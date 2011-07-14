@@ -1,0 +1,154 @@
+	SHADER nbody_sim
+
+	VERSION_2_1
+
+	DCL_THREADGROUP VARIABLE;
+
+	DCL_UAVRAW u0, TRUE =
+	{
+	  KERNEL_ARGUMENT,0
+	};
+
+	DCL_UAVRAW u1, TRUE =
+	{
+	  KERNEL_ARGUMENT,1
+	};
+
+	DCL_UAVRAW u2, TRUE =
+	{
+	  KERNEL_ARGUMENT,6
+	};
+
+	DCL_UAVRAW u3, TRUE =
+	{
+	  KERNEL_ARGUMENT,7
+	};
+
+	DCL_TGSMRAW g0, VARIABLE =
+	{
+	  KERNEL_ARGUMENT,5
+	};
+
+	DCL_CONSTANTREGISTER c0 =
+	{
+		KERNEL_ARGUMENT, 2, 0,
+		KERNEL_ARGUMENT, 3, 0,
+		KERNEL_ARGUMENT, 4, 0,
+		LOCAL_WORK_SIZE, 0, 0
+	};
+
+	DCL_CONSTANTREGISTER c1 =
+	{
+		LOCAL_WORK_SIZE, 0, 4,
+		LOCAL_WORK_SIZE, 0, 8,
+		UNUSED, 0, 0,
+		UNUSED, 0, 0
+	};
+
+	DCL_INPUT i1.xyz, THREAD_ID;
+
+	DCL_INPUT i0.xyz, THREAD_ID_IN_GROUP;
+
+	DCL_TEMPS r0..r79;
+	DCL_POINTERS ptr0..ptr15;
+	ADDRESS_OF ptr0, u0;
+	ADDRESS_OF ptr1, u1;
+	MOV r1, c0.x;
+	MOV r3, c0.y;
+	MOV r5, c0.z;
+	ADDRESS_OF ptr2, g0;
+	ADDRESS_OF ptr3, u2;
+	ADDRESS_OF ptr4, u3;
+
+
+	MOV r79.x, 1;
+	MOV ptr5, ptr0;
+	MOV ptr6, ptr1;
+	MOV r6.x, r3.x;
+	MOV r7.x, r5.x;
+	MOV ptr7, ptr2;
+	MOV ptr8, ptr3;
+	MOV ptr9, ptr4;
+	MOV r8.x, i0.x;
+	MOV r9.x, i1.x;
+	MOV r10.x, c0.w;
+	UDIV r11.x, r25.x, r1.x, r10.x;
+	SHL r26.x, r9.x, 4;
+	PADD ptr10, ptr0, r26.x;
+	LD_RAW_PTR r12, ptr10;
+	MOV r27.x, 0x00000000;
+	MOV_SWZ r20, r27.x, r27.x, r27.x, r27.x;
+	MOV r21.x, 0;
+	MOV r77, r20;
+	MOV r78.x, r21.x;
+	LOOP;
+	MOV r13, r77;
+	MOV r14.x, r78.x;
+	UCMP.ge r28.x, r14.x, r11.x;
+	MOV r79.x, r28.x;
+	XOR r79.x, r79.x, 1;
+	BREAK_CND.nz r28.x;
+	SHL r29.x, r8.x, 4;
+	PADD ptr11, ptr7, r29.x;
+	IMUL r31.x, r30.x, r14.x, r10.x;
+	IADD r32.x, r30.x, r8.x;
+	SHL r33.x, r32.x, 4;
+	PADD ptr12, ptr5, r33.x;
+	LD_RAW_PTR r34, ptr12;
+	STORE_RAW_PTR ptr11, r34;
+	SYNC.t.g;
+	LD_RAW_PTR r35, ptr7;
+	FADD r36, r35, -r12;
+	MOV r37.x, r36.x;
+	FMUL r38.x, r37.x, r37.x;
+	MOV r39.x, r36.y;
+	FMUL r40.x, r39.x, r39.x;
+	FADD r41.x, r38.x, r40.x;
+	MOV r42.x, r36.z;
+	FMUL r43.x, r42.x, r42.x;
+	FADD r44.x, r41.x, r43.x;
+	FADD r45.x, r44.x, r7.x;
+	FSQRT r46.x, r45.x;
+	LD_RAW_PTR r47, ptr7;
+	MOV r48.x, r47.w;
+	MOV r49.x, 0x3F800000;
+	FDIV r50.x, r49.x, r46.x;
+	FMUL r51.x, r50.x, r50.x;
+	FMUL r52.x, r51.x, r50.x;
+	FMUL r53.x, r48.x, r52.x;
+	MOV r54.x, 0x00000000;
+	MOV_SWZ r55, r53.x, r54.x, r54.x, r54.x;
+	MOV r56.x, r55.x;
+	MOV_SWZ r57, r56.x, r56.x, r56.x, r56.x;
+	FMUL r58, r57, r36;
+	FADD r15, r13, r58;
+	IADD r16.x, r14.x, 1;
+	MOV r77, r15;
+	MOV r78.x, r16.x;
+	ENDLOOP;
+	SHL r59.x, r9.x, 4;
+	PADD ptr13, ptr6, r59.x;
+	LD_RAW_PTR r60, ptr13;
+	MOV r61.x, 0x00000000;
+	MOV_SWZ r62, r6.x, r61.x, r61.x, r61.x;
+	MOV r63.x, r62.x;
+	MOV_SWZ r64, r63.x, r63.x, r63.x, r63.x;
+	FMUL r65, r13, r64;
+	FADD r66, r60, r65;
+	PADD ptr14, ptr9, r59.x;
+	FMUL r67, r60, r64;
+	FADD r68, r12, r67;
+	MOV r69.x, 0x3F000000;
+	MOV_SWZ r70, r69.x, r69.x, r69.x, r69.x;
+	FMUL r71, r13, r70;
+	FMUL r72, r71, r64;
+	FMUL r73, r72, r64;
+	FADD r74, r68, r73;
+	MOV r75.x, r12.w;
+	MOV_SWZ r76, r74.x, r74.y, r74.z, r75.x;
+	PADD ptr15, ptr8, r59.x;
+	STORE_RAW_PTR ptr15, r76;
+	STORE_RAW_PTR ptr14, r66;
+	RET;
+
+	END

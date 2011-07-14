@@ -1,0 +1,46 @@
+	SHADER fastWalshTransform
+
+	VERSION_2_1
+
+	DCL_THREADGROUP VARIABLE;
+
+	DCL_UAVRAW u0, TRUE =
+	{
+	  KERNEL_ARGUMENT,0
+	};
+
+	DCL_CONSTANTREGISTER c0 =
+	{
+		KERNEL_ARGUMENT, 1, 0,
+		UNUSED, 0, 0,
+		UNUSED, 0, 0,
+		UNUSED, 0, 0
+	};
+
+	DCL_INPUT i0.xyz, THREAD_ID;
+
+	DCL_TEMPS r0..r15;
+	DCL_POINTERS ptr0..ptr2;
+	ADDRESS_OF ptr0, u0;
+	MOV r0, c0.x;
+
+
+	MOV r2.x, i0.x;
+	UDIV r3.x, r4.x, r2.x, r0.x;
+	IMUL r6.x, r5.x, r0.x, r3.x;
+	SHL r7.x, r5.x, 1;
+	IADD r8.x, r7.x, r4.x;
+	SHL r9.x, r8.x, 2;
+	PADD ptr1, ptr0, r9.x;
+	LD_RAW_PTR r10.x, ptr1;
+	IADD r11.x, r8.x, r0.x;
+	SHL r12.x, r11.x, 2;
+	PADD ptr2, ptr0, r12.x;
+	LD_RAW_PTR r13.x, ptr2;
+	FADD r14.x, r10.x, -r13.x;
+	FADD r15.x, r10.x, r13.x;
+	STORE_RAW_PTR ptr1.x, r15.x;
+	STORE_RAW_PTR ptr2.x, r14.x;
+	RET;
+
+	END

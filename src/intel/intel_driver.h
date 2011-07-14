@@ -1,0 +1,95 @@
+/* 
+ * Copyright © 2012 Intel Corporation
+ *
+ * This library is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU Lesser General Public
+ * License as published by the Free Software Foundation; either
+ * version 2 of the License, or (at your option) any later version.
+ *
+ * This library is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+ * Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public
+ * License along with this library. If not, see <http://www.gnu.org/licenses/>.
+ *
+ * Author: Benjamin Segovia <benjamin.segovia@intel.com>
+ */
+
+#ifndef _INTEL_DRIVER_H_
+#define _INTEL_DRIVER_H_
+
+#include "cl_device_data.h"
+
+#include <stdint.h>
+#include <pthread.h>
+#include <signal.h>
+
+#include <xf86drm.h>
+#include <drm.h>
+#include <i915_drm.h>
+#include <intel_bufmgr.h>
+
+#define CMD_MI                                  (0x0 << 29)
+#define CMD_2D                                  (0x2 << 29)
+
+#define MI_NOOP                                 (CMD_MI | 0)
+#define MI_BATCH_BUFFER_END                     (CMD_MI | (0xA << 23))
+#define MI_FLUSH                                (CMD_MI | (0x4 << 23))
+#define STATE_INSTRUCTION_CACHE_INVALIDATE      (0x1 << 0)
+
+#define XY_COLOR_BLT_CMD                        (CMD_2D | (0x50 << 22) | 0x04)
+#define XY_COLOR_BLT_WRITE_ALPHA                (1 << 21)
+#define XY_COLOR_BLT_WRITE_RGB                  (1 << 20)
+#define XY_COLOR_BLT_DST_TILED                  (1 << 11)
+
+/* BR13 */
+#define BR13_565                                (0x1 << 24)
+#define BR13_8888                               (0x3 << 24)
+
+struct dri_state;
+
+typedef struct intel_driver
+{
+  dri_bufmgr *bufmgr;
+  int fd;
+  int device_id;
+  int gen_ver;
+  sigset_t sa_mask;
+  pthread_mutex_t ctxmutex;
+  int locked;
+  int master;
+} intel_driver_t;
+
+/* create / destroy device */
+extern intel_driver_t* intel_driver_new(void);
+extern void intel_driver_delete(intel_driver_t*);
+
+/* device control */
+extern void intel_driver_lock_hardware(intel_driver_t*);
+extern void intel_driver_unlock_hardware(intel_driver_t*);
+
+/* methods working in shared mode */
+extern dri_bo* intel_driver_share_buffer(intel_driver_t*, uint32_t name);
+extern uint32_t intel_driver_shared_name(intel_driver_t*, dri_bo*);
+
+/* init driver shared with X using dri state, acquired from X Display */
+extern int intel_driver_init_shared(intel_driver_t*, struct dri_state*);
+
+/* init driver in master mode (when X is not using the card) 
+ * usually dev_name = "/dev/dri/card0"
+ */
+extern int intel_driver_init_master(intel_driver_t*, const char* dev_name);
+
+/* terminate driver and all underlying structures */
+extern int intel_driver_terminate(intel_driver_t*);
+
+/* simple check if driver was initialized (checking fd should suffice) */
+extern int intel_driver_is_active(intel_driver_t*);
+
+/* query device parameters using driver ioctl */
+extern int intel_driver_get_param(intel_driver_t*, int param, int *value);
+
+#endif /* _INTEL_DRIVER_H_ */
+

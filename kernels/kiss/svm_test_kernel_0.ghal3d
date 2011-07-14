@@ -1,0 +1,37 @@
+	SHADER test1
+
+	VERSION_2_1
+
+	DCL_THREADGROUP VARIABLE;
+
+	DCL_UAVRAW u0, TRUE =
+	{
+	  KERNEL_ARGUMENT,0
+	};
+
+	DCL_CONSTANTREGISTER c0 =
+	{
+		KERNEL_ARGUMENT, 1, 0,
+		KERNEL_ARGUMENT, 2, 0,
+		UNUSED, 0, 0,
+		UNUSED, 0, 0
+	};
+
+	DCL_INPUT i0.xyz, THREAD_ID;
+
+	DCL_TEMPS r0..r5;
+	DCL_POINTERS ptr0..ptr3;
+	ADDRESS_OF ptr0, u0;
+	MOV r0, c0.x;
+	MOV r1, c0.y;
+
+
+	PADD ptr1, ptr0, -r0.x;
+	PADD ptr2, ptr1, r1.x;
+	MOV r4.x, i0.x;
+	SHL r5.x, r4.x, 2;
+	PADD ptr3, ptr2, r5.x;
+	STORE_RAW_PTR ptr3.x, r4.x;
+	RET;
+
+	END

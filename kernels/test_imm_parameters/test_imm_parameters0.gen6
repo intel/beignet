@@ -1,0 +1,91 @@
+ mov (1) f0.0<1>:uw   r2.12<0;1,0>:uw  { Align1, Q1, NoMask }
+ add (1) ip<1>:ud     ip<0;1,0>:ud     0x00000460:d     { Align1, Q1, NoMask }
+ shr (1) r2.6<1>:ud   r0.5<0;1,0>:ud   0x0000000a:ud    { Align1, Q1, NoMask }
+ mov (8) r50.0<1>:ud  r0.0<8;8,1>:ud   { Align1, Q1, NoMask }
+ mov (1) r0.2<1>:ud   0x00000000:ud    { Align1, Q1, NoMask }
+ mul (16) acc0.0<1>:ud r2.0<0;1,0>:ud   r2.3<0;1,0>:ud   { Align1, H1 }
+ mach (16) null:ud      r2.0<0;1,0>:ud   r2.3<0;1,0>:ud   { Align1, H1, AccWrEn }
+ add (16) r48.0<1>:ud  acc0.0<8;8,1>:ud r3.0<8;8,1>:uw   { Align1, H1 }
+ mov (16) r46.0<1>:d   r1.6<0;1,0>:w    { Align1, H1, NoMask }
+ mov (16) r44.0<1>:d   r1.4<0;1,0>:b    { Align1, H1, NoMask }
+ mov (16) r42.0<1>:d   r1.0<0;1,0>:f    { Align1, H1, NoMask }
+ shl (16) r40.0<1>:ud  r48.0<8;8,1>:ud  0x00000002:ud    { Align1, H1 }
+ mov (8) m6.0<1>:ud   r0.0<8;8,1>:ud   { Align1, Q1, NoMask }
+ asr (16) m7.0<1>:ud   r40.0<8;8,1>:d   0x00000002:d     { Align1, H1 }
+ send (16) r38.0<1>:uw  m6               0x05 0x0628c301:ud    { Align1, H1 }
+ // DAP Render Cache DWord scattered read bti = 1
+ add (16) r36.0<1>:d   r42.0<8;8,1>:d   r38.0<8;8,1>:d   { Align1, H1 }
+ mul (16) acc0.0<1>:d  r48.0<8;8,1>:d   0x00000006:d     { Align1, H1 }
+ mach (16) r34.0<1>:d   r48.0<8;8,1>:d   0x00000006:d     { Align1, H1, AccWrEn }
+ mov (16) r32.0<1>:d   acc0.0<8;8,1>:d  { Align1, H1 }
+ shl (16) r30.0<1>:ud  r32.0<8;8,1>:ud  0x00000002:ud    { Align1, H1 }
+ mov (8) m1.0<1>:ud   r0.0<8;8,1>:ud   { Align1, Q1, NoMask }
+ asr (16) m2.0<1>:d    r30.0<8;8,1>:d   0x00000002:d     { Align1, H1 }
+ mov (16) m4.0<1>:ud   r36.0<8;8,1>:ud  { Align1, H1 }
+ send (16) null:uw      m1               0x05 0x0a1b6300:ud    { Align1, H1 }
+ // DAP Render Cache DWord scattered write bti = 0
+ mov (8) m17.0<1>:ud  r0.0<8;8,1>:ud   { Align1, Q1, NoMask }
+ asr (16) m18.0<1>:ud  r40.0<8;8,1>:d   0x00000002:d     { Align1, H1 }
+ send (16) r28.0<1>:uw  m17              0x05 0x0628c301:ud    { Align1, H1 }
+ // DAP Render Cache DWord scattered read bti = 1
+ add (16) r26.0<1>:d   r44.0<8;8,1>:d   r28.0<8;8,1>:d   { Align1, H1 }
+ add (16) r24.0<1>:d   r30.0<8;8,1>:d   0x00000004:d     { Align1, H1 }
+ mov (8) m12.0<1>:ud  r0.0<8;8,1>:ud   { Align1, Q1, NoMask }
+ asr (16) m13.0<1>:d   r24.0<8;8,1>:d   0x00000002:d     { Align1, H1 }
+ mov (16) m15.0<1>:ud  r26.0<8;8,1>:ud  { Align1, H1 }
+ send (16) null:uw      m12              0x05 0x0a1b6300:ud    { Align1, H1 }
+ // DAP Render Cache DWord scattered write bti = 0
+ mov (8) m9.0<1>:ud   r0.0<8;8,1>:ud   { Align1, Q1, NoMask }
+ asr (16) m10.0<1>:ud  r40.0<8;8,1>:d   0x00000002:d     { Align1, H1 }
+ send (16) r22.0<1>:uw  m9               0x05 0x0628c301:ud    { Align1, H1 }
+ // DAP Render Cache DWord scattered read bti = 1
+ add (16) r20.0<1>:d   r1.2<0;1,0>:d    r22.0<8;8,1>:d   { Align1, H1 }
+ add (16) r18.0<1>:d   r30.0<8;8,1>:d   0x00000008:d     { Align1, H1 }
+ mov (8) m4.0<1>:ud   r0.0<8;8,1>:ud   { Align1, Q1, NoMask }
+ asr (16) m5.0<1>:d    r18.0<8;8,1>:d   0x00000002:d     { Align1, H1 }
+ mov (16) m7.0<1>:ud   r20.0<8;8,1>:ud  { Align1, H1 }
+ send (16) null:uw      m4               0x05 0x0a1b6300:ud    { Align1, H1 }
+ // DAP Render Cache DWord scattered write bti = 0
+ mov (8) m1.0<1>:ud   r0.0<8;8,1>:ud   { Align1, Q1, NoMask }
+ asr (16) m2.0<1>:ud   r40.0<8;8,1>:d   0x00000002:d     { Align1, H1 }
+ send (16) r16.0<1>:uw  m1               0x05 0x0628c301:ud    { Align1, H1 }
+ // DAP Render Cache DWord scattered read bti = 1
+ add (16) r14.0<1>:d   r46.0<8;8,1>:d   r16.0<8;8,1>:d   { Align1, H1 }
+ add (16) r12.0<1>:d   r30.0<8;8,1>:d   0x0000000c:d     { Align1, H1 }
+ mov (8) m18.0<1>:ud  r0.0<8;8,1>:ud   { Align1, Q1, NoMask }
+ asr (16) m19.0<1>:d   r12.0<8;8,1>:d   0x00000002:d     { Align1, H1 }
+ mov (16) m21.0<1>:ud  r14.0<8;8,1>:ud  { Align1, H1 }
+ send (16) null:uw      m18              0x05 0x0a1b6300:ud    { Align1, H1 }
+ // DAP Render Cache DWord scattered write bti = 0
+ mov (8) m15.0<1>:ud  r0.0<8;8,1>:ud   { Align1, Q1, NoMask }
+ asr (16) m16.0<1>:ud  r40.0<8;8,1>:d   0x00000002:d     { Align1, H1 }
+ send (16) r10.0<1>:uw  m15              0x05 0x0628c301:ud    { Align1, H1 }
+ // DAP Render Cache DWord scattered read bti = 1
+ add (16) r8.0<1>:d    r1.4<0;1,0>:d    r10.0<8;8,1>:d   { Align1, H1 }
+ add (16) r6.0<1>:d    r30.0<8;8,1>:d   0x00000010:d     { Align1, H1 }
+ mov (8) m10.0<1>:ud  r0.0<8;8,1>:ud   { Align1, Q1, NoMask }
+ asr (16) m11.0<1>:d   r6.0<8;8,1>:d    0x00000002:d     { Align1, H1 }
+ mov (16) m13.0<1>:ud  r8.0<8;8,1>:ud   { Align1, H1 }
+ send (16) null:uw      m10              0x05 0x0a1b6300:ud    { Align1, H1 }
+ // DAP Render Cache DWord scattered write bti = 0
+ mov (8) m7.0<1>:ud   r0.0<8;8,1>:ud   { Align1, Q1, NoMask }
+ asr (16) m8.0<1>:ud   r40.0<8;8,1>:d   0x00000002:d     { Align1, H1 }
+ send (16) r4.0<1>:uw   m7               0x05 0x0628c301:ud    { Align1, H1 }
+ // DAP Render Cache DWord scattered read bti = 1
+ add (16) r2.0<1>:d    r1.5<0;1,0>:d    r4.0<8;8,1>:d    { Align1, H1 }
+ add (16) r52.0<1>:d   r30.0<8;8,1>:d   0x00000014:d     { Align1, H1 }
+ mov (8) m2.0<1>:ud   r0.0<8;8,1>:ud   { Align1, Q1, NoMask }
+ asr (16) m3.0<1>:d    r52.0<8;8,1>:d   0x00000002:d     { Align1, H1 }
+ mov (16) m5.0<1>:ud   r2.0<8;8,1>:ud   { Align1, H1 }
+ send (16) null:uw      m2               0x05 0x0a1b6300:ud    { Align1, H1 }
+ // DAP Render Cache DWord scattered write bti = 0
+ mov (8) m1.0<1>:ud   r50.0<8;8,1>:ud  { Align1, Q1, NoMask }
+ send (8) null:ud      m1               0x27 0x02000010:ud    { Align1, Q1, EOT }
+ // Thread Spawner Thread spawner 
+ (+f0.0) if (16) null:w null:f           null:f           8 { Align1, H1, Switch }
+ add (1) ip<1>:ud     ip<0;1,0>:ud     0xfffffba0:d     { Align1, Q1, NoMask, AccWrEn }
+ nop { Align1, Q1 }
+ nop { Align1, Q1 }
+ mov (8) m1.0<1>:ud   r0.0<8;8,1>:ud   { Align1, Q1, NoMask }
+ send (8) null:ud      m1               0x27 0x02000010:d     { Align1, Q1, NoMask, EOT }
+ // Thread Spawner Thread spawner 

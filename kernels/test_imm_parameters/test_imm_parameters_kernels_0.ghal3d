@@ -1,0 +1,82 @@
+	SHADER test_imm_parameters
+
+	VERSION_2_1
+
+	DCL_THREADGROUP VARIABLE;
+
+	DCL_UAVRAW u0, TRUE =
+	{
+	  KERNEL_ARGUMENT,0
+	};
+
+	DCL_UAVRAW u1, TRUE =
+	{
+	  KERNEL_ARGUMENT,4
+	};
+
+	DCL_CONSTANTREGISTER c0 =
+	{
+		KERNEL_ARGUMENT, 1, 0,
+		KERNEL_ARGUMENT, 2, 0,
+		KERNEL_ARGUMENT, 3, 0,
+		KERNEL_ARGUMENT, 5, 0
+	};
+
+	DCL_CONSTANTREGISTER c1 =
+	{
+		KERNEL_ARGUMENT, 6, 0,
+		KERNEL_ARGUMENT, 7, 0,
+		UNUSED, 0, 0,
+		UNUSED, 0, 0
+	};
+
+	DCL_INPUT i0.xyz, THREAD_ID;
+
+	DCL_TEMPS r0..r32;
+	DCL_POINTERS ptr0..ptr8;
+	ADDRESS_OF ptr0, u0;
+	MOV r0, c0.x;
+	MOV r1, c0.y;
+	MOV r2, c0.z;
+	ADDRESS_OF ptr1, u1;
+	MOV r3, c0.w;
+	MOV r4, c1.x;
+	MOV r5, c1.y;
+
+
+	STOI r12.x, r3.x;
+	BTOI r13.x, r1.x;
+	FTOI r14.x, r0.x;
+	MOV r15.x, i0.x;
+	SHL r16.x, r15.x, 2;
+	PADD ptr2, ptr1, r16.x;
+	LD_RAW_PTR r17.x, ptr2;
+	IADD r18.x, r14.x, r17.x;
+	MOV r19.x, 6;
+	IMUL r21.x, r20.x, r15.x, r19.x;
+	SHL r22.x, r20.x, 2;
+	PADD ptr3, ptr0, r22.x;
+	STORE_RAW_PTR ptr3.x, r18.x;
+	LD_RAW_PTR r23.x, ptr2;
+	IADD r24.x, r13.x, r23.x;
+	PADD ptr4, ptr3, 4;
+	STORE_RAW_PTR ptr4.x, r24.x;
+	LD_RAW_PTR r25.x, ptr2;
+	IADD r26.x, r2.x, r25.x;
+	PADD ptr5, ptr3, 8;
+	STORE_RAW_PTR ptr5.x, r26.x;
+	LD_RAW_PTR r27.x, ptr2;
+	IADD r28.x, r12.x, r27.x;
+	PADD ptr6, ptr3, 12;
+	STORE_RAW_PTR ptr6.x, r28.x;
+	LD_RAW_PTR r29.x, ptr2;
+	IADD r30.x, r4.x, r29.x;
+	PADD ptr7, ptr3, 16;
+	STORE_RAW_PTR ptr7.x, r30.x;
+	LD_RAW_PTR r31.x, ptr2;
+	IADD r32.x, r5.x, r31.x;
+	PADD ptr8, ptr3, 20;
+	STORE_RAW_PTR ptr8.x, r32.x;
+	RET;
+
+	END

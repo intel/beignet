@@ -1,0 +1,25 @@
+	SHADER test_private_memory
+
+	VERSION_2_1
+
+	DCL_THREADGROUP VARIABLE;
+
+	DCL_UAVRAW u0, TRUE =
+	{
+	  KERNEL_ARGUMENT,0
+	};
+
+	DCL_INPUT i0.xyz, THREAD_ID;
+
+	DCL_TEMPS r0..r1;
+	DCL_POINTERS ptr0..ptr1;
+	ADDRESS_OF ptr0, u0;
+
+
+	MOV r0.x, i0.x;
+	SHL r1.x, r0.x, 2;
+	PADD ptr1, ptr0, r1.x;
+	STORE_RAW_PTR ptr1.x, r0.x;
+	RET;
+
+	END

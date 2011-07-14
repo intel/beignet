@@ -1,0 +1,69 @@
+MiniCL
+------
+
+This small project contains a quick and dirty implementation of a OpenCL
+run-time for gen6. There are several limitations and many things are not
+implemented or supported.
+
+How to build
+------------
+
+The projec uses CMake with three profiles:
+- NOOPT (-g)
+- DEBUG (-g with optimizations)
+- RELEASE (only optimizations)
+Basically, from the root directory of the project
+> mkdir build
+> ccmake ../ # to configure
+> Choose whatever you want for the build
+> then press 'c' to configure and 'g' to generate the code
+> make
+
+How to run
+----------
+
+The project comes with several tests. There are basically two classes of tests:
+- Pure unit tests which test one particular features of the kernel
+- More complex tests extracted from a code-base named kiss
+For the later tests, some may fail due to precision issues. Mersenne Twister
+just fails either with a bug in the run-time or because the compiler is broken
+
+For kiss tests, you need to set an env variable to say where the kernels are.
+For unit, it is a pain, you need to specify the location of each kernel. Or,
+just copy and use run_kernel.sh
+
+How it works
+------------
+
+The complete code is just a loader of kernels *already* compiled by the windows
+run-time. Windows guys built a stand-alone executable name "TC_Tester.exe" which
+basically builds a binary blob from a OCL kernel. The executable is renamed
+"TC_Tester.txt" to avoid problems with Intel mailing system
+
+Limitations
+-----------
+
+- Tested only with GT2. Be aware, crashed or hangs with GT1 are more than
+expected
+- Tested only with a 2.6.37 kernel
+- Tested only with lib_drm 2.4.23
+- Some bugs may be still outstanding. I hacked quickly some values to make all
+tests pass. It should not be a big deal but be prepared to debug nasty bugs
+- No support for samplers / textures but it should be rather easy since the
+low-level parts of the code already supports it (used in another code base)
+- No support for events
+- We could be able to push NDRangeKernels into _different_ queues from several
+threads but it was never tested
+- No support for Enqueue*Buffer. I added a straightforward extension to map /
+unmap buffer. This extension "clIntelMapBuffer" directly maps dri_bo_map which
+is really convenient
+- I directly map _cl_kernel, _cl_command_queue ...etc onto my own structures
+(cl_kernel_object_t, cl_command_queue_object_t ...). This is ont compliant with
+ocl.h but this is not a big deal, just a matter of re-encapsulation
+- I tried as fast as I can to cleanly crash the application as soon as I do
+something not compliant with the specification
+
+Anyway, everything was coded in three weeks. Be prepared for the worst :)
+
+Ben Segovia <benjamin.segovia@intel.com>
+

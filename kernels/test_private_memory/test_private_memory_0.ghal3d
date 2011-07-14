@@ -1,0 +1,67 @@
+	SHADER test_private_memory
+
+	VERSION_2_1
+
+	DCL_THREADGROUP VARIABLE;
+
+	DCL_UAVRAW u0, TRUE =
+	{
+	  KERNEL_ARGUMENT,0
+	};
+
+	DCL_TPM m0, 128;
+
+	DCL_INPUT i0.xyz, THREAD_ID;
+
+	DCL_TEMPS r0..r22;
+	DCL_POINTERS ptr0..ptr7;
+	ADDRESS_OF ptr0, u0;
+	ADDRESS_OF ptr1, m0;
+
+
+	MOV r22.x, 1;
+	MOV r21.x, 1;
+	MOV ptr2, ptr0;
+	MOV r0.x, i0.x;
+	MOV r7.x, 0;
+	MOV r18.x, r7.x;
+	LOOP;
+	MOV r1.x, r18.x;
+	MOV r8.x, 32;
+	ICMP.lt r9.x, r1.x, r8.x;
+	MOV r21.x, r9.x;
+	BREAK_CND.z r9.x;
+	IADD r2.x, r1.x, 1;
+	IADD r11.x, r1.x, r0.x;
+	MOV ptr3, ptr1;
+	SHL r12.x, r1.x, 2;
+	PADD ptr4, ptr3, r12.x;
+	STORE_RAW_PTR ptr4.x, r11.x;
+	MOV r18.x, r2.x;
+	ENDLOOP;
+	MOV r10.x, 0;
+	MOV r19.x, r10.x;
+	MOV r20.x, r10.x;
+	LOOP;
+	MOV r3.x, r19.x;
+	MOV r4.x, r20.x;
+	MOV r13.x, 31;
+	ICMP.gt r14.x, r3.x, r13.x;
+	MOV r22.x, r14.x;
+	XOR r22.x, r22.x, 1;
+	BREAK_CND.nz r14.x;
+	MOV ptr5, ptr1;
+	SHL r15.x, r3.x, 2;
+	PADD ptr6, ptr5, r15.x;
+	LD_RAW_PTR r16.x, ptr6;
+	IADD r5.x, r4.x, r16.x;
+	IADD r6.x, r3.x, 1;
+	MOV r19.x, r6.x;
+	MOV r20.x, r5.x;
+	ENDLOOP;
+	SHL r17.x, r0.x, 2;
+	PADD ptr7, ptr2, r17.x;
+	STORE_RAW_PTR ptr7.x, r4.x;
+	RET;
+
+	END

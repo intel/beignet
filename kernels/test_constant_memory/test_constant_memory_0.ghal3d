@@ -1,0 +1,69 @@
+	SHADER test_constant_memory
+
+	VERSION_2_1
+
+	DCL_THREADGROUP VARIABLE;
+
+	DCL_UAVRAW u0, TRUE =
+	{
+	  KERNEL_ARGUMENT,0
+	};
+
+	DCL_TGSMRAW g1, VARIABLE =
+	{
+	  KERNEL_ARGUMENT,1
+	};
+
+	DCL_TGSMRAW g0, 128;
+
+	DCL_CONSTANTBUFFER C1=
+	{
+	  KERNEL_ARGUMENT,2
+	};
+
+	DCL_CONSTANTBUFFER C0=
+	{
+	  INLINE,
+	  0x00000008
+	};
+
+	DCL_INPUT i1.xyz, THREAD_ID;
+
+	DCL_INPUT i0.xyz, THREAD_ID_IN_GROUP;
+
+	DCL_TEMPS r0..r13;
+	DCL_POINTERS ptr0..ptr10;
+	ADDRESS_OF ptr0, C0;
+	ADDRESS_OF ptr1, g0;
+	ADDRESS_OF ptr2, u0;
+	ADDRESS_OF ptr3, g1;
+	ADDRESS_OF ptr4, C1;
+
+
+	MOV r0.x, 31;
+	MOV r1.x, i0.x;
+	IADD r2.x, r0.x, -r1.x;
+	SHL r3.x, r2.x, 2;
+	PADD ptr5, ptr3, r3.x;
+	SHL r4.x, r1.x, 2;
+	PADD ptr6, ptr3, r4.x;
+	PADD ptr7, ptr1, r4.x;
+	MOV r5.x, i1.x;
+	STORE_RAW_PTR ptr7.x, r1.x;
+	STORE_RAW_PTR ptr6.x, r1.x;
+	SYNC.t.g;
+	LD_RAW_PTR r6.x, ptr5;
+	PADD ptr8, ptr1, r3.x;
+	LD_RAW_PTR r7.x, ptr8;
+	IADD r8.x, r6.x, r7.x;
+	PADD ptr9, ptr4, r4.x;
+	LD_RAW_PTR r9.x, ptr9;
+	IADD r10.x, r8.x, r9.x;
+	LD_RAW_PTR r11.x, ptr0;
+	IADD r12.x, r10.x, r11.x;
+	SHL r13.x, r5.x, 2;
+	PADD ptr10, ptr2, r13.x;
+	STORE_RAW_PTR ptr10.x, r12.x;
+	RET;
+
+	END

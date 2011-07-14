@@ -1,0 +1,54 @@
+	SHADER test_2d_copy
+
+	VERSION_2_1
+
+	DCL_THREADGROUP VARIABLE;
+
+	DCL_UAVRAW u0, TRUE =
+	{
+	  KERNEL_ARGUMENT,0
+	};
+
+	DCL_UAVRAW u1, TRUE =
+	{
+	  KERNEL_ARGUMENT,1
+	};
+
+	DCL_UAVRAW u2, TRUE =
+	{
+	  KERNEL_ARGUMENT,2
+	};
+
+	DCL_CONSTANTREGISTER c0 =
+	{
+		KERNEL_ARGUMENT, 3, 0,
+		UNUSED, 0, 0,
+		UNUSED, 0, 0,
+		UNUSED, 0, 0
+	};
+
+	DCL_INPUT i0.xyz, THREAD_ID;
+
+	DCL_TEMPS r0..r9;
+	DCL_POINTERS ptr0..ptr5;
+	ADDRESS_OF ptr0, u0;
+	ADDRESS_OF ptr1, u1;
+	ADDRESS_OF ptr2, u2;
+	MOV r0, c0.x;
+
+
+	MOV r2.x, i0.x;
+	MOV r3.x, i0.y;
+	IADD r4.x, r2.x, r3.x;
+	IMUL r6.x, r5.x, r3.x, r0.x;
+	IADD r7.x, r2.x, r5.x;
+	SHL r8.x, r7.x, 2;
+	PADD ptr3, ptr1, r8.x;
+	PADD ptr4, ptr0, r8.x;
+	PADD ptr5, ptr2, r8.x;
+	LD_RAW_PTR r9.x, ptr5;
+	STORE_RAW_PTR ptr4.x, r9.x;
+	STORE_RAW_PTR ptr3.x, r4.x;
+	RET;
+
+	END

@@ -1,0 +1,33 @@
+	SHADER CopyBuffer
+
+	VERSION_2_1
+
+	DCL_THREADGROUP VARIABLE;
+
+	DCL_UAVRAW u0, TRUE =
+	{
+	  KERNEL_ARGUMENT,0
+	};
+
+	DCL_UAVRAW u1, TRUE =
+	{
+	  KERNEL_ARGUMENT,1
+	};
+
+	DCL_INPUT i0.xyz, THREAD_ID;
+
+	DCL_TEMPS r0..r2;
+	DCL_POINTERS ptr0..ptr3;
+	ADDRESS_OF ptr0, u0;
+	ADDRESS_OF ptr1, u1;
+
+
+	MOV r0.x, i0.x;
+	SHL r1.x, r0.x, 2;
+	PADD ptr2, ptr1, r1.x;
+	PADD ptr3, ptr0, r1.x;
+	LD_RAW_PTR r2.x, ptr3;
+	STORE_RAW_PTR ptr2.x, r2.x;
+	RET;
+
+	END
