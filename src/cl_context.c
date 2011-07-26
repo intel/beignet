@@ -74,7 +74,7 @@ cl_create_context(const cl_context_properties *  properties,
                   void *                         user_data,
                   cl_int *                       errcode_ret)
 {
-  cl_platform_id platform = NULL;
+  /* cl_platform_id platform = NULL; */
   cl_context ctx = NULL;
   cl_int err = CL_SUCCESS;
 
@@ -90,7 +90,7 @@ cl_create_context(const cl_context_properties *  properties,
   /* Check that we are getting the right platform */
   if (UNLIKELY((err = cl_context_properties_is_ok(properties)) != CL_SUCCESS))
     goto error;
-  platform = intel_platform;
+  /* platform = intel_platform; */
 
   /* Now check if the user is asking for the right device */
   if (UNLIKELY(cl_device_id_is_ok(*devices) == CL_FALSE)) {
@@ -121,10 +121,9 @@ LOCAL cl_context
 cl_context_new(void)
 {
   cl_context ctx = NULL;
-  int err = 0;
 
-  TRY_ALLOC (ctx, CALLOC(struct _cl_context));
-  TRY_ALLOC (ctx->intel_drv, cl_genx_driver_new());
+  TRY_ALLOC_NO_ERR (ctx, CALLOC(struct _cl_context));
+  TRY_ALLOC_NO_ERR (ctx->intel_drv, cl_genx_driver_new());
   ctx->magic = CL_MAGIC_CONTEXT_HEADER;
   ctx->ref_n = 1;
   pthread_mutex_init(&ctx->program_lock, NULL);

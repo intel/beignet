@@ -8,6 +8,7 @@
 # 
 
 FIND_PATH(DRM_INCLUDE_PATH drm.h
+  ~/include/libdrm/
   /usr/include/libdrm/
   /usr/local/include/libdrm/
   /sw/include/libdrm/
@@ -16,6 +17,7 @@ FIND_PATH(DRM_INCLUDE_PATH drm.h
 FIND_LIBRARY(DRM_LIBRARY
   NAMES DRM drm
   PATHS
+  ~/lib/
   /usr/lib64
   /usr/lib
   /usr/local/lib64

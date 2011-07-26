@@ -9,6 +9,7 @@
 FIND_LIBRARY(DRM_INTEL_LIBRARY
   NAMES DRM_INTEL drm_intel
   PATHS
+  ~/lib/
   /usr/lib64
   /usr/lib
   /usr/local/lib64

@@ -127,7 +127,7 @@ clReleaseContext(cl_context context)
   CHECK_CONTEXT (context);
   cl_context_delete(context);
 error:
-  return CL_SUCCESS;
+  return err;
 }
 
 cl_int
@@ -152,7 +152,7 @@ clCreateCommandQueue(cl_context                   context,
   CHECK_CONTEXT (context);
   queue = cl_context_create_queue(context, device, properties, errcode_ret);
 error:
-  return queue;
+  return err == CL_SUCCESS ? queue : NULL;
 }
 
 cl_int
@@ -226,10 +226,12 @@ clCreateSubBuffer(cl_mem                buffer,
                   const void *          buffer_create_info,
                   cl_int *              errcode_ret)
 {
+#if 0
   cl_int err = CL_SUCCESS;
   CHECK_MEM (buffer);
   NOT_IMPLEMENTED;
 error:
+#endif
   return NULL;
 }
 
