@@ -109,6 +109,7 @@ typedef struct cl_local_id {
 } cl_local_id_t;
 
 #define SURFACE_SZ 32
+
 static cl_int
 cl_command_queue_bind_surface(cl_command_queue queue,
                               cl_kernel k,
