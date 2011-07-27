@@ -23,7 +23,7 @@
 
 	DCL_INPUT i0.xyz, THREAD_ID_IN_GROUP;
 
-	DCL_TEMPS r0..r9;
+	DCL_TEMPS r0..r27;
 	DCL_POINTERS ptr0..ptr7;
 	ADDRESS_OF ptr0, u0;
 	ADDRESS_OF ptr1, g0;
@@ -34,21 +34,39 @@
 	MOV r1.x, i0.x;
 	IADD r2.x, r0.x, -r1.x;
 	SHL r3.x, r2.x, 2;
-	PADD ptr3, ptr1, r3.x;
-	SHL r4.x, r1.x, 2;
-	PADD ptr4, ptr1, r4.x;
-	PADD ptr5, ptr2, r4.x;
-	MOV r5.x, i1.x;
+	SAR r4.x, r2.x, 31;
+	SHL r5.x, r4.x, 2;
+	SHR r6.x, r2.x, 30;
+	OR r7.x, r5.x, r6.x;
+	MOV r8.x, 0;
+	MOV_SWZ r9, r3.x, r7.x, r8.x, r8.x;
+	MOV r10.xy, r9;
+	MOV r11.xy, r10.xyxy;
+	PADD ptr3, ptr1, r11.x;
+	SHL r12.x, r1.x, 2;
+	SHR r13.x, r1.x, 30;
+	MOV_SWZ r14, r12.x, r13.x, r8.x, r8.x;
+	MOV r15.xy, r14;
+	MOV r16.xy, r15.xyxy;
+	PADD ptr4, ptr1, r16.x;
+	MOV r17.xy, r15.xyxy;
+	PADD ptr5, ptr2, r17.x;
+	MOV r18.x, i1.x;
 	STORE_RAW_PTR ptr5.x, r1.x;
 	STORE_RAW_PTR ptr4.x, r1.x;
 	SYNC.t.g;
-	LD_RAW_PTR r6.x, ptr3;
-	PADD ptr6, ptr2, r3.x;
-	LD_RAW_PTR r7.x, ptr6;
-	IADD r8.x, r6.x, r7.x;
-	SHL r9.x, r5.x, 2;
-	PADD ptr7, ptr0, r9.x;
-	STORE_RAW_PTR ptr7.x, r8.x;
+	LD_RAW_PTR r19.x, ptr3;
+	MOV r20.xy, r10.xyxy;
+	PADD ptr6, ptr2, r20.x;
+	LD_RAW_PTR r21.x, ptr6;
+	IADD r22.x, r19.x, r21.x;
+	SHL r23.x, r18.x, 2;
+	SHR r24.x, r18.x, 30;
+	MOV_SWZ r25, r23.x, r24.x, r8.x, r8.x;
+	MOV r26.xy, r25;
+	MOV r27.xy, r26.xyxy;
+	PADD ptr7, ptr0, r27.x;
+	STORE_RAW_PTR ptr7.x, r22.x;
 	RET;
 
 	END

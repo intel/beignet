@@ -19,28 +19,41 @@
 
 	DCL_INPUT i0.xyz, THREAD_ID;
 
-	DCL_TEMPS r0..r15;
+	DCL_TEMPS r0..r27;
 	DCL_POINTERS ptr0..ptr2;
 	ADDRESS_OF ptr0, u0;
 	MOV r0, c0.x;
 
 
 	MOV r2.x, i0.x;
-	UDIV r3.x, r4.x, r2.x, r0.x;
-	IMUL r6.x, r5.x, r0.x, r3.x;
-	SHL r7.x, r5.x, 1;
-	IADD r8.x, r7.x, r4.x;
-	SHL r9.x, r8.x, 2;
-	PADD ptr1, ptr0, r9.x;
-	LD_RAW_PTR r10.x, ptr1;
-	IADD r11.x, r8.x, r0.x;
-	SHL r12.x, r11.x, 2;
-	PADD ptr2, ptr0, r12.x;
-	LD_RAW_PTR r13.x, ptr2;
-	FADD r14.x, r10.x, -r13.x;
-	FADD r15.x, r10.x, r13.x;
-	STORE_RAW_PTR ptr1.x, r15.x;
-	STORE_RAW_PTR ptr2.x, r14.x;
+	MOV r3.x, 0;
+	ICMP.eq r4.x, r0.x, r3.x;
+	AND r4.x, r4.x, 0x1;
+	MOV r5.x, 1;
+	MOV_CND.nz r6.x, r4.x, r5.x, r0.x;
+	UDIV r7.x, r8.x, r2.x, r6.x;
+	IMUL r10.x, r9.x, r0.x, r7.x;
+	SHL r11.x, r9.x, 1;
+	IADD r12.x, r11.x, r8.x;
+	SHL r13.x, r12.x, 2;
+	SHR r14.x, r12.x, 30;
+	MOV_SWZ r15, r13.x, r14.x, r3.x, r3.x;
+	MOV r16.xy, r15;
+	MOV r17.xy, r16.xyxy;
+	PADD ptr1, ptr0, r17.x;
+	LD_RAW_PTR r18.x, ptr1;
+	IADD r19.x, r12.x, r0.x;
+	SHL r20.x, r19.x, 2;
+	SHR r21.x, r19.x, 30;
+	MOV_SWZ r22, r20.x, r21.x, r3.x, r3.x;
+	MOV r23.xy, r22;
+	MOV r24.xy, r23.xyxy;
+	PADD ptr2, ptr0, r24.x;
+	LD_RAW_PTR r25.x, ptr2;
+	FADD r26.x, r18.x, -r25.x;
+	FADD r27.x, r18.x, r25.x;
+	STORE_RAW_PTR ptr1.x, r27.x;
+	STORE_RAW_PTR ptr2.x, r26.x;
 	RET;
 
 	END

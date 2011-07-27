@@ -108,6 +108,7 @@ typedef struct cl_local_id {
   uint16_t data[16];
 } cl_local_id_t;
 
+#define SURFACE_SZ 32
 static cl_int
 cl_command_queue_bind_surface(cl_command_queue queue,
                               cl_kernel k,
@@ -131,8 +132,8 @@ cl_command_queue_bind_surface(cl_command_queue queue,
       continue;
 
     /* XXX 64 comes from the patch list format. May change */
-    assert(k->arg_info[i].offset % 64 == 0);
-    index = k->arg_info[i].offset / 64;
+    assert(k->arg_info[i].offset % SURFACE_SZ == 0);
+    index = k->arg_info[i].offset / SURFACE_SZ;
     mem = (cl_mem) k->args[k->arg_info[i].arg_index];
     assert(index != MAX_SURFACES - 1);
     CHECK_MEM(mem);
@@ -154,8 +155,8 @@ cl_command_queue_bind_surface(cl_command_queue queue,
   /* Allocate local surface needed for SLM and bind it */
   if (local_sz != 0) {
     const size_t sz = 16 * local_sz; /* XXX 16 == maximum barrier number */
-    assert(k->patch.local_surf.offset % 64 == 0);
-    index = k->patch.local_surf.offset / 64;
+    assert(k->patch.local_surf.offset % SURFACE_SZ == 0);
+    index = k->patch.local_surf.offset / SURFACE_SZ;
     assert(index != MAX_SURFACES - 1);
     *local = drm_intel_bo_alloc(bufmgr, "CL local surface", sz, 64);
     gpgpu_bind_buf(gpgpu, index, *local, 0, sz, cc_llc_mlc);
@@ -169,8 +170,8 @@ cl_command_queue_bind_surface(cl_command_queue queue,
                       k->patch.private_surf.size *
                       k->patch.exec_env.largest_compiled_simd_sz;
     assert(k->patch.exec_env.largest_compiled_simd_sz == 16);
-    assert(k->patch.private_surf.offset % 64 == 0);
-    index = k->patch.private_surf.offset / 64;
+    assert(k->patch.private_surf.offset % SURFACE_SZ == 0);
+    index = k->patch.private_surf.offset / SURFACE_SZ;
     assert(index != MAX_SURFACES - 1);
     *priv = drm_intel_bo_alloc(bufmgr, "CL private surface", sz, 64);
     gpgpu_bind_buf(gpgpu, index, *priv, 0, sz, cc_llc_mlc);
@@ -184,9 +185,9 @@ cl_command_queue_bind_surface(cl_command_queue queue,
                       k->patch.scratch.size *
                       k->patch.exec_env.largest_compiled_simd_sz;
     assert(k->patch.exec_env.largest_compiled_simd_sz == 16);
-    assert(k->patch.scratch.offset % 64 == 0);
+    assert(k->patch.scratch.offset % SURFACE_SZ == 0);
     assert(index != MAX_SURFACES - 1);
-    index = k->patch.scratch.offset / 64;
+    index = k->patch.scratch.offset / SURFACE_SZ;
     *scratch = drm_intel_bo_alloc(bufmgr, "CL scratch surface", sz, 64);
     gpgpu_bind_buf(gpgpu, index, *scratch, 0, sz, cc_llc_mlc);
   }
