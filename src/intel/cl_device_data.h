@@ -80,19 +80,11 @@
 #define IS_IVYBRIDGE(devid) (IS_IVB_GT1(devid) || IS_IVB_GT2(devid))
 #define IS_GEN7(devid)      IS_IVYBRIDGE(devid)
 
-#ifdef __cplusplus
-extern "C" {
-#endif /* __cplusplus */
-
 /* Open a connection to the X server and ask the kernel who we are. Returns -1
  * if no Intel GPU was found or an error was encountered in the probing
  * process
  */
 extern int cl_intel_get_device_id(void);
-
-#ifdef __cplusplus
-}
-#endif /* __cplusplus */
 
 #endif /* __CL_DEVICE_DATA_H__ */
 
