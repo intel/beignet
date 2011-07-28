@@ -51,19 +51,19 @@ typedef struct genx_gpgpu_kernel
 struct intel_driver;
 
 /* Covenient way to talk to the device */
-typedef struct genx_gpgpu_state genx_gpgpu_state_t;
+typedef struct intel_gpgpu intel_gpgpu_t;
 
 /* Buffer object as exposed by drm_intel */
 struct _drm_intel_bo;
 
 /* Allocate and initialize a GPGPU state */
-extern genx_gpgpu_state_t* genx_gpgpu_state_new(struct intel_driver*);
+extern intel_gpgpu_t* intel_gpgpu_new(struct intel_driver*);
 
 /* Destroy and deallocate a GPGPU state */
-extern void genx_gpgpu_state_delete(genx_gpgpu_state_t*);
+extern void intel_gpgpu_delete(intel_gpgpu_t*);
 
 /* Set surface descriptor in the current binding table */
-extern void gpgpu_bind_surf_2d(genx_gpgpu_state_t*,
+extern void gpgpu_bind_surf_2d(intel_gpgpu_t*,
                                int32_t index,
                                struct _drm_intel_bo* obj_bo,
                                uint32_t offset,
@@ -79,7 +79,7 @@ extern void gpgpu_bind_surf_2d(genx_gpgpu_state_t*,
  * Automatically determines and sets tiling mode which is transparently
  * supported by media block read/write
  */
-extern void gpgpu_bind_shared_surf_2d(genx_gpgpu_state_t*,
+extern void gpgpu_bind_shared_surf_2d(intel_gpgpu_t*,
                                       int32_t index,
                                       struct _drm_intel_bo* obj_bo,
                                       uint32_t offset,
@@ -92,7 +92,7 @@ extern void gpgpu_bind_shared_surf_2d(genx_gpgpu_state_t*,
                                       uint32_t cchint);
 
 /* Set typeless buffer descriptor in the current binding table */
-extern void gpgpu_bind_buf(genx_gpgpu_state_t*,
+extern void gpgpu_bind_buf(intel_gpgpu_t*,
                            int32_t index,
                            struct _drm_intel_bo* obj_bo,
                            uint32_t offset,
@@ -100,7 +100,7 @@ extern void gpgpu_bind_buf(genx_gpgpu_state_t*,
                            uint32_t cchint);
 
 /* Configure state, size in 512-bit units */
-extern void gpgpu_state_init(genx_gpgpu_state_t*,
+extern void gpgpu_state_init(intel_gpgpu_t*,
                              uint32_t max_threads,
                              uint32_t size_vfe_entry,
                              uint32_t num_vfe_entries,
@@ -108,39 +108,39 @@ extern void gpgpu_state_init(genx_gpgpu_state_t*,
                              uint32_t num_cs_entries);
 
 /* Set the buffer object where to report performance counters */
-extern void gpgpu_set_perf_counters(genx_gpgpu_state_t*, struct _drm_intel_bo *perf);
+extern void gpgpu_set_perf_counters(intel_gpgpu_t*, struct _drm_intel_bo *perf);
 
 /* Fills current constant buffer with data */
-extern void gpgpu_upload_constants(genx_gpgpu_state_t*, void* data, uint32_t size);
+extern void gpgpu_upload_constants(intel_gpgpu_t*, void* data, uint32_t size);
 
 /* Setup all indirect states */
-extern void gpgpu_states_setup(genx_gpgpu_state_t*, genx_gpgpu_kernel_t* kernel, uint32_t ker_n);
+extern void gpgpu_states_setup(intel_gpgpu_t*, genx_gpgpu_kernel_t* kernel, uint32_t ker_n);
 
 /* Make HW threads use barrierID */
-extern void gpgpu_update_barrier(genx_gpgpu_state_t*, uint32_t barrierID, uint32_t thread_n);
+extern void gpgpu_update_barrier(intel_gpgpu_t*, uint32_t barrierID, uint32_t thread_n);
 
 /* Set a sampler (TODO: add other sampler fields) */
-extern void gpgpu_set_sampler(genx_gpgpu_state_t*, uint32_t index, uint32_t non_normalized);
+extern void gpgpu_set_sampler(intel_gpgpu_t*, uint32_t index, uint32_t non_normalized);
 
 /* Allocate the batch buffer and return the BO used for the batch buffer */
-extern void gpgpu_batch_reset(genx_gpgpu_state_t*, size_t sz);
+extern void gpgpu_batch_reset(intel_gpgpu_t*, size_t sz);
 
 /* Atomic begin, pipeline select, urb, pipeline state and constant buffer */
-extern void gpgpu_batch_start(genx_gpgpu_state_t*);
+extern void gpgpu_batch_start(intel_gpgpu_t*);
 
 /* atomic end with possibly inserted flush */
-extern void gpgpu_batch_end(genx_gpgpu_state_t*, int32_t flush_mode);
+extern void gpgpu_batch_end(intel_gpgpu_t*, int32_t flush_mode);
 
 /* Emit MI_FLUSH */
-extern void gpgpu_flush(genx_gpgpu_state_t*);
+extern void gpgpu_flush(intel_gpgpu_t*);
 
 /* Enqueue a MEDIA object with no inline data */
-extern void gpgpu_run(genx_gpgpu_state_t*, int32_t ki);
+extern void gpgpu_run(intel_gpgpu_t*, int32_t ki);
 
 /* Enqueue a MEDIA object with inline data to push afterward. Returns the
  * pointer where to push. sz is the size of the data we are going to pass
  */
-extern char* gpgpu_run_with_inline(genx_gpgpu_state_t*, int32_t ki, size_t sz);
+extern char* gpgpu_run_with_inline(intel_gpgpu_t*, int32_t ki, size_t sz);
 
 #endif /* __GENX_GPGPU_H__ */
 

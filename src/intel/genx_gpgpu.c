@@ -310,7 +310,7 @@ struct opaque_sampler_state {
 struct intel_driver;
 
 /* Handle GPGPU state (actually "media" state) */
-struct genx_gpgpu_state
+struct intel_gpgpu
 {
   intel_driver_t *drv;
   intel_batchbuffer_t *batch;
@@ -344,12 +344,12 @@ struct genx_gpgpu_state
 /* Be sure that the size is still valid */
 STATIC_ASSERT(sizeof(struct opaque_sampler_state) == sizeof(struct i965_sampler_state));
 
-LOCAL genx_gpgpu_state_t*
-genx_gpgpu_state_new(intel_driver_t *drv)
+LOCAL intel_gpgpu_t*
+intel_gpgpu_new(intel_driver_t *drv)
 {
-  genx_gpgpu_state_t *state = NULL;
+  intel_gpgpu_t *state = NULL;
 
-  TRY_ALLOC_NO_ERR (state, CALLOC(genx_gpgpu_state_t));
+  TRY_ALLOC_NO_ERR (state, CALLOC(intel_gpgpu_t));
   state->drv = drv;
   state->batch = intel_batchbuffer_new(state->drv);
   assert(state->batch);
@@ -358,13 +358,13 @@ genx_gpgpu_state_new(intel_driver_t *drv)
 exit:
   return state;
 error:
-  genx_gpgpu_state_delete(state);
+  intel_gpgpu_delete(state);
   state = NULL;
   goto exit;
 }
 
 LOCAL void
-genx_gpgpu_state_delete(genx_gpgpu_state_t *state)
+intel_gpgpu_delete(intel_gpgpu_t *state)
 {
   uint32_t i;
 
@@ -390,7 +390,7 @@ genx_gpgpu_state_delete(genx_gpgpu_state_t *state)
 }
 
 static void
-gpgpu_select_pipeline(genx_gpgpu_state_t *state)
+gpgpu_select_pipeline(intel_gpgpu_t *state)
 {
   BEGIN_BATCH(state->batch, 1);
   OUT_BATCH(state->batch, CMD_PIPELINE_SELECT | PIPELINE_SELECT_MEDIA);
@@ -398,7 +398,7 @@ gpgpu_select_pipeline(genx_gpgpu_state_t *state)
 }
 
 static void
-gpgpu_set_base_address(genx_gpgpu_state_t *state)
+gpgpu_set_base_address(intel_gpgpu_t *state)
 {
   const uint32_t def_cc = cc_llc_mlc; /* default Cache Control value */
   BEGIN_BATCH(state->batch, 10);
@@ -426,7 +426,7 @@ gpgpu_set_base_address(genx_gpgpu_state_t *state)
 }
 
 static void
-gpgpu_load_vfe_state(genx_gpgpu_state_t *state)
+gpgpu_load_vfe_state(intel_gpgpu_t *state)
 {
   BEGIN_BATCH(state->batch, 8);
   OUT_BATCH(state->batch, CMD_MEDIA_STATE_POINTERS | (8-2));
@@ -450,7 +450,7 @@ gpgpu_load_vfe_state(genx_gpgpu_state_t *state)
 }
 
 static void
-gpgpu_load_constant_buffer(genx_gpgpu_state_t *state) 
+gpgpu_load_constant_buffer(intel_gpgpu_t *state) 
 {
   BEGIN_BATCH(state->batch, 4);
   OUT_BATCH(state->batch, CMD(2,0,1) | (4 - 2));  /* length-2 */
@@ -463,7 +463,7 @@ gpgpu_load_constant_buffer(genx_gpgpu_state_t *state)
 }
 
 static void
-gpgpu_load_idrt(genx_gpgpu_state_t *state) 
+gpgpu_load_idrt(intel_gpgpu_t *state) 
 {
   BEGIN_BATCH(state->batch, 4);
   OUT_BATCH(state->batch, CMD(2,0,2) | (4 - 2)); /* length-2 */
@@ -474,7 +474,7 @@ gpgpu_load_idrt(genx_gpgpu_state_t *state)
 }
 
 LOCAL void
-gpgpu_batch_start(genx_gpgpu_state_t *state)
+gpgpu_batch_start(intel_gpgpu_t *state)
 {
   intel_batchbuffer_start_atomic(state->batch, 256);
   intel_batchbuffer_emit_mi_flush(state->batch);
@@ -500,7 +500,7 @@ gpgpu_batch_start(genx_gpgpu_state_t *state)
 }
 
 LOCAL void
-gpgpu_batch_end(genx_gpgpu_state_t *state, int32_t flush_mode)
+gpgpu_batch_end(intel_gpgpu_t *state, int32_t flush_mode)
 {
   /* Insert the performance counter command */
   if (state->perf_b.bo) {
@@ -525,19 +525,19 @@ gpgpu_batch_end(genx_gpgpu_state_t *state, int32_t flush_mode)
 }
 
 LOCAL void
-gpgpu_batch_reset(genx_gpgpu_state_t *state, size_t sz)
+gpgpu_batch_reset(intel_gpgpu_t *state, size_t sz)
 {
   intel_batchbuffer_reset(state->batch, sz);
 }
 
 LOCAL void
-gpgpu_flush(genx_gpgpu_state_t *state)
+gpgpu_flush(intel_gpgpu_t *state)
 {
   intel_batchbuffer_flush(state->batch);
 }
 
 LOCAL void
-gpgpu_state_init(genx_gpgpu_state_t *state,
+gpgpu_state_init(intel_gpgpu_t *state,
                  uint32_t max_threads,
                  uint32_t size_vfe_entry,
                  uint32_t num_vfe_entries,
@@ -613,7 +613,7 @@ gpgpu_state_init(genx_gpgpu_state_t *state,
 }
 
 LOCAL void
-gpgpu_bind_surf_2d(genx_gpgpu_state_t *state,
+gpgpu_bind_surf_2d(intel_gpgpu_t *state,
                    int32_t index,
                    dri_bo* obj_bo,
                    uint32_t offset,
@@ -672,7 +672,7 @@ gpgpu_bind_surf_2d(genx_gpgpu_state_t *state,
 }
 
 LOCAL void
-gpgpu_bind_shared_surf_2d(genx_gpgpu_state_t *state,
+gpgpu_bind_shared_surf_2d(intel_gpgpu_t *state,
                           int32_t index,
                           dri_bo* obj_bo,
                           uint32_t offset,
@@ -761,7 +761,7 @@ gpgpu_bind_shared_surf_2d(genx_gpgpu_state_t *state,
 }
 
 LOCAL void
-gpgpu_bind_buf(genx_gpgpu_state_t *state,
+gpgpu_bind_buf(intel_gpgpu_t *state,
                int32_t index,
                dri_bo* obj_bo,
                uint32_t offset,
@@ -829,7 +829,7 @@ gpgpu_bind_buf(genx_gpgpu_state_t *state,
 }
 
 LOCAL void
-gpgpu_set_sampler(genx_gpgpu_state_t *state, uint32_t index, uint32_t non_normalized)
+gpgpu_set_sampler(intel_gpgpu_t *state, uint32_t index, uint32_t non_normalized)
 {
   struct i965_sampler_state *sampler = NULL;
   assert(index < (int) MAX_SAMPLERS);
@@ -851,7 +851,7 @@ gpgpu_set_sampler(genx_gpgpu_state_t *state, uint32_t index, uint32_t non_normal
 }
 
 static void
-gpgpu_build_sampler_table(genx_gpgpu_state_t *state)
+gpgpu_build_sampler_table(intel_gpgpu_t *state)
 {
   dri_bo_subdata(state->sampler_state_b.bo,
                  0,
@@ -860,7 +860,7 @@ gpgpu_build_sampler_table(genx_gpgpu_state_t *state)
 }
 
 static void
-gpgpu_build_binding_table(genx_gpgpu_state_t *state)
+gpgpu_build_binding_table(intel_gpgpu_t *state)
 {
   uint32_t *binding_table;
   dri_bo *bo = state->binding_table_b.bo;
@@ -886,7 +886,7 @@ gpgpu_build_binding_table(genx_gpgpu_state_t *state)
 }
 
 static void
-gpgpu_build_idrt(genx_gpgpu_state_t *state,
+gpgpu_build_idrt(intel_gpgpu_t *state,
                  genx_gpgpu_kernel_t *kernel,
                  uint32_t ker_n)
 {
@@ -938,7 +938,7 @@ gpgpu_build_idrt(genx_gpgpu_state_t *state,
 }
 
 LOCAL void
-gpgpu_upload_constants(genx_gpgpu_state_t *state, void* data, uint32_t size)
+gpgpu_upload_constants(intel_gpgpu_t *state, void* data, uint32_t size)
 {
   unsigned char *constant_buffer = NULL;
 
@@ -950,7 +950,7 @@ gpgpu_upload_constants(genx_gpgpu_state_t *state, void* data, uint32_t size)
 }
 
 LOCAL void
-gpgpu_states_setup(genx_gpgpu_state_t *state, genx_gpgpu_kernel_t *kernel, uint32_t ker_n)
+gpgpu_states_setup(intel_gpgpu_t *state, genx_gpgpu_kernel_t *kernel, uint32_t ker_n)
 {
   gpgpu_build_sampler_table(state);
   gpgpu_build_binding_table(state);
@@ -958,7 +958,7 @@ gpgpu_states_setup(genx_gpgpu_state_t *state, genx_gpgpu_kernel_t *kernel, uint3
 }
 
 LOCAL void 
-gpgpu_update_barrier(genx_gpgpu_state_t *state, uint32_t barrierID, uint32_t thread_n)
+gpgpu_update_barrier(intel_gpgpu_t *state, uint32_t barrierID, uint32_t thread_n)
 {
   BEGIN_BATCH(state->batch, 4);
   OUT_BATCH(state->batch, CMD_MEDIA_STATE_FLUSH | 0);
@@ -969,7 +969,7 @@ gpgpu_update_barrier(genx_gpgpu_state_t *state, uint32_t barrierID, uint32_t thr
 }
 
 LOCAL void
-gpgpu_set_perf_counters(genx_gpgpu_state_t *state, dri_bo *perf)
+gpgpu_set_perf_counters(intel_gpgpu_t *state, dri_bo *perf)
 {
   if (state->perf_b.bo)
     drm_intel_bo_unreference(state->perf_b.bo);
@@ -978,7 +978,7 @@ gpgpu_set_perf_counters(genx_gpgpu_state_t *state, dri_bo *perf)
 }
 
 LOCAL void
-gpgpu_run(genx_gpgpu_state_t *state, int32_t ki)
+gpgpu_run(intel_gpgpu_t *state, int32_t ki)
 {
   BEGIN_BATCH(state->batch, 6);
   OUT_BATCH(state->batch, GEN_CMD_MEDIA_OBJECT | 5);
@@ -992,7 +992,7 @@ gpgpu_run(genx_gpgpu_state_t *state, int32_t ki)
 }
 
 LOCAL char*
-gpgpu_run_with_inline(genx_gpgpu_state_t *state, int32_t ki, size_t sz)
+gpgpu_run_with_inline(intel_gpgpu_t *state, int32_t ki, size_t sz)
 {
   const uint32_t len = (uint32_t) (sz >> 2);
 

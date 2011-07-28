@@ -44,7 +44,7 @@ cl_command_queue_new(cl_context ctx)
   queue->ref_n = 1;
   queue->ctx = ctx;
   TRY_ALLOC_NO_ERR (queue->gpgpu,
-                    genx_gpgpu_state_new((struct intel_driver*) ctx->intel_drv));
+                    intel_gpgpu_new((struct intel_driver*) ctx->intel_drv));
 
   /* Append the command queue in the list */
   pthread_mutex_lock(&ctx->queue_lock);
@@ -84,7 +84,7 @@ cl_command_queue_delete(cl_command_queue queue)
   pthread_mutex_unlock(&queue->ctx->queue_lock);
   cl_mem_delete(queue->perf);
   cl_context_delete(queue->ctx);
-  genx_gpgpu_state_delete(queue->gpgpu);
+  intel_gpgpu_delete(queue->gpgpu);
   queue->magic = CL_MAGIC_DEAD_HEADER; /* For safety */
   cl_free(queue);
 }
@@ -119,7 +119,7 @@ cl_command_queue_bind_surface(cl_command_queue queue,
                               drm_intel_bo **scratch)
 {
   cl_context ctx = queue->ctx;
-  genx_gpgpu_state_t *gpgpu = queue->gpgpu;
+  intel_gpgpu_t *gpgpu = queue->gpgpu;
   drm_intel_bufmgr *bufmgr = cl_context_get_intel_bufmgr(ctx);
   cl_mem mem = NULL;
   drm_intel_bo *bo = NULL, *sync_bo = NULL;
@@ -222,7 +222,7 @@ cl_command_queue_enqueue_wrk_grp3(cl_command_queue queue,
                                   uint32_t thread_n,
                                   uint32_t barrierID)
 {
-  genx_gpgpu_state_t *gpgpu = queue->gpgpu;
+  intel_gpgpu_t *gpgpu = queue->gpgpu;
   uint32_t i;
   for (i = 0; i < thread_n; ++i) {
     const size_t sz = sizeof(cl_inline_header_t) + 3*sizeof(cl_local_id_t);
@@ -246,7 +246,7 @@ cl_command_queue_enqueue_wrk_grp2(cl_command_queue queue,
                                   uint32_t thread_n,
                                   uint32_t barrierID)
 {
-  genx_gpgpu_state_t *gpgpu = queue->gpgpu;
+  intel_gpgpu_t *gpgpu = queue->gpgpu;
   uint32_t i;
   for (i = 0; i < thread_n; ++i) {
     const size_t sz = sizeof(cl_inline_header_t) + 2*sizeof(cl_local_id_t);
@@ -268,7 +268,7 @@ cl_command_queue_enqueue_wrk_grp1(cl_command_queue queue,
                                   uint32_t thread_n,
                                   uint32_t barrierID)
 {
-  genx_gpgpu_state_t *gpgpu = queue->gpgpu;
+  intel_gpgpu_t *gpgpu = queue->gpgpu;
   uint32_t i;
   for (i = 0; i < thread_n; ++i) {
     const size_t sz = sizeof(cl_inline_header_t) + sizeof(cl_local_id_t);
@@ -432,7 +432,7 @@ cl_command_queue_ND_kernel(cl_command_queue queue,
                            const size_t *local_wk_sz)
 {
   cl_context ctx = queue->ctx;
-  genx_gpgpu_state_t *gpgpu = queue->gpgpu;
+  intel_gpgpu_t *gpgpu = queue->gpgpu;
   drm_intel_bo *slm_bo = NULL, *private_bo = NULL, *scratch_bo = NULL;
   size_t cst_sz = ker->patch.curbe.sz;
   size_t wrk_grp_sz, wrk_grp_n, batch_sz;

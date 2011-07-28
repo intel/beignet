@@ -24,7 +24,7 @@
 #include "CL/cl.h"
 #include <stdint.h>
 
-struct genx_gpgpu_state;
+struct intel_gpgpu;
 
 /* Basically, this is a (kind-of) batch buffer */
 struct _cl_command_queue {
@@ -32,7 +32,7 @@ struct _cl_command_queue {
   volatile int ref_n;              /* We reference count this object */
   cl_context ctx;                  /* Its parent context */
   cl_command_queue prev, next;     /* We chain the command queues together */
-  struct genx_gpgpu_state *gpgpu;  /* Setup all GEN commands */
+  struct intel_gpgpu *gpgpu;  /* Setup all GEN commands */
   cl_mem perf;                     /* Where to put the perf counters */
   cl_mem fulsim_out;               /* Fulsim will output this buffer */
   struct _drm_intel_bo *last_batch;/* To synchronize using clFinish */
