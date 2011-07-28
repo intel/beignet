@@ -29,24 +29,40 @@
 #include <stdio.h>
 #include <string.h>
 
-static struct _cl_device_id intel_gt2_device = {
+static struct _cl_device_id intel_snb_gt2_device = {
   .max_compute_unit = 60,
   .max_work_item_sizes = {512, 512, 512},
   .max_work_group_size = 512,
   .max_clock_frequency = 1350,
 
-  /* Common fields between GT1 and GT2 */
   #include "cl_gen6_device.h"
 };
 
-static struct _cl_device_id intel_gt1_device = {
+static struct _cl_device_id intel_snb_gt1_device = {
   .max_compute_unit = 24,
   .max_work_item_sizes = {256, 256, 256},
   .max_work_group_size = 256,
   .max_clock_frequency = 1000,
 
-  /* Common fields between GT1 and GT2 */
   #include "cl_gen6_device.h"
+};
+
+static struct _cl_device_id intel_ivb_gt2_device = {
+  .max_compute_unit = 128,
+  .max_work_item_sizes = {512, 512, 512},
+  .max_work_group_size = 512,
+  .max_clock_frequency = 1000,
+
+  #include "cl_gen7_device.h"
+};
+
+static struct _cl_device_id intel_ivb_gt1_device = {
+  .max_compute_unit = 64,
+  .max_work_item_sizes = {512, 512, 512},
+  .max_work_group_size = 512,
+  .max_clock_frequency = 1000,
+
+  #include "cl_gen7_device.h"
 };
 
 LOCAL cl_device_id
@@ -55,20 +71,33 @@ cl_get_gt_device(void)
   cl_device_id ret = NULL;
   int device_id = cl_intel_get_device_id();
 
-  if (device_id == PCI_CHIP_SANDYBRIDGE_GT1   ||
+  if (device_id == PCI_CHIP_IVYBRIDGE_GT1   ||
+      device_id == PCI_CHIP_IVYBRIDGE_M_GT1 ||
+      device_id == PCI_CHIP_IVYBRIDGE_S_GT1) {
+    intel_ivb_gt1_device.vendor_id = device_id;
+    intel_ivb_gt1_device.platform = intel_platform;
+    ret = &intel_ivb_gt1_device;
+  }
+  else if (device_id == PCI_CHIP_IVYBRIDGE_GT2   ||
+      device_id == PCI_CHIP_IVYBRIDGE_M_GT2) {
+    intel_ivb_gt2_device.vendor_id = device_id;
+    intel_ivb_gt2_device.platform = intel_platform;
+    ret = &intel_ivb_gt2_device;
+  }
+  else if (device_id == PCI_CHIP_SANDYBRIDGE_GT1   ||
       device_id == PCI_CHIP_SANDYBRIDGE_M_GT1 ||
       device_id == PCI_CHIP_SANDYBRIDGE_S_GT) {
-    intel_gt1_device.vendor_id = device_id;
-    intel_gt1_device.platform = intel_platform;
-    ret = &intel_gt1_device;
+    intel_snb_gt1_device.vendor_id = device_id;
+    intel_snb_gt1_device.platform = intel_platform;
+    ret = &intel_snb_gt1_device;
   }
   else if (device_id == PCI_CHIP_SANDYBRIDGE_GT2      ||
            device_id == PCI_CHIP_SANDYBRIDGE_M_GT2    ||
            device_id == PCI_CHIP_SANDYBRIDGE_GT2_PLUS ||
            device_id == PCI_CHIP_SANDYBRIDGE_M_GT2_PLUS) {
-    intel_gt2_device.vendor_id = device_id;
-    intel_gt2_device.platform = intel_platform;
-    ret = &intel_gt2_device;
+    intel_snb_gt2_device.vendor_id = device_id;
+    intel_snb_gt2_device.platform = intel_platform;
+    ret = &intel_snb_gt2_device;
   }
   return ret;
 }
@@ -130,7 +159,10 @@ cl_get_device_info(cl_device_id     device,
                    void *           param_value,
                    size_t *         param_value_size_ret)
 {
-  if (UNLIKELY(device != &intel_gt1_device && device != &intel_gt2_device))
+  if (UNLIKELY(device != &intel_snb_gt1_device &&
+               device != &intel_snb_gt2_device &&
+               device != &intel_ivb_gt1_device &&
+               device != &intel_ivb_gt2_device))
     return CL_INVALID_DEVICE;
   if (UNLIKELY(param_value == NULL))
     return CL_INVALID_VALUE;

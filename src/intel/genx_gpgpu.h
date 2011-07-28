@@ -101,7 +101,7 @@ extern void gpgpu_bind_buf(genx_gpgpu_state_t*,
 
 /* Configure state, size in 512-bit units */
 extern void gpgpu_state_init(genx_gpgpu_state_t*,
-                             uint32_t max_thr,
+                             uint32_t max_threads,
                              uint32_t size_vfe_entry,
                              uint32_t num_vfe_entries,
                              uint32_t size_cs_entry,

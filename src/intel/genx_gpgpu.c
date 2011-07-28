@@ -107,7 +107,76 @@ typedef struct gen6_surface_state
     uint32_t vertical_alignment:1;
     uint32_t x_offset:7;
   } ss5;
+
+  uint32_t ss6; /* unused */
+  uint32_t ss7; /* unused */
 } gen6_surface_state_t;
+
+typedef struct gen7_surface_state
+{
+  struct {
+    uint32_t cube_pos_z:1;
+    uint32_t cube_neg_z:1;
+    uint32_t cube_pos_y:1;
+    uint32_t cube_neg_y:1;
+    uint32_t cube_pos_x:1;
+    uint32_t cube_neg_x:1;
+    uint32_t media_boundary_pixel_mode:2;
+    uint32_t render_cache_rw_mode:1;
+    uint32_t pad1:1;
+    uint32_t surface_array_spacing:1;
+    uint32_t vertical_line_stride_offset:1;
+    uint32_t vertical_line_stride:1;
+    uint32_t tile_walk:1;
+    uint32_t tiled_surface:1;
+    uint32_t horizontal_alignment:1;
+    uint32_t vertical_alignment:2;
+    uint32_t surface_format:9;
+    uint32_t pad0:1;
+    uint32_t surface_array:1;
+    uint32_t surface_type:3;
+  } ss0;
+
+  struct {
+    uint32_t base_addr;
+  } ss1;
+
+  struct {
+    uint32_t width:14;
+    uint32_t pad1:2;
+    uint32_t height:14;
+    uint32_t pad0:2;
+  } ss2;
+
+  struct {
+    uint32_t pitch:18;
+    uint32_t pad0:3;
+    uint32_t depth:11;
+  } ss3;
+
+  uint32_t ss4;
+
+  struct {
+    uint32_t mip_count:4;
+    uint32_t surface_min_load:4;
+    uint32_t pad2:6;
+    uint32_t coherence_type:1;
+    uint32_t stateless_force_write_thru:1;
+    uint32_t surface_object_control_state:4;
+    uint32_t y_offset:4;
+    uint32_t pad0:1;
+    uint32_t x_offset:7;
+  } ss5;
+
+  uint32_t ss6; /* unused */
+  uint32_t ss7; /* unused */
+
+} gen7_surface_state_t;
+
+#define GEN7_CACHED_IN_LLC 3
+
+STATIC_ASSERT(sizeof(gen6_surface_state_t) == sizeof(gen7_surface_state_t));
+static const size_t surface_state_sz = sizeof(gen6_surface_state_t);
 
 typedef struct gen6_vfe_state_inline
 {
@@ -343,13 +412,16 @@ gpgpu_set_base_address(genx_gpgpu_state_t *state)
   OUT_BATCH(state->batch, 0 | (def_cc << 8) | BASE_ADDRESS_MODIFY); /* Instruction Base Addr  */
   /* If we output an AUB file, we limit the total size to 64MB */
 #if USE_FULSIM
-  OUT_BATCH(state->batch, 0x04000000 | BASE_ADDRESS_MODIFY); /* General State Access Upper Bound - Ignore Check */
+  OUT_BATCH(state->batch, 0x04000000 | BASE_ADDRESS_MODIFY); /* General State Access Upper Bound */
+  OUT_BATCH(state->batch, 0x04000000 | BASE_ADDRESS_MODIFY); /* Dynamic State Access Upper Bound */
+  OUT_BATCH(state->batch, 0x04000000 | BASE_ADDRESS_MODIFY); /* Indirect Obj Access Upper Bound */
+  OUT_BATCH(state->batch, 0x04000000 | BASE_ADDRESS_MODIFY); /* Instruction Access Upper Bound */
 #else
   OUT_BATCH(state->batch, 0 | BASE_ADDRESS_MODIFY);
+  OUT_BATCH(state->batch, 0 | BASE_ADDRESS_MODIFY);
+  OUT_BATCH(state->batch, 0 | BASE_ADDRESS_MODIFY);
+  OUT_BATCH(state->batch, 0 | BASE_ADDRESS_MODIFY);
 #endif
-  OUT_BATCH(state->batch, 0 | BASE_ADDRESS_MODIFY); /* Dynamic State Access Upper Bound - Ignore Check */
-  OUT_BATCH(state->batch, 0 | BASE_ADDRESS_MODIFY); /* Indirect Obj Access Upper Bound - Ignore Check */
-  OUT_BATCH(state->batch, 0 | BASE_ADDRESS_MODIFY); /* Instruction Access Upper Bound - Ignore Check */
   ADVANCE_BATCH(state->batch);
 }
 
@@ -383,11 +455,10 @@ gpgpu_load_constant_buffer(genx_gpgpu_state_t *state)
   BEGIN_BATCH(state->batch, 4);
   OUT_BATCH(state->batch, CMD(2,0,1) | (4 - 2));  /* length-2 */
   OUT_BATCH(state->batch, 0);                     /* mbz */
-  OUT_BATCH(state->batch, state->urb.size_cs_entry*
-                          state->urb.num_cs_entries*32);
-  OUT_RELOC(state->batch, state->curbe_b.bo,
-            I915_GEM_DOMAIN_INSTRUCTION, 0,
-            0);
+  OUT_BATCH(state->batch,
+            state->urb.size_cs_entry*
+            state->urb.num_cs_entries*32);
+  OUT_RELOC(state->batch, state->curbe_b.bo, I915_GEM_DOMAIN_INSTRUCTION, 0, 0);
   ADVANCE_BATCH(state->batch);
 }
 
@@ -398,9 +469,7 @@ gpgpu_load_idrt(genx_gpgpu_state_t *state)
   OUT_BATCH(state->batch, CMD(2,0,2) | (4 - 2)); /* length-2 */
   OUT_BATCH(state->batch, 0);                    /* mbz */
   OUT_BATCH(state->batch, state->idrt_b.num*32);
-  OUT_RELOC(state->batch, state->idrt_b.bo,
-            I915_GEM_DOMAIN_INSTRUCTION, 0,
-            0);
+  OUT_RELOC(state->batch, state->idrt_b.bo, I915_GEM_DOMAIN_INSTRUCTION, 0, 0);
   ADVANCE_BATCH(state->batch);
 }
 
@@ -469,7 +538,7 @@ gpgpu_flush(genx_gpgpu_state_t *state)
 
 LOCAL void
 gpgpu_state_init(genx_gpgpu_state_t *state,
-                 uint32_t max_thr, 
+                 uint32_t max_threads,
                  uint32_t size_vfe_entry,
                  uint32_t num_vfe_entries,
                  uint32_t size_cs_entry,
@@ -478,8 +547,6 @@ gpgpu_state_init(genx_gpgpu_state_t *state,
   dri_bo *bo;
   int32_t i;
 
-  assert(max_thr > 0 && max_thr < MAX_THREADS);
-
   /* URB */
   state->urb.vfe_start = 0;
   state->urb.num_vfe_entries = num_vfe_entries;
@@ -487,6 +554,7 @@ gpgpu_state_init(genx_gpgpu_state_t *state,
   state->urb.num_cs_entries = num_cs_entries;
   state->urb.size_cs_entry = size_cs_entry;
   state->urb.cs_start = state->urb.vfe_start + state->urb.num_vfe_entries * state->urb.size_vfe_entry;
+  state->max_threads = max_threads;
 
   /* constant buffer */
   if(state->curbe_b.bo)
@@ -494,7 +562,7 @@ gpgpu_state_init(genx_gpgpu_state_t *state,
   uint32_t size_cb = state->urb.num_cs_entries * state->urb.size_cs_entry * (512/8);
   size_cb = (size_cb + (4096 - 1)) & (~(4096-1)); /* roundup to 4K */
   bo = dri_bo_alloc(state->drv->bufmgr,
-                    "constant buffer",
+                    "CONSTANT_BUFFER",
                     size_cb,
                     64);
   assert(bo);
@@ -511,13 +579,13 @@ gpgpu_state_init(genx_gpgpu_state_t *state,
   if(state->binding_table_b.bo)
     dri_bo_unreference(state->binding_table_b.bo);
   bo = dri_bo_alloc(state->drv->bufmgr, 
-                    "binding table",
+                    "SS_SURF_BIND",
                     MAX_SURFACES * sizeof(uint32_t),
                     32);
   assert(bo);
   state->binding_table_b.bo = bo;
 
-  /* interface descriptor remapping table */
+  /* IDRT */
   if(state->idrt_b.bo)
     dri_bo_unreference(state->idrt_b.bo);
   bo = dri_bo_alloc(state->drv->bufmgr, 
@@ -565,14 +633,11 @@ gpgpu_bind_surf_2d(genx_gpgpu_state_t *state,
     state->surface_state_b[index].bo = NULL;
   }
 
-  bo = dri_bo_alloc(state->drv->bufmgr,
-                    "surface state", 
-                    sizeof(gen6_surface_state_t),
-                    32);
+  bo = dri_bo_alloc(state->drv->bufmgr, "surface state", surface_state_sz, 32);
   assert(bo);
   dri_bo_map(bo, 1);
   assert(bo->virtual);
-  ss = (gen6_surface_state_t *)bo->virtual;
+  ss = (gen6_surface_state_t*) bo->virtual;
   memset(ss, 0, sizeof(*ss));
   ss->ss0.surface_type = I965_SURFACE_2D;
   ss->ss0.surface_format = format;
@@ -584,9 +649,8 @@ gpgpu_bind_surf_2d(genx_gpgpu_state_t *state,
   ss->ss3.pitch = (w*4) - 1; /* TEMP patch */
 
   /* TODO: parse GFDT bit as well */
-  if(state->drv->gen_ver == 6) {
+  if(state->drv->gen_ver == 6)
     ss->ss5.cache_control = cchint;
-  }
 
   if (is_dst) {
     write_domain = I915_GEM_DOMAIN_RENDER;
@@ -704,9 +768,6 @@ gpgpu_bind_buf(genx_gpgpu_state_t *state,
                uint32_t size,
                uint32_t cchint)
 {
-  uint32_t size_ss = ((size + 0xf) >> 4)-1; /* ceil(size/16) - 1 */
-
-  gen6_surface_state_t *ss;
   dri_bo *bo;
   uint32_t write_domain, read_domain;
 
@@ -718,40 +779,51 @@ gpgpu_bind_buf(genx_gpgpu_state_t *state,
     state->surface_state_b[index].bo = NULL;
   }
 
-  bo = dri_bo_alloc(state->drv->bufmgr, 
-      "surface state", 
-      sizeof(gen6_surface_state_t), 32);
+  bo = dri_bo_alloc(state->drv->bufmgr, "SS_SURFACE", surface_state_sz, 32);
   assert(bo);
   dri_bo_map(bo, 1);
   assert(bo->virtual);
-  ss = (gen6_surface_state_t *)bo->virtual;
-  memset(ss, 0, sizeof(*ss));
-
-  ss->ss0.surface_type = I965_SURFACE_BUFFER;
-  ss->ss0.surface_format = I965_SURFACEFORMAT_R32G32B32A32_FLOAT;
-  ss->ss0.vert_line_stride = 0;
-  ss->ss0.vert_line_stride_ofs = 0;
-  ss->ss1.base_addr = obj_bo->offset + offset;
-  ss->ss2.width = (size_ss & 0x7f); /* bits 6:0 of size_ss */
-  ss->ss2.height = (size_ss >> 7) & 0x1fff; /* bits 19:7 of size_ss */
-  ss->ss3.pitch = 16-1;
-  ss->ss3.depth = (size_ss >> 20); /* bits 26:20 of size_ss */
-
-  /* TODO: parse GFDT bit as well */
-  if(state->drv->gen_ver==6)
-    ss->ss5.cache_control = cchint;
-
   write_domain = I915_GEM_DOMAIN_RENDER;
   read_domain = I915_GEM_DOMAIN_RENDER;
 
-  dri_bo_emit_reloc(bo,
-                    read_domain,
-                    write_domain,
-                    offset,
-                    offsetof(gen6_surface_state_t, ss1),
-                    obj_bo);
-  dri_bo_unmap(bo);
+  if(state->drv->gen_ver == 6) {
+    gen6_surface_state_t *ss = (gen6_surface_state_t *) bo->virtual;
+    const uint32_t size_ss = ((size+0xf) >> 4) - 1; /* ceil(size/16) - 1 */
+    memset(ss, 0, sizeof(*ss));
+    ss->ss0.surface_type = I965_SURFACE_BUFFER;
+    ss->ss0.surface_format = I965_SURFACEFORMAT_R32G32B32A32_FLOAT;
+    ss->ss1.base_addr = obj_bo->offset + offset;
+    ss->ss2.width = size_ss & 0x7f; /* bits 6:0 of size_ss */
+    ss->ss2.height = (size_ss >> 7) & 0x1fff; /* bits 19:7 of size_ss */
+    ss->ss3.pitch = 0xf;
+    ss->ss3.depth = size_ss >> 20; /* bits 26:20 of size_ss */
+    ss->ss5.cache_control = cchint;
+    dri_bo_emit_reloc(bo,
+                      read_domain,
+                      write_domain,
+                      offset,
+                      offsetof(gen6_surface_state_t, ss1),
+                      obj_bo);
+  } else if (state->drv->gen_ver == 7) {
+    gen7_surface_state_t *ss = (gen7_surface_state_t *) bo->virtual;
+    const uint32_t size_ss = size - 1;
+    memset(ss, 0, sizeof(*ss));
+    ss->ss0.surface_type = I965_SURFACE_BUFFER;
+    ss->ss0.surface_format = I965_SURFACEFORMAT_RAW;
+    ss->ss1.base_addr = obj_bo->offset + offset;
+    ss->ss2.width  = size_ss & 0x7f; /* bits 6:0 of size_ss */
+    ss->ss2.height = (size_ss & 0x1fff80) >> 7; /* bits 20:7 of size_ss */
+    ss->ss3.depth  = (size_ss & 0xffe00000) >> 20; /* bits 27:21 of size_ss */
+    ss->ss5.surface_object_control_state = GEN7_CACHED_IN_LLC;
+    dri_bo_emit_reloc(bo,
+                      read_domain,
+                      write_domain,
+                      offset,
+                      offsetof(gen7_surface_state_t, ss1),
+                      obj_bo);
+  }
 
+  dri_bo_unmap(bo);
   assert(index < (int) MAX_SURFACES);
   state->surface_state_b[index].bo = bo;
 }

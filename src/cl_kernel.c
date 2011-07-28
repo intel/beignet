@@ -347,6 +347,10 @@ cl_kernel_setup_patch_list(cl_kernel k, const char *patch, size_t sz)
       ASSOC_ITEM (EXECUTION_ENVIRONMENT, exec_env, exec_env);
       ASSOC_ITEM (THREAD_PAYLOAD, thread_payload, thread_payload);
 
+      case PATCH_TOKEN_DATA_PARAMETER_STREAM:
+        info->curbe.sz = *(uint32_t *) patch;
+        info->curbe.offset = 0;
+      break;
       case PATCH_TOKEN_CONSTANT_MEMORY_KERNEL_ARGUMENT:
       case PATCH_TOKEN_GLOBAL_MEMORY_KERNEL_ARGUMENT:
       {
@@ -382,6 +386,7 @@ cl_kernel_setup_patch_list(cl_kernel k, const char *patch, size_t sz)
           case DATA_PARAMETER_SUM_OF_LOCAL_MEMORY_ARGUMENT_SIZES:
           case DATA_PARAMETER_LOCAL_WORK_SIZE:
           case DATA_PARAMETER_GLOBAL_WORK_SIZE:
+          case DATA_PARAMETER_GLOBAL_WORK_OFFSET:
           case DATA_PARAMETER_NUM_WORK_GROUPS:
           case DATA_PARAMETER_WORK_DIMENSIONS:
           case DATA_PARAMETER_IMAGE_WIDTH:
@@ -389,6 +394,7 @@ cl_kernel_setup_patch_list(cl_kernel k, const char *patch, size_t sz)
           case DATA_PARAMETER_IMAGE_DEPTH:
           case DATA_PARAMETER_IMAGE_CHANNEL_DATA_TYPE:
           case DATA_PARAMETER_IMAGE_CHANNEL_ORDER:
+          case DATA_PARAMETER_NUM_HARDWARE_THREADS:
           {
             curbe_key = cl_curbe_key(data->type, data->index, data->src_offset);
             curbe_info = cl_kernel_get_curbe_info_list(k, curbe_key);

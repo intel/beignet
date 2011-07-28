@@ -19,12 +19,12 @@
 
 /* Common fields for both SNB devices (either GT1 or GT2)
  */
-.max_parameter_size = 256,
+.max_parameter_size = 256, 
 .global_mem_cache_line_size = 128, /* XXX */
 .global_mem_cache_size = 8 << 10, /* XXX */
 .local_mem_type = CL_GLOBAL,
-.local_mem_size = 16 << 10,
-.gfx_id = IGFX_GEN6_CORE,
+.local_mem_size = 64 << 10,
+.gfx_id = IGFX_GEN7_CORE,
 
 #include "cl_gt_device.h"
 

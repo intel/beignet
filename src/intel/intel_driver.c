@@ -114,12 +114,24 @@ intel_driver_init(intel_driver_t *driver, int dev_fd)
   assert(res);
   intel_driver_memman_init(driver);
 
-  if (IS_GEN6(driver->device_id))
+#if EMULATE_GEN
+  driver->gen_ver = EMULATE_GEN;
+  if (EMULATE_GEN == 7)
+    driver->device_id = PCI_CHIP_IVYBRIDGE_GT2; /* we pick GT2 for IVB */
+  else if (EMULATE_GEN == 6)
+    driver->device_id = PCI_CHIP_SANDYBRIDGE_GT2; /* we pick GT2 for SNB */
+  else
+    FATAL ("Unsupported Gen for emulation");
+#else
+  if (IS_GEN&(driver->device_id))
+    driver->gen_ver = 7;
+  else if (IS_GEN6(driver->device_id))
     driver->gen_ver = 6;
   else if(IS_IGDNG(driver->device_id))
     driver->gen_ver = 5;
   else
     driver->gen_ver = 4;
+#endif /* EMULATE_GEN */
 }
 
 LOCAL int
