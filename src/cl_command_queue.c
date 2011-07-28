@@ -27,7 +27,7 @@
 #include "cl_alloc.h"
 
 #include "intel_bufmgr.h"
-#include "intel/genx_gpgpu.h"
+#include "intel/intel_gpgpu.h"
 
 #include <assert.h>
 #include <stdio.h>

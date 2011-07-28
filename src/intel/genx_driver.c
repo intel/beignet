@@ -17,7 +17,7 @@
  * Author: Benjamin Segovia <benjamin.segovia@intel.com>
  */
 
-#include "intel/genx_gpgpu.h"
+#include "intel/intel_gpgpu.h"
 #include "intel/genx_driver.h"
 #include "x11/dricommon.h"
 

@@ -28,12 +28,11 @@
 #include <fcntl.h>
 #include <stddef.h>
 
-#include "intel/genx_gpgpu.h"
-#include "intel/genx_defines.h"
-#include "intel/genx_structs.h"
+#include "intel/intel_gpgpu.h"
+#include "intel/intel_defines.h"
+#include "intel/intel_structs.h"
 #include "intel/intel_batchbuffer.h"
 #include "intel/intel_driver.h"
-#include "intel/genx_defines.h"
 
 #include "cl_alloc.h"
 #include "cl_utils.h"

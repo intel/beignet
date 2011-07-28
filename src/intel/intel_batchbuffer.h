@@ -20,7 +20,7 @@
 #ifndef _INTEL_BATCHBUFFER_H_
 #define _INTEL_BATCHBUFFER_H_
 
-#include "genx_defines.h"
+#include "intel_defines.h"
 #include "cl_utils.h"
 
 #include <xf86drm.h>
