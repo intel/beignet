@@ -213,7 +213,6 @@ typedef struct gen6_vfe_state_inline
     uint32_t pad22:22;
     uint32_t scoreboard_type:1;   /* 0 stalling, 1 - non-stalling */
     uint32_t scoreboard_enable:1; /* 0 disabled, 1 enabled */
-
   } vfe4;
 
   struct {
@@ -302,8 +301,6 @@ struct opaque_sampler_state {
 };
 
 #define MAX_IF_DESC    32
-#define MAX_THREADS    72
-#define MAX_SCRATCH_KB 12
 
 /* Device abstraction */
 struct intel_driver;
@@ -504,8 +501,9 @@ gpgpu_batch_end(intel_gpgpu_t *state, int32_t flush_mode)
   /* Insert the performance counter command */
   if (state->perf_b.bo) {
     BEGIN_BATCH(state->batch, 3);
-    OUT_BATCH(state->batch, (0x28 << 23) | /* MI_REPORT_PERF_COUNT */
-                     (3 - 2));      /* length-2 */
+    OUT_BATCH(state->batch,
+              (0x28 << 23) | /* MI_REPORT_PERF_COUNT */
+              (3 - 2));      /* length-2 */
     OUT_RELOC(state->batch, state->perf_b.bo,
               I915_GEM_DOMAIN_RENDER,
               I915_GEM_DOMAIN_RENDER,

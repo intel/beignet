@@ -69,7 +69,7 @@ LOCAL cl_device_id
 cl_get_gt_device(void)
 {
   cl_device_id ret = NULL;
-  int device_id = cl_intel_get_device_id();
+  const int device_id = cl_intel_get_device_id();
 
   if (device_id == PCI_CHIP_IVYBRIDGE_GT1   ||
       device_id == PCI_CHIP_IVYBRIDGE_M_GT1 ||

@@ -49,6 +49,7 @@
 #define BR13_8888                               (0x3 << 24)
 
 struct dri_state;
+typedef struct _XDisplay Display;
 
 typedef struct intel_driver
 {
@@ -60,6 +61,8 @@ typedef struct intel_driver
   pthread_mutex_t ctxmutex;
   int locked;
   int master;
+  Display *x11_display;
+  struct dri_state *dri_ctx;
 } intel_driver_t;
 
 /* create / destroy device */

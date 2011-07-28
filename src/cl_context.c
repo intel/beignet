@@ -123,7 +123,7 @@ cl_context_new(void)
   cl_context ctx = NULL;
 
   TRY_ALLOC_NO_ERR (ctx, CALLOC(struct _cl_context));
-  TRY_ALLOC_NO_ERR (ctx->intel_drv, cl_genx_driver_new());
+  TRY_ALLOC_NO_ERR (ctx->intel_drv, cl_intel_driver_new());
   ctx->magic = CL_MAGIC_CONTEXT_HEADER;
   ctx->ref_n = 1;
   pthread_mutex_init(&ctx->program_lock, NULL);
@@ -155,7 +155,7 @@ cl_context_delete(cl_context ctx)
   assert(ctx->programs == NULL);
   assert(ctx->buffers == NULL);
   assert(ctx->intel_drv);
-  cl_genx_driver_delete(ctx->intel_drv);
+  cl_intel_driver_delete(ctx->intel_drv);
   ctx->magic = CL_MAGIC_DEAD_HEADER; /* For safety */
   cl_free(ctx);
 }

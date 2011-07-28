@@ -102,7 +102,7 @@ genx_driver_terminate(genx_driver_t *genx)
   genx->dri_ctx = NULL;
   genx->x11_display = NULL;
 }
-
+#if 0
 LOCAL int
 cl_intel_get_device_id(void)
 {
@@ -142,4 +142,5 @@ cl_genx_driver_delete(genx_driver_t *driver)
   genx_driver_terminate(driver);
   genx_driver_delete(driver);
 }
+#endif
 

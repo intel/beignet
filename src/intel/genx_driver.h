@@ -23,9 +23,6 @@
 #include "intel_driver.h"
 #include <stdint.h>
 
-struct dri_state;
-typedef struct _XDisplay Display;
-
 /* Provides more functionnalitites to setup gen state while using X */
 typedef struct genx_driver
 {

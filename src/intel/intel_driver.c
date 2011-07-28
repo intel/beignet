@@ -29,16 +29,9 @@
 #include <sys/ioctl.h>
 #include <xf86drm.h>
 
-#ifdef __cplusplus
-extern "C" {
-#endif /* __cplusplus */
-
 #include "cl_utils.h"
 #include "cl_alloc.h"
-
-#ifdef __cplusplus
-}
-#endif /* __cplusplus */
+#include "cl_genx_driver.h"
 
 #define SET_BLOCKED_SIGSET(DRIVER)   do {                     \
   sigset_t bl_mask;                                           \
@@ -123,7 +116,7 @@ intel_driver_init(intel_driver_t *driver, int dev_fd)
   else
     FATAL ("Unsupported Gen for emulation");
 #else
-  if (IS_GEN&(driver->device_id))
+  if (IS_GEN7(driver->device_id))
     driver->gen_ver = 7;
   else if (IS_GEN6(driver->device_id))
     driver->gen_ver = 6;
@@ -132,6 +125,49 @@ intel_driver_init(intel_driver_t *driver, int dev_fd)
   else
     driver->gen_ver = 4;
 #endif /* EMULATE_GEN */
+}
+
+LOCAL void
+intel_driver_open(intel_driver_t *intel)
+{
+  int cardi;
+  intel->x11_display = XOpenDisplay(":0.0");
+
+  if(intel->x11_display) {
+    if((intel->dri_ctx = getDRI2State(intel->x11_display,
+                                     DefaultScreen(intel->x11_display),
+                                     NULL)))
+      intel_driver_init_shared(intel, intel->dri_ctx);
+    else
+      printf("X server found. dri2 connection failed! \n");
+  } else {
+    printf("Can't find X server!\n");
+  }
+
+  if(!intel_driver_is_active(intel)) {
+    printf("Trying to open directly...");
+    char card_name[20];
+    for(cardi = 0; cardi < 16; cardi++) {
+      sprintf(card_name, "/dev/dri/card%d", cardi);
+      if(intel_driver_init_master(intel, card_name)) {
+        printf("Success at %s.\n", card_name);
+        break;
+      }
+    }
+  }
+  if(!intel_driver_is_active(intel)) {
+    printf("Device open failed\n");
+    exit(-1);
+  }
+}
+
+LOCAL void
+intel_driver_close(intel_driver_t *intel)
+{
+  if(intel->dri_ctx) dri_state_release(intel->dri_ctx);
+  if(intel->x11_display) XCloseDisplay(intel->x11_display);
+  intel->dri_ctx = NULL;
+  intel->x11_display = NULL;
 }
 
 LOCAL int
@@ -250,5 +286,46 @@ LOCAL drm_intel_bufmgr*
 intel_driver_get_buf(intel_driver_t *drv)
 {
   return drv->bufmgr;
+}
+
+LOCAL int
+cl_intel_get_device_id(void)
+{
+  intel_driver_t *driver = NULL;
+  int intel_device_id;
+
+  driver = intel_driver_new();
+  assert(driver != NULL);
+  intel_driver_open(driver);
+  intel_device_id = driver->device_id;
+  intel_driver_close(driver);
+  intel_driver_delete(driver);
+
+  return intel_device_id;
+}
+
+LOCAL void
+cl_intel_driver_delete(intel_driver_t *driver)
+{
+  if (driver == NULL)
+    return;
+  intel_driver_close(driver);
+  intel_driver_terminate(driver);
+  intel_driver_delete(driver);
+}
+
+LOCAL intel_driver_t*
+cl_intel_driver_new(void)
+{
+  intel_driver_t *driver = NULL;
+  TRY_ALLOC_NO_ERR (driver, intel_driver_new());
+  intel_driver_open(driver);
+
+exit:
+  return driver;
+error:
+  cl_intel_driver_delete(driver);
+  driver = NULL;
+  goto exit;
 }
 

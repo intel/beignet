@@ -27,13 +27,13 @@
 #include <pthread.h>
 
 /* DRI device created at create context */
-struct genx_driver;
+struct intel_driver;
 
 /* Encapsulate the whole device */
 struct _cl_context {
   uint64_t magic;                   /* To identify it as a context */
   volatile int ref_n;               /* We reference count this object */
-  struct genx_driver *intel_drv;    /* Handles the real HW */
+  struct intel_driver *intel_drv;   /* Handles the real HW */
   cl_device_id device;              /* All information about the GPU device */
   cl_command_queue queues;          /* All command queues currently allocated */
   cl_program programs;              /* All programs currently allocated */

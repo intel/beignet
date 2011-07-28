@@ -17,17 +17,17 @@
  * Author: Benjamin Segovia <benjamin.segovia@intel.com>
  */
 
-#ifndef __CL_GENX_DRIVER_H__
-#define __CL_GENX_DRIVER_H__
+#ifndef __CL_INTEL_DRIVER_H__
+#define __CL_INTEL_DRIVER_H__
 
 /* They are mostly wrapper around C++ delete / new to avoid c++ in c files */
-struct genx_driver;
+struct intel_driver;
 
 /* Allocate and initialize the gen driver */
-extern struct genx_driver* cl_genx_driver_new(void);
+extern struct intel_driver* cl_intel_driver_new(void);
 
 /* Destroy and deallocate the gen driver */
-extern void cl_genx_driver_delete(struct genx_driver*);
+extern void cl_intel_driver_delete(struct intel_driver*);
 
-#endif /* __CL_GENX_DRIVER_H__ */
+#endif /* __CL_INTEL_DRIVER_H__ */
 
