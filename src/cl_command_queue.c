@@ -95,37 +95,24 @@ cl_command_queue_add_ref(cl_command_queue queue)
   atomic_inc(&queue->ref_n);
 }
 
-/* Header used by kernels */
-typedef struct cl_inline_header {
-  uint32_t grp_n[3];
-  uint32_t local_sz[3];
-  uint32_t exec_mask;
-  uint32_t local_mem_sz;
-} cl_inline_header_t;
-
-/* ID inside the work group */
-typedef struct cl_local_id {
-  uint16_t data[16];
-} cl_local_id_t;
-
 #define SURFACE_SZ 32
 
-static cl_int
+extern cl_int
 cl_command_queue_bind_surface(cl_command_queue queue,
                               cl_kernel k,
                               drm_intel_bo **local, 
-                              uint32_t local_sz,
                               drm_intel_bo **priv,
-                              drm_intel_bo **scratch)
+                              drm_intel_bo **scratch,
+                              uint32_t local_sz)
 {
   cl_context ctx = queue->ctx;
   intel_gpgpu_t *gpgpu = queue->gpgpu;
   drm_intel_bufmgr *bufmgr = cl_context_get_intel_bufmgr(ctx);
   cl_mem mem = NULL;
   drm_intel_bo *bo = NULL, *sync_bo = NULL;
+  const size_t max_thread = ctx->device->max_compute_unit;
   cl_int err = CL_SUCCESS;
   uint32_t i, index;
-  const size_t max_thread = ctx->device->max_compute_unit;
 
   /* Bind user defined surface */
   for (i = 0; i < k->arg_info_n; ++i) {
@@ -205,7 +192,7 @@ error:
   return err;
 }
 
-static INLINE cl_int
+LOCAL cl_int
 cl_kernel_check_args(cl_kernel k)
 {
   uint32_t i;
@@ -215,129 +202,8 @@ cl_kernel_check_args(cl_kernel k)
   return CL_SUCCESS;
 }
 
-static INLINE void
-cl_command_queue_enqueue_wrk_grp3(cl_command_queue queue,
-                                  cl_local_id_t **ids,
-                                  const cl_inline_header_t *header,
-                                  uint32_t thread_n,
-                                  uint32_t barrierID)
-{
-  intel_gpgpu_t *gpgpu = queue->gpgpu;
-  uint32_t i;
-  for (i = 0; i < thread_n; ++i) {
-    const size_t sz = sizeof(cl_inline_header_t) + 3*sizeof(cl_local_id_t);
-    char *data = gpgpu_run_with_inline(gpgpu, barrierID, sz);
-    size_t offset = 0;
-    assert(data);
-    *((cl_inline_header_t *) (data + offset)) = *header;
-    offset += sizeof(cl_inline_header_t);
-    *((cl_local_id_t *) (data + offset)) = ids[0][i];
-    offset += sizeof(cl_local_id_t);
-    *((cl_local_id_t *) (data + offset)) = ids[1][i];
-    offset += sizeof(cl_local_id_t);
-    *((cl_local_id_t *) (data + offset)) = ids[2][i];
-  }
-}
-
-static INLINE void
-cl_command_queue_enqueue_wrk_grp2(cl_command_queue queue,
-                                  cl_local_id_t **ids,
-                                  const cl_inline_header_t *header,
-                                  uint32_t thread_n,
-                                  uint32_t barrierID)
-{
-  intel_gpgpu_t *gpgpu = queue->gpgpu;
-  uint32_t i;
-  for (i = 0; i < thread_n; ++i) {
-    const size_t sz = sizeof(cl_inline_header_t) + 2*sizeof(cl_local_id_t);
-    char *data = gpgpu_run_with_inline(gpgpu, barrierID, sz);
-    size_t offset = 0;
-    assert(data);
-    *((cl_inline_header_t *) (data + offset)) = *header;
-    offset += sizeof(cl_inline_header_t);
-    *((cl_local_id_t *) (data + offset)) = ids[0][i];
-    offset += sizeof(cl_local_id_t);
-    *((cl_local_id_t *) (data + offset)) = ids[1][i];
-  }
-}
-
-static INLINE void
-cl_command_queue_enqueue_wrk_grp1(cl_command_queue queue,
-                                  cl_local_id_t **ids,
-                                  const cl_inline_header_t *header,
-                                  uint32_t thread_n,
-                                  uint32_t barrierID)
-{
-  intel_gpgpu_t *gpgpu = queue->gpgpu;
-  uint32_t i;
-  for (i = 0; i < thread_n; ++i) {
-    const size_t sz = sizeof(cl_inline_header_t) + sizeof(cl_local_id_t);
-    char *data = gpgpu_run_with_inline(gpgpu, barrierID, sz);
-    size_t offset = 0;
-    assert(data);
-    *((cl_inline_header_t *) (data + offset)) = *header;
-    offset += sizeof(cl_inline_header_t);
-    *((cl_local_id_t *) (data + offset)) = ids[0][i];
-  }
-}
-
-static INLINE int32_t
-cl_kernel_get_first_local(cl_kernel k)
-{
-  int32_t i;
-  for (i = 0; i < (int32_t) k->curbe_info_n; ++i)
-    if (k->curbe_info[i].type == DATA_PARAMETER_SUM_OF_LOCAL_MEMORY_ARGUMENT_SIZES)
-      return i;
-  return k->curbe_info_n;
-}
-
-static void
-cl_kernel_handle_local_memory(cl_kernel k, cl_inline_header_t *header)
-{
-  int32_t i;
-
-  if (k->has_local_buffer) {
-    header->local_mem_sz = 0;
-
-    /* Look for all local surfaces offset to set */
-    i = cl_kernel_get_first_local(k);
-
-    /* Now, set the offsets for all local surfaces */
-    for (; i < (int32_t) k->curbe_info_n; ++i) {
-      cl_curbe_patch_info_t *info = k->curbe_info + i;
-      const size_t offset = header->local_mem_sz;
-      if (info->type != DATA_PARAMETER_SUM_OF_LOCAL_MEMORY_ARGUMENT_SIZES)
-        break;
-      assert(info->last == 0);
-      assert(sizeof(int32_t) + info->offsets[0] <= k->patch.curbe.sz);
-      memcpy(k->cst_buffer + info->offsets[0], &offset, sizeof(int32_t));
-      header->local_mem_sz += info->sz;
-    }
-    header->local_mem_sz += k->patch.local_surf.sz;
-  }
-  else
-    header->local_mem_sz = 0;
-}
-
-static INLINE size_t
-cl_ker_compute_batch_sz(cl_kernel k,
-                        size_t wrk_dim_n,
-                        size_t wrk_grp_n,
-                        size_t thread_n)
-{
-  size_t sz = 256; /* upper bound of the complete prelude */
-  size_t media_obj_sz = 6 * 4; /* size of one MEDIA OBJECT */
-  media_obj_sz += sizeof(cl_inline_header_t); /* header for all threads */
-  media_obj_sz += wrk_dim_n * sizeof(cl_local_id_t);/* for each dimension */ 
-  if (k->patch.exec_env.has_barriers)
-    media_obj_sz += 4 * 4; /* one barrier update per object */
-  sz += media_obj_sz * wrk_grp_n * thread_n;
-  return sz;
-}
-
 LOCAL cl_int
-cl_command_queue_set_report_buffer(cl_command_queue queue,
-                                   cl_mem mem)
+cl_command_queue_set_report_buffer(cl_command_queue queue, cl_mem mem)
 {
   cl_int err = CL_SUCCESS;
   if (queue->perf != NULL) {
@@ -355,50 +221,6 @@ cl_command_queue_set_report_buffer(cl_command_queue queue,
 
 error:
   return err;
-}
-
-static char*
-cl_kernel_create_cst_buffer(cl_kernel k, 
-                            cl_uint work_dim,
-                            const size_t *global_wk_sz,
-                            const size_t *local_wk_sz)
-{
-  cl_curbe_patch_info_t *info = NULL;
-  const size_t sz = k->patch.curbe.sz;
-  uint64_t key = 0;
-  char *data = NULL;
-
-  TRY_ALLOC_NO_ERR (data, (char *) cl_calloc(sz, 1));
-  memcpy(data, k->cst_buffer, sz);
-
-  /* Global work group size */
-  key = cl_curbe_key(DATA_PARAMETER_GLOBAL_WORK_SIZE, 0, 0);
-  if ((info = cl_kernel_get_curbe_info(k, key)) != NULL)
-    memcpy(data+info->offsets[0], global_wk_sz,   sizeof(uint32_t));
-  key = cl_curbe_key(DATA_PARAMETER_GLOBAL_WORK_SIZE, 0, 4);
-  if ((info = cl_kernel_get_curbe_info(k, key)) != NULL)
-    memcpy(data+info->offsets[0], global_wk_sz+1, sizeof(uint32_t));
-  key = cl_curbe_key(DATA_PARAMETER_GLOBAL_WORK_SIZE, 0, 8);
-  if ((info = cl_kernel_get_curbe_info(k, key)) != NULL)
-    memcpy(data+info->offsets[0], global_wk_sz+2, sizeof(uint32_t));
-
-  /* Local work group size */
-  key = cl_curbe_key(DATA_PARAMETER_LOCAL_WORK_SIZE, 0, 0);
-  if ((info = cl_kernel_get_curbe_info(k, key)) != NULL)
-    memcpy(data+info->offsets[0], local_wk_sz,   sizeof(uint32_t));
-  key = cl_curbe_key(DATA_PARAMETER_LOCAL_WORK_SIZE, 0, 4);
-  if ((info = cl_kernel_get_curbe_info(k, key)) != NULL)
-    memcpy(data+info->offsets[0], local_wk_sz+1, sizeof(uint32_t));
-  key = cl_curbe_key(DATA_PARAMETER_LOCAL_WORK_SIZE, 0, 8);
-  if ((info = cl_kernel_get_curbe_info(k, key)) != NULL)
-    memcpy(data+info->offsets[0], local_wk_sz+2, sizeof(uint32_t));
-
-exit:
-  return data;
-error:
-  cl_free(data);
-  data = NULL;
-  goto exit;
 }
 
 #if USE_FULSIM
@@ -423,181 +245,33 @@ cl_run_fulsim(void)
 }
 #endif /* USE_FULSIM */
 
-LOCAL cl_int
-cl_command_queue_ND_kernel(cl_command_queue queue,
-                           cl_kernel ker,
-                           cl_uint work_dim,
-                           const size_t *global_work_offset,
-                           const size_t *global_wk_sz,
-                           const size_t *local_wk_sz)
-{
-  cl_context ctx = queue->ctx;
-  intel_gpgpu_t *gpgpu = queue->gpgpu;
-  drm_intel_bo *slm_bo = NULL, *private_bo = NULL, *scratch_bo = NULL;
-  size_t cst_sz = ker->patch.curbe.sz;
-  size_t wrk_grp_sz, wrk_grp_n, batch_sz;
-  uint32_t grp_end[3], offset[3], thread_n; /* per work group */
-  uint32_t i, j, k, curr;
-  uint32_t barrierID = 0;
-  genx_gpgpu_kernel_t *kernels = NULL;
+extern cl_int cl_command_queue_ND_range_gen6(cl_command_queue, cl_kernel, cl_uint, const size_t*, const size_t*, const size_t*);
+extern cl_int cl_command_queue_ND_range_gen7(cl_command_queue, cl_kernel, cl_uint, const size_t *, const size_t *, const size_t *);
 
-  cl_inline_header_t header;
-  cl_local_id_t *ids[3] = {NULL,NULL,NULL};
+LOCAL cl_int
+cl_command_queue_ND_range(cl_command_queue queue,
+                          cl_kernel ker,
+                          cl_uint wk_dim,
+                          const size_t *global_wk_off,
+                          const size_t *global_wk_sz,
+                          const size_t *local_wk_sz)
+{
+  intel_gpgpu_t *gpgpu = queue->gpgpu;
+  const int32_t ver = intel_gpgpu_version(gpgpu);
   cl_int err = CL_SUCCESS;
 
-  /* Allocate 16 kernels (one for each barrier) */
-  TRY_ALLOC (kernels, CALLOC_ARRAY(genx_gpgpu_kernel_t, 16));
-  for (i = 0; i < 16; ++i) {
-    kernels[i].name = "OCL kernel";
-    kernels[i].grf_blocks = 128;
-    kernels[i].cst_sz = cst_sz;
-    kernels[i].bin = NULL,
-    kernels[i].size = 0,
-    kernels[i].bo = ker->bo;
-    kernels[i].barrierID = i;
-  }
-
-  /* All arguments must have been set */
-  TRY (cl_kernel_check_args, ker);
-
-  /* Total number of elements in the work group */
-  for (i = 0; i < work_dim; ++i)
-    if ((&ker->patch.exec_env.required_wgr_sz_x)[i] &&
-        (&ker->patch.exec_env.required_wgr_sz_x)[i] != local_wk_sz[i]) {
-      err = CL_INVALID_WORK_ITEM_SIZE;
-      goto error;
-    }
-  wrk_grp_sz = local_wk_sz[0];
-  for (i = 1; i < work_dim; ++i)
-    wrk_grp_sz *= local_wk_sz[i];
-  FATAL_IF (wrk_grp_sz % 16, "Work group size must be a multiple of 16");
-  if (wrk_grp_sz > ctx->device->max_work_group_size) {
-    err = CL_INVALID_WORK_ITEM_SIZE;
-    goto error;
-  }
-
-  /* Directly from the user defined values */
-  header.local_sz[0] = local_wk_sz[0];
-  header.local_sz[1] = local_wk_sz[1];
-  header.local_sz[2] = local_wk_sz[2];
-  offset[0] = header.grp_n[0] = 0;
-  offset[1] = header.grp_n[1] = 0;
-  offset[2] = header.grp_n[2] = 0;
-  header.exec_mask = ~0;
-
-  /* offsets are evenly divided by the local sizes */
-  if (global_work_offset)
-    for (i = 0; i < work_dim; ++i)
-      offset[i] = global_work_offset[i]/local_wk_sz[i];
-
-  /* Compute the local size per wg and the offsets for each local buffer */
-  cl_kernel_handle_local_memory(ker, &header);
-
-  if (queue->perf)
-    gpgpu_set_perf_counters(gpgpu, queue->perf->bo);
-
-  /* Setup the kernel */
-  gpgpu_state_init(gpgpu, ctx->device->max_compute_unit, 4, 64, cst_sz / 32, 64);
-  if (queue->last_batch != NULL)
-    drm_intel_bo_unreference(queue->last_batch);
-  queue->last_batch = NULL;
-  cl_command_queue_bind_surface(queue,
-                                ker,
-                                &slm_bo,
-                                header.local_mem_sz,
-                                &private_bo,
-                                &scratch_bo);
-  gpgpu_states_setup(gpgpu, kernels, 16);
-
-  /* Fill the constant buffer */
-  if (cst_sz > 0) {
-    char *data = NULL;
-    assert(ker->cst_buffer);
-    data = cl_kernel_create_cst_buffer(ker,work_dim,global_wk_sz,local_wk_sz);
-    gpgpu_upload_constants(gpgpu, data, cst_sz);
-    cl_free(data);
-  }
-
-  wrk_grp_n = 1;
-  for (i = 0; i < work_dim; ++i) {
-    TRY_ALLOC (ids[i], (cl_local_id_t*) cl_malloc(wrk_grp_sz*sizeof(uint16_t)));
-    grp_end[i] = offset[i] + global_wk_sz[i] / local_wk_sz[i];
-    wrk_grp_n *= grp_end[i]-offset[i];
-  }
-  thread_n = wrk_grp_sz / 16;
-  batch_sz = cl_ker_compute_batch_sz(ker, work_dim, wrk_grp_n, thread_n);
-
-  /* Start a new batch buffer */
-  gpgpu_batch_reset(gpgpu, batch_sz);
-  gpgpu_batch_start(gpgpu);
-#if 1
-  /* Push all media objects. We implement three paths to make it (a bit) faster.
-   * Local IDs are shared from work group to work group. We allocate once the
-   * buffers and reuse them
-   */
-  if (work_dim == 3) {
-    curr = 0;
-    for (i = 0; i < local_wk_sz[0]; ++i)
-    for (j = 0; j < local_wk_sz[1]; ++j)
-    for (k = 0; k < local_wk_sz[2]; ++k, ++curr) {
-      ((uint16_t*) ids[0])[curr] = i;
-      ((uint16_t*) ids[1])[curr] = j;
-      ((uint16_t*) ids[2])[curr] = k;
-    }
-    for (header.grp_n[0] = offset[0]; header.grp_n[0] < grp_end[0]; ++header.grp_n[0])
-    for (header.grp_n[1] = offset[1]; header.grp_n[1] < grp_end[1]; ++header.grp_n[1])
-    for (header.grp_n[2] = offset[2]; header.grp_n[2] < grp_end[2]; ++header.grp_n[2]) {
-      if (ker->patch.exec_env.has_barriers)
-        gpgpu_update_barrier(gpgpu, barrierID, thread_n);
-      cl_command_queue_enqueue_wrk_grp3(queue, ids, &header, thread_n, barrierID);
-      barrierID = (barrierID + 1) % 16;
-    }
-  }
-  else if (work_dim == 2) {
-    curr = 0;
-    for (i = 0; i < local_wk_sz[0]; ++i)
-    for (j = 0; j < local_wk_sz[1]; ++j, ++curr) {
-      ((uint16_t*) ids[0])[curr] = i;
-      ((uint16_t*) ids[1])[curr] = j;
-    }
-    for (header.grp_n[0] = offset[0]; header.grp_n[0] < grp_end[0]; ++header.grp_n[0])
-    for (header.grp_n[1] = offset[1]; header.grp_n[1] < grp_end[1]; ++header.grp_n[1]) {
-      if (ker->patch.exec_env.has_barriers)
-        gpgpu_update_barrier(gpgpu, barrierID, thread_n);
-      cl_command_queue_enqueue_wrk_grp2(queue, ids, &header, thread_n, barrierID);
-      barrierID = (barrierID + 1) % 16;
-    }
-  }
-  else {
-    for (i = 0; i < local_wk_sz[0]; ++i)
-      ((uint16_t*) ids[0])[i] = i;
-    for (header.grp_n[0] = offset[0]; header.grp_n[0] < grp_end[0]; ++header.grp_n[0]) {
-      if (ker->patch.exec_env.has_barriers)
-        gpgpu_update_barrier(gpgpu, barrierID, thread_n);
-      cl_command_queue_enqueue_wrk_grp1(queue, ids, &header, thread_n, barrierID);
-      barrierID = (barrierID + 1) % 16;
-    }
-  }
-#endif
-  gpgpu_batch_end(gpgpu, 0);
-  gpgpu_flush(gpgpu);
-
-  if (slm_bo)
-    drm_intel_bo_unreference(slm_bo);
-  if (private_bo)
-    drm_intel_bo_unreference(private_bo);
-  if (scratch_bo)
-    drm_intel_bo_unreference(scratch_bo);
+  if (ver == 6)
+    TRY (cl_command_queue_ND_range_gen6, queue, ker, wk_dim, global_wk_off, global_wk_sz, local_wk_sz);
+  else if (ver == 7)
+    TRY (cl_command_queue_ND_range_gen7, queue, ker, wk_dim, global_wk_off, global_wk_sz, local_wk_sz);
+  else
+    FATAL ("Unknown Gen Device");
 
 #if USE_FULSIM
   cl_run_fulsim();
 #endif /* USE_FULSIM */
 
 error:
-  cl_free(kernels);
-  cl_free(ids[0]);
-  cl_free(ids[1]);
-  cl_free(ids[2]);
   return err;
 }
 
@@ -611,6 +285,8 @@ cl_command_queue_finish(cl_command_queue queue)
   queue->last_batch = NULL;
   return CL_SUCCESS;
 }
+
+extern int drm_intel_aub_set_bo_to_dump(drm_intel_bufmgr*, drm_intel_bo*);
 
 LOCAL cl_int
 cl_command_queue_set_fulsim_buffer(cl_command_queue queue, cl_mem mem)

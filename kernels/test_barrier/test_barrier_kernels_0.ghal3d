@@ -32,7 +32,7 @@
 
 	DCL_INPUT i0.xyz, THREAD_ID;
 
-	DCL_TEMPS r0..r23;
+	DCL_TEMPS r0..r29;
 	DCL_POINTERS ptr0..ptr3;
 	ADDRESS_OF ptr0, u0;
 	MOV r0, c0.x;
@@ -54,11 +54,17 @@
 	IADD r19.x, r18.x, r5.x;
 	MOV r20.x, i0.x;
 	SHL r21.x, r20.x, 2;
-	PADD ptr2, ptr1, r21.x;
-	LD_RAW_PTR r22.x, ptr2;
-	IADD r23.x, r19.x, r22.x;
-	PADD ptr3, ptr0, r21.x;
-	STORE_RAW_PTR ptr3.x, r23.x;
+	SHR r22.x, r20.x, 30;
+	MOV r23.x, 0;
+	MOV_SWZ r24, r21.x, r22.x, r23.x, r23.x;
+	MOV r25.xy, r24;
+	MOV r26.xy, r25.xyxy;
+	PADD ptr2, ptr1, r26.x;
+	LD_RAW_PTR r27.x, ptr2;
+	IADD r28.x, r19.x, r27.x;
+	MOV r29.xy, r25.xyxy;
+	PADD ptr3, ptr0, r29.x;
+	STORE_RAW_PTR ptr3.x, r28.x;
 	SYNC.t.g;
 	RET;
 

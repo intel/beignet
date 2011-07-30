@@ -1004,3 +1004,9 @@ gpgpu_run_with_inline(intel_gpgpu_t *state, int32_t ki, size_t sz)
   return (char*) intel_batchbuffer_alloc_space(state->batch,sz);
 }
 
+LOCAL int32_t
+intel_gpgpu_version(intel_gpgpu_t *gpgpu)
+{
+  return gpgpu->drv->gen_ver;
+}
+

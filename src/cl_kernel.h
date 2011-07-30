@@ -295,10 +295,16 @@ extern void cl_kernel_add_ref(cl_kernel);
 extern int cl_kernel_setup(cl_kernel, const char*);
 
 /* Set the argument before kernel execution */
-extern int cl_kernel_set_arg(cl_kernel     kernel,
-                                    uint32_t      arg_index,
-                                    size_t        arg_size,
-                                    const void *  arg_value);
+extern int cl_kernel_set_arg(cl_kernel,
+                             uint32_t    arg_index,
+                             size_t      arg_size,
+                             const void *arg_value);
+
+/* Check that all arguments are set before running the kernel */
+extern cl_int cl_kernel_check_args(cl_kernel);
+
+/* Get the size of shared local memory bound to the kernel */
+extern uint32_t cl_kernel_local_memory_sz(cl_kernel);
 
 /* Return a curbe entry if it exists. NULL otherwise */
 extern cl_curbe_patch_info_t *cl_kernel_get_curbe_info(cl_kernel, uint64_t);
@@ -311,6 +317,13 @@ cl_curbe_key(uint32_t type, uint32_t index, uint32_t src_offset)
          ((uint64_t) index << 32) |
           (uint64_t) src_offset;
 }
+
+/* Allocate and fill the CURBE */
+extern char*
+cl_kernel_create_cst_buffer(cl_kernel k,
+                            cl_uint wk_dim,
+                            const size_t *global_wk_sz,
+                            const size_t *local_wk_sz);
 
 #endif /* __CL_KERNEL_H__ */
 

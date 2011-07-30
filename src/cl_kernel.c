@@ -698,3 +698,84 @@ error:
   return err;
 }
 
+static INLINE int32_t
+cl_kernel_get_first_local(cl_kernel k)
+{
+  int32_t i;
+  for (i = 0; i < (int32_t) k->curbe_info_n; ++i)
+    if (k->curbe_info[i].type == DATA_PARAMETER_SUM_OF_LOCAL_MEMORY_ARGUMENT_SIZES)
+      return i;
+  return k->curbe_info_n;
+}
+
+LOCAL uint32_t
+cl_kernel_local_memory_sz(cl_kernel k)
+{
+  int32_t i;
+  uint32_t local_mem_sz = 0;
+
+  if (k->has_local_buffer) {
+
+    /* Look for all local surfaces offset to set */
+    i = cl_kernel_get_first_local(k);
+
+    /* Now, set the offsets for all local surfaces */
+    for (; i < (int32_t) k->curbe_info_n; ++i) {
+      cl_curbe_patch_info_t *info = k->curbe_info + i;
+      const size_t offset = local_mem_sz;
+      if (info->type != DATA_PARAMETER_SUM_OF_LOCAL_MEMORY_ARGUMENT_SIZES)
+        break;
+      assert(info->last == 0);
+      assert(sizeof(int32_t) + info->offsets[0] <= k->patch.curbe.sz);
+      memcpy(k->cst_buffer + info->offsets[0], &offset, sizeof(int32_t));
+      local_mem_sz += info->sz;
+    }
+    local_mem_sz += k->patch.local_surf.sz;
+  }
+  return local_mem_sz;
+}
+
+LOCAL char*
+cl_kernel_create_cst_buffer(cl_kernel k,
+                            cl_uint wk_dim,
+                            const size_t *global_wk_sz,
+                            const size_t *local_wk_sz)
+{
+  cl_curbe_patch_info_t *info = NULL;
+  const size_t sz = k->patch.curbe.sz;
+  uint64_t key = 0;
+  char *data = NULL;
+
+  TRY_ALLOC_NO_ERR (data, (char *) cl_calloc(sz, 1));
+  memcpy(data, k->cst_buffer, sz);
+
+  /* Global work group size */
+  key = cl_curbe_key(DATA_PARAMETER_GLOBAL_WORK_SIZE, 0, 0);
+  if ((info = cl_kernel_get_curbe_info(k, key)) != NULL)
+    memcpy(data+info->offsets[0], global_wk_sz,   sizeof(uint32_t));
+  key = cl_curbe_key(DATA_PARAMETER_GLOBAL_WORK_SIZE, 0, 4);
+  if ((info = cl_kernel_get_curbe_info(k, key)) != NULL)
+    memcpy(data+info->offsets[0], global_wk_sz+1, sizeof(uint32_t));
+  key = cl_curbe_key(DATA_PARAMETER_GLOBAL_WORK_SIZE, 0, 8);
+  if ((info = cl_kernel_get_curbe_info(k, key)) != NULL)
+    memcpy(data+info->offsets[0], global_wk_sz+2, sizeof(uint32_t));
+
+  /* Local work group size */
+  key = cl_curbe_key(DATA_PARAMETER_LOCAL_WORK_SIZE, 0, 0);
+  if ((info = cl_kernel_get_curbe_info(k, key)) != NULL)
+    memcpy(data+info->offsets[0], local_wk_sz,   sizeof(uint32_t));
+  key = cl_curbe_key(DATA_PARAMETER_LOCAL_WORK_SIZE, 0, 4);
+  if ((info = cl_kernel_get_curbe_info(k, key)) != NULL)
+    memcpy(data+info->offsets[0], local_wk_sz+1, sizeof(uint32_t));
+  key = cl_curbe_key(DATA_PARAMETER_LOCAL_WORK_SIZE, 0, 8);
+  if ((info = cl_kernel_get_curbe_info(k, key)) != NULL)
+    memcpy(data+info->offsets[0], local_wk_sz+2, sizeof(uint32_t));
+
+exit:
+  return data;
+error:
+  cl_free(data);
+  data = NULL;
+  goto exit;
+}
+

@@ -50,12 +50,12 @@ extern void cl_command_queue_delete(cl_command_queue);
 extern void cl_command_queue_add_ref(cl_command_queue);
 
 /* Map ND range kernel from OCL API */
-extern cl_int cl_command_queue_ND_kernel(cl_command_queue queue,
-                                         cl_kernel ker,
-                                         cl_uint work_dim,
-                                         const size_t *global_work_offset,
-                                         const size_t *global_work_size,
-                                         const size_t *local_work_size);
+extern cl_int cl_command_queue_ND_range(cl_command_queue queue,
+                                        cl_kernel ker,
+                                        cl_uint work_dim,
+                                        const size_t *global_work_offset,
+                                        const size_t *global_work_size,
+                                        const size_t *local_work_size);
 
 /* The memory object where to report the performance */
 extern cl_int cl_command_queue_set_report_buffer(cl_command_queue, cl_mem);
@@ -65,6 +65,14 @@ cl_int cl_command_queue_set_fulsim_buffer(cl_command_queue, cl_mem);
 
 /* Wait for the completion of the command queue */
 extern cl_int cl_command_queue_finish(cl_command_queue);
+
+/* Bind all the surfaces in the GPGPU state */
+extern cl_int cl_command_queue_bind_surface(cl_command_queue queue,
+                                            cl_kernel k,
+                                            struct _drm_intel_bo **local, 
+                                            struct _drm_intel_bo **priv,
+                                            struct _drm_intel_bo **scratch,
+                                            uint32_t local_sz);
 
 #endif /* __CL_COMMAND_QUEUE_H__ */
 

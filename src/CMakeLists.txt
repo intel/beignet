@@ -14,6 +14,8 @@ SET(OPENCL_SRC
     cl_device_id.c
     cl_context.c
     cl_command_queue.c
+    cl_command_queue_gen6.c
+    cl_command_queue_gen7.c
     intel/intel_gpgpu.c
     intel/intel_batchbuffer.c
     intel/intel_driver.c

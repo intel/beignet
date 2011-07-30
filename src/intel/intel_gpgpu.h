@@ -62,6 +62,9 @@ extern intel_gpgpu_t* intel_gpgpu_new(struct intel_driver*);
 /* Destroy and deallocate a GPGPU state */
 extern void intel_gpgpu_delete(intel_gpgpu_t*);
 
+/* Get the device generation */
+extern int32_t intel_gpgpu_version(intel_gpgpu_t*);
+
 /* Set surface descriptor in the current binding table */
 extern void gpgpu_bind_surf_2d(intel_gpgpu_t*,
                                int32_t index,

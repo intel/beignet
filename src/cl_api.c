@@ -962,12 +962,12 @@ clEnqueueNDRangeKernel(cl_command_queue  command_queue,
   FATAL_IF(event != NULL, "Events are not supported");
 
   /* Do device specific checks are enqueue the kernel */
-  err = cl_command_queue_ND_kernel(command_queue,
-                                   kernel,
-                                   work_dim,
-                                   global_work_offset,
-                                   global_work_size,
-                                   local_work_size);
+  err = cl_command_queue_ND_range(command_queue,
+                                  kernel,
+                                  work_dim,
+                                  global_work_offset,
+                                  global_work_size,
+                                  local_work_size);
 
 error:
   return err;
