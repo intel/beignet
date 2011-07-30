@@ -19,6 +19,7 @@
 
 #include "cl_kernel.h"
 #include "cl_program.h"
+#include "cl_device_id.h"
 #include "cl_context.h"
 #include "cl_mem.h"
 #include "cl_alloc.h"
@@ -777,5 +778,33 @@ error:
   cl_free(data);
   data = NULL;
   goto exit;
+}
+
+LOCAL cl_int
+cl_kernel_work_group_sz(cl_kernel ker,
+                        const size_t *local_wk_sz,
+                        cl_uint wk_dim,
+                        size_t *wk_grp_sz)
+{
+  cl_int err = CL_SUCCESS;
+  cl_uint i;
+
+  for (i = 0; i < wk_dim; ++i)
+    if ((&ker->patch.exec_env.required_wgr_sz_x)[i] &&
+        (&ker->patch.exec_env.required_wgr_sz_x)[i] != local_wk_sz[i]) {
+      err = CL_INVALID_WORK_ITEM_SIZE;
+      goto error;
+    }
+  *wk_grp_sz = local_wk_sz[0];
+  for (i = 1; i < wk_dim; ++i)
+    *wk_grp_sz *= local_wk_sz[i];
+  FATAL_IF (*wk_grp_sz % 16, "Work group size must be a multiple of 16");
+  if (*wk_grp_sz > ker->program->ctx->device->max_work_group_size) {
+    err = CL_INVALID_WORK_ITEM_SIZE;
+    goto error;
+  }
+
+error:
+  return err;
 }
 

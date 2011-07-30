@@ -261,9 +261,19 @@ cl_command_queue_ND_range(cl_command_queue queue,
   cl_int err = CL_SUCCESS;
 
   if (ver == 6)
-    TRY (cl_command_queue_ND_range_gen6, queue, ker, wk_dim, global_wk_off, global_wk_sz, local_wk_sz);
+    TRY (cl_command_queue_ND_range_gen6, queue,
+                                         ker,
+                                         wk_dim,
+                                         global_wk_off,
+                                         global_wk_sz,
+                                         local_wk_sz);
   else if (ver == 7)
-    TRY (cl_command_queue_ND_range_gen7, queue, ker, wk_dim, global_wk_off, global_wk_sz, local_wk_sz);
+    TRY (cl_command_queue_ND_range_gen7, queue,
+                                         ker,
+                                         wk_dim,
+                                         global_wk_off,
+                                         global_wk_sz,
+                                         local_wk_sz);
   else
     FATAL ("Unknown Gen Device");
 
@@ -286,6 +296,7 @@ cl_command_queue_finish(cl_command_queue queue)
   return CL_SUCCESS;
 }
 
+/* We added this function in libdrm_intel to dump a binary buffer */
 extern int drm_intel_aub_set_bo_to_dump(drm_intel_bufmgr*, drm_intel_bo*);
 
 LOCAL cl_int
