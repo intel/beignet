@@ -251,7 +251,7 @@ struct _cl_kernel {
   volatile int ref_n;            /* We reference count this object */
   struct _drm_intel_bo *bo;      /* The code itself */
   struct _drm_intel_bo *const_bo;/* Buffer for all __constants values in the OCL program */
-  cl_program program;  /* Owns this structure (and pointers) */
+  cl_program program;            /* Owns this structure (and pointers) */
   cl_arg_info_t *arg_info;       /* List of arguments */
   cl_curbe_patch_info_t *curbe_info; /* List of patch locations for the curbe */
   char *name;                   /* User defined name */
@@ -320,7 +320,12 @@ cl_curbe_key(uint32_t type, uint32_t index, uint32_t src_offset)
 
 /* Allocate, fill and return the CURBE */
 extern char*
-cl_kernel_create_cst_buffer(cl_kernel k, const size_t *global_wk_sz, const size_t *local_wk_sz);
+cl_kernel_create_cst_buffer(cl_kernel k,
+                            const size_t *global_wk_off,
+                            const size_t *global_wk_sz,
+                            const size_t *local_wk_sz,
+                            cl_uint wk_dim,
+                            cl_uint thread_n);
 
 /* Compute and check the work group size from the user provided local size */
 extern cl_int

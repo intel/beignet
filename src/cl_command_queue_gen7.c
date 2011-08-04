@@ -36,7 +36,7 @@
 static INLINE size_t
 cl_kernel_compute_batch_sz(cl_kernel k)
 {
-  size_t sz = 256 + 16;
+  size_t sz = 256 + 32;
   return sz;
 }
 
@@ -96,7 +96,6 @@ cl_command_queue_ND_range_gen7(cl_command_queue queue,
   char *user = NULL;  /* User defined constants first */
   char *data = NULL;  /* Complete constant buffer to upload */
   genx_gpgpu_kernel_t kernel;
-  const size_t local_mem_sz = cl_kernel_local_memory_sz(ker);
   size_t local_sz, batch_sz, cst_sz = ker->patch.curbe.sz;
   size_t i, thread_n, id_offset;
   cl_int err = CL_SUCCESS;
@@ -108,13 +107,15 @@ cl_command_queue_ND_range_gen7(cl_command_queue queue,
   kernel.size = 0,
   kernel.bo = ker->bo;
   kernel.barrierID = 0;
+  kernel.use_barrier = ker->patch.exec_env.has_barriers;
+  kernel.slm_sz = cl_kernel_local_memory_sz(ker);
 
   /* All arguments must have been set */
   TRY (cl_kernel_check_args, ker);
 
   /* Check that the local work sizes are OK */
   TRY (cl_kernel_work_group_sz, ker, local_wk_sz, 3, &local_sz);
-  thread_n = local_sz / 16; /* SIMD16 only */
+  kernel.thread_n = thread_n = local_sz / 16; /* SIMD16 only */
 
   /* Fill the constant buffer. Basically, we have to build one set of
    * constants for each thread. The constants also includes the local ids we
@@ -122,9 +123,14 @@ cl_command_queue_ND_range_gen7(cl_command_queue queue,
    */
   if (cst_sz > 0) {
     assert(ker->cst_buffer);
-    user = cl_kernel_create_cst_buffer(ker, global_wk_sz, local_wk_sz);
+    user = cl_kernel_create_cst_buffer(ker,
+                                       global_wk_off,
+                                       global_wk_sz,
+                                       local_wk_sz,
+                                       3,
+                                       thread_n);
   }
-  id_offset = cst_sz =  ALIGN(cst_sz, 32); /* Align the user data on 32 bytes */
+  id_offset = cst_sz = ALIGN(cst_sz, 32); /* Align the user data on 32 bytes */
   kernel.cst_sz = cst_sz += 3 * 32;        /* Add local IDs (16 words) */
   TRY_ALLOC (data, (char*) cl_calloc(thread_n, cst_sz));
   for (i = 0; i < thread_n; ++i)
@@ -136,7 +142,7 @@ cl_command_queue_ND_range_gen7(cl_command_queue queue,
   if (queue->last_batch != NULL)
     drm_intel_bo_unreference(queue->last_batch);
   queue->last_batch = NULL;
-  cl_command_queue_bind_surface(queue, ker, NULL, &private_bo, &scratch_bo, local_mem_sz);
+  cl_command_queue_bind_surface(queue, ker, NULL, &private_bo, &scratch_bo, 0);
   gpgpu_states_setup(gpgpu, &kernel, 1);
 
   /* We always have constant with Gen7 (local_ids are used) */

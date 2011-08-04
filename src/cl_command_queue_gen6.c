@@ -112,6 +112,8 @@ cl_command_queue_ND_range_gen6(cl_command_queue queue,
     kernels[i].size = 0,
     kernels[i].bo = ker->bo;
     kernels[i].barrierID = i;
+    kernels[i].use_barrier = 0; /* unused in gen6 */
+    kernels[i].thread_n = 0;    /* unused in gen6 */
   }
 
   /* All arguments must have been set */
@@ -157,7 +159,11 @@ cl_command_queue_ND_range_gen6(cl_command_queue queue,
   if (cst_sz > 0) {
     char *data = NULL;
     assert(ker->cst_buffer);
-    data = cl_kernel_create_cst_buffer(ker, global_wk_sz, local_wk_sz);
+    data = cl_kernel_create_cst_buffer(ker,
+                                       global_wk_off,
+                                       global_wk_sz,
+                                       local_wk_sz,
+                                       0, 0); /* unused on Gen6 */
     gpgpu_upload_constants(gpgpu, data, cst_sz);
     cl_free(data);
   }

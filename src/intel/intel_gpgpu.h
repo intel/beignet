@@ -36,15 +36,17 @@ enum gen6_cache_control {
 #define MAX_SAMPLERS   16
 
 /* Use this structure to bind kernels in the gpgpu state */
-typedef struct genx_gpgpu_kernel
-{
+typedef struct genx_gpgpu_kernel {
   const char *name;        /* kernel name and bo name */
   uint32_t grf_blocks;     /* register blocks kernel wants (in 8 reg blocks) */
-  uint32_t cst_sz;         /* indicates if kernel needs constants */
+  uint32_t cst_sz;         /* total size of all constants */
   const uint32_t *bin;     /* binary code of the kernel */
   int32_t size;            /* kernel code size */
   struct _drm_intel_bo *bo;/* kernel code in the proper addr space */
   int32_t barrierID;       /* barrierID for _this_ kernel */
+  uint32_t use_barrier:1;  /* For gen7 (automatic barrier management) */
+  uint32_t thread_n:15;    /* For gen7 (automatic barrier management) */
+  uint32_t slm_sz:16;      /* For gen7 (automatic SLM allocation) */
 } genx_gpgpu_kernel_t;
 
 /* Convenient abstraction of the device */

@@ -280,7 +280,7 @@ typedef struct gen6_interface_descriptor
   struct {
     uint32_t group_threads_num:8;        /* 0..64, 0 - no barrier use */
     uint32_t barrier_return_byte:8;
-    uint32_t shared_local_mem_size:5;    /* 0..16 - 0K..64K */
+    uint32_t slm_sz:5;                   /* 0..16 - 0K..64K */
     uint32_t barrier_enable:1;
     uint32_t rounding_mode:2;
     uint32_t barrier_return_grf_offset:8;
@@ -310,6 +310,7 @@ struct intel_gpgpu
 {
   intel_driver_t *drv;
   intel_batchbuffer_t *batch;
+  genx_gpgpu_kernel_t *ker;
 
   struct {
     dri_bo *bo;
@@ -431,8 +432,8 @@ gpgpu_load_vfe_state(intel_gpgpu_t *state)
     intel_batchbuffer_alloc_space(state->batch,0);
 
   memset(vfe, 0, sizeof(struct gen6_vfe_state_inline));
-  vfe->vfe1.fast_preempt = 1;
-  vfe->vfe1.gpgpu_mode = state->drv->gen_ver > 6 ? 1 : 0;
+  vfe->vfe1.fast_preempt = 0;
+  vfe->vfe1.gpgpu_mode = state->drv->gen_ver >= 7 ? 1 : 0;
   vfe->vfe1.bypass_gateway_ctl = 1;
   vfe->vfe1.reset_gateway_timer = 1;
   vfe->vfe1.urb_entries = state->urb.num_vfe_entries;
@@ -441,7 +442,7 @@ gpgpu_load_vfe_state(intel_gpgpu_t *state)
   vfe->vfe1.max_threads = state->max_threads - 1;
 /*  vfe->vfe3.curbe_size = 63; */
 /*  vfe->vfe3.urbe_size = 13; */
-  vfe->vfe4.scoreboard_enable = 1;
+  vfe->vfe4.scoreboard_enable = 0;
   intel_batchbuffer_alloc_space(state->batch, sizeof(gen6_vfe_state_inline_t));
   ADVANCE_BATCH(state->batch);
 }
@@ -470,11 +471,73 @@ gpgpu_load_idrt(intel_gpgpu_t *state)
   ADVANCE_BATCH(state->batch);
 }
 
+static const uint32_t Gen7L3CacheConfigReg2DataTable[] =
+{
+                // SLM    URB     DC      RO      I/S     C       T
+    0x00080040, //{ 0,    256,    0,      256,    0,      0,      0,      }
+    0x02040040, //{ 0,    256,    128,    128,    0,      0,      0,      }
+    0x00800040, //{ 0,    256,    32,     0,      64,     32,     128,    }
+    0x01000038, //{ 0,    224,    64,     0,      64,     32,     128,    }
+    0x02000030, //{ 0,    224,    128,    0,      64,     32,     64,     }
+    0x01000038, //{ 0,    224,    64,     0,      128,    32,     64,     }
+    0x00000038, //{ 0,    224,    0,      0,      128,    32,     128,    }
+    0x00000040, //{ 0,    256,    0,      0,      128,    0,      128,    }
+    0x0A140091, //{ 128,  128,    128,    128,    0,      0,      0,      }
+    0x09100091, //{ 128,  128,    64,     0,      64,     64,     64,     }
+    0x08900091, //{ 128,  128,    32,     0,      64,     32,     128,    }
+    0x08900091  //{ 128,  128,    32,     0,      128,    32,     64,     }
+};
+
+static const uint32_t Gen7L3CacheConfigReg3DataTable[] =
+{
+                // SLM    URB     DC      RO      I/S     C       T
+    0x00000000, //{ 0,    256,    0,      256,    0,      0,      0,      }
+    0x00000000, //{ 0,    256,    128,    128,    0,      0,      0,      }
+    0x00080410, //{ 0,    256,    32,     0,      64,     32,     128,    }
+    0x00080410, //{ 0,    224,    64,     0,      64,     32,     128,    }
+    0x00040410, //{ 0,    224,    128,    0,      64,     32,     64,     }
+    0x00040420, //{ 0,    224,    64,     0,      128,    32,     64,     }
+    0x00080420, //{ 0,    224,    0,      0,      128,    32,     128,    }
+    0x00080020, //{ 0,    256,    0,      0,      128,    0,      128,    }
+    0x00204080, //{ 128,  128,    128,    128,    0,      0,      0,      }
+    0x00244890, //{ 128,  128,    64,     0,      64,     64,     64,     }
+    0x00284490, //{ 128,  128,    32,     0,      64,     32,     128,    }
+    0x002444A0  //{ 128,  128,    32,     0,      128,    32,     64,     }
+};
+
+// L3 cache stuff 
+#define L3_CNTL_REG2_ADDRESS_OFFSET         ( 0xB020 )
+#define L3_CNTL_REG3_ADDRESS_OFFSET         ( 0xB024 )
+
+LOCAL void
+intel_gpgpu_set_L3(intel_gpgpu_t *state, uint32_t use_barrier)
+{
+  BEGIN_BATCH(state->batch, 6);
+  OUT_BATCH(state->batch, CMD_LOAD_REGISTER_IMM | 1); /* length - 2 */
+  OUT_BATCH(state->batch, L3_CNTL_REG2_ADDRESS_OFFSET);
+  if (use_barrier)
+    OUT_BATCH(state->batch, Gen7L3CacheConfigReg2DataTable[8]);
+  else
+    OUT_BATCH(state->batch, Gen7L3CacheConfigReg2DataTable[4]);
+
+  OUT_BATCH(state->batch, CMD_LOAD_REGISTER_IMM | 1); /* length - 2 */
+  OUT_BATCH(state->batch, L3_CNTL_REG3_ADDRESS_OFFSET);
+  if (use_barrier)
+    OUT_BATCH(state->batch, Gen7L3CacheConfigReg3DataTable[8]);
+  else
+    OUT_BATCH(state->batch, Gen7L3CacheConfigReg3DataTable[4]);
+  ADVANCE_BATCH(state->batch);
+
+  intel_batchbuffer_emit_mi_flush(state->batch);
+}
+
 LOCAL void
 gpgpu_batch_start(intel_gpgpu_t *state)
 {
   intel_batchbuffer_start_atomic(state->batch, 256);
   intel_batchbuffer_emit_mi_flush(state->batch);
+  if (state->drv->gen_ver >= 7)
+    intel_gpgpu_set_L3(state, state->ker->use_barrier);
   gpgpu_select_pipeline(state);
   gpgpu_set_base_address(state);
   gpgpu_load_vfe_state(state);
@@ -883,6 +946,8 @@ gpgpu_build_binding_table(intel_gpgpu_t *state)
   dri_bo_unmap(state->binding_table_b.bo);
 }
 
+#define KB 1024
+
 static void
 gpgpu_build_idrt(intel_gpgpu_t *state,
                  genx_gpgpu_kernel_t *kernel,
@@ -907,10 +972,31 @@ gpgpu_build_idrt(intel_gpgpu_t *state,
     desc->desc3.binding_table_pointer = state->binding_table_b.bo->offset >> 5;
     desc->desc4.curbe_read_len = kernel[i].cst_sz / 32;
     desc->desc4.curbe_read_offset = 0;
-    desc->desc5.group_threads_num = kernel[i].barrierID; /* BarrierID on GEN6 */
-    /* desc->desc5 = 0; - no barriers, groups, etc. */
     /* desc->desc6 = 0; - mbz */
     /* desc->desc7 = 0; - mbz */
+
+    /* Barriers / SLM are automatically handled on Gen7+ */
+    if (state->drv->gen_ver >= 7) {
+      size_t slm_sz = kernel[i].slm_sz;
+      desc->desc5.group_threads_num = kernel[i].use_barrier ? kernel[i].thread_n : 0;
+      desc->desc5.barrier_enable = kernel[i].use_barrier;
+      if (slm_sz > 0) {
+        if (slm_sz <= 4 * KB)
+          slm_sz = 4 * KB; //4KB
+        else if (slm_sz <= 8 * KB)
+          slm_sz = 8 * KB; //8KB
+        else if (slm_sz <= 16 * KB)
+          slm_sz = 16 * KB; //16KB
+        else if (slm_sz <= 32 * KB)
+          slm_sz = 32 * KB; //32KB
+        else if (slm_sz <= 64 * KB)
+          slm_sz = 64 * KB; //64KB
+        slm_sz = slm_sz >> 12;
+      }
+      desc->desc5.slm_sz = slm_sz;
+    }
+    else
+      desc->desc5.group_threads_num = kernel[i].barrierID; /* BarrierID on GEN6 */
 
     dri_bo_emit_reloc(bo,
                       I915_GEM_DOMAIN_INSTRUCTION, 0,
@@ -950,6 +1036,7 @@ gpgpu_upload_constants(intel_gpgpu_t *state, void* data, uint32_t size)
 LOCAL void
 gpgpu_states_setup(intel_gpgpu_t *state, genx_gpgpu_kernel_t *kernel, uint32_t ker_n)
 {
+  state->ker = kernel;
   gpgpu_build_sampler_table(state);
   gpgpu_build_binding_table(state);
   gpgpu_build_idrt(state, kernel, ker_n);
@@ -1014,7 +1101,7 @@ gpgpu_walker(intel_gpgpu_t *state,
 {
   BEGIN_BATCH(state->batch, 11);
   OUT_BATCH(state->batch, CMD_GPGPU_WALKER | 9);
-  OUT_BATCH(state->batch, 0);                       /* kernel index */
+  OUT_BATCH(state->batch, 0);                        /* kernel index == 0 */
   OUT_BATCH(state->batch, (1 << 30) | (thread_n-1)); /* SIMD16 | thread max */
   OUT_BATCH(state->batch, global_wk_off[0]);
   OUT_BATCH(state->batch, global_wk_sz[0]-1);
@@ -1024,6 +1111,11 @@ gpgpu_walker(intel_gpgpu_t *state,
   OUT_BATCH(state->batch, global_wk_sz[2]-1);
   OUT_BATCH(state->batch, ~0x0);
   OUT_BATCH(state->batch, ~0x0);
+  ADVANCE_BATCH(state->batch);
+
+  BEGIN_BATCH(state->batch, 2);
+  OUT_BATCH(state->batch, CMD_MEDIA_STATE_FLUSH | 0);
+  OUT_BATCH(state->batch, 0);                        /* kernel index == 0 */
   ADVANCE_BATCH(state->batch);
 }
 

@@ -737,7 +737,12 @@ cl_kernel_local_memory_sz(cl_kernel k)
 }
 
 LOCAL char*
-cl_kernel_create_cst_buffer(cl_kernel k, const size_t *global_wk_sz, const size_t *local_wk_sz)
+cl_kernel_create_cst_buffer(cl_kernel k,
+                            const size_t *global_wk_off,
+                            const size_t *global_wk_sz,
+                            const size_t *local_wk_sz,
+                            cl_uint wk_dim,
+                            cl_uint thread_n)
 {
   cl_curbe_patch_info_t *info = NULL;
   const size_t sz = k->patch.curbe.sz;
@@ -746,6 +751,17 @@ cl_kernel_create_cst_buffer(cl_kernel k, const size_t *global_wk_sz, const size_
 
   TRY_ALLOC_NO_ERR (data, (char *) cl_calloc(sz, 1));
   memcpy(data, k->cst_buffer, sz);
+
+  /* Global work group offset */
+  key = cl_curbe_key(DATA_PARAMETER_GLOBAL_WORK_OFFSET, 0, 0);
+  if ((info = cl_kernel_get_curbe_info(k, key)) != NULL)
+    memcpy(data+info->offsets[0], global_wk_off,   sizeof(uint32_t));
+  key = cl_curbe_key(DATA_PARAMETER_GLOBAL_WORK_OFFSET, 0, 4);
+  if ((info = cl_kernel_get_curbe_info(k, key)) != NULL)
+    memcpy(data+info->offsets[0], global_wk_off+1, sizeof(uint32_t));
+  key = cl_curbe_key(DATA_PARAMETER_GLOBAL_WORK_OFFSET, 0, 8);
+  if ((info = cl_kernel_get_curbe_info(k, key)) != NULL)
+    memcpy(data+info->offsets[0], global_wk_off+2, sizeof(uint32_t));
 
   /* Global work group size */
   key = cl_curbe_key(DATA_PARAMETER_GLOBAL_WORK_SIZE, 0, 0);
@@ -768,6 +784,11 @@ cl_kernel_create_cst_buffer(cl_kernel k, const size_t *global_wk_sz, const size_
   key = cl_curbe_key(DATA_PARAMETER_LOCAL_WORK_SIZE, 0, 8);
   if ((info = cl_kernel_get_curbe_info(k, key)) != NULL)
     memcpy(data+info->offsets[0], local_wk_sz+2, sizeof(uint32_t));
+
+  /* HW thread number (Gen7+) */
+  key = cl_curbe_key(DATA_PARAMETER_NUM_HARDWARE_THREADS, 0, 0);
+  if ((info = cl_kernel_get_curbe_info(k, key)) != NULL)
+    memcpy(data+info->offsets[0], &thread_n, sizeof(uint32_t));
 
 exit:
   return data;
