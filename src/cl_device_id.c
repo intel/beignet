@@ -231,3 +231,20 @@ cl_get_device_info(cl_device_id     device,
   };
 }
 
+LOCAL cl_int
+cl_device_get_version(cl_device_id device, cl_int *ver)
+{
+  if (UNLIKELY(device != &intel_snb_gt1_device &&
+               device != &intel_snb_gt2_device &&
+               device != &intel_ivb_gt1_device &&
+               device != &intel_ivb_gt2_device))
+    return CL_INVALID_DEVICE;
+  if (ver == NULL)
+    return CL_SUCCESS;
+  if (device == &intel_snb_gt1_device || device == &intel_snb_gt2_device)
+    *ver = 6;
+  else
+    *ver = 7;
+  return CL_SUCCESS;
+}
+

@@ -2,7 +2,7 @@ GEN6 := $(patsubst %.cl,%.gen6.bin,$(wildcard *.cl))
 GEN7 := $(patsubst %.cl,%.gen7.bin,$(wildcard *.cl))
 
 %.gen6.bin: %.cl
-	wine ../bin/TC_Tester.exe -f $< -dev gen7 -in cl_text -out dev_bin
+	wine ../bin/TC_Tester.exe -f $< -dev gen6 -in cl_text -out dev_bin
 
 %.gen7.bin: %.cl
 	wine ../bin/TC_Tester.exe -f $< -dev gen7 -in cl_text -out dev_bin

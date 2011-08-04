@@ -107,5 +107,8 @@ extern cl_int cl_get_device_info(cl_device_id     device,
                                  void *           param_value,
                                  size_t *         param_value_size_ret);
 
+/* Returns the Gen device ID */
+extern cl_int cl_device_get_version(cl_device_id device, cl_int *ver);
+
 #endif /* __CL_DEVICE_ID_H__ */
 

@@ -52,6 +52,10 @@ clIntelUnpinBuffer(cl_mem);
 extern CL_API_ENTRY cl_int CL_API_CALL
 clIntelSetReportBuffer(cl_command_queue, cl_mem);
 
+/* Get the generation of the Gen device (used to load the proper binary) */
+extern CL_API_ENTRY cl_int CL_API_CALL
+clIntelGetGenVersion(cl_device_id device, cl_int *ver);
+
 #ifdef __cplusplus
 }
 #endif
