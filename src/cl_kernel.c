@@ -349,7 +349,7 @@ cl_kernel_setup_patch_list(cl_kernel k, const char *patch, size_t sz)
       ASSOC_ITEM (THREAD_PAYLOAD, thread_payload, thread_payload);
 
       case PATCH_TOKEN_DATA_PARAMETER_STREAM:
-        info->curbe.sz = *(uint32_t *) patch;
+        info->curbe.sz = *(uint32_t *) (patch + sizeof(cl_patch_item_header_t));
         info->curbe.offset = 0;
       break;
       case PATCH_TOKEN_CONSTANT_MEMORY_KERNEL_ARGUMENT:
