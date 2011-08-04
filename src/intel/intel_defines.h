@@ -31,6 +31,7 @@
 #define CMD_STATE_PREFETCH                      CMD(0, 0, 3)
 #define CMD_MEDIA_GATEWAY_STATE                 CMD(2, 0, 3)
 #define CMD_MEDIA_STATE_FLUSH                   CMD(2, 0, 4)
+#define CMD_GPGPU_WALKER                        CMD(2, 1, 5)
 
 #define CMD_STATE_BASE_ADDRESS                  CMD(0, 1, 1)
 #define CMD_STATE_SIP                           CMD(0, 1, 2)
@@ -38,8 +39,8 @@
 #define CMD_SAMPLER_PALETTE_LOAD                CMD(3, 1, 2)
 
 #define CMD_MEDIA_STATE_POINTERS                CMD(2, 0, 0)
-#define CMD_MEDIA                        CMD(2, 1, 0)
-#define CMD_MEDIA_EX                     CMD(2, 1, 1)
+#define CMD_MEDIA                               CMD(2, 1, 0)
+#define CMD_MEDIA_EX                            CMD(2, 1, 1)
 
 #define CMD_PIPELINED_POINTERS                  CMD(3, 0, 0)
 #define CMD_BINDING_TABLE_POINTERS              CMD(3, 0, 1)

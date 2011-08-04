@@ -427,11 +427,12 @@ gpgpu_load_vfe_state(intel_gpgpu_t *state)
   BEGIN_BATCH(state->batch, 8);
   OUT_BATCH(state->batch, CMD_MEDIA_STATE_POINTERS | (8-2));
 
-  struct gen6_vfe_state_inline* vfe = (struct gen6_vfe_state_inline*)
+  gen6_vfe_state_inline_t* vfe = (gen6_vfe_state_inline_t*)
     intel_batchbuffer_alloc_space(state->batch,0);
 
   memset(vfe, 0, sizeof(struct gen6_vfe_state_inline));
   vfe->vfe1.fast_preempt = 1;
+  vfe->vfe1.gpgpu_mode = state->drv->gen_ver > 6 ? 1 : 0;
   vfe->vfe1.bypass_gateway_ctl = 1;
   vfe->vfe1.reset_gateway_timer = 1;
   vfe->vfe1.urb_entries = state->urb.num_vfe_entries;
@@ -441,7 +442,7 @@ gpgpu_load_vfe_state(intel_gpgpu_t *state)
 /*  vfe->vfe3.curbe_size = 63; */
 /*  vfe->vfe3.urbe_size = 13; */
   vfe->vfe4.scoreboard_enable = 1;
-  intel_batchbuffer_alloc_space(state->batch, sizeof(struct gen6_vfe_state_inline));
+  intel_batchbuffer_alloc_space(state->batch, sizeof(gen6_vfe_state_inline_t));
   ADVANCE_BATCH(state->batch);
 }
 
@@ -1002,6 +1003,28 @@ gpgpu_run_with_inline(intel_gpgpu_t *state, int32_t ki, size_t sz)
   OUT_BATCH(state->batch, 0);  /* scoreboard Y,X = 0 or just 0 in reg.0 */
   OUT_BATCH(state->batch, 0);  /* scoreboard color, mask = 0  or just 0 in reg.1 */
   return (char*) intel_batchbuffer_alloc_space(state->batch,sz);
+}
+
+LOCAL void
+gpgpu_walker(intel_gpgpu_t *state,
+             uint32_t thread_n,
+             const size_t global_wk_off[3],
+             const size_t global_wk_sz[3],
+             const size_t local_wk_sz[3])
+{
+  BEGIN_BATCH(state->batch, 11);
+  OUT_BATCH(state->batch, CMD_GPGPU_WALKER | 9);
+  OUT_BATCH(state->batch, 0);                       /* kernel index */
+  OUT_BATCH(state->batch, (1 << 30) | (thread_n-1)); /* SIMD16 | thread max */
+  OUT_BATCH(state->batch, global_wk_off[0]);
+  OUT_BATCH(state->batch, global_wk_sz[0]-1);
+  OUT_BATCH(state->batch, global_wk_off[1]);
+  OUT_BATCH(state->batch, global_wk_sz[1]-1);
+  OUT_BATCH(state->batch, global_wk_off[2]);
+  OUT_BATCH(state->batch, global_wk_sz[2]-1);
+  OUT_BATCH(state->batch, ~0x0);
+  OUT_BATCH(state->batch, ~0x0);
+  ADVANCE_BATCH(state->batch);
 }
 
 LOCAL int32_t

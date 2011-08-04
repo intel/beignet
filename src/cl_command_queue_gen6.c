@@ -47,15 +47,12 @@ typedef struct cl_local_id {
 } cl_local_id_t;
 
 static INLINE size_t
-cl_ker_compute_batch_sz(cl_kernel k,
-                        size_t wrk_dim_n,
-                        size_t wk_grp_n,
-                        size_t thread_n)
+cl_kernel_compute_batch_sz(cl_kernel k, size_t wk_grp_n, size_t thread_n)
 {
   size_t sz = 256; /* upper bound of the complete prelude */
   size_t media_obj_sz = 6 * 4; /* size of one MEDIA OBJECT */
   media_obj_sz += sizeof(cl_inline_header_t); /* header for all threads */
-  media_obj_sz += wrk_dim_n * sizeof(cl_local_id_t);/* for each dimension */ 
+  media_obj_sz += 3 * sizeof(cl_local_id_t);/* for each dimension */ 
   if (k->patch.exec_env.has_barriers)
     media_obj_sz += 4 * 4; /* one barrier update per object */
   sz += media_obj_sz * wk_grp_n * thread_n;
@@ -63,11 +60,11 @@ cl_ker_compute_batch_sz(cl_kernel k,
 }
 
 static INLINE void
-cl_command_queue_enqueue_wk_grp3(cl_command_queue queue,
-                                  cl_local_id_t **ids,
-                                  const cl_inline_header_t *header,
-                                  uint32_t thread_n,
-                                  uint32_t barrierID)
+cl_command_queue_enqueue_wk_grp(cl_command_queue queue,
+                                 cl_local_id_t **ids,
+                                 const cl_inline_header_t *header,
+                                 uint32_t thread_n,
+                                 uint32_t barrierID)
 {
   intel_gpgpu_t *gpgpu = queue->gpgpu;
   uint32_t i;
@@ -86,53 +83,10 @@ cl_command_queue_enqueue_wk_grp3(cl_command_queue queue,
   }
 }
 
-static INLINE void
-cl_command_queue_enqueue_wk_grp2(cl_command_queue queue,
-                                  cl_local_id_t **ids,
-                                  const cl_inline_header_t *header,
-                                  uint32_t thread_n,
-                                  uint32_t barrierID)
-{
-  intel_gpgpu_t *gpgpu = queue->gpgpu;
-  uint32_t i;
-  for (i = 0; i < thread_n; ++i) {
-    const size_t sz = sizeof(cl_inline_header_t) + 2*sizeof(cl_local_id_t);
-    char *data = gpgpu_run_with_inline(gpgpu, barrierID, sz);
-    size_t offset = 0;
-    assert(data);
-    *((cl_inline_header_t *) (data + offset)) = *header;
-    offset += sizeof(cl_inline_header_t);
-    *((cl_local_id_t *) (data + offset)) = ids[0][i];
-    offset += sizeof(cl_local_id_t);
-    *((cl_local_id_t *) (data + offset)) = ids[1][i];
-  }
-}
-
-static INLINE void
-cl_command_queue_enqueue_wk_grp1(cl_command_queue queue,
-                                  cl_local_id_t **ids,
-                                  const cl_inline_header_t *header,
-                                  uint32_t thread_n,
-                                  uint32_t barrierID)
-{
-  intel_gpgpu_t *gpgpu = queue->gpgpu;
-  uint32_t i;
-  for (i = 0; i < thread_n; ++i) {
-    const size_t sz = sizeof(cl_inline_header_t) + sizeof(cl_local_id_t);
-    char *data = gpgpu_run_with_inline(gpgpu, barrierID, sz);
-    size_t offset = 0;
-    assert(data);
-    *((cl_inline_header_t *) (data + offset)) = *header;
-    offset += sizeof(cl_inline_header_t);
-    *((cl_local_id_t *) (data + offset)) = ids[0][i];
-  }
-}
-
 LOCAL cl_int
 cl_command_queue_ND_range_gen6(cl_command_queue queue,
                                 cl_kernel ker,
-                                cl_uint wk_dim,
-                                const size_t *global_work_offset,
+                                const size_t *global_wk_off,
                                 const size_t *global_wk_sz,
                                 const size_t *local_wk_sz)
 {
@@ -164,7 +118,7 @@ cl_command_queue_ND_range_gen6(cl_command_queue queue,
   TRY (cl_kernel_check_args, ker);
 
   /* Check that the local work sizes are OK */
-  TRY (cl_kernel_work_group_sz, ker, local_wk_sz, wk_dim, &wk_grp_sz);
+  TRY (cl_kernel_work_group_sz, ker, local_wk_sz, 3, &wk_grp_sz);
 
   /* Directly from the user defined values */
   header.local_sz[0] = local_wk_sz[0];
@@ -176,9 +130,9 @@ cl_command_queue_ND_range_gen6(cl_command_queue queue,
   header.exec_mask = ~0;
 
   /* offsets are evenly divided by the local sizes */
-  if (global_work_offset)
-    for (i = 0; i < wk_dim; ++i)
-      offset[i] = global_work_offset[i]/local_wk_sz[i];
+  offset[0] = global_wk_off[0] / local_wk_sz[0];
+  offset[1] = global_wk_off[1] / local_wk_sz[1];
+  offset[2] = global_wk_off[2] / local_wk_sz[2];
 
   /* Compute the local size per wg and the offsets for each local buffer */
   header.local_mem_sz = cl_kernel_local_memory_sz(ker);
@@ -203,19 +157,19 @@ cl_command_queue_ND_range_gen6(cl_command_queue queue,
   if (cst_sz > 0) {
     char *data = NULL;
     assert(ker->cst_buffer);
-    data = cl_kernel_create_cst_buffer(ker,wk_dim,global_wk_sz,local_wk_sz);
+    data = cl_kernel_create_cst_buffer(ker, global_wk_sz, local_wk_sz);
     gpgpu_upload_constants(gpgpu, data, cst_sz);
     cl_free(data);
   }
 
   wk_grp_n = 1;
-  for (i = 0; i < wk_dim; ++i) {
+  for (i = 0; i < 3; ++i) {
     TRY_ALLOC (ids[i], (cl_local_id_t*) cl_malloc(wk_grp_sz*sizeof(uint16_t)));
     grp_end[i] = offset[i] + global_wk_sz[i] / local_wk_sz[i];
     wk_grp_n *= grp_end[i]-offset[i];
   }
   thread_n = wk_grp_sz / 16;
-  batch_sz = cl_ker_compute_batch_sz(ker, wk_dim, wk_grp_n, thread_n);
+  batch_sz = cl_kernel_compute_batch_sz(ker, wk_grp_n, thread_n);
 
   /* Start a new batch buffer */
   gpgpu_batch_reset(gpgpu, batch_sz);
@@ -225,48 +179,21 @@ cl_command_queue_ND_range_gen6(cl_command_queue queue,
    * Local IDs are shared from work group to work group. We allocate once the
    * buffers and reuse them
    */
-  if (wk_dim == 3) {
-    curr = 0;
-    for (i = 0; i < local_wk_sz[0]; ++i)
-    for (j = 0; j < local_wk_sz[1]; ++j)
-    for (k = 0; k < local_wk_sz[2]; ++k, ++curr) {
-      ((uint16_t*) ids[0])[curr] = i;
-      ((uint16_t*) ids[1])[curr] = j;
-      ((uint16_t*) ids[2])[curr] = k;
-    }
-    for (header.grp_n[0] = offset[0]; header.grp_n[0] < grp_end[0]; ++header.grp_n[0])
-    for (header.grp_n[1] = offset[1]; header.grp_n[1] < grp_end[1]; ++header.grp_n[1])
-    for (header.grp_n[2] = offset[2]; header.grp_n[2] < grp_end[2]; ++header.grp_n[2]) {
-      if (ker->patch.exec_env.has_barriers)
-        gpgpu_update_barrier(gpgpu, barrierID, thread_n);
-      cl_command_queue_enqueue_wk_grp3(queue, ids, &header, thread_n, barrierID);
-      barrierID = (barrierID + 1) % 16;
-    }
+  curr = 0;
+  for (i = 0; i < local_wk_sz[0]; ++i)
+  for (j = 0; j < local_wk_sz[1]; ++j)
+  for (k = 0; k < local_wk_sz[2]; ++k, ++curr) {
+    ((uint16_t*) ids[0])[curr] = i;
+    ((uint16_t*) ids[1])[curr] = j;
+    ((uint16_t*) ids[2])[curr] = k;
   }
-  else if (wk_dim == 2) {
-    curr = 0;
-    for (i = 0; i < local_wk_sz[0]; ++i)
-    for (j = 0; j < local_wk_sz[1]; ++j, ++curr) {
-      ((uint16_t*) ids[0])[curr] = i;
-      ((uint16_t*) ids[1])[curr] = j;
-    }
-    for (header.grp_n[0] = offset[0]; header.grp_n[0] < grp_end[0]; ++header.grp_n[0])
-    for (header.grp_n[1] = offset[1]; header.grp_n[1] < grp_end[1]; ++header.grp_n[1]) {
-      if (ker->patch.exec_env.has_barriers)
-        gpgpu_update_barrier(gpgpu, barrierID, thread_n);
-      cl_command_queue_enqueue_wk_grp2(queue, ids, &header, thread_n, barrierID);
-      barrierID = (barrierID + 1) % 16;
-    }
-  }
-  else {
-    for (i = 0; i < local_wk_sz[0]; ++i)
-      ((uint16_t*) ids[0])[i] = i;
-    for (header.grp_n[0] = offset[0]; header.grp_n[0] < grp_end[0]; ++header.grp_n[0]) {
-      if (ker->patch.exec_env.has_barriers)
-        gpgpu_update_barrier(gpgpu, barrierID, thread_n);
-      cl_command_queue_enqueue_wk_grp1(queue, ids, &header, thread_n, barrierID);
-      barrierID = (barrierID + 1) % 16;
-    }
+  for (header.grp_n[0] = offset[0]; header.grp_n[0] < grp_end[0]; ++header.grp_n[0])
+  for (header.grp_n[1] = offset[1]; header.grp_n[1] < grp_end[1]; ++header.grp_n[1])
+  for (header.grp_n[2] = offset[2]; header.grp_n[2] < grp_end[2]; ++header.grp_n[2]) {
+    if (ker->patch.exec_env.has_barriers)
+      gpgpu_update_barrier(gpgpu, barrierID, thread_n);
+    cl_command_queue_enqueue_wk_grp(queue, ids, &header, thread_n, barrierID);
+    barrierID = (barrierID + 1) % 16;
   }
 
   gpgpu_batch_end(gpgpu, 0);

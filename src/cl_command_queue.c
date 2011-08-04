@@ -139,7 +139,7 @@ cl_command_queue_bind_surface(cl_command_queue queue,
   }
 
   /* Allocate local surface needed for SLM and bind it */
-  if (local_sz != 0) {
+  if (local && local_sz != 0) {
     const size_t sz = 16 * local_sz; /* XXX 16 == maximum barrier number */
     assert(k->patch.local_surf.offset % SURFACE_SZ == 0);
     index = k->patch.local_surf.offset / SURFACE_SZ;
@@ -147,11 +147,11 @@ cl_command_queue_bind_surface(cl_command_queue queue,
     *local = drm_intel_bo_alloc(bufmgr, "CL local surface", sz, 64);
     gpgpu_bind_buf(gpgpu, index, *local, 0, sz, cc_llc_mlc);
   }
-  else
+  else if (local)
     *local = NULL;
 
   /* Allocate private surface and bind it */
-  if (k->patch.private_surf.size != 0) {
+  if (priv && k->patch.private_surf.size != 0) {
     const size_t sz = max_thread *
                       k->patch.private_surf.size *
                       k->patch.exec_env.largest_compiled_simd_sz;
@@ -162,11 +162,11 @@ cl_command_queue_bind_surface(cl_command_queue queue,
     *priv = drm_intel_bo_alloc(bufmgr, "CL private surface", sz, 64);
     gpgpu_bind_buf(gpgpu, index, *priv, 0, sz, cc_llc_mlc);
   }
-  else
+  else if(priv)
     *priv = NULL;
 
   /* Allocate scratch surface and bind it */
-  if (k->patch.scratch.size != 0) {
+  if (scratch && k->patch.scratch.size != 0) {
     const size_t sz = max_thread * /* XXX is it given per lane ??? */
                       k->patch.scratch.size *
                       k->patch.exec_env.largest_compiled_simd_sz;
@@ -177,7 +177,7 @@ cl_command_queue_bind_surface(cl_command_queue queue,
     *scratch = drm_intel_bo_alloc(bufmgr, "CL scratch surface", sz, 64);
     gpgpu_bind_buf(gpgpu, index, *scratch, 0, sz, cc_llc_mlc);
   }
-  else
+  else if (scratch)
     *scratch = NULL;
 
   /* Now bind a bo used for synchronization */
@@ -245,13 +245,12 @@ cl_run_fulsim(void)
 }
 #endif /* USE_FULSIM */
 
-extern cl_int cl_command_queue_ND_range_gen6(cl_command_queue, cl_kernel, cl_uint, const size_t*, const size_t*, const size_t*);
-extern cl_int cl_command_queue_ND_range_gen7(cl_command_queue, cl_kernel, cl_uint, const size_t *, const size_t *, const size_t *);
+extern cl_int cl_command_queue_ND_range_gen6(cl_command_queue, cl_kernel, const size_t*, const size_t*, const size_t*);
+extern cl_int cl_command_queue_ND_range_gen7(cl_command_queue, cl_kernel, const size_t *, const size_t *, const size_t *);
 
 LOCAL cl_int
 cl_command_queue_ND_range(cl_command_queue queue,
-                          cl_kernel ker,
-                          cl_uint wk_dim,
+                          cl_kernel k,
                           const size_t *global_wk_off,
                           const size_t *global_wk_sz,
                           const size_t *local_wk_sz)
@@ -261,19 +260,9 @@ cl_command_queue_ND_range(cl_command_queue queue,
   cl_int err = CL_SUCCESS;
 
   if (ver == 6)
-    TRY (cl_command_queue_ND_range_gen6, queue,
-                                         ker,
-                                         wk_dim,
-                                         global_wk_off,
-                                         global_wk_sz,
-                                         local_wk_sz);
+    TRY (cl_command_queue_ND_range_gen6, queue, k, global_wk_off, global_wk_sz, local_wk_sz);
   else if (ver == 7)
-    TRY (cl_command_queue_ND_range_gen7, queue,
-                                         ker,
-                                         wk_dim,
-                                         global_wk_off,
-                                         global_wk_sz,
-                                         local_wk_sz);
+    TRY (cl_command_queue_ND_range_gen7, queue, k, global_wk_off, global_wk_sz, local_wk_sz);
   else
     FATAL ("Unknown Gen Device");
 

@@ -320,10 +320,7 @@ cl_curbe_key(uint32_t type, uint32_t index, uint32_t src_offset)
 
 /* Allocate, fill and return the CURBE */
 extern char*
-cl_kernel_create_cst_buffer(cl_kernel k,
-                            cl_uint wk_dim,
-                            const size_t *global_wk_sz,
-                            const size_t *local_wk_sz);
+cl_kernel_create_cst_buffer(cl_kernel k, const size_t *global_wk_sz, const size_t *local_wk_sz);
 
 /* Compute and check the work group size from the user provided local size */
 extern cl_int

@@ -737,10 +737,7 @@ cl_kernel_local_memory_sz(cl_kernel k)
 }
 
 LOCAL char*
-cl_kernel_create_cst_buffer(cl_kernel k,
-                            cl_uint wk_dim,
-                            const size_t *global_wk_sz,
-                            const size_t *local_wk_sz)
+cl_kernel_create_cst_buffer(cl_kernel k, const size_t *global_wk_sz, const size_t *local_wk_sz)
 {
   cl_curbe_patch_info_t *info = NULL;
   const size_t sz = k->patch.curbe.sz;
@@ -783,10 +780,11 @@ error:
 LOCAL cl_int
 cl_kernel_work_group_sz(cl_kernel ker,
                         const size_t *local_wk_sz,
-                        cl_uint wk_dim,
+                        uint32_t wk_dim,
                         size_t *wk_grp_sz)
 {
   cl_int err = CL_SUCCESS;
+  size_t sz;
   cl_uint i;
 
   for (i = 0; i < wk_dim; ++i)
@@ -795,16 +793,18 @@ cl_kernel_work_group_sz(cl_kernel ker,
       err = CL_INVALID_WORK_ITEM_SIZE;
       goto error;
     }
-  *wk_grp_sz = local_wk_sz[0];
+  sz = local_wk_sz[0];
   for (i = 1; i < wk_dim; ++i)
-    *wk_grp_sz *= local_wk_sz[i];
-  FATAL_IF (*wk_grp_sz % 16, "Work group size must be a multiple of 16");
-  if (*wk_grp_sz > ker->program->ctx->device->max_work_group_size) {
+    sz *= local_wk_sz[i];
+  FATAL_IF (sz % 16, "Work group size must be a multiple of 16");
+  if (sz > ker->program->ctx->device->max_work_group_size) {
     err = CL_INVALID_WORK_ITEM_SIZE;
     goto error;
   }
 
 error:
+  if (wk_grp_sz)
+    *wk_grp_sz = sz;
   return err;
 }
 

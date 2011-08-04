@@ -909,6 +909,9 @@ clEnqueueNDRangeKernel(cl_command_queue  command_queue,
                        const cl_event *  event_wait_list,
                        cl_event *        event)
 {
+  size_t fixed_global_off[] = {0,0,0};
+  size_t fixed_global_sz[] = {1,1,1};
+  size_t fixed_local_sz[] = {16,1,1};
   cl_int err = CL_SUCCESS;
   cl_int i;
 
@@ -961,13 +964,22 @@ clEnqueueNDRangeKernel(cl_command_queue  command_queue,
   FATAL_IF(event_wait_list != NULL, "Events are not supported");
   FATAL_IF(event != NULL, "Events are not supported");
 
+  if (local_work_size != NULL)
+    for (i = 0; i < work_dim; ++i)
+      fixed_local_sz[i] = local_work_size[i];
+  if (global_work_size != NULL)
+    for (i = 0; i < work_dim; ++i)
+      fixed_global_sz[i] = global_work_size[i];
+  if (global_work_offset != NULL)
+    for (i = 0; i < work_dim; ++i)
+      fixed_global_off[i] = global_work_offset[i];
+
   /* Do device specific checks are enqueue the kernel */
   err = cl_command_queue_ND_range(command_queue,
                                   kernel,
-                                  work_dim,
-                                  global_work_offset,
-                                  global_work_size,
-                                  local_work_size);
+                                  fixed_global_off,
+                                  fixed_global_sz,
+                                  fixed_local_sz);
 
 error:
   return err;
