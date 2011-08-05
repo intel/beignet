@@ -209,10 +209,7 @@ typedef struct gen6_vfe_state_inline
   } vfe3;
 
   struct {
-    uint32_t scoreboard_mask:8;  /* 1 - enable the corresponding dependency */
-    uint32_t pad22:22;
-    uint32_t scoreboard_type:1;   /* 0 stalling, 1 - non-stalling */
-    uint32_t scoreboard_enable:1; /* 0 disabled, 1 enabled */
+    uint32_t scoreboard_mask:32;  /* 1 - enable the corresponding dependency */
   } vfe4;
 
   struct {
@@ -432,17 +429,17 @@ gpgpu_load_vfe_state(intel_gpgpu_t *state)
     intel_batchbuffer_alloc_space(state->batch,0);
 
   memset(vfe, 0, sizeof(struct gen6_vfe_state_inline));
-  vfe->vfe1.fast_preempt = 0;
   vfe->vfe1.gpgpu_mode = state->drv->gen_ver >= 7 ? 1 : 0;
   vfe->vfe1.bypass_gateway_ctl = 1;
   vfe->vfe1.reset_gateway_timer = 1;
-  vfe->vfe1.urb_entries = state->urb.num_vfe_entries;
-  vfe->vfe3.urbe_size = state->urb.size_vfe_entry;
-  vfe->vfe3.curbe_size = state->urb.size_cs_entry*state->urb.num_cs_entries;
   vfe->vfe1.max_threads = state->max_threads - 1;
-/*  vfe->vfe3.curbe_size = 63; */
-/*  vfe->vfe3.urbe_size = 13; */
-  vfe->vfe4.scoreboard_enable = 0;
+  //vfe->vfe1.urb_entries = state->urb.num_vfe_entries;
+  //vfe->vfe3.urbe_size = state->urb.size_vfe_entry;
+  //vfe->vfe3.curbe_size = state->urb.size_cs_entry*state->urb.num_cs_entries;
+  vfe->vfe1.urb_entries = 64;
+  vfe->vfe3.curbe_size = 63;
+  vfe->vfe3.urbe_size = 13;
+  vfe->vfe4.scoreboard_mask = state->drv->gen_ver >= 7 ? 0 : 0x80000000;
   intel_batchbuffer_alloc_space(state->batch, sizeof(gen6_vfe_state_inline_t));
   ADVANCE_BATCH(state->batch);
 }
