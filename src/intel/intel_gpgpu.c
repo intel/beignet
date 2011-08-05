@@ -324,11 +324,7 @@ struct intel_gpgpu
   struct opaque_sampler_state samplers[MAX_SAMPLERS];
 
   struct {
-    uint32_t vfe_start;         /* start of vfe entries in urb */
-    uint32_t cs_start;          /* start of cs entries in urb */
-    uint32_t num_vfe_entries;
     uint32_t num_cs_entries;
-    uint32_t size_vfe_entry;    /* size of one entry in 512bit elements */
     uint32_t size_cs_entry;     /* size of one entry in 512bit elements */
   } urb;
 
@@ -433,9 +429,6 @@ gpgpu_load_vfe_state(intel_gpgpu_t *state)
   vfe->vfe1.bypass_gateway_ctl = 1;
   vfe->vfe1.reset_gateway_timer = 1;
   vfe->vfe1.max_threads = state->max_threads - 1;
-  //vfe->vfe1.urb_entries = state->urb.num_vfe_entries;
-  //vfe->vfe3.urbe_size = state->urb.size_vfe_entry;
-  //vfe->vfe3.curbe_size = state->urb.size_cs_entry*state->urb.num_cs_entries;
   vfe->vfe1.urb_entries = 64;
   vfe->vfe3.curbe_size = 63;
   vfe->vfe3.urbe_size = 13;
@@ -606,12 +599,8 @@ gpgpu_state_init(intel_gpgpu_t *state,
   int32_t i;
 
   /* URB */
-  state->urb.vfe_start = 0;
-  state->urb.num_vfe_entries = num_vfe_entries;
-  state->urb.size_vfe_entry = size_vfe_entry;
   state->urb.num_cs_entries = num_cs_entries;
   state->urb.size_cs_entry = size_cs_entry;
-  state->urb.cs_start = state->urb.vfe_start + state->urb.num_vfe_entries * state->urb.size_vfe_entry;
   state->max_threads = max_threads;
 
   /* constant buffer */
