@@ -138,7 +138,7 @@ cl_command_queue_ND_range_gen7(cl_command_queue queue,
   TRY (cl_set_local_ids, data, local_wk_sz, cst_sz, id_offset, thread_n);
 
   /* Setup the kernel */
-  gpgpu_state_init(gpgpu, ctx->device->max_compute_unit, 4, 64, cst_sz / 32, 64);
+  gpgpu_state_init(gpgpu, ctx->device->max_compute_unit, cst_sz / 32, 64);
   if (queue->last_batch != NULL)
     drm_intel_bo_unreference(queue->last_batch);
   queue->last_batch = NULL;

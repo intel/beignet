@@ -590,8 +590,6 @@ gpgpu_flush(intel_gpgpu_t *state)
 LOCAL void
 gpgpu_state_init(intel_gpgpu_t *state,
                  uint32_t max_threads,
-                 uint32_t size_vfe_entry,
-                 uint32_t num_vfe_entries,
                  uint32_t size_cs_entry,
                  uint32_t num_cs_entries)
 {
