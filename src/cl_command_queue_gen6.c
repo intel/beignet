@@ -186,9 +186,9 @@ cl_command_queue_ND_range_gen6(cl_command_queue queue,
    * buffers and reuse them
    */
   curr = 0;
-  for (i = 0; i < local_wk_sz[0]; ++i)
+  for (k = 0; k < local_wk_sz[2]; ++k)
   for (j = 0; j < local_wk_sz[1]; ++j)
-  for (k = 0; k < local_wk_sz[2]; ++k, ++curr) {
+  for (i = 0; i < local_wk_sz[0]; ++i, ++curr) {
     ((uint16_t*) ids[0])[curr] = i;
     ((uint16_t*) ids[1])[curr] = j;
     ((uint16_t*) ids[2])[curr] = k;

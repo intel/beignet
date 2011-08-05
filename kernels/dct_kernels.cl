@@ -59,11 +59,10 @@ void DCT(__global float * output,
     {
         uint index1 = (inverse)? i*blockWidth + k : k * blockWidth + i;
         uint index2 = getIdx(groupIdx, groupIdy, j, k, blockWidth, width);
-        
         acc += dct8x8[index1] * input[index2];
     }
-    inter[j*blockWidth + i] = acc;
 
+    inter[j*blockWidth + i] = acc;
     /* 
      * Make sure all the values of inter that belong to a block 
      * are calculated before proceeding further 
@@ -81,6 +80,6 @@ void DCT(__global float * output,
         acc += inter[index1] * dct8x8[index2];
     }
 
-    output[idx] = acc;    
+    output[idx] = acc;
 }
 

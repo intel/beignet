@@ -9,7 +9,7 @@
 __kernel void mmmKernel(__global float4 *matrixA,
                         __global float4 *matrixB,
                         __global float4* matrixC,
-            uint widthA, uint widthB)
+                        uint widthA, uint widthB)
 {
     int2 pos = (int2)(get_global_id(0), get_global_id(1));
 

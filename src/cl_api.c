@@ -1124,6 +1124,5 @@ clFulsimSetOutputBuffer(cl_command_queue queue, cl_mem mem)
   err = cl_command_queue_set_fulsim_buffer(queue, mem);
 error:
   return err;
-
 }
 

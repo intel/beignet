@@ -55,12 +55,12 @@ cl_set_local_ids(char *data,
     TRY_ALLOC(ids[i], (uint16_t*) cl_calloc(sizeof(uint16_t), thread_n*16));
 
   /* Compute the IDs */
-  for (i = 0; i < local_wk_sz[0]; ++i)
+  for (k = 0; k < local_wk_sz[2]; ++k)
   for (j = 0; j < local_wk_sz[1]; ++j)
-  for (k = 0; k < local_wk_sz[2]; ++k, ++curr) {
-    ((uint16_t*) ids[0])[curr] = i;
-    ((uint16_t*) ids[1])[curr] = j;
-    ((uint16_t*) ids[2])[curr] = k;
+  for (i = 0; i < local_wk_sz[0]; ++i, ++curr) {
+    ids[0][curr] = i;
+    ids[1][curr] = j;
+    ids[2][curr] = k;
   }
 
   /* Copy them to the constant buffer */
@@ -70,7 +70,7 @@ cl_set_local_ids(char *data,
     uint16_t *ids0 = (uint16_t *) (data +  0);
     uint16_t *ids1 = (uint16_t *) (data + 32);
     uint16_t *ids2 = (uint16_t *) (data + 64);
-    for (j = 0; j < 16; ++j, ++curr) {/* SIMD16 */
+    for (j = 0; j < 16; ++j, ++curr) {
       ids0[j] = ids[0][curr];
       ids1[j] = ids[1][curr];
       ids2[j] = ids[2][curr];

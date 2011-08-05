@@ -82,6 +82,10 @@ cl_command_queue_delete(cl_command_queue queue)
     if (queue->next == NULL && queue->prev == NULL)
       queue->ctx->queues = NULL;
   pthread_mutex_unlock(&queue->ctx->queue_lock);
+  if (queue->fulsim_out != NULL) {
+    cl_mem_delete(queue->fulsim_out);
+    queue->fulsim_out = NULL;
+  }
   cl_mem_delete(queue->perf);
   cl_context_delete(queue->ctx);
   intel_gpgpu_delete(queue->gpgpu);
@@ -292,21 +296,18 @@ LOCAL cl_int
 cl_command_queue_set_fulsim_buffer(cl_command_queue queue, cl_mem mem)
 {
 #if USE_FULSIM
-  cl_context ctx = queue->ctx;
-  drm_intel_bufmgr *bufmgr = cl_context_get_intel_bufmgr(ctx);
-  drm_intel_aub_set_bo_to_dump(bufmgr, mem->bo);
-#endif /* USE_FULSIM */
-
-  queue->fulsim_out = mem;
   if (queue->fulsim_out != NULL) {
     cl_mem_delete(queue->fulsim_out);
     queue->fulsim_out = NULL;
   }
   if (mem != NULL) {
+    cl_context ctx = queue->ctx;
+    drm_intel_bufmgr *bufmgr = cl_context_get_intel_bufmgr(ctx);
+    drm_intel_aub_set_bo_to_dump(bufmgr, mem->bo);
     cl_mem_add_ref(mem);
     queue->fulsim_out = mem;
   }
-
+#endif /* USE_FULSIM */
   return CL_SUCCESS;
 }
 

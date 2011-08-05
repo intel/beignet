@@ -1099,16 +1099,22 @@ gpgpu_walker(intel_gpgpu_t *state,
              const size_t global_wk_sz[3],
              const size_t local_wk_sz[3])
 {
+  const uint32_t global_wk_dim[3] = {
+    global_wk_sz[0] / local_wk_sz[0],
+    global_wk_sz[1] / local_wk_sz[1],
+    global_wk_sz[2] / local_wk_sz[2]
+  };
+
   BEGIN_BATCH(state->batch, 11);
   OUT_BATCH(state->batch, CMD_GPGPU_WALKER | 9);
   OUT_BATCH(state->batch, 0);                        /* kernel index == 0 */
   OUT_BATCH(state->batch, (1 << 30) | (thread_n-1)); /* SIMD16 | thread max */
   OUT_BATCH(state->batch, global_wk_off[0]);
-  OUT_BATCH(state->batch, global_wk_sz[0]-1);
+  OUT_BATCH(state->batch, global_wk_dim[0]);
   OUT_BATCH(state->batch, global_wk_off[1]);
-  OUT_BATCH(state->batch, global_wk_sz[1]-1);
+  OUT_BATCH(state->batch, global_wk_dim[1]);
   OUT_BATCH(state->batch, global_wk_off[2]);
-  OUT_BATCH(state->batch, global_wk_sz[2]-1);
+  OUT_BATCH(state->batch, global_wk_dim[2]);
   OUT_BATCH(state->batch, ~0x0);
   OUT_BATCH(state->batch, ~0x0);
   ADVANCE_BATCH(state->batch);
