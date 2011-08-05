@@ -590,22 +590,21 @@ gpgpu_flush(intel_gpgpu_t *state)
 LOCAL void
 gpgpu_state_init(intel_gpgpu_t *state,
                  uint32_t max_threads,
-                 uint32_t size_cs_entry,
-                 uint32_t num_cs_entries)
+                 uint32_t size_cs_entry)
 {
   dri_bo *bo;
   int32_t i;
 
   /* URB */
-  state->urb.num_cs_entries = num_cs_entries;
+  state->urb.num_cs_entries = 64;
   state->urb.size_cs_entry = size_cs_entry;
   state->max_threads = max_threads;
 
   /* constant buffer */
   if(state->curbe_b.bo)
     dri_bo_unreference(state->curbe_b.bo);
-  uint32_t size_cb = state->urb.num_cs_entries * state->urb.size_cs_entry * (512/8);
-  size_cb = (size_cb + (4096 - 1)) & (~(4096-1)); /* roundup to 4K */
+  uint32_t size_cb = state->urb.num_cs_entries * state->urb.size_cs_entry * 64;
+  size_cb = ALIGN(size_cb, 4096);
   bo = dri_bo_alloc(state->drv->bufmgr,
                     "CONSTANT_BUFFER",
                     size_cb,

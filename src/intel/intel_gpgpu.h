@@ -105,10 +105,7 @@ extern void gpgpu_bind_buf(intel_gpgpu_t*,
                            uint32_t cchint);
 
 /* Configure state, size in 512-bit units */
-extern void gpgpu_state_init(intel_gpgpu_t*,
-                             uint32_t max_threads,
-                             uint32_t size_cs_entry,
-                             uint32_t num_cs_entries);
+extern void gpgpu_state_init(intel_gpgpu_t*, uint32_t max_threads, uint32_t size_cs_entry);
 
 /* Set the buffer object where to report performance counters */
 extern void gpgpu_set_perf_counters(intel_gpgpu_t*, struct _drm_intel_bo *perf);
