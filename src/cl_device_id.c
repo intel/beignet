@@ -110,25 +110,27 @@ cl_get_device_ids(cl_platform_id    platform,
                   cl_uint *         num_devices)
 {
   /* Check parameter consistency */
-  if (UNLIKELY(num_entries == 0 && devices == NULL))
+  if (UNLIKELY(num_entries == 0 && devices == NULL && num_devices == NULL))
     return CL_SUCCESS;
-  if (UNLIKELY(devices == NULL))
+  if (UNLIKELY(devices == NULL && num_devices == NULL))
     return CL_INVALID_VALUE;
   if (UNLIKELY(platform != NULL && platform != intel_platform))
     return CL_INVALID_PLATFORM;
-  if (UNLIKELY(device_type == CL_DEVICE_TYPE_CPU))
-    return CL_INVALID_DEVICE_TYPE;
+  if (num_devices && (device_type == CL_DEVICE_TYPE_CPU)) {
+ 	*num_devices = 0;
+	return CL_SUCCESS;	
+  }
 
   /* Detect our device (reject a non intel one or gen<6) */
-  if (UNLIKELY((*devices = cl_get_gt_device()) != NULL)) {
+  if (devices && UNLIKELY((*devices = cl_get_gt_device()) != NULL)) {
     if (num_devices)
       *num_devices = 1;
     return CL_SUCCESS;
   }
   else {
     if (num_devices)
-      *num_devices = 0;
-    return CL_DEVICE_NOT_FOUND;
+      *num_devices = 1;
+    return CL_SUCCESS;
   }
 }
 

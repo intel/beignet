@@ -45,10 +45,10 @@ typedef cl_uint     cl_gl_platform_info;
 typedef struct __GLsync *cl_GLsync;
 
 /* cl_gl_object_type */
-#define CL_GL_BUFFER             0x2000
-#define CL_GL_TEXTURE2D          0x2001
-#define CL_GL_TEXTURE3D          0x2002
-#define CL_GL_RENDERBUFFER       0x2003
+#define CL_GL_OBJECT_BUFFER             0x2000
+#define CL_GL_OBJECT_TEXTURE2D          0x2001
+#define CL_GL_OBJECT_TEXTURE3D          0x2002
+#define CL_GL_OBJECT_RENDERBUFFER       0x2003
 
 /* cl_gl_texture_info */
 #define CL_GL_TEXTURE_TARGET            0x2004

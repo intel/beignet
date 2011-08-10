@@ -99,7 +99,7 @@ typedef double                  cl_double;
 #define CL_FLT_RADIX        2
 #define CL_FLT_MAX          340282346638528859811704183484516925440.0f
 #define CL_FLT_MIN          1.175494350822287507969e-38f
-#define CL_FLT_EPSILON      0x1.0p-23f
+#define CL_FLT_EPSILON      MAKE_HEX_DOUBLE(0x1.0p-23f, 0x1L, -23)
 
 #define CL_DBL_DIG          15
 #define CL_DBL_MANT_DIG     53

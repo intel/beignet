@@ -22,7 +22,9 @@
 #ifndef __OPENCL_CL_D3D10_H
 #define __OPENCL_CL_D3D10_H
 
+#ifdef __D3D10__
 #include <d3d10.h>
+#endif
 #include <CL/cl.h>
 #include <CL/cl_platform.h>
 
@@ -64,10 +66,15 @@ typedef cl_uint cl_d3d10_device_set_khr;
 #define CL_IMAGE_D3D10_SUBRESOURCE_KHR               0x4016
 
 // cl_command_type
-#define CL_COMMAND_ACQUIRE_D3D10S_KHR         0x4017
-#define CL_COMMAND_RELEASE_D3D10S_KHR         0x4018
+#define CL_COMMAND_ACQUIRE_D3D10_OBJECTS_KHR         0x4017
+#define CL_COMMAND_RELEASE_D3D10_OBJECTS_KHR         0x4018
 
 /******************************************************************************/
+#ifndef __D3D10__
+typedef struct {int i;} ID3D10Buffer;
+typedef struct {int i;} ID3D10Texture2D;
+typedef struct {int i;} ID3D10Texture3D;
+#endif
 
 typedef CL_API_ENTRY cl_int (CL_API_CALL *clGetDeviceIDsFromD3D10KHR_fn)(
     cl_platform_id             platform,

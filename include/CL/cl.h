@@ -138,7 +138,7 @@ typedef struct _cl_buffer_region {
 #define CL_INVALID_EVENT_WAIT_LIST                  -57
 #define CL_INVALID_EVENT                            -58
 #define CL_INVALID_OPERATION                        -59
-#define CL_INVALID_GL                        -60
+#define CL_INVALID_GL_OBJECT                        -60
 #define CL_INVALID_BUFFER_SIZE                      -61
 #define CL_INVALID_MIP_LEVEL                        -62
 #define CL_INVALID_GLOBAL_WORK_SIZE                 -63
@@ -312,9 +312,9 @@ typedef struct _cl_buffer_region {
 #define CL_FLOAT                                    0x10DE
 
 /* cl_mem_type */
-#define CL_MEM_BUFFER                        0x10F0
-#define CL_MEM_IMAGE2D                       0x10F1
-#define CL_MEM_IMAGE3D                       0x10F2
+#define CL_MEM_OBJECT_BUFFER                        0x10F0
+#define CL_MEM_OBJECT_IMAGE2D                       0x10F1
+#define CL_MEM_OBJECT_IMAGE3D                       0x10F2
 
 /* cl_mem_info */
 #define CL_MEM_TYPE                                 0x1100
@@ -413,10 +413,10 @@ typedef struct _cl_buffer_region {
 #define CL_COMMAND_COPY_BUFFER_TO_IMAGE             0x11FA
 #define CL_COMMAND_MAP_BUFFER                       0x11FB
 #define CL_COMMAND_MAP_IMAGE                        0x11FC
-#define CL_COMMAND_UNMAP_MEM                 0x11FD
+#define CL_COMMAND_UNMAP_MEM_OBJECT                 0x11FD
 #define CL_COMMAND_MARKER                           0x11FE
-#define CL_COMMAND_ACQUIRE_GLS               0x11FF
-#define CL_COMMAND_RELEASE_GLS               0x1200
+#define CL_COMMAND_ACQUIRE_GL_OBJECTS               0x11FF
+#define CL_COMMAND_RELEASE_GL_OBJECTS               0x1200
 #define CL_COMMAND_READ_BUFFER_RECT                 0x1201
 #define CL_COMMAND_WRITE_BUFFER_RECT                0x1202
 #define CL_COMMAND_COPY_BUFFER_RECT                 0x1203
