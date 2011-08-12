@@ -101,7 +101,7 @@ cl_command_queue_add_ref(cl_command_queue queue)
 
 #define SURFACE_SZ 32
 
-extern cl_int
+LOCAL cl_int
 cl_command_queue_bind_surface(cl_command_queue queue,
                               cl_kernel k,
                               drm_intel_bo **local, 
@@ -228,7 +228,11 @@ error:
 }
 
 #if USE_FULSIM
-LOCAL void
+extern void drm_intel_bufmgr_gem_stop_aubfile(drm_intel_bufmgr*);
+extern void drm_intel_bufmgr_gem_set_aubfile(drm_intel_bufmgr*, FILE*);
+extern void aub_exec_dump_raw_file(drm_intel_bo*);
+
+static void
 cl_run_fulsim(void)
 {
   const char *run_it = getenv("OCL_FULSIM_RUN");
@@ -247,6 +251,156 @@ cl_run_fulsim(void)
     system("wine AubLoad.exe dump.aub -device ivb2 -debug");
 #endif
 }
+
+static cl_int
+cl_fulsim_dump_all_surfaces(cl_command_queue queue, cl_kernel k)
+{
+  cl_mem mem = NULL;
+  cl_int err = CL_SUCCESS;
+  int i;
+
+  /* Bind user defined surface */
+  for (i = 0; i < k->arg_info_n; ++i) {
+    if (k->arg_info[i].type != OCLRT_ARG_TYPE_BUFFER)
+      continue;
+    mem = (cl_mem) k->args[k->arg_info[i].arg_index];
+    CHECK_MEM(mem);
+    aub_exec_dump_raw_file(mem->bo);
+  }
+error:
+  return err;
+}
+
+struct bmphdr {
+  //   2 bytes of magic here, "BM", total header size is 54 bytes!
+  int filesize;		//   4 total file size incl header
+  short as0, as1;		//   8 app specific
+  int bmpoffset;		//  12 ofset of bmp data 
+  int headerbytes;	//  16 bytes in header from this point (40 actually)
+  int width;		//  20 
+  int height;		//  24 
+  short nplanes;		//  26 no of color planes
+  short bpp;		//  28 bits/pixel
+  int compression;	//  32 BI_RGB = 0 = no compression
+  int sizeraw;		//  36 size of raw bmp file, excluding header, incl padding
+  int hres;		//  40 horz resolutions pixels/meter
+  int vres;		//  44
+  int npalcolors;		//  48 No of colors in palette
+  int nimportant;		//  52 No of important colors
+  // raw b, g, r data here, dword aligned per scan line
+};
+
+static int*
+cl_read_bmp(const char *filename, int *width, int *height)
+{
+  int n;
+  struct bmphdr hdr;
+
+  FILE *fp = fopen(filename, "rb");
+  assert(fp);
+
+  char magic[2];
+  n = fread(&magic[0], 1, 2, fp);
+  assert(n == 2 && magic[0] == 'B' && magic[1] == 'M');
+
+  n = fread(&hdr, 1, sizeof(hdr), fp);
+  assert(n == sizeof(hdr));
+
+#define DEBUG 1
+#ifdef	DEBUG
+  // Dump stuff out
+  printf("   filesize = %d\n", hdr.filesize);	// total file size incl header
+  printf("        as0 = %d\n", hdr.as0);
+  printf("        as1 = %d\n", hdr.as1);
+  printf("  bmpoffset = %d\n", hdr.bmpoffset);	// ofset of bmp data 
+  printf("headerbytes = %d\n", hdr.headerbytes);	// bytes in header from this point (40 actually)
+  printf("      width = %d\n", hdr.width);
+  printf("     height = %d\n", hdr.height);
+  printf("    nplanes = %d\n", hdr.nplanes);	// no of color planes
+  printf("        bpp = %d\n", hdr.bpp);	// bits/pixel
+  printf("compression = %d\n", hdr.compression);	// BI_RGB = 0 = no compression
+  printf("    sizeraw = %d\n", hdr.sizeraw);	// size of raw bmp file, excluding header, incl padding
+  printf("       hres = %d\n", hdr.hres);	// horz resolutions pixels/meter
+  printf("       vres = %d\n", hdr.vres);
+  printf(" npalcolors = %d\n", hdr.npalcolors);	// No of colors in palette
+  printf(" nimportant = %d\n", hdr.nimportant);	// No of important colors
+#endif
+  assert(hdr.width > 0 && hdr.height > 0 && hdr.nplanes == 1
+      && hdr.compression == 0);
+
+  int *rgb32 = (int *) cl_malloc(hdr.width * hdr.height * sizeof(int));
+  assert(rgb32);
+  int x, y;
+
+  int *dst = rgb32;
+  for (y = 0; y < hdr.height; y++) {
+    for (x = 0; x < hdr.width; x++) {
+      assert(!feof(fp));
+      int b = (getc(fp) & 0x0ff);
+      int g = (getc(fp) & 0x0ff);
+      int r = (getc(fp) & 0x0ff);
+      *dst++ = (r | (g << 8) | (b << 16) | 0xff000000);	/* abgr */
+    }
+    while (x & 3) {
+      getc(fp);
+      x++;
+    }		// each scanline padded to dword
+    // printf("read row %d\n", y);
+    // fflush(stdout);
+  }
+  fclose(fp);
+  *width = hdr.width;
+  *height = hdr.height;
+  return rgb32;
+}
+
+static char*
+cl_read_dump(const char *name, size_t *size)
+{
+  char *raw = NULL, *dump = NULL;
+  size_t i, sz;
+  int w, h;
+  if ((raw = (char*) cl_read_bmp(name, &w, &h)) == NULL)
+    return NULL;
+  sz = w * h;
+  dump = (char*) cl_malloc(sz);
+  assert(dump);
+  for (i = 0; i < sz; ++i)
+    dump[i] = raw[4*i];
+  cl_free(raw);
+  if (size)
+    *size = sz;
+  return dump;
+}
+
+static cl_int
+cl_fulsim_read_all_surfaces(cl_command_queue queue, cl_kernel k)
+{
+  cl_mem mem = NULL;
+  char *from = NULL, *to = NULL;
+  size_t size;
+  cl_int err = CL_SUCCESS;
+  char name[256];
+  int i, curr = 0;
+
+  /* Bind user defined surface */
+  for (i = 0; i < k->arg_info_n; ++i) {
+    if (k->arg_info[i].type != OCLRT_ARG_TYPE_BUFFER)
+      continue;
+    mem = (cl_mem) k->args[k->arg_info[i].arg_index];
+    CHECK_MEM(mem);
+    assert(mem->bo);
+    sprintf(name, "dump%03i.bmp", curr);
+    from = cl_read_dump(name, &size);
+    to = cl_mem_map(mem);
+    memcpy(to, from, mem->bo->size);
+    cl_mem_unmap(mem);
+    cl_free(from);
+    curr++;
+  }
+error:
+  return err;
+}
 #endif /* USE_FULSIM */
 
 extern cl_int cl_command_queue_ND_range_gen6(cl_command_queue, cl_kernel, const size_t*, const size_t*, const size_t*);
@@ -263,6 +417,14 @@ cl_command_queue_ND_range(cl_command_queue queue,
   const int32_t ver = intel_gpgpu_version(gpgpu);
   cl_int err = CL_SUCCESS;
 
+#if USE_FULSIM
+  drm_intel_bufmgr *bufmgr = NULL;
+  FILE *file = fopen("dump.aub", "wb");
+  FATAL_IF (file == NULL, "Unable to open file dump.aub");
+  bufmgr = cl_context_get_intel_bufmgr(queue->ctx);
+  drm_intel_bufmgr_gem_set_aubfile(bufmgr, file);
+#endif /* USE_FULSIM */
+
   if (ver == 6)
     TRY (cl_command_queue_ND_range_gen6, queue, k, global_wk_off, global_wk_sz, local_wk_sz);
   else if (ver == 7)
@@ -271,7 +433,15 @@ cl_command_queue_ND_range(cl_command_queue queue,
     FATAL ("Unknown Gen Device");
 
 #if USE_FULSIM
+  //if (queue->fulsim_out)
+  //  aub_exec_dump_raw_file(queue->fulsim_out->bo);
+#if 1
+  TRY (cl_fulsim_dump_all_surfaces, queue, k);
+  drm_intel_bufmgr_gem_stop_aubfile(bufmgr);
+  fclose(file);
   cl_run_fulsim();
+  TRY (cl_fulsim_read_all_surfaces, queue, k);
+#endif
 #endif /* USE_FULSIM */
 
 error:
@@ -289,25 +459,23 @@ cl_command_queue_finish(cl_command_queue queue)
   return CL_SUCCESS;
 }
 
-/* We added this function in libdrm_intel to dump a binary buffer */
-extern int drm_intel_aub_set_bo_to_dump(drm_intel_bufmgr*, drm_intel_bo*);
-
 LOCAL cl_int
 cl_command_queue_set_fulsim_buffer(cl_command_queue queue, cl_mem mem)
 {
-#if USE_FULSIM
+#if 0//USE_FULSIM
   if (queue->fulsim_out != NULL) {
     cl_mem_delete(queue->fulsim_out);
     queue->fulsim_out = NULL;
   }
   if (mem != NULL) {
-    cl_context ctx = queue->ctx;
-    drm_intel_bufmgr *bufmgr = cl_context_get_intel_bufmgr(ctx);
-    drm_intel_aub_set_bo_to_dump(bufmgr, mem->bo);
+//    cl_context ctx = queue->ctx;
+//    drm_intel_bufmgr *bufmgr = cl_context_get_intel_bufmgr(ctx);
+//    drm_intel_aub_set_bo_to_dump(bufmgr, mem->bo);
     cl_mem_add_ref(mem);
     queue->fulsim_out = mem;
   }
 #endif /* USE_FULSIM */
   return CL_SUCCESS;
 }
+
 
