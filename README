@@ -65,17 +65,18 @@ located in https://subversion.jf.intel.com/cag/gen/gpgpu/fulsim/
 
 - Copy fulsim executables you use where you are going to run the tests
 
-- Setup variable environments for your emulated  machine. I put a short script
-to emulate IVB at the root of miniCL. So just type:
-source setup_fulsim.sh LIVE_DEBUG
-LIVE_DEBUG is 0 or 1. When set to 0, the code just runs without stopping. When
-setting 1, the fulsim debugger is opened and you can step into the code and
-debug it easily
-
 - You need to get a specific version of libdrm which is able to output AUB
 files. Take it from:
 https://subversion.jf.intel.com/cag/gen/gpgpu/libdrm_fulsim/
 Then, compile it and install it
+
+- Setup variable environments for your emulated machine. I put a short script
+to emulate IVB at the root of miniCL. So just type:
+source setup_fulsim.sh LIVE_DEBUG
+LIVE_DEBUG is 0 or 1. When set to 0, the code just runs without stopping. When
+setting 1, the fulsim debugger is opened and you can step into the code and
+debug it easily. Just look at the script: it is nothing more than setting
+variables
 
 - Now run a test like:
 ./test_copy_buffer
