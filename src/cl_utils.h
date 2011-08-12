@@ -178,6 +178,7 @@ do {                                                        \
 do {                                                        \
   fprintf(stderr, "error: ");                               \
   fprintf(stderr, __VA_ARGS__);                             \
+  fprintf(stderr, "\n");                                    \
   assert(0);                                                \
   exit(-1);                                                 \
 } while (0)

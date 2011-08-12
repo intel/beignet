@@ -1112,17 +1112,3 @@ clIntelGetGenVersion(cl_device_id device, cl_int *ver)
   return cl_device_get_version(device, ver);
 }
 
-cl_int
-clFulsimSetOutputBuffer(cl_command_queue queue, cl_mem mem)
-{
-  cl_int err = CL_SUCCESS;
-  CHECK_QUEUE (queue);
-  if (mem != NULL && mem->magic != CL_MAGIC_MEM_HEADER) {
-    err = CL_INVALID_MEM;
-    goto error;
-  }
-  err = cl_command_queue_set_fulsim_buffer(queue, mem);
-error:
-  return err;
-}
-

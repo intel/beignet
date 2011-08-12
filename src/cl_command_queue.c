@@ -433,15 +433,11 @@ cl_command_queue_ND_range(cl_command_queue queue,
     FATAL ("Unknown Gen Device");
 
 #if USE_FULSIM
-  //if (queue->fulsim_out)
-  //  aub_exec_dump_raw_file(queue->fulsim_out->bo);
-#if 1
   TRY (cl_fulsim_dump_all_surfaces, queue, k);
   drm_intel_bufmgr_gem_stop_aubfile(bufmgr);
   fclose(file);
   cl_run_fulsim();
   TRY (cl_fulsim_read_all_surfaces, queue, k);
-#endif
 #endif /* USE_FULSIM */
 
 error:
@@ -458,24 +454,4 @@ cl_command_queue_finish(cl_command_queue queue)
   queue->last_batch = NULL;
   return CL_SUCCESS;
 }
-
-LOCAL cl_int
-cl_command_queue_set_fulsim_buffer(cl_command_queue queue, cl_mem mem)
-{
-#if 0//USE_FULSIM
-  if (queue->fulsim_out != NULL) {
-    cl_mem_delete(queue->fulsim_out);
-    queue->fulsim_out = NULL;
-  }
-  if (mem != NULL) {
-//    cl_context ctx = queue->ctx;
-//    drm_intel_bufmgr *bufmgr = cl_context_get_intel_bufmgr(ctx);
-//    drm_intel_aub_set_bo_to_dump(bufmgr, mem->bo);
-    cl_mem_add_ref(mem);
-    queue->fulsim_out = mem;
-  }
-#endif /* USE_FULSIM */
-  return CL_SUCCESS;
-}
-
 
