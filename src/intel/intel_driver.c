@@ -166,8 +166,10 @@ intel_driver_close(intel_driver_t *intel)
 {
   if(intel->dri_ctx) dri_state_release(intel->dri_ctx);
   if(intel->x11_display) XCloseDisplay(intel->x11_display);
+  if(intel->fd) close(intel->fd);
   intel->dri_ctx = NULL;
   intel->x11_display = NULL;
+  intel->fd = NULL;
 }
 
 LOCAL int
