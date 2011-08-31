@@ -574,8 +574,11 @@ clGetKernelWorkGroupInfo(cl_kernel                   kernel,
                          void *                      param_value,
                          size_t *                    param_value_size_ret)
 {
-  NOT_IMPLEMENTED;
-  return 0;
+  return cl_get_kernel_workgroup_info(device, 
+					param_name, 
+					param_value_size, 
+					param_value, 
+					param_value_size_ret);
 }
 
 cl_int
@@ -680,8 +683,10 @@ clEnqueueReadBuffer(cl_command_queue command_queue,
                     const cl_event * event_wait_list,
                     cl_event *       event)
 {
-  NOT_IMPLEMENTED;
-  return 0;
+	cl_int err = CL_SUCCESS;
+	assert(ptr != NULL);
+	ptr = clIntelMapBuffer(buffer, &err);
+	return err;
 }
 
 cl_int

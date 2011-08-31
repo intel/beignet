@@ -34,7 +34,10 @@ static struct _cl_device_id intel_snb_gt2_device = {
   .max_work_item_sizes = {512, 512, 512},
   .max_work_group_size = 512,
   .max_clock_frequency = 1350,
-
+  /* Does not really belong here, but for now this seems the most
+   * natural place to put it */
+   .wg_sz = 512,
+   .compile_wg_sz = {0},	
   #include "cl_gen6_device.h"
 };
 
@@ -43,6 +46,8 @@ static struct _cl_device_id intel_snb_gt1_device = {
   .max_work_item_sizes = {256, 256, 256},
   .max_work_group_size = 256,
   .max_clock_frequency = 1000,
+  .wg_sz = 256,
+  .compile_wg_sz = {0},	
 
   #include "cl_gen6_device.h"
 };
@@ -53,6 +58,8 @@ static struct _cl_device_id intel_ivb_gt2_device = {
   .max_work_group_size = 512,
   .max_clock_frequency = 1000,
 
+   .wg_sz = 1024,
+   .compile_wg_sz = {0},	
   #include "cl_gen7_device.h"
 };
 
@@ -61,6 +68,8 @@ static struct _cl_device_id intel_ivb_gt1_device = {
   .max_work_item_sizes = {512, 512, 512},
   .max_work_group_size = 512,
   .max_clock_frequency = 1000,
+  .wg_sz = 512,
+  .compile_wg_sz = {0},	
 
   #include "cl_gen7_device.h"
 };
@@ -249,4 +258,38 @@ cl_device_get_version(cl_device_id device, cl_int *ver)
     *ver = 7;
   return CL_SUCCESS;
 }
+#undef DECL_FIELD
+#define DECL_FIELD(CASE,FIELD)                                      \
+  case JOIN(CL_KERNEL_,CASE):                                       \
+      if (param_value_size < sizeof(((cl_device_id)NULL)->FIELD))   \
+        return CL_INVALID_VALUE;                                    \
+      if (param_value_size_ret != NULL)                             \
+        *param_value_size_ret = sizeof(((cl_device_id)NULL)->FIELD);\
+      memcpy(param_value,                                           \
+             &device->FIELD,                                        \
+             sizeof(((cl_device_id)NULL)->FIELD));                  \
+        return CL_SUCCESS;
 
+LOCAL cl_int cl_get_kernel_workgroup_info(
+				cl_device_id device,
+				cl_kernel_work_group_info param_name,
+				size_t param_value_size,
+				void* param_value,
+				size_t* param_value_size_ret)
+{
+	if (UNLIKELY(device != &intel_snb_gt1_device &&
+			device != &intel_snb_gt2_device &&
+			device != &intel_ivb_gt1_device &&
+			device != &intel_ivb_gt2_device))
+		return CL_INVALID_DEVICE;
+	if (UNLIKELY(param_value == NULL))
+		return CL_INVALID_VALUE;
+	
+	switch (param_name) {
+		DECL_FIELD(WORK_GROUP_SIZE, wg_sz)
+		DECL_FIELD(COMPILE_WORK_GROUP_SIZE, compile_wg_sz)
+		default: return CL_INVALID_VALUE;
+	};
+
+
+}

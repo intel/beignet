@@ -73,13 +73,16 @@ cl_mem_new(cl_context ctx,
     err = CL_MEM_ALLOCATION_FAILURE;
     goto error;
   }
-
   /* Copy the data if required */
   if (flags & CL_MEM_COPY_HOST_PTR) /* TODO check other flags too */
+	drm_intel_bo_subdata(mem->bo, 0, sz, data);
+   #if 0	
     if (UNLIKELY(drm_intel_bo_subdata(mem->bo, 0, sz, data) != 0)) {
       err = CL_MEM_ALLOCATION_FAILURE;
       goto error;
     }
+   #endif
+	
 
   /* Append the buffer in the context buffer list */
   pthread_mutex_lock(&ctx->buffer_lock);

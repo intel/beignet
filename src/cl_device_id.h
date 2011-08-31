@@ -87,6 +87,9 @@ struct _cl_device_id {
   size_t profile_sz;
   size_t opencl_c_version_sz;
   size_t extensions_sz;
+ /* Kernel specific info that we're assigning statically */
+  size_t wg_sz;
+  size_t compile_wg_sz[3];
   uint32_t gfx_id; /* Used by shaders */
 };
 
@@ -107,6 +110,11 @@ extern cl_int cl_get_device_info(cl_device_id     device,
                                  void *           param_value,
                                  size_t *         param_value_size_ret);
 
+extern cl_int cl_get_kernel_workgroup_info(cl_device_id     device,
+                                 cl_kernel_work_group_info   param_name,
+                                 size_t           param_value_size,
+                                 void *           param_value,
+                                 size_t *         param_value_size_ret);
 /* Returns the Gen device ID */
 extern cl_int cl_device_get_version(cl_device_id device, cl_int *ver);
 
