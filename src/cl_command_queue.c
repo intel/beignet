@@ -99,8 +99,6 @@ cl_command_queue_add_ref(cl_command_queue queue)
   atomic_inc(&queue->ref_n);
 }
 
-#define SURFACE_SZ 32
-
 LOCAL cl_int
 cl_command_queue_bind_surface(cl_command_queue queue,
                               cl_kernel k,

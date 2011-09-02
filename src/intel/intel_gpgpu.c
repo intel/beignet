@@ -948,6 +948,7 @@ gpgpu_build_idrt(intel_gpgpu_t *state,
   for (i = 0; i < ker_n; i++) {
     memset(desc, 0, sizeof(*desc));
     desc->desc0.kernel_start_pointer = kernel[i].bo->offset >> 6; /* reloc */
+    desc->desc1.floating_point_mode = 1;
     /* desc->desc1 = 0; - no exception control, no SPF */
     /* desc->desc2 = 0; - no samplers */
     desc->desc2.sampler_state_pointer = state->sampler_state_b.bo->offset >> 5;

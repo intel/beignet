@@ -201,7 +201,7 @@ void gaussianRand(const __global uint4 *seedArray,
         temp1 = convert_float4(temp[i]) * one / intMax;
         temp2 = convert_float4(temp[i + 1]) * one / intMax;
         
-        // Applying Box Mullar Transformations.
+        // Asinf Box Mullar Transformations.
         r = sqrt((-two) * log(temp1));
         phi  = two * PI * temp2;
         gaussianRand[actualPos + i * 2 + 0] = r * cos(phi);

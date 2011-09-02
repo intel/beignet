@@ -277,6 +277,9 @@ struct _cl_kernel {
   uint8_t ref_its_program;      /* True only for the user kernel (those created by clCreateKernel) */
 };
 
+/* Size of the surface state as encoded in the binary blob */
+#define SURFACE_SZ 32
+
 /* Allocate an empty kernel */
 extern cl_kernel cl_kernel_new(void);
 

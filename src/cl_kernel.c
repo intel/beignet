@@ -305,7 +305,7 @@ cl_kernel_allocate_inline_buffer(cl_kernel k,
   const size_t sz = init->sz;
   cl_int err = CL_SUCCESS;
 
-  FATAL_IF (init->offset % 64, "Bad alignment for inline buffer offset");
+  FATAL_IF (init->offset % SURFACE_SZ, "Bad alignment for inline buffer offset");
   FATAL_IF (k->const_bo != NULL, "inline buffer already declared");
   assert(k->program && k->program->ctx);
   bufmgr = cl_context_get_intel_bufmgr(k->program->ctx);
@@ -314,7 +314,7 @@ cl_kernel_allocate_inline_buffer(cl_kernel k,
                                              sz,
                                              64));
   drm_intel_bo_subdata(k->const_bo, 0, sz, &init->data);
-  k->const_bo_index = init->offset / 64;
+  k->const_bo_index = init->offset / SURFACE_SZ;
   *read += sz;
   *patch += sz;
 
