@@ -685,7 +685,10 @@ clEnqueueReadBuffer(cl_command_queue command_queue,
 {
 	cl_int err = CL_SUCCESS;
 	assert(ptr != NULL);
-	ptr = clIntelMapBuffer(buffer, &err);
+	void* temp_ptr = NULL;
+	temp_ptr = clIntelMapBuffer(buffer, &err);
+	assert(err == CL_SUCCESS);
+	memcpy(ptr, temp_ptr, cb);
 	return err;
 }
 

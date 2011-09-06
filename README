@@ -51,6 +51,9 @@ threads but it was never tested
 unmap buffer. This extension "clIntelMapBuffer" directly maps dri_bo_map which
 is really convenient
 
+[Update]: Added support for EnqueueBuffer through a straightforward copy into 
+host-allocated memory after maping the buffer [Hari Thantry]
+ 
 Fulsim
 ------
 
