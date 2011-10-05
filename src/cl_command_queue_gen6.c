@@ -180,7 +180,7 @@ cl_command_queue_ND_range_gen6(cl_command_queue queue,
   /* Start a new batch buffer */
   gpgpu_batch_reset(gpgpu, batch_sz);
   gpgpu_batch_start(gpgpu);
-
+#if 1
   /* Push all media objects. We implement three paths to make it (a bit) faster.
    * Local IDs are shared from work group to work group. We allocate once the
    * buffers and reuse them
@@ -201,7 +201,7 @@ cl_command_queue_ND_range_gen6(cl_command_queue queue,
     cl_command_queue_enqueue_wk_grp(queue, ids, &header, thread_n, barrierID);
     barrierID = (barrierID + 1) % 16;
   }
-
+#endif
   gpgpu_batch_end(gpgpu, 0);
   gpgpu_flush(gpgpu);
 

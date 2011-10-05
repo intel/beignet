@@ -10,8 +10,8 @@ k_sincos(int i, float *cretp)
 	i -= 1024;
 
     float x = i * -ANGLE;
-    *cretp = native_cos(x);
-    return native_sin(x);
+    *cretp = cos(x);
+    return sin(x);
 }
 
 __attribute__((always_inline)) float4
@@ -19,8 +19,8 @@ k_sincos4(int4 i, float4 *cretp)
 {
     i -= (i > 512) & 1024;
     float4 x = convert_float4(i) * -ANGLE;
-    *cretp = native_cos(x);
-    return native_sin(x);
+    *cretp = cos(x);
+    return sin(x);
 }
 
 // Twiddle factor stuff

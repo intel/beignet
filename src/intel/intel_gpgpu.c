@@ -499,6 +499,75 @@ static const uint32_t Gen7L3CacheConfigReg3DataTable[] =
 #define L3_CNTL_REG2_ADDRESS_OFFSET         ( 0xB020 )
 #define L3_CNTL_REG3_ADDRESS_OFFSET         ( 0xB024 )
 
+#define sizeof32(X) (sizeof(X) / sizeof(uint32_t))
+
+enum INSTRUCTION_PIPELINE
+{
+    PIPE_COMMON       = 0x0,
+    PIPE_SINGLE_DWORD = 0x1,
+    PIPE_COMMON_CTG   = 0x1,
+    PIPE_MEDIA        = 0x2,
+    PIPE_3D           = 0x3
+};
+
+enum GFX_OPCODE
+{
+    GFXOP_PIPELINED     = 0x0,
+    GFXOP_NONPIPELINED  = 0x1,
+    GFXOP_3DPRIMITIVE   = 0x3
+};
+
+enum INSTRUCTION_TYPE
+{
+    INSTRUCTION_MI      = 0x0,
+    INSTRUCTION_TRUSTED = 0x1,
+    INSTRUCTION_2D      = 0x2,
+    INSTRUCTION_GFX     = 0x3
+};
+
+enum GFX3DCONTROL_SUBOPCODE
+{
+    GFX3DSUBOP_3DCONTROL    = 0x00
+};
+
+enum GFX3D_OPCODE
+{
+    GFX3DOP_3DSTATE_PIPELINED       = 0x0,
+    GFX3DOP_3DSTATE_NONPIPELINED    = 0x1,
+    GFX3DOP_3DCONTROL               = 0x2,
+    GFX3DOP_3DPRIMITIVE             = 0x3
+};
+
+enum GFX3DSTATE_PIPELINED_SUBOPCODE
+{
+    GFX3DSUBOP_3DSTATE_PIPELINED_POINTERS       = 0x00,
+    GFX3DSUBOP_3DSTATE_BINDING_TABLE_POINTERS   = 0x01,
+    GFX3DSUBOP_3DSTATE_STATE_POINTER_INVALIDATE = 0x02,
+    GFX3DSUBOP_3DSTATE_VERTEX_BUFFERS           = 0x08,
+    GFX3DSUBOP_3DSTATE_VERTEX_ELEMENTS          = 0x09,
+    GFX3DSUBOP_3DSTATE_INDEX_BUFFER             = 0x0A,
+    GFX3DSUBOP_3DSTATE_VF_STATISTICS            = 0x0B,
+    GFX3DSUBOP_3DSTATE_CC_STATE_POINTERS        = 0x0E
+};
+
+static void
+gpgpu_pipe_control(intel_gpgpu_t *state)
+{
+  BEGIN_BATCH(state->batch, sizeof(i965_pipe_control_t) / sizeof(uint32_t));
+  i965_pipe_control_t* pc = (i965_pipe_control_t*)
+    intel_batchbuffer_alloc_space(state->batch, 0);
+  memset(pc, 0, sizeof(*pc));
+  pc->dw0.length = sizeof32(i965_pipe_control_t) - 2;
+  pc->dw0.instruction_subopcode = GFX3DSUBOP_3DCONTROL;
+  pc->dw0.instruction_opcode = GFX3DOP_3DCONTROL;
+  pc->dw0.instruction_pipeline = PIPE_3D;
+  pc->dw0.instruction_type = INSTRUCTION_GFX;
+  pc->dw1.render_target_cache_flush_enable = 1;
+  pc->dw1.cs_stall = 1;
+  pc->dw1.dc_flush_enable = 1;
+  ADVANCE_BATCH(state->batch);
+}
+
 LOCAL void
 intel_gpgpu_set_L3(intel_gpgpu_t *state, uint32_t use_barrier)
 {
@@ -518,14 +587,14 @@ intel_gpgpu_set_L3(intel_gpgpu_t *state, uint32_t use_barrier)
     OUT_BATCH(state->batch, Gen7L3CacheConfigReg3DataTable[4]);
   ADVANCE_BATCH(state->batch);
 
-  intel_batchbuffer_emit_mi_flush(state->batch);
+  gpgpu_pipe_control(state);
 }
 
 LOCAL void
 gpgpu_batch_start(intel_gpgpu_t *state)
 {
   intel_batchbuffer_start_atomic(state->batch, 256);
-  intel_batchbuffer_emit_mi_flush(state->batch);
+  gpgpu_pipe_control(state);
   if (state->drv->gen_ver >= 7)
     intel_gpgpu_set_L3(state, state->ker->use_barrier);
   gpgpu_select_pipeline(state);
@@ -567,11 +636,7 @@ gpgpu_batch_end(intel_gpgpu_t *state, int32_t flush_mode)
     ADVANCE_BATCH(state->batch);
   }
 
-  if(flush_mode) {
-    BEGIN_BATCH(state->batch, 1);
-    OUT_BATCH(state->batch, MI_FLUSH);
-    ADVANCE_BATCH(state->batch);
-  }
+  if(flush_mode) gpgpu_pipe_control(state);
   intel_batchbuffer_end_atomic(state->batch);
 }
 
@@ -948,7 +1013,7 @@ gpgpu_build_idrt(intel_gpgpu_t *state,
   for (i = 0; i < ker_n; i++) {
     memset(desc, 0, sizeof(*desc));
     desc->desc0.kernel_start_pointer = kernel[i].bo->offset >> 6; /* reloc */
-    desc->desc1.floating_point_mode = 1;
+    /* desc->desc1.floating_point_mode = 1; */
     /* desc->desc1 = 0; - no exception control, no SPF */
     /* desc->desc2 = 0; - no samplers */
     desc->desc2.sampler_state_pointer = state->sampler_state_b.bo->offset >> 5;
