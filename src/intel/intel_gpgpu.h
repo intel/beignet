@@ -32,7 +32,7 @@ enum gen6_cache_control {
   cc_llc_mlc    = 0x3,
 };
 
-#define MAX_SURFACES   255
+#define MAX_SURFACES   128 
 #define MAX_SAMPLERS   16
 
 /* Use this structure to bind kernels in the gpgpu state */
@@ -66,35 +66,6 @@ extern void intel_gpgpu_delete(intel_gpgpu_t*);
 
 /* Get the device generation */
 extern int32_t intel_gpgpu_version(intel_gpgpu_t*);
-
-/* Set surface descriptor in the current binding table */
-extern void gpgpu_bind_surf_2d(intel_gpgpu_t*,
-                               int32_t index,
-                               struct _drm_intel_bo* obj_bo,
-                               uint32_t offset,
-                               uint32_t format,
-                               int32_t w,
-                               int32_t h,
-                               uint32_t is_dst,
-                               int32_t vert_line_stride,
-                               int32_t vert_line_stride_offset,
-                               uint32_t cchint);
-
-/* Set shared surface descriptor in the current binding table
- * Automatically determines and sets tiling mode which is transparently
- * supported by media block read/write
- */
-extern void gpgpu_bind_shared_surf_2d(intel_gpgpu_t*,
-                                      int32_t index,
-                                      struct _drm_intel_bo* obj_bo,
-                                      uint32_t offset,
-                                      uint32_t format,
-                                      int32_t w,
-                                      int32_t h,
-                                      uint32_t is_dst,
-                                      int32_t vert_line_stride,
-                                      int32_t vert_line_stride_offset,
-                                      uint32_t cchint);
 
 /* Set typeless buffer descriptor in the current binding table */
 extern void gpgpu_bind_buf(intel_gpgpu_t*,

@@ -244,9 +244,9 @@ cl_run_fulsim(void)
     system("wine AubLoad.exe dump.aub -device sbrB0 -debug");
 #elif EMULATE_GEN == 7 /* IVB */
   if (debug_mode == NULL || strcmp(debug_mode, "1"))
-    system("wine AubLoad.exe dump.aub -device ivb2");
+    system("wine AubLoad.exe dump.aub -device ivbB0");
   else
-    system("wine AubLoad.exe dump.aub -device ivb2 -debug");
+    system("wine AubLoad.exe dump.aub -device ivbB0 -debug");
 #endif
 }
 

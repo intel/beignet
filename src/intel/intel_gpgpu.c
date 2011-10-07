@@ -297,6 +297,12 @@ struct opaque_sampler_state {
   char opaque[SAMPLER_STATE_SIZE];
 };
 
+/* Store both binding tables and surface states */
+typedef struct surface_heap {
+  uint32_t binding_table[256];
+  char surface[256][sizeof(gen6_surface_state_t)];
+} surface_heap_t;
+
 #define MAX_IF_DESC    32
 
 /* Device abstraction */
@@ -313,8 +319,7 @@ struct intel_gpgpu
     dri_bo *bo;
     uint32_t num;
   } idrt_b;
-  struct { dri_bo *bo; } surface_state_b[MAX_SURFACES]; 
-  struct { dri_bo *bo; } binding_table_b;
+  struct { dri_bo *bo; } surface_heap_b;
   struct { dri_bo *bo; } vfe_state_b;
   struct { dri_bo *bo; } curbe_b;
   struct { dri_bo *bo; } sampler_state_b;
@@ -356,15 +361,10 @@ error:
 LOCAL void
 intel_gpgpu_delete(intel_gpgpu_t *state)
 {
-  uint32_t i;
-
   if (state == NULL)
     return;
-  for (i = 0; i < MAX_SURFACES; ++i)
-    if (state->surface_state_b[i].bo)
-      drm_intel_bo_unreference(state->surface_state_b[i].bo);
-  if (state->binding_table_b.bo)
-    drm_intel_bo_unreference(state->binding_table_b.bo);
+  if (state->surface_heap_b.bo)
+    drm_intel_bo_unreference(state->surface_heap_b.bo);
   if (state->idrt_b.bo)
     drm_intel_bo_unreference(state->idrt_b.bo);
   if (state->vfe_state_b.bo)
@@ -396,7 +396,14 @@ gpgpu_set_base_address(intel_gpgpu_t *state)
   /* 0, Gen State Mem Obj CC, Stateless Mem Obj CC, Stateless Access Write Back */
   OUT_BATCH(state->batch, 0 | (def_cc << 8) | (def_cc << 4) | (0 << 3)| BASE_ADDRESS_MODIFY);    /* General State Base Addr   */
   /* 0, State Mem Obj CC */
-  OUT_BATCH(state->batch, 0 | (def_cc << 8) | BASE_ADDRESS_MODIFY); /* Surface State Base Addr */
+  /* We use a state base address for the surface heap since IVB clamp the
+   * binding table pointer at 11 bits. So, we cannot use pointers directly while
+   * using the surface heap
+   */
+  OUT_RELOC(state->batch, state->surface_heap_b.bo,
+            I915_GEM_DOMAIN_INSTRUCTION,
+            I915_GEM_DOMAIN_INSTRUCTION,
+            0 | (def_cc << 8) | (def_cc << 4) | (0 << 3)| BASE_ADDRESS_MODIFY);
   OUT_BATCH(state->batch, 0 | (def_cc << 8) | BASE_ADDRESS_MODIFY); /* Dynamic State Base Addr */
   OUT_BATCH(state->batch, 0 | (def_cc << 8) | BASE_ADDRESS_MODIFY); /* Indirect Obj Base Addr */
   OUT_BATCH(state->batch, 0 | (def_cc << 8) | BASE_ADDRESS_MODIFY); /* Instruction Base Addr  */
@@ -464,35 +471,35 @@ gpgpu_load_idrt(intel_gpgpu_t *state)
 static const uint32_t Gen7L3CacheConfigReg2DataTable[] =
 {
                 // SLM    URB     DC      RO      I/S     C       T
-    0x00080040, //{ 0,    256,    0,      256,    0,      0,      0,      }
-    0x02040040, //{ 0,    256,    128,    128,    0,      0,      0,      }
-    0x00800040, //{ 0,    256,    32,     0,      64,     32,     128,    }
-    0x01000038, //{ 0,    224,    64,     0,      64,     32,     128,    }
-    0x02000030, //{ 0,    224,    128,    0,      64,     32,     64,     }
-    0x01000038, //{ 0,    224,    64,     0,      128,    32,     64,     }
-    0x00000038, //{ 0,    224,    0,      0,      128,    32,     128,    }
-    0x00000040, //{ 0,    256,    0,      0,      128,    0,      128,    }
-    0x0A140091, //{ 128,  128,    128,    128,    0,      0,      0,      }
-    0x09100091, //{ 128,  128,    64,     0,      64,     64,     64,     }
-    0x08900091, //{ 128,  128,    32,     0,      64,     32,     128,    }
-    0x08900091  //{ 128,  128,    32,     0,      128,    32,     64,     }
+  0x00080040, //{ 0,    256,    0,      256,    0,      0,      0,      }
+  0x02040040, //{ 0,    256,    128,    128,    0,      0,      0,      }
+  0x00800040, //{ 0,    256,    32,     0,      64,     32,     128,    }
+  0x01000038, //{ 0,    224,    64,     0,      64,     32,     128,    }
+  0x02000030, //{ 0,    224,    128,    0,      64,     32,     64,     }
+  0x01000038, //{ 0,    224,    64,     0,      128,    32,     64,     }
+  0x00000038, //{ 0,    224,    0,      0,      128,    32,     128,    }
+  0x00000040, //{ 0,    256,    0,      0,      128,    0,      128,    }
+  0x0A140091, //{ 128,  128,    128,    128,    0,      0,      0,      }
+  0x09100091, //{ 128,  128,    64,     0,      64,     64,     64,     }
+  0x08900091, //{ 128,  128,    32,     0,      64,     32,     128,    }
+  0x08900091  //{ 128,  128,    32,     0,      128,    32,     64,     }
 };
 
 static const uint32_t Gen7L3CacheConfigReg3DataTable[] =
 {
                 // SLM    URB     DC      RO      I/S     C       T
-    0x00000000, //{ 0,    256,    0,      256,    0,      0,      0,      }
-    0x00000000, //{ 0,    256,    128,    128,    0,      0,      0,      }
-    0x00080410, //{ 0,    256,    32,     0,      64,     32,     128,    }
-    0x00080410, //{ 0,    224,    64,     0,      64,     32,     128,    }
-    0x00040410, //{ 0,    224,    128,    0,      64,     32,     64,     }
-    0x00040420, //{ 0,    224,    64,     0,      128,    32,     64,     }
-    0x00080420, //{ 0,    224,    0,      0,      128,    32,     128,    }
-    0x00080020, //{ 0,    256,    0,      0,      128,    0,      128,    }
-    0x00204080, //{ 128,  128,    128,    128,    0,      0,      0,      }
-    0x00244890, //{ 128,  128,    64,     0,      64,     64,     64,     }
-    0x00284490, //{ 128,  128,    32,     0,      64,     32,     128,    }
-    0x002444A0  //{ 128,  128,    32,     0,      128,    32,     64,     }
+  0x00000000, //{ 0,    256,    0,      256,    0,      0,      0,      }
+  0x00000000, //{ 0,    256,    128,    128,    0,      0,      0,      }
+  0x00080410, //{ 0,    256,    32,     0,      64,     32,     128,    }
+  0x00080410, //{ 0,    224,    64,     0,      64,     32,     128,    }
+  0x00040410, //{ 0,    224,    128,    0,      64,     32,     64,     }
+  0x00040420, //{ 0,    224,    64,     0,      128,    32,     64,     }
+  0x00080420, //{ 0,    224,    0,      0,      128,    32,     128,    }
+  0x00080020, //{ 0,    256,    0,      0,      128,    0,      128,    }
+  0x00204080, //{ 128,  128,    128,    128,    0,      0,      0,      }
+  0x00244890, //{ 128,  128,    64,     0,      64,     64,     64,     }
+  0x00284490, //{ 128,  128,    32,     0,      64,     32,     128,    }
+  0x002444A0  //{ 128,  128,    32,     0,      128,    32,     64,     }
 };
 
 // L3 cache stuff 
@@ -553,7 +560,7 @@ enum GFX3DSTATE_PIPELINED_SUBOPCODE
 static void
 gpgpu_pipe_control(intel_gpgpu_t *state)
 {
-  BEGIN_BATCH(state->batch, sizeof(i965_pipe_control_t) / sizeof(uint32_t));
+  BEGIN_BATCH(state->batch, sizeof32(i965_pipe_control_t));
   i965_pipe_control_t* pc = (i965_pipe_control_t*)
     intel_batchbuffer_alloc_space(state->batch, 0);
   memset(pc, 0, sizeof(*pc));
@@ -658,7 +665,6 @@ gpgpu_state_init(intel_gpgpu_t *state,
                  uint32_t size_cs_entry)
 {
   dri_bo *bo;
-  int32_t i;
 
   /* URB */
   state->urb.num_cs_entries = 64;
@@ -678,23 +684,18 @@ gpgpu_state_init(intel_gpgpu_t *state,
   state->curbe_b.bo = bo;
 
   /* surface state */
-  for (i = 0; i < (int) MAX_SURFACES; i++) {
-    if(state->surface_state_b[i].bo)
-      dri_bo_unreference(state->surface_state_b[i].bo);
-    state->surface_state_b[i].bo = NULL;
-  }
-
-  /* binding table */
-  if(state->binding_table_b.bo)
-    dri_bo_unreference(state->binding_table_b.bo);
+  if(state->surface_heap_b.bo)
+    dri_bo_unreference(state->surface_heap_b.bo);
   bo = dri_bo_alloc(state->drv->bufmgr, 
-                    "SS_SURF_BIND",
-                    MAX_SURFACES * sizeof(uint32_t),
+                    "interface descriptor", 
+                    sizeof(surface_heap_t),
                     32);
   assert(bo);
-  state->binding_table_b.bo = bo;
+  dri_bo_map(bo, 1);
+  memset(bo->virtual, 0, sizeof(surface_heap_t));
+  state->surface_heap_b.bo = bo;
 
-  /* IDRT */
+  /* Interface descriptor remap table */
   if(state->idrt_b.bo)
     dri_bo_unreference(state->idrt_b.bo);
   bo = dri_bo_alloc(state->drv->bufmgr, 
@@ -707,7 +708,7 @@ gpgpu_state_init(intel_gpgpu_t *state,
   /* vfe state */
   if(state->vfe_state_b.bo)
     dri_bo_unreference(state->vfe_state_b.bo);
-  bo = NULL;
+  state->vfe_state_b.bo = NULL;
 
   /* sampler state */
   if (state->sampler_state_b.bo)
@@ -722,154 +723,6 @@ gpgpu_state_init(intel_gpgpu_t *state,
 }
 
 LOCAL void
-gpgpu_bind_surf_2d(intel_gpgpu_t *state,
-                   int32_t index,
-                   dri_bo* obj_bo,
-                   uint32_t offset,
-                   uint32_t format,
-                   int32_t w, int32_t h,
-                   uint32_t is_dst,
-                   int32_t vert_line_stride,
-                   int32_t vert_line_stride_ofs,
-                   uint32_t cchint)
-{
-  gen6_surface_state_t *ss;
-  dri_bo *bo;
-  uint32_t write_domain, read_domain;
-
-  if(state->surface_state_b[index].bo) {
-    dri_bo_unreference(state->surface_state_b[index].bo);
-    state->surface_state_b[index].bo = NULL;
-  }
-
-  bo = dri_bo_alloc(state->drv->bufmgr, "surface state", surface_state_sz, 32);
-  assert(bo);
-  dri_bo_map(bo, 1);
-  assert(bo->virtual);
-  ss = (gen6_surface_state_t*) bo->virtual;
-  memset(ss, 0, sizeof(*ss));
-  ss->ss0.surface_type = I965_SURFACE_2D;
-  ss->ss0.surface_format = format;
-  ss->ss0.vert_line_stride = vert_line_stride;
-  ss->ss0.vert_line_stride_ofs = vert_line_stride_ofs;
-  ss->ss1.base_addr = obj_bo->offset + offset;
-  ss->ss2.width = w - 1;
-  ss->ss2.height = h - 1;
-  ss->ss3.pitch = (w*4) - 1; /* TEMP patch */
-
-  /* TODO: parse GFDT bit as well */
-  if(state->drv->gen_ver == 6)
-    ss->ss5.cache_control = cchint;
-
-  if (is_dst) {
-    write_domain = I915_GEM_DOMAIN_RENDER;
-    read_domain = I915_GEM_DOMAIN_RENDER;
-  } else {
-    write_domain = 0;
-    read_domain = I915_GEM_DOMAIN_SAMPLER;
-  }
-
-  dri_bo_emit_reloc(bo,
-                    read_domain, write_domain,
-                    offset,
-                    offsetof(gen6_surface_state_t, ss1),
-                    obj_bo);
-  dri_bo_unmap(bo);
-
-  assert(index < (int) MAX_SURFACES);
-  state->surface_state_b[index].bo = bo;
-}
-
-LOCAL void
-gpgpu_bind_shared_surf_2d(intel_gpgpu_t *state,
-                          int32_t index,
-                          dri_bo* obj_bo,
-                          uint32_t offset,
-                          uint32_t format,
-                          int32_t w,
-                          int32_t h,
-                          uint32_t is_dst,
-                          int32_t vert_line_stride,
-                          int32_t vert_line_stride_ofs,
-                          uint32_t cchint)
-{
-  gen6_surface_state_t *ss;
-  dri_bo *bo;
-  uint32_t write_domain, read_domain;
-
-  uint32_t tiling = 0;
-  uint32_t swizzle = 0;
-
-  /* query tiling from shared surface bo */
-#ifndef NDEBUG
-  int32_t ret =
-#endif /* NDEBUG */
-  dri_bo_get_tiling(obj_bo, &tiling, &swizzle);
-  assert(ret == 0);
-
-  /*TODO: choose between delete/reuse */
-  if(state->surface_state_b[index].bo) {
-    dri_bo_unreference(state->surface_state_b[index].bo);
-    state->surface_state_b[index].bo = NULL;
-  }
-
-  bo = dri_bo_alloc(state->drv->bufmgr, 
-                    "surface state", 
-                    sizeof(gen6_surface_state_t),
-                    32);
-  assert(bo);
-  dri_bo_map(bo, 1);
-  assert(bo->virtual);
-  ss = (gen6_surface_state_t *)bo->virtual;
-  memset(ss, 0, sizeof(*ss));
-  ss->ss0.surface_type = I965_SURFACE_2D;
-  ss->ss0.surface_format = format;
-  ss->ss0.vert_line_stride = vert_line_stride;
-  ss->ss0.vert_line_stride_ofs = vert_line_stride_ofs;
-  ss->ss1.base_addr = obj_bo->offset + offset;
-  ss->ss2.width = w - 1;
-  ss->ss2.height = h - 1;
-  ss->ss3.pitch = (w*4) - 1; /* TEMP patch */
-
-  /* TODO: parse GFDT bit as well */
-  if(state->drv->gen_ver == 6)
-    ss->ss5.cache_control = cchint;
-
-  switch (tiling) {
-    case I915_TILING_NONE:
-      ss->ss3.tiled_surface = 0;
-      ss->ss3.tile_walk = 0;
-      break;
-    case I915_TILING_X:
-      ss->ss3.tiled_surface = 1;
-      ss->ss3.tile_walk = I965_TILEWALK_XMAJOR;
-      break;
-    case I915_TILING_Y:
-      ss->ss3.tiled_surface = 1;
-      ss->ss3.tile_walk = I965_TILEWALK_YMAJOR;
-      break;
-  }
-
-  if (is_dst) {
-    write_domain = I915_GEM_DOMAIN_RENDER;
-    read_domain = I915_GEM_DOMAIN_RENDER;
-  } else {
-    write_domain = 0;
-    read_domain = I915_GEM_DOMAIN_SAMPLER;
-  }
-
-  dri_bo_emit_reloc(bo,
-                    read_domain, write_domain,
-                    offset,
-                    offsetof(gen6_surface_state_t, ss1),
-                    obj_bo);
-  dri_bo_unmap(bo);
-
-  assert(index < (int) MAX_SURFACES);
-  state->surface_state_b[index].bo = bo;
-}
-
-LOCAL void
 gpgpu_bind_buf(intel_gpgpu_t *state,
                int32_t index,
                dri_bo* obj_bo,
@@ -877,64 +730,52 @@ gpgpu_bind_buf(intel_gpgpu_t *state,
                uint32_t size,
                uint32_t cchint)
 {
-  dri_bo *bo;
-  uint32_t write_domain, read_domain;
-
   assert(offset < MAX_SURFACES);
-
-  /*TODO: choose between delete/reuse */
-  if(state->surface_state_b[index].bo) {
-    dri_bo_unreference(state->surface_state_b[index].bo);
-    state->surface_state_b[index].bo = NULL;
-  }
-
-  bo = dri_bo_alloc(state->drv->bufmgr, "SS_SURFACE", surface_state_sz, 32);
-  assert(bo);
-  dri_bo_map(bo, 1);
-  assert(bo->virtual);
-  write_domain = I915_GEM_DOMAIN_RENDER;
-  read_domain = I915_GEM_DOMAIN_RENDER;
+  surface_heap_t *heap = state->surface_heap_b.bo->virtual;
 
   if(state->drv->gen_ver == 6) {
-    gen6_surface_state_t *ss = (gen6_surface_state_t *) bo->virtual;
+    gen6_surface_state_t *ss = (gen6_surface_state_t *) heap->surface[index];
     const uint32_t size_ss = ((size+0xf) >> 4) - 1; /* ceil(size/16) - 1 */
     memset(ss, 0, sizeof(*ss));
     ss->ss0.surface_type = I965_SURFACE_BUFFER;
     ss->ss0.surface_format = I965_SURFACEFORMAT_R32G32B32A32_FLOAT;
     ss->ss1.base_addr = obj_bo->offset + offset;
-    ss->ss2.width = size_ss & 0x7f; /* bits 6:0 of size_ss */
+    ss->ss2.width = size_ss & 0x7f;           /* bits 6:0 of size_ss */
     ss->ss2.height = (size_ss >> 7) & 0x1fff; /* bits 19:7 of size_ss */
-    ss->ss3.pitch = 0xf;
-    ss->ss3.depth = size_ss >> 20; /* bits 26:20 of size_ss */
+    ss->ss3.depth = size_ss >> 20;            /* bits 26:20 of size_ss */
+    ss->ss3.pitch = 0xf;                      /* sizeof(RGBA32) - 1 */;
     ss->ss5.cache_control = cchint;
-    dri_bo_emit_reloc(bo,
-                      read_domain,
-                      write_domain,
+    heap->binding_table[index] = offsetof(surface_heap_t, surface) +
+                                 index * sizeof(gen6_surface_state_t);
+    dri_bo_emit_reloc(state->surface_heap_b.bo,
+                      I915_GEM_DOMAIN_RENDER,
+                      I915_GEM_DOMAIN_RENDER,
                       offset,
+                      heap->binding_table[index] +
                       offsetof(gen6_surface_state_t, ss1),
                       obj_bo);
   } else if (state->drv->gen_ver == 7) {
-    gen7_surface_state_t *ss = (gen7_surface_state_t *) bo->virtual;
+    gen7_surface_state_t *ss = (gen7_surface_state_t *) heap->surface[index];
     const uint32_t size_ss = size - 1;
     memset(ss, 0, sizeof(*ss));
     ss->ss0.surface_type = I965_SURFACE_BUFFER;
     ss->ss0.surface_format = I965_SURFACEFORMAT_RAW;
     ss->ss1.base_addr = obj_bo->offset + offset;
-    ss->ss2.width  = size_ss & 0x7f; /* bits 6:0 of size_ss */
-    ss->ss2.height = (size_ss & 0x1fff80) >> 7; /* bits 20:7 of size_ss */
+    ss->ss2.width  = size_ss & 0x7f;               /* bits 6:0 of size_ss */
+    ss->ss2.height = (size_ss & 0x1fff80) >> 7;    /* bits 20:7 of size_ss */
     ss->ss3.depth  = (size_ss & 0xffe00000) >> 20; /* bits 27:21 of size_ss */
     ss->ss5.surface_object_control_state = GEN7_CACHED_IN_LLC;
-    dri_bo_emit_reloc(bo,
-                      read_domain,
-                      write_domain,
+    heap->binding_table[index] = offsetof(surface_heap_t, surface) +
+                                 index * sizeof(gen7_surface_state_t);
+    dri_bo_emit_reloc(state->surface_heap_b.bo,
+                      I915_GEM_DOMAIN_RENDER,
+                      I915_GEM_DOMAIN_RENDER,
                       offset,
+                      heap->binding_table[index] +
                       offsetof(gen7_surface_state_t, ss1),
                       obj_bo);
   }
 
-  dri_bo_unmap(bo);
-  assert(index < (int) MAX_SURFACES);
-  state->surface_state_b[index].bo = bo;
 }
 
 LOCAL void
@@ -968,32 +809,6 @@ gpgpu_build_sampler_table(intel_gpgpu_t *state)
                  state->samplers);
 }
 
-static void
-gpgpu_build_binding_table(intel_gpgpu_t *state)
-{
-  uint32_t *binding_table;
-  dri_bo *bo = state->binding_table_b.bo;
-  uint32_t i;
-
-  dri_bo_map(bo, 1);
-  assert(bo->virtual);
-  binding_table = (uint32_t *)bo->virtual;
-  memset(binding_table, 0, bo->size);
-
-  for (i = 0; i < MAX_SURFACES; i++) {
-    if (state->surface_state_b[i].bo) {
-      binding_table[i] = state->surface_state_b[i].bo->offset;
-      dri_bo_emit_reloc(bo,
-                        I915_GEM_DOMAIN_INSTRUCTION, 0,
-                        0,
-                        i * sizeof(*binding_table),
-                        state->surface_state_b[i].bo);
-    }
-  }
-
-  dri_bo_unmap(state->binding_table_b.bo);
-}
-
 #define KB 1024
 
 static void
@@ -1013,16 +828,11 @@ gpgpu_build_idrt(intel_gpgpu_t *state,
   for (i = 0; i < ker_n; i++) {
     memset(desc, 0, sizeof(*desc));
     desc->desc0.kernel_start_pointer = kernel[i].bo->offset >> 6; /* reloc */
-    /* desc->desc1.floating_point_mode = 1; */
-    /* desc->desc1 = 0; - no exception control, no SPF */
-    /* desc->desc2 = 0; - no samplers */
     desc->desc2.sampler_state_pointer = state->sampler_state_b.bo->offset >> 5;
     desc->desc3.binding_table_entry_count = 0; /* no prefetch */
-    desc->desc3.binding_table_pointer = state->binding_table_b.bo->offset >> 5;
+    desc->desc3.binding_table_pointer = 0;
     desc->desc4.curbe_read_len = kernel[i].cst_sz / 32;
     desc->desc4.curbe_read_offset = 0;
-    /* desc->desc6 = 0; - mbz */
-    /* desc->desc7 = 0; - mbz */
 
     /* Barriers / SLM are automatically handled on Gen7+ */
     if (state->drv->gen_ver >= 7) {
@@ -1055,12 +865,6 @@ gpgpu_build_idrt(intel_gpgpu_t *state,
 
     dri_bo_emit_reloc(bo,
                       I915_GEM_DOMAIN_INSTRUCTION, 0,
-                      desc->desc3.binding_table_entry_count,
-                      i * sizeof(*desc) + offsetof(gen6_interface_descriptor_t, desc3),
-                      state->binding_table_b.bo);
-
-    dri_bo_emit_reloc(bo,
-                      I915_GEM_DOMAIN_INSTRUCTION, 0,
                       0,
                       i * sizeof(*desc) + offsetof(gen6_interface_descriptor_t, desc2),
                       state->sampler_state_b.bo);
@@ -1087,8 +891,8 @@ gpgpu_states_setup(intel_gpgpu_t *state, genx_gpgpu_kernel_t *kernel, uint32_t k
 {
   state->ker = kernel;
   gpgpu_build_sampler_table(state);
-  gpgpu_build_binding_table(state);
   gpgpu_build_idrt(state, kernel, ker_n);
+  dri_bo_unmap(state->surface_heap_b.bo);
 }
 
 LOCAL void 
