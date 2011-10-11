@@ -169,7 +169,7 @@ intel_driver_close(intel_driver_t *intel)
   if(intel->fd) close(intel->fd);
   intel->dri_ctx = NULL;
   intel->x11_display = NULL;
-  intel->fd = NULL;
+  intel->fd = 0;
 }
 
 LOCAL int

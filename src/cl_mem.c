@@ -157,9 +157,7 @@ cl_mem_pin(cl_mem mem)
   assert(mem);
   if ((mem->flags & CL_MEM_PINNABLE) == 0)
     return CL_INVALID_MEM;
-  printf("%x\n", mem->bo->offset / 16);
   drm_intel_bo_pin(mem->bo, 4096);
-  printf("%x\n", mem->bo->offset / 16);
   return CL_SUCCESS;
 }
 

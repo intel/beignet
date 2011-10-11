@@ -31,6 +31,7 @@
 #include "CL/cl_intel.h"
 
 #include <stdio.h>
+#include <string.h>
 #include <assert.h>
 
 cl_int
