@@ -20,10 +20,10 @@
 #ifndef __GENX_DEFINES_H__
 #define __GENX_DEFINES_H__
 
-#define CMD(pipeline,op,sub_op)		((3 << 29) | \
-                                  ((pipeline) << 27) | \
-                                  ((op) << 24) | \
-                                  ((sub_op) << 16))
+#define CMD(PIPELINE,OP,SUB_OP) ((3 << 29) |          \
+                                ((PIPELINE) << 27) |  \
+                                ((OP) << 24) |        \
+                                ((SUB_OP) << 16))
 
 #define CMD_URB_FENCE                           CMD(0, 0, 0)
 #define CMD_CS_URB_STATE                        CMD(0, 0, 1)
@@ -57,7 +57,6 @@
 #define PIPELINE_SELECT_3D              0
 #define PIPELINE_SELECT_MEDIA           1
 
-
 #define UF0_CS_REALLOC                  (1 << 13)
 #define UF0_VFE_REALLOC                 (1 << 12)
 #define UF0_SF_REALLOC                  (1 << 11)
@@ -71,15 +70,8 @@
 #define UF2_VFE_FENCE_SHIFT             10
 #define UF2_SF_FENCE_SHIFT              0
 
-#define VFE_GENERIC_MODE        0x0
-#define VFE_VLD_MODE            0x1
-#define VFE_IS_MODE             0x2
-#define VFE_AVC_MC_MODE         0x4
-#define VFE_AVC_IT_MODE         0x7
-
 #define FLOATING_POINT_IEEE_754        0
 #define FLOATING_POINT_NON_IEEE_754    1
-
 
 #define I965_SURFACE_1D      0
 #define I965_SURFACE_2D      1
@@ -244,17 +236,12 @@
 #define I965_SURFACEFORMAT_R16G16B16_USCALED              0x19F
 #define I965_SURFACEFORMAT_RAW                            0x1FF
 
-#define I965_CULLMODE_BOTH      0
-#define I965_CULLMODE_NONE      1
-#define I965_CULLMODE_FRONT     2
-#define I965_CULLMODE_BACK      3
-
 #define I965_MAPFILTER_NEAREST        0x0 
 #define I965_MAPFILTER_LINEAR         0x1 
 #define I965_MAPFILTER_ANISOTROPIC    0x2
 
-#define I965_MIPFILTER_NONE        0   
-#define I965_MIPFILTER_NEAREST     1   
+#define I965_MIPFILTER_NONE        0
+#define I965_MIPFILTER_NEAREST     1
 #define I965_MIPFILTER_LINEAR      3
 
 #define I965_TEXCOORDMODE_WRAP            0
@@ -264,84 +251,8 @@
 #define I965_TEXCOORDMODE_CLAMP_BORDER    4
 #define I965_TEXCOORDMODE_MIRROR_ONCE     5
 
-#define I965_BLENDFACTOR_ONE                 0x1
-#define I965_BLENDFACTOR_SRC_COLOR           0x2
-#define I965_BLENDFACTOR_SRC_ALPHA           0x3
-#define I965_BLENDFACTOR_DST_ALPHA           0x4
-#define I965_BLENDFACTOR_DST_COLOR           0x5
-#define I965_BLENDFACTOR_SRC_ALPHA_SATURATE  0x6
-#define I965_BLENDFACTOR_CONST_COLOR         0x7
-#define I965_BLENDFACTOR_CONST_ALPHA         0x8
-#define I965_BLENDFACTOR_SRC1_COLOR          0x9
-#define I965_BLENDFACTOR_SRC1_ALPHA          0x0A
-#define I965_BLENDFACTOR_ZERO                0x11
-#define I965_BLENDFACTOR_INV_SRC_COLOR       0x12
-#define I965_BLENDFACTOR_INV_SRC_ALPHA       0x13
-#define I965_BLENDFACTOR_INV_DST_ALPHA       0x14
-#define I965_BLENDFACTOR_INV_DST_COLOR       0x15
-#define I965_BLENDFACTOR_INV_CONST_COLOR     0x17
-#define I965_BLENDFACTOR_INV_CONST_ALPHA     0x18
-#define I965_BLENDFACTOR_INV_SRC1_COLOR      0x19
-#define I965_BLENDFACTOR_INV_SRC1_ALPHA      0x1A
-
-#define I965_BLENDFUNCTION_ADD               0
-#define I965_BLENDFUNCTION_SUBTRACT          1
-#define I965_BLENDFUNCTION_REVERSE_SUBTRACT  2
-#define I965_BLENDFUNCTION_MIN               3
-#define I965_BLENDFUNCTION_MAX               4
-
 #define I965_SURFACERETURNFORMAT_FLOAT32  0
 #define I965_SURFACERETURNFORMAT_S1       1
-
-#define I965_VFCOMPONENT_NOSTORE      0
-#define I965_VFCOMPONENT_STORE_SRC    1
-#define I965_VFCOMPONENT_STORE_0      2
-#define I965_VFCOMPONENT_STORE_1_FLT  3
-#define I965_VFCOMPONENT_STORE_1_INT  4
-#define I965_VFCOMPONENT_STORE_VID    5
-#define I965_VFCOMPONENT_STORE_IID    6
-#define I965_VFCOMPONENT_STORE_PID    7
-
-#define VE0_VERTEX_BUFFER_INDEX_SHIFT	27
-#define VE0_VALID			(1 << 26)
-#define VE0_FORMAT_SHIFT		16
-#define VE0_OFFSET_SHIFT		0
-#define VE1_VFCOMPONENT_0_SHIFT		28
-#define VE1_VFCOMPONENT_1_SHIFT		24
-#define VE1_VFCOMPONENT_2_SHIFT		20
-#define VE1_VFCOMPONENT_3_SHIFT		16
-#define VE1_DESTINATION_ELEMENT_OFFSET_SHIFT	0
-
-#define VB0_BUFFER_INDEX_SHIFT          27
-#define VB0_VERTEXDATA                  (0 << 26)
-#define VB0_INSTANCEDATA                (1 << 26)
-#define VB0_BUFFER_PITCH_SHIFT          0
-
-#define _3DPRIMITIVE_VERTEX_SEQUENTIAL  (0 << 15)
-#define _3DPRIMITIVE_VERTEX_RANDOM      (1 << 15)
-#define _3DPRIMITIVE_TOPOLOGY_SHIFT     10
-
-#define _3DPRIM_POINTLIST         0x01
-#define _3DPRIM_LINELIST          0x02
-#define _3DPRIM_LINESTRIP         0x03
-#define _3DPRIM_TRILIST           0x04
-#define _3DPRIM_TRISTRIP          0x05
-#define _3DPRIM_TRIFAN            0x06
-#define _3DPRIM_QUADLIST          0x07
-#define _3DPRIM_QUADSTRIP         0x08
-#define _3DPRIM_LINELIST_ADJ      0x09
-#define _3DPRIM_LINESTRIP_ADJ     0x0A
-#define _3DPRIM_TRILIST_ADJ       0x0B
-#define _3DPRIM_TRISTRIP_ADJ      0x0C
-#define _3DPRIM_TRISTRIP_REVERSE  0x0D
-#define _3DPRIM_POLYGON           0x0E
-#define _3DPRIM_RECTLIST          0x0F
-#define _3DPRIM_LINELOOP          0x10
-#define _3DPRIM_POINTLIST_BF      0x11
-#define _3DPRIM_LINESTRIP_CONT    0x12
-#define _3DPRIM_LINESTRIP_BF      0x13
-#define _3DPRIM_LINESTRIP_CONT_BF 0x14
-#define _3DPRIM_TRIFAN_NOSTIPPLE  0x15
 
 #define I965_TILEWALK_XMAJOR                 0
 #define I965_TILEWALK_YMAJOR                 1
@@ -349,3 +260,4 @@
 #define URB_SIZE(intel)         (IS_IGDNG(intel->device_id) ? 1024 : \
                                  IS_G4X(intel->device_id) ? 384 : 256)
 #endif /* __GENX_DEFINES_H__ */
+

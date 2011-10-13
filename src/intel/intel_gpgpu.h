@@ -32,7 +32,7 @@ enum gen6_cache_control {
   cc_llc_mlc    = 0x3,
 };
 
-#define MAX_SURFACES   128 
+#define MAX_SURFACES   128
 #define MAX_SAMPLERS   16
 
 /* Use this structure to bind kernels in the gpgpu state */

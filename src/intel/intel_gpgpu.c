@@ -778,28 +778,6 @@ gpgpu_bind_buf(intel_gpgpu_t *state,
 
 }
 
-LOCAL void
-gpgpu_set_sampler(intel_gpgpu_t *state, uint32_t index, uint32_t non_normalized)
-{
-  struct i965_sampler_state *sampler = NULL;
-  assert(index < (int) MAX_SAMPLERS);
-
-#ifndef NDEBUG
-  if (non_normalized && state->drv->gen_ver == 5)
-    assert("Non normalized coordinates are unsupported on Gen5" && 0);
-#endif /* NDEBUG */
-
-  sampler = (struct i965_sampler_state *) state->samplers[index].opaque;
-  if (non_normalized) {
-    sampler->ss3.gen6_non_normalized = 1;
-    sampler->ss1.r_wrap_mode = I965_TEXCOORDMODE_CLAMP;
-    sampler->ss1.t_wrap_mode = I965_TEXCOORDMODE_CLAMP;
-    sampler->ss1.s_wrap_mode = I965_TEXCOORDMODE_CLAMP;
-  }
-  else
-    sampler->ss3.gen6_non_normalized = 0;
-}
-
 static void
 gpgpu_build_sampler_table(intel_gpgpu_t *state)
 {
