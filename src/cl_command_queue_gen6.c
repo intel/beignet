@@ -61,10 +61,10 @@ cl_kernel_compute_batch_sz(cl_kernel k, size_t wk_grp_n, size_t thread_n)
 
 static INLINE void
 cl_command_queue_enqueue_wk_grp(cl_command_queue queue,
-                                 cl_local_id_t **ids,
-                                 const cl_inline_header_t *header,
-                                 uint32_t thread_n,
-                                 uint32_t barrierID)
+                                cl_local_id_t **ids,
+                                const cl_inline_header_t *header,
+                                uint32_t thread_n,
+                                uint32_t barrierID)
 {
   intel_gpgpu_t *gpgpu = queue->gpgpu;
   uint32_t i;
@@ -85,10 +85,10 @@ cl_command_queue_enqueue_wk_grp(cl_command_queue queue,
 
 LOCAL cl_int
 cl_command_queue_ND_range_gen6(cl_command_queue queue,
-                                cl_kernel ker,
-                                const size_t *global_wk_off,
-                                const size_t *global_wk_sz,
-                                const size_t *local_wk_sz)
+                               cl_kernel ker,
+                               const size_t *global_wk_off,
+                               const size_t *global_wk_sz,
+                               const size_t *local_wk_sz)
 {
   cl_context ctx = queue->ctx;
   intel_gpgpu_t *gpgpu = queue->gpgpu;
@@ -180,7 +180,7 @@ cl_command_queue_ND_range_gen6(cl_command_queue queue,
   /* Start a new batch buffer */
   gpgpu_batch_reset(gpgpu, batch_sz);
   gpgpu_batch_start(gpgpu);
-#if 1
+
   /* Push all media objects. We implement three paths to make it (a bit) faster.
    * Local IDs are shared from work group to work group. We allocate once the
    * buffers and reuse them
@@ -201,16 +201,13 @@ cl_command_queue_ND_range_gen6(cl_command_queue queue,
     cl_command_queue_enqueue_wk_grp(queue, ids, &header, thread_n, barrierID);
     barrierID = (barrierID + 1) % 16;
   }
-#endif
+
   gpgpu_batch_end(gpgpu, 0);
   gpgpu_flush(gpgpu);
 
-  if (slm_bo)
-    drm_intel_bo_unreference(slm_bo);
-  if (private_bo)
-    drm_intel_bo_unreference(private_bo);
-  if (scratch_bo)
-    drm_intel_bo_unreference(scratch_bo);
+  if (slm_bo)     drm_intel_bo_unreference(slm_bo);
+  if (private_bo) drm_intel_bo_unreference(private_bo);
+  if (scratch_bo) drm_intel_bo_unreference(scratch_bo);
 
 error:
   cl_free(ids[0]);

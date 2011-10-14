@@ -42,255 +42,7 @@
 #define MO_RETAIN_BIT         (1 << 28)
 #define SAMPLER_STATE_SIZE    (16)
 
-typedef struct gen6_surface_state
-{
-  struct {
-    uint32_t cube_pos_z:1;
-    uint32_t cube_neg_z:1;
-    uint32_t cube_pos_y:1;
-    uint32_t cube_neg_y:1;
-    uint32_t cube_pos_x:1;
-    uint32_t cube_neg_x:1;
-    uint32_t pad:2;
-    uint32_t render_cache_read_mode:1;
-    uint32_t cube_map_corner_mode:1;
-    uint32_t mipmap_layout_mode:1;
-    uint32_t vert_line_stride_ofs:1;
-    uint32_t vert_line_stride:1;
-    uint32_t color_blend:1;
-    uint32_t writedisable_blue:1;
-    uint32_t writedisable_green:1;
-    uint32_t writedisable_red:1;
-    uint32_t writedisable_alpha:1;
-    uint32_t surface_format:9;
-    uint32_t data_return_format:1;
-    uint32_t pad0:1;
-    uint32_t surface_type:3;
-  } ss0;
-
-  struct {
-    uint32_t base_addr;
-  } ss1;
-
-  struct {
-    uint32_t render_target_rotation:2;
-    uint32_t mip_count:4;
-    uint32_t width:13;
-    uint32_t height:13;
-  } ss2;
-
-  struct {
-    uint32_t tile_walk:1;
-    uint32_t tiled_surface:1;
-    uint32_t pad:1;
-    uint32_t pitch:18;
-    uint32_t depth:11;
-  } ss3;
-
-  struct {
-    uint32_t multisample_pos_index:3;
-    uint32_t pad:1;
-    uint32_t multisample_count:3;
-    uint32_t pad1:1;
-    uint32_t rt_view_extent:9;
-    uint32_t min_array_elt:11;
-    uint32_t min_lod:4;
-  } ss4;
-
-  struct {
-    uint32_t pad:16;
-    uint32_t cache_control:2;  /* different values for GT and IVB */
-    uint32_t gfdt:1;           /* allows selective flushing of LLC (e.g. for scanout) */
-    uint32_t encrypted_data:1;
-    uint32_t y_offset:4;
-    uint32_t vertical_alignment:1;
-    uint32_t x_offset:7;
-  } ss5;
-
-  uint32_t ss6; /* unused */
-  uint32_t ss7; /* unused */
-} gen6_surface_state_t;
-
-typedef struct gen7_surface_state
-{
-  struct {
-    uint32_t cube_pos_z:1;
-    uint32_t cube_neg_z:1;
-    uint32_t cube_pos_y:1;
-    uint32_t cube_neg_y:1;
-    uint32_t cube_pos_x:1;
-    uint32_t cube_neg_x:1;
-    uint32_t media_boundary_pixel_mode:2;
-    uint32_t render_cache_rw_mode:1;
-    uint32_t pad1:1;
-    uint32_t surface_array_spacing:1;
-    uint32_t vertical_line_stride_offset:1;
-    uint32_t vertical_line_stride:1;
-    uint32_t tile_walk:1;
-    uint32_t tiled_surface:1;
-    uint32_t horizontal_alignment:1;
-    uint32_t vertical_alignment:2;
-    uint32_t surface_format:9;
-    uint32_t pad0:1;
-    uint32_t surface_array:1;
-    uint32_t surface_type:3;
-  } ss0;
-
-  struct {
-    uint32_t base_addr;
-  } ss1;
-
-  struct {
-    uint32_t width:14;
-    uint32_t pad1:2;
-    uint32_t height:14;
-    uint32_t pad0:2;
-  } ss2;
-
-  struct {
-    uint32_t pitch:18;
-    uint32_t pad0:3;
-    uint32_t depth:11;
-  } ss3;
-
-  uint32_t ss4;
-
-  struct {
-    uint32_t mip_count:4;
-    uint32_t surface_min_load:4;
-    uint32_t pad2:6;
-    uint32_t coherence_type:1;
-    uint32_t stateless_force_write_thru:1;
-    uint32_t surface_object_control_state:4;
-    uint32_t y_offset:4;
-    uint32_t pad0:1;
-    uint32_t x_offset:7;
-  } ss5;
-
-  uint32_t ss6; /* unused */
-  uint32_t ss7; /* unused */
-
-} gen7_surface_state_t;
-
 #define GEN7_CACHED_IN_LLC 3
-
-STATIC_ASSERT(sizeof(gen6_surface_state_t) == sizeof(gen7_surface_state_t));
-static const size_t surface_state_sz = sizeof(gen6_surface_state_t);
-
-typedef struct gen6_vfe_state_inline
-{
-  struct {
-    uint32_t per_thread_scratch_space:4;
-    uint32_t pad3:3;
-    uint32_t extend_vfe_state_present:1;
-    uint32_t pad2:2;
-    uint32_t scratch_base:22;
-  } vfe0;
-
-  struct {
-    uint32_t debug_counter_control:2;
-    uint32_t gpgpu_mode:1;          /* 0 for SNB!!! */
-    uint32_t gateway_mmio_access:2;
-    uint32_t fast_preempt:1;
-    uint32_t bypass_gateway_ctl:1;  /* 0 - legacy, 1 - no open/close */
-    uint32_t reset_gateway_timer:1;
-    uint32_t urb_entries:8;
-    uint32_t max_threads:16;
-  } vfe1;
-
-  struct {
-    uint32_t pad8:8;
-    uint32_t debug_object_id:24;
-  } vfe2;
-
-  struct {
-    uint32_t curbe_size:16; /* in GRFs */
-    uint32_t urbe_size:16;  /* in GRFs */
-  } vfe3;
-
-  struct {
-    uint32_t scoreboard_mask:32;  /* 1 - enable the corresponding dependency */
-  } vfe4;
-
-  struct {
-    uint32_t scoreboard0_dx:4;
-    uint32_t scoreboard0_dy:4;
-    uint32_t scoreboard1_dx:4;
-    uint32_t scoreboard1_dy:4;
-    uint32_t scoreboard2_dx:4;
-    uint32_t scoreboard2_dy:4;
-    uint32_t scoreboard3_dx:4;
-    uint32_t scoreboard3_dy:4;
-  } vfe5;
-
-  struct {
-    uint32_t scoreboard4_dx:4;
-    uint32_t scoreboard4_dy:4;
-    uint32_t scoreboard5_dx:4;
-    uint32_t scoreboard5_dy:4;
-    uint32_t scoreboard6_dx:4;
-    uint32_t scoreboard6_dy:4;
-    uint32_t scoreboard7_dx:4;
-    uint32_t scoreboard7_dy:4;
-  } vfe6;
-} gen6_vfe_state_inline_t;
-
-typedef struct gen6_interface_descriptor
-{
-  struct {
-    uint32_t pad6:6;
-    uint32_t kernel_start_pointer:26;
-  } desc0;
-
-  struct {
-    uint32_t pad:7;
-    uint32_t software_exception:1;
-    uint32_t pad2:3;
-    uint32_t maskstack_exception:1;
-    uint32_t pad3:1;
-    uint32_t illegal_opcode_exception:1;
-    uint32_t pad4:2;
-    uint32_t floating_point_mode:1;
-    uint32_t thread_priority:1;
-    uint32_t single_program_flow:1;
-    uint32_t pad5:1;
-    uint32_t pad6:6;
-    uint32_t pad7:6;
-  } desc1;
-
-  struct {
-    uint32_t pad:2;
-    uint32_t sampler_count:3;
-    uint32_t sampler_state_pointer:27;
-  } desc2;
-
-  struct {
-    uint32_t binding_table_entry_count:5;  /* prefetch entries only */
-    uint32_t binding_table_pointer:27;     /* 11 bit only on IVB+ */
-  } desc3;
-
-  struct {
-    uint32_t curbe_read_offset:16;         /* in GRFs */
-    uint32_t curbe_read_len:16;            /* in GRFs */
-  } desc4;
-
-  struct {
-    uint32_t group_threads_num:8;        /* 0..64, 0 - no barrier use */
-    uint32_t barrier_return_byte:8;
-    uint32_t slm_sz:5;                   /* 0..16 - 0K..64K */
-    uint32_t barrier_enable:1;
-    uint32_t rounding_mode:2;
-    uint32_t barrier_return_grf_offset:8;
-  } desc5;
-
-  struct {
-    uint32_t reserved_mbz;
-  } desc6;
-
-  struct {
-    uint32_t reserved_mbz;
-  } desc7;
-} gen6_interface_descriptor_t;
 
 /* No dependency on Gen specific structures */
 struct opaque_sampler_state {
@@ -337,7 +89,7 @@ struct intel_gpgpu
 };
 
 /* Be sure that the size is still valid */
-STATIC_ASSERT(sizeof(struct opaque_sampler_state) == sizeof(struct i965_sampler_state));
+STATIC_ASSERT(sizeof(struct opaque_sampler_state) == 16);//sizeof(struct i965_sampler_state));
 
 LOCAL intel_gpgpu_t*
 intel_gpgpu_new(intel_driver_t *drv)
@@ -560,11 +312,11 @@ enum GFX3DSTATE_PIPELINED_SUBOPCODE
 static void
 gpgpu_pipe_control(intel_gpgpu_t *state)
 {
-  BEGIN_BATCH(state->batch, sizeof32(i965_pipe_control_t));
-  i965_pipe_control_t* pc = (i965_pipe_control_t*)
+  BEGIN_BATCH(state->batch, sizeof32(gen6_pipe_control_t));
+  gen6_pipe_control_t* pc = (gen6_pipe_control_t*)
     intel_batchbuffer_alloc_space(state->batch, 0);
   memset(pc, 0, sizeof(*pc));
-  pc->dw0.length = sizeof32(i965_pipe_control_t) - 2;
+  pc->dw0.length = sizeof32(gen6_pipe_control_t) - 2;
   pc->dw0.instruction_subopcode = GFX3DSUBOP_3DCONTROL;
   pc->dw0.instruction_opcode = GFX3DOP_3DCONTROL;
   pc->dw0.instruction_pipeline = PIPE_3D;
@@ -715,7 +467,8 @@ gpgpu_state_init(intel_gpgpu_t *state,
     dri_bo_unreference(state->sampler_state_b.bo);
   bo = dri_bo_alloc(state->drv->bufmgr, 
                     "sample states",
-                    MAX_SAMPLERS * sizeof(struct i965_sampler_state),
+                    //MAX_SAMPLERS * sizeof(struct i965_sampler_state),
+                    MAX_SAMPLERS * 16,
                     32);
   assert(bo);
   state->sampler_state_b.bo = bo;

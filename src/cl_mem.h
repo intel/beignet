@@ -33,11 +33,24 @@ struct _cl_mem {
   struct _drm_intel_bo *bo; /* Data in GPU memory */
   cl_mem prev, next;        /* We chain the memory buffers together */
   cl_context ctx;           /* Context it belongs to */
-  cl_mem_flags  flags;      /* Flags specified at the creation time */
+  cl_mem_flags flags;       /* Flags specified at the creation time */
+  uint32_t is_image;        /* Indicate if this is an image or not */
+  cl_image_format fmt;      /* only for images */
+  size_t w,h,depth,pitch;   /* only for images (depth is only for 3d images) */
 };
 
 /* Create a new memory object and initialize it with possible user data */
 extern cl_mem cl_mem_new(cl_context, cl_mem_flags, size_t, void*, cl_int*);
+
+/* Idem but this is an image */
+extern cl_mem cl_mem_new_image2D(cl_context,
+                                 cl_mem_flags,
+                                 const cl_image_format*,
+                                 size_t w,
+                                 size_t h,
+                                 size_t pitch,
+                                 void *,
+                                 cl_int *);
 
 /* Unref the object and delete it if no more reference */
 extern void cl_mem_delete(cl_mem);

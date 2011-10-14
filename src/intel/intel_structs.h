@@ -22,142 +22,10 @@
 
 #include <stdint.h>
 
-struct i965_vfe_state 
-{
-  struct {
-    uint32_t per_thread_scratch_space:4;
-    uint32_t pad3:3;
-    uint32_t extend_vfe_state_present:1;
-    uint32_t pad2:2;
-    uint32_t scratch_base:22;
-  } vfe0;
-
-  struct {
-    uint32_t debug_counter_control:2;
-    uint32_t children_present:1;
-    uint32_t vfe_mode:4;
-    uint32_t pad2:2;
-    uint32_t num_urb_entries:7;
-    uint32_t urb_entry_alloc_size:9;
-    uint32_t max_threads:7;
-  } vfe1;
-
-  struct {
-    uint32_t pad4:4;
-    uint32_t interface_descriptor_base:28;
-  } vfe2;
-};
-
-struct i965_vfe_state_ex 
-{
-  struct {
-    uint32_t pad:8;
-    uint32_t obj_id:24;
-  } vfex0;
-
-  struct {
-    uint32_t residual_grf_offset:5;
-    uint32_t pad0:3;
-    uint32_t weight_grf_offset:5;
-    uint32_t pad1:3;
-    uint32_t residual_data_offset:8;
-    uint32_t sub_field_present_flag:2;
-    uint32_t residual_data_fix_offset:1;
-    uint32_t pad2:5;
-  }vfex1;
-
-  struct {
-    uint32_t remap_index_0:4;
-    uint32_t remap_index_1:4;
-    uint32_t remap_index_2:4;
-    uint32_t remap_index_3:4;
-    uint32_t remap_index_4:4;
-    uint32_t remap_index_5:4;
-    uint32_t remap_index_6:4;
-    uint32_t remap_index_7:4;
-  }remap_table0;
-
-  struct {
-    uint32_t remap_index_8:4;
-    uint32_t remap_index_9:4;
-    uint32_t remap_index_10:4;
-    uint32_t remap_index_11:4;
-    uint32_t remap_index_12:4;
-    uint32_t remap_index_13:4;
-    uint32_t remap_index_14:4;
-    uint32_t remap_index_15:4;
-  } remap_table1;
-
-  struct {
-    uint32_t scoreboard_mask:8;
-    uint32_t pad:22;
-    uint32_t type:1;
-    uint32_t enable:1;
-  } scoreboard0;
-
-  struct {
-    uint32_t ignore;
-  } scoreboard1;
-
-  struct {
-    uint32_t ignore;
-  } scoreboard2;
-
-  uint32_t pad;
-};
-
-struct i965_vld_state 
+typedef struct gen6_interface_descriptor
 {
   struct {
     uint32_t pad6:6;
-    uint32_t scan_order:1;
-    uint32_t intra_vlc_format:1;
-    uint32_t quantizer_scale_type:1;
-    uint32_t concealment_motion_vector:1;
-    uint32_t frame_predict_frame_dct:1;
-    uint32_t top_field_first:1;
-    uint32_t picture_structure:2;
-    uint32_t intra_dc_precision:2;
-    uint32_t f_code_0_0:4;
-    uint32_t f_code_0_1:4;
-    uint32_t f_code_1_0:4;
-    uint32_t f_code_1_1:4;
-  } vld0;
-
-  struct {
-    uint32_t pad2:9;
-    uint32_t picture_coding_type:2;
-    uint32_t pad:21;
-  } vld1;
-
-  struct {
-    uint32_t index_0:4;
-    uint32_t index_1:4;
-    uint32_t index_2:4;
-    uint32_t index_3:4;
-    uint32_t index_4:4;
-    uint32_t index_5:4;
-    uint32_t index_6:4;
-    uint32_t index_7:4;
-  } desc_remap_table0;
-
-  struct {
-    uint32_t index_8:4;
-    uint32_t index_9:4;
-    uint32_t index_10:4;
-    uint32_t index_11:4;
-    uint32_t index_12:4;
-    uint32_t index_13:4;
-    uint32_t index_14:4;
-    uint32_t index_15:4;
-  } desc_remap_table1;
-};
-
-struct i965_interface_descriptor 
-{
-  struct {
-    uint32_t grf_reg_blocks:4;
-    uint32_t pad:2;
     uint32_t kernel_start_pointer:26;
   } desc0;
 
@@ -173,8 +41,8 @@ struct i965_interface_descriptor
     uint32_t thread_priority:1;
     uint32_t single_program_flow:1;
     uint32_t pad5:1;
-    uint32_t const_urb_entry_read_offset:6;
-    uint32_t const_urb_entry_read_len:6;
+    uint32_t pad6:6;
+    uint32_t pad7:6;
   } desc1;
 
   struct {
@@ -184,12 +52,34 @@ struct i965_interface_descriptor
   } desc2;
 
   struct {
-    uint32_t binding_table_entry_count:5;
-    uint32_t binding_table_pointer:27;
+    uint32_t binding_table_entry_count:5;  /* prefetch entries only */
+    uint32_t binding_table_pointer:27;     /* 11 bit only on IVB+ */
   } desc3;
-};
 
-struct i965_surface_state 
+  struct {
+    uint32_t curbe_read_offset:16;         /* in GRFs */
+    uint32_t curbe_read_len:16;            /* in GRFs */
+  } desc4;
+
+  struct {
+    uint32_t group_threads_num:8;        /* 0..64, 0 - no barrier use */
+    uint32_t barrier_return_byte:8;
+    uint32_t slm_sz:5;                   /* 0..16 - 0K..64K */
+    uint32_t barrier_enable:1;
+    uint32_t rounding_mode:2;
+    uint32_t barrier_return_grf_offset:8;
+  } desc5;
+
+  struct {
+    uint32_t reserved_mbz;
+  } desc6;
+
+  struct {
+    uint32_t reserved_mbz;
+  } desc7;
+} gen6_interface_descriptor_t;
+
+typedef struct gen6_surface_state
 {
   struct {
     uint32_t cube_pos_z:1;
@@ -198,8 +88,9 @@ struct i965_surface_state
     uint32_t cube_neg_y:1;
     uint32_t cube_pos_x:1;
     uint32_t cube_neg_x:1;
-    uint32_t pad:3;
+    uint32_t pad:2;
     uint32_t render_cache_read_mode:1;
+    uint32_t cube_map_corner_mode:1;
     uint32_t mipmap_layout_mode:1;
     uint32_t vert_line_stride_ofs:1;
     uint32_t vert_line_stride:1;
@@ -234,23 +125,155 @@ struct i965_surface_state
   } ss3;
 
   struct {
-    uint32_t pad:19;
-    uint32_t min_array_elt:9;
+    uint32_t multisample_pos_index:3;
+    uint32_t pad:1;
+    uint32_t multisample_count:3;
+    uint32_t pad1:1;
+    uint32_t rt_view_extent:9;
+    uint32_t min_array_elt:11;
     uint32_t min_lod:4;
   } ss4;
 
   struct {
-    uint32_t pad:20;
+    uint32_t pad:16;
+    uint32_t cache_control:2;  /* different values for GT and IVB */
+    uint32_t gfdt:1;           /* allows selective flushing of LLC (e.g. for scanout) */
+    uint32_t encrypted_data:1;
     uint32_t y_offset:4;
-    uint32_t pad2:1;
+    uint32_t vertical_alignment:1;
     uint32_t x_offset:7;
   } ss5;
-};
+
+  uint32_t ss6; /* unused */
+  uint32_t ss7; /* unused */
+} gen6_surface_state_t;
+
+typedef struct gen7_surface_state
+{
+  struct {
+    uint32_t cube_pos_z:1;
+    uint32_t cube_neg_z:1;
+    uint32_t cube_pos_y:1;
+    uint32_t cube_neg_y:1;
+    uint32_t cube_pos_x:1;
+    uint32_t cube_neg_x:1;
+    uint32_t media_boundary_pixel_mode:2;
+    uint32_t render_cache_rw_mode:1;
+    uint32_t pad1:1;
+    uint32_t surface_array_spacing:1;
+    uint32_t vertical_line_stride_offset:1;
+    uint32_t vertical_line_stride:1;
+    uint32_t tile_walk:1;
+    uint32_t tiled_surface:1;
+    uint32_t horizontal_alignment:1;
+    uint32_t vertical_alignment:2;
+    uint32_t surface_format:9;
+    uint32_t pad0:1;
+    uint32_t surface_array:1;
+    uint32_t surface_type:3;
+  } ss0;
+
+  struct {
+    uint32_t base_addr;
+  } ss1;
+
+  struct {
+    uint32_t width:14;
+    uint32_t pad1:2;
+    uint32_t height:14;
+    uint32_t pad0:2;
+  } ss2;
+
+  struct {
+    uint32_t pitch:18;
+    uint32_t pad0:3;
+    uint32_t depth:11;
+  } ss3;
+
+  uint32_t ss4;
+
+  struct {
+    uint32_t mip_count:4;
+    uint32_t surface_min_load:4;
+    uint32_t pad2:6;
+    uint32_t coherence_type:1;
+    uint32_t stateless_force_write_thru:1;
+    uint32_t surface_object_control_state:4;
+    uint32_t y_offset:4;
+    uint32_t pad0:1;
+    uint32_t x_offset:7;
+  } ss5;
+
+  uint32_t ss6; /* unused */
+  uint32_t ss7; /* unused */
+
+} gen7_surface_state_t;
+
+STATIC_ASSERT(sizeof(gen6_surface_state_t) == sizeof(gen7_surface_state_t));
+static const size_t surface_state_sz = sizeof(gen6_surface_state_t);
+
+typedef struct gen6_vfe_state_inline
+{
+  struct {
+    uint32_t per_thread_scratch_space:4;
+    uint32_t pad3:3;
+    uint32_t extend_vfe_state_present:1;
+    uint32_t pad2:2;
+    uint32_t scratch_base:22;
+  } vfe0;
+
+  struct {
+    uint32_t debug_counter_control:2;
+    uint32_t gpgpu_mode:1;          /* 0 for SNB!!! */
+    uint32_t gateway_mmio_access:2;
+    uint32_t fast_preempt:1;
+    uint32_t bypass_gateway_ctl:1;  /* 0 - legacy, 1 - no open/close */
+    uint32_t reset_gateway_timer:1;
+    uint32_t urb_entries:8;
+    uint32_t max_threads:16;
+  } vfe1;
+
+  struct {
+    uint32_t pad8:8;
+    uint32_t debug_object_id:24;
+  } vfe2;
+
+  struct {
+    uint32_t curbe_size:16; /* in GRFs */
+    uint32_t urbe_size:16;  /* in GRFs */
+  } vfe3;
+
+  struct {
+    uint32_t scoreboard_mask:32;  /* 1 - enable the corresponding dependency */
+  } vfe4;
+
+  struct {
+    uint32_t scoreboard0_dx:4;
+    uint32_t scoreboard0_dy:4;
+    uint32_t scoreboard1_dx:4;
+    uint32_t scoreboard1_dy:4;
+    uint32_t scoreboard2_dx:4;
+    uint32_t scoreboard2_dy:4;
+    uint32_t scoreboard3_dx:4;
+    uint32_t scoreboard3_dy:4;
+  } vfe5;
+
+  struct {
+    uint32_t scoreboard4_dx:4;
+    uint32_t scoreboard4_dy:4;
+    uint32_t scoreboard5_dx:4;
+    uint32_t scoreboard5_dy:4;
+    uint32_t scoreboard6_dx:4;
+    uint32_t scoreboard6_dy:4;
+    uint32_t scoreboard7_dx:4;
+    uint32_t scoreboard7_dy:4;
+  } vfe6;
+} gen6_vfe_state_inline_t;
 
 #define BITFIELD_BIT(X) 1
 #define BITFIELD_RANGE(X,Y) ((Y) - (X) + 1)
 
-typedef struct i965_pipe_control
+typedef struct gen6_pipe_control
 {
   struct
   {
@@ -300,9 +323,9 @@ typedef struct i965_pipe_control
   {
     uint64_t data;
   } qw0;
-} i965_pipe_control_t;
-
-typedef struct i965_sampler_state
+} gen6_pipe_control_t;
+#if 0
+typedef struct gen6_sampler_state
 {
   struct
   {
@@ -349,7 +372,8 @@ typedef struct i965_sampler_state
     uint32_t monochrome_filter_width:3; 
     uint32_t monochrome_filter_height:3; 
   } ss3;
-} i965_sampler_state_t;
+} gen6_sampler_state_t;
+#endif
 
 typedef struct gen7_sampler_state
 {

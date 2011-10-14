@@ -213,6 +213,7 @@ clCreateBuffer(cl_context    context,
   cl_mem mem = NULL;
   cl_int err = CL_SUCCESS;
   CHECK_CONTEXT (context);
+
   mem = cl_mem_new(context, flags, size, host_ptr, &err);
 error:
   if (errcode_ret)
@@ -246,8 +247,22 @@ clCreateImage2D(cl_context              context,
                 void *                  host_ptr,
                 cl_int *                errcode_ret)
 {
-  NOT_IMPLEMENTED;
-  return NULL;
+  cl_mem mem = NULL;
+  cl_int err = CL_SUCCESS;
+  CHECK_CONTEXT (context);
+
+  mem = cl_mem_new_image2D(context,
+                           flags,
+                           image_format,
+                           image_width,
+                           image_height,
+                           image_row_pitch,
+                           host_ptr,
+                           errcode_ret);
+error:
+  if (errcode_ret)
+    *errcode_ret = err;
+  return mem;
 }
 
 cl_mem

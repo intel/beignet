@@ -21,6 +21,7 @@
 #include "cl_context.h"
 #include "cl_utils.h"
 #include "cl_alloc.h"
+#include "cl_device_id.h"
 
 #include "intel_bufmgr.h" /* libdrm_intel */
 
@@ -29,12 +30,8 @@
 #include <assert.h>
 #include <stdio.h>
 
-LOCAL cl_mem
-cl_mem_new(cl_context ctx,
-           cl_mem_flags flags,
-           size_t sz,
-           void *data,
-           cl_int *errcode_ret)
+static cl_mem
+cl_mem_allocate(cl_context ctx, cl_mem_flags flags, size_t sz, cl_int *errcode)
 {
   drm_intel_bufmgr *bufmgr = NULL;
   cl_mem mem = NULL;
@@ -48,10 +45,6 @@ cl_mem_new(cl_context ctx,
             "CL_MEM_USE_HOST_PTR unsupported");   /* XXX */
   if (UNLIKELY(sz == 0)) {
     err = CL_INVALID_BUFFER_SIZE;
-    goto error;
-  }
-  if (UNLIKELY(flags & CL_MEM_COPY_HOST_PTR && data == NULL)) {
-    err = CL_INVALID_HOST_PTR;
     goto error;
   }
 
@@ -73,16 +66,6 @@ cl_mem_new(cl_context ctx,
     err = CL_MEM_ALLOCATION_FAILURE;
     goto error;
   }
-  /* Copy the data if required */
-  if (flags & CL_MEM_COPY_HOST_PTR) /* TODO check other flags too */
-	drm_intel_bo_subdata(mem->bo, 0, sz, data);
-   #if 0	
-    if (UNLIKELY(drm_intel_bo_subdata(mem->bo, 0, sz, data) != 0)) {
-      err = CL_MEM_ALLOCATION_FAILURE;
-      goto error;
-    }
-   #endif
-	
 
   /* Append the buffer in the context buffer list */
   pthread_mutex_lock(&ctx->buffer_lock);
@@ -93,6 +76,190 @@ cl_mem_new(cl_context ctx,
   pthread_mutex_unlock(&ctx->buffer_lock);
   mem->ctx = ctx;
   cl_context_add_ref(ctx);
+
+exit:
+  if (errcode)
+    *errcode = err;
+  return mem;
+error:
+  cl_mem_delete(mem);
+  mem = NULL;
+  goto exit;
+
+}
+
+LOCAL cl_mem
+cl_mem_new(cl_context ctx,
+           cl_mem_flags flags,
+           size_t sz,
+           void *data,
+           cl_int *errcode_ret)
+{
+  cl_int err = CL_SUCCESS;
+  cl_mem mem = NULL;
+
+  /* Check flags consistency */
+  if (UNLIKELY(flags & CL_MEM_COPY_HOST_PTR && data == NULL)) {
+    err = CL_INVALID_HOST_PTR;
+    goto error;
+  }
+
+  /* Create the buffer in video memory */
+  mem = cl_mem_allocate(ctx, flags, sz, &err);
+  if (mem == NULL || err != CL_SUCCESS)
+    goto error;
+
+  /* Copy the data if required */
+  if (flags & CL_MEM_COPY_HOST_PTR) /* TODO check other flags too */
+    drm_intel_bo_subdata(mem->bo, 0, sz, data);
+
+exit:
+  if (errcode_ret)
+    *errcode_ret = err;
+  return mem;
+error:
+  cl_mem_delete(mem);
+  mem = NULL;
+  goto exit;
+}
+
+static cl_int
+cl_mem_byte_per_pixel(const cl_image_format *fmt, uint32_t *bpp)
+{
+  assert(bpp);
+
+  const uint32_t type = fmt->image_channel_data_type;
+  const uint32_t order = fmt->image_channel_order;
+  switch (type) {
+#define DECL_BPP(DATA_TYPE, VALUE) case DATA_TYPE: *bpp = VALUE;
+    DECL_BPP(CL_SNORM_INT8, 1); break;
+    DECL_BPP(CL_SNORM_INT16, 2); break;
+    DECL_BPP(CL_UNORM_INT8, 1); break;
+    DECL_BPP(CL_UNORM_INT16, 2); break;
+    DECL_BPP(CL_UNORM_SHORT_565, 2);
+      if (order != CL_RGBx && order != CL_RGB)
+        return CL_INVALID_IMAGE_FORMAT_DESCRIPTOR;
+    break;
+    DECL_BPP(CL_UNORM_SHORT_555, 2);
+      if (order != CL_RGBx && order != CL_RGB)
+        return CL_INVALID_IMAGE_FORMAT_DESCRIPTOR;
+    break;
+    DECL_BPP(CL_UNORM_INT_101010, 4);
+      if (order != CL_RGBx && order != CL_RGB)
+        return CL_INVALID_IMAGE_FORMAT_DESCRIPTOR;
+    break;
+    DECL_BPP(CL_SIGNED_INT8, 1); break;
+    DECL_BPP(CL_SIGNED_INT16, 2); break;
+    DECL_BPP(CL_SIGNED_INT32, 4); break;
+    DECL_BPP(CL_UNSIGNED_INT8, 1); break;
+    DECL_BPP(CL_UNSIGNED_INT16, 2); break;
+    DECL_BPP(CL_UNSIGNED_INT32, 4); break;
+    DECL_BPP(CL_HALF_FLOAT, 2); break;
+    DECL_BPP(CL_FLOAT, 4); break;
+#undef DECL_BPP
+    default: return CL_INVALID_IMAGE_FORMAT_DESCRIPTOR;
+  };
+
+  switch (order) {
+    case CL_R: break;
+    case CL_A: break;
+    case CL_RA: *bpp *= 2; break;
+    case CL_RG: *bpp *= 2; break;
+    case CL_Rx: *bpp *= 2; break;
+    case CL_INTENSITY:
+    case CL_LUMINANCE:
+      if (type != CL_UNORM_INT8 && type != CL_UNORM_INT16 &&
+          type != CL_SNORM_INT8 && type != CL_SNORM_INT16 &&
+          type != CL_HALF_FLOAT && type != CL_FLOAT)
+        return CL_INVALID_IMAGE_FORMAT_DESCRIPTOR;
+    break;
+    case CL_RGB:
+    case CL_RGBx:
+      if (type != CL_UNORM_SHORT_555 &&
+          type != CL_UNORM_SHORT_565 &&
+          type != CL_UNORM_INT_101010)
+        return CL_INVALID_IMAGE_FORMAT_DESCRIPTOR;
+    break;
+    case CL_RGBA: *bpp *= 4; break;
+    case CL_ARGB:
+    case CL_BGRA:
+      if (type != CL_UNORM_INT8 && type != CL_SIGNED_INT8 &&
+          type != CL_SNORM_INT8 && type != CL_UNSIGNED_INT8)
+        return CL_INVALID_IMAGE_FORMAT_DESCRIPTOR;
+      *bpp *= 4;
+    break;
+    default: return CL_INVALID_IMAGE_FORMAT_DESCRIPTOR;
+  };
+
+  return CL_SUCCESS;
+}
+
+LOCAL cl_mem
+cl_mem_new_image2D(cl_context ctx,
+                   cl_mem_flags flags,
+                   const cl_image_format *fmt,
+                   size_t w,
+                   size_t h,
+                   size_t pitch,
+                   void *data,
+                   cl_int *errcode_ret)
+{
+  cl_int err = CL_SUCCESS;
+  cl_mem mem = NULL;
+  uint32_t bpp = 0;
+  size_t sz = 0;
+
+  /* Check flags consistency */
+  if (UNLIKELY(flags & CL_MEM_COPY_HOST_PTR && data == NULL)) {
+    err = CL_INVALID_HOST_PTR;
+    goto error;
+  }
+
+  /* Get the size of each pixel */
+  if (UNLIKELY((err = cl_mem_byte_per_pixel(fmt, &bpp)) != CL_SUCCESS))
+    goto error;
+
+  /* See if the user parameters match */
+#define DO_IMAGE_ERROR            \
+  do {                            \
+    err = CL_INVALID_IMAGE_SIZE;  \
+    goto error;                   \
+  } while (0);
+  if (UNLIKELY(w == 0)) DO_IMAGE_ERROR;
+  if (UNLIKELY(h == 0)) DO_IMAGE_ERROR;
+  if (UNLIKELY(w > ctx->device->image2d_max_width)) DO_IMAGE_ERROR;
+  if (UNLIKELY(h > ctx->device->image2d_max_height)) DO_IMAGE_ERROR;
+  if (UNLIKELY(bpp*w > pitch)) DO_IMAGE_ERROR;
+#undef DO_IMAGE_ERROR
+
+  /* Create the buffer in video memory */
+  sz = w * h * bpp;
+  mem = cl_mem_allocate(ctx, flags, sz, &err);
+  if (mem == NULL || err != CL_SUCCESS)
+    goto error;
+
+  /* Copy the data if required */
+  if (flags & CL_MEM_COPY_HOST_PTR) {/* TODO check other flags too */
+    size_t x, y, p;
+    char *dst;
+    drm_intel_bo_map(mem->bo, 1);
+    dst = mem->bo->virtual;
+    for (y = 0; y < h; ++y) {
+      char *src = (char*) data + pitch * y;
+      for (x = 0; x < w; ++x) {
+        for (p = 0; p < bpp; ++p)
+          dst[p] = src[p];
+        dst += bpp;
+        src += bpp;
+      }
+    }
+    drm_intel_bo_unmap(mem->bo);
+  }
+  mem->w = w;
+  mem->h = h;
+  mem->fmt = *fmt;
+  mem->pitch = w * bpp;
+  mem->is_image = 1;
 
 exit:
   if (errcode_ret)
