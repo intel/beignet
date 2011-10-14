@@ -17,8 +17,8 @@
  * Author: Benjamin Segovia <benjamin.segovia@intel.com>
  */
 
-#ifndef __GENX_STRUCTS_H__
-#define __GENX_STRUCTS_H__
+#ifndef __INTEL_STRUCTS_H__
+#define __INTEL_STRUCTS_H__
 
 #include <stdint.h>
 
@@ -70,13 +70,8 @@ typedef struct gen6_interface_descriptor
     uint32_t barrier_return_grf_offset:8;
   } desc5;
 
-  struct {
-    uint32_t reserved_mbz;
-  } desc6;
-
-  struct {
-    uint32_t reserved_mbz;
-  } desc7;
+  uint32_t desc6;
+  uint32_t desc7;
 } gen6_interface_descriptor_t;
 
 typedef struct gen6_surface_state
@@ -206,7 +201,6 @@ typedef struct gen7_surface_state
 
   uint32_t ss6; /* unused */
   uint32_t ss7; /* unused */
-
 } gen7_surface_state_t;
 
 STATIC_ASSERT(sizeof(gen6_surface_state_t) == sizeof(gen7_surface_state_t));
@@ -275,8 +269,7 @@ typedef struct gen6_vfe_state_inline
 
 typedef struct gen6_pipe_control
 {
-  struct
-  {
+  struct {
     uint32_t length                              : BITFIELD_RANGE(0, 7);
     uint32_t reserved                            : BITFIELD_RANGE(8, 15);
     uint32_t instruction_subopcode               : BITFIELD_RANGE(16, 23);
@@ -285,8 +278,7 @@ typedef struct gen6_pipe_control
     uint32_t instruction_type                    : BITFIELD_RANGE(29, 31);
   } dw0;
 
-  struct
-  {
+  struct {
     uint32_t depth_cache_flush_enable            : BITFIELD_BIT(0);
     uint32_t stall_at_pixel_scoreboard           : BITFIELD_BIT(1);
     uint32_t state_cache_invalidation_enable     : BITFIELD_BIT(2);
@@ -312,23 +304,20 @@ typedef struct gen6_pipe_control
     uint32_t reserved                            : BITFIELD_RANGE(23, 31);
   } dw1;
 
-  struct
-  {
+  struct {
     uint32_t reserved                            : BITFIELD_RANGE(0, 1);
     uint32_t destination_address_type            : BITFIELD_BIT(2);
     uint32_t address                             : BITFIELD_RANGE(3, 31);
   } dw2;
 
-  struct
-  {
+  struct {
     uint64_t data;
   } qw0;
 } gen6_pipe_control_t;
-#if 0
+
 typedef struct gen6_sampler_state
 {
-  struct
-  {
+  struct {
     uint32_t shadow_function:3; 
     uint32_t lod_bias:11; 
     uint32_t min_filter:3; 
@@ -342,8 +331,7 @@ typedef struct gen6_sampler_state
     uint32_t disable:1; 
   } ss0;
 
-  struct
-  {
+  struct {
     uint32_t r_wrap_mode:3; 
     uint32_t t_wrap_mode:3; 
     uint32_t s_wrap_mode:3; 
@@ -353,15 +341,12 @@ typedef struct gen6_sampler_state
     uint32_t min_lod:10; 
   } ss1;
 
-
-  struct
-  {
+  struct {
     uint32_t pad:5;
     uint32_t default_color_pointer:27; 
   } ss2;
 
-  struct
-  {
+  struct {
     uint32_t non_normalized_coord:1;
     uint32_t pad:12;
     uint32_t address_round:6;
@@ -373,12 +358,10 @@ typedef struct gen6_sampler_state
     uint32_t monochrome_filter_height:3; 
   } ss3;
 } gen6_sampler_state_t;
-#endif
 
 typedef struct gen7_sampler_state
 {
-  struct
-  {
+  struct {
     uint32_t aniso_algorithm:1;
     uint32_t lod_bias:13;
     uint32_t min_filter:3;
@@ -392,8 +375,7 @@ typedef struct gen7_sampler_state
     uint32_t disable:1;
   } ss0;
 
-  struct
-  {
+  struct {
     uint32_t cube_control_mode:1;
     uint32_t shadow_function:3;
     uint32_t pad:4;
@@ -401,14 +383,12 @@ typedef struct gen7_sampler_state
     uint32_t min_lod:12;
   } ss1;
 
-  struct
-  {
+  struct {
     uint32_t pad:5;
     uint32_t default_color_pointer:27;
   } ss2;
 
-  struct
-  {
+  struct {
     uint32_t r_wrap_mode:3;
     uint32_t t_wrap_mode:3;
     uint32_t s_wrap_mode:3;
@@ -427,4 +407,5 @@ typedef struct gen7_sampler_state
 #undef BITFIELD_BIT
 #undef BITFIELD_RANGE
 
-#endif /* __GENX_STRUCTS_H__ */
+#endif /* __INTEL_STRUCTS_H__ */
+

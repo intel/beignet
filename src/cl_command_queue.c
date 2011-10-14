@@ -118,8 +118,8 @@ cl_command_queue_bind_surface(cl_command_queue queue,
 
   /* Bind user defined surface */
   for (i = 0; i < k->arg_info_n; ++i) {
-    if (k->arg_info[i].type != OCLRT_ARG_TYPE_BUFFER)
-      continue;
+//    if (k->arg_info[i].type != OCLRT_ARG_TYPE_BUFFER)
+//      continue;
     assert(k->arg_info[i].offset % SURFACE_SZ == 0);
     index = k->arg_info[i].offset / SURFACE_SZ;
     mem = (cl_mem) k->args[k->arg_info[i].arg_index];
@@ -127,7 +127,18 @@ cl_command_queue_bind_surface(cl_command_queue queue,
     CHECK_MEM(mem);
     bo = mem->bo;
     assert(bo);
-    gpgpu_bind_buf(gpgpu, index, bo, 0, bo->size, cc_llc_mlc);
+    if (mem->is_image)
+#define I965_SURFACEFORMAT_R8G8B8A8_UINT                  0x0CB 
+      gpgpu_bind_image2D(gpgpu,
+                         index,
+                         bo,
+                         I965_SURFACEFORMAT_R8G8B8A8_UINT,
+                         mem->w,
+                         mem->h,
+                         4,
+                         cc_llc_mlc);
+    else
+      gpgpu_bind_buf(gpgpu, index, bo, bo->size, cc_llc_mlc);
   }
 
   /* Allocate the constant surface (if any) */
@@ -135,7 +146,6 @@ cl_command_queue_bind_surface(cl_command_queue queue,
     assert(k->const_bo_index != MAX_SURFACES - 1);
     gpgpu_bind_buf(gpgpu, k->const_bo_index,
                    k->const_bo,
-                   0,
                    k->const_bo->size,
                    cc_llc_mlc);
   }
@@ -147,7 +157,7 @@ cl_command_queue_bind_surface(cl_command_queue queue,
     index = k->patch.local_surf.offset / SURFACE_SZ;
     assert(index != MAX_SURFACES - 1);
     *local = drm_intel_bo_alloc(bufmgr, "CL local surface", sz, 64);
-    gpgpu_bind_buf(gpgpu, index, *local, 0, sz, cc_llc_mlc);
+    gpgpu_bind_buf(gpgpu, index, *local, sz, cc_llc_mlc);
   }
   else if (local)
     *local = NULL;
@@ -162,7 +172,7 @@ cl_command_queue_bind_surface(cl_command_queue queue,
     index = k->patch.private_surf.offset / SURFACE_SZ;
     assert(index != MAX_SURFACES - 1);
     *priv = drm_intel_bo_alloc(bufmgr, "CL private surface", sz, 64);
-    gpgpu_bind_buf(gpgpu, index, *priv, 0, sz, cc_llc_mlc);
+    gpgpu_bind_buf(gpgpu, index, *priv, sz, cc_llc_mlc);
   }
   else if(priv)
     *priv = NULL;
@@ -177,14 +187,14 @@ cl_command_queue_bind_surface(cl_command_queue queue,
     assert(index != MAX_SURFACES - 1);
     index = k->patch.scratch.offset / SURFACE_SZ;
     *scratch = drm_intel_bo_alloc(bufmgr, "CL scratch surface", sz, 64);
-    gpgpu_bind_buf(gpgpu, index, *scratch, 0, sz, cc_llc_mlc);
+    gpgpu_bind_buf(gpgpu, index, *scratch, sz, cc_llc_mlc);
   }
   else if (scratch)
     *scratch = NULL;
 
   /* Now bind a bo used for synchronization */
   sync_bo = drm_intel_bo_alloc(bufmgr, "sync surface", 64, 64);
-  gpgpu_bind_buf(gpgpu, MAX_SURFACES-1, sync_bo, 0, 64, cc_llc_mlc);
+  gpgpu_bind_buf(gpgpu, MAX_SURFACES-1, sync_bo, 64, cc_llc_mlc);
   if (queue->last_batch != NULL)
     drm_intel_bo_unreference(queue->last_batch);
   queue->last_batch = sync_bo;

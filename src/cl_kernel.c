@@ -451,54 +451,6 @@ error:
 }
 
 #undef ASSOC_ITEM
-typedef struct i965_sampler_state
-{
-  struct
-  {
-    uint32_t shadow_function:3; 
-    uint32_t lod_bias:11; 
-    uint32_t min_filter:3; 
-    uint32_t mag_filter:3; 
-    uint32_t mip_filter:2; 
-    uint32_t base_level:5; 
-    uint32_t min_mag_neq:1;
-    uint32_t lod_preclamp:1; 
-    uint32_t default_color_mode:1; 
-    uint32_t pad0:1;
-    uint32_t disable:1; 
-  } ss0;
-
-  struct
-  {
-    uint32_t r_wrap_mode:3; 
-    uint32_t t_wrap_mode:3; 
-    uint32_t s_wrap_mode:3; 
-    uint32_t cube_control_mode:1;
-    uint32_t pad:2;
-    uint32_t max_lod:10; 
-    uint32_t min_lod:10; 
-  } ss1;
-
-
-  struct
-  {
-    uint32_t pad:5;
-    uint32_t default_color_pointer:27; 
-  } ss2;
-
-  struct
-  {
-    uint32_t non_normalized_coord:1;
-    uint32_t pad:12;
-    uint32_t address_round:6;
-    uint32_t max_aniso:3; 
-    uint32_t chroma_key_mode:1; 
-    uint32_t chroma_key_index:2; 
-    uint32_t chroma_key_enable:1; 
-    uint32_t monochrome_filter_width:3; 
-    uint32_t monochrome_filter_height:3; 
-  } ss3;
-} i965_sampler_state_t;
 
 LOCAL int
 cl_kernel_setup(cl_kernel k, const char *ker)

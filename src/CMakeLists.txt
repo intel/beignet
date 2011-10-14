@@ -9,6 +9,7 @@ SET(OPENCL_SRC
     cl_kernel.c
     cl_program.c
     cl_event.c
+    cl_image.c
     cl_mem.c
     cl_platform_id.c
     cl_device_id.c

@@ -25,15 +25,15 @@
 #include <stdlib.h>
 #include <stdint.h>
 
+#define MAX_SURFACES 128
+#define MAX_SAMPLERS 16
+
 enum gen6_cache_control {
   cc_gtt        = 0x0,    /* don't use L3, use GTT for LLC */
   cc_mlc        = 0x1,    /* IVB: use L3, use GTT for LLC; SNB: UC */
   cc_llc        = 0x2,
   cc_llc_mlc    = 0x3,
 };
-
-#define MAX_SURFACES   128
-#define MAX_SAMPLERS   16
 
 /* Use this structure to bind kernels in the gpgpu state */
 typedef struct genx_gpgpu_kernel {
@@ -71,9 +71,18 @@ extern int32_t intel_gpgpu_version(intel_gpgpu_t*);
 extern void gpgpu_bind_buf(intel_gpgpu_t*,
                            int32_t index,
                            struct _drm_intel_bo* obj_bo,
-                           uint32_t offset,
                            uint32_t size,
                            uint32_t cchint);
+
+/* Set a 2d texture */
+extern void gpgpu_bind_image2D(intel_gpgpu_t *state,
+                               int32_t index,
+                               struct _drm_intel_bo* obj_bo,
+                               uint32_t format,
+                               int32_t w,
+                               int32_t h,
+                               int bpp,
+                               uint32_t cchint);
 
 /* Configure state, size in 512-bit units */
 extern void gpgpu_state_init(intel_gpgpu_t*, uint32_t max_threads, uint32_t size_cs_entry);

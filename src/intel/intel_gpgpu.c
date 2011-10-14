@@ -82,10 +82,10 @@ struct intel_gpgpu
 
   struct {
     uint32_t num_cs_entries;
-    uint32_t size_cs_entry;     /* size of one entry in 512bit elements */
+    uint32_t size_cs_entry;  /* size of one entry in 512bit elements */
   } urb;
 
-  uint32_t max_threads;         /* max threads requested by the user */
+  uint32_t max_threads;      /* max threads requested by the user */
 };
 
 /* Be sure that the size is still valid */
@@ -467,68 +467,161 @@ gpgpu_state_init(intel_gpgpu_t *state,
     dri_bo_unreference(state->sampler_state_b.bo);
   bo = dri_bo_alloc(state->drv->bufmgr, 
                     "sample states",
-                    //MAX_SAMPLERS * sizeof(struct i965_sampler_state),
-                    MAX_SAMPLERS * 16,
+                    MAX_SAMPLERS * sizeof(struct gen6_sampler_state),
                     32);
   assert(bo);
   state->sampler_state_b.bo = bo;
   memset(state->samplers, 0, sizeof(state->samplers));
 }
 
+static void
+gpgpu_set_buf_reloc_gen6(intel_gpgpu_t *state, int32_t index, dri_bo* obj_bo)
+{
+  surface_heap_t *heap = state->surface_heap_b.bo->virtual;
+  heap->binding_table[index] = offsetof(surface_heap_t, surface) +
+                               index * sizeof(gen6_surface_state_t);
+  dri_bo_emit_reloc(state->surface_heap_b.bo,
+                    I915_GEM_DOMAIN_RENDER,
+                    I915_GEM_DOMAIN_RENDER,
+                    0,
+                    heap->binding_table[index] +
+                    offsetof(gen6_surface_state_t, ss1),
+                    obj_bo);
+}
+
+static void
+gpgpu_set_buf_reloc_gen7(intel_gpgpu_t *state, int32_t index, dri_bo* obj_bo)
+{
+  surface_heap_t *heap = state->surface_heap_b.bo->virtual;
+  heap->binding_table[index] = offsetof(surface_heap_t, surface) +
+                               index * sizeof(gen7_surface_state_t);
+  dri_bo_emit_reloc(state->surface_heap_b.bo,
+                    I915_GEM_DOMAIN_RENDER,
+                    I915_GEM_DOMAIN_RENDER,
+                    0,
+                    heap->binding_table[index] +
+                    offsetof(gen7_surface_state_t, ss1),
+                    obj_bo);
+}
+
+static void
+gpgpu_bind_buf_gen6(intel_gpgpu_t *state,
+                    int32_t index,
+                    dri_bo* obj_bo,
+                    uint32_t size,
+                    uint32_t cchint)
+{
+  surface_heap_t *heap = state->surface_heap_b.bo->virtual;
+  gen6_surface_state_t *ss = (gen6_surface_state_t *) heap->surface[index];
+  const uint32_t size_ss = ((size+0xf) >> 4) - 1; /* ceil(size/16) - 1 */
+  memset(ss, 0, sizeof(*ss));
+  ss->ss0.surface_type = I965_SURFACE_BUFFER;
+  ss->ss0.surface_format = I965_SURFACEFORMAT_R32G32B32A32_FLOAT;
+  ss->ss1.base_addr = obj_bo->offset;
+  ss->ss2.width = size_ss & 0x7f;           /* bits 6:0 of size_ss */
+  ss->ss2.height = (size_ss >> 7) & 0x1fff; /* bits 19:7 of size_ss */
+  ss->ss3.depth = size_ss >> 20;            /* bits 26:20 of size_ss */
+  ss->ss3.pitch = 0xf;                      /* sizeof(RGBA32) - 1 */;
+  ss->ss5.cache_control = cchint;
+  gpgpu_set_buf_reloc_gen6(state, index, obj_bo);
+}
+
+static void
+gpgpu_bind_buf_gen7(intel_gpgpu_t *state,
+                    int32_t index,
+                    dri_bo* obj_bo,
+                    uint32_t size,
+                    uint32_t cchint)
+{
+  surface_heap_t *heap = state->surface_heap_b.bo->virtual;
+  gen7_surface_state_t *ss = (gen7_surface_state_t *) heap->surface[index];
+  const uint32_t size_ss = size - 1;
+  memset(ss, 0, sizeof(*ss));
+  ss->ss0.surface_type = I965_SURFACE_BUFFER;
+  ss->ss0.surface_format = I965_SURFACEFORMAT_RAW;
+  ss->ss1.base_addr = obj_bo->offset;
+  ss->ss2.width  = size_ss & 0x7f;               /* bits 6:0 of size_ss */
+  ss->ss2.height = (size_ss & 0x1fff80) >> 7;    /* bits 20:7 of size_ss */
+  ss->ss3.depth  = (size_ss & 0xffe00000) >> 20; /* bits 27:21 of size_ss */
+  ss->ss5.surface_object_control_state = GEN7_CACHED_IN_LLC;
+  gpgpu_set_buf_reloc_gen7(state, index, obj_bo);
+}
+
+static void
+gpgpu_bind_image2D_gen6(intel_gpgpu_t *state,
+                        int32_t index,
+                        dri_bo* obj_bo,
+                        uint32_t format,
+                        int32_t w,
+                        int32_t h,
+                        int bpp,
+                        uint32_t cchint)
+{
+  surface_heap_t *heap = state->surface_heap_b.bo->virtual;
+  gen6_surface_state_t *ss = (gen6_surface_state_t *) heap->surface[index];
+  memset(ss, 0, sizeof(*ss));
+  ss->ss0.surface_type = I965_SURFACE_2D;
+  ss->ss0.surface_format = format;
+  ss->ss1.base_addr = obj_bo->offset;
+  ss->ss2.width = w - 1;
+  ss->ss2.height = h - 1;
+  ss->ss3.pitch = w*bpp - 1;
+  ss->ss5.cache_control = cchint;
+  gpgpu_set_buf_reloc_gen6(state, index, obj_bo);
+}
+
+static void
+gpgpu_bind_image2D_gen7(intel_gpgpu_t *state,
+                        int32_t index,
+                        dri_bo* obj_bo,
+                        uint32_t format,
+                        int32_t w,
+                        int32_t h,
+                        int bpp,
+                        uint32_t cchint)
+{
+  surface_heap_t *heap = state->surface_heap_b.bo->virtual;
+  gen7_surface_state_t *ss = (gen7_surface_state_t *) heap->surface[index];
+  memset(ss, 0, sizeof(*ss));
+  ss->ss0.surface_type = I965_SURFACE_2D;
+  ss->ss0.surface_format = format;
+  ss->ss1.base_addr = obj_bo->offset;
+  ss->ss2.width = w - 1;
+  ss->ss2.height = h - 1;
+  ss->ss3.pitch = w*bpp - 1;
+  //ss->ss5.cache_control = cchint;
+  gpgpu_set_buf_reloc_gen7(state, index, obj_bo);
+}
+
 LOCAL void
 gpgpu_bind_buf(intel_gpgpu_t *state,
                int32_t index,
                dri_bo* obj_bo,
-               uint32_t offset,
                uint32_t size,
                uint32_t cchint)
 {
-  assert(offset < MAX_SURFACES);
-  surface_heap_t *heap = state->surface_heap_b.bo->virtual;
+  assert(index < MAX_SURFACES);
+  if(state->drv->gen_ver == 6)
+    gpgpu_bind_buf_gen6(state, index, obj_bo, size, cchint);
+  else if (state->drv->gen_ver == 7)
+    gpgpu_bind_buf_gen7(state, index, obj_bo, size, cchint);
+}
 
-  if(state->drv->gen_ver == 6) {
-    gen6_surface_state_t *ss = (gen6_surface_state_t *) heap->surface[index];
-    const uint32_t size_ss = ((size+0xf) >> 4) - 1; /* ceil(size/16) - 1 */
-    memset(ss, 0, sizeof(*ss));
-    ss->ss0.surface_type = I965_SURFACE_BUFFER;
-    ss->ss0.surface_format = I965_SURFACEFORMAT_R32G32B32A32_FLOAT;
-    ss->ss1.base_addr = obj_bo->offset + offset;
-    ss->ss2.width = size_ss & 0x7f;           /* bits 6:0 of size_ss */
-    ss->ss2.height = (size_ss >> 7) & 0x1fff; /* bits 19:7 of size_ss */
-    ss->ss3.depth = size_ss >> 20;            /* bits 26:20 of size_ss */
-    ss->ss3.pitch = 0xf;                      /* sizeof(RGBA32) - 1 */;
-    ss->ss5.cache_control = cchint;
-    heap->binding_table[index] = offsetof(surface_heap_t, surface) +
-                                 index * sizeof(gen6_surface_state_t);
-    dri_bo_emit_reloc(state->surface_heap_b.bo,
-                      I915_GEM_DOMAIN_RENDER,
-                      I915_GEM_DOMAIN_RENDER,
-                      offset,
-                      heap->binding_table[index] +
-                      offsetof(gen6_surface_state_t, ss1),
-                      obj_bo);
-  } else if (state->drv->gen_ver == 7) {
-    gen7_surface_state_t *ss = (gen7_surface_state_t *) heap->surface[index];
-    const uint32_t size_ss = size - 1;
-    memset(ss, 0, sizeof(*ss));
-    ss->ss0.surface_type = I965_SURFACE_BUFFER;
-    ss->ss0.surface_format = I965_SURFACEFORMAT_RAW;
-    ss->ss1.base_addr = obj_bo->offset + offset;
-    ss->ss2.width  = size_ss & 0x7f;               /* bits 6:0 of size_ss */
-    ss->ss2.height = (size_ss & 0x1fff80) >> 7;    /* bits 20:7 of size_ss */
-    ss->ss3.depth  = (size_ss & 0xffe00000) >> 20; /* bits 27:21 of size_ss */
-    ss->ss5.surface_object_control_state = GEN7_CACHED_IN_LLC;
-    heap->binding_table[index] = offsetof(surface_heap_t, surface) +
-                                 index * sizeof(gen7_surface_state_t);
-    dri_bo_emit_reloc(state->surface_heap_b.bo,
-                      I915_GEM_DOMAIN_RENDER,
-                      I915_GEM_DOMAIN_RENDER,
-                      offset,
-                      heap->binding_table[index] +
-                      offsetof(gen7_surface_state_t, ss1),
-                      obj_bo);
-  }
-
+LOCAL void
+gpgpu_bind_image2D(intel_gpgpu_t *state,
+                   int32_t index,
+                   dri_bo* obj_bo,
+                   uint32_t format,
+                   int32_t w,
+                   int32_t h,
+                   int bpp,
+                   uint32_t cchint)
+{
+  assert(index < MAX_SURFACES);
+  if(state->drv->gen_ver == 6)
+    gpgpu_bind_image2D_gen6(state, index, obj_bo, format, w, h, bpp, cchint);
+  else if (state->drv->gen_ver == 7)
+    gpgpu_bind_image2D_gen7(state, index, obj_bo, format, w, h, bpp, cchint);
 }
 
 static void
