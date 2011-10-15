@@ -37,6 +37,8 @@ struct _cl_mem {
   uint32_t is_image;        /* Indicate if this is an image or not */
   cl_image_format fmt;      /* only for images */
   size_t w,h,depth,pitch;   /* only for images (depth is only for 3d images) */
+  uint32_t intel_fmt;       /* format to provide in the surface state */
+  uint32_t bpp;             /* number of bytes per pixel */
 };
 
 /* Create a new memory object and initialize it with possible user data */

@@ -256,8 +256,6 @@ static const uint32_t gpgpu_l3_config_reg2[] =
 #define L3_CNTL_REG2_ADDRESS_OFFSET         (0xB020)
 #define L3_CNTL_REG3_ADDRESS_OFFSET         (0xB024)
 
-#define sizeof32(X) (sizeof(X) / sizeof(uint32_t))
-
 enum INSTRUCTION_PIPELINE
 {
     PIPE_COMMON       = 0x0,
@@ -310,11 +308,11 @@ enum GFX3DSTATE_PIPELINED_SUBOPCODE
 static void
 gpgpu_pipe_control(intel_gpgpu_t *state)
 {
-  BEGIN_BATCH(state->batch, sizeof32(gen6_pipe_control_t));
+  BEGIN_BATCH(state->batch, SIZEOF32(gen6_pipe_control_t));
   gen6_pipe_control_t* pc = (gen6_pipe_control_t*)
     intel_batchbuffer_alloc_space(state->batch, 0);
   memset(pc, 0, sizeof(*pc));
-  pc->dw0.length = sizeof32(gen6_pipe_control_t) - 2;
+  pc->dw0.length = SIZEOF32(gen6_pipe_control_t) - 2;
   pc->dw0.instruction_subopcode = GFX3DSUBOP_3DCONTROL;
   pc->dw0.instruction_opcode = GFX3DOP_3DCONTROL;
   pc->dw0.instruction_pipeline = PIPE_3D;

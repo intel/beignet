@@ -24,6 +24,7 @@
 #include "cl_program.h"
 #include "cl_kernel.h"
 #include "cl_mem.h"
+#include "cl_image.h"
 #include "cl_alloc.h"
 #include "cl_utils.h"
 
@@ -302,15 +303,32 @@ error:
 }
 
 cl_int
-clGetSupportedImageFormats(cl_context          context,
-                           cl_mem_flags        flags,
-                           cl_mem_type  image_type,
-                           cl_uint             num_entries,
-                           cl_image_format *   image_formats,
-                           cl_uint *           num_image_formats)
+clGetSupportedImageFormats(cl_context       ctx,
+                           cl_mem_flags     flags,
+                           cl_mem_type      image_type,
+                           cl_uint          num_entries,
+                           cl_image_format *image_formats,
+                           cl_uint *        num_image_formats)
 {
-  NOT_IMPLEMENTED;
-  return 0;
+  cl_int err = CL_SUCCESS;
+  CHECK_CONTEXT (ctx);
+  if (UNLIKELY(num_entries == 0 && image_formats != NULL)) {
+    err = CL_INVALID_VALUE;
+    goto error;
+  }
+  if (UNLIKELY(image_type != CL_MEM_OBJECT_IMAGE2D &&
+               image_type != CL_MEM_OBJECT_IMAGE3D)) {
+    err = CL_INVALID_VALUE;
+    goto error;
+  }
+  err = cl_image_get_supported_fmt(ctx,
+                                   image_type,
+                                   num_entries,
+                                   image_formats,
+                                   num_image_formats);
+
+error:
+  return err;
 }
 
 cl_int
@@ -1061,7 +1079,7 @@ clEnqueueBarrier(cl_command_queue  command_queue)
 }
 
 void*
-clGetExtensionFunctionAddress(const char *  func_name)
+clGetExtensionFunctionAddress(const char *func_name)
 {
   NOT_IMPLEMENTED;
   return NULL;

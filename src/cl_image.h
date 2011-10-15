@@ -24,8 +24,21 @@
 #include "CL/cl.h"
 #include <stdint.h>
 
+/* Returned when the OCL format is not supported */
+#define INTEL_UNSUPPORTED_FORMAT ((uint32_t) ~0x0u)
+
 /* Compute the number of bytes per pixel if the format is supported */
 extern cl_int cl_image_byte_per_pixel(const cl_image_format *fmt, uint32_t *bpp);
+
+/* Return the intel format for the given OCL format */
+extern uint32_t cl_image_get_intel_format(const cl_image_format *fmt);
+
+/* Return the list of formats supported by the API */
+extern cl_int cl_image_get_supported_fmt(cl_context context,
+                                         cl_mem_type image_type,
+                                         cl_uint num_entries,
+                                         cl_image_format *image_formats,
+                                         cl_uint *num_image_formats);
 
 #endif /* __CL_IMAGE_H__ */
 

@@ -151,8 +151,7 @@ cl_command_queue_bind_surface(cl_command_queue queue,
     bo = mem->bo;
     assert(bo);
     if (mem->is_image) {
-      const int fmt =0x0CB; // I965_SURFACEFORMAT_R8G8B8A8_UINT
-      gpgpu_bind_image2D(gpgpu, index, bo, fmt, mem->w, mem->h, 4, cc_llc_l3);
+      gpgpu_bind_image2D(gpgpu, index, bo, mem->intel_fmt, mem->w, mem->h, mem->bpp, cc_llc_l3);
       cl_kernel_copy_image_parameters(k, mem, index, curbe);
     } else
       gpgpu_bind_buf(gpgpu, index, bo, bo->size, cc_llc_l3);

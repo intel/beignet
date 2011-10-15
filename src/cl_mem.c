@@ -136,7 +136,7 @@ cl_mem_new_image2D(cl_context ctx,
 {
   cl_int err = CL_SUCCESS;
   cl_mem mem = NULL;
-  uint32_t bpp = 0;
+  uint32_t bpp = 0, intel_fmt = INTEL_UNSUPPORTED_FORMAT;
   size_t sz = 0;
 
   /* Check flags consistency */
@@ -148,6 +148,13 @@ cl_mem_new_image2D(cl_context ctx,
   /* Get the size of each pixel */
   if (UNLIKELY((err = cl_image_byte_per_pixel(fmt, &bpp)) != CL_SUCCESS))
     goto error;
+
+  /* Only a sub-set of the formats are supported */
+  intel_fmt = cl_image_get_intel_format(fmt);
+  if (UNLIKELY(intel_fmt == INTEL_UNSUPPORTED_FORMAT)) {
+    err = CL_INVALID_IMAGE_FORMAT_DESCRIPTOR;
+    goto error;
+  }
 
   /* See if the user parameters match */
 #define DO_IMAGE_ERROR            \
@@ -188,7 +195,9 @@ cl_mem_new_image2D(cl_context ctx,
   mem->w = w;
   mem->h = h;
   mem->fmt = *fmt;
+  mem->intel_fmt = intel_fmt;
   mem->pitch = w * bpp;
+  mem->bpp = bpp;
   mem->is_image = 1;
 
 exit:

@@ -311,6 +311,9 @@ do {                                                    \
 /* Align a structure or a variable */
 #define ALIGNED(X) __attribute__ ((aligned (X)))
 
+/* Number of DWORDS */
+#define SIZEOF32(X) (sizeof(X) / sizeof(uint32_t))
+
 /* 32 bits atomic variable */
 typedef volatile int atomic_t;
 
