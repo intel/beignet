@@ -254,7 +254,7 @@ error:
 #if USE_FULSIM
 extern void drm_intel_bufmgr_gem_stop_aubfile(drm_intel_bufmgr*);
 extern void drm_intel_bufmgr_gem_set_aubfile(drm_intel_bufmgr*, FILE*);
-extern void aub_exec_dump_raw_file(drm_intel_bo*);
+extern void aub_exec_dump_raw_file(drm_intel_bo*, size_t offset, size_t sz);
 
 static void
 cl_run_fulsim(void)
@@ -276,20 +276,30 @@ cl_run_fulsim(void)
 #endif
 }
 
+/* Each buffer is dump using several chunks of this size */
+static const size_t chunk_sz = 8192u;
+
 static cl_int
 cl_fulsim_dump_all_surfaces(cl_command_queue queue, cl_kernel k)
 {
   cl_mem mem = NULL;
   cl_int err = CL_SUCCESS;
   int i;
+  size_t j;
 
   /* Bind user defined surface */
   for (i = 0; i < k->arg_info_n; ++i) {
+    size_t chunk_n, chunk_remainder;
     if (k->arg_info[i].type != OCLRT_ARG_TYPE_BUFFER)
       continue;
     mem = (cl_mem) k->args[k->arg_info[i].arg_index];
     CHECK_MEM(mem);
-    aub_exec_dump_raw_file(mem->bo);
+    chunk_n = mem->bo->size / chunk_sz;
+    chunk_remainder = mem->bo->size % chunk_sz;
+    for (j = 0; j < chunk_n; ++j)
+      aub_exec_dump_raw_file(mem->bo, j * chunk_sz, chunk_sz);
+    if (chunk_remainder)
+      aub_exec_dump_raw_file(mem->bo, chunk_n * chunk_sz, chunk_remainder);
   }
 error:
   return err;
@@ -401,9 +411,8 @@ cl_fulsim_read_all_surfaces(cl_command_queue queue, cl_kernel k)
 {
   cl_mem mem = NULL;
   char *from = NULL, *to = NULL;
-  size_t size;
+  size_t size, j, chunk_n, chunk_remainder;
   cl_int err = CL_SUCCESS;
-  char name[256];
   int i, curr = 0;
 
   /* Bind user defined surface */
@@ -413,13 +422,36 @@ cl_fulsim_read_all_surfaces(cl_command_queue queue, cl_kernel k)
     mem = (cl_mem) k->args[k->arg_info[i].arg_index];
     CHECK_MEM(mem);
     assert(mem->bo);
-    sprintf(name, "dump%03i.bmp", curr);
-    from = cl_read_dump(name, &size);
+    chunk_n = mem->bo->size / chunk_sz;
+    chunk_remainder = mem->bo->size % chunk_sz;
     to = cl_mem_map(mem);
-    memcpy(to, from, mem->bo->size);
+    for (j = 0; j < chunk_n; ++j) {
+      char name[256];
+      sprintf(name, "dump%03i.bmp", curr);
+#ifdef NDEBUG
+      from = cl_read_dump(name, NULL);
+#else
+      from = cl_read_dump(name, &size);
+      assert(size == chunk_sz);
+#endif /* NDEBUG */
+      memcpy(to + j*chunk_sz, from, chunk_sz);
+      cl_free(from);
+      curr++;
+    }
+    if (chunk_remainder) {
+      char name[256];
+      sprintf(name, "dump%03i.bmp", curr);
+#ifdef NDEBUG
+      from = cl_read_dump(name, NULL);
+#else
+      from = cl_read_dump(name, &size);
+      assert(size == chunk_remainder);
+#endif /* NDEBUG */
+      memcpy(to + chunk_n*chunk_sz, from, chunk_remainder);
+      cl_free(from);
+      curr++;
+    }
     cl_mem_unmap(mem);
-    cl_free(from);
-    curr++;
   }
 error:
   return err;
