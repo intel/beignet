@@ -25,6 +25,7 @@
 #include "cl_kernel.h"
 #include "cl_mem.h"
 #include "cl_image.h"
+#include "cl_sampler.h"
 #include "cl_alloc.h"
 #include "cl_utils.h"
 
@@ -364,27 +365,39 @@ clSetMemObjectDestructorCallback(cl_mem  memobj,
 
 cl_sampler
 clCreateSampler(cl_context         context,
-                cl_bool            normalized_coords,
-                cl_addressing_mode addressing_mode,
-                cl_filter_mode     filter_mode,
+                cl_bool            normalized,
+                cl_addressing_mode addressing,
+                cl_filter_mode     filter,
                 cl_int *           errcode_ret)
 {
-  NOT_IMPLEMENTED;
-  return NULL;
+  cl_sampler sampler = NULL;
+  cl_int err = CL_SUCCESS;
+  CHECK_CONTEXT (context);
+  sampler = cl_sampler_new(context, normalized, addressing, filter, &err);
+error:
+  if (errcode_ret)
+    *errcode_ret = err;
+  return sampler;
 }
 
 cl_int
 clRetainSampler(cl_sampler sampler)
 {
-  NOT_IMPLEMENTED;
-  return 0;
+  cl_int err = CL_SUCCESS;
+  CHECK_SAMPLER (sampler);
+  cl_sampler_add_ref(sampler);
+error:
+  return err;
 }
 
 cl_int
 clReleaseSampler(cl_sampler sampler)
 {
-  NOT_IMPLEMENTED;
-  return 0;
+  cl_int err = CL_SUCCESS;
+  CHECK_SAMPLER (sampler);
+  cl_sampler_delete(sampler);
+error:
+  return err;
 }
 
 cl_int
