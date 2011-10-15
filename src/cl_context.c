@@ -129,6 +129,7 @@ cl_context_new(void)
   pthread_mutex_init(&ctx->program_lock, NULL);
   pthread_mutex_init(&ctx->queue_lock, NULL);
   pthread_mutex_init(&ctx->buffer_lock, NULL);
+  pthread_mutex_init(&ctx->sampler_lock, NULL);
 
 exit:
   return ctx;

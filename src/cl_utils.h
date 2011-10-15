@@ -72,102 +72,6 @@ do {                                                                \
 #define MIN(x0, x1) ((x0) < (x1) ? (x0) : (x1))
 #define ALIGN(A, B) (((A) % (B)) ? (A) + (B) - ((A) % (B)) : (A))
 
-/* Spawn allocation / destruction / deletion / initialization functions */
-#define __STATIC__ static
-#define __NON_STATIC__
-
-#define DECL_FUNC_INIT(name, qualifier)                     \
-qualifier cl_error_t                                        \
-JOIN(name,_init)(JOIN(name,_t) *x)                          \
-{                                                           \
-  assert(x);                                                \
-  memset(x, 0, sizeof(*x));                                 \
-  return CL_SUCCESS;                                        \
-}
-
-#define DECL_FUNC_NEW(name, qualifier)                      \
-qualifier JOIN(name,_t)*                                    \
-JOIN(name,_new)(void)                                       \
-{                                                           \
-  JOIN(name,_t) *x = (JOIN(name,_t)*)                       \
-    cl_calloc(1, sizeof(JOIN(name,_t)));                    \
-  if (x == NULL)                                            \
-    return NULL;                                            \
-  if (UNLIKELY(JOIN(name,_init)(x) != CL_SUCCESS))          \
-    return NULL;                                            \
-  return x;                                                 \
-}
-
-#define DECL_FUNC_DESTROY(name, qualifier)                  \
-qualifier void                                              \
-JOIN(name,_destroy)(JOIN(name,_t) *x)                       \
-{                                                           \
-}
-
-#define DECL_FUNC_DELETE(name, qualifier)                   \
-qualifier void                                              \
-JOIN(name,_delete)(JOIN(name,_t) *x)                        \
-{                                                           \
-  if (x == NULL)                                            \
-    return;                                                 \
-  JOIN(name,_destroy)(x);                                   \
-  cl_free(x);                                               \
-}
-
-#define DECL_FUNC_CLONE(name, qualifier)                    \
-qualifier JOIN(name,_t)*                                    \
-JOIN(name,_clone)(const JOIN(name,_t) *from)                \
-{                                                           \
-  JOIN(name,_t) *to = NULL;                                 \
-  if (from == NULL)                                         \
-    return NULL;                                            \
-  if (UNLIKELY((to =  JOIN(name,_new)()) == NULL))          \
-    return NULL;                                            \
-  memcpy(to, from, sizeof(*to));                            \
-  return to;                                                \
-}
-
-#define DECL_STATIC_INIT(name) DECL_FUNC_INIT(name, __STATIC__)
-#define DECL_STATIC_NEW(name) DECL_FUNC_NEW(name, __STATIC__)
-#define DECL_STATIC_DESTROY(name) DECL_FUNC_DESTROY(name, __STATIC__)
-#define DECL_STATIC_DELETE(name) DECL_FUNC_DELETE(name, __STATIC__)
-#define DECL_STATIC_CLONE(name) DECL_FUNC_CLONE(name, __STATIC__)
-#define DECL_STATIC_ALL(name)                               \
-  DECL_STATIC_INIT(name)                                    \
-  DECL_STATIC_NEW(name)                                     \
-  DECL_STATIC_DESTROY(name)                                 \
-  DECL_STATIC_DELETE(name)
-
-#define DECL_NON_STATIC_INIT(name) DECL_FUNC_INIT(name, __NON_STATIC__)
-#define DECL_NON_STATIC_NEW(name) DECL_FUNC_NEW(name, __NON_STATIC__)
-#define DECL_NON_STATIC_DESTROY(name) DECL_FUNC_DESTROY(name, __NON_STATIC__)
-#define DECL_NON_STATIC_DELETE(name) DECL_FUNC_DELETE(name, __NON_STATIC__)
-#define DECL_NON_STATIC_CLONE(name) DECL_FUNC_CLONE(name, __NON_STATIC__)
-#define DECL_NON_STATIC_ALL(name)                           \
-  DECL_NON_STATIC_INIT(name)                                \
-  DECL_NON_STATIC_NEW(name)                                 \
-  DECL_NON_STATIC_DESTROY(name)                             \
-  DECL_NON_STATIC_DELETE(name)
-
-/* Make a list from a standard type */
-#define CL_MAKE_LIST(type_name, list_name)                  \
-typedef struct JOIN(_,JOIN(list_name,_t)) {                 \
-  JOIN(type_name,_t) elem;                                  \
-  struct JOIN(_,JOIN(list_name,_t)) *next;                  \
-} JOIN(list_name,_t);                                       \
-DECLARE_STD_INIT(list_name)                                 \
-DECLARE_STD_NEW(list_name)                                  \
-DECLARE_STD_DESTROY(list_name)                              \
-static void                                                 \
-JOIN(list_name,_delete)(JOIN(list_name,_t) *x) {            \
-  if (x == NULL)                                            \
-    return;                                                 \
-  JOIN(list_name,_destroy)(x);                              \
-  JOIN(list_name,_t) *next = x->next;                       \
-  cl_free(x);                                               \
-  JOIN(list_name,_delete)(next);                            \
-}
-
 #define DO_ALLOC_ERROR                                      \
 do {                                                        \
   err = CL_OUT_OF_HOST_MEMORY;                              \
@@ -217,11 +121,23 @@ do {                                                        \
 #define CHECK_MEM(MEM)                                      \
 do {                                                        \
   if (UNLIKELY(MEM == NULL)) {                              \
-    err = CL_INVALID_MEM;                            \
+    err = CL_INVALID_MEM;                                   \
     goto error;                                             \
   }                                                         \
   if (UNLIKELY(MEM->magic != CL_MAGIC_MEM_HEADER)) {        \
-    err = CL_INVALID_MEM;                            \
+    err = CL_INVALID_MEM;                                   \
+    goto error;                                             \
+  }                                                         \
+} while (0)
+
+#define CHECK_SAMPLER(SAMPLER)                              \
+do {                                                        \
+  if (UNLIKELY(SAMPLER == NULL)) {                          \
+    err = CL_INVALID_SAMPLER;                               \
+    goto error;                                             \
+  }                                                         \
+  if (UNLIKELY(SAMPLER->magic != CL_MAGIC_SAMPLER_HEADER)) {\
+    err = CL_INVALID_SAMPLER;                               \
     goto error;                                             \
   }                                                         \
 } while (0)
@@ -314,6 +230,10 @@ do {                                                    \
 /* Number of DWORDS */
 #define SIZEOF32(X) (sizeof(X) / sizeof(uint32_t))
 
+/* Memory quantity */
+#define KB 1024
+#define MB (KB*KB)
+
 /* 32 bits atomic variable */
 typedef volatile int atomic_t;
 
@@ -322,7 +242,6 @@ static INLINE int atomic_add(atomic_t *v, const int c) {
   __asm__ __volatile__("lock ; xaddl %0, %1;"
       : "+r"(i), "+m"(*v)
       : "m"(*v), "r"(i));
-
   return i;
 }
 

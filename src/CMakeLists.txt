@@ -8,6 +8,7 @@ SET(OPENCL_SRC
     cl_alloc.c
     cl_kernel.c
     cl_program.c
+    cl_sampler.c
     cl_event.c
     cl_image.c
     cl_mem.c

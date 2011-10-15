@@ -47,7 +47,7 @@ struct opaque_sampler_state {
   char opaque[SAMPLER_STATE_SIZE];
 };
 
-/* Store both binding tables and surface states */
+/* Stores both binding tables and surface states */
 typedef struct surface_heap {
   uint32_t binding_table[256];
   char surface[256][sizeof(gen6_surface_state_t)];
@@ -628,8 +628,6 @@ gpgpu_build_sampler_table(intel_gpgpu_t *state)
                  sizeof(state->samplers),
                  state->samplers);
 }
-
-#define KB 1024
 
 static void
 gpgpu_build_idrt(intel_gpgpu_t *state,

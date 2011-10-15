@@ -38,9 +38,11 @@ struct _cl_context {
   cl_command_queue queues;          /* All command queues currently allocated */
   cl_program programs;              /* All programs currently allocated */
   cl_mem buffers;                   /* All memory object currently allocated */
+  cl_sampler samplers;              /* All sampler object currently allocated */
   pthread_mutex_t queue_lock;       /* To allocate and deallocate queues */
   pthread_mutex_t program_lock;     /* To allocate and deallocate programs */
   pthread_mutex_t buffer_lock;      /* To allocate and deallocate buffers */
+  pthread_mutex_t sampler_lock;     /* To allocate and deallocate samplers */
 };
 
 /* Implement OpenCL function */

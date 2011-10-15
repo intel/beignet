@@ -20,8 +20,32 @@
 #ifndef __CL_SAMPLER_H__
 #define __CL_SAMPLER_H__
 
+#include "CL/cl.h"
+#include <stdint.h>
+
+/* How to access images */
 struct _cl_sampler {
+  uint64_t magic;            /* To identify it as a sampler object */
+  volatile int ref_n;        /* This object is reference counted */
+  cl_sampler prev, next;     /* We chain the samplers in the allocator */
+  cl_context ctx;            /* Context it belongs to */
+  cl_bool normalized_coords; /* Are coordinates normalized? */
+  cl_addressing_mode address;/* CLAMP / REPEAT and so on... */
+  cl_filter_mode filter;     /* LINEAR / NEAREST mostly */
 };
+
+/* Create a new sampler object */
+extern cl_sampler cl_sampler_new(cl_context,
+                                 cl_bool,
+                                 cl_addressing_mode,
+                                 cl_filter_mode,
+                                 cl_int *err);
+
+/* Unref the object and delete it if no more reference on it */
+extern void cl_sampler_delete(cl_sampler);
+
+/* Add one more reference to this object */
+extern void cl_sampler_add_ref(cl_sampler);
 
 #endif /* __CL_SAMPLER_H__ */
 
