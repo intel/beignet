@@ -70,8 +70,8 @@ typedef struct gen6_interface_descriptor
     uint32_t barrier_return_grf_offset:8;
   } desc5;
 
-  uint32_t desc6;
-  uint32_t desc7;
+  uint32_t desc6; /* unused */
+  uint32_t desc7; /* unused */
 } gen6_interface_descriptor_t;
 
 typedef struct gen6_surface_state
@@ -193,7 +193,7 @@ typedef struct gen7_surface_state
     uint32_t pad2:6;
     uint32_t coherence_type:1;
     uint32_t stateless_force_write_thru:1;
-    uint32_t surface_object_control_state:4;
+    uint32_t cache_control:4;
     uint32_t y_offset:4;
     uint32_t pad0:1;
     uint32_t x_offset:7;

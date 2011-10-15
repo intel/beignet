@@ -83,14 +83,12 @@ cl_kernel_delete(cl_kernel k)
     return;
 
   /* We are not done with the kernel */
-  if (atomic_dec(&k->ref_n) > 1)
-    return;
+  if (atomic_dec(&k->ref_n) > 1) return;
 
   /* User may have set some OCL object as arguments. As we referenced them when
    * we set them, we release all their references here
    */
-  if (k->args)
-    cl_kernel_release_args(k);
+  if (k->args) cl_kernel_release_args(k);
 
   /* Free the chain lists (may also be arrays) */
   cl_arg_list_destroy(k->arg_info);
@@ -106,14 +104,11 @@ cl_kernel_delete(cl_kernel k)
   cl_free(k->is_provided);
 
   /* Release one reference on all bos we own */
-  if (k->bo)
-    drm_intel_bo_unreference(k->bo);
-  if (k->const_bo)
-    drm_intel_bo_unreference(k->const_bo);
+  if (k->bo)       drm_intel_bo_unreference(k->bo);
+  if (k->const_bo) drm_intel_bo_unreference(k->const_bo);
 
   /* This will be true for kernels created by clCreateKernel */
-  if (k->ref_its_program)
-    cl_program_delete(k->program);
+  if (k->ref_its_program) cl_program_delete(k->program);
 
   cl_free(k->name);
   k->magic = CL_MAGIC_DEAD_HEADER; /* For safety */
@@ -163,8 +158,7 @@ cl_kernel_get_curbe_info_list(cl_kernel k, uint64_t key)
 {
   cl_curbe_patch_info_t *curbe_info = k->curbe_info;
   while (curbe_info) {
-    if (curbe_info->key == key)
-      break;
+    if (curbe_info->key == key) break;
     curbe_info = curbe_info->next;
   }
   return curbe_info;
@@ -365,8 +359,10 @@ cl_kernel_setup_patch_list(cl_kernel k, const char *patch, size_t sz)
           arg_info->type = OCLRT_ARG_TYPE_BUFFER;
         else if (item->token == PATCH_TOKEN_CONSTANT_MEMORY_KERNEL_ARGUMENT)
           arg_info->type = OCLRT_ARG_TYPE_CONST;
-        else
+        else if (item->token == PATCH_TOKEN_IMAGE_MEMORY_KERNEL_ARGUMENT)
           arg_info->type = OCLRT_ARG_TYPE_IMAGE;
+        else
+          assert(0);
 
         arg_info->sz = sizeof(cl_mem);
         arg_info->is_patched = CL_FALSE;
@@ -553,10 +549,8 @@ cl_kernel_dup(cl_kernel from)
   TRY_ALLOC_NO_ERR (to->is_provided, CALLOC_ARRAY(uint8_t, to->arg_n));
 
   /* Retain the bos */
-  if (from->bo)
-    drm_intel_bo_reference(from->bo);
-  if (from->const_bo)
-    drm_intel_bo_reference(from->const_bo);
+  if (from->bo)       drm_intel_bo_reference(from->bo);
+  if (from->const_bo) drm_intel_bo_reference(from->const_bo);
 
   /* We retain the program destruction since this kernel (user allocated)
    * depends on the program for some of its pointers

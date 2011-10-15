@@ -42,8 +42,6 @@
 #define MO_RETAIN_BIT         (1 << 28)
 #define SAMPLER_STATE_SIZE    (16)
 
-#define GEN7_CACHED_IN_LLC 3
-
 /* No dependency on Gen specific structures */
 struct opaque_sampler_state {
   char opaque[SAMPLER_STATE_SIZE];
@@ -142,7 +140,7 @@ gpgpu_select_pipeline(intel_gpgpu_t *state)
 static void
 gpgpu_set_base_address(intel_gpgpu_t *state)
 {
-  const uint32_t def_cc = cc_llc_mlc; /* default Cache Control value */
+  const uint32_t def_cc = cc_llc_l3; /* default Cache Control value */
   BEGIN_BATCH(state->batch, 10);
   OUT_BATCH(state->batch, CMD_STATE_BASE_ADDRESS | 8);
   /* 0, Gen State Mem Obj CC, Stateless Mem Obj CC, Stateless Access Write Back */
@@ -220,9 +218,9 @@ gpgpu_load_idrt(intel_gpgpu_t *state)
   ADVANCE_BATCH(state->batch);
 }
 
-static const uint32_t Gen7L3CacheConfigReg2DataTable[] =
+static const uint32_t gpgpu_l3_config_reg1[] =
 {
-                // SLM    URB     DC      RO      I/S     C       T
+              // SLM    URB     DC      RO      I/S     C       T
   0x00080040, //{ 0,    256,    0,      256,    0,      0,      0,      }
   0x02040040, //{ 0,    256,    128,    128,    0,      0,      0,      }
   0x00800040, //{ 0,    256,    32,     0,      64,     32,     128,    }
@@ -237,9 +235,9 @@ static const uint32_t Gen7L3CacheConfigReg2DataTable[] =
   0x08900091  //{ 128,  128,    32,     0,      128,    32,     64,     }
 };
 
-static const uint32_t Gen7L3CacheConfigReg3DataTable[] =
+static const uint32_t gpgpu_l3_config_reg2[] =
 {
-                // SLM    URB     DC      RO      I/S     C       T
+              // SLM    URB     DC      RO      I/S     C       T
   0x00000000, //{ 0,    256,    0,      256,    0,      0,      0,      }
   0x00000000, //{ 0,    256,    128,    128,    0,      0,      0,      }
   0x00080410, //{ 0,    256,    32,     0,      64,     32,     128,    }
@@ -255,8 +253,8 @@ static const uint32_t Gen7L3CacheConfigReg3DataTable[] =
 };
 
 // L3 cache stuff 
-#define L3_CNTL_REG2_ADDRESS_OFFSET         ( 0xB020 )
-#define L3_CNTL_REG3_ADDRESS_OFFSET         ( 0xB024 )
+#define L3_CNTL_REG2_ADDRESS_OFFSET         (0xB020)
+#define L3_CNTL_REG3_ADDRESS_OFFSET         (0xB024)
 
 #define sizeof32(X) (sizeof(X) / sizeof(uint32_t))
 
@@ -334,16 +332,16 @@ intel_gpgpu_set_L3(intel_gpgpu_t *state, uint32_t use_barrier)
   OUT_BATCH(state->batch, CMD_LOAD_REGISTER_IMM | 1); /* length - 2 */
   OUT_BATCH(state->batch, L3_CNTL_REG2_ADDRESS_OFFSET);
   if (use_barrier)
-    OUT_BATCH(state->batch, Gen7L3CacheConfigReg2DataTable[8]);
+    OUT_BATCH(state->batch, gpgpu_l3_config_reg1[8]);
   else
-    OUT_BATCH(state->batch, Gen7L3CacheConfigReg2DataTable[4]);
+    OUT_BATCH(state->batch, gpgpu_l3_config_reg1[4]);
 
   OUT_BATCH(state->batch, CMD_LOAD_REGISTER_IMM | 1); /* length - 2 */
   OUT_BATCH(state->batch, L3_CNTL_REG3_ADDRESS_OFFSET);
   if (use_barrier)
-    OUT_BATCH(state->batch, Gen7L3CacheConfigReg3DataTable[8]);
+    OUT_BATCH(state->batch, gpgpu_l3_config_reg2[8]);
   else
-    OUT_BATCH(state->batch, Gen7L3CacheConfigReg3DataTable[4]);
+    OUT_BATCH(state->batch, gpgpu_l3_config_reg2[4]);
   ADVANCE_BATCH(state->batch);
 
   gpgpu_pipe_control(state);
@@ -543,7 +541,7 @@ gpgpu_bind_buf_gen7(intel_gpgpu_t *state,
   ss->ss2.width  = size_ss & 0x7f;               /* bits 6:0 of size_ss */
   ss->ss2.height = (size_ss & 0x1fff80) >> 7;    /* bits 20:7 of size_ss */
   ss->ss3.depth  = (size_ss & 0xffe00000) >> 20; /* bits 27:21 of size_ss */
-  ss->ss5.surface_object_control_state = GEN7_CACHED_IN_LLC;
+  ss->ss5.cache_control = cc_llc_l3;
   gpgpu_set_buf_reloc_gen7(state, index, obj_bo);
 }
 
@@ -589,7 +587,7 @@ gpgpu_bind_image2D_gen7(intel_gpgpu_t *state,
   ss->ss2.width = w - 1;
   ss->ss2.height = h - 1;
   ss->ss3.pitch = w*bpp - 1;
-  //ss->ss5.cache_control = cchint;
+  ss->ss5.cache_control = cchint;
   gpgpu_set_buf_reloc_gen7(state, index, obj_bo);
 }
 

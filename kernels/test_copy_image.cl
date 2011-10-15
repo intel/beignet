@@ -7,8 +7,8 @@ test_copy_image(__read_only image2d_t src,
 {
   const int x = (int) get_global_id(0);
   const int y = (int) get_global_id(1);
-  //const int id = x + y * get_image_width(src);
-  const int id = x + y * 32;
+  const int id = x + y * get_image_width(src);
+  //const int id = x + y * 32;
   const uchar4 from = convert_uchar4(read_imageui(src, s, (int2)(x,y)));
   dst[id] = from;
 }

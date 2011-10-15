@@ -93,6 +93,7 @@ cl_command_queue_ND_range_gen6(cl_command_queue queue,
   cl_context ctx = queue->ctx;
   intel_gpgpu_t *gpgpu = queue->gpgpu;
   drm_intel_bo *slm_bo = NULL, *private_bo = NULL, *scratch_bo = NULL;
+  char *curbe = NULL; /* constant buffer */
   const size_t cst_sz = ker->patch.curbe.sz;
   size_t wk_grp_sz, wk_grp_n, batch_sz;
   uint32_t grp_end[3], offset[3], thread_n; /* per work group */
@@ -139,6 +140,17 @@ cl_command_queue_ND_range_gen6(cl_command_queue queue,
   /* Compute the local size per wg and the offsets for each local buffer */
   header.local_mem_sz = cl_kernel_local_memory_sz(ker);
 
+  /* Create the constant buffer */
+  if (cst_sz > 0) {
+    assert(ker->cst_buffer);
+    curbe = cl_kernel_create_cst_buffer(ker,
+                                        global_wk_off,
+                                        global_wk_sz,
+                                        local_wk_sz,
+                                        0, 0);
+  }
+
+  /* Only if we want to monitor performance for this kernel */
   if (queue->perf)
     gpgpu_set_perf_counters(gpgpu, queue->perf->bo);
 
@@ -149,6 +161,7 @@ cl_command_queue_ND_range_gen6(cl_command_queue queue,
   queue->last_batch = NULL;
   cl_command_queue_bind_surface(queue,
                                 ker,
+                                curbe,
                                 &slm_bo,
                                 &private_bo,
                                 &scratch_bo,
@@ -157,15 +170,8 @@ cl_command_queue_ND_range_gen6(cl_command_queue queue,
 
   /* Fill the constant buffer */
   if (cst_sz > 0) {
-    char *data = NULL;
-    assert(ker->cst_buffer);
-    data = cl_kernel_create_cst_buffer(ker,
-                                       global_wk_off,
-                                       global_wk_sz,
-                                       local_wk_sz,
-                                       0, 0); /* unused on Gen6 */
-    gpgpu_upload_constants(gpgpu, data, cst_sz);
-    cl_free(data);
+    gpgpu_upload_constants(gpgpu, curbe, cst_sz);
+    cl_free(curbe);
   }
 
   wk_grp_n = 1;

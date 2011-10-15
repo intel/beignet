@@ -99,9 +99,34 @@ cl_command_queue_add_ref(cl_command_queue queue)
   atomic_inc(&queue->ref_n);
 }
 
+static void
+cl_kernel_copy_image_parameters(cl_kernel k, cl_mem mem, int index, char *curbe)
+{
+  cl_curbe_patch_info_t *info = NULL;
+  uint64_t key;
+  assert(curbe && mem && mem->is_image);
+
+  key = cl_curbe_key(DATA_PARAMETER_IMAGE_WIDTH, index, 0);
+  if ((info = cl_kernel_get_curbe_info(k, key)) != NULL)
+    memcpy(curbe+info->offsets[0], &mem->w, sizeof(uint32_t));
+  key = cl_curbe_key(DATA_PARAMETER_IMAGE_HEIGHT, index, 0);
+  if ((info = cl_kernel_get_curbe_info(k, key)) != NULL)
+    memcpy(curbe+info->offsets[0], &mem->h, sizeof(uint32_t));
+  key = cl_curbe_key(DATA_PARAMETER_IMAGE_DEPTH, index, 0);
+  if ((info = cl_kernel_get_curbe_info(k, key)) != NULL)
+    memcpy(curbe+info->offsets[0], &mem->depth, sizeof(uint32_t));
+  key = cl_curbe_key(DATA_PARAMETER_IMAGE_CHANNEL_DATA_TYPE, index, 0);
+  if ((info = cl_kernel_get_curbe_info(k, key)) != NULL)
+    memcpy(curbe+info->offsets[0], &mem->fmt.image_channel_data_type, sizeof(uint32_t));
+  key = cl_curbe_key(DATA_PARAMETER_IMAGE_CHANNEL_ORDER, index, 0);
+  if ((info = cl_kernel_get_curbe_info(k, key)) != NULL)
+    memcpy(curbe+info->offsets[0], &mem->fmt.image_channel_order, sizeof(uint32_t));
+}
+
 LOCAL cl_int
 cl_command_queue_bind_surface(cl_command_queue queue,
                               cl_kernel k,
+                              char *curbe,
                               drm_intel_bo **local, 
                               drm_intel_bo **priv,
                               drm_intel_bo **scratch,
@@ -118,8 +143,6 @@ cl_command_queue_bind_surface(cl_command_queue queue,
 
   /* Bind user defined surface */
   for (i = 0; i < k->arg_info_n; ++i) {
-//    if (k->arg_info[i].type != OCLRT_ARG_TYPE_BUFFER)
-//      continue;
     assert(k->arg_info[i].offset % SURFACE_SZ == 0);
     index = k->arg_info[i].offset / SURFACE_SZ;
     mem = (cl_mem) k->args[k->arg_info[i].arg_index];
@@ -127,18 +150,12 @@ cl_command_queue_bind_surface(cl_command_queue queue,
     CHECK_MEM(mem);
     bo = mem->bo;
     assert(bo);
-    if (mem->is_image)
-#define I965_SURFACEFORMAT_R8G8B8A8_UINT                  0x0CB 
-      gpgpu_bind_image2D(gpgpu,
-                         index,
-                         bo,
-                         I965_SURFACEFORMAT_R8G8B8A8_UINT,
-                         mem->w,
-                         mem->h,
-                         4,
-                         cc_llc_mlc);
-    else
-      gpgpu_bind_buf(gpgpu, index, bo, bo->size, cc_llc_mlc);
+    if (mem->is_image) {
+      const int fmt =0x0CB; // I965_SURFACEFORMAT_R8G8B8A8_UINT
+      gpgpu_bind_image2D(gpgpu, index, bo, fmt, mem->w, mem->h, 4, cc_llc_l3);
+      cl_kernel_copy_image_parameters(k, mem, index, curbe);
+    } else
+      gpgpu_bind_buf(gpgpu, index, bo, bo->size, cc_llc_l3);
   }
 
   /* Allocate the constant surface (if any) */
@@ -147,7 +164,7 @@ cl_command_queue_bind_surface(cl_command_queue queue,
     gpgpu_bind_buf(gpgpu, k->const_bo_index,
                    k->const_bo,
                    k->const_bo->size,
-                   cc_llc_mlc);
+                   cc_llc_l3);
   }
 
   /* Allocate local surface needed for SLM and bind it */
@@ -157,7 +174,7 @@ cl_command_queue_bind_surface(cl_command_queue queue,
     index = k->patch.local_surf.offset / SURFACE_SZ;
     assert(index != MAX_SURFACES - 1);
     *local = drm_intel_bo_alloc(bufmgr, "CL local surface", sz, 64);
-    gpgpu_bind_buf(gpgpu, index, *local, sz, cc_llc_mlc);
+    gpgpu_bind_buf(gpgpu, index, *local, sz, cc_llc_l3);
   }
   else if (local)
     *local = NULL;
@@ -172,7 +189,7 @@ cl_command_queue_bind_surface(cl_command_queue queue,
     index = k->patch.private_surf.offset / SURFACE_SZ;
     assert(index != MAX_SURFACES - 1);
     *priv = drm_intel_bo_alloc(bufmgr, "CL private surface", sz, 64);
-    gpgpu_bind_buf(gpgpu, index, *priv, sz, cc_llc_mlc);
+    gpgpu_bind_buf(gpgpu, index, *priv, sz, cc_llc_l3);
   }
   else if(priv)
     *priv = NULL;
@@ -187,14 +204,14 @@ cl_command_queue_bind_surface(cl_command_queue queue,
     assert(index != MAX_SURFACES - 1);
     index = k->patch.scratch.offset / SURFACE_SZ;
     *scratch = drm_intel_bo_alloc(bufmgr, "CL scratch surface", sz, 64);
-    gpgpu_bind_buf(gpgpu, index, *scratch, sz, cc_llc_mlc);
+    gpgpu_bind_buf(gpgpu, index, *scratch, sz, cc_llc_l3);
   }
   else if (scratch)
     *scratch = NULL;
 
   /* Now bind a bo used for synchronization */
   sync_bo = drm_intel_bo_alloc(bufmgr, "sync surface", 64, 64);
-  gpgpu_bind_buf(gpgpu, MAX_SURFACES-1, sync_bo, 64, cc_llc_mlc);
+  gpgpu_bind_buf(gpgpu, MAX_SURFACES-1, sync_bo, 64, cc_llc_l3);
   if (queue->last_batch != NULL)
     drm_intel_bo_unreference(queue->last_batch);
   queue->last_batch = sync_bo;
@@ -280,22 +297,22 @@ error:
 }
 
 struct bmphdr {
-  //   2 bytes of magic here, "BM", total header size is 54 bytes!
-  int filesize;		//   4 total file size incl header
-  short as0, as1;		//   8 app specific
-  int bmpoffset;		//  12 ofset of bmp data 
-  int headerbytes;	//  16 bytes in header from this point (40 actually)
-  int width;		//  20 
-  int height;		//  24 
-  short nplanes;		//  26 no of color planes
-  short bpp;		//  28 bits/pixel
-  int compression;	//  32 BI_RGB = 0 = no compression
-  int sizeraw;		//  36 size of raw bmp file, excluding header, incl padding
-  int hres;		//  40 horz resolutions pixels/meter
-  int vres;		//  44
-  int npalcolors;		//  48 No of colors in palette
-  int nimportant;		//  52 No of important colors
-  // raw b, g, r data here, dword aligned per scan line
+  /* 2 bytes of magic here, "BM", total header size is 54 bytes! */
+  int filesize;      /*  4 total file size incl header */
+  short as0, as1;    /*  8 app specific */
+  int bmpoffset;     /* 12 ofset of bmp data  */
+  int headerbytes;   /* 16 bytes in header from this point (40 actually) */
+  int width;         /* 20  */
+  int height;        /* 24  */
+  short nplanes;     /* 26 no of color planes */
+  short bpp;         /* 28 bits/pixel */
+  int compression;   /* 32 BI_RGB = 0 = no compression */
+  int sizeraw;       /* 36 size of raw bmp file, excluding header, incl padding */
+  int hres;          /* 40 horz resolutions pixels/meter */
+  int vres;          /* 44 */
+  int npalcolors;    /* 48 No of colors in palette */
+  int nimportant;    /* 52 No of important colors */
+  /* raw b, g, r data here, dword aligned per scan line */
 };
 
 static int*
@@ -314,27 +331,28 @@ cl_read_bmp(const char *filename, int *width, int *height)
   n = fread(&hdr, 1, sizeof(hdr), fp);
   assert(n == sizeof(hdr));
 
-#define DEBUG 1
-#ifdef	DEBUG
-  // Dump stuff out
-  printf("   filesize = %d\n", hdr.filesize);	// total file size incl header
+#if 0
+  /* Dump stuff out */
+  printf("   filesize = %d\n", hdr.filesize);	/* total file size incl header */
   printf("        as0 = %d\n", hdr.as0);
   printf("        as1 = %d\n", hdr.as1);
-  printf("  bmpoffset = %d\n", hdr.bmpoffset);	// ofset of bmp data 
-  printf("headerbytes = %d\n", hdr.headerbytes);	// bytes in header from this point (40 actually)
+  printf("  bmpoffset = %d\n", hdr.bmpoffset);	/* ofset of bmp data  */
+  printf("headerbytes = %d\n", hdr.headerbytes);	/* bytes in header from this point (40 actually) */
   printf("      width = %d\n", hdr.width);
   printf("     height = %d\n", hdr.height);
-  printf("    nplanes = %d\n", hdr.nplanes);	// no of color planes
-  printf("        bpp = %d\n", hdr.bpp);	// bits/pixel
-  printf("compression = %d\n", hdr.compression);	// BI_RGB = 0 = no compression
-  printf("    sizeraw = %d\n", hdr.sizeraw);	// size of raw bmp file, excluding header, incl padding
-  printf("       hres = %d\n", hdr.hres);	// horz resolutions pixels/meter
+  printf("    nplanes = %d\n", hdr.nplanes);	/* no of color planes */
+  printf("        bpp = %d\n", hdr.bpp);	/* bits/pixel */
+  printf("compression = %d\n", hdr.compression);	/* BI_RGB = 0 = no compression */
+  printf("    sizeraw = %d\n", hdr.sizeraw);	/* size of raw bmp file, excluding header, incl padding */
+  printf("       hres = %d\n", hdr.hres);	/* horz resolutions pixels/meter */
   printf("       vres = %d\n", hdr.vres);
-  printf(" npalcolors = %d\n", hdr.npalcolors);	// No of colors in palette
-  printf(" nimportant = %d\n", hdr.nimportant);	// No of important colors
+  printf(" npalcolors = %d\n", hdr.npalcolors);	/* No of colors in palette */
+  printf(" nimportant = %d\n", hdr.nimportant);	/* No of important colors */
 #endif
-  assert(hdr.width > 0 && hdr.height > 0 && hdr.nplanes == 1
-      && hdr.compression == 0);
+  assert(hdr.width > 0 &&
+         hdr.height > 0 &&
+         hdr.nplanes == 1
+         && hdr.compression == 0);
 
   int *rgb32 = (int *) cl_malloc(hdr.width * hdr.height * sizeof(int));
   assert(rgb32);
@@ -352,9 +370,7 @@ cl_read_bmp(const char *filename, int *width, int *height)
     while (x & 3) {
       getc(fp);
       x++;
-    }		// each scanline padded to dword
-    // printf("read row %d\n", y);
-    // fflush(stdout);
+    }
   }
   fclose(fp);
   *width = hdr.width;

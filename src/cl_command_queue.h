@@ -68,6 +68,7 @@ extern cl_int cl_command_queue_finish(cl_command_queue);
 /* Bind all the surfaces in the GPGPU state */
 extern cl_int cl_command_queue_bind_surface(cl_command_queue queue,
                                             cl_kernel k,
+                                            char *curbe,
                                             struct _drm_intel_bo **local, 
                                             struct _drm_intel_bo **priv,
                                             struct _drm_intel_bo **scratch,

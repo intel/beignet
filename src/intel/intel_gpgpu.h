@@ -29,10 +29,10 @@
 #define MAX_SAMPLERS 16
 
 enum gen6_cache_control {
-  cc_gtt        = 0x0,    /* don't use L3, use GTT for LLC */
-  cc_mlc        = 0x1,    /* IVB: use L3, use GTT for LLC; SNB: UC */
-  cc_llc        = 0x2,
-  cc_llc_mlc    = 0x3,
+  cc_gtt      = 0x0,
+  cc_l3       = 0x1,
+  cc_llc      = 0x2,
+  cc_llc_l3   = 0x3
 };
 
 /* Use this structure to bind kernels in the gpgpu state */
