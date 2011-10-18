@@ -143,11 +143,7 @@ cl_command_queue_ND_range_gen6(cl_command_queue queue,
   /* Create the constant buffer */
   if (cst_sz > 0) {
     assert(ker->cst_buffer);
-    curbe = cl_kernel_create_cst_buffer(ker,
-                                        global_wk_off,
-                                        global_wk_sz,
-                                        local_wk_sz,
-                                        0, 0);
+    curbe = cl_kernel_create_cst_buffer(ker, global_wk_off, global_wk_sz, local_wk_sz, 0, 0);
   }
 
   /* Only if we want to monitor performance for this kernel */
@@ -166,6 +162,12 @@ cl_command_queue_ND_range_gen6(cl_command_queue queue,
                                 &private_bo,
                                 &scratch_bo,
                                 header.local_mem_sz);
+
+  /* Upload the __constant samplers if any */
+  const void *samplers  = ker->dynamic_heap + ker->patch.sampler_state.offset;
+  const uint32_t sampler_n = ker->patch.sampler_state.count;
+  gpgpu_upload_samplers(gpgpu, samplers, sampler_n);
+
   gpgpu_states_setup(gpgpu, kernels, 16);
 
   /* Fill the constant buffer */

@@ -91,7 +91,7 @@ extern void gpgpu_state_init(intel_gpgpu_t*, uint32_t max_threads, uint32_t size
 extern void gpgpu_set_perf_counters(intel_gpgpu_t*, struct _drm_intel_bo *perf);
 
 /* Fills current constant buffer with data */
-extern void gpgpu_upload_constants(intel_gpgpu_t*, void* data, uint32_t size);
+extern void gpgpu_upload_constants(intel_gpgpu_t*, const void* data, uint32_t size);
 
 /* Setup all indirect states */
 extern void gpgpu_states_setup(intel_gpgpu_t*, genx_gpgpu_kernel_t* kernel, uint32_t ker_n);
@@ -99,7 +99,10 @@ extern void gpgpu_states_setup(intel_gpgpu_t*, genx_gpgpu_kernel_t* kernel, uint
 /* Make HW threads use barrierID */
 extern void gpgpu_update_barrier(intel_gpgpu_t*, uint32_t barrierID, uint32_t thread_n);
 
-/* Set a sampler (TODO: add other sampler fields) */
+/* Upload the constant samplers as specified inside the OCL kernel */
+extern void gpgpu_upload_samplers(intel_gpgpu_t *state, const void *data, uint32_t n);
+
+/* Set a sampler */
 extern void gpgpu_set_sampler(intel_gpgpu_t*, uint32_t index, uint32_t non_normalized);
 
 /* Allocate the batch buffer and return the BO used for the batch buffer */

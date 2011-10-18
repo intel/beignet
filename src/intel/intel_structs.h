@@ -404,6 +404,8 @@ typedef struct gen7_sampler_state
   } ss3;
 } gen7_sampler_state_t;
 
+STATIC_ASSERT(sizeof(gen6_sampler_state_t) == sizeof(gen7_sampler_state_t));
+
 #undef BITFIELD_BIT
 #undef BITFIELD_RANGE
 

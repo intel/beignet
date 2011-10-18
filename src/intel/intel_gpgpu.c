@@ -42,11 +42,6 @@
 #define MO_RETAIN_BIT         (1 << 28)
 #define SAMPLER_STATE_SIZE    (16)
 
-/* No dependency on Gen specific structures */
-struct opaque_sampler_state {
-  char opaque[SAMPLER_STATE_SIZE];
-};
-
 /* Stores both binding tables and surface states */
 typedef struct surface_heap {
   uint32_t binding_table[256];
@@ -75,9 +70,6 @@ struct intel_gpgpu
   struct { dri_bo *bo; } sampler_state_b;
   struct { dri_bo *bo; } perf_b;
 
-  /* we will just copy them into the bo */
-  struct opaque_sampler_state samplers[MAX_SAMPLERS];
-
   struct {
     uint32_t num_cs_entries;
     uint32_t size_cs_entry;  /* size of one entry in 512bit elements */
@@ -85,9 +77,6 @@ struct intel_gpgpu
 
   uint32_t max_threads;      /* max threads requested by the user */
 };
-
-/* Be sure that the size is still valid */
-STATIC_ASSERT(sizeof(struct opaque_sampler_state) == 16);//sizeof(struct i965_sampler_state));
 
 LOCAL intel_gpgpu_t*
 intel_gpgpu_new(intel_driver_t *drv)
@@ -258,51 +247,51 @@ static const uint32_t gpgpu_l3_config_reg2[] =
 
 enum INSTRUCTION_PIPELINE
 {
-    PIPE_COMMON       = 0x0,
-    PIPE_SINGLE_DWORD = 0x1,
-    PIPE_COMMON_CTG   = 0x1,
-    PIPE_MEDIA        = 0x2,
-    PIPE_3D           = 0x3
+  PIPE_COMMON       = 0x0,
+  PIPE_SINGLE_DWORD = 0x1,
+  PIPE_COMMON_CTG   = 0x1,
+  PIPE_MEDIA        = 0x2,
+  PIPE_3D           = 0x3
 };
 
 enum GFX_OPCODE
 {
-    GFXOP_PIPELINED     = 0x0,
-    GFXOP_NONPIPELINED  = 0x1,
-    GFXOP_3DPRIMITIVE   = 0x3
+  GFXOP_PIPELINED     = 0x0,
+  GFXOP_NONPIPELINED  = 0x1,
+  GFXOP_3DPRIMITIVE   = 0x3
 };
 
 enum INSTRUCTION_TYPE
 {
-    INSTRUCTION_MI      = 0x0,
-    INSTRUCTION_TRUSTED = 0x1,
-    INSTRUCTION_2D      = 0x2,
-    INSTRUCTION_GFX     = 0x3
+  INSTRUCTION_MI      = 0x0,
+  INSTRUCTION_TRUSTED = 0x1,
+  INSTRUCTION_2D      = 0x2,
+  INSTRUCTION_GFX     = 0x3
 };
 
 enum GFX3DCONTROL_SUBOPCODE
 {
-    GFX3DSUBOP_3DCONTROL    = 0x00
+  GFX3DSUBOP_3DCONTROL    = 0x00
 };
 
 enum GFX3D_OPCODE
 {
-    GFX3DOP_3DSTATE_PIPELINED       = 0x0,
-    GFX3DOP_3DSTATE_NONPIPELINED    = 0x1,
-    GFX3DOP_3DCONTROL               = 0x2,
-    GFX3DOP_3DPRIMITIVE             = 0x3
+  GFX3DOP_3DSTATE_PIPELINED       = 0x0,
+  GFX3DOP_3DSTATE_NONPIPELINED    = 0x1,
+  GFX3DOP_3DCONTROL               = 0x2,
+  GFX3DOP_3DPRIMITIVE             = 0x3
 };
 
 enum GFX3DSTATE_PIPELINED_SUBOPCODE
 {
-    GFX3DSUBOP_3DSTATE_PIPELINED_POINTERS       = 0x00,
-    GFX3DSUBOP_3DSTATE_BINDING_TABLE_POINTERS   = 0x01,
-    GFX3DSUBOP_3DSTATE_STATE_POINTER_INVALIDATE = 0x02,
-    GFX3DSUBOP_3DSTATE_VERTEX_BUFFERS           = 0x08,
-    GFX3DSUBOP_3DSTATE_VERTEX_ELEMENTS          = 0x09,
-    GFX3DSUBOP_3DSTATE_INDEX_BUFFER             = 0x0A,
-    GFX3DSUBOP_3DSTATE_VF_STATISTICS            = 0x0B,
-    GFX3DSUBOP_3DSTATE_CC_STATE_POINTERS        = 0x0E
+  GFX3DSUBOP_3DSTATE_PIPELINED_POINTERS       = 0x00,
+  GFX3DSUBOP_3DSTATE_BINDING_TABLE_POINTERS   = 0x01,
+  GFX3DSUBOP_3DSTATE_STATE_POINTER_INVALIDATE = 0x02,
+  GFX3DSUBOP_3DSTATE_VERTEX_BUFFERS           = 0x08,
+  GFX3DSUBOP_3DSTATE_VERTEX_ELEMENTS          = 0x09,
+  GFX3DSUBOP_3DSTATE_INDEX_BUFFER             = 0x0A,
+  GFX3DSUBOP_3DSTATE_VF_STATISTICS            = 0x0B,
+  GFX3DSUBOP_3DSTATE_CC_STATE_POINTERS        = 0x0E
 };
 
 static void
@@ -463,11 +452,12 @@ gpgpu_state_init(intel_gpgpu_t *state,
     dri_bo_unreference(state->sampler_state_b.bo);
   bo = dri_bo_alloc(state->drv->bufmgr, 
                     "sample states",
-                    MAX_SAMPLERS * sizeof(struct gen6_sampler_state),
+                    MAX_SAMPLERS * sizeof(gen6_sampler_state_t),
                     32);
   assert(bo);
+  dri_bo_map(bo, 1);
+  memset(bo->virtual, 0, sizeof(gen6_sampler_state_t) * MAX_SAMPLERS);
   state->sampler_state_b.bo = bo;
-  memset(state->samplers, 0, sizeof(state->samplers));
 }
 
 static void
@@ -621,15 +611,6 @@ gpgpu_bind_image2D(intel_gpgpu_t *state,
 }
 
 static void
-gpgpu_build_sampler_table(intel_gpgpu_t *state)
-{
-  dri_bo_subdata(state->sampler_state_b.bo,
-                 0,
-                 sizeof(state->samplers),
-                 state->samplers);
-}
-
-static void
 gpgpu_build_idrt(intel_gpgpu_t *state,
                  genx_gpgpu_kernel_t *kernel,
                  uint32_t ker_n)
@@ -693,7 +674,7 @@ gpgpu_build_idrt(intel_gpgpu_t *state,
 }
 
 LOCAL void
-gpgpu_upload_constants(intel_gpgpu_t *state, void* data, uint32_t size)
+gpgpu_upload_constants(intel_gpgpu_t *state, const void* data, uint32_t size)
 {
   unsigned char *constant_buffer = NULL;
 
@@ -705,12 +686,22 @@ gpgpu_upload_constants(intel_gpgpu_t *state, void* data, uint32_t size)
 }
 
 LOCAL void
+gpgpu_upload_samplers(intel_gpgpu_t *state, const void *data, uint32_t n)
+{
+  if (n) {
+    /*sizeof(gen6_sampler_state_t) == sizeof(gen7_surface_state_t) */
+    const size_t sz = n * sizeof(gen6_sampler_state_t);
+    memcpy(state->sampler_state_b.bo->virtual, data, sz);
+  }
+}
+
+LOCAL void
 gpgpu_states_setup(intel_gpgpu_t *state, genx_gpgpu_kernel_t *kernel, uint32_t ker_n)
 {
   state->ker = kernel;
-  gpgpu_build_sampler_table(state);
   gpgpu_build_idrt(state, kernel, ker_n);
   dri_bo_unmap(state->surface_heap_b.bo);
+  dri_bo_unmap(state->sampler_state_b.bo);
 }
 
 LOCAL void 
