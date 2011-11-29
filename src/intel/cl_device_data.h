@@ -80,6 +80,17 @@
 #define IS_IVYBRIDGE(devid) (IS_IVB_GT1(devid) || IS_IVB_GT2(devid))
 #define IS_GEN7(devid)      IS_IVYBRIDGE(devid)
 
+#define PCI_CHIP_HASWELL_M0          0x0094
+#define PCI_CHIP_HASWELL_D0          0x0090
+#define PCI_CHIP_HASWELL_M           0x0091
+#define PCI_CHIP_HASWELL_L           0x0092
+
+#define IS_HASWELL(dev) ((dev)->pci_device == PCI_CHIP_HASWELL_M0 || \
+                         (dev)->pci_device == PCI_CHIP_HASWELL_D0 || \
+                         (dev)->pci_device == PCI_CHIP_HASWELL_M  || \
+                         (dev)->pci_device == PCI_CHIP_HASWELL_L)
+#define IS_GEN75(dev)  IS_HASWELL(dev)
+
 /* Open a connection to the X server and ask the kernel who we are. Returns -1
  * if no Intel GPU was found or an error was encountered in the probing
  * process

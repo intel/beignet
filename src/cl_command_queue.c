@@ -482,7 +482,7 @@ cl_command_queue_ND_range(cl_command_queue queue,
 
   if (ver == 6)
     TRY (cl_command_queue_ND_range_gen6, queue, k, global_wk_off, global_wk_sz, local_wk_sz);
-  else if (ver == 7)
+  else if (ver == 7 || ver == 75)
     TRY (cl_command_queue_ND_range_gen7, queue, k, global_wk_off, global_wk_sz, local_wk_sz);
   else
     FATAL ("Unknown Gen Device");

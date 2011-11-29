@@ -808,7 +808,7 @@ cl_kernel_work_group_sz(cl_kernel ker,
                         size_t *wk_grp_sz)
 {
   cl_int err = CL_SUCCESS;
-  size_t sz;
+  size_t sz = 0;
   cl_uint i;
 
   for (i = 0; i < wk_dim; ++i)
