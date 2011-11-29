@@ -109,14 +109,18 @@ intel_driver_init(intel_driver_t *driver, int dev_fd)
 
 #if EMULATE_GEN
   driver->gen_ver = EMULATE_GEN;
-  if (EMULATE_GEN == 7)
+  if (EMULATE_GEN == 75)
+    driver->device_id = PCI_CHIP_HASWELL_L;       /* we pick L for HSW */
+  else if (EMULATE_GEN == 7)
     driver->device_id = PCI_CHIP_IVYBRIDGE_GT2; /* we pick GT2 for IVB */
   else if (EMULATE_GEN == 6)
     driver->device_id = PCI_CHIP_SANDYBRIDGE_GT2; /* we pick GT2 for SNB */
   else
     FATAL ("Unsupported Gen for emulation");
 #else
-  if (IS_GEN7(driver->device_id))
+  if (IS_GEN75(driver->device_id))
+    driver->gen_ver = 75;
+  else if (IS_GEN7(driver->device_id))
     driver->gen_ver = 7;
   else if (IS_GEN6(driver->device_id))
     driver->gen_ver = 6;

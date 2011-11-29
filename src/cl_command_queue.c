@@ -273,6 +273,13 @@ cl_run_fulsim(void)
     system("wine AubLoad.exe dump.aub -device ivbB0");
   else
     system("wine AubLoad.exe dump.aub -device ivbB0 -debug");
+#elif EMULATE_GEN == 75 /* HSW */
+  if (debug_mode == NULL || strcmp(debug_mode, "1"))
+    system("wine AubLoad.exe dump.aub -device hsw.h.a0");
+  else
+    system("wine AubLoad.exe dump.aub -device hsw.h.a0 -debug");
+#else
+#error "Unknown device"
 #endif
 }
 

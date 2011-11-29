@@ -75,15 +75,36 @@ static struct _cl_device_id intel_ivb_gt1_device = {
 #include "cl_gen7_device.h"
 };
 
+/* XXX we clone IVB for HSW now */
+static struct _cl_device_id intel_hsw_device = {
+  .max_compute_unit = 64,
+  .max_work_item_sizes = {512, 512, 512},
+  .max_work_group_size = 512,
+  .max_clock_frequency = 1000,
+  .wg_sz = 512,
+  .compile_wg_sz = {0},	
+
+#include "cl_gen75_device.h"
+};
+
 LOCAL cl_device_id
 cl_get_gt_device(void)
 {
   cl_device_id ret = NULL;
   const int device_id = cl_intel_get_device_id();
 
-  if (device_id == PCI_CHIP_IVYBRIDGE_GT1   ||
-      device_id == PCI_CHIP_IVYBRIDGE_M_GT1 ||
-      device_id == PCI_CHIP_IVYBRIDGE_S_GT1) {
+  /* XXX we pick IVB for HSW now */
+  if (device_id == PCI_CHIP_HASWELL_M   ||
+      device_id == PCI_CHIP_HASWELL_L   ||
+      device_id == PCI_CHIP_HASWELL_M0  ||
+      device_id == PCI_CHIP_HASWELL_D0) {
+    intel_hsw_device.vendor_id = device_id;
+    intel_hsw_device.platform = intel_platform;
+    ret = &intel_hsw_device;
+  }
+  else if (device_id == PCI_CHIP_IVYBRIDGE_GT1   ||
+           device_id == PCI_CHIP_IVYBRIDGE_M_GT1 ||
+           device_id == PCI_CHIP_IVYBRIDGE_S_GT1) {
     intel_ivb_gt1_device.vendor_id = device_id;
     intel_ivb_gt1_device.platform = intel_platform;
     ret = &intel_ivb_gt1_device;
@@ -174,7 +195,8 @@ cl_get_device_info(cl_device_id     device,
   if (UNLIKELY(device != &intel_snb_gt1_device &&
                device != &intel_snb_gt2_device &&
                device != &intel_ivb_gt1_device &&
-               device != &intel_ivb_gt2_device))
+               device != &intel_ivb_gt2_device &&
+               device != &intel_hsw_device))
     return CL_INVALID_DEVICE;
   if (UNLIKELY(param_value == NULL))
     return CL_INVALID_VALUE;
@@ -249,14 +271,17 @@ cl_device_get_version(cl_device_id device, cl_int *ver)
   if (UNLIKELY(device != &intel_snb_gt1_device &&
                device != &intel_snb_gt2_device &&
                device != &intel_ivb_gt1_device &&
-               device != &intel_ivb_gt2_device))
+               device != &intel_ivb_gt2_device &&
+               device != &intel_hsw_device))
     return CL_INVALID_DEVICE;
   if (ver == NULL)
     return CL_SUCCESS;
   if (device == &intel_snb_gt1_device || device == &intel_snb_gt2_device)
     *ver = 6;
-  else
+  else if (device == &intel_ivb_gt1_device || device == &intel_ivb_gt2_device)
     *ver = 7;
+  else
+    *ver = 75;
   return CL_SUCCESS;
 }
 #undef DECL_FIELD

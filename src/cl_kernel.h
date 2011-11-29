@@ -31,6 +31,13 @@
 /* XXX Structures extracted from the WINDOWS CODE BASE                     */
 /***************************************************************************/
 
+// Some fields went from 1 to 4 bytes with the new compiler
+#if USE_OLD_COMPILER
+typedef uint8_t cl_compiler_boolean_t;
+#else
+typedef uint32_t cl_compiler_boolean_t;
+#endif /* USE_OLD_COMPILER */
+
 typedef struct cl_program_header {
   uint32_t magic;
   uint32_t version;
@@ -41,11 +48,11 @@ typedef struct cl_program_header {
 typedef struct cl_arg_info {
   uint32_t arg_index;
   uint32_t type;
-  uint8_t is_null;
+  cl_compiler_boolean_t is_null;
   uint32_t offset;
   uint32_t sz;
   void *obj;
-  uint8_t is_patched;
+  cl_compiler_boolean_t is_patched;
   struct cl_arg_info *next;
 } cl_arg_info_t;
 
@@ -57,8 +64,8 @@ typedef struct cl_curbe_patch_info {
   uint32_t arg_index;
   uint32_t sz;
   uint32_t src_offset;
-  uint8_t is_patched;
-  uint8_t is_local;
+  cl_compiler_boolean_t is_patched;
+  cl_compiler_boolean_t is_local;
   struct cl_curbe_patch_info *next;
 } cl_curbe_patch_info_t;
 
@@ -68,13 +75,13 @@ typedef struct cl_kernel_header {
   uint32_t patch_list_sz;
 } cl_kernel_header_t;
 
-typedef struct cl_kernel_header7_5 {
+typedef struct cl_kernel_header75 {
   cl_kernel_header_t header;
   uint32_t kernel_heap_sz;
   uint32_t general_state_heap_sz;
   uint32_t dynamic_state_heap_sz;
   uint32_t surface_state_heap_sz;
-} cl_kernel_header7_5_t;
+} cl_kernel_header75_t;
 
 typedef struct cl_kernel_header7 {
   cl_kernel_header_t header;
@@ -104,11 +111,14 @@ typedef struct cl_global_memory_object_arg {
   uint32_t offset;
 } cl_global_memory_object_arg_t;
 
-typedef struct cl_patch_image_memory_object_arg {
+#if USE_OLD_COMPILER == 0
+typedef struct cl_image_memory_object_arg {
   cl_patch_item_header_t header;
   uint32_t index;
+  uint32_t image_type;
   uint32_t offset;
-} cl_patch_image_memory_object_arg_t;
+} cl_image_memory_object_arg_t;
+#endif
 
 typedef struct cl_patch_constant_memory_object_arg {
   uint32_t index;

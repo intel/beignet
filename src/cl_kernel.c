@@ -350,18 +350,26 @@ cl_kernel_setup_patch_list(cl_kernel k, const char *patch, size_t sz)
       case PATCH_TOKEN_CONSTANT_MEMORY_KERNEL_ARGUMENT:
       case PATCH_TOKEN_GLOBAL_MEMORY_KERNEL_ARGUMENT:
       {
-        cl_global_memory_object_arg_t *from = (cl_global_memory_object_arg_t *) patch;
 
         TRY_ALLOC (arg_info, CALLOC(cl_arg_info_t));
-        arg_info->arg_index = from->index;
-        arg_info->offset = from->offset;
-        if (item->token == PATCH_TOKEN_GLOBAL_MEMORY_KERNEL_ARGUMENT)
+        if (item->token == PATCH_TOKEN_GLOBAL_MEMORY_KERNEL_ARGUMENT) {
+          cl_global_memory_object_arg_t *from = (cl_global_memory_object_arg_t *) patch;
+          arg_info->arg_index = from->index;
+          arg_info->offset = from->offset;
           arg_info->type = OCLRT_ARG_TYPE_BUFFER;
-        else if (item->token == PATCH_TOKEN_CONSTANT_MEMORY_KERNEL_ARGUMENT)
+        }
+        else if (item->token == PATCH_TOKEN_CONSTANT_MEMORY_KERNEL_ARGUMENT) {
+          cl_global_memory_object_arg_t *from = (cl_global_memory_object_arg_t *) patch;
+          arg_info->arg_index = from->index;
+          arg_info->offset = from->offset;
           arg_info->type = OCLRT_ARG_TYPE_CONST;
-        else if (item->token == PATCH_TOKEN_IMAGE_MEMORY_KERNEL_ARGUMENT)
+        }
+        else if (item->token == PATCH_TOKEN_IMAGE_MEMORY_KERNEL_ARGUMENT) {
+          cl_image_memory_object_arg_t *from = (cl_image_memory_object_arg_t *) patch;
+          arg_info->arg_index = from->index;
+          arg_info->offset = from->offset;
           arg_info->type = OCLRT_ARG_TYPE_IMAGE;
-        else
+        } else
           assert(0);
 
         arg_info->sz = sizeof(cl_mem);
@@ -400,7 +408,12 @@ cl_kernel_setup_patch_list(cl_kernel k, const char *patch, size_t sz)
           case DATA_PARAMETER_IMAGE_CHANNEL_ORDER:
           case DATA_PARAMETER_NUM_HARDWARE_THREADS:
           {
-            curbe_key = cl_curbe_key(data->type, data->index, data->src_offset);
+#if USE_OLD_COMPILER == 0
+            if (data->type == DATA_PARAMETER_SUM_OF_LOCAL_MEMORY_ARGUMENT_SIZES)
+              curbe_key = cl_curbe_key(data->type, data->index, 0);
+            else
+#endif
+              curbe_key = cl_curbe_key(data->type, data->index, data->src_offset);
             curbe_info = cl_kernel_get_curbe_info_list(k, curbe_key);
             if (curbe_info != NULL)
               curbe_info->offsets[++curbe_info->last] = data->offset;

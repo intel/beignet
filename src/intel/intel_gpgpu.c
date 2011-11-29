@@ -171,14 +171,16 @@ gpgpu_load_vfe_state(intel_gpgpu_t *state)
     intel_batchbuffer_alloc_space(state->batch,0);
 
   memset(vfe, 0, sizeof(struct gen6_vfe_state_inline));
-  vfe->vfe1.gpgpu_mode = state->drv->gen_ver >= 7 ? 1 : 0;
+  vfe->vfe1.gpgpu_mode =
+    (state->drv->gen_ver == 7 || state->drv->gen_ver == 75) ? 1 : 0;
   vfe->vfe1.bypass_gateway_ctl = 1;
   vfe->vfe1.reset_gateway_timer = 1;
   vfe->vfe1.max_threads = state->max_threads - 1;
   vfe->vfe1.urb_entries = 64;
   vfe->vfe3.curbe_size = 63;
   vfe->vfe3.urbe_size = 13;
-  vfe->vfe4.scoreboard_mask = state->drv->gen_ver >= 7 ? 0 : 0x80000000;
+  vfe->vfe4.scoreboard_mask =
+    (state->drv->gen_ver == 7 || state->drv->gen_ver == 75) ? 0 : 0x80000000;
   intel_batchbuffer_alloc_space(state->batch, sizeof(gen6_vfe_state_inline_t));
   ADVANCE_BATCH(state->batch);
 }
@@ -339,7 +341,7 @@ gpgpu_batch_start(intel_gpgpu_t *state)
 {
   intel_batchbuffer_start_atomic(state->batch, 256);
   gpgpu_pipe_control(state);
-  if (state->drv->gen_ver >= 7)
+  if (state->drv->gen_ver == 7 || state->drv->gen_ver == 75)
     intel_gpgpu_set_L3(state, state->ker->use_barrier);
   gpgpu_select_pipeline(state);
   gpgpu_set_base_address(state);
@@ -589,8 +591,10 @@ gpgpu_bind_buf(intel_gpgpu_t *state,
   assert(index < MAX_SURFACES);
   if(state->drv->gen_ver == 6)
     gpgpu_bind_buf_gen6(state, index, obj_bo, size, cchint);
-  else if (state->drv->gen_ver == 7)
+  else if (state->drv->gen_ver == 7 || state->drv->gen_ver == 75)
     gpgpu_bind_buf_gen7(state, index, obj_bo, size, cchint);
+  else
+    NOT_IMPLEMENTED;
 }
 
 LOCAL void
@@ -606,8 +610,10 @@ gpgpu_bind_image2D(intel_gpgpu_t *state,
   assert(index < MAX_SURFACES);
   if(state->drv->gen_ver == 6)
     gpgpu_bind_image2D_gen6(state, index, obj_bo, format, w, h, bpp, cchint);
-  else if (state->drv->gen_ver == 7)
+  else if (state->drv->gen_ver == 7 || state->drv->gen_ver == 75)
     gpgpu_bind_image2D_gen7(state, index, obj_bo, format, w, h, bpp, cchint);
+  else
+    NOT_IMPLEMENTED;
 }
 
 static void
@@ -634,7 +640,7 @@ gpgpu_build_idrt(intel_gpgpu_t *state,
     desc->desc4.curbe_read_offset = 0;
 
     /* Barriers / SLM are automatically handled on Gen7+ */
-    if (state->drv->gen_ver >= 7) {
+    if (state->drv->gen_ver == 7 || state->drv->gen_ver == 75) {
       size_t slm_sz = kernel[i].slm_sz;
       desc->desc5.group_threads_num = kernel[i].use_barrier ? kernel[i].thread_n : 0;
       desc->desc5.barrier_enable = kernel[i].use_barrier;

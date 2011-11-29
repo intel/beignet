@@ -32,7 +32,11 @@
 #include <string.h>
 #include <assert.h>
 
-static int icbe_ver = 1001L;
+#if USE_OLD_COMPILER
+static const int icbe_ver = 1001;
+#else
+static const int icbe_ver = 1002;
+#endif
 
 #define DECL_LOAD_HEADER(GEN)                                           \
 static const char*                                                      \
@@ -54,6 +58,7 @@ JOIN(cl_kernel_load_header,GEN)(cl_kernel ker,                          \
 
 DECL_LOAD_HEADER(6)
 DECL_LOAD_HEADER(7)
+DECL_LOAD_HEADER(75)
 
 #undef DECL_LOAD_HEADER
 
@@ -82,6 +87,9 @@ cl_program_decode(cl_program p)
     /* Format changes from generation to generation */
     TRY_ALLOC (p->ker[i], cl_kernel_new());
     switch (header->device) {
+      case IGFX_GEN7_5_CORE:
+        ker = cl_kernel_load_header75(p->ker[i], ker, &name_sz, &ker_sz);
+      break;
       case IGFX_GEN7_CORE:
         ker = cl_kernel_load_header7(p->ker[i], ker, &name_sz, &ker_sz);
       break;
