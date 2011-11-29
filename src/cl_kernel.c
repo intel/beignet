@@ -364,12 +364,22 @@ cl_kernel_setup_patch_list(cl_kernel k, const char *patch, size_t sz)
           arg_info->offset = from->offset;
           arg_info->type = OCLRT_ARG_TYPE_CONST;
         }
+#if USE_OLD_COMPILER
+        else if (item->token == PATCH_TOKEN_IMAGE_MEMORY_KERNEL_ARGUMENT) {
+          cl_global_memory_object_arg_t *from = (cl_global_memory_object_arg_t *) patch;
+          arg_info->arg_index = from->index;
+          arg_info->offset = from->offset;
+          arg_info->type = OCLRT_ARG_TYPE_IMAGE;
+        }
+#else
         else if (item->token == PATCH_TOKEN_IMAGE_MEMORY_KERNEL_ARGUMENT) {
           cl_image_memory_object_arg_t *from = (cl_image_memory_object_arg_t *) patch;
           arg_info->arg_index = from->index;
           arg_info->offset = from->offset;
           arg_info->type = OCLRT_ARG_TYPE_IMAGE;
-        } else
+        }
+#endif
+        else
           assert(0);
 
         arg_info->sz = sizeof(cl_mem);
