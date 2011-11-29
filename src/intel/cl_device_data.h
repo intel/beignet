@@ -85,11 +85,11 @@
 #define PCI_CHIP_HASWELL_M           0x0091
 #define PCI_CHIP_HASWELL_L           0x0092
 
-#define IS_HASWELL(dev) ((dev)->pci_device == PCI_CHIP_HASWELL_M0 || \
-                         (dev)->pci_device == PCI_CHIP_HASWELL_D0 || \
-                         (dev)->pci_device == PCI_CHIP_HASWELL_M  || \
-                         (dev)->pci_device == PCI_CHIP_HASWELL_L)
-#define IS_GEN75(dev)  IS_HASWELL(dev)
+#define IS_HASWELL(devid) ((devid) == PCI_CHIP_HASWELL_M0 || \
+                           (devid) == PCI_CHIP_HASWELL_D0 || \
+                           (devid) == PCI_CHIP_HASWELL_M  || \
+                           (devid) == PCI_CHIP_HASWELL_L)
+#define IS_GEN75(devid)  IS_HASWELL(devid)
 
 /* Open a connection to the X server and ask the kernel who we are. Returns -1
  * if no Intel GPU was found or an error was encountered in the probing
