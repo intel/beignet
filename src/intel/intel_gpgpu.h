@@ -74,6 +74,12 @@ extern void gpgpu_bind_buf(intel_gpgpu_t*,
                            uint32_t size,
                            uint32_t cchint);
 
+typedef enum gpgpu_tiling {
+  GPGPU_NO_TILE = 0,
+  GPGPU_TILE_X  = 1,
+  GPGPU_TILE_Y  = 2,
+} gpgpu_tiling_t;
+
 /* Set a 2d texture */
 extern void gpgpu_bind_image2D(intel_gpgpu_t *state,
                                int32_t index,
@@ -81,8 +87,8 @@ extern void gpgpu_bind_image2D(intel_gpgpu_t *state,
                                uint32_t format,
                                int32_t w,
                                int32_t h,
-                               int bpp,
-                               uint32_t cchint);
+                               int pitch,
+                               gpgpu_tiling_t tiling);
 
 /* Configure state, size in 512-bit units */
 extern void gpgpu_state_init(intel_gpgpu_t*, uint32_t max_threads, uint32_t size_cs_entry);

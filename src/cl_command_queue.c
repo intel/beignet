@@ -151,7 +151,18 @@ cl_command_queue_bind_surface(cl_command_queue queue,
     bo = mem->bo;
     assert(bo);
     if (mem->is_image) {
-      gpgpu_bind_image2D(gpgpu, index, bo, mem->intel_fmt, mem->w, mem->h, mem->bpp, cc_llc_l3);
+      const int32_t w = mem->w, h = mem->h, pitch = mem->pitch;
+      const uint32_t fmt = mem->intel_fmt;
+      gpgpu_tiling_t tiling = GPGPU_NO_TILE;
+      if (mem->tiling == CL_TILE_X)
+        tiling = GPGPU_TILE_X;
+      else if (mem->tiling == CL_TILE_Y)
+        tiling = GPGPU_TILE_Y;
+      gpgpu_bind_image2D(gpgpu, index, bo, fmt, w, h, pitch, tiling);
+
+      /* Copy the image parameters (width, height) in the constant buffer if the
+       * user requests them
+       */
       cl_kernel_copy_image_parameters(k, mem, index, curbe);
     } else
       gpgpu_bind_buf(gpgpu, index, bo, bo->size, cc_llc_l3);

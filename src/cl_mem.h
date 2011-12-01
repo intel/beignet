@@ -26,6 +26,12 @@
 /* Store the object in video memory */
 struct _drm_intel_bo;
 
+typedef enum cl_image_tiling {
+  CL_NO_TILE = 0,
+  CL_TILE_X  = 1,
+  CL_TILE_Y  = 2
+} cl_image_tiling_t;
+
 /* Used for buffers and images */
 struct _cl_mem {
   uint64_t magic;           /* To identify it as a memory object */
@@ -39,6 +45,7 @@ struct _cl_mem {
   size_t w,h,depth,pitch;   /* only for images (depth is only for 3d images) */
   uint32_t intel_fmt;       /* format to provide in the surface state */
   uint32_t bpp;             /* number of bytes per pixel */
+  cl_image_tiling_t tiling; /* only IVB+ supports TILE_[X,Y] (image only) */
 };
 
 /* Create a new memory object and initialize it with possible user data */

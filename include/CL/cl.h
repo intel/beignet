@@ -55,7 +55,7 @@ typedef cl_uint             cl_device_local_mem_type;
 typedef cl_bitfield         cl_device_exec_capabilities;
 typedef cl_bitfield         cl_command_queue_properties;
 
-typedef intptr_t			cl_context_properties;
+typedef intptr_t            cl_context_properties;
 typedef cl_uint             cl_context_info;
 typedef cl_uint             cl_command_queue_info;
 typedef cl_uint             cl_channel_order;

@@ -542,8 +542,7 @@ gpgpu_bind_image2D_gen6(intel_gpgpu_t *state,
                         uint32_t format,
                         int32_t w,
                         int32_t h,
-                        int bpp,
-                        uint32_t cchint)
+                        int32_t pitch)
 {
   surface_heap_t *heap = state->surface_heap_b.bo->virtual;
   gen6_surface_state_t *ss = (gen6_surface_state_t *) heap->surface[index];
@@ -553,8 +552,8 @@ gpgpu_bind_image2D_gen6(intel_gpgpu_t *state,
   ss->ss1.base_addr = obj_bo->offset;
   ss->ss2.width = w - 1;
   ss->ss2.height = h - 1;
-  ss->ss3.pitch = w*bpp - 1;
-  ss->ss5.cache_control = cchint;
+  ss->ss3.pitch = pitch - 1;
+  ss->ss5.cache_control = cc_llc_l3;
   gpgpu_set_buf_reloc_gen6(state, index, obj_bo);
 }
 
@@ -565,8 +564,8 @@ gpgpu_bind_image2D_gen7(intel_gpgpu_t *state,
                         uint32_t format,
                         int32_t w,
                         int32_t h,
-                        int bpp,
-                        uint32_t cchint)
+                        int32_t pitch,
+                        int32_t tiling)
 {
   surface_heap_t *heap = state->surface_heap_b.bo->virtual;
   gen7_surface_state_t *ss = (gen7_surface_state_t *) heap->surface[index];
@@ -576,8 +575,15 @@ gpgpu_bind_image2D_gen7(intel_gpgpu_t *state,
   ss->ss1.base_addr = obj_bo->offset;
   ss->ss2.width = w - 1;
   ss->ss2.height = h - 1;
-  ss->ss3.pitch = w*bpp - 1;
-  ss->ss5.cache_control = cchint;
+  ss->ss3.pitch = pitch - 1;
+  ss->ss5.cache_control = cc_llc_l3;
+  if (tiling == GPGPU_TILE_X) {
+    ss->ss0.tiled_surface = 1;
+    ss->ss0.tile_walk = I965_TILEWALK_XMAJOR;
+  } else if (tiling == GPGPU_TILE_Y) {
+    ss->ss0.tiled_surface = 1;
+    ss->ss0.tile_walk = I965_TILEWALK_YMAJOR;
+  }
   gpgpu_set_buf_reloc_gen7(state, index, obj_bo);
 }
 
@@ -604,14 +610,16 @@ gpgpu_bind_image2D(intel_gpgpu_t *state,
                    uint32_t format,
                    int32_t w,
                    int32_t h,
-                   int bpp,
-                   uint32_t cchint)
+                   int32_t pitch,
+                   gpgpu_tiling_t tiling)
 {
   assert(index < MAX_SURFACES);
-  if(state->drv->gen_ver == 6)
-    gpgpu_bind_image2D_gen6(state, index, obj_bo, format, w, h, bpp, cchint);
-  else if (state->drv->gen_ver == 7 || state->drv->gen_ver == 75)
-    gpgpu_bind_image2D_gen7(state, index, obj_bo, format, w, h, bpp, cchint);
+  if(state->drv->gen_ver == 6) {
+    // We do not tile with SNB
+    FATAL_IF (tiling != GPGPU_NO_TILE, "No tiling is implemented on SNB");
+    gpgpu_bind_image2D_gen6(state, index, obj_bo, format, w, h, pitch);
+  } else if (state->drv->gen_ver == 7 || state->drv->gen_ver == 75)
+    gpgpu_bind_image2D_gen7(state, index, obj_bo, format, w, h, pitch, tiling);
   else
     NOT_IMPLEMENTED;
 }

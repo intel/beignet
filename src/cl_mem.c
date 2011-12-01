@@ -24,6 +24,7 @@
 #include "cl_alloc.h"
 #include "cl_device_id.h"
 
+#include "intel/intel_driver.h"
 #include "intel_bufmgr.h" /* libdrm_intel */
 
 #include "CL/cl.h"
@@ -32,7 +33,11 @@
 #include <stdio.h>
 
 static cl_mem
-cl_mem_allocate(cl_context ctx, cl_mem_flags flags, size_t sz, cl_int *errcode)
+cl_mem_allocate(cl_context ctx,
+                cl_mem_flags flags,
+                size_t sz,
+                cl_int is_tiled,
+                cl_int *errcode)
 {
   drm_intel_bufmgr *bufmgr = NULL;
   cl_mem mem = NULL;
@@ -56,7 +61,7 @@ cl_mem_allocate(cl_context ctx, cl_mem_flags flags, size_t sz, cl_int *errcode)
   mem->flags = flags;
 
   /* Pinning will require stricter alignment rules */
-  if (flags & CL_MEM_PINNABLE)
+  if ((flags & CL_MEM_PINNABLE) || is_tiled)
     alignment = 4096;
 
   /* Allocate space in memory */
@@ -106,7 +111,7 @@ cl_mem_new(cl_context ctx,
   }
 
   /* Create the buffer in video memory */
-  mem = cl_mem_allocate(ctx, flags, sz, &err);
+  mem = cl_mem_allocate(ctx, flags, sz, CL_FALSE, &err);
   if (mem == NULL || err != CL_SUCCESS)
     goto error;
 
@@ -124,6 +129,107 @@ error:
   goto exit;
 }
 
+static void
+cl_mem_copy_data_linear(cl_mem mem,
+                        size_t w,
+                        size_t h,
+                        size_t pitch,
+                        uint32_t bpp,
+                        void *data)
+{
+  size_t x, y, p;
+  char *dst;
+  drm_intel_bo_map(mem->bo, 1);
+  dst = mem->bo->virtual;
+  for (y = 0; y < h; ++y) {
+    char *src = (char*) data + pitch * y;
+    for (x = 0; x < w; ++x) {
+      for (p = 0; p < bpp; ++p)
+        dst[p] = src[p];
+      dst += bpp;
+      src += bpp;
+    }
+  }
+  drm_intel_bo_unmap(mem->bo);
+}
+
+static const uint32_t tile_sz = 4096; /* 4KB per tile */
+static const uint32_t tilex_w = 512;  /* tileX width in bytes */
+static const uint32_t tilex_h = 8;    /* tileX height in number of rows */
+static const uint32_t tiley_w = 128;  /* tileY width in bytes */
+static const uint32_t tiley_h = 32;   /* tileY height in number of rows */
+
+static void
+cl_mem_copy_data_tilex(cl_mem mem,
+                       size_t w,
+                       size_t h,
+                       size_t pitch,
+                       uint32_t bpp,
+                       void *data)
+{
+  const size_t tile_w = tilex_w;
+  const size_t tile_h = tilex_h;
+  const size_t aligned_pitch  = ALIGN(w * bpp, tile_w);
+  const size_t aligned_height = ALIGN(h, tile_h);
+  const size_t tilex_n = aligned_pitch  / tile_w;
+  const size_t tiley_n = aligned_height / tile_h;
+  size_t x, y, tilex, tiley;
+  char *img = NULL;
+  char *end = (char*) data + pitch * h;
+
+  drm_intel_bo_map(mem->bo, 1);
+  img = mem->bo->virtual;
+  for (tiley = 0; tiley < tiley_n; ++tiley)
+  for (tilex = 0; tilex < tilex_n; ++tilex) {
+    char *tile = img + (tilex + tiley * tilex_n) * tile_sz;
+    for (y = 0; y < tile_h; ++y) {
+      char *src = (char*) data + (tiley*tile_h+y)*pitch + tilex*tile_w;
+      char *dst = tile + y*tile_w;
+      for (x = 0; x < tile_w; ++x, ++dst, ++src) {
+        if ((uintptr_t) src < (uintptr_t) end)
+          *dst = *src;
+      }
+    }
+  }
+  drm_intel_bo_unmap(mem->bo);
+}
+
+static void
+cl_mem_copy_data_tiley(cl_mem mem,
+                       size_t w,
+                       size_t h,
+                       size_t pitch,
+                       uint32_t bpp,
+                       void *data)
+{
+  const size_t tile_w = tiley_w;
+  const size_t tile_h = tiley_h;
+  const size_t aligned_pitch  = ALIGN(w * bpp, tile_w);
+  const size_t aligned_height = ALIGN(h, tile_h);
+  const size_t tilex_n = aligned_pitch  / tile_w;
+  const size_t tiley_n = aligned_height / tile_h;
+  size_t x, y, tilex, tiley, byte;
+  char *img = NULL;
+  char *end = (char*) data + pitch * h;
+
+  drm_intel_bo_map(mem->bo, 1);
+  img = mem->bo->virtual;
+  for (tiley = 0; tiley < tiley_n; ++tiley)
+  for (tilex = 0; tilex < tilex_n; ++tilex) {
+    char *tile = img + (tiley * tilex_n + tilex) * tile_sz;
+    for (x = 0; x < tile_w; x += 16) {
+      char *src = (char*) data + tiley*tile_h*pitch + tilex*tile_w+x;
+      char *dst = tile + x*tile_h;
+      for (y = 0; y < tile_h; ++y, dst += 16, src += pitch) {
+        for (byte = 0; byte < 16; ++byte)
+          if ((uintptr_t) src  + byte < (uintptr_t) end)
+            dst[byte] = src[byte];
+      }
+    }
+  }
+  drm_intel_bo_unmap(mem->bo);
+}
+
 LOCAL cl_mem
 cl_mem_new_image2D(cl_context ctx,
                    cl_mem_flags flags,
@@ -137,10 +243,11 @@ cl_mem_new_image2D(cl_context ctx,
   cl_int err = CL_SUCCESS;
   cl_mem mem = NULL;
   uint32_t bpp = 0, intel_fmt = INTEL_UNSUPPORTED_FORMAT;
-  size_t sz = 0;
+  size_t sz = 0, aligned_pitch = 0, aligned_h;
+  cl_image_tiling_t tiling = CL_NO_TILE;
 
   /* Check flags consistency */
-  if (UNLIKELY(flags & CL_MEM_COPY_HOST_PTR && data == NULL)) {
+  if (UNLIKELY((flags & CL_MEM_COPY_HOST_PTR) && data == NULL)) {
     err = CL_INVALID_HOST_PTR;
     goto error;
   }
@@ -169,36 +276,45 @@ cl_mem_new_image2D(cl_context ctx,
   if (UNLIKELY(bpp*w > pitch)) DO_IMAGE_ERROR;
 #undef DO_IMAGE_ERROR
 
-  /* Create the buffer in video memory */
-  sz = w * h * bpp;
-  mem = cl_mem_allocate(ctx, flags, sz, &err);
+  /* Pick up tiling mode (we do only linear on SNB) */
+  if (ctx->intel_drv->gen_ver != 6)
+    tiling = CL_TILE_Y;
+
+  /* Tiling requires to align both pitch and height */
+  if (tiling == CL_NO_TILE) {
+    aligned_pitch = w * bpp;
+    aligned_h     = h;
+  } else if (tiling == CL_TILE_X) {
+    aligned_pitch = ALIGN(w * bpp, tilex_w);
+    aligned_h     = ALIGN(h, tilex_h);
+  } else if (tiling == CL_TILE_Y) {
+    aligned_pitch = ALIGN(w * bpp, tiley_w);
+    aligned_h     = ALIGN(h, tiley_h);
+  }
+
+  sz = aligned_pitch * aligned_h;
+  mem = cl_mem_allocate(ctx, flags, sz, tiling != CL_NO_TILE, &err);
   if (mem == NULL || err != CL_SUCCESS)
     goto error;
 
   /* Copy the data if required */
-  if (flags & CL_MEM_COPY_HOST_PTR) {/* TODO check other flags too */
-    size_t x, y, p;
-    char *dst;
-    drm_intel_bo_map(mem->bo, 1);
-    dst = mem->bo->virtual;
-    for (y = 0; y < h; ++y) {
-      char *src = (char*) data + pitch * y;
-      for (x = 0; x < w; ++x) {
-        for (p = 0; p < bpp; ++p)
-          dst[p] = src[p];
-        dst += bpp;
-        src += bpp;
-      }
-    }
-    drm_intel_bo_unmap(mem->bo);
+  if (flags & CL_MEM_COPY_HOST_PTR) {
+    if (tiling == CL_NO_TILE)
+      cl_mem_copy_data_linear(mem, w, h, pitch, bpp, data);
+    else if (tiling == CL_TILE_X)
+      cl_mem_copy_data_tilex(mem, w, h, pitch, bpp, data);
+    else if (tiling == CL_TILE_Y)
+      cl_mem_copy_data_tiley(mem, w, h, pitch, bpp, data);
   }
+
   mem->w = w;
   mem->h = h;
   mem->fmt = *fmt;
   mem->intel_fmt = intel_fmt;
-  mem->pitch = w * bpp;
   mem->bpp = bpp;
   mem->is_image = 1;
+  mem->pitch = aligned_pitch;
+  mem->tiling = tiling;
 
 exit:
   if (errcode_ret)
@@ -261,7 +377,7 @@ LOCAL cl_int
 cl_mem_pin(cl_mem mem)
 {
   assert(mem);
-  if ((mem->flags & CL_MEM_PINNABLE) == 0)
+  if (UNLIKELY((mem->flags & CL_MEM_PINNABLE) == 0))
     return CL_INVALID_MEM;
   drm_intel_bo_pin(mem->bo, 4096);
   return CL_SUCCESS;
@@ -271,7 +387,7 @@ LOCAL cl_int
 cl_mem_unpin(cl_mem mem)
 {
   assert(mem);
-  if ((mem->flags & CL_MEM_PINNABLE) == 0)
+  if (UNLIKELY((mem->flags & CL_MEM_PINNABLE) == 0))
     return CL_INVALID_MEM;
   drm_intel_bo_unpin(mem->bo);
   return CL_SUCCESS;
