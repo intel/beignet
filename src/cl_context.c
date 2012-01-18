@@ -33,6 +33,13 @@
 #include <stdint.h>
 #include <assert.h>
 
+/* Do not include the full dependency */
+struct intel_driver;
+/* Get the command buffer interface */
+extern struct _drm_intel_bufmgr* intel_driver_get_buf(struct intel_driver*);
+/* Get the Gen HW version */
+extern uint32_t intel_driver_get_ver(struct intel_driver*);
+
 static cl_int
 cl_context_properties_is_ok(const cl_context_properties *properties)
 {
@@ -126,6 +133,7 @@ cl_context_new(void)
   TRY_ALLOC_NO_ERR (ctx->intel_drv, cl_intel_driver_new());
   ctx->magic = CL_MAGIC_CONTEXT_HEADER;
   ctx->ref_n = 1;
+  ctx->ver = intel_driver_get_ver(ctx->intel_drv);
   pthread_mutex_init(&ctx->program_lock, NULL);
   pthread_mutex_init(&ctx->queue_lock, NULL);
   pthread_mutex_init(&ctx->buffer_lock, NULL);
@@ -193,9 +201,6 @@ error:
   cl_command_queue_delete(queue);
   goto exit;
 }
-
-struct intel_driver;
-extern struct _drm_intel_bufmgr* intel_driver_get_buf(struct intel_driver*);
 
 struct _drm_intel_bufmgr*
 cl_context_get_intel_bufmgr(cl_context ctx)

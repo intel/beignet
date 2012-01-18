@@ -288,7 +288,7 @@ struct _cl_kernel {
 };
 
 /* Size of the surface state as encoded in the binary blob */
-#define SURFACE_SZ 32
+#define SURFACE_SZ 64
 
 /* Allocate an empty kernel */
 extern cl_kernel cl_kernel_new(void);

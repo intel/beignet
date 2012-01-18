@@ -134,6 +134,7 @@ extern char* gpgpu_run_with_inline(intel_gpgpu_t*, int32_t ki, size_t sz);
 /* Will spawn all threads */
 extern void
 gpgpu_walker(intel_gpgpu_t *state,
+             uint32_t simd_sz,
              uint32_t thread_n,
              const size_t global_wk_off[3],
              const size_t global_wk_sz[3],

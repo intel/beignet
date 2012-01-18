@@ -516,9 +516,13 @@ cl_kernel_setup(cl_kernel k, const char *ker)
                                        64));
   drm_intel_bo_subdata(k->bo, 0, k->kernel_heap_sz, k->kernel_heap);
 
-  /* We have some restrictions on the compiled binary */
-  FATAL_IF (k->patch.exec_env.largest_compiled_simd_sz != 16, "Unsupported SIMD size");
-  FATAL_IF (k->patch.exec_env.compiled_simd16 == 0, "Unsupported SIMD size");
+  /* We have some restrictions on the compiled binary for SNB */
+  FATAL_IF (k->program->ctx->ver == 6 &&
+            k->patch.exec_env.largest_compiled_simd_sz != 16, "Unsupported SIMD size");
+  FATAL_IF (k->program->ctx->ver == 6 &&
+            k->patch.exec_env.compiled_simd16 == 0, "Unsupported SIMD size");
+  FATAL_IF (k->program->ctx->ver > 6 &&
+            k->patch.exec_env.largest_compiled_simd_sz == 32, "Unsupported SIMD size");
 
 error:
   return err;

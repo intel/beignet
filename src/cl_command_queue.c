@@ -194,7 +194,7 @@ cl_command_queue_bind_surface(cl_command_queue queue,
     const size_t sz = max_thread *
                       k->patch.private_surf.size *
                       k->patch.exec_env.largest_compiled_simd_sz;
-    assert(k->patch.exec_env.largest_compiled_simd_sz == 16);
+    // assert(k->patch.exec_env.largest_compiled_simd_sz == 16);
     assert(k->patch.private_surf.offset % SURFACE_SZ == 0);
     index = k->patch.private_surf.offset / SURFACE_SZ;
     assert(index != MAX_SURFACES - 1);
@@ -209,7 +209,7 @@ cl_command_queue_bind_surface(cl_command_queue queue,
     const size_t sz = max_thread * /* XXX is it given per lane ??? */
                       k->patch.scratch.size *
                       k->patch.exec_env.largest_compiled_simd_sz;
-    assert(k->patch.exec_env.largest_compiled_simd_sz == 16);
+    // assert(k->patch.exec_env.largest_compiled_simd_sz == 16);
     assert(k->patch.scratch.offset % SURFACE_SZ == 0);
     assert(index != MAX_SURFACES - 1);
     index = k->patch.scratch.offset / SURFACE_SZ;

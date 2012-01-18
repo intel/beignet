@@ -294,6 +294,12 @@ intel_driver_get_buf(intel_driver_t *drv)
   return drv->bufmgr;
 }
 
+LOCAL uint32_t
+intel_driver_get_ver(struct intel_driver *drv)
+{
+  return drv->gen_ver;
+}
+
 LOCAL int
 cl_intel_get_device_id(void)
 {

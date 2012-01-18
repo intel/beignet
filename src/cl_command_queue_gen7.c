@@ -43,6 +43,7 @@ cl_kernel_compute_batch_sz(cl_kernel k)
 static cl_int
 cl_set_local_ids(char *data,
                  const size_t *local_wk_sz,
+                 size_t simd_sz,
                  size_t cst_sz,
                  size_t id_offset,
                  size_t thread_n)
@@ -52,7 +53,7 @@ cl_set_local_ids(char *data,
   cl_int err = CL_SUCCESS;
 
   for (i = 0; i < 3; ++i)
-    TRY_ALLOC(ids[i], (uint16_t*) cl_calloc(sizeof(uint16_t), thread_n*16));
+    TRY_ALLOC(ids[i], (uint16_t*) cl_calloc(sizeof(uint16_t), thread_n*simd_sz));
 
   /* Compute the IDs */
   for (k = 0; k < local_wk_sz[2]; ++k)
@@ -67,10 +68,11 @@ cl_set_local_ids(char *data,
   curr = 0;
   data += id_offset;
   for (i = 0; i < thread_n; ++i, data += cst_sz) {
-    uint16_t *ids0 = (uint16_t *) (data +  0);
-    uint16_t *ids1 = (uint16_t *) (data + 32);
-    uint16_t *ids2 = (uint16_t *) (data + 64);
-    for (j = 0; j < 16; ++j, ++curr) {
+    /* Compiler use a GRF for each local ID (8 x 32 bits == 16 x 16 bits) */
+    uint16_t *ids0 = (uint16_t *) (data + 0);
+    uint16_t *ids1 = (uint16_t *) (data + 1*16*sizeof(uint16_t));
+    uint16_t *ids2 = (uint16_t *) (data + 2*16*sizeof(uint16_t));
+    for (j = 0; j < simd_sz; ++j, ++curr) {
       ids0[j] = ids[0][curr];
       ids1[j] = ids[1][curr];
       ids2[j] = ids[2][curr];
@@ -96,6 +98,7 @@ cl_command_queue_ND_range_gen7(cl_command_queue queue,
   char *curbe = NULL;        /* Does not include per-thread local IDs */
   char *final_curbe = NULL;  /* Includes them */
   genx_gpgpu_kernel_t kernel;
+  const size_t simd_sz = ker->patch.exec_env.largest_compiled_simd_sz;
   size_t local_sz, batch_sz, cst_sz = ker->patch.curbe.sz;
   size_t i, thread_n, id_offset;
   cl_int err = CL_SUCCESS;
@@ -115,7 +118,7 @@ cl_command_queue_ND_range_gen7(cl_command_queue queue,
 
   /* Check that the local work sizes are OK */
   TRY (cl_kernel_work_group_sz, ker, local_wk_sz, 3, &local_sz);
-  kernel.thread_n = thread_n = local_sz / 16; /* SIMD16 only */
+  kernel.thread_n = thread_n = local_sz / simd_sz;
 
   /* CURBE step 1. Allocate and fill fields shared by threads in workgroup */
   if (cst_sz > 0) {
@@ -142,7 +145,7 @@ cl_command_queue_ND_range_gen7(cl_command_queue queue,
   TRY_ALLOC (final_curbe, (char*) cl_calloc(thread_n, cst_sz));
   for (i = 0; i < thread_n; ++i)
     memcpy(final_curbe + cst_sz * i, curbe, cst_sz);
-  TRY (cl_set_local_ids, final_curbe, local_wk_sz, cst_sz, id_offset, thread_n);
+  TRY (cl_set_local_ids, final_curbe, local_wk_sz, simd_sz, cst_sz, id_offset, thread_n);
   gpgpu_upload_constants(gpgpu, final_curbe, thread_n*cst_sz);
 
   /* Start a new batch buffer */
@@ -151,7 +154,7 @@ cl_command_queue_ND_range_gen7(cl_command_queue queue,
   gpgpu_batch_start(gpgpu);
 
   /* Issue the GPGPU_WALKER command */
-  gpgpu_walker(gpgpu, thread_n, global_wk_off, global_wk_sz, local_wk_sz);
+  gpgpu_walker(gpgpu, simd_sz, thread_n, global_wk_off, global_wk_sz, local_wk_sz);
 
   /* Close the batch buffer and submit it */
   gpgpu_batch_end(gpgpu, 0);

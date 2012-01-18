@@ -43,6 +43,7 @@ struct _cl_context {
   pthread_mutex_t program_lock;     /* To allocate and deallocate programs */
   pthread_mutex_t buffer_lock;      /* To allocate and deallocate buffers */
   pthread_mutex_t sampler_lock;     /* To allocate and deallocate samplers */
+  uint32_t ver;                     /* Gen version */
 };
 
 /* Implement OpenCL function */

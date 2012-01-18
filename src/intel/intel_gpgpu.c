@@ -770,6 +770,7 @@ gpgpu_run_with_inline(intel_gpgpu_t *state, int32_t ki, size_t sz)
 
 LOCAL void
 gpgpu_walker(intel_gpgpu_t *state,
+             uint32_t simd_sz,
              uint32_t thread_n,
              const size_t global_wk_off[3],
              const size_t global_wk_sz[3],
@@ -780,11 +781,14 @@ gpgpu_walker(intel_gpgpu_t *state,
     global_wk_sz[1] / local_wk_sz[1],
     global_wk_sz[2] / local_wk_sz[2]
   };
-
+  assert(simd_sz == 8 || simd_sz == 16);
   BEGIN_BATCH(state->batch, 11);
   OUT_BATCH(state->batch, CMD_GPGPU_WALKER | 9);
   OUT_BATCH(state->batch, 0);                        /* kernel index == 0 */
-  OUT_BATCH(state->batch, (1 << 30) | (thread_n-1)); /* SIMD16 | thread max */
+  if (simd_sz == 16)
+    OUT_BATCH(state->batch, (1 << 30) | (thread_n-1)); /* SIMD16 | thread max */
+  else
+    OUT_BATCH(state->batch, (0 << 30) | (thread_n-1)); /* SIMD8  | thread max */
   OUT_BATCH(state->batch, global_wk_off[0]);
   OUT_BATCH(state->batch, global_wk_dim[0]);
   OUT_BATCH(state->batch, global_wk_off[1]);
