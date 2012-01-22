@@ -42,7 +42,7 @@ namespace std
   }
 
 }
-namespace pf
+namespace gbe
 {
   /* $Id: strtok_r.c,v 1.1 2003/12/03 15:22:23 chris_reid Exp $ */
   /*
@@ -118,7 +118,7 @@ namespace pf
 
   std::string loadFile(std::ifstream &stream)
   {
-    PF_ASSERT(stream.is_open());
+    GBE_ASSERT(stream.is_open());
     std::string line;
     std::stringstream text;
     while (std::getline(stream, line))

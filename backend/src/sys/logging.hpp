@@ -17,15 +17,15 @@
  * Author: Benjamin Segovia <benjamin.segovia@intel.com>
  */
 
-#ifndef __PF_LOGGING_HPP__
-#define __PF_LOGGING_HPP__
+#ifndef __GBE_LOGGING_HPP__
+#define __GBE_LOGGING_HPP__
 
 #include "sys/mutex.hpp"
 #include "sys/platform.hpp"
 #include <sstream>
 #include <iomanip>
 
-namespace pf
+namespace gbe
 {
   class Logger;
   class LoggerBuffer;
@@ -52,7 +52,7 @@ namespace pf
       file(file), function(function), line(line) {}
     const char *file, *function;
     int line;
-    PF_CLASS(LoggerInfo);
+    GBE_CLASS(LoggerInfo);
   };
 
   /*! Used to lazily create strings from the user defined logs. When destroyed
@@ -74,7 +74,7 @@ namespace pf
     LoggerBuffer(void);
     Logger *logger;       //!< The logger that created this buffer
     std::stringstream ss; //!< Stores all the user strings
-    PF_CLASS(LoggerBuffer);
+    GBE_CLASS(LoggerBuffer);
   };
 
   /*! Central class to log anything from the engine */
@@ -99,43 +99,43 @@ namespace pf
     LoggerStream *streams; //!< All the output streams
     LoggerBuffer *buffers; //!< One buffer per thread
     double startTime;      //!< When the logger has been created
-    PF_CLASS(Logger);
+    GBE_CLASS(Logger);
   };
 
   /*! We have one logger for the application */
   extern Logger *logger;
 
-} /* namespace pf */
+} /* namespace gbe */
 
 /*! Macros to handle logging information in the code */
-#define PF_LOG_HERE LoggerInfo(__FILE__, __FUNCTION__, __LINE__)
-#define PF_INFO " ######## " << PF_LOG_HERE
+#define GBE_LOG_HERE LoggerInfo(__FILE__, __FUNCTION__, __LINE__)
+#define GBE_INFO " ######## " << GBE_LOG_HERE
 
 /*! Verbose macros: they add logging position and thread ID */
-#define PF_WARNING_V(MSG) do {                                                \
-  if (logger) *logger << "WARNING " << MSG << PF_INFO << "\n" << loggerFlush; \
+#define GBE_WARNING_V(MSG) do {                                                \
+  if (logger) *logger << "WARNING " << MSG << GBE_INFO << "\n" << loggerFlush; \
 } while (0)
 
-#define PF_ERROR_V(MSG)   do {                                                \
-  if (logger) *logger << "ERROR " << MSG << PF_INFO << "\n" << loggerFlush;   \
+#define GBE_ERROR_V(MSG)   do {                                                \
+  if (logger) *logger << "ERROR " << MSG << GBE_INFO << "\n" << loggerFlush;   \
 } while (0)
 
-#define PF_MSG_V(MSG)     do {                                                \
-  if (logger) *logger << MSG << PF_INFO << "\n" << loggerFlush;               \
+#define GBE_MSG_V(MSG)     do {                                                \
+  if (logger) *logger << MSG << GBE_INFO << "\n" << loggerFlush;               \
 } while (0)
 
 /*! Regular macros: just the user message */
-#define PF_WARNING(MSG) do {                                                  \
+#define GBE_WARNING(MSG) do {                                                  \
   if (logger) *logger << "WARNING " << MSG << "\n" << loggerFlush;            \
 } while (0)
 
-#define PF_ERROR(MSG)   do {                                                  \
+#define GBE_ERROR(MSG)   do {                                                  \
   if (logger) *logger << "ERROR " << MSG << "\n" << loggerFlush;              \
 } while (0)
 
-#define PF_MSG(MSG)     do {                                                  \
+#define GBE_MSG(MSG)     do {                                                  \
   if (logger) *logger << MSG << "\n" << loggerFlush;                          \
 } while (0)
 
-#endif /* __PF_LOGGING_HPP__ */
+#endif /* __GBE_LOGGING_HPP__ */
 

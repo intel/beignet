@@ -17,12 +17,12 @@
  * Author: Benjamin Segovia <benjamin.segovia@intel.com>
  */
 
-#ifndef __PF_ATOMIC_HPP__
-#define __PF_ATOMIC_HPP__
+#ifndef __GBE_ATOMIC_HPP__
+#define __GBE_ATOMIC_HPP__
 
 #include "sys/intrinsics.hpp"
 
-namespace pf
+namespace gbe
 {
   template <typename T>
   struct AtomicInternal {
@@ -46,12 +46,12 @@ namespace pf
 
   private:
     volatile T data;
-    PF_STRUCT(AtomicInternal);
+    GBE_STRUCT(AtomicInternal);
   };
 
   typedef AtomicInternal<atomic32_t> Atomic32;
   typedef AtomicInternal<atomic_t> Atomic;
 }
 
-#endif /* __PF_ATOMIC_HPP__ */
+#endif /* __GBE_ATOMIC_HPP__ */
 

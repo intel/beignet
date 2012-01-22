@@ -17,8 +17,8 @@
  * Author: Benjamin Segovia <benjamin.segovia@intel.com>
  */
 
-#ifndef __PF_MAP_HPP__
-#define __PF_MAP_HPP__
+#ifndef __GBE_MAP_HPP__
+#define __GBE_MAP_HPP__
 
 #include "sys/platform.hpp"
 #include <map>
@@ -55,9 +55,9 @@ namespace pf
       parent_type(first, last, comp, a) {}
     /*! Copy constructor */
     INLINE map(const map& x) : parent_type(x) {}
-    PF_CLASS(map);
+    GBE_CLASS(map);
   };
 } /* namespace pf */
 
-#endif /* __PF_MAP_HPP__ */
+#endif /* __GBE_MAP_HPP__ */
 

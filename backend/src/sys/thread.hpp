@@ -17,12 +17,12 @@
  * Author: Benjamin Segovia <benjamin.segovia@intel.com>
  */
 
-#ifndef __PF_THREAD_HPP__
-#define __PF_THREAD_HPP__
+#ifndef __GBE_THREAD_HPP__
+#define __GBE_THREAD_HPP__
 
 #include "sys/platform.hpp"
 
-namespace pf
+namespace gbe
 {
   /*! Type for thread */
   typedef struct opaque_thread_t* thread_t;
@@ -50,5 +50,5 @@ namespace pf
   void destroyTls(tls_t tls);
 }
 
-#endif /* __PF_THREAD_HPP__ */
+#endif /* __GBE_THREAD_HPP__ */
 

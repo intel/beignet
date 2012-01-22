@@ -24,7 +24,7 @@
 #define WIN32_LEAN_AND_MEAN
 #include <windows.h>
 
-namespace pf
+namespace gbe
 {
   /*! system mutex using windows API */
   MutexSys::MutexSys( void ) { mutex = new CRITICAL_SECTION; InitializeCriticalSection((CRITICAL_SECTION*)mutex); }
@@ -37,7 +37,7 @@ namespace pf
 #if defined(__UNIX__)
 #include <pthread.h>
 
-namespace pf
+namespace gbe
 {
   /*! system mutex using pthreads */
   MutexSys::MutexSys( void ) { mutex = new pthread_mutex_t; pthread_mutex_init((pthread_mutex_t*)mutex, NULL); }

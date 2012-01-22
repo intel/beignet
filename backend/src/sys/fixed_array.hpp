@@ -17,13 +17,13 @@
  * Author: Benjamin Segovia <benjamin.segovia@intel.com>
  */
 
-#ifndef __PF_FIXED_ARRAY_HPP__
-#define __PF_FIXED_ARRAY_HPP__
+#ifndef __GBE_FIXED_ARRAY_HPP__
+#define __GBE_FIXED_ARRAY_HPP__
 
 #include "platform.hpp"
 #include <cstring>
 
-namespace pf
+namespace gbe
 {
   /*! Regular C array but with bound checks */
   template<typename T, size_t N>
@@ -58,22 +58,22 @@ namespace pf
     T& back(void) { return *(end() - 1); }
     /*! Get element at position index (with bound check) */
     INLINE T& operator[] (size_t index) {
-      PF_ASSERT(index < size());
+      GBE_ASSERT(index < size());
       return elem[index];
     }
     /*! Get element at position index (with bound check) */
     INLINE const T& operator[] (size_t index) const {
-      PF_ASSERT(index < size());
+      GBE_ASSERT(index < size());
       return elem[index];
     }
   private:
     T elem[N];            //!< Store the elements
     STATIC_ASSERT(N > 0); //!< zero element is not allowed
-    PF_CLASS(fixed_array);
+    GBE_CLASS(fixed_array);
   };
 
-} /* namespace pf */
+} /* namespace gbe */
 
-#endif /* __PF_FIXED_ARRAY_HPP__ */
+#endif /* __GBE_FIXED_ARRAY_HPP__ */
 
 

@@ -17,13 +17,13 @@
  * Author: Benjamin Segovia <benjamin.segovia@intel.com>
  */
 
-#ifndef __PF_VECTOR_HPP__
-#define __PF_VECTOR_HPP__
+#ifndef __GBE_VECTOR_HPP__
+#define __GBE_VECTOR_HPP__
 
 #include "sys/platform.hpp"
 #include <vector>
 
-namespace pf
+namespace gbe
 {
   /*! Add bound checks to the standard vector class and use the internal
    *  allocator
@@ -56,17 +56,17 @@ namespace pf
       parent_type(first, last, a) {}
     /*! Get element at position index (with a bound check) */
     T &operator[] (size_t index) {
-      PF_ASSERT(index < this->size());
+      GBE_ASSERT(index < this->size());
       return parent_type::operator[] (index);
     }
     /*! Get element at position index (with a bound check) */
     const T &operator[] (size_t index) const {
-      PF_ASSERT(index < this->size());
+      GBE_ASSERT(index < this->size());
       return parent_type::operator[] (index);
     }
-    PF_CLASS(vector);
+    GBE_CLASS(vector);
   };
-} /* namespace pf */
+} /* namespace gbe */
 
-#endif /* __PF_VECTOR_HPP__ */
+#endif /* __GBE_VECTOR_HPP__ */
 

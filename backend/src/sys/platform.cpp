@@ -30,7 +30,7 @@
 #define WIN32_LEAN_AND_MEAN
 #include <windows.h>
 
-namespace pf
+namespace gbe
 {
   double getSeconds() {
     LARGE_INTEGER freq, val;
@@ -42,7 +42,7 @@ namespace pf
   void FATAL(const std::string &msg) {
     std::cerr << msg << std::endl;
     MessageBox(NULL, msg.c_str(), "Fatal Error", MB_OK | MB_ICONEXCLAMATION);
-    PF_ASSERT(0);
+    GBE_ASSERT(0);
 #ifdef __GNUC__
     exit(-1);
 #else
@@ -50,7 +50,7 @@ namespace pf
 #endif /* __GNUC__ */
   }
 
-} /* namespace pf */
+} /* namespace gbe */
 #endif /* __WIN32__ */
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -61,7 +61,7 @@ namespace pf
 
 #include <sys/time.h>
 
-namespace pf
+namespace gbe
 {
   double getSeconds() {
     struct timeval tp; gettimeofday(&tp,NULL);
@@ -70,10 +70,10 @@ namespace pf
 
   void FATAL(const std::string &msg) {
     std::cerr << msg << std::endl;
-    PF_ASSERT(0);
+    GBE_ASSERT(0);
     _exit(-1);
   }
-} /* namespace pf */
+} /* namespace gbe */
 
 #endif /* __UNIX__ */
 

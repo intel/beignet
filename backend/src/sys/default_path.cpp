@@ -20,7 +20,7 @@
 #include "sys/default_path.hpp"
 #include "platform.hpp"
 
-namespace pf
+namespace gbe
 {
   const char *defaultPath[] = {
     "./share/",
@@ -34,5 +34,5 @@ namespace pf
     "../../data/"
   };
   const size_t defaultPathNum = ARRAY_ELEM_NUM(defaultPath);
-} /* namespace pf */
+} /* namespace gbe */
 

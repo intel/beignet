@@ -31,7 +31,7 @@
 #define WIN32_LEAN_AND_MEAN
 #include <windows.h>
 
-namespace pf
+namespace gbe
 {
   /*! creates a hardware thread running on specific core */
   thread_t createThread(thread_func f, void* arg, size_t stack_size, int affinity)
@@ -86,7 +86,7 @@ namespace pf
 ////////////////////////////////////////////////////////////////////////////////
 
 #ifdef __LINUX__
-namespace pf
+namespace gbe
 {
   /*! set affinity of the calling thread */
   void setAffinity(int affinity)
@@ -114,7 +114,7 @@ namespace pf
 #include <mach/thread_policy.h>
 #include <mach/mach_init.h>
 
-namespace pf
+namespace gbe
 {
   /*! set affinity of the calling thread */
   void setAffinity(int affinity)
@@ -138,7 +138,7 @@ namespace pf
 #include <pthread.h>
 #include <sched.h>
 
-namespace pf
+namespace gbe
 {
   struct ThreadStartupData {
     int affinity;
@@ -148,7 +148,7 @@ namespace pf
 
   static void* threadStartup(ThreadStartupData* parg)
   {
-    ThreadStartupData arg = *parg; PF_DELETE(parg); parg = NULL;
+    ThreadStartupData arg = *parg; GBE_DELETE(parg); parg = NULL;
     setAffinity(arg.affinity);
     arg.f(arg.arg);
     return NULL;
@@ -160,8 +160,8 @@ namespace pf
     pthread_attr_init(&attr);
     if (stack_size > 0) pthread_attr_setstacksize (&attr, stack_size);
 
-    pthread_t* tid = PF_NEW(pthread_t);
-    ThreadStartupData* startup = PF_NEW(ThreadStartupData);
+    pthread_t* tid = GBE_NEW(pthread_t);
+    ThreadStartupData* startup = GBE_NEW(ThreadStartupData);
     startup->f = f;
     startup->arg = arg;
     startup->affinity = affinity;
@@ -180,16 +180,16 @@ namespace pf
   void join(thread_t tid) {
     if (pthread_join(*(pthread_t*)tid, NULL) != 0)
       FATAL("pthread_join error");
-    PF_DELETE((pthread_t*)tid);
+    GBE_DELETE((pthread_t*)tid);
   }
 
   void destroyThread(thread_t tid) {
     pthread_cancel(*(pthread_t*)tid);
-    PF_DELETE((pthread_t*)tid);
+    GBE_DELETE((pthread_t*)tid);
   }
 
   tls_t createTls() {
-    pthread_key_t* key = PF_NEW(pthread_key_t);
+    pthread_key_t* key = GBE_NEW(pthread_key_t);
     if (pthread_key_create(key,NULL) != 0)
       FATAL("pthread_key_create error");
     return tls_t(key);
@@ -207,7 +207,7 @@ namespace pf
   void destroyTls(tls_t tls) {
     if (pthread_key_delete(*(pthread_key_t*)tls) != 0)
       FATAL("pthread_key_delete error");
-    PF_DELETE((pthread_key_t*)tls);
+    GBE_DELETE((pthread_key_t*)tls);
   }
 }
 #endif

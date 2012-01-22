@@ -17,3 +17,9 @@
  * Author: Benjamin Segovia <benjamin.segovia@intel.com>
  */
 
+#ifndef __GBE_IR_REGISTER_HPP__
+#define __GBE_IR_REGISTER_HPP__
+
+#endif /* __GBE_IR_REGISTER_HPP__ */
+
+

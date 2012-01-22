@@ -17,14 +17,14 @@
  * Author: Benjamin Segovia <benjamin.segovia@intel.com>
  */
 
-#ifndef __PF_FILENAME_HPP__
-#define __PF_FILENAME_HPP__
+#ifndef __GBE_FILENAME_HPP__
+#define __GBE_FILENAME_HPP__
 
 #include "platform.hpp"
 #include <string>
 #include <cstdio>
 
-namespace pf
+namespace gbe
 {
   /*! Convenience class for handling file names and paths. */
   class FileName
@@ -64,9 +64,9 @@ namespace pf
     friend std::ostream& operator<<(std::ostream& cout, const FileName& filename);
   private:
     std::string filename;
-    PF_CLASS(FileName);
+    GBE_CLASS(FileName);
   };
 }
 
-#endif /* __PF_FILENAME_HPP__ */
+#endif /* __GBE_FILENAME_HPP__ */
 

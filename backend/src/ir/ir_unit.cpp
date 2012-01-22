@@ -17,3 +17,5 @@
  * Author: Benjamin Segovia <benjamin.segovia@intel.com>
  */
 
+#include "ir_unit.hpp"
+

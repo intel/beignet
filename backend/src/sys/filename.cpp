@@ -20,7 +20,7 @@
 #include "sys/platform.hpp"
 #include "sys/filename.hpp"
 
-namespace pf
+namespace gbe
 {
 #ifdef __WIN32__
   const char path_sep = '\\';

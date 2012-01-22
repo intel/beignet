@@ -17,8 +17,8 @@
  * Author: Benjamin Segovia <benjamin.segovia@intel.com>
  */
 
-#ifndef __PF_INTRINSICS_H__
-#define __PF_INTRINSICS_H__
+#ifndef __GBE_INTRINSICS_H__
+#define __GBE_INTRINSICS_H__
 
 #include "sys/platform.hpp"
 #include <xmmintrin.h>
@@ -28,14 +28,14 @@
 
 #include <intrin.h>
 
-#define PF_COMPILER_WRITE_BARRIER       _WriteBarrier()
-#define PF_COMPILER_READ_WRITE_BARRIER  _ReadWriteBarrier()
+#define GBE_COMPILER_WRITE_BARRIER       _WriteBarrier()
+#define GBE_COMPILER_READ_WRITE_BARRIER  _ReadWriteBarrier()
 
 #if _MSC_VER >= 1400
 #pragma intrinsic(_ReadBarrier)
-#define PF_COMPILER_READ_BARRIER        _ReadBarrier()
+#define GBE_COMPILER_READ_BARRIER        _ReadBarrier()
 #else
-#define PF_COMPILER_READ_BARRIER        _ReadWriteBarrier()
+#define GBE_COMPILER_READ_BARRIER        _ReadWriteBarrier()
 #endif /* _MSC_VER >= 1400 */
 
 INLINE int __bsf(int v) {
@@ -184,27 +184,27 @@ INLINE int32 atomic_cmpxchg(int32 volatile* value, const int32 input, int32 comp
 
 #endif /* defined(__X86_64__) */
 
-#define PF_COMPILER_READ_WRITE_BARRIER    asm volatile("" ::: "memory");
-#define PF_COMPILER_WRITE_BARRIER         PF_COMPILER_READ_WRITE_BARRIER
-#define PF_COMPILER_READ_BARRIER          PF_COMPILER_READ_WRITE_BARRIER
+#define GBE_COMPILER_READ_WRITE_BARRIER    asm volatile("" ::: "memory");
+#define GBE_COMPILER_WRITE_BARRIER         GBE_COMPILER_READ_WRITE_BARRIER
+#define GBE_COMPILER_READ_BARRIER          GBE_COMPILER_READ_WRITE_BARRIER
 
 #endif /* __MSVC__ */
 
 template <typename T>
 INLINE T __load_acquire(volatile T *ptr)
 {
-  PF_COMPILER_READ_WRITE_BARRIER;
+  GBE_COMPILER_READ_WRITE_BARRIER;
   T x = *ptr; // for x86, load == load_acquire
-  PF_COMPILER_READ_WRITE_BARRIER;
+  GBE_COMPILER_READ_WRITE_BARRIER;
   return x;
 }
 
 template <typename T>
 INLINE void __store_release(volatile T *ptr, T x)
 {
-  PF_COMPILER_READ_WRITE_BARRIER;
+  GBE_COMPILER_READ_WRITE_BARRIER;
   *ptr = x; // for x86, store == store_release
-  PF_COMPILER_READ_WRITE_BARRIER;
+  GBE_COMPILER_READ_WRITE_BARRIER;
 }
-#endif /* __PF_INTRINSICS_H__ */
+#endif /* __GBE_INTRINSICS_H__ */
 

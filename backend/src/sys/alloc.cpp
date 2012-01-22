@@ -21,14 +21,14 @@
 #include "sys/atomic.hpp"
 #include "sys/mutex.hpp"
 
-#if PF_DEBUG_MEMORY
+#if GBE_DEBUG_MEMORY
 #ifdef __MSVC__
 #include <unordered_map>
 #else
 #include <tr1/unordered_map>
 #endif /* __MSVC__ */
 #include <cstring>
-#endif /* PF_DEBUG_MEMORY */
+#endif /* GBE_DEBUG_MEMORY */
 
 #if defined(__ICC__)
 #include <stdint.h>
@@ -39,10 +39,10 @@
 ////////////////////////////////////////////////////////////////////////////////
 /// Memory debugger
 ////////////////////////////////////////////////////////////////////////////////
-namespace pf
+namespace gbe
 {
 
-#if PF_DEBUG_MEMORY
+#if GBE_DEBUG_MEMORY
   /*! Store each allocation data */
   struct AllocData {
     INLINE AllocData(void) {}
@@ -156,10 +156,10 @@ namespace pf
     memDebugger = NULL;
     delete _debug;
   }
-#endif /* PF_DEBUG_MEMORY */
+#endif /* GBE_DEBUG_MEMORY */
 }
 
-namespace pf
+namespace gbe
 {
   void* malloc(size_t size) {
     void *ptr = std::malloc(size);
@@ -168,10 +168,10 @@ namespace pf
   }
 
   void* realloc(void *ptr, size_t size) {
-#if PF_DEBUG_MEMORY
+#if GBE_DEBUG_MEMORY
     if (ptr) MemDebuggerRemoveAlloc(ptr);
-#endif /* PF_DEBUG_MEMORY */
-    PF_ASSERT(size);
+#endif /* GBE_DEBUG_MEMORY */
+    GBE_ASSERT(size);
     if (ptr == NULL) {
       ptr = std::realloc(ptr, size);
       MemDebuggerInitializeMem(ptr, size);
@@ -192,7 +192,7 @@ namespace pf
 #define WIN32_LEAN_AND_MEAN
 #include <windows.h>
 
-namespace pf
+namespace gbe
 {
   void* alignedMalloc(size_t size, size_t align) {
     void* ptr = _mm_malloc(size,align);
@@ -217,7 +217,7 @@ namespace pf
 #include <malloc.h>
 #include <iostream>
 
-namespace pf
+namespace gbe
 {
   void* alignedMalloc(size_t size, size_t align) {
     void* ptr = memalign(align,size);
@@ -239,7 +239,7 @@ namespace pf
 
 #include <cstdlib>
 
-namespace pf
+namespace gbe
 {
   void* alignedMalloc(size_t size, size_t align) {
     void* mem = malloc(size+(align-1)+sizeof(void*));
@@ -252,7 +252,7 @@ namespace pf
   }
 
   void alignedFree(void* ptr) {
-    PF_ASSERT(ptr);
+    GBE_ASSERT(ptr);
     free(((void**)ptr)[-1]);
   }
 }

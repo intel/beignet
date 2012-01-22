@@ -17,12 +17,12 @@
  * Author: Benjamin Segovia <benjamin.segovia@intel.com>
  */
 
-#ifndef __PF_BARRIER_H__
-#define __PF_BARRIER_H__
+#ifndef __GBE_BARRIER_H__
+#define __GBE_BARRIER_H__
 
 #include "sys/condition.hpp"
 
-namespace pf
+namespace gbe
 {
   /*! system barrier using operating system */
   class BarrierSys
@@ -52,7 +52,7 @@ namespace pf
     size_t count, full_size;
     MutexSys count_mutex;
     ConditionSys cond;
-    PF_CLASS(BarrierSys);
+    GBE_CLASS(BarrierSys);
   };
 
   /* default barrier type */

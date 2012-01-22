@@ -17,3 +17,9 @@
  * Author: Benjamin Segovia <benjamin.segovia@intel.com>
  */
 
+#ifndef __GBE_IR_UNIT_HPP__
+#define __GBE_IR_UNIT_HPP__
+
+#endif /* __GBE_IR_UNIT_HPP__ */
+
+

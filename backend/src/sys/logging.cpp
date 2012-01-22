@@ -20,7 +20,7 @@
 #include "sys/logging.hpp"
 #include "sys/filename.hpp"
 
-namespace pf
+namespace gbe
 {
   LoggerStream::LoggerStream(void) : next(NULL) {}
   LoggerStream::~LoggerStream(void) {}
@@ -40,14 +40,14 @@ namespace pf
 
   Logger::Logger(void) : streams(NULL) {
     const uint32 threadNum = 1;
-    this->buffers = PF_NEW_ARRAY(LoggerBuffer, threadNum);
+    this->buffers = GBE_NEW_ARRAY(LoggerBuffer, threadNum);
     for (uint32 i = 0; i < threadNum; ++i) this->buffers[i].logger = this;
     this->startTime = getSeconds();
   }
 
   Logger::~Logger(void) {
     FATAL_IF(streams != NULL, "Remove all streams before deleting the logger");
-    PF_DELETE_ARRAY(buffers);
+    GBE_DELETE_ARRAY(buffers);
   }
 
   void Logger::output(const std::string &str) {
@@ -83,5 +83,5 @@ namespace pf
   }
 
   Logger *logger = NULL;
-} /* namespace pf */
+} /* namespace gbe */
 

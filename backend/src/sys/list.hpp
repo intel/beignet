@@ -17,13 +17,13 @@
  * Author: Benjamin Segovia <benjamin.segovia@intel.com>
  */
 
-#ifndef __PF_LIST_HPP__
-#define __PF_LIST_HPP__
+#ifndef __GBE_LIST_HPP__
+#define __GBE_LIST_HPP__
 
 #include "sys/platform.hpp"
 #include <list>
 
-namespace pf
+namespace gbe
 {
   /*! Use custom allocator instead of std one */
   template <typename T>
@@ -52,9 +52,9 @@ namespace pf
       parent_type(first, last, a) {}
     /*! Copy constructor */
     INLINE list(const list &x) : parent_type(x) {}
-    PF_CLASS(list);
+    GBE_CLASS(list);
   };
-} /* namespace pf */
+} /* namespace gbe */
 
-#endif /* __PF_LIST_HPP__ */
+#endif /* __GBE_LIST_HPP__ */
 

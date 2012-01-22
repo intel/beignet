@@ -17,8 +17,8 @@
  * Author: Benjamin Segovia <benjamin.segovia@intel.com>
  */
 
-#ifndef __PF_UTEST_HPP__
-#define __PF_UTEST_HPP__
+#ifndef __GBE_UTEST_HPP__
+#define __GBE_UTEST_HPP__
 
 #include <vector>
 
@@ -49,5 +49,5 @@ namespace pf
 /*! Register a new unit test */
 #define UTEST_REGISTER(FN) static const pf::UTest __##NAME##__(FN, #FN);
 
-#endif /* __PF_UTEST_HPP__ */
+#endif /* __GBE_UTEST_HPP__ */
 

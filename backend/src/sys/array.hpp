@@ -17,13 +17,13 @@
  * Author: Benjamin Segovia <benjamin.segovia@intel.com>
  */
 
-#ifndef __PF_ARRAY_HPP__
-#define __PF_ARRAY_HPP__
+#ifndef __GBE_ARRAY_HPP__
+#define __GBE_ARRAY_HPP__
 
 #include "sys/platform.hpp"
 #include <vector>
 
-namespace pf
+namespace gbe
 {
   /*! Non resizable array with no checking. We make it non-copiable right now
    *  since we do not want to implement an expensive deep copy
@@ -40,7 +40,7 @@ namespace pf
     INLINE array(const array &other) {
       this->elemNum = other.elemNum;
       if (this->elemNum) {
-        this->elem = PF_NEW_ARRAY(T, this->elemNum);
+        this->elem = GBE_NEW_ARRAY(T, this->elemNum);
         for (size_t i = 0; i < this->elemNum; ++i) this->elem[i] = other.elem[i];
       } else
         this->elem = NULL;
@@ -48,27 +48,27 @@ namespace pf
     /*! Assignment operator */
     INLINE array& operator= (const array &other) {
       if (this->elem != NULL && this->elemNum != other->elemNum) {
-        PF_DELETE_ARRAY(this->elem);
+        GBE_DELETE_ARRAY(this->elem);
         this->elem = NULL;
         this->elemNum = 0;
       }
       this->elemNum = other.elemNum;
       if (this->elemNum) {
         if (this->elem == NULL)
-          this->elem = PF_NEW_ARRAY(T, this->elemNum);
+          this->elem = GBE_NEW_ARRAY(T, this->elemNum);
         for (size_t i = 0; i < this->elemNum; ++i) this->elem[i] = other.elem[i];
       } else
         this->elem = NULL;
       return *this;
     }
     /*! Delete the allocated elements */
-    INLINE ~array(void) { PF_SAFE_DELETE_ARRAY(elem); }
+    INLINE ~array(void) { GBE_SAFE_DELETE_ARRAY(elem); }
     /*! Free the already allocated elements and allocate a new array */
     INLINE void resize(size_t elemNum_) {
       if (elemNum_ != this->elemNum) {
-        PF_SAFE_DELETE_ARRAY(elem);
+        GBE_SAFE_DELETE_ARRAY(elem);
         if (elemNum_)
-          this->elem = PF_NEW_ARRAY(T, elemNum_);
+          this->elem = GBE_NEW_ARRAY(T, elemNum_);
         else
           this->elem = NULL;
         this->elemNum = elemNum_;
@@ -87,12 +87,12 @@ namespace pf
     INLINE T *end(void) { return this->elem + elemNum; }
     /*! Get element at position index (with a bound check) */
     INLINE T &operator[] (size_t index) {
-      PF_ASSERT(elem && index < elemNum);
+      GBE_ASSERT(elem && index < elemNum);
       return elem[index];
     }
     /*! Get element at position index (with bound check) */
     INLINE const T &operator[] (size_t index) const {
-      PF_ASSERT(elem && index < elemNum);
+      GBE_ASSERT(elem && index < elemNum);
       return elem[index];
     }
     /*! Return the number of elements */
@@ -100,9 +100,9 @@ namespace pf
   private:
     T *elem;        //!< Points to the elements
     size_t elemNum; //!< Number of elements in the array
-    PF_CLASS(array);
+    GBE_CLASS(array);
   };
-} /* namespace pf */
+} /* namespace gbe */
 
-#endif /* __PF_ARRAY_HPP__ */
+#endif /* __GBE_ARRAY_HPP__ */
 

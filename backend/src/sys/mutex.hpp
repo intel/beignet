@@ -17,14 +17,14 @@
  * Author: Benjamin Segovia <benjamin.segovia@intel.com>
  */
 
-#ifndef __PF_MUTEX_H__
-#define __PF_MUTEX_H__
+#ifndef __GBE_MUTEX_H__
+#define __GBE_MUTEX_H__
 
 #include "platform.hpp"
 #include "atomic.hpp"
 #include <xmmintrin.h>
 
-namespace pf
+namespace gbe
 {
   class MutexSys {
     friend class ConditionSys;
@@ -37,7 +37,7 @@ namespace pf
     void* mutex;
     MutexSys(const MutexSys&); // don't implement
     MutexSys& operator= (const MutexSys&); // don't implement
-    PF_CLASS(MutexSys);
+    GBE_CLASS(MutexSys);
   };
 
   /*! active mutex */
@@ -45,10 +45,10 @@ namespace pf
   public:
     INLINE MutexActive(void) : $lock(LOCK_IS_FREE) {}
     INLINE void lock(void) {
-      PF_COMPILER_READ_BARRIER;
+      GBE_COMPILER_READ_BARRIER;
       while (cmpxchg($lock, LOCK_IS_TAKEN, LOCK_IS_FREE) != LOCK_IS_FREE)
         _mm_pause();
-      PF_COMPILER_READ_BARRIER;
+      GBE_COMPILER_READ_BARRIER;
     }
     INLINE void unlock(void) { $lock.storeRelease(LOCK_IS_FREE); }
   protected:
@@ -56,7 +56,7 @@ namespace pf
     Atomic $lock;
     MutexActive(const MutexActive&); // don't implement
     MutexActive& operator=(const MutexActive&); // don't implement
-    PF_CLASS(MutexActive);
+    GBE_CLASS(MutexActive);
   };
 
   /*! safe mutex lock and unlock helper */
@@ -68,7 +68,7 @@ namespace pf
     Mutex& mutex;
     Lock(const Lock&); // don't implement
     Lock& operator= (const Lock&); // don't implement
-    PF_CLASS(Lock);
+    GBE_CLASS(Lock);
   };
 }
 

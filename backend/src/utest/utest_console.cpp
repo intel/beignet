@@ -72,22 +72,22 @@ void utest_console(void)
   WinOpen(640, 480);
   ScriptSystem *scriptSystem = LuaScriptSystemCreate();
   CommandSystemStart(*scriptSystem);
-  UTestConsoleDisplay *display = PF_NEW(UTestConsoleDisplay);
+  UTestConsoleDisplay *display = GBE_NEW(UTestConsoleDisplay);
   Console *console = ConsoleNew(*scriptSystem, *display);
   console->addCompletion("while");
   console->addCompletion("whilewhile");
   for (;;) {
-    Ref<InputControl> input = PF_NEW(InputControl);
+    Ref<InputControl> input = GBE_NEW(InputControl);
     input->processEvents();
-    if (input->getKey(PF_KEY_ASCII_ESC))
+    if (input->getKey(GBE_KEY_ASCII_ESC))
       break;
     console->update(*input);
     WinSwapBuffers();
   }
   CommandSystemEnd();
-  PF_DELETE(console);
-  PF_DELETE(scriptSystem);
-  PF_DELETE(display);
+  GBE_DELETE(console);
+  GBE_DELETE(scriptSystem);
+  GBE_DELETE(display);
   WinClose();
 }
 

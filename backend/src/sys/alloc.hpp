@@ -17,14 +17,14 @@
  * Author: Benjamin Segovia <benjamin.segovia@intel.com>
  */
 
-#ifndef __PF_ALLOC_HPP__
-#define __PF_ALLOC_HPP__
+#ifndef __GBE_ALLOC_HPP__
+#define __GBE_ALLOC_HPP__
 
 #include "sys/platform.hpp"
 #include <cstdlib>
 #include <new>
 
-namespace pf
+namespace gbe
 {
   /*! regular allocation */
   void* malloc(size_t size);
@@ -36,7 +36,7 @@ namespace pf
   void  alignedFree(void* ptr);
 
   /*! Monitor memory allocations */
-#if PF_DEBUG_MEMORY
+#if GBE_DEBUG_MEMORY
   void* MemDebuggerInsertAlloc(void*, const char*, const char*, int);
   void  MemDebuggerRemoveAlloc(void *ptr);
   void  MemDebuggerDumpAlloc(void);
@@ -52,7 +52,7 @@ namespace pf
   INLINE void  MemDebuggerEnableMemoryInitialization(bool enabled) {}
   INLINE void  MemDebuggerStart(void) {}
   INLINE void  MemDebuggerEnd(void) {}
-#endif /* PF_DEBUG_MEMORY */
+#endif /* GBE_DEBUG_MEMORY */
 
   /*! Properly handle the allocated type */
   template <typename T>
@@ -60,86 +60,86 @@ namespace pf
     MemDebuggerInsertAlloc(ptr, file, function, line);
     return ptr;
   }
-} /* namespace pf */
+} /* namespace gbe */
 
 /*! Declare a structure with custom allocators */
-#define PF_STRUCT(TYPE)                                      \
+#define GBE_STRUCT(TYPE)                                      \
   void* operator new(size_t size)   {                        \
     if (AlignOf<TYPE>::value > sizeof(uintptr_t))            \
-      return pf::alignedMalloc(size, AlignOf<TYPE>::value);  \
+      return gbe::alignedMalloc(size, AlignOf<TYPE>::value);  \
     else                                                     \
-      return pf::malloc(size);                               \
+      return gbe::malloc(size);                               \
   }                                                          \
   void* operator new[](size_t size)   {                      \
     if (AlignOf<TYPE>::value > sizeof(uintptr_t))            \
-      return pf::alignedMalloc(size, AlignOf<TYPE>::value);  \
+      return gbe::alignedMalloc(size, AlignOf<TYPE>::value);  \
     else                                                     \
-      return pf::malloc(size);                               \
+      return gbe::malloc(size);                               \
   }                                                          \
   void  operator delete(void* ptr) {                         \
     if (AlignOf<TYPE>::value > sizeof(uintptr_t))            \
-      return pf::alignedFree(ptr);                           \
+      return gbe::alignedFree(ptr);                           \
     else                                                     \
-      return pf::free(ptr);                                  \
+      return gbe::free(ptr);                                  \
   }                                                          \
   void  operator delete[](void* ptr) {                       \
     if (AlignOf<TYPE>::value > sizeof(uintptr_t))            \
-      return pf::alignedFree(ptr);                           \
+      return gbe::alignedFree(ptr);                           \
     else                                                     \
-      return pf::free(ptr);                                  \
+      return gbe::free(ptr);                                  \
   }                                                          \
 
 /*! Declare a class with custom allocators */
-#define PF_CLASS(TYPE) \
+#define GBE_CLASS(TYPE) \
 public:                \
-  PF_STRUCT(TYPE)      \
+  GBE_STRUCT(TYPE)      \
 private:
 
 /*! Declare an aligned structure */
-#define PF_ALIGNED_STRUCT(ALIGN)                                              \
-  void* operator new(size_t size)   { return pf::alignedMalloc(size, ALIGN); }\
-  void* operator new[](size_t size) { return pf::alignedMalloc(size, ALIGN); }\
-  void  operator delete(void* ptr)   { pf::alignedFree(ptr); }                \
-  void  operator delete[](void* ptr) { pf::alignedFree(ptr); }
+#define GBE_ALIGNED_STRUCT(ALIGN)                                              \
+  void* operator new(size_t size)   { return gbe::alignedMalloc(size, ALIGN); }\
+  void* operator new[](size_t size) { return gbe::alignedMalloc(size, ALIGN); }\
+  void  operator delete(void* ptr)   { gbe::alignedFree(ptr); }                \
+  void  operator delete[](void* ptr) { gbe::alignedFree(ptr); }
 
 /*! Declare an aligned class */
-#define PF_ALIGNED_CLASS(ALIGN)    \
+#define GBE_ALIGNED_CLASS(ALIGN)    \
 public:                            \
-  PF_ALIGNED_STRUCT(ALIGN)         \
+  GBE_ALIGNED_STRUCT(ALIGN)         \
 private:
 
 /*! Macros to handle allocation position */
-#define PF_NEW(T,...)               \
-  pf::_MemDebuggerInsertAlloc(new T(__VA_ARGS__), __FILE__, __FUNCTION__, __LINE__)
+#define GBE_NEW(T,...)               \
+  gbe::_MemDebuggerInsertAlloc(new T(__VA_ARGS__), __FILE__, __FUNCTION__, __LINE__)
 
-#define PF_NEW_ARRAY(T,N,...)       \
-  pf::_MemDebuggerInsertAlloc(new T[N](__VA_ARGS__), __FILE__, __FUNCTION__, __LINE__)
+#define GBE_NEW_ARRAY(T,N,...)       \
+  gbe::_MemDebuggerInsertAlloc(new T[N](__VA_ARGS__), __FILE__, __FUNCTION__, __LINE__)
 
-#define PF_NEW_P(T,X,...)           \
-  pf::_MemDebuggerInsertAlloc(new (X) T(__VA_ARGS__), __FILE__, __FUNCTION__, __LINE__)
+#define GBE_NEW_P(T,X,...)           \
+  gbe::_MemDebuggerInsertAlloc(new (X) T(__VA_ARGS__), __FILE__, __FUNCTION__, __LINE__)
 
-#define PF_DELETE(X)                \
-  do { pf::MemDebuggerRemoveAlloc(X); delete X; } while (0)
+#define GBE_DELETE(X)                \
+  do { gbe::MemDebuggerRemoveAlloc(X); delete X; } while (0)
 
-#define PF_DELETE_ARRAY(X)          \
-  do { pf::MemDebuggerRemoveAlloc(X); delete[] X; } while (0)
+#define GBE_DELETE_ARRAY(X)          \
+  do { gbe::MemDebuggerRemoveAlloc(X); delete[] X; } while (0)
 
-#define PF_MALLOC(SZ)               \
-  pf::MemDebuggerInsertAlloc(pf::malloc(SZ),__FILE__, __FUNCTION__, __LINE__)
+#define GBE_MALLOC(SZ)               \
+  gbe::MemDebuggerInsertAlloc(gbe::malloc(SZ),__FILE__, __FUNCTION__, __LINE__)
 
-#define PF_REALLOC(PTR, SZ)         \
-  pf::MemDebuggerInsertAlloc(pf::realloc(PTR, SZ),__FILE__, __FUNCTION__, __LINE__)
+#define GBE_REALLOC(PTR, SZ)         \
+  gbe::MemDebuggerInsertAlloc(gbe::realloc(PTR, SZ),__FILE__, __FUNCTION__, __LINE__)
 
-#define PF_FREE(X)                  \
-  do { pf::MemDebuggerRemoveAlloc(X); pf::free(X); } while (0)
+#define GBE_FREE(X)                  \
+  do { gbe::MemDebuggerRemoveAlloc(X); gbe::free(X); } while (0)
 
-#define PF_ALIGNED_FREE(X)          \
-  do { pf::MemDebuggerRemoveAlloc(X); pf::alignedFree(X); } while (0)
+#define GBE_ALIGNED_FREE(X)          \
+  do { gbe::MemDebuggerRemoveAlloc(X); gbe::alignedFree(X); } while (0)
 
-#define PF_ALIGNED_MALLOC(SZ,ALIGN) \
-  pf::MemDebuggerInsertAlloc(pf::alignedMalloc(SZ,ALIGN),__FILE__, __FUNCTION__, __LINE__)
+#define GBE_ALIGNED_MALLOC(SZ,ALIGN) \
+  gbe::MemDebuggerInsertAlloc(gbe::alignedMalloc(SZ,ALIGN),__FILE__, __FUNCTION__, __LINE__)
 
-namespace pf
+namespace gbe
 {
   /*! STL compliant allocator to intercept all memory allocations */
   template<typename T>
@@ -165,15 +165,15 @@ namespace pf
     INLINE const_pointer address(const_reference r) { return &r; }
     INLINE pointer allocate(size_type n, void_allocator_ptr = 0) {
       if (AlignOf<T>::value > sizeof(uintptr_t))
-        return (pointer) PF_ALIGNED_MALLOC(n*sizeof(T), AlignOf<T>::value);
+        return (pointer) GBE_ALIGNED_MALLOC(n*sizeof(T), AlignOf<T>::value);
       else
-        return (pointer) PF_MALLOC(n * sizeof(T));
+        return (pointer) GBE_MALLOC(n * sizeof(T));
     }
     INLINE void deallocate(pointer p, size_type) {
       if (AlignOf<T>::value > sizeof(uintptr_t))
-        PF_ALIGNED_FREE(p);
+        GBE_ALIGNED_FREE(p);
       else
-        PF_FREE(p);
+        GBE_FREE(p);
     }
     INLINE size_type max_size(void) const {
       return std::numeric_limits<size_type>::max() / sizeof(T);
@@ -189,11 +189,11 @@ namespace pf
   class GrowingPool
   {
   public:
-    GrowingPool(void) : current(PF_NEW(GrowingPoolElem, 1)) {}
-    ~GrowingPool(void) { PF_ASSERT(current); PF_DELETE(current); }
+    GrowingPool(void) : current(GBE_NEW(GrowingPoolElem, 1)) {}
+    ~GrowingPool(void) { GBE_ASSERT(current); GBE_DELETE(current); }
     T *allocate(void) {
       if (UNLIKELY(current->allocated == current->maxElemNum)) {
-        GrowingPoolElem *elem = PF_NEW(GrowingPoolElem, 2 * current->maxElemNum);
+        GrowingPoolElem *elem = GBE_NEW(GrowingPoolElem, 2 * current->maxElemNum);
         elem->next = current;
         current = elem;
       }
@@ -206,24 +206,24 @@ namespace pf
     {
       friend class GrowingPool;
       GrowingPoolElem(size_t elemNum) {
-        this->data = PF_NEW_ARRAY(T, elemNum);
+        this->data = GBE_NEW_ARRAY(T, elemNum);
         this->next = NULL;
         this->maxElemNum = elemNum;
         this->allocated = 0;
       }
       ~GrowingPoolElem(void) {
-        PF_ASSERT(this->data);
-        PF_DELETE_ARRAY(this->data);
-        if (this->next) PF_DELETE(this->next);
+        GBE_ASSERT(this->data);
+        GBE_DELETE_ARRAY(this->data);
+        if (this->next) GBE_DELETE(this->next);
       }
       T *data;
       GrowingPoolElem *next;
       size_t allocated, maxElemNum;
     };
     GrowingPoolElem *current;
-    PF_CLASS(GrowingPool);
+    GBE_CLASS(GrowingPool);
   };
-} /* namespace pf */
+} /* namespace gbe */
 
-#endif /* __PF_ALLOC_HPP__ */
+#endif /* __GBE_ALLOC_HPP__ */
 

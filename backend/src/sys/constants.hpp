@@ -17,8 +17,8 @@
  * Author: Benjamin Segovia <benjamin.segovia@intel.com>
  */
 
-#ifndef __PF_CONSTANTS_HPP__
-#define __PF_CONSTANTS_HPP__
+#ifndef __GBE_CONSTANTS_HPP__
+#define __GBE_CONSTANTS_HPP__
 
 #ifndef NULL
 #define NULL 0
@@ -26,7 +26,7 @@
 
 #include <limits>
 
-namespace pf
+namespace gbe
 {
   static struct NullTy {
   } null MAYBE_UNUSED;

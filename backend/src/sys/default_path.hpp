@@ -22,13 +22,13 @@
 
 #include <cstdlib>
 
-namespace pf
+namespace gbe
 {
   /*! Where you may find data files and shaders */
   extern const char *defaultPath[];
   /*! Number of default paths */
   extern const size_t defaultPathNum;
-} /* namespace pf */
+} /* namespace gbe */
 
 #endif /* __DEFAULT_PATH_HPP__ */
 

@@ -25,7 +25,7 @@
 
 #if defined(__GNUC__)
 
-namespace pf
+namespace gbe
 {
   // This is an implementation of POSIX "compatible" condition variables for
   // Win32, as described by Douglas C. Schmidt and Irfan Pyarali:
@@ -47,7 +47,7 @@ namespace pf
 
   ConditionSys::ConditionSys ()
   {
-    cond = (Mingw32Cond *) PF_NEW(Mingw32Cond);
+    cond = (Mingw32Cond *) GBE_NEW(Mingw32Cond);
     ((Mingw32Cond *)cond)->waiters_count = 0;
     ((Mingw32Cond *)cond)->events[MINGW32_COND_SIGNAL]    = CreateEvent(NULL, FALSE, FALSE, NULL);
     ((Mingw32Cond *)cond)->events[MINGW32_COND_BROADCAST] = CreateEvent(NULL, TRUE, FALSE, NULL);
@@ -59,7 +59,7 @@ namespace pf
     CloseHandle(((Mingw32Cond *)cond)->events[MINGW32_COND_SIGNAL]);
     CloseHandle(((Mingw32Cond *)cond)->events[MINGW32_COND_BROADCAST]);
     DeleteCriticalSection(&((Mingw32Cond *)cond)->waiters_count_lock);
-    PF_DELETE((Mingw32Cond *)cond);
+    GBE_DELETE((Mingw32Cond *)cond);
   }
 
   void ConditionSys::wait(MutexSys& mutex)
@@ -112,28 +112,28 @@ namespace pf
     if (have_waiters)
       SetEvent(cv->events[MINGW32_COND_BROADCAST]);
   }
-} /* namespace pf */
+} /* namespace gbe */
 #else
 
-namespace pf
+namespace gbe
 {
   /*! system condition using windows API */
-  ConditionSys::ConditionSys () { cond = PF_NEW(CONDITION_VARIABLE); InitializeConditionVariable((CONDITION_VARIABLE*)cond); }
-  ConditionSys::~ConditionSys() { PF_DELETE((CONDITION_VARIABLE*)cond); }
+  ConditionSys::ConditionSys () { cond = GBE_NEW(CONDITION_VARIABLE); InitializeConditionVariable((CONDITION_VARIABLE*)cond); }
+  ConditionSys::~ConditionSys() { GBE_DELETE((CONDITION_VARIABLE*)cond); }
   void ConditionSys::wait(MutexSys& mutex) { SleepConditionVariableCS((CONDITION_VARIABLE*)cond, (CRITICAL_SECTION*)mutex.mutex, INFINITE); }
   void ConditionSys::broadcast() { WakeAllConditionVariable((CONDITION_VARIABLE*)cond); }
-} /* namespace pf */
+} /* namespace gbe */
 #endif /* __GNUC__ */
 #endif /* __WIN32__ */
 
 #if defined(__UNIX__)
 #include <pthread.h>
-namespace pf
+namespace gbe
 {
-  ConditionSys::ConditionSys () { cond = PF_NEW(pthread_cond_t); pthread_cond_init((pthread_cond_t*)cond,NULL); }
-  ConditionSys::~ConditionSys() { PF_DELETE((pthread_cond_t*)cond); }
+  ConditionSys::ConditionSys () { cond = GBE_NEW(pthread_cond_t); pthread_cond_init((pthread_cond_t*)cond,NULL); }
+  ConditionSys::~ConditionSys() { GBE_DELETE((pthread_cond_t*)cond); }
   void ConditionSys::wait(MutexSys& mutex) { pthread_cond_wait((pthread_cond_t*)cond, (pthread_mutex_t*)mutex.mutex); }
   void ConditionSys::broadcast() { pthread_cond_broadcast((pthread_cond_t*)cond); }
-} /* namespace pf */
+} /* namespace gbe */
 #endif /* __UNIX__ */
 

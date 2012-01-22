@@ -52,7 +52,7 @@ namespace pf
   //static const FileName objName("sponza.obj");
 
   static RTTriangle *ObjComputeTriangle(const Obj &obj) {
-    RTTriangle *tris = PF_NEW_ARRAY(RTTriangle, obj.triNum);
+    RTTriangle *tris = GBE_NEW_ARRAY(RTTriangle, obj.triNum);
     for (size_t i = 0; i < obj.triNum; ++i) {
       const vec3f &v0 = obj.vert[obj.tri[i].v[0]].p; 
       const vec3f &v1 = obj.vert[obj.tri[i].v[1]].p; 
@@ -124,24 +124,24 @@ namespace pf
   static void rayTrace(int w, int h, const uint32 *c) {
     FPSCamera fpsCam;
     const RTCamera cam(fpsCam.org, fpsCam.up, fpsCam.view, fpsCam.fov, fpsCam.ratio);
-    uint32 *rgba = PF_NEW_ARRAY(uint32, w * h);
+    uint32 *rgba = GBE_NEW_ARRAY(uint32, w * h);
     std::memset(rgba, 0, sizeof(uint32) * w * h);
-    PF_COMPILER_READ_WRITE_BARRIER;
+    GBE_COMPILER_READ_WRITE_BARRIER;
     const double t = getSeconds();
-    Task *rayTask = PF_NEW(TaskRayTrace<singleRay>, *intersector,
+    Task *rayTask = GBE_NEW(TaskRayTrace<singleRay>, *intersector,
                            cam, c, rgba, w, h/RayPacket::height);
-    Task *returnToMain = PF_NEW(TaskInterruptMain);
+    Task *returnToMain = GBE_NEW(TaskInterruptMain);
     rayTask->starts(returnToMain);
     rayTask->scheduled();
     returnToMain->scheduled();
     TaskingSystemEnter();
     const double dt = getSeconds() - t;
-    PF_MSG_V(dt * 1000. << " msec - " << CAMW * CAMH / dt << " rays/s");
+    GBE_MSG_V(dt * 1000. << " msec - " << CAMW * CAMH / dt << " rays/s");
     if (singleRay)
       stbi_write_bmp("single.bmp", w, h, 4, rgba);
     else
       stbi_write_bmp("packet.bmp", w, h, 4, rgba);
-    PF_DELETE_ARRAY(rgba);
+    GBE_DELETE_ARRAY(rgba);
   }
 
   static void RTStart(void)
@@ -150,34 +150,34 @@ namespace pf
     size_t path = 0;
     for (path = 0; path < defaultPathNum; ++path)
       if (obj.load(FileName(defaultPath[path]) + objName)) {
-        PF_MSG_V("Obj: " << objName << " loaded from " << defaultPath[path]);
+        GBE_MSG_V("Obj: " << objName << " loaded from " << defaultPath[path]);
         break;
       }
     if (path == defaultPathNum)
-      PF_WARNING_V("Obj: " << objName << " not found");
+      GBE_WARNING_V("Obj: " << objName << " not found");
 
     // Build the BVH
     RTTriangle *tris = ObjComputeTriangle(obj);
-    Ref<BVH2<RTTriangle>> bvh = PF_NEW(BVH2<RTTriangle>);
+    Ref<BVH2<RTTriangle>> bvh = GBE_NEW(BVH2<RTTriangle>);
     buildBVH2(tris, obj.triNum, *bvh);
-    PF_DELETE_ARRAY(tris);
+    GBE_DELETE_ARRAY(tris);
 
     // Now we have an intersector on the triangle soup
-    intersector = PF_NEW(BVH2Traverser<RTTriangle>, bvh);
+    intersector = GBE_NEW(BVH2Traverser<RTTriangle>, bvh);
 
     // Compute some triangle color
-    uint32 *c = PF_NEW_ARRAY(uint32, bvh->primNum);
+    uint32 *c = GBE_NEW_ARRAY(uint32, bvh->primNum);
     for (uint32 i = 0; i < bvh->primNum; ++i) {
       c[i] = rand();
       c[i] |= 0xff000000;
     }
 
     // Ray trace now
-    PF_MSG_V("Packet ray tracing");
+    GBE_MSG_V("Packet ray tracing");
     for (int i = 0; i < 16; ++i) rayTrace<false>(CAMW, CAMH, c);
-    PF_MSG_V("Single ray tracing");
+    GBE_MSG_V("Single ray tracing");
     for (int i = 0; i < 16; ++i) rayTrace<true>(CAMW, CAMH, c);
-    PF_DELETE_ARRAY(c);
+    GBE_DELETE_ARRAY(c);
   }
 
   static void RTEnd(void) { intersector = NULL; }

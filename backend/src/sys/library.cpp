@@ -30,7 +30,7 @@
 #define WIN32_LEAN_AND_MEAN
 #include <windows.h>
 
-namespace pf
+namespace gbe
 {
   /* opens a shared library */
   lib_t openLibrary(const std::string& file)
@@ -62,7 +62,7 @@ namespace pf
 
 #include <dlfcn.h>
 
-namespace pf
+namespace gbe
 {
   /* opens a shared library */
   lib_t openLibrary(const std::string& file)

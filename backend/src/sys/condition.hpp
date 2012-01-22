@@ -17,12 +17,12 @@
  * Author: Benjamin Segovia <benjamin.segovia@intel.com>
  */
 
-#ifndef __PF_CONDITION_HPP__
-#define __PF_CONDITION_HPP__
+#ifndef __GBE_CONDITION_HPP__
+#define __GBE_CONDITION_HPP__
 
 #include "sys/mutex.hpp"
 
-namespace pf
+namespace gbe
 {
   class ConditionSys
   {

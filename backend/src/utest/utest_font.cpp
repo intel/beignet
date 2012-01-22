@@ -34,7 +34,7 @@ void utest_font(void)
     const FileName path(std::string(defaultPath[i]) + fontName);
     if (font.load(path)) break;
   }
-  PF_ASSERT(i < defaultPathNum);
+  GBE_ASSERT(i < defaultPathNum);
 }
 
 UTEST_REGISTER(utest_font);

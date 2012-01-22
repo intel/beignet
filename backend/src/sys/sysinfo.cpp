@@ -23,7 +23,7 @@
 /// All Platforms
 ////////////////////////////////////////////////////////////////////////////////
 
-namespace pf
+namespace gbe
 {
   /* return platform name */
   std::string getPlatformName() {
@@ -66,7 +66,7 @@ namespace pf
 #define WIN32_LEAN_AND_MEAN
 #include <windows.h>
 
-namespace pf
+namespace gbe
 {
   /* get the full path to the running executable */
   std::string getExecutableFileName() {
@@ -93,7 +93,7 @@ namespace pf
 #include <stdio.h>
 #include <unistd.h>
 
-namespace pf
+namespace gbe
 {
   /* get the full path to the running executable */
   std::string getExecutableFileName() {
@@ -115,7 +115,7 @@ namespace pf
 
 #include <mach-o/dyld.h>
 
-namespace pf
+namespace gbe
 {
   /* get the full path to the running executable */
   std::string getExecutableFileName()
@@ -137,7 +137,7 @@ namespace pf
 
 #include <unistd.h>
 
-namespace pf
+namespace gbe
 {
   /* return the number of logical threads of the system */
   int getNumberOfLogicalThreads() {

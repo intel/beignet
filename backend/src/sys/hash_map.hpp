@@ -17,8 +17,8 @@
  * Author: Benjamin Segovia <benjamin.segovia@intel.com>
  */
 
-#ifndef __PF_HASH_MAP_HPP__
-#define __PF_HASH_MAP_HPP__
+#ifndef __GBE_HASH_MAP_HPP__
+#define __GBE_HASH_MAP_HPP__
 
 #include "sys/platform.hpp"
 
@@ -28,7 +28,7 @@
 #include <tr1/unordered_map>
 #endif /* __MSVC__ */
 
-namespace pf
+namespace gbe
 {
   /*! Add specific allocator to the hash map */
   template <class Key,
@@ -65,9 +65,9 @@ namespace pf
       parent_type(first,last,n,hf,eql,a) {}
     /*! Copy constructor */
     INLINE hash_map(const hash_map &other) : parent_type(other) {}
-    PF_CLASS(hash_map);
+    GBE_CLASS(hash_map);
   };
-} /* namespace pf */
+} /* namespace gbe */
 
-#endif /* __PF_HASH_MAP_HPP__ */
+#endif /* __GBE_HASH_MAP_HPP__ */
 

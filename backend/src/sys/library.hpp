@@ -17,14 +17,14 @@
  * Author: Benjamin Segovia <benjamin.segovia@intel.com>
  */
 
-#ifndef __PF_LIBRARY_HPP__
-#define __PF_LIBRARY_HPP__
+#ifndef __GBE_LIBRARY_HPP__
+#define __GBE_LIBRARY_HPP__
 
 #include <string>
 
 #include "sys/platform.hpp"
 
-namespace pf
+namespace gbe
 {
   /*! type for shared library */
   typedef struct opaque_lib_t* lib_t;
@@ -34,7 +34,7 @@ namespace pf
   void* getSymbol(lib_t lib, const std::string& sym);
   /*! unloads a shared library */
   void closeLibrary(lib_t lib);
-} /* namespace pf */
+} /* namespace gbe */
 
-#endif /* __PF_LIBRARY_HPP__ */
+#endif /* __GBE_LIBRARY_HPP__ */
 

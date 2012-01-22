@@ -31,7 +31,7 @@ VARS(player0, "ben", "player name");
 #define _RUN_SCRIPT(STR, RUN_MODE) do {\
   ScriptStatus status;\
   scriptSystem->RUN_MODE(STR, status);\
-  if (!status.success) PF_ERROR(status.msg);\
+  if (!status.success) GBE_ERROR(status.msg);\
 } while (0)
 #define RUN(STR) _RUN_SCRIPT(STR,run)
 #define RUN_NON_PROTECTED(STR) _RUN_SCRIPT(STR,runNonProtected)
@@ -48,10 +48,10 @@ void utest_lua(void)
   RUN_NON_PROTECTED("print(pf.cv.coucou)");
   RUN("cv.player0 = \"hop\"");
   RUN_NON_PROTECTED("print(pf.cv.player0)");
-  if (coucou() == 1) PF_MSG("coucou is equal to 1");
+  if (coucou() == 1) GBE_MSG("coucou is equal to 1");
 
   CommandSystemEnd();
-  PF_DELETE(scriptSystem);
+  GBE_DELETE(scriptSystem);
 }
 
 UTEST_REGISTER(utest_lua)

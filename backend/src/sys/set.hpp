@@ -17,13 +17,13 @@
  * Author: Benjamin Segovia <benjamin.segovia@intel.com>
  */
 
-#ifndef __PF_SET_HPP__
-#define __PF_SET_HPP__
+#ifndef __GBE_SET_HPP__
+#define __GBE_SET_HPP__
 
 #include "sys/platform.hpp"
 #include <set>
 
-namespace pf
+namespace gbe
 {
   /*! Add our custom allocator to std::set */
   template<class Key, class Pred = std::less<Key>>
@@ -50,10 +50,10 @@ namespace pf
       parent_type(first, last, comp, a) {}
     /*! Copy constructor */
     INLINE set(const set& x) : parent_type(x) {}
-    PF_CLASS(set);
+    GBE_CLASS(set);
   };
 
-} /* namespace pf */
+} /* namespace gbe */
 
-#endif /* __PF_SET_HPP__ */
+#endif /* __GBE_SET_HPP__ */
 

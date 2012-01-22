@@ -51,8 +51,8 @@ public:
 };
 
 START_UTEST(TestDummy)
-  Task *done = PF_NEW(TaskDone);
-  Task *nothing = PF_NEW(TaskDummy);
+  Task *done = GBE_NEW(TaskDone);
+  Task *nothing = GBE_NEW(TaskDummy);
   nothing->starts(done);
   done->scheduled();
   nothing->scheduled();
@@ -72,11 +72,11 @@ public:
 
 START_UTEST(TestTaskSet)
   const size_t elemNum = 1 << 20;
-  uint32 *array = PF_NEW_ARRAY(uint32, elemNum);
+  uint32 *array = GBE_NEW_ARRAY(uint32, elemNum);
   for (size_t i = 0; i < elemNum; ++i) array[i] = 0;
   double t = getSeconds();
-  Task *done = PF_NEW(TaskDone);
-  Task *taskSet = PF_NEW(TaskSetSimple, elemNum, array);
+  Task *done = GBE_NEW(TaskDone);
+  Task *taskSet = GBE_NEW(TaskSetSimple, elemNum, array);
   taskSet->starts(done);
   done->scheduled();
   taskSet->scheduled();
@@ -85,7 +85,7 @@ START_UTEST(TestTaskSet)
   std::cout << t * 1000. << " ms" << std::endl;
   for (size_t i = 0; i < elemNum; ++i)
     FATAL_IF(array[i] == 0, "TestTaskSet failed");
-  PF_DELETE_ARRAY(array);
+  GBE_DELETE_ARRAY(array);
 END_UTEST(TestTaskSet)
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -112,8 +112,8 @@ Task* TaskNode::run(void) {
   if (this->lvl == maxLevel)
     this->value++;
   else {
-    Task *left  = PF_NEW(TaskNode, this->value, this->lvl+1, this->root);
-    Task *right = PF_NEW(TaskNode, this->value, this->lvl+1, this->root);
+    Task *left  = GBE_NEW(TaskNode, this->value, this->lvl+1, this->root);
+    Task *right = GBE_NEW(TaskNode, this->value, this->lvl+1, this->root);
     left->ends(this->root);
     right->ends(this->root);
     left->scheduled();
@@ -145,8 +145,8 @@ Task* TaskNodeOpt::run(void) {
     this->value++;
     return NULL;
   } else {
-    Task *left  = PF_NEW(TaskNode, this->value, this->lvl+1, this->root);
-    Task *right = PF_NEW(TaskNode, this->value, this->lvl+1, this->root);
+    Task *left  = GBE_NEW(TaskNode, this->value, this->lvl+1, this->root);
+    Task *right = GBE_NEW(TaskNode, this->value, this->lvl+1, this->root);
     left->ends(this->root);
     right->ends(this->root);
     left->scheduled();
@@ -173,8 +173,8 @@ Task *TaskCascadeNode::run(void) {
   if (this->lvl == maxLevel)
     this->value++;
   else {
-    Task *left  = PF_NEW(TaskCascadeNode, this->value, this->lvl+1);
-    Task *right = PF_NEW(TaskCascadeNode, this->value, this->lvl+1);
+    Task *left  = GBE_NEW(TaskCascadeNode, this->value, this->lvl+1);
+    Task *right = GBE_NEW(TaskCascadeNode, this->value, this->lvl+1);
     left->ends(this);
     right->ends(this);
     left->scheduled();
@@ -200,8 +200,8 @@ Task *TaskCascadeNodeOpt::run(void) {
     this->value++;
     return NULL;
   } else {
-    Task *left  = PF_NEW(TaskCascadeNode, this->value, this->lvl+1);
-    Task *right = PF_NEW(TaskCascadeNode, this->value, this->lvl+1);
+    Task *left  = GBE_NEW(TaskCascadeNode, this->value, this->lvl+1);
+    Task *right = GBE_NEW(TaskCascadeNode, this->value, this->lvl+1);
     left->ends(this);
     right->ends(this);
     left->scheduled();
@@ -215,8 +215,8 @@ START_UTEST(TestTree)
   Atomic value(0u);
   std::cout << "nodeNum = " << (2 << maxLevel) - 1 << std::endl;
   double t = getSeconds();
-  Task *done = PF_NEW(TaskDone);
-  Task *root = PF_NEW(NodeType, value, 0);
+  Task *done = GBE_NEW(TaskDone);
+  Task *root = GBE_NEW(NodeType, value, 0);
   root->starts(done);
   done->scheduled();
   root->scheduled();
@@ -241,14 +241,14 @@ void TaskAllocate::run(size_t elemID) {
   Task *tasks[allocNum];
   for (int j = 0; j < iterNum; ++j) {
     const int taskNum = rand() % allocNum;
-    for (int i = 0; i < taskNum; ++i) tasks[i] = PF_NEW(TaskDummy);
-    for (int i = 0; i < taskNum; ++i) PF_DELETE(tasks[i]);
+    for (int i = 0; i < taskNum; ++i) tasks[i] = GBE_NEW(TaskDummy);
+    for (int i = 0; i < taskNum; ++i) GBE_DELETE(tasks[i]);
   }
 }
 
 START_UTEST(TestAllocator)
-  Task *done = PF_NEW(TaskDone);
-  Task *allocate = PF_NEW(TaskAllocate, 1 << 10);
+  Task *done = GBE_NEW(TaskDone);
+  Task *allocate = GBE_NEW(TaskAllocate, 1 << 10);
   double t = getSeconds();
   allocate->starts(done);
   done->scheduled();
@@ -269,7 +269,7 @@ public:
   virtual Task* run(void) {
     if (lvl == 0)
       for (size_t i = 0; i < taskToSpawn; ++i) {
-        Task *task = PF_NEW(TaskFull, "TaskFullLvl1", counter, 1);
+        Task *task = GBE_NEW(TaskFull, "TaskFullLvl1", counter, 1);
         task->ends(this);
         task->scheduled();
       }
@@ -284,9 +284,9 @@ public:
 START_UTEST(TestFullQueue)
   Atomic counter(0u);
   double t = getSeconds();
-  Task *done = PF_NEW(TaskDone);
+  Task *done = GBE_NEW(TaskDone);
   for (size_t i = 0; i < 64; ++i) {
-    Task *task = PF_NEW(TaskFull, "TaskFull", counter);
+    Task *task = GBE_NEW(TaskFull, "TaskFull", counter);
     task->starts(done);
     task->scheduled();
   }
@@ -311,7 +311,7 @@ public:
     else {
       const uint32 threadNum = TaskingSystemGetThreadNum();
       for (uint32 i = 0; i < taskToSpawn; ++i) {
-        Task *task = PF_NEW(TaskAffinity, done.ptr, counter, 1);
+        Task *task = GBE_NEW(TaskAffinity, done.ptr, counter, 1);
         task->setAffinity(i % threadNum);
         task->ends(this);
         task->scheduled();
@@ -329,9 +329,9 @@ START_UTEST(TestAffinity)
   for (int i = 0; i < 8; ++i) {
     Atomic counter(0u);
     double t = getSeconds();
-    Ref<Task> done = PF_NEW(TaskDone);
+    Ref<Task> done = GBE_NEW(TaskDone);
     for (size_t i = 0; i < batchNum; ++i) {
-      Task *task = PF_NEW(TaskAffinity, done.ptr, counter);
+      Task *task = GBE_NEW(TaskAffinity, done.ptr, counter);
       task->starts(done.ptr);
       task->scheduled();
     }
@@ -366,9 +366,9 @@ public:
 
 Task *TaskFiboSpawn::run(void) {
   if (rank > 1) {
-    TaskFiboSpawn *left = PF_NEW(TaskFiboSpawn, rank-1, &this->sumLeft);
-    TaskFiboSpawn *right = PF_NEW(TaskFiboSpawn, rank-2, &this->sumRight);
-    FiboSumTask *sum = PF_NEW(FiboSumTask, this);
+    TaskFiboSpawn *left = GBE_NEW(TaskFiboSpawn, rank-1, &this->sumLeft);
+    TaskFiboSpawn *right = GBE_NEW(TaskFiboSpawn, rank-2, &this->sumRight);
+    FiboSumTask *sum = GBE_NEW(FiboSumTask, this);
     left->starts(sum);
     right->starts(sum);
     sum->ends(this);
@@ -409,8 +409,8 @@ START_UTEST(TestFibo)
   uint64 sum;
   double t = getSeconds();
   fiboNum = 0u;
-  Ref<TaskFiboSpawn> fibo = PF_NEW(TaskFiboSpawn, rank, &sum);
-  Task *done = PF_NEW(TaskDone);
+  Ref<TaskFiboSpawn> fibo = GBE_NEW(TaskFiboSpawn, rank, &sum);
+  Task *done = GBE_NEW(TaskDone);
   fibo->starts(done);
   fibo->scheduled();
   done->scheduled();
@@ -452,15 +452,15 @@ START_UTEST(TestMultiDependency)
   static const uint32 triggeredTaskToSpawn = 512;
   static const uint32 valueToSetNum = multiTaskToSpawn;
 
-  int32 *toSet = PF_NEW_ARRAY(int32, valueToSetNum);
+  int32 *toSet = GBE_NEW_ARRAY(int32, valueToSetNum);
   Atomic32 dst(0);
-  Task *doneTask = PF_NEW(TaskDone);
+  Task *doneTask = GBE_NEW(TaskDone);
   for (uint32 i = 0; i < valueToSetNum; ++i) toSet[i] = 0;
   for (uint32 i = 0; i < multiTaskToSpawn; ++i) {
-    Ref<TaskMultiTrigger> task = PF_NEW(TaskMultiTrigger, toSet + i);
+    Ref<TaskMultiTrigger> task = GBE_NEW(TaskMultiTrigger, toSet + i);
     for (uint32 j = 0; j < triggeredTaskToSpawn; ++j) {
-      Ref<Task> triggered = PF_NEW(TaskTriggered, toSet + i, dst);
-      Ref<Task> dummy = PF_NEW(TaskDummy);
+      Ref<Task> triggered = GBE_NEW(TaskTriggered, toSet + i, dst);
+      Ref<Task> dummy = GBE_NEW(TaskDummy);
       task->multiStarts(dummy);
       dummy->starts(triggered);
       triggered->starts(doneTask);
@@ -471,7 +471,7 @@ START_UTEST(TestMultiDependency)
   }
   doneTask->scheduled();
   TaskingSystemEnter();
-  PF_DELETE_ARRAY(toSet);
+  GBE_DELETE_ARRAY(toSet);
   const uint32 result = dst;
   std::cout << "result: " << result << std::endl;
   FATAL_IF(result != multiTaskToSpawn * triggeredTaskToSpawn,
@@ -485,14 +485,14 @@ START_UTEST(TestMultiDependencyTwoStage)
   static const uint32 triggeredTaskToSpawn = 512;
   static const uint32 valueToSetNum = multiTaskToSpawn;
 
-  int32 *toSet = PF_NEW_ARRAY(int32, valueToSetNum);
+  int32 *toSet = GBE_NEW_ARRAY(int32, valueToSetNum);
   Atomic32 dst(0);
-  Task *doneTask = PF_NEW(TaskDone);
+  Task *doneTask = GBE_NEW(TaskDone);
   for (uint32 i = 0; i < valueToSetNum; ++i) toSet[i] = 0;
   for (uint32 i = 0; i < multiTaskToSpawn; ++i) {
-    Ref<TaskMultiTrigger> task = PF_NEW(TaskMultiTrigger, toSet + i);
+    Ref<TaskMultiTrigger> task = GBE_NEW(TaskMultiTrigger, toSet + i);
     for (uint32 j = 0; j < triggeredTaskToSpawn; ++j) {
-      Ref<Task> triggered = PF_NEW(TaskTriggered, toSet + i, dst);
+      Ref<Task> triggered = GBE_NEW(TaskTriggered, toSet + i, dst);
       task->multiStarts(triggered);
       triggered->starts(doneTask);
       triggered->scheduled();
@@ -501,7 +501,7 @@ START_UTEST(TestMultiDependencyTwoStage)
   }
   doneTask->scheduled();
   TaskingSystemEnter();
-  PF_DELETE_ARRAY(toSet);
+  GBE_DELETE_ARRAY(toSet);
   const uint32 result = dst;
   std::cout << "result: " << result << std::endl;
   FATAL_IF(result != multiTaskToSpawn * triggeredTaskToSpawn,
@@ -517,15 +517,15 @@ START_UTEST(TestMultiDependencyRandomStart)
   static const uint32 repeatNum = 8;
   Random rand;
   for (uint32 i = 0; i < repeatNum; ++i) {
-    int32 *toSet = PF_NEW_ARRAY(int32, valueToSetNum);
+    int32 *toSet = GBE_NEW_ARRAY(int32, valueToSetNum);
     Atomic32 dst(0);
-    Ref<Task> doneTask = PF_NEW(TaskDone);
+    Ref<Task> doneTask = GBE_NEW(TaskDone);
     for (uint32 i = 0; i < valueToSetNum; ++i) toSet[i] = 0;
     for (uint32 i = 0; i < multiTaskToSpawn; ++i) {
-      Ref<TaskMultiTrigger> task = PF_NEW(TaskMultiTrigger, toSet + i);
+      Ref<TaskMultiTrigger> task = GBE_NEW(TaskMultiTrigger, toSet + i);
       bool isScheduled = false;
       for (uint32 j = 0; j < triggeredTaskToSpawn; ++j) {
-        Ref<Task> triggered = PF_NEW(TaskTriggered, toSet + i, dst);
+        Ref<Task> triggered = GBE_NEW(TaskTriggered, toSet + i, dst);
         task->multiStarts(triggered);
         triggered->starts(doneTask);
         triggered->scheduled();
@@ -538,7 +538,7 @@ START_UTEST(TestMultiDependencyRandomStart)
     }
     doneTask->scheduled();
     TaskingSystemEnter();
-    PF_DELETE_ARRAY(toSet);
+    GBE_DELETE_ARRAY(toSet);
     const uint32 result = dst;
     std::cout << "result: " << result << std::endl;
     FATAL_IF(result != multiTaskToSpawn * triggeredTaskToSpawn,
@@ -567,9 +567,9 @@ START_UTEST(TestLockUnlock)
 {
   static const uint32 taskNum = 1024;
   int32 shared = 0;
-  Ref<Task> doneTask = PF_NEW(TaskDone);
+  Ref<Task> doneTask = GBE_NEW(TaskDone);
   for (uint32 i = 0; i < taskNum; ++i) {
-    Task *updateTask = PF_NEW(TaskLockUnlock, &shared);
+    Task *updateTask = GBE_NEW(TaskLockUnlock, &shared);
     updateTask->starts(doneTask);
     updateTask->scheduled();
   }
@@ -582,7 +582,7 @@ END_UTEST(TestLockUnlock)
 ///////////////////////////////////////////////////////////////////////////////
 // Test tasking profiler
 ///////////////////////////////////////////////////////////////////////////////
-#if PF_TASK_PROFILER
+#if GBE_TASK_PROFILER
 class UTestProfiler : public TaskProfiler
 {
 public:
@@ -608,7 +608,7 @@ public:
 
 START_UTEST(TestProfiler)
 {
-  UTestProfiler *profiler = PF_NEW(UTestProfiler);
+  UTestProfiler *profiler = GBE_NEW(UTestProfiler);
   TaskingSystemSetProfiler(profiler);
   TestFibo();
   TestTaskSet();
@@ -625,10 +625,10 @@ START_UTEST(TestProfiler)
   OUTPUT_FIELD(endNum);    
 #undef OUTPUT_FIELD
   TaskingSystemSetProfiler(NULL);
-  PF_DELETE(profiler);
+  GBE_DELETE(profiler);
 }
 END_UTEST(TestProfiler)
-#endif /* PF_TASK_PROFILER */
+#endif /* GBE_TASK_PROFILER */
 
 /*! Run all tasking tests */
 void utest_tasking(void)

@@ -17,13 +17,13 @@
  * Author: Benjamin Segovia <benjamin.segovia@intel.com>
  */
 
-#ifndef __PF_REF_HPP__
-#define __PF_REF_HPP__
+#ifndef __GBE_REF_HPP__
+#define __GBE_REF_HPP__
 
 #include "sys/atomic.hpp"
 #include "sys/alloc.hpp"
 
-namespace pf
+namespace gbe
 {
   class RefCount
   {
@@ -52,11 +52,11 @@ namespace pf
     INLINE Ref(NullTy) : ptr(NULL) {}
     INLINE Ref(const Ref& input) : ptr(input.ptr) { if ( ptr ) ptr->refInc(); }
     INLINE Ref(Type* const input) : ptr(input) { if (ptr) ptr->refInc(); }
-    INLINE ~Ref(void) { if (ptr && ptr->refDec()) PF_DELETE(ptr); }
+    INLINE ~Ref(void) { if (ptr && ptr->refDec()) GBE_DELETE(ptr); }
 
     INLINE Ref& operator= (const Ref &input) {
       if (input.ptr) input.ptr->refInc();
-      if (ptr && ptr->refDec()) PF_DELETE(ptr);
+      if (ptr && ptr->refDec()) GBE_DELETE(ptr);
       *(Type**)&ptr = input.ptr;
       return *this;
     }
@@ -83,7 +83,7 @@ namespace pf
     INLINE       Ref<TypeOut> cast()       { return Ref<TypeOut>(static_cast<TypeOut*>(ptr)); }
     template<typename TypeOut>
     INLINE const Ref<TypeOut> cast() const { return Ref<TypeOut>(static_cast<TypeOut*>(ptr)); }
-    PF_CLASS(Ref);
+    GBE_CLASS(Ref);
   };
 
   template<typename Type> INLINE bool operator< ( const Ref<Type>& a, const Ref<Type>& b ) { return a.ptr <  b.ptr ; }
@@ -95,5 +95,5 @@ namespace pf
   template<typename Type> INLINE bool operator!= ( const Ref<Type>& a, const Ref<Type>& b ) { return a.ptr != b.ptr ; }
 }
 
-#endif /* __PF_REF_HPP__ */
+#endif /* __GBE_REF_HPP__ */
 

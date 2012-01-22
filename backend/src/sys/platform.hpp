@@ -17,8 +17,8 @@
  * Author: Benjamin Segovia <benjamin.segovia@intel.com>
  */
 
-#ifndef __PF_PLATFORM_HPP__
-#define __PF_PLATFORM_HPP__
+#ifndef __GBE_PLATFORM_HPP__
+#define __GBE_PLATFORM_HPP__
 #include <cstddef>
 #include <cstdlib>
 #include <cstdio>
@@ -202,11 +202,11 @@
 
 /*! Run-time assertion */
 #ifndef NDEBUG
-#define PF_ASSERT(EXPR) do {            \
+#define GBE_ASSERT(EXPR) do {            \
   if (UNLIKELY(!(EXPR))) assert(EXPR);  \
 } while (0)
 #else
-#define PF_ASSERT(EXPR) do { } while (0)
+#define GBE_ASSERT(EXPR) do { } while (0)
 #endif
 
 /*! Compile-time assertion */
@@ -221,8 +221,8 @@ do {                                                 \
 } while (0)
 
 /* Safe deletion macros */
-#define PF_SAFE_DELETE_ARRAY(x) do { if (x != NULL) PF_DELETE_ARRAY(x); } while (0)
-#define PF_SAFE_DELETE(x) do { if (x != NULL) PF_DELETE(x); } while (0)
+#define GBE_SAFE_DELETE_ARRAY(x) do { if (x != NULL) GBE_DELETE_ARRAY(x); } while (0)
+#define GBE_SAFE_DELETE(x) do { if (x != NULL) GBE_DELETE(x); } while (0)
 
 /* Number of elements in an array */
 #define ARRAY_ELEM_NUM(x) (sizeof(x) / sizeof(x[0]))
@@ -246,15 +246,15 @@ struct AlignOf
 ////////////////////////////////////////////////////////////////////////////////
 #if defined __WIN32__
   #if defined __GNUC__
-    #define PF_EXPORT_SYMBOL __attribute__ ((dllexport))
-    #define PF_IMPORT_SYMBOL __attribute__ ((dllimport))
+    #define GBE_EXPORT_SYMBOL __attribute__ ((dllexport))
+    #define GBE_IMPORT_SYMBOL __attribute__ ((dllimport))
   #else
-    #define PF_IMPORT_SYMBOL __declspec(dllimport)
-    #define PF_EXPORT_SYMBOL __declspec(dllexport)
+    #define GBE_IMPORT_SYMBOL __declspec(dllimport)
+    #define GBE_EXPORT_SYMBOL __declspec(dllexport)
   #endif /* __GNUC__ */
 #else
-  #define PF_EXPORT_SYMBOL __attribute__ ((visibility ("default")))
-  #define PF_IMPORT_SYMBOL
+  #define GBE_EXPORT_SYMBOL __attribute__ ((visibility ("default")))
+  #define GBE_IMPORT_SYMBOL
 #endif /* __WIN32__ */
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -320,7 +320,7 @@ private:
 #include "sys/constants.hpp"
 #include "sys/alloc.hpp"
 
-namespace pf
+namespace gbe
 {
   /*! selects */
   INLINE bool  select(bool s, bool  t , bool f) { return s ? t : f; }
@@ -367,7 +367,7 @@ namespace pf
   /** returns performance counter in seconds */
   double getSeconds();
 
-} /* namespace pf */
+} /* namespace gbe */
 
-#endif /* __PF_PLATFORM_HPP__ */
+#endif /* __GBE_PLATFORM_HPP__ */
 

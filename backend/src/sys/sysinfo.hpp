@@ -17,14 +17,14 @@
  * Author: Benjamin Segovia <benjamin.segovia@intel.com>
  */
 
-#ifndef __PF_SYSINFO_H__
-#define __PF_SYSINFO_H__
+#ifndef __GBE_SYSINFO_HPP__
+#define __GBE_SYSINFO_HPP__
 
 #include "sys/platform.hpp"
 
 #include <string>
 
-namespace pf
+namespace gbe
 {
   /*! get the full path to the running executable */
   std::string getExecutableFileName();

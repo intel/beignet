@@ -17,8 +17,8 @@
  * Author: Benjamin Segovia <benjamin.segovia@intel.com>
  */
 
-#ifndef __PF_STRING_H__
-#define __PF_STRING_H__
+#ifndef __GBE_STRING_HPP__
+#define __GBE_STRING_HPP__
 
 #include "sys/platform.hpp"
 #include "sys/filename.hpp"
@@ -32,12 +32,12 @@ namespace std
 {
   string strlwr(const string& s);
   string strupr(const string& s);
-
   template<typename T> INLINE string stringOf(const T& v) {
     stringstream s; s << v; return s.str();
   }
-}
-namespace pf
+} /* namespace std */
+
+namespace gbe
 {
   /*! Compare two strings */
   bool strequal(const char *s1, const char *s2);
@@ -49,5 +49,7 @@ namespace pf
   std::string loadFile(const FileName &path);
   /*! Load a file from a stream and copies it into a string */
   std::string loadFile(std::ifstream &stream);
-}
-#endif
+} /* namespace gbe */
+
+#endif /* __GBE_STRING_HPP__ */
+
