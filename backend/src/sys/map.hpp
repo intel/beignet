@@ -23,7 +23,7 @@
 #include "sys/platform.hpp"
 #include <map>
 
-namespace pf
+namespace gbe
 {
   /*! Use custom allocator instead of std one */
   template<class Key, class T, class Pred = std::less<Key>>
@@ -57,7 +57,7 @@ namespace pf
     INLINE map(const map& x) : parent_type(x) {}
     GBE_CLASS(map);
   };
-} /* namespace pf */
+} /* namespace gbe */
 
 #endif /* __GBE_MAP_HPP__ */
 

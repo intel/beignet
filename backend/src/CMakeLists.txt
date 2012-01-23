@@ -24,7 +24,9 @@ set (GBE_SRC
   sys/logging.cpp
   sys/logging.hpp
   sys/default_path.cpp
-  sys/default_path.hpp)
+  sys/default_path.hpp
+  ir/ir_register.cpp
+  ir/ir_register.hpp)
 
 set (COMPILE_UTEST false CACHE bool "Compile or not the unit tests")
 if (COMPILE_UTEST)

@@ -21,6 +21,7 @@
 #define __GBE_ALLOC_HPP__
 
 #include "sys/platform.hpp"
+#include "math/math.hpp"
 #include <cstdlib>
 #include <new>
 
@@ -184,14 +185,20 @@ namespace gbe
     INLINE bool operator!=(Allocator const& a) { return !operator==(a); }
   };
 
-  /*! A growing pool never deallocates */
+  /*! A growing pool never gives memory to the system but chain free elements
+   *  together such as deallocation can be quickly done
+   */
   template <typename T>
   class GrowingPool
   {
   public:
-    GrowingPool(void) : current(GBE_NEW(GrowingPoolElem, 1)) {}
+    GrowingPool(void) : current(GBE_NEW(GrowingPoolElem, 1)), freeList(NULL) {}
     ~GrowingPool(void) { GBE_ASSERT(current); GBE_DELETE(current); }
     T *allocate(void) {
+      if (this->freeList != NULL) {
+        T *data = freeList;
+        this->freeList = *(void**) free;
+      }
       if (UNLIKELY(current->allocated == current->maxElemNum)) {
         GrowingPoolElem *elem = GBE_NEW(GrowingPoolElem, 2 * current->maxElemNum);
         elem->next = current;
@@ -200,13 +207,19 @@ namespace gbe
       T *data = current->data + current->allocated++;
       return data;
     }
+    void deallocate(T *t) {
+      if (t == NULL) return;
+      *(void**) t = this->freeList;
+      this->freeList = t;
+    }
   private:
     /*! Chunk of elements to allocate */
     class GrowingPoolElem
     {
       friend class GrowingPool;
       GrowingPoolElem(size_t elemNum) {
-        this->data = GBE_NEW_ARRAY(T, elemNum);
+        const size_t sz = min(sizeof(T), 2 * sizeof(void*));
+        this->data = (T*) GBE_ALIGNED_MALLOC(elemNum * sz, AlignOf<T>::value);
         this->next = NULL;
         this->maxElemNum = elemNum;
         this->allocated = 0;
@@ -220,7 +233,8 @@ namespace gbe
       GrowingPoolElem *next;
       size_t allocated, maxElemNum;
     };
-    GrowingPoolElem *current;
+    GrowingPoolElem *current; //!< To get new element from
+    void *freeList;           //!< Elements that have been deallocated
     GBE_CLASS(GrowingPool);
   };
 } /* namespace gbe */
