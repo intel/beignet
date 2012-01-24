@@ -234,7 +234,7 @@ typedef struct gen6_vfe_state_inline
 
   struct {
     uint32_t curbe_size:16; /* in GRFs */
-    uint32_t urbe_size:16;  /* in GRFs */
+    uint32_t urb_size:16;  /* in GRFs */
   } vfe3;
 
   struct {

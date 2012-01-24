@@ -177,10 +177,19 @@ gpgpu_load_vfe_state(intel_gpgpu_t *state)
   vfe->vfe1.reset_gateway_timer = 1;
   vfe->vfe1.max_threads = state->max_threads - 1;
   vfe->vfe1.urb_entries = 64;
-  vfe->vfe3.curbe_size = 63;
-  vfe->vfe3.urbe_size = 13;
-  vfe->vfe4.scoreboard_mask =
-    (state->drv->gen_ver == 7 || state->drv->gen_ver == 75) ? 0 : 0x80000000;
+  if (state->drv->gen_ver >= 7) {
+    vfe->vfe3.curbe_size = 480;
+    vfe->vfe4.scoreboard_mask = 0;
+  } else {
+    vfe->vfe3.curbe_size = 63;
+    vfe->vfe3.urb_size = 13;
+    vfe->vfe4.scoreboard_mask = 0x80000000;
+  }
+
+  //M
+  //p
+  //vfe->vfe3.urb_size = 13;
+  //vfe->vfe4.scoreboard_mask = (state->drv->gen_ver == 7 || state->drv->gen_ver == 75) ? 0 : 0x80000000;
   intel_batchbuffer_alloc_space(state->batch, sizeof(gen6_vfe_state_inline_t));
   ADVANCE_BATCH(state->batch);
 }
@@ -191,9 +200,14 @@ gpgpu_load_constant_buffer(intel_gpgpu_t *state)
   BEGIN_BATCH(state->batch, 4);
   OUT_BATCH(state->batch, CMD(2,0,1) | (4 - 2));  /* length-2 */
   OUT_BATCH(state->batch, 0);                     /* mbz */
+// XXX
+#if 1
   OUT_BATCH(state->batch,
             state->urb.size_cs_entry*
             state->urb.num_cs_entries*32);
+#else
+  OUT_BATCH(state->batch, 5120);
+#endif
   OUT_RELOC(state->batch, state->curbe_b.bo, I915_GEM_DOMAIN_INSTRUCTION, 0, 0);
   ADVANCE_BATCH(state->batch);
 }
@@ -204,7 +218,7 @@ gpgpu_load_idrt(intel_gpgpu_t *state)
   BEGIN_BATCH(state->batch, 4);
   OUT_BATCH(state->batch, CMD(2,0,2) | (4 - 2)); /* length-2 */
   OUT_BATCH(state->batch, 0);                    /* mbz */
-  OUT_BATCH(state->batch, state->idrt_b.num*32);
+  OUT_BATCH(state->batch, state->idrt_b.num << 5);
   OUT_RELOC(state->batch, state->idrt_b.bo, I915_GEM_DOMAIN_INSTRUCTION, 0, 0);
   ADVANCE_BATCH(state->batch);
 }

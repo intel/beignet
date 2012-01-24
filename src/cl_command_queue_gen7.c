@@ -118,6 +118,7 @@ cl_command_queue_ND_range_gen7(cl_command_queue queue,
 
   /* Check that the local work sizes are OK */
   TRY (cl_kernel_work_group_sz, ker, local_wk_sz, 3, &local_sz);
+  //kernel.thread_n = thread_n = local_sz / simd_sz;
   kernel.thread_n = thread_n = local_sz / simd_sz;
 
   /* CURBE step 1. Allocate and fill fields shared by threads in workgroup */
