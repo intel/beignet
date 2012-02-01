@@ -29,7 +29,6 @@ namespace gbe
     class ALIGNED(AlignOf<Instruction>::value) NaryInstruction
     {
     public:
-      INLINE uint32 getOpcode(void) const { return opcode; }
       INLINE uint32 getSrcNum(void) const { return srcNum; }
       INLINE uint32 getDstNum(void) const { return 1; }
       INLINE uint32 getDstIndex(const Function &fn, uint32 ID) const {

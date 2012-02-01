@@ -60,11 +60,11 @@ namespace gbe
   class Function;
 
   /*! Store the instruction description in 8 bytes */
-  class Instruction
+  class ALIGNED(sizeof(uint64)) Instruction
   {
   public:
     /*! Get the instruction opcode */
-    uint32 getOpcode(void) const;
+    INLINE uint32 getOpcode(void) const { return op; }
     /*! Get the number of sources for this instruction  */
     uint32 getSrcNum(void) const;
     /*! Get the number of destination for this instruction */
@@ -81,9 +81,17 @@ namespace gbe
      *  Otherwise, fill the string with a help message
      */
     bool check(void) const;
+    /*! Indicates if the instruction belongs to instruction type T. Typically, T
+     *  can be BinaryInstruction, UnaryInstruction, LoadInstruction and so on
+     */
+    template <typename T> bool isTypeOf(void) const;
   protected:
-    uint64 opaque; //!< Data depends on the instruction itself
+    uint8 op;                                   //!< Idendifies the instruction
+    uint8 opaque[sizeof(uint64)-sizeof(uint8)]; //!< Remainder of it
   };
+
+  // Check that the instruction is properly formed by the compiler
+  STATIC_ASSERT(sizeof(Instruction) == sizeof(uint64));
 
   /*! Binary instructions are typed. dst and sources share the same type */
   class BinaryInstruction : public Instruction
@@ -148,8 +156,7 @@ namespace gbe
   class LoadImmInstruction : public Instruction
   {
     /*! The value as stored in the instruction */
-    union Value
-    {
+    union Value {
       int8 s8;
       uint8 u8;
       int16 i16;
@@ -166,6 +173,20 @@ namespace gbe
     /*! Return the type of the stored value */
     uint32 getType(void) const;
   };
+
+  /*! Prevents all cast to non-instruction types */
+  template <typename T> INLINE bool Instruction::isTypeOf(void) const {
+    return false;
+  }
+
+  /*! Specialize the instruction. Also performs typechecking first based on the
+   *  opcode. Crashes if it fails
+   */
+  template <typename T>
+  T *cast(Instruction *insn)
+  {
+
+  }
 
 } /* namespace gbe */
 
