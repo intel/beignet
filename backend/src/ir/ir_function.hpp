@@ -20,5 +20,46 @@
 #ifndef __GBE_IR_FUNCTION_HPP__
 #define __GBE_IR_FUNCTION_HPP__
 
+namespace gbe
+{
+  /*! A function is no more that a set of declared registers and a set of
+   *  basic blocks
+   */
+  class Function
+  {
+  public:
+    /*! Create an empty function */
+    Function(void);
+
+    /*! Function basic blocks really belong to a function since:
+     * 1 - registers used in the basic blocks belongs to the function register
+     * file
+     * 2 - branches point to basic blocks of the same function
+     */
+    class BasicBlock
+    {
+    public:
+      /*! Empty basic block */
+      BasicBlock(void);
+      /*! Return the number of instruction in the block */
+      INLINE uint32 getInsnNum(void) { return insn.size(); }
+    private:
+      vector<Instruction> insn; //!< Sequence of instructions in the block
+    };
+
+    /*! Extract the register from the register file */
+    INLINE Register getRegister(uint32 ID) const { return file.get(ID); }
+
+  private:
+    /*! Create a function by sequential appending of instructions and registers */
+    friend class FunctionContext;
+    vector<uint16> input;    //!< Input registers of the function
+    vector<uint16> output;   //!< Output registers of the function
+    vector<BasicBlock> insn; //!< All the basic blocks one after the others
+    RegisterFile file;       //!< All the registers used in the instructions
+  };
+
+} /* namespace gbe */
+
 #endif /* __GBE_IR_FUNCTION_HPP__ */
 

@@ -20,88 +20,65 @@
 #ifndef __GBE_IR_REGISTER_HPP__
 #define __GBE_IR_REGISTER_HPP__
 
-#include "sys/ref.hpp"
-#include <new>
+#include "sys/vector.hpp"
 
 namespace gbe
 {
-  /*! Describe a register in GBE register file. Each register can be either a
-   *  boolean value or a {8|16|32|64} bit word. Also, each register contains some
-   *  number of lanes that describes its SIMD width
+  /*! A register can be either a byte, a word, a dword or a qword. It can be
+   *  either scalar or a vector. Everything is packed in 32 bits
    */
-  class Register : public RefCount, public NonCopyable
+  class Register
   {
   public:
-    /*! Family basically gives the size of each register lane */
-    enum Family
-    {
+    /*! Build a register. All fields will be immutable */
+    INLINE Register(uint8 type) : type(type) {}
+    /*! Copy constructor */
+    INLINE Register(const Register &other) : type(other.type) {}
+    /*! Copy operator */
+    Register &operator= (const Register &other) {
+      *this = Register(other.type);
+      return *this;
+    }
+    /*! Nothing really happens here */
+    INLINE ~Register(void) {}
+    /*! Register type */
+    enum {
       BOOL  = 0,
       BYTE  = 1,
       WORD  = 2,
       DWORD = 3,
       QWORD = 4
     };
-    friend class RegisterFile; // Allocates and destroys registers
-    /*! Get the register identifier */
-    INLINE uint32 id(void)     const { return this->_id; }
-    /*! Get the register width (ie number of lanes) */
-    INLINE uint16 width(void)  const { return this->_width; }
-    /*! Get the register family */
-    INLINE Family family(void) const { return this->_family; }
-    /*! Get the register *individual* lane size */
-    INLINE uint8  size(void)   const { return this->_size; }
-  private:
-    /*! */
-    INLINE Register(uint32 id, Family family, uint8 width) :
-      _id(id), _width(width), _family(family), _size(familySize[family]) {}
-    INLINE ~Register(void) {}
-    const uint32 _id;     //!< Uniquely identifies the register
-    const uint16 _width;  //!< Number of lane in the vector
-    const Family _family; //!< From Family enum
-    const uint8 _size;    //!< Directly related to its type
-    /*! Gives the size for each family */
-    static const uint8 familySize[];
+    const uint8 type;
     GBE_CLASS(Register);
   };
-
-  /*! Registers are equal if they have same width, ID and family */
-  INLINE bool operator== (const Register &a, const Register &b) {
-    return a.id() == b.id() &&
-           a.width() == b.width() &&
-           a.family() == b.family();
-  }
-
-  /*! != is just "not equal" */
-  INLINE bool operator!= (const Register &a, const Register &b) {
-    return !(a == b);
-  }
-
-  /*! To sort registers */
-  INLINE bool operator< (const Register &a, const Register &b) {
-    if (a.family() != b.family()) return a.family() < b.family();
-    if (a.width() != b.width()) return a.width() < b.width();
-    if (a.id() != b.id()) return a.id() < b.id();
-    return false;
-  }
 
   /*! A register file allocates and destroys registers. Basically, we will have
    *  one register file per function
    */
-  class RegisterFile : public RefCount
+  class RegisterFile
   {
   public:
-    /*! Destroy the register file */
-    virtual ~RegisterFile(void) = 0;
-    /*! Allocate and return a valid register */
-    virtual Register *create(Register::Family family, uint8 width) = 0;
-    /*! Get the register with index id */
-    virtual Register *get(uint32 id) = 0;
-    /*! Deallocate the register */
-    virtual void destroy(Register *reg) = 0;
+    /*! Return the index of a newly allocated register register */
+    INLINE uint32 append(uint32 type) {
+      const uint32 index = regs.size();
+      const Register reg(type);
+      assert(index <= MAX_INDEX);
+      regs.push_back(reg);
+      return index;
+    }
+    /*! Return a copy of the register at index */
+    INLINE Register get(uint32 index) const {
+      assert(index < regs.size() && index <= MAX_INDEX);
+      return regs[index];
+    }
+    /*! Number of registers in the register file */
+    INLINE uint32 regNum(void) const { return regs.size(); }
+  private:
+    enum { MAX_INDEX = 0xffff }; //!< We encode indices in 2 bytes
+    vector<Register> regs;       //!< All the registers together
+    GBE_CLASS(RegisterFile);
   };
-
-  /*! Allocate a new register file */
-  RegisterFile *RegisterFileNew(void);
 
 } /* namespace gbe */
 

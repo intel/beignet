@@ -18,31 +18,9 @@
  */
 
 #include "ir_register.hpp"
-#include "sys/map.hpp"
-#include "sys/fixed_array.hpp"
-#include "sys/vector.hpp"
 
 namespace gbe
 {
-  const uint8 Register::familySize[] = {
-    1, // bool
-    1, // byte
-    2, // word
-    4, // dword
-    5, // qword
-  };
-
-  /*! Implement register file class */
-  class RegisterFileInternal : public RegisterFile
-  {
-    // Implements base class methods
-    virtual ~RegisterFileInternal(void);
-    virtual Register *create(Register::Family family, uint8 width);
-    virtual Register *get(uint32 id);
-    virtual void destroy(Register *reg);
-
-    
-  };
 
 } /* namespace gbe */
 

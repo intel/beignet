@@ -238,7 +238,7 @@ template <typename T>
 struct AlignOf
 {
   struct Helper { char x; T t; };
-  static const size_t value = offsetof(Helper, t);
+  enum { value = offsetof(Helper, t) };
 };
 
 ////////////////////////////////////////////////////////////////////////////////
