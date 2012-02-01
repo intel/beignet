@@ -111,11 +111,60 @@ namespace gbe
     uint32 getDstType(void) const;
   };
 
-  /*! Store instruction */
+  /*! Store instruction. First source is the address. Next sources are the
+   *  values to store contiguously at the given address
+   */
   class StoreInstruction : public Instruction
   {
   public:
+    /*! Return the types of the values to store */
+    uint32 getValueType(void) const;
+    /*! Give the number of values the instruction is storing (srcNum-1) */
+    uint32 getValueNum(void) const;
+    /*! Address space that is manipulated here */
+    uint32 getAddressSpace(void) const;
+  };
 
+  /*! Load instruction. The source is simply the address where to get the data.
+   *  The multiple destinations are the contiguous values loaded at the given
+   *  address
+   */
+  class LoadInstruction : public Instruction
+  {
+  public:
+    /*! Type of the loaded values (ie type of all the destinations) */
+    uint32 getValueType(void) const;
+    /*! Number of values loaded (ie number of destinations) */
+    uint32 getValueNum(void) const;
+    /*! Address space that is manipulated here */
+    uint32 getAddressSpace(void) const;
+  };
+
+  /*! Load immediate instruction loads an typed immediate value into the given
+   * register. Since double and uint64 values will not fit into an instruction,
+   * the immediate themselves are stored in the function core. Contrary to
+   * regular load instructions, there is only one destination possible
+   */
+  class LoadImmInstruction : public Instruction
+  {
+    /*! The value as stored in the instruction */
+    union Value
+    {
+      int8 s8;
+      uint8 u8;
+      int16 i16;
+      uint16 u16;
+      int32 i32;
+      uint32 u32;
+      int64 i64;
+      uint64 u64;
+      float f32;
+      double f64;
+    };
+    /*! Return the value stored in the instruction */
+    Value getValue(void) const;
+    /*! Return the type of the stored value */
+    uint32 getType(void) const;
   };
 
 } /* namespace gbe */
