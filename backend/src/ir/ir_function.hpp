@@ -20,6 +20,11 @@
 #ifndef __GBE_IR_FUNCTION_HPP__
 #define __GBE_IR_FUNCTION_HPP__
 
+#include "ir_value.hpp"
+#include "ir_register.hpp"
+#include "ir_instruction.hpp"
+#include "sys/vector.hpp"
+
 namespace gbe
 {
   /*! A function is no more that a set of declared registers and a set of
@@ -49,12 +54,17 @@ namespace gbe
 
     /*! Extract the register from the register file */
     INLINE Register getRegister(uint32 ID) const { return file.get(ID); }
+    /*! Get the register index from the tuple vector */
+    INLINE RegisterIndex getRegisterIndex(TupleIndex ID, uint32 which) const {
+      return file.get(ID, which);
+    }
 
   private:
     /*! Create a function by sequential appending of instructions and registers */
     friend class FunctionContext;
     vector<uint16> input;    //!< Input registers of the function
     vector<uint16> output;   //!< Output registers of the function
+    vector<Value> immediate; //!< All immediate values stored in the function
     vector<BasicBlock> insn; //!< All the basic blocks one after the others
     RegisterFile file;       //!< All the registers used in the instructions
   };

@@ -28,7 +28,9 @@ set (GBE_SRC
   ir/ir_instruction.cpp
   ir/ir_instruction.hpp
   ir/ir_register.cpp
-  ir/ir_register.hpp)
+  ir/ir_register.hpp
+  ir/ir_function.cpp
+  ir/ir_function.hpp)
 
 set (COMPILE_UTEST false CACHE bool "Compile or not the unit tests")
 if (COMPILE_UTEST)

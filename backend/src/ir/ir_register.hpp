@@ -53,6 +53,12 @@ namespace gbe
     GBE_CLASS(Register);
   };
 
+  /*! Register index is the position of the register in the register file */
+  typedef uint16 RegisterIndex;
+
+  /*! Tuple index is the position of the register index in the tuple vector */
+  typedef uint32 TupleIndex;
+
   /*! A register file allocates and destroys registers. Basically, we will have
    *  one register file per function
    */
@@ -60,23 +66,39 @@ namespace gbe
   {
   public:
     /*! Return the index of a newly allocated register register */
-    INLINE uint32 append(uint32 type) {
+    INLINE RegisterIndex append(uint32 type) {
       const uint32 index = regs.size();
       const Register reg(type);
       assert(index <= MAX_INDEX);
       regs.push_back(reg);
       return index;
     }
+    /*! Make a tuple and return the index to the first element of the tuple */
+    template <typename First, typename... Rest>
+    INLINE TupleIndex appendTuple(First first, Rest... rest) {
+      const TupleIndex index = regTuples.size();
+      regTuples.push_back(first);
+      appendTuple(rest...);
+      return index;
+    }
+    /*! To terminate variadic recursion */
+    INLINE void appendTuple(void) {}
     /*! Return a copy of the register at index */
-    INLINE Register get(uint32 index) const {
+    INLINE Register get(RegisterIndex index) const {
       assert(index < regs.size() && index <= MAX_INDEX);
       return regs[index];
+    }
+    /*! Get the register index from the tuple */
+    INLINE RegisterIndex get(TupleIndex index, uint32 which) const {
+      assert(index + which < regTuples.size());
+      return regTuples[index + which];
     }
     /*! Number of registers in the register file */
     INLINE uint32 regNum(void) const { return regs.size(); }
   private:
-    enum { MAX_INDEX = 0xffff }; //!< We encode indices in 2 bytes
-    vector<Register> regs;       //!< All the registers together
+    enum { MAX_INDEX = 0xffff };     //!< We encode indices in 2 bytes
+    vector<Register> regs;           //!< All the registers together
+    vector<RegisterIndex> regTuples; //!< Tuples are used for many src / dst
     GBE_CLASS(RegisterFile);
   };
 

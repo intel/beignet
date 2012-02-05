@@ -22,37 +22,30 @@
 
 #include "sys/platform.hpp"
 #include "ir_register.hpp"
+#include "ir_value.hpp"
+#include "ir_type.hpp"
 
 namespace gbe
 {
   /*! All opcodes */
-  enum {
+  enum Opcode : uint8 {
 #define DECL_INSN(INSN, FAMILY) OP_##INSN,
 #include "ir_instruction.hxx"
 #undef DECL_INSN
-    OP_INVALID
   };
 
   /*! Different memory spaces */
-  enum {
-    MEM_GLOBAL = 0, /*! Global memory (a la OCL) */
-    MEM_LOCAL,      /*! Local memory (thread group memory) */
-    MEM_PRIVATE     /*! Per thread private memory */
+  enum MemorySpace : uint8 {
+    MEM_GLOBAL = 0, //!< Global memory (a la OCL)
+    MEM_LOCAL,      //!< Local memory (thread group memory)
+    MEM_PRIVATE     //!< Per thread private memory
   };
 
-  /*! All types possibly supported by the instruction */
-  enum {
-    TYPE_S8 = 0,  /*! signed 8 bits integer */
-    TYPE_U8,      /*! unsigned 8 bits integer */
-    TYPE_S16,     /*! signed 16 bits integer */
-    TYPE_U16,     /*! unsigned 16 bits integer */
-    TYPE_S32,     /*! signed 32 bits integer */
-    TYPE_U32,     /*! unsigned 32 bits integer */
-    TYPE_S64,     /*! signed 64 bits integer */
-    TYPE_U64,     /*! unsigned 64 bits integer */
-    TYPE_FLOAT,   /*! 32 bits floating point value */
-    TYPE_DOUBLE   /*! 64 bits floating point value */
-  };
+  /*! A label is identified with an unsigned short */
+  typedef uint16 LabelIndex;
+
+  /*! A value is stored in a per-function vector. This is the index to it */
+  typedef uint16 ValueIndex;
 
   /*! Function class contains the register file and the register tuple. Any
    *  information related to the registers may therefore require a function
@@ -64,88 +57,105 @@ namespace gbe
   {
   public:
     /*! Get the instruction opcode */
-    INLINE uint32 getOpcode(void) const { return op; }
+    INLINE Opcode getOpcode(void) const { return opcode; }
     /*! Get the number of sources for this instruction  */
     uint32 getSrcNum(void) const;
     /*! Get the number of destination for this instruction */
     uint32 getDstNum(void) const;
     /*! Get the register index of the given source */
-    uint32 getSrcIndex(const Function &fn, uint32 ID) const;
+    RegisterIndex getSrcIndex(const Function &fn, uint32 ID = 0u) const;
     /*! Get the register index of the given destination */
-    uint32 getDstIndex(const Function &fn, uint32 ID) const;
+    RegisterIndex getDstIndex(const Function &fn, uint32 ID = 0u) const;
     /*! Get the register of the given source */
-    Register getSrc(const Function &fn, uint32 ID) const;
+    Register getDst(const Function &fn, uint32 ID = 0u) const;
     /*! Get the register of the given destination */
-    Register getDst(const Function &fn, uint32 ID) const;
+    Register getSrc(const Function &fn, uint32 ID = 0u) const;
     /*! Check that the instruction is well formed. Return true if well formed.
+     *  j
      *  Otherwise, fill the string with a help message
      */
     bool check(void) const;
     /*! Indicates if the instruction belongs to instruction type T. Typically, T
      *  can be BinaryInstruction, UnaryInstruction, LoadInstruction and so on
      */
-    template <typename T> bool isTypeOf(void) const;
+    template <typename T> INLINE bool isMemberOf(void) const {
+      return T::isClassOf(*this);
+    }
   protected:
-    uint8 op;                                   //!< Idendifies the instruction
-    uint8 opaque[sizeof(uint64)-sizeof(uint8)]; //!< Remainder of it
+    Opcode opcode;                             //!< Idendifies the instruction
+    uint8 opaque[sizeof(uint64)-sizeof(uint8)];//!< Remainder of it
   };
 
   // Check that the instruction is properly formed by the compiler
   STATIC_ASSERT(sizeof(Instruction) == sizeof(uint64));
 
-  /*! Binary instructions are typed. dst and sources share the same type */
-  class BinaryInstruction : public Instruction
-  {
+  /*! Unary instructions are typed. dst and sources share the same type */
+  class UnaryInstruction : public Instruction {
   public:
     /*! Get the type manipulated by the instruction */
-    uint32 getType(void) const;
+    Type getType(void) const;
+    /*! Return true if the given instruction is an instance of this class */
+    static bool isClassOf(const Instruction &insn);
+  };
+
+  /*! Binary instructions are typed. dst and sources share the same type */
+  class BinaryInstruction : public Instruction {
+  public:
+    /*! Get the type manipulated by the instruction */
+    Type getType(void) const;
+    /*! Return true if the given instruction is an instance of this class */
+    static bool isClassOf(const Instruction &insn);
   };
 
   /*! Ternary instructions is mostly for MADs */
-  class TernaryInstruction : public Instruction
-  {
+  class TernaryInstruction : public Instruction {
   public:
     /*! Get the type manipulated by the instruction */
-    uint32 getType(void) const;
+    Type getType(void) const;
+    /*! Return true if the given instruction is an instance of this class */
+    static bool isClassOf(const Instruction &insn);
   };
 
   /*! Conversion instruction converts from one type to another */
-  class ConvertInstruction : public Instruction
-  {
+  class ConvertInstruction : public Instruction {
   public:
     /*! Get the type of the source */
-    uint32 getSrcType(void) const;
+    Type getSrcType(void) const;
     /*! Get the type of the destination */
-    uint32 getDstType(void) const;
+    Type getDstType(void) const;
+    /*! Return true if the given instruction is an instance of this class */
+    static bool isClassOf(const Instruction &insn);
   };
 
   /*! Store instruction. First source is the address. Next sources are the
    *  values to store contiguously at the given address
    */
-  class StoreInstruction : public Instruction
-  {
+  class StoreInstruction : public Instruction {
   public:
     /*! Return the types of the values to store */
-    uint32 getValueType(void) const;
+    Type getValueType(void) const;
     /*! Give the number of values the instruction is storing (srcNum-1) */
     uint32 getValueNum(void) const;
     /*! Address space that is manipulated here */
-    uint32 getAddressSpace(void) const;
+    MemorySpace getAddressSpace(void) const;
+    /*! Return true if the given instruction is an instance of this class */
+    static bool isClassOf(const Instruction &insn);
   };
 
   /*! Load instruction. The source is simply the address where to get the data.
    *  The multiple destinations are the contiguous values loaded at the given
    *  address
    */
-  class LoadInstruction : public Instruction
-  {
+  class LoadInstruction : public Instruction {
   public:
     /*! Type of the loaded values (ie type of all the destinations) */
-    uint32 getValueType(void) const;
+    Type getValueType(void) const;
     /*! Number of values loaded (ie number of destinations) */
     uint32 getValueNum(void) const;
     /*! Address space that is manipulated here */
-    uint32 getAddressSpace(void) const;
+    MemorySpace getAddressSpace(void) const;
+    /*! Return true if the given instruction is an instance of this class */
+    static bool isClassOf(const Instruction &insn);
   };
 
   /*! Load immediate instruction loads an typed immediate value into the given
@@ -153,39 +163,83 @@ namespace gbe
    * the immediate themselves are stored in the function core. Contrary to
    * regular load instructions, there is only one destination possible
    */
-  class LoadImmInstruction : public Instruction
-  {
-    /*! The value as stored in the instruction */
-    union Value {
-      int8 s8;
-      uint8 u8;
-      int16 i16;
-      uint16 u16;
-      int32 i32;
-      uint32 u32;
-      int64 i64;
-      uint64 u64;
-      float f32;
-      double f64;
-    };
+  class LoadImmInstruction : public Instruction {
     /*! Return the value stored in the instruction */
     Value getValue(void) const;
     /*! Return the type of the stored value */
-    uint32 getType(void) const;
+    Type getType(void) const;
+    /*! Return true if the given instruction is an instance of this class */
+    static bool isClassOf(const Instruction &insn);
   };
 
-  /*! Prevents all cast to non-instruction types */
-  template <typename T> INLINE bool Instruction::isTypeOf(void) const {
-    return false;
-  }
+  /*! Branch instruction is the unified way to branch (with or without
+   *  predicate)
+   */
+  class BranchInstruction : public Instruction {
+  public:
+    /*! Indicate if the branch is predicated */
+    bool isPredicated(void) const;
+    /*! Return the predicate register (if predicated) */
+    Register getPredicate(const Function &fn) const {
+      assert(this->isPredicated() == true);
+      return this->getSrc(fn, 0);
+    }
+    /*! Return the predicate register index (if predicated) */
+    Register getPredicateIndex(const Function &fn) const {
+      assert(this->isPredicated() == true);
+      return this->getSrcIndex(fn, 0);
+    }
+    /*! Return true if the given instruction is an instance of this class */
+    static bool isClassOf(const Instruction &insn);
+  };
+
+  /*! Label instruction are actual no-op but are referenced by branches as their
+   *  targets
+   */
+  class LabelInstruction : public Instruction {
+  public:
+    /*! Return true if the given instruction is an instance of this class */
+    static bool isClassOf(const Instruction &insn);
+  };
+
+  /*! Texture instruction are used for any texture mapping requests */
+  class TextureInstruction : public Instruction {
+  public:
+    /*! Return true if the given instruction is an instance of this class */
+    static bool isClassOf(const Instruction &insn);
+  };
+
+  /*! Fence instructions are used to order loads and stores for a given memory
+   *  space
+   */
+  class FenceInstruction : public Instruction {
+  public:
+    /*! Return true if the given instruction is an instance of this class */
+    static bool isClassOf(const Instruction &insn);
+  };
 
   /*! Specialize the instruction. Also performs typechecking first based on the
    *  opcode. Crashes if it fails
    */
   template <typename T>
-  T *cast(Instruction *insn)
-  {
-
+  INLINE T *cast(Instruction *insn) {
+    assert(insn->isMemberOf<T>() == true);
+    return reinterpret_cast<T*>(insn);
+  }
+  template <typename T>
+  INLINE const T *cast(const Instruction *insn) {
+    assert(insn->isMemberOf<T>() == true);
+    return reinterpret_cast<const T*>(insn);
+  }
+  template <typename T>
+  INLINE T &cast(Instruction &insn) {
+    assert(insn.isMemberOf<T>() == true);
+    return reinterpret_cast<T&>(insn);
+  }
+  template <typename T>
+  INLINE const T &castc(const Instruction &insn) {
+    assert(insn.isMemberOf<T>() == true);
+    return reinterpret_cast<const T&>(insn);
   }
 
 } /* namespace gbe */

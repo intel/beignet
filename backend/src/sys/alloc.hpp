@@ -64,30 +64,30 @@ namespace gbe
 } /* namespace gbe */
 
 /*! Declare a structure with custom allocators */
-#define GBE_STRUCT(TYPE)                                      \
+#define GBE_STRUCT(TYPE)                                     \
   void* operator new(size_t size)   {                        \
     if (AlignOf<TYPE>::value > sizeof(uintptr_t))            \
-      return gbe::alignedMalloc(size, AlignOf<TYPE>::value);  \
+      return gbe::alignedMalloc(size, AlignOf<TYPE>::value); \
     else                                                     \
-      return gbe::malloc(size);                               \
+      return gbe::malloc(size);                              \
   }                                                          \
   void* operator new[](size_t size)   {                      \
     if (AlignOf<TYPE>::value > sizeof(uintptr_t))            \
-      return gbe::alignedMalloc(size, AlignOf<TYPE>::value);  \
+      return gbe::alignedMalloc(size, AlignOf<TYPE>::value); \
     else                                                     \
-      return gbe::malloc(size);                               \
+      return gbe::malloc(size);                              \
   }                                                          \
   void  operator delete(void* ptr) {                         \
     if (AlignOf<TYPE>::value > sizeof(uintptr_t))            \
-      return gbe::alignedFree(ptr);                           \
+      return gbe::alignedFree(ptr);                          \
     else                                                     \
-      return gbe::free(ptr);                                  \
+      return gbe::free(ptr);                                 \
   }                                                          \
   void  operator delete[](void* ptr) {                       \
     if (AlignOf<TYPE>::value > sizeof(uintptr_t))            \
-      return gbe::alignedFree(ptr);                           \
+      return gbe::alignedFree(ptr);                          \
     else                                                     \
-      return gbe::free(ptr);                                  \
+      return gbe::free(ptr);                                 \
   }                                                          \
 
 /*! Declare a class with custom allocators */
@@ -196,8 +196,8 @@ namespace gbe
     ~GrowingPool(void) { GBE_ASSERT(current); GBE_DELETE(current); }
     T *allocate(void) {
       if (this->freeList != NULL) {
-        T *data = freeList;
-        this->freeList = *(void**) free;
+        T *data = (T*) freeList;
+        this->freeList = *(void**) freeList;
       }
       if (UNLIKELY(current->allocated == current->maxElemNum)) {
         GrowingPoolElem *elem = GBE_NEW(GrowingPoolElem, 2 * current->maxElemNum);

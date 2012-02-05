@@ -22,7 +22,7 @@
 
 #include <vector>
 
-namespace pf
+namespace gbe
 {
   /*! Quick and dirty Unit test system with registration */
   struct UTest
@@ -44,10 +44,10 @@ namespace pf
     /*! Run all the tests */
     static void runAll(void);
   };
-} /* namespace pf */
+} /* namespace gbe */
 
 /*! Register a new unit test */
-#define UTEST_REGISTER(FN) static const pf::UTest __##NAME##__(FN, #FN);
+#define UTEST_REGISTER(FN) static const gbe::UTest __##NAME##__(FN, #FN);
 
 #endif /* __GBE_UTEST_HPP__ */
 
