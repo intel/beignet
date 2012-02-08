@@ -31,12 +31,12 @@ namespace gbe
   {
   public:
     /*! Build a register. All fields will be immutable */
-    INLINE Register(uint8 type) : type(type) {}
+    INLINE Register(uint8 type = 0) : type(type) {}
     /*! Copy constructor */
     INLINE Register(const Register &other) : type(other.type) {}
     /*! Copy operator */
-    Register &operator= (const Register &other) {
-      *this = Register(other.type);
+    INLINE Register &operator= (const Register &other) {
+      this->type = other.type;
       return *this;
     }
     /*! Nothing really happens here */
@@ -49,7 +49,7 @@ namespace gbe
       DWORD = 3,
       QWORD = 4
     };
-    const uint8 type;
+    uint8 type;
     GBE_CLASS(Register);
   };
 

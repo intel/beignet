@@ -38,6 +38,7 @@ namespace gbe
   enum MemorySpace : uint8 {
     MEM_GLOBAL = 0, //!< Global memory (a la OCL)
     MEM_LOCAL,      //!< Local memory (thread group memory)
+    MEM_CONSTANT,   //!< Immutable global memory
     MEM_PRIVATE     //!< Per thread private memory
   };
 
@@ -51,6 +52,10 @@ namespace gbe
    *  information related to the registers may therefore require a function
    */
   class Function;
+
+  ///////////////////////////////////////////////////////////////////////////
+  /// All public instruction classes as manipulated by all public classes
+  ///////////////////////////////////////////////////////////////////////////
 
   /*! Store the instruction description in 8 bytes */
   class ALIGNED(sizeof(uint64)) Instruction
@@ -164,8 +169,9 @@ namespace gbe
    * regular load instructions, there is only one destination possible
    */
   class LoadImmInstruction : public Instruction {
+  public:
     /*! Return the value stored in the instruction */
-    Value getValue(void) const;
+    Value getValue(const Function &fn) const;
     /*! Return the type of the stored value */
     Type getType(void) const;
     /*! Return true if the given instruction is an instance of this class */
@@ -237,10 +243,45 @@ namespace gbe
     return reinterpret_cast<T&>(insn);
   }
   template <typename T>
-  INLINE const T &castc(const Instruction &insn) {
+  INLINE const T &cast(const Instruction &insn) {
     assert(insn.isMemberOf<T>() == true);
     return reinterpret_cast<const T&>(insn);
   }
+
+  ///////////////////////////////////////////////////////////////////////////
+  /// All emission functions
+  ///////////////////////////////////////////////////////////////////////////
+
+  Instruction mov(Type type, RegisterIndex dst, RegisterIndex src);
+  Instruction cos(Type type, RegisterIndex dst, RegisterIndex src);
+  Instruction sin(Type type, RegisterIndex dst, RegisterIndex src);
+  Instruction tan(Type type, RegisterIndex dst, RegisterIndex src);
+  Instruction log(Type type, RegisterIndex dst, RegisterIndex src);
+  Instruction sqr(Type type, RegisterIndex dst, RegisterIndex src);
+  Instruction rsq(Type type, RegisterIndex dst, RegisterIndex src);
+  Instruction pow(Type type, RegisterIndex dst, RegisterIndex src0, RegisterIndex src1);
+  Instruction mul(Type type, RegisterIndex dst, RegisterIndex src0, RegisterIndex src1);
+  Instruction add(Type type, RegisterIndex dst, RegisterIndex src0, RegisterIndex src1);
+  Instruction sub(Type type, RegisterIndex dst, RegisterIndex src0, RegisterIndex src1);
+  Instruction div(Type type, RegisterIndex dst, RegisterIndex src0, RegisterIndex src1);
+  Instruction rem(Type type, RegisterIndex dst, RegisterIndex src0, RegisterIndex src1);
+  Instruction shl(Type type, RegisterIndex dst, RegisterIndex src0, RegisterIndex src1);
+  Instruction shr(Type type, RegisterIndex dst, RegisterIndex src0, RegisterIndex src1);
+  Instruction asr(Type type, RegisterIndex dst, RegisterIndex src0, RegisterIndex src1);
+  Instruction bsf(Type type, RegisterIndex dst, RegisterIndex src0, RegisterIndex src1);
+  Instruction bsb(Type type, RegisterIndex dst, RegisterIndex src0, RegisterIndex src1);
+  Instruction or$(Type type, RegisterIndex dst, RegisterIndex src0, RegisterIndex src1);
+  Instruction xor$(Type type, RegisterIndex dst, RegisterIndex src0, RegisterIndex src1);
+  Instruction and$(Type type, RegisterIndex dst, RegisterIndex src0, RegisterIndex src1);
+  Instruction mad(Type type, RegisterIndex dst, TupleIndex src);
+  Instruction cvt(Type dstType, Type srcType, RegisterIndex dst, RegisterIndex src0, RegisterIndex src1);
+  Instruction bra(RegisterIndex dst, LabelIndex labelIndex);
+  Instruction bra(RegisterIndex dst, LabelIndex labelIndex, RegisterIndex pred);
+  Instruction loadi(Type type, RegisterIndex dst, ValueIndex value);
+  Instruction load(Type type, TupleIndex dst, RegisterIndex offset, MemorySpace space, uint16 valueNum);
+  Instruction store(Type type, TupleIndex src, RegisterIndex offset, MemorySpace space, uint16 valueNum);
+  Instruction fence(MemorySpace space);
+  Instruction label(LabelIndex labelIndex);
 
 } /* namespace gbe */
 

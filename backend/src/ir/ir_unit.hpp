@@ -20,6 +20,35 @@
 #ifndef __GBE_IR_UNIT_HPP__
 #define __GBE_IR_UNIT_HPP__
 
-#endif /* __GBE_IR_UNIT_HPP__ */
+#include "ir_constant.hpp"
+#include "sys/hash_map.hpp"
 
+namespace gbe
+{
+  // A unit contains a set of functions
+  class Function;
+
+  /*! Complete unit of compilation. It contains a set of functions and a set of
+   *  constant the functions may refer to.
+   */
+  class Unit
+  {
+  public:
+    /*! Create an empty unit */
+    Unit(void);
+    /*! Release everything (*including* the function pointers) */
+    ~Unit(void);
+    /*! Retrieve the function by its name */
+    Function *getFunction(const std::string &name) const;
+    /*! Return NULL if the function already exists */
+    Function *newFunction(const std::string &name);
+    /*! Create a new constant in the constant set */
+    void newConstant(const char*, const std::string&, uint32 size, uint32 alignment);
+  private:
+    hash_map<std::string, Function*> functions; //!< All the defined functions
+    ConstantSet constantSet;  //!< All the constants defined in the unit
+  };
+} /* namespace gbe */
+
+#endif /* __GBE_IR_UNIT_HPP__ */
 

@@ -17,9 +17,20 @@
  * Author: Benjamin Segovia <benjamin.segovia@intel.com>
  */
 
-#include "ir_function.hpp"
+#ifndef __GBE_IR_CONTEXT_HPP__
+#define __GBE_IR_CONTEXT_HPP__
+
 namespace gbe
 {
-  Function::Function(void) {}
+  /*! A context allows an easy creation of the functions (instruction stream and
+   *  the set of immediates and registers needed for it) and constant arrays
+   */
+  class Context
+  {
+    
+  };
+
 } /* namespace gbe */
+
+#endif /* __GBE_IR_CONTEXT_HPP__ */
 

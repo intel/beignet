@@ -58,13 +58,16 @@ namespace gbe
     INLINE RegisterIndex getRegisterIndex(TupleIndex ID, uint32 which) const {
       return file.get(ID, which);
     }
+    /*! Get the given value ie immediate from the function */
+    INLINE Value getValue(uint32 ID) const {
+      assert(ID < value.size());
+      return value[ID];
+    }
 
   private:
-    /*! Create a function by sequential appending of instructions and registers */
-    friend class FunctionContext;
     vector<uint16> input;    //!< Input registers of the function
     vector<uint16> output;   //!< Output registers of the function
-    vector<Value> immediate; //!< All immediate values stored in the function
+    vector<Value> value;     //!< All immediate values stored in the function
     vector<BasicBlock> insn; //!< All the basic blocks one after the others
     RegisterFile file;       //!< All the registers used in the instructions
   };

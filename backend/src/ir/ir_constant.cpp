@@ -17,37 +17,22 @@
  * Author: Benjamin Segovia <benjamin.segovia@intel.com>
  */
 
-#include "ir_unit.hpp"
-#include "ir_function.hpp"
+#include "ir_constant.hpp"
 
 namespace gbe
 {
-  Unit::Unit(void) {}
-  Unit::~Unit(void) {
-    for (auto it = functions.begin(); it != functions.end(); ++it)
-      GBE_DELETE(it->second);
-  }
-  Function *Unit::getFunction(const std::string &name) const {
-    auto it = functions.find(name);
-    if (it == functions.end())
-      return NULL;
-    return it->second;
-  }
-  Function *Unit::newFunction(const std::string &name) {
-    auto it = functions.find(name);
-    if (it != functions.end())
-      return NULL;
-    Function *fn = GBE_NEW(Function);
-    functions[name] = fn;
-    return fn;
-  }
-  void Unit::newConstant(const char *data,
-                         const std::string &name,
-                         uint32 size,
-                         uint32 alignment)
+
+  void ConstantSet::append(const char *data,
+                           const std::string &name,
+                           uint32 size,
+                           uint32 alignment)
   {
-    constantSet.append(data, name, size, alignment);
+    const uint32 offset = ALIGN(this->data.size(), alignment);
+    const uint32 padding = offset - this->data.size();
+    const Constant constant(name, size, alignment, offset);
+    constants.push_back(constant);
+    for (uint32 i = 0; i < padding; ++i) this->data.push_back(0);
+    for (uint32 i = 0; i < size; ++i) this->data.push_back(data[i]);
   }
 
 } /* namespace gbe */
-
