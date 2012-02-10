@@ -17,12 +17,17 @@
  * Author: Benjamin Segovia <benjamin.segovia@intel.com>
  */
 
-#include "ir_function.hpp"
+#include "ir_context.hpp"
+#include "ir_unit.hpp"
+
 namespace gbe
 {
-  Function::Function(void) {}
-  Function::~Function(void) {
-    for (auto it = bb.begin(); it != bb.end(); ++it) GBE_DELETE(*it);
+  Context::Context(Unit &unit) : unit(unit), fn(NULL), bb(NULL) {}
+  void Context::startFunction(const std::string &name) {
+    Function *fn = unit.newFunction(name);
+    if (UNLIKELY(fn == NULL))
+        throw std::exception("Function " + name " already defined");
+    fnStack.push_back(fn);
   }
 } /* namespace gbe */
 

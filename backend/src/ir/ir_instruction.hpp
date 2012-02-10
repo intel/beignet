@@ -191,7 +191,7 @@ namespace gbe
       return this->getSrc(fn, 0);
     }
     /*! Return the predicate register index (if predicated) */
-    Register getPredicateIndex(const Function &fn) const {
+    RegisterIndex getPredicateIndex(const Function &fn) const {
       assert(this->isPredicated() == true);
       return this->getSrcIndex(fn, 0);
     }
@@ -252,35 +252,65 @@ namespace gbe
   /// All emission functions
   ///////////////////////////////////////////////////////////////////////////
 
+  /*! mov.type dst src */
   Instruction mov(Type type, RegisterIndex dst, RegisterIndex src);
+  /*! cos.type dst src */
   Instruction cos(Type type, RegisterIndex dst, RegisterIndex src);
+  /*! sin.type dst src */
   Instruction sin(Type type, RegisterIndex dst, RegisterIndex src);
+  /*! tan.type dst src */
   Instruction tan(Type type, RegisterIndex dst, RegisterIndex src);
+  /*! log.type dst src */
   Instruction log(Type type, RegisterIndex dst, RegisterIndex src);
+  /*! sqr.type dst src */
   Instruction sqr(Type type, RegisterIndex dst, RegisterIndex src);
+  /*! rsq.type dst src */
   Instruction rsq(Type type, RegisterIndex dst, RegisterIndex src);
+  /*! pow.type dst src0 src1 */
   Instruction pow(Type type, RegisterIndex dst, RegisterIndex src0, RegisterIndex src1);
+  /*! mul.type dst src0 src1 */
   Instruction mul(Type type, RegisterIndex dst, RegisterIndex src0, RegisterIndex src1);
+  /*! add.type dst src0 src1 */
   Instruction add(Type type, RegisterIndex dst, RegisterIndex src0, RegisterIndex src1);
+  /*! sub.type dst src0 src1 */
   Instruction sub(Type type, RegisterIndex dst, RegisterIndex src0, RegisterIndex src1);
+  /*! div.type dst src0 src1 */
   Instruction div(Type type, RegisterIndex dst, RegisterIndex src0, RegisterIndex src1);
+  /*! rem.type dst src0 src1 */
   Instruction rem(Type type, RegisterIndex dst, RegisterIndex src0, RegisterIndex src1);
+  /*! shl.type dst src0 src1 */
   Instruction shl(Type type, RegisterIndex dst, RegisterIndex src0, RegisterIndex src1);
+  /*! shr.type dst src0 src1 */
   Instruction shr(Type type, RegisterIndex dst, RegisterIndex src0, RegisterIndex src1);
+  /*! asr.type dst src0 src1 */
   Instruction asr(Type type, RegisterIndex dst, RegisterIndex src0, RegisterIndex src1);
+  /*! bsf.type dst src0 src1 */
   Instruction bsf(Type type, RegisterIndex dst, RegisterIndex src0, RegisterIndex src1);
+  /*! bsb.type dst src0 src1 */
   Instruction bsb(Type type, RegisterIndex dst, RegisterIndex src0, RegisterIndex src1);
+  /*! or.type dst src0 src1 */
   Instruction or$(Type type, RegisterIndex dst, RegisterIndex src0, RegisterIndex src1);
+  /*! xor.type dst src0 src1 */
   Instruction xor$(Type type, RegisterIndex dst, RegisterIndex src0, RegisterIndex src1);
+  /*! and.type dst src0 src1 */
   Instruction and$(Type type, RegisterIndex dst, RegisterIndex src0, RegisterIndex src1);
+  /*! mad.type dst {src0, src1, src2} == src */
   Instruction mad(Type type, RegisterIndex dst, TupleIndex src);
+  /*! cvt.{dstType <- srcType} dst src */
   Instruction cvt(Type dstType, Type srcType, RegisterIndex dst, RegisterIndex src0, RegisterIndex src1);
-  Instruction bra(RegisterIndex dst, LabelIndex labelIndex);
-  Instruction bra(RegisterIndex dst, LabelIndex labelIndex, RegisterIndex pred);
+  /*! bra labelIndex */
+  Instruction bra(LabelIndex labelIndex);
+  /*! (pred) bra labelIndex */
+  Instruction bra(LabelIndex labelIndex, RegisterIndex pred);
+  /*! loadi.type dst value */
   Instruction loadi(Type type, RegisterIndex dst, ValueIndex value);
+  /*! load.type.space {dst1,...,dst_valueNum} offset value */
   Instruction load(Type type, TupleIndex dst, RegisterIndex offset, MemorySpace space, uint16 valueNum);
+  /*! store.type.space offset {src1,...,src_valueNum} value */
   Instruction store(Type type, TupleIndex src, RegisterIndex offset, MemorySpace space, uint16 valueNum);
+  /*! fence.space */
   Instruction fence(MemorySpace space);
+  /*! label labelIndex */
   Instruction label(LabelIndex labelIndex);
 
 } /* namespace gbe */

@@ -522,11 +522,11 @@ DECL_MEM_FN(BranchInstruction, bool, isPredicated(void), isPredicated())
   }
 
   // BRA
-  Instruction bra(RegisterIndex dst, LabelIndex labelIndex) {
+  Instruction bra(LabelIndex labelIndex) {
     internal::BranchInstruction insn(labelIndex);
     return *reinterpret_cast<Instruction*>(&insn);
   }
-  Instruction bra(RegisterIndex dst, LabelIndex labelIndex, RegisterIndex pred) {
+  Instruction bra(LabelIndex labelIndex, RegisterIndex pred) {
     internal::BranchInstruction insn(labelIndex, pred);
     return *reinterpret_cast<Instruction*>(&insn);
   }

@@ -25,6 +25,8 @@ set (GBE_SRC
   sys/logging.hpp
   sys/default_path.cpp
   sys/default_path.hpp
+  ir/ir_context.cpp
+  ir/ir_context.hpp
   ir/ir_unit.cpp
   ir/ir_unit.hpp
   ir/ir_constant.cpp

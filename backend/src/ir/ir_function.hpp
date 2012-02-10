@@ -35,6 +35,8 @@ namespace gbe
   public:
     /*! Create an empty function */
     Function(void);
+    /*! Release everything *including* the basic block pointers */
+    ~Function(void);
 
     /*! Function basic blocks really belong to a function since:
      * 1 - registers used in the basic blocks belongs to the function register
@@ -65,11 +67,13 @@ namespace gbe
     }
 
   private:
-    vector<uint16> input;    //!< Input registers of the function
-    vector<uint16> output;   //!< Output registers of the function
-    vector<Value> value;     //!< All immediate values stored in the function
-    vector<BasicBlock> insn; //!< All the basic blocks one after the others
-    RegisterFile file;       //!< All the registers used in the instructions
+    friend class Context;         //!< Can freely modify a function
+    vector<RegisterIndex> input;  //!< Input registers of the function
+    vector<RegisterIndex> output; //!< Output registers of the function
+    vector<BasicBlock*> labels;   //!< Each label points to a basic block
+    vector<Value> value;    //!< All immediate values stored in the function
+    vector<BasicBlock*> bb; //!< All the basic blocks one after the others
+    RegisterFile file;      //!< All the registers used in the instructions
   };
 
 } /* namespace gbe */

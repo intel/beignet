@@ -30,26 +30,26 @@ namespace gbe
   class Register
   {
   public:
-    /*! Build a register. All fields will be immutable */
-    INLINE Register(uint8 type = 0) : type(type) {}
-    /*! Copy constructor */
-    INLINE Register(const Register &other) : type(other.type) {}
-    /*! Copy operator */
-    INLINE Register &operator= (const Register &other) {
-      this->type = other.type;
-      return *this;
-    }
-    /*! Nothing really happens here */
-    INLINE ~Register(void) {}
-    /*! Register type */
-    enum {
+    /*! Register family */
+    enum Family : uint8 {
       BOOL  = 0,
       BYTE  = 1,
       WORD  = 2,
       DWORD = 3,
       QWORD = 4
     };
-    uint8 type;
+    /*! Build a register. All fields will be immutable */
+    INLINE Register(Family family = DWORD) : family(family) {}
+    /*! Copy constructor */
+    INLINE Register(const Register &other) : family(other.family) {}
+    /*! Copy operator */
+    INLINE Register &operator= (const Register &other) {
+      this->family = other.family;
+      return *this;
+    }
+    /*! Nothing really happens here */
+    INLINE ~Register(void) {}
+    Family family;
     GBE_CLASS(Register);
   };
 
@@ -66,9 +66,9 @@ namespace gbe
   {
   public:
     /*! Return the index of a newly allocated register register */
-    INLINE RegisterIndex append(uint32 type) {
+    INLINE RegisterIndex append(Register::Family family) {
       const uint32 index = regs.size();
-      const Register reg(type);
+      const Register reg(family);
       assert(index <= MAX_INDEX);
       regs.push_back(reg);
       return index;
@@ -77,6 +77,7 @@ namespace gbe
     template <typename First, typename... Rest>
     INLINE TupleIndex appendTuple(First first, Rest... rest) {
       const TupleIndex index = regTuples.size();
+      assert(first < regs.size());
       regTuples.push_back(first);
       appendTuple(rest...);
       return index;
