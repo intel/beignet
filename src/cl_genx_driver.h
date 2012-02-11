@@ -23,11 +23,19 @@
 /* They are mostly wrapper around C++ delete / new to avoid c++ in c files */
 struct intel_driver;
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+    
 /* Allocate and initialize the gen driver */
-extern struct intel_driver* cl_intel_driver_new(void);
+struct intel_driver* cl_intel_driver_new(void);
 
 /* Destroy and deallocate the gen driver */
-extern void cl_intel_driver_delete(struct intel_driver*);
+void cl_intel_driver_delete(struct intel_driver*);
 
+#ifdef __cplusplus
+}
+#endif
+    
 #endif /* __CL_INTEL_DRIVER_H__ */
 

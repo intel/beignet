@@ -26,8 +26,12 @@
 #include "cl_utils.h"
 #include "cl_alloc.h"
 
+#ifdef _PLASMA
+#include "plasma/plasma_export.h"
+#else
 #include "intel_bufmgr.h"
 #include "intel/intel_gpgpu.h"
+#endif
 
 #include <assert.h>
 #include <stdio.h>

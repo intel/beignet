@@ -36,6 +36,12 @@
 #include <string.h>
 #include <assert.h>
 
+#ifdef _PLASMA
+#define PRINTF(x)    printf("CL API => cl%s\n", x)
+#else
+#define PRINTF(x)
+#endif
+
 cl_int
 clGetPlatformIDs(cl_uint          num_entries,
                  cl_platform_id * platforms,
@@ -94,6 +100,7 @@ clCreateContext(const cl_context_properties *  properties,
                 void *                         user_data,
                 cl_int *                       errcode_ret)
 {
+    PRINTF("CreateContext");
   return cl_create_context(properties,
                            num_devices,
                            devices,
@@ -126,6 +133,8 @@ error:
 cl_int
 clReleaseContext(cl_context context)
 {
+    PRINTF("ReleaseContext");
+    
   cl_int err = CL_SUCCESS;
   CHECK_CONTEXT (context);
   cl_context_delete(context);
@@ -150,6 +159,7 @@ clCreateCommandQueue(cl_context                   context,
                      cl_command_queue_properties  properties,
                      cl_int *                     errcode_ret)
 {
+    PRINTF("CreateCommandQueue");    
   cl_command_queue queue = NULL;
   cl_int err = CL_SUCCESS;
   CHECK_CONTEXT (context);
@@ -171,6 +181,7 @@ error:
 cl_int
 clReleaseCommandQueue(cl_command_queue command_queue)
 {
+    PRINTF("ReleaseCommandQueue");    
   cl_int err = CL_SUCCESS;
   CHECK_QUEUE (command_queue);
   cl_command_queue_delete(command_queue);
@@ -212,6 +223,7 @@ clCreateBuffer(cl_context    context,
                void *        host_ptr,
                cl_int *      errcode_ret)
 {
+    PRINTF("CreateBuffer");    
   cl_mem mem = NULL;
   cl_int err = CL_SUCCESS;
   CHECK_CONTEXT (context);
@@ -249,6 +261,7 @@ clCreateImage2D(cl_context              context,
                 void *                  host_ptr,
                 cl_int *                errcode_ret)
 {
+    PRINTF("CreateImage2D");    
   cl_mem mem = NULL;
   cl_int err = CL_SUCCESS;
   CHECK_CONTEXT (context);
@@ -431,6 +444,7 @@ clCreateProgramWithBinary(cl_context             context,
                           cl_int *               binary_status,
                           cl_int *               errcode_ret)
 {
+    PRINTF("CreateProgramWithBinary");    
   cl_program program = NULL;
   cl_int err = CL_SUCCESS;
 
@@ -461,6 +475,7 @@ error:
 cl_int
 clReleaseProgram(cl_program program)
 {
+    PRINTF("clReleaseProgram");
   cl_int err = CL_SUCCESS;
   CHECK_PROGRAM (program);
   cl_program_delete(program);
@@ -541,6 +556,7 @@ clCreateKernel(cl_program   program,
                const char * kernel_name,
                cl_int *     errcode_ret)
 {
+    PRINTF("CreateKernel");    
   cl_kernel kernel = NULL;
   cl_int err = CL_SUCCESS;
 
@@ -582,6 +598,7 @@ error:
 cl_int
 clReleaseKernel(cl_kernel kernel)
 {
+    PRINTF("clReleaseKernel");    
   cl_int err = CL_SUCCESS;
   CHECK_KERNEL(kernel);
   cl_kernel_delete(kernel);
@@ -964,6 +981,7 @@ clEnqueueNDRangeKernel(cl_command_queue  command_queue,
                        const cl_event *  event_wait_list,
                        cl_event *        event)
 {
+    PRINTF("EnqueueNDRangeKernel");
   size_t fixed_global_off[] = {0,0,0};
   size_t fixed_global_sz[] = {1,1,1};
   size_t fixed_local_sz[] = {16,1,1};

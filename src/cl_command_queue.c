@@ -26,8 +26,12 @@
 #include "cl_utils.h"
 #include "cl_alloc.h"
 
+#ifdef _PLASMA
+#include "plasma/plasma_export.h"
+#else
 #include "intel_bufmgr.h"
 #include "intel/intel_gpgpu.h"
+#endif
 
 #include <assert.h>
 #include <stdio.h>
@@ -165,7 +169,7 @@ cl_command_queue_bind_surface(cl_command_queue queue,
        */
       cl_kernel_copy_image_parameters(k, mem, index, curbe);
     } else
-      gpgpu_bind_buf(gpgpu, index, bo, bo->size, cc_llc_l3);
+      gpgpu_bind_buf(gpgpu, index, bo, cc_llc_l3);
   }
 
   /* Allocate the constant surface (if any) */
@@ -173,7 +177,6 @@ cl_command_queue_bind_surface(cl_command_queue queue,
     assert(k->const_bo_index != MAX_SURFACES - 1);
     gpgpu_bind_buf(gpgpu, k->const_bo_index,
                    k->const_bo,
-                   k->const_bo->size,
                    cc_llc_l3);
   }
 
@@ -184,7 +187,7 @@ cl_command_queue_bind_surface(cl_command_queue queue,
     index = k->patch.local_surf.offset / SURFACE_SZ;
     assert(index != MAX_SURFACES - 1);
     *local = drm_intel_bo_alloc(bufmgr, "CL local surface", sz, 64);
-    gpgpu_bind_buf(gpgpu, index, *local, sz, cc_llc_l3);
+    gpgpu_bind_buf(gpgpu, index, *local, cc_llc_l3);
   }
   else if (local)
     *local = NULL;
@@ -199,7 +202,7 @@ cl_command_queue_bind_surface(cl_command_queue queue,
     index = k->patch.private_surf.offset / SURFACE_SZ;
     assert(index != MAX_SURFACES - 1);
     *priv = drm_intel_bo_alloc(bufmgr, "CL private surface", sz, 64);
-    gpgpu_bind_buf(gpgpu, index, *priv, sz, cc_llc_l3);
+    gpgpu_bind_buf(gpgpu, index, *priv, cc_llc_l3);
   }
   else if(priv)
     *priv = NULL;
@@ -214,14 +217,14 @@ cl_command_queue_bind_surface(cl_command_queue queue,
     assert(index != MAX_SURFACES - 1);
     index = k->patch.scratch.offset / SURFACE_SZ;
     *scratch = drm_intel_bo_alloc(bufmgr, "CL scratch surface", sz, 64);
-    gpgpu_bind_buf(gpgpu, index, *scratch, sz, cc_llc_l3);
+    gpgpu_bind_buf(gpgpu, index, *scratch, cc_llc_l3);
   }
   else if (scratch)
     *scratch = NULL;
 
   /* Now bind a bo used for synchronization */
   sync_bo = drm_intel_bo_alloc(bufmgr, "sync surface", 64, 64);
-  gpgpu_bind_buf(gpgpu, MAX_SURFACES-1, sync_bo, 64, cc_llc_l3);
+  gpgpu_bind_buf(gpgpu, MAX_SURFACES-1, sync_bo, cc_llc_l3);
   if (queue->last_batch != NULL)
     drm_intel_bo_unreference(queue->last_batch);
   queue->last_batch = sync_bo;
@@ -250,7 +253,7 @@ cl_command_queue_set_report_buffer(cl_command_queue queue, cl_mem mem)
     queue->perf = NULL;
   }
   if (mem != NULL) {
-    if (mem->bo->size < 1024) { /* 1K for the performance counters is enough */
+      if (drm_intel_bo_get_size(mem->bo) < 1024) { /* 1K for the performance counters is enough */
       err = CL_INVALID_BUFFER_SIZE;
       goto error;
     }

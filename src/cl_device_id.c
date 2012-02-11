@@ -22,7 +22,11 @@
 #include "cl_internals.h"
 #include "cl_utils.h"
 #include "cl_defs.h"
+#ifdef _PLASMA
+#include "plasma/cl_device_data.h"
+#else
 #include "intel/cl_device_data.h"
+#endif
 #include "CL/cl.h"
 
 #include <assert.h>

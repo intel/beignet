@@ -24,8 +24,13 @@
 #include "cl_alloc.h"
 #include "cl_device_id.h"
 
+#ifdef _PLASMA
+#include "plasma/plasma_export.h"
+#else
 #include "intel/intel_driver.h"
+#include "intel/intel_gpgpu.h"
 #include "intel_bufmgr.h" /* libdrm_intel */
+#endif
 
 #include "CL/cl.h"
 #include "CL/cl_intel.h"
@@ -140,7 +145,7 @@ cl_mem_copy_data_linear(cl_mem mem,
   size_t x, y, p;
   char *dst;
   drm_intel_bo_map(mem->bo, 1);
-  dst = mem->bo->virtual;
+  dst = drm_intel_bo_get_virtual(mem->bo);
   for (y = 0; y < h; ++y) {
     char *src = (char*) data + pitch * y;
     for (x = 0; x < w; ++x) {
@@ -178,7 +183,7 @@ cl_mem_copy_data_tilex(cl_mem mem,
   char *end = (char*) data + pitch * h;
 
   drm_intel_bo_map(mem->bo, 1);
-  img = mem->bo->virtual;
+  img = drm_intel_bo_get_virtual(mem->bo);
   for (tiley = 0; tiley < tiley_n; ++tiley)
   for (tilex = 0; tilex < tilex_n; ++tilex) {
     char *tile = img + (tilex + tiley * tilex_n) * tile_sz;
@@ -213,7 +218,7 @@ cl_mem_copy_data_tiley(cl_mem mem,
   char *end = (char*) data + pitch * h;
 
   drm_intel_bo_map(mem->bo, 1);
-  img = mem->bo->virtual;
+  img = drm_intel_bo_get_virtual(mem->bo);
   for (tiley = 0; tiley < tiley_n; ++tiley)
   for (tilex = 0; tilex < tilex_n; ++tilex) {
     char *tile = img + (tiley * tilex_n + tilex) * tile_sz;
@@ -362,8 +367,8 @@ LOCAL void*
 cl_mem_map(cl_mem mem)
 {
   drm_intel_bo_map(mem->bo, 1);
-  assert(mem->bo->virtual);
-  return mem->bo->virtual;
+  assert(drm_intel_bo_get_virtual(mem->bo));
+  return drm_intel_bo_get_virtual(mem->bo);
 }
 
 LOCAL cl_int

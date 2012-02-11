@@ -21,6 +21,7 @@
 #define __GENX_GPGPU_H__
 
 #include "cl_utils.h"
+#include "intel_bufmgr.h"
 
 #include <stdlib.h>
 #include <stdint.h>
@@ -40,7 +41,7 @@ typedef struct genx_gpgpu_kernel {
   const char *name;        /* kernel name and bo name */
   uint32_t grf_blocks;     /* register blocks kernel wants (in 8 reg blocks) */
   uint32_t cst_sz;         /* total size of all constants */
-  const uint32_t *bin;     /* binary code of the kernel */
+  const char *bin;     /* binary code of the kernel */
   int32_t size;            /* kernel code size */
   struct _drm_intel_bo *bo;/* kernel code in the proper addr space */
   int32_t barrierID;       /* barrierID for _this_ kernel */
@@ -67,11 +68,14 @@ extern void intel_gpgpu_delete(intel_gpgpu_t*);
 /* Get the device generation */
 extern int32_t intel_gpgpu_version(intel_gpgpu_t*);
 
+/* Buffer management wrapper APIs */
+extern uint32_t drm_intel_bo_get_size(drm_intel_bo *bo);
+extern void *drm_intel_bo_get_virtual(drm_intel_bo *bo);
+
 /* Set typeless buffer descriptor in the current binding table */
 extern void gpgpu_bind_buf(intel_gpgpu_t*,
                            int32_t index,
                            struct _drm_intel_bo* obj_bo,
-                           uint32_t size,
                            uint32_t cchint);
 
 typedef enum gpgpu_tiling {

@@ -28,6 +28,7 @@
 #include <sys/stat.h>
 #include <sys/ioctl.h>
 #include <xf86drm.h>
+#include <stdio.h>
 
 #include "cl_utils.h"
 #include "cl_alloc.h"

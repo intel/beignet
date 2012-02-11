@@ -605,9 +605,10 @@ LOCAL void
 gpgpu_bind_buf(intel_gpgpu_t *state,
                int32_t index,
                dri_bo* obj_bo,
-               uint32_t size,
                uint32_t cchint)
 {
+  uint32_t size = obj_bo->size;
+  
   assert(index < MAX_SURFACES);
   if(state->drv->gen_ver == 6)
     gpgpu_bind_buf_gen6(state, index, obj_bo, size, cchint);
@@ -825,3 +826,11 @@ intel_gpgpu_version(intel_gpgpu_t *gpgpu)
   return gpgpu->drv->gen_ver;
 }
 
+uint32_t drm_intel_bo_get_size(drm_intel_bo *bo)
+{
+    return (bo->size);
+}
+void *drm_intel_bo_get_virtual(drm_intel_bo *bo)
+{
+    return (bo->virtual);
+}

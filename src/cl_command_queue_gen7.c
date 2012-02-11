@@ -26,8 +26,12 @@
 #include "cl_utils.h"
 #include "cl_alloc.h"
 
+#ifdef _PLASMA
+#include "plasma/plasma_export.h"
+#else
 #include "intel_bufmgr.h"
 #include "intel/intel_gpgpu.h"
+#endif
 
 #include <assert.h>
 #include <stdio.h>
@@ -36,7 +40,11 @@
 static INLINE size_t
 cl_kernel_compute_batch_sz(cl_kernel k)
 {
-  size_t sz = 256 + 32;
+#ifdef _PLASMA
+    size_t sz = 0x1000; // _PLASMA
+#else
+    size_t sz = 256 + 32;
+#endif
   return sz;
 }
 
@@ -106,8 +114,8 @@ cl_command_queue_ND_range_gen7(cl_command_queue queue,
   /* Setup kernel */
   kernel.name = "OCL kernel";
   kernel.grf_blocks = 128;
-  kernel.bin = NULL,
-  kernel.size = 0,
+  kernel.bin = ker->kernel_heap; // _PLASMA ; NULL
+  kernel.size = ker->kernel_heap_sz; // _PLASMA ; 0
   kernel.bo = ker->bo;
   kernel.barrierID = 0;
   kernel.use_barrier = ker->patch.exec_env.has_barriers;
