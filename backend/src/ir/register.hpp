@@ -73,9 +73,9 @@ namespace ir {
   public:
     /*! Return the index of a newly allocated register register */
     INLINE RegisterIndex append(Register::Family family) {
-      const uint32_t index = regs.size();
+      const uint32_t index = regNum();
       const Register reg(family);
-      assert(index <= MAX_INDEX);
+      GBE_ASSERT(index <= MAX_INDEX);
       regs.push_back(reg);
       return index;
     }
@@ -83,7 +83,7 @@ namespace ir {
     template <typename First, typename... Rest>
     INLINE TupleIndex appendTuple(First first, Rest... rest) {
       const TupleIndex index = regTuples.size();
-      assert(first < regs.size());
+      GBE_ASSERT(first < regNum());
       regTuples.push_back(first);
       appendTuple(rest...);
       return index;
@@ -92,18 +92,19 @@ namespace ir {
     INLINE void appendTuple(void) {}
     /*! Return a copy of the register at index */
     INLINE Register get(RegisterIndex index) const {
-      assert(index < regs.size() && index <= MAX_INDEX);
+      GBE_ASSERT(index < regNum());
       return regs[index];
     }
     /*! Get the register index from the tuple */
     INLINE RegisterIndex get(TupleIndex index, uint32_t which) const {
-      assert(index + which < regTuples.size());
+      GBE_ASSERT(index + which < regTuples.size());
       return regTuples[index + which];
     }
     /*! Number of registers in the register file */
     INLINE uint32_t regNum(void) const { return regs.size(); }
+    /*! Number of tuples in the register file */
+    INLINE uint32_t tupleNum(void) const { return regTuples.size(); }
   private:
-    enum { MAX_INDEX = 0xffff };     //!< We encode indices in 2 bytes
     vector<Register> regs;           //!< All the registers together
     vector<RegisterIndex> regTuples; //!< Tuples are used for many src / dst
     GBE_CLASS(RegisterFile);

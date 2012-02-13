@@ -31,9 +31,32 @@ namespace ir {
   Context::Context(Unit &unit) : unit(unit), fn(NULL), bb(NULL) {}
 
   void Context::startFunction(const std::string &name) {
-    Function *fn = unit.newFunction(name);
+    if (fn != NULL) fnStack.push_back(fn);
+    fn = unit.newFunction(name);
+  }
+
+  void Context::endFunction(void) {
     GBE_ASSERT(fn != NULL);
-    fnStack.push_back(fn);
+    if (fnStack.size() != 0) {
+      fn = fnStack.back();
+      fnStack.pop_back();
+    } else
+      fn = NULL;
+  }
+
+  RegisterIndex Context::reg(Register::Family family) {
+    GBE_ASSERT(fn != NULL);
+    return fn->file.append(family);
+  }
+
+  void Context::input(RegisterIndex reg) {
+    GBE_ASSERT(fn != NULL && reg < fn->file.regNum());
+    fn->input.push_back(reg);
+  }
+
+  void Context::output(RegisterIndex reg) {
+    GBE_ASSERT(fn != NULL && reg < fn->file.regNum());
+    fn->output.push_back(reg);
   }
 
 } /* namespace ir */

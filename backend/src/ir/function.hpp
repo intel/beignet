@@ -68,16 +68,24 @@ namespace ir {
     }
     /*! Get the given value ie immediate from the function */
     INLINE Value getValue(uint32_t ID) const {
-      assert(ID < value.size());
-      return value[ID];
+      GBE_ASSERT(ID < values.size());
+      return values[ID];
     }
+    /*! Number of registers in the register file */
+    INLINE uint32_t regNum(void) const { return file.regNum(); }
+    /*! Number of register tuples in the register file */
+    INLINE uint32_t tupleNum(void) const { return file.tupleNum(); }
+    /*! Number of labels in the function */
+    INLINE uint32_t labelNum(void) const { return labels.size(); }
+    /*! Number of immediate values in the function */
+    INLINE uint32_t valueNum(void) const { return values.size(); }
 
   private:
     friend class Context;         //!< Can freely modify a function
     vector<RegisterIndex> input;  //!< Input registers of the function
     vector<RegisterIndex> output; //!< Output registers of the function
     vector<BasicBlock*> labels;   //!< Each label points to a basic block
-    vector<Value> value;    //!< All immediate values stored in the function
+    vector<Value> values;   //!< All immediate values stored in the function
     vector<BasicBlock*> bb; //!< All the basic blocks one after the others
     RegisterFile file;      //!< All the registers used in the instructions
   };

@@ -25,16 +25,16 @@
 #ifndef __GBE_IR_INSTRUCTION_HPP__
 #define __GBE_IR_INSTRUCTION_HPP__
 
-#include "sys/platform.hpp"
 #include "ir/register.hpp"
 #include "ir/value.hpp"
 #include "ir/type.hpp"
+#include "sys/platform.hpp"
 
 namespace gbe {
 namespace ir {
 
   /*! All opcodes */
-  enum Opcode : uint8_t {
+  enum Opcode : char {
 #define DECL_INSN(INSN, FAMILY) OP_##INSN,
 #include "ir/instruction.hxx"
 #undef DECL_INSN
@@ -67,6 +67,14 @@ namespace ir {
   class ALIGNED(sizeof(uint64_t)) Instruction
   {
   public:
+    /*! Initialize the instruction from a 8 bytes stream */
+    INLINE Instruction(const char *stream) {
+      opcode = Opcode(stream[0]);
+      for (uint32_t byte = 0; byte < opaqueSize; ++byte)
+        opaque[byte] = stream[byte+1];
+    }
+    /*! Uninitialize instruction */
+    INLINE Instruction(void) {}
     /*! Get the instruction opcode */
     INLINE Opcode getOpcode(void) const { return opcode; }
     /*! Get the number of sources for this instruction  */
@@ -81,11 +89,11 @@ namespace ir {
     Register getDst(const Function &fn, uint32_t ID = 0u) const;
     /*! Get the register of the given destination */
     Register getSrc(const Function &fn, uint32_t ID = 0u) const;
-    /*! Check that the instruction is well formed. Return true if well formed.
-     *  j
-     *  Otherwise, fill the string with a help message
+    /*! Check that the instruction is well formed (type properly match,
+     *  registers not of bound and so on). If not well formed, provide a reason
+     *  in string why
      */
-    bool check(void) const;
+    bool wellFormed(const Function &fn, std::string &why) const;
     /*! Indicates if the instruction belongs to instruction type T. Typically, T
      *  can be BinaryInstruction, UnaryInstruction, LoadInstruction and so on
      */
@@ -93,12 +101,13 @@ namespace ir {
       return T::isClassOf(*this);
     }
   protected:
-    Opcode opcode;                             //!< Idendifies the instruction
-    uint8_t opaque[sizeof(uint64_t)-sizeof(uint8_t)];//!< Remainder of it
+    enum { opaqueSize = sizeof(uint64_t)-sizeof(uint8_t) };
+    Opcode opcode;           //!< Idendifies the instruction
+    char opaque[opaqueSize]; //!< Remainder of it
   };
 
   // Check that the instruction is properly formed by the compiler
-  STATIC_ASSERT(sizeof(Instruction) == sizeof(uint64_t));
+  static_assert(sizeof(Instruction)==sizeof(uint64_t), "Bad instruction size");
 
   /*! Unary instructions are typed. dst and sources share the same type */
   class UnaryInstruction : public Instruction {
@@ -259,65 +268,67 @@ namespace ir {
   ///////////////////////////////////////////////////////////////////////////
 
   /*! mov.type dst src */
-  Instruction mov(Type type, RegisterIndex dst, RegisterIndex src);
+  Instruction MOV(Type type, RegisterIndex dst, RegisterIndex src);
   /*! cos.type dst src */
-  Instruction cos(Type type, RegisterIndex dst, RegisterIndex src);
+  Instruction COS(Type type, RegisterIndex dst, RegisterIndex src);
   /*! sin.type dst src */
-  Instruction sin(Type type, RegisterIndex dst, RegisterIndex src);
+  Instruction SIN(Type type, RegisterIndex dst, RegisterIndex src);
   /*! tan.type dst src */
-  Instruction tan(Type type, RegisterIndex dst, RegisterIndex src);
+  Instruction TAN(Type type, RegisterIndex dst, RegisterIndex src);
   /*! log.type dst src */
-  Instruction log(Type type, RegisterIndex dst, RegisterIndex src);
+  Instruction LOG(Type type, RegisterIndex dst, RegisterIndex src);
   /*! sqr.type dst src */
-  Instruction sqr(Type type, RegisterIndex dst, RegisterIndex src);
+  Instruction SQR(Type type, RegisterIndex dst, RegisterIndex src);
   /*! rsq.type dst src */
-  Instruction rsq(Type type, RegisterIndex dst, RegisterIndex src);
+  Instruction RSQ(Type type, RegisterIndex dst, RegisterIndex src);
   /*! pow.type dst src0 src1 */
-  Instruction pow(Type type, RegisterIndex dst, RegisterIndex src0, RegisterIndex src1);
+  Instruction POW(Type type, RegisterIndex dst, RegisterIndex src0, RegisterIndex src1);
   /*! mul.type dst src0 src1 */
-  Instruction mul(Type type, RegisterIndex dst, RegisterIndex src0, RegisterIndex src1);
+  Instruction MUL(Type type, RegisterIndex dst, RegisterIndex src0, RegisterIndex src1);
   /*! add.type dst src0 src1 */
-  Instruction add(Type type, RegisterIndex dst, RegisterIndex src0, RegisterIndex src1);
+  Instruction ADD(Type type, RegisterIndex dst, RegisterIndex src0, RegisterIndex src1);
   /*! sub.type dst src0 src1 */
-  Instruction sub(Type type, RegisterIndex dst, RegisterIndex src0, RegisterIndex src1);
+  Instruction SUB(Type type, RegisterIndex dst, RegisterIndex src0, RegisterIndex src1);
   /*! div.type dst src0 src1 */
-  Instruction div(Type type, RegisterIndex dst, RegisterIndex src0, RegisterIndex src1);
+  Instruction DIV(Type type, RegisterIndex dst, RegisterIndex src0, RegisterIndex src1);
   /*! rem.type dst src0 src1 */
-  Instruction rem(Type type, RegisterIndex dst, RegisterIndex src0, RegisterIndex src1);
+  Instruction REM(Type type, RegisterIndex dst, RegisterIndex src0, RegisterIndex src1);
   /*! shl.type dst src0 src1 */
-  Instruction shl(Type type, RegisterIndex dst, RegisterIndex src0, RegisterIndex src1);
+  Instruction SHL(Type type, RegisterIndex dst, RegisterIndex src0, RegisterIndex src1);
   /*! shr.type dst src0 src1 */
-  Instruction shr(Type type, RegisterIndex dst, RegisterIndex src0, RegisterIndex src1);
+  Instruction SHR(Type type, RegisterIndex dst, RegisterIndex src0, RegisterIndex src1);
   /*! asr.type dst src0 src1 */
-  Instruction asr(Type type, RegisterIndex dst, RegisterIndex src0, RegisterIndex src1);
+  Instruction ASR(Type type, RegisterIndex dst, RegisterIndex src0, RegisterIndex src1);
   /*! bsf.type dst src0 src1 */
-  Instruction bsf(Type type, RegisterIndex dst, RegisterIndex src0, RegisterIndex src1);
+  Instruction BSF(Type type, RegisterIndex dst, RegisterIndex src0, RegisterIndex src1);
   /*! bsb.type dst src0 src1 */
-  Instruction bsb(Type type, RegisterIndex dst, RegisterIndex src0, RegisterIndex src1);
+  Instruction BSB(Type type, RegisterIndex dst, RegisterIndex src0, RegisterIndex src1);
   /*! or.type dst src0 src1 */
-  Instruction or$(Type type, RegisterIndex dst, RegisterIndex src0, RegisterIndex src1);
+  Instruction OR(Type type, RegisterIndex dst, RegisterIndex src0, RegisterIndex src1);
   /*! xor.type dst src0 src1 */
-  Instruction xor$(Type type, RegisterIndex dst, RegisterIndex src0, RegisterIndex src1);
+  Instruction XOR(Type type, RegisterIndex dst, RegisterIndex src0, RegisterIndex src1);
   /*! and.type dst src0 src1 */
-  Instruction and$(Type type, RegisterIndex dst, RegisterIndex src0, RegisterIndex src1);
+  Instruction AND(Type type, RegisterIndex dst, RegisterIndex src0, RegisterIndex src1);
   /*! mad.type dst {src0, src1, src2} == src */
-  Instruction mad(Type type, RegisterIndex dst, TupleIndex src);
+  Instruction MAD(Type type, RegisterIndex dst, TupleIndex src);
   /*! cvt.{dstType <- srcType} dst src */
-  Instruction cvt(Type dstType, Type srcType, RegisterIndex dst, RegisterIndex src0, RegisterIndex src1);
+  Instruction CVT(Type dstType, Type srcType, RegisterIndex dst, RegisterIndex src0, RegisterIndex src1);
   /*! bra labelIndex */
-  Instruction bra(LabelIndex labelIndex);
+  Instruction BRA(LabelIndex labelIndex);
   /*! (pred) bra labelIndex */
-  Instruction bra(LabelIndex labelIndex, RegisterIndex pred);
+  Instruction BRA(LabelIndex labelIndex, RegisterIndex pred);
   /*! loadi.type dst value */
-  Instruction loadi(Type type, RegisterIndex dst, ValueIndex value);
+  Instruction LOADI(Type type, RegisterIndex dst, ValueIndex value);
   /*! load.type.space {dst1,...,dst_valueNum} offset value */
-  Instruction load(Type type, TupleIndex dst, RegisterIndex offset, MemorySpace space, uint16_t valueNum);
+  Instruction LOAD(Type type, TupleIndex dst, RegisterIndex offset, MemorySpace space, uint16_t valueNum);
   /*! store.type.space offset {src1,...,src_valueNum} value */
-  Instruction store(Type type, TupleIndex src, RegisterIndex offset, MemorySpace space, uint16_t valueNum);
+  Instruction STORE(Type type, TupleIndex src, RegisterIndex offset, MemorySpace space, uint16_t valueNum);
   /*! fence.space */
-  Instruction fence(MemorySpace space);
+  Instruction FENCE(MemorySpace space);
   /*! label labelIndex */
-  Instruction label(LabelIndex labelIndex);
+  Instruction LABEL(LabelIndex labelIndex);
+  /*! texture instruction TODO */
+  Instruction TEX(void);
 
 } /* namespace ir */
 } /* namespace gbe */

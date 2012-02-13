@@ -217,10 +217,6 @@
 #define GBE_ASSERT(EXPR) do { } while (0)
 #endif
 
-/*! Compile-time assertion */
-#define STATIC_ASSERT(value)                                     \
-  struct JOIN(__,JOIN(__,__LINE__)) { int x[(value) ? 1 : -1]; }
-
 /*! Fatal error macros */
 #define NOT_IMPLEMENTED FATAL ("Not implemented")
 #define FATAL_IF(COND, MSG)                          \

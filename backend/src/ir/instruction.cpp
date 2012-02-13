@@ -19,7 +19,6 @@
 
 /**
  * \file instruction.cpp
- *
  * \author Benjamin Segovia <benjamin.segovia@intel.com>
  */
 #include "ir/instruction.hpp"
@@ -54,9 +53,20 @@ namespace ir {
       }
     };
 
+    /*! Policy shared by all the internal instructions */
+    struct ALIGNED_INSTRUCTION BasePolicy {
+      /*! Create an instruction from its internal representation */
+      Instruction convert(void) const {
+        return Instruction(reinterpret_cast<const char *>(&this->opcode));
+      }
+      /*! Instruction opcode */
+      Opcode opcode;
+    };
+
     /*! All unary and binary arithmetic instructions */
     template <uint32_t srcNum> // 1 or 2
-    class ALIGNED_INSTRUCTION NaryInstruction {
+    class NaryInstruction : public BasePolicy
+    {
     public:
       INLINE uint32_t getSrcNum(void) const { return srcNum; }
       INLINE uint32_t getDstNum(void) const { return 1; }
@@ -69,14 +79,14 @@ namespace ir {
         return src[ID];
       }
       INLINE Type getType(void) const { return this->type; }
-      Opcode opcode;            //!< Instruction opcode
       Type type;                //!< Type of the instruction
       RegisterIndex dst;        //!< Index of the register in the register file
       RegisterIndex src[srcNum];//!< Indices of the sources
     };
 
     /*! All 1-source arithmetic instructions */
-    class ALIGNED_INSTRUCTION UnaryInstruction : public NaryInstruction<1> {
+    class UnaryInstruction : public NaryInstruction<1>
+    {
     public:
       UnaryInstruction(Opcode opcode,
                        Type type,
@@ -90,7 +100,8 @@ namespace ir {
     };
 
     /*! All 2-source arithmetic instructions */
-    class ALIGNED_INSTRUCTION BinaryInstruction : public NaryInstruction<2> {
+    class BinaryInstruction : public NaryInstruction<2>
+    {
     public:
       BinaryInstruction(Opcode opcode,
                         Type type,
@@ -108,7 +119,8 @@ namespace ir {
     /*! This is for MADs mostly. Since three sources cannot be encoded in 64
      *  bytes, we use tuples of registers
      */
-    class ALIGNED_INSTRUCTION TernaryInstruction {
+    class TernaryInstruction : public BasePolicy
+    {
     public:
       TernaryInstruction(Opcode opcode,
                          Type type,
@@ -131,13 +143,13 @@ namespace ir {
         return fn.getRegisterIndex(src, ID);
       }
       INLINE Type getType(void) const { return this->type; }
-      Opcode opcode;      //!< Opcode of the instruction
       Type type;          //!< Type of the instruction
       RegisterIndex dst;  //!< Dst is the register index
       TupleIndex src;     //!< 3 sources do not fit in 8 bytes -> use a tuple
     };
 
-    class ALIGNED_INSTRUCTION ConvertInstruction {
+    class ConvertInstruction : public BasePolicy
+    {
     public:
       ConvertInstruction(Type dstType,
                          Type srcType,
@@ -162,14 +174,14 @@ namespace ir {
         assert(ID == 0);
         return src;
       }
-      Opcode opcode;      //!< Opcode of the instruction
       RegisterIndex dst;  //!< Converted value
       RegisterIndex src;  //!< To convert
       Type dstType;       //!< Type to convert to
       Type srcType;       //!< Type to convert from
     };
 
-    class ALIGNED_INSTRUCTION BranchInstruction : public NoDstPolicy {
+    class BranchInstruction : public BasePolicy, public NoDstPolicy
+    {
     public:
       INLINE BranchInstruction(LabelIndex labelIndex, RegisterIndex predicate) {
         this->opcode = OP_BRA;
@@ -188,13 +200,13 @@ namespace ir {
         return predicate;
       }
       INLINE bool isPredicated(void) const { return hasPredicate; }
-      Opcode opcode;            //!< Opcode of the instruction
       RegisterIndex predicate;  //!< Predication means conditional branch
       LabelIndex labelIndex;    //!< Index of the label the branch targets
       bool hasPredicate;        //!< Is it predicated?
     };
 
-    class ALIGNED_INSTRUCTION LoadInstruction {
+    class LoadInstruction : public BasePolicy
+    {
     public:
       LoadInstruction(Type type,
                       TupleIndex dstValues,
@@ -222,7 +234,7 @@ namespace ir {
       INLINE Type getValueType(void) const { return type; }
       INLINE uint32_t getValueNum(void) const { return valueNum; }
       INLINE MemorySpace getAddressSpace(void) const { return memSpace; }
-      Opcode opcode;        //!< Opcode of the instruction
+      INLINE bool wellFormed(const Function &fn, std::string &why) const;
       Type type;            //!< Type to store
       RegisterIndex offset; //!< First source is the offset where to store
       TupleIndex values;    //!< Values to load
@@ -230,7 +242,8 @@ namespace ir {
       uint16_t valueNum;      //!< Number of values to store
     };
 
-    class ALIGNED_INSTRUCTION StoreInstruction : public NoDstPolicy {
+    class StoreInstruction : public BasePolicy, public NoDstPolicy
+    {
     public:
       StoreInstruction(Type type,
                        RegisterIndex offset,
@@ -253,26 +266,25 @@ namespace ir {
           return fn.getRegisterIndex(values, ID - 1);
       }
       INLINE uint32_t getSrcNum(void) const { return valueNum + 1u; }
-      INLINE Type getValueType(void) const { return type; }
       INLINE uint32_t getValueNum(void) const { return valueNum; }
+      INLINE Type getValueType(void) const { return type; }
       INLINE MemorySpace getAddressSpace(void) const { return memSpace; }
-      Opcode opcode;        //!< Opcode of the instruction
+      INLINE bool wellFormed(const Function &fn, std::string &why) const;
       Type type;            //!< Type to store
       RegisterIndex offset; //!< First source is the offset where to store
       TupleIndex values;    //!< Values to store
       MemorySpace memSpace; //!< Where to store
-      uint16_t valueNum;      //!< Number of values to store
+      uint16_t valueNum;    //!< Number of values to store
     };
 
-    class ALIGNED_INSTRUCTION TextureInstruction :
-      public NoDstPolicy, public NoSrcPolicy // TODO REMOVE THIS
+    class TextureInstruction : public BasePolicy, public NoDstPolicy, public NoSrcPolicy // TODO REMOVE THIS
     {
     public:
       INLINE TextureInstruction(void) { this->opcode = OP_TEX; }
-      Opcode opcode; //!< Opcode of the instruction
     };
 
-    class ALIGNED_INSTRUCTION LoadImmInstruction : public NoSrcPolicy {
+    class LoadImmInstruction : public BasePolicy, public NoSrcPolicy
+    {
     public:
       INLINE LoadImmInstruction(Type type, RegisterIndex dst, ValueIndex valueIndex) {
         this->dst = dst;
@@ -289,37 +301,101 @@ namespace ir {
         return dst;
       }
       INLINE Type getType(void) const { return this->type; }
-      Opcode opcode;        //!< Opcode of the instruction
+      bool wellFormed(const Function &fn, std::string &why) const;
       RegisterIndex dst;    //!< Register to store into
       ValueIndex valueIndex;//!< Index in the vector of immediates
       Type type;            //!< Type of the immediate
     };
 
-    class ALIGNED_INSTRUCTION FenceInstruction :
-      public NoSrcPolicy, public NoDstPolicy
+    class FenceInstruction : public BasePolicy, public NoSrcPolicy, public NoDstPolicy
     {
     public:
       INLINE FenceInstruction(MemorySpace memSpace) {
         this->opcode = OP_FENCE;
         this->memSpace = memSpace;
       }
-      Opcode opcode;        //!< Opcode of the instruction
+      bool wellFormed(const Function &fn, std::string &why) const;
       MemorySpace memSpace; //!< The loads and stores to order
     };
 
-    class ALIGNED_INSTRUCTION LabelInstruction :
-      public NoDstPolicy, public NoSrcPolicy
+    class LabelInstruction : public BasePolicy, public NoDstPolicy, public NoSrcPolicy
     {
     public:
       INLINE LabelInstruction(LabelIndex labelIndex) {
         this->opcode = OP_LABEL;
         this->labelIndex = labelIndex;
       }
-      Opcode opcode;          //!< Opcode of the instruction
+      INLINE bool wellFormed(const Function &fn, std::string &why) const;
       LabelIndex labelIndex;  //!< Index of the label
     };
 
 #undef ALIGNED_INSTRUCTION
+
+    /////////////////////////////////////////////////////////////////////////
+    // Implements all the wellFormed methods
+    /////////////////////////////////////////////////////////////////////////
+
+    /*! Loads and stores follow the same restrictions */
+    template <typename T>
+    INLINE bool wellFormedLoadStore(const T &insn, const Function &fn, std::string &why) {
+      if (UNLIKELY(insn.offset >= fn.regNum())) {
+        why = "Out-of-bound offset register index";
+        return false;
+      } else if (UNLIKELY(insn.values + insn.valueNum > fn.tupleNum())) {
+        why = "Out-of-bound tuple index";
+        return false;
+      }
+      // Check that all the registers have the same size
+      const Register::Family family = getFamily(insn.type);
+      for (uint32_t regID = 0; regID < insn.valueNum; ++regID) {
+        const RegisterIndex index = fn.getRegisterIndex(insn.values, regID);
+        if (index > fn.regNum()) {
+          why = "Out-of-bound register index";
+          return false;
+        } else {
+          const Register reg = fn.getRegister(regID);
+          if (reg.family != family) {
+            why = "Register family does match instruction type";
+            return false;
+          }
+        }
+      }
+      return true;
+    }
+    INLINE bool LoadInstruction::wellFormed(const Function &fn, std::string &why) const {
+      return wellFormedLoadStore(*this, fn, why);
+    }
+    INLINE bool StoreInstruction::wellFormed(const Function &fn, std::string &why) const {
+      return wellFormedLoadStore(*this, fn, why);
+    }
+
+    INLINE bool LoadImmInstruction::wellFormed(const Function &fn, std::string &why) const {
+      if (UNLIKELY(dst >= fn.regNum())) {
+        why = "Out-of-bound register index";
+        return false;
+      } else if (UNLIKELY(valueIndex >= fn.valueNum())) {
+        why = "Out-of-bound immediate value index";
+        return false;
+      } else if (UNLIKELY(type != fn.getValue(valueIndex).type)) {
+        why = "Inconsistant type for the immediate value to load";
+        return false;
+      } else
+        return true;
+    }
+
+    INLINE bool FenceInstruction::wellFormed(const Function &fn, std::string &why) const {
+      return true;
+    }
+
+
+    INLINE bool LabelInstruction::wellFormed(const Function &fn, std::string &why) const {
+      if (UNLIKELY(labelIndex >= fn.labelNum())) {
+        why = "Out-of-bound label index";
+        return false;
+      } else
+        return true;
+    }
+
   } /* namespace internal */
 
   ///////////////////////////////////////////////////////////////////////////
@@ -343,18 +419,18 @@ namespace ir {
   case OP_##OPCODE:                                        \
   return HelperIntrospection<CLASS, RefClass>::value == 1;
 
-#define START_INTROSPECTION(CLASS)                    \
-  STATIC_ASSERT(sizeof(CLASS) == sizeof(Instruction));\
-  bool CLASS::isClassOf(const Instruction &insn) {    \
-    const Opcode op = insn.getOpcode();               \
-    typedef CLASS RefClass;                           \
+#define START_INTROSPECTION(CLASS)                                            \
+  static_assert(sizeof(CLASS)==sizeof(Instruction), "Bad instruction size");  \
+  bool CLASS::isClassOf(const Instruction &insn) {                            \
+    const Opcode op = insn.getOpcode();                                       \
+    typedef CLASS RefClass;                                                   \
     switch (op) {
 
-#define END_INTROSPECTION(CLASS)  \
-      default: return false;      \
-    };                            \
-  }                               \
-  STATIC_ASSERT(offsetof(internal::CLASS, opcode) == 0);
+#define END_INTROSPECTION(CLASS)                                              \
+      default: return false;                                                  \
+    };                                                                        \
+  }                                                                           \
+  static_assert(offsetof(internal::CLASS, opcode)==0, "Bad opcode offset");
 
 START_INTROSPECTION(UnaryInstruction)
 #include "ir/instruction.hxx"
@@ -476,100 +552,102 @@ DECL_MEM_FN(BranchInstruction, bool, isPredicated(void), isPredicated())
   ///////////////////////////////////////////////////////////////////////////
 
   // All unary functions
-#define DECL_EMIT_FUNCTION(NAME, OPCODE)\
-  Instruction NAME(Type type, RegisterIndex dst, RegisterIndex src) {\
-    internal::UnaryInstruction insn(OPCODE, type, dst, src);\
-    return *reinterpret_cast<Instruction*>(&insn);\
+#define DECL_EMIT_FUNCTION(NAME)                                      \
+  Instruction NAME(Type type, RegisterIndex dst, RegisterIndex src) { \
+    const internal::UnaryInstruction insn(OP_##NAME, type, dst, src); \
+    return insn.convert();                                            \
   }
 
-  DECL_EMIT_FUNCTION(mov, OP_MOV)
-  DECL_EMIT_FUNCTION(cos, OP_COS)
-  DECL_EMIT_FUNCTION(sin, OP_SIN)
-  DECL_EMIT_FUNCTION(tan, OP_TAN)
-  DECL_EMIT_FUNCTION(log, OP_LOG)
-  DECL_EMIT_FUNCTION(sqr, OP_SQR)
-  DECL_EMIT_FUNCTION(rsq, OP_RSQ)
+  DECL_EMIT_FUNCTION(MOV)
+  DECL_EMIT_FUNCTION(COS)
+  DECL_EMIT_FUNCTION(SIN)
+  DECL_EMIT_FUNCTION(TAN)
+  DECL_EMIT_FUNCTION(LOG)
+  DECL_EMIT_FUNCTION(SQR)
+  DECL_EMIT_FUNCTION(RSQ)
 
 #undef DECL_EMIT_FUNCTION
 
   // All binary functions
-#define DECL_EMIT_FUNCTION(NAME, OPCODE)\
-  Instruction NAME(Type type, RegisterIndex dst, RegisterIndex src0, RegisterIndex src1) {\
-    internal::BinaryInstruction insn(OPCODE, type, dst, src0, src1);\
-    return *reinterpret_cast<Instruction*>(&insn);\
+#define DECL_EMIT_FUNCTION(NAME)                                              \
+  Instruction NAME(Type type, RegisterIndex dst,                              \
+                   RegisterIndex src0,                                        \
+                   RegisterIndex src1) {                                      \
+    const internal::BinaryInstruction insn(OP_##NAME, type, dst, src0, src1); \
+    return insn.convert();                                                    \
   }
 
-  DECL_EMIT_FUNCTION(mul, OP_MUL)
-  DECL_EMIT_FUNCTION(add, OP_ADD)
-  DECL_EMIT_FUNCTION(sub, OP_SUB)
-  DECL_EMIT_FUNCTION(div, OP_DIV)
-  DECL_EMIT_FUNCTION(rem, OP_REM)
-  DECL_EMIT_FUNCTION(shl, OP_SHL)
-  DECL_EMIT_FUNCTION(shr, OP_SHR)
-  DECL_EMIT_FUNCTION(asr, OP_ASR)
-  DECL_EMIT_FUNCTION(bsf, OP_BSF)
-  DECL_EMIT_FUNCTION(bsb, OP_BSB)
-  DECL_EMIT_FUNCTION(or$, OP_OR)
-  DECL_EMIT_FUNCTION(xor$, OP_XOR)
-  DECL_EMIT_FUNCTION(and$, OP_AND)
+  DECL_EMIT_FUNCTION(MUL)
+  DECL_EMIT_FUNCTION(ADD)
+  DECL_EMIT_FUNCTION(SUB)
+  DECL_EMIT_FUNCTION(DIV)
+  DECL_EMIT_FUNCTION(REM)
+  DECL_EMIT_FUNCTION(SHL)
+  DECL_EMIT_FUNCTION(SHR)
+  DECL_EMIT_FUNCTION(ASR)
+  DECL_EMIT_FUNCTION(BSF)
+  DECL_EMIT_FUNCTION(BSB)
+  DECL_EMIT_FUNCTION(OR)
+  DECL_EMIT_FUNCTION(XOR)
+  DECL_EMIT_FUNCTION(AND)
 
 #undef DECL_EMIT_FUNCTION
 
   // MAD
-  Instruction mad(Type type, RegisterIndex dst, TupleIndex src) {
+  Instruction MAD(Type type, RegisterIndex dst, TupleIndex src) {
     internal::TernaryInstruction insn(OP_MAD, type, dst, src);
-    return *reinterpret_cast<Instruction*>(&insn);
+    return insn.convert();
   }
 
   // CVT
-  Instruction cvt(Type dstType, Type srcType, RegisterIndex dst, TupleIndex src) {
+  Instruction CVT(Type dstType, Type srcType, RegisterIndex dst, TupleIndex src) {
     internal::ConvertInstruction insn(dstType, srcType, dst, src);
-    return *reinterpret_cast<Instruction*>(&insn);
+    return insn.convert();
   }
 
   // BRA
-  Instruction bra(LabelIndex labelIndex) {
+  Instruction BRA(LabelIndex labelIndex) {
     internal::BranchInstruction insn(labelIndex);
-    return *reinterpret_cast<Instruction*>(&insn);
+    return insn.convert();
   }
-  Instruction bra(LabelIndex labelIndex, RegisterIndex pred) {
+  Instruction BRA(LabelIndex labelIndex, RegisterIndex pred) {
     internal::BranchInstruction insn(labelIndex, pred);
-    return *reinterpret_cast<Instruction*>(&insn);
+    return insn.convert();
   }
 
   // LOADI
-  Instruction loadi(Type type, RegisterIndex dst, ValueIndex value) {
+  Instruction LOADI(Type type, RegisterIndex dst, ValueIndex value) {
     internal::LoadImmInstruction insn(type, dst, value);
-    return *reinterpret_cast<Instruction*>(&insn);
+    return insn.convert();
   }
 
   // LOAD and STORE
-#define DECL_EMIT_FUNCTION(NAME, CLASS)   \
-  Instruction NAME(Type type,             \
-                   TupleIndex tuple,      \
-                   RegisterIndex offset,  \
-                   MemorySpace space,     \
-                   uint16_t valueNum)       \
-  {                                       \
+#define DECL_EMIT_FUNCTION(NAME, CLASS)                               \
+  Instruction NAME(Type type,                                         \
+                   TupleIndex tuple,                                  \
+                   RegisterIndex offset,                              \
+                   MemorySpace space,                                 \
+                   uint16_t valueNum)                                 \
+  {                                                                   \
     const internal::CLASS insn(type, tuple, offset, space, valueNum); \
-    return *reinterpret_cast<const Instruction*>(&insn);              \
+    return insn.convert();                                            \
   }
 
-  DECL_EMIT_FUNCTION(load, LoadInstruction)
-  DECL_EMIT_FUNCTION(store, StoreInstruction)
+  DECL_EMIT_FUNCTION(LOAD, LoadInstruction)
+  DECL_EMIT_FUNCTION(STORE, StoreInstruction)
 
 #undef DECL_EMIT_FUNCTION
 
   // FENCE
-  Instruction fence(MemorySpace space) {
-    internal::FenceInstruction insn(space);
-    return *reinterpret_cast<Instruction*>(&insn);
+  Instruction FENCE(MemorySpace space) {
+    const internal::FenceInstruction insn(space);
+    return insn.convert();
   }
 
   // LABEL
-  Instruction label(LabelIndex labelIndex) {
-    internal::LabelInstruction insn(labelIndex);
-    return *reinterpret_cast<Instruction*>(&insn);
+  Instruction LABEL(LabelIndex labelIndex) {
+    const internal::LabelInstruction insn(labelIndex);
+    return insn.convert();
   }
 
 } /* namespace ir */
