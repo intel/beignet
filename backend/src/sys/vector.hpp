@@ -19,7 +19,6 @@
 
 /**
  * \file vector.hpp
- *
  * \author Benjamin Segovia <benjamin.segovia@intel.com>
  */
 

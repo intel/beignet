@@ -19,8 +19,10 @@
 
 /**
  * \file alloc.cpp
- *
  * \author Benjamin Segovia <benjamin.segovia@intel.com>
+ *
+ *  Provides facilities to track allocations and pre-initialize memory at
+ *  memory allocation and memory free time
  */
 #include "sys/alloc.hpp"
 #include "sys/atomic.hpp"
@@ -135,15 +137,37 @@ namespace gbe
 
   /*! Declare C like interface functions here */
   static MemDebugger *memDebugger = NULL;
+
+  /*! Stop the memory debugger */
+  static void MemDebuggerEnd(void) {
+    MemDebugger *_debug = memDebugger;
+    memDebugger = NULL;
+    delete _debug;
+  }
+
+  /*! Use this to serialize multiple starts of the debugger */
+  static MutexSys startMemDebuggerMutex;
+
+  /*! Start the memory debugger */
+  static void MemDebuggerStart(void) {
+    Lock<MutexSys> lock(startMemDebuggerMutex);
+    if (memDebugger == NULL) {
+      atexit(MemDebuggerEnd);
+      memDebugger = new MemDebugger;
+    }
+  }
+
   void* MemDebuggerInsertAlloc(void *ptr, const char *file, const char *function, int line) {
-    if (memDebugger) return memDebugger->insertAlloc(ptr, file, function, line);
-    return ptr;
+    if (memDebugger == NULL) MemDebuggerStart();
+    return memDebugger->insertAlloc(ptr, file, function, line);
   }
   void MemDebuggerRemoveAlloc(void *ptr) {
-    if (memDebugger) memDebugger->removeAlloc(ptr);
+    if (memDebugger == NULL) MemDebuggerStart();
+    memDebugger->removeAlloc(ptr);
   }
   void MemDebuggerDumpAlloc(void) {
-    if (memDebugger) memDebugger->dumpAlloc();
+    if (memDebugger == NULL) MemDebuggerStart();
+    memDebugger->dumpAlloc();
   }
   void MemDebuggerEnableMemoryInitialization(bool enabled) {
     memoryInitializationEnabled = enabled;
@@ -151,47 +175,65 @@ namespace gbe
   void MemDebuggerInitializeMem(void *mem, size_t sz) {
     if (memoryInitializationEnabled) std::memset(mem, 0xcd, sz);
   }
-  void MemDebuggerStart(void) {
-    if (memDebugger) MemDebuggerEnd();
-    memDebugger = new MemDebugger;
-  }
-  void MemDebuggerEnd(void) {
-    MemDebugger *_debug = memDebugger;
-    memDebugger = NULL;
-    delete _debug;
-  }
+} /* namespace gbe */
+
 #endif /* GBE_DEBUG_MEMORY */
-}
 
 namespace gbe
 {
-  void* malloc(size_t size) {
-    void *ptr = std::malloc(size);
-    MemDebuggerInitializeMem(ptr, size);
-    return ptr;
-  }
-
-  void* realloc(void *ptr, size_t size) {
 #if GBE_DEBUG_MEMORY
-    if (ptr) MemDebuggerRemoveAlloc(ptr);
-#endif /* GBE_DEBUG_MEMORY */
-    GBE_ASSERT(size);
-    if (ptr == NULL) {
-      ptr = std::realloc(ptr, size);
+  void* malloc(size_t size) {
+    void *ptr = std::malloc(size + sizeof(size_t));
+    *(size_t *) ptr = size;
+    MemDebuggerInitializeMem((char*) ptr + sizeof(size_t), size);
+    return (char *) ptr + sizeof(size_t);
+  }
+  void free(void *ptr) {
+    if (ptr != NULL) {
+      char *toFree = (char*) ptr - sizeof(size_t);
+      const size_t size = *(size_t *) toFree;
       MemDebuggerInitializeMem(ptr, size);
-      return ptr;
-    } else
-      return std::realloc(ptr, size);
+      std::free(toFree);
+    }
+  }
+#else
+  void* malloc(size_t size) { return  std::malloc(size); }
+  void free(void *ptr) { if (ptr != NULL) std::free(ptr); }
+#endif /* GBE_DEBUG_MEMORY */
+
+} /* namespace gbe */
+
+#if GBE_DEBUG_MEMORY
+
+namespace gbe
+{
+  void* alignedMalloc(size_t size, size_t align) {
+    void* mem = malloc(size+(align-1)+sizeof(uintptr_t) + sizeof(void*));
+    FATAL_IF (!mem && size, "memory allocation failed");
+    char* aligned = (char*) mem + sizeof(uintptr_t) + sizeof(void*);
+    aligned += align - ((uintptr_t)aligned & (align - 1));
+    ((void**)aligned)[-1] = mem;
+    ((uintptr_t*)aligned)[-2] = uintptr_t(size);
+    MemDebuggerInitializeMem(aligned, size);
+    return aligned;
   }
 
-  void free(void *ptr) { if (ptr != NULL) std::free(ptr); }
-}
+  void alignedFree(void* ptr) {
+    if (ptr) {
+      const size_t size = ((uintptr_t*)ptr)[-2];
+      MemDebuggerInitializeMem(ptr, size);
+      free(((void**)ptr)[-2]);
+    }
+  }
+} /* namespace gbe */
+
+#else
 
 ////////////////////////////////////////////////////////////////////////////////
 /// Windows Platform
 ////////////////////////////////////////////////////////////////////////////////
 
-#ifdef __WIN32__
+#if defined(__WIN32__)
 
 #define WIN32_LEAN_AND_MEAN
 #include <windows.h>
@@ -205,15 +247,16 @@ namespace gbe
     return ptr;
   }
 
-  void alignedFree(void *ptr) { _mm_free(ptr); }
-}
-#endif
+  void alignedFree(void *ptr) { if (ptr) _mm_free(ptr); }
+} /* namespace gbe */
+
+#endif /* __WIN32__ */
 
 ////////////////////////////////////////////////////////////////////////////////
 /// Linux Platform
 ////////////////////////////////////////////////////////////////////////////////
 
-#ifdef __LINUX__
+#if defined(__LINUX__)
 
 #include <unistd.h>
 #include <sys/mman.h>
@@ -230,16 +273,16 @@ namespace gbe
     return ptr;
   }
 
-  void alignedFree(void *ptr) { free(ptr); }
-}
+  void alignedFree(void *ptr) { if (ptr) free(ptr); }
+} /* namespace gbe */
 
-#endif
+#endif /* __LINUX__ */
 
 ////////////////////////////////////////////////////////////////////////////////
 /// MacOS Platform
 ////////////////////////////////////////////////////////////////////////////////
 
-#ifdef __MACOSX__
+#if defined(__MACOSX__)
 
 #include <cstdlib>
 
@@ -255,11 +298,10 @@ namespace gbe
     return aligned;
   }
 
-  void alignedFree(void* ptr) {
-    GBE_ASSERT(ptr);
-    free(((void**)ptr)[-1]);
-  }
-}
+  void alignedFree(void* ptr) { if (ptr) free(((void**)ptr)[-1]); }
+} /* namespace gbe */
 
-#endif
+#endif /* __MACOSX__ */
+
+#endif /* GBE_DEBUG_MEMORY */
 

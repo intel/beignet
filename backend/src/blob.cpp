@@ -18,38 +18,28 @@
  */
 
 /**
- * \file exception.hpp
- *
+ * \file blob.cpp
  * \author Benjamin Segovia <benjamin.segovia@intel.com>
+ *
+ * Compile the complete project from one file. This allows pretty aggresive
+ * optimization from the compiler and decreases the binary size
  */
-#ifndef __GBE_EXCEPTION_HPP__
-#define __GBE_EXCEPTION_HPP__
 
-#if GBE_COMPILE_UTESTS
+#include "sys/assert.cpp"
+#include "sys/string.cpp"
+#include "sys/alloc.cpp"
+#include "sys/sysinfo.cpp"
+#include "sys/mutex.cpp"
+#include "sys/condition.cpp"
+#include "sys/platform.cpp"
+#include "ir/context.cpp"
+#include "ir/unit.cpp"
+#include "ir/constant.cpp"
+#include "ir/instruction.cpp"
+#include "ir/register.cpp"
+#include "ir/function.cpp"
 
-#include "string.hpp"
-#include <exception>
+#if GBE_COMPILE_UTEST
 
-namespace gbe
-{
-  /*! Exception are only used while using unit tests */
-  class Exception : public std::exception
-  {
-  public:
-    Exception(const std::string &msg) throw() : msg(msg) {}
-    Exception(const Exception &other) throw() : msg(other.msg) {}
-    ~Exception(void) throw() {}
-    Exception &operator= (const Exception &other) throw() {
-      this->msg = other.msg;
-      return *this;
-    }
-    const char *what(void) const throw() { return msg.c_str(); }
-  private:
-    std::string msg; //!< String message
-  };
-
-} /* namespace gbe */
-
-#endif /* GBE_COMPILE_UTESTS */
-#endif /* __GBE_EXCEPTION_HPP__ */
+#endif /* GBE_COMPILE_UTEST */
 

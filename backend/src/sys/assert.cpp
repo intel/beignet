@@ -18,38 +18,45 @@
  */
 
 /**
- * \file exception.hpp
+ * \file assert.cpp
  *
  * \author Benjamin Segovia <benjamin.segovia@intel.com>
  */
-#ifndef __GBE_EXCEPTION_HPP__
-#define __GBE_EXCEPTION_HPP__
-
 #if GBE_COMPILE_UTESTS
 
-#include "string.hpp"
-#include <exception>
+#include "assert.hpp"
+#include "exception.hpp"
+namespace gbe
+{
+  void onFailedAssert(const char *file, const char *fn, int line)
+  {
+    char lineString[256];
+    sprintf(lineString, "%i", line);
+    const std::string msg = "file " + std::string(file)
+                          + ", function " + std::string(fn)
+                          + ", line " + std::string(lineString);
+    throw Exception(msg);
+  }
+} /* namespace gbe */
+
+#else
+
+#include "sys/assert.hpp"
+#include "sys/exception.hpp"
+#include "sys/platform.hpp"
+#include <cstdio>
 
 namespace gbe
 {
-  /*! Exception are only used while using unit tests */
-  class Exception : public std::exception
+  void onFailedAssert(const char *file, const char *fn, int32_t line)
   {
-  public:
-    Exception(const std::string &msg) throw() : msg(msg) {}
-    Exception(const Exception &other) throw() : msg(other.msg) {}
-    ~Exception(void) throw() {}
-    Exception &operator= (const Exception &other) throw() {
-      this->msg = other.msg;
-      return *this;
-    }
-    const char *what(void) const throw() { return msg.c_str(); }
-  private:
-    std::string msg; //!< String message
-  };
-
+    fprintf(stderr, " ASSERTION FAILED: file %s, function %s, line %i\n",
+            file, fn, line);
+    fflush(stdout);
+    DEBUGBREAK();
+    _exit(-1);
+  }
 } /* namespace gbe */
 
 #endif /* GBE_COMPILE_UTESTS */
-#endif /* __GBE_EXCEPTION_HPP__ */
 

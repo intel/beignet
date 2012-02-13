@@ -18,38 +18,18 @@
  */
 
 /**
- * \file exception.hpp
+ * \file assert.hpp
  *
  * \author Benjamin Segovia <benjamin.segovia@intel.com>
  */
-#ifndef __GBE_EXCEPTION_HPP__
-#define __GBE_EXCEPTION_HPP__
-
-#if GBE_COMPILE_UTESTS
-
-#include "string.hpp"
-#include <exception>
+#ifndef __GBE_ASSERT_HPP__
+#define __GBE_ASSERT_HPP__
 
 namespace gbe
 {
-  /*! Exception are only used while using unit tests */
-  class Exception : public std::exception
-  {
-  public:
-    Exception(const std::string &msg) throw() : msg(msg) {}
-    Exception(const Exception &other) throw() : msg(other.msg) {}
-    ~Exception(void) throw() {}
-    Exception &operator= (const Exception &other) throw() {
-      this->msg = other.msg;
-      return *this;
-    }
-    const char *what(void) const throw() { return msg.c_str(); }
-  private:
-    std::string msg; //!< String message
-  };
-
+  /*! To ensure that condition truth. Optional message is supported */
+  void onFailedAssert(const char *file, const char *fn, int line);
 } /* namespace gbe */
 
-#endif /* GBE_COMPILE_UTESTS */
-#endif /* __GBE_EXCEPTION_HPP__ */
+#endif /* __GBE_ASSERT_HPP__ */
 

@@ -19,7 +19,6 @@
 
 /**
  * \file alloc.hpp
- *
  * \author Benjamin Segovia <benjamin.segovia@intel.com>
  */
 #ifndef __GBE_ALLOC_HPP__
@@ -33,7 +32,6 @@ namespace gbe
 {
   /*! regular allocation */
   void* malloc(size_t size);
-  void* realloc(void *ptr, size_t size);
   void  free(void *ptr);
 
   /*! Aligned allocation */
@@ -47,16 +45,12 @@ namespace gbe
   void  MemDebuggerDumpAlloc(void);
   void  MemDebuggerInitializeMem(void *mem, size_t sz);
   void  MemDebuggerEnableMemoryInitialization(bool enabled);
-  void  MemDebuggerStart(void);
-  void  MemDebuggerEnd(void);
 #else
   INLINE void* MemDebuggerInsertAlloc(void *ptr, const char*, const char*, int) {return ptr;}
   INLINE void  MemDebuggerRemoveAlloc(void *ptr) {}
   INLINE void  MemDebuggerDumpAlloc(void) {}
   INLINE void  MemDebuggerInitializeMem(void *mem, size_t sz) {}
   INLINE void  MemDebuggerEnableMemoryInitialization(bool enabled) {}
-  INLINE void  MemDebuggerStart(void) {}
-  INLINE void  MemDebuggerEnd(void) {}
 #endif /* GBE_DEBUG_MEMORY */
 
   /*! Properly handle the allocated type */
@@ -96,20 +90,20 @@ namespace gbe
 
 /*! Declare a class with custom allocators */
 #define GBE_CLASS(TYPE) \
-public:                \
+public:                 \
   GBE_STRUCT(TYPE)      \
 private:
 
 /*! Declare an aligned structure */
-#define GBE_ALIGNED_STRUCT(ALIGN)                                              \
-  void* operator new(size_t size)   { return gbe::alignedMalloc(size, ALIGN); }\
-  void* operator new[](size_t size) { return gbe::alignedMalloc(size, ALIGN); }\
-  void  operator delete(void* ptr)   { gbe::alignedFree(ptr); }                \
+#define GBE_ALIGNED_STRUCT(ALIGN)                                               \
+  void* operator new(size_t size)   { return gbe::alignedMalloc(size, ALIGN); } \
+  void* operator new[](size_t size) { return gbe::alignedMalloc(size, ALIGN); } \
+  void  operator delete(void* ptr)   { gbe::alignedFree(ptr); }                 \
   void  operator delete[](void* ptr) { gbe::alignedFree(ptr); }
 
 /*! Declare an aligned class */
 #define GBE_ALIGNED_CLASS(ALIGN)    \
-public:                            \
+public:                             \
   GBE_ALIGNED_STRUCT(ALIGN)         \
 private:
 
@@ -131,9 +125,6 @@ private:
 
 #define GBE_MALLOC(SZ)               \
   gbe::MemDebuggerInsertAlloc(gbe::malloc(SZ),__FILE__, __FUNCTION__, __LINE__)
-
-#define GBE_REALLOC(PTR, SZ)         \
-  gbe::MemDebuggerInsertAlloc(gbe::realloc(PTR, SZ),__FILE__, __FUNCTION__, __LINE__)
 
 #define GBE_FREE(X)                  \
   do { gbe::MemDebuggerRemoveAlloc(X); gbe::free(X); } while (0)
