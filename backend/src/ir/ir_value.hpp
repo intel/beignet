@@ -31,17 +31,17 @@ namespace gbe
   public:
 #define DECL_CONSTRUCTOR(TYPE, FIELD) \
     Value(TYPE FIELD) { this->data.u64 = 0llu; this->data.FIELD = FIELD; }
-    DECL_CONSTRUCTOR(int8, s8);
-    DECL_CONSTRUCTOR(uint8, u8);
+    DECL_CONSTRUCTOR(int8_t, s8);
+    DECL_CONSTRUCTOR(uint8_t, u8);
     union {
-      int8 s8;
-      uint8 u8;
-      int16 i16;
-      uint16 u16;
-      int32 i32;
-      uint32 u32;
-      int64 i64;
-      uint64 u64;
+      int8_t s8;
+      uint8_t u8;
+      int16_t i16;
+      uint16_t u16;
+      int32_t i32;
+      uint32_t u32;
+      int64_t i64;
+      uint64_t u64;
       float f32;
       double f64;
     } data;     //!< Value to store

@@ -43,7 +43,7 @@ namespace gbe
     /*! Return NULL if the function already exists */
     Function *newFunction(const std::string &name);
     /*! Create a new constant in the constant set */
-    void newConstant(const char*, const std::string&, uint32 size, uint32 alignment);
+    void newConstant(const char*, const std::string&, uint32_t size, uint32_t alignment);
   private:
     hash_map<std::string, Function*> functions; //!< All the defined functions
     ConstantSet constantSet;  //!< All the constants defined in the unit

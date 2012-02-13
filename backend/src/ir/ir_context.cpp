@@ -23,10 +23,10 @@
 namespace gbe
 {
   Context::Context(Unit &unit) : unit(unit), fn(NULL), bb(NULL) {}
+
   void Context::startFunction(const std::string &name) {
     Function *fn = unit.newFunction(name);
-    if (UNLIKELY(fn == NULL))
-        throw std::exception("Function " + name " already defined");
+    GBE_ASSERT(fn != NULL);
     fnStack.push_back(fn);
   }
 } /* namespace gbe */

@@ -28,14 +28,14 @@
 namespace gbe
 {
   /*! All opcodes */
-  enum Opcode : uint8 {
+  enum Opcode : uint8_t {
 #define DECL_INSN(INSN, FAMILY) OP_##INSN,
 #include "ir_instruction.hxx"
 #undef DECL_INSN
   };
 
   /*! Different memory spaces */
-  enum MemorySpace : uint8 {
+  enum MemorySpace : uint8_t {
     MEM_GLOBAL = 0, //!< Global memory (a la OCL)
     MEM_LOCAL,      //!< Local memory (thread group memory)
     MEM_CONSTANT,   //!< Immutable global memory
@@ -43,10 +43,10 @@ namespace gbe
   };
 
   /*! A label is identified with an unsigned short */
-  typedef uint16 LabelIndex;
+  typedef uint16_t LabelIndex;
 
   /*! A value is stored in a per-function vector. This is the index to it */
-  typedef uint16 ValueIndex;
+  typedef uint16_t ValueIndex;
 
   /*! Function class contains the register file and the register tuple. Any
    *  information related to the registers may therefore require a function
@@ -58,23 +58,23 @@ namespace gbe
   ///////////////////////////////////////////////////////////////////////////
 
   /*! Store the instruction description in 8 bytes */
-  class ALIGNED(sizeof(uint64)) Instruction
+  class ALIGNED(sizeof(uint64_t)) Instruction
   {
   public:
     /*! Get the instruction opcode */
     INLINE Opcode getOpcode(void) const { return opcode; }
     /*! Get the number of sources for this instruction  */
-    uint32 getSrcNum(void) const;
+    uint32_t getSrcNum(void) const;
     /*! Get the number of destination for this instruction */
-    uint32 getDstNum(void) const;
+    uint32_t getDstNum(void) const;
     /*! Get the register index of the given source */
-    RegisterIndex getSrcIndex(const Function &fn, uint32 ID = 0u) const;
+    RegisterIndex getSrcIndex(const Function &fn, uint32_t ID = 0u) const;
     /*! Get the register index of the given destination */
-    RegisterIndex getDstIndex(const Function &fn, uint32 ID = 0u) const;
+    RegisterIndex getDstIndex(const Function &fn, uint32_t ID = 0u) const;
     /*! Get the register of the given source */
-    Register getDst(const Function &fn, uint32 ID = 0u) const;
+    Register getDst(const Function &fn, uint32_t ID = 0u) const;
     /*! Get the register of the given destination */
-    Register getSrc(const Function &fn, uint32 ID = 0u) const;
+    Register getSrc(const Function &fn, uint32_t ID = 0u) const;
     /*! Check that the instruction is well formed. Return true if well formed.
      *  j
      *  Otherwise, fill the string with a help message
@@ -88,11 +88,11 @@ namespace gbe
     }
   protected:
     Opcode opcode;                             //!< Idendifies the instruction
-    uint8 opaque[sizeof(uint64)-sizeof(uint8)];//!< Remainder of it
+    uint8_t opaque[sizeof(uint64_t)-sizeof(uint8_t)];//!< Remainder of it
   };
 
   // Check that the instruction is properly formed by the compiler
-  STATIC_ASSERT(sizeof(Instruction) == sizeof(uint64));
+  STATIC_ASSERT(sizeof(Instruction) == sizeof(uint64_t));
 
   /*! Unary instructions are typed. dst and sources share the same type */
   class UnaryInstruction : public Instruction {
@@ -140,7 +140,7 @@ namespace gbe
     /*! Return the types of the values to store */
     Type getValueType(void) const;
     /*! Give the number of values the instruction is storing (srcNum-1) */
-    uint32 getValueNum(void) const;
+    uint32_t getValueNum(void) const;
     /*! Address space that is manipulated here */
     MemorySpace getAddressSpace(void) const;
     /*! Return true if the given instruction is an instance of this class */
@@ -156,7 +156,7 @@ namespace gbe
     /*! Type of the loaded values (ie type of all the destinations) */
     Type getValueType(void) const;
     /*! Number of values loaded (ie number of destinations) */
-    uint32 getValueNum(void) const;
+    uint32_t getValueNum(void) const;
     /*! Address space that is manipulated here */
     MemorySpace getAddressSpace(void) const;
     /*! Return true if the given instruction is an instance of this class */
@@ -164,7 +164,7 @@ namespace gbe
   };
 
   /*! Load immediate instruction loads an typed immediate value into the given
-   * register. Since double and uint64 values will not fit into an instruction,
+   * register. Since double and uint64_t values will not fit into an instruction,
    * the immediate themselves are stored in the function core. Contrary to
    * regular load instructions, there is only one destination possible
    */
@@ -305,9 +305,9 @@ namespace gbe
   /*! loadi.type dst value */
   Instruction loadi(Type type, RegisterIndex dst, ValueIndex value);
   /*! load.type.space {dst1,...,dst_valueNum} offset value */
-  Instruction load(Type type, TupleIndex dst, RegisterIndex offset, MemorySpace space, uint16 valueNum);
+  Instruction load(Type type, TupleIndex dst, RegisterIndex offset, MemorySpace space, uint16_t valueNum);
   /*! store.type.space offset {src1,...,src_valueNum} value */
-  Instruction store(Type type, TupleIndex src, RegisterIndex offset, MemorySpace space, uint16 valueNum);
+  Instruction store(Type type, TupleIndex src, RegisterIndex offset, MemorySpace space, uint16_t valueNum);
   /*! fence.space */
   Instruction fence(MemorySpace space);
   /*! label labelIndex */

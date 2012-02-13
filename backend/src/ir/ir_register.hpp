@@ -31,7 +31,7 @@ namespace gbe
   {
   public:
     /*! Register family */
-    enum Family : uint8 {
+    enum Family : uint8_t {
       BOOL  = 0,
       BYTE  = 1,
       WORD  = 2,
@@ -54,10 +54,10 @@ namespace gbe
   };
 
   /*! Register index is the position of the register in the register file */
-  typedef uint16 RegisterIndex;
+  typedef uint16_t RegisterIndex;
 
   /*! Tuple index is the position of the register index in the tuple vector */
-  typedef uint32 TupleIndex;
+  typedef uint32_t TupleIndex;
 
   /*! A register file allocates and destroys registers. Basically, we will have
    *  one register file per function
@@ -67,7 +67,7 @@ namespace gbe
   public:
     /*! Return the index of a newly allocated register register */
     INLINE RegisterIndex append(Register::Family family) {
-      const uint32 index = regs.size();
+      const uint32_t index = regs.size();
       const Register reg(family);
       assert(index <= MAX_INDEX);
       regs.push_back(reg);
@@ -90,12 +90,12 @@ namespace gbe
       return regs[index];
     }
     /*! Get the register index from the tuple */
-    INLINE RegisterIndex get(TupleIndex index, uint32 which) const {
+    INLINE RegisterIndex get(TupleIndex index, uint32_t which) const {
       assert(index + which < regTuples.size());
       return regTuples[index + which];
     }
     /*! Number of registers in the register file */
-    INLINE uint32 regNum(void) const { return regs.size(); }
+    INLINE uint32_t regNum(void) const { return regs.size(); }
   private:
     enum { MAX_INDEX = 0xffff };     //!< We encode indices in 2 bytes
     vector<Register> regs;           //!< All the registers together

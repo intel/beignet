@@ -121,7 +121,7 @@ namespace gbe
   std::string getExecutableFileName()
   {
     char buf[1024];
-    uint32_t size = sizeof(buf);
+    uint32_t_t size = sizeof(buf);
     if (_NSGetExecutablePath(buf, &size) != 0) return std::string();
     return std::string(buf);
   }

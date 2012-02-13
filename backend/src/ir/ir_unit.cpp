@@ -43,8 +43,8 @@ namespace gbe
   }
   void Unit::newConstant(const char *data,
                          const std::string &name,
-                         uint32 size,
-                         uint32 alignment)
+                         uint32_t size,
+                         uint32_t alignment)
   {
     constantSet.append(data, name, size, alignment);
   }

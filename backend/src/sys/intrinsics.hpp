@@ -71,44 +71,44 @@ INLINE size_t __bsr(size_t v) {
 }
 
 INLINE size_t __btc(size_t v, size_t i) {
-  __int64 r = v; _bittestandcomplement64(&r,i); return r;
+  __int64_t r = v; _bittestandcomplement64(&r,i); return r;
 }
 
 INLINE size_t __bts(size_t v, size_t i) {
-  __int64 r = v; _bittestandset64(&r,i); return r;
+  __int64_t r = v; _bittestandset64(&r,i); return r;
 }
 
 INLINE size_t __btr(size_t v, size_t i) {
-  __int64 r = v; _bittestandreset64(&r,i); return r;
+  __int64_t r = v; _bittestandreset64(&r,i); return r;
 }
 
 #endif /* defined(__X86_64__) && !defined(__INTEL_COMPILER) */
 
-typedef int32 atomic32_t;
+typedef int32_t atomic32_t;
 
-INLINE int32 atomic_add(volatile int32* m, const int32 v) {
+INLINE int32_t atomic_add(volatile int32_t* m, const int32_t v) {
   return _InterlockedExchangeAdd((volatile long*)m,v);
 }
 
-INLINE int32 atomic_cmpxchg(volatile int32* m, const int32 v, const int32 c) {
+INLINE int32_t atomic_cmpxchg(volatile int32_t* m, const int32_t v, const int32_t c) {
   return _InterlockedCompareExchange((volatile long*)m,v,c);
 }
 
 #if defined(__X86_64__)
 
-typedef int64 atomic_t;
+typedef int64_t atomic_t;
 
-INLINE int64 atomic_add(volatile int64* m, const int64 v) {
+INLINE int64_t atomic_add(volatile int64_t* m, const int64_t v) {
   return _InterlockedExchangeAdd64(m,v);
 }
 
-INLINE int64 atomic_cmpxchg(volatile int64* m, const int64 v, const int64 c) {
+INLINE int64_t atomic_cmpxchg(volatile int64_t* m, const int64_t v, const int64_t c) {
   return _InterlockedCompareExchange64(m,v,c);
 }
 
 #else
 
-typedef int32 atomic_t;
+typedef int32_t atomic_t;
 
 #endif /* defined(__X86_64__) */
 
@@ -160,27 +160,27 @@ INLINE size_t __btr(size_t v, size_t i) {
 
 INLINE void memoryFence(void) { _mm_mfence(); }
 
-typedef int32 atomic32_t;
+typedef int32_t atomic32_t;
 
-INLINE int32 atomic_add(int32 volatile* value, int32 input)
+INLINE int32_t atomic_add(int32_t volatile* value, int32_t input)
 {  asm volatile("lock xadd %0,%1" : "+r" (input), "+m" (*value) : "r" (input), "m" (*value)); return input; }
 
-INLINE int32 atomic_cmpxchg(int32 volatile* value, const int32 input, int32 comparand)
+INLINE int32_t atomic_cmpxchg(int32_t volatile* value, const int32_t input, int32_t comparand)
 {  asm volatile("lock cmpxchg %2,%0" : "=m" (*value), "=a" (comparand) : "r" (input), "m" (*value), "a" (comparand) : "flags"); return comparand; }
 
 #if defined(__X86_64__)
 
-  typedef int64 atomic_t;
+  typedef int64_t atomic_t;
 
-  INLINE int64 atomic_add(int64 volatile* value, int64 input)
+  INLINE int64_t atomic_add(int64_t volatile* value, int64_t input)
   {  asm volatile("lock xaddq %0,%1" : "+r" (input), "+m" (*value) : "r" (input), "m" (*value));  return input;  }
 
-  INLINE int64 atomic_cmpxchg(int64 volatile* value, const int64 input, int64 comparand)
+  INLINE int64_t atomic_cmpxchg(int64_t volatile* value, const int64_t input, int64_t comparand)
   {  asm volatile("lock cmpxchgq %2,%0" : "+m" (*value), "+a" (comparand) : "r" (input), "m" (*value), "r" (comparand) : "flags"); return comparand;  }
 
 #else
 
-  typedef int32 atomic_t;
+  typedef int32_t atomic_t;
 
 #endif /* defined(__X86_64__) */
 

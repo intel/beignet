@@ -19,11 +19,13 @@
 
 #ifndef __GBE_PLATFORM_HPP__
 #define __GBE_PLATFORM_HPP__
+
 #include <cstddef>
 #include <cstdlib>
 #include <cstdio>
 #include <iostream>
 #include <cassert>
+#include <new>
 
 ////////////////////////////////////////////////////////////////////////////////
 /// CPU architecture
@@ -202,8 +204,9 @@
 
 /*! Run-time assertion */
 #ifndef NDEBUG
-#define GBE_ASSERT(EXPR) do {            \
-  if (UNLIKELY(!(EXPR))) assert(EXPR);  \
+#define GBE_ASSERT(EXPR) do {                              \
+  if (UNLIKELY(!(EXPR)))                                   \
+    gbe::onFailedAssert(__FILE__, __FUNCTION__, __LINE__); \
 } while (0)
 #else
 #define GBE_ASSERT(EXPR) do { } while (0)
@@ -262,29 +265,22 @@ struct AlignOf
 ////////////////////////////////////////////////////////////////////////////////
 
 #if defined(__MSVC__)
-typedef          __int64  int64;
-typedef unsigned __int64 uint64;
-typedef          __int32  int32;
-typedef unsigned __int32 uint32;
-typedef          __int16  int16;
-typedef unsigned __int16 uint16;
-typedef          __int8    int8;
-typedef unsigned __int8   uint8;
+typedef          __int64_t  int64_t;
+typedef unsigned __int64_t uint64_t;
+typedef          __int32_t  int32_t;
+typedef unsigned __int32_t uint32_t;
+typedef          __int16_t  int16_t;
+typedef unsigned __int16_t uint16_t;
+typedef          __int8_t    int8_t;
+typedef unsigned __int8_t   uint8_t;
 #else
-typedef          long long  int64;
-typedef unsigned long long uint64;
-typedef                int  int32;
-typedef unsigned       int uint32;
-typedef              short  int16;
-typedef unsigned     short uint16;
-typedef               char   int8;
-typedef unsigned      char  uint8;
+#include <cstdint>
 #endif
 
 #if defined(__X86_64__)
-typedef int64 index_t;
+typedef int64_t index_t;
 #else
-typedef int32 index_t;
+typedef int32_t index_t;
 #endif
 
 /*! To protect some classes from being copied */
@@ -331,7 +327,7 @@ namespace gbe
   void FATAL(const std::string&);
 
   /*! Return the next power of 2 */
-  INLINE uint32 nextHighestPowerOf2(uint32 x) {
+  INLINE uint32_t nextHighestPowerOf2(uint32_t x) {
     x--;
     x |= x >> 1;
     x |= x >> 2;
@@ -341,28 +337,28 @@ namespace gbe
     return ++x;
   }
 
-  INLINE uint32 logi2(uint32 x) {
-    uint32 r = 0;
+  INLINE uint32_t logi2(uint32_t x) {
+    uint32_t r = 0;
     while(x >>= 1) r++;
     return r;
   }
 
-  template<uint32 N>
-  INLINE uint32 isPowerOf(uint32 i) {
+  template<uint32_t N>
+  INLINE uint32_t isPowerOf(uint32_t i) {
     while (i > 1) {
       if (i%N) return false;
       i = i/N;
     }
     return true;
   }
-  template<> INLINE uint32 isPowerOf<2>(uint32 i) { return ((i-1)&i) == 0; }
+  template<> INLINE uint32_t isPowerOf<2>(uint32_t i) { return ((i-1)&i) == 0; }
 
   /*! random functions */
   template<typename T> T   random() { return T(0); }
   template<> INLINE int    random() { return int(rand()); }
-  template<> INLINE uint32 random() { return uint32(rand()); }
-  template<> INLINE float  random() { return random<uint32>()/float(RAND_MAX); }
-  template<> INLINE double random() { return random<uint32>()/double(RAND_MAX); }
+  template<> INLINE uint32_t random() { return uint32_t(rand()); }
+  template<> INLINE float  random() { return random<uint32_t>()/float(RAND_MAX); }
+  template<> INLINE double random() { return random<uint32_t>()/double(RAND_MAX); }
 
   /** returns performance counter in seconds */
   double getSeconds();

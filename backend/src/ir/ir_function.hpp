@@ -49,19 +49,19 @@ namespace gbe
       /*! Empty basic block */
       BasicBlock(void);
       /*! Return the number of instruction in the block */
-      INLINE uint32 getInsnNum(void) { return insn.size(); }
+      INLINE uint32_t getInsnNum(void) { return insn.size(); }
     private:
       vector<Instruction> insn; //!< Sequence of instructions in the block
     };
 
     /*! Extract the register from the register file */
-    INLINE Register getRegister(uint32 ID) const { return file.get(ID); }
+    INLINE Register getRegister(uint32_t ID) const { return file.get(ID); }
     /*! Get the register index from the tuple vector */
-    INLINE RegisterIndex getRegisterIndex(TupleIndex ID, uint32 which) const {
+    INLINE RegisterIndex getRegisterIndex(TupleIndex ID, uint32_t which) const {
       return file.get(ID, which);
     }
     /*! Get the given value ie immediate from the function */
-    INLINE Value getValue(uint32 ID) const {
+    INLINE Value getValue(uint32_t ID) const {
       assert(ID < value.size());
       return value[ID];
     }

@@ -21,9 +21,8 @@
 #define __GBE_ALLOC_HPP__
 
 #include "sys/platform.hpp"
+#include "sys/assert.hpp"
 #include "math/math.hpp"
-#include <cstdlib>
-#include <new>
 
 namespace gbe
 {

@@ -24,15 +24,15 @@ namespace gbe
 
   void ConstantSet::append(const char *data,
                            const std::string &name,
-                           uint32 size,
-                           uint32 alignment)
+                           uint32_t size,
+                           uint32_t alignment)
   {
-    const uint32 offset = ALIGN(this->data.size(), alignment);
-    const uint32 padding = offset - this->data.size();
+    const uint32_t offset = ALIGN(this->data.size(), alignment);
+    const uint32_t padding = offset - this->data.size();
     const Constant constant(name, size, alignment, offset);
     constants.push_back(constant);
-    for (uint32 i = 0; i < padding; ++i) this->data.push_back(0);
-    for (uint32 i = 0; i < size; ++i) this->data.push_back(data[i]);
+    for (uint32_t i = 0; i < padding; ++i) this->data.push_back(0);
+    for (uint32_t i = 0; i < size; ++i) this->data.push_back(data[i]);
   }
 
 } /* namespace gbe */

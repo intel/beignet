@@ -29,7 +29,7 @@ namespace gbe
   {
   public:
     /*! Build a constant description */
-    INLINE Constant(const std::string &name, uint32 size, uint32 alignment, uint32 offset) :
+    INLINE Constant(const std::string &name, uint32_t size, uint32_t alignment, uint32_t offset) :
       name(name), size(size), alignment(alignment), offset(offset) {}
     /*! Copy constructor */
     INLINE Constant(const Constant &other) :
@@ -46,9 +46,9 @@ namespace gbe
     INLINE ~Constant(void) {}
   private:
     std::string name; //!< Optional name of the constant
-    uint32 size;      //!< Size of the constant
-    uint32 alignment; //!< Alignment required for each constant
-    uint32 offset;    //!< Offset of the constant in the data segment
+    uint32_t size;      //!< Size of the constant
+    uint32_t alignment; //!< Alignment required for each constant
+    uint32_t offset;    //!< Offset of the constant in the data segment
   };
 
   /*! A constant set is a set of immutable data associated to a compilation
@@ -58,7 +58,7 @@ namespace gbe
   {
   public:
     /*! Append a new constant in the constant set */
-    void append(const char*, const std::string&, uint32 size, uint32 alignment);
+    void append(const char*, const std::string&, uint32_t size, uint32_t alignment);
   private:
     vector<char> data;         //!< The constant data serialized in one array
     vector<Constant> constants;//!< Each constant description

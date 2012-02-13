@@ -25,7 +25,7 @@
 namespace gbe
 {
   /*! All types possibly supported by the instruction */
-  enum Type : uint8 {
+  enum Type : uint8_t {
     TYPE_S8 = 0,  //!< signed 8 bits integer
     TYPE_U8,      //!< unsigned 8 bits integer
     TYPE_S16,     //!< signed 16 bits integer

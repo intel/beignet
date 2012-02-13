@@ -43,14 +43,14 @@ namespace gbe
   {
     INLINE operator double( ) const { return 0; }
     INLINE operator float ( ) const { return 0; }
-    INLINE operator int64 ( ) const { return 0; }
-    INLINE operator uint64( ) const { return 0; }
-    INLINE operator int32 ( ) const { return 0; }
-    INLINE operator uint32( ) const { return 0; }
-    INLINE operator int16 ( ) const { return 0; }
-    INLINE operator uint16( ) const { return 0; }
-    INLINE operator int8  ( ) const { return 0; }
-    INLINE operator uint8 ( ) const { return 0; }
+    INLINE operator int64_t ( ) const { return 0; }
+    INLINE operator uint64_t( ) const { return 0; }
+    INLINE operator int32_t ( ) const { return 0; }
+    INLINE operator uint32_t( ) const { return 0; }
+    INLINE operator int16_t ( ) const { return 0; }
+    INLINE operator uint16_t( ) const { return 0; }
+    INLINE operator int8_t  ( ) const { return 0; }
+    INLINE operator uint8_t ( ) const { return 0; }
 #ifndef __MSVC__
     INLINE operator size_t( ) const { return 0; }
 #endif
@@ -61,14 +61,14 @@ namespace gbe
   {
     INLINE operator double( ) const { return 1; }
     INLINE operator float ( ) const { return 1; }
-    INLINE operator int64 ( ) const { return 1; }
-    INLINE operator uint64( ) const { return 1; }
-    INLINE operator int32 ( ) const { return 1; }
-    INLINE operator uint32( ) const { return 1; }
-    INLINE operator int16 ( ) const { return 1; }
-    INLINE operator uint16( ) const { return 1; }
-    INLINE operator int8  ( ) const { return 1; }
-    INLINE operator uint8 ( ) const { return 1; }
+    INLINE operator int64_t ( ) const { return 1; }
+    INLINE operator uint64_t( ) const { return 1; }
+    INLINE operator int32_t ( ) const { return 1; }
+    INLINE operator uint32_t( ) const { return 1; }
+    INLINE operator int16_t ( ) const { return 1; }
+    INLINE operator uint16_t( ) const { return 1; }
+    INLINE operator int8_t  ( ) const { return 1; }
+    INLINE operator uint8_t ( ) const { return 1; }
 #ifndef __MSVC__
     INLINE operator size_t( ) const { return 1; }
 #endif
@@ -78,14 +78,14 @@ namespace gbe
   {
     INLINE operator double( ) const { return -std::numeric_limits<double>::infinity(); }
     INLINE operator float ( ) const { return -std::numeric_limits<float>::infinity(); }
-    INLINE operator int64 ( ) const { return std::numeric_limits<int64>::min(); }
-    INLINE operator uint64( ) const { return std::numeric_limits<uint64>::min(); }
-    INLINE operator int32 ( ) const { return std::numeric_limits<int32>::min(); }
-    INLINE operator uint32( ) const { return std::numeric_limits<uint32>::min(); }
-    INLINE operator int16 ( ) const { return std::numeric_limits<int16>::min(); }
-    INLINE operator uint16( ) const { return std::numeric_limits<uint16>::min(); }
-    INLINE operator int8  ( ) const { return std::numeric_limits<int8>::min(); }
-    INLINE operator uint8 ( ) const { return std::numeric_limits<uint8>::min(); }
+    INLINE operator int64_t ( ) const { return std::numeric_limits<int64_t>::min(); }
+    INLINE operator uint64_t( ) const { return std::numeric_limits<uint64_t>::min(); }
+    INLINE operator int32_t ( ) const { return std::numeric_limits<int32_t>::min(); }
+    INLINE operator uint32_t( ) const { return std::numeric_limits<uint32_t>::min(); }
+    INLINE operator int16_t ( ) const { return std::numeric_limits<int16_t>::min(); }
+    INLINE operator uint16_t( ) const { return std::numeric_limits<uint16_t>::min(); }
+    INLINE operator int8_t  ( ) const { return std::numeric_limits<int8_t>::min(); }
+    INLINE operator uint8_t ( ) const { return std::numeric_limits<uint8_t>::min(); }
 #ifndef __MSVC__
     INLINE operator size_t( ) const { return std::numeric_limits<size_t>::min(); }
 #endif
@@ -96,14 +96,14 @@ namespace gbe
   {
     INLINE operator double( ) const { return std::numeric_limits<double>::infinity(); }
     INLINE operator float ( ) const { return std::numeric_limits<float>::infinity(); }
-    INLINE operator int64 ( ) const { return std::numeric_limits<int64>::max(); }
-    INLINE operator uint64( ) const { return std::numeric_limits<uint64>::max(); }
-    INLINE operator int32 ( ) const { return std::numeric_limits<int32>::max(); }
-    INLINE operator uint32( ) const { return std::numeric_limits<uint32>::max(); }
-    INLINE operator int16 ( ) const { return std::numeric_limits<int16>::max(); }
-    INLINE operator uint16( ) const { return std::numeric_limits<uint16>::max(); }
-    INLINE operator int8  ( ) const { return std::numeric_limits<int8>::max(); }
-    INLINE operator uint8 ( ) const { return std::numeric_limits<uint8>::max(); }
+    INLINE operator int64_t ( ) const { return std::numeric_limits<int64_t>::max(); }
+    INLINE operator uint64_t( ) const { return std::numeric_limits<uint64_t>::max(); }
+    INLINE operator int32_t ( ) const { return std::numeric_limits<int32_t>::max(); }
+    INLINE operator uint32_t( ) const { return std::numeric_limits<uint32_t>::max(); }
+    INLINE operator int16_t ( ) const { return std::numeric_limits<int16_t>::max(); }
+    INLINE operator uint16_t( ) const { return std::numeric_limits<uint16_t>::max(); }
+    INLINE operator int8_t  ( ) const { return std::numeric_limits<int8_t>::max(); }
+    INLINE operator uint8_t ( ) const { return std::numeric_limits<uint8_t>::max(); }
 #ifndef _WIN32
     INLINE operator size_t( ) const { return std::numeric_limits<size_t>::max(); }
 #endif

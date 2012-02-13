@@ -32,8 +32,8 @@ namespace gbe
 
     /*! Use this when there is no source */
     struct NoSrcPolicy {
-      INLINE uint32 getSrcNum(void) const { return 0; }
-      INLINE RegisterIndex getSrcIndex(const Function &fn, uint32 ID) const {
+      INLINE uint32_t getSrcNum(void) const { return 0; }
+      INLINE RegisterIndex getSrcIndex(const Function &fn, uint32_t ID) const {
         NOT_IMPLEMENTED;
         return 0;
       }
@@ -41,30 +41,30 @@ namespace gbe
 
     /*! Use this when there is no destination */
     struct NoDstPolicy {
-      INLINE uint32 getDstNum(void) const { return 0; }
-      INLINE RegisterIndex getDstIndex(const Function &fn, uint32 ID) const {
+      INLINE uint32_t getDstNum(void) const { return 0; }
+      INLINE RegisterIndex getDstIndex(const Function &fn, uint32_t ID) const {
         NOT_IMPLEMENTED;
         return 0;
       }
     };
 
     /*! All unary and binary arithmetic instructions */
-    template <uint32 srcNum> // 1 or 2
+    template <uint32_t srcNum> // 1 or 2
     class ALIGNED_INSTRUCTION NaryInstruction {
     public:
-      INLINE uint32 getSrcNum(void) const { return srcNum; }
-      INLINE uint32 getDstNum(void) const { return 1; }
-      INLINE RegisterIndex getDstIndex(const Function &fn, uint32 ID) const {
+      INLINE uint32_t getSrcNum(void) const { return srcNum; }
+      INLINE uint32_t getDstNum(void) const { return 1; }
+      INLINE RegisterIndex getDstIndex(const Function &fn, uint32_t ID) const {
         assert(ID == 0);
         return dst;
       }
-      INLINE RegisterIndex getSrcIndex(const Function &fn, uint32 ID) const {
+      INLINE RegisterIndex getSrcIndex(const Function &fn, uint32_t ID) const {
         assert(ID <= srcNum);
         return src[ID];
       }
       INLINE Type getType(void) const { return this->type; }
-      Opcode opcode;     //!< Instruction opcode
-      Type type;         //!< Type of the instruction
+      Opcode opcode;            //!< Instruction opcode
+      Type type;                //!< Type of the instruction
       RegisterIndex dst;        //!< Index of the register in the register file
       RegisterIndex src[srcNum];//!< Indices of the sources
     };
@@ -114,13 +114,13 @@ namespace gbe
         this->dst = dst;
         this->src = src;
       }
-      INLINE uint32 getSrcNum(void) const { return 3; }
-      INLINE uint32 getDstNum(void) const { return 1; }
-      INLINE RegisterIndex getDstIndex(const Function &fn, uint32 ID) const {
+      INLINE uint32_t getSrcNum(void) const { return 3; }
+      INLINE uint32_t getDstNum(void) const { return 1; }
+      INLINE RegisterIndex getDstIndex(const Function &fn, uint32_t ID) const {
         assert(ID == 0);
         return dst;
       }
-      INLINE RegisterIndex getSrcIndex(const Function &fn, uint32 ID) const {
+      INLINE RegisterIndex getSrcIndex(const Function &fn, uint32_t ID) const {
         assert(ID <= 3);
         return fn.getRegisterIndex(src, ID);
       }
@@ -146,13 +146,13 @@ namespace gbe
       }
       INLINE Type getSrcType(void) const { return this->srcType; }
       INLINE Type getDstType(void) const { return this->dstType; }
-      INLINE uint32 getSrcNum(void) const { return 1; }
-      INLINE uint32 getDstNum(void) const { return 1; }
-      INLINE RegisterIndex getDstIndex(const Function &fn, uint32 ID) const {
+      INLINE uint32_t getSrcNum(void) const { return 1; }
+      INLINE uint32_t getDstNum(void) const { return 1; }
+      INLINE RegisterIndex getDstIndex(const Function &fn, uint32_t ID) const {
         assert(ID == 0);
         return dst;
       }
-      INLINE RegisterIndex getSrcIndex(const Function &fn, uint32 ID) const {
+      INLINE RegisterIndex getSrcIndex(const Function &fn, uint32_t ID) const {
         assert(ID == 0);
         return src;
       }
@@ -176,8 +176,8 @@ namespace gbe
         this->labelIndex = labelIndex;
         this->hasPredicate = false;
       }
-      INLINE uint32 getSrcNum(void) const { return hasPredicate ? 1 : 0; }
-      INLINE RegisterIndex getSrcIndex(const Function &fn, uint32 ID) const {
+      INLINE uint32_t getSrcNum(void) const { return hasPredicate ? 1 : 0; }
+      INLINE RegisterIndex getSrcIndex(const Function &fn, uint32_t ID) const {
         assert(ID == 0 && hasPredicate);
         return predicate;
       }
@@ -194,7 +194,7 @@ namespace gbe
                       TupleIndex dstValues,
                       RegisterIndex offset,
                       MemorySpace memSpace,
-                      uint16 valueNum)
+                      uint16_t valueNum)
       {
         this->opcode = OP_STORE;
         this->type = type;
@@ -203,25 +203,25 @@ namespace gbe
         this->memSpace = memSpace;
         this->valueNum = valueNum;
       }
-      INLINE RegisterIndex getSrcIndex(const Function &fn, uint32 ID) const {
+      INLINE RegisterIndex getSrcIndex(const Function &fn, uint32_t ID) const {
         assert(ID == 0u);
         return offset;
       }
-      INLINE uint32 getSrcNum(void) const { return 1; }
-      INLINE RegisterIndex getDstIndex(const Function &fn, uint32 ID) const {
+      INLINE uint32_t getSrcNum(void) const { return 1; }
+      INLINE RegisterIndex getDstIndex(const Function &fn, uint32_t ID) const {
         assert(ID < valueNum);
         return fn.getRegisterIndex(values, ID);
       }
-      INLINE uint32 getDstNum(void) const { return valueNum; }
+      INLINE uint32_t getDstNum(void) const { return valueNum; }
       INLINE Type getValueType(void) const { return type; }
-      INLINE uint32 getValueNum(void) const { return valueNum; }
+      INLINE uint32_t getValueNum(void) const { return valueNum; }
       INLINE MemorySpace getAddressSpace(void) const { return memSpace; }
       Opcode opcode;        //!< Opcode of the instruction
       Type type;            //!< Type to store
       RegisterIndex offset; //!< First source is the offset where to store
       TupleIndex values;    //!< Values to load
       MemorySpace memSpace; //!< Where to store
-      uint16 valueNum;      //!< Number of values to store
+      uint16_t valueNum;      //!< Number of values to store
     };
 
     class ALIGNED_INSTRUCTION StoreInstruction : public NoDstPolicy {
@@ -230,7 +230,7 @@ namespace gbe
                        RegisterIndex offset,
                        TupleIndex values,
                        MemorySpace memSpace,
-                       uint16 valueNum)
+                       uint16_t valueNum)
       {
         this->opcode = OP_STORE;
         this->type = type;
@@ -239,23 +239,23 @@ namespace gbe
         this->memSpace = memSpace;
         this->valueNum = valueNum;
       }
-      INLINE RegisterIndex getSrcIndex(const Function &fn, uint32 ID) const {
+      INLINE RegisterIndex getSrcIndex(const Function &fn, uint32_t ID) const {
         assert(ID < valueNum + 1u); // offset + values to store
         if (ID == 0u)
           return offset;
         else
           return fn.getRegisterIndex(values, ID - 1);
       }
-      INLINE uint32 getSrcNum(void) const { return valueNum + 1u; }
+      INLINE uint32_t getSrcNum(void) const { return valueNum + 1u; }
       INLINE Type getValueType(void) const { return type; }
-      INLINE uint32 getValueNum(void) const { return valueNum; }
+      INLINE uint32_t getValueNum(void) const { return valueNum; }
       INLINE MemorySpace getAddressSpace(void) const { return memSpace; }
       Opcode opcode;        //!< Opcode of the instruction
       Type type;            //!< Type to store
       RegisterIndex offset; //!< First source is the offset where to store
       TupleIndex values;    //!< Values to store
       MemorySpace memSpace; //!< Where to store
-      uint16 valueNum;      //!< Number of values to store
+      uint16_t valueNum;      //!< Number of values to store
     };
 
     class ALIGNED_INSTRUCTION TextureInstruction :
@@ -277,8 +277,8 @@ namespace gbe
       INLINE Value getValue(const Function &fn) const {
         return fn.getValue(valueIndex);
       }
-      INLINE uint32 getDstNum(void) const{ return 1; }
-      INLINE RegisterIndex getDstIndex(const Function &fn, uint32 ID) const {
+      INLINE uint32_t getDstNum(void) const{ return 1; }
+      INLINE RegisterIndex getDstIndex(const Function &fn, uint32_t ID) const {
         assert(ID == 0);
         return dst;
       }
@@ -326,10 +326,10 @@ namespace gbe
     enum { value = 1 };
   };
 
-  Register Instruction::getDst(const Function &fn, uint32 ID) const {
+  Register Instruction::getDst(const Function &fn, uint32_t ID) const {
     return fn.getRegister(this->getDstIndex(fn, ID));
   }
-  Register Instruction::getSrc(const Function &fn, uint32 ID) const {
+  Register Instruction::getSrc(const Function &fn, uint32_t ID) const {
     return fn.getRegister(this->getSrcIndex(fn, ID));
   }
 
@@ -417,25 +417,25 @@ END_INTROSPECTION(LabelInstruction)
   }
 
 #define CALL getSrcNum()
-START_FUNCTION(Instruction, uint32, getSrcNum(void))
+START_FUNCTION(Instruction, uint32_t, getSrcNum(void))
 #include "ir_instruction.hxx"
-END_FUNCTION(Instruction, uint32)
+END_FUNCTION(Instruction, uint32_t)
 #undef CALL
 
 #define CALL getDstNum()
-START_FUNCTION(Instruction, uint32, getDstNum(void))
+START_FUNCTION(Instruction, uint32_t, getDstNum(void))
 #include "ir_instruction.hxx"
-END_FUNCTION(Instruction, uint32)
+END_FUNCTION(Instruction, uint32_t)
 #undef CALL
 
 #define CALL getDstIndex(fn, ID)
-START_FUNCTION(Instruction, RegisterIndex, getDstIndex(const Function &fn, uint32 ID))
+START_FUNCTION(Instruction, RegisterIndex, getDstIndex(const Function &fn, uint32_t ID))
 #include "ir_instruction.hxx"
 END_FUNCTION(Instruction, RegisterIndex)
 #undef CALL
 
 #define CALL getSrcIndex(fn, ID)
-START_FUNCTION(Instruction, RegisterIndex, getSrcIndex(const Function &fn, uint32 ID))
+START_FUNCTION(Instruction, RegisterIndex, getSrcIndex(const Function &fn, uint32_t ID))
 #include "ir_instruction.hxx"
 END_FUNCTION(Instruction, RegisterIndex)
 #undef CALL
@@ -454,10 +454,10 @@ DECL_MEM_FN(TernaryInstruction, Type, getType(void), getType())
 DECL_MEM_FN(ConvertInstruction, Type, getSrcType(void), getSrcType())
 DECL_MEM_FN(ConvertInstruction, Type, getDstType(void), getDstType())
 DECL_MEM_FN(StoreInstruction, Type, getValueType(void), getValueType())
-DECL_MEM_FN(StoreInstruction, uint32, getValueNum(void), getValueNum())
+DECL_MEM_FN(StoreInstruction, uint32_t, getValueNum(void), getValueNum())
 DECL_MEM_FN(StoreInstruction, MemorySpace, getAddressSpace(void), getAddressSpace())
 DECL_MEM_FN(LoadInstruction, Type, getValueType(void), getValueType())
-DECL_MEM_FN(LoadInstruction, uint32, getValueNum(void), getValueNum())
+DECL_MEM_FN(LoadInstruction, uint32_t, getValueNum(void), getValueNum())
 DECL_MEM_FN(LoadInstruction, MemorySpace, getAddressSpace(void), getAddressSpace())
 DECL_MEM_FN(LoadImmInstruction, Value, getValue(const Function &fn), getValue(fn))
 DECL_MEM_FN(LoadImmInstruction, Type, getType(void), getType())
@@ -543,10 +543,10 @@ DECL_MEM_FN(BranchInstruction, bool, isPredicated(void), isPredicated())
                    TupleIndex tuple,      \
                    RegisterIndex offset,  \
                    MemorySpace space,     \
-                   uint16 valueNum)       \
+                   uint16_t valueNum)       \
   {                                       \
-    internal::CLASS insn(type, tuple, offset, space, valueNum); \
-    return *reinterpret_cast<Instruction*>(&insn);              \
+    const internal::CLASS insn(type, tuple, offset, space, valueNum); \
+    return *reinterpret_cast<const Instruction*>(&insn);              \
   }
 
   DECL_EMIT_FUNCTION(load, LoadInstruction)

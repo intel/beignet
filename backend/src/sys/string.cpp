@@ -118,7 +118,7 @@ namespace gbe
 
   std::string loadFile(std::ifstream &stream)
   {
-    GBE_ASSERT(stream.is_open());
+    GBE_ASSERT(stream.is_open() == true);
     std::string line;
     std::stringstream text;
     while (std::getline(stream, line))

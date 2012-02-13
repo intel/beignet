@@ -8,8 +8,6 @@ set (GBE_SRC
   sys/filename.hpp
   sys/library.cpp
   sys/library.hpp
-  sys/thread.cpp
-  sys/thread.hpp
   sys/alloc.cpp
   sys/alloc.hpp
   sys/sysinfo.cpp
@@ -21,10 +19,6 @@ set (GBE_SRC
   sys/condition.hpp
   sys/platform.cpp
   sys/platform.hpp
-  sys/logging.cpp
-  sys/logging.hpp
-  sys/default_path.cpp
-  sys/default_path.hpp
   ir/ir_context.cpp
   ir/ir_context.hpp
   ir/ir_unit.cpp
