@@ -17,8 +17,12 @@
  * Author: Benjamin Segovia <benjamin.segovia@intel.com>
  */
 
+/**
+ * \file string.cpp
+ *
+ * \author Benjamin Segovia <benjamin.segovia@intel.com>
+ */
 #include "sys/string.hpp"
-#include "sys/filename.hpp"
 
 #include <cstdio>
 #include <cctype>
@@ -104,27 +108,6 @@ namespace gbe
   bool contains(const char *haystack, const char *needle) {
     if (strstr(haystack, needle) == NULL) return false;
     return true;
-  }
-
-  std::string loadFile(const FileName &path)
-  {
-    std::ifstream stream(path.c_str(), std::istream::in);
-    if (stream.is_open() == false)
-      return std::string();
-    std::string str = loadFile(stream);
-    stream.close();
-    return str;
-  }
-
-  std::string loadFile(std::ifstream &stream)
-  {
-    GBE_ASSERT(stream.is_open() == true);
-    std::string line;
-    std::stringstream text;
-    while (std::getline(stream, line))
-      text << "\n" << line;
-    stream.close();
-    return text.str();
   }
 }
 

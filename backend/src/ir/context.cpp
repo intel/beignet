@@ -17,27 +17,25 @@
  * Author: Benjamin Segovia <benjamin.segovia@intel.com>
  */
 
-#ifndef __GBE_IR_TYPE_HPP__
-#define __GBE_IR_TYPE_HPP__
+/**
+ * \file context.cpp
+ *
+ * \author Benjamin Segovia <benjamin.segovia@intel.com>
+ */
+#include "ir/context.hpp"
+#include "ir/unit.hpp"
 
-#include "sys/platform.hpp"
+namespace gbe {
+namespace ir {
 
-namespace gbe
-{
-  /*! All types possibly supported by the instruction */
-  enum Type : uint8_t {
-    TYPE_S8 = 0,  //!< signed 8 bits integer
-    TYPE_U8,      //!< unsigned 8 bits integer
-    TYPE_S16,     //!< signed 16 bits integer
-    TYPE_U16,     //!< unsigned 16 bits integer
-    TYPE_S32,     //!< signed 32 bits integer
-    TYPE_U32,     //!< unsigned 32 bits integer
-    TYPE_S64,     //!< signed 64 bits integer
-    TYPE_U64,     //!< unsigned 64 bits integer
-    TYPE_FLOAT,   //!< 32 bits floating point value
-    TYPE_DOUBLE   //!< 64 bits floating point value
-  };
+  Context::Context(Unit &unit) : unit(unit), fn(NULL), bb(NULL) {}
+
+  void Context::startFunction(const std::string &name) {
+    Function *fn = unit.newFunction(name);
+    GBE_ASSERT(fn != NULL);
+    fnStack.push_back(fn);
+  }
+
+} /* namespace ir */
 } /* namespace gbe */
-
-#endif /* __GBE_IR_TYPE_HPP__ */
 

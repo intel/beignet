@@ -17,6 +17,11 @@
  * Author: Benjamin Segovia <benjamin.segovia@intel.com>
  */
 
+/**
+ * \file list.hpp
+ *
+ * \author Benjamin Segovia <benjamin.segovia@intel.com>
+ */
 #ifndef __GBE_LIST_HPP__
 #define __GBE_LIST_HPP__
 

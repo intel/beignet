@@ -17,6 +17,12 @@
  * Author: Benjamin Segovia <benjamin.segovia@intel.com>
  */
 
+/**
+ * \file vector.hpp
+ *
+ * \author Benjamin Segovia <benjamin.segovia@intel.com>
+ */
+
 #ifndef __GBE_VECTOR_HPP__
 #define __GBE_VECTOR_HPP__
 

@@ -17,6 +17,11 @@
  * Author: Benjamin Segovia <benjamin.segovia@intel.com>
  */
 
+//////////////////////////////////////////////////////////////////////////////////////////
+// Part of this file is taken from the Apache licensed Intel Embree project here:       //
+// http://software.intel.com/en-us/articles/embree-photo-realistic-ray-tracing-kernels/ //
+//////////////////////////////////////////////////////////////////////////////////////////
+
 #ifndef __GBE_PLATFORM_HPP__
 #define __GBE_PLATFORM_HPP__
 
@@ -154,7 +159,7 @@
 #define THREAD               __declspec(thread)
 #define ALIGNED(...)         __declspec(align(__VA_ARGS__))
 //#define __FUNCTION__           __FUNCTION__
-#define debugbreak()         __debugbreak()
+#define DEBUGBREAK()         __debugbreak()
 #else
 #undef NOINLINE
 #undef INLINE
@@ -164,7 +169,7 @@
 #define THREAD          __thread
 #define ALIGNED(...)    __attribute__((aligned(__VA_ARGS__)))
 #define __FUNCTION__    __PRETTY_FUNCTION__
-#define debugbreak()    asm ("int $3")
+#define DEBUGBREAK()    asm ("int $3")
 #endif
 
 /*! Modern x86 processors */

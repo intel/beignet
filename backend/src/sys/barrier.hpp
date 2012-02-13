@@ -17,8 +17,13 @@
  * Author: Benjamin Segovia <benjamin.segovia@intel.com>
  */
 
-#ifndef __GBE_BARRIER_H__
-#define __GBE_BARRIER_H__
+//////////////////////////////////////////////////////////////////////////////////////////
+// Part of this file is taken from the Apache licensed Intel Embree project here:       //
+// http://software.intel.com/en-us/articles/embree-photo-realistic-ray-tracing-kernels/ //
+//////////////////////////////////////////////////////////////////////////////////////////
+
+#ifndef __GBE_BARRIER_HPP__
+#define __GBE_BARRIER_HPP__
 
 #include "sys/condition.hpp"
 

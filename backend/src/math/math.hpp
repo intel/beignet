@@ -17,6 +17,11 @@
  * Author: Benjamin Segovia <benjamin.segovia@intel.com>
  */
 
+//////////////////////////////////////////////////////////////////////////////////////////
+// Part of this file is taken from the Apache licensed Intel Embree project here:       //
+// http://software.intel.com/en-us/articles/embree-photo-realistic-ray-tracing-kernels/ //
+//////////////////////////////////////////////////////////////////////////////////////////
+
 #ifndef __GBE_MATH_HPP__
 #define __GBE_MATH_HPP__
 
@@ -24,8 +29,6 @@
 
 #include <cmath>
 #include <cfloat>
-
-#define DECL template <typename T> INLINE
 
 namespace gbe
 {
@@ -87,6 +90,8 @@ namespace gbe
   INLINE double fmod (double x, double y) {return ::fmod (x, y);}
   INLINE double pow  (double x, double y) {return ::pow  (x, y);}
 
+#define DECL template <typename T> INLINE
+
   DECL T max (T a, T b) {return a<b? b:a;}
   DECL T min (T a, T b) {return a<b? a:b;}
   DECL T min (T a, T b, T c) {return min(min(a,b),c);}
@@ -100,8 +105,9 @@ namespace gbe
   DECL T rad2deg (T x) {return x * T(5.72957795130823208768e1f);}
   DECL T sin2cos (T x) {return sqrt(max(T(zero),T(one)-x*x));}
   DECL T cos2sin (T x) {return sin2cos(x);}
-}
 
 #undef DECL
+}
+
 #endif /* __GBE_MATH_HPP__ */
 

@@ -17,14 +17,20 @@
  * Author: Benjamin Segovia <benjamin.segovia@intel.com>
  */
 
+/**
+ * \file constant.cpp
+ *
+ * \author Benjamin Segovia <benjamin.segovia@intel.com>
+ */
 #ifndef __GBE_IR_CONSTANT_HPP__
 #define __GBE_IR_CONSTANT_HPP__
 
 #include "sys/vector.hpp"
 
-namespace gbe
-{
-  /*! We */
+namespace gbe {
+namespace ir {
+
+  /*! Describe one constant (may be a scalar or an array) */
   class Constant
   {
   public:
@@ -64,6 +70,7 @@ namespace gbe
     vector<Constant> constants;//!< Each constant description
   };
 
+} /* namespace ir */
 } /* namespace gbe */
 
 #endif /* __GBE_IR_CONSTANT_HPP__ */

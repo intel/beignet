@@ -17,20 +17,26 @@
  * Author: Benjamin Segovia <benjamin.segovia@intel.com>
  */
 
+/**
+ * \file instruction.hpp
+ *
+ * \author Benjamin Segovia <benjamin.segovia@intel.com>
+ */
 #ifndef __GBE_IR_INSTRUCTION_HPP__
 #define __GBE_IR_INSTRUCTION_HPP__
 
 #include "sys/platform.hpp"
-#include "ir_register.hpp"
-#include "ir_value.hpp"
-#include "ir_type.hpp"
+#include "ir/register.hpp"
+#include "ir/value.hpp"
+#include "ir/type.hpp"
 
-namespace gbe
-{
+namespace gbe {
+namespace ir {
+
   /*! All opcodes */
   enum Opcode : uint8_t {
 #define DECL_INSN(INSN, FAMILY) OP_##INSN,
-#include "ir_instruction.hxx"
+#include "ir/instruction.hxx"
 #undef DECL_INSN
   };
 
@@ -313,6 +319,7 @@ namespace gbe
   /*! label labelIndex */
   Instruction label(LabelIndex labelIndex);
 
+} /* namespace ir */
 } /* namespace gbe */
 
 #endif /* __GBE_IR_INSTRUCTION_HPP__ */

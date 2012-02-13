@@ -17,6 +17,11 @@
  * Author: Benjamin Segovia <benjamin.segovia@intel.com>
  */
 
+/**
+ * \file alloc.cpp
+ *
+ * \author Benjamin Segovia <benjamin.segovia@intel.com>
+ */
 #include "sys/alloc.hpp"
 #include "sys/atomic.hpp"
 #include "sys/mutex.hpp"
@@ -106,7 +111,6 @@ namespace gbe
     Lock<MutexSys> lock(mutex);
     const uintptr_t iptr = (uintptr_t) ptr;
     FATAL_IF(allocMap.find(iptr) == allocMap.end(), "Pointer not referenced");
-    //if(allocMap.find(iptr) == allocMap.end()) debugbreak();
     allocMap.erase(iptr);
     unfreedNum--;
   }

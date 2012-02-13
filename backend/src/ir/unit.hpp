@@ -17,14 +17,20 @@
  * Author: Benjamin Segovia <benjamin.segovia@intel.com>
  */
 
+/**
+ * \file unit.hpp
+ *
+ * \author Benjamin Segovia <benjamin.segovia@intel.com>
+ */
 #ifndef __GBE_IR_UNIT_HPP__
 #define __GBE_IR_UNIT_HPP__
 
-#include "ir_constant.hpp"
+#include "ir/constant.hpp"
 #include "sys/hash_map.hpp"
 
-namespace gbe
-{
+namespace gbe {
+namespace ir {
+
   // A unit contains a set of functions
   class Function;
 
@@ -48,6 +54,8 @@ namespace gbe
     hash_map<std::string, Function*> functions; //!< All the defined functions
     ConstantSet constantSet;  //!< All the constants defined in the unit
   };
+
+} /* namespace ir */
 } /* namespace gbe */
 
 #endif /* __GBE_IR_UNIT_HPP__ */

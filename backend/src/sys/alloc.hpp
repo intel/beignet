@@ -17,6 +17,11 @@
  * Author: Benjamin Segovia <benjamin.segovia@intel.com>
  */
 
+/**
+ * \file alloc.hpp
+ *
+ * \author Benjamin Segovia <benjamin.segovia@intel.com>
+ */
 #ifndef __GBE_ALLOC_HPP__
 #define __GBE_ALLOC_HPP__
 

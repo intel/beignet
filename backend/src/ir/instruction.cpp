@@ -17,11 +17,17 @@
  * Author: Benjamin Segovia <benjamin.segovia@intel.com>
  */
 
-#include "ir_instruction.hpp"
-#include "ir_function.hpp"
+/**
+ * \file instruction.cpp
+ *
+ * \author Benjamin Segovia <benjamin.segovia@intel.com>
+ */
+#include "ir/instruction.hpp"
+#include "ir/function.hpp"
 
-namespace gbe
-{
+namespace gbe {
+namespace ir {
+
   ///////////////////////////////////////////////////////////////////////////
   // Implements the concrete implementations of the instruction classes. We just
   // cast an instruction to an internal class to run the given member function
@@ -351,47 +357,47 @@ namespace gbe
   STATIC_ASSERT(offsetof(internal::CLASS, opcode) == 0);
 
 START_INTROSPECTION(UnaryInstruction)
-#include "ir_instruction.hxx"
+#include "ir/instruction.hxx"
 END_INTROSPECTION(UnaryInstruction)
 
 START_INTROSPECTION(BinaryInstruction)
-#include "ir_instruction.hxx"
+#include "ir/instruction.hxx"
 END_INTROSPECTION(BinaryInstruction)
 
 START_INTROSPECTION(TernaryInstruction)
-#include "ir_instruction.hxx"
+#include "ir/instruction.hxx"
 END_INTROSPECTION(TernaryInstruction)
 
 START_INTROSPECTION(ConvertInstruction)
-#include "ir_instruction.hxx"
+#include "ir/instruction.hxx"
 END_INTROSPECTION(ConvertInstruction)
 
 START_INTROSPECTION(BranchInstruction)
-#include "ir_instruction.hxx"
+#include "ir/instruction.hxx"
 END_INTROSPECTION(BranchInstruction)
 
 START_INTROSPECTION(TextureInstruction)
-#include "ir_instruction.hxx"
+#include "ir/instruction.hxx"
 END_INTROSPECTION(TextureInstruction)
 
 START_INTROSPECTION(LoadImmInstruction)
-#include "ir_instruction.hxx"
+#include "ir/instruction.hxx"
 END_INTROSPECTION(LoadImmInstruction)
 
 START_INTROSPECTION(LoadInstruction)
-#include "ir_instruction.hxx"
+#include "ir/instruction.hxx"
 END_INTROSPECTION(LoadInstruction)
 
 START_INTROSPECTION(StoreInstruction)
-#include "ir_instruction.hxx"
+#include "ir/instruction.hxx"
 END_INTROSPECTION(StoreInstruction)
 
 START_INTROSPECTION(FenceInstruction)
-#include "ir_instruction.hxx"
+#include "ir/instruction.hxx"
 END_INTROSPECTION(FenceInstruction)
 
 START_INTROSPECTION(LabelInstruction)
-#include "ir_instruction.hxx"
+#include "ir/instruction.hxx"
 END_INTROSPECTION(LabelInstruction)
 
 #undef END_INTROSPECTION
@@ -418,25 +424,25 @@ END_INTROSPECTION(LabelInstruction)
 
 #define CALL getSrcNum()
 START_FUNCTION(Instruction, uint32_t, getSrcNum(void))
-#include "ir_instruction.hxx"
+#include "ir/instruction.hxx"
 END_FUNCTION(Instruction, uint32_t)
 #undef CALL
 
 #define CALL getDstNum()
 START_FUNCTION(Instruction, uint32_t, getDstNum(void))
-#include "ir_instruction.hxx"
+#include "ir/instruction.hxx"
 END_FUNCTION(Instruction, uint32_t)
 #undef CALL
 
 #define CALL getDstIndex(fn, ID)
 START_FUNCTION(Instruction, RegisterIndex, getDstIndex(const Function &fn, uint32_t ID))
-#include "ir_instruction.hxx"
+#include "ir/instruction.hxx"
 END_FUNCTION(Instruction, RegisterIndex)
 #undef CALL
 
 #define CALL getSrcIndex(fn, ID)
 START_FUNCTION(Instruction, RegisterIndex, getSrcIndex(const Function &fn, uint32_t ID))
-#include "ir_instruction.hxx"
+#include "ir/instruction.hxx"
 END_FUNCTION(Instruction, RegisterIndex)
 #undef CALL
 
@@ -566,5 +572,6 @@ DECL_MEM_FN(BranchInstruction, bool, isPredicated(void), isPredicated())
     return *reinterpret_cast<Instruction*>(&insn);
   }
 
+} /* namespace ir */
 } /* namespace gbe */
 

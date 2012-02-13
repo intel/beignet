@@ -17,11 +17,17 @@
  * Author: Benjamin Segovia <benjamin.segovia@intel.com>
  */
 
-#include "ir_unit.hpp"
-#include "ir_function.hpp"
+/**
+ * \file unit.cpp
+ *
+ * \author Benjamin Segovia <benjamin.segovia@intel.com>
+ */
+#include "ir/unit.hpp"
+#include "ir/function.hpp"
 
-namespace gbe
-{
+namespace gbe {
+namespace ir {
+
   Unit::Unit(void) {}
   Unit::~Unit(void) {
     for (auto it = functions.begin(); it != functions.end(); ++it)
@@ -49,5 +55,6 @@ namespace gbe
     constantSet.append(data, name, size, alignment);
   }
 
+} /* namespace ir */
 } /* namespace gbe */
 

@@ -17,8 +17,13 @@
  * Author: Benjamin Segovia <benjamin.segovia@intel.com>
  */
 
-#ifndef __GBE_INTRINSICS_H__
-#define __GBE_INTRINSICS_H__
+//////////////////////////////////////////////////////////////////////////////////////////
+// Part of this file is taken from the Apache licensed Intel Embree project here:       //
+// http://software.intel.com/en-us/articles/embree-photo-realistic-ray-tracing-kernels/ //
+//////////////////////////////////////////////////////////////////////////////////////////
+
+#ifndef __GBE_INTRINSICS_HPP__
+#define __GBE_INTRINSICS_HPP__
 
 #include "sys/platform.hpp"
 #include <xmmintrin.h>
@@ -206,5 +211,5 @@ INLINE void __store_release(volatile T *ptr, T x)
   *ptr = x; // for x86, store == store_release
   GBE_COMPILER_READ_WRITE_BARRIER;
 }
-#endif /* __GBE_INTRINSICS_H__ */
+#endif /* __GBE_INTRINSICS_HPP__ */
 

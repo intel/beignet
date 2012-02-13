@@ -17,11 +17,15 @@
  * Author: Benjamin Segovia <benjamin.segovia@intel.com>
  */
 
+//////////////////////////////////////////////////////////////////////////////////////////
+// Part of this file is taken from the Apache licensed Intel Embree project here:       //
+// http://software.intel.com/en-us/articles/embree-photo-realistic-ray-tracing-kernels/ //
+//////////////////////////////////////////////////////////////////////////////////////////
+
 #ifndef __GBE_STRING_HPP__
 #define __GBE_STRING_HPP__
 
 #include "sys/platform.hpp"
-#include "sys/filename.hpp"
 
 #include <cstring>
 #include <string>
@@ -45,10 +49,6 @@ namespace gbe
   bool contains(const char *haystack, const char *needle);
   /*! Tokenize a string (like strtok_r does) */
   char* tokenize(char *s1, const char *s2, char **lasts);
-  /*! Load a file from its path and copies it into a string */
-  std::string loadFile(const FileName &path);
-  /*! Load a file from a stream and copies it into a string */
-  std::string loadFile(std::ifstream &stream);
 } /* namespace gbe */
 
 #endif /* __GBE_STRING_HPP__ */

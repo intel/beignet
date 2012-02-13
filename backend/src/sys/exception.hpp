@@ -17,8 +17,39 @@
  * Author: Benjamin Segovia <benjamin.segovia@intel.com>
  */
 
+/**
+ * \file exception.hpp
+ *
+ * \author Benjamin Segovia <benjamin.segovia@intel.com>
+ */
 #ifndef __GBE_EXCEPTION_HPP__
 #define __GBE_EXCEPTION_HPP__
 
+#if defined(GBE_COMPILE_UTEST)
+
+#include "string.hpp"
+#include <exception>
+
+namespace gbe
+{
+  /*! Exception are only used while using unit tests */
+  class Exception : public std::exception
+  {
+  public:
+    Exception(const std::string &msg) throw() : msg(msg) {}
+    Exception(const Exception &other) throw() : msg(other.msg) {}
+    ~Exception(void) throw() {}
+    Exception &operator= (const Exception &other) throw() {
+      this->msg = other.msg;
+      return *this;
+    }
+    const char *what(void) const throw() { return msg.c_str(); }
+  private:
+    std::string msg; //!< String message
+  };
+
+} /* namespace gbe */
+
+#endif /* GBE_COMPILE_UTEST */
 #endif /* __GBE_EXCEPTION_HPP__ */
 

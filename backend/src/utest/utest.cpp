@@ -17,10 +17,15 @@
  * Author: Benjamin Segovia <benjamin.segovia@intel.com>
  */
 
+/**
+ * \file utest.hpp
+ *
+ * \author Benjamin Segovia <benjamin.segovia@intel.com>
+ */
 #include "utest.hpp"
 #include "sys/string.hpp"
 
-namespace pf
+namespace gbe
 {
   std::vector<UTest> *UTest::utestList = NULL;
   void releaseUTestList(void) { if (UTest::utestList) delete UTest::utestList; }
@@ -53,5 +58,5 @@ namespace pf
       (utest.fn)();
     }
   }
-} /* namespace pf */
+} /* namespace gbe */
 

@@ -17,6 +17,11 @@
  * Author: Benjamin Segovia <benjamin.segovia@intel.com>
  */
 
+//////////////////////////////////////////////////////////////////////////////////////////
+// Part of this file is taken from the Apache licensed Intel Embree project here:       //
+// http://software.intel.com/en-us/articles/embree-photo-realistic-ray-tracing-kernels/ //
+//////////////////////////////////////////////////////////////////////////////////////////
+
 #ifndef __GBE_CONSTANTS_HPP__
 #define __GBE_CONSTANTS_HPP__
 
@@ -141,4 +146,5 @@ namespace gbe
   static const size_t GB = KB*MB;
 }
 
-#endif
+#endif /* __GBE_CONSTANTS_HPP__ */
+

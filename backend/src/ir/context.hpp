@@ -17,16 +17,22 @@
  * Author: Benjamin Segovia <benjamin.segovia@intel.com>
  */
 
+/**
+ * \file context.hpp
+ *
+ * \author Benjamin Segovia <benjamin.segovia@intel.com>
+ */
 #ifndef __GBE_IR_CONTEXT_HPP__
 #define __GBE_IR_CONTEXT_HPP__
 
-#include "ir_instruction.hpp"
-#include "ir_function.hpp"
-#include "ir_register.hpp"
+#include "ir/instruction.hpp"
+#include "ir/function.hpp"
+#include "ir/register.hpp"
 #include "sys/vector.hpp"
 
-namespace gbe
-{
+namespace gbe {
+namespace ir {
+
   // We compile a unit
   class Unit;
 
@@ -62,6 +68,7 @@ namespace gbe
     vector<Function*> fnStack;//!< Stack of functions still to finish
   };
 
+} /* namespace ir */
 } /* namespace gbe */
 
 #endif /* __GBE_IR_CONTEXT_HPP__ */

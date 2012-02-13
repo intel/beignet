@@ -17,13 +17,19 @@
  * Author: Benjamin Segovia <benjamin.segovia@intel.com>
  */
 
+/**
+ * \file register.hpp
+ *
+ * \author Benjamin Segovia <benjamin.segovia@intel.com>
+ */
 #ifndef __GBE_IR_REGISTER_HPP__
 #define __GBE_IR_REGISTER_HPP__
 
 #include "sys/vector.hpp"
 
-namespace gbe
-{
+namespace gbe {
+namespace ir {
+
   /*! A register can be either a byte, a word, a dword or a qword. It can be
    *  either scalar or a vector. Everything is packed in 32 bits
    */
@@ -103,6 +109,7 @@ namespace gbe
     GBE_CLASS(RegisterFile);
   };
 
+} /* namespace ir */
 } /* namespace gbe */
 
 #endif /* __GBE_IR_REGISTER_HPP__ */

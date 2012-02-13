@@ -17,10 +17,29 @@
  * Author: Benjamin Segovia <benjamin.segovia@intel.com>
  */
 
-#include "ir_register.hpp"
+/**
+ * \file constant.hpp
+ *
+ * \author Benjamin Segovia <benjamin.segovia@intel.com>
+ */
+#include "constant.hpp"
 
-namespace gbe
-{
+namespace gbe {
+namespace ir {
 
+  void ConstantSet::append(const char *data,
+                           const std::string &name,
+                           uint32_t size,
+                           uint32_t alignment)
+  {
+    const uint32_t offset = ALIGN(this->data.size(), alignment);
+    const uint32_t padding = offset - this->data.size();
+    const Constant constant(name, size, alignment, offset);
+    constants.push_back(constant);
+    for (uint32_t i = 0; i < padding; ++i) this->data.push_back(0);
+    for (uint32_t i = 0; i < size; ++i) this->data.push_back(data[i]);
+  }
+
+} /* namespace ir */
 } /* namespace gbe */
 

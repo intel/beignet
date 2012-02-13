@@ -17,16 +17,22 @@
  * Author: Benjamin Segovia <benjamin.segovia@intel.com>
  */
 
+/**
+ * \file function.hpp
+ *
+ * \author Benjamin Segovia <benjamin.segovia@intel.com>
+ */
 #ifndef __GBE_IR_FUNCTION_HPP__
 #define __GBE_IR_FUNCTION_HPP__
 
-#include "ir_value.hpp"
-#include "ir_register.hpp"
-#include "ir_instruction.hpp"
+#include "ir/value.hpp"
+#include "ir/register.hpp"
+#include "ir/instruction.hpp"
 #include "sys/vector.hpp"
 
-namespace gbe
-{
+namespace gbe {
+namespace ir {
+
   /*! A function is no more that a set of declared registers and a set of
    *  basic blocks
    */
@@ -76,6 +82,7 @@ namespace gbe
     RegisterFile file;      //!< All the registers used in the instructions
   };
 
+} /* namespace ir */
 } /* namespace gbe */
 
 #endif /* __GBE_IR_FUNCTION_HPP__ */

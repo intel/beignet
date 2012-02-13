@@ -17,9 +17,21 @@
  * Author: Benjamin Segovia <benjamin.segovia@intel.com>
  */
 
-#ifndef __GBE_IR_SCOPE_HPP__
-#define __GBE_IR_SCOPE_HPP__
+/**
+ * \file function.cpp
+ *
+ * \author Benjamin Segovia <benjamin.segovia@intel.com>
+ */
+#include "ir/function.hpp"
 
-#endif /* __GBE_IR_SCOPE_HPP__ */
+namespace gbe {
+namespace ir {
 
+  Function::Function(void) {}
+  Function::~Function(void) {
+    for (auto it = bb.begin(); it != bb.end(); ++it) GBE_DELETE(*it);
+  }
+
+} /* namespace ir */
+} /* namespace gbe */
 

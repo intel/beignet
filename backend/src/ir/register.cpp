@@ -17,12 +17,15 @@
  * Author: Benjamin Segovia <benjamin.segovia@intel.com>
  */
 
-#include "ir_function.hpp"
-namespace gbe
-{
-  Function::Function(void) {}
-  Function::~Function(void) {
-    for (auto it = bb.begin(); it != bb.end(); ++it) GBE_DELETE(*it);
-  }
+/**
+ * \file register.cpp
+ *
+ * \author Benjamin Segovia <benjamin.segovia@intel.com>
+ */
+#include "ir/register.hpp"
+
+namespace gbe {
+namespace ir {
+} /* namespace ir */
 } /* namespace gbe */
 

@@ -17,39 +17,35 @@
  * Author: Benjamin Segovia <benjamin.segovia@intel.com>
  */
 
-#ifndef __GBE_IR_VALUE_HPP__
-#define __GBE_IR_VALUE_HPP__
+/**
+ * \file type.hpp
+ *
+ * \author Benjamin Segovia <benjamin.segovia@intel.com>
+ */
+#ifndef __GBE_IR_TYPE_HPP__
+#define __GBE_IR_TYPE_HPP__
 
-#include "ir_type.hpp"
 #include "sys/platform.hpp"
 
-namespace gbe
-{
-  /*! The value as stored in the instruction */
-  class Value
-  {
-  public:
-#define DECL_CONSTRUCTOR(TYPE, FIELD) \
-    Value(TYPE FIELD) { this->data.u64 = 0llu; this->data.FIELD = FIELD; }
-    DECL_CONSTRUCTOR(int8_t, s8);
-    DECL_CONSTRUCTOR(uint8_t, u8);
-    union {
-      int8_t s8;
-      uint8_t u8;
-      int16_t i16;
-      uint16_t u16;
-      int32_t i32;
-      uint32_t u32;
-      int64_t i64;
-      uint64_t u64;
-      float f32;
-      double f64;
-    } data;     //!< Value to store
-    Type type;  //!< Type of the value
-#undef DECL_CONSTRUCTOR
+namespace gbe {
+namespace ir {
+
+  /*! All types possibly supported by the instruction */
+  enum Type : uint8_t {
+    TYPE_S8 = 0,  //!< signed 8 bits integer
+    TYPE_U8,      //!< unsigned 8 bits integer
+    TYPE_S16,     //!< signed 16 bits integer
+    TYPE_U16,     //!< unsigned 16 bits integer
+    TYPE_S32,     //!< signed 32 bits integer
+    TYPE_U32,     //!< unsigned 32 bits integer
+    TYPE_S64,     //!< signed 64 bits integer
+    TYPE_U64,     //!< unsigned 64 bits integer
+    TYPE_FLOAT,   //!< 32 bits floating point value
+    TYPE_DOUBLE   //!< 64 bits floating point value
   };
 
+} /* namespace ir */
 } /* namespace gbe */
 
-#endif /* __GBE_IR_VALUE_HPP__ */
+#endif /* __GBE_IR_TYPE_HPP__ */
 

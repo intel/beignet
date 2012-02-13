@@ -17,24 +17,46 @@
  * Author: Benjamin Segovia <benjamin.segovia@intel.com>
  */
 
-#ifndef __GBE_LIBRARY_HPP__
-#define __GBE_LIBRARY_HPP__
+/**
+ * \file value.hpp
+ *
+ * \author Benjamin Segovia <benjamin.segovia@intel.com>
+ */
+#ifndef __GBE_IR_VALUE_HPP__
+#define __GBE_IR_VALUE_HPP__
 
-#include <string>
-
+#include "ir/type.hpp"
 #include "sys/platform.hpp"
 
-namespace gbe
-{
-  /*! type for shared library */
-  typedef struct opaque_lib_t* lib_t;
-  /*! loads a shared library */
-  lib_t openLibrary(const std::string& file);
-  /*! returns address of a symbol from the library */
-  void* getSymbol(lib_t lib, const std::string& sym);
-  /*! unloads a shared library */
-  void closeLibrary(lib_t lib);
+namespace gbe {
+namespace ir {
+
+  /*! The value as stored in the instruction */
+  class Value
+  {
+  public:
+#define DECL_CONSTRUCTOR(TYPE, FIELD) \
+    Value(TYPE FIELD) { this->data.u64 = 0llu; this->data.FIELD = FIELD; }
+    DECL_CONSTRUCTOR(int8_t, s8);
+    DECL_CONSTRUCTOR(uint8_t, u8);
+    union {
+      int8_t s8;
+      uint8_t u8;
+      int16_t i16;
+      uint16_t u16;
+      int32_t i32;
+      uint32_t u32;
+      int64_t i64;
+      uint64_t u64;
+      float f32;
+      double f64;
+    } data;     //!< Value to store
+    Type type;  //!< Type of the value
+#undef DECL_CONSTRUCTOR
+  };
+
+} /* namespace ir */
 } /* namespace gbe */
 
-#endif /* __GBE_LIBRARY_HPP__ */
+#endif /* __GBE_IR_VALUE_HPP__ */
 
