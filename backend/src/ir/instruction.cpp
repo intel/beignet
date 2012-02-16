@@ -79,6 +79,7 @@ namespace ir {
         return src[ID];
       }
       INLINE Type getType(void) const { return this->type; }
+      INLINE bool wellFormed(const Function &fn, std::string &whyNot) const;
       Type type;                //!< Type of the instruction
       RegisterIndex dst;        //!< Index of the register in the register file
       RegisterIndex src[srcNum];//!< Indices of the sources
@@ -143,9 +144,31 @@ namespace ir {
         return fn.getRegisterIndex(src, ID);
       }
       INLINE Type getType(void) const { return this->type; }
+      INLINE bool wellFormed(const Function &fn, std::string &whyNot) const;
       Type type;          //!< Type of the instruction
       RegisterIndex dst;  //!< Dst is the register index
       TupleIndex src;     //!< 3 sources do not fit in 8 bytes -> use a tuple
+    };
+
+    /*! Comparison instructions take two sources of the same type and return a
+     *  boolean value. Since it is pretty similar to binary instruction, we
+     *  steal all the methods from it, except wellFormed (dst register is always
+     *  a boolean value)
+     */
+    class CompareInstruction : public BinaryInstruction
+    {
+    public:
+      CompareInstruction(Type type,
+                         CompareOperation operation,
+                         RegisterIndex dst,
+                         RegisterIndex src0,
+                         RegisterIndex src1) :
+        BinaryInstruction(OP_CMP, type, dst, src0, src1)
+      {
+        this->operation = operation;
+      }
+      INLINE bool wellFormed(const Function &fn, std::string &whyNot) const;
+      CompareOperation operation;
     };
 
     class ConvertInstruction : public BasePolicy
@@ -174,6 +197,7 @@ namespace ir {
         assert(ID == 0);
         return src;
       }
+      INLINE bool wellFormed(const Function &fn, std::string &whyNot) const;
       RegisterIndex dst;  //!< Converted value
       RegisterIndex src;  //!< To convert
       Type dstType;       //!< Type to convert to
@@ -200,6 +224,7 @@ namespace ir {
         return predicate;
       }
       INLINE bool isPredicated(void) const { return hasPredicate; }
+      INLINE bool wellFormed(const Function &fn, std::string &why) const;
       RegisterIndex predicate;  //!< Predication means conditional branch
       LabelIndex labelIndex;    //!< Index of the label the branch targets
       bool hasPredicate;        //!< Is it predicated?
@@ -281,6 +306,7 @@ namespace ir {
     {
     public:
       INLINE TextureInstruction(void) { this->opcode = OP_TEX; }
+      INLINE bool wellFormed(const Function &fn, std::string &why) const;
     };
 
     class LoadImmInstruction : public BasePolicy, public NoSrcPolicy
@@ -335,65 +361,164 @@ namespace ir {
     // Implements all the wellFormed methods
     /////////////////////////////////////////////////////////////////////////
 
+    /*! All Nary instruction register must be of the same family and properly
+     *  defined (i.e. not out-of-bound)
+     */
+    static INLINE bool checkRegister(Register::Family family,
+                                     const RegisterIndex ID,
+                                     const Function &fn,
+                                     std::string &whyNot)
+    {
+      if (UNLIKELY(ID >= fn.regNum())) {
+        whyNot = "Out-of-bound destination register index";
+        return false;
+      }
+      const Register reg = fn.getRegister(ID);
+      if (UNLIKELY(reg.family != family)) {
+        whyNot = "Destination family does not match instruction type";
+        return false;
+      }
+      return true;
+    }
+
+    // Unary and binary instructions share the same rules
+    template <uint32_t srcNum>
+    INLINE bool NaryInstruction<srcNum>::wellFormed(const Function &fn, std::string &whyNot) const
+    {
+      const Register::Family family = getFamily(this->type);
+      if (UNLIKELY(checkRegister(family, dst, fn, whyNot) == false))
+        return false;
+      for (uint32_t srcID = 0; srcID < srcNum; ++srcID)
+        if (UNLIKELY(checkRegister(family, src[srcID], fn, whyNot) == false))
+          return false;
+      return true;
+    }
+
+    // Idem for ternary instructions except that sources are in a tuple
+    INLINE bool TernaryInstruction::wellFormed(const Function &fn, std::string &whyNot) const
+    {
+      const Register::Family family = getFamily(this->type);
+      if (UNLIKELY(checkRegister(family, dst, fn, whyNot) == false))
+        return false;
+      if (UNLIKELY(src + 3u > fn.tupleNum())) {
+        whyNot = "Out-of-bound index for ternary instruction";
+        return false;
+      }
+      for (uint32_t srcID = 0; srcID < 3u; ++srcID) {
+        const RegisterIndex regID = fn.getRegisterIndex(src, srcID);
+        if (UNLIKELY(checkRegister(family, regID, fn, whyNot) == false))
+          return false;
+      }
+      return true;
+    }
+
+    // Pretty similar to binary instruction. Only the destination is of type
+    // boolean
+    INLINE bool CompareInstruction::wellFormed(const Function &fn, std::string &whyNot) const
+    {
+      if (UNLIKELY(checkRegister(Register::BOOL, dst, fn, whyNot) == false))
+        return false;
+      const Register::Family family = getFamily(this->type);
+      for (uint32_t srcID = 0; srcID < 2; ++srcID)
+        if (UNLIKELY(checkRegister(family, src[srcID], fn, whyNot) == false))
+          return false;
+      return true;
+    }
+
+    // We can convert anything to anything, but types and families must match
+    INLINE bool ConvertInstruction::wellFormed(const Function &fn, std::string &whyNot) const
+    {
+      const Register::Family dstFamily = getFamily(srcType);
+      const Register::Family srcFamily = getFamily(srcType);
+      if (UNLIKELY(checkRegister(dstFamily, dst, fn, whyNot) == false))
+        return false;
+      if (UNLIKELY(checkRegister(srcFamily, src, fn, whyNot) == false))
+        return false;
+      return true;
+    }
+
     /*! Loads and stores follow the same restrictions */
     template <typename T>
-    INLINE bool wellFormedLoadStore(const T &insn, const Function &fn, std::string &why) {
+    INLINE bool wellFormedLoadStore(const T &insn, const Function &fn, std::string &whyNot)
+    {
       if (UNLIKELY(insn.offset >= fn.regNum())) {
-        why = "Out-of-bound offset register index";
-        return false;
-      } else if (UNLIKELY(insn.values + insn.valueNum > fn.tupleNum())) {
-        why = "Out-of-bound tuple index";
+        whyNot = "Out-of-bound offset register index";
         return false;
       }
-      // Check that all the registers have the same size
+      if (UNLIKELY(insn.values + insn.valueNum > fn.tupleNum())) {
+        whyNot = "Out-of-bound tuple index";
+        return false;
+      }
+      // Check all registers
       const Register::Family family = getFamily(insn.type);
-      for (uint32_t regID = 0; regID < insn.valueNum; ++regID) {
-        const RegisterIndex index = fn.getRegisterIndex(insn.values, regID);
-        if (index > fn.regNum()) {
-          why = "Out-of-bound register index";
+      for (uint32_t valueID = 0; valueID < insn.valueNum; ++valueID) {
+        const RegisterIndex regID = fn.getRegisterIndex(insn.values, valueID);
+        if (UNLIKELY(checkRegister(family, regID, fn, whyNot) == false))
           return false;
-        } else {
-          const Register reg = fn.getRegister(regID);
-          if (reg.family != family) {
-            why = "Register family does match instruction type";
-            return false;
-          }
-        }
       }
       return true;
     }
-    INLINE bool LoadInstruction::wellFormed(const Function &fn, std::string &why) const {
-      return wellFormedLoadStore(*this, fn, why);
-    }
-    INLINE bool StoreInstruction::wellFormed(const Function &fn, std::string &why) const {
-      return wellFormedLoadStore(*this, fn, why);
+
+    INLINE bool LoadInstruction::wellFormed(const Function &fn, std::string &whyNot) const
+    {
+      return wellFormedLoadStore(*this, fn, whyNot);
     }
 
-    INLINE bool LoadImmInstruction::wellFormed(const Function &fn, std::string &why) const {
-      if (UNLIKELY(dst >= fn.regNum())) {
-        why = "Out-of-bound register index";
-        return false;
-      } else if (UNLIKELY(valueIndex >= fn.valueNum())) {
-        why = "Out-of-bound immediate value index";
-        return false;
-      } else if (UNLIKELY(type != fn.getValue(valueIndex).type)) {
-        why = "Inconsistant type for the immediate value to load";
-        return false;
-      } else
-        return true;
+    INLINE bool StoreInstruction::wellFormed(const Function &fn, std::string &whyNot) const
+    {
+      return wellFormedLoadStore(*this, fn, whyNot);
     }
 
-    INLINE bool FenceInstruction::wellFormed(const Function &fn, std::string &why) const {
+    // TODO
+    INLINE bool TextureInstruction::wellFormed(const Function &fn, std::string &why) const
+    {
       return true;
     }
 
-
-    INLINE bool LabelInstruction::wellFormed(const Function &fn, std::string &why) const {
-      if (UNLIKELY(labelIndex >= fn.labelNum())) {
-        why = "Out-of-bound label index";
+    // Ensure that types and register family match
+    INLINE bool LoadImmInstruction::wellFormed(const Function &fn, std::string &whyNot) const
+    {
+      if (UNLIKELY(valueIndex >= fn.valueNum())) {
+        whyNot = "Out-of-bound immediate value index";
         return false;
-      } else
-        return true;
+      }
+      if (UNLIKELY(type != fn.getValue(valueIndex).type)) {
+        whyNot = "Inconsistant type for the immediate value to load";
+        return false;
+      }
+      const Register::Family family = getFamily(type);
+      if (UNLIKELY(checkRegister(family, dst, fn, whyNot) == false))
+        return false;
+      return true;
+    }
+
+    // Nothing can go wrong here
+    INLINE bool FenceInstruction::wellFormed(const Function &fn, std::string &whyNot) const
+    {
+      return true;
+    }
+
+    // Only a label index is required
+    INLINE bool LabelInstruction::wellFormed(const Function &fn, std::string &whyNot) const
+    {
+      if (UNLIKELY(labelIndex >= fn.labelNum())) {
+        whyNot = "Out-of-bound label index";
+        return false;
+      }
+      return true;
+    }
+
+    // The label must exist and the register must of boolean family
+    INLINE bool BranchInstruction::wellFormed(const Function &fn, std::string &whyNot) const
+    {
+      if (UNLIKELY(labelIndex >= fn.labelNum())) {
+        whyNot = "Out-of-bound label index";
+        return false;
+      }
+      if (hasPredicate)
+        if (UNLIKELY(checkRegister(Register::BOOL, predicate, fn, whyNot) == false))
+          return false;
+      return true;
     }
 
   } /* namespace internal */
@@ -519,7 +644,13 @@ END_FUNCTION(Instruction, RegisterIndex)
 #define CALL getSrcIndex(fn, ID)
 START_FUNCTION(Instruction, RegisterIndex, getSrcIndex(const Function &fn, uint32_t ID))
 #include "ir/instruction.hxx"
-END_FUNCTION(Instruction, RegisterIndex)
+END_FUNCTION(Instruction, bool)
+#undef CALL
+
+#define CALL wellFormed(fn, whyNot)
+START_FUNCTION(Instruction, bool, wellFormed(const Function &fn, std::string &whyNot))
+#include "ir/instruction.hxx"
+END_FUNCTION(Instruction, bool)
 #undef CALL
 
 #undef END_FUNCTION

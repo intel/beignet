@@ -136,6 +136,29 @@ namespace ir {
     static bool isClassOf(const Instruction &insn);
   };
 
+  /*! Operation done in comparison */
+  enum CompareOperation : uint8_t {
+    EQ = 0, // ==
+    NE,     // !=
+    LT,     // <
+    LE,     // <=
+    GT,     // >
+    GE      // >=
+  };
+
+  /*! Compare instructions compare anything from the same type and return a
+   *  boolean value
+   */
+  class CompareInstruction : public Instruction {
+  public:
+    /*! Get the type of the source registers */
+    Type getType(void) const;
+    /*! Compare operation in the instruction */
+    CompareOperation getOperation(void) const;
+    /*! Return true if the given instruction is an instance of this class */
+    static bool isClassOf(const Instruction &insn);
+  };
+
   /*! Conversion instruction converts from one type to another */
   class ConvertInstruction : public Instruction {
   public:
@@ -311,6 +334,8 @@ namespace ir {
   Instruction AND(Type type, RegisterIndex dst, RegisterIndex src0, RegisterIndex src1);
   /*! mad.type dst {src0, src1, src2} == src */
   Instruction MAD(Type type, RegisterIndex dst, TupleIndex src);
+  /*! cmp.type.op dst src0 src1 */
+  Instruction CMP(Type type, CompareInstruction op, RegisterIndex dst, RegisterIndex src0, RegisterIndex src1);
   /*! cvt.{dstType <- srcType} dst src */
   Instruction CVT(Type dstType, Type srcType, RegisterIndex dst, RegisterIndex src0, RegisterIndex src1);
   /*! bra labelIndex */

@@ -68,6 +68,7 @@ namespace ir {
       case TYPE_DOUBLE:
         return Register::QWORD;
     };
+    return Register::DWORD;
   }
 
 } /* namespace ir */

@@ -120,34 +120,11 @@ namespace ir {
     return fn->file.appendTuple(args...);
   }
 
-  // Out-of-bound check for each function argument
-  template <typename T>
-  INLINE void Context::outOfBoundCheck(const T &t) { }
-  template <>
-  INLINE void Context::outOfBoundCheck<RegisterIndex>(const RegisterIndex &index) {
-    GBE_ASSERT(fn != NULL);
-    GBE_ASSERT(index < fn->regNum());
-  }
-  template <>
-  INLINE void Context::outOfBoundCheck<TupleIndex>(const TupleIndex &index) {
-    GBE_ASSERT(fn != NULL);
-    GBE_ASSERT(index < fn->tupleNum());
-  }
-
-  // Recursively check all the arguments
-  template <typename First, typename... Rest>
-  INLINE void Context::argumentCheck(First first, Rest... rest) {
-    this->outOfBoundCheck(first);
-    this->argumentCheck(rest...);
-  }
-  INLINE void Context::argumentCheck(void) {}
-
   // Use argument checker to assert argument value correctness
 #define DECL_INSN(NAME, FAMILY)                                   \
   template <typename... Args>                                     \
   INLINE void Context::NAME(Args...args) {                        \
     GBE_ASSERT(fn != NULL);                                       \
-    this->argumentCheck(args...);                                 \
     const Instruction insn = gbe::ir::NAME(args...);              \
     this->append(insn);                                           \
   }
