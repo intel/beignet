@@ -81,7 +81,7 @@ namespace ir {
     }
     /*! Allocate a new instruction (with the growing pool) */
     INLINE Instruction *newInstruction(void) {
-      return insnPool.allocate();
+      return new (insnPool.allocate()) Instruction();
     }
     /*! Deallocate an instruction (with the growing pool) */
     INLINE void deleteInstruction(Instruction *insn) {

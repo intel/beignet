@@ -189,9 +189,9 @@ namespace gbe
   public:
     GrowingPool(void) : current(GBE_NEW(GrowingPoolElem, 1)), freeList(NULL) {}
     ~GrowingPool(void) { GBE_ASSERT(current); GBE_DELETE(current); }
-    T *allocate(void) {
+    void *allocate(void) {
       if (this->freeList != NULL) {
-        T *data = (T*) freeList;
+        void *data = (void*) freeList;
         this->freeList = *(void**) freeList;
         return data;
       }
@@ -200,10 +200,10 @@ namespace gbe
         elem->next = current;
         current = elem;
       }
-      T *data = current->data + current->allocated++;
+      void *data = (T*) current->data + current->allocated++;
       return data;
     }
-    void deallocate(T *t) {
+    void deallocate(void *t) {
       if (t == NULL) return;
       *(void**) t = this->freeList;
       this->freeList = t;
