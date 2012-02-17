@@ -62,6 +62,7 @@ namespace gbe
   /*! Store allocation information */
   struct MemDebugger {
     MemDebugger(void) : unfreedNum(0), allocNum(0) {}
+    ~MemDebugger(void) { this->dumpAlloc(); }
     void* insertAlloc(void *ptr, const char *file, const char *function, int line);
     void removeAlloc(void *ptr);
     void dumpAlloc(void);
