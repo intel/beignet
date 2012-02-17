@@ -61,7 +61,7 @@ namespace ir {
     };
 
     /*! Extract the register from the register file */
-    INLINE Register getRegister(uint32_t ID) const { return file.get(ID); }
+    INLINE Register getRegister(RegisterIndex ID) const { return file.get(ID); }
     /*! Get the register index from the tuple vector */
     INLINE RegisterIndex getRegisterIndex(TupleIndex ID, uint32_t which) const {
       return file.get(ID, which);

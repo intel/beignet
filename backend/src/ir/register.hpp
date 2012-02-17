@@ -19,7 +19,6 @@
 
 /**
  * \file register.hpp
- *
  * \author Benjamin Segovia <benjamin.segovia@intel.com>
  */
 #ifndef __GBE_IR_REGISTER_HPP__
@@ -59,11 +58,33 @@ namespace ir {
     GBE_CLASS(Register);
   };
 
-  /*! Register index is the position of the register in the register file */
-  typedef uint16_t RegisterIndex;
+  /*! Register index is the position of the register in the register file. We
+   *  enforce type safety with this class
+   */
+  class RegisterIndex
+  {
+  public:
+    INLINE RegisterIndex(void) {}
+    explicit INLINE RegisterIndex(uint16_t index) : index(index) {}
+    INLINE operator uint16_t (void) const { return index; }
+    uint16_t value(void) const { return index; }
+  private:
+    uint16_t index;
+  };
 
-  /*! Tuple index is the position of the register index in the tuple vector */
-  typedef uint32_t TupleIndex;
+  /*! Tuple index is the position of the register index in the tuple vector. We
+   *  enforce type safety with this class
+   */
+  class TupleIndex
+  {
+  public:
+    INLINE TupleIndex(void) {}
+    explicit INLINE TupleIndex(uint16_t index) : index(index) {}
+    INLINE operator uint16_t (void) const { return index; }
+    uint16_t value(void) const { return index; }
+  private:
+    uint16_t index;
+  };
 
   /*! A register file allocates and destroys registers. Basically, we will have
    *  one register file per function
@@ -73,16 +94,16 @@ namespace ir {
   public:
     /*! Return the index of a newly allocated register register */
     INLINE RegisterIndex append(Register::Family family) {
-      const uint32_t index = regNum();
+      GBE_ASSERT(regNum() <= MAX_INDEX);
+      const uint16_t index = regNum();
       const Register reg(family);
-      GBE_ASSERT(index <= MAX_INDEX);
       regs.push_back(reg);
-      return index;
+      return RegisterIndex(index);
     }
     /*! Make a tuple and return the index to the first element of the tuple */
     template <typename First, typename... Rest>
     INLINE TupleIndex appendTuple(First first, Rest... rest) {
-      const TupleIndex index = regTuples.size();
+      const TupleIndex index = TupleIndex(regTuples.size());
       GBE_ASSERT(first < regNum());
       regTuples.push_back(first);
       appendTuple(rest...);
@@ -97,8 +118,8 @@ namespace ir {
     }
     /*! Get the register index from the tuple */
     INLINE RegisterIndex get(TupleIndex index, uint32_t which) const {
-      GBE_ASSERT(index + which < regTuples.size());
-      return regTuples[index + which];
+      GBE_ASSERT(uint16_t(index) + which < regTuples.size());
+      return regTuples[uint16_t(index) + which];
     }
     /*! Number of registers in the register file */
     INLINE uint32_t regNum(void) const { return regs.size(); }
@@ -107,6 +128,7 @@ namespace ir {
   private:
     vector<Register> regs;           //!< All the registers together
     vector<RegisterIndex> regTuples; //!< Tuples are used for many src / dst
+    enum { MAX_INDEX = 0xffff };     //!< register and tuple indices are short
     GBE_CLASS(RegisterFile);
   };
 

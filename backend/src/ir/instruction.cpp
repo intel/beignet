@@ -40,7 +40,7 @@ namespace ir {
       INLINE uint32_t getSrcNum(void) const { return 0; }
       INLINE RegisterIndex getSrcIndex(const Function &fn, uint32_t ID) const {
         NOT_IMPLEMENTED;
-        return 0;
+        return RegisterIndex(0);
       }
     };
 
@@ -49,7 +49,7 @@ namespace ir {
       INLINE uint32_t getDstNum(void) const { return 0; }
       INLINE RegisterIndex getDstIndex(const Function &fn, uint32_t ID) const {
         NOT_IMPLEMENTED;
-        return 0;
+        return RegisterIndex(0);
       }
     };
 
@@ -271,8 +271,8 @@ namespace ir {
     {
     public:
       StoreInstruction(Type type,
-                       RegisterIndex offset,
                        TupleIndex values,
+                       RegisterIndex offset,
                        MemorySpace memSpace,
                        uint16_t valueNum)
       {
@@ -369,7 +369,7 @@ namespace ir {
                                      const Function &fn,
                                      std::string &whyNot)
     {
-      if (UNLIKELY(ID >= fn.regNum())) {
+      if (UNLIKELY(uint16_t(ID) >= fn.regNum())) {
         whyNot = "Out-of-bound destination register index";
         return false;
       }
@@ -644,7 +644,7 @@ END_FUNCTION(Instruction, RegisterIndex)
 #define CALL getSrcIndex(fn, ID)
 START_FUNCTION(Instruction, RegisterIndex, getSrcIndex(const Function &fn, uint32_t ID))
 #include "ir/instruction.hxx"
-END_FUNCTION(Instruction, bool)
+END_FUNCTION(Instruction, RegisterIndex)
 #undef CALL
 
 #define CALL wellFormed(fn, whyNot)
@@ -731,7 +731,7 @@ DECL_MEM_FN(BranchInstruction, bool, isPredicated(void), isPredicated())
   }
 
   // CVT
-  Instruction CVT(Type dstType, Type srcType, RegisterIndex dst, TupleIndex src) {
+  Instruction CVT(Type dstType, Type srcType, RegisterIndex dst, RegisterIndex src) {
     internal::ConvertInstruction insn(dstType, srcType, dst, src);
     return insn.convert();
   }

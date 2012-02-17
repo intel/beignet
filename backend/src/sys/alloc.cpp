@@ -46,10 +46,10 @@
 ////////////////////////////////////////////////////////////////////////////////
 /// Memory debugger
 ////////////////////////////////////////////////////////////////////////////////
+#if GBE_DEBUG_MEMORY
 namespace gbe
 {
 
-#if GBE_DEBUG_MEMORY
   /*! Store each allocation data */
   struct AllocData {
     INLINE AllocData(void) {}
@@ -182,13 +182,13 @@ namespace gbe
 namespace gbe
 {
 #if GBE_DEBUG_MEMORY
-  void* malloc(size_t size) {
+  void* memAlloc(size_t size) {
     void *ptr = std::malloc(size + sizeof(size_t));
     *(size_t *) ptr = size;
     MemDebuggerInitializeMem((char*) ptr + sizeof(size_t), size);
     return (char *) ptr + sizeof(size_t);
   }
-  void free(void *ptr) {
+  void memFree(void *ptr) {
     if (ptr != NULL) {
       char *toFree = (char*) ptr - sizeof(size_t);
       const size_t size = *(size_t *) toFree;
@@ -197,8 +197,8 @@ namespace gbe
     }
   }
 #else
-  void* malloc(size_t size) { return  std::malloc(size); }
-  void free(void *ptr) { if (ptr != NULL) std::free(ptr); }
+  void* memAlloc(size_t size) { return  std::malloc(size); }
+  void memFree(void *ptr) { if (ptr != NULL) std::free(ptr); }
 #endif /* GBE_DEBUG_MEMORY */
 
 } /* namespace gbe */
@@ -273,7 +273,7 @@ namespace gbe
     return ptr;
   }
 
-  void alignedFree(void *ptr) { if (ptr) free(ptr); }
+  void alignedFree(void *ptr) { if (ptr) std::free(ptr); }
 } /* namespace gbe */
 
 #endif /* __LINUX__ */

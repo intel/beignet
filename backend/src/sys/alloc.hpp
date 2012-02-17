@@ -31,8 +31,8 @@
 namespace gbe
 {
   /*! regular allocation */
-  void* malloc(size_t size);
-  void  free(void *ptr);
+  void* memAlloc(size_t size);
+  void  memFree(void *ptr);
 
   /*! Aligned allocation */
   void* alignedMalloc(size_t size, size_t align = 64);
@@ -67,25 +67,25 @@ namespace gbe
     if (AlignOf<TYPE>::value > sizeof(uintptr_t))            \
       return gbe::alignedMalloc(size, AlignOf<TYPE>::value); \
     else                                                     \
-      return gbe::malloc(size);                              \
+      return gbe::memAlloc(size);                            \
   }                                                          \
   void* operator new[](size_t size)   {                      \
     if (AlignOf<TYPE>::value > sizeof(uintptr_t))            \
       return gbe::alignedMalloc(size, AlignOf<TYPE>::value); \
     else                                                     \
-      return gbe::malloc(size);                              \
+      return gbe::memAlloc(size);                            \
   }                                                          \
   void  operator delete(void* ptr) {                         \
     if (AlignOf<TYPE>::value > sizeof(uintptr_t))            \
       return gbe::alignedFree(ptr);                          \
     else                                                     \
-      return gbe::free(ptr);                                 \
+      return gbe::memFree(ptr);                              \
   }                                                          \
   void  operator delete[](void* ptr) {                       \
     if (AlignOf<TYPE>::value > sizeof(uintptr_t))            \
       return gbe::alignedFree(ptr);                          \
     else                                                     \
-      return gbe::free(ptr);                                 \
+      return gbe::memFree(ptr);                              \
   }                                                          \
 
 /*! Declare a class with custom allocators */
@@ -124,10 +124,10 @@ private:
   do { gbe::MemDebuggerRemoveAlloc(X); delete[] X; } while (0)
 
 #define GBE_MALLOC(SZ)               \
-  gbe::MemDebuggerInsertAlloc(gbe::malloc(SZ),__FILE__, __FUNCTION__, __LINE__)
+  gbe::MemDebuggerInsertAlloc(gbe::memAlloc(SZ),__FILE__, __FUNCTION__, __LINE__)
 
 #define GBE_FREE(X)                  \
-  do { gbe::MemDebuggerRemoveAlloc(X); gbe::free(X); } while (0)
+  do { gbe::MemDebuggerRemoveAlloc(X); gbe::memFree(X); } while (0)
 
 #define GBE_ALIGNED_FREE(X)          \
   do { gbe::MemDebuggerRemoveAlloc(X); gbe::alignedFree(X); } while (0)
