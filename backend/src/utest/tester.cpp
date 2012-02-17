@@ -18,29 +18,22 @@
  */
 
 /**
- * \file blob.cpp
+ * \file tester.cpp
  * \author Benjamin Segovia <benjamin.segovia@intel.com>
  *
- * Compile the complete project from one file. This allows pretty aggresive
- * optimization from the compiler and decreases the binary size
+ * Just run the unit tests. The user can possibly provides the subset of it
  */
+#include "utest/utest.hpp"
 
-#include "sys/assert.cpp"
-#include "sys/string.cpp"
-#include "sys/alloc.cpp"
-#include "sys/sysinfo.cpp"
-#include "sys/mutex.cpp"
-#include "sys/condition.cpp"
-#include "sys/platform.cpp"
-#include "ir/context.cpp"
-#include "ir/unit.cpp"
-#include "ir/constant.cpp"
-#include "ir/instruction.cpp"
-#include "ir/register.cpp"
-#include "ir/function.cpp"
+int main(int argc, char *argv[])
+{
+  using namespace gbe;
 
-#if GBE_COMPILE_UTESTS
-#include "utest/utest.cpp"
-#include "utest/utest_test_utest.cpp"
-#endif /* GBE_COMPILE_UTESTS */
+  // Run the unit tests specified by the user
+  if (argc > 2)
+    for (int i = 2; i < argc; ++i)
+      UTest::run(argv[i]);
+  else
+    UTest::runAll();
+}
 

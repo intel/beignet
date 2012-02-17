@@ -19,13 +19,16 @@
 
 /**
  * \file utest.hpp
- *
  * \author Benjamin Segovia <benjamin.segovia@intel.com>
+ *
+ * Provides all unit test capabilites. It is rather rudimentary but it should
+ * do the job
  */
 #ifndef __GBE_UTEST_HPP__
 #define __GBE_UTEST_HPP__
 
-#include <vector>
+#include "sys/vector.hpp"
+#include "sys/exception.hpp"
 
 namespace gbe
 {
@@ -43,7 +46,7 @@ namespace gbe
     /*! Name of the test */
     const char *name;
     /*! The tests that are registered */
-    static std::vector<UTest> *utestList;
+    static vector<UTest> *utestList;
     /*! Run the test with the given name */
     static void run(const char *name);
     /*! Run all the tests */
@@ -53,6 +56,30 @@ namespace gbe
 
 /*! Register a new unit test */
 #define UTEST_REGISTER(FN) static const gbe::UTest __##NAME##__(FN, #FN);
+
+/*! No assert is expected */
+#define UTEST_EXPECT_SUCCESS(EXPR)                                  \
+ do {                                                               \
+    try {                                                           \
+      EXPR;                                                         \
+      std::cout << "  " << #EXPR << "    [SUCCESS]" << std::endl;   \
+    }                                                               \
+    catch (gbe::Exception e) {                                      \
+      std::cout << "  " << #EXPR << "    [FAILED]" << std::endl;    \
+      std::cout << "    " << e.what() << std::endl;                 \
+    }                                                               \
+  } while (0)
+
+#define UTEST_EXPECT_FAILED(EXPR)                                   \
+ do {                                                               \
+    try {                                                           \
+      EXPR;                                                         \
+      std::cout << "  " << #EXPR << "    [FAILED]" <<  std::endl;   \
+    }                                                               \
+    catch (gbe::Exception e) {                                      \
+      std::cout << "  " << #EXPR << "    [SUCCESS]" << std::endl;   \
+    }                                                               \
+  } while (0)
 
 #endif /* __GBE_UTEST_HPP__ */
 

@@ -18,29 +18,18 @@
  */
 
 /**
- * \file blob.cpp
+ * \file utest_test_utest.cpp
  * \author Benjamin Segovia <benjamin.segovia@intel.com>
  *
- * Compile the complete project from one file. This allows pretty aggresive
- * optimization from the compiler and decreases the binary size
+ * Test that the underlying exceptions are properly caught
  */
+#include "utest/utest.hpp"
 
-#include "sys/assert.cpp"
-#include "sys/string.cpp"
-#include "sys/alloc.cpp"
-#include "sys/sysinfo.cpp"
-#include "sys/mutex.cpp"
-#include "sys/condition.cpp"
-#include "sys/platform.cpp"
-#include "ir/context.cpp"
-#include "ir/unit.cpp"
-#include "ir/constant.cpp"
-#include "ir/instruction.cpp"
-#include "ir/register.cpp"
-#include "ir/function.cpp"
+static void utestTestUTest(void)
+{
+  UTEST_EXPECT_FAILED(GBE_ASSERT(0));
+  UTEST_EXPECT_SUCCESS(GBE_ASSERT(1));
+}
 
-#if GBE_COMPILE_UTESTS
-#include "utest/utest.cpp"
-#include "utest/utest_test_utest.cpp"
-#endif /* GBE_COMPILE_UTESTS */
+UTEST_REGISTER(utestTestUTest)
 

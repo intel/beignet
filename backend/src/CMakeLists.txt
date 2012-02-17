@@ -35,10 +35,20 @@ else (GBE_USE_BLOB)
     ir/function.hpp)
 
   if (GBE_COMPILE_UTEST)
-    set (GBE_SRC ${GBE_SRC})
+    set (GBE_SRC
+      ${GBE_SRC}
+      utest/utest_test_utest.cpp
+      utest/utest.cpp
+      utest/utest.hpp)
   endif (GBE_COMPILE_UTEST)
 endif (GBE_USE_BLOB)
 
 include_directories (.)
 add_library (gbe SHARED ${GBE_SRC})
+
+if (GBE_COMPILE_UTEST)
+  set (TESTER_SRC utest/tester.cpp)
+  add_executable (tester utest/tester.cpp)
+  target_link_libraries (tester gbe)
+endif (GBE_COMPILE_UTEST)
 

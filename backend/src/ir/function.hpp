@@ -19,7 +19,6 @@
 
 /**
  * \file function.hpp
- *
  * \author Benjamin Segovia <benjamin.segovia@intel.com>
  */
 #ifndef __GBE_IR_FUNCTION_HPP__

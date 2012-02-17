@@ -19,20 +19,23 @@
 
 /**
  * \file utest.hpp
- *
  * \author Benjamin Segovia <benjamin.segovia@intel.com>
+ *
+ * Implements a simple unit test system. Basically, the user registers unit
+ * test with the provided macro and unit tests are then run
  */
 #include "utest.hpp"
 #include "sys/string.hpp"
+#include "sys/vector.hpp"
 
 namespace gbe
 {
-  std::vector<UTest> *UTest::utestList = NULL;
-  void releaseUTestList(void) { if (UTest::utestList) delete UTest::utestList; }
+  vector<UTest> *UTest::utestList = NULL;
+  void releaseUTestList(void) { GBE_SAFE_DELETE(UTest::utestList); }
 
   UTest::UTest(Function fn, const char *name) : fn(fn), name(name) {
     if (utestList == NULL) {
-      utestList = new std::vector<UTest>;
+      utestList = GBE_NEW(vector<UTest>);
       atexit(releaseUTestList);
     }
     utestList->push_back(*this);
@@ -46,7 +49,11 @@ namespace gbe
     for (size_t i = 0; i < utestList->size(); ++i) {
       const UTest &utest = (*utestList)[i];
       if (utest.name == NULL || utest.fn == NULL) continue;
-      if (strequal(utest.name, name)) (utest.fn)();
+      if (strequal(utest.name, name)) {
+        std::cout << utest.name << ":" << std::endl;
+        (utest.fn)();
+        std::cout << std::endl;
+      }
     }
   }
 
@@ -55,7 +62,9 @@ namespace gbe
     for (size_t i = 0; i < utestList->size(); ++i) {
       const UTest &utest = (*utestList)[i];
       if (utest.fn == NULL) continue;
+      std::cout << utest.name << ":" << std::endl;
       (utest.fn)();
+      std::cout << std::endl;
     }
   }
 } /* namespace gbe */

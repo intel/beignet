@@ -10,7 +10,7 @@ set (CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${GBE_CMAKE_DIR}")
 ##############################################################
 
 set (GBE_DEBUG_MEMORY false CACHE bool "Activate the memory debugger")
-set (GBE_COMPILE_UTEST false CACHE bool "Will compile the unit tests")
+set (GBE_COMPILE_UTESTS false CACHE bool "Will compile the unit tests")
 set (GBE_USE_BLOB false CACHE bool "Compile everything from one big file")
 
 ##############################################################
@@ -36,25 +36,25 @@ else (GBE_DEBUG_MEMORY)
   set (GBE_DEBUG_MEMORY_FLAG "${DEF}GBE_DEBUG_MEMORY=0")
 endif (GBE_DEBUG_MEMORY)
 
-if (GBE_COMPILE_UTEST)
+if (GBE_COMPILE_UTESTS)
   set (GBE_COMPILE_UTESTS_FLAG "${DEF}GBE_COMPILE_UTESTS=1")
-else (GBE_COMPILE_UTEST)
+else (GBE_COMPILE_UTESTS)
   set (GBE_COMPILE_UTESTS_FLAG "${DEF}GBE_COMPILE_UTESTS=0")
-endif (GBE_COMPILE_UTEST)
+endif (GBE_COMPILE_UTESTS)
 
 ## Linux compilation
 if (CMAKE_SYSTEM_NAME STREQUAL "Linux")
   # Hide all symbols and allows the symbols declared as visible to be exported
-  set (VISIBILITY_FLAG "-fvisibility=hidden")
+  # set (VISIBILITY_FLAG "-fvisibility=hidden")
 
   if (COMPILER STREQUAL "GCC")
     set (CMAKE_CXX_FLAGS "-Wstrict-aliasing=2 -Wno-invalid-offsetof -fstrict-aliasing -msse2 -ffast-math -fPIC -Wall -fno-rtti -std=c++0x")
     set (CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${GBE_DEBUG_MEMORY_FLAG}")
     set (CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${GBE_COMPILE_UTESTS_FLAG}")
     set (CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${VISIBILITY_FLAG} -Wl,-E")
-    if (NOT GBE_COMPILE_UTEST)
+    if (NOT GBE_COMPILE_UTESTS)
       set (CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fno-exceptions")
-    endif (NOT GBE_COMPILE_UTEST)
+    endif (NOT GBE_COMPILE_UTESTS)
     set (CMAKE_CXX_FLAGS_RELEASE "-O2 -DNDEBUG -ftree-vectorize")
   elseif (COMPILER STREQUAL "CLANG")
     set (CMAKE_C_COMPILER             "clang")
