@@ -19,7 +19,6 @@
 
 /**
  * \file context.hpp
- *
  * \author Benjamin Segovia <benjamin.segovia@intel.com>
  */
 #ifndef __GBE_IR_CONTEXT_HPP__
@@ -94,14 +93,23 @@ namespace ir {
       this->STORE(type, index, offset, space, valueNum);
     }
 
+#define DECL_CMP(NAME)                              \
+    void NAME(Type type,                            \
+              RegisterIndex dst,                    \
+              RegisterIndex src0,                   \
+              RegisterIndex src1)                   \
+    {                                               \
+      this->CMP(type, CMP_##NAME, dst, src0, src1); \
+    }
+DECL_CMP(EQ)
+DECL_CMP(NE)
+DECL_CMP(LT)
+DECL_CMP(LE)
+DECL_CMP(GT)
+DECL_CMP(GE)
+#undef DECL_CMP
+
   private:
-    /*! Check out-of-bound arguments */
-    template <typename T> void outOfBoundCheck(const T &t);
-    /*! Recurse on the arguments to check their correctness */
-    template <typename First, typename... Rest>
-    INLINE void argumentCheck(First first, Rest... rest);
-    /*! Stop the argument checking */
-    INLINE void argumentCheck(void);
     /*! A block must be started with a label */
     void startBlock(void);
     /*! A block must be ended with a branch */
@@ -110,7 +118,7 @@ namespace ir {
     void append(const Instruction &insn);
     Unit &unit;               //!< A unit is associated to a contect
     Function *fn;             //!< Current function we are processing
-    Function::BasicBlock *bb; //!< Current basic block we are filling
+    BasicBlock *bb;           //!< Current basic block we are filling
     vector<Function*> fnStack;//!< Stack of functions still to finish
   };
 

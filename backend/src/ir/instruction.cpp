@@ -167,6 +167,7 @@ namespace ir {
       {
         this->operation = operation;
       }
+      INLINE CompareOperation getOperation(void) const { return operation; }
       INLINE bool wellFormed(const Function &fn, std::string &whyNot) const;
       CompareOperation operation;
     };
@@ -569,6 +570,10 @@ START_INTROSPECTION(TernaryInstruction)
 #include "ir/instruction.hxx"
 END_INTROSPECTION(TernaryInstruction)
 
+START_INTROSPECTION(CompareInstruction)
+#include "ir/instruction.hxx"
+END_INTROSPECTION(CompareInstruction)
+
 START_INTROSPECTION(ConvertInstruction)
 #include "ir/instruction.hxx"
 END_INTROSPECTION(ConvertInstruction)
@@ -664,6 +669,8 @@ END_FUNCTION(Instruction, bool)
 DECL_MEM_FN(UnaryInstruction, Type, getType(void), getType())
 DECL_MEM_FN(BinaryInstruction, Type, getType(void), getType())
 DECL_MEM_FN(TernaryInstruction, Type, getType(void), getType())
+DECL_MEM_FN(CompareInstruction, Type, getType(void), getType())
+DECL_MEM_FN(CompareInstruction, CompareOperation, getOperation(void), getOperation())
 DECL_MEM_FN(ConvertInstruction, Type, getSrcType(void), getSrcType())
 DECL_MEM_FN(ConvertInstruction, Type, getDstType(void), getDstType())
 DECL_MEM_FN(StoreInstruction, Type, getValueType(void), getValueType())
@@ -727,6 +734,17 @@ DECL_MEM_FN(BranchInstruction, bool, isPredicated(void), isPredicated())
   // MAD
   Instruction MAD(Type type, RegisterIndex dst, TupleIndex src) {
     internal::TernaryInstruction insn(OP_MAD, type, dst, src);
+    return insn.convert();
+  }
+
+  // CMP
+  Instruction CMP(Type type,
+                  CompareOperation operation,
+                  RegisterIndex dst,
+                  RegisterIndex src0,
+                  RegisterIndex src1)
+  {
+    internal::CompareInstruction insn(type, operation, dst, src0, src1);
     return insn.convert();
   }
 

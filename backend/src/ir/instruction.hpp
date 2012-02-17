@@ -138,12 +138,12 @@ namespace ir {
 
   /*! Operation done in comparison */
   enum CompareOperation : uint8_t {
-    EQ = 0, // ==
-    NE,     // !=
-    LT,     // <
-    LE,     // <=
-    GT,     // >
-    GE      // >=
+    CMP_EQ = 0, // ==
+    CMP_NE,     // !=
+    CMP_LT,     // <
+    CMP_LE,     // <=
+    CMP_GT,     // >
+    CMP_GE      // >=
   };
 
   /*! Compare instructions compare anything from the same type and return a
@@ -335,7 +335,7 @@ namespace ir {
   /*! mad.type dst {src0, src1, src2} == src */
   Instruction MAD(Type type, RegisterIndex dst, TupleIndex src);
   /*! cmp.type.op dst src0 src1 */
-  Instruction CMP(Type type, CompareInstruction op, RegisterIndex dst, RegisterIndex src0, RegisterIndex src1);
+  Instruction CMP(Type type, CompareOperation op, RegisterIndex dst, RegisterIndex src0, RegisterIndex src1);
   /*! cvt.{dstType <- srcType} dst src */
   Instruction CVT(Type dstType, Type srcType, RegisterIndex dst, RegisterIndex src0, RegisterIndex src1);
   /*! bra labelIndex */

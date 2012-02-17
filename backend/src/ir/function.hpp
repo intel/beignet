@@ -29,9 +29,35 @@
 #include "ir/register.hpp"
 #include "ir/instruction.hpp"
 #include "sys/vector.hpp"
+#include "sys/list.hpp"
+#include "sys/alloc.hpp"
 
 namespace gbe {
 namespace ir {
+
+  /*! Function basic blocks really belong to a function since:
+   *  1 - registers used in the basic blocks belongs to the function register
+   *      file
+   *  2 - branches point to basic blocks of the same function
+   */
+  class BasicBlock
+  {
+    public:
+      /*! Empty basic block */
+      BasicBlock(Function &fn);
+      /*! Releases all the instructions */
+      ~BasicBlock(void);
+      /*! Append a new instruction in the stream */
+      void append(Instruction &insn) {
+        instructions.push_back(&insn);
+      }
+      /*! Return the number of instruction in the block */
+      INLINE uint32_t insnNum(void) { return instructions.size(); }
+    private:
+      friend class Function;           //!< Owns the basic blocks
+      list<Instruction*> instructions; //!< Sequence of instructions in the block
+      Function &fn;                    //!< Function the block belongs to
+  };
 
   /*! A function is no more that a set of declared registers and a set of
    *  basic blocks
@@ -43,23 +69,6 @@ namespace ir {
     Function(void);
     /*! Release everything *including* the basic block pointers */
     ~Function(void);
-
-    /*! Function basic blocks really belong to a function since:
-     * 1 - registers used in the basic blocks belongs to the function register
-     * file
-     * 2 - branches point to basic blocks of the same function
-     */
-    class BasicBlock
-    {
-    public:
-      /*! Empty basic block */
-      BasicBlock(void);
-      /*! Return the number of instruction in the block */
-      INLINE uint32_t getInsnNum(void) { return insn.size(); }
-    private:
-      vector<Instruction> insn; //!< Sequence of instructions in the block
-    };
-
     /*! Extract the register from the register file */
     INLINE Register getRegister(RegisterIndex ID) const { return file.get(ID); }
     /*! Get the register index from the tuple vector */
@@ -70,6 +79,14 @@ namespace ir {
     INLINE Value getValue(uint32_t ID) const {
       GBE_ASSERT(ID < values.size());
       return values[ID];
+    }
+    /*! Allocate a new instruction (with the growing pool) */
+    INLINE Instruction *newInstruction(void) {
+      return insnPool.allocate();
+    }
+    /*! Deallocate an instruction (with the growing pool) */
+    INLINE void deleteInstruction(Instruction *insn) {
+      insnPool.deallocate(insn);
     }
     /*! Number of registers in the register file */
     INLINE uint32_t regNum(void) const { return file.regNum(); }
@@ -85,9 +102,11 @@ namespace ir {
     vector<RegisterIndex> input;  //!< Input registers of the function
     vector<RegisterIndex> output; //!< Output registers of the function
     vector<BasicBlock*> labels;   //!< Each label points to a basic block
-    vector<Value> values;   //!< All immediate values stored in the function
-    vector<BasicBlock*> bb; //!< All the basic blocks one after the others
-    RegisterFile file;      //!< All the registers used in the instructions
+    vector<Value> values;         //!< All immediate values in the function
+    vector<BasicBlock*> blocks;   //!< All chained basic blocks
+    RegisterFile file;            //!< Registers used by the instructions
+    GrowingPool<Instruction> insnPool; //!< For fast instruction allocation
+    GBE_CLASS(Function);
   };
 
 } /* namespace ir */

@@ -193,6 +193,7 @@ namespace gbe
       if (this->freeList != NULL) {
         T *data = (T*) freeList;
         this->freeList = *(void**) freeList;
+        return data;
       }
       if (UNLIKELY(current->allocated == current->maxElemNum)) {
         GrowingPoolElem *elem = GBE_NEW(GrowingPoolElem, 2 * current->maxElemNum);

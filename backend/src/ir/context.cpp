@@ -19,7 +19,6 @@
 
 /**
  * \file context.cpp
- *
  * \author Benjamin Segovia <benjamin.segovia@intel.com>
  */
 #include "ir/context.hpp"
@@ -57,6 +56,35 @@ namespace ir {
   void Context::output(RegisterIndex reg) {
     GBE_ASSERT(fn != NULL && reg < fn->file.regNum());
     fn->output.push_back(reg);
+  }
+
+  void Context::startBlock(void) {
+    GBE_ASSERT(fn != NULL);
+    this->bb = GBE_NEW(BasicBlock, *fn);
+    fn->blocks.push_back(bb);
+  }
+
+  void Context::endBlock(void) {
+    this->bb = NULL;
+  }
+
+  void Context::append(const Instruction &insn) {
+
+    // Start a new block if this is a label
+    if (insn.isMemberOf<LabelInstruction>() == true) {
+      this->endBlock();
+      this->startBlock();
+    }
+
+    // Append the instruction in the stream
+    GBE_ASSERT(fn != NULL && bb != NULL);
+    Instruction *insnPtr = fn->newInstruction();
+    *insnPtr = insn;
+    bb->append(*insnPtr);
+
+    // Close the current block if this is a branch
+    if (insn.isMemberOf<BranchInstruction>() == true)
+      this->endBlock();
   }
 
 } /* namespace ir */

@@ -29,7 +29,13 @@ namespace ir {
 
   Function::Function(void) {}
   Function::~Function(void) {
-    for (auto it = bb.begin(); it != bb.end(); ++it) GBE_DELETE(*it);
+    for (auto it = blocks.begin(); it != blocks.end(); ++it)
+      GBE_DELETE(*it);
+  }
+  BasicBlock::BasicBlock(Function &fn) : fn(fn) {}
+  BasicBlock::~BasicBlock(void) {
+    for (auto it = instructions.begin(); it != instructions.end(); ++it)
+      GBE_DELETE(*it);
   }
 
 } /* namespace ir */
