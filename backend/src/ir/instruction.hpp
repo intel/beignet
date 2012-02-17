@@ -19,7 +19,6 @@
 
 /**
  * \file instruction.hpp
- *
  * \author Benjamin Segovia <benjamin.segovia@intel.com>
  */
 #ifndef __GBE_IR_INSTRUCTION_HPP__
@@ -49,10 +48,10 @@ namespace ir {
   };
 
   /*! A label is identified with an unsigned short */
-  typedef uint16_t LabelIndex;
+  TYPE_SAFE(LabelIndex, uint16_t)
 
   /*! A value is stored in a per-function vector. This is the index to it */
-  typedef uint16_t ValueIndex;
+  TYPE_SAFE(ImmediateIndex, uint16_t)
 
   /*! Function class contains the register file and the register tuple. Any
    *  information related to the registers may therefore require a function
@@ -209,7 +208,7 @@ namespace ir {
   class LoadImmInstruction : public Instruction {
   public:
     /*! Return the value stored in the instruction */
-    Value getValue(const Function &fn) const;
+    Immediate getImmediate(const Function &fn) const;
     /*! Return the type of the stored value */
     Type getType(void) const;
     /*! Return true if the given instruction is an instance of this class */
@@ -343,7 +342,7 @@ namespace ir {
   /*! (pred) bra labelIndex */
   Instruction BRA(LabelIndex labelIndex, RegisterIndex pred);
   /*! loadi.type dst value */
-  Instruction LOADI(Type type, RegisterIndex dst, ValueIndex value);
+  Instruction LOADI(Type type, RegisterIndex dst, ImmediateIndex value);
   /*! load.type.space {dst1,...,dst_valueNum} offset value */
   Instruction LOAD(Type type, TupleIndex dst, RegisterIndex offset, MemorySpace space, uint16_t valueNum);
   /*! store.type.space offset {src1,...,src_valueNum} value */

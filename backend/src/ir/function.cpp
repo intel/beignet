@@ -35,7 +35,7 @@ namespace ir {
   BasicBlock::BasicBlock(Function &fn) : fn(fn) {}
   BasicBlock::~BasicBlock(void) {
     for (auto it = instructions.begin(); it != instructions.end(); ++it)
-      GBE_DELETE(*it);
+      fn.deleteInstruction(*it);
   }
 
 } /* namespace ir */

@@ -214,15 +214,14 @@ namespace gbe
     {
       friend class GrowingPool;
       GrowingPoolElem(size_t elemNum) {
-        const size_t sz = min(sizeof(T), 2 * sizeof(void*));
+        const size_t sz = min(sizeof(T), sizeof(void*));
         this->data = (T*) GBE_ALIGNED_MALLOC(elemNum * sz, AlignOf<T>::value);
         this->next = NULL;
         this->maxElemNum = elemNum;
         this->allocated = 0;
       }
       ~GrowingPoolElem(void) {
-        GBE_ASSERT(this->data);
-        GBE_DELETE_ARRAY(this->data);
+        GBE_ALIGNED_FREE(this->data);
         if (this->next) GBE_DELETE(this->next);
       }
       T *data;

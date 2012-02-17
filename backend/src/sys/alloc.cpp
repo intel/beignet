@@ -146,12 +146,17 @@ namespace gbe
     delete _debug;
   }
 
-  /*! Use this to serialize multiple starts of the debugger */
-  static MutexSys startMemDebuggerMutex;
+  /*! Bring up the debugger at pre-main */
+  static struct ForceMemDebugger {
+    ForceMemDebugger(void) {
+      doesnotmatter = GBE_NEW(int);
+      GBE_DELETE(doesnotmatter);
+    }
+    int *doesnotmatter;
+  } forceMemDebugger;
 
   /*! Start the memory debugger */
   static void MemDebuggerStart(void) {
-    Lock<MutexSys> lock(startMemDebuggerMutex);
     if (memDebugger == NULL) {
       atexit(MemDebuggerEnd);
       memDebugger = new MemDebugger;
@@ -223,12 +228,12 @@ namespace gbe
     if (ptr) {
       const size_t size = ((uintptr_t*)ptr)[-2];
       MemDebuggerInitializeMem(ptr, size);
-      free(((void**)ptr)[-2]);
+      free(((void**)ptr)[-1]);
     }
   }
 } /* namespace gbe */
 
-#else
+#else /* GBE_DEBUG_MEMORY */
 
 ////////////////////////////////////////////////////////////////////////////////
 /// Windows Platform

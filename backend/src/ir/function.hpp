@@ -41,21 +41,21 @@ namespace ir {
    */
   class BasicBlock
   {
-    public:
-      /*! Empty basic block */
-      BasicBlock(Function &fn);
-      /*! Releases all the instructions */
-      ~BasicBlock(void);
-      /*! Append a new instruction in the stream */
-      void append(Instruction &insn) {
-        instructions.push_back(&insn);
-      }
-      /*! Return the number of instruction in the block */
-      INLINE uint32_t insnNum(void) { return instructions.size(); }
-    private:
-      friend class Function;           //!< Owns the basic blocks
-      list<Instruction*> instructions; //!< Sequence of instructions in the block
-      Function &fn;                    //!< Function the block belongs to
+  public:
+    /*! Empty basic block */
+    BasicBlock(Function &fn);
+    /*! Releases all the instructions */
+    ~BasicBlock(void);
+    /*! Append a new instruction in the stream */
+    void append(Instruction &insn) {
+      instructions.push_back(&insn);
+    }
+    /*! Return the number of instruction in the block */
+    INLINE uint32_t insnNum(void) { return instructions.size(); }
+  private:
+    friend class Function;           //!< Owns the basic blocks
+    list<Instruction*> instructions; //!< Sequence of instructions in the block
+    Function &fn;                    //!< Function the block belongs to
   };
 
   /*! A function is no more that a set of declared registers and a set of
@@ -75,9 +75,9 @@ namespace ir {
       return file.get(ID, which);
     }
     /*! Get the given value ie immediate from the function */
-    INLINE Value getValue(uint32_t ID) const {
-      GBE_ASSERT(ID < values.size());
-      return values[ID];
+    INLINE Immediate getImmediate(uint32_t ID) const {
+      GBE_ASSERT(ID < immediates.size());
+      return immediates[ID];
     }
     /*! Allocate a new instruction (with the growing pool) */
     INLINE Instruction *newInstruction(void) {
@@ -94,16 +94,16 @@ namespace ir {
     /*! Number of labels in the function */
     INLINE uint32_t labelNum(void) const { return labels.size(); }
     /*! Number of immediate values in the function */
-    INLINE uint32_t valueNum(void) const { return values.size(); }
+    INLINE uint32_t immediateNum(void) const { return immediates.size(); }
 
   private:
-    friend class Context;         //!< Can freely modify a function
-    vector<RegisterIndex> input;  //!< Input registers of the function
-    vector<RegisterIndex> output; //!< Output registers of the function
-    vector<BasicBlock*> labels;   //!< Each label points to a basic block
-    vector<Value> values;         //!< All immediate values in the function
-    vector<BasicBlock*> blocks;   //!< All chained basic blocks
-    RegisterFile file;            //!< Registers used by the instructions
+    friend class Context;          //!< Can freely modify a function
+    vector<RegisterIndex> input;   //!< Input registers of the function
+    vector<RegisterIndex> output;  //!< Output registers of the function
+    vector<BasicBlock*> labels;    //!< Each label points to a basic block
+    vector<Immediate> immediates;  //!< All immediate values in the function
+    vector<BasicBlock*> blocks;    //!< All chained basic blocks
+    RegisterFile file;             //!< Registers used by the instructions
     GrowingPool<Instruction> insnPool; //!< For fast instruction allocation
     GBE_CLASS(Function);
   };

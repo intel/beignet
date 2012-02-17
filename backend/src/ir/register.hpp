@@ -61,30 +61,12 @@ namespace ir {
   /*! Register index is the position of the register in the register file. We
    *  enforce type safety with this class
    */
-  class RegisterIndex
-  {
-  public:
-    INLINE RegisterIndex(void) {}
-    explicit INLINE RegisterIndex(uint16_t index) : index(index) {}
-    INLINE operator uint16_t (void) const { return index; }
-    uint16_t value(void) const { return index; }
-  private:
-    uint16_t index;
-  };
+  TYPE_SAFE(RegisterIndex, uint16_t)
 
   /*! Tuple index is the position of the register index in the tuple vector. We
    *  enforce type safety with this class
    */
-  class TupleIndex
-  {
-  public:
-    INLINE TupleIndex(void) {}
-    explicit INLINE TupleIndex(uint16_t index) : index(index) {}
-    INLINE operator uint16_t (void) const { return index; }
-    uint16_t value(void) const { return index; }
-  private:
-    uint16_t index;
-  };
+  TYPE_SAFE(TupleIndex, uint16_t)
 
   /*! A register file allocates and destroys registers. Basically, we will have
    *  one register file per function

@@ -313,14 +313,17 @@ namespace ir {
     class LoadImmInstruction : public BasePolicy, public NoSrcPolicy
     {
     public:
-      INLINE LoadImmInstruction(Type type, RegisterIndex dst, ValueIndex valueIndex) {
+      INLINE LoadImmInstruction(Type type,
+                                RegisterIndex dst,
+                                ImmediateIndex immediateIndex)
+      {
         this->dst = dst;
         this->opcode = OP_LOADI;
-        this->valueIndex = valueIndex;
+        this->immediateIndex = immediateIndex;
         this->type = type;
       }
-      INLINE Value getValue(const Function &fn) const {
-        return fn.getValue(valueIndex);
+      INLINE Immediate getImmediate(const Function &fn) const {
+        return fn.getImmediate(immediateIndex);
       }
       INLINE uint32_t getDstNum(void) const{ return 1; }
       INLINE RegisterIndex getDstIndex(const Function &fn, uint32_t ID) const {
@@ -329,9 +332,9 @@ namespace ir {
       }
       INLINE Type getType(void) const { return this->type; }
       bool wellFormed(const Function &fn, std::string &why) const;
-      RegisterIndex dst;    //!< Register to store into
-      ValueIndex valueIndex;//!< Index in the vector of immediates
-      Type type;            //!< Type of the immediate
+      RegisterIndex dst;              //!< Register to store into
+      ImmediateIndex immediateIndex;  //!< Index in the vector of immediates
+      Type type;                      //!< Type of the immediate
     };
 
     class FenceInstruction : public BasePolicy, public NoSrcPolicy, public NoDstPolicy
@@ -479,11 +482,11 @@ namespace ir {
     // Ensure that types and register family match
     INLINE bool LoadImmInstruction::wellFormed(const Function &fn, std::string &whyNot) const
     {
-      if (UNLIKELY(valueIndex >= fn.valueNum())) {
+      if (UNLIKELY(immediateIndex >= fn.immediateNum())) {
         whyNot = "Out-of-bound immediate value index";
         return false;
       }
-      if (UNLIKELY(type != fn.getValue(valueIndex).type)) {
+      if (UNLIKELY(type != fn.getImmediate(immediateIndex).type)) {
         whyNot = "Inconsistant type for the immediate value to load";
         return false;
       }
@@ -679,7 +682,7 @@ DECL_MEM_FN(StoreInstruction, MemorySpace, getAddressSpace(void), getAddressSpac
 DECL_MEM_FN(LoadInstruction, Type, getValueType(void), getValueType())
 DECL_MEM_FN(LoadInstruction, uint32_t, getValueNum(void), getValueNum())
 DECL_MEM_FN(LoadInstruction, MemorySpace, getAddressSpace(void), getAddressSpace())
-DECL_MEM_FN(LoadImmInstruction, Value, getValue(const Function &fn), getValue(fn))
+DECL_MEM_FN(LoadImmInstruction, Immediate, getImmediate(const Function &fn), getImmediate(fn))
 DECL_MEM_FN(LoadImmInstruction, Type, getType(void), getType())
 DECL_MEM_FN(BranchInstruction, bool, isPredicated(void), isPredicated())
 
@@ -765,7 +768,7 @@ DECL_MEM_FN(BranchInstruction, bool, isPredicated(void), isPredicated())
   }
 
   // LOADI
-  Instruction LOADI(Type type, RegisterIndex dst, ValueIndex value) {
+  Instruction LOADI(Type type, RegisterIndex dst, ImmediateIndex value) {
     internal::LoadImmInstruction insn(type, dst, value);
     return insn.convert();
   }

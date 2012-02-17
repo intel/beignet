@@ -237,6 +237,19 @@ do {                                                 \
 /*! Produce a string from the macro locatiom */
 #define HERE (STRING(__LINE__) "@" __FILE__)
 
+/*! Typesafe encapusalation of a type (mostly for integers) */
+#define TYPE_SAFE(SAFE, UNSAFE)                                     \
+class SAFE                                                          \
+{                                                                   \
+public:                                                             \
+  INLINE SAFE(void) {}                                              \
+  explicit INLINE SAFE(uint16_t unsafe) : unsafe(unsafe) {}         \
+  INLINE operator UNSAFE (void) const { return unsafe; }            \
+  UNSAFE value(void) const { return unsafe; }                       \
+private:                                                            \
+  UNSAFE unsafe;                                                    \
+};
+
 /*! Portable AlignOf */
 template <typename T>
 struct AlignOf

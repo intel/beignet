@@ -30,8 +30,8 @@ int main(int argc, char *argv[])
   using namespace gbe;
 
   // Run the unit tests specified by the user
-  if (argc > 2)
-    for (int i = 2; i < argc; ++i)
+  if (argc >= 2)
+    for (int i = 1; i < argc; ++i)
       UTest::run(argv[i]);
   else
     UTest::runAll();

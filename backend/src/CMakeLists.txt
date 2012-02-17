@@ -38,6 +38,7 @@ else (GBE_USE_BLOB)
     set (GBE_SRC
       ${GBE_SRC}
       utest/utest_test_utest.cpp
+      utest/utest_context.cpp
       utest/utest.cpp
       utest/utest.hpp)
   endif (GBE_COMPILE_UTEST)

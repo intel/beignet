@@ -32,13 +32,14 @@ namespace gbe {
 namespace ir {
 
   /*! The value as stored in the instruction */
-  class Value
+  class Immediate
   {
   public:
 #define DECL_CONSTRUCTOR(TYPE, FIELD) \
-    Value(TYPE FIELD) { this->data.u64 = 0llu; this->data.FIELD = FIELD; }
-    DECL_CONSTRUCTOR(int8_t, s8);
-    DECL_CONSTRUCTOR(uint8_t, u8);
+    Immediate(TYPE FIELD) { this->data.u64 = 0llu; this->data.FIELD = FIELD; }
+    DECL_CONSTRUCTOR(int8_t, s8)
+    DECL_CONSTRUCTOR(uint8_t, u8)
+#undef DECL_CONSTRUCTOR
     union {
       int8_t s8;
       uint8_t u8;
@@ -52,7 +53,6 @@ namespace ir {
       double f64;
     } data;     //!< Value to store
     Type type;  //!< Type of the value
-#undef DECL_CONSTRUCTOR
   };
 
 } /* namespace ir */
