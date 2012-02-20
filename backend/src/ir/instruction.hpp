@@ -29,6 +29,8 @@
 #include "ir/type.hpp"
 #include "sys/platform.hpp"
 
+#include <ostream>
+
 namespace gbe {
 namespace ir {
 
@@ -104,6 +106,9 @@ namespace ir {
     Opcode opcode;           //!< Idendifies the instruction
     char opaque[opaqueSize]; //!< Remainder of it
   };
+
+  /*! To output the instruction in any stream */
+  std::ostream &operator<< (std::ostream &out, const Instruction &insn);
 
   // Check that the instruction is properly formed by the compiler
   static_assert(sizeof(Instruction)==sizeof(uint64_t), "Bad instruction size");
@@ -221,6 +226,8 @@ namespace ir {
       GBE_ASSERTM(this->isPredicated() == true, "Branch is not predicated");
       return this->getSrcIndex(fn, 0);
     }
+    /*! Return the label index pointed by the branch */
+    LabelIndex getLabelIndex(void) const;
     /*! Return true if the given instruction is an instance of this class */
     static bool isClassOf(const Instruction &insn);
   };

@@ -28,7 +28,7 @@ namespace gbe {
 namespace ir {
 
   ///////////////////////////////////////////////////////////////////////////
-  // Implements the concrete implementations of the instruction classes. We just
+  // Implements the concrete implementations of the instruction classes. We
   // cast an instruction to an internal class to run the given member function
   ///////////////////////////////////////////////////////////////////////////
   namespace internal
@@ -80,9 +80,9 @@ namespace ir {
       }
       INLINE Type getType(void) const { return this->type; }
       INLINE bool wellFormed(const Function &fn, std::string &whyNot) const;
-      Type type;           //!< Type of the instruction
-      Register dst;        //!< Index of the register in the register file
-      Register src[srcNum];//!< Indices of the sources
+      Type type;            //!< Type of the instruction
+      Register dst;         //!< Index of the register in the register file
+      Register src[srcNum]; //!< Indices of the sources
     };
 
     /*! All 1-source arithmetic instructions */
@@ -148,9 +148,9 @@ namespace ir {
       }
       INLINE Type getType(void) const { return this->type; }
       INLINE bool wellFormed(const Function &fn, std::string &whyNot) const;
-      Type type;     //!< Type of the instruction
-      Register dst;  //!< Dst is the register index
-      Tuple src;     //!< 3 sources do not fit in 8 bytes -> use a tuple
+      Type type;    //!< Type of the instruction
+      Register dst; //!< Dst is the register index
+      Tuple src;    //!< 3 sources do not fit in 8 bytes -> use a tuple
     };
 
     /*! Comparison instructions take two sources of the same type and return a
@@ -158,7 +158,8 @@ namespace ir {
      *  steal all the methods from it, except wellFormed (dst register is always
      *  a boolean value)
      */
-    class ALIGNED_INSTRUCTION CompareInstruction : public NaryInstruction<2>
+    class ALIGNED_INSTRUCTION CompareInstruction :
+      public NaryInstruction<2>
     {
     public:
       CompareInstruction(Opcode opcode,
@@ -176,7 +177,8 @@ namespace ir {
       INLINE bool wellFormed(const Function &fn, std::string &whyNot) const;
     };
 
-    class ConvertInstruction : public BasePolicy
+    class ALIGNED_INSTRUCTION ConvertInstruction :
+      public BasePolicy
     {
     public:
       ConvertInstruction(Type dstType,
@@ -203,13 +205,14 @@ namespace ir {
         return src;
       }
       INLINE bool wellFormed(const Function &fn, std::string &whyNot) const;
-      Register dst;  //!< Converted value
-      Register src;  //!< To convert
-      Type dstType;  //!< Type to convert to
-      Type srcType;  //!< Type to convert from
+      Register dst; //!< Converted value
+      Register src; //!< To convert
+      Type dstType; //!< Type to convert to
+      Type srcType; //!< Type to convert from
     };
 
-    class BranchInstruction : public BasePolicy, public NoDstPolicy
+    class ALIGNED_INSTRUCTION BranchInstruction :
+      public BasePolicy, public NoDstPolicy
     {
     public:
       INLINE BranchInstruction(LabelIndex labelIndex, Register predicate) {
@@ -223,6 +226,7 @@ namespace ir {
         this->labelIndex = labelIndex;
         this->hasPredicate = false;
       }
+      INLINE LabelIndex getLabelIndex(void) const { return labelIndex; }
       INLINE uint32_t getSrcNum(void) const { return hasPredicate ? 1 : 0; }
       INLINE Register getSrcIndex(const Function &fn, uint32_t ID) const {
         GBE_ASSERTM(hasPredicate, "No source for unpredicated branches");
@@ -701,6 +705,7 @@ DECL_MEM_FN(LoadImmInstruction, Immediate, getImmediate(const Function &fn), get
 DECL_MEM_FN(LoadImmInstruction, Type, getType(void), getType())
 DECL_MEM_FN(LabelInstruction, LabelIndex, getLabelIndex(void), getLabelIndex())
 DECL_MEM_FN(BranchInstruction, bool, isPredicated(void), isPredicated())
+DECL_MEM_FN(BranchInstruction, LabelIndex, getLabelIndex(void), getLabelIndex())
 
 #undef DECL_MEM_FN
 

@@ -27,20 +27,37 @@
 namespace gbe {
 namespace ir {
 
-  Context::Context(Unit &unit) : unit(unit), fn(NULL), bb(NULL) {}
+  Context::Context(Unit &unit) :
+    unit(unit), fn(NULL), bb(NULL), usedLabels(NULL) {}
+
+  Context::~Context(void) {
+    for (auto it = fnStack.begin(); it != fnStack.end(); ++it)
+      GBE_SAFE_DELETE(it->usedLabels);
+    GBE_SAFE_DELETE(usedLabels);
+  }
 
   void Context::startFunction(const std::string &name) {
-    fnStack.push_back(StackElem(fn,bb));
+    fnStack.push_back(StackElem(fn,bb,usedLabels));
     fn = unit.newFunction(name);
+    usedLabels = GBE_NEW(vector<uint8_t>);
+    bb = NULL;
   }
 
   void Context::endFunction(void) {
     GBE_ASSERTM(fn != NULL, "No function to end");
     GBE_ASSERT(fnStack.size() != 0);
+    GBE_ASSERT(usedLabels != NULL);
+
+    // Check first that all branch instructions point to valid labels
+    for (auto it = usedLabels->begin(); it != usedLabels->end(); ++it)
+      GBE_ASSERTM(*it != LABEL_IS_POINTED, "A label is used and not defined");
+
+    GBE_DELETE(usedLabels);
     const StackElem elem = fnStack.back();
     fnStack.pop_back();
     fn = elem.fn;
     bb = elem.bb;
+    usedLabels = elem.usedLabels;
   }
 
   Register Context::reg(RegisterData::Family family) {
@@ -50,7 +67,12 @@ namespace ir {
 
   LabelIndex Context::label(void) {
     GBE_ASSERTM(fn != NULL, "No function currently defined");
-    return fn->newLabel();
+    const LabelIndex index = fn->newLabel();
+    if (index >= usedLabels->size()) {
+      usedLabels->resize(index + 1);
+      (*usedLabels)[index] = 0;
+    }
+    return index;
   }
 
   void Context::input(Register reg) {
@@ -87,11 +109,15 @@ namespace ir {
       GBE_ASSERTM(index < fn->labelNum(), "Out-of-bound label");
       GBE_ASSERTM(fn->labels[index] == NULL, "Label used in a previous block");
       fn->labels[index] = bb;
+
+      // Now the label index is properly defined
+      GBE_ASSERT(index < usedLabels->size());
+      (*usedLabels)[index] |= LABEL_IS_DEFINED;
     }
     // We create a new label for a new block if the user did not do it
     else if (bb == NULL) {
       this->startBlock();
-      const LabelIndex index = fn->newLabel();
+      const LabelIndex index = this->label();
       const Instruction insn = ir::LABEL(index);
       this->append(insn);
     }
@@ -106,8 +132,16 @@ namespace ir {
     bb->append(*insnPtr);
 
     // Close the current block if this is a branch
-    if (insn.isMemberOf<BranchInstruction>() == true)
+    if (insn.isMemberOf<BranchInstruction>() == true) {
+      // We must book keep the fact that the label is used
+      if (insn.getOpcode() == OP_BRA) {
+        const BranchInstruction &branch = cast<BranchInstruction>(insn);
+        const LabelIndex index = branch.getLabelIndex();
+        GBE_ASSERT(index < usedLabels->size());
+        (*usedLabels)[index] |= LABEL_IS_POINTED;
+      }
       this->endBlock();
+    }
   }
 
 } /* namespace ir */

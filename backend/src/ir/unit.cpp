@@ -19,7 +19,6 @@
 
 /**
  * \file unit.cpp
- *
  * \author Benjamin Segovia <benjamin.segovia@intel.com>
  */
 #include "ir/unit.hpp"
@@ -28,7 +27,7 @@
 namespace gbe {
 namespace ir {
 
-  Unit::Unit(void) {}
+  Unit::Unit(PointerSize pointerSize) : pointerSize(pointerSize) {}
   Unit::~Unit(void) {
     for (auto it = functions.begin(); it != functions.end(); ++it)
       GBE_DELETE(it->second);

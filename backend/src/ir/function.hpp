@@ -39,7 +39,7 @@ namespace ir {
    *      file
    *  2 - branches point to basic blocks of the same function
    */
-  class BasicBlock
+  class BasicBlock : public NonCopyable
   {
   public:
     /*! Empty basic block */
@@ -56,12 +56,13 @@ namespace ir {
     friend class Function;           //!< Owns the basic blocks
     list<Instruction*> instructions; //!< Sequence of instructions in the block
     Function &fn;                    //!< Function the block belongs to
+    GBE_CLASS(BasicBlock);
   };
 
   /*! A function is no more that a set of declared registers and a set of
    *  basic blocks
    */
-  class Function
+  class Function : public NonCopyable
   {
   public:
     /*! Create an empty function */

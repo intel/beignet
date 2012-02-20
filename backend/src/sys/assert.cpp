@@ -19,7 +19,6 @@
 
 /**
  * \file assert.cpp
- *
  * \author Benjamin Segovia <benjamin.segovia@intel.com>
  */
 #if GBE_COMPILE_UTESTS

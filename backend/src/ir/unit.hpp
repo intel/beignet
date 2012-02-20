@@ -19,7 +19,6 @@
 
 /**
  * \file unit.hpp
- *
  * \author Benjamin Segovia <benjamin.segovia@intel.com>
  */
 #ifndef __GBE_IR_UNIT_HPP__
@@ -34,14 +33,22 @@ namespace ir {
   // A unit contains a set of functions
   class Function;
 
+  /*! Defines the size of the pointers. All the functions from the unit will
+   *  use the same pointer size as the unit they belong to
+   */
+  enum PointerSize {
+    POINTER_32_BITS = 0,
+    POINTER_64_BITS = 1
+  };
+
   /*! Complete unit of compilation. It contains a set of functions and a set of
    *  constant the functions may refer to.
    */
-  class Unit
+  class Unit : public NonCopyable
   {
   public:
     /*! Create an empty unit */
-    Unit(void);
+    Unit(PointerSize pointerSize = POINTER_32_BITS);
     /*! Release everything (*including* the function pointers) */
     ~Unit(void);
     /*! Retrieve the function by its name */
@@ -52,7 +59,9 @@ namespace ir {
     void newConstant(const char*, const std::string&, uint32_t size, uint32_t alignment);
   private:
     hash_map<std::string, Function*> functions; //!< All the defined functions
-    ConstantSet constantSet;  //!< All the constants defined in the unit
+    ConstantSet constantSet; //!< All the constants defined in the unit
+    PointerSize pointerSize; //!< Size shared by all pointers
+    GBE_CLASS(Unit);
   };
 
 } /* namespace ir */

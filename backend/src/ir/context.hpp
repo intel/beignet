@@ -44,6 +44,8 @@ namespace ir {
   public:
     /*! Create a new context for this unit */
     Context(Unit &unit);
+    /*! Free resources needed by context */
+    ~Context(void);
     /*! Create a new function "name" */
     void startFunction(const std::string &name);
     /*! Close the function */
@@ -105,11 +107,17 @@ namespace ir {
     Unit &unit;                 //!< A unit is associated to a contect
     Function *fn;               //!< Current function we are processing
     BasicBlock *bb;             //!< Current basic block we are filling
+    static const uint8_t LABEL_IS_POINTED = 1 << 0; //!< Branch is using it
+    static const uint8_t LABEL_IS_DEFINED = 1 << 1; //!< Label is defining it
+    vector<uint8_t> *usedLabels;
     /*! Functions can be defined recursiely */
     struct StackElem {
-      INLINE StackElem(Function *fn, BasicBlock *bb) : fn(fn), bb(bb) {}
-      Function *fn;
-      BasicBlock *bb;
+      INLINE StackElem(Function *fn, BasicBlock *bb, vector<uint8_t> *usedLabels)
+        : fn(fn), bb(bb), usedLabels(usedLabels)
+      {}
+      Function *fn;                //!< Function to process
+      BasicBlock *bb;              //!< Basic block currently processed
+      vector<uint8_t> *usedLabels; //!< Store all labels that are defined
     };
     vector<StackElem> fnStack;  //!< Stack of functions still to finish
     GBE_CLASS(Context);
