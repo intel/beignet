@@ -29,13 +29,13 @@
 namespace gbe {
 namespace ir {
 
-  /*! A register can be either a byte, a word, a dword or a qword. It can be
-   *  either scalar or a vector. Everything is packed in 32 bits
+  /*! A register can be either a byte, a word, a dword or a qword. We store this
+   *  value into a register data (which makes the register file) 
    */
-  class Register
+  class RegisterData
   {
   public:
-    /*! Register family */
+    /*! RegisterData family */
     enum Family : uint8_t {
       BOOL  = 0,
       BYTE  = 1,
@@ -44,29 +44,29 @@ namespace ir {
       QWORD = 4
     };
     /*! Build a register. All fields will be immutable */
-    INLINE Register(Family family = DWORD) : family(family) {}
+    INLINE RegisterData(Family family = DWORD) : family(family) {}
     /*! Copy constructor */
-    INLINE Register(const Register &other) : family(other.family) {}
+    INLINE RegisterData(const RegisterData &other) : family(other.family) {}
     /*! Copy operator */
-    INLINE Register &operator= (const Register &other) {
+    INLINE RegisterData &operator= (const RegisterData &other) {
       this->family = other.family;
       return *this;
     }
     /*! Nothing really happens here */
-    INLINE ~Register(void) {}
+    INLINE ~RegisterData(void) {}
     Family family;
-    GBE_CLASS(Register);
+    GBE_CLASS(RegisterData);
   };
 
-  /*! Register index is the position of the register in the register file. We
-   *  enforce type safety with this class
+  /*! Register is the position of the index of the register data in the register
+   *  file. We enforce type safety with this class
    */
-  TYPE_SAFE(RegisterIndex, uint16_t)
+  TYPE_SAFE(Register, uint16_t)
 
-  /*! Tuple index is the position of the register index in the tuple vector. We
+  /*! Tuple is the position of the first register in the tuple vector. We
    *  enforce type safety with this class
    */
-  TYPE_SAFE(TupleIndex, uint16_t)
+  TYPE_SAFE(Tuple, uint16_t)
 
   /*! A register file allocates and destroys registers. Basically, we will have
    *  one register file per function
@@ -75,17 +75,17 @@ namespace ir {
   {
   public:
     /*! Return the index of a newly allocated register register */
-    INLINE RegisterIndex append(Register::Family family) {
+    INLINE Register append(RegisterData::Family family) {
       GBE_ASSERT(regNum() <= MAX_INDEX);
       const uint16_t index = regNum();
-      const Register reg(family);
+      const RegisterData reg(family);
       regs.push_back(reg);
-      return RegisterIndex(index);
+      return Register(index);
     }
     /*! Make a tuple and return the index to the first element of the tuple */
     template <typename First, typename... Rest>
-    INLINE TupleIndex appendTuple(First first, Rest... rest) {
-      const TupleIndex index = TupleIndex(regTuples.size());
+    INLINE Tuple appendTuple(First first, Rest... rest) {
+      const Tuple index = Tuple(regTuples.size());
       GBE_ASSERT(first < regNum());
       regTuples.push_back(first);
       appendTuple(rest...);
@@ -94,12 +94,12 @@ namespace ir {
     /*! To terminate variadic recursion */
     INLINE void appendTuple(void) {}
     /*! Return a copy of the register at index */
-    INLINE Register get(RegisterIndex index) const {
+    INLINE RegisterData get(Register index) const {
       GBE_ASSERT(index < regNum());
       return regs[index];
     }
     /*! Get the register index from the tuple */
-    INLINE RegisterIndex get(TupleIndex index, uint32_t which) const {
+    INLINE Register get(Tuple index, uint32_t which) const {
       GBE_ASSERT(uint16_t(index) + which < regTuples.size());
       return regTuples[uint16_t(index) + which];
     }
@@ -108,8 +108,8 @@ namespace ir {
     /*! Number of tuples in the register file */
     INLINE uint32_t tupleNum(void) const { return regTuples.size(); }
   private:
-    vector<Register> regs;           //!< All the registers together
-    vector<RegisterIndex> regTuples; //!< Tuples are used for many src / dst
+    vector<RegisterData> regs;           //!< All the registers together
+    vector<Register> regTuples; //!< Tuples are used for many src / dst
     enum { MAX_INDEX = 0xffff };     //!< register and tuple indices are short
     GBE_CLASS(RegisterFile);
   };

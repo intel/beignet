@@ -69,9 +69,9 @@ namespace ir {
     /*! Release everything *including* the basic block pointers */
     ~Function(void);
     /*! Extract the register from the register file */
-    INLINE Register getRegister(RegisterIndex ID) const { return file.get(ID); }
+    INLINE RegisterData getRegisterData(Register ID) const { return file.get(ID); }
     /*! Get the register index from the tuple vector */
-    INLINE RegisterIndex getRegisterIndex(TupleIndex ID, uint32_t which) const {
+    INLINE Register getRegister(Tuple ID, uint32_t which) const {
       return file.get(ID, which);
     }
     /*! Get the given value ie immediate from the function */
@@ -98,12 +98,12 @@ namespace ir {
 
   private:
     friend class Context;          //!< Can freely modify a function
-    vector<RegisterIndex> input;   //!< Input registers of the function
-    vector<RegisterIndex> output;  //!< Output registers of the function
+    vector<Register> input;   //!< Input registers of the function
+    vector<Register> output;  //!< Output registers of the function
     vector<BasicBlock*> labels;    //!< Each label points to a basic block
     vector<Immediate> immediates;  //!< All immediate values in the function
     vector<BasicBlock*> blocks;    //!< All chained basic blocks
-    RegisterFile file;             //!< Registers used by the instructions
+    RegisterFile file;             //!< RegisterDatas used by the instructions
     GrowingPool<Instruction> insnPool; //!< For fast instruction allocation
     GBE_CLASS(Function);
   };

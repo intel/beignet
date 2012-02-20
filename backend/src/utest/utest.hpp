@@ -54,7 +54,7 @@ namespace gbe
   };
 } /* namespace gbe */
 
-/*! Register a new unit test */
+/*! RegisterData a new unit test */
 #define UTEST_REGISTER(FN) static const gbe::UTest __##NAME##__(FN, #FN);
 
 /*! No assert is expected */

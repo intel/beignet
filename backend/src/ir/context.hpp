@@ -49,13 +49,13 @@ namespace ir {
     /*! Close the function */
     void endFunction(void);
     /*! Create a new register for the given family */
-    RegisterIndex reg(Register::Family family);
+    Register reg(RegisterData::Family family);
     /*! Append a new input register for the function */
-    void input(RegisterIndex reg);
+    void input(Register reg);
     /*! Append a new output register for the function */
-    void output(RegisterIndex reg);
+    void output(Register reg);
     /*! Append a new tuple */
-    template <typename... Args> INLINE TupleIndex tuple(Args...args);
+    template <typename... Args> INLINE Tuple tuple(Args...args);
     /*! We just use variadic templates to forward instruction functions */
 #define DECL_INSN(NAME, FAMILY)                                       \
     template <typename... Args> INLINE void NAME(Args...args);
@@ -64,20 +64,20 @@ namespace ir {
 
     /*! MAD with sources directly specified */
     INLINE void MAD(Type type,
-                    RegisterIndex dst,
-                    RegisterIndex src0,
-                    RegisterIndex src1,
-                    RegisterIndex src2)
+                    Register dst,
+                    Register src0,
+                    Register src1,
+                    Register src2)
     {
-      const TupleIndex index = this->tuple(src0, src1, src2);
+      const Tuple index = this->tuple(src0, src1, src2);
       return this->MAD(type, dst, index);
     }
 
     /*! LOAD with the destinations directly specified */
     template <typename... Args>
-    void LOAD(Type type, RegisterIndex offset, MemorySpace space, Args...values)
+    void LOAD(Type type, Register offset, MemorySpace space, Args...values)
     {
-      const TupleIndex index = this->tuple(values...);
+      const Tuple index = this->tuple(values...);
       const uint16_t valueNum = std::tuple_size<std::tuple<Args...>>::value;
       GBE_ASSERT(valueNum > 0);
       this->LOAD(type, index, offset, space, valueNum);
@@ -85,9 +85,9 @@ namespace ir {
 
     /*! STORE with the sources directly specified */
     template <typename... Args>
-    void STORE(Type type, RegisterIndex offset, MemorySpace space, Args...values)
+    void STORE(Type type, Register offset, MemorySpace space, Args...values)
     {
-      const TupleIndex index = this->tuple(values...);
+      const Tuple index = this->tuple(values...);
       const uint16_t valueNum = std::tuple_size<std::tuple<Args...>>::value;
       GBE_ASSERT(valueNum > 0);
       this->STORE(type, index, offset, space, valueNum);
@@ -95,9 +95,9 @@ namespace ir {
 
 #define DECL_CMP(NAME)                              \
     void NAME(Type type,                            \
-              RegisterIndex dst,                    \
-              RegisterIndex src0,                   \
-              RegisterIndex src1)                   \
+              Register dst,                    \
+              Register src0,                   \
+              Register src1)                   \
     {                                               \
       this->CMP(type, CMP_##NAME, dst, src0, src1); \
     }
@@ -123,7 +123,7 @@ DECL_CMP(GE)
   };
 
   template <typename... Args>
-  INLINE TupleIndex Context::tuple(Args...args) {
+  INLINE Tuple Context::tuple(Args...args) {
     GBE_ASSERT(fn != NULL);
     return fn->file.appendTuple(args...);
   }

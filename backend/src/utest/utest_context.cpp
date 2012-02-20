@@ -40,9 +40,9 @@ namespace gbe
     Unit unit;
     Context ctx(unit);
     ctx.startFunction("hop");
-      const RegisterIndex reg0 = ctx.reg(Register::DWORD);
-      const RegisterIndex reg1 = ctx.reg(Register::DWORD);
-      const RegisterIndex reg2 = ctx.reg(Register::DWORD);
+      const Register reg0 = ctx.reg(RegisterData::DWORD);
+      const Register reg1 = ctx.reg(RegisterData::DWORD);
+      const Register reg2 = ctx.reg(RegisterData::DWORD);
       ctx.MAD(TYPE_FLOAT, reg0, reg0, reg1, reg2);
     ctx.endFunction();
   }

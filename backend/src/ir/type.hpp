@@ -48,27 +48,27 @@ namespace ir {
   };
 
   /*! Get the register family for each type */
-  INLINE Register::Family getFamily(Type type) {
+  INLINE RegisterData::Family getFamily(Type type) {
     switch (type) {
       case TYPE_BOOL:
-        return Register::BOOL;
+        return RegisterData::BOOL;
       case TYPE_S8:
       case TYPE_U8:
-        return Register::BYTE;
+        return RegisterData::BYTE;
       case TYPE_S16:
       case TYPE_U16:
       case TYPE_HALF:
-        return Register::WORD;
+        return RegisterData::WORD;
       case TYPE_S32:
       case TYPE_U32:
       case TYPE_FLOAT:
-        return Register::DWORD;
+        return RegisterData::DWORD;
       case TYPE_S64:
       case TYPE_U64:
       case TYPE_DOUBLE:
-        return Register::QWORD;
+        return RegisterData::QWORD;
     };
-    return Register::DWORD;
+    return RegisterData::DWORD;
   }
 
 } /* namespace ir */

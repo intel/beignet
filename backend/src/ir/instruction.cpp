@@ -38,18 +38,18 @@ namespace ir {
     /*! Use this when there is no source */
     struct NoSrcPolicy {
       INLINE uint32_t getSrcNum(void) const { return 0; }
-      INLINE RegisterIndex getSrcIndex(const Function &fn, uint32_t ID) const {
+      INLINE Register getSrcIndex(const Function &fn, uint32_t ID) const {
         NOT_IMPLEMENTED;
-        return RegisterIndex(0);
+        return Register(0);
       }
     };
 
     /*! Use this when there is no destination */
     struct NoDstPolicy {
       INLINE uint32_t getDstNum(void) const { return 0; }
-      INLINE RegisterIndex getDstIndex(const Function &fn, uint32_t ID) const {
+      INLINE Register getDstIndex(const Function &fn, uint32_t ID) const {
         NOT_IMPLEMENTED;
-        return RegisterIndex(0);
+        return Register(0);
       }
     };
 
@@ -70,19 +70,19 @@ namespace ir {
     public:
       INLINE uint32_t getSrcNum(void) const { return srcNum; }
       INLINE uint32_t getDstNum(void) const { return 1; }
-      INLINE RegisterIndex getDstIndex(const Function &fn, uint32_t ID) const {
+      INLINE Register getDstIndex(const Function &fn, uint32_t ID) const {
         assert(ID == 0);
         return dst;
       }
-      INLINE RegisterIndex getSrcIndex(const Function &fn, uint32_t ID) const {
+      INLINE Register getSrcIndex(const Function &fn, uint32_t ID) const {
         assert(ID <= srcNum);
         return src[ID];
       }
       INLINE Type getType(void) const { return this->type; }
       INLINE bool wellFormed(const Function &fn, std::string &whyNot) const;
       Type type;                //!< Type of the instruction
-      RegisterIndex dst;        //!< Index of the register in the register file
-      RegisterIndex src[srcNum];//!< Indices of the sources
+      Register dst;        //!< Index of the register in the register file
+      Register src[srcNum];//!< Indices of the sources
     };
 
     /*! All 1-source arithmetic instructions */
@@ -91,8 +91,8 @@ namespace ir {
     public:
       UnaryInstruction(Opcode opcode,
                        Type type,
-                       RegisterIndex dst,
-                       RegisterIndex src) {
+                       Register dst,
+                       Register src) {
         this->opcode = opcode;
         this->type = type;
         this->dst = dst;
@@ -106,9 +106,9 @@ namespace ir {
     public:
       BinaryInstruction(Opcode opcode,
                         Type type,
-                        RegisterIndex dst,
-                        RegisterIndex src0,
-                        RegisterIndex src1) {
+                        Register dst,
+                        Register src0,
+                        Register src1) {
         this->opcode = opcode;
         this->type = type;
         this->dst = dst;
@@ -125,8 +125,8 @@ namespace ir {
     public:
       TernaryInstruction(Opcode opcode,
                          Type type,
-                         RegisterIndex dst,
-                         TupleIndex src)
+                         Register dst,
+                         Tuple src)
       {
         this->opcode = opcode;
         this->type = type;
@@ -135,19 +135,19 @@ namespace ir {
       }
       INLINE uint32_t getSrcNum(void) const { return 3; }
       INLINE uint32_t getDstNum(void) const { return 1; }
-      INLINE RegisterIndex getDstIndex(const Function &fn, uint32_t ID) const {
+      INLINE Register getDstIndex(const Function &fn, uint32_t ID) const {
         assert(ID == 0);
         return dst;
       }
-      INLINE RegisterIndex getSrcIndex(const Function &fn, uint32_t ID) const {
+      INLINE Register getSrcIndex(const Function &fn, uint32_t ID) const {
         assert(ID <= 3);
-        return fn.getRegisterIndex(src, ID);
+        return fn.getRegister(src, ID);
       }
       INLINE Type getType(void) const { return this->type; }
       INLINE bool wellFormed(const Function &fn, std::string &whyNot) const;
       Type type;          //!< Type of the instruction
-      RegisterIndex dst;  //!< Dst is the register index
-      TupleIndex src;     //!< 3 sources do not fit in 8 bytes -> use a tuple
+      Register dst;  //!< Dst is the register index
+      Tuple src;     //!< 3 sources do not fit in 8 bytes -> use a tuple
     };
 
     /*! Comparison instructions take two sources of the same type and return a
@@ -160,9 +160,9 @@ namespace ir {
     public:
       CompareInstruction(Type type,
                          CompareOperation operation,
-                         RegisterIndex dst,
-                         RegisterIndex src0,
-                         RegisterIndex src1) :
+                         Register dst,
+                         Register src0,
+                         Register src1) :
         BinaryInstruction(OP_CMP, type, dst, src0, src1)
       {
         this->operation = operation;
@@ -177,8 +177,8 @@ namespace ir {
     public:
       ConvertInstruction(Type dstType,
                          Type srcType,
-                         RegisterIndex dst,
-                         RegisterIndex src)
+                         Register dst,
+                         Register src)
       {
         this->opcode = OP_CVT;
         this->dst = dst;
@@ -190,17 +190,17 @@ namespace ir {
       INLINE Type getDstType(void) const { return this->dstType; }
       INLINE uint32_t getSrcNum(void) const { return 1; }
       INLINE uint32_t getDstNum(void) const { return 1; }
-      INLINE RegisterIndex getDstIndex(const Function &fn, uint32_t ID) const {
+      INLINE Register getDstIndex(const Function &fn, uint32_t ID) const {
         assert(ID == 0);
         return dst;
       }
-      INLINE RegisterIndex getSrcIndex(const Function &fn, uint32_t ID) const {
+      INLINE Register getSrcIndex(const Function &fn, uint32_t ID) const {
         assert(ID == 0);
         return src;
       }
       INLINE bool wellFormed(const Function &fn, std::string &whyNot) const;
-      RegisterIndex dst;  //!< Converted value
-      RegisterIndex src;  //!< To convert
+      Register dst;  //!< Converted value
+      Register src;  //!< To convert
       Type dstType;       //!< Type to convert to
       Type srcType;       //!< Type to convert from
     };
@@ -208,7 +208,7 @@ namespace ir {
     class BranchInstruction : public BasePolicy, public NoDstPolicy
     {
     public:
-      INLINE BranchInstruction(LabelIndex labelIndex, RegisterIndex predicate) {
+      INLINE BranchInstruction(LabelIndex labelIndex, Register predicate) {
         this->opcode = OP_BRA;
         this->predicate = predicate;
         this->labelIndex = labelIndex;
@@ -220,13 +220,13 @@ namespace ir {
         this->hasPredicate = false;
       }
       INLINE uint32_t getSrcNum(void) const { return hasPredicate ? 1 : 0; }
-      INLINE RegisterIndex getSrcIndex(const Function &fn, uint32_t ID) const {
+      INLINE Register getSrcIndex(const Function &fn, uint32_t ID) const {
         assert(ID == 0 && hasPredicate);
         return predicate;
       }
       INLINE bool isPredicated(void) const { return hasPredicate; }
       INLINE bool wellFormed(const Function &fn, std::string &why) const;
-      RegisterIndex predicate;  //!< Predication means conditional branch
+      Register predicate;  //!< Predication means conditional branch
       LabelIndex labelIndex;    //!< Index of the label the branch targets
       bool hasPredicate;        //!< Is it predicated?
     };
@@ -235,8 +235,8 @@ namespace ir {
     {
     public:
       LoadInstruction(Type type,
-                      TupleIndex dstValues,
-                      RegisterIndex offset,
+                      Tuple dstValues,
+                      Register offset,
                       MemorySpace memSpace,
                       uint16_t valueNum)
       {
@@ -247,14 +247,14 @@ namespace ir {
         this->memSpace = memSpace;
         this->valueNum = valueNum;
       }
-      INLINE RegisterIndex getSrcIndex(const Function &fn, uint32_t ID) const {
+      INLINE Register getSrcIndex(const Function &fn, uint32_t ID) const {
         assert(ID == 0u);
         return offset;
       }
       INLINE uint32_t getSrcNum(void) const { return 1; }
-      INLINE RegisterIndex getDstIndex(const Function &fn, uint32_t ID) const {
+      INLINE Register getDstIndex(const Function &fn, uint32_t ID) const {
         assert(ID < valueNum);
-        return fn.getRegisterIndex(values, ID);
+        return fn.getRegister(values, ID);
       }
       INLINE uint32_t getDstNum(void) const { return valueNum; }
       INLINE Type getValueType(void) const { return type; }
@@ -262,8 +262,8 @@ namespace ir {
       INLINE MemorySpace getAddressSpace(void) const { return memSpace; }
       INLINE bool wellFormed(const Function &fn, std::string &why) const;
       Type type;            //!< Type to store
-      RegisterIndex offset; //!< First source is the offset where to store
-      TupleIndex values;    //!< Values to load
+      Register offset; //!< First source is the offset where to store
+      Tuple values;    //!< Values to load
       MemorySpace memSpace; //!< Where to store
       uint16_t valueNum;      //!< Number of values to store
     };
@@ -272,8 +272,8 @@ namespace ir {
     {
     public:
       StoreInstruction(Type type,
-                       TupleIndex values,
-                       RegisterIndex offset,
+                       Tuple values,
+                       Register offset,
                        MemorySpace memSpace,
                        uint16_t valueNum)
       {
@@ -284,12 +284,12 @@ namespace ir {
         this->memSpace = memSpace;
         this->valueNum = valueNum;
       }
-      INLINE RegisterIndex getSrcIndex(const Function &fn, uint32_t ID) const {
+      INLINE Register getSrcIndex(const Function &fn, uint32_t ID) const {
         assert(ID < valueNum + 1u); // offset + values to store
         if (ID == 0u)
           return offset;
         else
-          return fn.getRegisterIndex(values, ID - 1);
+          return fn.getRegister(values, ID - 1);
       }
       INLINE uint32_t getSrcNum(void) const { return valueNum + 1u; }
       INLINE uint32_t getValueNum(void) const { return valueNum; }
@@ -297,8 +297,8 @@ namespace ir {
       INLINE MemorySpace getAddressSpace(void) const { return memSpace; }
       INLINE bool wellFormed(const Function &fn, std::string &why) const;
       Type type;            //!< Type to store
-      RegisterIndex offset; //!< First source is the offset where to store
-      TupleIndex values;    //!< Values to store
+      Register offset; //!< First source is the offset where to store
+      Tuple values;    //!< Values to store
       MemorySpace memSpace; //!< Where to store
       uint16_t valueNum;    //!< Number of values to store
     };
@@ -314,7 +314,7 @@ namespace ir {
     {
     public:
       INLINE LoadImmInstruction(Type type,
-                                RegisterIndex dst,
+                                Register dst,
                                 ImmediateIndex immediateIndex)
       {
         this->dst = dst;
@@ -326,13 +326,13 @@ namespace ir {
         return fn.getImmediate(immediateIndex);
       }
       INLINE uint32_t getDstNum(void) const{ return 1; }
-      INLINE RegisterIndex getDstIndex(const Function &fn, uint32_t ID) const {
+      INLINE Register getDstIndex(const Function &fn, uint32_t ID) const {
         assert(ID == 0);
         return dst;
       }
       INLINE Type getType(void) const { return this->type; }
       bool wellFormed(const Function &fn, std::string &why) const;
-      RegisterIndex dst;              //!< Register to store into
+      Register dst;              //!< RegisterData to store into
       ImmediateIndex immediateIndex;  //!< Index in the vector of immediates
       Type type;                      //!< Type of the immediate
     };
@@ -368,8 +368,8 @@ namespace ir {
     /*! All Nary instruction register must be of the same family and properly
      *  defined (i.e. not out-of-bound)
      */
-    static INLINE bool checkRegister(Register::Family family,
-                                     const RegisterIndex ID,
+    static INLINE bool checkRegisterData(RegisterData::Family family,
+                                     const Register ID,
                                      const Function &fn,
                                      std::string &whyNot)
     {
@@ -377,7 +377,7 @@ namespace ir {
         whyNot = "Out-of-bound destination register index";
         return false;
       }
-      const Register reg = fn.getRegister(ID);
+      const RegisterData reg = fn.getRegisterData(ID);
       if (UNLIKELY(reg.family != family)) {
         whyNot = "Destination family does not match instruction type";
         return false;
@@ -389,11 +389,11 @@ namespace ir {
     template <uint32_t srcNum>
     INLINE bool NaryInstruction<srcNum>::wellFormed(const Function &fn, std::string &whyNot) const
     {
-      const Register::Family family = getFamily(this->type);
-      if (UNLIKELY(checkRegister(family, dst, fn, whyNot) == false))
+      const RegisterData::Family family = getFamily(this->type);
+      if (UNLIKELY(checkRegisterData(family, dst, fn, whyNot) == false))
         return false;
       for (uint32_t srcID = 0; srcID < srcNum; ++srcID)
-        if (UNLIKELY(checkRegister(family, src[srcID], fn, whyNot) == false))
+        if (UNLIKELY(checkRegisterData(family, src[srcID], fn, whyNot) == false))
           return false;
       return true;
     }
@@ -401,16 +401,16 @@ namespace ir {
     // Idem for ternary instructions except that sources are in a tuple
     INLINE bool TernaryInstruction::wellFormed(const Function &fn, std::string &whyNot) const
     {
-      const Register::Family family = getFamily(this->type);
-      if (UNLIKELY(checkRegister(family, dst, fn, whyNot) == false))
+      const RegisterData::Family family = getFamily(this->type);
+      if (UNLIKELY(checkRegisterData(family, dst, fn, whyNot) == false))
         return false;
       if (UNLIKELY(src + 3u > fn.tupleNum())) {
         whyNot = "Out-of-bound index for ternary instruction";
         return false;
       }
       for (uint32_t srcID = 0; srcID < 3u; ++srcID) {
-        const RegisterIndex regID = fn.getRegisterIndex(src, srcID);
-        if (UNLIKELY(checkRegister(family, regID, fn, whyNot) == false))
+        const Register regID = fn.getRegister(src, srcID);
+        if (UNLIKELY(checkRegisterData(family, regID, fn, whyNot) == false))
           return false;
       }
       return true;
@@ -420,11 +420,11 @@ namespace ir {
     // boolean
     INLINE bool CompareInstruction::wellFormed(const Function &fn, std::string &whyNot) const
     {
-      if (UNLIKELY(checkRegister(Register::BOOL, dst, fn, whyNot) == false))
+      if (UNLIKELY(checkRegisterData(RegisterData::BOOL, dst, fn, whyNot) == false))
         return false;
-      const Register::Family family = getFamily(this->type);
+      const RegisterData::Family family = getFamily(this->type);
       for (uint32_t srcID = 0; srcID < 2; ++srcID)
-        if (UNLIKELY(checkRegister(family, src[srcID], fn, whyNot) == false))
+        if (UNLIKELY(checkRegisterData(family, src[srcID], fn, whyNot) == false))
           return false;
       return true;
     }
@@ -432,11 +432,11 @@ namespace ir {
     // We can convert anything to anything, but types and families must match
     INLINE bool ConvertInstruction::wellFormed(const Function &fn, std::string &whyNot) const
     {
-      const Register::Family dstFamily = getFamily(srcType);
-      const Register::Family srcFamily = getFamily(srcType);
-      if (UNLIKELY(checkRegister(dstFamily, dst, fn, whyNot) == false))
+      const RegisterData::Family dstFamily = getFamily(srcType);
+      const RegisterData::Family srcFamily = getFamily(srcType);
+      if (UNLIKELY(checkRegisterData(dstFamily, dst, fn, whyNot) == false))
         return false;
-      if (UNLIKELY(checkRegister(srcFamily, src, fn, whyNot) == false))
+      if (UNLIKELY(checkRegisterData(srcFamily, src, fn, whyNot) == false))
         return false;
       return true;
     }
@@ -454,10 +454,10 @@ namespace ir {
         return false;
       }
       // Check all registers
-      const Register::Family family = getFamily(insn.type);
+      const RegisterData::Family family = getFamily(insn.type);
       for (uint32_t valueID = 0; valueID < insn.valueNum; ++valueID) {
-        const RegisterIndex regID = fn.getRegisterIndex(insn.values, valueID);
-        if (UNLIKELY(checkRegister(family, regID, fn, whyNot) == false))
+        const Register regID = fn.getRegister(insn.values, valueID);
+        if (UNLIKELY(checkRegisterData(family, regID, fn, whyNot) == false))
           return false;
       }
       return true;
@@ -490,8 +490,8 @@ namespace ir {
         whyNot = "Inconsistant type for the immediate value to load";
         return false;
       }
-      const Register::Family family = getFamily(type);
-      if (UNLIKELY(checkRegister(family, dst, fn, whyNot) == false))
+      const RegisterData::Family family = getFamily(type);
+      if (UNLIKELY(checkRegisterData(family, dst, fn, whyNot) == false))
         return false;
       return true;
     }
@@ -520,7 +520,7 @@ namespace ir {
         return false;
       }
       if (hasPredicate)
-        if (UNLIKELY(checkRegister(Register::BOOL, predicate, fn, whyNot) == false))
+        if (UNLIKELY(checkRegisterData(RegisterData::BOOL, predicate, fn, whyNot) == false))
           return false;
       return true;
     }
@@ -537,11 +537,11 @@ namespace ir {
     enum { value = 1 };
   };
 
-  Register Instruction::getDst(const Function &fn, uint32_t ID) const {
-    return fn.getRegister(this->getDstIndex(fn, ID));
+  RegisterData Instruction::getDst(const Function &fn, uint32_t ID) const {
+    return fn.getRegisterData(this->getDstIndex(fn, ID));
   }
-  Register Instruction::getSrc(const Function &fn, uint32_t ID) const {
-    return fn.getRegister(this->getSrcIndex(fn, ID));
+  RegisterData Instruction::getSrc(const Function &fn, uint32_t ID) const {
+    return fn.getRegisterData(this->getSrcIndex(fn, ID));
   }
 
 #define DECL_INSN(OPCODE, CLASS)                           \
@@ -644,15 +644,15 @@ END_FUNCTION(Instruction, uint32_t)
 #undef CALL
 
 #define CALL getDstIndex(fn, ID)
-START_FUNCTION(Instruction, RegisterIndex, getDstIndex(const Function &fn, uint32_t ID))
+START_FUNCTION(Instruction, Register, getDstIndex(const Function &fn, uint32_t ID))
 #include "ir/instruction.hxx"
-END_FUNCTION(Instruction, RegisterIndex)
+END_FUNCTION(Instruction, Register)
 #undef CALL
 
 #define CALL getSrcIndex(fn, ID)
-START_FUNCTION(Instruction, RegisterIndex, getSrcIndex(const Function &fn, uint32_t ID))
+START_FUNCTION(Instruction, Register, getSrcIndex(const Function &fn, uint32_t ID))
 #include "ir/instruction.hxx"
-END_FUNCTION(Instruction, RegisterIndex)
+END_FUNCTION(Instruction, Register)
 #undef CALL
 
 #define CALL wellFormed(fn, whyNot)
@@ -694,7 +694,7 @@ DECL_MEM_FN(BranchInstruction, bool, isPredicated(void), isPredicated())
 
   // All unary functions
 #define DECL_EMIT_FUNCTION(NAME)                                      \
-  Instruction NAME(Type type, RegisterIndex dst, RegisterIndex src) { \
+  Instruction NAME(Type type, Register dst, Register src) { \
     const internal::UnaryInstruction insn(OP_##NAME, type, dst, src); \
     return insn.convert();                                            \
   }
@@ -711,9 +711,9 @@ DECL_MEM_FN(BranchInstruction, bool, isPredicated(void), isPredicated())
 
   // All binary functions
 #define DECL_EMIT_FUNCTION(NAME)                                              \
-  Instruction NAME(Type type, RegisterIndex dst,                              \
-                   RegisterIndex src0,                                        \
-                   RegisterIndex src1) {                                      \
+  Instruction NAME(Type type, Register dst,                              \
+                   Register src0,                                        \
+                   Register src1) {                                      \
     const internal::BinaryInstruction insn(OP_##NAME, type, dst, src0, src1); \
     return insn.convert();                                                    \
   }
@@ -735,7 +735,7 @@ DECL_MEM_FN(BranchInstruction, bool, isPredicated(void), isPredicated())
 #undef DECL_EMIT_FUNCTION
 
   // MAD
-  Instruction MAD(Type type, RegisterIndex dst, TupleIndex src) {
+  Instruction MAD(Type type, Register dst, Tuple src) {
     internal::TernaryInstruction insn(OP_MAD, type, dst, src);
     return insn.convert();
   }
@@ -743,16 +743,16 @@ DECL_MEM_FN(BranchInstruction, bool, isPredicated(void), isPredicated())
   // CMP
   Instruction CMP(Type type,
                   CompareOperation operation,
-                  RegisterIndex dst,
-                  RegisterIndex src0,
-                  RegisterIndex src1)
+                  Register dst,
+                  Register src0,
+                  Register src1)
   {
     internal::CompareInstruction insn(type, operation, dst, src0, src1);
     return insn.convert();
   }
 
   // CVT
-  Instruction CVT(Type dstType, Type srcType, RegisterIndex dst, RegisterIndex src) {
+  Instruction CVT(Type dstType, Type srcType, Register dst, Register src) {
     internal::ConvertInstruction insn(dstType, srcType, dst, src);
     return insn.convert();
   }
@@ -762,13 +762,13 @@ DECL_MEM_FN(BranchInstruction, bool, isPredicated(void), isPredicated())
     internal::BranchInstruction insn(labelIndex);
     return insn.convert();
   }
-  Instruction BRA(LabelIndex labelIndex, RegisterIndex pred) {
+  Instruction BRA(LabelIndex labelIndex, Register pred) {
     internal::BranchInstruction insn(labelIndex, pred);
     return insn.convert();
   }
 
   // LOADI
-  Instruction LOADI(Type type, RegisterIndex dst, ImmediateIndex value) {
+  Instruction LOADI(Type type, Register dst, ImmediateIndex value) {
     internal::LoadImmInstruction insn(type, dst, value);
     return insn.convert();
   }
@@ -776,8 +776,8 @@ DECL_MEM_FN(BranchInstruction, bool, isPredicated(void), isPredicated())
   // LOAD and STORE
 #define DECL_EMIT_FUNCTION(NAME, CLASS)                               \
   Instruction NAME(Type type,                                         \
-                   TupleIndex tuple,                                  \
-                   RegisterIndex offset,                              \
+                   Tuple tuple,                                  \
+                   Register offset,                              \
                    MemorySpace space,                                 \
                    uint16_t valueNum)                                 \
   {                                                                   \

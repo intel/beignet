@@ -81,13 +81,13 @@ namespace ir {
     /*! Get the number of destination for this instruction */
     uint32_t getDstNum(void) const;
     /*! Get the register index of the given source */
-    RegisterIndex getSrcIndex(const Function &fn, uint32_t ID = 0u) const;
+    Register getSrcIndex(const Function &fn, uint32_t ID = 0u) const;
     /*! Get the register index of the given destination */
-    RegisterIndex getDstIndex(const Function &fn, uint32_t ID = 0u) const;
+    Register getDstIndex(const Function &fn, uint32_t ID = 0u) const;
     /*! Get the register of the given source */
-    Register getDst(const Function &fn, uint32_t ID = 0u) const;
+    RegisterData getDst(const Function &fn, uint32_t ID = 0u) const;
     /*! Get the register of the given destination */
-    Register getSrc(const Function &fn, uint32_t ID = 0u) const;
+    RegisterData getSrc(const Function &fn, uint32_t ID = 0u) const;
     /*! Check that the instruction is well formed (type properly match,
      *  registers not of bound and so on). If not well formed, provide a reason
      *  in string why
@@ -223,12 +223,12 @@ namespace ir {
     /*! Indicate if the branch is predicated */
     bool isPredicated(void) const;
     /*! Return the predicate register (if predicated) */
-    Register getPredicate(const Function &fn) const {
+    RegisterData getPredicate(const Function &fn) const {
       assert(this->isPredicated() == true);
       return this->getSrc(fn, 0);
     }
     /*! Return the predicate register index (if predicated) */
-    RegisterIndex getPredicateIndex(const Function &fn) const {
+    Register getPredicateIndex(const Function &fn) const {
       assert(this->isPredicated() == true);
       return this->getSrcIndex(fn, 0);
     }
@@ -290,63 +290,63 @@ namespace ir {
   ///////////////////////////////////////////////////////////////////////////
 
   /*! mov.type dst src */
-  Instruction MOV(Type type, RegisterIndex dst, RegisterIndex src);
+  Instruction MOV(Type type, Register dst, Register src);
   /*! cos.type dst src */
-  Instruction COS(Type type, RegisterIndex dst, RegisterIndex src);
+  Instruction COS(Type type, Register dst, Register src);
   /*! sin.type dst src */
-  Instruction SIN(Type type, RegisterIndex dst, RegisterIndex src);
+  Instruction SIN(Type type, Register dst, Register src);
   /*! tan.type dst src */
-  Instruction TAN(Type type, RegisterIndex dst, RegisterIndex src);
+  Instruction TAN(Type type, Register dst, Register src);
   /*! log.type dst src */
-  Instruction LOG(Type type, RegisterIndex dst, RegisterIndex src);
+  Instruction LOG(Type type, Register dst, Register src);
   /*! sqr.type dst src */
-  Instruction SQR(Type type, RegisterIndex dst, RegisterIndex src);
+  Instruction SQR(Type type, Register dst, Register src);
   /*! rsq.type dst src */
-  Instruction RSQ(Type type, RegisterIndex dst, RegisterIndex src);
+  Instruction RSQ(Type type, Register dst, Register src);
   /*! pow.type dst src0 src1 */
-  Instruction POW(Type type, RegisterIndex dst, RegisterIndex src0, RegisterIndex src1);
+  Instruction POW(Type type, Register dst, Register src0, Register src1);
   /*! mul.type dst src0 src1 */
-  Instruction MUL(Type type, RegisterIndex dst, RegisterIndex src0, RegisterIndex src1);
+  Instruction MUL(Type type, Register dst, Register src0, Register src1);
   /*! add.type dst src0 src1 */
-  Instruction ADD(Type type, RegisterIndex dst, RegisterIndex src0, RegisterIndex src1);
+  Instruction ADD(Type type, Register dst, Register src0, Register src1);
   /*! sub.type dst src0 src1 */
-  Instruction SUB(Type type, RegisterIndex dst, RegisterIndex src0, RegisterIndex src1);
+  Instruction SUB(Type type, Register dst, Register src0, Register src1);
   /*! div.type dst src0 src1 */
-  Instruction DIV(Type type, RegisterIndex dst, RegisterIndex src0, RegisterIndex src1);
+  Instruction DIV(Type type, Register dst, Register src0, Register src1);
   /*! rem.type dst src0 src1 */
-  Instruction REM(Type type, RegisterIndex dst, RegisterIndex src0, RegisterIndex src1);
+  Instruction REM(Type type, Register dst, Register src0, Register src1);
   /*! shl.type dst src0 src1 */
-  Instruction SHL(Type type, RegisterIndex dst, RegisterIndex src0, RegisterIndex src1);
+  Instruction SHL(Type type, Register dst, Register src0, Register src1);
   /*! shr.type dst src0 src1 */
-  Instruction SHR(Type type, RegisterIndex dst, RegisterIndex src0, RegisterIndex src1);
+  Instruction SHR(Type type, Register dst, Register src0, Register src1);
   /*! asr.type dst src0 src1 */
-  Instruction ASR(Type type, RegisterIndex dst, RegisterIndex src0, RegisterIndex src1);
+  Instruction ASR(Type type, Register dst, Register src0, Register src1);
   /*! bsf.type dst src0 src1 */
-  Instruction BSF(Type type, RegisterIndex dst, RegisterIndex src0, RegisterIndex src1);
+  Instruction BSF(Type type, Register dst, Register src0, Register src1);
   /*! bsb.type dst src0 src1 */
-  Instruction BSB(Type type, RegisterIndex dst, RegisterIndex src0, RegisterIndex src1);
+  Instruction BSB(Type type, Register dst, Register src0, Register src1);
   /*! or.type dst src0 src1 */
-  Instruction OR(Type type, RegisterIndex dst, RegisterIndex src0, RegisterIndex src1);
+  Instruction OR(Type type, Register dst, Register src0, Register src1);
   /*! xor.type dst src0 src1 */
-  Instruction XOR(Type type, RegisterIndex dst, RegisterIndex src0, RegisterIndex src1);
+  Instruction XOR(Type type, Register dst, Register src0, Register src1);
   /*! and.type dst src0 src1 */
-  Instruction AND(Type type, RegisterIndex dst, RegisterIndex src0, RegisterIndex src1);
+  Instruction AND(Type type, Register dst, Register src0, Register src1);
   /*! mad.type dst {src0, src1, src2} == src */
-  Instruction MAD(Type type, RegisterIndex dst, TupleIndex src);
+  Instruction MAD(Type type, Register dst, Tuple src);
   /*! cmp.type.op dst src0 src1 */
-  Instruction CMP(Type type, CompareOperation op, RegisterIndex dst, RegisterIndex src0, RegisterIndex src1);
+  Instruction CMP(Type type, CompareOperation op, Register dst, Register src0, Register src1);
   /*! cvt.{dstType <- srcType} dst src */
-  Instruction CVT(Type dstType, Type srcType, RegisterIndex dst, RegisterIndex src0, RegisterIndex src1);
+  Instruction CVT(Type dstType, Type srcType, Register dst, Register src0, Register src1);
   /*! bra labelIndex */
   Instruction BRA(LabelIndex labelIndex);
   /*! (pred) bra labelIndex */
-  Instruction BRA(LabelIndex labelIndex, RegisterIndex pred);
+  Instruction BRA(LabelIndex labelIndex, Register pred);
   /*! loadi.type dst value */
-  Instruction LOADI(Type type, RegisterIndex dst, ImmediateIndex value);
+  Instruction LOADI(Type type, Register dst, ImmediateIndex value);
   /*! load.type.space {dst1,...,dst_valueNum} offset value */
-  Instruction LOAD(Type type, TupleIndex dst, RegisterIndex offset, MemorySpace space, uint16_t valueNum);
+  Instruction LOAD(Type type, Tuple dst, Register offset, MemorySpace space, uint16_t valueNum);
   /*! store.type.space offset {src1,...,src_valueNum} value */
-  Instruction STORE(Type type, TupleIndex src, RegisterIndex offset, MemorySpace space, uint16_t valueNum);
+  Instruction STORE(Type type, Tuple src, Register offset, MemorySpace space, uint16_t valueNum);
   /*! fence.space */
   Instruction FENCE(MemorySpace space);
   /*! label labelIndex */

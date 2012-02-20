@@ -43,17 +43,17 @@ namespace ir {
       fn = NULL;
   }
 
-  RegisterIndex Context::reg(Register::Family family) {
+  Register Context::reg(RegisterData::Family family) {
     GBE_ASSERT(fn != NULL);
     return fn->file.append(family);
   }
 
-  void Context::input(RegisterIndex reg) {
+  void Context::input(Register reg) {
     GBE_ASSERT(fn != NULL && reg < fn->file.regNum());
     fn->input.push_back(reg);
   }
 
-  void Context::output(RegisterIndex reg) {
+  void Context::output(Register reg) {
     GBE_ASSERT(fn != NULL && reg < fn->file.regNum());
     fn->output.push_back(reg);
   }
