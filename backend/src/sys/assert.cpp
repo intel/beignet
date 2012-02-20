@@ -26,16 +26,21 @@
 
 #include "assert.hpp"
 #include "exception.hpp"
+#include <cassert>
+
 namespace gbe
 {
-  void onFailedAssert(const char *file, const char *fn, int line)
+  void onFailedAssertion(const char *msg, const char *file, const char *fn, int line)
   {
     char lineString[256];
     sprintf(lineString, "%i", line);
-    const std::string msg = "file " + std::string(file)
+    assert(msg != NULL && file != NULL && fn != NULL);
+    const std::string str = "Compiler error: "
+                          + std::string(msg) + "\n  at file "
+                          + std::string(file)
                           + ", function " + std::string(fn)
                           + ", line " + std::string(lineString);
-    throw Exception(msg);
+    throw Exception(str);
   }
 } /* namespace gbe */
 
@@ -48,10 +53,12 @@ namespace gbe
 
 namespace gbe
 {
-  void onFailedAssert(const char *file, const char *fn, int32_t line)
+  void onFailedAssertion(const char *msg, const char *file, const char *fn, int32_t line)
   {
-    fprintf(stderr, " ASSERTION FAILED: file %s, function %s, line %i\n",
-            file, fn, line);
+    assert(msg != NULL && file != NULL && fn != NULL);
+    fprintf(stderr, "ASSERTION FAILED: %s\n"
+                    "  at file %s, function %s, line %i\n",
+                    msg,  file, fn, line);
     fflush(stdout);
     DEBUGBREAK();
     _exit(-1);

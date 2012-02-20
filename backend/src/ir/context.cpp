@@ -35,7 +35,7 @@ namespace ir {
   }
 
   void Context::endFunction(void) {
-    GBE_ASSERT(fn != NULL);
+    GBE_ASSERTM(fn != NULL, "No function to end");
     if (fnStack.size() != 0) {
       fn = fnStack.back();
       fnStack.pop_back();
@@ -44,22 +44,24 @@ namespace ir {
   }
 
   Register Context::reg(RegisterData::Family family) {
-    GBE_ASSERT(fn != NULL);
+    GBE_ASSERTM(fn != NULL, "No function currently defined");
     return fn->file.append(family);
   }
 
   void Context::input(Register reg) {
-    GBE_ASSERT(fn != NULL && reg < fn->file.regNum());
+    GBE_ASSERTM(fn != NULL, "No function currently defined");
+    GBE_ASSERTM(reg < fn->file.regNum(), "Out-of-bound register");
     fn->input.push_back(reg);
   }
 
   void Context::output(Register reg) {
-    GBE_ASSERT(fn != NULL && reg < fn->file.regNum());
+    GBE_ASSERTM(fn != NULL, "No function currently defined");
+    GBE_ASSERTM(reg < fn->file.regNum(), "Out-of-bound register");
     fn->output.push_back(reg);
   }
 
   void Context::startBlock(void) {
-    GBE_ASSERT(fn != NULL);
+    GBE_ASSERTM(fn != NULL, "No function currently defined");
     this->bb = GBE_NEW(BasicBlock, *fn);
     fn->blocks.push_back(bb);
   }
@@ -68,18 +70,34 @@ namespace ir {
     this->bb = NULL;
   }
 
-  void Context::append(const Instruction &insn) {
+  void Context::append(const Instruction &insn)
+  {
+    GBE_ASSERTM(fn != NULL, "No function currently defined");
 
     // Start a new block if this is a label
     if (insn.isMemberOf<LabelInstruction>() == true) {
       this->endBlock();
       this->startBlock();
+      const LabelIndex index = cast<LabelInstruction>(insn).getLabelIndex();
+      GBE_ASSERTM(index < fn->labelNum(), "Out-of-bound label");
+      GBE_ASSERTM(fn->labels[index] == NULL, "Label used in a previous block");
+      fn->labels[index] = bb;
+    }
+    // We create a new label for a new block if the user did not do it
+    else if (bb == NULL) {
+      this->startBlock();
+      const LabelIndex index = fn->newLabel();
+      const Instruction insn = ir::LABEL(index);
+      this->append(insn);
     }
 
     // Append the instruction in the stream
-    GBE_ASSERT(fn != NULL && bb != NULL);
     Instruction *insnPtr = fn->newInstruction();
     *insnPtr = insn;
+#ifndef NDEBUG
+    std::string whyNot;
+    GBE_ASSERTM(insn.wellFormed(*fn, whyNot), whyNot.c_str());
+#endif /* NDEBUG */
     bb->append(*insnPtr);
 
     // Close the current block if this is a branch

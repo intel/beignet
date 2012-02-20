@@ -71,16 +71,16 @@ namespace ir {
       INLINE uint32_t getSrcNum(void) const { return srcNum; }
       INLINE uint32_t getDstNum(void) const { return 1; }
       INLINE Register getDstIndex(const Function &fn, uint32_t ID) const {
-        assert(ID == 0);
+        GBE_ASSERTM(ID == 0, "Only one destination for the instruction");
         return dst;
       }
       INLINE Register getSrcIndex(const Function &fn, uint32_t ID) const {
-        assert(ID <= srcNum);
+        GBE_ASSERTM(ID < srcNum, "Out-of-bound source");
         return src[ID];
       }
       INLINE Type getType(void) const { return this->type; }
       INLINE bool wellFormed(const Function &fn, std::string &whyNot) const;
-      Type type;                //!< Type of the instruction
+      Type type;           //!< Type of the instruction
       Register dst;        //!< Index of the register in the register file
       Register src[srcNum];//!< Indices of the sources
     };
@@ -136,16 +136,16 @@ namespace ir {
       INLINE uint32_t getSrcNum(void) const { return 3; }
       INLINE uint32_t getDstNum(void) const { return 1; }
       INLINE Register getDstIndex(const Function &fn, uint32_t ID) const {
-        assert(ID == 0);
+        GBE_ASSERTM(ID == 0, "Only one destination for the instruction");
         return dst;
       }
       INLINE Register getSrcIndex(const Function &fn, uint32_t ID) const {
-        assert(ID <= 3);
+        GBE_ASSERTM(ID < 3, "Out-of-bound source register");
         return fn.getRegister(src, ID);
       }
       INLINE Type getType(void) const { return this->type; }
       INLINE bool wellFormed(const Function &fn, std::string &whyNot) const;
-      Type type;          //!< Type of the instruction
+      Type type;     //!< Type of the instruction
       Register dst;  //!< Dst is the register index
       Tuple src;     //!< 3 sources do not fit in 8 bytes -> use a tuple
     };
@@ -191,18 +191,18 @@ namespace ir {
       INLINE uint32_t getSrcNum(void) const { return 1; }
       INLINE uint32_t getDstNum(void) const { return 1; }
       INLINE Register getDstIndex(const Function &fn, uint32_t ID) const {
-        assert(ID == 0);
+        GBE_ASSERTM(ID == 0, "Only one destination for the convert instruction");
         return dst;
       }
       INLINE Register getSrcIndex(const Function &fn, uint32_t ID) const {
-        assert(ID == 0);
+        GBE_ASSERTM(ID == 0, "Only one source for the convert instruction");
         return src;
       }
       INLINE bool wellFormed(const Function &fn, std::string &whyNot) const;
       Register dst;  //!< Converted value
       Register src;  //!< To convert
-      Type dstType;       //!< Type to convert to
-      Type srcType;       //!< Type to convert from
+      Type dstType;  //!< Type to convert to
+      Type srcType;  //!< Type to convert from
     };
 
     class BranchInstruction : public BasePolicy, public NoDstPolicy
@@ -221,14 +221,15 @@ namespace ir {
       }
       INLINE uint32_t getSrcNum(void) const { return hasPredicate ? 1 : 0; }
       INLINE Register getSrcIndex(const Function &fn, uint32_t ID) const {
-        assert(ID == 0 && hasPredicate);
+        GBE_ASSERTM(hasPredicate, "No source for unpredicated branches");
+        GBE_ASSERTM(ID == 0, "Only one source for the branch instruction");
         return predicate;
       }
       INLINE bool isPredicated(void) const { return hasPredicate; }
       INLINE bool wellFormed(const Function &fn, std::string &why) const;
-      Register predicate;  //!< Predication means conditional branch
-      LabelIndex labelIndex;    //!< Index of the label the branch targets
-      bool hasPredicate;        //!< Is it predicated?
+      Register predicate;    //!< Predication means conditional branch
+      LabelIndex labelIndex; //!< Index of the label the branch targets
+      bool hasPredicate;     //!< Is it predicated?
     };
 
     class LoadInstruction : public BasePolicy
@@ -248,12 +249,12 @@ namespace ir {
         this->valueNum = valueNum;
       }
       INLINE Register getSrcIndex(const Function &fn, uint32_t ID) const {
-        assert(ID == 0u);
+        GBE_ASSERTM(ID == 0, "Only one source for the load instruction");
         return offset;
       }
       INLINE uint32_t getSrcNum(void) const { return 1; }
       INLINE Register getDstIndex(const Function &fn, uint32_t ID) const {
-        assert(ID < valueNum);
+        GBE_ASSERTM(ID < valueNum, "Out-of-bound source register");
         return fn.getRegister(values, ID);
       }
       INLINE uint32_t getDstNum(void) const { return valueNum; }
@@ -262,10 +263,10 @@ namespace ir {
       INLINE MemorySpace getAddressSpace(void) const { return memSpace; }
       INLINE bool wellFormed(const Function &fn, std::string &why) const;
       Type type;            //!< Type to store
-      Register offset; //!< First source is the offset where to store
-      Tuple values;    //!< Values to load
+      Register offset;      //!< First source is the offset where to store
+      Tuple values;         //!< Values to load
       MemorySpace memSpace; //!< Where to store
-      uint16_t valueNum;      //!< Number of values to store
+      uint16_t valueNum;    //!< Number of values to store
     };
 
     class StoreInstruction : public BasePolicy, public NoDstPolicy
@@ -285,7 +286,7 @@ namespace ir {
         this->valueNum = valueNum;
       }
       INLINE Register getSrcIndex(const Function &fn, uint32_t ID) const {
-        assert(ID < valueNum + 1u); // offset + values to store
+        GBE_ASSERTM(ID < valueNum + 1u, "Out-of-bound source register for store");
         if (ID == 0u)
           return offset;
         else
@@ -297,8 +298,8 @@ namespace ir {
       INLINE MemorySpace getAddressSpace(void) const { return memSpace; }
       INLINE bool wellFormed(const Function &fn, std::string &why) const;
       Type type;            //!< Type to store
-      Register offset; //!< First source is the offset where to store
-      Tuple values;    //!< Values to store
+      Register offset;      //!< First source is the offset where to store
+      Tuple values;         //!< Values to store
       MemorySpace memSpace; //!< Where to store
       uint16_t valueNum;    //!< Number of values to store
     };
@@ -327,14 +328,14 @@ namespace ir {
       }
       INLINE uint32_t getDstNum(void) const{ return 1; }
       INLINE Register getDstIndex(const Function &fn, uint32_t ID) const {
-        assert(ID == 0);
+        GBE_ASSERTM(ID == 0, "Only one destination is supported for load immediate");
         return dst;
       }
       INLINE Type getType(void) const { return this->type; }
       bool wellFormed(const Function &fn, std::string &why) const;
-      Register dst;              //!< RegisterData to store into
-      ImmediateIndex immediateIndex;  //!< Index in the vector of immediates
-      Type type;                      //!< Type of the immediate
+      Register dst;                  //!< RegisterData to store into
+      ImmediateIndex immediateIndex; //!< Index in the vector of immediates
+      Type type;                     //!< Type of the immediate
     };
 
     class FenceInstruction : public BasePolicy, public NoSrcPolicy, public NoDstPolicy
@@ -355,6 +356,7 @@ namespace ir {
         this->opcode = OP_LABEL;
         this->labelIndex = labelIndex;
       }
+      INLINE LabelIndex getLabelIndex(void) const { return labelIndex; }
       INLINE bool wellFormed(const Function &fn, std::string &why) const;
       LabelIndex labelIndex;  //!< Index of the label
     };
@@ -684,6 +686,7 @@ DECL_MEM_FN(LoadInstruction, uint32_t, getValueNum(void), getValueNum())
 DECL_MEM_FN(LoadInstruction, MemorySpace, getAddressSpace(void), getAddressSpace())
 DECL_MEM_FN(LoadImmInstruction, Immediate, getImmediate(const Function &fn), getImmediate(fn))
 DECL_MEM_FN(LoadImmInstruction, Type, getType(void), getType())
+DECL_MEM_FN(LabelInstruction, LabelIndex, getLabelIndex(void), getLabelIndex())
 DECL_MEM_FN(BranchInstruction, bool, isPredicated(void), isPredicated())
 
 #undef DECL_MEM_FN

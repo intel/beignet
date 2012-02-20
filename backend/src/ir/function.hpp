@@ -76,7 +76,7 @@ namespace ir {
     }
     /*! Get the given value ie immediate from the function */
     INLINE Immediate getImmediate(uint32_t ID) const {
-      GBE_ASSERT(ID < immediates.size());
+      GBE_ASSERTM(ID < immediates.size(), "Out-of-bound immediate");
       return immediates[ID];
     }
     /*! Allocate a new instruction (with the growing pool) */
@@ -87,6 +87,8 @@ namespace ir {
     INLINE void deleteInstruction(Instruction *insn) {
       insnPool.deallocate(insn);
     }
+    /*! Create a new label (still not bound to a basic block) */
+    LabelIndex newLabel(void);
     /*! Number of registers in the register file */
     INLINE uint32_t regNum(void) const { return file.regNum(); }
     /*! Number of register tuples in the register file */
@@ -97,13 +99,13 @@ namespace ir {
     INLINE uint32_t immediateNum(void) const { return immediates.size(); }
 
   private:
-    friend class Context;          //!< Can freely modify a function
-    vector<Register> input;   //!< Input registers of the function
-    vector<Register> output;  //!< Output registers of the function
-    vector<BasicBlock*> labels;    //!< Each label points to a basic block
-    vector<Immediate> immediates;  //!< All immediate values in the function
-    vector<BasicBlock*> blocks;    //!< All chained basic blocks
-    RegisterFile file;             //!< RegisterDatas used by the instructions
+    friend class Context;         //!< Can freely modify a function
+    vector<Register> input;       //!< Input registers of the function
+    vector<Register> output;      //!< Output registers of the function
+    vector<BasicBlock*> labels;   //!< Each label points to a basic block
+    vector<Immediate> immediates; //!< All immediate values in the function
+    vector<BasicBlock*> blocks;   //!< All chained basic blocks
+    RegisterFile file;            //!< RegisterDatas used by the instructions
     GrowingPool<Instruction> insnPool; //!< For fast instruction allocation
     GBE_CLASS(Function);
   };

@@ -209,12 +209,17 @@
 
 /*! Run-time assertion */
 #ifndef NDEBUG
-#define GBE_ASSERT(EXPR) do {                              \
-  if (UNLIKELY(!(EXPR)))                                   \
-    gbe::onFailedAssert(__FILE__, __FUNCTION__, __LINE__); \
+#define GBE_ASSERT(EXPR) do {                                       \
+  if (UNLIKELY(!(EXPR)))                                            \
+    gbe::onFailedAssertion(#EXPR, __FILE__, __FUNCTION__, __LINE__);\
+} while (0)
+#define GBE_ASSERTM(EXPR, MSG) do {                                 \
+  if (UNLIKELY(!(EXPR)))                                            \
+    gbe::onFailedAssertion(MSG, __FILE__, __FUNCTION__, __LINE__);  \
 } while (0)
 #else
 #define GBE_ASSERT(EXPR) do { } while (0)
+#define GBE_ASSERT_M(EXPR) do { } while (0)
 #endif
 
 /*! Fatal error macros */

@@ -201,9 +201,10 @@ namespace ir {
   };
 
   /*! Load immediate instruction loads an typed immediate value into the given
-   * register. Since double and uint64_t values will not fit into an instruction,
-   * the immediate themselves are stored in the function core. Contrary to
-   * regular load instructions, there is only one destination possible
+   *  register. Since double and uint64_t values will not fit into an
+   *  instruction, the immediate themselves are stored in the function core.
+   *  Contrary to regular load instructions, there is only one destination
+   *  possible
    */
   class LoadImmInstruction : public Instruction {
   public:
@@ -224,12 +225,12 @@ namespace ir {
     bool isPredicated(void) const;
     /*! Return the predicate register (if predicated) */
     RegisterData getPredicate(const Function &fn) const {
-      assert(this->isPredicated() == true);
+      GBE_ASSERTM(this->isPredicated() == true, "Branch is not predicated");
       return this->getSrc(fn, 0);
     }
     /*! Return the predicate register index (if predicated) */
     Register getPredicateIndex(const Function &fn) const {
-      assert(this->isPredicated() == true);
+      GBE_ASSERTM(this->isPredicated() == true, "Branch is not predicated");
       return this->getSrcIndex(fn, 0);
     }
     /*! Return true if the given instruction is an instance of this class */
@@ -241,6 +242,8 @@ namespace ir {
    */
   class LabelInstruction : public Instruction {
   public:
+    /*! Return the label index of the instruction */
+    LabelIndex getLabelIndex(void) const;
     /*! Return true if the given instruction is an instance of this class */
     static bool isClassOf(const Instruction &insn);
   };
@@ -266,22 +269,22 @@ namespace ir {
    */
   template <typename T>
   INLINE T *cast(Instruction *insn) {
-    assert(insn->isMemberOf<T>() == true);
+    GBE_ASSERTM(insn->isMemberOf<T>() == true, "Invalid instruction cast");
     return reinterpret_cast<T*>(insn);
   }
   template <typename T>
   INLINE const T *cast(const Instruction *insn) {
-    assert(insn->isMemberOf<T>() == true);
+    GBE_ASSERTM(insn->isMemberOf<T>() == true, "Invalid instruction cast");
     return reinterpret_cast<const T*>(insn);
   }
   template <typename T>
   INLINE T &cast(Instruction &insn) {
-    assert(insn.isMemberOf<T>() == true);
+    GBE_ASSERTM(insn.isMemberOf<T>() == true, "Invalid instruction cast");
     return reinterpret_cast<T&>(insn);
   }
   template <typename T>
   INLINE const T &cast(const Instruction &insn) {
-    assert(insn.isMemberOf<T>() == true);
+    GBE_ASSERTM(insn.isMemberOf<T>() == true, "Invalid instruction cast");
     return reinterpret_cast<const T&>(insn);
   }
 

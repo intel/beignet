@@ -32,6 +32,13 @@ namespace ir {
     for (auto it = blocks.begin(); it != blocks.end(); ++it)
       GBE_DELETE(*it);
   }
+  LabelIndex Function::newLabel(void) {
+    GBE_ASSERTM(labels.size() < 0xffff,
+                "Too many labels are defined (65536 only are supported)");
+    const LabelIndex index(labels.size());
+    labels.push_back(NULL);
+    return index;
+  }
   BasicBlock::BasicBlock(Function &fn) : fn(fn) {}
   BasicBlock::~BasicBlock(void) {
     for (auto it = instructions.begin(); it != instructions.end(); ++it)

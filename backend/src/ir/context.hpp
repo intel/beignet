@@ -95,9 +95,9 @@ namespace ir {
 
 #define DECL_CMP(NAME)                              \
     void NAME(Type type,                            \
-              Register dst,                    \
-              Register src0,                   \
-              Register src1)                   \
+              Register dst,                         \
+              Register src0,                        \
+              Register src1)                        \
     {                                               \
       this->CMP(type, CMP_##NAME, dst, src0, src1); \
     }
@@ -120,11 +120,12 @@ DECL_CMP(GE)
     Function *fn;             //!< Current function we are processing
     BasicBlock *bb;           //!< Current basic block we are filling
     vector<Function*> fnStack;//!< Stack of functions still to finish
+    GBE_CLASS(Context);
   };
 
   template <typename... Args>
   INLINE Tuple Context::tuple(Args...args) {
-    GBE_ASSERT(fn != NULL);
+    GBE_ASSERTM(fn != NULL, "No function currently defined");
     return fn->file.appendTuple(args...);
   }
 
@@ -132,7 +133,7 @@ DECL_CMP(GE)
 #define DECL_INSN(NAME, FAMILY)                                   \
   template <typename... Args>                                     \
   INLINE void Context::NAME(Args...args) {                        \
-    GBE_ASSERT(fn != NULL);                                       \
+    GBE_ASSERTM(fn != NULL, "No function currently defined");     \
     const Instruction insn = gbe::ir::NAME(args...);              \
     this->append(insn);                                           \
   }
