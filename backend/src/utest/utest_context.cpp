@@ -46,12 +46,43 @@ namespace gbe
       ctx.MAD(TYPE_FLOAT, reg0, reg0, reg1, reg2);
     ctx.endFunction();
   }
+  static void noStartFunction(void) {
+    Unit unit;
+    Context ctx(unit);
+    ctx.endFunction();
+  }
+  static void recursiveDefinition(void) {
+    Unit unit;
+    Context ctx(unit);
+    ctx.startFunction("hop");
+      const Register reg0 = ctx.reg(RegisterData::DWORD);
+      const Register reg1 = ctx.reg(RegisterData::DWORD);
+      const Register reg2 = ctx.reg(RegisterData::DWORD);
+      ctx.MAD(TYPE_FLOAT, reg0, reg0, reg1, reg2);
+      ctx.startFunction("bip");
+        const LabelIndex label = ctx.label();
+        ctx.BRA(label);
+      ctx.endFunction();
+    ctx.endFunction();
+  }
+  static void labelUsedTwice(void) {
+    Unit unit;
+    Context ctx(unit);
+    ctx.startFunction("hop");
+      const LabelIndex label = ctx.label();
+      ctx.LABEL(label);
+      ctx.LABEL(label);
+    ctx.endFunction();
+  }
 } /* namespace gbe */
 
 static void utestContext(void)
 {
   UTEST_EXPECT_SUCCESS(gbe::emptyFunction());
   UTEST_EXPECT_SUCCESS(gbe::oneInstruction());
+  UTEST_EXPECT_FAILED(gbe::noStartFunction());
+  UTEST_EXPECT_SUCCESS(gbe::recursiveDefinition());
+  UTEST_EXPECT_FAILED(gbe::labelUsedTwice());
 }
 
 UTEST_REGISTER(utestContext)

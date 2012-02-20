@@ -135,16 +135,6 @@ namespace ir {
     static bool isClassOf(const Instruction &insn);
   };
 
-  /*! Operation done in comparison */
-  enum CompareOperation : uint8_t {
-    CMP_EQ = 0, // ==
-    CMP_NE,     // !=
-    CMP_LT,     // <
-    CMP_LE,     // <=
-    CMP_GT,     // >
-    CMP_GE      // >=
-  };
-
   /*! Compare instructions compare anything from the same type and return a
    *  boolean value
    */
@@ -152,8 +142,6 @@ namespace ir {
   public:
     /*! Get the type of the source registers */
     Type getType(void) const;
-    /*! Compare operation in the instruction */
-    CompareOperation getOperation(void) const;
     /*! Return true if the given instruction is an instance of this class */
     static bool isClassOf(const Instruction &insn);
   };
@@ -336,8 +324,18 @@ namespace ir {
   Instruction AND(Type type, Register dst, Register src0, Register src1);
   /*! mad.type dst {src0, src1, src2} == src */
   Instruction MAD(Type type, Register dst, Tuple src);
-  /*! cmp.type.op dst src0 src1 */
-  Instruction CMP(Type type, CompareOperation op, Register dst, Register src0, Register src1);
+  /*! eq.type dst src0 src1 */
+  Instruction EQ(Type type, Register dst, Register src0, Register src1);
+  /*! ne.type dst src0 src1 */
+  Instruction NE(Type type, Register dst, Register src0, Register src1);
+  /*! lt.type dst src0 src1 */
+  Instruction LE(Type type, Register dst, Register src0, Register src1);
+  /*! le.type dst src0 src1 */
+  Instruction LT(Type type, Register dst, Register src0, Register src1);
+  /*! gt.type dst src0 src1 */
+  Instruction GE(Type type, Register dst, Register src0, Register src1);
+  /*! ge.type dst src0 src1 */
+  Instruction GT(Type type, Register dst, Register src0, Register src1);
   /*! cvt.{dstType <- srcType} dst src */
   Instruction CVT(Type dstType, Type srcType, Register dst, Register src0, Register src1);
   /*! bra labelIndex */

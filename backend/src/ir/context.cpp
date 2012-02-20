@@ -30,22 +30,27 @@ namespace ir {
   Context::Context(Unit &unit) : unit(unit), fn(NULL), bb(NULL) {}
 
   void Context::startFunction(const std::string &name) {
-    if (fn != NULL) fnStack.push_back(fn);
+    fnStack.push_back(StackElem(fn,bb));
     fn = unit.newFunction(name);
   }
 
   void Context::endFunction(void) {
     GBE_ASSERTM(fn != NULL, "No function to end");
-    if (fnStack.size() != 0) {
-      fn = fnStack.back();
-      fnStack.pop_back();
-    } else
-      fn = NULL;
+    GBE_ASSERT(fnStack.size() != 0);
+    const StackElem elem = fnStack.back();
+    fnStack.pop_back();
+    fn = elem.fn;
+    bb = elem.bb;
   }
 
   Register Context::reg(RegisterData::Family family) {
     GBE_ASSERTM(fn != NULL, "No function currently defined");
     return fn->file.append(family);
+  }
+
+  LabelIndex Context::label(void) {
+    GBE_ASSERTM(fn != NULL, "No function currently defined");
+    return fn->newLabel();
   }
 
   void Context::input(Register reg) {

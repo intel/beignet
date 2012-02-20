@@ -23,7 +23,6 @@
 
 /**
  * \file instruction.hxx
- *
  * \author Benjamin Segovia <benjamin.segovia@intel.com>
  */
 DECL_INSN(MOV, UnaryInstruction)
@@ -48,7 +47,12 @@ DECL_INSN(OR, BinaryInstruction)
 DECL_INSN(XOR, BinaryInstruction)
 DECL_INSN(AND, BinaryInstruction)
 DECL_INSN(MAD, TernaryInstruction)
-DECL_INSN(CMP, CompareInstruction)
+DECL_INSN(EQ, CompareInstruction)
+DECL_INSN(NE, CompareInstruction)
+DECL_INSN(LE, CompareInstruction)
+DECL_INSN(LT, CompareInstruction)
+DECL_INSN(GE, CompareInstruction)
+DECL_INSN(GT, CompareInstruction)
 DECL_INSN(CVT, ConvertInstruction)
 DECL_INSN(BRA, BranchInstruction)
 DECL_INSN(TEX, TextureInstruction)

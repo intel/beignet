@@ -48,8 +48,10 @@ namespace ir {
     void startFunction(const std::string &name);
     /*! Close the function */
     void endFunction(void);
-    /*! Create a new register for the given family */
+    /*! Create a new register with the given family for the current function */
     Register reg(RegisterData::Family family);
+    /*! Create a new label for the current function */
+    LabelIndex label(void);
     /*! Append a new input register for the function */
     void input(Register reg);
     /*! Append a new output register for the function */
@@ -93,22 +95,6 @@ namespace ir {
       this->STORE(type, index, offset, space, valueNum);
     }
 
-#define DECL_CMP(NAME)                              \
-    void NAME(Type type,                            \
-              Register dst,                         \
-              Register src0,                        \
-              Register src1)                        \
-    {                                               \
-      this->CMP(type, CMP_##NAME, dst, src0, src1); \
-    }
-DECL_CMP(EQ)
-DECL_CMP(NE)
-DECL_CMP(LT)
-DECL_CMP(LE)
-DECL_CMP(GT)
-DECL_CMP(GE)
-#undef DECL_CMP
-
   private:
     /*! A block must be started with a label */
     void startBlock(void);
@@ -116,10 +102,16 @@ DECL_CMP(GE)
     void endBlock(void);
     /*! Append the instruction in the current basic block */
     void append(const Instruction &insn);
-    Unit &unit;               //!< A unit is associated to a contect
-    Function *fn;             //!< Current function we are processing
-    BasicBlock *bb;           //!< Current basic block we are filling
-    vector<Function*> fnStack;//!< Stack of functions still to finish
+    Unit &unit;                 //!< A unit is associated to a contect
+    Function *fn;               //!< Current function we are processing
+    BasicBlock *bb;             //!< Current basic block we are filling
+    /*! Functions can be defined recursiely */
+    struct StackElem {
+      INLINE StackElem(Function *fn, BasicBlock *bb) : fn(fn), bb(bb) {}
+      Function *fn;
+      BasicBlock *bb;
+    };
+    vector<StackElem> fnStack;  //!< Stack of functions still to finish
     GBE_CLASS(Context);
   };
 

@@ -54,7 +54,7 @@ namespace ir {
     };
 
     /*! Policy shared by all the internal instructions */
-    struct ALIGNED_INSTRUCTION BasePolicy {
+    struct BasePolicy {
       /*! Create an instruction from its internal representation */
       Instruction convert(void) const {
         return Instruction(reinterpret_cast<const char *>(&this->opcode));
@@ -86,7 +86,8 @@ namespace ir {
     };
 
     /*! All 1-source arithmetic instructions */
-    class UnaryInstruction : public NaryInstruction<1>
+    class ALIGNED_INSTRUCTION UnaryInstruction :
+      public NaryInstruction<1>
     {
     public:
       UnaryInstruction(Opcode opcode,
@@ -101,7 +102,8 @@ namespace ir {
     };
 
     /*! All 2-source arithmetic instructions */
-    class BinaryInstruction : public NaryInstruction<2>
+    class ALIGNED_INSTRUCTION BinaryInstruction :
+      public NaryInstruction<2>
     {
     public:
       BinaryInstruction(Opcode opcode,
@@ -120,7 +122,8 @@ namespace ir {
     /*! This is for MADs mostly. Since three sources cannot be encoded in 64
      *  bytes, we use tuples of registers
      */
-    class TernaryInstruction : public BasePolicy
+    class ALIGNED_INSTRUCTION TernaryInstruction :
+      public BasePolicy
     {
     public:
       TernaryInstruction(Opcode opcode,
@@ -155,21 +158,22 @@ namespace ir {
      *  steal all the methods from it, except wellFormed (dst register is always
      *  a boolean value)
      */
-    class CompareInstruction : public BinaryInstruction
+    class ALIGNED_INSTRUCTION CompareInstruction : public NaryInstruction<2>
     {
     public:
-      CompareInstruction(Type type,
-                         CompareOperation operation,
+      CompareInstruction(Opcode opcode,
+                         Type type,
                          Register dst,
                          Register src0,
-                         Register src1) :
-        BinaryInstruction(OP_CMP, type, dst, src0, src1)
+                         Register src1)
       {
-        this->operation = operation;
+        this->opcode = opcode;
+        this->type = type;
+        this->dst = dst;
+        this->src[0] = src0;
+        this->src[1] = src1;
       }
-      INLINE CompareOperation getOperation(void) const { return operation; }
       INLINE bool wellFormed(const Function &fn, std::string &whyNot) const;
-      CompareOperation operation;
     };
 
     class ConvertInstruction : public BasePolicy
@@ -232,15 +236,17 @@ namespace ir {
       bool hasPredicate;     //!< Is it predicated?
     };
 
-    class LoadInstruction : public BasePolicy
+    class ALIGNED_INSTRUCTION LoadInstruction :
+      public BasePolicy
     {
     public:
       LoadInstruction(Type type,
                       Tuple dstValues,
                       Register offset,
                       MemorySpace memSpace,
-                      uint16_t valueNum)
+                      uint32_t valueNum)
       {
+        GBE_ASSERT(valueNum < 255);
         this->opcode = OP_STORE;
         this->type = type;
         this->offset = offset;
@@ -266,18 +272,20 @@ namespace ir {
       Register offset;      //!< First source is the offset where to store
       Tuple values;         //!< Values to load
       MemorySpace memSpace; //!< Where to store
-      uint16_t valueNum;    //!< Number of values to store
+      uint8_t valueNum;     //!< Number of values to store
     };
 
-    class StoreInstruction : public BasePolicy, public NoDstPolicy
+    class ALIGNED_INSTRUCTION StoreInstruction :
+      public BasePolicy, public NoDstPolicy
     {
     public:
       StoreInstruction(Type type,
                        Tuple values,
                        Register offset,
                        MemorySpace memSpace,
-                       uint16_t valueNum)
+                       uint32_t valueNum)
       {
+        GBE_ASSERT(valueNum < 255);
         this->opcode = OP_STORE;
         this->type = type;
         this->offset = offset;
@@ -301,17 +309,19 @@ namespace ir {
       Register offset;      //!< First source is the offset where to store
       Tuple values;         //!< Values to store
       MemorySpace memSpace; //!< Where to store
-      uint16_t valueNum;    //!< Number of values to store
+      uint8_t valueNum;     //!< Number of values to store
     };
 
-    class TextureInstruction : public BasePolicy, public NoDstPolicy, public NoSrcPolicy // TODO REMOVE THIS
+    class ALIGNED_INSTRUCTION TextureInstruction :
+      public BasePolicy, public NoDstPolicy, public NoSrcPolicy // TODO REMOVE THIS
     {
     public:
       INLINE TextureInstruction(void) { this->opcode = OP_TEX; }
       INLINE bool wellFormed(const Function &fn, std::string &why) const;
     };
 
-    class LoadImmInstruction : public BasePolicy, public NoSrcPolicy
+    class ALIGNED_INSTRUCTION LoadImmInstruction :
+      public BasePolicy, public NoSrcPolicy
     {
     public:
       INLINE LoadImmInstruction(Type type,
@@ -338,7 +348,8 @@ namespace ir {
       Type type;                     //!< Type of the immediate
     };
 
-    class FenceInstruction : public BasePolicy, public NoSrcPolicy, public NoDstPolicy
+    class ALIGNED_INSTRUCTION FenceInstruction :
+      public BasePolicy, public NoSrcPolicy, public NoDstPolicy
     {
     public:
       INLINE FenceInstruction(MemorySpace memSpace) {
@@ -349,7 +360,8 @@ namespace ir {
       MemorySpace memSpace; //!< The loads and stores to order
     };
 
-    class LabelInstruction : public BasePolicy, public NoDstPolicy, public NoSrcPolicy
+    class ALIGNED_INSTRUCTION LabelInstruction :
+      public BasePolicy, public NoDstPolicy, public NoSrcPolicy
     {
     public:
       INLINE LabelInstruction(LabelIndex labelIndex) {
@@ -546,22 +558,24 @@ namespace ir {
     return fn.getRegisterData(this->getSrcIndex(fn, ID));
   }
 
-#define DECL_INSN(OPCODE, CLASS)                           \
-  case OP_##OPCODE:                                        \
+#define DECL_INSN(OPCODE, CLASS)                                  \
+  case OP_##OPCODE:                                               \
   return HelperIntrospection<CLASS, RefClass>::value == 1;
 
-#define START_INTROSPECTION(CLASS)                                            \
-  static_assert(sizeof(CLASS)==sizeof(Instruction), "Bad instruction size");  \
-  bool CLASS::isClassOf(const Instruction &insn) {                            \
-    const Opcode op = insn.getOpcode();                                       \
-    typedef CLASS RefClass;                                                   \
+#define START_INTROSPECTION(CLASS)                                \
+  static_assert(sizeof(internal::CLASS) == sizeof(Instruction),   \
+                "Bad instruction size");                          \
+  static_assert(offsetof(internal::CLASS, opcode) == 0,           \
+                "Bad opcode offset");                             \
+  bool CLASS::isClassOf(const Instruction &insn) {                \
+    const Opcode op = insn.getOpcode();                           \
+    typedef CLASS RefClass;                                       \
     switch (op) {
 
-#define END_INTROSPECTION(CLASS)                                              \
-      default: return false;                                                  \
-    };                                                                        \
-  }                                                                           \
-  static_assert(offsetof(internal::CLASS, opcode)==0, "Bad opcode offset");
+#define END_INTROSPECTION(CLASS)                                  \
+      default: return false;                                      \
+    };                                                            \
+  }                                                               \
 
 START_INTROSPECTION(UnaryInstruction)
 #include "ir/instruction.hxx"
@@ -621,16 +635,16 @@ END_INTROSPECTION(LabelInstruction)
   ///////////////////////////////////////////////////////////////////////////
 
 #define DECL_INSN(OPCODE, CLASS)               \
-  case OP_##OPCODE: reinterpret_cast<const internal::CLASS*>(this)->CALL;
+  case OP_##OPCODE: return reinterpret_cast<const internal::CLASS*>(this)->CALL;
 
 #define START_FUNCTION(CLASS, RET, PROTOTYPE)  \
   RET CLASS::PROTOTYPE const {                 \
     const Opcode op = this->getOpcode();       \
     switch (op) {
 
-#define END_FUNCTION(CLASS, RET)              \
-    };                                        \
-    return RET();                             \
+#define END_FUNCTION(CLASS, RET)               \
+    };                                         \
+    return RET();                              \
   }
 
 #define CALL getSrcNum()
@@ -675,7 +689,6 @@ DECL_MEM_FN(UnaryInstruction, Type, getType(void), getType())
 DECL_MEM_FN(BinaryInstruction, Type, getType(void), getType())
 DECL_MEM_FN(TernaryInstruction, Type, getType(void), getType())
 DECL_MEM_FN(CompareInstruction, Type, getType(void), getType())
-DECL_MEM_FN(CompareInstruction, CompareOperation, getOperation(void), getOperation())
 DECL_MEM_FN(ConvertInstruction, Type, getSrcType(void), getSrcType())
 DECL_MEM_FN(ConvertInstruction, Type, getDstType(void), getDstType())
 DECL_MEM_FN(StoreInstruction, Type, getValueType(void), getValueType())
@@ -697,7 +710,7 @@ DECL_MEM_FN(BranchInstruction, bool, isPredicated(void), isPredicated())
 
   // All unary functions
 #define DECL_EMIT_FUNCTION(NAME)                                      \
-  Instruction NAME(Type type, Register dst, Register src) { \
+  Instruction NAME(Type type, Register dst, Register src) {           \
     const internal::UnaryInstruction insn(OP_##NAME, type, dst, src); \
     return insn.convert();                                            \
   }
@@ -714,9 +727,7 @@ DECL_MEM_FN(BranchInstruction, bool, isPredicated(void), isPredicated())
 
   // All binary functions
 #define DECL_EMIT_FUNCTION(NAME)                                              \
-  Instruction NAME(Type type, Register dst,                              \
-                   Register src0,                                        \
-                   Register src1) {                                      \
+  Instruction NAME(Type type, Register dst,  Register src0, Register src1) {  \
     const internal::BinaryInstruction insn(OP_##NAME, type, dst, src0, src1); \
     return insn.convert();                                                    \
   }
@@ -743,16 +754,21 @@ DECL_MEM_FN(BranchInstruction, bool, isPredicated(void), isPredicated())
     return insn.convert();
   }
 
-  // CMP
-  Instruction CMP(Type type,
-                  CompareOperation operation,
-                  Register dst,
-                  Register src0,
-                  Register src1)
-  {
-    internal::CompareInstruction insn(type, operation, dst, src0, src1);
-    return insn.convert();
+  // All compare functions
+#define DECL_EMIT_FUNCTION(NAME)                                              \
+  Instruction NAME(Type type, Register dst,  Register src0, Register src1) {  \
+    const internal::CompareInstruction insn(OP_##NAME, type, dst, src0, src1);\
+    return insn.convert();                                                    \
   }
+
+  DECL_EMIT_FUNCTION(EQ)
+  DECL_EMIT_FUNCTION(NE)
+  DECL_EMIT_FUNCTION(LE)
+  DECL_EMIT_FUNCTION(LT)
+  DECL_EMIT_FUNCTION(GE)
+  DECL_EMIT_FUNCTION(GT)
+
+#undef DECL_EMIT_FUNCTION
 
   // CVT
   Instruction CVT(Type dstType, Type srcType, Register dst, Register src) {
@@ -779,8 +795,8 @@ DECL_MEM_FN(BranchInstruction, bool, isPredicated(void), isPredicated())
   // LOAD and STORE
 #define DECL_EMIT_FUNCTION(NAME, CLASS)                               \
   Instruction NAME(Type type,                                         \
-                   Tuple tuple,                                  \
-                   Register offset,                              \
+                   Tuple tuple,                                       \
+                   Register offset,                                   \
                    MemorySpace space,                                 \
                    uint16_t valueNum)                                 \
   {                                                                   \
