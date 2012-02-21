@@ -55,7 +55,7 @@ namespace gbe
 } /* namespace gbe */
 
 /*! RegisterData a new unit test */
-#define UTEST_REGISTER(FN) static const gbe::UTest __##NAME##__(FN, #FN);
+#define UTEST_REGISTER(FN) static const gbe::UTest __##FN##__(FN, #FN);
 
 /*! No assert is expected */
 #define UTEST_EXPECT_SUCCESS(EXPR)                                  \

@@ -78,13 +78,13 @@ namespace ir {
   void Context::input(Register reg) {
     GBE_ASSERTM(fn != NULL, "No function currently defined");
     GBE_ASSERTM(reg < fn->file.regNum(), "Out-of-bound register");
-    fn->input.push_back(reg);
+    fn->inputs.push_back(reg);
   }
 
   void Context::output(Register reg) {
     GBE_ASSERTM(fn != NULL, "No function currently defined");
     GBE_ASSERTM(reg < fn->file.regNum(), "Out-of-bound register");
-    fn->output.push_back(reg);
+    fn->outputs.push_back(reg);
   }
 
   void Context::startBlock(void) {

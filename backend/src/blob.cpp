@@ -33,6 +33,7 @@
 #include "sys/condition.cpp"
 #include "sys/platform.cpp"
 #include "ir/context.cpp"
+#include "ir/type.cpp"
 #include "ir/unit.cpp"
 #include "ir/constant.cpp"
 #include "ir/instruction.cpp"
@@ -42,5 +43,6 @@
 #if GBE_COMPILE_UTESTS
 #include "utest/utest.cpp"
 #include "utest/utest_test_utest.cpp"
+#include "utest/utest_context.cpp"
 #endif /* GBE_COMPILE_UTESTS */
 

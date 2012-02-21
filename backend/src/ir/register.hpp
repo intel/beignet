@@ -58,6 +58,9 @@ namespace ir {
     GBE_CLASS(RegisterData);
   };
 
+  /*! Output the register file string in the given stream */
+  std::ostream &operator<< (std::ostream &out, const RegisterData &regData);
+
   /*! Register is the position of the index of the register data in the register
    *  file. We enforce type safety with this class
    */
@@ -115,6 +118,9 @@ namespace ir {
     enum { MAX_INDEX = 0xffff }; //!< register and tuple indices are short
     GBE_CLASS(RegisterFile);
   };
+
+  /*! Output the register file string in the given stream */
+  std::ostream &operator<< (std::ostream &out, const RegisterFile &file);
 
 } /* namespace ir */
 } /* namespace gbe */

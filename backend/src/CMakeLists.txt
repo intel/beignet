@@ -23,6 +23,8 @@ else (GBE_USE_BLOB)
     sys/platform.hpp
     ir/context.cpp
     ir/context.hpp
+    ir/type.cpp
+    ir/type.hpp
     ir/unit.cpp
     ir/unit.hpp
     ir/constant.cpp
@@ -34,22 +36,22 @@ else (GBE_USE_BLOB)
     ir/function.cpp
     ir/function.hpp)
 
-  if (GBE_COMPILE_UTEST)
+  if (GBE_COMPILE_UTESTS)
     set (GBE_SRC
       ${GBE_SRC}
       utest/utest_test_utest.cpp
       utest/utest_context.cpp
       utest/utest.cpp
       utest/utest.hpp)
-  endif (GBE_COMPILE_UTEST)
+  endif (GBE_COMPILE_UTESTS)
 endif (GBE_USE_BLOB)
 
 include_directories (.)
 add_library (gbe SHARED ${GBE_SRC})
 
-if (GBE_COMPILE_UTEST)
+if (GBE_COMPILE_UTESTS)
   set (TESTER_SRC utest/tester.cpp)
   add_executable (tester utest/tester.cpp)
   target_link_libraries (tester gbe)
-endif (GBE_COMPILE_UTEST)
+endif (GBE_COMPILE_UTESTS)
 

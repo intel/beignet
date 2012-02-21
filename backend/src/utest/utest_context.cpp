@@ -65,6 +65,10 @@ namespace gbe
         ctx.BRA(label);
       ctx.endFunction();
     ctx.endFunction();
+#if 0
+    std::cout << *unit.getFunction("hop") << std::endl;
+    std::cout << *unit.getFunction("bip") << std::endl;
+#endif
   }
   static void labelUsedTwice(void) {
     Unit unit;

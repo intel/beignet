@@ -19,13 +19,37 @@
 
 /**
  * \file register.cpp
- *
  * \author Benjamin Segovia <benjamin.segovia@intel.com>
  */
 #include "ir/register.hpp"
+#include "sys/string.hpp"
 
 namespace gbe {
 namespace ir {
+
+  std::ostream &operator<< (std::ostream &out, const RegisterData &regData)
+  {
+    switch (regData.family) {
+      case RegisterData::BOOL: return out << "bool";
+      case RegisterData::BYTE: return out << "byte";
+      case RegisterData::WORD: return out << "word";
+      case RegisterData::DWORD: return out << "dword";
+      case RegisterData::QWORD: return out << "qword";
+    };
+    return out;
+  }
+
+  std::ostream &operator<< (std::ostream &out, const RegisterFile &file)
+  {
+    out << "## " << file.regNum() << " register"
+        << plural(file.regNum()) << " ##" << std::endl;
+    for (uint32_t i = 0; i < file.regNum(); ++i) {
+      const RegisterData reg = file.get(Register(i));
+      out << ".decl." << reg << " %" << i << std::endl;
+    }
+    return out;
+  }
+
 } /* namespace ir */
 } /* namespace gbe */
 

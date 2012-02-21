@@ -49,6 +49,9 @@ namespace ir {
     MEM_PRIVATE     //!< Per thread private memory
   };
 
+  /*! Output the memory space */
+  std::ostream &operator<< (std::ostream &out, MemorySpace memSpace);
+
   /*! A label is identified with an unsigned short */
   TYPE_SAFE(LabelIndex, uint16_t)
 
@@ -101,14 +104,27 @@ namespace ir {
     template <typename T> INLINE bool isMemberOf(void) const {
       return T::isClassOf(*this);
     }
+    /*! Since we need the function to get all the instruction information, we
+     *  build a small temporary structure to forward both the instruction and
+     *  the function
+     */
+    struct Proxy {
+      INLINE Proxy(const Function &fn, const Instruction &insn) :
+        fn(fn), insn(insn) {}
+      const Function &fn;
+      const Instruction &insn;
+    };
+    /*! Build a proxy from the instruction */
+    INLINE Proxy proxy(const Function &fn) const { return Proxy(fn, *this); }
+
   protected:
     enum { opaqueSize = sizeof(uint64_t)-sizeof(uint8_t) };
     Opcode opcode;           //!< Idendifies the instruction
     char opaque[opaqueSize]; //!< Remainder of it
   };
 
-  /*! To output the instruction in any stream */
-  std::ostream &operator<< (std::ostream &out, const Instruction &insn);
+  /*! Output the instruction string in the given stream */
+  std::ostream &operator<< (std::ostream &out, const Instruction::Proxy &proxy);
 
   // Check that the instruction is properly formed by the compiler
   static_assert(sizeof(Instruction)==sizeof(uint64_t), "Bad instruction size");

@@ -31,6 +31,7 @@
 #include <string>
 #include <sstream>
 #include <fstream>
+#include <ostream>
 
 namespace std
 {
@@ -49,6 +50,8 @@ namespace gbe
   bool contains(const char *haystack, const char *needle);
   /*! Tokenize a string (like strtok_r does) */
   char* tokenize(char *s1, const char *s2, char **lasts);
+  /*! To append s or not */
+  INLINE const char *plural(uint32_t value) { return value > 1 ? "s" : ""; }
 } /* namespace gbe */
 
 #endif /* __GBE_STRING_HPP__ */

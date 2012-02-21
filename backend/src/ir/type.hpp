@@ -28,6 +28,8 @@
 #include "sys/platform.hpp"
 #include "ir/register.hpp"
 
+#include <ostream>
+
 namespace gbe {
 namespace ir {
 
@@ -46,6 +48,9 @@ namespace ir {
     TYPE_FLOAT,    //!< 32 bits floating point value
     TYPE_DOUBLE    //!< 64 bits floating point value
   };
+
+  /*! Output a string for the type in the given stream */
+  std::ostream &operator<< (std::ostream &out, const Type &type);
 
   /*! Get the register family for each type */
   INLINE RegisterData::Family getFamily(Type type) {

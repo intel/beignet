@@ -59,6 +59,15 @@ namespace ir {
       Instruction convert(void) const {
         return Instruction(reinterpret_cast<const char *>(&this->opcode));
       }
+      /*! Output the opcode in the given stream */
+      INLINE void outOpcode(std::ostream &out) const {
+        switch (opcode) {
+#define DECL_INSN(OPCODE, CLASS) case OP_##OPCODE: out << #OPCODE; break;
+#include "instruction.hxx"
+#undef DECL_INSN
+        };
+      }
+
       /*! Instruction opcode */
       Opcode opcode;
     };
@@ -80,6 +89,7 @@ namespace ir {
       }
       INLINE Type getType(void) const { return this->type; }
       INLINE bool wellFormed(const Function &fn, std::string &whyNot) const;
+      INLINE void out(std::ostream &out, const Function &fn) const;
       Type type;            //!< Type of the instruction
       Register dst;         //!< Index of the register in the register file
       Register src[srcNum]; //!< Indices of the sources
@@ -148,6 +158,7 @@ namespace ir {
       }
       INLINE Type getType(void) const { return this->type; }
       INLINE bool wellFormed(const Function &fn, std::string &whyNot) const;
+      INLINE void out(std::ostream &out, const Function &fn) const;
       Type type;    //!< Type of the instruction
       Register dst; //!< Dst is the register index
       Tuple src;    //!< 3 sources do not fit in 8 bytes -> use a tuple
@@ -205,6 +216,7 @@ namespace ir {
         return src;
       }
       INLINE bool wellFormed(const Function &fn, std::string &whyNot) const;
+      INLINE void out(std::ostream &out, const Function &fn) const;
       Register dst; //!< Converted value
       Register src; //!< To convert
       Type dstType; //!< Type to convert to
@@ -235,6 +247,7 @@ namespace ir {
       }
       INLINE bool isPredicated(void) const { return hasPredicate; }
       INLINE bool wellFormed(const Function &fn, std::string &why) const;
+      INLINE void out(std::ostream &out, const Function &fn) const;
       Register predicate;    //!< Predication means conditional branch
       LabelIndex labelIndex; //!< Index of the label the branch targets
       bool hasPredicate;     //!< Is it predicated?
@@ -272,6 +285,7 @@ namespace ir {
       INLINE uint32_t getValueNum(void) const { return valueNum; }
       INLINE MemorySpace getAddressSpace(void) const { return memSpace; }
       INLINE bool wellFormed(const Function &fn, std::string &why) const;
+      INLINE void out(std::ostream &out, const Function &fn) const;
       Type type;            //!< Type to store
       Register offset;      //!< First source is the offset where to store
       Tuple values;         //!< Values to load
@@ -309,6 +323,7 @@ namespace ir {
       INLINE Type getValueType(void) const { return type; }
       INLINE MemorySpace getAddressSpace(void) const { return memSpace; }
       INLINE bool wellFormed(const Function &fn, std::string &why) const;
+      INLINE void out(std::ostream &out, const Function &fn) const;
       Type type;            //!< Type to store
       Register offset;      //!< First source is the offset where to store
       Tuple values;         //!< Values to store
@@ -322,19 +337,21 @@ namespace ir {
     public:
       INLINE TextureInstruction(void) { this->opcode = OP_TEX; }
       INLINE bool wellFormed(const Function &fn, std::string &why) const;
+      INLINE void out(std::ostream &out, const Function &fn) const {
+        this->outOpcode(out);
+        out << " ... TODO";
+      }
     };
 
     class ALIGNED_INSTRUCTION LoadImmInstruction :
       public BasePolicy, public NoSrcPolicy
     {
     public:
-      INLINE LoadImmInstruction(Type type,
-                                Register dst,
-                                ImmediateIndex immediateIndex)
+      INLINE LoadImmInstruction(Type type, Register dst, ImmediateIndex index)
       {
         this->dst = dst;
         this->opcode = OP_LOADI;
-        this->immediateIndex = immediateIndex;
+        this->immediateIndex = index;
         this->type = type;
       }
       INLINE Immediate getImmediate(const Function &fn) const {
@@ -347,6 +364,7 @@ namespace ir {
       }
       INLINE Type getType(void) const { return this->type; }
       bool wellFormed(const Function &fn, std::string &why) const;
+      INLINE void out(std::ostream &out, const Function &fn) const;
       Register dst;                  //!< RegisterData to store into
       ImmediateIndex immediateIndex; //!< Index in the vector of immediates
       Type type;                     //!< Type of the immediate
@@ -361,6 +379,10 @@ namespace ir {
         this->memSpace = memSpace;
       }
       bool wellFormed(const Function &fn, std::string &why) const;
+      INLINE void out(std::ostream &out, const Function &fn) const {
+        this->outOpcode(out);
+        out << "." << memSpace;
+      }
       MemorySpace memSpace; //!< The loads and stores to order
     };
 
@@ -374,6 +396,7 @@ namespace ir {
       }
       INLINE LabelIndex getLabelIndex(void) const { return labelIndex; }
       INLINE bool wellFormed(const Function &fn, std::string &why) const;
+      INLINE void out(std::ostream &out, const Function &fn) const;
       LabelIndex labelIndex;  //!< Index of the label
     };
 
@@ -387,9 +410,9 @@ namespace ir {
      *  defined (i.e. not out-of-bound)
      */
     static INLINE bool checkRegisterData(RegisterData::Family family,
-                                     const Register ID,
-                                     const Function &fn,
-                                     std::string &whyNot)
+                                         const Register ID,
+                                         const Function &fn,
+                                         std::string &whyNot)
     {
       if (UNLIKELY(uint16_t(ID) >= fn.regNum())) {
         whyNot = "Out-of-bound destination register index";
@@ -543,7 +566,84 @@ namespace ir {
       return true;
     }
 
+    /////////////////////////////////////////////////////////////////////////
+    // Implements all the output stream methods
+    /////////////////////////////////////////////////////////////////////////
+    template <uint32_t srcNum>
+    INLINE void NaryInstruction<srcNum>::out(std::ostream &out, const Function &fn) const {
+      this->outOpcode(out);
+      out << "." << this->getType()
+          << " %" << this->getDstIndex(fn, 0);
+      for (uint32_t i = 0; i < srcNum; ++i)
+        out << " %" << this->getSrcIndex(fn, i);
+    }
+
+    INLINE void TernaryInstruction::out(std::ostream &out, const Function &fn) const {
+      this->outOpcode(out);
+      out << "." << this->getType()
+          << " %" << this->getDstIndex(fn, 0)
+          << " %" << this->getSrcIndex(fn, 0)
+          << " %" << this->getSrcIndex(fn, 1)
+          << " %" << this->getSrcIndex(fn, 2);
+    }
+
+    INLINE void ConvertInstruction::out(std::ostream &out, const Function &fn) const {
+      this->outOpcode(out);
+      out << "." << this->getDstType()
+          << "." << this->getSrcType()
+          << " %" << this->getDstIndex(fn, 0)
+          << " %" << this->getSrcIndex(fn, 0)
+          << " %" << this->getSrcIndex(fn, 1);
+    }
+
+    INLINE void LoadInstruction::out(std::ostream &out, const Function &fn) const {
+      this->outOpcode(out);
+      out << "." << type << "." << memSpace << " {";
+      for (uint32_t i = 0; i < valueNum; ++i)
+        out << this->getDstIndex(fn, i);
+      out << "}";
+      out << " %" << this->getSrcIndex(fn, 0);
+    }
+
+    INLINE void StoreInstruction::out(std::ostream &out, const Function &fn) const {
+      this->outOpcode(out);
+      out << "." << type << "." << memSpace;
+      out << " %" << this->getSrcIndex(fn, 0) << " {";
+      for (uint32_t i = 0; i < valueNum; ++i)
+        out << this->getSrcIndex(fn, i+1);
+      out << "}";
+    }
+
+    INLINE void LabelInstruction::out(std::ostream &out, const Function &fn) const {
+      this->outOpcode(out);
+      out << " $" << labelIndex;
+    }
+
+    INLINE void BranchInstruction::out(std::ostream &out, const Function &fn) const {
+      this->outOpcode(out);
+      if (hasPredicate)
+        out << "<%" << this->getSrcIndex(fn, 0) << ">";
+      out << " -> label$" << labelIndex;
+    }
+
+    INLINE void LoadImmInstruction::out(std::ostream &out, const Function &fn) const {
+      this->outOpcode(out);
+      out << "." << type;
+      out << " %" << this->getSrcIndex(fn,0);
+      out << " " << fn.outImmediate(out, immediateIndex);
+    }
+
   } /* namespace internal */
+
+  std::ostream &operator<< (std::ostream &out, MemorySpace memSpace) {
+    switch (memSpace) {
+      case MEM_GLOBAL: return out << "global";
+      case MEM_LOCAL: return out << "local";
+      case MEM_CONSTANT: return out << "constant";
+      case MEM_PRIVATE: return out << "private";
+    };
+    return out;
+  }
 
   ///////////////////////////////////////////////////////////////////////////
   // Implements the various instrospection functions
@@ -681,6 +781,7 @@ START_FUNCTION(Instruction, bool, wellFormed(const Function &fn, std::string &wh
 END_FUNCTION(Instruction, bool)
 #undef CALL
 
+#undef DECL_INSN
 #undef END_FUNCTION
 #undef START_FUNCTION
 
@@ -777,23 +878,23 @@ DECL_MEM_FN(BranchInstruction, LabelIndex, getLabelIndex(void), getLabelIndex())
 
   // CVT
   Instruction CVT(Type dstType, Type srcType, Register dst, Register src) {
-    internal::ConvertInstruction insn(dstType, srcType, dst, src);
+    const internal::ConvertInstruction insn(dstType, srcType, dst, src);
     return insn.convert();
   }
 
   // BRA
   Instruction BRA(LabelIndex labelIndex) {
-    internal::BranchInstruction insn(labelIndex);
+    const internal::BranchInstruction insn(labelIndex);
     return insn.convert();
   }
   Instruction BRA(LabelIndex labelIndex, Register pred) {
-    internal::BranchInstruction insn(labelIndex, pred);
+    const internal::BranchInstruction insn(labelIndex, pred);
     return insn.convert();
   }
 
   // LOADI
   Instruction LOADI(Type type, Register dst, ImmediateIndex value) {
-    internal::LoadImmInstruction insn(type, dst, value);
+    const internal::LoadImmInstruction insn(type, dst, value);
     return insn.convert();
   }
 
@@ -824,6 +925,21 @@ DECL_MEM_FN(BranchInstruction, LabelIndex, getLabelIndex(void), getLabelIndex())
   Instruction LABEL(LabelIndex labelIndex) {
     const internal::LabelInstruction insn(labelIndex);
     return insn.convert();
+  }
+
+  std::ostream &operator<< (std::ostream &out, const Instruction::Proxy &proxy)
+  {
+    const Instruction &insn = proxy.insn;
+    const Function &fn = proxy.fn;
+    switch (insn.getOpcode()) {
+#define DECL_INSN(OPCODE, CLASS)                                     \
+      case OP_##OPCODE:                                              \
+        reinterpret_cast<const internal::CLASS&>(insn).out(out, fn); \
+        break;
+#include "instruction.hxx"
+#undef DECL_INSN
+    };
+    return out;
   }
 
 } /* namespace ir */

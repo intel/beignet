@@ -42,7 +42,7 @@ namespace ir {
     auto it = functions.find(name);
     if (it != functions.end())
       return NULL;
-    Function *fn = GBE_NEW(Function);
+    Function *fn = GBE_NEW(Function, name);
     functions[name] = fn;
     return fn;
   }

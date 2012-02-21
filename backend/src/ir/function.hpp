@@ -31,6 +31,8 @@
 #include "sys/list.hpp"
 #include "sys/alloc.hpp"
 
+#include <ostream>
+
 namespace gbe {
 namespace ir {
 
@@ -47,11 +49,15 @@ namespace ir {
     /*! Releases all the instructions */
     ~BasicBlock(void);
     /*! Append a new instruction in the stream */
-    void append(Instruction &insn) {
-      instructions.push_back(&insn);
-    }
+    void append(Instruction &insn) { instructions.push_back(&insn); }
     /*! Return the number of instruction in the block */
     INLINE uint32_t insnNum(void) { return instructions.size(); }
+    /*! Apply the given functor on all instructions */
+    template <typename T>
+    INLINE void map(const T &functor) const {
+      for (auto it = instructions.begin(); it != instructions.end(); ++it)
+        functor(**it);
+    }
   private:
     friend class Function;           //!< Owns the basic blocks
     list<Instruction*> instructions; //!< Sequence of instructions in the block
@@ -66,18 +72,22 @@ namespace ir {
   {
   public:
     /*! Create an empty function */
-    Function(void);
+    Function(const std::string &name);
     /*! Release everything *including* the basic block pointers */
     ~Function(void);
+    /*! Get the function name */
+    const std::string &getName(void) const { return name; }
     /*! Extract the register from the register file */
     INLINE RegisterData getRegisterData(Register ID) const { return file.get(ID); }
     /*! Get the register index from the tuple vector */
     INLINE Register getRegister(Tuple ID, uint32_t which) const {
       return file.get(ID, which);
     }
+    /*! Get the register file */
+    INLINE const RegisterFile &getRegisterFile(void) const { return file; }
     /*! Get the given value ie immediate from the function */
     INLINE Immediate getImmediate(uint32_t ID) const {
-      GBE_ASSERTM(ID < immediates.size(), "Out-of-bound immediate");
+      GBE_ASSERT(ID < immediateNum());
       return immediates[ID];
     }
     /*! Allocate a new instruction (with the growing pool) */
@@ -87,6 +97,22 @@ namespace ir {
     /*! Deallocate an instruction (with the growing pool) */
     INLINE void deleteInstruction(Instruction *insn) {
       insnPool.deallocate(insn);
+    }
+    /*! Get input register */
+    INLINE Register getInput(uint32_t ID) const {
+      GBE_ASSERT(ID < inputNum());
+      return inputs[ID];
+    }
+    /*! Get output register */
+    INLINE Register getOutput(uint32_t ID) const {
+      GBE_ASSERT(ID < outputNum());
+      return outputs[ID];
+    }
+    /*! Get block ID */
+    INLINE const BasicBlock &getBlock(uint32_t ID) const {
+      GBE_ASSERT(ID < blockNum());
+      GBE_ASSERT(blocks[ID] != NULL);
+      return *blocks[ID];
     }
     /*! Create a new label (still not bound to a basic block) */
     LabelIndex newLabel(void);
@@ -98,11 +124,19 @@ namespace ir {
     INLINE uint32_t labelNum(void) const { return labels.size(); }
     /*! Number of immediate values in the function */
     INLINE uint32_t immediateNum(void) const { return immediates.size(); }
-
+    /*! Get the number of input register */
+    INLINE uint32_t inputNum(void) const { return inputs.size(); }
+    /*! Get the number of output register */
+    INLINE uint32_t outputNum(void) const { return outputs.size(); }
+    /*! Number of blocks in the function */
+    INLINE uint32_t blockNum(void) const { return blocks.size(); }
+    /*! Output an immediate value in a stream */
+    std::ostream &outImmediate(std::ostream &out, ImmediateIndex index) const;
   private:
     friend class Context;         //!< Can freely modify a function
-    vector<Register> input;       //!< Input registers of the function
-    vector<Register> output;      //!< Output registers of the function
+    std::string name;             //!< Function name
+    vector<Register> inputs;      //!< Input registers of the function
+    vector<Register> outputs;     //!< Output registers of the function
     vector<BasicBlock*> labels;   //!< Each label points to a basic block
     vector<Immediate> immediates; //!< All immediate values in the function
     vector<BasicBlock*> blocks;   //!< All chained basic blocks
@@ -110,6 +144,9 @@ namespace ir {
     GrowingPool<Instruction> insnPool; //!< For fast instruction allocation
     GBE_CLASS(Function);
   };
+
+  /*! Output the function string in the given stream */
+  std::ostream &operator<< (std::ostream &out, const Function &fn);
 
 } /* namespace ir */
 } /* namespace gbe */
