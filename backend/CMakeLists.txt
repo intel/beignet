@@ -14,6 +14,11 @@ set (GBE_COMPILE_UTESTS false CACHE bool "Will compile the unit tests")
 set (GBE_USE_BLOB false CACHE bool "Compile everything from one big file")
 
 ##############################################################
+# Front end stuff we need
+##############################################################
+Find_Package(LLVM REQUIRED)
+
+##############################################################
 # Compiler
 ##############################################################
 if (UNIX)
