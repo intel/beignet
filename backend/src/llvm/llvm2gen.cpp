@@ -253,9 +253,9 @@ extern "C" int llvmToGen(int argc, char **argv)
   // Initialize targets first, so that --version shows registered targets.
   LLVMInitializeGenBackendTarget();
   LLVMInitializeGenBackendTargetInfo();
-  InitializeAllTargetMCs();
-  InitializeAllAsmPrinters();
-  InitializeAllAsmParsers();
+  //InitializeAllTargetMCs();
+  //InitializeAllAsmPrinters();
+  //InitializeAllAsmParsers();
 
   // Register the target printer for --version.
   cl::AddExtraVersionPrinter(TargetRegistry::printRegisteredTargetsForVersion);
@@ -349,14 +349,14 @@ extern "C" int llvmToGen(int argc, char **argv)
 
   CodeGenOpt::Level OLvl = CodeGenOpt::Default;
   switch (OptLevel) {
-  default:
-    errs() << argv[0] << ": invalid optimization level.\n";
-    return 1;
-  case ' ': break;
-  case '0': OLvl = CodeGenOpt::None; break;
-  case '1': OLvl = CodeGenOpt::Less; break;
-  case '2': OLvl = CodeGenOpt::Default; break;
-  case '3': OLvl = CodeGenOpt::Aggressive; break;
+    default:
+      errs() << argv[0] << ": invalid optimization level.\n";
+      return 1;
+    case ' ': break;
+    case '0': OLvl = CodeGenOpt::None; break;
+    case '1': OLvl = CodeGenOpt::Less; break;
+    case '2': OLvl = CodeGenOpt::Default; break;
+    case '3': OLvl = CodeGenOpt::Aggressive; break;
   }
 
   // Build up all of the passes that we want to do to the module.
@@ -400,4 +400,5 @@ extern "C" int llvmToGen(int argc, char **argv)
 
   return 0;
 }
+
 

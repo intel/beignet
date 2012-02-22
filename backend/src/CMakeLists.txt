@@ -1,5 +1,4 @@
 add_subdirectory(llvm)
-add_subdirectory(llc)
 
 if (GBE_USE_BLOB)
   set (GBE_SRC blob.cpp)
@@ -42,6 +41,7 @@ else (GBE_USE_BLOB)
   if (GBE_COMPILE_UTESTS)
     set (GBE_SRC
       ${GBE_SRC}
+      utest/utest_llvm.cpp
       utest/utest_test_utest.cpp
       utest/utest_context.cpp
       utest/utest.cpp
@@ -50,11 +50,11 @@ else (GBE_USE_BLOB)
 endif (GBE_USE_BLOB)
 
 include_directories (.)
-add_library (gbe SHARED ${GBE_SRC})
 link_directories (${LLVM_LIBRARY_DIRS})
-
+add_library (gbe SHARED ${GBE_SRC})
 include (${LLVM_DIR}/AddLLVMDefinitions.cmake)
-target_link_libraries (gbe llc)
+target_link_libraries (gbe LLVMGenBackend LLVMSelectionDAG  LLVMAsmPrinter
+    LLVMMCParser LLVMAsmParser LLVMBitReader)
 
 if (GBE_COMPILE_UTESTS)
   set (TESTER_SRC utest/tester.cpp)
