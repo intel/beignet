@@ -25,6 +25,7 @@
 #define __GBE_IR_REGISTER_HPP__
 
 #include "sys/vector.hpp"
+#include "sys/platform.hpp"
 
 namespace gbe {
 namespace ir {

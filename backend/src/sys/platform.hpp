@@ -187,11 +187,11 @@
 #endif
 
 /*! Debug syntactic sugar */
-#ifdef NDEBUG
+#if GBE_DEBUG
 #define IF_DEBUG(EXPR)
 #else
 #define IF_DEBUG(EXPR) EXPR
-#endif /* NDEBUG */
+#endif /* GBE_DEBUG */
 
 /*! Debug printing macros */
 #define STRING(x) #x
@@ -208,7 +208,7 @@
 #define _DO_JOIN2(X, Y) X##Y
 
 /*! Run-time assertion */
-#ifndef NDEBUG
+#if GBE_DEBUG
 #define GBE_ASSERT(EXPR) do {                                       \
   if (UNLIKELY(!(EXPR)))                                            \
     gbe::onFailedAssertion(#EXPR, __FILE__, __FUNCTION__, __LINE__);\
@@ -219,7 +219,7 @@
 } while (0)
 #else
 #define GBE_ASSERT(EXPR) do { } while (0)
-#define GBE_ASSERT_M(EXPR) do { } while (0)
+#define GBE_ASSERTM(EXPR, MSG) do { } while (0)
 #endif
 
 /*! Fatal error macros */

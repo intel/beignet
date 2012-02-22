@@ -3,6 +3,7 @@ include (${LLVM_DIR}/AddLLVMDefinitions.cmake)
 include (${LLVM_DIR}/HandleLLVMOptions.cmake)
 include (${LLVM_DIR}/LLVMProcessSources.cmake)
 include_directories(${LLVM_INCLUDE_DIRS})
+include_directories(../)
 add_llvm_target(GenBackend GenBackend.cpp)
 
 add_llvm_library_dependencies(LLVMGenBackend

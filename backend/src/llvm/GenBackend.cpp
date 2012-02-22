@@ -71,11 +71,10 @@
 #include "llvm/Support/TargetRegistry.h"
 #include "llvm/Support/Host.h"
 #include "llvm/Config/config.h"
+
+#include "ir/context.hpp"
 #include <algorithm>
-// Some ms header decided to define setjmp as _setjmp, undo this for this file.
-#ifdef _MSC_VER
-#undef setjmp
-#endif
+
 using namespace llvm;
 
 extern "C" void LLVMInitializeGenBackendTarget() {
@@ -126,7 +125,6 @@ namespace {
         OpaqueCounter(0), NextAnonValueNumber(0) {
       initializeLoopInfoPass(*PassRegistry::getPassRegistry());
       FPCounter = 0;
-      printf("DDDn\n\n");
     }
 
     virtual const char *getPassName() const { return "Gen backend"; }
@@ -3627,7 +3625,6 @@ bool GenTargetMachine::addPassesToEmitFile(PassManagerBase &PM,
                                            CodeGenOpt::Level OptLevel,
                                            bool DisableVerify) {
   if (FileType != TargetMachine::CGFT_AssemblyFile) return true;
-  
   PM.add(createGCLoweringPass());
   PM.add(createLowerInvokePass());
   PM.add(createCFGSimplificationPass());   // clean up after lower invoke.

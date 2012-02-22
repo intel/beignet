@@ -125,10 +125,10 @@ namespace ir {
     // Append the instruction in the stream
     Instruction *insnPtr = fn->newInstruction();
     *insnPtr = insn;
-#ifndef NDEBUG
+#if GBE_DEBUG
     std::string whyNot;
     GBE_ASSERTM(insn.wellFormed(*fn, whyNot), whyNot.c_str());
-#endif /* NDEBUG */
+#endif /* GBE_DEBUG */
     bb->append(*insnPtr);
 
     // Close the current block if this is a branch
