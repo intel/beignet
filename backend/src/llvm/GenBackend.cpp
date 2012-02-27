@@ -17,7 +17,7 @@
  * Author: Benjamin Segovia <benjamin.segovia@intel.com>
  */
 
-#include "GenTargetMachine.h"
+// #include "GenTargetMachine.h"
 #include "llvm/CallingConv.h"
 #include "llvm/Constants.h"
 #include "llvm/DerivedTypes.h"
@@ -62,12 +62,6 @@
 #include <algorithm>
 
 using namespace llvm;
-#if 0
-extern "C" void LLVMInitializeGenBackendTarget() {
-  // Register the target.
-  RegisterTargetMachine<GenTargetMachine> X(TheGenBackendTarget);
-}
-#endif
 
 namespace {
   class CBEMCAsmInfo : public MCAsmInfo {

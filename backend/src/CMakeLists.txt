@@ -53,8 +53,13 @@ include_directories (.)
 link_directories (${LLVM_LIBRARY_DIRS})
 add_library (gbe SHARED ${GBE_SRC})
 include (${LLVM_DIR}/AddLLVMDefinitions.cmake)
-target_link_libraries (gbe LLVMGenBackend LLVMSelectionDAG  LLVMAsmPrinter
-    LLVMMCParser LLVMAsmParser LLVMBitReader)
+target_link_libraries (gbe
+  LLVMGenBackend
+  LLVMSelectionDAG
+  LLVMAsmPrinter
+  LLVMMCParser
+  LLVMAsmParser
+  LLVMBitReader)
 
 if (GBE_COMPILE_UTESTS)
   set (TESTER_SRC utest/tester.cpp)

@@ -5,10 +5,8 @@ include (${LLVM_DIR}/LLVMProcessSources.cmake)
 include_directories(${LLVM_INCLUDE_DIRS})
 include_directories(../)
 add_llvm_target(GenBackend llvm2gen.cpp GenBackend.cpp)
-
 add_llvm_library_dependencies(LLVMGenBackend
   LLVMAnalysis
-  LLVMGenBackendInfo
   LLVMCodeGen
   LLVMCore
   LLVMMC
@@ -16,6 +14,4 @@ add_llvm_library_dependencies(LLVMGenBackend
   LLVMSupport
   LLVMTarget
   LLVMTransformUtils)
-
-add_subdirectory(TargetInfo)
 
