@@ -17,7 +17,6 @@
  * Author: Benjamin Segovia <benjamin.segovia@intel.com>
  */
 
-// #include "GenTargetMachine.h"
 #include "llvm/CallingConv.h"
 #include "llvm/Constants.h"
 #include "llvm/DerivedTypes.h"
@@ -3550,22 +3549,6 @@ void GenWriter::visitExtractValueInst(ExtractValueInst &EVI) {
 //===----------------------------------------------------------------------===//
 //                       External Interface declaration
 //===----------------------------------------------------------------------===//
-#if 0
-bool GenTargetMachine::addPassesToEmitFile(PassManagerBase &PM,
-                                           formatted_raw_ostream &o,
-                                           CodeGenFileType FileType,
-                                           CodeGenOpt::Level OptLevel,
-                                           bool DisableVerify) {
-  if (FileType != TargetMachine::CGFT_AssemblyFile) return true;
-  PM.add(createGCLoweringPass());
-  PM.add(createLowerInvokePass());
-  PM.add(createCFGSimplificationPass());   // clean up after lower invoke.
-  PM.add(new GenWriter(o));
-  PM.add(createGCInfoDeleter());
-  return false;
-}
-#endif
-
 llvm::FunctionPass *createGenPass(formatted_raw_ostream &o) {
   return new GenWriter(o);
 }
