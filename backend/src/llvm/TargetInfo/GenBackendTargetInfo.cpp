@@ -30,7 +30,7 @@
 #include "llvm/Module.h"
 #include "llvm/Support/TargetRegistry.h"
 using namespace llvm;
-
+#if 0
 Target llvm::TheGenBackendTarget;
 
 extern "C" void LLVMInitializeGenBackendTargetInfo() { 
@@ -38,4 +38,5 @@ extern "C" void LLVMInitializeGenBackendTargetInfo() {
 }
 
 extern "C" void LLVMInitializeGenBackendTargetMC() {}
+#endif
 

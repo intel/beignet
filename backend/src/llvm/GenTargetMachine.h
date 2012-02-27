@@ -37,7 +37,7 @@
 #include "llvm/Target/TargetData.h"
 
 namespace llvm {
-
+#if 0
 struct GenTargetMachine : public TargetMachine {
   GenTargetMachine(const Target &T, StringRef TT,
                  StringRef CPU, StringRef FS,
@@ -54,7 +54,7 @@ struct GenTargetMachine : public TargetMachine {
 };
 
 extern Target TheGenBackendTarget;
-
+#endif
 } // End llvm namespace
 
 

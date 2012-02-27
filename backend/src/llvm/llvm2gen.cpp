@@ -41,6 +41,7 @@
 #include "llvm/CodeGen/LinkAllAsmWriterComponents.h"
 #include "llvm/CodeGen/LinkAllCodegenComponents.h"
 #include "llvm/Config/config.h"
+#include "llvm/Assembly/PrintModulePass.h"
 #include "llvm/MC/SubtargetFeature.h"
 #include "llvm/Support/CommandLine.h"
 #include "llvm/Support/Debug.h"
@@ -239,6 +240,7 @@ static tool_output_file *GetOutputStream(const char *TargetName,
 extern "C" void LLVMInitializeGenBackendTarget();
 extern "C" void LLVMInitializeGenBackendTargetInfo();
 
+#if 0
 extern "C" int llvmToGen(int argc, char **argv)
 {
   sys::PrintStackTraceOnErrorSignal();
@@ -249,13 +251,8 @@ extern "C" int llvmToGen(int argc, char **argv)
 
   LLVMContext &Context = getGlobalContext();
   llvm_shutdown_obj Y;  // Call llvm_shutdown() on exit.
-
-  // Initialize targets first, so that --version shows registered targets.
   LLVMInitializeGenBackendTarget();
   LLVMInitializeGenBackendTargetInfo();
-  //InitializeAllTargetMCs();
-  //InitializeAllAsmPrinters();
-  //InitializeAllAsmParsers();
 
   // Register the target printer for --version.
   cl::AddExtraVersionPrinter(TargetRegistry::printRegisteredTargetsForVersion);
@@ -397,8 +394,39 @@ extern "C" int llvmToGen(int argc, char **argv)
 
   // Declare success.
   Out->keep();
-
   return 0;
 }
 
+#else
+#include <iostream>
+extern llvm::FunctionPass *createGenPass(formatted_raw_ostream &o);
+extern "C" int llvmToGen(const char *fileName)
+{
+  // Get the global LLVM context
+  llvm::LLVMContext& c = llvm::getGlobalContext();
+
+  // Get the module from its file
+  SMDiagnostic Err;
+  std::auto_ptr<Module> M;
+  M.reset(ParseIRFile(fileName, Err, c));
+  if (M.get() == 0) {
+    Err.Print(fileName, errs());
+    return 1;
+  }
+  Module &mod = *M.get();
+
+  llvm::PassManager passes;
+  std::string error;
+
+  llvm::tool_output_file *FDOut = new llvm::tool_output_file("hop.ll", error, 0);
+  llvm::formatted_raw_ostream outstream(FDOut->os());
+
+  passes.add(llvm::createPrintModulePass(&outstream));
+  passes.add(createGenPass(outstream));
+  passes.run(mod);
+
+  FDOut->keep();
+  return 0;
+}
+#endif
 

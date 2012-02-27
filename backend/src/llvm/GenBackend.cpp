@@ -17,20 +17,6 @@
  * Author: Benjamin Segovia <benjamin.segovia@intel.com>
  */
 
-//===-- CBackend.cpp - Library for converting LLVM code to C --------------===//
-//
-//                     The LLVM Compiler Infrastructure
-//
-// This file is distributed under the University of Illinois Open Source
-// License. See LICENSE.TXT for details.
-//
-//===----------------------------------------------------------------------===//
-//
-// This library converts LLVM code to C code, compilable by GCC and other C
-// compilers.
-//
-//===----------------------------------------------------------------------===//
-
 #include "GenTargetMachine.h"
 #include "llvm/CallingConv.h"
 #include "llvm/Constants.h"
@@ -76,11 +62,12 @@
 #include <algorithm>
 
 using namespace llvm;
-
+#if 0
 extern "C" void LLVMInitializeGenBackendTarget() {
   // Register the target.
   RegisterTargetMachine<GenTargetMachine> X(TheGenBackendTarget);
 }
+#endif
 
 namespace {
   class CBEMCAsmInfo : public MCAsmInfo {
@@ -127,7 +114,7 @@ namespace {
       FPCounter = 0;
     }
 
-    virtual const char *getPassName() const { return "Gen backend"; }
+    virtual const char *getPassName() const { return "Gen Back-End"; }
 
     void getAnalysisUsage(AnalysisUsage &AU) const {
       AU.addRequired<LoopInfo>();
@@ -184,7 +171,7 @@ namespace {
                                               PointerType *Ty);
 
     std::string getStructName(StructType *ST);
-    
+
     /// writeOperandDeref - Print the result of dereferencing the specified
     /// operand with '*'.  This is equivalent to printing '*' then using
     /// writeOperand, but avoids excess syntax in some cases.
@@ -362,7 +349,6 @@ namespace {
 }
 
 char GenWriter::ID = 0;
-
 
 
 static std::string CBEMangle(const std::string &S) {
@@ -2250,6 +2236,7 @@ static inline bool isFPIntBitCast(const Instruction &I) {
 }
 
 void GenWriter::printFunction(Function &F) {
+
   /// isStructReturn - Should this function actually return a struct by-value?
   bool isStructReturn = F.hasStructRetAttr();
 
@@ -2792,54 +2779,6 @@ void GenWriter::printIntrinsicDefinition(const Function &F, raw_ostream &Out) {
   switch (F.getIntrinsicID()) {
   default:
     llvm_unreachable("Unsupported Intrinsic.");
-  case Intrinsic::uadd_with_overflow:
-    // static inline Rty uadd_ixx(unsigned ixx a, unsigned ixx b) {
-    //   Rty r;
-    //   r.field0 = a + b;
-    //   r.field1 = (r.field0 < a);
-    //   return r;
-    // }
-    Out << "static inline ";
-    printType(Out, retT);
-    Out << GetValueName(&F);
-    Out << "(";
-    printSimpleType(Out, elemT, false);
-    Out << "a,";
-    printSimpleType(Out, elemT, false);
-    Out << "b) {\n  ";
-    printType(Out, retT);
-    Out << "r;\n";
-    Out << "  r.field0 = a + b;\n";
-    Out << "  r.field1 = (r.field0 < a);\n";
-    Out << "  return r;\n}\n";
-    break;
-    
-  case Intrinsic::sadd_with_overflow:            
-    // static inline Rty sadd_ixx(ixx a, ixx b) {
-    //   Rty r;
-    //   r.field1 = (b > 0 && a > XX_MAX - b) ||
-    //              (b < 0 && a < XX_MIN - b);
-    //   r.field0 = r.field1 ? 0 : a + b;
-    //   return r;
-    // }
-    Out << "static ";
-    printType(Out, retT);
-    Out << GetValueName(&F);
-    Out << "(";
-    printSimpleType(Out, elemT, true);
-    Out << "a,";
-    printSimpleType(Out, elemT, true);
-    Out << "b) {\n  ";
-    printType(Out, retT);
-    Out << "r;\n";
-    Out << "  r.field1 = (b > 0 && a > ";
-    printLimitValue(*elemT, true, true, Out);
-    Out << " - b) || (b < 0 && a < ";
-    printLimitValue(*elemT, true, false, Out);
-    Out << " - b);\n";
-    Out << "  r.field0 = r.field1 ? 0 : a + b;\n";
-    Out << "  return r;\n}\n";
-    break;
   }
 }
 
@@ -3030,8 +2969,7 @@ void GenWriter::visitCallInst(CallInst &I) {
 /// visitBuiltinCall - Handle the call to the specified builtin.  Returns true
 /// if the entire call is handled, return false if it wasn't handled, and
 /// optionally set 'WroteCallee' if the callee has already been printed out.
-bool GenWriter::visitBuiltinCall(CallInst &I, Intrinsic::ID ID,
-                               bool &WroteCallee) {
+bool GenWriter::visitBuiltinCall(CallInst &I, Intrinsic::ID ID, bool &WroteCallee) {
   switch (ID) {
   default: {
     // If this is an intrinsic that directly corresponds to a GCC
@@ -3618,7 +3556,7 @@ void GenWriter::visitExtractValueInst(ExtractValueInst &EVI) {
 //===----------------------------------------------------------------------===//
 //                       External Interface declaration
 //===----------------------------------------------------------------------===//
-
+#if 0
 bool GenTargetMachine::addPassesToEmitFile(PassManagerBase &PM,
                                            formatted_raw_ostream &o,
                                            CodeGenFileType FileType,
@@ -3632,4 +3570,10 @@ bool GenTargetMachine::addPassesToEmitFile(PassManagerBase &PM,
   PM.add(createGCInfoDeleter());
   return false;
 }
+#endif
+
+llvm::FunctionPass *createGenPass(formatted_raw_ostream &o) {
+  return new GenWriter(o);
+}
+
 

@@ -28,7 +28,11 @@
 #include <cstdlib>
 
 // Transform some llvm code to gen code
+#if 0
 extern "C" int llvmToGen(int argc, char **argv);
+#else
+extern "C" int llvmToGen(const char *fileName);
+#endif
 
 /*! Where the kernels to test are */
 static std::string kernelPath;
@@ -44,6 +48,7 @@ char *copyString(const char *src) {
 static void utestLLVM2Gen(const char *kernel)
 {
   const std::string path = kernelPath + kernel;
+#if 0
   char *toFree[] = {
     copyString(""),
     copyString("-march=gen"),
@@ -54,6 +59,9 @@ static void utestLLVM2Gen(const char *kernel)
   GBE_DELETE_ARRAY(toFree[0]);
   GBE_DELETE_ARRAY(toFree[1]);
   GBE_DELETE_ARRAY(toFree[2]);
+#else
+  llvmToGen(path.c_str());
+#endif
 }
 
 static void utestLLVM(void)
