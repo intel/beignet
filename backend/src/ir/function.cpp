@@ -27,7 +27,8 @@
 namespace gbe {
 namespace ir {
 
-  Function::Function(const std::string &name) : name(name) {}
+  Function::Function(const std::string &name) :
+    name(name), structReturned(false) {}
 
   Function::~Function(void) {
     for (auto it = blocks.begin(); it != blocks.end(); ++it)
@@ -64,7 +65,8 @@ namespace ir {
 
   std::ostream &operator<< (std::ostream &out, const Function &fn)
   {
-    out << ".decl_function " << fn.getName() << std::endl << std::endl;
+    out << ".decl_function " << fn.getName() << std::endl;
+    out << ".return_struct " << (fn.isStructReturned() ? "true" : "false") << std::endl;
     out << fn.getRegisterFile();
     out << "## " << fn.inputNum() << " input register"
         << plural(fn.inputNum())  << " ##" << std::endl;
@@ -78,7 +80,7 @@ namespace ir {
         << plural(fn.blockNum()) << " ##" << std::endl;
     for (uint32_t i = 0; i < fn.blockNum(); ++i) {
       const BasicBlock &bb = fn.getBlock(i);
-      bb.map([&out, &fn] (const Instruction &insn) {
+      bb.apply([&out, &fn] (const Instruction &insn) {
         out << insn.proxy(fn) << std::endl;
       });
       out << std::endl;

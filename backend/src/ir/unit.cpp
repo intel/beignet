@@ -54,6 +54,11 @@ namespace ir {
     constantSet.append(data, name, size, alignment);
   }
 
+  std::ostream &operator<< (std::ostream &out, const Unit &unit)
+  {
+    unit.apply([&out] (const Function &fn) { out << fn << std::endl; });
+    return out;
+  }
 } /* namespace ir */
 } /* namespace gbe */
 

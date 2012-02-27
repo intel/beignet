@@ -27,6 +27,7 @@
 #include "ir/instruction.hpp"
 #include "ir/function.hpp"
 #include "ir/register.hpp"
+#include "ir/unit.hpp"
 #include "sys/vector.hpp"
 #include <tuple>
 
@@ -58,6 +59,8 @@ namespace ir {
     void input(Register reg);
     /*! Append a new output register for the function */
     void output(Register reg);
+    /*! Get the current processed function */
+    Function &getFunction(void);
     /*! Append a new tuple */
     template <typename... Args> INLINE Tuple tuple(Args...args);
     /*! We just use variadic templates to forward instruction functions */
@@ -65,7 +68,10 @@ namespace ir {
     template <typename... Args> INLINE void NAME(Args...args);
 #include "ir/instruction.hxx"
 #undef DECL_INSN
-
+    /*! Return the pointer size handled by the unit */
+    INLINE PointerSize getPointerSize(void) const {
+      return unit.getPointerSize();
+    }
     /*! MAD with sources directly specified */
     INLINE void MAD(Type type,
                     Register dst,

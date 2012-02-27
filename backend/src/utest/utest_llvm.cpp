@@ -25,47 +25,36 @@
  */
 
 #include "utest/utest.hpp"
+#include "llvm/llvm_to_gen.hpp"
+#include "ir/unit.hpp"
 #include <cstdlib>
 
-// Transform some llvm code to gen code
-#if 0
-extern "C" int llvmToGen(int argc, char **argv);
-#else
-extern "C" int llvmToGen(const char *fileName);
-#endif
-
-/*! Where the kernels to test are */
-static std::string kernelPath;
-
-char *copyString(const char *src) {
-  const size_t len = strlen(src);
-  char *dst = GBE_NEW_ARRAY(char, len + 1);
-  std::memcpy(dst, src, len);
-  dst[len] = 0;
-  return dst;
-}
-
-static void utestLLVM2Gen(const char *kernel)
+namespace gbe
 {
-  const std::string path = kernelPath + kernel;
-#if 0
-  char *toFree[] = {
-    copyString(""),
-    copyString("-march=gen"),
-    copyString(path.c_str())
-  };
-  char *argv[] = {toFree[0], toFree[1], toFree[2]};
-  llvmToGen(3, argv);
-  GBE_DELETE_ARRAY(toFree[0]);
-  GBE_DELETE_ARRAY(toFree[1]);
-  GBE_DELETE_ARRAY(toFree[2]);
-#else
-  llvmToGen(path.c_str());
-#endif
-}
+  /*! Where the kernels to test are */
+  static std::string kernelPath;
+
+  char *copyString(const char *src) {
+    const size_t len = strlen(src);
+    char *dst = GBE_NEW_ARRAY(char, len + 1);
+    std::memcpy(dst, src, len);
+    dst[len] = 0;
+    return dst;
+  }
+
+  static void utestLLVM2Gen(const char *kernel)
+  {
+    const std::string path = kernelPath + kernel;
+    ir::Unit unit;
+    llvmToGen(unit, path.c_str());
+    std::cout << unit << std::endl;
+  }
+} /* namespace gbe */
 
 static void utestLLVM(void)
 {
+  using namespace gbe;
+
   // Try to find where the kernels are
   FILE *dummyKernel = NULL;
 #define TRY_PATH(PATH)                                      \
@@ -87,7 +76,9 @@ runTests:
   GBE_ASSERT(dummyKernel != NULL);
   fclose(dummyKernel);
 
-  UTEST_EXPECT_SUCCESS(utestLLVM2Gen("void.ll"));
+  //UTEST_EXPECT_SUCCESS(utestLLVM2Gen("add.ll"));
+  UTEST_EXPECT_SUCCESS(utestLLVM2Gen("add2.ll"));
+  //UTEST_EXPECT_SUCCESS(utestLLVM2Gen("void.ll"));
 }
 
 UTEST_REGISTER(utestLLVM)

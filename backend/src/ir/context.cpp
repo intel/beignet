@@ -60,6 +60,11 @@ namespace ir {
     usedLabels = elem.usedLabels;
   }
 
+  Function &Context::getFunction(void) {
+    GBE_ASSERTM(fn != NULL, "No function currently defined");
+    return *fn;
+  }
+
   Register Context::reg(RegisterData::Family family) {
     GBE_ASSERTM(fn != NULL, "No function currently defined");
     return fn->file.append(family);

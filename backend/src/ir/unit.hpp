@@ -57,12 +57,23 @@ namespace ir {
     Function *newFunction(const std::string &name);
     /*! Create a new constant in the constant set */
     void newConstant(const char*, const std::string&, uint32_t size, uint32_t alignment);
+    /*! Apply the given functor on all the functions */
+    template <typename T>
+    INLINE void apply(const T &functor) const {
+      for (auto it = functions.begin(); it != functions.end(); ++it)
+        functor(*it->second);
+    }
+    /*! Return the size of the pointers manipulated */
+    INLINE PointerSize getPointerSize(void) const { return pointerSize; }
   private:
     hash_map<std::string, Function*> functions; //!< All the defined functions
     ConstantSet constantSet; //!< All the constants defined in the unit
     PointerSize pointerSize; //!< Size shared by all pointers
     GBE_CLASS(Unit);
   };
+
+  /*! Output the unit string in the given stream */
+  std::ostream &operator<< (std::ostream &out, const Unit &unit);
 
 } /* namespace ir */
 } /* namespace gbe */

@@ -54,7 +54,7 @@ namespace ir {
     INLINE uint32_t insnNum(void) { return instructions.size(); }
     /*! Apply the given functor on all instructions */
     template <typename T>
-    INLINE void map(const T &functor) const {
+    INLINE void apply(const T &functor) const {
       for (auto it = instructions.begin(); it != instructions.end(); ++it)
         functor(**it);
     }
@@ -114,6 +114,10 @@ namespace ir {
       GBE_ASSERT(blocks[ID] != NULL);
       return *blocks[ID];
     }
+    /*! Function returns a structure by pointer (see ptx32 ABI) */
+    INLINE void setStructReturned(bool isReturned) { structReturned = isReturned; }
+    /*! Indicate if a structure is returned from the function */
+    INLINE bool isStructReturned(void) const { return structReturned; }
     /*! Create a new label (still not bound to a basic block) */
     LabelIndex newLabel(void);
     /*! Number of registers in the register file */
@@ -142,6 +146,7 @@ namespace ir {
     vector<BasicBlock*> blocks;   //!< All chained basic blocks
     RegisterFile file;            //!< RegisterDatas used by the instructions
     GrowingPool<Instruction> insnPool; //!< For fast instruction allocation
+    bool structReturned;               //!< First argument is pointer to struct
     GBE_CLASS(Function);
   };
 
