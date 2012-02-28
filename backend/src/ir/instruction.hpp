@@ -365,6 +365,8 @@ namespace ir {
   Instruction BRA(LabelIndex labelIndex);
   /*! (pred) bra labelIndex */
   Instruction BRA(LabelIndex labelIndex, Register pred);
+  /*! ret */
+  Instruction RET(void);
   /*! loadi.type dst value */
   Instruction LOADI(Type type, Register dst, ImmediateIndex value);
   /*! load.type.space {dst1,...,dst_valueNum} offset value */

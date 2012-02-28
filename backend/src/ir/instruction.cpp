@@ -227,18 +227,31 @@ namespace ir {
       public BasePolicy, public NoDstPolicy
     {
     public:
-      INLINE BranchInstruction(LabelIndex labelIndex, Register predicate) {
-        this->opcode = OP_BRA;
+      INLINE BranchInstruction(Opcode op, LabelIndex labelIndex, Register predicate) {
+        GBE_ASSERT(op == OP_BRA);
+        this->opcode = op;
         this->predicate = predicate;
         this->labelIndex = labelIndex;
         this->hasPredicate = true;
+        this->hasLabel = true;
       }
-      INLINE BranchInstruction(LabelIndex labelIndex) {
+      INLINE BranchInstruction(Opcode op, LabelIndex labelIndex) {
+        GBE_ASSERT(op == OP_BRA);
         this->opcode = OP_BRA;
         this->labelIndex = labelIndex;
         this->hasPredicate = false;
+        this->hasLabel = true;
       }
-      INLINE LabelIndex getLabelIndex(void) const { return labelIndex; }
+      INLINE BranchInstruction(Opcode op) {
+        GBE_ASSERT(op == OP_RET);
+        this->opcode = OP_RET;
+        this->hasPredicate = false;
+        this->hasLabel = false;
+      }
+      INLINE LabelIndex getLabelIndex(void) const {
+        GBE_ASSERTM(hasLabel, "No target label for this branch instruction");
+        return labelIndex;
+      }
       INLINE uint32_t getSrcNum(void) const { return hasPredicate ? 1 : 0; }
       INLINE Register getSrcIndex(const Function &fn, uint32_t ID) const {
         GBE_ASSERTM(hasPredicate, "No source for unpredicated branches");
@@ -250,7 +263,8 @@ namespace ir {
       INLINE void out(std::ostream &out, const Function &fn) const;
       Register predicate;    //!< Predication means conditional branch
       LabelIndex labelIndex; //!< Index of the label the branch targets
-      bool hasPredicate;     //!< Is it predicated?
+      bool hasPredicate:1;  //!< Is it predicated?
+      bool hasLabel:1;      //!< Is there any target label?
     };
 
     class ALIGNED_INSTRUCTION LoadInstruction :
@@ -556,10 +570,11 @@ namespace ir {
     // The label must exist and the register must of boolean family
     INLINE bool BranchInstruction::wellFormed(const Function &fn, std::string &whyNot) const
     {
-      if (UNLIKELY(labelIndex >= fn.labelNum())) {
-        whyNot = "Out-of-bound label index";
-        return false;
-      }
+      if (hasLabel)
+        if (UNLIKELY(labelIndex >= fn.labelNum())) {
+          whyNot = "Out-of-bound label index";
+          return false;
+        }
       if (hasPredicate)
         if (UNLIKELY(checkRegisterData(RegisterData::BOOL, predicate, fn, whyNot) == false))
           return false;
@@ -623,7 +638,7 @@ namespace ir {
       this->outOpcode(out);
       if (hasPredicate)
         out << "<%" << this->getSrcIndex(fn, 0) << ">";
-      out << " -> label$" << labelIndex;
+      if (hasLabel) out << " -> label$" << labelIndex;
     }
 
     INLINE void LoadImmInstruction::out(std::ostream &out, const Function &fn) const {
@@ -884,11 +899,17 @@ DECL_MEM_FN(BranchInstruction, LabelIndex, getLabelIndex(void), getLabelIndex())
 
   // BRA
   Instruction BRA(LabelIndex labelIndex) {
-    const internal::BranchInstruction insn(labelIndex);
+    const internal::BranchInstruction insn(OP_BRA, labelIndex);
     return insn.convert();
   }
   Instruction BRA(LabelIndex labelIndex, Register pred) {
-    const internal::BranchInstruction insn(labelIndex, pred);
+    const internal::BranchInstruction insn(OP_BRA, labelIndex, pred);
+    return insn.convert();
+  }
+
+  // RET
+  Instruction RET(void) {
+    const internal::BranchInstruction insn(OP_RET);
     return insn.convert();
   }
 

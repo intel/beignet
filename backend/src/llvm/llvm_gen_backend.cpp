@@ -61,7 +61,7 @@
 
 #include "ir/context.hpp"
 #include "ir/unit.hpp"
-#include "sys/hash_map.hpp"
+#include "sys/map.hpp"
 #include <algorithm>
 
 using namespace llvm;
@@ -95,8 +95,11 @@ namespace gbe
     MCContext *TCtx;
     const TargetData* TD;
 
-    /*! Map value name to ir::Register*/
-    hash_map<std::string, ir::Register> registerMap;
+    /*! Map value to ir::Register*/
+    map<const Value*, ir::Register> registerMap;
+
+    /*! Map value to ir::LabelIndex */
+    map<const Value*, ir::LabelIndex> labelMap;
 
     std::map<const ConstantFP *, unsigned> FPConstantMap;
     std::set<Function*> intrinsicPrototypesAlreadyGenerated;
@@ -223,13 +226,26 @@ namespace gbe
     void printFloatingPointConstants(const Constant *C);
     void emitFunctionSignature(const Function *F, bool Prototype);
 
+    /*! Emit the complete function code and declaration */
+    void emitFunction(Function &F);
     /*! Handle input and output function parameters */
     void emitFunctionPrototype(const Function *F);
+    /*! Emit the code for a basic block */
+    void emitBasicBlock(BasicBlock *BB);
 
     /*! Get the register family from the given type */
     INLINE ir::RegisterData::Family getArgumentFamily(const Type*) const;
+    /*! Insert a new register when this is a scalar value */
+    INLINE void newRegister(const Value *value);
+    /*! Return a valid register from an operand (can use LOADI to make one) */
+    INLINE ir::Register getRegister(Value *value);
+    /*! Insert a new label index when this is a scalar value */
+    INLINE void newLabelIndex(const Value *value);
+    /*! int / float / double / bool are scalars */
+    INLINE bool isScalarType(const Type *type) const;
+    /*! Get the Gen IR type from the LLVM type */
+    INLINE ir::Type getType(const Type *type) const;
 
-    void emitFunction(Function &);
     void printBasicBlock(BasicBlock *BB);
     void printLoop(Loop *L);
 
@@ -367,6 +383,7 @@ namespace gbe
   };
 
 char GenWriter::ID = 0;
+#define PRINT_CODE 1
 
 static std::string CBEMangle(const std::string &S) {
   std::string Result;
@@ -1631,13 +1648,45 @@ static std::string CBEMangle(const std::string &S) {
     }
   }
 
+  INLINE bool GenWriter::isScalarType(const Type *type) const
+  {
+    return type->isFloatTy() ||
+           type->isIntegerTy() ||
+           type->isDoubleTy() ||
+           type->isPointerTy();
+  }
+
+  INLINE ir::Type GenWriter::getType(const Type *type) const
+  {
+    GBE_ASSERT(this->isScalarType(type));
+    if (type->isFloatTy() == true)
+      return ir::TYPE_FLOAT;
+    if (type->isDoubleTy() == true)
+      return ir::TYPE_DOUBLE;
+    if (type->isPointerTy() == true) {
+      if (ctx.getPointerSize() == ir::POINTER_32_BITS)
+        return ir::TYPE_U32;
+      else
+        return ir::TYPE_U64;
+    }
+    GBE_ASSERT(type->isIntegerTy() == true);
+    if (type == Type::getInt1Ty(type->getContext()))
+      return ir::TYPE_BOOL;
+    if (type == Type::getInt8Ty(type->getContext()))
+      return ir::TYPE_S8;
+    if (type == Type::getInt16Ty(type->getContext()))
+      return ir::TYPE_S16;
+    if (type == Type::getInt32Ty(type->getContext()))
+      return ir::TYPE_S32;
+    if (type == Type::getInt64Ty(type->getContext()))
+      return ir::TYPE_S64;
+    GBE_ASSERT(0);
+    return ir::TYPE_S64;
+  }
+
   INLINE ir::RegisterData::Family GenWriter::getArgumentFamily(const Type *type) const
   {
-    GBE_ASSERT(type->isFloatTy()   ||
-               type->isIntegerTy() ||
-               type->isDoubleTy()  ||
-               type->isPointerTy());
-
+    GBE_ASSERT(this->isScalarType(type) == true); 
     if (type == Type::getInt1Ty(type->getContext()))
       return ir::RegisterData::BOOL;
     if (type == Type::getInt8Ty(type->getContext()))
@@ -1656,6 +1705,49 @@ static std::string CBEMangle(const std::string &S) {
     return ir::RegisterData::BOOL;
   }
 
+  void GenWriter::newRegister(const Value *value) {
+    if (registerMap.find(value) == registerMap.end()) {
+      const Type *type = value->getType();
+      const ir::RegisterData::Family family = getArgumentFamily(type);
+      const ir::Register reg = ctx.reg(family);
+      ctx.input(reg);
+      registerMap[value] = reg;
+    }
+  }
+
+  ir::Register GenWriter::getRegister(Value *value) {
+    Constant *CPV = dyn_cast<Constant>(value);
+    if (CPV && !isa<GlobalValue>(CPV)) {
+      GBE_ASSERT(0);
+      // printConstant(CPV, Static);
+    } else {
+      GBE_ASSERT(this->registerMap.find(value) != this->registerMap.end());
+      return this->registerMap[value];
+    }
+  }
+
+  void GenWriter::newLabelIndex(const Value *value) {
+    if (labelMap.find(value) == labelMap.end()) {
+      const ir::LabelIndex label = ctx.label();
+      labelMap[value] = label;
+    }
+  }
+
+  void GenWriter::emitBasicBlock(BasicBlock *BB) {
+    GBE_ASSERT(labelMap.find(BB) != labelMap.end());
+    ctx.LABEL(labelMap[BB]);
+    for (auto II = BB->begin(), E = BB->end(); II != E; ++II) {
+      const Type *Ty = II->getType();
+      GBE_ASSERT(!Ty->isIntegerTy() ||
+          (Ty==Type::getInt1Ty(II->getContext())  ||
+           Ty==Type::getInt8Ty(II->getContext())  ||
+           Ty==Type::getInt16Ty(II->getContext()) ||
+           Ty==Type::getInt32Ty(II->getContext()) ||
+           Ty==Type::getInt64Ty(II->getContext())));
+      visit(*II);
+    }
+  }
+
   void GenWriter::emitFunctionPrototype(const Function *F)
   {
     const bool returnStruct = F->hasStructRetAttr();
@@ -1670,28 +1762,19 @@ static std::string CBEMangle(const std::string &S) {
         fn.setStructReturned(true);
       }
 
-      std::string ArgName;
-      for (; I != E; ++I) {
-        ArgName = GetValueName(I);
-
-        // Insert a new register if we need to
-        if (registerMap.find(ArgName) == registerMap.end()) {
-          const Type *type = I->getType();
-          const ir::RegisterData::Family family = getArgumentFamily(type);
-          const ir::Register reg = ctx.reg(family);
-          ctx.input(reg);
-          registerMap[ArgName] = reg;
-        }
-      }
+      // Insert a new register if we need to
+      for (; I != E; ++I) this->newRegister(I);
     }
 
     // When returning a structure, first input register is the pointer to the
     // structure
     if (!returnStruct) {
       const Type *type = F->getReturnType();
-      const ir::RegisterData::Family family = getArgumentFamily(type);
-      const ir::Register reg = ctx.reg(family);
-      ctx.output(reg);
+      if (type->isVoidTy() == false) {
+        const ir::RegisterData::Family family = getArgumentFamily(type);
+        const ir::Register reg = ctx.reg(family);
+        ctx.output(reg);
+      }
     }
 
 #if GBE_DEBUG
@@ -1823,8 +1906,22 @@ static std::string CBEMangle(const std::string &S) {
   {
     ctx.startFunction(GetValueName(&F));
     this->registerMap.clear();
+    this->labelMap.clear();
     this->emitFunctionPrototype(&F);
 
+    // We create all the register variables
+    for (inst_iterator I = inst_begin(&F), E = inst_end(&F); I != E; ++I)
+      if (I->getType() != Type::getVoidTy(F.getContext()))
+        this->newRegister(&*I);
+
+    // First create all the labels (one per block)
+    for (Function::iterator BB = F.begin(), E = F.end(); BB != E; ++BB)
+      this->newLabelIndex(BB);
+
+    // ... then, emit the code for all basic blocks
+    for (Function::iterator BB = F.begin(), E = F.end(); BB != E; ++BB)
+      emitBasicBlock(BB);
+#if 0
     /// isStructReturn - Should this function actually return a struct by-value?
     bool isStructReturn = F.hasStructRetAttr();
 
@@ -1850,6 +1947,7 @@ static std::string CBEMangle(const std::string &S) {
     // print local variable information for the function
     for (inst_iterator I = inst_begin(&F), E = inst_end(&F); I != E; ++I) {
       if (const AllocaInst *AI = isDirectAlloca(&*I)) {
+        GBE_ASSERT(0);
         Out << "  ";
         printType(Out, AI->getAllocatedType(), false, GetValueName(AI));
         Out << ";    /* Address-exposed local */\n";
@@ -1895,7 +1993,7 @@ static std::string CBEMangle(const std::string &S) {
     }
 
     Out << "}\n\n";
-
+#endif
     ctx.endFunction();
   }
 
@@ -1954,8 +2052,17 @@ static std::string CBEMangle(const std::string &S) {
   //
   void GenWriter::visitReturnInst(ReturnInst &I) {
     // If this is a struct return function, return the temporary struct.
-    bool isStructReturn = I.getParent()->getParent()->hasStructRetAttr();
+    const ir::Function &fn = ctx.getFunction();
+    GBE_ASSERTM(fn.outputNum() <= 1, "no more than one value can be returned");
+    if (fn.outputNum() == 1 && I.getNumOperands() > 0) {
+      const ir::Register dst = fn.getOutput(0);
+      const ir::Register src = this->getRegister(I.getOperand(0));
+      const ir::RegisterData::Family family = fn.getRegisterFamiy(dst);;
+      ctx.MOV(ir::getType(family), dst, src);
+    }
+    ctx.RET();
 
+    bool isStructReturn = I.getParent()->getParent()->hasStructRetAttr();
     if (isStructReturn) {
       Out << "  return StructReturn;\n";
       return;
@@ -1967,13 +2074,14 @@ static std::string CBEMangle(const std::string &S) {
         !I.getParent()->size() == 1) {
       return;
     }
-
+#if 0
     Out << "  return";
     if (I.getNumOperands()) {
       Out << ' ';
       writeOperand(I.getOperand(0));
     }
     Out << ";\n";
+#endif
   }
 
   void GenWriter::visitSwitchInst(SwitchInst &SI) {
@@ -2099,10 +2207,41 @@ static std::string CBEMangle(const std::string &S) {
   }
 
 
-  void GenWriter::visitBinaryOperator(Instruction &I) {
+  void GenWriter::visitBinaryOperator(Instruction &I)
+  {
+    GBE_ASSERT(!I.getType()->isPointerTy());
+    GBE_ASSERT(this->registerMap.find(&I) != this->registerMap.end());
+    const ir::Register dst = this->registerMap[&I];
+    const ir::Register src0 = this->getRegister(I.getOperand(0));
+    const ir::Register src1 = this->getRegister(I.getOperand(1));
+    const ir::Type type = this->getType(I.getType());
+
+    switch (I.getOpcode()) {
+      case Instruction::Add:
+      case Instruction::FAdd: ctx.ADD(type, dst, src0, src1); break;
+      case Instruction::Sub:
+      case Instruction::FSub: ctx.SUB(type, dst, src0, src1); break;
+      case Instruction::Mul:
+      case Instruction::FMul: ctx.MUL(type, dst, src0, src1); break;
+      case Instruction::URem:
+      case Instruction::SRem:
+      case Instruction::FRem: ctx.REM(type, dst, src0, src1); break;
+      case Instruction::UDiv:
+      case Instruction::SDiv:
+      case Instruction::FDiv: ctx.DIV(type, dst, src0, src1); break;
+      case Instruction::And:  ctx.AND(type, dst, src0, src1); break;
+      case Instruction::Or:   ctx.OR(type, dst, src0, src1); break;
+      case Instruction::Xor:  ctx.XOR(type, dst, src0, src1); break;
+      case Instruction::Shl : ctx.SHL(type, dst, src0, src1); break;
+      case Instruction::LShr: ctx.SHR(type, dst, src0, src1); break;
+      case Instruction::AShr: ctx.ASR(type, dst, src0, src1); break;
+      default:
+         GBE_ASSERT(0);
+    };
+
+#if 0
     // binary instructions, shift instructions, setCond instructions.
     assert(!I.getType()->isPointerTy());
-
     // We must cast the results of binary operations which might be promoted.
     bool needsCast = false;
     if ((I.getType() == Type::getInt8Ty(I.getContext())) ||
@@ -2181,6 +2320,7 @@ static std::string CBEMangle(const std::string &S) {
     if (needsCast) {
       Out << "))";
     }
+#endif
   }
 
   void GenWriter::visitICmpInst(ICmpInst &I) {
@@ -3076,7 +3216,7 @@ static std::string CBEMangle(const std::string &S) {
 
   void GenWriter::visitInsertValueInst(InsertValueInst &IVI) {
     // Start by copying the entire aggregate value into the result variable.
-    writeOperand(IVI.getOperand(0));
+        writeOperand(IVI.getOperand(0));
     Out << ";\n  ";
 
     // Then do the insert to update the field.

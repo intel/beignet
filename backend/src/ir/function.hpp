@@ -79,6 +79,10 @@ namespace ir {
     const std::string &getName(void) const { return name; }
     /*! Extract the register from the register file */
     INLINE RegisterData getRegisterData(Register ID) const { return file.get(ID); }
+    /*! Get the register family from the register itself */
+    INLINE RegisterData::Family getRegisterFamiy(Register ID) const {
+      return this->getRegisterData(ID).family;
+    }
     /*! Get the register index from the tuple vector */
     INLINE Register getRegister(Tuple ID, uint32_t which) const {
       return file.get(ID, which);

@@ -76,6 +76,18 @@ namespace ir {
     return RegisterData::DWORD;
   }
 
+  /*! Return a type for each register family */
+  INLINE Type getType(RegisterData::Family family) {
+    switch (family) {
+      case RegisterData::BOOL: return TYPE_BOOL;
+      case RegisterData::BYTE: return TYPE_U8;
+      case RegisterData::WORD: return TYPE_U16;
+      case RegisterData::DWORD: return TYPE_U32;
+      case RegisterData::QWORD: return TYPE_U64;
+    };
+    return TYPE_U32;
+  }
+
 } /* namespace ir */
 } /* namespace gbe */
 
