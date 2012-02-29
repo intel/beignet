@@ -39,6 +39,7 @@ namespace gbe
                           + std::string(file)
                           + ", function " + std::string(fn)
                           + ", line " + std::string(lineString);
+    assert(0);
     throw Exception(str);
   }
 } /* namespace gbe */

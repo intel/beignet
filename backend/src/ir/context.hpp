@@ -85,22 +85,22 @@ namespace ir {
 
     /*! LOAD with the destinations directly specified */
     template <typename... Args>
-    void LOAD(Type type, Register offset, MemorySpace space, Args...values)
+    void LOAD(Type type, Register offset, MemorySpace space, bool dwAligned, Args...values)
     {
       const Tuple index = this->tuple(values...);
       const uint16_t valueNum = std::tuple_size<std::tuple<Args...>>::value;
       GBE_ASSERT(valueNum > 0);
-      this->LOAD(type, index, offset, space, valueNum);
+      this->LOAD(type, index, offset, space, valueNum, dwAligned);
     }
 
     /*! STORE with the sources directly specified */
     template <typename... Args>
-    void STORE(Type type, Register offset, MemorySpace space, Args...values)
+    void STORE(Type type, Register offset, MemorySpace space, bool dwAligned, Args...values)
     {
       const Tuple index = this->tuple(values...);
       const uint16_t valueNum = std::tuple_size<std::tuple<Args...>>::value;
       GBE_ASSERT(valueNum > 0);
-      this->STORE(type, index, offset, space, valueNum);
+      this->STORE(type, index, offset, space, valueNum, dwAligned);
     }
 
   private:

@@ -76,7 +76,8 @@ runTests:
   GBE_ASSERT(dummyKernel != NULL);
   fclose(dummyKernel);
 
-  UTEST_EXPECT_SUCCESS(utestLLVM2Gen("add.ll"));
+  //UTEST_EXPECT_SUCCESS(utestLLVM2Gen("add.ll"));
+  UTEST_EXPECT_SUCCESS(utestLLVM2Gen("load_store.ll"));
   //UTEST_EXPECT_SUCCESS(utestLLVM2Gen("add2.ll"));
   //UTEST_EXPECT_SUCCESS(utestLLVM2Gen("loop.ll"));
   //UTEST_EXPECT_SUCCESS(utestLLVM2Gen("void.ll"));

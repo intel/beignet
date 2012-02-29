@@ -275,15 +275,17 @@ namespace ir {
                       Tuple dstValues,
                       Register offset,
                       MemorySpace memSpace,
-                      uint32_t valueNum)
+                      uint32_t valueNum,
+                      bool dwAligned)
       {
-        GBE_ASSERT(valueNum < 255);
-        this->opcode = OP_STORE;
+        GBE_ASSERT(valueNum < 128);
+        this->opcode = OP_LOAD;
         this->type = type;
         this->offset = offset;
         this->values = dstValues;
         this->memSpace = memSpace;
         this->valueNum = valueNum;
+        this->dwAligned = dwAligned ? 1 : 0;
       }
       INLINE Register getSrcIndex(const Function &fn, uint32_t ID) const {
         GBE_ASSERTM(ID == 0, "Only one source for the load instruction");
@@ -303,8 +305,9 @@ namespace ir {
       Type type;            //!< Type to store
       Register offset;      //!< First source is the offset where to store
       Tuple values;         //!< Values to load
-      MemorySpace memSpace; //!< Where to store
-      uint8_t valueNum;     //!< Number of values to store
+      MemorySpace memSpace; //!< Where to load
+      uint8_t valueNum:7;   //!< Number of values to load
+      uint8_t dwAligned:1;  //!< DWORD aligned is what matters with GEN
     };
 
     class ALIGNED_INSTRUCTION StoreInstruction :
@@ -315,7 +318,8 @@ namespace ir {
                        Tuple values,
                        Register offset,
                        MemorySpace memSpace,
-                       uint32_t valueNum)
+                       uint32_t valueNum,
+                       bool dwAligned)
       {
         GBE_ASSERT(valueNum < 255);
         this->opcode = OP_STORE;
@@ -324,6 +328,7 @@ namespace ir {
         this->values = values;
         this->memSpace = memSpace;
         this->valueNum = valueNum;
+        this->dwAligned = dwAligned ? 1 : 0;
       }
       INLINE Register getSrcIndex(const Function &fn, uint32_t ID) const {
         GBE_ASSERTM(ID < valueNum + 1u, "Out-of-bound source register for store");
@@ -342,7 +347,8 @@ namespace ir {
       Register offset;      //!< First source is the offset where to store
       Tuple values;         //!< Values to store
       MemorySpace memSpace; //!< Where to store
-      uint8_t valueNum;     //!< Number of values to store
+      uint8_t valueNum:7;   //!< Number of values to store
+      uint8_t dwAligned:1;  //!< DWORD aligned is what matters with GEN
     };
 
     class ALIGNED_INSTRUCTION TextureInstruction :
@@ -613,19 +619,20 @@ namespace ir {
 
     INLINE void LoadInstruction::out(std::ostream &out, const Function &fn) const {
       this->outOpcode(out);
-      out << "." << type << "." << memSpace << " {";
+      out << "." << type << "." << memSpace << (dwAligned ? "." : ".un") << "aligned";
+      out << " {";
       for (uint32_t i = 0; i < valueNum; ++i)
-        out << this->getDstIndex(fn, i);
+        out << "%" << this->getDstIndex(fn, i) << (i != (valueNum-1) ? " " : "");
       out << "}";
       out << " %" << this->getSrcIndex(fn, 0);
     }
 
     INLINE void StoreInstruction::out(std::ostream &out, const Function &fn) const {
       this->outOpcode(out);
-      out << "." << type << "." << memSpace;
+      out << "." << type << "." << memSpace << (dwAligned ? "." : ".un") << "aligned";
       out << " %" << this->getSrcIndex(fn, 0) << " {";
       for (uint32_t i = 0; i < valueNum; ++i)
-        out << this->getSrcIndex(fn, i+1);
+        out << "%" << this->getSrcIndex(fn, i+1) << (i != (valueNum-1) ? " " : "");
       out << "}";
     }
 
@@ -920,15 +927,16 @@ DECL_MEM_FN(BranchInstruction, LabelIndex, getLabelIndex(void), getLabelIndex())
   }
 
   // LOAD and STORE
-#define DECL_EMIT_FUNCTION(NAME, CLASS)                               \
-  Instruction NAME(Type type,                                         \
-                   Tuple tuple,                                       \
-                   Register offset,                                   \
-                   MemorySpace space,                                 \
-                   uint16_t valueNum)                                 \
-  {                                                                   \
-    const internal::CLASS insn(type, tuple, offset, space, valueNum); \
-    return insn.convert();                                            \
+#define DECL_EMIT_FUNCTION(NAME, CLASS)                                     \
+  Instruction NAME(Type type,                                               \
+                   Tuple tuple,                                             \
+                   Register offset,                                         \
+                   MemorySpace space,                                       \
+                   uint32_t valueNum,                                       \
+                   bool dwAligned)                                          \
+  {                                                                         \
+    const internal::CLASS insn(type,tuple,offset,space,valueNum,dwAligned); \
+    return insn.convert();                                                  \
   }
 
   DECL_EMIT_FUNCTION(LOAD, LoadInstruction)

@@ -189,6 +189,8 @@ namespace ir {
     uint32_t getValueNum(void) const;
     /*! Address space that is manipulated here */
     MemorySpace getAddressSpace(void) const;
+    /*! DWORD aligned means untyped read for Gen. That is what matters */
+    bool isDWORDAligned(void) const;
     /*! Return true if the given instruction is an instance of this class */
     static bool isClassOf(const Instruction &insn);
   };
@@ -205,6 +207,8 @@ namespace ir {
     uint32_t getValueNum(void) const;
     /*! Address space that is manipulated here */
     MemorySpace getAddressSpace(void) const;
+    /*! DWORD aligned means untyped read for Gen. That is what matters */
+    bool isDWORDAligned(void) const;
     /*! Return true if the given instruction is an instance of this class */
     static bool isClassOf(const Instruction &insn);
   };
@@ -370,9 +374,9 @@ namespace ir {
   /*! loadi.type dst value */
   Instruction LOADI(Type type, Register dst, ImmediateIndex value);
   /*! load.type.space {dst1,...,dst_valueNum} offset value */
-  Instruction LOAD(Type type, Tuple dst, Register offset, MemorySpace space, uint16_t valueNum);
+  Instruction LOAD(Type type, Tuple dst, Register offset, MemorySpace space, uint32_t valueNum, bool dwAligned);
   /*! store.type.space offset {src1,...,src_valueNum} value */
-  Instruction STORE(Type type, Tuple src, Register offset, MemorySpace space, uint16_t valueNum);
+  Instruction STORE(Type type, Tuple src, Register offset, MemorySpace space, uint32_t valueNum, bool dwAligned);
   /*! fence.space */
   Instruction FENCE(MemorySpace space);
   /*! label labelIndex */

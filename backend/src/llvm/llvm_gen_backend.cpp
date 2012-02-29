@@ -209,9 +209,6 @@ namespace gbe
     void writeOperandWithCast(Value* Operand, const ICmpInst &I);
     bool writeInstructionCast(const Instruction &I);
 
-    void writeMemoryAccess(Value *Operand, Type *OperandType,
-                           bool IsVolatile, unsigned Alignment);
-
   private :
     std::string InterpretASMConstraint(InlineAsm::ConstraintInfo& c);
 
@@ -247,7 +244,6 @@ namespace gbe
     INLINE ir::Type getType(const Type *type) const;
 
     void printBasicBlock(BasicBlock *BB);
-    void printLoop(Loop *L);
 
     void printCast(unsigned opcode, Type *SrcTy, Type *DstTy);
     void printConstant(Constant *CPV, bool Static);
@@ -323,18 +319,16 @@ namespace gbe
 
     void visitReturnInst(ReturnInst &I);
     void visitBranchInst(BranchInst &I);
-    void visitSwitchInst(SwitchInst &I);
-    void visitIndirectBrInst(IndirectBrInst &I);
-    void visitInvokeInst(InvokeInst &I) {
-      llvm_unreachable("Lowerinvoke pass didn't work!");
-    }
-    void visitUnwindInst(UnwindInst &I) {
-      llvm_unreachable("Lowerinvoke pass didn't work!");
-    }
-    void visitResumeInst(ResumeInst &I) {
-      llvm_unreachable("DwarfEHPrepare pass didn't work!");
-    }
-    void visitUnreachableInst(UnreachableInst &I);
+
+    void visitVAArgInst(VAArgInst &I) {GBE_ASSERTM(false, "Not supported");}
+    void visitSwitchInst(SwitchInst &I) {GBE_ASSERTM(false, "Not supported");}
+    void visitInvokeInst(InvokeInst &I) {GBE_ASSERTM(false, "Not supported");}
+    void visitUnwindInst(UnwindInst &I) {GBE_ASSERTM(false, "Not supported");}
+    void visitResumeInst(ResumeInst &I) {GBE_ASSERTM(false, "Not supported");}
+    void visitInlineAsm(CallInst &I) {GBE_ASSERTM(false, "Not supported");}
+    void visitIndirectBrInst(IndirectBrInst &I) {GBE_ASSERTM(false, "Not supported");}
+    void visitUnreachableInst(UnreachableInst &I) {GBE_ASSERTM(false, "Not supported");}
+
 
     void visitPHINode(PHINode &I);
     void visitBinaryOperator(Instruction &I);
@@ -344,14 +338,13 @@ namespace gbe
     void visitCastInst (CastInst &I);
     void visitSelectInst(SelectInst &I);
     void visitCallInst (CallInst &I);
-    void visitInlineAsm(CallInst &I);
     bool visitBuiltinCall(CallInst &I, Intrinsic::ID ID, bool &WroteCallee);
 
     void visitAllocaInst(AllocaInst &I);
+    template <bool isLoad, typename T> void visitLoadOrStore(T &I);
     void visitLoadInst  (LoadInst   &I);
     void visitStoreInst (StoreInst  &I);
     void visitGetElementPtrInst(GetElementPtrInst &I);
-    void visitVAArgInst (VAArgInst &I);
 
     void visitInsertElementInst(InsertElementInst &I);
     void visitExtractElementInst(ExtractElementInst &I);
@@ -1921,95 +1914,7 @@ static std::string CBEMangle(const std::string &S) {
     // ... then, emit the code for all basic blocks
     for (Function::iterator BB = F.begin(), E = F.end(); BB != E; ++BB)
       emitBasicBlock(BB);
-#if 0
-    /// isStructReturn - Should this function actually return a struct by-value?
-    bool isStructReturn = F.hasStructRetAttr();
-
-    emitFunctionSignature(&F, false);
-    Out << " {\n";
-
-    // If this is a struct return function, handle the result with magic.
-    if (isStructReturn) {
-      Type *StructTy =
-        cast<PointerType>(F.arg_begin()->getType())->getElementType();
-      Out << "  ";
-      printType(Out, StructTy, false, "StructReturn");
-      Out << ";  /* Struct return temporary */\n";
-
-      Out << "  ";
-      printType(Out, F.arg_begin()->getType(), false,
-                GetValueName(F.arg_begin()));
-      Out << " = &StructReturn;\n";
-    }
-
-    bool PrintedVar = false;
-
-    // print local variable information for the function
-    for (inst_iterator I = inst_begin(&F), E = inst_end(&F); I != E; ++I) {
-      if (const AllocaInst *AI = isDirectAlloca(&*I)) {
-        GBE_ASSERT(0);
-        Out << "  ";
-        printType(Out, AI->getAllocatedType(), false, GetValueName(AI));
-        Out << ";    /* Address-exposed local */\n";
-        PrintedVar = true;
-      } else if (I->getType() != Type::getVoidTy(F.getContext()) &&
-                 !isInlinableInst(*I)) {
-        Out << "  ";
-        printType(Out, I->getType(), false, GetValueName(&*I));
-        Out << ";\n";
-
-        if (isa<PHINode>(*I)) {  // Print out PHI node temporaries as well...
-          Out << "  ";
-          printType(Out, I->getType(), false,
-                    GetValueName(&*I)+"__PHI_TEMPORARY");
-          Out << ";\n";
-        }
-        PrintedVar = true;
-      }
-      // We need a temporary for the BitCast to use so it can pluck a value out
-      // of a union to do the BitCast. This is separate from the need for a
-      // variable to hold the result of the BitCast.
-      if (isFPIntBitCast(*I)) {
-        Out << "  llvmBitCastUnion " << GetValueName(&*I)
-            << "__BITCAST_TEMPORARY;\n";
-        PrintedVar = true;
-      }
-    }
-
-    if (PrintedVar)
-      Out << '\n';
-
-    if (F.hasExternalLinkage() && F.getName() == "main")
-      Out << "  CODE_FOR_MAIN();\n";
-
-    // print the basic blocks
-    for (Function::iterator BB = F.begin(), E = F.end(); BB != E; ++BB) {
-      if (Loop *L = LI->getLoopFor(BB)) {
-        if (L->getHeader() == BB && L->getParentLoop() == 0)
-          printLoop(L);
-      } else {
-        printBasicBlock(BB);
-      }
-    }
-
-    Out << "}\n\n";
-#endif
     ctx.endFunction();
-  }
-
-  void GenWriter::printLoop(Loop *L) {
-    Out << "  do {     /* Syntactic loop '" << L->getHeader()->getName()
-        << "' to make GCC happy */\n";
-    for (unsigned i = 0, e = L->getBlocks().size(); i != e; ++i) {
-      BasicBlock *BB = L->getBlocks()[i];
-      Loop *BBLoop = LI->getLoopFor(BB);
-      if (BBLoop == L)
-        printBasicBlock(BB);
-      else if (BB == BBLoop->getHeader() && BBLoop->getParentLoop() == L)
-        printLoop(BBLoop);
-    }
-    Out << "  } while (1); /* end of syntactic loop '"
-        << L->getHeader()->getName() << "' */\n";
   }
 
   void GenWriter::printBasicBlock(BasicBlock *BB) {
@@ -2082,44 +1987,6 @@ static std::string CBEMangle(const std::string &S) {
     }
     Out << ";\n";
 #endif
-  }
-
-  void GenWriter::visitSwitchInst(SwitchInst &SI) {
-
-    Value* Cond = SI.getCondition();
-
-    Out << "  switch (";
-    writeOperand(Cond);
-    Out << ") {\n  default:\n";
-    printPHICopiesForSuccessor (SI.getParent(), SI.getDefaultDest(), 2);
-    printBranchToBlock(SI.getParent(), SI.getDefaultDest(), 2);
-    Out << ";\n";
-
-    unsigned NumCases = SI.getNumCases();
-    // Skip the first item since that's the default case.
-    for (unsigned i = 1; i < NumCases; ++i) {
-      ConstantInt* CaseVal = SI.getCaseValue(i);
-      BasicBlock* Succ = SI.getSuccessor(i);
-      Out << "  case ";
-      writeOperand(CaseVal);
-      Out << ":\n";
-      printPHICopiesForSuccessor (SI.getParent(), Succ, 2);
-      printBranchToBlock(SI.getParent(), Succ, 2);
-      if (Function::iterator(Succ) == llvm::next(Function::iterator(SI.getParent())))
-        Out << "    break;\n";
-    }
-
-    Out << "  }\n";
-  }
-
-  void GenWriter::visitIndirectBrInst(IndirectBrInst &IBI) {
-    Out << "  goto *(void*)(";
-    writeOperand(IBI.getOperand(0));
-    Out << ");\n";
-  }
-
-  void GenWriter::visitUnreachableInst(UnreachableInst &I) {
-    Out << "  /*UNREACHABLE*/;\n";
   }
 
   bool GenWriter::isGotoCodeNecessary(BasicBlock *From, BasicBlock *To) {
@@ -2850,146 +2717,6 @@ static std::string CBEMangle(const std::string &S) {
     return c.Codes[0];
   }
 
-  //TODO: import logic from AsmPrinter.cpp
-  static std::string gccifyAsm(std::string asmstr) {
-    for (std::string::size_type i = 0; i != asmstr.size(); ++i)
-      if (asmstr[i] == '\n')
-        asmstr.replace(i, 1, "\\n");
-      else if (asmstr[i] == '\t')
-        asmstr.replace(i, 1, "\\t");
-      else if (asmstr[i] == '$') {
-        if (asmstr[i + 1] == '{') {
-          std::string::size_type a = asmstr.find_first_of(':', i + 1);
-          std::string::size_type b = asmstr.find_first_of('}', i + 1);
-          std::string n = "%" +
-            asmstr.substr(a + 1, b - a - 1) +
-            asmstr.substr(i + 2, a - i - 2);
-          asmstr.replace(i, b - i + 1, n);
-          i += n.size() - 1;
-        } else
-          asmstr.replace(i, 1, "%");
-      }
-      else if (asmstr[i] == '%')//grr
-        { asmstr.replace(i, 1, "%%"); ++i;}
-
-    return asmstr;
-  }
-
-  //TODO: assumptions about what consume arguments from the call are likely wrong
-  //      handle communitivity
-  void GenWriter::visitInlineAsm(CallInst &CI) {
-    InlineAsm* as = cast<InlineAsm>(CI.getCalledValue());
-    InlineAsm::ConstraintInfoVector Constraints = as->ParseConstraints();
-
-    std::vector<std::pair<Value*, int> > ResultVals;
-    if (CI.getType() == Type::getVoidTy(CI.getContext()))
-      ;
-    else if (StructType *ST = dyn_cast<StructType>(CI.getType())) {
-      for (unsigned i = 0, e = ST->getNumElements(); i != e; ++i)
-        ResultVals.push_back(std::make_pair(&CI, (int)i));
-    } else {
-      ResultVals.push_back(std::make_pair(&CI, -1));
-    }
-
-    // Fix up the asm string for gcc and emit it.
-    Out << "__asm__ volatile (\"" << gccifyAsm(as->getAsmString()) << "\"\n";
-    Out << "        :";
-
-    unsigned ValueCount = 0;
-    bool IsFirst = true;
-
-    // Convert over all the output constraints.
-    for (InlineAsm::ConstraintInfoVector::iterator I = Constraints.begin(),
-         E = Constraints.end(); I != E; ++I) {
-
-      if (I->Type != InlineAsm::isOutput) {
-        ++ValueCount;
-        continue;  // Ignore non-output constraints.
-      }
-
-      assert(I->Codes.size() == 1 && "Too many asm constraint codes to handle");
-      std::string C = InterpretASMConstraint(*I);
-      if (C.empty()) continue;
-
-      if (!IsFirst) {
-        Out << ", ";
-        IsFirst = false;
-      }
-
-      // Unpack the dest.
-      Value *DestVal;
-      int DestValNo = -1;
-
-      if (ValueCount < ResultVals.size()) {
-        DestVal = ResultVals[ValueCount].first;
-        DestValNo = ResultVals[ValueCount].second;
-      } else
-        DestVal = CI.getArgOperand(ValueCount-ResultVals.size());
-
-      if (I->isEarlyClobber)
-        C = "&"+C;
-
-      Out << "\"=" << C << "\"(" << GetValueName(DestVal);
-      if (DestValNo != -1)
-        Out << ".field" << DestValNo; // Multiple retvals.
-      Out << ")";
-      ++ValueCount;
-    }
-
-
-    // Convert over all the input constraints.
-    Out << "\n        :";
-    IsFirst = true;
-    ValueCount = 0;
-    for (InlineAsm::ConstraintInfoVector::iterator I = Constraints.begin(),
-         E = Constraints.end(); I != E; ++I) {
-      if (I->Type != InlineAsm::isInput) {
-        ++ValueCount;
-        continue;  // Ignore non-input constraints.
-      }
-
-      assert(I->Codes.size() == 1 && "Too many asm constraint codes to handle");
-      std::string C = InterpretASMConstraint(*I);
-      if (C.empty()) continue;
-
-      if (!IsFirst) {
-        Out << ", ";
-        IsFirst = false;
-      }
-
-      assert(ValueCount >= ResultVals.size() && "Input can't refer to result");
-      Value *SrcVal = CI.getArgOperand(ValueCount-ResultVals.size());
-
-      Out << "\"" << C << "\"(";
-      if (!I->isIndirect)
-        writeOperand(SrcVal);
-      else
-        writeOperandDeref(SrcVal);
-      Out << ")";
-    }
-
-    // Convert over the clobber constraints.
-    IsFirst = true;
-    for (InlineAsm::ConstraintInfoVector::iterator I = Constraints.begin(),
-         E = Constraints.end(); I != E; ++I) {
-      if (I->Type != InlineAsm::isClobber)
-        continue;  // Ignore non-input constraints.
-
-      assert(I->Codes.size() == 1 && "Too many asm constraint codes to handle");
-      std::string C = InterpretASMConstraint(*I);
-      if (C.empty()) continue;
-
-      if (!IsFirst) {
-        Out << ", ";
-        IsFirst = false;
-      }
-
-      Out << '\"' << C << '"';
-    }
-
-    Out << ")";
-  }
-
   void GenWriter::visitAllocaInst(AllocaInst &I) {
     Out << '(';
     printType(Out, I.getType());
@@ -3088,74 +2815,52 @@ static std::string CBEMangle(const std::string &S) {
     Out << ")";
   }
 
-  void GenWriter::writeMemoryAccess(Value *Operand, Type *OperandType,
-                                  bool IsVolatile, unsigned Alignment) {
-
-    bool IsUnaligned = Alignment &&
-      Alignment < TD->getABITypeAlignment(OperandType);
-
-    if (!IsUnaligned)
-      Out << '*';
-    if (IsVolatile || IsUnaligned) {
-      Out << "((";
-      if (IsUnaligned)
-        Out << "struct __attribute__ ((packed, aligned(" << Alignment << "))) {";
-      printType(Out, OperandType, false, IsUnaligned ? "data" : "volatile*");
-      if (IsUnaligned) {
-        Out << "; } ";
-        if (IsVolatile) Out << "volatile ";
-        Out << "*";
-      }
-      Out << ")";
+  static INLINE ir::MemorySpace addressSpaceLLVMToGen(unsigned llvmMemSpace) {
+    switch (llvmMemSpace) {
+      case 0: return ir::MEM_GLOBAL;
+      case 4: return ir::MEM_LOCAL;
     }
+    GBE_ASSERT(false);
+    return ir::MEM_GLOBAL;
+  }
 
-    writeOperand(Operand);
+  static INLINE Value *getLoadOrStoreValue(LoadInst &I) {
+    return &I;
+  }
+  static INLINE Value *getLoadOrStoreValue(StoreInst &I) {
+    return I.getValueOperand();
+  }
 
-    if (IsVolatile || IsUnaligned) {
-      Out << ')';
-      if (IsUnaligned)
-        Out << "->data";
-    }
+  template <bool isLoad, typename T>
+  INLINE void GenWriter::visitLoadOrStore(T &I)
+  {
+    GBE_ASSERTM(I.isVolatile() == false, "Volatile pointer is not supported");
+    unsigned int llvmSpace = I.getPointerAddressSpace();
+    Value *llvmPtr = I.getPointerOperand();
+    Value *llvmValues = getLoadOrStoreValue(I);
+    Type *llvmType = llvmValues->getType();
+    const bool dwAligned = (I.getAlignment() % 4) == 0;
+    const ir::MemorySpace memSpace = addressSpaceLLVMToGen(llvmSpace);
+    const ir::Type type = getType(llvmType);
+    const ir::Register values = getRegister(llvmValues);
+    const ir::Register ptr = getRegister(llvmPtr);
+    if (isLoad)
+      ctx.LOAD(type, ptr, memSpace, dwAligned, values);
+    else
+      ctx.STORE(type, ptr, memSpace, dwAligned, values);
   }
 
   void GenWriter::visitLoadInst(LoadInst &I) {
-    writeMemoryAccess(I.getOperand(0), I.getType(), I.isVolatile(),
-                      I.getAlignment());
-
+    this->visitLoadOrStore<true>(I);
   }
 
   void GenWriter::visitStoreInst(StoreInst &I) {
-    writeMemoryAccess(I.getPointerOperand(), I.getOperand(0)->getType(),
-                      I.isVolatile(), I.getAlignment());
-    Out << " = ";
-    Value *Operand = I.getOperand(0);
-    Constant *BitMask = 0;
-    if (IntegerType* ITy = dyn_cast<IntegerType>(Operand->getType()))
-      if (!ITy->isPowerOf2ByteWidth())
-        // We have a bit width that doesn't match an even power-of-2 byte
-        // size. Consequently we must & the value with the type's bit mask
-        BitMask = ConstantInt::get(ITy, ITy->getBitMask());
-    if (BitMask)
-      Out << "((";
-    writeOperand(Operand);
-    if (BitMask) {
-      Out << ") & ";
-      printConstant(BitMask, false);
-      Out << ")";
-    }
+    this->visitLoadOrStore<false>(I);
   }
 
   void GenWriter::visitGetElementPtrInst(GetElementPtrInst &I) {
     printGEPExpression(I.getPointerOperand(), gep_type_begin(I),
                        gep_type_end(I), false);
-  }
-
-  void GenWriter::visitVAArgInst(VAArgInst &I) {
-    Out << "va_arg(*(va_list*)";
-    writeOperand(I.getOperand(0));
-    Out << ", ";
-    printType(Out, I.getType());
-    Out << ");\n ";
   }
 
   void GenWriter::visitInsertElementInst(InsertElementInst &I) {
