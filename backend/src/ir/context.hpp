@@ -27,6 +27,7 @@
 #include "ir/instruction.hpp"
 #include "ir/function.hpp"
 #include "ir/register.hpp"
+#include "ir/value.hpp"
 #include "ir/unit.hpp"
 #include "sys/vector.hpp"
 #include <tuple>
@@ -53,6 +54,16 @@ namespace ir {
     void endFunction(void);
     /*! Create a new register with the given family for the current function */
     Register reg(RegisterData::Family family);
+    /*! Create a new register holding the given value. A LOADI is pushed */
+    template <typename T> INLINE Register immReg(T value) {
+      GBE_ASSERTM(fn != NULL, "No function currently defined");
+      const Immediate imm(value);
+      const ImmediateIndex index = fn->newImmediate(imm);
+      const RegisterData::Family family = getFamily(imm.type);
+      const Register reg = this->reg(family);
+      this->LOADI(imm.type, reg, index);
+      return reg;
+    }
     /*! Create a new label for the current function */
     LabelIndex label(void);
     /*! Append a new input register for the function */
@@ -62,7 +73,10 @@ namespace ir {
     /*! Get the current processed function */
     Function &getFunction(void);
     /*! Append a new tuple */
-    template <typename... Args> INLINE Tuple tuple(Args...args);
+    template <typename... Args> INLINE Tuple tuple(Args...args) {
+      GBE_ASSERTM(fn != NULL, "No function currently defined");
+      return fn->file.appendTuple(args...);
+    }
     /*! We just use variadic templates to forward instruction functions */
 #define DECL_INSN(NAME, FAMILY)                                       \
     template <typename... Args> INLINE void NAME(Args...args);
@@ -128,12 +142,6 @@ namespace ir {
     vector<StackElem> fnStack;  //!< Stack of functions still to finish
     GBE_CLASS(Context);
   };
-
-  template <typename... Args>
-  INLINE Tuple Context::tuple(Args...args) {
-    GBE_ASSERTM(fn != NULL, "No function currently defined");
-    return fn->file.appendTuple(args...);
-  }
 
   // Use argument checker to assert argument value correctness
 #define DECL_INSN(NAME, FAMILY)                                   \

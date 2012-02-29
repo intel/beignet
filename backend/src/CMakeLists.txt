@@ -25,6 +25,8 @@ else (GBE_USE_BLOB)
     sys/platform.hpp
     ir/context.cpp
     ir/context.hpp
+    ir/profile.cpp
+    ir/profile.hpp
     ir/type.cpp
     ir/type.hpp
     ir/unit.cpp

@@ -188,9 +188,9 @@
 
 /*! Debug syntactic sugar */
 #if GBE_DEBUG
-#define IF_DEBUG(EXPR)
-#else
 #define IF_DEBUG(EXPR) EXPR
+#else
+#define IF_DEBUG(EXPR)
 #endif /* GBE_DEBUG */
 
 /*! Debug printing macros */

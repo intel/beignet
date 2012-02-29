@@ -35,12 +35,26 @@ namespace ir {
   class Immediate
   {
   public:
-#define DECL_CONSTRUCTOR(TYPE, FIELD) \
-    Immediate(TYPE FIELD) { this->data.u64 = 0llu; this->data.FIELD = FIELD; }
-    DECL_CONSTRUCTOR(int8_t, s8)
-    DECL_CONSTRUCTOR(uint8_t, u8)
+#define DECL_CONSTRUCTOR(TYPE, FIELD, IR_TYPE)  \
+    Immediate(TYPE FIELD) {                     \
+      this->type = IR_TYPE;                     \
+      this->data.u64 = 0llu;                    \
+      this->data.FIELD = FIELD;                 \
+    }
+    DECL_CONSTRUCTOR(bool, b, TYPE_BOOL)
+    DECL_CONSTRUCTOR(int8_t, s8, TYPE_S8)
+    DECL_CONSTRUCTOR(uint8_t, u8, TYPE_U8)
+    DECL_CONSTRUCTOR(int16_t, s16, TYPE_S16)
+    DECL_CONSTRUCTOR(uint16_t, u16, TYPE_S16)
+    DECL_CONSTRUCTOR(int32_t, s32, TYPE_S32)
+    DECL_CONSTRUCTOR(uint32_t, u32, TYPE_S32)
+    DECL_CONSTRUCTOR(int64_t, s64, TYPE_S64)
+    DECL_CONSTRUCTOR(uint64_t, u64, TYPE_S64)
+    DECL_CONSTRUCTOR(float, f32, TYPE_FLOAT)
+    DECL_CONSTRUCTOR(double, f64, TYPE_DOUBLE)
 #undef DECL_CONSTRUCTOR
     union {
+      bool b;
       int8_t s8;
       uint8_t u8;
       int16_t s16;
@@ -54,6 +68,9 @@ namespace ir {
     } data;     //!< Value to store
     Type type;  //!< Type of the value
   };
+
+  /*! A value is stored in a per-function vector. This is the index to it */
+  TYPE_SAFE(ImmediateIndex, uint16_t)
 
 } /* namespace ir */
 } /* namespace gbe */

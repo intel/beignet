@@ -67,7 +67,7 @@ namespace ir {
 
   Register Context::reg(RegisterData::Family family) {
     GBE_ASSERTM(fn != NULL, "No function currently defined");
-    return fn->file.append(family);
+    return fn->newRegister(family);
   }
 
   LabelIndex Context::label(void) {

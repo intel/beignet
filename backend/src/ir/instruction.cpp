@@ -651,8 +651,8 @@ namespace ir {
     INLINE void LoadImmInstruction::out(std::ostream &out, const Function &fn) const {
       this->outOpcode(out);
       out << "." << type;
-      out << " %" << this->getSrcIndex(fn,0);
-      out << " " << fn.outImmediate(out, immediateIndex);
+      out << " %" << this->getDstIndex(fn,0) << " ";
+      fn.outImmediate(out, immediateIndex);
     }
 
   } /* namespace internal */

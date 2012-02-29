@@ -27,6 +27,7 @@
 #include "ir/value.hpp"
 #include "ir/register.hpp"
 #include "ir/instruction.hpp"
+#include "ir/profile.hpp"
 #include "sys/vector.hpp"
 #include "sys/list.hpp"
 #include "sys/alloc.hpp"
@@ -72,9 +73,15 @@ namespace ir {
   {
   public:
     /*! Create an empty function */
-    Function(const std::string &name);
+    Function(const std::string &name, Profile profile = PROFILE_OCL);
     /*! Release everything *including* the basic block pointers */
     ~Function(void);
+    /*! Get the function profile */
+    INLINE Profile getProfile(void) const { return profile; }
+    /*! Get a new valid register */
+    INLINE Register newRegister(RegisterData::Family family) {
+      return this->file.append(family);
+    }
     /*! Get the function name */
     const std::string &getName(void) const { return name; }
     /*! Extract the register from the register file */
@@ -93,6 +100,12 @@ namespace ir {
     INLINE Immediate getImmediate(uint32_t ID) const {
       GBE_ASSERT(ID < immediateNum());
       return immediates[ID];
+    }
+    /*! Create a new immediate and returns its index */
+    INLINE ImmediateIndex newImmediate(const Immediate &imm) {
+      const ImmediateIndex index(this->immediateNum());
+      this->immediates.push_back(imm);
+      return index;
     }
     /*! Allocate a new instruction (with the growing pool) */
     INLINE Instruction *newInstruction(void) {
@@ -139,7 +152,7 @@ namespace ir {
     /*! Number of blocks in the function */
     INLINE uint32_t blockNum(void) const { return blocks.size(); }
     /*! Output an immediate value in a stream */
-    std::ostream &outImmediate(std::ostream &out, ImmediateIndex index) const;
+    void outImmediate(std::ostream &out, ImmediateIndex index) const;
   private:
     friend class Context;         //!< Can freely modify a function
     std::string name;             //!< Function name
@@ -151,6 +164,7 @@ namespace ir {
     RegisterFile file;            //!< RegisterDatas used by the instructions
     GrowingPool<Instruction> insnPool; //!< For fast instruction allocation
     bool structReturned;               //!< First argument is pointer to struct
+    Profile profile;                   //!< Current function profile
     GBE_CLASS(Function);
   };
 

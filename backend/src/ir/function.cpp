@@ -27,8 +27,11 @@
 namespace gbe {
 namespace ir {
 
-  Function::Function(const std::string &name) :
-    name(name), structReturned(false) {}
+  Function::Function(const std::string &name, Profile profile) :
+    name(name), structReturned(false), profile(profile)
+  {
+      initProfile(*this);
+  }
 
   Function::~Function(void) {
     for (auto it = blocks.begin(); it != blocks.end(); ++it)
@@ -43,24 +46,23 @@ namespace ir {
     return index;
   }
 
-  std::ostream &Function::outImmediate(std::ostream &out, ImmediateIndex index) const {
+  void Function::outImmediate(std::ostream &out, ImmediateIndex index) const {
     GBE_ASSERT(index < immediates.size());
     const Immediate imm = immediates[index];
     switch (imm.type) {
-      case TYPE_BOOL: return out << !!imm.data.u8;
-      case TYPE_S8: return out << imm.data.s8;
-      case TYPE_U8: return out << imm.data.u8;
-      case TYPE_S16: return out << imm.data.s16;
-      case TYPE_U16: return out << imm.data.u16;
-      case TYPE_S32: return out << imm.data.s32;
-      case TYPE_U32: return out << imm.data.u32;
-      case TYPE_S64: return out << imm.data.s64;
-      case TYPE_U64: return out << imm.data.u64;
-      case TYPE_HALF: return out << "half(" << imm.data.u16 << ")";
-      case TYPE_FLOAT: return out << imm.data.f32;
-      case TYPE_DOUBLE: return out << imm.data.f64;
+      case TYPE_BOOL: out << !!imm.data.u8; break;
+      case TYPE_S8: out << imm.data.s8; break;
+      case TYPE_U8: out << imm.data.u8; break;
+      case TYPE_S16: out << imm.data.s16; break;
+      case TYPE_U16: out << imm.data.u16; break;
+      case TYPE_S32: out << imm.data.s32; break;
+      case TYPE_U32: out << imm.data.u32; break;
+      case TYPE_S64: out << imm.data.s64; break;
+      case TYPE_U64: out << imm.data.u64; break;
+      case TYPE_HALF: out << "half(" << imm.data.u16 << ")"; break;
+      case TYPE_FLOAT: out << imm.data.f32; break;
+      case TYPE_DOUBLE: out << imm.data.f64; break;
     };
-    return out;
   }
 
   std::ostream &operator<< (std::ostream &out, const Function &fn)

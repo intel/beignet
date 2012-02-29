@@ -55,9 +55,6 @@ namespace ir {
   /*! A label is identified with an unsigned short */
   TYPE_SAFE(LabelIndex, uint16_t)
 
-  /*! A value is stored in a per-function vector. This is the index to it */
-  TYPE_SAFE(ImmediateIndex, uint16_t)
-
   /*! Function class contains the register file and the register tuple. Any
    *  information related to the registers may therefore require a function
    */

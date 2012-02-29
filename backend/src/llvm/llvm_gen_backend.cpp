@@ -210,7 +210,6 @@ namespace gbe
     bool writeInstructionCast(const Instruction &I);
 
   private :
-    std::string InterpretASMConstraint(InlineAsm::ConstraintInfo& c);
 
     void lowerIntrinsics(Function &F);
     /// Prints the definition of the intrinsic function F. Supports the 
@@ -236,6 +235,8 @@ namespace gbe
     INLINE void newRegister(const Value *value);
     /*! Return a valid register from an operand (can use LOADI to make one) */
     INLINE ir::Register getRegister(Value *value);
+    /*! Return a valid register for a constant value */
+    INLINE ir::Register getConstantRegister(Constant *CPV);
     /*! Insert a new label index when this is a scalar value */
     INLINE void newLabelIndex(const Value *value);
     /*! int / float / double / bool are scalars */
@@ -1708,12 +1709,59 @@ static std::string CBEMangle(const std::string &S) {
     }
   }
 
+  ir::Register GenWriter::getConstantRegister(Constant *CPV) {
+    if (dyn_cast<ConstantExpr>(CPV))
+      GBE_ASSERTM(false, "Unsupported constant expression");
+    else if (isa<UndefValue>(CPV) && CPV->getType()->isSingleValueType())
+      GBE_ASSERTM(false, "Unsupported constant expression");
+    if (ConstantInt *CI = dyn_cast<ConstantInt>(CPV)) {
+      Type* Ty = CI->getType();
+      if (Ty == Type::getInt1Ty(CPV->getContext())) {
+        const bool b = CI->getZExtValue();
+        return ctx.immReg(b);
+      } else if (Ty == Type::getInt8Ty(CPV->getContext())) {
+        const uint8_t u8 = CI->getZExtValue();
+        return ctx.immReg(u8);
+      } else if (Ty == Type::getInt16Ty(CPV->getContext())) {
+        const uint16_t u16 = CI->getZExtValue();
+        return ctx.immReg(u16);
+      } else if (Ty == Type::getInt32Ty(CPV->getContext())) {
+        const uint32_t u32 = CI->getZExtValue();
+        return ctx.immReg(u32);
+      } else if (Ty == Type::getInt64Ty(CPV->getContext())) {
+        const uint64_t u64 = CI->getZExtValue();
+        return ctx.immReg(u64);
+      } else {
+        GBE_ASSERTM(false, "Unsupported integer size");
+        return ctx.immReg(uint64_t(0));
+      }
+    }
+
+    switch (CPV->getType()->getTypeID()) {
+    case Type::FloatTyID:
+    case Type::DoubleTyID:
+    {
+      ConstantFP *FPC = cast<ConstantFP>(CPV);
+      if (FPC->getType() == Type::getFloatTy(CPV->getContext())) {
+        const float f32 = FPC->getValueAPF().convertToFloat();
+        return ctx.immReg(f32);
+      } else {
+        const double f64 = FPC->getValueAPF().convertToDouble();
+        return ctx.immReg(f64);
+      }
+    }
+    break;
+    default:
+      GBE_ASSERTM(false, "Unsupported constant type");
+    }
+    return ctx.immReg(uint64_t(0));
+  }
+
   ir::Register GenWriter::getRegister(Value *value) {
     Constant *CPV = dyn_cast<Constant>(value);
-    if (CPV && !isa<GlobalValue>(CPV)) {
-      GBE_ASSERT(0);
-      // printConstant(CPV, Static);
-    } else {
+    if (CPV && !isa<GlobalValue>(CPV))
+      return getConstantRegister(CPV);
+    else {
       GBE_ASSERT(this->registerMap.find(value) != this->registerMap.end());
       return this->registerMap[value];
     }
@@ -2432,7 +2480,9 @@ static std::string CBEMangle(const std::string &S) {
     }
   }
 
-  void GenWriter::visitCallInst(CallInst &I) {
+  void GenWriter::visitCallInst(CallInst &I)
+  {
+#if 0
     if (isa<InlineAsm>(I.getCalledValue()))
       return visitInlineAsm(I);
 
@@ -2536,185 +2586,15 @@ static std::string CBEMangle(const std::string &S) {
       PrintedArg = true;
     }
     Out << ')';
+#endif
   }
 
   /// visitBuiltinCall - Handle the call to the specified builtin.  Returns true
   /// if the entire call is handled, return false if it wasn't handled, and
   /// optionally set 'WroteCallee' if the callee has already been printed out.
   bool GenWriter::visitBuiltinCall(CallInst &I, Intrinsic::ID ID, bool &WroteCallee) {
-    switch (ID) {
-    default: {
-      // If this is an intrinsic that directly corresponds to a GCC
-      // builtin, we emit it here.
-      const char *BuiltinName = "";
-      Function *F = I.getCalledFunction();
-#define GET_GCC_BUILTIN_NAME
-#include "llvm/Intrinsics.gen"
-#undef GET_GCC_BUILTIN_NAME
-      assert(BuiltinName[0] && "Unknown LLVM intrinsic!");
-
-      Out << BuiltinName;
-      WroteCallee = true;
-      return false;
-    }
-    case Intrinsic::vastart:
-      Out << "0; ";
-
-      Out << "va_start(*(va_list*)";
-      writeOperand(I.getArgOperand(0));
-      Out << ", ";
-      // Output the last argument to the enclosing function.
-      if (I.getParent()->getParent()->arg_empty())
-        Out << "vararg_dummy_arg";
-      else
-        writeOperand(--I.getParent()->getParent()->arg_end());
-      Out << ')';
-      return true;
-    case Intrinsic::vaend:
-      if (!isa<ConstantPointerNull>(I.getArgOperand(0))) {
-        Out << "0; va_end(*(va_list*)";
-        writeOperand(I.getArgOperand(0));
-        Out << ')';
-      } else {
-        Out << "va_end(*(va_list*)0)";
-      }
-      return true;
-    case Intrinsic::vacopy:
-      Out << "0; ";
-      Out << "va_copy(*(va_list*)";
-      writeOperand(I.getArgOperand(0));
-      Out << ", *(va_list*)";
-      writeOperand(I.getArgOperand(1));
-      Out << ')';
-      return true;
-    case Intrinsic::returnaddress:
-      Out << "__builtin_return_address(";
-      writeOperand(I.getArgOperand(0));
-      Out << ')';
-      return true;
-    case Intrinsic::frameaddress:
-      Out << "__builtin_frame_address(";
-      writeOperand(I.getArgOperand(0));
-      Out << ')';
-      return true;
-    case Intrinsic::powi:
-      Out << "__builtin_powi(";
-      writeOperand(I.getArgOperand(0));
-      Out << ", ";
-      writeOperand(I.getArgOperand(1));
-      Out << ')';
-      return true;
-    case Intrinsic::setjmp:
-      Out << "setjmp(*(jmp_buf*)";
-      writeOperand(I.getArgOperand(0));
-      Out << ')';
-      return true;
-    case Intrinsic::longjmp:
-      Out << "longjmp(*(jmp_buf*)";
-      writeOperand(I.getArgOperand(0));
-      Out << ", ";
-      writeOperand(I.getArgOperand(1));
-      Out << ')';
-      return true;
-    case Intrinsic::prefetch:
-      Out << "LLVM_PREFETCH((const void *)";
-      writeOperand(I.getArgOperand(0));
-      Out << ", ";
-      writeOperand(I.getArgOperand(1));
-      Out << ", ";
-      writeOperand(I.getArgOperand(2));
-      Out << ")";
-      return true;
-    case Intrinsic::stacksave:
-      // Emit this as: Val = 0; *((void**)&Val) = __builtin_stack_save()
-      // to work around GCC bugs (see PR1809).
-      Out << "0; *((void**)&" << GetValueName(&I)
-          << ") = __builtin_stack_save()";
-      return true;
-    case Intrinsic::x86_sse_cmp_ss:
-    case Intrinsic::x86_sse_cmp_ps:
-    case Intrinsic::x86_sse2_cmp_sd:
-    case Intrinsic::x86_sse2_cmp_pd:
-      Out << '(';
-      printType(Out, I.getType());
-      Out << ')';
-      // Multiple GCC builtins multiplex onto this intrinsic.
-      switch (cast<ConstantInt>(I.getArgOperand(2))->getZExtValue()) {
-      default: llvm_unreachable("Invalid llvm.x86.sse.cmp!");
-      case 0: Out << "__builtin_ia32_cmpeq"; break;
-      case 1: Out << "__builtin_ia32_cmplt"; break;
-      case 2: Out << "__builtin_ia32_cmple"; break;
-      case 3: Out << "__builtin_ia32_cmpunord"; break;
-      case 4: Out << "__builtin_ia32_cmpneq"; break;
-      case 5: Out << "__builtin_ia32_cmpnlt"; break;
-      case 6: Out << "__builtin_ia32_cmpnle"; break;
-      case 7: Out << "__builtin_ia32_cmpord"; break;
-      }
-      if (ID == Intrinsic::x86_sse_cmp_ps || ID == Intrinsic::x86_sse2_cmp_pd)
-        Out << 'p';
-      else
-        Out << 's';
-      if (ID == Intrinsic::x86_sse_cmp_ss || ID == Intrinsic::x86_sse_cmp_ps)
-        Out << 's';
-      else
-        Out << 'd';
-
-      Out << "(";
-      writeOperand(I.getArgOperand(0));
-      Out << ", ";
-      writeOperand(I.getArgOperand(1));
-      Out << ")";
-      return true;
-    case Intrinsic::ppc_altivec_lvsl:
-      Out << '(';
-      printType(Out, I.getType());
-      Out << ')';
-      Out << "__builtin_altivec_lvsl(0, (void*)";
-      writeOperand(I.getArgOperand(0));
-      Out << ")";
-      return true;
-    case Intrinsic::uadd_with_overflow:
-    case Intrinsic::sadd_with_overflow:
-      Out << GetValueName(I.getCalledFunction()) << "(";
-      writeOperand(I.getArgOperand(0));
-      Out << ", ";
-      writeOperand(I.getArgOperand(1));
-      Out << ")";
-      return true;
-    }
-  }
-
-  //This converts the llvm constraint string to something gcc is expecting.
-  //TODO: work out platform independent constraints and factor those out
-  //      of the per target tables
-  //      handle multiple constraint codes
-  std::string GenWriter::InterpretASMConstraint(InlineAsm::ConstraintInfo& c) {
-    assert(c.Codes.size() == 1 && "Too many asm constraint codes to handle");
-
-    // Grab the translation table from MCAsmInfo if it exists.
-    const MCAsmInfo *TargetAsm;
-    std::string Triple = TheModule->getTargetTriple();
-    if (Triple.empty())
-      Triple = llvm::sys::getHostTriple();
-
-    std::string E;
-    if (const Target *Match = TargetRegistry::lookupTarget(Triple, E))
-      TargetAsm = Match->createMCAsmInfo(Triple);
-    else
-      return c.Codes[0];
-
-    const char *const *table = TargetAsm->getAsmCBE();
-
-    // Search the translation table if it exists.
-    for (int i = 0; table && table[i]; i += 2)
-      if (c.Codes[0] == table[i]) {
-        delete TargetAsm;
-        return table[i+1];
-      }
-
-    // Default is identity.
-    delete TargetAsm;
-    return c.Codes[0];
+    GBE_ASSERTM(false, "builtin call is not supported");
+    return false;
   }
 
   void GenWriter::visitAllocaInst(AllocaInst &I) {
