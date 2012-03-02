@@ -37,8 +37,8 @@ namespace ir {
    *  use the same pointer size as the unit they belong to
    */
   enum PointerSize {
-    POINTER_32_BITS = 0,
-    POINTER_64_BITS = 1
+    POINTER_32_BITS = 32,
+    POINTER_64_BITS = 64
   };
 
   /*! Complete unit of compilation. It contains a set of functions and a set of

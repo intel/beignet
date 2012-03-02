@@ -17,34 +17,24 @@
  * Author: Benjamin Segovia <benjamin.segovia@intel.com>
  */
 
-//===-- llc.cpp - Implement the LLVM Native Code Generator ----------------===//
-//
-//                     The LLVM Compiler Infrastructure
-//
-// This file is distributed under the University of Illinois Open Source
-// License. See LICENSE.TXT for details.
-//
-//===----------------------------------------------------------------------===//
-//
-// This is the llc code generator driver. It provides a convenient
-// command-line interface for generating native assembly-language code
-// or C code, given LLVM bitcode.
-//
-//===----------------------------------------------------------------------===//
+/**
+ * \file llvm_to_gen.cpp
+ * \author Benjamin Segovia <benjamin.segovia@intel.com>
+ */
 
 #include "llvm/LLVMContext.h"
 #include "llvm/Module.h"
 #include "llvm/PassManager.h"
 #include "llvm/Pass.h"
 #include "llvm/Support/IRReader.h"
+#include "llvm/Transforms/Scalar.h"
 
+#include "llvm/llvm_gen_backend.hpp"
 #include "llvm/llvm_to_gen.hpp"
 #include "sys/platform.hpp"
 
 namespace gbe
 {
-  llvm::FunctionPass *createGenPass(ir::Unit &unit);
-
   void llvmToGen(ir::Unit &unit, const char *fileName)
   {
     using namespace llvm;
@@ -59,6 +49,12 @@ namespace gbe
     Module &mod = *M.get();
 
     llvm::PassManager passes;
+    passes.add(createRemoveGEPPass(unit));
+    passes.add(createConstantPropagationPass()); 
+    passes.add(createDeadInstEliminationPass()); // remove simplified instructions
+    passes.add(createLowerSwitchPass());
+    passes.add(createPromoteMemoryToRegisterPass());
+    passes.add(createGVNPass());                  // Remove redundancies
     passes.add(createGenPass(unit));
     passes.run(mod);
   }

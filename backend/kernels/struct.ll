@@ -12,20 +12,23 @@ entry:
   br label %for.body
 
 for.body:                                         ; preds = %for.body, %entry
-  %i.04 = phi i32 [ 0, %entry ], [ %inc, %for.body ]
-  %arrayidx = getelementptr inbounds [256 x i32] addrspace(4)* @struct_cl.array, i32 0, i32 %i.04
-  store i32 %i.04, i32 addrspace(4)* %arrayidx, align 4, !tbaa !1
-  %inc = add nsw i32 %i.04, 1
+  %i.05 = phi i32 [ 0, %entry ], [ %inc, %for.body ]
+  %arrayidx = getelementptr inbounds [256 x i32] addrspace(4)* @struct_cl.array, i32 0, i32 %i.05
+  store i32 %i.05, i32 addrspace(4)* %arrayidx, align 4, !tbaa !1
+  %inc = add nsw i32 %i.05, 1
   %exitcond = icmp eq i32 %inc, 256
   br i1 %exitcond, label %for.end, label %for.body
 
 for.end:                                          ; preds = %for.body
+  %a = getelementptr inbounds %struct.my_struct* %s, i32 0, i32 0
+  %0 = load i32* %a, align 4, !tbaa !1
   %arrayidx1 = getelementptr inbounds [256 x i32] addrspace(4)* @struct_cl.array, i32 0, i32 %x
-  %0 = load i32 addrspace(4)* %arrayidx1, align 4, !tbaa !1
+  %1 = load i32 addrspace(4)* %arrayidx1, align 4, !tbaa !1
   %arrayidx2 = getelementptr inbounds [4 x i32] addrspace(1)* @g, i32 0, i32 %x
-  %1 = load i32 addrspace(1)* %arrayidx2, align 4, !tbaa !1
-  %add = add nsw i32 %1, %0
-  store i32 %add, i32* %mem, align 4, !tbaa !1
+  %2 = load i32 addrspace(1)* %arrayidx2, align 4, !tbaa !1
+  %add = add i32 %1, %0
+  %add3 = add i32 %add, %2
+  store i32 %add3, i32* %mem, align 4, !tbaa !1
   ret void
 }
 

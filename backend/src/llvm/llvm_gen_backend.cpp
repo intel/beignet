@@ -59,6 +59,7 @@
 #include "llvm/Support/SourceMgr.h"
 #include "llvm/Config/config.h"
 
+#include "llvm/llvm_gen_backend.hpp"
 #include "ir/context.hpp"
 #include "ir/unit.hpp"
 #include "sys/map.hpp"
@@ -146,9 +147,6 @@ namespace gbe
 
       LI = &getAnalysis<LoopInfo>();
 
-      // Get rid of intrinsics we can't handle.
-      lowerIntrinsics(F);
-
       // Output all floating point constants that cannot be printed accurately.
       printFloatingPointConstants(F);
 
@@ -211,7 +209,6 @@ namespace gbe
 
   private :
 
-    void lowerIntrinsics(Function &F);
     /// Prints the definition of the intrinsic function F. Supports the 
     /// intrinsics which need to be explicitly defined in the CBackend.
     void printIntrinsicDefinition(const Function &F, raw_ostream &Out);
@@ -232,7 +229,7 @@ namespace gbe
     /*! Get the register family from the given type */
     INLINE ir::RegisterData::Family getArgumentFamily(const Type*) const;
     /*! Insert a new register when this is a scalar value */
-    INLINE void newRegister(const Value *value);
+    INLINE ir::Register newRegister(const Value *value);
     /*! Return a valid register from an operand (can use LOADI to make one) */
     INLINE ir::Register getRegister(Value *value);
     /*! Return a valid register for a constant value */
@@ -318,41 +315,42 @@ namespace gbe
     // Instruction visitation functions
     friend class InstVisitor<GenWriter>;
 
-    void visitReturnInst(ReturnInst &I);
-    void visitBranchInst(BranchInst &I);
-
-    void visitVAArgInst(VAArgInst &I) {GBE_ASSERTM(false, "Not supported");}
-    void visitSwitchInst(SwitchInst &I) {GBE_ASSERTM(false, "Not supported");}
-    void visitInvokeInst(InvokeInst &I) {GBE_ASSERTM(false, "Not supported");}
-    void visitUnwindInst(UnwindInst &I) {GBE_ASSERTM(false, "Not supported");}
-    void visitResumeInst(ResumeInst &I) {GBE_ASSERTM(false, "Not supported");}
-    void visitInlineAsm(CallInst &I) {GBE_ASSERTM(false, "Not supported");}
-    void visitIndirectBrInst(IndirectBrInst &I) {GBE_ASSERTM(false, "Not supported");}
-    void visitUnreachableInst(UnreachableInst &I) {GBE_ASSERTM(false, "Not supported");}
-
-
-    void visitPHINode(PHINode &I);
+    // Currently supported instructions
     void visitBinaryOperator(Instruction &I);
-    void visitICmpInst(ICmpInst &I);
-    void visitFCmpInst(FCmpInst &I);
-
-    void visitCastInst (CastInst &I);
-    void visitSelectInst(SelectInst &I);
+    void visitReturnInst(ReturnInst &I);
+    void visitLoadInst(LoadInst &I);
+    void visitStoreInst(StoreInst &I);
     void visitCallInst (CallInst &I);
     bool visitBuiltinCall(CallInst &I, Intrinsic::ID ID, bool &WroteCallee);
 
+    // Must be implemented later
+    void visitInsertElementInst(InsertElementInst &I) {NOT_SUPPORTED;}
+    void visitExtractElementInst(ExtractElementInst &I) {NOT_SUPPORTED;}
+    void visitShuffleVectorInst(ShuffleVectorInst &SVI) {NOT_SUPPORTED;}
+    void visitInsertValueInst(InsertValueInst &I) {NOT_SUPPORTED;}
+    void visitExtractValueInst(ExtractValueInst &I) {NOT_SUPPORTED;}
+    void visitPHINode(PHINode &I) {NOT_SUPPORTED;}
+    void visitBranchInst(BranchInst &I) {NOT_SUPPORTED;}
+    void visitICmpInst(ICmpInst &I) {NOT_SUPPORTED;}
+    void visitFCmpInst(FCmpInst &I) {NOT_SUPPORTED;}
+    void visitCastInst (CastInst &I);
+    void visitSelectInst(SelectInst &I) {NOT_SUPPORTED;}
+
+    // These instructions are not supported at all
+    void visitVAArgInst(VAArgInst &I) {NOT_SUPPORTED;}
+    void visitSwitchInst(SwitchInst &I) {NOT_SUPPORTED;}
+    void visitInvokeInst(InvokeInst &I) {NOT_SUPPORTED;}
+    void visitUnwindInst(UnwindInst &I) {NOT_SUPPORTED;}
+    void visitResumeInst(ResumeInst &I) {NOT_SUPPORTED;}
+    void visitInlineAsm(CallInst &I) {NOT_SUPPORTED;}
+    void visitIndirectBrInst(IndirectBrInst &I) {NOT_SUPPORTED;}
+    void visitUnreachableInst(UnreachableInst &I) {NOT_SUPPORTED;}
+    void visitGetElementPtrInst(GetElementPtrInst &I) {NOT_SUPPORTED;}
+
+
     void visitAllocaInst(AllocaInst &I);
     template <bool isLoad, typename T> void visitLoadOrStore(T &I);
-    void visitLoadInst  (LoadInst   &I);
-    void visitStoreInst (StoreInst  &I);
-    void visitGetElementPtrInst(GetElementPtrInst &I);
 
-    void visitInsertElementInst(InsertElementInst &I);
-    void visitExtractElementInst(ExtractElementInst &I);
-    void visitShuffleVectorInst(ShuffleVectorInst &SVI);
-
-    void visitInsertValueInst(InsertValueInst &I);
-    void visitExtractValueInst(ExtractValueInst &I);
 
     void visitInstruction(Instruction &I) {
 #ifndef NDEBUG
@@ -370,8 +368,6 @@ namespace gbe
                                     BasicBlock *Successor, unsigned Indent);
     void printBranchToBlock(BasicBlock *CurBlock, BasicBlock *SuccBlock,
                             unsigned Indent);
-    void printGEPExpression(Value *Ptr, gep_type_iterator I,
-                            gep_type_iterator E, bool Static);
 
     std::string GetValueName(const Value *Operand);
   };
@@ -815,8 +811,8 @@ static std::string CBEMangle(const std::string &S) {
 
       case Instruction::GetElementPtr:
         Out << "(";
-        printGEPExpression(CE->getOperand(0), gep_type_begin(CPV),
-                           gep_type_end(CPV), Static);
+        //printGEPExpression(CE->getOperand(0), gep_type_begin(CPV),
+         //                  gep_type_end(CPV), Static);
         Out << ")";
         return;
       case Instruction::Select:
@@ -1699,14 +1695,16 @@ static std::string CBEMangle(const std::string &S) {
     return ir::RegisterData::BOOL;
   }
 
-  void GenWriter::newRegister(const Value *value) {
-    if (registerMap.find(value) == registerMap.end()) {
+  ir::Register GenWriter::newRegister(const Value *value) {
+    auto it = registerMap.find(value);
+    if (it == registerMap.end()) {
       const Type *type = value->getType();
       const ir::RegisterData::Family family = getArgumentFamily(type);
       const ir::Register reg = ctx.reg(family);
-      ctx.input(reg);
       registerMap[value] = reg;
-    }
+      return reg;
+    } else
+      return it->second;
   }
 
   ir::Register GenWriter::getConstantRegister(Constant *CPV) {
@@ -1804,7 +1802,10 @@ static std::string CBEMangle(const std::string &S) {
       }
 
       // Insert a new register if we need to
-      for (; I != E; ++I) this->newRegister(I);
+      for (; I != E; ++I) {
+        const ir::Register reg = this->newRegister(I);
+        ctx.input(reg);
+      }
     }
 
     // When returning a structure, first input register is the pointer to the
@@ -2037,6 +2038,7 @@ static std::string CBEMangle(const std::string &S) {
 #endif
   }
 
+
   bool GenWriter::isGotoCodeNecessary(BasicBlock *From, BasicBlock *To) {
     /// FIXME: This should be reenabled, but loop reordering safe!!
     return true;
@@ -2050,7 +2052,7 @@ static std::string CBEMangle(const std::string &S) {
       return true;
     return false;
   }
-
+#if 0
   void GenWriter::printPHICopiesForSuccessor (BasicBlock *CurBlock,
                                             BasicBlock *Successor,
                                             unsigned Indent) {
@@ -2079,7 +2081,8 @@ static std::string CBEMangle(const std::string &S) {
   // Branch instruction printing - Avoid printing out a branch to a basic block
   // that immediately succeeds the current one.
   //
-  void GenWriter::visitBranchInst(BranchInst &I) {
+  void GenWriter::visitBranchInst(BranchInst &I)
+  {
 
     if (I.isConditional()) {
       if (isGotoCodeNecessary(I.getParent(), I.getSuccessor(0))) {
@@ -2116,11 +2119,13 @@ static std::string CBEMangle(const std::string &S) {
   // PHI nodes get copied into temporary values at the end of predecessor basic
   // blocks.  We now need to copy these temporary values into the REAL value for
   // the PHI.
+
   void GenWriter::visitPHINode(PHINode &I) {
+    NOT_SUPPORTED;
     writeOperand(&I);
     Out << "__PHI_TEMPORARY";
   }
-
+#endif
 
   void GenWriter::visitBinaryOperator(Instruction &I)
   {
@@ -2238,6 +2243,7 @@ static std::string CBEMangle(const std::string &S) {
 #endif
   }
 
+#if 0
   void GenWriter::visitICmpInst(ICmpInst &I) {
     // We must cast the results of icmp which might be promoted.
     bool needsCast = false;
@@ -2315,7 +2321,8 @@ static std::string CBEMangle(const std::string &S) {
     writeOperand(I.getOperand(1));
     Out << ")";
   }
-
+#endif
+#if 0
   static const char * getFloatBitCastField(Type *Ty) {
     switch (Ty->getTypeID()) {
       default: llvm_unreachable("Invalid Type");
@@ -2330,8 +2337,22 @@ static std::string CBEMangle(const std::string &S) {
       }
     }
   }
+#endif
 
+#if 1
   void GenWriter::visitCastInst(CastInst &I) {
+    if (I.getOpcode() == Instruction::PtrToInt ||
+        I.getOpcode() == Instruction::IntToPtr) {
+      Value *srcValue = &I, *dstValue = I.getOperand(0);
+      Type *dstType = dstValue->getType();
+      Type *srcType = srcValue->getType();
+      const ir::Unit &unit = ctx.getUnit();
+      GBE_ASSERT(getTypeByteSize(unit, dstType) == getTypeByteSize(unit, srcType));
+      GBE_ASSERT(registerMap.find(dstValue) != registerMap.end());
+      registerMap[dstValue] = registerMap[srcValue];
+    } else
+      NOT_SUPPORTED;
+#if 0
     Type *DstTy = I.getType();
     Type *SrcTy = I.getOperand(0)->getType();
     if (isFPIntBitCast(I)) {
@@ -2365,8 +2386,11 @@ static std::string CBEMangle(const std::string &S) {
       Out << "&1u";
     }
     Out << ')';
+#endif
   }
+#endif
 
+#if 0
   void GenWriter::visitSelectInst(SelectInst &I) {
     Out << "((";
     writeOperand(I.getCondition());
@@ -2376,6 +2400,7 @@ static std::string CBEMangle(const std::string &S) {
     writeOperand(I.getFalseValue());
     Out << "))";
   }
+#endif
 
 #ifndef NDEBUG
   static bool isSupportedIntegerSize(IntegerType &T) {
@@ -2402,88 +2427,39 @@ static std::string CBEMangle(const std::string &S) {
 #endif
   }
 
-  void GenWriter::lowerIntrinsics(Function &F) {
-    // This is used to keep track of intrinsics that get generated to a lowered
-    // function. We must generate the prototypes before the function body which
-    // will only be expanded on first use (by the loop below).
-    std::vector<Function*> prototypesToGen;
-
-    // Examine all the instructions in this function to find the intrinsics that
-    // need to be lowered.
-    for (Function::iterator BB = F.begin(), EE = F.end(); BB != EE; ++BB)
-      for (BasicBlock::iterator I = BB->begin(), E = BB->end(); I != E; )
-        if (CallInst *CI = dyn_cast<CallInst>(I++))
-          if (Function *F = CI->getCalledFunction())
-            switch (F->getIntrinsicID()) {
-            case Intrinsic::not_intrinsic:
-            case Intrinsic::vastart:
-            case Intrinsic::vacopy:
-            case Intrinsic::vaend:
-            case Intrinsic::returnaddress:
-            case Intrinsic::frameaddress:
-            case Intrinsic::setjmp:
-            case Intrinsic::longjmp:
-            case Intrinsic::prefetch:
-            case Intrinsic::powi:
-            case Intrinsic::x86_sse_cmp_ss:
-            case Intrinsic::x86_sse_cmp_ps:
-            case Intrinsic::x86_sse2_cmp_sd:
-            case Intrinsic::x86_sse2_cmp_pd:
-            case Intrinsic::ppc_altivec_lvsl:
-            case Intrinsic::uadd_with_overflow:
-            case Intrinsic::sadd_with_overflow:
-                // We directly implement these intrinsics
-              break;
-            default:
-              // If this is an intrinsic that directly corresponds to a GCC
-              // builtin, we handle it.
-              const char *BuiltinName = "";
-#define GET_GCC_BUILTIN_NAME
-#include "llvm/Intrinsics.gen"
-#undef GET_GCC_BUILTIN_NAME
-              // If we handle it, don't lower it.
-              if (BuiltinName[0]) break;
-
-              // All other intrinsic calls we must lower.
-              Instruction *Before = 0;
-              if (CI != &BB->front())
-                Before = prior(BasicBlock::iterator(CI));
-
-              IL->LowerIntrinsicCall(CI);
-              if (Before) {        // Move iterator to instruction after call
-                I = Before; ++I;
-              } else {
-                I = BB->begin();
-              }
-              // If the intrinsic got lowered to another call, and that call has
-              // a definition then we need to make sure its prototype is emitted
-              // before any calls to it.
-              if (CallInst *Call = dyn_cast<CallInst>(I))
-                if (Function *NewF = Call->getCalledFunction())
-                  if (!NewF->isDeclaration())
-                    prototypesToGen.push_back(NewF);
-
-              break;
-            }
-
-    // We may have collected some prototypes to emit in the loop above.
-    // Emit them now, before the function that uses them is emitted. But,
-    // be careful not to emit them twice.
-    std::vector<Function*>::iterator I = prototypesToGen.begin();
-    std::vector<Function*>::iterator E = prototypesToGen.end();
-    for ( ; I != E; ++I) {
-      if (intrinsicPrototypesAlreadyGenerated.insert(*I).second) {
-        Out << '\n';
-        emitFunctionSignature(*I, true);
-        Out << ";\n";
-      }
-    }
-  }
-
   void GenWriter::visitCallInst(CallInst &I)
   {
+    Value *dst = &I;
+    Value *Callee = I.getCalledValue();
+    GBE_ASSERT(ctx.getFunction().getProfile() == ir::PROFILE_OCL);
+    GBE_ASSERT(isa<InlineAsm>(I.getCalledValue()) == false);
+    GBE_ASSERT(I.hasStructRetAttr() == false);
+#if GBE_DEBUG
+    if (Function *F = I.getCalledFunction())
+      GBE_ASSERT(F->getIntrinsicID() == 0);
+#endif /* GBE_DEBUG */
+    // With OCL there is no side effect for any called functions. So do nothing
+    // when there is no returned value
+    if (I.getType() == Type::getVoidTy(I.getContext()))
+      return;
+
+    // Get the name of the called function and handle it. We should use a hash
+    // map later
+    const std::string fnName = Callee->getName();
+    if (fnName == "__gen_ocl_get_global_id0")
+      this->registerMap[dst] = ir::ocl::gid0;
+    else if (fnName == "__gen_ocl_get_global_id1")
+      this->registerMap[dst] = ir::ocl::gid1;
+    else if (fnName == "__gen_ocl_get_global_id2")
+      this->registerMap[dst] = ir::ocl::gid2;
+    else if (fnName == "__gen_ocl_get_local_id0")
+      this->registerMap[dst] = ir::ocl::lid0;
+    else if (fnName == "__gen_ocl_get_local_id1")
+      this->registerMap[dst] = ir::ocl::lid1;
+    else if (fnName == "__gen_ocl_get_local_id2")
+      this->registerMap[dst] = ir::ocl::lid2;
+
 #if 0
-    if (isa<InlineAsm>(I.getCalledValue()))
       return visitInlineAsm(I);
 
     bool WroteCallee = false;
@@ -2495,7 +2471,7 @@ static std::string CBEMangle(const std::string &S) {
           return;
 
     Value *Callee = I.getCalledValue();
-
+    Out << (Callee->getName());
     PointerType  *PTy   = cast<PointerType>(Callee->getType());
     FunctionType *FTy   = cast<FunctionType>(PTy->getElementType());
 
@@ -2610,91 +2586,6 @@ static std::string CBEMangle(const std::string &S) {
     Out << ')';
   }
 
-  void GenWriter::printGEPExpression(Value *Ptr, gep_type_iterator I,
-                                     gep_type_iterator E, bool Static) {
-
-    // If there are no indices, just print out the pointer.
-    if (I == E) {
-      writeOperand(Ptr);
-      return;
-    }
-
-    // Find out if the last index is into a vector.  If so, we have to print this
-    // specially.  Since vectors can't have elements of indexable type, only the
-    // last index could possibly be of a vector element.
-    VectorType *LastIndexIsVector = 0;
-    {
-      for (gep_type_iterator TmpI = I; TmpI != E; ++TmpI)
-        LastIndexIsVector = dyn_cast<VectorType>(*TmpI);
-    }
-
-    Out << "(";
-
-    // If the last index is into a vector, we can't print it as &a[i][j] because
-    // we can't index into a vector with j in GCC.  Instead, emit this as
-    // (((float*)&a[i])+j)
-    if (LastIndexIsVector) {
-      Out << "((";
-      printType(Out, PointerType::getUnqual(LastIndexIsVector->getElementType()));
-      Out << ")(";
-    }
-
-    Out << '&';
-
-    // If the first index is 0 (very typical) we can do a number of
-    // simplifications to clean up the code.
-    Value *FirstOp = I.getOperand();
-    if (!isa<Constant>(FirstOp) || !cast<Constant>(FirstOp)->isNullValue()) {
-      // First index isn't simple, print it the hard way.
-      writeOperand(Ptr);
-    } else {
-      ++I;  // Skip the zero index.
-
-      // Okay, emit the first operand. If Ptr is something that is already address
-      // exposed, like a global, avoid emitting (&foo)[0], just emit foo instead.
-      if (isAddressExposed(Ptr)) {
-        writeOperandInternal(Ptr, Static);
-      } else if (I != E && (*I)->isStructTy()) {
-        // If we didn't already emit the first operand, see if we can print it as
-        // P->f instead of "P[0].f"
-        writeOperand(Ptr);
-        Out << "->field" << cast<ConstantInt>(I.getOperand())->getZExtValue();
-        ++I;  // eat the struct index as well.
-      } else {
-        // Instead of emitting P[0][1], emit (*P)[1], which is more idiomatic.
-        Out << "(*";
-        writeOperand(Ptr);
-        Out << ")";
-      }
-    }
-
-    for (; I != E; ++I) {
-      if ((*I)->isStructTy()) {
-        Out << ".field" << cast<ConstantInt>(I.getOperand())->getZExtValue();
-      } else if ((*I)->isArrayTy()) {
-        Out << ".array[";
-        writeOperandWithCast(I.getOperand(), Instruction::GetElementPtr);
-        Out << ']';
-      } else if (!(*I)->isVectorTy()) {
-        Out << '[';
-        writeOperandWithCast(I.getOperand(), Instruction::GetElementPtr);
-        Out << ']';
-      } else {
-        // If the last index is into a vector, then print it out as "+j)".  This
-        // works with the 'LastIndexIsVector' code above.
-        if (isa<Constant>(I.getOperand()) &&
-            cast<Constant>(I.getOperand())->isNullValue()) {
-          Out << "))";  // avoid "+0".
-        } else {
-          Out << ")+(";
-          writeOperandWithCast(I.getOperand(), Instruction::GetElementPtr);
-          Out << "))";
-        }
-      }
-    }
-    Out << ")";
-  }
-
   static INLINE ir::MemorySpace addressSpaceLLVMToGen(unsigned llvmMemSpace) {
     switch (llvmMemSpace) {
       case 0: return ir::MEM_GLOBAL;
@@ -2738,11 +2629,7 @@ static std::string CBEMangle(const std::string &S) {
     this->visitLoadOrStore<false>(I);
   }
 
-  void GenWriter::visitGetElementPtrInst(GetElementPtrInst &I) {
-    printGEPExpression(I.getPointerOperand(), gep_type_begin(I),
-                       gep_type_end(I), false);
-  }
-
+#if 0
   void GenWriter::visitInsertElementInst(InsertElementInst &I) {
     Type *EltTy = I.getType()->getElementType();
     writeOperand(I.getOperand(0));
@@ -2782,7 +2669,8 @@ static std::string CBEMangle(const std::string &S) {
       } else {
         Value *Op = SVI.getOperand((unsigned)SrcVal >= NumElts);
         if (isa<Instruction>(Op)) {
-          // Do an extractelement of this value from the appropriate input.
+          // Do an extractelement of this value from the appropriate i. So do
+          // nothing when there is no returned valuenput.
           Out << "((";
           printType(Out, PointerType::getUnqual(EltTy));
           Out << ")(&" << GetValueName(Op)
@@ -2841,6 +2729,7 @@ static std::string CBEMangle(const std::string &S) {
     }
     Out << ")";
   }
+#endif
 
   llvm::FunctionPass *createGenPass(ir::Unit &unit) {
     return new GenWriter(unit);

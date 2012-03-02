@@ -131,8 +131,9 @@ typedef union {
 double fmod(double, double);
 float fmodf(float, float);
 long double fmodl(long double, long double);
-void test_global_id(unsigned int *llvm_cbe_dst);
-unsigned int __gen_get_global_id0(void);
+void test_global_id(unsigned int *llvm_cbe_dst, unsigned int *llvm_cbe_p);
+unsigned int __gen_ocl_get_global_id0(void);
+unsigned int __gen_ocl_get_local_id0(void);
 void abort(void);
 
 
@@ -152,11 +153,14 @@ static inline int llvm_fcmp_ogt(double X, double Y) { return X >  Y ; }
 static inline int llvm_fcmp_ole(double X, double Y) { return X <= Y ; }
 static inline int llvm_fcmp_oge(double X, double Y) { return X >= Y ; }
 
-void test_global_id(unsigned int *llvm_cbe_dst) {
+void test_global_id(unsigned int *llvm_cbe_dst, unsigned int *llvm_cbe_p) {
   unsigned int llvm_cbe_call_2e_i;
+  unsigned int llvm_cbe_call_2e_i6;
 
-  llvm_cbe_call_2e_i =  /*tail*/ __gen_get_global_id0();
-  *((&llvm_cbe_dst[((signed int )llvm_cbe_call_2e_i)])) = 1u;
+  llvm_cbe_call_2e_i =  /*tail*/ __gen_ocl_get_local_id0();
+  llvm_cbe_call_2e_i6 =  /*tail*/ __gen_ocl_get_global_id0();
+  *((&llvm_cbe_dst[((signed int )llvm_cbe_call_2e_i6)])) = (((signed int )(((signed int )(llvm_cbe_call_2e_i << 16u)) >> ((signed int )16u))));
+  *((&llvm_cbe_p[((signed int )llvm_cbe_call_2e_i6)])) = llvm_cbe_call_2e_i;
   return;
 }
 

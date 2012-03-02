@@ -220,10 +220,12 @@
 #else
 #define GBE_ASSERT(EXPR) do { } while (0)
 #define GBE_ASSERTM(EXPR, MSG) do { } while (0)
-#endif
+#endif /* GBE_DEBUG */
+
+#define NOT_IMPLEMENTED GBE_ASSERTM (false, "Not implemented")
+#define NOT_SUPPORTED GBE_ASSERTM (false, "Not supported")
 
 /*! Fatal error macros */
-#define NOT_IMPLEMENTED FATAL ("Not implemented")
 #define FATAL_IF(COND, MSG)                          \
 do {                                                 \
   if(UNLIKELY(COND)) FATAL(MSG);                     \

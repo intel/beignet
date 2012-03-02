@@ -72,6 +72,8 @@ namespace ir {
     void output(Register reg);
     /*! Get the current processed function */
     Function &getFunction(void);
+    /*! Get the current processed unit */
+    INLINE Unit &getUnit(void) { return unit; }
     /*! Append a new tuple */
     template <typename... Args> INLINE Tuple tuple(Args...args) {
       GBE_ASSERTM(fn != NULL, "No function currently defined");

@@ -10,6 +10,6 @@ __kernel void struct_cl (struct my_struct s, int x, __global int *mem)
   __local int array[256];
   for (int i = 0; i < 256; ++i)
     array[i] = i;
-  mem[0] = array[x] + g[x];
+  mem[0] = s.a + array[x] + g[x];
 }
 
