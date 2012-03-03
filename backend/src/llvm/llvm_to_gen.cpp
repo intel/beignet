@@ -49,8 +49,9 @@ namespace gbe
     Module &mod = *M.get();
 
     llvm::PassManager passes;
+    passes.add(createScalarReplAggregatesPass()); // Break up allocas
     passes.add(createRemoveGEPPass(unit));
-    passes.add(createConstantPropagationPass()); 
+    passes.add(createConstantPropagationPass());
     passes.add(createDeadInstEliminationPass()); // remove simplified instructions
     passes.add(createLowerSwitchPass());
     passes.add(createPromoteMemoryToRegisterPass());

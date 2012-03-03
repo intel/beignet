@@ -361,7 +361,7 @@ namespace ir {
   /*! ge.type dst src0 src1 */
   Instruction GT(Type type, Register dst, Register src0, Register src1);
   /*! cvt.{dstType <- srcType} dst src */
-  Instruction CVT(Type dstType, Type srcType, Register dst, Register src0, Register src1);
+  Instruction CVT(Type dstType, Type srcType, Register dst, Register src);
   /*! bra labelIndex */
   Instruction BRA(LabelIndex labelIndex);
   /*! (pred) bra labelIndex */

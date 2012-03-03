@@ -493,7 +493,7 @@ namespace ir {
     // We can convert anything to anything, but types and families must match
     INLINE bool ConvertInstruction::wellFormed(const Function &fn, std::string &whyNot) const
     {
-      const RegisterData::Family dstFamily = getFamily(srcType);
+      const RegisterData::Family dstFamily = getFamily(dstType);
       const RegisterData::Family srcFamily = getFamily(srcType);
       if (UNLIKELY(checkRegisterData(dstFamily, dst, fn, whyNot) == false))
         return false;
@@ -613,8 +613,7 @@ namespace ir {
       out << "." << this->getDstType()
           << "." << this->getSrcType()
           << " %" << this->getDstIndex(fn, 0)
-          << " %" << this->getSrcIndex(fn, 0)
-          << " %" << this->getSrcIndex(fn, 1);
+          << " %" << this->getSrcIndex(fn, 0);
     }
 
     INLINE void LoadInstruction::out(std::ostream &out, const Function &fn) const {

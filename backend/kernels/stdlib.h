@@ -44,4 +44,22 @@ typedef float float4 __attribute__((ext_vector_type(4)));
 typedef int int2 __attribute__((ext_vector_type(2)));
 typedef int int3 __attribute__((ext_vector_type(3)));
 typedef int int4 __attribute__((ext_vector_type(4)));
+typedef bool bool2 __attribute__((ext_vector_type(2)));
+typedef bool bool3 __attribute__((ext_vector_type(3)));
+typedef bool bool4 __attribute__((ext_vector_type(4)));
+
+#define DECL_SELECT(TYPE)                     \
+__attribute__((overloadable))                 \
+inline TYPE select(bool b, TYPE x, TYPE y) {  \
+  if (b) return x; else return y;             \
+}
+#define DECL_SELECT_ALL(TYPE)   \
+  DECL_SELECT(TYPE)             \
+  DECL_SELECT(TYPE##2)          \
+  DECL_SELECT(TYPE##3)          \
+  DECL_SELECT(TYPE##4)
+DECL_SELECT_ALL(int)
+DECL_SELECT_ALL(float)
+#undef DECL_SELECT_ALL
+#undef DECL_SELECT
 

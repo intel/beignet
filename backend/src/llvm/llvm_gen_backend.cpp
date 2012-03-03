@@ -370,18 +370,16 @@ namespace gbe
     DECL_VISIT_FN(LoadInst, LoadInst);
     DECL_VISIT_FN(StoreInst, StoreInst);
     DECL_VISIT_FN(CallInst, CallInst);
+    DECL_VISIT_FN(ICmpInst, ICmpInst);
+    DECL_VISIT_FN(FCmpInst, FCmpInst);
 #undef DECL_VISIT_FN
 
     // Must be implemented later
     void visitInsertElementInst(InsertElementInst &I) {NOT_SUPPORTED;}
     void visitExtractElementInst(ExtractElementInst &I) {NOT_SUPPORTED;}
     void visitShuffleVectorInst(ShuffleVectorInst &SVI) {NOT_SUPPORTED;}
-    void visitInsertValueInst(InsertValueInst &I) {NOT_SUPPORTED;}
-    void visitExtractValueInst(ExtractValueInst &I) {NOT_SUPPORTED;}
     void visitPHINode(PHINode &I) {NOT_SUPPORTED;}
     void visitBranchInst(BranchInst &I) {NOT_SUPPORTED;}
-    void visitICmpInst(ICmpInst &I) {NOT_SUPPORTED;}
-    void visitFCmpInst(FCmpInst &I) {NOT_SUPPORTED;}
     void visitSelectInst(SelectInst &I) {NOT_SUPPORTED;}
 
     // These instructions are not supported at all
@@ -395,6 +393,8 @@ namespace gbe
     void visitUnreachableInst(UnreachableInst &I) {NOT_SUPPORTED;}
     void visitGetElementPtrInst(GetElementPtrInst &I) {NOT_SUPPORTED;}
     void visitAllocaInst(AllocaInst &I) {NOT_SUPPORTED;}
+    void visitInsertValueInst(InsertValueInst &I) {NOT_SUPPORTED;}
+    void visitExtractValueInst(ExtractValueInst &I) {NOT_SUPPORTED;}
     template <bool isLoad, typename T> void visitLoadOrStore(T &I);
 
     void visitInstruction(Instruction &I) {NOT_SUPPORTED;}
@@ -615,13 +615,10 @@ namespace gbe
     this->newRegister(&I);
   }
 
-  void GenWriter::emitBinaryOperator(Instruction &I) {
-    GBE_ASSERT(I.getType()->isPointerTy() == false);
-
-    // Get the element type for a vector
+  static ir::Type
+  getVectorInfo(const ir::Context &ctx, Type *llvmType, Value *value, uint32_t &elemNum)
+  {
     ir::Type type;
-    uint32_t elemNum;
-    Type *llvmType = I.getType();
     if (llvmType->isVectorTy() == true) {
       VectorType *vectorType = cast<VectorType>(llvmType);
       Type *elementType = vectorType->getElementType();
@@ -631,6 +628,16 @@ namespace gbe
       elemNum = 1;
       type = getType(ctx, llvmType);
     }
+    return type;
+  }
+
+  void GenWriter::emitBinaryOperator(Instruction &I) {
+    GBE_ASSERT(I.getType()->isPointerTy() == false ||
+               I.getType() != Type::getInt1Ty(I.getContext()));
+
+    // Get the element type for a vector
+    uint32_t elemNum;
+    const ir::Type type = getVectorInfo(ctx, I.getType(), &I, elemNum);
 
     // Emit the instructions in a row
     for (uint32_t elemID = 0; elemID < elemNum; ++elemID) {
@@ -662,38 +669,183 @@ namespace gbe
     }
   }
 
+  void GenWriter::regAllocateICmpInst(ICmpInst &I) {
+    this->newRegister(&I);
+  }
+
+  static ir::Type makeTypeSigned(const ir::Type &type) {
+    if (type == ir::TYPE_U8) return ir::TYPE_S8;
+    else if (type == ir::TYPE_U16) return ir::TYPE_S16;
+    else if (type == ir::TYPE_U32) return ir::TYPE_S32;
+    else if (type == ir::TYPE_U64) return ir::TYPE_S64;
+    return type;
+  }
+
+  static ir::Type makeTypeUnsigned(const ir::Type &type) {
+    if (type == ir::TYPE_S8) return ir::TYPE_U8;
+    else if (type == ir::TYPE_S16) return ir::TYPE_U16;
+    else if (type == ir::TYPE_S32) return ir::TYPE_U32;
+    else if (type == ir::TYPE_S64) return ir::TYPE_U64;
+    return type;
+  }
+
+  void GenWriter::emitICmpInst(ICmpInst &I) {
+    GBE_ASSERT(I.getOperand(0)->getType() != Type::getInt1Ty(I.getContext()));
+
+    // Get the element type and the number of elements
+    uint32_t elemNum;
+    Type *operandType = I.getOperand(0)->getType();
+    const ir::Type type = getVectorInfo(ctx, operandType, &I, elemNum);
+    const ir::Type signedType = makeTypeSigned(type);
+    const ir::Type unsignedType = makeTypeUnsigned(type);
+
+    // Emit the instructions in a row
+    for (uint32_t elemID = 0; elemID < elemNum; ++elemID) {
+      const ir::Register dst = this->getRegister(&I, elemID);
+      const ir::Register src0 = this->getRegister(I.getOperand(0), elemID);
+      const ir::Register src1 = this->getRegister(I.getOperand(1), elemID);
+
+      switch (I.getPredicate()) {
+        case ICmpInst::ICMP_EQ:  ctx.EQ(type, dst, src0, src1); break;
+        case ICmpInst::ICMP_NE:  ctx.NE(type, dst, src0, src1); break;
+        case ICmpInst::ICMP_ULE: ctx.LE((unsignedType), dst, src0, src1); break;
+        case ICmpInst::ICMP_SLE: ctx.LE(signedType, dst, src0, src1); break;
+        case ICmpInst::ICMP_UGE: ctx.GE(unsignedType, dst, src0, src1); break;
+        case ICmpInst::ICMP_SGE: ctx.GE(signedType, dst, src0, src1); break;
+        case ICmpInst::ICMP_ULT: ctx.LT(unsignedType, dst, src0, src1); break;
+        case ICmpInst::ICMP_SLT: ctx.LT(signedType, dst, src0, src1); break;
+        case ICmpInst::ICMP_UGT: ctx.GT(unsignedType, dst, src0, src1); break;
+        case ICmpInst::ICMP_SGT: ctx.GT(signedType, dst, src0, src1); break;
+        default: NOT_SUPPORTED;
+      };
+    }
+  }
+
+  void GenWriter::regAllocateFCmpInst(FCmpInst &I) {
+    this->newRegister(&I);
+  }
+
+  void GenWriter::emitFCmpInst(FCmpInst &I) {
+    GBE_ASSERT(I.getType() != Type::getInt1Ty(I.getContext()));
+
+    // Get the element type and the number of elements
+    uint32_t elemNum;
+    Type *operandType = I.getOperand(0)->getType();
+    const ir::Type type = getVectorInfo(ctx, operandType, &I, elemNum);
+
+    // Emit the instructions in a row
+    for (uint32_t elemID = 0; elemID < elemNum; ++elemID) {
+      const ir::Register dst = this->getRegister(&I, elemID);
+      const ir::Register src0 = this->getRegister(I.getOperand(0), elemID);
+      const ir::Register src1 = this->getRegister(I.getOperand(1), elemID);
+
+      switch (I.getPredicate()) {
+        case ICmpInst::FCMP_OEQ:
+        case ICmpInst::FCMP_UEQ: ctx.EQ(type, dst, src0, src1); break;
+        case ICmpInst::FCMP_ONE:
+        case ICmpInst::FCMP_UNE: ctx.NE(type, dst, src0, src1); break;
+        case ICmpInst::FCMP_OLE:
+        case ICmpInst::FCMP_ULE: ctx.LE(type, dst, src0, src1); break;
+        case ICmpInst::FCMP_OGE:
+        case ICmpInst::FCMP_UGE: ctx.GE(type, dst, src0, src1); break;
+        case ICmpInst::FCMP_OLT:
+        case ICmpInst::FCMP_ULT: ctx.LT(type, dst, src0, src1); break;
+        case ICmpInst::FCMP_OGT:
+        case ICmpInst::FCMP_UGT: ctx.GT(type, dst, src0, src1); break;
+        default: NOT_SUPPORTED;
+      };
+    }
+  }
+
   void GenWriter::regAllocateCastInst(CastInst &I)
   {
-    if (I.getOpcode() == Instruction::PtrToInt ||
-        I.getOpcode() == Instruction::IntToPtr) {
-      Value *dstValue = &I;
-      Value *srcValue = I.getOperand(0);
-      Constant *CPV = dyn_cast<Constant>(srcValue);
-      if (CPV == NULL) {
-        Type *dstType = dstValue->getType();
-        Type *srcType = srcValue->getType();
-        GBE_ASSERT(getTypeByteSize(unit, dstType) == getTypeByteSize(unit, srcType));
-        regTranslator.newValueProxy(srcValue, dstValue);
-      } else
-        this->newRegister(dstValue);
+    Value *dstValue = &I;
+    Value *srcValue = I.getOperand(0);
+
+    switch (I.getOpcode())
+    {
+      // When casting pointer to integers, be aware with integers
+      case Instruction::PtrToInt:
+      case Instruction::IntToPtr:
+      {
+        Constant *CPV = dyn_cast<Constant>(srcValue);
+        if (CPV == NULL) {
+          Type *dstType = dstValue->getType();
+          Type *srcType = srcValue->getType();
+          GBE_ASSERT(getTypeByteSize(unit, dstType) == getTypeByteSize(unit, srcType));
+          regTranslator.newValueProxy(srcValue, dstValue);
+        } else
+          this->newRegister(dstValue);
+      }
+      break;
+      // Bitcast just forward registers
+      case Instruction::BitCast:
+      {
+        uint32_t elemNum;
+        getVectorInfo(ctx, I.getType(), &I, elemNum);
+        for (uint32_t elemID = 0; elemID < elemNum; ++elemID)
+          regTranslator.newValueProxy(srcValue, dstValue, elemID, elemID);
+      }
+      break;
+      // Various conversion operations -> just allocate registers for them
+      case Instruction::FPToUI:
+      case Instruction::FPToSI:
+      case Instruction::SIToFP:
+      case Instruction::UIToFP:
+      case Instruction::SExt:
+      case Instruction::ZExt:
+      case Instruction::FPExt:
+      case Instruction::FPTrunc:
+        this->newRegister(&I);
+      break;
+      default: NOT_SUPPORTED;
     }
-    else
-      NOT_SUPPORTED;
   }
 
   void GenWriter::emitCastInst(CastInst &I) {
-    if (I.getOpcode() == Instruction::PtrToInt ||
-        I.getOpcode() == Instruction::IntToPtr) {
-      Value *srcValue = &I;
-      Value *dstValue = I.getOperand(0);
-      Constant *CPV = dyn_cast<Constant>(srcValue);
-      if (CPV != NULL) {
-        const ir::ImmediateIndex index = ctx.newImmediate(CPV);
-        const ir::Immediate imm = ctx.getImmediate(index);
-        const ir::Register reg = this->getRegister(dstValue);
-        ctx.LOADI(imm.type, reg, index);
+    switch (I.getOpcode())
+    {
+      case Instruction::PtrToInt:
+      case Instruction::IntToPtr:
+      {
+        Value *dstValue = &I;
+        Value *srcValue = I.getOperand(0);
+        Constant *CPV = dyn_cast<Constant>(srcValue);
+        if (CPV != NULL) {
+          const ir::ImmediateIndex index = ctx.newImmediate(CPV);
+          const ir::Immediate imm = ctx.getImmediate(index);
+          const ir::Register reg = this->getRegister(dstValue);
+          ctx.LOADI(imm.type, reg, index);
+        }
       }
-    }
+      break;
+      case Instruction::BitCast: break; // nothing to emit here
+      case Instruction::FPToUI:
+      case Instruction::FPToSI:
+      case Instruction::SIToFP:
+      case Instruction::UIToFP:
+      case Instruction::SExt:
+      case Instruction::ZExt:
+      case Instruction::FPExt:
+      case Instruction::FPTrunc:
+      {
+        // Get the element type for a vector
+        uint32_t elemNum;
+        Type *llvmDstType = I.getType();
+        Type *llvmSrcType = I.getOperand(0)->getType();
+        const ir::Type dstType = getVectorInfo(ctx, llvmDstType, &I, elemNum);
+        const ir::Type srcType = getVectorInfo(ctx, llvmSrcType, &I, elemNum);
+
+        // Emit the instructions in a row
+        for (uint32_t elemID = 0; elemID < elemNum; ++elemID) {
+          const ir::Register dst = this->getRegister(&I, elemID);
+          const ir::Register src = this->getRegister(I.getOperand(0), elemID);
+          ctx.CVT(dstType, srcType, dst, src);
+        }
+      }
+      break;
+      default: NOT_SUPPORTED;
+    };
   }
 
 #ifndef NDEBUG

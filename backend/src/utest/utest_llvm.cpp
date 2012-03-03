@@ -84,6 +84,7 @@ runTests:
   UTEST_EXPECT_SUCCESS(utestLLVM2Gen("simple_float4_2.ll"));
   //UTEST_EXPECT_SUCCESS(utestLLVM2Gen("loop.ll"));
   UTEST_EXPECT_SUCCESS(utestLLVM2Gen("void.ll"));
+  UTEST_EXPECT_SUCCESS(utestLLVM2Gen("cmp_cvt.ll"));
 }
 
 UTEST_REGISTER(utestLLVM)
