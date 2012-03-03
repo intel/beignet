@@ -87,6 +87,8 @@ namespace ir {
       regs.push_back(reg);
       return Register(index);
     }
+    /*! Make a tuple from an array of register */
+    Tuple appendArrayTuple(const Register *reg, uint32_t regNum);
     /*! Make a tuple and return the index to the first element of the tuple */
     template <typename First, typename... Rest>
     INLINE Tuple appendTuple(First first, Rest... rest) {

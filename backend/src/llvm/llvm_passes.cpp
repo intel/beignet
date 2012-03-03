@@ -82,7 +82,11 @@ namespace gbe
 
     switch (Ty->getTypeID()) {
       case Type::VoidTyID: NOT_SUPPORTED;
-      case Type::VectorTyID: NOT_SUPPORTED;
+      case Type::VectorTyID:
+      {
+        const VectorType* VecTy = cast<VectorType>(Ty);
+        return VecTy->getNumElements() * getTypeByteSize(unit, VecTy->getElementType());
+      }
       case Type::PointerTyID:
       case Type::IntegerTyID:
       case Type::FloatTyID:

@@ -97,7 +97,7 @@ namespace ir {
     /*! Get the register file */
     INLINE const RegisterFile &getRegisterFile(void) const { return file; }
     /*! Get the given value ie immediate from the function */
-    INLINE Immediate getImmediate(uint32_t ID) const {
+    INLINE Immediate getImmediate(ImmediateIndex ID) const {
       GBE_ASSERT(ID < immediateNum());
       return immediates[ID];
     }

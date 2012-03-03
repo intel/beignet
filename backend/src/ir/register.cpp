@@ -50,6 +50,15 @@ namespace ir {
     return out;
   }
 
+  Tuple RegisterFile::appendArrayTuple(const Register *reg, uint32_t regNum) {
+    const Tuple index = Tuple(regTuples.size());
+    for (uint32_t regID = 0; regID < regNum; ++regID) {
+      GBE_ASSERTM(reg[regID] < this->regNum(), "Out-of-bound register");
+      regTuples.push_back(reg[regID]);
+    }
+    return index;
+  }
+
 } /* namespace ir */
 } /* namespace gbe */
 

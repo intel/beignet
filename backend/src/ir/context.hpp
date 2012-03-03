@@ -54,6 +54,11 @@ namespace ir {
     void endFunction(void);
     /*! Create a new register with the given family for the current function */
     Register reg(RegisterData::Family family);
+    /*! Create a new immediate value */
+    template <typename T> INLINE ImmediateIndex newImmediate(T value) {
+      const Immediate imm(value);
+      return fn->newImmediate(imm);
+    }
     /*! Create a new register holding the given value. A LOADI is pushed */
     template <typename T> INLINE Register immReg(T value) {
       GBE_ASSERTM(fn != NULL, "No function currently defined");
@@ -70,6 +75,10 @@ namespace ir {
     void input(Register reg);
     /*! Append a new output register for the function */
     void output(Register reg);
+    /*! Get the immediate value */
+    INLINE Immediate getImmediate(ImmediateIndex index) const {
+      return fn->getImmediate(index);
+    }
     /*! Get the current processed function */
     Function &getFunction(void);
     /*! Get the current processed unit */
@@ -79,8 +88,13 @@ namespace ir {
       GBE_ASSERTM(fn != NULL, "No function currently defined");
       return fn->file.appendTuple(args...);
     }
+    /*! Make a tuple from an array of register */
+    INLINE Tuple arrayTuple(const Register *reg, uint32_t regNum) {
+      GBE_ASSERTM(fn != NULL, "No function currently defined");
+      return fn->file.appendArrayTuple(reg, regNum);
+    }
     /*! We just use variadic templates to forward instruction functions */
-#define DECL_INSN(NAME, FAMILY)                                       \
+#define DECL_INSN(NAME, FAMILY)                                 \
     template <typename... Args> INLINE void NAME(Args...args);
 #include "ir/instruction.hxx"
 #undef DECL_INSN

@@ -17,6 +17,12 @@
  * Author: Benjamin Segovia <benjamin.segovia@intel.com>
  */
 
+/**
+ * \file llvm_gen_backend.cpp
+ * \author Benjamin Segovia <benjamin.segovia@intel.com>
+ *
+ * Transform the LLVM IR code into Gen IR code
+ */
 #include "llvm/CallingConv.h"
 #include "llvm/Constants.h"
 #include "llvm/DerivedTypes.h"
@@ -69,6 +75,171 @@ using namespace llvm;
 
 namespace gbe
 {
+  /*! Gen IR manipulates only scalar types */
+  static bool isScalarType(const Type *type)
+  {
+    return type->isFloatTy()   ||
+           type->isIntegerTy() ||
+           type->isDoubleTy()  ||
+           type->isPointerTy();
+  }
+
+  /*! LLVM IR Type to Gen IR type translation */
+  static ir::Type getType(const ir::Context &ctx, const Type *type)
+  {
+    GBE_ASSERT(isScalarType(type));
+    if (type->isFloatTy() == true)
+      return ir::TYPE_FLOAT;
+    if (type->isDoubleTy() == true)
+      return ir::TYPE_DOUBLE;
+    if (type->isPointerTy() == true) {
+      if (ctx.getPointerSize() == ir::POINTER_32_BITS)
+        return ir::TYPE_U32;
+      else
+        return ir::TYPE_U64;
+    }
+    GBE_ASSERT(type->isIntegerTy() == true);
+    if (type == Type::getInt1Ty(type->getContext()))
+      return ir::TYPE_BOOL;
+    if (type == Type::getInt8Ty(type->getContext()))
+      return ir::TYPE_S8;
+    if (type == Type::getInt16Ty(type->getContext()))
+      return ir::TYPE_S16;
+    if (type == Type::getInt32Ty(type->getContext()))
+      return ir::TYPE_S32;
+    if (type == Type::getInt64Ty(type->getContext()))
+      return ir::TYPE_S64;
+    GBE_ASSERT(0);
+    return ir::TYPE_S64;
+  }
+
+  /*! Type to register family translation */
+  static ir::RegisterData::Family getFamily(const ir::Context &ctx, const Type *type)
+  {
+    GBE_ASSERT(isScalarType(type) == true); 
+    if (type == Type::getInt1Ty(type->getContext()))
+      return ir::RegisterData::BOOL;
+    if (type == Type::getInt8Ty(type->getContext()))
+      return ir::RegisterData::BYTE;
+    if (type == Type::getInt16Ty(type->getContext()))
+      return ir::RegisterData::WORD;
+    if (type == Type::getInt32Ty(type->getContext()) || type->isFloatTy())
+      return ir::RegisterData::DWORD;
+    if (type == Type::getInt64Ty(type->getContext()) || type->isDoubleTy())
+      return ir::RegisterData::QWORD;
+    if (type->isPointerTy() && ctx.getPointerSize() == ir::POINTER_32_BITS)
+      return ir::RegisterData::DWORD;
+    if (type->isPointerTy() && ctx.getPointerSize() == ir::POINTER_64_BITS)
+      return ir::RegisterData::QWORD;
+    GBE_ASSERT(0);
+    return ir::RegisterData::BOOL;
+  }
+
+  /*! Handle the LLVM IR Value to Gen IR register translation. This has 2 roles:
+   *  - Split the LLVM vector into several scalar values
+   *  - Handle the transparent copies (bitcast or use of intrincics functions
+   *    like get_local_id / get_global_id
+   */
+  class RegisterTranslator
+  {
+  public:
+    RegisterTranslator(ir::Context &ctx) : ctx(ctx) {}
+
+    /*! Empty the maps */
+    void clear(void) {
+      valueMap.clear();
+      scalarMap.clear();
+    }
+    /*! Some values will not be allocated. For example, a bit-cast destination
+     *  like: %fake = bitcast %real or a vector insertion since we do not have
+     *  vectors in Gen-IR
+     */
+    void newValueProxy(Value *real,
+                       Value *fake,
+                       uint32_t realIndex = 0u,
+                       uint32_t fakeIndex = 0u) {
+      const ValueIndex key(fake, fakeIndex);
+      const ValueIndex value(real, realIndex);
+      GBE_ASSERT(valueMap.find(key) == valueMap.end()); // Do not insert twice
+      valueMap[key] = value;
+    }
+    /*! Mostly used for the preallocated registers (lids, gids) */
+    void newScalarProxy(ir::Register reg, Value *value, uint32_t index = 0u) {
+      const ValueIndex key(value, index);
+      GBE_ASSERT(scalarMap.find(key) == scalarMap.end());
+      scalarMap[key] = reg;
+    }
+    /*! Allocate a new scalar register */
+    ir::Register newScalar(Value *value, uint32_t index = 0u)
+    {
+      GBE_ASSERT(dyn_cast<Constant>(value) == NULL);
+      Type *type = value->getType();
+      auto typeID = type->getTypeID();
+      switch (typeID) {
+        case Type::IntegerTyID:
+        case Type::FloatTyID:
+        case Type::DoubleTyID:
+        case Type::PointerTyID:
+          GBE_ASSERT(index == 0);
+          return this->newScalar(value, type, index);
+          break;
+        case Type::VectorTyID:
+        {
+          auto vectorType = cast<VectorType>(type);
+          auto elementType = vectorType->getElementType();
+          auto elementTypeID = elementType->getTypeID();
+          if (elementTypeID != Type::IntegerTyID &&
+              elementTypeID != Type::FloatTyID &&
+              elementTypeID != Type::DoubleTyID)
+            GBE_ASSERTM(false, "Vectors of elements are not supported");
+            return this->newScalar(value, elementType, index);
+          break;
+        }
+        default: NOT_SUPPORTED;
+      };
+      return ir::Register();
+    }
+    /*! Get the register from the given value at given index possibly iterating
+     *  in the value map to get the final real register
+     */
+    ir::Register getScalar(Value *value, uint32_t index = 0u) {
+      auto end = valueMap.end();
+      for (;;) {
+        auto it = valueMap.find(std::make_pair(value, index));
+        if (it == end)
+          break;
+        else {
+          value = it->second.first;
+          index = it->second.second;
+        }
+      }
+      const auto key = std::make_pair(value, index);
+      GBE_ASSERT(scalarMap.find(key) != scalarMap.end());
+      return scalarMap[key];
+    }
+
+  private:
+    /*! This maps a scalar register to a Value (index is the vector index when
+     *  the value is a vector of scalars)
+     */
+    ir::Register newScalar(Value *value, Type *type, uint32_t index) {
+      const auto key = std::make_pair(value, index);
+      GBE_ASSERT(scalarMap.find(key) == scalarMap.end());
+      const ir::RegisterData::Family family = getFamily(ctx, type);
+      const ir::Register reg = ctx.reg(family);
+      scalarMap[key] = reg;
+      return reg;
+    }
+    /*! Indices will be zero for scalar values */
+    typedef std::pair<Value*, uint32_t> ValueIndex;
+    /*! Map value to ir::Register */
+    map<ValueIndex, ir::Register> scalarMap;
+    /*! Map values to values when this is only a translation (eq bitcast) */
+    map<ValueIndex, ValueIndex> valueMap;
+    /*! Actually allocates the registers */
+    ir::Context &ctx;
+  };
+
   class CBEMCAsmInfo : public MCAsmInfo {
   public:
     CBEMCAsmInfo() {
@@ -77,30 +248,36 @@ namespace gbe
     }
   };
 
-  /// GenWriter - This class is the main chunk of code that converts an LLVM
-  /// module to a C translation unit.
+  /*! Translate LLVM IR code to Gen IR code */
   class GenWriter : public FunctionPass, public InstVisitor<GenWriter>
   {
+    /*! Unit to compute */
     ir::Unit &unit;
+    /*! Helper structure to compute the unit */
     ir::Context ctx;
+    /*! Make the LLVM-to-Gen translation */
+    RegisterTranslator regTranslator;
+    /*! Map value to ir::LabelIndex */
+    map<const Value*, ir::LabelIndex> labelMap;
+    /*! We visit each function twice. Once to allocate the registers and once to
+     *  emit the Gen IR instructions 
+     */
+    enum Pass {
+      PASS_EMIT_REGISTERS = 0,
+      PASS_EMIT_INSTRUCTIONS = 1
+    } pass;
+
     std::string FDOutErr;
     tool_output_file *FDOut;
     formatted_raw_ostream Out;
-    IntrinsicLowering *IL;
     Mangler *Mang;
     LoopInfo *LI;
     const Module *TheModule;
+    const MCObjectFileInfo *MOFI;
+    const TargetData* TD;
     const MCAsmInfo* TAsm;
     const MCRegisterInfo *MRI;
-    const MCObjectFileInfo *MOFI;
     MCContext *TCtx;
-    const TargetData* TD;
-
-    /*! Map value to ir::Register*/
-    map<const Value*, ir::Register> registerMap;
-
-    /*! Map value to ir::LabelIndex */
-    map<const Value*, ir::LabelIndex> labelMap;
 
     std::map<const ConstantFP *, unsigned> FPConstantMap;
     std::set<Function*> intrinsicPrototypesAlreadyGenerated;
@@ -120,14 +297,16 @@ namespace gbe
       : FunctionPass(ID),
         unit(unit),
         ctx(unit),
+        regTranslator(ctx),
         FDOut(new llvm::tool_output_file("-", FDOutErr, 0)),
         Out(FDOut->os()),
-        IL(0), Mang(0), LI(0),
-        TheModule(0), TAsm(0), MRI(0), MOFI(0), TCtx(0), TD(0),
+        Mang(0), LI(0),
+        TheModule(0), MOFI(0), TD(0),
         OpaqueCounter(0), NextAnonValueNumber(0)
     {
       initializeLoopInfoPass(*PassRegistry::getPassRegistry());
       FPCounter = 0;
+      pass = PASS_EMIT_REGISTERS;
     }
 
     virtual const char *getPassName() const { return "Gen Back-End"; }
@@ -156,12 +335,8 @@ namespace gbe
 
     virtual bool doFinalization(Module &M) {
       // Free memory...
-      delete IL;
       delete TD;
       delete Mang;
-      delete TCtx;
-      delete TAsm;
-      delete MRI;
       delete MOFI;
       FPConstantMap.clear();
       ByValParams.clear();
@@ -203,43 +378,30 @@ namespace gbe
     void writeOperand(Value *Operand, bool Static = false);
     void writeInstComputationInline(Instruction &I);
     void writeOperandInternal(Value *Operand, bool Static = false);
-    void writeOperandWithCast(Value* Operand, unsigned Opcode);
-    void writeOperandWithCast(Value* Operand, const ICmpInst &I);
-    bool writeInstructionCast(const Instruction &I);
-
-  private :
 
     /// Prints the definition of the intrinsic function F. Supports the 
     /// intrinsics which need to be explicitly defined in the CBackend.
     void printIntrinsicDefinition(const Function &F, raw_ostream &Out);
 
-    void printModuleTypes();
     void printContainedStructs(Type *Ty, SmallPtrSet<Type *, 16> &);
     void printFloatingPointConstants(Function &F);
     void printFloatingPointConstants(const Constant *C);
-    void emitFunctionSignature(const Function *F, bool Prototype);
 
     /*! Emit the complete function code and declaration */
     void emitFunction(Function &F);
     /*! Handle input and output function parameters */
-    void emitFunctionPrototype(const Function *F);
+    void emitFunctionPrototype(Function &F);
     /*! Emit the code for a basic block */
     void emitBasicBlock(BasicBlock *BB);
 
-    /*! Get the register family from the given type */
-    INLINE ir::RegisterData::Family getArgumentFamily(const Type*) const;
-    /*! Insert a new register when this is a scalar value */
-    INLINE ir::Register newRegister(const Value *value);
+    /*! Alocate one or several registers (if vector) for the value */
+    INLINE void newRegister(Value *value);
     /*! Return a valid register from an operand (can use LOADI to make one) */
-    INLINE ir::Register getRegister(Value *value);
-    /*! Return a valid register for a constant value */
-    INLINE ir::Register getConstantRegister(Constant *CPV);
+    INLINE ir::Register getRegister(Value *value, uint32_t index = 0);
+    /*! Create a new immediate from a constant */
+    ir::ImmediateIndex newImmediate(Constant *CPV);
     /*! Insert a new label index when this is a scalar value */
     INLINE void newLabelIndex(const Value *value);
-    /*! int / float / double / bool are scalars */
-    INLINE bool isScalarType(const Type *type) const;
-    /*! Get the Gen IR type from the LLVM type */
-    INLINE ir::Type getType(const Type *type) const;
 
     void printBasicBlock(BasicBlock *BB);
 
@@ -312,16 +474,27 @@ namespace gbe
       return false;
     }
 
-    // Instruction visitation functions
-    friend class InstVisitor<GenWriter>;
+    /*! Helper function to emit loads and stores */
+    template <bool isLoad, typename T> void emitLoadOrStore(T &I);
 
     // Currently supported instructions
-    void visitBinaryOperator(Instruction &I);
-    void visitReturnInst(ReturnInst &I);
-    void visitLoadInst(LoadInst &I);
-    void visitStoreInst(StoreInst &I);
-    void visitCallInst (CallInst &I);
-    bool visitBuiltinCall(CallInst &I, Intrinsic::ID ID, bool &WroteCallee);
+#define DECL_VISIT_FN(NAME, TYPE)         \
+    void regAllocate##NAME(TYPE &I);      \
+    void emit##NAME(TYPE &I);             \
+    void visit##NAME(TYPE &I) {           \
+      if (pass == PASS_EMIT_INSTRUCTIONS) \
+        emit##NAME(I);                    \
+      else                                \
+        regAllocate##NAME(I);             \
+    }
+    DECL_VISIT_FN(BinaryOperator, Instruction);
+    DECL_VISIT_FN(CastInst, CastInst);
+    DECL_VISIT_FN(ReturnInst, ReturnInst);
+    DECL_VISIT_FN(LoadInst, LoadInst);
+    DECL_VISIT_FN(StoreInst, StoreInst);
+    DECL_VISIT_FN(CallInst, CallInst);
+
+#undef DECL_VISIT_FN
 
     // Must be implemented later
     void visitInsertElementInst(InsertElementInst &I) {NOT_SUPPORTED;}
@@ -333,7 +506,6 @@ namespace gbe
     void visitBranchInst(BranchInst &I) {NOT_SUPPORTED;}
     void visitICmpInst(ICmpInst &I) {NOT_SUPPORTED;}
     void visitFCmpInst(FCmpInst &I) {NOT_SUPPORTED;}
-    void visitCastInst (CastInst &I);
     void visitSelectInst(SelectInst &I) {NOT_SUPPORTED;}
 
     // These instructions are not supported at all
@@ -1354,122 +1526,6 @@ static std::string CBEMangle(const std::string &S) {
       Out << ')';
   }
 
-  // Some instructions need to have their result value casted back to the
-  // original types because their operands were casted to the expected type.
-  // This function takes care of detecting that case and printing the cast
-  // for the Instruction.
-  bool GenWriter::writeInstructionCast(const Instruction &I) {
-    Type *Ty = I.getOperand(0)->getType();
-    switch (I.getOpcode()) {
-    case Instruction::Add:
-    case Instruction::Sub:
-    case Instruction::Mul:
-      // We need to cast integer arithmetic so that it is always performed
-      // as unsigned, to avoid undefined behavior on overflow.
-    case Instruction::LShr:
-    case Instruction::URem:
-    case Instruction::UDiv:
-      Out << "((";
-      printSimpleType(Out, Ty, false);
-      Out << ")(";
-      return true;
-    case Instruction::AShr:
-    case Instruction::SRem:
-    case Instruction::SDiv:
-      Out << "((";
-      printSimpleType(Out, Ty, true);
-      Out << ")(";
-      return true;
-    default: break;
-    }
-    return false;
-  }
-
-  // Write the operand with a cast to another type based on the Opcode being used.
-  // This will be used in cases where an instruction has specific type
-  // requirements (usually signedness) for its operands.
-  void GenWriter::writeOperandWithCast(Value* Operand, unsigned Opcode) {
-
-    // Extract the operand's type, we'll need it.
-    Type* OpTy = Operand->getType();
-
-    // Indicate whether to do the cast or not.
-    bool shouldCast = false;
-
-    // Indicate whether the cast should be to a signed type or not.
-    bool castIsSigned = false;
-
-    // Based on the Opcode for which this Operand is being written, determine
-    // the new type to which the operand should be casted by setting the value
-    // of OpTy. If we change OpTy, also set shouldCast to true.
-    switch (Opcode) {
-      default:
-        // for most instructions, it doesn't matter
-        break;
-      case Instruction::Add:
-      case Instruction::Sub:
-      case Instruction::Mul:
-        // We need to cast integer arithmetic so that it is always performed
-        // as unsigned, to avoid undefined behavior on overflow.
-      case Instruction::LShr:
-      case Instruction::UDiv:
-      case Instruction::URem: // Cast to unsigned first
-        shouldCast = true;
-        castIsSigned = false;
-        break;
-      case Instruction::GetElementPtr:
-      case Instruction::AShr:
-      case Instruction::SDiv:
-      case Instruction::SRem: // Cast to signed first
-        shouldCast = true;
-        castIsSigned = true;
-        break;
-    }
-
-    // Write out the casted operand if we should, otherwise just write the
-    // operand.
-    if (shouldCast) {
-      Out << "((";
-      printSimpleType(Out, OpTy, castIsSigned);
-      Out << ")";
-      writeOperand(Operand);
-      Out << ")";
-    } else
-      writeOperand(Operand);
-  }
-
-  // Write the operand with a cast to another type based on the icmp predicate
-  // being used.
-  void GenWriter::writeOperandWithCast(Value* Operand, const ICmpInst &Cmp) {
-    // This has to do a cast to ensure the operand has the right signedness.
-    // Also, if the operand is a pointer, we make sure to cast to an integer when
-    // doing the comparison both for signedness and so that the C compiler doesn't
-    // optimize things like "p < NULL" to false (p may contain an integer value
-    // f.e.).
-    bool shouldCast = Cmp.isRelational();
-
-    // Write out the casted operand if we should, otherwise just write the
-    // operand.
-    if (!shouldCast) {
-      writeOperand(Operand);
-      return;
-    }
-
-    // Should this be a signed comparison?  If so, convert to signed.
-    bool castIsSigned = Cmp.isSigned();
-
-    // If the operand was a pointer, convert to a large integer type.
-    Type* OpTy = Operand->getType();
-    if (OpTy->isPointerTy())
-      OpTy = TD->getIntPtrType(Operand->getContext());
-
-    Out << "((";
-    printSimpleType(Out, OpTy, castIsSigned);
-    Out << ")";
-    writeOperand(Operand);
-    Out << ")";
-  }
-
   enum SpecialGlobalClass {
     NotSpecial = 0,
     GlobalCtors, GlobalDtors,
@@ -1482,14 +1538,12 @@ static std::string CBEMangle(const std::string &S) {
     // Initialize
     TheModule = &M;
 
-    TD = new TargetData(&M);
-    IL = new IntrinsicLowering(*TD);
-    IL->AddPrototypes(M);
-
     TAsm = new CBEMCAsmInfo();
+    TD = new TargetData(&M);
     MRI  = new MCRegisterInfo();
     TCtx = new MCContext(*TAsm, *MRI, NULL);
     Mang = new Mangler(*TCtx, *TD);
+
     return false;
   }
 
@@ -1561,57 +1615,6 @@ static std::string CBEMangle(const std::string &S) {
     }
   }
 
-
-  /// printSymbolTable - Run through symbol table looking for type names.  If a
-  /// type name is found, emit its declaration...
-  ///
-  void GenWriter::printModuleTypes() {
-    Out << "/* Helper union for bitcasts */\n";
-    Out << "typedef union {\n";
-    Out << "  unsigned int Int32;\n";
-    Out << "  unsigned long long Int64;\n";
-    Out << "  float Float;\n";
-    Out << "  double Double;\n";
-    Out << "} llvmBitCastUnion;\n";
-
-    // Get all of the struct types used in the module.
-    std::vector<StructType*> StructTypes;
-    TheModule->findUsedStructTypes(StructTypes);
-
-    if (StructTypes.empty()) return;
-
-    Out << "/* Structure forward decls */\n";
-
-    unsigned NextTypeID = 0;
-    
-    // If any of them are missing names, add a unique ID to UnnamedStructIDs.
-    // Print out forward declarations for structure types.
-    for (unsigned i = 0, e = StructTypes.size(); i != e; ++i) {
-      StructType *ST = StructTypes[i];
-
-      if (ST->isLiteral() || ST->getName().empty())
-        UnnamedStructIDs[ST] = NextTypeID++;
-
-      std::string Name = getStructName(ST);
-
-      Out << "typedef struct " << Name << ' ' << Name << ";\n";
-    }
-
-    Out << '\n';
-
-    // Keep track of which structures have been printed so far.
-    SmallPtrSet<Type *, 16> StructPrinted;
-
-    // Loop over all structures then push them into the stack so they are
-    // printed in the correct order.
-    //
-    Out << "/* Structure contents */\n";
-    for (unsigned i = 0, e = StructTypes.size(); i != e; ++i)
-      if (StructTypes[i]->isStructTy())
-        // Only print out used types!
-        printContainedStructs(StructTypes[i], StructPrinted);
-  }
-
   // Push the struct onto the stack and recursively push all structs
   // this one depends on.
   //
@@ -1638,131 +1641,90 @@ static std::string CBEMangle(const std::string &S) {
     }
   }
 
-  INLINE bool GenWriter::isScalarType(const Type *type) const
-  {
-    return type->isFloatTy() ||
-           type->isIntegerTy() ||
-           type->isDoubleTy() ||
-           type->isPointerTy();
-  }
-
-  INLINE ir::Type GenWriter::getType(const Type *type) const
-  {
-    GBE_ASSERT(this->isScalarType(type));
-    if (type->isFloatTy() == true)
-      return ir::TYPE_FLOAT;
-    if (type->isDoubleTy() == true)
-      return ir::TYPE_DOUBLE;
-    if (type->isPointerTy() == true) {
-      if (ctx.getPointerSize() == ir::POINTER_32_BITS)
-        return ir::TYPE_U32;
-      else
-        return ir::TYPE_U64;
-    }
-    GBE_ASSERT(type->isIntegerTy() == true);
-    if (type == Type::getInt1Ty(type->getContext()))
-      return ir::TYPE_BOOL;
-    if (type == Type::getInt8Ty(type->getContext()))
-      return ir::TYPE_S8;
-    if (type == Type::getInt16Ty(type->getContext()))
-      return ir::TYPE_S16;
-    if (type == Type::getInt32Ty(type->getContext()))
-      return ir::TYPE_S32;
-    if (type == Type::getInt64Ty(type->getContext()))
-      return ir::TYPE_S64;
-    GBE_ASSERT(0);
-    return ir::TYPE_S64;
-  }
-
-  INLINE ir::RegisterData::Family GenWriter::getArgumentFamily(const Type *type) const
-  {
-    GBE_ASSERT(this->isScalarType(type) == true); 
-    if (type == Type::getInt1Ty(type->getContext()))
-      return ir::RegisterData::BOOL;
-    if (type == Type::getInt8Ty(type->getContext()))
-      return ir::RegisterData::BYTE;
-    if (type == Type::getInt16Ty(type->getContext()))
-      return ir::RegisterData::WORD;
-    if (type == Type::getInt32Ty(type->getContext()) || type->isFloatTy())
-      return ir::RegisterData::DWORD;
-    if (type == Type::getInt64Ty(type->getContext()) || type->isDoubleTy())
-      return ir::RegisterData::QWORD;
-    if (type->isPointerTy() && ctx.getPointerSize() == ir::POINTER_32_BITS)
-      return ir::RegisterData::DWORD;
-    if (type->isPointerTy() && ctx.getPointerSize() == ir::POINTER_64_BITS)
-      return ir::RegisterData::QWORD;
-    GBE_ASSERT(0);
-    return ir::RegisterData::BOOL;
-  }
-
-  ir::Register GenWriter::newRegister(const Value *value) {
-    auto it = registerMap.find(value);
-    if (it == registerMap.end()) {
-      const Type *type = value->getType();
-      const ir::RegisterData::Family family = getArgumentFamily(type);
-      const ir::Register reg = ctx.reg(family);
-      registerMap[value] = reg;
-      return reg;
-    } else
-      return it->second;
-  }
-
-  ir::Register GenWriter::getConstantRegister(Constant *CPV) {
+  ir::ImmediateIndex GenWriter::newImmediate(Constant *CPV) {
     if (dyn_cast<ConstantExpr>(CPV))
       GBE_ASSERTM(false, "Unsupported constant expression");
     else if (isa<UndefValue>(CPV) && CPV->getType()->isSingleValueType())
       GBE_ASSERTM(false, "Unsupported constant expression");
+
+    // Integers
     if (ConstantInt *CI = dyn_cast<ConstantInt>(CPV)) {
       Type* Ty = CI->getType();
       if (Ty == Type::getInt1Ty(CPV->getContext())) {
         const bool b = CI->getZExtValue();
-        return ctx.immReg(b);
+        return ctx.newImmediate(b);
       } else if (Ty == Type::getInt8Ty(CPV->getContext())) {
         const uint8_t u8 = CI->getZExtValue();
-        return ctx.immReg(u8);
+        return ctx.newImmediate(u8);
       } else if (Ty == Type::getInt16Ty(CPV->getContext())) {
         const uint16_t u16 = CI->getZExtValue();
-        return ctx.immReg(u16);
+        return ctx.newImmediate(u16);
       } else if (Ty == Type::getInt32Ty(CPV->getContext())) {
         const uint32_t u32 = CI->getZExtValue();
-        return ctx.immReg(u32);
+        return ctx.newImmediate(u32);
       } else if (Ty == Type::getInt64Ty(CPV->getContext())) {
         const uint64_t u64 = CI->getZExtValue();
-        return ctx.immReg(u64);
+        return ctx.newImmediate(u64);
       } else {
         GBE_ASSERTM(false, "Unsupported integer size");
-        return ctx.immReg(uint64_t(0));
+        return ctx.newImmediate(uint64_t(0));
       }
     }
 
+    // Floats and doubles
     switch (CPV->getType()->getTypeID()) {
-    case Type::FloatTyID:
-    case Type::DoubleTyID:
-    {
-      ConstantFP *FPC = cast<ConstantFP>(CPV);
-      if (FPC->getType() == Type::getFloatTy(CPV->getContext())) {
-        const float f32 = FPC->getValueAPF().convertToFloat();
-        return ctx.immReg(f32);
-      } else {
-        const double f64 = FPC->getValueAPF().convertToDouble();
-        return ctx.immReg(f64);
+      case Type::FloatTyID:
+      case Type::DoubleTyID:
+      {
+        ConstantFP *FPC = cast<ConstantFP>(CPV);
+        if (FPC->getType() == Type::getFloatTy(CPV->getContext())) {
+          const float f32 = FPC->getValueAPF().convertToFloat();
+          return ctx.newImmediate(f32);
+        } else {
+          const double f64 = FPC->getValueAPF().convertToDouble();
+          return ctx.newImmediate(f64);
+        }
       }
+      break;
+      default:
+        GBE_ASSERTM(false, "Unsupported constant type");
     }
-    break;
-    default:
-      GBE_ASSERTM(false, "Unsupported constant type");
-    }
-    return ctx.immReg(uint64_t(0));
+    return ctx.newImmediate(uint64_t(0));
   }
 
-  ir::Register GenWriter::getRegister(Value *value) {
+  void GenWriter::newRegister(Value *value) {
+    auto type = value->getType();
+    auto typeID = type->getTypeID();
+    switch (typeID) {
+      case Type::IntegerTyID:
+      case Type::FloatTyID:
+      case Type::DoubleTyID:
+      case Type::PointerTyID:
+        regTranslator.newScalar(value);
+        break;
+      case Type::VectorTyID:
+      {
+        auto vectorType = cast<VectorType>(type);
+        const uint32_t elemNum = vectorType->getNumElements();
+        for (uint32_t elemID = 0; elemID < elemNum; ++elemID)
+          regTranslator.newScalar(value, elemID);
+        break;
+      }
+      default: NOT_SUPPORTED;
+    };
+  }
+
+  ir::Register GenWriter::getRegister(Value *value, uint32_t index) {
     Constant *CPV = dyn_cast<Constant>(value);
-    if (CPV && !isa<GlobalValue>(CPV))
-      return getConstantRegister(CPV);
-    else {
-      GBE_ASSERT(this->registerMap.find(value) != this->registerMap.end());
-      return this->registerMap[value];
+    if (CPV && !isa<GlobalValue>(CPV)) {
+      const ir::ImmediateIndex index = this->newImmediate(CPV);
+      const ir::Immediate imm = ctx.getImmediate(index);
+      const ir::Register reg = ctx.reg(getFamily(imm.type));
+      ctx.LOADI(imm.type, reg, index);
+      return reg;
     }
+    else
+      return regTranslator.getScalar(value, index);
   }
 
   void GenWriter::newLabelIndex(const Value *value) {
@@ -1787,23 +1749,23 @@ static std::string CBEMangle(const std::string &S) {
     }
   }
 
-  void GenWriter::emitFunctionPrototype(const Function *F)
+  void GenWriter::emitFunctionPrototype(Function &F)
   {
-    const bool returnStruct = F->hasStructRetAttr();
+    const bool returnStruct = F.hasStructRetAttr();
 
     // Loop over the arguments and output registers for them
-    if (!F->arg_empty()) {
-      Function::const_arg_iterator I = F->arg_begin(), E = F->arg_end();
+    if (!F.arg_empty()) {
+      Function::arg_iterator I = F.arg_begin(), E = F.arg_end();
 
       // When a struct is returned, first argument is pointer to the structure
-      if (returnStruct) {
-        ir::Function &fn = ctx.getFunction();
-        fn.setStructReturned(true);
-      }
+      if (returnStruct)
+        ctx.getFunction().setStructReturned(true);
 
-      // Insert a new register if we need to
+      // Insert a new register for each function argument
       for (; I != E; ++I) {
-        const ir::Register reg = this->newRegister(I);
+        const Type *type = I->getType();
+        GBE_ASSERT(isScalarType(type) == true);
+        const ir::Register reg = regTranslator.newScalar(I);
         ctx.input(reg);
       }
     }
@@ -1811,9 +1773,9 @@ static std::string CBEMangle(const std::string &S) {
     // When returning a structure, first input register is the pointer to the
     // structure
     if (!returnStruct) {
-      const Type *type = F->getReturnType();
+      const Type *type = F.getReturnType();
       if (type->isVoidTy() == false) {
-        const ir::RegisterData::Family family = getArgumentFamily(type);
+        const ir::RegisterData::Family family = getFamily(ctx, type);
         const ir::Register reg = ctx.reg(family);
         ctx.output(reg);
       }
@@ -1821,118 +1783,9 @@ static std::string CBEMangle(const std::string &S) {
 
 #if GBE_DEBUG
     // Variable number of arguments is not supported
-    FunctionType *FT = cast<FunctionType>(F->getFunctionType());
+    FunctionType *FT = cast<FunctionType>(F.getFunctionType());
     GBE_ASSERT(FT->isVarArg() == false);
 #endif /* GBE_DEBUG */
-  }
-
-  void GenWriter::emitFunctionSignature(const Function *F, bool Prototype)
-  {
-    /// isStructReturn - Should this function actually return a struct by-value?
-    bool isStructReturn = F->hasStructRetAttr();
-
-    // Loop over the arguments, printing them...
-    FunctionType *FT = cast<FunctionType>(F->getFunctionType());
-    const AttrListPtr &PAL = F->getAttributes();
-
-    std::string tstr;
-    raw_string_ostream FunctionInnards(tstr);
-
-    // Print out the name...
-    FunctionInnards << GetValueName(F) << '(';
-
-    bool PrintedArg = false;
-    if (!F->isDeclaration()) {
-      if (!F->arg_empty()) {
-        Function::const_arg_iterator I = F->arg_begin(), E = F->arg_end();
-        unsigned Idx = 1;
-
-        // If this is a struct-return function, don't print the hidden
-        // struct-return argument.
-        if (isStructReturn) {
-          assert(I != E && "Invalid struct return function!");
-          ++I;
-          ++Idx;
-        }
-
-        std::string ArgName;
-        for (; I != E; ++I) {
-          if (PrintedArg) FunctionInnards << ", ";
-          if (I->hasName() || !Prototype) {
-            ArgName = GetValueName(I);
-          } else {
-            GBE_ASSERT(0);
-            ArgName = "";
-          }
-          Type *ArgTy = I->getType();
-          if (PAL.paramHasAttr(Idx, Attribute::ByVal)) {
-            ArgTy = cast<PointerType>(ArgTy)->getElementType();
-            ByValParams.insert(I);
-          }
-          printType(FunctionInnards, ArgTy,
-              /*isSigned=*/PAL.paramHasAttr(Idx, Attribute::SExt),
-              ArgName);
-          PrintedArg = true;
-          ++Idx;
-        }
-      }
-    } else {
-      GBE_ASSERT(0);
-
-      // Loop over the arguments, printing them.
-      FunctionType::param_iterator I = FT->param_begin(), E = FT->param_end();
-      unsigned Idx = 1;
-
-      // If this is a struct-return function, don't print the hidden
-      // struct-return argument.
-      if (isStructReturn) {
-        assert(I != E && "Invalid struct return function!");
-        ++I;
-        ++Idx;
-      }
-
-      for (; I != E; ++I) {
-        if (PrintedArg) FunctionInnards << ", ";
-        Type *ArgTy = *I;
-        if (PAL.paramHasAttr(Idx, Attribute::ByVal)) {
-          assert(ArgTy->isPointerTy());
-          ArgTy = cast<PointerType>(ArgTy)->getElementType();
-        }
-        printType(FunctionInnards, ArgTy,
-               /*isSigned=*/PAL.paramHasAttr(Idx, Attribute::SExt));
-        PrintedArg = true;
-        ++Idx;
-      }
-    }
-
-    if (!PrintedArg && FT->isVarArg()) {
-      FunctionInnards << "int vararg_dummy_arg";
-      PrintedArg = true;
-    }
-
-    // Finish printing arguments... if this is a vararg function, print the ...,
-    // unless there are no known types, in which case, we just emit ().
-    //
-    if (FT->isVarArg() && PrintedArg) {
-      FunctionInnards << ",...";  // Output varargs portion of signature!
-    } else if (!FT->isVarArg() && !PrintedArg) {
-      FunctionInnards << "void"; // ret() -> ret(void) in C.
-    }
-    FunctionInnards << ')';
-
-    // Get the return tpe for the function.
-    Type *RetTy;
-    if (!isStructReturn)
-      RetTy = F->getReturnType();
-    else {
-      // If this is a struct-return function, print the struct-return type.
-      RetTy = cast<PointerType>(FT->getParamType(0))->getElementType();
-    }
-
-    // Print out the return type and the signature built above.
-    printType(Out, RetTy,
-              /*isSigned=*/PAL.paramHasAttr(0, Attribute::SExt),
-              FunctionInnards.str());
   }
 
   static inline bool isFPIntBitCast(const Instruction &I) {
@@ -1947,20 +1800,22 @@ static std::string CBEMangle(const std::string &S) {
   void GenWriter::emitFunction(Function &F)
   {
     ctx.startFunction(GetValueName(&F));
-    this->registerMap.clear();
+    this->regTranslator.clear();
     this->labelMap.clear();
-    this->emitFunctionPrototype(&F);
+    this->emitFunctionPrototype(F);
 
-    // We create all the register variables
+    // Visit all the instructions and emit the IR registers or the value to
+    // value mapping
+    pass = PASS_EMIT_REGISTERS;
     for (inst_iterator I = inst_begin(&F), E = inst_end(&F); I != E; ++I)
-      if (I->getType() != Type::getVoidTy(F.getContext()))
-        this->newRegister(&*I);
+      visit(*I);
 
     // First create all the labels (one per block)
     for (Function::iterator BB = F.begin(), E = F.end(); BB != E; ++BB)
       this->newLabelIndex(BB);
 
-    // ... then, emit the code for all basic blocks
+    // ... then, emit the instructions for all basic blocks
+    pass = PASS_EMIT_INSTRUCTIONS;
     for (Function::iterator BB = F.begin(), E = F.end(); BB != E; ++BB)
       emitBasicBlock(BB);
     ctx.endFunction();
@@ -2000,12 +1855,9 @@ static std::string CBEMangle(const std::string &S) {
     visit(*BB->getTerminator());
   }
 
+  void GenWriter::regAllocateReturnInst(ReturnInst &I) {}
 
-  // Specific Instruction type classes... note that all of the casts are
-  // necessary because we use the instruction classes as opaque types...
-  //
-  void GenWriter::visitReturnInst(ReturnInst &I) {
-    // If this is a struct return function, return the temporary struct.
+  void GenWriter::emitReturnInst(ReturnInst &I) {
     const ir::Function &fn = ctx.getFunction();
     GBE_ASSERTM(fn.outputNum() <= 1, "no more than one value can be returned");
     if (fn.outputNum() == 1 && I.getNumOperands() > 0) {
@@ -2015,29 +1867,7 @@ static std::string CBEMangle(const std::string &S) {
       ctx.MOV(ir::getType(family), dst, src);
     }
     ctx.RET();
-
-    bool isStructReturn = I.getParent()->getParent()->hasStructRetAttr();
-    if (isStructReturn) {
-      Out << "  return StructReturn;\n";
-      return;
-    }
-
-    // Don't output a void return if this is the last basic block in the function
-    if (I.getNumOperands() == 0 &&
-        &*--I.getParent()->getParent()->end() == I.getParent() &&
-        !I.getParent()->size() == 1) {
-      return;
-    }
-#if 0
-    Out << "  return";
-    if (I.getNumOperands()) {
-      Out << ' ';
-      writeOperand(I.getOperand(0));
-    }
-    Out << ";\n";
-#endif
   }
-
 
   bool GenWriter::isGotoCodeNecessary(BasicBlock *From, BasicBlock *To) {
     /// FIXME: This should be reenabled, but loop reordering safe!!
@@ -2052,195 +1882,59 @@ static std::string CBEMangle(const std::string &S) {
       return true;
     return false;
   }
-#if 0
-  void GenWriter::printPHICopiesForSuccessor (BasicBlock *CurBlock,
-                                            BasicBlock *Successor,
-                                            unsigned Indent) {
-    for (BasicBlock::iterator I = Successor->begin(); isa<PHINode>(I); ++I) {
-      PHINode *PN = cast<PHINode>(I);
-      // Now we have to do the printing.
-      Value *IV = PN->getIncomingValueForBlock(CurBlock);
-      if (!isa<UndefValue>(IV)) {
-        Out << std::string(Indent, ' ');
-        Out << "  " << GetValueName(I) << "__PHI_TEMPORARY = ";
-        writeOperand(IV);
-        Out << ";   /* for PHI node */\n";
-      }
-    }
-  }
 
-  void GenWriter::printBranchToBlock(BasicBlock *CurBB, BasicBlock *Succ,
-                                   unsigned Indent) {
-    if (isGotoCodeNecessary(CurBB, Succ)) {
-      Out << std::string(Indent, ' ') << "  goto ";
-      writeOperand(Succ);
-      Out << ";\n";
-    }
-  }
-
-  // Branch instruction printing - Avoid printing out a branch to a basic block
-  // that immediately succeeds the current one.
-  //
-  void GenWriter::visitBranchInst(BranchInst &I)
+  void GenWriter::regAllocateBinaryOperator(Instruction &I)
   {
-
-    if (I.isConditional()) {
-      if (isGotoCodeNecessary(I.getParent(), I.getSuccessor(0))) {
-        Out << "  if (";
-        writeOperand(I.getCondition());
-        Out << ") {\n";
-
-        printPHICopiesForSuccessor (I.getParent(), I.getSuccessor(0), 2);
-        printBranchToBlock(I.getParent(), I.getSuccessor(0), 2);
-
-        if (isGotoCodeNecessary(I.getParent(), I.getSuccessor(1))) {
-          Out << "  } else {\n";
-          printPHICopiesForSuccessor (I.getParent(), I.getSuccessor(1), 2);
-          printBranchToBlock(I.getParent(), I.getSuccessor(1), 2);
-        }
-      } else {
-        // First goto not necessary, assume second one is...
-        Out << "  if (!";
-        writeOperand(I.getCondition());
-        Out << ") {\n";
-
-        printPHICopiesForSuccessor (I.getParent(), I.getSuccessor(1), 2);
-        printBranchToBlock(I.getParent(), I.getSuccessor(1), 2);
-      }
-
-      Out << "  }\n";
-    } else {
-      printPHICopiesForSuccessor (I.getParent(), I.getSuccessor(0), 0);
-      printBranchToBlock(I.getParent(), I.getSuccessor(0), 0);
-    }
-    Out << "\n";
+    this->newRegister(&I);
   }
 
-  // PHI nodes get copied into temporary values at the end of predecessor basic
-  // blocks.  We now need to copy these temporary values into the REAL value for
-  // the PHI.
-
-  void GenWriter::visitPHINode(PHINode &I) {
-    NOT_SUPPORTED;
-    writeOperand(&I);
-    Out << "__PHI_TEMPORARY";
-  }
-#endif
-
-  void GenWriter::visitBinaryOperator(Instruction &I)
+  void GenWriter::emitBinaryOperator(Instruction &I)
   {
-    GBE_ASSERT(!I.getType()->isPointerTy());
-    GBE_ASSERT(this->registerMap.find(&I) != this->registerMap.end());
-    const ir::Register dst = this->registerMap[&I];
-    const ir::Register src0 = this->getRegister(I.getOperand(0));
-    const ir::Register src1 = this->getRegister(I.getOperand(1));
-    const ir::Type type = this->getType(I.getType());
+    GBE_ASSERT(I.getType()->isPointerTy() == false);
 
-    switch (I.getOpcode()) {
-      case Instruction::Add:
-      case Instruction::FAdd: ctx.ADD(type, dst, src0, src1); break;
-      case Instruction::Sub:
-      case Instruction::FSub: ctx.SUB(type, dst, src0, src1); break;
-      case Instruction::Mul:
-      case Instruction::FMul: ctx.MUL(type, dst, src0, src1); break;
-      case Instruction::URem:
-      case Instruction::SRem:
-      case Instruction::FRem: ctx.REM(type, dst, src0, src1); break;
-      case Instruction::UDiv:
-      case Instruction::SDiv:
-      case Instruction::FDiv: ctx.DIV(type, dst, src0, src1); break;
-      case Instruction::And:  ctx.AND(type, dst, src0, src1); break;
-      case Instruction::Or:   ctx.OR(type, dst, src0, src1); break;
-      case Instruction::Xor:  ctx.XOR(type, dst, src0, src1); break;
-      case Instruction::Shl : ctx.SHL(type, dst, src0, src1); break;
-      case Instruction::LShr: ctx.SHR(type, dst, src0, src1); break;
-      case Instruction::AShr: ctx.ASR(type, dst, src0, src1); break;
-      default:
-         GBE_ASSERT(0);
-    };
-
-#if 0
-    // binary instructions, shift instructions, setCond instructions.
-    assert(!I.getType()->isPointerTy());
-    // We must cast the results of binary operations which might be promoted.
-    bool needsCast = false;
-    if ((I.getType() == Type::getInt8Ty(I.getContext())) ||
-        (I.getType() == Type::getInt16Ty(I.getContext()))
-        || (I.getType() == Type::getFloatTy(I.getContext()))) {
-      needsCast = true;
-      Out << "((";
-      printType(Out, I.getType(), false);
-      Out << ")(";
+    // Get the element type for a vector
+    ir::Type type;
+    uint32_t elemNum;
+    Type *llvmType = I.getType();
+    if (llvmType->isVectorTy() == true) {
+      VectorType *vectorType = cast<VectorType>(llvmType);
+      Type *elementType = vectorType->getElementType();
+      elemNum = vectorType->getNumElements();
+      type = getType(ctx, elementType);
+    } else {
+      elemNum = 1;
+      type = getType(ctx, llvmType);
     }
 
-    // If this is a negation operation, print it out as such.  For FP, we don't
-    // want to print "-0.0 - X".
-    if (BinaryOperator::isNeg(&I)) {
-      Out << "-(";
-      writeOperand(BinaryOperator::getNegArgument(cast<BinaryOperator>(&I)));
-      Out << ")";
-    } else if (BinaryOperator::isFNeg(&I)) {
-      Out << "-(";
-      writeOperand(BinaryOperator::getFNegArgument(cast<BinaryOperator>(&I)));
-      Out << ")";
-    } else if (I.getOpcode() == Instruction::FRem) {
-      // Output a call to fmod/fmodf instead of emitting a%b
-      if (I.getType() == Type::getFloatTy(I.getContext()))
-        Out << "fmodf(";
-      else if (I.getType() == Type::getDoubleTy(I.getContext()))
-        Out << "fmod(";
-      else  // all 3 flavors of long double
-        Out << "fmodl(";
-      writeOperand(I.getOperand(0));
-      Out << ", ";
-      writeOperand(I.getOperand(1));
-      Out << ")";
-    } else {
-
-      // Write out the cast of the instruction's value back to the proper type
-      // if necessary.
-      bool NeedsClosingParens = writeInstructionCast(I);
-
-      // Certain instructions require the operand to be forced to a specific type
-      // so we use writeOperandWithCast here instead of writeOperand. Similarly
-      // below for operand 1
-      writeOperandWithCast(I.getOperand(0), I.getOpcode());
+    // Emit the instructions in a row
+    for (uint32_t elemID = 0; elemID < elemNum; ++elemID) {
+      const ir::Register dst = this->getRegister(&I, elemID);
+      const ir::Register src0 = this->getRegister(I.getOperand(0), elemID);
+      const ir::Register src1 = this->getRegister(I.getOperand(1), elemID);
 
       switch (I.getOpcode()) {
-      case Instruction::Add:
-      case Instruction::FAdd: Out << " + "; break;
-      case Instruction::Sub:
-      case Instruction::FSub: Out << " - "; break;
-      case Instruction::Mul:
-      case Instruction::FMul: Out << " * "; break;
-      case Instruction::URem:
-      case Instruction::SRem:
-      case Instruction::FRem: Out << " % "; break;
-      case Instruction::UDiv:
-      case Instruction::SDiv:
-      case Instruction::FDiv: Out << " / "; break;
-      case Instruction::And:  Out << " & "; break;
-      case Instruction::Or:   Out << " | "; break;
-      case Instruction::Xor:  Out << " ^ "; break;
-      case Instruction::Shl : Out << " << "; break;
-      case Instruction::LShr:
-      case Instruction::AShr: Out << " >> "; break;
-      default:
-#ifndef NDEBUG
-         errs() << "Invalid operator type!" << I;
-#endif
-         llvm_unreachable(0);
-      }
-
-      writeOperandWithCast(I.getOperand(1), I.getOpcode());
-      if (NeedsClosingParens)
-        Out << "))";
+        case Instruction::Add:
+        case Instruction::FAdd: ctx.ADD(type, dst, src0, src1); break;
+        case Instruction::Sub:
+        case Instruction::FSub: ctx.SUB(type, dst, src0, src1); break;
+        case Instruction::Mul:
+        case Instruction::FMul: ctx.MUL(type, dst, src0, src1); break;
+        case Instruction::URem:
+        case Instruction::SRem:
+        case Instruction::FRem: ctx.REM(type, dst, src0, src1); break;
+        case Instruction::UDiv:
+        case Instruction::SDiv:
+        case Instruction::FDiv: ctx.DIV(type, dst, src0, src1); break;
+        case Instruction::And:  ctx.AND(type, dst, src0, src1); break;
+        case Instruction::Or:   ctx.OR(type, dst, src0, src1); break;
+        case Instruction::Xor:  ctx.XOR(type, dst, src0, src1); break;
+        case Instruction::Shl : ctx.SHL(type, dst, src0, src1); break;
+        case Instruction::LShr: ctx.SHR(type, dst, src0, src1); break;
+        case Instruction::AShr: ctx.ASR(type, dst, src0, src1); break;
+        default:
+           GBE_ASSERT(0);
+      };
     }
-
-    if (needsCast) {
-      Out << "))";
-    }
-#endif
   }
 
 #if 0
@@ -2322,85 +2016,41 @@ static std::string CBEMangle(const std::string &S) {
     Out << ")";
   }
 #endif
-#if 0
-  static const char * getFloatBitCastField(Type *Ty) {
-    switch (Ty->getTypeID()) {
-      default: llvm_unreachable("Invalid Type");
-      case Type::FloatTyID:  return "Float";
-      case Type::DoubleTyID: return "Double";
-      case Type::IntegerTyID: {
-        unsigned NumBits = cast<IntegerType>(Ty)->getBitWidth();
-        if (NumBits <= 32)
-          return "Int32";
-        else
-          return "Int64";
+
+  void GenWriter::regAllocateCastInst(CastInst &I)
+  {
+    if (I.getOpcode() == Instruction::PtrToInt ||
+        I.getOpcode() == Instruction::IntToPtr) {
+      Value *dstValue = &I;
+      Value *srcValue = I.getOperand(0);
+      Constant *CPV = dyn_cast<Constant>(srcValue);
+      if (CPV == NULL) {
+        Type *dstType = dstValue->getType();
+        Type *srcType = srcValue->getType();
+        GBE_ASSERT(getTypeByteSize(unit, dstType) == getTypeByteSize(unit, srcType));
+        regTranslator.newValueProxy(srcValue, dstValue);
+      } else
+        this->newRegister(dstValue);
+    }
+    else
+      NOT_SUPPORTED;
+  }
+
+  void GenWriter::emitCastInst(CastInst &I)
+  {
+    if (I.getOpcode() == Instruction::PtrToInt ||
+        I.getOpcode() == Instruction::IntToPtr) {
+      Value *srcValue = &I;
+      Value *dstValue = I.getOperand(0);
+      Constant *CPV = dyn_cast<Constant>(srcValue);
+      if (CPV != NULL) {
+        const ir::ImmediateIndex index = ctx.newImmediate(CPV);
+        const ir::Immediate imm = ctx.getImmediate(index);
+        const ir::Register reg = this->getRegister(dstValue);
+        ctx.LOADI(imm.type, reg, index);
       }
     }
   }
-#endif
-
-#if 1
-  void GenWriter::visitCastInst(CastInst &I) {
-    if (I.getOpcode() == Instruction::PtrToInt ||
-        I.getOpcode() == Instruction::IntToPtr) {
-      Value *srcValue = &I, *dstValue = I.getOperand(0);
-      Type *dstType = dstValue->getType();
-      Type *srcType = srcValue->getType();
-      const ir::Unit &unit = ctx.getUnit();
-      GBE_ASSERT(getTypeByteSize(unit, dstType) == getTypeByteSize(unit, srcType));
-      GBE_ASSERT(registerMap.find(dstValue) != registerMap.end());
-      registerMap[dstValue] = registerMap[srcValue];
-    } else
-      NOT_SUPPORTED;
-#if 0
-    Type *DstTy = I.getType();
-    Type *SrcTy = I.getOperand(0)->getType();
-    if (isFPIntBitCast(I)) {
-      Out << '(';
-      // These int<->float and long<->double casts need to be handled specially
-      Out << GetValueName(&I) << "__BITCAST_TEMPORARY."
-          << getFloatBitCastField(I.getOperand(0)->getType()) << " = ";
-      writeOperand(I.getOperand(0));
-      Out << ", " << GetValueName(&I) << "__BITCAST_TEMPORARY."
-          << getFloatBitCastField(I.getType());
-      Out << ')';
-      return;
-    }
-
-    Out << '(';
-    printCast(I.getOpcode(), SrcTy, DstTy);
-
-    // Make a sext from i1 work by subtracting the i1 from 0 (an int).
-    if (SrcTy == Type::getInt1Ty(I.getContext()) &&
-        I.getOpcode() == Instruction::SExt)
-      Out << "0-";
-
-    writeOperand(I.getOperand(0));
-
-    if (DstTy == Type::getInt1Ty(I.getContext()) &&
-        (I.getOpcode() == Instruction::Trunc ||
-         I.getOpcode() == Instruction::FPToUI ||
-         I.getOpcode() == Instruction::FPToSI ||
-         I.getOpcode() == Instruction::PtrToInt)) {
-      // Make sure we really get a trunc to bool by anding the operand with 1
-      Out << "&1u";
-    }
-    Out << ')';
-#endif
-  }
-#endif
-
-#if 0
-  void GenWriter::visitSelectInst(SelectInst &I) {
-    Out << "((";
-    writeOperand(I.getCondition());
-    Out << ") ? (";
-    writeOperand(I.getTrueValue());
-    Out << ") : (";
-    writeOperand(I.getFalseValue());
-    Out << "))";
-  }
-#endif
 
 #ifndef NDEBUG
   static bool isSupportedIntegerSize(IntegerType &T) {
@@ -2427,8 +2077,8 @@ static std::string CBEMangle(const std::string &S) {
 #endif
   }
 
-  void GenWriter::visitCallInst(CallInst &I)
-  {
+  void GenWriter::emitCallInst(CallInst &I) {}
+  void GenWriter::regAllocateCallInst(CallInst &I) {
     Value *dst = &I;
     Value *Callee = I.getCalledValue();
     GBE_ASSERT(ctx.getFunction().getProfile() == ir::PROFILE_OCL);
@@ -2441,136 +2091,23 @@ static std::string CBEMangle(const std::string &S) {
     // With OCL there is no side effect for any called functions. So do nothing
     // when there is no returned value
     if (I.getType() == Type::getVoidTy(I.getContext()))
-      return;
+      NOT_SUPPORTED;
 
     // Get the name of the called function and handle it. We should use a hash
     // map later
     const std::string fnName = Callee->getName();
     if (fnName == "__gen_ocl_get_global_id0")
-      this->registerMap[dst] = ir::ocl::gid0;
+      regTranslator.newScalarProxy(ir::ocl::gid0, dst);
     else if (fnName == "__gen_ocl_get_global_id1")
-      this->registerMap[dst] = ir::ocl::gid1;
+      regTranslator.newScalarProxy(ir::ocl::gid1, dst);
     else if (fnName == "__gen_ocl_get_global_id2")
-      this->registerMap[dst] = ir::ocl::gid2;
+      regTranslator.newScalarProxy(ir::ocl::gid2, dst);
     else if (fnName == "__gen_ocl_get_local_id0")
-      this->registerMap[dst] = ir::ocl::lid0;
+      regTranslator.newScalarProxy(ir::ocl::lid0, dst);
     else if (fnName == "__gen_ocl_get_local_id1")
-      this->registerMap[dst] = ir::ocl::lid1;
+      regTranslator.newScalarProxy(ir::ocl::lid1, dst);
     else if (fnName == "__gen_ocl_get_local_id2")
-      this->registerMap[dst] = ir::ocl::lid2;
-
-#if 0
-      return visitInlineAsm(I);
-
-    bool WroteCallee = false;
-
-    // Handle intrinsic function calls first...
-    if (Function *F = I.getCalledFunction())
-      if (Intrinsic::ID ID = (Intrinsic::ID)F->getIntrinsicID())
-        if (visitBuiltinCall(I, ID, WroteCallee))
-          return;
-
-    Value *Callee = I.getCalledValue();
-    Out << (Callee->getName());
-    PointerType  *PTy   = cast<PointerType>(Callee->getType());
-    FunctionType *FTy   = cast<FunctionType>(PTy->getElementType());
-
-    // If this is a call to a struct-return function, assign to the first
-    // parameter instead of passing it to the call.
-    const AttrListPtr &PAL = I.getAttributes();
-    bool hasByVal = I.hasByValArgument();
-    bool isStructRet = I.hasStructRetAttr();
-    if (isStructRet) {
-      writeOperandDeref(I.getArgOperand(0));
-      Out << " = ";
-    }
-
-    if (I.isTailCall()) Out << " /*tail*/ ";
-
-    if (!WroteCallee) {
-      // If this is an indirect call to a struct return function, we need to cast
-      // the pointer. Ditto for indirect calls with byval arguments.
-      bool NeedsCast = (hasByVal || isStructRet) && !isa<Function>(Callee);
-
-      // GCC is a real PITA.  It does not permit codegening casts of functions to
-      // function pointers if they are in a call (it generates a trap instruction
-      // instead!).  We work around this by inserting a cast to void* in between
-      // the function and the function pointer cast.  Unfortunately, we can't just
-      // form the constant expression here, because the folder will immediately
-      // nuke it.
-      //
-      // Note finally, that this is completely unsafe.  ANSI C does not guarantee
-      // that void* and function pointers have the same size. :( To deal with this
-      // in the common case, we handle casts where the number of arguments passed
-      // match exactly.
-      //
-      if (ConstantExpr *CE = dyn_cast<ConstantExpr>(Callee))
-        if (CE->isCast())
-          if (Function *RF = dyn_cast<Function>(CE->getOperand(0))) {
-            NeedsCast = true;
-            Callee = RF;
-          }
-
-      if (NeedsCast) {
-        // Ok, just cast the pointer type.
-        Out << "((";
-        if (isStructRet)
-          printStructReturnPointerFunctionType(Out, PAL,
-                               cast<PointerType>(I.getCalledValue()->getType()));
-        else if (hasByVal)
-          printType(Out, I.getCalledValue()->getType(), false, "", true, PAL);
-        else
-          printType(Out, I.getCalledValue()->getType());
-        Out << ")(void*)";
-      }
-      writeOperand(Callee);
-      if (NeedsCast) Out << ')';
-    }
-
-    Out << '(';
-
-    bool PrintedArg = false;
-    if(FTy->isVarArg() && !FTy->getNumParams()) {
-      Out << "0 /*dummy arg*/";
-      PrintedArg = true;
-    }
-
-    unsigned NumDeclaredParams = FTy->getNumParams();
-    CallSite CS(&I);
-    CallSite::arg_iterator AI = CS.arg_begin(), AE = CS.arg_end();
-    unsigned ArgNo = 0;
-    if (isStructRet) {   // Skip struct return argument.
-      ++AI;
-      ++ArgNo;
-    }
-
-
-    for (; AI != AE; ++AI, ++ArgNo) {
-      if (PrintedArg) Out << ", ";
-      if (ArgNo < NumDeclaredParams &&
-          (*AI)->getType() != FTy->getParamType(ArgNo)) {
-        Out << '(';
-        printType(Out, FTy->getParamType(ArgNo),
-              /*isSigned=*/PAL.paramHasAttr(ArgNo+1, Attribute::SExt));
-        Out << ')';
-      }
-      // Check if the argument is expected to be passed by value.
-      if (I.paramHasAttr(ArgNo+1, Attribute::ByVal))
-        writeOperandDeref(*AI);
-      else
-        writeOperand(*AI);
-      PrintedArg = true;
-    }
-    Out << ')';
-#endif
-  }
-
-  /// visitBuiltinCall - Handle the call to the specified builtin.  Returns true
-  /// if the entire call is handled, return false if it wasn't handled, and
-  /// optionally set 'WroteCallee' if the callee has already been printed out.
-  bool GenWriter::visitBuiltinCall(CallInst &I, Intrinsic::ID ID, bool &WroteCallee) {
-    GBE_ASSERTM(false, "builtin call is not supported");
-    return false;
+      regTranslator.newScalarProxy(ir::ocl::lid2, dst);
   }
 
   void GenWriter::visitAllocaInst(AllocaInst &I) {
@@ -2601,9 +2138,13 @@ static std::string CBEMangle(const std::string &S) {
   static INLINE Value *getLoadOrStoreValue(StoreInst &I) {
     return I.getValueOperand();
   }
+  void GenWriter::regAllocateLoadInst(LoadInst &I) {
+    this->newRegister(&I);
+  }
+  void GenWriter::regAllocateStoreInst(StoreInst &I) {}
 
   template <bool isLoad, typename T>
-  INLINE void GenWriter::visitLoadOrStore(T &I)
+  INLINE void GenWriter::emitLoadOrStore(T &I)
   {
     GBE_ASSERTM(I.isVolatile() == false, "Volatile pointer is not supported");
     unsigned int llvmSpace = I.getPointerAddressSpace();
@@ -2612,124 +2153,47 @@ static std::string CBEMangle(const std::string &S) {
     Type *llvmType = llvmValues->getType();
     const bool dwAligned = (I.getAlignment() % 4) == 0;
     const ir::MemorySpace memSpace = addressSpaceLLVMToGen(llvmSpace);
-    const ir::Type type = getType(llvmType);
-    const ir::Register values = getRegister(llvmValues);
-    const ir::Register ptr = getRegister(llvmPtr);
-    if (isLoad)
-      ctx.LOAD(type, ptr, memSpace, dwAligned, values);
-    else
-      ctx.STORE(type, ptr, memSpace, dwAligned, values);
-  }
+    const ir::Register ptr = this->getRegister(llvmPtr);
 
-  void GenWriter::visitLoadInst(LoadInst &I) {
-    this->visitLoadOrStore<true>(I);
-  }
-
-  void GenWriter::visitStoreInst(StoreInst &I) {
-    this->visitLoadOrStore<false>(I);
-  }
-
-#if 0
-  void GenWriter::visitInsertElementInst(InsertElementInst &I) {
-    Type *EltTy = I.getType()->getElementType();
-    writeOperand(I.getOperand(0));
-    Out << ";\n  ";
-    Out << "((";
-    printType(Out, PointerType::getUnqual(EltTy));
-    Out << ")(&" << GetValueName(&I) << "))[";
-    writeOperand(I.getOperand(2));
-    Out << "] = (";
-    writeOperand(I.getOperand(1));
-    Out << ")";
-  }
-
-  void GenWriter::visitExtractElementInst(ExtractElementInst &I) {
-    // We know that our operand is not inlined.
-    Out << "((";
-    Type *EltTy = cast<VectorType>(I.getOperand(0)->getType())->getElementType();
-    printType(Out, PointerType::getUnqual(EltTy));
-    Out << ")(&" << GetValueName(I.getOperand(0)) << "))[";
-    writeOperand(I.getOperand(1));
-    Out << "]";
-  }
-
-  void GenWriter::visitShuffleVectorInst(ShuffleVectorInst &SVI) {
-    Out << "(";
-    printType(Out, SVI.getType());
-    Out << "){ ";
-    VectorType *VT = SVI.getType();
-    unsigned NumElts = VT->getNumElements();
-    Type *EltTy = VT->getElementType();
-
-    for (unsigned i = 0; i != NumElts; ++i) {
-      if (i) Out << ", ";
-      int SrcVal = SVI.getMaskValue(i);
-      if ((unsigned)SrcVal >= NumElts*2) {
-        Out << " 0/*undef*/ ";
-      } else {
-        Value *Op = SVI.getOperand((unsigned)SrcVal >= NumElts);
-        if (isa<Instruction>(Op)) {
-          // Do an extractelement of this value from the appropriate i. So do
-          // nothing when there is no returned valuenput.
-          Out << "((";
-          printType(Out, PointerType::getUnqual(EltTy));
-          Out << ")(&" << GetValueName(Op)
-              << "))[" << (SrcVal & (NumElts-1)) << "]";
-        } else if (isa<ConstantAggregateZero>(Op) || isa<UndefValue>(Op)) {
-          Out << "0";
-        } else {
-          printConstant(cast<ConstantVector>(Op)->getOperand(SrcVal &
-                                                             (NumElts-1)),
-                        false);
-        }
-      }
-    }
-    Out << "}";
-  }
-
-  void GenWriter::visitInsertValueInst(InsertValueInst &IVI) {
-    // Start by copying the entire aggregate value into the result variable.
-        writeOperand(IVI.getOperand(0));
-    Out << ";\n  ";
-
-    // Then do the insert to update the field.
-    Out << GetValueName(&IVI);
-    for (const unsigned *b = IVI.idx_begin(), *i = b, *e = IVI.idx_end();
-         i != e; ++i) {
-      Type *IndexedTy =
-        ExtractValueInst::getIndexedType(IVI.getOperand(0)->getType(),
-                                         makeArrayRef(b, i+1));
-      if (IndexedTy->isArrayTy())
-        Out << ".array[" << *i << "]";
+    // Scalar is easy. We neednot build register tuples
+    if (isScalarType(llvmType) == true) {
+      const ir::Type type = getType(ctx, llvmType);
+      const ir::Register values = this->getRegister(llvmValues);
+      if (isLoad)
+        ctx.LOAD(type, ptr, memSpace, dwAligned, values);
       else
-        Out << ".field" << *i;
+        ctx.STORE(type, ptr, memSpace, dwAligned, values);
     }
-    Out << " = ";
-    writeOperand(IVI.getOperand(1));
+    // A vector type requires to build a tuple
+    else {
+      VectorType *vectorType = cast<VectorType>(llvmType);
+      Type *elemType = vectorType->getElementType();
+
+      // Build the tuple data in the vector
+      vector<ir::Register> tupleData; // put registers here
+      const uint32_t elemNum = vectorType->getNumElements();
+      for (uint32_t elemID = 0; elemID < elemNum; ++elemID) {
+        const ir::Register reg = this->getRegister(llvmValues, elemID);
+        tupleData.push_back(reg);
+      }
+      const ir::Tuple tuple = ctx.arrayTuple(&tupleData[0], elemNum);
+
+      // Emit the instruction
+      const ir::Type type = getType(ctx, elemType);
+      if (isLoad)
+        ctx.LOAD(type, tuple, ptr, memSpace, elemNum, dwAligned);
+      else
+        ctx.STORE(type, tuple, ptr, memSpace, elemNum, dwAligned);
+    }
   }
 
-  void GenWriter::visitExtractValueInst(ExtractValueInst &EVI) {
-    Out << "(";
-    if (isa<UndefValue>(EVI.getOperand(0))) {
-      Out << "(";
-      printType(Out, EVI.getType());
-      Out << ") 0/*UNDEF*/";
-    } else {
-      Out << GetValueName(EVI.getOperand(0));
-      for (const unsigned *b = EVI.idx_begin(), *i = b, *e = EVI.idx_end();
-           i != e; ++i) {
-        Type *IndexedTy =
-          ExtractValueInst::getIndexedType(EVI.getOperand(0)->getType(),
-                                           makeArrayRef(b, i+1));
-        if (IndexedTy->isArrayTy())
-          Out << ".array[" << *i << "]";
-        else
-          Out << ".field" << *i;
-      }
-    }
-    Out << ")";
+  void GenWriter::emitLoadInst(LoadInst &I) {
+    this->emitLoadOrStore<true>(I);
   }
-#endif
+
+  void GenWriter::emitStoreInst(StoreInst &I) {
+    this->emitLoadOrStore<false>(I);
+  }
 
   llvm::FunctionPass *createGenPass(ir::Unit &unit) {
     return new GenWriter(unit);

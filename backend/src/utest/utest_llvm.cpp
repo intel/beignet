@@ -76,12 +76,14 @@ runTests:
   GBE_ASSERT(dummyKernel != NULL);
   fclose(dummyKernel);
 
-  //UTEST_EXPECT_SUCCESS(utestLLVM2Gen("add.ll"));
-  //UTEST_EXPECT_SUCCESS(utestLLVM2Gen("load_store.ll"));
-  //UTEST_EXPECT_SUCCESS(utestLLVM2Gen("add2.ll"));
+  UTEST_EXPECT_SUCCESS(utestLLVM2Gen("add.ll"));
+  UTEST_EXPECT_SUCCESS(utestLLVM2Gen("load_store.ll"));
+  UTEST_EXPECT_SUCCESS(utestLLVM2Gen("add2.ll"));
   UTEST_EXPECT_SUCCESS(utestLLVM2Gen("get_global_id.ll"));
+  UTEST_EXPECT_SUCCESS(utestLLVM2Gen("simple_float4.ll"));
+  UTEST_EXPECT_SUCCESS(utestLLVM2Gen("simple_float4_2.ll"));
   //UTEST_EXPECT_SUCCESS(utestLLVM2Gen("loop.ll"));
-  //UTEST_EXPECT_SUCCESS(utestLLVM2Gen("void.ll"));
+  UTEST_EXPECT_SUCCESS(utestLLVM2Gen("void.ll"));
 }
 
 UTEST_REGISTER(utestLLVM)
