@@ -886,6 +886,8 @@ namespace gbe
       regTranslator.newScalarProxy(ir::ocl::lid1, dst);
     else if (fnName == "__gen_ocl_get_local_id2")
       regTranslator.newScalarProxy(ir::ocl::lid2, dst);
+    else
+      NOT_SUPPORTED;
   }
 
   static INLINE ir::MemorySpace addressSpaceLLVMToGen(unsigned llvmMemSpace) {
