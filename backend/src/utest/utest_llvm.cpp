@@ -76,6 +76,11 @@ runTests:
   GBE_ASSERT(dummyKernel != NULL);
   fclose(dummyKernel);
 
+  UTEST_EXPECT_SUCCESS(utestLLVM2Gen("select.ll"));
+#if 1
+  UTEST_EXPECT_SUCCESS(utestLLVM2Gen("shuffle.ll"));
+  UTEST_EXPECT_SUCCESS(utestLLVM2Gen("extract.ll"));
+  UTEST_EXPECT_SUCCESS(utestLLVM2Gen("insert.ll"));
   UTEST_EXPECT_SUCCESS(utestLLVM2Gen("add.ll"));
   UTEST_EXPECT_SUCCESS(utestLLVM2Gen("load_store.ll"));
   UTEST_EXPECT_SUCCESS(utestLLVM2Gen("add2.ll"));
@@ -85,6 +90,7 @@ runTests:
   //UTEST_EXPECT_SUCCESS(utestLLVM2Gen("loop.ll"));
   UTEST_EXPECT_SUCCESS(utestLLVM2Gen("void.ll"));
   UTEST_EXPECT_SUCCESS(utestLLVM2Gen("cmp_cvt.ll"));
+#endif
 }
 
 UTEST_REGISTER(utestLLVM)

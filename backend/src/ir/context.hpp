@@ -102,16 +102,20 @@ namespace ir {
     INLINE PointerSize getPointerSize(void) const {
       return unit.getPointerSize();
     }
-    /*! MAD with sources directly specified */
-    INLINE void MAD(Type type,
-                    Register dst,
-                    Register src0,
-                    Register src1,
-                    Register src2)
-    {
-      const Tuple index = this->tuple(src0, src1, src2);
-      return this->MAD(type, dst, index);
+
+#define DECL_THREE_SRC_INSN(NAME)                         \
+    INLINE void NAME(Type type,                           \
+                     Register dst,                        \
+                     Register src0,                       \
+                     Register src1,                       \
+                     Register src2)                       \
+    {                                                     \
+      const Tuple index = this->tuple(src0, src1, src2);  \
+      return this->NAME(type, dst, index);                \
     }
+    DECL_THREE_SRC_INSN(MAD);
+    DECL_THREE_SRC_INSN(SEL);
+#undef DECL_THREE_SRC_INSN
 
     /*! LOAD with the destinations directly specified */
     template <typename... Args>

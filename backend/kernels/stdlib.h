@@ -38,28 +38,42 @@ inline unsigned get_local_id(unsigned int dim) {
   else return 0;
 }
 
+__attribute__((overloadable)) inline unsigned select(unsigned src0, unsigned src1, unsigned cond) {
+  return cond ? src0 : src1;
+}
+
+__attribute__((overloadable)) inline int select(int src0, int src1, int cond) {
+  return cond ? src0 : src1;
+}
+
 typedef float float2 __attribute__((ext_vector_type(2)));
 typedef float float3 __attribute__((ext_vector_type(3)));
 typedef float float4 __attribute__((ext_vector_type(4)));
 typedef int int2 __attribute__((ext_vector_type(2)));
 typedef int int3 __attribute__((ext_vector_type(3)));
 typedef int int4 __attribute__((ext_vector_type(4)));
+typedef int uint2 __attribute__((ext_vector_type(2)));
+typedef unsigned uint3 __attribute__((ext_vector_type(3)));
+typedef unsigned uint4 __attribute__((ext_vector_type(4)));
 typedef bool bool2 __attribute__((ext_vector_type(2)));
 typedef bool bool3 __attribute__((ext_vector_type(3)));
 typedef bool bool4 __attribute__((ext_vector_type(4)));
 
-#define DECL_SELECT(TYPE)                     \
-__attribute__((overloadable))                 \
-inline TYPE select(bool b, TYPE x, TYPE y) {  \
-  if (b) return x; else return y;             \
+__attribute__((overloadable)) inline int4 select(int4 src0, int4 src1, int4 cond) {
+  int4 dst;
+  const int x0 = src0.x; // Fix performance issue with CLANG
+  const int x1 = src1.x;
+  const int y0 = src0.y;
+  const int y1 = src1.y;
+  const int z0 = src0.z;
+  const int z1 = src1.z;
+  const int w0 = src0.w;
+  const int w1 = src1.w;
+
+  dst.x = (cond.x & 0x80000000) ? x1 : x0;
+  dst.y = (cond.y & 0x80000000) ? y1 : y0;
+  dst.z = (cond.z & 0x80000000) ? z1 : z0;
+  dst.w = (cond.w & 0x80000000) ? w1 : w0;
+  return dst;
 }
-#define DECL_SELECT_ALL(TYPE)   \
-  DECL_SELECT(TYPE)             \
-  DECL_SELECT(TYPE##2)          \
-  DECL_SELECT(TYPE##3)          \
-  DECL_SELECT(TYPE##4)
-DECL_SELECT_ALL(int)
-DECL_SELECT_ALL(float)
-#undef DECL_SELECT_ALL
-#undef DECL_SELECT
 

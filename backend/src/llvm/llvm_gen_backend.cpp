@@ -217,17 +217,20 @@ namespace gbe
       GBE_ASSERT(scalarMap.find(key) != scalarMap.end());
       return scalarMap[key];
     }
-
+    /*! Insert a given register at given Value position */
+    void insertRegister(const ir::Register &reg, Value *value, uint32_t index) {
+      const auto key = std::make_pair(value, index);
+      GBE_ASSERT(scalarMap.find(key) == scalarMap.end());
+      scalarMap[key] = reg;
+    }
   private:
-    /*! This maps a scalar register to a Value (index is the vector index when
+    /*! This creates a scalar register for a Value (index is the vector index when
      *  the value is a vector of scalars)
      */
     ir::Register newScalar(Value *value, Type *type, uint32_t index) {
-      const auto key = std::make_pair(value, index);
-      GBE_ASSERT(scalarMap.find(key) == scalarMap.end());
       const ir::RegisterData::Family family = getFamily(ctx, type);
       const ir::Register reg = ctx.reg(family);
-      scalarMap[key] = reg;
+      this->insertRegister(reg, value, index);
       return reg;
     }
     /*! Indices will be zero for scalar values */
@@ -372,15 +375,15 @@ namespace gbe
     DECL_VISIT_FN(CallInst, CallInst);
     DECL_VISIT_FN(ICmpInst, ICmpInst);
     DECL_VISIT_FN(FCmpInst, FCmpInst);
+    DECL_VISIT_FN(InsertElement, InsertElementInst);
+    DECL_VISIT_FN(ExtractElement, ExtractElementInst);
+    DECL_VISIT_FN(ShuffleVectorInst, ShuffleVectorInst);
+    DECL_VISIT_FN(SelectInst, SelectInst);
 #undef DECL_VISIT_FN
 
     // Must be implemented later
-    void visitInsertElementInst(InsertElementInst &I) {NOT_SUPPORTED;}
-    void visitExtractElementInst(ExtractElementInst &I) {NOT_SUPPORTED;}
-    void visitShuffleVectorInst(ShuffleVectorInst &SVI) {NOT_SUPPORTED;}
     void visitPHINode(PHINode &I) {NOT_SUPPORTED;}
     void visitBranchInst(BranchInst &I) {NOT_SUPPORTED;}
-    void visitSelectInst(SelectInst &I) {NOT_SUPPORTED;}
 
     // These instructions are not supported at all
     void visitVAArgInst(VAArgInst &I) {NOT_SUPPORTED;}
@@ -417,7 +420,9 @@ namespace gbe
     return false;
   }
 
-  ir::ImmediateIndex GenWriter::newImmediate(Constant *CPV) {
+  template <typename U, typename T>
+  static U processConstant(Constant *CPV, T doIt)
+  {
     if (dyn_cast<ConstantExpr>(CPV))
       GBE_ASSERTM(false, "Unsupported constant expression");
     else if (isa<UndefValue>(CPV) && CPV->getType()->isSingleValueType())
@@ -428,22 +433,22 @@ namespace gbe
       Type* Ty = CI->getType();
       if (Ty == Type::getInt1Ty(CPV->getContext())) {
         const bool b = CI->getZExtValue();
-        return ctx.newImmediate(b);
+        return doIt(b);
       } else if (Ty == Type::getInt8Ty(CPV->getContext())) {
         const uint8_t u8 = CI->getZExtValue();
-        return ctx.newImmediate(u8);
+        return doIt(u8);
       } else if (Ty == Type::getInt16Ty(CPV->getContext())) {
         const uint16_t u16 = CI->getZExtValue();
-        return ctx.newImmediate(u16);
+        return doIt(u16);
       } else if (Ty == Type::getInt32Ty(CPV->getContext())) {
         const uint32_t u32 = CI->getZExtValue();
-        return ctx.newImmediate(u32);
+        return doIt(u32);
       } else if (Ty == Type::getInt64Ty(CPV->getContext())) {
         const uint64_t u64 = CI->getZExtValue();
-        return ctx.newImmediate(u64);
+        return doIt(u64);
       } else {
         GBE_ASSERTM(false, "Unsupported integer size");
-        return ctx.newImmediate(uint64_t(0));
+        return doIt(uint64_t(0));
       }
     }
 
@@ -455,17 +460,32 @@ namespace gbe
         ConstantFP *FPC = cast<ConstantFP>(CPV);
         if (FPC->getType() == Type::getFloatTy(CPV->getContext())) {
           const float f32 = FPC->getValueAPF().convertToFloat();
-          return ctx.newImmediate(f32);
+          return doIt(f32);
         } else {
           const double f64 = FPC->getValueAPF().convertToDouble();
-          return ctx.newImmediate(f64);
+          return doIt(f64);
         }
       }
       break;
       default:
         GBE_ASSERTM(false, "Unsupported constant type");
     }
-    return ctx.newImmediate(uint64_t(0));
+    const uint64_t imm(8);
+    return doIt(imm);
+  }
+
+  /*! Pfff. I cannot use a lambda, since it is templated. Congratulation c++ */
+  struct NewImmediateFunctor
+  {
+    NewImmediateFunctor(ir::Context &ctx) : ctx(ctx) {}
+    template <typename T> ir::ImmediateIndex operator() (const T &t) {
+      return ctx.newImmediate(t);
+    }
+    ir::Context &ctx;
+  };
+
+  ir::ImmediateIndex GenWriter::newImmediate(Constant *CPV) {
+    return processConstant<ir::ImmediateIndex>(CPV, NewImmediateFunctor(ctx));
   }
 
   void GenWriter::newRegister(Value *value) {
@@ -632,7 +652,7 @@ namespace gbe
   }
 
   void GenWriter::emitBinaryOperator(Instruction &I) {
-    GBE_ASSERT(I.getType()->isPointerTy() == false ||
+    GBE_ASSERT(I.getType()->isPointerTy() == false &&
                I.getType() != Type::getInt1Ty(I.getContext()));
 
     // Get the element type for a vector
@@ -757,8 +777,7 @@ namespace gbe
     }
   }
 
-  void GenWriter::regAllocateCastInst(CastInst &I)
-  {
+  void GenWriter::regAllocateCastInst(CastInst &I) {
     Value *dstValue = &I;
     Value *srcValue = I.getOperand(0);
 
@@ -846,6 +865,143 @@ namespace gbe
       break;
       default: NOT_SUPPORTED;
     };
+  }
+
+  /*! Once again, it is a templated functor. No lambda */
+  struct InsertExtractFunctor {
+    InsertExtractFunctor(ir::Context &ctx) : ctx(ctx) {}
+    template <typename T> ir::Immediate operator() (const T &t) {
+      return ir::Immediate(t);
+    }
+    ir::Context &ctx;
+  };
+
+  void GenWriter::regAllocateInsertElement(InsertElementInst &I) {
+    Value *modified = I.getOperand(0);
+    Value *toInsert = I.getOperand(1);
+    Value *index = I.getOperand(2);
+    GBE_ASSERTM(!isa<Constant>(modified) || isa<UndefValue>(modified),
+                "TODO SUPPORT constant vector for insert");
+    Constant *CPV = dyn_cast<Constant>(index);
+    GBE_ASSERTM(CPV != NULL, "only constant indices when inserting values");
+    auto x = processConstant<ir::Immediate>(CPV, InsertExtractFunctor(ctx));
+    GBE_ASSERTM(x.type == ir::TYPE_U32 || x.type == ir::TYPE_S32,
+                "Invalid index type for InsertElement");
+
+    // Crash on overrun
+    VectorType *vectorType = cast<VectorType>(modified->getType());
+    const uint32_t elemNum = vectorType->getNumElements();
+    const uint32_t modifiedID = x.data.u32;
+    GBE_ASSERTM(modifiedID < elemNum, "Out-of-bound index for InsertElement");
+
+    // Non modified values are just proxies
+    for (uint32_t elemID = 0; elemID < elemNum; ++elemID)
+      if (elemID != modifiedID)
+        regTranslator.newValueProxy(modified, &I, elemID, elemID);
+
+    // If the element to insert is an immediate we will generate a LOADI.
+    // Otherwise, the value is just a proxy of the inserted value
+    if (dyn_cast<Constant>(toInsert) != NULL) {
+      const ir::Type type = getType(ctx, toInsert->getType());
+      const ir::Register reg = ctx.reg(getFamily(type));
+      regTranslator.insertRegister(reg, &I, modifiedID);
+    } else
+      regTranslator.newValueProxy(toInsert, &I, 0, modifiedID);
+  }
+
+  void GenWriter::emitInsertElement(InsertElementInst &I) {
+    // Note that we check everything in regAllocateInsertElement
+    Value *toInsert = I.getOperand(1);
+    Value *index = I.getOperand(2);
+
+    // If this is not a constant, we just use a proxy
+    if (dyn_cast<Constant>(toInsert) == NULL)
+      return;
+
+    // We need a LOADI if we insert a immediate
+    Constant *indexCPV = dyn_cast<Constant>(index);
+    Constant *toInsertCPV = dyn_cast<Constant>(toInsert);
+    auto x = processConstant<ir::Immediate>(indexCPV, InsertExtractFunctor(ctx));
+    const uint32_t modifiedID = x.data.u32;
+    const ir::ImmediateIndex immIndex = this->newImmediate(toInsertCPV);
+    const ir::Immediate imm = ctx.getImmediate(immIndex);
+    const ir::Register reg = regTranslator.getScalar(&I, modifiedID);
+    ctx.LOADI(imm.type, reg, immIndex);
+  }
+
+  void GenWriter::regAllocateExtractElement(ExtractElementInst &I) {
+    Value *extracted = I.getOperand(0);
+    Value *index = I.getOperand(1);
+    GBE_ASSERTM(isa<Constant>(extracted) == false,
+                "TODO SUPPORT constant vector for extract");
+    Constant *CPV = dyn_cast<Constant>(index);
+    GBE_ASSERTM(CPV != NULL, "only constant indices when inserting values");
+    auto x = processConstant<ir::Immediate>(CPV, InsertExtractFunctor(ctx));
+    GBE_ASSERTM(x.type == ir::TYPE_U32 || x.type == ir::TYPE_S32,
+                "Invalid index type for InsertElement");
+
+    // Crash on overrun
+    VectorType *vectorType = cast<VectorType>(extracted->getType());
+    const uint32_t elemNum = vectorType->getNumElements();
+    const uint32_t extractedID = x.data.u32;
+    GBE_ASSERTM(extractedID < elemNum, "Out-of-bound index for InsertElement");
+
+    // Easy when the vector is not immediate
+    regTranslator.newValueProxy(extracted, &I, extractedID, 0);
+  }
+
+  void GenWriter::emitExtractElement(ExtractElementInst &I) {
+    // TODO -> insert LOADI when the extracted vector is constant
+  }
+
+  void GenWriter::regAllocateShuffleVectorInst(ShuffleVectorInst &I) {
+    Value *first = I.getOperand(0);
+    Value *second = I.getOperand(1);
+    GBE_ASSERTM(!isa<Constant>(first) || isa<UndefValue>(first),
+                "TODO support constant vector for shuffle");
+    GBE_ASSERTM(!isa<Constant>(second) || isa<UndefValue>(second),
+                "TODO support constant vector for shuffle");
+    VectorType *dstType = cast<VectorType>(I.getType());
+    VectorType *srcType = cast<VectorType>(first->getType());
+    const uint32_t dstElemNum = dstType->getNumElements();
+    const uint32_t srcElemNum = srcType->getNumElements();
+    for (uint32_t elemID = 0; elemID < dstElemNum; ++elemID) {
+      uint32_t srcID = I.getMaskValue(elemID);
+      Value *src = first;
+      if (srcID >= srcElemNum) {
+        srcID -= srcElemNum;
+        src = second;
+      }
+      regTranslator.newValueProxy(src, &I, srcID, elemID);
+    }
+  }
+
+  void GenWriter::emitShuffleVectorInst(ShuffleVectorInst &I) {
+
+  }
+
+  void GenWriter::regAllocateSelectInst(SelectInst &I) {
+    this->newRegister(&I);
+  }
+
+  void GenWriter::emitSelectInst(SelectInst &I) {
+    // Get the element type for a vector
+    uint32_t elemNum;
+    const ir::Type type = getVectorInfo(ctx, I.getType(), &I, elemNum);
+
+    // Condition can be either a vector or a scalar
+    Type *condType = I.getOperand(0)->getType();
+    const bool isVectorCond = isa<VectorType>(condType);
+
+    // Emit the instructions in a row
+    for (uint32_t elemID = 0; elemID < elemNum; ++elemID) {
+      const ir::Register dst = this->getRegister(&I, elemID);
+      const uint32_t condID = isVectorCond ? elemID : 0;
+      const ir::Register cond = this->getRegister(I.getOperand(0), condID);
+      const ir::Register src0 = this->getRegister(I.getOperand(1), elemID);
+      const ir::Register src1 = this->getRegister(I.getOperand(2), elemID);
+      ctx.SEL(type, dst, cond, src0, src1);
+    }
   }
 
 #ifndef NDEBUG

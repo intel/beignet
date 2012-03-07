@@ -153,6 +153,17 @@ namespace ir {
     static bool isClassOf(const Instruction &insn);
   };
 
+  /*! Select instructions writes src0 to dst if cond is true. Otherwise, it
+   *  writes src1
+   */
+  class SelectInstruction {
+  public:
+    /*! Get the type of both sources */
+    Type getType(void) const;
+    /*! Return true if the given instruction is an instance of this class */
+    static bool isClassOf(const Instruction &insn);
+  };
+
   /*! Compare instructions compare anything from the same type and return a
    *  boolean value
    */
@@ -346,8 +357,10 @@ namespace ir {
   Instruction XOR(Type type, Register dst, Register src0, Register src1);
   /*! and.type dst src0 src1 */
   Instruction AND(Type type, Register dst, Register src0, Register src1);
-  /*! mad.type dst {src0, src1, src2} == src */
+  /*! mad.type dst {src0, src1, src2} (== src) */
   Instruction MAD(Type type, Register dst, Tuple src);
+  /*! sel.type dst {cond, src0, src1} (== src) */
+  Instruction SEL(Type type, Register dst, Tuple src);
   /*! eq.type dst src0 src1 */
   Instruction EQ(Type type, Register dst, Register src0, Register src1);
   /*! ne.type dst src0 src1 */
