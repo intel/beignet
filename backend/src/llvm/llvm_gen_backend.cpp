@@ -69,6 +69,7 @@
 #include "ir/context.hpp"
 #include "ir/unit.hpp"
 #include "sys/map.hpp"
+#include "sys/set.hpp"
 #include <algorithm>
 
 using namespace llvm;
@@ -134,6 +135,25 @@ namespace gbe
     GBE_ASSERT(0);
     return ir::RegisterData::BOOL;
   }
+
+  /*! Get number of element to process dealing either with a vector or a scalar
+   *  value
+   */
+  static ir::Type getVectorInfo(const ir::Context &ctx, Type *llvmType, Value *value, uint32_t &elemNum)
+  {
+    ir::Type type;
+    if (llvmType->isVectorTy() == true) {
+      VectorType *vectorType = cast<VectorType>(llvmType);
+      Type *elementType = vectorType->getElementType();
+      elemNum = vectorType->getNumElements();
+      type = getType(ctx, elementType);
+    } else {
+      elemNum = 1;
+      type = getType(ctx, llvmType);
+    }
+    return type;
+  }
+
 
   /*! Handle the LLVM IR Value to Gen IR register translation. This has 2 roles:
    *  - Split the LLVM vector into several scalar values
@@ -260,8 +280,12 @@ namespace gbe
     ir::Context ctx;
     /*! Make the LLVM-to-Gen translation */
     RegisterTranslator regTranslator;
-    /*! Map value to ir::LabelIndex */
-    map<const Value*, ir::LabelIndex> labelMap;
+    /*! Map target basic block to its ir::LabelIndex */
+    map<const BasicBlock*, ir::LabelIndex> labelMap;
+    /*! Condition inversion can simplify branch code. We store here all the
+     *  compare instructions we need to invert to decrease branch complexity
+     */
+    set<const Value*> conditionSet;
     /*! We visit each function twice. Once to allocate the registers and once to
      *  emit the Gen IR instructions 
      */
@@ -279,18 +303,6 @@ namespace gbe
     const MCRegisterInfo *MRI;
     MCContext *TCtx;
 
-    std::map<const ConstantFP *, unsigned> FPConstantMap;
-    std::set<Function*> intrinsicPrototypesAlreadyGenerated;
-    std::set<const Argument*> ByValParams;
-    unsigned FPCounter;
-    unsigned OpaqueCounter;
-    DenseMap<const Value*, unsigned> AnonValueNumbers;
-    unsigned NextAnonValueNumber;
-
-    /// UnnamedStructIDs - This contains a unique ID for each struct that is
-    /// either anonymous or has no name.
-    DenseMap<StructType*, unsigned> UnnamedStructIDs;
-
   public:
     static char ID;
     explicit GenWriter(ir::Unit &unit)
@@ -299,11 +311,9 @@ namespace gbe
         ctx(unit),
         regTranslator(ctx),
         Mang(0), LI(0),
-        TheModule(0), MOFI(0), TD(0),
-        OpaqueCounter(0), NextAnonValueNumber(0)
+        TheModule(0), MOFI(0), TD(0)
     {
       initializeLoopInfoPass(*PassRegistry::getPassRegistry());
-      FPCounter = 0;
       pass = PASS_EMIT_REGISTERS;
     }
 
@@ -332,10 +342,6 @@ namespace gbe
       delete TD;
       delete Mang;
       delete MOFI;
-      FPConstantMap.clear();
-      ByValParams.clear();
-      intrinsicPrototypesAlreadyGenerated.clear();
-      UnnamedStructIDs.clear();
       return false;
     }
 
@@ -345,7 +351,8 @@ namespace gbe
     void emitFunctionPrototype(Function &F);
     /*! Emit the code for a basic block */
     void emitBasicBlock(BasicBlock *BB);
-
+    /*! Each block end may require to emit MOVs for further PHIs */
+    void emitMovForPHI(BasicBlock *curr, BasicBlock *succ);
     /*! Alocate one or several registers (if vector) for the value */
     INLINE void newRegister(Value *value);
     /*! Return a valid register from an operand (can use LOADI to make one) */
@@ -353,7 +360,11 @@ namespace gbe
     /*! Create a new immediate from a constant */
     ir::ImmediateIndex newImmediate(Constant *CPV);
     /*! Insert a new label index when this is a scalar value */
-    INLINE void newLabelIndex(const Value *value);
+    INLINE void newLabelIndex(const BasicBlock *bb);
+    /*! Inspect the terminator instruction and try to see if we should invert
+     *  the value to simplify the code
+     */
+    INLINE void simplifyTerminator(BasicBlock *bb);
     /*! Helper function to emit loads and stores */
     template <bool isLoad, typename T> void emitLoadOrStore(T &I);
 
@@ -379,11 +390,9 @@ namespace gbe
     DECL_VISIT_FN(ExtractElement, ExtractElementInst);
     DECL_VISIT_FN(ShuffleVectorInst, ShuffleVectorInst);
     DECL_VISIT_FN(SelectInst, SelectInst);
+    DECL_VISIT_FN(BranchInst, BranchInst);
+    DECL_VISIT_FN(PHINode, PHINode);
 #undef DECL_VISIT_FN
-
-    // Must be implemented later
-    void visitPHINode(PHINode &I) {NOT_SUPPORTED;}
-    void visitBranchInst(BranchInst &I) {NOT_SUPPORTED;}
 
     // These instructions are not supported at all
     void visitVAArgInst(VAArgInst &I) {NOT_SUPPORTED;}
@@ -523,10 +532,37 @@ namespace gbe
       return regTranslator.getScalar(value, index);
   }
 
-  void GenWriter::newLabelIndex(const Value *value) {
-    if (labelMap.find(value) == labelMap.end()) {
+  void GenWriter::newLabelIndex(const BasicBlock *bb) {
+    if (labelMap.find(bb) == labelMap.end()) {
       const ir::LabelIndex label = ctx.label();
-      labelMap[value] = label;
+      labelMap[bb] = label;
+    }
+  }
+
+  void GenWriter::simplifyTerminator(BasicBlock *bb) {
+    Value *value = --bb->end();
+    BranchInst *I = NULL;
+    if ((I = dyn_cast<BranchInst>(value)) != NULL) {
+      if (I->isConditional() == false)
+        return;
+      // If the "taken" successor is the next block, we try to invert the
+      // branch.
+      BasicBlock *succ = I->getSuccessor(0);
+      if (llvm::next(Function::iterator(bb)) != Function::iterator(succ))
+        return;
+
+      // More than one use is too complicated: we skip it
+      Value *condition = I->getCondition();
+      if (condition->hasOneUse() == false)
+        return;
+
+      // Right now, we only invert comparison instruction
+      ICmpInst *CI = dyn_cast<ICmpInst>(condition);
+      if (CI != NULL) {
+        GBE_ASSERT(conditionSet.find(CI) == conditionSet.end());
+        conditionSet.insert(CI);
+        return;
+      }
     }
   }
 
@@ -542,6 +578,27 @@ namespace gbe
            Ty==Type::getInt32Ty(II->getContext()) ||
            Ty==Type::getInt64Ty(II->getContext())));
       visit(*II);
+    }
+  }
+
+  void GenWriter::emitMovForPHI(BasicBlock *curr, BasicBlock *succ) {
+    for (BasicBlock::iterator I = succ->begin(); isa<PHINode>(I); ++I) {
+      PHINode *PN = cast<PHINode>(I);
+      Value *IV = PN->getIncomingValueForBlock(curr);
+      if (!isa<UndefValue>(IV)) {
+        uint32_t elemNum;
+        Type *llvmType = PN->getType();
+        const ir::Type type = getVectorInfo(ctx, llvmType, PN, elemNum);
+
+        // Emit the MOV required by the PHI function. We do it simple and do not
+        // try to optimize them. A next data flow analysis pass on the Gen IR
+        // will remove them
+        for (uint32_t elemID = 0; elemID < elemNum; ++elemID) {
+          const ir::Register dst = this->getRegister(PN, elemID);
+          const ir::Register src = this->getRegister(PN->getOperand(0), elemID);
+          ctx.MOV(type, dst, src);
+        }
+      }
     }
   }
 
@@ -601,14 +658,19 @@ namespace gbe
     this->emitFunctionPrototype(F);
 
     // Visit all the instructions and emit the IR registers or the value to
-    // value mapping
+    // value mapping when a new register is not needed
     pass = PASS_EMIT_REGISTERS;
     for (inst_iterator I = inst_begin(&F), E = inst_end(&F); I != E; ++I)
       visit(*I);
 
-    // First create all the labels (one per block)
+    // First create all the labels (one per block) ...
     for (Function::iterator BB = F.begin(), E = F.end(); BB != E; ++BB)
       this->newLabelIndex(BB);
+
+    // Then, for all branch instructions that have conditions, see if we can
+    // simplify the code by inverting condition code
+    for (Function::iterator BB = F.begin(), E = F.end(); BB != E; ++BB)
+      this->simplifyTerminator(BB);
 
     // ... then, emit the instructions for all basic blocks
     pass = PASS_EMIT_INSTRUCTIONS;
@@ -633,22 +695,6 @@ namespace gbe
 
   void GenWriter::regAllocateBinaryOperator(Instruction &I) {
     this->newRegister(&I);
-  }
-
-  static ir::Type
-  getVectorInfo(const ir::Context &ctx, Type *llvmType, Value *value, uint32_t &elemNum)
-  {
-    ir::Type type;
-    if (llvmType->isVectorTy() == true) {
-      VectorType *vectorType = cast<VectorType>(llvmType);
-      Type *elementType = vectorType->getElementType();
-      elemNum = vectorType->getNumElements();
-      type = getType(ctx, elementType);
-    } else {
-      elemNum = 1;
-      type = getType(ctx, llvmType);
-    }
-    return type;
   }
 
   void GenWriter::emitBinaryOperator(Instruction &I) {
@@ -725,19 +771,38 @@ namespace gbe
       const ir::Register src0 = this->getRegister(I.getOperand(0), elemID);
       const ir::Register src1 = this->getRegister(I.getOperand(1), elemID);
 
-      switch (I.getPredicate()) {
-        case ICmpInst::ICMP_EQ:  ctx.EQ(type, dst, src0, src1); break;
-        case ICmpInst::ICMP_NE:  ctx.NE(type, dst, src0, src1); break;
-        case ICmpInst::ICMP_ULE: ctx.LE((unsignedType), dst, src0, src1); break;
-        case ICmpInst::ICMP_SLE: ctx.LE(signedType, dst, src0, src1); break;
-        case ICmpInst::ICMP_UGE: ctx.GE(unsignedType, dst, src0, src1); break;
-        case ICmpInst::ICMP_SGE: ctx.GE(signedType, dst, src0, src1); break;
-        case ICmpInst::ICMP_ULT: ctx.LT(unsignedType, dst, src0, src1); break;
-        case ICmpInst::ICMP_SLT: ctx.LT(signedType, dst, src0, src1); break;
-        case ICmpInst::ICMP_UGT: ctx.GT(unsignedType, dst, src0, src1); break;
-        case ICmpInst::ICMP_SGT: ctx.GT(signedType, dst, src0, src1); break;
-        default: NOT_SUPPORTED;
-      };
+      // We must invert the condition to simplify the branch code
+      if (conditionSet.find(&I) != conditionSet.end()) {
+        switch (I.getPredicate()) {
+          case ICmpInst::ICMP_EQ:  ctx.NE(type, dst, src0, src1); break;
+          case ICmpInst::ICMP_NE:  ctx.EQ(type, dst, src0, src1); break;
+          case ICmpInst::ICMP_ULE: ctx.GT((unsignedType), dst, src0, src1); break;
+          case ICmpInst::ICMP_SLE: ctx.GT(signedType, dst, src0, src1); break;
+          case ICmpInst::ICMP_UGE: ctx.LT(unsignedType, dst, src0, src1); break;
+          case ICmpInst::ICMP_SGE: ctx.LT(signedType, dst, src0, src1); break;
+          case ICmpInst::ICMP_ULT: ctx.GE(unsignedType, dst, src0, src1); break;
+          case ICmpInst::ICMP_SLT: ctx.GE(signedType, dst, src0, src1); break;
+          case ICmpInst::ICMP_UGT: ctx.LE(unsignedType, dst, src0, src1); break;
+          case ICmpInst::ICMP_SGT: ctx.LE(signedType, dst, src0, src1); break;
+          default: NOT_SUPPORTED;
+        };
+      }
+      // Nothing special to do
+      else {
+        switch (I.getPredicate()) {
+          case ICmpInst::ICMP_EQ:  ctx.EQ(type, dst, src0, src1); break;
+          case ICmpInst::ICMP_NE:  ctx.NE(type, dst, src0, src1); break;
+          case ICmpInst::ICMP_ULE: ctx.LE((unsignedType), dst, src0, src1); break;
+          case ICmpInst::ICMP_SLE: ctx.LE(signedType, dst, src0, src1); break;
+          case ICmpInst::ICMP_UGE: ctx.GE(unsignedType, dst, src0, src1); break;
+          case ICmpInst::ICMP_SGE: ctx.GE(signedType, dst, src0, src1); break;
+          case ICmpInst::ICMP_ULT: ctx.LT(unsignedType, dst, src0, src1); break;
+          case ICmpInst::ICMP_SLT: ctx.LT(signedType, dst, src0, src1); break;
+          case ICmpInst::ICMP_UGT: ctx.GT(unsignedType, dst, src0, src1); break;
+          case ICmpInst::ICMP_SGT: ctx.GT(signedType, dst, src0, src1); break;
+          default: NOT_SUPPORTED;
+        };
+      }
     }
   }
 
@@ -976,9 +1041,7 @@ namespace gbe
     }
   }
 
-  void GenWriter::emitShuffleVectorInst(ShuffleVectorInst &I) {
-
-  }
+  void GenWriter::emitShuffleVectorInst(ShuffleVectorInst &I) {}
 
   void GenWriter::regAllocateSelectInst(SelectInst &I) {
     this->newRegister(&I);
@@ -1004,12 +1067,56 @@ namespace gbe
     }
   }
 
-#ifndef NDEBUG
-  static bool isSupportedIntegerSize(IntegerType &T) {
-    return T.getBitWidth() == 8 || T.getBitWidth() == 16 ||
-           T.getBitWidth() == 32 || T.getBitWidth() == 64;
+  void GenWriter::regAllocatePHINode(PHINode &I) { this->newRegister(&I); }
+  void GenWriter::emitPHINode(PHINode &I) {}
+
+  void GenWriter::regAllocateBranchInst(BranchInst &I) {}
+
+  void GenWriter::emitBranchInst(BranchInst &I) {
+    // Emit MOVs if required
+    BasicBlock *bb = I.getParent();
+    this->emitMovForPHI(bb, I.getSuccessor(0));
+    this->emitMovForPHI(bb, I.getSuccessor(1));
+
+    // Inconditional branch. Just check that we jump to a block which is not our
+    // successor
+    if (I.isConditional() == false) {
+    BasicBlock *target = I.getSuccessor(0);
+      if (llvm::next(Function::iterator(bb)) != Function::iterator(target)) {
+        GBE_ASSERT(labelMap.find(target) != labelMap.end());
+        const ir::LabelIndex labelIndex = labelMap[bb];
+        ctx.BRA(labelIndex);
+      }
+    }
+    // The LLVM branch has two targets
+    else {
+      BasicBlock *taken = NULL, *nonTaken = NULL;
+      Value *condition = I.getCondition();
+
+      // We may inverted the branch condition to simplify the branching code
+      const bool inverted = conditionSet.find(condition) != conditionSet.end();
+      taken = inverted ? I.getSuccessor(1) : I.getSuccessor(0);
+      nonTaken = inverted ? I.getSuccessor(0) : I.getSuccessor(1);
+
+      // Get both taken label and predicate register
+      GBE_ASSERT(labelMap.find(taken) != labelMap.end());
+      const ir::LabelIndex index = labelMap[taken];
+      const ir::Register reg = this->getRegister(condition);
+      ctx.BRA(index, reg);
+
+      // If non-taken target is the next block, there is nothing to do
+      BasicBlock *bb = I.getParent();
+      if (llvm::next(Function::iterator(bb)) == Function::iterator(nonTaken))
+        return;
+
+      // This is slightly more complicated here. We need to issue one more
+      // branch for the non-taken condition.
+      GBE_ASSERT(labelMap.find(nonTaken) != labelMap.end());
+      const ir::LabelIndex untakenIndex = ctx.label();
+      ctx.LABEL(untakenIndex);
+      ctx.BRA(labelMap[nonTaken]);
+    }
   }
-#endif
 
   void GenWriter::emitCallInst(CallInst &I) {}
   void GenWriter::regAllocateCallInst(CallInst &I) {

@@ -76,8 +76,10 @@ runTests:
   GBE_ASSERT(dummyKernel != NULL);
   fclose(dummyKernel);
 
+  UTEST_EXPECT_SUCCESS(utestLLVM2Gen("loop.ll"));
+  //UTEST_EXPECT_SUCCESS(utestLLVM2Gen("mad.ll"));
+#if 0
   UTEST_EXPECT_SUCCESS(utestLLVM2Gen("select.ll"));
-#if 1
   UTEST_EXPECT_SUCCESS(utestLLVM2Gen("shuffle.ll"));
   UTEST_EXPECT_SUCCESS(utestLLVM2Gen("extract.ll"));
   UTEST_EXPECT_SUCCESS(utestLLVM2Gen("insert.ll"));
@@ -87,7 +89,6 @@ runTests:
   UTEST_EXPECT_SUCCESS(utestLLVM2Gen("get_global_id.ll"));
   UTEST_EXPECT_SUCCESS(utestLLVM2Gen("simple_float4.ll"));
   UTEST_EXPECT_SUCCESS(utestLLVM2Gen("simple_float4_2.ll"));
-  //UTEST_EXPECT_SUCCESS(utestLLVM2Gen("loop.ll"));
   UTEST_EXPECT_SUCCESS(utestLLVM2Gen("void.ll"));
   UTEST_EXPECT_SUCCESS(utestLLVM2Gen("cmp_cvt.ll"));
 #endif
