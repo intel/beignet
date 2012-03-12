@@ -76,7 +76,8 @@ runTests:
   GBE_ASSERT(dummyKernel != NULL);
   fclose(dummyKernel);
 
-  UTEST_EXPECT_SUCCESS(utestLLVM2Gen("loop.ll"));
+  UTEST_EXPECT_SUCCESS(utestLLVM2Gen("function_param.ll"));
+  //UTEST_EXPECT_SUCCESS(utestLLVM2Gen("loop.ll"));
   //UTEST_EXPECT_SUCCESS(utestLLVM2Gen("mad.ll"));
 #if 0
   UTEST_EXPECT_SUCCESS(utestLLVM2Gen("select.ll"));
