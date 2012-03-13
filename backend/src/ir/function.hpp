@@ -161,6 +161,12 @@ namespace ir {
     INLINE uint32_t blockNum(void) const { return blocks.size(); }
     /*! Output an immediate value in a stream */
     void outImmediate(std::ostream &out, ImmediateIndex index) const;
+    /*! Apply the given functor on all basic blocks */
+    template <typename T>
+    INLINE void apply(const T &functor) const {
+      for (auto it = blocks.begin; it != blocks.end(); ++it)
+        functor(*it);
+    }
   private:
     friend class Context;         //!< Can freely modify a function
     std::string name;             //!< Function name

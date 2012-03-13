@@ -62,7 +62,7 @@ namespace ir {
       case TYPE_HALF: out << "half(" << imm.data.u16 << ")"; break;
       case TYPE_FLOAT: out << imm.data.f32; break;
       case TYPE_DOUBLE: out << imm.data.f64; break;
-    };
+    }
   }
 
   std::ostream &operator<< (std::ostream &out, const Function &fn)
