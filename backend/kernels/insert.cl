@@ -1,4 +1,5 @@
-#include "stdlib.h"
+#include <stdlib.h>
+
 __kernel void insert(__global int4 *dst, __global int4 *src, int c)
 {
   int4 x = src[0];

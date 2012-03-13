@@ -1,4 +1,4 @@
-#include "stdlib.h"
+#include <stdlib.h>
 
 __kernel void simple_float4(__global float4 *dst, __global float4 *src, bool b)
 {

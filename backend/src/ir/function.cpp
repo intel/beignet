@@ -28,7 +28,7 @@ namespace gbe {
 namespace ir {
 
   Function::Function(const std::string &name, Profile profile) :
-    name(name), structReturned(false), profile(profile)
+    name(name), profile(profile)
   {
       initProfile(*this);
   }
@@ -68,7 +68,6 @@ namespace ir {
   std::ostream &operator<< (std::ostream &out, const Function &fn)
   {
     out << ".decl_function " << fn.getName() << std::endl;
-    out << ".return_struct " << (fn.isStructReturned() ? "true" : "false") << std::endl;
     out << fn.getRegisterFile();
     out << "## " << fn.inputNum() << " input register"
         << plural(fn.inputNum())  << " ##" << std::endl;

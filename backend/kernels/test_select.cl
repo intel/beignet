@@ -1,4 +1,4 @@
-#include "stdlib.h"
+#include <stdlib.h>
 __kernel void test_select(__global int *dst, __global int *src)
 {
 

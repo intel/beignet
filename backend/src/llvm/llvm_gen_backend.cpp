@@ -595,15 +595,11 @@ namespace gbe
 
   void GenWriter::emitFunctionPrototype(Function &F)
   {
-    const bool returnStruct = F.hasStructRetAttr();
-
+    GBE_ASSERTM(F.hasStructRetAttr() == false,
+                "Returned value for kernel functions");
     // Loop over the arguments and output registers for them
     if (!F.arg_empty()) {
       Function::arg_iterator I = F.arg_begin(), E = F.arg_end();
-
-      // When a struct is returned, first argument is pointer to the structure
-      if (returnStruct)
-        ctx.getFunction().setStructReturned(true);
 
       // Insert a new register for each function argument
       for (; I != E; ++I) {
@@ -616,14 +612,9 @@ namespace gbe
 
     // When returning a structure, first input register is the pointer to the
     // structure
-    if (!returnStruct) {
-      const Type *type = F.getReturnType();
-      if (type->isVoidTy() == false) {
-        const ir::RegisterFamily family = getFamily(ctx, type);
-        const ir::Register reg = ctx.reg(family);
-        ctx.output(reg);
-      }
-    }
+    const Type *type = F.getReturnType();
+    GBE_ASSERTM(type->isVoidTy() == true,
+                "Returned value for kernel functions");
 
 #if GBE_DEBUG
     // Variable number of arguments is not supported
@@ -643,6 +634,14 @@ namespace gbe
 
   void GenWriter::emitFunction(Function &F)
   {
+    switch (F.getCallingConv()) {
+      case CallingConv::PTX_Device: // we do not emit device function
+        return;
+      case CallingConv::PTX_Kernel:
+        break;
+      default: GBE_ASSERTM(false, "Unsupported calling convention");
+    }
+
     ctx.startFunction(F.getName());
     this->regTranslator.clear();
     this->labelMap.clear();
@@ -722,7 +721,7 @@ namespace gbe
         case Instruction::LShr: ctx.SHR(type, dst, src0, src1); break;
         case Instruction::AShr: ctx.ASR(type, dst, src0, src1); break;
         default: NOT_SUPPORTED;
-      };
+      }
     }
   }
 
@@ -776,7 +775,7 @@ namespace gbe
           case ICmpInst::ICMP_UGT: ctx.LE(unsignedType, dst, src0, src1); break;
           case ICmpInst::ICMP_SGT: ctx.LE(signedType, dst, src0, src1); break;
           default: NOT_SUPPORTED;
-        };
+        }
       }
       // Nothing special to do
       else {
@@ -792,7 +791,7 @@ namespace gbe
           case ICmpInst::ICMP_UGT: ctx.GT(unsignedType, dst, src0, src1); break;
           case ICmpInst::ICMP_SGT: ctx.GT(signedType, dst, src0, src1); break;
           default: NOT_SUPPORTED;
-        };
+        }
       }
     }
   }
@@ -829,7 +828,7 @@ namespace gbe
         case ICmpInst::FCMP_OGT:
         case ICmpInst::FCMP_UGT: ctx.GT(type, dst, src0, src1); break;
         default: NOT_SUPPORTED;
-      };
+      }
     }
   }
 
@@ -920,7 +919,7 @@ namespace gbe
       }
       break;
       default: NOT_SUPPORTED;
-    };
+    }
   }
 
   /*! Once again, it is a templated functor. No lambda */
@@ -1146,7 +1145,8 @@ namespace gbe
 
   static INLINE ir::MemorySpace addressSpaceLLVMToGen(unsigned llvmMemSpace) {
     switch (llvmMemSpace) {
-      case 0: return ir::MEM_GLOBAL;
+      case 0: return ir::MEM_PRIVATE;
+      case 1: return ir::MEM_GLOBAL;
       case 4: return ir::MEM_LOCAL;
     }
     GBE_ASSERT(false);

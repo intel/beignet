@@ -1,3 +1,4 @@
+#include <stdlib.h>
 __kernel void undefined(__global int *dst)
 {
   int x;

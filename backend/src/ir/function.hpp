@@ -143,10 +143,6 @@ namespace ir {
       GBE_ASSERT(blocks[ID] != NULL);
       return *blocks[ID];
     }
-    /*! Function returns a structure by pointer (see ptx32 ABI) */
-    INLINE void setStructReturned(bool isReturned) { structReturned = isReturned; }
-    /*! Indicate if a structure is returned from the function */
-    INLINE bool isStructReturned(void) const { return structReturned; }
     /*! Create a new label (still not bound to a basic block) */
     LabelIndex newLabel(void);
     /*! Number of registers in the register file */
@@ -175,7 +171,6 @@ namespace ir {
     vector<BasicBlock*> blocks;   //!< All chained basic blocks
     RegisterFile file;            //!< RegisterDatas used by the instructions
     GrowingPool<Instruction> insnPool; //!< For fast instruction allocation
-    bool structReturned;               //!< First argument is pointer to struct
     Profile profile;                   //!< Current function profile
     GBE_CLASS(Function);
   };

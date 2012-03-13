@@ -159,7 +159,7 @@ namespace ir {
       BasicBlock *bb;              //!< Basic block currently processed
       vector<uint8_t> *usedLabels; //!< Store all labels that are defined
     };
-    vector<StackElem> fnStack;  //!< Stack of functions still to finish
+    vector<StackElem> fnStack;     //!< Stack of functions still to finish
     GBE_CLASS(Context);
   };
 

@@ -1,3 +1,4 @@
+#include <stdlib.h>
 struct my_struct {
   int a;
   int b[2];

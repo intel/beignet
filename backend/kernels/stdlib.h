@@ -77,3 +77,6 @@ __attribute__((overloadable)) inline int4 select(int4 src0, int4 src1, int4 cond
   return dst;
 }
 
+#define __global __attribute__((address_space(1)))
+#define global __global
+
