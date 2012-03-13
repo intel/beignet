@@ -161,7 +161,7 @@ namespace ir {
   /*! Select instructions writes src0 to dst if cond is true. Otherwise, it
    *  writes src1
    */
-  class SelectInstruction {
+  class SelectInstruction : public Instruction {
   public:
     /*! Get the type of both sources */
     Type getType(void) const;

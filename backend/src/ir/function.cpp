@@ -65,6 +65,34 @@ namespace ir {
     }
   }
 
+  void Function::computeCFG(void) {
+    // Clear possible previously computed CFG
+    this->apply([this](BasicBlock &bb) {
+      bb.successors.clear();
+      bb.predecessors.clear();
+    });
+    // Update it. Do not forget that a branch can also jump to the next block
+    BasicBlock *jumpToNext = NULL;
+    this->apply([this, &jumpToNext](BasicBlock &bb) {
+      if (jumpToNext) {
+        jumpToNext->successors.insert(&bb);
+        bb.predecessors.insert(jumpToNext);
+        jumpToNext = NULL;
+      }
+      if (bb.last == NULL) return;
+      GBE_ASSERT(bb.last->isMemberOf<BranchInstruction>() == true);
+      const BranchInstruction &insn = cast<BranchInstruction>(*bb.last);
+      if (insn.getOpcode() == OP_BRA) {
+        const LabelIndex label = insn.getLabelIndex();
+        BasicBlock *target = this->blocks[label];
+        GBE_ASSERT(target != NULL);
+        target->predecessors.insert(&bb);
+        bb.successors.insert(target);
+        if (insn.isPredicated() == true) jumpToNext = &bb;
+      }
+    });
+  }
+
   std::ostream &operator<< (std::ostream &out, const Function &fn)
   {
     out << ".decl_function " << fn.getName() << std::endl;

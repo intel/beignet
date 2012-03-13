@@ -35,6 +35,7 @@ else (GBE_USE_BLOB)
     ir/constant.hpp
     ir/instruction.cpp
     ir/instruction.hpp
+    ir/liveness.cpp
     ir/register.cpp
     ir/register.hpp
     ir/function.cpp

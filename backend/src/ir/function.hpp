@@ -29,13 +29,16 @@
 #include "ir/instruction.hpp"
 #include "ir/profile.hpp"
 #include "sys/vector.hpp"
-#include "sys/list.hpp"
+#include "sys/set.hpp"
 #include "sys/alloc.hpp"
 
 #include <ostream>
 
 namespace gbe {
 namespace ir {
+
+  /*! Commonly used in the CFG */
+  typedef set<BasicBlock*> BlockSet;
 
   /*! Function basic blocks really belong to a function since:
    *  1 - registers used in the basic blocks belongs to the function register
@@ -70,8 +73,14 @@ namespace ir {
     /*! Get the parent function */
     Function &getParent(void) { return fn; }
     const Function &getParent(void) const { return fn; }
+    /*! Get the successors */
+    const BlockSet &getSuccessorSet(void) const { return successors; }
+    /*! Get the predecessors */
+    const BlockSet &getPredecessorSet(void) const { return predecessors; }
   private:
     friend class Function; //!< Owns the basic blocks
+    BlockSet predecessors; //!< Incoming blocks
+    BlockSet successors;   //!< Outgoing blocks
     Instruction *first;    //!< First instruction in the block
     Instruction *last;     //!< Last instruction in the block
     Function &fn;          //!< Function the block belongs to
@@ -145,6 +154,8 @@ namespace ir {
     }
     /*! Create a new label (still not bound to a basic block) */
     LabelIndex newLabel(void);
+    /*! Create the control flow graph */
+    void computeCFG(void);
     /*! Number of registers in the register file */
     INLINE uint32_t regNum(void) const { return file.regNum(); }
     /*! Number of register tuples in the register file */
@@ -164,8 +175,8 @@ namespace ir {
     /*! Apply the given functor on all basic blocks */
     template <typename T>
     INLINE void apply(const T &functor) const {
-      for (auto it = blocks.begin; it != blocks.end(); ++it)
-        functor(*it);
+      for (auto it = blocks.begin(); it != blocks.end(); ++it)
+        functor(**it);
     }
   private:
     friend class Context;         //!< Can freely modify a function
