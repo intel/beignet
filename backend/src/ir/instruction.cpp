@@ -461,7 +461,7 @@ namespace ir {
     /*! All Nary instruction register must be of the same family and properly
      *  defined (i.e. not out-of-bound)
      */
-    static INLINE bool checkRegisterData(RegisterData::Family family,
+    static INLINE bool checkRegisterData(RegisterFamily family,
                                          const Register ID,
                                          const Function &fn,
                                          std::string &whyNot)
@@ -482,7 +482,7 @@ namespace ir {
     template <uint32_t srcNum>
     INLINE bool NaryInstruction<srcNum>::wellFormed(const Function &fn, std::string &whyNot) const
     {
-      const RegisterData::Family family = getFamily(this->type);
+      const RegisterFamily family = getFamily(this->type);
       if (UNLIKELY(checkRegisterData(family, dst, fn, whyNot) == false))
         return false;
       for (uint32_t srcID = 0; srcID < srcNum; ++srcID)
@@ -494,7 +494,7 @@ namespace ir {
     // Idem for ternary instructions except that sources are in a tuple
     INLINE bool TernaryInstruction::wellFormed(const Function &fn, std::string &whyNot) const
     {
-      const RegisterData::Family family = getFamily(this->type);
+      const RegisterFamily family = getFamily(this->type);
       if (UNLIKELY(checkRegisterData(family, dst, fn, whyNot) == false))
         return false;
       if (UNLIKELY(src + 3u > fn.tupleNum())) {
@@ -512,7 +512,7 @@ namespace ir {
     // First source must a boolean. Other must match the destination type
     INLINE bool SelectInstruction::wellFormed(const Function &fn, std::string &whyNot) const
     {
-      const RegisterData::Family family = getFamily(this->type);
+      const RegisterFamily family = getFamily(this->type);
       if (UNLIKELY(checkRegisterData(family, dst, fn, whyNot) == false))
         return false;
       if (UNLIKELY(src + 3u > fn.tupleNum())) {
@@ -520,7 +520,7 @@ namespace ir {
         return false;
       }
       const Register regID = fn.getRegister(src, 0);
-      if (UNLIKELY(checkRegisterData(RegisterData::BOOL, regID, fn, whyNot) == false))
+      if (UNLIKELY(checkRegisterData(FAMILY_BOOL, regID, fn, whyNot) == false))
         return false;
       for (uint32_t srcID = 1; srcID < 3; ++srcID) {
         const Register regID = fn.getRegister(src, srcID);
@@ -534,9 +534,9 @@ namespace ir {
     // boolean
     INLINE bool CompareInstruction::wellFormed(const Function &fn, std::string &whyNot) const
     {
-      if (UNLIKELY(checkRegisterData(RegisterData::BOOL, dst, fn, whyNot) == false))
+      if (UNLIKELY(checkRegisterData(FAMILY_BOOL, dst, fn, whyNot) == false))
         return false;
-      const RegisterData::Family family = getFamily(this->type);
+      const RegisterFamily family = getFamily(this->type);
       for (uint32_t srcID = 0; srcID < 2; ++srcID)
         if (UNLIKELY(checkRegisterData(family, src[srcID], fn, whyNot) == false))
           return false;
@@ -546,8 +546,8 @@ namespace ir {
     // We can convert anything to anything, but types and families must match
     INLINE bool ConvertInstruction::wellFormed(const Function &fn, std::string &whyNot) const
     {
-      const RegisterData::Family dstFamily = getFamily(dstType);
-      const RegisterData::Family srcFamily = getFamily(srcType);
+      const RegisterFamily dstFamily = getFamily(dstType);
+      const RegisterFamily srcFamily = getFamily(srcType);
       if (UNLIKELY(checkRegisterData(dstFamily, dst, fn, whyNot) == false))
         return false;
       if (UNLIKELY(checkRegisterData(srcFamily, src, fn, whyNot) == false))
@@ -568,7 +568,7 @@ namespace ir {
         return false;
       }
       // Check all registers
-      const RegisterData::Family family = getFamily(insn.type);
+      const RegisterFamily family = getFamily(insn.type);
       for (uint32_t valueID = 0; valueID < insn.valueNum; ++valueID) {
         const Register regID = fn.getRegister(insn.values, valueID);
         if (UNLIKELY(checkRegisterData(family, regID, fn, whyNot) == false))
@@ -604,7 +604,7 @@ namespace ir {
         whyNot = "Inconsistant type for the immediate value to load";
         return false;
       }
-      const RegisterData::Family family = getFamily(type);
+      const RegisterFamily family = getFamily(type);
       if (UNLIKELY(checkRegisterData(family, dst, fn, whyNot) == false))
         return false;
       return true;
@@ -635,7 +635,7 @@ namespace ir {
           return false;
         }
       if (hasPredicate)
-        if (UNLIKELY(checkRegisterData(RegisterData::BOOL, predicate, fn, whyNot) == false))
+        if (UNLIKELY(checkRegisterData(FAMILY_BOOL, predicate, fn, whyNot) == false))
           return false;
       return true;
     }
@@ -750,7 +750,7 @@ namespace ir {
   return HelperIntrospection<CLASS, RefClass>::value == 1;
 
 #define START_INTROSPECTION(CLASS)                                \
-  static_assert(sizeof(internal::CLASS) == sizeof(Instruction),   \
+  static_assert(sizeof(internal::CLASS) == sizeof(uint64_t),      \
                 "Bad instruction size");                          \
   static_assert(offsetof(internal::CLASS, opcode) == 0,           \
                 "Bad opcode offset");                             \
@@ -1024,10 +1024,11 @@ DECL_MEM_FN(BranchInstruction, LabelIndex, getLabelIndex(void), getLabelIndex())
     return insn.convert();
   }
 
-  std::ostream &operator<< (std::ostream &out, const Instruction::Proxy &proxy)
+  std::ostream &operator<< (std::ostream &out, const Instruction &insn)
   {
-    const Instruction &insn = proxy.insn;
-    const Function &fn = proxy.fn;
+    GBE_ASSERT(insn.getParent() != NULL);
+    const BasicBlock *bb = insn.getParent();
+    const Function &fn = bb->getParent();
     switch (insn.getOpcode()) {
 #define DECL_INSN(OPCODE, CLASS)                                     \
       case OP_##OPCODE:                                              \

@@ -50,19 +50,31 @@ namespace ir {
     /*! Releases all the instructions */
     ~BasicBlock(void);
     /*! Append a new instruction in the stream */
-    void append(Instruction &insn) { instructions.push_back(&insn); }
-    /*! Return the number of instruction in the block */
-    INLINE uint32_t insnNum(void) { return instructions.size(); }
+    void append(Instruction &insn) {
+      if (last != NULL) last->setSuccessor(&insn);
+      if (first == NULL) first = &insn;
+      insn.setParent(this);
+      insn.setSuccessor(NULL);
+      insn.setPredecessor(last);
+      last = &insn;
+    }
     /*! Apply the given functor on all instructions */
     template <typename T>
     INLINE void apply(const T &functor) const {
-      for (auto it = instructions.begin(); it != instructions.end(); ++it)
-        functor(**it);
+      Instruction *curr = first;
+      while (curr) {
+        functor(*curr);
+        curr = curr->getSuccessor();
+      }
     }
+    /*! Get the parent function */
+    Function &getParent(void) { return fn; }
+    const Function &getParent(void) const { return fn; }
   private:
-    friend class Function;           //!< Owns the basic blocks
-    list<Instruction*> instructions; //!< Sequence of instructions in the block
-    Function &fn;                    //!< Function the block belongs to
+    friend class Function; //!< Owns the basic blocks
+    Instruction *first;    //!< First instruction in the block
+    Instruction *last;     //!< Last instruction in the block
+    Function &fn;          //!< Function the block belongs to
     GBE_CLASS(BasicBlock);
   };
 
@@ -79,7 +91,7 @@ namespace ir {
     /*! Get the function profile */
     INLINE Profile getProfile(void) const { return profile; }
     /*! Get a new valid register */
-    INLINE Register newRegister(RegisterData::Family family) {
+    INLINE Register newRegister(RegisterFamily family) {
       return this->file.append(family);
     }
     /*! Get the function name */
@@ -87,7 +99,7 @@ namespace ir {
     /*! Extract the register from the register file */
     INLINE RegisterData getRegisterData(Register ID) const { return file.get(ID); }
     /*! Get the register family from the register itself */
-    INLINE RegisterData::Family getRegisterFamiy(Register ID) const {
+    INLINE RegisterFamily getRegisterFamiy(Register ID) const {
       return this->getRegisterData(ID).family;
     }
     /*! Get the register index from the tuple vector */

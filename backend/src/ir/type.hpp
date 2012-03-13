@@ -53,37 +53,37 @@ namespace ir {
   std::ostream &operator<< (std::ostream &out, const Type &type);
 
   /*! Get the register family for each type */
-  INLINE RegisterData::Family getFamily(Type type) {
+  INLINE RegisterFamily getFamily(Type type) {
     switch (type) {
       case TYPE_BOOL:
-        return RegisterData::BOOL;
+        return FAMILY_BOOL;
       case TYPE_S8:
       case TYPE_U8:
-        return RegisterData::BYTE;
+        return FAMILY_BYTE;
       case TYPE_S16:
       case TYPE_U16:
       case TYPE_HALF:
-        return RegisterData::WORD;
+        return FAMILY_WORD;
       case TYPE_S32:
       case TYPE_U32:
       case TYPE_FLOAT:
-        return RegisterData::DWORD;
+        return FAMILY_DWORD;
       case TYPE_S64:
       case TYPE_U64:
       case TYPE_DOUBLE:
-        return RegisterData::QWORD;
+        return FAMILY_QWORD;
     };
-    return RegisterData::DWORD;
+    return FAMILY_DWORD;
   }
 
   /*! Return a type for each register family */
-  INLINE Type getType(RegisterData::Family family) {
+  INLINE Type getType(RegisterFamily family) {
     switch (family) {
-      case RegisterData::BOOL: return TYPE_BOOL;
-      case RegisterData::BYTE: return TYPE_U8;
-      case RegisterData::WORD: return TYPE_U16;
-      case RegisterData::DWORD: return TYPE_U32;
-      case RegisterData::QWORD: return TYPE_U64;
+      case FAMILY_BOOL: return TYPE_BOOL;
+      case FAMILY_BYTE: return TYPE_U8;
+      case FAMILY_WORD: return TYPE_U16;
+      case FAMILY_DWORD: return TYPE_U32;
+      case FAMILY_QWORD: return TYPE_U64;
     };
     return TYPE_U32;
   }

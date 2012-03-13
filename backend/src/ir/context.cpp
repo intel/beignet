@@ -65,7 +65,7 @@ namespace ir {
     return *fn;
   }
 
-  Register Context::reg(RegisterData::Family family) {
+  Register Context::reg(RegisterFamily family) {
     GBE_ASSERTM(fn != NULL, "No function currently defined");
     return fn->newRegister(family);
   }
@@ -129,6 +129,7 @@ namespace ir {
 
     // Append the instruction in the stream
     Instruction *insnPtr = fn->newInstruction();
+
     *insnPtr = insn;
 #if GBE_DEBUG
     std::string whyNot;

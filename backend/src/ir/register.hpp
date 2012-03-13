@@ -30,22 +30,23 @@
 namespace gbe {
 namespace ir {
 
+  /*! Basically provides the size of the register */
+  enum RegisterFamily : uint8_t {
+    FAMILY_BOOL  = 0,
+    FAMILY_BYTE  = 1,
+    FAMILY_WORD  = 2,
+    FAMILY_DWORD = 3,
+    FAMILY_QWORD = 4
+  };
+
   /*! A register can be either a byte, a word, a dword or a qword. We store this
    *  value into a register data (which makes the register file) 
    */
   class RegisterData
   {
   public:
-    /*! RegisterData family */
-    enum Family : uint8_t {
-      BOOL  = 0,
-      BYTE  = 1,
-      WORD  = 2,
-      DWORD = 3,
-      QWORD = 4
-    };
     /*! Build a register. All fields will be immutable */
-    INLINE RegisterData(Family family = DWORD) : family(family) {}
+    INLINE RegisterData(RegisterFamily family = FAMILY_DWORD) : family(family) {}
     /*! Copy constructor */
     INLINE RegisterData(const RegisterData &other) : family(other.family) {}
     /*! Copy operator */
@@ -55,7 +56,7 @@ namespace ir {
     }
     /*! Nothing really happens here */
     INLINE ~RegisterData(void) {}
-    Family family;
+    RegisterFamily family;
     GBE_CLASS(RegisterData);
   };
 
@@ -79,7 +80,7 @@ namespace ir {
   {
   public:
     /*! Return the index of a newly allocated register */
-    INLINE Register append(RegisterData::Family family) {
+    INLINE Register append(RegisterFamily family) {
       GBE_ASSERTM(regNum() <= MAX_INDEX,
                   "Too many defined registers (only 65536 are supported)");
       const uint16_t index = regNum();

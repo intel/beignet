@@ -53,7 +53,7 @@ namespace ir {
     /*! Close the function */
     void endFunction(void);
     /*! Create a new register with the given family for the current function */
-    Register reg(RegisterData::Family family);
+    Register reg(RegisterFamily family);
     /*! Create a new immediate value */
     template <typename T> INLINE ImmediateIndex newImmediate(T value) {
       const Immediate imm(value);
@@ -64,7 +64,7 @@ namespace ir {
       GBE_ASSERTM(fn != NULL, "No function currently defined");
       const Immediate imm(value);
       const ImmediateIndex index = fn->newImmediate(imm);
-      const RegisterData::Family family = getFamily(imm.type);
+      const RegisterFamily family = getFamily(imm.type);
       const Register reg = this->reg(family);
       this->LOADI(imm.type, reg, index);
       return reg;

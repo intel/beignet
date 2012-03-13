@@ -30,11 +30,11 @@ namespace ir {
   std::ostream &operator<< (std::ostream &out, const RegisterData &regData)
   {
     switch (regData.family) {
-      case RegisterData::BOOL: return out << "bool";
-      case RegisterData::BYTE: return out << "byte";
-      case RegisterData::WORD: return out << "word";
-      case RegisterData::DWORD: return out << "dword";
-      case RegisterData::QWORD: return out << "qword";
+      case FAMILY_BOOL: return out << "bool";
+      case FAMILY_BYTE: return out << "byte";
+      case FAMILY_WORD: return out << "word";
+      case FAMILY_DWORD: return out << "dword";
+      case FAMILY_QWORD: return out << "qword";
     };
     return out;
   }

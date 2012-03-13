@@ -60,6 +60,9 @@ namespace ir {
    */
   class Function;
 
+  /*! Contains the stream of instructions */
+  class BasicBlock;
+
   ///////////////////////////////////////////////////////////////////////////
   /// All public instruction classes as manipulated by all public classes
   ///////////////////////////////////////////////////////////////////////////
@@ -73,6 +76,8 @@ namespace ir {
       opcode = Opcode(stream[0]);
       for (uint32_t byte = 0; byte < opaqueSize; ++byte)
         opaque[byte] = stream[byte+1];
+      predecessor = successor = NULL;
+      parent = NULL;
     }
     /*! Uninitialize instruction */
     INLINE Instruction(void) {}
@@ -90,6 +95,18 @@ namespace ir {
     RegisterData getDst(const Function &fn, uint32_t ID = 0u) const;
     /*! Get the register of the given destination */
     RegisterData getSrc(const Function &fn, uint32_t ID = 0u) const;
+    /*! Get / set the previous instruction in the stream */
+    Instruction *getPredecessor(void) { return predecessor; }
+    const Instruction *getPredecessor(void) const { return predecessor; }
+    void setPredecessor(Instruction *insn) { this->predecessor = insn; }
+    /*! Get / set the next instruction in the stream */
+    Instruction *getSuccessor(void) { return successor; }
+    const Instruction *getSuccessor(void) const { return successor; }
+    void setSuccessor(Instruction *insn) { this->successor = insn; }
+    /*! Get / set the parent basic block */
+    BasicBlock *getParent(void) { return parent; }
+    const BasicBlock *getParent(void) const { return parent; }
+    void setParent(BasicBlock *block) { this->parent = block; }
     /*! Check that the instruction is well formed (type properly match,
      *  registers not of bound and so on). If not well formed, provide a reason
      *  in string why
@@ -101,30 +118,18 @@ namespace ir {
     template <typename T> INLINE bool isMemberOf(void) const {
       return T::isClassOf(*this);
     }
-    /*! Since we need the function to get all the instruction information, we
-     *  build a small temporary structure to forward both the instruction and
-     *  the function
-     */
-    struct Proxy {
-      INLINE Proxy(const Function &fn, const Instruction &insn) :
-        fn(fn), insn(insn) {}
-      const Function &fn;
-      const Instruction &insn;
-    };
-    /*! Build a proxy from the instruction */
-    INLINE Proxy proxy(const Function &fn) const { return Proxy(fn, *this); }
 
   protected:
     enum { opaqueSize = sizeof(uint64_t)-sizeof(uint8_t) };
     Opcode opcode;           //!< Idendifies the instruction
     char opaque[opaqueSize]; //!< Remainder of it
+    Instruction *predecessor;//!< Previous instruction in the basic block
+    Instruction *successor;  //!< Next instruction in the basic block
+    BasicBlock *parent;      //!< The basic block containing the instruction
   };
 
   /*! Output the instruction string in the given stream */
-  std::ostream &operator<< (std::ostream &out, const Instruction::Proxy &proxy);
-
-  // Check that the instruction is properly formed by the compiler
-  static_assert(sizeof(Instruction)==sizeof(uint64_t), "Bad instruction size");
+  std::ostream &operator<< (std::ostream &out, const Instruction &proxy);
 
   /*! Unary instructions are typed. dst and sources share the same type */
   class UnaryInstruction : public Instruction {
@@ -292,22 +297,26 @@ namespace ir {
    */
   template <typename T>
   INLINE T *cast(Instruction *insn) {
-    GBE_ASSERTM(insn->isMemberOf<T>() == true, "Invalid instruction cast");
-    return reinterpret_cast<T*>(insn);
+    if(insn->isMemberOf<T>())
+      return reinterpret_cast<T*>(insn);
+    else
+      return NULL;
   }
   template <typename T>
   INLINE const T *cast(const Instruction *insn) {
-    GBE_ASSERTM(insn->isMemberOf<T>() == true, "Invalid instruction cast");
-    return reinterpret_cast<const T*>(insn);
+    if(insn->isMemberOf<T>())
+      return reinterpret_cast<const T*>(insn);
+    else
+      return NULL;
   }
   template <typename T>
   INLINE T &cast(Instruction &insn) {
-    GBE_ASSERTM(insn.isMemberOf<T>() == true, "Invalid instruction cast");
+    GBE_ASSERTM(insn.isMemberOf<T>() == true, "Invalid instruction type");
     return reinterpret_cast<T&>(insn);
   }
   template <typename T>
   INLINE const T &cast(const Instruction &insn) {
-    GBE_ASSERTM(insn.isMemberOf<T>() == true, "Invalid instruction cast");
+    GBE_ASSERTM(insn.isMemberOf<T>() == true, "Invalid instruction type");
     return reinterpret_cast<const T&>(insn);
   }
 

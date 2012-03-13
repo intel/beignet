@@ -214,7 +214,7 @@ namespace gbe
     {
       friend class GrowingPool;
       GrowingPoolElem(size_t elemNum) {
-        const size_t sz = min(sizeof(T), sizeof(void*));
+        const size_t sz = max(sizeof(T), sizeof(void*));
         this->data = (T*) GBE_ALIGNED_MALLOC(elemNum * sz, AlignOf<T>::value);
         this->next = NULL;
         this->maxElemNum = elemNum;

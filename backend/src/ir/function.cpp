@@ -83,7 +83,7 @@ namespace ir {
     for (uint32_t i = 0; i < fn.blockNum(); ++i) {
       const BasicBlock &bb = fn.getBlock(i);
       bb.apply([&out, &fn] (const Instruction &insn) {
-        out << insn.proxy(fn) << std::endl;
+        out << insn << std::endl;
       });
       out << std::endl;
     }
@@ -91,10 +91,13 @@ namespace ir {
     return out;
   }
 
-  BasicBlock::BasicBlock(Function &fn) : fn(fn) {}
+  BasicBlock::BasicBlock(Function &fn) : fn(fn) {
+    this->first = this->last = NULL;
+  }
   BasicBlock::~BasicBlock(void) {
-    for (auto it = instructions.begin(); it != instructions.end(); ++it)
-      fn.deleteInstruction(*it);
+    this->apply([this] (Instruction &insn) {
+     this->fn.deleteInstruction(&insn);
+    });
   }
 
 } /* namespace ir */

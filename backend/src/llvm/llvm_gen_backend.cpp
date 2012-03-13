@@ -115,25 +115,25 @@ namespace gbe
   }
 
   /*! Type to register family translation */
-  static ir::RegisterData::Family getFamily(const ir::Context &ctx, const Type *type)
+  static ir::RegisterFamily getFamily(const ir::Context &ctx, const Type *type)
   {
     GBE_ASSERT(isScalarType(type) == true); 
     if (type == Type::getInt1Ty(type->getContext()))
-      return ir::RegisterData::BOOL;
+      return ir::FAMILY_BOOL;
     if (type == Type::getInt8Ty(type->getContext()))
-      return ir::RegisterData::BYTE;
+      return ir::FAMILY_BYTE;
     if (type == Type::getInt16Ty(type->getContext()))
-      return ir::RegisterData::WORD;
+      return ir::FAMILY_WORD;
     if (type == Type::getInt32Ty(type->getContext()) || type->isFloatTy())
-      return ir::RegisterData::DWORD;
+      return ir::FAMILY_DWORD;
     if (type == Type::getInt64Ty(type->getContext()) || type->isDoubleTy())
-      return ir::RegisterData::QWORD;
+      return ir::FAMILY_QWORD;
     if (type->isPointerTy() && ctx.getPointerSize() == ir::POINTER_32_BITS)
-      return ir::RegisterData::DWORD;
+      return ir::FAMILY_DWORD;
     if (type->isPointerTy() && ctx.getPointerSize() == ir::POINTER_64_BITS)
-      return ir::RegisterData::QWORD;
+      return ir::FAMILY_QWORD;
     GBE_ASSERT(0);
-    return ir::RegisterData::BOOL;
+    return ir::FAMILY_BOOL;
   }
 
   /*! Get number of element to process dealing either with a vector or a scalar
@@ -248,7 +248,7 @@ namespace gbe
      *  the value is a vector of scalars)
      */
     ir::Register newScalar(Value *value, Type *type, uint32_t index) {
-      const ir::RegisterData::Family family = getFamily(ctx, type);
+      const ir::RegisterFamily family = getFamily(ctx, type);
       const ir::Register reg = ctx.reg(family);
       this->insertRegister(reg, value, index);
       return reg;
@@ -569,16 +569,7 @@ namespace gbe
   void GenWriter::emitBasicBlock(BasicBlock *BB) {
     GBE_ASSERT(labelMap.find(BB) != labelMap.end());
     ctx.LABEL(labelMap[BB]);
-    for (auto II = BB->begin(), E = BB->end(); II != E; ++II) {
-      const Type *Ty = II->getType();
-      GBE_ASSERT(!Ty->isIntegerTy() ||
-          (Ty==Type::getInt1Ty(II->getContext())  ||
-           Ty==Type::getInt8Ty(II->getContext())  ||
-           Ty==Type::getInt16Ty(II->getContext()) ||
-           Ty==Type::getInt32Ty(II->getContext()) ||
-           Ty==Type::getInt64Ty(II->getContext())));
-      visit(*II);
-    }
+    for (auto II = BB->begin(), E = BB->end(); II != E; ++II) visit(*II);
   }
 
   void GenWriter::emitMovForPHI(BasicBlock *curr, BasicBlock *succ) {
@@ -595,7 +586,7 @@ namespace gbe
         // will remove them
         for (uint32_t elemID = 0; elemID < elemNum; ++elemID) {
           const ir::Register dst = this->getRegister(PN, elemID);
-          const ir::Register src = this->getRegister(PN->getOperand(0), elemID);
+          const ir::Register src = this->getRegister(IV, elemID);
           ctx.MOV(type, dst, src);
         }
       }
@@ -628,7 +619,7 @@ namespace gbe
     if (!returnStruct) {
       const Type *type = F.getReturnType();
       if (type->isVoidTy() == false) {
-        const ir::RegisterData::Family family = getFamily(ctx, type);
+        const ir::RegisterFamily family = getFamily(ctx, type);
         const ir::Register reg = ctx.reg(family);
         ctx.output(reg);
       }
@@ -687,7 +678,7 @@ namespace gbe
     if (fn.outputNum() == 1 && I.getNumOperands() > 0) {
       const ir::Register dst = fn.getOutput(0);
       const ir::Register src = this->getRegister(I.getOperand(0));
-      const ir::RegisterData::Family family = fn.getRegisterFamiy(dst);;
+      const ir::RegisterFamily family = fn.getRegisterFamiy(dst);;
       ctx.MOV(ir::getType(family), dst, src);
     }
     ctx.RET();

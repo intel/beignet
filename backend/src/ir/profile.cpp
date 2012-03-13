@@ -32,17 +32,17 @@ namespace ir {
   {
     static void init(Function &fn) {
       IF_DEBUG(Register r);
-      IF_DEBUG(r =) fn.newRegister(RegisterData::DWORD);
+      IF_DEBUG(r =) fn.newRegister(FAMILY_DWORD);
       GBE_ASSERT(r == lid0);
-      IF_DEBUG(r =) fn.newRegister(RegisterData::DWORD);
+      IF_DEBUG(r =) fn.newRegister(FAMILY_DWORD);
       GBE_ASSERT(r == lid1);
-      IF_DEBUG(r =) fn.newRegister(RegisterData::DWORD);
+      IF_DEBUG(r =) fn.newRegister(FAMILY_DWORD);
       GBE_ASSERT(r == lid2);
-      IF_DEBUG(r =) fn.newRegister(RegisterData::DWORD);
+      IF_DEBUG(r =) fn.newRegister(FAMILY_DWORD);
       GBE_ASSERT(r == gid0);
-      IF_DEBUG(r =) fn.newRegister(RegisterData::DWORD);
+      IF_DEBUG(r =) fn.newRegister(FAMILY_DWORD);
       GBE_ASSERT(r == gid1);
-      IF_DEBUG(r =) fn.newRegister(RegisterData::DWORD);
+      IF_DEBUG(r =) fn.newRegister(FAMILY_DWORD);
       GBE_ASSERT(r == gid2);
     }
   } /* namespace ocl */
