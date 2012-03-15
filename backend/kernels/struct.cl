@@ -1,4 +1,4 @@
-#include <stdlib.h>
+#include "stdlib.h"
 struct my_struct {
   int a;
   int b[2];
@@ -22,4 +22,5 @@ __kernel void struct_cl (struct my_struct s, int x, __global int *mem, int y)
   array[0] = hop;
   mem[0] = s.a + array[x].a + array[x+1].b[0] + g[x] + g[3];
 }
+
 

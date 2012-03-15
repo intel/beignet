@@ -87,6 +87,28 @@ namespace ir {
     GBE_CLASS(BasicBlock);
   };
 
+  /*! In fine, function inputs (arguments) can be pushed from the constant
+   *  buffer if they are structures. Other arguments can be images (textures)
+   *  and will also require special treatment.
+   */
+  struct FunctionInput
+  {
+    enum Type
+    {
+      GLOBAL_POINTER    = 0, /* __global */
+      CONSTANT_POINTER  = 1, /* __constant */
+      LOCAL_POINTER     = 2, /* __local */
+      VALUE             = 3, /* int, float */
+      STRUCTURE         = 4  /* struct foo */
+    };
+    /*! Create a function input */
+    INLINE FunctionInput(Type type, Register reg, uint32_t elementSize = 0u) :
+      type(type), reg(reg), elementSize(elementSize) {}
+    Type type;            /*! Gives the type of argument we have */
+    Register reg;         /*! Holds the argument */
+    uint32_t elementSize; /*! Only for structure arguments */
+  };
+
   /*! A function is no more that a set of declared registers and a set of
    *  basic blocks
    */
@@ -136,8 +158,8 @@ namespace ir {
     INLINE void deleteInstruction(Instruction *insn) {
       insnPool.deallocate(insn);
     }
-    /*! Get input register */
-    INLINE Register getInput(uint32_t ID) const {
+    /*! Get input argument */
+    INLINE const FunctionInput &getInput(uint32_t ID) const {
       GBE_ASSERT(ID < inputNum());
       return inputs[ID];
     }
@@ -181,7 +203,7 @@ namespace ir {
   private:
     friend class Context;         //!< Can freely modify a function
     std::string name;             //!< Function name
-    vector<Register> inputs;      //!< Input registers of the function
+    vector<FunctionInput> inputs; //!< Input registers of the function
     vector<Register> outputs;     //!< Output registers of the function
     vector<BasicBlock*> labels;   //!< Each label points to a basic block
     vector<Immediate> immediates; //!< All immediate values in the function

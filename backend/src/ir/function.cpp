@@ -99,8 +99,21 @@ namespace ir {
     out << fn.getRegisterFile();
     out << "## " << fn.inputNum() << " input register"
         << plural(fn.inputNum())  << " ##" << std::endl;
-    for (uint32_t i = 0; i < fn.inputNum(); ++i)
-      out << "decl_input %" << fn.getInput(i) << std::endl;
+    for (uint32_t i = 0; i < fn.inputNum(); ++i) {
+      const FunctionInput &input = fn.getInput(i);
+      out << "decl_input.";
+      switch (input.type) {
+        case FunctionInput::GLOBAL_POINTER: out << "global"; break;
+        case FunctionInput::LOCAL_POINTER: out << "local"; break;
+        case FunctionInput::CONSTANT_POINTER: out << "constant"; break;
+        case FunctionInput::VALUE: out << "value"; break;
+        case FunctionInput::STRUCTURE:
+          out << "structure." << input.elementSize;
+        break;
+        default: break;
+      }
+      out << " %" << input.reg << std::endl;
+    }
     out << "## " << fn.outputNum() << " output register"
         << plural(fn.outputNum()) << " ##" << std::endl;
     for (uint32_t i = 0; i < fn.outputNum(); ++i)

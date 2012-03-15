@@ -94,36 +94,58 @@ namespace ir {
     }
   }
 
+  /*! To pretty print the livfeness info */
   static const uint32_t prettyInsnStrSize = 48;
   static const uint32_t prettyRegStrSize = 5;
 
-  enum RegisterUse
-  {
-    USE_NONE    = 0,
-    USE_READ    = 1,
-    USE_WRITTEN = 2
+  /*! Describe how the register is used */
+  static const uint32_t USE_NONE    = 0;
+  static const uint32_t USE_READ    = 1 << 0;
+  static const uint32_t USE_WRITTEN = 1 << 1;
+
+  enum UsePosition {
+    POS_BEFORE = 0,
+    POS_HERE = 1,
+    POS_AFTER = 2
   };
 
-  /*! "next" includes the provided instruction */
-  static INLINE RegisterUse nextUse(const Instruction &insn, Register reg) {
+  /*! Compute the use of a register in all direction in a block */
+  template <UsePosition pos>
+  static INLINE uint32_t usage(const Instruction &insn, Register reg) {
     const Function &fn = insn.getParent()->getParent();
     const Instruction *curr = &insn;
+    uint32_t use = USE_NONE;
+
+    // Skip the current element if you are looking forward or backward
+    if (curr && pos == POS_BEFORE)
+      curr = curr->getPredecessor();
+    else if (curr && pos == POS_AFTER)
+      curr = curr->getSuccessor();
     while (curr) {
       for (uint32_t srcID = 0; srcID < curr->getSrcNum(); ++srcID) {
         const Register src = curr->getSrcIndex(fn, srcID);
-        if (src == reg) return USE_READ;
+        if (src == reg) {
+          use |= USE_READ;
+          break;
+        }
       }
       for (uint32_t dstID = 0; dstID < curr->getDstNum(); ++dstID) {
         const Register dst = curr->getDstIndex(fn, dstID);
-        if (dst == reg) return USE_WRITTEN;
+        if (dst == reg) {
+          use |= USE_WRITTEN;
+          break;
+        }
       }
-      curr = curr->getSuccessor();
+      if (use != USE_NONE)
+        break;
+      if (pos == POS_BEFORE)
+        curr = curr->getPredecessor();
+      else if (pos == POS_AFTER)
+        curr = curr->getSuccessor();
+      else
+        curr = NULL;
     }
-    return USE_NONE;
-  }
-  /*! "previous" does not include the provided instruction */
-  static INLINE RegisterUse previousUse(const Instruction &insn, Register reg) {
-    return USE_NONE;
+    return use;
   }
 
   /*! Just print spaceNum spaces */
@@ -162,14 +184,28 @@ namespace ir {
     {
       for (uint32_t regID = 0; regID < fn.regNum(); ++regID) {
         const Register reg(regID);
-        // Non-killed and liveout == alive in the complete block
-        if (info.inLiveOut(reg) == true && info.inVarKill(reg) == false)
+        // Use in that instruction means alive
+        if (usage<POS_HERE>(insn, reg) != USE_NONE) {
           printAlive(out);
-        // We must look for the last use of the instruction
-        else if (info.inLiveOut(reg) == false) {
-
-        } else
-         printDead(out);
+          continue;
+        }
+        // Non-killed and liveout == alive in the complete block
+        if (info.inLiveOut(reg) == true && info.inVarKill(reg) == false) {
+          printAlive(out);
+          continue;
+        }
+        // It is going to be read
+        const uint32_t nextUsage = usage<POS_AFTER>(insn, reg);
+        if ((nextUsage & USE_READ) != USE_NONE) {
+          printAlive(out);
+          continue;
+        }
+        // It is not written and alive at the end of the block
+        if ((nextUsage & USE_WRITTEN) == USE_NONE && info.inLiveOut(reg) == true) {
+          printAlive(out);
+          continue;
+        }
+        printDead(out);
       }
     }
     out << std::endl;

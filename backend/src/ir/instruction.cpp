@@ -306,7 +306,7 @@ namespace ir {
       LoadInstruction(Type type,
                       Tuple dstValues,
                       Register offset,
-                      MemorySpace memSpace,
+                      AddressSpace addrSpace,
                       uint32_t valueNum,
                       bool dwAligned)
       {
@@ -315,7 +315,7 @@ namespace ir {
         this->type = type;
         this->offset = offset;
         this->values = dstValues;
-        this->memSpace = memSpace;
+        this->addrSpace = addrSpace;
         this->valueNum = valueNum;
         this->dwAligned = dwAligned ? 1 : 0;
       }
@@ -331,13 +331,13 @@ namespace ir {
       INLINE uint32_t getDstNum(void) const { return valueNum; }
       INLINE Type getValueType(void) const { return type; }
       INLINE uint32_t getValueNum(void) const { return valueNum; }
-      INLINE MemorySpace getAddressSpace(void) const { return memSpace; }
+      INLINE AddressSpace getAddressSpace(void) const { return addrSpace; }
       INLINE bool wellFormed(const Function &fn, std::string &why) const;
       INLINE void out(std::ostream &out, const Function &fn) const;
       Type type;            //!< Type to store
       Register offset;      //!< First source is the offset where to store
       Tuple values;         //!< Values to load
-      MemorySpace memSpace; //!< Where to load
+      AddressSpace addrSpace; //!< Where to load
       uint8_t valueNum:7;   //!< Number of values to load
       uint8_t dwAligned:1;  //!< DWORD aligned is what matters with GEN
     };
@@ -349,7 +349,7 @@ namespace ir {
       StoreInstruction(Type type,
                        Tuple values,
                        Register offset,
-                       MemorySpace memSpace,
+                       AddressSpace addrSpace,
                        uint32_t valueNum,
                        bool dwAligned)
       {
@@ -358,7 +358,7 @@ namespace ir {
         this->type = type;
         this->offset = offset;
         this->values = values;
-        this->memSpace = memSpace;
+        this->addrSpace = addrSpace;
         this->valueNum = valueNum;
         this->dwAligned = dwAligned ? 1 : 0;
       }
@@ -372,13 +372,13 @@ namespace ir {
       INLINE uint32_t getSrcNum(void) const { return valueNum + 1u; }
       INLINE uint32_t getValueNum(void) const { return valueNum; }
       INLINE Type getValueType(void) const { return type; }
-      INLINE MemorySpace getAddressSpace(void) const { return memSpace; }
+      INLINE AddressSpace getAddressSpace(void) const { return addrSpace; }
       INLINE bool wellFormed(const Function &fn, std::string &why) const;
       INLINE void out(std::ostream &out, const Function &fn) const;
       Type type;            //!< Type to store
       Register offset;      //!< First source is the offset where to store
       Tuple values;         //!< Values to store
-      MemorySpace memSpace; //!< Where to store
+      AddressSpace addrSpace; //!< Where to store
       uint8_t valueNum:7;   //!< Number of values to store
       uint8_t dwAligned:1;  //!< DWORD aligned is what matters with GEN
     };
@@ -426,16 +426,16 @@ namespace ir {
       public BasePolicy, public NoSrcPolicy, public NoDstPolicy
     {
     public:
-      INLINE FenceInstruction(MemorySpace memSpace) {
+      INLINE FenceInstruction(AddressSpace addrSpace) {
         this->opcode = OP_FENCE;
-        this->memSpace = memSpace;
+        this->addrSpace = addrSpace;
       }
       bool wellFormed(const Function &fn, std::string &why) const;
       INLINE void out(std::ostream &out, const Function &fn) const {
         this->outOpcode(out);
-        out << "." << memSpace;
+        out << "." << addrSpace;
       }
-      MemorySpace memSpace; //!< The loads and stores to order
+      AddressSpace addrSpace; //!< The loads and stores to order
     };
 
     class ALIGNED_INSTRUCTION LabelInstruction :
@@ -680,7 +680,7 @@ namespace ir {
 
     INLINE void LoadInstruction::out(std::ostream &out, const Function &fn) const {
       this->outOpcode(out);
-      out << "." << type << "." << memSpace << (dwAligned ? "." : ".un") << "aligned";
+      out << "." << type << "." << addrSpace << (dwAligned ? "." : ".un") << "aligned";
       out << " {";
       for (uint32_t i = 0; i < valueNum; ++i)
         out << "%" << this->getDstIndex(fn, i) << (i != (valueNum-1) ? " " : "");
@@ -690,7 +690,7 @@ namespace ir {
 
     INLINE void StoreInstruction::out(std::ostream &out, const Function &fn) const {
       this->outOpcode(out);
-      out << "." << type << "." << memSpace << (dwAligned ? "." : ".un") << "aligned";
+      out << "." << type << "." << addrSpace << (dwAligned ? "." : ".un") << "aligned";
       out << " %" << this->getSrcIndex(fn, 0) << " {";
       for (uint32_t i = 0; i < valueNum; ++i)
         out << "%" << this->getSrcIndex(fn, i+1) << (i != (valueNum-1) ? " " : "");
@@ -718,8 +718,8 @@ namespace ir {
 
   } /* namespace internal */
 
-  std::ostream &operator<< (std::ostream &out, MemorySpace memSpace) {
-    switch (memSpace) {
+  std::ostream &operator<< (std::ostream &out, AddressSpace addrSpace) {
+    switch (addrSpace) {
       case MEM_GLOBAL: return out << "global";
       case MEM_LOCAL: return out << "local";
       case MEM_CONSTANT: return out << "constant";
@@ -882,10 +882,10 @@ DECL_MEM_FN(ConvertInstruction, Type, getSrcType(void), getSrcType())
 DECL_MEM_FN(ConvertInstruction, Type, getDstType(void), getDstType())
 DECL_MEM_FN(StoreInstruction, Type, getValueType(void), getValueType())
 DECL_MEM_FN(StoreInstruction, uint32_t, getValueNum(void), getValueNum())
-DECL_MEM_FN(StoreInstruction, MemorySpace, getAddressSpace(void), getAddressSpace())
+DECL_MEM_FN(StoreInstruction, AddressSpace, getAddressSpace(void), getAddressSpace())
 DECL_MEM_FN(LoadInstruction, Type, getValueType(void), getValueType())
 DECL_MEM_FN(LoadInstruction, uint32_t, getValueNum(void), getValueNum())
-DECL_MEM_FN(LoadInstruction, MemorySpace, getAddressSpace(void), getAddressSpace())
+DECL_MEM_FN(LoadInstruction, AddressSpace, getAddressSpace(void), getAddressSpace())
 DECL_MEM_FN(LoadImmInstruction, Immediate, getImmediate(const Function &fn), getImmediate(fn))
 DECL_MEM_FN(LoadImmInstruction, Type, getType(void), getType())
 DECL_MEM_FN(LabelInstruction, LabelIndex, getLabelIndex(void), getLabelIndex())
@@ -999,7 +999,7 @@ DECL_MEM_FN(BranchInstruction, LabelIndex, getLabelIndex(void), getLabelIndex())
   Instruction NAME(Type type,                                               \
                    Tuple tuple,                                             \
                    Register offset,                                         \
-                   MemorySpace space,                                       \
+                   AddressSpace space,                                       \
                    uint32_t valueNum,                                       \
                    bool dwAligned)                                          \
   {                                                                         \
@@ -1013,7 +1013,7 @@ DECL_MEM_FN(BranchInstruction, LabelIndex, getLabelIndex(void), getLabelIndex())
 #undef DECL_EMIT_FUNCTION
 
   // FENCE
-  Instruction FENCE(MemorySpace space) {
+  Instruction FENCE(AddressSpace space) {
     const internal::FenceInstruction insn(space);
     return insn.convert();
   }

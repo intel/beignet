@@ -154,6 +154,17 @@ namespace gbe
     return type;
   }
 
+  /*! OCL to Gen-IR address type */
+  static INLINE ir::AddressSpace addressSpaceLLVMToGen(unsigned llvmMemSpace) {
+    switch (llvmMemSpace) {
+      case 0: return ir::MEM_PRIVATE;
+      case 1: return ir::MEM_GLOBAL;
+      case 2: return ir::MEM_CONSTANT;
+      case 4: return ir::MEM_LOCAL;
+    }
+    GBE_ASSERT(false);
+    return ir::MEM_GLOBAL;
+  }
 
   /*! Handle the LLVM IR Value to Gen IR register translation. This has 2 roles:
    *  - Split the LLVM vector into several scalar values
@@ -596,17 +607,46 @@ namespace gbe
   void GenWriter::emitFunctionPrototype(Function &F)
   {
     GBE_ASSERTM(F.hasStructRetAttr() == false,
-                "Returned value for kernel functions");
+                "Returned value for kernel functions is forbidden");
     // Loop over the arguments and output registers for them
     if (!F.arg_empty()) {
       Function::arg_iterator I = F.arg_begin(), E = F.arg_end();
+      const AttrListPtr &PAL = F.getAttributes();
 
       // Insert a new register for each function argument
-      for (; I != E; ++I) {
-        const Type *type = I->getType();
+      uint32_t argID = 1; // Start at one actually
+      for (; I != E; ++I, ++argID) {
+        Type *type = I->getType();
         GBE_ASSERT(isScalarType(type) == true);
         const ir::Register reg = regTranslator.newScalar(I);
-        ctx.input(reg);
+        if (type->isPointerTy() == false)
+          ctx.input(ir::FunctionInput::VALUE, reg);
+        else {
+          PointerType *pointerType = dyn_cast<PointerType>(type);
+          // By value structure
+          if (PAL.paramHasAttr(argID, Attribute::ByVal)) {
+            Type *pointed = pointerType->getElementType();
+            const size_t structSize = getTypeByteSize(unit, pointed);
+            ctx.input(ir::FunctionInput::STRUCTURE, reg, structSize);
+          }
+          // Regular user provided pointer (global, local or constant)
+          else {
+            const uint32_t addr = pointerType->getAddressSpace();
+            const ir::AddressSpace addrSpace = addressSpaceLLVMToGen(addr);
+            switch (addrSpace) {
+              case ir::MEM_GLOBAL:
+                ctx.input(ir::FunctionInput::GLOBAL_POINTER, reg);
+              break;
+              case ir::MEM_LOCAL:
+                ctx.input(ir::FunctionInput::LOCAL_POINTER, reg);
+              break;
+              case ir::MEM_CONSTANT:
+                ctx.input(ir::FunctionInput::CONSTANT_POINTER, reg);
+              break;
+              default: GBE_ASSERT(addrSpace != ir::MEM_PRIVATE);
+            }
+          }
+        }
       }
     }
 
@@ -614,7 +654,7 @@ namespace gbe
     // structure
     const Type *type = F.getReturnType();
     GBE_ASSERTM(type->isVoidTy() == true,
-                "Returned value for kernel functions");
+                "Returned value for kernel functions is forbidden");
 
 #if GBE_DEBUG
     // Variable number of arguments is not supported
@@ -1143,16 +1183,6 @@ namespace gbe
       NOT_SUPPORTED;
   }
 
-  static INLINE ir::MemorySpace addressSpaceLLVMToGen(unsigned llvmMemSpace) {
-    switch (llvmMemSpace) {
-      case 0: return ir::MEM_PRIVATE;
-      case 1: return ir::MEM_GLOBAL;
-      case 4: return ir::MEM_LOCAL;
-    }
-    GBE_ASSERT(false);
-    return ir::MEM_GLOBAL;
-  }
-
   static INLINE Value *getLoadOrStoreValue(LoadInst &I) {
     return &I;
   }
@@ -1173,7 +1203,7 @@ namespace gbe
     Value *llvmValues = getLoadOrStoreValue(I);
     Type *llvmType = llvmValues->getType();
     const bool dwAligned = (I.getAlignment() % 4) == 0;
-    const ir::MemorySpace memSpace = addressSpaceLLVMToGen(llvmSpace);
+    const ir::AddressSpace addrSpace = addressSpaceLLVMToGen(llvmSpace);
     const ir::Register ptr = this->getRegister(llvmPtr);
 
     // Scalar is easy. We neednot build register tuples
@@ -1181,9 +1211,9 @@ namespace gbe
       const ir::Type type = getType(ctx, llvmType);
       const ir::Register values = this->getRegister(llvmValues);
       if (isLoad)
-        ctx.LOAD(type, ptr, memSpace, dwAligned, values);
+        ctx.LOAD(type, ptr, addrSpace, dwAligned, values);
       else
-        ctx.STORE(type, ptr, memSpace, dwAligned, values);
+        ctx.STORE(type, ptr, addrSpace, dwAligned, values);
     }
     // A vector type requires to build a tuple
     else {
@@ -1202,9 +1232,9 @@ namespace gbe
       // Emit the instruction
       const ir::Type type = getType(ctx, elemType);
       if (isLoad)
-        ctx.LOAD(type, tuple, ptr, memSpace, elemNum, dwAligned);
+        ctx.LOAD(type, tuple, ptr, addrSpace, elemNum, dwAligned);
       else
-        ctx.STORE(type, tuple, ptr, memSpace, elemNum, dwAligned);
+        ctx.STORE(type, tuple, ptr, addrSpace, elemNum, dwAligned);
     }
   }
 

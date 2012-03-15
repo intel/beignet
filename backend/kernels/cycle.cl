@@ -1,4 +1,4 @@
-#include <stdlib.h>
+#include "stdlib.h"
 __kernel void cycle(global int *dst)
 {
   int x, y;
@@ -12,4 +12,5 @@ hop1:
 
   dst[0] = x;
 }
+
 

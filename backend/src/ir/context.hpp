@@ -72,7 +72,7 @@ namespace ir {
     /*! Create a new label for the current function */
     LabelIndex label(void);
     /*! Append a new input register for the function */
-    void input(Register reg);
+    void input(FunctionInput::Type type, Register reg, uint32_t elemSz = 0u);
     /*! Append a new output register for the function */
     void output(Register reg);
     /*! Get the immediate value */
@@ -119,7 +119,7 @@ namespace ir {
 
     /*! LOAD with the destinations directly specified */
     template <typename... Args>
-    void LOAD(Type type, Register offset, MemorySpace space, bool dwAligned, Args...values)
+    void LOAD(Type type, Register offset, AddressSpace space, bool dwAligned, Args...values)
     {
       const Tuple index = this->tuple(values...);
       const uint16_t valueNum = std::tuple_size<std::tuple<Args...>>::value;
@@ -129,7 +129,7 @@ namespace ir {
 
     /*! STORE with the sources directly specified */
     template <typename... Args>
-    void STORE(Type type, Register offset, MemorySpace space, bool dwAligned, Args...values)
+    void STORE(Type type, Register offset, AddressSpace space, bool dwAligned, Args...values)
     {
       const Tuple index = this->tuple(values...);
       const uint16_t valueNum = std::tuple_size<std::tuple<Args...>>::value;

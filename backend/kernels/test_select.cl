@@ -1,4 +1,4 @@
-#include <stdlib.h>
+#include "stdlib.h"
 __kernel void test_select(__global int *dst, __global int *src)
 {
 
@@ -7,4 +7,5 @@ __kernel void test_select(__global int *dst, __global int *src)
   else
     dst[get_global_id(0)] = 2;
 }
+
 

@@ -1,4 +1,4 @@
-#include <stdlib.h>
+#include "stdlib.h"
 struct struct0
 {
   int hop[5];
@@ -11,4 +11,5 @@ __kernel void param(__global struct struct0 *dst, struct struct0 s, __local int 
   dst[0] = s;
   dst[0].y += y;
 }
+
 

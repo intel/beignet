@@ -42,7 +42,7 @@ namespace ir {
   };
 
   /*! Different memory spaces */
-  enum MemorySpace : uint8_t {
+  enum AddressSpace : uint8_t {
     MEM_GLOBAL = 0, //!< Global memory (a la OCL)
     MEM_LOCAL,      //!< Local memory (thread group memory)
     MEM_CONSTANT,   //!< Immutable global memory
@@ -50,7 +50,7 @@ namespace ir {
   };
 
   /*! Output the memory space */
-  std::ostream &operator<< (std::ostream &out, MemorySpace memSpace);
+  std::ostream &operator<< (std::ostream &out, AddressSpace addrSpace);
 
   /*! A label is identified with an unsigned short */
   TYPE_SAFE(LabelIndex, uint16_t)
@@ -201,7 +201,7 @@ namespace ir {
     /*! Give the number of values the instruction is storing (srcNum-1) */
     uint32_t getValueNum(void) const;
     /*! Address space that is manipulated here */
-    MemorySpace getAddressSpace(void) const;
+    AddressSpace getAddressSpace(void) const;
     /*! DWORD aligned means untyped read for Gen. That is what matters */
     bool isDWORDAligned(void) const;
     /*! Return true if the given instruction is an instance of this class */
@@ -219,7 +219,7 @@ namespace ir {
     /*! Number of values loaded (ie number of destinations) */
     uint32_t getValueNum(void) const;
     /*! Address space that is manipulated here */
-    MemorySpace getAddressSpace(void) const;
+    AddressSpace getAddressSpace(void) const;
     /*! DWORD aligned means untyped read for Gen. That is what matters */
     bool isDWORDAligned(void) const;
     /*! Return true if the given instruction is an instance of this class */
@@ -393,11 +393,11 @@ namespace ir {
   /*! loadi.type dst value */
   Instruction LOADI(Type type, Register dst, ImmediateIndex value);
   /*! load.type.space {dst1,...,dst_valueNum} offset value */
-  Instruction LOAD(Type type, Tuple dst, Register offset, MemorySpace space, uint32_t valueNum, bool dwAligned);
+  Instruction LOAD(Type type, Tuple dst, Register offset, AddressSpace space, uint32_t valueNum, bool dwAligned);
   /*! store.type.space offset {src1,...,src_valueNum} value */
-  Instruction STORE(Type type, Tuple src, Register offset, MemorySpace space, uint32_t valueNum, bool dwAligned);
+  Instruction STORE(Type type, Tuple src, Register offset, AddressSpace space, uint32_t valueNum, bool dwAligned);
   /*! fence.space */
-  Instruction FENCE(MemorySpace space);
+  Instruction FENCE(AddressSpace space);
   /*! label labelIndex */
   Instruction LABEL(LabelIndex labelIndex);
   /*! texture instruction TODO */

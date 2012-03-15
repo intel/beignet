@@ -1,4 +1,4 @@
-#include <stdlib.h>
+#include "stdlib.h"
 __attribute__((pure, overloadable)) int mad(int,int,int);
 __attribute__((pure, overloadable)) float mad(float,float,float);
 __attribute__((pure, overloadable)) float4 mad(float4,float4,float4);
@@ -14,4 +14,5 @@ __kernel void add(__global int *dst, unsigned int x, float z)
     dst[i] = y + (int) z + x0.x + x0.y + x0.z;
   }
 }
+
 

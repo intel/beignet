@@ -77,6 +77,12 @@ __attribute__((overloadable)) inline int4 select(int4 src0, int4 src1, int4 cond
   return dst;
 }
 
+#define __private __attribute__((address_space(0)))
 #define __global __attribute__((address_space(1)))
+#define __constant __attribute__((address_space(2)))
+#define __local __attribute__((address_space(3)))
 #define global __global
+#define local __local
+#define constant __constant
+#define private __private
 
