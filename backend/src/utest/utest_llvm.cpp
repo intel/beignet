@@ -27,6 +27,7 @@
 #include "utest/utest.hpp"
 #include "llvm/llvm_to_gen.hpp"
 #include "ir/unit.hpp"
+#include "ir/liveness.hpp"
 #include <cstdlib>
 
 namespace gbe
@@ -48,6 +49,11 @@ namespace gbe
     ir::Unit unit;
     llvmToGen(unit, path.c_str());
     std::cout << unit << std::endl;
+
+    unit.apply([](ir::Function &fn) {
+      ir::Liveness liveness(fn);
+      std::cout << liveness << std::endl;
+    });
   }
 } /* namespace gbe */
 
@@ -78,7 +84,7 @@ runTests:
 
   UTEST_EXPECT_SUCCESS(utestLLVM2Gen("loop.ll"));
   //UTEST_EXPECT_SUCCESS(utestLLVM2Gen("function_param.ll"));
-  UTEST_EXPECT_SUCCESS(utestLLVM2Gen("function.ll"));
+  //UTEST_EXPECT_SUCCESS(utestLLVM2Gen("function.ll"));
   //UTEST_EXPECT_SUCCESS(utestLLVM2Gen("mad.ll"));
 #if 0
   UTEST_EXPECT_SUCCESS(utestLLVM2Gen("select.ll"));

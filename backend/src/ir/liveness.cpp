@@ -21,77 +21,25 @@
  * \file liveness.cpp
  * \author Benjamin Segovia <benjamin.segovia@intel.com>
  */
-#include "ir/function.hpp"
-#include "sys/map.hpp"
-#include "sys/set.hpp"
+#include "ir/liveness.hpp"
+#include <sstream>
 
 namespace gbe {
 namespace ir {
 
-  /*! Compute liveness of each register */
-  class LivenessInfo
-  {
-  public:
-    LivenessInfo(Function &fn);
-    ~LivenessInfo(void);
-    /*! Set of variables used upwards in the block (before a definition) */
-    typedef set<Register> UEVar;
-    /*! Set of variables alive at the exit of the block */
-    typedef set<Register> LiveOut;
-    /*! Set of variables actually killed in each block */
-    typedef set<Register> VarKill;
-    /*! Per-block info */
-    struct BlockInfo {
-      BlockInfo(const BasicBlock &bb) : bb(bb) {}
-      const BasicBlock &bb;
-      UEVar upwardUsed;
-      LiveOut liveOut;
-      VarKill varKill;
-    };
-    /*! Gives for each block the variables alive at entry / exit */
-    typedef map<const BasicBlock*, BlockInfo*> Liveness;
-  private:
-    /*! Store the liveness of all blocks */
-    Liveness liveness;
-    /*! Compute the liveness for this function */
-    Function &fn;
-    /*! Initialize UEVar and VarKill per block */
-    void initBlock(const BasicBlock &bb);
-    /*! Initialize UEVar and VarKill per instruction */
-    void initInstruction(BlockInfo &info, const Instruction &insn);
-    /*! Now really compute LiveOut based on UEVar and VarKill */
-    void computeLiveOut(void);
-    /*! Actually do something for each successor of *all* blocks */
-    template <typename T>
-    void forEachSuccessor(const T &functor) {
-      // Iterate on all blocks
-      for (auto it = liveness.begin(); it != liveness.end(); ++it) {
-        BlockInfo &info = *it->second;
-        const BasicBlock &bb = info.bb;
-        const BlockSet set = bb.getSuccessorSet();
-        // Iterate over all successors
-        for (auto other = set.begin(); other != set.end(); ++other) {
-          auto otherInfo = liveness.find(*other);
-          GBE_ASSERT(otherInfo != liveness.end() && otherInfo->second != NULL);
-          functor(info, *otherInfo->second);
-        }
-      }
-    }
-  };
-
-  LivenessInfo::LivenessInfo(Function &fn) : fn(fn) {
+  Liveness::Liveness(Function &fn) : fn(fn) {
     // Initialize UEVar and VarKill for each block
     fn.apply([this](const BasicBlock &bb) { this->initBlock(bb); });
     // Now with iterative analysis, we compute liveout sets
     this->computeLiveOut();
   }
 
-  LivenessInfo::~LivenessInfo(void) {
+  Liveness::~Liveness(void) {
     for (auto it = liveness.begin(); it != liveness.end(); ++it)
       GBE_SAFE_DELETE(it->second);
   }
 
-  void LivenessInfo::initBlock(const BasicBlock &bb) {
+  void Liveness::initBlock(const BasicBlock &bb) {
     GBE_ASSERT(liveness.find(&bb) == liveness.end());
     BlockInfo *info = GBE_NEW(BlockInfo, bb);
     // Traverse all instructions to handle UEVar and VarKill
@@ -101,7 +49,7 @@ namespace ir {
     liveness[&bb] = info;
   }
 
-  void LivenessInfo::initInstruction(BlockInfo &info, const Instruction &insn) {
+  void Liveness::initInstruction(BlockInfo &info, const Instruction &insn) {
     const uint32_t srcNum = insn.getSrcNum();
     const uint32_t dstNum = insn.getDstNum();
     const Function &fn = info.bb.getParent();
@@ -119,7 +67,7 @@ namespace ir {
     }
   }
 
-  void LivenessInfo::computeLiveOut(void) {
+  void Liveness::computeLiveOut(void) {
     // First insert the UEVar from the successors
     forEachSuccessor([](BlockInfo &info, const BlockInfo &succ) {
       const UEVar &ueVarSet = succ.upwardUsed;
@@ -127,18 +75,16 @@ namespace ir {
       for (auto ueVar = ueVarSet.begin(); ueVar != ueVarSet.end(); ++ueVar)
         info.liveOut.insert(*ueVar);
     });
-    int counter = 0;
     // Now iterate on liveOut
     bool changed = true;
     while (changed) {
       changed = false;
-      forEachSuccessor([&changed, &counter](BlockInfo &info, const BlockInfo &succ) {
+      forEachSuccessor([&changed](BlockInfo &info, const BlockInfo &succ) {
         const UEVar &killSet = succ.varKill;
         const LiveOut &liveOut = succ.liveOut;
         auto end = killSet.end();
         // Iterate over all the registers in the UEVar of our successor
         for (auto living = liveOut.begin(); living != liveOut.end(); ++living) {
-          counter++;
           if (killSet.find(*living) != end) continue;
           if (info.liveOut.find(*living) != info.liveOut.end()) continue;
           info.liveOut.insert(*living);
@@ -146,7 +92,132 @@ namespace ir {
         }
       });
     }
-    std::cout << counter << std::endl;
+  }
+
+  static const uint32_t prettyInsnStrSize = 48;
+  static const uint32_t prettyRegStrSize = 5;
+
+  enum RegisterUse
+  {
+    USE_NONE    = 0,
+    USE_READ    = 1,
+    USE_WRITTEN = 2
+  };
+
+  /*! "next" includes the provided instruction */
+  static INLINE RegisterUse nextUse(const Instruction &insn, Register reg) {
+    const Function &fn = insn.getParent()->getParent();
+    const Instruction *curr = &insn;
+    while (curr) {
+      for (uint32_t srcID = 0; srcID < curr->getSrcNum(); ++srcID) {
+        const Register src = curr->getSrcIndex(fn, srcID);
+        if (src == reg) return USE_READ;
+      }
+      for (uint32_t dstID = 0; dstID < curr->getDstNum(); ++dstID) {
+        const Register dst = curr->getDstIndex(fn, dstID);
+        if (dst == reg) return USE_WRITTEN;
+      }
+      curr = curr->getSuccessor();
+    }
+    return USE_NONE;
+  }
+  /*! "previous" does not include the provided instruction */
+  static INLINE RegisterUse previousUse(const Instruction &insn, Register reg) {
+    return USE_NONE;
+  }
+
+  /*! Just print spaceNum spaces */
+  static INLINE void printSpaces(std::ostream &out, uint32_t spaceNum) {
+    for (uint32_t space = 0; space < spaceNum; ++space) out << " ";
+  }
+  /*! Print the "alive" string */
+  static INLINE void printAlive(std::ostream &out) {
+    static_assert(prettyRegStrSize == 5, "Bad register string size");
+    out << " #   ";
+  }
+  /*! Print the "dead" string */
+  static INLINE void printDead(std::ostream &out) {
+    static_assert(prettyRegStrSize == 5, "Bad register string size");
+    out << " .   ";
+  }
+  /*! Print the instruction liveness for each register */
+  static void printInstruction(std::ostream &out,
+                               const Liveness::BlockInfo &info,
+                               const Instruction &insn)
+  {
+    const BasicBlock &bb = info.bb;
+    const Function &fn = bb.getParent();
+
+    // Print the instruction first
+    {
+      std::stringstream ss;
+      ss << insn;
+      std::string str = ss.str();
+      str.resize(std::min((uint32_t)str.size(), prettyInsnStrSize));
+      out << str;
+      printSpaces(out, prettyInsnStrSize - str.size());
+    }
+
+    // Now print the liveness "." for dead and "#" for alive.
+    {
+      for (uint32_t regID = 0; regID < fn.regNum(); ++regID) {
+        const Register reg(regID);
+        // Non-killed and liveout == alive in the complete block
+        if (info.inLiveOut(reg) == true && info.inVarKill(reg) == false)
+          printAlive(out);
+        // We must look for the last use of the instruction
+        else if (info.inLiveOut(reg) == false) {
+
+        } else
+         printDead(out);
+      }
+    }
+    out << std::endl;
+  }
+  /*! Print all the instruction liveness for the given block */
+  static void printBlock(std::ostream &out, const Liveness::BlockInfo &info) {
+    const BasicBlock &bb = info.bb;
+    const Function &fn = bb.getParent();
+    bb.apply([&out, &info](const Instruction &insn) {
+      printInstruction(out, info, insn);
+    });
+    // At the end of block, we also output the variables actually alive at the
+    // end of the block
+    printSpaces(out, prettyInsnStrSize);
+    for (uint32_t reg = 0; reg < fn.regNum(); ++reg) {
+      if (info.inLiveOut(Register(reg)) == true)
+        printAlive(out);
+      else
+        printDead(out);
+    }
+
+    out << std::endl; // let a blank line
+  }
+
+  std::ostream &operator<< (std::ostream &out, const Liveness &liveness) {
+    const Function &fn = liveness.getFunction();
+    const uint32_t regNum = fn.regNum();
+    printSpaces(out, prettyInsnStrSize);
+
+    // Print all the function registers
+    for (uint32_t reg = 0; reg < regNum; ++reg) {
+      std::stringstream ss;
+      ss << "%" << reg;
+      std::string str = ss.str();
+      str.resize(std::min((uint32_t)str.size(), prettyRegStrSize));
+      out << str;
+      printSpaces(out, prettyRegStrSize - str.size());
+    }
+    out << std::endl << std::endl; // skip a line
+
+    // Print liveness in each block
+    fn.apply([&out, &liveness] (const BasicBlock &bb) {
+      const Liveness::Info &info = liveness.getLiveness();
+      auto it = info.find(&bb);
+      GBE_ASSERT(it != info.end());
+      printBlock(out, *it->second);
+    });
+    return out;
   }
 
 } /* namespace ir */
