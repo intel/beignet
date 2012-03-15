@@ -63,7 +63,7 @@ namespace ir {
     }
     /*! Apply the given functor on all instructions */
     template <typename T>
-    INLINE void apply(const T &functor) const {
+    INLINE void foreach(const T &functor) const {
       Instruction *curr = first;
       while (curr) {
         functor(*curr);
@@ -151,8 +151,9 @@ namespace ir {
       return index;
     }
     /*! Allocate a new instruction (with the growing pool) */
-    INLINE Instruction *newInstruction(void) {
-      return new (insnPool.allocate()) Instruction();
+    template <typename... Args>
+    INLINE Instruction *newInstruction(Args... args) {
+      return new (insnPool.allocate()) Instruction(args...);
     }
     /*! Deallocate an instruction (with the growing pool) */
     INLINE void deleteInstruction(Instruction *insn) {
@@ -160,8 +161,8 @@ namespace ir {
     }
     /*! Get input argument */
     INLINE const FunctionInput &getInput(uint32_t ID) const {
-      GBE_ASSERT(ID < inputNum());
-      return inputs[ID];
+      GBE_ASSERT(ID < inputNum() && inputs[ID] != NULL);
+      return *inputs[ID];
     }
     /*! Get output register */
     INLINE Register getOutput(uint32_t ID) const {
@@ -196,14 +197,21 @@ namespace ir {
     void outImmediate(std::ostream &out, ImmediateIndex index) const;
     /*! Apply the given functor on all basic blocks */
     template <typename T>
-    INLINE void apply(const T &functor) const {
+    INLINE void foreachBlock(const T &functor) const {
       for (auto it = blocks.begin(); it != blocks.end(); ++it)
         functor(**it);
     }
+    /*! Apply the given functor on all instructions */
+    template <typename T>
+    INLINE void foreachInstruction(const T &functor) const {
+      for (auto it = blocks.begin(); it != blocks.end(); ++it)
+        (*it)->foreach(functor);
+    }
+
   private:
     friend class Context;         //!< Can freely modify a function
     std::string name;             //!< Function name
-    vector<FunctionInput> inputs; //!< Input registers of the function
+    vector<FunctionInput*> inputs;//!< Input registers of the function
     vector<Register> outputs;     //!< Output registers of the function
     vector<BasicBlock*> labels;   //!< Each label points to a basic block
     vector<Immediate> immediates; //!< All immediate values in the function

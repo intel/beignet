@@ -36,6 +36,8 @@ namespace ir {
   Function::~Function(void) {
     for (auto it = blocks.begin(); it != blocks.end(); ++it)
       GBE_DELETE(*it);
+    for (auto it = inputs.begin(); it != inputs.end(); ++it)
+      GBE_DELETE(*it);
   }
 
   LabelIndex Function::newLabel(void) {
@@ -67,13 +69,13 @@ namespace ir {
 
   void Function::computeCFG(void) {
     // Clear possible previously computed CFG
-    this->apply([this](BasicBlock &bb) {
+    this->foreachBlock([this](BasicBlock &bb) {
       bb.successors.clear();
       bb.predecessors.clear();
     });
     // Update it. Do not forget that a branch can also jump to the next block
     BasicBlock *jumpToNext = NULL;
-    this->apply([this, &jumpToNext](BasicBlock &bb) {
+    this->foreachBlock([this, &jumpToNext](BasicBlock &bb) {
       if (jumpToNext) {
         jumpToNext->successors.insert(&bb);
         bb.predecessors.insert(jumpToNext);
@@ -122,7 +124,7 @@ namespace ir {
         << plural(fn.blockNum()) << " ##" << std::endl;
     for (uint32_t i = 0; i < fn.blockNum(); ++i) {
       const BasicBlock &bb = fn.getBlock(i);
-      bb.apply([&out, &fn] (const Instruction &insn) {
+      bb.foreach([&out, &fn] (const Instruction &insn) {
         out << insn << std::endl;
       });
       out << std::endl;
@@ -135,7 +137,7 @@ namespace ir {
     this->first = this->last = NULL;
   }
   BasicBlock::~BasicBlock(void) {
-    this->apply([this] (Instruction &insn) {
+    this->foreach([this] (Instruction &insn) {
      this->fn.deleteInstruction(&insn);
     });
   }

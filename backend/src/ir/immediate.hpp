@@ -22,8 +22,8 @@
  *
  * \author Benjamin Segovia <benjamin.segovia@intel.com>
  */
-#ifndef __GBE_IR_VALUE_HPP__
-#define __GBE_IR_VALUE_HPP__
+#ifndef __GBE_IR_IMMEDIATE_HPP__
+#define __GBE_IR_IMMEDIATE_HPP__
 
 #include "ir/type.hpp"
 #include "sys/platform.hpp"
@@ -75,5 +75,5 @@ namespace ir {
 } /* namespace ir */
 } /* namespace gbe */
 
-#endif /* __GBE_IR_VALUE_HPP__ */
+#endif /* __GBE_IR_IMMEDIATE_HPP__ */
 

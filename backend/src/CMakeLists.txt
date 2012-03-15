@@ -39,7 +39,9 @@ else (GBE_USE_BLOB)
     ir/register.cpp
     ir/register.hpp
     ir/function.cpp
-    ir/function.hpp)
+    ir/function.hpp
+    ir/value.cpp
+    ir/value.hpp)
 
   if (GBE_COMPILE_UTESTS)
     set (GBE_SRC

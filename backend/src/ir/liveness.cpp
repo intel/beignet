@@ -29,7 +29,7 @@ namespace ir {
 
   Liveness::Liveness(Function &fn) : fn(fn) {
     // Initialize UEVar and VarKill for each block
-    fn.apply([this](const BasicBlock &bb) { this->initBlock(bb); });
+    fn.foreachBlock([this](const BasicBlock &bb) { this->initBlock(bb); });
     // Now with iterative analysis, we compute liveout sets
     this->computeLiveOut();
   }
@@ -43,7 +43,7 @@ namespace ir {
     GBE_ASSERT(liveness.find(&bb) == liveness.end());
     BlockInfo *info = GBE_NEW(BlockInfo, bb);
     // Traverse all instructions to handle UEVar and VarKill
-    bb.apply([this, info](const Instruction &insn) {
+    bb.foreach([this, info](const Instruction &insn) {
       this->initInstruction(*info, insn);
     });
     liveness[&bb] = info;
@@ -214,7 +214,7 @@ namespace ir {
   static void printBlock(std::ostream &out, const Liveness::BlockInfo &info) {
     const BasicBlock &bb = info.bb;
     const Function &fn = bb.getParent();
-    bb.apply([&out, &info](const Instruction &insn) {
+    bb.foreach([&out, &info](const Instruction &insn) {
       printInstruction(out, info, insn);
     });
     // At the end of block, we also output the variables actually alive at the
@@ -247,7 +247,7 @@ namespace ir {
     out << std::endl << std::endl; // skip a line
 
     // Print liveness in each block
-    fn.apply([&out, &liveness] (const BasicBlock &bb) {
+    fn.foreachBlock([&out, &liveness] (const BasicBlock &bb) {
       const Liveness::Info &info = liveness.getLiveness();
       auto it = info.find(&bb);
       GBE_ASSERT(it != info.end());

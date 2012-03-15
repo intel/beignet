@@ -83,7 +83,7 @@ namespace ir {
   void Context::input(FunctionInput::Type type, Register reg, uint32_t elementSize) {
     GBE_ASSERTM(fn != NULL, "No function currently defined");
     GBE_ASSERTM(reg < fn->file.regNum(), "Out-of-bound register");
-    const FunctionInput input(type, reg, elementSize);
+    FunctionInput *input = GBE_NEW(FunctionInput, type, reg, elementSize);
     fn->inputs.push_back(input);
   }
 
@@ -129,9 +129,7 @@ namespace ir {
     }
 
     // Append the instruction in the stream
-    Instruction *insnPtr = fn->newInstruction();
-
-    *insnPtr = insn;
+    Instruction *insnPtr = fn->newInstruction(insn);
 #if GBE_DEBUG
     std::string whyNot;
     GBE_ASSERTM(insn.wellFormed(*fn, whyNot), whyNot.c_str());
