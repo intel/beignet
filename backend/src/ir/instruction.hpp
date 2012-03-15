@@ -25,7 +25,7 @@
 #define __GBE_IR_INSTRUCTION_HPP__
 
 #include "ir/register.hpp"
-#include "ir/value.hpp"
+#include "ir/immediate.hpp"
 #include "ir/type.hpp"
 #include "sys/platform.hpp"
 

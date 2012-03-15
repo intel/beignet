@@ -27,7 +27,7 @@
 #include "ir/instruction.hpp"
 #include "ir/function.hpp"
 #include "ir/register.hpp"
-#include "ir/value.hpp"
+#include "ir/immediate.hpp"
 #include "ir/unit.hpp"
 #include "sys/vector.hpp"
 #include <tuple>

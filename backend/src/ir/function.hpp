@@ -24,7 +24,7 @@
 #ifndef __GBE_IR_FUNCTION_HPP__
 #define __GBE_IR_FUNCTION_HPP__
 
-#include "ir/value.hpp"
+#include "ir/immediate.hpp"
 #include "ir/register.hpp"
 #include "ir/instruction.hpp"
 #include "ir/profile.hpp"
