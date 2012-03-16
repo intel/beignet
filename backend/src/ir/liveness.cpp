@@ -69,7 +69,7 @@ namespace ir {
 
   void Liveness::computeLiveOut(void) {
     // First insert the UEVar from the successors
-    forEachSuccessor([](BlockInfo &info, const BlockInfo &succ) {
+    foreach<DF_SUCC>([](BlockInfo &info, const BlockInfo &succ) {
       const UEVar &ueVarSet = succ.upwardUsed;
       // Iterate over all the registers in the UEVar of our successor
       for (auto ueVar = ueVarSet.begin(); ueVar != ueVarSet.end(); ++ueVar)
@@ -79,7 +79,7 @@ namespace ir {
     bool changed = true;
     while (changed) {
       changed = false;
-      forEachSuccessor([&changed](BlockInfo &info, const BlockInfo &succ) {
+      foreach<DF_SUCC>([&changed](BlockInfo &info, const BlockInfo &succ) {
         const UEVar &killSet = succ.varKill;
         const LiveOut &liveOut = succ.liveOut;
         // Iterate over all the registers in the UEVar of our successor
@@ -247,7 +247,7 @@ namespace ir {
 
     // Print liveness in each block
     fn.foreachBlock([&out, &liveness] (const BasicBlock &bb) {
-      const Liveness::Info &info = liveness.getLiveness();
+      const Liveness::Info &info = liveness.getLivenessInfo();
       auto it = info.find(&bb);
       GBE_ASSERT(it != info.end());
       printBlock(out, *it->second);

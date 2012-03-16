@@ -40,7 +40,7 @@ namespace ir {
   class LiveOutSet
   {
   public:
-    LiveOutSet(const Liveness &liveness, const FunctionDAG &dag);
+    LiveOutSet(Liveness &liveness, const FunctionDAG &dag);
     ~LiveOutSet(void);
     /*! One set per register */
     typedef set<const ValueDef*> RegDefSet;
@@ -48,19 +48,44 @@ namespace ir {
     typedef map<Register, RegDefSet*> BlockDefMap;
     /*! All the block definitions map in the functions */
     typedef map<const BasicBlock*, BlockDefMap*> FunctionDefMap;
-    FunctionDefMap defMap;    //!< All per-block data
-    const Liveness &liveness; //!< Contains LiveOut information
-    const FunctionDAG &dag;   //!< Structure we are building
+    /*! Performs the double look-up to get the set of defs per register */
+    RegDefSet &getDefSet(const BasicBlock *bb, const Register &reg) {
+      auto bbIt = defMap.find(bb);
+      GBE_ASSERT(bbIt != defMap.end());
+      auto defIt = bbIt->second->find(reg);
+      GBE_ASSERT(defIt != bbIt->second->end() && defIt->second != NULL);
+      return *defIt->second;
+    }
+    /*! Build a UD-chain as the union of the predecessor chains */
+    void fillUDChain(UDChain &udChain, const BasicBlock &bb, const Register &reg);
+    /*! Fast per register definition set allocation */
     DECL_POOL(RegDefSet, regDefSetPool);
+    /*! Fast register sets allocation */
     DECL_POOL(BlockDefMap, blockDefMapPool);
+    FunctionDefMap defMap;    //!< All per-block data
+    Liveness &liveness;       //!< Contains LiveOut information
+    const FunctionDAG &dag;   //!< Structure we are building
+  private:
+    /*! Initialize liveOut with the instruction destination values */
+    void initializeInstructionDst(void);
+    /*! Initialize liveOut with the function argument */
+    void initializeFunctionInput(void);
+    /*! Iterate to completely transfer the liveness and get the def sets */
+    void iterateLiveOut(void);
   };
 
-  LiveOutSet::LiveOutSet(const Liveness &liveness, const FunctionDAG &dag) :
+  LiveOutSet::LiveOutSet(Liveness &liveness, const FunctionDAG &dag) :
     liveness(liveness), dag(dag)
   {
+    this->initializeInstructionDst();
+    this->initializeFunctionInput();
+    this->iterateLiveOut();
+  }
+
+  void LiveOutSet::initializeInstructionDst(void) {
     const Function &fn = liveness.getFunction();
 
-    // Iterate over each block
+    // Iterate over each block and initialize the liveOut data
     fn.foreachBlock([&](const BasicBlock &bb) {
       GBE_ASSERT(defMap.find(&bb) == defMap.end());
 
@@ -85,17 +110,98 @@ namespace ir {
         for (uint32_t dstID = 0; dstID < dstNum; ++dstID) {
           const Register reg = insn.getDstIndex(fn, dstID);
           // We only take the most recent definition
-          if (defined.contains(reg) == false) continue;
+          if (defined.contains(reg) == true) continue;
           // Not in LiveOut, so does not matter
           if (info.inLiveOut(reg) == false) continue;
+          defined.insert(reg);
           // Insert the outgoing definition for this register
           auto regDefSet = blockDefMap->find(reg);
-          const ValueDef *def = this->dag.getDefAddress(insn, dstID);
+          const ValueDef *def = this->dag.getDefAddress(&insn, dstID);
           GBE_ASSERT(regDefSet != blockDefMap->end() && def != NULL);
+          // May be NULL if there is no definition
           regDefSet->second->insert(def);
         }
       });
     });
+
+    // The first block must also transfer the function arguments
+    const BasicBlock &top = fn.getBlock(0);
+    auto info = this->liveness.getBlockInfo(top);
+    auto blockDefMapIt = defMap.find(&top);
+    GBE_ASSERT(blockDefMapIt != defMap.end());
+    auto blockDefMap = blockDefMapIt->second;
+    const uint32_t inputNum = fn.inputNum();
+    for (uint32_t inputID = 0; inputID < inputNum; ++inputID) {
+      const FunctionInput &input = fn.getInput(inputID);
+      const Register reg = input.reg;
+      // Do not transfer dead values
+      if (info.inLiveOut(reg) == false) continue;
+      // If we overwrite it, do not transfer the initial value
+      if (info.inVarKill(reg) == false) continue;
+      const ValueDef *def = this->dag.getDefAddress(&input);
+      GBE_ASSERT(blockDefMap->contains(reg) == false);
+      auto regDefSet = this->newRegDefSet();
+      regDefSet->insert(def);
+      blockDefMap->insert(std::make_pair(reg, regDefSet));
+    }
+  }
+
+  void LiveOutSet::initializeFunctionInput(void) {
+    const Function &fn = liveness.getFunction();
+    const uint32_t inputNum = fn.inputNum();
+
+    // The first block must also transfer the function arguments
+    const BasicBlock &top = fn.getBlock(0);
+    const Liveness::BlockInfo &info = this->liveness.getBlockInfo(top);
+    GBE_ASSERT(defMap.contains(&top) == true);
+    auto blockDefMap = defMap.find(&top)->second;
+
+    // Insert all the values that are not overwritten in the block and alive at
+    // the end of it
+    for (uint32_t inputID = 0; inputID < inputNum; ++inputID) {
+      const FunctionInput &input = fn.getInput(inputID);
+      const Register reg = input.reg;
+      // Do not transfer dead values
+      if (info.inLiveOut(reg) == false) continue;
+      // If we overwrite it, do not transfer the initial value
+      if (info.inVarKill(reg) == false) continue;
+      const ValueDef *def = this->dag.getDefAddress(&input);
+      GBE_ASSERT(blockDefMap->contains(reg) == false);
+      auto regDefSet = this->newRegDefSet();
+      regDefSet->insert(def);
+      blockDefMap->insert(std::make_pair(reg, regDefSet));
+    }
+  }
+
+  void LiveOutSet::iterateLiveOut(void) {
+    bool changed = true;
+
+    while (changed) {
+      changed = false;
+
+      // Compute the union of the current liveout definitions with the previous
+      // ones. Do not take into account the killed values though
+      liveness.foreach<DF_PRED>([&](Liveness::BlockInfo &curr,
+                                    const Liveness::BlockInfo &pred)
+      {
+        const BasicBlock &bb = curr.bb;
+        const BasicBlock &pbb = pred.bb;
+        for (auto it = curr.liveOut.begin(); it != curr.liveOut.end(); ++it) {
+          const Register reg = *it;
+          if (pred.inLiveOut(reg) == false) continue;
+          if (curr.inVarKill(reg) == true) continue;
+          RegDefSet &currSet = this->getDefSet(&bb, reg);
+          RegDefSet &predSet = this->getDefSet(&pbb, reg);
+
+          // Transfer the values
+          for (auto it = predSet.begin(); it != predSet.end(); ++it) {
+            if (currSet.contains(*it)) continue;
+            changed = true;
+            currSet.insert(*it);
+          }
+        }
+      });
+    }
   }
 
   LiveOutSet::~LiveOutSet(void) {
@@ -107,26 +213,27 @@ namespace ir {
     }
   }
 
-  FunctionDAG::FunctionDAG(const Liveness &liveness) {
+  FunctionDAG::FunctionDAG(Liveness &liveness) {
     const Function &fn = liveness.getFunction();
-    LiveOutSet p(liveness, *this);
+
     // We first start with empty chains
-    udEmpty = this->newUDChain(); udEmpty->second = NULL;
-    duEmpty = this->newDUChain(); duEmpty->second = NULL;
+    udEmpty = this->newUDChain();
+    duEmpty = this->newDUChain();
 
     // First create the chains and insert them in their respective maps
     fn.foreachInstruction([this, udEmpty, duEmpty](const Instruction &insn) {
-
       // sources == value uses
       const uint32_t srcNum = insn.getSrcNum();
       for (uint32_t srcID = 0; srcID < srcNum; ++srcID) {
-        ValueUse *valueUse = this->newValueUse(insn, srcID);
+        ValueUse *valueUse = this->newValueUse(&insn, srcID);
+        useName.insert(std::make_pair(*valueUse, valueUse));
         udGraph.insert(std::make_pair(*valueUse, udEmpty));
       }
       // destinations == value defs
       const uint32_t dstNum = insn.getDstNum();
       for (uint32_t dstID = 0; dstID < dstNum; ++dstID) {
-        ValueDef *valueDef = this->newValueDef(insn, dstID);
+        ValueDef *valueDef = this->newValueDef(&insn, dstID);
+        defName.insert(std::make_pair(*valueDef, valueDef));
         duGraph.insert(std::make_pair(*valueDef, duEmpty));
       }
     });
@@ -135,9 +242,13 @@ namespace ir {
     const uint32_t inputNum = fn.inputNum();
     for (uint32_t inputID = 0; inputID < inputNum; ++inputID) {
       const FunctionInput &input = fn.getInput(inputID);
-      ValueDef *valueDef = this->newValueDef(input);
+      ValueDef *valueDef = this->newValueDef(&input);
+      defName.insert(std::make_pair(*valueDef, valueDef));
       duGraph.insert(std::make_pair(*valueDef, duEmpty));
     }
+
+    // We create the liveOutSet to help us transfer the definitions
+    const LiveOutSet liveOutSet(liveness, *this);
   }
 
 /*! Helper to deallocate objects */
@@ -155,76 +266,64 @@ namespace ir {
     set<void*> destroyed;
 
     // Release the empty ud-chains and du-chains
-    PTR_RELEASE(ValueUse, udEmpty->second);
-    PTR_RELEASE(ValueDef, duEmpty->second);
     PTR_RELEASE(UDChain, udEmpty);
     PTR_RELEASE(DUChain, duEmpty);
 
     // We free all the ud-chains
     for (auto it = udGraph.begin(); it != udGraph.end(); ++it) {
-      auto udChain = it->second;
-      auto defs = udChain->first;
-      for (auto def = defs.begin(); def != defs.end(); ++def)
+      auto defs = it->second;
+      for (auto def = defs->begin(); def != defs->end(); ++def)
         PTR_RELEASE(ValueDef, *def);
-      PTR_RELEASE(ValueUse, udChain->second);
-      PTR_RELEASE(UDChain, udChain);
+      PTR_RELEASE(UDChain, defs);
     }
 
     // We free all the du-chains
     for (auto it = duGraph.begin(); it != duGraph.end(); ++it) {
-      auto duChain = it->second;
-      auto uses = duChain->first;
-      for (auto use = uses.begin(); use != uses.end(); ++use)
+      auto uses = it->second;
+      for (auto use = uses->begin(); use != uses->end(); ++use)
         PTR_RELEASE(ValueUse, *use);
-      PTR_RELEASE(ValueDef, duChain->second);
-      PTR_RELEASE(DUChain, duChain);
+      PTR_RELEASE(DUChain, uses);
     }
   }
 #undef PTR_RELEASE
 
-  const DUChain &FunctionDAG::getDUChain(const Instruction &insn, uint32_t dstID) const {
+  const DUChain &FunctionDAG::getUse(const Instruction *insn, uint32_t dstID) const {
     const ValueDef def(insn, dstID);
     auto it = duGraph.find(def);
     GBE_ASSERT(it != duGraph.end());
     return *it->second;
   }
 
-  const DUChain &FunctionDAG::getDUChain(const FunctionInput &input) const {
+  const DUChain &FunctionDAG::getUse(const FunctionInput *input) const {
     const ValueDef def(input);
     auto it = duGraph.find(def);
     GBE_ASSERT(it != duGraph.end());
     return *it->second;
   }
 
-  const UDChain &FunctionDAG::getUDChain(const Instruction &insn, uint32_t srcID) const {
+  const UDChain &FunctionDAG::getDef(const Instruction *insn, uint32_t srcID) const {
     const ValueUse use(insn, srcID);
     auto it = udGraph.find(use);
     GBE_ASSERT(it != udGraph.end());
     return *it->second;
   }
-  const ValueUseSet &FunctionDAG::getUse(const Instruction &insn, uint32_t dstID) const {
-    const DUChain &chain = this->getDUChain(insn, dstID);
-    return chain.first;
+  const ValueDef *FunctionDAG::getDefAddress(const Instruction *insn, uint32_t dstID) const {
+    const ValueDef def(insn, dstID);
+    auto it = defName.find(def);
+    GBE_ASSERT(it != defName.end() && it->second != NULL);
+    return it->second;
   }
-  const ValueUseSet &FunctionDAG::getUse(const FunctionInput &input) const {
-    const DUChain &chain = this->getDUChain(input);
-    return chain.first;
+  const ValueDef *FunctionDAG::getDefAddress(const FunctionInput *input) const {
+    const ValueDef def(input);
+    auto it = defName.find(def);
+    GBE_ASSERT(it != defName.end() && it->second != NULL);
+    return it->second;
   }
-  const ValueDefSet &FunctionDAG::getDef(const Instruction &insn, uint32_t srcID) const {
-    const UDChain &chain = this->getUDChain(insn, srcID);
-    return chain.first;
-  }
-  const ValueDef *FunctionDAG::getDefAddress(const Instruction &insn, uint32_t dstID) const {
-    const DUChain &chain = this->getDUChain(insn, dstID);
-    return chain.second;
-  }
-  const ValueDef *FunctionDAG::getDefAddress(const FunctionInput &input) const {
-    const DUChain &chain = this->getDUChain(input);
-    return chain.second;
-  }
-  const ValueUse *FunctionDAG::getUseAddress(const Instruction &insn, uint32_t srcID) const {
-    const UDChain &chain = this->getUDChain(insn, srcID);
-    return chain.second;
+  const ValueUse *FunctionDAG::getUseAddress(const Instruction *insn, uint32_t srcID) const {
+    const ValueUse use(insn, srcID);
+    auto it = useName.find(use);
+    GBE_ASSERT(it != useName.end() && it->second != NULL);
+    return it->second;
   }
 } /* namespace ir */
 } /* namespace gbe */

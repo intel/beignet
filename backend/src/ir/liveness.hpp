@@ -35,6 +35,14 @@ namespace ir {
   // Liveness is computed per function
   class Function;
 
+  /*! To choose the iteration direction, we either look at predecessors or
+   *  successors
+   */
+  enum DataFlowDirection {
+    DF_PRED = 0,
+    DF_SUCC = 1
+  };
+
   /*! Compute liveness of each register */
   class Liveness : public NonCopyable
   {
@@ -67,7 +75,7 @@ namespace ir {
     /*! Gives for each block the variables alive at entry / exit */
     typedef map<const BasicBlock*, BlockInfo*> Info;
     /*! Return the complete liveness info */
-    INLINE const Info &getLiveness(void) const { return liveness; }
+    INLINE const Info &getLivenessInfo(void) const { return liveness; }
     /*! Return the complete block info */
     INLINE const BlockInfo &getBlockInfo(const BasicBlock &bb) const {
       auto it = liveness.find(&bb);
@@ -76,6 +84,26 @@ namespace ir {
     }
     /*! Return the function the liveness was computed on */
     INLINE const Function &getFunction(void) const { return fn; }
+    /*! Actually do something for each successor / predecessor of *all* blocks */
+    template <DataFlowDirection dir, typename T>
+    void foreach(const T &functor) {
+      // Iterate on all blocks
+      for (auto it = liveness.begin(); it != liveness.end(); ++it) {
+        BlockInfo &info = *it->second;
+        const BasicBlock &bb = info.bb;
+        const BlockSet *set = NULL;
+        if (dir == DF_SUCC)
+          set = &bb.getSuccessorSet();
+        else
+          set = &bb.getPredecessorSet();
+        // Iterate over all successors
+        for (auto other = set->begin(); other != set->end(); ++other) {
+          auto otherInfo = liveness.find(*other);
+          GBE_ASSERT(otherInfo != liveness.end() && otherInfo->second != NULL);
+          functor(info, *otherInfo->second);
+        }
+      }
+    }
   private:
     /*! Store the liveness of all blocks */
     Info liveness;
@@ -87,22 +115,6 @@ namespace ir {
     void initInstruction(BlockInfo &info, const Instruction &insn);
     /*! Now really compute LiveOut based on UEVar and VarKill */
     void computeLiveOut(void);
-    /*! Actually do something for each successor of *all* blocks */
-    template <typename T>
-    void forEachSuccessor(const T &functor) {
-      // Iterate on all blocks
-      for (auto it = liveness.begin(); it != liveness.end(); ++it) {
-        BlockInfo &info = *it->second;
-        const BasicBlock &bb = info.bb;
-        const BlockSet set = bb.getSuccessorSet();
-        // Iterate over all successors
-        for (auto other = set.begin(); other != set.end(); ++other) {
-          auto otherInfo = liveness.find(*other);
-          GBE_ASSERT(otherInfo != liveness.end() && otherInfo->second != NULL);
-          functor(info, *otherInfo->second);
-        }
-      }
-    }
   };
 
   /*! Output a nice ASCII reprensation of the liveness */
