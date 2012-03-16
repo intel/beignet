@@ -48,20 +48,22 @@ namespace ir {
       INSTRUCTION_DST = 1
     };
     /*! Build a value from an instruction destination */
-    ValueDef(Instruction &insn, uint32_t dstID = 0u) : type(INSTRUCTION_DST) {
+    ValueDef(const Instruction &insn, uint32_t dstID = 0u) :
+      type(INSTRUCTION_DST)
+    {
       this->data.insn = &insn;
       this->data.dstID = dstID;
     }
     /*! Build a value from a function argument */
-    ValueDef(FunctionInput &input) : type(FUNCTION_INPUT) {
+    ValueDef(const FunctionInput &input) : type(FUNCTION_INPUT) {
       this->data.input = &input;
     }
     /*! Get the type of the value */
     INLINE Type getType(void) const { return type; }
     /*! Get the instruction (only if this is a instruction value) */
-    INLINE Instruction *getInstruction(void) const {
+    INLINE const Instruction &getInstruction(void) const {
       GBE_ASSERT(type == INSTRUCTION_DST);
-      return data.insn;
+      return *data.insn;
     }
     /*! Get the destination ID (only if this is a instruction value) */
     INLINE uint32_t getDstID(void) const {
@@ -69,9 +71,9 @@ namespace ir {
       return data.dstID;
     }
     /*! Get the function input (only if this is a function argument) */
-    INLINE FunctionInput *getFunctionInput(void) const {
+    INLINE const FunctionInput &getFunctionInput(void) const {
       GBE_ASSERT(type == FUNCTION_INPUT);
-      return data.input;
+      return *data.input;
     }
 
   private:
@@ -79,31 +81,31 @@ namespace ir {
     union Data {
       /*! Instruction destination or ... */
       struct {
-        Instruction *insn;  //<! Instruction itself
-        uint32_t dstID;     //<! Which destination we take into account
+        const Instruction *insn; //<! Instruction itself
+        uint32_t dstID;          //<! Which destination we take into account
       };
       /*! ... function argument */
-      FunctionInput *input;
+      const FunctionInput *input;
     } data;
     /*!< Function argument or instruction dst? */
     Type type;
   };
 
   /*! Compare two value definitions (used in maps) */
-  INLINE bool operator < (const ValueDef &def0, const ValueDef &def1) {
+  INLINE bool operator< (const ValueDef &def0, const ValueDef &def1) {
     const ValueDef::Type type0 = def0.getType();
     const ValueDef::Type type1 = def1.getType();
     if (type0 != type1) return uint32_t(type0) < uint32_t(type1);
     if (type0 == ValueDef::FUNCTION_INPUT) {
-      const FunctionInput *in0 = def0.getFunctionInput();
-      const FunctionInput *in1 = def1.getFunctionInput();
+      const FunctionInput *in0 = &def0.getFunctionInput();
+      const FunctionInput *in1 = &def1.getFunctionInput();
       return uintptr_t(in0) < uintptr_t(in1);
     } else {
-      const Instruction *insn0 = def0.getInstruction();
-      const Instruction *insn1 = def1.getInstruction();
+      const Instruction *insn0 = &def0.getInstruction();
+      const Instruction *insn1 = &def1.getInstruction();
       if (insn0 != insn1) return uintptr_t(insn0) < uintptr_t(insn1);
       const uint32_t dst0 = def0.getDstID();
-      const uint32_t dst1 = def0.getDstID();
+      const uint32_t dst1 = def1.getDstID();
       return dst0 < dst1;
     }
   }
@@ -118,7 +120,7 @@ namespace ir {
     ValueUse(const Instruction &insn, uint32_t srcID = 0u) :
       insn(&insn), srcID(srcID) {}
     /*! Get the instruction of the use */
-    const Instruction *getInstruction(void) const { return insn; }
+    const Instruction &getInstruction(void) const { return *insn; }
     /*! Get the source index for this use */
     uint32_t getSrcID(void) const { return srcID; }
   private:
@@ -127,49 +129,62 @@ namespace ir {
   };
 
   /*! Compare two value uses (used in maps) */
-  INLINE bool operator < (const ValueUse &use0, const ValueUse &use1) {
-    const Instruction *insn0 = use0.getInstruction();
-    const Instruction *insn1 = use1.getInstruction();
+  INLINE bool operator< (const ValueUse &use0, const ValueUse &use1) {
+    const Instruction *insn0 = &use0.getInstruction();
+    const Instruction *insn1 = &use1.getInstruction();
     if (insn0 != insn1) return uintptr_t(insn0) < uintptr_t(insn1);
     const uint32_t src0 = use0.getSrcID();
-    const uint32_t src1 = use0.getSrcID();
+    const uint32_t src1 = use1.getSrcID();
     return src0 < src1;
   }
 
   /*! All uses of a definition */
-  typedef std::pair<ValueDef*, set<ValueUse*>> DUChain;
+  typedef set<ValueUse*> ValueUseSet;
+  typedef std::pair<ValueUseSet, ValueDef*> DUChain;
   /*! All possible definitions for a use */
-  typedef std::pair<ValueUse*, set<ValueDef*>> UDChain;
+  typedef set<ValueDef*> ValueDefSet;
+  typedef std::pair<ValueDefSet, ValueUse*> UDChain;
 
   /*! Get the chains (in both directions) for the complete program */
-  class GraphUseDef
+  class FunctionDAG
   {
   public:
     /*! Build the complete DU/UD graphs for the program included in liveness */
-    GraphUseDef(const Liveness &liveness);
+    FunctionDAG(const Liveness &liveness);
+    /*! Free all the resources */
+    ~FunctionDAG(void);
+    /*! Get the du-chain for the given instruction and destination */
+    const DUChain &getDUChain(const Instruction &insn, uint32_t dstID) const;
+    /*! Get the du-chain for the given function input */
+    const DUChain &getDUChain(const FunctionInput &input) const;
+    /*! Get the ud-chain for the instruction and source */
+    const UDChain &getUDChain(const Instruction &insn, uint32_t srcID) const;
+    /*! Get the use set for the given definition */
+    const ValueUseSet &getUse(const Instruction &insn, uint32_t dstID) const;
+    /*! Get the use set for the function argument */
+    const ValueUseSet &getUse(const FunctionInput &input) const;
+    /*! Get the definition set for the given source */
+    const ValueDefSet &getDef(const Instruction &insn, uint32_t srcID) const;
+    /*! Get the pointer to the definition *as stored in the DAG* */
+    const ValueDef *getDefAddress(const Instruction &insn, uint32_t dstID) const;
+    /*! Get the pointer to the definition *as stored in the DAG* */
+    const ValueDef *getDefAddress(const FunctionInput &input) const;
+    /*! Get the pointer to the use *as stored in the DAG* */
+    const ValueUse *getUseAddress(const Instruction &insn, uint32_t srcID) const;
     /*! The UDChain for each definition use */
     typedef map<ValueUse, UDChain*> UDGraph;
     /*! The DUChain for each definition */
     typedef map<ValueDef, DUChain*> DUGraph;
   private:
-    UDGraph udGraph; //!< All the UD chains
-    DUGraph duGraph; //!< All the DU chains
-    GrowingPool<ValueUse> valueUsePool; //!< Allocate the value uses
-    GrowingPool<ValueDef> valueDefPool; //!< Allocate the value defs
-    GrowingPool<UDChain> udChainPool;   //!< Allocate all the ud-chains
-    GrowingPool<DUChain> duChainPool;   //!< Allocate all the du-chains
-#define DECL_ALLOCATE_DEALLOCATE(TYPE, POOL)                        \
-    template <typename... Args>                                     \
-    INLINE TYPE *new##TYPE(Args... args) {                          \
-      return new (POOL.allocate()) TYPE(args...);                   \
-    }                                                               \
-    INLINE void delete##TYPE(TYPE *ptr) { POOL.deallocate(ptr); }
-    DECL_ALLOCATE_DEALLOCATE(ValueDef, valueDefPool)
-    DECL_ALLOCATE_DEALLOCATE(ValueUse, valueUsePool)
-    DECL_ALLOCATE_DEALLOCATE(UDChain, udChainPool)
-    DECL_ALLOCATE_DEALLOCATE(DUChain, duChainPool)
-#undef DECL_ALLOCATE_DEALLOCATE
-    GBE_CLASS(GraphUseDef);
+    UDGraph udGraph;                   //!< All the UD chains
+    DUGraph duGraph;                   //!< All the DU chains
+    UDChain *udEmpty;                  //!< For all empty ud chains
+    DUChain *duEmpty;                  //!< For all empty du chains
+    DECL_POOL(ValueDef, valueDefPool); //!< Fast ValueDef allocation
+    DECL_POOL(ValueUse, valueUsePool); //!< Fast ValueUse allocation
+    DECL_POOL(UDChain, udChainPool);   //!< Fast UDChain allocation
+    DECL_POOL(DUChain, duChainPool);   //!< Fast DUChain allocation
+    GBE_CLASS(FunctionDAG);            //!< Use internal allocators
   };
 
 } /* namespace ir */

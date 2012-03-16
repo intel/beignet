@@ -52,13 +52,13 @@ namespace ir {
       BlockInfo(const BasicBlock &bb) : bb(bb) {}
       const BasicBlock &bb;
       INLINE bool inUpwardUsed(Register reg) const {
-        return upwardUsed.find(reg) != upwardUsed.end();
+        return upwardUsed.contains(reg);
       }
       INLINE bool inLiveOut(Register reg) const {
-        return liveOut.find(reg) != liveOut.end();
+        return liveOut.contains(reg);
       }
       INLINE bool inVarKill(Register reg) const {
-        return varKill.find(reg) != varKill.end();
+        return varKill.contains(reg);
       }
       UEVar upwardUsed;
       LiveOut liveOut;
@@ -68,6 +68,12 @@ namespace ir {
     typedef map<const BasicBlock*, BlockInfo*> Info;
     /*! Return the complete liveness info */
     INLINE const Info &getLiveness(void) const { return liveness; }
+    /*! Return the complete block info */
+    INLINE const BlockInfo &getBlockInfo(const BasicBlock &bb) const {
+      auto it = liveness.find(&bb);
+      GBE_ASSERT(it != liveness.end() && it->second != NULL);
+      return *it->second;
+    }
     /*! Return the function the liveness was computed on */
     INLINE const Function &getFunction(void) const { return fn; }
   private:

@@ -60,6 +60,10 @@ namespace gbe
       parent_type(first, last, comp, a) {}
     /*! Copy constructor */
     INLINE map(const map& x) : parent_type(x) {}
+    /*! Better than using find if we do not care about the iterator itself */
+    INLINE bool contains(const Key &key) const {
+      return this->find(key) != this->end();
+    }
     GBE_CLASS(map);
   };
 } /* namespace gbe */

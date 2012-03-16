@@ -28,6 +28,7 @@
 #include "llvm/llvm_to_gen.hpp"
 #include "ir/unit.hpp"
 #include "ir/liveness.hpp"
+#include "ir/value.hpp"
 #include <cstdlib>
 
 namespace gbe
@@ -52,6 +53,7 @@ namespace gbe
 
     unit.apply([](ir::Function &fn) {
       ir::Liveness liveness(fn);
+      ir::FunctionDAG dag(liveness);
       std::cout << liveness << std::endl;
     });
   }

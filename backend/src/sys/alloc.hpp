@@ -87,24 +87,13 @@ namespace gbe
     else                                                     \
       return gbe::memFree(ptr);                              \
   }                                                          \
+  void* operator new(size_t size, void *p) { return p; }     \
+  void* operator new[](size_t size, void *p) { return p; }   \
 
 /*! Declare a class with custom allocators */
 #define GBE_CLASS(TYPE) \
 public:                 \
   GBE_STRUCT(TYPE)      \
-private:
-
-/*! Declare an aligned structure */
-#define GBE_ALIGNED_STRUCT(ALIGN)                                               \
-  void* operator new(size_t size)   { return gbe::alignedMalloc(size, ALIGN); } \
-  void* operator new[](size_t size) { return gbe::alignedMalloc(size, ALIGN); } \
-  void  operator delete(void* ptr)   { gbe::alignedFree(ptr); }                 \
-  void  operator delete[](void* ptr) { gbe::alignedFree(ptr); }
-
-/*! Declare an aligned class */
-#define GBE_ALIGNED_CLASS(ALIGN)    \
-public:                             \
-  GBE_ALIGNED_STRUCT(ALIGN)         \
 private:
 
 /*! Macros to handle allocation position */
@@ -232,6 +221,18 @@ namespace gbe
     void *freeList;           //!< Elements that have been deallocated
     GBE_CLASS(GrowingPool);
   };
+
+/*! Helper macros to build and destroy objects with a pool */
+#define DECL_POOL(TYPE, POOL)                     \
+  GrowingPool<TYPE> POOL;                         \
+  template <typename... Args>                     \
+  INLINE TYPE *new##TYPE(Args... args) {          \
+    return new (POOL.allocate()) TYPE(args...);   \
+  }                                               \
+  INLINE void delete##TYPE(TYPE *ptr) {           \
+    ptr->~TYPE();                                 \
+    POOL.deallocate(ptr);                         \
+  }
 } /* namespace gbe */
 
 #endif /* __GBE_ALLOC_HPP__ */

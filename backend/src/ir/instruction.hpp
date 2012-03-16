@@ -126,6 +126,7 @@ namespace ir {
     Instruction *predecessor;//!< Previous instruction in the basic block
     Instruction *successor;  //!< Next instruction in the basic block
     BasicBlock *parent;      //!< The basic block containing the instruction
+    GBE_CLASS(Instruction);  //!< Use internal allocators
   };
 
   /*! Output the instruction string in the given stream */

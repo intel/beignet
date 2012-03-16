@@ -70,6 +70,15 @@ namespace ir {
         curr = curr->getSuccessor();
       }
     }
+    /*! Apply the given functor on all instructions (reverse order) */
+    template <typename T>
+    INLINE void rforeach(const T &functor) const {
+      Instruction *curr = last;
+      while (curr) {
+        functor(*curr);
+        curr = curr->getPredecessor();
+      }
+    }
     /*! Get the parent function */
     Function &getParent(void) { return fn; }
     const Function &getParent(void) const { return fn; }
@@ -150,15 +159,8 @@ namespace ir {
       this->immediates.push_back(imm);
       return index;
     }
-    /*! Allocate a new instruction (with the growing pool) */
-    template <typename... Args>
-    INLINE Instruction *newInstruction(Args... args) {
-      return new (insnPool.allocate()) Instruction(args...);
-    }
-    /*! Deallocate an instruction (with the growing pool) */
-    INLINE void deleteInstruction(Instruction *insn) {
-      insnPool.deallocate(insn);
-    }
+    /*! Fast allocation / deallocation of instructions */
+    DECL_POOL(Instruction, insnPool);
     /*! Get input argument */
     INLINE const FunctionInput &getInput(uint32_t ID) const {
       GBE_ASSERT(ID < inputNum() && inputs[ID] != NULL);
@@ -217,8 +219,7 @@ namespace ir {
     vector<Immediate> immediates; //!< All immediate values in the function
     vector<BasicBlock*> blocks;   //!< All chained basic blocks
     RegisterFile file;            //!< RegisterDatas used by the instructions
-    GrowingPool<Instruction> insnPool; //!< For fast instruction allocation
-    Profile profile;                   //!< Current function profile
+    Profile profile;              //!< Current function profile
     GBE_CLASS(Function);
   };
 

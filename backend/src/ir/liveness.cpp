@@ -40,7 +40,7 @@ namespace ir {
   }
 
   void Liveness::initBlock(const BasicBlock &bb) {
-    GBE_ASSERT(liveness.find(&bb) == liveness.end());
+    GBE_ASSERT(liveness.contains(&bb) == false);
     BlockInfo *info = GBE_NEW(BlockInfo, bb);
     // Traverse all instructions to handle UEVar and VarKill
     bb.foreach([this, info](const Instruction &insn) {
@@ -57,7 +57,7 @@ namespace ir {
     for (uint32_t srcID = 0; srcID < srcNum; ++srcID) {
       const Register reg = insn.getSrcIndex(fn, srcID);
       // Not killed -> it is really an upward use
-      if (info.varKill.find(reg) == info.varKill.end())
+      if (info.varKill.contains(reg) == false)
         info.upwardUsed.insert(reg);
     }
     // A destination is a killed value
@@ -82,11 +82,10 @@ namespace ir {
       forEachSuccessor([&changed](BlockInfo &info, const BlockInfo &succ) {
         const UEVar &killSet = succ.varKill;
         const LiveOut &liveOut = succ.liveOut;
-        auto end = killSet.end();
         // Iterate over all the registers in the UEVar of our successor
         for (auto living = liveOut.begin(); living != liveOut.end(); ++living) {
-          if (killSet.find(*living) != end) continue;
-          if (info.liveOut.find(*living) != info.liveOut.end()) continue;
+          if (killSet.contains(*living)) continue;
+          if (info.liveOut.contains(*living)) continue;
           info.liveOut.insert(*living);
           changed = true;
         }
