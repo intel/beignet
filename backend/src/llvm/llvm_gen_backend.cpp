@@ -1106,12 +1106,13 @@ namespace gbe
     // Emit MOVs if required
     BasicBlock *bb = I.getParent();
     this->emitMovForPHI(bb, I.getSuccessor(0));
-    this->emitMovForPHI(bb, I.getSuccessor(1));
+    if (I.isConditional())
+      this->emitMovForPHI(bb, I.getSuccessor(1));
 
     // Inconditional branch. Just check that we jump to a block which is not our
     // successor
     if (I.isConditional() == false) {
-    BasicBlock *target = I.getSuccessor(0);
+      BasicBlock *target = I.getSuccessor(0);
       if (llvm::next(Function::iterator(bb)) != Function::iterator(target)) {
         GBE_ASSERT(labelMap.find(target) != labelMap.end());
         const ir::LabelIndex labelIndex = labelMap[bb];
