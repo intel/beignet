@@ -49,13 +49,7 @@ namespace ir {
     /*! All the block definitions map in the functions */
     typedef map<const BasicBlock*, BlockDefMap*> FunctionDefMap;
     /*! Performs the double look-up to get the set of defs per register */
-    RegDefSet &getDefSet(const BasicBlock *bb, const Register &reg) {
-      auto bbIt = defMap.find(bb);
-      GBE_ASSERT(bbIt != defMap.end());
-      auto defIt = bbIt->second->find(reg);
-      GBE_ASSERT(defIt != bbIt->second->end() && defIt->second != NULL);
-      return *defIt->second;
-    }
+    RegDefSet &getDefSet(const BasicBlock *bb, const Register &reg);
     /*! Build a UD-chain as the union of the predecessor chains */
     void fillUDChain(UDChain &udChain, const BasicBlock &bb, const Register &reg);
     /*! Fast per register definition set allocation */
@@ -82,6 +76,22 @@ namespace ir {
     this->iterateLiveOut();
   }
 
+  LiveOutSet::RegDefSet &LiveOutSet::getDefSet(const BasicBlock *bb,
+                                               const Register &reg)
+  {
+    auto bbIt = defMap.find(bb);
+    GBE_ASSERT(bbIt != defMap.end());
+    auto defIt = bbIt->second->find(reg);
+    GBE_ASSERT(defIt != bbIt->second->end() && defIt->second != NULL);
+    return *defIt->second;
+  }
+
+  void LiveOutSet::fillUDChain(UDChain &udChain,
+                               const BasicBlock &bb,
+                               const Register &reg)
+  {
+  }
+
   void LiveOutSet::initializeInstructionDst(void) {
     const Function &fn = liveness.getFunction();
 
@@ -94,8 +104,8 @@ namespace ir {
       defMap.insert(std::make_pair(&bb, blockDefMap));
 
       // We only consider liveout registers
-      auto info = this->liveness.getBlockInfo(bb);
-      auto liveOut = info.liveOut;
+      const auto &info = this->liveness.getBlockInfo(bb);
+      const auto &liveOut = info.liveOut;
       for (auto it = liveOut.begin(); it != liveOut.end(); ++it) {
         GBE_ASSERT(blockDefMap->find(*it) == blockDefMap->end());
         auto regDefSet = this->newRegDefSet();
@@ -126,7 +136,7 @@ namespace ir {
 
     // The first block must also transfer the function arguments
     const BasicBlock &top = fn.getBlock(0);
-    auto info = this->liveness.getBlockInfo(top);
+    const auto &info = this->liveness.getBlockInfo(top);
     auto blockDefMapIt = defMap.find(&top);
     GBE_ASSERT(blockDefMapIt != defMap.end());
     auto blockDefMap = blockDefMapIt->second;

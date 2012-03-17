@@ -56,7 +56,7 @@ namespace ir {
     /*! Set of variables actually killed in each block */
     typedef set<Register> VarKill;
     /*! Per-block info */
-    struct BlockInfo {
+    struct BlockInfo : public NonCopyable {
       BlockInfo(const BasicBlock &bb) : bb(bb) {}
       const BasicBlock &bb;
       INLINE bool inUpwardUsed(Register reg) const {
