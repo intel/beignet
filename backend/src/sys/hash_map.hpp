@@ -40,7 +40,8 @@ namespace gbe
             class T,
             class Hash = std::hash<Key>,
             class Pred = std::equal_to<Key>>
-  class hash_map : public std::tr1::unordered_map<Key,T,Hash,Pred,Allocator<std::pair<const Key,T>>>
+  class hash_map : public std::tr1::unordered_map<Key,T,Hash,Pred,Allocator<std::pair<const Key,T>>>,
+                   public NonCopyable
   {
   public:
     // Typedefs
@@ -68,8 +69,10 @@ namespace gbe
                     const key_equal& eql = key_equal(),
                     const allocator_type& a = allocator_type()) :
       parent_type(first,last,n,hf,eql,a) {}
+#if 0
     /*! Copy constructor */
     INLINE hash_map(const hash_map &other) : parent_type(other) {}
+#endif
     GBE_CLASS(hash_map);
   };
 } /* namespace gbe */

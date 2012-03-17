@@ -32,7 +32,8 @@ namespace gbe
 {
   /*! Use custom allocator instead of std one */
   template<class Key, class T, class Pred = std::less<Key>>
-  class map : public std::map<Key,T,Pred,Allocator<std::pair<const Key, T>>>
+  class map : public std::map<Key,T,Pred,Allocator<std::pair<const Key, T>>>,
+              public NonCopyable
   {
   public:
     // Typedefs
@@ -58,8 +59,10 @@ namespace gbe
                const key_compare &comp = key_compare(),
                const allocator_type& a = allocator_type()) :
       parent_type(first, last, comp, a) {}
+#if 0
     /*! Copy constructor */
     INLINE map(const map& x) : parent_type(x) {}
+#endif
     /*! Better than using find if we do not care about the iterator itself */
     INLINE bool contains(const Key &key) const {
       return this->find(key) != this->end();

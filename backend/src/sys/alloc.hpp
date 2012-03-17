@@ -226,10 +226,10 @@ namespace gbe
 #define DECL_POOL(TYPE, POOL)                     \
   GrowingPool<TYPE> POOL;                         \
   template <typename... Args>                     \
-  INLINE TYPE *new##TYPE(Args... args) {          \
+  TYPE *new##TYPE(Args... args) {          \
     return new (POOL.allocate()) TYPE(args...);   \
   }                                               \
-  INLINE void delete##TYPE(TYPE *ptr) {           \
+  void delete##TYPE(TYPE *ptr) {           \
     ptr->~TYPE();                                 \
     POOL.deallocate(ptr);                         \
   }

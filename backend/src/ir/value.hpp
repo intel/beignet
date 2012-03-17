@@ -89,6 +89,7 @@ namespace ir {
     } data;
     /*!< Function argument or instruction dst? */
     Type type;
+    GBE_CLASS(ValueDef); // Use gbe allocators
   };
 
   /*! Compare two value definitions (used in maps) */
@@ -126,6 +127,7 @@ namespace ir {
   private:
     const Instruction *insn; //!< Instruction where the value is used
     uint32_t srcID;          //!< Index of the source in the instruction
+    GBE_CLASS(ValueUse);     // Use gbe allocators
   };
 
   /*! Compare two value uses (used in maps) */
@@ -141,7 +143,7 @@ namespace ir {
   /*! All uses of a definition */
   typedef set<ValueUse*> DUChain;
   /*! All possible definitions for a use */
-  typedef set<ValueDef*> UDChain;
+  typedef std::set<ValueDef*> UDChain;
 
   /*! Get the chains (in both directions) for the complete program */
   class FunctionDAG
@@ -172,6 +174,7 @@ namespace ir {
     DUGraph duGraph;                   //!< All the DU chains
     UDChain *udEmpty;                  //!< Void use set
     DUChain *duEmpty;                  //!< Void def set
+    ValueDef *undefined;               //!< Undefined value
     map<ValueUse, ValueUse*> useName;  //!< Get the ValueUse pointer from the value
     map<ValueDef, ValueDef*> defName;  //!< Get the ValueDef pointer from the value
     DECL_POOL(ValueDef, valueDefPool); //!< Fast ValueDef allocation

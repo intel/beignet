@@ -141,18 +141,19 @@ namespace gbe
   static MemDebugger *memDebugger = NULL;
 
   /*! Monitor maximum memory requirement in the compiler */
-  static size_t memDebuggerCurrSize = 0;
-  static size_t memDebuggerMaxSize = 0;
+  static MutexSys sizeMutex;
+  static size_t memDebuggerCurrSize(0u);
+  static size_t memDebuggerMaxSize(0u);
 
   /*! Stop the memory debugger */
   static void MemDebuggerEnd(void) {
     MemDebugger *_debug = memDebugger;
     memDebugger = NULL;
-    GBE_ASSERT(memDebuggerCurrSize == 0);
     std::cout << "Maximum memory consumption: "
               << std::setprecision(2) << std::fixed
               << float(memDebuggerMaxSize) / 1024. << "KB" << std::endl;
     delete _debug;
+    GBE_ASSERT(memDebuggerCurrSize == 0);
   }
 
   /*! Bring up the debugger at pre-main */
@@ -201,8 +202,10 @@ namespace gbe
     void *ptr = std::malloc(size + sizeof(size_t));
     *(size_t *) ptr = size;
     MemDebuggerInitializeMem((char*) ptr + sizeof(size_t), size);
+    sizeMutex.lock();
     memDebuggerCurrSize += size;
     memDebuggerMaxSize = std::max(memDebuggerCurrSize, memDebuggerMaxSize);
+    sizeMutex.unlock();
     return (char *) ptr + sizeof(size_t);
   }
   void memFree(void *ptr) {
@@ -210,7 +213,9 @@ namespace gbe
       char *toFree = (char*) ptr - sizeof(size_t);
       const size_t size = *(size_t *) toFree;
       MemDebuggerInitializeMem(ptr, size);
+      sizeMutex.lock();
       memDebuggerCurrSize -= size;
+      sizeMutex.unlock();
       std::free(toFree);
     }
   }
@@ -226,15 +231,17 @@ namespace gbe
 namespace gbe
 {
   void* alignedMalloc(size_t size, size_t align) {
-    void* mem = malloc(size+(align-1)+sizeof(uintptr_t) + sizeof(void*));
+    void* mem = malloc(size+align+sizeof(uintptr_t) + sizeof(void*));
     FATAL_IF (!mem && size, "memory allocation failed");
     char* aligned = (char*) mem + sizeof(uintptr_t) + sizeof(void*);
     aligned += align - ((uintptr_t)aligned & (align - 1));
     ((void**)aligned)[-1] = mem;
     ((uintptr_t*)aligned)[-2] = uintptr_t(size);
     MemDebuggerInitializeMem(aligned, size);
+    sizeMutex.lock();
     memDebuggerCurrSize += size;
     memDebuggerMaxSize = std::max(memDebuggerCurrSize, memDebuggerMaxSize);
+    sizeMutex.unlock();
     return aligned;
   }
 
@@ -243,7 +250,9 @@ namespace gbe
       const size_t size = ((uintptr_t*)ptr)[-2];
       MemDebuggerInitializeMem(ptr, size);
       free(((void**)ptr)[-1]);
+      sizeMutex.lock();
       memDebuggerCurrSize -= size;
+      sizeMutex.unlock();
     }
   }
 } /* namespace gbe */
@@ -310,7 +319,7 @@ namespace gbe
 namespace gbe
 {
   void* alignedMalloc(size_t size, size_t align) {
-    void* mem = malloc(size+(align-1)+sizeof(void*));
+    void* mem = malloc(size+align+sizeof(void*));
     FATAL_IF (!mem && size, "memory allocation failed");
     char* aligned = ((char*)mem) + sizeof(void*);
     aligned += align - ((uintptr_t)aligned & (align - 1));

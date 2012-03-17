@@ -90,6 +90,16 @@ namespace ir {
                                const BasicBlock &bb,
                                const Register &reg)
   {
+    // We add all the definitions here
+    RegDefSet &defs = this->getDefSet(&bb, reg);
+
+    // Iterate over all the predecessors
+    const auto &preds = bb.getPredecessorSet();
+    for (auto pred = preds.begin(); pred != preds.end(); ++pred) {
+      RegDefSet &predDef = this->getDefSet(*pred, reg);
+      for (auto def = predDef.begin(); def != predDef.end(); ++def)
+        defs.insert(*def);
+    }
   }
 
   void LiveOutSet::initializeInstructionDst(void) {
@@ -257,8 +267,72 @@ namespace ir {
       duGraph.insert(std::make_pair(*valueDef, duEmpty));
     }
 
+#if 1
     // We create the liveOutSet to help us transfer the definitions
-    const LiveOutSet liveOutSet(liveness, *this);
+    LiveOutSet liveOutSet(liveness, *this);
+
+    // Build UD chains traversing the blocks top to bottom
+    fn.foreachBlock([&](const BasicBlock &bb) {
+      // Track the allocated chains to be able to reuse them
+      map<Register, UDChain*> allocated;
+      // Some chains may be not used (ie they are dead). We track them to be
+      // able to deallocate them later
+      // set<UDChain*> unused;
+
+      // For each instruction build the UD chains
+      bb.foreach([&](const Instruction &insn) {
+        // Instruction sources consumes definitions
+#if 1
+        const uint32_t srcNum = insn.getSrcNum();
+        for (uint32_t srcID = 0; srcID < srcNum; ++srcID) {
+          const Register src = insn.getSrcIndex(fn, srcID);
+          const ValueUse use(&insn, srcID);
+          // auto ud = udGraph.find(use);
+          //GBE_ASSERT(ud != udGraph.end());
+
+          // We already allocate the ud chain for this register
+          auto it = allocated.find(src);
+          if (it != allocated.end()) {
+            // udGraph.erase(ud);
+            udGraph.insert(std::make_pair(use, it->second));
+            //if (unused.contains(it->second))
+            //  unused.erase(it->second);
+
+          // Create a new one from the predecessor chains (upward used value)
+          } else {
+    //        UDChain *udChain = this->newUDChain();
+    //        liveOutSet.fillUDChain(*udChain, bb, src);
+    //        allocated.insert(std::make_pair(src, udChain));
+    //        ud->second = udChain;
+          }
+        }
+#endif
+        // Instruction destinations create new chains
+        const uint32_t dstNum = insn.getDstNum();
+        for (uint32_t dstID = 0; dstID < dstNum; ++dstID) {
+          const Register dst = insn.getDstIndex(fn, dstID);
+          // ValueDef *def = (ValueDef *) this->getDefAddress(&insn, dstID);
+
+          UDChain *udChain = this->newUDChain();
+          // udChain->insert(def);
+          udChain->insert(NULL);
+          // unused.insert(udChain);
+          allocated.insert(std::make_pair(dst, udChain));
+#endif
+        }
+      });
+
+      // Deallocate unused chains
+//      for (auto it = unused.begin(); it != unused.end(); ++it)
+//        this->deleteUDChain(*it);
+    });
+
+    // Build the DU chains from the UD ones
+    fn.foreachInstruction([&](const Instruction &insn) {
+
+
+    });
+
   }
 
 /*! Helper to deallocate objects */
@@ -282,6 +356,7 @@ namespace ir {
     // We free all the ud-chains
     for (auto it = udGraph.begin(); it != udGraph.end(); ++it) {
       auto defs = it->second;
+      if (destroyed.contains(defs)) continue;
       for (auto def = defs->begin(); def != defs->end(); ++def)
         PTR_RELEASE(ValueDef, *def);
       PTR_RELEASE(UDChain, defs);
@@ -290,6 +365,7 @@ namespace ir {
     // We free all the du-chains
     for (auto it = duGraph.begin(); it != duGraph.end(); ++it) {
       auto uses = it->second;
+      if (destroyed.contains(uses)) continue;
       for (auto use = uses->begin(); use != uses->end(); ++use)
         PTR_RELEASE(ValueUse, *use);
       PTR_RELEASE(DUChain, uses);
@@ -303,14 +379,12 @@ namespace ir {
     GBE_ASSERT(it != duGraph.end());
     return *it->second;
   }
-
   const DUChain &FunctionDAG::getUse(const FunctionInput *input) const {
     const ValueDef def(input);
     auto it = duGraph.find(def);
     GBE_ASSERT(it != duGraph.end());
     return *it->second;
   }
-
   const UDChain &FunctionDAG::getDef(const Instruction *insn, uint32_t srcID) const {
     const ValueUse use(insn, srcID);
     auto it = udGraph.find(use);

@@ -32,7 +32,7 @@ namespace gbe
 {
   /*! Add our custom allocator to std::set */
   template<class Key, class Pred = std::less<Key>>
-  class set : public std::set<Key,Pred,Allocator<Key>>
+  class set : public std::set<Key,Pred,Allocator<Key>>, public NonCopyable
   {
   public:
     // Typedefs
@@ -53,8 +53,10 @@ namespace gbe
                const key_compare &comp = key_compare(),
                const allocator_type& a = allocator_type()) :
       parent_type(first, last, comp, a) {}
+#if 0
     /*! Copy constructor */
     INLINE set(const set& x) : parent_type(x) {}
+#endif
     /*! Better than using find if we do not care about the iterator itself */
     INLINE bool contains(const Key &key) const {
       return this->find(key) != this->end();

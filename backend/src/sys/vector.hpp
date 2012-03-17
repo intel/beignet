@@ -34,7 +34,7 @@ namespace gbe
    *  allocator
    */
   template<class T>
-  class vector : public std::vector<T, Allocator<T>>
+  class vector : public std::vector<T, Allocator<T>>, public NonCopyable
   {
   public:
     // Typedefs
@@ -46,8 +46,10 @@ namespace gbe
     /*! Default constructor */
     INLINE explicit vector(const allocator_type &a = allocator_type()) :
       parent_type(a) {}
+#if 0
     /*! Copy constructor */
     INLINE vector(const vector &x) : parent_type(x) {}
+#endif
     /*! Repetitive sequence constructor */
     INLINE explicit vector(size_type n,
                            const T& value= T(),

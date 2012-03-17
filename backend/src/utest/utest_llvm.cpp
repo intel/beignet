@@ -54,7 +54,7 @@ namespace gbe
     unit.apply([](ir::Function &fn) {
       ir::Liveness liveness(fn);
       ir::FunctionDAG dag(liveness);
-      std::cout << liveness << std::endl;
+  //    std::cout << liveness << std::endl;
     });
   }
 } /* namespace gbe */
