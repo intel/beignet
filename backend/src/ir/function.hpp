@@ -128,6 +128,13 @@ namespace ir {
     Function(const std::string &name, Profile profile = PROFILE_OCL);
     /*! Release everything *including* the basic block pointers */
     ~Function(void);
+    /*! Says if this is the top basic block (entry point) */
+    INLINE bool isEntryBlock(const BasicBlock &bb) const {
+      if (this->blockNum() == 0)
+        return false;
+      else
+        return &bb == this->blocks[0];
+    }
     /*! Get the function profile */
     INLINE Profile getProfile(void) const { return profile; }
     /*! Get a new valid register */
@@ -165,6 +172,14 @@ namespace ir {
     INLINE const FunctionInput &getInput(uint32_t ID) const {
       GBE_ASSERT(ID < inputNum() && inputs[ID] != NULL);
       return *inputs[ID];
+    }
+    /*! Get input argument from the register (linear research). Return NULL if
+     *  this is not an input argument
+     */
+    INLINE const FunctionInput *getInput(const Register &reg) const {
+      for (auto it = inputs.begin(); it != inputs.end(); ++it)
+        if ((*it)->reg == reg) return *it;
+      return NULL;
     }
     /*! Get output register */
     INLINE Register getOutput(uint32_t ID) const {
@@ -220,7 +235,7 @@ namespace ir {
     vector<BasicBlock*> blocks;   //!< All chained basic blocks
     RegisterFile file;            //!< RegisterDatas used by the instructions
     Profile profile;              //!< Current function profile
-    GBE_CLASS(Function);
+    GBE_CLASS(Function);          //!< Use gbe allocators
   };
 
   /*! Output the function string in the given stream */

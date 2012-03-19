@@ -43,7 +43,7 @@ namespace ir {
     LiveOutSet(Liveness &liveness, const FunctionDAG &dag);
     ~LiveOutSet(void);
     /*! One set per register */
-    typedef set<const ValueDef*> RegDefSet;
+    typedef set<ValueDef*> RegDefSet;
     /*! We have one map of liveout register per block */
     typedef map<Register, RegDefSet*> BlockDefMap;
     /*! All the block definitions map in the functions */
@@ -51,7 +51,7 @@ namespace ir {
     /*! Performs the double look-up to get the set of defs per register */
     RegDefSet &getDefSet(const BasicBlock *bb, const Register &reg);
     /*! Build a UD-chain as the union of the predecessor chains */
-    void fillUDChain(UDChain &udChain, const BasicBlock &bb, const Register &reg);
+    void makeUDChain(UDChain &udChain, const BasicBlock &bb, const Register &reg);
     /*! Fast per register definition set allocation */
     DECL_POOL(RegDefSet, regDefSetPool);
     /*! Fast register sets allocation */
@@ -67,6 +67,9 @@ namespace ir {
     /*! Iterate to completely transfer the liveness and get the def sets */
     void iterateLiveOut(void);
   };
+
+  /*! Debug print of the liveout set */
+  std::ostream &operator<< (std::ostream &out, LiveOutSet &set);
 
   LiveOutSet::LiveOutSet(Liveness &liveness, const FunctionDAG &dag) :
     liveness(liveness), dag(dag)
@@ -86,19 +89,16 @@ namespace ir {
     return *defIt->second;
   }
 
-  void LiveOutSet::fillUDChain(UDChain &udChain,
+  void LiveOutSet::makeUDChain(UDChain &udChain,
                                const BasicBlock &bb,
                                const Register &reg)
   {
-    // We add all the definitions here
-    RegDefSet &defs = this->getDefSet(&bb, reg);
-
     // Iterate over all the predecessors
     const auto &preds = bb.getPredecessorSet();
     for (auto pred = preds.begin(); pred != preds.end(); ++pred) {
       RegDefSet &predDef = this->getDefSet(*pred, reg);
       for (auto def = predDef.begin(); def != predDef.end(); ++def)
-        defs.insert(*def);
+        udChain.insert(*def);
     }
   }
 
@@ -109,7 +109,7 @@ namespace ir {
     fn.foreachBlock([&](const BasicBlock &bb) {
       GBE_ASSERT(defMap.find(&bb) == defMap.end());
 
-      // Allocate a map of register definition
+      // Allocate a map of register definitions
       auto blockDefMap = this->newBlockDefMap();
       defMap.insert(std::make_pair(&bb, blockDefMap));
 
@@ -124,11 +124,12 @@ namespace ir {
 
       // Now traverse the blocks backwards and find the definition of each
       // liveOut register
-      set<Register> defined; // Liveout registers for which we found a def
+      set<Register> defined;
       bb.rforeach([&](const Instruction &insn) {
         const uint32_t dstNum = insn.getDstNum();
         for (uint32_t dstID = 0; dstID < dstNum; ++dstID) {
           const Register reg = insn.getDstIndex(fn, dstID);
+          std::cout << "reg" << reg << std::endl;
           // We only take the most recent definition
           if (defined.contains(reg) == true) continue;
           // Not in LiveOut, so does not matter
@@ -136,34 +137,12 @@ namespace ir {
           defined.insert(reg);
           // Insert the outgoing definition for this register
           auto regDefSet = blockDefMap->find(reg);
-          const ValueDef *def = this->dag.getDefAddress(&insn, dstID);
+          ValueDef *def = (ValueDef*) this->dag.getDefAddress(&insn, dstID);
           GBE_ASSERT(regDefSet != blockDefMap->end() && def != NULL);
-          // May be NULL if there is no definition
           regDefSet->second->insert(def);
         }
       });
     });
-
-    // The first block must also transfer the function arguments
-    const BasicBlock &top = fn.getBlock(0);
-    const auto &info = this->liveness.getBlockInfo(top);
-    auto blockDefMapIt = defMap.find(&top);
-    GBE_ASSERT(blockDefMapIt != defMap.end());
-    auto blockDefMap = blockDefMapIt->second;
-    const uint32_t inputNum = fn.inputNum();
-    for (uint32_t inputID = 0; inputID < inputNum; ++inputID) {
-      const FunctionInput &input = fn.getInput(inputID);
-      const Register reg = input.reg;
-      // Do not transfer dead values
-      if (info.inLiveOut(reg) == false) continue;
-      // If we overwrite it, do not transfer the initial value
-      if (info.inVarKill(reg) == false) continue;
-      const ValueDef *def = this->dag.getDefAddress(&input);
-      GBE_ASSERT(blockDefMap->contains(reg) == false);
-      auto regDefSet = this->newRegDefSet();
-      regDefSet->insert(def);
-      blockDefMap->insert(std::make_pair(reg, regDefSet));
-    }
   }
 
   void LiveOutSet::initializeFunctionInput(void) {
@@ -184,12 +163,11 @@ namespace ir {
       // Do not transfer dead values
       if (info.inLiveOut(reg) == false) continue;
       // If we overwrite it, do not transfer the initial value
-      if (info.inVarKill(reg) == false) continue;
-      const ValueDef *def = this->dag.getDefAddress(&input);
-      GBE_ASSERT(blockDefMap->contains(reg) == false);
-      auto regDefSet = this->newRegDefSet();
-      regDefSet->insert(def);
-      blockDefMap->insert(std::make_pair(reg, regDefSet));
+      if (info.inVarKill(reg) == true) continue;
+      ValueDef *def = (ValueDef*) this->dag.getDefAddress(&input);
+      auto it = blockDefMap->find(reg);
+      GBE_ASSERT(it != blockDefMap->end());
+      it->second->insert(def);
     }
   }
 
@@ -233,9 +211,38 @@ namespace ir {
     }
   }
 
-  FunctionDAG::FunctionDAG(Liveness &liveness) {
-    const Function &fn = liveness.getFunction();
+  std::ostream &operator<< (std::ostream &out, LiveOutSet &set) {
+    for (auto it = set.defMap.begin(); it != set.defMap.end(); ++it) {
+      // To recognize the block, just print its instructions
+      out << "Block:" << std::endl;
+      it->first->foreach([&out] (const Instruction &insn) {
+        out << insn << std::endl;
+      });
 
+      // Iterate over all alive registers to get their definitions
+      out << "LiveSet:" << std::endl;
+      const LiveOutSet::BlockDefMap *defMap = it->second;
+      for (auto regIt = defMap->begin(); regIt != defMap->end(); ++regIt) {
+        const Register reg = regIt->first;
+        const LiveOutSet::RegDefSet *set = regIt->second;
+        for (auto def = set->begin(); def != set->end(); ++def) {
+          const ValueDef::Type type = (*def)->getType();
+          if (type == ValueDef::FUNCTION_INPUT)
+            out << "%" << reg << ": " << "function input" << std::endl;
+          else if (type == ValueDef::INSTRUCTION_DST) {
+            const Instruction *insn = (*def)->getInstruction();
+            out << "%" << reg << ": " << insn << " " << *insn << std::endl;
+          }
+        }
+      }
+      out << std::endl;
+    }
+    return out;
+  }
+
+  FunctionDAG::FunctionDAG(Liveness &liveness) :
+    fn(liveness.getFunction())
+  {
     // We first start with empty chains
     udEmpty = this->newUDChain();
     duEmpty = this->newDUChain();
@@ -267,7 +274,6 @@ namespace ir {
       duGraph.insert(std::make_pair(*valueDef, duEmpty));
     }
 
-#if 1
     // We create the liveOutSet to help us transfer the definitions
     LiveOutSet liveOutSet(liveness, *this);
 
@@ -277,62 +283,79 @@ namespace ir {
       map<Register, UDChain*> allocated;
       // Some chains may be not used (ie they are dead). We track them to be
       // able to deallocate them later
-      // set<UDChain*> unused;
+      set<UDChain*> unused;
 
       // For each instruction build the UD chains
       bb.foreach([&](const Instruction &insn) {
         // Instruction sources consumes definitions
-#if 1
         const uint32_t srcNum = insn.getSrcNum();
         for (uint32_t srcID = 0; srcID < srcNum; ++srcID) {
           const Register src = insn.getSrcIndex(fn, srcID);
           const ValueUse use(&insn, srcID);
-          // auto ud = udGraph.find(use);
-          //GBE_ASSERT(ud != udGraph.end());
+          auto ud = udGraph.find(use);
+          GBE_ASSERT(ud != udGraph.end());
 
           // We already allocate the ud chain for this register
           auto it = allocated.find(src);
           if (it != allocated.end()) {
-            // udGraph.erase(ud);
+            udGraph.erase(ud);
             udGraph.insert(std::make_pair(use, it->second));
-            //if (unused.contains(it->second))
-            //  unused.erase(it->second);
-
+            if (unused.contains(it->second))
+              unused.erase(it->second);
+          }
           // Create a new one from the predecessor chains (upward used value)
-          } else {
-    //        UDChain *udChain = this->newUDChain();
-    //        liveOutSet.fillUDChain(*udChain, bb, src);
-    //        allocated.insert(std::make_pair(src, udChain));
-    //        ud->second = udChain;
+          else {
+            UDChain *udChain = this->newUDChain();
+            liveOutSet.makeUDChain(*udChain, bb, src);
+            allocated.insert(std::make_pair(src, udChain));
+            ud->second = udChain;
           }
         }
-#endif
+
         // Instruction destinations create new chains
         const uint32_t dstNum = insn.getDstNum();
         for (uint32_t dstID = 0; dstID < dstNum; ++dstID) {
           const Register dst = insn.getDstIndex(fn, dstID);
-          // ValueDef *def = (ValueDef *) this->getDefAddress(&insn, dstID);
-
+          ValueDef *def = (ValueDef *) this->getDefAddress(&insn, dstID);
           UDChain *udChain = this->newUDChain();
-          // udChain->insert(def);
-          udChain->insert(NULL);
-          // unused.insert(udChain);
+          udChain->insert(def);
+          unused.insert(udChain);
+          // Remove the previous definition if any
+          if (allocated.contains(dst) == true)
+            allocated.erase(dst);
           allocated.insert(std::make_pair(dst, udChain));
-#endif
         }
       });
 
       // Deallocate unused chains
-//      for (auto it = unused.begin(); it != unused.end(); ++it)
-//        this->deleteUDChain(*it);
+      for (auto it = unused.begin(); it != unused.end(); ++it)
+        this->deleteUDChain(*it);
     });
 
     // Build the DU chains from the UD ones
     fn.foreachInstruction([&](const Instruction &insn) {
 
+      // For each value definition of each source, we push back this use
+      const uint32_t srcNum = insn.getSrcNum();
+      for (uint32_t srcID = 0; srcID < srcNum; ++srcID) {
+        ValueUse *use = (ValueUse*) getUseAddress(&insn, srcID);
 
+        // Find all definitions for this source
+        const auto &defs = this->getDef(&insn, srcID);
+        for (auto def = defs.begin(); def != defs.end(); ++def) {
+          auto uses = duGraph.find(**def);
+          DUChain *du = uses->second;
+          GBE_ASSERT(uses != duGraph.end());
+          if (du == duEmpty) {
+            duGraph.erase(**def);
+            du = this->newDUChain();
+            duGraph.insert(std::make_pair(**def, du));
+          }
+          du->insert(use);
+        }
+      }
     });
-
+    std::cout << liveOutSet;
   }
 
 /*! Helper to deallocate objects */
@@ -409,6 +432,47 @@ namespace ir {
     GBE_ASSERT(it != useName.end() && it->second != NULL);
     return it->second;
   }
+
+  std::ostream &operator<< (std::ostream &out, const FunctionDAG &dag) {
+    const Function &fn = dag.getFunction();
+
+    // Print all uses for the definitions and all definitions for each uses
+    fn.foreachInstruction([&](const Instruction &insn) {
+      out << &insn << ": " << insn << std::endl;
+
+      // Display the set of definition for each destination
+      const uint32_t dstNum = insn.getDstNum();
+      if (dstNum > 0) out << "USES:" << std::endl;
+      for (uint32_t dstID = 0; dstID < dstNum; ++dstID) {
+        const Register reg = insn.getDstIndex(fn, dstID);
+        const auto &uses = dag.getUse(&insn, dstID);
+        for (auto it = uses.begin(); it != uses.end(); ++it) {
+          const Instruction *other = (*it)->getInstruction();
+          out << "  %" << reg << " " << other << ": " << *other << std::endl;
+        }
+      }
+
+      // Display the set of definitions for each source
+      const uint32_t srcNum = insn.getSrcNum();
+      if (srcNum > 0) out << "DEFS:" << std::endl;
+      for (uint32_t srcID = 0; srcID < srcNum; ++srcID) {
+        const Register reg = insn.getSrcIndex(fn, srcID);
+        const auto &defs = dag.getDef(&insn, srcID);
+        for (auto it = defs.begin(); it != defs.end(); ++it) {
+          if ((*it)->getType() == ValueDef::FUNCTION_INPUT)
+            out << "  %" << reg << " # function argument" << std::endl;
+          else if ((*it)->getType() == ValueDef::INSTRUCTION_DST) {
+            const Instruction *other = (*it)->getInstruction();
+            out << "  %" << reg << " " << other << ": " << *other << std::endl;
+          }
+        }
+      }
+      out << std::endl;
+    });
+
+    return out;
+  }
+
 } /* namespace ir */
 } /* namespace gbe */
 

@@ -124,7 +124,7 @@ namespace ir {
         << plural(fn.blockNum()) << " ##" << std::endl;
     for (uint32_t i = 0; i < fn.blockNum(); ++i) {
       const BasicBlock &bb = fn.getBlock(i);
-      bb.foreach([&out, &fn] (const Instruction &insn) {
+      bb.foreach([&out] (const Instruction &insn) {
         out << insn << std::endl;
       });
       out << std::endl;

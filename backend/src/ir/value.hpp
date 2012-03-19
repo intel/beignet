@@ -143,10 +143,10 @@ namespace ir {
   /*! All uses of a definition */
   typedef set<ValueUse*> DUChain;
   /*! All possible definitions for a use */
-  typedef std::set<ValueDef*> UDChain;
+  typedef set<ValueDef*> UDChain;
 
   /*! Get the chains (in both directions) for the complete program */
-  class FunctionDAG
+  class FunctionDAG : public NonCopyable
   {
   public:
     /*! Build the complete DU/UD graphs for the program included in liveness */
@@ -165,6 +165,8 @@ namespace ir {
     const ValueDef *getDefAddress(const FunctionInput *input) const;
     /*! Get the pointer to the use *as stored in the DAG* */
     const ValueUse *getUseAddress(const Instruction *insn, uint32_t srcID) const;
+    /*! Get the function we have the graph for */
+    const Function &getFunction(void) const { return fn; }
     /*! The UDChain for each definition use */
     typedef map<ValueUse, UDChain*> UDGraph;
     /*! The DUChain for each definition */
@@ -181,8 +183,12 @@ namespace ir {
     DECL_POOL(ValueUse, valueUsePool); //!< Fast ValueUse allocation
     DECL_POOL(UDChain, udChainPool);   //!< Fast UDChain allocation
     DECL_POOL(DUChain, duChainPool);   //!< Fast DUChain allocation
+    const Function &fn;                //!< Function we are referring to
     GBE_CLASS(FunctionDAG);            //!< Use internal allocators
   };
+
+  /*! Pretty print of the function DAG */
+  std::ostream &operator<< (std::ostream &out, const FunctionDAG &dag);
 
 } /* namespace ir */
 } /* namespace gbe */
