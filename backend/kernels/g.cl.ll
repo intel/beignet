@@ -1,8 +1,10 @@
-; ModuleID = 'add2.cl.o'
+; ModuleID = 'g.cl.o'
 target datalayout = "e-p:32:32-i64:64:64-f64:64:64-n1:8:16:32:64"
 target triple = "ptx32--"
 
 %struct.big = type { i32, i32 }
+
+@add.d = private unnamed_addr constant [3 x i32] [i32 0, i32 1, i32 2], align 4
 
 define ptx_device <2 x float> @_Z3madDv2_fS_S_(<2 x float> %a, <2 x float> %b, <2 x float> %c) nounwind readnone {
 entry:
@@ -68,13 +70,16 @@ entry:
 
 define ptx_kernel void @add(%struct.big addrspace(1)* nocapture %b, i32 %x, i32 %y) nounwind noinline {
 entry:
+  %arrayidx = getelementptr inbounds [3 x i32]* @add.d, i32 0, i32 %y
+  %0 = load i32* %arrayidx, align 4, !tbaa !1
   %add = add i32 %y, %x
+  %add1 = add i32 %add, %0
   %a = getelementptr inbounds %struct.big addrspace(1)* %b, i32 0, i32 0
-  store i32 %add, i32 addrspace(1)* %a, align 4, !tbaa !1
+  store i32 %add1, i32 addrspace(1)* %a, align 4, !tbaa !1
   %sub = add i32 %x, 10
-  %add1 = sub i32 %sub, %y
-  %b2 = getelementptr inbounds %struct.big addrspace(1)* %b, i32 0, i32 1
-  store i32 %add1, i32 addrspace(1)* %b2, align 4, !tbaa !1
+  %add2 = sub i32 %sub, %y
+  %b3 = getelementptr inbounds %struct.big addrspace(1)* %b, i32 0, i32 1
+  store i32 %add2, i32 addrspace(1)* %b3, align 4, !tbaa !1
   ret void
 }
 

@@ -1,8 +1,6 @@
-; ModuleID = 'add2.cl.o'
+; ModuleID = 'vector_constant.o'
 target datalayout = "e-p:32:32-i64:64:64-f64:64:64-n1:8:16:32:64"
 target triple = "ptx32--"
-
-%struct.big = type { i32, i32 }
 
 define ptx_device <2 x float> @_Z3madDv2_fS_S_(<2 x float> %a, <2 x float> %b, <2 x float> %c) nounwind readnone {
 entry:
@@ -66,21 +64,21 @@ entry:
   ret <4 x float> %vecinit6
 }
 
-define ptx_kernel void @add(%struct.big addrspace(1)* nocapture %b, i32 %x, i32 %y) nounwind noinline {
-entry:
-  %add = add i32 %y, %x
-  %a = getelementptr inbounds %struct.big addrspace(1)* %b, i32 0, i32 0
-  store i32 %add, i32 addrspace(1)* %a, align 4, !tbaa !1
-  %sub = add i32 %x, 10
-  %add1 = sub i32 %sub, %y
-  %b2 = getelementptr inbounds %struct.big addrspace(1)* %b, i32 0, i32 1
-  store i32 %add1, i32 addrspace(1)* %b2, align 4, !tbaa !1
+define ptx_kernel void @simple_float4(<4 x float> addrspace(1)* nocapture %dst, <4 x float> addrspace(1)* nocapture %src) nounwind noinline {
+get_global_id.exit5:
+  %call.i = tail call ptx_device i32 @__gen_ocl_get_global_id0() nounwind readnone
+  %arrayidx = getelementptr inbounds <4 x float> addrspace(1)* %src, i32 %call.i
+  %0 = load <4 x float> addrspace(1)* %arrayidx, align 16, !tbaa !1
+  %add = fadd <4 x float> %0, <float 0.000000e+00, float 1.000000e+00, float 2.000000e+00, float 3.000000e+00>
+  %arrayidx2 = getelementptr inbounds <4 x float> addrspace(1)* %dst, i32 %call.i
+  store <4 x float> %add, <4 x float> addrspace(1)* %arrayidx2, align 16, !tbaa !1
   ret void
 }
 
+declare ptx_device i32 @__gen_ocl_get_global_id0() nounwind readnone
+
 !opencl.kernels = !{!0}
 
-!0 = metadata !{void (%struct.big addrspace(1)*, i32, i32)* @add}
-!1 = metadata !{metadata !"int", metadata !2}
-!2 = metadata !{metadata !"omnipotent char", metadata !3}
-!3 = metadata !{metadata !"Simple C/C++ TBAA", null}
+!0 = metadata !{void (<4 x float> addrspace(1)*, <4 x float> addrspace(1)*)* @simple_float4}
+!1 = metadata !{metadata !"omnipotent char", metadata !2}
+!2 = metadata !{metadata !"Simple C/C++ TBAA", null}

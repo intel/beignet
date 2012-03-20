@@ -5,7 +5,8 @@ struct big{
 
 __kernel void add(__global struct big *b, unsigned int x, unsigned int y)
 {
-  b->a = x + y;
+  __private int d[3] = {0,1,2};
+  b->a = x + y + d[y];
   b->b = x - y + 10;
 }
 

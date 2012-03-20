@@ -1,7 +1,7 @@
 #include "stdlib.h"
-__kernel unsigned int add(unsigned int x, unsigned int y)
+__kernel void add(__global unsigned int *dst, unsigned int x, unsigned int y)
 {
-  return x + y;
+  dst[0] = x + y;
 }
 
 

@@ -41,7 +41,8 @@ else (GBE_USE_BLOB)
     ir/function.cpp
     ir/function.hpp
     ir/value.cpp
-    ir/value.hpp)
+    ir/value.hpp
+    gen/brw_disasm.c)
 
   if (GBE_COMPILE_UTESTS)
     set (GBE_SRC

@@ -85,16 +85,16 @@ runTests:
   GBE_ASSERT(dummyKernel != NULL);
   fclose(dummyKernel);
 
-  UTEST_EXPECT_SUCCESS(utestLLVM2Gen("complex_struct.ll"));
-  //UTEST_EXPECT_SUCCESS(utestLLVM2Gen("vector_constant.ll"));
-  //UTEST_EXPECT_SUCCESS(utestLLVM2Gen("loop5.ll"));
-  //UTEST_EXPECT_SUCCESS(utestLLVM2Gen("loop4.ll"));
-  //UTEST_EXPECT_SUCCESS(utestLLVM2Gen("loop3.ll"));
-  //UTEST_EXPECT_SUCCESS(utestLLVM2Gen("loop.ll"));
-  //UTEST_EXPECT_SUCCESS(utestLLVM2Gen("function_param.ll"));
-  //UTEST_EXPECT_SUCCESS(utestLLVM2Gen("function.ll"));
-  //UTEST_EXPECT_SUCCESS(utestLLVM2Gen("mad.ll"));
-#if 1
+  UTEST_EXPECT_SUCCESS(utestLLVM2Gen("complex_struct.cl.ll"));
+  UTEST_EXPECT_SUCCESS(utestLLVM2Gen("vector_constant.cl.ll"));
+  UTEST_EXPECT_SUCCESS(utestLLVM2Gen("loop5.cl.ll"));
+  UTEST_EXPECT_SUCCESS(utestLLVM2Gen("loop4.cl.ll"));
+  UTEST_EXPECT_SUCCESS(utestLLVM2Gen("loop3.cl.ll"));
+  // UTEST_EXPECT_SUCCESS(utestLLVM2Gen("loop.cl.ll"));
+  // UTEST_EXPECT_SUCCESS(utestLLVM2Gen("function_param.cl.ll"));
+  UTEST_EXPECT_SUCCESS(utestLLVM2Gen("function.cl.ll"));
+  //UTEST_EXPECT_SUCCESS(utestLLVM2Gen("mad.cl.ll"));
+
   UTEST_EXPECT_SUCCESS(utestLLVM2Gen("select.cl.ll"));
   UTEST_EXPECT_SUCCESS(utestLLVM2Gen("shuffle.cl.ll"));
   UTEST_EXPECT_SUCCESS(utestLLVM2Gen("extract.cl.ll"));
@@ -107,7 +107,6 @@ runTests:
   UTEST_EXPECT_SUCCESS(utestLLVM2Gen("simple_float4_2.cl.ll"));
   UTEST_EXPECT_SUCCESS(utestLLVM2Gen("void.cl.ll"));
   UTEST_EXPECT_SUCCESS(utestLLVM2Gen("cmp_cvt.cl.ll"));
-#endif
 }
 
 UTEST_REGISTER(utestLLVM)
