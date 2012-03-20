@@ -55,7 +55,7 @@ namespace gbe
       ir::Liveness liveness(fn);
       ir::FunctionDAG dag(liveness);
   //    std::cout << liveness << std::endl;
-  //    std::cout << dag << std::endl;
+      std::cout << dag << std::endl;
     });
   }
 } /* namespace gbe */
@@ -85,23 +85,28 @@ runTests:
   GBE_ASSERT(dummyKernel != NULL);
   fclose(dummyKernel);
 
-  UTEST_EXPECT_SUCCESS(utestLLVM2Gen("loop.ll"));
+  UTEST_EXPECT_SUCCESS(utestLLVM2Gen("complex_struct.ll"));
+  //UTEST_EXPECT_SUCCESS(utestLLVM2Gen("vector_constant.ll"));
+  //UTEST_EXPECT_SUCCESS(utestLLVM2Gen("loop5.ll"));
+  //UTEST_EXPECT_SUCCESS(utestLLVM2Gen("loop4.ll"));
+  //UTEST_EXPECT_SUCCESS(utestLLVM2Gen("loop3.ll"));
+  //UTEST_EXPECT_SUCCESS(utestLLVM2Gen("loop.ll"));
   //UTEST_EXPECT_SUCCESS(utestLLVM2Gen("function_param.ll"));
   //UTEST_EXPECT_SUCCESS(utestLLVM2Gen("function.ll"));
   //UTEST_EXPECT_SUCCESS(utestLLVM2Gen("mad.ll"));
-#if 0
-  UTEST_EXPECT_SUCCESS(utestLLVM2Gen("select.ll"));
-  UTEST_EXPECT_SUCCESS(utestLLVM2Gen("shuffle.ll"));
-  UTEST_EXPECT_SUCCESS(utestLLVM2Gen("extract.ll"));
-  UTEST_EXPECT_SUCCESS(utestLLVM2Gen("insert.ll"));
-  UTEST_EXPECT_SUCCESS(utestLLVM2Gen("add.ll"));
-  UTEST_EXPECT_SUCCESS(utestLLVM2Gen("load_store.ll"));
-  UTEST_EXPECT_SUCCESS(utestLLVM2Gen("add2.ll"));
-  UTEST_EXPECT_SUCCESS(utestLLVM2Gen("get_global_id.ll"));
-  UTEST_EXPECT_SUCCESS(utestLLVM2Gen("simple_float4.ll"));
-  UTEST_EXPECT_SUCCESS(utestLLVM2Gen("simple_float4_2.ll"));
-  UTEST_EXPECT_SUCCESS(utestLLVM2Gen("void.ll"));
-  UTEST_EXPECT_SUCCESS(utestLLVM2Gen("cmp_cvt.ll"));
+#if 1
+  UTEST_EXPECT_SUCCESS(utestLLVM2Gen("select.cl.ll"));
+  UTEST_EXPECT_SUCCESS(utestLLVM2Gen("shuffle.cl.ll"));
+  UTEST_EXPECT_SUCCESS(utestLLVM2Gen("extract.cl.ll"));
+  UTEST_EXPECT_SUCCESS(utestLLVM2Gen("insert.cl.ll"));
+  UTEST_EXPECT_SUCCESS(utestLLVM2Gen("add.cl.ll"));
+  UTEST_EXPECT_SUCCESS(utestLLVM2Gen("load_store.cl.ll"));
+  UTEST_EXPECT_SUCCESS(utestLLVM2Gen("add2.cl.ll"));
+  UTEST_EXPECT_SUCCESS(utestLLVM2Gen("get_global_id.cl.ll"));
+  UTEST_EXPECT_SUCCESS(utestLLVM2Gen("simple_float4.cl.ll"));
+  UTEST_EXPECT_SUCCESS(utestLLVM2Gen("simple_float4_2.cl.ll"));
+  UTEST_EXPECT_SUCCESS(utestLLVM2Gen("void.cl.ll"));
+  UTEST_EXPECT_SUCCESS(utestLLVM2Gen("cmp_cvt.cl.ll"));
 #endif
 }
 

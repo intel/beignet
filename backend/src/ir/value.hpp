@@ -44,36 +44,46 @@ namespace ir {
   public:
     /*! Discriminates the kind of values */
     enum Type : uint32_t {
-      FUNCTION_INPUT = 0,
-      INSTRUCTION_DST = 1
+      DEF_FN_INPUT = 0,
+      DEF_INSN_DST = 1,
+      DEF_SPECIAL_REG = 2
     };
     /*! Build a value from an instruction destination */
-    ValueDef(const Instruction *insn, uint32_t dstID = 0u) :
-      type(INSTRUCTION_DST)
+    explicit ValueDef(const Instruction *insn, uint32_t dstID = 0u) :
+      type(DEF_INSN_DST)
     {
       this->data.insn = insn;
       this->data.dstID = dstID;
     }
     /*! Build a value from a function argument */
-    ValueDef(const FunctionInput *input) : type(FUNCTION_INPUT) {
+    explicit ValueDef(const FunctionInput *input) : type(DEF_FN_INPUT) {
       this->data.input = input;
+    }
+    /*! Build a value from a special register */
+    explicit ValueDef(const Register &reg) : type(DEF_SPECIAL_REG) {
+      this->data.regID = uint32_t(reg);
     }
     /*! Get the type of the value */
     INLINE Type getType(void) const { return type; }
     /*! Get the instruction (only if this is a instruction value) */
     INLINE const Instruction *getInstruction(void) const {
-      GBE_ASSERT(type == INSTRUCTION_DST);
+      GBE_ASSERT(type == DEF_INSN_DST);
       return data.insn;
     }
     /*! Get the destination ID (only if this is a instruction value) */
     INLINE uint32_t getDstID(void) const {
-      GBE_ASSERT(type == INSTRUCTION_DST);
+      GBE_ASSERT(type == DEF_INSN_DST);
       return data.dstID;
     }
     /*! Get the function input (only if this is a function argument) */
     INLINE const FunctionInput *getFunctionInput(void) const {
-      GBE_ASSERT(type == FUNCTION_INPUT);
+      GBE_ASSERT(type == DEF_FN_INPUT);
       return data.input;
+    }
+    /*! Get the register */
+    INLINE Register getRegister(void) const {
+      GBE_ASSERT(type == DEF_SPECIAL_REG);
+      return Register(data.regID);
     }
 
   private:
@@ -84,8 +94,10 @@ namespace ir {
         const Instruction *insn; //<! Instruction itself
         uint32_t dstID;          //<! Which destination we take into account
       };
-      /*! ... function argument */
+      /*! ... function argument or ... */
       const FunctionInput *input;
+      /*! ... special register */
+      uint32_t regID;
     } data;
     /*!< Function argument or instruction dst? */
     Type type;
@@ -97,10 +109,14 @@ namespace ir {
     const ValueDef::Type type0 = def0.getType();
     const ValueDef::Type type1 = def1.getType();
     if (type0 != type1) return uint32_t(type0) < uint32_t(type1);
-    if (type0 == ValueDef::FUNCTION_INPUT) {
+    if (type0 == ValueDef::DEF_FN_INPUT) {
       const FunctionInput *in0 = def0.getFunctionInput();
       const FunctionInput *in1 = def1.getFunctionInput();
       return uintptr_t(in0) < uintptr_t(in1);
+    } else if (type0 == ValueDef::DEF_SPECIAL_REG) {
+      const Register reg0 = def0.getRegister();
+      const Register reg1 = def1.getRegister();
+      return uint32_t(reg0) < uint32_t(reg1);
     } else {
       const Instruction *insn0 = def0.getInstruction();
       const Instruction *insn1 = def1.getInstruction();
@@ -118,7 +134,7 @@ namespace ir {
   {
   public:
     /*! Build a value use */
-    ValueUse(const Instruction *insn, uint32_t srcID = 0u) :
+    explicit ValueUse(const Instruction *insn, uint32_t srcID = 0u) :
       insn(insn), srcID(srcID) {}
     /*! Get the instruction of the use */
     const Instruction *getInstruction(void) const { return insn; }
@@ -157,12 +173,16 @@ namespace ir {
     const DUChain &getUse(const Instruction *insn, uint32_t dstID) const;
     /*! Get the du-chain for the given function input */
     const DUChain &getUse(const FunctionInput *input) const;
+    /*! Get the du-chain for the given special register */
+    const DUChain &getUse(const Register &reg) const;
     /*! Get the ud-chain for the instruction and source */
     const UDChain &getDef(const Instruction *insn, uint32_t srcID) const;
     /*! Get the pointer to the definition *as stored in the DAG* */
     const ValueDef *getDefAddress(const Instruction *insn, uint32_t dstID) const;
     /*! Get the pointer to the definition *as stored in the DAG* */
     const ValueDef *getDefAddress(const FunctionInput *input) const;
+    /*! Get the pointer to the definition *as stored in the DAG* */
+    const ValueDef *getDefAddress(const Register &reg) const;
     /*! Get the pointer to the use *as stored in the DAG* */
     const ValueUse *getUseAddress(const Instruction *insn, uint32_t srcID) const;
     /*! Get the function we have the graph for */

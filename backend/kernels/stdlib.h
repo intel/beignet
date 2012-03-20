@@ -23,6 +23,7 @@ __attribute__((pure,const)) unsigned int __gen_ocl_get_global_id2(void);
 __attribute__((pure,const)) unsigned int __gen_ocl_get_local_id0(void);
 __attribute__((pure,const)) unsigned int __gen_ocl_get_local_id1(void);
 __attribute__((pure,const)) unsigned int __gen_ocl_get_local_id2(void);
+__attribute__ ((pure,const,overloadable)) float mad(float a, float b, float c);
 
 inline unsigned get_global_id(unsigned int dim) {
   if (dim == 0) return __gen_ocl_get_global_id0();
@@ -59,30 +60,48 @@ typedef bool bool2 __attribute__((ext_vector_type(2)));
 typedef bool bool3 __attribute__((ext_vector_type(3)));
 typedef bool bool4 __attribute__((ext_vector_type(4)));
 
-__attribute__((overloadable)) inline int4 select(int4 src0, int4 src1, int4 cond) {
-  int4 dst;
-  const int x0 = src0.x; // Fix performance issue with CLANG
-  const int x1 = src1.x;
-  const int y0 = src0.y;
-  const int y1 = src1.y;
-  const int z0 = src0.z;
-  const int z1 = src1.z;
-  const int w0 = src0.w;
-  const int w1 = src1.w;
+// This will be optimized out by LLVM and will output LLVM select instructions
+#define DECL_SELECT4(TYPE4, TYPE, COND_TYPE4, MASK)                       \
+__attribute__((overloadable))                                             \
+inline TYPE4 select(TYPE4 src0, TYPE4 src1, COND_TYPE4 cond) {            \
+  TYPE4 dst;                                                              \
+  const TYPE x0 = src0.x; /* Fix performance issue with CLANG */          \
+  const TYPE x1 = src1.x;                                                 \
+  const TYPE y0 = src0.y;                                                 \
+  const TYPE y1 = src1.y;                                                 \
+  const TYPE z0 = src0.z;                                                 \
+  const TYPE z1 = src1.z;                                                 \
+  const TYPE w0 = src0.w;                                                 \
+  const TYPE w1 = src1.w;                                                 \
+                                                                          \
+  dst.x = (cond.x & MASK) ? x1 : x0;                                      \
+  dst.y = (cond.y & MASK) ? y1 : y0;                                      \
+  dst.z = (cond.z & MASK) ? z1 : z0;                                      \
+  dst.w = (cond.w & MASK) ? w1 : w0;                                      \
+  return dst;                                                             \
+}
+DECL_SELECT4(int4, int, int4, 0x80000000)
+DECL_SELECT4(float4, float, int4, 0x80000000)
+#undef DECL_SELECT4
 
-  dst.x = (cond.x & 0x80000000) ? x1 : x0;
-  dst.y = (cond.y & 0x80000000) ? y1 : y0;
-  dst.z = (cond.z & 0x80000000) ? z1 : z0;
-  dst.w = (cond.w & 0x80000000) ? w1 : w0;
-  return dst;
+__attribute__((overloadable)) float2 mad(float2 a, float2 b, float2 c) {
+  return (float2)(mad(a.x,b.x,c.x), mad(a.y,b.y,c.y));
+}
+__attribute__((overloadable)) float3 mad(float3 a, float3 b, float3 c) {
+  return (float3)(mad(a.x,b.x,c.x), mad(a.y,b.y,c.y), mad(a.z,b.z,c.z));
+}
+__attribute__((overloadable)) float4 mad(float4 a, float4 b, float4 c) {
+  return (float4)(mad(a.x,b.x,c.x), mad(a.y,b.y,c.y),
+                  mad(a.z,b.z,c.z), mad(a.w,b.w,c.w));
 }
 
 #define __private __attribute__((address_space(0)))
 #define __global __attribute__((address_space(1)))
 #define __constant __attribute__((address_space(2)))
-#define __local __attribute__((address_space(3)))
+//#define __local __attribute__((address_space(3)))
 #define global __global
-#define local __local
+//#define local __local
 #define constant __constant
 #define private __private
 
+#define NULL ((void*)0)

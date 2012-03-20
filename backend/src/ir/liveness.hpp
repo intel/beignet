@@ -77,8 +77,8 @@ namespace ir {
     /*! Return the complete liveness info */
     INLINE const Info &getLivenessInfo(void) const { return liveness; }
     /*! Return the complete block info */
-    INLINE const BlockInfo &getBlockInfo(const BasicBlock &bb) const {
-      auto it = liveness.find(&bb);
+    INLINE const BlockInfo &getBlockInfo(const BasicBlock *bb) const {
+      auto it = liveness.find(bb);
       GBE_ASSERT(it != liveness.end() && it->second != NULL);
       return *it->second;
     }

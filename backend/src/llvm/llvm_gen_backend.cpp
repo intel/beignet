@@ -369,7 +369,7 @@ namespace gbe
     /*! Return a valid register from an operand (can use LOADI to make one) */
     INLINE ir::Register getRegister(Value *value, uint32_t index = 0);
     /*! Create a new immediate from a constant */
-    ir::ImmediateIndex newImmediate(Constant *CPV);
+    ir::ImmediateIndex newImmediate(Constant *CPV, uint32_t index = 0);
     /*! Insert a new label index when this is a scalar value */
     INLINE void newLabelIndex(const BasicBlock *bb);
     /*! Inspect the terminator instruction and try to see if we should invert
@@ -441,12 +441,18 @@ namespace gbe
   }
 
   template <typename U, typename T>
-  static U processConstant(Constant *CPV, T doIt)
+  static U processConstant(Constant *CPV, T doIt, uint32_t index = 0u)
   {
     if (dyn_cast<ConstantExpr>(CPV))
       GBE_ASSERTM(false, "Unsupported constant expression");
     else if (isa<UndefValue>(CPV) && CPV->getType()->isSingleValueType())
       GBE_ASSERTM(false, "Unsupported constant expression");
+
+    if (ConstantVector *CV = dyn_cast<ConstantVector>(CPV)) {
+      const uint32_t elemNum = CV->getNumOperands();
+      GBE_ASSERTM(index < elemNum, "Out-of-bound constant vector access");
+      CPV = cast<Constant>(CV->getOperand(index));
+    }
 
     // Integers
     if (ConstantInt *CI = dyn_cast<ConstantInt>(CPV)) {
@@ -504,8 +510,8 @@ namespace gbe
     ir::Context &ctx;
   };
 
-  ir::ImmediateIndex GenWriter::newImmediate(Constant *CPV) {
-    return processConstant<ir::ImmediateIndex>(CPV, NewImmediateFunctor(ctx));
+  ir::ImmediateIndex GenWriter::newImmediate(Constant *CPV, uint32_t index) {
+    return processConstant<ir::ImmediateIndex>(CPV, NewImmediateFunctor(ctx), index);
   }
 
   void GenWriter::newRegister(Value *value) {
@@ -530,17 +536,18 @@ namespace gbe
     };
   }
 
-  ir::Register GenWriter::getRegister(Value *value, uint32_t index) {
+  ir::Register GenWriter::getRegister(Value *value, uint32_t elemID) {
     Constant *CPV = dyn_cast<Constant>(value);
-    if (CPV && !isa<GlobalValue>(CPV)) {
-      const ir::ImmediateIndex index = this->newImmediate(CPV);
-      const ir::Immediate imm = ctx.getImmediate(index);
+    if (CPV) {
+      GBE_ASSERT(isa<GlobalValue>(CPV) == false);
+      const ir::ImmediateIndex immIndex = this->newImmediate(CPV, elemID);
+      const ir::Immediate imm = ctx.getImmediate(immIndex);
       const ir::Register reg = ctx.reg(getFamily(imm.type));
-      ctx.LOADI(imm.type, reg, index);
+      ctx.LOADI(imm.type, reg, immIndex);
       return reg;
     }
     else
-      return regTranslator.getScalar(value, index);
+      return regTranslator.getScalar(value, elemID);
   }
 
   void GenWriter::newLabelIndex(const BasicBlock *bb) {
@@ -1115,7 +1122,7 @@ namespace gbe
       BasicBlock *target = I.getSuccessor(0);
       if (llvm::next(Function::iterator(bb)) != Function::iterator(target)) {
         GBE_ASSERT(labelMap.find(target) != labelMap.end());
-        const ir::LabelIndex labelIndex = labelMap[bb];
+        const ir::LabelIndex labelIndex = labelMap[target];
         ctx.BRA(labelIndex);
       }
     }

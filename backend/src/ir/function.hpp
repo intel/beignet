@@ -192,6 +192,16 @@ namespace ir {
       GBE_ASSERT(blocks[ID] != NULL);
       return *blocks[ID];
     }
+    /*! Get the first index of the special registers and number of them */
+    uint32_t getFirstSpecialReg(void) const;
+    uint32_t getSpecialRegNum(void) const;
+    /*! Indicate if the given register is a special one */
+    INLINE bool isSpecialReg(const Register &reg) const {
+      const uint32_t ID = uint32_t(reg);
+      const uint32_t firstID = this->getFirstSpecialReg();
+      const uint32_t specialNum = this->getSpecialRegNum();
+      return ID >= firstID && ID < firstID + specialNum;
+    }
     /*! Create a new label (still not bound to a basic block) */
     LabelIndex newLabel(void);
     /*! Create the control flow graph */

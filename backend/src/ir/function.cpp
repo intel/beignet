@@ -67,6 +67,14 @@ namespace ir {
     }
   }
 
+  uint32_t Function::getFirstSpecialReg(void) const {
+    return this->profile == PROFILE_OCL ? 0u : ~0u;
+  }
+
+  uint32_t Function::getSpecialRegNum(void) const {
+    return this->profile == PROFILE_OCL ? ocl::regNum : ~0u;
+  }
+
   void Function::computeCFG(void) {
     // Clear possible previously computed CFG
     this->foreachBlock([this](BasicBlock &bb) {
@@ -82,7 +90,10 @@ namespace ir {
         jumpToNext = NULL;
       }
       if (bb.last == NULL) return;
-      GBE_ASSERT(bb.last->isMemberOf<BranchInstruction>() == true);
+      if (bb.last->isMemberOf<BranchInstruction>() == false) {
+        jumpToNext = &bb;
+        return;
+      }
       const BranchInstruction &insn = cast<BranchInstruction>(*bb.last);
       if (insn.getOpcode() == OP_BRA) {
         const LabelIndex label = insn.getLabelIndex();

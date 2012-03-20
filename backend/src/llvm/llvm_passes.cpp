@@ -22,6 +22,11 @@
  * \author Benjamin Segovia <benjamin.segovia@intel.com>
  */
 
+/* THIS CODE IS DERIVED FROM LLVM PTX BACKEND. CODE IS HERE:
+ * http://sourceforge.net/scm/?type=git&group_id=319085
+ * Note that the LICENSE is GPL
+ */
+
 #include "llvm/CallingConv.h"
 #include "llvm/Constants.h"
 #include "llvm/DerivedTypes.h"
@@ -85,7 +90,9 @@ namespace gbe
       case Type::VectorTyID:
       {
         const VectorType* VecTy = cast<VectorType>(Ty);
-        return VecTy->getNumElements() * getTypeByteSize(unit, VecTy->getElementType());
+        uint32_t elemNum = VecTy->getNumElements();
+        if (elemNum == 3) elemNum = 4; // OCL spec
+        return elemNum * getTypeByteSize(unit, VecTy->getElementType());
       }
       case Type::PointerTyID:
       case Type::IntegerTyID:
