@@ -31,7 +31,7 @@
 
 #include <stdint.h>
 
-struct {
+static struct {
     char    *name;
     int            nsrc;
     int            ndst;
@@ -91,7 +91,7 @@ struct {
     [BRW_OPCODE_ENDIF] = { .name = "endif", .nsrc = 2, .ndst = 0 },
 };
 
-char *conditional_modifier[16] = {
+static char *conditional_modifier[16] = {
     [BRW_CONDITIONAL_NONE] = "",
     [BRW_CONDITIONAL_Z] = ".e",
     [BRW_CONDITIONAL_NZ] = ".ne",
@@ -104,17 +104,17 @@ char *conditional_modifier[16] = {
     [BRW_CONDITIONAL_U] = ".u",
 };
 
-char *negate[2] = {
+static char *negate[2] = {
     [0] = "",
     [1] = "-",
 };
 
-char *_abs[2] = {
+static char *_abs[2] = {
     [0] = "",
     [1] = "(abs)",
 };
 
-char *vert_stride[16] = {
+static char *vert_stride[16] = {
     [0] = "0",
     [1] = "1",
     [2] = "2",
@@ -125,7 +125,7 @@ char *vert_stride[16] = {
     [15] = "VxH",
 };
 
-char *width[8] = {
+static char *width[8] = {
     [0] = "1",
     [1] = "2",
     [2] = "4",
@@ -133,44 +133,41 @@ char *width[8] = {
     [4] = "16",
 };
 
-char *horiz_stride[4] = {
+static char *horiz_stride[4] = {
     [0] = "0",
     [1] = "1",
     [2] = "2",
     [3] = "4"
 };
 
-char *chan_sel[4] = {
+static char *chan_sel[4] = {
     [0] = "x",
     [1] = "y",
     [2] = "z",
     [3] = "w",
 };
 
-char *dest_condmod[16] = {
-};
-
-char *debug_ctrl[2] = {
+static char *debug_ctrl[2] = {
     [0] = "",
     [1] = ".breakpoint"
 };
 
-char *saturate[2] = {
+static char *saturate[2] = {
     [0] = "",
     [1] = ".sat"
 };
 
-char *accwr[2] = {
+static char *accwr[2] = {
     [0] = "",
     [1] = "AccWrEnable"
 };
 
-char *wectrl[2] = {
+static char *wectrl[2] = {
     [0] = "WE_normal",
     [1] = "WE_all"
 };
 
-char *exec_size[8] = {
+static char *exec_size[8] = {
     [0] = "1",
     [1] = "2",
     [2] = "4",
@@ -179,12 +176,12 @@ char *exec_size[8] = {
     [5] = "32"
 };
 
-char *pred_inv[2] = {
+static char *pred_inv[2] = {
     [0] = "+",
     [1] = "-"
 };
 
-char *pred_ctrl_align16[16] = {
+static char *pred_ctrl_align16[16] = {
     [1] = "",
     [2] = ".x",
     [3] = ".y",
@@ -194,7 +191,7 @@ char *pred_ctrl_align16[16] = {
     [7] = ".all4h",
 };
 
-char *pred_ctrl_align1[16] = {
+static char *pred_ctrl_align1[16] = {
     [1] = "",
     [2] = ".anyv",
     [3] = ".allv",
@@ -208,36 +205,36 @@ char *pred_ctrl_align1[16] = {
     [11] = ".all16h",
 };
 
-char *thread_ctrl[4] = {
+static char *thread_ctrl[4] = {
     [0] = "",
     [2] = "switch"
 };
 
-char *compr_ctrl[4] = {
+static char *compr_ctrl[4] = {
     [0] = "",
     [1] = "sechalf",
     [2] = "compr",
     [3] = "compr4",
 };
 
-char *dep_ctrl[4] = {
+static char *dep_ctrl[4] = {
     [0] = "",
     [1] = "NoDDClr",
     [2] = "NoDDChk",
     [3] = "NoDDClr,NoDDChk",
 };
 
-char *mask_ctrl[4] = {
+static char *mask_ctrl[4] = {
     [0] = "",
     [1] = "nomask",
 };
 
-char *access_mode[2] = {
+static char *access_mode[2] = {
     [0] = "align1",
     [1] = "align16",
 };
 
-char *reg_encoding[8] = {
+static char *reg_encoding[8] = {
     [0] = "UD",
     [1] = "D",
     [2] = "UW",
@@ -247,7 +244,7 @@ char *reg_encoding[8] = {
     [7] = "F"
 };
 
-int reg_type_size[8] = {
+const int reg_type_size[8] = {
     [0] = 4,
     [1] = 4,
     [2] = 2,
@@ -257,24 +254,14 @@ int reg_type_size[8] = {
     [7] = 4
 };
 
-char *imm_encoding[8] = {
-    [0] = "UD",
-    [1] = "D",
-    [2] = "UW",
-    [3] = "W",
-    [5] = "VF",
-    [6] = "V",
-    [7] = "F"
-};
-
-char *reg_file[4] = {
+static char *reg_file[4] = {
     [0] = "A",
     [1] = "g",
     [2] = "m",
     [3] = "imm",
 };
 
-char *writemask[16] = {
+static char *writemask[16] = {
     [0x0] = ".",
     [0x1] = ".x",
     [0x2] = ".y",
@@ -293,12 +280,12 @@ char *writemask[16] = {
     [0xf] = "",
 };
 
-char *end_of_thread[2] = {
+static char *end_of_thread[2] = {
     [0] = "",
     [1] = "EOT"
 };
 
-char *target_function[16] = {
+static char *target_function[16] = {
     [BRW_SFID_NULL] = "null",
     [BRW_SFID_MATH] = "math",
     [BRW_SFID_SAMPLER] = "sampler",
@@ -309,7 +296,7 @@ char *target_function[16] = {
     [BRW_SFID_THREAD_SPAWNER] = "thread_spawner"
 };
 
-char *target_function_gen6[16] = {
+static char *target_function_gen6[16] = {
     [BRW_SFID_NULL] = "null",
     [BRW_SFID_MATH] = "math",
     [BRW_SFID_SAMPLER] = "sampler",
@@ -322,7 +309,7 @@ char *target_function_gen6[16] = {
     [GEN7_SFID_DATAPORT_DATA_CACHE] = "data"
 };
 
-char *dp_rc_msg_type_gen6[16] = {
+static char *dp_rc_msg_type_gen6[16] = {
     [BRW_DATAPORT_READ_MESSAGE_OWORD_BLOCK_READ] = "OWORD block read",
     [GEN6_DATAPORT_READ_MESSAGE_RENDER_UNORM_READ] = "RT UNORM read",
     [GEN6_DATAPORT_READ_MESSAGE_OWORD_DUAL_BLOCK_READ] = "OWORD dual block read",
@@ -339,7 +326,7 @@ char *dp_rc_msg_type_gen6[16] = {
     [GEN6_DATAPORT_WRITE_MESSAGE_RENDER_TARGET_UNORM_WRITE] = "RT UNORMc write",
 };
 
-char *math_function[16] = {
+static char *math_function[16] = {
     [BRW_MATH_FUNCTION_INV] = "inv",
     [BRW_MATH_FUNCTION_LOG] = "log",
     [BRW_MATH_FUNCTION_EXP] = "exp",
@@ -355,53 +342,53 @@ char *math_function[16] = {
     [BRW_MATH_FUNCTION_INT_DIV_REMAINDER] = "intmod",
 };
 
-char *math_saturate[2] = {
+static char *math_saturate[2] = {
     [0] = "",
     [1] = "sat"
 };
 
-char *math_signed[2] = {
+static char *math_signed[2] = {
     [0] = "",
     [1] = "signed"
 };
 
-char *math_scalar[2] = {
+static char *math_scalar[2] = {
     [0] = "",
     [1] = "scalar"
 };
 
-char *math_precision[2] = {
+static char *math_precision[2] = {
     [0] = "",
     [1] = "partial_precision"
 };
 
-char *urb_opcode[2] = {
+static char *urb_opcode[2] = {
     [0] = "urb_write",
     [1] = "ff_sync",
 };
 
-char *urb_swizzle[4] = {
+static char *urb_swizzle[4] = {
     [BRW_URB_SWIZZLE_NONE] = "",
     [BRW_URB_SWIZZLE_INTERLEAVE] = "interleave",
     [BRW_URB_SWIZZLE_TRANSPOSE] = "transpose",
 };
 
-char *urb_allocate[2] = {
+static char *urb_allocate[2] = {
     [0] = "",
     [1] = "allocate"
 };
 
-char *urb_used[2] = {
+static char *urb_used[2] = {
     [0] = "",
     [1] = "used"
 };
 
-char *urb_complete[2] = {
+static char *urb_complete[2] = {
     [0] = "",
     [1] = "complete"
 };
 
-char *sampler_target_format[4] = {
+static char *sampler_target_format[4] = {
     [0] = "F",
     [2] = "UD",
     [3] = "D"

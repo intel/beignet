@@ -42,8 +42,7 @@ namespace ir {
 namespace gbe {
 namespace gen {
 
-  struct KernelArgument
-  {
+  struct KernelArgument {
     GenArgType type; //!< Pointer, structure, regular value?
     size_t size;     //!< Size of each argument
   };
@@ -52,10 +51,33 @@ namespace gen {
   struct Kernel : public NonCopyable
   {
     /*! Create an empty kernel with the given name */
-    Kernel(void);
+    Kernel(const std::string &name);
     /*! Destroy it */
     ~Kernel(void);
-
+    /*! Return the instruction stream */
+    INLINE const char *getCode(void) const { return (const char*) insns; }
+    /*! Return the instruction stream size */
+    INLINE size_t getCodeSize(void) const {
+      return insnNum * sizeof(brw_instruction);
+    }
+    /*! Return the number of arguments for the kernel call */
+    INLINE uint32_t getArgNum(void) const { return argNum; }
+    /*! Return the size of the given argument */
+    INLINE uint32_t getArgSize(uint32_t argID) const {
+      if (argID >= argNum)
+        return 0u;
+      else
+        return args[argID].size;
+    }
+    /*! Return the type of the given argument */
+    INLINE GenArgType getArgType(uint32_t argID) const {
+      if (argID >= argNum)
+        return GEN_ARG_INVALID;
+      else
+        return args[argID].type;
+    }
+  private:
+    friend class Program;    //!< Owns the kernels
     std::string name;        //!< Kernel name
     KernelArgument *args;    //!< Each argument
     brw_instruction *insns;  //!< Instruction stream
@@ -73,12 +95,23 @@ namespace gen {
     Program(void);
     /*! Destroy the program */
     ~Program(void);
+    /*! Get the number of kernels in the program */
+    uint32_t getKernelNum(void) const { return kernels.size(); }
+    /*! Get the kernel from its name */
+    Kernel *getKernel(const std::string &name) const {
+      auto it = kernels.find(name);
+      if (it == kernels.end())
+        return NULL;
+      else
+        return it->second;
+    }
     /*! Build a program from a ir::Unit */
     bool buildFromUnit(const ir::Unit &unit, std::string &error);
     /*! Buils a program from a LLVM source code */
     bool buildFromLLVMFile(const char *fileName, std::string &error);
     /*! Buils a program from a OCL string */
     bool buildFromSource(const char *source, std::string &error);
+  private:
     /*! Kernels sorted by their name */
     hash_map<std::string, Kernel*> kernels;
   };

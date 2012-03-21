@@ -489,6 +489,19 @@ struct brw_instruction
          uint32_t end_of_thread:1;
       } generic_gen5;
 
+      struct {
+        uint32_t opcode:1;
+        uint32_t request:1;
+        uint32_t pad0:2;
+        uint32_t resource:1;
+        uint32_t pad1:14;
+        uint32_t header:1;
+        uint32_t response_length:5;
+        uint32_t msg_length:4;
+        uint32_t pad2:2;
+        uint32_t end_of_thread:1;
+      } spawner_gen5;
+
       /** G45 PRM, Volume 4, Section 6.1.1.1 */
       struct {
          uint32_t function:4;

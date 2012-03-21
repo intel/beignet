@@ -44,7 +44,6 @@ static void guess_execution_size(struct brw_compile *p,
       insn->header.execution_size = reg.width;        /* note - definitions are compatible */
 }
 
-
 /**
  * Prior to Sandybridge, the SEND instruction accepted non-MRF source
  * registers, implicitly moving the operand to a message register.
@@ -543,28 +542,8 @@ struct brw_instruction *
 brw_next_insn(struct brw_compile *p, uint32_t opcode)
 {
    struct brw_instruction *insn;
-   assert(0);
-#if 0
-   if (p->nr_insn + 1 > p->store_size) {
-      p->store_size <<= 1;
-      p->store = reralloc(p->mem_ctx, p->store,
-                          struct brw_instruction, p->store_size);
-      if (!p->store)
-         assert(!"realloc eu store memeory failed");
-   }
-#endif
-
    insn = &p->store[p->nr_insn++];
    memcpy(insn, p->current, sizeof(*insn));
-
-   /* Reset this one-shot flag: 
-    */
-
-   if (p->current->header.destreg__conditionalmod) {
-      p->current->header.destreg__conditionalmod = 0;
-      p->current->header.predicate_control = BRW_PREDICATE_NORMAL;
-   }
-
    insn->header.opcode = opcode;
    return insn;
 }
@@ -1632,5 +1611,30 @@ void brw_SAMPLE(struct brw_compile *p,
       brw_pop_insn_state(p);
    }
 
+}
+
+void
+brw_EOT(struct brw_compile *p, uint32_t msg_nr)
+{
+  struct brw_instruction *insn = NULL;
+
+  brw_MOV(p, brw_message_reg(msg_nr), brw_vec8_grf(0,0));
+  insn = next_insn(p, BRW_OPCODE_SEND);
+  brw_set_dest(p, insn, brw_null_reg());
+  brw_set_src0(p, insn, brw_message_reg(msg_nr));
+  brw_set_src1(p, insn, brw_imm_ud(0));
+
+  insn->header.execution_size = BRW_EXECUTE_1;
+  insn->header.predicate_control = 0; /* XXX */
+  insn->header.compression_control = BRW_COMPRESSION_NONE;
+  insn->header.execution_size = BRW_EXECUTE_1;
+  insn->bits3.spawner_gen5.opcode = 0;
+  insn->bits3.spawner_gen5.request = 1;
+  insn->bits3.spawner_gen5.resource = 0;
+  insn->bits3.spawner_gen5.header = 0;
+  insn->bits3.spawner_gen5.response_length = 0;
+  insn->bits3.spawner_gen5.msg_length = 1;
+  insn->bits3.spawner_gen5.end_of_thread = 1;
+  insn->header.destreg__conditionalmod = BRW_SFID_THREAD_SPAWNER;
 }
 

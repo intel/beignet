@@ -141,9 +141,18 @@ namespace gbe
   static MemDebugger *memDebugger = NULL;
 
   /*! Monitor maximum memory requirement in the compiler */
-  static MutexSys sizeMutex;
+  static MutexSys *sizeMutex = NULL;
+  static bool isMutexInitializing = true;
   static size_t memDebuggerCurrSize(0u);
   static size_t memDebuggerMaxSize(0u);
+  static void SizeMutexDeallocate(void) { if (sizeMutex) delete sizeMutex; }
+  static void SizeMutexAllocate(void) {
+    if (sizeMutex == NULL && isMutexInitializing == false) {
+      isMutexInitializing = true;
+      sizeMutex = new MutexSys;
+      atexit(SizeMutexDeallocate);
+    }
+  }
 
   /*! Stop the memory debugger */
   static void MemDebuggerEnd(void) {
@@ -202,10 +211,11 @@ namespace gbe
     void *ptr = std::malloc(size + sizeof(size_t));
     *(size_t *) ptr = size;
     MemDebuggerInitializeMem((char*) ptr + sizeof(size_t), size);
-    sizeMutex.lock();
+    SizeMutexAllocate();
+    if (sizeMutex) sizeMutex->lock();
     memDebuggerCurrSize += size;
     memDebuggerMaxSize = std::max(memDebuggerCurrSize, memDebuggerMaxSize);
-    sizeMutex.unlock();
+    if (sizeMutex) sizeMutex->unlock();
     return (char *) ptr + sizeof(size_t);
   }
   void memFree(void *ptr) {
@@ -213,9 +223,10 @@ namespace gbe
       char *toFree = (char*) ptr - sizeof(size_t);
       const size_t size = *(size_t *) toFree;
       MemDebuggerInitializeMem(ptr, size);
-      sizeMutex.lock();
+      SizeMutexAllocate();
+      if (sizeMutex) sizeMutex->lock();
       memDebuggerCurrSize -= size;
-      sizeMutex.unlock();
+      if (sizeMutex) sizeMutex->unlock();
       std::free(toFree);
     }
   }
@@ -238,10 +249,11 @@ namespace gbe
     ((void**)aligned)[-1] = mem;
     ((uintptr_t*)aligned)[-2] = uintptr_t(size);
     MemDebuggerInitializeMem(aligned, size);
-    sizeMutex.lock();
+    SizeMutexAllocate();
+    if (sizeMutex) sizeMutex->lock();
     memDebuggerCurrSize += size;
     memDebuggerMaxSize = std::max(memDebuggerCurrSize, memDebuggerMaxSize);
-    sizeMutex.unlock();
+    if (sizeMutex) sizeMutex->unlock();
     return aligned;
   }
 
@@ -250,9 +262,10 @@ namespace gbe
       const size_t size = ((uintptr_t*)ptr)[-2];
       MemDebuggerInitializeMem(ptr, size);
       free(((void**)ptr)[-1]);
-      sizeMutex.lock();
+      SizeMutexAllocate();
+      if (sizeMutex) sizeMutex->lock();
       memDebuggerCurrSize -= size;
-      sizeMutex.unlock();
+      if (sizeMutex) sizeMutex->unlock();
     }
   }
 } /* namespace gbe */

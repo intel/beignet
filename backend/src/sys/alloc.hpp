@@ -63,6 +63,7 @@ namespace gbe
 
 /*! Declare a structure with custom allocators */
 #define GBE_STRUCT(TYPE)                                     \
+public:                                                      \
   void* operator new(size_t size)   {                        \
     if (AlignOf<TYPE>::value > sizeof(uintptr_t))            \
       return gbe::alignedMalloc(size, AlignOf<TYPE>::value); \
@@ -92,7 +93,6 @@ namespace gbe
 
 /*! Declare a class with custom allocators */
 #define GBE_CLASS(TYPE) \
-public:                 \
   GBE_STRUCT(TYPE)      \
 private:
 

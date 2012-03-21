@@ -46,7 +46,7 @@ enum GenArgType {
   GEN_ARG_GLOBAL_PTR = 1,       // __global, __constant
   GEN_ARG_STRUCTURE = 2,        // By value structure
   GEN_ARG_IMAGE = 3,            // image2d_t, image3d_t
-  GEN_ARG_INVALUE = 0xffffffff
+  GEN_ARG_INVALID = 0xffffffff
 };
 
 /*! Create a new program from the given source code (zero terminated string) */
@@ -55,6 +55,12 @@ GenProgram *GenProgramNewFromSource(const char *source);
 /*! Create a new program from the given blob */
 GenProgram *GenProgramNewFromBinary(const char *binary, size_t size);
 
+/*! Create a new program from the given LLVM file */
+GenProgram *GenProgramNewFromLLVM(const char *fileName,
+                                  size_t stringSize,
+                                  char *err,
+                                  size_t *errSize);
+
 /*! Destroy and deallocate the given program */
 void GenProgramDelete(GenProgram *program);
 
@@ -62,7 +68,7 @@ void GenProgramDelete(GenProgram *program);
 uint32_t GenProgramGetKernelNum(const GenProgram *program);
 
 /*! Get the kernel from its name */
-const GenKernel GenProgramGetKernel(const GenProgram *program, const char *name);
+const GenKernel *GenProgramGetKernel(const GenProgram *program, const char *name);
 
 /*! Get the Gen ISA source code */
 const char *GenKernelGetCode(const GenKernel *kernel);
@@ -77,7 +83,7 @@ uint32_t GenKernelGetArgNum(const GenKernel *kernel);
 uint32_t GenKernelGetArgSize(const GenKernel *kernel, uint32_t argID);
 
 /*! Get the type of the given argument */
-GenArgType GenKernelGetArgType(const GenKernel *kernel, uint32_t argID);
+enum GenArgType GenKernelGetArgType(const GenKernel *kernel, uint32_t argID);
 
 #ifdef __cplusplus
 }

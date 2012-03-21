@@ -47,10 +47,13 @@ namespace ir {
   class Unit : public NonCopyable
   {
   public:
+    typedef hash_map<std::string, Function*> FunctionSet;
     /*! Create an empty unit */
     Unit(PointerSize pointerSize = POINTER_32_BITS);
     /*! Release everything (*including* the function pointers) */
     ~Unit(void);
+    /*! Get the set of functions defined in the unit */
+    const FunctionSet &getFunctionSet(void) const { return functions; }
     /*! Retrieve the function by its name */
     Function *getFunction(const std::string &name) const;
     /*! Return NULL if the function already exists */

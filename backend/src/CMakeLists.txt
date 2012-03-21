@@ -43,6 +43,8 @@ else (GBE_USE_BLOB)
     ir/value.cpp
     ir/value.hpp
     gen/program.cpp
+    gen/program.hpp
+    gen/program.h
     gen/brw_disasm.c
     gen/brw_eu_emit.c
     gen/brw_eu.c)
@@ -64,6 +66,12 @@ add_library (gbe SHARED ${GBE_SRC})
 include (${LLVM_DIR}/AddLLVMDefinitions.cmake)
 target_link_libraries (gbe
   LLVMGenBackend
+  LLVMTransformUtils
+  LLVMCore
+  LLVMTarget
+  LLVMAnalysis
+  LLVMCodeGen
+  LLVMScalarOpts
   LLVMSelectionDAG
   LLVMAsmPrinter
   LLVMMCParser
@@ -75,4 +83,7 @@ if (GBE_COMPILE_UTESTS)
   add_executable (tester utest/tester.cpp)
   target_link_libraries (tester gbe)
 endif (GBE_COMPILE_UTESTS)
+
+install (TARGETS gbe LIBRARY DESTINATION lib)
+install (FILES gen/program.h DESTINATION include/gen)
 

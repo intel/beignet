@@ -924,6 +924,8 @@ void brw_math2(struct brw_compile *p,
                struct brw_reg src0,
                struct brw_reg src1);
 
+void brw_EOT(struct brw_compile *p, uint32_t msg_nr);
+
 void brw_oword_block_read(struct brw_compile *p,
                           struct brw_reg dest,
                           struct brw_reg mrf,
