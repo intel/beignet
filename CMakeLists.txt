@@ -88,6 +88,14 @@ ELSE(XFIXES_FOUND)
   MESSAGE(STATUS "Looking for Xfixes - not found")
 ENDIF(XFIXES_FOUND)
 
+# Gen-backend (compiler)
+INCLUDE(CMake/FindGBE.cmake)
+IF(GBE_FOUND)
+  MESSAGE(STATUS "Looking for Gen-Backend - found")
+ELSE(GBE_FOUND)
+  MESSAGE(STATUS "Looking for Gen-Backend - not found")
+ENDIF(GBE_FOUND)
+
 # the run-time itself
 ADD_SUBDIRECTORY(src)
 

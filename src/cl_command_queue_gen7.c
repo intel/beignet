@@ -100,13 +100,15 @@ cl_command_queue_ND_range_gen7(cl_command_queue queue,
                                const size_t *global_wk_sz,
                                const size_t *local_wk_sz)
 {
+#if 0
   cl_context ctx = queue->ctx;
   intel_gpgpu_t *gpgpu = queue->gpgpu;
   drm_intel_bo *private_bo = NULL, *scratch_bo = NULL;
   char *curbe = NULL;        /* Does not include per-thread local IDs */
   char *final_curbe = NULL;  /* Includes them */
   genx_gpgpu_kernel_t kernel;
-  const size_t simd_sz = ker->patch.exec_env.largest_compiled_simd_sz;
+  //const size_t simd_sz = ker->patch.exec_env.largest_compiled_simd_sz;
+  const size_t simd_sz = 16;
   size_t local_sz, batch_sz, cst_sz = ker->patch.curbe.sz;
   size_t i, thread_n, id_offset;
   cl_int err = CL_SUCCESS;
@@ -176,5 +178,7 @@ error:
   cl_free(final_curbe);
   cl_free(curbe);
   return err;
+#endif
+  return CL_SUCCESS;
 }
 

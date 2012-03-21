@@ -1,6 +1,7 @@
 INCLUDE_DIRECTORIES(
   ${CMAKE_CURRENT_SOURCE_DIR}
   ${DRM_INCLUDE_PATH}
+  ${GBE_INCLUDE_PATH}
   ${CMAKE_CURRENT_SOURCE_DIR}/../include)
 
 SET(OPENCL_SRC
@@ -16,7 +17,6 @@ SET(OPENCL_SRC
     cl_device_id.c
     cl_context.c
     cl_command_queue.c
-    cl_command_queue_gen6.c
     cl_command_queue_gen7.c
     intel/intel_gpgpu.c
     intel/intel_batchbuffer.c
@@ -26,6 +26,7 @@ SET(OPENCL_SRC
 
 ADD_LIBRARY(cl SHARED ${OPENCL_SRC})
 TARGET_LINK_LIBRARIES(cl
+                      ${GBE_LIBRARY}
                       ${DRM_LIBRARY}
                       ${DRM_INTEL_LIBRARY}
                       ${XLIB_LIBRARY}
@@ -39,7 +40,6 @@ ADD_LIBRARY(cl_test STATIC
             tests/cl_file_map.c)
 TARGET_LINK_LIBRARIES(cl_test cl)
 
-ADD_EXECUTABLE(cl_inject cl_inject.c tests/cl_file_map.c)
 ADD_EXECUTABLE(test_write_only tests/test_write_only.c)
 ADD_EXECUTABLE(test_copy_buffer tests/test_copy_buffer.c)
 ADD_EXECUTABLE(test_copy_image tests/test_copy_image.c)
@@ -52,7 +52,6 @@ ADD_EXECUTABLE(test_local_memory tests/test_local_memory.c)
 ADD_EXECUTABLE(test_private_memory tests/test_private_memory.c)
 ADD_EXECUTABLE(test_constant_memory tests/test_constant_memory.c)
 ADD_EXECUTABLE(test_memory_leak tests/test_memory_leak.c)
-ADD_EXECUTABLE(test_perf_report tests/test_perf_report.c)
 ADD_EXECUTABLE(mandelbrot tests/mandelbrot.c)
 ADD_EXECUTABLE(mersenneTwister tests/mersenneTwister.c)
 ADD_EXECUTABLE(blackscholes tests/blackscholes.c)
@@ -76,7 +75,6 @@ TARGET_LINK_LIBRARIES(test_private_memory cl_test m)
 TARGET_LINK_LIBRARIES(test_constant_memory cl_test m)
 TARGET_LINK_LIBRARIES(test_memory_leak cl_test m)
 TARGET_LINK_LIBRARIES(test_write_only cl_test m)
-TARGET_LINK_LIBRARIES(test_perf_report cl_test m)
 TARGET_LINK_LIBRARIES(mandelbrot cl_test m)
 TARGET_LINK_LIBRARIES(mersenneTwister cl_test m)
 TARGET_LINK_LIBRARIES(blackscholes cl_test m)

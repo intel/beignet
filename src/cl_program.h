@@ -62,5 +62,13 @@ cl_program_create_from_binary(cl_context             context,
                               cl_int *               binary_status,
                               cl_int *               errcode_ret);
 
+/* Directly create a program from a LLVM source file */
+extern cl_program
+cl_program_create_from_llvm(cl_context             context,
+                            cl_uint                num_devices,
+                            const cl_device_id *   devices,
+                            const char *           fileName,
+                            cl_int *               errcode_ret);
+
 #endif /* __CL_PROGRAM_H__ */
 

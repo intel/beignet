@@ -103,168 +103,6 @@ cl_command_queue_add_ref(cl_command_queue queue)
   atomic_inc(&queue->ref_n);
 }
 
-static void
-cl_kernel_copy_image_parameters(cl_kernel k, cl_mem mem, int index, char *curbe)
-{
-  cl_curbe_patch_info_t *info = NULL;
-  uint64_t key;
-  assert(curbe && mem && mem->is_image);
-
-  key = cl_curbe_key(DATA_PARAMETER_IMAGE_WIDTH, index, 0);
-  if ((info = cl_kernel_get_curbe_info(k, key)) != NULL)
-    memcpy(curbe+info->offsets[0], &mem->w, sizeof(uint32_t));
-  key = cl_curbe_key(DATA_PARAMETER_IMAGE_HEIGHT, index, 0);
-  if ((info = cl_kernel_get_curbe_info(k, key)) != NULL)
-    memcpy(curbe+info->offsets[0], &mem->h, sizeof(uint32_t));
-  key = cl_curbe_key(DATA_PARAMETER_IMAGE_DEPTH, index, 0);
-  if ((info = cl_kernel_get_curbe_info(k, key)) != NULL)
-    memcpy(curbe+info->offsets[0], &mem->depth, sizeof(uint32_t));
-  key = cl_curbe_key(DATA_PARAMETER_IMAGE_CHANNEL_DATA_TYPE, index, 0);
-  if ((info = cl_kernel_get_curbe_info(k, key)) != NULL)
-    memcpy(curbe+info->offsets[0], &mem->fmt.image_channel_data_type, sizeof(uint32_t));
-  key = cl_curbe_key(DATA_PARAMETER_IMAGE_CHANNEL_ORDER, index, 0);
-  if ((info = cl_kernel_get_curbe_info(k, key)) != NULL)
-    memcpy(curbe+info->offsets[0], &mem->fmt.image_channel_order, sizeof(uint32_t));
-}
-
-LOCAL cl_int
-cl_command_queue_bind_surface(cl_command_queue queue,
-                              cl_kernel k,
-                              char *curbe,
-                              drm_intel_bo **local, 
-                              drm_intel_bo **priv,
-                              drm_intel_bo **scratch,
-                              uint32_t local_sz)
-{
-  cl_context ctx = queue->ctx;
-  intel_gpgpu_t *gpgpu = queue->gpgpu;
-  drm_intel_bufmgr *bufmgr = cl_context_get_intel_bufmgr(ctx);
-  cl_mem mem = NULL;
-  drm_intel_bo *bo = NULL, *sync_bo = NULL;
-  const size_t max_thread = ctx->device->max_compute_unit;
-  cl_int err = CL_SUCCESS;
-  uint32_t i, index;
-
-  /* Bind user defined surface */
-  for (i = 0; i < k->arg_info_n; ++i) {
-    assert(k->arg_info[i].offset % SURFACE_SZ == 0);
-    index = k->arg_info[i].offset / SURFACE_SZ;
-    mem = (cl_mem) k->args[k->arg_info[i].arg_index];
-    assert(index != MAX_SURFACES - 1);
-    CHECK_MEM(mem);
-    bo = mem->bo;
-    assert(bo);
-    if (mem->is_image) {
-      const int32_t w = mem->w, h = mem->h, pitch = mem->pitch;
-      const uint32_t fmt = mem->intel_fmt;
-      gpgpu_tiling_t tiling = GPGPU_NO_TILE;
-      if (mem->tiling == CL_TILE_X)
-        tiling = GPGPU_TILE_X;
-      else if (mem->tiling == CL_TILE_Y)
-        tiling = GPGPU_TILE_Y;
-      gpgpu_bind_image2D(gpgpu, index, bo, fmt, w, h, pitch, tiling);
-
-      /* Copy the image parameters (width, height) in the constant buffer if the
-       * user requests them
-       */
-      cl_kernel_copy_image_parameters(k, mem, index, curbe);
-    } else
-      gpgpu_bind_buf(gpgpu, index, bo, cc_llc_l3);
-  }
-
-  /* Allocate the constant surface (if any) */
-  if (k->const_bo) {
-    assert(k->const_bo_index != MAX_SURFACES - 1);
-    gpgpu_bind_buf(gpgpu, k->const_bo_index,
-                   k->const_bo,
-                   cc_llc_l3);
-  }
-
-  /* Allocate local surface needed for SLM and bind it */
-  if (local && local_sz != 0) {
-    const size_t sz = 16 * local_sz; /* XXX 16 == maximum barrier number */
-    assert(k->patch.local_surf.offset % SURFACE_SZ == 0);
-    index = k->patch.local_surf.offset / SURFACE_SZ;
-    assert(index != MAX_SURFACES - 1);
-    *local = drm_intel_bo_alloc(bufmgr, "CL local surface", sz, 64);
-    gpgpu_bind_buf(gpgpu, index, *local, cc_llc_l3);
-  }
-  else if (local)
-    *local = NULL;
-
-  /* Allocate private surface and bind it */
-  if (priv && k->patch.private_surf.size != 0) {
-    const size_t sz = max_thread *
-                      k->patch.private_surf.size *
-                      k->patch.exec_env.largest_compiled_simd_sz;
-    // assert(k->patch.exec_env.largest_compiled_simd_sz == 16);
-    assert(k->patch.private_surf.offset % SURFACE_SZ == 0);
-    index = k->patch.private_surf.offset / SURFACE_SZ;
-    assert(index != MAX_SURFACES - 1);
-    *priv = drm_intel_bo_alloc(bufmgr, "CL private surface", sz, 64);
-    gpgpu_bind_buf(gpgpu, index, *priv, cc_llc_l3);
-  }
-  else if(priv)
-    *priv = NULL;
-
-  /* Allocate scratch surface and bind it */
-  if (scratch && k->patch.scratch.size != 0) {
-    const size_t sz = max_thread * /* XXX is it given per lane ??? */
-                      k->patch.scratch.size *
-                      k->patch.exec_env.largest_compiled_simd_sz;
-    // assert(k->patch.exec_env.largest_compiled_simd_sz == 16);
-    assert(k->patch.scratch.offset % SURFACE_SZ == 0);
-    assert(index != MAX_SURFACES - 1);
-    index = k->patch.scratch.offset / SURFACE_SZ;
-    *scratch = drm_intel_bo_alloc(bufmgr, "CL scratch surface", sz, 64);
-    gpgpu_bind_buf(gpgpu, index, *scratch, cc_llc_l3);
-  }
-  else if (scratch)
-    *scratch = NULL;
-
-  /* Now bind a bo used for synchronization */
-  sync_bo = drm_intel_bo_alloc(bufmgr, "sync surface", 64, 64);
-  gpgpu_bind_buf(gpgpu, MAX_SURFACES-1, sync_bo, cc_llc_l3);
-  if (queue->last_batch != NULL)
-    drm_intel_bo_unreference(queue->last_batch);
-  queue->last_batch = sync_bo;
-
-error:
-  assert(err == CL_SUCCESS); /* Cannot fail here */
-  return err;
-}
-
-LOCAL cl_int
-cl_kernel_check_args(cl_kernel k)
-{
-  uint32_t i;
-  for (i = 0; i < k->arg_n; ++i)
-    if (k->is_provided[i] == CL_FALSE)
-      return CL_INVALID_KERNEL_ARGS;
-  return CL_SUCCESS;
-}
-
-LOCAL cl_int
-cl_command_queue_set_report_buffer(cl_command_queue queue, cl_mem mem)
-{
-  cl_int err = CL_SUCCESS;
-  if (queue->perf != NULL) {
-    cl_mem_delete(queue->perf);
-    queue->perf = NULL;
-  }
-  if (mem != NULL) {
-      if (drm_intel_bo_get_size(mem->bo) < 1024) { /* 1K for the performance counters is enough */
-      err = CL_INVALID_BUFFER_SIZE;
-      goto error;
-    }
-    cl_mem_add_ref(mem);
-    queue->perf = mem;
-  }
-
-error:
-  return err;
-}
-
 #if USE_FULSIM
 extern void drm_intel_bufmgr_gem_stop_aubfile(drm_intel_bufmgr*);
 extern void drm_intel_bufmgr_gem_set_aubfile(drm_intel_bufmgr*, FILE*);
@@ -303,8 +141,9 @@ static const size_t chunk_sz = 8192u;
 static cl_int
 cl_fulsim_dump_all_surfaces(cl_command_queue queue, cl_kernel k)
 {
-  cl_mem mem = NULL;
   cl_int err = CL_SUCCESS;
+#if 0
+  cl_mem mem = NULL;
   int i;
   size_t j;
 
@@ -323,6 +162,7 @@ cl_fulsim_dump_all_surfaces(cl_command_queue queue, cl_kernel k)
       aub_exec_dump_raw_file(mem->bo, chunk_n * chunk_sz, chunk_remainder);
   }
 error:
+#endif
   return err;
 }
 
@@ -345,6 +185,7 @@ struct bmphdr {
   /* raw b, g, r data here, dword aligned per scan line */
 };
 
+#if 0
 static int*
 cl_read_bmp(const char *filename, int *width, int *height)
 {
@@ -426,16 +267,17 @@ cl_read_dump(const char *name, size_t *size)
     *size = sz;
   return dump;
 }
+#endif
 
 static cl_int
 cl_fulsim_read_all_surfaces(cl_command_queue queue, cl_kernel k)
 {
+  cl_int err = CL_SUCCESS;
+#if 0
   cl_mem mem = NULL;
   char *from = NULL, *to = NULL;
   size_t size, j, chunk_n, chunk_remainder;
-  cl_int err = CL_SUCCESS;
   int i, curr = 0;
-
   /* Bind user defined surface */
   for (i = 0; i < k->arg_info_n; ++i) {
     if (k->arg_info[i].type != OCLRT_ARG_TYPE_BUFFER)
@@ -475,11 +317,12 @@ cl_fulsim_read_all_surfaces(cl_command_queue queue, cl_kernel k)
     cl_mem_unmap(mem);
   }
 error:
+#endif
   return err;
+
 }
 #endif /* USE_FULSIM */
 
-extern cl_int cl_command_queue_ND_range_gen6(cl_command_queue, cl_kernel, const size_t*, const size_t*, const size_t*);
 extern cl_int cl_command_queue_ND_range_gen7(cl_command_queue, cl_kernel, const size_t *, const size_t *, const size_t *);
 
 LOCAL cl_int
@@ -501,9 +344,7 @@ cl_command_queue_ND_range(cl_command_queue queue,
   drm_intel_bufmgr_gem_set_aubfile(bufmgr, file);
 #endif /* USE_FULSIM */
 
-  if (ver == 6)
-    TRY (cl_command_queue_ND_range_gen6, queue, k, global_wk_off, global_wk_sz, local_wk_sz);
-  else if (ver == 7 || ver == 75)
+  if (ver == 7 || ver == 75)
     TRY (cl_command_queue_ND_range_gen7, queue, k, global_wk_off, global_wk_sz, local_wk_sz);
   else
     FATAL ("Unknown Gen Device");

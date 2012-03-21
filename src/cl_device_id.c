@@ -33,30 +33,6 @@
 #include <stdio.h>
 #include <string.h>
 
-static struct _cl_device_id intel_snb_gt2_device = {
-  .max_compute_unit = 60,
-  .max_work_item_sizes = {512, 512, 512},
-  .max_work_group_size = 512,
-  .max_clock_frequency = 1350,
-  /* Does not really belong here, but for now this seems the most
-   * natural place to put it */
-  .wg_sz = 512,
-  .compile_wg_sz = {0},
-
-#include "cl_gen6_device.h"
-};
-
-static struct _cl_device_id intel_snb_gt1_device = {
-  .max_compute_unit = 24,
-  .max_work_item_sizes = {256, 256, 256},
-  .max_work_group_size = 256,
-  .max_clock_frequency = 1000,
-  .wg_sz = 256,
-  .compile_wg_sz = {0},	
-
-#include "cl_gen6_device.h"
-};
-
 static struct _cl_device_id intel_ivb_gt2_device = {
   .max_compute_unit = 128,
   .max_work_item_sizes = {512, 512, 512},
@@ -118,21 +94,6 @@ cl_get_gt_device(void)
     intel_ivb_gt2_device.vendor_id = device_id;
     intel_ivb_gt2_device.platform = intel_platform;
     ret = &intel_ivb_gt2_device;
-  }
-  else if (device_id == PCI_CHIP_SANDYBRIDGE_GT1   ||
-           device_id == PCI_CHIP_SANDYBRIDGE_M_GT1 ||
-           device_id == PCI_CHIP_SANDYBRIDGE_S_GT) {
-    intel_snb_gt1_device.vendor_id = device_id;
-    intel_snb_gt1_device.platform = intel_platform;
-    ret = &intel_snb_gt1_device;
-  }
-  else if (device_id == PCI_CHIP_SANDYBRIDGE_GT2      ||
-           device_id == PCI_CHIP_SANDYBRIDGE_M_GT2    ||
-           device_id == PCI_CHIP_SANDYBRIDGE_GT2_PLUS ||
-           device_id == PCI_CHIP_SANDYBRIDGE_M_GT2_PLUS) {
-    intel_snb_gt2_device.vendor_id = device_id;
-    intel_snb_gt2_device.platform = intel_platform;
-    ret = &intel_snb_gt2_device;
   }
   return ret;
 }
@@ -196,9 +157,7 @@ cl_get_device_info(cl_device_id     device,
                    void *           param_value,
                    size_t *         param_value_size_ret)
 {
-  if (UNLIKELY(device != &intel_snb_gt1_device &&
-               device != &intel_snb_gt2_device &&
-               device != &intel_ivb_gt1_device &&
+  if (UNLIKELY(device != &intel_ivb_gt1_device &&
                device != &intel_ivb_gt2_device &&
                device != &intel_hsw_device))
     return CL_INVALID_DEVICE;
@@ -272,17 +231,13 @@ cl_get_device_info(cl_device_id     device,
 LOCAL cl_int
 cl_device_get_version(cl_device_id device, cl_int *ver)
 {
-  if (UNLIKELY(device != &intel_snb_gt1_device &&
-               device != &intel_snb_gt2_device &&
-               device != &intel_ivb_gt1_device &&
+  if (UNLIKELY(device != &intel_ivb_gt1_device &&
                device != &intel_ivb_gt2_device &&
                device != &intel_hsw_device))
     return CL_INVALID_DEVICE;
   if (ver == NULL)
     return CL_SUCCESS;
-  if (device == &intel_snb_gt1_device || device == &intel_snb_gt2_device)
-    *ver = 6;
-  else if (device == &intel_ivb_gt1_device || device == &intel_ivb_gt2_device)
+  if (device == &intel_ivb_gt1_device || device == &intel_ivb_gt2_device)
     *ver = 7;
   else
     *ver = 75;
@@ -308,9 +263,7 @@ cl_get_kernel_workgroup_info(cl_device_id device,
                              void* param_value,
                              size_t* param_value_size_ret)
 {
-  if (UNLIKELY(device != &intel_snb_gt1_device &&
-               device != &intel_snb_gt2_device &&
-               device != &intel_ivb_gt1_device &&
+  if (UNLIKELY(device != &intel_ivb_gt1_device &&
                device != &intel_ivb_gt2_device))
     return CL_INVALID_DEVICE;
   if (UNLIKELY(param_value == NULL))

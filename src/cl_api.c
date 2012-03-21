@@ -1166,20 +1166,6 @@ error:
 }
 
 cl_int
-clIntelSetReportBuffer(cl_command_queue queue, cl_mem mem)
-{
-  cl_int err = CL_SUCCESS;
-  CHECK_QUEUE (queue);
-  if (mem != NULL && mem->magic != CL_MAGIC_MEM_HEADER) {
-    err = CL_INVALID_MEM;
-    goto error;
-  }
-  err = cl_command_queue_set_report_buffer(queue, mem);
-error:
-  return err;
-}
-
-cl_int
 clIntelGetGenVersion(cl_device_id device, cl_int *ver)
 {
   return cl_device_get_version(device, ver);
