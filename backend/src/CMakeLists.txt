@@ -42,7 +42,10 @@ else (GBE_USE_BLOB)
     ir/function.hpp
     ir/value.cpp
     ir/value.hpp
-    gen/brw_disasm.c)
+    gen/program.cpp
+    gen/brw_disasm.c
+    gen/brw_eu_emit.c
+    gen/brw_eu.c)
 
   if (GBE_COMPILE_UTESTS)
     set (GBE_SRC

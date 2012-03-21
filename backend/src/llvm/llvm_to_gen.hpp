@@ -31,7 +31,7 @@ namespace gbe {
   } /* namespace ir */
 
   /*! Convert the LLVM IR code to a GEN IR code */
-  void llvmToGen(ir::Unit &unit, const char *fileName);
+  bool llvmToGen(ir::Unit &unit, const char *fileName);
 
 } /* namespace gbe */
 

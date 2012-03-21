@@ -21,15 +21,17 @@
   * Authors:
   *   Keith Whitwell <keith@tungstengraphics.com>
   */
-   
-
 #ifndef BRW_EU_H
 #define BRW_EU_H
 
 #include <stdbool.h>
+#include <assert.h>
 #include "brw_structs.h"
 #include "brw_defines.h"
-#include "program/prog_instruction.h"
+
+#ifdef __cplusplus
+extern "C" {
+#endif /* __cplusplus */
 
 #define BRW_SWIZZLE4(a,b,c,d) (((a)<<0) | ((b)<<2) | ((c)<<4) | ((d)<<6))
 #define BRW_GET_SWZ(swz, idx) (((swz) >> ((idx)*2)) & 0x3)
@@ -42,16 +44,31 @@
 #define BRW_SWIZZLE_WWWW      BRW_SWIZZLE4(3,3,3,3)
 #define BRW_SWIZZLE_XYXY      BRW_SWIZZLE4(0,1,0,1)
 
+#define WRITEMASK_X     0x1
+#define WRITEMASK_Y     0x2
+#define WRITEMASK_XY    0x3
+#define WRITEMASK_Z     0x4
+#define WRITEMASK_XZ    0x5
+#define WRITEMASK_YZ    0x6
+#define WRITEMASK_XYZ   0x7
+#define WRITEMASK_W     0x8
+#define WRITEMASK_XW    0x9
+#define WRITEMASK_YW    0xa
+#define WRITEMASK_XYW   0xb
+#define WRITEMASK_ZW    0xc
+#define WRITEMASK_XZW   0xd
+#define WRITEMASK_YZW   0xe
+#define WRITEMASK_XYZW  0xf
+
 static inline bool brw_is_single_value_swizzle(int swiz)
 {
    return (swiz == BRW_SWIZZLE_XXXX ||
-	   swiz == BRW_SWIZZLE_YYYY ||
-	   swiz == BRW_SWIZZLE_ZZZZ ||
-	   swiz == BRW_SWIZZLE_WWWW);
+           swiz == BRW_SWIZZLE_YYYY ||
+           swiz == BRW_SWIZZLE_ZZZZ ||
+           swiz == BRW_SWIZZLE_WWWW);
 }
 
 #define REG_SIZE (8*4)
-
 
 /* These aren't hardware structs, just something useful for us to pass around:
  *
@@ -61,109 +78,70 @@ static inline bool brw_is_single_value_swizzle(int swiz)
  */
 struct brw_reg
 {
-   GLuint type:4;
-   GLuint file:2;
-   GLuint nr:8;
-   GLuint subnr:5;		/* :1 in align16 */
-   GLuint negate:1;		/* source only */
-   GLuint abs:1;		/* source only */
-   GLuint vstride:4;		/* source only */
-   GLuint width:3;		/* src only, align1 only */
-   GLuint hstride:2;   		/* align1 only */
-   GLuint address_mode:1;	/* relative addressing, hopefully! */
-   GLuint pad0:1;
+   uint32_t type:4;
+   uint32_t file:2;
+   uint32_t nr:8;
+   uint32_t subnr:5;                /* :1 in align16 */
+   uint32_t negate:1;                /* source only */
+   uint32_t abs:1;                /* source only */
+   uint32_t vstride:4;                /* source only */
+   uint32_t width:3;                /* src only, align1 only */
+   uint32_t hstride:2;                   /* align1 only */
+   uint32_t address_mode:1;        /* relative addressing, hopefully! */
+   uint32_t pad0:1;
 
-   union {      
+   union {
       struct {
-	 GLuint swizzle:8;		/* src only, align16 only */
-	 GLuint writemask:4;		/* dest only, align16 only */
-	 GLint  indirect_offset:10;	/* relative addressing offset */
-	 GLuint pad1:10;		/* two dwords total */
+         uint32_t swizzle:8;                /* src only, align16 only */
+         uint32_t writemask:4;                /* dest only, align16 only */
+         int  indirect_offset:10;        /* relative addressing offset */
+         uint32_t pad1:10;                /* two dwords total */
       } bits;
 
-      GLfloat f;
-      GLint   d;
-      GLuint ud;
-   } dw1;      
+      float f;
+      int   d;
+      uint32_t ud;
+   } dw1;
 };
 
 
 struct brw_indirect {
-   GLuint addr_subnr:4;
-   GLint addr_offset:10;
-   GLuint pad:18;
+   uint32_t addr_subnr:4;
+   int addr_offset:10;
+   uint32_t pad:18;
 };
-
-
-struct brw_glsl_label;
-struct brw_glsl_call;
-
-
 
 #define BRW_EU_MAX_INSN_STACK 5
-
+#define BRW_MAX_INSTRUCTION_NUM 8192
 struct brw_compile {
-   struct brw_instruction *store;
-   int store_size;
-   GLuint nr_insn;
+  int gen;
+  struct brw_instruction store[8192];
+  int store_size;
+  uint32_t nr_insn;
 
-   void *mem_ctx;
+  /* Allow clients to push/pop instruction state */
+  struct brw_instruction stack[BRW_EU_MAX_INSN_STACK];
+  bool compressed_stack[BRW_EU_MAX_INSN_STACK];
+  struct brw_instruction *current;
 
-   /* Allow clients to push/pop instruction state:
-    */
-   struct brw_instruction stack[BRW_EU_MAX_INSN_STACK];
-   bool compressed_stack[BRW_EU_MAX_INSN_STACK];
-   struct brw_instruction *current;
-
-   GLuint flag_value;
-   bool single_program_flow;
-   bool compressed;
-   struct brw_context *brw;
-
-   /* Control flow stacks:
-    * - if_stack contains IF and ELSE instructions which must be patched
-    *   (and popped) once the matching ENDIF instruction is encountered.
-    *
-    *   Just store the instruction pointer(an index).
-    */
-   int *if_stack;
-   int if_stack_depth;
-   int if_stack_array_size;
-
-   /**
-    * loop_stack contains the instruction pointers of the starts of loops which
-    * must be patched (and popped) once the matching WHILE instruction is
-    * encountered.
-    */
-   int *loop_stack;
-   /**
-    * pre-gen6, the BREAK and CONT instructions had to tell how many IF/ENDIF
-    * blocks they were popping out of, to fix up the mask stack.  This tracks
-    * the IF/ENDIF nesting in each current nested loop level.
-    */
-   int *if_depth_in_loop;
-   int loop_stack_depth;
-   int loop_stack_array_size;
-
-   struct brw_glsl_label *first_label;  /**< linked list of labels */
-   struct brw_glsl_call *first_call;    /**< linked list of CALs */
+  uint32_t flag_value;
+  bool single_program_flow;
+  bool compressed;
+  struct brw_context *brw;
 };
 
+void
+brw_save_label(struct brw_compile *c, const char *name, uint32_t position);
 
 void
-brw_save_label(struct brw_compile *c, const char *name, GLuint position);
-
-void
-brw_save_call(struct brw_compile *c, const char *name, GLuint call_pos);
+brw_save_call(struct brw_compile *c, const char *name, uint32_t call_pos);
 
 void
 brw_resolve_cals(struct brw_compile *c);
 
-
-
-static INLINE int type_sz( GLuint type )
+static inline int type_sz(uint32_t type)
 {
-   switch( type ) {
+   switch(type) {
    case BRW_REGISTER_TYPE_UD:
    case BRW_REGISTER_TYPE_D:
    case BRW_REGISTER_TYPE_F:
@@ -192,15 +170,15 @@ static INLINE int type_sz( GLuint type )
  * \param swizzle  one of BRW_SWIZZLE_x
  * \param writemask  WRITEMASK_X/Y/Z/W bitfield
  */
-static INLINE struct brw_reg brw_reg( GLuint file,
-                                      GLuint nr,
-                                      GLuint subnr,
-                                      GLuint type,
-                                      GLuint vstride,
-                                      GLuint width,
-                                      GLuint hstride,
-                                      GLuint swizzle,
-                                      GLuint writemask )
+static inline struct brw_reg brw_reg(uint32_t file,
+                                     uint32_t nr,
+                                     uint32_t subnr,
+                                     uint32_t type,
+                                     uint32_t vstride,
+                                     uint32_t width,
+                                     uint32_t hstride,
+                                     uint32_t swizzle,
+                                     uint32_t writemask)
 {
    struct brw_reg reg;
    if (file == BRW_GENERAL_REGISTER_FILE)
@@ -236,166 +214,159 @@ static INLINE struct brw_reg brw_reg( GLuint file,
 }
 
 /** Construct float[16] register */
-static INLINE struct brw_reg brw_vec16_reg( GLuint file,
-					      GLuint nr,
-					      GLuint subnr )
+static inline struct brw_reg brw_vec16_reg(uint32_t file,
+                                           uint32_t nr,
+                                           uint32_t subnr)
 {
    return brw_reg(file,
-		  nr,
-		  subnr,
-		  BRW_REGISTER_TYPE_F,
-		  BRW_VERTICAL_STRIDE_16,
-		  BRW_WIDTH_16,
-		  BRW_HORIZONTAL_STRIDE_1,
-		  BRW_SWIZZLE_XYZW,
-		  WRITEMASK_XYZW);
+                  nr,
+                  subnr,
+                  BRW_REGISTER_TYPE_F,
+                  BRW_VERTICAL_STRIDE_16,
+                  BRW_WIDTH_16,
+                  BRW_HORIZONTAL_STRIDE_1,
+                  BRW_SWIZZLE_XYZW,
+                  WRITEMASK_XYZW);
 }
 
 /** Construct float[8] register */
-static INLINE struct brw_reg brw_vec8_reg( GLuint file,
-					     GLuint nr,
-					     GLuint subnr )
+static inline struct brw_reg brw_vec8_reg(uint32_t file,
+                                          uint32_t nr,
+                                          uint32_t subnr)
 {
    return brw_reg(file,
-		  nr,
-		  subnr,
-		  BRW_REGISTER_TYPE_F,
-		  BRW_VERTICAL_STRIDE_8,
-		  BRW_WIDTH_8,
-		  BRW_HORIZONTAL_STRIDE_1,
-		  BRW_SWIZZLE_XYZW,
-		  WRITEMASK_XYZW);
+                  nr,
+                  subnr,
+                  BRW_REGISTER_TYPE_F,
+                  BRW_VERTICAL_STRIDE_8,
+                  BRW_WIDTH_8,
+                  BRW_HORIZONTAL_STRIDE_1,
+                  BRW_SWIZZLE_XYZW,
+                  WRITEMASK_XYZW);
 }
 
 /** Construct float[4] register */
-static INLINE struct brw_reg brw_vec4_reg( GLuint file,
-					      GLuint nr,
-					      GLuint subnr )
+static inline struct brw_reg brw_vec4_reg(uint32_t file,
+                                          uint32_t nr,
+                                          uint32_t subnr)
 {
    return brw_reg(file,
-		  nr,
-		  subnr,
-		  BRW_REGISTER_TYPE_F,
-		  BRW_VERTICAL_STRIDE_4,
-		  BRW_WIDTH_4,
-		  BRW_HORIZONTAL_STRIDE_1,
-		  BRW_SWIZZLE_XYZW,
-		  WRITEMASK_XYZW);
+                  nr,
+                  subnr,
+                  BRW_REGISTER_TYPE_F,
+                  BRW_VERTICAL_STRIDE_4,
+                  BRW_WIDTH_4,
+                  BRW_HORIZONTAL_STRIDE_1,
+                  BRW_SWIZZLE_XYZW,
+                  WRITEMASK_XYZW);
 }
 
 /** Construct float[2] register */
-static INLINE struct brw_reg brw_vec2_reg( GLuint file,
-					      GLuint nr,
-					      GLuint subnr )
+static inline struct brw_reg brw_vec2_reg(uint32_t file,
+                                          uint32_t nr,
+                                          uint32_t subnr)
 {
    return brw_reg(file,
-		  nr,
-		  subnr,
-		  BRW_REGISTER_TYPE_F,
-		  BRW_VERTICAL_STRIDE_2,
-		  BRW_WIDTH_2,
-		  BRW_HORIZONTAL_STRIDE_1,
-		  BRW_SWIZZLE_XYXY,
-		  WRITEMASK_XY);
+                  nr,
+                  subnr,
+                  BRW_REGISTER_TYPE_F,
+                  BRW_VERTICAL_STRIDE_2,
+                  BRW_WIDTH_2,
+                  BRW_HORIZONTAL_STRIDE_1,
+                  BRW_SWIZZLE_XYXY,
+                  WRITEMASK_XY);
 }
 
 /** Construct float[1] register */
-static INLINE struct brw_reg brw_vec1_reg( GLuint file,
-					     GLuint nr,
-					     GLuint subnr )
+static inline struct brw_reg brw_vec1_reg(uint32_t file,
+                                          uint32_t nr,
+                                          uint32_t subnr)
 {
    return brw_reg(file,
-		  nr,
-		  subnr,
-		  BRW_REGISTER_TYPE_F,
-		  BRW_VERTICAL_STRIDE_0,
-		  BRW_WIDTH_1,
-		  BRW_HORIZONTAL_STRIDE_0,
-		  BRW_SWIZZLE_XXXX,
-		  WRITEMASK_X);
+                  nr,
+                  subnr,
+                  BRW_REGISTER_TYPE_F,
+                  BRW_VERTICAL_STRIDE_0,
+                  BRW_WIDTH_1,
+                  BRW_HORIZONTAL_STRIDE_0,
+                  BRW_SWIZZLE_XXXX,
+                  WRITEMASK_X);
 }
 
 
-static INLINE struct brw_reg retype( struct brw_reg reg,
-				       GLuint type )
+static inline struct brw_reg retype(struct brw_reg reg, uint32_t type)
 {
    reg.type = type;
    return reg;
 }
 
-static inline struct brw_reg
-sechalf(struct brw_reg reg)
+static inline struct brw_reg sechalf(struct brw_reg reg)
 {
    if (reg.vstride)
       reg.nr++;
    return reg;
 }
 
-static INLINE struct brw_reg suboffset( struct brw_reg reg,
-					  GLuint delta )
-{   
+static inline struct brw_reg suboffset(struct brw_reg reg, uint32_t delta)
+{
    reg.subnr += delta * type_sz(reg.type);
    return reg;
 }
 
-
-static INLINE struct brw_reg offset( struct brw_reg reg,
-				       GLuint delta )
+static inline struct brw_reg offset(struct brw_reg reg, uint32_t delta)
 {
    reg.nr += delta;
    return reg;
 }
 
-
-static INLINE struct brw_reg byte_offset( struct brw_reg reg,
-					    GLuint bytes )
+static inline struct brw_reg byte_offset(struct brw_reg reg, uint32_t bytes)
 {
-   GLuint newoffset = reg.nr * REG_SIZE + reg.subnr + bytes;
+   uint32_t newoffset = reg.nr * REG_SIZE + reg.subnr + bytes;
    reg.nr = newoffset / REG_SIZE;
    reg.subnr = newoffset % REG_SIZE;
    return reg;
 }
-   
+
 
 /** Construct unsigned word[16] register */
-static INLINE struct brw_reg brw_uw16_reg( GLuint file,
-					     GLuint nr,
-					     GLuint subnr )
+static inline struct brw_reg brw_uw16_reg(uint32_t file,
+                                          uint32_t nr,
+                                          uint32_t subnr)
 {
    return suboffset(retype(brw_vec16_reg(file, nr, 0), BRW_REGISTER_TYPE_UW), subnr);
 }
 
 /** Construct unsigned word[8] register */
-static INLINE struct brw_reg brw_uw8_reg( GLuint file,
-					    GLuint nr,
-					    GLuint subnr )
+static inline struct brw_reg brw_uw8_reg(uint32_t file,
+                                         uint32_t nr,
+                                         uint32_t subnr)
 {
    return suboffset(retype(brw_vec8_reg(file, nr, 0), BRW_REGISTER_TYPE_UW), subnr);
 }
 
 /** Construct unsigned word[1] register */
-static INLINE struct brw_reg brw_uw1_reg( GLuint file,
-					    GLuint nr,
-					    GLuint subnr )
+static inline struct brw_reg brw_uw1_reg(uint32_t file,
+                                         uint32_t nr,
+                                         uint32_t subnr)
 {
    return suboffset(retype(brw_vec1_reg(file, nr, 0), BRW_REGISTER_TYPE_UW), subnr);
 }
 
-static INLINE struct brw_reg brw_imm_reg( GLuint type )
+static inline struct brw_reg brw_imm_reg(uint32_t type)
 {
-   return brw_reg( BRW_IMMEDIATE_VALUE,
-		   0,
-		   0,
-		   type,
-		   BRW_VERTICAL_STRIDE_0,
-		   BRW_WIDTH_1,
-		   BRW_HORIZONTAL_STRIDE_0,
-		   0,
-		   0);      
+   return brw_reg(BRW_IMMEDIATE_VALUE,
+                   0,
+                   0,
+                   type,
+                   BRW_VERTICAL_STRIDE_0,
+                   BRW_WIDTH_1,
+                   BRW_HORIZONTAL_STRIDE_0,
+                   0,
+                   0);
 }
 
 /** Construct float immediate register */
-static INLINE struct brw_reg brw_imm_f( GLfloat f )
+static inline struct brw_reg brw_imm_f(float f)
 {
    struct brw_reg imm = brw_imm_reg(BRW_REGISTER_TYPE_F);
    imm.dw1.f = f;
@@ -403,7 +374,7 @@ static INLINE struct brw_reg brw_imm_f( GLfloat f )
 }
 
 /** Construct integer immediate register */
-static INLINE struct brw_reg brw_imm_d( GLint d )
+static inline struct brw_reg brw_imm_d(int d)
 {
    struct brw_reg imm = brw_imm_reg(BRW_REGISTER_TYPE_D);
    imm.dw1.d = d;
@@ -411,7 +382,7 @@ static INLINE struct brw_reg brw_imm_d( GLint d )
 }
 
 /** Construct uint immediate register */
-static INLINE struct brw_reg brw_imm_ud( GLuint ud )
+static inline struct brw_reg brw_imm_ud(uint32_t ud)
 {
    struct brw_reg imm = brw_imm_reg(BRW_REGISTER_TYPE_UD);
    imm.dw1.ud = ud;
@@ -419,7 +390,7 @@ static INLINE struct brw_reg brw_imm_ud( GLuint ud )
 }
 
 /** Construct ushort immediate register */
-static INLINE struct brw_reg brw_imm_uw( GLushort uw )
+static inline struct brw_reg brw_imm_uw(uint16_t uw)
 {
    struct brw_reg imm = brw_imm_reg(BRW_REGISTER_TYPE_UW);
    imm.dw1.ud = uw | (uw << 16);
@@ -427,7 +398,7 @@ static INLINE struct brw_reg brw_imm_uw( GLushort uw )
 }
 
 /** Construct short immediate register */
-static INLINE struct brw_reg brw_imm_w( GLshort w )
+static inline struct brw_reg brw_imm_w(short w)
 {
    struct brw_reg imm = brw_imm_reg(BRW_REGISTER_TYPE_W);
    imm.dw1.d = w | (w << 16);
@@ -439,7 +410,7 @@ static INLINE struct brw_reg brw_imm_w( GLshort w )
  */
 
 /** Construct vector of eight signed half-byte values */
-static INLINE struct brw_reg brw_imm_v( GLuint v )
+static inline struct brw_reg brw_imm_v(uint32_t v)
 {
    struct brw_reg imm = brw_imm_reg(BRW_REGISTER_TYPE_V);
    imm.vstride = BRW_VERTICAL_STRIDE_0;
@@ -450,7 +421,7 @@ static INLINE struct brw_reg brw_imm_v( GLuint v )
 }
 
 /** Construct vector of four 8-bit float values */
-static INLINE struct brw_reg brw_imm_vf( GLuint v )
+static inline struct brw_reg brw_imm_vf(uint32_t v)
 {
    struct brw_reg imm = brw_imm_reg(BRW_REGISTER_TYPE_VF);
    imm.vstride = BRW_VERTICAL_STRIDE_0;
@@ -464,148 +435,144 @@ static INLINE struct brw_reg brw_imm_vf( GLuint v )
 #define VF_ONE  0x30
 #define VF_NEG  (1<<7)
 
-static INLINE struct brw_reg brw_imm_vf4( GLuint v0, 
-					    GLuint v1, 
-					    GLuint v2,
-					    GLuint v3)
+static inline struct brw_reg brw_imm_vf4(uint32_t v0,
+                                         uint32_t v1,
+                                         uint32_t v2,
+                                         uint32_t v3)
 {
    struct brw_reg imm = brw_imm_reg(BRW_REGISTER_TYPE_VF);
    imm.vstride = BRW_VERTICAL_STRIDE_0;
    imm.width = BRW_WIDTH_4;
    imm.hstride = BRW_HORIZONTAL_STRIDE_1;
    imm.dw1.ud = ((v0 << 0) |
-		 (v1 << 8) |
-		 (v2 << 16) |
-		 (v3 << 24));
+                 (v1 << 8) |
+                 (v2 << 16) |
+                 (v3 << 24));
    return imm;
 }
 
 
-static INLINE struct brw_reg brw_address( struct brw_reg reg )
+static inline struct brw_reg brw_address(struct brw_reg reg)
 {
    return brw_imm_uw(reg.nr * REG_SIZE + reg.subnr);
 }
 
 /** Construct float[1] general-purpose register */
-static INLINE struct brw_reg brw_vec1_grf( GLuint nr, GLuint subnr )
+static inline struct brw_reg brw_vec1_grf(uint32_t nr, uint32_t subnr)
 {
    return brw_vec1_reg(BRW_GENERAL_REGISTER_FILE, nr, subnr);
 }
 
 /** Construct float[2] general-purpose register */
-static INLINE struct brw_reg brw_vec2_grf( GLuint nr, GLuint subnr )
+static inline struct brw_reg brw_vec2_grf(uint32_t nr, uint32_t subnr)
 {
    return brw_vec2_reg(BRW_GENERAL_REGISTER_FILE, nr, subnr);
 }
 
 /** Construct float[4] general-purpose register */
-static INLINE struct brw_reg brw_vec4_grf( GLuint nr, GLuint subnr )
+static inline struct brw_reg brw_vec4_grf(uint32_t nr, uint32_t subnr)
 {
    return brw_vec4_reg(BRW_GENERAL_REGISTER_FILE, nr, subnr);
 }
 
 /** Construct float[8] general-purpose register */
-static INLINE struct brw_reg brw_vec8_grf( GLuint nr, GLuint subnr )
+static inline struct brw_reg brw_vec8_grf(uint32_t nr, uint32_t subnr)
 {
    return brw_vec8_reg(BRW_GENERAL_REGISTER_FILE, nr, subnr);
 }
 
 
-static INLINE struct brw_reg brw_uw8_grf( GLuint nr, GLuint subnr )
+static inline struct brw_reg brw_uw8_grf(uint32_t nr, uint32_t subnr)
 {
    return brw_uw8_reg(BRW_GENERAL_REGISTER_FILE, nr, subnr);
 }
 
-static INLINE struct brw_reg brw_uw16_grf( GLuint nr, GLuint subnr )
+static inline struct brw_reg brw_uw16_grf(uint32_t nr, uint32_t subnr)
 {
    return brw_uw16_reg(BRW_GENERAL_REGISTER_FILE, nr, subnr);
 }
 
-
 /** Construct null register (usually used for setting condition codes) */
-static INLINE struct brw_reg brw_null_reg( void )
+static inline struct brw_reg brw_null_reg(void)
 {
-   return brw_vec8_reg(BRW_ARCHITECTURE_REGISTER_FILE, 
-		       BRW_ARF_NULL, 
-		       0);
+   return brw_vec8_reg(BRW_ARCHITECTURE_REGISTER_FILE,
+                       BRW_ARF_NULL,
+                       0);
 }
 
-static INLINE struct brw_reg brw_address_reg( GLuint subnr )
+static inline struct brw_reg brw_address_reg(uint32_t subnr)
 {
-   return brw_uw1_reg(BRW_ARCHITECTURE_REGISTER_FILE, 
-		      BRW_ARF_ADDRESS, 
-		      subnr);
+   return brw_uw1_reg(BRW_ARCHITECTURE_REGISTER_FILE,
+                      BRW_ARF_ADDRESS,
+                      subnr);
 }
 
 /* If/else instructions break in align16 mode if writemask & swizzle
  * aren't xyzw.  This goes against the convention for other scalar
  * regs:
  */
-static INLINE struct brw_reg brw_ip_reg( void )
+static inline struct brw_reg brw_ip_reg(void)
 {
-   return brw_reg(BRW_ARCHITECTURE_REGISTER_FILE, 
-		  BRW_ARF_IP, 
-		  0,
-		  BRW_REGISTER_TYPE_UD,
-		  BRW_VERTICAL_STRIDE_4, /* ? */
-		  BRW_WIDTH_1,
-		  BRW_HORIZONTAL_STRIDE_0,
-		  BRW_SWIZZLE_XYZW, /* NOTE! */
-		  WRITEMASK_XYZW); /* NOTE! */
+   return brw_reg(BRW_ARCHITECTURE_REGISTER_FILE,
+                  BRW_ARF_IP,
+                  0,
+                  BRW_REGISTER_TYPE_UD,
+                  BRW_VERTICAL_STRIDE_4, /* ? */
+                  BRW_WIDTH_1,
+                  BRW_HORIZONTAL_STRIDE_0,
+                  BRW_SWIZZLE_XYZW, /* NOTE! */
+                  WRITEMASK_XYZW); /* NOTE! */
 }
 
-static INLINE struct brw_reg brw_acc_reg( void )
+static inline struct brw_reg brw_acc_reg(void)
 {
-   return brw_vec8_reg(BRW_ARCHITECTURE_REGISTER_FILE, 
-		       BRW_ARF_ACCUMULATOR, 
-		       0);
+   return brw_vec8_reg(BRW_ARCHITECTURE_REGISTER_FILE,
+                       BRW_ARF_ACCUMULATOR,
+                       0);
 }
 
-static INLINE struct brw_reg brw_notification_1_reg(void)
+static inline struct brw_reg brw_notification_1_reg(void)
 {
 
    return brw_reg(BRW_ARCHITECTURE_REGISTER_FILE,
-		  BRW_ARF_NOTIFICATION_COUNT,
-		  1,
-		  BRW_REGISTER_TYPE_UD,
-		  BRW_VERTICAL_STRIDE_0,
-		  BRW_WIDTH_1,
-		  BRW_HORIZONTAL_STRIDE_0,
-		  BRW_SWIZZLE_XXXX,
-		  WRITEMASK_X);
+                  BRW_ARF_NOTIFICATION_COUNT,
+                  1,
+                  BRW_REGISTER_TYPE_UD,
+                  BRW_VERTICAL_STRIDE_0,
+                  BRW_WIDTH_1,
+                  BRW_HORIZONTAL_STRIDE_0,
+                  BRW_SWIZZLE_XXXX,
+                  WRITEMASK_X);
 }
 
 
-static INLINE struct brw_reg brw_flag_reg( void )
+static inline struct brw_reg brw_flag_reg(void)
 {
    return brw_uw1_reg(BRW_ARCHITECTURE_REGISTER_FILE,
-		      BRW_ARF_FLAG,
-		      0);
+                      BRW_ARF_FLAG,
+                      0);
 }
 
 
-static INLINE struct brw_reg brw_mask_reg( GLuint subnr )
+static inline struct brw_reg brw_mask_reg(uint32_t subnr)
 {
    return brw_uw1_reg(BRW_ARCHITECTURE_REGISTER_FILE,
-		      BRW_ARF_MASK,
-		      subnr);
+                      BRW_ARF_MASK,
+                      subnr);
 }
 
-static INLINE struct brw_reg brw_message_reg( GLuint nr )
+static inline struct brw_reg brw_message_reg(uint32_t nr)
 {
    assert((nr & ~(1 << 7)) < BRW_MAX_MRF);
    return brw_vec8_reg(BRW_MESSAGE_REGISTER_FILE,
-		       nr,
-		       0);
+                       nr,
+                       0);
 }
-
-
-
 
 /* This is almost always called with a numeric constant argument, so
  * make things easy to evaluate at compile time:
  */
-static INLINE GLuint cvt( GLuint val )
+static inline uint32_t cvt(uint32_t val)
 {
    switch (val) {
    case 0: return 0;
@@ -619,10 +586,10 @@ static INLINE GLuint cvt( GLuint val )
    return 0;
 }
 
-static INLINE struct brw_reg stride( struct brw_reg reg,
-				       GLuint vstride,
-				       GLuint width,
-				       GLuint hstride )
+static inline struct brw_reg stride(struct brw_reg reg,
+                                    uint32_t vstride,
+                                    uint32_t width,
+                                    uint32_t hstride)
 {
    reg.vstride = cvt(vstride);
    reg.width = cvt(width) - 1;
@@ -631,103 +598,98 @@ static INLINE struct brw_reg stride( struct brw_reg reg,
 }
 
 
-static INLINE struct brw_reg vec16( struct brw_reg reg )
+static inline struct brw_reg vec16(struct brw_reg reg)
 {
    return stride(reg, 16,16,1);
 }
 
-static INLINE struct brw_reg vec8( struct brw_reg reg )
+static inline struct brw_reg vec8(struct brw_reg reg)
 {
    return stride(reg, 8,8,1);
 }
 
-static INLINE struct brw_reg vec4( struct brw_reg reg )
+static inline struct brw_reg vec4(struct brw_reg reg)
 {
    return stride(reg, 4,4,1);
 }
 
-static INLINE struct brw_reg vec2( struct brw_reg reg )
+static inline struct brw_reg vec2(struct brw_reg reg)
 {
    return stride(reg, 2,2,1);
 }
 
-static INLINE struct brw_reg vec1( struct brw_reg reg )
+static inline struct brw_reg vec1(struct brw_reg reg)
 {
    return stride(reg, 0,1,0);
 }
 
-
-static INLINE struct brw_reg get_element( struct brw_reg reg, GLuint elt )
+static inline struct brw_reg get_element(struct brw_reg reg, uint32_t elt)
 {
    return vec1(suboffset(reg, elt));
 }
 
-static INLINE struct brw_reg get_element_ud( struct brw_reg reg, GLuint elt )
+static inline struct brw_reg get_element_ud(struct brw_reg reg, uint32_t elt)
 {
    return vec1(suboffset(retype(reg, BRW_REGISTER_TYPE_UD), elt));
 }
 
-static INLINE struct brw_reg get_element_d( struct brw_reg reg, GLuint elt )
+static inline struct brw_reg get_element_d(struct brw_reg reg, uint32_t elt)
 {
    return vec1(suboffset(retype(reg, BRW_REGISTER_TYPE_D), elt));
 }
 
-
-static INLINE struct brw_reg brw_swizzle( struct brw_reg reg,
-					    GLuint x,
-					    GLuint y, 
-					    GLuint z,
-					    GLuint w)
+static inline struct brw_reg brw_swizzle(struct brw_reg reg,
+                                         uint32_t x,
+                                         uint32_t y,
+                                         uint32_t z,
+                                         uint32_t w)
 {
    assert(reg.file != BRW_IMMEDIATE_VALUE);
 
    reg.dw1.bits.swizzle = BRW_SWIZZLE4(BRW_GET_SWZ(reg.dw1.bits.swizzle, x),
-				       BRW_GET_SWZ(reg.dw1.bits.swizzle, y),
-				       BRW_GET_SWZ(reg.dw1.bits.swizzle, z),
-				       BRW_GET_SWZ(reg.dw1.bits.swizzle, w));
+                                       BRW_GET_SWZ(reg.dw1.bits.swizzle, y),
+                                       BRW_GET_SWZ(reg.dw1.bits.swizzle, z),
+                                       BRW_GET_SWZ(reg.dw1.bits.swizzle, w));
    return reg;
 }
 
 
-static INLINE struct brw_reg brw_swizzle1( struct brw_reg reg,
-					     GLuint x )
+static inline struct brw_reg brw_swizzle1(struct brw_reg reg,
+                                          uint32_t x)
 {
    return brw_swizzle(reg, x, x, x, x);
 }
 
-static INLINE struct brw_reg brw_writemask( struct brw_reg reg,
-					      GLuint mask )
+static inline struct brw_reg brw_writemask(struct brw_reg reg,
+                                           uint32_t mask)
 {
    assert(reg.file != BRW_IMMEDIATE_VALUE);
    reg.dw1.bits.writemask &= mask;
    return reg;
 }
 
-static INLINE struct brw_reg brw_set_writemask( struct brw_reg reg,
-						  GLuint mask )
+static inline struct brw_reg brw_set_writemask(struct brw_reg reg, uint32_t mask)
 {
    assert(reg.file != BRW_IMMEDIATE_VALUE);
    reg.dw1.bits.writemask = mask;
    return reg;
 }
 
-static INLINE struct brw_reg negate( struct brw_reg reg )
+static inline struct brw_reg negate(struct brw_reg reg)
 {
    reg.negate ^= 1;
    return reg;
 }
 
-static INLINE struct brw_reg brw_abs( struct brw_reg reg )
+static inline struct brw_reg brw_abs(struct brw_reg reg)
 {
    reg.abs = 1;
    reg.negate = 0;
    return reg;
 }
 
-/***********************************************************************
- */
-static INLINE struct brw_reg brw_vec4_indirect( GLuint subnr,
-						  GLint offset )
+static inline struct brw_reg brw_vec4_indirect(uint32_t subnr,
+                                                  int offset)
 {
    struct brw_reg reg =  brw_vec4_grf(0, 0);
    reg.subnr = subnr;
@@ -736,8 +698,7 @@ static INLINE struct brw_reg brw_vec4_indirect( GLuint subnr,
    return reg;
 }
 
-static INLINE struct brw_reg brw_vec1_indirect( GLuint subnr,
-						  GLint offset )
+static inline struct brw_reg brw_vec1_indirect(uint32_t subnr, int offset)
 {
    struct brw_reg reg =  brw_vec1_grf(0, 0);
    reg.subnr = subnr;
@@ -746,48 +707,48 @@ static INLINE struct brw_reg brw_vec1_indirect( GLuint subnr,
    return reg;
 }
 
-static INLINE struct brw_reg deref_4f(struct brw_indirect ptr, GLint offset)
+static inline struct brw_reg deref_4f(struct brw_indirect ptr, int offset)
 {
    return brw_vec4_indirect(ptr.addr_subnr, ptr.addr_offset + offset);
 }
 
-static INLINE struct brw_reg deref_1f(struct brw_indirect ptr, GLint offset)
+static inline struct brw_reg deref_1f(struct brw_indirect ptr, int offset)
 {
    return brw_vec1_indirect(ptr.addr_subnr, ptr.addr_offset + offset);
 }
 
-static INLINE struct brw_reg deref_4b(struct brw_indirect ptr, GLint offset)
+static inline struct brw_reg deref_4b(struct brw_indirect ptr, int offset)
 {
    return retype(deref_4f(ptr, offset), BRW_REGISTER_TYPE_B);
 }
 
-static INLINE struct brw_reg deref_1uw(struct brw_indirect ptr, GLint offset)
+static inline struct brw_reg deref_1uw(struct brw_indirect ptr, int offset)
 {
    return retype(deref_1f(ptr, offset), BRW_REGISTER_TYPE_UW);
 }
 
-static INLINE struct brw_reg deref_1d(struct brw_indirect ptr, GLint offset)
+static inline struct brw_reg deref_1d(struct brw_indirect ptr, int offset)
 {
    return retype(deref_1f(ptr, offset), BRW_REGISTER_TYPE_D);
 }
 
-static INLINE struct brw_reg deref_1ud(struct brw_indirect ptr, GLint offset)
+static inline struct brw_reg deref_1ud(struct brw_indirect ptr, int offset)
 {
    return retype(deref_1f(ptr, offset), BRW_REGISTER_TYPE_UD);
 }
 
-static INLINE struct brw_reg get_addr_reg(struct brw_indirect ptr)
+static inline struct brw_reg get_addr_reg(struct brw_indirect ptr)
 {
    return brw_address_reg(ptr.addr_subnr);
 }
 
-static INLINE struct brw_indirect brw_indirect_offset( struct brw_indirect ptr, GLint offset )
+static inline struct brw_indirect brw_indirect_offset(struct brw_indirect ptr, int offset)
 {
    ptr.addr_offset += offset;
    return ptr;
 }
 
-static INLINE struct brw_indirect brw_indirect( GLuint addr_subnr, GLint offset )
+static inline struct brw_indirect brw_indirect(uint32_t addr_subnr, int offset)
 {
    struct brw_indirect ptr;
    ptr.addr_subnr = addr_subnr;
@@ -797,62 +758,62 @@ static INLINE struct brw_indirect brw_indirect( GLuint addr_subnr, GLint offset 
 }
 
 /** Do two brw_regs refer to the same register? */
-static INLINE bool
+static inline bool
 brw_same_reg(struct brw_reg r1, struct brw_reg r2)
 {
    return r1.file == r2.file && r1.nr == r2.nr;
 }
 
-static INLINE struct brw_instruction *current_insn( struct brw_compile *p)
+static inline struct brw_instruction *current_insn(struct brw_compile *p)
 {
    return &p->store[p->nr_insn];
 }
 
-void brw_pop_insn_state( struct brw_compile *p );
-void brw_push_insn_state( struct brw_compile *p );
-void brw_set_mask_control( struct brw_compile *p, GLuint value );
-void brw_set_saturate( struct brw_compile *p, GLuint value );
-void brw_set_access_mode( struct brw_compile *p, GLuint access_mode );
+void brw_pop_insn_state(struct brw_compile *p);
+void brw_push_insn_state(struct brw_compile *p);
+void brw_set_mask_control(struct brw_compile *p, uint32_t value);
+void brw_set_saturate(struct brw_compile *p, uint32_t value);
+void brw_set_access_mode(struct brw_compile *p, uint32_t access_mode);
 void brw_set_compression_control(struct brw_compile *p, enum brw_compression c);
-void brw_set_predicate_control_flag_value( struct brw_compile *p, GLuint value );
-void brw_set_predicate_control( struct brw_compile *p, GLuint pc );
+void brw_set_predicate_control_flag_value(struct brw_compile *p, uint32_t value);
+void brw_set_predicate_control(struct brw_compile *p, uint32_t pc);
 void brw_set_predicate_inverse(struct brw_compile *p, bool predicate_inverse);
-void brw_set_conditionalmod( struct brw_compile *p, GLuint conditional );
-void brw_set_acc_write_control(struct brw_compile *p, GLuint value);
+void brw_set_conditionalmod(struct brw_compile *p, uint32_t conditional);
+void brw_set_acc_write_control(struct brw_compile *p, uint32_t value);
 
 void brw_init_compile(struct brw_context *, struct brw_compile *p,
-		      void *mem_ctx);
-const GLuint *brw_get_program( struct brw_compile *p, GLuint *sz );
+                      void *mem_ctx);
+const uint32_t *brw_get_program(struct brw_compile *p, uint32_t *sz);
 
-struct brw_instruction *brw_next_insn(struct brw_compile *p, GLuint opcode);
+struct brw_instruction *brw_next_insn(struct brw_compile *p, uint32_t opcode);
 void brw_set_dest(struct brw_compile *p, struct brw_instruction *insn,
-		  struct brw_reg dest);
+                  struct brw_reg dest);
 void brw_set_src0(struct brw_compile *p, struct brw_instruction *insn,
-		  struct brw_reg reg);
+                  struct brw_reg reg);
 
 void gen6_resolve_implied_move(struct brw_compile *p,
-			       struct brw_reg *src,
-			       GLuint msg_reg_nr);
+                               struct brw_reg *src,
+                               uint32_t msg_reg_nr);
 
 /* Helpers for regular instructions:
  */
-#define ALU1(OP)					\
-struct brw_instruction *brw_##OP(struct brw_compile *p,	\
-	      struct brw_reg dest,			\
-	      struct brw_reg src0);
+#define ALU1(OP)                                          \
+struct brw_instruction *brw_##OP(struct brw_compile *p,   \
+              struct brw_reg dest,                        \
+              struct brw_reg src0);
 
-#define ALU2(OP)					\
-struct brw_instruction *brw_##OP(struct brw_compile *p,	\
-	      struct brw_reg dest,			\
-	      struct brw_reg src0,			\
-	      struct brw_reg src1);
+#define ALU2(OP)                                          \
+struct brw_instruction *brw_##OP(struct brw_compile *p,   \
+              struct brw_reg dest,                        \
+              struct brw_reg src0,                        \
+              struct brw_reg src1);
 
-#define ALU3(OP)					\
-struct brw_instruction *brw_##OP(struct brw_compile *p,	\
-	      struct brw_reg dest,			\
-	      struct brw_reg src0,			\
-	      struct brw_reg src1,			\
-	      struct brw_reg src2);
+#define ALU3(OP)                                          \
+struct brw_instruction *brw_##OP(struct brw_compile *p,   \
+              struct brw_reg dest,                        \
+              struct brw_reg src0,                        \
+              struct brw_reg src1,                        \
+              struct brw_reg src2);
 
 #define ROUND(OP) \
 void brw_##OP(struct brw_compile *p, struct brw_reg dest, struct brw_reg src0);
@@ -893,175 +854,100 @@ ROUND(RNDE)
 #undef ROUND
 
 
-/* Helpers for SEND instruction:
- */
+/* Helpers for SEND instruction */
 void brw_set_sampler_message(struct brw_compile *p,
                              struct brw_instruction *insn,
-                             GLuint binding_table_index,
-                             GLuint sampler,
-                             GLuint msg_type,
-                             GLuint response_length,
-                             GLuint msg_length,
-                             GLuint header_present,
-                             GLuint simd_mode,
-                             GLuint return_format);
+                             uint32_t binding_table_index,
+                             uint32_t sampler,
+                             uint32_t msg_type,
+                             uint32_t response_length,
+                             uint32_t msg_length,
+                             uint32_t header_present,
+                             uint32_t simd_mode,
+                             uint32_t return_format);
 
 void brw_set_dp_read_message(struct brw_compile *p,
-			     struct brw_instruction *insn,
-			     GLuint binding_table_index,
-			     GLuint msg_control,
-			     GLuint msg_type,
-			     GLuint target_cache,
-			     GLuint msg_length,
-			     GLuint response_length);
+                             struct brw_instruction *insn,
+                             uint32_t binding_table_index,
+                             uint32_t msg_control,
+                             uint32_t msg_type,
+                             uint32_t target_cache,
+                             uint32_t msg_length,
+                             uint32_t response_length);
 
 void brw_set_dp_write_message(struct brw_compile *p,
-			      struct brw_instruction *insn,
-			      GLuint binding_table_index,
-			      GLuint msg_control,
-			      GLuint msg_type,
-			      GLuint msg_length,
-			      bool header_present,
-			      GLuint last_render_target,
-			      GLuint response_length,
-			      GLuint end_of_thread,
-			      GLuint send_commit_msg);
-
-void brw_urb_WRITE(struct brw_compile *p,
-		   struct brw_reg dest,
-		   GLuint msg_reg_nr,
-		   struct brw_reg src0,
-		   bool allocate,
-		   bool used,
-		   GLuint msg_length,
-		   GLuint response_length,
-		   bool eot,
-		   bool writes_complete,
-		   GLuint offset,
-		   GLuint swizzle);
-
-void brw_ff_sync(struct brw_compile *p,
-		   struct brw_reg dest,
-		   GLuint msg_reg_nr,
-		   struct brw_reg src0,
-		   bool allocate,
-		   GLuint response_length,
-		   bool eot);
-
-void brw_svb_write(struct brw_compile *p,
-                   struct brw_reg dest,
-                   GLuint msg_reg_nr,
-                   struct brw_reg src0,
-                   GLuint binding_table_index,
-                   bool   send_commit_msg);
-
-void brw_fb_WRITE(struct brw_compile *p,
-		  int dispatch_width,
-		   GLuint msg_reg_nr,
-		   struct brw_reg src0,
-		   GLuint binding_table_index,
-		   GLuint msg_length,
-		   GLuint response_length,
-		   bool eot,
-		   bool header_present);
+                              struct brw_instruction *insn,
+                              uint32_t binding_table_index,
+                              uint32_t msg_control,
+                              uint32_t msg_type,
+                              uint32_t msg_length,
+                              bool header_present,
+                              uint32_t last_render_target,
+                              uint32_t response_length,
+                              uint32_t end_of_thread,
+                              uint32_t send_commit_msg);
 
 void brw_SAMPLE(struct brw_compile *p,
-		struct brw_reg dest,
-		GLuint msg_reg_nr,
-		struct brw_reg src0,
-		GLuint binding_table_index,
-		GLuint sampler,
-		GLuint writemask,
-		GLuint msg_type,
-		GLuint response_length,
-		GLuint msg_length,
-		GLuint header_present,
-		GLuint simd_mode,
-		GLuint return_format);
+                struct brw_reg dest,
+                uint32_t msg_reg_nr,
+                struct brw_reg src0,
+                uint32_t binding_table_index,
+                uint32_t sampler,
+                uint32_t writemask,
+                uint32_t msg_type,
+                uint32_t response_length,
+                uint32_t msg_length,
+                uint32_t header_present,
+                uint32_t simd_mode,
+                uint32_t return_format);
 
-void brw_math_16( struct brw_compile *p,
-		  struct brw_reg dest,
-		  GLuint function,
-		  GLuint saturate,
-		  GLuint msg_reg_nr,
-		  struct brw_reg src,
-		  GLuint precision );
+void brw_math_16(struct brw_compile *p,
+                 struct brw_reg dest,
+                 uint32_t function,
+                 uint32_t saturate,
+                 uint32_t msg_reg_nr,
+                 struct brw_reg src,
+                 uint32_t precision);
 
-void brw_math( struct brw_compile *p,
-	       struct brw_reg dest,
-	       GLuint function,
-	       GLuint saturate,
-	       GLuint msg_reg_nr,
-	       struct brw_reg src,
-	       GLuint data_type,
-	       GLuint precision );
+void brw_math(struct brw_compile *p,
+               struct brw_reg dest,
+               uint32_t function,
+               uint32_t saturate,
+               uint32_t msg_reg_nr,
+               struct brw_reg src,
+               uint32_t data_type,
+               uint32_t precision);
 
 void brw_math2(struct brw_compile *p,
-	       struct brw_reg dest,
-	       GLuint function,
-	       struct brw_reg src0,
-	       struct brw_reg src1);
+               struct brw_reg dest,
+               uint32_t function,
+               struct brw_reg src0,
+               struct brw_reg src1);
 
 void brw_oword_block_read(struct brw_compile *p,
-			  struct brw_reg dest,
-			  struct brw_reg mrf,
-			  uint32_t offset,
-			  uint32_t bind_table_index);
+                          struct brw_reg dest,
+                          struct brw_reg mrf,
+                          uint32_t offset,
+                          uint32_t bind_table_index);
 
 void brw_oword_block_read_scratch(struct brw_compile *p,
-				  struct brw_reg dest,
-				  struct brw_reg mrf,
-				  int num_regs,
-				  GLuint offset);
+                                  struct brw_reg dest,
+                                  struct brw_reg mrf,
+                                  int num_regs,
+                                  uint32_t offset);
 
 void brw_oword_block_write_scratch(struct brw_compile *p,
-				   struct brw_reg mrf,
-				   int num_regs,
-				   GLuint offset);
+                                   struct brw_reg mrf,
+                                   int num_regs,
+                                   uint32_t offset);
 
 void brw_dword_scattered_read(struct brw_compile *p,
-			      struct brw_reg dest,
-			      struct brw_reg mrf,
-			      uint32_t bind_table_index);
-
-void brw_dp_READ_4_vs( struct brw_compile *p,
-                       struct brw_reg dest,
-                       GLuint location,
-                       GLuint bind_table_index );
-
-void brw_dp_READ_4_vs_relative(struct brw_compile *p,
-			       struct brw_reg dest,
-			       struct brw_reg addrReg,
-			       GLuint offset,
-			       GLuint bind_table_index);
-
-/* If/else/endif.  Works by manipulating the execution flags on each
- * channel.
- */
-struct brw_instruction *brw_IF(struct brw_compile *p, 
-			       GLuint execute_size);
-struct brw_instruction *gen6_IF(struct brw_compile *p, uint32_t conditional,
-				struct brw_reg src0, struct brw_reg src1);
-
-void brw_ELSE(struct brw_compile *p);
-void brw_ENDIF(struct brw_compile *p);
-
-/* DO/WHILE loops:
- */
-struct brw_instruction *brw_DO(struct brw_compile *p,
-			       GLuint execute_size);
-
-struct brw_instruction *brw_WHILE(struct brw_compile *p);
-
-struct brw_instruction *brw_BREAK(struct brw_compile *p);
-struct brw_instruction *brw_CONT(struct brw_compile *p);
-struct brw_instruction *gen6_CONT(struct brw_compile *p);
-struct brw_instruction *gen6_HALT(struct brw_compile *p);
+                              struct brw_reg dest,
+                              struct brw_reg mrf,
+                              uint32_t bind_table_index);
 /* Forward jumps:
  */
 void brw_land_fwd_jump(struct brw_compile *p, int jmp_insn_idx);
-
-
 
 void brw_NOP(struct brw_compile *p);
 
@@ -1071,53 +957,48 @@ void brw_WAIT(struct brw_compile *p);
  * taken from src0:
  */
 void brw_CMP(struct brw_compile *p,
-	     struct brw_reg dest,
-	     GLuint conditional,
-	     struct brw_reg src0,
-	     struct brw_reg src1);
+             struct brw_reg dest,
+             uint32_t conditional,
+             struct brw_reg src0,
+             struct brw_reg src1);
 
-void brw_print_reg( struct brw_reg reg );
-
-
-/*********************************************************************** 
- * brw_eu_util.c:
- */
+void brw_print_reg(struct brw_reg reg);
 
 void brw_copy_indirect_to_indirect(struct brw_compile *p,
-				   struct brw_indirect dst_ptr,
-				   struct brw_indirect src_ptr,
-				   GLuint count);
+                                   struct brw_indirect dst_ptr,
+                                   struct brw_indirect src_ptr,
+                                   uint32_t count);
 
 void brw_copy_from_indirect(struct brw_compile *p,
-			    struct brw_reg dst,
-			    struct brw_indirect ptr,
-			    GLuint count);
+                            struct brw_reg dst,
+                            struct brw_indirect ptr,
+                            uint32_t count);
 
 void brw_copy4(struct brw_compile *p,
-	       struct brw_reg dst,
-	       struct brw_reg src,
-	       GLuint count);
+               struct brw_reg dst,
+               struct brw_reg src,
+               uint32_t count);
 
 void brw_copy8(struct brw_compile *p,
-	       struct brw_reg dst,
-	       struct brw_reg src,
-	       GLuint count);
+               struct brw_reg dst,
+               struct brw_reg src,
+               uint32_t count);
 
-void brw_math_invert( struct brw_compile *p, 
-		      struct brw_reg dst,
-		      struct brw_reg src);
+void brw_math_invert(struct brw_compile *p,
+                      struct brw_reg dst,
+                      struct brw_reg src);
 
 void brw_set_src1(struct brw_compile *p,
-		  struct brw_instruction *insn,
-		  struct brw_reg reg);
+                  struct brw_instruction *insn,
+                  struct brw_reg reg);
 
 void brw_set_uip_jip(struct brw_compile *p);
 
 uint32_t brw_swap_cmod(uint32_t cmod);
 
-/* brw_optimize.c */
-void brw_optimize(struct brw_compile *p);
-void brw_remove_duplicate_mrf_moves(struct brw_compile *p);
-void brw_remove_grf_to_mrf_moves(struct brw_compile *p);
+#ifdef __cplusplus
+}
+#endif /* __cplusplus */
 
-#endif
+#endif /* BRW_EU_H */
+

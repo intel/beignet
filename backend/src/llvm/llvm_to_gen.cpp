@@ -35,7 +35,7 @@
 
 namespace gbe
 {
-  void llvmToGen(ir::Unit &unit, const char *fileName)
+  bool llvmToGen(ir::Unit &unit, const char *fileName)
   {
     using namespace llvm;
     // Get the global LLVM context
@@ -45,7 +45,7 @@ namespace gbe
     SMDiagnostic Err;
     std::auto_ptr<Module> M;
     M.reset(ParseIRFile(fileName, Err, c));
-    GBE_ASSERT (M.get() != 0);
+    if (M.get() == 0) return false;
     Module &mod = *M.get();
 
     llvm::PassManager passes;
@@ -58,6 +58,7 @@ namespace gbe
     passes.add(createGVNPass());                  // Remove redundancies
     passes.add(createGenPass(unit));
     passes.run(mod);
+    return true;
   }
 } /* namespace gbe */
 

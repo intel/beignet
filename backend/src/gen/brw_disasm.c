@@ -25,9 +25,11 @@
 #include <stdarg.h>
 
 //#include "main/mtypes.h"
-
 //#include "brw_context.h"
 #include "brw_defines.h"
+#include "brw_structs.h"
+
+#include <stdint.h>
 
 struct {
     char    *name;
@@ -633,7 +635,7 @@ static int src_da1 (FILE *file, uint32_t type, uint32_t _reg_file,
 static int src_ia1 (FILE *file,
                     uint32_t type,
                     uint32_t _reg_file,
-                    GLint _addr_imm,
+                    int _addr_imm,
                     uint32_t _addr_subreg_nr,
                     uint32_t _negate,
                     uint32_t __abs,

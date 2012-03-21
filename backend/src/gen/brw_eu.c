@@ -23,11 +23,15 @@
   */
   
 
-#include "brw_context.h"
+// #include "brw_context.h"
 #include "brw_defines.h"
 #include "brw_eu.h"
 
-#include "glsl/ralloc.h"
+#include <stdlib.h>
+#include <assert.h>
+#include <string.h>
+
+// #include "glsl/ralloc.h"
 
 /* Returns the corresponding conditional mod for swapping src0 and
  * src1 in e.g. CMP.
@@ -56,7 +60,7 @@ brw_swap_cmod(uint32_t cmod)
 /* How does predicate control work when execution_size != 8?  Do I
  * need to test/set for 0xffff when execution_size is 16?
  */
-void brw_set_predicate_control_flag_value( struct brw_compile *p, uint32_t value )
+void brw_set_predicate_control_flag_value(struct brw_compile *p, uint32_t value)
 {
    p->current->header.predicate_control = BRW_PREDICATE_NONE;
 
@@ -72,7 +76,7 @@ void brw_set_predicate_control_flag_value( struct brw_compile *p, uint32_t value
    }   
 }
 
-void brw_set_predicate_control( struct brw_compile *p, uint32_t pc )
+void brw_set_predicate_control(struct brw_compile *p, uint32_t pc)
 {
    p->current->header.predicate_control = pc;
 }
@@ -82,12 +86,12 @@ void brw_set_predicate_inverse(struct brw_compile *p, bool predicate_inverse)
    p->current->header.predicate_inverse = predicate_inverse;
 }
 
-void brw_set_conditionalmod( struct brw_compile *p, uint32_t conditional )
+void brw_set_conditionalmod(struct brw_compile *p, uint32_t conditional)
 {
    p->current->header.destreg__conditionalmod = conditional;
 }
 
-void brw_set_access_mode( struct brw_compile *p, uint32_t access_mode )
+void brw_set_access_mode(struct brw_compile *p, uint32_t access_mode)
 {
    p->current->header.access_mode = access_mode;
 }
@@ -98,7 +102,7 @@ brw_set_compression_control(struct brw_compile *p,
 {
    p->compressed = (compression_control == BRW_COMPRESSION_COMPRESSED);
 
-   if (p->brw->intel.gen >= 6) {
+   if (p->gen >= 6) {
       /* Since we don't use the 32-wide support in gen6, we translate
        * the pre-gen6 compression control here.
        */
@@ -129,23 +133,25 @@ brw_set_compression_control(struct brw_compile *p,
    }
 }
 
-void brw_set_mask_control( struct brw_compile *p, uint32_t value )
+void brw_set_mask_control(struct brw_compile *p, uint32_t value)
 {
    p->current->header.mask_control = value;
 }
 
-void brw_set_saturate( struct brw_compile *p, uint32_t value )
+void brw_set_saturate(struct brw_compile *p, uint32_t value)
 {
    p->current->header.saturate = value;
 }
 
+#if 0
 void brw_set_acc_write_control(struct brw_compile *p, uint32_t value)
 {
    if (p->brw->intel.gen >= 6)
       p->current->header.acc_wr_control = value;
 }
+#endif
 
-void brw_push_insn_state( struct brw_compile *p )
+void brw_push_insn_state(struct brw_compile *p)
 {
    assert(p->current != &p->stack[BRW_EU_MAX_INSN_STACK-1]);
    memcpy(p->current+1, p->current, sizeof(struct brw_instruction));
@@ -153,7 +159,7 @@ void brw_push_insn_state( struct brw_compile *p )
    p->current++;   
 }
 
-void brw_pop_insn_state( struct brw_compile *p )
+void brw_pop_insn_state(struct brw_compile *p)
 {
    assert(p->current != p->stack);
    p->current--;
@@ -161,6 +167,7 @@ void brw_pop_insn_state( struct brw_compile *p )
 }
 
 
+#if 0
 /***********************************************************************
  */
 void
@@ -200,8 +207,8 @@ brw_init_compile(struct brw_context *brw, struct brw_compile *p, void *mem_ctx)
 }
 
 
-const uint32_t *brw_get_program( struct brw_compile *p,
-                               uint32_t *sz )
+const uint32_t *brw_get_program(struct brw_compile *p,
+                               uint32_t *sz)
 {
    uint32_t i;
 
@@ -335,3 +342,4 @@ brw_resolve_cals(struct brw_compile *c)
         c->first_label = NULL;
     }
 }
+#endif
