@@ -48,6 +48,7 @@ cl_kernel_compute_batch_sz(cl_kernel k)
   return sz;
 }
 
+#if 0
 static cl_int
 cl_set_local_ids(char *data,
                  const size_t *local_wk_sz,
@@ -92,6 +93,7 @@ error:
     cl_free(ids[i]);
   return err;
 }
+#endif
 
 LOCAL cl_int
 cl_command_queue_ND_range_gen7(cl_command_queue queue,

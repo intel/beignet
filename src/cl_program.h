@@ -26,10 +26,14 @@
 #include <stdint.h>
 #include <stdlib.h>
 
+// This is the structure ouput by the compiler
+struct GenProgram;
+
 /* This maps an OCL file containing some kernels */
 struct _cl_program {
-  uint64_t magic;           /* To identify it as a program */
-  volatile int ref_n;       /* We reference count this object */
+  uint64_t magic;                  /* To identify it as a program */
+  volatile int ref_n;              /* We reference count this object */
+  struct GenProgram *gen_program;  /* Program as ouput by the compiler */
   cl_kernel *ker;           /* All kernels included by the OCL file */
   cl_program prev, next;    /* We chain the programs together */
   cl_context ctx;           /* Its parent context */

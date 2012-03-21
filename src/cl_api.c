@@ -1171,3 +1171,17 @@ clIntelGetGenVersion(cl_device_id device, cl_int *ver)
   return cl_device_get_version(device, ver);
 }
 
+cl_program
+clCreateProgramWithLLVM(cl_context              context,
+                        cl_uint                 num_devices,
+                        const cl_device_id *    devices,
+                        const char *            filename,
+                        cl_int *                errcode_ret)
+{
+  return cl_program_create_from_llvm(context,
+                                     num_devices,
+                                     devices,
+                                     filename,
+                                     errcode_ret);
+}
+

@@ -23,8 +23,8 @@
 #include "cl_context.h"
 #include "cl_alloc.h"
 #include "cl_utils.h"
-
 #include "CL/cl.h"
+#include "gen/program.h"
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -62,6 +62,9 @@ cl_program_delete(cl_program p)
 
   /* Program belongs to their parent context */
   cl_context_delete(p->ctx);
+
+  /* Free the program as allocated by the compiler */
+  if (p->gen_program) GenProgramDelete(p->gen_program);
 
   p->magic = CL_MAGIC_DEAD_HEADER; /* For safety */
   cl_free(p);
@@ -104,7 +107,76 @@ cl_program_create_from_binary(cl_context             ctx,
                               cl_int *               binary_status,
                               cl_int *               errcode_ret)
 {
-  return NULL;
+#if 0
+  cl_program program = NULL;
+  cl_int err = CL_SUCCESS;
+
+  assert(ctx);
+  INVALID_DEVICE_IF (num_devices != 1);
+  INVALID_DEVICE_IF (devices == NULL);
+  INVALID_DEVICE_IF (devices[0] != ctx->device);
+  INVALID_VALUE_IF (binaries == NULL);
+  INVALID_VALUE_IF (lengths == NULL);
+
+  if (binaries[0] == NULL) {
+    err = CL_INVALID_VALUE;
+    if (binary_status)
+      binary_status[0] = CL_INVALID_VALUE;
+    goto error;
+  }
+
+  if (lengths[0] == 0) {
+    err = CL_INVALID_VALUE;
+    if (binary_status)
+      binary_status[0] = CL_INVALID_VALUE;
+    goto error;
+  }
+
+  // TRY_ALLOC (program, cl_program_new(ctx, (const char *) binaries[0], lengths[0]));
+
+exit:
+  if (errcode_ret)
+    *errcode_ret = err;
+  return program;
+error:
+  cl_program_delete(program);
+  program = NULL;
+  goto exit;
+#endif
+  NOT_IMPLEMENTED;
+  return CL_SUCCESS;
+}
+
+LOCAL cl_program
+cl_program_create_from_llvm(cl_context ctx,
+                            cl_uint num_devices,
+                            const cl_device_id *devices,
+                            const char *file_name,
+                            cl_int *errcode_ret)
+{
+  cl_program program = NULL;
+  cl_int err = CL_SUCCESS;
+
+  assert(ctx);
+  INVALID_DEVICE_IF (num_devices != 1);
+  INVALID_DEVICE_IF (devices == NULL);
+  INVALID_DEVICE_IF (devices[0] != ctx->device);
+  INVALID_VALUE_IF (file_name == NULL);
+
+  program->gen_program = GenProgramNewFromLLVM(file_name, 0, NULL, NULL);
+  if (program->gen_program == NULL) {
+    err = CL_INVALID_PROGRAM;
+    goto error;
+  }
+
+exit:
+  if (errcode_ret)
+    *errcode_ret = err;
+  return program;
+error:
+  cl_program_delete(program);
+  program = NULL;
+  goto exit;
 }
 
 LOCAL cl_kernel
