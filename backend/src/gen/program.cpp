@@ -147,10 +147,17 @@ uint32_t GenProgramGetKernelNum(const GenProgram *genProgram) {
 }
 
 GBE_EXPORT_SYMBOL
-const GenKernel *GenProgramGetKernel(const GenProgram *genProgram, const char *name) {
+const GenKernel *GenProgramGetKernelByName(const GenProgram *genProgram, const char *name) {
   if (genProgram == NULL) return NULL;
   const gbe::gen::Program *program = (const gbe::gen::Program*) genProgram;
   return (GenKernel*) program->getKernel(std::string(name));
+}
+
+GBE_EXPORT_SYMBOL
+const GenKernel *GenProgramGetKernel(const GenProgram *genProgram, uint32_t ID) {
+  if (genProgram == NULL) return NULL;
+  const gbe::gen::Program *program = (const gbe::gen::Program*) genProgram;
+  return (GenKernel*) program->getKernel(ID);
 }
 
 GBE_EXPORT_SYMBOL

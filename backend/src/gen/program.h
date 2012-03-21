@@ -68,7 +68,10 @@ void GenProgramDelete(GenProgram *program);
 uint32_t GenProgramGetKernelNum(const GenProgram *program);
 
 /*! Get the kernel from its name */
-const GenKernel *GenProgramGetKernel(const GenProgram *program, const char *name);
+const GenKernel *GenProgramGetKernelByName(const GenProgram *program, const char *name);
+
+/*! Get the kernel from its ID */
+const GenKernel *GenProgramGetKernel(const GenProgram *program, uint32_t ID);
 
 /*! Get the Gen ISA source code */
 const char *GenKernelGetCode(const GenKernel *kernel);

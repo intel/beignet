@@ -105,6 +105,18 @@ namespace gen {
       else
         return it->second;
     }
+    /*! Get the kernel from its ID */
+    Kernel *getKernel(const uint32_t ID) const {
+      uint32_t currID = 0;
+      Kernel *kernel = NULL;
+      for (auto it = kernels.begin(); it != kernels.end(); ++it) {
+        if (currID == ID) {
+          kernel = it->second;
+          break;
+        }
+      }
+      return kernel;
+    }
     /*! Build a program from a ir::Unit */
     bool buildFromUnit(const ir::Unit &unit, std::string &error);
     /*! Buils a program from a LLVM source code */
