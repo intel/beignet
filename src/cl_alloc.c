@@ -22,6 +22,7 @@
 
 #include <stdlib.h>
 #include <assert.h>
+#include <malloc.h>
 
 static volatile int32_t cl_alloc_n = 0;
 
@@ -31,6 +32,16 @@ cl_malloc(size_t sz)
   void * p = NULL;
   atomic_inc(&cl_alloc_n);
   p = malloc(sz);
+  assert(p);
+  return p;
+}
+
+LOCAL void*
+cl_aligned_malloc(size_t sz, size_t align)
+{
+  void * p = NULL;
+  atomic_inc(&cl_alloc_n);
+  p = memalign(align, sz);
   assert(p);
   return p;
 }

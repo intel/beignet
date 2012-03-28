@@ -157,7 +157,7 @@ gpgpu_set_base_address(intel_gpgpu_t *state)
   OUT_BATCH(state->batch, 0 | BASE_ADDRESS_MODIFY);
   OUT_BATCH(state->batch, 0 | BASE_ADDRESS_MODIFY);
   OUT_BATCH(state->batch, 0 | BASE_ADDRESS_MODIFY);
-#endif
+#endif /* USE_FULSIM */
   ADVANCE_BATCH(state->batch);
 }
 
@@ -477,21 +477,6 @@ gpgpu_state_init(intel_gpgpu_t *state,
 }
 
 static void
-gpgpu_set_buf_reloc_gen6(intel_gpgpu_t *state, int32_t index, dri_bo* obj_bo)
-{
-  surface_heap_t *heap = state->surface_heap_b.bo->virtual;
-  heap->binding_table[index] = offsetof(surface_heap_t, surface) +
-                               index * sizeof(gen6_surface_state_t);
-  dri_bo_emit_reloc(state->surface_heap_b.bo,
-                    I915_GEM_DOMAIN_RENDER,
-                    I915_GEM_DOMAIN_RENDER,
-                    0,
-                    heap->binding_table[index] +
-                    offsetof(gen6_surface_state_t, ss1),
-                    obj_bo);
-}
-
-static void
 gpgpu_set_buf_reloc_gen7(intel_gpgpu_t *state, int32_t index, dri_bo* obj_bo)
 {
   surface_heap_t *heap = state->surface_heap_b.bo->virtual;
@@ -504,28 +489,6 @@ gpgpu_set_buf_reloc_gen7(intel_gpgpu_t *state, int32_t index, dri_bo* obj_bo)
                     heap->binding_table[index] +
                     offsetof(gen7_surface_state_t, ss1),
                     obj_bo);
-}
-
-static void
-gpgpu_bind_buf_gen6(intel_gpgpu_t *state,
-                    int32_t index,
-                    dri_bo* obj_bo,
-                    uint32_t size,
-                    uint32_t cchint)
-{
-  surface_heap_t *heap = state->surface_heap_b.bo->virtual;
-  gen6_surface_state_t *ss = (gen6_surface_state_t *) heap->surface[index];
-  const uint32_t size_ss = ((size+0xf) >> 4) - 1; /* ceil(size/16) - 1 */
-  memset(ss, 0, sizeof(*ss));
-  ss->ss0.surface_type = I965_SURFACE_BUFFER;
-  ss->ss0.surface_format = I965_SURFACEFORMAT_R32G32B32A32_FLOAT;
-  ss->ss1.base_addr = obj_bo->offset;
-  ss->ss2.width = size_ss & 0x7f;           /* bits 6:0 of size_ss */
-  ss->ss2.height = (size_ss >> 7) & 0x1fff; /* bits 19:7 of size_ss */
-  ss->ss3.depth = size_ss >> 20;            /* bits 26:20 of size_ss */
-  ss->ss3.pitch = 0xf;                      /* sizeof(RGBA32) - 1 */;
-  ss->ss5.cache_control = cchint;
-  gpgpu_set_buf_reloc_gen6(state, index, obj_bo);
 }
 
 static void
@@ -547,28 +510,6 @@ gpgpu_bind_buf_gen7(intel_gpgpu_t *state,
   ss->ss3.depth  = (size_ss & 0xffe00000) >> 20; /* bits 27:21 of size_ss */
   ss->ss5.cache_control = cc_llc_l3;
   gpgpu_set_buf_reloc_gen7(state, index, obj_bo);
-}
-
-static void
-gpgpu_bind_image2D_gen6(intel_gpgpu_t *state,
-                        int32_t index,
-                        dri_bo* obj_bo,
-                        uint32_t format,
-                        int32_t w,
-                        int32_t h,
-                        int32_t pitch)
-{
-  surface_heap_t *heap = state->surface_heap_b.bo->virtual;
-  gen6_surface_state_t *ss = (gen6_surface_state_t *) heap->surface[index];
-  memset(ss, 0, sizeof(*ss));
-  ss->ss0.surface_type = I965_SURFACE_2D;
-  ss->ss0.surface_format = format;
-  ss->ss1.base_addr = obj_bo->offset;
-  ss->ss2.width = w - 1;
-  ss->ss2.height = h - 1;
-  ss->ss3.pitch = pitch - 1;
-  ss->ss5.cache_control = cc_llc_l3;
-  gpgpu_set_buf_reloc_gen6(state, index, obj_bo);
 }
 
 static void
@@ -608,11 +549,9 @@ gpgpu_bind_buf(intel_gpgpu_t *state,
                uint32_t cchint)
 {
   uint32_t size = obj_bo->size;
-  
+
   assert(index < MAX_SURFACES);
-  if(state->drv->gen_ver == 6)
-    gpgpu_bind_buf_gen6(state, index, obj_bo, size, cchint);
-  else if (state->drv->gen_ver == 7 || state->drv->gen_ver == 75)
+  if (state->drv->gen_ver == 7 || state->drv->gen_ver == 75)
     gpgpu_bind_buf_gen7(state, index, obj_bo, size, cchint);
   else
     NOT_IMPLEMENTED;
@@ -629,11 +568,7 @@ gpgpu_bind_image2D(intel_gpgpu_t *state,
                    gpgpu_tiling_t tiling)
 {
   assert(index < MAX_SURFACES);
-  if(state->drv->gen_ver == 6) {
-    // We do not tile with SNB
-    FATAL_IF (tiling != GPGPU_NO_TILE, "No tiling is implemented on SNB");
-    gpgpu_bind_image2D_gen6(state, index, obj_bo, format, w, h, pitch);
-  } else if (state->drv->gen_ver == 7 || state->drv->gen_ver == 75)
+  if (state->drv->gen_ver == 7 || state->drv->gen_ver == 75)
     gpgpu_bind_image2D_gen7(state, index, obj_bo, format, w, h, pitch, tiling);
   else
     NOT_IMPLEMENTED;
