@@ -44,8 +44,8 @@ struct _cl_program {
   uint32_t is_built:1;      /* Did we call clBuildProgram on it? */
 };
 
-/* Create a program from */
-extern cl_program cl_program_new(cl_context, const char*, size_t);
+/* Create a empty program */
+extern cl_program cl_program_new(cl_context);
 
 /* Destroy and deallocate an empty kernel */
 extern void cl_program_delete(cl_program);

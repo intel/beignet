@@ -24,6 +24,7 @@
 #include "cl_alloc.h"
 #include "cl_utils.h"
 #include "CL/cl.h"
+#include "CL/cl_intel.h"
 #include "gen/program.h"
 
 #include <stdio.h>
@@ -71,15 +72,12 @@ cl_program_delete(cl_program p)
 }
 
 LOCAL cl_program
-cl_program_new(cl_context ctx, const char *data, size_t sz)
+cl_program_new(cl_context ctx)
 {
   cl_program p = NULL;
 
   /* Allocate the structure */
   TRY_ALLOC_NO_ERR (p, CALLOC(struct _cl_program));
-  TRY_ALLOC_NO_ERR (p->bin, CALLOC_ARRAY(char, sz));
-  memcpy(p->bin, data, sz);
-  p->bin_sz = sz;
   p->ref_n = 1;
   p->magic = CL_MAGIC_PROGRAM_HEADER;
   p->ctx = ctx;
@@ -96,6 +94,29 @@ cl_program_add_ref(cl_program p)
 {
   assert(p);
   atomic_inc(&p->ref_n);
+}
+
+static cl_int
+cl_program_load_gen_program(cl_program p)
+{
+  cl_int err = CL_SUCCESS;
+  uint32_t i;
+
+  assert(p->gen_program != NULL);
+  p->ker_n = GenProgramGetKernelNum(p->gen_program);
+
+  /* Allocate the kernel array */
+  TRY_ALLOC (p->ker, CALLOC_ARRAY(cl_kernel, p->ker_n));
+
+  for (i = 0; i < p->ker_n; ++i) {
+    const GenKernel *gen_kernel = GenProgramGetKernel(p->gen_program, i);
+    assert(gen_kernel != NULL);
+    TRY_ALLOC (p->ker[i], cl_kernel_new(p));
+    cl_kernel_setup(p->ker[i], gen_kernel);
+  }
+
+error:
+  return err;
 }
 
 LOCAL cl_program
@@ -163,11 +184,16 @@ cl_program_create_from_llvm(cl_context ctx,
   INVALID_DEVICE_IF (devices[0] != ctx->device);
   INVALID_VALUE_IF (file_name == NULL);
 
+  program = cl_program_new(ctx);
+
   program->gen_program = GenProgramNewFromLLVM(file_name, 0, NULL, NULL);
   if (program->gen_program == NULL) {
     err = CL_INVALID_PROGRAM;
     goto error;
   }
+
+  /* Create all the kernels */
+  TRY (cl_program_load_gen_program, program);
 
 exit:
   if (errcode_ret)
@@ -182,6 +208,40 @@ error:
 LOCAL cl_kernel
 cl_program_create_kernel(cl_program p, const char *name, cl_int *errcode_ret)
 {
-  return NULL;
+  cl_kernel from = NULL, to = NULL;
+  cl_int err = CL_SUCCESS;
+  uint32_t i = 0;
+
+  if (UNLIKELY(name == NULL)) {
+    err = CL_INVALID_KERNEL_NAME;
+    goto error;
+  }
+
+  /* Find the program first */
+  for (i = 0; i < p->ker_n; ++i) {
+    assert(p->ker[i]);
+    const char *ker_name = cl_kernel_get_name(p->ker[i]);
+    if (strcmp(ker_name, name) == 0) {
+      from = p->ker[i];
+      break;
+    }
+  }
+
+  /* We were not able to find this named kernel */
+  if (UNLIKELY(from == NULL)) {
+    err = CL_INVALID_KERNEL_NAME;
+    goto error;
+  }
+
+  TRY_ALLOC(to, cl_kernel_dup(from));
+
+exit:
+  if (errcode_ret)
+    *errcode_ret = err;
+  return to;
+error:
+  cl_kernel_delete(to);
+  to = NULL;
+  goto exit;
 }
 

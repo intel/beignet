@@ -23,25 +23,38 @@
 #include "cl_defs.h"
 #include "cl_internals.h"
 #include "CL/cl.h"
-#include "gen/program.h"
 
 #include <stdint.h>
 #include <stdlib.h>
 
+/* This is the kernel as it is interfaced by the compiler */
+struct GenKernel;
+
+/*! One OCL function */
 struct _cl_kernel {
-  uint64_t magic;                /* To identify it as a kernel */
-  volatile int ref_n;            /* We reference count this object */
-  struct _drm_intel_bo *bo;      /* The code itself */
-  struct _drm_intel_bo *const_bo;/* Buffer for all __constants values in the OCL program */
-  cl_program program;            /* Owns this structure (and pointers) */
-  uint8_t ref_its_program;      /* True only for the user kernel (those created by clCreateKernel) */
+  uint64_t magic;                     /* To identify it as a kernel */
+  volatile int ref_n;                 /* We reference count this object */
+  struct _drm_intel_bo *bo;           /* The code itself */
+  struct _drm_intel_bo *const_bo;     /* Buffer for all __constants values in the OCL program */
+  cl_program program;                 /* Owns this structure (and pointers) */
+  const struct GenKernel *gen_kernel; /* (Opaque) compiler structure for the OCL kernel */
+  uint8_t ref_its_program;            /* True only for the user kernel (those created by clCreateKernel) */
 };
 
 /* Allocate an empty kernel */
-extern cl_kernel cl_kernel_new(void);
+extern cl_kernel cl_kernel_new(const cl_program);
 
 /* Destroy and deallocate an empty kernel */
 extern void cl_kernel_delete(cl_kernel);
+
+/* Setup the kernel with the given Gen Kernel */
+extern void cl_kernel_setup(cl_kernel k, const struct GenKernel *gen_kernel);
+
+/* Get the kernel name */
+extern const char *cl_kernel_get_name(const cl_kernel k);
+
+/* Get the simd width as used in the code */
+extern uint32_t cl_kernel_get_simd_width(const cl_kernel k);
 
 /* When a kernel is created from outside, we just duplicate the structure we
  * have internally and give it back to the user

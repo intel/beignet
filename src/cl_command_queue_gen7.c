@@ -40,15 +40,10 @@
 static INLINE size_t
 cl_kernel_compute_batch_sz(cl_kernel k)
 {
-#ifdef _PLASMA
-    size_t sz = 0x1000; // _PLASMA
-#else
-    size_t sz = 256 + 32;
-#endif
+  size_t sz = 256 + 32;
   return sz;
 }
 
-#if 0
 static cl_int
 cl_set_local_ids(char *data,
                  const size_t *local_wk_sz,
@@ -62,7 +57,7 @@ cl_set_local_ids(char *data,
   cl_int err = CL_SUCCESS;
 
   for (i = 0; i < 3; ++i)
-    TRY_ALLOC(ids[i], (uint16_t*) cl_calloc(sizeof(uint16_t), thread_n*simd_sz));
+    TRY_ALLOC(ids[i], (uint16_t*) alloca(sizeof(uint16_t)*thread_n*simd_sz));
 
   /* Compute the IDs */
   for (k = 0; k < local_wk_sz[2]; ++k)
@@ -89,11 +84,8 @@ cl_set_local_ids(char *data,
   }
 
 error:
-  for (i = 0; i < 3; ++i)
-    cl_free(ids[i]);
   return err;
 }
-#endif
 
 LOCAL cl_int
 cl_command_queue_ND_range_gen7(cl_command_queue queue,
@@ -102,6 +94,59 @@ cl_command_queue_ND_range_gen7(cl_command_queue queue,
                                const size_t *global_wk_sz,
                                const size_t *local_wk_sz)
 {
+  cl_context ctx = queue->ctx;
+  intel_gpgpu_t *gpgpu = queue->gpgpu;
+  char *curbe = NULL;        /* Does not include per-thread local IDs */
+  char *final_curbe = NULL;  /* Includes them */
+  drm_intel_bo *private_bo = NULL, *scratch_bo = NULL;
+  genx_gpgpu_kernel_t kernel;
+  const uint32_t simd_sz = cl_kernel_get_simd_width(ker);
+  size_t i, batch_sz = 0u, local_sz = 0u, thread_n = 0u, id_offset = 0u, cst_sz = 0u;
+  cl_int err = CL_SUCCESS;
+
+  /* Setup kernel */
+  kernel.name = "OCL kernel";
+  kernel.grf_blocks = 128;
+  kernel.bo = ker->bo;
+  kernel.barrierID = 0;
+  kernel.use_barrier = 0;
+  kernel.slm_sz = 0;
+  kernel.cst_sz = 0;
+
+  /* Compute the number of HW threads we are going to need */
+  TRY (cl_kernel_work_group_sz, ker, local_wk_sz, 3, &local_sz);
+  kernel.thread_n = thread_n = local_sz / simd_sz;
+  id_offset = cst_sz = ALIGN(cst_sz, 32); /* Align the user data on 32 bytes */
+  kernel.cst_sz = cst_sz += 3 * 32;       /* Add local IDs (16 words) */
+
+  /* Setup the kernel */
+  gpgpu_state_init(gpgpu, ctx->device->max_compute_unit, cst_sz / 32);
+  if (queue->last_batch != NULL)
+    drm_intel_bo_unreference(queue->last_batch);
+  queue->last_batch = NULL;
+  cl_command_queue_bind_surface(queue, ker, curbe, NULL, &private_bo, &scratch_bo, 0);
+  gpgpu_states_setup(gpgpu, &kernel, 1);
+
+  /* CURBE step 2. Give the localID and upload it to video memory */
+  TRY_ALLOC (final_curbe, (char*) alloca(thread_n * cst_sz));
+  if (curbe)
+    for (i = 0; i < thread_n; ++i)
+      memcpy(final_curbe + cst_sz * i, curbe, cst_sz - 3*32);
+  TRY (cl_set_local_ids, final_curbe, local_wk_sz, simd_sz, cst_sz, id_offset, thread_n);
+  gpgpu_upload_constants(gpgpu, final_curbe, thread_n*cst_sz);
+
+  /* Start a new batch buffer */
+  batch_sz = cl_kernel_compute_batch_sz(ker);
+  gpgpu_batch_reset(gpgpu, batch_sz);
+  gpgpu_batch_start(gpgpu);
+
+  /* Issue the GPGPU_WALKER command */
+  gpgpu_walker(gpgpu, simd_sz, thread_n, global_wk_off, global_wk_sz, local_wk_sz);
+
+  /* Close the batch buffer and submit it */
+  gpgpu_batch_end(gpgpu, 0);
+  gpgpu_flush(gpgpu);
+
 #if 0
   cl_context ctx = queue->ctx;
   intel_gpgpu_t *gpgpu = queue->gpgpu;
@@ -181,6 +226,8 @@ error:
   cl_free(curbe);
   return err;
 #endif
-  return CL_SUCCESS;
+
+error:
+  return err;
 }
 

@@ -24,15 +24,10 @@
 #include "cl_mem.h"
 #include "cl_alloc.h"
 #include "cl_utils.h"
-
 #include "CL/cl.h"
-
-#ifdef _PLASMA
-#include "plasma/plasma_export.h"
-#else
 #include "intel_bufmgr.h"
 #include "intel/intel_gpgpu.h"
-#endif
+#include "gen/program.h"
 
 #include <stdio.h>
 #include <string.h>
@@ -61,12 +56,13 @@ cl_kernel_delete(cl_kernel k)
 }
 
 LOCAL cl_kernel
-cl_kernel_new(void)
+cl_kernel_new(const cl_program p)
 {
   cl_kernel k = NULL;
   TRY_ALLOC_NO_ERR (k, CALLOC(struct _cl_kernel));
   k->ref_n = 1;
   k->magic = CL_MAGIC_KERNEL_HEADER;
+  k->program = p;
 
 exit:
   return k;
@@ -74,6 +70,13 @@ error:
   cl_kernel_delete(k);
   k = NULL;
   goto exit;
+}
+
+LOCAL const char*
+cl_kernel_get_name(const cl_kernel k)
+{
+  if (UNLIKELY(k == NULL)) return NULL;
+  return GenKernelGetName(k->gen_kernel);
 }
 
 LOCAL void
@@ -89,4 +92,94 @@ cl_kernel_set_arg(cl_kernel k, cl_uint index, size_t sz, const void *value)
 
   return err;
 }
+
+LOCAL uint32_t
+cl_kernel_get_simd_width(const cl_kernel k)
+{
+  assert(k != NULL);
+  return GenKernelGetSIMDWidth(k->gen_kernel);
+}
+
+LOCAL void
+cl_kernel_setup(cl_kernel k, const struct GenKernel *gen_kernel)
+{
+  cl_context ctx = k->program->ctx;
+  drm_intel_bufmgr *bufmgr = cl_context_get_intel_bufmgr(ctx);
+
+  /* Allocate the gen code here */
+  const uint32_t code_sz = GenKernelGetCodeSize(gen_kernel);
+  const char *code = GenKernelGetCode(gen_kernel);
+  k->bo = drm_intel_bo_alloc(bufmgr, "CL kernel", code_sz, 64u);
+
+  /* Upload the code */
+  drm_intel_bo_subdata(k->bo, 0, code_sz, code);
+  k->gen_kernel = gen_kernel;
+}
+
+LOCAL cl_kernel
+cl_kernel_dup(const cl_kernel from)
+{
+  cl_kernel to = NULL;
+
+  if (UNLIKELY(from == NULL))
+    return NULL;
+  TRY_ALLOC_NO_ERR (to, CALLOC(struct _cl_kernel));
+  to->bo = from->bo;
+  to->const_bo = from->const_bo;
+  to->gen_kernel = from->gen_kernel;
+  to->ref_n = 1;
+  to->magic = CL_MAGIC_KERNEL_HEADER;
+  to->program = from->program;
+
+  /* Retain the bos */
+  if (from->bo)       drm_intel_bo_reference(from->bo);
+  if (from->const_bo) drm_intel_bo_reference(from->const_bo);
+
+  /* We retain the program destruction since this kernel (user allocated)
+   * depends on the program for some of its pointers
+   */
+  assert(from->program);
+  cl_program_add_ref(from->program);
+  to->ref_its_program = CL_TRUE;
+
+exit:
+  return to;
+error:
+  cl_kernel_delete(to);
+  to = NULL;
+  goto exit;
+}
+
+LOCAL cl_int
+cl_kernel_work_group_sz(cl_kernel ker,
+                        const size_t *local_wk_sz,
+                        uint32_t wk_dim,
+                        size_t *wk_grp_sz)
+{
+  cl_int err = CL_SUCCESS;
+  size_t sz = 0;
+  cl_uint i;
+
+  for (i = 0; i < wk_dim; ++i) {
+    const uint32_t required_sz = GenKernelGetRequiredWorkGroupSize(ker->gen_kernel, i);
+    if (required_sz != 0 && required_sz != local_wk_sz[i]) {
+      err = CL_INVALID_WORK_ITEM_SIZE;
+      goto error;
+    }
+  }
+  sz = local_wk_sz[0];
+  for (i = 1; i < wk_dim; ++i)
+    sz *= local_wk_sz[i];
+  FATAL_IF (sz % 16, "Work group size must be a multiple of 16");
+  if (sz > ker->program->ctx->device->max_work_group_size) {
+    err = CL_INVALID_WORK_ITEM_SIZE;
+    goto error;
+  }
+
+error:
+  if (wk_grp_sz)
+    *wk_grp_sz = sz;
+  return err;
+}
+
 

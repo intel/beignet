@@ -41,8 +41,6 @@ typedef struct genx_gpgpu_kernel {
   const char *name;        /* kernel name and bo name */
   uint32_t grf_blocks;     /* register blocks kernel wants (in 8 reg blocks) */
   uint32_t cst_sz;         /* total size of all constants */
-  const char *bin;     /* binary code of the kernel */
-  int32_t size;            /* kernel code size */
   struct _drm_intel_bo *bo;/* kernel code in the proper addr space */
   int32_t barrierID;       /* barrierID for _this_ kernel */
   uint32_t use_barrier:1;  /* For gen7 (automatic barrier management) */
