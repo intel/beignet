@@ -73,7 +73,10 @@ const GenKernel *GenProgramGetKernelByName(const GenProgram *program, const char
 /*! Get the kernel from its ID */
 const GenKernel *GenProgramGetKernel(const GenProgram *program, uint32_t ID);
 
-/*! Get the Gen ISA source code */
+/*! Get the Gen kernel name */
+const char *GenKernelGetName(const GenKernel *kernel);
+
+/*! Get the Gen kernel source code */
 const char *GenKernelGetCode(const GenKernel *kernel);
 
 /*! Get the size of the source code */
@@ -87,6 +90,14 @@ uint32_t GenKernelGetArgSize(const GenKernel *kernel, uint32_t argID);
 
 /*! Get the type of the given argument */
 enum GenArgType GenKernelGetArgType(const GenKernel *kernel, uint32_t argID);
+
+/*! Get the simd width for the kernel */
+uint32_t GenKernelGetSIMDWidth(const GenKernel *kernel);
+
+/*! Indicates if a work group size is required. Return the required width or 0
+ *  if none
+ */
+uint32_t GenKernelGetRequiredWorkGroupSize(const GenKernel *kernel, uint32_t dim);
 
 #ifdef __cplusplus
 }

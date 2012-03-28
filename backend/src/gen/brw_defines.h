@@ -29,47 +29,6 @@
 #ifndef BRW_DEFINES_H
 #define BRW_DEFINES_H
 
-/* 3D state:
- */
-#define PIPE_CONTROL_NOWRITE          0x00
-#define PIPE_CONTROL_WRITEIMMEDIATE   0x01
-#define PIPE_CONTROL_WRITEDEPTH       0x02
-#define PIPE_CONTROL_WRITETIMESTAMP   0x03
-
-#define PIPE_CONTROL_GTTWRITE_PROCESS_LOCAL 0x00
-#define PIPE_CONTROL_GTTWRITE_GLOBAL        0x01
-
-#define CMD_3D_PRIM                                 0x7b00 /* 3DPRIMITIVE */
-/* DW0 */
-# define GEN4_3DPRIM_TOPOLOGY_TYPE_SHIFT            10
-# define GEN4_3DPRIM_VERTEXBUFFER_ACCESS_SEQUENTIAL (0 << 15)
-# define GEN4_3DPRIM_VERTEXBUFFER_ACCESS_RANDOM     (1 << 15)
-/* DW1 */
-# define GEN7_3DPRIM_VERTEXBUFFER_ACCESS_SEQUENTIAL (0 << 8)
-# define GEN7_3DPRIM_VERTEXBUFFER_ACCESS_RANDOM     (1 << 8)
-
-#define _3DPRIM_POINTLIST         0x01
-#define _3DPRIM_LINELIST          0x02
-#define _3DPRIM_LINESTRIP         0x03
-#define _3DPRIM_TRILIST           0x04
-#define _3DPRIM_TRISTRIP          0x05
-#define _3DPRIM_TRIFAN            0x06
-#define _3DPRIM_QUADLIST          0x07
-#define _3DPRIM_QUADSTRIP         0x08
-#define _3DPRIM_LINELIST_ADJ      0x09
-#define _3DPRIM_LINESTRIP_ADJ     0x0A
-#define _3DPRIM_TRILIST_ADJ       0x0B
-#define _3DPRIM_TRISTRIP_ADJ      0x0C
-#define _3DPRIM_TRISTRIP_REVERSE  0x0D
-#define _3DPRIM_POLYGON           0x0E
-#define _3DPRIM_RECTLIST          0x0F
-#define _3DPRIM_LINELOOP          0x10
-#define _3DPRIM_POINTLIST_BF      0x11
-#define _3DPRIM_LINESTRIP_CONT    0x12
-#define _3DPRIM_LINESTRIP_BF      0x13
-#define _3DPRIM_LINESTRIP_CONT_BF 0x14
-#define _3DPRIM_TRIFAN_NOSTIPPLE  0x15
-
 #define BRW_ANISORATIO_2     0 
 #define BRW_ANISORATIO_4     1 
 #define BRW_ANISORATIO_6     2 
@@ -676,7 +635,7 @@ enum opcode {
 
 #define BRW_ARCHITECTURE_REGISTER_FILE    0
 #define BRW_GENERAL_REGISTER_FILE         1
-#define BRW_MESSAGE_REGISTER_FILE         2
+// #define BRW_MESSAGE_REGISTER_FILE         2
 #define BRW_IMMEDIATE_VALUE               3
 
 #define BRW_REGISTER_TYPE_UD  0
@@ -1482,12 +1441,8 @@ enum brw_wm_barycentric_interp_mode {
 
 #define CMD_MI_FLUSH                  0x0200
 
-
-/* Bitfields for the URB_WRITE message, DW2 of message header: */
-#define URB_WRITE_PRIM_END		0x1
-#define URB_WRITE_PRIM_START		0x2
-#define URB_WRITE_PRIM_TYPE_SHIFT	2
-
+#define BRW_DEREFERENCE_URB 0
+#define BRW_DO_NOT_DEREFERENCE_URB 1
 
 /* Maximum number of entries that can be addressed using a binding table
  * pointer of type SURFTYPE_BUFFER

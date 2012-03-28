@@ -122,7 +122,6 @@ struct brw_compile {
   /* Allow clients to push/pop instruction state */
   struct brw_instruction stack[BRW_EU_MAX_INSN_STACK];
   bool compressed_stack[BRW_EU_MAX_INSN_STACK];
-  struct brw_instruction *current;
 
   uint32_t flag_value;
   bool single_program_flow;
@@ -183,8 +182,6 @@ static inline struct brw_reg brw_reg(uint32_t file,
    struct brw_reg reg;
    if (file == BRW_GENERAL_REGISTER_FILE)
       assert(nr < BRW_MAX_GRF);
-   else if (file == BRW_MESSAGE_REGISTER_FILE)
-      assert((nr & ~(1 << 7)) < BRW_MAX_MRF);
    else if (file == BRW_ARCHITECTURE_REGISTER_FILE)
       assert(nr <= BRW_ARF_IP);
 
@@ -559,14 +556,6 @@ static inline struct brw_reg brw_mask_reg(uint32_t subnr)
    return brw_uw1_reg(BRW_ARCHITECTURE_REGISTER_FILE,
                       BRW_ARF_MASK,
                       subnr);
-}
-
-static inline struct brw_reg brw_message_reg(uint32_t nr)
-{
-   assert((nr & ~(1 << 7)) < BRW_MAX_MRF);
-   return brw_vec8_reg(BRW_MESSAGE_REGISTER_FILE,
-                       nr,
-                       0);
 }
 
 /* This is almost always called with a numeric constant argument, so

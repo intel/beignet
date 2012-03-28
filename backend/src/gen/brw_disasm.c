@@ -463,10 +463,6 @@ static int reg (FILE *file, uint32_t _reg_file, uint32_t _reg_nr)
 {
     int        err = 0;
 
-    /* Clear the Compr4 instruction compression bit. */
-    if (_reg_file == BRW_MESSAGE_REGISTER_FILE)
-       _reg_nr &= ~(1 << 7);
-
     if (_reg_file == BRW_ARCHITECTURE_REGISTER_FILE) {
         switch (_reg_nr & 0xf0) {
         case BRW_ARF_NULL:
@@ -570,10 +566,7 @@ static int dest_3src (FILE *file, struct brw_instruction *inst)
     int        err = 0;
     uint32_t reg_file;
 
-    if (inst->bits1.da3src.dest_reg_file)
-       reg_file = BRW_MESSAGE_REGISTER_FILE;
-    else
-       reg_file = BRW_GENERAL_REGISTER_FILE;
+    reg_file = BRW_GENERAL_REGISTER_FILE;
 
     err |= reg (file, reg_file, inst->bits1.da3src.dest_reg_nr);
     if (err == -1)
@@ -1302,15 +1295,8 @@ int brw_disasm (FILE *file, struct brw_instruction *inst, int gen)
         if (gen >= 6)
             err |= qtr_ctrl (file, inst);
         else {
-            if (inst->header.compression_control == BRW_COMPRESSION_COMPRESSED &&
-                opcode[inst->header.opcode].ndst > 0 &&
-                inst->bits1.da1.dest_reg_file == BRW_MESSAGE_REGISTER_FILE &&
-                inst->bits1.da1.dest_reg_nr & (1 << 7)) {
-                format (file, " compr4");
-            } else {
-                err |= control (file, "compression control", compr_ctrl,
-                                inst->header.compression_control, &space);
-            }
+          err |= control (file, "compression control", compr_ctrl,
+              inst->header.compression_control, &space);
         }
 
         err |= control (file, "thread control", thread_ctrl, inst->header.thread_control, &space);

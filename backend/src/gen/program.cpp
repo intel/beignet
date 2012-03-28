@@ -82,6 +82,7 @@ namespace gen {
       kernel->insns = GBE_NEW_ARRAY(brw_instruction, kernel->insnNum);
       std::memcpy(kernel->insns, p->store, kernel->insnNum * sizeof(brw_instruction));
       GBE_FREE(p);
+      kernels.insert(std::make_pair(name, kernel));
     }
 
     return true;
@@ -161,6 +162,13 @@ const GenKernel *GenProgramGetKernel(const GenProgram *genProgram, uint32_t ID) 
 }
 
 GBE_EXPORT_SYMBOL
+const char *GenKernelGetName(const GenKernel *genKernel) {
+  if (genKernel == NULL) return NULL;
+  const gbe::gen::Kernel *kernel = (const gbe::gen::Kernel*) genKernel;
+  return kernel->getName();
+}
+
+GBE_EXPORT_SYMBOL
 const char *GenKernelGetCode(const GenKernel *genKernel) {
   if (genKernel == NULL) return NULL;
   const gbe::gen::Kernel *kernel = (const gbe::gen::Kernel*) genKernel;
@@ -193,5 +201,15 @@ GenArgType GenKernelGetArgType(const GenKernel *genKernel, uint32_t argID) {
   if (genKernel == NULL) return GEN_ARG_INVALID;
   const gbe::gen::Kernel *kernel = (const gbe::gen::Kernel*) genKernel;
   return kernel->getArgType(argID);
+}
+
+GBE_EXPORT_SYMBOL
+uint32_t GenKernelGetSIMDWidth(const GenKernel *kernel) {
+  return 16u;
+}
+
+GBE_EXPORT_SYMBOL
+uint32_t GenKernelGetRequiredWorkGroupSize(const GenKernel *kernel, uint32_t dim) {
+  return 0u;
 }
 

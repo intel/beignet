@@ -60,6 +60,8 @@ namespace gen {
     INLINE size_t getCodeSize(void) const {
       return insnNum * sizeof(brw_instruction);
     }
+    /*! Get the kernel name */
+    INLINE const char *getName(void) const { return name.c_str(); }
     /*! Return the number of arguments for the kernel call */
     INLINE uint32_t getArgNum(void) const { return argNum; }
     /*! Return the size of the given argument */
@@ -78,7 +80,7 @@ namespace gen {
     }
   private:
     friend class Program;    //!< Owns the kernels
-    std::string name;        //!< Kernel name
+    const std::string name;  //!< Kernel name
     KernelArgument *args;    //!< Each argument
     brw_instruction *insns;  //!< Instruction stream
     uint32_t argNum;         //!< Number of function arguments

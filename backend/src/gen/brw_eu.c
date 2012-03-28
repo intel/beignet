@@ -62,7 +62,7 @@ brw_swap_cmod(uint32_t cmod)
  */
 void brw_set_predicate_control_flag_value(struct brw_compile *p, uint32_t value)
 {
-   p->current->header.predicate_control = BRW_PREDICATE_NONE;
+//   p->current->header.predicate_control = BRW_PREDICATE_NONE;
 
    if (value != 0xff) {
       if (value != p->flag_value) {
@@ -72,34 +72,35 @@ void brw_set_predicate_control_flag_value(struct brw_compile *p, uint32_t value)
          brw_pop_insn_state(p);
       }
 
-      p->current->header.predicate_control = BRW_PREDICATE_NORMAL;
+//      p->current->header.predicate_control = BRW_PREDICATE_NORMAL;
    }   
 }
 
 void brw_set_predicate_control(struct brw_compile *p, uint32_t pc)
 {
-   p->current->header.predicate_control = pc;
+  // p->current->header.predicate_control = pc;
 }
 
 void brw_set_predicate_inverse(struct brw_compile *p, bool predicate_inverse)
 {
-   p->current->header.predicate_inverse = predicate_inverse;
+  // p->current->header.predicate_inverse = predicate_inverse;
 }
 
 void brw_set_conditionalmod(struct brw_compile *p, uint32_t conditional)
 {
-   p->current->header.destreg__conditionalmod = conditional;
+ //  p->current->header.destreg__conditionalmod = conditional;
 }
 
 void brw_set_access_mode(struct brw_compile *p, uint32_t access_mode)
 {
-   p->current->header.access_mode = access_mode;
+  // p->current->header.access_mode = access_mode;
 }
 
 void
 brw_set_compression_control(struct brw_compile *p,
                             enum brw_compression compression_control)
 {
+#if 0
    p->compressed = (compression_control == BRW_COMPRESSION_COMPRESSED);
 
    if (p->gen >= 6) {
@@ -131,16 +132,17 @@ brw_set_compression_control(struct brw_compile *p,
    } else {
       p->current->header.compression_control = compression_control;
    }
+#endif
 }
 
 void brw_set_mask_control(struct brw_compile *p, uint32_t value)
 {
-   p->current->header.mask_control = value;
+//   p->current->header.mask_control = value;
 }
 
 void brw_set_saturate(struct brw_compile *p, uint32_t value)
 {
-   p->current->header.saturate = value;
+//   p->current->header.saturate = value;
 }
 
 #if 0
@@ -153,17 +155,21 @@ void brw_set_acc_write_control(struct brw_compile *p, uint32_t value)
 
 void brw_push_insn_state(struct brw_compile *p)
 {
+#if 0
    assert(p->current != &p->stack[BRW_EU_MAX_INSN_STACK-1]);
    memcpy(p->current+1, p->current, sizeof(struct brw_instruction));
    p->compressed_stack[p->current - p->stack] = p->compressed;
    p->current++;   
+#endif
 }
 
 void brw_pop_insn_state(struct brw_compile *p)
 {
+#if 0
    assert(p->current != p->stack);
    p->current--;
    p->compressed = p->compressed_stack[p->current - p->stack];
+#endif
 }
 
 
