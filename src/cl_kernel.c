@@ -25,8 +25,6 @@
 #include "cl_alloc.h"
 #include "cl_utils.h"
 #include "CL/cl.h"
-#include "intel_bufmgr.h"
-#include "intel/intel_gpgpu.h"
 #include "gen/program.h"
 
 #include <stdio.h>
@@ -45,8 +43,8 @@ cl_kernel_delete(cl_kernel k)
   if (atomic_dec(&k->ref_n) > 1) return;
 
   /* Release one reference on all bos we own */
-  if (k->bo)       drm_intel_bo_unreference(k->bo);
-  if (k->const_bo) drm_intel_bo_unreference(k->const_bo);
+  if (k->bo)       cl_buffer_unreference(k->bo);
+  if (k->const_bo) cl_buffer_unreference(k->const_bo);
 
   /* This will be true for kernels created by clCreateKernel */
   if (k->ref_its_program) cl_program_delete(k->program);
@@ -104,15 +102,15 @@ LOCAL void
 cl_kernel_setup(cl_kernel k, const struct GenKernel *gen_kernel)
 {
   cl_context ctx = k->program->ctx;
-  drm_intel_bufmgr *bufmgr = cl_context_get_intel_bufmgr(ctx);
+  cl_buffer_mgr *bufmgr = cl_context_get_bufmgr(ctx);
 
   /* Allocate the gen code here */
   const uint32_t code_sz = GenKernelGetCodeSize(gen_kernel);
   const char *code = GenKernelGetCode(gen_kernel);
-  k->bo = drm_intel_bo_alloc(bufmgr, "CL kernel", code_sz, 64u);
+  k->bo = cl_buffer_alloc(bufmgr, "CL kernel", code_sz, 64u);
 
   /* Upload the code */
-  drm_intel_bo_subdata(k->bo, 0, code_sz, code);
+  cl_buffer_subdata(k->bo, 0, code_sz, code);
   k->gen_kernel = gen_kernel;
 }
 
@@ -132,8 +130,8 @@ cl_kernel_dup(const cl_kernel from)
   to->program = from->program;
 
   /* Retain the bos */
-  if (from->bo)       drm_intel_bo_reference(from->bo);
-  if (from->const_bo) drm_intel_bo_reference(from->const_bo);
+  if (from->bo)       cl_buffer_reference(from->bo);
+  if (from->const_bo) cl_buffer_reference(from->const_bo);
 
   /* We retain the program destruction since this kernel (user allocated)
    * depends on the program for some of its pointers

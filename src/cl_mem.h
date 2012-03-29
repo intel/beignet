@@ -21,10 +21,8 @@
 #define __CL_MEM_H__
 
 #include "cl_internals.h"
+#include "cl_driver.h"
 #include "CL/cl.h"
-
-/* Store the object in video memory */
-struct _drm_intel_bo;
 
 typedef enum cl_image_tiling {
   CL_NO_TILE = 0,
@@ -36,7 +34,7 @@ typedef enum cl_image_tiling {
 struct _cl_mem {
   uint64_t magic;           /* To identify it as a memory object */
   volatile int ref_n;       /* This object is reference counted */
-  struct _drm_intel_bo *bo; /* Data in GPU memory */
+  cl_buffer *bo;            /* Data in GPU memory */
   cl_mem prev, next;        /* We chain the memory buffers together */
   cl_context ctx;           /* Context it belongs to */
   cl_mem_flags flags;       /* Flags specified at the creation time */
@@ -67,10 +65,10 @@ extern void cl_mem_delete(cl_mem);
 /* Add one more reference to this object */
 extern void cl_mem_add_ref(cl_mem);
 
-/* Directly map a memory object (just use drm_intel_bo_map) */
+/* Directly map a memory object */
 extern void *cl_mem_map(cl_mem);
 
-/* Unmap a memory object (just use drm_intel_bo_unmap) */
+/* Unmap a memory object */
 extern cl_int cl_mem_unmap(cl_mem);
 
 /* Pin/unpin the buffer in memory (you must be root) */

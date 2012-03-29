@@ -25,8 +25,7 @@
 #include "cl_mem.h"
 #include "cl_utils.h"
 #include "cl_alloc.h"
-#include "intel_bufmgr.h"
-#include "intel/intel_gpgpu.h"
+#include "cl_driver.h"
 
 #include <assert.h>
 #include <stdio.h>
@@ -42,8 +41,7 @@ cl_command_queue_new(cl_context ctx)
   queue->magic = CL_MAGIC_QUEUE_HEADER;
   queue->ref_n = 1;
   queue->ctx = ctx;
-  TRY_ALLOC_NO_ERR (queue->gpgpu,
-                    intel_gpgpu_new((struct intel_driver*) ctx->intel_drv));
+  TRY_ALLOC_NO_ERR (queue->gpgpu, cl_gpgpu_new(ctx->drv));
 
   /* Append the command queue in the list */
   pthread_mutex_lock(&ctx->queue_lock);
@@ -87,7 +85,7 @@ cl_command_queue_delete(cl_command_queue queue)
   }
   cl_mem_delete(queue->perf);
   cl_context_delete(queue->ctx);
-  intel_gpgpu_delete(queue->gpgpu);
+  cl_gpgpu_delete(queue->gpgpu);
   queue->magic = CL_MAGIC_DEAD_HEADER; /* For safety */
   cl_free(queue);
 }
@@ -98,26 +96,26 @@ cl_command_queue_add_ref(cl_command_queue queue)
   atomic_inc(&queue->ref_n);
 }
 
-  LOCAL cl_int
+LOCAL cl_int
 cl_command_queue_bind_surface(cl_command_queue queue,
                               cl_kernel k,
                               char *curbe,
-                              drm_intel_bo **local, 
-                              drm_intel_bo **priv,
-                              drm_intel_bo **scratch,
+                              cl_buffer **local, 
+                              cl_buffer **priv,
+                              cl_buffer **scratch,
                               uint32_t local_sz)
 {
   cl_context ctx = queue->ctx;
-  intel_gpgpu_t *gpgpu = queue->gpgpu;
-  drm_intel_bufmgr *bufmgr = cl_context_get_intel_bufmgr(ctx);
-  drm_intel_bo *sync_bo = NULL;
+  cl_gpgpu *gpgpu = queue->gpgpu;
+  cl_buffer_mgr *bufmgr = cl_context_get_bufmgr(ctx);
+  cl_buffer *sync_bo = NULL;
   cl_int err = CL_SUCCESS;
 #if 0
   cl_context ctx = queue->ctx;
   intel_gpgpu_t *gpgpu = queue->gpgpu;
   drm_intel_bufmgr *bufmgr = cl_context_get_intel_bufmgr(ctx);
   cl_mem mem = NULL;
-  drm_intel_bo *bo = NULL, *sync_bo = NULL;
+  cl_buffer *bo = NULL, *sync_bo = NULL;
   const size_t max_thread = ctx->device->max_compute_unit;
   cl_int err = CL_SUCCESS;
   uint32_t i, index;
@@ -163,7 +161,7 @@ cl_command_queue_bind_surface(cl_command_queue queue,
     assert(k->patch.local_surf.offset % SURFACE_SZ == 0);
     index = k->patch.local_surf.offset / SURFACE_SZ;
     assert(index != MAX_SURFACES - 1);
-    *local = drm_intel_bo_alloc(bufmgr, "CL local surface", sz, 64);
+    *local = cl_buffer_alloc(bufmgr, "CL local surface", sz, 64);
     gpgpu_bind_buf(gpgpu, index, *local, cc_llc_l3);
   }
   else if (local)
@@ -178,7 +176,7 @@ cl_command_queue_bind_surface(cl_command_queue queue,
     assert(k->patch.private_surf.offset % SURFACE_SZ == 0);
     index = k->patch.private_surf.offset / SURFACE_SZ;
     assert(index != MAX_SURFACES - 1);
-    *priv = drm_intel_bo_alloc(bufmgr, "CL private surface", sz, 64);
+    *priv = cl_buffer_alloc(bufmgr, "CL private surface", sz, 64);
     gpgpu_bind_buf(gpgpu, index, *priv, cc_llc_l3);
   }
   else if(priv)
@@ -193,17 +191,17 @@ cl_command_queue_bind_surface(cl_command_queue queue,
     assert(k->patch.scratch.offset % SURFACE_SZ == 0);
     assert(index != MAX_SURFACES - 1);
     index = k->patch.scratch.offset / SURFACE_SZ;
-    *scratch = drm_intel_bo_alloc(bufmgr, "CL scratch surface", sz, 64);
+    *scratch = cl_buffer_alloc(bufmgr, "CL scratch surface", sz, 64);
     gpgpu_bind_buf(gpgpu, index, *scratch, cc_llc_l3);
   }
   else if (scratch)
     *scratch = NULL;
 #endif
   /* Now bind a bo used for synchronization */
-  sync_bo = drm_intel_bo_alloc(bufmgr, "sync surface", 64, 64);
-  gpgpu_bind_buf(gpgpu, MAX_SURFACES-1, sync_bo, cc_llc_l3);
+  sync_bo = cl_buffer_alloc(bufmgr, "sync surface", 64, 64);
+  cl_gpgpu_bind_buf(gpgpu, MAX_SURFACES-1, sync_bo, cc_llc_l3);
   if (queue->last_batch != NULL)
-    drm_intel_bo_unreference(queue->last_batch);
+    cl_buffer_unreference(queue->last_batch);
   queue->last_batch = sync_bo;
 
 // error:
@@ -212,9 +210,9 @@ cl_command_queue_bind_surface(cl_command_queue queue,
 }
 
 #if USE_FULSIM
-extern void drm_intel_bufmgr_gem_stop_aubfile(drm_intel_bufmgr*);
-extern void drm_intel_bufmgr_gem_set_aubfile(drm_intel_bufmgr*, FILE*);
-extern void aub_exec_dump_raw_file(drm_intel_bo*, size_t offset, size_t sz);
+extern void drm_intel_bufmgr_gem_stop_aubfile(cl_buffer_mgr*);
+extern void drm_intel_bufmgr_gem_set_aubfile(cl_buffer_mgr*, FILE*);
+extern void aub_exec_dump_raw_file(cl_buffer*, size_t offset, size_t sz);
 
 static void
 cl_run_fulsim(void)
@@ -435,15 +433,14 @@ cl_command_queue_ND_range(cl_command_queue queue,
                           const size_t *global_wk_sz,
                           const size_t *local_wk_sz)
 {
-  intel_gpgpu_t *gpgpu = queue->gpgpu;
-  const int32_t ver = intel_gpgpu_version(gpgpu);
+  const int32_t ver = cl_driver_get_ver(queue->ctx->drv);
   cl_int err = CL_SUCCESS;
 
 #if USE_FULSIM
-  drm_intel_bufmgr *bufmgr = NULL;
+  cl_buffer_mgr *bufmgr = NULL;
   FILE *file = fopen("dump.aub", "wb");
   FATAL_IF (file == NULL, "Unable to open file dump.aub");
-  bufmgr = cl_context_get_intel_bufmgr(queue->ctx);
+  bufmgr = cl_context_get_bufmgr(queue->ctx);
   drm_intel_bufmgr_gem_set_aubfile(bufmgr, file);
 #endif /* USE_FULSIM */
 
@@ -469,8 +466,8 @@ cl_command_queue_finish(cl_command_queue queue)
 {
   if (queue->last_batch == NULL)
     return CL_SUCCESS;
-  drm_intel_bo_wait_rendering(queue->last_batch);
-  drm_intel_bo_unreference(queue->last_batch);
+  cl_buffer_wait_rendering(queue->last_batch);
+  cl_buffer_unreference(queue->last_batch);
   queue->last_batch = NULL;
   return CL_SUCCESS;
 }

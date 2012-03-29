@@ -21,6 +21,7 @@
 #define __CL_CONTEXT_H__
 
 #include "cl_internals.h"
+#include "cl_driver.h"
 #include "CL/cl.h"
 
 #include <stdint.h>
@@ -33,7 +34,7 @@ struct intel_driver;
 struct _cl_context {
   uint64_t magic;                   /* To identify it as a context */
   volatile int ref_n;               /* We reference count this object */
-  struct intel_driver *intel_drv;   /* Handles the real HW */
+  cl_driver *drv;                   /* Handles HW or simulator */
   cl_device_id device;              /* All information about the GPU device */
   cl_command_queue queues;          /* All command queues currently allocated */
   cl_program programs;              /* All programs currently allocated */
@@ -69,9 +70,6 @@ extern cl_command_queue cl_context_create_queue(cl_context,
                                                 cl_command_queue_properties,
                                                 cl_int*);
 
-/* Use for all GPU buffers */
-extern struct _drm_intel_bufmgr* cl_context_get_intel_bufmgr(cl_context);
-
 /* Enqueue a ND Range kernel */
 extern cl_int cl_context_ND_kernel(cl_context,
                                    cl_command_queue,
@@ -82,8 +80,7 @@ extern cl_int cl_context_ND_kernel(cl_context,
                                    const size_t*);
 
 /* Used for allocation */
-extern struct _drm_intel_bufmgr*
-cl_context_get_intel_bufmgr(cl_context ctx);
+extern cl_buffer_mgr* cl_context_get_bufmgr(cl_context ctx);
 
 #endif /* __CL_CONTEXT_H__ */
 

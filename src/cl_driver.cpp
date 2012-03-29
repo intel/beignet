@@ -18,8 +18,8 @@
  */
 
 extern "C" {
-#include "sim/sim_buffer.h"
-#include "intel/intel_buffer.h"
+#include "sim/sim_driver.h"
+#include "intel/intel_driver.h"
 #include "cl_utils.h"
 #include <stdlib.h>
 #include <string.h>

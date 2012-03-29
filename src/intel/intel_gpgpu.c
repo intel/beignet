@@ -58,7 +58,7 @@ struct intel_gpgpu
 {
   intel_driver_t *drv;
   intel_batchbuffer_t *batch;
-  genx_gpgpu_kernel_t *ker;
+  cl_gpgpu_kernel_t *ker;
 
   struct {
     dri_bo *bo;
@@ -78,26 +78,9 @@ struct intel_gpgpu
   uint32_t max_threads;      /* max threads requested by the user */
 };
 
-LOCAL intel_gpgpu_t*
-intel_gpgpu_new(intel_driver_t *drv)
-{
-  intel_gpgpu_t *state = NULL;
+typedef struct intel_gpgpu intel_gpgpu_t;
 
-  TRY_ALLOC_NO_ERR (state, CALLOC(intel_gpgpu_t));
-  state->drv = drv;
-  state->batch = intel_batchbuffer_new(state->drv);
-  assert(state->batch);
-  intel_batchbuffer_init(state->batch, state->drv);
-
-exit:
-  return state;
-error:
-  intel_gpgpu_delete(state);
-  state = NULL;
-  goto exit;
-}
-
-LOCAL void
+static void
 intel_gpgpu_delete(intel_gpgpu_t *state)
 {
   if (state == NULL)
@@ -118,8 +101,27 @@ intel_gpgpu_delete(intel_gpgpu_t *state)
   cl_free(state);
 }
 
+static intel_gpgpu_t*
+intel_gpgpu_new(intel_driver_t *drv)
+{
+  intel_gpgpu_t *state = NULL;
+
+  TRY_ALLOC_NO_ERR (state, CALLOC(intel_gpgpu_t));
+  state->drv = drv;
+  state->batch = intel_batchbuffer_new(state->drv);
+  assert(state->batch);
+  intel_batchbuffer_init(state->batch, state->drv);
+
+exit:
+  return state;
+error:
+  intel_gpgpu_delete(state);
+  state = NULL;
+  goto exit;
+}
+
 static void
-gpgpu_select_pipeline(intel_gpgpu_t *state)
+intel_gpgpu_select_pipeline(intel_gpgpu_t *state)
 {
   BEGIN_BATCH(state->batch, 1);
   OUT_BATCH(state->batch, CMD_PIPELINE_SELECT | PIPELINE_SELECT_MEDIA);
@@ -127,7 +129,7 @@ gpgpu_select_pipeline(intel_gpgpu_t *state)
 }
 
 static void
-gpgpu_set_base_address(intel_gpgpu_t *state)
+intel_gpgpu_set_base_address(intel_gpgpu_t *state)
 {
   const uint32_t def_cc = cc_llc_l3; /* default Cache Control value */
   BEGIN_BATCH(state->batch, 10);
@@ -162,7 +164,7 @@ gpgpu_set_base_address(intel_gpgpu_t *state)
 }
 
 static void
-gpgpu_load_vfe_state(intel_gpgpu_t *state)
+intel_gpgpu_load_vfe_state(intel_gpgpu_t *state)
 {
   BEGIN_BATCH(state->batch, 8);
   OUT_BATCH(state->batch, CMD_MEDIA_STATE_POINTERS | (8-2));
@@ -171,23 +173,13 @@ gpgpu_load_vfe_state(intel_gpgpu_t *state)
     intel_batchbuffer_alloc_space(state->batch,0);
 
   memset(vfe, 0, sizeof(struct gen6_vfe_state_inline));
-  vfe->vfe1.gpgpu_mode =
-    (state->drv->gen_ver == 7 || state->drv->gen_ver == 75) ? 1 : 0;
+  vfe->vfe1.gpgpu_mode = 1;
   vfe->vfe1.bypass_gateway_ctl = 1;
   vfe->vfe1.reset_gateway_timer = 1;
   vfe->vfe1.max_threads = state->max_threads - 1;
   vfe->vfe1.urb_entries = 64;
-  if (state->drv->gen_ver >= 7) {
-    vfe->vfe3.curbe_size = 480;
-    vfe->vfe4.scoreboard_mask = 0;
-  } else {
-    vfe->vfe3.curbe_size = 63;
-    vfe->vfe3.urb_size = 13;
-    vfe->vfe4.scoreboard_mask = 0x80000000;
-  }
-
-  //M
-  //p
+  vfe->vfe3.curbe_size = 480;
+  vfe->vfe4.scoreboard_mask = 0;
   //vfe->vfe3.urb_size = 13;
   //vfe->vfe4.scoreboard_mask = (state->drv->gen_ver == 7 || state->drv->gen_ver == 75) ? 0 : 0x80000000;
   intel_batchbuffer_alloc_space(state->batch, sizeof(gen6_vfe_state_inline_t));
@@ -195,7 +187,7 @@ gpgpu_load_vfe_state(intel_gpgpu_t *state)
 }
 
 static void
-gpgpu_load_constant_buffer(intel_gpgpu_t *state) 
+intel_gpgpu_load_constant_buffer(intel_gpgpu_t *state) 
 {
   BEGIN_BATCH(state->batch, 4);
   OUT_BATCH(state->batch, CMD(2,0,1) | (4 - 2));  /* length-2 */
@@ -213,7 +205,7 @@ gpgpu_load_constant_buffer(intel_gpgpu_t *state)
 }
 
 static void
-gpgpu_load_idrt(intel_gpgpu_t *state) 
+intel_gpgpu_load_idrt(intel_gpgpu_t *state) 
 {
   BEGIN_BATCH(state->batch, 4);
   OUT_BATCH(state->batch, CMD(2,0,2) | (4 - 2)); /* length-2 */
@@ -311,7 +303,7 @@ enum GFX3DSTATE_PIPELINED_SUBOPCODE
 };
 
 static void
-gpgpu_pipe_control(intel_gpgpu_t *state)
+intel_gpgpu_pipe_control(intel_gpgpu_t *state)
 {
   BEGIN_BATCH(state->batch, SIZEOF32(gen6_pipe_control_t));
   gen6_pipe_control_t* pc = (gen6_pipe_control_t*)
@@ -328,7 +320,7 @@ gpgpu_pipe_control(intel_gpgpu_t *state)
   ADVANCE_BATCH(state->batch);
 }
 
-LOCAL void
+static void
 intel_gpgpu_set_L3(intel_gpgpu_t *state, uint32_t use_barrier)
 {
   BEGIN_BATCH(state->batch, 6);
@@ -347,21 +339,21 @@ intel_gpgpu_set_L3(intel_gpgpu_t *state, uint32_t use_barrier)
     OUT_BATCH(state->batch, gpgpu_l3_config_reg2[4]);
   ADVANCE_BATCH(state->batch);
 
-  gpgpu_pipe_control(state);
+  intel_gpgpu_pipe_control(state);
 }
 
-LOCAL void
-gpgpu_batch_start(intel_gpgpu_t *state)
+static void
+intel_gpgpu_batch_start(intel_gpgpu_t *state)
 {
   intel_batchbuffer_start_atomic(state->batch, 256);
-  gpgpu_pipe_control(state);
+  intel_gpgpu_pipe_control(state);
   if (state->drv->gen_ver == 7 || state->drv->gen_ver == 75)
     intel_gpgpu_set_L3(state, state->ker->use_barrier);
-  gpgpu_select_pipeline(state);
-  gpgpu_set_base_address(state);
-  gpgpu_load_vfe_state(state);
-  gpgpu_load_constant_buffer(state);
-  gpgpu_load_idrt(state);
+  intel_gpgpu_select_pipeline(state);
+  intel_gpgpu_set_base_address(state);
+  intel_gpgpu_load_vfe_state(state);
+  intel_gpgpu_load_constant_buffer(state);
+  intel_gpgpu_load_idrt(state);
 
   if (state->perf_b.bo) {
     BEGIN_BATCH(state->batch, 3);
@@ -378,8 +370,8 @@ gpgpu_batch_start(intel_gpgpu_t *state)
   }
 }
 
-LOCAL void
-gpgpu_batch_end(intel_gpgpu_t *state, int32_t flush_mode)
+static void
+intel_gpgpu_batch_end(intel_gpgpu_t *state, int32_t flush_mode)
 {
   /* Insert the performance counter command */
   if (state->perf_b.bo) {
@@ -396,26 +388,26 @@ gpgpu_batch_end(intel_gpgpu_t *state, int32_t flush_mode)
     ADVANCE_BATCH(state->batch);
   }
 
-  if(flush_mode) gpgpu_pipe_control(state);
+  if(flush_mode) intel_gpgpu_pipe_control(state);
   intel_batchbuffer_end_atomic(state->batch);
 }
 
-LOCAL void
-gpgpu_batch_reset(intel_gpgpu_t *state, size_t sz)
+static void
+intel_gpgpu_batch_reset(intel_gpgpu_t *state, size_t sz)
 {
   intel_batchbuffer_reset(state->batch, sz);
 }
 
-LOCAL void
-gpgpu_flush(intel_gpgpu_t *state)
+static void
+intel_gpgpu_flush(intel_gpgpu_t *state)
 {
   intel_batchbuffer_flush(state->batch);
 }
 
-LOCAL void
-gpgpu_state_init(intel_gpgpu_t *state,
-                 uint32_t max_threads,
-                 uint32_t size_cs_entry)
+static void
+intel_gpgpu_state_init(intel_gpgpu_t *state,
+                       uint32_t max_threads,
+                       uint32_t size_cs_entry)
 {
   dri_bo *bo;
 
@@ -477,7 +469,7 @@ gpgpu_state_init(intel_gpgpu_t *state,
 }
 
 static void
-gpgpu_set_buf_reloc_gen7(intel_gpgpu_t *state, int32_t index, dri_bo* obj_bo)
+intel_gpgpu_set_buf_reloc_gen7(intel_gpgpu_t *state, int32_t index, dri_bo* obj_bo)
 {
   surface_heap_t *heap = state->surface_heap_b.bo->virtual;
   heap->binding_table[index] = offsetof(surface_heap_t, surface) +
@@ -492,11 +484,11 @@ gpgpu_set_buf_reloc_gen7(intel_gpgpu_t *state, int32_t index, dri_bo* obj_bo)
 }
 
 static void
-gpgpu_bind_buf_gen7(intel_gpgpu_t *state,
-                    int32_t index,
-                    dri_bo* obj_bo,
-                    uint32_t size,
-                    uint32_t cchint)
+intel_gpgpu_bind_buf_gen7(intel_gpgpu_t *state,
+                          int32_t index,
+                          dri_bo* obj_bo,
+                          uint32_t size,
+                          uint32_t cchint)
 {
   surface_heap_t *heap = state->surface_heap_b.bo->virtual;
   gen7_surface_state_t *ss = (gen7_surface_state_t *) heap->surface[index];
@@ -509,18 +501,18 @@ gpgpu_bind_buf_gen7(intel_gpgpu_t *state,
   ss->ss2.height = (size_ss & 0x1fff80) >> 7;    /* bits 20:7 of size_ss */
   ss->ss3.depth  = (size_ss & 0xffe00000) >> 20; /* bits 27:21 of size_ss */
   ss->ss5.cache_control = cc_llc_l3;
-  gpgpu_set_buf_reloc_gen7(state, index, obj_bo);
+  intel_gpgpu_set_buf_reloc_gen7(state, index, obj_bo);
 }
 
 static void
-gpgpu_bind_image2D_gen7(intel_gpgpu_t *state,
-                        int32_t index,
-                        dri_bo* obj_bo,
-                        uint32_t format,
-                        int32_t w,
-                        int32_t h,
-                        int32_t pitch,
-                        int32_t tiling)
+intel_gpgpu_bind_image2D_gen7(intel_gpgpu_t *state,
+                              int32_t index,
+                              dri_bo* obj_bo,
+                              uint32_t format,
+                              int32_t w,
+                              int32_t h,
+                              int32_t pitch,
+                              int32_t tiling)
 {
   surface_heap_t *heap = state->surface_heap_b.bo->virtual;
   gen7_surface_state_t *ss = (gen7_surface_state_t *) heap->surface[index];
@@ -539,48 +531,47 @@ gpgpu_bind_image2D_gen7(intel_gpgpu_t *state,
     ss->ss0.tiled_surface = 1;
     ss->ss0.tile_walk = I965_TILEWALK_YMAJOR;
   }
-  gpgpu_set_buf_reloc_gen7(state, index, obj_bo);
+  intel_gpgpu_set_buf_reloc_gen7(state, index, obj_bo);
 }
 
-LOCAL void
-gpgpu_bind_buf(intel_gpgpu_t *state,
-               int32_t index,
-               dri_bo* obj_bo,
-               uint32_t cchint)
+static void
+intel_gpgpu_bind_buf(intel_gpgpu_t *state,
+                     int32_t index,
+                     drm_intel_bo *obj_bo,
+                     uint32_t cchint)
 {
-  uint32_t size = obj_bo->size;
-
+  const uint32_t size = obj_bo->size;
   assert(index < MAX_SURFACES);
   if (state->drv->gen_ver == 7 || state->drv->gen_ver == 75)
-    gpgpu_bind_buf_gen7(state, index, obj_bo, size, cchint);
-  else
-    NOT_IMPLEMENTED;
-}
-
-LOCAL void
-gpgpu_bind_image2D(intel_gpgpu_t *state,
-                   int32_t index,
-                   dri_bo* obj_bo,
-                   uint32_t format,
-                   int32_t w,
-                   int32_t h,
-                   int32_t pitch,
-                   gpgpu_tiling_t tiling)
-{
-  assert(index < MAX_SURFACES);
-  if (state->drv->gen_ver == 7 || state->drv->gen_ver == 75)
-    gpgpu_bind_image2D_gen7(state, index, obj_bo, format, w, h, pitch, tiling);
+    intel_gpgpu_bind_buf_gen7(state, index, obj_bo, size, cchint);
   else
     NOT_IMPLEMENTED;
 }
 
 static void
-gpgpu_build_idrt(intel_gpgpu_t *state,
-                 genx_gpgpu_kernel_t *kernel,
-                 uint32_t ker_n)
+intel_gpgpu_bind_image2D(intel_gpgpu_t *state,
+                         int32_t index,
+                         cl_buffer *obj_bo,
+                         uint32_t format,
+                         int32_t w,
+                         int32_t h,
+                         int32_t pitch,
+                         cl_gpgpu_tiling_t tiling)
+{
+  assert(index < MAX_SURFACES);
+  if (state->drv->gen_ver == 7 || state->drv->gen_ver == 75)
+    intel_gpgpu_bind_image2D_gen7(state, index, (drm_intel_bo*) obj_bo, format, w, h, pitch, tiling);
+  else
+    NOT_IMPLEMENTED;
+}
+
+static void
+intel_gpgpu_build_idrt(intel_gpgpu_t *state,
+                       cl_gpgpu_kernel_t *kernel,
+                       uint32_t ker_n)
 {
   gen6_interface_descriptor_t *desc;
-  dri_bo *bo;
+  drm_intel_bo *bo = NULL, *ker_bo = NULL;
   uint32_t i;
 
   bo = state->idrt_b.bo;
@@ -590,7 +581,8 @@ gpgpu_build_idrt(intel_gpgpu_t *state,
 
   for (i = 0; i < ker_n; i++) {
     memset(desc, 0, sizeof(*desc));
-    desc->desc0.kernel_start_pointer = kernel[i].bo->offset >> 6; /* reloc */
+    ker_bo = (drm_intel_bo *) kernel[i].bo;
+    desc->desc0.kernel_start_pointer = ker_bo->offset >> 6; /* reloc */
     desc->desc2.sampler_state_pointer = state->sampler_state_b.bo->offset >> 5;
     desc->desc3.binding_table_entry_count = 0; /* no prefetch */
     desc->desc3.binding_table_pointer = 0;
@@ -624,7 +616,7 @@ gpgpu_build_idrt(intel_gpgpu_t *state,
                       I915_GEM_DOMAIN_INSTRUCTION, 0,
                       0,
                       i * sizeof(*desc) + offsetof(gen6_interface_descriptor_t, desc0),
-                      kernel[i].bo);
+                      ker_bo);
 
     dri_bo_emit_reloc(bo,
                       I915_GEM_DOMAIN_INSTRUCTION, 0,
@@ -637,8 +629,8 @@ gpgpu_build_idrt(intel_gpgpu_t *state,
   dri_bo_unmap(bo);
 }
 
-LOCAL void
-gpgpu_upload_constants(intel_gpgpu_t *state, const void* data, uint32_t size)
+static void
+intel_gpgpu_upload_constants(intel_gpgpu_t *state, const void* data, uint32_t size)
 {
   unsigned char *constant_buffer = NULL;
 
@@ -649,8 +641,8 @@ gpgpu_upload_constants(intel_gpgpu_t *state, const void* data, uint32_t size)
   dri_bo_unmap(state->curbe_b.bo);
 }
 
-LOCAL void
-gpgpu_upload_samplers(intel_gpgpu_t *state, const void *data, uint32_t n)
+static void
+intel_gpgpu_upload_samplers(intel_gpgpu_t *state, const void *data, uint32_t n)
 {
   if (n) {
     /*sizeof(gen6_sampler_state_t) == sizeof(gen7_surface_state_t) */
@@ -659,17 +651,17 @@ gpgpu_upload_samplers(intel_gpgpu_t *state, const void *data, uint32_t n)
   }
 }
 
-LOCAL void
-gpgpu_states_setup(intel_gpgpu_t *state, genx_gpgpu_kernel_t *kernel, uint32_t ker_n)
+static void
+intel_gpgpu_states_setup(intel_gpgpu_t *state, cl_gpgpu_kernel_t *kernel, uint32_t ker_n)
 {
   state->ker = kernel;
-  gpgpu_build_idrt(state, kernel, ker_n);
+  intel_gpgpu_build_idrt(state, kernel, ker_n);
   dri_bo_unmap(state->surface_heap_b.bo);
   dri_bo_unmap(state->sampler_state_b.bo);
 }
 
-LOCAL void 
-gpgpu_update_barrier(intel_gpgpu_t *state, uint32_t barrierID, uint32_t thread_n)
+static void 
+intel_gpgpu_update_barrier(intel_gpgpu_t *state, uint32_t barrierID, uint32_t thread_n)
 {
   BEGIN_BATCH(state->batch, 4);
   OUT_BATCH(state->batch, CMD_MEDIA_STATE_FLUSH | 0);
@@ -679,52 +671,22 @@ gpgpu_update_barrier(intel_gpgpu_t *state, uint32_t barrierID, uint32_t thread_n
   ADVANCE_BATCH(state->batch);
 }
 
-LOCAL void
-gpgpu_set_perf_counters(intel_gpgpu_t *state, dri_bo *perf)
+static void
+intel_gpgpu_set_perf_counters(intel_gpgpu_t *state, cl_buffer *perf)
 {
   if (state->perf_b.bo)
     drm_intel_bo_unreference(state->perf_b.bo);
-  drm_intel_bo_reference(perf);
-  state->perf_b.bo = perf;
+  drm_intel_bo_reference((drm_intel_bo*) perf);
+  state->perf_b.bo = (drm_intel_bo*) perf;
 }
 
-LOCAL void
-gpgpu_run(intel_gpgpu_t *state, int32_t ki)
-{
-  BEGIN_BATCH(state->batch, 6);
-  OUT_BATCH(state->batch, GEN_CMD_MEDIA_OBJECT | 5);
-  OUT_BATCH(state->batch, ki); /* kernel index + DBGOBJ=0 << 8 */
-  OUT_BATCH(state->batch, 0);  /* no children, no thread sync, no scoreboard, any half-slice, indirect data size = 0 */
-  OUT_BATCH(state->batch, 0);  /* no indirect data ptr */
-  OUT_BATCH(state->batch, 0);  /* scoreboard Y,X = 0 or just 0 in reg.0 */
-  OUT_BATCH(state->batch, 0);  /* scoreboard color, mask = 0  or just 0 in reg.1 */
-  OUT_BATCH(state->batch, 0);  /* scoreboard color, mask = 0  or just 0 in reg.1 */
-  ADVANCE_BATCH(state->batch);
-}
-
-LOCAL char*
-gpgpu_run_with_inline(intel_gpgpu_t *state, int32_t ki, size_t sz)
-{
-  const uint32_t len = (uint32_t) (sz >> 2);
-
-  assert(sz % sizeof(int32_t) == 0);
-  BEGIN_BATCH(state->batch, len + 6);
-  OUT_BATCH(state->batch, GEN_CMD_MEDIA_OBJECT | (len + 4));
-  OUT_BATCH(state->batch, ki); /* kernel index + DBGOBJ=0 << 8 */
-  OUT_BATCH(state->batch, 0);  /* no children, no thread sync, no scoreboard, any half-slice, indirect data size = 0 */
-  OUT_BATCH(state->batch, 0);  /* no indirect data ptr */
-  OUT_BATCH(state->batch, 0);  /* scoreboard Y,X = 0 or just 0 in reg.0 */
-  OUT_BATCH(state->batch, 0);  /* scoreboard color, mask = 0  or just 0 in reg.1 */
-  return (char*) intel_batchbuffer_alloc_space(state->batch,sz);
-}
-
-LOCAL void
-gpgpu_walker(intel_gpgpu_t *state,
-             uint32_t simd_sz,
-             uint32_t thread_n,
-             const size_t global_wk_off[3],
-             const size_t global_wk_sz[3],
-             const size_t local_wk_sz[3])
+static void
+intel_gpgpu_walker(intel_gpgpu_t *state,
+                   uint32_t simd_sz,
+                   uint32_t thread_n,
+                   const size_t global_wk_off[3],
+                   const size_t global_wk_sz[3],
+                   const size_t local_wk_sz[3])
 {
   const uint32_t global_wk_dim[3] = {
     global_wk_sz[0] / local_wk_sz[0],
@@ -755,17 +717,23 @@ gpgpu_walker(intel_gpgpu_t *state,
   ADVANCE_BATCH(state->batch);
 }
 
-LOCAL int32_t
-intel_gpgpu_version(intel_gpgpu_t *gpgpu)
+LOCAL void
+intel_set_gpgpu_callbacks(void)
 {
-  return gpgpu->drv->gen_ver;
+  cl_gpgpu_new = (cl_gpgpu_new_cb *) intel_gpgpu_new;
+  cl_gpgpu_delete = (cl_gpgpu_delete_cb *) intel_gpgpu_delete;
+  cl_gpgpu_bind_image2D = (cl_gpgpu_bind_image2D_cb *) intel_gpgpu_bind_image2D;
+  cl_gpgpu_bind_buf = (cl_gpgpu_bind_buf_cb *) intel_gpgpu_bind_buf;
+  cl_gpgpu_state_init = (cl_gpgpu_state_init_cb *) intel_gpgpu_state_init;
+  cl_gpgpu_set_perf_counters = (cl_gpgpu_set_perf_counters_cb *) intel_gpgpu_set_perf_counters;
+  cl_gpgpu_upload_constants = (cl_gpgpu_upload_constants_cb *) intel_gpgpu_upload_constants;
+  cl_gpgpu_states_setup = (cl_gpgpu_states_setup_cb *) intel_gpgpu_states_setup;
+  cl_gpgpu_update_barrier = (cl_gpgpu_update_barrier_cb *) intel_gpgpu_update_barrier;
+  cl_gpgpu_upload_samplers = (cl_gpgpu_upload_samplers_cb *) intel_gpgpu_upload_samplers;
+  cl_gpgpu_batch_reset = (cl_gpgpu_batch_reset_cb *) intel_gpgpu_batch_reset;
+  cl_gpgpu_batch_start = (cl_gpgpu_batch_start_cb *) intel_gpgpu_batch_start;
+  cl_gpgpu_batch_end = (cl_gpgpu_batch_end_cb *) intel_gpgpu_batch_end;
+  cl_gpgpu_flush = (cl_gpgpu_flush_cb *) intel_gpgpu_flush;
+  cl_gpgpu_walker = (cl_gpgpu_walker_cb *) intel_gpgpu_walker;
 }
 
-uint32_t drm_intel_bo_get_size(drm_intel_bo *bo)
-{
-    return (bo->size);
-}
-void *drm_intel_bo_get_virtual(drm_intel_bo *bo)
-{
-    return (bo->virtual);
-}

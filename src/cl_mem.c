@@ -23,11 +23,7 @@
 #include "cl_utils.h"
 #include "cl_alloc.h"
 #include "cl_device_id.h"
-
-#include "intel/intel_driver.h"
-#include "intel/intel_gpgpu.h"
-#include "intel_bufmgr.h" /* libdrm_intel */
-#include "cl_buffer.h"
+#include "cl_driver.h"
 
 #include "CL/cl.h"
 #include "CL/cl_intel.h"
@@ -41,7 +37,7 @@ cl_mem_allocate(cl_context ctx,
                 cl_int is_tiled,
                 cl_int *errcode)
 {
-  drm_intel_bufmgr *bufmgr = NULL;
+  cl_buffer_mgr *bufmgr = NULL;
   cl_mem mem = NULL;
   cl_int err = CL_SUCCESS;
   size_t alignment = 64;
@@ -67,9 +63,9 @@ cl_mem_allocate(cl_context ctx,
     alignment = 4096;
 
   /* Allocate space in memory */
-  bufmgr = cl_context_get_intel_bufmgr(ctx);
+  bufmgr = cl_context_get_bufmgr(ctx);
   assert(bufmgr);
-  mem->bo = drm_intel_bo_alloc(bufmgr, "CL memory object", sz, alignment);
+  mem->bo = cl_buffer_alloc(bufmgr, "CL memory object", sz, alignment);
   if (UNLIKELY(mem->bo == NULL)) {
     err = CL_MEM_ALLOCATION_FAILURE;
     goto error;
@@ -119,7 +115,7 @@ cl_mem_new(cl_context ctx,
 
   /* Copy the data if required */
   if (flags & CL_MEM_COPY_HOST_PTR) /* TODO check other flags too */
-    drm_intel_bo_subdata(mem->bo, 0, sz, data);
+    cl_buffer_subdata(mem->bo, 0, sz, data);
 
 exit:
   if (errcode_ret)
@@ -141,8 +137,8 @@ cl_mem_copy_data_linear(cl_mem mem,
 {
   size_t x, y, p;
   char *dst;
-  drm_intel_bo_map(mem->bo, 1);
-  dst = drm_intel_bo_get_virtual(mem->bo);
+  cl_buffer_map(mem->bo, 1);
+  dst = cl_buffer_get_virtual(mem->bo);
   for (y = 0; y < h; ++y) {
     char *src = (char*) data + pitch * y;
     for (x = 0; x < w; ++x) {
@@ -152,7 +148,7 @@ cl_mem_copy_data_linear(cl_mem mem,
       src += bpp;
     }
   }
-  drm_intel_bo_unmap(mem->bo);
+  cl_buffer_unmap(mem->bo);
 }
 
 static const uint32_t tile_sz = 4096; /* 4KB per tile */
@@ -179,8 +175,8 @@ cl_mem_copy_data_tilex(cl_mem mem,
   char *img = NULL;
   char *end = (char*) data + pitch * h;
 
-  drm_intel_bo_map(mem->bo, 1);
-  img = drm_intel_bo_get_virtual(mem->bo);
+  cl_buffer_map(mem->bo, 1);
+  img = cl_buffer_get_virtual(mem->bo);
   for (tiley = 0; tiley < tiley_n; ++tiley)
   for (tilex = 0; tilex < tilex_n; ++tilex) {
     char *tile = img + (tilex + tiley * tilex_n) * tile_sz;
@@ -193,7 +189,7 @@ cl_mem_copy_data_tilex(cl_mem mem,
       }
     }
   }
-  drm_intel_bo_unmap(mem->bo);
+  cl_buffer_unmap(mem->bo);
 }
 
 static void
@@ -214,8 +210,8 @@ cl_mem_copy_data_tiley(cl_mem mem,
   char *img = NULL;
   char *end = (char*) data + pitch * h;
 
-  drm_intel_bo_map(mem->bo, 1);
-  img = drm_intel_bo_get_virtual(mem->bo);
+  cl_buffer_map(mem->bo, 1);
+  img = cl_buffer_get_virtual(mem->bo);
   for (tiley = 0; tiley < tiley_n; ++tiley)
   for (tilex = 0; tilex < tilex_n; ++tilex) {
     char *tile = img + (tiley * tilex_n + tilex) * tile_sz;
@@ -229,7 +225,7 @@ cl_mem_copy_data_tiley(cl_mem mem,
       }
     }
   }
-  drm_intel_bo_unmap(mem->bo);
+  cl_buffer_unmap(mem->bo);
 }
 
 LOCAL cl_mem
@@ -279,7 +275,7 @@ cl_mem_new_image2D(cl_context ctx,
 #undef DO_IMAGE_ERROR
 
   /* Pick up tiling mode (we do only linear on SNB) */
-  if (ctx->intel_drv->gen_ver != 6)
+  if (cl_driver_get_ver(ctx->drv) != 6)
     tiling = CL_TILE_Y;
 
   /* Tiling requires to align both pitch and height */
@@ -336,7 +332,7 @@ cl_mem_delete(cl_mem mem)
   if (atomic_dec(&mem->ref_n) > 1)
     return;
   if (LIKELY(mem->bo != NULL))
-    drm_intel_bo_unreference(mem->bo);
+    cl_buffer_unreference(mem->bo);
 
   /* Remove it from the list */
   assert(mem->ctx);
@@ -363,15 +359,15 @@ cl_mem_add_ref(cl_mem mem)
 LOCAL void*
 cl_mem_map(cl_mem mem)
 {
-  drm_intel_bo_map(mem->bo, 1);
-  assert(drm_intel_bo_get_virtual(mem->bo));
-  return drm_intel_bo_get_virtual(mem->bo);
+  cl_buffer_map(mem->bo, 1);
+  assert(cl_buffer_get_virtual(mem->bo));
+  return cl_buffer_get_virtual(mem->bo);
 }
 
 LOCAL cl_int
 cl_mem_unmap(cl_mem mem)
 {
-  drm_intel_bo_unmap(mem->bo);
+  cl_buffer_unmap(mem->bo);
   return CL_SUCCESS;
 }
 
@@ -381,7 +377,7 @@ cl_mem_pin(cl_mem mem)
   assert(mem);
   if (UNLIKELY((mem->flags & CL_MEM_PINNABLE) == 0))
     return CL_INVALID_MEM;
-  drm_intel_bo_pin(mem->bo, 4096);
+  cl_buffer_pin(mem->bo, 4096);
   return CL_SUCCESS;
 }
 
@@ -391,7 +387,7 @@ cl_mem_unpin(cl_mem mem)
   assert(mem);
   if (UNLIKELY((mem->flags & CL_MEM_PINNABLE) == 0))
     return CL_INVALID_MEM;
-  drm_intel_bo_unpin(mem->bo);
+  cl_buffer_unpin(mem->bo);
   return CL_SUCCESS;
 }
 

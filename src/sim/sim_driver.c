@@ -19,13 +19,13 @@
 
 #include "cl_utils.h"
 #include "cl_alloc.h"
-#include "sim/sim_buffer.h"
+#include "sim/sim_driver.h"
 #include "CL/cl.h"
 #include <stdlib.h>
 #include <assert.h>
 #include <string.h>
 
-#include "cl_buffer.h"
+#include "cl_driver.h"
 
 /* Just to count allocations */
 typedef struct sim_bufmgr { volatile int buf_n; } sim_bufmgr_t;
@@ -81,13 +81,6 @@ sim_buffer_unreference(sim_buffer_t *buf)
   sim_buffer_delete(buf);
 }
 
-static void*
-sim_buffer_map(sim_buffer_t *buf)
-{
-  assert(buf);
-  return buf->data;
-}
-
 static int
 sim_buffer_subdata(sim_buffer_t *buf, unsigned long offset, unsigned long size, const void *data)
 {
@@ -107,8 +100,10 @@ sim_buffer_emit_reloc(sim_buffer_t *buf,
 {
   return 1;
 }
+
+static int sim_buffer_map(sim_buffer_t *buf, uint32_t write_enable) {return 0;}
 static int sim_buffer_unmap(sim_buffer_t *buf) {return 0;}
-static int sim_buffer_pin(sim_buffer_t *buf) {return 0;}
+static int sim_buffer_pin(sim_buffer_t *buf, uint32_t alignment) {return 0;}
 static int sim_buffer_unpin(sim_buffer_t *buf) {return 0;}
 
 LOCAL void

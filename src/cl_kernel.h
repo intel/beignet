@@ -22,6 +22,7 @@
 
 #include "cl_defs.h"
 #include "cl_internals.h"
+#include "cl_driver.h"
 #include "CL/cl.h"
 
 #include <stdint.h>
@@ -34,8 +35,8 @@ struct GenKernel;
 struct _cl_kernel {
   uint64_t magic;                     /* To identify it as a kernel */
   volatile int ref_n;                 /* We reference count this object */
-  struct _drm_intel_bo *bo;           /* The code itself */
-  struct _drm_intel_bo *const_bo;     /* Buffer for all __constants values in the OCL program */
+  struct cl_buffer *bo;               /* The code itself */
+  struct cl_buffer *const_bo;         /* Buffer for all __constants values in the OCL program */
   cl_program program;                 /* Owns this structure (and pointers) */
   const struct GenKernel *gen_kernel; /* (Opaque) compiler structure for the OCL kernel */
   uint8_t ref_its_program;            /* True only for the user kernel (those created by clCreateKernel) */

@@ -17,11 +17,12 @@
  * Author: Benjamin Segovia <benjamin.segovia@intel.com>
  */
 
-#ifndef __SIM_BUFFER_H__
-#define __SIM_BUFFER_H__
+#ifndef __SIM_DRIVER_H__
+#define __SIM_DRIVER_H__
 
 /* Setup the call backs when using the simulator */
 extern void sim_setup_callbacks(void);
 
-#endif /* __SIM_BUFFER_H__ */
+#endif /* __SIM_DRIVER_H__ */
+
 

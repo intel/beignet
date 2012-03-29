@@ -21,6 +21,7 @@
 #define __CL_COMMAND_QUEUE_H__
 
 #include "cl_internals.h"
+#include "cl_driver.h"
 #include "CL/cl.h"
 #include <stdint.h>
 
@@ -28,14 +29,14 @@ struct intel_gpgpu;
 
 /* Basically, this is a (kind-of) batch buffer */
 struct _cl_command_queue {
-  uint64_t magic;                  /* To identify it as a command queue */
-  volatile int ref_n;              /* We reference count this object */
-  cl_context ctx;                  /* Its parent context */
-  cl_command_queue prev, next;     /* We chain the command queues together */
-  struct intel_gpgpu *gpgpu;  /* Setup all GEN commands */
-  cl_mem perf;                     /* Where to put the perf counters */
-  cl_mem fulsim_out;               /* Fulsim will output this buffer */
-  struct _drm_intel_bo *last_batch;/* To synchronize using clFinish */
+  uint64_t magic;               /* To identify it as a command queue */
+  volatile int ref_n;           /* We reference count this object */
+  cl_context ctx;               /* Its parent context */
+  cl_command_queue prev, next;  /* We chain the command queues together */
+  cl_gpgpu *gpgpu;              /* Setup all GEN commands */
+  cl_mem perf;                  /* Where to put the perf counters */
+  cl_mem fulsim_out;            /* Fulsim will output this buffer */
+  cl_buffer *last_batch;        /* To synchronize using clFinish */
 };
 
 /* Allocate and initialize a new command queue. Also insert it in the list of
@@ -69,9 +70,9 @@ extern cl_int cl_command_queue_finish(cl_command_queue);
 extern cl_int cl_command_queue_bind_surface(cl_command_queue queue,
                                             cl_kernel k,
                                             char *curbe,
-                                            struct _drm_intel_bo **local, 
-                                            struct _drm_intel_bo **priv,
-                                            struct _drm_intel_bo **scratch,
+                                            cl_buffer **local,
+                                            cl_buffer **priv,
+                                            cl_buffer **scratch,
                                             uint32_t local_sz);
 
 #endif /* __CL_COMMAND_QUEUE_H__ */

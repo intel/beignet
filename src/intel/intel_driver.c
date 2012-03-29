@@ -18,6 +18,7 @@
  */
 
 #include "intel_driver.h"
+#include "intel_gpgpu.h"
 #include "intel_batchbuffer.h"
 #include "x11/dricommon.h"
 
@@ -32,6 +33,7 @@
 
 #include "cl_utils.h"
 #include "cl_alloc.h"
+#include "cl_driver.h"
 #include "cl_genx_driver.h"
 
 #define SET_BLOCKED_SIGSET(DRIVER)   do {                     \
@@ -58,7 +60,6 @@
   pthread_mutex_unlock(&(DRIVER)->ctxmutex);                  \
   RESTORE_BLOCKED_SIGSET(DRIVER);                             \
 } while (0)
-
 
 LOCAL intel_driver_t*
 intel_driver_new(void)
@@ -340,18 +341,27 @@ intel_driver_get_ver(struct intel_driver *drv)
   return drv->gen_ver;
 }
 
+LOCAL uint32_t drm_intel_bo_get_size(drm_intel_bo *bo) { return bo->size; }
+LOCAL void* drm_intel_bo_get_virtual(drm_intel_bo *bo) { return bo->virtual; }
+
 LOCAL void
 intel_setup_callbacks(void)
 {
+  cl_driver_new = (cl_driver_new_cb *) cl_intel_driver_new;
+  cl_driver_delete = (cl_driver_delete_cb *) cl_intel_driver_delete;
+  cl_driver_get_ver = (cl_driver_get_ver_cb *) intel_driver_get_ver;
+  cl_driver_get_bufmgr = (cl_driver_get_bufmgr_cb *) intel_driver_get_bufmgr;
   cl_buffer_alloc = (cl_buffer_alloc_cb *) drm_intel_bo_alloc;
+  cl_buffer_reference = (cl_buffer_reference_cb *) drm_intel_bo_reference;
   cl_buffer_unreference = (cl_buffer_unreference_cb *) drm_intel_bo_unreference;
   cl_buffer_map = (cl_buffer_map_cb *) drm_intel_bo_map;
   cl_buffer_unmap = (cl_buffer_unmap_cb *) drm_intel_bo_unmap;
+  cl_buffer_get_virtual = (cl_buffer_get_virtual_cb *) drm_intel_bo_unmap;
   cl_buffer_pin = (cl_buffer_pin_cb *) drm_intel_bo_pin;
   cl_buffer_unpin = (cl_buffer_unpin_cb *) drm_intel_bo_unpin;
   cl_buffer_subdata = (cl_buffer_subdata_cb *) drm_intel_bo_subdata;
   cl_buffer_emit_reloc = (cl_buffer_emit_reloc_cb *) drm_intel_bo_emit_reloc;
-  cl_driver_get_bufmgr = (cl_driver_get_bufmgr_cb *) intel_driver_get_bufmgr;
-  cl_driver_get_ver = (cl_driver_get_ver_cb *) intel_driver_get_ver;
+  cl_buffer_wait_rendering = (cl_buffer_wait_rendering_cb *) drm_intel_bo_wait_rendering;
+  intel_set_gpgpu_callbacks();
 }
 

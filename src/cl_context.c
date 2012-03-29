@@ -25,6 +25,7 @@
 #include "cl_mem.h"
 #include "cl_alloc.h"
 #include "cl_utils.h"
+#include "cl_driver.h"
 
 #include "CL/cl.h"
 
@@ -32,13 +33,6 @@
 #include <stdlib.h>
 #include <stdint.h>
 #include <assert.h>
-
-/* Do not include the full dependency */
-struct intel_driver;
-/* Get the command buffer interface */
-extern struct _drm_intel_bufmgr* intel_driver_get_bufmgr(struct intel_driver*);
-/* Get the Gen HW version */
-extern uint32_t intel_driver_get_ver(struct intel_driver*);
 
 static cl_int
 cl_context_properties_is_ok(const cl_context_properties *properties)
@@ -130,10 +124,10 @@ cl_context_new(void)
   cl_context ctx = NULL;
 
   TRY_ALLOC_NO_ERR (ctx, CALLOC(struct _cl_context));
-  TRY_ALLOC_NO_ERR (ctx->intel_drv, cl_intel_driver_new());
+  TRY_ALLOC_NO_ERR (ctx->drv, cl_driver_new());
   ctx->magic = CL_MAGIC_CONTEXT_HEADER;
   ctx->ref_n = 1;
-  ctx->ver = intel_driver_get_ver(ctx->intel_drv);
+  ctx->ver = cl_driver_get_ver(ctx->drv);
   pthread_mutex_init(&ctx->program_lock, NULL);
   pthread_mutex_init(&ctx->queue_lock, NULL);
   pthread_mutex_init(&ctx->buffer_lock, NULL);
@@ -163,8 +157,8 @@ cl_context_delete(cl_context ctx)
   assert(ctx->queues == NULL);
   assert(ctx->programs == NULL);
   assert(ctx->buffers == NULL);
-  assert(ctx->intel_drv);
-  cl_intel_driver_delete(ctx->intel_drv);
+  assert(ctx->drv);
+  cl_driver_delete(ctx->drv);
   ctx->magic = CL_MAGIC_DEAD_HEADER; /* For safety */
   cl_free(ctx);
 }
@@ -202,9 +196,9 @@ error:
   goto exit;
 }
 
-struct _drm_intel_bufmgr*
-cl_context_get_intel_bufmgr(cl_context ctx)
+struct cl_buffer_mgr*
+cl_context_get_bufmgr(cl_context ctx)
 {
-  return intel_driver_get_bufmgr((struct intel_driver*) ctx->intel_drv);
+  return cl_driver_get_bufmgr(ctx->drv);
 }
 

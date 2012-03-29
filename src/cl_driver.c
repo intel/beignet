@@ -17,17 +17,43 @@
  * Author: Benjamin Segovia <benjamin.segovia@intel.com>
  */
 
-#include "cl_buffer.h"
+#include "cl_driver.h"
+#include "cl_utils.h"
 #include <stdlib.h>
 
-cl_buffer_alloc_cb *cl_buffer_alloc = NULL;
-cl_buffer_unreference_cb *cl_buffer_unreference = NULL;
-cl_buffer_map_cb *cl_buffer_map = NULL;
-cl_buffer_unmap_cb *cl_buffer_unmap = NULL;
-cl_buffer_pin_cb *cl_buffer_pin = NULL;
-cl_buffer_unpin_cb *cl_buffer_unpin = NULL;
-cl_buffer_subdata_cb *cl_buffer_subdata = NULL;
-cl_buffer_emit_reloc_cb *cl_buffer_emit_reloc = NULL;
-cl_driver_get_bufmgr_cb *cl_driver_get_bufmgr = NULL;
-cl_driver_get_ver_cb *cl_driver_get_ver = NULL;
+/* Driver */
+LOCAL cl_driver_new_cb *cl_driver_new = NULL;
+LOCAL cl_driver_delete_cb *cl_driver_delete = NULL;
+LOCAL cl_driver_get_bufmgr_cb *cl_driver_get_bufmgr = NULL;
+
+/* Buffer */
+LOCAL cl_driver_get_ver_cb *cl_driver_get_ver = NULL;
+LOCAL cl_buffer_alloc_cb *cl_buffer_alloc = NULL;
+LOCAL cl_buffer_reference_cb *cl_buffer_reference = NULL;
+LOCAL cl_buffer_unreference_cb *cl_buffer_unreference = NULL;
+LOCAL cl_buffer_map_cb *cl_buffer_map = NULL;
+LOCAL cl_buffer_unmap_cb *cl_buffer_unmap = NULL;
+LOCAL cl_buffer_get_virtual_cb *cl_buffer_get_virtual = NULL;
+LOCAL cl_buffer_pin_cb *cl_buffer_pin = NULL;
+LOCAL cl_buffer_unpin_cb *cl_buffer_unpin = NULL;
+LOCAL cl_buffer_subdata_cb *cl_buffer_subdata = NULL;
+LOCAL cl_buffer_emit_reloc_cb *cl_buffer_emit_reloc = NULL;
+LOCAL cl_buffer_wait_rendering_cb *cl_buffer_wait_rendering = NULL;
+
+/* GPGPU */
+LOCAL cl_gpgpu_new_cb *cl_gpgpu_new = NULL;
+LOCAL cl_gpgpu_delete_cb *cl_gpgpu_delete = NULL;
+LOCAL cl_gpgpu_bind_buf_cb *cl_gpgpu_bind_buf = NULL;
+LOCAL cl_gpgpu_bind_image2D_cb *cl_gpgpu_bind_image2D = NULL;
+LOCAL cl_gpgpu_state_init_cb *cl_gpgpu_state_init = NULL;
+LOCAL cl_gpgpu_set_perf_counters_cb *cl_gpgpu_set_perf_counters = NULL;
+LOCAL cl_gpgpu_upload_constants_cb *cl_gpgpu_upload_constants = NULL;
+LOCAL cl_gpgpu_states_setup_cb *cl_gpgpu_states_setup = NULL;
+LOCAL cl_gpgpu_update_barrier_cb *cl_gpgpu_update_barrier = NULL;
+LOCAL cl_gpgpu_upload_samplers_cb *cl_gpgpu_upload_samplers = NULL;
+LOCAL cl_gpgpu_batch_reset_cb *cl_gpgpu_batch_reset = NULL;
+LOCAL cl_gpgpu_batch_start_cb *cl_gpgpu_batch_start = NULL;
+LOCAL cl_gpgpu_batch_end_cb *cl_gpgpu_batch_end = NULL;
+LOCAL cl_gpgpu_flush_cb *cl_gpgpu_flush = NULL;
+LOCAL cl_gpgpu_walker_cb *cl_gpgpu_walker = NULL;
 

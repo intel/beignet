@@ -19,11 +19,7 @@
 
 #include "cl_image.h"
 #include "cl_utils.h"
-#ifdef _PLASMA
-#include "plasma/intel_defines.h"
-#else
 #include "intel/intel_defines.h"
-#endif
 
 #include <assert.h>
 
