@@ -36,7 +36,7 @@
 /* Do not include the full dependency */
 struct intel_driver;
 /* Get the command buffer interface */
-extern struct _drm_intel_bufmgr* intel_driver_get_buf(struct intel_driver*);
+extern struct _drm_intel_bufmgr* intel_driver_get_bufmgr(struct intel_driver*);
 /* Get the Gen HW version */
 extern uint32_t intel_driver_get_ver(struct intel_driver*);
 
@@ -205,6 +205,6 @@ error:
 struct _drm_intel_bufmgr*
 cl_context_get_intel_bufmgr(cl_context ctx)
 {
-  return intel_driver_get_buf((struct intel_driver*) ctx->intel_drv);
+  return intel_driver_get_bufmgr((struct intel_driver*) ctx->intel_drv);
 }
 

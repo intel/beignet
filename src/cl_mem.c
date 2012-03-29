@@ -24,13 +24,10 @@
 #include "cl_alloc.h"
 #include "cl_device_id.h"
 
-#ifdef _PLASMA
-#include "plasma/plasma_export.h"
-#else
 #include "intel/intel_driver.h"
 #include "intel/intel_gpgpu.h"
 #include "intel_bufmgr.h" /* libdrm_intel */
-#endif
+#include "cl_buffer.h"
 
 #include "CL/cl.h"
 #include "CL/cl_intel.h"

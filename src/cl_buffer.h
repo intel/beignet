@@ -33,6 +33,25 @@ typedef struct cl_buffer cl_buffer;
 /* Encapsulates buffer manager */
 typedef struct cl_buffer_mgr cl_buffer_mgr;
 
+/* Encapsulates the driver backend functionalities */
+typedef struct cl_driver cl_driver;
+
+/* Create a new driver */
+typedef cl_driver* (cl_driver_new_cb)(void);
+extern cl_driver_new_cb cl_driver_new;
+
+/* Delete the driver */
+typedef cl_driver* (cl_driver_delete_cb)(void);
+extern cl_driver_delete_cb cl_driver_delete;
+
+/* Get the buffer manager from the driver */
+typedef cl_buffer_mgr* (cl_driver_get_bufmgr_cb)(cl_driver*);
+extern cl_driver_get_bufmgr_cb *cl_driver_get_bufmgr;
+
+/* Get the Gen version from the driver */
+typedef uint32_t (cl_driver_get_ver_cb)(cl_driver*);
+extern cl_driver_get_ver_cb *cl_driver_get_ver;
+
 /* Allocate a buffer */
 typedef cl_buffer* (cl_buffer_alloc_cb)(cl_buffer_mgr*, const char*, unsigned long, unsigned long);
 extern cl_buffer_alloc_cb *cl_buffer_alloc;

@@ -28,4 +28,6 @@ cl_buffer_pin_cb *cl_buffer_pin = NULL;
 cl_buffer_unpin_cb *cl_buffer_unpin = NULL;
 cl_buffer_subdata_cb *cl_buffer_subdata = NULL;
 cl_buffer_emit_reloc_cb *cl_buffer_emit_reloc = NULL;
+cl_driver_get_bufmgr_cb *cl_driver_get_bufmgr = NULL;
+cl_driver_get_ver_cb *cl_driver_get_ver = NULL;
 

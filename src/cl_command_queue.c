@@ -25,13 +25,8 @@
 #include "cl_mem.h"
 #include "cl_utils.h"
 #include "cl_alloc.h"
-
-#ifdef _PLASMA
-#include "plasma/plasma_export.h"
-#else
 #include "intel_bufmgr.h"
 #include "intel/intel_gpgpu.h"
-#endif
 
 #include <assert.h>
 #include <stdio.h>
@@ -224,16 +219,11 @@ extern void aub_exec_dump_raw_file(drm_intel_bo*, size_t offset, size_t sz);
 static void
 cl_run_fulsim(void)
 {
-  const char *run_it = getenv("OCL_FULSIM_RUN");
+  const char *run_it = getenv("OCL_SIMULATOR");
   const char *debug_mode = getenv("OCL_FULSIM_DEBUG_MODE");
-  if (run_it == NULL || strcmp(run_it, "1"))
-    return;
-#if EMULATE_GEN == 6 /* SNB */
-  if (debug_mode == NULL || strcmp(debug_mode, "1"))
-    system("wine AubLoad.exe dump.aub -device sbrB0");
-  else
-    system("wine AubLoad.exe dump.aub -device sbrB0 -debug");
-#elif EMULATE_GEN == 7 /* IVB */
+  if (run_it == NULL || strcmp(run_it, "1")) return;
+
+#if EMULATE_GEN == 7 /* IVB */
   if (debug_mode == NULL || strcmp(debug_mode, "1"))
     system("wine AubLoad.exe dump.aub -device ivbB0");
   else

@@ -287,20 +287,6 @@ intel_driver_shared_name(intel_driver_t *driver, dri_bo *bo)
   return name;
 }
 
-extern drm_intel_bufmgr* intel_driver_get_buf(intel_driver_t*);
-
-LOCAL drm_intel_bufmgr*
-intel_driver_get_buf(intel_driver_t *drv)
-{
-  return drv->bufmgr;
-}
-
-LOCAL uint32_t
-intel_driver_get_ver(struct intel_driver *drv)
-{
-  return drv->gen_ver;
-}
-
 LOCAL int
 cl_intel_get_device_id(void)
 {
