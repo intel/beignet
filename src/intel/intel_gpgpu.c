@@ -50,15 +50,12 @@ typedef struct surface_heap {
 
 #define MAX_IF_DESC    32
 
-/* Device abstraction */
-struct intel_driver;
-
 /* Handle GPGPU state (actually "media" state) */
 struct intel_gpgpu
 {
   intel_driver_t *drv;
   intel_batchbuffer_t *batch;
-  cl_gpgpu_kernel_t *ker;
+  cl_gpgpu_kernel *ker;
 
   struct {
     dri_bo *bo;
@@ -556,7 +553,7 @@ intel_gpgpu_bind_image2D(intel_gpgpu_t *state,
                          int32_t w,
                          int32_t h,
                          int32_t pitch,
-                         cl_gpgpu_tiling_t tiling)
+                         cl_gpgpu_tiling tiling)
 {
   assert(index < MAX_SURFACES);
   if (state->drv->gen_ver == 7 || state->drv->gen_ver == 75)
@@ -567,7 +564,7 @@ intel_gpgpu_bind_image2D(intel_gpgpu_t *state,
 
 static void
 intel_gpgpu_build_idrt(intel_gpgpu_t *state,
-                       cl_gpgpu_kernel_t *kernel,
+                       cl_gpgpu_kernel *kernel,
                        uint32_t ker_n)
 {
   gen6_interface_descriptor_t *desc;
@@ -645,14 +642,13 @@ static void
 intel_gpgpu_upload_samplers(intel_gpgpu_t *state, const void *data, uint32_t n)
 {
   if (n) {
-    /*sizeof(gen6_sampler_state_t) == sizeof(gen7_surface_state_t) */
     const size_t sz = n * sizeof(gen6_sampler_state_t);
     memcpy(state->sampler_state_b.bo->virtual, data, sz);
   }
 }
 
 static void
-intel_gpgpu_states_setup(intel_gpgpu_t *state, cl_gpgpu_kernel_t *kernel, uint32_t ker_n)
+intel_gpgpu_states_setup(intel_gpgpu_t *state, cl_gpgpu_kernel *kernel, uint32_t ker_n)
 {
   state->ker = kernel;
   intel_gpgpu_build_idrt(state, kernel, ker_n);

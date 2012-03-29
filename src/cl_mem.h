@@ -34,7 +34,7 @@ typedef enum cl_image_tiling {
 struct _cl_mem {
   uint64_t magic;           /* To identify it as a memory object */
   volatile int ref_n;       /* This object is reference counted */
-  cl_buffer *bo;            /* Data in GPU memory */
+  cl_buffer bo;             /* Data in GPU memory */
   cl_mem prev, next;        /* We chain the memory buffers together */
   cl_context ctx;           /* Context it belongs to */
   cl_mem_flags flags;       /* Flags specified at the creation time */

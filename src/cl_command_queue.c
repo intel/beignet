@@ -100,15 +100,15 @@ LOCAL cl_int
 cl_command_queue_bind_surface(cl_command_queue queue,
                               cl_kernel k,
                               char *curbe,
-                              cl_buffer **local, 
-                              cl_buffer **priv,
-                              cl_buffer **scratch,
+                              cl_buffer *local, 
+                              cl_buffer *priv,
+                              cl_buffer *scratch,
                               uint32_t local_sz)
 {
   cl_context ctx = queue->ctx;
-  cl_gpgpu *gpgpu = queue->gpgpu;
-  cl_buffer_mgr *bufmgr = cl_context_get_bufmgr(ctx);
-  cl_buffer *sync_bo = NULL;
+  cl_gpgpu gpgpu = queue->gpgpu;
+  cl_buffer_mgr bufmgr = cl_context_get_bufmgr(ctx);
+  cl_buffer sync_bo = NULL;
   cl_int err = CL_SUCCESS;
 #if 0
   cl_context ctx = queue->ctx;
@@ -210,9 +210,9 @@ cl_command_queue_bind_surface(cl_command_queue queue,
 }
 
 #if USE_FULSIM
-extern void drm_intel_bufmgr_gem_stop_aubfile(cl_buffer_mgr*);
-extern void drm_intel_bufmgr_gem_set_aubfile(cl_buffer_mgr*, FILE*);
-extern void aub_exec_dump_raw_file(cl_buffer*, size_t offset, size_t sz);
+extern void drm_intel_bufmgr_gem_stop_aubfile(cl_buffer_mgr);
+extern void drm_intel_bufmgr_gem_set_aubfile(cl_buffer_mgr, FILE*);
+extern void aub_exec_dump_raw_file(cl_buffer, size_t offset, size_t sz);
 
 static void
 cl_run_fulsim(void)
@@ -437,7 +437,7 @@ cl_command_queue_ND_range(cl_command_queue queue,
   cl_int err = CL_SUCCESS;
 
 #if USE_FULSIM
-  cl_buffer_mgr *bufmgr = NULL;
+  cl_buffer_mgr bufmgr = NULL;
   FILE *file = fopen("dump.aub", "wb");
   FATAL_IF (file == NULL, "Unable to open file dump.aub");
   bufmgr = cl_context_get_bufmgr(queue->ctx);

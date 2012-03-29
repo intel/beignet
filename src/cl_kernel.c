@@ -102,7 +102,7 @@ LOCAL void
 cl_kernel_setup(cl_kernel k, const struct GenKernel *gen_kernel)
 {
   cl_context ctx = k->program->ctx;
-  cl_buffer_mgr *bufmgr = cl_context_get_bufmgr(ctx);
+  cl_buffer_mgr bufmgr = cl_context_get_bufmgr(ctx);
 
   /* Allocate the gen code here */
   const uint32_t code_sz = GenKernelGetCodeSize(gen_kernel);

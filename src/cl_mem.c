@@ -37,7 +37,7 @@ cl_mem_allocate(cl_context ctx,
                 cl_int is_tiled,
                 cl_int *errcode)
 {
-  cl_buffer_mgr *bufmgr = NULL;
+  cl_buffer_mgr bufmgr = NULL;
   cl_mem mem = NULL;
   cl_int err = CL_SUCCESS;
   size_t alignment = 64;

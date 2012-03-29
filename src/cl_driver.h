@@ -35,34 +35,34 @@
  **************************************************************************/
 
 /* Encapsulates command buffer / data buffer / kernels */
-typedef struct cl_buffer cl_buffer;
+typedef struct _cl_buffer *cl_buffer;
 
 /* Encapsulates buffer manager */
-typedef struct cl_buffer_mgr cl_buffer_mgr;
+typedef struct _cl_buffer_mgr *cl_buffer_mgr;
 
 /* Encapsulates the driver backend functionalities */
-typedef struct cl_driver cl_driver;
+typedef struct _cl_driver *cl_driver;
 
 /* Encapsulates the gpgpu stream of commands */
-typedef struct cl_gpgpu cl_gpgpu;
+typedef struct _cl_gpgpu *cl_gpgpu;
 
 /**************************************************************************
  * Driver
  **************************************************************************/
 /* Create a new driver */
-typedef cl_driver* (cl_driver_new_cb)(void);
+typedef cl_driver (cl_driver_new_cb)(void);
 extern cl_driver_new_cb *cl_driver_new;
 
 /* Delete the driver */
-typedef void (cl_driver_delete_cb)(cl_driver*);
+typedef void (cl_driver_delete_cb)(cl_driver);
 extern cl_driver_delete_cb *cl_driver_delete;
 
 /* Get the buffer manager from the driver */
-typedef cl_buffer_mgr* (cl_driver_get_bufmgr_cb)(cl_driver*);
+typedef cl_buffer_mgr (cl_driver_get_bufmgr_cb)(cl_driver);
 extern cl_driver_get_bufmgr_cb *cl_driver_get_bufmgr;
 
 /* Get the Gen version from the driver */
-typedef uint32_t (cl_driver_get_ver_cb)(cl_driver*);
+typedef uint32_t (cl_driver_get_ver_cb)(cl_driver);
 extern cl_driver_get_ver_cb *cl_driver_get_ver;
 
 /**************************************************************************
@@ -73,70 +73,69 @@ typedef enum cl_gpgpu_tiling {
   GPGPU_NO_TILE = 0,
   GPGPU_TILE_X  = 1,
   GPGPU_TILE_Y  = 2,
-} cl_gpgpu_tiling_t;
+} cl_gpgpu_tiling;
 
 /* Cache control options */
-enum gen6_cache_control {
+typedef enum cl_cache_control {
   cc_gtt      = 0x0,
   cc_l3       = 0x1,
   cc_llc      = 0x2,
   cc_llc_l3   = 0x3
-};
-
+} cl_cache_control;
 
 /* Use this structure to bind kernels in the gpgpu state */
 typedef struct cl_gpgpu_kernel {
   const char *name;        /* kernel name and bo name */
   uint32_t grf_blocks;     /* register blocks kernel wants (in 8 reg blocks) */
   uint32_t cst_sz;         /* total size of all constants */
-  cl_buffer *bo;           /* kernel code in the proper addr space */
+  cl_buffer bo;            /* kernel code in the proper addr space */
   int32_t barrierID;       /* barrierID for _this_ kernel */
   uint32_t use_barrier:1;  /* For gen7 (automatic barrier management) */
   uint32_t thread_n:15;    /* For gen7 (automatic barrier management) */
   uint32_t slm_sz:16;      /* For gen7 (automatic SLM allocation) */
-} cl_gpgpu_kernel_t;
+} cl_gpgpu_kernel;
 
 /* Create a new gpgpu state */
-typedef cl_gpgpu* (cl_gpgpu_new_cb)(cl_driver*);
+typedef cl_gpgpu (cl_gpgpu_new_cb)(cl_driver);
 extern cl_gpgpu_new_cb *cl_gpgpu_new;
 
 /* Delete the gpgpu state */
-typedef void (cl_gpgpu_delete_cb)(cl_gpgpu*);
+typedef void (cl_gpgpu_delete_cb)(cl_gpgpu);
 extern cl_gpgpu_delete_cb *cl_gpgpu_delete;
 
 /* Bind a regular unformatted buffer */
-typedef void (cl_gpgpu_bind_buf_cb)(cl_gpgpu*, int32_t index, cl_buffer *, uint32_t cchint);
+typedef void (cl_gpgpu_bind_buf_cb)(cl_gpgpu, int32_t index, cl_buffer, uint32_t cchint);
 extern cl_gpgpu_bind_buf_cb *cl_gpgpu_bind_buf;
 
 /* Set a 2d texture */
 typedef void (cl_gpgpu_bind_image2D_cb)(cl_gpgpu state,
                                         int32_t index,
-                                        struct cl_buffer* obj_bo,
+                                        cl_buffer obj_bo,
                                         uint32_t format,
                                         int32_t w,
                                         int32_t h,
                                         int pitch,
-                                        cl_gpgpu_tiling_t tiling);
+                                        cl_gpgpu_tiling tiling);
 extern cl_gpgpu_bind_image2D_cb *cl_gpgpu_bind_image2D;
 
 /* Configure internal state */
-typedef void (cl_gpgpu_state_init_cb)(cl_gpgpu*, uint32_t max_threads, uint32_t size_cs_entry);
+typedef void (cl_gpgpu_state_init_cb)(cl_gpgpu, uint32_t max_threads, uint32_t size_cs_entry);
 extern cl_gpgpu_state_init_cb *cl_gpgpu_state_init;
 
 /* Set the buffer object where to report performance counters */
-typedef void (cl_gpgpu_set_perf_counters_cb)(cl_gpgpu*, struct cl_buffer *perf);
+typedef void (cl_gpgpu_set_perf_counters_cb)(cl_gpgpu, cl_buffer perf);
 extern cl_gpgpu_set_perf_counters_cb *cl_gpgpu_set_perf_counters;
 
 /* Fills current constant buffer with data */
-typedef void (cl_gpgpu_upload_constants_cb)(cl_gpgpu*, const void* data, uint32_t size);
+typedef void (cl_gpgpu_upload_constants_cb)(cl_gpgpu, const void* data, uint32_t size);
 extern cl_gpgpu_upload_constants_cb *cl_gpgpu_upload_constants;
 
 /* Setup all indirect states */
-typedef void (cl_gpgpu_states_setup_cb)(cl_gpgpu*, cl_gpgpu_kernel_t* kernel, uint32_t ker_n);
+typedef void (cl_gpgpu_states_setup_cb)(cl_gpgpu, cl_gpgpu_kernel* kernel, uint32_t ker_n);
 extern cl_gpgpu_states_setup_cb *cl_gpgpu_states_setup;
 
 /* Make HW threads use barrierID */
-typedef void (cl_gpgpu_update_barrier_cb)(cl_gpgpu*, uint32_t barrierID, uint32_t thread_n);
+typedef void (cl_gpgpu_update_barrier_cb)(cl_gpgpu, uint32_t barrierID, uint32_t thread_n);
 extern cl_gpgpu_update_barrier_cb *cl_gpgpu_update_barrier;
 
 /* Upload the constant samplers as specified inside the OCL kernel */
@@ -144,27 +143,27 @@ typedef void (cl_gpgpu_upload_samplers_cb)(cl_gpgpu *state, const void *data, ui
 extern cl_gpgpu_upload_samplers_cb *cl_gpgpu_upload_samplers;
 
 /* Set a sampler */
-typedef void (cl_gpgpu_set_sampler_cb)(cl_gpgpu*, uint32_t index, uint32_t non_normalized);
+typedef void (cl_gpgpu_set_sampler_cb)(cl_gpgpu, uint32_t index, uint32_t non_normalized);
 extern cl_gpgpu_set_sampler_cb *cl_gpgpu_set_sampler;
 
 /* Allocate the batch buffer and return the BO used for the batch buffer */
-typedef void (cl_gpgpu_batch_reset_cb)(cl_gpgpu*, size_t sz);
+typedef void (cl_gpgpu_batch_reset_cb)(cl_gpgpu, size_t sz);
 extern cl_gpgpu_batch_reset_cb *cl_gpgpu_batch_reset;
 
 /* Atomic begin, pipeline select, urb, pipeline state and constant buffer */
-typedef void (cl_gpgpu_batch_start_cb)(cl_gpgpu*);
+typedef void (cl_gpgpu_batch_start_cb)(cl_gpgpu);
 extern cl_gpgpu_batch_start_cb *cl_gpgpu_batch_start;
 
 /* atomic end with possibly inserted flush */
-typedef void (cl_gpgpu_batch_end_cb)(cl_gpgpu*, int32_t flush_mode);
+typedef void (cl_gpgpu_batch_end_cb)(cl_gpgpu, int32_t flush_mode);
 extern cl_gpgpu_batch_end_cb *cl_gpgpu_batch_end;
 
 /* Flush the command buffer */
-typedef void (cl_gpgpu_flush_cb)(cl_gpgpu *state);
+typedef void (cl_gpgpu_flush_cb)(cl_gpgpu);
 extern cl_gpgpu_flush_cb *cl_gpgpu_flush;
 
 /* Will spawn all threads */
-typedef void (cl_gpgpu_walker_cb)(cl_gpgpu *state,
+typedef void (cl_gpgpu_walker_cb)(cl_gpgpu,
                                   uint32_t simd_sz,
                                   uint32_t thread_n,
                                   const size_t global_wk_off[3],
@@ -176,47 +175,47 @@ extern cl_gpgpu_walker_cb *cl_gpgpu_walker;
  * Buffer
  **************************************************************************/
 /* Allocate a buffer */
-typedef cl_buffer* (cl_buffer_alloc_cb)(cl_buffer_mgr*, const char*, unsigned long, unsigned long);
+typedef cl_buffer (cl_buffer_alloc_cb)(cl_buffer_mgr, const char*, unsigned long, unsigned long);
 extern cl_buffer_alloc_cb *cl_buffer_alloc;
 
 /* Unref a buffer and destroy it if no more ref */
-typedef void (cl_buffer_unreference_cb)(cl_buffer*);
+typedef void (cl_buffer_unreference_cb)(cl_buffer);
 extern cl_buffer_unreference_cb *cl_buffer_unreference;
 
 /* Add one more ref on a buffer */
-typedef void (cl_buffer_reference_cb)(cl_buffer*);
+typedef void (cl_buffer_reference_cb)(cl_buffer);
 extern cl_buffer_reference_cb *cl_buffer_reference;
 
 /* Map a buffer */
-typedef int (cl_buffer_map_cb)(cl_buffer*, uint32_t write_enable);
+typedef int (cl_buffer_map_cb)(cl_buffer, uint32_t write_enable);
 extern cl_buffer_map_cb *cl_buffer_map;
 
 /* Unmap a buffer */
-typedef int (cl_buffer_unmap_cb)(cl_buffer*);
+typedef int (cl_buffer_unmap_cb)(cl_buffer);
 extern cl_buffer_unmap_cb *cl_buffer_unmap;
 
 /* Get the virtual address (when mapped) */
-typedef void* (cl_buffer_get_virtual_cb)(cl_buffer*);
+typedef void* (cl_buffer_get_virtual_cb)(cl_buffer);
 extern cl_buffer_get_virtual_cb *cl_buffer_get_virtual;
 
 /* Pin a buffer */
-typedef int (cl_buffer_pin_cb)(cl_buffer*, uint32_t alignment);
+typedef int (cl_buffer_pin_cb)(cl_buffer, uint32_t alignment);
 extern cl_buffer_pin_cb *cl_buffer_pin;
 
 /* Unpin a buffer */
-typedef int (cl_buffer_unpin_cb)(cl_buffer*);
+typedef int (cl_buffer_unpin_cb)(cl_buffer);
 extern cl_buffer_unpin_cb *cl_buffer_unpin;
 
 /* Fill data in the buffer */
-typedef int (cl_buffer_subdata_cb)(cl_buffer*, unsigned long, unsigned long, const void*);
+typedef int (cl_buffer_subdata_cb)(cl_buffer, unsigned long, unsigned long, const void*);
 extern cl_buffer_subdata_cb *cl_buffer_subdata;
 
 /* Emit relocation */
-typedef int (cl_buffer_emit_reloc_cb) (cl_buffer *, uint32_t, cl_buffer*, uint32_t, uint32_t, uint32_t);
+typedef int (cl_buffer_emit_reloc_cb) (cl_buffer, uint32_t, cl_buffer, uint32_t, uint32_t, uint32_t);
 extern cl_buffer_emit_reloc_cb *cl_buffer_emit_reloc;
 
 /* Wait for all pending rendering for this buffer to complete */
-typedef int (cl_buffer_wait_rendering_cb) (cl_buffer *);
+typedef int (cl_buffer_wait_rendering_cb) (cl_buffer);
 extern cl_buffer_wait_rendering_cb *cl_buffer_wait_rendering;
 
 #endif /* __CL_BUFFER_H__ */

@@ -88,11 +88,11 @@ cl_command_queue_ND_range_gen7(cl_command_queue queue,
                                const size_t *local_wk_sz)
 {
   cl_context ctx = queue->ctx;
-  cl_gpgpu *gpgpu = queue->gpgpu;
+  cl_gpgpu gpgpu = queue->gpgpu;
   char *curbe = NULL;        /* Does not include per-thread local IDs */
   char *final_curbe = NULL;  /* Includes them */
-  cl_buffer *private_bo = NULL, *scratch_bo = NULL;
-  cl_gpgpu_kernel_t kernel;
+  cl_buffer private_bo = NULL, scratch_bo = NULL;
+  cl_gpgpu_kernel kernel;
   const uint32_t simd_sz = cl_kernel_get_simd_width(ker);
   size_t i, batch_sz = 0u, local_sz = 0u, thread_n = 0u, id_offset = 0u, cst_sz = 0u;
   cl_int err = CL_SUCCESS;

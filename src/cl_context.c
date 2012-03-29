@@ -196,7 +196,7 @@ error:
   goto exit;
 }
 
-struct cl_buffer_mgr*
+cl_buffer_mgr
 cl_context_get_bufmgr(cl_context ctx)
 {
   return cl_driver_get_bufmgr(ctx->drv);
