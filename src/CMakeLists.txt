@@ -21,7 +21,6 @@ SET(OPENCL_SRC
     cl_buffer.c
     cl_buffer.cpp
     sim/sim_buffer.c
-    intel/intel_buffer.c
     intel/intel_gpgpu.c
     intel/intel_batchbuffer.c
     intel/intel_driver.c

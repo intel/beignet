@@ -328,3 +328,30 @@ error:
   goto exit;
 }
 
+LOCAL drm_intel_bufmgr*
+intel_driver_get_bufmgr(intel_driver_t *drv)
+{
+  return drv->bufmgr;
+}
+
+LOCAL uint32_t
+intel_driver_get_ver(struct intel_driver *drv)
+{
+  return drv->gen_ver;
+}
+
+LOCAL void
+intel_setup_callbacks(void)
+{
+  cl_buffer_alloc = (cl_buffer_alloc_cb *) drm_intel_bo_alloc;
+  cl_buffer_unreference = (cl_buffer_unreference_cb *) drm_intel_bo_unreference;
+  cl_buffer_map = (cl_buffer_map_cb *) drm_intel_bo_map;
+  cl_buffer_unmap = (cl_buffer_unmap_cb *) drm_intel_bo_unmap;
+  cl_buffer_pin = (cl_buffer_pin_cb *) drm_intel_bo_pin;
+  cl_buffer_unpin = (cl_buffer_unpin_cb *) drm_intel_bo_unpin;
+  cl_buffer_subdata = (cl_buffer_subdata_cb *) drm_intel_bo_subdata;
+  cl_buffer_emit_reloc = (cl_buffer_emit_reloc_cb *) drm_intel_bo_emit_reloc;
+  cl_driver_get_bufmgr = (cl_driver_get_bufmgr_cb *) intel_driver_get_bufmgr;
+  cl_driver_get_ver = (cl_driver_get_ver_cb *) intel_driver_get_ver;
+}
+
