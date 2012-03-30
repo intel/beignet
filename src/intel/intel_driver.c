@@ -34,7 +34,6 @@
 #include "cl_utils.h"
 #include "cl_alloc.h"
 #include "cl_driver.h"
-#include "cl_genx_driver.h"
 
 #define SET_BLOCKED_SIGSET(DRIVER)   do {                     \
   sigset_t bl_mask;                                           \
@@ -61,7 +60,15 @@
   RESTORE_BLOCKED_SIGSET(DRIVER);                             \
 } while (0)
 
-LOCAL intel_driver_t*
+static void
+intel_driver_delete(intel_driver_t *driver)
+{
+  if (driver == NULL)
+    return;
+  cl_free(driver);
+}
+
+static intel_driver_t*
 intel_driver_new(void)
 {
   intel_driver_t *driver = NULL;
@@ -75,14 +82,6 @@ error:
   intel_driver_delete(driver);
   driver = NULL;
   goto exit;
-}
-
-LOCAL void
-intel_driver_delete(intel_driver_t *driver)
-{
-  if (driver == NULL)
-    return;
-  cl_free(driver);
 }
 
 /* just used for maximum relocation number in drm_intel */
@@ -133,7 +132,7 @@ intel_driver_init(intel_driver_t *driver, int dev_fd)
 #endif /* EMULATE_GEN */
 }
 
-LOCAL void
+static void
 intel_driver_open(intel_driver_t *intel)
 {
   int cardi;
@@ -167,7 +166,7 @@ intel_driver_open(intel_driver_t *intel)
   }
 }
 
-LOCAL void
+static void
 intel_driver_close(intel_driver_t *intel)
 {
   if(intel->dri_ctx) dri_state_release(intel->dri_ctx);
@@ -288,8 +287,8 @@ intel_driver_shared_name(intel_driver_t *driver, dri_bo *bo)
   return name;
 }
 
-LOCAL int
-cl_intel_get_device_id(void)
+static int
+intel_get_device_id(void)
 {
   intel_driver_t *driver = NULL;
   int intel_device_id;
@@ -304,7 +303,7 @@ cl_intel_get_device_id(void)
   return intel_device_id;
 }
 
-LOCAL void
+static void
 cl_intel_driver_delete(intel_driver_t *driver)
 {
   if (driver == NULL)
@@ -314,7 +313,7 @@ cl_intel_driver_delete(intel_driver_t *driver)
   intel_driver_delete(driver);
 }
 
-LOCAL intel_driver_t*
+static intel_driver_t*
 cl_intel_driver_new(void)
 {
   intel_driver_t *driver = NULL;
@@ -329,20 +328,20 @@ error:
   goto exit;
 }
 
-LOCAL drm_intel_bufmgr*
+static drm_intel_bufmgr*
 intel_driver_get_bufmgr(intel_driver_t *drv)
 {
   return drv->bufmgr;
 }
 
-LOCAL uint32_t
+static uint32_t
 intel_driver_get_ver(struct intel_driver *drv)
 {
   return drv->gen_ver;
 }
 
-LOCAL uint32_t drm_intel_bo_get_size(drm_intel_bo *bo) { return bo->size; }
-LOCAL void* drm_intel_bo_get_virtual(drm_intel_bo *bo) { return bo->virtual; }
+static uint32_t drm_intel_bo_get_size(drm_intel_bo *bo) { return bo->size; }
+static void* drm_intel_bo_get_virtual(drm_intel_bo *bo) { return bo->virtual; }
 
 LOCAL void
 intel_setup_callbacks(void)
@@ -351,16 +350,17 @@ intel_setup_callbacks(void)
   cl_driver_delete = (cl_driver_delete_cb *) cl_intel_driver_delete;
   cl_driver_get_ver = (cl_driver_get_ver_cb *) intel_driver_get_ver;
   cl_driver_get_bufmgr = (cl_driver_get_bufmgr_cb *) intel_driver_get_bufmgr;
+  cl_driver_get_device_id = (cl_driver_get_device_id_cb *) intel_get_device_id;
   cl_buffer_alloc = (cl_buffer_alloc_cb *) drm_intel_bo_alloc;
   cl_buffer_reference = (cl_buffer_reference_cb *) drm_intel_bo_reference;
   cl_buffer_unreference = (cl_buffer_unreference_cb *) drm_intel_bo_unreference;
   cl_buffer_map = (cl_buffer_map_cb *) drm_intel_bo_map;
   cl_buffer_unmap = (cl_buffer_unmap_cb *) drm_intel_bo_unmap;
-  cl_buffer_get_virtual = (cl_buffer_get_virtual_cb *) drm_intel_bo_unmap;
+  cl_buffer_get_virtual = (cl_buffer_get_virtual_cb *) drm_intel_bo_get_virtual;
+  cl_buffer_get_size = (cl_buffer_get_size_cb *) drm_intel_bo_get_size;
   cl_buffer_pin = (cl_buffer_pin_cb *) drm_intel_bo_pin;
   cl_buffer_unpin = (cl_buffer_unpin_cb *) drm_intel_bo_unpin;
   cl_buffer_subdata = (cl_buffer_subdata_cb *) drm_intel_bo_subdata;
-  cl_buffer_emit_reloc = (cl_buffer_emit_reloc_cb *) drm_intel_bo_emit_reloc;
   cl_buffer_wait_rendering = (cl_buffer_wait_rendering_cb *) drm_intel_bo_wait_rendering;
   intel_set_gpgpu_callbacks();
 }

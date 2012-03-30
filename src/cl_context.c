@@ -19,7 +19,6 @@
 
 #include "cl_platform_id.h"
 #include "cl_device_id.h"
-#include "cl_genx_driver.h"
 #include "cl_context.h"
 #include "cl_command_queue.h"
 #include "cl_mem.h"

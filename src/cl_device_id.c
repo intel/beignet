@@ -22,11 +22,8 @@
 #include "cl_internals.h"
 #include "cl_utils.h"
 #include "cl_defs.h"
-#ifdef _PLASMA
-#include "plasma/cl_device_data.h"
-#else
-#include "intel/cl_device_data.h"
-#endif
+#include "cl_driver.h"
+#include "cl_device_data.h"
 #include "CL/cl.h"
 
 #include <assert.h>
@@ -40,7 +37,6 @@ static struct _cl_device_id intel_ivb_gt2_device = {
   .max_clock_frequency = 1000,
   .wg_sz = 1024,
   .compile_wg_sz = {0},	
-
 #include "cl_gen7_device.h"
 };
 
@@ -51,7 +47,6 @@ static struct _cl_device_id intel_ivb_gt1_device = {
   .max_clock_frequency = 1000,
   .wg_sz = 512,
   .compile_wg_sz = {0},	
-
 #include "cl_gen7_device.h"
 };
 
@@ -63,7 +58,6 @@ static struct _cl_device_id intel_hsw_device = {
   .max_clock_frequency = 1000,
   .wg_sz = 512,
   .compile_wg_sz = {0},	
-
 #include "cl_gen75_device.h"
 };
 
@@ -71,7 +65,7 @@ LOCAL cl_device_id
 cl_get_gt_device(void)
 {
   cl_device_id ret = NULL;
-  const int device_id = cl_intel_get_device_id();
+  const int device_id = cl_driver_get_device_id();
 
   /* XXX we pick IVB for HSW now */
   if (device_id == PCI_CHIP_HASWELL_M   ||

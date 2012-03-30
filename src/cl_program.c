@@ -82,6 +82,9 @@ cl_program_new(cl_context ctx)
   p->magic = CL_MAGIC_PROGRAM_HEADER;
   p->ctx = ctx;
 
+  /* The queue also belongs to its context */
+  cl_context_add_ref(ctx);
+
 exit:
   return p;
 error:

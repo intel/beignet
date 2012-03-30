@@ -17,15 +17,15 @@
  * Author: Benjamin Segovia <benjamin.segovia@intel.com>
  */
 
-#ifndef __CL_BUFFER_H__
-#define __CL_BUFFER_H__
+#ifndef __CL_DRIVER_H__
+#define __CL_DRIVER_H__
 
 #include <stdint.h>
 #include <stdlib.h>
 
 /* XXX needed for previous driver */
-#define MAX_SURFACES 128
-#define MAX_SAMPLERS 16
+#define GEN_MAX_SURFACES 128
+#define GEN_MAX_SAMPLERS 16
 
 /**************************************************************************
  * cl_driver:
@@ -134,10 +134,6 @@ extern cl_gpgpu_upload_constants_cb *cl_gpgpu_upload_constants;
 typedef void (cl_gpgpu_states_setup_cb)(cl_gpgpu, cl_gpgpu_kernel* kernel, uint32_t ker_n);
 extern cl_gpgpu_states_setup_cb *cl_gpgpu_states_setup;
 
-/* Make HW threads use barrierID */
-typedef void (cl_gpgpu_update_barrier_cb)(cl_gpgpu, uint32_t barrierID, uint32_t thread_n);
-extern cl_gpgpu_update_barrier_cb *cl_gpgpu_update_barrier;
-
 /* Upload the constant samplers as specified inside the OCL kernel */
 typedef void (cl_gpgpu_upload_samplers_cb)(cl_gpgpu *state, const void *data, uint32_t n);
 extern cl_gpgpu_upload_samplers_cb *cl_gpgpu_upload_samplers;
@@ -198,6 +194,10 @@ extern cl_buffer_unmap_cb *cl_buffer_unmap;
 typedef void* (cl_buffer_get_virtual_cb)(cl_buffer);
 extern cl_buffer_get_virtual_cb *cl_buffer_get_virtual;
 
+/* Get the size of the buffer */
+typedef void* (cl_buffer_get_size_cb)(cl_buffer);
+extern cl_buffer_get_size_cb *cl_buffer_get_size;
+
 /* Pin a buffer */
 typedef int (cl_buffer_pin_cb)(cl_buffer, uint32_t alignment);
 extern cl_buffer_pin_cb *cl_buffer_pin;
@@ -210,13 +210,13 @@ extern cl_buffer_unpin_cb *cl_buffer_unpin;
 typedef int (cl_buffer_subdata_cb)(cl_buffer, unsigned long, unsigned long, const void*);
 extern cl_buffer_subdata_cb *cl_buffer_subdata;
 
-/* Emit relocation */
-typedef int (cl_buffer_emit_reloc_cb) (cl_buffer, uint32_t, cl_buffer, uint32_t, uint32_t, uint32_t);
-extern cl_buffer_emit_reloc_cb *cl_buffer_emit_reloc;
-
 /* Wait for all pending rendering for this buffer to complete */
 typedef int (cl_buffer_wait_rendering_cb) (cl_buffer);
 extern cl_buffer_wait_rendering_cb *cl_buffer_wait_rendering;
 
-#endif /* __CL_BUFFER_H__ */
+/* Get the device id */
+typedef int (cl_driver_get_device_id_cb)(void);
+extern cl_driver_get_device_id_cb *cl_driver_get_device_id;
+
+#endif /* __CL_DRIVER_H__ */
 

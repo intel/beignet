@@ -91,11 +91,5 @@
                            (devid) == PCI_CHIP_HASWELL_L)
 #define IS_GEN75(devid)  IS_HASWELL(devid)
 
-/* Open a connection to the X server and ask the kernel who we are. Returns -1
- * if no Intel GPU was found or an error was encountered in the probing
- * process
- */
-extern int cl_intel_get_device_id(void);
-
 #endif /* __CL_DEVICE_DATA_H__ */
 

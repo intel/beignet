@@ -17,8 +17,8 @@
  * Author: Benjamin Segovia <benjamin.segovia@intel.com>
  */
 
-#ifndef __GENX_GPGPU_H__
-#define __GENX_GPGPU_H__
+#ifndef __INTEL_GPGPU_H__
+#define __INTEL_GPGPU_H__
 
 #include "cl_utils.h"
 #include "cl_driver.h"
@@ -29,5 +29,5 @@
 /* Set the gpgpu related call backs */
 extern void intel_set_gpgpu_callbacks(void);
 
-#endif /* __GENX_GPGPU_H__ */
+#endif /* __INTEL_GPGPU_H__ */
 

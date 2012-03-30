@@ -66,8 +66,7 @@ LOCAL void
 cl_command_queue_delete(cl_command_queue queue)
 {
   assert(queue);
-  if (atomic_dec(&queue->ref_n) != 1)
-    return;
+  if (atomic_dec(&queue->ref_n) != 1) return;
 
   /* Remove it from the list */
   assert(queue->ctx);
@@ -83,6 +82,7 @@ cl_command_queue_delete(cl_command_queue queue)
     cl_mem_delete(queue->fulsim_out);
     queue->fulsim_out = NULL;
   }
+  cl_buffer_unreference(queue->last_batch);
   cl_mem_delete(queue->perf);
   cl_context_delete(queue->ctx);
   cl_gpgpu_delete(queue->gpgpu);
@@ -110,96 +110,10 @@ cl_command_queue_bind_surface(cl_command_queue queue,
   cl_buffer_mgr bufmgr = cl_context_get_bufmgr(ctx);
   cl_buffer sync_bo = NULL;
   cl_int err = CL_SUCCESS;
-#if 0
-  cl_context ctx = queue->ctx;
-  intel_gpgpu_t *gpgpu = queue->gpgpu;
-  drm_intel_bufmgr *bufmgr = cl_context_get_intel_bufmgr(ctx);
-  cl_mem mem = NULL;
-  cl_buffer *bo = NULL, *sync_bo = NULL;
-  const size_t max_thread = ctx->device->max_compute_unit;
-  cl_int err = CL_SUCCESS;
-  uint32_t i, index;
 
-  /* Bind user defined surface */
-  for (i = 0; i < k->arg_info_n; ++i) {
-    assert(k->arg_info[i].offset % SURFACE_SZ == 0);
-    index = k->arg_info[i].offset / SURFACE_SZ;
-    mem = (cl_mem) k->args[k->arg_info[i].arg_index];
-    assert(index != MAX_SURFACES - 1);
-    CHECK_MEM(mem);
-    bo = mem->bo;
-    assert(bo);
-    if (mem->is_image) {
-      const int32_t w = mem->w, h = mem->h, pitch = mem->pitch;
-      const uint32_t fmt = mem->intel_fmt;
-      gpgpu_tiling_t tiling = GPGPU_NO_TILE;
-      if (mem->tiling == CL_TILE_X)
-        tiling = GPGPU_TILE_X;
-      else if (mem->tiling == CL_TILE_Y)
-        tiling = GPGPU_TILE_Y;
-      gpgpu_bind_image2D(gpgpu, index, bo, fmt, w, h, pitch, tiling);
-
-      /* Copy the image parameters (width, height) in the constant buffer if the
-       * user requests them
-       */
-      cl_kernel_copy_image_parameters(k, mem, index, curbe);
-    } else
-      gpgpu_bind_buf(gpgpu, index, bo, cc_llc_l3);
-  }
-
-  /* Allocate the constant surface (if any) */
-  if (k->const_bo) {
-    assert(k->const_bo_index != MAX_SURFACES - 1);
-    gpgpu_bind_buf(gpgpu, k->const_bo_index,
-                   k->const_bo,
-                   cc_llc_l3);
-  }
-
-  /* Allocate local surface needed for SLM and bind it */
-  if (local && local_sz != 0) {
-    const size_t sz = 16 * local_sz; /* XXX 16 == maximum barrier number */
-    assert(k->patch.local_surf.offset % SURFACE_SZ == 0);
-    index = k->patch.local_surf.offset / SURFACE_SZ;
-    assert(index != MAX_SURFACES - 1);
-    *local = cl_buffer_alloc(bufmgr, "CL local surface", sz, 64);
-    gpgpu_bind_buf(gpgpu, index, *local, cc_llc_l3);
-  }
-  else if (local)
-    *local = NULL;
-
-  /* Allocate private surface and bind it */
-  if (priv && k->patch.private_surf.size != 0) {
-    const size_t sz = max_thread *
-                      k->patch.private_surf.size *
-                      k->patch.exec_env.largest_compiled_simd_sz;
-    // assert(k->patch.exec_env.largest_compiled_simd_sz == 16);
-    assert(k->patch.private_surf.offset % SURFACE_SZ == 0);
-    index = k->patch.private_surf.offset / SURFACE_SZ;
-    assert(index != MAX_SURFACES - 1);
-    *priv = cl_buffer_alloc(bufmgr, "CL private surface", sz, 64);
-    gpgpu_bind_buf(gpgpu, index, *priv, cc_llc_l3);
-  }
-  else if(priv)
-    *priv = NULL;
-
-  /* Allocate scratch surface and bind it */
-  if (scratch && k->patch.scratch.size != 0) {
-    const size_t sz = max_thread * /* XXX is it given per lane ??? */
-                      k->patch.scratch.size *
-                      k->patch.exec_env.largest_compiled_simd_sz;
-    // assert(k->patch.exec_env.largest_compiled_simd_sz == 16);
-    assert(k->patch.scratch.offset % SURFACE_SZ == 0);
-    assert(index != MAX_SURFACES - 1);
-    index = k->patch.scratch.offset / SURFACE_SZ;
-    *scratch = cl_buffer_alloc(bufmgr, "CL scratch surface", sz, 64);
-    gpgpu_bind_buf(gpgpu, index, *scratch, cc_llc_l3);
-  }
-  else if (scratch)
-    *scratch = NULL;
-#endif
   /* Now bind a bo used for synchronization */
   sync_bo = cl_buffer_alloc(bufmgr, "sync surface", 64, 64);
-  cl_gpgpu_bind_buf(gpgpu, MAX_SURFACES-1, sync_bo, cc_llc_l3);
+  cl_gpgpu_bind_buf(gpgpu, GEN_MAX_SURFACES-1, sync_bo, cc_llc_l3);
   if (queue->last_batch != NULL)
     cl_buffer_unreference(queue->last_batch);
   queue->last_batch = sync_bo;

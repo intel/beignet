@@ -25,19 +25,20 @@
 LOCAL cl_driver_new_cb *cl_driver_new = NULL;
 LOCAL cl_driver_delete_cb *cl_driver_delete = NULL;
 LOCAL cl_driver_get_bufmgr_cb *cl_driver_get_bufmgr = NULL;
+LOCAL cl_driver_get_ver_cb *cl_driver_get_ver = NULL;
+LOCAL cl_driver_get_device_id_cb *cl_driver_get_device_id = NULL;
 
 /* Buffer */
-LOCAL cl_driver_get_ver_cb *cl_driver_get_ver = NULL;
 LOCAL cl_buffer_alloc_cb *cl_buffer_alloc = NULL;
 LOCAL cl_buffer_reference_cb *cl_buffer_reference = NULL;
 LOCAL cl_buffer_unreference_cb *cl_buffer_unreference = NULL;
 LOCAL cl_buffer_map_cb *cl_buffer_map = NULL;
 LOCAL cl_buffer_unmap_cb *cl_buffer_unmap = NULL;
 LOCAL cl_buffer_get_virtual_cb *cl_buffer_get_virtual = NULL;
+LOCAL cl_buffer_get_size_cb *cl_buffer_get_size = NULL;
 LOCAL cl_buffer_pin_cb *cl_buffer_pin = NULL;
 LOCAL cl_buffer_unpin_cb *cl_buffer_unpin = NULL;
 LOCAL cl_buffer_subdata_cb *cl_buffer_subdata = NULL;
-LOCAL cl_buffer_emit_reloc_cb *cl_buffer_emit_reloc = NULL;
 LOCAL cl_buffer_wait_rendering_cb *cl_buffer_wait_rendering = NULL;
 
 /* GPGPU */
@@ -49,7 +50,6 @@ LOCAL cl_gpgpu_state_init_cb *cl_gpgpu_state_init = NULL;
 LOCAL cl_gpgpu_set_perf_counters_cb *cl_gpgpu_set_perf_counters = NULL;
 LOCAL cl_gpgpu_upload_constants_cb *cl_gpgpu_upload_constants = NULL;
 LOCAL cl_gpgpu_states_setup_cb *cl_gpgpu_states_setup = NULL;
-LOCAL cl_gpgpu_update_barrier_cb *cl_gpgpu_update_barrier = NULL;
 LOCAL cl_gpgpu_upload_samplers_cb *cl_gpgpu_upload_samplers = NULL;
 LOCAL cl_gpgpu_batch_reset_cb *cl_gpgpu_batch_reset = NULL;
 LOCAL cl_gpgpu_batch_start_cb *cl_gpgpu_batch_start = NULL;

@@ -65,10 +65,6 @@ typedef struct intel_driver
   struct dri_state *dri_ctx;
 } intel_driver_t;
 
-/* create / destroy device */
-extern intel_driver_t* intel_driver_new(void);
-extern void intel_driver_delete(intel_driver_t*);
-
 /* device control */
 extern void intel_driver_lock_hardware(intel_driver_t*);
 extern void intel_driver_unlock_hardware(intel_driver_t*);

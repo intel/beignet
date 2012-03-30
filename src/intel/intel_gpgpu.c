@@ -457,11 +457,11 @@ intel_gpgpu_state_init(intel_gpgpu_t *state,
     dri_bo_unreference(state->sampler_state_b.bo);
   bo = dri_bo_alloc(state->drv->bufmgr, 
                     "sample states",
-                    MAX_SAMPLERS * sizeof(gen6_sampler_state_t),
+                    GEN_MAX_SAMPLERS * sizeof(gen6_sampler_state_t),
                     32);
   assert(bo);
   dri_bo_map(bo, 1);
-  memset(bo->virtual, 0, sizeof(gen6_sampler_state_t) * MAX_SAMPLERS);
+  memset(bo->virtual, 0, sizeof(gen6_sampler_state_t) * GEN_MAX_SAMPLERS);
   state->sampler_state_b.bo = bo;
 }
 
@@ -538,7 +538,7 @@ intel_gpgpu_bind_buf(intel_gpgpu_t *state,
                      uint32_t cchint)
 {
   const uint32_t size = obj_bo->size;
-  assert(index < MAX_SURFACES);
+  assert(index < GEN_MAX_SURFACES);
   if (state->drv->gen_ver == 7 || state->drv->gen_ver == 75)
     intel_gpgpu_bind_buf_gen7(state, index, obj_bo, size, cchint);
   else
@@ -555,7 +555,7 @@ intel_gpgpu_bind_image2D(intel_gpgpu_t *state,
                          int32_t pitch,
                          cl_gpgpu_tiling tiling)
 {
-  assert(index < MAX_SURFACES);
+  assert(index < GEN_MAX_SURFACES);
   if (state->drv->gen_ver == 7 || state->drv->gen_ver == 75)
     intel_gpgpu_bind_image2D_gen7(state, index, (drm_intel_bo*) obj_bo, format, w, h, pitch, tiling);
   else
@@ -656,17 +656,6 @@ intel_gpgpu_states_setup(intel_gpgpu_t *state, cl_gpgpu_kernel *kernel, uint32_t
   dri_bo_unmap(state->sampler_state_b.bo);
 }
 
-static void 
-intel_gpgpu_update_barrier(intel_gpgpu_t *state, uint32_t barrierID, uint32_t thread_n)
-{
-  BEGIN_BATCH(state->batch, 4);
-  OUT_BATCH(state->batch, CMD_MEDIA_STATE_FLUSH | 0);
-  OUT_BATCH(state->batch, 1 << barrierID);
-  OUT_BATCH(state->batch, CMD_MEDIA_GATEWAY_STATE | 0);
-  OUT_BATCH(state->batch, (barrierID << 16) | thread_n);
-  ADVANCE_BATCH(state->batch);
-}
-
 static void
 intel_gpgpu_set_perf_counters(intel_gpgpu_t *state, cl_buffer *perf)
 {
@@ -724,7 +713,6 @@ intel_set_gpgpu_callbacks(void)
   cl_gpgpu_set_perf_counters = (cl_gpgpu_set_perf_counters_cb *) intel_gpgpu_set_perf_counters;
   cl_gpgpu_upload_constants = (cl_gpgpu_upload_constants_cb *) intel_gpgpu_upload_constants;
   cl_gpgpu_states_setup = (cl_gpgpu_states_setup_cb *) intel_gpgpu_states_setup;
-  cl_gpgpu_update_barrier = (cl_gpgpu_update_barrier_cb *) intel_gpgpu_update_barrier;
   cl_gpgpu_upload_samplers = (cl_gpgpu_upload_samplers_cb *) intel_gpgpu_upload_samplers;
   cl_gpgpu_batch_reset = (cl_gpgpu_batch_reset_cb *) intel_gpgpu_batch_reset;
   cl_gpgpu_batch_start = (cl_gpgpu_batch_start_cb *) intel_gpgpu_batch_start;
