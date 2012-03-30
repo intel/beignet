@@ -308,7 +308,6 @@ namespace gbe
     Mangler *Mang;
     LoopInfo *LI;
     const Module *TheModule;
-    const MCObjectFileInfo *MOFI;
     const TargetData* TD;
     const MCAsmInfo* TAsm;
     const MCRegisterInfo *MRI;
@@ -322,7 +321,7 @@ namespace gbe
         ctx(unit),
         regTranslator(ctx),
         Mang(0), LI(0),
-        TheModule(0), MOFI(0), TD(0)
+        TheModule(0), TD(0)
     {
       initializeLoopInfoPass(*PassRegistry::getPassRegistry());
       pass = PASS_EMIT_REGISTERS;
@@ -351,8 +350,10 @@ namespace gbe
 
     virtual bool doFinalization(Module &M) {
       delete TD;
+      delete TAsm;
       delete Mang;
-      delete MOFI;
+      delete TCtx;
+      delete MRI;
       return false;
     }
 
