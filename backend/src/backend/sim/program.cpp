@@ -24,32 +24,95 @@
 
 #include "backend/gbe_program.h"
 #include "backend/sim/program.h"
+#include "backend/sim/program.hpp"
+#include <cstring>
+#include <cstdio>
+#include <fstream>
+#include "dlfcn.h"
 
 namespace gbe {
 namespace sim {
 
+  SimKernel::SimKernel(const std::string &name) :
+    Kernel(name), fn(NULL), handle(NULL) {}
+  SimKernel::~SimKernel(void) { if (this->handle) dlclose(this->handle); }
+
+  SimProgram::SimProgram(void) {}
+  SimProgram::~SimProgram(void) {}
+
+  Kernel *SimProgram::compileKernel(const std::string &name) {
+    SimKernel *kernel = GBE_NEW(SimKernel, name);
+    char srcStr[L_tmpnam+1], libStr[L_tmpnam+1];
+    const std::string srcName = std::string(tmpnam_r(srcStr)) + ".cpp"; // unsecure but we don't care
+    const std::string libName = std::string(tmpnam_r(libStr)) + ".so";  // unsecure but we don't care
+
+    // Output the code first
+    std::ofstream ostream;
+    ostream.open(srcName);
+    ostream << "extern \"C\" void " << name << "() {}" << std::endl;
+    ostream.close();
+
+    // Compile the function
+    std::cout << srcName << " " << libName;
+    std::string compileCmd = "g++ -shared -O3 -o ";
+    compileCmd += libName;
+    compileCmd += " ";
+    compileCmd += srcName;
+    printf(compileCmd.c_str());
+    if (UNLIKELY(system(compileCmd.c_str()) != 0))
+      FATAL("Simulation program compilation failed");
+
+    // Load it and get the function pointer
+    kernel->handle = dlopen(libName.c_str(), RTLD_NOW);
+    if (UNLIKELY(kernel->handle == NULL))
+      FATAL("Failed to open the compiled shared object");
+    kernel->fn = (SimKernelCallBack*) dlsym(kernel->handle, name.c_str());
+    if (UNLIKELY(kernel->fn == NULL))
+      FATAL("Failed to get the symbol from the compiled shared object");
+    return kernel;
+  }
 
 } /* namespace sim */
 } /* namespace gen */
 
-  void simSetupCallBacks(void)
-  {
-#if 0
-    GBEProgramNewFromSource = SimProgramNewFromSource;
-    GBEProgramNewFromBinary = SimProgramNewFromBinary;
-    GBEProgramNewFromLLVM = SimProgramNewFromLLVM;
-    GBEProgramDelete = SimProgramDelete;
-    GBEProgramGetKernelNum = SimProgramGetKernelNum;
-    GBEProgramGetKernelByName = SimProgramGetKernelByName;
-    GBEProgramGetKernel = SimProgramGetKernel;
-    GBEKernelGetName = SimKernelGetName;
-    GBEKernelGetCode = SimKernelGetCode;
-    GBEKernelGetCodeSize = SimKernelGetCodeSize;
-    GBEKernelGetArgNum = SimKernelGetArgNum;
-    GBEKernelGetArgSize = SimKernelGetArgSize;
-    GBEKernelGetArgType = SimKernelGetArgType;
-    GBEKernelGetSIMDWidth = SimKernelGetSIMDWidth;
-    GBEKernelGetRequiredWorkGroupSize = SimKernelGetRequiredWorkGroupSize;
-#endif
+static gbe_program SimProgramNewFromSource(const char *source) {
+  NOT_IMPLEMENTED;
+  return NULL;
+}
+
+static gbe_program SimProgramNewFromBinary(const char *binary, size_t size) {
+  NOT_IMPLEMENTED;
+  return NULL;
+}
+
+static gbe_program SimProgramNewFromLLVM(const char *fileName,
+                                         size_t stringSize,
+                                         char *err,
+                                         size_t *errSize)
+{
+  using namespace gbe::sim;
+  SimProgram *program = GBE_NEW(SimProgram);
+  std::string error;
+
+  // Try to compile the program
+  if (program->buildFromLLVMFile(fileName, error) == false) {
+    if (err != NULL && errSize != NULL && stringSize > 0u) {
+      const size_t msgSize = std::min(error.size(), stringSize-1u);
+      std::memcpy(err, error.c_str(), msgSize);
+      *errSize = error.size();
+    }
+    GBE_DELETE(program);
+    return NULL;
   }
+
+  // Everything run fine
+  return (gbe_program) program;
+}
+
+void simSetupCallBacks(void)
+{
+  gbe_program_new_from_source = SimProgramNewFromSource;
+  gbe_program_new_from_binary = SimProgramNewFromBinary;
+  gbe_program_new_from_llvm = SimProgramNewFromLLVM;
+}
 
