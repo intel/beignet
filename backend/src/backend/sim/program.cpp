@@ -22,8 +22,8 @@
  * \author Benjamin Segovia <benjamin.segovia@intel.com>
  */
 
-#include "gbe_program.h"
-#include "sim/program.h"
+#include "backend/gbe_program.h"
+#include "backend/sim/program.h"
 
 namespace gbe {
 namespace sim {

@@ -25,8 +25,8 @@
 #ifndef __GBE_GEN_PROGRAM_HPP__
 #define __GBE_GEN_PROGRAM_HPP__
 
-#include "gbe_program.h"
-#include "gen/brw_structs.h"
+#include "backend/gbe_program.h"
+#include "backend/gen/brw_structs.h"
 #include "sys/hash_map.hpp"
 #include <string>
 

@@ -23,8 +23,6 @@ else (GBE_USE_BLOB)
     sys/condition.hpp
     sys/platform.cpp
     sys/platform.hpp
-    gbe_program.cpp
-    gbe_program.h
     ir/context.cpp
     ir/context.hpp
     ir/profile.cpp
@@ -44,14 +42,16 @@ else (GBE_USE_BLOB)
     ir/function.hpp
     ir/value.cpp
     ir/value.hpp
-    gen/program.cpp
-    gen/program.hpp
-    gen/program.h
-    gen/brw_disasm.c
-    gen/brw_eu_emit.c
-    gen/brw_eu.c
-    sim/program.cpp
-    sim/program.h)
+    backend/gbe_program.cpp
+    backend/gbe_program.h
+    backend/gen/program.cpp
+    backend/gen/program.hpp
+    backend/gen/program.h
+    backend/gen/brw_disasm.c
+    backend/gen/brw_eu_emit.c
+    backend/gen/brw_eu.c
+    backend/sim/program.cpp
+    backend/sim/program.h)
 
   if (GBE_COMPILE_UTESTS)
     set (GBE_SRC
