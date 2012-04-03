@@ -36,84 +36,84 @@ extern "C" {
 #endif /* __cplusplus */
 
 /*! Opaque structure that interfaces a GBE program */
-typedef struct GBEProgram GBEProgram;
+typedef struct _gbe_program *gbe_program;
 
 /*! Opaque structure that interfaces a GBE kernel (ie one OCL function) */
-typedef struct GBEKernel GBEKernel;
+typedef struct _gbe_kernel *gbe_kernel;
 
 /*! Argument type for each function call */
-enum GBEArgType {
-  GEN_ARG_VALUE = 0,            // int, float and so on
-  GEN_ARG_GLOBAL_PTR = 1,       // __global, __constant
-  GEN_ARG_STRUCTURE = 2,        // By value structure
-  GEN_ARG_IMAGE = 3,            // image2d_t, image3d_t
-  GEN_ARG_INVALID = 0xffffffff
+enum gbe_arg_type {
+  GBE_ARG_VALUE = 0,            // int, float and so on
+  GBE_ARG_GLOBAL_PTR = 1,       // __global, __constant
+  GBE_ARG_STRUCTURE = 2,        // By value structure
+  GBE_ARG_IMAGE = 3,            // image2d_t, image3d_t
+  GBE_ARG_INVALID = 0xffffffff
 };
 
 /*! Create a new program from the given source code (zero terminated string) */
-typedef GBEProgram *(GBEProgramNewFromSourceCB)(const char *source);
-extern GBEProgramNewFromSourceCB *GBEProgramNewFromSource;
+typedef gbe_program (gbe_program_new_from_source_cb)(const char *source);
+extern gbe_program_new_from_source_cb *gbe_program_new_from_source;
 
 /*! Create a new program from the given blob */
-typedef GBEProgram *(GBEProgramNewFromBinaryCB)(const char *binary, size_t size);
-extern GBEProgramNewFromBinaryCB *GBEProgramNewFromBinary;
+typedef gbe_program (gbe_program_new_from_binary_cb)(const char *binary, size_t size);
+extern gbe_program_new_from_binary_cb *gbe_program_new_from_binary;
 
 /*! Create a new program from the given LLVM file */
-typedef GBEProgram *(GBEProgramNewFromLLVMCB)(const char *fileName,
-                                              size_t stringSize,
-                                              char *err,
-                                              size_t *errSize);
-extern GBEProgramNewFromLLVMCB *GBEProgramNewFromLLVM;
+typedef gbe_program (gbe_program_new_from_llvm_cb)(const char *fileName,
+                                                   size_t string_size,
+                                                   char *err,
+                                                   size_t *err_size);
+extern gbe_program_new_from_llvm_cb *gbe_program_new_from_llvm;
 
 /*! Destroy and deallocate the given program */
-typedef void (GBEProgramDeleteCB)(GBEProgram*);
-extern GBEProgramDeleteCB *GBEProgramDelete;
+typedef void (gbe_program_delete_cb)(gbe_program);
+extern gbe_program_delete_cb *gbe_program_delete;
 
 /*! Get the number of functions in the program */
-typedef uint32_t (GBEProgramGetKernelNumCB)(const GBEProgram*);
-extern GBEProgramGetKernelNumCB *GBEProgramGetKernelNum;
+typedef uint32_t (gbe_program_get_kernel_num_cb)(gbe_program);
+extern gbe_program_get_kernel_num_cb *gbe_program_get_kernel_num;
 
 /*! Get the kernel from its name */
-typedef const GBEKernel *(GBEProgramGetKernelByNameCB)(const GBEProgram*, const char *name);
-extern GBEProgramGetKernelByNameCB *GBEProgramGetKernelByName;
+typedef gbe_kernel (gbe_program_get_kernel_by_name_cb)(gbe_program, const char *name);
+extern gbe_program_get_kernel_by_name_cb *gbe_program_get_kernel_by_name;
 
 /*! Get the kernel from its ID */
-typedef const GBEKernel *(GBEProgramGetKernelCB)(const GBEProgram*, uint32_t ID);
-extern GBEProgramGetKernelCB *GBEProgramGetKernel;
+typedef gbe_kernel (gbe_program_get_kernel_cb)(gbe_program, uint32_t ID);
+extern gbe_program_get_kernel_cb *gbe_program_get_kernel;
 
 /*! Get the GBE kernel name */
-typedef const char *(GBEKernelGetNameCB)(const GBEKernel*);
-extern GBEKernelGetNameCB *GBEKernelGetName;
+typedef const char *(gbe_kernel_get_name_cb)(gbe_kernel);
+extern gbe_kernel_get_name_cb *gbe_kernel_get_name;
 
 /*! Get the GBE kernel source code */
-typedef const char *(GBEKernelGetCodeCB)(const GBEKernel*);
-extern GBEKernelGetCodeCB *GBEKernelGetCode;
+typedef const char *(gbe_kernel_get_code_cb)(gbe_kernel);
+extern gbe_kernel_get_code_cb *gbe_kernel_get_code;
 
 /*! Get the size of the source code */
-typedef const size_t (GBEKernelGetCodeSizeCB)(const GBEKernel*);
-extern GBEKernelGetCodeSizeCB *GBEKernelGetCodeSize;
+typedef size_t (gbe_kernel_get_code_size_cb)(gbe_kernel);
+extern gbe_kernel_get_code_size_cb *gbe_kernel_get_code_size;
 
 /*! Get the total number of arguments */
-typedef uint32_t (GBEKernelGetArgNumCB)(const GBEKernel*);
-extern GBEKernelGetArgNumCB *GBEKernelGetArgNum;
+typedef uint32_t (gbe_kernel_get_arg_num_cb)(gbe_kernel);
+extern gbe_kernel_get_arg_num_cb *gbe_kernel_get_arg_num;
 
 /*! Get the size of the given argument */
-typedef uint32_t (GBEKernelGetArgSizeCB)(const GBEKernel*, uint32_t argID);
-extern GBEKernelGetArgSizeCB *GBEKernelGetArgSize;
+typedef uint32_t (gbe_kernel_get_arg_size_cb)(gbe_kernel, uint32_t argID);
+extern gbe_kernel_get_arg_size_cb *gbe_kernel_get_arg_size;
 
 /*! Get the type of the given argument */
-typedef enum GBEArgType (GBEKernelGetArgTypeCB)(const GBEKernel*, uint32_t argID);
-extern GBEKernelGetArgTypeCB *GBEKernelGetArgType;
+typedef enum gbe_arg_type (gbe_kernel_get_arg_type_cb)(gbe_kernel, uint32_t argID);
+extern gbe_kernel_get_arg_type_cb *gbe_kernel_get_arg_type;
 
 /*! Get the simd width for the kernel */
-typedef uint32_t (GBEKernelGetSIMDWidthCB)(const GBEKernel*);
-extern GBEKernelGetSIMDWidthCB *GBEKernelGetSIMDWidth;
+typedef uint32_t (gbe_kernel_get_simd_width_cb)(gbe_kernel);
+extern gbe_kernel_get_simd_width_cb *gbe_kernel_get_simd_width;
 
 /*! Indicates if a work group size is required. Return the required width or 0
  *  if none
  */
-typedef uint32_t (GBEKernelGetRequiredWorkGroupSizeCB)(const GBEKernel*, uint32_t dim);
-extern GBEKernelGetRequiredWorkGroupSizeCB *GBEKernelGetRequiredWorkGroupSize;
+typedef uint32_t (gbe_kernel_get_required_work_group_size_cb)(gbe_kernel, uint32_t dim);
+extern gbe_kernel_get_required_work_group_size_cb *gbe_kernel_get_required_work_group_size;
 
 #ifdef __cplusplus
 }

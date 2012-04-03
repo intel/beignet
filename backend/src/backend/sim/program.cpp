@@ -32,7 +32,7 @@ namespace sim {
 } /* namespace sim */
 } /* namespace gen */
 
-  void SimSetupCallBacks(void)
+  void simSetupCallBacks(void)
   {
 #if 0
     GBEProgramNewFromSource = SimProgramNewFromSource;

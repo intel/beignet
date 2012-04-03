@@ -31,7 +31,7 @@
 #include <stdlib.h>
 
 /*! This will make the compiler output Gen ISA code */
-extern void SimSetupCallBacks(void);
+extern void simSetupCallBacks(void);
 
 #endif /* __GBE_SIM_PROGRAM_H__ */
 

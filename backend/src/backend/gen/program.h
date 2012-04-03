@@ -31,7 +31,7 @@
 #include <stdlib.h>
 
 /*! This will make the compiler output Gen ISA code */
-extern void GenSetupCallBacks(void);
+extern void genSetupCallBacks(void);
 
 #endif /* __GBE_GEN_PROGRAM_H__ */
 
