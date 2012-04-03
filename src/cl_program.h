@@ -21,27 +21,28 @@
 #define __CL_PROGRAM_H__
 
 #include "cl_internals.h"
+#include "gen/gbe_program.h"
 #include "CL/cl.h"
 
 #include <stdint.h>
 #include <stdlib.h>
 
 // This is the structure ouput by the compiler
-struct GenProgram;
+struct _gbe_program;
 
 /* This maps an OCL file containing some kernels */
 struct _cl_program {
-  uint64_t magic;                  /* To identify it as a program */
-  volatile int ref_n;              /* We reference count this object */
-  struct GenProgram *gen_program;  /* Program as ouput by the compiler */
-  cl_kernel *ker;           /* All kernels included by the OCL file */
-  cl_program prev, next;    /* We chain the programs together */
-  cl_context ctx;           /* Its parent context */
-  char *bin;                /* The program copied verbatim */
-  size_t bin_sz;            /* Its size in memory */
-  uint32_t ker_n;           /* Number of declared kernels */
-  uint32_t from_source:1;   /* Built from binary or source? */
-  uint32_t is_built:1;      /* Did we call clBuildProgram on it? */
+  uint64_t magic;         /* To identify it as a program */
+  volatile int ref_n;     /* We reference count this object */
+  gbe_program opaque;     /* (Opaque) program as ouput by the compiler */
+  cl_kernel *ker;         /* All kernels included by the OCL file */
+  cl_program prev, next;  /* We chain the programs together */
+  cl_context ctx;         /* Its parent context */
+  char *bin;              /* The program copied verbatim */
+  size_t bin_sz;          /* Its size in memory */
+  uint32_t ker_n;         /* Number of declared kernels */
+  uint32_t from_source:1; /* Built from binary or source? */
+  uint32_t is_built:1;    /* Did we call clBuildProgram on it? */
 };
 
 /* Create a empty program */

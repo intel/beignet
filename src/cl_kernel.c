@@ -25,7 +25,7 @@
 #include "cl_alloc.h"
 #include "cl_utils.h"
 #include "CL/cl.h"
-#include "gen/program.h"
+#include "gen/gbe_program.h"
 
 #include <stdio.h>
 #include <string.h>
@@ -74,7 +74,7 @@ LOCAL const char*
 cl_kernel_get_name(const cl_kernel k)
 {
   if (UNLIKELY(k == NULL)) return NULL;
-  return GenKernelGetName(k->gen_kernel);
+  return gbe_kernel_get_name(k->opaque);
 }
 
 LOCAL void
@@ -95,23 +95,23 @@ LOCAL uint32_t
 cl_kernel_get_simd_width(const cl_kernel k)
 {
   assert(k != NULL);
-  return GenKernelGetSIMDWidth(k->gen_kernel);
+  return gbe_kernel_get_simd_width(k->opaque);
 }
 
 LOCAL void
-cl_kernel_setup(cl_kernel k, const struct GenKernel *gen_kernel)
+cl_kernel_setup(cl_kernel k, gbe_kernel opaque)
 {
   cl_context ctx = k->program->ctx;
   cl_buffer_mgr bufmgr = cl_context_get_bufmgr(ctx);
 
   /* Allocate the gen code here */
-  const uint32_t code_sz = GenKernelGetCodeSize(gen_kernel);
-  const char *code = GenKernelGetCode(gen_kernel);
+  const uint32_t code_sz = gbe_kernel_get_code_size(opaque);
+  const char *code = gbe_kernel_get_code(opaque);
   k->bo = cl_buffer_alloc(bufmgr, "CL kernel", code_sz, 64u);
 
   /* Upload the code */
   cl_buffer_subdata(k->bo, 0, code_sz, code);
-  k->gen_kernel = gen_kernel;
+  k->opaque = opaque;
 }
 
 LOCAL cl_kernel
@@ -124,7 +124,7 @@ cl_kernel_dup(const cl_kernel from)
   TRY_ALLOC_NO_ERR (to, CALLOC(struct _cl_kernel));
   to->bo = from->bo;
   to->const_bo = from->const_bo;
-  to->gen_kernel = from->gen_kernel;
+  to->opaque = from->opaque;
   to->ref_n = 1;
   to->magic = CL_MAGIC_KERNEL_HEADER;
   to->program = from->program;
@@ -159,7 +159,7 @@ cl_kernel_work_group_sz(cl_kernel ker,
   cl_uint i;
 
   for (i = 0; i < wk_dim; ++i) {
-    const uint32_t required_sz = GenKernelGetRequiredWorkGroupSize(ker->gen_kernel, i);
+    const uint32_t required_sz = gbe_kernel_get_required_work_group_size(ker->opaque, i);
     if (required_sz != 0 && required_sz != local_wk_sz[i]) {
       err = CL_INVALID_WORK_ITEM_SIZE;
       goto error;

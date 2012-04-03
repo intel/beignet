@@ -25,7 +25,7 @@
 #include "cl_utils.h"
 #include "CL/cl.h"
 #include "CL/cl_intel.h"
-#include "gen/program.h"
+#include "gen/gbe_program.h"
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -65,7 +65,7 @@ cl_program_delete(cl_program p)
   cl_context_delete(p->ctx);
 
   /* Free the program as allocated by the compiler */
-  if (p->gen_program) GenProgramDelete(p->gen_program);
+  if (p->opaque) gbe_program_delete(p->opaque);
 
   p->magic = CL_MAGIC_DEAD_HEADER; /* For safety */
   cl_free(p);
@@ -105,17 +105,17 @@ cl_program_load_gen_program(cl_program p)
   cl_int err = CL_SUCCESS;
   uint32_t i;
 
-  assert(p->gen_program != NULL);
-  p->ker_n = GenProgramGetKernelNum(p->gen_program);
+  assert(p->opaque != NULL);
+  p->ker_n = gbe_program_get_kernel_num(p->opaque);
 
   /* Allocate the kernel array */
   TRY_ALLOC (p->ker, CALLOC_ARRAY(cl_kernel, p->ker_n));
 
   for (i = 0; i < p->ker_n; ++i) {
-    const GenKernel *gen_kernel = GenProgramGetKernel(p->gen_program, i);
-    assert(gen_kernel != NULL);
+    const gbe_kernel opaque = gbe_program_get_kernel(p->opaque, i);
+    assert(opaque != NULL);
     TRY_ALLOC (p->ker[i], cl_kernel_new(p));
-    cl_kernel_setup(p->ker[i], gen_kernel);
+    cl_kernel_setup(p->ker[i], opaque);
   }
 
 error:
@@ -189,8 +189,8 @@ cl_program_create_from_llvm(cl_context ctx,
 
   program = cl_program_new(ctx);
 
-  program->gen_program = GenProgramNewFromLLVM(file_name, 0, NULL, NULL);
-  if (program->gen_program == NULL) {
+  program->opaque = gbe_program_new_from_llvm(file_name, 0, NULL, NULL);
+  if (program->opaque == NULL) {
     err = CL_INVALID_PROGRAM;
     goto error;
   }
