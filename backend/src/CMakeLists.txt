@@ -23,6 +23,8 @@ else (GBE_USE_BLOB)
     sys/condition.hpp
     sys/platform.cpp
     sys/platform.hpp
+    gbe_program.cpp
+    gbe_program.h
     ir/context.cpp
     ir/context.hpp
     ir/profile.cpp
@@ -47,7 +49,9 @@ else (GBE_USE_BLOB)
     gen/program.h
     gen/brw_disasm.c
     gen/brw_eu_emit.c
-    gen/brw_eu.c)
+    gen/brw_eu.c
+    sim/program.cpp
+    sim/program.h)
 
   if (GBE_COMPILE_UTESTS)
     set (GBE_SRC
@@ -85,5 +89,5 @@ if (GBE_COMPILE_UTESTS)
 endif (GBE_COMPILE_UTESTS)
 
 install (TARGETS gbe LIBRARY DESTINATION lib)
-install (FILES gen/program.h DESTINATION include/gen)
+install (FILES gbe_program.h DESTINATION include/gen)
 

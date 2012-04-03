@@ -24,14 +24,14 @@
  * C-like interface for the gen kernels and programs
  */
 
-#ifndef __GBE_GEN_PROGRAM_H__
-#define __GBE_GEN_PROGRAM_H__
+#ifndef __GBE_SIM_PROGRAM_H__
+#define __GBE_SIM_PROGRAM_H__
 
 #include <stdint.h>
 #include <stdlib.h>
 
 /*! This will make the compiler output Gen ISA code */
-extern void GenSetupCallBacks(void);
+extern void SimSetupCallBacks(void);
 
-#endif /* __GBE_GEN_PROGRAM_H__ */
+#endif /* __GBE_SIM_PROGRAM_H__ */
 

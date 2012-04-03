@@ -22,13 +22,15 @@
  * \author Benjamin Segovia <benjamin.segovia@intel.com>
  */
 
+#include "program.h"
 #include "gen/program.h"
 #include "gen/program.hpp"
+#include "gen/program.hpp"
+#include "gen/brw_eu.h"
 #include "ir/liveness.hpp"
 #include "ir/value.hpp"
 #include "ir/unit.hpp"
 #include "llvm/llvm_to_gen.hpp"
-#include "gen/brw_eu.h"
 #include <cstring>
 
 namespace gbe {
@@ -94,20 +96,20 @@ namespace gen {
 /////////////////////////////////////////////////////////////////////////////
 // C interface for the Gen Programs
 /////////////////////////////////////////////////////////////////////////////
-GBE_EXPORT_SYMBOL
-GenProgram *GenProgramNewFromSource(const char *source) {
+static
+GBEProgram *GenProgramNewFromSource(const char *source) {
   NOT_IMPLEMENTED;
   return NULL;
 }
 
-GBE_EXPORT_SYMBOL
-GenProgram *GenProgramNewFromBinary(const char *binary, size_t size) {
+static
+GBEProgram *GenProgramNewFromBinary(const char *binary, size_t size) {
   NOT_IMPLEMENTED;
   return NULL;
 }
 
-GBE_EXPORT_SYMBOL
-GenProgram *GenProgramNewFromLLVM(const char *fileName,
+static
+GBEProgram *GenProgramNewFromLLVM(const char *fileName,
                                   size_t stringSize,
                                   char *err,
                                   size_t *errSize)
@@ -128,11 +130,11 @@ GenProgram *GenProgramNewFromLLVM(const char *fileName,
   }
 
   // Everything run fine
-  return (GenProgram *) program;
+  return (GBEProgram *) program;
 }
 
-GBE_EXPORT_SYMBOL
-void GenProgramDelete(GenProgram *genProgram) {
+static
+void GenProgramDelete(GBEProgram *genProgram) {
   gbe::gen::Program *program = (gbe::gen::Program*)(genProgram);
   GBE_SAFE_DELETE(program);
 }
@@ -140,76 +142,84 @@ void GenProgramDelete(GenProgram *genProgram) {
 /////////////////////////////////////////////////////////////////////////////
 // C interface for the Gen Kernels
 /////////////////////////////////////////////////////////////////////////////
-GBE_EXPORT_SYMBOL
-uint32_t GenProgramGetKernelNum(const GenProgram *genProgram) {
+static uint32_t GenProgramGetKernelNum(const GBEProgram *genProgram) {
   if (genProgram == NULL) return 0;
   const gbe::gen::Program *program = (const gbe::gen::Program*) genProgram;
   return program->getKernelNum();
 }
 
-GBE_EXPORT_SYMBOL
-const GenKernel *GenProgramGetKernelByName(const GenProgram *genProgram, const char *name) {
+static const GBEKernel *GenProgramGetKernelByName(const GBEProgram *genProgram, const char *name) {
   if (genProgram == NULL) return NULL;
   const gbe::gen::Program *program = (const gbe::gen::Program*) genProgram;
-  return (GenKernel*) program->getKernel(std::string(name));
+  return (GBEKernel*) program->getKernel(std::string(name));
 }
 
-GBE_EXPORT_SYMBOL
-const GenKernel *GenProgramGetKernel(const GenProgram *genProgram, uint32_t ID) {
+static const GBEKernel *GenProgramGetKernel(const GBEProgram *genProgram, uint32_t ID) {
   if (genProgram == NULL) return NULL;
   const gbe::gen::Program *program = (const gbe::gen::Program*) genProgram;
-  return (GenKernel*) program->getKernel(ID);
+  return (GBEKernel*) program->getKernel(ID);
 }
 
-GBE_EXPORT_SYMBOL
-const char *GenKernelGetName(const GenKernel *genKernel) {
+static const char *GenKernelGetName(const GBEKernel *genKernel) {
   if (genKernel == NULL) return NULL;
   const gbe::gen::Kernel *kernel = (const gbe::gen::Kernel*) genKernel;
   return kernel->getName();
 }
 
-GBE_EXPORT_SYMBOL
-const char *GenKernelGetCode(const GenKernel *genKernel) {
+static const char *GenKernelGetCode(const GBEKernel *genKernel) {
   if (genKernel == NULL) return NULL;
   const gbe::gen::Kernel *kernel = (const gbe::gen::Kernel*) genKernel;
   return kernel->getCode();
 }
 
-GBE_EXPORT_SYMBOL
-const size_t GenKernelGetCodeSize(const GenKernel *genKernel) {
+static const size_t GenKernelGetCodeSize(const GBEKernel *genKernel) {
   if (genKernel == NULL) return 0u;
   const gbe::gen::Kernel *kernel = (const gbe::gen::Kernel*) genKernel;
   return kernel->getCodeSize();
 }
 
-GBE_EXPORT_SYMBOL
-uint32_t GenKernelGetArgNum(const GenKernel *genKernel) {
+static uint32_t GenKernelGetArgNum(const GBEKernel *genKernel) {
   if (genKernel == NULL) return 0u;
   const gbe::gen::Kernel *kernel = (const gbe::gen::Kernel*) genKernel;
   return kernel->getArgNum();
 }
 
-GBE_EXPORT_SYMBOL
-uint32_t GenKernelGetArgSize(const GenKernel *genKernel, uint32_t argID) {
+static uint32_t GenKernelGetArgSize(const GBEKernel *genKernel, uint32_t argID) {
   if (genKernel == NULL) return 0u;
   const gbe::gen::Kernel *kernel = (const gbe::gen::Kernel*) genKernel;
   return kernel->getArgSize(argID);
 }
 
-GBE_EXPORT_SYMBOL
-GenArgType GenKernelGetArgType(const GenKernel *genKernel, uint32_t argID) {
+static GBEArgType GenKernelGetArgType(const GBEKernel *genKernel, uint32_t argID) {
   if (genKernel == NULL) return GEN_ARG_INVALID;
   const gbe::gen::Kernel *kernel = (const gbe::gen::Kernel*) genKernel;
   return kernel->getArgType(argID);
 }
 
-GBE_EXPORT_SYMBOL
-uint32_t GenKernelGetSIMDWidth(const GenKernel *kernel) {
+static uint32_t GenKernelGetSIMDWidth(const GBEKernel *kernel) {
   return 16u;
 }
 
-GBE_EXPORT_SYMBOL
-uint32_t GenKernelGetRequiredWorkGroupSize(const GenKernel *kernel, uint32_t dim) {
+static uint32_t GenKernelGetRequiredWorkGroupSize(const GBEKernel *kernel, uint32_t dim) {
   return 0u;
+}
+
+void GenSetupCallBacks(void)
+{
+  GBEProgramNewFromSource = GenProgramNewFromSource;
+  GBEProgramNewFromBinary = GenProgramNewFromBinary;
+  GBEProgramNewFromLLVM = GenProgramNewFromLLVM;
+  GBEProgramDelete = GenProgramDelete;
+  GBEProgramGetKernelNum = GenProgramGetKernelNum;
+  GBEProgramGetKernelByName = GenProgramGetKernelByName;
+  GBEProgramGetKernel = GenProgramGetKernel;
+  GBEKernelGetName = GenKernelGetName;
+  GBEKernelGetCode = GenKernelGetCode;
+  GBEKernelGetCodeSize = GenKernelGetCodeSize;
+  GBEKernelGetArgNum = GenKernelGetArgNum;
+  GBEKernelGetArgSize = GenKernelGetArgSize;
+  GBEKernelGetArgType = GenKernelGetArgType;
+  GBEKernelGetSIMDWidth = GenKernelGetSIMDWidth;
+  GBEKernelGetRequiredWorkGroupSize = GenKernelGetRequiredWorkGroupSize;
 }
 

@@ -25,6 +25,7 @@
 #ifndef __GBE_GEN_PROGRAM_HPP__
 #define __GBE_GEN_PROGRAM_HPP__
 
+#include "gbe_program.h"
 #include "gen/brw_structs.h"
 #include "sys/hash_map.hpp"
 #include <string>
@@ -43,7 +44,7 @@ namespace gbe {
 namespace gen {
 
   struct KernelArgument {
-    GenArgType type; //!< Pointer, structure, regular value?
+    GBEArgType type; //!< Pointer, structure, regular value?
     size_t size;     //!< Size of each argument
   };
 
@@ -72,7 +73,7 @@ namespace gen {
         return args[argID].size;
     }
     /*! Return the type of the given argument */
-    INLINE GenArgType getArgType(uint32_t argID) const {
+    INLINE GBEArgType getArgType(uint32_t argID) const {
       if (argID >= argNum)
         return GEN_ARG_INVALID;
       else
