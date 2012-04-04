@@ -43,9 +43,9 @@ namespace sim {
     /*! Destroy it */
     virtual ~SimKernel(void);
     /*! Implements base class */
-    virtual const char *getCode(void) const { return (const char*) fn; }
+    virtual const char *getCode(void) const { return (const char*) &fn; }
     /*! Implements base class */
-    virtual size_t getCodeSize(void) const { return sizeof(fn); }
+    virtual size_t getCodeSize(void) const { return sizeof(&fn); }
     SimKernelCallBack *fn; //!< Function that runs the code
     void *handle;          //!< dlopen / dlclose / dlsym handle
     GBE_STRUCT(SimKernel); //!< Use gbe allocators
