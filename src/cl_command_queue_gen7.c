@@ -118,7 +118,7 @@ cl_command_queue_ND_range_gen7(cl_command_queue queue,
     cl_buffer_unreference(queue->last_batch);
   queue->last_batch = NULL;
   cl_command_queue_bind_surface(queue, ker, curbe, NULL, &private_bo, &scratch_bo, 0);
-  cl_gpgpu_states_setup(gpgpu, &kernel, 1);
+  cl_gpgpu_states_setup(gpgpu, &kernel);
 
   /* CURBE step 2. Give the localID and upload it to video memory */
   TRY_ALLOC (final_curbe, (char*) alloca(thread_n * cst_sz));

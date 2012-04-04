@@ -648,10 +648,10 @@ intel_gpgpu_upload_samplers(intel_gpgpu_t *state, const void *data, uint32_t n)
 }
 
 static void
-intel_gpgpu_states_setup(intel_gpgpu_t *state, cl_gpgpu_kernel *kernel, uint32_t ker_n)
+intel_gpgpu_states_setup(intel_gpgpu_t *state, cl_gpgpu_kernel *kernel)
 {
   state->ker = kernel;
-  intel_gpgpu_build_idrt(state, kernel, ker_n);
+  intel_gpgpu_build_idrt(state, kernel, 1);
   dri_bo_unmap(state->surface_heap_b.bo);
   dri_bo_unmap(state->sampler_state_b.bo);
 }

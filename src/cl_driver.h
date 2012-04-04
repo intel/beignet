@@ -131,7 +131,7 @@ typedef void (cl_gpgpu_upload_constants_cb)(cl_gpgpu, const void* data, uint32_t
 extern cl_gpgpu_upload_constants_cb *cl_gpgpu_upload_constants;
 
 /* Setup all indirect states */
-typedef void (cl_gpgpu_states_setup_cb)(cl_gpgpu, cl_gpgpu_kernel* kernel, uint32_t ker_n);
+typedef void (cl_gpgpu_states_setup_cb)(cl_gpgpu, cl_gpgpu_kernel *kernel);
 extern cl_gpgpu_states_setup_cb *cl_gpgpu_states_setup;
 
 /* Upload the constant samplers as specified inside the OCL kernel */
