@@ -22,10 +22,10 @@
  * \author Benjamin Segovia <benjamin.segovia@intel.com>
  */
 
-#include "backend/gbe_program.h"
-#include "backend/gen/program.h"
-#include "backend/gen/program.hpp"
-#include "backend/gen/program.hpp"
+#include "backend/program.h"
+#include "backend/gen_program.h"
+#include "backend/gen_program.hpp"
+#include "backend/gen_program.hpp"
 #include "backend/gen/brw_eu.h"
 #include "ir/liveness.hpp"
 #include "ir/value.hpp"

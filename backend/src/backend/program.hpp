@@ -25,7 +25,7 @@
 #ifndef __GBE_PROGRAM_HPP__
 #define __GBE_PROGRAM_HPP__
 
-#include "backend/gbe_program.h"
+#include "backend/program.h"
 #include "sys/hash_map.hpp"
 #include <string>
 

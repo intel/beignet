@@ -22,46 +22,47 @@
  * \author Benjamin Segovia <benjamin.segovia@intel.com>
  */
 
-#ifndef __GBE_GEN_PROGRAM_HPP__
-#define __GBE_GEN_PROGRAM_HPP__
+#ifndef __GBE_SIM_PROGRAM_HPP__
+#define __GBE_SIM_PROGRAM_HPP__
 
-#include "backend/gbe_program.h"
-#include "backend/gbe_program.hpp"
+#include "backend/program.h"
+#include "backend/program.hpp"
 #include "backend/gen/brw_structs.h"
 
 namespace gbe {
 
+  /*! We basically create one real C function for each */
+  typedef void (SimKernelCallBack)();
+
   /*! Describe a compiled kernel */
-  struct GenKernel : public Kernel
+  struct SimKernel : public Kernel
   {
     /*! Create an empty kernel with the given name */
-    GenKernel(const std::string &name);
+    SimKernel(const std::string &name);
     /*! Destroy it */
-    virtual ~GenKernel(void);
+    virtual ~SimKernel(void);
     /*! Implements base class */
-    virtual const char *getCode(void) const { return (const char*) insns; }
+    virtual const char *getCode(void) const { return (const char*) &fn; }
     /*! Implements base class */
-    virtual size_t getCodeSize(void) const {
-      return insnNum * sizeof(brw_instruction);
-    }
-    brw_instruction *insns;  //!< Instruction stream
-    uint32_t insnNum;        //!< Number of instructions
-    GBE_STRUCT(GenKernel);   //!< Use gbe allocators
+    virtual size_t getCodeSize(void) const { return sizeof(&fn); }
+    SimKernelCallBack *fn; //!< Function that runs the code
+    void *handle;          //!< dlopen / dlclose / dlsym handle
+    GBE_STRUCT(SimKernel); //!< Use gbe allocators
   };
 
   /*! Describe a compiled program */
-  struct GenProgram : public Program
+  struct SimProgram : public Program
   {
     /*! Create an empty program */
-    GenProgram(void);
+    SimProgram(void);
     /*! Destroy the program */
-    virtual ~GenProgram(void);
+    virtual ~SimProgram(void);
     /*! Implements base class */
-    Kernel *compileKernel(const std::string &name);
-    GBE_STRUCT(GenProgram);   //!< Use gbe allocators
+    virtual Kernel *compileKernel(const std::string &name);
+    GBE_STRUCT(SimProgram); //!< Use gbe allocators
   };
 
 } /* namespace gbe */
 
-#endif /* __GBE_GEN_PROGRAM_HPP__ */
+#endif /* __GBE_SIM_PROGRAM_HPP__ */
 

@@ -42,16 +42,17 @@ else (GBE_USE_BLOB)
     ir/function.hpp
     ir/value.cpp
     ir/value.hpp
-    backend/gbe_program.cpp
-    backend/gbe_program.h
-    backend/gen/program.cpp
-    backend/gen/program.hpp
-    backend/gen/program.h
+    backend/program.cpp
+    backend/program.h
+    backend/sim_program.cpp
+    backend/sim_program.hpp
+    backend/sim_program.h
+    backend/gen_program.cpp
+    backend/gen_program.hpp
+    backend/gen_program.h
     backend/gen/brw_disasm.c
     backend/gen/brw_eu_emit.c
-    backend/gen/brw_eu.c
-    backend/sim/program.cpp
-    backend/sim/program.h)
+    backend/gen/brw_eu.c)
 
   if (GBE_COMPILE_UTESTS)
     set (GBE_SRC

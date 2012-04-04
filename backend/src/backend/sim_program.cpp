@@ -22,9 +22,9 @@
  * \author Benjamin Segovia <benjamin.segovia@intel.com>
  */
 
-#include "backend/gbe_program.h"
-#include "backend/sim/program.h"
-#include "backend/sim/program.hpp"
+#include "backend/program.h"
+#include "backend/sim_program.h"
+#include "backend/sim_program.hpp"
 #include <cstring>
 #include <cstdio>
 #include <fstream>
