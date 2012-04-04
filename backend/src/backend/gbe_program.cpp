@@ -64,88 +64,81 @@ namespace gbe {
     const auto &set = unit.getFunctionSet();
     const uint32_t kernelNum = set.size();
     if (kernelNum == 0) return true;
-
-    // Dummy functions now
     for (auto it = set.begin(); it != set.end(); ++it) {
       const std::string &name = it->first;
       Kernel *kernel = this->compileKernel(name);
       kernels.insert(std::make_pair(name, kernel));
     }
-
     return true;
   }
 
+  static void programDelete(gbe_program gbeProgram) {
+    gbe::Program *program = (gbe::Program*)(gbeProgram);
+    GBE_SAFE_DELETE(program);
+  }
+
+  static uint32_t programGetKernelNum(gbe_program gbeProgram) {
+    if (gbeProgram == NULL) return 0;
+    const gbe::Program *program = (const gbe::Program*) gbeProgram;
+    return program->getKernelNum();
+  }
+
+  static gbe_kernel programGetKernelByName(gbe_program gbeProgram, const char *name) {
+    if (gbeProgram == NULL) return NULL;
+    const gbe::Program *program = (gbe::Program*) gbeProgram;
+    return (gbe_kernel) program->getKernel(std::string(name));
+  }
+
+  static gbe_kernel programGetKernel(const gbe_program gbeProgram, uint32_t ID) {
+    if (gbeProgram == NULL) return NULL;
+    const gbe::Program *program = (gbe::Program*) gbeProgram;
+    return (gbe_kernel) program->getKernel(ID);
+  }
+
+  static const char *kernelGetName(gbe_kernel genKernel) {
+    if (genKernel == NULL) return NULL;
+    const gbe::Kernel *kernel = (const gbe::Kernel*) genKernel;
+    return kernel->getName();
+  }
+
+  static const char *kernelGetCode(gbe_kernel genKernel) {
+    if (genKernel == NULL) return NULL;
+    const gbe::Kernel *kernel = (const gbe::Kernel*) genKernel;
+    return kernel->getCode();
+  }
+
+  static size_t kernelGetCodeSize(gbe_kernel genKernel) {
+    if (genKernel == NULL) return 0u;
+    const gbe::Kernel *kernel = (const gbe::Kernel*) genKernel;
+    return kernel->getCodeSize();
+  }
+
+  static uint32_t kernelGetArgNum(gbe_kernel genKernel) {
+    if (genKernel == NULL) return 0u;
+    const gbe::Kernel *kernel = (const gbe::Kernel*) genKernel;
+    return kernel->getArgNum();
+  }
+
+  static uint32_t kernelGetArgSize(gbe_kernel genKernel, uint32_t argID) {
+    if (genKernel == NULL) return 0u;
+    const gbe::Kernel *kernel = (const gbe::Kernel*) genKernel;
+    return kernel->getArgSize(argID);
+  }
+
+  static gbe_arg_type kernelGetArgType(gbe_kernel genKernel, uint32_t argID) {
+    if (genKernel == NULL) return GBE_ARG_INVALID;
+    const gbe::Kernel *kernel = (const gbe::Kernel*) genKernel;
+    return kernel->getArgType(argID);
+  }
+
+  static uint32_t kernelGetSIMDWidth(gbe_kernel kernel) {
+    return 16u;
+  }
+
+  static uint32_t kernelGetRequiredWorkGroupSize(gbe_kernel kernel, uint32_t dim) {
+    return 0u;
+  }
 } /* namespace gbe */
-
-/////////////////////////////////////////////////////////////////////////////
-// Common C interface for both Gen and simulator
-/////////////////////////////////////////////////////////////////////////////
-static void GBEProgramDelete(gbe_program gbeProgram) {
-  gbe::Program *program = (gbe::Program*)(gbeProgram);
-  GBE_SAFE_DELETE(program);
-}
-
-static uint32_t GBEProgramGetKernelNum(gbe_program gbeProgram) {
-  if (gbeProgram == NULL) return 0;
-  const gbe::Program *program = (const gbe::Program*) gbeProgram;
-  return program->getKernelNum();
-}
-
-static gbe_kernel GBEProgramGetKernelByName(gbe_program gbeProgram, const char *name) {
-  if (gbeProgram == NULL) return NULL;
-  const gbe::Program *program = (gbe::Program*) gbeProgram;
-  return (gbe_kernel) program->getKernel(std::string(name));
-}
-
-static gbe_kernel GBEProgramGetKernel(const gbe_program gbeProgram, uint32_t ID) {
-  if (gbeProgram == NULL) return NULL;
-  const gbe::Program *program = (gbe::Program*) gbeProgram;
-  return (gbe_kernel) program->getKernel(ID);
-}
-
-static const char *GBEKernelGetName(gbe_kernel genKernel) {
-  if (genKernel == NULL) return NULL;
-  const gbe::Kernel *kernel = (const gbe::Kernel*) genKernel;
-  return kernel->getName();
-}
-
-static const char *GBEKernelGetCode(gbe_kernel genKernel) {
-  if (genKernel == NULL) return NULL;
-  const gbe::Kernel *kernel = (const gbe::Kernel*) genKernel;
-  return kernel->getCode();
-}
-
-static size_t GBEKernelGetCodeSize(gbe_kernel genKernel) {
-  if (genKernel == NULL) return 0u;
-  const gbe::Kernel *kernel = (const gbe::Kernel*) genKernel;
-  return kernel->getCodeSize();
-}
-
-static uint32_t GBEKernelGetArgNum(gbe_kernel genKernel) {
-  if (genKernel == NULL) return 0u;
-  const gbe::Kernel *kernel = (const gbe::Kernel*) genKernel;
-  return kernel->getArgNum();
-}
-
-static uint32_t GBEKernelGetArgSize(gbe_kernel genKernel, uint32_t argID) {
-  if (genKernel == NULL) return 0u;
-  const gbe::Kernel *kernel = (const gbe::Kernel*) genKernel;
-  return kernel->getArgSize(argID);
-}
-
-static gbe_arg_type GBEKernelGetArgType(gbe_kernel genKernel, uint32_t argID) {
-  if (genKernel == NULL) return GBE_ARG_INVALID;
-  const gbe::Kernel *kernel = (const gbe::Kernel*) genKernel;
-  return kernel->getArgType(argID);
-}
-
-static uint32_t GBEKernelGetSIMDWidth(gbe_kernel kernel) {
-  return 16u;
-}
-
-static uint32_t GBEKernelGetRequiredWorkGroupSize(gbe_kernel kernel, uint32_t dim) {
-  return 0u;
-}
 
 GBE_EXPORT_SYMBOL gbe_program_new_from_source_cb *gbe_program_new_from_source = NULL;
 GBE_EXPORT_SYMBOL gbe_program_new_from_binary_cb *gbe_program_new_from_binary = NULL;
@@ -167,18 +160,18 @@ GBE_EXPORT_SYMBOL gbe_kernel_get_required_work_group_size_cb *gbe_kernel_get_req
 struct CallBackInitializer
 {
   CallBackInitializer(void) {
-    gbe_program_delete = GBEProgramDelete;
-    gbe_program_get_kernel_num = GBEProgramGetKernelNum;
-    gbe_program_get_kernel_by_name = GBEProgramGetKernelByName;
-    gbe_program_get_kernel = GBEProgramGetKernel;
-    gbe_kernel_get_name = GBEKernelGetName;
-    gbe_kernel_get_code = GBEKernelGetCode;
-    gbe_kernel_get_code_size = GBEKernelGetCodeSize;
-    gbe_kernel_get_arg_num = GBEKernelGetArgNum;
-    gbe_kernel_get_arg_size = GBEKernelGetArgSize;
-    gbe_kernel_get_arg_type = GBEKernelGetArgType;
-    gbe_kernel_get_simd_width = GBEKernelGetSIMDWidth;
-    gbe_kernel_get_required_work_group_size = GBEKernelGetRequiredWorkGroupSize;
+    gbe_program_delete = gbe::programDelete;
+    gbe_program_get_kernel_num = gbe::programGetKernelNum;
+    gbe_program_get_kernel_by_name = gbe::programGetKernelByName;
+    gbe_program_get_kernel = gbe::programGetKernel;
+    gbe_kernel_get_name = gbe::kernelGetName;
+    gbe_kernel_get_code = gbe::kernelGetCode;
+    gbe_kernel_get_code_size = gbe::kernelGetCodeSize;
+    gbe_kernel_get_arg_num = gbe::kernelGetArgNum;
+    gbe_kernel_get_arg_size = gbe::kernelGetArgSize;
+    gbe_kernel_get_arg_type = gbe::kernelGetArgType;
+    gbe_kernel_get_simd_width = gbe::kernelGetSIMDWidth;
+    gbe_kernel_get_required_work_group_size = gbe::kernelGetRequiredWorkGroupSize;
     const char *run_it = getenv("OCL_SIMULATOR");
     if (run_it != NULL && !strcmp(run_it, "2"))
       simSetupCallBacks();

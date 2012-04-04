@@ -30,7 +30,6 @@
 #include "backend/gen/brw_structs.h"
 
 namespace gbe {
-namespace gen {
 
   /*! Describe a compiled kernel */
   struct GenKernel : public Kernel
@@ -62,7 +61,6 @@ namespace gen {
     GBE_STRUCT(GenProgram);   //!< Use gbe allocators
   };
 
-} /* namespace gen */
 } /* namespace gbe */
 
 #endif /* __GBE_GEN_PROGRAM_HPP__ */

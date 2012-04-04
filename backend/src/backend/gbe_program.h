@@ -50,6 +50,23 @@ enum gbe_arg_type {
   GBE_ARG_INVALID = 0xffffffff
 };
 
+/*! Constant buffer values (ie values to setup in the constant buffer) */
+enum gbe_curbe_value {
+  GBE_CURBE_LOCAL_SIZE_X = 0, /* Order matters! */
+  GBE_CURBE_LOCAL_SIZE_Y,
+  GBE_CURBE_LOCAL_SIZE_Z,
+  GBE_CURBE_GLOBAL_SIZE_X,
+  GBE_CURBE_GLOBAL_SIZE_Y,
+  GBE_CURBE_GLOBAL_SIZE_Z,
+  GBE_CURBE_GLOBAL_OFFSET_X,
+  GBE_CURBE_GLOBAL_OFFSET_Y,
+  GBE_CURBE_GLOBAL_OFFSET_Z,
+  GBE_CURBE_IMAGE_WIDTH,
+  GBE_CURBE_IMAGE_HEIGHT,
+  GBE_CURBE_IMAGE_DEPTH,
+  GBE_CURBE_BUFFER_ADDRESS
+};
+
 /*! Create a new program from the given source code (zero terminated string) */
 typedef gbe_program (gbe_program_new_from_source_cb)(const char *source);
 extern gbe_program_new_from_source_cb *gbe_program_new_from_source;

@@ -30,7 +30,6 @@
 #include "backend/gen/brw_structs.h"
 
 namespace gbe {
-namespace sim {
 
   /*! We basically create one real C function for each */
   typedef void (SimKernelCallBack)();
@@ -60,10 +59,9 @@ namespace sim {
     virtual ~SimProgram(void);
     /*! Implements base class */
     virtual Kernel *compileKernel(const std::string &name);
-    GBE_STRUCT(SimProgram);   //!< Use gbe allocators
+    GBE_STRUCT(SimProgram); //!< Use gbe allocators
   };
 
-} /* namespace sim */
 } /* namespace gbe */
 
 #endif /* __GBE_SIM_PROGRAM_HPP__ */

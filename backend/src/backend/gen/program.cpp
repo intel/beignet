@@ -34,7 +34,6 @@
 #include <cstring>
 
 namespace gbe {
-namespace gen {
 
   GenKernel::GenKernel(const std::string &name) :
     Kernel(name), insns(NULL), insnNum(0)
@@ -56,50 +55,44 @@ namespace gen {
     return kernel;
   }
 
-} /* namespace gen */
-} /* namespace gbe */
-
-/////////////////////////////////////////////////////////////////////////////
-// C interface for the specific Gen ISA compilation path
-/////////////////////////////////////////////////////////////////////////////
-static gbe_program GenProgramNewFromSource(const char *source) {
-  NOT_IMPLEMENTED;
-  return NULL;
-}
-
-static gbe_program GenProgramNewFromBinary(const char *binary, size_t size) {
-  NOT_IMPLEMENTED;
-  return NULL;
-}
-
-static gbe_program GenProgramNewFromLLVM(const char *fileName,
-                                         size_t stringSize,
-                                         char *err,
-                                         size_t *errSize)
-{
-  using namespace gbe::gen;
-  GenProgram *program = GBE_NEW(GenProgram);
-  std::string error;
-
-  // Try to compile the program
-  if (program->buildFromLLVMFile(fileName, error) == false) {
-    if (err != NULL && errSize != NULL && stringSize > 0u) {
-      const size_t msgSize = std::min(error.size(), stringSize-1u);
-      std::memcpy(err, error.c_str(), msgSize);
-      *errSize = error.size();
-    }
-    GBE_DELETE(program);
+  static gbe_program genProgramNewFromSource(const char *source) {
+    NOT_IMPLEMENTED;
     return NULL;
   }
 
-  // Everything run fine
-  return (gbe_program) program;
-}
+  static gbe_program genProgramNewFromBinary(const char *binary, size_t size) {
+    NOT_IMPLEMENTED;
+    return NULL;
+  }
+
+  static gbe_program genProgramNewFromLLVM(const char *fileName,
+                                           size_t stringSize,
+                                           char *err,
+                                           size_t *errSize)
+  {
+    using namespace gbe;
+    GenProgram *program = GBE_NEW(GenProgram);
+    std::string error;
+
+    // Try to compile the program
+    if (program->buildFromLLVMFile(fileName, error) == false) {
+      if (err != NULL && errSize != NULL && stringSize > 0u) {
+        const size_t msgSize = std::min(error.size(), stringSize-1u);
+        std::memcpy(err, error.c_str(), msgSize);
+        *errSize = error.size();
+      }
+      GBE_DELETE(program);
+      return NULL;
+    }
+    // Everything run fine
+    return (gbe_program) program;
+  }
+} /* namespace gbe */
 
 void genSetupCallBacks(void)
 {
-  gbe_program_new_from_source = GenProgramNewFromSource;
-  gbe_program_new_from_binary = GenProgramNewFromBinary;
-  gbe_program_new_from_llvm = GenProgramNewFromLLVM;
+  gbe_program_new_from_source = gbe::genProgramNewFromSource;
+  gbe_program_new_from_binary = gbe::genProgramNewFromBinary;
+  gbe_program_new_from_llvm = gbe::genProgramNewFromLLVM;
 }
 

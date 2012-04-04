@@ -41,6 +41,7 @@ namespace ir {
 
 namespace gbe {
 
+  /*! Info for the kernel argument */
   struct KernelArgument {
     gbe_arg_type type; //!< Pointer, structure, regular value?
     size_t size;       //!< Size of each argument
@@ -75,6 +76,8 @@ namespace gbe {
       else
         return args[argID].type;
     }
+    /*! Return where to put the address of a buffer argument */
+    
   protected:
     friend class Program;    //!< Owns the kernels
     const std::string name;  //!< Kernel name
