@@ -105,6 +105,7 @@ cl_command_queue_bind_surface(cl_command_queue queue,
                               cl_buffer *scratch,
                               uint32_t local_sz)
 {
+#if 0
   cl_context ctx = queue->ctx;
   cl_gpgpu gpgpu = queue->gpgpu;
   cl_buffer_mgr bufmgr = cl_context_get_bufmgr(ctx);
@@ -113,7 +114,7 @@ cl_command_queue_bind_surface(cl_command_queue queue,
 
   /* Now bind a bo used for synchronization */
   sync_bo = cl_buffer_alloc(bufmgr, "sync surface", 64, 64);
-  cl_gpgpu_bind_buf(gpgpu, GEN_MAX_SURFACES-1, sync_bo, cc_llc_l3);
+  // cl_gpgpu_bind_buf(gpgpu, GEN_MAX_SURFACES-1, sync_bo, cc_llc_l3);
   if (queue->last_batch != NULL)
     cl_buffer_unreference(queue->last_batch);
   queue->last_batch = sync_bo;
@@ -121,6 +122,9 @@ cl_command_queue_bind_surface(cl_command_queue queue,
 // error:
   assert(err == CL_SUCCESS); /* Cannot fail here */
   return err;
+#else
+  return CL_SUCCESS;
+#endif
 }
 
 #if USE_FULSIM

@@ -533,16 +533,18 @@ intel_gpgpu_bind_image2D_gen7(intel_gpgpu_t *state,
 
 static void
 intel_gpgpu_bind_buf(intel_gpgpu_t *state,
-                     int32_t index,
                      drm_intel_bo *obj_bo,
+                     uint32_t offset,
                      uint32_t cchint)
 {
+#if 0
   const uint32_t size = obj_bo->size;
   assert(index < GEN_MAX_SURFACES);
   if (state->drv->gen_ver == 7 || state->drv->gen_ver == 75)
     intel_gpgpu_bind_buf_gen7(state, index, obj_bo, size, cchint);
   else
     NOT_IMPLEMENTED;
+#endif
 }
 
 static void
