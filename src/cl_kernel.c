@@ -25,7 +25,6 @@
 #include "cl_alloc.h"
 #include "cl_utils.h"
 #include "CL/cl.h"
-#include "gen/gbe_program.h"
 
 #include <stdio.h>
 #include <string.h>

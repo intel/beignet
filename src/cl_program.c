@@ -25,7 +25,6 @@
 #include "cl_utils.h"
 #include "CL/cl.h"
 #include "CL/cl_intel.h"
-#include "gen/gbe_program.h"
 
 #include <stdio.h>
 #include <stdlib.h>

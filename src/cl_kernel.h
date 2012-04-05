@@ -23,7 +23,7 @@
 #include "cl_defs.h"
 #include "cl_internals.h"
 #include "cl_driver.h"
-#include "gen/gbe_program.h"
+#include "gen/program.h"
 #include "CL/cl.h"
 
 #include <stdint.h>
