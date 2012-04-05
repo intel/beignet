@@ -126,6 +126,10 @@ extern gbe_kernel_get_arg_type_cb *gbe_kernel_get_arg_type;
 typedef uint32_t (gbe_kernel_get_simd_width_cb)(gbe_kernel);
 extern gbe_kernel_get_simd_width_cb *gbe_kernel_get_simd_width;
 
+/*! Get the curbe offset where to put the data. Returns -1 if not required */
+typedef int32_t (gbe_kernel_get_curbe_offset_cb)(enum gbe_arg_type type, uint32_t sub_type);
+extern gbe_kernel_get_curbe_offset_cb *gbe_kernel_get_curbe_offset;
+
 /*! Indicates if a work group size is required. Return the required width or 0
  *  if none
  */

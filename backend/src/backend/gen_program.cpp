@@ -26,10 +26,7 @@
 #include "backend/gen_program.h"
 #include "backend/gen_program.hpp"
 #include "backend/gen_program.hpp"
-#include "backend/gen/brw_eu.h"
-#include "ir/liveness.hpp"
-#include "ir/value.hpp"
-#include "ir/unit.hpp"
+#include "backend/gen_context.hpp"
 #include "llvm/llvm_to_gen.hpp"
 #include <cstring>
 
@@ -43,16 +40,11 @@ namespace gbe {
   GenProgram::GenProgram(void) {}
   GenProgram::~GenProgram(void) {}
 
-  Kernel *GenProgram::compileKernel(const std::string &name) {
-    GenKernel *kernel = GBE_NEW(GenKernel, name);
-    brw_compile *p = (brw_compile*) GBE_MALLOC(sizeof(brw_compile));
-    std::memset(p, 0, sizeof(*p));
-    brw_EOT(p, 127);
-    kernel->insnNum = p->nr_insn;
-    kernel->insns = GBE_NEW_ARRAY(brw_instruction, kernel->insnNum);
-    std::memcpy(kernel->insns, p->store, kernel->insnNum * sizeof(brw_instruction));
-    GBE_FREE(p);
-    return kernel;
+  Kernel *GenProgram::compileKernel(const ir::Unit &unit, const std::string &name) {
+    Context *ctx = GBE_NEW(GenContext, unit, name);
+    Kernel *ker = ctx->compileKernel();
+    GBE_DELETE(ctx);
+    return ker;
   }
 
   static gbe_program genProgramNewFromSource(const char *source) {

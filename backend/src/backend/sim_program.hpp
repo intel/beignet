@@ -58,7 +58,7 @@ namespace gbe {
     /*! Destroy the program */
     virtual ~SimProgram(void);
     /*! Implements base class */
-    virtual Kernel *compileKernel(const std::string &name);
+    virtual Kernel *compileKernel(const ir::Unit &unit, const std::string &name);
     GBE_STRUCT(SimProgram); //!< Use gbe allocators
   };
 

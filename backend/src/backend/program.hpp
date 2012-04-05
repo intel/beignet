@@ -27,15 +27,12 @@
 
 #include "backend/program.h"
 #include "sys/hash_map.hpp"
+#include "sys/vector.hpp"
 #include <string>
 
 namespace gbe {
 namespace ir {
-
-  class Unit;        // Compilation unit. Contains the program to compile
-  class Liveness;    // Describes liveness of each ir function register
-  class FunctionDAG; // Describes the instruction dependencies
-
+  class Unit; // Compilation unit. Contains the program to compile
 } /* namespace ir */
 } /* namespace gbe */
 
@@ -43,9 +40,25 @@ namespace gbe {
 
   /*! Info for the kernel argument */
   struct KernelArgument {
-    gbe_arg_type type; //!< Pointer, structure, regular value?
-    size_t size;       //!< Size of each argument
+    gbe_arg_type type; //!< Pointer, structure, image, regular value?
+    uint32_t size;     //!< Size of the argument
   };
+
+  /*! Stores the offset where to patch where to patch */
+  struct PatchInfo {
+    INLINE PatchInfo(gbe_curbe_value type, uint32_t subType = 0u, uint32_t offset = 0u) :
+      type(uint32_t(type)), subType(subType), offset(offset) {}
+    INLINE PatchInfo(void) {}
+    uint32_t type : 8;
+    uint32_t subType : 8;
+    uint32_t offset : 16;
+  };
+
+  /*! We will sort PatchInfo to make binary search */
+  INLINE bool operator< (PatchInfo i0, PatchInfo i1) {
+    if (i0.type != i1.type) return i0.type < i1.type;
+    return i0.subType < i1.subType;
+  }
 
   /*! Describe a compiled kernel */
   struct Kernel : public NonCopyable
@@ -64,27 +77,20 @@ namespace gbe {
     INLINE uint32_t getArgNum(void) const { return argNum; }
     /*! Return the size of the given argument */
     INLINE uint32_t getArgSize(uint32_t argID) const {
-      if (argID >= argNum)
-        return 0u;
-      else
-        return args[argID].size;
+      return argID >= argNum ? 0u : args[argID].size;
     }
     /*! Return the type of the given argument */
     INLINE gbe_arg_type getArgType(uint32_t argID) const {
-      if (argID >= argNum)
-        return GBE_ARG_INVALID;
-      else
-        return args[argID].type;
+      return argID >= argNum ? GBE_ARG_INVALID : args[argID].type;
     }
-    /*! Return where to put the address of a buffer argument */
-    
+    /*! Get the offset where to patch. Returns -1 if no patch needed */
+    int32_t getCurbeOffset(gbe_curbe_value value, uint32_t subvalue) const;
   protected:
-    friend class Program;    //!< Owns the kernels
-    const std::string name;  //!< Kernel name
-    KernelArgument *args;    //!< Each argument
-    uint32_t argNum;         //!< Number of function arguments
-    ir::Liveness *liveness;  //!< Used only for the build
-    ir::FunctionDAG *dag;    //!< Used only for the build
+    friend class Context;       //!< Owns the kernels
+    const std::string name;     //!< Kernel name
+    KernelArgument *args;       //!< Each argument
+    uint32_t argNum;            //!< Number of function arguments
+    vector<PatchInfo> patches;  //!< Indicates how to build the curbe
   };
 
   /*! Describe a compiled program */
@@ -122,9 +128,9 @@ namespace gbe {
     bool buildFromLLVMFile(const char *fileName, std::string &error);
     /*! Buils a program from a OCL string */
     bool buildFromSource(const char *source, std::string &error);
-    /*! Compile a kernel */
-    virtual Kernel *compileKernel(const std::string &name) = 0;
   protected:
+    /*! Compile a kernel */
+    virtual Kernel *compileKernel(const ir::Unit &unit, const std::string &name) = 0;
     /*! Kernels sorted by their name */
     hash_map<std::string, Kernel*> kernels;
   };

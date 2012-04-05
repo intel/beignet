@@ -57,7 +57,7 @@ namespace gbe {
     /*! Destroy the program */
     virtual ~GenProgram(void);
     /*! Implements base class */
-    Kernel *compileKernel(const std::string &name);
+    Kernel *compileKernel(const ir::Unit &unit, const std::string &name);
     GBE_STRUCT(GenProgram);   //!< Use gbe allocators
   };
 

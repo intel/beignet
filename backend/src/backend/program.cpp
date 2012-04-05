@@ -32,16 +32,22 @@
 #include "ir/unit.hpp"
 #include "llvm/llvm_to_gen.hpp"
 #include <cstring>
+#include <algorithm>
 
 namespace gbe {
 
   Kernel::Kernel(const std::string &name) :
-    name(name), args(NULL), argNum(0), liveness(NULL), dag(NULL)
+    name(name), args(NULL), argNum(0)
   {}
   Kernel::~Kernel(void) {
     GBE_SAFE_DELETE_ARRAY(args);
-    GBE_SAFE_DELETE(liveness);
-    GBE_SAFE_DELETE(dag);
+  }
+  int32_t Kernel::getCurbeOffset(gbe_curbe_value type, uint32_t subType) const {
+    const PatchInfo patch(type, subType);
+    const auto it = std::lower_bound(patches.begin(), patches.end(), patch);
+    if (it == patches.end()) return -1; // nothing found
+    if (patch < *it) return -1; // they are not equal
+    return it->offset; // we found it!
   }
 
   Program::Program(void) {}
@@ -66,7 +72,7 @@ namespace gbe {
     if (kernelNum == 0) return true;
     for (auto it = set.begin(); it != set.end(); ++it) {
       const std::string &name = it->first;
-      Kernel *kernel = this->compileKernel(name);
+      Kernel *kernel = this->compileKernel(unit, name);
       kernels.insert(std::make_pair(name, kernel));
     }
     return true;
@@ -135,6 +141,10 @@ namespace gbe {
     return 16u;
   }
 
+  static int32_t kernelGetCurbeOffset(gbe_arg_type type, uint32_t sub_type) {
+    return -1;
+  }
+
   static uint32_t kernelGetRequiredWorkGroupSize(gbe_kernel kernel, uint32_t dim) {
     return 0u;
   }
@@ -154,6 +164,7 @@ GBE_EXPORT_SYMBOL gbe_kernel_get_arg_num_cb *gbe_kernel_get_arg_num = NULL;
 GBE_EXPORT_SYMBOL gbe_kernel_get_arg_size_cb *gbe_kernel_get_arg_size = NULL;
 GBE_EXPORT_SYMBOL gbe_kernel_get_arg_type_cb *gbe_kernel_get_arg_type = NULL;
 GBE_EXPORT_SYMBOL gbe_kernel_get_simd_width_cb *gbe_kernel_get_simd_width = NULL;
+GBE_EXPORT_SYMBOL gbe_kernel_get_curbe_offset_cb *gbe_kernel_get_curbe_offset = NULL;
 GBE_EXPORT_SYMBOL gbe_kernel_get_required_work_group_size_cb *gbe_kernel_get_required_work_group_size = NULL;
 
 /* Use pre-main to setup the call backs */
@@ -171,6 +182,7 @@ struct CallBackInitializer
     gbe_kernel_get_arg_size = gbe::kernelGetArgSize;
     gbe_kernel_get_arg_type = gbe::kernelGetArgType;
     gbe_kernel_get_simd_width = gbe::kernelGetSIMDWidth;
+    gbe_kernel_get_curbe_offset = gbe::kernelGetCurbeOffset;
     gbe_kernel_get_required_work_group_size = gbe::kernelGetRequiredWorkGroupSize;
     const char *run_it = getenv("OCL_SIMULATOR");
     if (run_it != NULL && !strcmp(run_it, "2"))

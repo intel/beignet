@@ -42,11 +42,18 @@ else (GBE_USE_BLOB)
     ir/function.hpp
     ir/value.cpp
     ir/value.hpp
+    backend/context.cpp
+    backend/context.hpp
     backend/program.cpp
+    backend/program.hpp
     backend/program.h
+    backend/sim_context.cpp
+    backend/sim_context.hpp
     backend/sim_program.cpp
     backend/sim_program.hpp
     backend/sim_program.h
+    backend/gen_context.cpp
+    backend/gen_context.hpp
     backend/gen_program.cpp
     backend/gen_program.hpp
     backend/gen_program.h
@@ -90,5 +97,5 @@ if (GBE_COMPILE_UTESTS)
 endif (GBE_COMPILE_UTESTS)
 
 install (TARGETS gbe LIBRARY DESTINATION lib)
-install (FILES backend/gbe_program.h DESTINATION include/gen)
+install (FILES backend/program.h DESTINATION include/gen)
 

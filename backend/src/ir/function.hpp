@@ -234,7 +234,6 @@ namespace ir {
       for (auto it = blocks.begin(); it != blocks.end(); ++it)
         (*it)->foreach(functor);
     }
-
   private:
     friend class Context;         //!< Can freely modify a function
     std::string name;             //!< Function name
