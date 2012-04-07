@@ -48,7 +48,6 @@ namespace gbe
     virtual void emitCode(void);
     /*! Implements base class */
     virtual Kernel *allocateKernel(void);
-    GBE_CLASS(SimContext);
   };
 
 } /* namespace gbe */

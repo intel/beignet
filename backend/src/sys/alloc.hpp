@@ -61,6 +61,11 @@ namespace gbe
   }
 } /* namespace gbe */
 
+/*! Declare a class with custom allocators */
+#define GBE_CLASS(TYPE) \
+  GBE_STRUCT(TYPE)      \
+private:
+
 /*! Declare a structure with custom allocators */
 #define GBE_STRUCT(TYPE)                                     \
 public:                                                      \
@@ -76,6 +81,8 @@ public:                                                      \
     else                                                     \
       return gbe::memAlloc(size);                            \
   }                                                          \
+  void* operator new(size_t size, void *p) { return p; }     \
+  void* operator new[](size_t size, void *p) { return p; }   \
   void  operator delete(void* ptr) {                         \
     if (AlignOf<TYPE>::value > sizeof(uintptr_t))            \
       return gbe::alignedFree(ptr);                          \
@@ -88,13 +95,6 @@ public:                                                      \
     else                                                     \
       return gbe::memFree(ptr);                              \
   }                                                          \
-  void* operator new(size_t size, void *p) { return p; }     \
-  void* operator new[](size_t size, void *p) { return p; }   \
-
-/*! Declare a class with custom allocators */
-#define GBE_CLASS(TYPE) \
-  GBE_STRUCT(TYPE)      \
-private:
 
 /*! Macros to handle allocation position */
 #define GBE_NEW(T,...)               \

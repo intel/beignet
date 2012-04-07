@@ -167,30 +167,33 @@ GBE_EXPORT_SYMBOL gbe_kernel_get_simd_width_cb *gbe_kernel_get_simd_width = NULL
 GBE_EXPORT_SYMBOL gbe_kernel_get_curbe_offset_cb *gbe_kernel_get_curbe_offset = NULL;
 GBE_EXPORT_SYMBOL gbe_kernel_get_required_work_group_size_cb *gbe_kernel_get_required_work_group_size = NULL;
 
-/* Use pre-main to setup the call backs */
-struct CallBackInitializer
+namespace gbe
 {
-  CallBackInitializer(void) {
-    gbe_program_delete = gbe::programDelete;
-    gbe_program_get_kernel_num = gbe::programGetKernelNum;
-    gbe_program_get_kernel_by_name = gbe::programGetKernelByName;
-    gbe_program_get_kernel = gbe::programGetKernel;
-    gbe_kernel_get_name = gbe::kernelGetName;
-    gbe_kernel_get_code = gbe::kernelGetCode;
-    gbe_kernel_get_code_size = gbe::kernelGetCodeSize;
-    gbe_kernel_get_arg_num = gbe::kernelGetArgNum;
-    gbe_kernel_get_arg_size = gbe::kernelGetArgSize;
-    gbe_kernel_get_arg_type = gbe::kernelGetArgType;
-    gbe_kernel_get_simd_width = gbe::kernelGetSIMDWidth;
-    gbe_kernel_get_curbe_offset = gbe::kernelGetCurbeOffset;
-    gbe_kernel_get_required_work_group_size = gbe::kernelGetRequiredWorkGroupSize;
-    const char *run_it = getenv("OCL_SIMULATOR");
-    if (run_it != NULL && !strcmp(run_it, "2"))
-      simSetupCallBacks();
-    else
-      genSetupCallBacks();
-  }
-};
+  /* Use pre-main to setup the call backs */
+  struct CallBackInitializer
+  {
+    CallBackInitializer(void) {
+      gbe_program_delete = gbe::programDelete;
+      gbe_program_get_kernel_num = gbe::programGetKernelNum;
+      gbe_program_get_kernel_by_name = gbe::programGetKernelByName;
+      gbe_program_get_kernel = gbe::programGetKernel;
+      gbe_kernel_get_name = gbe::kernelGetName;
+      gbe_kernel_get_code = gbe::kernelGetCode;
+      gbe_kernel_get_code_size = gbe::kernelGetCodeSize;
+      gbe_kernel_get_arg_num = gbe::kernelGetArgNum;
+      gbe_kernel_get_arg_size = gbe::kernelGetArgSize;
+      gbe_kernel_get_arg_type = gbe::kernelGetArgType;
+      gbe_kernel_get_simd_width = gbe::kernelGetSIMDWidth;
+      gbe_kernel_get_curbe_offset = gbe::kernelGetCurbeOffset;
+      gbe_kernel_get_required_work_group_size = gbe::kernelGetRequiredWorkGroupSize;
+      const char *run_it = getenv("OCL_SIMULATOR");
+      if (run_it != NULL && !strcmp(run_it, "2"))
+        simSetupCallBacks();
+      else
+        genSetupCallBacks();
+    }
+  };
 
-static CallBackInitializer cbInitializer;
+  static CallBackInitializer cbInitializer;
+} /* namespace gbe */
 

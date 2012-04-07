@@ -47,7 +47,6 @@ namespace gbe {
     virtual size_t getCodeSize(void) const { return sizeof(&fn); }
     SimKernelCallBack *fn; //!< Function that runs the code
     void *handle;          //!< dlopen / dlclose / dlsym handle
-    GBE_STRUCT(SimKernel); //!< Use gbe allocators
   };
 
   /*! Describe a compiled program */
@@ -59,7 +58,6 @@ namespace gbe {
     virtual ~SimProgram(void);
     /*! Implements base class */
     virtual Kernel *compileKernel(const ir::Unit &unit, const std::string &name);
-    GBE_STRUCT(SimProgram); //!< Use gbe allocators
   };
 
 } /* namespace gbe */
