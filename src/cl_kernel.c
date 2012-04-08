@@ -35,25 +35,23 @@
 LOCAL void
 cl_kernel_delete(cl_kernel k)
 {
-  if (k == NULL)
-    return;
+  if (k == NULL) return;
 
   /* We are not done with the kernel */
   if (atomic_dec(&k->ref_n) > 1) return;
-
   /* Release one reference on all bos we own */
   if (k->bo)       cl_buffer_unreference(k->bo);
   if (k->const_bo) cl_buffer_unreference(k->const_bo);
-
   /* This will be true for kernels created by clCreateKernel */
   if (k->ref_its_program) cl_program_delete(k->program);
-
+  /* Release the curbe if allocated */
+  if (k->curbe) cl_free(k->curbe);
   k->magic = CL_MAGIC_DEAD_HEADER; /* For safety */
   cl_free(k);
 }
 
 LOCAL cl_kernel
-cl_kernel_new(const cl_program p)
+cl_kernel_new(cl_program p)
 {
   cl_kernel k = NULL;
   TRY_ALLOC_NO_ERR (k, CALLOC(struct _cl_kernel));
@@ -70,7 +68,7 @@ error:
 }
 
 LOCAL const char*
-cl_kernel_get_name(const cl_kernel k)
+cl_kernel_get_name(cl_kernel k)
 {
   if (UNLIKELY(k == NULL)) return NULL;
   return gbe_kernel_get_name(k->opaque);
@@ -91,7 +89,7 @@ cl_kernel_set_arg(cl_kernel k, cl_uint index, size_t sz, const void *value)
 }
 
 LOCAL uint32_t
-cl_kernel_get_simd_width(const cl_kernel k)
+cl_kernel_get_simd_width(cl_kernel k)
 {
   assert(k != NULL);
   return gbe_kernel_get_simd_width(k->opaque);
@@ -111,10 +109,22 @@ cl_kernel_setup(cl_kernel k, gbe_kernel opaque)
   /* Upload the code */
   cl_buffer_subdata(k->bo, 0, code_sz, code);
   k->opaque = opaque;
+
+  /* Create the curbe */
+  k->curbe_sz = gbe_kernel_get_curbe_size(k->opaque);
+  TRY_ALLOC_NO_ERR(k->curbe, cl_malloc(k->curbe_sz));
+  return;
+
+error:
+  if (k->curbe) cl_free(k->curbe);
+  if (k->bo) cl_buffer_unreference(k->bo);
+  k->curbe = NULL;
+  k->bo = NULL;
+  return;
 }
 
 LOCAL cl_kernel
-cl_kernel_dup(const cl_kernel from)
+cl_kernel_dup(cl_kernel from)
 {
   cl_kernel to = NULL;
 
@@ -174,8 +184,7 @@ cl_kernel_work_group_sz(cl_kernel ker,
   }
 
 error:
-  if (wk_grp_sz)
-    *wk_grp_sz = sz;
+  if (wk_grp_sz) *wk_grp_sz = sz;
   return err;
 }
 

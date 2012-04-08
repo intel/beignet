@@ -80,6 +80,32 @@ error:
   return err;
 }
 
+static void
+cl_curbe_fill(cl_kernel ker,
+              char *curbe,
+              const size_t *global_wk_off,
+              const size_t *global_wk_sz,
+              const size_t *local_wk_sz)
+{
+  uint32_t offset;
+#define UPLOAD(ENUM, VALUE)                                              \
+  if ((offset = gbe_kernel_get_curbe_offset(ker->opaque, ENUM, 0)) >= 0) \
+    *((uint32_t *) (curbe + offset)) = VALUE;
+  UPLOAD(GBE_CURBE_LOCAL_SIZE_X, local_wk_sz[0]);
+  UPLOAD(GBE_CURBE_LOCAL_SIZE_Y, local_wk_sz[1]);
+  UPLOAD(GBE_CURBE_LOCAL_SIZE_Z, local_wk_sz[2]);
+  UPLOAD(GBE_CURBE_GLOBAL_SIZE_X, global_wk_sz[0]);
+  UPLOAD(GBE_CURBE_GLOBAL_SIZE_Y, global_wk_sz[1]);
+  UPLOAD(GBE_CURBE_GLOBAL_SIZE_Z, global_wk_sz[2]);
+  UPLOAD(GBE_CURBE_GLOBAL_OFFSET_X, global_wk_off[0]);
+  UPLOAD(GBE_CURBE_GLOBAL_OFFSET_Y, global_wk_off[1]);
+  UPLOAD(GBE_CURBE_GLOBAL_OFFSET_Z, global_wk_off[2]);
+  UPLOAD(GBE_CURBE_GROUP_NUM_X, global_wk_sz[0]/local_wk_sz[0]);
+  UPLOAD(GBE_CURBE_GROUP_NUM_Y, global_wk_sz[1]/local_wk_sz[1]);
+  UPLOAD(GBE_CURBE_GROUP_NUM_Z, global_wk_sz[2]/local_wk_sz[2]);
+#undef UPLOAD
+}
+
 LOCAL cl_int
 cl_command_queue_ND_range_gen7(cl_command_queue queue,
                                cl_kernel ker,
@@ -90,7 +116,7 @@ cl_command_queue_ND_range_gen7(cl_command_queue queue,
   cl_context ctx = queue->ctx;
   cl_gpgpu gpgpu = queue->gpgpu;
   char *curbe = NULL;        /* Does not include per-thread local IDs */
-  char *final_curbe = NULL;  /* Includes them */
+  char *final_curbe = NULL;  /* Includes them and one sub-buffer per group */
   cl_buffer private_bo = NULL, scratch_bo = NULL;
   cl_gpgpu_kernel kernel;
   const uint32_t simd_sz = cl_kernel_get_simd_width(ker);
@@ -105,6 +131,10 @@ cl_command_queue_ND_range_gen7(cl_command_queue queue,
   kernel.use_barrier = 0;
   kernel.slm_sz = 0;
   kernel.cst_sz = 0;
+
+  /* Fill the constant buffer */
+  curbe = alloca(ker->curbe_sz);
+  cl_curbe_fill(ker, curbe, global_wk_off, global_wk_sz, local_wk_sz);
 
   /* Compute the number of HW threads we are going to need */
   TRY (cl_kernel_work_group_sz, ker, local_wk_sz, 3, &local_sz);

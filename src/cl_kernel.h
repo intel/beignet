@@ -40,11 +40,14 @@ struct _cl_kernel {
   cl_buffer const_bo;       /* Buffer for all __constants values in the OCL program */
   cl_program program;       /* Owns this structure (and pointers) */
   gbe_kernel opaque;        /* (Opaque) compiler structure for the OCL kernel */
+  char *curbe;              /* One curbe per kernel */
+  size_t curbe_sz;          /* Size of it */
+  
   uint8_t ref_its_program;  /* True only for the user kernel (created by clCreateKernel) */
 };
 
 /* Allocate an empty kernel */
-extern cl_kernel cl_kernel_new(const cl_program);
+extern cl_kernel cl_kernel_new(cl_program);
 
 /* Destroy and deallocate an empty kernel */
 extern void cl_kernel_delete(cl_kernel);
@@ -53,10 +56,10 @@ extern void cl_kernel_delete(cl_kernel);
 extern void cl_kernel_setup(cl_kernel k, gbe_kernel opaque);
 
 /* Get the kernel name */
-extern const char *cl_kernel_get_name(const cl_kernel k);
+extern const char *cl_kernel_get_name(cl_kernel k);
 
 /* Get the simd width as used in the code */
-extern uint32_t cl_kernel_get_simd_width(const cl_kernel k);
+extern uint32_t cl_kernel_get_simd_width(cl_kernel k);
 
 /* When a kernel is created from outside, we just duplicate the structure we
  * have internally and give it back to the user
