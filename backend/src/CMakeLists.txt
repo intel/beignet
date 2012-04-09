@@ -1,5 +1,24 @@
 add_subdirectory(llvm)
 
+set (TO_STRINGIFY_FILES simulator sim_vector)
+foreach (to_stringify_file ${TO_STRINGIFY_FILES})
+  set (input_file ${GBE_SOURCE_DIR}/src/backend/sim/${to_stringify_file}.h)
+  set (output_file ${GBE_SOURCE_DIR}/src/backend/sim/${to_stringify_file}_str.cpp)
+  set (string_header "\\\"string\\\"")
+  add_custom_command(
+    OUTPUT ${output_file}
+    COMMAND rm -rf ${output_file}
+    COMMAND echo "\\\#include ${string_header}" >> ${output_file}
+    COMMAND echo "namespace gbe {" >> ${output_file}
+    COMMAND echo "std::string ${to_stringify_file}_str = " >> ${output_file}
+    # Yeah!!! welcome to quote hell!
+    COMMAND cat ${input_file} | sed 's/\\\"/\\\\\\\"/g' | awk '{ printf \(\"\\"%s\\\\n\\"\\n\", $$0\) }' >> ${output_file}
+    COMMAND echo "\;" >> ${output_file}
+    COMMAND echo "}" >> ${output_file}
+    COMMAND echo "" >> ${output_file}
+    MAIN_DEPENDENCY ${input_file})
+endforeach (to_stringify_file)
+
 if (GBE_USE_BLOB)
   set (GBE_SRC blob.cpp)
 else (GBE_USE_BLOB)
@@ -52,6 +71,9 @@ else (GBE_USE_BLOB)
     backend/sim_program.cpp
     backend/sim_program.hpp
     backend/sim_program.h
+    backend/sim/simulator_str.cpp
+    backend/sim/sim_vector_str.cpp
+    backend/sim/sim_vector.h
     backend/gen_context.cpp
     backend/gen_context.hpp
     backend/gen_program.cpp
@@ -64,6 +86,7 @@ else (GBE_USE_BLOB)
   if (GBE_COMPILE_UTESTS)
     set (GBE_SRC
       ${GBE_SRC}
+      utest/utest_vector.cpp
       utest/utest_llvm.cpp
       utest/utest_test_utest.cpp
       utest/utest_context.cpp
@@ -97,5 +120,5 @@ if (GBE_COMPILE_UTESTS)
 endif (GBE_COMPILE_UTESTS)
 
 install (TARGETS gbe LIBRARY DESTINATION lib)
-install (FILES backend/program.h backend/simulator.h DESTINATION include/gen)
+install (FILES backend/program.h backend/sim/simulator.h DESTINATION include/gen)
 

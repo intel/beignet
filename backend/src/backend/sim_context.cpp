@@ -38,6 +38,8 @@ namespace gbe
     return GBE_NEW(SimKernel, name);
   }
 
+  extern std::string simulator_str;
+
   void SimContext::emitCode(void) {
     SimKernel *simKernel = static_cast<SimKernel*>(this->kernel);
     char srcStr[L_tmpnam+1], libStr[L_tmpnam+1];
@@ -47,21 +49,21 @@ namespace gbe
     /* Output the code first */
     std::ofstream ostream;
     ostream.open(srcName);
+    ostream << simulator_str << std::endl;
     ostream << "#include <stdint.h>\n";
-    ostream << "typedef struct _gen_simulator *gen_simulator;\n";
     ostream << "extern \"C\" void " << name
-            << "(gen_simulator sim, "
-            << "uint32_t thread, uint32_t group_x, uint32_t group_y, uint32_t group_z) {}"
-            << std::endl;
+            << "(gbe_simulator sim, uint32_t thread, uint32_t group_x, uint32_t group_y, uint32_t group_z)" << std::endl
+            << "{}"
+            << std::endl << std::endl;
     ostream.close();
 
     /* Compile the function */
-    std::cout << srcName << " " << libName;
-    std::string compileCmd = "g++ -shared -O3 -o ";
+    std::cout << "# source: " << srcName << " library: " << libName << std::endl;
+    std::string compileCmd = "g++ -funroll-loops -shared -msse -msse2 -msse3 -mssse3 -msse4.1 -g -O3 -o ";
     compileCmd += libName;
     compileCmd += " ";
     compileCmd += srcName;
-    printf(compileCmd.c_str());
+    std::cout << "# compilation command: " << compileCmd << std::endl;
     if (UNLIKELY(system(compileCmd.c_str()) != 0))
       FATAL("Simulation program compilation failed");
 

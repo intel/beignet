@@ -33,7 +33,6 @@ extern "C" {
 
 /* Gen simulator that runs the c++ produced by the back-end */
 typedef struct _gbe_simulator *gbe_simulator;
-
 /* Return the base address of the global / constant memory space */
 typedef void *(sim_get_base_address_cb)(gbe_simulator);
 /* Set the base address of the global / constant memory space */

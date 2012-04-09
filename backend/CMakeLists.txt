@@ -55,7 +55,7 @@ if (CMAKE_SYSTEM_NAME STREQUAL "Linux")
   endif (NOT GBE_COMPILE_UTESTS)
 
   if (COMPILER STREQUAL "GCC")
-    set (CMAKE_C_CXX_FLAGS "${CMAKE_C_CXX_FLAGS} -Wstrict-aliasing=2 -fstrict-aliasing -msse2 -ffast-math -fPIC -Wall")
+    set (CMAKE_C_CXX_FLAGS "${CMAKE_C_CXX_FLAGS} -funroll-loops -Wstrict-aliasing=2 -fstrict-aliasing -msse2 -msse3 -mssse3 -msse4.1 -ffast-math -fPIC -Wall")
     set (CMAKE_CXX_FLAGS "${CMAKE_C_CXX_FLAGS}  -Wno-invalid-offsetof -fno-rtti -std=c++0x")
     set (CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${GBE_DEBUG_MEMORY_FLAG}")
     set (CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${GBE_COMPILE_UTESTS_FLAG}")
