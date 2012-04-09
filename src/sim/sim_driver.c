@@ -22,12 +22,16 @@
 #include "cl_device_data.h"
 #include "sim/sim_driver.h"
 #include "CL/cl.h"
+#include "cl_driver.h"
+#include "gen/program.h"
+#include "gen/simulator.h"
+#include "sim/sim_simulator.h"
+
 #include <stdlib.h>
 #include <assert.h>
 #include <string.h>
 #include <stdio.h>
 
-#include "cl_driver.h"
 
 /* Fake buffer manager that just counts allocations */
 struct _sim_bufmgr { volatile int buf_n; };
@@ -39,11 +43,7 @@ sim_bufmgr_new(void)
   return cl_calloc(1,sizeof(struct _sim_bufmgr));
 }
 
-static void
-sim_bufmgr_delete(sim_bufmgr bufmgr)
-{
-  cl_free(bufmgr);
-}
+static void sim_bufmgr_delete(sim_bufmgr bufmgr) { cl_free(bufmgr); }
 
 /* Fake low-level driver */
 struct _sim_driver {
@@ -91,7 +91,8 @@ sim_driver_get_bufmgr(sim_driver driver)
 static int
 sim_driver_get_device_id(void)
 {
-  return PCI_CHIP_IVYBRIDGE_GT2; // XXX get some env variable instead
+  /* XXX get some env variable instead */
+  return PCI_CHIP_IVYBRIDGE_GT2;
 }
 
 /* Just a named buffer to mirror real drm functions */
@@ -184,7 +185,7 @@ static int sim_buffer_unpin(sim_buffer buf) {return 0;}
 static int sim_buffer_wait_rendering(sim_buffer buf) {return 0;}
 
 /* Function to call for each HW thread we simulate */
-typedef void (sim_kernel_cb)(void);
+typedef void (sim_kernel_cb)(gbe_simulator, uint32_t, uint32_t, uint32_t, uint32_t);
 
 /* We can bind only a limited number of buffers */
 enum { max_buf_n = 128 };
@@ -192,19 +193,23 @@ enum { max_buf_n = 128 };
 /* Encapsulates operations needed to run one NDrange */
 struct _sim_gpgpu
 {
-  sim_driver driver;     /* the driver the gpgpu states belongs to */
-  sim_kernel_cb *kernel; /* call it for each HW thread */
+  sim_driver driver;                 /* the driver the gpgpu states belongs to */
+  sim_kernel_cb *kernel;             /* call it for each HW thread */
   sim_buffer binded_buf[max_buf_n];  /* all buffers binded for the call */
   char *fake_memory;                 /* fake memory to emulate flat address space in any mode (32 / 64 bits) */
+  char *curbe;                       /* constant buffer */
   uint32_t binded_offset[max_buf_n]; /* their offsets in the constant buffer */
+  uint32_t memory_remap[max_buf_n];  /* offset of each buffer in the fake memory space */
   uint32_t max_threads;              /* HW threads running */
   uint32_t cst_sz;                   /* size of the constant buffer */
   uint32_t binded_n;                 /* number of buffers binded */
+  uint32_t thread_n;                 /* number of threads to run per work group */
 };
 typedef struct _sim_gpgpu *sim_gpgpu;
 
-static void sim_gpgpu_delete(sim_gpgpu gpgpu)
-{
+static void sim_gpgpu_delete(sim_gpgpu gpgpu) {
+  if (gpgpu->fake_memory) cl_free(gpgpu->fake_memory);
+  if (gpgpu->curbe) cl_free(gpgpu->curbe);
   cl_free(gpgpu);
 }
 
@@ -212,7 +217,6 @@ static sim_gpgpu sim_gpgpu_new(sim_driver driver)
 {
   sim_gpgpu gpgpu = NULL;
   TRY_ALLOC_NO_ERR(gpgpu, cl_calloc(1, sizeof(struct _sim_gpgpu)));
-
 exit:
   return gpgpu;
 error:
@@ -223,21 +227,40 @@ error:
 
 static void sim_gpgpu_bind_image2D(sim_gpgpu gpgpu,
                                    int32_t index,
-                                   sim_buffer obj_bo,
+                                   sim_buffer bo,
                                    uint32_t format,
                                    int32_t w,
                                    int32_t h,
                                    int pitch,
                                    cl_gpgpu_tiling tiling) {}
 static void sim_gpgpu_set_perf_counters(sim_gpgpu gpgpu, sim_buffer perf) {}
-static void sim_gpgpu_upload_constants(sim_gpgpu gpgpu, const void* data, uint32_t size) {}
 static void sim_gpgpu_upload_samplers(sim_gpgpu gpgpu, const void *data, uint32_t n) {}
 static void sim_gpgpu_batch_reset(sim_gpgpu gpgpu, size_t sz) {}
 static void sim_gpgpu_batch_start(sim_gpgpu gpgpu) {}
 static void sim_gpgpu_batch_end(sim_gpgpu gpgpu, uint32_t flush_mode) {}
 static void sim_gpgpu_flush(sim_gpgpu gpgpu) {}
 
-static void sim_gpgpu_state_init(sim_gpgpu gpgpu, uint32_t max_threads, uint32_t size_cs_entry)
+static void
+sim_gpgpu_upload_constants(sim_gpgpu gpgpu, const void* data, uint32_t size)
+{
+  uint32_t i, j;
+  assert(size == gpgpu->cst_sz * gpgpu->thread_n);
+  if (gpgpu->curbe) cl_free(gpgpu->curbe);
+  gpgpu->curbe = (char*) cl_malloc(size);
+
+  /* Upload the buffer offsets per thread */
+  for (i = 0; i < gpgpu->thread_n; ++i) {
+    const uint32_t start_offset = i * gpgpu->cst_sz;
+    for (j = 0; j < gpgpu->binded_n; ++j) {
+      const uint32_t offset = start_offset + gpgpu->binded_offset[j];
+      const uint32_t fake_address = gpgpu->memory_remap[j];
+      *(uint32_t*) (gpgpu->curbe + offset) = fake_address; /* XXX 32 bits only */
+    }
+  }
+}
+
+static void
+sim_gpgpu_state_init(sim_gpgpu gpgpu, uint32_t max_threads, uint32_t size_cs_entry)
 {
   assert(gpgpu);
   memset(gpgpu, 0, sizeof(*gpgpu));
@@ -245,16 +268,35 @@ static void sim_gpgpu_state_init(sim_gpgpu gpgpu, uint32_t max_threads, uint32_t
   gpgpu->max_threads = max_threads;
 }
 
-static void sim_gpgpu_states_setup(sim_gpgpu gpgpu, cl_gpgpu_kernel *kernel)
+static void
+sim_gpgpu_states_setup(sim_gpgpu gpgpu, cl_gpgpu_kernel *kernel)
 {
+  uint32_t i;
+  size_t sz = 0;
   cl_buffer_map(kernel->bo, 0);
   gpgpu->kernel = *(sim_kernel_cb **) cl_buffer_get_virtual(kernel->bo);
+  gpgpu->thread_n = kernel->thread_n;
+
+  /* Because of flat address space and because the host machine can be 64 bits
+   * and Gen 32 bits, we just create a fake memory space of 1GB and copy back
+   * and forth the data from here
+   */
+  for (i = 0; i < gpgpu->binded_n; ++i) {
+    gpgpu->memory_remap[i] = sz;
+    sz += gpgpu->binded_buf[i]->sz;
+  }
+
+  /* Copy everything to the fake address space */
+  if (gpgpu->fake_memory) cl_free(gpgpu->fake_memory);
+  gpgpu->fake_memory = cl_malloc(sz);
+  for (i = 0; i < gpgpu->binded_n; ++i) {
+    const sim_buffer buf = gpgpu->binded_buf[i];
+    memcpy(gpgpu->fake_memory + gpgpu->memory_remap[i], buf->data, buf->sz);
+  }
 }
 
-static void sim_gpgpu_bind_buf(sim_gpgpu gpgpu,
-                               sim_buffer buf,
-                               uint32_t offset,
-                               uint32_t cchint)
+static void
+sim_gpgpu_bind_buf(sim_gpgpu gpgpu, sim_buffer buf, uint32_t offset, uint32_t cchint)
 {
   assert(gpgpu->binded_n < max_buf_n);
   gpgpu->binded_buf[gpgpu->binded_n] = buf;
@@ -262,12 +304,13 @@ static void sim_gpgpu_bind_buf(sim_gpgpu gpgpu,
   gpgpu->binded_n++;
 }
 
-static void sim_gpgpu_walker(sim_gpgpu gpgpu,
-                             uint32_t simd_sz,
-                             uint32_t thread_n,
-                             const size_t global_wk_off[3],
-                             const size_t global_wk_sz[3],
-                             const size_t local_wk_sz[3])
+static void
+sim_gpgpu_walker(sim_gpgpu gpgpu,
+                 uint32_t simd_sz,
+                 uint32_t thread_n,
+                 const size_t global_wk_off[3],
+                 const size_t global_wk_sz[3],
+                 const size_t local_wk_sz[3])
 {
   uint32_t x, y, z, t, i;
   const uint32_t global_wk_dim[3] = {
@@ -277,34 +320,20 @@ static void sim_gpgpu_walker(sim_gpgpu gpgpu,
   };
   assert(simd_sz == 8 || simd_sz == 16);
 
-  /* Because of flat address space and because the host machine can be 64 bits
-   * and gen 32 bits, we just create a fake memory space of 1GB and copy back
-   * and forth the data from here
-   */
-  size_t sz = 0;
-  uint32_t memory_remap[max_buf_n];
-  for (i = 0; i < gpgpu->binded_n; ++i) {
-    memory_remap[i] = sz;
-    sz += gpgpu->binded_buf[i]->sz;
-  }
-
-  /* Copy everything to the fake address space */
-  gpgpu->fake_memory = cl_malloc(sz);
-  for (i = 0; i < gpgpu->binded_n; ++i) {
-    const sim_buffer buf = gpgpu->binded_buf[i];
-    memcpy(gpgpu->fake_memory + memory_remap[i], buf->data, buf->sz);
-  }
-
+  gbe_simulator sim = sim_simulator_new();
+  sim->set_base_address(sim, gpgpu->fake_memory);
+  sim->set_curbe_address(sim, gpgpu->curbe);
   for (z = 0; z < global_wk_dim[2]; ++z)
   for (y = 0; y < global_wk_dim[1]; ++y)
   for (x = 0; x < global_wk_dim[0]; ++x)
   for (t = 0; t < thread_n; ++t)
-    gpgpu->kernel();
+    gpgpu->kernel(sim, t, x, y, z);
+  sim_simulator_delete(sim);
 
   /* Get the results back*/
   for (i = 0; i < gpgpu->binded_n; ++i) {
     const sim_buffer buf = gpgpu->binded_buf[i];
-    memcpy(buf->data, gpgpu->fake_memory + memory_remap[i], buf->sz);
+    memcpy(buf->data, gpgpu->fake_memory + gpgpu->memory_remap[i], buf->sz);
   }
   cl_free(gpgpu->fake_memory);
   gpgpu->fake_memory = NULL;

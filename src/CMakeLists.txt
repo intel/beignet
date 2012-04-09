@@ -17,10 +17,15 @@ SET(OPENCL_SRC
     cl_device_id.c
     cl_context.c
     cl_command_queue.c
+    cl_command_queue.h
     cl_command_queue_gen7.c
     cl_driver.c
+    cl_driver.h
     cl_driver.cpp
     sim/sim_driver.c
+    sim/sim_driver.h
+    sim/sim_simulator.c
+    sim/sim_simulator.h
     intel/intel_gpgpu.c
     intel/intel_batchbuffer.c
     intel/intel_driver.c

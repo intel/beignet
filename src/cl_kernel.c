@@ -35,6 +35,7 @@
 LOCAL void
 cl_kernel_delete(cl_kernel k)
 {
+  uint32_t i;
   if (k == NULL) return;
 
   /* We are not done with the kernel */
@@ -46,6 +47,13 @@ cl_kernel_delete(cl_kernel k)
   if (k->ref_its_program) cl_program_delete(k->program);
   /* Release the curbe if allocated */
   if (k->curbe) cl_free(k->curbe);
+  /* Release the argument array if required */
+  if (k->args) {
+    for (i = 0; i < k->arg_n; ++i)
+      if (k->args[i].mem != NULL)
+        cl_mem_delete(k->args[i].mem);
+    cl_free(k->args);
+  }
   k->magic = CL_MAGIC_DEAD_HEADER; /* For safety */
   cl_free(k);
 }
@@ -83,9 +91,56 @@ cl_kernel_add_ref(cl_kernel k)
 LOCAL cl_int
 cl_kernel_set_arg(cl_kernel k, cl_uint index, size_t sz, const void *value)
 {
-  cl_int err = CL_SUCCESS;
+  uint32_t offset;            /* where to patch */
+  enum gbe_arg_type arg_type; /* kind of argument */
+  size_t arg_sz;              /* size of the argument */
+  cl_mem mem;                 /* for __global, __constant and image arguments */
 
-  return err;
+  if (UNLIKELY(index >= k->arg_n))
+    return CL_INVALID_ARG_INDEX;
+  arg_type = gbe_kernel_get_arg_type(k->opaque, index);
+  arg_sz = gbe_kernel_get_arg_size(k->opaque, index);
+  if (UNLIKELY(arg_sz != sz))
+    return CL_INVALID_ARG_SIZE;
+
+  /* Copy the structure or the value directly into the curbe */
+  if (arg_type == GBE_ARG_VALUE) {
+    if (UNLIKELY(value == NULL))
+      return CL_INVALID_KERNEL_ARGS;
+    offset = gbe_kernel_get_curbe_offset(k->opaque, GBE_CURBE_KERNEL_ARGUMENT, index);
+    assert(offset + sz <= k->curbe_sz);
+    memcpy(k->curbe + offset, value, sz);
+    k->args[index].local_sz = 0;
+    k->args[index].is_set = 1;
+    k->args[index].mem = NULL;
+    return CL_SUCCESS;
+  }
+
+  /* For a local pointer just save the size */
+  if (arg_type == GBE_ARG_LOCAL_PTR) {
+    if (UNLIKELY(value != NULL))
+      return CL_INVALID_KERNEL_ARGS;
+    k->args[index].local_sz = sz;
+    k->args[index].is_set = 1;
+    k->args[index].mem = NULL;
+    return CL_SUCCESS;
+  }
+
+  /* Otherwise, we just need to check that this is a buffer */
+  if (UNLIKELY(value == NULL))
+    return CL_INVALID_KERNEL_ARGS;
+  mem = *(cl_mem*) value;
+  if (UNLIKELY(mem->magic != CL_MAGIC_MEM_HEADER))
+    return CL_INVALID_ARG_VALUE;
+  if (mem->is_image)
+    if (UNLIKELY(arg_type == GBE_ARG_IMAGE))
+      return CL_INVALID_ARG_VALUE;
+  cl_mem_add_ref(mem);
+  k->args[index].mem = mem;
+  k->args[index].is_set = 1;
+  k->args[index].local_sz = 0;
+
+  return CL_SUCCESS;
 }
 
 LOCAL uint32_t
@@ -105,6 +160,7 @@ cl_kernel_setup(cl_kernel k, gbe_kernel opaque)
   const uint32_t code_sz = gbe_kernel_get_code_size(opaque);
   const char *code = gbe_kernel_get_code(opaque);
   k->bo = cl_buffer_alloc(bufmgr, "CL kernel", code_sz, 64u);
+  k->arg_n = gbe_kernel_get_arg_num(opaque);
 
   /* Upload the code */
   cl_buffer_subdata(k->bo, 0, code_sz, code);
@@ -137,6 +193,8 @@ cl_kernel_dup(cl_kernel from)
   to->ref_n = 1;
   to->magic = CL_MAGIC_KERNEL_HEADER;
   to->program = from->program;
+  to->arg_n = from->arg_n;
+  TRY_ALLOC_NO_ERR(to->args, cl_calloc(to->arg_n, sizeof(cl_argument)));
 
   /* Retain the bos */
   if (from->bo)       cl_buffer_reference(from->bo);

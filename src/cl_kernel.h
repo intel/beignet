@@ -32,18 +32,28 @@
 /* This is the kernel as it is interfaced by the compiler */
 struct _gbe_kernel;
 
-/*! One OCL function */
+/* We need to save buffer data for relocation and binding and we must figure out
+ * if all arguments are properly set
+ */
+typedef struct cl_argument {
+  cl_mem mem;           /* For image and regular buffers */
+  uint32_t local_sz:31; /* For __local size specification */
+  uint32_t is_set:1;    /* All args must be set before NDRange */
+} cl_argument;
+
+/* One OCL function */
 struct _cl_kernel {
-  uint64_t magic;           /* To identify it as a kernel */
-  volatile int ref_n;       /* We reference count this object */
-  cl_buffer bo;             /* The code itself */
-  cl_buffer const_bo;       /* Buffer for all __constants values in the OCL program */
-  cl_program program;       /* Owns this structure (and pointers) */
-  gbe_kernel opaque;        /* (Opaque) compiler structure for the OCL kernel */
-  char *curbe;              /* One curbe per kernel */
-  size_t curbe_sz;          /* Size of it */
-  
-  uint8_t ref_its_program;  /* True only for the user kernel (created by clCreateKernel) */
+  uint64_t magic;             /* To identify it as a kernel */
+  volatile int ref_n;         /* We reference count this object */
+  cl_buffer bo;               /* The code itself */
+  cl_buffer const_bo;         /* Buffer for all __constants values in the OCL program */
+  cl_program program;         /* Owns this structure (and pointers) */
+  gbe_kernel opaque;          /* (Opaque) compiler structure for the OCL kernel */
+  char *curbe;                /* One curbe per kernel */
+  size_t curbe_sz;            /* Size of it */
+  cl_argument *args;          /* To track argument setting */
+  uint32_t arg_n:31;          /* Number of arguments */
+  uint32_t ref_its_program:1; /* True only for the user kernel (created by clCreateKernel) */
 };
 
 /* Allocate an empty kernel */

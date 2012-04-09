@@ -87,7 +87,7 @@ cl_curbe_fill(cl_kernel ker,
               const size_t *global_wk_sz,
               const size_t *local_wk_sz)
 {
-  uint32_t offset;
+  int32_t offset;
 #define UPLOAD(ENUM, VALUE)                                              \
   if ((offset = gbe_kernel_get_curbe_offset(ker->opaque, ENUM, 0)) >= 0) \
     *((uint32_t *) (curbe + offset)) = VALUE;

@@ -621,11 +621,11 @@ clGetKernelWorkGroupInfo(cl_kernel                   kernel,
                          void *                      param_value,
                          size_t *                    param_value_size_ret)
 {
-  return cl_get_kernel_workgroup_info(device, 
-					param_name, 
-					param_value_size, 
-					param_value, 
-					param_value_size_ret);
+  return cl_get_kernel_workgroup_info(device,
+                                      param_name,
+                                      param_value_size,
+                                      param_value,
+                                      param_value_size_ret);
 }
 
 cl_int

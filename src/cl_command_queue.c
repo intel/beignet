@@ -105,26 +105,18 @@ cl_command_queue_bind_surface(cl_command_queue queue,
                               cl_buffer *scratch,
                               uint32_t local_sz)
 {
-#if 0
-  cl_context ctx = queue->ctx;
-  cl_gpgpu gpgpu = queue->gpgpu;
-  cl_buffer_mgr bufmgr = cl_context_get_bufmgr(ctx);
-  cl_buffer sync_bo = NULL;
-  cl_int err = CL_SUCCESS;
+  /* Bind all user buffers (given by clSetKernelArg) */
+  uint32_t i;
+  for (i = 0; i < k->arg_n; ++k) {
+    uint32_t offset; // location of the address in the curbe
+    if (gbe_kernel_get_arg_type(k->opaque, i) != GBE_ARG_GLOBAL_PTR &&
+        gbe_kernel_get_arg_type(k->opaque, i) != GBE_ARG_CONSTANT_PTR)
+      continue;
+    offset = gbe_kernel_get_curbe_offset(k->opaque, GBE_CURBE_KERNEL_ARGUMENT, i);
+    cl_gpgpu_bind_buf(queue->gpgpu, k->args[i].mem->bo, offset, cc_llc_l3);
+  }
 
-  /* Now bind a bo used for synchronization */
-  sync_bo = cl_buffer_alloc(bufmgr, "sync surface", 64, 64);
-  // cl_gpgpu_bind_buf(gpgpu, GEN_MAX_SURFACES-1, sync_bo, cc_llc_l3);
-  if (queue->last_batch != NULL)
-    cl_buffer_unreference(queue->last_batch);
-  queue->last_batch = sync_bo;
-
-// error:
-  assert(err == CL_SUCCESS); /* Cannot fail here */
-  return err;
-#else
   return CL_SUCCESS;
-#endif
 }
 
 #if USE_FULSIM
