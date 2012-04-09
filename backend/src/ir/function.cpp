@@ -28,10 +28,7 @@ namespace gbe {
 namespace ir {
 
   Function::Function(const std::string &name, Profile profile) :
-    name(name), profile(profile)
-  {
-      initProfile(*this);
-  }
+    name(name), profile(profile) { initProfile(*this); }
 
   Function::~Function(void) {
     for (auto it = blocks.begin(); it != blocks.end(); ++it)

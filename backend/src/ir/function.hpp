@@ -104,11 +104,12 @@ namespace ir {
   {
     enum Type
     {
-      GLOBAL_POINTER    = 0, /* __global */
-      CONSTANT_POINTER  = 1, /* __constant */
-      LOCAL_POINTER     = 2, /* __local */
-      VALUE             = 3, /* int, float */
-      STRUCTURE         = 4  /* struct foo */
+      GLOBAL_POINTER    = 0, // __global
+      CONSTANT_POINTER  = 1, // __constant
+      LOCAL_POINTER     = 2, // __local
+      VALUE             = 3, // int, float
+      STRUCTURE         = 4, // struct foo
+      IMAGE             = 5  // image*d_t
     };
     /*! Create a function input */
     INLINE FunctionInput(Type type, Register reg, uint32_t elementSize = 0u) :

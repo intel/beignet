@@ -97,5 +97,5 @@ if (GBE_COMPILE_UTESTS)
 endif (GBE_COMPILE_UTESTS)
 
 install (TARGETS gbe LIBRARY DESTINATION lib)
-install (FILES backend/program.h DESTINATION include/gen)
+install (FILES backend/program.h backend/simulator.h DESTINATION include/gen)
 

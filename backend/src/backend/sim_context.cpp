@@ -41,13 +41,18 @@ namespace gbe
   void SimContext::emitCode(void) {
     SimKernel *simKernel = static_cast<SimKernel*>(this->kernel);
     char srcStr[L_tmpnam+1], libStr[L_tmpnam+1];
-    const std::string srcName = std::string(tmpnam_r(srcStr)) + ".cpp"; /* unsecure but we don't care */
-    const std::string libName = std::string(tmpnam_r(libStr)) + ".so";  /* unsecure but we don't care */
+    const std::string srcName = std::string(tmpnam_r(srcStr)) + ".cpp"; /* unsafe! */
+    const std::string libName = std::string(tmpnam_r(libStr)) + ".so";  /* unsafe! */
 
     /* Output the code first */
     std::ofstream ostream;
     ostream.open(srcName);
-    ostream << "extern \"C\" void " << name << "() {}" << std::endl;
+    ostream << "#include <stdint.h>\n";
+    ostream << "typedef struct _gen_simulator *gen_simulator;\n";
+    ostream << "extern \"C\" void " << name
+            << "(gen_simulator sim, "
+            << "uint32_t thread, uint32_t group_x, uint32_t group_y, uint32_t group_z) {}"
+            << std::endl;
     ostream.close();
 
     /* Compile the function */

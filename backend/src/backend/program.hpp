@@ -46,7 +46,7 @@ namespace gbe {
 
   /*! Stores the offset where to patch where to patch */
   struct PatchInfo {
-    INLINE PatchInfo(gbe_curbe_value type, uint32_t subType = 0u, uint32_t offset = 0u) :
+    INLINE PatchInfo(gbe_curbe_type type, uint32_t subType = 0u, uint32_t offset = 0u) :
       type(uint32_t(type)), subType(subType), offset(offset) {}
     INLINE PatchInfo(void) {}
     uint32_t type : 8;
@@ -84,13 +84,16 @@ namespace gbe {
       return argID >= argNum ? GBE_ARG_INVALID : args[argID].type;
     }
     /*! Get the offset where to patch. Returns -1 if no patch needed */
-    int32_t getCurbeOffset(gbe_curbe_value value, uint32_t subvalue) const;
+    int32_t getCurbeOffset(gbe_curbe_type type, uint32_t subType) const;
+    /*! Get the curbe size required by the kernel */
+    uint32_t getCurbeSize(void) const { return this->curbeSize; }
   protected:
     friend class Context;       //!< Owns the kernels
     const std::string name;     //!< Kernel name
     KernelArgument *args;       //!< Each argument
     uint32_t argNum;            //!< Number of function arguments
     vector<PatchInfo> patches;  //!< Indicates how to build the curbe
+    uint32_t curbeSize;         //!< Size of the data to push
   };
 
   /*! Describe a compiled program */

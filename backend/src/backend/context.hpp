@@ -60,6 +60,8 @@ namespace gbe
   protected:
     /*! Build the curbe patch list for the given kernel */
     void buildPatchList(void);
+    /*! Build the list of arguments to set to launch the kernel */
+    void buildArgList(void);
     /*! Build the instruction stream */
     virtual void emitCode(void) = 0;
     /*! Allocate a new empty kernel */

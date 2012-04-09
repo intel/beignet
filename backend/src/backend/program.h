@@ -21,7 +21,7 @@
  * \file program.h
  * \author Benjamin Segovia <benjamin.segovia@intel.com>
  *
- * C-like interface for the gen kernels and programs (either real Gen ISA or Gen
+ * C interface for the gen kernels and programs (either real Gen ISA or Gen
  * simulator)
  */
 
@@ -44,15 +44,19 @@ typedef struct _gbe_kernel *gbe_kernel;
 /*! Argument type for each function call */
 enum gbe_arg_type {
   GBE_ARG_VALUE = 0,            // int, float and so on
-  GBE_ARG_GLOBAL_PTR = 1,       // __global, __constant
-  GBE_ARG_STRUCTURE = 2,        // By value structure
-  GBE_ARG_IMAGE = 3,            // image2d_t, image3d_t
+  GBE_ARG_GLOBAL_PTR = 1,       // __global
+  GBE_ARG_CONSTANT_PTR = 2,     // __constant
+  GBE_ARG_LOCAL_PTR = 3,        // __local
+  GBE_ARG_IMAGE = 4,            // image2d_t, image3d_t
   GBE_ARG_INVALID = 0xffffffff
 };
 
 /*! Constant buffer values (ie values to setup in the constant buffer) */
-enum gbe_curbe_value {
-  GBE_CURBE_LOCAL_SIZE_X = 0, /* Order matters! */
+enum gbe_curbe_type {
+  GBE_CURBE_LOCAL_ID_X = 0,
+  GBE_CURBE_LOCAL_ID_Y,
+  GBE_CURBE_LOCAL_ID_Z,
+  GBE_CURBE_LOCAL_SIZE_X,
   GBE_CURBE_LOCAL_SIZE_Y,
   GBE_CURBE_LOCAL_SIZE_Z,
   GBE_CURBE_GLOBAL_SIZE_X,
@@ -61,10 +65,13 @@ enum gbe_curbe_value {
   GBE_CURBE_GLOBAL_OFFSET_X,
   GBE_CURBE_GLOBAL_OFFSET_Y,
   GBE_CURBE_GLOBAL_OFFSET_Z,
+  GBE_CURBE_GROUP_NUM_X,
+  GBE_CURBE_GROUP_NUM_Y,
+  GBE_CURBE_GROUP_NUM_Z,
   GBE_CURBE_IMAGE_WIDTH,
   GBE_CURBE_IMAGE_HEIGHT,
   GBE_CURBE_IMAGE_DEPTH,
-  GBE_CURBE_BUFFER_ADDRESS
+  GBE_CURBE_KERNEL_ARGUMENT
 };
 
 /*! Create a new program from the given source code (zero terminated string) */
@@ -126,8 +133,12 @@ extern gbe_kernel_get_arg_type_cb *gbe_kernel_get_arg_type;
 typedef uint32_t (gbe_kernel_get_simd_width_cb)(gbe_kernel);
 extern gbe_kernel_get_simd_width_cb *gbe_kernel_get_simd_width;
 
+/*! Get the curbe size required by the kernel */
+typedef int32_t (gbe_kernel_get_curbe_size_cb)(gbe_kernel);
+extern gbe_kernel_get_curbe_size_cb *gbe_kernel_get_curbe_size;
+
 /*! Get the curbe offset where to put the data. Returns -1 if not required */
-typedef int32_t (gbe_kernel_get_curbe_offset_cb)(enum gbe_arg_type type, uint32_t sub_type);
+typedef int32_t (gbe_kernel_get_curbe_offset_cb)(gbe_kernel, enum gbe_curbe_type type, uint32_t sub_type);
 extern gbe_kernel_get_curbe_offset_cb *gbe_kernel_get_curbe_offset;
 
 /*! Indicates if a work group size is required. Return the required width or 0

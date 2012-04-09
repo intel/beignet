@@ -30,21 +30,37 @@ namespace ir {
 
   namespace ocl
   {
+#if GBE_DEBUG
+#define DECL_NEW_REG(FAMILY, REG)       \
+   r = fn.newRegister(FAMILY_DWORD);    \
+   GBE_ASSERT(r == REG);
+#else
+#define DECL_NEW_REG(FAMILY, REG)       \
+   fn.newRegister(FAMILY_DWORD);
+#endif /* GBE_DEBUG */
     static void init(Function &fn) {
       IF_DEBUG(Register r);
-      IF_DEBUG(r =) fn.newRegister(FAMILY_DWORD);
-      GBE_ASSERT(r == lid0);
-      IF_DEBUG(r =) fn.newRegister(FAMILY_DWORD);
-      GBE_ASSERT(r == lid1);
-      IF_DEBUG(r =) fn.newRegister(FAMILY_DWORD);
-      GBE_ASSERT(r == lid2);
-      IF_DEBUG(r =) fn.newRegister(FAMILY_DWORD);
-      GBE_ASSERT(r == gid0);
-      IF_DEBUG(r =) fn.newRegister(FAMILY_DWORD);
-      GBE_ASSERT(r == gid1);
-      IF_DEBUG(r =) fn.newRegister(FAMILY_DWORD);
-      GBE_ASSERT(r == gid2);
+      DECL_NEW_REG(FAMILY_DWORD, lid0);
+      DECL_NEW_REG(FAMILY_DWORD, lid1);
+      DECL_NEW_REG(FAMILY_DWORD, lid2);
+      DECL_NEW_REG(FAMILY_DWORD, groupid0);
+      DECL_NEW_REG(FAMILY_DWORD, groupid1);
+      DECL_NEW_REG(FAMILY_DWORD, groupid2);
+      DECL_NEW_REG(FAMILY_DWORD, numgroup0);
+      DECL_NEW_REG(FAMILY_DWORD, numgroup1);
+      DECL_NEW_REG(FAMILY_DWORD, numgroup2);
+      DECL_NEW_REG(FAMILY_DWORD, lsize0);
+      DECL_NEW_REG(FAMILY_DWORD, lsize1);
+      DECL_NEW_REG(FAMILY_DWORD, lsize2);
+      DECL_NEW_REG(FAMILY_DWORD, gsize0);
+      DECL_NEW_REG(FAMILY_DWORD, gsize1);
+      DECL_NEW_REG(FAMILY_DWORD, gsize2);
+      DECL_NEW_REG(FAMILY_DWORD, goffset0);
+      DECL_NEW_REG(FAMILY_DWORD, goffset1);
+      DECL_NEW_REG(FAMILY_DWORD, goffset2);
     }
+#undef DECL_NEW_REG
+
   } /* namespace ocl */
 
   void initProfile(Function &fn) {

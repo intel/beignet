@@ -41,13 +41,25 @@ namespace ir {
   /*! Registers used for ocl */
   namespace ocl
   {
-    static const Register lid0 = Register(0); // get_local_id(0)
-    static const Register lid1 = Register(1); // get_local_id(1)
-    static const Register lid2 = Register(2); // get_local_id(2)
-    static const Register gid0 = Register(3); // get_global_id(0)
-    static const Register gid1 = Register(4); // get_global_id(1)
-    static const Register gid2 = Register(5); // get_global_id(2)
-    static const uint32_t regNum = 6;         // number of special registers
+    static const Register lid0 = Register(0);      // get_local_id(0)
+    static const Register lid1 = Register(1);      // get_local_id(1)
+    static const Register lid2 = Register(2);      // get_local_id(2)
+    static const Register groupid0 = Register(3);  // get_group_id(0)
+    static const Register groupid1 = Register(4);  // get_group_id(1)
+    static const Register groupid2 = Register(5);  // get_group_id(2)
+    static const Register numgroup0 = Register(6); // get_group_id(0)
+    static const Register numgroup1 = Register(7); // get_group_id(1)
+    static const Register numgroup2 = Register(8); // get_group_id(2)
+    static const Register lsize0 = Register(9);    // get_local_size(0)
+    static const Register lsize1 = Register(10);   // get_local_size(1)
+    static const Register lsize2 = Register(11);   // get_local_size(2)
+    static const Register gsize0 = Register(12);   // get_global_size(0)
+    static const Register gsize1 = Register(13);   // get_global_size(1)
+    static const Register gsize2 = Register(14);   // get_global_size(2)
+    static const Register goffset0 = Register(15); // get_global_offset(0)
+    static const Register goffset1 = Register(16); // get_global_offset(1)
+    static const Register goffset2 = Register(17); // get_global_offset(2)
+    static const uint32_t regNum = 18;             // number of special registers
   } /* namespace ocl */
 
   /*! Initialize the profile of the given function */

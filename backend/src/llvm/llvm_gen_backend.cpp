@@ -1176,18 +1176,42 @@ namespace gbe
     // Get the name of the called function and handle it. We should use a hash
     // map later
     const std::string fnName = Callee->getName();
-    if (fnName == "__gen_ocl_get_global_id0")
-      regTranslator.newScalarProxy(ir::ocl::gid0, dst);
-    else if (fnName == "__gen_ocl_get_global_id1")
-      regTranslator.newScalarProxy(ir::ocl::gid1, dst);
-    else if (fnName == "__gen_ocl_get_global_id2")
-      regTranslator.newScalarProxy(ir::ocl::gid2, dst);
+    if (fnName == "__gen_ocl_get_group_id0")
+      regTranslator.newScalarProxy(ir::ocl::groupid0, dst);
+    else if (fnName == "__gen_ocl_get_group_id1")
+      regTranslator.newScalarProxy(ir::ocl::groupid1, dst);
+    else if (fnName == "__gen_ocl_get_group_id2")
+      regTranslator.newScalarProxy(ir::ocl::groupid2, dst);
     else if (fnName == "__gen_ocl_get_local_id0")
       regTranslator.newScalarProxy(ir::ocl::lid0, dst);
     else if (fnName == "__gen_ocl_get_local_id1")
       regTranslator.newScalarProxy(ir::ocl::lid1, dst);
     else if (fnName == "__gen_ocl_get_local_id2")
       regTranslator.newScalarProxy(ir::ocl::lid2, dst);
+    else if (fnName == "__gen_ocl_get_num_groups0")
+      regTranslator.newScalarProxy(ir::ocl::numgroup0, dst);
+    else if (fnName == "__gen_ocl_get_num_groups1")
+      regTranslator.newScalarProxy(ir::ocl::numgroup1, dst);
+    else if (fnName == "__gen_ocl_get_num_groups2")
+      regTranslator.newScalarProxy(ir::ocl::numgroup2, dst);
+    else if (fnName == "__gen_ocl_get_local_size0")
+      regTranslator.newScalarProxy(ir::ocl::lsize0, dst);
+    else if (fnName == "__gen_ocl_get_local_size1")
+      regTranslator.newScalarProxy(ir::ocl::lsize1, dst);
+    else if (fnName == "__gen_ocl_get_local_size2")
+      regTranslator.newScalarProxy(ir::ocl::lsize2, dst);
+    else if (fnName == "__gen_ocl_get_global_size0")
+      regTranslator.newScalarProxy(ir::ocl::gsize0, dst);
+    else if (fnName == "__gen_ocl_get_global_size1")
+      regTranslator.newScalarProxy(ir::ocl::gsize1, dst);
+    else if (fnName == "__gen_ocl_get_global_size2")
+      regTranslator.newScalarProxy(ir::ocl::gsize2, dst);
+    else if (fnName == "__gen_ocl_get_global_offset0")
+      regTranslator.newScalarProxy(ir::ocl::goffset0, dst);
+    else if (fnName == "__gen_ocl_get_global_offset1")
+      regTranslator.newScalarProxy(ir::ocl::goffset1, dst);
+    else if (fnName == "__gen_ocl_get_global_offset2")
+      regTranslator.newScalarProxy(ir::ocl::goffset2, dst);
     else
       NOT_SUPPORTED;
   }
