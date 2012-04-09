@@ -107,7 +107,7 @@ cl_command_queue_bind_surface(cl_command_queue queue,
 {
   /* Bind all user buffers (given by clSetKernelArg) */
   uint32_t i;
-  for (i = 0; i < k->arg_n; ++k) {
+  for (i = 0; i < k->arg_n; ++i) {
     uint32_t offset; // location of the address in the curbe
     if (gbe_kernel_get_arg_type(k->opaque, i) != GBE_ARG_GLOBAL_PTR &&
         gbe_kernel_get_arg_type(k->opaque, i) != GBE_ARG_CONSTANT_PTR)
