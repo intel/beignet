@@ -75,7 +75,5 @@ namespace gbe
     if (UNLIKELY(simKernel->fn == NULL))
       FATAL("Failed to get the symbol from the compiled shared object");
   }
-
 } /* namespace gbe */
-
 

@@ -23,68 +23,75 @@
 static INLINE bool ok(float x, float y) {
   return fabs(x-y) / (1.f + std::max(fabs(x), fabs(y))) < 1.e-6;
 }
+static INLINE bool ok(int x, int y) { return x == y; }
 
-NOINLINE void hop(const float *p0, const float *p1, float *p2)
-{
-  genf16 _0,_1,_2;
-  LOAD(_0, p0);
-  LOAD(_1, p1);
-  LOAD(_2, p2);
-  MUL(_0, _0, _1);
-  ADD(_0, _1, _2);
-  MUL(_1, _1, _2);
-  SUB(_0, _0, _2);
-  SUB(_0, _1, _0);
-  STORE(_0, p2);
-}
+#define CHECK_BINARY_OP(TYPE,FN,OP,DST,SRC0,SRC1,ELEM0,ELEM1)\
+  do {\
+    FN(DST, SRC0, SRC1);\
+    TYPE tmp[32];\
+    STORE(DST, (char*) tmp);\
+    for (uint32_t i = 0; i < elemNum(DST); ++i) {\
+      const TYPE verification = ELEM0 OP ELEM1;\
+      GBE_ASSERT(ok(verification, tmp[i]));\
+    }\
+  } while (0);
 
 static void utestFP(void)
 {
   genf1 _0, _4, _5;
   genf16 _1, _2, _3;
-  const float fdata16[32] = {1.f,1.f,2.f, 3.f, 4.f, 5.f, 6.f, 7.f,
-                             8.f,9.f,10.f,11.f,12.f,13.f,14.f,15.f,
-                             8.f,9.f,10.f,11.f,12.f,13.f,14.f,15.f,
-                             1.f,1.f,2.f, 3.f, 4.f, 5.f, 6.f, 7.f};
+  const float data[32] = {1.f,1.f,2.f, 3.f, 4.f, 5.f, 6.f, 7.f,
+                          8.f,9.f,10.f,11.f,12.f,13.f,14.f,15.f,
+                          8.f,9.f,10.f,11.f,12.f,13.f,14.f,15.f,
+                          1.f,1.f,2.f, 3.f, 4.f, 5.f, 6.f, 7.f};
 
-  LOAD(_0, fdata16+4);
-  LOAD(_4, fdata16+5);
-  LOAD(_1, fdata16);
-  LOAD(_2, fdata16);
-#define CHECK_BIN_FLOAT(FN,OP,DST,SRC0,SRC1,ELEM0,ELEM1)\
-  do {\
-    FN(DST, SRC0, SRC1);\
-    float tmp[32];\
-    STORE(DST, tmp);\
-    for (uint32_t i = 0; i < elemNum(DST); ++i) {\
-      const float verification = ELEM0 OP ELEM1;\
-      GBE_ASSERT(ok(verification, tmp[i]));\
-    }\
-  } while (0);
-  CHECK_BIN_FLOAT(MUL,*,_3,_2,_1,fdata16[i],fdata16[i]);
-  CHECK_BIN_FLOAT(DIV,/,_3,_2,_1,fdata16[i],fdata16[i]);
-  CHECK_BIN_FLOAT(ADD,+,_3,_2,_1,fdata16[i],fdata16[i]);
-  CHECK_BIN_FLOAT(SUB,-,_3,_2,_1,fdata16[i],fdata16[i]);
-  CHECK_BIN_FLOAT(MUL,*,_3,_2,_0,fdata16[i],fdata16[4]);
-  CHECK_BIN_FLOAT(DIV,/,_3,_2,_0,fdata16[i],fdata16[4]);
-  CHECK_BIN_FLOAT(ADD,+,_3,_2,_0,fdata16[i],fdata16[4]);
-  CHECK_BIN_FLOAT(SUB,-,_3,_2,_0,fdata16[i],fdata16[4]);
-  CHECK_BIN_FLOAT(MUL,*,_3,_2,_0,fdata16[i],fdata16[4]);
-  CHECK_BIN_FLOAT(DIV,/,_3,_2,_0,fdata16[i],fdata16[4]);
-  CHECK_BIN_FLOAT(ADD,+,_3,_2,_0,fdata16[i],fdata16[4]);
-  CHECK_BIN_FLOAT(SUB,-,_3,_2,_0,fdata16[i],fdata16[4]);
-  CHECK_BIN_FLOAT(MUL,*,_5,_4,_0,fdata16[5],fdata16[4]);
-  CHECK_BIN_FLOAT(DIV,/,_5,_4,_0,fdata16[5],fdata16[4]);
-  CHECK_BIN_FLOAT(ADD,+,_5,_4,_0,fdata16[5],fdata16[4]);
-  CHECK_BIN_FLOAT(SUB,-,_5,_4,_0,fdata16[5],fdata16[4]);
-#undef CHECK_BIN_FLOAT
-  float t0[16], t1[16], t2[16];
-  hop(t0,t1,t2);
+  LOAD(_0, (const char *) (data+4));
+  LOAD(_4, (const char *) (data+5));
+  LOAD(_1, (const char *) (data));
+  LOAD(_2, (const char *) (data));
+  CHECK_BINARY_OP(float,MUL,*,_3,_2,_1,data[i],data[i]);
+  CHECK_BINARY_OP(float,DIV,/,_3,_2,_1,data[i],data[i]);
+  CHECK_BINARY_OP(float,ADD,+,_3,_2,_1,data[i],data[i]);
+  CHECK_BINARY_OP(float,SUB,-,_3,_2,_1,data[i],data[i]);
+  CHECK_BINARY_OP(float,MUL,*,_3,_2,_0,data[i],data[4]);
+  CHECK_BINARY_OP(float,DIV,/,_3,_2,_0,data[i],data[4]);
+  CHECK_BINARY_OP(float,ADD,+,_3,_2,_0,data[i],data[4]);
+  CHECK_BINARY_OP(float,SUB,-,_3,_2,_0,data[i],data[4]);
+  CHECK_BINARY_OP(float,MUL,*,_3,_2,_0,data[i],data[4]);
+  CHECK_BINARY_OP(float,DIV,/,_3,_2,_0,data[i],data[4]);
+  CHECK_BINARY_OP(float,ADD,+,_3,_2,_0,data[i],data[4]);
+  CHECK_BINARY_OP(float,SUB,-,_3,_2,_0,data[i],data[4]);
+  CHECK_BINARY_OP(float,MUL,*,_5,_4,_0,data[5],data[4]);
+  CHECK_BINARY_OP(float,DIV,/,_5,_4,_0,data[5],data[4]);
+  CHECK_BINARY_OP(float,ADD,+,_5,_4,_0,data[5],data[4]);
+  CHECK_BINARY_OP(float,SUB,-,_5,_4,_0,data[5],data[4]);
+}
+
+static void utestInt(void)
+{
+  geni1 _0, _4, _5;
+  geni16 _1, _2, _3;
+  const int data[32] = {1,1,2, 3, 4, 5, 6, 7,
+                        8,9,10,11,12,13,14,15,
+                        8,9,10,11,12,13,14,15,
+                        1,1,2, 3, 4, 5, 6, 7};
+  LOAD(_0, (const char *) (data+4));
+  LOAD(_4, (const char *) (data+5));
+  LOAD(_1, (const char *) (data));
+  LOAD(_2, (const char *) (data));
+  CHECK_BINARY_OP(int,ADD,+,_3,_2,_1,data[i],data[i]);
+  CHECK_BINARY_OP(int,SUB,-,_3,_2,_1,data[i],data[i]);
+  CHECK_BINARY_OP(int,ADD,+,_3,_2,_0,data[i],data[4]);
+  CHECK_BINARY_OP(int,SUB,-,_3,_2,_0,data[i],data[4]);
+  CHECK_BINARY_OP(int,ADD,+,_5,_4,_0,data[5],data[4]);
+  CHECK_BINARY_OP(int,SUB,-,_5,_4,_0,data[5],data[4]);
+
 }
 
 static void utestVector(void)
 {
   UTEST_EXPECT_SUCCESS(utestFP());
+  UTEST_EXPECT_SUCCESS(utestInt());
 }
 
 UTEST_REGISTER(utestVector)
