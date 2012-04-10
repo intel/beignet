@@ -11,8 +11,8 @@ foreach (to_stringify_file ${TO_STRINGIFY_FILES})
     COMMAND echo "\\\#include ${string_header}" >> ${output_file}
     COMMAND echo "namespace gbe {" >> ${output_file}
     COMMAND echo "std::string ${to_stringify_file}_str = " >> ${output_file}
-    # Yeah!!! welcome to quote hell!
-    COMMAND cat ${input_file} | sed 's/\\\"/\\\\\\\"/g' | awk '{ printf \(\"\\"%s\\\\n\\"\\n\", $$0\) }' >> ${output_file}
+    # Yeah!!! welcome to back slash hell
+    COMMAND cat ${input_file} |sed 's/\\\\/\\\\\\\\/g' | sed 's/\\\"/\\\\\\\"/g' | awk '{ printf \(\"\\"%s\\\\n\\"\\n\", $$0\) }' >> ${output_file}
     COMMAND echo "\;" >> ${output_file}
     COMMAND echo "}" >> ${output_file}
     COMMAND echo "" >> ${output_file}

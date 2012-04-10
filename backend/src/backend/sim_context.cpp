@@ -39,6 +39,7 @@ namespace gbe
   }
 
   extern std::string simulator_str;
+  extern std::string sim_vector_str;
 
   void SimContext::emitCode(void) {
     SimKernel *simKernel = static_cast<SimKernel*>(this->kernel);
@@ -50,6 +51,7 @@ namespace gbe
     std::ofstream ostream;
     ostream.open(srcName);
     ostream << simulator_str << std::endl;
+    ostream << sim_vector_str << std::endl;
     ostream << "#include <stdint.h>\n";
     ostream << "extern \"C\" void " << name
             << "(gbe_simulator sim, uint32_t thread, uint32_t group_x, uint32_t group_y, uint32_t group_z)" << std::endl
