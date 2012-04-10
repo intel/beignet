@@ -309,10 +309,10 @@ INLINE void SCATTER(const simd_dw<vectorNum> &value,
                     const simd_dw<vectorNum> &offset,
                     char *base_address) {
   for (uint32_t i = 0; i < vectorNum; ++i) {
-    const int v0 = _mm_extract_epi32(_mm_castps_si128(value.m[i]), 0);
-    const int v1 = _mm_extract_epi32(_mm_castps_si128(value.m[i]), 1);
-    const int v2 = _mm_extract_epi32(_mm_castps_si128(value.m[i]), 2);
-    const int v3 = _mm_extract_epi32(_mm_castps_si128(value.m[i]), 3);
+    const int v0 = _mm_extract_epi32(PS2SI(value.m[i]), 0);
+    const int v1 = _mm_extract_epi32(PS2SI(value.m[i]), 1);
+    const int v2 = _mm_extract_epi32(PS2SI(value.m[i]), 2);
+    const int v3 = _mm_extract_epi32(PS2SI(value.m[i]), 3);
     const int o0 = _mm_extract_epi32(offset.m[i], 0);
     const int o1 = _mm_extract_epi32(offset.m[i], 1);
     const int o2 = _mm_extract_epi32(offset.m[i], 2);
@@ -323,26 +323,44 @@ INLINE void SCATTER(const simd_dw<vectorNum> &value,
     *(int*)(base_address + o3) = v3;
   }
 }
-
+template <uint32_t vectorNum>
+INLINE void SCATTER(const scalar_dw &value,
+                    const simd_dw<vectorNum> &offset,
+                    char *base_address) {
+  SCATTER(simd_dw<vectorNum>(value), offset, base_address);
+}
+template <uint32_t vectorNum>
+INLINE void SCATTER(const simd_dw<vectorNum> &value,
+                    const scalar_dw &offset,
+                    char *base_address) {
+  SCATTER(value, simd_dw<vectorNum>(offset), base_address);
+}
+#include <cstdio>
 /* Gather */
 template <uint32_t vectorNum>
 INLINE void GATHER(simd_dw<vectorNum> &dst,
                    const simd_dw<vectorNum> &offset,
-                   char *base_address) {
+                   const char *base_address) {
   for (uint32_t i = 0; i < vectorNum; ++i) {
     const int o0 = _mm_extract_epi32(offset.m[i], 0);
     const int o1 = _mm_extract_epi32(offset.m[i], 1);
     const int o2 = _mm_extract_epi32(offset.m[i], 2);
     const int o3 = _mm_extract_epi32(offset.m[i], 3);
-    const int v0 = *(int*)(base_address + o0);
-    const int v1 = *(int*)(base_address + o1);
-    const int v2 = *(int*)(base_address + o2);
-    const int v3 = *(int*)(base_address + o3);
-    _mm_insert_epi32(_mm_castps_si128(dst.m[i]), v0, 0);
-    _mm_insert_epi32(_mm_castps_si128(dst.m[i]), v1, 1);
-    _mm_insert_epi32(_mm_castps_si128(dst.m[i]), v2, 2);
-    _mm_insert_epi32(_mm_castps_si128(dst.m[i]), v3, 3);
+    const int v0 = *(const int*)(base_address + o0);
+    const int v1 = *(const int*)(base_address + o1);
+    const int v2 = *(const int*)(base_address + o2);
+    const int v3 = *(const int*)(base_address + o3);
+    dst.m[i] = SI2PS(_mm_insert_epi32(PS2SI(dst.m[i]), v0, 0));
+    dst.m[i] = SI2PS(_mm_insert_epi32(PS2SI(dst.m[i]), v1, 1));
+    dst.m[i] = SI2PS(_mm_insert_epi32(PS2SI(dst.m[i]), v2, 2));
+    dst.m[i] = SI2PS(_mm_insert_epi32(PS2SI(dst.m[i]), v3, 3));
   }
+}
+template <uint32_t vectorNum>
+INLINE void GATHER(simd_dw<vectorNum> &dst,
+                   const scalar_dw &offset,
+                   const char *base_address) {
+  GATHER(dst, simd_dw<vectorNum>(offset), base_address);
 }
 
 //////////////////////////////////////////////////////////////////////////////
@@ -386,7 +404,7 @@ INLINE void LOAD(scalar_dw &dst, const char *ptr) { dst.u = *(const uint32_t *) 
 INLINE void STORE(scalar_dw src, char *ptr) { *(uint32_t *) ptr = src.u; }
 INLINE void LOADI(scalar_dw &dst, uint32_t u) { dst.u = u; }
 INLINE void SCATTER(scalar_dw value, scalar_dw offset, char *base) { *(uint32_t*)(base + offset.u) = value.u; }
-INLINE void GATHER(scalar_dw &dst, scalar_dw offset, char *base) { dst.u = *(uint32_t*)(base + offset.u); }
+INLINE void GATHER(scalar_dw &dst, scalar_dw offset, const char *base) { dst.u = *(const uint32_t*)(base + offset.u); }
 
 //////////////////////////////////////////////////////////////////////////////
 // Identical instructions are forwarded

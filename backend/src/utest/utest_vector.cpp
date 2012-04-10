@@ -19,7 +19,7 @@
 
 #include "backend/sim/sim_vector.h"
 #include "utest/utest.hpp"
-
+#include <algorithm>
 
 static INLINE bool ok(float x, float y) {
   return fabs(x-y) / (1.f + std::max(fabs(x), fabs(y))) < 1.e-6;
@@ -330,6 +330,51 @@ static void utestFPCmp(void)
 }
 #undef CHECK_CMP_OP
 
+static void utestScatterGather(void)
+{
+  uint32_t data[64], gatherOffsets[64], scatterOffsets[64], dst[64];
+  simd1dw _0, _0s, _0g, _4, _4s, _4g;
+  simd16dw _1, _1s, _1g, _2, _2s, _2g;
+  simd8dw _6, _6s, _6g, _7, _7s, _7g;
+
+  // Create the value and offset arrays
+  for (uint32_t i = 0; i < 64; ++i) {
+    data[i] = i;
+    scatterOffsets[i] = gatherOffsets[i] = i * sizeof(uint32_t);
+  }
+  for (uint32_t i = 0; i < 63; ++i) {
+    const int gatherIndex = rand() % (63-i)+i+1;
+    const int scatterIndex = rand() % (63-i)+i+1;
+    std::swap(gatherOffsets[i], gatherOffsets[gatherIndex]);
+    std::swap(scatterOffsets[i], scatterOffsets[scatterIndex]);
+  }
+
+#define CHECK_SCATTER_GATHER_OP(INDEX)\
+    LOAD(_##INDEX##g, (const char *) (gatherOffsets+index##INDEX));\
+    LOAD(_##INDEX##s, (const char *) (scatterOffsets+index##INDEX));\
+    GATHER(_##INDEX, _##INDEX##g, (const char *) data);\
+    SCATTER(_##INDEX, _##INDEX##s, (char *) dst);\
+    for (uint32_t i = 0; i < elemNum(_##INDEX); ++i)\
+      GBE_ASSERT(data[gatherOffsets[index##INDEX+i] / sizeof(uint32_t)] ==\
+                 dst[scatterOffsets[index##INDEX+i] / sizeof(uint32_t)]);
+  for (uint32_t i = 0; i < 32; ++i) {
+    const int index0 = rand() % 32;
+    const int index1 = rand() % 16;
+    const int index2 = rand() % 16;
+    const int index4 = rand() % 32;
+    const int index6 = rand() % 16;
+    const int index7 = rand() % 32;
+    CHECK_SCATTER_GATHER_OP(0);
+    CHECK_SCATTER_GATHER_OP(1);
+    CHECK_SCATTER_GATHER_OP(2);
+    CHECK_SCATTER_GATHER_OP(4);
+    CHECK_SCATTER_GATHER_OP(6);
+    CHECK_SCATTER_GATHER_OP(7);
+  }
+#undef CHECK_SCATTER_GATHER_OP
+
+}
+
 static void utestVector(void)
 {
   UTEST_EXPECT_SUCCESS(utestFP());
@@ -338,6 +383,7 @@ static void utestVector(void)
   UTEST_EXPECT_SUCCESS(utestFPCmp());
   UTEST_EXPECT_SUCCESS(utestINT32Cmp());
   UTEST_EXPECT_SUCCESS(utestUINT32Cmp());
+  UTEST_EXPECT_SUCCESS(utestScatterGather());
 }
 
 UTEST_REGISTER(utestVector)
