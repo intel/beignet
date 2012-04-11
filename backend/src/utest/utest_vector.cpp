@@ -386,5 +386,6 @@ static void utestVector(void)
   UTEST_EXPECT_SUCCESS(utestScatterGather());
 }
 
+
 UTEST_REGISTER(utestVector)
 
