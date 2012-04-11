@@ -371,7 +371,7 @@ error:
   return err;
 }
 
-LOCAL cl_int
+ LOCAL cl_int
 cl_command_queue_finish(cl_command_queue queue)
 {
   if (queue->last_batch == NULL)
