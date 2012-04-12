@@ -45,12 +45,12 @@ cl_set_local_ids(char *data,
                  size_t id_offset,
                  size_t thread_n)
 {
-  uint16_t *ids[3] = {NULL,NULL,NULL};
+  uint32_t *ids[3] = {NULL,NULL,NULL};
   size_t i, j, k, curr = 0;
   cl_int err = CL_SUCCESS;
 
   for (i = 0; i < 3; ++i)
-    TRY_ALLOC(ids[i], (uint16_t*) alloca(sizeof(uint16_t)*thread_n*simd_sz));
+    TRY_ALLOC(ids[i], (uint32_t*) alloca(sizeof(uint32_t)*thread_n*simd_sz));
 
   /* Compute the IDs */
   for (k = 0; k < local_wk_sz[2]; ++k)
@@ -65,10 +65,9 @@ cl_set_local_ids(char *data,
   curr = 0;
   data += id_offset;
   for (i = 0; i < thread_n; ++i, data += cst_sz) {
-    /* Compiler use a GRF for each local ID (8 x 32 bits == 16 x 16 bits) */
-    uint16_t *ids0 = (uint16_t *) (data + 0);
-    uint16_t *ids1 = (uint16_t *) (data + 1*16*sizeof(uint16_t));
-    uint16_t *ids2 = (uint16_t *) (data + 2*16*sizeof(uint16_t));
+    uint32_t *ids0 = (uint32_t *) (data + 0);
+    uint32_t *ids1 = (uint32_t *) (data + 1*simd_sz*sizeof(uint32_t));
+    uint32_t *ids2 = (uint32_t *) (data + 2*simd_sz*sizeof(uint32_t));
     for (j = 0; j < simd_sz; ++j, ++curr) {
       ids0[j] = ids[0][curr];
       ids1[j] = ids[1][curr];
@@ -120,7 +119,8 @@ cl_command_queue_ND_range_gen7(cl_command_queue queue,
   cl_buffer private_bo = NULL, scratch_bo = NULL;
   cl_gpgpu_kernel kernel;
   const uint32_t simd_sz = cl_kernel_get_simd_width(ker);
-  size_t i, batch_sz = 0u, local_sz = 0u, thread_n = 0u, id_offset = 0u, cst_sz = 0u;
+  size_t i, batch_sz = 0u, local_sz = 0u, cst_sz = 0u, local_id_sz = 0u;
+  size_t thread_n = 0u, id_offset = 0u;
   cl_int err = CL_SUCCESS;
 
   /* Setup kernel */
@@ -140,7 +140,8 @@ cl_command_queue_ND_range_gen7(cl_command_queue queue,
   TRY (cl_kernel_work_group_sz, ker, local_wk_sz, 3, &local_sz);
   kernel.thread_n = thread_n = local_sz / simd_sz;
   id_offset = cst_sz = ALIGN(cst_sz, 32); /* Align the user data on 32 bytes */
-  kernel.cst_sz = cst_sz += 3 * 32;       /* Add local IDs (16 words) */
+  local_id_sz = 3 * simd_sz * sizeof(uint32_t); /* Add local IDs */
+  kernel.cst_sz = cst_sz += local_id_sz;
 
   /* Setup the kernel */
   cl_gpgpu_state_init(gpgpu, ctx->device->max_compute_unit, cst_sz / 32);
@@ -154,7 +155,7 @@ cl_command_queue_ND_range_gen7(cl_command_queue queue,
   TRY_ALLOC (final_curbe, (char*) alloca(thread_n * cst_sz));
   if (curbe)
     for (i = 0; i < thread_n; ++i)
-      memcpy(final_curbe + cst_sz * i, curbe, cst_sz - 3*32);
+      memcpy(final_curbe + cst_sz * i, curbe, cst_sz - local_id_sz);
   TRY (cl_set_local_ids, final_curbe, local_wk_sz, simd_sz, cst_sz, id_offset, thread_n);
   cl_gpgpu_upload_constants(gpgpu, final_curbe, thread_n*cst_sz);
 

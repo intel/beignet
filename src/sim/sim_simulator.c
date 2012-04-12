@@ -27,6 +27,7 @@ struct _sim_simulator {
   struct _gbe_simulator internal; /* Contains the call backs */
   void *base_address;             /* Base address of the fake address space */
   void *curbe_address;            /* Curbe address */
+  size_t curbe_size;              /* Curbe size */
 };
 typedef struct _sim_simulator *sim_simulator;
 
@@ -41,6 +42,12 @@ static void *sim_get_curbe_address(sim_simulator sim) {
 }
 static void sim_set_curbe_address(sim_simulator sim, void *addr) {
   sim->curbe_address = addr;
+}
+static size_t sim_get_curbe_size(sim_simulator sim) {
+  return sim->curbe_size;
+}
+static void sim_set_curbe_size(sim_simulator sim, size_t sz) {
+  sim->curbe_size = sz;
 }
 
 LOCAL void
@@ -58,6 +65,8 @@ sim_simulator_new(void)
   sim->internal.set_base_address = (sim_set_base_address_cb*) sim_set_base_address;
   sim->internal.get_curbe_address = (sim_get_curbe_address_cb*) sim_get_curbe_address;
   sim->internal.set_curbe_address = (sim_set_curbe_address_cb*) sim_set_curbe_address;
+  sim->internal.get_curbe_size = (sim_get_curbe_size_cb*) sim_get_curbe_size;
+  sim->internal.set_curbe_size = (sim_set_curbe_size_cb*) sim_set_curbe_size;
 
 exit:
   return (gbe_simulator) sim;
