@@ -23,9 +23,9 @@
  */
 #include "backend/sim_context.hpp"
 #include "backend/sim_program.hpp"
+#include "ir/function.hpp"
 #include <cstring>
 #include <cstdio>
-#include <fstream>
 #include <dlfcn.h>
 
 namespace gbe
@@ -41,23 +41,61 @@ namespace gbe
   extern std::string simulator_str;
   extern std::string sim_vector_str;
 
+  void SimContext::emitRegisters(void) {
+    GBE_ASSERT(fn.getProfile() == ir::PROFILE_OCL);
+    const uint32_t regNum = fn.regNum();
+    for (uint32_t regID = 0; regID < regNum; ++regID) {
+      const ir::Register reg(regID);
+      if (reg == ir::ocl::groupid0 ||
+          reg == ir::ocl::groupid1 ||
+          reg == ir::ocl::groupid2)
+        continue;
+      const ir::RegisterData regData = fn.getRegisterData(reg);
+      switch (regData.family) {
+        case ir::FAMILY_BOOL:
+        case ir::FAMILY_BYTE:
+        case ir::FAMILY_WORD:
+        case ir::FAMILY_QWORD:
+          NOT_IMPLEMENTED;
+        break;
+        case ir::FAMILY_DWORD:
+          if (isScalarReg(reg) == true)
+            o << "scalar_dw _" << regID << ";\n";
+          else
+            o << "simd" << simdWidth << "dw _" << regID << ";\n";
+        break;
+      }
+    }
+  }
+
+  void SimContext::loadCurbe(void) {
+    // Right now curbe is only made of input argument stuff
+    const uint32_t inputNum = fn.inputNum();
+    for (uint32_t inputID = 0; inputID < inputNum; ++inputID) {
+
+    }
+  }
+
   void SimContext::emitCode(void) {
     SimKernel *simKernel = static_cast<SimKernel*>(this->kernel);
     char srcStr[L_tmpnam+1], libStr[L_tmpnam+1];
     const std::string srcName = std::string(tmpnam_r(srcStr)) + ".cpp"; /* unsafe! */
     const std::string libName = std::string(tmpnam_r(libStr)) + ".so";  /* unsafe! */
-
+    std::cout << fn;
     /* Output the code first */
-    std::ofstream ostream;
-    ostream.open(srcName);
-    ostream << simulator_str << std::endl;
-    ostream << sim_vector_str << std::endl;
-    ostream << "#include <stdint.h>\n";
-    ostream << "extern \"C\" void " << name
-            << "(gbe_simulator sim, uint32_t thread, uint32_t group_x, uint32_t group_y, uint32_t group_z)" << std::endl
-            << "{}"
-            << std::endl << std::endl;
-    ostream.close();
+    o.open(srcName);
+    o << simulator_str << std::endl;
+    o << sim_vector_str << std::endl;
+    o << "#include <stdint.h>\n";
+    o << "extern \"C\" void " << name
+      << "(gbe_simulator sim, uint32_t tid, scalar_dw _3, scalar_dw _4, scalar_dw _5)\n"
+      << "{\n"
+      << "const size_t curbe_sz = sim->get_curbe_size(sim);\n"
+      << "const char *curbe = (const char*) sim->get_curbe_address(sim) + curbe_sz * tid;\n";
+    this->emitRegisters();
+    o << "}\n";
+    o << std::endl;
+    o.close();
 
     /* Compile the function */
     std::cout << "# source: " << srcName << " library: " << libName << std::endl;

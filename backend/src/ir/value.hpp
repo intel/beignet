@@ -80,10 +80,21 @@ namespace ir {
       GBE_ASSERT(type == DEF_FN_INPUT);
       return data.input;
     }
-    /*! Get the register */
-    INLINE Register getRegister(void) const {
+    /*! Get the special register */
+    INLINE Register getSpecialReg(void) const {
       GBE_ASSERT(type == DEF_SPECIAL_REG);
       return Register(data.regID);
+    }
+    /*! Retrieve the register associated to the definition */
+    INLINE Register getRegister(void) const {
+      if (type == DEF_SPECIAL_REG)
+        return Register(data.regID);
+      else if (type == DEF_FN_INPUT)
+        return data.input->reg;
+      else {
+        const Function &fn = data.insn->getParent()->getParent();
+        return data.insn->getDstIndex(fn, data.dstID);
+      }
     }
 
   private:
@@ -114,8 +125,8 @@ namespace ir {
       const FunctionInput *in1 = def1.getFunctionInput();
       return uintptr_t(in0) < uintptr_t(in1);
     } else if (type0 == ValueDef::DEF_SPECIAL_REG) {
-      const Register reg0 = def0.getRegister();
-      const Register reg1 = def1.getRegister();
+      const Register reg0 = def0.getSpecialReg();
+      const Register reg1 = def1.getSpecialReg();
       return uint32_t(reg0) < uint32_t(reg1);
     } else {
       const Instruction *insn0 = def0.getInstruction();
@@ -140,6 +151,10 @@ namespace ir {
     const Instruction *getInstruction(void) const { return insn; }
     /*! Get the source index for this use */
     uint32_t getSrcID(void) const { return srcID; }
+    /*! Get the register for this use */
+    Register getRegister(void) const {
+      return insn->getSrcIndex(insn->getParent()->getParent(), srcID);
+    }
   private:
     const Instruction *insn; //!< Instruction where the value is used
     uint32_t srcID;          //!< Index of the source in the instruction
@@ -157,9 +172,9 @@ namespace ir {
   }
 
   /*! All uses of a definition */
-  typedef set<ValueUse*> DUChain;
+  typedef set<ValueUse*> UseSet;
   /*! All possible definitions for a use */
-  typedef set<ValueDef*> UDChain;
+  typedef set<ValueDef*> DefSet;
 
   /*! Get the chains (in both directions) for the complete program */
   class FunctionDAG : public NonCopyable
@@ -170,13 +185,13 @@ namespace ir {
     /*! Free all the resources */
     ~FunctionDAG(void);
     /*! Get the du-chain for the given instruction and destination */
-    const DUChain &getUse(const Instruction *insn, uint32_t dstID) const;
+    const UseSet &getUse(const Instruction *insn, uint32_t dstID) const;
     /*! Get the du-chain for the given function input */
-    const DUChain &getUse(const FunctionInput *input) const;
+    const UseSet &getUse(const FunctionInput *input) const;
     /*! Get the du-chain for the given special register */
-    const DUChain &getUse(const Register &reg) const;
+    const UseSet &getUse(const Register &reg) const;
     /*! Get the ud-chain for the instruction and source */
-    const UDChain &getDef(const Instruction *insn, uint32_t srcID) const;
+    const DefSet &getDef(const Instruction *insn, uint32_t srcID) const;
     /*! Get the pointer to the definition *as stored in the DAG* */
     const ValueDef *getDefAddress(const Instruction *insn, uint32_t dstID) const;
     /*! Get the pointer to the definition *as stored in the DAG* */
@@ -187,22 +202,24 @@ namespace ir {
     const ValueUse *getUseAddress(const Instruction *insn, uint32_t srcID) const;
     /*! Get the function we have the graph for */
     const Function &getFunction(void) const { return fn; }
-    /*! The UDChain for each definition use */
-    typedef map<ValueUse, UDChain*> UDGraph;
-    /*! The DUChain for each definition */
-    typedef map<ValueDef, DUChain*> DUGraph;
+    /*! The DefSet for each definition use */
+    typedef map<ValueUse, DefSet*> UDGraph;
+    /*! The UseSet for each definition */
+    typedef map<ValueDef, UseSet*> DUGraph;
   private:
     UDGraph udGraph;                   //!< All the UD chains
     DUGraph duGraph;                   //!< All the DU chains
-    UDChain *udEmpty;                  //!< Void use set
-    DUChain *duEmpty;                  //!< Void def set
+    DefSet *udEmpty;                   //!< Void use set
+    UseSet *duEmpty;                   //!< Void def set
     ValueDef *undefined;               //!< Undefined value
     map<ValueUse, ValueUse*> useName;  //!< Get the ValueUse pointer from the value
     map<ValueDef, ValueDef*> defName;  //!< Get the ValueDef pointer from the value
+    map<Register, UseSet*> regUse;     //!< All uses of registers
+    map<Register, DefSet*> regDef;     //!< All defs of registers
     DECL_POOL(ValueDef, valueDefPool); //!< Fast ValueDef allocation
     DECL_POOL(ValueUse, valueUsePool); //!< Fast ValueUse allocation
-    DECL_POOL(UDChain, udChainPool);   //!< Fast UDChain allocation
-    DECL_POOL(DUChain, duChainPool);   //!< Fast DUChain allocation
+    DECL_POOL(DefSet, udChainPool);    //!< Fast DefSet allocation
+    DECL_POOL(UseSet, duChainPool);    //!< Fast UseSet allocation
     const Function &fn;                //!< Function we are referring to
     GBE_CLASS(FunctionDAG);            //!< Use internal allocators
   };

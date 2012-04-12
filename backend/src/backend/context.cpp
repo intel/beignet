@@ -28,12 +28,13 @@
 #include "ir/profile.hpp"
 #include <algorithm>
 
-
 namespace gbe
 {
   Context::Context(const ir::Unit &unit, const std::string &name) :
     unit(unit), fn(*unit.getFunction(name)), name(name), liveness(NULL), dag(NULL)
-  { GBE_ASSERT(unit.getPointerSize() == ir::POINTER_32_BITS); }
+  { GBE_ASSERT(unit.getPointerSize() == ir::POINTER_32_BITS);
+    this->simdWidth = 16; /* XXX environment variable for that to start with */
+  }
   Context::~Context(void) {}
 
   Kernel *Context::compileKernel(void) {
@@ -64,12 +65,12 @@ namespace gbe
     // Go over all the instructions and find the special register value we need
     // to push
 #define INSERT_REG(SPECIAL_REG, PATCH)                              \
-  else if (reg == ir::ocl::SPECIAL_REG) {                           \
+  if (reg == ir::ocl::SPECIAL_REG) {                                \
     if (specialRegs.find(reg) != specialRegs.end()) continue;       \
     const PatchInfo patch(GBE_CURBE_##PATCH, 0, kernel->curbeSize); \
     kernel->patches.push_back(patch);                               \
     kernel->curbeSize += ptrSize;                                   \
-  }
+  } else
     set<ir::Register> specialRegs; // already inserted registers
     fn.foreachInstruction([&](const ir::Instruction &insn) {
       const uint32_t srcNum = insn.getSrcNum();
@@ -77,7 +78,6 @@ namespace gbe
         const ir::Register reg = insn.getSrcIndex(fn, srcID);
         if (fn.isSpecialReg(reg) == false) continue;
 
-        if (0);
         INSERT_REG(lsize0, LOCAL_SIZE_X)
         INSERT_REG(lsize1, LOCAL_SIZE_Y)
         INSERT_REG(lsize2, LOCAL_SIZE_Z)
@@ -89,7 +89,7 @@ namespace gbe
         INSERT_REG(goffset2, GLOBAL_OFFSET_Z)
         INSERT_REG(numgroup0, GROUP_NUM_X)
         INSERT_REG(numgroup1, GROUP_NUM_Y)
-        INSERT_REG(numgroup2, GROUP_NUM_Z)
+        INSERT_REG(numgroup2, GROUP_NUM_Z);
       }
     });
 
@@ -129,6 +129,28 @@ namespace gbe
     }
   }
 
+  bool Context::isScalarReg(const ir::Register &reg) const {
+    GBE_ASSERT(fn.getProfile() == ir::Profile::PROFILE_OCL);
+    if (fn.getInput(reg) != NULL)
+      return true;
+    if (reg == ir::ocl::groupid0  ||
+        reg == ir::ocl::groupid1  ||
+        reg == ir::ocl::groupid2  ||
+        reg == ir::ocl::numgroup0 ||
+        reg == ir::ocl::numgroup1 ||
+        reg == ir::ocl::numgroup2 ||
+        reg == ir::ocl::lsize0    ||
+        reg == ir::ocl::lsize1    ||
+        reg == ir::ocl::lsize2    ||
+        reg == ir::ocl::gsize0    ||
+        reg == ir::ocl::gsize1    ||
+        reg == ir::ocl::gsize2    ||
+        reg == ir::ocl::goffset0  ||
+        reg == ir::ocl::goffset1  ||
+        reg == ir::ocl::goffset2)
+      return true;
+    return false;
+  }
 
 } /* namespace gbe */
 

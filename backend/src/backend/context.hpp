@@ -33,6 +33,7 @@ namespace ir {
 
   class Unit;        // Contains the complete program
   class Function;    // We compile a function into a kernel
+  class Register;    // We compile a function into a kernel
   class Liveness;    // Describes liveness of each ir function register
   class FunctionDAG; // Describes the instruction dependencies
 
@@ -62,6 +63,8 @@ namespace gbe
     void buildPatchList(void);
     /*! Build the list of arguments to set to launch the kernel */
     void buildArgList(void);
+    /*! Indicate if a register is scalar or not */
+    bool isScalarReg(const ir::Register &reg) const;
     /*! Build the instruction stream */
     virtual void emitCode(void) = 0;
     /*! Allocate a new empty kernel */
@@ -72,6 +75,7 @@ namespace gbe
     Kernel *kernel;          //!< Kernel we are building
     ir::Liveness *liveness;  //!< Liveness info for the variables
     ir::FunctionDAG *dag;    //!< Complete DAG of values on the function
+    uint32_t simdWidth;      //!< Number of lanes per HW threads
   };
 
 } /* namespace gbe */

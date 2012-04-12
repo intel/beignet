@@ -35,7 +35,7 @@ namespace ir {
     PROFILE_OCL = 1
   };
 
-  // Will be pre-initialized
+  // Will be pre-initialized based on its profile
   class Function;
 
   /*! Registers used for ocl */

@@ -27,25 +27,29 @@
 #ifndef __GBE_SIMULATOR_H__
 #define __GBE_SIMULATOR_H__
 
+#include <stdlib.h>
 #ifdef __cplusplus
 extern "C" {
 #endif /* __cplusplus */
 
 /* Gen simulator that runs the c++ produced by the back-end */
 typedef struct _gbe_simulator *gbe_simulator;
-/* Return the base address of the global / constant memory space */
+/* Get / set the base address of the global / constant memory space */
 typedef void *(sim_get_base_address_cb)(gbe_simulator);
-/* Set the base address of the global / constant memory space */
 typedef void (sim_set_base_address_cb)(gbe_simulator, void*);
-/* Set the base address of the constant buffer */
+/* Get / set the base address of the constant buffer */
 typedef void *(sim_get_curbe_address_cb)(gbe_simulator);
-/* Set the base address of the global / constant memory space */
 typedef void (sim_set_curbe_address_cb)(gbe_simulator, void*);
+/* Get / set per-thread curbe size */
+typedef void (sim_set_curbe_size_cb)(gbe_simulator, size_t);
+typedef size_t (sim_get_curbe_size_cb)(gbe_simulator);
 struct _gbe_simulator {
   sim_set_base_address_cb *set_base_address;
   sim_get_base_address_cb *get_base_address;
   sim_set_curbe_address_cb *set_curbe_address;
   sim_get_curbe_address_cb *get_curbe_address;
+  sim_set_curbe_size_cb *set_curbe_size;
+  sim_get_curbe_size_cb *get_curbe_size;
 };
 
 #ifdef __cplusplus

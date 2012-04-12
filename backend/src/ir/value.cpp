@@ -51,7 +51,7 @@ namespace ir {
     /*! Performs the double look-up to get the set of defs per register */
     RegDefSet &getDefSet(const BasicBlock *bb, const Register &reg);
     /*! Build a UD-chain as the union of the predecessor chains */
-    void makeUDChain(UDChain &udChain, const BasicBlock &bb, const Register &reg);
+    void makeDefSet(DefSet &udChain, const BasicBlock &bb, const Register &reg);
     /*! Fast per register definition set allocation */
     DECL_POOL(RegDefSet, regDefSetPool);
     /*! Fast register sets allocation */
@@ -89,7 +89,7 @@ namespace ir {
     return *defIt->second;
   }
 
-  void LiveOutSet::makeUDChain(UDChain &udChain,
+  void LiveOutSet::makeDefSet(DefSet &udChain,
                                const BasicBlock &bb,
                                const Register &reg)
   {
@@ -276,8 +276,8 @@ namespace ir {
     fn(liveness.getFunction())
   {
     // We first start with empty chains
-    udEmpty = this->newUDChain();
-    duEmpty = this->newDUChain();
+    udEmpty = this->newDefSet();
+    duEmpty = this->newUseSet();
 
     // First create the chains and insert them in their respective maps
     fn.foreachInstruction([this, udEmpty, duEmpty](const Instruction &insn) {
@@ -322,10 +322,10 @@ namespace ir {
     // Build UD chains traversing the blocks top to bottom
     fn.foreachBlock([&](const BasicBlock &bb) {
       // Track the allocated chains to be able to reuse them
-      map<Register, UDChain*> allocated;
+      map<Register, DefSet*> allocated;
       // Some chains may be not used (ie they are dead). We track them to be
       // able to deallocate them later
-      set<UDChain*> unused;
+      set<DefSet*> unused;
 
       // For each instruction build the UD chains
       bb.foreach([&](const Instruction &insn) {
@@ -347,8 +347,8 @@ namespace ir {
           }
           // Create a new one from the predecessor chains (upward used value)
           else {
-            UDChain *udChain = this->newUDChain();
-            liveOutSet.makeUDChain(*udChain, bb, src);
+            DefSet *udChain = this->newDefSet();
+            liveOutSet.makeDefSet(*udChain, bb, src);
             allocated.insert(std::make_pair(src, udChain));
             ud->second = udChain;
           }
@@ -359,7 +359,7 @@ namespace ir {
         for (uint32_t dstID = 0; dstID < dstNum; ++dstID) {
           const Register dst = insn.getDstIndex(fn, dstID);
           ValueDef *def = (ValueDef *) this->getDefAddress(&insn, dstID);
-          UDChain *udChain = this->newUDChain();
+          DefSet *udChain = this->newDefSet();
           udChain->insert(def);
           unused.insert(udChain);
           // Remove the previous definition if any
@@ -371,7 +371,7 @@ namespace ir {
 
       // Deallocate unused chains
       for (auto it = unused.begin(); it != unused.end(); ++it)
-        this->deleteUDChain(*it);
+        this->deleteDefSet(*it);
     });
 
     // Build the DU chains from the UD ones
@@ -386,18 +386,47 @@ namespace ir {
         const auto &defs = this->getDef(&insn, srcID);
         for (auto def = defs.begin(); def != defs.end(); ++def) {
           auto uses = duGraph.find(**def);
-          DUChain *du = uses->second;
+          UseSet *du = uses->second;
           GBE_ASSERT(uses != duGraph.end());
           if (du == duEmpty) {
             duGraph.erase(**def);
-            du = this->newDUChain();
+            du = this->newUseSet();
             duGraph.insert(std::make_pair(**def, du));
           }
           du->insert(use);
         }
       }
     });
-    std::cout << liveOutSet;
+
+    // Allocate the set of uses and defs per register
+    const uint32_t regNum = fn.regNum();
+    for (uint32_t regID = 0; regID < regNum; ++regID) {
+      const Register reg(regID);
+      UseSet *useSet = GBE_NEW(UseSet);
+      DefSet *defSet = GBE_NEW(DefSet);
+      regUse.insert(std::make_pair(reg, useSet));
+      regDef.insert(std::make_pair(reg, defSet));
+    }
+
+    // Fill use sets (one per register)
+    for (auto &useSet : duGraph) {
+      for (auto use : *useSet.second) {
+        const Register reg = use->getRegister();
+        auto it = regUse.find(reg);
+        GBE_ASSERT(it != regUse.end() && it->second != NULL);
+        it->second->insert(use);
+      }
+    }
+
+    // Fill def sets (one per register)
+    for (auto &defSet : udGraph) {
+      for (auto def : *defSet.second) {
+        const Register reg = def->getRegister();
+        auto it = regDef.find(reg);
+        GBE_ASSERT(it != regDef.end() && it->second != NULL);
+        it->second->insert(def);
+      }
+    }
   }
 
 /*! Helper to deallocate objects */
@@ -415,8 +444,8 @@ namespace ir {
     set<void*> destroyed;
 
     // Release the empty ud-chains and du-chains
-    PTR_RELEASE(UDChain, udEmpty);
-    PTR_RELEASE(DUChain, duEmpty);
+    PTR_RELEASE(DefSet, udEmpty);
+    PTR_RELEASE(UseSet, duEmpty);
 
     // We free all the ud-chains
     for (auto it = udGraph.begin(); it != udGraph.end(); ++it) {
@@ -424,7 +453,7 @@ namespace ir {
       if (destroyed.contains(defs)) continue;
       for (auto def = defs->begin(); def != defs->end(); ++def)
         PTR_RELEASE(ValueDef, *def);
-      PTR_RELEASE(UDChain, defs);
+      PTR_RELEASE(DefSet, defs);
     }
 
     // We free all the du-chains
@@ -433,24 +462,30 @@ namespace ir {
       if (destroyed.contains(uses)) continue;
       for (auto use = uses->begin(); use != uses->end(); ++use)
         PTR_RELEASE(ValueUse, *use);
-      PTR_RELEASE(DUChain, uses);
+      PTR_RELEASE(UseSet, uses);
     }
+
+    // Release all the use and definition sets per register
+    for (auto it = regUse.begin(); it != regUse.end(); ++it)
+      GBE_SAFE_DELETE(it->second);
+    for (auto it = regDef.begin(); it != regDef.end(); ++it)
+      GBE_SAFE_DELETE(it->second);
   }
 #undef PTR_RELEASE
 
-  const DUChain &FunctionDAG::getUse(const Instruction *insn, uint32_t dstID) const {
+  const UseSet &FunctionDAG::getUse(const Instruction *insn, uint32_t dstID) const {
     const ValueDef def(insn, dstID);
     auto it = duGraph.find(def);
     GBE_ASSERT(it != duGraph.end());
     return *it->second;
   }
-  const DUChain &FunctionDAG::getUse(const FunctionInput *input) const {
+  const UseSet &FunctionDAG::getUse(const FunctionInput *input) const {
     const ValueDef def(input);
     auto it = duGraph.find(def);
     GBE_ASSERT(it != duGraph.end());
     return *it->second;
   }
-  const UDChain &FunctionDAG::getDef(const Instruction *insn, uint32_t srcID) const {
+  const DefSet &FunctionDAG::getDef(const Instruction *insn, uint32_t srcID) const {
     const ValueUse use(insn, srcID);
     auto it = udGraph.find(use);
     GBE_ASSERT(it != udGraph.end());

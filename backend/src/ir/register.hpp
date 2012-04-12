@@ -67,6 +67,9 @@ namespace ir {
    *  file. We enforce type safety with this class
    */
   TYPE_SAFE(Register, uint16_t)
+  INLINE bool operator< (const Register &r0, const Register &r1) {
+    return r0.value() < r1.value();
+  }
 
   /*! Tuple is the position of the first register in the tuple vector. We
    *  enforce type safety with this class

@@ -26,6 +26,7 @@
 #define __GBE_SIM_CONTEXT_HPP__
 
 #include <string>
+#include <fstream>
 #include "backend/context.hpp"
 
 namespace gbe
@@ -46,8 +47,13 @@ namespace gbe
     ~SimContext(void);
     /*! Implements base class */
     virtual void emitCode(void);
+    /*! Emit all the register declarations */
+    void emitRegisters(void);
+    /*! Load the curbe data into the registers */
+    void loadCurbe(void);
     /*! Implements base class */
     virtual Kernel *allocateKernel(void);
+    std::ofstream o; //!< Where to output the c++ string
   };
 
 } /* namespace gbe */
