@@ -739,10 +739,10 @@ namespace ir {
   };
 
   RegisterData Instruction::getDst(const Function &fn, uint32_t ID) const {
-    return fn.getRegisterData(this->getDstIndex(fn, ID));
+    return fn.getRegisterData(this->getDstIndex(ID));
   }
   RegisterData Instruction::getSrc(const Function &fn, uint32_t ID) const {
-    return fn.getRegisterData(this->getSrcIndex(fn, ID));
+    return fn.getRegisterData(this->getSrcIndex(ID));
   }
 
 #define DECL_INSN(OPCODE, CLASS)                                  \
@@ -846,22 +846,32 @@ START_FUNCTION(Instruction, uint32_t, getDstNum(void))
 END_FUNCTION(Instruction, uint32_t)
 #undef CALL
 
+#define CALL wellFormed(fn, whyNot)
+START_FUNCTION(Instruction, bool, wellFormed(const Function &fn, std::string &whyNot))
+#include "ir/instruction.hxx"
+END_FUNCTION(Instruction, bool)
+#undef CALL
+
+#undef DECL_INSN
+
+#define DECL_INSN(OPCODE, CLASS)                                  \
+  case OP_##OPCODE:                                               \
+  {                                                               \
+    GBE_ASSERT(this->getParent() != NULL);                        \
+    const Function &fn = this->getParent()->getParent();          \
+    return reinterpret_cast<const internal::CLASS*>(this)->CALL;  \
+  }
+
 #define CALL getDstIndex(fn, ID)
-START_FUNCTION(Instruction, Register, getDstIndex(const Function &fn, uint32_t ID))
+START_FUNCTION(Instruction, Register, getDstIndex(uint32_t ID))
 #include "ir/instruction.hxx"
 END_FUNCTION(Instruction, Register)
 #undef CALL
 
 #define CALL getSrcIndex(fn, ID)
-START_FUNCTION(Instruction, Register, getSrcIndex(const Function &fn, uint32_t ID))
+START_FUNCTION(Instruction, Register, getSrcIndex(uint32_t ID))
 #include "ir/instruction.hxx"
 END_FUNCTION(Instruction, Register)
-#undef CALL
-
-#define CALL wellFormed(fn, whyNot)
-START_FUNCTION(Instruction, bool, wellFormed(const Function &fn, std::string &whyNot))
-#include "ir/instruction.hxx"
-END_FUNCTION(Instruction, bool)
 #undef CALL
 
 #undef DECL_INSN

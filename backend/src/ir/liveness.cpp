@@ -52,17 +52,16 @@ namespace ir {
   void Liveness::initInstruction(BlockInfo &info, const Instruction &insn) {
     const uint32_t srcNum = insn.getSrcNum();
     const uint32_t dstNum = insn.getDstNum();
-    const Function &fn = info.bb.getParent();
     // First look for used before killed
     for (uint32_t srcID = 0; srcID < srcNum; ++srcID) {
-      const Register reg = insn.getSrcIndex(fn, srcID);
+      const Register reg = insn.getSrcIndex(srcID);
       // Not killed -> it is really an upward use
       if (info.varKill.contains(reg) == false)
         info.upwardUsed.insert(reg);
     }
     // A destination is a killed value
     for (uint32_t dstID = 0; dstID < dstNum; ++dstID) {
-      const Register reg = insn.getDstIndex(fn, dstID);
+      const Register reg = insn.getDstIndex(dstID);
       info.varKill.insert(reg);
     }
   }
@@ -111,7 +110,6 @@ namespace ir {
   /*! Compute the use of a register in all direction in a block */
   template <UsePosition pos>
   static INLINE uint32_t usage(const Instruction &insn, Register reg) {
-    const Function &fn = insn.getParent()->getParent();
     const Instruction *curr = &insn;
     uint32_t use = USE_NONE;
 
@@ -122,14 +120,14 @@ namespace ir {
       curr = curr->getSuccessor();
     while (curr) {
       for (uint32_t srcID = 0; srcID < curr->getSrcNum(); ++srcID) {
-        const Register src = curr->getSrcIndex(fn, srcID);
+        const Register src = curr->getSrcIndex(srcID);
         if (src == reg) {
           use |= USE_READ;
           break;
         }
       }
       for (uint32_t dstID = 0; dstID < curr->getDstNum(); ++dstID) {
-        const Register dst = curr->getDstIndex(fn, dstID);
+        const Register dst = curr->getDstIndex(dstID);
         if (dst == reg) {
           use |= USE_WRITTEN;
           break;

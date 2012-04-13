@@ -92,8 +92,7 @@ namespace ir {
       else if (type == DEF_FN_INPUT)
         return data.input->reg;
       else {
-        const Function &fn = data.insn->getParent()->getParent();
-        return data.insn->getDstIndex(fn, data.dstID);
+        return data.insn->getDstIndex(data.dstID);
       }
     }
 
@@ -153,7 +152,7 @@ namespace ir {
     uint32_t getSrcID(void) const { return srcID; }
     /*! Get the register for this use */
     Register getRegister(void) const {
-      return insn->getSrcIndex(insn->getParent()->getParent(), srcID);
+      return insn->getSrcIndex(srcID);
     }
   private:
     const Instruction *insn; //!< Instruction where the value is used

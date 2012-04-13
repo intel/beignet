@@ -88,9 +88,9 @@ namespace ir {
     /*! Get the number of destination for this instruction */
     uint32_t getDstNum(void) const;
     /*! Get the register index of the given source */
-    Register getSrcIndex(const Function &fn, uint32_t ID = 0u) const;
+    Register getSrcIndex(uint32_t ID = 0u) const;
     /*! Get the register index of the given destination */
-    Register getDstIndex(const Function &fn, uint32_t ID = 0u) const;
+    Register getDstIndex(uint32_t ID = 0u) const;
     /*! Get the register of the given source */
     RegisterData getDst(const Function &fn, uint32_t ID = 0u) const;
     /*! Get the register of the given destination */
@@ -258,7 +258,7 @@ namespace ir {
     /*! Return the predicate register index (if predicated) */
     Register getPredicateIndex(const Function &fn) const {
       GBE_ASSERTM(this->isPredicated() == true, "Branch is not predicated");
-      return this->getSrcIndex(fn, 0);
+      return this->getSrcIndex(0);
     }
     /*! Return the label index pointed by the branch */
     LabelIndex getLabelIndex(void) const;
