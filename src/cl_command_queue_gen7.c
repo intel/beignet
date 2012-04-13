@@ -119,7 +119,7 @@ cl_command_queue_ND_range_gen7(cl_command_queue queue,
   cl_buffer private_bo = NULL, scratch_bo = NULL;
   cl_gpgpu_kernel kernel;
   const uint32_t simd_sz = cl_kernel_get_simd_width(ker);
-  size_t i, batch_sz = 0u, local_sz = 0u, cst_sz = 0u, local_id_sz = 0u;
+  size_t i, batch_sz = 0u, local_sz = 0u, local_id_sz = 0u, cst_sz = ker->curbe_sz;
   size_t thread_n = 0u, id_offset = 0u;
   cl_int err = CL_SUCCESS;
 
@@ -130,9 +130,8 @@ cl_command_queue_ND_range_gen7(cl_command_queue queue,
   kernel.barrierID = 0;
   kernel.use_barrier = 0;
   kernel.slm_sz = 0;
-  kernel.cst_sz = 0;
 
-  /* Fill the constant buffer */
+  /* Curbe step 1: fill the constant buffer data shared by all threads */
   curbe = alloca(ker->curbe_sz);
   cl_curbe_fill(ker, curbe, global_wk_off, global_wk_sz, local_wk_sz);
 
@@ -151,7 +150,7 @@ cl_command_queue_ND_range_gen7(cl_command_queue queue,
   cl_command_queue_bind_surface(queue, ker, curbe, NULL, &private_bo, &scratch_bo, 0);
   cl_gpgpu_states_setup(gpgpu, &kernel);
 
-  /* CURBE step 2. Give the localID and upload it to video memory */
+  /* Curbe step 2. Give the localID and upload it to video memory */
   TRY_ALLOC (final_curbe, (char*) alloca(thread_n * cst_sz));
   if (curbe)
     for (i = 0; i < thread_n; ++i)

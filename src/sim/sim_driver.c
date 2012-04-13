@@ -201,7 +201,7 @@ struct _sim_gpgpu
   uint32_t binded_offset[max_buf_n]; /* their offsets in the constant buffer */
   uint32_t memory_remap[max_buf_n];  /* offset of each buffer in the fake memory space */
   uint32_t max_threads;              /* HW threads running */
-  uint32_t cst_sz;                   /* size of the constant buffer */
+  uint32_t curbe_sz;                 /* size of curbe used per HW thread */
   uint32_t binded_n;                 /* number of buffers binded */
   uint32_t thread_n;                 /* number of threads to run per work group */
 };
@@ -244,13 +244,14 @@ static void
 sim_gpgpu_upload_constants(sim_gpgpu gpgpu, const void* data, uint32_t size)
 {
   uint32_t i, j;
-  assert(size == gpgpu->cst_sz * gpgpu->thread_n);
+  assert(size == gpgpu->curbe_sz * gpgpu->thread_n);
   if (gpgpu->curbe) cl_free(gpgpu->curbe);
   gpgpu->curbe = (char*) cl_malloc(size);
+  memcpy(gpgpu->curbe, data, size);
 
   /* Upload the buffer offsets per thread */
   for (i = 0; i < gpgpu->thread_n; ++i) {
-    const uint32_t start_offset = i * gpgpu->cst_sz;
+    const uint32_t start_offset = i * gpgpu->curbe_sz;
     for (j = 0; j < gpgpu->binded_n; ++j) {
       const uint32_t offset = start_offset + gpgpu->binded_offset[j];
       const uint32_t fake_address = gpgpu->memory_remap[j];
@@ -264,7 +265,7 @@ sim_gpgpu_state_init(sim_gpgpu gpgpu, uint32_t max_threads, uint32_t size_cs_ent
 {
   assert(gpgpu);
   memset(gpgpu, 0, sizeof(*gpgpu));
-  gpgpu->cst_sz = size_cs_entry * 32;
+  gpgpu->curbe_sz = size_cs_entry * 32;
   gpgpu->max_threads = max_threads;
 }
 
@@ -323,6 +324,7 @@ sim_gpgpu_walker(sim_gpgpu gpgpu,
   gbe_simulator sim = sim_simulator_new();
   sim->set_base_address(sim, gpgpu->fake_memory);
   sim->set_curbe_address(sim, gpgpu->curbe);
+  sim->set_curbe_size(sim, gpgpu->curbe_sz);
   for (z = 0; z < global_wk_dim[2]; ++z)
   for (y = 0; y < global_wk_dim[1]; ++y)
   for (x = 0; x < global_wk_dim[0]; ++x)

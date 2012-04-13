@@ -168,15 +168,6 @@ cl_kernel_setup(cl_kernel k, gbe_kernel opaque)
 
   /* Create the curbe */
   k->curbe_sz = gbe_kernel_get_curbe_size(k->opaque);
-  TRY_ALLOC_NO_ERR(k->curbe, cl_malloc(k->curbe_sz));
-  return;
-
-error:
-  if (k->curbe) cl_free(k->curbe);
-  if (k->bo) cl_buffer_unreference(k->bo);
-  k->curbe = NULL;
-  k->bo = NULL;
-  return;
 }
 
 LOCAL cl_kernel
@@ -194,7 +185,9 @@ cl_kernel_dup(cl_kernel from)
   to->magic = CL_MAGIC_KERNEL_HEADER;
   to->program = from->program;
   to->arg_n = from->arg_n;
+  to->curbe_sz = from->curbe_sz;
   TRY_ALLOC_NO_ERR(to->args, cl_calloc(to->arg_n, sizeof(cl_argument)));
+  if (to->curbe_sz) TRY_ALLOC_NO_ERR(to->curbe, cl_calloc(1, to->curbe_sz));
 
   /* Retain the bos */
   if (from->bo)       cl_buffer_reference(from->bo);

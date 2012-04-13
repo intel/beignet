@@ -49,9 +49,11 @@ ADD_LIBRARY(cl_test STATIC
 TARGET_LINK_LIBRARIES(cl_test cl)
 
 ADD_EXECUTABLE(test_write_only tests/test_write_only.c)
+ADD_EXECUTABLE(test_copy_buffer tests/test_copy_buffer.c)
 ADD_EXECUTABLE(test_eot tests/test_eot.c)
 TARGET_LINK_LIBRARIES(test_eot cl_test m)
 TARGET_LINK_LIBRARIES(test_write_only cl_test m)
+TARGET_LINK_LIBRARIES(test_copy_buffer cl_test m)
 
 #ADD_EXECUTABLE(test_copy_buffer tests/test_copy_buffer.c)
 #ADD_EXECUTABLE(test_copy_image tests/test_copy_image.c)

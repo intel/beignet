@@ -43,7 +43,7 @@ DECL_PUBLIC_WORK_ITEM_FN(get_num_groups)
 #undef DECL_PUBLIC_WORK_ITEM_FN
 
 inline unsigned int get_global_id(unsigned int dim) {
-  return get_local_id(dim) + get_local_size(dim) * get_num_groups(dim);
+  return get_local_id(dim) + get_local_size(dim) * get_group_id(dim);
 }
 
 __attribute__ ((pure,const,overloadable)) float mad(float a, float b, float c);

@@ -24,12 +24,13 @@ extern "C" {
 #include <stdlib.h>
 #include <string.h>
 }
+
 namespace
 {
-  /* Just use c++ pre-main to initialize the call-backs */
-  struct CallBackInitializer
+  /*! Just use c++ pre-main to initialize the call-backs */
+  struct OCLDriverCallBackInitializer
   {
-    CallBackInitializer(void) {
+    OCLDriverCallBackInitializer(void) {
       const char *run_it = getenv("OCL_SIMULATOR");
       if (run_it != NULL && !strcmp(run_it, "2"))
         sim_setup_callbacks();
@@ -38,7 +39,7 @@ namespace
     }
   };
 
-  /* Set the call backs at pre-main time */
-  LOCAL CallBackInitializer cbInitializer;
-}
+  /*! Set the call backs at pre-main time */
+  static OCLDriverCallBackInitializer cbInitializer;
+} /* namespace */
 
