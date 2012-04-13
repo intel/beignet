@@ -157,6 +157,10 @@ INLINE void NAME(DST_TYPE &dst, const SRC_TYPE &v0, const scalar_dw &v1) {\
 template <uint32_t vectorNum>\
 INLINE void NAME(DST_TYPE &dst, const scalar_dw &v0, const SRC_TYPE &v1) {\
   NAME(dst, simd_dw<vectorNum>(v0), v1);\
+}\
+template <uint32_t vectorNum>\
+INLINE void NAME(DST_TYPE &dst, const scalar_dw &v0, const scalar_dw &v1) {\
+  NAME(dst, simd_dw<vectorNum>(v0), simd_dw<vectorNum>(v1));\
 }
 VEC_OP(simd_dw<vectorNum>, simd_dw<vectorNum>, ADD_F, _mm_add_ps, ID, ID, ID);
 VEC_OP(simd_dw<vectorNum>, simd_dw<vectorNum>, SUB_F, _mm_sub_ps, ID, ID, ID);
@@ -192,6 +196,10 @@ INLINE void NAME(DST_TYPE &dst, const SRC_TYPE &v0, const scalar_dw &v1) {\
 template <uint32_t vectorNum>\
 INLINE void NAME(DST_TYPE &dst, const scalar_dw &v0, const SRC_TYPE &v1) {\
   NAME(dst, simd_dw<vectorNum>(v0), v1);\
+}\
+template <uint32_t vectorNum>\
+INLINE void NAME(DST_TYPE &dst, const scalar_dw &v0, const scalar_dw &v1) {\
+  NAME(dst, simd_dw<vectorNum>(v0), simd_dw<vectorNum>(v1));\
 }
 VEC_OP(simd_m<vectorNum>, simd_dw<vectorNum>, GE_S32, _mm_cmplt_epi32, SI2PS, PS2SI, PS2SI);
 VEC_OP(simd_m<vectorNum>, simd_dw<vectorNum>, LE_S32, _mm_cmpgt_epi32, SI2PS, PS2SI, PS2SI);
@@ -215,6 +223,10 @@ INLINE void NAME(DST_TYPE &dst, const SRC_TYPE &v0, const scalar_dw &v1) {\
 template <uint32_t vectorNum>\
 INLINE void NAME(DST_TYPE &dst, const scalar_dw &v0, const SRC_TYPE &v1) {\
   NAME(dst, simd_dw<vectorNum>(v0), v1);\
+}\
+template <uint32_t vectorNum>\
+INLINE void NAME(DST_TYPE &dst, const scalar_dw &v0, const scalar_dw &v1) {\
+  NAME(dst, simd_dw<vectorNum>(v0), simd_dw<vectorNum>(v1));\
 }
 VEC_OP(simd_dw<vectorNum>, simd_dw<vectorNum>, MUL_S32, *, s);
 VEC_OP(simd_dw<vectorNum>, simd_dw<vectorNum>, DIV_S32, /, s);
@@ -262,6 +274,14 @@ VEC_OP(simd_m<vectorNum>, simd_dw<vectorNum>, GT_U32, >, u);
 template <uint32_t vectorNum>
 INLINE void NE_S32(simd_m<vectorNum> &dst,
                    const simd_dw<vectorNum> &v0,
+                   const simd_dw<vectorNum> &v1)
+{
+  for (uint32_t i = 0; i < vectorNum; ++i)
+    dst.m[i] = _mm_xor_ps(alltrue.v, SI2PS(_mm_cmpeq_epi32(PS2SI(v0.m[i]), PS2SI(v1.m[i]))));
+}
+template <uint32_t vectorNum>
+INLINE void NE_S32(simd_m<vectorNum> &dst,
+                   const simd_dw<vectorNum> &v0,
                    const scalar_dw &v1)
 {
   NE_S32(dst, v0, simd_dw<vectorNum>(v1));
@@ -272,14 +292,6 @@ INLINE void NE_S32(simd_m<vectorNum> &dst,
                    const simd_dw<vectorNum> &v1)
 {
   NE_S32(dst, simd_dw<vectorNum>(v0), v1);
-}
-template <uint32_t vectorNum>
-INLINE void NE_S32(simd_m<vectorNum> &dst,
-                   const simd_dw<vectorNum> &v0,
-                   const simd_dw<vectorNum> &v1)
-{
-  for (uint32_t i = 0; i < vectorNum; ++i)
-    dst.m[i] = _mm_xor_ps(alltrue.v, SI2PS(_mm_cmpeq_epi32(PS2SI(v0.m[i]), PS2SI(v1.m[i]))));
 }
 
 /* Load from contiguous double words */
@@ -298,25 +310,28 @@ INLINE void STORE(const simd_dw<vectorNum> &src, char *ptr) {
 
 /* Load immediates */
 template <uint32_t vectorNum>
-INLINE void LOADI(simd_dw<vectorNum> &dst, float f) {
+INLINE void LOADI(simd_dw<vectorNum> &dst, uint32_t u) {
+  union { uint32_t u; float f; } cast;
+  cast.u = u;
   for (uint32_t i = 0; i < vectorNum; ++i)
-    dst.m[i] = _mm_load1_ps(&f);
+    dst.m[i] = _mm_load1_ps(&cast.f);
 }
 
+#include <cstdio>
 /* Scatter */
 template <uint32_t vectorNum>
-INLINE void SCATTER(const simd_dw<vectorNum> &value,
-                    const simd_dw<vectorNum> &offset,
+INLINE void SCATTER(const simd_dw<vectorNum> &offset,
+                    const simd_dw<vectorNum> &value,
                     char *base_address) {
   for (uint32_t i = 0; i < vectorNum; ++i) {
     const int v0 = _mm_extract_epi32(PS2SI(value.m[i]), 0);
     const int v1 = _mm_extract_epi32(PS2SI(value.m[i]), 1);
     const int v2 = _mm_extract_epi32(PS2SI(value.m[i]), 2);
     const int v3 = _mm_extract_epi32(PS2SI(value.m[i]), 3);
-    const int o0 = _mm_extract_epi32(offset.m[i], 0);
-    const int o1 = _mm_extract_epi32(offset.m[i], 1);
-    const int o2 = _mm_extract_epi32(offset.m[i], 2);
-    const int o3 = _mm_extract_epi32(offset.m[i], 3);
+    const int o0 = _mm_extract_epi32(PS2SI(offset.m[i]), 0);
+    const int o1 = _mm_extract_epi32(PS2SI(offset.m[i]), 1);
+    const int o2 = _mm_extract_epi32(PS2SI(offset.m[i]), 2);
+    const int o3 = _mm_extract_epi32(PS2SI(offset.m[i]), 3);
     *(int*)(base_address + o0) = v0;
     *(int*)(base_address + o1) = v1;
     *(int*)(base_address + o2) = v2;
@@ -324,14 +339,14 @@ INLINE void SCATTER(const simd_dw<vectorNum> &value,
   }
 }
 template <uint32_t vectorNum>
-INLINE void SCATTER(const scalar_dw &value,
-                    const simd_dw<vectorNum> &offset,
+INLINE void SCATTER(const simd_dw<vectorNum> &offset,
+                    const scalar_dw &value,
                     char *base_address) {
   SCATTER(simd_dw<vectorNum>(value), offset, base_address);
 }
 template <uint32_t vectorNum>
-INLINE void SCATTER(const simd_dw<vectorNum> &value,
-                    const scalar_dw &offset,
+INLINE void SCATTER(const scalar_dw &offset,
+                    const simd_dw<vectorNum> &value,
                     char *base_address) {
   SCATTER(value, simd_dw<vectorNum>(offset), base_address);
 }

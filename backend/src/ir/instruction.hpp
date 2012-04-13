@@ -107,6 +107,8 @@ namespace ir {
     BasicBlock *getParent(void) { return parent; }
     const BasicBlock *getParent(void) const { return parent; }
     void setParent(BasicBlock *block) { this->parent = block; }
+    /*! Get the function from the parent basic block */
+    const Function &getFunction(void) const;
     /*! Check that the instruction is well formed (type properly match,
      *  registers not of bound and so on). If not well formed, provide a reason
      *  in string why
@@ -236,7 +238,7 @@ namespace ir {
   class LoadImmInstruction : public Instruction {
   public:
     /*! Return the value stored in the instruction */
-    Immediate getImmediate(const Function &fn) const;
+    Immediate getImmediate(void) const;
     /*! Return the type of the stored value */
     Type getType(void) const;
     /*! Return true if the given instruction is an instance of this class */

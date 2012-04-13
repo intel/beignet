@@ -26,16 +26,24 @@
 #include "ir/unit.hpp"
 #include "ir/function.hpp"
 #include "ir/profile.hpp"
+#include "ir/liveness.hpp"
+#include "ir/value.hpp"
 #include <algorithm>
 
 namespace gbe
 {
   Context::Context(const ir::Unit &unit, const std::string &name) :
     unit(unit), fn(*unit.getFunction(name)), name(name), liveness(NULL), dag(NULL)
-  { GBE_ASSERT(unit.getPointerSize() == ir::POINTER_32_BITS);
+  {
+    GBE_ASSERT(unit.getPointerSize() == ir::POINTER_32_BITS);
+    this->liveness = GBE_NEW(ir::Liveness, (ir::Function&) fn);
+    this->dag = GBE_NEW(ir::FunctionDAG, *this->liveness);
     this->simdWidth = 16; /* XXX environment variable for that to start with */
   }
-  Context::~Context(void) {}
+  Context::~Context(void) {
+    GBE_SAFE_DELETE(this->dag);
+    GBE_SAFE_DELETE(this->liveness);
+  }
 
   Kernel *Context::compileKernel(void) {
     this->kernel = this->allocateKernel();
@@ -77,7 +85,7 @@ namespace gbe
       for (uint32_t srcID = 0; srcID < srcNum; ++srcID) {
         const ir::Register reg = insn.getSrc(srcID);
         if (fn.isSpecialReg(reg) == false) continue;
-
+        if (specialRegs.contains(reg) == true) continue;
         INSERT_REG(lsize0, LOCAL_SIZE_X)
         INSERT_REG(lsize1, LOCAL_SIZE_Y)
         INSERT_REG(lsize2, LOCAL_SIZE_Z)
@@ -90,10 +98,21 @@ namespace gbe
         INSERT_REG(numgroup0, GROUP_NUM_X)
         INSERT_REG(numgroup1, GROUP_NUM_Y)
         INSERT_REG(numgroup2, GROUP_NUM_Z);
+        specialRegs.insert(reg);
       }
     });
+    kernel->curbeSize = ALIGN(kernel->curbeSize, 32);
 
-    // After this point the vector is immutable. so, Sorting it will make
+    // Local IDs always go at the end of the curbe
+    const size_t localIDSize = sizeof(uint32_t) * this->simdWidth;
+    const PatchInfo lid0(GBE_CURBE_LOCAL_ID_X, 0, kernel->curbeSize+0*localIDSize);
+    const PatchInfo lid1(GBE_CURBE_LOCAL_ID_Y, 0, kernel->curbeSize+1*localIDSize);
+    const PatchInfo lid2(GBE_CURBE_LOCAL_ID_Z, 0, kernel->curbeSize+2*localIDSize);
+    kernel->patches.push_back(lid0);
+    kernel->patches.push_back(lid1);
+    kernel->patches.push_back(lid2);
+
+    // After this point the vector is immutable. Sorting it will make
     // research faster
     std::sort(kernel->patches.begin(), kernel->patches.end());
   }

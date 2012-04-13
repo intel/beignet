@@ -739,13 +739,11 @@ namespace ir {
   };
 
   RegisterData Instruction::getDstData(uint32_t ID) const {
-    GBE_ASSERT(this->getParent() != NULL);
-    const Function &fn = this->getParent()->getParent();
+    const Function &fn = this->getFunction();
     return fn.getRegisterData(this->getDst(ID));
   }
   RegisterData Instruction::getSrcData(uint32_t ID) const {
-    GBE_ASSERT(this->getParent() != NULL);
-    const Function &fn = this->getParent()->getParent();
+    const Function &fn = this->getFunction();
     return fn.getRegisterData(this->getSrc(ID));
   }
 
@@ -861,8 +859,7 @@ END_FUNCTION(Instruction, bool)
 #define DECL_INSN(OPCODE, CLASS)                                  \
   case OP_##OPCODE:                                               \
   {                                                               \
-    GBE_ASSERT(this->getParent() != NULL);                        \
-    const Function &fn = this->getParent()->getParent();          \
+    const Function &fn = this->getFunction();                     \
     return reinterpret_cast<const internal::CLASS*>(this)->CALL;  \
   }
 
@@ -882,6 +879,12 @@ END_FUNCTION(Instruction, Register)
 #undef END_FUNCTION
 #undef START_FUNCTION
 
+  const Function &Instruction::getFunction(void) const {
+    const BasicBlock *bb = this->getParent();
+    GBE_ASSERT(bb != NULL);
+    return bb->getParent();
+  }
+
 #define DECL_MEM_FN(CLASS, RET, PROTOTYPE, CALL)                  \
   RET CLASS::PROTOTYPE const {                                    \
     return reinterpret_cast<const internal::CLASS*>(this)->CALL;  \
@@ -900,13 +903,17 @@ DECL_MEM_FN(StoreInstruction, AddressSpace, getAddressSpace(void), getAddressSpa
 DECL_MEM_FN(LoadInstruction, Type, getValueType(void), getValueType())
 DECL_MEM_FN(LoadInstruction, uint32_t, getValueNum(void), getValueNum())
 DECL_MEM_FN(LoadInstruction, AddressSpace, getAddressSpace(void), getAddressSpace())
-DECL_MEM_FN(LoadImmInstruction, Immediate, getImmediate(const Function &fn), getImmediate(fn))
 DECL_MEM_FN(LoadImmInstruction, Type, getType(void), getType())
 DECL_MEM_FN(LabelInstruction, LabelIndex, getLabelIndex(void), getLabelIndex())
 DECL_MEM_FN(BranchInstruction, bool, isPredicated(void), isPredicated())
 DECL_MEM_FN(BranchInstruction, LabelIndex, getLabelIndex(void), getLabelIndex())
 
 #undef DECL_MEM_FN
+
+  Immediate LoadImmInstruction::getImmediate(void) const {
+    const Function &fn = this->getFunction();
+    return reinterpret_cast<const internal::LoadImmInstruction*>(this)->getImmediate(fn);
+  }
 
   ///////////////////////////////////////////////////////////////////////////
   // Implements the emission functions
@@ -1038,11 +1045,8 @@ DECL_MEM_FN(BranchInstruction, LabelIndex, getLabelIndex(void), getLabelIndex())
     return insn.convert();
   }
 
-  std::ostream &operator<< (std::ostream &out, const Instruction &insn)
-  {
-    GBE_ASSERT(insn.getParent() != NULL);
-    const BasicBlock *bb = insn.getParent();
-    const Function &fn = bb->getParent();
+  std::ostream &operator<< (std::ostream &out, const Instruction &insn) {
+    const Function &fn = insn.getFunction();
     switch (insn.getOpcode()) {
 #define DECL_INSN(OPCODE, CLASS)                                     \
       case OP_##OPCODE:                                              \

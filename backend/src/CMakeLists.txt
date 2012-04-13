@@ -42,6 +42,9 @@ else (GBE_USE_BLOB)
     sys/condition.hpp
     sys/platform.cpp
     sys/platform.hpp
+    sys/debug.cpp
+    sys/debug.hpp
+    sys/debug.hxx
     ir/context.cpp
     ir/context.hpp
     ir/profile.cpp

@@ -50,7 +50,9 @@ namespace gbe
     /*! Emit all the register declarations */
     void emitRegisters(void);
     /*! Load the curbe data into the registers */
-    void loadCurbe(void);
+    void emitCurbeLoad(void);
+    /*! Emit the instructions */
+    void emitInstructionStream(void);
     /*! Implements base class */
     virtual Kernel *allocateKernel(void);
     std::ofstream o; //!< Where to output the c++ string
