@@ -92,9 +92,9 @@ namespace ir {
     /*! Get the register index of the given destination */
     Register getDstIndex(uint32_t ID = 0u) const;
     /*! Get the register of the given source */
-    RegisterData getDst(const Function &fn, uint32_t ID = 0u) const;
+    RegisterData getDstData(uint32_t ID = 0u) const;
     /*! Get the register of the given destination */
-    RegisterData getSrc(const Function &fn, uint32_t ID = 0u) const;
+    RegisterData getSrcData(uint32_t ID = 0u) const;
     /*! Get / set the previous instruction in the stream */
     Instruction *getPredecessor(void) { return predecessor; }
     const Instruction *getPredecessor(void) const { return predecessor; }
@@ -251,12 +251,12 @@ namespace ir {
     /*! Indicate if the branch is predicated */
     bool isPredicated(void) const;
     /*! Return the predicate register (if predicated) */
-    RegisterData getPredicate(const Function &fn) const {
+    RegisterData getPredicate(void) const {
       GBE_ASSERTM(this->isPredicated() == true, "Branch is not predicated");
-      return this->getSrc(fn, 0);
+      return this->getSrcData(0);
     }
     /*! Return the predicate register index (if predicated) */
-    Register getPredicateIndex(const Function &fn) const {
+    Register getPredicateIndex(void) const {
       GBE_ASSERTM(this->isPredicated() == true, "Branch is not predicated");
       return this->getSrcIndex(0);
     }

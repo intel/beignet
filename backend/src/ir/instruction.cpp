@@ -738,10 +738,14 @@ namespace ir {
     enum { value = 1 };
   };
 
-  RegisterData Instruction::getDst(const Function &fn, uint32_t ID) const {
+  RegisterData Instruction::getDstData(uint32_t ID) const {
+    GBE_ASSERT(this->getParent() != NULL);
+    const Function &fn = this->getParent()->getParent();
     return fn.getRegisterData(this->getDstIndex(ID));
   }
-  RegisterData Instruction::getSrc(const Function &fn, uint32_t ID) const {
+  RegisterData Instruction::getSrcData(uint32_t ID) const {
+    GBE_ASSERT(this->getParent() != NULL);
+    const Function &fn = this->getParent()->getParent();
     return fn.getRegisterData(this->getSrcIndex(ID));
   }
 
