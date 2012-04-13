@@ -111,5 +111,3 @@ namespace gbe
 
 #endif /* __GBE_MATH_HPP__ */
 
-
-

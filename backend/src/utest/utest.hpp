@@ -83,5 +83,3 @@ namespace gbe
 
 #endif /* __GBE_UTEST_HPP__ */
 
-
-

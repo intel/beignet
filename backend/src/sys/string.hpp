@@ -56,5 +56,3 @@ namespace gbe
 
 #endif /* __GBE_STRING_HPP__ */
 
-
-

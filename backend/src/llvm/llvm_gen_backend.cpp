@@ -1284,5 +1284,3 @@ namespace gbe
   }
 } /* namespace gbe */
 
-
-

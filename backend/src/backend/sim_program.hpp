@@ -64,5 +64,3 @@ namespace gbe {
 
 #endif /* __GBE_SIM_PROGRAM_HPP__ */
 
-
-

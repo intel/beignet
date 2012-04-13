@@ -82,5 +82,3 @@ namespace gbe
 
 #endif /* __UNIX__ */
 
-
-

@@ -79,5 +79,3 @@ namespace gbe
 
 #endif /* __GBE_HASH_MAP_HPP__ */
 
-
-

@@ -33,5 +33,3 @@ namespace gbe
 
 #endif /* __GBE_ASSERT_HPP__ */
 
-
-

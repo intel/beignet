@@ -142,5 +142,3 @@ namespace gbe {
 
 #endif /* __GBE_PROGRAM_HPP__ */
 
-
-

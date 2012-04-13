@@ -70,5 +70,3 @@ namespace ir {
 
 #endif /* __GBE_IR_PROFILE_HPP__ */
 
-
-

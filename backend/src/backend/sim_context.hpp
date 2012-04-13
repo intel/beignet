@@ -60,5 +60,3 @@ namespace gbe
 
 #endif /* __GBE_SIM_CONTEXT_HPP__ */
 
-
-

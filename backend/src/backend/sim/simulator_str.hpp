@@ -83,5 +83,3 @@ const std::string gbe::simulator_str =
 ;
 }
 
-
-

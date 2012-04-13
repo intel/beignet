@@ -33,5 +33,3 @@ static void utestTestUTest(void)
 
 UTEST_REGISTER(utestTestUTest)
 
-
-

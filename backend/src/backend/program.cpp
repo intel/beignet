@@ -207,5 +207,3 @@ namespace gbe
   static CallBackInitializer cbInitializer;
 } /* namespace gbe */
 
-
-

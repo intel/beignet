@@ -37,5 +37,3 @@ namespace gbe {
 
 #endif /* __GBE_IR_LLVM_TO_GEN_HPP__ */
 
-
-

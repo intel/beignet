@@ -62,5 +62,3 @@ namespace gbe
   }
 } /* namespace gbe */
 
-
-

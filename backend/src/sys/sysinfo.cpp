@@ -151,5 +151,3 @@ namespace gbe
 }
 #endif
 
-
-

@@ -86,5 +86,3 @@ void simSetupCallBacks(void)
   gbe_program_new_from_llvm = gbe::simProgramNewFromLLVM;
 }
 
-
-

@@ -231,5 +231,3 @@ namespace ir {
 
 #endif /* __GBE_IR_VALUE_HPP__ */
 
-
-

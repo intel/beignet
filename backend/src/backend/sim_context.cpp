@@ -117,5 +117,3 @@ namespace gbe
   }
 } /* namespace gbe */
 
-
-

@@ -154,5 +154,3 @@ namespace gbe
 
 } /* namespace gbe */
 
-
-

@@ -409,5 +409,3 @@ namespace ir {
 
 #endif /* __GBE_IR_INSTRUCTION_HPP__ */
 
-
-

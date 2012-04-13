@@ -65,5 +65,3 @@ namespace gbe
 }
 
 #endif
-
-

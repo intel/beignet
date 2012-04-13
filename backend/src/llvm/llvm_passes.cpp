@@ -353,5 +353,3 @@ namespace gbe
   }
 } /* namespace gbe */
 
-
-

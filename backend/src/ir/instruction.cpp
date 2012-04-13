@@ -1057,5 +1057,3 @@ DECL_MEM_FN(BranchInstruction, LabelIndex, getLabelIndex(void), getLabelIndex())
 } /* namespace ir */
 } /* namespace gbe */
 
-
-

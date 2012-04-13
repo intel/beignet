@@ -237,5 +237,3 @@ namespace gbe
 
 #endif /* __GBE_ALLOC_HPP__ */
 
-
-
