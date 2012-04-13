@@ -213,3 +213,5 @@ INLINE void __store_release(volatile T *ptr, T x)
 }
 #endif /* __GBE_INTRINSICS_HPP__ */
 
+
+

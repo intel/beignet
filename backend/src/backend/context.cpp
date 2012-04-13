@@ -75,7 +75,7 @@ namespace gbe
     fn.foreachInstruction([&](const ir::Instruction &insn) {
       const uint32_t srcNum = insn.getSrcNum();
       for (uint32_t srcID = 0; srcID < srcNum; ++srcID) {
-        const ir::Register reg = insn.getSrcIndex(srcID);
+        const ir::Register reg = insn.getSrc(srcID);
         if (fn.isSpecialReg(reg) == false) continue;
 
         INSERT_REG(lsize0, LOCAL_SIZE_X)
@@ -153,4 +153,6 @@ namespace gbe
   }
 
 } /* namespace gbe */
+
+
 

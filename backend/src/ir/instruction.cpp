@@ -38,7 +38,7 @@ namespace ir {
     /*! Use this when there is no source */
     struct NoSrcPolicy {
       INLINE uint32_t getSrcNum(void) const { return 0; }
-      INLINE Register getSrcIndex(const Function &fn, uint32_t ID) const {
+      INLINE Register getSrc(const Function &fn, uint32_t ID) const {
         NOT_IMPLEMENTED;
         return Register(0);
       }
@@ -47,7 +47,7 @@ namespace ir {
     /*! Use this when there is no destination */
     struct NoDstPolicy {
       INLINE uint32_t getDstNum(void) const { return 0; }
-      INLINE Register getDstIndex(const Function &fn, uint32_t ID) const {
+      INLINE Register getDst(const Function &fn, uint32_t ID) const {
         NOT_IMPLEMENTED;
         return Register(0);
       }
@@ -79,11 +79,11 @@ namespace ir {
     public:
       INLINE uint32_t getSrcNum(void) const { return srcNum; }
       INLINE uint32_t getDstNum(void) const { return 1; }
-      INLINE Register getDstIndex(const Function &fn, uint32_t ID) const {
+      INLINE Register getDst(const Function &fn, uint32_t ID) const {
         GBE_ASSERTM(ID == 0, "Only one destination for the instruction");
         return dst;
       }
-      INLINE Register getSrcIndex(const Function &fn, uint32_t ID) const {
+      INLINE Register getSrc(const Function &fn, uint32_t ID) const {
         GBE_ASSERTM(ID < srcNum, "Out-of-bound source");
         return src[ID];
       }
@@ -148,11 +148,11 @@ namespace ir {
       }
       INLINE uint32_t getSrcNum(void) const { return 3; }
       INLINE uint32_t getDstNum(void) const { return 1; }
-      INLINE Register getDstIndex(const Function &fn, uint32_t ID) const {
+      INLINE Register getDst(const Function &fn, uint32_t ID) const {
         GBE_ASSERTM(ID == 0, "Only one destination for the instruction");
         return dst;
       }
-      INLINE Register getSrcIndex(const Function &fn, uint32_t ID) const {
+      INLINE Register getSrc(const Function &fn, uint32_t ID) const {
         GBE_ASSERTM(ID < 3, "Out-of-bound source register");
         return fn.getRegister(src, ID);
       }
@@ -180,11 +180,11 @@ namespace ir {
       }
       INLINE uint32_t getSrcNum(void) const { return 3; }
       INLINE uint32_t getDstNum(void) const { return 1; }
-      INLINE Register getDstIndex(const Function &fn, uint32_t ID) const {
+      INLINE Register getDst(const Function &fn, uint32_t ID) const {
         GBE_ASSERTM(ID == 0, "Only one destination for the instruction");
         return dst;
       }
-      INLINE Register getSrcIndex(const Function &fn, uint32_t ID) const {
+      INLINE Register getSrc(const Function &fn, uint32_t ID) const {
         GBE_ASSERTM(ID < 3, "Out-of-bound source register");
         return fn.getRegister(src, ID);
       }
@@ -239,11 +239,11 @@ namespace ir {
       INLINE Type getDstType(void) const { return this->dstType; }
       INLINE uint32_t getSrcNum(void) const { return 1; }
       INLINE uint32_t getDstNum(void) const { return 1; }
-      INLINE Register getDstIndex(const Function &fn, uint32_t ID) const {
+      INLINE Register getDst(const Function &fn, uint32_t ID) const {
         GBE_ASSERTM(ID == 0, "Only one destination for the convert instruction");
         return dst;
       }
-      INLINE Register getSrcIndex(const Function &fn, uint32_t ID) const {
+      INLINE Register getSrc(const Function &fn, uint32_t ID) const {
         GBE_ASSERTM(ID == 0, "Only one source for the convert instruction");
         return src;
       }
@@ -285,7 +285,7 @@ namespace ir {
         return labelIndex;
       }
       INLINE uint32_t getSrcNum(void) const { return hasPredicate ? 1 : 0; }
-      INLINE Register getSrcIndex(const Function &fn, uint32_t ID) const {
+      INLINE Register getSrc(const Function &fn, uint32_t ID) const {
         GBE_ASSERTM(hasPredicate, "No source for unpredicated branches");
         GBE_ASSERTM(ID == 0, "Only one source for the branch instruction");
         return predicate;
@@ -319,12 +319,12 @@ namespace ir {
         this->valueNum = valueNum;
         this->dwAligned = dwAligned ? 1 : 0;
       }
-      INLINE Register getSrcIndex(const Function &fn, uint32_t ID) const {
+      INLINE Register getSrc(const Function &fn, uint32_t ID) const {
         GBE_ASSERTM(ID == 0, "Only one source for the load instruction");
         return offset;
       }
       INLINE uint32_t getSrcNum(void) const { return 1; }
-      INLINE Register getDstIndex(const Function &fn, uint32_t ID) const {
+      INLINE Register getDst(const Function &fn, uint32_t ID) const {
         GBE_ASSERTM(ID < valueNum, "Out-of-bound source register");
         return fn.getRegister(values, ID);
       }
@@ -362,7 +362,7 @@ namespace ir {
         this->valueNum = valueNum;
         this->dwAligned = dwAligned ? 1 : 0;
       }
-      INLINE Register getSrcIndex(const Function &fn, uint32_t ID) const {
+      INLINE Register getSrc(const Function &fn, uint32_t ID) const {
         GBE_ASSERTM(ID < valueNum + 1u, "Out-of-bound source register for store");
         if (ID == 0u)
           return offset;
@@ -410,7 +410,7 @@ namespace ir {
         return fn.getImmediate(immediateIndex);
       }
       INLINE uint32_t getDstNum(void) const{ return 1; }
-      INLINE Register getDstIndex(const Function &fn, uint32_t ID) const {
+      INLINE Register getDst(const Function &fn, uint32_t ID) const {
         GBE_ASSERTM(ID == 0, "Only one destination is supported for load immediate");
         return dst;
       }
@@ -647,19 +647,19 @@ namespace ir {
     INLINE void NaryInstruction<srcNum>::out(std::ostream &out, const Function &fn) const {
       this->outOpcode(out);
       out << "." << this->getType()
-          << " %" << this->getDstIndex(fn, 0);
+          << " %" << this->getDst(fn, 0);
       for (uint32_t i = 0; i < srcNum; ++i)
-        out << " %" << this->getSrcIndex(fn, i);
+        out << " %" << this->getSrc(fn, i);
     }
 
     template <typename T>
     static void ternaryOrSelectOut(const T &insn, std::ostream &out, const Function &fn) {
       insn.outOpcode(out);
       out << "." << insn.getType()
-          << " %" << insn.getDstIndex(fn, 0)
-          << " %" << insn.getSrcIndex(fn, 0)
-          << " %" << insn.getSrcIndex(fn, 1)
-          << " %" << insn.getSrcIndex(fn, 2);
+          << " %" << insn.getDst(fn, 0)
+          << " %" << insn.getSrc(fn, 0)
+          << " %" << insn.getSrc(fn, 1)
+          << " %" << insn.getSrc(fn, 2);
     }
 
     INLINE void TernaryInstruction::out(std::ostream &out, const Function &fn) const {
@@ -674,8 +674,8 @@ namespace ir {
       this->outOpcode(out);
       out << "." << this->getDstType()
           << "." << this->getSrcType()
-          << " %" << this->getDstIndex(fn, 0)
-          << " %" << this->getSrcIndex(fn, 0);
+          << " %" << this->getDst(fn, 0)
+          << " %" << this->getSrc(fn, 0);
     }
 
     INLINE void LoadInstruction::out(std::ostream &out, const Function &fn) const {
@@ -683,17 +683,17 @@ namespace ir {
       out << "." << type << "." << addrSpace << (dwAligned ? "." : ".un") << "aligned";
       out << " {";
       for (uint32_t i = 0; i < valueNum; ++i)
-        out << "%" << this->getDstIndex(fn, i) << (i != (valueNum-1) ? " " : "");
+        out << "%" << this->getDst(fn, i) << (i != (valueNum-1) ? " " : "");
       out << "}";
-      out << " %" << this->getSrcIndex(fn, 0);
+      out << " %" << this->getSrc(fn, 0);
     }
 
     INLINE void StoreInstruction::out(std::ostream &out, const Function &fn) const {
       this->outOpcode(out);
       out << "." << type << "." << addrSpace << (dwAligned ? "." : ".un") << "aligned";
-      out << " %" << this->getSrcIndex(fn, 0) << " {";
+      out << " %" << this->getSrc(fn, 0) << " {";
       for (uint32_t i = 0; i < valueNum; ++i)
-        out << "%" << this->getSrcIndex(fn, i+1) << (i != (valueNum-1) ? " " : "");
+        out << "%" << this->getSrc(fn, i+1) << (i != (valueNum-1) ? " " : "");
       out << "}";
     }
 
@@ -705,14 +705,14 @@ namespace ir {
     INLINE void BranchInstruction::out(std::ostream &out, const Function &fn) const {
       this->outOpcode(out);
       if (hasPredicate)
-        out << "<%" << this->getSrcIndex(fn, 0) << ">";
+        out << "<%" << this->getSrc(fn, 0) << ">";
       if (hasLabel) out << " -> label$" << labelIndex;
     }
 
     INLINE void LoadImmInstruction::out(std::ostream &out, const Function &fn) const {
       this->outOpcode(out);
       out << "." << type;
-      out << " %" << this->getDstIndex(fn,0) << " ";
+      out << " %" << this->getDst(fn,0) << " ";
       fn.outImmediate(out, immediateIndex);
     }
 
@@ -741,12 +741,12 @@ namespace ir {
   RegisterData Instruction::getDstData(uint32_t ID) const {
     GBE_ASSERT(this->getParent() != NULL);
     const Function &fn = this->getParent()->getParent();
-    return fn.getRegisterData(this->getDstIndex(ID));
+    return fn.getRegisterData(this->getDst(ID));
   }
   RegisterData Instruction::getSrcData(uint32_t ID) const {
     GBE_ASSERT(this->getParent() != NULL);
     const Function &fn = this->getParent()->getParent();
-    return fn.getRegisterData(this->getSrcIndex(ID));
+    return fn.getRegisterData(this->getSrc(ID));
   }
 
 #define DECL_INSN(OPCODE, CLASS)                                  \
@@ -866,14 +866,14 @@ END_FUNCTION(Instruction, bool)
     return reinterpret_cast<const internal::CLASS*>(this)->CALL;  \
   }
 
-#define CALL getDstIndex(fn, ID)
-START_FUNCTION(Instruction, Register, getDstIndex(uint32_t ID))
+#define CALL getDst(fn, ID)
+START_FUNCTION(Instruction, Register, getDst(uint32_t ID))
 #include "ir/instruction.hxx"
 END_FUNCTION(Instruction, Register)
 #undef CALL
 
-#define CALL getSrcIndex(fn, ID)
-START_FUNCTION(Instruction, Register, getSrcIndex(uint32_t ID))
+#define CALL getSrc(fn, ID)
+START_FUNCTION(Instruction, Register, getSrc(uint32_t ID))
 #include "ir/instruction.hxx"
 END_FUNCTION(Instruction, Register)
 #undef CALL
@@ -1056,4 +1056,6 @@ DECL_MEM_FN(BranchInstruction, LabelIndex, getLabelIndex(void), getLabelIndex())
 
 } /* namespace ir */
 } /* namespace gbe */
+
+
 

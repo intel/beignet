@@ -54,14 +54,14 @@ namespace ir {
     const uint32_t dstNum = insn.getDstNum();
     // First look for used before killed
     for (uint32_t srcID = 0; srcID < srcNum; ++srcID) {
-      const Register reg = insn.getSrcIndex(srcID);
+      const Register reg = insn.getSrc(srcID);
       // Not killed -> it is really an upward use
       if (info.varKill.contains(reg) == false)
         info.upwardUsed.insert(reg);
     }
     // A destination is a killed value
     for (uint32_t dstID = 0; dstID < dstNum; ++dstID) {
-      const Register reg = insn.getDstIndex(dstID);
+      const Register reg = insn.getDst(dstID);
       info.varKill.insert(reg);
     }
   }
@@ -120,14 +120,14 @@ namespace ir {
       curr = curr->getSuccessor();
     while (curr) {
       for (uint32_t srcID = 0; srcID < curr->getSrcNum(); ++srcID) {
-        const Register src = curr->getSrcIndex(srcID);
+        const Register src = curr->getSrc(srcID);
         if (src == reg) {
           use |= USE_READ;
           break;
         }
       }
       for (uint32_t dstID = 0; dstID < curr->getDstNum(); ++dstID) {
-        const Register dst = curr->getDstIndex(dstID);
+        const Register dst = curr->getDst(dstID);
         if (dst == reg) {
           use |= USE_WRITTEN;
           break;
@@ -255,4 +255,6 @@ namespace ir {
 
 } /* namespace ir */
 } /* namespace gbe */
+
+
 

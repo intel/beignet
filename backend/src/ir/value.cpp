@@ -144,7 +144,7 @@ namespace ir {
       bb.rforeach([&](const Instruction &insn) {
         const uint32_t dstNum = insn.getDstNum();
         for (uint32_t dstID = 0; dstID < dstNum; ++dstID) {
-          const Register reg = insn.getDstIndex(dstID);
+          const Register reg = insn.getDst(dstID);
           // We only take the most recent definition
           if (defined.contains(reg) == true) continue;
           // Not in LiveOut, so does not matter
@@ -332,7 +332,7 @@ namespace ir {
         // Instruction sources consumes definitions
         const uint32_t srcNum = insn.getSrcNum();
         for (uint32_t srcID = 0; srcID < srcNum; ++srcID) {
-          const Register src = insn.getSrcIndex(srcID);
+          const Register src = insn.getSrc(srcID);
           const ValueUse use(&insn, srcID);
           auto ud = udGraph.find(use);
           GBE_ASSERT(ud != udGraph.end());
@@ -357,7 +357,7 @@ namespace ir {
         // Instruction destinations create new chains
         const uint32_t dstNum = insn.getDstNum();
         for (uint32_t dstID = 0; dstID < dstNum; ++dstID) {
-          const Register dst = insn.getDstIndex(dstID);
+          const Register dst = insn.getDst(dstID);
           ValueDef *def = (ValueDef *) this->getDefAddress(&insn, dstID);
           DefSet *udChain = this->newDefSet();
           udChain->insert(def);
@@ -527,7 +527,7 @@ namespace ir {
       const uint32_t dstNum = insn.getDstNum();
       if (dstNum > 0) out << "USES:" << std::endl;
       for (uint32_t dstID = 0; dstID < dstNum; ++dstID) {
-        const Register reg = insn.getDstIndex(dstID);
+        const Register reg = insn.getDst(dstID);
         const auto &uses = dag.getUse(&insn, dstID);
         for (auto it = uses.begin(); it != uses.end(); ++it) {
           const Instruction *other = (*it)->getInstruction();
@@ -539,7 +539,7 @@ namespace ir {
       const uint32_t srcNum = insn.getSrcNum();
       if (srcNum > 0) out << "DEFS:" << std::endl;
       for (uint32_t srcID = 0; srcID < srcNum; ++srcID) {
-        const Register reg = insn.getSrcIndex(srcID);
+        const Register reg = insn.getSrc(srcID);
         const auto &defs = dag.getDef(&insn, srcID);
         for (auto it = defs.begin(); it != defs.end(); ++it) {
           if ((*it)->getType() == ValueDef::DEF_FN_INPUT)
@@ -560,4 +560,6 @@ namespace ir {
 
 } /* namespace ir */
 } /* namespace gbe */
+
+
 

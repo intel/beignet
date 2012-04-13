@@ -92,7 +92,7 @@ namespace ir {
       else if (type == DEF_FN_INPUT)
         return data.input->reg;
       else {
-        return data.insn->getDstIndex(data.dstID);
+        return data.insn->getDst(data.dstID);
       }
     }
 
@@ -152,7 +152,7 @@ namespace ir {
     uint32_t getSrcID(void) const { return srcID; }
     /*! Get the register for this use */
     Register getRegister(void) const {
-      return insn->getSrcIndex(srcID);
+      return insn->getSrc(srcID);
     }
   private:
     const Instruction *insn; //!< Instruction where the value is used
@@ -230,4 +230,6 @@ namespace ir {
 } /* namespace gbe */
 
 #endif /* __GBE_IR_VALUE_HPP__ */
+
+
 
