@@ -30,6 +30,12 @@
 // This is the structure ouput by the compiler
 struct _gbe_program;
 
+enum {
+  FROM_SOURCE = 0,
+  FROM_LLVM = 1,
+  FROM_BINARY = 2
+};
+
 /* This maps an OCL file containing some kernels */
 struct _cl_program {
   uint64_t magic;         /* To identify it as a program */
@@ -40,8 +46,10 @@ struct _cl_program {
   cl_context ctx;         /* Its parent context */
   char *bin;              /* The program copied verbatim */
   size_t bin_sz;          /* Its size in memory */
+  char **sources;         /* Program sources */
+  size_t src_n;           /* Number of sources */
   uint32_t ker_n;         /* Number of declared kernels */
-  uint32_t from_source:1; /* Built from binary or source? */
+  uint32_t source_type:2; /* Built from binary, source or LLVM */
   uint32_t is_built:1;    /* Did we call clBuildProgram on it? */
 };
 
@@ -56,6 +64,14 @@ extern void cl_program_add_ref(cl_program);
 
 /* Create a kernel for the OCL user */
 extern cl_kernel cl_program_create_kernel(cl_program, const char*, cl_int*);
+
+/* Create a program from OCL source */
+extern cl_program
+cl_program_create_from_source(cl_context ctx,
+                              cl_uint count,
+                              const char **strings,
+                              const size_t *lengths,
+                              cl_int *errcode_ret);
 
 /* Directly create a program from a blob */
 extern cl_program
@@ -74,6 +90,10 @@ cl_program_create_from_llvm(cl_context             context,
                             const cl_device_id *   devices,
                             const char *           fileName,
                             cl_int *               errcode_ret);
+
+/* Build the program as specified by OCL */
+extern cl_int
+cl_program_build(cl_program p);
 
 #endif /* __CL_PROGRAM_H__ */
 

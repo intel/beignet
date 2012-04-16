@@ -32,6 +32,18 @@
 #include <string.h>
 #include <assert.h>
 
+static void
+cl_program_release_sources(cl_program p)
+{
+  int i;
+  if (p->sources == NULL) return;
+  for (i = 0; i < p->src_n; ++i)
+    if (p->sources[i]) cl_free(p->sources[i]);
+  cl_free(p->sources);
+  p->sources = NULL;
+  p->src_n = 0;
+}
+
 LOCAL void
 cl_program_delete(cl_program p)
 {
@@ -41,8 +53,10 @@ cl_program_delete(cl_program p)
     return;
 
   /* We are not done with it yet */
-  if ((ref = atomic_dec(&p->ref_n)) > 1)
-    return;
+  if ((ref = atomic_dec(&p->ref_n)) > 1) return;
+
+  /* Destroy the sources if still allocated */
+  cl_program_release_sources(p);
 
   /* Remove it from the list */
   assert(p->ctx);
@@ -187,15 +201,15 @@ cl_program_create_from_llvm(cl_context ctx,
   INVALID_VALUE_IF (file_name == NULL);
 
   program = cl_program_new(ctx);
-
   program->opaque = gbe_program_new_from_llvm(file_name, 0, NULL, NULL);
-  if (program->opaque == NULL) {
+  if (UNLIKELY(program->opaque == NULL)) {
     err = CL_INVALID_PROGRAM;
     goto error;
   }
 
   /* Create all the kernels */
   TRY (cl_program_load_gen_program, program);
+  program->source_type = FROM_LLVM;
 
 exit:
   if (errcode_ret)
@@ -205,6 +219,73 @@ error:
   cl_program_delete(program);
   program = NULL;
   goto exit;
+}
+
+LOCAL cl_program
+cl_program_create_from_source(cl_context ctx,
+                              cl_uint count,
+                              const char **strings,
+                              const size_t *lengths,
+                              cl_int *errcode_ret)
+
+{
+  cl_program program = NULL;
+  cl_int err = CL_SUCCESS;
+  cl_int i;
+
+  assert(ctx);
+  INVALID_VALUE_IF (count == 0);
+  INVALID_VALUE_IF (strings == NULL);
+
+  // the real compilation step will be done at build time since we do not have
+  // yet the compilation options
+  program = cl_program_new(ctx);
+  TRY_ALLOC (program->sources, cl_calloc(count, sizeof(char*)));
+  for (i = 0; i < count; ++i) {
+    size_t len;
+    if (lengths == NULL || lengths[i] == 0)
+      len = strlen(strings[i]);
+    else
+      len = lengths[i];
+    TRY_ALLOC (program->sources[i], cl_calloc(len+1, sizeof(char)));
+    memcpy(program->sources[i], strings[i], len);
+    program->sources[i][len] = 0;
+  }
+  program->src_n = count;
+  program->source_type = FROM_SOURCE;
+
+exit:
+  if (errcode_ret)
+    *errcode_ret = err;
+  return program;
+error:
+  cl_program_delete(program);
+  program = NULL;
+  goto exit;
+}
+
+LOCAL cl_int
+cl_program_build(cl_program p)
+{
+  cl_int err = CL_SUCCESS;
+
+  if (p->source_type == FROM_SOURCE) {
+    /* XXX support multiple sources later */
+    FATAL_IF (p->src_n != 1, "Only ONE source supported");
+    p->opaque = gbe_program_new_from_source(p->sources[0], 0, NULL, NULL);
+    if (UNLIKELY(p->opaque == NULL)) {
+      err = CL_INVALID_PROGRAM;
+      goto error;
+    }
+
+    /* Create all the kernels */
+    TRY (cl_program_load_gen_program, p);
+    p->source_type = FROM_LLVM;
+  }
+
+  p->is_built = 1;
+error:
+  return err;
 }
 
 LOCAL cl_kernel

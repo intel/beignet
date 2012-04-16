@@ -418,8 +418,19 @@ clCreateProgramWithSource(cl_context     context,
                           const size_t * lengths,
                           cl_int *       errcode_ret)
 {
-  NOT_IMPLEMENTED;
-  return NULL;
+  cl_program program = NULL;
+  cl_int err = CL_SUCCESS;
+
+  CHECK_CONTEXT (context);
+  program = cl_program_create_from_source(context,
+                                          count,
+                                          strings,
+                                          lengths,
+                                          &err);
+error:
+  if (errcode_ret)
+    *errcode_ret = err;
+  return program;
 }
 
 cl_program
@@ -447,7 +458,6 @@ error:
     *errcode_ret = err;
   return program;
 }
-
 cl_int
 clRetainProgram(cl_program program)
 {
@@ -476,9 +486,6 @@ clBuildProgram(cl_program            program,
                void (CL_CALLBACK *pfn_notify) (cl_program, void*),
                void *                user_data)
 {
-  /* It does nothing today since we only support creation from binary. We just
-   * try to follow OCL specification
-   */
   cl_int err = CL_SUCCESS;
   CHECK_PROGRAM(program);
   INVALID_VALUE_IF (num_devices > 1);
@@ -494,13 +501,13 @@ clBuildProgram(cl_program            program,
     }
   }
 
-  /* XXX */
-  FATAL_IF (pfn_notify != NULL || user_data != NULL,
-            "No call back is supported now");
-
-  /* TODO support create program from source */
-  assert(program->from_source == CL_FALSE);
+  /* TODO support create program from binary */
+  assert(program->source_type == FROM_LLVM ||
+         program->source_type == FROM_SOURCE);
+  cl_program_build(program);
   program->is_built = CL_TRUE;
+
+  if (pfn_notify) pfn_notify(program, user_data);
 
 error:
   return err;
