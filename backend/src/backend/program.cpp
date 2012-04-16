@@ -27,12 +27,14 @@
 #include "gen_program.h"
 #include "sim_program.h"
 #include "sys/platform.hpp"
+#include "sys/cvar.hpp"
 #include "ir/liveness.hpp"
 #include "ir/value.hpp"
 #include "ir/unit.hpp"
 #include "llvm/llvm_to_gen.hpp"
 #include <cstring>
 #include <algorithm>
+#include <fstream>
 
 namespace gbe {
 
@@ -56,8 +58,22 @@ namespace gbe {
       GBE_DELETE(it->second);
   }
 
+  BVAR(OCL_OUTPUT_GEN_IR, false);
+  BVAR(OCL_OUTPUT_LLVM, false);
+
   bool Program::buildFromLLVMFile(const char *fileName, std::string &error) {
     ir::Unit unit;
+    if (OCL_OUTPUT_LLVM) {
+      std::ifstream llvmFile;
+      llvmFile.open(fileName);
+      if (llvmFile.is_open() == true) {
+        std::string line;
+        while (llvmFile.good() == true) {
+          std::getline(llvmFile ,line);
+          std::cout << line << std::endl;
+        }
+      }
+    }
     if (llvmToGen(unit, fileName) == false) {
       error = std::string(fileName) + " not found";
       return false;
@@ -69,6 +85,7 @@ namespace gbe {
   bool Program::buildFromUnit(const ir::Unit &unit, std::string &error) {
     const auto &set = unit.getFunctionSet();
     const uint32_t kernelNum = set.size();
+    if (OCL_OUTPUT_GEN_IR) std::cout << unit;
     if (kernelNum == 0) return true;
     for (auto it = set.begin(); it != set.end(); ++it) {
       const std::string &name = it->first;

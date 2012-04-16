@@ -24,6 +24,7 @@
 #include "backend/sim_context.hpp"
 #include "backend/sim_program.hpp"
 #include "ir/function.hpp"
+#include "sys/cvar.hpp"
 #include <cstring>
 #include <cstdio>
 #include <dlfcn.h>
@@ -163,8 +164,8 @@ namespace gbe
         return;
       }
 
-      // Extra checks
 #if GBE_DEBUG
+      // Extra checks
       if (opcode == OP_LOAD)
         GBE_ASSERT(cast<LoadInstruction>(insn).getValueNum() == 1);
       if (opcode == OP_STORE)
@@ -212,13 +213,19 @@ namespace gbe
 
 #undef LOAD_SPECIAL_REG
 
+  SVAR(OCL_GCC_SIM_COMPILER, "gcc");
+  SVAR(OCL_GCC_SIM_COMPILER_OPTIONS, "-Wall -fPIC -shared -msse -msse2 -msse3 -mssse3 -msse4.1 -g -O3");
+  SVAR(OCL_ICC_SIM_COMPILER, "icc");
+  SVAR(OCL_ICC_SIM_COMPILER_OPTIONS, "-Wall -ldl -fabi-version=2 -fPIC -shared -O3 -g");
+  BVAR(OCL_USE_ICC, false);
+
   void SimContext::emitCode(void) {
     SimKernel *simKernel = static_cast<SimKernel*>(this->kernel);
     char srcStr[L_tmpnam+1], libStr[L_tmpnam+1];
     const std::string srcName = std::string(tmpnam_r(srcStr)) + ".cpp"; /* unsafe! */
     const std::string libName = std::string(tmpnam_r(libStr)) + ".so";  /* unsafe! */
-    std::cout << fn;
-    /* Output the code first */
+
+    // Output the code first
     o.open(srcName);
     o << simulator_str << std::endl;
     o << sim_vector_str << std::endl;
@@ -236,10 +243,13 @@ namespace gbe
     o << std::endl;
     o.close();
 
-    /* Compile the function */
+    // Compile the function
     std::cout << "# source: " << srcName << " library: " << libName << std::endl;
-    //std::string compileCmd = "g++ -fPIC -funroll-loops -shared -msse -msse2 -msse3 -mssse3 -msse4.1 -g -O3 -o ";
-    std::string compileCmd = "g++ -fPIC -funroll-loops -shared -msse -msse2 -msse3 -mssse3 -msse4.1 -g -o ";
+    std::string compileCmd;
+    if (OCL_USE_ICC)
+      compileCmd = OCL_ICC_SIM_COMPILER + " " + OCL_ICC_SIM_COMPILER_OPTIONS + " -o ";
+    else
+      compileCmd = OCL_GCC_SIM_COMPILER + " " + OCL_GCC_SIM_COMPILER_OPTIONS + " -o ";
     compileCmd += libName;
     compileCmd += " ";
     compileCmd += srcName;
@@ -247,10 +257,12 @@ namespace gbe
     if (UNLIKELY(system(compileCmd.c_str()) != 0))
       FATAL("Simulation program compilation failed");
 
-    /* Load it and get the function pointer */
+    // Load it and get the function pointer
     simKernel->handle = dlopen(libName.c_str(), RTLD_NOW);
-    if (UNLIKELY(simKernel->handle == NULL))
+    if (UNLIKELY(simKernel->handle == NULL)) {
+      std::cerr << "errno[" << errno << "], errmsg[" << dlerror() << "]\n";
       FATAL("Failed to open the compiled shared object");
+    }
     simKernel->fn = (SimKernelCallBack*) dlsym(simKernel->handle, name.c_str());
     if (UNLIKELY(simKernel->fn == NULL))
       FATAL("Failed to get the symbol from the compiled shared object");

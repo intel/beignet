@@ -357,10 +357,10 @@ INLINE void GATHER(simd_dw<vectorNum> &dst,
                    const simd_dw<vectorNum> &offset,
                    const char *base_address) {
   for (uint32_t i = 0; i < vectorNum; ++i) {
-    const int o0 = _mm_extract_epi32(offset.m[i], 0);
-    const int o1 = _mm_extract_epi32(offset.m[i], 1);
-    const int o2 = _mm_extract_epi32(offset.m[i], 2);
-    const int o3 = _mm_extract_epi32(offset.m[i], 3);
+    const int o0 = _mm_extract_epi32(PS2SI(offset.m[i]) , 0);
+    const int o1 = _mm_extract_epi32(PS2SI(offset.m[i]), 1);
+    const int o2 = _mm_extract_epi32(PS2SI(offset.m[i]), 2);
+    const int o3 = _mm_extract_epi32(PS2SI(offset.m[i]), 3);
     const int v0 = *(const int*)(base_address + o0);
     const int v1 = *(const int*)(base_address + o1);
     const int v2 = *(const int*)(base_address + o2);
