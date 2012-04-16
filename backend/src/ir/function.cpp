@@ -23,6 +23,7 @@
  */
 #include "ir/function.hpp"
 #include "sys/string.hpp"
+#include "sys/map.hpp"
 
 namespace gbe {
 namespace ir {
@@ -35,6 +36,44 @@ namespace ir {
       GBE_DELETE(*it);
     for (auto it = inputs.begin(); it != inputs.end(); ++it)
       GBE_DELETE(*it);
+  }
+
+  void Function::sortLabels(void) {
+    uint32_t last = 0;
+
+    // Compute the new labels and patch the label instruction
+    map<LabelIndex, LabelIndex> labelMap;
+    foreachInstruction([&](Instruction &insn) {
+      if (insn.getOpcode() != OP_LABEL) return;
+
+      // Create the new label
+      Instruction *newLabel = newInstruction();
+      *newLabel = LABEL(LabelIndex(last));
+
+      // Replace the previous label instruction
+      LabelInstruction &label = cast<LabelInstruction>(insn);
+      const LabelIndex index = label.getLabelIndex();
+      labelMap.insert(std::make_pair(index, LabelIndex(last++)));
+      newLabel->replace(&insn);
+    });
+
+    // Patch all branch instructions with the new labels
+    foreachInstruction([&](Instruction &insn) {
+      if (insn.getOpcode() != OP_BRA) return;
+
+      // Get the current branch instruction
+      BranchInstruction &bra = cast<BranchInstruction>(insn);
+      const LabelIndex index = bra.getLabelIndex();
+      const LabelIndex newIndex = labelMap.find(index)->second;
+
+      // Insert the patched branch instruction
+      Instruction *newBra = newInstruction();
+      if (bra.isPredicated() == true)
+        *newBra = BRA(newIndex, bra.getPredicateIndex());
+      else
+        *newBra = BRA(newIndex);
+      newBra->replace(&insn);
+    });
   }
 
   LabelIndex Function::newLabel(void) {

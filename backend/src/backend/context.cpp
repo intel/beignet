@@ -28,17 +28,21 @@
 #include "ir/profile.hpp"
 #include "ir/liveness.hpp"
 #include "ir/value.hpp"
+#include "sys/cvar.hpp"
 #include <algorithm>
 
 namespace gbe
 {
+
+  IVAR(OCL_SIMD_WIDTH, 8, 16, 32);
+
   Context::Context(const ir::Unit &unit, const std::string &name) :
     unit(unit), fn(*unit.getFunction(name)), name(name), liveness(NULL), dag(NULL)
   {
     GBE_ASSERT(unit.getPointerSize() == ir::POINTER_32_BITS);
     this->liveness = GBE_NEW(ir::Liveness, (ir::Function&) fn);
     this->dag = GBE_NEW(ir::FunctionDAG, *this->liveness);
-    this->simdWidth = 16; /* XXX environment variable for that to start with */
+    this->simdWidth = nextHighestPowerOf2(OCL_SIMD_WIDTH);
   }
   Context::~Context(void) {
     GBE_SAFE_DELETE(this->dag);
@@ -49,6 +53,7 @@ namespace gbe
     this->kernel = this->allocateKernel();
     this->buildPatchList();
     this->buildArgList();
+    this->buildUsedLabels();
     this->emitCode();
     return this->kernel;
   }
@@ -146,6 +151,16 @@ namespace gbe
           break;
       }
     }
+  }
+
+  void Context::buildUsedLabels(void) {
+    usedLabels.clear();
+    fn.foreachInstruction([this](const ir::Instruction &insn) {
+      using namespace ir;
+      if (insn.getOpcode() != OP_BRA) return;
+      const LabelIndex index = cast<BranchInstruction>(insn).getLabelIndex();
+      usedLabels.insert(index);
+    });
   }
 
   bool Context::isScalarReg(const ir::Register &reg) const {

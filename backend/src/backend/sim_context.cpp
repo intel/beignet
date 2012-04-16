@@ -44,10 +44,22 @@ namespace gbe
 
   void SimContext::emitRegisters(void) {
     GBE_ASSERT(fn.getProfile() == ir::PROFILE_OCL);
+
+    // First we build the set of all used registers
+    set<ir::Register> usedRegs;
+    fn.foreachInstruction([&usedRegs](const ir::Instruction &insn) {
+      const uint32_t srcNum = insn.getSrcNum(), dstNum = insn.getDstNum();
+      for (uint32_t srcID = 0; srcID < srcNum; ++srcID)
+        usedRegs.insert(insn.getSrc(srcID));
+      for (uint32_t dstID = 0; dstID < dstNum; ++dstID)
+        usedRegs.insert(insn.getDst(dstID));
+    });
+
     const uint32_t regNum = fn.regNum();
     bool lid0 = false, lid1 = false, lid2 = false; // for local id registers
     for (uint32_t regID = 0; regID < regNum; ++regID) {
       const ir::Register reg(regID);
+      if (usedRegs.contains(reg) == false) continue;
       if (reg == ir::ocl::groupid0 ||
           reg == ir::ocl::groupid1 ||
           reg == ir::ocl::groupid2)
@@ -153,13 +165,15 @@ namespace gbe
 #undef DECL_INSN
       }
       if (opcode == OP_LABEL) {
-        o << "label" << cast<LabelInstruction>(insn).getLabelIndex() << ":\n";
+        const LabelInstruction labelInsn = cast<LabelInstruction>(insn);
+        const LabelIndex index = labelInsn.getLabelIndex();
+        if (usedLabels.contains(index) == true)
+          o << "label" << index << ":\n";
         return;
       } else if (opcode == OP_BRA) {
         NOT_IMPLEMENTED;
         return;
       } else if (opcode == OP_RET) {
-        std::cout << "BE AWARE OF RET: ONLY ONE RET AT THE END OF THE FUNCTION SHOULD BE OUTPUTTED!";
         o << "return;\n";
         return;
       }

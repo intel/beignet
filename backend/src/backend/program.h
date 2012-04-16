@@ -75,7 +75,10 @@ enum gbe_curbe_type {
 };
 
 /*! Create a new program from the given source code (zero terminated string) */
-typedef gbe_program (gbe_program_new_from_source_cb)(const char *source);
+typedef gbe_program (gbe_program_new_from_source_cb)(const char *source,
+                                                     size_t stringSize,
+                                                     char *err,
+                                                     size_t *err_size);
 extern gbe_program_new_from_source_cb *gbe_program_new_from_source;
 
 /*! Create a new program from the given blob */

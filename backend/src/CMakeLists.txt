@@ -1,9 +1,9 @@
 add_subdirectory(llvm)
 
-set (TO_STRINGIFY_FILES simulator sim_vector)
+macro (stringify TO_STRINGIFY_PATH TO_STRINGIFY_FILES)
 foreach (to_stringify_file ${TO_STRINGIFY_FILES})
-  set (input_file ${GBE_SOURCE_DIR}/src/backend/sim/${to_stringify_file}.h)
-  set (output_file ${GBE_SOURCE_DIR}/src/backend/sim/${to_stringify_file}_str.cpp)
+  set (input_file ${TO_STRINGIFY_PATH}/${to_stringify_file}.h)
+  set (output_file ${TO_STRINGIFY_PATH}/${to_stringify_file}_str.cpp)
   set (string_header "\\\"string\\\"")
   add_custom_command(
     OUTPUT ${output_file}
@@ -18,6 +18,12 @@ foreach (to_stringify_file ${TO_STRINGIFY_FILES})
     COMMAND echo "" >> ${output_file}
     MAIN_DEPENDENCY ${input_file})
 endforeach (to_stringify_file)
+endmacro (stringify)
+
+set (TO_STRINGIFY_FILES simulator sim_vector)
+stringify ("${GBE_SOURCE_DIR}/src/backend/sim/" "${TO_STRINGIFY_FILES}")
+set (TO_STRINGIFY_FILES stdlib)
+stringify ("${GBE_SOURCE_DIR}/src/llvm/" "${TO_STRINGIFY_FILES}")
 
 if (GBE_USE_BLOB)
   set (GBE_SRC blob.cpp)
@@ -63,6 +69,7 @@ else (GBE_USE_BLOB)
     ir/function.hpp
     ir/value.cpp
     ir/value.hpp
+    llvm/stdlib_str.cpp
     backend/context.cpp
     backend/context.hpp
     backend/program.cpp

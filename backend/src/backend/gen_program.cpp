@@ -47,11 +47,6 @@ namespace gbe {
     return ker;
   }
 
-  static gbe_program genProgramNewFromSource(const char *source) {
-    NOT_IMPLEMENTED;
-    return NULL;
-  }
-
   static gbe_program genProgramNewFromBinary(const char *binary, size_t size) {
     NOT_IMPLEMENTED;
     return NULL;
@@ -65,7 +60,6 @@ namespace gbe {
     using namespace gbe;
     GenProgram *program = GBE_NEW(GenProgram);
     std::string error;
-
     // Try to compile the program
     if (program->buildFromLLVMFile(fileName, error) == false) {
       if (err != NULL && errSize != NULL && stringSize > 0u) {
@@ -83,7 +77,6 @@ namespace gbe {
 
 void genSetupCallBacks(void)
 {
-  gbe_program_new_from_source = gbe::genProgramNewFromSource;
   gbe_program_new_from_binary = gbe::genProgramNewFromBinary;
   gbe_program_new_from_llvm = gbe::genProgramNewFromLLVM;
 }

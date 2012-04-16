@@ -45,11 +45,6 @@ namespace gbe {
     return ker;
   }
 
-  static gbe_program simProgramNewFromSource(const char *source) {
-    NOT_IMPLEMENTED;
-    return NULL;
-  }
-
   static gbe_program simProgramNewFromBinary(const char *binary, size_t size) {
     NOT_IMPLEMENTED;
     return NULL;
@@ -63,7 +58,7 @@ namespace gbe {
     using namespace gbe;
     SimProgram *program = GBE_NEW(SimProgram);
     std::string error;
-    /* Try to compile the program */
+    // Try to compile the program
     if (program->buildFromLLVMFile(fileName, error) == false) {
       if (err != NULL && errSize != NULL && stringSize > 0u) {
         const size_t msgSize = std::min(error.size(), stringSize-1u);
@@ -73,7 +68,7 @@ namespace gbe {
       GBE_DELETE(program);
       return NULL;
     }
-    /* Everything run fine */
+    // Everything run fine
     return (gbe_program) program;
   }
 
@@ -81,7 +76,6 @@ namespace gbe {
 
 void simSetupCallBacks(void)
 {
-  gbe_program_new_from_source = gbe::simProgramNewFromSource;
   gbe_program_new_from_binary = gbe::simProgramNewFromBinary;
   gbe_program_new_from_llvm = gbe::simProgramNewFromLLVM;
 }

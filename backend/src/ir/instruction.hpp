@@ -109,11 +109,14 @@ namespace ir {
     void setParent(BasicBlock *block) { this->parent = block; }
     /*! Get the function from the parent basic block */
     const Function &getFunction(void) const;
+    Function &getFunction(void);
     /*! Check that the instruction is well formed (type properly match,
      *  registers not of bound and so on). If not well formed, provide a reason
      *  in string why
      */
     bool wellFormed(const Function &fn, std::string &why) const;
+    /*! Replace other by this instruction */
+    void replace(Instruction *other);
     /*! Indicates if the instruction belongs to instruction type T. Typically, T
      *  can be BinaryInstruction, UnaryInstruction, LoadInstruction and so on
      */

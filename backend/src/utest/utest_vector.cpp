@@ -353,7 +353,7 @@ static void utestScatterGather(void)
     LOAD(_##INDEX##g, (const char *) (gatherOffsets+index##INDEX));\
     LOAD(_##INDEX##s, (const char *) (scatterOffsets+index##INDEX));\
     GATHER(_##INDEX, _##INDEX##g, (const char *) data);\
-    SCATTER(_##INDEX, _##INDEX##s, (char *) dst);\
+    SCATTER(_##INDEX##s, _##INDEX, (char *) dst);\
     for (uint32_t i = 0; i < elemNum(_##INDEX); ++i)\
       GBE_ASSERT(data[gatherOffsets[index##INDEX+i] / sizeof(uint32_t)] ==\
                  dst[scatterOffsets[index##INDEX+i] / sizeof(uint32_t)]);

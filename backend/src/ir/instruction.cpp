@@ -884,6 +884,24 @@ END_FUNCTION(Instruction, Register)
     GBE_ASSERT(bb != NULL);
     return bb->getParent();
   }
+  Function &Instruction::getFunction(void) {
+    BasicBlock *bb = this->getParent();
+    GBE_ASSERT(bb != NULL);
+    return bb->getParent();
+  }
+
+  void Instruction::replace(Instruction *other) {
+    Function &fn = other->getFunction();
+    BasicBlock *bb = other->getParent();
+    if (bb->getFirstInstruction() == other) bb->setFirstInstruction(this);
+    if (bb->getLastInstruction() == other) bb->setLastInstruction(this);
+    if (other->predecessor) other->predecessor->successor = this;
+    if (other->successor) other->successor->predecessor = this;
+    this->parent = other->parent;
+    this->predecessor = other->predecessor;
+    this->successor = other->successor;
+    fn.deleteInstruction(other);
+  }
 
 #define DECL_MEM_FN(CLASS, RET, PROTOTYPE, CALL)                  \
   RET CLASS::PROTOTYPE const {                                    \

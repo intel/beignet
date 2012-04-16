@@ -59,21 +59,9 @@ namespace gbe {
   }
 
   BVAR(OCL_OUTPUT_GEN_IR, false);
-  BVAR(OCL_OUTPUT_LLVM, false);
 
   bool Program::buildFromLLVMFile(const char *fileName, std::string &error) {
     ir::Unit unit;
-    if (OCL_OUTPUT_LLVM) {
-      std::ifstream llvmFile;
-      llvmFile.open(fileName);
-      if (llvmFile.is_open() == true) {
-        std::string line;
-        while (llvmFile.good() == true) {
-          std::getline(llvmFile ,line);
-          std::cout << line << std::endl;
-        }
-      }
-    }
     if (llvmToGen(unit, fileName) == false) {
       error = std::string(fileName) + " not found";
       return false;
@@ -98,6 +86,35 @@ namespace gbe {
   static void programDelete(gbe_program gbeProgram) {
     gbe::Program *program = (gbe::Program*)(gbeProgram);
     GBE_SAFE_DELETE(program);
+  }
+
+  extern std::string stdlib_str;
+  static gbe_program programNewFromSource(const char *source,
+                                          size_t stringSize,
+                                          char *err,
+                                          size_t *errSize)
+  {
+    char clStr[L_tmpnam+1], llStr[L_tmpnam+1];
+    const std::string clName = std::string(tmpnam_r(clStr)) + ".cl"; /* unsafe! */
+    const std::string llName = std::string(tmpnam_r(llStr)) + ".ll"; /* unsafe! */
+
+    // Write the source to the cl file
+    FILE *clFile = fopen(clName.c_str(), "w");
+    FATAL_IF(clFile == NULL, "Failed to open temporary file");
+    fwrite(stdlib_str.c_str(), strlen(stdlib_str.c_str()), 1, clFile);
+    fwrite(source, strlen(source), 1, clFile);
+    fclose(clFile);
+
+    // Now compile the code to llvm using clang
+    // XXX use popen and stuff instead of that
+    std::string compileCmd = "clang -emit-llvm -O3 -ccc-host-triple ptx32 -c ";
+    compileCmd += clName;
+    compileCmd += " -o ";
+    compileCmd += llName;
+    if (UNLIKELY(system(compileCmd.c_str()) != 0)) return NULL;
+
+    // Now build the program from llvm
+    return gbe_program_new_from_llvm(llName.c_str(), stringSize, err, errSize);
   }
 
   static uint32_t programGetKernelNum(gbe_program gbeProgram) {
@@ -199,6 +216,7 @@ namespace gbe
   struct CallBackInitializer
   {
     CallBackInitializer(void) {
+      gbe_program_new_from_source = gbe::programNewFromSource;
       gbe_program_delete = gbe::programDelete;
       gbe_program_get_kernel_num = gbe::programGetKernelNum;
       gbe_program_get_kernel_by_name = gbe::programGetKernelByName;

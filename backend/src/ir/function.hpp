@@ -66,8 +66,10 @@ namespace ir {
     INLINE void foreach(const T &functor) const {
       Instruction *curr = first;
       while (curr) {
+        // Be aware the current instruction can be destroyed in functor
+        Instruction *succ = curr->getSuccessor();
         functor(*curr);
-        curr = curr->getSuccessor();
+        curr = succ;
       }
     }
     /*! Apply the given functor on all instructions (reverse order) */
@@ -75,8 +77,10 @@ namespace ir {
     INLINE void rforeach(const T &functor) const {
       Instruction *curr = last;
       while (curr) {
+        // Be aware the current instruction can be destroyed in functor
+        Instruction *pred = curr->getPredecessor();
         functor(*curr);
-        curr = curr->getPredecessor();
+        curr = pred;
       }
     }
     /*! Get the parent function */
@@ -85,9 +89,11 @@ namespace ir {
     /*! Get the next and previous allocated block */
     BasicBlock *getNextBlock(void) const { return this->nextBlock; }
     BasicBlock *getPrevBlock(void) const { return this->prevBlock; }
-    /*! Get the first and last instructions */
+    /*! Get / set the first and last instructions */
     Instruction *getFirstInstruction(void) const { return this->first; }
     Instruction *getLastInstruction(void) const { return this->last; }
+    void setFirstInstruction(Instruction *insn) { this->first = insn; }
+    void setLastInstruction(Instruction *insn) { this->last = insn; }
     /*! Get successors and predecessors */
     const BlockSet &getSuccessorSet(void) const { return successors; }
     const BlockSet &getPredecessorSet(void) const { return predecessors; }
@@ -214,6 +220,10 @@ namespace ir {
     LabelIndex newLabel(void);
     /*! Create the control flow graph */
     void computeCFG(void);
+    /*! Sort the labels in increasing orders (ie top block has the smallest
+     *  labels)
+     */
+    void sortLabels(void);
     /*! Number of registers in the register file */
     INLINE uint32_t regNum(void) const { return file.regNum(); }
     /*! Number of register tuples in the register file */

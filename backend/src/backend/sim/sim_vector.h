@@ -342,13 +342,13 @@ template <uint32_t vectorNum>
 INLINE void SCATTER(const simd_dw<vectorNum> &offset,
                     const scalar_dw &value,
                     char *base_address) {
-  SCATTER(simd_dw<vectorNum>(value), offset, base_address);
+  SCATTER(offset, simd_dw<vectorNum>(value), base_address);
 }
 template <uint32_t vectorNum>
 INLINE void SCATTER(const scalar_dw &offset,
                     const simd_dw<vectorNum> &value,
                     char *base_address) {
-  SCATTER(value, simd_dw<vectorNum>(offset), base_address);
+  SCATTER(simd_dw<vectorNum>(offset), value, base_address);
 }
 #include <cstdio>
 /* Gather */
@@ -418,7 +418,7 @@ INLINE void GT_U32(scalar_m &dst, scalar_dw v0, scalar_dw v1) { dst.u = (v0.u > 
 INLINE void LOAD(scalar_dw &dst, const char *ptr) { dst.u = *(const uint32_t *) ptr; }
 INLINE void STORE(scalar_dw src, char *ptr) { *(uint32_t *) ptr = src.u; }
 INLINE void LOADI(scalar_dw &dst, uint32_t u) { dst.u = u; }
-INLINE void SCATTER(scalar_dw value, scalar_dw offset, char *base) { *(uint32_t*)(base + offset.u) = value.u; }
+INLINE void SCATTER(scalar_dw offset, scalar_dw value, char *base) { *(uint32_t*)(base + offset.u) = value.u; }
 INLINE void GATHER(scalar_dw &dst, scalar_dw offset, const char *base) { dst.u = *(const uint32_t*)(base + offset.u); }
 
 //////////////////////////////////////////////////////////////////////////////

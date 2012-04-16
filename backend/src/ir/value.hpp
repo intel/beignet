@@ -199,8 +199,12 @@ namespace ir {
     const ValueDef *getDefAddress(const Register &reg) const;
     /*! Get the pointer to the use *as stored in the DAG* */
     const ValueUse *getUseAddress(const Instruction *insn, uint32_t srcID) const;
+    /*! Get the set of all uses for the register */
+    const UseSet *getRegUse(const Register &reg) const;
+    /*! Get the set of all definitions for the register */
+    const DefSet *getRegDef(const Register &reg) const;
     /*! Get the function we have the graph for */
-    const Function &getFunction(void) const { return fn; }
+    INLINE const Function &getFunction(void) const { return fn; }
     /*! The DefSet for each definition use */
     typedef map<ValueUse, DefSet*> UDGraph;
     /*! The UseSet for each definition */

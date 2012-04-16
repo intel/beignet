@@ -27,19 +27,27 @@
 #include "llvm/PassManager.h"
 #include "llvm/Pass.h"
 #include "llvm/Support/IRReader.h"
+#include "llvm/Support/raw_ostream.h"
 #include "llvm/Transforms/Scalar.h"
+#include "llvm/Assembly/PrintModulePass.h"
 
 #include "llvm/llvm_gen_backend.hpp"
 #include "llvm/llvm_to_gen.hpp"
+#include "sys/cvar.hpp"
 #include "sys/platform.hpp"
 
 namespace gbe
 {
+  BVAR(OCL_OUTPUT_LLVM, false);
+  BVAR(OCL_OUTPUT_LLVM_BEFORE_EXTRA_PASS, false);
+
   bool llvmToGen(ir::Unit &unit, const char *fileName)
   {
     using namespace llvm;
     // Get the global LLVM context
     llvm::LLVMContext& c = llvm::getGlobalContext();
+    std::string errInfo;
+    llvm::raw_fd_ostream o("-", errInfo);
 
     // Get the module from its file
     SMDiagnostic Err;
@@ -49,14 +57,22 @@ namespace gbe
     Module &mod = *M.get();
 
     llvm::PassManager passes;
+
+    // Print the code before further optimizations
+    if (OCL_OUTPUT_LLVM_BEFORE_EXTRA_PASS)
+      passes.add(createPrintModulePass(&o));
     passes.add(createScalarReplAggregatesPass()); // Break up allocas
     passes.add(createRemoveGEPPass(unit));
     passes.add(createConstantPropagationPass());
-    passes.add(createDeadInstEliminationPass()); // remove simplified instructions
+    passes.add(createDeadInstEliminationPass());  // Remove simplified instructions
     passes.add(createLowerSwitchPass());
     passes.add(createPromoteMemoryToRegisterPass());
     passes.add(createGVNPass());                  // Remove redundancies
     passes.add(createGenPass(unit));
+
+    // Print the code extra optimization passes
+    if (OCL_OUTPUT_LLVM)
+      passes.add(createPrintModulePass(&o));
     passes.run(mod);
     return true;
   }
