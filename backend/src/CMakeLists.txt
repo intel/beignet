@@ -22,13 +22,15 @@ endmacro (stringify)
 
 set (TO_STRINGIFY_FILES simulator sim_vector)
 stringify ("${GBE_SOURCE_DIR}/src/backend/sim/" "${TO_STRINGIFY_FILES}")
-set (TO_STRINGIFY_FILES stdlib)
-stringify ("${GBE_SOURCE_DIR}/src/llvm/" "${TO_STRINGIFY_FILES}")
+set (TO_STRINGIFY_FILES ocl_stdlib)
+stringify ("${GBE_SOURCE_DIR}/src/" "${TO_STRINGIFY_FILES}")
 
 if (GBE_USE_BLOB)
   set (GBE_SRC blob.cpp)
 else (GBE_USE_BLOB)
   set (GBE_SRC
+    ocl_stdlib.h
+    ocl_stdlib_str.cpp
     sys/vector.hpp
     sys/hash_map.hpp
     sys/map.hpp
@@ -69,7 +71,6 @@ else (GBE_USE_BLOB)
     ir/function.hpp
     ir/value.cpp
     ir/value.hpp
-    llvm/stdlib_str.cpp
     backend/context.cpp
     backend/context.hpp
     backend/program.cpp

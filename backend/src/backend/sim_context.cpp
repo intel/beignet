@@ -69,11 +69,16 @@ namespace gbe
       if (reg == ir::ocl::lid2) lid2 = true;
       const ir::RegisterData regData = fn.getRegisterData(reg);
       switch (regData.family) {
-        case ir::FAMILY_BOOL:
         case ir::FAMILY_BYTE:
         case ir::FAMILY_WORD:
         case ir::FAMILY_QWORD:
           NOT_IMPLEMENTED;
+        break;
+        case ir::FAMILY_BOOL:
+          if (isScalarReg(reg) == true)
+            o << "scalar_m _" << regID << ";\n";
+          else
+            o << "simd" << simdWidth << "m _" << regID << ";\n";
         break;
         case ir::FAMILY_DWORD:
           if (isScalarReg(reg) == true)
@@ -90,9 +95,9 @@ namespace gbe
     if (lid2 == false) o << "scalar_dw _" << uint32_t(ir::ocl::lid2) << ";\n";
   }
 
-#define LOAD_SPECIAL_REG(CURBE, REG) do {                                 \
-    const int32_t offset = kernel->getCurbeOffset(CURBE, 0);              \
-    if (offset >= 0)                                                      \
+#define LOAD_SPECIAL_REG(CURBE, REG) do { \
+    const int32_t offset = kernel->getCurbeOffset(CURBE, 0); \
+    if (offset >= 0) \
       o << "LOAD(_" << uint32_t(REG) << ", curbe + " << offset << ");\n"; \
   } while (0)
 
@@ -148,16 +153,23 @@ namespace gbe
     };
   }
 
+  void SimContext::emitMaskingCode(void) {
+    o << "simd" << simdWidth << "m " << "emask;\n"
+      << "simd" << simdWidth << "dw " << "uip(scalar_dw(0u));\n"
+      << "alltrueMask(emask);\n"
+      << "uint32_t movedMask = ~0x0u;\n";
+  }
+
   void SimContext::emitInstructionStream(void) {
     using namespace ir;
     fn.foreachInstruction([&](const Instruction &insn) {
       const char *opcodeStr = NULL;
       const Opcode opcode = insn.getOpcode();
-#define DECL_INSN(OPCODE, FAMILY)                         \
-      case OP_##OPCODE:                                   \
-      if (opcode == OP_LOAD) opcodeStr = "GATHER";        \
+#define DECL_INSN(OPCODE, FAMILY) \
+      case OP_##OPCODE: \
+      if (opcode == OP_LOAD) opcodeStr = "GATHER"; \
       else if (opcode == OP_STORE) opcodeStr = "SCATTER"; \
-      else opcodeStr = #OPCODE;                           \
+      else opcodeStr = #OPCODE; \
       break;
       switch (opcode) {
         #include "ir/instruction.hxx"
@@ -167,11 +179,40 @@ namespace gbe
       if (opcode == OP_LABEL) {
         const LabelInstruction labelInsn = cast<LabelInstruction>(insn);
         const LabelIndex index = labelInsn.getLabelIndex();
-        if (usedLabels.contains(index) == true)
-          o << "label" << index << ":\n";
+        o << "\n";
+        if (usedLabels.contains(index) == false)  o << "// ";
+        o << "label" << index << ":\n";
+        o << "SIM_JOIN(uip, emask, " << uint32_t(index) << ");\n";
         return;
       } else if (opcode == OP_BRA) {
-        NOT_IMPLEMENTED;
+        // Get the label of the block
+        const BranchInstruction bra = cast<BranchInstruction>(insn);
+        const BasicBlock *bb = insn.getParent();
+        const Instruction *label = bb->getFirstInstruction();
+        GBE_ASSERT(label->isMemberOf<LabelInstruction>() == true);
+        const LabelIndex srcIndex = cast<LabelInstruction>(label)->getLabelIndex();
+        const LabelIndex dstIndex = bra.getLabelIndex();
+        const bool isPredicated = bra.isPredicated();
+
+        if (uint32_t(dstIndex) > uint32_t(srcIndex)) { // FWD jump here
+          if (isPredicated) {
+            const Register pred = bra.getPredicateIndex();
+            o << "SIM_FWD_BRA_C(uip, emask, " << "_" << pred
+              << ", " << uint32_t(dstIndex) << ", " << uint32_t(dstIndex)
+              << ");\n";
+          } else {
+            o << "SIM_FWD_BRA(uip, emask, "
+              << uint32_t(dstIndex) << ", " << uint32_t(dstIndex)
+              << ");\n";
+          }
+        } else { // BWD jump
+          if (isPredicated) {
+            const Register pred = bra.getPredicateIndex();
+            o << "SIM_BWD_BRA_C(uip, _" << pred
+              << ", " << uint32_t(dstIndex) << ");\n";
+          } else
+            o << "SIM_BWD_BRA(uip, emask, " << uint32_t(dstIndex) << ");\n";
+        }
         return;
       } else if (opcode == OP_RET) {
         o << "return;\n";
@@ -189,7 +230,13 @@ namespace gbe
       // Regular compute instruction
       const uint32_t dstNum = insn.getDstNum();
       const uint32_t srcNum = insn.getSrcNum();
-      o << opcodeStr;
+
+      // These two needs a new instruction. Fortunately, it is just a string
+      // manipulation. MASKED(OP,... just becomes MASKED_OP(...)
+      if (opcode == OP_STORE || opcode == OP_LOAD)
+        o << "MASKED_" << opcodeStr << "(";
+      else
+        o << "MASKED" << dstNum << "(" << opcodeStr;
 
       // Append type when needed
       if (insn.isMemberOf<UnaryInstruction>() == true)
@@ -200,7 +247,8 @@ namespace gbe
        o << "_" << typeStr(cast<BinaryInstruction>(insn).getType());
       else if (insn.isMemberOf<CompareInstruction>() == true)
        o << "_" << typeStr(cast<CompareInstruction>(insn).getType());
-      o << "(";
+      if (opcode != OP_STORE && opcode != OP_LOAD)
+        o << ", ";
 
       // Output both destinations and sources in that order
       for (uint32_t dstID = 0; dstID < dstNum; ++dstID) {
@@ -220,7 +268,7 @@ namespace gbe
                    imm.type == TYPE_FLOAT);
         o << ", " << imm.data.u32;
       } else if (opcode == OP_LOAD || opcode == OP_STORE)
-        o << ", base";
+        o << ", base, movedMask";
       o << ");\n";
     });
   }
@@ -250,7 +298,9 @@ namespace gbe
       << "const size_t curbe_sz = sim->get_curbe_size(sim);\n"
       << "const char *curbe = (const char*) sim->get_curbe_address(sim) + curbe_sz * tid;\n"
       << "char *base = (char*) sim->get_base_address(sim);\n";
+
     this->emitRegisters();
+    this->emitMaskingCode();
     this->emitCurbeLoad();
     this->emitInstructionStream();
     o << "}\n";

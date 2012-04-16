@@ -88,7 +88,7 @@ namespace gbe {
     GBE_SAFE_DELETE(program);
   }
 
-  extern std::string stdlib_str;
+  extern std::string ocl_stdlib_str;
   static gbe_program programNewFromSource(const char *source,
                                           size_t stringSize,
                                           char *err,
@@ -101,7 +101,7 @@ namespace gbe {
     // Write the source to the cl file
     FILE *clFile = fopen(clName.c_str(), "w");
     FATAL_IF(clFile == NULL, "Failed to open temporary file");
-    fwrite(stdlib_str.c_str(), strlen(stdlib_str.c_str()), 1, clFile);
+    fwrite(ocl_stdlib_str.c_str(), strlen(ocl_stdlib_str.c_str()), 1, clFile);
     fwrite(source, strlen(source), 1, clFile);
     fclose(clFile);
 

@@ -19,7 +19,7 @@
 
 #include "string"
 namespace gbe {
-std::string stdlib_str = 
+std::string ocl_stdlib_str = 
 "#define DECL_INTERNAL_WORK_ITEM_FN(NAME)                             \\\n"
 "__attribute__((pure,const)) unsigned int __gen_ocl_##NAME##0(void);  \\\n"
 "__attribute__((pure,const)) unsigned int __gen_ocl_##NAME##1(void);  \\\n"

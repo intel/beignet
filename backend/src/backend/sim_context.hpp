@@ -51,6 +51,8 @@ namespace gbe
     void emitRegisters(void);
     /*! Load the curbe data into the registers */
     void emitCurbeLoad(void);
+    /*! Emit the masking code (mask / UIP) */
+    void emitMaskingCode(void);
     /*! Emit the instructions */
     void emitInstructionStream(void);
     /*! Implements base class */

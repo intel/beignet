@@ -36,6 +36,10 @@
 #include "sys/cvar.hpp"
 #include "sys/platform.hpp"
 
+#include <sys/types.h>
+#include <sys/stat.h>
+#include <fcntl.h>
+
 namespace gbe
 {
   BVAR(OCL_OUTPUT_LLVM, false);
@@ -44,10 +48,11 @@ namespace gbe
   bool llvmToGen(ir::Unit &unit, const char *fileName)
   {
     using namespace llvm;
+
     // Get the global LLVM context
     llvm::LLVMContext& c = llvm::getGlobalContext();
     std::string errInfo;
-    llvm::raw_fd_ostream o("-", errInfo);
+    auto *o = new llvm::raw_fd_ostream("-", errInfo);
 
     // Get the module from its file
     SMDiagnostic Err;
@@ -60,7 +65,7 @@ namespace gbe
 
     // Print the code before further optimizations
     if (OCL_OUTPUT_LLVM_BEFORE_EXTRA_PASS)
-      passes.add(createPrintModulePass(&o));
+      passes.add(createPrintModulePass(o));
     passes.add(createScalarReplAggregatesPass()); // Break up allocas
     passes.add(createRemoveGEPPass(unit));
     passes.add(createConstantPropagationPass());
@@ -72,8 +77,15 @@ namespace gbe
 
     // Print the code extra optimization passes
     if (OCL_OUTPUT_LLVM)
-      passes.add(createPrintModulePass(&o));
+      passes.add(createPrintModulePass(o));
     passes.run(mod);
+
+    // raw_fd_ostream closes stdout. We must reopen it
+    delete o;
+    int fd;
+    fd = open("/dev/tty", O_WRONLY);
+    stdout = fdopen(fd, "w");
+
     return true;
   }
 } /* namespace gbe */

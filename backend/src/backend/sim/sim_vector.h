@@ -58,7 +58,13 @@ INLINE const __m128i expand(const __m128i& b) {
 }
 
 /*! Base structure for scalar double word */
-union scalar_dw { uint32_t u; int32_t s; float f; };
+union scalar_dw {
+  INLINE scalar_dw(void) {}
+  INLINE scalar_dw(uint32_t u) { this->u = u; }
+  INLINE scalar_dw(int32_t s) { this->s = s; }
+  INLINE scalar_dw(float f) { this->f = f; }
+  uint32_t u; int32_t s; float f;
+};
 
 /*! Base structure for scalar mask */
 union scalar_m { uint32_t u; int32_t s; float f; };
@@ -87,6 +93,26 @@ struct simd_m {
   __m128 m[vectorNum];
 };
 
+/*! Select instruction on vectors */
+template <uint32_t vectorNum>
+INLINE void select(simd_dw<vectorNum> &dst,
+                   const simd_dw<vectorNum> &src0,
+                   const simd_dw<vectorNum> &src1,
+                   const simd_m<vectorNum> &mask)
+{
+  for (uint32_t i = 0; i < vectorNum; ++i)
+    dst.m[i] = _mm_blendv_ps(src0.m[i], src1.m[i], mask.m[i]);
+}
+template <uint32_t vectorNum>
+INLINE void select(simd_m<vectorNum> &dst,
+                   const simd_m<vectorNum> &src0,
+                   const simd_m<vectorNum> &src1,
+                   const simd_m<vectorNum> &mask)
+{
+  for (uint32_t i = 0; i < vectorNum; ++i)
+    dst.m[i] = _mm_blendv_ps(src0.m[i], src1.m[i], mask.m[i]);
+}
+
 /*! To cast through memory */
 union cast_dw {
   INLINE cast_dw(uint32_t u0, uint32_t u1, uint32_t u2, uint32_t u3) {
@@ -108,6 +134,12 @@ union cast_dw {
   float f[4];
 };
 static const cast_dw alltrue(0xffffffff, 0xffffffff, 0xffffffff, 0xffffffff);
+
+/*! Make a mask true */
+template <uint32_t vectorNum>
+INLINE void alltrueMask(simd_m<vectorNum> &x) {
+  for (uint32_t i = 0; i < vectorNum; ++i) x.m[i] = alltrue.v;
+}
 
 /* Some convenient typedefs */
 typedef scalar_dw  simd1dw;
@@ -141,6 +173,17 @@ INLINE uint32_t mask(const simd_m<vectorNum> v) {
   for (uint32_t i = 1; i < vectorNum; ++i)
     m |= (_mm_movemask_ps(v.m[i]) << (4*i));
   return m;
+}
+
+/* MOV instruction */
+template <uint32_t vectorNum>
+INLINE void MOV_S32(simd_dw<vectorNum> &dst, const simd_dw<vectorNum> &v) {
+  for (uint32_t i = 0; i < vectorNum; ++i) dst.m[i] = v.m[i];
+}
+template <uint32_t vectorNum>
+INLINE void MOV_S32(simd_dw<vectorNum> &dst, const scalar_dw &x) {
+  const __m128 v = _mm_load1_ps(&x.f);
+  for (uint32_t i = 0; i < vectorNum; ++i) dst.m[i] = v;
 }
 
 /* Vector instructions that use sse* */
@@ -317,7 +360,6 @@ INLINE void LOADI(simd_dw<vectorNum> &dst, uint32_t u) {
     dst.m[i] = _mm_load1_ps(&cast.f);
 }
 
-#include <cstdio>
 /* Scatter */
 template <uint32_t vectorNum>
 INLINE void SCATTER(const simd_dw<vectorNum> &offset,
@@ -350,7 +392,47 @@ INLINE void SCATTER(const scalar_dw &offset,
                     char *base_address) {
   SCATTER(simd_dw<vectorNum>(offset), value, base_address);
 }
-#include <cstdio>
+
+/* Masked scatter will only store unmasked lanes */
+template <uint32_t vectorNum>
+INLINE void MASKED_SCATTER(const simd_dw<vectorNum> &offset,
+                           const simd_dw<vectorNum> &value,
+                           char *base_address,
+                           uint32_t mask)
+{
+  for (uint32_t i = 0; i < vectorNum; ++i) {
+    const int v0 = _mm_extract_epi32(PS2SI(value.m[i]), 0);
+    const int v1 = _mm_extract_epi32(PS2SI(value.m[i]), 1);
+    const int v2 = _mm_extract_epi32(PS2SI(value.m[i]), 2);
+    const int v3 = _mm_extract_epi32(PS2SI(value.m[i]), 3);
+    const int o0 = _mm_extract_epi32(PS2SI(offset.m[i]), 0);
+    const int o1 = _mm_extract_epi32(PS2SI(offset.m[i]), 1);
+    const int o2 = _mm_extract_epi32(PS2SI(offset.m[i]), 2);
+    const int o3 = _mm_extract_epi32(PS2SI(offset.m[i]), 3);
+    if (mask & 1) *(int*)(base_address + o0) = v0;
+    if (mask & 2) *(int*)(base_address + o1) = v1;
+    if (mask & 4) *(int*)(base_address + o2) = v2;
+    if (mask & 8) *(int*)(base_address + o3) = v3;
+    mask = mask >> 4;
+  }
+}
+template <uint32_t vectorNum>
+INLINE void MASKED_SCATTER(const simd_dw<vectorNum> &offset,
+                           const scalar_dw &value,
+                           char *base_address,
+                           uint32_t mask)
+{
+  MASKED_SCATTER(offset, simd_dw<vectorNum>(value), base_address, mask);
+}
+template <uint32_t vectorNum>
+INLINE void MASKED_SCATTER(const scalar_dw &offset,
+                           const simd_dw<vectorNum> &value,
+                           char *base_address,
+                           uint32_t mask)
+{
+  MASKED_SCATTER(simd_dw<vectorNum>(offset), value, base_address, mask);
+}
+
 /* Gather */
 template <uint32_t vectorNum>
 INLINE void GATHER(simd_dw<vectorNum> &dst,
@@ -376,6 +458,38 @@ INLINE void GATHER(simd_dw<vectorNum> &dst,
                    const scalar_dw &offset,
                    const char *base_address) {
   GATHER(dst, simd_dw<vectorNum>(offset), base_address);
+}
+
+/* Masked gather will only load activated lanes */
+template <uint32_t vectorNum>
+INLINE void MASKED_GATHER(simd_dw<vectorNum> &dst,
+                          const simd_dw<vectorNum> &offset,
+                          const char *base_address,
+                          uint32_t mask)
+{
+  for (uint32_t i = 0; i < vectorNum; ++i) {
+    const int o0 = _mm_extract_epi32(PS2SI(offset.m[i]) , 0);
+    const int o1 = _mm_extract_epi32(PS2SI(offset.m[i]), 1);
+    const int o2 = _mm_extract_epi32(PS2SI(offset.m[i]), 2);
+    const int o3 = _mm_extract_epi32(PS2SI(offset.m[i]), 3);
+    const int v0 = *(const int*)(base_address + o0);
+    const int v1 = *(const int*)(base_address + o1);
+    const int v2 = *(const int*)(base_address + o2);
+    const int v3 = *(const int*)(base_address + o3);
+    if (mask & 1) dst.m[i] = SI2PS(_mm_insert_epi32(PS2SI(dst.m[i]), v0, 0));
+    if (mask & 2) dst.m[i] = SI2PS(_mm_insert_epi32(PS2SI(dst.m[i]), v1, 1));
+    if (mask & 4) dst.m[i] = SI2PS(_mm_insert_epi32(PS2SI(dst.m[i]), v2, 2));
+    if (mask & 8) dst.m[i] = SI2PS(_mm_insert_epi32(PS2SI(dst.m[i]), v3, 3));
+    mask = mask >> 4;
+  }
+}
+template <uint32_t vectorNum>
+INLINE void MASKED_GATHER(simd_dw<vectorNum> &dst,
+                          const scalar_dw &offset,
+                          const char *base_address,
+                          uint32_t mask)
+{
+  MASKED_GATHER(dst, simd_dw<vectorNum>(offset), base_address, mask);
 }
 
 //////////////////////////////////////////////////////////////////////////////
@@ -425,6 +539,8 @@ INLINE void GATHER(scalar_dw &dst, scalar_dw offset, const char *base) { dst.u =
 // Identical instructions are forwarded
 //////////////////////////////////////////////////////////////////////////////
 
+#define NOV_U32 MOV_S32
+#define NOV_F MOV_S32
 #define ADD_U32 ADD_S32
 #define SUB_U32 SUB_S32
 #define XOR_U32 XOR_S32
@@ -436,6 +552,122 @@ INLINE void GATHER(scalar_dw &dst, scalar_dw offset, const char *base) { dst.u =
 #undef PS2SI
 #undef SI2PS
 #undef ID
+
+//////////////////////////////////////////////////////////////////////////////
+// Goto implementation which is directly inspired by BDW goto and by this
+// article "Whole function vectorization" (CGO 2011)
+//////////////////////////////////////////////////////////////////////////////
+
+/*! Update the UIP vector according for the lanes alive in mask */
+template <uint32_t vectorNum>
+INLINE void updateUIP(simd_dw<vectorNum> &uipVec, const simd_m<vectorNum> mask, uint32_t uip) {
+  union { float f; uint32_t u; } x;
+  x.u = uip;
+  __m128 v = _mm_load1_ps(&x.f);
+  for (uint32_t i = 0; i < vectorNum; ++i)
+    uipVec.m[i] = _mm_blendv_ps(uipVec.m[i], v, mask.m[i]);
+}
+
+/*! Update the execution mask based on block IP and UIP values */
+template <uint32_t vectorNum>
+INLINE void updateMask(simd_m<vectorNum> &mask, const simd_dw<vectorNum> &uipVec, uint32_t ip) {
+  const simd_dw<vectorNum> ipv(ip);
+  LE_U32(mask, uipVec, ipv);
+}
+
+/*! Jump to the block JIP */
+#define SIM_FWD_BRA(UIPVEC, EMASK, JIP, UIP) \
+  do { \
+    updateUIP(UIPVEC, EMASK, UIP); \
+    goto label##JIP; \
+  } while (0)
+
+/*! Based on the condition jump to block JIP */
+#define SIM_FWD_BRA_C(UIPVEC, EMASK, COND, JIP, UIP) \
+  do { \
+    updateUIP(UIPVEC, COND, UIP); \
+    typeof(COND) jumpCond; \
+    scalar_dw jipScalar(uint32_t(JIP)); \
+    LT_U32(jumpCond, UIPVEC, JIP); \
+    uint32_t jumpMask = mask(jumpCond); \
+    if (!jumpMask) goto label##JIP; \
+  } while (0)
+
+/*! Backward jump is always taken */
+#define SIM_BWD_BRA(UIPVEC, EMASK, JIP) \
+  do { \
+    updateUIP(UIPVEC, EMASK, JIP); \
+    goto label##JIP; \
+  } while (0)
+
+/*! Conditional backward jump is taken if the condition is non-null */
+#define SIM_BWD_BRA_C(UIPVEC, COND, JIP) \
+  do { \
+    updateUIP(UIPVEC, COND, JIP); \
+    if (mask(COND) != 0) goto label##JIP; \
+  } while (0)
+
+/*! JOIN: reactivates lanes */
+#define SIM_JOIN(UIPVEC, MASK, IP) \
+  do { \
+    updateMask(MASK, UIPVEC, IP); \
+    movedMask = mask(MASK); \
+  } while (0)
+
+/*! JOIN_JUMP: ractivate lanes and jump to JIP if none is activated */
+#define SIM_JOIN_JUMP(UIPVEC, EMASK, IP, JIP) \
+  do { \
+    SIM_JOIN(UIPVEC, EMASK, IP); \
+    const uint32_t execMask = mask(EMASK); \
+    if (execMask == 0) goto label##JIP; \
+  } while (0)
+
+/* Macro to apply masking on destinations (from zero to four destinations) */
+#define MASKED0(OP, ...) \
+  do { \
+    OP(__VA_ARGS__); \
+  } while (0)
+
+#define MASKED1(OP, ARG0, ...) \
+  do { \
+    typeof(ARG0) ARG0##__; \
+    OP(ARG0##__, __VA_ARGS__); \
+    select(ARG0, ARG0, ARG0##__, emask); \
+  } while (0)
+
+#define MASKED2(OP, ARG0, ARG1, ...) \
+  do { \
+    typeof(ARG0) ARG0##__; \
+    typeof(ARG1) ARG1##__; \
+    OP(ARG0##__, ARG1##__, __VA_ARGS__); \
+    select(ARG0, ARG0, ARG0##__, emask); \
+    select(ARG1, ARG1, ARG1##__, emask); \
+  } while (0)
+
+#define MASKED3(OP, ARG0, ARG1, ARG2, ...) \
+  do { \
+    typeof(ARG0) ARG0##__; \
+    typeof(ARG1) ARG1##__; \
+    typeof(ARG2) ARG2##__; \
+    OP(ARG0##__, ARG1##__, ARG2##__, __VA_ARGS__); \
+    select(ARG0, ARG0, ARG0##__, emask); \
+    select(ARG1, ARG1, ARG1##__, emask); \
+    select(ARG2, ARG2, ARG2##__, emask); \
+  } while (0)
+
+#define MASKED4(OP, ARG0, ARG1, ARG2, ARG3, ...) \
+  do { \
+    typeof(ARG0) ARG0##__; \
+    typeof(ARG1) ARG1##__; \
+    typeof(ARG2) ARG2##__; \
+    typeof(ARG3) ARG3##__; \
+    OP(ARG0##__, ARG1##__, ARG2##__, ARG3##__, __VA_ARGS__); \
+    select(ARG0, ARG0, ARG0##__, emask); \
+    select(ARG1, ARG1, ARG1##__, emask); \
+    select(ARG2, ARG2, ARG2##__, emask); \
+    select(ARG3, ARG3, ARG3##__, emask); \
+  } while (0)
+
 #undef INLINE
 
 #endif /* __GBE_SIM_VECTOR_H__ */
