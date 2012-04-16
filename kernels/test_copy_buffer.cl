@@ -1,4 +1,3 @@
-#include "stdlib.h"
 __kernel void
 test_copy_buffer(__global float* src, __global float* dst)
 {
