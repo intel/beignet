@@ -50,22 +50,28 @@ typedef struct surface_heap {
 
 #define MAX_IF_DESC    32
 
-/* Handle GPGPU state (actually "media" state) */
+/* We can bind only a limited number of buffers */
+enum { max_buf_n = 128 };
+
+/* Handle GPGPU state */
 struct intel_gpgpu
 {
   intel_driver_t *drv;
   intel_batchbuffer_t *batch;
   cl_gpgpu_kernel *ker;
+  drm_intel_bo *binded_buf[max_buf_n];  /* all buffers binded for the call */
+  uint32_t binded_offset[max_buf_n];    /* their offsets in the constant buffer */
+  uint32_t binded_n;                    /* number of buffers binded */
 
   struct {
-    dri_bo *bo;
+    drm_intel_bo *bo;
     uint32_t num;
   } idrt_b;
-  struct { dri_bo *bo; } surface_heap_b;
-  struct { dri_bo *bo; } vfe_state_b;
-  struct { dri_bo *bo; } curbe_b;
-  struct { dri_bo *bo; } sampler_state_b;
-  struct { dri_bo *bo; } perf_b;
+  struct { drm_intel_bo *bo; } surface_heap_b;
+  struct { drm_intel_bo *bo; } vfe_state_b;
+  struct { drm_intel_bo *bo; } curbe_b;
+  struct { drm_intel_bo *bo; } sampler_state_b;
+  struct { drm_intel_bo *bo; } perf_b;
 
   struct {
     uint32_t num_cs_entries;
@@ -481,11 +487,10 @@ intel_gpgpu_set_buf_reloc_gen7(intel_gpgpu_t *state, int32_t index, dri_bo* obj_
 }
 
 static void
-intel_gpgpu_bind_buf_gen7(intel_gpgpu_t *state,
-                          int32_t index,
-                          dri_bo* obj_bo,
-                          uint32_t size,
-                          uint32_t cchint)
+intel_gpgpu_map_address_space(intel_gpgpu_t *state,
+                              int32_t index,
+                              uint32_t size,
+                              uint32_t cchint)
 {
   surface_heap_t *heap = state->surface_heap_b.bo->virtual;
   gen7_surface_state_t *ss = (gen7_surface_state_t *) heap->surface[index];
@@ -493,12 +498,11 @@ intel_gpgpu_bind_buf_gen7(intel_gpgpu_t *state,
   memset(ss, 0, sizeof(*ss));
   ss->ss0.surface_type = I965_SURFACE_BUFFER;
   ss->ss0.surface_format = I965_SURFACEFORMAT_RAW;
-  ss->ss1.base_addr = obj_bo->offset;
+  ss->ss1.base_addr = 0;
   ss->ss2.width  = size_ss & 0x7f;               /* bits 6:0 of size_ss */
   ss->ss2.height = (size_ss & 0x1fff80) >> 7;    /* bits 20:7 of size_ss */
   ss->ss3.depth  = (size_ss & 0xffe00000) >> 20; /* bits 27:21 of size_ss */
   ss->ss5.cache_control = cc_llc_l3;
-  intel_gpgpu_set_buf_reloc_gen7(state, index, obj_bo);
 }
 
 static void
@@ -532,11 +536,12 @@ intel_gpgpu_bind_image2D_gen7(intel_gpgpu_t *state,
 }
 
 static void
-intel_gpgpu_bind_buf(intel_gpgpu_t *state,
-                     drm_intel_bo *obj_bo,
-                     uint32_t offset,
-                     uint32_t cchint)
+intel_gpgpu_bind_buf(intel_gpgpu_t *gpgpu, drm_intel_bo *buf, uint32_t offset, uint32_t cchint)
 {
+  assert(gpgpu->binded_n < max_buf_n);
+  gpgpu->binded_buf[gpgpu->binded_n] = buf;
+  gpgpu->binded_offset[gpgpu->binded_n] = offset;
+  gpgpu->binded_n++;
 #if 0
   const uint32_t size = obj_bo->size;
   assert(index < GEN_MAX_SURFACES);
@@ -565,66 +570,60 @@ intel_gpgpu_bind_image2D(intel_gpgpu_t *state,
 }
 
 static void
-intel_gpgpu_build_idrt(intel_gpgpu_t *state,
-                       cl_gpgpu_kernel *kernel,
-                       uint32_t ker_n)
+intel_gpgpu_build_idrt(intel_gpgpu_t *state, cl_gpgpu_kernel *kernel)
 {
   gen6_interface_descriptor_t *desc;
   drm_intel_bo *bo = NULL, *ker_bo = NULL;
-  uint32_t i;
 
   bo = state->idrt_b.bo;
   dri_bo_map(bo, 1);
   assert(bo->virtual);
   desc = (gen6_interface_descriptor_t*) bo->virtual;
 
-  for (i = 0; i < ker_n; i++) {
-    memset(desc, 0, sizeof(*desc));
-    ker_bo = (drm_intel_bo *) kernel[i].bo;
-    desc->desc0.kernel_start_pointer = ker_bo->offset >> 6; /* reloc */
-    desc->desc2.sampler_state_pointer = state->sampler_state_b.bo->offset >> 5;
-    desc->desc3.binding_table_entry_count = 0; /* no prefetch */
-    desc->desc3.binding_table_pointer = 0;
-    desc->desc4.curbe_read_len = kernel[i].cst_sz / 32;
-    desc->desc4.curbe_read_offset = 0;
+  memset(desc, 0, sizeof(*desc));
+  ker_bo = (drm_intel_bo *) kernel->bo;
+  desc->desc0.kernel_start_pointer = ker_bo->offset >> 6; /* reloc */
+  desc->desc2.sampler_state_pointer = state->sampler_state_b.bo->offset >> 5;
+  desc->desc3.binding_table_entry_count = 0; /* no prefetch */
+  desc->desc3.binding_table_pointer = 0;
+  desc->desc4.curbe_read_len = kernel->cst_sz / 32;
+  desc->desc4.curbe_read_offset = 0;
 
-    /* Barriers / SLM are automatically handled on Gen7+ */
-    if (state->drv->gen_ver == 7 || state->drv->gen_ver == 75) {
-      size_t slm_sz = kernel[i].slm_sz;
-      desc->desc5.group_threads_num = kernel[i].use_barrier ? kernel[i].thread_n : 0;
-      desc->desc5.barrier_enable = kernel[i].use_barrier;
-      if (slm_sz > 0) {
-        if (slm_sz <= 4 * KB)
-          slm_sz = 4 * KB; //4KB
-        else if (slm_sz <= 8 * KB)
-          slm_sz = 8 * KB; //8KB
-        else if (slm_sz <= 16 * KB)
-          slm_sz = 16 * KB; //16KB
-        else if (slm_sz <= 32 * KB)
-          slm_sz = 32 * KB; //32KB
-        else if (slm_sz <= 64 * KB)
-          slm_sz = 64 * KB; //64KB
-        slm_sz = slm_sz >> 12;
-      }
-      desc->desc5.slm_sz = slm_sz;
+  /* Barriers / SLM are automatically handled on Gen7+ */
+  if (state->drv->gen_ver == 7 || state->drv->gen_ver == 75) {
+    size_t slm_sz = kernel->slm_sz;
+    desc->desc5.group_threads_num = kernel->use_barrier ? kernel->thread_n : 0;
+    desc->desc5.barrier_enable = kernel->use_barrier;
+    if (slm_sz > 0) {
+      if (slm_sz <= 4 * KB)
+        slm_sz = 4 * KB; //4KB
+      else if (slm_sz <= 8 * KB)
+        slm_sz = 8 * KB; //8KB
+      else if (slm_sz <= 16 * KB)
+        slm_sz = 16 * KB; //16KB
+      else if (slm_sz <= 32 * KB)
+        slm_sz = 32 * KB; //32KB
+      else if (slm_sz <= 64 * KB)
+        slm_sz = 64 * KB; //64KB
+      slm_sz = slm_sz >> 12;
     }
-    else
-      desc->desc5.group_threads_num = kernel[i].barrierID; /* BarrierID on GEN6 */
-
-    dri_bo_emit_reloc(bo,
-                      I915_GEM_DOMAIN_INSTRUCTION, 0,
-                      0,
-                      i * sizeof(*desc) + offsetof(gen6_interface_descriptor_t, desc0),
-                      ker_bo);
-
-    dri_bo_emit_reloc(bo,
-                      I915_GEM_DOMAIN_INSTRUCTION, 0,
-                      0,
-                      i * sizeof(*desc) + offsetof(gen6_interface_descriptor_t, desc2),
-                      state->sampler_state_b.bo);
-    desc++;
+    desc->desc5.slm_sz = slm_sz;
   }
-  state->idrt_b.num = ker_n;
+  else
+    desc->desc5.group_threads_num = kernel->barrierID; /* BarrierID on GEN6 */
+
+  dri_bo_emit_reloc(bo,
+                    I915_GEM_DOMAIN_INSTRUCTION, 0,
+                    0,
+                    offsetof(gen6_interface_descriptor_t, desc0),
+                    ker_bo);
+
+  dri_bo_emit_reloc(bo,
+                    I915_GEM_DOMAIN_INSTRUCTION, 0,
+                    0,
+                    offsetof(gen6_interface_descriptor_t, desc2),
+                    state->sampler_state_b.bo);
+  state->idrt_b.num = 1;
   dri_bo_unmap(bo);
 }
 
@@ -653,7 +652,7 @@ static void
 intel_gpgpu_states_setup(intel_gpgpu_t *state, cl_gpgpu_kernel *kernel)
 {
   state->ker = kernel;
-  intel_gpgpu_build_idrt(state, kernel, 1);
+  intel_gpgpu_build_idrt(state, kernel);
   dri_bo_unmap(state->surface_heap_b.bo);
   dri_bo_unmap(state->sampler_state_b.bo);
 }

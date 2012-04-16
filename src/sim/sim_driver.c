@@ -188,7 +188,7 @@ static int sim_buffer_wait_rendering(sim_buffer buf) {return 0;}
 typedef void (sim_kernel_cb)(gbe_simulator, uint32_t, uint32_t, uint32_t, uint32_t);
 
 /* We can bind only a limited number of buffers */
-enum { max_buf_n = 128 };
+enum { max_buf_n = 32 };
 
 /* Encapsulates operations needed to run one NDrange */
 struct _sim_gpgpu
