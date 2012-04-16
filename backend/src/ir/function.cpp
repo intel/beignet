@@ -73,11 +73,19 @@ namespace ir {
   }
 
   void Function::computeCFG(void) {
-    // Clear possible previously computed CFG
-    this->foreachBlock([this](BasicBlock &bb) {
+    // Clear possible previously computed CFG and compute the direct
+    // predecessors and successors
+    BasicBlock *prev = NULL;
+    this->foreachBlock([this, &prev](BasicBlock &bb) {
       bb.successors.clear();
       bb.predecessors.clear();
+      if (prev != NULL) {
+        prev->nextBlock = &bb;
+        bb.prevBlock = prev;
+      }
+      prev = &bb;
     });
+
     // Update it. Do not forget that a branch can also jump to the next block
     BasicBlock *jumpToNext = NULL;
     this->foreachBlock([this, &jumpToNext](BasicBlock &bb) {
@@ -143,12 +151,55 @@ namespace ir {
 
   BasicBlock::BasicBlock(Function &fn) : fn(fn) {
     this->first = this->last = NULL;
+    this->nextBlock = this->prevBlock = NULL;
   }
   BasicBlock::~BasicBlock(void) {
     this->foreach([this] (Instruction &insn) {
      this->fn.deleteInstruction(&insn);
     });
   }
+
+#define DECL_GET_PRED \
+  if (predecessor != NULL) return predecessor; \
+  if (stayInBlock == true) return NULL; \
+  const BasicBlock *parent = this->getParent(); \
+  const BasicBlock *prev = parent->getPrevBlock(); \
+  while (prev) { \
+    Instruction *last = prev->getLastInstruction(); \
+    if (last) return last; \
+    prev = prev->getPrevBlock(); \
+  } \
+  return NULL;
+
+  Instruction *Instruction::getPredecessor(bool stayInBlock) {
+    DECL_GET_PRED;
+  }
+  const Instruction *Instruction::getPredecessor(bool stayInBlock) const {
+    DECL_GET_PRED;
+  }
+
+#undef DECL_GET_PRED
+
+#define DECL_GET_SUCC \
+  if (successor != NULL) return successor; \
+  if (stayInBlock == true) return NULL; \
+  const BasicBlock *parent = this->getParent(); \
+  const BasicBlock *next = parent->getNextBlock(); \
+  while (next) { \
+    Instruction *first = next->getFirstInstruction(); \
+    if (first) return first; \
+    next = next->getNextBlock(); \
+  } \
+  return NULL;
+
+  Instruction *Instruction::getSuccessor(bool stayInBlock) {
+    DECL_GET_SUCC;
+  }
+  const Instruction *Instruction::getSuccessor(bool stayInBlock) const {
+    DECL_GET_SUCC;
+  }
+
+#undef DECL_GET_SUCC
 
 } /* namespace ir */
 } /* namespace gbe */

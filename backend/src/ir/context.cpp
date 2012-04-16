@@ -51,7 +51,6 @@ namespace ir {
     // Check first that all branch instructions point to valid labels
     for (auto it = usedLabels->begin(); it != usedLabels->end(); ++it)
       GBE_ASSERTM(*it != LABEL_IS_POINTED, "A label is used and not defined");
-    // std::cout << *fn << std::endl;
     fn->computeCFG();
     GBE_DELETE(usedLabels);
     const StackElem elem = fnStack.back();

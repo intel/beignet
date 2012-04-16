@@ -82,14 +82,21 @@ namespace ir {
     /*! Get the parent function */
     Function &getParent(void) { return fn; }
     const Function &getParent(void) const { return fn; }
-    /*! Get the successors */
+    /*! Get the next and previous allocated block */
+    BasicBlock *getNextBlock(void) const { return this->nextBlock; }
+    BasicBlock *getPrevBlock(void) const { return this->prevBlock; }
+    /*! Get the first and last instructions */
+    Instruction *getFirstInstruction(void) const { return this->first; }
+    Instruction *getLastInstruction(void) const { return this->last; }
+    /*! Get successors and predecessors */
     const BlockSet &getSuccessorSet(void) const { return successors; }
-    /*! Get the predecessors */
     const BlockSet &getPredecessorSet(void) const { return predecessors; }
   private:
     friend class Function; //!< Owns the basic blocks
     BlockSet predecessors; //!< Incoming blocks
     BlockSet successors;   //!< Outgoing blocks
+    BasicBlock *nextBlock; //!< Block allocated just after this one
+    BasicBlock *prevBlock; //!< Block allocated just before this one
     Instruction *first;    //!< First instruction in the block
     Instruction *last;     //!< Last instruction in the block
     Function &fn;          //!< Function the block belongs to

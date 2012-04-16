@@ -96,12 +96,12 @@ namespace ir {
     /*! Get the register of the given destination */
     RegisterData getSrcData(uint32_t ID = 0u) const;
     /*! Get / set the previous instruction in the stream */
-    Instruction *getPredecessor(void) { return predecessor; }
-    const Instruction *getPredecessor(void) const { return predecessor; }
+    Instruction *getPredecessor(bool stayInBlock = true);
+    const Instruction *getPredecessor(bool stayInBlock = true) const;
     void setPredecessor(Instruction *insn) { this->predecessor = insn; }
     /*! Get / set the next instruction in the stream */
-    Instruction *getSuccessor(void) { return successor; }
-    const Instruction *getSuccessor(void) const { return successor; }
+    Instruction *getSuccessor(bool stayInBlock = true);
+    const Instruction *getSuccessor(bool stayInBlock = true) const;
     void setSuccessor(Instruction *insn) { this->successor = insn; }
     /*! Get / set the parent basic block */
     BasicBlock *getParent(void) { return parent; }
