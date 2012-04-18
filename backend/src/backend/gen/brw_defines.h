@@ -48,9 +48,9 @@
 #define GEN_CHANNEL_W     3
 
 enum brw_compression {
-   GEN_COMPRESSION_NONE       = 0,
-   GEN_COMPRESSION_2NDHALF    = 1,
-   GEN_COMPRESSION_COMPRESSED = 2,
+  GEN_COMPRESSION_NONE       = 0,
+  GEN_COMPRESSION_2NDHALF    = 1,
+  GEN_COMPRESSION_COMPRESSED = 2,
 };
 
 #define GEN6_COMPRESSION_1Q  0
@@ -524,123 +524,10 @@ enum brw_message_target {
 /** Number of message register file registers */
 #define GEN_MAX_MRF 16
 
-struct brw_urb_immediate {
-   uint32_t opcode:4;
-   uint32_t offset:6;
-   uint32_t swizzle_control:2; 
-   uint32_t pad:1;
-   uint32_t allocate:1;
-   uint32_t used:1;
-   uint32_t complete:1;
-   uint32_t response_length:4;
-   uint32_t msg_length:4;
-   uint32_t msg_target:4;
-   uint32_t pad1:3;
-   uint32_t end_of_thread:1;
-};
-
-struct brw_sampler_state
-{
-   struct
-   {
-      uint32_t shadow_function:3;
-      uint32_t lod_bias:11;
-      uint32_t min_filter:3;
-      uint32_t mag_filter:3;
-      uint32_t mip_filter:2;
-      uint32_t base_level:5;
-      uint32_t min_mag_neq:1;
-      uint32_t lod_preclamp:1;
-      uint32_t default_color_mode:1;
-      uint32_t pad0:1;
-      uint32_t disable:1;
-   } ss0;
-
-   struct
-   {
-      uint32_t r_wrap_mode:3;
-      uint32_t t_wrap_mode:3;
-      uint32_t s_wrap_mode:3;
-      uint32_t cube_control_mode:1;
-      uint32_t pad:2;
-      uint32_t max_lod:10;
-      uint32_t min_lod:10;
-   } ss1;
-
-   struct
-   {
-      uint32_t pad:5;
-      uint32_t default_color_pointer:27;
-   } ss2;
-
-   struct
-   {
-      uint32_t non_normalized_coord:1;
-      uint32_t pad:12;
-      uint32_t address_round:6;
-      uint32_t max_aniso:3;
-      uint32_t chroma_key_mode:1;
-      uint32_t chroma_key_index:2;
-      uint32_t chroma_key_enable:1;
-      uint32_t monochrome_filter_width:3;
-      uint32_t monochrome_filter_height:3;
-   } ss3;
-};
-
-struct gen7_sampler_state
-{
-   struct
-   {
-      uint32_t aniso_algorithm:1;
-      uint32_t lod_bias:13;
-      uint32_t min_filter:3;
-      uint32_t mag_filter:3;
-      uint32_t mip_filter:2;
-      uint32_t base_level:5;
-      uint32_t pad1:1;
-      uint32_t lod_preclamp:1;
-      uint32_t default_color_mode:1;
-      uint32_t pad0:1;
-      uint32_t disable:1;
-   } ss0;
-
-   struct
-   {
-      uint32_t cube_control_mode:1;
-      uint32_t shadow_function:3;
-      uint32_t pad:4;
-      uint32_t max_lod:12;
-      uint32_t min_lod:12;
-   } ss1;
-
-   struct
-   {
-      uint32_t pad:5;
-      uint32_t default_color_pointer:27;
-   } ss2;
-
-   struct
-   {
-      uint32_t r_wrap_mode:3;
-      uint32_t t_wrap_mode:3;
-      uint32_t s_wrap_mode:3;
-      uint32_t pad:1;
-      uint32_t non_normalized_coord:1;
-      uint32_t trilinear_quality:2;
-      uint32_t address_round:6;
-      uint32_t max_aniso:3;
-      uint32_t chroma_key_mode:1;
-      uint32_t chroma_key_index:2;
-      uint32_t chroma_key_enable:1;
-      uint32_t pad0:6;
-   } ss3;
-};
-
 /* Instruction format for the execution units */
 struct GenInstruction
 {
-   struct
-   {
+   struct {
       uint32_t opcode:7;
       uint32_t pad:1;
       uint32_t access_mode:1;
@@ -663,8 +550,7 @@ struct GenInstruction
    } header;
 
    union {
-      struct
-      {
+      struct {
          uint32_t dest_reg_file:2;
          uint32_t dest_reg_type:3;
          uint32_t src0_reg_file:2;
@@ -678,8 +564,7 @@ struct GenInstruction
          uint32_t dest_address_mode:1;
       } da1;
 
-      struct
-      {
+      struct {
          uint32_t dest_reg_file:2;
          uint32_t dest_reg_type:3;
          uint32_t src0_reg_file:2;
@@ -693,8 +578,7 @@ struct GenInstruction
          uint32_t dest_address_mode:1;
       } ia1;
 
-      struct
-      {
+      struct {
          uint32_t dest_reg_file:2;
          uint32_t dest_reg_type:3;
          uint32_t src0_reg_file:2;
@@ -709,8 +593,7 @@ struct GenInstruction
          uint32_t dest_address_mode:1;
       } da16;
 
-      struct
-      {
+      struct {
          uint32_t dest_reg_file:2;
          uint32_t dest_reg_type:3;
          uint32_t src0_reg_file:2;
@@ -731,7 +614,6 @@ struct GenInstruction
          uint32_t src1_reg_file:2;
          uint32_t src1_reg_type:3;
          uint32_t pad:1;
-
          int jump_count:16;
       } branch_gen6;
 
@@ -752,10 +634,8 @@ struct GenInstruction
       } da3src;
    } bits1;
 
-
    union {
-      struct
-      {
+      struct {
          uint32_t src0_subreg_nr:5;
          uint32_t src0_reg_nr:8;
          uint32_t src0_abs:1;
@@ -768,8 +648,7 @@ struct GenInstruction
          uint32_t pad:6;
       } da1;
 
-      struct
-      {
+      struct {
          int src0_indirect_offset:10;
          uint32_t src0_subreg_nr:3;
          uint32_t src0_abs:1;
@@ -782,8 +661,7 @@ struct GenInstruction
          uint32_t pad:6;
       } ia1;
 
-      struct
-      {
+      struct {
          uint32_t src0_swz_x:2;
          uint32_t src0_swz_y:2;
          uint32_t src0_subreg_nr:1;
@@ -799,8 +677,7 @@ struct GenInstruction
          uint32_t pad1:6;
       } da16;
 
-      struct
-      {
+      struct {
          uint32_t src0_swz_x:2;
          uint32_t src0_swz_y:2;
          int src0_indirect_offset:6;
@@ -816,19 +693,6 @@ struct GenInstruction
          uint32_t pad1:6;
       } ia16;
 
-      /* Extended Message Descriptor for Ironlake (Gen5) SEND instruction.
-       *
-       * Does not apply to Gen6+.  The SFID/message target moved to bits
-       * 27:24 of the header (destreg__conditionalmod); EOT is in bits3.
-       */
-       struct
-       {
-           uint32_t pad:26;
-           uint32_t end_of_thread:1;
-           uint32_t pad1:1;
-           uint32_t sfid:4;
-       } send_gen5;  /* for Ironlake only */
-
       struct {
          uint32_t src0_rep_ctrl:1;
          uint32_t src0_swizzle:8;
@@ -841,10 +705,8 @@ struct GenInstruction
       } da3src;
    } bits2;
 
-   union
-   {
-      struct
-      {
+   union {
+      struct {
          uint32_t src1_subreg_nr:5;
          uint32_t src1_reg_nr:8;
          uint32_t src1_abs:1;
@@ -856,8 +718,7 @@ struct GenInstruction
          uint32_t pad0:7;
       } da1;
 
-      struct
-      {
+      struct {
          uint32_t src1_swz_x:2;
          uint32_t src1_swz_y:2;
          uint32_t src1_subreg_nr:1;
@@ -872,8 +733,7 @@ struct GenInstruction
          uint32_t pad2:7;
       } da16;
 
-      struct
-      {
+      struct {
          int  src1_indirect_offset:10;
          uint32_t src1_subreg_nr:3;
          uint32_t src1_abs:1;
@@ -886,8 +746,7 @@ struct GenInstruction
          uint32_t pad1:6;
       } ia1;
 
-      struct
-      {
+      struct {
          uint32_t src1_swz_x:2;
          uint32_t src1_swz_y:2;
          int  src1_indirect_offset:6;
@@ -904,26 +763,15 @@ struct GenInstruction
       } ia16;
 
 
-      struct
-      {
+      struct {
          int  jump_count:16;        /* note: signed */
          uint32_t  pop_count:4;
          uint32_t  pad0:12;
       } if_else;
 
       /* This is also used for gen7 IF/ELSE instructions */
-      struct
-      {
-         /* Signed jump distance to the ip to jump to if all channels
-          * are disabled after the break or continue.  It should point
-          * to the end of the innermost control flow block, as that's
-          * where some channel could get re-enabled.
-          */
+      struct {
          int jip:16;
-
-         /* Signed jump distance to the location to resume execution
-          * of this channel if it's enabled for the break or continue.
-          */
          int uip:16;
       } break_cont;
 
@@ -1014,45 +862,6 @@ struct GenInstruction
          uint32_t end_of_thread:1;
       } math_gen5;
 
-      /** G45 PRM, Volume 4, Section 4.8.1.1.1 [DevBW] and [DevCL] */
-      struct {
-         uint32_t binding_table_index:8;
-         uint32_t sampler:4;
-         uint32_t return_format:2;
-         uint32_t msg_type:2;
-         uint32_t response_length:4;
-         uint32_t msg_length:4;
-         uint32_t msg_target:4;
-         uint32_t pad1:3;
-         uint32_t end_of_thread:1;
-      } sampler;
-
-      /** G45 PRM, Volume 4, Section 4.8.1.1.2 [DevCTG] */
-      struct {
-         uint32_t binding_table_index:8;
-         uint32_t sampler:4;
-         uint32_t msg_type:4;
-         uint32_t response_length:4;
-         uint32_t msg_length:4;
-         uint32_t msg_target:4;
-         uint32_t pad1:3;
-         uint32_t end_of_thread:1;
-      } sampler_g4x;
-
-      /** Ironlake PRM, Volume 4 Part 1, Section 4.11.1.1.3 */
-      struct {
-         uint32_t binding_table_index:8;
-         uint32_t sampler:4;
-         uint32_t msg_type:4;
-         uint32_t simd_mode:2;
-         uint32_t pad0:1;
-         uint32_t header_present:1;
-         uint32_t response_length:5;
-         uint32_t msg_length:4;
-         uint32_t pad1:2;
-         uint32_t end_of_thread:1;
-      } sampler_gen5;
-
       struct {
          uint32_t binding_table_index:8;
          uint32_t sampler:4;
@@ -1064,107 +873,6 @@ struct GenInstruction
          uint32_t pad1:2;
          uint32_t end_of_thread:1;
       } sampler_gen7;
-
-      struct brw_urb_immediate urb;
-
-      struct {
-         uint32_t opcode:4;
-         uint32_t offset:6;
-         uint32_t swizzle_control:2;
-         uint32_t pad:1;
-         uint32_t allocate:1;
-         uint32_t used:1;
-         uint32_t complete:1;
-         uint32_t pad0:3;
-         uint32_t header_present:1;
-         uint32_t response_length:5;
-         uint32_t msg_length:4;
-         uint32_t pad1:2;
-         uint32_t end_of_thread:1;
-      } urb_gen5;
-
-      struct {
-         uint32_t opcode:3;
-         uint32_t offset:11;
-         uint32_t swizzle_control:1;
-         uint32_t complete:1;
-         uint32_t per_slot_offset:1;
-         uint32_t pad0:2;
-         uint32_t header_present:1;
-         uint32_t response_length:5;
-         uint32_t msg_length:4;
-         uint32_t pad1:2;
-         uint32_t end_of_thread:1;
-      } urb_gen7;
-
-      /** 965 PRM, Volume 4, Section 5.10.1.1: Message Descriptor */
-      struct {
-         uint32_t binding_table_index:8;
-         uint32_t msg_control:4;
-         uint32_t msg_type:2;
-         uint32_t target_cache:2;
-         uint32_t response_length:4;
-         uint32_t msg_length:4;
-         uint32_t msg_target:4;
-         uint32_t pad1:3;
-         uint32_t end_of_thread:1;
-      } dp_read;
-
-      /** G45 PRM, Volume 4, Section 5.10.1.1.2 */
-      struct {
-         uint32_t binding_table_index:8;
-         uint32_t msg_control:3;
-         uint32_t msg_type:3;
-         uint32_t target_cache:2;
-         uint32_t response_length:4;
-         uint32_t msg_length:4;
-         uint32_t msg_target:4;
-         uint32_t pad1:3;
-         uint32_t end_of_thread:1;
-      } dp_read_g4x;
-
-      /** Ironlake PRM, Volume 4 Part 1, Section 5.10.2.1.2. */
-      struct {
-         uint32_t binding_table_index:8;
-         uint32_t msg_control:3;
-         uint32_t msg_type:3;
-         uint32_t target_cache:2;
-         uint32_t pad0:3;
-         uint32_t header_present:1;
-         uint32_t response_length:5;
-         uint32_t msg_length:4;
-         uint32_t pad1:2;
-         uint32_t end_of_thread:1;
-      } dp_read_gen5;
-
-      /** G45 PRM, Volume 4, Section 5.10.1.1.2.  For both Gen4 and G45. */
-      struct {
-         uint32_t binding_table_index:8;
-         uint32_t msg_control:3;
-         uint32_t last_render_target:1;
-         uint32_t msg_type:3;
-         uint32_t send_commit_msg:1;
-         uint32_t response_length:4;
-         uint32_t msg_length:4;
-         uint32_t msg_target:4;
-         uint32_t pad1:3;
-         uint32_t end_of_thread:1;
-      } dp_write;
-
-      /** Ironlake PRM, Volume 4 Part 1, Section 5.10.2.1.2. */
-      struct {
-         uint32_t binding_table_index:8;
-         uint32_t msg_control:3;
-         uint32_t last_render_target:1;
-         uint32_t msg_type:3;
-         uint32_t send_commit_msg:1;
-         uint32_t pad0:3;
-         uint32_t header_present:1;
-         uint32_t response_length:5;
-         uint32_t msg_length:4;
-         uint32_t pad1:2;
-         uint32_t end_of_thread:1;
-      } dp_write_gen5;
 
       /**
        * Message for the Sandybridge Sampler Cache or Constant Cache Data Port.
@@ -1230,7 +938,6 @@ struct GenInstruction
          uint32_t pad2:2;
          uint32_t end_of_thread:1;
       } gen7_dp;
-      /** @} */
 
       struct {
          uint32_t src1_subreg_nr_high:1;
