@@ -89,9 +89,8 @@ else (GBE_USE_BLOB)
     backend/gen_program.cpp
     backend/gen_program.hpp
     backend/gen_program.h
-    backend/gen/brw_disasm.c
-    backend/gen/brw_eu_emit.c
-    backend/gen/brw_eu.c)
+    backend/gen/brw_eu_emit.cpp
+    backend/gen/brw_eu.cpp)
 
   if (GBE_COMPILE_UTESTS)
     set (GBE_SRC

@@ -37,7 +37,7 @@ namespace gbe
     GenKernel *genKernel = static_cast<GenKernel*>(this->kernel);
     brw_compile *p = (brw_compile*) GBE_MALLOC(sizeof(brw_compile));
     std::memset(p, 0, sizeof(*p));
-    brw_EOT(p, 127);
+    p->brw_EOT(127);
     genKernel->insnNum = p->nr_insn;
     genKernel->insns = GBE_NEW_ARRAY(brw_instruction, genKernel->insnNum);
     std::memcpy(genKernel->insns, p->store, genKernel->insnNum * sizeof(brw_instruction));
