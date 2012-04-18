@@ -22,8 +22,7 @@
   *   Keith Whitwell <keith@tungstengraphics.com>
   */
 
-#include "brw_defines.h"
-#include "brw_eu.h"
+#include "backend/gen_eu.hpp"
 #include <cstring>
 
 namespace gbe

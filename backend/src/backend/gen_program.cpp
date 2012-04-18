@@ -27,7 +27,7 @@
 #include "backend/gen_program.hpp"
 #include "backend/gen_program.hpp"
 #include "backend/gen_context.hpp"
-#include "backend/gen/brw_defines.h"
+#include "backend/gen_defs.hpp"
 #include "llvm/llvm_to_gen.hpp"
 
 #include <cstring>

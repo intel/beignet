@@ -24,7 +24,7 @@
 #ifndef GEN_EU_H
 #define GEN_EU_H
 
-#include "backend/gen/brw_defines.h"
+#include "backend/gen_defs.hpp"
 #include "sys/platform.hpp"
 #include <cassert>
 
