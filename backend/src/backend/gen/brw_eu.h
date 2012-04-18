@@ -21,28 +21,23 @@
   * Authors:
   *   Keith Whitwell <keith@tungstengraphics.com>
   */
-#ifndef BRW_EU_H
-#define BRW_EU_H
+#ifndef GEN_EU_H
+#define GEN_EU_H
 
-#include <stdbool.h>
-#include <assert.h>
-#include "brw_structs.h"
-#include "brw_defines.h"
+#include "backend/gen/brw_defines.h"
+#include "sys/platform.hpp"
+#include <cassert>
 
-#ifdef __cplusplus
-extern "C" {
-#endif /* __cplusplus */
+#define GEN_SWIZZLE4(a,b,c,d) (((a)<<0) | ((b)<<2) | ((c)<<4) | ((d)<<6))
+#define GEN_GET_SWZ(swz, idx) (((swz) >> ((idx)*2)) & 0x3)
 
-#define BRW_SWIZZLE4(a,b,c,d) (((a)<<0) | ((b)<<2) | ((c)<<4) | ((d)<<6))
-#define BRW_GET_SWZ(swz, idx) (((swz) >> ((idx)*2)) & 0x3)
-
-#define BRW_SWIZZLE_NOOP      BRW_SWIZZLE4(0,1,2,3)
-#define BRW_SWIZZLE_XYZW      BRW_SWIZZLE4(0,1,2,3)
-#define BRW_SWIZZLE_XXXX      BRW_SWIZZLE4(0,0,0,0)
-#define BRW_SWIZZLE_YYYY      BRW_SWIZZLE4(1,1,1,1)
-#define BRW_SWIZZLE_ZZZZ      BRW_SWIZZLE4(2,2,2,2)
-#define BRW_SWIZZLE_WWWW      BRW_SWIZZLE4(3,3,3,3)
-#define BRW_SWIZZLE_XYXY      BRW_SWIZZLE4(0,1,0,1)
+#define GEN_SWIZZLE_NOOP      GEN_SWIZZLE4(0,1,2,3)
+#define GEN_SWIZZLE_XYZW      GEN_SWIZZLE4(0,1,2,3)
+#define GEN_SWIZZLE_XXXX      GEN_SWIZZLE4(0,0,0,0)
+#define GEN_SWIZZLE_YYYY      GEN_SWIZZLE4(1,1,1,1)
+#define GEN_SWIZZLE_ZZZZ      GEN_SWIZZLE4(2,2,2,2)
+#define GEN_SWIZZLE_WWWW      GEN_SWIZZLE4(3,3,3,3)
+#define GEN_SWIZZLE_XYXY      GEN_SWIZZLE4(0,1,0,1)
 
 #define WRITEMASK_X     0x1
 #define WRITEMASK_Y     0x2
@@ -60,12 +55,12 @@ extern "C" {
 #define WRITEMASK_YZW   0xe
 #define WRITEMASK_XYZW  0xf
 
-static inline bool brw_is_single_value_swizzle(int swiz)
+static INLINE bool brw_is_single_value_swizzle(int swiz)
 {
-   return (swiz == BRW_SWIZZLE_XXXX ||
-           swiz == BRW_SWIZZLE_YYYY ||
-           swiz == BRW_SWIZZLE_ZZZZ ||
-           swiz == BRW_SWIZZLE_WWWW);
+   return (swiz == GEN_SWIZZLE_XXXX ||
+           swiz == GEN_SWIZZLE_YYYY ||
+           swiz == GEN_SWIZZLE_ZZZZ ||
+           swiz == GEN_SWIZZLE_WWWW);
 }
 
 #define REG_SIZE (8*4)
@@ -76,7 +71,7 @@ static inline bool brw_is_single_value_swizzle(int swiz)
  * WM programs to implement shaders decomposed into "channel serial"
  * or "structure of array" form:
  */
-struct brw_reg
+struct GenReg
 {
    uint32_t type:4;
    uint32_t file:2;
@@ -104,61 +99,60 @@ struct brw_reg
    } dw1;
 };
 
-struct brw_indirect {
+struct GenIndirect {
    uint32_t addr_subnr:4;
    int addr_offset:10;
    uint32_t pad:18;
 };
 
-#define BRW_EU_MAX_INSN_STACK 5
-#define BRW_MAX_INSTRUCTION_NUM 8192
-struct brw_compile {
+#define GEN_EU_MAX_INSN_STACK 5
+#define GEN_MAX_INSTRUCTION_NUM 8192
+struct GenEmitter {
   int gen;
-  brw_instruction store[8192];
+  GenInstruction store[8192];
   int store_size;
   uint32_t nr_insn;
 
   /* Allow clients to push/pop instruction state */
-  brw_instruction stack[BRW_EU_MAX_INSN_STACK];
-  bool compressed_stack[BRW_EU_MAX_INSN_STACK];
+  GenInstruction stack[GEN_EU_MAX_INSN_STACK];
+  bool compressed_stack[GEN_EU_MAX_INSN_STACK];
 
   uint32_t flag_value;
   bool single_program_flow;
   bool compressed;
-  struct brw_context *brw;
 
-  inline brw_instruction *current_insn(void) { return &this->store[this->nr_insn]; }
+  INLINE GenInstruction *current_insn(void) { return &this->store[this->nr_insn]; }
 
-  void guess_execution_size(brw_instruction *insn, brw_reg reg);
-  void brw_set_mask_control(uint32_t value);
-  void brw_set_saturate(uint32_t value);
-  void brw_set_access_mode(uint32_t access_mode);
-  void brw_set_compression_control(enum brw_compression c);
-  void brw_set_predicate_control_flag_value(uint32_t value);
-  void brw_set_predicate_control(uint32_t pc);
-  void brw_set_predicate_inverse(bool predicate_inverse);
-  void brw_set_conditionalmod(uint32_t conditional);
-  void brw_set_acc_write_control(uint32_t value);
+  void guess_execution_size(GenInstruction *insn, GenReg reg);
+  void set_mask_control(uint32_t value);
+  void set_saturate(uint32_t value);
+  void set_access_mode(uint32_t access_mode);
+  void set_compression_control(enum brw_compression c);
+  void set_predicate_control_flag_value(uint32_t value);
+  void set_predicate_control(uint32_t pc);
+  void set_predicate_inverse(bool predicate_inverse);
+  void set_conditionalmod(uint32_t conditional);
+  void set_acc_write_control(uint32_t value);
 
-  void brw_init_compile(struct brw_context *, void *mem_ctx);
-  const uint32_t *brw_get_program(uint32_t *sz);
+  void init_compile(struct context *, void *mem_ctx);
+  const uint32_t *get_program(uint32_t *sz);
 
-  brw_instruction *brw_next_insn(uint32_t opcode);
-  void brw_set_dest(brw_instruction *insn, brw_reg dest);
-  void brw_set_src0(brw_instruction *insn, brw_reg reg);
-  void gen6_resolve_implied_move(brw_reg *src, uint32_t msg_reg_nr);
+  GenInstruction *next_insn(uint32_t opcode);
+  void set_dest(GenInstruction *insn, GenReg dest);
+  void set_src0(GenInstruction *insn, GenReg reg);
+  void gen6_resolve_implied_move(GenReg *src, uint32_t msg_reg_nr);
 
-#define ALU1(OP)                                          \
-  brw_instruction *brw_##OP(brw_reg dest, brw_reg src0);
+#define ALU1(OP) \
+  GenInstruction *OP(GenReg dest, GenReg src0);
 
-#define ALU2(OP)                                          \
-  brw_instruction *brw_##OP(brw_reg dest, brw_reg src0, brw_reg src1);
+#define ALU2(OP) \
+  GenInstruction *OP(GenReg dest, GenReg src0, GenReg src1);
 
-#define ALU3(OP)                                          \
-  brw_instruction *brw_##OP(brw_reg dest, brw_reg src0, brw_reg src1, brw_reg src2);
+#define ALU3(OP) \
+  GenInstruction *OP(GenReg dest, GenReg src0, GenReg src1, GenReg src2);
 
 #define ROUND(OP) \
-  void brw_##OP(brw_reg dest, brw_reg src0);
+  void OP(GenReg dest, GenReg src0);
 
   ALU1(MOV)
   ALU2(SEL)
@@ -196,7 +190,7 @@ struct brw_compile {
 #undef ROUND
 
   /* Helpers for SEND instruction */
-  void brw_set_sampler_message(brw_instruction *insn,
+  void set_sampler_message(GenInstruction *insn,
                                uint32_t binding_table_index,
                                uint32_t sampler,
                                uint32_t msg_type,
@@ -206,7 +200,7 @@ struct brw_compile {
                                uint32_t simd_mode,
                                uint32_t return_format);
 
-  void brw_set_dp_read_message(brw_instruction *insn,
+  void set_dp_read_message(GenInstruction *insn,
                                uint32_t binding_table_index,
                                uint32_t msg_control,
                                uint32_t msg_type,
@@ -214,7 +208,7 @@ struct brw_compile {
                                uint32_t msg_length,
                                uint32_t response_length);
 
-  void brw_set_dp_write_message(brw_instruction *insn,
+  void set_dp_write_message(GenInstruction *insn,
                                 uint32_t binding_table_index,
                                 uint32_t msg_control,
                                 uint32_t msg_type,
@@ -225,9 +219,9 @@ struct brw_compile {
                                 uint32_t end_of_thread,
                                 uint32_t send_commit_msg);
 
-  void brw_SAMPLE(brw_reg dest,
+  void SAMPLE(GenReg dest,
                   uint32_t msg_reg_nr,
-                  brw_reg src0,
+                  GenReg src0,
                   uint32_t binding_table_index,
                   uint32_t sampler,
                   uint32_t writemask,
@@ -238,55 +232,55 @@ struct brw_compile {
                   uint32_t simd_mode,
                   uint32_t return_format);
 
-  void brw_math_16(brw_reg dest,
+  void math_16(GenReg dest,
                    uint32_t function,
                    uint32_t saturate,
                    uint32_t msg_reg_nr,
-                   brw_reg src,
+                   GenReg src,
                    uint32_t precision);
 
-  void brw_math(brw_reg dest,
+  void math(GenReg dest,
                  uint32_t function,
                  uint32_t saturate,
                  uint32_t msg_reg_nr,
-                 brw_reg src,
+                 GenReg src,
                  uint32_t data_type,
                  uint32_t precision);
 
-  void brw_math2(brw_reg dest, uint32_t function, brw_reg src0, brw_reg src1);
-  void brw_EOT(uint32_t msg_nr);
+  void math2(GenReg dest, uint32_t function, GenReg src0, GenReg src1);
+  void EOT(uint32_t msg_nr);
 
-  void brw_dword_scattered_read(brw_reg dest, brw_reg mrf, uint32_t bind_table_index);
+  void dword_scattered_read(GenReg dest, GenReg mrf, uint32_t bind_table_index);
 
-  void brw_land_fwd_jump(int jmp_insn_idx);
-  void brw_NOP(void);
-  void brw_WAIT(void);
+  void land_fwd_jump(int jmp_insn_idx);
+  void NOP(void);
+  void WAIT(void);
 
-  void brw_CMP(brw_reg dest, uint32_t conditional, brw_reg src0, brw_reg src1);
-  void brw_copy_indirect_to_indirect(brw_indirect dst_ptr, brw_indirect src_ptr, uint32_t count);
-  void brw_copy_from_indirect(brw_reg dst, brw_indirect ptr, uint32_t count);
-  void brw_copy4(brw_reg dst, brw_reg src, uint32_t count);
-  void brw_copy8(brw_reg dst, brw_reg src, uint32_t count);
-  void brw_math_invert(brw_reg dst, brw_reg src);
-  void brw_set_src1(brw_instruction *insn, brw_reg reg);
-  void brw_set_uip_jip(void);
+  void CMP(GenReg dest, uint32_t conditional, GenReg src0, GenReg src1);
+  void copy_indirect_to_indirect(GenIndirect dst_ptr, GenIndirect src_ptr, uint32_t count);
+  void copy_from_indirect(GenReg dst, GenIndirect ptr, uint32_t count);
+  void copy4(GenReg dst, GenReg src, uint32_t count);
+  void copy8(GenReg dst, GenReg src, uint32_t count);
+  void math_invert(GenReg dst, GenReg src);
+  void set_src1(GenInstruction *insn, GenReg reg);
+  void set_uip_jip(void);
 };
 
-void brw_print_reg(brw_reg reg);
+void brw_print_reg(GenReg reg);
 
-static inline int type_sz(uint32_t type)
+static INLINE int type_sz(uint32_t type)
 {
    switch(type) {
-   case BRW_REGISTER_TYPE_UD:
-   case BRW_REGISTER_TYPE_D:
-   case BRW_REGISTER_TYPE_F:
+   case GEN_REGISTER_TYPE_UD:
+   case GEN_REGISTER_TYPE_D:
+   case GEN_REGISTER_TYPE_F:
       return 4;
-   case BRW_REGISTER_TYPE_HF:
-   case BRW_REGISTER_TYPE_UW:
-   case BRW_REGISTER_TYPE_W:
+   case GEN_REGISTER_TYPE_HF:
+   case GEN_REGISTER_TYPE_UW:
+   case GEN_REGISTER_TYPE_W:
       return 2;
-   case BRW_REGISTER_TYPE_UB:
-   case BRW_REGISTER_TYPE_B:
+   case GEN_REGISTER_TYPE_UB:
+   case GEN_REGISTER_TYPE_B:
       return 1;
    default:
       return 0;
@@ -294,18 +288,18 @@ static inline int type_sz(uint32_t type)
 }
 
 /**
- * Construct a brw_reg.
- * \param file  one of the BRW_x_REGISTER_FILE values
+ * Construct a GenReg.
+ * \param file  one of the GEN_x_REGISTER_FILE values
  * \param nr  register number/index
  * \param subnr  register sub number
- * \param type  one of BRW_REGISTER_TYPE_x
- * \param vstride  one of BRW_VERTICAL_STRIDE_x
- * \param width  one of BRW_WIDTH_x
- * \param hstride  one of BRW_HORIZONTAL_STRIDE_x
- * \param swizzle  one of BRW_SWIZZLE_x
+ * \param type  one of GEN_REGISTER_TYPE_x
+ * \param vstride  one of GEN_VERTICAL_STRIDE_x
+ * \param width  one of GEN_WIDTH_x
+ * \param hstride  one of GEN_HORIZONTAL_STRIDE_x
+ * \param swizzle  one of GEN_SWIZZLE_x
  * \param writemask  WRITEMASK_X/Y/Z/W bitfield
  */
-static inline brw_reg make_brw_reg(uint32_t file,
+static INLINE GenReg makeGenReg(uint32_t file,
                                    uint32_t nr,
                                    uint32_t subnr,
                                    uint32_t type,
@@ -315,11 +309,11 @@ static inline brw_reg make_brw_reg(uint32_t file,
                                    uint32_t swizzle,
                                    uint32_t writemask)
 {
-   struct brw_reg reg;
-   if (file == BRW_GENERAL_REGISTER_FILE)
-      assert(nr < BRW_MAX_GRF);
-   else if (file == BRW_ARCHITECTURE_REGISTER_FILE)
-      assert(nr <= BRW_ARF_IP);
+   GenReg reg;
+   if (file == GEN_GENERAL_REGISTER_FILE)
+      assert(nr < GEN_MAX_GRF);
+   else if (file == GEN_ARCHITECTURE_REGISTER_FILE)
+      assert(nr <= GEN_ARF_IP);
 
    reg.type = type;
    reg.file = file;
@@ -330,7 +324,7 @@ static inline brw_reg make_brw_reg(uint32_t file,
    reg.vstride = vstride;
    reg.width = width;
    reg.hstride = hstride;
-   reg.address_mode = BRW_ADDRESS_DIRECT;
+   reg.address_mode = GEN_ADDRESS_DIRECT;
    reg.pad0 = 0;
 
    /* Could do better: If the reg is r5.3<0;1,0>, we probably want to
@@ -347,102 +341,102 @@ static inline brw_reg make_brw_reg(uint32_t file,
 }
 
 /** Construct float[16] register */
-static inline brw_reg brw_vec16_reg(uint32_t file, uint32_t nr, uint32_t subnr)
+static INLINE GenReg brw_vec16_reg(uint32_t file, uint32_t nr, uint32_t subnr)
 {
-   return make_brw_reg(file,
+   return makeGenReg(file,
                        nr,
                        subnr,
-                       BRW_REGISTER_TYPE_F,
-                       BRW_VERTICAL_STRIDE_16,
-                       BRW_WIDTH_16,
-                       BRW_HORIZONTAL_STRIDE_1,
-                       BRW_SWIZZLE_XYZW,
+                       GEN_REGISTER_TYPE_F,
+                       GEN_VERTICAL_STRIDE_16,
+                       GEN_WIDTH_16,
+                       GEN_HORIZONTAL_STRIDE_1,
+                       GEN_SWIZZLE_XYZW,
                        WRITEMASK_XYZW);
 }
 
 /** Construct float[8] register */
-static inline brw_reg brw_vec8_reg(uint32_t file, uint32_t nr, uint32_t subnr)
+static INLINE GenReg brw_vec8_reg(uint32_t file, uint32_t nr, uint32_t subnr)
 {
-   return make_brw_reg(file,
+   return makeGenReg(file,
                        nr,
                        subnr,
-                       BRW_REGISTER_TYPE_F,
-                       BRW_VERTICAL_STRIDE_8,
-                       BRW_WIDTH_8,
-                       BRW_HORIZONTAL_STRIDE_1,
-                       BRW_SWIZZLE_XYZW,
+                       GEN_REGISTER_TYPE_F,
+                       GEN_VERTICAL_STRIDE_8,
+                       GEN_WIDTH_8,
+                       GEN_HORIZONTAL_STRIDE_1,
+                       GEN_SWIZZLE_XYZW,
                        WRITEMASK_XYZW);
 }
 
 /** Construct float[4] register */
-static inline brw_reg brw_vec4_reg(uint32_t file, uint32_t nr, uint32_t subnr)
+static INLINE GenReg brw_vec4_reg(uint32_t file, uint32_t nr, uint32_t subnr)
 {
-   return make_brw_reg(file,
+   return makeGenReg(file,
                        nr,
                        subnr,
-                       BRW_REGISTER_TYPE_F,
-                       BRW_VERTICAL_STRIDE_4,
-                       BRW_WIDTH_4,
-                       BRW_HORIZONTAL_STRIDE_1,
-                       BRW_SWIZZLE_XYZW,
+                       GEN_REGISTER_TYPE_F,
+                       GEN_VERTICAL_STRIDE_4,
+                       GEN_WIDTH_4,
+                       GEN_HORIZONTAL_STRIDE_1,
+                       GEN_SWIZZLE_XYZW,
                        WRITEMASK_XYZW);
 }
 
 /** Construct float[2] register */
-static inline brw_reg brw_vec2_reg(uint32_t file, uint32_t nr, uint32_t subnr)
+static INLINE GenReg brw_vec2_reg(uint32_t file, uint32_t nr, uint32_t subnr)
 {
-   return make_brw_reg(file,
+   return makeGenReg(file,
                        nr,
                        subnr,
-                       BRW_REGISTER_TYPE_F,
-                       BRW_VERTICAL_STRIDE_2,
-                       BRW_WIDTH_2,
-                       BRW_HORIZONTAL_STRIDE_1,
-                       BRW_SWIZZLE_XYXY,
+                       GEN_REGISTER_TYPE_F,
+                       GEN_VERTICAL_STRIDE_2,
+                       GEN_WIDTH_2,
+                       GEN_HORIZONTAL_STRIDE_1,
+                       GEN_SWIZZLE_XYXY,
                        WRITEMASK_XY);
 }
 
 /** Construct float[1] register */
-static inline brw_reg brw_vec1_reg(uint32_t file, uint32_t nr, uint32_t subnr)
+static INLINE GenReg brw_vec1_reg(uint32_t file, uint32_t nr, uint32_t subnr)
 {
-   return make_brw_reg(file,
+   return makeGenReg(file,
                        nr,
                        subnr,
-                       BRW_REGISTER_TYPE_F,
-                       BRW_VERTICAL_STRIDE_0,
-                       BRW_WIDTH_1,
-                       BRW_HORIZONTAL_STRIDE_0,
-                       BRW_SWIZZLE_XXXX,
+                       GEN_REGISTER_TYPE_F,
+                       GEN_VERTICAL_STRIDE_0,
+                       GEN_WIDTH_1,
+                       GEN_HORIZONTAL_STRIDE_0,
+                       GEN_SWIZZLE_XXXX,
                        WRITEMASK_X);
 }
 
 
-static inline brw_reg retype(brw_reg reg, uint32_t type)
+static INLINE GenReg retype(GenReg reg, uint32_t type)
 {
    reg.type = type;
    return reg;
 }
 
-static inline brw_reg sechalf(brw_reg reg)
+static INLINE GenReg sechalf(GenReg reg)
 {
    if (reg.vstride)
       reg.nr++;
    return reg;
 }
 
-static inline brw_reg suboffset(brw_reg reg, uint32_t delta)
+static INLINE GenReg suboffset(GenReg reg, uint32_t delta)
 {
    reg.subnr += delta * type_sz(reg.type);
    return reg;
 }
 
-static inline brw_reg offset(brw_reg reg, uint32_t delta)
+static INLINE GenReg offset(GenReg reg, uint32_t delta)
 {
    reg.nr += delta;
    return reg;
 }
 
-static inline brw_reg byte_offset(brw_reg reg, uint32_t bytes)
+static INLINE GenReg byte_offset(GenReg reg, uint32_t bytes)
 {
    uint32_t newoffset = reg.nr * REG_SIZE + reg.subnr + bytes;
    reg.nr = newoffset / REG_SIZE;
@@ -452,78 +446,72 @@ static inline brw_reg byte_offset(brw_reg reg, uint32_t bytes)
 
 
 /** Construct unsigned word[16] register */
-static inline brw_reg brw_uw16_reg(uint32_t file,
-                                          uint32_t nr,
-                                          uint32_t subnr)
+static INLINE GenReg brw_uw16_reg(uint32_t file, uint32_t nr, uint32_t subnr)
 {
-   return suboffset(retype(brw_vec16_reg(file, nr, 0), BRW_REGISTER_TYPE_UW), subnr);
+   return suboffset(retype(brw_vec16_reg(file, nr, 0), GEN_REGISTER_TYPE_UW), subnr);
 }
 
 /** Construct unsigned word[8] register */
-static inline brw_reg brw_uw8_reg(uint32_t file,
-                                         uint32_t nr,
-                                         uint32_t subnr)
+static INLINE GenReg brw_uw8_reg(uint32_t file, uint32_t nr, uint32_t subnr)
 {
-   return suboffset(retype(brw_vec8_reg(file, nr, 0), BRW_REGISTER_TYPE_UW), subnr);
+   return suboffset(retype(brw_vec8_reg(file, nr, 0), GEN_REGISTER_TYPE_UW), subnr);
 }
 
 /** Construct unsigned word[1] register */
-static inline brw_reg brw_uw1_reg(uint32_t file,
-                                         uint32_t nr,
-                                         uint32_t subnr)
+static INLINE GenReg brw_uw1_reg(uint32_t file, uint32_t nr, uint32_t subnr)
 {
-   return suboffset(retype(brw_vec1_reg(file, nr, 0), BRW_REGISTER_TYPE_UW), subnr);
+   return suboffset(retype(brw_vec1_reg(file, nr, 0), GEN_REGISTER_TYPE_UW), subnr);
 }
 
-static inline brw_reg brw_imm_reg(uint32_t type)
+static INLINE GenReg brw_imm_reg(uint32_t type)
 {
-   return make_brw_reg(BRW_IMMEDIATE_VALUE,
+   return makeGenReg(GEN_IMMEDIATE_VALUE,
                        0,
                        0,
                        type,
-                       BRW_VERTICAL_STRIDE_0,
-                       BRW_WIDTH_1,
-                       BRW_HORIZONTAL_STRIDE_0,
+                       GEN_VERTICAL_STRIDE_0,
+                       GEN_WIDTH_1,
+                       GEN_HORIZONTAL_STRIDE_0,
                        0,
                        0);
 }
 
 /** Construct float immediate register */
-static inline brw_reg brw_imm_f(float f)
+static INLINE GenReg brw_imm_f(float f)
 {
-   brw_reg imm = brw_imm_reg(BRW_REGISTER_TYPE_F);
+   GenReg imm = brw_imm_reg(GEN_REGISTER_TYPE_F);
    imm.dw1.f = f;
    return imm;
 }
 
 /** Construct integer immediate register */
-static inline brw_reg brw_imm_d(int d)
+static INLINE GenReg brw_imm_d(int d)
 {
-   brw_reg imm = brw_imm_reg(BRW_REGISTER_TYPE_D);
+   GenReg imm = brw_imm_reg(GEN_REGISTER_TYPE_D);
    imm.dw1.d = d;
    return imm;
 }
 
 /** Construct uint immediate register */
-static inline brw_reg brw_imm_ud(uint32_t ud)
+static INLINE GenReg brw_imm_ud(uint32_t ud)
 {
-   brw_reg imm = brw_imm_reg(BRW_REGISTER_TYPE_UD);
+   GenReg imm = brw_imm_reg(GEN_REGISTER_TYPE_UD);
    imm.dw1.ud = ud;
    return imm;
 }
 
 /** Construct ushort immediate register */
-static inline brw_reg brw_imm_uw(uint16_t uw)
+static INLINE GenReg brw_imm_uw(uint16_t uw)
 {
-   brw_reg imm = brw_imm_reg(BRW_REGISTER_TYPE_UW);
+   GenReg imm = brw_imm_reg(GEN_REGISTER_TYPE_UW);
    imm.dw1.ud = uw | (uw << 16);
    return imm;
 }
 
 /** Construct short immediate register */
-static inline brw_reg brw_imm_w(short w)
+static INLINE GenReg brw_imm_w(short w)
 {
-   brw_reg imm = brw_imm_reg(BRW_REGISTER_TYPE_W);
+   GenReg imm = brw_imm_reg(GEN_REGISTER_TYPE_W);
    imm.dw1.d = w | (w << 16);
    return imm;
 }
@@ -533,23 +521,23 @@ static inline brw_reg brw_imm_w(short w)
  */
 
 /** Construct vector of eight signed half-byte values */
-static inline brw_reg brw_imm_v(uint32_t v)
+static INLINE GenReg brw_imm_v(uint32_t v)
 {
-   brw_reg imm = brw_imm_reg(BRW_REGISTER_TYPE_V);
-   imm.vstride = BRW_VERTICAL_STRIDE_0;
-   imm.width = BRW_WIDTH_8;
-   imm.hstride = BRW_HORIZONTAL_STRIDE_1;
+   GenReg imm = brw_imm_reg(GEN_REGISTER_TYPE_V);
+   imm.vstride = GEN_VERTICAL_STRIDE_0;
+   imm.width = GEN_WIDTH_8;
+   imm.hstride = GEN_HORIZONTAL_STRIDE_1;
    imm.dw1.ud = v;
    return imm;
 }
 
 /** Construct vector of four 8-bit float values */
-static inline brw_reg brw_imm_vf(uint32_t v)
+static INLINE GenReg brw_imm_vf(uint32_t v)
 {
-   brw_reg imm = brw_imm_reg(BRW_REGISTER_TYPE_VF);
-   imm.vstride = BRW_VERTICAL_STRIDE_0;
-   imm.width = BRW_WIDTH_4;
-   imm.hstride = BRW_HORIZONTAL_STRIDE_1;
+   GenReg imm = brw_imm_reg(GEN_REGISTER_TYPE_VF);
+   imm.vstride = GEN_VERTICAL_STRIDE_0;
+   imm.width = GEN_WIDTH_4;
+   imm.hstride = GEN_HORIZONTAL_STRIDE_1;
    imm.dw1.ud = v;
    return imm;
 }
@@ -558,73 +546,67 @@ static inline brw_reg brw_imm_vf(uint32_t v)
 #define VF_ONE  0x30
 #define VF_NEG  (1<<7)
 
-static inline brw_reg brw_imm_vf4(uint32_t v0,
-                                         uint32_t v1,
-                                         uint32_t v2,
-                                         uint32_t v3)
+static INLINE GenReg brw_imm_vf4(uint32_t v0, uint32_t v1, uint32_t v2, uint32_t v3)
 {
-   brw_reg imm = brw_imm_reg(BRW_REGISTER_TYPE_VF);
-   imm.vstride = BRW_VERTICAL_STRIDE_0;
-   imm.width = BRW_WIDTH_4;
-   imm.hstride = BRW_HORIZONTAL_STRIDE_1;
-   imm.dw1.ud = ((v0 << 0) |
-                 (v1 << 8) |
-                 (v2 << 16) |
-                 (v3 << 24));
+   GenReg imm = brw_imm_reg(GEN_REGISTER_TYPE_VF);
+   imm.vstride = GEN_VERTICAL_STRIDE_0;
+   imm.width = GEN_WIDTH_4;
+   imm.hstride = GEN_HORIZONTAL_STRIDE_1;
+   imm.dw1.ud = ((v0 << 0) | (v1 << 8) | (v2 << 16) | (v3 << 24));
    return imm;
 }
 
-static inline brw_reg brw_address(brw_reg reg)
+static INLINE GenReg brw_address(GenReg reg)
 {
    return brw_imm_uw(reg.nr * REG_SIZE + reg.subnr);
 }
 
 /** Construct float[1] general-purpose register */
-static inline brw_reg brw_vec1_grf(uint32_t nr, uint32_t subnr)
+static INLINE GenReg brw_vec1_grf(uint32_t nr, uint32_t subnr)
 {
-   return brw_vec1_reg(BRW_GENERAL_REGISTER_FILE, nr, subnr);
+   return brw_vec1_reg(GEN_GENERAL_REGISTER_FILE, nr, subnr);
 }
 
 /** Construct float[2] general-purpose register */
-static inline brw_reg brw_vec2_grf(uint32_t nr, uint32_t subnr)
+static INLINE GenReg brw_vec2_grf(uint32_t nr, uint32_t subnr)
 {
-   return brw_vec2_reg(BRW_GENERAL_REGISTER_FILE, nr, subnr);
+   return brw_vec2_reg(GEN_GENERAL_REGISTER_FILE, nr, subnr);
 }
 
 /** Construct float[4] general-purpose register */
-static inline brw_reg brw_vec4_grf(uint32_t nr, uint32_t subnr)
+static INLINE GenReg brw_vec4_grf(uint32_t nr, uint32_t subnr)
 {
-   return brw_vec4_reg(BRW_GENERAL_REGISTER_FILE, nr, subnr);
+   return brw_vec4_reg(GEN_GENERAL_REGISTER_FILE, nr, subnr);
 }
 
 /** Construct float[8] general-purpose register */
-static inline brw_reg brw_vec8_grf(uint32_t nr, uint32_t subnr)
+static INLINE GenReg brw_vec8_grf(uint32_t nr, uint32_t subnr)
 {
-   return brw_vec8_reg(BRW_GENERAL_REGISTER_FILE, nr, subnr);
+   return brw_vec8_reg(GEN_GENERAL_REGISTER_FILE, nr, subnr);
 }
 
-static inline brw_reg brw_uw8_grf(uint32_t nr, uint32_t subnr)
+static INLINE GenReg brw_uw8_grf(uint32_t nr, uint32_t subnr)
 {
-   return brw_uw8_reg(BRW_GENERAL_REGISTER_FILE, nr, subnr);
+   return brw_uw8_reg(GEN_GENERAL_REGISTER_FILE, nr, subnr);
 }
 
-static inline brw_reg brw_uw16_grf(uint32_t nr, uint32_t subnr)
+static INLINE GenReg brw_uw16_grf(uint32_t nr, uint32_t subnr)
 {
-   return brw_uw16_reg(BRW_GENERAL_REGISTER_FILE, nr, subnr);
+   return brw_uw16_reg(GEN_GENERAL_REGISTER_FILE, nr, subnr);
 }
 
 /** Construct null register (usually used for setting condition codes) */
-static inline brw_reg brw_null_reg(void)
+static INLINE GenReg brw_null_reg(void)
 {
-   return brw_vec8_reg(BRW_ARCHITECTURE_REGISTER_FILE,
-                       BRW_ARF_NULL,
+   return brw_vec8_reg(GEN_ARCHITECTURE_REGISTER_FILE,
+                       GEN_ARF_NULL,
                        0);
 }
 
-static inline brw_reg brw_address_reg(uint32_t subnr)
+static INLINE GenReg brw_address_reg(uint32_t subnr)
 {
-   return brw_uw1_reg(BRW_ARCHITECTURE_REGISTER_FILE,
-                      BRW_ARF_ADDRESS,
+   return brw_uw1_reg(GEN_ARCHITECTURE_REGISTER_FILE,
+                      GEN_ARF_ADDRESS,
                       subnr);
 }
 
@@ -632,55 +614,55 @@ static inline brw_reg brw_address_reg(uint32_t subnr)
  * aren't xyzw.  This goes against the convention for other scalar
  * regs:
  */
-static inline brw_reg brw_ip_reg(void)
+static INLINE GenReg brw_ip_reg(void)
 {
-   return make_brw_reg(BRW_ARCHITECTURE_REGISTER_FILE,
-                       BRW_ARF_IP,
+   return makeGenReg(GEN_ARCHITECTURE_REGISTER_FILE,
+                       GEN_ARF_IP,
                        0,
-                       BRW_REGISTER_TYPE_UD,
-                       BRW_VERTICAL_STRIDE_4, /* ? */
-                       BRW_WIDTH_1,
-                       BRW_HORIZONTAL_STRIDE_0,
-                       BRW_SWIZZLE_XYZW, /* NOTE! */
+                       GEN_REGISTER_TYPE_UD,
+                       GEN_VERTICAL_STRIDE_4, /* ? */
+                       GEN_WIDTH_1,
+                       GEN_HORIZONTAL_STRIDE_0,
+                       GEN_SWIZZLE_XYZW, /* NOTE! */
                        WRITEMASK_XYZW); /* NOTE! */
 }
 
-static inline brw_reg brw_acc_reg(void)
+static INLINE GenReg brw_acc_reg(void)
 {
-   return brw_vec8_reg(BRW_ARCHITECTURE_REGISTER_FILE,
-                       BRW_ARF_ACCUMULATOR,
+   return brw_vec8_reg(GEN_ARCHITECTURE_REGISTER_FILE,
+                       GEN_ARF_ACCUMULATOR,
                        0);
 }
 
-static inline brw_reg brw_notification_1_reg(void)
+static INLINE GenReg brw_notification_1_reg(void)
 {
 
-   return make_brw_reg(BRW_ARCHITECTURE_REGISTER_FILE,
-                       BRW_ARF_NOTIFICATION_COUNT,
+   return makeGenReg(GEN_ARCHITECTURE_REGISTER_FILE,
+                       GEN_ARF_NOTIFICATION_COUNT,
                        1,
-                       BRW_REGISTER_TYPE_UD,
-                       BRW_VERTICAL_STRIDE_0,
-                       BRW_WIDTH_1,
-                       BRW_HORIZONTAL_STRIDE_0,
-                       BRW_SWIZZLE_XXXX,
+                       GEN_REGISTER_TYPE_UD,
+                       GEN_VERTICAL_STRIDE_0,
+                       GEN_WIDTH_1,
+                       GEN_HORIZONTAL_STRIDE_0,
+                       GEN_SWIZZLE_XXXX,
                        WRITEMASK_X);
 }
 
 
-static inline brw_reg brw_flag_reg(void)
+static INLINE GenReg brw_flag_reg(void)
 {
-   return brw_uw1_reg(BRW_ARCHITECTURE_REGISTER_FILE, BRW_ARF_FLAG, 0);
+   return brw_uw1_reg(GEN_ARCHITECTURE_REGISTER_FILE, GEN_ARF_FLAG, 0);
 }
 
-static inline brw_reg brw_mask_reg(uint32_t subnr)
+static INLINE GenReg brw_mask_reg(uint32_t subnr)
 {
-   return brw_uw1_reg(BRW_ARCHITECTURE_REGISTER_FILE, BRW_ARF_MASK, subnr);
+   return brw_uw1_reg(GEN_ARCHITECTURE_REGISTER_FILE, GEN_ARF_MASK, subnr);
 }
 
 /* This is almost always called with a numeric constant argument, so
  * make things easy to evaluate at compile time:
  */
-static inline uint32_t cvt(uint32_t val)
+static INLINE uint32_t cvt(uint32_t val)
 {
    switch (val) {
    case 0: return 0;
@@ -694,7 +676,7 @@ static inline uint32_t cvt(uint32_t val)
    return 0;
 }
 
-static inline brw_reg stride(brw_reg reg,
+static INLINE GenReg stride(GenReg reg,
                                     uint32_t vstride,
                                     uint32_t width,
                                     uint32_t hstride)
@@ -706,168 +688,164 @@ static inline brw_reg stride(brw_reg reg,
 }
 
 
-static inline brw_reg vec16(brw_reg reg)
+static INLINE GenReg vec16(GenReg reg)
 {
    return stride(reg, 16,16,1);
 }
 
-static inline brw_reg vec8(brw_reg reg)
+static INLINE GenReg vec8(GenReg reg)
 {
    return stride(reg, 8,8,1);
 }
 
-static inline brw_reg vec4(brw_reg reg)
+static INLINE GenReg vec4(GenReg reg)
 {
    return stride(reg, 4,4,1);
 }
 
-static inline brw_reg vec2(brw_reg reg)
+static INLINE GenReg vec2(GenReg reg)
 {
    return stride(reg, 2,2,1);
 }
 
-static inline brw_reg vec1(brw_reg reg)
+static INLINE GenReg vec1(GenReg reg)
 {
    return stride(reg, 0,1,0);
 }
 
-static inline brw_reg get_element(brw_reg reg, uint32_t elt)
+static INLINE GenReg get_element(GenReg reg, uint32_t elt)
 {
    return vec1(suboffset(reg, elt));
 }
 
-static inline brw_reg get_element_ud(brw_reg reg, uint32_t elt)
+static INLINE GenReg get_element_ud(GenReg reg, uint32_t elt)
 {
-   return vec1(suboffset(retype(reg, BRW_REGISTER_TYPE_UD), elt));
+   return vec1(suboffset(retype(reg, GEN_REGISTER_TYPE_UD), elt));
 }
 
-static inline brw_reg get_element_d(brw_reg reg, uint32_t elt)
+static INLINE GenReg get_element_d(GenReg reg, uint32_t elt)
 {
-   return vec1(suboffset(retype(reg, BRW_REGISTER_TYPE_D), elt));
+   return vec1(suboffset(retype(reg, GEN_REGISTER_TYPE_D), elt));
 }
 
-static inline brw_reg brw_swizzle(brw_reg reg, uint32_t x, uint32_t y, uint32_t z, uint32_t w)
+static INLINE GenReg brw_swizzle(GenReg reg, uint32_t x, uint32_t y, uint32_t z, uint32_t w)
 {
-   assert(reg.file != BRW_IMMEDIATE_VALUE);
-   reg.dw1.bits.swizzle = BRW_SWIZZLE4(BRW_GET_SWZ(reg.dw1.bits.swizzle, x),
-                                       BRW_GET_SWZ(reg.dw1.bits.swizzle, y),
-                                       BRW_GET_SWZ(reg.dw1.bits.swizzle, z),
-                                       BRW_GET_SWZ(reg.dw1.bits.swizzle, w));
+   assert(reg.file != GEN_IMMEDIATE_VALUE);
+   reg.dw1.bits.swizzle = GEN_SWIZZLE4(GEN_GET_SWZ(reg.dw1.bits.swizzle, x),
+                                       GEN_GET_SWZ(reg.dw1.bits.swizzle, y),
+                                       GEN_GET_SWZ(reg.dw1.bits.swizzle, z),
+                                       GEN_GET_SWZ(reg.dw1.bits.swizzle, w));
    return reg;
 }
 
 
-static inline brw_reg brw_swizzle1(brw_reg reg, uint32_t x)
+static INLINE GenReg brw_swizzle1(GenReg reg, uint32_t x)
 {
    return brw_swizzle(reg, x, x, x, x);
 }
 
-static inline brw_reg brw_writemask(brw_reg reg, uint32_t mask)
+static INLINE GenReg brw_writemask(GenReg reg, uint32_t mask)
 {
-   assert(reg.file != BRW_IMMEDIATE_VALUE);
+   assert(reg.file != GEN_IMMEDIATE_VALUE);
    reg.dw1.bits.writemask &= mask;
    return reg;
 }
 
-static inline brw_reg brw_set_writemask(brw_reg reg, uint32_t mask)
+static INLINE GenReg brw_set_writemask(GenReg reg, uint32_t mask)
 {
-   assert(reg.file != BRW_IMMEDIATE_VALUE);
+   assert(reg.file != GEN_IMMEDIATE_VALUE);
    reg.dw1.bits.writemask = mask;
    return reg;
 }
 
-static inline brw_reg negate(brw_reg reg)
+static INLINE GenReg negate(GenReg reg)
 {
    reg.negate ^= 1;
    return reg;
 }
 
-static inline brw_reg brw_abs(brw_reg reg)
+static INLINE GenReg brw_abs(GenReg reg)
 {
    reg.abs = 1;
    reg.negate = 0;
    return reg;
 }
 
-static inline brw_reg brw_vec4_indirect(uint32_t subnr, int offset)
+static INLINE GenReg brw_vec4_indirect(uint32_t subnr, int offset)
 {
-   brw_reg reg =  brw_vec4_grf(0, 0);
+   GenReg reg =  brw_vec4_grf(0, 0);
    reg.subnr = subnr;
-   reg.address_mode = BRW_ADDRESS_REGISTER_INDIRECT_REGISTER;
+   reg.address_mode = GEN_ADDRESS_REGISTER_INDIRECT_REGISTER;
    reg.dw1.bits.indirect_offset = offset;
    return reg;
 }
 
-static inline brw_reg brw_vec1_indirect(uint32_t subnr, int offset)
+static INLINE GenReg brw_vec1_indirect(uint32_t subnr, int offset)
 {
-   brw_reg reg =  brw_vec1_grf(0, 0);
+   GenReg reg =  brw_vec1_grf(0, 0);
    reg.subnr = subnr;
-   reg.address_mode = BRW_ADDRESS_REGISTER_INDIRECT_REGISTER;
+   reg.address_mode = GEN_ADDRESS_REGISTER_INDIRECT_REGISTER;
    reg.dw1.bits.indirect_offset = offset;
    return reg;
 }
 
-static inline brw_reg deref_4f(brw_indirect ptr, int offset)
+static INLINE GenReg deref_4f(GenIndirect ptr, int offset)
 {
    return brw_vec4_indirect(ptr.addr_subnr, ptr.addr_offset + offset);
 }
 
-static inline brw_reg deref_1f(brw_indirect ptr, int offset)
+static INLINE GenReg deref_1f(GenIndirect ptr, int offset)
 {
    return brw_vec1_indirect(ptr.addr_subnr, ptr.addr_offset + offset);
 }
 
-static inline brw_reg deref_4b(brw_indirect ptr, int offset)
+static INLINE GenReg deref_4b(GenIndirect ptr, int offset)
 {
-   return retype(deref_4f(ptr, offset), BRW_REGISTER_TYPE_B);
+   return retype(deref_4f(ptr, offset), GEN_REGISTER_TYPE_B);
 }
 
-static inline brw_reg deref_1uw(brw_indirect ptr, int offset)
+static INLINE GenReg deref_1uw(GenIndirect ptr, int offset)
 {
-   return retype(deref_1f(ptr, offset), BRW_REGISTER_TYPE_UW);
+   return retype(deref_1f(ptr, offset), GEN_REGISTER_TYPE_UW);
 }
 
-static inline brw_reg deref_1d(brw_indirect ptr, int offset)
+static INLINE GenReg deref_1d(GenIndirect ptr, int offset)
 {
-   return retype(deref_1f(ptr, offset), BRW_REGISTER_TYPE_D);
+   return retype(deref_1f(ptr, offset), GEN_REGISTER_TYPE_D);
 }
 
-static inline brw_reg deref_1ud(brw_indirect ptr, int offset)
+static INLINE GenReg deref_1ud(GenIndirect ptr, int offset)
 {
-   return retype(deref_1f(ptr, offset), BRW_REGISTER_TYPE_UD);
+   return retype(deref_1f(ptr, offset), GEN_REGISTER_TYPE_UD);
 }
 
-static inline brw_reg get_addr_reg(brw_indirect ptr)
+static INLINE GenReg get_addr_reg(GenIndirect ptr)
 {
    return brw_address_reg(ptr.addr_subnr);
 }
 
-static inline brw_indirect brw_indirect_offset(brw_indirect ptr, int offset)
+static INLINE GenIndirect GenIndirect_offset(GenIndirect ptr, int offset)
 {
    ptr.addr_offset += offset;
    return ptr;
 }
 
-static inline brw_indirect make_brw_indirect(uint32_t addr_subnr, int offset)
+static INLINE GenIndirect make_GenIndirect(uint32_t addr_subnr, int offset)
 {
-   brw_indirect ptr;
+   GenIndirect ptr;
    ptr.addr_subnr = addr_subnr;
    ptr.addr_offset = offset;
    ptr.pad = 0;
    return ptr;
 }
 
-static inline bool
-brw_same_reg(brw_reg r1, brw_reg r2)
+static INLINE bool
+brw_same_reg(GenReg r1, GenReg r2)
 {
    return r1.file == r2.file && r1.nr == r2.nr;
 }
 
 uint32_t brw_swap_cmod(uint32_t cmod);
 
-#ifdef __cplusplus
-}
-#endif /* __cplusplus */
-
-#endif /* BRW_EU_H */
+#endif /* GEN_EU_H */
 

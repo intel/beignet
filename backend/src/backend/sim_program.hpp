@@ -27,7 +27,6 @@
 
 #include "backend/program.h"
 #include "backend/program.hpp"
-#include "backend/gen/brw_structs.h"
 
 namespace gbe {
 

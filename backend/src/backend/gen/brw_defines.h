@@ -22,8 +22,8 @@
   *   Keith Whitwell <keith@tungstengraphics.com>
   */
 
-#ifndef BRW_DEFINES_H
-#define BRW_DEFINES_H
+#ifndef GEN_DEFINES_H
+#define GEN_DEFINES_H
 
 #include <cstdint>
 
@@ -36,21 +36,21 @@
 #define GET_FIELD(word, field) (((word)  & field ## _MASK) >> field ## _SHIFT)
 
 /* Execution Unit (EU) defines */
-#define BRW_ALIGN_1   0
-#define BRW_ALIGN_16  1
+#define GEN_ALIGN_1   0
+#define GEN_ALIGN_16  1
 
-#define BRW_ADDRESS_DIRECT                        0
-#define BRW_ADDRESS_REGISTER_INDIRECT_REGISTER    1
+#define GEN_ADDRESS_DIRECT                        0
+#define GEN_ADDRESS_REGISTER_INDIRECT_REGISTER    1
 
-#define BRW_CHANNEL_X     0
-#define BRW_CHANNEL_Y     1
-#define BRW_CHANNEL_Z     2
-#define BRW_CHANNEL_W     3
+#define GEN_CHANNEL_X     0
+#define GEN_CHANNEL_Y     1
+#define GEN_CHANNEL_Z     2
+#define GEN_CHANNEL_W     3
 
 enum brw_compression {
-   BRW_COMPRESSION_NONE       = 0,
-   BRW_COMPRESSION_2NDHALF    = 1,
-   BRW_COMPRESSION_COMPRESSED = 2,
+   GEN_COMPRESSION_NONE       = 0,
+   GEN_COMPRESSION_2NDHALF    = 1,
+   GEN_COMPRESSION_COMPRESSED = 2,
 };
 
 #define GEN6_COMPRESSION_1Q  0
@@ -60,44 +60,44 @@ enum brw_compression {
 #define GEN6_COMPRESSION_1H  0
 #define GEN6_COMPRESSION_2H  2
 
-#define BRW_CONDITIONAL_NONE  0
-#define BRW_CONDITIONAL_Z     1
-#define BRW_CONDITIONAL_NZ    2
-#define BRW_CONDITIONAL_EQ    1 /* Z */
-#define BRW_CONDITIONAL_NEQ   2 /* NZ */
-#define BRW_CONDITIONAL_G     3
-#define BRW_CONDITIONAL_GE    4
-#define BRW_CONDITIONAL_L     5
-#define BRW_CONDITIONAL_LE    6
-#define BRW_CONDITIONAL_R     7
-#define BRW_CONDITIONAL_O     8
-#define BRW_CONDITIONAL_U     9
+#define GEN_CONDITIONAL_NONE  0
+#define GEN_CONDITIONAL_Z     1
+#define GEN_CONDITIONAL_NZ    2
+#define GEN_CONDITIONAL_EQ    1 /* Z */
+#define GEN_CONDITIONAL_NEQ   2 /* NZ */
+#define GEN_CONDITIONAL_G     3
+#define GEN_CONDITIONAL_GE    4
+#define GEN_CONDITIONAL_L     5
+#define GEN_CONDITIONAL_LE    6
+#define GEN_CONDITIONAL_R     7
+#define GEN_CONDITIONAL_O     8
+#define GEN_CONDITIONAL_U     9
 
-#define BRW_DEBUG_NONE        0
-#define BRW_DEBUG_BREAKPOINT  1
+#define GEN_DEBUG_NONE        0
+#define GEN_DEBUG_BREAKPOINT  1
 
-#define BRW_DEPENDENCY_NORMAL         0
-#define BRW_DEPENDENCY_NOTCLEARED     1
-#define BRW_DEPENDENCY_NOTCHECKED     2
-#define BRW_DEPENDENCY_DISABLE        3
+#define GEN_DEPENDENCY_NORMAL         0
+#define GEN_DEPENDENCY_NOTCLEARED     1
+#define GEN_DEPENDENCY_NOTCHECKED     2
+#define GEN_DEPENDENCY_DISABLE        3
 
-#define BRW_EXECUTE_1     0
-#define BRW_EXECUTE_2     1
-#define BRW_EXECUTE_4     2
-#define BRW_EXECUTE_8     3
-#define BRW_EXECUTE_16    4
-#define BRW_EXECUTE_32    5
+#define GEN_EXECUTE_1     0
+#define GEN_EXECUTE_2     1
+#define GEN_EXECUTE_4     2
+#define GEN_EXECUTE_8     3
+#define GEN_EXECUTE_16    4
+#define GEN_EXECUTE_32    5
 
-#define BRW_HORIZONTAL_STRIDE_0   0
-#define BRW_HORIZONTAL_STRIDE_1   1
-#define BRW_HORIZONTAL_STRIDE_2   2
-#define BRW_HORIZONTAL_STRIDE_4   3
+#define GEN_HORIZONTAL_STRIDE_0   0
+#define GEN_HORIZONTAL_STRIDE_1   1
+#define GEN_HORIZONTAL_STRIDE_2   2
+#define GEN_HORIZONTAL_STRIDE_4   3
 
-#define BRW_INSTRUCTION_NORMAL    0
-#define BRW_INSTRUCTION_SATURATE  1
+#define GEN_INSTRUCTION_NORMAL    0
+#define GEN_INSTRUCTION_SATURATE  1
 
-#define BRW_MASK_ENABLE   0
-#define BRW_MASK_DISABLE  1
+#define GEN_MASK_ENABLE   0
+#define GEN_MASK_DISABLE  1
 
 /** @{
  *
@@ -111,70 +111,70 @@ enum brw_compression {
  * This is the default value.  It means that a channel's write enable is set
  * if the per-channel IP is pointing at this instruction.
  */
-#define BRW_WE_NORMAL  0
+#define GEN_WE_NORMAL  0
 /**
- * This is used like BRW_MASK_DISABLE, and causes all channels to have
+ * This is used like GEN_MASK_DISABLE, and causes all channels to have
  * their write enable set.  Note that predication still contributes to
  * whether the channel actually gets written.
  */
-#define BRW_WE_ALL  1
+#define GEN_WE_ALL  1
 /** @} */
 
 enum opcode {
    /* These are the actual hardware opcodes. */
-   BRW_OPCODE_MOV = 1,
-   BRW_OPCODE_SEL = 2,
-   BRW_OPCODE_NOT = 4,
-   BRW_OPCODE_AND = 5,
-   BRW_OPCODE_OR = 6,
-   BRW_OPCODE_XOR = 7,
-   BRW_OPCODE_SHR = 8,
-   BRW_OPCODE_SHL = 9,
-   BRW_OPCODE_RSR = 10,
-   BRW_OPCODE_RSL = 11,
-   BRW_OPCODE_ASR = 12,
-   BRW_OPCODE_CMP = 16,
-   BRW_OPCODE_CMPN = 17,
-   BRW_OPCODE_JMPI = 32,
-   BRW_OPCODE_IF = 34,
-   BRW_OPCODE_IFF = 35,
-   BRW_OPCODE_ELSE = 36,
-   BRW_OPCODE_ENDIF = 37,
-   BRW_OPCODE_DO = 38,
-   BRW_OPCODE_WHILE = 39,
-   BRW_OPCODE_BREAK = 40,
-   BRW_OPCODE_CONTINUE = 41,
-   BRW_OPCODE_HALT = 42,
-   BRW_OPCODE_MSAVE = 44,
-   BRW_OPCODE_MRESTORE = 45,
-   BRW_OPCODE_PUSH = 46,
-   BRW_OPCODE_POP = 47,
-   BRW_OPCODE_WAIT = 48,
-   BRW_OPCODE_SEND = 49,
-   BRW_OPCODE_SENDC = 50,
-   BRW_OPCODE_MATH = 56,
-   BRW_OPCODE_ADD = 64,
-   BRW_OPCODE_MUL = 65,
-   BRW_OPCODE_AVG = 66,
-   BRW_OPCODE_FRC = 67,
-   BRW_OPCODE_RNDU = 68,
-   BRW_OPCODE_RNDD = 69,
-   BRW_OPCODE_RNDE = 70,
-   BRW_OPCODE_RNDZ = 71,
-   BRW_OPCODE_MAC = 72,
-   BRW_OPCODE_MACH = 73,
-   BRW_OPCODE_LZD = 74,
-   BRW_OPCODE_SAD2 = 80,
-   BRW_OPCODE_SADA2 = 81,
-   BRW_OPCODE_DP4 = 84,
-   BRW_OPCODE_DPH = 85,
-   BRW_OPCODE_DP3 = 86,
-   BRW_OPCODE_DP2 = 87,
-   BRW_OPCODE_DPA2 = 88,
-   BRW_OPCODE_LINE = 89,
-   BRW_OPCODE_PLN = 90,
-   BRW_OPCODE_MAD = 91,
-   BRW_OPCODE_NOP = 126,
+   GEN_OPCODE_MOV = 1,
+   GEN_OPCODE_SEL = 2,
+   GEN_OPCODE_NOT = 4,
+   GEN_OPCODE_AND = 5,
+   GEN_OPCODE_OR = 6,
+   GEN_OPCODE_XOR = 7,
+   GEN_OPCODE_SHR = 8,
+   GEN_OPCODE_SHL = 9,
+   GEN_OPCODE_RSR = 10,
+   GEN_OPCODE_RSL = 11,
+   GEN_OPCODE_ASR = 12,
+   GEN_OPCODE_CMP = 16,
+   GEN_OPCODE_CMPN = 17,
+   GEN_OPCODE_JMPI = 32,
+   GEN_OPCODE_IF = 34,
+   GEN_OPCODE_IFF = 35,
+   GEN_OPCODE_ELSE = 36,
+   GEN_OPCODE_ENDIF = 37,
+   GEN_OPCODE_DO = 38,
+   GEN_OPCODE_WHILE = 39,
+   GEN_OPCODE_BREAK = 40,
+   GEN_OPCODE_CONTINUE = 41,
+   GEN_OPCODE_HALT = 42,
+   GEN_OPCODE_MSAVE = 44,
+   GEN_OPCODE_MRESTORE = 45,
+   GEN_OPCODE_PUSH = 46,
+   GEN_OPCODE_POP = 47,
+   GEN_OPCODE_WAIT = 48,
+   GEN_OPCODE_SEND = 49,
+   GEN_OPCODE_SENDC = 50,
+   GEN_OPCODE_MATH = 56,
+   GEN_OPCODE_ADD = 64,
+   GEN_OPCODE_MUL = 65,
+   GEN_OPCODE_AVG = 66,
+   GEN_OPCODE_FRC = 67,
+   GEN_OPCODE_RNDU = 68,
+   GEN_OPCODE_RNDD = 69,
+   GEN_OPCODE_RNDE = 70,
+   GEN_OPCODE_RNDZ = 71,
+   GEN_OPCODE_MAC = 72,
+   GEN_OPCODE_MACH = 73,
+   GEN_OPCODE_LZD = 74,
+   GEN_OPCODE_SAD2 = 80,
+   GEN_OPCODE_SADA2 = 81,
+   GEN_OPCODE_DP4 = 84,
+   GEN_OPCODE_DPH = 85,
+   GEN_OPCODE_DP3 = 86,
+   GEN_OPCODE_DP2 = 87,
+   GEN_OPCODE_DPA2 = 88,
+   GEN_OPCODE_LINE = 89,
+   GEN_OPCODE_PLN = 90,
+   GEN_OPCODE_MAD = 91,
+   GEN_OPCODE_NOP = 126,
 
    /* These are compiler backend opcodes that get translated into other
     * instructions.
@@ -215,98 +215,98 @@ enum opcode {
    VS_OPCODE_PULL_CONSTANT_LOAD,
 };
 
-#define BRW_PREDICATE_NONE                    0
-#define BRW_PREDICATE_NORMAL                  1
-#define BRW_PREDICATE_ALIGN1_ANYV             2
-#define BRW_PREDICATE_ALIGN1_ALLV             3
-#define BRW_PREDICATE_ALIGN1_ANY2H            4
-#define BRW_PREDICATE_ALIGN1_ALL2H            5
-#define BRW_PREDICATE_ALIGN1_ANY4H            6
-#define BRW_PREDICATE_ALIGN1_ALL4H            7
-#define BRW_PREDICATE_ALIGN1_ANY8H            8
-#define BRW_PREDICATE_ALIGN1_ALL8H            9
-#define BRW_PREDICATE_ALIGN1_ANY16H           10
-#define BRW_PREDICATE_ALIGN1_ALL16H           11
-#define BRW_PREDICATE_ALIGN16_REPLICATE_X     2
-#define BRW_PREDICATE_ALIGN16_REPLICATE_Y     3
-#define BRW_PREDICATE_ALIGN16_REPLICATE_Z     4
-#define BRW_PREDICATE_ALIGN16_REPLICATE_W     5
-#define BRW_PREDICATE_ALIGN16_ANY4H           6
-#define BRW_PREDICATE_ALIGN16_ALL4H           7
+#define GEN_PREDICATE_NONE                    0
+#define GEN_PREDICATE_NORMAL                  1
+#define GEN_PREDICATE_ALIGN1_ANYV             2
+#define GEN_PREDICATE_ALIGN1_ALLV             3
+#define GEN_PREDICATE_ALIGN1_ANY2H            4
+#define GEN_PREDICATE_ALIGN1_ALL2H            5
+#define GEN_PREDICATE_ALIGN1_ANY4H            6
+#define GEN_PREDICATE_ALIGN1_ALL4H            7
+#define GEN_PREDICATE_ALIGN1_ANY8H            8
+#define GEN_PREDICATE_ALIGN1_ALL8H            9
+#define GEN_PREDICATE_ALIGN1_ANY16H           10
+#define GEN_PREDICATE_ALIGN1_ALL16H           11
+#define GEN_PREDICATE_ALIGN16_REPLICATE_X     2
+#define GEN_PREDICATE_ALIGN16_REPLICATE_Y     3
+#define GEN_PREDICATE_ALIGN16_REPLICATE_Z     4
+#define GEN_PREDICATE_ALIGN16_REPLICATE_W     5
+#define GEN_PREDICATE_ALIGN16_ANY4H           6
+#define GEN_PREDICATE_ALIGN16_ALL4H           7
 
-#define BRW_ARCHITECTURE_REGISTER_FILE        0
-#define BRW_GENERAL_REGISTER_FILE             1
-#define BRW_IMMEDIATE_VALUE                   3
+#define GEN_ARCHITECTURE_REGISTER_FILE        0
+#define GEN_GENERAL_REGISTER_FILE             1
+#define GEN_IMMEDIATE_VALUE                   3
 
-#define BRW_REGISTER_TYPE_UD  0
-#define BRW_REGISTER_TYPE_D   1
-#define BRW_REGISTER_TYPE_UW  2
-#define BRW_REGISTER_TYPE_W   3
-#define BRW_REGISTER_TYPE_UB  4
-#define BRW_REGISTER_TYPE_B   5
-#define BRW_REGISTER_TYPE_VF  5 /* packed float vector, immediates only? */
-#define BRW_REGISTER_TYPE_HF  6
-#define BRW_REGISTER_TYPE_V   6 /* packed int vector, immediates only, uword dest only */
-#define BRW_REGISTER_TYPE_F   7
+#define GEN_REGISTER_TYPE_UD  0
+#define GEN_REGISTER_TYPE_D   1
+#define GEN_REGISTER_TYPE_UW  2
+#define GEN_REGISTER_TYPE_W   3
+#define GEN_REGISTER_TYPE_UB  4
+#define GEN_REGISTER_TYPE_B   5
+#define GEN_REGISTER_TYPE_VF  5 /* packed float vector, immediates only? */
+#define GEN_REGISTER_TYPE_HF  6
+#define GEN_REGISTER_TYPE_V   6 /* packed int vector, immediates only, uword dest only */
+#define GEN_REGISTER_TYPE_F   7
 
-#define BRW_ARF_NULL                  0x00
-#define BRW_ARF_ADDRESS               0x10
-#define BRW_ARF_ACCUMULATOR           0x20
-#define BRW_ARF_FLAG                  0x30
-#define BRW_ARF_MASK                  0x40
-#define BRW_ARF_MASK_STACK            0x50
-#define BRW_ARF_MASK_STACK_DEPTH      0x60
-#define BRW_ARF_STATE                 0x70
-#define BRW_ARF_CONTROL               0x80
-#define BRW_ARF_NOTIFICATION_COUNT    0x90
-#define BRW_ARF_IP                    0xA0
+#define GEN_ARF_NULL                  0x00
+#define GEN_ARF_ADDRESS               0x10
+#define GEN_ARF_ACCUMULATOR           0x20
+#define GEN_ARF_FLAG                  0x30
+#define GEN_ARF_MASK                  0x40
+#define GEN_ARF_MASK_STACK            0x50
+#define GEN_ARF_MASK_STACK_DEPTH      0x60
+#define GEN_ARF_STATE                 0x70
+#define GEN_ARF_CONTROL               0x80
+#define GEN_ARF_NOTIFICATION_COUNT    0x90
+#define GEN_ARF_IP                    0xA0
 
-#define BRW_MRF_COMPR4   (1 << 7)
+#define GEN_MRF_COMPR4   (1 << 7)
 
-#define BRW_AMASK   0
-#define BRW_IMASK   1
-#define BRW_LMASK   2
-#define BRW_CMASK   3
+#define GEN_AMASK   0
+#define GEN_IMASK   1
+#define GEN_LMASK   2
+#define GEN_CMASK   3
 
 
 
-#define BRW_THREAD_NORMAL     0
-#define BRW_THREAD_ATOMIC     1
-#define BRW_THREAD_SWITCH     2
+#define GEN_THREAD_NORMAL     0
+#define GEN_THREAD_ATOMIC     1
+#define GEN_THREAD_SWITCH     2
 
-#define BRW_VERTICAL_STRIDE_0                 0
-#define BRW_VERTICAL_STRIDE_1                 1
-#define BRW_VERTICAL_STRIDE_2                 2
-#define BRW_VERTICAL_STRIDE_4                 3
-#define BRW_VERTICAL_STRIDE_8                 4
-#define BRW_VERTICAL_STRIDE_16                5
-#define BRW_VERTICAL_STRIDE_32                6
-#define BRW_VERTICAL_STRIDE_64                7
-#define BRW_VERTICAL_STRIDE_128               8
-#define BRW_VERTICAL_STRIDE_256               9
-#define BRW_VERTICAL_STRIDE_ONE_DIMENSIONAL   0xF
+#define GEN_VERTICAL_STRIDE_0                 0
+#define GEN_VERTICAL_STRIDE_1                 1
+#define GEN_VERTICAL_STRIDE_2                 2
+#define GEN_VERTICAL_STRIDE_4                 3
+#define GEN_VERTICAL_STRIDE_8                 4
+#define GEN_VERTICAL_STRIDE_16                5
+#define GEN_VERTICAL_STRIDE_32                6
+#define GEN_VERTICAL_STRIDE_64                7
+#define GEN_VERTICAL_STRIDE_128               8
+#define GEN_VERTICAL_STRIDE_256               9
+#define GEN_VERTICAL_STRIDE_ONE_DIMENSIONAL   0xF
 
-#define BRW_WIDTH_1       0
-#define BRW_WIDTH_2       1
-#define BRW_WIDTH_4       2
-#define BRW_WIDTH_8       3
-#define BRW_WIDTH_16      4
+#define GEN_WIDTH_1       0
+#define GEN_WIDTH_2       1
+#define GEN_WIDTH_4       2
+#define GEN_WIDTH_8       3
+#define GEN_WIDTH_16      4
 
-#define BRW_STATELESS_BUFFER_BOUNDARY_1K      0
-#define BRW_STATELESS_BUFFER_BOUNDARY_2K      1
-#define BRW_STATELESS_BUFFER_BOUNDARY_4K      2
-#define BRW_STATELESS_BUFFER_BOUNDARY_8K      3
-#define BRW_STATELESS_BUFFER_BOUNDARY_16K     4
-#define BRW_STATELESS_BUFFER_BOUNDARY_32K     5
-#define BRW_STATELESS_BUFFER_BOUNDARY_64K     6
-#define BRW_STATELESS_BUFFER_BOUNDARY_128K    7
-#define BRW_STATELESS_BUFFER_BOUNDARY_256K    8
-#define BRW_STATELESS_BUFFER_BOUNDARY_512K    9
-#define BRW_STATELESS_BUFFER_BOUNDARY_1M      10
-#define BRW_STATELESS_BUFFER_BOUNDARY_2M      11
+#define GEN_STATELESS_BUFFER_BOUNDARY_1K      0
+#define GEN_STATELESS_BUFFER_BOUNDARY_2K      1
+#define GEN_STATELESS_BUFFER_BOUNDARY_4K      2
+#define GEN_STATELESS_BUFFER_BOUNDARY_8K      3
+#define GEN_STATELESS_BUFFER_BOUNDARY_16K     4
+#define GEN_STATELESS_BUFFER_BOUNDARY_32K     5
+#define GEN_STATELESS_BUFFER_BOUNDARY_64K     6
+#define GEN_STATELESS_BUFFER_BOUNDARY_128K    7
+#define GEN_STATELESS_BUFFER_BOUNDARY_256K    8
+#define GEN_STATELESS_BUFFER_BOUNDARY_512K    9
+#define GEN_STATELESS_BUFFER_BOUNDARY_1M      10
+#define GEN_STATELESS_BUFFER_BOUNDARY_2M      11
 
-#define BRW_POLYGON_FACING_FRONT      0
-#define BRW_POLYGON_FACING_BACK       1
+#define GEN_POLYGON_FACING_FRONT      0
+#define GEN_POLYGON_FACING_BACK       1
 
 /**
  * Message target: Shared Function ID for where to SEND a message.
@@ -319,14 +319,14 @@ enum opcode {
  *   Overview / GPE Function IDs
  */
 enum brw_message_target {
-   BRW_SFID_NULL                     = 0,
-   BRW_SFID_MATH                     = 1, /* Only valid on Gen4-5 */
-   BRW_SFID_SAMPLER                  = 2,
-   BRW_SFID_MESSAGE_GATEWAY          = 3,
-   BRW_SFID_DATAPORT_READ            = 4,
-   BRW_SFID_DATAPORT_WRITE           = 5,
-   BRW_SFID_URB                      = 6,
-   BRW_SFID_THREAD_SPAWNER           = 7,
+   GEN_SFID_NULL                     = 0,
+   GEN_SFID_MATH                     = 1, /* Only valid on Gen4-5 */
+   GEN_SFID_SAMPLER                  = 2,
+   GEN_SFID_MESSAGE_GATEWAY          = 3,
+   GEN_SFID_DATAPORT_READ            = 4,
+   GEN_SFID_DATAPORT_WRITE           = 5,
+   GEN_SFID_URB                      = 6,
+   GEN_SFID_THREAD_SPAWNER           = 7,
    GEN6_SFID_DATAPORT_SAMPLER_CACHE  = 4,
    GEN6_SFID_DATAPORT_RENDER_CACHE   = 5,
    GEN6_SFID_DATAPORT_CONSTANT_CACHE = 9,
@@ -335,28 +335,28 @@ enum brw_message_target {
 
 #define GEN7_MESSAGE_TARGET_DP_DATA_CACHE     10
 
-#define BRW_SAMPLER_RETURN_FORMAT_FLOAT32     0
-#define BRW_SAMPLER_RETURN_FORMAT_UINT32      2
-#define BRW_SAMPLER_RETURN_FORMAT_SINT32      3
+#define GEN_SAMPLER_RETURN_FORMAT_FLOAT32     0
+#define GEN_SAMPLER_RETURN_FORMAT_UINT32      2
+#define GEN_SAMPLER_RETURN_FORMAT_SINT32      3
 
-#define BRW_SAMPLER_MESSAGE_SIMD8_SAMPLE              0
-#define BRW_SAMPLER_MESSAGE_SIMD16_SAMPLE             0
-#define BRW_SAMPLER_MESSAGE_SIMD16_SAMPLE_BIAS        0
-#define BRW_SAMPLER_MESSAGE_SIMD8_KILLPIX             1
-#define BRW_SAMPLER_MESSAGE_SIMD4X2_SAMPLE_LOD        1
-#define BRW_SAMPLER_MESSAGE_SIMD16_SAMPLE_LOD         1
-#define BRW_SAMPLER_MESSAGE_SIMD4X2_SAMPLE_GRADIENTS  2
-#define BRW_SAMPLER_MESSAGE_SIMD8_SAMPLE_GRADIENTS    2
-#define BRW_SAMPLER_MESSAGE_SIMD4X2_SAMPLE_COMPARE    0
-#define BRW_SAMPLER_MESSAGE_SIMD16_SAMPLE_COMPARE     2
-#define BRW_SAMPLER_MESSAGE_SIMD8_SAMPLE_BIAS_COMPARE 0
-#define BRW_SAMPLER_MESSAGE_SIMD4X2_SAMPLE_LOD_COMPARE 1
-#define BRW_SAMPLER_MESSAGE_SIMD8_SAMPLE_LOD_COMPARE  1
-#define BRW_SAMPLER_MESSAGE_SIMD4X2_RESINFO           2
-#define BRW_SAMPLER_MESSAGE_SIMD16_RESINFO            2
-#define BRW_SAMPLER_MESSAGE_SIMD4X2_LD                3
-#define BRW_SAMPLER_MESSAGE_SIMD8_LD                  3
-#define BRW_SAMPLER_MESSAGE_SIMD16_LD                 3
+#define GEN_SAMPLER_MESSAGE_SIMD8_SAMPLE              0
+#define GEN_SAMPLER_MESSAGE_SIMD16_SAMPLE             0
+#define GEN_SAMPLER_MESSAGE_SIMD16_SAMPLE_BIAS        0
+#define GEN_SAMPLER_MESSAGE_SIMD8_KILLPIX             1
+#define GEN_SAMPLER_MESSAGE_SIMD4X2_SAMPLE_LOD        1
+#define GEN_SAMPLER_MESSAGE_SIMD16_SAMPLE_LOD         1
+#define GEN_SAMPLER_MESSAGE_SIMD4X2_SAMPLE_GRADIENTS  2
+#define GEN_SAMPLER_MESSAGE_SIMD8_SAMPLE_GRADIENTS    2
+#define GEN_SAMPLER_MESSAGE_SIMD4X2_SAMPLE_COMPARE    0
+#define GEN_SAMPLER_MESSAGE_SIMD16_SAMPLE_COMPARE     2
+#define GEN_SAMPLER_MESSAGE_SIMD8_SAMPLE_BIAS_COMPARE 0
+#define GEN_SAMPLER_MESSAGE_SIMD4X2_SAMPLE_LOD_COMPARE 1
+#define GEN_SAMPLER_MESSAGE_SIMD8_SAMPLE_LOD_COMPARE  1
+#define GEN_SAMPLER_MESSAGE_SIMD4X2_RESINFO           2
+#define GEN_SAMPLER_MESSAGE_SIMD16_RESINFO            2
+#define GEN_SAMPLER_MESSAGE_SIMD4X2_LD                3
+#define GEN_SAMPLER_MESSAGE_SIMD8_LD                  3
+#define GEN_SAMPLER_MESSAGE_SIMD16_LD                 3
 
 #define GEN5_SAMPLER_MESSAGE_SAMPLE              0
 #define GEN5_SAMPLER_MESSAGE_SAMPLE_BIAS         1
@@ -369,29 +369,29 @@ enum brw_message_target {
 #define GEN5_SAMPLER_MESSAGE_SAMPLE_RESINFO      10
 
 /* for GEN5 only */
-#define BRW_SAMPLER_SIMD_MODE_SIMD4X2                   0
-#define BRW_SAMPLER_SIMD_MODE_SIMD8                     1
-#define BRW_SAMPLER_SIMD_MODE_SIMD16                    2
-#define BRW_SAMPLER_SIMD_MODE_SIMD32_64                 3
+#define GEN_SAMPLER_SIMD_MODE_SIMD4X2                   0
+#define GEN_SAMPLER_SIMD_MODE_SIMD8                     1
+#define GEN_SAMPLER_SIMD_MODE_SIMD16                    2
+#define GEN_SAMPLER_SIMD_MODE_SIMD32_64                 3
 
-#define BRW_DATAPORT_OWORD_BLOCK_1_OWORDLOW   0
-#define BRW_DATAPORT_OWORD_BLOCK_1_OWORDHIGH  1
-#define BRW_DATAPORT_OWORD_BLOCK_2_OWORDS     2
-#define BRW_DATAPORT_OWORD_BLOCK_4_OWORDS     3
-#define BRW_DATAPORT_OWORD_BLOCK_8_OWORDS     4
+#define GEN_DATAPORT_OWORD_BLOCK_1_OWORDLOW   0
+#define GEN_DATAPORT_OWORD_BLOCK_1_OWORDHIGH  1
+#define GEN_DATAPORT_OWORD_BLOCK_2_OWORDS     2
+#define GEN_DATAPORT_OWORD_BLOCK_4_OWORDS     3
+#define GEN_DATAPORT_OWORD_BLOCK_8_OWORDS     4
 
-#define BRW_DATAPORT_OWORD_DUAL_BLOCK_1OWORD     0
-#define BRW_DATAPORT_OWORD_DUAL_BLOCK_4OWORDS    2
+#define GEN_DATAPORT_OWORD_DUAL_BLOCK_1OWORD     0
+#define GEN_DATAPORT_OWORD_DUAL_BLOCK_4OWORDS    2
 
-#define BRW_DATAPORT_DWORD_SCATTERED_BLOCK_8DWORDS   2
-#define BRW_DATAPORT_DWORD_SCATTERED_BLOCK_16DWORDS  3
+#define GEN_DATAPORT_DWORD_SCATTERED_BLOCK_8DWORDS   2
+#define GEN_DATAPORT_DWORD_SCATTERED_BLOCK_16DWORDS  3
 
 /* This one stays the same across generations. */
-#define BRW_DATAPORT_READ_MESSAGE_OWORD_BLOCK_READ          0
+#define GEN_DATAPORT_READ_MESSAGE_OWORD_BLOCK_READ          0
 /* GEN4 */
-#define BRW_DATAPORT_READ_MESSAGE_OWORD_DUAL_BLOCK_READ     1
-#define BRW_DATAPORT_READ_MESSAGE_MEDIA_BLOCK_READ          2
-#define BRW_DATAPORT_READ_MESSAGE_DWORD_SCATTERED_READ      3
+#define GEN_DATAPORT_READ_MESSAGE_OWORD_DUAL_BLOCK_READ     1
+#define GEN_DATAPORT_READ_MESSAGE_MEDIA_BLOCK_READ          2
+#define GEN_DATAPORT_READ_MESSAGE_DWORD_SCATTERED_READ      3
 /* G45, GEN5 */
 #define G45_DATAPORT_READ_MESSAGE_RENDER_UNORM_READ     1
 #define G45_DATAPORT_READ_MESSAGE_OWORD_DUAL_BLOCK_READ     2
@@ -405,23 +405,23 @@ enum brw_message_target {
 #define GEN6_DATAPORT_READ_MESSAGE_OWORD_UNALIGN_BLOCK_READ  5
 #define GEN6_DATAPORT_READ_MESSAGE_DWORD_SCATTERED_READ      6
 
-#define BRW_DATAPORT_READ_TARGET_DATA_CACHE      0
-#define BRW_DATAPORT_READ_TARGET_RENDER_CACHE    1
-#define BRW_DATAPORT_READ_TARGET_SAMPLER_CACHE   2
+#define GEN_DATAPORT_READ_TARGET_DATA_CACHE      0
+#define GEN_DATAPORT_READ_TARGET_RENDER_CACHE    1
+#define GEN_DATAPORT_READ_TARGET_SAMPLER_CACHE   2
 
-#define BRW_DATAPORT_RENDER_TARGET_WRITE_SIMD16_SINGLE_SOURCE                0
-#define BRW_DATAPORT_RENDER_TARGET_WRITE_SIMD16_SINGLE_SOURCE_REPLICATED     1
-#define BRW_DATAPORT_RENDER_TARGET_WRITE_SIMD8_DUAL_SOURCE_SUBSPAN01         2
-#define BRW_DATAPORT_RENDER_TARGET_WRITE_SIMD8_DUAL_SOURCE_SUBSPAN23         3
-#define BRW_DATAPORT_RENDER_TARGET_WRITE_SIMD8_SINGLE_SOURCE_SUBSPAN01       4
+#define GEN_DATAPORT_RENDER_TARGET_WRITE_SIMD16_SINGLE_SOURCE                0
+#define GEN_DATAPORT_RENDER_TARGET_WRITE_SIMD16_SINGLE_SOURCE_REPLICATED     1
+#define GEN_DATAPORT_RENDER_TARGET_WRITE_SIMD8_DUAL_SOURCE_SUBSPAN01         2
+#define GEN_DATAPORT_RENDER_TARGET_WRITE_SIMD8_DUAL_SOURCE_SUBSPAN23         3
+#define GEN_DATAPORT_RENDER_TARGET_WRITE_SIMD8_SINGLE_SOURCE_SUBSPAN01       4
 
-#define BRW_DATAPORT_WRITE_MESSAGE_OWORD_BLOCK_WRITE                0
-#define BRW_DATAPORT_WRITE_MESSAGE_OWORD_DUAL_BLOCK_WRITE           1
-#define BRW_DATAPORT_WRITE_MESSAGE_MEDIA_BLOCK_WRITE                2
-#define BRW_DATAPORT_WRITE_MESSAGE_DWORD_SCATTERED_WRITE            3
-#define BRW_DATAPORT_WRITE_MESSAGE_RENDER_TARGET_WRITE              4
-#define BRW_DATAPORT_WRITE_MESSAGE_STREAMED_VERTEX_BUFFER_WRITE     5
-#define BRW_DATAPORT_WRITE_MESSAGE_FLUSH_RENDER_CACHE               7
+#define GEN_DATAPORT_WRITE_MESSAGE_OWORD_BLOCK_WRITE                0
+#define GEN_DATAPORT_WRITE_MESSAGE_OWORD_DUAL_BLOCK_WRITE           1
+#define GEN_DATAPORT_WRITE_MESSAGE_MEDIA_BLOCK_WRITE                2
+#define GEN_DATAPORT_WRITE_MESSAGE_DWORD_SCATTERED_WRITE            3
+#define GEN_DATAPORT_WRITE_MESSAGE_RENDER_TARGET_WRITE              4
+#define GEN_DATAPORT_WRITE_MESSAGE_STREAMED_VERTEX_BUFFER_WRITE     5
+#define GEN_DATAPORT_WRITE_MESSAGE_FLUSH_RENDER_CACHE               7
 
 /* GEN6 */
 #define GEN6_DATAPORT_WRITE_MESSAGE_DWORD_ATOMIC_WRITE              7
@@ -436,38 +436,38 @@ enum brw_message_target {
 /* GEN7 */
 #define GEN7_DATAPORT_WRITE_MESSAGE_OWORD_DUAL_BLOCK_WRITE          10
 
-#define BRW_MATH_FUNCTION_INV                              1
-#define BRW_MATH_FUNCTION_LOG                              2
-#define BRW_MATH_FUNCTION_EXP                              3
-#define BRW_MATH_FUNCTION_SQRT                             4
-#define BRW_MATH_FUNCTION_RSQ                              5
-#define BRW_MATH_FUNCTION_SIN                              6 /* was 7 */
-#define BRW_MATH_FUNCTION_COS                              7 /* was 8 */
-#define BRW_MATH_FUNCTION_SINCOS                           8 /* was 6 */
-#define BRW_MATH_FUNCTION_TAN                              9 /* gen4 */
-#define BRW_MATH_FUNCTION_FDIV                             9 /* gen6+ */
-#define BRW_MATH_FUNCTION_POW                              10
-#define BRW_MATH_FUNCTION_INT_DIV_QUOTIENT_AND_REMAINDER   11
-#define BRW_MATH_FUNCTION_INT_DIV_QUOTIENT                 12
-#define BRW_MATH_FUNCTION_INT_DIV_REMAINDER                13
+#define GEN_MATH_FUNCTION_INV                              1
+#define GEN_MATH_FUNCTION_LOG                              2
+#define GEN_MATH_FUNCTION_EXP                              3
+#define GEN_MATH_FUNCTION_SQRT                             4
+#define GEN_MATH_FUNCTION_RSQ                              5
+#define GEN_MATH_FUNCTION_SIN                              6 /* was 7 */
+#define GEN_MATH_FUNCTION_COS                              7 /* was 8 */
+#define GEN_MATH_FUNCTION_SINCOS                           8 /* was 6 */
+#define GEN_MATH_FUNCTION_TAN                              9 /* gen4 */
+#define GEN_MATH_FUNCTION_FDIV                             9 /* gen6+ */
+#define GEN_MATH_FUNCTION_POW                              10
+#define GEN_MATH_FUNCTION_INT_DIV_QUOTIENT_AND_REMAINDER   11
+#define GEN_MATH_FUNCTION_INT_DIV_QUOTIENT                 12
+#define GEN_MATH_FUNCTION_INT_DIV_REMAINDER                13
 
-#define BRW_MATH_INTEGER_UNSIGNED     0
-#define BRW_MATH_INTEGER_SIGNED       1
+#define GEN_MATH_INTEGER_UNSIGNED     0
+#define GEN_MATH_INTEGER_SIGNED       1
 
-#define BRW_MATH_PRECISION_FULL        0
-#define BRW_MATH_PRECISION_PARTIAL     1
+#define GEN_MATH_PRECISION_FULL        0
+#define GEN_MATH_PRECISION_PARTIAL     1
 
-#define BRW_MATH_SATURATE_NONE         0
-#define BRW_MATH_SATURATE_SATURATE     1
+#define GEN_MATH_SATURATE_NONE         0
+#define GEN_MATH_SATURATE_SATURATE     1
 
-#define BRW_MATH_DATA_VECTOR  0
-#define BRW_MATH_DATA_SCALAR  1
+#define GEN_MATH_DATA_VECTOR  0
+#define GEN_MATH_DATA_SCALAR  1
 
-#define BRW_URB_OPCODE_WRITE  0
+#define GEN_URB_OPCODE_WRITE  0
 
-#define BRW_URB_SWIZZLE_NONE          0
-#define BRW_URB_SWIZZLE_INTERLEAVE    1
-#define BRW_URB_SWIZZLE_TRANSPOSE     2
+#define GEN_URB_SWIZZLE_NONE          0
+#define GEN_URB_SWIZZLE_INTERLEAVE    1
+#define GEN_URB_SWIZZLE_TRANSPOSE     2
 
 #define CMD_URB_FENCE                 0x6000
 #define CMD_CS_URB_STATE              0x6001
@@ -495,20 +495,20 @@ enum brw_message_target {
 # define GEN6_VS_CACHE_DISABLE    (1 << 1)
 # define GEN6_VS_ENABLE     (1 << 0)
 
-#define BRW_DEREFERENCE_URB 0
-#define BRW_DO_NOT_DEREFERENCE_URB 1
+#define GEN_DEREFERENCE_URB 0
+#define GEN_DO_NOT_DEREFERENCE_URB 1
 
 /* Maximum number of entries that can be addressed using a binding table
  * pointer of type SURFTYPE_BUFFER
  */
-#define BRW_MAX_NUM_BUFFER_ENTRIES (1 << 27)
+#define GEN_MAX_NUM_BUFFER_ENTRIES (1 << 27)
 
 /////////////////////////////////////////////////////////////////////////////
 // Gen EU structures
 /////////////////////////////////////////////////////////////////////////////
 
 /** Number of general purpose registers (VS, WM, etc) */
-#define BRW_MAX_GRF 128
+#define GEN_MAX_GRF 128
 
 /**
  * First GRF used for the MRF hack.
@@ -522,7 +522,7 @@ enum brw_message_target {
 #define GEN7_MRF_HACK_START 112.
 
 /** Number of message register file registers */
-#define BRW_MAX_MRF 16
+#define GEN_MAX_MRF 16
 
 struct brw_urb_immediate {
    uint32_t opcode:4;
@@ -637,7 +637,7 @@ struct gen7_sampler_state
 };
 
 /* Instruction format for the execution units */
-struct brw_instruction
+struct GenInstruction
 {
    struct
    {
@@ -1249,5 +1249,5 @@ struct brw_instruction
    } bits3;
 };
 
-#endif /* BRW_DEFINES_H */
+#endif /* GEN_DEFINES_H */
 

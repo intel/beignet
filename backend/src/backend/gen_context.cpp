@@ -36,12 +36,12 @@ namespace gbe
 
   void GenContext::emitCode(void) {
     GenKernel *genKernel = static_cast<GenKernel*>(this->kernel);
-    brw_compile *p = (brw_compile*) GBE_MALLOC(sizeof(brw_compile));
+    GenEmitter *p = (GenEmitter*) GBE_MALLOC(sizeof(GenEmitter));
     std::memset(p, 0, sizeof(*p));
-    p->brw_EOT(127);
+    p->EOT(127);
     genKernel->insnNum = p->nr_insn;
-    genKernel->insns = GBE_NEW_ARRAY(brw_instruction, genKernel->insnNum);
-    std::memcpy(genKernel->insns, p->store, genKernel->insnNum * sizeof(brw_instruction));
+    genKernel->insns = GBE_NEW_ARRAY(GenInstruction, genKernel->insnNum);
+    std::memcpy(genKernel->insns, p->store, genKernel->insnNum * sizeof(GenInstruction));
     GBE_FREE(p);
   }
   Kernel *GenContext::allocateKernel(void) {

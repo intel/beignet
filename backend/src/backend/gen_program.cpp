@@ -39,7 +39,7 @@ namespace gbe {
   {}
   GenKernel::~GenKernel(void) { GBE_SAFE_DELETE_ARRAY(insns); }
   const char *GenKernel::getCode(void) const { return (const char*) insns; }
-  size_t GenKernel::getCodeSize(void) const { return insnNum * sizeof(brw_instruction); }
+  size_t GenKernel::getCodeSize(void) const { return insnNum * sizeof(GenInstruction); }
 
   GenProgram::GenProgram(void) {}
   GenProgram::~GenProgram(void) {}

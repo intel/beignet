@@ -29,7 +29,7 @@
 #include "backend/program.hpp"
 
 // Gen ISA instruction
-struct brw_instruction;
+struct GenInstruction;
 namespace gbe
 {
   /*! Describe a compiled kernel */
@@ -43,7 +43,7 @@ namespace gbe
     virtual const char *getCode(void) const;
     /*! Implements base class */
     virtual size_t getCodeSize(void) const;
-    brw_instruction *insns;  //!< Instruction stream
+    GenInstruction *insns;  //!< Instruction stream
     uint32_t insnNum;        //!< Number of instructions
     GBE_STRUCT(GenKernel);   //!< Use gbe allocators
   };
