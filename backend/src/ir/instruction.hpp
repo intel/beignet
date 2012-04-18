@@ -114,7 +114,7 @@ namespace ir {
      *  registers not of bound and so on). If not well formed, provide a reason
      *  in string why
      */
-    bool wellFormed(const Function &fn, std::string &why) const;
+    bool wellFormed(std::string &why) const;
     /*! Replace other by this instruction */
     void replace(Instruction *other);
     /*! Indicates if the instruction belongs to instruction type T. Typically, T

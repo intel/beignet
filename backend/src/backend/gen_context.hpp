@@ -27,6 +27,8 @@
 
 #include <string>
 #include "backend/context.hpp"
+#include "backend/gen_eu.hpp"
+#include "sys/set.hpp"
 
 namespace gbe
 {
@@ -46,10 +48,12 @@ namespace gbe
     ~GenContext(void);
     /*! Implements base class */
     virtual void emitCode(void);
+    /*! Very stupid register allocator to start with */
+    void allocateRegister(void);
     /*! Implements base class */
     virtual Kernel *allocateKernel(void);
     /*! Simplistic allocation to start with */
-    //set<ir::Register, GenReg> RA;
+    set<ir::Register, GenReg> RA;
   };
 
 } /* namespace gbe */

@@ -26,6 +26,7 @@
 #include "backend/gen_program.hpp"
 #include "backend/gen_defs.hpp"
 #include "backend/gen_eu.hpp"
+#include "ir/function.hpp"
 #include <cstring>
 
 namespace gbe
@@ -33,6 +34,22 @@ namespace gbe
   GenContext::GenContext(const ir::Unit &unit, const std::string &name) :
     Context(unit, name) {}
   GenContext::~GenContext(void) {}
+
+  void GenContext::allocateRegister(void) {
+    GBE_ASSERT(fn.getProfile() == ir::PROFILE_OCL);
+
+    // First we build the set of all used registers
+    set<ir::Register> usedRegs;
+    fn.foreachInstruction([&usedRegs](const ir::Instruction &insn) {
+      const uint32_t srcNum = insn.getSrcNum(), dstNum = insn.getDstNum();
+      for (uint32_t srcID = 0; srcID < srcNum; ++srcID)
+        usedRegs.insert(insn.getSrc(srcID));
+      for (uint32_t dstID = 0; dstID < dstNum; ++dstID)
+        usedRegs.insert(insn.getDst(dstID));
+    });
+
+
+  }
 
   void GenContext::emitCode(void) {
     GenKernel *genKernel = static_cast<GenKernel*>(this->kernel);
@@ -44,6 +61,7 @@ namespace gbe
     std::memcpy(genKernel->insns, p->store, genKernel->insnNum * sizeof(GenInstruction));
     GBE_FREE(p);
   }
+
   Kernel *GenContext::allocateKernel(void) {
     return GBE_NEW(GenKernel, name);
   }

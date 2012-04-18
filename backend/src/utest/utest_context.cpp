@@ -87,6 +87,14 @@ namespace gbe
       ctx.BRA(label);
     ctx.endFunction();
   }
+  static void writeSpecialReg(void) {
+    Unit unit;
+    Context ctx(unit);
+    ctx.startFunction("hop");
+      const ImmediateIndex imm = ctx.newImmediate(2);
+      ctx.LOADI(TYPE_U32, ocl::lid0, imm);
+    ctx.endFunction();
+  }
 } /* namespace gbe */
 
 static void utestContext(void)
@@ -97,6 +105,7 @@ static void utestContext(void)
   UTEST_EXPECT_SUCCESS(gbe::recursiveDefinition());
   UTEST_EXPECT_FAILED(gbe::labelUsedTwice());
   UTEST_EXPECT_FAILED(gbe::labelNotDefined());
+  UTEST_EXPECT_FAILED(gbe::writeSpecialReg());
 }
 
 UTEST_REGISTER(utestContext)

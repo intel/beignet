@@ -462,7 +462,7 @@ namespace ir {
      *  defined (i.e. not out-of-bound)
      */
     static INLINE bool checkRegisterData(RegisterFamily family,
-                                         const Register ID,
+                                         const Register &ID,
                                          const Function &fn,
                                          std::string &whyNot)
     {
@@ -478,11 +478,25 @@ namespace ir {
       return true;
     }
 
+    /*! Special registers are *not* writeable */
+    static INLINE bool checkSpecialRegForWrite(const Register &reg,
+                                               const Function &fn,
+                                               std::string &whyNot)
+    {
+      if (fn.isSpecialReg(reg) == true) {
+        whyNot = "Special registers are not writeable";
+        return false;
+      }
+      return true;
+    }
+
     // Unary and binary instructions share the same rules
     template <uint32_t srcNum>
     INLINE bool NaryInstruction<srcNum>::wellFormed(const Function &fn, std::string &whyNot) const
     {
       const RegisterFamily family = getFamily(this->type);
+      if (UNLIKELY(checkSpecialRegForWrite(dst, fn, whyNot) == false))
+        return false;
       if (UNLIKELY(checkRegisterData(family, dst, fn, whyNot) == false))
         return false;
       for (uint32_t srcID = 0; srcID < srcNum; ++srcID)
@@ -495,6 +509,8 @@ namespace ir {
     INLINE bool TernaryInstruction::wellFormed(const Function &fn, std::string &whyNot) const
     {
       const RegisterFamily family = getFamily(this->type);
+      if (UNLIKELY(checkSpecialRegForWrite(dst, fn, whyNot) == false))
+        return false;
       if (UNLIKELY(checkRegisterData(family, dst, fn, whyNot) == false))
         return false;
       if (UNLIKELY(src + 3u > fn.tupleNum())) {
@@ -513,6 +529,8 @@ namespace ir {
     INLINE bool SelectInstruction::wellFormed(const Function &fn, std::string &whyNot) const
     {
       const RegisterFamily family = getFamily(this->type);
+      if (UNLIKELY(checkSpecialRegForWrite(dst, fn, whyNot) == false))
+        return false;
       if (UNLIKELY(checkRegisterData(family, dst, fn, whyNot) == false))
         return false;
       if (UNLIKELY(src + 3u > fn.tupleNum())) {
@@ -534,6 +552,8 @@ namespace ir {
     // boolean
     INLINE bool CompareInstruction::wellFormed(const Function &fn, std::string &whyNot) const
     {
+      if (UNLIKELY(checkSpecialRegForWrite(dst, fn, whyNot) == false))
+        return false;
       if (UNLIKELY(checkRegisterData(FAMILY_BOOL, dst, fn, whyNot) == false))
         return false;
       const RegisterFamily family = getFamily(this->type);
@@ -548,6 +568,8 @@ namespace ir {
     {
       const RegisterFamily dstFamily = getFamily(dstType);
       const RegisterFamily srcFamily = getFamily(srcType);
+      if (UNLIKELY(checkSpecialRegForWrite(dst, fn, whyNot) == false))
+        return false;
       if (UNLIKELY(checkRegisterData(dstFamily, dst, fn, whyNot) == false))
         return false;
       if (UNLIKELY(checkRegisterData(srcFamily, src, fn, whyNot) == false))
@@ -579,6 +601,12 @@ namespace ir {
 
     INLINE bool LoadInstruction::wellFormed(const Function &fn, std::string &whyNot) const
     {
+      const uint32_t dstNum = this->getDstNum();
+      for (uint32_t dstID = 0; dstID < dstNum; ++dstID) {
+        const Register reg = this->getDst(fn, dstID);
+        const bool isOK = checkSpecialRegForWrite(reg, fn, whyNot);
+        if (UNLIKELY(isOK == false)) return false;
+      }
       return wellFormedLoadStore(*this, fn, whyNot);
     }
 
@@ -605,6 +633,8 @@ namespace ir {
         return false;
       }
       const RegisterFamily family = getFamily(type);
+      if (UNLIKELY(checkSpecialRegForWrite(dst, fn, whyNot) == false))
+        return false;
       if (UNLIKELY(checkRegisterData(family, dst, fn, whyNot) == false))
         return false;
       return true;
@@ -848,12 +878,6 @@ START_FUNCTION(Instruction, uint32_t, getDstNum(void))
 END_FUNCTION(Instruction, uint32_t)
 #undef CALL
 
-#define CALL wellFormed(fn, whyNot)
-START_FUNCTION(Instruction, bool, wellFormed(const Function &fn, std::string &whyNot))
-#include "ir/instruction.hxx"
-END_FUNCTION(Instruction, bool)
-#undef CALL
-
 #undef DECL_INSN
 
 #define DECL_INSN(OPCODE, CLASS)                                  \
@@ -862,6 +886,12 @@ END_FUNCTION(Instruction, bool)
     const Function &fn = this->getFunction();                     \
     return reinterpret_cast<const internal::CLASS*>(this)->CALL;  \
   }
+
+#define CALL wellFormed(fn, whyNot)
+START_FUNCTION(Instruction, bool, wellFormed(std::string &whyNot))
+#include "ir/instruction.hxx"
+END_FUNCTION(Instruction, bool)
+#undef CALL
 
 #define CALL getDst(fn, ID)
 START_FUNCTION(Instruction, Register, getDst(uint32_t ID))
