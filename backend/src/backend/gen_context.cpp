@@ -24,6 +24,7 @@
 
 #include "backend/gen_context.hpp"
 #include "backend/gen_program.hpp"
+#include "backend/gen/brw_defines.h"
 #include "backend/gen/brw_eu.h"
 #include <cstring>
 

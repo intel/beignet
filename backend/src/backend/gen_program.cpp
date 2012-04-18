@@ -27,7 +27,9 @@
 #include "backend/gen_program.hpp"
 #include "backend/gen_program.hpp"
 #include "backend/gen_context.hpp"
+#include "backend/gen/brw_defines.h"
 #include "llvm/llvm_to_gen.hpp"
+
 #include <cstring>
 
 namespace gbe {
@@ -36,6 +38,8 @@ namespace gbe {
     Kernel(name), insns(NULL), insnNum(0)
   {}
   GenKernel::~GenKernel(void) { GBE_SAFE_DELETE_ARRAY(insns); }
+  const char *GenKernel::getCode(void) const { return (const char*) insns; }
+  size_t GenKernel::getCodeSize(void) const { return insnNum * sizeof(brw_instruction); }
 
   GenProgram::GenProgram(void) {}
   GenProgram::~GenProgram(void) {}

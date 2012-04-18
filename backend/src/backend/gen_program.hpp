@@ -27,10 +27,11 @@
 
 #include "backend/program.h"
 #include "backend/program.hpp"
-#include "backend/gen/brw_structs.h"
 
-namespace gbe {
-
+// Gen ISA instruction
+struct brw_instruction;
+namespace gbe
+{
   /*! Describe a compiled kernel */
   struct GenKernel : public Kernel
   {
@@ -39,11 +40,9 @@ namespace gbe {
     /*! Destroy it */
     virtual ~GenKernel(void);
     /*! Implements base class */
-    virtual const char *getCode(void) const { return (const char*) insns; }
+    virtual const char *getCode(void) const;
     /*! Implements base class */
-    virtual size_t getCodeSize(void) const {
-      return insnNum * sizeof(brw_instruction);
-    }
+    virtual size_t getCodeSize(void) const;
     brw_instruction *insns;  //!< Instruction stream
     uint32_t insnNum;        //!< Number of instructions
     GBE_STRUCT(GenKernel);   //!< Use gbe allocators
