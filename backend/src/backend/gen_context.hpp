@@ -25,10 +25,11 @@
 #ifndef __GBE_GEN_CONTEXT_HPP__
 #define __GBE_GEN_CONTEXT_HPP__
 
-#include <string>
 #include "backend/context.hpp"
 #include "backend/gen_eu.hpp"
-#include "sys/set.hpp"
+#include "sys/map.hpp"
+#include "program.h"
+#include <string>
 
 namespace gbe
 {
@@ -48,12 +49,14 @@ namespace gbe
     ~GenContext(void);
     /*! Implements base class */
     virtual void emitCode(void);
+    /*! Create a Gen register from the special register */
+    void allocateSpecialReg(gbe_curbe_type curbe, const ir::Register &reg);
     /*! Very stupid register allocator to start with */
     void allocateRegister(void);
     /*! Implements base class */
     virtual Kernel *allocateKernel(void);
     /*! Simplistic allocation to start with */
-    set<ir::Register, GenReg> RA;
+    map<ir::Register, GenReg> RA;
   };
 
 } /* namespace gbe */

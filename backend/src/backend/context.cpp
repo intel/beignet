@@ -86,6 +86,7 @@ namespace gbe
   } else
     set<ir::Register> specialRegs; // already inserted registers
     fn.foreachInstruction([&](const ir::Instruction &insn) {
+      // Special registers are immutable. So only check sources
       const uint32_t srcNum = insn.getSrcNum();
       for (uint32_t srcID = 0; srcID < srcNum; ++srcID) {
         const ir::Register reg = insn.getSrc(srcID);
@@ -106,7 +107,7 @@ namespace gbe
         specialRegs.insert(reg);
       }
     });
-    kernel->curbeSize = ALIGN(kernel->curbeSize, 32);
+    kernel->curbeSize = ALIGN(kernel->curbeSize, 32); // 32 == GEN_REG_SIZE
 
     // Local IDs always go at the end of the curbe
     const size_t localIDSize = sizeof(uint32_t) * this->simdWidth;

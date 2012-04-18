@@ -56,7 +56,10 @@ namespace ir {
     }
     /*! Nothing really happens here */
     INLINE ~RegisterData(void) {}
-    RegisterFamily family;
+    /*! Get the size of the register */
+    INLINE size_t getSize(void) const { return familySize[family]; }
+    RegisterFamily family;            //!< Register size or if it is a flag
+    static const size_t familySize[]; //!< Size per register family
     GBE_CLASS(RegisterData);
   };
 

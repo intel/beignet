@@ -158,10 +158,10 @@ namespace ir {
     /*! Get the function name */
     const std::string &getName(void) const { return name; }
     /*! Extract the register from the register file */
-    INLINE RegisterData getRegisterData(Register ID) const { return file.get(ID); }
+    INLINE RegisterData getRegisterData(Register reg) const { return file.get(reg); }
     /*! Get the register family from the register itself */
-    INLINE RegisterFamily getRegisterFamiy(Register ID) const {
-      return this->getRegisterData(ID).family;
+    INLINE RegisterFamily getRegisterFamily(Register reg) const {
+      return this->getRegisterData(reg).family;
     }
     /*! Get the register index from the tuple vector */
     INLINE Register getRegister(Tuple ID, uint32_t which) const {

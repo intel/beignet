@@ -725,7 +725,7 @@ namespace gbe
     if (fn.outputNum() == 1 && I.getNumOperands() > 0) {
       const ir::Register dst = fn.getOutput(0);
       const ir::Register src = this->getRegister(I.getOperand(0));
-      const ir::RegisterFamily family = fn.getRegisterFamiy(dst);;
+      const ir::RegisterFamily family = fn.getRegisterFamily(dst);;
       ctx.MOV(ir::getType(family), dst, src);
     }
     ctx.RET();

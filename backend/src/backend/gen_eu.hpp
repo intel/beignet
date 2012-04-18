@@ -55,7 +55,8 @@
 #define WRITEMASK_YZW   0xe
 #define WRITEMASK_XYZW  0xf
 
-#define REG_SIZE (8*4)
+#define GEN_REG_SIZE (8*4)
+#define GEN_GRF_SIZE (GEN_REG_SIZE*128)
 #define GEN_EU_MAX_INSN_STACK 5
 
 #define VF_ZERO 0x0
@@ -175,53 +176,53 @@ namespace gbe
 
     /* Helpers for SEND instruction */
     void set_sampler_message(GenInstruction *insn,
-                                 uint32_t binding_table_index,
-                                 uint32_t sampler,
-                                 uint32_t msg_type,
-                                 uint32_t response_length,
-                                 uint32_t msg_length,
-                                 uint32_t header_present,
-                                 uint32_t simd_mode,
-                                 uint32_t return_format);
+                             uint32_t binding_table_index,
+                             uint32_t sampler,
+                             uint32_t msg_type,
+                             uint32_t response_length,
+                             uint32_t msg_length,
+                             uint32_t header_present,
+                             uint32_t simd_mode,
+                             uint32_t return_format);
 
     void set_dp_read_message(GenInstruction *insn,
-                                 uint32_t binding_table_index,
-                                 uint32_t msg_control,
-                                 uint32_t msg_type,
-                                 uint32_t target_cache,
-                                 uint32_t msg_length,
-                                 uint32_t response_length);
+                             uint32_t binding_table_index,
+                             uint32_t msg_control,
+                             uint32_t msg_type,
+                             uint32_t target_cache,
+                             uint32_t msg_length,
+                             uint32_t response_length);
 
     void set_dp_write_message(GenInstruction *insn,
-                                  uint32_t binding_table_index,
-                                  uint32_t msg_control,
-                                  uint32_t msg_type,
-                                  uint32_t msg_length,
-                                  bool header_present,
-                                  uint32_t last_render_target,
-                                  uint32_t response_length,
-                                  uint32_t end_of_thread,
-                                  uint32_t send_commit_msg);
+                              uint32_t binding_table_index,
+                              uint32_t msg_control,
+                              uint32_t msg_type,
+                              uint32_t msg_length,
+                              bool header_present,
+                              uint32_t last_render_target,
+                              uint32_t response_length,
+                              uint32_t end_of_thread,
+                              uint32_t send_commit_msg);
 
     void SAMPLE(GenReg dest,
-                    uint32_t msg_reg_nr,
-                    GenReg src0,
-                    uint32_t binding_table_index,
-                    uint32_t sampler,
-                    uint32_t writemask,
-                    uint32_t msg_type,
-                    uint32_t response_length,
-                    uint32_t msg_length,
-                    uint32_t header_present,
-                    uint32_t simd_mode,
-                    uint32_t return_format);
+                uint32_t msg_reg_nr,
+                GenReg src0,
+                uint32_t binding_table_index,
+                uint32_t sampler,
+                uint32_t writemask,
+                uint32_t msg_type,
+                uint32_t response_length,
+                uint32_t msg_length,
+                uint32_t header_present,
+                uint32_t simd_mode,
+                uint32_t return_format);
 
     void math_16(GenReg dest,
-                     uint32_t function,
-                     uint32_t saturate,
-                     uint32_t msg_reg_nr,
-                     GenReg src,
-                     uint32_t precision);
+                 uint32_t function,
+                 uint32_t saturate,
+                 uint32_t msg_reg_nr,
+                 GenReg src,
+                 uint32_t precision);
 
     void math(GenReg dest,
               uint32_t function,
@@ -332,14 +333,14 @@ namespace gbe
   static INLINE GenReg brw_vec16_reg(uint32_t file, uint32_t nr, uint32_t subnr)
   {
      return makeGenReg(file,
-                         nr,
-                         subnr,
-                         GEN_REGISTER_TYPE_F,
-                         GEN_VERTICAL_STRIDE_16,
-                         GEN_WIDTH_16,
-                         GEN_HORIZONTAL_STRIDE_1,
-                         GEN_SWIZZLE_XYZW,
-                         WRITEMASK_XYZW);
+                       nr,
+                       subnr,
+                       GEN_REGISTER_TYPE_F,
+                       GEN_VERTICAL_STRIDE_16,
+                       GEN_WIDTH_16,
+                       GEN_HORIZONTAL_STRIDE_1,
+                       GEN_SWIZZLE_XYZW,
+                       WRITEMASK_XYZW);
   }
 
   /** Construct float[8] register */
@@ -360,14 +361,14 @@ namespace gbe
   static INLINE GenReg brw_vec4_reg(uint32_t file, uint32_t nr, uint32_t subnr)
   {
      return makeGenReg(file,
-                         nr,
-                         subnr,
-                         GEN_REGISTER_TYPE_F,
-                         GEN_VERTICAL_STRIDE_4,
-                         GEN_WIDTH_4,
-                         GEN_HORIZONTAL_STRIDE_1,
-                         GEN_SWIZZLE_XYZW,
-                         WRITEMASK_XYZW);
+                       nr,
+                       subnr,
+                       GEN_REGISTER_TYPE_F,
+                       GEN_VERTICAL_STRIDE_4,
+                       GEN_WIDTH_4,
+                       GEN_HORIZONTAL_STRIDE_1,
+                       GEN_SWIZZLE_XYZW,
+                       WRITEMASK_XYZW);
   }
 
   /** Construct float[2] register */
@@ -388,14 +389,14 @@ namespace gbe
   static INLINE GenReg brw_vec1_reg(uint32_t file, uint32_t nr, uint32_t subnr)
   {
      return makeGenReg(file,
-                         nr,
-                         subnr,
-                         GEN_REGISTER_TYPE_F,
-                         GEN_VERTICAL_STRIDE_0,
-                         GEN_WIDTH_1,
-                         GEN_HORIZONTAL_STRIDE_0,
-                         GEN_SWIZZLE_XXXX,
-                         WRITEMASK_X);
+                       nr,
+                       subnr,
+                       GEN_REGISTER_TYPE_F,
+                       GEN_VERTICAL_STRIDE_0,
+                       GEN_WIDTH_1,
+                       GEN_HORIZONTAL_STRIDE_0,
+                       GEN_SWIZZLE_XXXX,
+                       WRITEMASK_X);
   }
 
   static INLINE GenReg retype(GenReg reg, uint32_t type)
@@ -425,9 +426,9 @@ namespace gbe
 
   static INLINE GenReg byte_offset(GenReg reg, uint32_t bytes)
   {
-     uint32_t newoffset = reg.nr * REG_SIZE + reg.subnr + bytes;
-     reg.nr = newoffset / REG_SIZE;
-     reg.subnr = newoffset % REG_SIZE;
+     uint32_t newoffset = reg.nr * GEN_REG_SIZE + reg.subnr + bytes;
+     reg.nr = newoffset / GEN_REG_SIZE;
+     reg.subnr = newoffset % GEN_REG_SIZE;
      return reg;
   }
 
@@ -541,7 +542,7 @@ namespace gbe
 
   static INLINE GenReg brw_address(GenReg reg)
   {
-     return brw_imm_uw(reg.nr * REG_SIZE + reg.subnr);
+     return brw_imm_uw(reg.nr * GEN_REG_SIZE + reg.subnr);
   }
 
   /** Construct float[1] general-purpose register */
