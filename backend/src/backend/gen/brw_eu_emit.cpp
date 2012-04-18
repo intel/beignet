@@ -22,13 +22,9 @@
   *   Keith Whitwell <keith@tungstengraphics.com>
   */
 
-// #include "brw_context.h"
 #include "brw_defines.h"
 #include "brw_eu.h"
-
-#include <string.h>
-
-#define Elements(x) (sizeof(x) / sizeof(*(x)))
+#include <cstring>
 
 namespace gbe
 {
@@ -210,21 +206,21 @@ namespace gbe
          reg.file == GEN_ARF_NULL)
         return;
 
-     assert(reg.hstride >= 0 && reg.hstride < Elements(hstride_for_reg));
+     assert(reg.hstride >= 0 && reg.hstride < ARRAY_ELEM_NUM(hstride_for_reg));
      hstride = hstride_for_reg[reg.hstride];
 
      if (reg.vstride == 0xf) {
         vstride = -1;
      } else {
-        assert(reg.vstride >= 0 && reg.vstride < Elements(vstride_for_reg));
+        assert(reg.vstride >= 0 && reg.vstride < ARRAY_ELEM_NUM(vstride_for_reg));
         vstride = vstride_for_reg[reg.vstride];
      }
 
-     assert(reg.width >= 0 && reg.width < Elements(width_for_reg));
+     assert(reg.width >= 0 && reg.width < ARRAY_ELEM_NUM(width_for_reg));
      width = width_for_reg[reg.width];
 
      assert(insn->header.execution_size >= 0 &&
-            insn->header.execution_size < Elements(execsize_for_reg));
+            insn->header.execution_size < ARRAY_ELEM_NUM(execsize_for_reg));
      execsize = execsize_for_reg[insn->header.execution_size];
 
      /* Restrictions from 3.3.10: Register Region Restrictions. */
@@ -418,19 +414,11 @@ namespace gbe
                              bool end_of_thread)
   {
      p->set_src1(inst, brw_imm_d(0));
-
-     if (p->gen >= 5) {
-        inst->bits3.generic_gen5.header_present = header_present;
-        inst->bits3.generic_gen5.response_length = response_length;
-        inst->bits3.generic_gen5.msg_length = msg_length;
-        inst->bits3.generic_gen5.end_of_thread = end_of_thread;
-        inst->header.destreg__conditionalmod = sfid;
-     } else {
-        inst->bits3.generic.response_length = response_length;
-        inst->bits3.generic.msg_length = msg_length;
-        inst->bits3.generic.msg_target = sfid;
-        inst->bits3.generic.end_of_thread = end_of_thread;
-     }
+     inst->bits3.generic_gen5.header_present = header_present;
+     inst->bits3.generic_gen5.response_length = response_length;
+     inst->bits3.generic_gen5.msg_length = msg_length;
+     inst->bits3.generic_gen5.end_of_thread = end_of_thread;
+     inst->header.destreg__conditionalmod = sfid;
   }
 
   static void brw_set_math_message(GenEmitter *p,
@@ -488,15 +476,15 @@ namespace gbe
 
   void
   GenEmitter::set_dp_write_message(GenInstruction *insn,
-                                       uint32_t binding_table_index,
-                                       uint32_t msg_control,
-                                       uint32_t msg_type,
-                                       uint32_t msg_length,
-                                       bool header_present,
-                                       uint32_t last_render_target,
-                                       uint32_t response_length,
-                                       uint32_t end_of_thread,
-                                       uint32_t send_commit_msg)
+                                   uint32_t bti,
+                                   uint32_t msg_control,
+                                   uint32_t msg_type,
+                                   uint32_t msg_length,
+                                   bool header_present,
+                                   uint32_t last_render_target,
+                                   uint32_t response_length,
+                                   uint32_t end_of_thread,
+                                   uint32_t send_commit_msg)
   {
      unsigned sfid;
 
@@ -509,7 +497,7 @@ namespace gbe
                                 msg_length, response_length,
                                 header_present, end_of_thread);
 
-     insn->bits3.gen7_dp.binding_table_index = binding_table_index;
+     insn->bits3.gen7_dp.bti = bti;
      insn->bits3.gen7_dp.msg_control = msg_control;
      insn->bits3.gen7_dp.last_render_target = last_render_target;
      insn->bits3.gen7_dp.msg_type = msg_type;
@@ -517,7 +505,7 @@ namespace gbe
 
   void
   GenEmitter::set_dp_read_message(GenInstruction *insn,
-                                       uint32_t binding_table_index,
+                                       uint32_t bti,
                                        uint32_t msg_control,
                                        uint32_t msg_type,
                                        uint32_t target_cache,
@@ -530,7 +518,7 @@ namespace gbe
      brw_set_message_descriptor(this, insn, brw_message_target(sfid), msg_length, response_length,
                                 true, false);
 
-     insn->bits3.gen7_dp.binding_table_index = binding_table_index;
+     insn->bits3.gen7_dp.bti = bti;
      insn->bits3.gen7_dp.msg_control = msg_control;
      insn->bits3.gen7_dp.last_render_target = 0;
      insn->bits3.gen7_dp.msg_type = msg_type;
@@ -538,24 +526,24 @@ namespace gbe
 
   void
   GenEmitter::set_sampler_message(GenInstruction *insn,
-                                       uint32_t binding_table_index,
-                                       uint32_t sampler,
-                                       uint32_t msg_type,
-                                       uint32_t response_length,
-                                       uint32_t msg_length,
-                                       uint32_t header_present,
-                                       uint32_t simd_mode,
-                                       uint32_t return_format)
+                                  uint32_t bti,
+                                  uint32_t sampler,
+                                  uint32_t msg_type,
+                                  uint32_t response_length,
+                                  uint32_t msg_length,
+                                  uint32_t header_present,
+                                  uint32_t simd_mode,
+                                  uint32_t return_format)
   {
      brw_set_message_descriptor(this, insn, GEN_SFID_SAMPLER, msg_length,
                                 response_length, header_present, false);
-     insn->bits3.sampler_gen7.binding_table_index = binding_table_index;
+     insn->bits3.sampler_gen7.bti = bti;
      insn->bits3.sampler_gen7.sampler = sampler;
      insn->bits3.sampler_gen7.msg_type = msg_type;
      insn->bits3.sampler_gen7.simd_mode = simd_mode;
   }
 
-  GenInstruction *GenEmitter::next_insn(uint32_t opcode)
+  GenInstruction *GenEmitter::next(uint32_t opcode)
   {
      GenInstruction *insn;
      insn = &this->store[this->nr_insn++];
@@ -568,7 +556,7 @@ namespace gbe
                                    GenReg dest,
                                    GenReg src)
   {
-     GenInstruction *insn = p->next_insn(opcode);
+     GenInstruction *insn = p->next(opcode);
      p->set_dest(insn, dest);
      p->set_src0(insn, src);
      return insn;
@@ -580,7 +568,7 @@ namespace gbe
                                    GenReg src0,
                                    GenReg src1)
   {
-     GenInstruction *insn = p->next_insn(opcode);
+     GenInstruction *insn = p->next(opcode);
      p->set_dest(insn, dest);
      p->set_src0(insn, src0);
      p->set_src1(insn, src1);
@@ -604,7 +592,7 @@ namespace gbe
                                    GenReg src1,
                                    GenReg src2)
   {
-     GenInstruction *insn = p->next_insn(opcode);
+     GenInstruction *insn = p->next(opcode);
 
      assert(insn->header.access_mode == GEN_ALIGN_16);
 
@@ -688,7 +676,7 @@ namespace gbe
   void GenEmitter::OP(GenReg dest, GenReg src) \
   { \
      GenInstruction *rnd; \
-     rnd = this->next_insn(GEN_OPCODE_##OP);  \
+     rnd = this->next(GEN_OPCODE_##OP);  \
      this->set_dest(rnd, dest); \
      this->set_src0(rnd, src); \
   }
@@ -775,7 +763,7 @@ namespace gbe
 
   void GenEmitter::NOP(void)
   {
-     GenInstruction *insn = this->next_insn(GEN_OPCODE_NOP);
+     GenInstruction *insn = this->next(GEN_OPCODE_NOP);
      this->set_dest(insn, retype(brw_vec4_grf(0,0), GEN_REGISTER_TYPE_UD));
      this->set_src0(insn, retype(brw_vec4_grf(0,0), GEN_REGISTER_TYPE_UD));
      this->set_src1(insn, brw_imm_ud(0x0));
@@ -796,7 +784,7 @@ namespace gbe
    */
   void GenEmitter::CMP(GenReg dest, uint32_t conditional, GenReg src0, GenReg src1)
   {
-     GenInstruction *insn = this->next_insn(GEN_OPCODE_CMP);
+     GenInstruction *insn = this->next(GEN_OPCODE_CMP);
 
      insn->header.destreg__conditionalmod = conditional;
      this->set_dest(insn, dest);
@@ -822,7 +810,7 @@ namespace gbe
      to wake up thread. */
   void GenEmitter::WAIT(void)
   {
-     GenInstruction *insn = this->next_insn(GEN_OPCODE_WAIT);
+     GenInstruction *insn = this->next(GEN_OPCODE_WAIT);
      GenReg src = brw_notification_1_reg();
 
      this->set_dest(insn, src);
@@ -844,7 +832,7 @@ namespace gbe
                 uint32_t precision)
   {
      if (this->gen >= 6) {
-        GenInstruction *insn = this->next_insn(GEN_OPCODE_MATH);
+        GenInstruction *insn = this->next(GEN_OPCODE_MATH);
 
         assert(dest.file == GEN_GENERAL_REGISTER_FILE);
         assert(src.file == GEN_GENERAL_REGISTER_FILE);
@@ -877,7 +865,7 @@ namespace gbe
         this->set_src0(insn, src);
         this->set_src1(insn, brw_null_reg());
      } else {
-        GenInstruction *insn = this->next_insn(GEN_OPCODE_SEND);
+        GenInstruction *insn = this->next(GEN_OPCODE_SEND);
 
         /* Example code doesn't set predicate_control for send
          * instructions.
@@ -900,7 +888,7 @@ namespace gbe
   /* Extended math function, float[8] */
   void GenEmitter::math2(GenReg dest, uint32_t function, GenReg src0, GenReg src1)
   {
-     GenInstruction *insn = this->next_insn(GEN_OPCODE_MATH);
+     GenInstruction *insn = this->next(GEN_OPCODE_MATH);
 
      assert(this->gen >= 6);
 
@@ -953,7 +941,7 @@ namespace gbe
   {
      GenInstruction *insn;
 
-     insn = this->next_insn(GEN_OPCODE_MATH);
+     insn = this->next(GEN_OPCODE_MATH);
 
      /* Math is the same ISA format as other opcodes, except that CondModifier
       * becomes FC[3:0] and ThreadCtrl becomes FC[5:4].
@@ -984,7 +972,7 @@ namespace gbe
      this->set_compression_control(GEN_COMPRESSION_NONE);
      this->MOV(mrf, retype(brw_vec8_grf(0, 0), GEN_REGISTER_TYPE_UD));
 
-     GenInstruction *insn = this->next_insn(GEN_OPCODE_SEND);
+     GenInstruction *insn = this->next(GEN_OPCODE_SEND);
      insn->header.destreg__conditionalmod = mrf.nr;
 
      /* cast dest to a uword[8] vector */
@@ -1038,11 +1026,9 @@ namespace gbe
      {
         GenInstruction *insn;
 
-        insn = this->next_insn(GEN_OPCODE_SEND);
+        insn = this->next(GEN_OPCODE_SEND);
         insn->header.predicate_control = 0; /* XXX */
         insn->header.compression_control = GEN_COMPRESSION_NONE;
-        if (this->gen < 6)
-            insn->header.destreg__conditionalmod = msg_reg_nr;
 
         this->set_dest(insn, dest);
         this->set_src0(insn, src0);
@@ -1064,7 +1050,7 @@ namespace gbe
 
     insn = this->MOV(brw_vec8_grf(msg_nr,0), brw_vec8_grf(0,0));
     insn->header.mask_control = GEN_MASK_DISABLE;
-    insn = this->next_insn(GEN_OPCODE_SEND);
+    insn = this->next(GEN_OPCODE_SEND);
     this->set_dest(insn, brw_null_reg());
     this->set_src0(insn, brw_vec8_grf(msg_nr,0));
     this->set_src1(insn, brw_imm_ud(0));
@@ -1075,6 +1061,5 @@ namespace gbe
     insn->bits3.spawner_gen5.end_of_thread = 1;
     insn->header.destreg__conditionalmod = GEN_SFID_THREAD_SPAWNER;
   }
-
 } /* namespace gbe */
 

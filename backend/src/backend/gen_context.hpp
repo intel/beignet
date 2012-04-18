@@ -48,6 +48,8 @@ namespace gbe
     virtual void emitCode(void);
     /*! Implements base class */
     virtual Kernel *allocateKernel(void);
+    /*! Simplistic allocation to start with */
+    //set<ir::Register, GenReg> RA;
   };
 
 } /* namespace gbe */

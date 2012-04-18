@@ -98,12 +98,6 @@ namespace gbe
      } dw1;
   };
 
-  struct GenIndirect {
-     uint32_t addr_subnr:4;
-     int addr_offset:10;
-     uint32_t pad:18;
-  };
-
   struct GenEmitter
   {
     int gen;
@@ -135,7 +129,7 @@ namespace gbe
     void init_compile(struct context *, void *mem_ctx);
     const uint32_t *get_program(uint32_t *sz);
 
-    GenInstruction *next_insn(uint32_t opcode);
+    GenInstruction *next(uint32_t opcode);
     void set_dest(GenInstruction *insn, GenReg dest);
     void set_src0(GenInstruction *insn, GenReg reg);
 
@@ -247,8 +241,6 @@ namespace gbe
     void WAIT(void);
 
     void CMP(GenReg dest, uint32_t conditional, GenReg src0, GenReg src1);
-    void copy_indirect_to_indirect(GenIndirect dst_ptr, GenIndirect src_ptr, uint32_t count);
-    void copy_from_indirect(GenReg dst, GenIndirect ptr, uint32_t count);
     void copy4(GenReg dst, GenReg src, uint32_t count);
     void copy8(GenReg dst, GenReg src, uint32_t count);
     void math_invert(GenReg dst, GenReg src);
@@ -668,9 +660,9 @@ namespace gbe
   }
 
   static INLINE GenReg stride(GenReg reg,
-                                      uint32_t vstride,
-                                      uint32_t width,
-                                      uint32_t hstride)
+                              uint32_t vstride,
+                              uint32_t width,
+                              uint32_t hstride)
   {
      reg.vstride = cvt(vstride);
      reg.width = cvt(width) - 1;
@@ -780,58 +772,7 @@ namespace gbe
      return reg;
   }
 
-  static INLINE GenReg deref_4f(GenIndirect ptr, int offset)
-  {
-     return brw_vec4_indirect(ptr.addr_subnr, ptr.addr_offset + offset);
-  }
-
-  static INLINE GenReg deref_1f(GenIndirect ptr, int offset)
-  {
-     return brw_vec1_indirect(ptr.addr_subnr, ptr.addr_offset + offset);
-  }
-
-  static INLINE GenReg deref_4b(GenIndirect ptr, int offset)
-  {
-     return retype(deref_4f(ptr, offset), GEN_REGISTER_TYPE_B);
-  }
-
-  static INLINE GenReg deref_1uw(GenIndirect ptr, int offset)
-  {
-     return retype(deref_1f(ptr, offset), GEN_REGISTER_TYPE_UW);
-  }
-
-  static INLINE GenReg deref_1d(GenIndirect ptr, int offset)
-  {
-     return retype(deref_1f(ptr, offset), GEN_REGISTER_TYPE_D);
-  }
-
-  static INLINE GenReg deref_1ud(GenIndirect ptr, int offset)
-  {
-     return retype(deref_1f(ptr, offset), GEN_REGISTER_TYPE_UD);
-  }
-
-  static INLINE GenReg get_addr_reg(GenIndirect ptr)
-  {
-     return brw_address_reg(ptr.addr_subnr);
-  }
-
-  static INLINE GenIndirect GenIndirect_offset(GenIndirect ptr, int offset)
-  {
-     ptr.addr_offset += offset;
-     return ptr;
-  }
-
-  static INLINE GenIndirect make_GenIndirect(uint32_t addr_subnr, int offset)
-  {
-     GenIndirect ptr;
-     ptr.addr_subnr = addr_subnr;
-     ptr.addr_offset = offset;
-     ptr.pad = 0;
-     return ptr;
-  }
-
-  static INLINE bool
-  brw_same_reg(GenReg r1, GenReg r2)
+  static INLINE bool brw_same_reg(GenReg r1, GenReg r2)
   {
      return r1.file == r2.file && r1.nr == r2.nr;
   }

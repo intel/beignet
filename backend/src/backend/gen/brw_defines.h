@@ -776,28 +776,6 @@ struct GenInstruction
       } break_cont;
 
       /**
-       * \defgroup SEND instructions / Message Descriptors
-       *
-       * @{
-       */
-
-      /**
-       * Generic Message Descriptor for Gen4 SEND instructions.  The structs
-       * below expand function_control to something specific for their
-       * message.  Due to struct packing issues, they duplicate these bits.
-       *
-       * See the G45 PRM, Volume 4, Table 14-15.
-       */
-      struct {
-         uint32_t function_control:16;
-         uint32_t response_length:4;
-         uint32_t msg_length:4;
-         uint32_t msg_target:4;
-         uint32_t pad1:3;
-         uint32_t end_of_thread:1;
-      } generic;
-
-      /**
        * Generic Message Descriptor for Gen5-7 SEND instructions.
        *
        * See the Sandybridge PRM, Volume 2 Part 2, Table 8-15.  (Sadly, most
@@ -863,7 +841,7 @@ struct GenInstruction
       } math_gen5;
 
       struct {
-         uint32_t binding_table_index:8;
+         uint32_t bti:8;
          uint32_t sampler:4;
          uint32_t msg_type:5;
          uint32_t simd_mode:2;
@@ -880,7 +858,7 @@ struct GenInstruction
        * See the Sandybridge PRM, Volume 4 Part 1, Section 3.9.2.1.1.
        **/
       struct {
-         uint32_t binding_table_index:8;
+         uint32_t bti:8;
          uint32_t msg_control:5;
          uint32_t msg_type:3;
          uint32_t pad0:3;
@@ -902,7 +880,7 @@ struct GenInstruction
        * Section 3.9.9.2.1 of the same volume.
        */
       struct {
-         uint32_t binding_table_index:8;
+         uint32_t bti:8;
          uint32_t msg_control:3;
          uint32_t slot_group_select:1;
          uint32_t last_render_target:1;
@@ -925,7 +903,7 @@ struct GenInstruction
        * control for Render Target Writes.
        */
       struct {
-         uint32_t binding_table_index:8;
+         uint32_t bti:8;
          uint32_t msg_control:3;
          uint32_t slot_group_select:1;
          uint32_t last_render_target:1;
