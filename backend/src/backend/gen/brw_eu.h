@@ -976,8 +976,8 @@ void brw_copy8(struct brw_compile *p,
                uint32_t count);
 
 void brw_math_invert(struct brw_compile *p,
-                      struct brw_reg dst,
-                      struct brw_reg src);
+                     struct brw_reg dst,
+                     struct brw_reg src);
 
 void brw_set_src1(struct brw_compile *p,
                   struct brw_instruction *insn,
