@@ -33,7 +33,8 @@
 
 namespace gbe
 {
-  struct Kernel; // we build this structure
+  struct Kernel;     // we build this structure
+  struct GenEmitter; // helps emitting Gen ISA
 
   /*! Context is the helper structure to build the Gen ISA or simulation code
    *  from GenIR
@@ -49,14 +50,38 @@ namespace gbe
     ~GenContext(void);
     /*! Implements base class */
     virtual void emitCode(void);
-    /*! Create a Gen register from the special register */
-    void allocateSpecialReg(gbe_curbe_type curbe, const ir::Register &reg);
+    /*! Create a Gen register from a register set in the payload */
+    void allocatePayloadReg(gbe_curbe_type value, uint32_t subValue, const ir::Register &reg);
     /*! Very stupid register allocator to start with */
     void allocateRegister(void);
+    /*! Emit the instructions */
+    void emitInstructionStream(void);
+    /*! Return the Gen register from the GenIR one */
+    INLINE GenReg reg(const ir::Register &reg) {
+      auto it = RA.find(reg);
+      GBE_ASSERT(it != RA.end());
+      return it->second;
+    }
+    /*! Emit instruction per family */
+    void emitUnaryInstruction(const ir::UnaryInstruction &insn);
+    void emitBinaryInstruction(const ir::BinaryInstruction &insn);
+    void emitTernaryInstruction(const ir::TernaryInstruction &insn);
+    void emitSelectInstruction(const ir::SelectInstruction &insn);
+    void emitCompareInstruction(const ir::CompareInstruction &insn);
+    void emitConvertInstruction(const ir::ConvertInstruction &insn);
+    void emitBranchInstruction(const ir::BranchInstruction &insn);
+    void emitTextureInstruction(const ir::TextureInstruction &insn);
+    void emitLoadImmInstruction(const ir::LoadImmInstruction &insn);
+    void emitLoadInstruction(const ir::LoadInstruction &insn);
+    void emitStoreInstruction(const ir::StoreInstruction &insn);
+    void emitFenceInstruction(const ir::FenceInstruction &insn);
+    void emitLabelInstruction(const ir::LabelInstruction &insn);
     /*! Implements base class */
     virtual Kernel *allocateKernel(void);
     /*! Simplistic allocation to start with */
     map<ir::Register, GenReg> RA;
+    /*! Helper structure to emit Gen ISA */
+    GenEmitter *p;
   };
 
 } /* namespace gbe */

@@ -27,56 +27,78 @@
 #include "backend/gen_defs.hpp"
 #include "backend/gen_eu.hpp"
 #include "ir/function.hpp"
+#include "sys/cvar.hpp"
 #include <cstring>
 
 namespace gbe
 {
   GenContext::GenContext(const ir::Unit &unit, const std::string &name) :
-    Context(unit, name) {}
-  GenContext::~GenContext(void) {}
-
-  void GenContext::allocateSpecialReg(gbe_curbe_type curbe, const ir::Register &reg)
+    Context(unit, name)
   {
-    const int32_t offset = kernel->getCurbeOffset(curbe, 0);
-    GBE_ASSERT(this->isScalarReg(reg) == true);
+    p = GBE_NEW(GenEmitter, simdWidth, 7); // XXX handle more than gen7
+  }
+
+
+  GenContext::~GenContext(void) { GBE_DELETE(p); }
+
+  void GenContext::allocatePayloadReg(gbe_curbe_type value,
+                                      uint32_t subValue,
+                                      const ir::Register &reg)
+  {
+    const int32_t offset = kernel->getCurbeOffset(value, subValue);
     if (offset >= 0) {
       const ir::RegisterData data = fn.getRegisterData(reg);
       const uint32_t typeSize = data.getSize();
       const uint32_t nr = (offset + GEN_REG_SIZE) / GEN_REG_SIZE;
       const uint32_t subnr = ((offset + GEN_REG_SIZE) % GEN_REG_SIZE) / typeSize;
       GBE_ASSERT(data.family == ir::FAMILY_DWORD); // XXX support the rest
-      RA.insert(std::make_pair(reg, brw_vec1_reg(GEN_GENERAL_REGISTER_FILE, nr, subnr)));
+      if (this->isScalarReg(reg) == true)
+        RA.insert(std::make_pair(reg, brw_vec1_reg(GEN_GENERAL_REGISTER_FILE, nr, subnr)));
+      else if (this->simdWidth == 8)
+        RA.insert(std::make_pair(reg, brw_vec8_reg(GEN_GENERAL_REGISTER_FILE, nr, subnr)));
+      else if (this->simdWidth == 16)
+        RA.insert(std::make_pair(reg, brw_vec16_reg(GEN_GENERAL_REGISTER_FILE, nr, subnr)));
     }
   }
 
   void GenContext::allocateRegister(void) {
-    GBE_ASSERT(fn.getProfile() == ir::PROFILE_OCL);
+    using namespace ir;
+    GBE_ASSERT(fn.getProfile() == PROFILE_OCL);
 
     // Allocate the special registers (only those which are actually used)
-    allocateSpecialReg(GBE_CURBE_LOCAL_ID_X, ir::ocl::lid0);
-    allocateSpecialReg(GBE_CURBE_LOCAL_ID_Y, ir::ocl::lid1);
-    allocateSpecialReg(GBE_CURBE_LOCAL_ID_Z, ir::ocl::lid2);
-    allocateSpecialReg(GBE_CURBE_LOCAL_SIZE_X, ir::ocl::lsize0);
-    allocateSpecialReg(GBE_CURBE_LOCAL_SIZE_Y, ir::ocl::lsize1);
-    allocateSpecialReg(GBE_CURBE_LOCAL_SIZE_Z, ir::ocl::lsize2);
-    allocateSpecialReg(GBE_CURBE_GLOBAL_SIZE_X, ir::ocl::gsize0);
-    allocateSpecialReg(GBE_CURBE_GLOBAL_SIZE_Y, ir::ocl::gsize1);
-    allocateSpecialReg(GBE_CURBE_GLOBAL_SIZE_Z, ir::ocl::gsize2);
-    allocateSpecialReg(GBE_CURBE_GLOBAL_OFFSET_X, ir::ocl::goffset0);
-    allocateSpecialReg(GBE_CURBE_GLOBAL_OFFSET_Y, ir::ocl::goffset1);
-    allocateSpecialReg(GBE_CURBE_GLOBAL_OFFSET_Z, ir::ocl::goffset2);
-    allocateSpecialReg(GBE_CURBE_GROUP_NUM_X, ir::ocl::numgroup0);
-    allocateSpecialReg(GBE_CURBE_GROUP_NUM_Y, ir::ocl::numgroup1);
-    allocateSpecialReg(GBE_CURBE_GROUP_NUM_Z, ir::ocl::numgroup2);
+    allocatePayloadReg(GBE_CURBE_LOCAL_ID_X, 0, ocl::lid0);
+    allocatePayloadReg(GBE_CURBE_LOCAL_ID_Y, 0, ocl::lid1);
+    allocatePayloadReg(GBE_CURBE_LOCAL_ID_Z, 0, ocl::lid2);
+    allocatePayloadReg(GBE_CURBE_LOCAL_SIZE_X, 0, ocl::lsize0);
+    allocatePayloadReg(GBE_CURBE_LOCAL_SIZE_Y, 0, ocl::lsize1);
+    allocatePayloadReg(GBE_CURBE_LOCAL_SIZE_Z, 0, ocl::lsize2);
+    allocatePayloadReg(GBE_CURBE_GLOBAL_SIZE_X, 0, ocl::gsize0);
+    allocatePayloadReg(GBE_CURBE_GLOBAL_SIZE_Y, 0, ocl::gsize1);
+    allocatePayloadReg(GBE_CURBE_GLOBAL_SIZE_Z, 0, ocl::gsize2);
+    allocatePayloadReg(GBE_CURBE_GLOBAL_OFFSET_X, 0, ocl::goffset0);
+    allocatePayloadReg(GBE_CURBE_GLOBAL_OFFSET_Y, 0, ocl::goffset1);
+    allocatePayloadReg(GBE_CURBE_GLOBAL_OFFSET_Z, 0, ocl::goffset2);
+    allocatePayloadReg(GBE_CURBE_GROUP_NUM_X, 0, ocl::numgroup0);
+    allocatePayloadReg(GBE_CURBE_GROUP_NUM_Y, 0, ocl::numgroup1);
+    allocatePayloadReg(GBE_CURBE_GROUP_NUM_Z, 0, ocl::numgroup2);
 
-    // group IDs are always allocated by the hardware in r0
-    RA.insert(std::make_pair(ir::ocl::groupid0, brw_vec1_reg(GEN_GENERAL_REGISTER_FILE, 0, 1)));
-    RA.insert(std::make_pair(ir::ocl::groupid1, brw_vec1_reg(GEN_GENERAL_REGISTER_FILE, 0, 6)));
-    RA.insert(std::make_pair(ir::ocl::groupid2, brw_vec1_reg(GEN_GENERAL_REGISTER_FILE, 0, 7)));
+    // Group IDs are always allocated by the hardware in r0
+    RA.insert(std::make_pair(ocl::groupid0, brw_vec1_reg(GEN_GENERAL_REGISTER_FILE, 0, 1)));
+    RA.insert(std::make_pair(ocl::groupid1, brw_vec1_reg(GEN_GENERAL_REGISTER_FILE, 0, 6)));
+    RA.insert(std::make_pair(ocl::groupid2, brw_vec1_reg(GEN_GENERAL_REGISTER_FILE, 0, 7)));
+
+    // Allocate all input parameters
+    const uint32_t inputNum = fn.inputNum();
+    for (uint32_t inputID = 0; inputID < inputNum; ++inputID) {
+      const FunctionInput &input = fn.getInput(inputID);
+      GBE_ASSERT(input.type == FunctionInput::GLOBAL_POINTER ||
+                 input.type == FunctionInput::CONSTANT_POINTER);
+      allocatePayloadReg(GBE_CURBE_KERNEL_ARGUMENT, inputID, input.reg);
+    }
 
     // First we build the set of all used registers
-    set<ir::Register> usedRegs;
-    fn.foreachInstruction([&usedRegs](const ir::Instruction &insn) {
+    set<Register> usedRegs;
+    fn.foreachInstruction([&usedRegs](const Instruction &insn) {
       const uint32_t srcNum = insn.getSrcNum(), dstNum = insn.getDstNum();
       for (uint32_t srcID = 0; srcID < srcNum; ++srcID)
         usedRegs.insert(insn.getSrc(srcID));
@@ -92,27 +114,110 @@ namespace gbe
     GBE_ASSERT(simdWidth != 32); // a bit more complicated see later
     for (auto reg : usedRegs) {
       if (fn.isSpecialReg(reg) == true) continue; // already done
-      const ir::RegisterData regData = fn.getRegisterData(reg);
-      const ir::RegisterFamily family = regData.family;
+      if (fn.getInput(reg) != NULL) continue; // already done
+      const RegisterData regData = fn.getRegisterData(reg);
+      const RegisterFamily family = regData.family;
       const uint32_t typeSize = regData.getSize();
       const uint32_t nr = grfOffset / GEN_REG_SIZE;
       const uint32_t subnr = (grfOffset % GEN_REG_SIZE) / typeSize;
-      GBE_ASSERT(family == ir::FAMILY_DWORD); // XXX Do the rest
+      GBE_ASSERT(family == FAMILY_DWORD); // XXX Do the rest
       GBE_ASSERT(grfOffset + simdWidth*typeSize < GEN_GRF_SIZE);
       RA.insert(std::make_pair(reg, brw_vec16_reg(GEN_GENERAL_REGISTER_FILE, nr, subnr)));
       grfOffset += simdWidth * typeSize;
     }
   }
 
+  void GenContext::emitUnaryInstruction(const ir::UnaryInstruction &insn) {
+    GBE_ASSERT(insn.getOpcode() == ir::OP_MOV);
+    p->MOV(reg(insn.getDst(0)), reg(insn.getSrc(0)));
+  }
+
+  void GenContext::emitBinaryInstruction(const ir::BinaryInstruction &insn) {
+    using namespace ir;
+    const Opcode opcode = insn.getOpcode();
+    const Type type = insn.getType();
+    GenReg dst = reg(insn.getDst(0));
+    GenReg src0 = reg(insn.getSrc(0));
+    GenReg src1 = reg(insn.getSrc(1));
+
+    // Default type is FLOAT
+    GBE_ASSERT(type == TYPE_U32 || type == TYPE_S32 || type == TYPE_FLOAT);
+    if (type == TYPE_U32) {
+      dst = retype(dst, GEN_TYPE_UD);
+      src0 = retype(src0, GEN_TYPE_UD);
+      src1 = retype(src1, GEN_TYPE_UD);
+    } else if (type == TYPE_S32) {
+      dst = retype(dst, GEN_TYPE_D);
+      src0 = retype(src0, GEN_TYPE_D);
+      src1 = retype(src1, GEN_TYPE_D);
+    }
+
+    // Output the binary instruction
+    switch (opcode) {
+      case OP_ADD: p->ADD(dst, src0, src1); break;
+      case OP_MUL: p->MUL(dst, src0, src1); break;
+      default: NOT_IMPLEMENTED;
+    }
+  }
+
+  void GenContext::emitTernaryInstruction(const ir::TernaryInstruction &insn) {}
+  void GenContext::emitSelectInstruction(const ir::SelectInstruction &insn) {}
+  void GenContext::emitCompareInstruction(const ir::CompareInstruction &insn) {}
+  void GenContext::emitConvertInstruction(const ir::ConvertInstruction &insn) {}
+  void GenContext::emitBranchInstruction(const ir::BranchInstruction &insn) {}
+  void GenContext::emitTextureInstruction(const ir::TextureInstruction &insn) {}
+
+  void GenContext::emitLoadImmInstruction(const ir::LoadImmInstruction &insn) {
+    using namespace ir;
+    const Type type = insn.getType();
+    const Immediate imm = insn.getImmediate();
+    const GenReg dst = reg(insn.getDst(0));
+
+    switch (type) {
+      case TYPE_U32: p->MOV(retype(dst, GEN_TYPE_UD), brw_imm_ud(imm.data.u32)); break;
+      case TYPE_S32: p->MOV(retype(dst, GEN_TYPE_D), brw_imm_d(imm.data.s32)); break;
+      case TYPE_FLOAT: p->MOV(dst, brw_imm_f(imm.data.f32)); break;
+      default: NOT_SUPPORTED;
+    }
+  }
+
+  void GenContext::emitLoadInstruction(const ir::LoadInstruction &insn) {
+  }
+
+  void GenContext::emitStoreInstruction(const ir::StoreInstruction &insn) {
+    const GenReg dst = reg(insn.getDst(0));
+
+  }
+  void GenContext::emitFenceInstruction(const ir::FenceInstruction &insn) {}
+  void GenContext::emitLabelInstruction(const ir::LabelInstruction &insn) {}
+
+  void GenContext::emitInstructionStream(void) {
+    using namespace ir;
+    fn.foreachInstruction([&](const Instruction &insn) {
+      const Opcode opcode = insn.getOpcode();
+      switch (opcode) {
+#define DECL_INSN(OPCODE, FAMILY) \
+      case OP_##OPCODE: this->emit##FAMILY(cast<FAMILY>(insn)); break;
+#include "ir/instruction.hxx"
+#undef DECL_INSN
+      }
+    });
+  }
+
+  BVAR(OCL_OUTPUT_ASM, false);
   void GenContext::emitCode(void) {
     GenKernel *genKernel = static_cast<GenKernel*>(this->kernel);
-    GenEmitter *p = (GenEmitter*) GBE_MALLOC(sizeof(GenEmitter));
-    std::memset(p, 0, sizeof(*p));
+    this->allocateRegister();
+    this->emitInstructionStream();
     p->EOT(127);
     genKernel->insnNum = p->nr_insn;
     genKernel->insns = GBE_NEW_ARRAY(GenInstruction, genKernel->insnNum);
     std::memcpy(genKernel->insns, p->store, genKernel->insnNum * sizeof(GenInstruction));
-    GBE_FREE(p);
+    if (OCL_OUTPUT_ASM) {
+      FILE *f = fopen("asm.dump", "wb");
+      fwrite(genKernel->insns, 1, genKernel->insnNum * sizeof(GenInstruction), f);
+      fclose(f);
+    }
   }
 
   Kernel *GenContext::allocateKernel(void) {

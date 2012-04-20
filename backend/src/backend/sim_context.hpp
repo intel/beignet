@@ -25,9 +25,10 @@
 #ifndef __GBE_SIM_CONTEXT_HPP__
 #define __GBE_SIM_CONTEXT_HPP__
 
+#include "backend/context.hpp"
+#include "ir/instruction.hpp"
 #include <string>
 #include <fstream>
-#include "backend/context.hpp"
 
 namespace gbe
 {
@@ -53,8 +54,6 @@ namespace gbe
     void emitCurbeLoad(void);
     /*! Emit the masking code (mask / UIP) */
     void emitMaskingCode(void);
-    /*! Emit the instructions */
-    void emitInstructionStream(void);
     /*! Implements base class */
     virtual Kernel *allocateKernel(void);
     std::ofstream o; //!< Where to output the c++ string

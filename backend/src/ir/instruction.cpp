@@ -777,24 +777,24 @@ namespace ir {
     return fn.getRegisterData(this->getSrc(ID));
   }
 
-#define DECL_INSN(OPCODE, CLASS)                                  \
-  case OP_##OPCODE:                                               \
+#define DECL_INSN(OPCODE, CLASS) \
+  case OP_##OPCODE: \
   return HelperIntrospection<CLASS, RefClass>::value == 1;
 
-#define START_INTROSPECTION(CLASS)                                \
-  static_assert(sizeof(internal::CLASS) == sizeof(uint64_t),      \
-                "Bad instruction size");                          \
-  static_assert(offsetof(internal::CLASS, opcode) == 0,           \
-                "Bad opcode offset");                             \
-  bool CLASS::isClassOf(const Instruction &insn) {                \
-    const Opcode op = insn.getOpcode();                           \
-    typedef CLASS RefClass;                                       \
+#define START_INTROSPECTION(CLASS) \
+  static_assert(sizeof(internal::CLASS) == sizeof(uint64_t), \
+                "Bad instruction size"); \
+  static_assert(offsetof(internal::CLASS, opcode) == 0, \
+                "Bad opcode offset"); \
+  bool CLASS::isClassOf(const Instruction &insn) { \
+    const Opcode op = insn.getOpcode(); \
+    typedef CLASS RefClass; \
     switch (op) {
 
-#define END_INTROSPECTION(CLASS)                                  \
-      default: return false;                                      \
-    };                                                            \
-  }                                                               \
+#define END_INTROSPECTION(CLASS) \
+      default: return false; \
+    }; \
+  }
 
 START_INTROSPECTION(UnaryInstruction)
 #include "ir/instruction.hxx"
@@ -815,6 +815,10 @@ END_INTROSPECTION(CompareInstruction)
 START_INTROSPECTION(ConvertInstruction)
 #include "ir/instruction.hxx"
 END_INTROSPECTION(ConvertInstruction)
+
+START_INTROSPECTION(SelectInstruction)
+#include "ir/instruction.hxx"
+END_INTROSPECTION(SelectInstruction)
 
 START_INTROSPECTION(BranchInstruction)
 #include "ir/instruction.hxx"

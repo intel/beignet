@@ -99,20 +99,14 @@ namespace gbe
      } dw1;
   };
 
+  /*! Helper structure to emit Gen instructions */
   struct GenEmitter
   {
-    int gen;
+    GenEmitter(uint32_t simdWidth, uint32_t gen);
     GenInstruction store[8192];
-    int store_size;
     uint32_t nr_insn;
-
-    /* Allow clients to push/pop instruction state */
-    GenInstruction stack[GEN_EU_MAX_INSN_STACK];
-    bool compressed_stack[GEN_EU_MAX_INSN_STACK];
-
-    uint32_t flag_value;
-    bool single_program_flow;
-    bool compressed;
+    uint32_t simdWidth;
+    uint32_t gen;
 
     INLINE GenInstruction *current_insn(void) { return &this->store[this->nr_insn]; }
 
@@ -120,7 +114,6 @@ namespace gbe
     void set_mask_control(uint32_t value);
     void set_saturate(uint32_t value);
     void set_access_mode(uint32_t access_mode);
-    void set_compression_control(enum brw_compression c);
     void set_predicate_control_flag_value(uint32_t value);
     void set_predicate_control(uint32_t pc);
     void set_predicate_inverse(bool predicate_inverse);
@@ -176,7 +169,7 @@ namespace gbe
 
     /* Helpers for SEND instruction */
     void set_sampler_message(GenInstruction *insn,
-                             uint32_t binding_table_index,
+                             uint32_t bti,
                              uint32_t sampler,
                              uint32_t msg_type,
                              uint32_t response_length,
@@ -185,29 +178,18 @@ namespace gbe
                              uint32_t simd_mode,
                              uint32_t return_format);
 
-    void set_dp_read_message(GenInstruction *insn,
-                             uint32_t binding_table_index,
-                             uint32_t msg_control,
-                             uint32_t msg_type,
-                             uint32_t target_cache,
-                             uint32_t msg_length,
-                             uint32_t response_length);
-
-    void set_dp_write_message(GenInstruction *insn,
-                              uint32_t binding_table_index,
-                              uint32_t msg_control,
-                              uint32_t msg_type,
-                              uint32_t msg_length,
-                              bool header_present,
-                              uint32_t last_render_target,
-                              uint32_t response_length,
-                              uint32_t end_of_thread,
-                              uint32_t send_commit_msg);
+    void set_dp_untyped_rw(GenInstruction *insn,
+                           uint32_t bti,
+                           uint32_t rgba,
+                           uint32_t simd_mode,
+                           uint32_t msg_type,
+                           uint32_t msg_length,
+                           uint32_t response_length);
 
     void SAMPLE(GenReg dest,
                 uint32_t msg_reg_nr,
                 GenReg src0,
-                uint32_t binding_table_index,
+                uint32_t bti,
                 uint32_t sampler,
                 uint32_t writemask,
                 uint32_t msg_type,
@@ -234,10 +216,6 @@ namespace gbe
 
     void math2(GenReg dest, uint32_t function, GenReg src0, GenReg src1);
     void EOT(uint32_t msg_nr);
-
-    void dword_scattered_read(GenReg dest, GenReg mrf, uint32_t bind_table_index);
-
-    void land_fwd_jump(int jmp_insn_idx);
     void NOP(void);
     void WAIT(void);
 
@@ -252,16 +230,16 @@ namespace gbe
   static INLINE int type_sz(uint32_t type)
   {
      switch(type) {
-     case GEN_REGISTER_TYPE_UD:
-     case GEN_REGISTER_TYPE_D:
-     case GEN_REGISTER_TYPE_F:
+     case GEN_TYPE_UD:
+     case GEN_TYPE_D:
+     case GEN_TYPE_F:
         return 4;
-     case GEN_REGISTER_TYPE_HF:
-     case GEN_REGISTER_TYPE_UW:
-     case GEN_REGISTER_TYPE_W:
+     case GEN_TYPE_HF:
+     case GEN_TYPE_UW:
+     case GEN_TYPE_W:
         return 2;
-     case GEN_REGISTER_TYPE_UB:
-     case GEN_REGISTER_TYPE_B:
+     case GEN_TYPE_UB:
+     case GEN_TYPE_B:
         return 1;
      default:
         return 0;
@@ -281,7 +259,7 @@ namespace gbe
    * \param file  one of the GEN_x_REGISTER_FILE values
    * \param nr  register number/index
    * \param subnr  register sub number
-   * \param type  one of GEN_REGISTER_TYPE_x
+   * \param type  one of GEN_TYPE_x
    * \param vstride  one of GEN_VERTICAL_STRIDE_x
    * \param width  one of GEN_WIDTH_x
    * \param hstride  one of GEN_HORIZONTAL_STRIDE_x
@@ -289,14 +267,14 @@ namespace gbe
    * \param writemask  WRITEMASK_X/Y/Z/W bitfield
    */
   static INLINE GenReg makeGenReg(uint32_t file,
-                                     uint32_t nr,
-                                     uint32_t subnr,
-                                     uint32_t type,
-                                     uint32_t vstride,
-                                     uint32_t width,
-                                     uint32_t hstride,
-                                     uint32_t swizzle,
-                                     uint32_t writemask)
+                                  uint32_t nr,
+                                  uint32_t subnr,
+                                  uint32_t type,
+                                  uint32_t vstride,
+                                  uint32_t width,
+                                  uint32_t hstride,
+                                  uint32_t swizzle,
+                                  uint32_t writemask)
   {
      GenReg reg;
      if (file == GEN_GENERAL_REGISTER_FILE)
@@ -335,9 +313,9 @@ namespace gbe
      return makeGenReg(file,
                        nr,
                        subnr,
-                       GEN_REGISTER_TYPE_F,
-                       GEN_VERTICAL_STRIDE_16,
-                       GEN_WIDTH_16,
+                       GEN_TYPE_F,
+                       GEN_VERTICAL_STRIDE_8,
+                       GEN_WIDTH_8,
                        GEN_HORIZONTAL_STRIDE_1,
                        GEN_SWIZZLE_XYZW,
                        WRITEMASK_XYZW);
@@ -349,7 +327,7 @@ namespace gbe
      return makeGenReg(file,
                          nr,
                          subnr,
-                         GEN_REGISTER_TYPE_F,
+                         GEN_TYPE_F,
                          GEN_VERTICAL_STRIDE_8,
                          GEN_WIDTH_8,
                          GEN_HORIZONTAL_STRIDE_1,
@@ -363,7 +341,7 @@ namespace gbe
      return makeGenReg(file,
                        nr,
                        subnr,
-                       GEN_REGISTER_TYPE_F,
+                       GEN_TYPE_F,
                        GEN_VERTICAL_STRIDE_4,
                        GEN_WIDTH_4,
                        GEN_HORIZONTAL_STRIDE_1,
@@ -377,7 +355,7 @@ namespace gbe
      return makeGenReg(file,
                          nr,
                          subnr,
-                         GEN_REGISTER_TYPE_F,
+                         GEN_TYPE_F,
                          GEN_VERTICAL_STRIDE_2,
                          GEN_WIDTH_2,
                          GEN_HORIZONTAL_STRIDE_1,
@@ -391,7 +369,7 @@ namespace gbe
      return makeGenReg(file,
                        nr,
                        subnr,
-                       GEN_REGISTER_TYPE_F,
+                       GEN_TYPE_F,
                        GEN_VERTICAL_STRIDE_0,
                        GEN_WIDTH_1,
                        GEN_HORIZONTAL_STRIDE_0,
@@ -436,19 +414,19 @@ namespace gbe
   /** Construct unsigned word[16] register */
   static INLINE GenReg brw_uw16_reg(uint32_t file, uint32_t nr, uint32_t subnr)
   {
-     return suboffset(retype(brw_vec16_reg(file, nr, 0), GEN_REGISTER_TYPE_UW), subnr);
+     return suboffset(retype(brw_vec16_reg(file, nr, 0), GEN_TYPE_UW), subnr);
   }
 
   /** Construct unsigned word[8] register */
   static INLINE GenReg brw_uw8_reg(uint32_t file, uint32_t nr, uint32_t subnr)
   {
-     return suboffset(retype(brw_vec8_reg(file, nr, 0), GEN_REGISTER_TYPE_UW), subnr);
+     return suboffset(retype(brw_vec8_reg(file, nr, 0), GEN_TYPE_UW), subnr);
   }
 
   /** Construct unsigned word[1] register */
   static INLINE GenReg brw_uw1_reg(uint32_t file, uint32_t nr, uint32_t subnr)
   {
-     return suboffset(retype(brw_vec1_reg(file, nr, 0), GEN_REGISTER_TYPE_UW), subnr);
+     return suboffset(retype(brw_vec1_reg(file, nr, 0), GEN_TYPE_UW), subnr);
   }
 
   static INLINE GenReg brw_imm_reg(uint32_t type)
@@ -467,7 +445,7 @@ namespace gbe
   /** Construct float immediate register */
   static INLINE GenReg brw_imm_f(float f)
   {
-     GenReg imm = brw_imm_reg(GEN_REGISTER_TYPE_F);
+     GenReg imm = brw_imm_reg(GEN_TYPE_F);
      imm.dw1.f = f;
      return imm;
   }
@@ -475,7 +453,7 @@ namespace gbe
   /** Construct integer immediate register */
   static INLINE GenReg brw_imm_d(int d)
   {
-     GenReg imm = brw_imm_reg(GEN_REGISTER_TYPE_D);
+     GenReg imm = brw_imm_reg(GEN_TYPE_D);
      imm.dw1.d = d;
      return imm;
   }
@@ -483,7 +461,7 @@ namespace gbe
   /** Construct uint immediate register */
   static INLINE GenReg brw_imm_ud(uint32_t ud)
   {
-     GenReg imm = brw_imm_reg(GEN_REGISTER_TYPE_UD);
+     GenReg imm = brw_imm_reg(GEN_TYPE_UD);
      imm.dw1.ud = ud;
      return imm;
   }
@@ -491,7 +469,7 @@ namespace gbe
   /** Construct ushort immediate register */
   static INLINE GenReg brw_imm_uw(uint16_t uw)
   {
-     GenReg imm = brw_imm_reg(GEN_REGISTER_TYPE_UW);
+     GenReg imm = brw_imm_reg(GEN_TYPE_UW);
      imm.dw1.ud = uw | (uw << 16);
      return imm;
   }
@@ -499,7 +477,7 @@ namespace gbe
   /** Construct short immediate register */
   static INLINE GenReg brw_imm_w(short w)
   {
-     GenReg imm = brw_imm_reg(GEN_REGISTER_TYPE_W);
+     GenReg imm = brw_imm_reg(GEN_TYPE_W);
      imm.dw1.d = w | (w << 16);
      return imm;
   }
@@ -511,7 +489,7 @@ namespace gbe
   /** Construct vector of eight signed half-byte values */
   static INLINE GenReg brw_imm_v(uint32_t v)
   {
-     GenReg imm = brw_imm_reg(GEN_REGISTER_TYPE_V);
+     GenReg imm = brw_imm_reg(GEN_TYPE_V);
      imm.vstride = GEN_VERTICAL_STRIDE_0;
      imm.width = GEN_WIDTH_8;
      imm.hstride = GEN_HORIZONTAL_STRIDE_1;
@@ -522,7 +500,7 @@ namespace gbe
   /** Construct vector of four 8-bit float values */
   static INLINE GenReg brw_imm_vf(uint32_t v)
   {
-     GenReg imm = brw_imm_reg(GEN_REGISTER_TYPE_VF);
+     GenReg imm = brw_imm_reg(GEN_TYPE_VF);
      imm.vstride = GEN_VERTICAL_STRIDE_0;
      imm.width = GEN_WIDTH_4;
      imm.hstride = GEN_HORIZONTAL_STRIDE_1;
@@ -532,7 +510,7 @@ namespace gbe
 
   static INLINE GenReg brw_imm_vf4(uint32_t v0, uint32_t v1, uint32_t v2, uint32_t v3)
   {
-     GenReg imm = brw_imm_reg(GEN_REGISTER_TYPE_VF);
+     GenReg imm = brw_imm_reg(GEN_TYPE_VF);
      imm.vstride = GEN_VERTICAL_STRIDE_0;
      imm.width = GEN_WIDTH_4;
      imm.hstride = GEN_HORIZONTAL_STRIDE_1;
@@ -603,7 +581,7 @@ namespace gbe
      return makeGenReg(GEN_ARCHITECTURE_REGISTER_FILE,
                          GEN_ARF_IP,
                          0,
-                         GEN_REGISTER_TYPE_UD,
+                         GEN_TYPE_UD,
                          GEN_VERTICAL_STRIDE_4, /* ? */
                          GEN_WIDTH_1,
                          GEN_HORIZONTAL_STRIDE_0,
@@ -624,7 +602,7 @@ namespace gbe
      return makeGenReg(GEN_ARCHITECTURE_REGISTER_FILE,
                          GEN_ARF_NOTIFICATION_COUNT,
                          1,
-                         GEN_REGISTER_TYPE_UD,
+                         GEN_TYPE_UD,
                          GEN_VERTICAL_STRIDE_0,
                          GEN_WIDTH_1,
                          GEN_HORIZONTAL_STRIDE_0,
@@ -704,12 +682,12 @@ namespace gbe
 
   static INLINE GenReg get_element_ud(GenReg reg, uint32_t elt)
   {
-     return vec1(suboffset(retype(reg, GEN_REGISTER_TYPE_UD), elt));
+     return vec1(suboffset(retype(reg, GEN_TYPE_UD), elt));
   }
 
   static INLINE GenReg get_element_d(GenReg reg, uint32_t elt)
   {
-     return vec1(suboffset(retype(reg, GEN_REGISTER_TYPE_D), elt));
+     return vec1(suboffset(retype(reg, GEN_TYPE_D), elt));
   }
 
   static INLINE GenReg brw_swizzle(GenReg reg, uint32_t x, uint32_t y, uint32_t z, uint32_t w)

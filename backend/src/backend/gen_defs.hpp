@@ -47,12 +47,6 @@
 #define GEN_CHANNEL_Z     2
 #define GEN_CHANNEL_W     3
 
-enum brw_compression {
-  GEN_COMPRESSION_NONE       = 0,
-  GEN_COMPRESSION_2NDHALF    = 1,
-  GEN_COMPRESSION_COMPRESSED = 2,
-};
-
 #define GEN6_COMPRESSION_1Q  0
 #define GEN6_COMPRESSION_2Q  1
 #define GEN6_COMPRESSION_3Q  2
@@ -99,120 +93,77 @@ enum brw_compression {
 #define GEN_MASK_ENABLE   0
 #define GEN_MASK_DISABLE  1
 
-/** @{
- *
- * Gen6 has replaced "mask enable/disable" with WECtrl, which is
- * effectively the same but much simpler to think about.  Now, there
- * are two contributors ANDed together to whether channels are
- * executed: The predication on the instruction, and the channel write
- * enable.
- */
-/**
- * This is the default value.  It means that a channel's write enable is set
- * if the per-channel IP is pointing at this instruction.
- */
-#define GEN_WE_NORMAL  0
-/**
- * This is used like GEN_MASK_DISABLE, and causes all channels to have
- * their write enable set.  Note that predication still contributes to
- * whether the channel actually gets written.
- */
-#define GEN_WE_ALL  1
-/** @} */
-
+/*! Gen opcode */
 enum opcode {
-   /* These are the actual hardware opcodes. */
-   GEN_OPCODE_MOV = 1,
-   GEN_OPCODE_SEL = 2,
-   GEN_OPCODE_NOT = 4,
-   GEN_OPCODE_AND = 5,
-   GEN_OPCODE_OR = 6,
-   GEN_OPCODE_XOR = 7,
-   GEN_OPCODE_SHR = 8,
-   GEN_OPCODE_SHL = 9,
-   GEN_OPCODE_RSR = 10,
-   GEN_OPCODE_RSL = 11,
-   GEN_OPCODE_ASR = 12,
-   GEN_OPCODE_CMP = 16,
-   GEN_OPCODE_CMPN = 17,
-   GEN_OPCODE_JMPI = 32,
-   GEN_OPCODE_IF = 34,
-   GEN_OPCODE_IFF = 35,
-   GEN_OPCODE_ELSE = 36,
-   GEN_OPCODE_ENDIF = 37,
-   GEN_OPCODE_DO = 38,
-   GEN_OPCODE_WHILE = 39,
-   GEN_OPCODE_BREAK = 40,
-   GEN_OPCODE_CONTINUE = 41,
-   GEN_OPCODE_HALT = 42,
-   GEN_OPCODE_MSAVE = 44,
-   GEN_OPCODE_MRESTORE = 45,
-   GEN_OPCODE_PUSH = 46,
-   GEN_OPCODE_POP = 47,
-   GEN_OPCODE_WAIT = 48,
-   GEN_OPCODE_SEND = 49,
-   GEN_OPCODE_SENDC = 50,
-   GEN_OPCODE_MATH = 56,
-   GEN_OPCODE_ADD = 64,
-   GEN_OPCODE_MUL = 65,
-   GEN_OPCODE_AVG = 66,
-   GEN_OPCODE_FRC = 67,
-   GEN_OPCODE_RNDU = 68,
-   GEN_OPCODE_RNDD = 69,
-   GEN_OPCODE_RNDE = 70,
-   GEN_OPCODE_RNDZ = 71,
-   GEN_OPCODE_MAC = 72,
-   GEN_OPCODE_MACH = 73,
-   GEN_OPCODE_LZD = 74,
-   GEN_OPCODE_SAD2 = 80,
-   GEN_OPCODE_SADA2 = 81,
-   GEN_OPCODE_DP4 = 84,
-   GEN_OPCODE_DPH = 85,
-   GEN_OPCODE_DP3 = 86,
-   GEN_OPCODE_DP2 = 87,
-   GEN_OPCODE_DPA2 = 88,
-   GEN_OPCODE_LINE = 89,
-   GEN_OPCODE_PLN = 90,
-   GEN_OPCODE_MAD = 91,
-   GEN_OPCODE_NOP = 126,
+  GEN_OPCODE_MOV = 1,
+  GEN_OPCODE_SEL = 2,
+  GEN_OPCODE_NOT = 4,
+  GEN_OPCODE_AND = 5,
+  GEN_OPCODE_OR = 6,
+  GEN_OPCODE_XOR = 7,
+  GEN_OPCODE_SHR = 8,
+  GEN_OPCODE_SHL = 9,
+  GEN_OPCODE_RSR = 10,
+  GEN_OPCODE_RSL = 11,
+  GEN_OPCODE_ASR = 12,
+  GEN_OPCODE_CMP = 16,
+  GEN_OPCODE_CMPN = 17,
+  GEN_OPCODE_JMPI = 32,
+  GEN_OPCODE_IF = 34,
+  GEN_OPCODE_IFF = 35,
+  GEN_OPCODE_ELSE = 36,
+  GEN_OPCODE_ENDIF = 37,
+  GEN_OPCODE_DO = 38,
+  GEN_OPCODE_WHILE = 39,
+  GEN_OPCODE_BREAK = 40,
+  GEN_OPCODE_CONTINUE = 41,
+  GEN_OPCODE_HALT = 42,
+  GEN_OPCODE_MSAVE = 44,
+  GEN_OPCODE_MRESTORE = 45,
+  GEN_OPCODE_PUSH = 46,
+  GEN_OPCODE_POP = 47,
+  GEN_OPCODE_WAIT = 48,
+  GEN_OPCODE_SEND = 49,
+  GEN_OPCODE_SENDC = 50,
+  GEN_OPCODE_MATH = 56,
+  GEN_OPCODE_ADD = 64,
+  GEN_OPCODE_MUL = 65,
+  GEN_OPCODE_AVG = 66,
+  GEN_OPCODE_FRC = 67,
+  GEN_OPCODE_RNDU = 68,
+  GEN_OPCODE_RNDD = 69,
+  GEN_OPCODE_RNDE = 70,
+  GEN_OPCODE_RNDZ = 71,
+  GEN_OPCODE_MAC = 72,
+  GEN_OPCODE_MACH = 73,
+  GEN_OPCODE_LZD = 74,
+  GEN_OPCODE_SAD2 = 80,
+  GEN_OPCODE_SADA2 = 81,
+  GEN_OPCODE_DP4 = 84,
+  GEN_OPCODE_DPH = 85,
+  GEN_OPCODE_DP3 = 86,
+  GEN_OPCODE_DP2 = 87,
+  GEN_OPCODE_DPA2 = 88,
+  GEN_OPCODE_LINE = 89,
+  GEN_OPCODE_PLN = 90,
+  GEN_OPCODE_MAD = 91,
+  GEN_OPCODE_NOP = 126,
+};
 
-   /* These are compiler backend opcodes that get translated into other
-    * instructions.
-    */
-   FS_OPCODE_FB_WRITE = 128,
-   SHADER_OPCODE_RCP,
-   SHADER_OPCODE_RSQ,
-   SHADER_OPCODE_SQRT,
-   SHADER_OPCODE_EXP2,
-   SHADER_OPCODE_LOG2,
-   SHADER_OPCODE_POW,
-   SHADER_OPCODE_INT_QUOTIENT,
-   SHADER_OPCODE_INT_REMAINDER,
-   SHADER_OPCODE_SIN,
-   SHADER_OPCODE_COS,
-
-   SHADER_OPCODE_TEX,
-   SHADER_OPCODE_TXD,
-   SHADER_OPCODE_TXF,
-   SHADER_OPCODE_TXL,
-   SHADER_OPCODE_TXS,
-   FS_OPCODE_TXB,
-
-   FS_OPCODE_DDX,
-   FS_OPCODE_DDY,
-   FS_OPCODE_PIXEL_X,
-   FS_OPCODE_PIXEL_Y,
-   FS_OPCODE_CINTERP,
-   FS_OPCODE_LINTERP,
-   FS_OPCODE_DISCARD,
-   FS_OPCODE_SPILL,
-   FS_OPCODE_UNSPILL,
-   FS_OPCODE_PULL_CONSTANT_LOAD,
-
-   VS_OPCODE_URB_WRITE,
-   VS_OPCODE_SCRATCH_READ,
-   VS_OPCODE_SCRATCH_WRITE,
-   VS_OPCODE_PULL_CONSTANT_LOAD,
+/*! Gen SFID */
+enum GenMessageTarget {
+  GEN_SFID_NULL                     = 0,
+  GEN_SFID_MATH                     = 1, /* Only valid on Gen4-5 */
+  GEN_SFID_SAMPLER                  = 2,
+  GEN_SFID_MESSAGE_GATEWAY          = 3,
+  GEN_SFID_DATAPORT_READ            = 4,
+  GEN_SFID_DATAPORT_WRITE           = 5,
+  GEN_SFID_URB                      = 6,
+  GEN_SFID_THREAD_SPAWNER           = 7,
+  GEN6_SFID_DATAPORT_SAMPLER_CACHE  = 4,
+  GEN6_SFID_DATAPORT_RENDER_CACHE   = 5,
+  GEN6_SFID_DATAPORT_CONSTANT_CACHE = 9,
+  GEN7_SFID_DATAPORT_DATA_CACHE     = 10,
 };
 
 #define GEN_PREDICATE_NONE                    0
@@ -238,16 +189,16 @@ enum opcode {
 #define GEN_GENERAL_REGISTER_FILE             1
 #define GEN_IMMEDIATE_VALUE                   3
 
-#define GEN_REGISTER_TYPE_UD  0
-#define GEN_REGISTER_TYPE_D   1
-#define GEN_REGISTER_TYPE_UW  2
-#define GEN_REGISTER_TYPE_W   3
-#define GEN_REGISTER_TYPE_UB  4
-#define GEN_REGISTER_TYPE_B   5
-#define GEN_REGISTER_TYPE_VF  5 /* packed float vector, immediates only? */
-#define GEN_REGISTER_TYPE_HF  6
-#define GEN_REGISTER_TYPE_V   6 /* packed int vector, immediates only, uword dest only */
-#define GEN_REGISTER_TYPE_F   7
+#define GEN_TYPE_UD  0
+#define GEN_TYPE_D   1
+#define GEN_TYPE_UW  2
+#define GEN_TYPE_W   3
+#define GEN_TYPE_UB  4
+#define GEN_TYPE_B   5
+#define GEN_TYPE_VF  5 /* packed float vector, immediates only? */
+#define GEN_TYPE_HF  6
+#define GEN_TYPE_V   6 /* packed int vector, immediates only, uword dest only */
+#define GEN_TYPE_F   7
 
 #define GEN_ARF_NULL                  0x00
 #define GEN_ARF_ADDRESS               0x10
@@ -267,8 +218,6 @@ enum opcode {
 #define GEN_IMASK   1
 #define GEN_LMASK   2
 #define GEN_CMASK   3
-
-
 
 #define GEN_THREAD_NORMAL     0
 #define GEN_THREAD_ATOMIC     1
@@ -292,48 +241,11 @@ enum opcode {
 #define GEN_WIDTH_8       3
 #define GEN_WIDTH_16      4
 
-#define GEN_STATELESS_BUFFER_BOUNDARY_1K      0
-#define GEN_STATELESS_BUFFER_BOUNDARY_2K      1
-#define GEN_STATELESS_BUFFER_BOUNDARY_4K      2
-#define GEN_STATELESS_BUFFER_BOUNDARY_8K      3
-#define GEN_STATELESS_BUFFER_BOUNDARY_16K     4
-#define GEN_STATELESS_BUFFER_BOUNDARY_32K     5
-#define GEN_STATELESS_BUFFER_BOUNDARY_64K     6
-#define GEN_STATELESS_BUFFER_BOUNDARY_128K    7
-#define GEN_STATELESS_BUFFER_BOUNDARY_256K    8
-#define GEN_STATELESS_BUFFER_BOUNDARY_512K    9
-#define GEN_STATELESS_BUFFER_BOUNDARY_1M      10
-#define GEN_STATELESS_BUFFER_BOUNDARY_2M      11
-
-#define GEN_POLYGON_FACING_FRONT      0
-#define GEN_POLYGON_FACING_BACK       1
-
-/**
- * Message target: Shared Function ID for where to SEND a message.
- *
- * These are enumerated in the ISA reference under "send - Send Message".
- * In particular, see the following tables:
- * - G45 PRM, Volume 4, Table 14-15 "Message Descriptor Definition"
- * - Sandybridge PRM, Volume 4 Part 2, Table 8-16 "Extended Message Descriptor"
- * - BSpec, Volume 1a (GPU Overview) / Graphics Processing Engine (GPE) /
- *   Overview / GPE Function IDs
- */
-enum brw_message_target {
-   GEN_SFID_NULL                     = 0,
-   GEN_SFID_MATH                     = 1, /* Only valid on Gen4-5 */
-   GEN_SFID_SAMPLER                  = 2,
-   GEN_SFID_MESSAGE_GATEWAY          = 3,
-   GEN_SFID_DATAPORT_READ            = 4,
-   GEN_SFID_DATAPORT_WRITE           = 5,
-   GEN_SFID_URB                      = 6,
-   GEN_SFID_THREAD_SPAWNER           = 7,
-   GEN6_SFID_DATAPORT_SAMPLER_CACHE  = 4,
-   GEN6_SFID_DATAPORT_RENDER_CACHE   = 5,
-   GEN6_SFID_DATAPORT_CONSTANT_CACHE = 9,
-   GEN7_SFID_DATAPORT_DATA_CACHE     = 10,
-};
-
-#define GEN7_MESSAGE_TARGET_DP_DATA_CACHE     10
+/*! Channels to enable for the untyped reads and writes */
+#define GEN7_UNTYPED_RED   (1 << 0)
+#define GEN7_UNTYPED_GREEN (1 << 1)
+#define GEN7_UNTYPED_BLUE  (1 << 2)
+#define GEN7_UNTYPED_ALPHA (1 << 3)
 
 #define GEN_SAMPLER_RETURN_FORMAT_FLOAT32     0
 #define GEN_SAMPLER_RETURN_FORMAT_UINT32      2
@@ -392,12 +304,6 @@ enum brw_message_target {
 #define GEN_DATAPORT_READ_MESSAGE_OWORD_DUAL_BLOCK_READ     1
 #define GEN_DATAPORT_READ_MESSAGE_MEDIA_BLOCK_READ          2
 #define GEN_DATAPORT_READ_MESSAGE_DWORD_SCATTERED_READ      3
-/* G45, GEN5 */
-#define G45_DATAPORT_READ_MESSAGE_RENDER_UNORM_READ     1
-#define G45_DATAPORT_READ_MESSAGE_OWORD_DUAL_BLOCK_READ     2
-#define G45_DATAPORT_READ_MESSAGE_AVC_LOOP_FILTER_READ     3
-#define G45_DATAPORT_READ_MESSAGE_MEDIA_BLOCK_READ          4
-#define G45_DATAPORT_READ_MESSAGE_DWORD_SCATTERED_READ      6
 /* GEN6 */
 #define GEN6_DATAPORT_READ_MESSAGE_RENDER_UNORM_READ     1
 #define GEN6_DATAPORT_READ_MESSAGE_OWORD_DUAL_BLOCK_READ     2
@@ -463,44 +369,9 @@ enum brw_message_target {
 #define GEN_MATH_DATA_VECTOR  0
 #define GEN_MATH_DATA_SCALAR  1
 
-#define GEN_URB_OPCODE_WRITE  0
-
-#define GEN_URB_SWIZZLE_NONE          0
-#define GEN_URB_SWIZZLE_INTERLEAVE    1
-#define GEN_URB_SWIZZLE_TRANSPOSE     2
-
-#define CMD_URB_FENCE                 0x6000
-#define CMD_CS_URB_STATE              0x6001
-#define CMD_CONST_BUFFER              0x6002
-
-#define CMD_STATE_BASE_ADDRESS        0x6101
-#define CMD_STATE_SIP                 0x6102
-#define CMD_PIPELINE_SELECT_965       0x6104
-#define CMD_PIPELINE_SELECT_GM45      0x6904
-
-/* DW2 */
-# define GEN6_VS_SPF_MODE    (1 << 31)
-# define GEN6_VS_VECTOR_MASK_ENABLE   (1 << 30)
-# define GEN6_VS_SAMPLER_COUNT_SHIFT   27
-# define GEN6_VS_BINDING_TABLE_ENTRY_COUNT_SHIFT 18
-# define GEN6_VS_FLOATING_POINT_MODE_IEEE_754  (0 << 16)
-# define GEN6_VS_FLOATING_POINT_MODE_ALT  (1 << 16)
-/* DW4 */
-# define GEN6_VS_DISPATCH_START_GRF_SHIFT  20
-# define GEN6_VS_URB_READ_LENGTH_SHIFT   11
-# define GEN6_VS_URB_ENTRY_READ_OFFSET_SHIFT  4
-/* DW5 */
-# define GEN6_VS_MAX_THREADS_SHIFT   25
-# define GEN6_VS_STATISTICS_ENABLE   (1 << 10)
-# define GEN6_VS_CACHE_DISABLE    (1 << 1)
-# define GEN6_VS_ENABLE     (1 << 0)
-
 #define GEN_DEREFERENCE_URB 0
 #define GEN_DO_NOT_DEREFERENCE_URB 1
 
-/* Maximum number of entries that can be addressed using a binding table
- * pointer of type SURFTYPE_BUFFER
- */
 #define GEN_MAX_NUM_BUFFER_ENTRIES (1 << 27)
 
 /////////////////////////////////////////////////////////////////////////////
@@ -762,31 +633,6 @@ struct GenInstruction
          uint32_t pad2:6;
       } ia16;
 
-
-      struct {
-         int  jump_count:16;        /* note: signed */
-         uint32_t  pop_count:4;
-         uint32_t  pad0:12;
-      } if_else;
-
-      /* This is also used for gen7 IF/ELSE instructions */
-      struct {
-         int jip:16;
-         int uip:16;
-      } break_cont;
-
-      /**
-       * Generic Message Descriptor for Gen5-7 SEND instructions.
-       *
-       * See the Sandybridge PRM, Volume 2 Part 2, Table 8-15.  (Sadly, most
-       * of the information on the SEND instruction is missing from the public
-       * Ironlake PRM.)
-       *
-       * The table claims that bit 31 is reserved/MBZ on Gen6+, but it lies.
-       * According to the SEND instruction description:
-       * "The MSb of the message description, the EOT field, always comes from
-       *  bit 127 of the instruction word"...which is bit 31 of this field.
-       */
       struct {
          uint32_t function_control:19;
          uint32_t header_present:1;
@@ -808,21 +654,6 @@ struct GenInstruction
         uint32_t pad2:2;
         uint32_t end_of_thread:1;
       } spawner_gen5;
-
-      /** G45 PRM, Volume 4, Section 6.1.1.1 */
-      struct {
-         uint32_t function:4;
-         uint32_t int_type:1;
-         uint32_t precision:1;
-         uint32_t saturate:1;
-         uint32_t data_type:1;
-         uint32_t pad0:8;
-         uint32_t response_length:4;
-         uint32_t msg_length:4;
-         uint32_t msg_target:4;
-         uint32_t pad1:3;
-         uint32_t end_of_thread:1;
-      } math;
 
       /** Ironlake PRM, Volume 4 Part 1, Section 6.1.1.1 */
       struct {
@@ -869,53 +700,19 @@ struct GenInstruction
          uint32_t end_of_thread:1;
       } gen6_dp_sampler_const_cache;
 
-      /**
-       * Message for the Sandybridge Render Cache Data Port.
-       *
-       * Most fields are defined in the Sandybridge PRM, Volume 4 Part 1,
-       * Section 3.9.2.1.1: Message Descriptor.
-       *
-       * "Slot Group Select" and "Last Render Target" are part of the
-       * 5-bit message control for Render Target Write messages.  See
-       * Section 3.9.9.2.1 of the same volume.
-       */
+      /*! Data port untyped read / write messages */
       struct {
          uint32_t bti:8;
-         uint32_t msg_control:3;
-         uint32_t slot_group_select:1;
-         uint32_t last_render_target:1;
+         uint32_t rgba:4;
+         uint32_t simd_mode:2;
          uint32_t msg_type:4;
-         uint32_t send_commit_msg:1;
-         uint32_t pad0:1;
-         uint32_t header_present:1;
-         uint32_t response_length:5;
-         uint32_t msg_length:4;
-         uint32_t pad1:2;
-         uint32_t end_of_thread:1;
-      } gen6_dp;
-
-      /**
-       * Message for any of the Gen7 Data Port caches.
-       *
-       * Most fields are defined in BSpec volume 5c.2 Data Port / Messages /
-       * Data Port Messages / Message Descriptor.  Once again, "Slot Group
-       * Select" and "Last Render Target" are part of the 6-bit message
-       * control for Render Target Writes.
-       */
-      struct {
-         uint32_t bti:8;
-         uint32_t msg_control:3;
-         uint32_t slot_group_select:1;
-         uint32_t last_render_target:1;
-         uint32_t msg_control_pad:1;
-         uint32_t msg_type:4;
-         uint32_t pad1:1;
+         uint32_t category:1;
          uint32_t header_present:1;
          uint32_t response_length:5;
          uint32_t msg_length:4;
          uint32_t pad2:2;
          uint32_t end_of_thread:1;
-      } gen7_dp;
+      } gen7_untyped_rw;
 
       struct {
          uint32_t src1_subreg_nr_high:1;
