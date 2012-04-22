@@ -167,6 +167,12 @@ namespace gbe
 #undef ALU3
 #undef ROUND
 
+    void EOT(uint32_t msg_nr);
+    void NOP(void);
+    void WAIT(void);
+    void UNTYPED_READ(GenReg src, GenReg dst, uint32_t bti, uint32_t elemNum);
+    void UNTYPED_WRITE(GenReg src, uint32_t bti, uint32_t elemNum);
+
     /* Helpers for SEND instruction */
     void set_sampler_message(GenInstruction *insn,
                              uint32_t bti,
@@ -215,9 +221,6 @@ namespace gbe
               uint32_t precision);
 
     void math2(GenReg dest, uint32_t function, GenReg src0, GenReg src1);
-    void EOT(uint32_t msg_nr);
-    void NOP(void);
-    void WAIT(void);
 
     void CMP(GenReg dest, uint32_t conditional, GenReg src0, GenReg src1);
     void copy4(GenReg dst, GenReg src, uint32_t count);

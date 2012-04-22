@@ -416,12 +416,40 @@ namespace gbe
   {
      GenMessageTarget sfid = GEN7_SFID_DATAPORT_DATA_CACHE;
      brw_set_message_descriptor(this, insn, sfid, msg_length, response_length);
-
      insn->bits3.gen7_untyped_rw.msg_type = msg_type;
      insn->bits3.gen7_untyped_rw.bti = bti;
      insn->bits3.gen7_untyped_rw.rgba = rgba;
      insn->bits3.gen7_untyped_rw.simd_mode = simd_mode;
   }
+
+  static const uint32_t untypedRWMask[] = {
+    0,
+    GEN7_UNTYPED_RED,
+    GEN7_UNTYPED_RED|GEN7_UNTYPED_GREEN,
+    GEN7_UNTYPED_RED|GEN7_UNTYPED_GREEN|GEN7_UNTYPED_BLUE,
+    GEN7_UNTYPED_RED|GEN7_UNTYPED_GREEN|GEN7_UNTYPED_BLUE|GEN7_UNTYPED_ALPHA
+  };
+
+#if 0
+  void
+  GenEmitter::UNTYPED_READ(GenReg dst, GenReg src, uint32_t bti, uint32_t elemNum)
+  {
+    GenInstruction *insn = this->next(GEN_OPCODE_SEND);
+    assert(elemNum >= 1 || elemNum <= 4);
+    this->set_dp_untyped_rw(insn,
+                            bti,
+                            untypedRWMask[elemNum],
+
+  }
+
+  void
+  GenEmitter::UNTYPED_WRITE(GenReg src, uint32_t bti, uint32_t elemNum)
+  {
+    GenInstruction *insn = this->next(GEN_OPCODE_SEND);
+    assert(elemNum >= 1 || elemNum <= 4);
+
+  }
+#endif
 
   void
   GenEmitter::set_sampler_message(GenInstruction *insn,
@@ -861,21 +889,21 @@ namespace gbe
      assert (writemask == WRITEMASK_XYZW);
 
      {
-        GenInstruction *insn;
+       GenInstruction *insn;
 
-        insn = this->next(GEN_OPCODE_SEND);
-        insn->header.predicate_control = 0; /* XXX */
-        this->set_dest(insn, dest);
-        this->set_src0(insn, src0);
-        this->set_sampler_message(insn,
-                                bti,
-                                sampler,
-                                msg_type,
-                                response_length, 
-                                msg_length,
-                                header_present,
-                                simd_mode,
-                                return_format);
+       insn = this->next(GEN_OPCODE_SEND);
+       insn->header.predicate_control = 0; /* XXX */
+       this->set_dest(insn, dest);
+       this->set_src0(insn, src0);
+       this->set_sampler_message(insn,
+                                 bti,
+                                 sampler,
+                                 msg_type,
+                                 response_length, 
+                                 msg_length,
+                                 header_present,
+                                 simd_mode,
+                                 return_format);
      }
   }
 
