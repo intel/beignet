@@ -195,7 +195,7 @@ typedef void* (cl_buffer_get_virtual_cb)(cl_buffer);
 extern cl_buffer_get_virtual_cb *cl_buffer_get_virtual;
 
 /* Get the size of the buffer */
-typedef void* (cl_buffer_get_size_cb)(cl_buffer);
+typedef size_t (cl_buffer_get_size_cb)(cl_buffer);
 extern cl_buffer_get_size_cb *cl_buffer_get_size;
 
 /* Pin a buffer */

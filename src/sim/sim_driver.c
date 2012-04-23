@@ -163,11 +163,11 @@ sim_buffer_get_virtual(sim_buffer buf)
   return buf->data;
 }
 
-static void*
+static size_t
 sim_buffer_get_size(sim_buffer buf)
 {
   if (UNLIKELY(buf == NULL)) return 0;
-  return buf->data;
+  return buf->sz;
 }
 
 static int

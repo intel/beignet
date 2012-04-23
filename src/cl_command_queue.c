@@ -153,27 +153,25 @@ static cl_int
 cl_fulsim_dump_all_surfaces(cl_command_queue queue, cl_kernel k)
 {
   cl_int err = CL_SUCCESS;
-#if 0
   cl_mem mem = NULL;
   int i;
   size_t j;
 
   /* Bind user defined surface */
-  for (i = 0; i < k->arg_info_n; ++i) {
+  for (i = 0; i < k->arg_n; ++i) {
     size_t chunk_n, chunk_remainder;
-    if (k->arg_info[i].type != OCLRT_ARG_TYPE_BUFFER)
+    if (gbe_kernel_get_arg_type(k->opaque, i) != GBE_ARG_GLOBAL_PTR)
       continue;
-    mem = (cl_mem) k->args[k->arg_info[i].arg_index];
+    mem = (cl_mem) k->args[i].mem;
     CHECK_MEM(mem);
-    chunk_n = mem->bo->size / chunk_sz;
-    chunk_remainder = mem->bo->size % chunk_sz;
+    chunk_n = cl_buffer_get_size(mem->bo) / chunk_sz;
+    chunk_remainder = cl_buffer_get_size(mem->bo) % chunk_sz;
     for (j = 0; j < chunk_n; ++j)
       aub_exec_dump_raw_file(mem->bo, j * chunk_sz, chunk_sz);
     if (chunk_remainder)
       aub_exec_dump_raw_file(mem->bo, chunk_n * chunk_sz, chunk_remainder);
   }
 error:
-#endif
   return err;
 }
 
@@ -196,7 +194,6 @@ struct bmphdr {
   /* raw b, g, r data here, dword aligned per scan line */
 };
 
-#if 0
 static int*
 cl_read_bmp(const char *filename, int *width, int *height)
 {
@@ -213,24 +210,6 @@ cl_read_bmp(const char *filename, int *width, int *height)
   n = fread(&hdr, 1, sizeof(hdr), fp);
   assert(n == sizeof(hdr));
 
-#if 0
-  /* Dump stuff out */
-  printf("   filesize = %d\n", hdr.filesize);	/* total file size incl header */
-  printf("        as0 = %d\n", hdr.as0);
-  printf("        as1 = %d\n", hdr.as1);
-  printf("  bmpoffset = %d\n", hdr.bmpoffset);	/* ofset of bmp data  */
-  printf("headerbytes = %d\n", hdr.headerbytes);	/* bytes in header from this point (40 actually) */
-  printf("      width = %d\n", hdr.width);
-  printf("     height = %d\n", hdr.height);
-  printf("    nplanes = %d\n", hdr.nplanes);	/* no of color planes */
-  printf("        bpp = %d\n", hdr.bpp);	/* bits/pixel */
-  printf("compression = %d\n", hdr.compression);	/* BI_RGB = 0 = no compression */
-  printf("    sizeraw = %d\n", hdr.sizeraw);	/* size of raw bmp file, excluding header, incl padding */
-  printf("       hres = %d\n", hdr.hres);	/* horz resolutions pixels/meter */
-  printf("       vres = %d\n", hdr.vres);
-  printf(" npalcolors = %d\n", hdr.npalcolors);	/* No of colors in palette */
-  printf(" nimportant = %d\n", hdr.nimportant);	/* No of important colors */
-#endif
   assert(hdr.width > 0 &&
          hdr.height > 0 &&
          hdr.nplanes == 1
@@ -278,26 +257,24 @@ cl_read_dump(const char *name, size_t *size)
     *size = sz;
   return dump;
 }
-#endif
 
 static cl_int
 cl_fulsim_read_all_surfaces(cl_command_queue queue, cl_kernel k)
 {
   cl_int err = CL_SUCCESS;
-#if 0
   cl_mem mem = NULL;
   char *from = NULL, *to = NULL;
   size_t size, j, chunk_n, chunk_remainder;
   int i, curr = 0;
   /* Bind user defined surface */
-  for (i = 0; i < k->arg_info_n; ++i) {
-    if (k->arg_info[i].type != OCLRT_ARG_TYPE_BUFFER)
+  for (i = 0; i < k->arg_n; ++i) {
+    if (gbe_kernel_get_arg_type(k->opaque, i) != GBE_ARG_GLOBAL_PTR)
       continue;
-    mem = (cl_mem) k->args[k->arg_info[i].arg_index];
+    mem = (cl_mem) k->args[i].mem;
     CHECK_MEM(mem);
     assert(mem->bo);
-    chunk_n = mem->bo->size / chunk_sz;
-    chunk_remainder = mem->bo->size % chunk_sz;
+    chunk_n = cl_buffer_get_size(mem->bo) / chunk_sz;
+    chunk_remainder = cl_buffer_get_size(mem->bo) % chunk_sz;
     to = cl_mem_map(mem);
     for (j = 0; j < chunk_n; ++j) {
       char name[256];
@@ -328,11 +305,9 @@ cl_fulsim_read_all_surfaces(cl_command_queue queue, cl_kernel k)
     cl_mem_unmap(mem);
   }
 error:
-#endif
   return err;
-
 }
-#endif /* USE_FULSIM */
+#endif
 
 extern cl_int cl_command_queue_ND_range_gen7(cl_command_queue, cl_kernel, const size_t *, const size_t *, const size_t *);
 

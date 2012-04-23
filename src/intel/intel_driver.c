@@ -340,7 +340,7 @@ intel_driver_get_ver(struct intel_driver *drv)
   return drv->gen_ver;
 }
 
-static uint32_t drm_intel_bo_get_size(drm_intel_bo *bo) { return bo->size; }
+static size_t drm_intel_bo_get_size(drm_intel_bo *bo) { return bo->size; }
 static void* drm_intel_bo_get_virtual(drm_intel_bo *bo) { return bo->virtual; }
 
 LOCAL void

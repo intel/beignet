@@ -486,23 +486,29 @@ intel_gpgpu_set_buf_reloc_gen7(intel_gpgpu_t *state, int32_t index, dri_bo* obj_
                     obj_bo);
 }
 
+/* Use two one GB surface to map the 2GB address space */
 static void
-intel_gpgpu_map_address_space(intel_gpgpu_t *state,
-                              int32_t index,
-                              uint32_t size,
-                              uint32_t cchint)
+intel_gpgpu_map_address_space(intel_gpgpu_t *state)
 {
   surface_heap_t *heap = state->surface_heap_b.bo->virtual;
-  gen7_surface_state_t *ss = (gen7_surface_state_t *) heap->surface[index];
-  const uint32_t size_ss = size - 1;
-  memset(ss, 0, sizeof(*ss));
-  ss->ss0.surface_type = I965_SURFACE_BUFFER;
-  ss->ss0.surface_format = I965_SURFACEFORMAT_RAW;
-  ss->ss1.base_addr = 0;
-  ss->ss2.width  = size_ss & 0x7f;               /* bits 6:0 of size_ss */
-  ss->ss2.height = (size_ss & 0x1fff80) >> 7;    /* bits 20:7 of size_ss */
-  ss->ss3.depth  = (size_ss & 0xffe00000) >> 20; /* bits 27:21 of size_ss */
-  ss->ss5.cache_control = cc_llc_l3;
+  gen7_surface_state_t *ss0 = (gen7_surface_state_t *) heap->surface[0];
+  gen7_surface_state_t *ss1 = (gen7_surface_state_t *) heap->surface[1];
+  const uint32_t sz = (1<<30) - 1;
+  //const uint32_t sz = 1024*1024-1;
+  memset(ss0, 0, sizeof(gen7_surface_state_t));
+  memset(ss1, 0, sizeof(gen7_surface_state_t));
+  ss1->ss0.surface_type = ss0->ss0.surface_type = I965_SURFACE_BUFFER;
+  ss1->ss0.surface_format = ss0->ss0.surface_format = I965_SURFACEFORMAT_RAW;
+  ss0->ss1.base_addr = 0;
+  ss1->ss1.base_addr = 1<<30;
+  ss1->ss2.width  = ss0->ss2.width  = sz & 127;          /* bits 6:0 of sz */
+  ss1->ss2.height = ss0->ss2.height = (sz >> 7) & 16383; /* bits 20:7 of sz */
+  ss1->ss3.depth  = ss0->ss3.depth  = (sz >> 21) & 1023; /* bits 30:21 of sz */
+  ss1->ss5.cache_control = ss0->ss5.cache_control = cc_llc_l3;
+  heap->binding_table[0] = offsetof(surface_heap_t, surface)
+                         + 0 * sizeof(gen7_surface_state_t);
+  heap->binding_table[1] = offsetof(surface_heap_t, surface)
+                         + 1 * sizeof(gen7_surface_state_t);
 }
 
 static void
@@ -628,46 +634,60 @@ intel_gpgpu_build_idrt(intel_gpgpu_t *state, cl_gpgpu_kernel *kernel)
 }
 
 static void
-intel_gpgpu_upload_constants(intel_gpgpu_t *state, const void* data, uint32_t size)
+intel_gpgpu_upload_constants(intel_gpgpu_t *gpgpu, const void* data, uint32_t size)
 {
   unsigned char *constant_buffer = NULL;
+  cl_gpgpu_kernel *k = gpgpu->ker;
+  uint32_t i, j;
 
-  dri_bo_map(state->curbe_b.bo, 1);
-  assert(state->curbe_b.bo->virtual);
-  constant_buffer = (unsigned char *) state->curbe_b.bo->virtual;
+  /* Upload the data first */
+  dri_bo_map(gpgpu->curbe_b.bo, 1);
+  assert(gpgpu->curbe_b.bo->virtual);
+  constant_buffer = (unsigned char *) gpgpu->curbe_b.bo->virtual;
   memcpy(constant_buffer, data, size);
-  dri_bo_unmap(state->curbe_b.bo);
+  dri_bo_unmap(gpgpu->curbe_b.bo);
+
+  /* Now put all the relocations for our flat address space */
+  for (i = 0; i < k->thread_n; ++i)
+    for (j = 0; j < gpgpu->binded_n; ++j)
+      drm_intel_bo_emit_reloc(gpgpu->curbe_b.bo,
+                              gpgpu->binded_offset[j]+i*k->cst_sz,
+                              gpgpu->binded_buf[j],
+                              0,
+                              I915_GEM_DOMAIN_RENDER,
+                              I915_GEM_DOMAIN_RENDER);
 }
 
 static void
-intel_gpgpu_upload_samplers(intel_gpgpu_t *state, const void *data, uint32_t n)
+intel_gpgpu_upload_samplers(intel_gpgpu_t *gpgpu, const void *data, uint32_t n)
 {
   if (n) {
     const size_t sz = n * sizeof(gen6_sampler_state_t);
-    memcpy(state->sampler_state_b.bo->virtual, data, sz);
+    memcpy(gpgpu->sampler_state_b.bo->virtual, data, sz);
   }
 }
 
 static void
-intel_gpgpu_states_setup(intel_gpgpu_t *state, cl_gpgpu_kernel *kernel)
+intel_gpgpu_states_setup(intel_gpgpu_t *gpgpu, cl_gpgpu_kernel *kernel)
 {
-  state->ker = kernel;
-  intel_gpgpu_build_idrt(state, kernel);
-  dri_bo_unmap(state->surface_heap_b.bo);
-  dri_bo_unmap(state->sampler_state_b.bo);
+  gpgpu->ker = kernel;
+  intel_gpgpu_build_idrt(gpgpu, kernel);
+  intel_gpgpu_map_address_space(gpgpu);
+  dri_bo_unmap(gpgpu->surface_heap_b.bo);
+  dri_bo_unmap(gpgpu->sampler_state_b.bo);
 }
 
 static void
-intel_gpgpu_set_perf_counters(intel_gpgpu_t *state, cl_buffer *perf)
+intel_gpgpu_set_perf_counters(intel_gpgpu_t *gpgpu, cl_buffer *perf)
 {
-  if (state->perf_b.bo)
-    drm_intel_bo_unreference(state->perf_b.bo);
+  if (gpgpu->perf_b.bo)
+    drm_intel_bo_unreference(gpgpu->perf_b.bo);
   drm_intel_bo_reference((drm_intel_bo*) perf);
-  state->perf_b.bo = (drm_intel_bo*) perf;
+  gpgpu->perf_b.bo = (drm_intel_bo*) perf;
 }
 
 static void
-intel_gpgpu_walker(intel_gpgpu_t *state,
+intel_gpgpu_walker(intel_gpgpu_t *gpgpu,
                    uint32_t simd_sz,
                    uint32_t thread_n,
                    const size_t global_wk_off[3],
@@ -680,27 +700,27 @@ intel_gpgpu_walker(intel_gpgpu_t *state,
     global_wk_sz[2] / local_wk_sz[2]
   };
   assert(simd_sz == 8 || simd_sz == 16);
-  BEGIN_BATCH(state->batch, 11);
-  OUT_BATCH(state->batch, CMD_GPGPU_WALKER | 9);
-  OUT_BATCH(state->batch, 0);                        /* kernel index == 0 */
+  BEGIN_BATCH(gpgpu->batch, 11);
+  OUT_BATCH(gpgpu->batch, CMD_GPGPU_WALKER | 9);
+  OUT_BATCH(gpgpu->batch, 0);                        /* kernel index == 0 */
   if (simd_sz == 16)
-    OUT_BATCH(state->batch, (1 << 30) | (thread_n-1)); /* SIMD16 | thread max */
+    OUT_BATCH(gpgpu->batch, (1 << 30) | (thread_n-1)); /* SIMD16 | thread max */
   else
-    OUT_BATCH(state->batch, (0 << 30) | (thread_n-1)); /* SIMD8  | thread max */
-  OUT_BATCH(state->batch, global_wk_off[0]);
-  OUT_BATCH(state->batch, global_wk_dim[0]);
-  OUT_BATCH(state->batch, global_wk_off[1]);
-  OUT_BATCH(state->batch, global_wk_dim[1]);
-  OUT_BATCH(state->batch, global_wk_off[2]);
-  OUT_BATCH(state->batch, global_wk_dim[2]);
-  OUT_BATCH(state->batch, ~0x0);
-  OUT_BATCH(state->batch, ~0x0);
-  ADVANCE_BATCH(state->batch);
+    OUT_BATCH(gpgpu->batch, (0 << 30) | (thread_n-1)); /* SIMD8  | thread max */
+  OUT_BATCH(gpgpu->batch, global_wk_off[0]);
+  OUT_BATCH(gpgpu->batch, global_wk_dim[0]);
+  OUT_BATCH(gpgpu->batch, global_wk_off[1]);
+  OUT_BATCH(gpgpu->batch, global_wk_dim[1]);
+  OUT_BATCH(gpgpu->batch, global_wk_off[2]);
+  OUT_BATCH(gpgpu->batch, global_wk_dim[2]);
+  OUT_BATCH(gpgpu->batch, ~0x0);
+  OUT_BATCH(gpgpu->batch, ~0x0);
+  ADVANCE_BATCH(gpgpu->batch);
 
-  BEGIN_BATCH(state->batch, 2);
-  OUT_BATCH(state->batch, CMD_MEDIA_STATE_FLUSH | 0);
-  OUT_BATCH(state->batch, 0);                        /* kernel index == 0 */
-  ADVANCE_BATCH(state->batch);
+  BEGIN_BATCH(gpgpu->batch, 2);
+  OUT_BATCH(gpgpu->batch, CMD_MEDIA_STATE_FLUSH | 0);
+  OUT_BATCH(gpgpu->batch, 0);                        /* kernel index == 0 */
+  ADVANCE_BATCH(gpgpu->batch);
 }
 
 LOCAL void
