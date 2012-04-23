@@ -28,14 +28,19 @@
 namespace gbe
 {
   GenEmitter::GenEmitter(uint32_t simdWidth, uint32_t gen) :
-    nr_insn(0), simdWidth(simdWidth), gen(gen) {}
-
-  void GenEmitter::guess_execution_size(GenInstruction *insn, GenReg reg)
+    insnNum(0), gen(gen)
   {
-    if (simdWidth == 8)
-      insn->header.execution_size = GEN_EXECUTE_8;
-    else if (simdWidth == 16)
-      insn->header.execution_size = GEN_EXECUTE_16;
+    this->curr.execWidth = simdWidth;
+    this->curr.quaterControl = GEN_COMPRESSION_Q1;
+    this->curr.noMask = 0;
+  }
+
+  void GenEmitter::setExecutionWidth(GenInstruction *insn)
+  {
+    if (this->curr.execWidth == 8)
+      insn->header.execution_size = GEN_WIDTH_8;
+    else if (this->curr.execWidth == 16)
+      insn->header.execution_size = GEN_WIDTH_16;
     else
       GBE_ASSERT(0);
   }
@@ -62,27 +67,7 @@ namespace gbe
      }
   }
 
-  void GenEmitter::set_predicate_control(uint32_t pc)
-  {
-    // p->current->header.predicate_control = pc;
-  }
-
-  void GenEmitter::set_predicate_inverse(bool predicate_inverse)
-  {
-    // p->current->header.predicate_inverse = predicate_inverse;
-  }
-
-  void GenEmitter::set_conditionalmod(uint32_t conditional)
-  {
-   //  p->current->header.destreg__conditionalmod = conditional;
-  }
-
-  void GenEmitter::set_access_mode(uint32_t access_mode)
-  {
-    // p->current->header.access_mode = access_mode;
-  }
-
-  void GenEmitter::set_dest(GenInstruction *insn, GenReg dest)
+  void GenEmitter::setDst(GenInstruction *insn, GenReg dest)
   {
      if (dest.file != GEN_ARCHITECTURE_REGISTER_FILE)
         assert(dest.nr < 128);
@@ -125,10 +110,7 @@ namespace gbe
         }
      }
 
-     /* NEW: Set the execution size based on dest.width and
-      * insn->compression_control:
-      */
-     guess_execution_size(insn, dest);
+     this->setExecutionWidth(insn);
   }
 
   static const int reg_type_size[8] = { 4, 4, 2, 2, 1, 1, 4 };
@@ -210,7 +192,7 @@ namespace gbe
   }
 
   void
-  GenEmitter::set_src0(GenInstruction *insn, GenReg reg)
+  GenEmitter::setSrc0(GenInstruction *insn, GenReg reg)
   {
      if (reg.type != GEN_ARCHITECTURE_REGISTER_FILE)
         assert(reg.nr < 128);
@@ -219,8 +201,8 @@ namespace gbe
 
      insn->bits1.da1.src0_reg_file = reg.file;
      insn->bits1.da1.src0_reg_type = reg.type;
-     insn->bits2.da1.src0_abs = reg.abs;
-     insn->bits2.da1.src0_negate = reg.negate;
+     insn->bits2.da1.src0_abs = reg.absolute;
+     insn->bits2.da1.src0_negate = reg.negation;
      insn->bits2.da1.src0_address_mode = reg.address_mode;
 
      if (reg.file == GEN_IMMEDIATE_VALUE) {
@@ -256,7 +238,7 @@ namespace gbe
 
         if (insn->header.access_mode == GEN_ALIGN_1) {
            if (reg.width == GEN_WIDTH_1 && 
-               insn->header.execution_size == GEN_EXECUTE_1) {
+               insn->header.execution_size == GEN_WIDTH_1) {
               insn->bits2.da1.src0_horiz_stride = GEN_HORIZONTAL_STRIDE_0;
               insn->bits2.da1.src0_width = GEN_WIDTH_1;
               insn->bits2.da1.src0_vert_stride = GEN_VERTICAL_STRIDE_0;
@@ -285,7 +267,7 @@ namespace gbe
   }
 
 
-  void GenEmitter::set_src1(GenInstruction *insn, GenReg reg)
+  void GenEmitter::setSrc1(GenInstruction *insn, GenReg reg)
   {
      assert(reg.nr < 128);
 
@@ -293,8 +275,8 @@ namespace gbe
 
      insn->bits1.da1.src1_reg_file = reg.file;
      insn->bits1.da1.src1_reg_type = reg.type;
-     insn->bits3.da1.src1_abs = reg.abs;
-     insn->bits3.da1.src1_negate = reg.negate;
+     insn->bits3.da1.src1_abs = reg.absolute;
+     insn->bits3.da1.src1_negate = reg.negation;
 
      /* Only src1 can be immediate in two-argument instructions.
       */
@@ -321,7 +303,7 @@ namespace gbe
 
         if (insn->header.access_mode == GEN_ALIGN_1) {
            if (reg.width == GEN_WIDTH_1 && 
-               insn->header.execution_size == GEN_EXECUTE_1) {
+               insn->header.execution_size == GEN_WIDTH_1) {
               insn->bits3.da1.src1_horiz_stride = GEN_HORIZONTAL_STRIDE_0;
               insn->bits3.da1.src1_width = GEN_WIDTH_1;
               insn->bits3.da1.src1_vert_stride = GEN_VERTICAL_STRIDE_0;
@@ -366,7 +348,7 @@ namespace gbe
                              bool header_present = false,
                              bool end_of_thread = false)
   {
-     p->set_src1(inst, brw_imm_d(0));
+     p->setSrc1(inst, GenReg::immd(0));
      inst->bits3.generic_gen5.header_present = header_present;
      inst->bits3.generic_gen5.response_length = response_length;
      inst->bits3.generic_gen5.msg_length = msg_length;
@@ -374,96 +356,104 @@ namespace gbe
      inst->header.destreg__conditionalmod = sfid;
   }
 
-#if 0
   void
-  GenEmitter::set_dp_write_message(GenInstruction *insn,
-                                   uint32_t bti,
-                                   uint32_t msg_control,
-                                   uint32_t msg_type,
-                                   uint32_t msg_length,
-                                   bool header_present,
-                                   uint32_t last_render_target,
-                                   uint32_t response_length,
-                                   uint32_t end_of_thread,
-                                   uint32_t send_commit_msg)
+  set_dp_untyped_rw(GenEmitter *p,
+                    GenInstruction *insn,
+                    uint32_t bti,
+                    uint32_t rgba,
+                    uint32_t msg_type,
+                    uint32_t msg_length,
+                    uint32_t response_length)
   {
-     unsigned sfid;
-
-     /* Use the Render Cache for RT writes; otherwise use the Data Cache */
-     if (msg_type == GEN6_DATAPORT_WRITE_MESSAGE_RENDER_TARGET_WRITE)
-      sfid = GEN6_SFID_DATAPORT_RENDER_CACHE;
-     else
-      sfid = GEN7_SFID_DATAPORT_DATA_CACHE;
-     brw_set_message_descriptor(this, insn, GenMessageTarget(sfid),
-                                msg_length, response_length,
-                                header_present, end_of_thread);
-
-     insn->bits3.gen7_dp.bti = bti;
-     insn->bits3.gen7_dp.msg_control = msg_control;
-     insn->bits3.gen7_dp.last_render_target = last_render_target;
-     insn->bits3.gen7_dp.msg_type = msg_type;
-  }
-#endif
-
-  void
-  GenEmitter::set_dp_untyped_rw(GenInstruction *insn,
-                                uint32_t bti,
-                                uint32_t rgba,
-                                uint32_t simd_mode,
-                                uint32_t msg_type,
-                                uint32_t msg_length,
-                                uint32_t response_length)
-  {
-     GenMessageTarget sfid = GEN7_SFID_DATAPORT_DATA_CACHE;
-     brw_set_message_descriptor(this, insn, sfid, msg_length, response_length);
+     GenMessageTarget sfid = GEN_SFID_DATAPORT_DATA_CACHE;
+     brw_set_message_descriptor(p, insn, sfid, msg_length, response_length);
      insn->bits3.gen7_untyped_rw.msg_type = msg_type;
      insn->bits3.gen7_untyped_rw.bti = bti;
      insn->bits3.gen7_untyped_rw.rgba = rgba;
-     insn->bits3.gen7_untyped_rw.simd_mode = simd_mode;
+     if (p->curr.execWidth == 8)
+       insn->bits3.gen7_untyped_rw.simd_mode = GEN_UNTYPED_SIMD8;
+     else if (p->curr.execWidth == 16)
+       insn->bits3.gen7_untyped_rw.simd_mode = GEN_UNTYPED_SIMD16;
+     else
+       NOT_SUPPORTED;
   }
 
   static const uint32_t untypedRWMask[] = {
-    0,
-    GEN7_UNTYPED_RED,
-    GEN7_UNTYPED_RED|GEN7_UNTYPED_GREEN,
-    GEN7_UNTYPED_RED|GEN7_UNTYPED_GREEN|GEN7_UNTYPED_BLUE,
-    GEN7_UNTYPED_RED|GEN7_UNTYPED_GREEN|GEN7_UNTYPED_BLUE|GEN7_UNTYPED_ALPHA
+    GEN_UNTYPED_ALPHA|GEN_UNTYPED_BLUE|GEN_UNTYPED_GREEN|GEN_UNTYPED_RED,
+    GEN_UNTYPED_ALPHA|GEN_UNTYPED_BLUE|GEN_UNTYPED_GREEN,
+    GEN_UNTYPED_ALPHA|GEN_UNTYPED_BLUE,
+    GEN_UNTYPED_ALPHA,
+    0
   };
 
-#if 0
   void
   GenEmitter::UNTYPED_READ(GenReg dst, GenReg src, uint32_t bti, uint32_t elemNum)
   {
     GenInstruction *insn = this->next(GEN_OPCODE_SEND);
     assert(elemNum >= 1 || elemNum <= 4);
-    this->set_dp_untyped_rw(insn,
-                            bti,
-                            untypedRWMask[elemNum],
+    uint32_t msg_length = 0;
+    uint32_t response_length = 0;
+    if (this->curr.execWidth == 8) {
+      msg_length = 1;
+      response_length = elemNum;
+    } else if (this->curr.execWidth == 16) {
+      msg_length = 2;
+      response_length = 2*elemNum;
+    } else
+      NOT_IMPLEMENTED;
 
+    this->setDst(insn, GenReg::uw16grf(dst.nr, 0));
+    this->setSrc0(insn, GenReg::ud8grf(src.nr, 0));
+    this->setSrc1(insn, GenReg::immud(0));
+    this->setExecutionWidth(insn);
+    set_dp_untyped_rw(this,
+                      insn,
+                      bti,
+                      untypedRWMask[elemNum],
+                      GEN_UNTYPED_READ,
+                      msg_length,
+                      response_length);
   }
 
   void
-  GenEmitter::UNTYPED_WRITE(GenReg src, uint32_t bti, uint32_t elemNum)
+  GenEmitter::UNTYPED_WRITE(GenReg msg, uint32_t bti, uint32_t elemNum)
   {
     GenInstruction *insn = this->next(GEN_OPCODE_SEND);
     assert(elemNum >= 1 || elemNum <= 4);
-
+    uint32_t msg_length = 0;
+    uint32_t response_length = 0;
+    if (this->curr.execWidth == 8)
+      msg_length = 1+elemNum;
+    else if (this->curr.execWidth == 16)
+      msg_length = 2*(1+elemNum);
+    else
+      NOT_IMPLEMENTED;
+    this->setDst(insn, GenReg::retype(GenReg::null(), GEN_TYPE_UW));
+    this->setSrc0(insn, GenReg::ud8grf(msg.nr, 0));
+    this->setSrc1(insn, GenReg::immud(0));
+    this->setExecutionWidth(insn);
+    set_dp_untyped_rw(this,
+                      insn,
+                      bti,
+                      untypedRWMask[elemNum],
+                      GEN_UNTYPED_WRITE,
+                      msg_length,
+                      response_length);
   }
-#endif
 
-  void
-  GenEmitter::set_sampler_message(GenInstruction *insn,
-                                  uint32_t bti,
-                                  uint32_t sampler,
-                                  uint32_t msg_type,
-                                  uint32_t response_length,
-                                  uint32_t msg_length,
-                                  uint32_t header_present,
-                                  uint32_t simd_mode,
-                                  uint32_t return_format)
+  void set_sampler_message(GenEmitter *p,
+                           GenInstruction *insn,
+                           uint32_t bti,
+                           uint32_t sampler,
+                           uint32_t msg_type,
+                           uint32_t response_length,
+                           uint32_t msg_length,
+                           uint32_t header_present,
+                           uint32_t simd_mode,
+                           uint32_t return_format)
   {
-     brw_set_message_descriptor(this, insn, GEN_SFID_SAMPLER, msg_length,
-                                response_length, header_present, false);
+     brw_set_message_descriptor(p, insn, GEN_SFID_SAMPLER, msg_length,
+                                response_length, header_present);
      insn->bits3.sampler_gen7.bti = bti;
      insn->bits3.sampler_gen7.sampler = sampler;
      insn->bits3.sampler_gen7.msg_type = msg_type;
@@ -473,7 +463,7 @@ namespace gbe
   GenInstruction *GenEmitter::next(uint32_t opcode)
   {
      GenInstruction *insn;
-     insn = &this->store[this->nr_insn++];
+     insn = &this->store[this->insnNum++];
      std::memset(insn, 0, sizeof(GenInstruction));
      insn->header.opcode = opcode;
      return insn;
@@ -485,8 +475,8 @@ namespace gbe
                                    GenReg src)
   {
      GenInstruction *insn = p->next(opcode);
-     p->set_dest(insn, dest);
-     p->set_src0(insn, src);
+     p->setDst(insn, dest);
+     p->setSrc0(insn, src);
      return insn;
   }
 
@@ -497,9 +487,9 @@ namespace gbe
                                    GenReg src1)
   {
      GenInstruction *insn = p->next(opcode);
-     p->set_dest(insn, dest);
-     p->set_src0(insn, src0);
-     p->set_src1(insn, src1);
+     p->setDst(insn, dest);
+     p->setSrc0(insn, src0);
+     p->setSrc1(insn, src1);
      return insn;
   }
 
@@ -532,7 +522,7 @@ namespace gbe
      insn->bits1.da3src.dest_reg_nr = dest.nr;
      insn->bits1.da3src.dest_subreg_nr = dest.subnr / 16;
      insn->bits1.da3src.dest_writemask = dest.dw1.bits.writemask;
-     p->guess_execution_size(insn, dest);
+     p->setExecutionWidth(insn);
 
      assert(src0.file == GEN_GENERAL_REGISTER_FILE);
      assert(src0.address_mode == GEN_ADDRESS_DIRECT);
@@ -541,8 +531,8 @@ namespace gbe
      insn->bits2.da3src.src0_swizzle = src0.dw1.bits.swizzle;
      insn->bits2.da3src.src0_subreg_nr = get_3src_subreg_nr(src0);
      insn->bits2.da3src.src0_reg_nr = src0.nr;
-     insn->bits1.da3src.src0_abs = src0.abs;
-     insn->bits1.da3src.src0_negate = src0.negate;
+     insn->bits1.da3src.src0_abs = src0.absolute;
+     insn->bits1.da3src.src0_negate = src0.negation;
      insn->bits2.da3src.src0_rep_ctrl = src0.vstride == GEN_VERTICAL_STRIDE_0;
 
      assert(src1.file == GEN_GENERAL_REGISTER_FILE);
@@ -554,8 +544,8 @@ namespace gbe
      insn->bits3.da3src.src1_subreg_nr_high = get_3src_subreg_nr(src1) >> 2;
      insn->bits2.da3src.src1_rep_ctrl = src1.vstride == GEN_VERTICAL_STRIDE_0;
      insn->bits3.da3src.src1_reg_nr = src1.nr;
-     insn->bits1.da3src.src1_abs = src1.abs;
-     insn->bits1.da3src.src1_negate = src1.negate;
+     insn->bits1.da3src.src1_abs = src1.absolute;
+     insn->bits1.da3src.src1_negate = src1.negation;
 
      assert(src2.file == GEN_GENERAL_REGISTER_FILE);
      assert(src2.address_mode == GEN_ADDRESS_DIRECT);
@@ -565,8 +555,8 @@ namespace gbe
      insn->bits3.da3src.src2_subreg_nr = get_3src_subreg_nr(src2);
      insn->bits3.da3src.src2_rep_ctrl = src2.vstride == GEN_VERTICAL_STRIDE_0;
      insn->bits3.da3src.src2_reg_nr = src2.nr;
-     insn->bits1.da3src.src2_abs = src2.abs;
-     insn->bits1.da3src.src2_negate = src2.negate;
+     insn->bits1.da3src.src2_abs = src2.absolute;
+     insn->bits1.da3src.src2_negate = src2.negation;
 
      return insn;
   }
@@ -590,23 +580,9 @@ namespace gbe
      return brw_alu3(this, GEN_OPCODE_##OP, dest, src0, src1, src2); \
   }
 
-  /* Rounding operations (other than RNDD) require two instructions - the first
-   * stores a rounded value (possibly the wrong way) in the dest register, but
-   * also sets a per-channel "increment bit" in the flag register.  A predicated
-   * add of 1.0 fixes dest to contain the desired result.
-   *
-   * Sandybridge and later appear to round correctly without an ADD.
-   */
-#define ROUND(OP) \
-  void GenEmitter::OP(GenReg dest, GenReg src) \
-  { \
-     GenInstruction *rnd; \
-     rnd = this->next(GEN_OPCODE_##OP);  \
-     this->set_dest(rnd, dest); \
-     this->set_src0(rnd, src); \
-  }
-
   ALU1(MOV)
+  ALU1(RNDZ)
+  ALU1(RNDE)
   ALU2(SEL)
   ALU1(NOT)
   ALU2(AND)
@@ -622,16 +598,9 @@ namespace gbe
   ALU2(MAC)
   ALU2(MACH)
   ALU1(LZD)
-  ALU2(DP4)
-  ALU2(DPH)
-  ALU2(DP3)
-  ALU2(DP2)
   ALU2(LINE)
   ALU2(PLN)
   ALU3(MAD)
-
-  ROUND(RNDZ)
-  ROUND(RNDE)
 
   GenInstruction *GenEmitter::ADD(GenReg dest, GenReg src0, GenReg src1)
   {
@@ -689,9 +658,9 @@ namespace gbe
   void GenEmitter::NOP(void)
   {
     GenInstruction *insn = this->next(GEN_OPCODE_NOP);
-    this->set_dest(insn, retype(brw_vec4_grf(0,0), GEN_TYPE_UD));
-    this->set_src0(insn, retype(brw_vec4_grf(0,0), GEN_TYPE_UD));
-    this->set_src1(insn, brw_imm_ud(0x0));
+    this->setDst(insn, GenReg::retype(GenReg::vec4grf(0,0), GEN_TYPE_UD));
+    this->setSrc0(insn, GenReg::retype(GenReg::vec4grf(0,0), GEN_TYPE_UD));
+    this->setSrc1(insn, GenReg::immud(0x0));
   }
 
   GenInstruction *GenEmitter::JMPI(GenReg dest, GenReg src0, GenReg src1)
@@ -711,11 +680,10 @@ namespace gbe
     GenInstruction *insn = this->next(GEN_OPCODE_CMP);
 
     insn->header.destreg__conditionalmod = conditional;
-    this->set_dest(insn, dest);
-    this->set_src0(insn, src0);
-    this->set_src1(insn, src1);
-
-    guess_execution_size(insn, src0); 
+    this->setDst(insn, dest);
+    this->setSrc0(insn, src0);
+    this->setSrc1(insn, src1);
+    this->setExecutionWidth(insn);
 #if 0
 
      /* Make it so that future instructions will use the computed flag
@@ -735,18 +703,17 @@ namespace gbe
   void GenEmitter::WAIT(void)
   {
      GenInstruction *insn = this->next(GEN_OPCODE_WAIT);
-     GenReg src = brw_notification_1_reg();
+     GenReg src = GenReg::notification1();
 
-     this->set_dest(insn, src);
-     this->set_src0(insn, src);
-     this->set_src1(insn, brw_null_reg());
+     this->setDst(insn, src);
+     this->setSrc0(insn, src);
+     this->setSrc1(insn, GenReg::null());
      insn->header.execution_size = 0; /* must */
      insn->header.predicate_control = 0;
      insn->header.compression_control = 0;
   }
 
-  /* Extended math function, float[8] */
-  void GenEmitter::math(GenReg dest,
+  void GenEmitter::MATH(GenReg dest,
                         uint32_t function,
                         uint32_t saturate,
                         uint32_t msg_reg_nr,
@@ -759,14 +726,6 @@ namespace gbe
     assert(dest.file == GEN_GENERAL_REGISTER_FILE);
     assert(src.file == GEN_GENERAL_REGISTER_FILE);
     assert(dest.hstride == GEN_HORIZONTAL_STRIDE_1);
-    if (this->gen == 6)
-      assert(src.hstride == GEN_HORIZONTAL_STRIDE_1);
-
-    /* Source modifiers are ignored for extended math instructions on Gen6. */
-    if (this->gen == 6) {
-      assert(!src.negate);
-      assert(!src.abs);
-    }
 
     if (function == GEN_MATH_FUNCTION_INT_DIV_QUOTIENT ||
         function == GEN_MATH_FUNCTION_INT_DIV_REMAINDER ||
@@ -777,13 +736,13 @@ namespace gbe
 
     insn->header.destreg__conditionalmod = function;
     insn->header.saturate = saturate;
-    this->set_dest(insn, dest);
-    this->set_src0(insn, src);
-    this->set_src1(insn, brw_null_reg());
+    this->setDst(insn, dest);
+    this->setSrc0(insn, src);
+    this->setSrc1(insn, GenReg::null());
   }
 
-  /* Extended math function, float[8] */
-  void GenEmitter::math2(GenReg dest, uint32_t function, GenReg src0, GenReg src1)
+
+  void GenEmitter::MATH2(GenReg dest, uint32_t function, GenReg src0, GenReg src1)
   {
      GenInstruction *insn = this->next(GEN_OPCODE_MATH);
 
@@ -795,10 +754,6 @@ namespace gbe
      assert(src1.file == GEN_GENERAL_REGISTER_FILE);
 
      assert(dest.hstride == GEN_HORIZONTAL_STRIDE_1);
-     if (this->gen == 6) {
-        assert(src0.hstride == GEN_HORIZONTAL_STRIDE_1);
-        assert(src1.hstride == GEN_HORIZONTAL_STRIDE_1);
-     }
 
      if (function == GEN_MATH_FUNCTION_INT_DIV_QUOTIENT ||
          function == GEN_MATH_FUNCTION_INT_DIV_REMAINDER ||
@@ -810,31 +765,18 @@ namespace gbe
         assert(src1.type == GEN_TYPE_F);
      }
 
-     /* Source modifiers are ignored for extended math instructions on Gen6. */
-     if (this->gen == 6) {
-        assert(!src0.negate);
-        assert(!src0.abs);
-        assert(!src1.negate);
-        assert(!src1.abs);
-     }
-
-     /* Math is the same ISA format as other opcodes, except that CondModifier
-      * becomes FC[3:0] and ThreadCtrl becomes FC[5:4].
-      */
      insn->header.destreg__conditionalmod = function;
-
-     this->set_dest(insn, dest);
-     this->set_src0(insn, src0);
-     this->set_src1(insn, src1);
+     this->setDst(insn, dest);
+     this->setSrc0(insn, src0);
+     this->setSrc1(insn, src1);
   }
 
-  /* Extended math function, float[16] */
-  void GenEmitter::math_16(GenReg dest,
-                           uint32_t function,
-                           uint32_t saturate,
-                           uint32_t msg_reg_nr,
-                           GenReg src,
-                           uint32_t precision)
+  void GenEmitter::MATH16(GenReg dest,
+                          uint32_t function,
+                          uint32_t saturate,
+                          uint32_t msg_reg_nr,
+                          GenReg src,
+                          uint32_t precision)
   {
      GenInstruction *insn;
 
@@ -850,9 +792,9 @@ namespace gbe
      assert(!src.negate);
      assert(!src.abs);
 
-     this->set_dest(insn, dest);
-     this->set_src0(insn, src);
-     this->set_src1(insn, brw_null_reg());
+     this->setDst(insn, dest);
+     this->setSrc0(insn, src);
+     this->setSrc1(insn, GenReg::null());
   }
 
   /**
@@ -860,19 +802,18 @@ namespace gbe
    * Note: the msg_type plus msg_length values determine exactly what kind
    * of sampling operation is performed.  See volume 4, page 161 of docs.
    */
-  void GenEmitter::SAMPLE(
-                  GenReg dest,
-                  uint32_t msg_reg_nr,
-                  GenReg src0,
-                  uint32_t bti,
-                  uint32_t sampler,
-                  uint32_t writemask,
-                  uint32_t msg_type,
-                  uint32_t response_length,
-                  uint32_t msg_length,
-                  uint32_t header_present,
-                  uint32_t simd_mode,
-                  uint32_t return_format)
+  void GenEmitter::SAMPLE(GenReg dest,
+                          uint32_t msg_reg_nr,
+                          GenReg src0,
+                          uint32_t bti,
+                          uint32_t sampler,
+                          uint32_t writemask,
+                          uint32_t msg_type,
+                          uint32_t response_length,
+                          uint32_t msg_length,
+                          uint32_t header_present,
+                          uint32_t simd_mode,
+                          uint32_t return_format)
   {
      if (writemask == 0) return;
 
@@ -893,17 +834,18 @@ namespace gbe
 
        insn = this->next(GEN_OPCODE_SEND);
        insn->header.predicate_control = 0; /* XXX */
-       this->set_dest(insn, dest);
-       this->set_src0(insn, src0);
-       this->set_sampler_message(insn,
-                                 bti,
-                                 sampler,
-                                 msg_type,
-                                 response_length, 
-                                 msg_length,
-                                 header_present,
-                                 simd_mode,
-                                 return_format);
+       this->setDst(insn, dest);
+       this->setSrc0(insn, src0);
+       set_sampler_message(this,
+                           insn,
+                           bti,
+                           sampler,
+                           msg_type,
+                           response_length, 
+                           msg_length,
+                           header_present,
+                           simd_mode,
+                           return_format);
      }
   }
 
@@ -911,13 +853,13 @@ namespace gbe
   {
     GenInstruction *insn = NULL;
 
-    insn = this->MOV(brw_vec8_grf(msg_nr,0), brw_vec8_grf(0,0));
+    insn = this->MOV(GenReg::vec8grf(msg_nr,0), GenReg::vec8grf(0,0));
     insn->header.mask_control = GEN_MASK_DISABLE;
     insn = this->next(GEN_OPCODE_SEND);
-    this->set_dest(insn, brw_null_reg());
-    this->set_src0(insn, brw_vec8_grf(msg_nr,0));
-    this->set_src1(insn, brw_imm_ud(0));
-    insn->header.execution_size = GEN_EXECUTE_8;
+    this->setDst(insn, GenReg::null());
+    this->setSrc0(insn, GenReg::vec8grf(msg_nr,0));
+    this->setSrc1(insn, GenReg::immud(0));
+    insn->header.execution_size = GEN_WIDTH_8;
     insn->bits3.spawner_gen5.resource = GEN_DO_NOT_DEREFERENCE_URB;
     insn->bits3.spawner_gen5.msg_length = 1;
     insn->bits3.spawner_gen5.end_of_thread = 1;

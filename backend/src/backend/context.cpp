@@ -107,7 +107,10 @@ namespace gbe
         specialRegs.insert(reg);
       }
     });
-    kernel->curbeSize = ALIGN(kernel->curbeSize, 32); // 32 == GEN_REG_SIZE
+    if (this->simdWidth == 8)
+      kernel->curbeSize = ALIGN(kernel->curbeSize, 32); // 32 == GEN_REG_SIZE
+    else
+      kernel->curbeSize = ALIGN(kernel->curbeSize, 64); // 64 == 2*GEN_REG_SIZE
 
     // Local IDs always go at the end of the curbe
     const size_t localIDSize = sizeof(uint32_t) * this->simdWidth;

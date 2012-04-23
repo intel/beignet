@@ -53,11 +53,11 @@ namespace gbe
       const uint32_t subnr = ((offset + GEN_REG_SIZE) % GEN_REG_SIZE) / typeSize;
       GBE_ASSERT(data.family == ir::FAMILY_DWORD); // XXX support the rest
       if (this->isScalarReg(reg) == true)
-        RA.insert(std::make_pair(reg, brw_vec1_reg(GEN_GENERAL_REGISTER_FILE, nr, subnr)));
+        RA.insert(std::make_pair(reg, GenReg::vec1(GEN_GENERAL_REGISTER_FILE, nr, subnr)));
       else if (this->simdWidth == 8)
-        RA.insert(std::make_pair(reg, brw_vec8_reg(GEN_GENERAL_REGISTER_FILE, nr, subnr)));
+        RA.insert(std::make_pair(reg, GenReg::vec8(GEN_GENERAL_REGISTER_FILE, nr, subnr)));
       else if (this->simdWidth == 16)
-        RA.insert(std::make_pair(reg, brw_vec16_reg(GEN_GENERAL_REGISTER_FILE, nr, subnr)));
+        RA.insert(std::make_pair(reg, GenReg::vec16(GEN_GENERAL_REGISTER_FILE, nr, subnr)));
     }
   }
 
@@ -83,9 +83,9 @@ namespace gbe
     allocatePayloadReg(GBE_CURBE_GROUP_NUM_Z, 0, ocl::numgroup2);
 
     // Group IDs are always allocated by the hardware in r0
-    RA.insert(std::make_pair(ocl::groupid0, brw_vec1_reg(GEN_GENERAL_REGISTER_FILE, 0, 1)));
-    RA.insert(std::make_pair(ocl::groupid1, brw_vec1_reg(GEN_GENERAL_REGISTER_FILE, 0, 6)));
-    RA.insert(std::make_pair(ocl::groupid2, brw_vec1_reg(GEN_GENERAL_REGISTER_FILE, 0, 7)));
+    RA.insert(std::make_pair(ocl::groupid0, GenReg::vec1(GEN_GENERAL_REGISTER_FILE, 0, 1)));
+    RA.insert(std::make_pair(ocl::groupid1, GenReg::vec1(GEN_GENERAL_REGISTER_FILE, 0, 6)));
+    RA.insert(std::make_pair(ocl::groupid2, GenReg::vec1(GEN_GENERAL_REGISTER_FILE, 0, 7)));
 
     // Allocate all input parameters
     const uint32_t inputNum = fn.inputNum();
@@ -107,11 +107,12 @@ namespace gbe
     });
 
     // Allocate all used registers. Just crash when we run out-of-registers
-    // r0 is always taken by the HW
-    uint32_t grfOffset = kernel->getCurbeSize() + GEN_REG_SIZE;
-    if (simdWidth >= 16)
-      grfOffset = ALIGN(grfOffset, 2 * GEN_REG_SIZE);
-    GBE_ASSERT(simdWidth != 32); // a bit more complicated see later
+    // r0 is always taken by the HW. We also always write down local IDs after
+    // the curbe data
+    uint32_t grfOffset = kernel->getCurbeSize() + GEN_REG_SIZE
+                       + 3 * sizeof(uint32_t) * this->simdWidth;
+    GBE_ASSERT(simdWidth != 32); // XXX a bit more complicated see later
+    if (simdWidth == 16) grfOffset = ALIGN(grfOffset, 64);
     for (auto reg : usedRegs) {
       if (fn.isSpecialReg(reg) == true) continue; // already done
       if (fn.getInput(reg) != NULL) continue; // already done
@@ -122,7 +123,7 @@ namespace gbe
       const uint32_t subnr = (grfOffset % GEN_REG_SIZE) / typeSize;
       GBE_ASSERT(family == FAMILY_DWORD); // XXX Do the rest
       GBE_ASSERT(grfOffset + simdWidth*typeSize < GEN_GRF_SIZE);
-      RA.insert(std::make_pair(reg, brw_vec16_reg(GEN_GENERAL_REGISTER_FILE, nr, subnr)));
+      RA.insert(std::make_pair(reg, GenReg::vec16(GEN_GENERAL_REGISTER_FILE, nr, subnr)));
       grfOffset += simdWidth * typeSize;
     }
   }
@@ -143,19 +144,29 @@ namespace gbe
     // Default type is FLOAT
     GBE_ASSERT(type == TYPE_U32 || type == TYPE_S32 || type == TYPE_FLOAT);
     if (type == TYPE_U32) {
-      dst = retype(dst, GEN_TYPE_UD);
-      src0 = retype(src0, GEN_TYPE_UD);
-      src1 = retype(src1, GEN_TYPE_UD);
+      dst = GenReg::retype(dst, GEN_TYPE_UD);
+      src0 = GenReg::retype(src0, GEN_TYPE_UD);
+      src1 = GenReg::retype(src1, GEN_TYPE_UD);
     } else if (type == TYPE_S32) {
-      dst = retype(dst, GEN_TYPE_D);
-      src0 = retype(src0, GEN_TYPE_D);
-      src1 = retype(src1, GEN_TYPE_D);
+      dst = GenReg::retype(dst, GEN_TYPE_D);
+      src0 = GenReg::retype(src0, GEN_TYPE_D);
+      src1 = GenReg::retype(src1, GEN_TYPE_D);
     }
 
     // Output the binary instruction
     switch (opcode) {
       case OP_ADD: p->ADD(dst, src0, src1); break;
-      case OP_MUL: p->MUL(dst, src0, src1); break;
+      case OP_MUL: 
+      {
+        p->MUL(dst, src0, src1);
+#if 0
+        if (type == TYPE_FLOAT) p->MUL(dst, src0, src1);
+        else {
+
+        }
+#endif
+        break;
+      }
       default: NOT_IMPLEMENTED;
     }
   }
@@ -174,19 +185,49 @@ namespace gbe
     const GenReg dst = reg(insn.getDst(0));
 
     switch (type) {
-      case TYPE_U32: p->MOV(retype(dst, GEN_TYPE_UD), brw_imm_ud(imm.data.u32)); break;
-      case TYPE_S32: p->MOV(retype(dst, GEN_TYPE_D), brw_imm_d(imm.data.s32)); break;
-      case TYPE_FLOAT: p->MOV(dst, brw_imm_f(imm.data.f32)); break;
+      case TYPE_U32: p->MOV(GenReg::retype(dst, GEN_TYPE_UD), GenReg::immud(imm.data.u32)); break;
+      case TYPE_S32: p->MOV(GenReg::retype(dst, GEN_TYPE_D), GenReg::immd(imm.data.s32)); break;
+      case TYPE_FLOAT: p->MOV(dst, GenReg::immf(imm.data.f32)); break;
       default: NOT_SUPPORTED;
     }
   }
 
   void GenContext::emitLoadInstruction(const ir::LoadInstruction &insn) {
+    using namespace ir;
+    GBE_ASSERT(insn.getAddressSpace() == MEM_GLOBAL);
+    GBE_ASSERT(insn.getValueNum() == 1);
+    GBE_ASSERT(insn.isAligned() == true);
+    GBE_ASSERT(this->simdWidth <= 16);
+    const GenReg address = reg(insn.getAddress());
+    const GenReg value = reg(insn.getValue(0));
+    // XXX remove that later. Now we just copy everything to GRFs to make it
+    // contiguous
+    if (this->simdWidth == 8 || this->simdWidth == 16)
+      p->UNTYPED_READ(value, address, 0, 1);
+    else
+      NOT_IMPLEMENTED;
   }
 
   void GenContext::emitStoreInstruction(const ir::StoreInstruction &insn) {
-    const GenReg dst = reg(insn.getDst(0));
-
+    using namespace ir;
+    GBE_ASSERT(insn.getAddressSpace() == MEM_GLOBAL);
+    GBE_ASSERT(insn.getValueNum() == 1);
+    GBE_ASSERT(insn.isAligned() == true);
+    GBE_ASSERT(this->simdWidth <= 16);
+    const GenReg address = reg(insn.getAddress());
+    const GenReg value = reg(insn.getValue(0));
+    // XXX remove that later. Now we just copy everything to GRFs to make it
+    // contiguous
+    if (this->simdWidth == 8) {
+      p->MOV(GenReg::vec8grf(112, 0), GenReg::retype(address, GEN_TYPE_F));
+      p->MOV(GenReg::vec8grf(113, 0), GenReg::retype(value, GEN_TYPE_F));
+      p->UNTYPED_WRITE(GenReg::vec8grf(112, 0), 0, 1);
+    } else if (this->simdWidth == 16) {
+      p->MOV(GenReg::vec16grf(112, 0), GenReg::retype(address, GEN_TYPE_F));
+      p->MOV(GenReg::vec16grf(114, 0), GenReg::retype(value, GEN_TYPE_F));
+      p->UNTYPED_WRITE(GenReg::vec16grf(112, 0), 0, 1);
+    } else
+      NOT_IMPLEMENTED;
   }
   void GenContext::emitFenceInstruction(const ir::FenceInstruction &insn) {}
   void GenContext::emitLabelInstruction(const ir::LabelInstruction &insn) {}
@@ -210,7 +251,7 @@ namespace gbe
     this->allocateRegister();
     this->emitInstructionStream();
     p->EOT(127);
-    genKernel->insnNum = p->nr_insn;
+    genKernel->insnNum = p->insnNum;
     genKernel->insns = GBE_NEW_ARRAY(GenInstruction, genKernel->insnNum);
     std::memcpy(genKernel->insns, p->store, genKernel->insnNum * sizeof(GenInstruction));
     if (OCL_OUTPUT_ASM) {

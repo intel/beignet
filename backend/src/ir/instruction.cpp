@@ -334,6 +334,7 @@ namespace ir {
       INLINE AddressSpace getAddressSpace(void) const { return addrSpace; }
       INLINE bool wellFormed(const Function &fn, std::string &why) const;
       INLINE void out(std::ostream &out, const Function &fn) const;
+      INLINE bool isAligned(void) const { return !!dwAligned; }
       Type type;            //!< Type to store
       Register offset;      //!< First source is the offset where to store
       Tuple values;         //!< Values to load
@@ -375,12 +376,13 @@ namespace ir {
       INLINE AddressSpace getAddressSpace(void) const { return addrSpace; }
       INLINE bool wellFormed(const Function &fn, std::string &why) const;
       INLINE void out(std::ostream &out, const Function &fn) const;
-      Type type;            //!< Type to store
-      Register offset;      //!< First source is the offset where to store
-      Tuple values;         //!< Values to store
+      INLINE bool isAligned(void) const { return !!dwAligned; }
+      Type type;              //!< Type to store
+      Register offset;        //!< First source is the offset where to store
+      Tuple values;           //!< Values to store
       AddressSpace addrSpace; //!< Where to store
-      uint8_t valueNum:7;   //!< Number of values to store
-      uint8_t dwAligned:1;  //!< DWORD aligned is what matters with GEN
+      uint8_t valueNum:7;     //!< Number of values to store
+      uint8_t dwAligned:1;    //!< DWORD aligned is what matters with GEN
     };
 
     class ALIGNED_INSTRUCTION TextureInstruction :
@@ -745,7 +747,6 @@ namespace ir {
       out << " %" << this->getDst(fn,0) << " ";
       fn.outImmediate(out, immediateIndex);
     }
-
   } /* namespace internal */
 
   std::ostream &operator<< (std::ostream &out, AddressSpace addrSpace) {
@@ -857,17 +858,17 @@ END_INTROSPECTION(LabelInstruction)
   // macro horrors
   ///////////////////////////////////////////////////////////////////////////
 
-#define DECL_INSN(OPCODE, CLASS)               \
+#define DECL_INSN(OPCODE, CLASS) \
   case OP_##OPCODE: return reinterpret_cast<const internal::CLASS*>(this)->CALL;
 
-#define START_FUNCTION(CLASS, RET, PROTOTYPE)  \
-  RET CLASS::PROTOTYPE const {                 \
-    const Opcode op = this->getOpcode();       \
+#define START_FUNCTION(CLASS, RET, PROTOTYPE) \
+  RET CLASS::PROTOTYPE const { \
+    const Opcode op = this->getOpcode(); \
     switch (op) {
 
-#define END_FUNCTION(CLASS, RET)               \
-    };                                         \
-    return RET();                              \
+#define END_FUNCTION(CLASS, RET) \
+    }; \
+    return RET(); \
   }
 
 #define CALL getSrcNum()
@@ -884,11 +885,11 @@ END_FUNCTION(Instruction, uint32_t)
 
 #undef DECL_INSN
 
-#define DECL_INSN(OPCODE, CLASS)                                  \
-  case OP_##OPCODE:                                               \
-  {                                                               \
-    const Function &fn = this->getFunction();                     \
-    return reinterpret_cast<const internal::CLASS*>(this)->CALL;  \
+#define DECL_INSN(OPCODE, CLASS) \
+  case OP_##OPCODE: \
+  { \
+    const Function &fn = this->getFunction(); \
+    return reinterpret_cast<const internal::CLASS*>(this)->CALL; \
   }
 
 #define CALL wellFormed(fn, whyNot)
@@ -937,9 +938,9 @@ END_FUNCTION(Instruction, Register)
     fn.deleteInstruction(other);
   }
 
-#define DECL_MEM_FN(CLASS, RET, PROTOTYPE, CALL)                  \
-  RET CLASS::PROTOTYPE const {                                    \
-    return reinterpret_cast<const internal::CLASS*>(this)->CALL;  \
+#define DECL_MEM_FN(CLASS, RET, PROTOTYPE, CALL) \
+  RET CLASS::PROTOTYPE const { \
+    return reinterpret_cast<const internal::CLASS*>(this)->CALL; \
   }
 
 DECL_MEM_FN(UnaryInstruction, Type, getType(void), getType())
@@ -952,9 +953,11 @@ DECL_MEM_FN(ConvertInstruction, Type, getDstType(void), getDstType())
 DECL_MEM_FN(StoreInstruction, Type, getValueType(void), getValueType())
 DECL_MEM_FN(StoreInstruction, uint32_t, getValueNum(void), getValueNum())
 DECL_MEM_FN(StoreInstruction, AddressSpace, getAddressSpace(void), getAddressSpace())
+DECL_MEM_FN(StoreInstruction, bool, isAligned(void), isAligned())
 DECL_MEM_FN(LoadInstruction, Type, getValueType(void), getValueType())
 DECL_MEM_FN(LoadInstruction, uint32_t, getValueNum(void), getValueNum())
 DECL_MEM_FN(LoadInstruction, AddressSpace, getAddressSpace(void), getAddressSpace())
+DECL_MEM_FN(LoadInstruction, bool, isAligned(void), isAligned())
 DECL_MEM_FN(LoadImmInstruction, Type, getType(void), getType())
 DECL_MEM_FN(LabelInstruction, LabelIndex, getLabelIndex(void), getLabelIndex())
 DECL_MEM_FN(BranchInstruction, bool, isPredicated(void), isPredicated())
@@ -972,10 +975,10 @@ DECL_MEM_FN(BranchInstruction, LabelIndex, getLabelIndex(void), getLabelIndex())
   ///////////////////////////////////////////////////////////////////////////
 
   // All unary functions
-#define DECL_EMIT_FUNCTION(NAME)                                      \
-  Instruction NAME(Type type, Register dst, Register src) {           \
+#define DECL_EMIT_FUNCTION(NAME) \
+  Instruction NAME(Type type, Register dst, Register src) { \
     const internal::UnaryInstruction insn(OP_##NAME, type, dst, src); \
-    return insn.convert();                                            \
+    return insn.convert(); \
   }
 
   DECL_EMIT_FUNCTION(MOV)
@@ -989,10 +992,10 @@ DECL_MEM_FN(BranchInstruction, LabelIndex, getLabelIndex(void), getLabelIndex())
 #undef DECL_EMIT_FUNCTION
 
   // All binary functions
-#define DECL_EMIT_FUNCTION(NAME)                                              \
-  Instruction NAME(Type type, Register dst,  Register src0, Register src1) {  \
+#define DECL_EMIT_FUNCTION(NAME) \
+  Instruction NAME(Type type, Register dst,  Register src0, Register src1) { \
     const internal::BinaryInstruction insn(OP_##NAME, type, dst, src0, src1); \
-    return insn.convert();                                                    \
+    return insn.convert(); \
   }
 
   DECL_EMIT_FUNCTION(MUL)
@@ -1024,10 +1027,10 @@ DECL_MEM_FN(BranchInstruction, LabelIndex, getLabelIndex(void), getLabelIndex())
   }
 
   // All compare functions
-#define DECL_EMIT_FUNCTION(NAME)                                              \
-  Instruction NAME(Type type, Register dst,  Register src0, Register src1) {  \
-    const internal::CompareInstruction insn(OP_##NAME, type, dst, src0, src1);\
-    return insn.convert();                                                    \
+#define DECL_EMIT_FUNCTION(NAME) \
+  Instruction NAME(Type type, Register dst,  Register src0, Register src1) { \
+    const internal::CompareInstruction insn(OP_##NAME, type, dst, src0, src1); \
+    return insn.convert(); \
   }
 
   DECL_EMIT_FUNCTION(EQ)
@@ -1068,16 +1071,16 @@ DECL_MEM_FN(BranchInstruction, LabelIndex, getLabelIndex(void), getLabelIndex())
   }
 
   // LOAD and STORE
-#define DECL_EMIT_FUNCTION(NAME, CLASS)                                     \
-  Instruction NAME(Type type,                                               \
-                   Tuple tuple,                                             \
-                   Register offset,                                         \
-                   AddressSpace space,                                       \
-                   uint32_t valueNum,                                       \
-                   bool dwAligned)                                          \
-  {                                                                         \
+#define DECL_EMIT_FUNCTION(NAME, CLASS) \
+  Instruction NAME(Type type, \
+                   Tuple tuple, \
+                   Register offset, \
+                   AddressSpace space, \
+                   uint32_t valueNum, \
+                   bool dwAligned) \
+  { \
     const internal::CLASS insn(type,tuple,offset,space,valueNum,dwAligned); \
-    return insn.convert();                                                  \
+    return insn.convert(); \
   }
 
   DECL_EMIT_FUNCTION(LOAD, LoadInstruction)
@@ -1100,8 +1103,8 @@ DECL_MEM_FN(BranchInstruction, LabelIndex, getLabelIndex(void), getLabelIndex())
   std::ostream &operator<< (std::ostream &out, const Instruction &insn) {
     const Function &fn = insn.getFunction();
     switch (insn.getOpcode()) {
-#define DECL_INSN(OPCODE, CLASS)                                     \
-      case OP_##OPCODE:                                              \
+#define DECL_INSN(OPCODE, CLASS) \
+      case OP_##OPCODE: \
         reinterpret_cast<const internal::CLASS&>(insn).out(out, fn); \
         break;
 #include "instruction.hxx"

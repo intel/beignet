@@ -47,12 +47,12 @@
 #define GEN_CHANNEL_Z     2
 #define GEN_CHANNEL_W     3
 
-#define GEN6_COMPRESSION_1Q  0
-#define GEN6_COMPRESSION_2Q  1
-#define GEN6_COMPRESSION_3Q  2
-#define GEN6_COMPRESSION_4Q  3
-#define GEN6_COMPRESSION_1H  0
-#define GEN6_COMPRESSION_2H  2
+#define GEN_COMPRESSION_Q1  0
+#define GEN_COMPRESSION_Q2  1
+#define GEN_COMPRESSION_Q3  2
+#define GEN_COMPRESSION_Q4  3
+#define GEN_COMPRESSION_H1  0
+#define GEN_COMPRESSION_H2  2
 
 #define GEN_CONDITIONAL_NONE  0
 #define GEN_CONDITIONAL_Z     1
@@ -74,13 +74,6 @@
 #define GEN_DEPENDENCY_NOTCLEARED     1
 #define GEN_DEPENDENCY_NOTCHECKED     2
 #define GEN_DEPENDENCY_DISABLE        3
-
-#define GEN_EXECUTE_1     0
-#define GEN_EXECUTE_2     1
-#define GEN_EXECUTE_4     2
-#define GEN_EXECUTE_8     3
-#define GEN_EXECUTE_16    4
-#define GEN_EXECUTE_32    5
 
 #define GEN_HORIZONTAL_STRIDE_0   0
 #define GEN_HORIZONTAL_STRIDE_1   1
@@ -153,7 +146,7 @@ enum opcode {
 /*! Gen SFID */
 enum GenMessageTarget {
   GEN_SFID_NULL                     = 0,
-  GEN_SFID_MATH                     = 1, /* Only valid on Gen4-5 */
+  GEN_SFID_MATH                     = 1,
   GEN_SFID_SAMPLER                  = 2,
   GEN_SFID_MESSAGE_GATEWAY          = 3,
   GEN_SFID_DATAPORT_READ            = 4,
@@ -163,7 +156,7 @@ enum GenMessageTarget {
   GEN6_SFID_DATAPORT_SAMPLER_CACHE  = 4,
   GEN6_SFID_DATAPORT_RENDER_CACHE   = 5,
   GEN6_SFID_DATAPORT_CONSTANT_CACHE = 9,
-  GEN7_SFID_DATAPORT_DATA_CACHE     = 10,
+  GEN_SFID_DATAPORT_DATA_CACHE     = 10,
 };
 
 #define GEN_PREDICATE_NONE                    0
@@ -235,17 +228,28 @@ enum GenMessageTarget {
 #define GEN_VERTICAL_STRIDE_256               9
 #define GEN_VERTICAL_STRIDE_ONE_DIMENSIONAL   0xF
 
+/* Execution width */
 #define GEN_WIDTH_1       0
 #define GEN_WIDTH_2       1
 #define GEN_WIDTH_4       2
 #define GEN_WIDTH_8       3
 #define GEN_WIDTH_16      4
+#define GEN_WIDTH_32      5
 
-/*! Channels to enable for the untyped reads and writes */
-#define GEN7_UNTYPED_RED   (1 << 0)
-#define GEN7_UNTYPED_GREEN (1 << 1)
-#define GEN7_UNTYPED_BLUE  (1 << 2)
-#define GEN7_UNTYPED_ALPHA (1 << 3)
+/* Channels to enable for the untyped reads and writes */
+#define GEN_UNTYPED_RED   (1 << 0)
+#define GEN_UNTYPED_GREEN (1 << 1)
+#define GEN_UNTYPED_BLUE  (1 << 2)
+#define GEN_UNTYPED_ALPHA (1 << 3)
+
+/* SIMD mode for untyped reads and writes */
+#define GEN_UNTYPED_SIMD4x2 0
+#define GEN_UNTYPED_SIMD16  1
+#define GEN_UNTYPED_SIMD8   2
+
+/* Data port message type */
+#define GEN_UNTYPED_READ    5
+#define GEN_UNTYPED_WRITE  13
 
 #define GEN_SAMPLER_RETURN_FORMAT_FLOAT32     0
 #define GEN_SAMPLER_RETURN_FORMAT_UINT32      2
@@ -285,62 +289,6 @@ enum GenMessageTarget {
 #define GEN_SAMPLER_SIMD_MODE_SIMD8                     1
 #define GEN_SAMPLER_SIMD_MODE_SIMD16                    2
 #define GEN_SAMPLER_SIMD_MODE_SIMD32_64                 3
-
-#define GEN_DATAPORT_OWORD_BLOCK_1_OWORDLOW   0
-#define GEN_DATAPORT_OWORD_BLOCK_1_OWORDHIGH  1
-#define GEN_DATAPORT_OWORD_BLOCK_2_OWORDS     2
-#define GEN_DATAPORT_OWORD_BLOCK_4_OWORDS     3
-#define GEN_DATAPORT_OWORD_BLOCK_8_OWORDS     4
-
-#define GEN_DATAPORT_OWORD_DUAL_BLOCK_1OWORD     0
-#define GEN_DATAPORT_OWORD_DUAL_BLOCK_4OWORDS    2
-
-#define GEN_DATAPORT_DWORD_SCATTERED_BLOCK_8DWORDS   2
-#define GEN_DATAPORT_DWORD_SCATTERED_BLOCK_16DWORDS  3
-
-/* This one stays the same across generations. */
-#define GEN_DATAPORT_READ_MESSAGE_OWORD_BLOCK_READ          0
-/* GEN4 */
-#define GEN_DATAPORT_READ_MESSAGE_OWORD_DUAL_BLOCK_READ     1
-#define GEN_DATAPORT_READ_MESSAGE_MEDIA_BLOCK_READ          2
-#define GEN_DATAPORT_READ_MESSAGE_DWORD_SCATTERED_READ      3
-/* GEN6 */
-#define GEN6_DATAPORT_READ_MESSAGE_RENDER_UNORM_READ     1
-#define GEN6_DATAPORT_READ_MESSAGE_OWORD_DUAL_BLOCK_READ     2
-#define GEN6_DATAPORT_READ_MESSAGE_MEDIA_BLOCK_READ          4
-#define GEN6_DATAPORT_READ_MESSAGE_OWORD_UNALIGN_BLOCK_READ  5
-#define GEN6_DATAPORT_READ_MESSAGE_DWORD_SCATTERED_READ      6
-
-#define GEN_DATAPORT_READ_TARGET_DATA_CACHE      0
-#define GEN_DATAPORT_READ_TARGET_RENDER_CACHE    1
-#define GEN_DATAPORT_READ_TARGET_SAMPLER_CACHE   2
-
-#define GEN_DATAPORT_RENDER_TARGET_WRITE_SIMD16_SINGLE_SOURCE                0
-#define GEN_DATAPORT_RENDER_TARGET_WRITE_SIMD16_SINGLE_SOURCE_REPLICATED     1
-#define GEN_DATAPORT_RENDER_TARGET_WRITE_SIMD8_DUAL_SOURCE_SUBSPAN01         2
-#define GEN_DATAPORT_RENDER_TARGET_WRITE_SIMD8_DUAL_SOURCE_SUBSPAN23         3
-#define GEN_DATAPORT_RENDER_TARGET_WRITE_SIMD8_SINGLE_SOURCE_SUBSPAN01       4
-
-#define GEN_DATAPORT_WRITE_MESSAGE_OWORD_BLOCK_WRITE                0
-#define GEN_DATAPORT_WRITE_MESSAGE_OWORD_DUAL_BLOCK_WRITE           1
-#define GEN_DATAPORT_WRITE_MESSAGE_MEDIA_BLOCK_WRITE                2
-#define GEN_DATAPORT_WRITE_MESSAGE_DWORD_SCATTERED_WRITE            3
-#define GEN_DATAPORT_WRITE_MESSAGE_RENDER_TARGET_WRITE              4
-#define GEN_DATAPORT_WRITE_MESSAGE_STREAMED_VERTEX_BUFFER_WRITE     5
-#define GEN_DATAPORT_WRITE_MESSAGE_FLUSH_RENDER_CACHE               7
-
-/* GEN6 */
-#define GEN6_DATAPORT_WRITE_MESSAGE_DWORD_ATOMIC_WRITE              7
-#define GEN6_DATAPORT_WRITE_MESSAGE_OWORD_BLOCK_WRITE               8
-#define GEN6_DATAPORT_WRITE_MESSAGE_OWORD_DUAL_BLOCK_WRITE          9
-#define GEN6_DATAPORT_WRITE_MESSAGE_MEDIA_BLOCK_WRITE               10
-#define GEN6_DATAPORT_WRITE_MESSAGE_DWORD_SCATTERED_WRITE           11
-#define GEN6_DATAPORT_WRITE_MESSAGE_RENDER_TARGET_WRITE             12
-#define GEN6_DATAPORT_WRITE_MESSAGE_STREAMED_VB_WRITE               13
-#define GEN6_DATAPORT_WRITE_MESSAGE_RENDER_TARGET_UNORM_WRITE       14
-
-/* GEN7 */
-#define GEN7_DATAPORT_WRITE_MESSAGE_OWORD_DUAL_BLOCK_WRITE          10
 
 #define GEN_MATH_FUNCTION_INV                              1
 #define GEN_MATH_FUNCTION_LOG                              2
@@ -390,7 +338,7 @@ enum GenMessageTarget {
  * register allocators have to be careful of this to avoid corrupting the "MRF"s
  * with actual GRF allocations.
  */
-#define GEN7_MRF_HACK_START 112.
+#define GEN_MRF_HACK_START 112.
 
 /** Number of message register file registers */
 #define GEN_MAX_MRF 16

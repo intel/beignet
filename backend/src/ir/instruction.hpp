@@ -209,7 +209,14 @@ namespace ir {
     /*! Address space that is manipulated here */
     AddressSpace getAddressSpace(void) const;
     /*! DWORD aligned means untyped read for Gen. That is what matters */
-    bool isDWORDAligned(void) const;
+    bool isAligned(void) const;
+    /*! Return the register that contains the addresses */
+    INLINE Register getAddress(void) const { return this->getSrc(0u); }
+    /*! Return the register that contain value valueID */
+    INLINE Register getValue(uint32_t valueID) const {
+      GBE_ASSERT(valueID < this->getValueNum());
+      return this->getSrc(valueID + 1u);
+    }
     /*! Return true if the given instruction is an instance of this class */
     static bool isClassOf(const Instruction &insn);
   };
@@ -227,7 +234,13 @@ namespace ir {
     /*! Address space that is manipulated here */
     AddressSpace getAddressSpace(void) const;
     /*! DWORD aligned means untyped read for Gen. That is what matters */
-    bool isDWORDAligned(void) const;
+    bool isAligned(void) const;
+    /*! Return the register that contains the addresses */
+    INLINE Register getAddress(void) const { return this->getSrc(0u); }
+    /*! Return the register that contain value valueID */
+    INLINE Register getValue(uint32_t valueID) const {
+      return this->getDst(valueID);
+    }
     /*! Return true if the given instruction is an instance of this class */
     static bool isClassOf(const Instruction &insn);
   };
