@@ -136,6 +136,8 @@ cl_kernel_set_arg(cl_kernel k, cl_uint index, size_t sz, const void *value)
     if (UNLIKELY(arg_type == GBE_ARG_IMAGE))
       return CL_INVALID_ARG_VALUE;
   cl_mem_add_ref(mem);
+  if (k->args[index].mem)
+    cl_mem_delete(k->args[index].mem);
   k->args[index].mem = mem;
   k->args[index].is_set = 1;
   k->args[index].local_sz = 0;

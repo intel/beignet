@@ -414,6 +414,9 @@ intel_gpgpu_state_init(intel_gpgpu_t *state,
 {
   dri_bo *bo;
 
+  /* Binded buffers */
+  state->binded_n = 0;
+
   /* URB */
   state->urb.num_cs_entries = 64;
   state->urb.size_cs_entry = size_cs_entry;
@@ -435,7 +438,7 @@ intel_gpgpu_state_init(intel_gpgpu_t *state,
   if(state->surface_heap_b.bo)
     dri_bo_unreference(state->surface_heap_b.bo);
   bo = dri_bo_alloc(state->drv->bufmgr, 
-                    "interface descriptor", 
+                    "SURFACE_HEAP",
                     sizeof(surface_heap_t),
                     32);
   assert(bo);
@@ -447,7 +450,7 @@ intel_gpgpu_state_init(intel_gpgpu_t *state,
   if(state->idrt_b.bo)
     dri_bo_unreference(state->idrt_b.bo);
   bo = dri_bo_alloc(state->drv->bufmgr, 
-                    "interface discriptor", 
+                    "IDRT",
                     MAX_IF_DESC * sizeof(struct gen6_interface_descriptor),
                     32);
   assert(bo);
@@ -491,24 +494,16 @@ static void
 intel_gpgpu_map_address_space(intel_gpgpu_t *state)
 {
   surface_heap_t *heap = state->surface_heap_b.bo->virtual;
-  gen7_surface_state_t *ss0 = (gen7_surface_state_t *) heap->surface[0];
-  gen7_surface_state_t *ss1 = (gen7_surface_state_t *) heap->surface[1];
-  const uint32_t sz = (1<<30) - 1;
-  //const uint32_t sz = 1024*1024-1;
-  memset(ss0, 0, sizeof(gen7_surface_state_t));
-  memset(ss1, 0, sizeof(gen7_surface_state_t));
-  ss1->ss0.surface_type = ss0->ss0.surface_type = I965_SURFACE_BUFFER;
-  ss1->ss0.surface_format = ss0->ss0.surface_format = I965_SURFACEFORMAT_RAW;
-  ss0->ss1.base_addr = 0;
-  ss1->ss1.base_addr = 1<<30;
-  ss1->ss2.width  = ss0->ss2.width  = sz & 127;          /* bits 6:0 of sz */
-  ss1->ss2.height = ss0->ss2.height = (sz >> 7) & 16383; /* bits 20:7 of sz */
-  ss1->ss3.depth  = ss0->ss3.depth  = (sz >> 21) & 1023; /* bits 30:21 of sz */
-  ss1->ss5.cache_control = ss0->ss5.cache_control = cc_llc_l3;
-  heap->binding_table[0] = offsetof(surface_heap_t, surface)
-                         + 0 * sizeof(gen7_surface_state_t);
-  heap->binding_table[1] = offsetof(surface_heap_t, surface)
-                         + 1 * sizeof(gen7_surface_state_t);
+  gen7_surface_state_t *ss = (gen7_surface_state_t *) heap->surface[0];
+  memset(ss, 0, sizeof(gen7_surface_state_t));
+  ss->ss0.surface_type = I965_SURFACE_BUFFER;
+  ss->ss0.surface_format = I965_SURFACEFORMAT_RAW;
+  ss->ss1.base_addr = 0;
+  ss->ss2.width  = 127;   /* bits 6:0 of sz */
+  ss->ss2.height = 16383; /* bits 20:7 of sz */
+  ss->ss3.depth  = 1023;  /* bits 30:21 of sz */
+  ss->ss5.cache_control = cc_llc_l3;
+  heap->binding_table[0] = offsetof(surface_heap_t, surface);
 }
 
 static void
