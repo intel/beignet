@@ -105,6 +105,7 @@ namespace gbe
   {
     /*! Empty constructor */
     INLINE GenReg(void) {}
+
     /*! General constructor */
     INLINE GenReg(uint32_t file,
                   uint32_t nr,
@@ -244,6 +245,14 @@ namespace gbe
       return retype(vec1(file, nr, subnr), GEN_TYPE_UD);
     }
 
+    static INLINE GenReg d8(uint32_t file, uint32_t nr, uint32_t subnr) {
+      return retype(vec8(file, nr, subnr), GEN_TYPE_D);
+    }
+
+    static INLINE GenReg d1(uint32_t file, uint32_t nr, uint32_t subnr) {
+      return retype(vec1(file, nr, subnr), GEN_TYPE_D);
+    }
+
     static INLINE GenReg imm(uint32_t type) {
       return GenReg(GEN_IMMEDIATE_VALUE,
                     0,
@@ -341,6 +350,10 @@ namespace gbe
       return ud8(GEN_GENERAL_REGISTER_FILE, nr, subnr);
     }
 
+    static INLINE GenReg d8grf(uint32_t nr, uint32_t subnr) {
+      return d8(GEN_GENERAL_REGISTER_FILE, nr, subnr);
+    }
+
     static INLINE GenReg ud16grf(uint32_t nr, uint32_t subnr) {
       return ud16(GEN_GENERAL_REGISTER_FILE, nr, subnr);
     }
@@ -383,6 +396,11 @@ namespace gbe
 
     static INLINE GenReg mask(uint32_t subnr) {
       return uw1(GEN_ARCHITECTURE_REGISTER_FILE, GEN_ARF_MASK, subnr);
+    }
+
+    static INLINE GenReg next(GenReg reg) {
+      reg.nr++;
+      return reg;
     }
 
     static INLINE GenReg stride(GenReg reg, uint32_t vstride, uint32_t width, uint32_t hstride) {
@@ -495,7 +513,7 @@ namespace gbe
   struct GenInstructionState
   {
     uint32_t execWidth:6;
-    uint32_t quaterControl:2;
+    uint32_t quarterControl:2;
     uint32_t noMask:1;
   };
 
@@ -508,6 +526,16 @@ namespace gbe
     enum { MAX_INSN_NUM = 8192 };
     /*! Size of the stack (should be large enough) */
     enum { MAX_STATE_NUM = 16 };
+    /*! Push the current instruction state */
+    INLINE void pushState(void) {
+      assert(stateNum < MAX_STATE_NUM);
+      stack[stateNum++] = curr;
+    }
+    /*! Pop the latest pushed state */
+    INLINE void popState(void) {
+      assert(stateNum > 0);
+      curr = stack[--stateNum];
+    }
     /*! TODO Update that with a vector */
     GenInstruction store[MAX_INSN_NUM]; 
     /*! Number of instructions currently pushed */
@@ -515,7 +543,9 @@ namespace gbe
     /*! Current instruction state to use */
     GenInstructionState curr;
     /*! State used to encode the instructions */
-    GenInstructionState stack[MAX_STATE_NUM]; 
+    GenInstructionState stack[MAX_STATE_NUM];
+    /*! Number of states currently pushed */
+    uint32_t stateNum;
     /*! Gen generation to encode */
     uint32_t gen;
 
@@ -609,7 +639,10 @@ namespace gbe
     ////////////////////////////////////////////////////////////////////////
     // Helper functions to encode
     ////////////////////////////////////////////////////////////////////////
+    void setHeader(GenInstruction *insn);
     void setExecutionWidth(GenInstruction *insn);
+    void setQuarterControl(GenInstruction *insn);
+    void setNoMask(GenInstruction *insn);
     void setDst(GenInstruction *insn, GenReg dest);
     void setSrc0(GenInstruction *insn, GenReg reg);
     void setSrc1(GenInstruction *insn, GenReg reg);

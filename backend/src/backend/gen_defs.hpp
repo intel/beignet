@@ -352,7 +352,7 @@ struct GenInstruction
       uint32_t access_mode:1;
       uint32_t mask_control:1;
       uint32_t dependency_control:2;
-      uint32_t compression_control:2; /* gen6: quater control */
+      uint32_t quarter_control:2;
       uint32_t thread_control:2;
       uint32_t predicate_control:4;
       uint32_t predicate_inverse:1;

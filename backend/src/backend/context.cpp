@@ -23,6 +23,7 @@
  */
 #include "backend/context.hpp"
 #include "backend/program.hpp"
+#include "backend/gen_eu.hpp"
 #include "ir/unit.hpp"
 #include "ir/function.hpp"
 #include "ir/profile.hpp"
@@ -107,10 +108,11 @@ namespace gbe
         specialRegs.insert(reg);
       }
     });
-    if (this->simdWidth == 8)
-      kernel->curbeSize = ALIGN(kernel->curbeSize, 32); // 32 == GEN_REG_SIZE
-    else
-      kernel->curbeSize = ALIGN(kernel->curbeSize, 64); // 64 == 2*GEN_REG_SIZE
+
+    kernel->curbeSize = ALIGN(kernel->curbeSize, GEN_REG_SIZE);
+    if (this->simdWidth == 16)
+      if ((kernel->curbeSize + GEN_REG_SIZE) % (2*GEN_REG_SIZE) != 0)
+        kernel->curbeSize += GEN_REG_SIZE;
 
     // Local IDs always go at the end of the curbe
     const size_t localIDSize = sizeof(uint32_t) * this->simdWidth;

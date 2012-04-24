@@ -131,6 +131,7 @@ namespace gbe
   void GenContext::emitUnaryInstruction(const ir::UnaryInstruction &insn) {
     GBE_ASSERT(insn.getOpcode() == ir::OP_MOV);
     p->MOV(reg(insn.getDst(0)), reg(insn.getSrc(0)));
+    //p->MOV(GenReg::retype(reg(insn.getDst(0)), GEN_TYPE_UD), GenReg::retype(reg(insn.getSrc(0)), GEN_TYPE_UD));
   }
 
   void GenContext::emitBinaryInstruction(const ir::BinaryInstruction &insn) {
@@ -140,6 +141,9 @@ namespace gbe
     GenReg dst = reg(insn.getDst(0));
     GenReg src0 = reg(insn.getSrc(0));
     GenReg src1 = reg(insn.getSrc(1));
+    GBE_ASSERT(isScalarReg(insn.getDst(0)) == false);
+    const bool src0Scalar = isScalarReg(insn.getSrc(0));
+    const bool src1Scalar = isScalarReg(insn.getSrc(1));
 
     // Default type is FLOAT
     GBE_ASSERT(type == TYPE_U32 || type == TYPE_S32 || type == TYPE_FLOAT);
@@ -158,10 +162,31 @@ namespace gbe
       case OP_ADD: p->ADD(dst, src0, src1); break;
       case OP_MUL: 
       {
-        p->MUL(dst, src0, src1);
-#if 0
-        if (type == TYPE_FLOAT) p->MUL(dst, src0, src1);
+    //    p->MUL(dst, src0, src1);
+#if 1
+        if (type == TYPE_FLOAT)
+          p->MUL(dst, src0, src1);
         else {
+          const uint32_t width = p->curr.execWidth;
+          p->pushState();
+          p->curr.execWidth = 8;
+          p->curr.quarterControl = GEN_COMPRESSION_Q1;
+          p->MUL(GenReg::retype(GenReg::acc(), GEN_TYPE_D), src0, src1);
+          p->MACH(GenReg::retype(GenReg::null(), GEN_TYPE_D), src0, src1);
+          p->MOV(dst, GenReg::retype(GenReg::acc(), GEN_TYPE_D));
+          if (width == 16) {
+            p->curr.noMask = 1;
+            GenReg nextSrc0 = src0, nextSrc1 = src1;
+            if (src0Scalar == false) nextSrc0 = GenReg::next(src0);
+            if (src1Scalar == false) nextSrc1 = GenReg::next(src1);
+            p->MUL(GenReg::retype(GenReg::acc(), GEN_TYPE_D), nextSrc0, nextSrc1);
+            p->MACH(GenReg::retype(GenReg::null(), GEN_TYPE_D), nextSrc0, nextSrc1);
+            p->curr.quarterControl = GEN_COMPRESSION_Q2;
+            p->MOV(GenReg::d8grf(116, 0), GenReg::retype(GenReg::acc(), GEN_TYPE_D));
+            p->curr.noMask = 0;
+            p->MOV(GenReg::next(dst), GenReg::d8grf(116, 0));
+          }
+          p->popState();
 
         }
 #endif
@@ -218,6 +243,7 @@ namespace gbe
     const GenReg value = reg(insn.getValue(0));
     // XXX remove that later. Now we just copy everything to GRFs to make it
     // contiguous
+#if 1
     if (this->simdWidth == 8) {
       p->MOV(GenReg::vec8grf(112, 0), GenReg::retype(address, GEN_TYPE_F));
       p->MOV(GenReg::vec8grf(113, 0), GenReg::retype(value, GEN_TYPE_F));
@@ -228,6 +254,19 @@ namespace gbe
       p->UNTYPED_WRITE(GenReg::vec16grf(112, 0), 0, 1);
     } else
       NOT_IMPLEMENTED;
+#else
+    if (this->simdWidth == 8) {
+      p->MOV(GenReg::ud8grf(112, 0), GenReg::retype(address, GEN_TYPE_UD));
+      p->MOV(GenReg::ud8grf(113, 0), GenReg::retype(value, GEN_TYPE_UD));
+      p->UNTYPED_WRITE(GenReg::vec8grf(112, 0), 0, 1);
+    } else if (this->simdWidth == 16) {
+      p->MOV(GenReg::ud16grf(112, 0), GenReg::retype(address, GEN_TYPE_UD));
+      p->MOV(GenReg::ud16grf(114, 0), GenReg::retype(value, GEN_TYPE_UD));
+      p->UNTYPED_WRITE(GenReg::vec16grf(112, 0), 0, 1);
+    } else
+      NOT_IMPLEMENTED;
+
+#endif
   }
   void GenContext::emitFenceInstruction(const ir::FenceInstruction &insn) {}
   void GenContext::emitLabelInstruction(const ir::LabelInstruction &insn) {}
