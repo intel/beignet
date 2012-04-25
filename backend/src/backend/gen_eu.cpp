@@ -591,8 +591,8 @@ namespace gbe
   void GenEmitter::NOP(void)
   {
     GenInstruction *insn = this->next(GEN_OPCODE_NOP);
-    this->setDst(insn, GenReg::retype(GenReg::vec4grf(0,0), GEN_TYPE_UD));
-    this->setSrc0(insn, GenReg::retype(GenReg::vec4grf(0,0), GEN_TYPE_UD));
+    this->setDst(insn, GenReg::retype(GenReg::f4grf(0,0), GEN_TYPE_UD));
+    this->setSrc0(insn, GenReg::retype(GenReg::f4grf(0,0), GEN_TYPE_UD));
     this->setSrc1(insn, GenReg::immud(0x0));
   }
 
@@ -767,18 +767,13 @@ namespace gbe
                          return_format);
   }
 
-  void GenEmitter::EOT(uint32_t msg_nr)
+  void GenEmitter::EOT(uint32_t msg)
   {
     GenInstruction *insn = NULL;
 
-    this->pushState();
-    this->curr.execWidth = 8;
-    insn = this->MOV(GenReg::vec8grf(msg_nr,0), GenReg::vec8grf(0,0));
-    this->popState();
-    insn->header.mask_control = GEN_MASK_DISABLE;
     insn = this->next(GEN_OPCODE_SEND);
     this->setDst(insn, GenReg::retype(GenReg::null(), GEN_TYPE_UD));
-    this->setSrc0(insn, GenReg::ud8grf(msg_nr,0));
+    this->setSrc0(insn, GenReg::ud8grf(msg,0));
     this->setSrc1(insn, GenReg::immud(0));
     insn->header.execution_size = GEN_WIDTH_8;
     insn->bits3.spawner_gen5.resource = GEN_DO_NOT_DEREFERENCE_URB;

@@ -171,8 +171,10 @@ namespace gbe {
     return kernel->getArgType(argID);
   }
 
-  static uint32_t kernelGetSIMDWidth(gbe_kernel kernel) {
-    return 16u;
+  static uint32_t kernelGetSIMDWidth(gbe_kernel genKernel) {
+    if (genKernel == NULL) return GBE_ARG_INVALID;
+    const gbe::Kernel *kernel = (const gbe::Kernel*) genKernel;
+    return kernel->getSIMDWidth();
   }
 
   static int32_t kernelGetCurbeOffset(gbe_kernel genKernel, gbe_curbe_type type, uint32_t subType) {

@@ -177,26 +177,26 @@ namespace gbe
 
     static INLINE GenReg vec2(uint32_t file, uint32_t nr, uint32_t subnr) {
       return GenReg(file,
-          nr,
-          subnr,
-          GEN_TYPE_F,
-          GEN_VERTICAL_STRIDE_2,
-          GEN_WIDTH_2,
-          GEN_HORIZONTAL_STRIDE_1,
-          GEN_SWIZZLE_XYXY,
-          WRITEMASK_XY);
+                    nr,
+                    subnr,
+                    GEN_TYPE_F,
+                    GEN_VERTICAL_STRIDE_2,
+                    GEN_WIDTH_2,
+                    GEN_HORIZONTAL_STRIDE_1,
+                    GEN_SWIZZLE_XYXY,
+                    WRITEMASK_XY);
     }
 
     static INLINE GenReg vec1(uint32_t file, uint32_t nr, uint32_t subnr) {
       return GenReg(file,
-          nr,
-          subnr,
-          GEN_TYPE_F,
-          GEN_VERTICAL_STRIDE_0,
-          GEN_WIDTH_1,
-          GEN_HORIZONTAL_STRIDE_0,
-          GEN_SWIZZLE_XXXX,
-          WRITEMASK_X);
+                    nr,
+                    subnr,
+                    GEN_TYPE_F,
+                    GEN_VERTICAL_STRIDE_0,
+                    GEN_WIDTH_1,
+                    GEN_HORIZONTAL_STRIDE_0,
+                    GEN_SWIZZLE_XXXX,
+                    WRITEMASK_X);
     }
 
     static INLINE GenReg retype(GenReg reg, uint32_t type) {
@@ -326,23 +326,23 @@ namespace gbe
       return immuw(reg.nr * GEN_REG_SIZE + reg.subnr);
     }
 
-    static INLINE GenReg vec1grf(uint32_t nr, uint32_t subnr) {
+    static INLINE GenReg f1grf(uint32_t nr, uint32_t subnr) {
       return vec1(GEN_GENERAL_REGISTER_FILE, nr, subnr);
     }
 
-    static INLINE GenReg vec2grf(uint32_t nr, uint32_t subnr) {
+    static INLINE GenReg f2grf(uint32_t nr, uint32_t subnr) {
       return vec2(GEN_GENERAL_REGISTER_FILE, nr, subnr);
     }
 
-    static INLINE GenReg vec4grf(uint32_t nr, uint32_t subnr) {
+    static INLINE GenReg f4grf(uint32_t nr, uint32_t subnr) {
       return vec4(GEN_GENERAL_REGISTER_FILE, nr, subnr);
     }
 
-    static INLINE GenReg vec8grf(uint32_t nr, uint32_t subnr) {
+    static INLINE GenReg f8grf(uint32_t nr, uint32_t subnr) {
       return vec8(GEN_GENERAL_REGISTER_FILE, nr, subnr);
     }
 
-    static INLINE GenReg vec16grf(uint32_t nr, uint32_t subnr) {
+    static INLINE GenReg f16grf(uint32_t nr, uint32_t subnr) {
       return vec16(GEN_GENERAL_REGISTER_FILE, nr, subnr);
     }
 
@@ -465,7 +465,7 @@ namespace gbe
     }
 
     static INLINE GenReg vec4_indirect(uint32_t subnr, int offset) {
-      GenReg reg =  vec4grf(0, 0);
+      GenReg reg =  f4grf(0, 0);
       reg.subnr = subnr;
       reg.address_mode = GEN_ADDRESS_REGISTER_INDIRECT_REGISTER;
       reg.dw1.bits.indirect_offset = offset;
@@ -473,7 +473,7 @@ namespace gbe
     }
 
     static INLINE GenReg vec1_indirect(uint32_t subnr, int offset) {
-      GenReg reg =  vec1grf(0, 0);
+      GenReg reg =  f1grf(0, 0);
       reg.subnr = subnr;
       reg.address_mode = GEN_ADDRESS_REGISTER_INDIRECT_REGISTER;
       reg.dw1.bits.indirect_offset = offset;
@@ -527,12 +527,12 @@ namespace gbe
     /*! Size of the stack (should be large enough) */
     enum { MAX_STATE_NUM = 16 };
     /*! Push the current instruction state */
-    INLINE void pushState(void) {
+    INLINE void push(void) {
       assert(stateNum < MAX_STATE_NUM);
       stack[stateNum++] = curr;
     }
     /*! Pop the latest pushed state */
-    INLINE void popState(void) {
+    INLINE void pop(void) {
       assert(stateNum > 0);
       curr = stack[--stateNum];
     }

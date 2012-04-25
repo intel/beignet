@@ -51,6 +51,7 @@ namespace gbe
 
   Kernel *Context::compileKernel(void) {
     this->kernel = this->allocateKernel();
+    this->kernel->simdWidth = this->simdWidth;
     this->buildPatchList();
     this->buildArgList();
     this->buildUsedLabels();

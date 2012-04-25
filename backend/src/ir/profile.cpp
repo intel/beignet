@@ -31,11 +31,11 @@ namespace ir {
   namespace ocl
   {
 #if GBE_DEBUG
-#define DECL_NEW_REG(FAMILY, REG)       \
-   r = fn.newRegister(FAMILY_DWORD);    \
+#define DECL_NEW_REG(FAMILY, REG) \
+   r = fn.newRegister(FAMILY_DWORD); \
    GBE_ASSERT(r == REG);
 #else
-#define DECL_NEW_REG(FAMILY, REG)       \
+#define DECL_NEW_REG(FAMILY, REG) \
    fn.newRegister(FAMILY_DWORD);
 #endif /* GBE_DEBUG */
     static void init(Function &fn) {

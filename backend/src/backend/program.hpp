@@ -87,6 +87,8 @@ namespace gbe {
     int32_t getCurbeOffset(gbe_curbe_type type, uint32_t subType) const;
     /*! Get the curbe size required by the kernel */
     uint32_t getCurbeSize(void) const { return this->curbeSize; }
+    /*! Get the SIMD width for the kernel */
+    uint32_t getSIMDWidth(void) const { return this->simdWidth; }
   protected:
     friend class Context;       //!< Owns the kernels
     const std::string name;     //!< Kernel name
@@ -94,6 +96,7 @@ namespace gbe {
     uint32_t argNum;            //!< Number of function arguments
     vector<PatchInfo> patches;  //!< Indicates how to build the curbe
     uint32_t curbeSize;         //!< Size of the data to push
+    uint32_t simdWidth;         //!< SIMD size for the kernel
   };
 
   /*! Describe a compiled program */
