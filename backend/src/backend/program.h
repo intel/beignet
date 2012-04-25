@@ -71,7 +71,8 @@ enum gbe_curbe_type {
   GBE_CURBE_IMAGE_WIDTH,
   GBE_CURBE_IMAGE_HEIGHT,
   GBE_CURBE_IMAGE_DEPTH,
-  GBE_CURBE_KERNEL_ARGUMENT
+  GBE_CURBE_KERNEL_ARGUMENT,
+  GBE_CURBE_BLOCK_IP
 };
 
 /*! Create a new program from the given source code (zero terminated string) */

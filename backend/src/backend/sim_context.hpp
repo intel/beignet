@@ -54,6 +54,8 @@ namespace gbe
     void emitCurbeLoad(void);
     /*! Emit the masking code (mask / UIP) */
     void emitMaskingCode(void);
+    /*! Emit the instructions */
+    void emitInstructionStream(void);
     /*! Implements base class */
     virtual Kernel *allocateKernel(void);
     std::ofstream o; //!< Where to output the c++ string

@@ -131,7 +131,6 @@ namespace gbe
   void GenContext::emitUnaryInstruction(const ir::UnaryInstruction &insn) {
     GBE_ASSERT(insn.getOpcode() == ir::OP_MOV);
     p->MOV(reg(insn.getDst(0)), reg(insn.getSrc(0)));
-    //p->MOV(GenReg::retype(reg(insn.getDst(0)), GEN_TYPE_UD), GenReg::retype(reg(insn.getSrc(0)), GEN_TYPE_UD));
   }
 
   void GenContext::emitBinaryInstruction(const ir::BinaryInstruction &insn) {
@@ -243,7 +242,6 @@ namespace gbe
     const GenReg value = reg(insn.getValue(0));
     // XXX remove that later. Now we just copy everything to GRFs to make it
     // contiguous
-#if 1
     if (this->simdWidth == 8) {
       p->MOV(GenReg::vec8grf(112, 0), GenReg::retype(address, GEN_TYPE_F));
       p->MOV(GenReg::vec8grf(113, 0), GenReg::retype(value, GEN_TYPE_F));
@@ -254,19 +252,6 @@ namespace gbe
       p->UNTYPED_WRITE(GenReg::vec16grf(112, 0), 0, 1);
     } else
       NOT_IMPLEMENTED;
-#else
-    if (this->simdWidth == 8) {
-      p->MOV(GenReg::ud8grf(112, 0), GenReg::retype(address, GEN_TYPE_UD));
-      p->MOV(GenReg::ud8grf(113, 0), GenReg::retype(value, GEN_TYPE_UD));
-      p->UNTYPED_WRITE(GenReg::vec8grf(112, 0), 0, 1);
-    } else if (this->simdWidth == 16) {
-      p->MOV(GenReg::ud16grf(112, 0), GenReg::retype(address, GEN_TYPE_UD));
-      p->MOV(GenReg::ud16grf(114, 0), GenReg::retype(value, GEN_TYPE_UD));
-      p->UNTYPED_WRITE(GenReg::vec16grf(112, 0), 0, 1);
-    } else
-      NOT_IMPLEMENTED;
-
-#endif
   }
   void GenContext::emitFenceInstruction(const ir::FenceInstruction &insn) {}
   void GenContext::emitLabelInstruction(const ir::LabelInstruction &insn) {}

@@ -55,6 +55,7 @@ namespace gbe
         usedRegs.insert(insn.getDst(dstID));
     });
 
+    // Declare register variables
     const uint32_t regNum = fn.regNum();
     bool lid0 = false, lid1 = false, lid2 = false; // for local id registers
     for (uint32_t regID = 0; regID < regNum; ++regID) {
@@ -276,8 +277,8 @@ namespace gbe
 #undef LOAD_SPECIAL_REG
 
   SVAR(OCL_GCC_SIM_COMPILER, "gcc");
-  SVAR(OCL_GCC_SIM_COMPILER_OPTIONS, "-Wall -fPIC -shared -msse -msse2 -msse3 -mssse3 -msse4.1 -g -O3");
   SVAR(OCL_ICC_SIM_COMPILER, "icc");
+  SVAR(OCL_GCC_SIM_COMPILER_OPTIONS, "-Wall -fPIC -shared -msse -msse2 -msse3 -mssse3 -msse4.1 -g -O3");
   SVAR(OCL_ICC_SIM_COMPILER_OPTIONS, "-Wall -ldl -fabi-version=2 -fPIC -shared -O3 -g");
   BVAR(OCL_USE_ICC, false);
 

@@ -141,38 +141,38 @@ namespace gbe
 
     static INLINE GenReg vec16(uint32_t file, uint32_t nr, uint32_t subnr) {
       return GenReg(file,
-          nr,
-          subnr,
-          GEN_TYPE_F,
-          GEN_VERTICAL_STRIDE_8,
-          GEN_WIDTH_8,
-          GEN_HORIZONTAL_STRIDE_1,
-          GEN_SWIZZLE_XYZW,
-          WRITEMASK_XYZW);
+                    nr,
+                    subnr,
+                    GEN_TYPE_F,
+                    GEN_VERTICAL_STRIDE_8,
+                    GEN_WIDTH_8,
+                    GEN_HORIZONTAL_STRIDE_1,
+                    GEN_SWIZZLE_XYZW,
+                    WRITEMASK_XYZW);
     }
 
     static INLINE GenReg vec8(uint32_t file, uint32_t nr, uint32_t subnr) {
       return GenReg(file,
-          nr,
-          subnr,
-          GEN_TYPE_F,
-          GEN_VERTICAL_STRIDE_8,
-          GEN_WIDTH_8,
-          GEN_HORIZONTAL_STRIDE_1,
-          GEN_SWIZZLE_XYZW,
-          WRITEMASK_XYZW);
+                    nr,
+                    subnr,
+                    GEN_TYPE_F,
+                    GEN_VERTICAL_STRIDE_8,
+                    GEN_WIDTH_8,
+                    GEN_HORIZONTAL_STRIDE_1,
+                    GEN_SWIZZLE_XYZW,
+                    WRITEMASK_XYZW);
     }
 
     static INLINE GenReg vec4(uint32_t file, uint32_t nr, uint32_t subnr) {
       return GenReg(file,
-          nr,
-          subnr,
-          GEN_TYPE_F,
-          GEN_VERTICAL_STRIDE_4,
-          GEN_WIDTH_4,
-          GEN_HORIZONTAL_STRIDE_1,
-          GEN_SWIZZLE_XYZW,
-          WRITEMASK_XYZW);
+                    nr,
+                    subnr,
+                    GEN_TYPE_F,
+                    GEN_VERTICAL_STRIDE_4,
+                    GEN_WIDTH_4,
+                    GEN_HORIZONTAL_STRIDE_1,
+                    GEN_SWIZZLE_XYZW,
+                    WRITEMASK_XYZW);
     }
 
     static INLINE GenReg vec2(uint32_t file, uint32_t nr, uint32_t subnr) {

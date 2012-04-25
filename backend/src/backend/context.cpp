@@ -34,7 +34,6 @@
 
 namespace gbe
 {
-
   IVAR(OCL_SIMD_WIDTH, 8, 16, 32);
 
   Context::Context(const ir::Unit &unit, const std::string &name) :
@@ -76,18 +75,42 @@ namespace gbe
       }
     }
 
+    // Already inserted registers go here
+    set<ir::Register> specialRegs;
+
+    // We insert the block IP mask first
+    kernel->patches.push_back(PatchInfo(GBE_CURBE_BLOCK_IP, 0, kernel->curbeSize));
+    kernel->curbeSize += this->simdWidth * sizeof(uint16_t);
+
+    // Then the local IDs (not scalar, so we align them properly)
+    kernel->curbeSize = ALIGN(kernel->curbeSize, GEN_REG_SIZE);
+    if (this->simdWidth == 16 || this->simdWidth == 32)
+      if ((kernel->curbeSize + GEN_REG_SIZE) % (2*GEN_REG_SIZE) != 0)
+        kernel->curbeSize += GEN_REG_SIZE;
+    const size_t localIDSize = sizeof(uint32_t) * this->simdWidth;
+    const PatchInfo lid0(GBE_CURBE_LOCAL_ID_X, 0, kernel->curbeSize);
+    kernel->curbeSize += localIDSize;
+    const PatchInfo lid1(GBE_CURBE_LOCAL_ID_Y, 0, kernel->curbeSize);
+    kernel->curbeSize += localIDSize;
+    const PatchInfo lid2(GBE_CURBE_LOCAL_ID_Z, 0, kernel->curbeSize);
+    kernel->curbeSize += localIDSize;
+    kernel->patches.push_back(lid0);
+    kernel->patches.push_back(lid1);
+    kernel->patches.push_back(lid2);
+    specialRegs.insert(ir::ocl::lid0);
+    specialRegs.insert(ir::ocl::lid1);
+    specialRegs.insert(ir::ocl::lid2);
+
     // Go over all the instructions and find the special register value we need
     // to push
-#define INSERT_REG(SPECIAL_REG, PATCH)                              \
-  if (reg == ir::ocl::SPECIAL_REG) {                                \
-    if (specialRegs.find(reg) != specialRegs.end()) continue;       \
+#define INSERT_REG(SPECIAL_REG, PATCH) \
+  if (reg == ir::ocl::SPECIAL_REG) { \
+    if (specialRegs.find(reg) != specialRegs.end()) continue; \
     const PatchInfo patch(GBE_CURBE_##PATCH, 0, kernel->curbeSize); \
-    kernel->patches.push_back(patch);                               \
-    kernel->curbeSize += ptrSize;                                   \
+    kernel->patches.push_back(patch); \
+    kernel->curbeSize += ptrSize; \
   } else
-    set<ir::Register> specialRegs; // already inserted registers
     fn.foreachInstruction([&](const ir::Instruction &insn) {
-      // Special registers are immutable. So only check sources
       const uint32_t srcNum = insn.getSrcNum();
       for (uint32_t srcID = 0; srcID < srcNum; ++srcID) {
         const ir::Register reg = insn.getSrc(srcID);
@@ -108,24 +131,14 @@ namespace gbe
         specialRegs.insert(reg);
       }
     });
-
-    kernel->curbeSize = ALIGN(kernel->curbeSize, GEN_REG_SIZE);
-    if (this->simdWidth == 16)
-      if ((kernel->curbeSize + GEN_REG_SIZE) % (2*GEN_REG_SIZE) != 0)
-        kernel->curbeSize += GEN_REG_SIZE;
-
-    // Local IDs always go at the end of the curbe
-    const size_t localIDSize = sizeof(uint32_t) * this->simdWidth;
-    const PatchInfo lid0(GBE_CURBE_LOCAL_ID_X, 0, kernel->curbeSize+0*localIDSize);
-    const PatchInfo lid1(GBE_CURBE_LOCAL_ID_Y, 0, kernel->curbeSize+1*localIDSize);
-    const PatchInfo lid2(GBE_CURBE_LOCAL_ID_Z, 0, kernel->curbeSize+2*localIDSize);
-    kernel->patches.push_back(lid0);
-    kernel->patches.push_back(lid1);
-    kernel->patches.push_back(lid2);
+#undef INSERT_REG
 
     // After this point the vector is immutable. Sorting it will make
     // research faster
     std::sort(kernel->patches.begin(), kernel->patches.end());
+
+    // Align it on 128 bytes properly
+    kernel->curbeSize = ALIGN(kernel->curbeSize, GEN_REG_SIZE);
   }
 
   void Context::buildArgList(void) {
@@ -171,8 +184,7 @@ namespace gbe
 
   bool Context::isScalarReg(const ir::Register &reg) const {
     GBE_ASSERT(fn.getProfile() == ir::Profile::PROFILE_OCL);
-    if (fn.getInput(reg) != NULL)
-      return true;
+    if (fn.getInput(reg) != NULL) return true;
     if (reg == ir::ocl::groupid0  ||
         reg == ir::ocl::groupid1  ||
         reg == ir::ocl::groupid2  ||
