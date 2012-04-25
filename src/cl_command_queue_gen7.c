@@ -40,9 +40,9 @@ cl_kernel_compute_batch_sz(cl_kernel k)
 static cl_int
 cl_set_local_ids(char *data,
                  const size_t *local_wk_sz,
+                 const size_t *id_offset,
                  size_t simd_sz,
                  size_t cst_sz,
-                 size_t id_offset,
                  size_t thread_n)
 {
   uint32_t *ids[3] = {NULL,NULL,NULL};
@@ -63,11 +63,10 @@ cl_set_local_ids(char *data,
 
   /* Copy them to the constant buffer */
   curr = 0;
-  data += id_offset;
   for (i = 0; i < thread_n; ++i, data += cst_sz) {
-    uint32_t *ids0 = (uint32_t *) (data + 0);
-    uint32_t *ids1 = (uint32_t *) (data + 1*simd_sz*sizeof(uint32_t));
-    uint32_t *ids2 = (uint32_t *) (data + 2*simd_sz*sizeof(uint32_t));
+    uint32_t *ids0 = (uint32_t *) (data + id_offset[0]);
+    uint32_t *ids1 = (uint32_t *) (data + id_offset[1]);
+    uint32_t *ids2 = (uint32_t *) (data + id_offset[2]);
     for (j = 0; j < simd_sz; ++j, ++curr) {
       ids0[j] = ids[0][curr];
       ids1[j] = ids[1][curr];
@@ -119,8 +118,8 @@ cl_command_queue_ND_range_gen7(cl_command_queue queue,
   cl_buffer private_bo = NULL, scratch_bo = NULL;
   cl_gpgpu_kernel kernel;
   const uint32_t simd_sz = cl_kernel_get_simd_width(ker);
-  size_t i, batch_sz = 0u, local_sz = 0u, local_id_sz = 0u, cst_sz = ker->curbe_sz;
-  size_t thread_n = 0u, id_offset = 0u;
+  size_t i, batch_sz = 0u, local_sz = 0u, cst_sz = ker->curbe_sz;
+  size_t thread_n = 0u, id_offset[3];
   cl_int err = CL_SUCCESS;
 
   /* Setup kernel */
@@ -135,12 +134,10 @@ cl_command_queue_ND_range_gen7(cl_command_queue queue,
   curbe = alloca(ker->curbe_sz);
   cl_curbe_fill(ker, curbe, global_wk_off, global_wk_sz, local_wk_sz);
 
-  /* Compute the number of HW threads we are going to need */
+  /* Compute the number of HW threads we need */
   TRY (cl_kernel_work_group_sz, ker, local_wk_sz, 3, &local_sz);
   kernel.thread_n = thread_n = local_sz / simd_sz;
-  id_offset = cst_sz = ALIGN(cst_sz, 32); /* Align the user data on 32 bytes */
-  local_id_sz = 3 * simd_sz * sizeof(uint32_t); /* Add local IDs */
-  kernel.cst_sz = cst_sz += local_id_sz;
+  kernel.cst_sz = cst_sz;
 
   /* Setup the kernel */
   cl_gpgpu_state_init(gpgpu, ctx->device->max_compute_unit, cst_sz / 32);
@@ -154,8 +151,12 @@ cl_command_queue_ND_range_gen7(cl_command_queue queue,
   TRY_ALLOC (final_curbe, (char*) alloca(thread_n * cst_sz));
   if (curbe)
     for (i = 0; i < thread_n; ++i)
-      memcpy(final_curbe + cst_sz * i, curbe, cst_sz - local_id_sz);
-  TRY (cl_set_local_ids, final_curbe, local_wk_sz, simd_sz, cst_sz, id_offset, thread_n);
+      memcpy(final_curbe + cst_sz * i, curbe, cst_sz);
+  id_offset[0] = gbe_kernel_get_curbe_offset(ker->opaque, GBE_CURBE_LOCAL_ID_X, 0);
+  id_offset[1] = gbe_kernel_get_curbe_offset(ker->opaque, GBE_CURBE_LOCAL_ID_X, 1);
+  id_offset[2] = gbe_kernel_get_curbe_offset(ker->opaque, GBE_CURBE_LOCAL_ID_X, 2);
+  assert(id_offset[0] >= 0 && id_offset[1] >= 0 && id_offset[2] >= 0);
+  TRY (cl_set_local_ids, final_curbe, local_wk_sz, id_offset, simd_sz, cst_sz, thread_n);
   cl_gpgpu_upload_constants(gpgpu, final_curbe, thread_n*cst_sz);
 
   /* Start a new batch buffer */
