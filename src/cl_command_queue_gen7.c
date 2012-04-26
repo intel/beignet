@@ -37,28 +37,39 @@ cl_kernel_compute_batch_sz(cl_kernel k)
   return sz;
 }
 
+/* "Varing" payload is the part of the curbe that changes accross threads in the
+ *  same work group. Right now, it consists in local IDs and block IPs
+ */
 static cl_int
-cl_set_local_ids(char *data,
-                 const size_t *local_wk_sz,
-                 const size_t *id_offset,
-                 size_t simd_sz,
-                 size_t cst_sz,
-                 size_t thread_n)
+cl_set_varying_payload(char *data,
+                       const size_t *local_wk_sz,
+                       const size_t *id_offset,
+                       size_t ip_offset,
+                       size_t simd_sz,
+                       size_t cst_sz,
+                       size_t thread_n)
 {
   uint32_t *ids[3] = {NULL,NULL,NULL};
+  uint16_t *block_ips = NULL;
   size_t i, j, k, curr = 0;
   cl_int err = CL_SUCCESS;
 
-  for (i = 0; i < 3; ++i)
-    TRY_ALLOC(ids[i], (uint32_t*) alloca(sizeof(uint32_t)*thread_n*simd_sz));
+  TRY_ALLOC(ids[0], (uint32_t*) alloca(sizeof(uint32_t)*thread_n*simd_sz));
+  TRY_ALLOC(ids[1], (uint32_t*) alloca(sizeof(uint32_t)*thread_n*simd_sz));
+  TRY_ALLOC(ids[2], (uint32_t*) alloca(sizeof(uint32_t)*thread_n*simd_sz));
+  TRY_ALLOC(block_ips, (uint16_t*) alloca(sizeof(uint16_t)*thread_n*simd_sz));
 
-  /* Compute the IDs */
+  /* 0xffff means that the lane is inactivated */
+  memset(block_ips, 0xff, sizeof(uint16_t)*thread_n*simd_sz);
+
+  /* Compute the IDs and the block IPs */
   for (k = 0; k < local_wk_sz[2]; ++k)
   for (j = 0; j < local_wk_sz[1]; ++j)
   for (i = 0; i < local_wk_sz[0]; ++i, ++curr) {
     ids[0][curr] = i;
     ids[1][curr] = j;
     ids[2][curr] = k;
+    block_ips[curr] = 0;
   }
 
   /* Copy them to the constant buffer */
@@ -67,10 +78,12 @@ cl_set_local_ids(char *data,
     uint32_t *ids0 = (uint32_t *) (data + id_offset[0]);
     uint32_t *ids1 = (uint32_t *) (data + id_offset[1]);
     uint32_t *ids2 = (uint32_t *) (data + id_offset[2]);
+    uint16_t *ips  = (uint16_t *) (data + ip_offset);
     for (j = 0; j < simd_sz; ++j, ++curr) {
       ids0[j] = ids[0][curr];
       ids1[j] = ids[1][curr];
       ids2[j] = ids[2][curr];
+      ips[j] = block_ips[curr];
     }
   }
 
@@ -86,7 +99,7 @@ cl_curbe_fill(cl_kernel ker,
               const size_t *local_wk_sz)
 {
   int32_t offset;
-#define UPLOAD(ENUM, VALUE)                                              \
+#define UPLOAD(ENUM, VALUE) \
   if ((offset = gbe_kernel_get_curbe_offset(ker->opaque, ENUM, 0)) >= 0) \
     *((uint32_t *) (curbe + offset)) = VALUE;
   UPLOAD(GBE_CURBE_LOCAL_SIZE_X, local_wk_sz[0]);
@@ -119,7 +132,7 @@ cl_command_queue_ND_range_gen7(cl_command_queue queue,
   cl_gpgpu_kernel kernel;
   const uint32_t simd_sz = cl_kernel_get_simd_width(ker);
   size_t i, batch_sz = 0u, local_sz = 0u, cst_sz = ker->curbe_sz;
-  size_t thread_n = 0u, id_offset[3];
+  size_t thread_n = 0u, id_offset[3], ip_offset;
   cl_int err = CL_SUCCESS;
 
   /* Setup kernel */
@@ -155,8 +168,12 @@ cl_command_queue_ND_range_gen7(cl_command_queue queue,
   id_offset[0] = gbe_kernel_get_curbe_offset(ker->opaque, GBE_CURBE_LOCAL_ID_X, 0);
   id_offset[1] = gbe_kernel_get_curbe_offset(ker->opaque, GBE_CURBE_LOCAL_ID_X, 1);
   id_offset[2] = gbe_kernel_get_curbe_offset(ker->opaque, GBE_CURBE_LOCAL_ID_X, 2);
-  assert(id_offset[0] >= 0 && id_offset[1] >= 0 && id_offset[2] >= 0);
-  TRY (cl_set_local_ids, final_curbe, local_wk_sz, id_offset, simd_sz, cst_sz, thread_n);
+  ip_offset = gbe_kernel_get_curbe_offset(ker->opaque, GBE_CURBE_BLOCK_IP, 0);
+  assert(id_offset[0] >= 0 &&
+         id_offset[1] >= 0 &&
+         id_offset[2] >= 0 &&
+         ip_offset >= 0);
+  TRY (cl_set_varying_payload, final_curbe, local_wk_sz, id_offset, ip_offset, simd_sz, cst_sz, thread_n);
   cl_gpgpu_upload_constants(gpgpu, final_curbe, thread_n*cst_sz);
 
   /* Start a new batch buffer */

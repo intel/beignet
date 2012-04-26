@@ -584,6 +584,7 @@ intel_gpgpu_build_idrt(intel_gpgpu_t *state, cl_gpgpu_kernel *kernel)
   memset(desc, 0, sizeof(*desc));
   ker_bo = (drm_intel_bo *) kernel->bo;
   desc->desc0.kernel_start_pointer = ker_bo->offset >> 6; /* reloc */
+  desc->desc1.single_program_flow = 1;
   desc->desc2.sampler_state_pointer = state->sampler_state_b.bo->offset >> 5;
   desc->desc3.binding_table_entry_count = 0; /* no prefetch */
   desc->desc3.binding_table_pointer = 0;
