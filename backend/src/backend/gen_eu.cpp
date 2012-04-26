@@ -36,6 +36,7 @@ namespace gbe
     this->curr.noMask = 0;
     this->curr.predicated = 1;
     this->curr.flag = 0;
+    this->curr.subFlag = 0;
     this->curr.inversePredicate = 0;
   }
 
@@ -48,10 +49,11 @@ namespace gbe
       NOT_IMPLEMENTED;
     insn->header.quarter_control = this->curr.quarterControl;
     insn->header.mask_control = this->curr.noMask;
+    insn->bits2.ia1.flag_reg_nr = this->curr.flag;
+    insn->bits2.ia1.flag_sub_reg_nr = this->curr.subFlag;
     if (this->curr.predicated) {
       insn->header.predicate_control = GEN_PREDICATE_NORMAL;
       insn->header.predicate_inverse = this->curr.inversePredicate;
-      insn->bits2.da1.flag_reg_nr = this->curr.flag;
     }
   }
 

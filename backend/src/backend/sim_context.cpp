@@ -155,11 +155,13 @@ namespace gbe
   }
 
   void SimContext::emitMaskingCode(void) {
+    const int32_t blockIPOffset = kernel->getCurbeOffset(GBE_CURBE_BLOCK_IP, 0);
+    GBE_ASSERT(blockIPOffset >= 0);
     o << "simd" << simdWidth << "m " << "emask;\n"
+      << "uint32_t movedMask = 0;\n"
       //<< "simd" << simdWidth << "dw " << "uip(scalar_dw(0u));\n"
-      << "simd" << simdWidth << "dw " << "uip;\n"
-      << "alltrueMask(emask);\n"
-      << "uint32_t movedMask = ~0x0u;\n";
+      << "simd" << simdWidth << "w " << "uip;\n"
+      << "LOAD(uip, curbe + " << blockIPOffset << ");\n";
   }
 
   void SimContext::emitInstructionStream(void) {
@@ -279,7 +281,8 @@ namespace gbe
 
   SVAR(OCL_GCC_SIM_COMPILER, "gcc");
   SVAR(OCL_ICC_SIM_COMPILER, "icc");
-  SVAR(OCL_GCC_SIM_COMPILER_OPTIONS, "-Wall -fPIC -shared -msse -msse2 -msse3 -mssse3 -msse4.1 -g -O3");
+  //SVAR(OCL_GCC_SIM_COMPILER_OPTIONS, "-Wall -fPIC -shared -msse -msse2 -msse3 -mssse3 -msse4.1 -g -O3");
+  SVAR(OCL_GCC_SIM_COMPILER_OPTIONS, "-Wall -fPIC -shared -msse -msse2 -msse3 -mssse3 -msse4.1 -g");
   SVAR(OCL_ICC_SIM_COMPILER_OPTIONS, "-Wall -ldl -fabi-version=2 -fPIC -shared -O3 -g");
   BVAR(OCL_USE_ICC, false);
 

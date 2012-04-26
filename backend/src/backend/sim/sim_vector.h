@@ -165,7 +165,7 @@ union cast_dw {
   int32_t s[4];
   float f[4];
 };
-static const cast_dw allTrue32(0xffffffff, 0xffffffff, 0xffffffff, 0xffffffff);
+static const cast_dw allTrue(0xffffffff, 0xffffffff, 0xffffffff, 0xffffffff);
 
 /*! To cast through memory 16 bits values in sse registers */
 union cast_w {
@@ -188,8 +188,8 @@ union cast_w {
 
 /*! Make a mask true */
 template <uint32_t vectorNum>
-INLINE void allTrue32Mask(simd_m<vectorNum> &x) {
-  for (uint32_t i = 0; i < vectorNum; ++i) x.m[i] = allTrue32.v;
+INLINE void allTrueMask(simd_m<vectorNum> &x) {
+  for (uint32_t i = 0; i < vectorNum; ++i) x.m[i] = allTrue.v;
 }
 
 /* Some convenient typedefs */
@@ -306,7 +306,7 @@ VEC_OP(simd_w<vectorNum>,  simd_w<vectorNum>,  scalar_w, XOR_S16, _mm_xor_ps, ID
 template <uint32_t vectorNum>\
 INLINE void NAME(DST_TYPE &dst, const SRC_TYPE &v0, const SRC_TYPE &v1) {\
   for (uint32_t i = 0; i < vectorNum; ++i)\
-    dst.m[i] = _mm_xor_ps(FN(INTRINSIC_NAME(FN1(v0.m[i]), FN0(v1.m[i]))), allTrue32.v);\
+    dst.m[i] = _mm_xor_ps(FN(INTRINSIC_NAME(FN1(v0.m[i]), FN0(v1.m[i]))), allTrue.v);\
 }\
 template <uint32_t vectorNum>\
 INLINE void NAME(DST_TYPE &dst, const SRC_TYPE &v0, const scalar_dw &v1) {\
@@ -406,7 +406,7 @@ INLINE void NE_S32(simd_m<vectorNum> &dst,
                    const simd_dw<vectorNum> &v1)
 {
   for (uint32_t i = 0; i < vectorNum; ++i)
-    dst.m[i] = _mm_xor_ps(allTrue32.v, SI2PS(_mm_cmpeq_epi32(PS2SI(v0.m[i]), PS2SI(v1.m[i]))));
+    dst.m[i] = _mm_xor_ps(allTrue.v, SI2PS(_mm_cmpeq_epi32(PS2SI(v0.m[i]), PS2SI(v1.m[i]))));
 }
 template <uint32_t vectorNum>
 INLINE void NE_S32(simd_m<vectorNum> &dst,
@@ -428,7 +428,7 @@ INLINE void NE_S16(simd_m<vectorNum> &dst,
                    const simd_w<vectorNum> &v1)
 {
   for (uint32_t i = 0; i < vectorNum; ++i)
-    dst.m[i] = _mm_xor_ps(allTrue32.v, SI2PS(_mm_cmpeq_epi32(PS2SI(v0.m[i]), PS2SI(v1.m[i]))));
+    dst.m[i] = _mm_xor_ps(allTrue.v, SI2PS(_mm_cmpeq_epi32(PS2SI(v0.m[i]), PS2SI(v1.m[i]))));
 }
 template <uint32_t vectorNum>
 INLINE void NE_S16(simd_m<vectorNum> &dst,
@@ -757,9 +757,9 @@ INLINE void updateUIP(simd_dw<vectorNum> &uipVec, const simd_m<vectorNum> mask, 
 
 /*! Update the execution mask based on block IP and UIP values */
 template <uint32_t vectorNum>
-INLINE void updateMask(simd_m<vectorNum> &mask, const simd_dw<vectorNum> &uipVec, uint32_t ip) {
-  const simd_dw<vectorNum> ipv(ip);
-  LE_U32(mask, uipVec, ipv);
+INLINE void updateMask(simd_m<vectorNum> &mask, const simd_w<vectorNum> &uipVec, uint16_t ip) {
+  const simd_w<vectorNum> ipv(ip);
+  LE_U16(mask, uipVec, ipv);
 }
 
 /*! Jump to the block JIP */

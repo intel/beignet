@@ -357,10 +357,6 @@ struct GenInstruction
       uint32_t predicate_control:4;
       uint32_t predicate_inverse:1;
       uint32_t execution_size:3;
-      /**
-       * Conditional Modifier for most instructions.  On Gen6+, this is also
-       * used for the SEND instruction's Message Target/SFID.
-       */
       uint32_t destreg_or_condmod:4;
       uint32_t acc_wr_control:1;
       uint32_t cmpt_control:1;
@@ -463,8 +459,9 @@ struct GenInstruction
          uint32_t src0_horiz_stride:2;
          uint32_t src0_width:3;
          uint32_t src0_vert_stride:4;
+         uint32_t flag_sub_reg_nr:1;
          uint32_t flag_reg_nr:1;
-         uint32_t pad:6;
+         uint32_t pad:5;
       } da1;
 
       struct {
@@ -476,8 +473,9 @@ struct GenInstruction
          uint32_t src0_horiz_stride:2;
          uint32_t src0_width:3;
          uint32_t src0_vert_stride:4;
+         uint32_t flag_sub_reg_nr:1;
          uint32_t flag_reg_nr:1;
-         uint32_t pad:6;
+         uint32_t pad:5;
       } ia1;
 
       struct {
@@ -492,8 +490,9 @@ struct GenInstruction
          uint32_t src0_swz_w:2;
          uint32_t pad0:1;
          uint32_t src0_vert_stride:4;
+         uint32_t flag_sub_reg_nr:1;
          uint32_t flag_reg_nr:1;
-         uint32_t pad1:6;
+         uint32_t pad:5;
       } da16;
 
       struct {
@@ -508,8 +507,9 @@ struct GenInstruction
          uint32_t src0_swz_w:2;
          uint32_t pad0:1;
          uint32_t src0_vert_stride:4;
+         uint32_t flag_sub_reg_nr:1;
          uint32_t flag_reg_nr:1;
-         uint32_t pad1:6;
+         uint32_t pad:5;
       } ia16;
 
       struct {
@@ -561,8 +561,7 @@ struct GenInstruction
          uint32_t src1_horiz_stride:2;
          uint32_t src1_width:3;
          uint32_t src1_vert_stride:4;
-         uint32_t flag_reg_nr:1;
-         uint32_t pad1:6;
+         uint32_t pad1:7;
       } ia1;
 
       struct {
@@ -577,8 +576,7 @@ struct GenInstruction
          uint32_t src1_swz_w:2;
          uint32_t pad1:1;
          uint32_t src1_vert_stride:4;
-         uint32_t flag_reg_nr:1;
-         uint32_t pad2:6;
+         uint32_t pad2:7;
       } ia16;
 
       struct {

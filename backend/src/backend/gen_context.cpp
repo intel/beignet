@@ -91,7 +91,7 @@ namespace gbe
     RA.insert(std::make_pair(ocl::groupid2, GenReg::f1grf(0, 7)));
 
     // block IP used to handle the mask in SW is always allocated
-    int32_t blockIPOffset = kernel->getCurbeOffset(GBE_CURBE_BLOCK_IP,0);
+    int32_t blockIPOffset = GEN_REG_SIZE + kernel->getCurbeOffset(GBE_CURBE_BLOCK_IP,0);
     GBE_ASSERT(blockIPOffset >= 0 && blockIPOffset % GEN_REG_SIZE == 0);
     blockIPOffset /= GEN_REG_SIZE;
     if (simdWidth == 8)
@@ -286,7 +286,23 @@ namespace gbe
       NOT_IMPLEMENTED;
   }
   void GenContext::emitFenceInstruction(const ir::FenceInstruction &insn) {}
-  void GenContext::emitLabelInstruction(const ir::LabelInstruction &insn) {}
+  void GenContext::emitLabelInstruction(const ir::LabelInstruction &insn) {
+    const GenReg dst = GenReg::retype(GenReg::null(), GEN_TYPE_UW);
+    const GenReg src0 = this->reg(blockIPReg);
+    const GenReg src1 = GenReg::immuw(insn.getLabelIndex());
+#if 0
+    p->push();
+    p->curr.predicated = 0;
+    p->MOV(GenReg::flag(0,1), GenReg::immuw(0xffff));
+    p->pop();
+#endif
+
+    p->push();
+    p->curr.predicated = 0;
+    p->curr.flag = 0;
+    p->CMP(dst, GEN_CONDITIONAL_LE, src0, src1);
+    p->pop();
+  }
 
   void GenContext::emitInstructionStream(void) {
     using namespace ir;

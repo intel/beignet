@@ -142,15 +142,30 @@ namespace gbe
     }
 
     static INLINE GenReg vec16(uint32_t file, uint32_t nr, uint32_t subnr) {
-      return GenReg(file,
-                    nr,
-                    subnr,
-                    GEN_TYPE_F,
-                    GEN_VERTICAL_STRIDE_8,
-                    GEN_WIDTH_8,
-                    GEN_HORIZONTAL_STRIDE_1,
-                    GEN_SWIZZLE_XYZW,
-                    WRITEMASK_XYZW);
+      if (typeSize(file) == 4)
+        return GenReg(file,
+                      nr,
+                      subnr,
+                      GEN_TYPE_F,
+                      GEN_VERTICAL_STRIDE_8,
+                      GEN_WIDTH_8,
+                      GEN_HORIZONTAL_STRIDE_1,
+                      GEN_SWIZZLE_XYZW,
+                      WRITEMASK_XYZW);
+      else if (typeSize(file) == 2)
+        return GenReg(file,
+                      nr,
+                      subnr,
+                      GEN_TYPE_F,
+                      GEN_VERTICAL_STRIDE_16,
+                      GEN_WIDTH_16,
+                      GEN_HORIZONTAL_STRIDE_1,
+                      GEN_SWIZZLE_XYZW,
+                      WRITEMASK_XYZW);
+      else {
+        NOT_IMPLEMENTED;
+        return GenReg();
+      }
     }
 
     static INLINE GenReg vec8(uint32_t file, uint32_t nr, uint32_t subnr) {
@@ -392,8 +407,8 @@ namespace gbe
                     WRITEMASK_X);
     }
 
-    static INLINE GenReg flag(void) {
-      return uw1(GEN_ARCHITECTURE_REGISTER_FILE, GEN_ARF_FLAG, 0);
+    static INLINE GenReg flag(uint32_t nr, uint32_t subnr) {
+      return uw1(GEN_ARCHITECTURE_REGISTER_FILE, GEN_ARF_FLAG | nr, subnr);
     }
 
     static INLINE GenReg mask(uint32_t subnr) {
@@ -519,6 +534,7 @@ namespace gbe
     uint32_t noMask:1;
     uint32_t predicated:1;
     uint32_t flag:1;
+    uint32_t subFlag:1;
     uint32_t inversePredicate:1;
   };
 
