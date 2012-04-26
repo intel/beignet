@@ -156,7 +156,8 @@ namespace gbe
 
   void SimContext::emitMaskingCode(void) {
     o << "simd" << simdWidth << "m " << "emask;\n"
-      << "simd" << simdWidth << "dw " << "uip(scalar_dw(0u));\n"
+      //<< "simd" << simdWidth << "dw " << "uip(scalar_dw(0u));\n"
+      << "simd" << simdWidth << "dw " << "uip;\n"
       << "alltrueMask(emask);\n"
       << "uint32_t movedMask = ~0x0u;\n";
   }

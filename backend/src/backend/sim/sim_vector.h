@@ -57,13 +57,27 @@ INLINE const __m128i expand(const __m128i& b) {
   return shuffle<index, index, index, index>(b);
 }
 
-/*! Base structure for scalar double word */
+/*! Base structure for scalar double word (32 bits) */
 union scalar_dw {
   INLINE scalar_dw(void) {}
   INLINE scalar_dw(uint32_t u) { this->u = u; }
   INLINE scalar_dw(int32_t s) { this->s = s; }
   INLINE scalar_dw(float f) { this->f = f; }
   uint32_t u; int32_t s; float f;
+};
+
+/*! Base structure for scalar word (16 bits) */
+union scalar_w {
+  INLINE scalar_w(void) {}
+  INLINE scalar_w(uint16_t u) { this->u = u; }
+  INLINE scalar_w(int16_t s) { this->s = s; }
+  INLINE float toFloat(void) const {
+    union {uint16_t u[2]; float f;} x;
+    x.u[0] = u;
+    x.u[1] = 0;
+    return x.f;
+  }
+  uint16_t u; int16_t s;
 };
 
 /*! Base structure for scalar mask */
@@ -78,6 +92,24 @@ struct simd_dw {
   }
   simd_dw &operator= (const scalar_dw &s) {
     for (uint32_t i = 0; i < vectorNum; ++i) m[i] = _mm_load1_ps(&s.f);
+    return *this;
+  }
+  __m128 m[vectorNum];
+};
+
+/*! Base structure for vectors 4 / 8 / 16 / 32 words. We do not store 8 shorts
+ *  but only 4. This makes everything much simpler even if it is clearly slower
+ */
+template <uint32_t vectorNum>
+struct simd_w {
+  INLINE simd_w(void) {}
+  INLINE simd_w(const scalar_w &s) {
+    const float f = s.toFloat();
+    for (uint32_t i = 0; i < vectorNum; ++i) m[i] = _mm_load1_ps(&f);
+  }
+  simd_w &operator= (const scalar_w &s) {
+    const float f = s.toFloat();
+    for (uint32_t i = 0; i < vectorNum; ++i) m[i] = _mm_load1_ps(&f);
     return *this;
   }
   __m128 m[vectorNum];
@@ -113,7 +145,7 @@ INLINE void select(simd_m<vectorNum> &dst,
     dst.m[i] = _mm_blendv_ps(src0.m[i], src1.m[i], mask.m[i]);
 }
 
-/*! To cast through memory */
+/*! To cast through memory 32 bits values in sse registers */
 union cast_dw {
   INLINE cast_dw(uint32_t u0, uint32_t u1, uint32_t u2, uint32_t u3) {
     u[0] = u0; u[1] = u1; u[2] = u2; u[3] = u3;
@@ -133,12 +165,31 @@ union cast_dw {
   int32_t s[4];
   float f[4];
 };
-static const cast_dw alltrue(0xffffffff, 0xffffffff, 0xffffffff, 0xffffffff);
+static const cast_dw allTrue32(0xffffffff, 0xffffffff, 0xffffffff, 0xffffffff);
+
+/*! To cast through memory 16 bits values in sse registers */
+union cast_w {
+  INLINE cast_w(int16_t s0, int16_t s1, int16_t s2, int16_t s3) {
+    s[0].v = s0; s[1].v = s1; s[2].v = s2; s[3].v = s3;
+    s[0].pad = s[1].pad = s[2].pad = s[3].pad = 0;
+  }
+  INLINE cast_w(uint16_t u0, uint16_t u1, uint16_t u2, uint16_t u3) {
+    u[0].v = u0; u[1].v = u1; u[2].v = u2; u[3].v = u3;
+    u[0].pad = u[1].pad = u[2].pad = u[3].pad = 0;
+  }
+  INLINE cast_w(const __m128 &v) : v(v) {}
+  INLINE cast_w(const __m128i &vi) : vi(vi) {}
+  INLINE cast_w(void) {}
+  __m128 v;
+  __m128i vi;
+  struct { uint16_t v; uint16_t pad; } u[4];
+  struct {  int16_t v;  int16_t pad; } s[4];
+};
 
 /*! Make a mask true */
 template <uint32_t vectorNum>
-INLINE void alltrueMask(simd_m<vectorNum> &x) {
-  for (uint32_t i = 0; i < vectorNum; ++i) x.m[i] = alltrue.v;
+INLINE void allTrue32Mask(simd_m<vectorNum> &x) {
+  for (uint32_t i = 0; i < vectorNum; ++i) x.m[i] = allTrue32.v;
 }
 
 /* Some convenient typedefs */
@@ -147,6 +198,11 @@ typedef simd_dw<1> simd4dw;
 typedef simd_dw<2> simd8dw;
 typedef simd_dw<4> simd16dw;
 typedef simd_dw<8> simd32dw;
+typedef scalar_w   simd1w;
+typedef simd_w<1>  simd4w;
+typedef simd_w<2>  simd8w;
+typedef simd_w<4>  simd16w;
+typedef simd_w<8>  simd32w;
 typedef scalar_m   simd1m;
 typedef simd_m<1>  simd4m;
 typedef simd_m<2>  simd8m;
@@ -159,11 +215,15 @@ typedef simd_m<8>  simd32m;
 /* Simple function to get the number of element per vector */
 template <uint32_t vectorNum>
 INLINE uint32_t elemNum(const simd_dw<vectorNum> &x) {
-  return 4 * vectorNum;
+  return 4*vectorNum;
 }
 template <uint32_t vectorNum>
 INLINE uint32_t elemNum(const simd_m<vectorNum> &x) {
-  return 4 * vectorNum;
+  return 4*vectorNum;
+}
+template <uint32_t vectorNum>
+INLINE uint32_t elemNum(const simd_w<vectorNum> &x) {
+  return 4*vectorNum;
 }
 
 /* Build an integer mask from the mask vectors */
@@ -185,44 +245,60 @@ INLINE void MOV_S32(simd_dw<vectorNum> &dst, const scalar_dw &x) {
   const __m128 v = _mm_load1_ps(&x.f);
   for (uint32_t i = 0; i < vectorNum; ++i) dst.m[i] = v;
 }
+template <uint32_t vectorNum>
+INLINE void MOV_S16(simd_w<vectorNum> &dst, const simd_w<vectorNum> &v) {
+  for (uint32_t i = 0; i < vectorNum; ++i) dst.m[i] = v.m[i];
+}
+template <uint32_t vectorNum>
+INLINE void MOV_S16(simd_w<vectorNum> &dst, const scalar_w &x) {
+  const float f = x.toFloat();
+  const __m128 v = _mm_load1_ps(&f);
+  for (uint32_t i = 0; i < vectorNum; ++i) dst.m[i] = v;
+}
 
 /* Vector instructions that use sse* */
-#define VEC_OP(DST_TYPE, SRC_TYPE, NAME, INTRINSIC_NAME, FN, FN0, FN1)\
+#define VEC_OP(DST_TYPE, SRC_TYPE, SCALAR_TYPE, NAME, INTRINSIC_NAME, FN, FN0, FN1)\
 template <uint32_t vectorNum>\
 INLINE void NAME(DST_TYPE &dst, const SRC_TYPE &v0, const SRC_TYPE &v1) {\
   for (uint32_t i = 0; i < vectorNum; ++i)\
     dst.m[i] = FN(INTRINSIC_NAME(FN0(v0.m[i]), FN1(v1.m[i])));\
 }\
 template <uint32_t vectorNum>\
-INLINE void NAME(DST_TYPE &dst, const SRC_TYPE &v0, const scalar_dw &v1) {\
-  NAME(dst, v0, simd_dw<vectorNum>(v1));\
+INLINE void NAME(DST_TYPE &dst, const SRC_TYPE &v0, const SCALAR_TYPE &v1) {\
+  NAME(dst, v0, SRC_TYPE(v1));\
 }\
 template <uint32_t vectorNum>\
-INLINE void NAME(DST_TYPE &dst, const scalar_dw &v0, const SRC_TYPE &v1) {\
-  NAME(dst, simd_dw<vectorNum>(v0), v1);\
+INLINE void NAME(DST_TYPE &dst, const SCALAR_TYPE &v0, const SRC_TYPE &v1) {\
+  NAME(dst, SRC_TYPE(v0), v1);\
 }\
 template <uint32_t vectorNum>\
-INLINE void NAME(DST_TYPE &dst, const scalar_dw &v0, const scalar_dw &v1) {\
-  NAME(dst, simd_dw<vectorNum>(v0), simd_dw<vectorNum>(v1));\
+INLINE void NAME(DST_TYPE &dst, const SCALAR_TYPE &v0, const SCALAR_TYPE &v1) {\
+  NAME(dst, SRC_TYPE(v0), SRC_TYPE(v1));\
 }
-VEC_OP(simd_dw<vectorNum>, simd_dw<vectorNum>, ADD_F, _mm_add_ps, ID, ID, ID);
-VEC_OP(simd_dw<vectorNum>, simd_dw<vectorNum>, SUB_F, _mm_sub_ps, ID, ID, ID);
-VEC_OP(simd_dw<vectorNum>, simd_dw<vectorNum>, MUL_F, _mm_mul_ps, ID, ID, ID);
-VEC_OP(simd_dw<vectorNum>, simd_dw<vectorNum>, DIV_F, _mm_div_ps, ID, ID, ID);
-VEC_OP(simd_m<vectorNum>,  simd_dw<vectorNum>, EQ_F, _mm_cmpeq_ps, ID, ID, ID);
-VEC_OP(simd_m<vectorNum>,  simd_dw<vectorNum>, NE_F, _mm_cmpneq_ps, ID, ID, ID);
-VEC_OP(simd_m<vectorNum>,  simd_dw<vectorNum>, LT_F, _mm_cmplt_ps, ID, ID, ID);
-VEC_OP(simd_m<vectorNum>,  simd_dw<vectorNum>, LE_F, _mm_cmple_ps, ID, ID, ID);
-VEC_OP(simd_m<vectorNum>,  simd_dw<vectorNum>, GT_F, _mm_cmpgt_ps, ID, ID, ID);
-VEC_OP(simd_m<vectorNum>,  simd_dw<vectorNum>, GE_F, _mm_cmpge_ps, ID, ID, ID);
-VEC_OP(simd_dw<vectorNum>, simd_dw<vectorNum>, ADD_S32, _mm_add_epi32, SI2PS, PS2SI, PS2SI);
-VEC_OP(simd_dw<vectorNum>, simd_dw<vectorNum>, SUB_S32, _mm_sub_epi32, SI2PS, PS2SI, PS2SI);
-VEC_OP(simd_m<vectorNum>,  simd_dw<vectorNum>, EQ_S32, _mm_cmpeq_epi32, SI2PS, PS2SI, PS2SI);
-VEC_OP(simd_m<vectorNum>,  simd_dw<vectorNum>, LT_S32, _mm_cmplt_epi32, SI2PS, PS2SI, PS2SI);
-VEC_OP(simd_m<vectorNum>,  simd_dw<vectorNum>, GT_S32, _mm_cmpgt_epi32, SI2PS, PS2SI, PS2SI);
-VEC_OP(simd_dw<vectorNum>, simd_dw<vectorNum>, OR_S32, _mm_or_ps, ID, ID, ID);
-VEC_OP(simd_dw<vectorNum>, simd_dw<vectorNum>, XOR_S32, _mm_xor_ps, ID, ID, ID);
-VEC_OP(simd_dw<vectorNum>, simd_dw<vectorNum>, AND_S32, _mm_and_ps, ID, ID, ID);
+VEC_OP(simd_dw<vectorNum>, simd_dw<vectorNum>, scalar_dw, ADD_F, _mm_add_ps, ID, ID, ID);
+VEC_OP(simd_dw<vectorNum>, simd_dw<vectorNum>, scalar_dw, SUB_F, _mm_sub_ps, ID, ID, ID);
+VEC_OP(simd_dw<vectorNum>, simd_dw<vectorNum>, scalar_dw, MUL_F, _mm_mul_ps, ID, ID, ID);
+VEC_OP(simd_dw<vectorNum>, simd_dw<vectorNum>, scalar_dw, DIV_F, _mm_div_ps, ID, ID, ID);
+VEC_OP(simd_m<vectorNum>,  simd_dw<vectorNum>, scalar_dw, EQ_F, _mm_cmpeq_ps, ID, ID, ID);
+VEC_OP(simd_m<vectorNum>,  simd_dw<vectorNum>, scalar_dw, NE_F, _mm_cmpneq_ps, ID, ID, ID);
+VEC_OP(simd_m<vectorNum>,  simd_dw<vectorNum>, scalar_dw, LT_F, _mm_cmplt_ps, ID, ID, ID);
+VEC_OP(simd_m<vectorNum>,  simd_dw<vectorNum>, scalar_dw, LE_F, _mm_cmple_ps, ID, ID, ID);
+VEC_OP(simd_m<vectorNum>,  simd_dw<vectorNum>, scalar_dw, GT_F, _mm_cmpgt_ps, ID, ID, ID);
+VEC_OP(simd_m<vectorNum>,  simd_dw<vectorNum>, scalar_dw, GE_F, _mm_cmpge_ps, ID, ID, ID);
+VEC_OP(simd_dw<vectorNum>, simd_dw<vectorNum>, scalar_dw, ADD_S32, _mm_add_epi32, SI2PS, PS2SI, PS2SI);
+VEC_OP(simd_dw<vectorNum>, simd_dw<vectorNum>, scalar_dw, SUB_S32, _mm_sub_epi32, SI2PS, PS2SI, PS2SI);
+VEC_OP(simd_m<vectorNum>,  simd_dw<vectorNum>, scalar_dw, EQ_S32, _mm_cmpeq_epi32, SI2PS, PS2SI, PS2SI);
+VEC_OP(simd_m<vectorNum>,  simd_dw<vectorNum>, scalar_dw, LT_S32, _mm_cmplt_epi32, SI2PS, PS2SI, PS2SI);
+VEC_OP(simd_m<vectorNum>,  simd_dw<vectorNum>, scalar_dw, GT_S32, _mm_cmpgt_epi32, SI2PS, PS2SI, PS2SI);
+VEC_OP(simd_dw<vectorNum>, simd_dw<vectorNum>, scalar_dw, AND_S32, _mm_and_ps, ID, ID, ID);
+VEC_OP(simd_dw<vectorNum>, simd_dw<vectorNum>, scalar_dw, OR_S32, _mm_or_ps, ID, ID, ID);
+VEC_OP(simd_dw<vectorNum>, simd_dw<vectorNum>, scalar_dw, XOR_S32, _mm_xor_ps, ID, ID, ID);
+VEC_OP(simd_m<vectorNum>,  simd_w<vectorNum>,  scalar_w,  EQ_S16, _mm_cmpeq_epi32, SI2PS, PS2SI, PS2SI);
+VEC_OP(simd_w<vectorNum>,  simd_w<vectorNum>,  scalar_w, ADD_S16, _mm_add_epi16, SI2PS, PS2SI, PS2SI);
+VEC_OP(simd_w<vectorNum>,  simd_w<vectorNum>,  scalar_w, SUB_S16, _mm_sub_epi16, SI2PS, PS2SI, PS2SI);
+VEC_OP(simd_w<vectorNum>,  simd_w<vectorNum>,  scalar_w, AND_S16, _mm_and_ps, ID, ID, ID);
+VEC_OP(simd_w<vectorNum>,  simd_w<vectorNum>,  scalar_w, OR_S16, _mm_or_ps, ID, ID, ID);
+VEC_OP(simd_w<vectorNum>,  simd_w<vectorNum>,  scalar_w, XOR_S16, _mm_xor_ps, ID, ID, ID);
 #undef VEC_OP
 
 /* Vector integer operations that we can get by switching argument order */
@@ -230,7 +306,7 @@ VEC_OP(simd_dw<vectorNum>, simd_dw<vectorNum>, AND_S32, _mm_and_ps, ID, ID, ID);
 template <uint32_t vectorNum>\
 INLINE void NAME(DST_TYPE &dst, const SRC_TYPE &v0, const SRC_TYPE &v1) {\
   for (uint32_t i = 0; i < vectorNum; ++i)\
-    dst.m[i] = _mm_xor_ps(FN(INTRINSIC_NAME(FN1(v0.m[i]), FN0(v1.m[i]))), alltrue.v);\
+    dst.m[i] = _mm_xor_ps(FN(INTRINSIC_NAME(FN1(v0.m[i]), FN0(v1.m[i]))), allTrue32.v);\
 }\
 template <uint32_t vectorNum>\
 INLINE void NAME(DST_TYPE &dst, const SRC_TYPE &v0, const scalar_dw &v1) {\
@@ -249,78 +325,88 @@ VEC_OP(simd_m<vectorNum>, simd_dw<vectorNum>, LE_S32, _mm_cmpgt_epi32, SI2PS, PS
 #undef VEC_OP
 
 /* Vector binary integer operations that require C */
-#define VEC_OP(DST_TYPE, SRC_TYPE, NAME, OP, FIELD)\
+#define VEC_OP(DST_TYPE, SRC_TYPE, SCALAR_TYPE, CAST_TYPE, NAME, OP, FIELD)\
 template <uint32_t vectorNum>\
 INLINE void NAME(DST_TYPE &dst, const SRC_TYPE &v0, const SRC_TYPE &v1) {\
   for (uint32_t i = 0; i < vectorNum; ++i) {\
-    cast_dw c0(v0.m[i]), c1(v1.m[i]), d;\
+    CAST_TYPE c0(v0.m[i]), c1(v1.m[i]), d;\
     for (uint32_t j = 0; j < 4; ++j)\
-      d.FIELD[j] = c0.FIELD[j] OP c1.FIELD[j];\
+      d.FIELD = c0.FIELD OP c1.FIELD;\
     dst.m[i] = d.v;\
   }\
 }\
 template <uint32_t vectorNum>\
-INLINE void NAME(DST_TYPE &dst, const SRC_TYPE &v0, const scalar_dw &v1) {\
-  NAME(dst, v0, simd_dw<vectorNum>(v1));\
+INLINE void NAME(DST_TYPE &dst, const SRC_TYPE &v0, const SCALAR_TYPE &v1) {\
+  NAME(dst, v0, SRC_TYPE(v1));\
 }\
 template <uint32_t vectorNum>\
-INLINE void NAME(DST_TYPE &dst, const scalar_dw &v0, const SRC_TYPE &v1) {\
-  NAME(dst, simd_dw<vectorNum>(v0), v1);\
+INLINE void NAME(DST_TYPE &dst, const SCALAR_TYPE &v0, const SRC_TYPE &v1) {\
+  NAME(dst, SRC_TYPE(v0), v1);\
 }\
 template <uint32_t vectorNum>\
-INLINE void NAME(DST_TYPE &dst, const scalar_dw &v0, const scalar_dw &v1) {\
-  NAME(dst, simd_dw<vectorNum>(v0), simd_dw<vectorNum>(v1));\
+INLINE void NAME(DST_TYPE &dst, const SCALAR_TYPE &v0, const SCALAR_TYPE &v1) {\
+  NAME(dst, SRC_TYPE(v0), SRC_TYPE(v1));\
 }
-VEC_OP(simd_dw<vectorNum>, simd_dw<vectorNum>, MUL_S32, *, s);
-VEC_OP(simd_dw<vectorNum>, simd_dw<vectorNum>, DIV_S32, /, s);
-VEC_OP(simd_dw<vectorNum>, simd_dw<vectorNum>, REM_S32, %, s);
-VEC_OP(simd_dw<vectorNum>, simd_dw<vectorNum>, MUL_U32, *, u);
-VEC_OP(simd_dw<vectorNum>, simd_dw<vectorNum>, DIV_U32, /, u);
-VEC_OP(simd_dw<vectorNum>, simd_dw<vectorNum>, REM_U32, %, u);
+VEC_OP(simd_dw<vectorNum>, simd_dw<vectorNum>, scalar_dw, cast_dw, MUL_S32, *, s[j]);
+VEC_OP(simd_dw<vectorNum>, simd_dw<vectorNum>, scalar_dw, cast_dw, DIV_S32, /, s[j]);
+VEC_OP(simd_dw<vectorNum>, simd_dw<vectorNum>, scalar_dw, cast_dw, REM_S32, %, s[j]);
+VEC_OP(simd_dw<vectorNum>, simd_dw<vectorNum>, scalar_dw, cast_dw, MUL_U32, *, u[j]);
+VEC_OP(simd_dw<vectorNum>, simd_dw<vectorNum>, scalar_dw, cast_dw, DIV_U32, /, u[j]);
+VEC_OP(simd_dw<vectorNum>, simd_dw<vectorNum>, scalar_dw, cast_dw, REM_U32, %, u[j]);
+VEC_OP(simd_w<vectorNum>,  simd_w<vectorNum>,  scalar_w,  cast_w,  MUL_S16, *, s[j].v);
+VEC_OP(simd_w<vectorNum>,  simd_w<vectorNum>,  scalar_w,  cast_w,  DIV_S16, /, s[j].v);
+VEC_OP(simd_w<vectorNum>,  simd_w<vectorNum>,  scalar_w,  cast_w,  REM_S16, %, s[j].v);
+VEC_OP(simd_w<vectorNum>,  simd_w<vectorNum>,  scalar_w,  cast_w,  MUL_U16, *, u[j].v);
+VEC_OP(simd_w<vectorNum>,  simd_w<vectorNum>,  scalar_w,  cast_w,  DIV_U16, /, u[j].v);
+VEC_OP(simd_w<vectorNum>,  simd_w<vectorNum>,  scalar_w,  cast_w,  REM_U16, %, u[j].v);
 #undef VEC_OP
 
 /* Vector compare vectors that require C */
-#define VEC_OP(DST_TYPE, SRC_TYPE, NAME, OP, FIELD)\
+#define VEC_OP(DST_TYPE, SRC_TYPE, SCALAR_TYPE, CAST_TYPE, NAME, OP, FIELD)\
 template <uint32_t vectorNum>\
 INLINE void NAME(DST_TYPE &dst, const SRC_TYPE &v0, const SRC_TYPE &v1) {\
   for (uint32_t i = 0; i < vectorNum; ++i) {\
-    cast_dw c0(v0.m[i]), c1(v1.m[i]), d;\
+    CAST_TYPE c0(v0.m[i]), c1(v1.m[i]);\
+    cast_dw d;\
     for (uint32_t j = 0; j < 4; ++j)\
-      d.u[j] = (c0.FIELD[j] OP c1.FIELD[j]) ? ~0u : 0u;\
+      d.u[j] = (c0.FIELD OP c1.FIELD) ? ~0u : 0u;\
     dst.m[i] = d.v;\
   }\
 }\
 template <uint32_t vectorNum>\
-INLINE void NAME(DST_TYPE &dst, const SRC_TYPE &v0, const scalar_dw &v1) {\
-  for (uint32_t i = 0; i < vectorNum; ++i) {\
-    cast_dw c0(v0.m[i]), d;\
-    for (uint32_t j = 0; j < 4; ++j)\
-      d.u[j] = (c0.FIELD[j] OP v1.FIELD) ? ~0u : 0u;\
-    dst.m[i] = d.v;\
-  }\
+INLINE void NAME(DST_TYPE &dst, const SRC_TYPE &v0, const SCALAR_TYPE &v1) {\
+  NAME(dst, v0, SRC_TYPE(v1));\
 }\
 template <uint32_t vectorNum>\
-INLINE void NAME(DST_TYPE &dst, const scalar_dw &v0, const SRC_TYPE &v1) {\
-  for (uint32_t i = 0; i < vectorNum; ++i) {\
-    cast_dw c1(v1.m[i]), d;\
-    for (uint32_t j = 0; j < 4; ++j)\
-      d.u[j] = (v0.FIELD OP c1.FIELD[j]) ? ~0u : 0u;\
-    dst.m[i] = d.v;\
-  }\
+INLINE void NAME(DST_TYPE &dst, const SCALAR_TYPE &v0, const SRC_TYPE &v1) {\
+  NAME(dst, SRC_TYPE(v0), v1);\
+}\
+template <uint32_t vectorNum>\
+INLINE void NAME(DST_TYPE &dst, const SCALAR_TYPE &v0, const SCALAR_TYPE &v1) {\
+  NAME(dst, SRC_TYPE(v0), SRC_TYPE(v1));\
 }
-VEC_OP(simd_m<vectorNum>, simd_dw<vectorNum>, LE_U32, <=, u);
-VEC_OP(simd_m<vectorNum>, simd_dw<vectorNum>, LT_U32, <, u);
-VEC_OP(simd_m<vectorNum>, simd_dw<vectorNum>, GE_U32, >=, u);
-VEC_OP(simd_m<vectorNum>, simd_dw<vectorNum>, GT_U32, >, u);
+VEC_OP(simd_m<vectorNum>, simd_dw<vectorNum>, scalar_dw, cast_dw, LE_U32, <=, u[j]);
+VEC_OP(simd_m<vectorNum>, simd_dw<vectorNum>, scalar_dw, cast_dw, LT_U32, <, u[j]);
+VEC_OP(simd_m<vectorNum>, simd_dw<vectorNum>, scalar_dw, cast_dw, GE_U32, >=, u[j]);
+VEC_OP(simd_m<vectorNum>, simd_dw<vectorNum>, scalar_dw, cast_dw, GT_U32, >, u[j]);
+VEC_OP(simd_m<vectorNum>, simd_w<vectorNum>,  scalar_w,  cast_w,  LE_U16, <=, u[j].v);
+VEC_OP(simd_m<vectorNum>, simd_w<vectorNum>,  scalar_w,  cast_w,  LT_U16, <, u[j].v);
+VEC_OP(simd_m<vectorNum>, simd_w<vectorNum>,  scalar_w,  cast_w,  GE_U16, >=, u[j].v);
+VEC_OP(simd_m<vectorNum>, simd_w<vectorNum>,  scalar_w,  cast_w,  GT_U16, >, u[j].v);
+VEC_OP(simd_m<vectorNum>, simd_w<vectorNum>,  scalar_w,  cast_w,  LE_S16, <=, s[j].v);
+VEC_OP(simd_m<vectorNum>, simd_w<vectorNum>,  scalar_w,  cast_w,  LT_S16, <, s[j].v);
+VEC_OP(simd_m<vectorNum>, simd_w<vectorNum>,  scalar_w,  cast_w,  GE_S16, >=, s[j].v);
+VEC_OP(simd_m<vectorNum>, simd_w<vectorNum>,  scalar_w,  cast_w,  GT_S16, >, s[j].v);
 #undef VEC_OP
 
+/* Get NE from EQ */
 template <uint32_t vectorNum>
 INLINE void NE_S32(simd_m<vectorNum> &dst,
                    const simd_dw<vectorNum> &v0,
                    const simd_dw<vectorNum> &v1)
 {
   for (uint32_t i = 0; i < vectorNum; ++i)
-    dst.m[i] = _mm_xor_ps(alltrue.v, SI2PS(_mm_cmpeq_epi32(PS2SI(v0.m[i]), PS2SI(v1.m[i]))));
+    dst.m[i] = _mm_xor_ps(allTrue32.v, SI2PS(_mm_cmpeq_epi32(PS2SI(v0.m[i]), PS2SI(v1.m[i]))));
 }
 template <uint32_t vectorNum>
 INLINE void NE_S32(simd_m<vectorNum> &dst,
@@ -336,6 +422,35 @@ INLINE void NE_S32(simd_m<vectorNum> &dst,
 {
   NE_S32(dst, simd_dw<vectorNum>(v0), v1);
 }
+template <uint32_t vectorNum>
+INLINE void NE_S16(simd_m<vectorNum> &dst,
+                   const simd_w<vectorNum> &v0,
+                   const simd_w<vectorNum> &v1)
+{
+  for (uint32_t i = 0; i < vectorNum; ++i)
+    dst.m[i] = _mm_xor_ps(allTrue32.v, SI2PS(_mm_cmpeq_epi32(PS2SI(v0.m[i]), PS2SI(v1.m[i]))));
+}
+template <uint32_t vectorNum>
+INLINE void NE_S16(simd_m<vectorNum> &dst,
+                   const simd_w<vectorNum> &v0,
+                   const scalar_w &v1)
+{
+  NE_S16(dst, v0, simd_w<vectorNum>(v1));
+}
+template <uint32_t vectorNum>
+INLINE void NE_S16(simd_m<vectorNum> &dst,
+                   const scalar_w &v0,
+                   const simd_w<vectorNum> &v1)
+{
+  NE_S16(dst, simd_w<vectorNum>(v0), v1);
+}
+template <uint32_t vectorNum>
+INLINE void NE_S16(simd_m<vectorNum> &dst,
+                   const scalar_w &v0,
+                   const scalar_w &v1)
+{
+  NE_S16(dst, simd_w<vectorNum>(v0), simd_w<vectorNum>(v1));
+}
 
 /* Load from contiguous double words */
 template <uint32_t vectorNum>
@@ -349,6 +464,31 @@ template <uint32_t vectorNum>
 INLINE void STORE(const simd_dw<vectorNum> &src, char *ptr) {
   for (uint32_t i = 0; i < vectorNum; ++i)
     _mm_storeu_ps((float*) ptr + 4*i, src.m[i]);
+}
+
+/* Load from contiguous words */
+template <uint32_t vectorNum>
+INLINE void LOAD(simd_w<vectorNum> &dst, const char *ptr) {
+  for (uint32_t i = 0; i < vectorNum; ++i) {
+    const uint16_t u0 = *((uint16_t*) ptr + 4*i + 0);
+    const uint16_t u1 = *((uint16_t*) ptr + 4*i + 1);
+    const uint16_t u2 = *((uint16_t*) ptr + 4*i + 2);
+    const uint16_t u3 = *((uint16_t*) ptr + 4*i + 3);
+    const cast_w w(u0,u1,u2,u3);
+    dst.m[i] = w.v;
+  }
+}
+
+/* Store to contiguous words */
+template <uint32_t vectorNum>
+INLINE void STORE(const simd_w<vectorNum> &src, char *ptr) {
+  for (uint32_t i = 0; i < vectorNum; ++i) {
+    const cast_w w(src.m[i]);
+    *((uint16_t*) ptr + 4*i + 0) = w.u[0].v;
+    *((uint16_t*) ptr + 4*i + 1) = w.u[1].v;
+    *((uint16_t*) ptr + 4*i + 2) = w.u[2].v;
+    *((uint16_t*) ptr + 4*i + 3) = w.u[3].v;
+  }
 }
 
 /* Load immediates */
@@ -496,8 +636,11 @@ INLINE void MASKED_GATHER(simd_dw<vectorNum> &dst,
 // Scalar instructions
 //////////////////////////////////////////////////////////////////////////////
 INLINE uint32_t elemNum(const scalar_dw &x) { return 1; }
+INLINE uint32_t elemNum(const scalar_w &x) { return 1; }
 INLINE uint32_t elemNum(const scalar_m &x) { return 1; }
 INLINE uint32_t mask(const scalar_m &v) { return v.u ? 1 : 0; }
+
+// 32 bit floating points
 INLINE void ADD_F(scalar_dw &dst, scalar_dw v0, scalar_dw v1) { dst.f = v0.f + v1.f; }
 INLINE void SUB_F(scalar_dw &dst, scalar_dw v0, scalar_dw v1) { dst.f = v0.f - v1.f; }
 INLINE void MUL_F(scalar_dw &dst, scalar_dw v0, scalar_dw v1) { dst.f = v0.f * v1.f; }
@@ -508,6 +651,8 @@ INLINE void LE_F(scalar_m &dst, scalar_dw v0, scalar_dw v1) { dst.u = (v0.f <= v
 INLINE void LT_F(scalar_m &dst, scalar_dw v0, scalar_dw v1) { dst.u = (v0.f < v1.f ? ~0 : 0); }
 INLINE void GE_F(scalar_m &dst, scalar_dw v0, scalar_dw v1) { dst.u = (v0.f >= v1.f ? ~0 : 0); }
 INLINE void GT_F(scalar_m &dst, scalar_dw v0, scalar_dw v1) { dst.u = (v0.f > v1.f ? ~0 : 0); }
+
+// 32 bit integers
 INLINE void ADD_S32(scalar_dw &dst, scalar_dw v0, scalar_dw v1) { dst.s = v0.s + v1.s; }
 INLINE void SUB_S32(scalar_dw &dst, scalar_dw v0, scalar_dw v1) { dst.s = v0.s - v1.s; }
 INLINE void MUL_S32(scalar_dw &dst, scalar_dw v0, scalar_dw v1) { dst.s = v0.s * v1.s; }
@@ -535,10 +680,41 @@ INLINE void LOADI(scalar_dw &dst, uint32_t u) { dst.u = u; }
 INLINE void SCATTER(scalar_dw offset, scalar_dw value, char *base) { *(uint32_t*)(base + offset.u) = value.u; }
 INLINE void GATHER(scalar_dw &dst, scalar_dw offset, const char *base) { dst.u = *(const uint32_t*)(base + offset.u); }
 
+// 16 bit floating points
+INLINE void ADD_U16(scalar_w &dst, scalar_w v0, scalar_w v1) { dst.u = v0.u + v1.u; }
+INLINE void SUB_U16(scalar_w &dst, scalar_w v0, scalar_w v1) { dst.u = v0.u - v1.u; }
+INLINE void ADD_S16(scalar_w &dst, scalar_w v0, scalar_w v1) { dst.s = v0.s + v1.s; }
+INLINE void SUB_S16(scalar_w &dst, scalar_w v0, scalar_w v1) { dst.s = v0.s - v1.s; }
+INLINE void MUL_S16(scalar_w &dst, scalar_w v0, scalar_w v1) { dst.s = v0.s * v1.s; }
+INLINE void DIV_S16(scalar_w &dst, scalar_w v0, scalar_w v1) { dst.s = v0.s / v1.s; }
+INLINE void REM_S16(scalar_w &dst, scalar_w v0, scalar_w v1) { dst.s = v0.s % v1.s; }
+INLINE void MUL_U16(scalar_w &dst, scalar_w v0, scalar_w v1) { dst.u = v0.u * v1.u; }
+INLINE void DIV_U16(scalar_w &dst, scalar_w v0, scalar_w v1) { dst.u = v0.u / v1.u; }
+INLINE void REM_U16(scalar_w &dst, scalar_w v0, scalar_w v1) { dst.u = v0.u % v1.u; }
+INLINE void EQ_S16(scalar_m &dst, scalar_w v0, scalar_w v1) { dst.u = (v0.s == v1.s ? ~0 : 0); }
+INLINE void NE_S16(scalar_m &dst, scalar_w v0, scalar_w v1) { dst.u = (v0.s != v1.s ? ~0 : 0); }
+INLINE void LE_S16(scalar_m &dst, scalar_w v0, scalar_w v1) { dst.u = (v0.s <= v1.s ? ~0 : 0); }
+INLINE void LT_S16(scalar_m &dst, scalar_w v0, scalar_w v1) { dst.u = (v0.s < v1.s ? ~0 : 0); }
+INLINE void GE_S16(scalar_m &dst, scalar_w v0, scalar_w v1) { dst.u = (v0.s >= v1.s ? ~0 : 0); }
+INLINE void GT_S16(scalar_m &dst, scalar_w v0, scalar_w v1) { dst.u = (v0.s > v1.s ? ~0 : 0); }
+INLINE void XOR_S16(scalar_w &dst, scalar_w v0, scalar_w v1) { dst.s = v0.s ^ v1.s; }
+INLINE void OR_S16(scalar_w &dst, scalar_w v0, scalar_w v1) { dst.s = v0.s | v1.s; }
+INLINE void AND_S16(scalar_w &dst, scalar_w v0, scalar_w v1) { dst.s = v0.s & v1.s; }
+INLINE void LE_U16(scalar_m &dst, scalar_w v0, scalar_w v1) { dst.u = (v0.u <= v1.u ? ~0 : 0); }
+INLINE void LT_U16(scalar_m &dst, scalar_w v0, scalar_w v1) { dst.u = (v0.u < v1.u ? ~0 : 0); }
+INLINE void GE_U16(scalar_m &dst, scalar_w v0, scalar_w v1) { dst.u = (v0.u >= v1.u ? ~0 : 0); }
+INLINE void GT_U16(scalar_m &dst, scalar_w v0, scalar_w v1) { dst.u = (v0.u > v1.u ? ~0 : 0); }
+INLINE void LOAD(scalar_w &dst, const char *ptr) { dst.u = *(const uint16_t *) ptr; }
+INLINE void STORE(scalar_w src, char *ptr) { *(uint16_t *) ptr = src.u; }
+INLINE void LOADI(scalar_w &dst, uint16_t u) { dst.u = u; }
+INLINE void SCATTER(scalar_w offset, scalar_w value, char *base) { *(uint16_t*)(base + offset.u) = value.u; }
+INLINE void GATHER(scalar_w &dst, scalar_w offset, const char *base) { dst.u = *(const uint16_t*)(base + offset.u); }
+
 //////////////////////////////////////////////////////////////////////////////
 // Identical instructions are forwarded
 //////////////////////////////////////////////////////////////////////////////
 
+// Forward identical 32 bit instructions
 #define NOV_U32 MOV_S32
 #define NOV_F MOV_S32
 #define ADD_U32 ADD_S32
@@ -548,6 +724,17 @@ INLINE void GATHER(scalar_dw &dst, scalar_dw offset, const char *base) { dst.u =
 #define AND_U32 AND_S32
 #define EQ_U32 EQ_S32
 #define NE_U32 NE_S32
+
+// Forward identical 16 bit instructions
+#define NOV_U16 MOV_S16
+#define ADD_U16 ADD_S16
+#define SUB_U16 SUB_S16
+#define AND_U16 AND_S16
+#define XOR_U16 XOR_S16
+#define OR_U16 OR_S16
+#define AND_U16 AND_S16
+#define EQ_U16 EQ_S16
+#define NE_U16 NE_S16
 
 #undef PS2SI
 #undef SI2PS

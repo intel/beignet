@@ -17,10 +17,12 @@
  * Author: Benjamin Segovia <benjamin.segovia@intel.com>
  */
 
- /*
-  * Authors:
-  *   Keith Whitwell <keith@tungstengraphics.com>
-  */
+/**
+ * \file gen_eu.hpp
+ * \author Benjamin Segovia <benjamin.segovia@intel.com>
+ * This is a revamped Gen ISA encoder from Mesa code base
+ */
+
 #ifndef GEN_EU_H
 #define GEN_EU_H
 
@@ -515,6 +517,9 @@ namespace gbe
     uint32_t execWidth:6;
     uint32_t quarterControl:2;
     uint32_t noMask:1;
+    uint32_t predicated:1;
+    uint32_t flag:1;
+    uint32_t inversePredicate:1;
   };
 
   /*! Helper structure to emit Gen instructions */
@@ -640,9 +645,6 @@ namespace gbe
     // Helper functions to encode
     ////////////////////////////////////////////////////////////////////////
     void setHeader(GenInstruction *insn);
-    void setExecutionWidth(GenInstruction *insn);
-    void setQuarterControl(GenInstruction *insn);
-    void setNoMask(GenInstruction *insn);
     void setDst(GenInstruction *insn, GenReg dest);
     void setSrc0(GenInstruction *insn, GenReg reg);
     void setSrc1(GenInstruction *insn, GenReg reg);

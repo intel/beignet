@@ -62,6 +62,7 @@ namespace gbe
       GBE_ASSERT(it != RA.end());
       return it->second;
     }
+
     /*! Emit instruction per family */
     void emitUnaryInstruction(const ir::UnaryInstruction &insn);
     void emitBinaryInstruction(const ir::BinaryInstruction &insn);
@@ -76,6 +77,8 @@ namespace gbe
     void emitStoreInstruction(const ir::StoreInstruction &insn);
     void emitFenceInstruction(const ir::FenceInstruction &insn);
     void emitLabelInstruction(const ir::LabelInstruction &insn);
+    /*! It is not natively suppored on Gen. We implement it here */
+    void emitIntMul32x32(const ir::Instruction &insn, GenReg dst, GenReg src0, GenReg src1);
     /*! Implements base class */
     virtual Kernel *allocateKernel(void);
     /*! Simplistic allocation to start with */

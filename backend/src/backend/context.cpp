@@ -63,6 +63,10 @@ namespace gbe
     const uint32_t ptrSize = unit.getPointerSize() == ir::POINTER_32_BITS ? 4u : 8u;
     kernel->curbeSize = 0u;
 
+    // We insert the block IP mask first
+    kernel->patches.push_back(PatchInfo(GBE_CURBE_BLOCK_IP, 0, kernel->curbeSize));
+    kernel->curbeSize += this->simdWidth * sizeof(uint16_t);
+
     // Go over the arguments and find the related patch locations
     const uint32_t inputNum = fn.inputNum();
     for (uint32_t inputID = 0u; inputID < inputNum; ++inputID) {
@@ -78,10 +82,6 @@ namespace gbe
 
     // Already inserted registers go here
     set<ir::Register> specialRegs;
-
-    // We insert the block IP mask first
-    kernel->patches.push_back(PatchInfo(GBE_CURBE_BLOCK_IP, 0, kernel->curbeSize));
-    kernel->curbeSize += this->simdWidth * sizeof(uint16_t);
 
     // Then the local IDs (not scalar, so we align them properly)
     kernel->curbeSize = ALIGN(kernel->curbeSize, GEN_REG_SIZE);

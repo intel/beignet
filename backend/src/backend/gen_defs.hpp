@@ -361,7 +361,7 @@ struct GenInstruction
        * Conditional Modifier for most instructions.  On Gen6+, this is also
        * used for the SEND instruction's Message Target/SFID.
        */
-      uint32_t destreg__conditionalmod:4;
+      uint32_t destreg_or_condmod:4;
       uint32_t acc_wr_control:1;
       uint32_t cmpt_control:1;
       uint32_t debug_control:1;

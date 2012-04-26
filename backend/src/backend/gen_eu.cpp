@@ -17,10 +17,11 @@
  * Author: Benjamin Segovia <benjamin.segovia@intel.com>
  */
 
- /*
-  * Authors:
-  *   Keith Whitwell <keith@tungstengraphics.com>
-  */
+/**
+ * \file gen_eu.hpp
+ * \author Benjamin Segovia <benjamin.segovia@intel.com>
+ * This is a revamped Gen ISA encoder from Mesa code base
+ */
 
 #include "backend/gen_eu.hpp"
 #include <cstring>
@@ -33,26 +34,25 @@ namespace gbe
     this->curr.execWidth = simdWidth;
     this->curr.quarterControl = GEN_COMPRESSION_Q1;
     this->curr.noMask = 0;
+    this->curr.predicated = 1;
+    this->curr.flag = 0;
+    this->curr.inversePredicate = 0;
   }
 
-  void GenEmitter::setExecutionWidth(GenInstruction *insn) {
+  void GenEmitter::setHeader(GenInstruction *insn) {
     if (this->curr.execWidth == 8)
       insn->header.execution_size = GEN_WIDTH_8;
     else if (this->curr.execWidth == 16)
       insn->header.execution_size = GEN_WIDTH_16;
     else
-      GBE_ASSERT(0);
-  }
-  void GenEmitter::setQuarterControl(GenInstruction *insn) {
+      NOT_IMPLEMENTED;
     insn->header.quarter_control = this->curr.quarterControl;
-  }
-  void GenEmitter::setNoMask(GenInstruction *insn) {
     insn->header.mask_control = this->curr.noMask;
-  }
-  void GenEmitter::setHeader(GenInstruction *insn) {
-    this->setExecutionWidth(insn);
-    this->setQuarterControl(insn);
-    this->setNoMask(insn);
+    if (this->curr.predicated) {
+      insn->header.predicate_control = GEN_PREDICATE_NORMAL;
+      insn->header.predicate_inverse = this->curr.inversePredicate;
+      insn->bits2.da1.flag_reg_nr = this->curr.flag;
+    }
   }
 
   /* Returns the corresponding conditional mod for swapping src0 and
@@ -278,7 +278,7 @@ namespace gbe
      inst->bits3.generic_gen5.response_length = response_length;
      inst->bits3.generic_gen5.msg_length = msg_length;
      inst->bits3.generic_gen5.end_of_thread = end_of_thread;
-     inst->header.destreg__conditionalmod = sfid;
+     inst->header.destreg_or_condmod = sfid;
   }
 
   void
@@ -347,14 +347,16 @@ namespace gbe
     assert(elemNum >= 1 || elemNum <= 4);
     uint32_t msg_length = 0;
     uint32_t response_length = 0;
-    if (this->curr.execWidth == 8)
+    this->setHeader(insn);
+    if (this->curr.execWidth == 8) {
+      this->setDst(insn, GenReg::retype(GenReg::null(), GEN_TYPE_UD));
       msg_length = 1+elemNum;
-    else if (this->curr.execWidth == 16)
+    } else if (this->curr.execWidth == 16) {
+      this->setDst(insn, GenReg::retype(GenReg::null(), GEN_TYPE_UW));
       msg_length = 2*(1+elemNum);
+    }
     else
       NOT_IMPLEMENTED;
-    this->setHeader(insn);
-    this->setDst(insn, GenReg::retype(GenReg::null(), GEN_TYPE_UW));
     this->setSrc0(insn, GenReg::ud8grf(msg.nr, 0));
     this->setSrc1(insn, GenReg::immud(0));
     set_dp_untyped_rw(this,
@@ -612,7 +614,7 @@ namespace gbe
   {
     GenInstruction *insn = this->next(GEN_OPCODE_CMP);
 
-    insn->header.destreg__conditionalmod = conditional;
+    insn->header.destreg_or_condmod = conditional;
     this->setHeader(insn);
     this->setDst(insn, dest);
     this->setSrc0(insn, src0);
@@ -667,7 +669,7 @@ namespace gbe
     } else
       assert(src.type == GEN_TYPE_F);
 
-    insn->header.destreg__conditionalmod = function;
+    insn->header.destreg_or_condmod = function;
     insn->header.saturate = saturate;
     this->setDst(insn, dest);
     this->setSrc0(insn, src);
@@ -694,7 +696,7 @@ namespace gbe
         assert(src1.type == GEN_TYPE_F);
      }
 
-     insn->header.destreg__conditionalmod = function;
+     insn->header.destreg_or_condmod = function;
      this->setHeader(insn);
      this->setDst(insn, dest);
      this->setSrc0(insn, src0);
@@ -715,7 +717,7 @@ namespace gbe
      /* Math is the same ISA format as other opcodes, except that CondModifier
       * becomes FC[3:0] and ThreadCtrl becomes FC[5:4].
       */
-     insn->header.destreg__conditionalmod = function;
+     insn->header.destreg_or_condmod = function;
      insn->header.saturate = saturate;
 
      /* Source modifiers are ignored for extended math instructions. */
@@ -779,7 +781,7 @@ namespace gbe
     insn->bits3.spawner_gen5.resource = GEN_DO_NOT_DEREFERENCE_URB;
     insn->bits3.spawner_gen5.msg_length = 1;
     insn->bits3.spawner_gen5.end_of_thread = 1;
-    insn->header.destreg__conditionalmod = GEN_SFID_THREAD_SPAWNER;
+    insn->header.destreg_or_condmod = GEN_SFID_THREAD_SPAWNER;
   }
 } /* namespace gbe */
 

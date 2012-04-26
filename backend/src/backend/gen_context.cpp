@@ -42,7 +42,7 @@ namespace gbe
 
   // Per-lane block IPs are always pre-allocated and used for branches. We just
   // 0xffff as a fake register for them
-  static const ir::Register blockIP(0xffff);
+  static const ir::Register blockIPReg(0xffff);
 
   void GenContext::allocatePayloadReg(gbe_curbe_type value,
                                       uint32_t subValue,
@@ -95,9 +95,9 @@ namespace gbe
     GBE_ASSERT(blockIPOffset >= 0 && blockIPOffset % GEN_REG_SIZE == 0);
     blockIPOffset /= GEN_REG_SIZE;
     if (simdWidth == 8)
-      RA.insert(std::make_pair(blockIP, GenReg::uw8grf(blockIPOffset, 0)));
+      RA.insert(std::make_pair(blockIPReg, GenReg::uw8grf(blockIPOffset, 0)));
     else if (simdWidth == 16)
-      RA.insert(std::make_pair(blockIP, GenReg::uw16grf(blockIPOffset, 0)));
+      RA.insert(std::make_pair(blockIPReg, GenReg::uw16grf(blockIPOffset, 0)));
     else
       NOT_SUPPORTED;
 
@@ -144,6 +144,42 @@ namespace gbe
     p->MOV(reg(insn.getDst(0)), reg(insn.getSrc(0)));
   }
 
+  void GenContext::emitIntMul32x32(const ir::Instruction &insn,
+                                   GenReg dst, GenReg src0, GenReg src1)
+  {
+
+    const uint32_t width = p->curr.execWidth;
+    const bool src0Scalar = isScalarReg(insn.getSrc(0));
+    const bool src1Scalar = isScalarReg(insn.getSrc(1));
+
+    p->push();
+
+    // Either left part of the 16-wide register or just a simd 8 register
+    dst  = GenReg::retype(dst,  GEN_TYPE_D);
+    src1 = GenReg::retype(src1, GEN_TYPE_D);
+    src1 = GenReg::retype(src1, GEN_TYPE_D);
+    p->curr.execWidth = 8;
+    p->curr.quarterControl = GEN_COMPRESSION_Q1;
+    p->MUL(GenReg::retype(GenReg::acc(), GEN_TYPE_D), src0, src1);
+    p->MACH(GenReg::retype(GenReg::null(), GEN_TYPE_D), src0, src1);
+    p->MOV(GenReg::retype(dst, GEN_TYPE_F), GenReg::acc());
+
+    // Right part of the 16-wide register now
+    if (width == 16) {
+      p->curr.noMask = 1;
+      GenReg nextSrc0 = src0, nextSrc1 = src1;
+      if (src0Scalar == false) nextSrc0 = GenReg::next(src0);
+      if (src1Scalar == false) nextSrc1 = GenReg::next(src1);
+      p->MUL(GenReg::retype(GenReg::acc(), GEN_TYPE_D), nextSrc0, nextSrc1);
+      p->MACH(GenReg::retype(GenReg::null(), GEN_TYPE_D), nextSrc0, nextSrc1);
+      p->curr.quarterControl = GEN_COMPRESSION_Q2;
+      p->MOV(GenReg::f8grf(116,0), GenReg::acc());
+      p->curr.noMask = 0;
+      p->MOV(GenReg::retype(GenReg::next(dst), GEN_TYPE_F), GenReg::f8grf(116,0));
+    }
+    p->pop();
+  }
+
   void GenContext::emitBinaryInstruction(const ir::BinaryInstruction &insn) {
     using namespace ir;
     const Opcode opcode = insn.getOpcode();
@@ -152,8 +188,6 @@ namespace gbe
     GenReg src0 = reg(insn.getSrc(0));
     GenReg src1 = reg(insn.getSrc(1));
     GBE_ASSERT(isScalarReg(insn.getDst(0)) == false);
-    const bool src0Scalar = isScalarReg(insn.getSrc(0));
-    const bool src1Scalar = isScalarReg(insn.getSrc(1));
 
     // Default type is FLOAT
     GBE_ASSERT(type == TYPE_U32 || type == TYPE_S32 || type == TYPE_FLOAT);
@@ -173,33 +207,12 @@ namespace gbe
       case OP_SUB: p->ADD(dst, src0, GenReg::negate(src1)); break;
       case OP_MUL: 
       {
-#if 1
         if (type == TYPE_FLOAT)
           p->MUL(dst, src0, src1);
-        else {
-          const uint32_t width = p->curr.execWidth;
-          p->push();
-          p->curr.execWidth = 8;
-          p->curr.quarterControl = GEN_COMPRESSION_Q1;
-          p->MUL(GenReg::retype(GenReg::acc(), GEN_TYPE_D), src0, src1);
-          p->MACH(GenReg::retype(GenReg::null(), GEN_TYPE_D), src0, src1);
-          p->MOV(dst, GenReg::retype(GenReg::acc(), GEN_TYPE_D));
-          if (width == 16) {
-            p->curr.noMask = 1;
-            GenReg nextSrc0 = src0, nextSrc1 = src1;
-            if (src0Scalar == false) nextSrc0 = GenReg::next(src0);
-            if (src1Scalar == false) nextSrc1 = GenReg::next(src1);
-            p->MUL(GenReg::retype(GenReg::acc(), GEN_TYPE_D), nextSrc0, nextSrc1);
-            p->MACH(GenReg::retype(GenReg::null(), GEN_TYPE_D), nextSrc0, nextSrc1);
-            p->curr.quarterControl = GEN_COMPRESSION_Q2;
-            p->MOV(GenReg::d8grf(116,0), GenReg::retype(GenReg::acc(), GEN_TYPE_D));
-            p->curr.noMask = 0;
-            p->MOV(GenReg::next(dst), GenReg::d8grf(116,0));
-          }
-          p->pop();
-
-        }
-#endif
+        else if (type == TYPE_U32 || type == TYPE_S32)
+          this->emitIntMul32x32(insn, dst, src0, src1);
+        else
+          NOT_IMPLEMENTED;
         break;
       }
       default: NOT_IMPLEMENTED;
@@ -245,8 +258,6 @@ namespace gbe
     GBE_ASSERT(this->simdWidth <= 16);
     const GenReg address = reg(insn.getAddress());
     const GenReg value = reg(insn.getValue(0));
-    // XXX remove that later. Now we just copy everything to GRFs to make it
-    // contiguous
     if (this->simdWidth == 8 || this->simdWidth == 16)
       p->UNTYPED_READ(value, address, 0, 1);
     else
