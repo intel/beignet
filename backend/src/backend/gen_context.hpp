@@ -56,12 +56,12 @@ namespace gbe
     void allocateRegister(void);
     /*! Emit the instructions */
     void emitInstructionStream(void);
+    /*! Set the correct target values for the branches */
+    void patchBranches(void);
     /*! Return the Gen register from the GenIR one */
-    INLINE GenReg reg(const ir::Register &reg) {
-      auto it = RA.find(reg);
-      GBE_ASSERT(it != RA.end());
-      return it->second;
-    }
+    GenReg genReg(ir::Register reg, ir::Type type = ir::TYPE_FLOAT);
+    /*! Compute the second instruction when using SIMD8 with Qn (n in 2,3,4) */
+    GenReg genRegQn(ir::Register reg, uint32_t quarter, ir::Type type = ir::TYPE_FLOAT);
 
     /*! Emit instruction per family */
     void emitUnaryInstruction(const ir::UnaryInstruction &insn);
@@ -79,10 +79,17 @@ namespace gbe
     void emitLabelInstruction(const ir::LabelInstruction &insn);
     /*! It is not natively suppored on Gen. We implement it here */
     void emitIntMul32x32(const ir::Instruction &insn, GenReg dst, GenReg src0, GenReg src1);
+    /*! Backward and forward branches are handled slightly differently */
+    void emitForwardBranch(const ir::BranchInstruction&, ir::LabelIndex dst, ir::LabelIndex src);
+    void emitBackwardBranch(const ir::BranchInstruction&, ir::LabelIndex dst, ir::LabelIndex src);
     /*! Implements base class */
     virtual Kernel *allocateKernel(void);
     /*! Simplistic allocation to start with */
     map<ir::Register, GenReg> RA;
+    /*! Store the position of each label instruction in the Gen ISA stream */
+    map<ir::LabelIndex, uint32_t> labelPos;
+    /*! Store the position of each branch instruction in the Gen ISA stream */
+    map<const ir::Instruction*, uint32_t> branchPos;
     /*! Helper structure to emit Gen ISA */
     GenEmitter *p;
   };

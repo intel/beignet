@@ -97,6 +97,11 @@ namespace ir {
     /*! Get successors and predecessors */
     const BlockSet &getSuccessorSet(void) const { return successors; }
     const BlockSet &getPredecessorSet(void) const { return predecessors; }
+    /*! Get the label index of this block */
+    LabelIndex getLabelIndex(void) const {
+      const LabelInstruction *label = cast<LabelInstruction>(this->first);
+      return label->getLabelIndex();
+    }
   private:
     friend class Function; //!< Owns the basic blocks
     BlockSet predecessors; //!< Incoming blocks

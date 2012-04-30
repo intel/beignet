@@ -34,9 +34,9 @@ namespace gbe
     this->curr.execWidth = simdWidth;
     this->curr.quarterControl = GEN_COMPRESSION_Q1;
     this->curr.noMask = 0;
-    this->curr.predicated = 1;
     this->curr.flag = 0;
     this->curr.subFlag = 0;
+    this->curr.predicate = GEN_PREDICATE_NORMAL;
     this->curr.inversePredicate = 0;
   }
 
@@ -45,14 +45,16 @@ namespace gbe
       insn->header.execution_size = GEN_WIDTH_8;
     else if (this->curr.execWidth == 16)
       insn->header.execution_size = GEN_WIDTH_16;
+    else if (this->curr.execWidth == 1)
+      insn->header.execution_size = GEN_WIDTH_1;
     else
       NOT_IMPLEMENTED;
     insn->header.quarter_control = this->curr.quarterControl;
     insn->header.mask_control = this->curr.noMask;
     insn->bits2.ia1.flag_reg_nr = this->curr.flag;
     insn->bits2.ia1.flag_sub_reg_nr = this->curr.subFlag;
-    if (this->curr.predicated) {
-      insn->header.predicate_control = GEN_PREDICATE_NORMAL;
+    if (this->curr.predicate != GEN_PREDICATE_NONE) {
+      insn->header.predicate_control = this->curr.predicate;
       insn->header.predicate_inverse = this->curr.inversePredicate;
     }
   }
@@ -398,10 +400,10 @@ namespace gbe
      return insn;
   }
 
-  static GenInstruction *brw_alu1(GenEmitter *p,
-                                   uint32_t opcode,
-                                   GenReg dest,
-                                   GenReg src)
+  INLINE GenInstruction *alu1(GenEmitter *p,
+                              uint32_t opcode,
+                              GenReg dest,
+                              GenReg src)
   {
      GenInstruction *insn = p->next(opcode);
      p->setHeader(insn);
@@ -410,11 +412,11 @@ namespace gbe
      return insn;
   }
 
-  static GenInstruction *brw_alu2(GenEmitter *p,
-                                   uint32_t opcode,
-                                   GenReg dest,
-                                   GenReg src0,
-                                   GenReg src1)
+  INLINE GenInstruction *alu2(GenEmitter *p,
+                              uint32_t opcode,
+                              GenReg dest,
+                              GenReg src0,
+                              GenReg src1)
   {
      GenInstruction *insn = p->next(opcode);
      p->setHeader(insn);
@@ -434,12 +436,12 @@ namespace gbe
         return reg.subnr / 4;
   }
 
-  static GenInstruction *brw_alu3(GenEmitter *p,
-                                   uint32_t opcode,
-                                   GenReg dest,
-                                   GenReg src0,
-                                   GenReg src1,
-                                   GenReg src2)
+  static GenInstruction *alu3(GenEmitter *p,
+                              uint32_t opcode,
+                              GenReg dest,
+                              GenReg src0,
+                              GenReg src1,
+                              GenReg src2)
   {
      GenInstruction *insn = p->next(opcode);
 
@@ -496,19 +498,19 @@ namespace gbe
 #define ALU1(OP) \
   GenInstruction *GenEmitter::OP(GenReg dest, GenReg src0) \
   { \
-     return brw_alu1(this, GEN_OPCODE_##OP, dest, src0); \
+     return alu1(this, GEN_OPCODE_##OP, dest, src0); \
   }
 
 #define ALU2(OP) \
   GenInstruction *GenEmitter::OP(GenReg dest, GenReg src0, GenReg src1) \
   { \
-     return brw_alu2(this, GEN_OPCODE_##OP, dest, src0, src1); \
+     return alu2(this, GEN_OPCODE_##OP, dest, src0, src1); \
   }
 
 #define ALU3(OP) \
   GenInstruction *GenEmitter::OP(GenReg dest, GenReg src0, GenReg src1, GenReg src2) \
   { \
-     return brw_alu3(this, GEN_OPCODE_##OP, dest, src0, src1, src2); \
+     return alu3(this, GEN_OPCODE_##OP, dest, src0, src1, src2); \
   }
 
   ALU1(MOV)
@@ -534,7 +536,7 @@ namespace gbe
 
   GenInstruction *GenEmitter::MACH(GenReg dest, GenReg src0, GenReg src1)
   {
-     GenInstruction *insn = brw_alu2(this, GEN_OPCODE_MACH, dest, src0, src1);
+     GenInstruction *insn = alu2(this, GEN_OPCODE_MACH, dest, src0, src1);
      insn->header.acc_wr_control = 1;
      return insn;
   }
@@ -556,7 +558,7 @@ namespace gbe
         assert(src0.type != GEN_TYPE_D);
      }
 
-     return brw_alu2(this, GEN_OPCODE_ADD, dest, src0, src1);
+     return alu2(this, GEN_OPCODE_ADD, dest, src0, src1);
   }
 
   GenInstruction *GenEmitter::MUL(GenReg dest, GenReg src0, GenReg src1)
@@ -588,7 +590,7 @@ namespace gbe
      assert(src1.file != GEN_ARCHITECTURE_REGISTER_FILE ||
             src1.nr != GEN_ARF_ACCUMULATOR);
 
-     return brw_alu2(this, GEN_OPCODE_MUL, dest, src0, src1);
+     return alu2(this, GEN_OPCODE_MUL, dest, src0, src1);
   }
 
 
@@ -600,12 +602,17 @@ namespace gbe
     this->setSrc1(insn, GenReg::immud(0x0));
   }
 
-  GenInstruction *GenEmitter::JMPI(GenReg dest, GenReg src0, GenReg src1)
+  void GenEmitter::JMPI(GenReg src)
   {
-    GenInstruction *insn = brw_alu2(this, GEN_OPCODE_JMPI, dest, src0, src1);
-    insn->header.execution_size = 1;
-    insn->header.mask_control = GEN_MASK_DISABLE;
-    return insn;
+    alu2(this, GEN_OPCODE_JMPI, GenReg::ip(), GenReg::ip(), src);
+  }
+
+  void GenEmitter::patchJMPI(uint32_t insnID, int32_t jumpDistance)
+  {
+    GenInstruction &insn = this->store[insnID];
+    assert(insnID < this->insnNum);
+    assert(insn.header.opcode == GEN_OPCODE_JMPI);
+    this->setSrc1(&insn, GenReg::retype(GenReg::immw(jumpDistance), GEN_TYPE_D));
   }
 
   /* To integrate with the above, it makes sense that the comparison
@@ -621,18 +628,6 @@ namespace gbe
     this->setDst(insn, dest);
     this->setSrc0(insn, src0);
     this->setSrc1(insn, src1);
-#if 0
-
-     /* Make it so that future instructions will use the computed flag
-      * value until brw_set_predicate_control_flag_value() is called
-      * again.  
-      */
-     if (dest.file == GEN_ARCHITECTURE_REGISTER_FILE &&
-         dest.nr == 0) {
-        this->current->header.predicate_control = GEN_PREDICATE_NORMAL;
-        this->flag_value = 0xff;
-     }
-#endif
   }
 
   /* Issue 'wait' instruction for n1, host could program MMIO

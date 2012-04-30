@@ -747,7 +747,7 @@ INLINE void GATHER(scalar_w &dst, scalar_w offset, const char *base) { dst.u = *
 
 /*! Update the UIP vector according for the lanes alive in mask */
 template <uint32_t vectorNum>
-INLINE void updateUIP(simd_dw<vectorNum> &uipVec, const simd_m<vectorNum> mask, uint32_t uip) {
+INLINE void updateUIP(simd_w<vectorNum> &uipVec, const simd_m<vectorNum> mask, uint16_t uip) {
   union { float f; uint32_t u; } x;
   x.u = uip;
   __m128 v = _mm_load1_ps(&x.f);
@@ -774,8 +774,8 @@ INLINE void updateMask(simd_m<vectorNum> &mask, const simd_w<vectorNum> &uipVec,
   do { \
     updateUIP(UIPVEC, COND, UIP); \
     typeof(COND) jumpCond; \
-    scalar_dw jipScalar(uint32_t(JIP)); \
-    LT_U32(jumpCond, UIPVEC, JIP); \
+    scalar_w jipScalar(uint16_t(JIP)); \
+    LT_U16(jumpCond, UIPVEC, uint16_t(JIP)); \
     uint32_t jumpMask = mask(jumpCond); \
     if (!jumpMask) goto label##JIP; \
   } while (0)

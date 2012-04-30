@@ -59,7 +59,7 @@ namespace ir {
     return index;
   }
 
-  const size_t RegisterData::familySize[] = {1,1,2,4,8};
+  const size_t RegisterData::familySize[] = {2,1,2,4,8};
 
 } /* namespace ir */
 } /* namespace gbe */

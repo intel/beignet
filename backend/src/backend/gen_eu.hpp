@@ -58,7 +58,7 @@
 #define WRITEMASK_XYZW  0xf
 
 #define GEN_REG_SIZE (8*4)
-#define GEN_GRF_SIZE (GEN_REG_SIZE*128)
+#define GEN_GRF_SIZE (GEN_REG_SIZE*112)
 #define GEN_EU_MAX_INSN_STACK 5
 
 #define VF_ZERO 0x0
@@ -375,6 +375,9 @@ namespace gbe
       return ud16(GEN_GENERAL_REGISTER_FILE, nr, subnr);
     }
 
+    static INLINE GenReg uw1grf(uint32_t nr, uint32_t subnr) {
+      return uw1(GEN_GENERAL_REGISTER_FILE, nr, subnr);
+    }
     static INLINE GenReg uw8grf(uint32_t nr, uint32_t subnr) {
       return uw8(GEN_GENERAL_REGISTER_FILE, nr, subnr);
     }
@@ -393,6 +396,18 @@ namespace gbe
 
     static INLINE GenReg acc(void) {
       return vec8(GEN_ARCHITECTURE_REGISTER_FILE, GEN_ARF_ACCUMULATOR, 0);
+    }
+
+    static INLINE GenReg ip(void) {
+      return GenReg(GEN_ARCHITECTURE_REGISTER_FILE, 
+                    GEN_ARF_IP, 
+                    0,
+                    GEN_TYPE_UD,
+                    GEN_VERTICAL_STRIDE_4,
+                    GEN_WIDTH_1,
+                    GEN_HORIZONTAL_STRIDE_0,
+                    GEN_SWIZZLE_XYZW,
+                    WRITEMASK_XYZW);
     }
 
     static INLINE GenReg notification1(void) {
@@ -532,9 +547,9 @@ namespace gbe
     uint32_t execWidth:6;
     uint32_t quarterControl:2;
     uint32_t noMask:1;
-    uint32_t predicated:1;
     uint32_t flag:1;
     uint32_t subFlag:1;
+    uint32_t predicate:4;
     uint32_t inversePredicate:1;
   };
 
@@ -590,7 +605,6 @@ namespace gbe
     ALU2(RSR)
     ALU2(RSL)
     ALU2(ASR)
-    ALU2(JMPI)
     ALU2(ADD)
     ALU2(MUL)
     ALU1(FRC)
@@ -605,24 +619,20 @@ namespace gbe
 #undef ALU2
 #undef ALU3
 
+    /*! Jump indexed instruction */
+    void JMPI(GenReg src);
     /*! Compare instructions */
     void CMP(GenReg dst, uint32_t conditional, GenReg src0, GenReg src1);
-
     /*! EOT is used to finish GPGPU threads */
     void EOT(uint32_t msg_nr);
-
     /*! No-op */
     void NOP(void);
-
     /*! Wait instruction (used for the barrier) */
     void WAIT(void);
-
     /*! Untyped read (upto 4 channels) */
     void UNTYPED_READ(GenReg dst, GenReg src, uint32_t bti, uint32_t elemNum);
-
     /*! Untyped write (upto 4 channels) */
     void UNTYPED_WRITE(GenReg src, uint32_t bti, uint32_t elemNum);
-
     /*! Send instruction for the sampler */
     void SAMPLE(GenReg dest,
                 uint32_t msg_reg_nr,
@@ -636,7 +646,6 @@ namespace gbe
                 uint32_t header_present,
                 uint32_t simd_mode,
                 uint32_t return_format);
-
     /*! Extended math function, float[16] */
     void MATH16(GenReg dest,
                 uint32_t function,
@@ -644,7 +653,6 @@ namespace gbe
                 uint32_t msg_reg_nr,
                 GenReg src,
                 uint32_t precision);
-
     /*! Extended math function, float[8] */
     void MATH(GenReg dest,
               uint32_t function,
@@ -653,9 +661,11 @@ namespace gbe
               GenReg src,
               uint32_t data_type,
               uint32_t precision);
-
     /*! Extended math function, float[8] */
     void MATH2(GenReg dest, uint32_t function, GenReg src0, GenReg src1);
+
+    /*! Patch JMPI (located at index insnID) with the given jump distance */
+    void patchJMPI(uint32_t insnID, int32_t jumpDistance);
 
     ////////////////////////////////////////////////////////////////////////
     // Helper functions to encode
