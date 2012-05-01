@@ -98,4 +98,5 @@ ENDIF(GBE_FOUND)
 
 # the run-time itself
 ADD_SUBDIRECTORY(src)
+ADD_SUBDIRECTORY(tests)
 
