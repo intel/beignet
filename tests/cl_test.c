@@ -28,25 +28,29 @@
 #include <string.h>
 #include <assert.h>
 
-#define FATAL(...)                                          \
-do {                                                        \
-  fprintf(stderr, "error: ");                               \
-  fprintf(stderr, __VA_ARGS__);                             \
-  assert(0);                                                \
-  exit(-1);                                                 \
+#define FATAL(...) \
+do { \
+  fprintf(stderr, "error: "); \
+  fprintf(stderr, __VA_ARGS__); \
+  assert(0); \
+  exit(-1); \
 } while (0)
 
-#define FATAL_IF(COND, ...)                                 \
-do {                                                        \
-  if (COND) FATAL(__VA_ARGS__);                             \
+#define FATAL_IF(COND, ...) \
+do { \
+  if (COND) FATAL(__VA_ARGS__); \
 } while (0)
 
-cl_platform_id platform;
-cl_device_id device;
-cl_context ctx;
-cl_program program;
-cl_kernel kernel;
-cl_command_queue queue;
+cl_platform_id platform = NULL;
+cl_device_id device = NULL;
+cl_context ctx = NULL;
+cl_program program = NULL;
+cl_kernel kernel = NULL;
+cl_command_queue queue = NULL;
+cl_mem buf[MAX_BUFFER_N] = {};
+void *buf_data[MAX_BUFFER_N] = {};
+size_t globals[3] = {};
+size_t locals[3] = {};
 
 static const char*
 cl_test_channel_order_string(cl_channel_order order)
@@ -97,11 +101,53 @@ cl_test_channel_type_string(cl_channel_type type)
 }
 
 int
-cl_test_init(const char *file_name, const char *kernel_name, int format)
+cl_kernel_init(const char *file_name, const char *kernel_name, int format)
 {
   cl_file_map_t *fm = NULL;
-  cl_int status = CL_SUCCESS;
   char *ker_path = NULL;
+  cl_int status = CL_SUCCESS;
+
+  /* Load the program and build it */
+  ker_path = do_kiss_path(file_name, device);
+  if (format == LLVM)
+    program = clCreateProgramWithLLVM(ctx, 1, &device, ker_path, &status);
+  else if (format == SOURCE) {
+    cl_file_map_t *fm = cl_file_map_new();
+    FATAL_IF (cl_file_map_open(fm, ker_path) != CL_FILE_MAP_SUCCESS,
+              "Failed to open file");
+    const char *src = cl_file_map_begin(fm);
+    const size_t sz = cl_file_map_size(fm);
+    program = clCreateProgramWithSource(ctx, 1, &src, &sz, &status);
+  } else
+    FATAL("Not able to create program from binary");
+
+  if (status != CL_SUCCESS) {
+    fprintf(stderr, "error calling clCreateProgramWithBinary\n");
+    goto error;
+  }
+
+  /* OCL requires to build the program even if it is created from a binary */
+  CALL (clBuildProgram, program, 1, &device, NULL, NULL, NULL);
+
+  /* Create a kernel from the program */
+  kernel = clCreateKernel(program, kernel_name, &status);
+  if (status != CL_SUCCESS) {
+    fprintf(stderr, "error calling clCreateKernel\n");
+    goto error;
+  }
+
+exit:
+  free(ker_path);
+  cl_file_map_delete(fm);
+  return status;
+error:
+  goto exit;
+}
+
+int
+cl_ocl_init(void)
+{
+  cl_int status = CL_SUCCESS;
   char name[128];
   cl_uint platform_n;
   size_t i;
@@ -150,35 +196,6 @@ cl_test_init(const char *file_name, const char *kernel_name, int format)
         cl_test_channel_order_string(fmt[i].image_channel_order),
         cl_test_channel_type_string(fmt[i].image_channel_data_type));
 
-  /* Load the program and build it */
-  ker_path = do_kiss_path(file_name, device);
-  if (format == LLVM)
-    program = clCreateProgramWithLLVM(ctx, 1, &device, ker_path, &status);
-  else if (format == SOURCE) {
-    cl_file_map_t *fm = cl_file_map_new();
-    FATAL_IF (cl_file_map_open(fm, ker_path) != CL_FILE_MAP_SUCCESS,
-              "Failed to open file");
-    const char *src = cl_file_map_begin(fm);
-    const size_t sz = cl_file_map_size(fm);
-    program = clCreateProgramWithSource(ctx, 1, &src, &sz, &status);
-  } else
-    FATAL("Not able to create program from binary");
-
-  if (status != CL_SUCCESS) {
-    fprintf(stderr, "error calling clCreateProgramWithBinary\n");
-    goto error;
-  }
-
-  /* OCL requires to build the program even if it is created from a binary */
-  CALL (clBuildProgram, program, 1, &device, NULL, NULL, NULL);
-
-  /* Create a kernel from the program */
-  kernel = clCreateKernel(program, kernel_name, &status);
-  if (status != CL_SUCCESS) {
-    fprintf(stderr, "error calling clCreateKernel\n");
-    goto error;
-  }
-
   /* We are going to push NDRange kernels here */
   queue = clCreateCommandQueue(ctx, device, 0, &status);
   if (status != CL_SUCCESS) {
@@ -186,21 +203,61 @@ cl_test_init(const char *file_name, const char *kernel_name, int format)
     goto error;
   }
 
-exit:
-  free(ker_path);
-  cl_file_map_delete(fm);
-  return status;
 error:
-  goto exit;
+  return status;
+}
+
+int
+cl_test_init(const char *file_name, const char *kernel_name, int format)
+{
+  cl_int status = CL_SUCCESS;
+
+  /* Initialize OCL */
+  if ((status = cl_ocl_init()) != CL_SUCCESS)
+    goto error;
+
+  /* Load the kernel */
+  if ((status = cl_kernel_init(file_name, kernel_name, format)) != CL_SUCCESS)
+    goto error;
+
+error:
+  return status;
+}
+
+void
+cl_kernel_destroy(void)
+{
+  clReleaseKernel(kernel);
+  clReleaseProgram(program);
+  kernel = NULL;
+  program = NULL;
+}
+
+void
+cl_ocl_destroy(void)
+{
+  clReleaseCommandQueue(queue);
+  clReleaseContext(ctx);
 }
 
 void
 cl_test_destroy(void)
 {
-  clReleaseCommandQueue(queue);
-  clReleaseKernel(kernel);
-  clReleaseProgram(program);
-  clReleaseContext(ctx);
+  cl_kernel_destroy();
+  cl_ocl_destroy();
+  printf("%i memory leaks\n", clIntelReportUnfreed());
+  assert(clIntelReportUnfreed() == 0);
+}
+
+void
+cl_release_buffers(void)
+{
+  int i;
+  for (i = 0; i < MAX_BUFFER_N; ++i)
+    if (buf[i] != NULL) {
+      clReleaseMemObject(buf[i]);
+      buf[i] = NULL;
+    }
 }
 
 static const char *err_msg[] = {
