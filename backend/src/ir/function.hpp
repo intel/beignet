@@ -205,11 +205,21 @@ namespace ir {
       GBE_ASSERT(ID < outputNum());
       return outputs[ID];
     }
-    /*! Get block ID */
-    INLINE const BasicBlock &getBlock(uint32_t ID) const {
-      GBE_ASSERT(ID < blockNum());
-      GBE_ASSERT(blocks[ID] != NULL);
-      return *blocks[ID];
+    /*! Get function the entry point block */
+    INLINE const BasicBlock &getTopBlock(void) const {
+     GBE_ASSERT(blockNum() > 0);
+      return *blocks[0];
+    }
+    /*! Get block from its label */
+    INLINE const BasicBlock &getBlock(LabelIndex label) const {
+      GBE_ASSERT(label < labelNum() && labels[label] != NULL);
+      return *labels[label];
+    }
+    /*! Get the label instruction from its label index */
+    INLINE const LabelInstruction *getLabelInstruction(LabelIndex index) const {
+      const BasicBlock *bb = this->labels[index];
+      const Instruction *first = bb->getFirstInstruction();
+      return cast<LabelInstruction>(first);
     }
     /*! Get the first index of the special registers and number of them */
     uint32_t getFirstSpecialReg(void) const;

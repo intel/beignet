@@ -165,7 +165,7 @@ namespace ir {
     const uint32_t inputNum = fn.inputNum();
 
     // The first block must also transfer the function arguments
-    const BasicBlock &top = fn.getBlock(0);
+    const BasicBlock &top = fn.getTopBlock();
     const Liveness::BlockInfo &info = this->liveness.getBlockInfo(&top);
     GBE_ASSERT(defMap.contains(&top) == true);
     auto blockDefMap = defMap.find(&top)->second;

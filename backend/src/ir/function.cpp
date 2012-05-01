@@ -74,6 +74,15 @@ namespace ir {
         *newBra = BRA(newIndex);
       newBra->replace(&insn);
     });
+
+    // Reset the label to block mapping
+    this->labels.resize(last);
+    foreachBlock([&](BasicBlock &bb) {
+      const Instruction *first = bb.getFirstInstruction();
+      const LabelInstruction *label = cast<LabelInstruction>(first);
+      const LabelIndex index = label->getLabelIndex();
+      this->labels[index] = &bb;
+    });
   }
 
   LabelIndex Function::newLabel(void) {
@@ -177,13 +186,12 @@ namespace ir {
       out << "decl_output %" << fn.getOutput(i) << std::endl;
     out << "## " << fn.blockNum() << " block"
         << plural(fn.blockNum()) << " ##" << std::endl;
-    for (uint32_t i = 0; i < fn.blockNum(); ++i) {
-      const BasicBlock &bb = fn.getBlock(i);
+    fn.foreachBlock([&](const BasicBlock &bb) {
       bb.foreach([&out] (const Instruction &insn) {
         out << insn << std::endl;
       });
       out << std::endl;
-    }
+    });
     out << ".end_function" << std::endl;
     return out;
   }
