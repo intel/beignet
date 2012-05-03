@@ -181,41 +181,52 @@ namespace gbe
 #undef DECL_INSN
       }
       if (opcode == OP_LABEL) {
-        const LabelInstruction labelInsn = cast<LabelInstruction>(insn);
+        const LabelInstruction &labelInsn = cast<LabelInstruction>(insn);
         const LabelIndex index = labelInsn.getLabelIndex();
+        const bool byPassed = JIPs.contains(&labelInsn);
         o << "\n";
-        if (usedLabels.contains(index) == false)  o << "// ";
+        if (byPassed == false && usedLabels.contains(index) == false)  o << "// ";
         o << "label" << index << ":\n";
-        o << "SIM_JOIN(uip, emask, " << uint32_t(index) << ");\n";
+        if (byPassed == false)
+          o << "SIM_JOIN(uip, emask, " << uint32_t(index) << ");\n";
+        else {
+          //GBE_ASSERT(false);
+          const LabelIndex jip = JIPs.find(&labelInsn)->second;
+          o << "SIM_JOIN_JUMP(uip, emask, " <<
+                              uint32_t(index) << ", " <<
+                              uint32_t(jip) << ");\n";
+        }
         return;
       } else if (opcode == OP_BRA) {
         // Get the label of the block
-        const BranchInstruction bra = cast<BranchInstruction>(insn);
+        const BranchInstruction &bra = cast<BranchInstruction>(insn);
         const BasicBlock *bb = insn.getParent();
         const Instruction *label = bb->getFirstInstruction();
         GBE_ASSERT(label->isMemberOf<LabelInstruction>() == true);
         const LabelIndex srcIndex = cast<LabelInstruction>(label)->getLabelIndex();
-        const LabelIndex dstIndex = bra.getLabelIndex();
+        const LabelIndex uip = bra.getLabelIndex();
         const bool isPredicated = bra.isPredicated();
 
-        if (uint32_t(dstIndex) > uint32_t(srcIndex)) { // FWD jump here
+        if (uint32_t(uip) > uint32_t(srcIndex)) { // FWD jump here
+          GBE_ASSERT(JIPs.contains(&bra) == true);
+          const LabelIndex jip = JIPs.find(&bra)->second;
           if (isPredicated) {
             const Register pred = bra.getPredicateIndex();
             o << "SIM_FWD_BRA_C(uip, emask, " << "_" << pred
-              << ", " << uint32_t(dstIndex) << ", " << uint32_t(dstIndex)
+              << ", " << uint32_t(jip) << ", " << uint32_t(uip)
               << ");\n";
           } else {
             o << "SIM_FWD_BRA(uip, emask, "
-              << uint32_t(dstIndex) << ", " << uint32_t(dstIndex)
+              << uint32_t(jip) << ", " << uint32_t(uip)
               << ");\n";
           }
         } else { // BWD jump
           if (isPredicated) {
             const Register pred = bra.getPredicateIndex();
-            o << "SIM_BWD_BRA_C(uip, _" << pred
-              << ", " << uint32_t(dstIndex) << ");\n";
+            o << "SIM_BWD_BRA_C(uip, emask, _" << pred
+              << ", " << uint32_t(uip) << ");\n";
           } else
-            o << "SIM_BWD_BRA(uip, emask, " << uint32_t(dstIndex) << ");\n";
+            o << "SIM_BWD_BRA(uip, emask, " << uint32_t(uip) << ");\n";
         }
         return;
       } else if (opcode == OP_RET) {

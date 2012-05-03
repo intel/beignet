@@ -299,6 +299,7 @@ VEC_OP(simd_w<vectorNum>,  simd_w<vectorNum>,  scalar_w, SUB_S16, _mm_sub_epi16,
 VEC_OP(simd_w<vectorNum>,  simd_w<vectorNum>,  scalar_w, AND_S16, _mm_and_ps, ID, ID, ID);
 VEC_OP(simd_w<vectorNum>,  simd_w<vectorNum>,  scalar_w, OR_S16, _mm_or_ps, ID, ID, ID);
 VEC_OP(simd_w<vectorNum>,  simd_w<vectorNum>,  scalar_w, XOR_S16, _mm_xor_ps, ID, ID, ID);
+VEC_OP(simd_m<vectorNum>,  simd_m<vectorNum>,  scalar_m, AND_M,   _mm_and_ps, ID, ID, ID);
 #undef VEC_OP
 
 /* Vector integer operations that we can get by switching argument order */
@@ -747,7 +748,7 @@ INLINE void GATHER(scalar_w &dst, scalar_w offset, const char *base) { dst.u = *
 
 /*! Update the UIP vector according for the lanes alive in mask */
 template <uint32_t vectorNum>
-INLINE void updateUIP(simd_w<vectorNum> &uipVec, const simd_m<vectorNum> mask, uint16_t uip) {
+void updateUIP(simd_w<vectorNum> &uipVec, const simd_m<vectorNum> mask, uint16_t uip) {
   union { float f; uint32_t u; } x;
   x.u = uip;
   __m128 v = _mm_load1_ps(&x.f);
@@ -755,9 +756,22 @@ INLINE void updateUIP(simd_w<vectorNum> &uipVec, const simd_m<vectorNum> mask, u
     uipVec.m[i] = _mm_blendv_ps(uipVec.m[i], v, mask.m[i]);
 }
 
+/*! Update the UIP vector according for the lanes alive in mask */
+template <uint32_t vectorNum>
+void updateUIPC(simd_w<vectorNum> &uipVec,
+                const simd_m<vectorNum> mask,
+                const simd_m<vectorNum> cond,
+                uint16_t uip) {
+  union { float f; uint32_t u; } x;
+  x.u = uip;
+  __m128 v = _mm_load1_ps(&x.f);
+  for (uint32_t i = 0; i < vectorNum; ++i)
+    uipVec.m[i] = _mm_blendv_ps(uipVec.m[i], v, _mm_and_ps(cond.m[i], mask.m[i]));
+}
+
 /*! Update the execution mask based on block IP and UIP values */
 template <uint32_t vectorNum>
-INLINE void updateMask(simd_m<vectorNum> &mask, const simd_w<vectorNum> &uipVec, uint16_t ip) {
+void updateMask(simd_m<vectorNum> &mask, const simd_w<vectorNum> &uipVec, uint16_t ip) {
   const simd_w<vectorNum> ipv(ip);
   LE_U16(mask, uipVec, ipv);
 }
@@ -772,7 +786,7 @@ INLINE void updateMask(simd_m<vectorNum> &mask, const simd_w<vectorNum> &uipVec,
 /*! Based on the condition jump to block JIP */
 #define SIM_FWD_BRA_C(UIPVEC, EMASK, COND, JIP, UIP) \
   do { \
-    updateUIP(UIPVEC, COND, UIP); \
+    updateUIPC(UIPVEC, EMASK, COND, UIP); \
     typeof(COND) jumpCond; \
     scalar_w jipScalar(uint16_t(JIP)); \
     LT_U16(jumpCond, UIPVEC, uint16_t(JIP)); \
@@ -788,10 +802,12 @@ INLINE void updateMask(simd_m<vectorNum> &mask, const simd_w<vectorNum> &uipVec,
   } while (0)
 
 /*! Conditional backward jump is taken if the condition is non-null */
-#define SIM_BWD_BRA_C(UIPVEC, COND, JIP) \
+#define SIM_BWD_BRA_C(UIPVEC, EMASK, COND, JIP) \
   do { \
-    updateUIP(UIPVEC, COND, JIP); \
-    if (mask(COND) != 0) goto label##JIP; \
+    updateUIPC(UIPVEC, EMASK, COND, JIP); \
+    typeof(COND) JUMP_MASK; \
+    AND_M(JUMP_MASK, COND, EMASK); \
+    if (mask(JUMP_MASK) != 0) goto label##JIP; \
   } while (0)
 
 /*! JOIN: reactivates lanes */

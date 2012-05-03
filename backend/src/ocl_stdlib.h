@@ -54,13 +54,14 @@ __attribute__((overloadable)) inline int select(int src0, int src1, int cond) {
   return cond ? src0 : src1;
 }
 
+typedef unsigned int uint;
 typedef float float2 __attribute__((ext_vector_type(2)));
 typedef float float3 __attribute__((ext_vector_type(3)));
 typedef float float4 __attribute__((ext_vector_type(4)));
 typedef int int2 __attribute__((ext_vector_type(2)));
 typedef int int3 __attribute__((ext_vector_type(3)));
 typedef int int4 __attribute__((ext_vector_type(4)));
-typedef int uint2 __attribute__((ext_vector_type(2)));
+typedef unsigned int uint2 __attribute__((ext_vector_type(2)));
 typedef unsigned uint3 __attribute__((ext_vector_type(3)));
 typedef unsigned uint4 __attribute__((ext_vector_type(4)));
 typedef bool bool2 __attribute__((ext_vector_type(2)));
