@@ -26,7 +26,7 @@
 #include <cstdio>
 #include <cstdint>
 #include <cstring>
-#include <casserth>
+#include <cassert>
 
 #define FATAL(...) \
 do { \

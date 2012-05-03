@@ -36,6 +36,7 @@ void onFailedAssertion(const char *msg, const char *file, const char *fn, int li
                         + std::string(file)
                         + ", function " + std::string(fn)
                         + ", line " + std::string(lineString);
+  assert(0);
   throw Exception(str);
 }
 
