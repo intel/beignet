@@ -17,72 +17,40 @@
  * Author: Benjamin Segovia <benjamin.segovia@intel.com>
  */
 
-#include "cl_test.h"
+#include "utest_helper.hpp"
 
-int
-main (int argc, char *argv[])
+static void compiler_copy_buffer(void)
 {
-  cl_mem dst, src;
-  IF_DEBUG(uint32_t *dst_buffer = NULL);
-  uint32_t *src_buffer = NULL;
   const size_t n = 8192 * 4;
-  const size_t global_work_size = n;
-  const size_t local_work_size = 32;
-  int status = 0, i;
+  int status = 0;
 
-  if ((status = cl_test_init("test_copy_buffer.cl", "test_copy_buffer", SOURCE)) != 0)
-    goto error;
+  CALL (cl_test_init, "test_copy_buffer.cl", "test_copy_buffer", SOURCE);
+  buf_data[0] = (uint32_t*) malloc(sizeof(uint32_t) * n);
+  for (uint32_t i = 0; i < n; ++i) ((uint32_t*)buf_data[0])[i] = i;
+  OCL_CREATE_BUFFER(buf[0], CL_MEM_COPY_HOST_PTR, n * sizeof(uint32_t), buf_data[0]);
+  OCL_CREATE_BUFFER(buf[1], 0, n * sizeof(uint32_t), NULL);
+  free(buf_data[0]);
+  buf_data[0] = NULL;
 
-  /* Fill the buffer with random values */
-  if ((src_buffer = malloc(sizeof(uint32_t) * n)) == NULL) {
-    fprintf(stderr, "Allocation failed\n");
-    status = CL_OUT_OF_HOST_MEMORY;
-    goto error;
-  }
-  for (i = 0; i < n; ++i)
-    src_buffer[i] = i;
+  OCL_SET_ARG(0, sizeof(cl_mem), &buf[0]);
+  OCL_SET_ARG(1, sizeof(cl_mem), &buf[1]);
 
-  /* Allocate the two buffers */
-  dst = clCreateBuffer(ctx, 0, n * sizeof(uint32_t), NULL, &status);
-  if (status != CL_SUCCESS)
-    goto error;
-  src = clCreateBuffer(ctx, CL_MEM_COPY_HOST_PTR, n * sizeof(uint32_t), src_buffer, &status);
-  if (status != CL_SUCCESS)
-    goto error;
+  globals[0] = n;
+  locals[0] = 16;
+  OCL_NDRANGE(1);
 
-  /* Set source and destination */
-  CALL (clSetKernelArg, kernel, 0, sizeof(cl_mem), &src);
-  CALL (clSetKernelArg, kernel, 1, sizeof(cl_mem), &dst);
-
-  /* Run the kernel */
-  CALL (clEnqueueNDRangeKernel, queue,
-                                kernel,
-                                1,
-                                NULL,
-                                &global_work_size,
-                                &local_work_size,
-                                0,
-                                NULL,
-                                NULL);
-
-#ifndef NDEBUG
-  /* Be sure that everything run fine */
-  dst_buffer = (uint32_t *) clIntelMapBuffer(dst, &status);
-  if (status != CL_SUCCESS)
-    goto error;
-  for (i = 0; i < n; ++i)
-    assert(src_buffer[i] == dst_buffer[i]);
-  CALL (clIntelUnmapBuffer, dst);
-#endif /* NDEBUG */
-  free(src_buffer);
-  CALL (clReleaseMemObject, dst);
-  CALL (clReleaseMemObject, src);
-  cl_test_destroy();
-  printf("%i memory leaks\n", clIntelReportUnfreed());
-  assert(clIntelReportUnfreed() == 0);
+  OCL_MAP_BUFFER(0);
+  OCL_MAP_BUFFER(1);
+  for (uint32_t i = 0; i < n; ++i)
+    assert(((uint32_t*)buf_data[0])[i] == ((uint32_t*)buf_data[1])[i]);
+  OCL_UNMAP_BUFFER(0);
+  OCL_UNMAP_BUFFER(1);
 
 error:
+  cl_release_buffers();
   cl_report_error(status);
-  return status;
+  cl_test_destroy();
 }
+
+UTEST_REGISTER(compiler_copy_buffer)
 

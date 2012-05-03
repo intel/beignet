@@ -17,83 +17,54 @@
  * Author: Benjamin Segovia <benjamin.segovia@intel.com>
  */
 
-#include "cl_test.h"
+#include "utest_helper.hpp"
 
-#include <assert.h>
-#include <stdio.h>
-#include <stdlib.h>
-
-int
-main (int argc, char *argv[])
+static void compiler_copy_buffer_row(void)
 {
-  cl_mem dst, src, data;
-  IF_DEBUG(uint32_t *dst_buffer = NULL);
   uint32_t *src_buffer = NULL;
   int *data_buffer = NULL;
   const int row = 8192;
   const int row_n = 2;
   const int n =  row * row_n;
-  const size_t global_work_size = row;
-  const size_t local_work_size = 256;
-  int status = 0, i;
+  int status = 0;
 
-  if ((status = cl_test_init("test_copy_buffer_row.cl", "test_copy_buffer_row", SOURCE)) != 0)
-    goto error;
+  CALL (cl_test_init, "test_copy_buffer_row.cl", "test_copy_buffer_row", SOURCE);
 
-  /* Fill the buffer with some values */
+  // Create the input data
   src_buffer = (uint32_t *) malloc(sizeof(uint32_t) * n);
-  for (i = 0; i < n; ++i) src_buffer[i] = i;
-
-  /* Just put copy info in a buffer */
+  for (int32_t i = 0; i < n; ++i) src_buffer[i] = i;
   data_buffer = (int *) malloc(sizeof(int) * 2);
   data_buffer[0] = row;
   data_buffer[1] = n;
 
-  /* Allocate the two buffers */
-  dst = clCreateBuffer(ctx, 0, n * sizeof(uint32_t), NULL, &status);
-  if (status != CL_SUCCESS) goto error;
-  src = clCreateBuffer(ctx, CL_MEM_COPY_HOST_PTR, n * sizeof(uint32_t), src_buffer, &status);
-  if (status != CL_SUCCESS) goto error;
-  data = clCreateBuffer(ctx, CL_MEM_COPY_HOST_PTR, 2 * sizeof(int), data_buffer, &status);
-  if (status != CL_SUCCESS) goto error;
-
-  /* Set source and destination */
-  CALL (clSetKernelArg, kernel, 0, sizeof(cl_mem), &src);
-  CALL (clSetKernelArg, kernel, 1, sizeof(cl_mem), &dst);
-  CALL (clSetKernelArg, kernel, 2, sizeof(cl_mem), &data);
-
-  /* Run the kernel */
-  CALL (clEnqueueNDRangeKernel, queue,
-                                kernel,
-                                1,
-                                NULL,
-                                &global_work_size,
-                                &local_work_size,
-                                0,
-                                NULL,
-                                NULL);
-
-#ifndef NDEBUG
-  /* Be sure that everything run fine */
-  dst_buffer = (uint32_t *) clIntelMapBuffer(dst, &status);
-  if (status != CL_SUCCESS)
-    goto error;
-  for (i = 0; i < n; ++i)
-    assert(src_buffer[i] == dst_buffer[i]);
-  CALL (clIntelUnmapBuffer, dst);
-#endif /* NDEBUG */
-
+  // Allocate all buffers
+  OCL_CREATE_BUFFER(buf[0], CL_MEM_COPY_HOST_PTR, n * sizeof(uint32_t), src_buffer);
+  OCL_CREATE_BUFFER(buf[1], 0, n * sizeof(uint32_t), NULL);
+  OCL_CREATE_BUFFER(buf[2], CL_MEM_COPY_HOST_PTR, 2 * sizeof(uint32_t), data_buffer);
   free(src_buffer);
   free(data_buffer);
-  CALL (clReleaseMemObject, dst);
-  CALL (clReleaseMemObject, src);
-  CALL (clReleaseMemObject, data);
-  cl_test_destroy();
-  printf("%i memory leaks\n", clIntelReportUnfreed());
-  assert(clIntelReportUnfreed() == 0);
 
+  // Run the code
+  OCL_SET_ARG(0, sizeof(cl_mem), &buf[0]);
+  OCL_SET_ARG(1, sizeof(cl_mem), &buf[1]);
+  OCL_SET_ARG(2, sizeof(cl_mem), &buf[2]);
+  globals[0] = n;
+  locals[0] = 16;
+  OCL_NDRANGE(1);
+
+  // Check results
+  OCL_MAP_BUFFER(0);
+  OCL_MAP_BUFFER(1);
+  for (int32_t i = 0; i < n; ++i)
+    assert(((uint32_t*)buf_data[0])[i] == ((uint32_t*)buf_data[1])[i]);
+  OCL_UNMAP_BUFFER(0);
+  OCL_UNMAP_BUFFER(1);
 error:
+  cl_release_buffers();
   cl_report_error(status);
-  return status;
+  cl_test_destroy();
+
 }
+
+UTEST_REGISTER(compiler_copy_buffer_row)
 

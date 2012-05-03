@@ -27,6 +27,7 @@
 
 #include "CL/cl.h"
 #include "CL/cl_intel.h"
+#include "utest.hpp"
 #include <assert.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -70,17 +71,13 @@
     CALL (clSetKernelArg, kernel, ID, SIZE, ARG); \
   } while (0)
 
-#ifdef __cplusplus
-extern "C" {
-#endif
-
+enum { MAX_BUFFER_N = 16 };
 extern cl_platform_id platform;
 extern cl_device_id device;
 extern cl_context ctx;
 extern cl_program program;
 extern cl_kernel kernel;
 extern cl_command_queue queue;
-enum { MAX_BUFFER_N = 16 };
 extern cl_mem buf[MAX_BUFFER_N];     // initialized at NULL
 extern void* buf_data[MAX_BUFFER_N]; // initialized at NULL
 extern size_t globals[3];            // initialized at zero
@@ -118,10 +115,6 @@ extern void cl_report_error(cl_int err);
 
 /* Nicely output the performance counters */
 extern void cl_report_perf_counters(cl_mem perf);
-
-#ifdef __cplusplus
-}
-#endif
 
 #endif /* __UTEST_HELPER_HPP__ */
 

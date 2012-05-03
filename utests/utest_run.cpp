@@ -17,28 +17,20 @@
  * Author: Benjamin Segovia <benjamin.segovia@intel.com>
  */
 
-#include "utest_helper.hpp"
+/**
+ * \file utest_run.cpp
+ * \author Benjamin Segovia <benjamin.segovia@intel.com>
+ *
+ * Just run the unit tests. The user can possibly provides the subset of it
+ */
+#include "utest.hpp"
 
-void compiler_write_only(void)
+int main(int argc, char *argv[])
 {
-  const size_t n = 2048;
-  int status = 0;
-
-  CALL (cl_test_init, "test_write_only.cl", "test_write_only", SOURCE);
-  OCL_CREATE_BUFFER(buf[0], 0, n * sizeof(uint32_t), NULL);
-  OCL_SET_ARG(0, sizeof(cl_mem), &buf[0]);
-  globals[0] = n;
-  locals[0] = 16;
-  OCL_NDRANGE(1);
-  OCL_MAP_BUFFER(0);
-  for (uint32_t i = 0; i < n; ++i) assert(((uint32_t*)buf_data[0])[i] == i);
-  OCL_UNMAP_BUFFER(0);
-
-error:
-  cl_release_buffers();
-  cl_report_error(status);
-  cl_test_destroy();
+  if (argc >= 2)
+    for (int i = 1; i < argc; ++i)
+      UTest::run(argv[i]);
+  else
+    UTest::runAll();
 }
-
-UTEST_REGISTER(compiler_write_only);
 
