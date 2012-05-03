@@ -32,7 +32,7 @@
 
 namespace gbe
 {
-  /*! Quick and dirty Unit test system with registration */
+  /*! Quick and dirty unit test system with registration */
   struct UTest
   {
     /*! A unit test function to run */
@@ -58,27 +58,27 @@ namespace gbe
 #define UTEST_REGISTER(FN) static const gbe::UTest __##FN##__(FN, #FN);
 
 /*! No assert is expected */
-#define UTEST_EXPECT_SUCCESS(EXPR)                                  \
- do {                                                               \
-    try {                                                           \
-      EXPR;                                                         \
-      std::cout << "  " << #EXPR << "    [SUCCESS]" << std::endl;   \
-    }                                                               \
-    catch (gbe::Exception e) {                                      \
-      std::cout << "  " << #EXPR << "    [FAILED]" << std::endl;    \
-      std::cout << "    " << e.what() << std::endl;                 \
-    }                                                               \
+#define UTEST_EXPECT_SUCCESS(EXPR) \
+ do { \
+    try { \
+      EXPR; \
+      std::cout << "  " << #EXPR << "    [SUCCESS]" << std::endl; \
+    } \
+    catch (gbe::Exception e) { \
+      std::cout << "  " << #EXPR << "    [FAILED]" << std::endl; \
+      std::cout << "    " << e.what() << std::endl; \
+    } \
   } while (0)
 
-#define UTEST_EXPECT_FAILED(EXPR)                                   \
- do {                                                               \
-    try {                                                           \
-      EXPR;                                                         \
-      std::cout << "  " << #EXPR << "    [FAILED]" <<  std::endl;   \
-    }                                                               \
-    catch (gbe::Exception e) {                                      \
-      std::cout << "  " << #EXPR << "    [SUCCESS]" << std::endl;   \
-    }                                                               \
+#define UTEST_EXPECT_FAILED(EXPR) \
+ do { \
+    try { \
+      EXPR; \
+      std::cout << "  " << #EXPR << "    [FAILED]" <<  std::endl; \
+    } \
+    catch (gbe::Exception e) { \
+      std::cout << "  " << #EXPR << "    [SUCCESS]" << std::endl; \
+    } \
   } while (0)
 
 #endif /* __GBE_UTEST_HPP__ */
