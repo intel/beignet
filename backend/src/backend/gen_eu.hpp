@@ -402,7 +402,7 @@ namespace gbe
       return GenReg(GEN_ARCHITECTURE_REGISTER_FILE, 
                     GEN_ARF_IP, 
                     0,
-                    GEN_TYPE_UD,
+                    GEN_TYPE_D,
                     GEN_VERTICAL_STRIDE_4,
                     GEN_WIDTH_1,
                     GEN_HORIZONTAL_STRIDE_0,

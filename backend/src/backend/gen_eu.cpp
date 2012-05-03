@@ -129,7 +129,7 @@ namespace gbe
 
   void GenEmitter::setSrc0(GenInstruction *insn, GenReg reg)
   {
-     if (reg.type != GEN_ARCHITECTURE_REGISTER_FILE)
+     if (reg.file != GEN_ARCHITECTURE_REGISTER_FILE)
         assert(reg.nr < 128);
 
      insn->bits1.da1.src0_reg_file = reg.file;
@@ -612,11 +612,7 @@ namespace gbe
     GenInstruction &insn = this->store[insnID];
     assert(insnID < this->insnNum);
     assert(insn.header.opcode == GEN_OPCODE_JMPI);
-    union { int32_t i32; int16_t i16; } target;
-    target.i32 = 0;
-    target.i16 = int16_t(jumpDistance);
-    //this->setSrc1(&insn, GenReg::retype(GenReg::immw(jumpDistance), GEN_TYPE_D));
-    this->setSrc1(&insn, GenReg::immd(target.i32));
+    this->setSrc1(&insn, GenReg::immd(jumpDistance));
   }
 
   /* To integrate with the above, it makes sense that the comparison
