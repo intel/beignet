@@ -27,7 +27,7 @@
 #define __UTEST_FILE_MAP_HPP__
 
 #include "CL/cl.h"
-#include <stdlib.h>
+#include <cstdlib>
 
 /* Map a file into memory for direct / cached / simple accesses */
 typedef struct cl_file_map {

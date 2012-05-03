@@ -23,10 +23,10 @@
 #include "CL/cl.h"
 #include "CL/cl_intel.h"
 
-#include <stdio.h>
-#include <stdint.h>
-#include <string.h>
-#include <assert.h>
+#include <cstdio>
+#include <cstdint>
+#include <cstring>
+#include <casserth>
 
 #define FATAL(...) \
 do { \

@@ -30,9 +30,9 @@
 #include "utest.hpp"
 #include "utest_assert.hpp"
 #include "utest_error.h"
-#include <assert.h>
-#include <stdio.h>
-#include <stdlib.h>
+#include <cassert>
+#include <cstdio>
+#include <cstdlib>
 
 #define OCL_THROW_ERROR(FN, STATUS) \
   do { \
@@ -68,8 +68,10 @@
 
 #define OCL_UNMAP_BUFFER(ID) \
   do { \
-    OCL_CALL (clIntelUnmapBuffer, buf[ID]); \
-    buf_data[ID] = NULL; \
+    if (buf[ID] != NULL) { \
+      OCL_CALL (clIntelUnmapBuffer, buf[ID]); \
+      buf_data[ID] = NULL; \
+    } \
   } while (0)
 
 #define OCL_NDRANGE(DIM_N) \
