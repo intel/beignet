@@ -320,13 +320,19 @@ cl_command_queue_ND_range(cl_command_queue queue,
 {
   const int32_t ver = cl_driver_get_ver(queue->ctx->drv);
   cl_int err = CL_SUCCESS;
-
 #if USE_FULSIM
   cl_buffer_mgr bufmgr = NULL;
-  FILE *file = fopen("dump.aub", "wb");
-  FATAL_IF (file == NULL, "Unable to open file dump.aub");
-  bufmgr = cl_context_get_bufmgr(queue->ctx);
-  drm_intel_bufmgr_gem_set_aubfile(bufmgr, file);
+  FILE *file = NULL;
+#endif
+
+#if USE_FULSIM
+  const char *run_it = getenv("OCL_SIMULATOR");
+  if (run_it != NULL && strcmp(run_it, "1") == 0) {
+    file = fopen("dump.aub", "wb");
+    FATAL_IF (file == NULL, "Unable to open file dump.aub");
+    bufmgr = cl_context_get_bufmgr(queue->ctx);
+    drm_intel_bufmgr_gem_set_aubfile(bufmgr, file);
+  }
 #endif /* USE_FULSIM */
 
   if (ver == 7 || ver == 75)
@@ -335,11 +341,13 @@ cl_command_queue_ND_range(cl_command_queue queue,
     FATAL ("Unknown Gen Device");
 
 #if USE_FULSIM
-  TRY (cl_fulsim_dump_all_surfaces, queue, k);
-  drm_intel_bufmgr_gem_stop_aubfile(bufmgr);
-  fclose(file);
-  cl_run_fulsim();
-  TRY (cl_fulsim_read_all_surfaces, queue, k);
+  if (run_it != NULL && strcmp(run_it, "1") == 0) {
+    TRY (cl_fulsim_dump_all_surfaces, queue, k);
+    drm_intel_bufmgr_gem_stop_aubfile(bufmgr);
+    fclose(file);
+    cl_run_fulsim();
+    TRY (cl_fulsim_read_all_surfaces, queue, k);
+  }
 #endif /* USE_FULSIM */
 
 error:
