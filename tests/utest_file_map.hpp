@@ -17,8 +17,14 @@
  * Author: Benjamin Segovia <benjamin.segovia@intel.com>
  */
 
-#ifndef __CL_FILE_MAP_H__
-#define __CL_FILE_MAP_H__
+/**
+ * \file assert.hpp
+ *
+ * \author Benjamin Segovia <benjamin.segovia@intel.com>
+ */
+
+#ifndef __UTEST_FILE_MAP_HPP__
+#define __UTEST_FILE_MAP_HPP__
 
 #include "CL/cl.h"
 #include <stdlib.h>
@@ -74,5 +80,5 @@ cl_file_map_size(const cl_file_map_t *fm) {
   return fm->size;
 }
 
-#endif /* __CL_FILE_MAP_H__ */
+#endif /* __UTEST_FILE_MAP_HPP__ */
 

@@ -17,11 +17,16 @@
  * Author: Benjamin Segovia <benjamin.segovia@intel.com>
  */
 
-#ifndef __CL_TEST_H__
-#define __CL_TEST_H__
+/**
+ * \file utest_helper.hpp
+ *
+ * \author Benjamin Segovia <benjamin.segovia@intel.com>
+ */
+#ifndef __UTEST_HELPER_HPP__
+#define __UTEST_HELPER_HPP__
 
 #include "CL/cl.h"
-#include "common.h"
+#include "CL/cl_intel.h"
 #include <assert.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -118,5 +123,5 @@ extern void cl_report_perf_counters(cl_mem perf);
 }
 #endif
 
-#endif /* __CL_TEST_H__ */
+#endif /* __UTEST_HELPER_HPP__ */
 

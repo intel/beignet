@@ -17,8 +17,7 @@
  * Author: Benjamin Segovia <benjamin.segovia@intel.com>
  */
 
-#include "cl_file_map.h"
-
+#include "utest_file_map.hpp"
 #include "CL/cl.h"
 
 #include <sys/types.h>
@@ -69,7 +68,7 @@ cl_file_map_new(void)
 {
   cl_file_map_t *fm = NULL;
 
-  if ((fm = calloc(1, sizeof(cl_file_map_t))) == NULL)
+  if ((fm = (cl_file_map_t *) calloc(1, sizeof(cl_file_map_t))) == NULL)
     goto error;
   if (cl_file_map_init(fm) != CL_SUCCESS)
     goto error;
@@ -93,7 +92,7 @@ cl_file_map_open(cl_file_map_t *fm, const char *name)
     err = CL_FILE_MAP_FILE_NOT_FOUND;
     goto error;
   }
-  if ((fm->name = calloc(strlen(name) + 1, sizeof(char))) == NULL)
+  if ((fm->name = (char*) calloc(strlen(name) + 1, sizeof(char))) == NULL)
     goto error;
   sprintf(fm->name, "%s", name);
 

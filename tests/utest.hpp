@@ -24,8 +24,8 @@
  * Provides all unit test capabilites. It is rather rudimentary but it should
  * do the job
  */
-#ifndef __OCL_UTEST_HPP__
-#define __OCL_UTEST_HPP__
+#ifndef __UTEST_UTEST_HPP__
+#define __UTEST_UTEST_HPP__
 
 #include <vector>
 #include <exception>
@@ -78,5 +78,5 @@ struct UTest
     } \
   } while (0)
 
-#endif /* __OCL_UTEST_HPP__ */
+#endif /* __UTEST_UTEST_HPP__ */
 

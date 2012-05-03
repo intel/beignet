@@ -17,9 +17,9 @@
  * Author: Benjamin Segovia <benjamin.segovia@intel.com>
  */
 
-#include "cl_file_map.h"
-#include "cl_test.h"
-#include "common.h"
+#include "utest_file_map.hpp"
+#include "utest_helper.hpp"
+#include "utest_error.h"
 #include "CL/cl.h"
 #include "CL/cl_intel.h"
 
@@ -98,6 +98,39 @@ cl_test_channel_type_string(cl_channel_type type)
 #undef DECL_TYPE
     default: return "Unsupported image channel type";
   };
+}
+
+static void
+clpanic(const char *msg, int rval)
+{
+  printf("Failed: %s (%d)\n", msg, rval);
+  exit(-1);
+}
+
+static char*
+do_kiss_path(const char *file, cl_device_id device)
+{
+  cl_int ver;
+  const char *sub_path = NULL;
+  char *ker_path = NULL;
+  const char *kiss_path = getenv("OCL_KERNEL_PATH");
+  size_t sz = strlen(file);
+
+  if (device == NULL)
+    sub_path = "";
+  else {
+    if (clIntelGetGenVersion(device, &ver) != CL_SUCCESS)
+      clpanic("Unable to get Gen version", -1);
+    sub_path = "";
+  }
+
+  if (kiss_path == NULL)
+    clpanic("set OCL_KERNEL_PATH. This is where the kiss kernels are", -1);
+  sz += strlen(kiss_path) + strlen(sub_path) + 2; /* +1 for end of string, +1 for '/' */
+  if ((ker_path = (char*) malloc(sz)) == NULL)
+    clpanic("Allocation failed", -1);
+  sprintf(ker_path, "%s/%s%s", kiss_path, sub_path, file);
+  return ker_path;
 }
 
 int
@@ -260,66 +293,12 @@ cl_release_buffers(void)
     }
 }
 
-static const char *err_msg[] = {
-  [-CL_SUCCESS] = "CL_SUCCESS",
-  [-CL_DEVICE_NOT_FOUND] = "CL_DEVICE_NOT_FOUND",
-  [-CL_DEVICE_NOT_AVAILABLE] = "CL_DEVICE_NOT_AVAILABLE",
-  [-CL_COMPILER_NOT_AVAILABLE] = "CL_COMPILER_NOT_AVAILABLE",
-  [-CL_MEM_ALLOCATION_FAILURE] = "CL_MEM_ALLOCATION_FAILURE",
-  [-CL_OUT_OF_RESOURCES] = "CL_OUT_OF_RESOURCES",
-  [-CL_OUT_OF_HOST_MEMORY] = "CL_OUT_OF_HOST_MEMORY",
-  [-CL_PROFILING_INFO_NOT_AVAILABLE] = "CL_PROFILING_INFO_NOT_AVAILABLE",
-  [-CL_MEM_COPY_OVERLAP] = "CL_MEM_COPY_OVERLAP",
-  [-CL_IMAGE_FORMAT_MISMATCH] = "CL_IMAGE_FORMAT_MISMATCH",
-  [-CL_IMAGE_FORMAT_NOT_SUPPORTED] = "CL_IMAGE_FORMAT_NOT_SUPPORTED",
-  [-CL_BUILD_PROGRAM_FAILURE] = "CL_BUILD_PROGRAM_FAILURE",
-  [-CL_MAP_FAILURE] = "CL_MAP_FAILURE",
-  [-CL_MISALIGNED_SUB_BUFFER_OFFSET] = "CL_MISALIGNED_SUB_BUFFER_OFFSET",
-  [-CL_EXEC_STATUS_ERROR_FOR_EVENTS_IN_WAIT_LIST] = "CL_EXEC_STATUS_ERROR_FOR_EVENTS_IN_WAIT_LIST",
-  [-CL_INVALID_VALUE] = "CL_INVALID_VALUE",
-  [-CL_INVALID_DEVICE_TYPE] = "CL_INVALID_DEVICE_TYPE",
-  [-CL_INVALID_PLATFORM] = "CL_INVALID_PLATFORM",
-  [-CL_INVALID_DEVICE] = "CL_INVALID_DEVICE",
-  [-CL_INVALID_CONTEXT] = "CL_INVALID_CONTEXT",
-  [-CL_INVALID_QUEUE_PROPERTIES] = "CL_INVALID_QUEUE_PROPERTIES",
-  [-CL_INVALID_COMMAND_QUEUE] = "CL_INVALID_COMMAND_QUEUE",
-  [-CL_INVALID_HOST_PTR] = "CL_INVALID_HOST_PTR",
-  [-CL_INVALID_MEM] = "CL_INVALID_MEM",
-  [-CL_INVALID_IMAGE_FORMAT_DESCRIPTOR] = "CL_INVALID_IMAGE_FORMAT_DESCRIPTOR",
-  [-CL_INVALID_IMAGE_SIZE] = "CL_INVALID_IMAGE_SIZE",
-  [-CL_INVALID_SAMPLER] = "CL_INVALID_SAMPLER",
-  [-CL_INVALID_BINARY] = "CL_INVALID_BINARY",
-  [-CL_INVALID_BUILD_OPTIONS] = "CL_INVALID_BUILD_OPTIONS",
-  [-CL_INVALID_PROGRAM] = "CL_INVALID_PROGRAM",
-  [-CL_INVALID_PROGRAM_EXECUTABLE] = "CL_INVALID_PROGRAM_EXECUTABLE",
-  [-CL_INVALID_KERNEL_NAME] = "CL_INVALID_KERNEL_NAME",
-  [-CL_INVALID_KERNEL_DEFINITION] = "CL_INVALID_KERNEL_DEFINITION",
-  [-CL_INVALID_KERNEL] = "CL_INVALID_KERNEL",
-  [-CL_INVALID_ARG_INDEX] = "CL_INVALID_ARG_INDEX",
-  [-CL_INVALID_ARG_VALUE] = "CL_INVALID_ARG_VALUE",
-  [-CL_INVALID_ARG_SIZE] = "CL_INVALID_ARG_SIZE",
-  [-CL_INVALID_KERNEL_ARGS] = "CL_INVALID_KERNEL_ARGS",
-  [-CL_INVALID_WORK_DIMENSION] = "CL_INVALID_WORK_DIMENSION",
-  [-CL_INVALID_WORK_GROUP_SIZE] = "CL_INVALID_WORK_GROUP_SIZE",
-  [-CL_INVALID_WORK_ITEM_SIZE] = "CL_INVALID_WORK_ITEM_SIZE",
-  [-CL_INVALID_GLOBAL_OFFSET] = "CL_INVALID_GLOBAL_OFFSET",
-  [-CL_INVALID_EVENT_WAIT_LIST] = "CL_INVALID_EVENT_WAIT_LIST",
-  [-CL_INVALID_EVENT] = "CL_INVALID_EVENT",
-  [-CL_INVALID_OPERATION] = "CL_INVALID_OPERATION",
-  [-CL_INVALID_GL_OBJECT] = "CL_INVALID_GL_OBJECT",
-  [-CL_INVALID_BUFFER_SIZE] = "CL_INVALID_BUFFER_SIZE",
-  [-CL_INVALID_MIP_LEVEL] = "CL_INVALID_MIP_LEVEL",
-  [-CL_INVALID_GLOBAL_WORK_SIZE] = "CL_INVALID_GLOBAL_WORK_SIZE",
-  [-CL_INVALID_PROPERTY] = "CL_INVALID_PROPERTY"
-};
-static const size_t err_msg_n = sizeof(err_msg) / sizeof(err_msg[0]);
-
 void
 cl_report_error(cl_int err)
 {
   if (err > 0)
     return;
-  if (-err > err_msg_n)
+  if ((uint32_t) -err > err_msg_n)
     return;
   if (err == CL_SUCCESS)
     return;
@@ -334,7 +313,7 @@ cl_report_perf_counters(cl_mem perf)
   uint32_t i;
   if (perf == NULL)
     return;
-  start = clIntelMapBuffer(perf, &status);
+  start = (uint32_t*) clIntelMapBuffer(perf, &status);
   assert(status == CL_SUCCESS && start != NULL);
   end = start + 128;
 

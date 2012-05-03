@@ -21,8 +21,8 @@
  * \file assert.cpp
  * \author Benjamin Segovia <benjamin.segovia@intel.com>
  */
-#include "assert.hpp"
-#include "exception.hpp"
+#include "utest_assert.hpp"
+#include "utest_exception.hpp"
 #include <cassert>
 #include <cstdlib>
 
