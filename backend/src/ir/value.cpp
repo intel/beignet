@@ -280,7 +280,7 @@ namespace ir {
     duEmpty = this->newUseSet();
 
     // First create the chains and insert them in their respective maps
-    fn.foreachInstruction([this, udEmpty, duEmpty](const Instruction &insn) {
+    fn.foreachInstruction([this](const Instruction &insn) {
       // sources == value uses
       const uint32_t srcNum = insn.getSrcNum();
       for (uint32_t srcID = 0; srcID < srcNum; ++srcID) {

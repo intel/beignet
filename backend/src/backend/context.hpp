@@ -57,7 +57,7 @@ namespace gbe
      */
     Context(const ir::Unit &unit, const std::string &name);
     /*! Release everything needed */
-    ~Context(void);
+    virtual ~Context(void);
     /*! Compile the code */
     Kernel *compileKernel(void);
     /*! Tells if the labels is used */

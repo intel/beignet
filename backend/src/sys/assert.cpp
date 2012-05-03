@@ -26,6 +26,7 @@
 #include "assert.hpp"
 #include "exception.hpp"
 #include <cassert>
+#include <cstdlib>
 
 namespace gbe
 {
@@ -50,6 +51,8 @@ namespace gbe
 #include "sys/exception.hpp"
 #include "sys/platform.hpp"
 #include <cstdio>
+#include <cstdlib>
+#include <unistd.h>
 
 namespace gbe
 {

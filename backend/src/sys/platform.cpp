@@ -65,6 +65,7 @@ namespace gbe
 #if defined(__UNIX__)
 
 #include <sys/time.h>
+#include <unistd.h>
 
 namespace gbe
 {
