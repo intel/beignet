@@ -1,9 +1,0 @@
-__kernel void
-CopyBuffer(
-    __global float* src,
-	__global float* dst )
-{
-    int id = (int)get_global_id(0);
-    dst[id] = src[id];
-}
-
