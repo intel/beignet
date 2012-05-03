@@ -612,7 +612,11 @@ namespace gbe
     GenInstruction &insn = this->store[insnID];
     assert(insnID < this->insnNum);
     assert(insn.header.opcode == GEN_OPCODE_JMPI);
-    this->setSrc1(&insn, GenReg::retype(GenReg::immw(jumpDistance), GEN_TYPE_D));
+    union { int32_t i32; int16_t i16; } target;
+    target.i32 = 0;
+    target.i16 = int16_t(jumpDistance);
+    //this->setSrc1(&insn, GenReg::retype(GenReg::immw(jumpDistance), GEN_TYPE_D));
+    this->setSrc1(&insn, GenReg::immd(target.i32));
   }
 
   /* To integrate with the above, it makes sense that the comparison

@@ -282,7 +282,7 @@ namespace gbe
       p->push();
         p->curr.flag = 0;
         p->curr.subFlag = 1;
-        p->CMP(GenReg::null(), GEN_CONDITIONAL_G, pred, GenReg::immuw(nextLabel));
+        p->CMP(GenReg::null(), GEN_CONDITIONAL_G, ip, GenReg::immuw(nextLabel));
 
         // Branch to the jump target
         this->branchPos.insert(std::make_pair(&insn, p->insnNum));
