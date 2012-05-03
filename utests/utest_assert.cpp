@@ -31,12 +31,11 @@ void onFailedAssertion(const char *msg, const char *file, const char *fn, int li
   char lineString[256];
   sprintf(lineString, "%i", line);
   assert(msg != NULL && file != NULL && fn != NULL);
-  const std::string str = "Compiler error: "
+  const std::string str = "Error: "
                         + std::string(msg) + "\n  at file "
                         + std::string(file)
                         + ", function " + std::string(fn)
                         + ", line " + std::string(lineString);
-  // assert(0);
   throw Exception(str);
 }
 

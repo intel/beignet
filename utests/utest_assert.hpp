@@ -28,5 +28,17 @@
 /*! To ensure that condition truth. Optional message is supported */
 void onFailedAssertion(const char *msg, const char *file, const char *fn, int line);
 
+#define OCL_ASSERT(EXPR) \
+  do { \
+    if (!(EXPR)) \
+      onFailedAssertion(#EXPR, __FILE__, __FUNCTION__, __LINE__); \
+  } while (0)
+
+#define OCL_ASSERTM(EXPR, MSG) \
+  do { \
+    if (!(EXPR)) \
+      onFailedAssertion(MSG, __FILE__, __FUNCTION__, __LINE__); \
+  } while (0)
+
 #endif /* __OCL_ASSERT_HPP__ */
 

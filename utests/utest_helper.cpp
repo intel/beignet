@@ -160,7 +160,7 @@ cl_kernel_init(const char *file_name, const char *kernel_name, int format)
   }
 
   /* OCL requires to build the program even if it is created from a binary */
-  CALL (clBuildProgram, program, 1, &device, NULL, NULL, NULL);
+  OCL_CALL (clBuildProgram, program, 1, &device, NULL, NULL, NULL);
 
   /* Create a kernel from the program */
   kernel = clCreateKernel(program, kernel_name, &status);
@@ -186,30 +186,30 @@ cl_ocl_init(void)
   size_t i;
 
   /* Get the platform number */
-  CALL (clGetPlatformIDs, 0, NULL, &platform_n);
+  OCL_CALL (clGetPlatformIDs, 0, NULL, &platform_n);
   printf("platform number %u\n", platform_n);
   assert(platform_n >= 1);
 
   /* Get a valid platform */
-  CALL (clGetPlatformIDs, 1, &platform, &platform_n);
-  CALL (clGetPlatformInfo, platform, CL_PLATFORM_PROFILE, sizeof(name), name, NULL);
+  OCL_CALL (clGetPlatformIDs, 1, &platform, &platform_n);
+  OCL_CALL (clGetPlatformInfo, platform, CL_PLATFORM_PROFILE, sizeof(name), name, NULL);
   printf("platform_profile \"%s\"\n", name);
-  CALL (clGetPlatformInfo, platform, CL_PLATFORM_NAME, sizeof(name), name, NULL);
+  OCL_CALL (clGetPlatformInfo, platform, CL_PLATFORM_NAME, sizeof(name), name, NULL);
   printf("platform_name \"%s\"\n", name);
-  CALL (clGetPlatformInfo, platform, CL_PLATFORM_VENDOR, sizeof(name), name, NULL);
+  OCL_CALL (clGetPlatformInfo, platform, CL_PLATFORM_VENDOR, sizeof(name), name, NULL);
   printf("platform_vendor \"%s\"\n", name);
-  CALL (clGetPlatformInfo, platform, CL_PLATFORM_VERSION, sizeof(name), name, NULL);
+  OCL_CALL (clGetPlatformInfo, platform, CL_PLATFORM_VERSION, sizeof(name), name, NULL);
   printf("platform_version \"%s\"\n", name);
 
   /* Get the device (only GPU device is supported right now) */
-  CALL (clGetDeviceIDs, platform, CL_DEVICE_TYPE_GPU, 1, &device, NULL);
-  CALL (clGetDeviceInfo, device, CL_DEVICE_PROFILE, sizeof(name), name, NULL);
+  OCL_CALL (clGetDeviceIDs, platform, CL_DEVICE_TYPE_GPU, 1, &device, NULL);
+  OCL_CALL (clGetDeviceInfo, device, CL_DEVICE_PROFILE, sizeof(name), name, NULL);
   printf("device_profile \"%s\"\n", name);
-  CALL (clGetDeviceInfo, device, CL_DEVICE_NAME, sizeof(name), name, NULL);
+  OCL_CALL (clGetDeviceInfo, device, CL_DEVICE_NAME, sizeof(name), name, NULL);
   printf("device_name \"%s\"\n", name);
-  CALL (clGetDeviceInfo, device, CL_DEVICE_VENDOR, sizeof(name), name, NULL);
+  OCL_CALL (clGetDeviceInfo, device, CL_DEVICE_VENDOR, sizeof(name), name, NULL);
   printf("device_vendor \"%s\"\n", name);
-  CALL (clGetDeviceInfo, device, CL_DEVICE_VERSION, sizeof(name), name, NULL);
+  OCL_CALL (clGetDeviceInfo, device, CL_DEVICE_VERSION, sizeof(name), name, NULL);
   printf("device_version \"%s\"\n", name);
 
   /* Now create a context */
@@ -260,8 +260,8 @@ error:
 void
 cl_kernel_destroy(void)
 {
-  clReleaseKernel(kernel);
-  clReleaseProgram(program);
+  if (kernel) clReleaseKernel(kernel);
+  if (program) clReleaseProgram(program);
   kernel = NULL;
   program = NULL;
 }
@@ -283,26 +283,19 @@ cl_test_destroy(void)
 }
 
 void
-cl_release_buffers(void)
+cl_buffer_destroy(void)
 {
   int i;
-  for (i = 0; i < MAX_BUFFER_N; ++i)
+  for (i = 0; i < MAX_BUFFER_N; ++i) {
+    if (buf_data[i] != NULL) {
+      clIntelUnmapBuffer(buf[i]);
+      buf_data[i] = NULL;
+    }
     if (buf[i] != NULL) {
       clReleaseMemObject(buf[i]);
       buf[i] = NULL;
     }
-}
-
-void
-cl_report_error(cl_int err)
-{
-  if (err > 0)
-    return;
-  if ((uint32_t) -err > err_msg_n)
-    return;
-  if (err == CL_SUCCESS)
-    return;
-  fprintf(stderr, "error %s\n", err_msg[-err]);
+  }
 }
 
 void

@@ -23,14 +23,22 @@
  *
  * Just run the unit tests. The user can possibly provides the subset of it
  */
-#include "utest.hpp"
+#include "utest_helper.hpp"
+#include "utest_exception.hpp"
+#include <iostream>
 
 int main(int argc, char *argv[])
 {
-  if (argc >= 2)
-    for (int i = 1; i < argc; ++i)
-      UTest::run(argv[i]);
-  else
-    UTest::runAll();
+  try {
+    cl_ocl_init();
+    if (argc >= 2)
+      for (int i = 1; i < argc; ++i)
+        UTest::run(argv[i]);
+    else
+      UTest::runAll();
+    cl_ocl_destroy();
+  } catch (Exception e) {
+      std::cout << "  " << e.what() << "    [SUCCESS]" << std::endl;
+  }
 }
 

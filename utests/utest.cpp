@@ -22,6 +22,7 @@
  * \author Benjamin Segovia <benjamin.segovia@intel.com>
  */
 #include "utest.hpp"
+#include "utest_helper.hpp"
 #include <vector>
 #include <string>
 #include <iostream>
@@ -56,6 +57,8 @@ void UTest::run(const char *name) {
       std::cout << utest.name << ":" << std::endl;
       (utest.fn)();
       std::cout << std::endl;
+      cl_kernel_destroy();
+      cl_buffer_destroy();
     }
   }
 }
@@ -68,6 +71,8 @@ void UTest::runAll(void) {
     std::cout << utest.name << ":" << std::endl;
     (utest.fn)();
     std::cout << std::endl;
+    cl_kernel_destroy();
+    cl_buffer_destroy();
   }
 }
 

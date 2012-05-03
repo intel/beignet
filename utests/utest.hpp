@@ -27,8 +27,9 @@
 #ifndef __UTEST_UTEST_HPP__
 #define __UTEST_UTEST_HPP__
 
+#include "utest_exception.hpp"
 #include <vector>
-#include <exception>
+#include <iostream>
 
 /*! Quick and dirty unit test system with registration */
 struct UTest
@@ -51,8 +52,13 @@ struct UTest
   static void runAll(void);
 };
 
-/*! RegisterData a new unit test */
+/*! Register a new unit test */
 #define UTEST_REGISTER(FN) static const UTest __##FN##__(FN, #FN);
+
+/*! Turn a function into a unit test */
+#define MAKE_UTEST_FROM_FUNCTION(FN) \
+  static void __ANON__##FN##__(void) { UTEST_EXPECT_SUCCESS(FN()); } \
+  static const UTest __##FN##__(__ANON__##FN##__, #FN);
 
 /*! No assert is expected */
 #define UTEST_EXPECT_SUCCESS(EXPR) \
@@ -61,7 +67,7 @@ struct UTest
       EXPR; \
       std::cout << "  " << #EXPR << "    [SUCCESS]" << std::endl; \
     } \
-    catch (gbe::Exception e) { \
+    catch (Exception e) { \
       std::cout << "  " << #EXPR << "    [FAILED]" << std::endl; \
       std::cout << "    " << e.what() << std::endl; \
     } \

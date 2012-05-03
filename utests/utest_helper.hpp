@@ -28,47 +28,58 @@
 #include "CL/cl.h"
 #include "CL/cl_intel.h"
 #include "utest.hpp"
+#include "utest_assert.hpp"
+#include "utest_error.h"
 #include <assert.h>
 #include <stdio.h>
 #include <stdlib.h>
 
-#define CALL(FN, ...) \
+#define OCL_THROW_ERROR(FN, STATUS) \
   do { \
-    status = FN(__VA_ARGS__); \
-    if (status != CL_SUCCESS) { \
-      fprintf(stderr, "error calling %s \n", #FN); \
-      goto error; \
-    } \
+    char msg[2048]; \
+    sprintf(msg, "error calling %s with error%s \n", #FN, err_msg[-STATUS]); \
+    OCL_ASSERTM(false, msg); \
+  } while (0)
+
+#define OCL_CALL(FN, ...) \
+  do { \
+    int status = FN(__VA_ARGS__); \
+    if (status != CL_SUCCESS) OCL_THROW_ERROR(FN, status); \
+  } while (0)
+
+#define OCL_CREATE_KERNEL(NAME) \
+  do { \
+    OCL_CALL (cl_kernel_init, NAME".cl", NAME, SOURCE); \
   } while (0)
 
 #define OCL_CREATE_BUFFER(BUFFER, FLAGS, SIZE, DATA) \
   do { \
     cl_int status; \
     BUFFER = clCreateBuffer(ctx, FLAGS, SIZE, DATA, &status); \
-    if (status != CL_SUCCESS) goto error; \
+    if (status != CL_SUCCESS) OCL_THROW_ERROR(FN, status); \
   } while (0)
 
 #define OCL_MAP_BUFFER(ID) \
   do { \
     cl_int status; \
     buf_data[ID] = (int *) clIntelMapBuffer(buf[ID], &status); \
-    if (status != CL_SUCCESS) goto error; \
+    if (status != CL_SUCCESS) OCL_THROW_ERROR(FN, status); \
   } while (0)
 
 #define OCL_UNMAP_BUFFER(ID) \
- do { \
-   CALL (clIntelUnmapBuffer, buf[ID]); \
-   buf_data[ID] = NULL; \
- } while (0)
+  do { \
+    OCL_CALL (clIntelUnmapBuffer, buf[ID]); \
+    buf_data[ID] = NULL; \
+  } while (0)
 
 #define OCL_NDRANGE(DIM_N) \
   do { \
-    CALL (clEnqueueNDRangeKernel, queue, kernel, DIM_N, NULL, globals, locals, 0, NULL, NULL); \
+    OCL_CALL (clEnqueueNDRangeKernel, queue, kernel, DIM_N, NULL, globals, locals, 0, NULL, NULL); \
   } while (0)
 
 #define OCL_SET_ARG(ID, SIZE, ARG) \
   do { \
-    CALL (clSetKernelArg, kernel, ID, SIZE, ARG); \
+    OCL_CALL (clSetKernelArg, kernel, ID, SIZE, ARG); \
   } while (0)
 
 enum { MAX_BUFFER_N = 16 };
@@ -78,10 +89,10 @@ extern cl_context ctx;
 extern cl_program program;
 extern cl_kernel kernel;
 extern cl_command_queue queue;
-extern cl_mem buf[MAX_BUFFER_N];     // initialized at NULL
-extern void* buf_data[MAX_BUFFER_N]; // initialized at NULL
-extern size_t globals[3];            // initialized at zero
-extern size_t locals[3];             // initialized at zero
+extern cl_mem buf[MAX_BUFFER_N];
+extern void* buf_data[MAX_BUFFER_N];
+extern size_t globals[3];
+extern size_t locals[3];
 
 enum {
   SOURCE = 0,
@@ -98,8 +109,8 @@ extern int cl_kernel_init(const char *file_name, const char *kernel_name, int fo
 /* init the bunch of global varaibles here */
 extern int cl_test_init(const char *file_name, const char *kernel_name, int format);
 
-/* Release all the created buffers */
-extern void cl_release_buffers(void);
+/* Unmap and release all the created buffers */
+extern void cl_buffer_destroy(void);
 
 /* Release OCL queue, context and device */
 extern void cl_ocl_destroy(void);
@@ -109,9 +120,6 @@ extern void cl_kernel_destroy(void);
 
 /* Release everything allocated in cl_test_init */
 extern void cl_test_destroy(void);
-
-/* Properly report the error in stderr */
-extern void cl_report_error(cl_int err);
 
 /* Nicely output the performance counters */
 extern void cl_report_perf_counters(cl_mem perf);
