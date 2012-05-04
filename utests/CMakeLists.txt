@@ -7,6 +7,7 @@ ADD_LIBRARY(utests SHARED
             utest_file_map.cpp
             utest_assert.cpp
             utest.cpp
+            app_mandelbrot.cpp
             compiler_write_only.cpp
             compiler_copy_buffer.cpp
             compiler_copy_buffer_row.cpp
