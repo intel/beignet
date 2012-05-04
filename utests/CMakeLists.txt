@@ -10,9 +10,11 @@ ADD_LIBRARY(utests SHARED
             compiler_write_only.cpp
             compiler_copy_buffer.cpp
             compiler_copy_buffer_row.cpp
+            compiler_if_else.cpp
             compiler_unstructured_branch0.cpp
             compiler_unstructured_branch1.cpp
-            compiler_unstructured_branch2.cpp)
+            compiler_unstructured_branch2.cpp
+            compiler_unstructured_branch3.cpp)
 TARGET_LINK_LIBRARIES(utests cl m)
 
 ADD_EXECUTABLE(run utest_run.cpp)
