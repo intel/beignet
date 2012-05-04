@@ -615,10 +615,6 @@ namespace gbe
     this->setSrc1(&insn, GenReg::immd(jumpDistance));
   }
 
-  /* To integrate with the above, it makes sense that the comparison
-   * instruction should populate the flag register.  It might be simpler
-   * just to use the flag reg for most WM tasks?
-   */
   void GenEmitter::CMP(GenReg dest, uint32_t conditional, GenReg src0, GenReg src1)
   {
     GenInstruction *insn = this->next(GEN_OPCODE_CMP);
@@ -630,8 +626,6 @@ namespace gbe
     this->setSrc1(insn, src1);
   }
 
-  /* Issue 'wait' instruction for n1, host could program MMIO
-     to wake up thread. */
   void GenEmitter::WAIT(void)
   {
      GenInstruction *insn = this->next(GEN_OPCODE_WAIT);

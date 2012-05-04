@@ -228,9 +228,15 @@ namespace gbe
     for (int32_t blockID = 0; blockID < blockNum; ++blockID) {
       const LabelIndex ownLabel = braTargets[blockID].first;
       const LabelIndex target = braTargets[blockID].second;
+      const BasicBlock &bb = fn.getBlock(ownLabel);
+      const Instruction *insn = bb.getLastInstruction();
       if (ownLabel == noTarget) continue; // unused block
       if (target == noTarget) continue; // no branch at all
-      if (target <= ownLabel) continue; // bwd branch: nothing to do
+      GBE_ASSERT(insn->isMemberOf<BranchInstruction>() == true);
+      if (target <= ownLabel) { // bwd branch: we always jump
+        JIPs.insert(std::make_pair(insn, LabelIndex(target)));
+        continue;
+      }
 
       // Traverse all previous blocks and see if we bypass their target
       uint32_t bypassedNum = 0;
@@ -245,9 +251,6 @@ namespace gbe
       }
 
       // We now have the (possibly) updated JIP for the branch
-      const BasicBlock &bb = fn.getBlock(ownLabel);
-      const Instruction *insn = bb.getLastInstruction();
-      GBE_ASSERT(insn->isMemberOf<BranchInstruction>() == true);
       JIPs.insert(std::make_pair(insn, LabelIndex(JIP)));
 
       // No bypassed targets
@@ -255,7 +258,7 @@ namespace gbe
 
       // When we have several bypassed targets, we must simply sort them and
       // chain them such target_n points to target_{n+1}
-      bypassedLabels[bypassedNum++] = ownLabel;
+      bypassedLabels[bypassedNum++] = target;
       std::sort(&bypassedLabels[0], &bypassedLabels[bypassedNum]);
 
       // Bypassed labels have a JIP now. However, we will only insert the

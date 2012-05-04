@@ -248,6 +248,12 @@ namespace gbe
   {
     using namespace ir;
     const GenReg ip = this->genReg(blockIPReg, TYPE_U16);
+    const LabelIndex jip = JIPs.find(&insn)->second;
+
+    // We will not emit any jump if we must go the next block anyway
+    const BasicBlock *curr = insn.getParent();
+    const BasicBlock *next = curr->getNextBlock();
+    const LabelIndex nextLabel = next->getLabelIndex();
 
     // Inefficient code. If the instruction is predicated, we build the flag
     // register from the boolean vector
@@ -270,16 +276,13 @@ namespace gbe
         p->MOV(ip, GenReg::immuw(uint16_t(dst)));
       p->pop();
 
-      // We do not emit any jump if we must jump to the next instruction
-      const BasicBlock *curr = insn.getParent();
-      const BasicBlock *next = curr->getNextBlock();
-      const LabelIndex nextLabel = next->getLabelIndex();
-      if (nextLabel == dst) return;
+      if (nextLabel == jip) return;
 
       // It is slightly more complicated than for backward jump. We check that
       // all PcIPs are greater than the next block IP to be sure that we can
       // jump
       p->push();
+        p->curr.predicate = GEN_PREDICATE_NONE;
         p->curr.flag = 0;
         p->curr.subFlag = 1;
         p->CMP(GenReg::null(), GEN_CONDITIONAL_G, ip, GenReg::immuw(nextLabel));
@@ -301,7 +304,8 @@ namespace gbe
       // Update the PcIPs
       p->MOV(ip, GenReg::immuw(uint16_t(dst)));
 
-      // Branch to the jump target
+      // Do not emit branch when we go to the next block anyway
+      if (nextLabel == jip) return;
       this->branchPos.insert(std::make_pair(&insn, p->insnNum));
       p->push();
         p->curr.execWidth = 1;
@@ -546,6 +550,26 @@ namespace gbe
       p->curr.flag = 0;
       p->CMP(dst, GEN_CONDITIONAL_LE, GenReg::retype(src0, GEN_TYPE_UW), src1);
     p->pop();
+
+    // If it is required, insert a JUMP to bypass the block
+    auto it = JIPs.find(&insn);
+    if (it != JIPs.end()) {
+      p->push();
+        this->branchPos.insert(std::make_pair(&insn, p->insnNum));
+        if (simdWidth == 8)
+          p->curr.predicate = GEN_PREDICATE_ALIGN1_ANY8H;
+        else if (simdWidth == 16)
+          p->curr.predicate = GEN_PREDICATE_ALIGN1_ANY16H;
+        else
+          NOT_IMPLEMENTED;
+        p->curr.inversePredicate = 1;
+        p->curr.execWidth = 1;
+        p->curr.flag = 0;
+        p->curr.subFlag = 0;
+        p->curr.noMask = 1;
+        p->JMPI(GenReg::immd(0));
+      p->pop();
+    }
   }
 
   void GenContext::emitInstructionStream(void) {
@@ -573,8 +597,8 @@ namespace gbe
   void GenContext::patchBranches(void) {
     using namespace ir;
     for (auto pair : branchPos) {
-      const BranchInstruction *insn = cast<BranchInstruction>(pair.first);
-      const LabelIndex label = insn->getLabelIndex();
+      const Instruction *insn = pair.first;
+      const LabelIndex label = JIPs.find(insn)->second;
       const int32_t insnID = pair.second;
       const int32_t targetID = labelPos.find(label)->second;
       p->patchJMPI(insnID, (targetID-insnID-1) * 2);
