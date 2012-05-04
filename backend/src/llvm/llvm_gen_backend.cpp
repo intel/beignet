@@ -849,7 +849,6 @@ namespace gbe
   }
 
   void GenWriter::emitFCmpInst(FCmpInst &I) {
-    GBE_ASSERT(I.getType() != Type::getInt1Ty(I.getContext()));
 
     // Get the element type and the number of elements
     uint32_t elemNum;
@@ -883,8 +882,9 @@ namespace gbe
   void GenWriter::regAllocateCastInst(CastInst &I) {
     Value *dstValue = &I;
     Value *srcValue = I.getOperand(0);
+    const auto op = I.getOpcode();
 
-    switch (I.getOpcode())
+    switch (op)
     {
       // When casting pointer to integers, be aware with integers
       case Instruction::PtrToInt:
@@ -918,6 +918,7 @@ namespace gbe
       case Instruction::ZExt:
       case Instruction::FPExt:
       case Instruction::FPTrunc:
+      case Instruction::Trunc:
         this->newRegister(&I);
       break;
       default: NOT_SUPPORTED;
@@ -950,6 +951,7 @@ namespace gbe
       case Instruction::ZExt:
       case Instruction::FPExt:
       case Instruction::FPTrunc:
+      case Instruction::Trunc:
       {
         // Get the element type for a vector
         uint32_t elemNum;
