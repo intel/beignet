@@ -247,9 +247,15 @@ enum GenMessageTarget {
 #define GEN_UNTYPED_SIMD16  1
 #define GEN_UNTYPED_SIMD8   2
 
+/* SIMD mode for byte scatters / gathers */
+#define GEN_BYTE_SCATTER_SIMD8    0
+#define GEN_BYTE_SCATTER_SIMD16   1
+
 /* Data port message type */
 #define GEN_UNTYPED_READ    5
 #define GEN_UNTYPED_WRITE  13
+#define GEN_BYTE_GATHER     4
+#define GEN_BYTE_SCATTER   12
 
 #define GEN_SAMPLER_RETURN_FORMAT_FLOAT32     0
 #define GEN_SAMPLER_RETURN_FORMAT_UINT32      2
@@ -659,6 +665,22 @@ struct GenInstruction
          uint32_t pad2:2;
          uint32_t end_of_thread:1;
       } gen7_untyped_rw;
+
+      /*! Data port byte scatter / gather */
+      struct {
+         uint32_t bti:8;
+         uint32_t simd_mode:1;
+         uint32_t ignored0:1;
+         uint32_t data_size:2;
+         uint32_t ignored1:2;
+         uint32_t msg_type:4;
+         uint32_t category:1;
+         uint32_t header_present:1;
+         uint32_t response_length:5;
+         uint32_t msg_length:4;
+         uint32_t pad2:2;
+         uint32_t end_of_thread:1;
+      } gen7_byte_rw;
 
       struct {
          uint32_t src1_subreg_nr_high:1;

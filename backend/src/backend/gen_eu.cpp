@@ -307,6 +307,28 @@ namespace gbe
        NOT_SUPPORTED;
   }
 
+  void
+  set_dp_byte_scatter_gather(GenEmitter *p,
+                             GenInstruction *insn,
+                             uint32_t bti,
+                             uint32_t elem_size,
+                             uint32_t msg_type,
+                             uint32_t msg_length,
+                             uint32_t response_length)
+  {
+     GenMessageTarget sfid = GEN_SFID_DATAPORT_DATA_CACHE;
+     brw_set_message_descriptor(p, insn, sfid, msg_length, response_length);
+     insn->bits3.gen7_byte_rw.msg_type = msg_type;
+     insn->bits3.gen7_byte_rw.bti = bti;
+     insn->bits3.gen7_byte_rw.data_size = elem_size;
+     if (p->curr.execWidth == 8)
+       insn->bits3.gen7_byte_rw.simd_mode = GEN_BYTE_SCATTER_SIMD8;
+     else if (p->curr.execWidth == 16)
+       insn->bits3.gen7_byte_rw.simd_mode = GEN_BYTE_SCATTER_SIMD16;
+     else
+       NOT_SUPPORTED;
+  }
+
   static const uint32_t untypedRWMask[] = {
     GEN_UNTYPED_ALPHA|GEN_UNTYPED_BLUE|GEN_UNTYPED_GREEN|GEN_UNTYPED_RED,
     GEN_UNTYPED_ALPHA|GEN_UNTYPED_BLUE|GEN_UNTYPED_GREEN,
@@ -370,6 +392,60 @@ namespace gbe
                       GEN_UNTYPED_WRITE,
                       msg_length,
                       response_length);
+  }
+
+  void
+  GenEmitter::BYTE_GATHER(GenReg dst, GenReg src, uint32_t bti, uint32_t elemSize)
+  {
+    GenInstruction *insn = this->next(GEN_OPCODE_SEND);
+    uint32_t msg_length = 0;
+    uint32_t response_length = 0;
+    if (this->curr.execWidth == 8) {
+      msg_length = 1;
+      response_length = 1;
+    } else if (this->curr.execWidth == 16) {
+      msg_length = 2;
+      response_length = 2;
+    } else
+      NOT_IMPLEMENTED;
+
+    this->setHeader(insn);
+    this->setDst(insn, GenReg::uw16grf(dst.nr, 0));
+    this->setSrc0(insn, GenReg::ud8grf(src.nr, 0));
+    this->setSrc1(insn, GenReg::immud(0));
+    set_dp_byte_scatter_gather(this,
+                               insn,
+                               bti,
+                               elemSize,
+                               GEN_BYTE_GATHER,
+                               msg_length,
+                               response_length);
+  }
+
+  void
+  GenEmitter::BYTE_SCATTER(GenReg msg, uint32_t bti, uint32_t elemSize)
+  {
+    GenInstruction *insn = this->next(GEN_OPCODE_SEND);
+    uint32_t msg_length = 0;
+    uint32_t response_length = 0;
+    this->setHeader(insn);
+    if (this->curr.execWidth == 8) {
+      this->setDst(insn, GenReg::retype(GenReg::null(), GEN_TYPE_UD));
+      msg_length = 1;
+    } else if (this->curr.execWidth == 16) {
+      this->setDst(insn, GenReg::retype(GenReg::null(), GEN_TYPE_UW));
+      msg_length = 2;
+    } else
+      NOT_IMPLEMENTED;
+    this->setSrc0(insn, GenReg::ud8grf(msg.nr, 0));
+    this->setSrc1(insn, GenReg::immud(0));
+    set_dp_byte_scatter_gather(this,
+                               insn,
+                               bti,
+                               elemSize,
+                               GEN_BYTE_SCATTER,
+                               msg_length,
+                               response_length);
   }
 
   void set_sampler_message(GenEmitter *p,
@@ -639,36 +715,7 @@ namespace gbe
      insn->header.quarter_control = 0;
   }
 
-  void GenEmitter::MATH(GenReg dest,
-                        uint32_t function,
-                        uint32_t saturate,
-                        uint32_t msg_reg_nr,
-                        GenReg src,
-                        uint32_t data_type,
-                        uint32_t precision)
-  {
-    GenInstruction *insn = this->next(GEN_OPCODE_MATH);
-
-    assert(dest.file == GEN_GENERAL_REGISTER_FILE);
-    assert(src.file == GEN_GENERAL_REGISTER_FILE);
-    assert(dest.hstride == GEN_HORIZONTAL_STRIDE_1);
-
-    if (function == GEN_MATH_FUNCTION_INT_DIV_QUOTIENT ||
-        function == GEN_MATH_FUNCTION_INT_DIV_REMAINDER ||
-        function == GEN_MATH_FUNCTION_INT_DIV_QUOTIENT_AND_REMAINDER) {
-      assert(src.type != GEN_TYPE_F);
-    } else
-      assert(src.type == GEN_TYPE_F);
-
-    insn->header.destreg_or_condmod = function;
-    insn->header.saturate = saturate;
-    this->setDst(insn, dest);
-    this->setSrc0(insn, src);
-    this->setSrc1(insn, GenReg::null());
-  }
-
-
-  void GenEmitter::MATH2(GenReg dest, uint32_t function, GenReg src0, GenReg src1)
+  void GenEmitter::MATH(GenReg dest, uint32_t function, GenReg src0, GenReg src1)
   {
      GenInstruction *insn = this->next(GEN_OPCODE_MATH);
 
@@ -694,38 +741,6 @@ namespace gbe
      this->setSrc1(insn, src1);
   }
 
-  void GenEmitter::MATH16(GenReg dest,
-                          uint32_t function,
-                          uint32_t saturate,
-                          uint32_t msg_reg_nr,
-                          GenReg src,
-                          uint32_t precision)
-  {
-     GenInstruction *insn;
-
-     insn = this->next(GEN_OPCODE_MATH);
-
-     /* Math is the same ISA format as other opcodes, except that CondModifier
-      * becomes FC[3:0] and ThreadCtrl becomes FC[5:4].
-      */
-     insn->header.destreg_or_condmod = function;
-     insn->header.saturate = saturate;
-
-     /* Source modifiers are ignored for extended math instructions. */
-     assert(!src.negate);
-     assert(!src.abs);
-
-     this->setHeader(insn);
-     this->setDst(insn, dest);
-     this->setSrc0(insn, src);
-     this->setSrc1(insn, GenReg::null());
-  }
-
-  /**
-   * Texture sample instruction.
-   * Note: the msg_type plus msg_length values determine exactly what kind
-   * of sampling operation is performed.  See volume 4, page 161 of docs.
-   */
   void GenEmitter::SAMPLE(GenReg dest,
                           uint32_t msg_reg_nr,
                           GenReg src0,

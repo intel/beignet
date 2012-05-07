@@ -736,8 +736,18 @@ namespace gbe
   }
 
   void GenWriter::emitBinaryOperator(Instruction &I) {
-    GBE_ASSERT(I.getType()->isPointerTy() == false &&
-               I.getType() != Type::getInt1Ty(I.getContext()));
+#if GBE_DEBUG
+    GBE_ASSERT(I.getType()->isPointerTy() == false);
+    // We accept logical operations on booleans
+    switch (I.getOpcode()) {
+      case Instruction::And:
+      case Instruction::Or:
+      case Instruction::Xor:
+        break;
+      default:
+        GBE_ASSERT(I.getType() != Type::getInt1Ty(I.getContext()));
+    }
+#endif /* GBE_DEBUG */
 
     // Get the element type for a vector
     uint32_t elemNum;

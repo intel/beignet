@@ -384,6 +384,10 @@ namespace gbe
     switch (opcode) {
       case OP_ADD: p->ADD(dst, src0, src1); break;
       case OP_SUB: p->ADD(dst, src0, GenReg::negate(src1)); break;
+      case OP_AND: p->AND(dst, src0, src1); break;
+      case OP_XOR: p->XOR(dst, src0, src1); break;
+      case OP_OR:  p->OR(dst, src0,  src1); break;
+      case OP_SHL: p->SHL(dst, src0, src1); break;
       case OP_MUL: 
       {
         if (type == TYPE_FLOAT)
@@ -394,12 +398,21 @@ namespace gbe
           NOT_IMPLEMENTED;
         break;
       }
+      case OP_DIV:
+      {
+        p->MATH(dst, GEN_MATH_FUNCTION_INV, src0, src1);
+        break;
+      }
       default: NOT_IMPLEMENTED;
     }
   }
 
-  void GenContext::emitTernaryInstruction(const ir::TernaryInstruction &insn) {}
-  void GenContext::emitSelectInstruction(const ir::SelectInstruction &insn) {}
+  void GenContext::emitTernaryInstruction(const ir::TernaryInstruction &insn) {
+    NOT_IMPLEMENTED;
+  }
+  void GenContext::emitSelectInstruction(const ir::SelectInstruction &insn) {
+    NOT_IMPLEMENTED;
+  }
 
   void GenContext::emitCompareInstruction(const ir::CompareInstruction &insn) {
     using namespace ir;
@@ -449,7 +462,14 @@ namespace gbe
     p->pop();
   }
 
-  void GenContext::emitConvertInstruction(const ir::ConvertInstruction &insn) {}
+  void GenContext::emitConvertInstruction(const ir::ConvertInstruction &insn) {
+    const ir::Type dstType = insn.getDstType();
+    const ir::Type srcType = insn.getSrcType();
+    const GenReg dst = this->genReg(insn.getDst(0), dstType);
+    const GenReg src = this->genReg(insn.getSrc(0), srcType);
+    p->MOV(dst, src);
+  }
+
   void GenContext::emitBranchInstruction(const ir::BranchInstruction &insn) {
     using namespace ir;
     const Opcode opcode = insn.getOpcode();
@@ -473,7 +493,10 @@ namespace gbe
     } else
       NOT_IMPLEMENTED;
   }
-  void GenContext::emitTextureInstruction(const ir::TextureInstruction &insn) {}
+
+  void GenContext::emitTextureInstruction(const ir::TextureInstruction &insn) {
+    NOT_IMPLEMENTED;
+  }
 
   void GenContext::emitLoadImmInstruction(const ir::LoadImmInstruction &insn) {
     using namespace ir;

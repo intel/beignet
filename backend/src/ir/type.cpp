@@ -30,7 +30,7 @@ namespace ir {
     switch (type) {
       case TYPE_BOOL: return out << "bool";
       case TYPE_S8: return out << "int8";
-      case TYPE_U8: return out << "uin8";
+      case TYPE_U8: return out << "uint8";
       case TYPE_S16: return out << "int16";
       case TYPE_U16: return out << "uin16";
       case TYPE_S32: return out << "int32";

@@ -460,7 +460,7 @@ namespace ir {
     // Implements all the wellFormed methods
     /////////////////////////////////////////////////////////////////////////
 
-    /*! All Nary instruction register must be of the same family and properly
+    /*! All Nary instruction registers must be of the same family and properly
      *  defined (i.e. not out-of-bound)
      */
     static INLINE bool checkRegisterData(RegisterFamily family,
@@ -492,6 +492,46 @@ namespace ir {
       return true;
     }
 
+    /*! We check that the given type belongs to the provided type family */
+    static INLINE bool checkTypeFamily(const Type &type,
+                                       const Type *family,
+                                       uint32_t typeNum,
+                                       std::string &whyNot)
+    {
+      uint32_t typeID = 0;
+      for (; typeID < typeNum; ++typeID)
+        if (family[typeID] == type)
+          break;
+      if (typeID == typeNum) {
+        whyNot = "Type is not supported by the instruction";
+        return false;
+      }
+      return true;
+    }
+
+#define CHECK_TYPE(TYPE, FAMILY) \
+  do { \
+    if (UNLIKELY(checkTypeFamily(TYPE, FAMILY, FAMILY##Num, whyNot)) == false) \
+      return false; \
+  } while (0)
+
+    static const Type madType[] = {TYPE_FLOAT};
+    static const uint32_t madTypeNum = ARRAY_ELEM_NUM(madType);
+
+    // TODO add support for 64 bits values
+    static const Type allButBool[] = {TYPE_S8,  TYPE_U8,
+                                        TYPE_S16, TYPE_U16,
+                                        TYPE_S32, TYPE_U32,
+                                        TYPE_FLOAT, TYPE_DOUBLE};
+    static const uint32_t allButBoolNum = ARRAY_ELEM_NUM(allButBool);
+
+    // TODO add support for 64 bits values
+    static const Type logicalType[] = {TYPE_S8,  TYPE_U8,
+                                       TYPE_S16, TYPE_U16,
+                                       TYPE_S32, TYPE_U32,
+                                       TYPE_BOOL};
+    static const uint32_t logicalTypeNum = ARRAY_ELEM_NUM(logicalType);
+
     // Unary and binary instructions share the same rules
     template <uint32_t srcNum>
     INLINE bool NaryInstruction<srcNum>::wellFormed(const Function &fn, std::string &whyNot) const
@@ -504,6 +544,18 @@ namespace ir {
       for (uint32_t srcID = 0; srcID < srcNum; ++srcID)
         if (UNLIKELY(checkRegisterData(family, src[srcID], fn, whyNot) == false))
           return false;
+      // We actually support logical operations on boolean values for AND, OR,
+      // and XOR
+      switch (this->opcode) {
+        case OP_OR:
+        case OP_XOR:
+        case OP_AND:
+          CHECK_TYPE(this->type, logicalType);
+          break;
+        default:
+          CHECK_TYPE(this->type, allButBool);
+          break;
+      }
       return true;
     }
 
@@ -524,6 +576,10 @@ namespace ir {
         if (UNLIKELY(checkRegisterData(family, regID, fn, whyNot) == false))
           return false;
       }
+      if (this->opcode == OP_MAD)
+        CHECK_TYPE(this->type, madType);
+      else
+        NOT_IMPLEMENTED;
       return true;
     }
 
@@ -547,6 +603,7 @@ namespace ir {
         if (UNLIKELY(checkRegisterData(family, regID, fn, whyNot) == false))
           return false;
       }
+      CHECK_TYPE(this->type, allButBool);
       return true;
     }
 
@@ -562,6 +619,7 @@ namespace ir {
       for (uint32_t srcID = 0; srcID < 2; ++srcID)
         if (UNLIKELY(checkRegisterData(family, src[srcID], fn, whyNot) == false))
           return false;
+      CHECK_TYPE(this->type, allButBool);
       return true;
     }
 
@@ -576,6 +634,8 @@ namespace ir {
         return false;
       if (UNLIKELY(checkRegisterData(srcFamily, src, fn, whyNot) == false))
         return false;
+      CHECK_TYPE(this->dstType, allButBool);
+      CHECK_TYPE(this->srcType, allButBool);
       return true;
     }
 
@@ -598,6 +658,7 @@ namespace ir {
         if (UNLIKELY(checkRegisterData(family, regID, fn, whyNot) == false))
           return false;
       }
+      CHECK_TYPE(insn.type, allButBool);
       return true;
     }
 
@@ -639,6 +700,7 @@ namespace ir {
         return false;
       if (UNLIKELY(checkRegisterData(family, dst, fn, whyNot) == false))
         return false;
+      CHECK_TYPE(this->type, allButBool);
       return true;
     }
 
@@ -671,6 +733,7 @@ namespace ir {
           return false;
       return true;
     }
+#undef CHECK_TYPE
 
     /////////////////////////////////////////////////////////////////////////
     // Implements all the output stream methods

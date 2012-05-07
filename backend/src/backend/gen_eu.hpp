@@ -633,6 +633,10 @@ namespace gbe
     void UNTYPED_READ(GenReg dst, GenReg src, uint32_t bti, uint32_t elemNum);
     /*! Untyped write (upto 4 channels) */
     void UNTYPED_WRITE(GenReg src, uint32_t bti, uint32_t elemNum);
+    /*! Byte gather (for unaligned bytes, shorts and ints) */
+    void BYTE_GATHER(GenReg dst, GenReg src, uint32_t bti, uint32_t type);
+    /*! Byte scatter (for unaligned bytes, shorts and ints) */
+    void BYTE_SCATTER(GenReg src, uint32_t bti, uint32_t type);
     /*! Send instruction for the sampler */
     void SAMPLE(GenReg dest,
                 uint32_t msg_reg_nr,
@@ -646,23 +650,8 @@ namespace gbe
                 uint32_t header_present,
                 uint32_t simd_mode,
                 uint32_t return_format);
-    /*! Extended math function, float[16] */
-    void MATH16(GenReg dest,
-                uint32_t function,
-                uint32_t saturate,
-                uint32_t msg_reg_nr,
-                GenReg src,
-                uint32_t precision);
     /*! Extended math function, float[8] */
-    void MATH(GenReg dest,
-              uint32_t function,
-              uint32_t saturate,
-              uint32_t msg_reg_nr,
-              GenReg src,
-              uint32_t data_type,
-              uint32_t precision);
-    /*! Extended math function, float[8] */
-    void MATH2(GenReg dest, uint32_t function, GenReg src0, GenReg src1);
+    void MATH(GenReg dest, uint32_t function, GenReg src0, GenReg src1);
 
     /*! Patch JMPI (located at index insnID) with the given jump distance */
     void patchJMPI(uint32_t insnID, int32_t jumpDistance);
