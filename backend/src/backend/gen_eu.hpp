@@ -42,21 +42,21 @@ namespace gbe
 {
   /*! Type size in bytes for each Gen type */
   INLINE int typeSize(uint32_t type) {
-     switch(type) {
-     case GEN_TYPE_UD:
-     case GEN_TYPE_D:
-     case GEN_TYPE_F:
+    switch(type) {
+      case GEN_TYPE_UD:
+      case GEN_TYPE_D:
+      case GEN_TYPE_F:
         return 4;
-     case GEN_TYPE_HF:
-     case GEN_TYPE_UW:
-     case GEN_TYPE_W:
+      case GEN_TYPE_HF:
+      case GEN_TYPE_UW:
+      case GEN_TYPE_W:
         return 2;
-     case GEN_TYPE_UB:
-     case GEN_TYPE_B:
+      case GEN_TYPE_UB:
+      case GEN_TYPE_B:
         return 1;
-     default:
+      default:
         return 0;
-     }
+    }
   }
 
   /*! This is almost always called with a numeric constant argument, so make
@@ -109,13 +109,13 @@ namespace gbe
     }
 
     static INLINE GenReg vec16(uint32_t file, uint32_t nr, uint32_t subnr) {
-        return GenReg(file,
-                      nr,
-                      subnr,
-                      GEN_TYPE_F,
-                      GEN_VERTICAL_STRIDE_8,
-                      GEN_WIDTH_8,
-                      GEN_HORIZONTAL_STRIDE_1);
+      return GenReg(file,
+                    nr,
+                    subnr,
+                    GEN_TYPE_F,
+                    GEN_VERTICAL_STRIDE_8,
+                    GEN_WIDTH_8,
+                    GEN_HORIZONTAL_STRIDE_1);
     }
 
     static INLINE GenReg vec8(uint32_t file, uint32_t nr, uint32_t subnr) {
@@ -168,30 +168,6 @@ namespace gbe
       return reg;
     }
 
-    static INLINE GenReg offset(GenReg reg, uint32_t delta) {
-      reg.nr += delta;
-      return reg;
-    }
-
-    static INLINE GenReg byte_offset(GenReg reg, uint32_t bytes) {
-      uint32_t newoffset = reg.nr * GEN_REG_SIZE + reg.subnr + bytes;
-      reg.nr = newoffset / GEN_REG_SIZE;
-      reg.subnr = newoffset % GEN_REG_SIZE;
-      return reg;
-    }
-
-    static INLINE GenReg uw16(uint32_t file, uint32_t nr, uint32_t subnr) {
-      return suboffset(retype(vec16(file, nr, 0), GEN_TYPE_UW), subnr);
-    }
-
-    static INLINE GenReg uw8(uint32_t file, uint32_t nr, uint32_t subnr) {
-      return suboffset(retype(vec8(file, nr, 0), GEN_TYPE_UW), subnr);
-    }
-
-    static INLINE GenReg uw1(uint32_t file, uint32_t nr, uint32_t subnr) {
-      return suboffset(retype(vec1(file, nr, 0), GEN_TYPE_UW), subnr);
-    }
-
     static INLINE GenReg ud16(uint32_t file, uint32_t nr, uint32_t subnr) {
       return retype(vec16(file, nr, subnr), GEN_TYPE_UD);
     }
@@ -208,8 +184,40 @@ namespace gbe
       return retype(vec8(file, nr, subnr), GEN_TYPE_D);
     }
 
-    static INLINE GenReg d1(uint32_t file, uint32_t nr, uint32_t subnr) {
-      return retype(vec1(file, nr, subnr), GEN_TYPE_D);
+    static INLINE GenReg uw16(uint32_t file, uint32_t nr, uint32_t subnr) {
+      return suboffset(retype(vec16(file, nr, 0), GEN_TYPE_UW), subnr);
+    }
+
+    static INLINE GenReg uw8(uint32_t file, uint32_t nr, uint32_t subnr) {
+      return suboffset(retype(vec8(file, nr, 0), GEN_TYPE_UW), subnr);
+    }
+
+    static INLINE GenReg uw1(uint32_t file, uint32_t nr, uint32_t subnr) {
+      return suboffset(retype(vec1(file, nr, 0), GEN_TYPE_UW), subnr);
+    }
+
+    static INLINE GenReg ub16(uint32_t file, uint32_t nr, uint32_t subnr) {
+      return GenReg(file,
+                    nr,
+                    subnr,
+                    GEN_TYPE_UB,
+                    GEN_VERTICAL_STRIDE_16,
+                    GEN_WIDTH_16,
+                    GEN_HORIZONTAL_STRIDE_2);
+    }
+
+    static INLINE GenReg ub8(uint32_t file, uint32_t nr, uint32_t subnr) {
+      return GenReg(file,
+                    nr,
+                    subnr,
+                    GEN_TYPE_UB,
+                    GEN_VERTICAL_STRIDE_16,
+                    GEN_WIDTH_8,
+                    GEN_HORIZONTAL_STRIDE_2);
+    }
+
+    static INLINE GenReg ub1(uint32_t file, uint32_t nr, uint32_t subnr) {
+      return suboffset(retype(vec1(file, nr, 0), GEN_TYPE_UB), subnr);
     }
 
     static INLINE GenReg imm(uint32_t type) {
@@ -307,17 +315,10 @@ namespace gbe
       return ud8(GEN_GENERAL_REGISTER_FILE, nr, subnr);
     }
 
-    static INLINE GenReg d8grf(uint32_t nr, uint32_t subnr) {
-      return d8(GEN_GENERAL_REGISTER_FILE, nr, subnr);
-    }
-
-    static INLINE GenReg ud16grf(uint32_t nr, uint32_t subnr) {
-      return ud16(GEN_GENERAL_REGISTER_FILE, nr, subnr);
-    }
-
     static INLINE GenReg uw1grf(uint32_t nr, uint32_t subnr) {
       return uw1(GEN_GENERAL_REGISTER_FILE, nr, subnr);
     }
+
     static INLINE GenReg uw8grf(uint32_t nr, uint32_t subnr) {
       return uw8(GEN_GENERAL_REGISTER_FILE, nr, subnr);
     }
@@ -521,8 +522,8 @@ namespace gbe
                 uint32_t header_present,
                 uint32_t simd_mode,
                 uint32_t return_format);
-    /*! Extended math function, float[8] */
-    void MATH(GenReg dest, uint32_t function, GenReg src0, GenReg src1);
+    /*! Extended math function */
+    void MATH(GenReg dst, uint32_t function, GenReg src0, GenReg src1);
 
     /*! Patch JMPI (located at index insnID) with the given jump distance */
     void patchJMPI(uint32_t insnID, int32_t jumpDistance);
