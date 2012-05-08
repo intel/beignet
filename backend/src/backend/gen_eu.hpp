@@ -30,33 +30,6 @@
 #include "sys/platform.hpp"
 #include <cassert>
 
-#define GEN_SWIZZLE4(a,b,c,d) (((a)<<0) | ((b)<<2) | ((c)<<4) | ((d)<<6))
-#define GEN_GET_SWZ(swz, idx) (((swz) >> ((idx)*2)) & 0x3)
-
-#define GEN_SWIZZLE_NOOP      GEN_SWIZZLE4(0,1,2,3)
-#define GEN_SWIZZLE_XYZW      GEN_SWIZZLE4(0,1,2,3)
-#define GEN_SWIZZLE_XXXX      GEN_SWIZZLE4(0,0,0,0)
-#define GEN_SWIZZLE_YYYY      GEN_SWIZZLE4(1,1,1,1)
-#define GEN_SWIZZLE_ZZZZ      GEN_SWIZZLE4(2,2,2,2)
-#define GEN_SWIZZLE_WWWW      GEN_SWIZZLE4(3,3,3,3)
-#define GEN_SWIZZLE_XYXY      GEN_SWIZZLE4(0,1,0,1)
-
-#define WRITEMASK_X     0x1
-#define WRITEMASK_Y     0x2
-#define WRITEMASK_XY    0x3
-#define WRITEMASK_Z     0x4
-#define WRITEMASK_XZ    0x5
-#define WRITEMASK_YZ    0x6
-#define WRITEMASK_XYZ   0x7
-#define WRITEMASK_W     0x8
-#define WRITEMASK_XW    0x9
-#define WRITEMASK_YW    0xa
-#define WRITEMASK_XYW   0xb
-#define WRITEMASK_ZW    0xc
-#define WRITEMASK_XZW   0xd
-#define WRITEMASK_YZW   0xe
-#define WRITEMASK_XYZW  0xf
-
 #define GEN_REG_SIZE (8*4)
 #define GEN_GRF_SIZE (GEN_REG_SIZE*112)
 #define GEN_EU_MAX_INSN_STACK 5
@@ -115,9 +88,7 @@ namespace gbe
                   uint32_t type,
                   uint32_t vstride,
                   uint32_t width,
-                  uint32_t hstride,
-                  uint32_t swizzle,
-                  uint32_t writemask)
+                  uint32_t hstride)
     {
       if (file == GEN_GENERAL_REGISTER_FILE)
         assert(nr < GEN_MAX_GRF);
@@ -144,9 +115,7 @@ namespace gbe
                       GEN_TYPE_F,
                       GEN_VERTICAL_STRIDE_8,
                       GEN_WIDTH_8,
-                      GEN_HORIZONTAL_STRIDE_1,
-                      GEN_SWIZZLE_XYZW,
-                      WRITEMASK_XYZW);
+                      GEN_HORIZONTAL_STRIDE_1);
     }
 
     static INLINE GenReg vec8(uint32_t file, uint32_t nr, uint32_t subnr) {
@@ -156,9 +125,7 @@ namespace gbe
                     GEN_TYPE_F,
                     GEN_VERTICAL_STRIDE_8,
                     GEN_WIDTH_8,
-                    GEN_HORIZONTAL_STRIDE_1,
-                    GEN_SWIZZLE_XYZW,
-                    WRITEMASK_XYZW);
+                    GEN_HORIZONTAL_STRIDE_1);
     }
 
     static INLINE GenReg vec4(uint32_t file, uint32_t nr, uint32_t subnr) {
@@ -168,9 +135,7 @@ namespace gbe
                     GEN_TYPE_F,
                     GEN_VERTICAL_STRIDE_4,
                     GEN_WIDTH_4,
-                    GEN_HORIZONTAL_STRIDE_1,
-                    GEN_SWIZZLE_XYZW,
-                    WRITEMASK_XYZW);
+                    GEN_HORIZONTAL_STRIDE_1);
     }
 
     static INLINE GenReg vec2(uint32_t file, uint32_t nr, uint32_t subnr) {
@@ -180,9 +145,7 @@ namespace gbe
                     GEN_TYPE_F,
                     GEN_VERTICAL_STRIDE_2,
                     GEN_WIDTH_2,
-                    GEN_HORIZONTAL_STRIDE_1,
-                    GEN_SWIZZLE_XYXY,
-                    WRITEMASK_XY);
+                    GEN_HORIZONTAL_STRIDE_1);
     }
 
     static INLINE GenReg vec1(uint32_t file, uint32_t nr, uint32_t subnr) {
@@ -192,9 +155,7 @@ namespace gbe
                     GEN_TYPE_F,
                     GEN_VERTICAL_STRIDE_0,
                     GEN_WIDTH_1,
-                    GEN_HORIZONTAL_STRIDE_0,
-                    GEN_SWIZZLE_XXXX,
-                    WRITEMASK_X);
+                    GEN_HORIZONTAL_STRIDE_0);
     }
 
     static INLINE GenReg retype(GenReg reg, uint32_t type) {
@@ -258,9 +219,7 @@ namespace gbe
                     type,
                     GEN_VERTICAL_STRIDE_0,
                     GEN_WIDTH_1,
-                    GEN_HORIZONTAL_STRIDE_0,
-                    0,
-                    0);
+                    GEN_HORIZONTAL_STRIDE_0);
     }
 
     static INLINE GenReg immf(float f) {
@@ -386,9 +345,7 @@ namespace gbe
                     GEN_TYPE_D,
                     GEN_VERTICAL_STRIDE_4,
                     GEN_WIDTH_1,
-                    GEN_HORIZONTAL_STRIDE_0,
-                    GEN_SWIZZLE_XYZW,
-                    WRITEMASK_XYZW);
+                    GEN_HORIZONTAL_STRIDE_0);
     }
 
     static INLINE GenReg notification1(void) {
@@ -398,9 +355,7 @@ namespace gbe
                     GEN_TYPE_UD,
                     GEN_VERTICAL_STRIDE_0,
                     GEN_WIDTH_1,
-                    GEN_HORIZONTAL_STRIDE_0,
-                    GEN_SWIZZLE_XXXX,
-                    WRITEMASK_X);
+                    GEN_HORIZONTAL_STRIDE_0);
     }
 
     static INLINE GenReg flag(uint32_t nr, uint32_t subnr) {
@@ -421,24 +376,6 @@ namespace gbe
       reg.width = cvt(width) - 1;
       reg.hstride = cvt(hstride);
       return reg;
-    }
-
-    static INLINE GenReg vec16(GenReg reg) { return stride(reg, 16,16,1); }
-    static INLINE GenReg vec8(GenReg reg) { return stride(reg, 8,8,1); }
-    static INLINE GenReg vec4(GenReg reg) { return stride(reg, 4,4,1); }
-    static INLINE GenReg vec2(GenReg reg) { return stride(reg, 2,2,1); }
-    static INLINE GenReg vec1(GenReg reg) { return stride(reg, 0,1,0); }
-
-    static INLINE GenReg getElement(GenReg reg, uint32_t elt) {
-      return vec1(suboffset(reg, elt));
-    }
-
-    static INLINE GenReg getElementUD(GenReg reg, uint32_t elt) {
-      return vec1(suboffset(retype(reg, GEN_TYPE_UD), elt));
-    }
-
-    static INLINE GenReg getElementD(GenReg reg, uint32_t elt) {
-      return vec1(suboffset(retype(reg, GEN_TYPE_D), elt));
     }
 
     static INLINE GenReg negate(GenReg reg) {
@@ -469,14 +406,6 @@ namespace gbe
     uint32_t pad0:1;
 
     union {
-#if 0
-      struct {
-        uint32_t swizzle:8;          /* src only, align16 only */
-        uint32_t writemask:4;        /* dest only, align16 only */
-        int32_t  indirect_offset:10; /* relative addressing offset */
-        uint32_t pad1:10;            /* two dwords total */
-      } bits;
-#endif
       float f;
       int32_t d;
       uint32_t ud;
@@ -607,13 +536,6 @@ namespace gbe
     void setSrc1(GenInstruction *insn, GenReg reg);
     GenInstruction *next(uint32_t opcode);
   };
-
-  INLINE bool brw_is_single_value_swizzle(int swiz) {
-     return (swiz == GEN_SWIZZLE_XXXX ||
-             swiz == GEN_SWIZZLE_YYYY ||
-             swiz == GEN_SWIZZLE_ZZZZ ||
-             swiz == GEN_SWIZZLE_WWWW);
-  }
 
   uint32_t brw_swap_cmod(uint32_t cmod);
 
