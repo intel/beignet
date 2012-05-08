@@ -135,14 +135,9 @@ namespace gbe
       this->hstride = hstride;
       this->address_mode = GEN_ADDRESS_DIRECT;
       this->pad0 = 0;
-      this->dw1.bits.swizzle = swizzle;
-      this->dw1.bits.writemask = writemask;
-      this->dw1.bits.indirect_offset = 0;
-      this->dw1.bits.pad1 = 0;
     }
 
     static INLINE GenReg vec16(uint32_t file, uint32_t nr, uint32_t subnr) {
-      if (typeSize(file) == 4)
         return GenReg(file,
                       nr,
                       subnr,
@@ -152,20 +147,6 @@ namespace gbe
                       GEN_HORIZONTAL_STRIDE_1,
                       GEN_SWIZZLE_XYZW,
                       WRITEMASK_XYZW);
-      else if (typeSize(file) == 2)
-        return GenReg(file,
-                      nr,
-                      subnr,
-                      GEN_TYPE_F,
-                      GEN_VERTICAL_STRIDE_16,
-                      GEN_WIDTH_16,
-                      GEN_HORIZONTAL_STRIDE_1,
-                      GEN_SWIZZLE_XYZW,
-                      WRITEMASK_XYZW);
-      else {
-        NOT_IMPLEMENTED;
-        return GenReg();
-      }
     }
 
     static INLINE GenReg vec8(uint32_t file, uint32_t nr, uint32_t subnr) {
@@ -460,31 +441,6 @@ namespace gbe
       return vec1(suboffset(retype(reg, GEN_TYPE_D), elt));
     }
 
-    static INLINE GenReg swizzle(GenReg reg, uint32_t x, uint32_t y, uint32_t z, uint32_t w) {
-      assert(reg.file != GEN_IMMEDIATE_VALUE);
-      reg.dw1.bits.swizzle = GEN_SWIZZLE4(GEN_GET_SWZ(reg.dw1.bits.swizzle, x),
-                                          GEN_GET_SWZ(reg.dw1.bits.swizzle, y),
-                                          GEN_GET_SWZ(reg.dw1.bits.swizzle, z),
-                                          GEN_GET_SWZ(reg.dw1.bits.swizzle, w));
-      return reg;
-    }
-
-    static INLINE GenReg swizzle1(GenReg reg, uint32_t x) {
-      return swizzle(reg, x, x, x, x);
-    }
-
-    static INLINE GenReg writemask(GenReg reg, uint32_t mask) {
-      assert(reg.file != GEN_IMMEDIATE_VALUE);
-      reg.dw1.bits.writemask &= mask;
-      return reg;
-    }
-
-    static INLINE GenReg set_writemask(GenReg reg, uint32_t mask) {
-      assert(reg.file != GEN_IMMEDIATE_VALUE);
-      reg.dw1.bits.writemask = mask;
-      return reg;
-    }
-
     static INLINE GenReg negate(GenReg reg) {
       reg.negation ^= 1;
       return reg;
@@ -493,22 +449,6 @@ namespace gbe
     static INLINE GenReg abs(GenReg reg) {
       reg.absolute = 1;
       reg.negation = 0;
-      return reg;
-    }
-
-    static INLINE GenReg vec4_indirect(uint32_t subnr, int offset) {
-      GenReg reg =  f4grf(0, 0);
-      reg.subnr = subnr;
-      reg.address_mode = GEN_ADDRESS_REGISTER_INDIRECT_REGISTER;
-      reg.dw1.bits.indirect_offset = offset;
-      return reg;
-    }
-
-    static INLINE GenReg vec1_indirect(uint32_t subnr, int offset) {
-      GenReg reg =  f1grf(0, 0);
-      reg.subnr = subnr;
-      reg.address_mode = GEN_ADDRESS_REGISTER_INDIRECT_REGISTER;
-      reg.dw1.bits.indirect_offset = offset;
       return reg;
     }
 
@@ -529,12 +469,14 @@ namespace gbe
     uint32_t pad0:1;
 
     union {
+#if 0
       struct {
         uint32_t swizzle:8;          /* src only, align16 only */
         uint32_t writemask:4;        /* dest only, align16 only */
         int32_t  indirect_offset:10; /* relative addressing offset */
         uint32_t pad1:10;            /* two dwords total */
       } bits;
+#endif
       float f;
       int32_t d;
       uint32_t ud;
@@ -614,7 +556,7 @@ namespace gbe
     ALU1(LZD)
     ALU2(LINE)
     ALU2(PLN)
-    ALU3(MAD)
+    // ALU3(MAD)
 #undef ALU1
 #undef ALU2
 #undef ALU3

@@ -89,40 +89,11 @@ namespace gbe
      insn->bits1.da1.dest_reg_file = dest.file;
      insn->bits1.da1.dest_reg_type = dest.type;
      insn->bits1.da1.dest_address_mode = dest.address_mode;
-
-     if (dest.address_mode == GEN_ADDRESS_DIRECT) {   
-        insn->bits1.da1.dest_reg_nr = dest.nr;
-
-        if (insn->header.access_mode == GEN_ALIGN_1) {
-           insn->bits1.da1.dest_subreg_nr = dest.subnr;
-           if (dest.hstride == GEN_HORIZONTAL_STRIDE_0)
-              dest.hstride = GEN_HORIZONTAL_STRIDE_1;
-           insn->bits1.da1.dest_horiz_stride = dest.hstride;
-        }
-        else {
-           insn->bits1.da16.dest_subreg_nr = dest.subnr / 16;
-           insn->bits1.da16.dest_writemask = dest.dw1.bits.writemask;
-           /* even ignored in da16, still need to set as '01' */
-           insn->bits1.da16.dest_horiz_stride = 1;
-        }
-     }
-     else {
-        insn->bits1.ia1.dest_subreg_nr = dest.subnr;
-
-        /* These are different sizes in align1 vs align16:
-         */
-        if (insn->header.access_mode == GEN_ALIGN_1) {
-           insn->bits1.ia1.dest_indirect_offset = dest.dw1.bits.indirect_offset;
-           if (dest.hstride == GEN_HORIZONTAL_STRIDE_0)
-              dest.hstride = GEN_HORIZONTAL_STRIDE_1;
-           insn->bits1.ia1.dest_horiz_stride = dest.hstride;
-        }
-        else {
-           insn->bits1.ia16.dest_indirect_offset = dest.dw1.bits.indirect_offset;
-           /* even ignored in da16, still need to set as '01' */
-           insn->bits1.ia16.dest_horiz_stride = 1;
-        }
-     }
+     insn->bits1.da1.dest_reg_nr = dest.nr;
+     insn->bits1.da1.dest_subreg_nr = dest.subnr;
+     if (dest.hstride == GEN_HORIZONTAL_STRIDE_0)
+       dest.hstride = GEN_HORIZONTAL_STRIDE_1;
+     insn->bits1.da1.dest_horiz_stride = dest.hstride;
   }
 
   static const int reg_type_size[8] = { 4, 4, 2, 2, 1, 1, 4 };
@@ -146,54 +117,25 @@ namespace gbe
         insn->bits1.da1.src1_reg_type = reg.type;
      }
      else {
-        if (reg.address_mode == GEN_ADDRESS_DIRECT) {
-           if (insn->header.access_mode == GEN_ALIGN_1) {
-              insn->bits2.da1.src0_subreg_nr = reg.subnr;
-              insn->bits2.da1.src0_reg_nr = reg.nr;
-           }
-           else {
-              insn->bits2.da16.src0_subreg_nr = reg.subnr / 16;
-              insn->bits2.da16.src0_reg_nr = reg.nr;
-           }
-        }
-        else {
-           insn->bits2.ia1.src0_subreg_nr = reg.subnr;
+       if (insn->header.access_mode == GEN_ALIGN_1) {
+         insn->bits2.da1.src0_subreg_nr = reg.subnr;
+         insn->bits2.da1.src0_reg_nr = reg.nr;
+       } else {
+         insn->bits2.da16.src0_subreg_nr = reg.subnr / 16;
+         insn->bits2.da16.src0_reg_nr = reg.nr;
+       }
 
-           if (insn->header.access_mode == GEN_ALIGN_1) {
-              insn->bits2.ia1.src0_indirect_offset = reg.dw1.bits.indirect_offset; 
-           }
-           else {
-              insn->bits2.ia16.src0_subreg_nr = reg.dw1.bits.indirect_offset;
-           }
-        }
-
-        if (insn->header.access_mode == GEN_ALIGN_1) {
-           if (reg.width == GEN_WIDTH_1 && 
-               insn->header.execution_size == GEN_WIDTH_1) {
-              insn->bits2.da1.src0_horiz_stride = GEN_HORIZONTAL_STRIDE_0;
-              insn->bits2.da1.src0_width = GEN_WIDTH_1;
-              insn->bits2.da1.src0_vert_stride = GEN_VERTICAL_STRIDE_0;
-           }
-           else {
-              insn->bits2.da1.src0_horiz_stride = reg.hstride;
-              insn->bits2.da1.src0_width = reg.width;
-              insn->bits2.da1.src0_vert_stride = reg.vstride;
-           }
-        }
-        else {
-           insn->bits2.da16.src0_swz_x = GEN_GET_SWZ(reg.dw1.bits.swizzle, GEN_CHANNEL_X);
-           insn->bits2.da16.src0_swz_y = GEN_GET_SWZ(reg.dw1.bits.swizzle, GEN_CHANNEL_Y);
-           insn->bits2.da16.src0_swz_z = GEN_GET_SWZ(reg.dw1.bits.swizzle, GEN_CHANNEL_Z);
-           insn->bits2.da16.src0_swz_w = GEN_GET_SWZ(reg.dw1.bits.swizzle, GEN_CHANNEL_W);
-
-           /* This is an oddity of the fact we're using the same
-            * descriptions for registers in align_16 as align_1:
-            */
-           if (reg.vstride == GEN_VERTICAL_STRIDE_8)
-              insn->bits2.da16.src0_vert_stride = GEN_VERTICAL_STRIDE_4;
-           else
-              insn->bits2.da16.src0_vert_stride = reg.vstride;
-        }
+       if (reg.width == GEN_WIDTH_1 &&
+           insn->header.execution_size == GEN_WIDTH_1) {
+         insn->bits2.da1.src0_horiz_stride = GEN_HORIZONTAL_STRIDE_0;
+         insn->bits2.da1.src0_width = GEN_WIDTH_1;
+         insn->bits2.da1.src0_vert_stride = GEN_VERTICAL_STRIDE_0;
+       }
+       else {
+         insn->bits2.da1.src0_horiz_stride = reg.hstride;
+         insn->bits2.da1.src0_width = reg.width;
+         insn->bits2.da1.src0_vert_stride = reg.vstride;
+       }
      }
   }
 
@@ -211,63 +153,31 @@ namespace gbe
       */
      assert(insn->bits1.da1.src0_reg_file != GEN_IMMEDIATE_VALUE);
 
-     if (reg.file == GEN_IMMEDIATE_VALUE) {
-        insn->bits3.ud = reg.dw1.ud;
-     }
+     if (reg.file == GEN_IMMEDIATE_VALUE)
+       insn->bits3.ud = reg.dw1.ud;
      else {
-        /* This is a hardware restriction, which may or may not be lifted
-         * in the future:
-         */
-        assert (reg.address_mode == GEN_ADDRESS_DIRECT);
-        /* assert (reg.file == GEN_GENERAL_REGISTER_FILE); */
+       assert (reg.address_mode == GEN_ADDRESS_DIRECT);
+       if (insn->header.access_mode == GEN_ALIGN_1) {
+         insn->bits3.da1.src1_subreg_nr = reg.subnr;
+         insn->bits3.da1.src1_reg_nr = reg.nr;
+       } else {
+         insn->bits3.da16.src1_subreg_nr = reg.subnr / 16;
+         insn->bits3.da16.src1_reg_nr = reg.nr;
+       }
 
-        if (insn->header.access_mode == GEN_ALIGN_1) {
-           insn->bits3.da1.src1_subreg_nr = reg.subnr;
-           insn->bits3.da1.src1_reg_nr = reg.nr;
-        }
-        else {
-           insn->bits3.da16.src1_subreg_nr = reg.subnr / 16;
-           insn->bits3.da16.src1_reg_nr = reg.nr;
-        }
-
-        if (insn->header.access_mode == GEN_ALIGN_1) {
-           if (reg.width == GEN_WIDTH_1 && 
-               insn->header.execution_size == GEN_WIDTH_1) {
-              insn->bits3.da1.src1_horiz_stride = GEN_HORIZONTAL_STRIDE_0;
-              insn->bits3.da1.src1_width = GEN_WIDTH_1;
-              insn->bits3.da1.src1_vert_stride = GEN_VERTICAL_STRIDE_0;
-           }
-           else {
-              insn->bits3.da1.src1_horiz_stride = reg.hstride;
-              insn->bits3.da1.src1_width = reg.width;
-              insn->bits3.da1.src1_vert_stride = reg.vstride;
-           }
-        }
-        else {
-           insn->bits3.da16.src1_swz_x = GEN_GET_SWZ(reg.dw1.bits.swizzle, GEN_CHANNEL_X);
-           insn->bits3.da16.src1_swz_y = GEN_GET_SWZ(reg.dw1.bits.swizzle, GEN_CHANNEL_Y);
-           insn->bits3.da16.src1_swz_z = GEN_GET_SWZ(reg.dw1.bits.swizzle, GEN_CHANNEL_Z);
-           insn->bits3.da16.src1_swz_w = GEN_GET_SWZ(reg.dw1.bits.swizzle, GEN_CHANNEL_W);
-
-           /* This is an oddity of the fact we're using the same
-            * descriptions for registers in align_16 as align_1:
-            */
-           if (reg.vstride == GEN_VERTICAL_STRIDE_8)
-              insn->bits3.da16.src1_vert_stride = GEN_VERTICAL_STRIDE_4;
-           else
-              insn->bits3.da16.src1_vert_stride = reg.vstride;
-        }
+       if (reg.width == GEN_WIDTH_1 && 
+           insn->header.execution_size == GEN_WIDTH_1) {
+         insn->bits3.da1.src1_horiz_stride = GEN_HORIZONTAL_STRIDE_0;
+         insn->bits3.da1.src1_width = GEN_WIDTH_1;
+         insn->bits3.da1.src1_vert_stride = GEN_VERTICAL_STRIDE_0;
+       } else {
+         insn->bits3.da1.src1_horiz_stride = reg.hstride;
+         insn->bits3.da1.src1_width = reg.width;
+         insn->bits3.da1.src1_vert_stride = reg.vstride;
+       }
      }
   }
 
-  /**
-   * Set the Message Descriptor and Extended Message Descriptor fields
-   * for SEND messages.
-   *
-   * \note This zeroes out the Function Control bits, so it must be called
-   *       \b before filling out any message-specific data.  Callers can
-   *       choose not to fill in irrelevant bits; they will be zero.
-   */
   static void
   brw_set_message_descriptor(GenEmitter *p,
                              GenInstruction *inst,
@@ -285,7 +195,7 @@ namespace gbe
      inst->header.destreg_or_condmod = sfid;
   }
 
-  void
+  static void
   set_dp_untyped_rw(GenEmitter *p,
                     GenInstruction *insn,
                     uint32_t bti,
@@ -307,7 +217,7 @@ namespace gbe
        NOT_SUPPORTED;
   }
 
-  void
+  static void
   set_dp_byte_scatter_gather(GenEmitter *p,
                              GenInstruction *insn,
                              uint32_t bti,
@@ -448,16 +358,17 @@ namespace gbe
                                response_length);
   }
 
-  void set_sampler_message(GenEmitter *p,
-                           GenInstruction *insn,
-                           uint32_t bti,
-                           uint32_t sampler,
-                           uint32_t msg_type,
-                           uint32_t response_length,
-                           uint32_t msg_length,
-                           uint32_t header_present,
-                           uint32_t simd_mode,
-                           uint32_t return_format)
+  static void
+  set_sampler_message(GenEmitter *p,
+                      GenInstruction *insn,
+                      uint32_t bti,
+                      uint32_t sampler,
+                      uint32_t msg_type,
+                      uint32_t response_length,
+                      uint32_t msg_length,
+                      uint32_t header_present,
+                      uint32_t simd_mode,
+                      uint32_t return_format)
   {
      brw_set_message_descriptor(p, insn, GEN_SFID_SAMPLER, msg_length,
                                 response_length, header_present);
@@ -502,6 +413,7 @@ namespace gbe
      return insn;
   }
 
+#if 0
   static int
   get_3src_subreg_nr(GenReg reg)
   {
@@ -569,7 +481,7 @@ namespace gbe
 
      return insn;
   }
-
+#endif
 
 #define ALU1(OP) \
   GenInstruction *GenEmitter::OP(GenReg dest, GenReg src0) \
@@ -608,7 +520,7 @@ namespace gbe
   ALU1(LZD)
   ALU2(LINE)
   ALU2(PLN)
-  ALU3(MAD)
+  // ALU3(MAD)
 
   GenInstruction *GenEmitter::MACH(GenReg dest, GenReg src0, GenReg src1)
   {
@@ -619,7 +531,6 @@ namespace gbe
 
   GenInstruction *GenEmitter::ADD(GenReg dest, GenReg src0, GenReg src1)
   {
-     /* 6.2.2: add */
      if (src0.type == GEN_TYPE_F ||
          (src0.file == GEN_IMMEDIATE_VALUE &&
           src0.type == GEN_TYPE_VF)) {
