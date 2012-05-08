@@ -538,8 +538,6 @@ namespace gbe
     GenInstruction *next(uint32_t opcode);
   };
 
-  uint32_t brw_swap_cmod(uint32_t cmod);
-
 } /* namespace gbe */
 
 #endif /* GEN_EU_H */

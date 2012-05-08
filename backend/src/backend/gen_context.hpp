@@ -54,6 +54,8 @@ namespace gbe
     void allocatePayloadReg(gbe_curbe_type value, uint32_t subValue, const ir::Register &reg);
     /*! Very stupid register allocator to start with */
     void allocateRegister(void);
+    /*! Create a GenReg from a ir::Register */
+    uint32_t createGenReg(ir::Register reg, uint32_t grfOffset);
     /*! Emit the instructions */
     void emitInstructionStream(void);
     /*! Set the correct target values for the branches */

@@ -59,28 +59,6 @@ namespace gbe
     }
   }
 
-  /* Returns the corresponding conditional mod for swapping src0 and
-   * src1 in e.g. CMP.
-   */
-  uint32_t brw_swap_cmod(uint32_t cmod)
-  {
-     switch (cmod) {
-       case GEN_CONDITIONAL_Z:
-       case GEN_CONDITIONAL_NZ:
-         return cmod;
-       case GEN_CONDITIONAL_G:
-         return GEN_CONDITIONAL_LE;
-       case GEN_CONDITIONAL_GE:
-         return GEN_CONDITIONAL_L;
-       case GEN_CONDITIONAL_L:
-         return GEN_CONDITIONAL_GE;
-       case GEN_CONDITIONAL_LE:
-         return GEN_CONDITIONAL_G;
-       default:
-         return ~0;
-     }
-  }
-
   void GenEmitter::setDst(GenInstruction *insn, GenReg dest)
   {
      if (dest.file != GEN_ARCHITECTURE_REGISTER_FILE)

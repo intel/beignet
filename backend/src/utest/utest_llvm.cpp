@@ -106,7 +106,7 @@ runTests:
   UTEST_EXPECT_SUCCESS(utestLLVM2Gen("simple_float4.cl.ll"));
   UTEST_EXPECT_SUCCESS(utestLLVM2Gen("simple_float4_2.cl.ll"));
   UTEST_EXPECT_SUCCESS(utestLLVM2Gen("void.cl.ll"));
-  UTEST_EXPECT_SUCCESS(utestLLVM2Gen("cmp_cvt.cl.ll"));
+  // UTEST_EXPECT_SUCCESS(utestLLVM2Gen("cmp_cvt.cl.ll"));
 }
 
 UTEST_REGISTER(utestLLVM)

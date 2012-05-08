@@ -122,6 +122,29 @@ namespace gbe
     }
   }
 
+  uint32_t GenContext::createGenReg(ir::Register reg, uint32_t grfOffset) {
+    using namespace ir;
+    if (fn.isSpecialReg(reg) == true) return grfOffset; // already done
+    if (fn.getInput(reg) != NULL) return grfOffset; // already done
+    const RegisterData regData = fn.getRegisterData(reg);
+    const uint32_t typeSize = regData.getSize();
+    const uint32_t regSize = simdWidth*typeSize;
+    grfOffset = ALIGN(grfOffset, regSize);
+    if (grfOffset + regSize <= GEN_GRF_SIZE) {
+      const uint32_t nr = grfOffset / GEN_REG_SIZE;
+      const uint32_t subnr = (grfOffset % GEN_REG_SIZE) / typeSize;
+      if (simdWidth == 16)
+        RA.insert(std::make_pair(reg, GenReg::f16grf(nr, subnr)));
+      else if (simdWidth == 8)
+        RA.insert(std::make_pair(reg, GenReg::f8grf(nr, subnr)));
+      else
+        NOT_SUPPORTED;
+      grfOffset += simdWidth * typeSize;
+    } else
+      NOT_SUPPORTED;
+    return grfOffset;
+  }
+
   void GenContext::allocateRegister(void) {
     using namespace ir;
     GBE_ASSERT(fn.getProfile() == PROFILE_OCL);
@@ -180,28 +203,8 @@ namespace gbe
 
     // Allocate all used registers. Just crash when we run out-of-registers
     uint32_t grfOffset = kernel->getCurbeSize() + GEN_REG_SIZE;
-    GBE_ASSERT(simdWidth != 32); // XXX a bit more complicated see later
-    if (simdWidth == 16) grfOffset = ALIGN(grfOffset, 2*GEN_REG_SIZE);
-    for (auto reg : usedRegs) {
-      if (fn.isSpecialReg(reg) == true) continue; // already done
-      if (fn.getInput(reg) != NULL) continue; // already done
-      const RegisterData regData = fn.getRegisterData(reg);
-      const uint32_t typeSize = regData.getSize();
-      const uint32_t regSize = simdWidth*typeSize;
-      grfOffset = ALIGN(grfOffset, regSize);
-      if (grfOffset + regSize <= GEN_GRF_SIZE) {
-        const uint32_t nr = grfOffset / GEN_REG_SIZE;
-        const uint32_t subnr = (grfOffset % GEN_REG_SIZE) / typeSize;
-        if (simdWidth == 16)
-          RA.insert(std::make_pair(reg, GenReg::f16grf(nr, subnr)));
-        else if (simdWidth == 8)
-          RA.insert(std::make_pair(reg, GenReg::f8grf(nr, subnr)));
-        else
-          NOT_SUPPORTED;
-        grfOffset += simdWidth * typeSize;
-      } else
-        NOT_IMPLEMENTED;
-    }
+    for (auto reg : usedRegs)
+      grfOffset = this->createGenReg(reg, grfOffset);
   }
 
   void GenContext::emitUnaryInstruction(const ir::UnaryInstruction &insn) {

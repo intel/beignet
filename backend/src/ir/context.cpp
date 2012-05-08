@@ -123,7 +123,7 @@ namespace ir {
     }
     // We create a new label for a new block if the user did not do it
     else if (bb == NULL) {
-      this->startBlock();
+      // this->startBlock();
       const LabelIndex index = this->label();
       const Instruction insn = ir::LABEL(index);
       this->append(insn);

@@ -75,6 +75,7 @@ namespace ir {
       newBra->replace(&insn);
     });
 
+    std::cout << "blockNum: " << this->blockNum() << std::endl;
     // Reset the label to block mapping
     this->labels.resize(last);
     foreachBlock([&](BasicBlock &bb) {
