@@ -490,11 +490,43 @@ namespace gbe
   }
 
   void GenContext::emitConvertInstruction(const ir::ConvertInstruction &insn) {
-    const ir::Type dstType = insn.getDstType();
-    const ir::Type srcType = insn.getSrcType();
+    using namespace ir;
+    const Type dstType = insn.getDstType();
+    const Type srcType = insn.getSrcType();
+    const RegisterFamily dstFamily = getFamily(dstType);
+    const RegisterFamily srcFamily = getFamily(srcType);
     const GenReg dst = this->genReg(insn.getDst(0), dstType);
     const GenReg src = this->genReg(insn.getSrc(0), srcType);
-    p->MOV(dst, src);
+
+    GBE_ASSERT(dstFamily != FAMILY_QWORD && srcFamily != FAMILY_QWORD);
+
+    // We need two steps here to make the conversion
+    if (dstFamily != FAMILY_DWORD && srcFamily == FAMILY_DWORD) {
+      GenReg unpacked;
+      const uint32_t vstride = simdWidth == 8 ? GEN_VERTICAL_STRIDE_8 : GEN_VERTICAL_STRIDE_16;
+      if (dstFamily == FAMILY_WORD) {
+        unpacked = GenReg(GEN_GENERAL_REGISTER_FILE,
+                          112,
+                          0,
+                          dstType == TYPE_U16 ? GEN_TYPE_UW : GEN_TYPE_W,
+                          vstride,
+                          GEN_WIDTH_8,
+                          GEN_HORIZONTAL_STRIDE_2);
+      } else {
+        GBE_ASSERT(dstFamily == FAMILY_BYTE);
+        unpacked = GenReg(GEN_GENERAL_REGISTER_FILE,
+                          112,
+                          0,
+                          dstType == TYPE_U8 ? GEN_TYPE_UB : GEN_TYPE_B,
+                          vstride,
+                          GEN_WIDTH_8,
+                          GEN_HORIZONTAL_STRIDE_4);
+      }
+      p->MOV(unpacked, src);
+      p->MOV(dst, unpacked);
+    } else {
+      p->MOV(dst, src);
+   }
   }
 
   void GenContext::emitBranchInstruction(const ir::BranchInstruction &insn) {
@@ -608,28 +640,22 @@ namespace gbe
       if (isScalarReg(insn.getAddress()) == true) {
         if (this->simdWidth == 8) {
           p->MOV(GenReg::f8grf(112, 0), GenReg::retype(address, GEN_TYPE_F));
-          p->BYTE_GATHER(dst, GenReg::f8grf(112, 0), 0, 1);
+          p->BYTE_GATHER(dst, GenReg::f8grf(112, 0), 0, elemSize);
         } else if (this->simdWidth == 16) {
           p->MOV(GenReg::f16grf(112, 0), GenReg::retype(address, GEN_TYPE_F));
-          p->BYTE_GATHER(dst, GenReg::f16grf(112, 0), 0, 1);
+          p->BYTE_GATHER(dst, GenReg::f16grf(112, 0), 0, elemSize);
         }
       } else
-        p->BYTE_GATHER(dst, address, 0, 1);
+        p->BYTE_GATHER(dst, address, 0, elemSize);
     } else
       NOT_IMPLEMENTED;
 
-    // Repack bytes or words
-    if (elemSize == GEN_BYTE_SCATTER_WORD) {
-      if (simdWidth == 8) {
-
-      } else if (simdWidth == 16) {
-
-      }
-    } else if (elemSize == GEN_BYTE_SCATTER_BYTE) {
-
-    }
+    // Repack bytes or words using a converting mov instruction
+    if (elemSize == GEN_BYTE_SCATTER_WORD)
+      p->MOV(GenReg::retype(value, GEN_TYPE_UW), GenReg::retype(dst, GEN_TYPE_UD));
+    else if (elemSize == GEN_BYTE_SCATTER_BYTE)
+      p->MOV(GenReg::retype(value, GEN_TYPE_UB), GenReg::retype(dst, GEN_TYPE_UD));
   }
-
 
   void GenContext::emitLoadInstruction(const ir::LoadInstruction &insn) {
     using namespace ir;
@@ -643,16 +669,11 @@ namespace gbe
       this->emitByteGather(insn, address, value);
   }
 
-  void GenContext::emitStoreInstruction(const ir::StoreInstruction &insn) {
+  void GenContext::emitUntypedWrite(const ir::StoreInstruction &insn,
+                                    GenReg address,
+                                    GenReg value)
+  {
     using namespace ir;
-    GBE_ASSERT(insn.getAddressSpace() == MEM_GLOBAL);
-    GBE_ASSERT(insn.getValueNum() == 1);
-    GBE_ASSERT(insn.isAligned() == true);
-    GBE_ASSERT(this->simdWidth <= 16);
-    const GenReg address = this->genReg(insn.getAddress());
-    const GenReg value = this->genReg(insn.getValue(0));
-    // XXX remove that later. Now we just copy everything to GRFs to make it
-    // contiguous
     if (this->simdWidth == 8) {
       p->MOV(GenReg::f8grf(112, 0), GenReg::retype(address, GEN_TYPE_F));
       p->MOV(GenReg::f8grf(113, 0), GenReg::retype(value, GEN_TYPE_F));
@@ -664,6 +685,49 @@ namespace gbe
     } else
       NOT_IMPLEMENTED;
   }
+
+  void GenContext::emitByteScatter(const ir::StoreInstruction &insn,
+                                   GenReg address,
+                                   GenReg value)
+  {
+    using namespace ir;
+    const Type type = insn.getValueType();
+    const uint32_t elemSize = getByteScatterGatherSize(type);
+
+    if (this->simdWidth == 8) {
+      p->MOV(GenReg::f8grf(112, 0), GenReg::retype(address, GEN_TYPE_F));
+      if (elemSize == GEN_BYTE_SCATTER_DWORD)
+        p->MOV(GenReg::f8grf(113, 0), GenReg::retype(value, GEN_TYPE_F));
+      else if (elemSize == GEN_BYTE_SCATTER_WORD)
+        p->MOV(GenReg::ud8grf(113, 0), GenReg::retype(value, GEN_TYPE_UW));
+      else if (elemSize == GEN_BYTE_SCATTER_BYTE)
+        p->MOV(GenReg::ud8grf(113, 0), GenReg::retype(value, GEN_TYPE_UB));
+      p->BYTE_SCATTER(GenReg::f8grf(112, 0), 0, elemSize);
+    } else if (this->simdWidth == 16) {
+      p->MOV(GenReg::f16grf(112, 0), GenReg::retype(address, GEN_TYPE_F));
+      if (elemSize == GEN_BYTE_SCATTER_DWORD)
+        p->MOV(GenReg::f16grf(114, 0), GenReg::retype(value, GEN_TYPE_F));
+      else if (elemSize == GEN_BYTE_SCATTER_WORD)
+        p->MOV(GenReg::ud16grf(114, 0), GenReg::retype(value, GEN_TYPE_UW));
+      else if (elemSize == GEN_BYTE_SCATTER_BYTE)
+        p->MOV(GenReg::ud16grf(114, 0), GenReg::retype(value, GEN_TYPE_UB));
+      p->BYTE_SCATTER(GenReg::f16grf(112, 0), 0, elemSize);
+    } else
+      NOT_IMPLEMENTED;
+  }
+
+  void GenContext::emitStoreInstruction(const ir::StoreInstruction &insn) {
+    using namespace ir;
+    GBE_ASSERT(insn.getAddressSpace() == MEM_GLOBAL);
+    GBE_ASSERT(insn.getValueNum() == 1);
+    const GenReg address = this->genReg(insn.getAddress());
+    const GenReg value = this->genReg(insn.getValue(0));
+    if (insn.isAligned() == true)
+      this->emitUntypedWrite(insn, address, value);
+    else
+      this->emitByteScatter(insn, address, value);
+  }
+
   void GenContext::emitFenceInstruction(const ir::FenceInstruction &insn) {}
   void GenContext::emitLabelInstruction(const ir::LabelInstruction &insn) {
     const ir::LabelIndex label = insn.getLabelIndex();

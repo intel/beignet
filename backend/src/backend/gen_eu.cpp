@@ -319,10 +319,10 @@ namespace gbe
     this->setHeader(insn);
     if (this->curr.execWidth == 8) {
       this->setDst(insn, GenReg::retype(GenReg::null(), GEN_TYPE_UD));
-      msg_length = 1;
+      msg_length = 2;
     } else if (this->curr.execWidth == 16) {
       this->setDst(insn, GenReg::retype(GenReg::null(), GEN_TYPE_UW));
-      msg_length = 2;
+      msg_length = 4;
     } else
       NOT_IMPLEMENTED;
     this->setSrc0(insn, GenReg::ud8grf(msg.nr, 0));

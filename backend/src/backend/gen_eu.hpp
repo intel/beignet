@@ -53,7 +53,7 @@ namespace gbe
         return 2;
       case GEN_TYPE_UB:
       case GEN_TYPE_B:
-        return 1;
+        return 2;
       default:
         return 0;
     }
@@ -195,7 +195,7 @@ namespace gbe
     static INLINE GenReg uw1(uint32_t file, uint32_t nr, uint32_t subnr) {
       return suboffset(retype(vec1(file, nr, 0), GEN_TYPE_UW), subnr);
     }
-
+#if 0
     static INLINE GenReg ub16(uint32_t file, uint32_t nr, uint32_t subnr) {
       return GenReg(file,
                     nr,
@@ -219,6 +219,19 @@ namespace gbe
     static INLINE GenReg ub1(uint32_t file, uint32_t nr, uint32_t subnr) {
       return suboffset(retype(vec1(file, nr, 0), GEN_TYPE_UB), subnr);
     }
+#else
+    static INLINE GenReg ub16(uint32_t file, uint32_t nr, uint32_t subnr) {
+      return suboffset(retype(vec16(file, nr, 0), GEN_TYPE_UW), subnr);
+    }
+
+    static INLINE GenReg ub8(uint32_t file, uint32_t nr, uint32_t subnr) {
+      return suboffset(retype(vec8(file, nr, 0), GEN_TYPE_UW), subnr);
+    }
+
+    static INLINE GenReg ub1(uint32_t file, uint32_t nr, uint32_t subnr) {
+      return suboffset(retype(vec1(file, nr, 0), GEN_TYPE_UW), subnr);
+    }
+#endif
 
     static INLINE GenReg imm(uint32_t type) {
       return GenReg(GEN_IMMEDIATE_VALUE,
@@ -309,6 +322,10 @@ namespace gbe
 
     static INLINE GenReg f16grf(uint32_t nr, uint32_t subnr) {
       return vec16(GEN_GENERAL_REGISTER_FILE, nr, subnr);
+    }
+
+    static INLINE GenReg ud16grf(uint32_t nr, uint32_t subnr) {
+      return ud16(GEN_GENERAL_REGISTER_FILE, nr, subnr);
     }
 
     static INLINE GenReg ud8grf(uint32_t nr, uint32_t subnr) {
@@ -518,9 +535,9 @@ namespace gbe
     /*! Untyped write (upto 4 channels) */
     void UNTYPED_WRITE(GenReg src, uint32_t bti, uint32_t elemNum);
     /*! Byte gather (for unaligned bytes, shorts and ints) */
-    void BYTE_GATHER(GenReg dst, GenReg src, uint32_t bti, uint32_t type);
+    void BYTE_GATHER(GenReg dst, GenReg src, uint32_t bti, uint32_t elemSize);
     /*! Byte scatter (for unaligned bytes, shorts and ints) */
-    void BYTE_SCATTER(GenReg src, uint32_t bti, uint32_t type);
+    void BYTE_SCATTER(GenReg src, uint32_t bti, uint32_t elemSize);
     /*! Send instruction for the sampler */
     void SAMPLE(GenReg dest,
                 uint32_t msg_reg_nr,
