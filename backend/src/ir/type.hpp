@@ -76,12 +76,6 @@ namespace ir {
     return FAMILY_DWORD;
   }
 
-  /*! Get the size of each type */
-  INLINE size_t getSize(Type type) {
-    const RegisterFamily family = getFamily(type);
-    return RegisterData::familySize[family];
-  }
-
   /*! Return a type for each register family */
   INLINE Type getType(RegisterFamily family) {
     switch (family) {

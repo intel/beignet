@@ -81,6 +81,12 @@ namespace gbe
     void emitLabelInstruction(const ir::LabelInstruction &insn);
     /*! It is not natively suppored on Gen. We implement it here */
     void emitIntMul32x32(const ir::Instruction &insn, GenReg dst, GenReg src0, GenReg src1);
+    /*! Use untyped writes and reads for everything aligned on 4 bytes */
+    void emitUntypedRead(const ir::LoadInstruction &insn, GenReg address, GenReg value);
+    void emitUntypedWrite(const ir::StoreInstruction &insn, GenReg address, GenReg value);
+    /*! Use byte scatters and gathers for everything not aligned on 4 bytes */
+    void emitByteGather(const ir::LoadInstruction &insn, GenReg address, GenReg value);
+    void emitByteScatter(const ir::StoreInstruction &insn, GenReg address, GenReg value);
     /*! Backward and forward branches are handled slightly differently */
     void emitForwardBranch(const ir::BranchInstruction&, ir::LabelIndex dst, ir::LabelIndex src);
     void emitBackwardBranch(const ir::BranchInstruction&, ir::LabelIndex dst, ir::LabelIndex src);

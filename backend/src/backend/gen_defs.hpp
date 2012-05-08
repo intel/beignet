@@ -257,6 +257,11 @@ enum GenMessageTarget {
 #define GEN_BYTE_GATHER     4
 #define GEN_BYTE_SCATTER   12
 
+/* For byte scatters and gathers, the element to write */
+#define GEN_BYTE_SCATTER_BYTE   0
+#define GEN_BYTE_SCATTER_WORD   1
+#define GEN_BYTE_SCATTER_DWORD  2
+
 #define GEN_SAMPLER_RETURN_FORMAT_FLOAT32     0
 #define GEN_SAMPLER_RETURN_FORMAT_UINT32      2
 #define GEN_SAMPLER_RETURN_FORMAT_SINT32      3

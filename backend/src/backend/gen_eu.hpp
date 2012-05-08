@@ -327,6 +327,18 @@ namespace gbe
       return uw16(GEN_GENERAL_REGISTER_FILE, nr, subnr);
     }
 
+    static INLINE GenReg ub1grf(uint32_t nr, uint32_t subnr) {
+      return ub1(GEN_GENERAL_REGISTER_FILE, nr, subnr);
+    }
+
+    static INLINE GenReg ub8grf(uint32_t nr, uint32_t subnr) {
+      return ub8(GEN_GENERAL_REGISTER_FILE, nr, subnr);
+    }
+
+    static INLINE GenReg ub16grf(uint32_t nr, uint32_t subnr) {
+      return ub16(GEN_GENERAL_REGISTER_FILE, nr, subnr);
+    }
+
     static INLINE GenReg null(void) {
       return vec8(GEN_ARCHITECTURE_REGISTER_FILE, GEN_ARF_NULL, 0);
     }
