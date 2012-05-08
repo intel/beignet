@@ -42,5 +42,5 @@ static void mandelbrot(void)
   OCL_CALL (clReleaseMemObject, cl_dst);
 }
 
-MAKE_UTEST_FROM_FUNCTION(mandelbrot);
+// MAKE_UTEST_FROM_FUNCTION(mandelbrot);
 
