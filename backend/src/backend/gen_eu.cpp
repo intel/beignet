@@ -37,6 +37,7 @@ namespace gbe
     this->curr.flag = 0;
     this->curr.subFlag = 0;
     this->curr.predicate = GEN_PREDICATE_NORMAL;
+    //this->curr.predicate = GEN_PREDICATE_NONE;
     this->curr.inversePredicate = 0;
   }
 

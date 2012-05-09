@@ -702,7 +702,7 @@ namespace gbe
         p->MOV(GenReg::ud8grf(113, 0), GenReg::retype(value, GEN_TYPE_UW));
       else if (elemSize == GEN_BYTE_SCATTER_BYTE)
         p->MOV(GenReg::ud8grf(113, 0), GenReg::retype(value, GEN_TYPE_UB));
-      p->BYTE_SCATTER(GenReg::f8grf(112, 0), 0, elemSize);
+      p->BYTE_SCATTER(GenReg::f8grf(112, 0), 1, elemSize);
     } else if (this->simdWidth == 16) {
       p->MOV(GenReg::f16grf(112, 0), GenReg::retype(address, GEN_TYPE_F));
       if (elemSize == GEN_BYTE_SCATTER_DWORD)
@@ -711,7 +711,7 @@ namespace gbe
         p->MOV(GenReg::ud16grf(114, 0), GenReg::retype(value, GEN_TYPE_UW));
       else if (elemSize == GEN_BYTE_SCATTER_BYTE)
         p->MOV(GenReg::ud16grf(114, 0), GenReg::retype(value, GEN_TYPE_UB));
-      p->BYTE_SCATTER(GenReg::f16grf(112, 0), 0, elemSize);
+      p->BYTE_SCATTER(GenReg::f16grf(112, 0), 1, elemSize);
     } else
       NOT_IMPLEMENTED;
   }
@@ -724,7 +724,7 @@ namespace gbe
     const GenReg value = this->genReg(insn.getValue(0));
     if (insn.isAligned() == true)
       this->emitUntypedWrite(insn, address, value);
-    else
+     else
       this->emitByteScatter(insn, address, value);
   }
 
