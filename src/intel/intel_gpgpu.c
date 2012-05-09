@@ -489,21 +489,27 @@ intel_gpgpu_set_buf_reloc_gen7(intel_gpgpu_t *state, int32_t index, dri_bo* obj_
                     obj_bo);
 }
 
-/* Use two one GB surface to map the 2GB address space */
+/* Map address space with two 2GB surfaces. One surface for untyped message and
+ * one surface for byte scatters / gathers. Actually the HW will not require teo
+ * surface but Fulsim complains
+ */
 static void
 intel_gpgpu_map_address_space(intel_gpgpu_t *state)
 {
   surface_heap_t *heap = state->surface_heap_b.bo->virtual;
-  gen7_surface_state_t *ss = (gen7_surface_state_t *) heap->surface[0];
-  memset(ss, 0, sizeof(gen7_surface_state_t));
-  ss->ss0.surface_type = I965_SURFACE_BUFFER;
-  ss->ss0.surface_format = I965_SURFACEFORMAT_RAW;
-  ss->ss1.base_addr = 0;
-  ss->ss2.width  = 127;   /* bits 6:0 of sz */
-  ss->ss2.height = 16383; /* bits 20:7 of sz */
-  ss->ss3.depth  = 1023;  /* bits 30:21 of sz */
-  ss->ss5.cache_control = cc_llc_l3;
+  gen7_surface_state_t *ss0 = (gen7_surface_state_t *) heap->surface[0];
+  gen7_surface_state_t *ss1 = (gen7_surface_state_t *) heap->surface[1];
+  memset(ss0, 0, sizeof(gen7_surface_state_t));
+  memset(ss1, 0, sizeof(gen7_surface_state_t));
+  ss1->ss0.surface_type = ss0->ss0.surface_type = I965_SURFACE_BUFFER;
+  ss1->ss0.surface_format = ss0->ss0.surface_format = I965_SURFACEFORMAT_RAW;
+  ss1->ss2.width  = ss0->ss2.width  = 127;   /* bits 6:0 of sz */
+  ss1->ss2.height = ss0->ss2.height = 16383; /* bits 20:7 of sz */
+  ss0->ss3.depth  = 1023; /* bits 30:21 of sz */
+  ss1->ss3.depth  = 510;  /* bits 30:21 of sz */
+  ss1->ss5.cache_control = ss0->ss5.cache_control = cc_llc_l3;
   heap->binding_table[0] = offsetof(surface_heap_t, surface);
+  heap->binding_table[1] = sizeof(gen7_surface_state_t) + offsetof(surface_heap_t, surface);
 }
 
 static void
