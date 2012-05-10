@@ -638,26 +638,28 @@ intel_gpgpu_build_idrt(intel_gpgpu_t *state, cl_gpgpu_kernel *kernel)
 static void
 intel_gpgpu_upload_constants(intel_gpgpu_t *gpgpu, const void* data, uint32_t size)
 {
-  unsigned char *constant_buffer = NULL;
+  unsigned char *curbe = NULL;
   cl_gpgpu_kernel *k = gpgpu->ker;
   uint32_t i, j;
 
   /* Upload the data first */
   dri_bo_map(gpgpu->curbe_b.bo, 1);
   assert(gpgpu->curbe_b.bo->virtual);
-  constant_buffer = (unsigned char *) gpgpu->curbe_b.bo->virtual;
-  memcpy(constant_buffer, data, size);
-  dri_bo_unmap(gpgpu->curbe_b.bo);
+  curbe = (unsigned char *) gpgpu->curbe_b.bo->virtual;
+  memcpy(curbe, data, size);
 
   /* Now put all the relocations for our flat address space */
   for (i = 0; i < k->thread_n; ++i)
-    for (j = 0; j < gpgpu->binded_n; ++j)
+    for (j = 0; j < gpgpu->binded_n; ++j) {
+      *(uint32_t*)(curbe + gpgpu->binded_offset[j]+i*k->cst_sz) = gpgpu->binded_buf[j]->offset;
       drm_intel_bo_emit_reloc(gpgpu->curbe_b.bo,
                               gpgpu->binded_offset[j]+i*k->cst_sz,
                               gpgpu->binded_buf[j],
                               0,
                               I915_GEM_DOMAIN_RENDER,
                               I915_GEM_DOMAIN_RENDER);
+    }
+  dri_bo_unmap(gpgpu->curbe_b.bo);
 }
 
 static void

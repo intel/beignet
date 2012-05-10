@@ -43,8 +43,8 @@ cl_kernel_compute_batch_sz(cl_kernel k)
 static cl_int
 cl_set_varying_payload(char *data,
                        const size_t *local_wk_sz,
-                       const size_t *id_offset,
-                       size_t ip_offset,
+                       const int32_t *id_offset,
+                       int32_t ip_offset,
                        size_t simd_sz,
                        size_t cst_sz,
                        size_t thread_n)
@@ -132,7 +132,8 @@ cl_command_queue_ND_range_gen7(cl_command_queue queue,
   cl_gpgpu_kernel kernel;
   const uint32_t simd_sz = cl_kernel_get_simd_width(ker);
   size_t i, batch_sz = 0u, local_sz = 0u, cst_sz = ker->curbe_sz;
-  size_t thread_n = 0u, id_offset[3], ip_offset;
+  size_t thread_n = 0u;
+  int32_t id_offset[3], ip_offset;
   cl_int err = CL_SUCCESS;
 
   /* Setup kernel */
@@ -166,8 +167,8 @@ cl_command_queue_ND_range_gen7(cl_command_queue queue,
     for (i = 0; i < thread_n; ++i)
       memcpy(final_curbe + cst_sz * i, curbe, cst_sz);
   id_offset[0] = gbe_kernel_get_curbe_offset(ker->opaque, GBE_CURBE_LOCAL_ID_X, 0);
-  id_offset[1] = gbe_kernel_get_curbe_offset(ker->opaque, GBE_CURBE_LOCAL_ID_X, 1);
-  id_offset[2] = gbe_kernel_get_curbe_offset(ker->opaque, GBE_CURBE_LOCAL_ID_X, 2);
+  id_offset[1] = gbe_kernel_get_curbe_offset(ker->opaque, GBE_CURBE_LOCAL_ID_Y, 0);
+  id_offset[2] = gbe_kernel_get_curbe_offset(ker->opaque, GBE_CURBE_LOCAL_ID_Z, 0);
   ip_offset = gbe_kernel_get_curbe_offset(ker->opaque, GBE_CURBE_BLOCK_IP, 0);
   assert(id_offset[0] >= 0 &&
          id_offset[1] >= 0 &&
