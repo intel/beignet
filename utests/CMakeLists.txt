@@ -9,6 +9,8 @@ ADD_LIBRARY(utests SHARED
             utest.cpp
             app_mandelbrot.cpp
             compiler_write_only.cpp
+            compiler_write_only_shorts.cpp
+            compiler_write_only_bytes.cpp
             compiler_sub_bytes.cpp
             compiler_sub_shorts.cpp
             compiler_copy_buffer.cpp

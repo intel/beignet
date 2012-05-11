@@ -19,28 +19,25 @@
 
 #include "utest_helper.hpp"
 
-static int *dst = NULL;
-static const size_t w = 64;
-static const size_t h = 64; 
-static const size_t iter = 4;
-
-static void mandelbrot(void)
+void compiler_write_only_shorts(void)
 {
-  const size_t global[2] = {w, h};
-  const size_t local[2] = {16, 1};
-  const size_t sz = w * h * sizeof(char[4]);
+  const size_t n = 32;
 
-  OCL_CREATE_KERNEL("mandelbrot");
+  // Setup kernel and buffers
+  OCL_CREATE_KERNEL("compiler_write_only_shorts");
+  OCL_CREATE_BUFFER(buf[0], 0, n * sizeof(uint16_t), NULL);
+  OCL_SET_ARG(0, sizeof(cl_mem), &buf[0]);
 
-  cl_mem cl_dst = clCreateBuffer(ctx, 0, sz, NULL, NULL);
-  OCL_CALL (clSetKernelArg, kernel, 0, sizeof(cl_mem), &cl_dst);
-  OCL_CALL (clEnqueueNDRangeKernel, queue, kernel, 2, NULL, global, local, 0, NULL, NULL);
-  dst = (int *) clIntelMapBuffer(cl_dst, NULL);
+  // Run the kernel
+  globals[0] = n;
+  locals[0] = 16;
+  OCL_NDRANGE(1);
+  OCL_MAP_BUFFER(0);
 
-  //writeBmp(dst, w, h, "mandelbrot.bmp");
-  OCL_CALL (clIntelUnmapBuffer, cl_dst);
-  OCL_CALL (clReleaseMemObject, cl_dst);
+  // Check results
+  for (uint32_t i = 0; i < n; ++i)
+    OCL_ASSERT(((uint16_t*)buf_data[0])[i] == 2);
 }
 
-MAKE_UTEST_FROM_FUNCTION(mandelbrot);
+MAKE_UTEST_FROM_FUNCTION(compiler_write_only_shorts);
 
