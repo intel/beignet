@@ -11,7 +11,7 @@ ADD_LIBRARY(utests SHARED
             compiler_write_only.cpp
             compiler_copy_buffer.cpp
             compiler_copy_buffer_row.cpp
-#compiler_byte_scatter.cpp
+compiler_byte_scatter.cpp
             compiler_short_scatter.cpp
             compiler_if_else.cpp
             compiler_unstructured_branch0.cpp
