@@ -88,14 +88,8 @@ namespace gbe
     GenReg genReg = this->genReg(reg, type);
     if (this->isScalarReg(reg) == true)
       return genReg;
-    else {
-      const uint32_t elemSz = typeSize(genReg.file);
-      const uint32_t grfOffset = genReg.nr*GEN_REG_SIZE + elemSz*genReg.subnr;
-      const uint32_t nextOffset = grfOffset + 8*(quarter-1)*elemSz;
-      genReg.nr = nextOffset / GEN_REG_SIZE;
-      genReg.subnr = (nextOffset % GEN_REG_SIZE) / elemSz;
-      return genReg;
-    }
+    else
+      return GenReg::Qn(genReg, quarter);
   }
 
   // Per-lane block IPs are always pre-allocated and used for branches. We just
@@ -296,7 +290,7 @@ namespace gbe
       p->push();
         p->curr.flag = 0;
         p->curr.subFlag = 1;
-        p->CMP(GenReg::null(), GEN_CONDITIONAL_EQ, pred, GenReg::immuw(1));
+        p->CMP(GEN_CONDITIONAL_EQ, pred, GenReg::immuw(1));
 
         // Update the PcIPs
         p->MOV(ip, GenReg::immuw(uint16_t(dst)));
@@ -311,7 +305,7 @@ namespace gbe
         p->curr.predicate = GEN_PREDICATE_NONE;
         p->curr.flag = 0;
         p->curr.subFlag = 1;
-        p->CMP(GenReg::null(), GEN_CONDITIONAL_G, ip, GenReg::immuw(nextLabel));
+        p->CMP(GEN_CONDITIONAL_G, ip, GenReg::immuw(nextLabel));
 
         // Branch to the jump target
         this->branchPos.insert(std::make_pair(&insn, p->insnNum));
@@ -364,7 +358,7 @@ namespace gbe
       p->push();
         p->curr.flag = 0;
         p->curr.subFlag = 1;
-        p->CMP(GenReg::null(), GEN_CONDITIONAL_EQ, pred, GenReg::immuw(1));
+        p->CMP(GEN_CONDITIONAL_EQ, pred, GenReg::immuw(1));
 
         // Update the PcIPs
         p->MOV(ip, GenReg::immuw(uint16_t(dst)));
@@ -444,8 +438,6 @@ namespace gbe
     using namespace ir;
     const Opcode opcode = insn.getOpcode();
     const Type type = insn.getType();
-    const RegisterFamily family = getFamily(type);
-    const uint32_t typeSize = familySize[family];
     const uint32_t genCmp = getGenCompare(opcode);
     const GenReg dst  = this->genReg(insn.getDst(0), TYPE_BOOL);
     const GenReg src0 = this->genReg(insn.getSrc(0), type);
@@ -459,26 +451,11 @@ namespace gbe
       p->MOV(GenReg::flag(0,1), GenReg::flag(0,0));
     p->pop();
 
-    // Emit the compare instruction now. dwords require to push two SIMD8
-    // instructions
-    GBE_ASSERT(typeSize == 2 || typeSize == 4);
+    // Emit the compare instruction itself
     p->push();
-      if (this->simdWidth == 8 || typeSize == 2) {
-        p->curr.flag = 0;
-        p->curr.subFlag = 1;
-        p->CMP(GenReg::null(), genCmp, src0, src1);
-      } else if (this->simdWidth == 16) {
-        const GenReg nextSrc0 = this->genRegQn(insn.getSrc(0), 2, type);
-        const GenReg nextSrc1 = this->genRegQn(insn.getSrc(1), 2, type);
-        p->curr.flag = 0;
-        p->curr.subFlag = 1;
-        p->curr.execWidth = 8;
-        p->curr.quarterControl = GEN_COMPRESSION_Q1;
-        p->CMP(GenReg::null(), genCmp, src0, src1);
-        p->curr.quarterControl = GEN_COMPRESSION_Q2;
-        p->CMP(GenReg::null(), genCmp, nextSrc0, nextSrc1);
-      } else
-        NOT_SUPPORTED;
+      p->curr.flag = 0;
+      p->curr.subFlag = 1;
+      p->CMP(genCmp, src0, src1);
     p->pop();
 
     // We emit a very unoptimized code where we store the resulting mask in a GRF
@@ -503,30 +480,27 @@ namespace gbe
     // We need two steps here to make the conversion
     if (dstFamily != FAMILY_DWORD && srcFamily == FAMILY_DWORD) {
       GenReg unpacked;
-      const uint32_t vstride = simdWidth == 8 ? GEN_VERTICAL_STRIDE_8 : GEN_VERTICAL_STRIDE_16;
-      if (dstFamily == FAMILY_WORD) {
+      if (dstFamily == FAMILY_WORD)
         unpacked = GenReg(GEN_GENERAL_REGISTER_FILE,
                           112,
                           0,
                           dstType == TYPE_U16 ? GEN_TYPE_UW : GEN_TYPE_W,
-                          vstride,
+                          GEN_VERTICAL_STRIDE_16,
                           GEN_WIDTH_8,
                           GEN_HORIZONTAL_STRIDE_2);
-      } else {
+      else
         GBE_ASSERT(dstFamily == FAMILY_BYTE);
         unpacked = GenReg(GEN_GENERAL_REGISTER_FILE,
                           112,
                           0,
                           dstType == TYPE_U8 ? GEN_TYPE_UB : GEN_TYPE_B,
-                          vstride,
+                          GEN_VERTICAL_STRIDE_32,
                           GEN_WIDTH_8,
                           GEN_HORIZONTAL_STRIDE_4);
-      }
       p->MOV(unpacked, src);
       p->MOV(dst, unpacked);
-    } else {
+    } else
       p->MOV(dst, src);
-   }
   }
 
   void GenContext::emitBranchInstruction(const ir::BranchInstruction &insn) {
@@ -731,7 +705,6 @@ namespace gbe
   void GenContext::emitFenceInstruction(const ir::FenceInstruction &insn) {}
   void GenContext::emitLabelInstruction(const ir::LabelInstruction &insn) {
     const ir::LabelIndex label = insn.getLabelIndex();
-    const GenReg dst = GenReg::retype(GenReg::null(), GEN_TYPE_UW);
     const GenReg src0 = this->genReg(blockIPReg);
     const GenReg src1 = GenReg::immuw(label);
 
@@ -743,7 +716,7 @@ namespace gbe
     p->push();
       p->curr.predicate = GEN_PREDICATE_NONE;
       p->curr.flag = 0;
-      p->CMP(dst, GEN_CONDITIONAL_LE, GenReg::retype(src0, GEN_TYPE_UW), src1);
+      p->CMP(GEN_CONDITIONAL_LE, GenReg::retype(src0, GEN_TYPE_UW), src1);
     p->pop();
 
     // If it is required, insert a JUMP to bypass the block

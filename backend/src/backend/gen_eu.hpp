@@ -53,26 +53,24 @@ namespace gbe
         return 2;
       case GEN_TYPE_UB:
       case GEN_TYPE_B:
-        return 2;
+        return 1;
       default:
+        assert(0);
         return 0;
     }
   }
 
-  /*! This is almost always called with a numeric constant argument, so make
-   *  things easy to evaluate at compile time:
-   */
-  INLINE uint32_t cvt(uint32_t val) {
-     switch (val) {
-       case 0: return 0;
-       case 1: return 1;
-       case 2: return 2;
-       case 4: return 3;
-       case 8: return 4;
-       case 16: return 5;
-       case 32: return 6;
-     }
-     return 0;
+  /*! Convert a hstride to a number of element */
+  INLINE uint32_t stride(uint32_t stride) {
+    switch (stride) {
+      case 0: return 0;
+      case 1: return 1;
+      case 2: return 2;
+      case 3: return 4;
+      case 4: return 8;
+      case 5: return 16;
+      default: assert(0); return 0;
+    }
   }
 
   /*! These are not hardware structs, just something useful to pass around */
@@ -106,6 +104,20 @@ namespace gbe
       this->hstride = hstride;
       this->address_mode = GEN_ADDRESS_DIRECT;
       this->pad0 = 0;
+    }
+
+    static INLINE GenReg Qn(GenReg reg, uint32_t quarter) {
+      if (reg.hstride == GEN_HORIZONTAL_STRIDE_0) // scalar register
+        return reg;
+      else {
+        const uint32_t typeSz = typeSize(reg.type);
+        const uint32_t horizontal = stride(reg.hstride);
+        const uint32_t grfOffset = reg.nr*GEN_REG_SIZE + typeSz*reg.subnr;
+        const uint32_t nextOffset = grfOffset + 8*(quarter-1)*typeSz*horizontal;
+        reg.nr = nextOffset / GEN_REG_SIZE;
+        reg.subnr = (nextOffset % GEN_REG_SIZE) / typeSz;
+        return reg;
+      }
     }
 
     static INLINE GenReg vec16(uint32_t file, uint32_t nr, uint32_t subnr) {
@@ -195,14 +207,14 @@ namespace gbe
     static INLINE GenReg uw1(uint32_t file, uint32_t nr, uint32_t subnr) {
       return suboffset(retype(vec1(file, nr, 0), GEN_TYPE_UW), subnr);
     }
-#if 0
+
     static INLINE GenReg ub16(uint32_t file, uint32_t nr, uint32_t subnr) {
       return GenReg(file,
                     nr,
                     subnr,
                     GEN_TYPE_UB,
                     GEN_VERTICAL_STRIDE_16,
-                    GEN_WIDTH_16,
+                    GEN_WIDTH_8,
                     GEN_HORIZONTAL_STRIDE_2);
     }
 
@@ -219,19 +231,6 @@ namespace gbe
     static INLINE GenReg ub1(uint32_t file, uint32_t nr, uint32_t subnr) {
       return suboffset(retype(vec1(file, nr, 0), GEN_TYPE_UB), subnr);
     }
-#else
-    static INLINE GenReg ub16(uint32_t file, uint32_t nr, uint32_t subnr) {
-      return suboffset(retype(vec16(file, nr, 0), GEN_TYPE_UW), subnr);
-    }
-
-    static INLINE GenReg ub8(uint32_t file, uint32_t nr, uint32_t subnr) {
-      return suboffset(retype(vec8(file, nr, 0), GEN_TYPE_UW), subnr);
-    }
-
-    static INLINE GenReg ub1(uint32_t file, uint32_t nr, uint32_t subnr) {
-      return suboffset(retype(vec1(file, nr, 0), GEN_TYPE_UW), subnr);
-    }
-#endif
 
     static INLINE GenReg imm(uint32_t type) {
       return GenReg(GEN_IMMEDIATE_VALUE,
@@ -401,13 +400,6 @@ namespace gbe
       return reg;
     }
 
-    static INLINE GenReg stride(GenReg reg, uint32_t vstride, uint32_t width, uint32_t hstride) {
-      reg.vstride = cvt(vstride);
-      reg.width = cvt(width) - 1;
-      reg.hstride = cvt(hstride);
-      return reg;
-    }
-
     static INLINE GenReg negate(GenReg reg) {
       reg.negation ^= 1;
       return reg;
@@ -490,9 +482,9 @@ namespace gbe
     // Encoding functions
     ////////////////////////////////////////////////////////////////////////
 
-#define ALU1(OP) GenInstruction *OP(GenReg dest, GenReg src0);
-#define ALU2(OP) GenInstruction *OP(GenReg dest, GenReg src0, GenReg src1);
-#define ALU3(OP) GenInstruction *OP(GenReg dest, GenReg src0, GenReg src1, GenReg src2);
+#define ALU1(OP) void OP(GenReg dest, GenReg src0);
+#define ALU2(OP) void OP(GenReg dest, GenReg src0, GenReg src1);
+#define ALU3(OP) void OP(GenReg dest, GenReg src0, GenReg src1, GenReg src2);
     ALU1(MOV)
     ALU1(RNDZ)
     ALU1(RNDE)
@@ -523,7 +515,7 @@ namespace gbe
     /*! Jump indexed instruction */
     void JMPI(GenReg src);
     /*! Compare instructions */
-    void CMP(GenReg dst, uint32_t conditional, GenReg src0, GenReg src1);
+    void CMP(uint32_t conditional, GenReg src0, GenReg src1);
     /*! EOT is used to finish GPGPU threads */
     void EOT(uint32_t msg_nr);
     /*! No-op */

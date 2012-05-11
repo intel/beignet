@@ -28,6 +28,46 @@
 
 namespace gbe
 {
+  //////////////////////////////////////////////////////////////////////////
+  // Some helper functions to encode
+  //////////////////////////////////////////////////////////////////////////
+  INLINE bool isVectorOfBytes(GenReg reg) {
+    if (reg.hstride != GEN_HORIZONTAL_STRIDE_0 &&
+        (reg.type == GEN_TYPE_UB || reg.type == GEN_TYPE_B))
+      return true;
+    else
+      return false;
+  }
+
+  INLINE bool needToSplitAlu1(GenEmitter *p, GenReg dst, GenReg src) {
+    if (p->curr.execWidth != 16) return false;
+    if (isVectorOfBytes(dst) == true) return true;
+    if (isVectorOfBytes(src) == true) return true;
+    return false;
+  }
+
+  INLINE bool needToSplitAlu2(GenEmitter *p, GenReg dst, GenReg src0, GenReg src1) {
+    if (p->curr.execWidth != 16) return false;
+    if (isVectorOfBytes(dst) == true) return true;
+    if (isVectorOfBytes(src0) == true) return true;
+    if (isVectorOfBytes(src1) == true) return true;
+    return false;
+  }
+
+  INLINE bool needToSplitCmp(GenEmitter *p, GenReg src0, GenReg src1) {
+    if (p->curr.execWidth != 16) return false;
+    if (isVectorOfBytes(src0) == true) return true;
+    if (isVectorOfBytes(src1) == true) return true;
+    if (src0.type == GEN_TYPE_D || src0.type == GEN_TYPE_UD || src0.type == GEN_TYPE_F)
+      return true;
+    if (src1.type == GEN_TYPE_D || src1.type == GEN_TYPE_UD || src1.type == GEN_TYPE_F)
+      return true;
+    return false;
+  }
+
+  //////////////////////////////////////////////////////////////////////////
+  // Gen Emitter encoding class
+  //////////////////////////////////////////////////////////////////////////
   GenEmitter::GenEmitter(uint32_t simdWidth, uint32_t gen) :
     insnNum(0), stateNum(0), gen(gen)
   {
@@ -37,7 +77,6 @@ namespace gbe
     this->curr.flag = 0;
     this->curr.subFlag = 0;
     this->curr.predicate = GEN_PREDICATE_NORMAL;
-    //this->curr.predicate = GEN_PREDICATE_NONE;
     this->curr.inversePredicate = 0;
   }
 
@@ -74,8 +113,6 @@ namespace gbe
        dest.hstride = GEN_HORIZONTAL_STRIDE_1;
      insn->bits1.da1.dest_horiz_stride = dest.hstride;
   }
-
-  static const int reg_type_size[8] = { 4, 4, 2, 2, 1, 1, 4 };
 
   void GenEmitter::setSrc0(GenInstruction *insn, GenReg reg)
   {
@@ -128,8 +165,6 @@ namespace gbe
      insn->bits3.da1.src1_abs = reg.absolute;
      insn->bits3.da1.src1_negate = reg.negation;
 
-     /* Only src1 can be immediate in two-argument instructions.
-      */
      assert(insn->bits1.da1.src0_reg_file != GEN_IMMEDIATE_VALUE);
 
      if (reg.file == GEN_IMMEDIATE_VALUE)
@@ -366,30 +401,71 @@ namespace gbe
      return insn;
   }
 
-  INLINE GenInstruction *alu1(GenEmitter *p,
-                              uint32_t opcode,
-                              GenReg dest,
-                              GenReg src)
+  INLINE void alu1(GenEmitter *p, uint32_t opcode, GenReg dst, GenReg src)
   {
-     GenInstruction *insn = p->next(opcode);
-     p->setHeader(insn);
-     p->setDst(insn, dest);
-     p->setSrc0(insn, src);
-     return insn;
+     if (needToSplitAlu1(p, dst, src) == false) {
+       GenInstruction *insn = p->next(opcode);
+       p->setHeader(insn);
+       p->setDst(insn, dst);
+       p->setSrc0(insn, src);
+     } else {
+       GenInstruction *insnQ1, *insnQ2;
+
+       // Instruction for the first quarter
+       insnQ1 = p->next(opcode);
+       p->setHeader(insnQ1);
+       insnQ1->header.quarter_control = GEN_COMPRESSION_Q1;
+       insnQ1->header.execution_size = GEN_WIDTH_8;
+       p->setDst(insnQ1, dst);
+       p->setSrc0(insnQ1, src);
+
+       // Instruction for the second quarter
+       insnQ2 = p->next(opcode);
+       p->setHeader(insnQ2);
+       insnQ2->header.quarter_control = GEN_COMPRESSION_Q2;
+       insnQ2->header.execution_size = GEN_WIDTH_8;
+       p->setDst(insnQ2, GenReg::Qn(dst, 2));
+       p->setSrc0(insnQ2, GenReg::Qn(src, 2));
+     }
   }
 
-  INLINE GenInstruction *alu2(GenEmitter *p,
-                              uint32_t opcode,
-                              GenReg dest,
-                              GenReg src0,
-                              GenReg src1)
+  INLINE void alu2(GenEmitter *p,
+                   uint32_t opcode,
+                   GenReg dst,
+                   GenReg src0,
+                   GenReg src1,
+                   int accWriteControl = 0)
   {
-     GenInstruction *insn = p->next(opcode);
-     p->setHeader(insn);
-     p->setDst(insn, dest);
-     p->setSrc0(insn, src0);
-     p->setSrc1(insn, src1);
-     return insn;
+     if (needToSplitAlu2(p, dst, src0, src1) == false) {
+       GenInstruction *insn = p->next(opcode);
+       p->setHeader(insn);
+       insn->header.acc_wr_control = accWriteControl;
+       p->setDst(insn, dst);
+       p->setSrc0(insn, src0);
+       p->setSrc1(insn, src1);
+    } else {
+       GenInstruction *insnQ1, *insnQ2;
+
+       // Instruction for the first quarter
+       insnQ1 = p->next(opcode);
+       p->setHeader(insnQ1);
+       insnQ1->header.acc_wr_control = accWriteControl;
+       insnQ1->header.quarter_control = GEN_COMPRESSION_Q1;
+       insnQ1->header.execution_size = GEN_WIDTH_8;
+       p->setDst(insnQ1, dst);
+       p->setSrc0(insnQ1, src0);
+       p->setSrc1(insnQ1, src1);
+
+       // Instruction for the second quarter
+       insnQ2 = p->next(opcode);
+       p->setHeader(insnQ2);
+       insnQ2->header.acc_wr_control = accWriteControl;
+       insnQ2->header.quarter_control = GEN_COMPRESSION_Q2;
+       insnQ2->header.execution_size = GEN_WIDTH_8;
+       p->setDst(insnQ2, GenReg::Qn(dst, 2));
+       p->setSrc0(insnQ2, GenReg::Qn(src0, 2));
+       p->setSrc1(insnQ2, GenReg::Qn(src1, 2));
+    }
   }
 
 #if 0
@@ -463,21 +539,21 @@ namespace gbe
 #endif
 
 #define ALU1(OP) \
-  GenInstruction *GenEmitter::OP(GenReg dest, GenReg src0) \
+  void GenEmitter::OP(GenReg dest, GenReg src0) \
   { \
-     return alu1(this, GEN_OPCODE_##OP, dest, src0); \
+    alu1(this, GEN_OPCODE_##OP, dest, src0); \
   }
 
 #define ALU2(OP) \
-  GenInstruction *GenEmitter::OP(GenReg dest, GenReg src0, GenReg src1) \
+  void GenEmitter::OP(GenReg dest, GenReg src0, GenReg src1) \
   { \
-     return alu2(this, GEN_OPCODE_##OP, dest, src0, src1); \
+    alu2(this, GEN_OPCODE_##OP, dest, src0, src1); \
   }
 
 #define ALU3(OP) \
-  GenInstruction *GenEmitter::OP(GenReg dest, GenReg src0, GenReg src1, GenReg src2) \
+  void GenEmitter::OP(GenReg dest, GenReg src0, GenReg src1, GenReg src2) \
   { \
-     return alu3(this, GEN_OPCODE_##OP, dest, src0, src1, src2); \
+     alu3(this, GEN_OPCODE_##OP, dest, src0, src1, src2); \
   }
 
   ALU1(MOV)
@@ -501,14 +577,11 @@ namespace gbe
   ALU2(PLN)
   // ALU3(MAD)
 
-  GenInstruction *GenEmitter::MACH(GenReg dest, GenReg src0, GenReg src1)
-  {
-     GenInstruction *insn = alu2(this, GEN_OPCODE_MACH, dest, src0, src1);
-     insn->header.acc_wr_control = 1;
-     return insn;
+  void GenEmitter::MACH(GenReg dest, GenReg src0, GenReg src1) {
+     alu2(this, GEN_OPCODE_MACH, dest, src0, src1, 1);
   }
 
-  GenInstruction *GenEmitter::ADD(GenReg dest, GenReg src0, GenReg src1)
+  void GenEmitter::ADD(GenReg dest, GenReg src0, GenReg src1)
   {
      if (src0.type == GEN_TYPE_F ||
          (src0.file == GEN_IMMEDIATE_VALUE &&
@@ -524,10 +597,10 @@ namespace gbe
         assert(src0.type != GEN_TYPE_D);
      }
 
-     return alu2(this, GEN_OPCODE_ADD, dest, src0, src1);
+     alu2(this, GEN_OPCODE_ADD, dest, src0, src1);
   }
 
-  GenInstruction *GenEmitter::MUL(GenReg dest, GenReg src0, GenReg src1)
+  void GenEmitter::MUL(GenReg dest, GenReg src0, GenReg src1)
   {
      /* 6.32.38: mul */
      if (src0.type == GEN_TYPE_D ||
@@ -556,7 +629,7 @@ namespace gbe
      assert(src1.file != GEN_ARCHITECTURE_REGISTER_FILE ||
             src1.nr != GEN_ARF_ACCUMULATOR);
 
-     return alu2(this, GEN_OPCODE_MUL, dest, src0, src1);
+     alu2(this, GEN_OPCODE_MUL, dest, src0, src1);
   }
 
 
@@ -581,15 +654,38 @@ namespace gbe
     this->setSrc1(&insn, GenReg::immd(jumpDistance));
   }
 
-  void GenEmitter::CMP(GenReg dest, uint32_t conditional, GenReg src0, GenReg src1)
+  void GenEmitter::CMP(uint32_t conditional, GenReg src0, GenReg src1)
   {
-    GenInstruction *insn = this->next(GEN_OPCODE_CMP);
+    if (needToSplitCmp(this, src0, src1) == false) {
+      GenInstruction *insn = this->next(GEN_OPCODE_CMP);
+      this->setHeader(insn);
+      insn->header.destreg_or_condmod = conditional;
+      this->setDst(insn, GenReg::null());
+      this->setSrc0(insn, src0);
+      this->setSrc1(insn, src1);
+    } else {
+      GenInstruction *insnQ1, *insnQ2;
 
-    insn->header.destreg_or_condmod = conditional;
-    this->setHeader(insn);
-    this->setDst(insn, dest);
-    this->setSrc0(insn, src0);
-    this->setSrc1(insn, src1);
+      // Instruction for the first quarter
+      insnQ1 = this->next(GEN_OPCODE_CMP);
+      this->setHeader(insnQ1);
+      insnQ1->header.quarter_control = GEN_COMPRESSION_Q1;
+      insnQ1->header.execution_size = GEN_WIDTH_8;
+      insnQ1->header.destreg_or_condmod = conditional;
+      this->setDst(insnQ1, GenReg::null());
+      this->setSrc0(insnQ1, src0);
+      this->setSrc1(insnQ1, src1);
+
+      // Instruction for the second quarter
+      insnQ2 = this->next(GEN_OPCODE_CMP);
+      this->setHeader(insnQ2);
+      insnQ2->header.quarter_control = GEN_COMPRESSION_Q2;
+      insnQ2->header.execution_size = GEN_WIDTH_8;
+      insnQ2->header.destreg_or_condmod = conditional;
+      this->setDst(insnQ2, GenReg::null());
+      this->setSrc0(insnQ2, GenReg::Qn(src0, 2));
+      this->setSrc1(insnQ2, GenReg::Qn(src1, 2));
+    }
   }
 
   void GenEmitter::WAIT(void)
