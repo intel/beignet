@@ -21,7 +21,7 @@
 
 static int *dst = NULL;
 static const size_t w = 64;
-static const size_t h = 64; 
+static const size_t h = 64;
 static const size_t iter = 4;
 
 static void mandelbrot(void)
@@ -37,7 +37,7 @@ static void mandelbrot(void)
   OCL_CALL (clEnqueueNDRangeKernel, queue, kernel, 2, NULL, global, local, 0, NULL, NULL);
   dst = (int *) clIntelMapBuffer(cl_dst, NULL);
 
-  //writeBmp(dst, w, h, "mandelbrot.bmp");
+  cl_write_bmp(dst, w, h, "mandelbrot.bmp");
   OCL_CALL (clIntelUnmapBuffer, cl_dst);
   OCL_CALL (clReleaseMemObject, cl_dst);
 }

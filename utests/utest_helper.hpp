@@ -126,5 +126,11 @@ extern void cl_test_destroy(void);
 /* Nicely output the performance counters */
 extern void cl_report_perf_counters(cl_mem perf);
 
+/* Read a bmp from file */
+extern int *cl_read_bmp(const char *filename, int *width, int *height);
+
+/* Write a bmp to a file */
+extern void cl_write_bmp(const int *data, int width, int height, const char *filename);
+
 #endif /* __UTEST_HELPER_HPP__ */
 

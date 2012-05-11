@@ -1,9 +1,6 @@
 // Used to ID into the 1D array, so that we can use
 // it effectively as a 2D array
-int ID(int x, int y, int width) {
-  return 4*width*y + x*4;
-}
-
+int ID(int x, int y, int width) { return 4*width*y + x*4; }
 float mapX(float x) { return x*3.25f - 2.f; }
 float mapY(float y) { return y*2.5f - 1.25f; }
 

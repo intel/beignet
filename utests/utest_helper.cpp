@@ -334,3 +334,118 @@ cl_report_perf_counters(cl_mem perf)
   clIntelUnmapBuffer(perf);
 }
 
+struct bmphdr {
+  //   2 bytes of magic here, "BM", total header size is 54 bytes!
+  int filesize;		//   4 total file size incl header
+  short as0, as1;		//   8 app specific
+  int bmpoffset;		//  12 ofset of bmp data 
+  int headerbytes;	//  16 bytes in header from this point (40 actually)
+  int width;		//  20 
+  int height;		//  24 
+  short nplanes;		//  26 no of color planes
+  short bpp;		//  28 bits/pixel
+  int compression;	//  32 BI_RGB = 0 = no compression
+  int sizeraw;		//  36 size of raw bmp file, excluding header, incl padding
+  int hres;		//  40 horz resolutions pixels/meter
+  int vres;		//  44
+  int npalcolors;		//  48 No of colors in palette
+  int nimportant;		//  52 No of important colors
+  // raw b, g, r data here, dword aligned per scan line
+};
+
+int *cl_read_bmp(const char *filename, int *width, int *height)
+{
+  struct bmphdr hdr;
+
+  FILE *fp = fopen(filename, "rb");
+  assert(fp);
+
+  char magic[2];
+  fread(&magic[0], 1, 2, fp);
+  assert(magic[0] == 'B' && magic[1] == 'M');
+
+  fread(&hdr, 1, sizeof(hdr), fp);
+
+  assert(hdr.width > 0 && hdr.height > 0 && hdr.nplanes == 1 && hdr.compression == 0);
+
+  int *rgb32 = (int *) malloc(hdr.width * hdr.height * sizeof(int));
+  assert(rgb32);
+  int x, y;
+
+  int *dst = rgb32;
+  for (y = 0; y < hdr.height; y++) {
+    for (x = 0; x < hdr.width; x++) {
+      assert(!feof(fp));
+      int b = (getc(fp) & 0x0ff);
+      int g = (getc(fp) & 0x0ff);
+      int r = (getc(fp) & 0x0ff);
+      *dst++ = (r | (g << 8) | (b << 16) | 0xff000000);	/* abgr */
+    }
+    while (x & 3) {
+      getc(fp);
+      x++;
+    }		// each scanline padded to dword
+    // printf("read row %d\n", y);
+    // fflush(stdout);
+  }
+  fclose(fp);
+  *width = hdr.width;
+  *height = hdr.height;
+  return rgb32;
+}
+
+void cl_write_bmp(const int *data, int width, int height, const char *filename)
+{
+  int x, y;
+
+  FILE *fp = fopen(filename, "wb");
+  assert(fp);
+
+  char *raw = (char *) malloc(width * height * sizeof(int));	// at most
+  assert(raw);
+  char *p = raw;
+
+  for (y = 0; y < height; y++) {
+    for (x = 0; x < width; x++) {
+      int c = *data++;
+      *p++ = ((c >> 16) & 0x0ff);
+      *p++ = ((c >> 8) & 0x0ff);
+      *p++ = ((c >> 0) & 0x0ff);
+    }
+    while (x & 3) {
+      *p++ = 0;
+      x++;
+    }		// pad to dword
+  }
+  int sizeraw = p - raw;
+  int scanline = (width * 3 + 3) & ~3;
+  assert(sizeraw == scanline * height);
+
+  struct bmphdr hdr;
+
+  hdr.filesize = scanline * height + sizeof(hdr) + 2;
+  hdr.as0 = 0;
+  hdr.as1 = 0;
+  hdr.bmpoffset = sizeof(hdr) + 2;
+  hdr.headerbytes = 40;
+  hdr.width = width;
+  hdr.height = height;
+  hdr.nplanes = 1;
+  hdr.bpp = 24;
+  hdr.compression = 0;
+  hdr.sizeraw = sizeraw;
+  hdr.hres = 0;		// 2834;
+  hdr.vres = 0;		// 2834;
+  hdr.npalcolors = 0;
+  hdr.nimportant = 0;
+
+  /* Now write bmp file */
+  char magic[2] = { 'B', 'M' };
+  fwrite(&magic[0], 1, 2, fp);
+  fwrite(&hdr, 1, sizeof(hdr), fp);
+  fwrite(raw, 1, hdr.sizeraw, fp);
+
+  fclose(fp);
+  free(raw);
+}
+
