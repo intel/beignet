@@ -342,6 +342,8 @@ namespace gbe
   {
     using namespace ir;
     const GenReg ip = this->genReg(blockIPReg, TYPE_U16);
+    const BasicBlock &bb = fn.getBlock(src);
+    GBE_ASSERT(bb.getNextBlock() != NULL);
 
     // Inefficient code. If the instruction is predicated, we build the flag
     // register from the boolean vector
@@ -354,13 +356,19 @@ namespace gbe
         p->MOV(GenReg::flag(0,1), GenReg::flag(0,0));
       p->pop();
 
+      // Update the PcIPs for all the branches. Just put the IPs of the next
+      // block. Next instruction will properly reupdate the IPs of the lanes
+      // that actually take the branch
+      const LabelIndex next = bb.getNextBlock()->getLabelIndex();
+      p->MOV(ip, GenReg::immuw(uint16_t(next)));
+
       // Rebuild the flag register by comparing the boolean with 1s
       p->push();
         p->curr.flag = 0;
         p->curr.subFlag = 1;
         p->CMP(GEN_CONDITIONAL_EQ, pred, GenReg::immuw(1));
 
-        // Update the PcIPs
+        // Re-update the PcIPs for the branches that takes the backward jump
         p->MOV(ip, GenReg::immuw(uint16_t(dst)));
 
         // Branch to the jump target
@@ -420,7 +428,7 @@ namespace gbe
       }
       case OP_DIV:
       {
-        p->MATH(dst, GEN_MATH_FUNCTION_INV, src0, src1);
+        p->MATH(dst, GEN_MATH_FUNCTION_FDIV, src0, src1);
         break;
       }
       default: NOT_IMPLEMENTED;
@@ -548,20 +556,16 @@ namespace gbe
     using namespace ir;
     GBE_ASSERT(insn.getAddressSpace() == MEM_GLOBAL);
     GBE_ASSERT(insn.getValueNum() == 1);
-    GBE_ASSERT(this->simdWidth <= 16);
-    if (this->simdWidth == 8 || this->simdWidth == 16) {
-      if (isScalarReg(insn.getAddress()) == true) {
-        if (this->simdWidth == 8) {
-          p->MOV(GenReg::f8grf(112, 0), GenReg::retype(address, GEN_TYPE_F));
-          p->UNTYPED_READ(value, GenReg::f8grf(112, 0), 0, 1);
-        } else if (this->simdWidth == 16) {
-          p->MOV(GenReg::f16grf(112, 0), GenReg::retype(address, GEN_TYPE_F));
-          p->UNTYPED_READ(value, GenReg::f16grf(112, 0), 0, 1);
-        }
-      } else
-        p->UNTYPED_READ(value, address, 0, 1);
+    if (isScalarReg(insn.getAddress()) == true) {
+      if (this->simdWidth == 8) {
+        p->MOV(GenReg::f8grf(112, 0), GenReg::retype(address, GEN_TYPE_F));
+        p->UNTYPED_READ(value, GenReg::f8grf(112, 0), 0, 1);
+      } else if (this->simdWidth == 16) {
+        p->MOV(GenReg::f16grf(112, 0), GenReg::retype(address, GEN_TYPE_F));
+        p->UNTYPED_READ(value, GenReg::f16grf(112, 0), 0, 1);
+      }
     } else
-      NOT_IMPLEMENTED;
+      p->UNTYPED_READ(value, address, 0, 1);
   }
 
   INLINE uint32_t getByteScatterGatherSize(ir::Type type) {
@@ -589,7 +593,6 @@ namespace gbe
     using namespace ir;
     GBE_ASSERT(insn.getAddressSpace() == MEM_GLOBAL);
     GBE_ASSERT(insn.getValueNum() == 1);
-    GBE_ASSERT(this->simdWidth <= 16);
     const Type type = insn.getValueType();
     const uint32_t elemSize = getByteScatterGatherSize(type);
 
@@ -606,19 +609,16 @@ namespace gbe
     }
 
     // Emit the byte gather itself
-    if (this->simdWidth == 8 || this->simdWidth == 16) {
-      if (isScalarReg(insn.getAddress()) == true) {
-        if (this->simdWidth == 8) {
-          p->MOV(GenReg::f8grf(112, 0), GenReg::retype(address, GEN_TYPE_F));
-          p->BYTE_GATHER(dst, GenReg::f8grf(112, 0), 0, elemSize);
-        } else if (this->simdWidth == 16) {
-          p->MOV(GenReg::f16grf(112, 0), GenReg::retype(address, GEN_TYPE_F));
-          p->BYTE_GATHER(dst, GenReg::f16grf(112, 0), 0, elemSize);
-        }
-      } else
-        p->BYTE_GATHER(dst, address, 0, elemSize);
+    if (isScalarReg(insn.getAddress()) == true) {
+      if (this->simdWidth == 8) {
+        p->MOV(GenReg::f8grf(112, 0), GenReg::retype(address, GEN_TYPE_F));
+        p->BYTE_GATHER(dst, GenReg::f8grf(112, 0), 0, elemSize);
+      } else if (this->simdWidth == 16) {
+        p->MOV(GenReg::f16grf(112, 0), GenReg::retype(address, GEN_TYPE_F));
+        p->BYTE_GATHER(dst, GenReg::f16grf(112, 0), 0, elemSize);
+      }
     } else
-      NOT_IMPLEMENTED;
+      p->BYTE_GATHER(dst, address, 0, elemSize);
 
     // Repack bytes or words using a converting mov instruction
     if (elemSize == GEN_BYTE_SCATTER_WORD)
@@ -629,14 +629,15 @@ namespace gbe
 
   void GenContext::emitLoadInstruction(const ir::LoadInstruction &insn) {
     using namespace ir;
-    const GenReg address = this->genReg(insn.getAddress());
     const GenReg value = this->genReg(insn.getValue(0));
+    const GenReg address = this->genReg(insn.getAddress());
     GBE_ASSERT(insn.getAddressSpace() == MEM_GLOBAL);
-    GBE_ASSERT(insn.getValueNum() == 1);
+    GBE_ASSERT(this->isScalarReg(insn.getValue(0)) == false);
     if (insn.isAligned() == true)
       this->emitUntypedRead(insn, address, value);
-    else
+    else {
       this->emitByteGather(insn, address, value);
+    }
   }
 
   void GenContext::emitUntypedWrite(const ir::StoreInstruction &insn,
@@ -647,13 +648,12 @@ namespace gbe
     if (this->simdWidth == 8) {
       p->MOV(GenReg::f8grf(112, 0), GenReg::retype(address, GEN_TYPE_F));
       p->MOV(GenReg::f8grf(113, 0), GenReg::retype(value, GEN_TYPE_F));
-      p->UNTYPED_WRITE(GenReg::f8grf(112, 0), 0, 1);
     } else if (this->simdWidth == 16) {
       p->MOV(GenReg::f16grf(112, 0), GenReg::retype(address, GEN_TYPE_F));
       p->MOV(GenReg::f16grf(114, 0), GenReg::retype(value, GEN_TYPE_F));
-      p->UNTYPED_WRITE(GenReg::f16grf(112, 0), 0, 1);
     } else
       NOT_IMPLEMENTED;
+    p->UNTYPED_WRITE(GenReg::f8grf(112, 0), 0, 1);
   }
 
   void GenContext::emitByteScatter(const ir::StoreInstruction &insn,
