@@ -232,6 +232,26 @@ namespace gbe
       return suboffset(retype(vec1(file, nr, 0), GEN_TYPE_UB), subnr);
     }
 
+    static INLINE GenReg unpacked_uw(uint32_t nr, uint32_t subnr) {
+        return GenReg(GEN_GENERAL_REGISTER_FILE,
+                      nr,
+                      subnr,
+                      GEN_TYPE_UW,
+                      GEN_VERTICAL_STRIDE_16,
+                      GEN_WIDTH_8,
+                      GEN_HORIZONTAL_STRIDE_2);
+    }
+
+    static INLINE GenReg unpacked_ub(uint32_t nr, uint32_t subnr) {
+      return GenReg(GEN_GENERAL_REGISTER_FILE,
+                    nr,
+                    subnr,
+                    GEN_TYPE_UB,
+                    GEN_VERTICAL_STRIDE_32,
+                    GEN_WIDTH_8,
+                    GEN_HORIZONTAL_STRIDE_4);
+    }
+
     static INLINE GenReg imm(uint32_t type) {
       return GenReg(GEN_IMMEDIATE_VALUE,
                     0,
@@ -266,7 +286,7 @@ namespace gbe
       return immediate;
     }
 
-    static INLINE GenReg immw(short w) {
+    static INLINE GenReg immw(int16_t w) {
       GenReg immediate = imm(GEN_TYPE_W);
       immediate.dw1.d = w | (w << 16);
       return immediate;

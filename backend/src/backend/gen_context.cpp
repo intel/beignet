@@ -134,7 +134,7 @@ namespace gbe
   if (this->isScalarReg(reg) == true) { \
     RA.insert(std::make_pair(reg, GenReg::SIMD1(nr, subnr))); \
     grfOffset += typeSize; \
-  } if (simdWidth == 16) { \
+  } else if (simdWidth == 16) { \
     RA.insert(std::make_pair(reg, GenReg::SIMD16(nr, subnr))); \
     grfOffset += simdWidth * typeSize; \
   } else if (simdWidth == 8) {\
@@ -477,26 +477,18 @@ namespace gbe
 
     GBE_ASSERT(dstFamily != FAMILY_QWORD && srcFamily != FAMILY_QWORD);
 
-    // We need two steps here to make the conversion
+    // We need two instructions to make the conversion
     if (dstFamily != FAMILY_DWORD && srcFamily == FAMILY_DWORD) {
       GenReg unpacked;
-      if (dstFamily == FAMILY_WORD)
-        unpacked = GenReg(GEN_GENERAL_REGISTER_FILE,
-                          112,
-                          0,
-                          dstType == TYPE_U16 ? GEN_TYPE_UW : GEN_TYPE_W,
-                          GEN_VERTICAL_STRIDE_16,
-                          GEN_WIDTH_8,
-                          GEN_HORIZONTAL_STRIDE_2);
-      else
-        GBE_ASSERT(dstFamily == FAMILY_BYTE);
-        unpacked = GenReg(GEN_GENERAL_REGISTER_FILE,
-                          112,
-                          0,
-                          dstType == TYPE_U8 ? GEN_TYPE_UB : GEN_TYPE_B,
-                          GEN_VERTICAL_STRIDE_32,
-                          GEN_WIDTH_8,
-                          GEN_HORIZONTAL_STRIDE_4);
+      if (dstFamily == FAMILY_WORD) {
+        const uint32_t type = TYPE_U16 ? GEN_TYPE_UW : GEN_TYPE_W;
+        unpacked = GenReg::unpacked_uw(112, 0);
+        unpacked = GenReg::retype(unpacked, type);
+      } else {
+        const uint32_t type = TYPE_U8 ? GEN_TYPE_UB : GEN_TYPE_B;
+        unpacked = GenReg::unpacked_ub(112, 0);
+        unpacked = GenReg::retype(unpacked, type);
+      }
       p->MOV(unpacked, src);
       p->MOV(dst, unpacked);
     } else
@@ -540,6 +532,10 @@ namespace gbe
     switch (type) {
       case TYPE_U32: p->MOV(dst, GenReg::immud(imm.data.u32)); break;
       case TYPE_S32: p->MOV(dst, GenReg::immd(imm.data.s32)); break;
+      case TYPE_U16: p->MOV(dst, GenReg::immuw(imm.data.u16)); break;
+      case TYPE_S16: p->MOV(dst, GenReg::immw(imm.data.s16)); break;
+      case TYPE_U8:  p->MOV(dst, GenReg::immuw(imm.data.u8)); break;
+      case TYPE_S8:  p->MOV(dst, GenReg::immw(imm.data.s8)); break;
       case TYPE_FLOAT: p->MOV(dst, GenReg::immf(imm.data.f32)); break;
       default: NOT_SUPPORTED;
     }
@@ -626,9 +622,9 @@ namespace gbe
 
     // Repack bytes or words using a converting mov instruction
     if (elemSize == GEN_BYTE_SCATTER_WORD)
-      p->MOV(GenReg::retype(value, GEN_TYPE_UW), GenReg::retype(dst, GEN_TYPE_UD));
+      p->MOV(GenReg::retype(value, GEN_TYPE_UW), GenReg::unpacked_uw(dst.nr, 0));
     else if (elemSize == GEN_BYTE_SCATTER_BYTE)
-      p->MOV(GenReg::retype(value, GEN_TYPE_UB), GenReg::retype(dst, GEN_TYPE_UD));
+      p->MOV(GenReg::retype(value, GEN_TYPE_UB), GenReg::unpacked_ub(dst.nr, 0));
   }
 
   void GenContext::emitLoadInstruction(const ir::LoadInstruction &insn) {
