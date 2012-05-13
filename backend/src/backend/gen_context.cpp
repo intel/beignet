@@ -118,18 +118,6 @@ namespace gbe
     }
   }
 
-  uint32_t GenContext::createGenReg(ir::Register reg, uint32_t grfOffset) {
-    using namespace ir;
-    if (fn.isSpecialReg(reg) == true) return grfOffset; // already done
-    if (fn.getInput(reg) != NULL) return grfOffset; // already done
-    const RegisterData regData = fn.getRegisterData(reg);
-    const RegisterFamily family = regData.family;
-    const uint32_t typeSize = familySize[family];
-    const uint32_t regSize = simdWidth*typeSize;
-    grfOffset = ALIGN(grfOffset, regSize);
-    if (grfOffset + regSize <= GEN_GRF_SIZE) {
-      const uint32_t nr = grfOffset / GEN_REG_SIZE;
-      const uint32_t subnr = (grfOffset % GEN_REG_SIZE) / typeSize;
 #define INSERT_REG(SIMD16, SIMD8, SIMD1) \
   if (this->isScalarReg(reg) == true) { \
     RA.insert(std::make_pair(reg, GenReg::SIMD1(nr, subnr))); \
@@ -142,6 +130,19 @@ namespace gbe
     grfOffset += simdWidth * typeSize; \
   } else \
     NOT_SUPPORTED;
+
+  uint32_t GenContext::createGenReg(ir::Register reg, uint32_t grfOffset) {
+    using namespace ir;
+    if (fn.isSpecialReg(reg) == true) return grfOffset; // already done
+    if (fn.getInput(reg) != NULL) return grfOffset; // already done
+    const RegisterData regData = fn.getRegisterData(reg);
+    const RegisterFamily family = regData.family;
+    const uint32_t typeSize = familySize[family];
+    const uint32_t regSize = simdWidth*typeSize;
+    grfOffset = ALIGN(grfOffset, regSize);
+    if (grfOffset + regSize <= GEN_GRF_SIZE) {
+      const uint32_t nr = grfOffset / GEN_REG_SIZE;
+      const uint32_t subnr = (grfOffset % GEN_REG_SIZE) / typeSize;
       switch (family) {
         case FAMILY_BOOL:
         case FAMILY_WORD:
@@ -156,11 +157,12 @@ namespace gbe
         default:
           NOT_SUPPORTED;
       }
-#undef INSERT_REG
     } else
       NOT_SUPPORTED;
     return grfOffset;
   }
+
+#undef INSERT_REG
 
   void GenContext::allocateRegister(void) {
     using namespace ir;
@@ -466,7 +468,8 @@ namespace gbe
       p->CMP(genCmp, src0, src1);
     p->pop();
 
-    // We emit a very unoptimized code where we store the resulting mask in a GRF
+    // We emit a very unoptimized code where we store the resulting mask in a
+    // GRF
     p->push();
       p->curr.flag = 0;
       p->curr.subFlag = 1;
@@ -549,23 +552,46 @@ namespace gbe
     }
   }
 
-  void GenContext::emitUntypedRead(const ir::LoadInstruction &insn,
-                                   GenReg address,
-                                   GenReg value)
+  void GenContext::emitUntypedRead(const ir::LoadInstruction &insn, GenReg address)
   {
     using namespace ir;
+    const uint32_t valueNum = insn.getValueNum();
+    GenReg src;
     GBE_ASSERT(insn.getAddressSpace() == MEM_GLOBAL);
-    GBE_ASSERT(insn.getValueNum() == 1);
+
+    // A scalar address register requires to be aligned
     if (isScalarReg(insn.getAddress()) == true) {
-      if (this->simdWidth == 8) {
-        p->MOV(GenReg::f8grf(112, 0), GenReg::retype(address, GEN_TYPE_F));
-        p->UNTYPED_READ(value, GenReg::f8grf(112, 0), 0, 1);
-      } else if (this->simdWidth == 16) {
-        p->MOV(GenReg::f16grf(112, 0), GenReg::retype(address, GEN_TYPE_F));
-        p->UNTYPED_READ(value, GenReg::f16grf(112, 0), 0, 1);
-      }
+      if (this->simdWidth == 8)
+        src = GenReg::f8grf(112, 0);
+      else
+        src = GenReg::f16grf(112, 0);
+      p->MOV(src, GenReg::retype(address, GEN_TYPE_F));
     } else
-      p->UNTYPED_READ(value, address, 0, 1);
+      src = address;
+
+    // Gather of integer is simpler since we may not need to move the
+    // destination
+    if (valueNum == 1) {
+      const GenReg value = this->genReg(insn.getValue(0));
+      p->UNTYPED_READ(value, src, 0, 1);
+    }
+    // Right now, we just move everything to registers when dealing with
+    // int2/3/4
+    else {
+      p->UNTYPED_READ(GenReg::f8grf(114, 0), src, 0, valueNum);
+      if (this->simdWidth == 8) {
+        for (uint32_t value = 0; value < valueNum; ++value) {
+          const GenReg dst = this->genReg(insn.getValue(value), TYPE_FLOAT);
+          p->MOV(dst, GenReg::f8grf(114+value, 0));
+        }
+      } else if (this->simdWidth == 16) {
+        for (uint32_t value = 0; value < valueNum; ++value) {
+          const GenReg dst = this->genReg(insn.getValue(value), TYPE_FLOAT);
+          p->MOV(dst, GenReg::f16grf(114+2*value, 0));
+        }
+      } else
+        NOT_SUPPORTED;
+    }
   }
 
   INLINE uint32_t getByteScatterGatherSize(ir::Type type) {
@@ -629,31 +655,37 @@ namespace gbe
 
   void GenContext::emitLoadInstruction(const ir::LoadInstruction &insn) {
     using namespace ir;
-    const GenReg value = this->genReg(insn.getValue(0));
     const GenReg address = this->genReg(insn.getAddress());
     GBE_ASSERT(insn.getAddressSpace() == MEM_GLOBAL);
     GBE_ASSERT(this->isScalarReg(insn.getValue(0)) == false);
     if (insn.isAligned() == true)
-      this->emitUntypedRead(insn, address, value);
+      this->emitUntypedRead(insn, address);
     else {
+      const GenReg value = this->genReg(insn.getValue(0));
       this->emitByteGather(insn, address, value);
     }
   }
 
-  void GenContext::emitUntypedWrite(const ir::StoreInstruction &insn,
-                                    GenReg address,
-                                    GenReg value)
+  void GenContext::emitUntypedWrite(const ir::StoreInstruction &insn)
   {
     using namespace ir;
-    if (this->simdWidth == 8) {
-      p->MOV(GenReg::f8grf(112, 0), GenReg::retype(address, GEN_TYPE_F));
-      p->MOV(GenReg::f8grf(113, 0), GenReg::retype(value, GEN_TYPE_F));
-    } else if (this->simdWidth == 16) {
-      p->MOV(GenReg::f16grf(112, 0), GenReg::retype(address, GEN_TYPE_F));
-      p->MOV(GenReg::f16grf(114, 0), GenReg::retype(value, GEN_TYPE_F));
-    } else
+    const uint32_t srcNum = insn.getSrcNum();
+    const uint32_t valueNum = insn.getValueNum();
+
+    // We do it stupidly right now. We just move everything to temporaries
+    if (this->simdWidth == 8)
+      for (uint32_t src = 0; src < srcNum; ++src) {
+        const GenReg reg = this->genReg(insn.getSrc(src), TYPE_FLOAT);
+        p->MOV(GenReg::f8grf(112+src, 0), reg);
+      }
+    else if (this->simdWidth == 16)
+      for (uint32_t src = 0; src < srcNum; ++src) {
+        const GenReg reg = this->genReg(insn.getSrc(src), TYPE_FLOAT);
+        p->MOV(GenReg::f16grf(112+2*src, 0), reg);
+      }
+    else
       NOT_IMPLEMENTED;
-    p->UNTYPED_WRITE(GenReg::f8grf(112, 0), 0, 1);
+    p->UNTYPED_WRITE(GenReg::f8grf(112, 0), 0, valueNum);
   }
 
   void GenContext::emitByteScatter(const ir::StoreInstruction &insn,
@@ -664,6 +696,7 @@ namespace gbe
     const Type type = insn.getValueType();
     const uint32_t elemSize = getByteScatterGatherSize(type);
 
+    GBE_ASSERT(insn.getValueNum() == 1);
     if (this->simdWidth == 8) {
       p->MOV(GenReg::f8grf(112, 0), GenReg::retype(address, GEN_TYPE_F));
       if (elemSize == GEN_BYTE_SCATTER_DWORD)
@@ -689,13 +722,13 @@ namespace gbe
   void GenContext::emitStoreInstruction(const ir::StoreInstruction &insn) {
     using namespace ir;
     GBE_ASSERT(insn.getAddressSpace() == MEM_GLOBAL);
-    GBE_ASSERT(insn.getValueNum() == 1);
-    const GenReg address = this->genReg(insn.getAddress());
-    const GenReg value = this->genReg(insn.getValue(0));
     if (insn.isAligned() == true)
-      this->emitUntypedWrite(insn, address, value);
-     else
+      this->emitUntypedWrite(insn);
+    else {
+      const GenReg address = this->genReg(insn.getAddress());
+      const GenReg value = this->genReg(insn.getValue(0));
       this->emitByteScatter(insn, address, value);
+    }
   }
 
   void GenContext::emitFenceInstruction(const ir::FenceInstruction &insn) {}
