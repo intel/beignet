@@ -17,6 +17,8 @@ ADD_LIBRARY(utests SHARED
             compiler_copy_buffer_row.cpp
             compiler_byte_scatter.cpp
             compiler_short_scatter.cpp
+            compiler_uint2_copy.cpp
+            compiler_uint3_unaligned_copy.cpp
             compiler_if_else.cpp
             compiler_unstructured_branch0.cpp
             compiler_unstructured_branch1.cpp
