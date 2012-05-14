@@ -244,6 +244,90 @@ static void utestUINT16(void)
   }
 }
 
+static void utestINT8(void)
+{
+  simd1b _0, _4, _5;
+  simd16b _1, _2, _3;
+  const int8_t data[32] = {-1,1,-2,-3,4,-5,6,7,-8,9,10,11,12,13,14,15,8,
+                            9,10,11,12,-13,14,-15,-1,1,-2,3,4,5,6,7};
+  for (uint32_t i = 0; i < 32; ++i) {
+    const int index0 = rand() % 32;
+    const int index1 = rand() % 16;
+    const int index2 = rand() % 16;
+    const int index4 = rand() % 32;
+    LOAD(_0, (const char *) (data+index0));
+    LOAD(_1, (const char *) (data+index1));
+    LOAD(_2, (const char *) (data+index2));
+    LOAD(_4, (const char *) (data+index4));
+    CHECK_BINARY_OP(int8_t,ADD_S8,+,_3,_2,_1,data[i+index2],data[i+index1]);
+    CHECK_BINARY_OP(int8_t,SUB_S8,-,_3,_2,_1,data[i+index2],data[i+index1]);
+    CHECK_BINARY_OP(int8_t,MUL_S8,*,_3,_2,_1,data[i+index2],data[i+index1]);
+    CHECK_BINARY_OP(int8_t,DIV_S8,/,_3,_2,_1,data[i+index2],data[i+index1]);
+    CHECK_BINARY_OP(int8_t,REM_S8,%,_3,_2,_1,data[i+index2],data[i+index1]);
+    CHECK_BINARY_OP(int8_t,AND_S8,&,_3,_2,_1,data[i+index2],data[i+index1]);
+    CHECK_BINARY_OP(int8_t,XOR_S8,^,_3,_2,_1,data[i+index2],data[i+index1]);
+    CHECK_BINARY_OP(int8_t,OR_S8, |,_3,_2,_1,data[i+index2],data[i+index1]);
+    CHECK_BINARY_OP(int8_t,ADD_S8,+,_3,_2,_0,data[i+index2],data[index0]);
+    CHECK_BINARY_OP(int8_t,SUB_S8,-,_3,_2,_0,data[i+index2],data[index0]);
+    CHECK_BINARY_OP(int8_t,MUL_S8,*,_3,_2,_0,data[i+index2],data[index0]);
+    CHECK_BINARY_OP(int8_t,DIV_S8,/,_3,_2,_0,data[i+index2],data[index0]);
+    CHECK_BINARY_OP(int8_t,REM_S8,%,_3,_2,_0,data[i+index2],data[index0]);
+    CHECK_BINARY_OP(int8_t,AND_S8,&,_3,_2,_0,data[i+index2],data[index0]);
+    CHECK_BINARY_OP(int8_t,XOR_S8,^,_3,_2,_0,data[i+index2],data[index0]);
+    CHECK_BINARY_OP(int8_t,OR_S8, |,_3,_2,_0,data[i+index2],data[index0]);
+    CHECK_BINARY_OP(int8_t,ADD_S8,+,_5,_4,_0,data[index4],data[index0]);
+    CHECK_BINARY_OP(int8_t,SUB_S8,-,_5,_4,_0,data[index4],data[index0]);
+    CHECK_BINARY_OP(int8_t,MUL_S8,*,_5,_4,_0,data[index4],data[index0]);
+    CHECK_BINARY_OP(int8_t,DIV_S8,/,_5,_4,_0,data[index4],data[index0]);
+    CHECK_BINARY_OP(int8_t,REM_S8,%,_5,_4,_0,data[index4],data[index0]);
+    CHECK_BINARY_OP(int8_t,AND_S8,&,_5,_4,_0,data[index4],data[index0]);
+    CHECK_BINARY_OP(int8_t,XOR_S8,^,_5,_4,_0,data[index4],data[index0]);
+    CHECK_BINARY_OP(int8_t,OR_S8, |,_5,_4,_0,data[index4],data[index0]);
+  }
+}
+
+static void utestUINT8(void)
+{
+  simd1b _0, _4, _5;
+  simd16b _1, _2, _3;
+  const uint8_t data[32] = {1,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,8,
+                             9,10,11,12,13,14,15,1,1,2,3,4,5,6,7};
+  for (uint32_t i = 0; i < 32; ++i) {
+    const int index0 = rand() % 32;
+    const int index1 = rand() % 16;
+    const int index2 = rand() % 16;
+    const int index4 = rand() % 32;
+    LOAD(_0, (const char *) (data+index0));
+    LOAD(_1, (const char *) (data+index1));
+    LOAD(_2, (const char *) (data+index2));
+    LOAD(_4, (const char *) (data+index4));
+    CHECK_BINARY_OP(uint8_t,ADD_U8,+,_3,_2,_1,data[i+index2],data[i+index1]);
+    CHECK_BINARY_OP(uint8_t,SUB_U8,-,_3,_2,_1,data[i+index2],data[i+index1]);
+    CHECK_BINARY_OP(uint8_t,MUL_U8,*,_3,_2,_1,data[i+index2],data[i+index1]);
+    CHECK_BINARY_OP(uint8_t,DIV_U8,/,_3,_2,_1,data[i+index2],data[i+index1]);
+    CHECK_BINARY_OP(uint8_t,REM_U8,%,_3,_2,_1,data[i+index2],data[i+index1]);
+    CHECK_BINARY_OP(uint8_t,AND_U8,&,_3,_2,_1,data[i+index2],data[i+index1]);
+    CHECK_BINARY_OP(uint8_t,XOR_U8,^,_3,_2,_1,data[i+index2],data[i+index1]);
+    CHECK_BINARY_OP(uint8_t,OR_U8, |,_3,_2,_1,data[i+index2],data[i+index1]);
+    CHECK_BINARY_OP(uint8_t,ADD_U8,+,_3,_2,_0,data[i+index2],data[index0]);
+    CHECK_BINARY_OP(uint8_t,SUB_U8,-,_3,_2,_0,data[i+index2],data[index0]);
+    CHECK_BINARY_OP(uint8_t,MUL_U8,*,_3,_2,_0,data[i+index2],data[index0]);
+    CHECK_BINARY_OP(uint8_t,DIV_U8,/,_3,_2,_0,data[i+index2],data[index0]);
+    CHECK_BINARY_OP(uint8_t,REM_U8,%,_3,_2,_0,data[i+index2],data[index0]);
+    CHECK_BINARY_OP(uint8_t,AND_U8,&,_3,_2,_0,data[i+index2],data[index0]);
+    CHECK_BINARY_OP(uint8_t,XOR_U8,^,_3,_2,_0,data[i+index2],data[index0]);
+    CHECK_BINARY_OP(uint8_t,OR_U8, |,_3,_2,_0,data[i+index2],data[index0]);
+    CHECK_BINARY_OP(uint8_t,ADD_U8,+,_5,_4,_0,data[index4],data[index0]);
+    CHECK_BINARY_OP(uint8_t,SUB_U8,-,_5,_4,_0,data[index4],data[index0]);
+    CHECK_BINARY_OP(uint8_t,MUL_U8,*,_5,_4,_0,data[index4],data[index0]);
+    CHECK_BINARY_OP(uint8_t,DIV_U8,/,_5,_4,_0,data[index4],data[index0]);
+    CHECK_BINARY_OP(uint8_t,REM_U8,%,_5,_4,_0,data[index4],data[index0]);
+    CHECK_BINARY_OP(uint8_t,AND_U8,&,_5,_4,_0,data[index4],data[index0]);
+    CHECK_BINARY_OP(uint8_t,XOR_U8,^,_5,_4,_0,data[index4],data[index0]);
+    CHECK_BINARY_OP(uint8_t,OR_U8, |,_5,_4,_0,data[index4],data[index0]);
+  }
+}
+
 #undef CHECK_BINARY_OP
 
 #define CHECK_CMP_OP(FN,OP,DST,SRC0,SRC1,ELEM0,ELEM1)\
@@ -465,6 +549,111 @@ static void utestINT16Cmp(void)
   }
 }
 
+static void utestUINT8Cmp(void)
+{
+  simd1b _0, _4;
+  simd16b _1, _2;
+  simd8b _6, _7;
+  simd1m _5;
+  simd16m _3;
+  simd8m _8;
+  const uint8_t data[64] = {11,12,13,14,15,8,1,1,2,3,4,5,6,7,8,9,10,
+                            9,10,11,12,13,14,15,1,1,2,3,4,5,6,7,
+                            10,11,12,13,14,15,8,1,1,2,3,4,5,6,7,8,9,
+                            9,10,11,12,13,14,15,1,1,2,3,4,5,6,7};
+  for (uint32_t i = 0; i < 32; ++i) {
+    const int index0 = rand() % 32;
+    const int index1 = rand() % 16;
+    const int index2 = rand() % 16;
+    const int index4 = rand() % 32;
+    const int index6 = rand() % 16;
+    const int index7 = rand() % 32;
+    LOAD(_0, (const char *) (data+index0));
+    LOAD(_1, (const char *) (data+index1));
+    LOAD(_2, (const char *) (data+index2));
+    LOAD(_4, (const char *) (data+index4));
+    LOAD(_6, (const char *) (data+index6));
+    LOAD(_7, (const char *) (data+index7));
+    CHECK_CMP_OP(GE_U8,>=,_3,_2,_1,data[i+index2],data[i+index1]);
+    CHECK_CMP_OP(LE_U8,<=,_3,_2,_1,data[i+index2],data[i+index1]);
+    CHECK_CMP_OP(GT_U8,>,_3,_2,_1,data[i+index2],data[i+index1]);
+    CHECK_CMP_OP(LT_U8,<,_3,_2,_1,data[i+index2],data[i+index1]);
+    CHECK_CMP_OP(EQ_U8,==,_3,_2,_1,data[i+index2],data[i+index1]);
+    CHECK_CMP_OP(NE_U8,!=,_3,_2,_1,data[i+index2],data[i+index1]);
+    CHECK_CMP_OP(GE_U8,>=,_8,_7,_6,data[i+index7],data[i+index6]);
+    CHECK_CMP_OP(LE_U8,<=,_8,_7,_6,data[i+index7],data[i+index6]);
+    CHECK_CMP_OP(GT_U8,>,_8,_7,_6,data[i+index7],data[i+index6]);
+    CHECK_CMP_OP(LT_U8,<,_8,_7,_6,data[i+index7],data[i+index6]);
+    CHECK_CMP_OP(EQ_U8,==,_8,_7,_6,data[i+index7],data[i+index6]);
+    CHECK_CMP_OP(NE_U8,!=,_8,_7,_6,data[i+index7],data[i+index6]);
+    CHECK_CMP_OP(GE_U8,>=,_3,_2,_0,data[i+index2],data[index0]);
+    CHECK_CMP_OP(LE_U8,<=,_3,_2,_0,data[i+index2],data[index0]);
+    CHECK_CMP_OP(GT_U8,>,_3,_2,_0,data[i+index2],data[index0]);
+    CHECK_CMP_OP(LT_U8,<,_3,_2,_0,data[i+index2],data[index0]);
+    CHECK_CMP_OP(EQ_U8,==,_3,_2,_0,data[i+index2],data[index0]);
+    CHECK_CMP_OP(NE_U8,!=,_3,_2,_0,data[i+index2],data[index0]);
+    CHECK_CMP_OP(GE_U8,>=,_5,_4,_0,data[index4],data[index0]);
+    CHECK_CMP_OP(LE_U8,<=,_5,_4,_0,data[index4],data[index0]);
+    CHECK_CMP_OP(GT_U8,>,_5,_4,_0,data[index4],data[index0]);
+    CHECK_CMP_OP(LT_U8,<,_5,_4,_0,data[index4],data[index0]);
+    CHECK_CMP_OP(EQ_U8,==,_5,_4,_0,data[index4],data[index0]);
+    CHECK_CMP_OP(NE_U8,!=,_5,_4,_0,data[index4],data[index0]);
+  }
+}
+
+static void utestINT8Cmp(void)
+{
+  simd1b _0, _4;
+  simd16b _1, _2;
+  simd8b _6, _7;
+  simd1m _5;
+  simd16m _3;
+  simd8m _8;
+  const int8_t data[64] = {-11,-12,13,14,-15,8,-1,-1,2,3,4,5,-6,7,8,9,10,
+                            9,10,-11,12,-13,14,15,1,1,2,-3,4,-5,6,7,
+                            10,11,-12,13,14,15,-8,1,1,2,-3,-4,5,-6,7,8,9,
+                            9,10,11,12,-13,14,15,-1,-1,-2,-3,-4,5,6,7};
+
+  for (uint32_t i = 0; i < 32; ++i) {
+    const int index0 = rand() % 32;
+    const int index1 = rand() % 16;
+    const int index2 = rand() % 16;
+    const int index4 = rand() % 32;
+    const int index6 = rand() % 16;
+    const int index7 = rand() % 32;
+    LOAD(_0, (const char *) (data+index0));
+    LOAD(_1, (const char *) (data+index1));
+    LOAD(_2, (const char *) (data+index2));
+    LOAD(_4, (const char *) (data+index4));
+    LOAD(_6, (const char *) (data+index6));
+    LOAD(_7, (const char *) (data+index7));
+    CHECK_CMP_OP(GE_S8,>=,_3,_2,_1,data[i+index2],data[i+index1]);
+    CHECK_CMP_OP(LE_S8,<=,_3,_2,_1,data[i+index2],data[i+index1]);
+    CHECK_CMP_OP(GT_S8,>,_3,_2,_1,data[i+index2],data[i+index1]);
+    CHECK_CMP_OP(LT_S8,<,_3,_2,_1,data[i+index2],data[i+index1]);
+    CHECK_CMP_OP(EQ_S8,==,_3,_2,_1,data[i+index2],data[i+index1]);
+    CHECK_CMP_OP(NE_S8,!=,_3,_2,_1,data[i+index2],data[i+index1]);
+    CHECK_CMP_OP(GE_S8,>=,_8,_7,_6,data[i+index7],data[i+index6]);
+    CHECK_CMP_OP(LE_S8,<=,_8,_7,_6,data[i+index7],data[i+index6]);
+    CHECK_CMP_OP(GT_S8,>,_8,_7,_6,data[i+index7],data[i+index6]);
+    CHECK_CMP_OP(LT_S8,<,_8,_7,_6,data[i+index7],data[i+index6]);
+    CHECK_CMP_OP(EQ_S8,==,_8,_7,_6,data[i+index7],data[i+index6]);
+    CHECK_CMP_OP(NE_S8,!=,_8,_7,_6,data[i+index7],data[i+index6]);
+    CHECK_CMP_OP(GE_S8,>=,_3,_2,_0,data[i+index2],data[index0]);
+    CHECK_CMP_OP(LE_S8,<=,_3,_2,_0,data[i+index2],data[index0]);
+    CHECK_CMP_OP(GT_S8,>,_3,_2,_0,data[i+index2],data[index0]);
+    CHECK_CMP_OP(LT_S8,<,_3,_2,_0,data[i+index2],data[index0]);
+    CHECK_CMP_OP(EQ_S8,==,_3,_2,_0,data[i+index2],data[index0]);
+    CHECK_CMP_OP(NE_S8,!=,_3,_2,_0,data[i+index2],data[index0]);
+    CHECK_CMP_OP(GE_S8,>=,_5,_4,_0,data[index4],data[index0]);
+    CHECK_CMP_OP(LE_S8,<=,_5,_4,_0,data[index4],data[index0]);
+    CHECK_CMP_OP(GT_S8,>,_5,_4,_0,data[index4],data[index0]);
+    CHECK_CMP_OP(LT_S8,<,_5,_4,_0,data[index4],data[index0]);
+    CHECK_CMP_OP(EQ_S8,==,_5,_4,_0,data[index4],data[index0]);
+    CHECK_CMP_OP(NE_S8,!=,_5,_4,_0,data[index4],data[index0]);
+  }
+}
+
 static void utestFPCmp(void)
 {
   simd1dw _0, _4;
@@ -522,9 +711,10 @@ static void utestFPCmp(void)
 }
 #undef CHECK_CMP_OP
 
-static void utestScatterGather(void)
+static void utestScatterGatherUINT32(void)
 {
-  uint32_t data[64], gatherOffsets[64], scatterOffsets[64], dst[64];
+  uint32_t data[64], dst[64];
+  uint32_t gatherOffsets[64], scatterOffsets[64];
   simd1dw _0, _0s, _0g, _4, _4s, _4g;
   simd16dw _1, _1s, _1g, _2, _2s, _2g;
   simd8dw _6, _6s, _6g, _7, _7s, _7g;
@@ -564,7 +754,102 @@ static void utestScatterGather(void)
     CHECK_SCATTER_GATHER_OP(7);
   }
 #undef CHECK_SCATTER_GATHER_OP
+}
 
+static void utestScatterGatherUINT16(void)
+{
+  uint16_t data[64], dst[64];
+  uint32_t gatherOffsets[64], scatterOffsets[64];
+  simd1dw _0s, _0g, _4s, _4g;
+  simd1w _0, _4;
+  simd16dw _1s, _1g, _2s, _2g;
+  simd16w _1, _2;
+  simd8dw _6s, _6g, _7s, _7g;
+  simd8w _6, _7;
+
+  // Create the value and offset arrays
+  for (uint32_t i = 0; i < 64; ++i) {
+    data[i] = i;
+    scatterOffsets[i] = gatherOffsets[i] = i * sizeof(uint16_t);
+  }
+  for (uint32_t i = 0; i < 63; ++i) {
+    const int gatherIndex = rand() % (63-i)+i+1;
+    const int scatterIndex = rand() % (63-i)+i+1;
+    std::swap(gatherOffsets[i], gatherOffsets[gatherIndex]);
+    std::swap(scatterOffsets[i], scatterOffsets[scatterIndex]);
+  }
+
+#define CHECK_SCATTER_GATHER_OP(INDEX)\
+    LOAD(_##INDEX##g, (const char *) (gatherOffsets+index##INDEX));\
+    LOAD(_##INDEX##s, (const char *) (scatterOffsets+index##INDEX));\
+    GATHER(_##INDEX, _##INDEX##g, (const char *) data);\
+    SCATTER(_##INDEX##s, _##INDEX, (char *) dst);\
+    for (uint32_t i = 0; i < elemNum(_##INDEX); ++i)\
+      GBE_ASSERT(data[gatherOffsets[index##INDEX+i] / sizeof(uint16_t)] ==\
+                 dst[scatterOffsets[index##INDEX+i] / sizeof(uint16_t)]);
+  for (uint32_t i = 0; i < 32; ++i) {
+    const int index0 = rand() % 32;
+    const int index1 = rand() % 16;
+    const int index2 = rand() % 16;
+    const int index4 = rand() % 32;
+    const int index6 = rand() % 16;
+    const int index7 = rand() % 32;
+    CHECK_SCATTER_GATHER_OP(0);
+    CHECK_SCATTER_GATHER_OP(1);
+    CHECK_SCATTER_GATHER_OP(2);
+    CHECK_SCATTER_GATHER_OP(4);
+    CHECK_SCATTER_GATHER_OP(6);
+    CHECK_SCATTER_GATHER_OP(7);
+  }
+#undef CHECK_SCATTER_GATHER_OP
+}
+
+static void utestScatterGatherUINT8(void)
+{
+  uint8_t data[64], dst[64];
+  uint32_t gatherOffsets[64], scatterOffsets[64];
+  simd1dw _0s, _0g, _4s, _4g;
+  simd1b _0, _4;
+  simd16dw _1s, _1g, _2s, _2g;
+  simd16b _1, _2;
+  simd8dw _6s, _6g, _7s, _7g;
+  simd8b _6, _7;
+
+  // Create the value and offset arrays
+  for (uint32_t i = 0; i < 64; ++i) {
+    data[i] = i;
+    scatterOffsets[i] = gatherOffsets[i] = i * sizeof(uint8_t);
+  }
+  for (uint32_t i = 0; i < 63; ++i) {
+    const int gatherIndex = rand() % (63-i)+i+1;
+    const int scatterIndex = rand() % (63-i)+i+1;
+    std::swap(gatherOffsets[i], gatherOffsets[gatherIndex]);
+    std::swap(scatterOffsets[i], scatterOffsets[scatterIndex]);
+  }
+
+#define CHECK_SCATTER_GATHER_OP(INDEX)\
+    LOAD(_##INDEX##g, (const char *) (gatherOffsets+index##INDEX));\
+    LOAD(_##INDEX##s, (const char *) (scatterOffsets+index##INDEX));\
+    GATHER(_##INDEX, _##INDEX##g, (const char *) data);\
+    SCATTER(_##INDEX##s, _##INDEX, (char *) dst);\
+    for (uint32_t i = 0; i < elemNum(_##INDEX); ++i)\
+      GBE_ASSERT(data[gatherOffsets[index##INDEX+i] / sizeof(uint8_t)] ==\
+                 dst[scatterOffsets[index##INDEX+i] / sizeof(uint8_t)]);
+  for (uint32_t i = 0; i < 32; ++i) {
+    const int index0 = rand() % 32;
+    const int index1 = rand() % 16;
+    const int index2 = rand() % 16;
+    const int index4 = rand() % 32;
+    const int index6 = rand() % 16;
+    const int index7 = rand() % 32;
+    CHECK_SCATTER_GATHER_OP(0);
+    CHECK_SCATTER_GATHER_OP(1);
+    CHECK_SCATTER_GATHER_OP(2);
+    CHECK_SCATTER_GATHER_OP(4);
+    CHECK_SCATTER_GATHER_OP(6);
+    CHECK_SCATTER_GATHER_OP(7);
+  }
+#undef CHECK_SCATTER_GATHER_OP
 }
 
 static void utestVector(void)
@@ -574,12 +859,18 @@ static void utestVector(void)
   UTEST_EXPECT_SUCCESS(utestUINT32());
   UTEST_EXPECT_SUCCESS(utestINT16());
   UTEST_EXPECT_SUCCESS(utestUINT16());
+  UTEST_EXPECT_SUCCESS(utestINT8());
+  UTEST_EXPECT_SUCCESS(utestUINT8());
   UTEST_EXPECT_SUCCESS(utestFPCmp());
   UTEST_EXPECT_SUCCESS(utestINT32Cmp());
   UTEST_EXPECT_SUCCESS(utestUINT32Cmp());
   UTEST_EXPECT_SUCCESS(utestINT16Cmp());
   UTEST_EXPECT_SUCCESS(utestUINT16Cmp());
-  UTEST_EXPECT_SUCCESS(utestScatterGather());
+  UTEST_EXPECT_SUCCESS(utestINT8Cmp());
+  UTEST_EXPECT_SUCCESS(utestUINT8Cmp());
+  UTEST_EXPECT_SUCCESS(utestScatterGatherUINT32());
+  UTEST_EXPECT_SUCCESS(utestScatterGatherUINT16());
+  UTEST_EXPECT_SUCCESS(utestScatterGatherUINT8());
 }
 
 UTEST_REGISTER(utestVector)

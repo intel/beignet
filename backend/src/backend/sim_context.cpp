@@ -71,7 +71,17 @@ namespace gbe
       const ir::RegisterData regData = fn.getRegisterData(reg);
       switch (regData.family) {
         case ir::FAMILY_BYTE:
+          if (isScalarReg(reg) == true)
+            o << "scalar_b _" << regID << ";\n";
+          else
+            o << "simd" << simdWidth << "b _" << regID << ";\n";
+        break;
         case ir::FAMILY_WORD:
+          if (isScalarReg(reg) == true)
+            o << "scalar_w _" << regID << ";\n";
+          else
+            o << "simd" << simdWidth << "w _" << regID << ";\n";
+        break;
         case ir::FAMILY_QWORD:
           NOT_IMPLEMENTED;
         break;
@@ -154,6 +164,23 @@ namespace gbe
     };
   }
 
+  static const char *typeCppStr(const ir::Type &type) {
+    switch (type) {
+      case ir::TYPE_BOOL: return "bool";
+      case ir::TYPE_S8:   return "int8_t";
+      case ir::TYPE_S16:  return "int16_t";
+      case ir::TYPE_S32:  return "int32_t";
+      case ir::TYPE_S64:  return "int64_t";
+      case ir::TYPE_U8:   return "uint8_t";
+      case ir::TYPE_U16:  return "uint16_t";
+      case ir::TYPE_U32:  return "uint32_t";
+      case ir::TYPE_U64:  return "uint64_t";
+      case ir::TYPE_FLOAT: return "float";
+      case ir::TYPE_DOUBLE: return "double";
+      default: NOT_IMPLEMENTED; return NULL;
+    };
+  }
+
   void SimContext::emitMaskingCode(void) {
     const int32_t blockIPOffset = kernel->getCurbeOffset(GBE_CURBE_BLOCK_IP, 0);
     GBE_ASSERT(blockIPOffset >= 0);
@@ -211,8 +238,11 @@ namespace gbe
           GBE_ASSERT(JIPs.contains(&bra) == true);
           const LabelIndex jip = JIPs.find(&bra)->second;
           if (isPredicated) {
+            // Now the branch itself. Update the PcIP for the lanes that
+            // actually take the branch: only lanes that do not take the branch
+            // will have a PcIP updated to next
             const Register pred = bra.getPredicateIndex();
-            o << "SIM_FWD_BRA_C(uip, emask, " << "_" << pred
+            o << "SIM_FWD_BRA_C(uip, emask, _" << pred
               << ", " << uint32_t(jip) << ", " << uint32_t(uip)
               << ");\n";
           } else {
@@ -221,6 +251,11 @@ namespace gbe
               << ");\n";
           }
         } else { // BWD jump
+          // Set the IP of the next block for all activated lanes
+          GBE_ASSERT(bb->getNextBlock() != NULL);
+          const LabelIndex next = bb->getNextBlock()->getLabelIndex();
+          o << "updateUIP(uip, emask, " << uint32_t(next) << ");\n";
+
           if (isPredicated) {
             const Register pred = bra.getPredicateIndex();
             o << "SIM_BWD_BRA_C(uip, emask, _" << pred
@@ -234,13 +269,22 @@ namespace gbe
         return;
       }
 
-#if GBE_DEBUG
-      // Extra checks
-      if (opcode == OP_LOAD)
-        GBE_ASSERT(cast<LoadInstruction>(insn).getValueNum() == 1);
-      if (opcode == OP_STORE)
-        GBE_ASSERT(cast<StoreInstruction>(insn).getValueNum() == 1);
-#endif /* GBE_DEBUG */
+      uint32_t valueNum = 0; // for loads and stores
+      if (opcode == OP_LOAD) {
+        const LoadInstruction &load = cast<LoadInstruction>(insn);
+        valueNum = load.getValueNum();
+        if (load.isAligned() == true)
+          GBE_ASSERT(valueNum <= 4);
+        else
+          GBE_ASSERT(valueNum = 1);
+      } else if (opcode == OP_STORE) {
+        const StoreInstruction &store = cast<StoreInstruction>(insn);
+        valueNum = store.getValueNum();
+        if (store.isAligned() == true)
+          GBE_ASSERT(valueNum <= 4);
+        else
+          GBE_ASSERT(valueNum == 1);
+      }
 
       // Regular compute instruction
       const uint32_t dstNum = insn.getDstNum();
@@ -249,11 +293,11 @@ namespace gbe
       // These two needs a new instruction. Fortunately, it is just a string
       // manipulation. MASKED(OP,... just becomes MASKED_OP(...)
       if (opcode == OP_STORE || opcode == OP_LOAD)
-        o << "MASKED_" << opcodeStr << "(";
+        o << "MASKED_" << opcodeStr << valueNum << "(";
       else
         o << "MASKED" << dstNum << "(" << opcodeStr;
 
-      // Append type when needed
+      // Append type when needed or extra information (for templates)
       if (insn.isMemberOf<UnaryInstruction>() == true)
        o << "_" << typeStr(cast<UnaryInstruction>(insn).getType());
       else if (insn.isMemberOf<BinaryInstruction>() == true)
@@ -262,8 +306,15 @@ namespace gbe
        o << "_" << typeStr(cast<BinaryInstruction>(insn).getType());
       else if (insn.isMemberOf<CompareInstruction>() == true)
        o << "_" << typeStr(cast<CompareInstruction>(insn).getType());
-      if (opcode != OP_STORE && opcode != OP_LOAD)
-        o << ", ";
+      else if (insn.isMemberOf<ConvertInstruction>() == true) {
+        const ConvertInstruction cvt = cast<ConvertInstruction>(insn);
+        const Type dstType = cvt.getDstType();
+        const Type srcType = cvt.getSrcType();
+        o << "<" << typeCppStr(dstType) << " COMMA "
+                 << typeCppStr(srcType) << " COMMA "
+                 << (this->simdWidth / sizeof(uint32_t)) << ">";
+      }
+      if (opcode != OP_STORE && opcode != OP_LOAD) o << ", ";
 
       // Output both destinations and sources in that order
       for (uint32_t dstID = 0; dstID < dstNum; ++dstID) {
@@ -278,10 +329,16 @@ namespace gbe
       // Append extra stuff for instructions that need it
       if (opcode == OP_LOADI) {
         Immediate imm = cast<LoadImmInstruction>(insn).getImmediate();
-        GBE_ASSERT(imm.type == TYPE_S32 ||
-                   imm.type == TYPE_U32 ||
-                   imm.type == TYPE_FLOAT);
-        o << ", " << imm.data.u32;
+        if (imm.type == TYPE_S32 ||
+            imm.type == TYPE_U32 ||
+            imm.type == TYPE_FLOAT)
+          o << ", " << imm.data.u32;
+        else if (imm.type == TYPE_S16 ||
+                 imm.type == TYPE_U16)
+          o << ", " << uint32_t(imm.data.u16);
+        else if (imm.type == TYPE_S8 ||
+                 imm.type == TYPE_U8)
+          o << ", " << uint32_t(imm.data.u8);
       } else if (opcode == OP_LOAD || opcode == OP_STORE)
         o << ", base, movedMask";
       o << ");\n";
@@ -292,8 +349,8 @@ namespace gbe
 
   SVAR(OCL_GCC_SIM_COMPILER, "gcc");
   SVAR(OCL_ICC_SIM_COMPILER, "icc");
-  //SVAR(OCL_GCC_SIM_COMPILER_OPTIONS, "-Wall -fPIC -shared -msse -msse2 -msse3 -mssse3 -msse4.1 -g -O3");
-  SVAR(OCL_GCC_SIM_COMPILER_OPTIONS, "-Wall -fPIC -shared -msse -msse2 -msse3 -mssse3 -msse4.1 -g");
+  SVAR(OCL_GCC_SIM_COMPILER_OPTIONS, "-Wall -Wno-unused-label -Wno-strict-aliasing -fPIC -shared -msse -msse2 -msse3 -mssse3 -msse4.1 -g -O3");
+  //SVAR(OCL_GCC_SIM_COMPILER_OPTIONS, "-Wall -fPIC -shared -msse -msse2 -msse3 -mssse3 -msse4.1 -g");
   SVAR(OCL_ICC_SIM_COMPILER_OPTIONS, "-Wall -ldl -fabi-version=2 -fPIC -shared -O3 -g");
   BVAR(OCL_USE_ICC, false);
 
