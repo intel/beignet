@@ -47,14 +47,17 @@ namespace ir {
       if (insn.getOpcode() != OP_LABEL) return;
 
       // Create the new label
+#if 0
       Instruction *newLabel = newInstruction();
       *newLabel = LABEL(LabelIndex(last));
-
+#else
+      const Instruction newLabel = LABEL(LabelIndex(last));
+#endif
       // Replace the previous label instruction
       LabelInstruction &label = cast<LabelInstruction>(insn);
       const LabelIndex index = label.getLabelIndex();
       labelMap.insert(std::make_pair(index, LabelIndex(last++)));
-      newLabel->replace(&insn);
+      newLabel.replace(&insn);
     });
 
     // Patch all branch instructions with the new labels
@@ -67,12 +70,13 @@ namespace ir {
       const LabelIndex newIndex = labelMap.find(index)->second;
 
       // Insert the patched branch instruction
-      Instruction *newBra = newInstruction();
-      if (bra.isPredicated() == true)
-        *newBra = BRA(newIndex, bra.getPredicateIndex());
-      else
-        *newBra = BRA(newIndex);
-      newBra->replace(&insn);
+      if (bra.isPredicated() == true) {
+        const Instruction newBra = BRA(newIndex, bra.getPredicateIndex());
+        newBra.replace(&insn);
+      } else {
+        const Instruction newBra = BRA(newIndex);
+        newBra.replace(&insn);
+      }
     });
 
     // Reset the label to block mapping

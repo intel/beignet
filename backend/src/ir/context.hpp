@@ -94,7 +94,7 @@ namespace ir {
       return fn->file.appendArrayTuple(reg, regNum);
     }
     /*! We just use variadic templates to forward instruction functions */
-#define DECL_INSN(NAME, FAMILY)                                 \
+#define DECL_INSN(NAME, FAMILY) \
     template <typename... Args> INLINE void NAME(Args...args);
 #include "ir/instruction.hxx"
 #undef DECL_INSN
@@ -103,15 +103,15 @@ namespace ir {
       return unit.getPointerSize();
     }
 
-#define DECL_THREE_SRC_INSN(NAME)                         \
-    INLINE void NAME(Type type,                           \
-                     Register dst,                        \
-                     Register src0,                       \
-                     Register src1,                       \
-                     Register src2)                       \
-    {                                                     \
-      const Tuple index = this->tuple(src0, src1, src2);  \
-      return this->NAME(type, dst, index);                \
+#define DECL_THREE_SRC_INSN(NAME) \
+    INLINE void NAME(Type type, \
+                     Register dst, \
+                     Register src0, \
+                     Register src1, \
+                     Register src2) \
+    { \
+      const Tuple index = this->tuple(src0, src1, src2); \
+      return this->NAME(type, dst, index); \
     }
     DECL_THREE_SRC_INSN(MAD);
     DECL_THREE_SRC_INSN(SEL);
@@ -137,7 +137,7 @@ namespace ir {
       this->STORE(type, index, offset, space, valueNum, dwAligned);
     }
 
-  private:
+  protected:
     /*! A block must be started with a label */
     void startBlock(void);
     /*! A block must be ended with a branch */
@@ -164,12 +164,12 @@ namespace ir {
   };
 
   // Use argument checker to assert argument value correctness
-#define DECL_INSN(NAME, FAMILY)                                   \
-  template <typename... Args>                                     \
-  INLINE void Context::NAME(Args...args) {                        \
-    GBE_ASSERTM(fn != NULL, "No function currently defined");     \
-    const Instruction insn = gbe::ir::NAME(args...);              \
-    this->append(insn);                                           \
+#define DECL_INSN(NAME, FAMILY) \
+  template <typename... Args> \
+  INLINE void Context::NAME(Args...args) { \
+    GBE_ASSERTM(fn != NULL, "No function currently defined"); \
+    const Instruction insn = gbe::ir::NAME(args...); \
+    this->append(insn); \
   }
 #include "ir/instruction.hxx"
 #undef DECL_INSN

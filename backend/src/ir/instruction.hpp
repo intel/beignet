@@ -116,7 +116,7 @@ namespace ir {
      */
     bool wellFormed(std::string &why) const;
     /*! Replace other by this instruction */
-    void replace(Instruction *other);
+    void replace(Instruction *other) const;
     /*! Indicates if the instruction belongs to instruction type T. Typically, T
      *  can be BinaryInstruction, UnaryInstruction, LoadInstruction and so on
      */

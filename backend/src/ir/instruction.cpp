@@ -778,7 +778,7 @@ namespace ir {
       out << "." << type << "." << addrSpace << (dwAligned ? "." : ".un") << "aligned";
       out << " {";
       for (uint32_t i = 0; i < valueNum; ++i)
-        out << "%" << this->getDst(fn, i) << (i != (valueNum-1) ? " " : "");
+        out << "%" << this->getDst(fn, i) << (i != (valueNum-1u) ? " " : "");
       out << "}";
       out << " %" << this->getSrc(fn, 0);
     }
@@ -788,7 +788,7 @@ namespace ir {
       out << "." << type << "." << addrSpace << (dwAligned ? "." : ".un") << "aligned";
       out << " %" << this->getSrc(fn, 0) << " {";
       for (uint32_t i = 0; i < valueNum; ++i)
-        out << "%" << this->getSrc(fn, i+1) << (i != (valueNum-1) ? " " : "");
+        out << "%" << this->getSrc(fn, i+1) << (i != (valueNum-1u) ? " " : "");
       out << "}";
     }
 
@@ -988,16 +988,18 @@ END_FUNCTION(Instruction, Register)
     return bb->getParent();
   }
 
-  void Instruction::replace(Instruction *other) {
+  void Instruction::replace(Instruction *other) const {
     Function &fn = other->getFunction();
     BasicBlock *bb = other->getParent();
-    if (bb->getFirstInstruction() == other) bb->setFirstInstruction(this);
-    if (bb->getLastInstruction() == other) bb->setLastInstruction(this);
-    if (other->predecessor) other->predecessor->successor = this;
-    if (other->successor) other->successor->predecessor = this;
-    this->parent = other->parent;
-    this->predecessor = other->predecessor;
-    this->successor = other->successor;
+    Instruction *insn = fn.newInstruction();
+    *insn = *this;
+    if (bb->getFirstInstruction() == other) bb->setFirstInstruction(insn);
+    if (bb->getLastInstruction() == other) bb->setLastInstruction(insn);
+    if (other->predecessor) other->predecessor->successor = insn;
+    if (other->successor) other->successor->predecessor = insn;
+    insn->parent = other->parent;
+    insn->predecessor = other->predecessor;
+    insn->successor = other->successor;
     fn.deleteInstruction(other);
   }
 

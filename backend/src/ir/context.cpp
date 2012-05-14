@@ -23,6 +23,7 @@
  */
 #include "ir/context.hpp"
 #include "ir/unit.hpp"
+#include "ir/lowering.hpp"
 
 namespace gbe {
 namespace ir {
@@ -51,9 +52,15 @@ namespace ir {
     // Check first that all branch instructions point to valid labels
     for (auto it = usedLabels->begin(); it != usedLabels->end(); ++it)
       GBE_ASSERTM(*it != LABEL_IS_POINTED, "A label is used and not defined");
+    GBE_DELETE(usedLabels);
+
+    // Remove all returns and insert one unique return block at the end of the
+    // function
+    lowerReturn(unit, fn->getName());
+
+    // Properly order labels and compute the CFG
     fn->sortLabels();
     fn->computeCFG();
-    GBE_DELETE(usedLabels);
     const StackElem elem = fnStack.back();
     fnStack.pop_back();
     fn = elem.fn;

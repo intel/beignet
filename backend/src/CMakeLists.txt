@@ -71,6 +71,8 @@ else (GBE_USE_BLOB)
     ir/function.hpp
     ir/value.cpp
     ir/value.hpp
+    ir/lowering.cpp
+    ir/lowering.hpp
     backend/context.cpp
     backend/context.hpp
     backend/program.cpp

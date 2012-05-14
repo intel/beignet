@@ -207,8 +207,20 @@ namespace ir {
     }
     /*! Get function the entry point block */
     INLINE const BasicBlock &getTopBlock(void) const {
-     GBE_ASSERT(blockNum() > 0);
+      GBE_ASSERT(blockNum() > 0 && blocks[0] != NULL);
       return *blocks[0];
+    }
+    /*! Get the last block */
+    INLINE const BasicBlock &getBottomBlock(void) const {
+      const uint32_t n = blockNum();
+      GBE_ASSERT(n > 0 && blocks[n-1] != NULL);
+      return *blocks[n-1];
+    }
+    /*! Get the last block */
+    INLINE BasicBlock &getBottomBlock(void) {
+      const uint32_t n = blockNum();
+      GBE_ASSERT(n > 0 && blocks[n-1] != NULL);
+      return *blocks[n-1];
     }
     /*! Get block from its label */
     INLINE const BasicBlock &getBlock(LabelIndex label) const {
