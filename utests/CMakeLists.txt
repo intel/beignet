@@ -7,7 +7,7 @@ ADD_LIBRARY(utests SHARED
             utest_file_map.cpp
             utest_assert.cpp
             utest.cpp
-#app_mandelbrot.cpp
+            app_mandelbrot.cpp
             compiler_write_only.cpp
             compiler_write_only_shorts.cpp
             compiler_write_only_bytes.cpp
@@ -18,6 +18,7 @@ ADD_LIBRARY(utests SHARED
             compiler_byte_scatter.cpp
             compiler_short_scatter.cpp
             compiler_uint2_copy.cpp
+            compiler_uint3_copy.cpp
             compiler_uint3_unaligned_copy.cpp
             compiler_if_else.cpp
             compiler_unstructured_branch0.cpp
