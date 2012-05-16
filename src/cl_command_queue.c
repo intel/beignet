@@ -97,13 +97,7 @@ cl_command_queue_add_ref(cl_command_queue queue)
 }
 
 LOCAL cl_int
-cl_command_queue_bind_surface(cl_command_queue queue,
-                              cl_kernel k,
-                              char *curbe,
-                              cl_buffer *local, 
-                              cl_buffer *priv,
-                              cl_buffer *scratch,
-                              uint32_t local_sz)
+cl_command_queue_bind_surface(cl_command_queue queue, cl_kernel k)
 {
   /* Bind all user buffers (given by clSetKernelArg) */
   uint32_t i;
@@ -311,6 +305,16 @@ error:
 
 extern cl_int cl_command_queue_ND_range_gen7(cl_command_queue, cl_kernel, const size_t *, const size_t *, const size_t *);
 
+static cl_int
+cl_kernel_check_args(cl_kernel k)
+{
+  uint32_t i;
+  for (i = 0; i < k->arg_n; ++i)
+    if (k->args[i].is_set == CL_FALSE)
+      return CL_INVALID_KERNEL_ARGS;
+  return CL_SUCCESS;
+}
+
 LOCAL cl_int
 cl_command_queue_ND_range(cl_command_queue queue,
                           cl_kernel k,
@@ -320,12 +324,13 @@ cl_command_queue_ND_range(cl_command_queue queue,
 {
   const int32_t ver = cl_driver_get_ver(queue->ctx->drv);
   cl_int err = CL_SUCCESS;
+
+  /* Check that the user did not forget any argument */
+  TRY (cl_kernel_check_args, k);
+
 #if USE_FULSIM
   cl_buffer_mgr bufmgr = NULL;
   FILE *file = NULL;
-#endif
-
-#if USE_FULSIM
   const char *run_it = getenv("OCL_SIMULATOR");
   if (run_it != NULL && strcmp(run_it, "1") == 0) {
     file = fopen("dump.aub", "wb");

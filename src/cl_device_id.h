@@ -25,6 +25,7 @@ struct _cl_device_id {
   cl_device_type device_type;
   cl_uint  vendor_id;
   cl_uint  max_compute_unit;
+  cl_uint  max_thread_per_unit;
   cl_uint  max_work_item_dimensions;
   size_t   max_work_item_sizes[3];
   cl_uint  max_work_group_size;

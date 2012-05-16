@@ -63,10 +63,7 @@ struct intel_gpgpu
   uint32_t binded_offset[max_buf_n];    /* their offsets in the constant buffer */
   uint32_t binded_n;                    /* number of buffers binded */
 
-  struct {
-    drm_intel_bo *bo;
-    uint32_t num;
-  } idrt_b;
+  struct { drm_intel_bo *bo; } idrt_b;
   struct { drm_intel_bo *bo; } surface_heap_b;
   struct { drm_intel_bo *bo; } vfe_state_b;
   struct { drm_intel_bo *bo; } curbe_b;
@@ -213,7 +210,7 @@ intel_gpgpu_load_idrt(intel_gpgpu_t *state)
   BEGIN_BATCH(state->batch, 4);
   OUT_BATCH(state->batch, CMD(2,0,2) | (4 - 2)); /* length-2 */
   OUT_BATCH(state->batch, 0);                    /* mbz */
-  OUT_BATCH(state->batch, state->idrt_b.num << 5);
+  OUT_BATCH(state->batch, 1 << 5);
   OUT_RELOC(state->batch, state->idrt_b.bo, I915_GEM_DOMAIN_INSTRUCTION, 0, 0);
   ADVANCE_BATCH(state->batch);
 }
@@ -631,7 +628,6 @@ intel_gpgpu_build_idrt(intel_gpgpu_t *state, cl_gpgpu_kernel *kernel)
                     0,
                     offsetof(gen6_interface_descriptor_t, desc2),
                     state->sampler_state_b.bo);
-  state->idrt_b.num = 1;
   dri_bo_unmap(bo);
 }
 

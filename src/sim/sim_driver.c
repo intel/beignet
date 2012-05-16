@@ -185,7 +185,7 @@ static int sim_buffer_unpin(sim_buffer buf) {return 0;}
 static int sim_buffer_wait_rendering(sim_buffer buf) {return 0;}
 
 /* Function to call for each HW thread we simulate */
-typedef void (sim_kernel_cb)(gbe_simulator, uint32_t, uint32_t, uint32_t, uint32_t);
+typedef void (sim_kernel_cb)(gbe_simulator, uint32_t, uint32_t, uint32_t, uint32_t, uint32_t);
 
 /* We can bind only a limited number of buffers */
 enum { max_buf_n = 32 };
@@ -329,7 +329,7 @@ sim_gpgpu_walker(sim_gpgpu gpgpu,
   for (y = 0; y < global_wk_dim[1]; ++y)
   for (x = 0; x < global_wk_dim[0]; ++x)
   for (t = 0; t < thread_n; ++t)
-    gpgpu->kernel(sim, t, x, y, z);
+    gpgpu->kernel(sim, t, t, x, y, z);
   sim_simulator_delete(sim);
 
   /* Get the results back*/

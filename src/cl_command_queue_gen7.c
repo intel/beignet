@@ -41,10 +41,9 @@ cl_kernel_compute_batch_sz(cl_kernel k)
  *  same work group. Right now, it consists in local IDs and block IPs
  */
 static cl_int
-cl_set_varying_payload(char *data,
+cl_set_varying_payload(const cl_kernel ker,
+                       char *data,
                        const size_t *local_wk_sz,
-                       const int32_t *id_offset,
-                       int32_t ip_offset,
                        size_t simd_sz,
                        size_t cst_sz,
                        size_t thread_n)
@@ -52,7 +51,17 @@ cl_set_varying_payload(char *data,
   uint32_t *ids[3] = {NULL,NULL,NULL};
   uint16_t *block_ips = NULL;
   size_t i, j, k, curr = 0;
+  int32_t id_offset[3], ip_offset;
   cl_int err = CL_SUCCESS;
+
+  id_offset[0] = gbe_kernel_get_curbe_offset(ker->opaque, GBE_CURBE_LOCAL_ID_X, 0);
+  id_offset[1] = gbe_kernel_get_curbe_offset(ker->opaque, GBE_CURBE_LOCAL_ID_Y, 0);
+  id_offset[2] = gbe_kernel_get_curbe_offset(ker->opaque, GBE_CURBE_LOCAL_ID_Z, 0);
+  ip_offset = gbe_kernel_get_curbe_offset(ker->opaque, GBE_CURBE_BLOCK_IP, 0);
+  assert(id_offset[0] >= 0 &&
+         id_offset[1] >= 0 &&
+         id_offset[2] >= 0 &&
+         ip_offset >= 0);
 
   TRY_ALLOC(ids[0], (uint32_t*) alloca(sizeof(uint32_t)*thread_n*simd_sz));
   TRY_ALLOC(ids[1], (uint32_t*) alloca(sizeof(uint32_t)*thread_n*simd_sz));
@@ -115,6 +124,44 @@ cl_curbe_fill(cl_kernel ker,
   UPLOAD(GBE_CURBE_GROUP_NUM_Y, global_wk_sz[1]/local_wk_sz[1]);
   UPLOAD(GBE_CURBE_GROUP_NUM_Z, global_wk_sz[2]/local_wk_sz[2]);
 #undef UPLOAD
+
+  /* Write identity for the stack pointer. This will make the stack pointer
+   * computations faster in the kernel
+   */
+  if ((offset = gbe_kernel_get_curbe_offset(ker->opaque, GBE_CURBE_STACK_POINTER, 0)) >= 0) {
+    const uint32_t simd_sz = gbe_kernel_get_simd_width(ker->opaque);
+    uint32_t *stackptr = (uint32_t *) (curbe + offset);
+    int32_t i;
+    for (i = 0; i < simd_sz; ++i) stackptr[i] = i;
+  }
+}
+
+static void
+cl_bind_stack(cl_gpgpu gpgpu, cl_kernel ker)
+{
+  cl_context ctx = ker->program->ctx;
+  cl_device_id device = ctx->device;
+  cl_buffer_mgr bufmgr = cl_context_get_bufmgr(ctx);
+  cl_buffer buffer = NULL;
+  const int32_t per_lane_stack_sz = gbe_kernel_get_stack_size(ker->opaque);
+  const int32_t value = GBE_CURBE_EXTRA_ARGUMENT;
+  const int32_t sub_value = GBE_STACK_BUFFER;
+  const int32_t offset = gbe_kernel_get_curbe_offset(ker->opaque, value, sub_value);
+  int32_t stack_sz = per_lane_stack_sz;
+
+  /* No stack required for this kernel */
+  if (per_lane_stack_sz == 0)
+    return;
+
+  /* The stack size is given for *each* SIMD lane. So, we accordingly compute
+   * the size we need for the complete machine
+   */
+  assert(offset >= 0);
+  stack_sz *= gbe_kernel_get_simd_width(ker->opaque);
+  stack_sz *= device->max_compute_unit;
+  stack_sz *= device->max_thread_per_unit;
+  buffer = cl_buffer_alloc(bufmgr, NULL, stack_sz, 64);
+  cl_gpgpu_bind_buf(gpgpu, buffer, offset, cc_llc_l3);
 }
 
 LOCAL cl_int
@@ -128,12 +175,10 @@ cl_command_queue_ND_range_gen7(cl_command_queue queue,
   cl_gpgpu gpgpu = queue->gpgpu;
   char *curbe = NULL;        /* Does not include per-thread local IDs */
   char *final_curbe = NULL;  /* Includes them and one sub-buffer per group */
-  cl_buffer private_bo = NULL, scratch_bo = NULL;
   cl_gpgpu_kernel kernel;
   const uint32_t simd_sz = cl_kernel_get_simd_width(ker);
   size_t i, batch_sz = 0u, local_sz = 0u, cst_sz = ker->curbe_sz;
   size_t thread_n = 0u;
-  int32_t id_offset[3], ip_offset;
   cl_int err = CL_SUCCESS;
 
   /* Setup kernel */
@@ -158,7 +203,12 @@ cl_command_queue_ND_range_gen7(cl_command_queue queue,
   if (queue->last_batch != NULL)
     cl_buffer_unreference(queue->last_batch);
   queue->last_batch = NULL;
-  cl_command_queue_bind_surface(queue, ker, curbe, NULL, &private_bo, &scratch_bo, 0);
+
+  /* Bind user buffers */
+  cl_command_queue_bind_surface(queue, ker);
+
+  /* Bind a stack if needed */
+  cl_bind_stack(gpgpu, ker);
   cl_gpgpu_states_setup(gpgpu, &kernel);
 
   /* Curbe step 2. Give the localID and upload it to video memory */
@@ -166,15 +216,7 @@ cl_command_queue_ND_range_gen7(cl_command_queue queue,
   if (curbe)
     for (i = 0; i < thread_n; ++i)
       memcpy(final_curbe + cst_sz * i, curbe, cst_sz);
-  id_offset[0] = gbe_kernel_get_curbe_offset(ker->opaque, GBE_CURBE_LOCAL_ID_X, 0);
-  id_offset[1] = gbe_kernel_get_curbe_offset(ker->opaque, GBE_CURBE_LOCAL_ID_Y, 0);
-  id_offset[2] = gbe_kernel_get_curbe_offset(ker->opaque, GBE_CURBE_LOCAL_ID_Z, 0);
-  ip_offset = gbe_kernel_get_curbe_offset(ker->opaque, GBE_CURBE_BLOCK_IP, 0);
-  assert(id_offset[0] >= 0 &&
-         id_offset[1] >= 0 &&
-         id_offset[2] >= 0 &&
-         ip_offset >= 0);
-  TRY (cl_set_varying_payload, final_curbe, local_wk_sz, id_offset, ip_offset, simd_sz, cst_sz, thread_n);
+  TRY (cl_set_varying_payload, ker, final_curbe, local_wk_sz, simd_sz, cst_sz, thread_n);
   cl_gpgpu_upload_constants(gpgpu, final_curbe, thread_n*cst_sz);
 
   /* Start a new batch buffer */

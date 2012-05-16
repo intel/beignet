@@ -27,7 +27,8 @@ ADD_LIBRARY(utests SHARED
             compiler_unstructured_branch3.cpp
             compiler_lower_return0.cpp
             compiler_lower_return1.cpp
-            compiler_lower_return2.cpp)
+            compiler_lower_return2.cpp
+            compiler_array.cpp)
 TARGET_LINK_LIBRARIES(utests cl m)
 
 ADD_EXECUTABLE(run utest_run.cpp)

@@ -67,13 +67,7 @@ cl_int cl_command_queue_set_fulsim_buffer(cl_command_queue, cl_mem);
 extern cl_int cl_command_queue_finish(cl_command_queue);
 
 /* Bind all the surfaces in the GPGPU state */
-extern cl_int cl_command_queue_bind_surface(cl_command_queue queue,
-                                            cl_kernel k,
-                                            char *curbe,
-                                            cl_buffer *local,
-                                            cl_buffer *priv,
-                                            cl_buffer *scratch,
-                                            uint32_t local_sz);
+extern cl_int cl_command_queue_bind_surface(cl_command_queue, cl_kernel);
 
 #endif /* __CL_COMMAND_QUEUE_H__ */
 

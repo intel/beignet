@@ -32,6 +32,7 @@
 
 static struct _cl_device_id intel_ivb_gt2_device = {
   .max_compute_unit = 128,
+  .max_thread_per_unit = 8,
   .max_work_item_sizes = {512, 512, 512},
   .max_work_group_size = 512,
   .max_clock_frequency = 1000,
@@ -42,6 +43,7 @@ static struct _cl_device_id intel_ivb_gt2_device = {
 
 static struct _cl_device_id intel_ivb_gt1_device = {
   .max_compute_unit = 64,
+  .max_thread_per_unit = 8,
   .max_work_item_sizes = {512, 512, 512},
   .max_work_group_size = 512,
   .max_clock_frequency = 1000,
@@ -53,6 +55,7 @@ static struct _cl_device_id intel_ivb_gt1_device = {
 /* XXX we clone IVB for HSW now */
 static struct _cl_device_id intel_hsw_device = {
   .max_compute_unit = 64,
+  .max_thread_per_unit = 8,
   .max_work_item_sizes = {512, 512, 512},
   .max_work_group_size = 512,
   .max_clock_frequency = 1000,
