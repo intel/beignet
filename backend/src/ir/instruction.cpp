@@ -485,8 +485,8 @@ namespace ir {
                                                const Function &fn,
                                                std::string &whyNot)
     {
-      if (fn.isSpecialReg(reg) == true) {
-        whyNot = "Special registers are not writeable";
+      if (fn.isSpecialReg(reg) == true && reg != ir::ocl::stackptr) {
+        whyNot = "Non stack pointer special registers are not writeable";
         return false;
       }
       return true;

@@ -58,6 +58,7 @@ namespace ir {
       DECL_NEW_REG(FAMILY_DWORD, goffset0);
       DECL_NEW_REG(FAMILY_DWORD, goffset1);
       DECL_NEW_REG(FAMILY_DWORD, goffset2);
+      DECL_NEW_REG(FAMILY_DWORD, stackptr);
     }
 #undef DECL_NEW_REG
 

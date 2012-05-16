@@ -29,13 +29,12 @@ namespace gbe {
 namespace ir {
 
   Function::Function(const std::string &name, Profile profile) :
-    name(name), profile(profile) { initProfile(*this); }
+    name(name), profile(profile)
+  { initProfile(*this); }
 
   Function::~Function(void) {
-    for (auto it = blocks.begin(); it != blocks.end(); ++it)
-      GBE_DELETE(*it);
-    for (auto it = inputs.begin(); it != inputs.end(); ++it)
-      GBE_DELETE(*it);
+    for (auto it = blocks.begin(); it != blocks.end(); ++it) GBE_DELETE(*it);
+    for (auto it = inputs.begin(); it != inputs.end(); ++it) GBE_DELETE(*it);
   }
 
   void Function::sortLabels(void) {
@@ -47,12 +46,8 @@ namespace ir {
       if (insn.getOpcode() != OP_LABEL) return;
 
       // Create the new label
-#if 0
-      Instruction *newLabel = newInstruction();
-      *newLabel = LABEL(LabelIndex(last));
-#else
       const Instruction newLabel = LABEL(LabelIndex(last));
-#endif
+
       // Replace the previous label instruction
       LabelInstruction &label = cast<LabelInstruction>(insn);
       const LabelIndex index = label.getLabelIndex();

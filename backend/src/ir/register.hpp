@@ -70,6 +70,8 @@ namespace ir {
   INLINE bool operator< (const Register &r0, const Register &r1) {
     return r0.value() < r1.value();
   }
+  /*! Useful to encode anything special */
+  static const Register invalidRegister(0xffff);
 
   /*! Tuple is the position of the first register in the tuple vector. We
    *  enforce type safety with this class

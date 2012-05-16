@@ -71,8 +71,15 @@ enum gbe_curbe_type {
   GBE_CURBE_IMAGE_WIDTH,
   GBE_CURBE_IMAGE_HEIGHT,
   GBE_CURBE_IMAGE_DEPTH,
+  GBE_CURBE_STACK_POINTER,
   GBE_CURBE_KERNEL_ARGUMENT,
+  GBE_CURBE_EXTRA_ARGUMENT,
   GBE_CURBE_BLOCK_IP
+};
+
+/*! Extra arguments use the negative range of sub-values */
+enum gbe_extra_argument {
+  GBE_STACK_BUFFER = 0 /* Give stack location in curbe */
 };
 
 /*! Create a new program from the given source code (zero terminated string) */
@@ -109,11 +116,11 @@ extern gbe_program_get_kernel_by_name_cb *gbe_program_get_kernel_by_name;
 typedef gbe_kernel (gbe_program_get_kernel_cb)(gbe_program, uint32_t ID);
 extern gbe_program_get_kernel_cb *gbe_program_get_kernel;
 
-/*! Get the GBE kernel name */
+/*! Get the kernel name */
 typedef const char *(gbe_kernel_get_name_cb)(gbe_kernel);
 extern gbe_kernel_get_name_cb *gbe_kernel_get_name;
 
-/*! Get the GBE kernel source code */
+/*! Get the kernel source code */
 typedef const char *(gbe_kernel_get_code_cb)(gbe_kernel);
 extern gbe_kernel_get_code_cb *gbe_kernel_get_code;
 
@@ -140,6 +147,10 @@ extern gbe_kernel_get_simd_width_cb *gbe_kernel_get_simd_width;
 /*! Get the curbe size required by the kernel */
 typedef int32_t (gbe_kernel_get_curbe_size_cb)(gbe_kernel);
 extern gbe_kernel_get_curbe_size_cb *gbe_kernel_get_curbe_size;
+
+/*! Get the stack size (zero if no stack is required) */
+typedef int32_t (gbe_kernel_get_stack_size_cb)(gbe_kernel);
+extern gbe_kernel_get_stack_size_cb *gbe_kernel_get_stack_size;
 
 /*! Get the curbe offset where to put the data. Returns -1 if not required */
 typedef int32_t (gbe_kernel_get_curbe_offset_cb)(gbe_kernel, enum gbe_curbe_type type, uint32_t sub_type);

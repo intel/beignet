@@ -128,10 +128,8 @@ namespace gbe
       return ir::FAMILY_DWORD;
     if (type == Type::getInt64Ty(type->getContext()) || type->isDoubleTy())
       return ir::FAMILY_QWORD;
-    if (type->isPointerTy() && ctx.getPointerSize() == ir::POINTER_32_BITS)
-      return ir::FAMILY_DWORD;
-    if (type->isPointerTy() && ctx.getPointerSize() == ir::POINTER_64_BITS)
-      return ir::FAMILY_QWORD;
+    if (type->isPointerTy())
+      return ctx.getPointerFamily();
     GBE_ASSERT(0);
     return ir::FAMILY_BOOL;
   }
@@ -381,14 +379,14 @@ namespace gbe
     template <bool isLoad, typename T> void emitLoadOrStore(T &I);
 
     // Currently supported instructions
-#define DECL_VISIT_FN(NAME, TYPE)         \
-    void regAllocate##NAME(TYPE &I);      \
-    void emit##NAME(TYPE &I);             \
-    void visit##NAME(TYPE &I) {           \
+#define DECL_VISIT_FN(NAME, TYPE) \
+    void regAllocate##NAME(TYPE &I); \
+    void emit##NAME(TYPE &I); \
+    void visit##NAME(TYPE &I) { \
       if (pass == PASS_EMIT_INSTRUCTIONS) \
-        emit##NAME(I);                    \
-      else                                \
-        regAllocate##NAME(I);             \
+        emit##NAME(I); \
+      else \
+        regAllocate##NAME(I); \
     }
     DECL_VISIT_FN(BinaryOperator, Instruction);
     DECL_VISIT_FN(CastInst, CastInst);
@@ -404,6 +402,7 @@ namespace gbe
     DECL_VISIT_FN(SelectInst, SelectInst);
     DECL_VISIT_FN(BranchInst, BranchInst);
     DECL_VISIT_FN(PHINode, PHINode);
+    DECL_VISIT_FN(AllocaInst, AllocaInst);
 #undef DECL_VISIT_FN
 
     // These instructions are not supported at all
@@ -416,7 +415,6 @@ namespace gbe
     void visitIndirectBrInst(IndirectBrInst &I) {NOT_SUPPORTED;}
     void visitUnreachableInst(UnreachableInst &I) {NOT_SUPPORTED;}
     void visitGetElementPtrInst(GetElementPtrInst &I) {NOT_SUPPORTED;}
-    void visitAllocaInst(AllocaInst &I) {NOT_SUPPORTED;}
     void visitInsertValueInst(InsertValueInst &I) {NOT_SUPPORTED;}
     void visitExtractValueInst(ExtractValueInst &I) {NOT_SUPPORTED;}
     template <bool isLoad, typename T> void visitLoadOrStore(T &I);
@@ -725,7 +723,7 @@ namespace gbe
     if (fn.outputNum() == 1 && I.getNumOperands() > 0) {
       const ir::Register dst = fn.getOutput(0);
       const ir::Register src = this->getRegister(I.getOperand(0));
-      const ir::RegisterFamily family = fn.getRegisterFamily(dst);;
+      const ir::RegisterFamily family = fn.getRegisterFamily(dst);
       ctx.MOV(ir::getType(family), dst, src);
     }
     ctx.RET();
@@ -1169,17 +1167,28 @@ namespace gbe
     }
   }
 
-  void GenWriter::emitCallInst(CallInst &I) {}
   void GenWriter::regAllocateCallInst(CallInst &I) {
     Value *dst = &I;
     Value *Callee = I.getCalledValue();
     GBE_ASSERT(ctx.getFunction().getProfile() == ir::PROFILE_OCL);
     GBE_ASSERT(isa<InlineAsm>(I.getCalledValue()) == false);
     GBE_ASSERT(I.hasStructRetAttr() == false);
-#if GBE_DEBUG
-    if (Function *F = I.getCalledFunction())
-      GBE_ASSERT(F->getIntrinsicID() == 0);
-#endif /* GBE_DEBUG */
+
+    // We only support a small number of intrinsics right now
+    if (Function *F = I.getCalledFunction()) {
+      if (F->getIntrinsicID() != 0) {
+        switch (F->getIntrinsicID()) {
+          case Intrinsic::stacksave:
+            this->newRegister(&I);
+          break;
+          case Intrinsic::stackrestore:
+          break;
+          default: NOT_IMPLEMENTED;
+        }
+        return;
+      }
+    }
+
     // With OCL there is no side effect for any called functions. So do nothing
     // when there is no returned value
     if (I.getType() == Type::getVoidTy(I.getContext()))
@@ -1226,6 +1235,98 @@ namespace gbe
       regTranslator.newScalarProxy(ir::ocl::goffset2, dst);
     else
       NOT_SUPPORTED;
+  }
+
+  void GenWriter::emitCallInst(CallInst &I) {
+    if (Function *F = I.getCalledFunction()) {
+      if (F->getIntrinsicID() != 0) {
+        const ir::Function &fn = ctx.getFunction();
+        switch (F->getIntrinsicID()) {
+          case Intrinsic::stacksave:
+          {
+            const ir::Register dst = this->getRegister(&I);
+            const ir::Register src = ir::ocl::stackptr;
+            const ir::RegisterFamily family = fn.getRegisterFamily(dst);
+            ctx.MOV(ir::getType(family), dst, src);
+          }
+          break;
+          case Intrinsic::stackrestore:
+          {
+            const ir::Register dst = ir::ocl::stackptr;
+            const ir::Register src = this->getRegister(I.getOperand(0));
+            const ir::RegisterFamily family = fn.getRegisterFamily(dst);
+            ctx.MOV(ir::getType(family), dst, src);
+          }
+          break;
+          default: NOT_IMPLEMENTED;
+        }
+      }
+    }
+  }
+
+  struct AllocaSizeFunctor
+  {
+    AllocaSizeFunctor(ir::Context &ctx) : ctx(ctx) {}
+    template <typename T> INLINE uint64_t operator() (const T &t) {
+      return uint64_t(t);
+    }
+    ir::Context &ctx;
+  };
+
+
+  void GenWriter::regAllocateAllocaInst(AllocaInst &I) {
+    this->newRegister(&I);
+  }
+  void GenWriter::emitAllocaInst(AllocaInst &I) {
+    Value *src = I.getOperand(0);
+    Type *elemType = I.getType()->getElementType();
+    ir::ImmediateIndex immIndex;
+    bool needMultiply = true;
+
+    // Be aware, we manipulate pointers
+    if (ctx.getPointerSize() == ir::POINTER_32_BITS)
+      immIndex = ctx.newImmediate(uint32_t(getTypeByteSize(unit, elemType)));
+    else
+      immIndex = ctx.newImmediate(uint64_t(getTypeByteSize(unit, elemType)));
+
+    // OK, we try to see if we know compile time the size we need to allocate
+    if (I.isArrayAllocation() == false) // one element allocated only
+      needMultiply = false;
+    else {
+      Constant *CPV = dyn_cast<Constant>(src);
+      if (CPV) {
+        const uint64_t elemNum = processConstant<uint64_t>(CPV, AllocaSizeFunctor(ctx));
+        ir::Immediate imm = ctx.getImmediate(immIndex);
+        imm.data.u64 = ALIGN(imm.data.u64 * elemNum, 4);
+        ctx.setImmediate(immIndex, imm);
+        needMultiply = false;
+      } else {
+        // Brutal but cheap way to get arrays aligned on 4 bytes: we just align
+        // the element on 4 bytes!
+        ir::Immediate imm = ctx.getImmediate(immIndex);
+        imm.data.u64 = ALIGN(imm.data.u64, 4);
+        ctx.setImmediate(immIndex, imm);
+      }
+    }
+
+    // Now emit the stream of instructions to get the allocated pointer
+    const ir::RegisterFamily pointerFamily = ctx.getPointerFamily();
+    const ir::Register dst = this->getRegister(&I);
+    const ir::Register stack = ir::ocl::stackptr;
+    const ir::Register reg = ctx.reg(pointerFamily);
+    const ir::Immediate imm = ctx.getImmediate(immIndex);
+
+    // Easy case, we just increment the stack pointer
+    if (needMultiply == false) {
+      ctx.LOADI(imm.type, reg, immIndex);
+      ctx.ADD(imm.type, dst, stack, reg);
+    }
+    // Harder case (variable length array) that requires a multiply
+    else {
+      ctx.LOADI(imm.type, reg, immIndex);
+      ctx.MUL(imm.type, reg, this->getRegister(src), reg);
+      ctx.ADD(imm.type, dst, stack, reg);
+    }
   }
 
   static INLINE Value *getLoadOrStoreValue(LoadInst &I) {

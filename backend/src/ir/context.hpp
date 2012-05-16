@@ -59,6 +59,11 @@ namespace ir {
       const Immediate imm(value);
       return fn->newImmediate(imm);
     }
+    /*! Set an immediate value */
+    template <typename T> INLINE void setImmediate(ImmediateIndex index, T value) {
+      const Immediate imm(value);
+      fn->immediates[index] = imm;
+    }
     /*! Create a new register holding the given value. A LOADI is pushed */
     template <typename T> INLINE Register immReg(T value) {
       GBE_ASSERTM(fn != NULL, "No function currently defined");
@@ -102,7 +107,13 @@ namespace ir {
     INLINE PointerSize getPointerSize(void) const {
       return unit.getPointerSize();
     }
-
+    /*! Return the family of registers that contain pointer */
+    INLINE RegisterFamily getPointerFamily(void) const {
+      if (this->getPointerSize() == POINTER_32_BITS)
+        return FAMILY_DWORD;
+      else
+        return FAMILY_QWORD;
+    }
 #define DECL_THREE_SRC_INSN(NAME) \
     INLINE void NAME(Type type, \
                      Register dst, \

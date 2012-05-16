@@ -35,6 +35,7 @@ namespace ir {
   class Immediate
   {
   public:
+    INLINE Immediate(void) {}
 #define DECL_CONSTRUCTOR(TYPE, FIELD, IR_TYPE)  \
     Immediate(TYPE FIELD) {                     \
       this->type = IR_TYPE;                     \

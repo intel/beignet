@@ -43,6 +43,8 @@ namespace gbe
     this->liveness = GBE_NEW(ir::Liveness, (ir::Function&) fn);
     this->dag = GBE_NEW(ir::FunctionDAG, *this->liveness);
     this->simdWidth = nextHighestPowerOf2(OCL_SIMD_WIDTH);
+    // std::cout << *dag;
+    //std::cout << *liveness;
   }
   Context::~Context(void) {
     GBE_SAFE_DELETE(this->dag);
@@ -56,8 +58,18 @@ namespace gbe
     this->buildArgList();
     this->buildUsedLabels();
     this->buildJIPs();
+    this->buildStack();
     this->emitCode();
     return this->kernel;
+  }
+
+  void Context::buildStack(void) {
+    const auto &stackUse = dag->getUse(ir::ocl::stackptr);
+    if (stackUse.size() == 0)  // no stack is used if stackptr is unused
+      return;
+    // Be sure that the stack pointer is set
+    GBE_ASSERT(this->kernel->getCurbeOffset(GBE_CURBE_STACK_POINTER, 0) >= 0);
+    this->kernel->stackSize = 2*KB; // XXX compute that in a better way
   }
 
   void Context::buildPatchList(void) {
@@ -105,12 +117,13 @@ namespace gbe
 
     // Go over all the instructions and find the special register value we need
     // to push
-#define INSERT_REG(SPECIAL_REG, PATCH) \
+#define INSERT_REG(SPECIAL_REG, PATCH, WIDTH) \
   if (reg == ir::ocl::SPECIAL_REG) { \
     if (specialRegs.find(reg) != specialRegs.end()) continue; \
+    kernel->curbeSize = ALIGN(kernel->curbeSize, ptrSize * WIDTH); \
     const PatchInfo patch(GBE_CURBE_##PATCH, 0, kernel->curbeSize); \
     kernel->patches.push_back(patch); \
-    kernel->curbeSize += ptrSize; \
+    kernel->curbeSize += ptrSize * WIDTH; \
   } else
     fn.foreachInstruction([&](const ir::Instruction &insn) {
       const uint32_t srcNum = insn.getSrcNum();
@@ -118,22 +131,31 @@ namespace gbe
         const ir::Register reg = insn.getSrc(srcID);
         if (fn.isSpecialReg(reg) == false) continue;
         if (specialRegs.contains(reg) == true) continue;
-        INSERT_REG(lsize0, LOCAL_SIZE_X)
-        INSERT_REG(lsize1, LOCAL_SIZE_Y)
-        INSERT_REG(lsize2, LOCAL_SIZE_Z)
-        INSERT_REG(gsize0, GLOBAL_SIZE_X)
-        INSERT_REG(gsize1, GLOBAL_SIZE_Y)
-        INSERT_REG(gsize2, GLOBAL_SIZE_Z)
-        INSERT_REG(goffset0, GLOBAL_OFFSET_X)
-        INSERT_REG(goffset1, GLOBAL_OFFSET_Y)
-        INSERT_REG(goffset2, GLOBAL_OFFSET_Z)
-        INSERT_REG(numgroup0, GROUP_NUM_X)
-        INSERT_REG(numgroup1, GROUP_NUM_Y)
-        INSERT_REG(numgroup2, GROUP_NUM_Z);
+        INSERT_REG(lsize0, LOCAL_SIZE_X, 1)
+        INSERT_REG(lsize1, LOCAL_SIZE_Y, 1)
+        INSERT_REG(lsize2, LOCAL_SIZE_Z, 1)
+        INSERT_REG(gsize0, GLOBAL_SIZE_X, 1)
+        INSERT_REG(gsize1, GLOBAL_SIZE_Y, 1)
+        INSERT_REG(gsize2, GLOBAL_SIZE_Z, 1)
+        INSERT_REG(goffset0, GLOBAL_OFFSET_X, 1)
+        INSERT_REG(goffset1, GLOBAL_OFFSET_Y, 1)
+        INSERT_REG(goffset2, GLOBAL_OFFSET_Z, 1)
+        INSERT_REG(numgroup0, GROUP_NUM_X, 1)
+        INSERT_REG(numgroup1, GROUP_NUM_Y, 1)
+        INSERT_REG(numgroup2, GROUP_NUM_Z, 1)
+        INSERT_REG(stackptr, STACK_POINTER, this->simdWidth);
         specialRegs.insert(reg);
       }
     });
 #undef INSERT_REG
+
+    // Insert the stack buffer if used
+    if (kernel->getCurbeOffset(GBE_CURBE_STACK_POINTER, 0) >= 0) {
+      kernel->curbeSize = ALIGN(kernel->curbeSize, ptrSize);
+      const PatchInfo patch(GBE_CURBE_EXTRA_ARGUMENT, GBE_STACK_BUFFER, kernel->curbeSize);
+      kernel->patches.push_back(patch);
+      kernel->curbeSize += ptrSize;
+    }
 
     // After this point the vector is immutable. Sorting it will make
     // research faster

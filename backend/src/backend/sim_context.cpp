@@ -101,9 +101,9 @@ namespace gbe
     }
 
     // Always declare local IDs
-    if (lid0 == false) o << "scalar_dw _" << uint32_t(ir::ocl::lid0) << ";\n";
-    if (lid1 == false) o << "scalar_dw _" << uint32_t(ir::ocl::lid1) << ";\n";
-    if (lid2 == false) o << "scalar_dw _" << uint32_t(ir::ocl::lid2) << ";\n";
+    if (lid0 == false) o << "simd" << simdWidth << "dw _" << uint32_t(ir::ocl::lid0) << ";\n";
+    if (lid1 == false) o << "simd" << simdWidth << "dw _" << uint32_t(ir::ocl::lid1) << ";\n";
+    if (lid2 == false) o << "simd" << simdWidth << "dw _" << uint32_t(ir::ocl::lid2) << ";\n";
   }
 
 #define LOAD_SPECIAL_REG(CURBE, REG) do { \
@@ -144,6 +144,7 @@ namespace gbe
     LOAD_SPECIAL_REG(GBE_CURBE_GROUP_NUM_X, ir::ocl::numgroup0);
     LOAD_SPECIAL_REG(GBE_CURBE_GROUP_NUM_Y, ir::ocl::numgroup1);
     LOAD_SPECIAL_REG(GBE_CURBE_GROUP_NUM_Z, ir::ocl::numgroup2);
+    LOAD_SPECIAL_REG(GBE_CURBE_STACK_POINTER, ir::ocl::stackptr);
   }
 
   static const char *typeStr(const ir::Type &type) {
@@ -191,6 +192,28 @@ namespace gbe
       << "LOAD(uip, curbe + " << blockIPOffset << ");\n";
   }
 
+  void SimContext::emitStackPointer(void) {
+    if (kernel->getCurbeOffset(GBE_CURBE_STACK_POINTER, 0) <= 0)
+      return;
+    const uint32_t perLaneSize = kernel->getStackSize();
+    const uint32_t perThreadSize = perLaneSize * this->simdWidth;
+    const int32_t offset = kernel->getCurbeOffset(GBE_CURBE_EXTRA_ARGUMENT, GBE_STACK_BUFFER);
+
+    GBE_ASSERT(offset >= 0 && perLaneSize > 0);
+    o << "\n// Computing stack pointer for each lane\n"
+      << "scalar_dw perThreadSize, perLaneSize;\n"
+      << "scalar_dw stackThreadOffset, stackBuffer, globalThreadID;\n"
+      << "simd" << this->simdWidth << "dw stackLaneOffset;\n"
+      << "LOAD(stackBuffer, curbe + " << offset << ");\n"
+      << "LOADI(perThreadSize, " << perThreadSize << ");\n"
+      << "LOADI(perLaneSize, " << perLaneSize << ");\n"
+      << "LOADI(globalThreadID, global_id);\n"
+      << "MUL_U32(stackThreadOffset, perThreadSize, globalThreadID);\n"
+      << "MUL_U32(stackLaneOffset, perLaneSize, _" << uint32_t(ir::ocl::stackptr) << ");\n"
+      << "ADD_U32(_" << uint32_t(ir::ocl::stackptr) << ", stackBuffer, stackThreadOffset);\n"
+      << "ADD_U32(_" << uint32_t(ir::ocl::stackptr) << ", _" << uint32_t(ir::ocl::stackptr) << ", stackLaneOffset);\n";
+  }
+
   void SimContext::emitInstructionStream(void) {
     using namespace ir;
     fn.foreachInstruction([&](const Instruction &insn) {
@@ -217,7 +240,6 @@ namespace gbe
         if (byPassed == false)
           o << "SIM_JOIN(uip, emask, " << uint32_t(index) << ");\n";
         else {
-          //GBE_ASSERT(false);
           const LabelIndex jip = JIPs.find(&labelInsn)->second;
           o << "SIM_JOIN_JUMP(uip, emask, " <<
                               uint32_t(index) << ", " <<
@@ -349,8 +371,8 @@ namespace gbe
 
   SVAR(OCL_GCC_SIM_COMPILER, "gcc");
   SVAR(OCL_ICC_SIM_COMPILER, "icc");
-  SVAR(OCL_GCC_SIM_COMPILER_OPTIONS, "-Wall -Wno-unused-label -Wno-strict-aliasing -fPIC -shared -msse -msse2 -msse3 -mssse3 -msse4.1 -g -O3");
-  //SVAR(OCL_GCC_SIM_COMPILER_OPTIONS, "-Wall -fPIC -shared -msse -msse2 -msse3 -mssse3 -msse4.1 -g");
+  //SVAR(OCL_GCC_SIM_COMPILER_OPTIONS, "-Wall -Wno-unused-label -Wno-strict-aliasing -fPIC -shared -msse -msse2 -msse3 -mssse3 -msse4.1 -g -O3");
+  SVAR(OCL_GCC_SIM_COMPILER_OPTIONS, "-Wall -fPIC -shared -msse -msse2 -msse3 -mssse3 -msse4.1 -g");
   SVAR(OCL_ICC_SIM_COMPILER_OPTIONS, "-Wall -ldl -fabi-version=2 -fPIC -shared -O3 -g");
   BVAR(OCL_USE_ICC, false);
 
@@ -366,7 +388,7 @@ namespace gbe
     o << sim_vector_str << std::endl;
     o << "#include <stdint.h>\n";
     o << "extern \"C\" void " << name
-      << "(gbe_simulator sim, uint32_t tid, scalar_dw _3, scalar_dw _4, scalar_dw _5)\n"
+      << "(gbe_simulator sim, uint32_t tid, uint32_t global_id, scalar_dw _3, scalar_dw _4, scalar_dw _5)\n"
       << "{\n"
       << "const size_t curbe_sz = sim->get_curbe_size(sim);\n"
       << "const char *curbe = (const char*) sim->get_curbe_address(sim) + curbe_sz * tid;\n"
@@ -375,6 +397,7 @@ namespace gbe
     this->emitRegisters();
     this->emitMaskingCode();
     this->emitCurbeLoad();
+    this->emitStackPointer();
     this->emitInstructionStream();
     o << "}\n";
     o << std::endl;

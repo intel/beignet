@@ -184,6 +184,7 @@ namespace gbe
     allocatePayloadReg(GBE_CURBE_GROUP_NUM_X, 0, ocl::numgroup0);
     allocatePayloadReg(GBE_CURBE_GROUP_NUM_Y, 0, ocl::numgroup1);
     allocatePayloadReg(GBE_CURBE_GROUP_NUM_Z, 0, ocl::numgroup2);
+    allocatePayloadReg(GBE_CURBE_STACK_POINTER, 0, ocl::stackptr);
 
     // Group IDs are always allocated by the hardware in r0
     RA.insert(std::make_pair(ocl::groupid0, GenReg::f1grf(0, 1)));
@@ -557,7 +558,7 @@ namespace gbe
     using namespace ir;
     const uint32_t valueNum = insn.getValueNum();
     GenReg src;
-    GBE_ASSERT(insn.getAddressSpace() == MEM_GLOBAL);
+    //GBE_ASSERT(insn.getAddressSpace() == MEM_GLOBAL);
 
     // A scalar address register requires to be aligned
     if (isScalarReg(insn.getAddress()) == true) {
@@ -617,7 +618,7 @@ namespace gbe
                                   GenReg value)
   {
     using namespace ir;
-    GBE_ASSERT(insn.getAddressSpace() == MEM_GLOBAL);
+    // GBE_ASSERT(insn.getAddressSpace() == MEM_GLOBAL);
     GBE_ASSERT(insn.getValueNum() == 1);
     const Type type = insn.getValueType();
     const uint32_t elemSize = getByteScatterGatherSize(type);
@@ -656,7 +657,7 @@ namespace gbe
   void GenContext::emitLoadInstruction(const ir::LoadInstruction &insn) {
     using namespace ir;
     const GenReg address = this->genReg(insn.getAddress());
-    GBE_ASSERT(insn.getAddressSpace() == MEM_GLOBAL);
+    // GBE_ASSERT(insn.getAddressSpace() == MEM_GLOBAL);
     GBE_ASSERT(this->isScalarReg(insn.getValue(0)) == false);
     if (insn.isAligned() == true)
       this->emitUntypedRead(insn, address);
@@ -721,7 +722,7 @@ namespace gbe
 
   void GenContext::emitStoreInstruction(const ir::StoreInstruction &insn) {
     using namespace ir;
-    GBE_ASSERT(insn.getAddressSpace() == MEM_GLOBAL);
+    //GBE_ASSERT(insn.getAddressSpace() == MEM_GLOBAL);
     if (insn.isAligned() == true)
       this->emitUntypedWrite(insn);
     else {
@@ -772,7 +773,7 @@ namespace gbe
   void GenContext::emitInstructionStream(void) {
     using namespace ir;
 
-    // We push 0 in a scalar register to make select(pred, 0, 1) faster
+    // XXX we push 0 in a scalar register to make select(pred, 0, 1) faster
     p->push();
       p->curr.predicate = GEN_PREDICATE_NONE;
       p->curr.execWidth = 1;

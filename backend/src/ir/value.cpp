@@ -108,14 +108,15 @@ namespace ir {
 
     // Is it a function input?
     const FunctionInput *input = fn.getInput(reg);
-    if (input == NULL) return;
-    ValueDef *def = (ValueDef *) dag.getDefAddress(input);
-    udChain.insert(def);
-
+    if (input != NULL) {
+      ValueDef *def = (ValueDef *) dag.getDefAddress(input);
+      udChain.insert(def);
+    }
     // Is it a special register?
-    if (fn.isSpecialReg(reg) == false) return;
-    def = (ValueDef *) dag.getDefAddress(reg);
-    udChain.insert(def);
+    else if (fn.isSpecialReg(reg) == true) {
+      ValueDef *def = (ValueDef *) dag.getDefAddress(reg);
+      udChain.insert(def);
+    }
   }
 
   void LiveOutSet::initializeInstructionDst(void) {
@@ -430,12 +431,12 @@ namespace ir {
   }
 
 /*! Helper to deallocate objects */
-#define PTR_RELEASE(TYPE, VAR)                      \
-  do {                                              \
-    if (VAR && destroyed.contains(VAR) == false) {  \
-      destroyed.insert(VAR);                        \
-      delete##TYPE(VAR);                            \
-    }                                               \
+#define PTR_RELEASE(TYPE, VAR) \
+  do { \
+    if (VAR && destroyed.contains(VAR) == false) { \
+      destroyed.insert(VAR); \
+      delete##TYPE(VAR); \
+    } \
   } while (0)
 
   FunctionDAG::~FunctionDAG(void) {
@@ -481,6 +482,12 @@ namespace ir {
   }
   const UseSet &FunctionDAG::getUse(const FunctionInput *input) const {
     const ValueDef def(input);
+    auto it = duGraph.find(def);
+    GBE_ASSERT(it != duGraph.end());
+    return *it->second;
+  }
+  const UseSet &FunctionDAG::getUse(const Register &reg) const {
+    const ValueDef def(reg);
     auto it = duGraph.find(def);
     GBE_ASSERT(it != duGraph.end());
     return *it->second;

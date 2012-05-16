@@ -67,6 +67,8 @@ namespace gbe
     /*! Tells if the register is used */
     bool isRegUsed(const ir::Register &reg) const;
   protected:
+    /*! Look if a stack is needed and allocate it */
+    void buildStack(void);
     /*! Build the curbe patch list for the given kernel */
     void buildPatchList(void);
     /*! Build the list of arguments to set to launch the kernel */
