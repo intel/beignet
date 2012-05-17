@@ -375,11 +375,11 @@ namespace gbe
   template<> INLINE uint32_t isPowerOf<2>(uint32_t i) { return ((i-1)&i) == 0; }
 
   /*! random functions */
-  template<typename T> T   random() { return T(0); }
-  template<> INLINE int    random() { return int(rand()); }
+  template<typename T> T     random() { return T(0); }
+  template<> INLINE int32_t  random() { return int(rand()); }
   template<> INLINE uint32_t random() { return uint32_t(rand()); }
-  template<> INLINE float  random() { return random<uint32_t>()/float(RAND_MAX); }
-  template<> INLINE double random() { return random<uint32_t>()/double(RAND_MAX); }
+  template<> INLINE float    random() { return random<uint32_t>()/float(RAND_MAX); }
+  template<> INLINE double   random() { return random<uint32_t>()/double(RAND_MAX); }
 
   /** returns performance counter in seconds */
   double getSeconds();

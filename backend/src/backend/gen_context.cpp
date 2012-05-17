@@ -770,6 +770,44 @@ namespace gbe
     }
   }
 
+  void GenContext::emitStackPointer(void) {
+    using namespace ir;
+
+    // Only emit stack pointer computation if we use a stack
+    if (kernel->getCurbeOffset(GBE_CURBE_STACK_POINTER, 0) <= 0)
+      return;
+
+    // Check that everything is consistent in the kernel code
+    const uint32_t perLaneSize = kernel->getStackSize();
+    const uint32_t perThreadSize = perLaneSize * this->simdWidth;
+    const int32_t offset = kernel->getCurbeOffset(GBE_CURBE_EXTRA_ARGUMENT, GBE_STACK_BUFFER);
+    GBE_ASSERT(perLaneSize > 0);
+    GBE_ASSERT(isPowerOf<2>(perLaneSize) == true);
+    GBE_ASSERT(isPowerOf<2>(perThreadSize) == true);
+
+    // Use shifts rather than muls which are limited to 32x16 bit sources
+    const uint32_t perLaneShift = logi2(perLaneSize);
+    const uint32_t perThreadShift = logi2(perThreadSize);
+    const GenReg stackptr = this->genReg(ir::ocl::stackptr, TYPE_U32);
+    const uint32_t nr = offset / GEN_REG_SIZE;
+    const uint32_t subnr = (offset % GEN_REG_SIZE) / sizeof(uint32_t);
+    const GenReg bufferptr = GenReg::ud1grf(nr, subnr);
+
+    // We compute the per-lane stack pointer here
+    p->push();
+      p->curr.execWidth = 1;
+      p->curr.predicate = GEN_PREDICATE_NONE;
+      p->SHR(GenReg::ud1grf(126,0), GenReg::ud1grf(0,5), GenReg::immud(10));
+      p->curr.execWidth = this->simdWidth;
+      p->SHL(stackptr, stackptr, GenReg::immud(perLaneShift));
+      p->curr.execWidth = 1;
+      p->SHL(GenReg::ud1grf(126,0), GenReg::ud1grf(126,0), GenReg::immud(perThreadShift));
+      p->curr.execWidth = this->simdWidth;
+      p->ADD(stackptr, stackptr, bufferptr);
+      p->ADD(stackptr, stackptr, GenReg::ud1grf(126,0));
+    p->pop();
+  }
+
   void GenContext::emitInstructionStream(void) {
     using namespace ir;
 
@@ -807,6 +845,7 @@ namespace gbe
   void GenContext::emitCode(void) {
     GenKernel *genKernel = static_cast<GenKernel*>(this->kernel);
     this->allocateRegister();
+    this->emitStackPointer();
     this->emitInstructionStream();
     this->patchBranches();
     genKernel->insnNum = p->insnNum;

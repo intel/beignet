@@ -351,6 +351,10 @@ namespace gbe
       return ud8(GEN_GENERAL_REGISTER_FILE, nr, subnr);
     }
 
+    static INLINE GenReg ud1grf(uint32_t nr, uint32_t subnr) {
+      return ud1(GEN_GENERAL_REGISTER_FILE, nr, subnr);
+    }
+
     static INLINE GenReg uw1grf(uint32_t nr, uint32_t subnr) {
       return uw1(GEN_GENERAL_REGISTER_FILE, nr, subnr);
     }

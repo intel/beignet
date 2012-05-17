@@ -56,6 +56,8 @@ namespace gbe
     void allocateRegister(void);
     /*! Create a GenReg from a ir::Register */
     uint32_t createGenReg(ir::Register reg, uint32_t grfOffset);
+    /*! Emit the per-lane stack pointer computation */
+    void emitStackPointer(void);
     /*! Emit the instructions */
     void emitInstructionStream(void);
     /*! Set the correct target values for the branches */

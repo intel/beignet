@@ -69,7 +69,7 @@ namespace gbe
       return;
     // Be sure that the stack pointer is set
     GBE_ASSERT(this->kernel->getCurbeOffset(GBE_CURBE_STACK_POINTER, 0) >= 0);
-    this->kernel->stackSize = 2*KB; // XXX compute that in a better way
+    this->kernel->stackSize = KB; // XXX compute that in a better way
   }
 
   void Context::buildPatchList(void) {
