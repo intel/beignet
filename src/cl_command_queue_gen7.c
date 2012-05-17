@@ -141,8 +141,6 @@ cl_bind_stack(cl_gpgpu gpgpu, cl_kernel ker)
 {
   cl_context ctx = ker->program->ctx;
   cl_device_id device = ctx->device;
-  cl_buffer_mgr bufmgr = cl_context_get_bufmgr(ctx);
-  cl_buffer buffer = NULL;
   const int32_t per_lane_stack_sz = gbe_kernel_get_stack_size(ker->opaque);
   const int32_t value = GBE_CURBE_EXTRA_ARGUMENT;
   const int32_t sub_value = GBE_STACK_BUFFER;
@@ -160,8 +158,7 @@ cl_bind_stack(cl_gpgpu gpgpu, cl_kernel ker)
   stack_sz *= gbe_kernel_get_simd_width(ker->opaque);
   stack_sz *= device->max_compute_unit;
   stack_sz *= device->max_thread_per_unit;
-  buffer = cl_buffer_alloc(bufmgr, NULL, stack_sz, 64);
-  cl_gpgpu_bind_buf(gpgpu, buffer, offset, cc_llc_l3);
+  cl_gpgpu_set_stack(gpgpu, offset, stack_sz, cc_llc_l3);
 }
 
 LOCAL cl_int

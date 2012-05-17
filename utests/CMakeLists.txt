@@ -28,7 +28,8 @@ ADD_LIBRARY(utests SHARED
             compiler_lower_return0.cpp
             compiler_lower_return1.cpp
             compiler_lower_return2.cpp
-            compiler_array.cpp)
+            compiler_array.cpp
+            compiler_array0.cpp)
 TARGET_LINK_LIBRARIES(utests cl m)
 
 ADD_EXECUTABLE(run utest_run.cpp)

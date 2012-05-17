@@ -196,6 +196,7 @@ struct _sim_gpgpu
   sim_driver driver;                 /* the driver the gpgpu states belongs to */
   sim_kernel_cb *kernel;             /* call it for each HW thread */
   sim_buffer binded_buf[max_buf_n];  /* all buffers binded for the call */
+  sim_buffer stack;                  /* used only when stack is required */
   char *fake_memory;                 /* fake memory to emulate flat address space in any mode (32 / 64 bits) */
   char *curbe;                       /* constant buffer */
   uint32_t binded_offset[max_buf_n]; /* their offsets in the constant buffer */
@@ -210,6 +211,7 @@ typedef struct _sim_gpgpu *sim_gpgpu;
 static void sim_gpgpu_delete(sim_gpgpu gpgpu) {
   if (gpgpu->fake_memory) cl_free(gpgpu->fake_memory);
   if (gpgpu->curbe) cl_free(gpgpu->curbe);
+  if (gpgpu->stack) sim_buffer_delete(gpgpu->stack);
   cl_free(gpgpu);
 }
 
@@ -217,6 +219,7 @@ static sim_gpgpu sim_gpgpu_new(sim_driver driver)
 {
   sim_gpgpu gpgpu = NULL;
   TRY_ALLOC_NO_ERR(gpgpu, cl_calloc(1, sizeof(struct _sim_gpgpu)));
+  gpgpu->driver = driver;
 exit:
   return gpgpu;
 error:
@@ -264,7 +267,12 @@ static void
 sim_gpgpu_state_init(sim_gpgpu gpgpu, uint32_t max_threads, uint32_t size_cs_entry)
 {
   assert(gpgpu);
-  memset(gpgpu, 0, sizeof(*gpgpu));
+  if (gpgpu->stack)
+    sim_buffer_delete(gpgpu->stack);
+  gpgpu->fake_memory = NULL;
+  gpgpu->curbe = NULL;
+  gpgpu->binded_n = 0;
+  gpgpu->thread_n = 0;
   gpgpu->curbe_sz = size_cs_entry * 32;
   gpgpu->max_threads = max_threads;
 }
@@ -303,6 +311,14 @@ sim_gpgpu_bind_buf(sim_gpgpu gpgpu, sim_buffer buf, uint32_t offset, uint32_t cc
   gpgpu->binded_buf[gpgpu->binded_n] = buf;
   gpgpu->binded_offset[gpgpu->binded_n] = offset;
   gpgpu->binded_n++;
+}
+
+static void
+sim_gpgpu_set_stack(sim_gpgpu gpgpu, uint32_t offset, uint32_t size, uint32_t cchint)
+{
+  sim_bufmgr bufmgr = gpgpu->driver->bufmgr;
+  gpgpu->stack = sim_buffer_alloc(bufmgr, "STACK", size, 64);
+  sim_gpgpu_bind_buf(gpgpu, gpgpu->stack, offset, cchint);
 }
 
 static void
@@ -364,6 +380,7 @@ sim_setup_callbacks(void)
   cl_gpgpu_delete = (cl_gpgpu_delete_cb *) sim_gpgpu_delete;
   cl_gpgpu_bind_image2D = (cl_gpgpu_bind_image2D_cb *) sim_gpgpu_bind_image2D;
   cl_gpgpu_bind_buf = (cl_gpgpu_bind_buf_cb *) sim_gpgpu_bind_buf;
+  cl_gpgpu_set_stack = (cl_gpgpu_set_stack_cb *) sim_gpgpu_set_stack;
   cl_gpgpu_state_init = (cl_gpgpu_state_init_cb *) sim_gpgpu_state_init;
   cl_gpgpu_set_perf_counters = (cl_gpgpu_set_perf_counters_cb *) sim_gpgpu_set_perf_counters;
   cl_gpgpu_upload_constants = (cl_gpgpu_upload_constants_cb *) sim_gpgpu_upload_constants;

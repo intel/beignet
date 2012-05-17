@@ -23,7 +23,7 @@
 #include <stdint.h>
 #include <stdlib.h>
 
-/* XXX needed for previous driver */
+/* Various limitations we should remove actually */
 #define GEN_MAX_SURFACES 128
 #define GEN_MAX_SAMPLERS 16
 
@@ -117,6 +117,10 @@ typedef void (cl_gpgpu_bind_image2D_cb)(cl_gpgpu state,
                                         int pitch,
                                         cl_gpgpu_tiling tiling);
 extern cl_gpgpu_bind_image2D_cb *cl_gpgpu_bind_image2D;
+
+/* Setup a stack */
+typedef void (cl_gpgpu_set_stack_cb)(cl_gpgpu, uint32_t offset, uint32_t size, uint32_t cchint);
+extern cl_gpgpu_set_stack_cb *cl_gpgpu_set_stack;
 
 /* Configure internal state */
 typedef void (cl_gpgpu_state_init_cb)(cl_gpgpu, uint32_t max_threads, uint32_t size_cs_entry);

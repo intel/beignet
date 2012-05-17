@@ -45,6 +45,7 @@ LOCAL cl_buffer_wait_rendering_cb *cl_buffer_wait_rendering = NULL;
 LOCAL cl_gpgpu_new_cb *cl_gpgpu_new = NULL;
 LOCAL cl_gpgpu_delete_cb *cl_gpgpu_delete = NULL;
 LOCAL cl_gpgpu_bind_buf_cb *cl_gpgpu_bind_buf = NULL;
+LOCAL cl_gpgpu_set_stack_cb *cl_gpgpu_set_stack = NULL;
 LOCAL cl_gpgpu_bind_image2D_cb *cl_gpgpu_bind_image2D = NULL;
 LOCAL cl_gpgpu_state_init_cb *cl_gpgpu_state_init = NULL;
 LOCAL cl_gpgpu_set_perf_counters_cb *cl_gpgpu_set_perf_counters = NULL;

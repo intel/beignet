@@ -12,4 +12,3 @@ compiler_array(__global int *src, __global int *dst)
   dst[get_global_id(0)] = array[get_local_id(0)];
 }
 
-
