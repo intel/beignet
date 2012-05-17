@@ -192,6 +192,10 @@ namespace ir {
       GBE_ASSERT(ID < inputNum() && inputs[ID] != NULL);
       return *inputs[ID];
     }
+    INLINE FunctionInput &getInput(uint32_t ID) {
+      GBE_ASSERT(ID < inputNum() && inputs[ID] != NULL);
+      return *inputs[ID];
+    }
     /*! Get input argument from the register (linear research). Return NULL if
      *  this is not an input argument
      */

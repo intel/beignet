@@ -76,8 +76,10 @@ namespace ir {
     FunctionArgumentLowerer(Unit &unit);
     /*! Free everything we needed */
     ~FunctionArgumentLowerer(void);
-    /*! Perform the function argument substitution */
+    /*! Perform the function argument substitution if needed */
     void lower(const std::string &name);
+    /*! Inspect and possibly the given function argument */
+    void lower(FunctionInput &input);
     Liveness *liveness; //!< To compute the function graph
     FunctionDAG *dag;   //!< Contains complete dependency information
     Unit &unit;         //!< The unit we process
@@ -98,7 +100,30 @@ namespace ir {
     GBE_SAFE_DELETE(liveness);
     this->liveness = GBE_NEW(ir::Liveness, *fn);
     this->dag = GBE_NEW(ir::FunctionDAG, *this->liveness);
-   }
+    const uint32_t inputNum = fn->inputNum();
+    for (uint32_t inputID = 0; inputID < inputNum; ++inputID) {
+      FunctionInput &input = fn->getInput(inputID);
+      if (input.type != FunctionInput::STRUCTURE) return;
+      this->lower(input);
+    }
+  }
+
+  void FunctionArgumentLowerer::lower(FunctionInput &input) {
+#if 0
+    const UseSet &useSet = dag->getUse(input.reg);
+    bool isIndirectlyRead = false;
+    bool isDirectlyRead = false;
+
+    // We explore the graph of instructions that use the input register. 
+
+    // 1 - we look for a store. If we find one, we need to spill it. Since we do
+    // not do any aliasing analysis, we will spill all structure arguments also
+    set <Instruction*> visited;
+    for (const auto &use : useSet) {
+      const Instruction 
+    }
+#endif
+  }
 
 } /* namespace ir */
 } /* namespace gbe */
