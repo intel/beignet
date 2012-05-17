@@ -102,7 +102,6 @@ error:
 
 static void
 cl_curbe_fill(cl_kernel ker,
-              char *curbe,
               const size_t *global_wk_off,
               const size_t *global_wk_sz,
               const size_t *local_wk_sz)
@@ -110,7 +109,7 @@ cl_curbe_fill(cl_kernel ker,
   int32_t offset;
 #define UPLOAD(ENUM, VALUE) \
   if ((offset = gbe_kernel_get_curbe_offset(ker->opaque, ENUM, 0)) >= 0) \
-    *((uint32_t *) (curbe + offset)) = VALUE;
+    *((uint32_t *) (ker->curbe + offset)) = VALUE;
   UPLOAD(GBE_CURBE_LOCAL_SIZE_X, local_wk_sz[0]);
   UPLOAD(GBE_CURBE_LOCAL_SIZE_Y, local_wk_sz[1]);
   UPLOAD(GBE_CURBE_LOCAL_SIZE_Z, local_wk_sz[2]);
@@ -125,12 +124,12 @@ cl_curbe_fill(cl_kernel ker,
   UPLOAD(GBE_CURBE_GROUP_NUM_Z, global_wk_sz[2]/local_wk_sz[2]);
 #undef UPLOAD
 
-  /* Write identity for the stack pointer. This will make the stack pointer
-   * computations faster in the kernel
+  /* Write identity for the stack pointer. This is required by the stack pointer
+   * computation in the kernel
    */
   if ((offset = gbe_kernel_get_curbe_offset(ker->opaque, GBE_CURBE_STACK_POINTER, 0)) >= 0) {
     const uint32_t simd_sz = gbe_kernel_get_simd_width(ker->opaque);
-    uint32_t *stackptr = (uint32_t *) (curbe + offset);
+    uint32_t *stackptr = (uint32_t *) (ker->curbe + offset);
     int32_t i;
     for (i = 0; i < simd_sz; ++i) stackptr[i] = i;
   }
@@ -170,7 +169,6 @@ cl_command_queue_ND_range_gen7(cl_command_queue queue,
 {
   cl_context ctx = queue->ctx;
   cl_gpgpu gpgpu = queue->gpgpu;
-  char *curbe = NULL;        /* Does not include per-thread local IDs */
   char *final_curbe = NULL;  /* Includes them and one sub-buffer per group */
   cl_gpgpu_kernel kernel;
   const uint32_t simd_sz = cl_kernel_get_simd_width(ker);
@@ -187,8 +185,8 @@ cl_command_queue_ND_range_gen7(cl_command_queue queue,
   kernel.slm_sz = 0;
 
   /* Curbe step 1: fill the constant buffer data shared by all threads */
-  curbe = alloca(ker->curbe_sz);
-  cl_curbe_fill(ker, curbe, global_wk_off, global_wk_sz, local_wk_sz);
+  if (ker->curbe)
+    cl_curbe_fill(ker, global_wk_off, global_wk_sz, local_wk_sz);
 
   /* Compute the number of HW threads we need */
   TRY (cl_kernel_work_group_sz, ker, local_wk_sz, 3, &local_sz);
@@ -209,12 +207,14 @@ cl_command_queue_ND_range_gen7(cl_command_queue queue,
   cl_gpgpu_states_setup(gpgpu, &kernel);
 
   /* Curbe step 2. Give the localID and upload it to video memory */
-  TRY_ALLOC (final_curbe, (char*) alloca(thread_n * cst_sz));
-  if (curbe)
-    for (i = 0; i < thread_n; ++i)
-      memcpy(final_curbe + cst_sz * i, curbe, cst_sz);
-  TRY (cl_set_varying_payload, ker, final_curbe, local_wk_sz, simd_sz, cst_sz, thread_n);
-  cl_gpgpu_upload_constants(gpgpu, final_curbe, thread_n*cst_sz);
+  if (ker->curbe) {
+    assert(cst_sz > 0);
+    TRY_ALLOC (final_curbe, (char*) alloca(thread_n * cst_sz));
+      for (i = 0; i < thread_n; ++i)
+        memcpy(final_curbe + cst_sz * i, ker->curbe, cst_sz);
+    TRY (cl_set_varying_payload, ker, final_curbe, local_wk_sz, simd_sz, cst_sz, thread_n);
+    cl_gpgpu_upload_constants(gpgpu, final_curbe, thread_n*cst_sz);
+  }
 
   /* Start a new batch buffer */
   batch_sz = cl_kernel_compute_batch_sz(ker);
