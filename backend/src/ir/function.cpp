@@ -173,7 +173,7 @@ namespace ir {
         case FunctionInput::CONSTANT_POINTER: out << "constant"; break;
         case FunctionInput::VALUE: out << "value"; break;
         case FunctionInput::STRUCTURE:
-          out << "structure." << input.elementSize;
+          out << "structure." << input.size;
         break;
         default: break;
       }

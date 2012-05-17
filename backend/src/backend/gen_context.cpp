@@ -95,28 +95,44 @@ namespace gbe
   // Per-lane block IPs are always pre-allocated and used for branches. We just
   // 0xffff as a fake register for them
   static const ir::Register blockIPReg(0xffff);
-  static const size_t familySize[] = {2,2,2,4,8};
+
+  // Note that byte vector registers use two bytes per byte (and can be
+  // interleaved)
+  static const size_t familyVectorSize[] = {2,2,2,4,8};
+  static const size_t familyScalarSize[] = {2,1,2,4,8};
+
+#define INSERT_REG(SIMD16, SIMD8, SIMD1) \
+  if (this->isScalarReg(reg) == true) \
+    RA.insert(std::make_pair(reg, GenReg::SIMD1(nr, subnr))); \
+  else if (this->simdWidth == 8) \
+    RA.insert(std::make_pair(reg, GenReg::SIMD8(nr, subnr))); \
+  else if (this->simdWidth == 16) \
+    RA.insert(std::make_pair(reg, GenReg::SIMD16(nr, subnr)));
 
   void GenContext::allocatePayloadReg(gbe_curbe_type value,
                                       uint32_t subValue,
                                       const ir::Register &reg)
   {
+    using namespace ir;
     const int32_t offset = kernel->getCurbeOffset(value, subValue);
     if (offset >= 0) {
       const ir::RegisterData data = fn.getRegisterData(reg);
       const ir::RegisterFamily family = data.family;
-      const uint32_t typeSize = familySize[family];
+      const bool isScalar = this->isScalarReg(reg);
+      const uint32_t typeSize = isScalar ? familyScalarSize[family] : familyVectorSize[family];
       const uint32_t nr = (offset + GEN_REG_SIZE) / GEN_REG_SIZE;
       const uint32_t subnr = ((offset + GEN_REG_SIZE) % GEN_REG_SIZE) / typeSize;
-      GBE_ASSERT(data.family == ir::FAMILY_DWORD); // XXX support the rest
-      if (this->isScalarReg(reg) == true)
-        RA.insert(std::make_pair(reg, GenReg::f1grf(nr, subnr)));
-      else if (this->simdWidth == 8)
-        RA.insert(std::make_pair(reg, GenReg::f8grf(nr, subnr)));
-      else if (this->simdWidth == 16)
-        RA.insert(std::make_pair(reg, GenReg::f16grf(nr, subnr)));
+      switch (family) {
+        case FAMILY_BOOL:
+        case FAMILY_WORD: INSERT_REG(uw16grf, uw8grf, uw1grf); break;
+        case FAMILY_BYTE: INSERT_REG(ub16grf, ub8grf, ub1grf); break;
+        case FAMILY_DWORD: INSERT_REG(f16grf, f8grf, f1grf); break;
+        default: NOT_SUPPORTED;
+      }
     }
   }
+
+#undef INSERT_REG
 
 #define INSERT_REG(SIMD16, SIMD8, SIMD1) \
   if (this->isScalarReg(reg) == true) { \
@@ -135,9 +151,10 @@ namespace gbe
     using namespace ir;
     if (fn.isSpecialReg(reg) == true) return grfOffset; // already done
     if (fn.getInput(reg) != NULL) return grfOffset; // already done
+    GBE_ASSERT(this->isScalarReg(reg) == false);
     const RegisterData regData = fn.getRegisterData(reg);
     const RegisterFamily family = regData.family;
-    const uint32_t typeSize = familySize[family];
+    const uint32_t typeSize = familyVectorSize[family];
     const uint32_t regSize = simdWidth*typeSize;
     grfOffset = ALIGN(grfOffset, regSize);
     if (grfOffset + regSize <= GEN_GRF_SIZE) {
@@ -145,17 +162,10 @@ namespace gbe
       const uint32_t subnr = (grfOffset % GEN_REG_SIZE) / typeSize;
       switch (family) {
         case FAMILY_BOOL:
-        case FAMILY_WORD:
-          INSERT_REG(GenReg::uw16grf, GenReg::uw8grf, GenReg::uw1grf);
-          break;
-        case FAMILY_BYTE:
-          INSERT_REG(GenReg::ub16grf, GenReg::ub8grf, GenReg::ub1grf);
-          break;
-        case FAMILY_DWORD:
-          INSERT_REG(GenReg::f16grf, GenReg::f8grf, GenReg::f1grf);
-          break;
-        default:
-          NOT_SUPPORTED;
+        case FAMILY_WORD: INSERT_REG(uw16grf, uw8grf, uw1grf); break;
+        case FAMILY_BYTE: INSERT_REG(ub16grf, ub8grf, ub1grf); break;
+        case FAMILY_DWORD: INSERT_REG(f16grf, f8grf, f1grf); break;
+        default: NOT_SUPPORTED;
       }
     } else
       NOT_SUPPORTED;
@@ -207,7 +217,8 @@ namespace gbe
     for (uint32_t inputID = 0; inputID < inputNum; ++inputID) {
       const FunctionInput &input = fn.getInput(inputID);
       GBE_ASSERT(input.type == FunctionInput::GLOBAL_POINTER ||
-                 input.type == FunctionInput::CONSTANT_POINTER);
+                 input.type == FunctionInput::CONSTANT_POINTER ||
+                 input.type == FunctionInput::VALUE);
       allocatePayloadReg(GBE_CURBE_KERNEL_ARGUMENT, inputID, input.reg);
     }
 

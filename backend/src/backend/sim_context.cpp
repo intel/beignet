@@ -120,8 +120,7 @@ namespace gbe
       const ir::Register reg = input.reg;
       const int32_t offset = kernel->getCurbeOffset(GBE_CURBE_KERNEL_ARGUMENT, inputID);
       // XXX add support for these items
-      GBE_ASSERT (input.type != ir::FunctionInput::VALUE &&
-                  input.type != ir::FunctionInput::STRUCTURE &&
+      GBE_ASSERT (input.type != ir::FunctionInput::STRUCTURE &&
                   input.type != ir::FunctionInput::IMAGE &&
                   input.type != ir::FunctionInput::LOCAL_POINTER);
       GBE_ASSERT(offset >= 0);

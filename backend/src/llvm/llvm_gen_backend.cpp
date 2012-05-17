@@ -626,7 +626,7 @@ namespace gbe
         GBE_ASSERT(isScalarType(type) == true);
         const ir::Register reg = regTranslator.newScalar(I);
         if (type->isPointerTy() == false)
-          ctx.input(ir::FunctionInput::VALUE, reg);
+          ctx.input(ir::FunctionInput::VALUE, reg, getTypeByteSize(unit, type));
         else {
           PointerType *pointerType = dyn_cast<PointerType>(type);
           // By value structure
@@ -639,15 +639,16 @@ namespace gbe
           else {
             const uint32_t addr = pointerType->getAddressSpace();
             const ir::AddressSpace addrSpace = addressSpaceLLVMToGen(addr);
-            switch (addrSpace) {
+            const uint32_t ptrSize = getTypeByteSize(unit, type);
+              switch (addrSpace) {
               case ir::MEM_GLOBAL:
-                ctx.input(ir::FunctionInput::GLOBAL_POINTER, reg);
+                ctx.input(ir::FunctionInput::GLOBAL_POINTER, reg, ptrSize);
               break;
               case ir::MEM_LOCAL:
-                ctx.input(ir::FunctionInput::LOCAL_POINTER, reg);
+                ctx.input(ir::FunctionInput::LOCAL_POINTER, reg, ptrSize);
               break;
               case ir::MEM_CONSTANT:
-                ctx.input(ir::FunctionInput::CONSTANT_POINTER, reg);
+                ctx.input(ir::FunctionInput::CONSTANT_POINTER, reg, ptrSize);
               break;
               default: GBE_ASSERT(addrSpace != ir::MEM_PRIVATE);
             }

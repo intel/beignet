@@ -84,12 +84,14 @@ namespace gbe
     const uint32_t inputNum = fn.inputNum();
     for (uint32_t inputID = 0u; inputID < inputNum; ++inputID) {
       const ir::FunctionInput &input = fn.getInput(inputID);
-      // This is a pointer -> 4 bytes to patch (do 64 bits later)
+      // For pointers and values, we have nothing to do. We just push the values
       if (input.type == ir::FunctionInput::GLOBAL_POINTER ||
-          input.type == ir::FunctionInput::CONSTANT_POINTER) {
+          input.type == ir::FunctionInput::CONSTANT_POINTER ||
+          input.type == ir::FunctionInput::VALUE) {
+        kernel->curbeSize = ALIGN(kernel->curbeSize, input.size);
         const PatchInfo patch(GBE_CURBE_KERNEL_ARGUMENT, inputID, kernel->curbeSize);
         kernel->patches.push_back(patch);
-        kernel->curbeSize += ptrSize;
+        kernel->curbeSize += input.size;
       }
     }
 
@@ -174,7 +176,7 @@ namespace gbe
         case ir::FunctionInput::VALUE:
         case ir::FunctionInput::STRUCTURE:
           kernel->args[inputID].type = GBE_ARG_VALUE;
-          kernel->args[inputID].size = input.elementSize;
+          kernel->args[inputID].size = input.size;
           break;
         case ir::FunctionInput::GLOBAL_POINTER:
           kernel->args[inputID].type = GBE_ARG_GLOBAL_PTR;

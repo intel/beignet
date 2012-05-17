@@ -130,11 +130,11 @@ namespace ir {
       IMAGE             = 5  // image*d_t
     };
     /*! Create a function input */
-    INLINE FunctionInput(Type type, Register reg, uint32_t elementSize = 0u) :
-      type(type), reg(reg), elementSize(elementSize) {}
-    Type type;            /*! Gives the type of argument we have */
-    Register reg;         /*! Holds the argument */
-    uint32_t elementSize; /*! Only for structure arguments */
+    INLINE FunctionInput(Type type, Register reg, uint32_t size) :
+      type(type), reg(reg), size(size) {}
+    Type type;     /*! Gives the type of argument we have */
+    Register reg;  /*! Holds the argument */
+    uint32_t size; /*! == sizeof(void*) for pointer, sizeof(elem) for the rest */
   };
 
   /*! A function is no more that a set of declared registers and a set of

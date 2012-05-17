@@ -23,6 +23,8 @@
  */
 
 #include "ir/context.hpp"
+#include "ir/value.hpp"
+#include "ir/liveness.hpp"
 
 namespace gbe {
 namespace ir {
@@ -66,6 +68,37 @@ namespace ir {
     ctx->lower(functionName);
     GBE_DELETE(ctx);
   }
+
+  /*! Helper class to lower function arguments if required */
+  class FunctionArgumentLowerer
+  {
+    /*! Build the helper structure */
+    FunctionArgumentLowerer(Unit &unit);
+    /*! Free everything we needed */
+    ~FunctionArgumentLowerer(void);
+    /*! Perform the function argument substitution */
+    void lower(const std::string &name);
+    Liveness *liveness; //!< To compute the function graph
+    FunctionDAG *dag;   //!< Contains complete dependency information
+    Unit &unit;         //!< The unit we process
+    Function *fn;       //!< Function to patch
+  };
+
+  FunctionArgumentLowerer::FunctionArgumentLowerer(Unit &unit) :
+    liveness(NULL), dag(NULL), unit(unit) {}
+  FunctionArgumentLowerer::~FunctionArgumentLowerer(void) {
+    GBE_SAFE_DELETE(dag);
+    GBE_SAFE_DELETE(liveness);
+  }
+
+  void FunctionArgumentLowerer::lower(const std::string &functionName) {
+    if ((this->fn = unit.getFunction(functionName)) == NULL)
+      return;
+    GBE_SAFE_DELETE(dag);
+    GBE_SAFE_DELETE(liveness);
+    this->liveness = GBE_NEW(ir::Liveness, *fn);
+    this->dag = GBE_NEW(ir::FunctionDAG, *this->liveness);
+   }
 
 } /* namespace ir */
 } /* namespace gbe */
