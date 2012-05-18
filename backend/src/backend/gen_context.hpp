@@ -75,10 +75,11 @@ namespace gbe
     void emitCompareInstruction(const ir::CompareInstruction &insn);
     void emitConvertInstruction(const ir::ConvertInstruction &insn);
     void emitBranchInstruction(const ir::BranchInstruction &insn);
-    void emitTextureInstruction(const ir::TextureInstruction &insn);
     void emitLoadImmInstruction(const ir::LoadImmInstruction &insn);
     void emitLoadInstruction(const ir::LoadInstruction &insn);
     void emitStoreInstruction(const ir::StoreInstruction &insn);
+    void emitSampleInstruction(const ir::SampleInstruction &insn);
+    void emitTypedWriteInstruction(const ir::TypedWriteInstruction &insn);
     void emitFenceInstruction(const ir::FenceInstruction &insn);
     void emitLabelInstruction(const ir::LabelInstruction &insn);
     /*! It is not natively suppored on Gen. We implement it here */

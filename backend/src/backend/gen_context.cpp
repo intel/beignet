@@ -455,6 +455,12 @@ namespace gbe
   void GenContext::emitSelectInstruction(const ir::SelectInstruction &insn) {
     NOT_IMPLEMENTED;
   }
+  void GenContext::emitSampleInstruction(const ir::SampleInstruction &insn) {
+    NOT_IMPLEMENTED;
+  }
+  void GenContext::emitTypedWriteInstruction(const ir::TypedWriteInstruction &insn) {
+    NOT_IMPLEMENTED;
+  }
 
   void GenContext::emitCompareInstruction(const ir::CompareInstruction &insn) {
     using namespace ir;
@@ -540,10 +546,6 @@ namespace gbe
         this->emitForwardBranch(insn, dst, src);
     } else
       NOT_IMPLEMENTED;
-  }
-
-  void GenContext::emitTextureInstruction(const ir::TextureInstruction &insn) {
-    NOT_IMPLEMENTED;
   }
 
   void GenContext::emitLoadImmInstruction(const ir::LoadImmInstruction &insn) {

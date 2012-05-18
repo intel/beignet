@@ -58,6 +58,10 @@ namespace ir {
     // function
     lowerReturn(unit, fn->getName());
 
+    // Spill function argument to the stack if required and identify which
+    // function arguments can use constant push
+    
+
     // Properly order labels and compute the CFG
     fn->sortLabels();
     fn->computeCFG();

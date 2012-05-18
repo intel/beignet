@@ -202,6 +202,8 @@ namespace ir {
    */
   class StoreInstruction : public Instruction {
   public:
+    /*! Where the address register goes */
+    static const uint32_t addressIndex = 0;
     /*! Return the types of the values to store */
     Type getValueType(void) const;
     /*! Give the number of values the instruction is storing (srcNum-1) */
@@ -211,7 +213,7 @@ namespace ir {
     /*! DWORD aligned means untyped read for Gen. That is what matters */
     bool isAligned(void) const;
     /*! Return the register that contains the addresses */
-    INLINE Register getAddress(void) const { return this->getSrc(0u); }
+    INLINE Register getAddress(void) const { return this->getSrc(addressIndex); }
     /*! Return the register that contain value valueID */
     INLINE Register getValue(uint32_t valueID) const {
       GBE_ASSERT(valueID < this->getValueNum());
@@ -257,6 +259,20 @@ namespace ir {
     Immediate getImmediate(void) const;
     /*! Return the type of the stored value */
     Type getType(void) const;
+    /*! Return true if the given instruction is an instance of this class */
+    static bool isClassOf(const Instruction &insn);
+  };
+
+  /*! Store data in an texture */
+  class TypedWriteInstruction : public Instruction {
+  public:
+    /*! Return true if the given instruction is an instance of this class */
+    static bool isClassOf(const Instruction &insn);
+  };
+
+  /*! Load texels from a texture */
+  class SampleInstruction : public Instruction {
+  public:
     /*! Return true if the given instruction is an instance of this class */
     static bool isClassOf(const Instruction &insn);
   };
@@ -409,12 +425,16 @@ namespace ir {
   Instruction BRA(LabelIndex labelIndex, Register pred);
   /*! ret */
   Instruction RET(void);
-  /*! loadi.type dst value */
-  Instruction LOADI(Type type, Register dst, ImmediateIndex value);
   /*! load.type.space {dst1,...,dst_valueNum} offset value */
   Instruction LOAD(Type type, Tuple dst, Register offset, AddressSpace space, uint32_t valueNum, bool dwAligned);
   /*! store.type.space offset {src1,...,src_valueNum} value */
   Instruction STORE(Type type, Tuple src, Register offset, AddressSpace space, uint32_t valueNum, bool dwAligned);
+  /*! loadi.type dst value */
+  Instruction LOADI(Type type, Register dst, ImmediateIndex value);
+  /*! typed write TODO */
+  Instruction TYPED_WRITE(void);
+  /*! sample TODO */
+  Instruction SAMPLE(void);
   /*! fence.space */
   Instruction FENCE(AddressSpace space);
   /*! label labelIndex */

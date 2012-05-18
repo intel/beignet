@@ -385,11 +385,23 @@ namespace ir {
       uint8_t dwAligned:1;    //!< DWORD aligned is what matters with GEN
     };
 
-    class ALIGNED_INSTRUCTION TextureInstruction :
-      public BasePolicy, public NoDstPolicy, public NoSrcPolicy // TODO REMOVE THIS
+    class ALIGNED_INSTRUCTION SampleInstruction : // TODO
+      public BasePolicy, public NoDstPolicy, public NoSrcPolicy
     {
     public:
-      INLINE TextureInstruction(void) { this->opcode = OP_TEX; }
+      INLINE SampleInstruction(void) { this->opcode = OP_SAMPLE; }
+      INLINE bool wellFormed(const Function &fn, std::string &why) const;
+      INLINE void out(std::ostream &out, const Function &fn) const {
+        this->outOpcode(out);
+        out << " ... TODO";
+      }
+    };
+
+    class ALIGNED_INSTRUCTION TypedWriteInstruction : // TODO
+      public BasePolicy, public NoDstPolicy, public NoSrcPolicy
+    {
+    public:
+      INLINE TypedWriteInstruction(void) { this->opcode = OP_TYPED_WRITE; }
       INLINE bool wellFormed(const Function &fn, std::string &why) const;
       INLINE void out(std::ostream &out, const Function &fn) const {
         this->outOpcode(out);
@@ -679,10 +691,10 @@ namespace ir {
     }
 
     // TODO
-    INLINE bool TextureInstruction::wellFormed(const Function &fn, std::string &why) const
-    {
-      return true;
-    }
+    INLINE bool SampleInstruction::wellFormed(const Function &fn, std::string &why) const
+    { return true; }
+    INLINE bool TypedWriteInstruction::wellFormed(const Function &fn, std::string &why) const
+    { return true; }
 
     // Ensure that types and register family match
     INLINE bool LoadImmInstruction::wellFormed(const Function &fn, std::string &whyNot) const
@@ -888,9 +900,13 @@ START_INTROSPECTION(BranchInstruction)
 #include "ir/instruction.hxx"
 END_INTROSPECTION(BranchInstruction)
 
-START_INTROSPECTION(TextureInstruction)
+START_INTROSPECTION(SampleInstruction)
 #include "ir/instruction.hxx"
-END_INTROSPECTION(TextureInstruction)
+END_INTROSPECTION(SampleInstruction)
+
+START_INTROSPECTION(TypedWriteInstruction)
+#include "ir/instruction.hxx"
+END_INTROSPECTION(TypedWriteInstruction)
 
 START_INTROSPECTION(LoadImmInstruction)
 #include "ir/instruction.hxx"
