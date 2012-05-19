@@ -474,29 +474,27 @@ namespace ir {
   }
 #undef PTR_RELEASE
 
-  const UseSet &FunctionDAG::getUse(const Instruction *insn, uint32_t dstID) const {
-    const ValueDef def(insn, dstID);
+  const UseSet &FunctionDAG::getUse(const ValueDef &def) const {
     auto it = duGraph.find(def);
     GBE_ASSERT(it != duGraph.end());
     return *it->second;
+  }
+  const UseSet &FunctionDAG::getUse(const Instruction *insn, uint32_t dstID) const {
+    return this->getUse(ValueDef(insn, dstID));
   }
   const UseSet &FunctionDAG::getUse(const FunctionInput *input) const {
-    const ValueDef def(input);
-    auto it = duGraph.find(def);
-    GBE_ASSERT(it != duGraph.end());
-    return *it->second;
+    return this->getUse(ValueDef(input));
   }
   const UseSet &FunctionDAG::getUse(const Register &reg) const {
-    const ValueDef def(reg);
-    auto it = duGraph.find(def);
-    GBE_ASSERT(it != duGraph.end());
-    return *it->second;
+    return this->getUse(ValueDef(reg));
   }
-  const DefSet &FunctionDAG::getDef(const Instruction *insn, uint32_t srcID) const {
-    const ValueUse use(insn, srcID);
+  const DefSet &FunctionDAG::getDef(const ValueUse &use) const {
     auto it = udGraph.find(use);
     GBE_ASSERT(it != udGraph.end());
     return *it->second;
+  }
+  const DefSet &FunctionDAG::getDef(const Instruction *insn, uint32_t srcID) const {
+    return this->getDef(ValueUse(insn, srcID));
   }
   const ValueDef *FunctionDAG::getDefAddress(const Instruction *insn, uint32_t dstID) const {
     const ValueDef def(insn, dstID);

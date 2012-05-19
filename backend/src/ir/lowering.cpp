@@ -83,9 +83,9 @@ namespace ir {
     /*! Inspect and possibly the given function argument */
     void lower(FunctionInput &input);
     /*! Recursively look if there is a store in the given use */
-    bool useStore(Register reg, set<const Instruction*> &visited);
+    bool useStore(const ValueDef &def, set<const Instruction*> &visited);
     /*! Look if the pointer use only load with immediate offsets */
-    bool matchLoadImm(Register reg, uint64_t &offset);
+    bool matchLoadImm(const FunctionInput &input, uint64_t &offset);
     Liveness *liveness; //!< To compute the function graph
     FunctionDAG *dag;   //!< Contains complete dependency information
     Unit &unit;         //!< The unit we process
@@ -106,16 +106,18 @@ namespace ir {
     GBE_SAFE_DELETE(liveness);
     this->liveness = GBE_NEW(ir::Liveness, *fn);
     this->dag = GBE_NEW(ir::FunctionDAG, *this->liveness);
+    std::cout << *this->dag;
     const uint32_t inputNum = fn->inputNum();
     for (uint32_t inputID = 0; inputID < inputNum; ++inputID) {
       FunctionInput &input = fn->getInput(inputID);
-      if (input.type != FunctionInput::STRUCTURE) return;
+      if (input.type != FunctionInput::STRUCTURE) continue;
       this->lower(input);
     }
   }
 
-  bool FunctionArgumentLowerer::useStore(Register reg, set<const Instruction*> &visited) {
-    const UseSet &useSet = dag->getUse(reg);
+  bool FunctionArgumentLowerer::useStore(const ValueDef &def, set<const Instruction*> &visited)
+  {
+    const UseSet &useSet = dag->getUse(def);
     for (const auto &use : useSet) {
       const Instruction *insn = use->getInstruction();
       const uint32_t srcID = use->getSrcID();
@@ -131,8 +133,7 @@ namespace ir {
       else {
         const uint32_t dstNum = insn->getDstNum();
         for (uint32_t dstID = 0; dstID < dstNum; ++dstID) {
-          const Register dst = insn->getDst(dstID);
-          if (this->useStore(dst, visited) == true)
+          if (this->useStore(ValueDef(insn, dstID), visited) == true)
             return true;
         }
       }
@@ -140,8 +141,8 @@ namespace ir {
     return false;
   }
 
-  bool FunctionArgumentLowerer::matchLoadImm(Register reg, uint64_t &offset) {
-    const UseSet &useSet = dag->getUse(reg);
+  bool FunctionArgumentLowerer::matchLoadImm(const FunctionInput &input, uint64_t &offset) {
+    const UseSet &useSet = dag->getUse(&input);
     offset = 0;
     for (const auto &use : useSet) {
       const Instruction *insn = use->getInstruction();
@@ -161,6 +162,7 @@ namespace ir {
 
         // Only accept one LOADI as definition
         const ValueDef *otherDef = *defSet.begin();
+        if (otherDef->getType() != ValueDef::DEF_INSN_DST) return false;
         const Instruction *otherInsn = otherDef->getInstruction();
         if (otherInsn->getOpcode() != OP_LOADI) return false;
         const LoadImmInstruction *loadImm = cast<LoadImmInstruction>(otherInsn);
@@ -172,14 +174,11 @@ namespace ir {
 
   void FunctionArgumentLowerer::lower(FunctionInput &input)
   {
-    // Look at what happened at the input pointer to see what we need to do
-    const Register reg = input.reg;
-
     // case 1 - we may store something to the structure argument. Right now we
     // abort but we will need to spill the structures into register (actually
     // all argument that may be also indirectly read (due to aliasing problems)
     set<const Instruction*> visited;
-    GBE_ASSERTM(this->useStore(reg, visited) == false,
+    GBE_ASSERTM(this->useStore(ValueDef(&input), visited) == false,
                "A store to a structure argument "
                "(i.e. not a char/short/int/float argument) has been found. "
                "This is not supported yet");
@@ -190,14 +189,15 @@ namespace ir {
     // constant and we save the analysis result for the final backend code
     // generation
     uint64_t offset;
-    if (this->matchLoadImm(reg, offset) == true) {
+    if (this->matchLoadImm(input, offset) == true) {
 
 
+      return;
     }
+
     // case 3 - LOAD(ptr+runtime_value) is *not* supported yet
-    else
-      GBE_ASSERTM(false, "Only direct loads of structure arguments are "
-                         "supported now.");
+    GBE_ASSERTM(false, "Only direct loads of structure arguments are "
+                       "supported now.");
   }
 
   void lowerFunctionArguments(Unit &unit, const std::string &functionName) {

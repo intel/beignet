@@ -183,12 +183,16 @@ namespace ir {
     FunctionDAG(Liveness &liveness);
     /*! Free all the resources */
     ~FunctionDAG(void);
+    /*! Get the du-chain for the definition */
+    const UseSet &getUse(const ValueDef &def) const;
     /*! Get the du-chain for the given instruction and destination */
     const UseSet &getUse(const Instruction *insn, uint32_t dstID) const;
     /*! Get the du-chain for the given function input */
     const UseSet &getUse(const FunctionInput *input) const;
     /*! Get the du-chain for the given special register */
     const UseSet &getUse(const Register &reg) const;
+    /*! Get the ud-chain for the given use */
+    const DefSet &getDef(const ValueUse &use) const;
     /*! Get the ud-chain for the instruction and source */
     const DefSet &getDef(const Instruction *insn, uint32_t srcID) const;
     /*! Get the pointer to the definition *as stored in the DAG* */

@@ -954,7 +954,7 @@ INLINE void GATHER4(U &value0,
   GATHER(value2, address, base_address, 8);
   GATHER(value3, address, base_address, 12);
 }
-#include <cstdio>
+
 /* Masked gather will only load activated lanes */
 #define DECL_MASKED_GATHER(VECTOR_TYPE, SCALAR_TYPE, CTYPE) \
 template <uint32_t vectorNum> \
@@ -965,7 +965,6 @@ INLINE void MASKED_GATHER(VECTOR_TYPE<vectorNum> &dst, \
                           uint32_t offset = 0) \
 { \
   for (uint32_t i = 0; i < vectorNum; ++i) { \
-    printf("%i\n", i);\
     const uint32_t o0 = _mm_extract_epi32(PS2SI(address.m[i]), 0) + offset; \
     const uint32_t o1 = _mm_extract_epi32(PS2SI(address.m[i]), 1) + offset; \
     const uint32_t o2 = _mm_extract_epi32(PS2SI(address.m[i]), 2) + offset; \

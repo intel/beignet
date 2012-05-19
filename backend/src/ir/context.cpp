@@ -60,7 +60,7 @@ namespace ir {
 
     // Spill function argument to the stack if required and identify which
     // function arguments can use constant push
-    
+    lowerFunctionArguments(unit, fn->getName());
 
     // Properly order labels and compute the CFG
     fn->sortLabels();
