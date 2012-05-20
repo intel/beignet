@@ -135,6 +135,11 @@ namespace ir {
     uint32_t size; /*! == sizeof(void*) for pointer, sizeof(elem) for the rest */
   };
 
+  /*! Constant values can be pushed into registers by the hardware. This class
+   *  maintains the mapping between virtual registers and pushed values
+   */
+  class ConstantPush;
+
   /*! A function is no more that a set of declared registers and a set of
    *  basic blocks
    */
@@ -291,6 +296,7 @@ namespace ir {
     vector<BasicBlock*> blocks;    //!< All chained basic blocks
     RegisterFile file;             //!< RegisterDatas used by the instructions
     Profile profile;               //!< Current function profile
+    ConstantPush *pushedConstant;  //!< All constants pushed before function is called
     GBE_CLASS(Function);           //!< Use gbe allocators
   };
 

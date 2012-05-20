@@ -28,7 +28,7 @@
 namespace gbe {
 namespace ir {
 
-  /*! To build the chains (i.e. basically the DAG of values), we are going to
+  /*! To build the chains (i.e. basically the graph of values), we are going to
    *  iterate on liveout definitions: for each block and for each variable
    *  (ir::Register) alive at the end of the block (in Block::LiveOut), we are
    *  computing the set of all possible value definitions. Using these value
@@ -482,8 +482,8 @@ namespace ir {
   const UseSet &FunctionDAG::getUse(const Instruction *insn, uint32_t dstID) const {
     return this->getUse(ValueDef(insn, dstID));
   }
-  const UseSet &FunctionDAG::getUse(const FunctionArgument *input) const {
-    return this->getUse(ValueDef(input));
+  const UseSet &FunctionDAG::getUse(const FunctionArgument *arg) const {
+    return this->getUse(ValueDef(arg));
   }
   const UseSet &FunctionDAG::getUse(const Register &reg) const {
     return this->getUse(ValueDef(reg));

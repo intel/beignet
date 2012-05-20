@@ -65,9 +65,8 @@ namespace ir {
   }
 
   void lowerReturn(Unit &unit, const std::string &functionName) {
-    ContextReturn *ctx = GBE_NEW(ContextReturn, unit);
-    ctx->lower(functionName);
-    GBE_DELETE(ctx);
+    ContextReturn ctx(unit);
+    ctx.lower(functionName);
   }
 
   /*! Characterizes how the argument is used (directly read, indirectly read,
@@ -87,6 +86,7 @@ namespace ir {
     Instruction *add;     //!< Can be NULL if we only have load(arg)
     Instruction *loadImm; //!< Can also be NULL
     uint64_t offset;      //!< Offset where to load in the structure
+    uint32_t argID;       //!< Associated function argument
   };
 
   /*! List of direct loads */
@@ -103,22 +103,66 @@ namespace ir {
     /*! Perform all function arguments substitution if needed */
     void lower(const std::string &name);
     /*! Lower the given function argument accesses */
-    void lower(FunctionArgument &arg);
+    void lower(uint32_t argID);
+    /*! Build the constant push for the function */
+    void buildConstantPush(void);
     /*! Inspect the given function argument to see how it is used. If this is
      *  direct loads only, we also output the list of instructions used for each
      *  load
      */
-    ArgUse getArgUse(FunctionArgument &arg);
+    ArgUse getArgUse(uint32_t argID);
     /*! Recursively look if there is a store in the given use */
     bool useStore(const ValueDef &def, set<const Instruction*> &visited);
     /*! Look if the pointer use only load with immediate offsets */
-    bool matchLoadAddImm(const FunctionArgument &arg);
+    bool matchLoadAddImm(uint32_t argID);
     Liveness *liveness; //!< To compute the function graph
     FunctionDAG *dag;   //!< Contains complete dependency information
     Unit &unit;         //!< The unit we process
     Function *fn;       //!< Function to patch
     LoadAddImmSeq seq;  //!< All the direct loads
   };
+
+  INLINE uint64_t getOffsetFromImm(const Immediate &imm) {
+    switch (imm.type) {
+      case TYPE_DOUBLE:
+      case TYPE_FLOAT:
+      case TYPE_S64:
+      case TYPE_U64:
+      case TYPE_U32:
+      case TYPE_U16:
+      case TYPE_U8: return imm.data.u64;
+      case TYPE_S32: return int64_t(imm.data.s32);
+      case TYPE_S16: return int64_t(imm.data.s16);
+      case TYPE_S8: return int64_t(imm.data.s8);
+      case TYPE_BOOL:
+      case TYPE_HALF: NOT_SUPPORTED; return 0;
+    }
+    return 0;
+  }
+
+  bool matchLoad(Instruction *insn,
+                 Instruction *add,
+                 Instruction *loadImm,
+                 uint64_t offset,
+                 uint32_t argID,
+                 LoadAddImm &loadAddImm)
+  {
+    const Opcode opcode = insn->getOpcode();
+
+    if (opcode == OP_LOAD) {
+      LoadInstruction *load = cast<LoadInstruction>(insn);
+      if (load->getAddressSpace() != MEM_PRIVATE)
+        return false;
+      loadAddImm.load = insn;
+      loadAddImm.add = add;
+      loadAddImm.loadImm = loadImm;
+      loadAddImm.offset = offset;
+      loadAddImm.argID = argID;
+      return true;
+    } else
+      return false;
+  }
+
 
   FunctionArgumentLowerer::FunctionArgumentLowerer(Unit &unit) :
     liveness(NULL), dag(NULL), unit(unit) {}
@@ -134,11 +178,43 @@ namespace ir {
     GBE_SAFE_DELETE(liveness);
     this->liveness = GBE_NEW(ir::Liveness, *fn);
     this->dag = GBE_NEW(ir::FunctionDAG, *this->liveness);
+
+    // Process all structure arguments and find all the direct loads we can
+    // replace
     const uint32_t argNum = fn->argNum();
     for (uint32_t argID = 0; argID < argNum; ++argID) {
       FunctionArgument &arg = fn->getInput(argID);
       if (arg.type != FunctionArgument::STRUCTURE) continue;
-      this->lower(arg);
+      this->lower(argID);
+    }
+  }
+
+  INLINE bool operator< (const ArgLocation &arg0, const ArgLocation &arg1) {
+    if (arg0.argID != arg1.argID) return arg0.argID < arg1.argID;
+    return arg0.offset < arg1.offset;
+  }
+
+  void FunctionArgumentLowerer::buildConstantPush(void)
+  {
+    // The argument location we already pushed (since the same argument location
+    // can be used several times)
+    set<ArgLocation> inserted;
+    for (const auto &loadAddImm : seq) {
+      LoadInstruction *load = cast<LoadInstruction>(loadAddImm.load);
+      const uint32_t valueNum = load->getValueNum();
+      for (uint32_t valueID = 0; valueID < valueNum; ++valueID) {
+        const Type type = load->getValueType();
+        const RegisterFamily family = getFamily(type);
+        const uint32_t size = getFamilySize(family);
+        const uint32_t offset = loadAddImm.offset + valueID * size;
+        const ArgLocation argLocation(loadAddImm.argID, offset);
+        if (inserted.contains(argLocation))
+          continue;
+        const Register reg = load->getValue(valueID);
+        const Register pushed = fn->newRegister(family);
+        const Instruction mov = MOV(type, reg, pushed);
+        mov.replace(load);
+      }
     }
   }
 
@@ -167,46 +243,9 @@ namespace ir {
     return false;
   }
 
-  INLINE uint64_t getOffsetFromImm(const Immediate &imm) {
-    switch (imm.type) {
-      case TYPE_DOUBLE:
-      case TYPE_FLOAT:
-      case TYPE_S64:
-      case TYPE_U64:
-      case TYPE_U32:
-      case TYPE_U16:
-      case TYPE_U8: return imm.data.u64;
-      case TYPE_S32: return int64_t(imm.data.s32);
-      case TYPE_S16: return int64_t(imm.data.s16);
-      case TYPE_S8: return int64_t(imm.data.s8);
-      case TYPE_BOOL:
-      case TYPE_HALF: NOT_SUPPORTED; return 0;
-    }
-    return 0;
-  }
-
-  bool matchLoad(Instruction *insn,
-                 Instruction *add,
-                 Instruction *loadImm,
-                 uint64_t offset,
-                 LoadAddImm &loadAddImm)
+  bool FunctionArgumentLowerer::matchLoadAddImm(uint32_t argID)
   {
-    const Opcode opcode = insn->getOpcode();
-
-    if (opcode == OP_LOAD) {
-      LoadInstruction *load = cast<LoadInstruction>(insn);
-      if (load->getAddressSpace() != MEM_PRIVATE)
-        return false;
-      loadAddImm.load = insn;
-      loadAddImm.add = add;
-      loadAddImm.loadImm = loadImm;
-      loadAddImm.offset = offset;
-      return true;
-    } else
-      return false;
-  }
-
-  bool FunctionArgumentLowerer::matchLoadAddImm(const FunctionArgument &arg) {
+    const FunctionArgument &arg = fn->getInput(argID);
     LoadAddImmSeq tmpSeq;
 
     // Inspect all uses of the function argument pointer
@@ -217,7 +256,7 @@ namespace ir {
 
       // load dst arg
       LoadAddImm loadAddImm;
-      if (matchLoad(insn, NULL, NULL, 0, loadAddImm)) {
+      if (matchLoad(insn, NULL, NULL, 0, argID, loadAddImm)) {
         tmpSeq.push_back(loadAddImm);
         continue;
       }
@@ -252,7 +291,7 @@ namespace ir {
 
         // We finally find something like load dst arg+imm
         LoadAddImm loadAddImm;
-        if (matchLoad(insn, add, loadImm, offset, loadAddImm)) {
+        if (matchLoad(insn, add, loadImm, offset, argID, loadAddImm)) {
           tmpSeq.push_back(loadAddImm);
           continue;
         }
@@ -266,23 +305,25 @@ namespace ir {
     return true;
   }
 
-  ArgUse FunctionArgumentLowerer::getArgUse(FunctionArgument &arg)
+  ArgUse FunctionArgumentLowerer::getArgUse(uint32_t argID)
   {
+    FunctionArgument &arg = fn->getInput(argID);
+
     // case 1 - we may store something to the structure argument
     set<const Instruction*> visited;
     if (this->useStore(ValueDef(&arg), visited))
       return ARG_WRITTEN;
 
     // case 2 - we look for the patterns: LOAD(ptr) or LOAD(ptr+imm)
-    if (this->matchLoadAddImm(arg))
+    if (this->matchLoadAddImm(argID))
       return ARG_DIRECT_READ;
 
     // case 3 - LOAD(ptr+runtime_value)
     return ARG_INDIRECT_READ;
   }
 
-  void FunctionArgumentLowerer::lower(FunctionArgument &arg) {
-    const ArgUse argUse = this->getArgUse(arg);
+  void FunctionArgumentLowerer::lower(uint32_t argID) {
+    const ArgUse argUse = this->getArgUse(argID);
     GBE_ASSERTM(argUse != ARG_WRITTEN,
                 "TODO A store to a structure argument "
                 "(i.e. not a char/short/int/float argument) has been found. "

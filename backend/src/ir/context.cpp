@@ -37,6 +37,11 @@ namespace ir {
     GBE_SAFE_DELETE(usedLabels);
   }
 
+  Function &Context::getFunction(void) {
+    GBE_ASSERTM(fn != NULL, "No function currently defined");
+    return *fn;
+  }
+
   void Context::startFunction(const std::string &name) {
     fnStack.push_back(StackElem(fn,bb,usedLabels));
     fn = unit.newFunction(name);
@@ -48,6 +53,9 @@ namespace ir {
     GBE_ASSERTM(fn != NULL, "No function to end");
     GBE_ASSERT(fnStack.size() != 0);
     GBE_ASSERT(usedLabels != NULL);
+
+    // Empty function -> append a return
+    if (fn->blockNum() == 0) this->RET();
 
     // Check first that all branch instructions point to valid labels
     for (auto it = usedLabels->begin(); it != usedLabels->end(); ++it)
@@ -70,11 +78,6 @@ namespace ir {
     fn = elem.fn;
     bb = elem.bb;
     usedLabels = elem.usedLabels;
-  }
-
-  Function &Context::getFunction(void) {
-    GBE_ASSERTM(fn != NULL, "No function currently defined");
-    return *fn;
   }
 
   Register Context::reg(RegisterFamily family) {

@@ -35,9 +35,6 @@
 namespace gbe {
 namespace ir {
 
-  // We compile a unit
-  class Unit;
-
   /*! A context allows an easy creation of the functions (instruction stream and
    *  the set of immediates and registers needed for it) and constant arrays
    */
@@ -47,11 +44,15 @@ namespace ir {
     /*! Create a new context for this unit */
     Context(Unit &unit);
     /*! Free resources needed by context */
-    ~Context(void);
+    virtual ~Context(void);
     /*! Create a new function "name" */
     void startFunction(const std::string &name);
     /*! Close the function */
     void endFunction(void);
+    /*! Get the current processed unit */
+    INLINE Unit &getUnit(void) { return unit; }
+    /*! Get the current processed function */
+    Function &getFunction(void);
     /*! Create a new register with the given family for the current function */
     Register reg(RegisterFamily family);
     /*! Create a new immediate value */
@@ -84,10 +85,6 @@ namespace ir {
     INLINE Immediate getImmediate(ImmediateIndex index) const {
       return fn->getImmediate(index);
     }
-    /*! Get the current processed function */
-    Function &getFunction(void);
-    /*! Get the current processed unit */
-    INLINE Unit &getUnit(void) { return unit; }
     /*! Append a new tuple */
     template <typename... Args> INLINE Tuple tuple(Args...args) {
       GBE_ASSERTM(fn != NULL, "No function currently defined");

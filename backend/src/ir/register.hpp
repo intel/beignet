@@ -39,6 +39,17 @@ namespace ir {
     FAMILY_QWORD = 4
   };
 
+  INLINE uint32_t getFamilySize(RegisterFamily family) {
+    switch (family) {
+      case FAMILY_BYTE: return 1;
+      case FAMILY_WORD: return 2;
+      case FAMILY_DWORD: return 4;
+      case FAMILY_QWORD: return 8;
+      default: NOT_SUPPORTED;
+    };
+    return 0;
+  }
+
   /*! A register can be either a byte, a word, a dword or a qword. We store this
    *  value into a register data (which makes the register file) 
    */
@@ -70,8 +81,6 @@ namespace ir {
   INLINE bool operator< (const Register &r0, const Register &r1) {
     return r0.value() < r1.value();
   }
-  /*! Useful to encode anything special */
-  static const Register invalidRegister(0xffff);
 
   /*! Tuple is the position of the first register in the tuple vector. We
    *  enforce type safety with this class
@@ -86,8 +95,8 @@ namespace ir {
   public:
     /*! Return the index of a newly allocated register */
     INLINE Register append(RegisterFamily family) {
-      GBE_ASSERTM(regNum() <= MAX_INDEX,
-                  "Too many defined registers (only 65536 are supported)");
+      GBE_ASSERTM(regNum() < MAX_INDEX,
+                  "Too many defined registers (only 65535 are supported)");
       const uint16_t index = regNum();
       const RegisterData reg(family);
       regs.push_back(reg);
@@ -121,12 +130,16 @@ namespace ir {
     INLINE uint32_t regNum(void) const { return regs.size(); }
     /*! Number of tuples in the register file */
     INLINE uint32_t tupleNum(void) const { return regTuples.size(); }
+    /*! register and tuple indices are short */
+    enum { MAX_INDEX = 0xffff }; 
   private:
     vector<RegisterData> regs;   //!< All the registers together
     vector<Register> regTuples;  //!< Tuples are used for many src / dst
-    enum { MAX_INDEX = 0xffff }; //!< register and tuple indices are short
     GBE_CLASS(RegisterFile);
   };
+
+  /*! Useful to encode anything special */
+  static const Register invalidRegister(RegisterFile::MAX_INDEX);
 
   /*! Output the register file string in the given stream */
   std::ostream &operator<< (std::ostream &out, const RegisterFile &file);

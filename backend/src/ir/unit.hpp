@@ -77,6 +77,7 @@ namespace ir {
         return FAMILY_QWORD;
     }
   private:
+    friend class ContextInterface; //!< Can free modify the unit
     hash_map<std::string, Function*> functions; //!< All the defined functions
     ConstantSet constantSet; //!< All the constants defined in the unit
     PointerSize pointerSize; //!< Size shared by all pointers

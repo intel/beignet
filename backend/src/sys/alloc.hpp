@@ -63,62 +63,46 @@ namespace gbe
 
 /*! Declare a class with custom allocators */
 #define GBE_CLASS(TYPE) \
-  GBE_STRUCT(TYPE)      \
+  GBE_STRUCT(TYPE) \
 private:
 
 /*! Declare a structure with custom allocators */
-#define GBE_STRUCT(TYPE)                                     \
-public:                                                      \
-  void* operator new(size_t size)   {                        \
-    if (AlignOf<TYPE>::value > sizeof(uintptr_t))            \
-      return gbe::alignedMalloc(size, AlignOf<TYPE>::value); \
-    else                                                     \
-      return gbe::memAlloc(size);                            \
-  }                                                          \
-  void* operator new[](size_t size)   {                      \
-    if (AlignOf<TYPE>::value > sizeof(uintptr_t))            \
-      return gbe::alignedMalloc(size, AlignOf<TYPE>::value); \
-    else                                                     \
-      return gbe::memAlloc(size);                            \
-  }                                                          \
-  void* operator new(size_t size, void *p) { return p; }     \
-  void* operator new[](size_t size, void *p) { return p; }   \
-  void  operator delete(void* ptr) {                         \
-    if (AlignOf<TYPE>::value > sizeof(uintptr_t))            \
-      return gbe::alignedFree(ptr);                          \
-    else                                                     \
-      return gbe::memFree(ptr);                              \
-  }                                                          \
-  void  operator delete[](void* ptr) {                       \
-    if (AlignOf<TYPE>::value > sizeof(uintptr_t))            \
-      return gbe::alignedFree(ptr);                          \
-    else                                                     \
-      return gbe::memFree(ptr);                              \
-  }                                                          \
+#define GBE_STRUCT(TYPE) \
+public: \
+  void* operator new(size_t size) { \
+    return gbe::alignedMalloc(size, GBE_DEFAULT_ALIGNMENT); \
+  } \
+  void* operator new[](size_t size) { \
+   return gbe::alignedMalloc(size, GBE_DEFAULT_ALIGNMENT); \
+  } \
+  void* operator new(size_t size, void *p) { return p; } \
+  void* operator new[](size_t size, void *p) { return p; } \
+  void  operator delete(void* ptr) { return gbe::alignedFree(ptr); } \
+  void  operator delete[](void* ptr) { return gbe::alignedFree(ptr); }
 
 /*! Macros to handle allocation position */
-#define GBE_NEW(T,...)               \
+#define GBE_NEW(T,...) \
   gbe::_MemDebuggerInsertAlloc(new T(__VA_ARGS__), __FILE__, __FUNCTION__, __LINE__)
 
-#define GBE_NEW_ARRAY(T,N,...)       \
+#define GBE_NEW_ARRAY(T,N,...) \
   gbe::_MemDebuggerInsertAlloc(new T[N](__VA_ARGS__), __FILE__, __FUNCTION__, __LINE__)
 
-#define GBE_NEW_P(T,X,...)           \
+#define GBE_NEW_P(T,X,...) \
   gbe::_MemDebuggerInsertAlloc(new (X) T(__VA_ARGS__), __FILE__, __FUNCTION__, __LINE__)
 
-#define GBE_DELETE(X)                \
+#define GBE_DELETE(X) \
   do { gbe::MemDebuggerRemoveAlloc(X); delete X; } while (0)
 
-#define GBE_DELETE_ARRAY(X)          \
+#define GBE_DELETE_ARRAY(X) \
   do { gbe::MemDebuggerRemoveAlloc(X); delete[] X; } while (0)
 
-#define GBE_MALLOC(SZ)               \
+#define GBE_MALLOC(SZ) \
   gbe::MemDebuggerInsertAlloc(gbe::memAlloc(SZ),__FILE__, __FUNCTION__, __LINE__)
 
-#define GBE_FREE(X)                  \
+#define GBE_FREE(X) \
   do { gbe::MemDebuggerRemoveAlloc(X); gbe::memFree(X); } while (0)
 
-#define GBE_ALIGNED_FREE(X)          \
+#define GBE_ALIGNED_FREE(X) \
   do { gbe::MemDebuggerRemoveAlloc(X); gbe::alignedFree(X); } while (0)
 
 #define GBE_ALIGNED_MALLOC(SZ,ALIGN) \
@@ -223,15 +207,15 @@ namespace gbe
   };
 
 /*! Helper macros to build and destroy objects with a pool */
-#define DECL_POOL(TYPE, POOL)                     \
-  GrowingPool<TYPE> POOL;                         \
-  template <typename... Args>                     \
-  TYPE *new##TYPE(Args... args) {          \
-    return new (POOL.allocate()) TYPE(args...);   \
-  }                                               \
-  void delete##TYPE(TYPE *ptr) {           \
-    ptr->~TYPE();                                 \
-    POOL.deallocate(ptr);                         \
+#define DECL_POOL(TYPE, POOL) \
+  GrowingPool<TYPE> POOL; \
+  template <typename... Args> \
+  TYPE *new##TYPE(Args... args) { \
+    return new (POOL.allocate()) TYPE(args...); \
+  } \
+  void delete##TYPE(TYPE *ptr) { \
+    ptr->~TYPE(); \
+    POOL.deallocate(ptr); \
   }
 } /* namespace gbe */
 

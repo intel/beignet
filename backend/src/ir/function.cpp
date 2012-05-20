@@ -22,6 +22,7 @@
  * \author Benjamin Segovia <benjamin.segovia@intel.com>
  */
 #include "ir/function.hpp"
+#include "ir/constant_push.hpp"
 #include "sys/string.hpp"
 #include "sys/map.hpp"
 
@@ -29,12 +30,13 @@ namespace gbe {
 namespace ir {
 
   Function::Function(const std::string &name, Profile profile) :
-    name(name), profile(profile)
+    name(name), profile(profile), pushedConstant(NULL)
   { initProfile(*this); }
 
   Function::~Function(void) {
     for (auto it = blocks.begin(); it != blocks.end(); ++it) GBE_DELETE(*it);
     for (auto it = args.begin(); it != args.end(); ++it) GBE_DELETE(*it);
+    GBE_SAFE_DELETE(pushedConstant);
   }
 
   void Function::sortLabels(void) {

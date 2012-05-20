@@ -209,13 +209,13 @@
 
 /*! Run-time assertion */
 #if GBE_DEBUG
-#define GBE_ASSERT(EXPR) do {                                       \
-  if (UNLIKELY(!(EXPR)))                                            \
-    gbe::onFailedAssertion(#EXPR, __FILE__, __FUNCTION__, __LINE__);\
+#define GBE_ASSERT(EXPR) do { \
+  if (UNLIKELY(!(EXPR))) \
+    gbe::onFailedAssertion(#EXPR, __FILE__, __FUNCTION__, __LINE__); \
 } while (0)
-#define GBE_ASSERTM(EXPR, MSG) do {                                 \
-  if (UNLIKELY(!(EXPR)))                                            \
-    gbe::onFailedAssertion(MSG, __FILE__, __FUNCTION__, __LINE__);  \
+#define GBE_ASSERTM(EXPR, MSG) do { \
+  if (UNLIKELY(!(EXPR))) \
+    gbe::onFailedAssertion(MSG, __FILE__, __FUNCTION__, __LINE__); \
 } while (0)
 #else
 #define GBE_ASSERT(EXPR) do { } while (0)
@@ -226,9 +226,9 @@
 #define NOT_SUPPORTED GBE_ASSERTM (false, "Not supported")
 
 /*! Fatal error macros */
-#define FATAL_IF(COND, MSG)                          \
-do {                                                 \
-  if(UNLIKELY(COND)) FATAL(MSG);                     \
+#define FATAL_IF(COND, MSG) \
+do { \
+  if(UNLIKELY(COND)) FATAL(MSG); \
 } while (0)
 
 /* Safe deletion macros */
@@ -245,22 +245,24 @@ do {                                                 \
 #define HERE (STRING(__LINE__) "@" __FILE__)
 
 /*! Typesafe encapusalation of a type (mostly for integers) */
-#define TYPE_SAFE(SAFE, UNSAFE)                                     \
-class SAFE                                                          \
-{                                                                   \
-public:                                                             \
-  INLINE SAFE(void) {}                                              \
-  explicit INLINE SAFE(uint16_t unsafe) : unsafe(unsafe) {}         \
-  INLINE operator UNSAFE (void) const { return unsafe; }            \
-  UNSAFE value(void) const { return unsafe; }                       \
-private:                                                            \
-  UNSAFE unsafe;                                                    \
+#define TYPE_SAFE(SAFE, UNSAFE) \
+class SAFE \
+{ \
+public: \
+  INLINE SAFE(void) {} \
+  explicit INLINE SAFE(uint16_t unsafe) : unsafe(unsafe) {} \
+  INLINE operator UNSAFE (void) const { return unsafe; } \
+  UNSAFE value(void) const { return unsafe; } \
+private: \
+  UNSAFE unsafe; \
 };
+
+/*! Default alignment for the platform */
+#define GBE_DEFAULT_ALIGNMENT 16
 
 /*! Portable AlignOf */
 template <typename T>
-struct AlignOf
-{
+struct AlignOf {
   struct Helper { char x; T t; };
   enum { value = offsetof(Helper, t) };
 };
