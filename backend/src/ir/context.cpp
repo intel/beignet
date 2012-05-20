@@ -92,11 +92,11 @@ namespace ir {
     return index;
   }
 
-  void Context::input(FunctionInput::Type type, Register reg, uint32_t elementSize) {
+  void Context::input(FunctionArgument::Type type, Register reg, uint32_t elementSize) {
     GBE_ASSERTM(fn != NULL, "No function currently defined");
     GBE_ASSERTM(reg < fn->file.regNum(), "Out-of-bound register");
-    FunctionInput *input = GBE_NEW(FunctionInput, type, reg, elementSize);
-    fn->inputs.push_back(input);
+    FunctionArgument *arg = GBE_NEW(FunctionArgument, type, reg, elementSize);
+    fn->args.push_back(arg);
   }
 
   void Context::output(Register reg) {

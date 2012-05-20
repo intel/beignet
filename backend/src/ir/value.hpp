@@ -56,7 +56,7 @@ namespace ir {
       this->data.dstID = dstID;
     }
     /*! Build a value from a function argument */
-    explicit ValueDef(const FunctionInput *input) : type(DEF_FN_INPUT) {
+    explicit ValueDef(const FunctionArgument *input) : type(DEF_FN_INPUT) {
       this->data.input = input;
     }
     /*! Build a value from a special register */
@@ -76,7 +76,7 @@ namespace ir {
       return data.dstID;
     }
     /*! Get the function input (only if this is a function argument) */
-    INLINE const FunctionInput *getFunctionInput(void) const {
+    INLINE const FunctionArgument *getFunctionArgument(void) const {
       GBE_ASSERT(type == DEF_FN_INPUT);
       return data.input;
     }
@@ -105,7 +105,7 @@ namespace ir {
         uint32_t dstID;          //<! Which destination we take into account
       };
       /*! ... function argument or ... */
-      const FunctionInput *input;
+      const FunctionArgument *input;
       /*! ... special register */
       uint32_t regID;
     } data;
@@ -120,8 +120,8 @@ namespace ir {
     const ValueDef::Type type1 = def1.getType();
     if (type0 != type1) return uint32_t(type0) < uint32_t(type1);
     if (type0 == ValueDef::DEF_FN_INPUT) {
-      const FunctionInput *in0 = def0.getFunctionInput();
-      const FunctionInput *in1 = def1.getFunctionInput();
+      const FunctionArgument *in0 = def0.getFunctionArgument();
+      const FunctionArgument *in1 = def1.getFunctionArgument();
       return uintptr_t(in0) < uintptr_t(in1);
     } else if (type0 == ValueDef::DEF_SPECIAL_REG) {
       const Register reg0 = def0.getSpecialReg();
@@ -188,7 +188,7 @@ namespace ir {
     /*! Get the du-chain for the given instruction and destination */
     const UseSet &getUse(const Instruction *insn, uint32_t dstID) const;
     /*! Get the du-chain for the given function input */
-    const UseSet &getUse(const FunctionInput *input) const;
+    const UseSet &getUse(const FunctionArgument *input) const;
     /*! Get the du-chain for the given special register */
     const UseSet &getUse(const Register &reg) const;
     /*! Get the ud-chain for the given use */
@@ -198,7 +198,7 @@ namespace ir {
     /*! Get the pointer to the definition *as stored in the DAG* */
     const ValueDef *getDefAddress(const Instruction *insn, uint32_t dstID) const;
     /*! Get the pointer to the definition *as stored in the DAG* */
-    const ValueDef *getDefAddress(const FunctionInput *input) const;
+    const ValueDef *getDefAddress(const FunctionArgument *input) const;
     /*! Get the pointer to the definition *as stored in the DAG* */
     const ValueDef *getDefAddress(const Register &reg) const;
     /*! Get the pointer to the use *as stored in the DAG* */

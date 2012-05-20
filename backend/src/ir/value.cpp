@@ -63,7 +63,7 @@ namespace ir {
     /*! Initialize liveOut with the instruction destination values */
     void initializeInstructionDst(void);
     /*! Initialize liveOut with the function argument */
-    void initializeFunctionInputAndSpecialReg(void);
+    void initializeFunctionArgumentAndSpecialReg(void);
     /*! Iterate to completely transfer the liveness and get the def sets */
     void iterateLiveOut(void);
   };
@@ -75,7 +75,7 @@ namespace ir {
     liveness(liveness), dag(dag)
   {
     this->initializeInstructionDst();
-    this->initializeFunctionInputAndSpecialReg();
+    this->initializeFunctionArgumentAndSpecialReg();
     this->iterateLiveOut();
   }
 
@@ -107,7 +107,7 @@ namespace ir {
     if (fn.isEntryBlock(bb) == false) return;
 
     // Is it a function input?
-    const FunctionInput *input = fn.getInput(reg);
+    const FunctionArgument *input = fn.getInput(reg);
     if (input != NULL) {
       ValueDef *def = (ValueDef *) dag.getDefAddress(input);
       udChain.insert(def);
@@ -161,9 +161,9 @@ namespace ir {
     });
   }
 
-  void LiveOutSet::initializeFunctionInputAndSpecialReg(void) {
+  void LiveOutSet::initializeFunctionArgumentAndSpecialReg(void) {
     const Function &fn = liveness.getFunction();
-    const uint32_t inputNum = fn.inputNum();
+    const uint32_t argNum = fn.argNum();
 
     // The first block must also transfer the function arguments
     const BasicBlock &top = fn.getTopBlock();
@@ -173,14 +173,14 @@ namespace ir {
 
     // Insert all the values that are not overwritten in the block and alive at
     // the end of it
-    for (uint32_t inputID = 0; inputID < inputNum; ++inputID) {
-      const FunctionInput &input = fn.getInput(inputID);
-      const Register reg = input.reg;
+    for (uint32_t argID = 0; argID < argNum; ++argID) {
+      const FunctionArgument &arg = fn.getInput(argID);
+      const Register reg = arg.reg;
       // Do not transfer dead values
       if (info.inLiveOut(reg) == false) continue;
       // If we overwrite it, do not transfer the initial value
       if (info.inVarKill(reg) == true) continue;
-      ValueDef *def = (ValueDef*) this->dag.getDefAddress(&input);
+      ValueDef *def = (ValueDef*) this->dag.getDefAddress(&arg);
       auto it = blockDefMap->find(reg);
       GBE_ASSERT(it != blockDefMap->end());
       it->second->insert(def);
@@ -299,10 +299,10 @@ namespace ir {
     });
 
     // Function arguments are also value definitions
-    const uint32_t inputNum = fn.inputNum();
-    for (uint32_t inputID = 0; inputID < inputNum; ++inputID) {
-      const FunctionInput &input = fn.getInput(inputID);
-      ValueDef *valueDef = this->newValueDef(&input);
+    const uint32_t argNum = fn.argNum();
+    for (uint32_t argID = 0; argID < argNum; ++argID) {
+      const FunctionArgument &arg = fn.getInput(argID);
+      ValueDef *valueDef = this->newValueDef(&arg);
       defName.insert(std::make_pair(*valueDef, valueDef));
       duGraph.insert(std::make_pair(*valueDef, duEmpty));
     }
@@ -482,7 +482,7 @@ namespace ir {
   const UseSet &FunctionDAG::getUse(const Instruction *insn, uint32_t dstID) const {
     return this->getUse(ValueDef(insn, dstID));
   }
-  const UseSet &FunctionDAG::getUse(const FunctionInput *input) const {
+  const UseSet &FunctionDAG::getUse(const FunctionArgument *input) const {
     return this->getUse(ValueDef(input));
   }
   const UseSet &FunctionDAG::getUse(const Register &reg) const {
@@ -502,7 +502,7 @@ namespace ir {
     GBE_ASSERT(it != defName.end() && it->second != NULL);
     return it->second;
   }
-  const ValueDef *FunctionDAG::getDefAddress(const FunctionInput *input) const {
+  const ValueDef *FunctionDAG::getDefAddress(const FunctionArgument *input) const {
     const ValueDef def(input);
     auto it = defName.find(def);
     GBE_ASSERT(it != defName.end() && it->second != NULL);

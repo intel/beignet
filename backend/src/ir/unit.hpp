@@ -25,6 +25,7 @@
 #define __GBE_IR_UNIT_HPP__
 
 #include "ir/constant.hpp"
+#include "ir/register.hpp"
 #include "sys/hash_map.hpp"
 
 namespace gbe {
@@ -68,6 +69,13 @@ namespace ir {
     }
     /*! Return the size of the pointers manipulated */
     INLINE PointerSize getPointerSize(void) const { return pointerSize; }
+    /*! Return the family of registers that contain pointer */
+    INLINE RegisterFamily getPointerFamily(void) const {
+      if (this->getPointerSize() == POINTER_32_BITS)
+        return FAMILY_DWORD;
+      else
+        return FAMILY_QWORD;
+    }
   private:
     hash_map<std::string, Function*> functions; //!< All the defined functions
     ConstantSet constantSet; //!< All the constants defined in the unit

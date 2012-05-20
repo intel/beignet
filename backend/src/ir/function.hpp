@@ -114,14 +114,12 @@ namespace ir {
     GBE_CLASS(BasicBlock);
   };
 
-  /*! In fine, function inputs (arguments) can be pushed from the constant
+  /*! In fine, function input arguments can be pushed from the constant
    *  buffer if they are structures. Other arguments can be images (textures)
    *  and will also require special treatment.
    */
-  struct FunctionInput
-  {
-    enum Type
-    {
+  struct FunctionArgument {
+    enum Type {
       GLOBAL_POINTER    = 0, // __global
       CONSTANT_POINTER  = 1, // __constant
       LOCAL_POINTER     = 2, // __local
@@ -129,8 +127,8 @@ namespace ir {
       STRUCTURE         = 4, // struct foo
       IMAGE             = 5  // image*d_t
     };
-    /*! Create a function input */
-    INLINE FunctionInput(Type type, Register reg, uint32_t size) :
+    /*! Create a function input argument */
+    INLINE FunctionArgument(Type type, Register reg, uint32_t size) :
       type(type), reg(reg), size(size) {}
     Type type;     /*! Gives the type of argument we have */
     Register reg;  /*! Holds the argument */
@@ -188,19 +186,19 @@ namespace ir {
     /*! Fast allocation / deallocation of instructions */
     DECL_POOL(Instruction, insnPool);
     /*! Get input argument */
-    INLINE const FunctionInput &getInput(uint32_t ID) const {
-      GBE_ASSERT(ID < inputNum() && inputs[ID] != NULL);
-      return *inputs[ID];
+    INLINE const FunctionArgument &getInput(uint32_t ID) const {
+      GBE_ASSERT(ID < argNum() && args[ID] != NULL);
+      return *args[ID];
     }
-    INLINE FunctionInput &getInput(uint32_t ID) {
-      GBE_ASSERT(ID < inputNum() && inputs[ID] != NULL);
-      return *inputs[ID];
+    INLINE FunctionArgument &getInput(uint32_t ID) {
+      GBE_ASSERT(ID < argNum() && args[ID] != NULL);
+      return *args[ID];
     }
     /*! Get input argument from the register (linear research). Return NULL if
      *  this is not an input argument
      */
-    INLINE const FunctionInput *getInput(const Register &reg) const {
-      for (auto it = inputs.begin(); it != inputs.end(); ++it)
+    INLINE const FunctionArgument *getInput(const Register &reg) const {
+      for (auto it = args.begin(); it != args.end(); ++it)
         if ((*it)->reg == reg) return *it;
       return NULL;
     }
@@ -263,8 +261,8 @@ namespace ir {
     INLINE uint32_t labelNum(void) const { return labels.size(); }
     /*! Number of immediate values in the function */
     INLINE uint32_t immediateNum(void) const { return immediates.size(); }
-    /*! Get the number of input register */
-    INLINE uint32_t inputNum(void) const { return inputs.size(); }
+    /*! Get the number of argument register */
+    INLINE uint32_t argNum(void) const { return args.size(); }
     /*! Get the number of output register */
     INLINE uint32_t outputNum(void) const { return outputs.size(); }
     /*! Number of blocks in the function */
@@ -284,16 +282,16 @@ namespace ir {
         (*it)->foreach(functor);
     }
   private:
-    friend class Context;         //!< Can freely modify a function
-    std::string name;             //!< Function name
-    vector<FunctionInput*> inputs;//!< Input registers of the function
-    vector<Register> outputs;     //!< Output registers of the function
-    vector<BasicBlock*> labels;   //!< Each label points to a basic block
-    vector<Immediate> immediates; //!< All immediate values in the function
-    vector<BasicBlock*> blocks;   //!< All chained basic blocks
-    RegisterFile file;            //!< RegisterDatas used by the instructions
-    Profile profile;              //!< Current function profile
-    GBE_CLASS(Function);          //!< Use gbe allocators
+    friend class Context;          //!< Can freely modify a function
+    std::string name;              //!< Function name
+    vector<FunctionArgument*> args;//!< Input registers of the function
+    vector<Register> outputs;      //!< Output registers of the function
+    vector<BasicBlock*> labels;    //!< Each label points to a basic block
+    vector<Immediate> immediates;  //!< All immediate values in the function
+    vector<BasicBlock*> blocks;    //!< All chained basic blocks
+    RegisterFile file;             //!< RegisterDatas used by the instructions
+    Profile profile;               //!< Current function profile
+    GBE_CLASS(Function);           //!< Use gbe allocators
   };
 
   /*! Output the function string in the given stream */

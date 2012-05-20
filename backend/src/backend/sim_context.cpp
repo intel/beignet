@@ -113,16 +113,16 @@ namespace gbe
   } while (0)
 
   void SimContext::emitCurbeLoad(void) {
-    // Right now curbe is only made of input argument stuff
-    const uint32_t inputNum = fn.inputNum();
-    for (uint32_t inputID = 0; inputID < inputNum; ++inputID) {
-      const ir::FunctionInput &input = fn.getInput(inputID);
-      const ir::Register reg = input.reg;
-      const int32_t offset = kernel->getCurbeOffset(GBE_CURBE_KERNEL_ARGUMENT, inputID);
+    // Right now curbe is only made of arg argument stuff
+    const uint32_t argNum = fn.argNum();
+    for (uint32_t argID = 0; argID < argNum; ++argID) {
+      const ir::FunctionArgument &arg = fn.getInput(argID);
+      const ir::Register reg = arg.reg;
+      const int32_t offset = kernel->getCurbeOffset(GBE_CURBE_KERNEL_ARGUMENT, argID);
       // XXX add support for these items
-      GBE_ASSERT (input.type != ir::FunctionInput::STRUCTURE &&
-                  input.type != ir::FunctionInput::IMAGE &&
-                  input.type != ir::FunctionInput::LOCAL_POINTER);
+      GBE_ASSERT (arg.type != ir::FunctionArgument::STRUCTURE &&
+                  arg.type != ir::FunctionArgument::IMAGE &&
+                  arg.type != ir::FunctionArgument::LOCAL_POINTER);
       GBE_ASSERT(offset >= 0);
       o << "LOAD(_" << uint32_t(reg) << ", curbe + " << offset << ");\n";
     }

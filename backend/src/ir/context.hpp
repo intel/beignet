@@ -77,7 +77,7 @@ namespace ir {
     /*! Create a new label for the current function */
     LabelIndex label(void);
     /*! Append a new input register for the function */
-    void input(FunctionInput::Type type, Register reg, uint32_t elemSz = 0u);
+    void input(FunctionArgument::Type type, Register reg, uint32_t elemSz = 0u);
     /*! Append a new output register for the function */
     void output(Register reg);
     /*! Get the immediate value */
@@ -109,10 +109,7 @@ namespace ir {
     }
     /*! Return the family of registers that contain pointer */
     INLINE RegisterFamily getPointerFamily(void) const {
-      if (this->getPointerSize() == POINTER_32_BITS)
-        return FAMILY_DWORD;
-      else
-        return FAMILY_QWORD;
+      return unit.getPointerFamily();
     }
 #define DECL_THREE_SRC_INSN(NAME) \
     INLINE void NAME(Type type, \

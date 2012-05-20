@@ -34,7 +34,7 @@ namespace ir {
 
   Function::~Function(void) {
     for (auto it = blocks.begin(); it != blocks.end(); ++it) GBE_DELETE(*it);
-    for (auto it = inputs.begin(); it != inputs.end(); ++it) GBE_DELETE(*it);
+    for (auto it = args.begin(); it != args.end(); ++it) GBE_DELETE(*it);
   }
 
   void Function::sortLabels(void) {
@@ -162,17 +162,17 @@ namespace ir {
   {
     out << ".decl_function " << fn.getName() << std::endl;
     out << fn.getRegisterFile();
-    out << "## " << fn.inputNum() << " input register"
-        << plural(fn.inputNum())  << " ##" << std::endl;
-    for (uint32_t i = 0; i < fn.inputNum(); ++i) {
-      const FunctionInput &input = fn.getInput(i);
+    out << "## " << fn.argNum() << " input register"
+        << plural(fn.argNum())  << " ##" << std::endl;
+    for (uint32_t i = 0; i < fn.argNum(); ++i) {
+      const FunctionArgument &input = fn.getInput(i);
       out << "decl_input.";
       switch (input.type) {
-        case FunctionInput::GLOBAL_POINTER: out << "global"; break;
-        case FunctionInput::LOCAL_POINTER: out << "local"; break;
-        case FunctionInput::CONSTANT_POINTER: out << "constant"; break;
-        case FunctionInput::VALUE: out << "value"; break;
-        case FunctionInput::STRUCTURE:
+        case FunctionArgument::GLOBAL_POINTER: out << "global"; break;
+        case FunctionArgument::LOCAL_POINTER: out << "local"; break;
+        case FunctionArgument::CONSTANT_POINTER: out << "constant"; break;
+        case FunctionArgument::VALUE: out << "value"; break;
+        case FunctionArgument::STRUCTURE:
           out << "structure." << input.size;
         break;
         default: break;

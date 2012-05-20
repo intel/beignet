@@ -626,14 +626,14 @@ namespace gbe
         GBE_ASSERT(isScalarType(type) == true);
         const ir::Register reg = regTranslator.newScalar(I);
         if (type->isPointerTy() == false)
-          ctx.input(ir::FunctionInput::VALUE, reg, getTypeByteSize(unit, type));
+          ctx.input(ir::FunctionArgument::VALUE, reg, getTypeByteSize(unit, type));
         else {
           PointerType *pointerType = dyn_cast<PointerType>(type);
           // By value structure
           if (PAL.paramHasAttr(argID, Attribute::ByVal)) {
             Type *pointed = pointerType->getElementType();
             const size_t structSize = getTypeByteSize(unit, pointed);
-            ctx.input(ir::FunctionInput::STRUCTURE, reg, structSize);
+            ctx.input(ir::FunctionArgument::STRUCTURE, reg, structSize);
           }
           // Regular user provided pointer (global, local or constant)
           else {
@@ -642,13 +642,13 @@ namespace gbe
             const uint32_t ptrSize = getTypeByteSize(unit, type);
               switch (addrSpace) {
               case ir::MEM_GLOBAL:
-                ctx.input(ir::FunctionInput::GLOBAL_POINTER, reg, ptrSize);
+                ctx.input(ir::FunctionArgument::GLOBAL_POINTER, reg, ptrSize);
               break;
               case ir::MEM_LOCAL:
-                ctx.input(ir::FunctionInput::LOCAL_POINTER, reg, ptrSize);
+                ctx.input(ir::FunctionArgument::LOCAL_POINTER, reg, ptrSize);
               break;
               case ir::MEM_CONSTANT:
-                ctx.input(ir::FunctionInput::CONSTANT_POINTER, reg, ptrSize);
+                ctx.input(ir::FunctionArgument::CONSTANT_POINTER, reg, ptrSize);
               break;
               default: GBE_ASSERT(addrSpace != ir::MEM_PRIVATE);
             }

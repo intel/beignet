@@ -212,14 +212,14 @@ namespace gbe
     else
       NOT_SUPPORTED;
 
-    // Allocate all input parameters
-    const uint32_t inputNum = fn.inputNum();
-    for (uint32_t inputID = 0; inputID < inputNum; ++inputID) {
-      const FunctionInput &input = fn.getInput(inputID);
-      GBE_ASSERT(input.type == FunctionInput::GLOBAL_POINTER ||
-                 input.type == FunctionInput::CONSTANT_POINTER ||
-                 input.type == FunctionInput::VALUE);
-      allocatePayloadReg(GBE_CURBE_KERNEL_ARGUMENT, inputID, input.reg);
+    // Allocate all arg parameters
+    const uint32_t argNum = fn.argNum();
+    for (uint32_t argID = 0; argID < argNum; ++argID) {
+      const FunctionArgument &arg = fn.getInput(argID);
+      GBE_ASSERT(arg.type == FunctionArgument::GLOBAL_POINTER ||
+                 arg.type == FunctionArgument::CONSTANT_POINTER ||
+                 arg.type == FunctionArgument::VALUE);
+      allocatePayloadReg(GBE_CURBE_KERNEL_ARGUMENT, argID, arg.reg);
     }
 
     // First we build the set of all used registers

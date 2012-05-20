@@ -81,17 +81,17 @@ namespace gbe
     kernel->curbeSize += this->simdWidth * sizeof(uint16_t);
 
     // Go over the arguments and find the related patch locations
-    const uint32_t inputNum = fn.inputNum();
-    for (uint32_t inputID = 0u; inputID < inputNum; ++inputID) {
-      const ir::FunctionInput &input = fn.getInput(inputID);
+    const uint32_t argNum = fn.argNum();
+    for (uint32_t argID = 0u; argID < argNum; ++argID) {
+      const ir::FunctionArgument &arg = fn.getInput(argID);
       // For pointers and values, we have nothing to do. We just push the values
-      if (input.type == ir::FunctionInput::GLOBAL_POINTER ||
-          input.type == ir::FunctionInput::CONSTANT_POINTER ||
-          input.type == ir::FunctionInput::VALUE) {
-        kernel->curbeSize = ALIGN(kernel->curbeSize, input.size);
-        const PatchInfo patch(GBE_CURBE_KERNEL_ARGUMENT, inputID, kernel->curbeSize);
+      if (arg.type == ir::FunctionArgument::GLOBAL_POINTER ||
+          arg.type == ir::FunctionArgument::CONSTANT_POINTER ||
+          arg.type == ir::FunctionArgument::VALUE) {
+        kernel->curbeSize = ALIGN(kernel->curbeSize, arg.size);
+        const PatchInfo patch(GBE_CURBE_KERNEL_ARGUMENT, argID, kernel->curbeSize);
         kernel->patches.push_back(patch);
-        kernel->curbeSize += input.size;
+        kernel->curbeSize += arg.size;
       }
     }
 
@@ -168,31 +168,31 @@ namespace gbe
   }
 
   void Context::buildArgList(void) {
-    kernel->argNum = fn.inputNum();
+    kernel->argNum = fn.argNum();
     kernel->args = GBE_NEW_ARRAY(KernelArgument, kernel->argNum);
-    for (uint32_t inputID = 0; inputID < kernel->argNum; ++inputID) {
-      const auto &input = fn.getInput(inputID);
-      switch (input.type) {
-        case ir::FunctionInput::VALUE:
-        case ir::FunctionInput::STRUCTURE:
-          kernel->args[inputID].type = GBE_ARG_VALUE;
-          kernel->args[inputID].size = input.size;
+    for (uint32_t argID = 0; argID < kernel->argNum; ++argID) {
+      const auto &arg = fn.getInput(argID);
+      switch (arg.type) {
+        case ir::FunctionArgument::VALUE:
+        case ir::FunctionArgument::STRUCTURE:
+          kernel->args[argID].type = GBE_ARG_VALUE;
+          kernel->args[argID].size = arg.size;
           break;
-        case ir::FunctionInput::GLOBAL_POINTER:
-          kernel->args[inputID].type = GBE_ARG_GLOBAL_PTR;
-          kernel->args[inputID].size = sizeof(void*);
+        case ir::FunctionArgument::GLOBAL_POINTER:
+          kernel->args[argID].type = GBE_ARG_GLOBAL_PTR;
+          kernel->args[argID].size = sizeof(void*);
           break;
-        case ir::FunctionInput::CONSTANT_POINTER:
-          kernel->args[inputID].type = GBE_ARG_CONSTANT_PTR;
-          kernel->args[inputID].size = sizeof(void*);
+        case ir::FunctionArgument::CONSTANT_POINTER:
+          kernel->args[argID].type = GBE_ARG_CONSTANT_PTR;
+          kernel->args[argID].size = sizeof(void*);
           break;
-        case ir::FunctionInput::LOCAL_POINTER:
-          kernel->args[inputID].type = GBE_ARG_LOCAL_PTR;
-          kernel->args[inputID].size = sizeof(void*);
+        case ir::FunctionArgument::LOCAL_POINTER:
+          kernel->args[argID].type = GBE_ARG_LOCAL_PTR;
+          kernel->args[argID].size = sizeof(void*);
           break;
-        case ir::FunctionInput::IMAGE:
-          kernel->args[inputID].type = GBE_ARG_IMAGE;
-          kernel->args[inputID].size = sizeof(void*);
+        case ir::FunctionArgument::IMAGE:
+          kernel->args[argID].type = GBE_ARG_IMAGE;
+          kernel->args[argID].size = sizeof(void*);
           break;
       }
     }
