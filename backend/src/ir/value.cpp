@@ -107,9 +107,9 @@ namespace ir {
     if (fn.isEntryBlock(bb) == false) return;
 
     // Is it a function input?
-    const FunctionArgument *input = fn.getInput(reg);
-    if (input != NULL) {
-      ValueDef *def = (ValueDef *) dag.getDefAddress(input);
+    const FunctionArgument *arg = fn.getInput(reg);
+    if (arg != NULL) {
+      ValueDef *def = (ValueDef *) dag.getDefAddress(arg);
       udChain.insert(def);
     }
     // Is it a special register?
@@ -502,8 +502,8 @@ namespace ir {
     GBE_ASSERT(it != defName.end() && it->second != NULL);
     return it->second;
   }
-  const ValueDef *FunctionDAG::getDefAddress(const FunctionArgument *input) const {
-    const ValueDef def(input);
+  const ValueDef *FunctionDAG::getDefAddress(const FunctionArgument *arg) const {
+    const ValueDef def(arg);
     auto it = defName.find(def);
     GBE_ASSERT(it != defName.end() && it->second != NULL);
     return it->second;

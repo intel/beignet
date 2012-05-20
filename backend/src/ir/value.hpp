@@ -56,8 +56,8 @@ namespace ir {
       this->data.dstID = dstID;
     }
     /*! Build a value from a function argument */
-    explicit ValueDef(const FunctionArgument *input) : type(DEF_FN_INPUT) {
-      this->data.input = input;
+    explicit ValueDef(const FunctionArgument *arg) : type(DEF_FN_INPUT) {
+      this->data.arg = arg;
     }
     /*! Build a value from a special register */
     explicit ValueDef(const Register &reg) : type(DEF_SPECIAL_REG) {
@@ -78,7 +78,7 @@ namespace ir {
     /*! Get the function input (only if this is a function argument) */
     INLINE const FunctionArgument *getFunctionArgument(void) const {
       GBE_ASSERT(type == DEF_FN_INPUT);
-      return data.input;
+      return data.arg;
     }
     /*! Get the special register */
     INLINE Register getSpecialReg(void) const {
@@ -90,7 +90,7 @@ namespace ir {
       if (type == DEF_SPECIAL_REG)
         return Register(data.regID);
       else if (type == DEF_FN_INPUT)
-        return data.input->reg;
+        return data.arg->reg;
       else {
         return data.insn->getDst(data.dstID);
       }
@@ -105,7 +105,7 @@ namespace ir {
         uint32_t dstID;          //<! Which destination we take into account
       };
       /*! ... function argument or ... */
-      const FunctionArgument *input;
+      const FunctionArgument *arg;
       /*! ... special register */
       uint32_t regID;
     } data;
@@ -188,7 +188,7 @@ namespace ir {
     /*! Get the du-chain for the given instruction and destination */
     const UseSet &getUse(const Instruction *insn, uint32_t dstID) const;
     /*! Get the du-chain for the given function input */
-    const UseSet &getUse(const FunctionArgument *input) const;
+    const UseSet &getUse(const FunctionArgument *arg) const;
     /*! Get the du-chain for the given special register */
     const UseSet &getUse(const Register &reg) const;
     /*! Get the ud-chain for the given use */
