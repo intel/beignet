@@ -123,7 +123,7 @@ namespace gbe
       GBE_ASSERT (arg.type != ir::FunctionArgument::IMAGE &&
                   arg.type != ir::FunctionArgument::LOCAL_POINTER);
       GBE_ASSERT(offset >= 0);
-      if (arg.type != ir::FunctionArgument::VALUE && usedRegs.contains(reg))
+      if (arg.type != ir::FunctionArgument::STRUCTURE && usedRegs.contains(reg))
         o << "LOAD(_" << uint32_t(reg) << ", curbe + " << offset << ");\n";
     }
 
