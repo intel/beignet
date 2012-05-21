@@ -585,7 +585,6 @@ namespace gbe
     using namespace ir;
     const uint32_t valueNum = insn.getValueNum();
     GenReg src;
-    //GBE_ASSERT(insn.getAddressSpace() == MEM_GLOBAL);
 
     // A scalar address register requires to be aligned
     if (isScalarReg(insn.getAddress()) == true) {
@@ -645,7 +644,6 @@ namespace gbe
                                   GenReg value)
   {
     using namespace ir;
-    // GBE_ASSERT(insn.getAddressSpace() == MEM_GLOBAL);
     GBE_ASSERT(insn.getValueNum() == 1);
     const Type type = insn.getValueType();
     const uint32_t elemSize = getByteScatterGatherSize(type);
@@ -684,7 +682,8 @@ namespace gbe
   void GenContext::emitLoadInstruction(const ir::LoadInstruction &insn) {
     using namespace ir;
     const GenReg address = this->genReg(insn.getAddress());
-    // GBE_ASSERT(insn.getAddressSpace() == MEM_GLOBAL);
+    GBE_ASSERT(insn.getAddressSpace() == MEM_GLOBAL ||
+               insn.getAddressSpace() == MEM_PRIVATE);
     GBE_ASSERT(this->isScalarReg(insn.getValue(0)) == false);
     if (insn.isAligned() == true)
       this->emitUntypedRead(insn, address);

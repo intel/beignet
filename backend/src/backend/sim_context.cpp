@@ -46,7 +46,7 @@ namespace gbe
     GBE_ASSERT(fn.getProfile() == ir::PROFILE_OCL);
 
     // First we build the set of all used registers
-    fn.foreachInstruction([&usedRegs](const ir::Instruction &insn) {
+    fn.foreachInstruction([&](const ir::Instruction &insn) {
       const uint32_t srcNum = insn.getSrcNum(), dstNum = insn.getDstNum();
       for (uint32_t srcID = 0; srcID < srcNum; ++srcID)
         usedRegs.insert(insn.getSrc(srcID));

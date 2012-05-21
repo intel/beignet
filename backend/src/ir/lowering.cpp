@@ -18,7 +18,7 @@
  */
 
 /**
- * \file lowering.hpp
+ * \file lowering.cpp
  * \author Benjamin Segovia <benjamin.segovia@intel.com>
  */
 

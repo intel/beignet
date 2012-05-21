@@ -24,6 +24,9 @@
  *  handling returns or unsupported vector scatters / gathers
  */
 
+#ifndef __GBE_IR_LOWERING_HPP__
+#define __GBE_IR_LOWERING_HPP__
+
 namespace gbe {
 namespace ir {
 
@@ -86,4 +89,6 @@ namespace ir {
 
 } /* namespace ir */
 } /* namespace gbe */
+
+#endif /* __GBE_IR_LOWERING_HPP__ */
 
