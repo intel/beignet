@@ -49,13 +49,13 @@ namespace gbe
     const std::string path = kernelPath + kernel;
     ir::Unit unit;
     llvmToGen(unit, path.c_str());
-    std::cout << unit << std::endl;
+    // std::cout << unit << std::endl;
 
     unit.apply([](ir::Function &fn) {
       ir::Liveness liveness(fn);
       ir::FunctionDAG dag(liveness);
-  //    std::cout << liveness << std::endl;
-      std::cout << dag << std::endl;
+      // std::cout << liveness << std::endl;
+      // std::cout << dag << std::endl;
     });
   }
 } /* namespace gbe */
@@ -90,7 +90,7 @@ runTests:
   UTEST_EXPECT_SUCCESS(utestLLVM2Gen("loop5.cl.ll"));
   UTEST_EXPECT_SUCCESS(utestLLVM2Gen("loop4.cl.ll"));
   UTEST_EXPECT_SUCCESS(utestLLVM2Gen("loop3.cl.ll"));
-  // UTEST_EXPECT_SUCCESS(utestLLVM2Gen("loop.cl.ll"));
+  UTEST_EXPECT_SUCCESS(utestLLVM2Gen("loop.cl.ll"));
   // UTEST_EXPECT_SUCCESS(utestLLVM2Gen("function_param.cl.ll"));
   UTEST_EXPECT_SUCCESS(utestLLVM2Gen("function.cl.ll"));
   //UTEST_EXPECT_SUCCESS(utestLLVM2Gen("mad.cl.ll"));
@@ -106,7 +106,7 @@ runTests:
   UTEST_EXPECT_SUCCESS(utestLLVM2Gen("simple_float4.cl.ll"));
   UTEST_EXPECT_SUCCESS(utestLLVM2Gen("simple_float4_2.cl.ll"));
   UTEST_EXPECT_SUCCESS(utestLLVM2Gen("void.cl.ll"));
-  // UTEST_EXPECT_SUCCESS(utestLLVM2Gen("cmp_cvt.cl.ll"));
+  UTEST_EXPECT_SUCCESS(utestLLVM2Gen("cmp_cvt.cl.ll"));
 }
 
 UTEST_REGISTER(utestLLVM)

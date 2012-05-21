@@ -62,6 +62,22 @@ namespace ir {
       const Immediate imm(value);
       return fn->newImmediate(imm);
     }
+    /*! Create an integer immediate value */
+    INLINE ImmediateIndex newIntegerImmediate(int64_t x, Type type) {
+      switch (type) {
+        case TYPE_S8: return this->newImmediate(int8_t(x));
+        case TYPE_U8: return this->newImmediate(uint8_t(x));
+        case TYPE_S16: return this->newImmediate(int16_t(x));
+        case TYPE_U16: return this->newImmediate(uint16_t(x));
+        case TYPE_S32: return this->newImmediate(int32_t(x));
+        case TYPE_U32: return this->newImmediate(uint32_t(x));
+        case TYPE_S64: return this->newImmediate(int64_t(x));
+        case TYPE_U64: return this->newImmediate(uint64_t(x));
+        default: NOT_SUPPORTED; return ImmediateIndex(0);
+      }
+      return ImmediateIndex(0);
+    }
+
     /*! Set an immediate value */
     template <typename T> INLINE void setImmediate(ImmediateIndex index, T value) {
       const Immediate imm(value);

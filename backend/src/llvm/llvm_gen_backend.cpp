@@ -969,11 +969,28 @@ namespace gbe
         const ir::Type dstType = getVectorInfo(ctx, llvmDstType, &I, elemNum);
         const ir::Type srcType = getVectorInfo(ctx, llvmSrcType, &I, elemNum);
 
-        // Emit the instructions in a row
-        for (uint32_t elemID = 0; elemID < elemNum; ++elemID) {
-          const ir::Register dst = this->getRegister(&I, elemID);
-          const ir::Register src = this->getRegister(I.getOperand(0), elemID);
-          ctx.CVT(dstType, srcType, dst, src);
+        // We use a select (0,1) not a convert when the destination is a boolean
+        if (srcType == ir::TYPE_BOOL) {
+          const ir::RegisterFamily family = getFamily(dstType);
+          const ir::ImmediateIndex zero = ctx.newIntegerImmediate(0, dstType);
+          const ir::ImmediateIndex one = ctx.newIntegerImmediate(1, dstType);
+          const ir::Register zeroReg = ctx.reg(family);
+          const ir::Register oneReg = ctx.reg(family);
+          ctx.LOADI(dstType, zeroReg, zero);
+          ctx.LOADI(dstType, oneReg, one);
+          for (uint32_t elemID = 0; elemID < elemNum; ++elemID) {
+            const ir::Register dst = this->getRegister(&I, elemID);
+            const ir::Register src = this->getRegister(I.getOperand(0), elemID);
+            ctx.SEL(dstType, dst, src, oneReg, zeroReg);
+          }
+        }
+        // Use a convert for the other cases
+        else {
+          for (uint32_t elemID = 0; elemID < elemNum; ++elemID) {
+            const ir::Register dst = this->getRegister(&I, elemID);
+            const ir::Register src = this->getRegister(I.getOperand(0), elemID);
+            ctx.CVT(dstType, srcType, dst, src);
+          }
         }
       }
       break;

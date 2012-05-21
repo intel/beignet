@@ -173,7 +173,6 @@ namespace ir {
   void FunctionArgumentLowerer::lower(const std::string &functionName) {
     if ((this->fn = unit.getFunction(functionName)) == NULL)
       return;
-    std::cout << *fn;
     GBE_SAFE_DELETE(dag);
     GBE_SAFE_DELETE(liveness);
     this->liveness = GBE_NEW(ir::Liveness, *fn);
@@ -191,7 +190,6 @@ namespace ir {
     // Build the constant push description and remove the instruction that
     // therefore become useless
     this->buildConstantPush();
-    std::cout << *fn;
   }
 
 // Remove all the given instructions from the stream (if dead)
