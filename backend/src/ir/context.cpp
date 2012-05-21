@@ -22,6 +22,7 @@
  * \author Benjamin Segovia <benjamin.segovia@intel.com>
  */
 #include "ir/context.hpp"
+#include "ir/constant_push.hpp"
 #include "ir/unit.hpp"
 #include "ir/lowering.hpp"
 
@@ -40,6 +41,14 @@ namespace ir {
   Function &Context::getFunction(void) {
     GBE_ASSERTM(fn != NULL, "No function currently defined");
     return *fn;
+  }
+
+  void Context::appendPushedConstant(Register reg, const PushLocation &pushed)
+  {
+    GBE_ASSERTM(fn != NULL, "No function currently defined");
+    GBE_ASSERTM(fn->pushMap.contains(reg) == false, "Register already pushed");
+    fn->pushMap.insert(std::make_pair(reg, pushed));
+    fn->locationMap.insert(std::make_pair(pushed, reg));
   }
 
   void Context::startFunction(const std::string &name) {
@@ -118,8 +127,7 @@ namespace ir {
     this->bb = NULL;
   }
 
-  void Context::append(const Instruction &insn)
-  {
+  void Context::append(const Instruction &insn) {
     GBE_ASSERTM(fn != NULL, "No function currently defined");
 
     // Start a new block if this is a label

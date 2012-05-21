@@ -53,6 +53,8 @@ namespace ir {
     INLINE Unit &getUnit(void) { return unit; }
     /*! Get the current processed function */
     Function &getFunction(void);
+    /*! Append a new pushed constant */
+    void appendPushedConstant(Register reg, const PushLocation &pushed);
     /*! Create a new register with the given family for the current function */
     Register reg(RegisterFamily family);
     /*! Create a new immediate value */

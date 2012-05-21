@@ -30,14 +30,6 @@
 namespace gbe {
 namespace ir {
 
-  /*! Maps the register to the function argument */
-  struct ArgLocation {
-    INLINE ArgLocation(void) {}
-    INLINE ArgLocation(uint32_t argID, uint32_t offset) :
-      argID(argID), offset(offset) {}
-    uint32_t argID;  //!< Function argument
-    uint32_t offset; //!< Offset in the function argument
-  };
 
   /*! Structure arguments can be directly pushed to the register file. We store
    *  here the mapping the function argument and the registers that contains the
@@ -50,9 +42,7 @@ namespace ir {
     ConstantPush(void);
     /*! Set the contanst pushing description */
     ~ConstantPush(void);
-    /*! Maps each register with the function argument */
-    map<Register, ArgLocation> constantMap;
-    GBE_CLASS(ConstantPush); // Uses GBE allocators
+    GBE_CLASS(ConstantPush); // Use GBE allocator
   };
 
 } /* namespace ir */

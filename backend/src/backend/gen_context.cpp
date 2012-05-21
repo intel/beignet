@@ -110,12 +110,14 @@ namespace gbe
     RA.insert(std::make_pair(reg, GenReg::SIMD16(nr, subnr)));
 
   void GenContext::allocatePayloadReg(gbe_curbe_type value,
-                                      uint32_t subValue,
-                                      const ir::Register &reg)
+                                      ir::Register reg,
+                                      uint32_t subValue = 0,
+                                      uint32_t subOffset = 0)
   {
     using namespace ir;
-    const int32_t offset = kernel->getCurbeOffset(value, subValue);
-    if (offset >= 0) {
+    const int32_t curbeOffset = kernel->getCurbeOffset(value, subValue);
+    if (curbeOffset >= 0) {
+      const uint32_t offset = curbeOffset + subOffset;
       const ir::RegisterData data = fn.getRegisterData(reg);
       const ir::RegisterFamily family = data.family;
       const bool isScalar = this->isScalarReg(reg);
@@ -151,6 +153,7 @@ namespace gbe
     using namespace ir;
     if (fn.isSpecialReg(reg) == true) return grfOffset; // already done
     if (fn.getInput(reg) != NULL) return grfOffset; // already done
+    if (fn.getPushLocation(reg) != NULL) return grfOffset; // already done
     GBE_ASSERT(this->isScalarReg(reg) == false);
     const RegisterData regData = fn.getRegisterData(reg);
     const RegisterFamily family = regData.family;
@@ -179,22 +182,22 @@ namespace gbe
     GBE_ASSERT(fn.getProfile() == PROFILE_OCL);
 
     // Allocate the special registers (only those which are actually used)
-    allocatePayloadReg(GBE_CURBE_LOCAL_ID_X, 0, ocl::lid0);
-    allocatePayloadReg(GBE_CURBE_LOCAL_ID_Y, 0, ocl::lid1);
-    allocatePayloadReg(GBE_CURBE_LOCAL_ID_Z, 0, ocl::lid2);
-    allocatePayloadReg(GBE_CURBE_LOCAL_SIZE_X, 0, ocl::lsize0);
-    allocatePayloadReg(GBE_CURBE_LOCAL_SIZE_Y, 0, ocl::lsize1);
-    allocatePayloadReg(GBE_CURBE_LOCAL_SIZE_Z, 0, ocl::lsize2);
-    allocatePayloadReg(GBE_CURBE_GLOBAL_SIZE_X, 0, ocl::gsize0);
-    allocatePayloadReg(GBE_CURBE_GLOBAL_SIZE_Y, 0, ocl::gsize1);
-    allocatePayloadReg(GBE_CURBE_GLOBAL_SIZE_Z, 0, ocl::gsize2);
-    allocatePayloadReg(GBE_CURBE_GLOBAL_OFFSET_X, 0, ocl::goffset0);
-    allocatePayloadReg(GBE_CURBE_GLOBAL_OFFSET_Y, 0, ocl::goffset1);
-    allocatePayloadReg(GBE_CURBE_GLOBAL_OFFSET_Z, 0, ocl::goffset2);
-    allocatePayloadReg(GBE_CURBE_GROUP_NUM_X, 0, ocl::numgroup0);
-    allocatePayloadReg(GBE_CURBE_GROUP_NUM_Y, 0, ocl::numgroup1);
-    allocatePayloadReg(GBE_CURBE_GROUP_NUM_Z, 0, ocl::numgroup2);
-    allocatePayloadReg(GBE_CURBE_STACK_POINTER, 0, ocl::stackptr);
+    allocatePayloadReg(GBE_CURBE_LOCAL_ID_X, ocl::lid0);
+    allocatePayloadReg(GBE_CURBE_LOCAL_ID_Y, ocl::lid1);
+    allocatePayloadReg(GBE_CURBE_LOCAL_ID_Z, ocl::lid2);
+    allocatePayloadReg(GBE_CURBE_LOCAL_SIZE_X, ocl::lsize0);
+    allocatePayloadReg(GBE_CURBE_LOCAL_SIZE_Y, ocl::lsize1);
+    allocatePayloadReg(GBE_CURBE_LOCAL_SIZE_Z, ocl::lsize2);
+    allocatePayloadReg(GBE_CURBE_GLOBAL_SIZE_X, ocl::gsize0);
+    allocatePayloadReg(GBE_CURBE_GLOBAL_SIZE_Y, ocl::gsize1);
+    allocatePayloadReg(GBE_CURBE_GLOBAL_SIZE_Z, ocl::gsize2);
+    allocatePayloadReg(GBE_CURBE_GLOBAL_OFFSET_X, ocl::goffset0);
+    allocatePayloadReg(GBE_CURBE_GLOBAL_OFFSET_Y, ocl::goffset1);
+    allocatePayloadReg(GBE_CURBE_GLOBAL_OFFSET_Z, ocl::goffset2);
+    allocatePayloadReg(GBE_CURBE_GROUP_NUM_X, ocl::numgroup0);
+    allocatePayloadReg(GBE_CURBE_GROUP_NUM_Y, ocl::numgroup1);
+    allocatePayloadReg(GBE_CURBE_GROUP_NUM_Z, ocl::numgroup2);
+    allocatePayloadReg(GBE_CURBE_STACK_POINTER, ocl::stackptr);
 
     // Group IDs are always allocated by the hardware in r0
     RA.insert(std::make_pair(ocl::groupid0, GenReg::f1grf(0, 1)));
@@ -212,14 +215,24 @@ namespace gbe
     else
       NOT_SUPPORTED;
 
-    // Allocate all arg parameters
+    // Allocate all (non-structure) argument parameters
     const uint32_t argNum = fn.argNum();
     for (uint32_t argID = 0; argID < argNum; ++argID) {
       const FunctionArgument &arg = fn.getInput(argID);
       GBE_ASSERT(arg.type == FunctionArgument::GLOBAL_POINTER ||
                  arg.type == FunctionArgument::CONSTANT_POINTER ||
-                 arg.type == FunctionArgument::VALUE);
-      allocatePayloadReg(GBE_CURBE_KERNEL_ARGUMENT, argID, arg.reg);
+                 arg.type == FunctionArgument::VALUE ||
+                 arg.type == FunctionArgument::STRUCTURE);
+      allocatePayloadReg(GBE_CURBE_KERNEL_ARGUMENT, arg.reg, argID);
+    }
+
+    // Allocate all pushed registers (i.e. structure kernel arguments)
+    const Function::PushMap &pushMap = fn.getPushMap();
+    for (const auto &pushed : pushMap) {
+      const uint32_t argID = pushed.second.argID;
+      const uint32_t subOffset = pushed.second.offset;
+      const Register reg = pushed.second.getRegister();
+      allocatePayloadReg(GBE_CURBE_KERNEL_ARGUMENT, reg, argID, subOffset);
     }
 
     // First we build the set of all used registers
@@ -442,6 +455,7 @@ namespace gbe
       }
       case OP_DIV:
       {
+        GBE_ASSERT(type == TYPE_FLOAT);
         p->MATH(dst, GEN_MATH_FUNCTION_FDIV, src0, src1);
         break;
       }

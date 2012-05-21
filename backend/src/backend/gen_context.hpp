@@ -51,7 +51,7 @@ namespace gbe
     /*! Implements base class */
     virtual void emitCode(void);
     /*! Create a Gen register from a register set in the payload */
-    void allocatePayloadReg(gbe_curbe_type value, uint32_t subValue, const ir::Register &reg);
+    void allocatePayloadReg(gbe_curbe_type, ir::Register, uint32_t subValue, uint32_t subOffset);
     /*! Very stupid register allocator to start with */
     void allocateRegister(void);
     /*! Create a GenReg from a ir::Register */

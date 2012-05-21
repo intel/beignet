@@ -30,6 +30,7 @@
 #include "ir/profile.hpp"
 #include "sys/vector.hpp"
 #include "sys/set.hpp"
+#include "sys/map.hpp"
 #include "sys/alloc.hpp"
 
 #include <ostream>
@@ -135,10 +136,23 @@ namespace ir {
     uint32_t size; /*! == sizeof(void*) for pointer, sizeof(elem) for the rest */
   };
 
-  /*! Constant values can be pushed into registers by the hardware. This class
-   *  maintains the mapping between virtual registers and pushed values
-   */
-  class ConstantPush;
+  /*! Maps the pushed register to the function argument */
+  struct PushLocation {
+    INLINE PushLocation(const Function &fn, uint32_t argID, uint32_t offset) :
+      fn(fn), argID(argID), offset(offset) {}
+    /*! Get the pushed virtual register */
+    Register getRegister(void) const;
+    const Function &fn;       //!< Function it belongs to
+    uint32_t argID;           //!< Function argument
+    uint32_t offset;          //!< Offset in the function argument
+    GBE_STRUCT(PushLocation); // Use GBE allocator
+  };
+
+  /*! For maps and sets */
+  INLINE bool operator< (const PushLocation &arg0, const PushLocation &arg1) {
+    if (arg0.argID != arg1.argID) return arg0.argID < arg1.argID;
+    return arg0.offset < arg1.offset;
+  }
 
   /*! A function is no more that a set of declared registers and a set of
    *  basic blocks
@@ -146,6 +160,10 @@ namespace ir {
   class Function : public NonCopyable
   {
   public:
+    /*! Map of all pushed registers */
+    typedef map<Register, PushLocation> PushMap;
+    /*! Map of all pushed location (i.e. part of function argument) */
+    typedef map<PushLocation, Register> LocationMap;
     /*! Create an empty function */
     Function(const std::string &name, Profile profile = PROFILE_OCL);
     /*! Release everything *including* the basic block pointers */
@@ -199,6 +217,20 @@ namespace ir {
       GBE_ASSERT(ID < argNum() && args[ID] != NULL);
       return *args[ID];
     }
+    /*! Get the number of pushed registers */
+    INLINE uint32_t pushedNum(void) const { return pushMap.size(); }
+    /*! Get the pushed data location for the given register */
+    INLINE const PushLocation *getPushLocation(Register reg) const {
+      auto it = pushMap.find(reg);
+      if (it == pushMap.end())
+        return NULL;
+      else
+        return &it->second;
+    }
+    /*! Get the map of pushed registers */
+    const PushMap &getPushMap(void) const { return this->pushMap; }
+    /*! Get the map of pushed registers */
+    const LocationMap &getLocationMap(void) const { return this->locationMap; }
     /*! Get input argument from the register (linear research). Return NULL if
      *  this is not an input argument
      */
@@ -211,6 +243,11 @@ namespace ir {
     INLINE Register getOutput(uint32_t ID) const {
       GBE_ASSERT(ID < outputNum());
       return outputs[ID];
+    }
+    /*! Get the argument location for the pushed register */
+    INLINE const PushLocation &getPushLocation(Register reg) {
+      GBE_ASSERT(pushMap.contains(reg) == true);
+      return pushMap.find(reg)->second;
     }
     /*! Get function the entry point block */
     INLINE const BasicBlock &getTopBlock(void) const {
@@ -287,17 +324,18 @@ namespace ir {
         (*it)->foreach(functor);
     }
   private:
-    friend class Context;          //!< Can freely modify a function
-    std::string name;              //!< Function name
-    vector<FunctionArgument*> args;//!< Input registers of the function
-    vector<Register> outputs;      //!< Output registers of the function
-    vector<BasicBlock*> labels;    //!< Each label points to a basic block
-    vector<Immediate> immediates;  //!< All immediate values in the function
-    vector<BasicBlock*> blocks;    //!< All chained basic blocks
-    RegisterFile file;             //!< RegisterDatas used by the instructions
-    Profile profile;               //!< Current function profile
-    ConstantPush *pushedConstant;  //!< All constants pushed before function is called
-    GBE_CLASS(Function);           //!< Use gbe allocators
+    friend class Context;           //!< Can freely modify a function
+    std::string name;               //!< Function name
+    vector<FunctionArgument*> args; //!< Input registers of the function
+    vector<Register> outputs;       //!< Output registers of the function
+    vector<BasicBlock*> labels;     //!< Each label points to a basic block
+    vector<Immediate> immediates;   //!< All immediate values in the function
+    vector<BasicBlock*> blocks;     //!< All chained basic blocks
+    RegisterFile file;              //!< RegisterDatas used by the instructions
+    Profile profile;                //!< Current function profile
+    PushMap pushMap;                //<! Pushed function arguments (reg->loc)
+    LocationMap locationMap;        //<! Pushed function arguments (loc->reg)
+    GBE_CLASS(Function);            //!< Use gbe allocators
   };
 
   /*! Output the function string in the given stream */

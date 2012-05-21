@@ -29,14 +29,18 @@
 namespace gbe {
 namespace ir {
 
+  Register PushLocation::getRegister(void) const {
+    const Function::LocationMap &locationMap = fn.getLocationMap();
+    GBE_ASSERT(locationMap.contains(*this) == true);
+    return locationMap.find(*this)->second;
+  }
+
   Function::Function(const std::string &name, Profile profile) :
-    name(name), profile(profile), pushedConstant(NULL)
-  { initProfile(*this); }
+    name(name), profile(profile) { initProfile(*this); }
 
   Function::~Function(void) {
     for (auto it = blocks.begin(); it != blocks.end(); ++it) GBE_DELETE(*it);
     for (auto it = args.begin(); it != args.end(); ++it) GBE_DELETE(*it);
-    GBE_SAFE_DELETE(pushedConstant);
   }
 
   void Function::sortLabels(void) {
@@ -185,6 +189,13 @@ namespace ir {
         << plural(fn.outputNum()) << " ##" << std::endl;
     for (uint32_t i = 0; i < fn.outputNum(); ++i)
       out << "decl_output %" << fn.getOutput(i) << std::endl;
+    out << "## " << fn.pushedNum() << " pushed register" << std::endl;
+    const Function::PushMap &pushMap = fn.getPushMap();
+    for (const auto &pushed : pushMap) {
+      out << "decl_pushed %" << pushed.first
+           << " @{" << pushed.second.argID << ","
+           << pushed.second.offset << "}" << std::endl;
+    }
     out << "## " << fn.blockNum() << " block"
         << plural(fn.blockNum()) << " ##" << std::endl;
     fn.foreachBlock([&](const BasicBlock &bb) {

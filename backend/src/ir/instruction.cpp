@@ -1019,6 +1019,20 @@ END_FUNCTION(Instruction, Register)
     fn.deleteInstruction(other);
   }
 
+  void Instruction::remove(void) {
+    Function &fn = this->getFunction();
+    BasicBlock *bb = this->getParent();
+    if (bb->getFirstInstruction() == this)
+      bb->setFirstInstruction(this->successor);
+    if (bb->getLastInstruction() == this)
+      bb->setLastInstruction(this->predecessor);
+    if (this->predecessor)
+      this->predecessor->successor = this->successor;
+    if (this->successor)
+      this->successor->predecessor = this->predecessor;
+    fn.deleteInstruction(this);
+  }
+
 #define DECL_MEM_FN(CLASS, RET, PROTOTYPE, CALL) \
   RET CLASS::PROTOTYPE const { \
     return reinterpret_cast<const internal::CLASS*>(this)->CALL; \

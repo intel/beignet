@@ -62,8 +62,6 @@ else (GBE_USE_BLOB)
     ir/unit.hpp
     ir/constant.cpp
     ir/constant.hpp
-    ir/constant_push.cpp
-    ir/constant_push.hpp
     ir/instruction.cpp
     ir/instruction.hpp
     ir/liveness.cpp

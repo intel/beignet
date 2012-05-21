@@ -43,8 +43,6 @@ namespace gbe
     this->liveness = GBE_NEW(ir::Liveness, (ir::Function&) fn);
     this->dag = GBE_NEW(ir::FunctionDAG, *this->liveness);
     this->simdWidth = nextHighestPowerOf2(OCL_SIMD_WIDTH);
-    // std::cout << *dag;
-    //std::cout << *liveness;
   }
   Context::~Context(void) {
     GBE_SAFE_DELETE(this->dag);
@@ -69,7 +67,7 @@ namespace gbe
       return;
     // Be sure that the stack pointer is set
     GBE_ASSERT(this->kernel->getCurbeOffset(GBE_CURBE_STACK_POINTER, 0) >= 0);
-    this->kernel->stackSize = KB; // XXX compute that in a better way
+    this->kernel->stackSize = 1*KB; // XXX compute that in a better way
   }
 
   void Context::buildPatchList(void) {
@@ -87,8 +85,9 @@ namespace gbe
       // For pointers and values, we have nothing to do. We just push the values
       if (arg.type == ir::FunctionArgument::GLOBAL_POINTER ||
           arg.type == ir::FunctionArgument::CONSTANT_POINTER ||
-          arg.type == ir::FunctionArgument::VALUE) {
-        kernel->curbeSize = ALIGN(kernel->curbeSize, arg.size);
+          arg.type == ir::FunctionArgument::VALUE ||
+          arg.type == ir::FunctionArgument::STRUCTURE) {
+        kernel->curbeSize = ALIGN(kernel->curbeSize, ptrSize);
         const PatchInfo patch(GBE_CURBE_KERNEL_ARGUMENT, argID, kernel->curbeSize);
         kernel->patches.push_back(patch);
         kernel->curbeSize += arg.size;
@@ -117,7 +116,7 @@ namespace gbe
     specialRegs.insert(ir::ocl::lid1);
     specialRegs.insert(ir::ocl::lid2);
 
-    // Go over all the instructions and find the special register value we need
+    // Go over all the instructions and find the special register we need
     // to push
 #define INSERT_REG(SPECIAL_REG, PATCH, WIDTH) \
   if (reg == ir::ocl::SPECIAL_REG) { \
@@ -163,7 +162,7 @@ namespace gbe
     // research faster
     std::sort(kernel->patches.begin(), kernel->patches.end());
 
-    // Align it on 128 bytes properly
+    // Align it on 32 bytes properly
     kernel->curbeSize = ALIGN(kernel->curbeSize, GEN_REG_SIZE);
   }
 
@@ -308,6 +307,7 @@ namespace gbe
   bool Context::isScalarReg(const ir::Register &reg) const {
     GBE_ASSERT(fn.getProfile() == ir::Profile::PROFILE_OCL);
     if (fn.getInput(reg) != NULL) return true;
+    if (fn.getPushLocation(reg) != NULL) return true;
     if (reg == ir::ocl::groupid0  ||
         reg == ir::ocl::groupid1  ||
         reg == ir::ocl::groupid2  ||

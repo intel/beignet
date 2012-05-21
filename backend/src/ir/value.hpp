@@ -44,9 +44,10 @@ namespace ir {
   public:
     /*! Discriminates the kind of values */
     enum Type : uint32_t {
-      DEF_FN_INPUT = 0,
-      DEF_INSN_DST = 1,
-      DEF_SPECIAL_REG = 2
+      DEF_FN_ARG = 0,
+      DEF_FN_PUSHED = 1,
+      DEF_INSN_DST = 2,
+      DEF_SPECIAL_REG = 3
     };
     /*! Build a value from an instruction destination */
     explicit ValueDef(const Instruction *insn, uint32_t dstID = 0u) :
@@ -56,8 +57,12 @@ namespace ir {
       this->data.dstID = dstID;
     }
     /*! Build a value from a function argument */
-    explicit ValueDef(const FunctionArgument *arg) : type(DEF_FN_INPUT) {
+    explicit ValueDef(const FunctionArgument *arg) : type(DEF_FN_ARG) {
       this->data.arg = arg;
+    }
+    /*! Build a value from a pushed register */
+    explicit ValueDef(const PushLocation *pushed) : type(DEF_FN_PUSHED) {
+      this->data.pushed = pushed;
     }
     /*! Build a value from a special register */
     explicit ValueDef(const Register &reg) : type(DEF_SPECIAL_REG) {
@@ -77,8 +82,13 @@ namespace ir {
     }
     /*! Get the function input (only if this is a function argument) */
     INLINE const FunctionArgument *getFunctionArgument(void) const {
-      GBE_ASSERT(type == DEF_FN_INPUT);
+      GBE_ASSERT(type == DEF_FN_ARG);
       return data.arg;
+    }
+    /*! Get the pushed location */
+    INLINE const PushLocation *getPushLocation(void) const {
+      GBE_ASSERT(type == DEF_FN_PUSHED);
+      return data.pushed;
     }
     /*! Get the special register */
     INLINE Register getSpecialReg(void) const {
@@ -89,11 +99,12 @@ namespace ir {
     INLINE Register getRegister(void) const {
       if (type == DEF_SPECIAL_REG)
         return Register(data.regID);
-      else if (type == DEF_FN_INPUT)
+      else if (type == DEF_FN_ARG)
         return data.arg->reg;
-      else {
+      else if (type == DEF_FN_PUSHED)
+        return data.pushed->getRegister();
+      else
         return data.insn->getDst(data.dstID);
-      }
     }
 
   private:
@@ -104,6 +115,8 @@ namespace ir {
         const Instruction *insn; //<! Instruction itself
         uint32_t dstID;          //<! Which destination we take into account
       };
+      /*! Pushed value */
+      const PushLocation *pushed;
       /*! ... function argument or ... */
       const FunctionArgument *arg;
       /*! ... special register */
@@ -119,10 +132,14 @@ namespace ir {
     const ValueDef::Type type0 = def0.getType();
     const ValueDef::Type type1 = def1.getType();
     if (type0 != type1) return uint32_t(type0) < uint32_t(type1);
-    if (type0 == ValueDef::DEF_FN_INPUT) {
+    if (type0 == ValueDef::DEF_FN_ARG) {
       const FunctionArgument *in0 = def0.getFunctionArgument();
       const FunctionArgument *in1 = def1.getFunctionArgument();
       return uintptr_t(in0) < uintptr_t(in1);
+    } else if (type0 == ValueDef::DEF_FN_PUSHED) {
+      const PushLocation *pushed0 = def0.getPushLocation();
+      const PushLocation *pushed1 = def1.getPushLocation();
+      return uintptr_t(pushed0) < uintptr_t(pushed1);
     } else if (type0 == ValueDef::DEF_SPECIAL_REG) {
       const Register reg0 = def0.getSpecialReg();
       const Register reg1 = def1.getSpecialReg();
@@ -151,9 +168,7 @@ namespace ir {
     /*! Get the source index for this use */
     uint32_t getSrcID(void) const { return srcID; }
     /*! Get the register for this use */
-    Register getRegister(void) const {
-      return insn->getSrc(srcID);
-    }
+    Register getRegister(void) const { return insn->getSrc(srcID); }
   private:
     const Instruction *insn; //!< Instruction where the value is used
     uint32_t srcID;          //!< Index of the source in the instruction
@@ -189,12 +204,18 @@ namespace ir {
     const UseSet &getUse(const Instruction *insn, uint32_t dstID) const;
     /*! Get the du-chain for the given function input */
     const UseSet &getUse(const FunctionArgument *arg) const;
+    /*! Get the du-chain for the given pushed location */
+    const UseSet &getUse(const PushLocation *pushed) const;
     /*! Get the du-chain for the given special register */
     const UseSet &getUse(const Register &reg) const;
     /*! Get the ud-chain for the given use */
     const DefSet &getDef(const ValueUse &use) const;
     /*! Get the ud-chain for the instruction and source */
     const DefSet &getDef(const Instruction *insn, uint32_t srcID) const;
+    /*! Get the pointer to the definition *as stored in the DAG* */
+    const ValueDef *getDefAddress(const ValueDef &def) const;
+    /*! Get the pointer to the definition *as stored in the DAG* */
+    const ValueDef *getDefAddress(const PushLocation *pushed) const;
     /*! Get the pointer to the definition *as stored in the DAG* */
     const ValueDef *getDefAddress(const Instruction *insn, uint32_t dstID) const;
     /*! Get the pointer to the definition *as stored in the DAG* */
@@ -228,7 +249,7 @@ namespace ir {
     DECL_POOL(DefSet, udChainPool);    //!< Fast DefSet allocation
     DECL_POOL(UseSet, duChainPool);    //!< Fast UseSet allocation
     const Function &fn;                //!< Function we are referring to
-    GBE_CLASS(FunctionDAG);            //!< Use internal allocators
+    GBE_CLASS(FunctionDAG);            //   Use internal allocators
   };
 
   /*! Pretty print of the function DAG */

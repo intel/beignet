@@ -49,9 +49,9 @@ namespace ir {
     /*! All the block definitions map in the functions */
     typedef map<const BasicBlock*, BlockDefMap*> FunctionDefMap;
     /*! Performs the double look-up to get the set of defs per register */
-    RegDefSet &getDefSet(const BasicBlock *bb, const Register &reg);
+    RegDefSet &getDefSet(const BasicBlock *bb, Register reg);
     /*! Build a UD-chain as the union of the predecessor chains */
-    void makeDefSet(DefSet &udChain, const BasicBlock &bb, const Register &reg);
+    void makeDefSet(DefSet &udChain, const BasicBlock &bb, Register reg);
     /*! Fast per register definition set allocation */
     DECL_POOL(RegDefSet, regDefSetPool);
     /*! Fast register sets allocation */
@@ -61,9 +61,11 @@ namespace ir {
     const FunctionDAG &dag;   //!< Structure we are building
   private:
     /*! Initialize liveOut with the instruction destination values */
-    void initializeInstructionDst(void);
-    /*! Initialize liveOut with the function argument */
-    void initializeFunctionArgumentAndSpecialReg(void);
+    void initializeInstructionDef(void);
+    /*! Initialize liveOut with the function argument, special and pushed
+     *  registers
+     */
+    void initializeOtherDef(void);
     /*! Iterate to completely transfer the liveness and get the def sets */
     void iterateLiveOut(void);
   };
@@ -74,13 +76,12 @@ namespace ir {
   LiveOutSet::LiveOutSet(Liveness &liveness, const FunctionDAG &dag) :
     liveness(liveness), dag(dag)
   {
-    this->initializeInstructionDst();
-    this->initializeFunctionArgumentAndSpecialReg();
+    this->initializeInstructionDef();
+    this->initializeOtherDef();
     this->iterateLiveOut();
   }
 
-  LiveOutSet::RegDefSet &LiveOutSet::getDefSet(const BasicBlock *bb,
-                                               const Register &reg)
+  LiveOutSet::RegDefSet &LiveOutSet::getDefSet(const BasicBlock *bb, Register reg)
   {
     auto bbIt = defMap.find(bb);
     GBE_ASSERT(bbIt != defMap.end());
@@ -89,9 +90,7 @@ namespace ir {
     return *defIt->second;
   }
 
-  void LiveOutSet::makeDefSet(DefSet &udChain,
-                               const BasicBlock &bb,
-                               const Register &reg)
+  void LiveOutSet::makeDefSet(DefSet &udChain, const BasicBlock &bb, Register reg)
   {
     // Iterate over all the predecessors
     const auto &preds = bb.getPredecessorSet();
@@ -108,7 +107,15 @@ namespace ir {
 
     // Is it a function input?
     const FunctionArgument *arg = fn.getInput(reg);
-    if (arg != NULL) {
+    const PushLocation *pushed = fn.getPushLocation(reg);
+
+    // Is it a pushed register?
+    if (pushed != NULL) {
+      ValueDef *def = (ValueDef *) dag.getDefAddress(pushed);
+      udChain.insert(def);
+    }
+    // Is a function argument?
+    else if (arg != NULL) {
       ValueDef *def = (ValueDef *) dag.getDefAddress(arg);
       udChain.insert(def);
     }
@@ -119,7 +126,7 @@ namespace ir {
     }
   }
 
-  void LiveOutSet::initializeInstructionDst(void) {
+  void LiveOutSet::initializeInstructionDef(void) {
     const Function &fn = liveness.getFunction();
 
     // Iterate over each block and initialize the liveOut data
@@ -161,7 +168,7 @@ namespace ir {
     });
   }
 
-  void LiveOutSet::initializeFunctionArgumentAndSpecialReg(void) {
+  void LiveOutSet::initializeOtherDef(void) {
     const Function &fn = liveness.getFunction();
     const uint32_t argNum = fn.argNum();
 
@@ -196,6 +203,20 @@ namespace ir {
       // If we overwrite it, do not transfer the initial value
       if (info.inVarKill(reg) == true) continue;
       ValueDef *def = (ValueDef*) this->dag.getDefAddress(reg);
+      auto it = blockDefMap->find(reg);
+      GBE_ASSERT(it != blockDefMap->end());
+      it->second->insert(def);
+    }
+
+    // Finally do the same thing with pushed registers
+    const Function::PushMap &pushMap = fn.getPushMap();
+    for (const auto &pushed : pushMap) {
+      const Register reg = pushed.first;
+      // Do not transfer dead values
+      if (info.inLiveOut(reg) == false) continue;
+      // If we overwrite it, do not transfer the initial value
+      if (info.inVarKill(reg) == true) continue;
+      ValueDef *def = (ValueDef*) this->dag.getDefAddress(&pushed.second);
       auto it = blockDefMap->find(reg);
       GBE_ASSERT(it != blockDefMap->end());
       it->second->insert(def);
@@ -258,7 +279,7 @@ namespace ir {
         const LiveOutSet::RegDefSet *set = regIt->second;
         for (auto def = set->begin(); def != set->end(); ++def) {
           const ValueDef::Type type = (*def)->getType();
-          if (type == ValueDef::DEF_FN_INPUT)
+          if (type == ValueDef::DEF_FN_ARG)
             out << "%" << reg << ": " << "function input" << std::endl;
           else if (type == ValueDef::DEF_SPECIAL_REG)
             out << "%" << reg << ": " << "special register" << std::endl;
@@ -313,6 +334,14 @@ namespace ir {
     for (uint32_t regID = firstID; regID < firstID + specialNum; ++regID) {
       const Register reg(regID);
       ValueDef *valueDef = this->newValueDef(reg);
+      defName.insert(std::make_pair(*valueDef, valueDef));
+      duGraph.insert(std::make_pair(*valueDef, duEmpty));
+    }
+
+    // Pushed registers are also definitions
+    const Function::PushMap &pushMap = fn.getPushMap();
+    for (const auto &pushed : pushMap) {
+      ValueDef *valueDef = this->newValueDef(&pushed.second);
       defName.insert(std::make_pair(*valueDef, valueDef));
       duGraph.insert(std::make_pair(*valueDef, duEmpty));
     }
@@ -496,23 +525,22 @@ namespace ir {
   const DefSet &FunctionDAG::getDef(const Instruction *insn, uint32_t srcID) const {
     return this->getDef(ValueUse(insn, srcID));
   }
-  const ValueDef *FunctionDAG::getDefAddress(const Instruction *insn, uint32_t dstID) const {
-    const ValueDef def(insn, dstID);
+  const ValueDef *FunctionDAG::getDefAddress(const ValueDef &def) const {
     auto it = defName.find(def);
     GBE_ASSERT(it != defName.end() && it->second != NULL);
     return it->second;
+  }
+  const ValueDef *FunctionDAG::getDefAddress(const PushLocation *pushed) const {
+    return this->getDefAddress(ValueDef(pushed));
+  }
+  const ValueDef *FunctionDAG::getDefAddress(const Instruction *insn, uint32_t dstID) const {
+    return this->getDefAddress(ValueDef(insn, dstID));
   }
   const ValueDef *FunctionDAG::getDefAddress(const FunctionArgument *arg) const {
-    const ValueDef def(arg);
-    auto it = defName.find(def);
-    GBE_ASSERT(it != defName.end() && it->second != NULL);
-    return it->second;
+    return this->getDefAddress(ValueDef(arg));
   }
   const ValueDef *FunctionDAG::getDefAddress(const Register &reg) const {
-    const ValueDef def(reg);
-    auto it = defName.find(def);
-    GBE_ASSERT(it != defName.end() && it->second != NULL);
-    return it->second;
+    return this->getDefAddress(ValueDef(reg));
   }
   const ValueUse *FunctionDAG::getUseAddress(const Instruction *insn, uint32_t srcID) const {
     const ValueUse use(insn, srcID);
@@ -547,7 +575,9 @@ namespace ir {
         const Register reg = insn.getSrc(srcID);
         const auto &defs = dag.getDef(&insn, srcID);
         for (auto it = defs.begin(); it != defs.end(); ++it) {
-          if ((*it)->getType() == ValueDef::DEF_FN_INPUT)
+          if ((*it)->getType() == ValueDef::DEF_FN_PUSHED)
+            out << "  %" << reg << " # pushed register" << std::endl;
+          else if ((*it)->getType() == ValueDef::DEF_FN_ARG)
             out << "  %" << reg << " # function argument" << std::endl;
           else if ((*it)->getType() == ValueDef::DEF_SPECIAL_REG)
             out << "  %" << reg << " # special register" << std::endl;

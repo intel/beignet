@@ -60,7 +60,8 @@ namespace gbe
     void emitInstructionStream(void);
     /*! Implements base class */
     virtual Kernel *allocateKernel(void);
-    std::ofstream o; //!< Where to output the c++ string
+    std::ofstream o;            //!< Where to output the c++ string
+    set<ir::Register> usedRegs; //!< All used registers
   };
 
 } /* namespace gbe */

@@ -93,13 +93,13 @@ namespace ir {
   typedef vector<LoadAddImm> LoadAddImmSeq;
 
   /*! Helper class to lower function arguments if required */
-  class FunctionArgumentLowerer
+  class FunctionArgumentLowerer : public Context
   {
   public:
     /*! Build the helper structure */
     FunctionArgumentLowerer(Unit &unit);
     /*! Free everything we needed */
-    ~FunctionArgumentLowerer(void);
+    virtual ~FunctionArgumentLowerer(void);
     /*! Perform all function arguments substitution if needed */
     void lower(const std::string &name);
     /*! Lower the given function argument accesses */
@@ -117,8 +117,6 @@ namespace ir {
     bool matchLoadAddImm(uint32_t argID);
     Liveness *liveness; //!< To compute the function graph
     FunctionDAG *dag;   //!< Contains complete dependency information
-    Unit &unit;         //!< The unit we process
-    Function *fn;       //!< Function to patch
     LoadAddImmSeq seq;  //!< All the direct loads
   };
 
@@ -165,7 +163,7 @@ namespace ir {
 
 
   FunctionArgumentLowerer::FunctionArgumentLowerer(Unit &unit) :
-    liveness(NULL), dag(NULL), unit(unit) {}
+    Context(unit), liveness(NULL), dag(NULL) {}
   FunctionArgumentLowerer::~FunctionArgumentLowerer(void) {
     GBE_SAFE_DELETE(dag);
     GBE_SAFE_DELETE(liveness);
@@ -174,6 +172,7 @@ namespace ir {
   void FunctionArgumentLowerer::lower(const std::string &functionName) {
     if ((this->fn = unit.getFunction(functionName)) == NULL)
       return;
+    std::cout << *fn;
     GBE_SAFE_DELETE(dag);
     GBE_SAFE_DELETE(liveness);
     this->liveness = GBE_NEW(ir::Liveness, *fn);
@@ -187,18 +186,43 @@ namespace ir {
       if (arg.type != FunctionArgument::STRUCTURE) continue;
       this->lower(argID);
     }
+
+    // Build the constant push description and remove the instruction that
+    // therefore become useless
+    this->buildConstantPush();
+    std::cout << *fn;
   }
 
-  INLINE bool operator< (const ArgLocation &arg0, const ArgLocation &arg1) {
-    if (arg0.argID != arg1.argID) return arg0.argID < arg1.argID;
-    return arg0.offset < arg1.offset;
+// Remove all the given instructions from the stream (if dead)
+#define REMOVE_INSN(WHICH) \
+  for (const auto &loadAddImm : seq) { \
+    Instruction *WHICH = loadAddImm.WHICH; \
+    if (WHICH == NULL) continue; \
+    const UseSet &useSet = dag->getUse(WHICH, 0); \
+    bool isDead = true; \
+    for (auto use : useSet) { \
+      if (dead.contains(use->getInstruction()) == false) { \
+        isDead = false; \
+        break; \
+      } \
+    } \
+    if (isDead) { \
+      dead.insert(WHICH); \
+      WHICH->remove(); \
+    } \
   }
 
   void FunctionArgumentLowerer::buildConstantPush(void)
   {
+    if (seq.size() == 0)
+      return;
+
+    // Track instructions we remove to recursively kill them properly
+    set<const Instruction*> dead;
+
     // The argument location we already pushed (since the same argument location
     // can be used several times)
-    set<ArgLocation> inserted;
+    set<PushLocation> inserted;
     for (const auto &loadAddImm : seq) {
       LoadInstruction *load = cast<LoadInstruction>(loadAddImm.load);
       const uint32_t valueNum = load->getValueNum();
@@ -207,16 +231,29 @@ namespace ir {
         const RegisterFamily family = getFamily(type);
         const uint32_t size = getFamilySize(family);
         const uint32_t offset = loadAddImm.offset + valueID * size;
-        const ArgLocation argLocation(loadAddImm.argID, offset);
+        const PushLocation argLocation(*fn, loadAddImm.argID, offset);
         if (inserted.contains(argLocation))
           continue;
         const Register reg = load->getValue(valueID);
         const Register pushed = fn->newRegister(family);
-        const Instruction mov = MOV(type, reg, pushed);
+
+        // TODO the MOV instruction can be most of the time avoided if the
+        // register is never written. We must however support the register
+        // replacement in the instruction interface to be able to patch all the
+        // instruction that uses "reg"
+        const Instruction mov = ir::MOV(type, reg, pushed);
         mov.replace(load);
+        dead.insert(load);
+        this->appendPushedConstant(pushed, argLocation);
       }
     }
+
+    // Remove all unused adds and load immediates
+    REMOVE_INSN(add)
+    REMOVE_INSN(loadImm)
   }
+
+#undef REMOVE_INSN
 
   bool FunctionArgumentLowerer::useStore(const ValueDef &def, set<const Instruction*> &visited)
   {

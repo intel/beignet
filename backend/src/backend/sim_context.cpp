@@ -46,7 +46,6 @@ namespace gbe
     GBE_ASSERT(fn.getProfile() == ir::PROFILE_OCL);
 
     // First we build the set of all used registers
-    set<ir::Register> usedRegs;
     fn.foreachInstruction([&usedRegs](const ir::Instruction &insn) {
       const uint32_t srcNum = insn.getSrcNum(), dstNum = insn.getDstNum();
       for (uint32_t srcID = 0; srcID < srcNum; ++srcID)
@@ -113,18 +112,34 @@ namespace gbe
   } while (0)
 
   void SimContext::emitCurbeLoad(void) {
-    // Right now curbe is only made of arg argument stuff
+
+    // Load the function arguments
     const uint32_t argNum = fn.argNum();
     for (uint32_t argID = 0; argID < argNum; ++argID) {
       const ir::FunctionArgument &arg = fn.getInput(argID);
       const ir::Register reg = arg.reg;
       const int32_t offset = kernel->getCurbeOffset(GBE_CURBE_KERNEL_ARGUMENT, argID);
       // XXX add support for these items
-      GBE_ASSERT (arg.type != ir::FunctionArgument::STRUCTURE &&
-                  arg.type != ir::FunctionArgument::IMAGE &&
+      GBE_ASSERT (arg.type != ir::FunctionArgument::IMAGE &&
                   arg.type != ir::FunctionArgument::LOCAL_POINTER);
       GBE_ASSERT(offset >= 0);
-      o << "LOAD(_" << uint32_t(reg) << ", curbe + " << offset << ");\n";
+      if (arg.type != ir::FunctionArgument::VALUE && usedRegs.contains(reg))
+        o << "LOAD(_" << uint32_t(reg) << ", curbe + " << offset << ");\n";
+    }
+
+    // Load the other pushed values
+    const ir::Function::PushMap &pushMap = fn.getPushMap();
+    for (const auto &pushed : pushMap) {
+      const ir::Register reg = pushed.first;
+      const uint32_t argID = pushed.second.argID;
+      const uint32_t offset = pushed.second.offset;
+
+      // offset gives where the structure is pushed in the curbe
+      const int32_t structOffset = kernel->getCurbeOffset(GBE_CURBE_KERNEL_ARGUMENT, argID);
+      GBE_ASSERT(structOffset >= 0);
+      if (usedRegs.contains(reg))
+        o << "LOAD(_" << uint32_t(reg)
+          << ", curbe + " << (structOffset + offset) << ");\n";
     }
 
     // We must now load the special registers needed by the kernel
