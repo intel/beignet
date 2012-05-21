@@ -116,7 +116,7 @@ namespace gbe
     // Load the function arguments
     const uint32_t argNum = fn.argNum();
     for (uint32_t argID = 0; argID < argNum; ++argID) {
-      const ir::FunctionArgument &arg = fn.getInput(argID);
+      const ir::FunctionArgument &arg = fn.getArg(argID);
       const ir::Register reg = arg.reg;
       const int32_t offset = kernel->getCurbeOffset(GBE_CURBE_KERNEL_ARGUMENT, argID);
       // XXX add support for these items

@@ -81,7 +81,7 @@ namespace gbe
     // Go over the arguments and find the related patch locations
     const uint32_t argNum = fn.argNum();
     for (uint32_t argID = 0u; argID < argNum; ++argID) {
-      const ir::FunctionArgument &arg = fn.getInput(argID);
+      const ir::FunctionArgument &arg = fn.getArg(argID);
       // For pointers and values, we have nothing to do. We just push the values
       if (arg.type == ir::FunctionArgument::GLOBAL_POINTER ||
           arg.type == ir::FunctionArgument::CONSTANT_POINTER ||
@@ -170,7 +170,7 @@ namespace gbe
     kernel->argNum = fn.argNum();
     kernel->args = GBE_NEW_ARRAY(KernelArgument, kernel->argNum);
     for (uint32_t argID = 0; argID < kernel->argNum; ++argID) {
-      const auto &arg = fn.getInput(argID);
+      const auto &arg = fn.getArg(argID);
       switch (arg.type) {
         case ir::FunctionArgument::VALUE:
         case ir::FunctionArgument::STRUCTURE:
@@ -306,7 +306,7 @@ namespace gbe
 
   bool Context::isScalarReg(const ir::Register &reg) const {
     GBE_ASSERT(fn.getProfile() == ir::Profile::PROFILE_OCL);
-    if (fn.getInput(reg) != NULL) return true;
+    if (fn.getArg(reg) != NULL) return true;
     if (fn.getPushLocation(reg) != NULL) return true;
     if (reg == ir::ocl::groupid0  ||
         reg == ir::ocl::groupid1  ||

@@ -170,7 +170,7 @@ namespace ir {
     out << "## " << fn.argNum() << " input register"
         << plural(fn.argNum())  << " ##" << std::endl;
     for (uint32_t i = 0; i < fn.argNum(); ++i) {
-      const FunctionArgument &input = fn.getInput(i);
+      const FunctionArgument &input = fn.getArg(i);
       out << "decl_input.";
       switch (input.type) {
         case FunctionArgument::GLOBAL_POINTER: out << "global"; break;

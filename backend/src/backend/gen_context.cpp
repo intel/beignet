@@ -152,7 +152,7 @@ namespace gbe
   uint32_t GenContext::createGenReg(ir::Register reg, uint32_t grfOffset) {
     using namespace ir;
     if (fn.isSpecialReg(reg) == true) return grfOffset; // already done
-    if (fn.getInput(reg) != NULL) return grfOffset; // already done
+    if (fn.getArg(reg) != NULL) return grfOffset; // already done
     if (fn.getPushLocation(reg) != NULL) return grfOffset; // already done
     GBE_ASSERT(this->isScalarReg(reg) == false);
     const RegisterData regData = fn.getRegisterData(reg);
@@ -218,7 +218,7 @@ namespace gbe
     // Allocate all (non-structure) argument parameters
     const uint32_t argNum = fn.argNum();
     for (uint32_t argID = 0; argID < argNum; ++argID) {
-      const FunctionArgument &arg = fn.getInput(argID);
+      const FunctionArgument &arg = fn.getArg(argID);
       GBE_ASSERT(arg.type == FunctionArgument::GLOBAL_POINTER ||
                  arg.type == FunctionArgument::CONSTANT_POINTER ||
                  arg.type == FunctionArgument::VALUE ||

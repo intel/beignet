@@ -209,11 +209,11 @@ namespace ir {
     /*! Fast allocation / deallocation of instructions */
     DECL_POOL(Instruction, insnPool);
     /*! Get input argument */
-    INLINE const FunctionArgument &getInput(uint32_t ID) const {
+    INLINE const FunctionArgument &getArg(uint32_t ID) const {
       GBE_ASSERT(ID < argNum() && args[ID] != NULL);
       return *args[ID];
     }
-    INLINE FunctionArgument &getInput(uint32_t ID) {
+    INLINE FunctionArgument &getArg(uint32_t ID) {
       GBE_ASSERT(ID < argNum() && args[ID] != NULL);
       return *args[ID];
     }
@@ -234,7 +234,7 @@ namespace ir {
     /*! Get input argument from the register (linear research). Return NULL if
      *  this is not an input argument
      */
-    INLINE const FunctionArgument *getInput(const Register &reg) const {
+    INLINE const FunctionArgument *getArg(const Register &reg) const {
       for (auto it = args.begin(); it != args.end(); ++it)
         if ((*it)->reg == reg) return *it;
       return NULL;

@@ -121,6 +121,7 @@ namespace ir {
 
   INLINE uint64_t getOffsetFromImm(const Immediate &imm) {
     switch (imm.type) {
+      // bit-cast these ones
       case TYPE_DOUBLE:
       case TYPE_FLOAT:
       case TYPE_S64:
@@ -128,6 +129,7 @@ namespace ir {
       case TYPE_U32:
       case TYPE_U16:
       case TYPE_U8: return imm.data.u64;
+      // sign extend these ones
       case TYPE_S32: return int64_t(imm.data.s32);
       case TYPE_S16: return int64_t(imm.data.s16);
       case TYPE_S8: return int64_t(imm.data.s8);
@@ -181,7 +183,7 @@ namespace ir {
     // replace
     const uint32_t argNum = fn->argNum();
     for (uint32_t argID = 0; argID < argNum; ++argID) {
-      FunctionArgument &arg = fn->getInput(argID);
+      FunctionArgument &arg = fn->getArg(argID);
       if (arg.type != FunctionArgument::STRUCTURE) continue;
       this->lower(argID);
     }
@@ -281,7 +283,7 @@ namespace ir {
 
   bool FunctionArgumentLowerer::matchLoadAddImm(uint32_t argID)
   {
-    const FunctionArgument &arg = fn->getInput(argID);
+    const FunctionArgument &arg = fn->getArg(argID);
     LoadAddImmSeq tmpSeq;
 
     // Inspect all uses of the function argument pointer
@@ -343,7 +345,7 @@ namespace ir {
 
   ArgUse FunctionArgumentLowerer::getArgUse(uint32_t argID)
   {
-    FunctionArgument &arg = fn->getInput(argID);
+    FunctionArgument &arg = fn->getArg(argID);
 
     // case 1 - we may store something to the structure argument
     set<const Instruction*> visited;

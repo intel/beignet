@@ -106,7 +106,7 @@ namespace ir {
     if (fn.isEntryBlock(bb) == false) return;
 
     // Is it a function input?
-    const FunctionArgument *arg = fn.getInput(reg);
+    const FunctionArgument *arg = fn.getArg(reg);
     const PushLocation *pushed = fn.getPushLocation(reg);
 
     // Is it a pushed register?
@@ -181,7 +181,7 @@ namespace ir {
     // Insert all the values that are not overwritten in the block and alive at
     // the end of it
     for (uint32_t argID = 0; argID < argNum; ++argID) {
-      const FunctionArgument &arg = fn.getInput(argID);
+      const FunctionArgument &arg = fn.getArg(argID);
       const Register reg = arg.reg;
       // Do not transfer dead values
       if (info.inLiveOut(reg) == false) continue;
@@ -322,7 +322,7 @@ namespace ir {
     // Function arguments are also value definitions
     const uint32_t argNum = fn.argNum();
     for (uint32_t argID = 0; argID < argNum; ++argID) {
-      const FunctionArgument &arg = fn.getInput(argID);
+      const FunctionArgument &arg = fn.getArg(argID);
       ValueDef *valueDef = this->newValueDef(&arg);
       defName.insert(std::make_pair(*valueDef, valueDef));
       duGraph.insert(std::make_pair(*valueDef, duEmpty));
