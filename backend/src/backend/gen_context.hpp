@@ -66,7 +66,10 @@ namespace gbe
     GenReg genReg(ir::Register reg, ir::Type type = ir::TYPE_FLOAT);
     /*! Compute the second instruction when using SIMD8 with Qn (n in 2,3,4) */
     GenReg genRegQn(ir::Register reg, uint32_t quarter, ir::Type type = ir::TYPE_FLOAT);
-
+    /*! Bool registers will use scalar words. So we will consider them as
+     *  scalars in Gen backend
+     */
+    bool isScalarOrBool(ir::Register reg) const;
     /*! Emit instruction per family */
     void emitUnaryInstruction(const ir::UnaryInstruction &insn);
     void emitBinaryInstruction(const ir::BinaryInstruction &insn);

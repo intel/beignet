@@ -35,7 +35,6 @@ namespace gbe
   ///////////////////////////////////////////////////////////////////////////
   // Various helper functions
   ///////////////////////////////////////////////////////////////////////////
-
   INLINE uint32_t getGenType(ir::Type type) {
     using namespace ir;
     switch (type) {
@@ -67,12 +66,9 @@ namespace gbe
   ///////////////////////////////////////////////////////////////////////////
   // GenContext implementation
   ///////////////////////////////////////////////////////////////////////////
-
   GenContext::GenContext(const ir::Unit &unit, const std::string &name) :
     Context(unit, name)
-  {
-    p = GBE_NEW(GenEmitter, simdWidth, 7); // XXX handle more than gen7
-  }
+  { p = GBE_NEW(GenEmitter, simdWidth, 7); } // XXX handle more than Gen7
 
   GenContext::~GenContext(void) { GBE_DELETE(p); }
 
@@ -92,6 +88,15 @@ namespace gbe
       return GenReg::Qn(genReg, quarter);
   }
 
+  bool GenContext::isScalarOrBool(ir::Register reg) const {
+    if (this->isScalarReg(reg))
+      return true;
+    else {
+      const ir::RegisterFamily family = fn.getRegisterFamily(reg);
+      return family == ir::FAMILY_BOOL;
+    }
+  }
+
   // Per-lane block IPs are always pre-allocated and used for branches. We just
   // 0xffff as a fake register for them
   static const ir::Register blockIPReg(0xffff);
@@ -102,7 +107,7 @@ namespace gbe
   static const size_t familyScalarSize[] = {2,1,2,4,8};
 
 #define INSERT_REG(SIMD16, SIMD8, SIMD1) \
-  if (this->isScalarReg(reg) == true) \
+  if (this->isScalarOrBool(reg) == true) \
     RA.insert(std::make_pair(reg, GenReg::SIMD1(nr, subnr))); \
   else if (this->simdWidth == 8) \
     RA.insert(std::make_pair(reg, GenReg::SIMD8(nr, subnr))); \
@@ -120,12 +125,12 @@ namespace gbe
       const uint32_t offset = curbeOffset + subOffset;
       const ir::RegisterData data = fn.getRegisterData(reg);
       const ir::RegisterFamily family = data.family;
-      const bool isScalar = this->isScalarReg(reg);
+      const bool isScalar = this->isScalarOrBool(reg);
       const uint32_t typeSize = isScalar ? familyScalarSize[family] : familyVectorSize[family];
       const uint32_t nr = (offset + GEN_REG_SIZE) / GEN_REG_SIZE;
       const uint32_t subnr = ((offset + GEN_REG_SIZE) % GEN_REG_SIZE) / typeSize;
       switch (family) {
-        case FAMILY_BOOL:
+        case FAMILY_BOOL: INSERT_REG(uw1grf, uw1grf, uw1grf); break;
         case FAMILY_WORD: INSERT_REG(uw16grf, uw8grf, uw1grf); break;
         case FAMILY_BYTE: INSERT_REG(ub16grf, ub8grf, ub1grf); break;
         case FAMILY_DWORD: INSERT_REG(f16grf, f8grf, f1grf); break;
@@ -137,7 +142,7 @@ namespace gbe
 #undef INSERT_REG
 
 #define INSERT_REG(SIMD16, SIMD8, SIMD1) \
-  if (this->isScalarReg(reg) == true) { \
+  if (this->isScalarOrBool(reg) == true) { \
     RA.insert(std::make_pair(reg, GenReg::SIMD1(nr, subnr))); \
     grfOffset += typeSize; \
   } else if (simdWidth == 16) { \
@@ -155,16 +160,17 @@ namespace gbe
     if (fn.getArg(reg) != NULL) return grfOffset; // already done
     if (fn.getPushLocation(reg) != NULL) return grfOffset; // already done
     GBE_ASSERT(this->isScalarReg(reg) == false);
+    const bool isScalar = this->isScalarOrBool(reg);
     const RegisterData regData = fn.getRegisterData(reg);
     const RegisterFamily family = regData.family;
-    const uint32_t typeSize = familyVectorSize[family];
+    const uint32_t typeSize = isScalar ? familyScalarSize[family] : familyVectorSize[family];
     const uint32_t regSize = simdWidth*typeSize;
     grfOffset = ALIGN(grfOffset, regSize);
     if (grfOffset + regSize <= GEN_GRF_SIZE) {
       const uint32_t nr = grfOffset / GEN_REG_SIZE;
       const uint32_t subnr = (grfOffset % GEN_REG_SIZE) / typeSize;
       switch (family) {
-        case FAMILY_BOOL:
+        case FAMILY_BOOL: INSERT_REG(uw1grf, uw1grf, uw1grf); break;
         case FAMILY_WORD: INSERT_REG(uw16grf, uw8grf, uw1grf); break;
         case FAMILY_BYTE: INSERT_REG(ub16grf, ub8grf, ub1grf); break;
         case FAMILY_DWORD: INSERT_REG(f16grf, f8grf, f1grf); break;
@@ -306,20 +312,19 @@ namespace gbe
     // register from the boolean vector
     if (insn.isPredicated() == true) {
       const GenReg pred = this->genReg(insn.getPredicateIndex(), TYPE_U16);
+
+      // Reset the flag register
       p->push();
-        p->curr.noMask = 1;
-        p->curr.execWidth = 1;
         p->curr.predicate = GEN_PREDICATE_NONE;
-        p->MOV(GenReg::flag(0,1), GenReg::flag(0,0));
+        p->curr.execWidth = 1;
+        p->curr.noMask = 1;
+        p->MOV(GenReg::flag(0,1), pred);
       p->pop();
 
-      // Rebuild the flag register by comparing the boolean with 1s
+      // Update the PcIPs
       p->push();
         p->curr.flag = 0;
         p->curr.subFlag = 1;
-        p->CMP(GEN_CONDITIONAL_EQ, pred, GenReg::immuw(1));
-
-        // Update the PcIPs
         p->MOV(ip, GenReg::immuw(uint16_t(dst)));
       p->pop();
 
@@ -372,16 +377,9 @@ namespace gbe
     const BasicBlock &bb = fn.getBlock(src);
     GBE_ASSERT(bb.getNextBlock() != NULL);
 
-    // Inefficient code. If the instruction is predicated, we build the flag
-    // register from the boolean vector
+    // Inefficient code: we make a GRF to flag conversion
     if (insn.isPredicated() == true) {
       const GenReg pred = this->genReg(insn.getPredicateIndex(), TYPE_U16);
-      p->push();
-        p->curr.noMask = 1;
-        p->curr.execWidth = 1;
-        p->curr.predicate = GEN_PREDICATE_NONE;
-        p->MOV(GenReg::flag(0,1), GenReg::flag(0,0));
-      p->pop();
 
       // Update the PcIPs for all the branches. Just put the IPs of the next
       // block. Next instruction will properly reupdate the IPs of the lanes
@@ -391,9 +389,15 @@ namespace gbe
 
       // Rebuild the flag register by comparing the boolean with 1s
       p->push();
+        p->curr.noMask = 1;
+        p->curr.execWidth = 1;
+        p->curr.predicate = GEN_PREDICATE_NONE;
+        p->MOV(GenReg::flag(0,1), pred);
+      p->pop();
+
+      p->push();
         p->curr.flag = 0;
         p->curr.subFlag = 1;
-        p->CMP(GEN_CONDITIONAL_EQ, pred, GenReg::immuw(1));
 
         // Re-update the PcIPs for the branches that takes the backward jump
         p->MOV(ip, GenReg::immuw(uint16_t(dst)));
@@ -435,6 +439,15 @@ namespace gbe
     GenReg src0 = this->genReg(insn.getSrc(0), type);
     GenReg src1 = this->genReg(insn.getSrc(1), type);
 
+    p->push();
+
+    // Boolean values use scalars
+    if (this->isScalarOrBool(insn.getDst(0)) == true) {
+      p->curr.execWidth = 1;
+      p->curr.predicate = GEN_PREDICATE_NONE;
+      p->curr.noMask = 1;
+    }
+
     // Output the binary instruction
     switch (opcode) {
       case OP_ADD: p->ADD(dst, src0, src1); break;
@@ -451,16 +464,17 @@ namespace gbe
           this->emitIntMul32x32(insn, dst, src0, src1);
         else
           NOT_IMPLEMENTED;
-        break;
       }
+      break;
       case OP_DIV:
       {
         GBE_ASSERT(type == TYPE_FLOAT);
         p->MATH(dst, GEN_MATH_FUNCTION_FDIV, src0, src1);
-        break;
       }
+      break;
       default: NOT_IMPLEMENTED;
     }
+    p->pop();
   }
 
   void GenContext::emitTernaryInstruction(const ir::TernaryInstruction &insn) {
@@ -500,12 +514,11 @@ namespace gbe
       p->CMP(genCmp, src0, src1);
     p->pop();
 
-    // We emit a very unoptimized code where we store the resulting mask in a
-    // GRF
+    // We emit an unoptimized code where we store the resulting mask in a GRF
     p->push();
-      p->curr.flag = 0;
-      p->curr.subFlag = 1;
-      p->SEL(dst, GenReg::uw1grf(127,0), GenReg::immuw(0));
+      p->curr.execWidth = 1;
+      p->curr.predicate = GEN_PREDICATE_NONE;
+      p->MOV(dst, GenReg::flag(0,1));
     p->pop();
   }
 
