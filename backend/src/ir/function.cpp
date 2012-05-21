@@ -22,7 +22,6 @@
  * \author Benjamin Segovia <benjamin.segovia@intel.com>
  */
 #include "ir/function.hpp"
-#include "ir/constant_push.hpp"
 #include "sys/string.hpp"
 #include "sys/map.hpp"
 

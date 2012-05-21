@@ -22,7 +22,6 @@
  * \author Benjamin Segovia <benjamin.segovia@intel.com>
  */
 #include "ir/context.hpp"
-#include "ir/constant_push.hpp"
 #include "ir/unit.hpp"
 #include "ir/lowering.hpp"
 

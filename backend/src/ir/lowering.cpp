@@ -25,7 +25,6 @@
 #include "ir/context.hpp"
 #include "ir/value.hpp"
 #include "ir/liveness.hpp"
-#include "ir/constant_push.hpp"
 #include "sys/set.hpp"
 
 namespace gbe {
