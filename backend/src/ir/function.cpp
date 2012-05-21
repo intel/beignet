@@ -38,8 +38,8 @@ namespace ir {
     name(name), profile(profile) { initProfile(*this); }
 
   Function::~Function(void) {
-    for (auto it = blocks.begin(); it != blocks.end(); ++it) GBE_DELETE(*it);
-    for (auto it = args.begin(); it != args.end(); ++it) GBE_DELETE(*it);
+    for (auto block : blocks) GBE_DELETE(block);
+    for (auto arg : args) GBE_DELETE(arg);
   }
 
   void Function::sortLabels(void) {

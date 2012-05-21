@@ -64,8 +64,7 @@ namespace ir {
     /*! Apply the given functor on all the functions */
     template <typename T>
     INLINE void apply(const T &functor) const {
-      for (auto it = functions.begin(); it != functions.end(); ++it)
-        functor(*it->second);
+      for (const auto &pair : functions) functor(*pair.second);
     }
     /*! Return the size of the pointers manipulated */
     INLINE PointerSize getPointerSize(void) const { return pointerSize; }

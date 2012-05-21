@@ -29,8 +29,7 @@ namespace ir {
 
   Unit::Unit(PointerSize pointerSize) : pointerSize(pointerSize) {}
   Unit::~Unit(void) {
-    for (auto it = functions.begin(); it != functions.end(); ++it)
-      GBE_DELETE(it->second);
+    for (const auto &pair : functions) GBE_DELETE(pair.second);
   }
   Function *Unit::getFunction(const std::string &name) const {
     auto it = functions.find(name);
@@ -54,8 +53,7 @@ namespace ir {
     constantSet.append(data, name, size, alignment);
   }
 
-  std::ostream &operator<< (std::ostream &out, const Unit &unit)
-  {
+  std::ostream &operator<< (std::ostream &out, const Unit &unit) {
     unit.apply([&out] (const Function &fn) { out << fn << std::endl; });
     return out;
   }

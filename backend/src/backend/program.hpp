@@ -123,9 +123,9 @@ namespace gbe {
     Kernel *getKernel(const uint32_t ID) const {
       uint32_t currID = 0;
       Kernel *kernel = NULL;
-      for (auto it = kernels.begin(); it != kernels.end(); ++it) {
+      for (const auto &pair : kernels) {
         if (currID == ID) {
-          kernel = it->second;
+          kernel = pair.second;
           break;
         }
       }

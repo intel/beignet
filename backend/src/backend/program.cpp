@@ -54,8 +54,7 @@ namespace gbe {
 
   Program::Program(void) {}
   Program::~Program(void) {
-    for (auto it = kernels.begin(); it != kernels.end(); ++it)
-      GBE_DELETE(it->second);
+    for (auto &kernel : kernels) GBE_DELETE(kernel.second);
   }
 
   BVAR(OCL_OUTPUT_GEN_IR, false);
@@ -75,8 +74,8 @@ namespace gbe {
     const uint32_t kernelNum = set.size();
     if (OCL_OUTPUT_GEN_IR) std::cout << unit;
     if (kernelNum == 0) return true;
-    for (auto it = set.begin(); it != set.end(); ++it) {
-      const std::string &name = it->first;
+    for (const auto &pair : set) {
+      const std::string &name = pair.first;
       Kernel *kernel = this->compileKernel(unit, name);
       kernels.insert(std::make_pair(name, kernel));
     }

@@ -235,8 +235,7 @@ namespace ir {
      *  this is not an input argument
      */
     INLINE const FunctionArgument *getArg(const Register &reg) const {
-      for (auto it = args.begin(); it != args.end(); ++it)
-        if ((*it)->reg == reg) return *it;
+      for (auto arg : args) if (arg->reg == reg) return arg;
       return NULL;
     }
     /*! Get output register */
@@ -314,14 +313,12 @@ namespace ir {
     /*! Apply the given functor on all basic blocks */
     template <typename T>
     INLINE void foreachBlock(const T &functor) const {
-      for (auto it = blocks.begin(); it != blocks.end(); ++it)
-        functor(**it);
+      for (auto block : blocks) functor(*block);
     }
     /*! Apply the given functor on all instructions */
     template <typename T>
     INLINE void foreachInstruction(const T &functor) const {
-      for (auto it = blocks.begin(); it != blocks.end(); ++it)
-        (*it)->foreach(functor);
+      for (auto block : blocks) block->foreach(functor);
     }
   private:
     friend class Context;           //!< Can freely modify a function

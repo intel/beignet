@@ -32,8 +32,7 @@ namespace ir {
     unit(unit), fn(NULL), bb(NULL), usedLabels(NULL) {}
 
   Context::~Context(void) {
-    for (auto it = fnStack.begin(); it != fnStack.end(); ++it)
-      GBE_SAFE_DELETE(it->usedLabels);
+    for (const auto &elem : fnStack) GBE_SAFE_DELETE(elem.usedLabels);
     GBE_SAFE_DELETE(usedLabels);
   }
 
@@ -66,8 +65,9 @@ namespace ir {
     if (fn->blockNum() == 0) this->RET();
 
     // Check first that all branch instructions point to valid labels
-    for (auto it = usedLabels->begin(); it != usedLabels->end(); ++it)
-      GBE_ASSERTM(*it != LABEL_IS_POINTED, "A label is used and not defined");
+    GBE_ASSERT(usedLabels);
+    for (auto usage : *usedLabels)
+      GBE_ASSERTM(usage != LABEL_IS_POINTED, "A label is used and not defined");
     GBE_DELETE(usedLabels);
 
     // Remove all returns and insert one unique return block at the end of the

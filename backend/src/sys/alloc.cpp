@@ -128,8 +128,7 @@ namespace gbe
 
   void MemDebugger::dumpAlloc(void) {
     std::cerr << "MemDebugger: Unfreed number: " << unfreedNum << std::endl;
-    for (auto it = allocMap.begin(); it != allocMap.end(); ++it)
-      this->dumpData(it->second);
+    for (const auto &alloc : allocMap) this->dumpData(alloc.second);
     std::cerr << "MemDebugger: " << staticStringVector.size()
               << " allocated static strings" << std::endl;
   }

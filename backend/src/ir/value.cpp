@@ -94,10 +94,9 @@ namespace ir {
   {
     // Iterate over all the predecessors
     const auto &preds = bb.getPredecessorSet();
-    for (auto pred = preds.begin(); pred != preds.end(); ++pred) {
-      RegDefSet &predDef = this->getDefSet(*pred, reg);
-      for (auto def = predDef.begin(); def != predDef.end(); ++def)
-        udChain.insert(*def);
+    for (const auto &pred : preds) {
+      RegDefSet &predDef = this->getDefSet(pred, reg);
+      for (auto def : predDef) udChain.insert(def);
     }
 
     // If this is the top block we must take into account both function
@@ -140,10 +139,10 @@ namespace ir {
       // We only consider liveout registers
       const auto &info = this->liveness.getBlockInfo(&bb);
       const auto &liveOut = info.liveOut;
-      for (auto it = liveOut.begin(); it != liveOut.end(); ++it) {
-        GBE_ASSERT(blockDefMap->find(*it) == blockDefMap->end());
+      for (auto reg : liveOut) {
+        GBE_ASSERT(blockDefMap->find(reg) == blockDefMap->end());
         auto regDefSet = this->newRegDefSet();
-        blockDefMap->insert(std::make_pair(*it, regDefSet));
+        blockDefMap->insert(std::make_pair(reg, regDefSet));
       }
 
       // Now traverse the blocks backwards and find the definition of each
@@ -236,18 +235,17 @@ namespace ir {
       {
         const BasicBlock &bb = curr.bb;
         const BasicBlock &pbb = pred.bb;
-        for (auto it = curr.liveOut.begin(); it != curr.liveOut.end(); ++it) {
-          const Register reg = *it;
+        for (auto reg : curr.liveOut) {
           if (pred.inLiveOut(reg) == false) continue;
           if (curr.inVarKill(reg) == true) continue;
           RegDefSet &currSet = this->getDefSet(&bb, reg);
           RegDefSet &predSet = this->getDefSet(&pbb, reg);
 
           // Transfer the values
-          for (auto it = predSet.begin(); it != predSet.end(); ++it) {
-            if (currSet.contains(*it)) continue;
+          for (auto def : predSet) {
+            if (currSet.contains(def)) continue;
             changed = true;
-            currSet.insert(*it);
+            currSet.insert(def);
           }
         }
       });
@@ -255,36 +253,38 @@ namespace ir {
   }
 
   LiveOutSet::~LiveOutSet(void) {
-    for (auto it = defMap.begin(); it != defMap.end(); ++it) {
-      BlockDefMap *block = it->second;
-      for (auto regSet = block->begin();regSet != block->end(); ++regSet)
-        this->deleteRegDefSet(regSet->second);
+    for (const auto pair : defMap) {
+      BlockDefMap *block = pair.second;
+      for (auto regSet : *block)
+        this->deleteRegDefSet(regSet.second);
       this->deleteBlockDefMap(block);
     }
   }
 
   std::ostream &operator<< (std::ostream &out, LiveOutSet &set) {
-    for (auto it = set.defMap.begin(); it != set.defMap.end(); ++it) {
+    for (const auto &pair : set.defMap) {
       // To recognize the block, just print its instructions
       out << "Block:" << std::endl;
-      it->first->foreach([&out] (const Instruction &insn) {
+      pair.first->foreach([&out] (const Instruction &insn) {
         out << insn << std::endl;
       });
 
       // Iterate over all alive registers to get their definitions
-      const LiveOutSet::BlockDefMap *defMap = it->second;
+      const LiveOutSet::BlockDefMap *defMap = pair.second;
       if (defMap->size() > 0) out << "LiveSet:" << std::endl;
-      for (auto regIt = defMap->begin(); regIt != defMap->end(); ++regIt) {
-        const Register reg = regIt->first;
-        const LiveOutSet::RegDefSet *set = regIt->second;
-        for (auto def = set->begin(); def != set->end(); ++def) {
-          const ValueDef::Type type = (*def)->getType();
+      for (const auto &pair : *defMap) {
+        const Register reg = pair.first;
+        const LiveOutSet::RegDefSet *set = pair.second;
+        for (auto def : *set) {
+          const ValueDef::Type type = def->getType();
           if (type == ValueDef::DEF_FN_ARG)
             out << "%" << reg << ": " << "function input" << std::endl;
+          else if (type == ValueDef::DEF_FN_PUSHED)
+            out << "%" << reg << ": " << "pushed register" << std::endl;
           else if (type == ValueDef::DEF_SPECIAL_REG)
             out << "%" << reg << ": " << "special register" << std::endl;
           else {
-            const Instruction *insn = (*def)->getInstruction();
+            const Instruction *insn = def->getInstruction();
             out << "%" << reg << ": " << insn << " " << *insn << std::endl;
           }
         }
@@ -400,8 +400,7 @@ namespace ir {
       });
 
       // Deallocate unused chains
-      for (auto it = unused.begin(); it != unused.end(); ++it)
-        this->deleteDefSet(*it);
+      for (auto set : unused) this->deleteDefSet(set);
     });
 
     // Build the DU chains from the UD ones
@@ -414,14 +413,14 @@ namespace ir {
 
         // Find all definitions for this source
         const auto &defs = this->getDef(&insn, srcID);
-        for (auto def = defs.begin(); def != defs.end(); ++def) {
-          auto uses = duGraph.find(**def);
+        for (auto def : defs) {
+          auto uses = duGraph.find(*def);
           UseSet *du = uses->second;
           GBE_ASSERT(uses != duGraph.end());
           if (du == duEmpty) {
-            duGraph.erase(**def);
+            duGraph.erase(*def);
             du = this->newUseSet();
-            duGraph.insert(std::make_pair(**def, du));
+            duGraph.insert(std::make_pair(*def, du));
           }
           du->insert(use);
         }
@@ -478,28 +477,24 @@ namespace ir {
     PTR_RELEASE(UseSet, duEmpty);
 
     // We free all the ud-chains
-    for (auto it = udGraph.begin(); it != udGraph.end(); ++it) {
-      auto defs = it->second;
+    for (const auto &pair : udGraph) {
+      auto defs = pair.second;
       if (destroyed.contains(defs)) continue;
-      for (auto def = defs->begin(); def != defs->end(); ++def)
-        PTR_RELEASE(ValueDef, *def);
+      for (auto def : *defs) PTR_RELEASE(ValueDef, def);
       PTR_RELEASE(DefSet, defs);
     }
 
     // We free all the du-chains
-    for (auto it = duGraph.begin(); it != duGraph.end(); ++it) {
-      auto uses = it->second;
+    for (const auto &pair : duGraph) {
+      auto uses = pair.second;
       if (destroyed.contains(uses)) continue;
-      for (auto use = uses->begin(); use != uses->end(); ++use)
-        PTR_RELEASE(ValueUse, *use);
+      for (auto use : *uses) PTR_RELEASE(ValueUse, use);
       PTR_RELEASE(UseSet, uses);
     }
 
     // Release all the use and definition sets per register
-    for (auto it = regUse.begin(); it != regUse.end(); ++it)
-      GBE_SAFE_DELETE(it->second);
-    for (auto it = regDef.begin(); it != regDef.end(); ++it)
-      GBE_SAFE_DELETE(it->second);
+    for (const auto &pair : regUse) GBE_SAFE_DELETE(pair.second);
+    for (const auto &pair : regDef) GBE_SAFE_DELETE(pair.second);
   }
 #undef PTR_RELEASE
 
@@ -562,8 +557,8 @@ namespace ir {
       for (uint32_t dstID = 0; dstID < dstNum; ++dstID) {
         const Register reg = insn.getDst(dstID);
         const auto &uses = dag.getUse(&insn, dstID);
-        for (auto it = uses.begin(); it != uses.end(); ++it) {
-          const Instruction *other = (*it)->getInstruction();
+        for (auto use : uses) {
+          const Instruction *other = use->getInstruction();
           out << "  %" << reg << " " << other << ": " << *other << std::endl;
         }
       }
@@ -574,15 +569,15 @@ namespace ir {
       for (uint32_t srcID = 0; srcID < srcNum; ++srcID) {
         const Register reg = insn.getSrc(srcID);
         const auto &defs = dag.getDef(&insn, srcID);
-        for (auto it = defs.begin(); it != defs.end(); ++it) {
-          if ((*it)->getType() == ValueDef::DEF_FN_PUSHED)
+        for (auto def : defs) {
+          if (def->getType() == ValueDef::DEF_FN_PUSHED)
             out << "  %" << reg << " # pushed register" << std::endl;
-          else if ((*it)->getType() == ValueDef::DEF_FN_ARG)
+          else if (def->getType() == ValueDef::DEF_FN_ARG)
             out << "  %" << reg << " # function argument" << std::endl;
-          else if ((*it)->getType() == ValueDef::DEF_SPECIAL_REG)
+          else if (def->getType() == ValueDef::DEF_SPECIAL_REG)
             out << "  %" << reg << " # special register" << std::endl;
           else {
-            const Instruction *other = (*it)->getInstruction();
+            const Instruction *other = def->getInstruction();
             out << "  %" << reg << " " << other << ": " << *other << std::endl;
           }
         }

@@ -35,8 +35,7 @@ namespace ir {
   }
 
   Liveness::~Liveness(void) {
-    for (auto it = liveness.begin(); it != liveness.end(); ++it)
-      GBE_SAFE_DELETE(it->second);
+    for (auto &pair : liveness) GBE_SAFE_DELETE(pair.second);
   }
 
   void Liveness::initBlock(const BasicBlock &bb) {
@@ -71,8 +70,7 @@ namespace ir {
     foreach<DF_SUCC>([](BlockInfo &info, const BlockInfo &succ) {
       const UEVar &ueVarSet = succ.upwardUsed;
       // Iterate over all the registers in the UEVar of our successor
-      for (auto ueVar = ueVarSet.begin(); ueVar != ueVarSet.end(); ++ueVar)
-        info.liveOut.insert(*ueVar);
+      for (auto ueVar : ueVarSet) info.liveOut.insert(ueVar);
     });
     // Now iterate on liveOut
     bool changed = true;
@@ -82,10 +80,10 @@ namespace ir {
         const UEVar &killSet = succ.varKill;
         const LiveOut &liveOut = succ.liveOut;
         // Iterate over all the registers in the UEVar of our successor
-        for (auto living = liveOut.begin(); living != liveOut.end(); ++living) {
-          if (killSet.contains(*living)) continue;
-          if (info.liveOut.contains(*living)) continue;
-          info.liveOut.insert(*living);
+        for (auto living : liveOut) {
+          if (killSet.contains(living)) continue;
+          if (info.liveOut.contains(living)) continue;
+          info.liveOut.insert(living);
           changed = true;
         }
       });
