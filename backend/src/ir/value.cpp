@@ -111,17 +111,17 @@ namespace ir {
 
     // Is it a pushed register?
     if (pushed != NULL) {
-      ValueDef *def = (ValueDef *) dag.getDefAddress(pushed);
+      ValueDef *def = const_cast<ValueDef*>(dag.getDefAddress(pushed));
       udChain.insert(def);
     }
     // Is a function argument?
     else if (arg != NULL) {
-      ValueDef *def = (ValueDef *) dag.getDefAddress(arg);
+      ValueDef *def = const_cast<ValueDef*>(dag.getDefAddress(arg));
       udChain.insert(def);
     }
     // Is it a special register?
     else if (fn.isSpecialReg(reg) == true) {
-      ValueDef *def = (ValueDef *) dag.getDefAddress(reg);
+      ValueDef *def = const_cast<ValueDef*>(dag.getDefAddress(reg));
       udChain.insert(def);
     }
   }
@@ -160,7 +160,7 @@ namespace ir {
           defined.insert(reg);
           // Insert the outgoing definition for this register
           auto regDefSet = blockDefMap->find(reg);
-          ValueDef *def = (ValueDef*) this->dag.getDefAddress(&insn, dstID);
+          ValueDef *def = const_cast<ValueDef*>(this->dag.getDefAddress(&insn, dstID));
           GBE_ASSERT(regDefSet != blockDefMap->end() && def != NULL);
           regDefSet->second->insert(def);
         }
@@ -187,7 +187,7 @@ namespace ir {
       if (info.inLiveOut(reg) == false) continue;
       // If we overwrite it, do not transfer the initial value
       if (info.inVarKill(reg) == true) continue;
-      ValueDef *def = (ValueDef*) this->dag.getDefAddress(&arg);
+      ValueDef *def = const_cast<ValueDef*>(this->dag.getDefAddress(&arg));
       auto it = blockDefMap->find(reg);
       GBE_ASSERT(it != blockDefMap->end());
       it->second->insert(def);
@@ -202,7 +202,7 @@ namespace ir {
       if (info.inLiveOut(reg) == false) continue;
       // If we overwrite it, do not transfer the initial value
       if (info.inVarKill(reg) == true) continue;
-      ValueDef *def = (ValueDef*) this->dag.getDefAddress(reg);
+      ValueDef *def = const_cast<ValueDef*>(this->dag.getDefAddress(reg));
       auto it = blockDefMap->find(reg);
       GBE_ASSERT(it != blockDefMap->end());
       it->second->insert(def);
@@ -216,7 +216,7 @@ namespace ir {
       if (info.inLiveOut(reg) == false) continue;
       // If we overwrite it, do not transfer the initial value
       if (info.inVarKill(reg) == true) continue;
-      ValueDef *def = (ValueDef*) this->dag.getDefAddress(&pushed.second);
+      ValueDef *def = const_cast<ValueDef*>(this->dag.getDefAddress(&pushed.second));
       auto it = blockDefMap->find(reg);
       GBE_ASSERT(it != blockDefMap->end());
       it->second->insert(def);
@@ -388,7 +388,7 @@ namespace ir {
         const uint32_t dstNum = insn.getDstNum();
         for (uint32_t dstID = 0; dstID < dstNum; ++dstID) {
           const Register dst = insn.getDst(dstID);
-          ValueDef *def = (ValueDef *) this->getDefAddress(&insn, dstID);
+          ValueDef *def = const_cast<ValueDef*>(this->getDefAddress(&insn, dstID));
           DefSet *udChain = this->newDefSet();
           udChain->insert(def);
           unused.insert(udChain);
@@ -410,7 +410,7 @@ namespace ir {
       // For each value definition of each source, we push back this use
       const uint32_t srcNum = insn.getSrcNum();
       for (uint32_t srcID = 0; srcID < srcNum; ++srcID) {
-        ValueUse *use = (ValueUse*) getUseAddress(&insn, srcID);
+        ValueUse *use = const_cast<ValueUse*>(getUseAddress(&insn, srcID));
 
         // Find all definitions for this source
         const auto &defs = this->getDef(&insn, srcID);
