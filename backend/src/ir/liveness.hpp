@@ -88,7 +88,7 @@ namespace ir {
     template <DataFlowDirection dir, typename T>
     void foreach(const T &functor) {
       // Iterate on all blocks
-      for (const auto pair : liveness) {
+      for (const auto &pair : liveness) {
         BlockInfo &info = *pair.second;
         const BasicBlock &bb = info.bb;
         const BlockSet *set = NULL;
