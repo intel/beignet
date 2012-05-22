@@ -86,6 +86,8 @@ else (GBE_USE_BLOB)
     backend/sim/simulator_str.cpp
     backend/sim/sim_vector_str.cpp
     backend/sim/sim_vector.h
+    backend/gen_selector.cpp
+    backend/gen_selector.hpp
     backend/gen_context.cpp
     backend/gen_context.hpp
     backend/gen_program.cpp

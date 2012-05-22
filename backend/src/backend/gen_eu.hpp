@@ -103,7 +103,6 @@ namespace gbe
       this->width = width;
       this->hstride = hstride;
       this->address_mode = GEN_ADDRESS_DIRECT;
-      this->pad0 = 0;
     }
 
     static INLINE GenReg Qn(GenReg reg, uint32_t quarter) {
@@ -319,10 +318,6 @@ namespace gbe
       return immediate;
     }
 
-    static INLINE GenReg address(GenReg reg) {
-      return immuw(reg.nr * GEN_REG_SIZE + reg.subnr);
-    }
-
     static INLINE GenReg f1grf(uint32_t nr, uint32_t subnr) {
       return vec1(GEN_GENERAL_REGISTER_FILE, nr, subnr);
     }
@@ -383,10 +378,6 @@ namespace gbe
       return vec8(GEN_ARCHITECTURE_REGISTER_FILE, GEN_ARF_NULL, 0);
     }
 
-    static INLINE GenReg address(uint32_t subnr) {
-      return uw1(GEN_ARCHITECTURE_REGISTER_FILE, GEN_ARF_ADDRESS, subnr);
-    }
-
     static INLINE GenReg acc(void) {
       return vec8(GEN_ARCHITECTURE_REGISTER_FILE, GEN_ARF_ACCUMULATOR, 0);
     }
@@ -435,10 +426,6 @@ namespace gbe
       return reg;
     }
 
-    static INLINE bool same_reg(GenReg r1, GenReg r2) {
-      return r1.file == r2.file && r1.nr == r2.nr;
-    }
-
     uint32_t type:4;
     uint32_t file:2;
     uint32_t nr:8;
@@ -449,7 +436,6 @@ namespace gbe
     uint32_t width:3;        /* src only, align1 only */
     uint32_t hstride:2;      /* align1 only */
     uint32_t address_mode:1; /* relative addressing, hopefully! */
-    uint32_t pad0:1;
 
     union {
       float f;
