@@ -22,5 +22,5 @@
  * \author Benjamin Segovia <benjamin.segovia@intel.com>
  */
 
-#include "gen_instruction_selection.hpp"
+#include "gen_selector.hpp"
 
