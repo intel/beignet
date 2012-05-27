@@ -406,8 +406,14 @@ namespace gbe
                           GEN_HORIZONTAL_STRIDE_0);
     }
 
-    static INLINE SelectionReg flag(ir::Register reg) {
-      return uw1(GEN_ARCHITECTURE_REGISTER_FILE, reg);
+    static INLINE SelectionReg flag(uint32_t nr, uint32_t subnr) {
+      return SelectionReg(GEN_ARCHITECTURE_REGISTER_FILE,
+                          GEN_ARF_FLAG | nr,
+                          subnr,
+                          GEN_TYPE_UW,
+                          GEN_VERTICAL_STRIDE_0,
+                          GEN_WIDTH_1,
+                          GEN_HORIZONTAL_STRIDE_0);
     }
 
     static INLINE SelectionReg next(SelectionReg reg) {
@@ -458,7 +464,9 @@ namespace gbe
     /*! For math and cmp instructions. Store bti for loads/stores */
     uint8_t function:4;
     /*! elemSize for byte scatters / gathers, elemNum for untyped msg */
-    uint16_t elem:4;
+    uint8_t elem:4;
+    /*! To store various indices */
+    uint16_t index;
   };
 
   /*! Some instructions like sends require to make some registers contiguous in
@@ -641,9 +649,10 @@ namespace gbe
     ALU1(LZD)
 #undef ALU1
 #undef ALU2
-
+    /*! Encode a label instruction */
+    void LABEL(ir::LabelIndex label);
     /*! Jump indexed instruction */
-    void JMPI(Reg src);
+    void JMPI(Reg src, ir::LabelIndex target);
     /*! Compare instructions */
     void CMP(uint32_t conditional, Reg src0, Reg src1);
     /*! EOT is used to finish GPGPU threads */

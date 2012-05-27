@@ -169,9 +169,9 @@ namespace gbe
     GBE_ASSERT(blockIPOffset >= 0 && blockIPOffset % GEN_REG_SIZE == 0);
     blockIPOffset /= GEN_REG_SIZE;
     if (simdWidth == 8)
-      RA.insert(std::make_pair(GenContext::blockIPReg, GenReg::uw8grf(blockIPOffset, 0)));
+      RA.insert(std::make_pair(ocl::blockip, GenReg::uw8grf(blockIPOffset, 0)));
     else if (simdWidth == 16)
-      RA.insert(std::make_pair(GenContext::blockIPReg, GenReg::uw16grf(blockIPOffset, 0)));
+      RA.insert(std::make_pair(ocl::blockip, GenReg::uw16grf(blockIPOffset, 0)));
     else
       NOT_SUPPORTED;
 

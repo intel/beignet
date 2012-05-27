@@ -59,6 +59,7 @@ namespace ir {
       DECL_NEW_REG(FAMILY_DWORD, goffset1);
       DECL_NEW_REG(FAMILY_DWORD, goffset2);
       DECL_NEW_REG(FAMILY_DWORD, stackptr);
+      DECL_NEW_REG(FAMILY_WORD, blockip);
     }
 #undef DECL_NEW_REG
 

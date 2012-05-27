@@ -56,18 +56,6 @@ namespace gbe
     INLINE const ir::Function &getFunction(void) const { return fn; }
     /*! Simd width chosen for the current function */
     INLINE uint32_t getSimdWidth(void) const { return simdWidth; }
-#if 0
-    /*! Create a Gen register from a register set in the payload */
-    void allocatePayloadReg(gbe_curbe_type, ir::Register, uint32_t subValue = 0, uint32_t subOffset = 0);
-    /*! Very stupid register allocator to start with */
-    void allocateRegister(void);
-    /*! Create a GenReg from a ir::Register */
-    uint32_t createGenReg(ir::Register reg, uint32_t grfOffset);
-    /*! Return the Gen register from the GenIR one */
-    GenReg genReg(ir::Register reg, ir::Type type = ir::TYPE_FLOAT);
-    /*! Compute the quarterth register part when using SIMD8 with Qn (n in 2,3,4) */
-    GenReg genRegQn(ir::Register reg, uint32_t quarter, ir::Type type = ir::TYPE_FLOAT);
-#endif
     /*! Emit the per-lane stack pointer computation */
     void emitStackPointer(void);
     /*! Emit the instructions */
@@ -118,8 +106,6 @@ namespace gbe
     SelectionEngine *sel;
     /*! Perform the register allocation */
     GenRegAllocator *ra;
-    /*! Register used to encode the block IP */
-    static const ir::Register blockIPReg;
   };
 
 } /* namespace gbe */

@@ -72,6 +72,16 @@ namespace gbe
     INLINE Kernel *getKernel(void) const { return this->kernel; }
     /*! Get the function we are currently compiling */
     INLINE const ir::Function &getFunction(void) const { return this->fn; }
+    /*! Get the target label index for the given instruction */
+    INLINE ir::LabelIndex getLabelIndex(const ir::Instruction *insn) const {
+      GBE_ASSERT(JIPs.find(insn) != JIPs.end());
+      return JIPs.find(insn)->second;
+    }
+    /*! Only GOTO and some LABEL instructions may have JIPs */
+    INLINE bool hasJIP(const ir::Instruction *insn) const {
+      return JIPs.find(insn) != JIPs.end();
+    }
+
   protected:
     /*! Look if a stack is needed and allocate it */
     void buildStack(void);

@@ -1,3 +1,4 @@
+DECL_SELECTION_IR(LABEL, LabelInstruction)
 DECL_SELECTION_IR(MOV, UnaryInstruction)
 DECL_SELECTION_IR(NOT, UnaryInstruction)
 DECL_SELECTION_IR(LZD, UnaryInstruction)

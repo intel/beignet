@@ -144,11 +144,19 @@ namespace gbe
   /*! Syntactic sugar for method declaration */
   typedef const SelectionReg &Reg;
 
-  void SelectionEngine::JMPI(Reg src) {
+  void SelectionEngine::LABEL(ir::LabelIndex index) {
+    SelectionInstruction *insn = this->appendInsn();
+    insn->opcode = SEL_OP_LABEL;
+    insn->state = this->curr;
+    insn->index = uint16_t(index);
+  }
+
+  void SelectionEngine::JMPI(Reg src, ir::LabelIndex index) {
     SelectionInstruction *insn = this->appendInsn();
     insn->src[0] = src;
     insn->opcode = SEL_OP_JMPI;
     insn->state = this->curr;
+    insn->index = uint16_t(index);
   }
 
   void SelectionEngine::CMP(uint32_t conditional, Reg src0, Reg src1) {
@@ -627,27 +635,11 @@ namespace gbe
   void SimpleEngine::emitForwardBranch(const ir::BranchInstruction &insn,
                                        ir::LabelIndex dst,
                                        ir::LabelIndex src)
-  {}
-
-  void SimpleEngine::emitBackwardBranch(const ir::BranchInstruction &insn,
-                                        ir::LabelIndex dst,
-                                        ir::LabelIndex src)
-  {}
-
-  void SimpleEngine::emitCompareInstruction(const ir::CompareInstruction &insn) {}
-  void SimpleEngine::emitConvertInstruction(const ir::ConvertInstruction &insn) {} 
-  void SimpleEngine::emitBranchInstruction(const ir::BranchInstruction &insn) {}
-  void SimpleEngine::emitFenceInstruction(const ir::FenceInstruction &insn) {}
-  void SimpleEngine::emitLabelInstruction(const ir::LabelInstruction &insn) {}
-
-#if 0
-  void SimpleEngine::emitForwardBranch(const ir::BranchInstruction &insn,
-                                       ir::LabelIndex dst,
-                                       ir::LabelIndex src)
   {
     using namespace ir;
-    const SelectionReg ip = this->selReg(blockIPReg, TYPE_U16);
-    const LabelIndex jip = JIPs.find(&insn)->second;
+    const SelectionReg ip = this->selReg(ocl::blockip, TYPE_U16);
+    const LabelIndex jip = ctx.getLabelIndex(&insn);
+    const uint32_t simdWidth = ctx.getSimdWidth();
 
     // We will not emit any jump if we must go the next block anyway
     const BasicBlock *curr = insn.getParent();
@@ -686,7 +678,6 @@ namespace gbe
         this->CMP(GEN_CONDITIONAL_G, ip, SelectionReg::immuw(nextLabel));
 
         // Branch to the jump target
-        this->branchPos.insert(std::make_pair(&insn, this->insnNum));
         if (simdWidth == 8)
           this->curr.predicate = GEN_PREDICATE_ALIGN1_ALL8H;
         else if (simdWidth == 16)
@@ -695,7 +686,7 @@ namespace gbe
           NOT_SUPPORTED;
         this->curr.execWidth = 1;
         this->curr.noMask = 1;
-        this->JMPI(SelectionReg::immd(0));
+        this->JMPI(SelectionReg::immd(0), jip);
       this->pop();
 
     } else {
@@ -704,23 +695,25 @@ namespace gbe
 
       // Do not emit branch when we go to the next block anyway
       if (nextLabel == jip) return;
-      this->branchPos.insert(std::make_pair(&insn, this->insnNum));
       this->push();
         this->curr.execWidth = 1;
         this->curr.noMask = 1;
         this->curr.predicate = GEN_PREDICATE_NONE;
-        this->JMPI(SelectionReg::immd(0));
+        this->JMPI(SelectionReg::immd(0), jip);
       this->pop();
     }
   }
 
   void SimpleEngine::emitBackwardBranch(const ir::BranchInstruction &insn,
-                                                 ir::LabelIndex dst,
-                                                 ir::LabelIndex src)
+                                        ir::LabelIndex dst,
+                                        ir::LabelIndex src)
   {
     using namespace ir;
-    const SelectionReg ip = this->selReg(blockIPReg, TYPE_U16);
+    const SelectionReg ip = this->selReg(ocl::blockip, TYPE_U16);
+    const Function &fn = ctx.getFunction();
     const BasicBlock &bb = fn.getBlock(src);
+    const LabelIndex jip = ctx.getLabelIndex(&insn);
+    const uint32_t simdWidth = ctx.getSimdWidth();
     GBE_ASSERT(bb.getNextBlock() != NULL);
 
     // Inefficient code: we make a GRF to flag conversion
@@ -749,7 +742,6 @@ namespace gbe
         this->MOV(ip, SelectionReg::immuw(uint16_t(dst)));
 
         // Branch to the jump target
-        this->branchPos.insert(std::make_pair(&insn, this->insnNum));
         if (simdWidth == 8)
           this->curr.predicate = GEN_PREDICATE_ALIGN1_ANY8H;
         else if (simdWidth == 16)
@@ -758,7 +750,7 @@ namespace gbe
           NOT_SUPPORTED;
         this->curr.execWidth = 1;
         this->curr.noMask = 1;
-        this->JMPI(SelectionReg::immd(0));
+        this->JMPI(SelectionReg::immd(0), jip);
       this->pop();
 
     } else {
@@ -767,15 +759,15 @@ namespace gbe
       this->MOV(ip, SelectionReg::immuw(uint16_t(dst)));
 
       // Branch to the jump target
-      this->branchPos.insert(std::make_pair(&insn, this->insnNum));
       this->push();
         this->curr.execWidth = 1;
         this->curr.noMask = 1;
         this->curr.predicate = GEN_PREDICATE_NONE;
-        this->JMPI(SelectionReg::immd(0));
+        this->JMPI(SelectionReg::immd(0), jip);
       this->pop();
     }
   }
+
 
   void SimpleEngine::emitCompareInstruction(const ir::CompareInstruction &insn) {
     using namespace ir;
@@ -825,11 +817,11 @@ namespace gbe
       SelectionReg unpacked;
       if (dstFamily == FAMILY_WORD) {
         const uint32_t type = TYPE_U16 ? GEN_TYPE_UW : GEN_TYPE_W;
-        unpacked = SelectionReg::unpacked_uw(112, 0);
+        unpacked = SelectionReg::unpacked_uw(this->reg(FAMILY_DWORD));
         unpacked = SelectionReg::retype(unpacked, type);
       } else {
         const uint32_t type = TYPE_U8 ? GEN_TYPE_UB : GEN_TYPE_B;
-        unpacked = SelectionReg::unpacked_ub(112, 0);
+        unpacked = SelectionReg::unpacked_uw(this->reg(FAMILY_DWORD));
         unpacked = SelectionReg::retype(unpacked, type);
       }
       this->MOV(unpacked, src);
@@ -838,10 +830,12 @@ namespace gbe
       this->MOV(dst, src);
   }
 
+
   void SimpleEngine::emitBranchInstruction(const ir::BranchInstruction &insn) {
     using namespace ir;
     const Opcode opcode = insn.getOpcode();
     if (opcode == OP_RET) {
+#if 0
       this->push();
         this->curr.predicate = GEN_PREDICATE_NONE;
         this->curr.execWidth = 8;
@@ -849,6 +843,7 @@ namespace gbe
         this->MOV(SelectionReg::f8grf(127,0), SelectionReg::f8grf(0,0));
         this->EOT(127);
       this->pop();
+#endif
     } else if (opcode == OP_BRA) {
       const LabelIndex dst = insn.getLabelIndex();
       const LabelIndex src = insn.getParent()->getLabelIndex();
@@ -864,13 +859,12 @@ namespace gbe
 
   void SimpleEngine::emitFenceInstruction(const ir::FenceInstruction &insn) {}
   void SimpleEngine::emitLabelInstruction(const ir::LabelInstruction &insn) {
-    const ir::LabelIndex label = insn.getLabelIndex();
-    const SelectionReg src0 = this->selReg(blockIPReg);
+    using namespace ir;
+    const LabelIndex label = insn.getLabelIndex();
+    const SelectionReg src0 = this->selReg(ocl::blockip);
     const SelectionReg src1 = SelectionReg::immuw(label);
-
-    // Labels are branch targets. We save the position of each label in the
-    // stream
-    this->labelPos.insert(std::make_pair(label, this->insnNum));
+    const uint32_t simdWidth = ctx.getSimdWidth();
+    this->LABEL(label);
 
     // Emit the mask computation at the head of each basic block
     this->push();
@@ -880,10 +874,9 @@ namespace gbe
     this->pop();
 
     // If it is required, insert a JUMP to bypass the block
-    auto it = JIPs.find(&insn);
-    if (it != JIPs.end()) {
+    if (ctx.hasJIP(&insn)) {
+      const LabelIndex jip = ctx.getLabelIndex(&insn);
       this->push();
-        this->branchPos.insert(std::make_pair(&insn, this->insnNum));
         if (simdWidth == 8)
           this->curr.predicate = GEN_PREDICATE_ALIGN1_ANY8H;
         else if (simdWidth == 16)
@@ -895,11 +888,10 @@ namespace gbe
         this->curr.flag = 0;
         this->curr.subFlag = 0;
         this->curr.noMask = 1;
-        this->JMPI(SelectionReg::immd(0));
+        this->JMPI(SelectionReg::immd(0), jip);
       this->pop();
     }
   }
-#endif
 
   SelectionEngine *newSimpleSelectionEngine(GenContext &ctx) {
     return GBE_NEW(SimpleEngine, ctx);
