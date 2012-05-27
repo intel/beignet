@@ -66,6 +66,8 @@ namespace gbe
     }
     /*! Tells if the register is used */
     bool isRegUsed(const ir::Register &reg) const;
+    /*! Indicate if a register is scalar or not */
+    bool isScalarReg(const ir::Register &reg) const;
   protected:
     /*! Look if a stack is needed and allocate it */
     void buildStack(void);
@@ -79,8 +81,6 @@ namespace gbe
      *  the branch target due to unstructured branches
      */
     void buildJIPs(void);
-    /*! Indicate if a register is scalar or not */
-    bool isScalarReg(const ir::Register &reg) const;
     /*! Build the instruction stream */
     virtual void emitCode(void) = 0;
     /*! Allocate a new empty kernel */

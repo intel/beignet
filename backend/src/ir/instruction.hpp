@@ -441,8 +441,6 @@ namespace ir {
   Instruction FENCE(AddressSpace space);
   /*! label labelIndex */
   Instruction LABEL(LabelIndex labelIndex);
-  /*! texture instruction TODO */
-  Instruction TEX(void);
 
 } /* namespace ir */
 } /* namespace gbe */

@@ -50,6 +50,10 @@ namespace gbe
     ~GenContext(void);
     /*! Implements base class */
     virtual void emitCode(void);
+    /*! Function we emit code for */
+    INLINE const ir::Function &getFunction(void) const { return fn; }
+    /*! Simd width chosen for the current function */
+    INLINE uint32_t getSimdWidth(void) const { return simdWidth; }
     /*! Create a Gen register from a register set in the payload */
     void allocatePayloadReg(gbe_curbe_type, ir::Register, uint32_t subValue, uint32_t subOffset);
     /*! Very stupid register allocator to start with */

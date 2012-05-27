@@ -34,7 +34,7 @@ namespace gbe
    *  allocator
    */
   template<class T>
-  class vector : public std::vector<T, Allocator<T>>, public NonCopyable
+  class vector : public std::vector<T, Allocator<T>>
   {
   public:
     // Typedefs

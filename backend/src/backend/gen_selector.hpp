@@ -18,12 +18,12 @@
  */
 
 /**
- * \file gen_instruction_selection.hpp
+ * \file gen_selector.hpp
  * \author Benjamin Segovia <benjamin.segovia@intel.com>
  */
 
 #ifndef __GEN_SELECTOR_HPP__
-#define  __GEN_SELECTOR_HPP__
+#define __GEN_SELECTOR_HPP__
 
 #include "ir/register.hpp"
 #include "ir/instruction.hpp"
@@ -33,7 +33,7 @@
 namespace gbe
 {
   /*! The state for each instruction */
-  struct GenInstructionState
+  struct SelectionState
   {
     uint32_t execWidth:6;
     uint32_t quarterControl:2;
@@ -63,7 +63,7 @@ namespace gbe
     } immediate;
 
     uint32_t nr:8;        //!< Just for some physical registers (acc, null)
-    uint32_t subnr:6;     //!< Idem
+    uint32_t subnr:5;     //!< Idem
     uint32_t type:4;      //!< Gen type
     uint32_t file:2;      //!< Register file
     uint32_t negation:1;  //!< For source
@@ -71,7 +71,7 @@ namespace gbe
     uint32_t vstride:4;   //!< Vertical stride
     uint32_t width:3;     //!< Width
     uint32_t hstride:2;   //!< Horizontal stride
-    uint32_t quarter:1;   //!< To choose which part we want
+    uint32_t quarter:2;   //!< To choose which part we want
 
     /*! Empty constructor */
     INLINE SelectionReg(void) {}
@@ -408,11 +408,11 @@ namespace gbe
     static INLINE SelectionReg flag(ir::Register reg) {
       return uw1(GEN_ARCHITECTURE_REGISTER_FILE, reg);
     }
-#if 0
+
     static INLINE SelectionReg next(SelectionReg reg) {
+      reg.quarter++;
       return reg;
     }
-#endif
 
     static INLINE SelectionReg negate(SelectionReg reg) {
       reg.negation ^= 1;
@@ -426,6 +426,19 @@ namespace gbe
     }
   };
 
+  /*! Selection opcodes properly encoded from 0 to n for fast jump tables
+   *  generations
+   */
+  enum SelectionOpcode {
+    SEL_OP_MOV = 0, SEL_OP_RNDZ, SEL_OP_RNDE, SEL_OP_SEL, SEL_OP_NOT,
+    SEL_OP_AND, SEL_OP_OR, SEL_OP_XOR, SEL_OP_SHR, SEL_OP_SHL,
+    SEL_OP_RSR, SEL_OP_RSL, SEL_OP_ASR, SEL_OP_ADD, SEL_OP_MUL,
+    SEL_OP_FRC, SEL_OP_RNDD, SEL_OP_MAC, SEL_OP_MACH, SEL_OP_LZD,
+    SEL_OP_JMPI, SEL_OP_CMP, SEL_OP_EOT, SEL_OP_NOP, SEL_OP_WAIT,
+    SEL_OP_UNTYPED_READ, SEL_OP_UNTYPED_WRITE,
+    SEL_OP_BYTE_GATHER, SEL_OP_BYTE_SCATTER, SEL_OP_MATH
+  };
+
   /*! A selection instruction is also almost a Gen instruction but *before* the
    *  register allocation
    */
@@ -435,18 +448,40 @@ namespace gbe
     enum { MAX_SRC_NUM = 6 };
     /*! No more than 4 destinations (used by samples and untyped reads) */
     enum { MAX_DST_NUM = 4 };
+    /*! Instruction are chained in the tile */
+    SelectionInstruction *next;
     /*! All destinations */
     SelectionReg dst[MAX_DST_NUM];
     /*! All sources */
     SelectionReg src[MAX_SRC_NUM];
     /*! State of the instruction (extra fields neeed for the encoding) */
-    GenInstructionState state;
+    SelectionState state;
     /*! Gen opcode */
     uint8_t opcode;
-    /*! For math instructions only */
+    /*! For math and cmp instructions. Store bti for loads/stores */
     uint8_t function:4;
-    /*! For byte scattered reads / writes */
-    uint16_t elemSize:4;
+    /*! elemSize for byte scatters / gathers, elemNum for untyped msg */
+    uint16_t elem:4;
+  };
+
+  /*! Some instructions like sends require to make some registers contiguous in
+   *  memory
+   */
+  struct SelectionVector
+  {
+    INLINE SelectionVector(void) : insn(NULL), next(NULL), regNum(0) {}
+    /*! The instruction that requires the vector of registers */
+    SelectionInstruction *insn;
+    /*! We chain the selection vectors together */
+    SelectionVector *next;
+    /*! Maximum number of registers we may have in a vector */
+    enum { MAX_VECTOR_REGISTER = 7 };
+    /*! The registers in the vector */
+    ir::Register reg[MAX_VECTOR_REGISTER];
+    /*! Number of registers in the vector */
+    uint16_t regNum:15;
+    /*! Indicate if this a destination or a source vector */
+    uint16_t isSrc:1;
   };
 
   /*! A selection tile is the result of a m-to-n IR instruction to selection
@@ -454,33 +489,82 @@ namespace gbe
    */
   struct SelectionTile
   {
-    INLINE SelectionTile(void) : next(NULL) {}
-    /*! All the emitted instructions */
-    vector<SelectionInstruction> insn;
+    INLINE SelectionTile(void) :
+      insnHead(NULL), insnTail(NULL), vector(NULL), next(NULL),
+      outputNum(0), inputNum(0), tmpNum(0), irNum(0) {}
+    /*! Maximum of output registers per tile */
+    enum { MAX_OUT_REGISTER = 8 };
+    /*! Minimum of input registers per tile */
+    enum { MAX_IN_REGISTER = 8 };
+    /*! Minimum of temporary registers per tile */
+    enum { MAX_TMP_REGISTER = 8 };
+    /*! Maximum number of instructions in the tile */
+    enum { MAX_IR_INSN = 8 };
+    /*! All the emitted instructions in the tile */
+    SelectionInstruction *insnHead, *insnTail;
+    /*! The vectors that may be required by some instructions of the tile */
+    SelectionVector *vector;
     /*! Registers output by the tile (i.e. produced values) */
-    vector<ir::Register> out;
+    ir::Register out[MAX_OUT_REGISTER];
     /*! Registers required by the tile (i.e. input values) */
-    vector<ir::Register> in;
+    ir::Register in[MAX_IN_REGISTER];
     /*! Extra registers needed by the tile (only live in the tile) */
-    vector<ir::Register> tmp;
+    ir::Register tmp[MAX_TMP_REGISTER];
     /*! Instructions actually captured by the tile (used by RA) */
-    vector<ir::Instruction*> ir;
+    ir::Instruction *ir[MAX_IR_INSN];
     /*! We chain the tiles together */
     SelectionTile *next;
+    /*! Number of output registers */
+    uint8_t outputNum;
+    /*! Number of input registers */
+    uint8_t inputNum;
+    /*! Number of temporary registers */
+    uint8_t tmpNum;
+    /*! Number of ir instructions */
+    uint8_t irNum;
+
+#define DECL_APPEND_FN(TYPE, FN, WHICH, NUM, MAX) \
+  INLINE void FN(TYPE reg) { \
+    GBE_ASSERT(NUM < MAX); \
+    WHICH[NUM++] = reg; \
+  }
+    DECL_APPEND_FN(ir::Register, appendInput, in, inputNum, MAX_IN_REGISTER)
+    DECL_APPEND_FN(ir::Register, appendOutput, out, outputNum, MAX_OUT_REGISTER)
+    DECL_APPEND_FN(ir::Register, appendTmp, tmp, tmpNum, MAX_TMP_REGISTER)
+    DECL_APPEND_FN(ir::Instruction*, append, ir, irNum, MAX_IR_INSN)
+#undef DECL_APPEND_FN
+
+    /*! Append a new selection instruction in the tile */
+    INLINE void append(SelectionInstruction *insn) {
+      if (this->insnTail != NULL)
+        this->insnTail->next = insn;
+      if (this->insnHead == NULL)
+        this->insnHead = insn;
+      this->insnTail = insn;
+    }
+    /*! Append a new selection vector in the tile */
+    INLINE void append(SelectionVector *vec) {
+      SelectionVector *tmp = this->vector;
+      this->vector = vec;
+      this->vector->next = tmp;
+    }
   };
 
   /*! Owns the selection engine */
   class GenContext;
 
   /*! Selection engine produces the pre-ISA instruction tiles */
-  struct SelectionEngine
+  class SelectionEngine
   {
+  public:
     /*! simdWidth is the default width for the instructions */
     SelectionEngine(GenContext &ctx);
     /*! Release everything */
-    ~SelectionEngine(void);
+    virtual ~SelectionEngine(void);
     /*! Implement the instruction selection itself */
     virtual void select(void) = 0;
+
+  protected:
     /*! Size of the stack (should be large enough) */
     enum { MAX_STATE_NUM = 16 };
     /*! Push the current instruction state */
@@ -493,25 +577,52 @@ namespace gbe
       assert(stateNum > 0);
       curr = stack[--stateNum];
     }
+    /*! Append a tile at the tile stream tail. It becomes the current tile */
+    void appendTile(void);
+    /*! Append an instruction in the current tile */
+    SelectionInstruction *appendInsn(void);
+    /*! Append a new vector of registers in the current tile */
+    SelectionVector *appendVector(void);
+    /*! Create a new register in the register file and append it in the
+     *  temporary list of the current tile
+     */
+    INLINE ir::Register reg(ir::RegisterFamily family) {
+      GBE_ASSERT(tile != NULL);
+      const ir::Register reg = file.append(family);
+      tile->appendTmp(reg);
+      return reg;
+    }
+    /*! Return the selection register from the GenIR one */
+    SelectionReg selReg(ir::Register, ir::Type type = ir::TYPE_FLOAT);
+    /*! Compute the nth register part when using SIMD8 with Qn (n in 2,3,4) */
+    SelectionReg selRegQn(ir::Register, uint32_t quarter, ir::Type type = ir::TYPE_FLOAT);
+    /*! To handle selection tile allocation */
+    DECL_POOL(SelectionTile, tilePool);
+    /*! To handle selection instruction allocation */
+    DECL_POOL(SelectionInstruction, insnPool);
+    /*! To handle selection vector allocation */
+    DECL_POOL(SelectionVector, vecPool);
     /*! Owns this structure */
     GenContext &ctx;
     /*! List of emitted tiles */
-    SelectionTile *tileList;
+    SelectionTile *tileHead, *tileTail;
     /*! Currently processed tile */
     SelectionTile *tile;
     /*! Current instruction state to use */
-    GenInstructionState curr;
+    SelectionState curr;
     /*! State used to encode the instructions */
-    GenInstructionState stack[MAX_STATE_NUM];
+    SelectionState stack[MAX_STATE_NUM];
+    /*! We append new registers so we duplicate the function register file */
+    ir::RegisterFile file;
     /*! Number of states currently pushed */
     uint32_t stateNum;
     /*! To make function prototypes more readable */
     typedef const SelectionReg &Reg;
 
 #define ALU1(OP) \
-  INLINE void OP(Reg dst, Reg src) { ALU1(GEN_OPCODE_##OP, dst, src); }
+  INLINE void OP(Reg dst, Reg src) { ALU1(SEL_OP_##OP, dst, src); }
 #define ALU2(OP) \
-  INLINE void OP(Reg dst, Reg src0, Reg src1) { ALU2(GEN_OPCODE_##OP, dst, src0, src1); }
+  INLINE void OP(Reg dst, Reg src0, Reg src1) { ALU2(SEL_OP_##OP, dst, src0, src1); }
     ALU1(MOV)
     ALU1(RNDZ)
     ALU1(RNDE)
@@ -546,19 +657,13 @@ namespace gbe
     /*! Wait instruction (used for the barrier) */
     void WAIT(void);
     /*! Untyped read (up to 4 elements) */
-    void UNTYPED_READ(Reg dst0, Reg addr, uint32_t bti);
-    void UNTYPED_READ(Reg dst0, Reg dst1, Reg addr, uint32_t bti);
-    void UNTYPED_READ(Reg dst0, Reg dst1, Reg dst2, Reg addr, uint32_t bti);
-    void UNTYPED_READ(Reg dst0, Reg dst1, Reg dst2, Reg dst3, Reg addr, uint32_t bti);
+    void UNTYPED_READ(Reg addr, const SelectionReg *dst, uint32_t elemNum, uint32_t bti);
     /*! Untyped write (up to 4 elements) */
-    void UNTYPED_WRITE(Reg addr, Reg src0, uint32_t bti);
-    void UNTYPED_WRITE(Reg addr, Reg src0, Reg src1, uint32_t bti);
-    void UNTYPED_WRITE(Reg addr, Reg src0, Reg src1, Reg src2, uint32_t bti);
-    void UNTYPED_WRITE(Reg addr, Reg src0, Reg src1, Reg src2, Reg src3, uint32_t bti);
+    void UNTYPED_WRITE(Reg addr, const SelectionReg *src, uint32_t elemNum, uint32_t bti);
     /*! Byte gather (for unaligned bytes, shorts and ints) */
-    void BYTE_GATHER(Reg dst, Reg addr, uint32_t bti, uint32_t elemSize);
+    void BYTE_GATHER(Reg dst, Reg addr, uint32_t elemSize, uint32_t bti);
     /*! Byte scatter (for unaligned bytes, shorts and ints) */
-    void BYTE_SCATTER(Reg addr, Reg src, uint32_t bti, uint32_t elemSize);
+    void BYTE_SCATTER(Reg addr, Reg src, uint32_t elemSize, uint32_t bti);
     /*! Extended math function */
     void MATH(Reg dst, uint32_t function, Reg src0, Reg src1);
     /*! Encode unary instructions */
@@ -567,7 +672,7 @@ namespace gbe
     void ALU2(uint32_t opcode, Reg dst, Reg src0, Reg src1);
   };
 
-  /*! This is a stupid one-to-many instruction selection */
+  /*! This is a simple one-to-many instruction selection */
   SelectionEngine *newPoorManSelectionEngine(void);
 
 } /* namespace gbe */
