@@ -68,6 +68,10 @@ namespace gbe
     bool isRegUsed(const ir::Register &reg) const;
     /*! Indicate if a register is scalar or not */
     bool isScalarReg(const ir::Register &reg) const;
+    /*! Get the kernel we are currently compiling */
+    INLINE Kernel *getKernel(void) const { return this->kernel; }
+    /*! Get the function we are currently compiling */
+    INLINE const ir::Function &getFunction(void) const { return this->fn; }
   protected:
     /*! Look if a stack is needed and allocate it */
     void buildStack(void);

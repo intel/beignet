@@ -22,7 +22,7 @@
  * \author Benjamin Segovia <benjamin.segovia@intel.com>
  */
 
-#include "backend/gen_selector.hpp"
+#include "backend/gen_insn_selection.hpp"
 #include "backend/gen_context.hpp"
 #include "ir/function.hpp"
 
@@ -71,6 +71,11 @@ namespace gbe
     if (this->tile) this->deleteSelectionTile(this->tile);
     while (this->tileHead) {
       SelectionTile *next = this->tileHead->next;
+      while (this->tileHead->vector) {
+        SelectionVector *next = this->tileHead->vector->next;
+        this->deleteSelectionVector(this->tileHead->vector);
+        this->tileHead->vector = next;
+      }
       this->deleteSelectionTile(this->tileHead);
       this->tileHead = next;
     }
@@ -305,10 +310,12 @@ namespace gbe
   /*! This is a simplistic one-to-many instruction selection engine */
   class SimpleEngine : public SelectionEngine
   {
+  public:
     SimpleEngine(GenContext &ctx);
     virtual ~SimpleEngine(void);
     /*! Implements the base class */
     virtual void select(void);
+  private:
     /*! Emit instruction per family */
     void emitUnaryInstruction(const ir::UnaryInstruction &insn);
     void emitBinaryInstruction(const ir::BinaryInstruction &insn);
@@ -893,4 +900,8 @@ namespace gbe
     }
   }
 #endif
+
+  SelectionEngine *newSimpleSelectionEngine(GenContext &ctx) {
+    return GBE_NEW(SimpleEngine, ctx);
+  }
 } /* namespace gbe */

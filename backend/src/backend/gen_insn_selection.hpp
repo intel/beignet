@@ -22,8 +22,8 @@
  * \author Benjamin Segovia <benjamin.segovia@intel.com>
  */
 
-#ifndef __GEN_SELECTOR_HPP__
-#define __GEN_SELECTOR_HPP__
+#ifndef __GEN_INSN_SELECTION_HPP__
+#define __GEN_INSN_SELECTION_HPP__
 
 #include "ir/register.hpp"
 #include "ir/instruction.hpp"
@@ -93,6 +93,7 @@ namespace gbe
       this->width = width;
       this->hstride = hstride;
       this->quarter = 0;
+      this->nr = this->subnr = 0;
     }
 
     /*! For specific physical registers only (acc, null) */
@@ -430,13 +431,9 @@ namespace gbe
    *  generations
    */
   enum SelectionOpcode {
-    SEL_OP_MOV = 0, SEL_OP_RNDZ, SEL_OP_RNDE, SEL_OP_SEL, SEL_OP_NOT,
-    SEL_OP_AND, SEL_OP_OR, SEL_OP_XOR, SEL_OP_SHR, SEL_OP_SHL,
-    SEL_OP_RSR, SEL_OP_RSL, SEL_OP_ASR, SEL_OP_ADD, SEL_OP_MUL,
-    SEL_OP_FRC, SEL_OP_RNDD, SEL_OP_MAC, SEL_OP_MACH, SEL_OP_LZD,
-    SEL_OP_JMPI, SEL_OP_CMP, SEL_OP_EOT, SEL_OP_NOP, SEL_OP_WAIT,
-    SEL_OP_UNTYPED_READ, SEL_OP_UNTYPED_WRITE,
-    SEL_OP_BYTE_GATHER, SEL_OP_BYTE_SCATTER, SEL_OP_MATH
+#define DECL_SELECTION_IR(OP, FN) SEL_OP_##OP,
+#include "backend/gen_insn_selection.hxx"
+#undef DECL_SELECTION_IR
   };
 
   /*! A selection instruction is also almost a Gen instruction but *before* the
@@ -640,7 +637,6 @@ namespace gbe
     ALU2(MUL)
     ALU1(FRC)
     ALU1(RNDD)
-    ALU2(MAC)
     ALU2(MACH)
     ALU1(LZD)
 #undef ALU1
@@ -673,9 +669,9 @@ namespace gbe
   };
 
   /*! This is a simple one-to-many instruction selection */
-  SelectionEngine *newPoorManSelectionEngine(void);
+  SelectionEngine *newSimpleSelectionEngine(GenContext &ctx);
 
 } /* namespace gbe */
 
-#endif /*  __GEN_SELECTOR_HPP__ */
+#endif /*  __GEN_INSN_SELECTION_HPP__ */
 

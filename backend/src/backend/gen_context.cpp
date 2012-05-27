@@ -26,6 +26,8 @@
 #include "backend/gen_program.hpp"
 #include "backend/gen_defs.hpp"
 #include "backend/gen_eu.hpp"
+#include "backend/gen_insn_selection.hpp"
+#include "backend/gen_reg_allocation.hpp"
 #include "ir/function.hpp"
 #include "sys/cvar.hpp"
 #include <cstring>
@@ -35,20 +37,6 @@ namespace gbe
   ///////////////////////////////////////////////////////////////////////////
   // Various helper functions
   ///////////////////////////////////////////////////////////////////////////
-  INLINE uint32_t getGenType(ir::Type type) {
-    using namespace ir;
-    switch (type) {
-      case TYPE_BOOL: return GEN_TYPE_UW;
-      case TYPE_S8: return GEN_TYPE_B;
-      case TYPE_U8: return GEN_TYPE_UB;
-      case TYPE_S16: return GEN_TYPE_W;
-      case TYPE_U16: return GEN_TYPE_UW;
-      case TYPE_S32: return GEN_TYPE_D;
-      case TYPE_U32: return GEN_TYPE_UD;
-      case TYPE_FLOAT: return GEN_TYPE_F;
-      default: NOT_SUPPORTED; return GEN_TYPE_F;
-    }
-  }
 
   INLINE uint32_t getGenCompare(ir::Opcode opcode) {
     using namespace ir;
@@ -68,10 +56,18 @@ namespace gbe
   ///////////////////////////////////////////////////////////////////////////
   GenContext::GenContext(const ir::Unit &unit, const std::string &name) :
     Context(unit, name)
-  { p = GBE_NEW(GenEmitter, simdWidth, 7); } // XXX handle more than Gen7
+  {
+    this->p = GBE_NEW(GenEmitter, simdWidth, 7); // XXX handle more than Gen7
+    this->sel = newSimpleSelectionEngine(*this);
+    this->ra = GBE_NEW(GenRegAllocator, *this);
+  }
 
-  GenContext::~GenContext(void) { GBE_DELETE(p); }
-
+  GenContext::~GenContext(void) {
+    GBE_DELETE(this->ra);
+    GBE_DELETE(this->sel);
+    GBE_DELETE(this->p);
+  }
+#if 0
   GenReg GenContext::genReg(ir::Register reg, ir::Type type) {
     const uint32_t genType = getGenType(type);
     auto it = RA.find(reg);
@@ -87,6 +83,7 @@ namespace gbe
     else
       return GenReg::Qn(genReg, quarter);
   }
+#endif
 
   bool GenContext::isScalarOrBool(ir::Register reg) const {
     if (this->isScalarReg(reg))
@@ -99,8 +96,8 @@ namespace gbe
 
   // Per-lane block IPs are always pre-allocated and used for branches. We just
   // 0xffff as a fake register for them
-  static const ir::Register blockIPReg(0xffff);
-
+  const ir::Register GenContext::blockIPReg(0xffff);
+#if 0
   // Note that byte vector registers use two bytes per byte (and can be
   // interleaved)
   static const size_t familyVectorSize[] = {2,2,2,4,8};
@@ -116,8 +113,8 @@ namespace gbe
 
   void GenContext::allocatePayloadReg(gbe_curbe_type value,
                                       ir::Register reg,
-                                      uint32_t subValue = 0,
-                                      uint32_t subOffset = 0)
+                                      uint32_t subValue,
+                                      uint32_t subOffset)
   {
     using namespace ir;
     const int32_t curbeOffset = kernel->getCurbeOffset(value, subValue);
@@ -256,10 +253,12 @@ namespace gbe
     for (auto reg : usedRegs)
       grfOffset = this->createGenReg(reg, grfOffset);
   }
+#endif
 
   void GenContext::emitUnaryInstruction(const ir::UnaryInstruction &insn) {
     GBE_ASSERT(insn.getOpcode() == ir::OP_MOV);
-    p->MOV(genReg(insn.getDst(0)), genReg(insn.getSrc(0)));
+    p->MOV(ra->genReg(insn.getDst(0)),
+           ra->genReg(insn.getSrc(0)));
   }
 
   void GenContext::emitIntMul32x32(const ir::Instruction &insn,
@@ -282,8 +281,8 @@ namespace gbe
       // Right part of the 16-wide register now
       if (width == 16) {
         p->curr.noMask = 1;
-        const GenReg nextSrc0 = this->genRegQn(insn.getSrc(0), 2, TYPE_S32);
-        const GenReg nextSrc1 = this->genRegQn(insn.getSrc(1), 2, TYPE_S32);
+        const GenReg nextSrc0 = ra->genRegQn(insn.getSrc(0), 2, TYPE_S32);
+        const GenReg nextSrc1 = ra->genRegQn(insn.getSrc(1), 2, TYPE_S32);
         p->MUL(GenReg::retype(GenReg::acc(), GEN_TYPE_D), nextSrc0, nextSrc1);
         p->MACH(GenReg::retype(GenReg::null(), GEN_TYPE_D), nextSrc0, nextSrc1);
         p->curr.quarterControl = GEN_COMPRESSION_Q2;
@@ -300,7 +299,7 @@ namespace gbe
                                      ir::LabelIndex src)
   {
     using namespace ir;
-    const GenReg ip = this->genReg(blockIPReg, TYPE_U16);
+    const GenReg ip = ra->genReg(blockIPReg, TYPE_U16);
     const LabelIndex jip = JIPs.find(&insn)->second;
 
     // We will not emit any jump if we must go the next block anyway
@@ -311,7 +310,7 @@ namespace gbe
     // Inefficient code. If the instruction is predicated, we build the flag
     // register from the boolean vector
     if (insn.isPredicated() == true) {
-      const GenReg pred = this->genReg(insn.getPredicateIndex(), TYPE_U16);
+      const GenReg pred = ra->genReg(insn.getPredicateIndex(), TYPE_U16);
 
       // Reset the flag register
       p->push();
@@ -373,13 +372,13 @@ namespace gbe
                                       ir::LabelIndex src)
   {
     using namespace ir;
-    const GenReg ip = this->genReg(blockIPReg, TYPE_U16);
+    const GenReg ip = ra->genReg(blockIPReg, TYPE_U16);
     const BasicBlock &bb = fn.getBlock(src);
     GBE_ASSERT(bb.getNextBlock() != NULL);
 
     // Inefficient code: we make a GRF to flag conversion
     if (insn.isPredicated() == true) {
-      const GenReg pred = this->genReg(insn.getPredicateIndex(), TYPE_U16);
+      const GenReg pred = ra->genReg(insn.getPredicateIndex(), TYPE_U16);
 
       // Update the PcIPs for all the branches. Just put the IPs of the next
       // block. Next instruction will properly reupdate the IPs of the lanes
@@ -435,9 +434,9 @@ namespace gbe
     using namespace ir;
     const Opcode opcode = insn.getOpcode();
     const Type type = insn.getType();
-    GenReg dst  = this->genReg(insn.getDst(0), type);
-    GenReg src0 = this->genReg(insn.getSrc(0), type);
-    GenReg src1 = this->genReg(insn.getSrc(1), type);
+    GenReg dst  = ra->genReg(insn.getDst(0), type);
+    GenReg src0 = ra->genReg(insn.getSrc(0), type);
+    GenReg src1 = ra->genReg(insn.getSrc(1), type);
 
     p->push();
 
@@ -495,9 +494,9 @@ namespace gbe
     const Opcode opcode = insn.getOpcode();
     const Type type = insn.getType();
     const uint32_t genCmp = getGenCompare(opcode);
-    const GenReg dst  = this->genReg(insn.getDst(0), TYPE_BOOL);
-    const GenReg src0 = this->genReg(insn.getSrc(0), type);
-    const GenReg src1 = this->genReg(insn.getSrc(1), type);
+    const GenReg dst  = ra->genReg(insn.getDst(0), TYPE_BOOL);
+    const GenReg src0 = ra->genReg(insn.getSrc(0), type);
+    const GenReg src1 = ra->genReg(insn.getSrc(1), type);
 
     // Copy the predicate to save it basically
     p->push();
@@ -528,8 +527,8 @@ namespace gbe
     const Type srcType = insn.getSrcType();
     const RegisterFamily dstFamily = getFamily(dstType);
     const RegisterFamily srcFamily = getFamily(srcType);
-    const GenReg dst = this->genReg(insn.getDst(0), dstType);
-    const GenReg src = this->genReg(insn.getSrc(0), srcType);
+    const GenReg dst = ra->genReg(insn.getDst(0), dstType);
+    const GenReg src = ra->genReg(insn.getSrc(0), srcType);
 
     GBE_ASSERT(dstFamily != FAMILY_QWORD && srcFamily != FAMILY_QWORD);
 
@@ -579,7 +578,7 @@ namespace gbe
     using namespace ir;
     const Type type = insn.getType();
     const Immediate imm = insn.getImmediate();
-    const GenReg dst = this->genReg(insn.getDst(0), type);
+    const GenReg dst = ra->genReg(insn.getDst(0), type);
 
     switch (type) {
       case TYPE_U32: p->MOV(dst, GenReg::immud(imm.data.u32)); break;
@@ -612,7 +611,7 @@ namespace gbe
     // Gather of integer is simpler since we may not need to move the
     // destination
     if (valueNum == 1) {
-      const GenReg value = this->genReg(insn.getValue(0));
+      const GenReg value = ra->genReg(insn.getValue(0));
       p->UNTYPED_READ(value, src, 0, 1);
     }
     // Right now, we just move everything to registers when dealing with
@@ -621,12 +620,12 @@ namespace gbe
       p->UNTYPED_READ(GenReg::f8grf(114, 0), src, 0, valueNum);
       if (this->simdWidth == 8) {
         for (uint32_t value = 0; value < valueNum; ++value) {
-          const GenReg dst = this->genReg(insn.getValue(value), TYPE_FLOAT);
+          const GenReg dst = ra->genReg(insn.getValue(value), TYPE_FLOAT);
           p->MOV(dst, GenReg::f8grf(114+value, 0));
         }
       } else if (this->simdWidth == 16) {
         for (uint32_t value = 0; value < valueNum; ++value) {
-          const GenReg dst = this->genReg(insn.getValue(value), TYPE_FLOAT);
+          const GenReg dst = ra->genReg(insn.getValue(value), TYPE_FLOAT);
           p->MOV(dst, GenReg::f16grf(114+2*value, 0));
         }
       } else
@@ -694,14 +693,14 @@ namespace gbe
 
   void GenContext::emitLoadInstruction(const ir::LoadInstruction &insn) {
     using namespace ir;
-    const GenReg address = this->genReg(insn.getAddress());
+    const GenReg address = ra->genReg(insn.getAddress());
     GBE_ASSERT(insn.getAddressSpace() == MEM_GLOBAL ||
                insn.getAddressSpace() == MEM_PRIVATE);
     GBE_ASSERT(this->isScalarReg(insn.getValue(0)) == false);
     if (insn.isAligned() == true)
       this->emitUntypedRead(insn, address);
     else {
-      const GenReg value = this->genReg(insn.getValue(0));
+      const GenReg value = ra->genReg(insn.getValue(0));
       this->emitByteGather(insn, address, value);
     }
   }
@@ -715,12 +714,12 @@ namespace gbe
     // We do it stupidly right now. We just move everything to temporaries
     if (this->simdWidth == 8)
       for (uint32_t src = 0; src < srcNum; ++src) {
-        const GenReg reg = this->genReg(insn.getSrc(src), TYPE_FLOAT);
+        const GenReg reg = ra->genReg(insn.getSrc(src), TYPE_FLOAT);
         p->MOV(GenReg::f8grf(112+src, 0), reg);
       }
     else if (this->simdWidth == 16)
       for (uint32_t src = 0; src < srcNum; ++src) {
-        const GenReg reg = this->genReg(insn.getSrc(src), TYPE_FLOAT);
+        const GenReg reg = ra->genReg(insn.getSrc(src), TYPE_FLOAT);
         p->MOV(GenReg::f16grf(112+2*src, 0), reg);
       }
     else
@@ -765,8 +764,8 @@ namespace gbe
     if (insn.isAligned() == true)
       this->emitUntypedWrite(insn);
     else {
-      const GenReg address = this->genReg(insn.getAddress());
-      const GenReg value = this->genReg(insn.getValue(0));
+      const GenReg address = ra->genReg(insn.getAddress());
+      const GenReg value = ra->genReg(insn.getValue(0));
       this->emitByteScatter(insn, address, value);
     }
   }
@@ -774,7 +773,7 @@ namespace gbe
   void GenContext::emitFenceInstruction(const ir::FenceInstruction &insn) {}
   void GenContext::emitLabelInstruction(const ir::LabelInstruction &insn) {
     const ir::LabelIndex label = insn.getLabelIndex();
-    const GenReg src0 = this->genReg(blockIPReg);
+    const GenReg src0 = ra->genReg(blockIPReg);
     const GenReg src1 = GenReg::immuw(label);
 
     // Labels are branch targets. We save the position of each label in the
@@ -827,7 +826,7 @@ namespace gbe
     // Use shifts rather than muls which are limited to 32x16 bit sources
     const uint32_t perLaneShift = logi2(perLaneSize);
     const uint32_t perThreadShift = logi2(perThreadSize);
-    const GenReg stackptr = this->genReg(ir::ocl::stackptr, TYPE_U32);
+    const GenReg stackptr = ra->genReg(ir::ocl::stackptr, TYPE_U32);
     const uint32_t nr = offset / GEN_REG_SIZE;
     const uint32_t subnr = (offset % GEN_REG_SIZE) / sizeof(uint32_t);
     const GenReg bufferptr = GenReg::ud1grf(nr, subnr);
@@ -883,7 +882,8 @@ namespace gbe
   BVAR(OCL_OUTPUT_ASM, false);
   void GenContext::emitCode(void) {
     GenKernel *genKernel = static_cast<GenKernel*>(this->kernel);
-    this->allocateRegister();
+    sel->select();
+    ra->allocateRegister();
     this->emitStackPointer();
     this->emitInstructionStream();
     this->patchBranches();

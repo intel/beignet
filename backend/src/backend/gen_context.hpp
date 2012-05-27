@@ -27,14 +27,16 @@
 
 #include "backend/context.hpp"
 #include "backend/gen_eu.hpp"
+#include "backend/program.h"
 #include "sys/map.hpp"
-#include "program.h"
 #include <string>
 
 namespace gbe
 {
-  struct Kernel;     // we build this structure
-  struct GenEmitter; // helps emitting Gen ISA
+  struct Kernel;          // we build this structure
+  struct GenEmitter;      // helps emitting Gen ISA
+  class GenRegAllocator;  // handle the register allocation
+  struct SelectionEngine; // performs instruction selection
 
   /*! Context is the helper structure to build the Gen ISA or simulation code
    *  from GenIR
@@ -54,22 +56,24 @@ namespace gbe
     INLINE const ir::Function &getFunction(void) const { return fn; }
     /*! Simd width chosen for the current function */
     INLINE uint32_t getSimdWidth(void) const { return simdWidth; }
+#if 0
     /*! Create a Gen register from a register set in the payload */
-    void allocatePayloadReg(gbe_curbe_type, ir::Register, uint32_t subValue, uint32_t subOffset);
+    void allocatePayloadReg(gbe_curbe_type, ir::Register, uint32_t subValue = 0, uint32_t subOffset = 0);
     /*! Very stupid register allocator to start with */
     void allocateRegister(void);
     /*! Create a GenReg from a ir::Register */
     uint32_t createGenReg(ir::Register reg, uint32_t grfOffset);
+    /*! Return the Gen register from the GenIR one */
+    GenReg genReg(ir::Register reg, ir::Type type = ir::TYPE_FLOAT);
+    /*! Compute the quarterth register part when using SIMD8 with Qn (n in 2,3,4) */
+    GenReg genRegQn(ir::Register reg, uint32_t quarter, ir::Type type = ir::TYPE_FLOAT);
+#endif
     /*! Emit the per-lane stack pointer computation */
     void emitStackPointer(void);
     /*! Emit the instructions */
     void emitInstructionStream(void);
     /*! Set the correct target values for the branches */
     void patchBranches(void);
-    /*! Return the Gen register from the GenIR one */
-    GenReg genReg(ir::Register reg, ir::Type type = ir::TYPE_FLOAT);
-    /*! Compute the quarterth register part when using SIMD8 with Qn (n in 2,3,4) */
-    GenReg genRegQn(ir::Register reg, uint32_t quarter, ir::Type type = ir::TYPE_FLOAT);
     /*! Bool registers will use scalar words. So we will consider them as
      *  scalars in Gen backend
      */
@@ -103,13 +107,19 @@ namespace gbe
     /*! Implements base class */
     virtual Kernel *allocateKernel(void);
     /*! Simplistic allocation to start with */
-    map<ir::Register, GenReg> RA;
+    // map<ir::Register, GenReg> RA;
     /*! Store the position of each label instruction in the Gen ISA stream */
     map<ir::LabelIndex, uint32_t> labelPos;
     /*! Store the position of each branch instruction in the Gen ISA stream */
     map<const ir::Instruction*, uint32_t> branchPos;
-    /*! Helper structure to emit Gen ISA */
+    /*! Encode Gen ISA */
     GenEmitter *p;
+    /*! Perform the instruction selection */
+    SelectionEngine *sel;
+    /*! Perform the register allocation */
+    GenRegAllocator *ra;
+    /*! Register used to encode the block IP */
+    static const ir::Register blockIPReg;
   };
 
 } /* namespace gbe */
