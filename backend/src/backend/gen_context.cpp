@@ -58,7 +58,7 @@ namespace gbe
     Context(unit, name)
   {
     this->p = GBE_NEW(GenEmitter, simdWidth, 7); // XXX handle more than Gen7
-    this->sel = newSimpleSelectionEngine(*this);
+    this->sel = newSimpleSelection(*this);
     this->ra = GBE_NEW(GenRegAllocator, *this);
   }
 
@@ -702,11 +702,34 @@ namespace gbe
     }
   }
 
+  ///////////////////// XXX ///////////////////////
+  void GenContext::emitLabelInstruction(const SelectionInstruction &insn) {
+    const ir::LabelIndex label(insn.index);
+    this->labelPos.insert(std::make_pair(label, p->insnNum));
+  }
+
+  void GenContext::emitUnaryInstruction(const SelectionInstruction &insn) {
+
+  }
+
+  void GenContext::emitBinaryInstruction(const SelectionInstruction &insn){}
+  void GenContext::emitSelectInstruction(const SelectionInstruction &insn){}
+  void GenContext::emitCompareInstruction(const SelectionInstruction &insn){}
+  void GenContext::emitJumpInstruction(const SelectionInstruction &insn){}
+  void GenContext::emitEotInstruction(const SelectionInstruction &insn){}
+  void GenContext::emitNoOpInstruction(const SelectionInstruction &insn){}
+  void GenContext::emitWaitInstruction(const SelectionInstruction &insn){}
+  void GenContext::emitMathInstruction(const SelectionInstruction &insn){}
+  void GenContext::emitUntypedReadInstruction(const SelectionInstruction &insn){}
+  void GenContext::emitUntypedWriteInstruction(const SelectionInstruction &insn){}
+  void GenContext::emitByteGatherInstruction(const SelectionInstruction &insn){}
+  void GenContext::emitByteScatterInstruction(const SelectionInstruction &insn){}
+
   BVAR(OCL_OUTPUT_ASM, false);
   void GenContext::emitCode(void) {
     GenKernel *genKernel = static_cast<GenKernel*>(this->kernel);
     sel->select();
-    ra->allocateRegister();
+    ra->allocate(*this->sel);
     this->emitStackPointer();
     this->emitInstructionStream();
     this->patchBranches();

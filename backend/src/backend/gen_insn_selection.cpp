@@ -60,14 +60,14 @@ namespace gbe
   }
 
   ///////////////////////////////////////////////////////////////////////////
-  // SelectionEngine
+  // Selection
   ///////////////////////////////////////////////////////////////////////////
-  SelectionEngine::SelectionEngine(GenContext &ctx) :
+  Selection::Selection(GenContext &ctx) :
     ctx(ctx), tileHead(NULL), tileTail(NULL), tile(NULL),
-    file(ctx.getFunction().getRegisterFile()),
-    stateNum(0) {}
+    curr(ctx.getSimdWidth()), file(ctx.getFunction().getRegisterFile()),
+    stateNum(0), vectorNum(0) {}
 
-  SelectionEngine::~SelectionEngine(void) {
+  Selection::~Selection(void) {
     if (this->tile) this->deleteSelectionTile(this->tile);
     while (this->tileHead) {
       SelectionTile *next = this->tileHead->next;
@@ -81,8 +81,9 @@ namespace gbe
     }
   }
 
-  void SelectionEngine::appendTile(void) {
+  void Selection::appendTile(void) {
     this->tile = this->newSelectionTile();
+    this->tile->parent = this;
     if (this->tileTail != NULL)
       this->tileTail->next = this->tile;
     if (this->tileHead == NULL)
@@ -90,20 +91,93 @@ namespace gbe
     this->tileTail = this->tile;
   }
 
-  SelectionInstruction *SelectionEngine::appendInsn(void) {
+  SelectionInstruction *Selection::appendInsn(void) {
     GBE_ASSERT(this->tile != NULL);
     SelectionInstruction *insn = this->newSelectionInstruction();
     this->tile->append(insn);
     return insn;
   }
 
-  SelectionVector *SelectionEngine::appendVector(void) {
+  SelectionVector *Selection::appendVector(void) {
     GBE_ASSERT(this->tile != NULL && this->tile->insnTail != NULL);
     SelectionVector *vector = this->newSelectionVector();
     vector->insn = this->tile->insnTail;
     this->tile->append(vector);
+    this->vectorNum++;
     return vector;
   }
+
+  ir::Register Selection::replaceSrc(SelectionInstruction *insn, uint32_t regID) {
+    SelectionTile *tile = insn->parent;
+    const uint32_t simdWidth = ctx.getSimdWidth();
+    ir::Register tmp;
+
+    // This will append the temporary register in the instruction tile
+    this->tile = tile;
+    tmp = this->reg(ir::FAMILY_DWORD);
+
+    // Generate the MOV instruction and replace the register in the instruction
+    SelectionInstruction *mov = this->newSelectionInstruction();
+    mov->opcode = SEL_OP_MOV;
+    if (simdWidth == 8)
+      insn->src[regID] = mov->dst[0] = SelectionReg::f8grf(tmp);
+    else
+      insn->src[regID] = mov->dst[0] = SelectionReg::f16grf(tmp);
+    mov->src[0] = SelectionReg::retype(insn->src[regID], GEN_TYPE_F);
+    mov->state = SelectionState(simdWidth);
+
+    // Insert the MOV instruction before the current instruction
+    SelectionInstruction *prev = insn->prev;
+    insn->prev = mov;
+    mov->next = insn;
+    if (prev) {
+      mov->prev = prev;
+      prev->next = mov;
+    }
+
+    return tmp;
+  }
+
+  ir::Register Selection::replaceDst(SelectionInstruction *insn, uint32_t regID) {
+    SelectionTile *tile = insn->parent;
+    const uint32_t simdWidth = ctx.getSimdWidth();
+    ir::Register tmp;
+
+    // This will append the temporary register in the instruction tile
+    this->tile = tile;
+    tmp = this->reg(ir::FAMILY_DWORD);
+
+    // Generate the MOV instruction and replace the register in the instruction
+    SelectionInstruction *mov = this->newSelectionInstruction();
+    mov->opcode = SEL_OP_MOV;
+    if (simdWidth == 8)
+      insn->dst[regID] = mov->src[0] = SelectionReg::f8grf(tmp);
+    else
+      insn->dst[regID] = mov->src[0] = SelectionReg::f16grf(tmp);
+    mov->dst[0] = SelectionReg::retype(insn->src[regID], GEN_TYPE_F);
+    mov->state = SelectionState(simdWidth);
+
+    // Insert the MOV instruction after the current instruction
+    SelectionInstruction *next = insn->next;
+    insn->next = mov;
+    mov->prev = insn;
+    if (next) {
+      mov->next = next;
+      next->prev = mov;
+    }
+
+    return tmp;
+  }
+
+  bool Selection::isScalarOrBool(ir::Register reg) const {
+    if (ctx.isScalarReg(reg))
+      return true;
+    else {
+      const ir::RegisterFamily family = file.get(reg).family;
+      return family == ir::FAMILY_BOOL;
+    }
+  }
+
 
 #define SEL_REG(SIMD16, SIMD8, SIMD1) \
   if (ctx.isScalarOrBool(reg) == true) \
@@ -115,12 +189,11 @@ namespace gbe
     return SelectionReg::retype(SelectionReg::SIMD16(reg), genType); \
   }
 
-  SelectionReg SelectionEngine::selReg(ir::Register reg, ir::Type type) {
+  SelectionReg Selection::selReg(ir::Register reg, ir::Type type) {
     using namespace ir;
     const uint32_t genType = getGenType(type);
     const uint32_t simdWidth = ctx.getSimdWidth();
-    const Function &fn = ctx.getFunction();
-    const RegisterData data = fn.getRegisterData(reg);
+    const RegisterData data = file.get(reg);
     const RegisterFamily family = data.family;
     switch (family) {
       case FAMILY_BOOL: SEL_REG(uw1grf, uw1grf, uw1grf); break;
@@ -135,7 +208,7 @@ namespace gbe
 
 #undef SEL_REG
 
-  SelectionReg SelectionEngine::selRegQn(ir::Register reg, uint32_t q, ir::Type type) {
+  SelectionReg Selection::selRegQn(ir::Register reg, uint32_t q, ir::Type type) {
     SelectionReg sreg = this->selReg(reg, type);
     sreg.quarter = q;
     return sreg;
@@ -144,53 +217,62 @@ namespace gbe
   /*! Syntactic sugar for method declaration */
   typedef const SelectionReg &Reg;
 
-  void SelectionEngine::LABEL(ir::LabelIndex index) {
+  void Selection::LABEL(ir::LabelIndex index) {
     SelectionInstruction *insn = this->appendInsn();
     insn->opcode = SEL_OP_LABEL;
     insn->state = this->curr;
     insn->index = uint16_t(index);
+    insn->srcNum = insn->dstNum = 0;
   }
 
-  void SelectionEngine::JMPI(Reg src, ir::LabelIndex index) {
+  void Selection::JMPI(Reg src, ir::LabelIndex index) {
     SelectionInstruction *insn = this->appendInsn();
     insn->src[0] = src;
     insn->opcode = SEL_OP_JMPI;
     insn->state = this->curr;
     insn->index = uint16_t(index);
+    insn->srcNum = 1;
+    insn->dstNum = 0;
   }
 
-  void SelectionEngine::CMP(uint32_t conditional, Reg src0, Reg src1) {
+  void Selection::CMP(uint32_t conditional, Reg src0, Reg src1) {
     SelectionInstruction *insn = this->appendInsn();
     insn->src[0] = src0;
     insn->src[1] = src1;
     insn->function = conditional;
     insn->opcode = SEL_OP_CMP;
     insn->state = this->curr;
+    insn->srcNum = 2;
+    insn->dstNum = 0;
   }
 
-  void SelectionEngine::EOT(Reg src) {
+  void Selection::EOT(Reg src) {
     SelectionInstruction *insn = this->appendInsn();
     insn->src[0] = src;
     insn->opcode = SEL_OP_EOT;
     insn->state = this->curr;
+    insn->srcNum = 1;
+    insn->dstNum = 0;
   }
 
-  void SelectionEngine::NOP(void) {
+  void Selection::NOP(void) {
     SelectionInstruction *insn = this->appendInsn();
     insn->opcode = SEL_OP_NOP;
     insn->state = this->curr;
+    insn->srcNum = insn->dstNum = 0;
   }
 
-  void SelectionEngine::WAIT(void) {
+  void Selection::WAIT(void) {
     SelectionInstruction *insn = this->appendInsn();
     insn->opcode = SEL_OP_WAIT;
     insn->state = this->curr;
+    insn->srcNum = insn->dstNum = 0;
   }
 
-  void SelectionEngine::UNTYPED_READ(Reg addr,
-                                     const SelectionReg *dst,
-                                     uint32_t elemNum,
-                                     uint32_t bti)
+  void Selection::UNTYPED_READ(Reg addr,
+                               const SelectionReg *dst,
+                               uint32_t elemNum,
+                               uint32_t bti)
   {
     SelectionInstruction *insn = this->appendInsn();
     SelectionVector *srcVector = this->appendVector();
@@ -204,23 +286,24 @@ namespace gbe
     insn->function = bti;
     insn->elem = elemNum;
     insn->state = this->curr;
+    insn->srcNum = 1;
+    insn->dstNum = elemNum;
 
     // Sends require contiguous allocation
     dstVector->regNum = elemNum;
     dstVector->isSrc = 0;
-    for (uint32_t elemID = 0; elemID < elemNum; ++elemID)
-      dstVector->reg[elemID] = dst[elemID].reg;
+    dstVector->reg = insn->dst;
 
     // Source cannot be scalar (yet)
     srcVector->regNum = 1;
     srcVector->isSrc = 1;
-    srcVector->reg[0] = addr.reg;
+    srcVector->reg = insn->src;
   }
 
- void SelectionEngine::UNTYPED_WRITE(Reg addr,
-                                     const SelectionReg *src,
-                                     uint32_t elemNum,
-                                     uint32_t bti)
+ void Selection::UNTYPED_WRITE(Reg addr,
+                               const SelectionReg *src,
+                               uint32_t elemNum,
+                               uint32_t bti)
  {
     SelectionInstruction *insn = this->appendInsn();
     SelectionVector *vector = this->appendVector();
@@ -233,16 +316,16 @@ namespace gbe
     insn->function = bti;
     insn->elem = elemNum;
     insn->state = this->curr;
+    insn->srcNum = elemNum+1;
+    insn->dstNum = 0;
 
     // Sends require contiguous allocation for the sources
-    vector->regNum = elemNum;
-    vector->reg[0] = addr.reg;
+    vector->regNum = elemNum+1;
+    vector->reg = insn->src;
     vector->isSrc = 1;
-    for (uint32_t elemID = 0; elemID < elemNum; ++elemID)
-      vector->reg[elemID+1] = src[elemID].reg;
   }
 
-  void SelectionEngine::BYTE_GATHER(Reg dst, Reg addr, uint32_t elemSize, uint32_t bti) {
+  void Selection::BYTE_GATHER(Reg dst, Reg addr, uint32_t elemSize, uint32_t bti) {
     SelectionInstruction *insn = this->appendInsn();
     SelectionVector *srcVector = this->appendVector();
     SelectionVector *dstVector = this->appendVector();
@@ -254,18 +337,20 @@ namespace gbe
     insn->function = bti;
     insn->elem = elemSize;
     insn->state = this->curr;
+    insn->srcNum = 1;
+    insn->dstNum = 1;
 
     // byte gather requires vector in the sense that scalar are not allowed
     // (yet)
     dstVector->regNum = 1;
     dstVector->isSrc = 0;
-    dstVector->reg[0] = dst.reg;
+    dstVector->reg = insn->dst;
     srcVector->regNum = 1;
     srcVector->isSrc = 1;
-    srcVector->reg[0] = addr.reg;
+    srcVector->reg = insn->src;
   }
 
-  void SelectionEngine::BYTE_SCATTER(Reg addr, Reg src, uint32_t elemSize, uint32_t bti) {
+  void Selection::BYTE_SCATTER(Reg addr, Reg src, uint32_t elemSize, uint32_t bti) {
     SelectionInstruction *insn = this->appendInsn();
     SelectionVector *vector = this->appendVector();
 
@@ -276,15 +361,16 @@ namespace gbe
     insn->function = bti;
     insn->elem = elemSize;
     insn->state = this->curr;
+    insn->srcNum = 2;
+    insn->dstNum = 0;
 
     // value and address are contiguous in the send
     vector->regNum = 2;
     vector->isSrc = 1;
-    vector->reg[0] = addr.reg;
-    vector->reg[1] = src.reg;
+    vector->reg = insn->src;
   }
 
-  void SelectionEngine::MATH(Reg dst, uint32_t function, Reg src0, Reg src1) {
+  void Selection::MATH(Reg dst, uint32_t function, Reg src0, Reg src1) {
     SelectionInstruction *insn = this->appendInsn();
     insn->opcode = SEL_OP_MATH;
     insn->dst[0] = dst;
@@ -292,35 +378,41 @@ namespace gbe
     insn->src[1] = src1;
     insn->function = function;
     insn->state = this->curr;
+    insn->srcNum = 2;
+    insn->dstNum = 1;
   }
 
-  void SelectionEngine::ALU1(uint32_t opcode, Reg dst, Reg src) {
+  void Selection::ALU1(uint32_t opcode, Reg dst, Reg src) {
     SelectionInstruction *insn = this->appendInsn();
     insn->opcode = opcode;
     insn->dst[0] = dst;
     insn->src[0] = src;
     insn->state = this->curr;
+    insn->srcNum = 1;
+    insn->dstNum = 1;
   }
 
-  void SelectionEngine::ALU2(uint32_t opcode, Reg dst, Reg src0, Reg src1) {
+  void Selection::ALU2(uint32_t opcode, Reg dst, Reg src0, Reg src1) {
     SelectionInstruction *insn = this->appendInsn();
     insn->opcode = opcode;
     insn->dst[0] = dst;
     insn->src[0] = src0;
     insn->src[1] = src1;
     insn->state = this->curr;
+    insn->srcNum = 2;
+    insn->dstNum = 1;
   }
 
   ///////////////////////////////////////////////////////////////////////////
-  // SimpleEngine
+  // SimpleSelection
   ///////////////////////////////////////////////////////////////////////////
 
   /*! This is a simplistic one-to-many instruction selection engine */
-  class SimpleEngine : public SelectionEngine
+  class SimpleSelection : public Selection
   {
   public:
-    SimpleEngine(GenContext &ctx);
-    virtual ~SimpleEngine(void);
+    SimpleSelection(GenContext &ctx);
+    virtual ~SimpleSelection(void);
     /*! Implements the base class */
     virtual void select(void);
   private:
@@ -352,11 +444,11 @@ namespace gbe
     void emitBackwardBranch(const ir::BranchInstruction&, ir::LabelIndex dst, ir::LabelIndex src);
   };
 
-  SimpleEngine::SimpleEngine(GenContext &ctx) :
-    SelectionEngine(ctx) {}
-  SimpleEngine::~SimpleEngine(void) {}
+  SimpleSelection::SimpleSelection(GenContext &ctx) :
+    Selection(ctx) {}
+  SimpleSelection::~SimpleSelection(void) {}
 
-  void SimpleEngine::select(void) {
+  void SimpleSelection::select(void) {
     using namespace ir;
     const Function &fn = ctx.getFunction();
     fn.foreachInstruction([&](const Instruction &insn) {
@@ -371,12 +463,12 @@ namespace gbe
     });
   }
 
-  void SimpleEngine::emitUnaryInstruction(const ir::UnaryInstruction &insn) {
+  void SimpleSelection::emitUnaryInstruction(const ir::UnaryInstruction &insn) {
     GBE_ASSERT(insn.getOpcode() == ir::OP_MOV);
     this->MOV(selReg(insn.getDst(0)), selReg(insn.getSrc(0)));
   }
 
-  void SimpleEngine::emitIntMul32x32(const ir::Instruction &insn,
+  void SimpleSelection::emitIntMul32x32(const ir::Instruction &insn,
                                      SelectionReg dst,
                                      SelectionReg src0,
                                      SelectionReg src1)
@@ -413,7 +505,7 @@ namespace gbe
     this->pop();
   }
 
-  void SimpleEngine::emitBinaryInstruction(const ir::BinaryInstruction &insn) {
+  void SimpleSelection::emitBinaryInstruction(const ir::BinaryInstruction &insn) {
     using namespace ir;
     const Opcode opcode = insn.getOpcode();
     const Type type = insn.getType();
@@ -459,20 +551,20 @@ namespace gbe
     this->pop();
   }
 
-  void SimpleEngine::emitTernaryInstruction(const ir::TernaryInstruction &insn) {
+  void SimpleSelection::emitTernaryInstruction(const ir::TernaryInstruction &insn) {
     NOT_IMPLEMENTED;
   }
-  void SimpleEngine::emitSelectInstruction(const ir::SelectInstruction &insn) {
+  void SimpleSelection::emitSelectInstruction(const ir::SelectInstruction &insn) {
     NOT_IMPLEMENTED;
   }
-  void SimpleEngine::emitSampleInstruction(const ir::SampleInstruction &insn) {
+  void SimpleSelection::emitSampleInstruction(const ir::SampleInstruction &insn) {
     NOT_IMPLEMENTED;
   }
-  void SimpleEngine::emitTypedWriteInstruction(const ir::TypedWriteInstruction &insn) {
+  void SimpleSelection::emitTypedWriteInstruction(const ir::TypedWriteInstruction &insn) {
     NOT_IMPLEMENTED;
   }
 
-  void SimpleEngine::emitLoadImmInstruction(const ir::LoadImmInstruction &insn) {
+  void SimpleSelection::emitLoadImmInstruction(const ir::LoadImmInstruction &insn) {
     using namespace ir;
     const Type type = insn.getType();
     const Immediate imm = insn.getImmediate();
@@ -490,7 +582,7 @@ namespace gbe
     }
   }
 
-  void SimpleEngine::emitUntypedRead(const ir::LoadInstruction &insn, SelectionReg addr)
+  void SimpleSelection::emitUntypedRead(const ir::LoadInstruction &insn, SelectionReg addr)
   {
     using namespace ir;
     const uint32_t valueNum = insn.getValueNum();
@@ -524,7 +616,7 @@ namespace gbe
     }
   }
 
-  void SimpleEngine::emitByteGather(const ir::LoadInstruction &insn,
+  void SimpleSelection::emitByteGather(const ir::LoadInstruction &insn,
                                     SelectionReg address,
                                     SelectionReg value)
   {
@@ -554,7 +646,7 @@ namespace gbe
       this->MOV(SelectionReg::retype(value, GEN_TYPE_UB), SelectionReg::unpacked_ub(dst));
   }
 
-  void SimpleEngine::emitLoadInstruction(const ir::LoadInstruction &insn) {
+  void SimpleSelection::emitLoadInstruction(const ir::LoadInstruction &insn) {
     using namespace ir;
     const SelectionReg address = this->selReg(insn.getAddress());
     GBE_ASSERT(insn.getAddressSpace() == MEM_GLOBAL ||
@@ -568,7 +660,7 @@ namespace gbe
     }
   }
 
-  void SimpleEngine::emitUntypedWrite(const ir::StoreInstruction &insn)
+  void SimpleSelection::emitUntypedWrite(const ir::StoreInstruction &insn)
   {
     using namespace ir;
     const uint32_t valueNum = insn.getValueNum();
@@ -588,7 +680,7 @@ namespace gbe
     this->UNTYPED_WRITE(addr, value, valueNum, 0);
   }
 
-  void SimpleEngine::emitByteScatter(const ir::StoreInstruction &insn,
+  void SimpleSelection::emitByteScatter(const ir::StoreInstruction &insn,
                                      SelectionReg addr,
                                      SelectionReg value)
   {
@@ -621,7 +713,7 @@ namespace gbe
     this->BYTE_SCATTER(addr, value, 1, elemSize);
   }
 
-  void SimpleEngine::emitStoreInstruction(const ir::StoreInstruction &insn) {
+  void SimpleSelection::emitStoreInstruction(const ir::StoreInstruction &insn) {
     using namespace ir;
     if (insn.isAligned() == true)
       this->emitUntypedWrite(insn);
@@ -632,7 +724,7 @@ namespace gbe
     }
   }
 
-  void SimpleEngine::emitForwardBranch(const ir::BranchInstruction &insn,
+  void SimpleSelection::emitForwardBranch(const ir::BranchInstruction &insn,
                                        ir::LabelIndex dst,
                                        ir::LabelIndex src)
   {
@@ -704,7 +796,7 @@ namespace gbe
     }
   }
 
-  void SimpleEngine::emitBackwardBranch(const ir::BranchInstruction &insn,
+  void SimpleSelection::emitBackwardBranch(const ir::BranchInstruction &insn,
                                         ir::LabelIndex dst,
                                         ir::LabelIndex src)
   {
@@ -769,7 +861,7 @@ namespace gbe
   }
 
 
-  void SimpleEngine::emitCompareInstruction(const ir::CompareInstruction &insn) {
+  void SimpleSelection::emitCompareInstruction(const ir::CompareInstruction &insn) {
     using namespace ir;
     const Opcode opcode = insn.getOpcode();
     const Type type = insn.getType();
@@ -801,7 +893,7 @@ namespace gbe
     this->pop();
   }
 
-  void SimpleEngine::emitConvertInstruction(const ir::ConvertInstruction &insn) {
+  void SimpleSelection::emitConvertInstruction(const ir::ConvertInstruction &insn) {
     using namespace ir;
     const Type dstType = insn.getDstType();
     const Type srcType = insn.getSrcType();
@@ -831,7 +923,7 @@ namespace gbe
   }
 
 
-  void SimpleEngine::emitBranchInstruction(const ir::BranchInstruction &insn) {
+  void SimpleSelection::emitBranchInstruction(const ir::BranchInstruction &insn) {
     using namespace ir;
     const Opcode opcode = insn.getOpcode();
     if (opcode == OP_RET) {
@@ -857,8 +949,8 @@ namespace gbe
       NOT_IMPLEMENTED;
   }
 
-  void SimpleEngine::emitFenceInstruction(const ir::FenceInstruction &insn) {}
-  void SimpleEngine::emitLabelInstruction(const ir::LabelInstruction &insn) {
+  void SimpleSelection::emitFenceInstruction(const ir::FenceInstruction &insn) {}
+  void SimpleSelection::emitLabelInstruction(const ir::LabelInstruction &insn) {
     using namespace ir;
     const LabelIndex label = insn.getLabelIndex();
     const SelectionReg src0 = this->selReg(ocl::blockip);
@@ -893,7 +985,7 @@ namespace gbe
     }
   }
 
-  SelectionEngine *newSimpleSelectionEngine(GenContext &ctx) {
-    return GBE_NEW(SimpleEngine, ctx);
+  Selection *newSimpleSelection(GenContext &ctx) {
+    return GBE_NEW(SimpleSelection, ctx);
   }
 } /* namespace gbe */

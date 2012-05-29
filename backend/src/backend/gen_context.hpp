@@ -28,15 +28,17 @@
 #include "backend/context.hpp"
 #include "backend/gen_eu.hpp"
 #include "backend/program.h"
+#include "ir/function.hpp"
 #include "sys/map.hpp"
 #include <string>
 
 namespace gbe
 {
-  struct Kernel;          // we build this structure
-  struct GenEmitter;      // helps emitting Gen ISA
-  class GenRegAllocator;  // handle the register allocation
-  struct SelectionEngine; // performs instruction selection
+  class Kernel;               // We build this structure
+  class GenEmitter;           // Helps emitting Gen ISA
+  class GenRegAllocator;      // Handle the register allocation
+  class Selection;            // Performs instruction selection
+  class SelectionInstruction; // Pre-RA GEN instruction
 
   /*! Context is the helper structure to build the Gen ISA or simulation code
    *  from GenIR
@@ -66,6 +68,13 @@ namespace gbe
      *  scalars in Gen backend
      */
     bool isScalarOrBool(ir::Register reg) const;
+    /*! Forward ir::Function method */
+    INLINE bool isSpecialReg(ir::Register reg) const {
+      return fn.isSpecialReg(reg);
+    }
+    /*! Build the final physical register */
+    GenReg getGenReg(ir::Register reg, const SelectionReg &selReg) const;
+
     /*! Emit instruction per family */
     void emitUnaryInstruction(const ir::UnaryInstruction &insn);
     void emitBinaryInstruction(const ir::BinaryInstruction &insn);
@@ -92,6 +101,24 @@ namespace gbe
     /*! Backward and forward branches are handled slightly differently */
     void emitForwardBranch(const ir::BranchInstruction&, ir::LabelIndex dst, ir::LabelIndex src);
     void emitBackwardBranch(const ir::BranchInstruction&, ir::LabelIndex dst, ir::LabelIndex src);
+
+    ///////////////////// XXX ///////////////////////
+
+    void emitLabelInstruction(const SelectionInstruction &insn);
+    void emitUnaryInstruction(const SelectionInstruction &insn);
+    void emitBinaryInstruction(const SelectionInstruction &insn);
+    void emitSelectInstruction(const SelectionInstruction &insn);
+    void emitCompareInstruction(const SelectionInstruction &insn);
+    void emitJumpInstruction(const SelectionInstruction &insn);
+    void emitEotInstruction(const SelectionInstruction &insn);
+    void emitNoOpInstruction(const SelectionInstruction &insn);
+    void emitWaitInstruction(const SelectionInstruction &insn);
+    void emitMathInstruction(const SelectionInstruction &insn);
+    void emitUntypedReadInstruction(const SelectionInstruction &insn);
+    void emitUntypedWriteInstruction(const SelectionInstruction &insn);
+    void emitByteGatherInstruction(const SelectionInstruction &insn);
+    void emitByteScatterInstruction(const SelectionInstruction &insn);
+
     /*! Implements base class */
     virtual Kernel *allocateKernel(void);
     /*! Simplistic allocation to start with */
@@ -102,8 +129,8 @@ namespace gbe
     map<const ir::Instruction*, uint32_t> branchPos;
     /*! Encode Gen ISA */
     GenEmitter *p;
-    /*! Perform the instruction selection */
-    SelectionEngine *sel;
+    /*! Instruction selection on Gen ISA (pre-register allocation) */
+    Selection *sel;
     /*! Perform the register allocation */
     GenRegAllocator *ra;
   };

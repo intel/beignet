@@ -24,8 +24,10 @@
 
 #include "ir/profile.hpp"
 #include "ir/function.hpp"
+#include "backend/gen_insn_selection.hpp"
 #include "backend/gen_reg_allocation.hpp"
 #include "backend/program.hpp"
+#include <algorithm>
 
 namespace gbe
 {
@@ -91,7 +93,7 @@ namespace gbe
 #undef INSERT_REG
 
 #define INSERT_REG(SIMD16, SIMD8, SIMD1) \
-  if (ctx.isScalarOrBool(reg) == true) { \
+  if (ctx.sel->isScalarOrBool(reg) == true) { \
     RA.insert(std::make_pair(reg, GenReg::SIMD1(nr, subnr))); \
     grfOffset += typeSize; \
   } else if (simdWidth == 16) { \
@@ -107,12 +109,13 @@ namespace gbe
     using namespace ir;
     const Function &fn = ctx.getFunction();
     const uint32_t simdWidth = ctx.getSimdWidth();
+    if (RA.contains(reg) == true) return grfOffset; // already allocated
     if (fn.isSpecialReg(reg) == true) return grfOffset; // already done
     if (fn.getArg(reg) != NULL) return grfOffset; // already done
     if (fn.getPushLocation(reg) != NULL) return grfOffset; // already done
     GBE_ASSERT(ctx.isScalarReg(reg) == false);
-    const bool isScalar = ctx.isScalarOrBool(reg);
-    const RegisterData regData = fn.getRegisterData(reg);
+    const bool isScalar = ctx.sel->isScalarOrBool(reg);
+    const RegisterData regData = ctx.sel->getRegisterData(reg);
     const RegisterFamily family = regData.family;
     const uint32_t typeSize = isScalar ? familyScalarSize[family] : familyVectorSize[family];
     const uint32_t regSize = simdWidth*typeSize;
@@ -134,7 +137,122 @@ namespace gbe
 
 #undef INSERT_REG
 
-  void GenRegAllocator::allocateRegister(void) {
+  bool GenRegAllocator::isAllocated(const SelectionVector *vector) const {
+    const ir::Register first = vector->reg[0].reg;
+    const auto it = vectorMap.find(first);
+
+    // If the first register is not allocated we are done
+    if (it == vectorMap.end())
+      return false;
+
+    // If there are more left registers than in the found vector, there are
+    // still registers to allocate
+    const SelectionVector *other = it->second.first;
+    const uint32_t otherFirst = other->reg[0].reg;
+    const uint32_t leftNum = other->regNum - otherFirst;
+    if (leftNum < vector->regNum)
+      return false;
+
+    // Now check that all the registers in the already allocated vector match
+    // the current vector
+    for (uint32_t regID = 1; regID < vector->regNum; ++regID) {
+       const ir::Register from = vector->reg[regID].reg;
+       const ir::Register to = other->reg[regID + otherFirst].reg;
+       if (from != to)
+         return false;
+    }
+    return true;
+  }
+
+  void GenRegAllocator::coalesce(Selection &selection, SelectionVector *vector) {
+    for (uint32_t regID = 0; regID < vector->regNum; ++regID) {
+      const ir::Register reg = vector->reg[regID].reg;
+      const auto it = this->vectorMap.find(reg);
+      // case 1: the register is not already in a vector, so it can stay in this
+      // vector. Note that local IDs are *non-scalar* special registers but will
+      // require a MOV anyway since pre-allocated in the CURBE
+      if (it == vectorMap.end() &&
+          ctx.sel->isScalarOrBool(reg) == false &&
+          ctx.isSpecialReg(reg) == false)
+      {
+        const VectorLocation location = std::make_pair(vector, regID);
+        this->vectorMap.insert(std::make_pair(reg, location));
+      }
+      // case 2: the register is already in another vector, so we need to move
+      // it to a temporary register
+      else {
+        ir::Register tmp;
+        if (vector->isSrc)
+          tmp = selection.replaceSrc(vector->insn, regID);
+        else
+          tmp = selection.replaceDst(vector->insn, regID);
+        const VectorLocation location = std::make_pair(vector, regID);
+        this->vectorMap.insert(std::make_pair(tmp, location));
+      }
+    }
+  }
+
+  /*! Will sort vector in decreasing order */
+  INLINE bool cmp(const SelectionVector *v0, const SelectionVector *v1) {
+    return v0->regNum > v1->regNum;
+  }
+
+  uint32_t GenRegAllocator::allocateVector(Selection &selection) {
+    const uint32_t vectorNum = selection.getVectorNum();
+    SelectionVector *vectors[vectorNum];
+
+    // First we find and store all vectors
+    uint32_t vectorID = 0;
+    selection.foreach([&](SelectionTile &tile) {
+      SelectionVector *v = tile.vector;
+      while (v) {
+        GBE_ASSERT(vectorID < vectorNum);
+        vectors[vectorID++] = v;
+        v = v->next;
+      }
+    });
+    GBE_ASSERT(vectorID == vectorNum);
+
+    // Heuristic (really simple...): sort them by the number of registers they
+    // contain
+    std::sort(vectors, vectors + vectorNum, cmp);
+
+    // Insert MOVs when this is required
+    for (vectorID = 0; vectorID < vectorNum; ++vectorID) {
+      SelectionVector *vector = vectors[vectorID];
+      if (this->isAllocated(vector))
+        continue;
+      this->coalesce(selection, vector);
+    }
+
+    // Allocate all the vector registers
+    uint32_t grfOffset = ctx.getKernel()->getCurbeSize() + GEN_REG_SIZE;
+    for (vectorID = 0; vectorID < vectorNum; ++vectorID) {
+      const SelectionVector *vector = vectors[vectorID];
+      const ir::Register first = vector->reg[0].reg;
+
+      // Since there is no interference, if the first register is allocated,
+      // this means that this vector is a sub-vector of a previous one, and
+      // therefore all the registers are allocated
+      if (RA.contains(first) == true) {
+#if GBE_DEBUG
+        for (uint32_t regID = 1; regID < vector->regNum; ++regID)
+          GBE_ASSERT(RA.contains(vector->reg[regID].reg));
+#endif /* GBE_DEBUG */
+        continue;
+      }
+
+      // Allocate all the registers consecutively
+      for (uint32_t regID = 0; regID < vector->regNum; ++regID) {
+        const ir::Register reg = vector->reg[regID].reg;
+        GBE_ASSERT(RA.contains(reg) == false);
+        grfOffset = this->createGenReg(reg, grfOffset);
+      }
+    }
+    return grfOffset;
+  }
+
+  void GenRegAllocator::allocate(Selection &selection) {
     using namespace ir;
     const Kernel *kernel = ctx.getKernel();
     const Function &fn = ctx.getFunction();
@@ -194,7 +312,7 @@ namespace gbe
       const Register reg = pushed.second.getRegister();
       allocatePayloadReg(GBE_CURBE_KERNEL_ARGUMENT, reg, argID, subOffset);
     }
-
+#if 0
     // First we build the set of all used registers
     set<Register> usedRegs;
     fn.foreachInstruction([&usedRegs](const Instruction &insn) {
@@ -205,8 +323,30 @@ namespace gbe
         usedRegs.insert(insn.getDst(dstID));
     });
 
+    this->allocateVector(selection);
+#else
+    // First we build the set of all used registers
+    set<Register> usedRegs;
+    selection.foreachInstruction([&](const SelectionInstruction &insn) {
+      const uint32_t srcNum = insn.srcNum, dstNum = insn.dstNum;
+      for (uint32_t srcID = 0; srcID < srcNum; ++srcID) {
+        const SelectionReg reg = insn.src[srcID];
+        if (reg.file == GEN_GENERAL_REGISTER_FILE)
+          usedRegs.insert(reg.reg);
+      }
+      for (uint32_t dstID = 0; dstID < dstNum; ++dstID) {
+        const SelectionReg reg = insn.dst[dstID];
+        if (reg.file == GEN_GENERAL_REGISTER_FILE)
+          usedRegs.insert(reg.reg);
+      }
+    });
+
+#endif
+
+    // Allocate all the vectors first since they need to be contiguous
+    uint32_t grfOffset = this->allocateVector(selection);
+
     // Allocate all used registers. Just crash when we run out-of-registers
-    uint32_t grfOffset = kernel->getCurbeSize() + GEN_REG_SIZE;
     for (auto reg : usedRegs)
       grfOffset = this->createGenReg(reg, grfOffset);
   }

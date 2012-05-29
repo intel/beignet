@@ -31,25 +31,41 @@
 
 namespace gbe
 {
+  class Selection; // pre-register allocation code generation
+
+  /*! Provides the location of a register in a vector */
+  typedef std::pair<SelectionVector*, uint32_t> VectorLocation;
+
   class GenRegAllocator
   {
   public:
     /*! Initialize the register allocator */
     GenRegAllocator(GenContext &ctx);
+    /*! Perform the register allocation */
+    void allocate(Selection &selection);
     /*! Return the Gen register from the GenIR one */
-    GenReg genReg(ir::Register reg, ir::Type type = ir::TYPE_FLOAT);
+    GenReg genReg(ir::Register, ir::Type type = ir::TYPE_FLOAT);
     /*! Compute the quarterth register part when using SIMD8 with Qn (n in 2,3,4) */
-    GenReg genRegQn(ir::Register reg, uint32_t quarter, ir::Type type = ir::TYPE_FLOAT);
+    GenReg genRegQn(ir::Register, uint32_t quarter, ir::Type type = ir::TYPE_FLOAT);
+  private:
     /*! Create a Gen register from a register set in the payload */
     void allocatePayloadReg(gbe_curbe_type, ir::Register, uint32_t subValue = 0, uint32_t subOffset = 0);
-    /*! Very stupid register allocator to start with */
-    void allocateRegister(void);
+    /*! Allocate the vectors detected in the instruction selection pass */
+    uint32_t allocateVector(Selection &selection);
     /*! Create a GenReg from a ir::Register */
-    uint32_t createGenReg(ir::Register reg, uint32_t grfOffset);
+    uint32_t createGenReg(ir::Register, uint32_t grfOffset);
+    /*! Indicate if the registers are already allocated in vectors */
+    bool isAllocated(const SelectionVector *vector) const;
+    /*! Reallocate registers if needed to make the registers in the vector
+     *  contigous in memory
+     */
+    void coalesce(Selection &selection, SelectionVector *vector);
     /*! The context owns the register allocator */
     GenContext &ctx;
     /*! Map virtual registers to physical registers */
     map<ir::Register, GenReg> RA;
+    /*! Provides the position of each register in a vector */
+    map<ir::Register, VectorLocation> vectorMap;
   };
 
 } /* namespace gbe */

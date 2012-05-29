@@ -28,6 +28,7 @@
 #include "ir/register.hpp"
 #include "ir/instruction.hpp"
 #include "backend/gen_defs.hpp"
+#include "backend/gen_context.hpp"
 #include "sys/vector.hpp"
 
 namespace gbe
@@ -35,6 +36,15 @@ namespace gbe
   /*! The state for each instruction */
   struct SelectionState
   {
+    INLINE SelectionState(uint32_t simdWidth = 8) {
+      this->execWidth = simdWidth;
+      this->quarterControl = GEN_COMPRESSION_Q1;
+      this->noMask = 0;
+      this->flag = 0;
+      this->subFlag = 0;
+      this->predicate = GEN_PREDICATE_NORMAL;
+      this->inversePredicate = 0;
+    }
     uint32_t execWidth:6;
     uint32_t quarterControl:2;
     uint32_t noMask:1;
@@ -442,17 +452,24 @@ namespace gbe
 #undef DECL_SELECTION_IR
   };
 
+  // Owns the selection instructions
+  class SelectionTile;
+
   /*! A selection instruction is also almost a Gen instruction but *before* the
    *  register allocation
    */
-  struct SelectionInstruction
+  class SelectionInstruction
   {
+  public:
+    INLINE SelectionInstruction(void) : parent(NULL), prev(NULL), next(NULL) {}
     /*! No more than 6 sources (used by typed writes) */
     enum { MAX_SRC_NUM = 6 };
     /*! No more than 4 destinations (used by samples and untyped reads) */
     enum { MAX_DST_NUM = 4 };
+    /*! Owns the instruction */
+    SelectionTile *parent;
     /*! Instruction are chained in the tile */
-    SelectionInstruction *next;
+    SelectionInstruction *prev, *next;
     /*! All destinations */
     SelectionReg dst[MAX_DST_NUM];
     /*! All sources */
@@ -465,6 +482,10 @@ namespace gbe
     uint8_t function:4;
     /*! elemSize for byte scatters / gathers, elemNum for untyped msg */
     uint8_t elem:4;
+    /*! Number of sources */
+    uint8_t srcNum:4;
+    /*! Number of destinations */
+    uint8_t dstNum:4;
     /*! To store various indices */
     uint16_t index;
   };
@@ -474,26 +495,29 @@ namespace gbe
    */
   struct SelectionVector
   {
-    INLINE SelectionVector(void) : insn(NULL), next(NULL), regNum(0) {}
+    INLINE SelectionVector(void) :
+      insn(NULL), next(NULL), reg(NULL), regNum(0), isSrc(0) {}
     /*! The instruction that requires the vector of registers */
     SelectionInstruction *insn;
     /*! We chain the selection vectors together */
     SelectionVector *next;
-    /*! Maximum number of registers we may have in a vector */
-    enum { MAX_VECTOR_REGISTER = 7 };
-    /*! The registers in the vector */
-    ir::Register reg[MAX_VECTOR_REGISTER];
+    /*! Directly points to the selection instruction registers */
+    SelectionReg *reg;
     /*! Number of registers in the vector */
-    uint16_t regNum:15;
+    uint16_t regNum;
     /*! Indicate if this a destination or a source vector */
-    uint16_t isSrc:1;
+    uint16_t isSrc;
   };
+
+  // Owns the selection tile
+  class Selection;
 
   /*! A selection tile is the result of a m-to-n IR instruction to selection
    *  instructions mapping (the role of the instruction selection pass).
    */
-  struct SelectionTile
+  class SelectionTile
   {
+  public:
     INLINE SelectionTile(void) :
       insnHead(NULL), insnTail(NULL), vector(NULL), next(NULL),
       outputNum(0), inputNum(0), tmpNum(0), irNum(0) {}
@@ -509,6 +533,8 @@ namespace gbe
     SelectionInstruction *insnHead, *insnTail;
     /*! The vectors that may be required by some instructions of the tile */
     SelectionVector *vector;
+    /*! Own the selection tile */
+    Selection *parent;
     /*! Registers output by the tile (i.e. produced values) */
     ir::Register out[MAX_OUT_REGISTER];
     /*! Registers required by the tile (i.e. input values) */
@@ -527,6 +553,16 @@ namespace gbe
     uint8_t tmpNum;
     /*! Number of ir instructions */
     uint8_t irNum;
+    /*! Apply the given functor on all the instructions */
+    template <typename T>
+    INLINE void foreach(const T &functor) const {
+      SelectionInstruction *curr = insnHead;
+      while (curr) {
+        SelectionInstruction *succ = curr->next;
+        functor(*curr);
+        curr = succ;
+      }
+    }
 
 #define DECL_APPEND_FN(TYPE, FN, WHICH, NUM, MAX) \
   INLINE void FN(TYPE reg) { \
@@ -541,11 +577,14 @@ namespace gbe
 
     /*! Append a new selection instruction in the tile */
     INLINE void append(SelectionInstruction *insn) {
-      if (this->insnTail != NULL)
+      if (this->insnTail != NULL) {
         this->insnTail->next = insn;
+        insn->prev = this->insnTail;
+      }
       if (this->insnHead == NULL)
         this->insnHead = insn;
       this->insnTail = insn;
+      insn->parent = this;
     }
     /*! Append a new selection vector in the tile */
     INLINE void append(SelectionVector *vec) {
@@ -559,16 +598,49 @@ namespace gbe
   class GenContext;
 
   /*! Selection engine produces the pre-ISA instruction tiles */
-  class SelectionEngine
+  class Selection
   {
   public:
     /*! simdWidth is the default width for the instructions */
-    SelectionEngine(GenContext &ctx);
+    Selection(GenContext &ctx);
     /*! Release everything */
-    virtual ~SelectionEngine(void);
-    /*! Implement the instruction selection itself */
+    virtual ~Selection(void);
+    /*! Implements the instruction selection itself */
     virtual void select(void) = 0;
-
+    /*! Apply the given functor on all selection tile */
+    template <typename T>
+    INLINE void foreach(const T &functor) const {
+      SelectionTile *curr = tileHead;
+      while (curr) {
+        SelectionTile *succ = curr->next;
+        functor(*curr);
+        curr = succ;
+      }
+    }
+    /*! Apply the given functor all the instructions */
+    template <typename T>
+    INLINE void foreachInstruction(const T &functor) const {
+      SelectionTile *curr = tileHead;
+      while (curr) {
+        SelectionTile *succ = curr->next;
+        curr->foreach(functor);
+        curr = succ;
+      }
+    }
+    /*! Number of register vectors in the selection */
+    INLINE uint32_t getVectorNum(void) const { return this->vectorNum; }
+    /*! Replace a source by the returned temporary register */
+    ir::Register replaceSrc(SelectionInstruction *insn, uint32_t regID);
+    /*! Replace a destination to the returned temporary register */
+    ir::Register replaceDst(SelectionInstruction *insn, uint32_t regID);
+    /*! Bool registers will use scalar words. So we will consider them as
+     *  scalars in Gen backend
+     */
+    bool isScalarOrBool(ir::Register reg) const;
+    /*! Get the data for the given register */
+    INLINE ir::RegisterData getRegisterData(ir::Register reg) const {
+      return file.get(reg);
+    }
   protected:
     /*! Size of the stack (should be large enough) */
     enum { MAX_STATE_NUM = 16 };
@@ -582,12 +654,6 @@ namespace gbe
       assert(stateNum > 0);
       curr = stack[--stateNum];
     }
-    /*! Append a tile at the tile stream tail. It becomes the current tile */
-    void appendTile(void);
-    /*! Append an instruction in the current tile */
-    SelectionInstruction *appendInsn(void);
-    /*! Append a new vector of registers in the current tile */
-    SelectionVector *appendVector(void);
     /*! Create a new register in the register file and append it in the
      *  temporary list of the current tile
      */
@@ -597,6 +663,12 @@ namespace gbe
       tile->appendTmp(reg);
       return reg;
     }
+    /*! Append a tile at the tile stream tail. It becomes the current tile */
+    void appendTile(void);
+    /*! Append an instruction in the current tile */
+    SelectionInstruction *appendInsn(void);
+    /*! Append a new vector of registers in the current tile */
+    SelectionVector *appendVector(void);
     /*! Return the selection register from the GenIR one */
     SelectionReg selReg(ir::Register, ir::Type type = ir::TYPE_FLOAT);
     /*! Compute the nth register part when using SIMD8 with Qn (n in 2,3,4) */
@@ -621,6 +693,8 @@ namespace gbe
     ir::RegisterFile file;
     /*! Number of states currently pushed */
     uint32_t stateNum;
+    /*! Number of vector allocated */
+    uint32_t vectorNum;
     /*! To make function prototypes more readable */
     typedef const SelectionReg &Reg;
 
@@ -678,7 +752,7 @@ namespace gbe
   };
 
   /*! This is a simple one-to-many instruction selection */
-  SelectionEngine *newSimpleSelectionEngine(GenContext &ctx);
+  Selection *newSimpleSelection(GenContext &ctx);
 
 } /* namespace gbe */
 
