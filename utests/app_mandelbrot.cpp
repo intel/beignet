@@ -20,8 +20,8 @@
 #include "utest_helper.hpp"
 
 static int *dst = NULL;
-static const size_t w = 1024;
-static const size_t h = 1024;
+static const size_t w = 64;
+static const size_t h = 64;
 static const size_t iter = 4;
 
 static void mandelbrot(void)
