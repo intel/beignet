@@ -694,16 +694,32 @@ namespace gbe
     });
   }
 
+  /*! XXX Make both structures the same! */
+  INLINE void setInstructionState(GenInstructionState &dst,
+                                  const SelectionState &src)
+  {
+    dst.execWidth = src.execWidth;
+    dst.quarterControl = src.quarterControl;
+    dst.noMask = src.noMask;
+    dst.flag = src.flag;
+    dst.subFlag = src.subFlag;
+    dst.predicate = src.predicate;
+    dst.inversePredicate = src.inversePredicate;
+  }
+
   void GenContext::emitInstructionStream2(void) {
     // Emit Gen ISA
     sel->foreachInstruction([&](const SelectionInstruction &insn) {
       const uint32_t opcode = insn.opcode;
+      p->push();
+      setInstructionState(p->curr, insn.state);
       switch (opcode) {
 #define DECL_SELECTION_IR(OPCODE, FAMILY) \
   case SEL_OP_##OPCODE: this->emit##FAMILY(insn); break;
 #include "backend/gen_insn_selection.hxx"
 #undef DECL_INSN
       }
+      p->pop();
     });
   }
 
@@ -729,42 +745,25 @@ namespace gbe
   }
 
   ///////////////////// XXX ///////////////////////
+
   void GenContext::emitLabelInstruction(const SelectionInstruction &insn) {
     const ir::LabelIndex label(insn.index);
     this->labelPos.insert(std::make_pair(label, p->insnNum));
   }
 
-  /*! XXX Make both structures the same! */
-  INLINE void setInstructionState(GenInstructionState &dst,
-                                  const SelectionState &src)
-  {
-    dst.execWidth = src.execWidth;
-    dst.quarterControl = src.quarterControl;
-    dst.noMask = src.noMask;
-    dst.flag = src.flag;
-    dst.subFlag = src.subFlag;
-    dst.predicate = src.predicate;
-    dst.inversePredicate = src.inversePredicate;
-  }
-
   void GenContext::emitUnaryInstruction(const SelectionInstruction &insn) {
     const GenReg dst = ra->genReg(insn.dst[0]);
     const GenReg src = ra->genReg(insn.src[0]);
-    p->push();
-    setInstructionState(p->curr, insn.state);
     switch (insn.opcode) {
       case SEL_OP_MOV: p->MOV(dst, src); break;
       default: NOT_IMPLEMENTED;
     }
-    p->pop();
   }
 
   void GenContext::emitBinaryInstruction(const SelectionInstruction &insn) { 
     const GenReg dst = ra->genReg(insn.dst[0]);
     const GenReg src0 = ra->genReg(insn.src[0]);
     const GenReg src1 = ra->genReg(insn.src[1]);
-    p->push();
-    setInstructionState(p->curr, insn.state);
     switch (insn.opcode) {
       case SEL_OP_AND:  p->AND(dst, src0, src1); break;
       case SEL_OP_OR:   p->OR(dst, src0, src1);  break;
@@ -779,7 +778,6 @@ namespace gbe
       case SEL_OP_MACH: p->MACH(dst, src0, src1); break;
       default: NOT_IMPLEMENTED;
     }
-    p->pop();
   }
 
   void GenContext::emitSelectInstruction(const SelectionInstruction &insn) {
@@ -801,20 +799,14 @@ namespace gbe
   void GenContext::emitCompareInstruction(const SelectionInstruction &insn) {
     const GenReg src0 = ra->genReg(insn.src[0]);
     const GenReg src1 = ra->genReg(insn.src[1]);
-    p->push();
-    setInstructionState(p->curr, insn.state);
     p->CMP(insn.function, src0, src1);
-    p->pop();
   }
 
   void GenContext::emitJumpInstruction(const SelectionInstruction &insn) {
     const ir::LabelIndex label(insn.index);
     const GenReg src = ra->genReg(insn.src[0]);
     this->branchPos2.push_back(std::make_pair(label, p->insnNum));
-    p->push();
-    setInstructionState(p->curr, insn.state);
     p->JMPI(src);
-    p->pop();
   }
 
   void GenContext::emitEotInstruction(const SelectionInstruction &insn) {
@@ -832,20 +824,14 @@ namespace gbe
     const GenReg src = ra->genReg(insn.src[0]);
     const uint32_t bti = insn.function;
     const uint32_t elemNum = insn.elem;
-    p->push();
-    setInstructionState(p->curr, insn.state);
     p->UNTYPED_READ(dst, src, bti, elemNum);
-    p->pop();
   }
 
   void GenContext::emitUntypedWriteInstruction(const SelectionInstruction &insn) {
     const GenReg src = ra->genReg(insn.src[0]);
     const uint32_t bti = insn.function;
     const uint32_t elemNum = insn.elem;
-    p->push();
-    setInstructionState(p->curr, insn.state);
     p->UNTYPED_WRITE(src, bti, elemNum);
-    p->pop();
   }
 
   void GenContext::emitByteGatherInstruction(const SelectionInstruction &insn) {
@@ -853,20 +839,14 @@ namespace gbe
     const GenReg src = ra->genReg(insn.src[0]);
     const uint32_t bti = insn.function;
     const uint32_t elemSize = insn.elem;
-    p->push();
-    setInstructionState(p->curr, insn.state);
     p->BYTE_GATHER(dst, src, bti, elemSize);
-    p->pop();
   }
 
   void GenContext::emitByteScatterInstruction(const SelectionInstruction &insn) {
     const GenReg src = ra->genReg(insn.src[0]);
     const uint32_t bti = insn.function;
     const uint32_t elemSize = insn.elem;
-    p->push();
-    setInstructionState(p->curr, insn.state);
     p->BYTE_SCATTER(src, bti, elemSize);
-    p->pop();
   }
 
   BVAR(OCL_OUTPUT_ASM, false);
