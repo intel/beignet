@@ -38,7 +38,8 @@ namespace gbe
   class GenEmitter;           // Helps emitting Gen ISA
   class GenRegAllocator;      // Handle the register allocation
   class Selection;            // Performs instruction selection
-  class SelectionInstruction; // Pre-RA GEN instruction
+  class SelectionInstruction; // Pre-RA Gen instruction
+  class SelectionReg;         // Pre-RA Gen register
 
   /*! Context is the helper structure to build the Gen ISA or simulation code
    *  from GenIR
@@ -62,8 +63,12 @@ namespace gbe
     void emitStackPointer(void);
     /*! Emit the instructions */
     void emitInstructionStream(void);
+    /*! Emit the instructions */
+    void emitInstructionStream2(void);
     /*! Set the correct target values for the branches */
     void patchBranches(void);
+    /*! Set the correct target values for the branches */
+    void patchBranches2(void);
     /*! Bool registers will use scalar words. So we will consider them as
      *  scalars in Gen backend
      */
@@ -72,8 +77,6 @@ namespace gbe
     INLINE bool isSpecialReg(ir::Register reg) const {
       return fn.isSpecialReg(reg);
     }
-    /*! Build the final physical register */
-    GenReg getGenReg(ir::Register reg, const SelectionReg &selReg) const;
 
     /*! Emit instruction per family */
     void emitUnaryInstruction(const ir::UnaryInstruction &insn);
@@ -121,12 +124,12 @@ namespace gbe
 
     /*! Implements base class */
     virtual Kernel *allocateKernel(void);
-    /*! Simplistic allocation to start with */
-    // map<ir::Register, GenReg> RA;
     /*! Store the position of each label instruction in the Gen ISA stream */
     map<ir::LabelIndex, uint32_t> labelPos;
     /*! Store the position of each branch instruction in the Gen ISA stream */
     map<const ir::Instruction*, uint32_t> branchPos;
+    /*! Store the Gen instructions to patch */
+    vector<std::pair<ir::LabelIndex, uint32_t>> branchPos2;
     /*! Encode Gen ISA */
     GenEmitter *p;
     /*! Instruction selection on Gen ISA (pre-register allocation) */

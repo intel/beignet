@@ -730,7 +730,7 @@ namespace gbe
     /*! Compare instructions */
     void CMP(uint32_t conditional, Reg src0, Reg src1);
     /*! EOT is used to finish GPGPU threads */
-    void EOT(Reg src);
+    void EOT(void);
     /*! No-op */
     void NOP(void);
     /*! Wait instruction (used for the barrier) */

@@ -351,6 +351,40 @@ namespace gbe
       grfOffset = this->createGenReg(reg, grfOffset);
   }
 
+  INLINE void setGenReg(GenReg &dst, const SelectionReg &src) {
+    dst.type = src.type;
+    dst.file = src.file;
+    dst.negation = src.negation;
+    dst.absolute = src.absolute;
+    dst.vstride = src.vstride;
+    dst.width = src.width;
+    dst.hstride = src.hstride;
+    dst.address_mode = GEN_ADDRESS_DIRECT;
+    dst.dw1.ud = src.immediate.ud;
+  }
+
+  GenReg GenRegAllocator::genReg(const SelectionReg &reg) {
+    // Right now, only GRF are allocated ...
+    if (reg.file == GEN_GENERAL_REGISTER_FILE) {
+      GBE_ASSERT(RA.contains(reg.reg) != false);
+      GenReg dst = RA.find(reg.reg)->second;
+      // XXX Fix that properly (ir::Type is *not* needed)
+      if (reg.quarter != 0)
+        dst = this->genRegQn(reg.reg, reg.quarter+1, ir::TYPE_S32);
+      else
+        setGenReg(dst, reg);
+      return dst;
+    }
+    // Other registers are already physical registers
+    else {
+      GenReg dst;
+      setGenReg(dst, reg);
+      dst.nr = reg.nr;
+      dst.subnr = reg.subnr;
+      return dst;
+    }
+  }
+
   GenReg GenRegAllocator::genReg(ir::Register reg, ir::Type type) {
     const uint32_t genType = getGenType(type);
     auto it = RA.find(reg);

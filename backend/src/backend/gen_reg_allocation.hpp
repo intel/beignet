@@ -31,7 +31,8 @@
 
 namespace gbe
 {
-  class Selection; // pre-register allocation code generation
+  class Selection;    // Pre-register allocation code generation
+  class SelectionReg; // Pre-register allocation Gen register
 
   /*! Provides the location of a register in a vector */
   typedef std::pair<SelectionVector*, uint32_t> VectorLocation;
@@ -43,6 +44,8 @@ namespace gbe
     GenRegAllocator(GenContext &ctx);
     /*! Perform the register allocation */
     void allocate(Selection &selection);
+    /*! Return the Gen register from the selection register */
+    GenReg genReg(const SelectionReg &reg);
     /*! Return the Gen register from the GenIR one */
     GenReg genReg(ir::Register, ir::Type type = ir::TYPE_FLOAT);
     /*! Compute the quarterth register part when using SIMD8 with Qn (n in 2,3,4) */

@@ -246,9 +246,8 @@ namespace gbe
     insn->dstNum = 0;
   }
 
-  void Selection::EOT(Reg src) {
+  void Selection::EOT(void) {
     SelectionInstruction *insn = this->appendInsn();
-    insn->src[0] = src;
     insn->opcode = SEL_OP_EOT;
     insn->state = this->curr;
     insn->srcNum = 1;
@@ -936,6 +935,7 @@ namespace gbe
         this->EOT(127);
       this->pop();
 #endif
+      this->EOT();
     } else if (opcode == OP_BRA) {
       const LabelIndex dst = insn.getLabelIndex();
       const LabelIndex src = insn.getParent()->getLabelIndex();
