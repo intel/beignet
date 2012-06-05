@@ -119,12 +119,12 @@ namespace gbe
     // Generate the MOV instruction and replace the register in the instruction
     SelectionInstruction *mov = this->newSelectionInstruction();
     mov->opcode = SEL_OP_MOV;
+    mov->src[0] = SelectionReg::retype(insn->src[regID], GEN_TYPE_F);
+    mov->state = SelectionState(simdWidth);
     if (simdWidth == 8)
       insn->src[regID] = mov->dst[0] = SelectionReg::f8grf(tmp);
     else
       insn->src[regID] = mov->dst[0] = SelectionReg::f16grf(tmp);
-    mov->src[0] = SelectionReg::retype(insn->src[regID], GEN_TYPE_F);
-    mov->state = SelectionState(simdWidth);
 
     // Insert the MOV instruction before the current instruction
     SelectionInstruction *prev = insn->prev;
@@ -133,6 +133,9 @@ namespace gbe
     if (prev) {
       mov->prev = prev;
       prev->next = mov;
+    } else {
+      GBE_ASSERT (insn == tile->insnHead);
+      tile->insnHead = mov;
     }
 
     return tmp;
@@ -150,12 +153,12 @@ namespace gbe
     // Generate the MOV instruction and replace the register in the instruction
     SelectionInstruction *mov = this->newSelectionInstruction();
     mov->opcode = SEL_OP_MOV;
+    mov->dst[0] = SelectionReg::retype(insn->dst[regID], GEN_TYPE_F);
+    mov->state = SelectionState(simdWidth);
     if (simdWidth == 8)
       insn->dst[regID] = mov->src[0] = SelectionReg::f8grf(tmp);
     else
       insn->dst[regID] = mov->src[0] = SelectionReg::f16grf(tmp);
-    mov->dst[0] = SelectionReg::retype(insn->src[regID], GEN_TYPE_F);
-    mov->state = SelectionState(simdWidth);
 
     // Insert the MOV instruction after the current instruction
     SelectionInstruction *next = insn->next;
@@ -680,8 +683,8 @@ namespace gbe
   }
 
   void SimpleSelection::emitByteScatter(const ir::StoreInstruction &insn,
-                                     SelectionReg addr,
-                                     SelectionReg value)
+                                        SelectionReg addr,
+                                        SelectionReg value)
   {
     using namespace ir;
     const Type type = insn.getValueType();
@@ -709,7 +712,7 @@ namespace gbe
     } else
       NOT_IMPLEMENTED;
 
-    this->BYTE_SCATTER(addr, value, 1, elemSize);
+    this->BYTE_SCATTER(addr, value, elemSize, 1);
   }
 
   void SimpleSelection::emitStoreInstruction(const ir::StoreInstruction &insn) {
@@ -912,7 +915,7 @@ namespace gbe
         unpacked = SelectionReg::retype(unpacked, type);
       } else {
         const uint32_t type = TYPE_U8 ? GEN_TYPE_UB : GEN_TYPE_B;
-        unpacked = SelectionReg::unpacked_uw(this->reg(FAMILY_DWORD));
+        unpacked = SelectionReg::unpacked_ub(this->reg(FAMILY_DWORD));
         unpacked = SelectionReg::retype(unpacked, type);
       }
       this->MOV(unpacked, src);

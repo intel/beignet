@@ -793,7 +793,11 @@ namespace gbe
   }
 
   void GenContext::emitMathInstruction(const SelectionInstruction &insn) {
-    NOT_IMPLEMENTED;
+    const GenReg dst = ra->genReg(insn.dst[0]);
+    const GenReg src0 = ra->genReg(insn.src[0]);
+    const GenReg src1 = ra->genReg(insn.src[1]);
+    const uint32_t function = insn.function;
+    p->MATH(dst, function, src0, src1);
   }
 
   void GenContext::emitCompareInstruction(const SelectionInstruction &insn) {
@@ -855,8 +859,13 @@ namespace gbe
     sel->select();
     ra->allocate(*this->sel);
     this->emitStackPointer();
+#if 0
     this->emitInstructionStream();
     this->patchBranches();
+#else
+    this->emitInstructionStream2();
+    this->patchBranches2();
+#endif
     genKernel->insnNum = p->insnNum;
     genKernel->insns = GBE_NEW_ARRAY(GenInstruction, genKernel->insnNum);
     std::memcpy(genKernel->insns, p->store, genKernel->insnNum * sizeof(GenInstruction));

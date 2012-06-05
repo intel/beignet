@@ -148,7 +148,7 @@ namespace gbe
     // If there are more left registers than in the found vector, there are
     // still registers to allocate
     const SelectionVector *other = it->second.first;
-    const uint32_t otherFirst = other->reg[0].reg;
+    const uint32_t otherFirst = it->second.second;
     const uint32_t leftNum = other->regNum - otherFirst;
     if (leftNum < vector->regNum)
       return false;
@@ -181,6 +181,7 @@ namespace gbe
       // case 2: the register is already in another vector, so we need to move
       // it to a temporary register
       else {
+#if 1
         ir::Register tmp;
         if (vector->isSrc)
           tmp = selection.replaceSrc(vector->insn, regID);
@@ -188,6 +189,7 @@ namespace gbe
           tmp = selection.replaceDst(vector->insn, regID);
         const VectorLocation location = std::make_pair(vector, regID);
         this->vectorMap.insert(std::make_pair(tmp, location));
+#endif
       }
     }
   }
@@ -368,11 +370,9 @@ namespace gbe
     if (reg.file == GEN_GENERAL_REGISTER_FILE) {
       GBE_ASSERT(RA.contains(reg.reg) != false);
       GenReg dst = RA.find(reg.reg)->second;
-      // XXX Fix that properly (ir::Type is *not* needed)
+      setGenReg(dst, reg);
       if (reg.quarter != 0)
-        dst = this->genRegQn(reg.reg, reg.quarter+1, ir::TYPE_S32);
-      else
-        setGenReg(dst, reg);
+        dst = GenReg::Qn(dst, reg.quarter+1);
       return dst;
     }
     // Other registers are already physical registers

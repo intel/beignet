@@ -54,6 +54,26 @@ namespace gbe
     uint32_t inversePredicate:1;
   };
 
+  /*! Type size in bytes for each Gen type */
+  INLINE int typeSize2(uint32_t type) {
+    switch(type) {
+      case GEN_TYPE_UD:
+      case GEN_TYPE_D:
+      case GEN_TYPE_F:
+        return 4;
+      case GEN_TYPE_HF:
+      case GEN_TYPE_UW:
+      case GEN_TYPE_W:
+        return 2;
+      case GEN_TYPE_UB:
+      case GEN_TYPE_B:
+        return 1;
+      default:
+        assert(0);
+        return 0;
+    }
+  }
+
   /*! This is a book-keeping structure that is not exactly a virtual register
    *  and not exactly a physical register. Basically, it is a Gen register
    *  *before* the register allocation i.e. it contains the info to get it
@@ -118,7 +138,7 @@ namespace gbe
       this->type = type;
       this->file = file;
       this->nr = nr;
-      this->subnr = subnr;
+      this->subnr = subnr * typeSize2(type);
       this->negation = 0;
       this->absolute = 0;
       this->vstride = vstride;
