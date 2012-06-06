@@ -167,6 +167,9 @@ namespace gbe
     if (next) {
       mov->next = next;
       next->prev = mov;
+    } else {
+      GBE_ASSERT (insn == tile->insnTail);
+      tile->insnTail = mov;
     }
 
     return tmp;
@@ -479,30 +482,30 @@ namespace gbe
     const uint32_t width = this->curr.execWidth;
     this->push();
 
-      // Either left part of the 16-wide register or just a simd 8 register
-      dst  = SelectionReg::retype(dst,  GEN_TYPE_D);
-      src0 = SelectionReg::retype(src0, GEN_TYPE_D);
-      src1 = SelectionReg::retype(src1, GEN_TYPE_D);
-      this->curr.execWidth = 8;
-      this->curr.quarterControl = GEN_COMPRESSION_Q1;
-      this->MUL(SelectionReg::retype(SelectionReg::acc(), GEN_TYPE_D), src0, src1);
-      this->MACH(SelectionReg::retype(SelectionReg::null(), GEN_TYPE_D), src0, src1);
-      this->MOV(SelectionReg::retype(dst, GEN_TYPE_F), SelectionReg::acc());
+    // Either left part of the 16-wide register or just a simd 8 register
+    dst  = SelectionReg::retype(dst,  GEN_TYPE_D);
+    src0 = SelectionReg::retype(src0, GEN_TYPE_D);
+    src1 = SelectionReg::retype(src1, GEN_TYPE_D);
+    this->curr.execWidth = 8;
+    this->curr.quarterControl = GEN_COMPRESSION_Q1;
+    this->MUL(SelectionReg::retype(SelectionReg::acc(), GEN_TYPE_D), src0, src1);
+    this->MACH(SelectionReg::retype(SelectionReg::null(), GEN_TYPE_D), src0, src1);
+    this->MOV(SelectionReg::retype(dst, GEN_TYPE_F), SelectionReg::acc());
 
-      // Right part of the 16-wide register now
-      if (width == 16) {
-        this->curr.noMask = 1;
-        const SelectionReg nextSrc0 = this->selRegQn(insn.getSrc(0), 1, TYPE_S32);
-        const SelectionReg nextSrc1 = this->selRegQn(insn.getSrc(1), 1, TYPE_S32);
-        this->MUL(SelectionReg::retype(SelectionReg::acc(), GEN_TYPE_D), nextSrc0, nextSrc1);
-        this->MACH(SelectionReg::retype(SelectionReg::null(), GEN_TYPE_D), nextSrc0, nextSrc1);
-        this->curr.quarterControl = GEN_COMPRESSION_Q2;
-        const ir::Register reg = this->reg(FAMILY_DWORD);
-        this->MOV(SelectionReg::f8grf(reg), SelectionReg::acc());
-        this->curr.noMask = 0;
-        this->MOV(SelectionReg::retype(SelectionReg::next(dst), GEN_TYPE_F),
-                  SelectionReg::f8grf(reg));
-      }
+    // Right part of the 16-wide register now
+    if (width == 16) {
+      this->curr.noMask = 1;
+      const SelectionReg nextSrc0 = this->selRegQn(insn.getSrc(0), 1, TYPE_S32);
+      const SelectionReg nextSrc1 = this->selRegQn(insn.getSrc(1), 1, TYPE_S32);
+      this->MUL(SelectionReg::retype(SelectionReg::acc(), GEN_TYPE_D), nextSrc0, nextSrc1);
+      this->MACH(SelectionReg::retype(SelectionReg::null(), GEN_TYPE_D), nextSrc0, nextSrc1);
+      this->curr.quarterControl = GEN_COMPRESSION_Q2;
+      const ir::Register reg = this->reg(FAMILY_DWORD);
+      this->MOV(SelectionReg::f8grf(reg), SelectionReg::acc());
+      this->curr.noMask = 0;
+      this->MOV(SelectionReg::retype(SelectionReg::next(dst), GEN_TYPE_F),
+                SelectionReg::f8grf(reg));
+    }
 
     this->pop();
   }
@@ -589,14 +592,10 @@ namespace gbe
     using namespace ir;
     const uint32_t valueNum = insn.getValueNum();
     const uint32_t simdWidth = ctx.getSimdWidth();
-    SelectionReg dst[valueNum], src;
+    SelectionReg dst[valueNum];
 
-    if (simdWidth == 8)
       for (uint32_t dstID = 0; dstID < valueNum; ++dstID)
-        dst[dstID] = SelectionReg::f8grf(insn.getValue(dstID));
-    else
-      for (uint32_t dstID = 0; dstID < valueNum; ++dstID)
-        dst[dstID] = SelectionReg::f16grf(insn.getValue(dstID));
+        dst[dstID] = SelectionReg::retype(this->selReg(insn.getValue(dstID)), GEN_TYPE_F);
     this->UNTYPED_READ(addr, dst, valueNum, 0);
   }
 
@@ -670,15 +669,9 @@ namespace gbe
     const uint32_t addrID = ir::StoreInstruction::addressIndex;
     SelectionReg addr, value[valueNum];
 
-    if (simdWidth == 8) {
-      addr = SelectionReg::f8grf(insn.getSrc(addrID));
-      for (uint32_t valueID = 0; valueID < valueNum; ++valueID)
-        value[valueID] = SelectionReg::f8grf(insn.getValue(valueID));
-    } else {
-      addr = SelectionReg::f16grf(insn.getSrc(addrID));
-      for (uint32_t valueID = 0; valueID < valueNum; ++valueID)
-        value[valueID] = SelectionReg::f16grf(insn.getValue(valueID));
-    }
+    addr = SelectionReg::retype(this->selReg(insn.getSrc(addrID)), GEN_TYPE_F);;
+    for (uint32_t valueID = 0; valueID < valueNum; ++valueID)
+      value[valueID] = SelectionReg::retype(this->selReg(insn.getValue(valueID)), GEN_TYPE_F);
     this->UNTYPED_WRITE(addr, value, valueNum, 0);
   }
 
