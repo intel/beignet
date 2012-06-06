@@ -46,6 +46,56 @@ namespace gbe
 {
   struct Kernel; // we build this structure
 
+  /*! Structure that keeps track of allocation in the register file. This is
+   *  actually needed by Context (and not only by GenContext) because both
+   *  simulator and hardware have to deal with constant pushing which uses the
+   *  register file
+   *
+   *  Since Gen is pretty flexible, we just maintain a free list for the
+   *  register file (as a classical allocator) and coalesce blocks when required
+   */
+  class RegisterFileAllocator
+  {
+  public:
+    RegisterFileAllocator(void);
+    ~RegisterFileAllocator(void);
+
+    /*! Allocate some memory in the register file. Return 0 if out-of-memory. By
+     *  the way, zero is not a valid offset since r0 is always preallocated by
+     *  the hardware. Note that we always use the left most block when
+     *  allocating, so it makes sense for constant pushing
+     */
+    int16_t allocate(int16_t size, int16_t alignment);
+
+    /*! Free the given register file piece */
+    void deallocate(int16_t offset, int16_t size);
+
+  private:
+    /*! May need to make that run-time in the future */
+    static const int16_t RegisterFileSize = 4*KB;
+
+    /*! Double chained list of free spaces */
+    struct FreeList {
+      FreeList(int16_t offset, int16_t size) :
+        prev(NULL), next(NULL), offset(offset), size(size) {}
+      FreeList *prev, *next; //!< Previous and next free blocks
+      int16_t offset;        //!< Where the free block starts
+      int16_t size;          //!< Size of the free block
+    };
+
+    /*! Try to coalesce two blocks (left and right). They must be in that order.
+     *  Returns the new collapsed block if collapsing was done or the right most
+     *  block (i.e. the second argument)
+     */
+    void coalesce(FreeList *left, FreeList *right);
+
+    /*! Head of the free list */
+    FreeList *head;
+
+    /*! Handle free list element allocation */
+    DECL_POOL(FreeList, listPool);
+  };
+
   /*! Context is the helper structure to build the Gen ISA or simulation code
    *  from GenIR
    */

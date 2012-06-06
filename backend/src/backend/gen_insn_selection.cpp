@@ -475,9 +475,9 @@ namespace gbe
   }
 
   void SimpleSelection::emitIntMul32x32(const ir::Instruction &insn,
-                                     SelectionReg dst,
-                                     SelectionReg src0,
-                                     SelectionReg src1)
+                                        SelectionReg dst,
+                                        SelectionReg src0,
+                                        SelectionReg src1)
   {
     using namespace ir;
     const uint32_t width = this->curr.execWidth;

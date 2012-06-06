@@ -34,6 +34,114 @@
 
 namespace gbe
 {
+  ///////////////////////////////////////////////////////////////////////////
+  // RegisterFileAllocator (handles insertion and deletion of registers)
+  ///////////////////////////////////////////////////////////////////////////
+  RegisterFileAllocator::RegisterFileAllocator(void) {
+    // r0 is always set by the HW
+    const int16_t offset = GEN_REG_SIZE;
+    const int16_t size = RegisterFileSize  - offset;
+    head = this->newFreeList(size, size);
+  }
+
+  RegisterFileAllocator::~RegisterFileAllocator(void) { 
+    while (this->head) {
+      FreeList *next = this->head->next;
+      this->deleteFreeList(this->head);
+      this->head = next;
+    }
+  }
+
+  int16_t RegisterFileAllocator::allocate(int16_t size, int16_t alignment)
+  {
+    // Make it simple and just use the first block we find
+    FreeList *list = head;
+    while (list) {
+      const int16_t aligned = ALIGN(list->offset, alignment);
+      const int16_t spaceOnLeft = aligned - list->offset;
+      const int16_t spaceOnRight = list->size - size - spaceOnLeft;
+
+      // Not enough space in this block
+      if (spaceOnRight < 0) {
+        list = list->next;
+        continue;
+      }
+      // Cool we can use this block
+      else {
+        FreeList *left = list->prev;
+        FreeList *right = list->next;
+
+        // If we left a hole on the left, create a new block
+        if (spaceOnLeft) {
+          FreeList *newBlock = this->newFreeList(list->offset, spaceOnLeft);
+          if (left) left->next = newBlock;
+          left = newBlock;
+        }
+
+        // If we left a hole on the right, create a new block as well
+        if (spaceOnRight) {
+          FreeList *newBlock = this->newFreeList(list->offset, spaceOnLeft);
+          if (left) left->next = newBlock;
+          newBlock->prev = left;
+          if (right) right->prev = newBlock;
+          newBlock->next = right;
+        }
+
+        // Remove the previous element
+        if (list == head) head = left;
+        this->deleteFreeList(list);
+
+        // We have a valid offset now
+        return aligned;
+      }
+    }
+    return 0;
+  }
+
+  void RegisterFileAllocator::deallocate(int16_t offset, int16_t size)
+  {
+    // Find the two blocks where to insert the new block
+    FreeList *list = head, *prev = NULL;
+    while (list != NULL) {
+      if (list->offset > offset)
+        break;
+      prev = list;
+      list = list->next;
+    }
+
+    // Create the block and insert it
+    FreeList *newBlock = this->newFreeList(offset, size);
+    if (prev) {
+      prev->next = newBlock;
+      newBlock->prev = prev;
+    }
+    if (list) {
+      list->prev = newBlock;
+      newBlock->next = list;
+    }
+
+    // Coalesce the blocks if possible
+    this->coalesce(prev, newBlock);
+    this->coalesce(newBlock, list);
+  }
+
+  void RegisterFileAllocator::coalesce(FreeList *left, FreeList *right) {
+    if (left == NULL || right == NULL) return; 
+    GBE_ASSERT(left->offset < right->offset);
+    GBE_ASSERT(left->next == right);
+    GBE_ASSERT(right->prev == left);
+    if (left->offset + left->size == right->offset) {
+      right->offset = left->offset;
+      right->size += left->size;
+      if (left->prev) left->prev->next = right;
+      right->prev = left->prev;
+      this->deleteFreeList(left);
+    }
+  }
+
+  ///////////////////////////////////////////////////////////////////////////
+  // Generic Context (shared by the simulator and the HW context)
+  ///////////////////////////////////////////////////////////////////////////
   IVAR(OCL_SIMD_WIDTH, 8, 16, 32);
 
   Context::Context(const ir::Unit &unit, const std::string &name) :
