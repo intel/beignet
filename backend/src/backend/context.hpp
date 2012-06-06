@@ -84,8 +84,7 @@ namespace gbe
     };
 
     /*! Try to coalesce two blocks (left and right). They must be in that order.
-     *  Returns the new collapsed block if collapsing was done or the right most
-     *  block (i.e. the second argument)
+     *  If the colascing was done, the left block is deleted
      */
     void coalesce(FreeList *left, FreeList *right);
 
