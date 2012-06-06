@@ -205,8 +205,8 @@ namespace gbe
 
     // First we find and store all vectors
     uint32_t vectorID = 0;
-    selection.foreach([&](SelectionTile &tile) {
-      SelectionVector *v = tile.vector;
+    selection.foreach([&](SelectionBlock &block) {
+      SelectionVector *v = block.vector;
       while (v) {
         GBE_ASSERT(vectorID < vectorNum);
         vectors[vectorID++] = v;

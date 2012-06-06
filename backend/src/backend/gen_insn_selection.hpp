@@ -473,7 +473,7 @@ namespace gbe
   };
 
   // Owns the selection instructions
-  class SelectionTile;
+  class SelectionBlock;
 
   /*! A selection instruction is also almost a Gen instruction but *before* the
    *  register allocation
@@ -487,8 +487,8 @@ namespace gbe
     /*! No more than 4 destinations (used by samples and untyped reads) */
     enum { MAX_DST_NUM = 4 };
     /*! Owns the instruction */
-    SelectionTile *parent;
-    /*! Instruction are chained in the tile */
+    SelectionBlock *parent;
+    /*! Instruction are chained in the block */
     SelectionInstruction *prev, *next;
     /*! All destinations */
     SelectionReg dst[MAX_DST_NUM];
@@ -529,50 +529,29 @@ namespace gbe
     uint16_t isSrc;
   };
 
-  // Owns the selection tile
+  // Owns the selection block
   class Selection;
 
-  /*! A selection tile is the result of a m-to-n IR instruction to selection
-   *  instructions mapping (the role of the instruction selection pass).
-   */
-  class SelectionTile
+  /*! A selection block is the counterpart of the ir::block */
+  class SelectionBlock
   {
   public:
-    INLINE SelectionTile(void) :
-      insnHead(NULL), insnTail(NULL), vector(NULL), next(NULL),
-      outputNum(0), inputNum(0), tmpNum(0), irNum(0) {}
-    /*! Maximum of output registers per tile */
-    enum { MAX_OUT_REGISTER = 8 };
-    /*! Minimum of input registers per tile */
-    enum { MAX_IN_REGISTER = 8 };
-    /*! Minimum of temporary registers per tile */
+    INLINE SelectionBlock(const ir::BasicBlock *bb) :
+      insnHead(NULL), insnTail(NULL), vector(NULL), next(NULL), bb(bb) {}
+    /*! Minimum of temporary registers per block */
     enum { MAX_TMP_REGISTER = 8 };
-    /*! Maximum number of instructions in the tile */
-    enum { MAX_IR_INSN = 8 };
-    /*! All the emitted instructions in the tile */
+    /*! All the emitted instructions in the block */
     SelectionInstruction *insnHead, *insnTail;
-    /*! The vectors that may be required by some instructions of the tile */
+    /*! The vectors that may be required by some instructions of the block */
     SelectionVector *vector;
-    /*! Own the selection tile */
+    /*! Own the selection block */
     Selection *parent;
-    /*! Registers output by the tile (i.e. produced values) */
-    ir::Register out[MAX_OUT_REGISTER];
-    /*! Registers required by the tile (i.e. input values) */
-    ir::Register in[MAX_IN_REGISTER];
-    /*! Extra registers needed by the tile (only live in the tile) */
-    ir::Register tmp[MAX_TMP_REGISTER];
-    /*! Instructions actually captured by the tile (used by RA) */
-    ir::Instruction *ir[MAX_IR_INSN];
-    /*! We chain the tiles together */
-    SelectionTile *next;
-    /*! Number of output registers */
-    uint8_t outputNum;
-    /*! Number of input registers */
-    uint8_t inputNum;
-    /*! Number of temporary registers */
-    uint8_t tmpNum;
-    /*! Number of ir instructions */
-    uint8_t irNum;
+    /*! Extra registers needed by the block (only live in the block) */
+    gbe::vector<ir::Register> tmp;
+    /*! We chain the blocks together */
+    SelectionBlock *next;
+    /*! Associated IR basic block */
+    const ir::BasicBlock *bb;
     /*! Apply the given functor on all the instructions */
     template <typename T>
     INLINE void foreach(const T &functor) const {
@@ -583,19 +562,9 @@ namespace gbe
         curr = succ;
       }
     }
-
-#define DECL_APPEND_FN(TYPE, FN, WHICH, NUM, MAX) \
-  INLINE void FN(TYPE reg) { \
-    GBE_ASSERT(NUM < MAX); \
-    WHICH[NUM++] = reg; \
-  }
-    DECL_APPEND_FN(ir::Register, appendInput, in, inputNum, MAX_IN_REGISTER)
-    DECL_APPEND_FN(ir::Register, appendOutput, out, outputNum, MAX_OUT_REGISTER)
-    DECL_APPEND_FN(ir::Register, appendTmp, tmp, tmpNum, MAX_TMP_REGISTER)
-    DECL_APPEND_FN(ir::Instruction*, append, ir, irNum, MAX_IR_INSN)
-#undef DECL_APPEND_FN
-
-    /*! Append a new selection instruction in the tile */
+    /*! Append a new temporary register */
+    INLINE void append(ir::Register reg) { tmp.push_back(reg); }
+    /*! Append a new selection instruction in the block */
     INLINE void append(SelectionInstruction *insn) {
       if (this->insnTail != NULL) {
         this->insnTail->next = insn;
@@ -606,7 +575,7 @@ namespace gbe
       this->insnTail = insn;
       insn->parent = this;
     }
-    /*! Append a new selection vector in the tile */
+    /*! Append a new selection vector in the block */
     INLINE void append(SelectionVector *vec) {
       SelectionVector *tmp = this->vector;
       this->vector = vec;
@@ -617,7 +586,7 @@ namespace gbe
   /*! Owns the selection engine */
   class GenContext;
 
-  /*! Selection engine produces the pre-ISA instruction tiles */
+  /*! Selection engine produces the pre-ISA instruction blocks */
   class Selection
   {
   public:
@@ -627,12 +596,12 @@ namespace gbe
     virtual ~Selection(void);
     /*! Implements the instruction selection itself */
     virtual void select(void) = 0;
-    /*! Apply the given functor on all selection tile */
+    /*! Apply the given functor on all selection block */
     template <typename T>
     INLINE void foreach(const T &functor) const {
-      SelectionTile *curr = tileHead;
+      SelectionBlock *curr = blockHead;
       while (curr) {
-        SelectionTile *succ = curr->next;
+        SelectionBlock *succ = curr->next;
         functor(*curr);
         curr = succ;
       }
@@ -640,9 +609,9 @@ namespace gbe
     /*! Apply the given functor all the instructions */
     template <typename T>
     INLINE void foreachInstruction(const T &functor) const {
-      SelectionTile *curr = tileHead;
+      SelectionBlock *curr = blockHead;
       while (curr) {
-        SelectionTile *succ = curr->next;
+        SelectionBlock *succ = curr->next;
         curr->foreach(functor);
         curr = succ;
       }
@@ -675,36 +644,36 @@ namespace gbe
       curr = stack[--stateNum];
     }
     /*! Create a new register in the register file and append it in the
-     *  temporary list of the current tile
+     *  temporary list of the current block
      */
     INLINE ir::Register reg(ir::RegisterFamily family) {
-      GBE_ASSERT(tile != NULL);
+      GBE_ASSERT(block != NULL);
       const ir::Register reg = file.append(family);
-      tile->appendTmp(reg);
+      block->append(reg);
       return reg;
     }
-    /*! Append a tile at the tile stream tail. It becomes the current tile */
-    void appendTile(void);
-    /*! Append an instruction in the current tile */
+    /*! Append a block at the block stream tail. It becomes the current block */
+    void appendBlock(const ir::BasicBlock &bb);
+    /*! Append an instruction in the current block */
     SelectionInstruction *appendInsn(void);
-    /*! Append a new vector of registers in the current tile */
+    /*! Append a new vector of registers in the current block */
     SelectionVector *appendVector(void);
     /*! Return the selection register from the GenIR one */
     SelectionReg selReg(ir::Register, ir::Type type = ir::TYPE_FLOAT);
     /*! Compute the nth register part when using SIMD8 with Qn (n in 2,3,4) */
     SelectionReg selRegQn(ir::Register, uint32_t quarter, ir::Type type = ir::TYPE_FLOAT);
-    /*! To handle selection tile allocation */
-    DECL_POOL(SelectionTile, tilePool);
+    /*! To handle selection block allocation */
+    DECL_POOL(SelectionBlock, blockPool);
     /*! To handle selection instruction allocation */
     DECL_POOL(SelectionInstruction, insnPool);
     /*! To handle selection vector allocation */
     DECL_POOL(SelectionVector, vecPool);
     /*! Owns this structure */
     GenContext &ctx;
-    /*! List of emitted tiles */
-    SelectionTile *tileHead, *tileTail;
-    /*! Currently processed tile */
-    SelectionTile *tile;
+    /*! List of emitted blocks */
+    SelectionBlock *blockHead, *blockTail;
+    /*! Currently processed block */
+    SelectionBlock *block;
     /*! Current instruction state to use */
     SelectionState curr;
     /*! State used to encode the instructions */

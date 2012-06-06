@@ -63,57 +63,56 @@ namespace gbe
   // Selection
   ///////////////////////////////////////////////////////////////////////////
   Selection::Selection(GenContext &ctx) :
-    ctx(ctx), tileHead(NULL), tileTail(NULL), tile(NULL),
+    ctx(ctx), blockHead(NULL), blockTail(NULL), block(NULL),
     curr(ctx.getSimdWidth()), file(ctx.getFunction().getRegisterFile()),
     stateNum(0), vectorNum(0) {}
 
   Selection::~Selection(void) {
-    if (this->tile) this->deleteSelectionTile(this->tile);
-    while (this->tileHead) {
-      SelectionTile *next = this->tileHead->next;
-      while (this->tileHead->vector) {
-        SelectionVector *next = this->tileHead->vector->next;
-        this->deleteSelectionVector(this->tileHead->vector);
-        this->tileHead->vector = next;
+    while (this->blockHead) {
+      SelectionBlock *next = this->blockHead->next;
+      while (this->blockHead->vector) {
+        SelectionVector *next = this->blockHead->vector->next;
+        this->deleteSelectionVector(this->blockHead->vector);
+        this->blockHead->vector = next;
       }
-      this->deleteSelectionTile(this->tileHead);
-      this->tileHead = next;
+      this->deleteSelectionBlock(this->blockHead);
+      this->blockHead = next;
     }
   }
 
-  void Selection::appendTile(void) {
-    this->tile = this->newSelectionTile();
-    this->tile->parent = this;
-    if (this->tileTail != NULL)
-      this->tileTail->next = this->tile;
-    if (this->tileHead == NULL)
-      this->tileHead = this->tile;
-    this->tileTail = this->tile;
+  void Selection::appendBlock(const ir::BasicBlock &bb) {
+    this->block = this->newSelectionBlock(&bb);
+    this->block->parent = this;
+    if (this->blockTail != NULL)
+      this->blockTail->next = this->block;
+    if (this->blockHead == NULL)
+      this->blockHead = this->block;
+    this->blockTail = this->block;
   }
 
   SelectionInstruction *Selection::appendInsn(void) {
-    GBE_ASSERT(this->tile != NULL);
+    GBE_ASSERT(this->block != NULL);
     SelectionInstruction *insn = this->newSelectionInstruction();
-    this->tile->append(insn);
+    this->block->append(insn);
     return insn;
   }
 
   SelectionVector *Selection::appendVector(void) {
-    GBE_ASSERT(this->tile != NULL && this->tile->insnTail != NULL);
+    GBE_ASSERT(this->block != NULL && this->block->insnTail != NULL);
     SelectionVector *vector = this->newSelectionVector();
-    vector->insn = this->tile->insnTail;
-    this->tile->append(vector);
+    vector->insn = this->block->insnTail;
+    this->block->append(vector);
     this->vectorNum++;
     return vector;
   }
 
   ir::Register Selection::replaceSrc(SelectionInstruction *insn, uint32_t regID) {
-    SelectionTile *tile = insn->parent;
+    SelectionBlock *block = insn->parent;
     const uint32_t simdWidth = ctx.getSimdWidth();
     ir::Register tmp;
 
-    // This will append the temporary register in the instruction tile
-    this->tile = tile;
+    // This will append the temporary register in the instruction block
+    this->block = block;
     tmp = this->reg(ir::FAMILY_DWORD);
 
     // Generate the MOV instruction and replace the register in the instruction
@@ -134,20 +133,20 @@ namespace gbe
       mov->prev = prev;
       prev->next = mov;
     } else {
-      GBE_ASSERT (insn == tile->insnHead);
-      tile->insnHead = mov;
+      GBE_ASSERT (insn == block->insnHead);
+      block->insnHead = mov;
     }
 
     return tmp;
   }
 
   ir::Register Selection::replaceDst(SelectionInstruction *insn, uint32_t regID) {
-    SelectionTile *tile = insn->parent;
+    SelectionBlock *block = insn->parent;
     const uint32_t simdWidth = ctx.getSimdWidth();
     ir::Register tmp;
 
-    // This will append the temporary register in the instruction tile
-    this->tile = tile;
+    // This will append the temporary register in the instruction block
+    this->block = block;
     tmp = this->reg(ir::FAMILY_DWORD);
 
     // Generate the MOV instruction and replace the register in the instruction
@@ -168,8 +167,8 @@ namespace gbe
       mov->next = next;
       next->prev = mov;
     } else {
-      GBE_ASSERT (insn == tile->insnTail);
-      tile->insnTail = mov;
+      GBE_ASSERT (insn == block->insnTail);
+      block->insnTail = mov;
     }
 
     return tmp;
@@ -456,15 +455,17 @@ namespace gbe
   void SimpleSelection::select(void) {
     using namespace ir;
     const Function &fn = ctx.getFunction();
-    fn.foreachInstruction([&](const Instruction &insn) {
-      const Opcode opcode = insn.getOpcode();
-      this->appendTile();
-      switch (opcode) {
+    fn.foreachBlock([&](const BasicBlock &bb) {
+      this->appendBlock(bb);
+      bb.foreach([&](const Instruction &insn) {
+        const Opcode opcode = insn.getOpcode();
+        switch (opcode) {
 #define DECL_INSN(OPCODE, FAMILY) \
-  case OP_##OPCODE: this->emit##FAMILY(cast<FAMILY>(insn)); break;
+    case OP_##OPCODE: this->emit##FAMILY(cast<FAMILY>(insn)); break;
 #include "ir/instruction.hxx"
 #undef DECL_INSN
-      }
+        }
+      });
     });
   }
 
@@ -591,7 +592,6 @@ namespace gbe
   {
     using namespace ir;
     const uint32_t valueNum = insn.getValueNum();
-    const uint32_t simdWidth = ctx.getSimdWidth();
     SelectionReg dst[valueNum];
 
       for (uint32_t dstID = 0; dstID < valueNum; ++dstID)
@@ -665,7 +665,6 @@ namespace gbe
   {
     using namespace ir;
     const uint32_t valueNum = insn.getValueNum();
-    const uint32_t simdWidth = ctx.getSimdWidth();
     const uint32_t addrID = ir::StoreInstruction::addressIndex;
     SelectionReg addr, value[valueNum];
 
