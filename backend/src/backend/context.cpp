@@ -74,21 +74,39 @@ namespace gbe
         // If we left a hole on the left, create a new block
         if (spaceOnLeft) {
           Block *newBlock = this->newBlock(list->offset, spaceOnLeft);
-          if (left) left->next = newBlock;
+          if (left) {
+            left->next = newBlock;
+            newBlock->prev = left;
+          }
+          if (right) {
+            newBlock->next = right;
+            right->prev = newBlock;
+          }
           left = newBlock;
         }
 
         // If we left a hole on the right, create a new block as well
         if (spaceOnRight) {
           Block *newBlock = this->newBlock(aligned + size, spaceOnRight);
-          if (left) left->next = newBlock;
-          newBlock->prev = left;
-          if (right) right->prev = newBlock;
-          newBlock->next = right;
+          if (left) {
+            left->next = newBlock;
+            newBlock->prev = left;
+          }
+          if (right) {
+            right->prev = newBlock;
+            newBlock->next = right;
+          }
           right = newBlock;
         }
 
-        // Remove the previous element
+        // Chain both successors and predecessors when the entire block was
+        // allocated
+        if (spaceOnLeft == 0 && spaceOnRight == 0) {
+          if (left) left->next = right;
+          if (right) right->prev = left;
+        }
+
+        // Update the head of the free blocks
         if (list == head) {
           if (left)
             head = left;
@@ -98,6 +116,7 @@ namespace gbe
             head = NULL;
         }
         this->deleteBlock(list);
+        if (head->next) GBE_ASSERT(head->next->prev == head);
 
         // We have a valid offset now
         return aligned;
@@ -120,10 +139,12 @@ namespace gbe
     // Create the block and insert it
     Block *newBlock = this->newBlock(offset, size);
     if (prev) {
+      GBE_ASSERT(prev->offset + prev->size <= offset);
       prev->next = newBlock;
       newBlock->prev = prev;
     }
     if (list) {
+      GBE_ASSERT(offset + size <= list->offset);
       list->prev = newBlock;
       newBlock->next = list;
     }

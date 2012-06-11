@@ -95,32 +95,29 @@ namespace gbe
 #define INSERT_REG(SIMD16, SIMD8, SIMD1) \
   if (ctx.sel->isScalarOrBool(reg) == true) { \
     RA.insert(std::make_pair(reg, GenReg::SIMD1(nr, subnr))); \
-    grfOffset += typeSize; \
   } else if (simdWidth == 16) { \
     RA.insert(std::make_pair(reg, GenReg::SIMD16(nr, subnr))); \
-    grfOffset += simdWidth * typeSize; \
   } else if (simdWidth == 8) {\
     RA.insert(std::make_pair(reg, GenReg::SIMD8(nr, subnr))); \
-    grfOffset += simdWidth * typeSize; \
   } else \
     NOT_SUPPORTED;
 
-  uint32_t GenRegAllocator::createGenReg(ir::Register reg, uint32_t grfOffset) {
+  void GenRegAllocator::createGenReg(ir::Register reg) {
     using namespace ir;
     const Function &fn = ctx.getFunction();
     const uint32_t simdWidth = ctx.getSimdWidth();
-    if (RA.contains(reg) == true) return grfOffset; // already allocated
-    if (fn.isSpecialReg(reg) == true) return grfOffset; // already done
-    if (fn.getArg(reg) != NULL) return grfOffset; // already done
-    if (fn.getPushLocation(reg) != NULL) return grfOffset; // already done
+    if (RA.contains(reg) == true) return; // already allocated
+    if (fn.isSpecialReg(reg) == true) return; // already done
+    if (fn.getArg(reg) != NULL) return; // already done
+    if (fn.getPushLocation(reg) != NULL) return; // already done
     GBE_ASSERT(ctx.isScalarReg(reg) == false);
     const bool isScalar = ctx.sel->isScalarOrBool(reg);
     const RegisterData regData = ctx.sel->getRegisterData(reg);
     const RegisterFamily family = regData.family;
     const uint32_t typeSize = isScalar ? familyScalarSize[family] : familyVectorSize[family];
     const uint32_t regSize = simdWidth*typeSize;
-    grfOffset = ALIGN(grfOffset, regSize);
-    if (grfOffset + regSize <= GEN_GRF_SIZE) {
+    const uint32_t grfOffset = ctx.allocate(regSize, regSize);
+    if (grfOffset != 0) {
       const uint32_t nr = grfOffset / GEN_REG_SIZE;
       const uint32_t subnr = (grfOffset % GEN_REG_SIZE) / typeSize;
       switch (family) {
@@ -131,8 +128,7 @@ namespace gbe
         default: NOT_SUPPORTED;
       }
     } else
-      NOT_SUPPORTED;
-    return grfOffset;
+      GBE_ASSERTM(false, "Unable to register allocate");
   }
 
 #undef INSERT_REG
@@ -179,9 +175,12 @@ namespace gbe
         this->vectorMap.insert(std::make_pair(reg, location));
       }
       // case 2: the register is already in another vector, so we need to move
-      // it to a temporary register
+      // it to a temporary register.
+      // TODO: we can do better than that if we analyze the liveness of the
+      // already allocated registers in the vector.  If there is no inteference
+      // and the order is maintained, we can reuse the previous vector and avoid
+      // the MOVs
       else {
-#if 1
         ir::Register tmp;
         if (vector->isSrc)
           tmp = selection.replaceSrc(vector->insn, regID);
@@ -189,7 +188,6 @@ namespace gbe
           tmp = selection.replaceDst(vector->insn, regID);
         const VectorLocation location = std::make_pair(vector, regID);
         this->vectorMap.insert(std::make_pair(tmp, location));
-#endif
       }
     }
   }
@@ -199,7 +197,7 @@ namespace gbe
     return v0->regNum > v1->regNum;
   }
 
-  uint32_t GenRegAllocator::allocateVector(Selection &selection) {
+  void GenRegAllocator::allocateVector(Selection &selection) {
     const uint32_t vectorNum = selection.getVectorNum();
     SelectionVector *vectors[vectorNum];
 
@@ -228,7 +226,6 @@ namespace gbe
     }
 
     // Allocate all the vector registers
-    uint32_t grfOffset = ctx.getKernel()->getCurbeSize() + GEN_REG_SIZE;
     for (vectorID = 0; vectorID < vectorNum; ++vectorID) {
       const SelectionVector *vector = vectors[vectorID];
       const ir::Register first = vector->reg[0].reg;
@@ -244,14 +241,25 @@ namespace gbe
         continue;
       }
 
-      // Allocate all the registers consecutively
-      for (uint32_t regID = 0; regID < vector->regNum; ++regID) {
+      // Allocate all the vector registers consecutively
+      const uint32_t simdWidth = ctx.getSimdWidth();
+      const uint32_t alignment = simdWidth * sizeof(uint32_t);
+      const uint32_t size = vector->regNum * alignment;
+      uint32_t grfOffset = ctx.allocate(size, alignment);
+      GBE_ASSERTM(grfOffset != 0, "Unable to register allocate");
+      for (uint32_t regID = 0; regID < vector->regNum; ++regID, grfOffset += alignment) {
         const ir::Register reg = vector->reg[regID].reg;
+        const uint32_t nr = grfOffset / GEN_REG_SIZE;
+        const uint32_t subnr = (grfOffset % GEN_REG_SIZE) / sizeof(uint32_t);
         GBE_ASSERT(RA.contains(reg) == false);
-        grfOffset = this->createGenReg(reg, grfOffset);
+        if (simdWidth == 16)
+          RA.insert(std::make_pair(reg, GenReg::f16grf(nr, subnr)));
+        else if (simdWidth == 8)
+          RA.insert(std::make_pair(reg, GenReg::f8grf(nr, subnr)));
+        else
+          NOT_SUPPORTED;
       }
     }
-    return grfOffset;
   }
 
   void GenRegAllocator::allocate(Selection &selection) {
@@ -314,19 +322,7 @@ namespace gbe
       const Register reg = pushed.second.getRegister();
       allocatePayloadReg(GBE_CURBE_KERNEL_ARGUMENT, reg, argID, subOffset);
     }
-#if 0
-    // First we build the set of all used registers
-    set<Register> usedRegs;
-    fn.foreachInstruction([&usedRegs](const Instruction &insn) {
-      const uint32_t srcNum = insn.getSrcNum(), dstNum = insn.getDstNum();
-      for (uint32_t srcID = 0; srcID < srcNum; ++srcID)
-        usedRegs.insert(insn.getSrc(srcID));
-      for (uint32_t dstID = 0; dstID < dstNum; ++dstID)
-        usedRegs.insert(insn.getDst(dstID));
-    });
 
-    this->allocateVector(selection);
-#else
     // First we build the set of all used registers
     set<Register> usedRegs;
     selection.foreachInstruction([&](const SelectionInstruction &insn) {
@@ -343,14 +339,20 @@ namespace gbe
       }
     });
 
-#endif
-
+#if OLD_ALLOCATOR
     // Allocate all the vectors first since they need to be contiguous
     uint32_t grfOffset = this->allocateVector(selection);
 
     // Allocate all used registers. Just crash when we run out-of-registers
     for (auto reg : usedRegs)
       grfOffset = this->createGenReg(reg, grfOffset);
+#else
+    // Allocate all the vectors first since they need to be contiguous
+    this->allocateVector(selection);
+
+    // Allocate all used registers. Just crash when we run out-of-registers
+    for (auto reg : usedRegs) this->createGenReg(reg);
+#endif
   }
 
   INLINE void setGenReg(GenReg &dst, const SelectionReg &src) {

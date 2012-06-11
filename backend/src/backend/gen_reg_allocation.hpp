@@ -34,6 +34,8 @@ namespace gbe
   class Selection;    // Pre-register allocation code generation
   class SelectionReg; // Pre-register allocation Gen register
 
+#define OLD_ALLOCATOR 0
+
   /*! Provides the location of a register in a vector */
   typedef std::pair<SelectionVector*, uint32_t> VectorLocation;
 
@@ -54,9 +56,9 @@ namespace gbe
     /*! Create a Gen register from a register set in the payload */
     void allocatePayloadReg(gbe_curbe_type, ir::Register, uint32_t subValue = 0, uint32_t subOffset = 0);
     /*! Allocate the vectors detected in the instruction selection pass */
-    uint32_t allocateVector(Selection &selection);
+    void allocateVector(Selection &selection);
     /*! Create a GenReg from a ir::Register */
-    uint32_t createGenReg(ir::Register, uint32_t grfOffset);
+    void createGenReg(ir::Register);
     /*! Indicate if the registers are already allocated in vectors */
     bool isAllocated(const SelectionVector *vector) const;
     /*! Reallocate registers if needed to make the registers in the vector

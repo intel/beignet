@@ -131,7 +131,14 @@ namespace gbe
     INLINE bool hasJIP(const ir::Instruction *insn) const {
       return JIPs.find(insn) != JIPs.end();
     }
-
+    /*! Allocate some memory in the register file */
+    INLINE int16_t allocate(int16_t size, int16_t alignment) {
+      return raFile.allocate(size, alignment);
+    }
+    /*! Deallocate previously allocated memory */
+    INLINE void deallocate(int16_t offset, int16_t size) {
+      raFile.deallocate(offset, size);
+    }
   protected:
     /*! Look if a stack is needed and allocate it */
     void buildStack(void);
