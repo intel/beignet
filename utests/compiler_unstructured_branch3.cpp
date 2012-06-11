@@ -39,9 +39,11 @@ static void compiler_unstructured_branch3(void)
   locals[0] = 16;
   OCL_NDRANGE(1);
 
+
   // First control flow
   OCL_MAP_BUFFER(0);
   OCL_MAP_BUFFER(1);
+
   for (uint32_t i = 0; i < n; ++i)
     OCL_ASSERT(((int32_t*)buf_data[1])[i] == 2);
 
@@ -56,6 +58,8 @@ static void compiler_unstructured_branch3(void)
     OCL_ASSERT(((uint32_t*)buf_data[1])[i] == 3);
 
   // Third control flow
+  OCL_MAP_BUFFER(0);
+  OCL_MAP_BUFFER(1);
   for (uint32_t i = 0; i < 8; ++i) ((int32_t*)buf_data[0])[i] = 2;
   for (uint32_t i = 8; i < n; ++i) ((int32_t*)buf_data[0])[i] = 0;
   OCL_UNMAP_BUFFER(0);

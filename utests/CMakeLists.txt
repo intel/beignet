@@ -7,8 +7,8 @@ ADD_LIBRARY(utests SHARED
             utest_file_map.cpp
             utest_assert.cpp
             utest.cpp
-# need register allocation
-#app_mandelbrot.cpp
+# need register allocation (in SIMD16)
+# app_mandelbrot.cpp
             compiler_write_only.cpp
             compiler_write_only_shorts.cpp
             compiler_write_only_bytes.cpp
@@ -29,14 +29,16 @@ ADD_LIBRARY(utests SHARED
             compiler_lower_return0.cpp
             compiler_lower_return1.cpp
             compiler_lower_return2.cpp
-# need register allocation
+# unsupported indirect load of kernel arguments
+# compiler_argument_structure_indirect.cpp
+
+# need register allocation (in SIMD16)
 #compiler_array.cpp
 #compiler_array0.cpp
             compiler_function_argument.cpp
             compiler_function_argument0.cpp
             compiler_function_argument1.cpp
             compiler_argument_structure.cpp)
-#compiler_argument_structure_indirect.cpp)
 TARGET_LINK_LIBRARIES(utests cl m)
 
 ADD_EXECUTABLE(run utest_run.cpp)

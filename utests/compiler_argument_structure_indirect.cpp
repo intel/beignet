@@ -46,4 +46,3 @@ void compiler_argument_structure_indirect(void)
 
 MAKE_UTEST_FROM_FUNCTION(compiler_argument_structure_indirect);
 
-
