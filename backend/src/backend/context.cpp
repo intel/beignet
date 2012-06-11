@@ -41,7 +41,7 @@ namespace gbe
     // r0 is always set by the HW and used at the end by EOT
     const int16_t offset = GEN_REG_SIZE;
     const int16_t size = RegisterFileSize  - offset;
-    head = this->newBlock(size, size);
+    head = this->newBlock(offset, size);
   }
 
   RegisterFileAllocator::~RegisterFileAllocator(void) { 
@@ -80,15 +80,23 @@ namespace gbe
 
         // If we left a hole on the right, create a new block as well
         if (spaceOnRight) {
-          Block *newBlock = this->newBlock(list->offset, spaceOnLeft);
+          Block *newBlock = this->newBlock(aligned + size, spaceOnRight);
           if (left) left->next = newBlock;
           newBlock->prev = left;
           if (right) right->prev = newBlock;
           newBlock->next = right;
+          right = newBlock;
         }
 
         // Remove the previous element
-        if (list == head) head = left;
+        if (list == head) {
+          if (left)
+            head = left;
+          else if (right)
+            head = right;
+          else
+            head = NULL;
+        }
         this->deleteBlock(list);
 
         // We have a valid offset now
@@ -178,10 +186,15 @@ namespace gbe
     this->kernel->stackSize = 1*KB; // XXX compute that in a better way
   }
 
-  void Context::newCurbeEntry(gbe_curbe_type value, uint32_t subValue, uint32_t size) {
-    const uint32_t offset = raFile.allocate(size, size);
+  void Context::newCurbeEntry(gbe_curbe_type value,
+                              uint32_t subValue,
+                              uint32_t size,
+                              uint32_t alignment)
+  {
+    alignment = alignment == 0 ? size : alignment;
+    const uint32_t offset = raFile.allocate(size, alignment);
     GBE_ASSERT(offset != 0);
-    kernel->patches.push_back(PatchInfo(value, subValue, offset));
+    kernel->patches.push_back(PatchInfo(value, subValue, offset - GEN_REG_SIZE));
     kernel->curbeSize = max(kernel->curbeSize, offset + size - GEN_REG_SIZE);
   }
 
@@ -190,8 +203,7 @@ namespace gbe
     kernel->curbeSize = 0u;
 
     // We insert the block IP mask first
-    kernel->patches.push_back(PatchInfo(GBE_CURBE_BLOCK_IP, 0, kernel->curbeSize));
-    kernel->curbeSize += this->simdWidth * sizeof(uint16_t);
+    this->newCurbeEntry(GBE_CURBE_BLOCK_IP, 0, this->simdWidth*sizeof(uint16_t));
 
     // Go over the arguments and find the related patch locations
     const uint32_t argNum = fn.argNum();
@@ -201,32 +213,17 @@ namespace gbe
       if (arg.type == ir::FunctionArgument::GLOBAL_POINTER ||
           arg.type == ir::FunctionArgument::CONSTANT_POINTER ||
           arg.type == ir::FunctionArgument::VALUE ||
-          arg.type == ir::FunctionArgument::STRUCTURE) {
-        kernel->curbeSize = ALIGN(kernel->curbeSize, ptrSize);
-        const PatchInfo patch(GBE_CURBE_KERNEL_ARGUMENT, argID, kernel->curbeSize);
-        kernel->patches.push_back(patch);
-        kernel->curbeSize += arg.size;
-      }
+          arg.type == ir::FunctionArgument::STRUCTURE)
+        this->newCurbeEntry(GBE_CURBE_KERNEL_ARGUMENT, argID, arg.size, ptrSize);
     }
 
     // Already inserted registers go here
     set<ir::Register> specialRegs;
 
-    // Then the local IDs (not scalar, so we align them properly)
-    kernel->curbeSize = ALIGN(kernel->curbeSize, GEN_REG_SIZE);
-    if (this->simdWidth == 16 || this->simdWidth == 32)
-      if ((kernel->curbeSize + GEN_REG_SIZE) % (2*GEN_REG_SIZE) != 0)
-        kernel->curbeSize += GEN_REG_SIZE;
     const size_t localIDSize = sizeof(uint32_t) * this->simdWidth;
-    const PatchInfo lid0(GBE_CURBE_LOCAL_ID_X, 0, kernel->curbeSize);
-    kernel->curbeSize += localIDSize;
-    const PatchInfo lid1(GBE_CURBE_LOCAL_ID_Y, 0, kernel->curbeSize);
-    kernel->curbeSize += localIDSize;
-    const PatchInfo lid2(GBE_CURBE_LOCAL_ID_Z, 0, kernel->curbeSize);
-    kernel->curbeSize += localIDSize;
-    kernel->patches.push_back(lid0);
-    kernel->patches.push_back(lid1);
-    kernel->patches.push_back(lid2);
+    this->newCurbeEntry(GBE_CURBE_LOCAL_ID_X, 0, localIDSize);
+    this->newCurbeEntry(GBE_CURBE_LOCAL_ID_Y, 0, localIDSize);
+    this->newCurbeEntry(GBE_CURBE_LOCAL_ID_Z, 0, localIDSize);
     specialRegs.insert(ir::ocl::lid0);
     specialRegs.insert(ir::ocl::lid1);
     specialRegs.insert(ir::ocl::lid2);
@@ -236,10 +233,7 @@ namespace gbe
 #define INSERT_REG(SPECIAL_REG, PATCH, WIDTH) \
   if (reg == ir::ocl::SPECIAL_REG) { \
     if (specialRegs.find(reg) != specialRegs.end()) continue; \
-    kernel->curbeSize = ALIGN(kernel->curbeSize, ptrSize * WIDTH); \
-    const PatchInfo patch(GBE_CURBE_##PATCH, 0, kernel->curbeSize); \
-    kernel->patches.push_back(patch); \
-    kernel->curbeSize += ptrSize * WIDTH; \
+    this->newCurbeEntry(GBE_CURBE_##PATCH, 0, ptrSize * WIDTH); \
   } else
     fn.foreachInstruction([&](const ir::Instruction &insn) {
       const uint32_t srcNum = insn.getSrcNum();
@@ -266,12 +260,8 @@ namespace gbe
 #undef INSERT_REG
 
     // Insert the stack buffer if used
-    if (kernel->getCurbeOffset(GBE_CURBE_STACK_POINTER, 0) >= 0) {
-      kernel->curbeSize = ALIGN(kernel->curbeSize, ptrSize);
-      const PatchInfo patch(GBE_CURBE_EXTRA_ARGUMENT, GBE_STACK_BUFFER, kernel->curbeSize);
-      kernel->patches.push_back(patch);
-      kernel->curbeSize += ptrSize;
-    }
+    if (kernel->getCurbeOffset(GBE_CURBE_STACK_POINTER, 0) >= 0)
+      this->newCurbeEntry(GBE_CURBE_EXTRA_ARGUMENT, GBE_STACK_BUFFER, ptrSize);
 
     // After this point the vector is immutable. Sorting it will make
     // research faster

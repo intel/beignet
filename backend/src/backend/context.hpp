@@ -152,7 +152,7 @@ namespace gbe
     /*! Insert a new entry with the given size in the Curbe. Return the offset
      *  of the entry
      */
-    void newCurbeEntry(gbe_curbe_type value, uint32_t subValue, uint32_t size);
+    void newCurbeEntry(gbe_curbe_type value, uint32_t subValue, uint32_t size, uint32_t alignment = 0);
     /*! Provide for each branch and label the label index target */
     typedef map<const ir::Instruction*, ir::LabelIndex> JIPMap;
     const ir::Unit &unit;           //!< Unit that contains the kernel
