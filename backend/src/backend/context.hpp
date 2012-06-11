@@ -29,6 +29,7 @@
 #include "sys/set.hpp"
 #include "sys/map.hpp"
 #include "ir/instruction.hpp"
+#include "backend/program.h"
 #include <string>
 
 namespace gbe {
@@ -75,10 +76,10 @@ namespace gbe
     static const int16_t RegisterFileSize = 4*KB;
 
     /*! Double chained list of free spaces */
-    struct FreeList {
-      FreeList(int16_t offset, int16_t size) :
+    struct Block {
+      Block(int16_t offset, int16_t size) :
         prev(NULL), next(NULL), offset(offset), size(size) {}
-      FreeList *prev, *next; //!< Previous and next free blocks
+      Block *prev, *next; //!< Previous and next free blocks
       int16_t offset;        //!< Where the free block starts
       int16_t size;          //!< Size of the free block
     };
@@ -86,13 +87,13 @@ namespace gbe
     /*! Try to coalesce two blocks (left and right). They must be in that order.
      *  If the colascing was done, the left block is deleted
      */
-    void coalesce(FreeList *left, FreeList *right);
+    void coalesce(Block *left, Block *right);
 
     /*! Head of the free list */
-    FreeList *head;
+    Block *head;
 
     /*! Handle free list element allocation */
-    DECL_POOL(FreeList, listPool);
+    DECL_POOL(Block, blockPool);
   };
 
   /*! Context is the helper structure to build the Gen ISA or simulation code
@@ -148,6 +149,10 @@ namespace gbe
     virtual void emitCode(void) = 0;
     /*! Allocate a new empty kernel */
     virtual Kernel *allocateKernel(void) = 0;
+    /*! Insert a new entry with the given size in the Curbe. Return the offset
+     *  of the entry
+     */
+    void newCurbeEntry(gbe_curbe_type value, uint32_t subValue, uint32_t size);
     /*! Provide for each branch and label the label index target */
     typedef map<const ir::Instruction*, ir::LabelIndex> JIPMap;
     const ir::Unit &unit;           //!< Unit that contains the kernel
@@ -158,6 +163,7 @@ namespace gbe
     ir::FunctionDAG *dag;           //!< Graph of values on the function
     set<ir::LabelIndex> usedLabels; //!< Set of all used labels
     JIPMap JIPs;                    //!< Where to jump all labels / branches
+    RegisterFileAllocator raFile;   //!< Handle register allocation / deallocation
     uint32_t simdWidth;             //!< Number of lanes per HW threads
   };
 

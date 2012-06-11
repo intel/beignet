@@ -38,16 +38,16 @@ namespace gbe
   // RegisterFileAllocator (handles insertion and deletion of registers)
   ///////////////////////////////////////////////////////////////////////////
   RegisterFileAllocator::RegisterFileAllocator(void) {
-    // r0 is always set by the HW
+    // r0 is always set by the HW and used at the end by EOT
     const int16_t offset = GEN_REG_SIZE;
     const int16_t size = RegisterFileSize  - offset;
-    head = this->newFreeList(size, size);
+    head = this->newBlock(size, size);
   }
 
   RegisterFileAllocator::~RegisterFileAllocator(void) { 
     while (this->head) {
-      FreeList *next = this->head->next;
-      this->deleteFreeList(this->head);
+      Block *next = this->head->next;
+      this->deleteBlock(this->head);
       this->head = next;
     }
   }
@@ -55,7 +55,7 @@ namespace gbe
   int16_t RegisterFileAllocator::allocate(int16_t size, int16_t alignment)
   {
     // Make it simple and just use the first block we find
-    FreeList *list = head;
+    Block *list = head;
     while (list) {
       const int16_t aligned = ALIGN(list->offset, alignment);
       const int16_t spaceOnLeft = aligned - list->offset;
@@ -68,19 +68,19 @@ namespace gbe
       }
       // Cool we can use this block
       else {
-        FreeList *left = list->prev;
-        FreeList *right = list->next;
+        Block *left = list->prev;
+        Block *right = list->next;
 
         // If we left a hole on the left, create a new block
         if (spaceOnLeft) {
-          FreeList *newBlock = this->newFreeList(list->offset, spaceOnLeft);
+          Block *newBlock = this->newBlock(list->offset, spaceOnLeft);
           if (left) left->next = newBlock;
           left = newBlock;
         }
 
         // If we left a hole on the right, create a new block as well
         if (spaceOnRight) {
-          FreeList *newBlock = this->newFreeList(list->offset, spaceOnLeft);
+          Block *newBlock = this->newBlock(list->offset, spaceOnLeft);
           if (left) left->next = newBlock;
           newBlock->prev = left;
           if (right) right->prev = newBlock;
@@ -89,7 +89,7 @@ namespace gbe
 
         // Remove the previous element
         if (list == head) head = left;
-        this->deleteFreeList(list);
+        this->deleteBlock(list);
 
         // We have a valid offset now
         return aligned;
@@ -101,7 +101,7 @@ namespace gbe
   void RegisterFileAllocator::deallocate(int16_t offset, int16_t size)
   {
     // Find the two blocks where to insert the new block
-    FreeList *list = head, *prev = NULL;
+    Block *list = head, *prev = NULL;
     while (list != NULL) {
       if (list->offset > offset)
         break;
@@ -110,7 +110,7 @@ namespace gbe
     }
 
     // Create the block and insert it
-    FreeList *newBlock = this->newFreeList(offset, size);
+    Block *newBlock = this->newBlock(offset, size);
     if (prev) {
       prev->next = newBlock;
       newBlock->prev = prev;
@@ -125,7 +125,7 @@ namespace gbe
     this->coalesce(newBlock, list);
   }
 
-  void RegisterFileAllocator::coalesce(FreeList *left, FreeList *right) {
+  void RegisterFileAllocator::coalesce(Block *left, Block *right) {
     if (left == NULL || right == NULL) return; 
     GBE_ASSERT(left->offset < right->offset);
     GBE_ASSERT(left->next == right);
@@ -135,7 +135,7 @@ namespace gbe
       right->size += left->size;
       if (left->prev) left->prev->next = right;
       right->prev = left->prev;
-      this->deleteFreeList(left);
+      this->deleteBlock(left);
     }
   }
 
@@ -176,6 +176,13 @@ namespace gbe
     // Be sure that the stack pointer is set
     GBE_ASSERT(this->kernel->getCurbeOffset(GBE_CURBE_STACK_POINTER, 0) >= 0);
     this->kernel->stackSize = 1*KB; // XXX compute that in a better way
+  }
+
+  void Context::newCurbeEntry(gbe_curbe_type value, uint32_t subValue, uint32_t size) {
+    const uint32_t offset = raFile.allocate(size, size);
+    GBE_ASSERT(offset != 0);
+    kernel->patches.push_back(PatchInfo(value, subValue, offset));
+    kernel->curbeSize = max(kernel->curbeSize, offset + size - GEN_REG_SIZE);
   }
 
   void Context::buildPatchList(void) {
