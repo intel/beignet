@@ -64,12 +64,8 @@ namespace gbe
     void emitStackPointer(void);
     /*! Emit the instructions */
     void emitInstructionStream(void);
-    /*! Emit the instructions */
-    void emitInstructionStream2(void);
     /*! Set the correct target values for the branches */
     void patchBranches(void);
-    /*! Set the correct target values for the branches */
-    void patchBranches2(void);
     /*! Bool registers will use scalar words. So we will consider them as
      *  scalars in Gen backend
      */
@@ -82,35 +78,8 @@ namespace gbe
     INLINE const ir::Liveness::LiveOut &getLiveOut(const ir::BasicBlock *bb) const {
       return this->liveness->getLiveOut(bb);
     }
-    /*! Emit instruction per family */
-    void emitUnaryInstruction(const ir::UnaryInstruction &insn);
-    void emitBinaryInstruction(const ir::BinaryInstruction &insn);
-    void emitTernaryInstruction(const ir::TernaryInstruction &insn);
-    void emitSelectInstruction(const ir::SelectInstruction &insn);
-    void emitCompareInstruction(const ir::CompareInstruction &insn);
-    void emitConvertInstruction(const ir::ConvertInstruction &insn);
-    void emitBranchInstruction(const ir::BranchInstruction &insn);
-    void emitLoadImmInstruction(const ir::LoadImmInstruction &insn);
-    void emitLoadInstruction(const ir::LoadInstruction &insn);
-    void emitStoreInstruction(const ir::StoreInstruction &insn);
-    void emitSampleInstruction(const ir::SampleInstruction &insn);
-    void emitTypedWriteInstruction(const ir::TypedWriteInstruction &insn);
-    void emitFenceInstruction(const ir::FenceInstruction &insn);
-    void emitLabelInstruction(const ir::LabelInstruction &insn);
-    /*! It is not natively suppored on Gen. We implement it here */
-    void emitIntMul32x32(const ir::Instruction &insn, GenReg dst, GenReg src0, GenReg src1);
-    /*! Use untyped writes and reads for everything aligned on 4 bytes */
-    void emitUntypedRead(const ir::LoadInstruction &insn, GenReg address);
-    void emitUntypedWrite(const ir::StoreInstruction &insn);
-    /*! Use byte scatters and gathers for everything not aligned on 4 bytes */
-    void emitByteGather(const ir::LoadInstruction &insn, GenReg address, GenReg value);
-    void emitByteScatter(const ir::StoreInstruction &insn, GenReg address, GenReg value);
-    /*! Backward and forward branches are handled slightly differently */
-    void emitForwardBranch(const ir::BranchInstruction&, ir::LabelIndex dst, ir::LabelIndex src);
-    void emitBackwardBranch(const ir::BranchInstruction&, ir::LabelIndex dst, ir::LabelIndex src);
 
-    ///////////////////// XXX ///////////////////////
-
+    /*! Finally Gen ISA emission helper functions */
     void emitLabelInstruction(const SelectionInstruction &insn);
     void emitUnaryInstruction(const SelectionInstruction &insn);
     void emitBinaryInstruction(const SelectionInstruction &insn);
