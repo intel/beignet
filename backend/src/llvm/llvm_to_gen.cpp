@@ -83,8 +83,7 @@ namespace gbe
 
     // raw_fd_ostream closes stdout. We must reopen it
     o = NULL;
-    int fd;
-    fd = open("/dev/tty", O_WRONLY);
+    const int fd = open("/dev/tty", O_WRONLY);
     stdout = fdopen(fd, "w");
 
     return true;
