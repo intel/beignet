@@ -234,6 +234,10 @@ do {                                                    \
 #define KB 1024
 #define MB (KB*KB)
 
+/* To help bitfield definitions */
+#define BITFIELD_BIT(X) 1
+#define BITFIELD_RANGE(X,Y) ((Y) - (X) + 1)
+
 /* 32 bits atomic variable */
 typedef volatile int atomic_t;
 

@@ -21,7 +21,6 @@
 #include "cl_device_id.h"
 #include "cl_internals.h"
 #include "cl_utils.h"
-#include "cl_defs.h"
 #include "cl_driver.h"
 #include "cl_device_data.h"
 #include "CL/cl.h"

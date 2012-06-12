@@ -20,7 +20,6 @@
 #ifndef __CL_KERNEL_H__
 #define __CL_KERNEL_H__
 
-#include "cl_defs.h"
 #include "cl_internals.h"
 #include "cl_driver.h"
 #include "gen/program.h"

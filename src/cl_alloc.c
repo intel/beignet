@@ -27,7 +27,7 @@
 static volatile int32_t cl_alloc_n = 0;
 
 LOCAL void*
-cl_malloc(size_t sz)  
+cl_malloc(size_t sz)
 {
   void * p = NULL;
   atomic_inc(&cl_alloc_n);

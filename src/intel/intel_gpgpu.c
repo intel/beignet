@@ -250,59 +250,6 @@ static const uint32_t gpgpu_l3_config_reg2[] =
   0x002444A0  //{ 128,  128,    32,     0,      128,    32,     64,     }
 };
 
-// L3 cache stuff 
-#define L3_CNTL_REG2_ADDRESS_OFFSET         (0xB020)
-#define L3_CNTL_REG3_ADDRESS_OFFSET         (0xB024)
-
-enum INSTRUCTION_PIPELINE
-{
-  PIPE_COMMON       = 0x0,
-  PIPE_SINGLE_DWORD = 0x1,
-  PIPE_COMMON_CTG   = 0x1,
-  PIPE_MEDIA        = 0x2,
-  PIPE_3D           = 0x3
-};
-
-enum GFX_OPCODE
-{
-  GFXOP_PIPELINED     = 0x0,
-  GFXOP_NONPIPELINED  = 0x1,
-  GFXOP_3DPRIMITIVE   = 0x3
-};
-
-enum INSTRUCTION_TYPE
-{
-  INSTRUCTION_MI      = 0x0,
-  INSTRUCTION_TRUSTED = 0x1,
-  INSTRUCTION_2D      = 0x2,
-  INSTRUCTION_GFX     = 0x3
-};
-
-enum GFX3DCONTROL_SUBOPCODE
-{
-  GFX3DSUBOP_3DCONTROL    = 0x00
-};
-
-enum GFX3D_OPCODE
-{
-  GFX3DOP_3DSTATE_PIPELINED       = 0x0,
-  GFX3DOP_3DSTATE_NONPIPELINED    = 0x1,
-  GFX3DOP_3DCONTROL               = 0x2,
-  GFX3DOP_3DPRIMITIVE             = 0x3
-};
-
-enum GFX3DSTATE_PIPELINED_SUBOPCODE
-{
-  GFX3DSUBOP_3DSTATE_PIPELINED_POINTERS       = 0x00,
-  GFX3DSUBOP_3DSTATE_BINDING_TABLE_POINTERS   = 0x01,
-  GFX3DSUBOP_3DSTATE_STATE_POINTER_INVALIDATE = 0x02,
-  GFX3DSUBOP_3DSTATE_VERTEX_BUFFERS           = 0x08,
-  GFX3DSUBOP_3DSTATE_VERTEX_ELEMENTS          = 0x09,
-  GFX3DSUBOP_3DSTATE_INDEX_BUFFER             = 0x0A,
-  GFX3DSUBOP_3DSTATE_VF_STATISTICS            = 0x0B,
-  GFX3DSUBOP_3DSTATE_CC_STATE_POINTERS        = 0x0E
-};
-
 static void
 intel_gpgpu_pipe_control(intel_gpgpu_t *gpgpu)
 {
@@ -311,10 +258,10 @@ intel_gpgpu_pipe_control(intel_gpgpu_t *gpgpu)
     intel_batchbuffer_alloc_space(gpgpu->batch, 0);
   memset(pc, 0, sizeof(*pc));
   pc->dw0.length = SIZEOF32(gen6_pipe_control_t) - 2;
-  pc->dw0.instruction_subopcode = GFX3DSUBOP_3DCONTROL;
-  pc->dw0.instruction_opcode = GFX3DOP_3DCONTROL;
-  pc->dw0.instruction_pipeline = PIPE_3D;
-  pc->dw0.instruction_type = INSTRUCTION_GFX;
+  pc->dw0.instruction_subopcode = GEN7_PIPE_CONTROL_SUBOPCODE_3D_CONTROL;
+  pc->dw0.instruction_opcode = GEN7_PIPE_CONTROL_OPCODE_3D_CONTROL;
+  pc->dw0.instruction_pipeline = GEN7_PIPE_CONTROL_3D;
+  pc->dw0.instruction_type = GEN7_PIPE_CONTROL_INSTRUCTION_GFX;
   pc->dw1.render_target_cache_flush_enable = 1;
   pc->dw1.cs_stall = 1;
   pc->dw1.dc_flush_enable = 1;
@@ -326,14 +273,14 @@ intel_gpgpu_set_L3(intel_gpgpu_t *gpgpu, uint32_t use_barrier)
 {
   BEGIN_BATCH(gpgpu->batch, 6);
   OUT_BATCH(gpgpu->batch, CMD_LOAD_REGISTER_IMM | 1); /* length - 2 */
-  OUT_BATCH(gpgpu->batch, L3_CNTL_REG2_ADDRESS_OFFSET);
+  OUT_BATCH(gpgpu->batch, GEN7_L3_CNTL_REG2_ADDRESS_OFFSET);
   if (use_barrier)
     OUT_BATCH(gpgpu->batch, gpgpu_l3_config_reg1[8]);
   else
     OUT_BATCH(gpgpu->batch, gpgpu_l3_config_reg1[4]);
 
   OUT_BATCH(gpgpu->batch, CMD_LOAD_REGISTER_IMM | 1); /* length - 2 */
-  OUT_BATCH(gpgpu->batch, L3_CNTL_REG3_ADDRESS_OFFSET);
+  OUT_BATCH(gpgpu->batch, GEN7_L3_CNTL_REG3_ADDRESS_OFFSET);
   if (use_barrier)
     OUT_BATCH(gpgpu->batch, gpgpu_l3_config_reg2[8]);
   else
@@ -490,8 +437,8 @@ intel_gpgpu_set_buf_reloc_gen7(intel_gpgpu_t *gpgpu, int32_t index, dri_bo* obj_
 }
 
 /* Map address space with two 2GB surfaces. One surface for untyped message and
- * one surface for byte scatters / gathers. Actually the HW will not require teo
- * surface but Fulsim complains
+ * one surface for byte scatters / gathers. Actually the HW does not require two
+ * surfaces but Fulsim complains
  */
 static void
 intel_gpgpu_map_address_space(intel_gpgpu_t *gpgpu)

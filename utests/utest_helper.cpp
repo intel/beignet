@@ -151,6 +151,7 @@ cl_kernel_init(const char *file_name, const char *kernel_name, int format)
     const char *src = cl_file_map_begin(fm);
     const size_t sz = cl_file_map_size(fm);
     program = clCreateProgramWithSource(ctx, 1, &src, &sz, &status);
+    cl_file_map_delete(fm);
   } else
     FATAL("Not able to create program from binary");
 

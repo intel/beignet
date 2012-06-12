@@ -88,10 +88,9 @@ struct _cl_device_id {
   size_t profile_sz;
   size_t opencl_c_version_sz;
   size_t extensions_sz;
- /* Kernel specific info that we're assigning statically */
+  /* Kernel specific info that we're assigning statically */
   size_t wg_sz;
   size_t compile_wg_sz[3];
-  uint32_t gfx_id; /* Used by shaders */
 };
 
 /* Get a device from the given platform */

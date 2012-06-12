@@ -273,13 +273,18 @@ getDRI2State(Display* dpy, int screen, char **driver_name)
         magic))
     goto err_out;
 
-  if(driver_name) *driver_name = internal_driver_name;
+  if(driver_name)
+    *driver_name = internal_driver_name;
+  else
+    Xfree(internal_driver_name);
 
   state = dri_state_new();
   state->fd = fd;
   state->x11_dpy = dpy;
   state->x11_screen = screen;
   state->driConnectedFlag = DRI2;
+  if (device_name)
+    Xfree(device_name);
   return state;
 
 err_out:

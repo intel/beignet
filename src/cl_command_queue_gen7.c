@@ -30,12 +30,7 @@
 #include <stdio.h>
 #include <string.h>
 
-static INLINE size_t
-cl_kernel_compute_batch_sz(cl_kernel k)
-{
-  size_t sz = 256 + 32;
-  return sz;
-}
+static INLINE size_t cl_kernel_compute_batch_sz(cl_kernel k) { return 256+32; }
 
 /* "Varing" payload is the part of the curbe that changes accross threads in the
  *  same work group. Right now, it consists in local IDs and block IPs
@@ -177,7 +172,7 @@ cl_command_queue_ND_range_gen7(cl_command_queue queue,
   cl_int err = CL_SUCCESS;
 
   /* Setup kernel */
-  kernel.name = "OCL kernel";
+  kernel.name = "KERNEL";
   kernel.grf_blocks = 128;
   kernel.bo = ker->bo;
   kernel.barrierID = 0;

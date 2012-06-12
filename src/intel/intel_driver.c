@@ -298,6 +298,7 @@ intel_get_device_id(void)
   intel_driver_open(driver);
   intel_device_id = driver->device_id;
   intel_driver_close(driver);
+  intel_driver_terminate(driver);
   intel_driver_delete(driver);
 
   return intel_device_id;

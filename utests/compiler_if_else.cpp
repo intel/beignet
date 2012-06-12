@@ -55,8 +55,8 @@ static void compiler_if_else(void)
   OCL_MAP_BUFFER(0);
   OCL_MAP_BUFFER(1);
   for (uint32_t i = 0; i < 16; ++i) {
-    OCL_ASSERT(((uint32_t*)buf_data[1])[i] == -2);
-    OCL_ASSERT(((uint32_t*)buf_data[0])[i] == 2);
+    OCL_ASSERT(((int32_t*)buf_data[1])[i] == -2);
+    OCL_ASSERT(((int32_t*)buf_data[0])[i] == 2);
   }
 
   // Third control flow

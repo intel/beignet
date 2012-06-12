@@ -259,5 +259,17 @@
 
 #define URB_SIZE(intel)         (IS_IGDNG(intel->device_id) ? 1024 : \
                                  IS_G4X(intel->device_id) ? 384 : 256)
+
+// L3 cache stuff 
+#define GEN7_L3_CNTL_REG2_ADDRESS_OFFSET         (0xB020)
+#define GEN7_L3_CNTL_REG3_ADDRESS_OFFSET         (0xB024)
+
+// To issue pipe controls (reset L3 / SLM or stall)
+#define GEN7_PIPE_CONTROL_MEDIA 0x2
+#define GEN7_PIPE_CONTROL_3D 0x3
+#define GEN7_PIPE_CONTROL_INSTRUCTION_GFX 0x3
+#define GEN7_PIPE_CONTROL_OPCODE_3D_CONTROL 0x2
+#define GEN7_PIPE_CONTROL_SUBOPCODE_3D_CONTROL 0x0
+
 #endif /* __GENX_DEFINES_H__ */
 
