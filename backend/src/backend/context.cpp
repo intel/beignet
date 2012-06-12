@@ -23,7 +23,7 @@
  */
 #include "backend/context.hpp"
 #include "backend/program.hpp"
-#include "backend/gen_eu.hpp"
+#include "backend/gen_encoder.hpp"
 #include "ir/unit.hpp"
 #include "ir/function.hpp"
 #include "ir/profile.hpp"

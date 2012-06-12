@@ -23,7 +23,7 @@
  * This is a revamped Gen ISA encoder from Mesa code base
  */
 
-#include "backend/gen_eu.hpp"
+#include "backend/gen_encoder.hpp"
 #include <cstring>
 
 namespace gbe

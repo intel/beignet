@@ -26,7 +26,7 @@
 #define __GBE_GEN_CONTEXT_HPP__
 
 #include "backend/context.hpp"
-#include "backend/gen_eu.hpp"
+#include "backend/gen_defs.hpp"
 #include "backend/program.h"
 #include "ir/function.hpp"
 #include "ir/liveness.hpp"

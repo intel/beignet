@@ -28,7 +28,7 @@
 #include "ir/register.hpp"
 #include "ir/instruction.hpp"
 #include "backend/gen_defs.hpp"
-#include "backend/gen_eu.hpp"
+#include "backend/gen_encoder.hpp"
 #include "backend/gen_context.hpp"
 #include "sys/vector.hpp"
 
