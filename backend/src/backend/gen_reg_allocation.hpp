@@ -29,8 +29,6 @@
 #include "backend/gen_context.hpp"
 #include "backend/program.h"
 
-#define LINEAR_SCAN 1
-
 namespace gbe
 {
   class Selection;       // Pre-register allocation code generation
@@ -65,13 +63,8 @@ namespace gbe
     /*! Create the intervals for each register */
     /*! Allocate the vectors detected in the instruction selection pass */
     void allocateVector(Selection &selection);
-#if LINEAR_SCAN
     /*! Create the given interval */
     void createGenReg(const GenRegInterval &interval);
-#else
-    /*! Create a GenReg from a ir::Register */
-    void createGenReg(ir::Register);
-#endif
     /*! Indicate if the registers are already allocated in vectors */
     bool isAllocated(const SelectionVector *vector) const;
     /*! Reallocate registers if needed to make the registers in the vector

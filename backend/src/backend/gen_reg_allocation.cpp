@@ -101,20 +101,13 @@ namespace gbe
         case FAMILY_DWORD: INSERT_REG(f16grf, f8grf, f1grf); break;
         default: NOT_SUPPORTED;
       }
-#if LINEAR_SCAN
       this->intervals[reg].minID = 0;
-#endif
     }
   }
 
-#if LINEAR_SCAN
   void GenRegAllocator::createGenReg(const GenRegInterval &interval) {
     using namespace ir;
     const ir::Register reg = interval.reg;
-#else
-  void GenRegAllocator::createGenReg(ir::Register reg) {
-    using namespace ir;
-#endif
     const uint32_t simdWidth = ctx.getSimdWidth();
     if (RA.contains(reg) == true) return; // already allocated
     GBE_ASSERT(ctx.isScalarReg(reg) == false);
@@ -123,15 +116,11 @@ namespace gbe
     const RegisterFamily family = regData.family;
     const uint32_t typeSize = isScalar ? familyScalarSize[family] : familyVectorSize[family];
     const uint32_t regSize = simdWidth*typeSize;
-#if LINEAR_SCAN
     uint32_t grfOffset;
     while ((grfOffset = ctx.allocate(regSize, regSize)) == 0) {
       const bool success = this->expire(interval);
       GBE_ASSERTM(success, "Register allocation failed");
     }
-#else
-    const uint32_t grfOffset = ctx.allocate(regSize, regSize);
-#endif
     if (grfOffset != 0) {
       const uint32_t nr = grfOffset / GEN_REG_SIZE;
       const uint32_t subnr = (grfOffset % GEN_REG_SIZE) / typeSize;
@@ -239,52 +228,12 @@ namespace gbe
         continue;
       this->coalesce(selection, vector);
     }
-
-#if LINEAR_SCAN == 0
-    // Allocate all the vector registers
-    for (vectorID = 0; vectorID < vectorNum; ++vectorID) {
-      const SelectionVector *vector = this->vectors[vectorID];
-      const ir::Register first = vector->reg[0].reg;
-
-      // Since there is no interference, if the first register is allocated,
-      // this means that this vector is a sub-vector of a previous one, and
-      // therefore all the registers are allocated
-      if (RA.contains(first) == true) {
-#if GBE_DEBUG
-        for (uint32_t regID = 1; regID < vector->regNum; ++regID)
-          GBE_ASSERT(RA.contains(vector->reg[regID].reg));
-#endif /* GBE_DEBUG */
-        continue;
-      }
-
-      //  Allocate all the vector registers consecutively
-      const uint32_t simdWidth = ctx.getSimdWidth();
-      const uint32_t alignment = simdWidth * sizeof(uint32_t);
-      const uint32_t size = vector->regNum * alignment;
-      uint32_t grfOffset = ctx.allocate(size, alignment);
-      GBE_ASSERTM(grfOffset != 0, "Unable to register allocate");
-      for (uint32_t regID = 0; regID < vector->regNum; ++regID, grfOffset += alignment) {
-        const ir::Register reg = vector->reg[regID].reg;
-        const uint32_t nr = grfOffset / GEN_REG_SIZE;
-        const uint32_t subnr = (grfOffset % GEN_REG_SIZE) / sizeof(uint32_t);
-        GBE_ASSERT(RA.contains(reg) == false);
-        if (simdWidth == 16)
-          RA.insert(std::make_pair(reg, GenReg::f16grf(nr, subnr)));
-        else if (simdWidth == 8)
-          RA.insert(std::make_pair(reg, GenReg::f8grf(nr, subnr)));
-        else
-          NOT_SUPPORTED;
-      }
-    }
-#endif
   }
 
-#if LINEAR_SCAN
   template <bool sortStartingPoint>
   INLINE bool cmp(const GenRegInterval *i0, const GenRegInterval *i1) {
     return sortStartingPoint ? i0->minID < i1->minID : i0->maxID < i1->maxID;
   }
-#endif
 
   bool GenRegAllocator::expire(const GenRegInterval &limit) {
     while (this->expiringID != ending.size()) {
@@ -333,14 +282,12 @@ namespace gbe
     const uint32_t simdWidth = ctx.getSimdWidth();
     GBE_ASSERT(fn.getProfile() == PROFILE_OCL);
 
-#if LINEAR_SCAN
     // Allocate all the vectors first since they need to be contiguous
     this->allocateVector(selection);
 
     // Now start the linear scan allocation
     for (uint32_t regID = 0; regID < ctx.sel->regNum(); ++regID)
       this->intervals.push_back(ir::Register(regID));
-#endif
 
     // Allocate the special registers (only those which are actually used)
     allocatePayloadReg(GBE_CURBE_LOCAL_ID_X, ocl::lid0);
@@ -375,9 +322,7 @@ namespace gbe
       RA.insert(std::make_pair(ocl::blockip, GenReg::uw16grf(blockIPOffset, 0)));
     else
       NOT_SUPPORTED;
-#if LINEAR_SCAN
     this->intervals[ocl::blockip].minID = 0;
-#endif
 
     // Allocate all (non-structure) argument parameters
     const uint32_t argNum = fn.argNum();
@@ -398,23 +343,8 @@ namespace gbe
       const Register reg = pushed.second.getRegister();
       allocatePayloadReg(GBE_CURBE_KERNEL_ARGUMENT, reg, argID, subOffset);
     }
-#if LINEAR_SCAN == 0
-    // First we build the set of all used registers
-    set<Register> usedRegs;
-    selection.foreachInstruction([&](const SelectionInstruction &insn) {
-      const uint32_t srcNum = insn.srcNum, dstNum = insn.dstNum;
-      for (uint32_t srcID = 0; srcID < srcNum; ++srcID) {
-        const SelectionReg reg = insn.src[srcID];
-        if (reg.file == GEN_GENERAL_REGISTER_FILE)
-          usedRegs.insert(reg.reg);
-      }
-      for (uint32_t dstID = 0; dstID < dstNum; ++dstID) {
-        const SelectionReg reg = insn.dst[dstID];
-        if (reg.file == GEN_GENERAL_REGISTER_FILE)
-          usedRegs.insert(reg.reg);
-      }
-    });
-#else
+
+    // Compute the intervals
     int32_t insnID = 0;
     selection.foreach([&](const SelectionBlock &block) {
       int32_t lastID = insnID;
@@ -457,14 +387,7 @@ namespace gbe
         this->intervals[reg].maxID = max(this->intervals[reg].maxID, lastID);
       }
     });
-#endif
 
-#if LINEAR_SCAN == 0
-    // Allocate all the vectors first since they need to be contiguous
-    this->allocateVector(selection);
-    // Allocate all used registers. Just crash when we run out-of-registers
-    for (auto reg : usedRegs) this->createGenReg(reg);
-#else
     // Extend the liveness of the registers that belong to vectors. Actually,
     // this is way too brutal, we should instead maintain a list of allocated
     // intervals to handle vector registers independently while doing the linear
@@ -545,8 +468,6 @@ namespace gbe
       else
         this->createGenReg(interval);
     }
-
-#endif
   }
 
   INLINE void setGenReg(GenReg &dst, const SelectionReg &src) {
