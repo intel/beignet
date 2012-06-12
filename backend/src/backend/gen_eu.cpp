@@ -424,8 +424,8 @@ namespace gbe
        p->setHeader(insnQ2);
        insnQ2->header.quarter_control = GEN_COMPRESSION_Q2;
        insnQ2->header.execution_size = GEN_WIDTH_8;
-       p->setDst(insnQ2, GenReg::Qn(dst, 2));
-       p->setSrc0(insnQ2, GenReg::Qn(src, 2));
+       p->setDst(insnQ2, GenReg::Qn(dst, 1));
+       p->setSrc0(insnQ2, GenReg::Qn(src, 1));
      }
   }
 
@@ -462,9 +462,9 @@ namespace gbe
        insnQ2->header.acc_wr_control = accWriteControl;
        insnQ2->header.quarter_control = GEN_COMPRESSION_Q2;
        insnQ2->header.execution_size = GEN_WIDTH_8;
-       p->setDst(insnQ2, GenReg::Qn(dst, 2));
-       p->setSrc0(insnQ2, GenReg::Qn(src0, 2));
-       p->setSrc1(insnQ2, GenReg::Qn(src1, 2));
+       p->setDst(insnQ2, GenReg::Qn(dst, 1));
+       p->setSrc0(insnQ2, GenReg::Qn(src0, 1));
+       p->setSrc1(insnQ2, GenReg::Qn(src1, 1));
     }
   }
 
@@ -683,8 +683,8 @@ namespace gbe
       insnQ2->header.execution_size = GEN_WIDTH_8;
       insnQ2->header.destreg_or_condmod = conditional;
       this->setDst(insnQ2, GenReg::null());
-      this->setSrc0(insnQ2, GenReg::Qn(src0, 2));
-      this->setSrc1(insnQ2, GenReg::Qn(src1, 2));
+      this->setSrc0(insnQ2, GenReg::Qn(src0, 1));
+      this->setSrc1(insnQ2, GenReg::Qn(src1, 1));
     }
   }
 

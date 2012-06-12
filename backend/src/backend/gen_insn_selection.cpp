@@ -18,7 +18,7 @@
  */
 
 /**
- * \file gen_selector.cpp
+ * \file gen_insn_selection.cpp
  * \author Benjamin Segovia <benjamin.segovia@intel.com>
  */
 
@@ -184,7 +184,6 @@ namespace gbe
       return family == ir::FAMILY_BOOL;
     }
   }
-
 
 #define SEL_REG(SIMD16, SIMD8, SIMD1) \
   if (ctx.isScalarOrBool(reg) == true) \

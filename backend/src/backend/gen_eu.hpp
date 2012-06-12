@@ -31,12 +31,7 @@
 #include <cassert>
 
 #define GEN_REG_SIZE (8*4)
-#define GEN_GRF_SIZE (GEN_REG_SIZE*112)
 #define GEN_EU_MAX_INSN_STACK 5
-
-#define VF_ZERO 0x0
-#define VF_ONE  0x30
-#define VF_NEG  (1<<7)
 
 namespace gbe
 {
@@ -112,7 +107,7 @@ namespace gbe
         const uint32_t typeSz = typeSize(reg.type);
         const uint32_t horizontal = stride(reg.hstride);
         const uint32_t grfOffset = reg.nr*GEN_REG_SIZE + typeSz*reg.subnr;
-        const uint32_t nextOffset = grfOffset + 8*(quarter-1)*typeSz*horizontal;
+        const uint32_t nextOffset = grfOffset + 8*quarter*typeSz*horizontal;
         reg.nr = nextOffset / GEN_REG_SIZE;
         reg.subnr = (nextOffset % GEN_REG_SIZE) / typeSz;
         return reg;
@@ -231,26 +226,6 @@ namespace gbe
       return suboffset(retype(vec1(file, nr, 0), GEN_TYPE_UB), subnr);
     }
 
-    static INLINE GenReg unpacked_uw(uint32_t nr, uint32_t subnr) {
-        return GenReg(GEN_GENERAL_REGISTER_FILE,
-                      nr,
-                      subnr,
-                      GEN_TYPE_UW,
-                      GEN_VERTICAL_STRIDE_16,
-                      GEN_WIDTH_8,
-                      GEN_HORIZONTAL_STRIDE_2);
-    }
-
-    static INLINE GenReg unpacked_ub(uint32_t nr, uint32_t subnr) {
-      return GenReg(GEN_GENERAL_REGISTER_FILE,
-                    nr,
-                    subnr,
-                    GEN_TYPE_UB,
-                    GEN_VERTICAL_STRIDE_32,
-                    GEN_WIDTH_8,
-                    GEN_HORIZONTAL_STRIDE_4);
-    }
-
     static INLINE GenReg imm(uint32_t type) {
       return GenReg(GEN_IMMEDIATE_VALUE,
                     0,
@@ -297,24 +272,6 @@ namespace gbe
       immediate.width = GEN_WIDTH_8;
       immediate.hstride = GEN_HORIZONTAL_STRIDE_1;
       immediate.dw1.ud = v;
-      return immediate;
-    }
-
-    static INLINE GenReg immvf(uint32_t v) {
-      GenReg immediate = imm(GEN_TYPE_VF);
-      immediate.vstride = GEN_VERTICAL_STRIDE_0;
-      immediate.width = GEN_WIDTH_4;
-      immediate.hstride = GEN_HORIZONTAL_STRIDE_1;
-      immediate.dw1.ud = v;
-      return immediate;
-    }
-
-    static INLINE GenReg immvf4(uint32_t v0, uint32_t v1, uint32_t v2, uint32_t v3) {
-      GenReg immediate = imm(GEN_TYPE_VF);
-      immediate.vstride = GEN_VERTICAL_STRIDE_0;
-      immediate.width = GEN_WIDTH_4;
-      immediate.hstride = GEN_HORIZONTAL_STRIDE_1;
-      immediate.dw1.ud = ((v0 << 0) | (v1 << 8) | (v2 << 16) | (v3 << 24));
       return immediate;
     }
 
@@ -384,7 +341,7 @@ namespace gbe
 
     static INLINE GenReg ip(void) {
       return GenReg(GEN_ARCHITECTURE_REGISTER_FILE, 
-                    GEN_ARF_IP, 
+                    GEN_ARF_IP,
                     0,
                     GEN_TYPE_D,
                     GEN_VERTICAL_STRIDE_4,

@@ -483,13 +483,13 @@ namespace gbe
   }
 
   GenReg GenRegAllocator::genReg(const SelectionReg &reg) {
-    // Right now, only GRF are allocated ...
+    // Right now, only GRF are allocated (TODO bool) ...
     if (reg.file == GEN_GENERAL_REGISTER_FILE) {
       GBE_ASSERT(RA.contains(reg.reg) != false);
       GenReg dst = RA.find(reg.reg)->second;
       setGenReg(dst, reg);
       if (reg.quarter != 0)
-        dst = GenReg::Qn(dst, reg.quarter+1);
+        dst = GenReg::Qn(dst, reg.quarter);
       return dst;
     }
     // Other registers are already physical registers
