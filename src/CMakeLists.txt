@@ -1,9 +1,9 @@
-INCLUDE_DIRECTORIES(${CMAKE_CURRENT_SOURCE_DIR}
+include_directories(${CMAKE_CURRENT_SOURCE_DIR}
                     ${DRM_INCLUDE_PATH}
                     ${GBE_INCLUDE_PATH}
                     ${CMAKE_CURRENT_SOURCE_DIR}/../include)
 
-SET(OPENCL_SRC
+set(OPENCL_SRC
     cl_api.c
     cl_alloc.c
     cl_kernel.c
@@ -31,8 +31,8 @@ SET(OPENCL_SRC
     x11/dricommon.c 
     x11/va_dri2.c)
 
-ADD_LIBRARY(cl SHARED ${OPENCL_SRC})
-TARGET_LINK_LIBRARIES(cl
+add_library(cl SHARED ${OPENCL_SRC})
+target_link_libraries(cl
                       ${GBE_LIBRARY}
                       ${DRM_LIBRARY}
                       ${DRM_INTEL_LIBRARY}
@@ -40,4 +40,5 @@ TARGET_LINK_LIBRARIES(cl
                       ${XEXT_LIBRARY}
                       ${XFIXES_LIBRARY}
                       ${DRM_LIBRARY})
+install (TARGETS cl LIBRARY DESTINATION lib)
 

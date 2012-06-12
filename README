@@ -1,4 +1,4 @@
-OpenCL runtime
+OpenCL Runtime
 ==============
 
 This code base contains the code to run OpenCL programs on Intel GPUs. This is
@@ -12,15 +12,30 @@ How to build
 ------------
 
 The project uses CMake with three profiles:
-  1/ Debug (-g)
-  2/ RelWithDebInfo (-g with optimizations)
-  3/ Release (only optimizations)
+
+1. Debug (-g)
+2. RelWithDebInfo (-g with optimizations)
+3. Release (only optimizations)
+
 Basically, from the root directory of the project
-> mkdir build
-> ccmake ../ # to configure
-> Choose whatever you want for the build
-> then press 'c' to configure and 'g' to generate the code
-> make
+
+`> mkdir build`
+
+`> ccmake ../` # to configure
+
+Choose whatever you want for the build.
+
+Then press 'c' to configure and 'g' to generate the code.
+
+`> make`
+
+The project depends on several external libraries:
+
+- Several X components (XLib, Xfixes, Xext)
+- libdrm libraries (libdrm and libdrm_intel)
+- The compiler backend itself (libgbe)
+
+CMake will check the dependencies and will complain if it does not find them.
 
 Once built, the run-time produces a shared object libcl.so which basically
 directly implements the OpenCL API. A set of tests are also produced. They may
@@ -33,11 +48,15 @@ Apart from the OpenCL library itself that can be used by any OpenCL application,
 this code also produces various tests to ensure the compiler and the run-time
 consistency. This small test framework uses a simple c++ registration system to
 register all the unit tests.
-Typically, in utests/
-> ./run
+Typically, in utests/:
+
+`> ./run`
+
 will run all the unit tests one after the others
-> ./run some_unit_test0 some_unit_test1
-will only run some_unit_test0 and some_unit_test1 tests
+
+`> ./run some_unit_test0 some_unit_test1`
+
+will only run `some_unit_test0` and `some_unit_test1` tests
 
 Limitations
 -----------
@@ -56,7 +75,7 @@ low-level parts of the code already supports it
 threads but it was never tested
 
 - No support for Enqueue*Buffer. I added a straightforward extension to map /
-unmap buffer. This extension "clIntelMapBuffer" directly maps dri_bo_map which
+unmap buffer. This extension `clIntelMapBuffer` directly maps dri_bo_map which
 is really convenient
 
 - No state tracking at all. One batch buffer is created at each "draw call"
@@ -79,13 +98,17 @@ properly
 DLLs into the directory where you run your code. The run-time will simply call
 AubLoad.exe to run Fulsim. You can get fulsim from our subversion server. We
 compile versions of it. They are all located in
-https://subversion.jf.intel.com/cag/gen/gpgpu/fulsim/
+[here](https://subversion.jf.intel.com/cag/gen/gpgpu/fulsim/)
 
 - Run-time phase. You need to fake the machine you want to simulate. Small
 scripts in the root directory of the project are responsible for doing that:
-  > source setup_fulsim_ivb.sh 1
+
+  `> source setup_fulsim_ivb.sh 1`
+
     will run fulsim in debug mode i.e. you will be able to step into the EU code
-  > source setup_fulsim_ivb.sh 0
+
+  `> source setup_fulsim_ivb.sh 0`
+
     will simply run fulsim
 
 - Modified libdrm. Unfortunately, to support fulsim, this run-time uses a
@@ -105,14 +128,15 @@ ICC) is directly called to generate a shared object.
 The run-time is actually able to run the simulation code directly. To enable it
 (and to also enable the c++ path in the compile code), a small script in the
 root directory has to be run:
-> source setup_perfim_ivb.sh
+
+`> source setup_perfim_ivb.sh`
 
 Doing that, the complete C++ simulation path is enabled.
 
 Modified libdrm
 ---------------
 
-Right now, e modified libdrm is required to run fulsim. It completely disables
+Right now, a modified libdrm is required to run fulsim. It completely disables
 the HW path (nothing will run on the HW at all) and allows to selectively dump
 any OpenCL buffer. Contact Ben Segovia to get the access to it.
 
