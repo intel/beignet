@@ -120,6 +120,7 @@ namespace gbe
     mov->opcode = SEL_OP_MOV;
     mov->src[0] = SelectionReg::retype(insn->src[regID], GEN_TYPE_F);
     mov->state = SelectionState(simdWidth);
+    mov->dstNum = mov->srcNum = 1;
     if (simdWidth == 8)
       insn->src[regID] = mov->dst[0] = SelectionReg::f8grf(tmp);
     else
@@ -154,6 +155,7 @@ namespace gbe
     mov->opcode = SEL_OP_MOV;
     mov->dst[0] = SelectionReg::retype(insn->dst[regID], GEN_TYPE_F);
     mov->state = SelectionState(simdWidth);
+    mov->dstNum = mov->srcNum = 1;
     if (simdWidth == 8)
       insn->dst[regID] = mov->src[0] = SelectionReg::f8grf(tmp);
     else

@@ -29,6 +29,8 @@
 #include "backend/gen_context.hpp"
 #include "backend/program.h"
 
+#define LINEAR_SCAN 1
+
 namespace gbe
 {
   class Selection;       // Pre-register allocation code generation
@@ -54,13 +56,22 @@ namespace gbe
     /*! Compute the quarterth register part when using SIMD8 with Qn (n in 2,3,4) */
     GenReg genRegQn(ir::Register, uint32_t quarter, ir::Type type = ir::TYPE_FLOAT);
   private:
+    /*! Expire one interval upto interval limit. Return true if one interval was
+     *  successfully expired
+     */
+    bool expire(const GenRegInterval &limit);
     /*! Create a Gen register from a register set in the payload */
     void allocatePayloadReg(gbe_curbe_type, ir::Register, uint32_t subValue = 0, uint32_t subOffset = 0);
     /*! Create the intervals for each register */
     /*! Allocate the vectors detected in the instruction selection pass */
     void allocateVector(Selection &selection);
+#if LINEAR_SCAN
+    /*! Create the given interval */
+    void createGenReg(const GenRegInterval &interval);
+#else
     /*! Create a GenReg from a ir::Register */
     void createGenReg(ir::Register);
+#endif
     /*! Indicate if the registers are already allocated in vectors */
     bool isAllocated(const SelectionVector *vector) const;
     /*! Reallocate registers if needed to make the registers in the vector
@@ -73,10 +84,18 @@ namespace gbe
     map<ir::Register, GenReg> RA;
     /*! Provides the position of each register in a vector */
     map<ir::Register, VectorLocation> vectorMap;
-    /*! All the register intervals */
-    vector<GenRegInterval> intervals;
     /*! All vectors used in the selection */
     vector<SelectionVector*> vectors;
+    /*! All vectors that are already expired */
+    set<SelectionVector*> expired;
+    /*! All the register intervals */
+    vector<GenRegInterval> intervals;
+    /*! Intervals sorting based on starting point positions */
+    vector<GenRegInterval*> starting;
+    /*! Intervals sorting based on ending point positions */
+    vector<GenRegInterval*> ending;
+    /*! Current vector to expire */
+    uint32_t expiringID;
   };
 
 } /* namespace gbe */

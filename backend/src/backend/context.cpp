@@ -118,7 +118,7 @@ namespace gbe
 
         // Free the block and check the consistency
         this->deleteBlock(list);
-        if (head->next) GBE_ASSERT(head->next->prev == head);
+        if (head && head->next) GBE_ASSERT(head->next->prev == head);
 
         // Track the allocation to retrieve the size later
         allocatedBlocks.insert(std::make_pair(aligned, size));
@@ -159,26 +159,31 @@ namespace gbe
       newBlock->next = list;
     }
 
-    // Coalesce the blocks if possible
-    this->coalesce(prev, newBlock);
-    this->coalesce(newBlock, list);
+    // There were no block anymore
+    if (prev == NULL && list == NULL)
+      this->head = newBlock;
+    else {
+      // Coalesce the blocks if possible
+      this->coalesce(prev, newBlock);
+      this->coalesce(newBlock, list);
+    }
 
     // Do not track this allocation anymore
     allocatedBlocks.erase(it);
   }
 
   void RegisterFileAllocator::coalesce(Block *left, Block *right) {
-    if (left == NULL || right == NULL) return; 
+    if (left == NULL || right == NULL) return;
     GBE_ASSERT(left->offset < right->offset);
     GBE_ASSERT(left->next == right);
     GBE_ASSERT(right->prev == left);
     if (left->offset + left->size == right->offset) {
       right->offset = left->offset;
       right->size += left->size;
-      if (left->prev) {
-        left->prev->next = right;
-        right->prev = left->prev;
-      }
+      if (left->prev) left->prev->next = right;
+      right->prev = left->prev;
+      if (left == this->head)
+        this->head = right;
       this->deleteBlock(left);
     }
   }
@@ -229,7 +234,7 @@ namespace gbe
   {
     alignment = alignment == 0 ? size : alignment;
     const uint32_t offset = raFile.allocate(size, alignment);
-    GBE_ASSERT(offset != 0);
+    GBE_ASSERT(offset >= GEN_REG_SIZE);
     kernel->patches.push_back(PatchInfo(value, subValue, offset - GEN_REG_SIZE));
     kernel->curbeSize = max(kernel->curbeSize, offset + size - GEN_REG_SIZE);
   }
