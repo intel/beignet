@@ -99,17 +99,18 @@ else (GBE_USE_BLOB)
     backend/gen_encoder.hpp
     backend/gen_encoder.cpp)
 
-  if (GBE_COMPILE_UTESTS)
-    set (GBE_SRC
-      ${GBE_SRC}
-      utest/utest_vector.cpp
-      utest/utest_llvm.cpp
-      utest/utest_test_utest.cpp
-      utest/utest_context.cpp
-      utest/utest.cpp
-      utest/utest.hpp)
-  endif (GBE_COMPILE_UTESTS)
 endif (GBE_USE_BLOB)
+
+if (GBE_COMPILE_UTESTS)
+  set (GBE_SRC
+       ${GBE_SRC}
+       utest/utest_vector.cpp
+       utest/utest_llvm.cpp
+       utest/utest_test_utest.cpp
+       utest/utest_context.cpp
+       utest/utest.cpp
+       utest/utest.hpp)
+endif (GBE_COMPILE_UTESTS)
 
 include_directories (.)
 link_directories (${LLVM_LIBRARY_DIRS})

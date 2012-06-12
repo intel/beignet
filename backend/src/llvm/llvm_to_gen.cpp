@@ -39,6 +39,7 @@
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <fcntl.h>
+#include <memory>
 
 namespace gbe
 {
@@ -52,7 +53,7 @@ namespace gbe
     // Get the global LLVM context
     llvm::LLVMContext& c = llvm::getGlobalContext();
     std::string errInfo;
-    auto *o = new llvm::raw_fd_ostream("-", errInfo);
+    std::unique_ptr<llvm::raw_fd_ostream> o(new llvm::raw_fd_ostream("-", errInfo));
 
     // Get the module from its file
     SMDiagnostic Err;
@@ -65,7 +66,7 @@ namespace gbe
 
     // Print the code before further optimizations
     if (OCL_OUTPUT_LLVM_BEFORE_EXTRA_PASS)
-      passes.add(createPrintModulePass(o));
+      passes.add(createPrintModulePass(&*o));
     passes.add(createScalarReplAggregatesPass()); // Break up allocas
     passes.add(createRemoveGEPPass(unit));
     passes.add(createConstantPropagationPass());
@@ -77,11 +78,11 @@ namespace gbe
 
     // Print the code extra optimization passes
     if (OCL_OUTPUT_LLVM)
-      passes.add(createPrintModulePass(o));
+      passes.add(createPrintModulePass(&*o));
     passes.run(mod);
 
     // raw_fd_ostream closes stdout. We must reopen it
-    delete o;
+    o = NULL;
     int fd;
     fd = open("/dev/tty", O_WRONLY);
     stdout = fdopen(fd, "w");

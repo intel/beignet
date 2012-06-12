@@ -32,7 +32,7 @@
 namespace gbe
 {
   class Selection;       // Pre-register allocation code generation
-  class SelectionReg;    // Pre-register allocation Gen register
+  struct SelectionReg;   // Pre-register allocation Gen register
   struct GenRegInterval; // Liveness interval for each register
 
   /*! Provides the location of a register in a vector */

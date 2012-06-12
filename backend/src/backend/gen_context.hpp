@@ -79,7 +79,7 @@ namespace gbe
       return this->liveness->getLiveOut(bb);
     }
 
-    /*! Finally Gen ISA emission helper functions */
+    /*! Final Gen ISA emission helper functions */
     void emitLabelInstruction(const SelectionInstruction &insn);
     void emitUnaryInstruction(const SelectionInstruction &insn);
     void emitBinaryInstruction(const SelectionInstruction &insn);

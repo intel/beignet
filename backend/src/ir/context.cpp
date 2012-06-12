@@ -66,8 +66,10 @@ namespace ir {
 
     // Check first that all branch instructions point to valid labels
     GBE_ASSERT(usedLabels);
+#if GBE_DEBUG
     for (auto usage : *usedLabels)
       GBE_ASSERTM(usage != LABEL_IS_POINTED, "A label is used and not defined");
+#endif /* GBE_DEBUG */
     GBE_DELETE(usedLabels);
 
     // Remove all returns and insert one unique return block at the end of the

@@ -35,6 +35,13 @@ else (WIN32)
   set (DEF "-D")
 endif (WIN32)
 
+# Force Release with debug info
+if (NOT CMAKE_BUILD_TYPE)
+  set (CMAKE_BUILD_TYPE RelWithDebInfo)
+endif (NOT CMAKE_BUILD_TYPE)
+set (CMAKE_BUILD_TYPE ${CMAKE_BUILD_TYPE} CACHE STRING "assure config" FORCE)
+message(STATUS "Building mode: " ${CMAKE_BUILD_TYPE})
+
 if (GBE_DEBUG_MEMORY)
   set (GBE_DEBUG_MEMORY_FLAG "${DEF}GBE_DEBUG_MEMORY=1")
 else (GBE_DEBUG_MEMORY)

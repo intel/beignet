@@ -37,22 +37,6 @@ namespace gbe
   static const size_t familyVectorSize[] = {2,2,2,4,8};
   static const size_t familyScalarSize[] = {2,1,2,4,8};
 
-  /*! IR-to-Gen type conversion */
-  INLINE uint32_t getGenType(ir::Type type) {
-    using namespace ir;
-    switch (type) {
-      case TYPE_BOOL: return GEN_TYPE_UW;
-      case TYPE_S8: return GEN_TYPE_B;
-      case TYPE_U8: return GEN_TYPE_UB;
-      case TYPE_S16: return GEN_TYPE_W;
-      case TYPE_U16: return GEN_TYPE_UW;
-      case TYPE_S32: return GEN_TYPE_D;
-      case TYPE_U32: return GEN_TYPE_UD;
-      case TYPE_FLOAT: return GEN_TYPE_F;
-      default: NOT_SUPPORTED; return GEN_TYPE_F;
-    }
-  }
-
   /*! Interval as used in linear scan allocator. Basically, stores the first and
    *  the last instruction where the register is alive
    */
@@ -118,7 +102,7 @@ namespace gbe
     const uint32_t regSize = simdWidth*typeSize;
     uint32_t grfOffset;
     while ((grfOffset = ctx.allocate(regSize, regSize)) == 0) {
-      const bool success = this->expire(interval);
+      IF_DEBUG(const bool success =) this->expire(interval);
       GBE_ASSERTM(success, "Register allocation failed");
     }
     if (grfOffset != 0) {
@@ -447,7 +431,7 @@ namespace gbe
         const uint32_t size = vector->regNum * alignment;
         uint32_t grfOffset;
         while ((grfOffset = ctx.allocate(size, alignment)) == 0) {
-          const bool success = this->expire(interval);
+          IF_DEBUG(const bool success =) this->expire(interval);
           GBE_ASSERTM(success, "Register allocation failed");
         }
         //GBE_ASSERTM(grfOffset != 0, "Unable to register allocate");

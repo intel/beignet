@@ -25,6 +25,7 @@
  * optimization from the compiler and decreases the binary size
  */
 
+#include "ocl_stdlib_str.cpp"
 #include "sys/assert.cpp"
 #include "sys/string.cpp"
 #include "sys/alloc.cpp"
@@ -32,6 +33,7 @@
 #include "sys/mutex.cpp"
 #include "sys/condition.cpp"
 #include "sys/platform.cpp"
+#include "sys/cvar.cpp"
 #include "ir/context.cpp"
 #include "ir/type.cpp"
 #include "ir/unit.cpp"
@@ -39,10 +41,19 @@
 #include "ir/instruction.cpp"
 #include "ir/register.cpp"
 #include "ir/function.cpp"
-
-#if GBE_COMPILE_UTESTS
-#include "utest/utest.cpp"
-#include "utest/utest_test_utest.cpp"
-#include "utest/utest_context.cpp"
-#endif /* GBE_COMPILE_UTESTS */
+#include "ir/liveness.cpp"
+#include "ir/value.cpp"
+#include "ir/lowering.cpp"
+#include "ir/profile.cpp"
+#include "backend/context.cpp"
+#include "backend/program.cpp"
+#include "backend/sim_context.cpp"
+#include "backend/sim_program.cpp"
+#include "backend/sim/simulator_str.cpp"
+#include "backend/sim/sim_vector_str.cpp"
+#include "backend/gen_insn_selection.cpp"
+#include "backend/gen_reg_allocation.cpp"
+#include "backend/gen_context.cpp"
+#include "backend/gen_program.cpp"
+#include "backend/gen_encoder.cpp"
 

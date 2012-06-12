@@ -448,8 +448,10 @@ namespace gbe
       GBE_ASSERTM(false, "Unsupported constant expression");
 
     if (ConstantVector *CV = dyn_cast<ConstantVector>(CPV)) {
+#if GBE_DEBUG
       const uint32_t elemNum = CV->getNumOperands();
       GBE_ASSERTM(index < elemNum, "Out-of-bound constant vector access");
+#endif /* GBE_DEBUG */
       CPV = cast<Constant>(CV->getOperand(index));
     }
 
@@ -659,11 +661,11 @@ namespace gbe
 
     // When returning a structure, first input register is the pointer to the
     // structure
+#if GBE_DEBUG
     const Type *type = F.getReturnType();
     GBE_ASSERTM(type->isVoidTy() == true,
                 "Returned value for kernel functions is forbidden");
 
-#if GBE_DEBUG
     // Variable number of arguments is not supported
     FunctionType *FT = cast<FunctionType>(F.getFunctionType());
     GBE_ASSERT(FT->isVarArg() == false);
@@ -901,9 +903,11 @@ namespace gbe
       {
         Constant *CPV = dyn_cast<Constant>(srcValue);
         if (CPV == NULL) {
+#if GBE_DEBUG
           Type *dstType = dstValue->getType();
           Type *srcType = srcValue->getType();
           GBE_ASSERT(getTypeByteSize(unit, dstType) == getTypeByteSize(unit, srcType));
+#endif /* GBE_DEBUG */
           regTranslator.newValueProxy(srcValue, dstValue);
         } else
           this->newRegister(dstValue);
@@ -1072,10 +1076,12 @@ namespace gbe
                 "Invalid index type for InsertElement");
 
     // Crash on overrun
+    const uint32_t extractedID = x.data.u32;
+#if GBE_DEBUG
     VectorType *vectorType = cast<VectorType>(extracted->getType());
     const uint32_t elemNum = vectorType->getNumElements();
-    const uint32_t extractedID = x.data.u32;
     GBE_ASSERTM(extractedID < elemNum, "Out-of-bound index for InsertElement");
+#endif /* GBE_DEBUG */
 
     // Easy when the vector is not immediate
     regTranslator.newValueProxy(extracted, &I, extractedID, 0);

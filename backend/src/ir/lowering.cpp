@@ -359,6 +359,7 @@ namespace ir {
   }
 
   void FunctionArgumentLowerer::lower(uint32_t argID) {
+#if GBE_DEBUG
     const ArgUse argUse = this->getArgUse(argID);
     GBE_ASSERTM(argUse != ARG_WRITTEN,
                 "TODO A store to a structure argument "
@@ -367,6 +368,7 @@ namespace ir {
     GBE_ASSERTM(argUse != ARG_INDIRECT_READ,
                 "TODO Only direct loads of structure arguments are "
                 "supported now");
+#endif /* GBE_DEBUG */
   }
 
   void lowerFunctionArguments(Unit &unit, const std::string &functionName) {

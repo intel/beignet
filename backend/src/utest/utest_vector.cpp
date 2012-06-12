@@ -35,7 +35,7 @@ static INLINE bool ok(uint16_t x, uint16_t y) { return x == y; }
     TYPE tmp[32];\
     STORE(DST, (char*) tmp);\
     for (uint32_t i = 0; i < elemNum(DST); ++i) {\
-      const TYPE verification = ELEM0 OP ELEM1;\
+      IF_DEBUG(const TYPE verification = ELEM0 OP ELEM1);\
       GBE_ASSERT(ok(verification, tmp[i]));\
     }\
   } while (0);

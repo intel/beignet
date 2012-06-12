@@ -35,23 +35,6 @@
 namespace gbe
 {
   ///////////////////////////////////////////////////////////////////////////
-  // Various helper functions
-  ///////////////////////////////////////////////////////////////////////////
-
-  INLINE uint32_t getGenCompare(ir::Opcode opcode) {
-    using namespace ir;
-    switch (opcode) {
-      case OP_LE: return GEN_CONDITIONAL_LE;
-      case OP_LT: return GEN_CONDITIONAL_L;
-      case OP_GE: return GEN_CONDITIONAL_GE;
-      case OP_GT: return GEN_CONDITIONAL_G;
-      case OP_EQ: return GEN_CONDITIONAL_EQ;
-      case OP_NE: return GEN_CONDITIONAL_NEQ;
-      default: NOT_SUPPORTED; return 0u;
-    };
-  }
-
-  ///////////////////////////////////////////////////////////////////////////
   // GenContext implementation
   ///////////////////////////////////////////////////////////////////////////
   GenContext::GenContext(const ir::Unit &unit, const std::string &name) :
