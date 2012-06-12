@@ -31,10 +31,9 @@
 
 namespace gbe
 {
-  class Selection;    // Pre-register allocation code generation
-  class SelectionReg; // Pre-register allocation Gen register
-
-#define OLD_ALLOCATOR 0
+  class Selection;       // Pre-register allocation code generation
+  class SelectionReg;    // Pre-register allocation Gen register
+  struct GenRegInterval; // Liveness interval for each register
 
   /*! Provides the location of a register in a vector */
   typedef std::pair<SelectionVector*, uint32_t> VectorLocation;
@@ -44,6 +43,8 @@ namespace gbe
   public:
     /*! Initialize the register allocator */
     GenRegAllocator(GenContext &ctx);
+    /*! Release all taken resources */
+    ~GenRegAllocator(void);
     /*! Perform the register allocation */
     void allocate(Selection &selection);
     /*! Return the Gen register from the selection register */
@@ -55,6 +56,7 @@ namespace gbe
   private:
     /*! Create a Gen register from a register set in the payload */
     void allocatePayloadReg(gbe_curbe_type, ir::Register, uint32_t subValue = 0, uint32_t subOffset = 0);
+    /*! Create the intervals for each register */
     /*! Allocate the vectors detected in the instruction selection pass */
     void allocateVector(Selection &selection);
     /*! Create a GenReg from a ir::Register */
@@ -71,6 +73,10 @@ namespace gbe
     map<ir::Register, GenReg> RA;
     /*! Provides the position of each register in a vector */
     map<ir::Register, VectorLocation> vectorMap;
+    /*! All the register intervals */
+    vector<GenRegInterval> intervals;
+    /*! All vectors used in the selection */
+    vector<SelectionVector*> vectors;
   };
 
 } /* namespace gbe */

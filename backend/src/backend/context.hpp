@@ -69,7 +69,7 @@ namespace gbe
     int16_t allocate(int16_t size, int16_t alignment);
 
     /*! Free the given register file piece */
-    void deallocate(int16_t offset, int16_t size);
+    void deallocate(int16_t offset);
 
   private:
     /*! May need to make that run-time in the future */
@@ -88,12 +88,12 @@ namespace gbe
      *  If the colascing was done, the left block is deleted
      */
     void coalesce(Block *left, Block *right);
-
     /*! Head of the free list */
     Block *head;
-
     /*! Handle free list element allocation */
     DECL_POOL(Block, blockPool);
+    /*! Track allocated memory blocks <offset, size> */
+    map<int16_t, int16_t> allocatedBlocks;
   };
 
   /*! Context is the helper structure to build the Gen ISA or simulation code
@@ -136,9 +136,7 @@ namespace gbe
       return raFile.allocate(size, alignment);
     }
     /*! Deallocate previously allocated memory */
-    INLINE void deallocate(int16_t offset, int16_t size) {
-      raFile.deallocate(offset, size);
-    }
+    INLINE void deallocate(int16_t offset) { raFile.deallocate(offset); }
   protected:
     /*! Look if a stack is needed and allocate it */
     void buildStack(void);

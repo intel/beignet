@@ -630,6 +630,8 @@ namespace gbe
     INLINE ir::RegisterData getRegisterData(ir::Register reg) const {
       return file.get(reg);
     }
+    /*! Registers in the register file */
+    INLINE uint32_t regNum(void) const { return file.regNum(); }
   protected:
     /*! Size of the stack (should be large enough) */
     enum { MAX_STATE_NUM = 16 };

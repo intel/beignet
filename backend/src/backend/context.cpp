@@ -115,8 +115,13 @@ namespace gbe
           else
             head = NULL;
         }
+
+        // Free the block and check the consistency
         this->deleteBlock(list);
         if (head->next) GBE_ASSERT(head->next->prev == head);
+
+        // Track the allocation to retrieve the size later
+        allocatedBlocks.insert(std::make_pair(aligned, size));
 
         // We have a valid offset now
         return aligned;
@@ -125,8 +130,13 @@ namespace gbe
     return 0;
   }
 
-  void RegisterFileAllocator::deallocate(int16_t offset, int16_t size)
+  void RegisterFileAllocator::deallocate(int16_t offset)
   {
+    // Retrieve the size in the allocation map
+    auto it = allocatedBlocks.find(offset);
+    GBE_ASSERT(it != allocatedBlocks.end());
+    const int16_t size = it->second;
+
     // Find the two blocks where to insert the new block
     Block *list = head, *prev = NULL;
     while (list != NULL) {
@@ -152,6 +162,9 @@ namespace gbe
     // Coalesce the blocks if possible
     this->coalesce(prev, newBlock);
     this->coalesce(newBlock, list);
+
+    // Do not track this allocation anymore
+    allocatedBlocks.erase(it);
   }
 
   void RegisterFileAllocator::coalesce(Block *left, Block *right) {
@@ -162,8 +175,10 @@ namespace gbe
     if (left->offset + left->size == right->offset) {
       right->offset = left->offset;
       right->size += left->size;
-      if (left->prev) left->prev->next = right;
-      right->prev = left->prev;
+      if (left->prev) {
+        left->prev->next = right;
+        right->prev = left->prev;
+      }
       this->deleteBlock(left);
     }
   }

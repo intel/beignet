@@ -82,6 +82,11 @@ namespace ir {
       GBE_ASSERT(it != liveness.end() && it->second != NULL);
       return *it->second;
     }
+    /*! Get the set of registers alive at the end of the block */
+    const LiveOut &getLiveOut(const BasicBlock *bb) const {
+      const BlockInfo &info = this->getBlockInfo(bb);
+      return info.liveOut;
+    }
     /*! Return the function the liveness was computed on */
     INLINE const Function &getFunction(void) const { return fn; }
     /*! Actually do something for each successor / predecessor of *all* blocks */

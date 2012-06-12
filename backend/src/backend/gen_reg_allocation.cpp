@@ -28,6 +28,7 @@
 #include "backend/gen_reg_allocation.hpp"
 #include "backend/program.hpp"
 #include <algorithm>
+#include <climits>
 
 namespace gbe
 {
@@ -52,15 +53,30 @@ namespace gbe
     }
   }
 
+#define LINEAR_SCAN 1
+
+  /*! Interval as used in linear scan allocator. Basically, stores the first and
+   *  the last instruction where the register is alive
+   */
+  struct GenRegInterval {
+    INLINE GenRegInterval(ir::Register reg) :
+      reg(reg), minID(INT_MAX), maxID(-INT_MAX) {}
+    ir::Register reg;     //!< (virtual) register of the interval
+    int32_t minID, maxID; //!< Starting and ending points
+  };
+
   GenRegAllocator::GenRegAllocator(GenContext &ctx) : ctx(ctx) {}
+  GenRegAllocator::~GenRegAllocator(void) {}
 
 #define INSERT_REG(SIMD16, SIMD8, SIMD1) \
-  if (ctx.isScalarOrBool(reg) == true) \
+  if (ctx.sel->isScalarOrBool(reg) == true) \
     RA.insert(std::make_pair(reg, GenReg::SIMD1(nr, subnr))); \
   else if (simdWidth == 8) \
     RA.insert(std::make_pair(reg, GenReg::SIMD8(nr, subnr))); \
   else if (simdWidth == 16) \
-    RA.insert(std::make_pair(reg, GenReg::SIMD16(nr, subnr)));
+    RA.insert(std::make_pair(reg, GenReg::SIMD16(nr, subnr))); \
+  else \
+    NOT_SUPPORTED;
 
   void GenRegAllocator::allocatePayloadReg(gbe_curbe_type value,
                                            ir::Register reg,
@@ -87,29 +103,16 @@ namespace gbe
         case FAMILY_DWORD: INSERT_REG(f16grf, f8grf, f1grf); break;
         default: NOT_SUPPORTED;
       }
+#if LINEAR_SCAN
+      this->intervals[reg].minID = 0;
+#endif
     }
   }
 
-#undef INSERT_REG
-
-#define INSERT_REG(SIMD16, SIMD8, SIMD1) \
-  if (ctx.sel->isScalarOrBool(reg) == true) { \
-    RA.insert(std::make_pair(reg, GenReg::SIMD1(nr, subnr))); \
-  } else if (simdWidth == 16) { \
-    RA.insert(std::make_pair(reg, GenReg::SIMD16(nr, subnr))); \
-  } else if (simdWidth == 8) {\
-    RA.insert(std::make_pair(reg, GenReg::SIMD8(nr, subnr))); \
-  } else \
-    NOT_SUPPORTED;
-
   void GenRegAllocator::createGenReg(ir::Register reg) {
     using namespace ir;
-    const Function &fn = ctx.getFunction();
     const uint32_t simdWidth = ctx.getSimdWidth();
     if (RA.contains(reg) == true) return; // already allocated
-    if (fn.isSpecialReg(reg) == true) return; // already done
-    if (fn.getArg(reg) != NULL) return; // already done
-    if (fn.getPushLocation(reg) != NULL) return; // already done
     GBE_ASSERT(ctx.isScalarReg(reg) == false);
     const bool isScalar = ctx.sel->isScalarOrBool(reg);
     const RegisterData regData = ctx.sel->getRegisterData(reg);
@@ -199,7 +202,7 @@ namespace gbe
 
   void GenRegAllocator::allocateVector(Selection &selection) {
     const uint32_t vectorNum = selection.getVectorNum();
-    SelectionVector *vectors[vectorNum];
+    this->vectors.resize(vectorNum);
 
     // First we find and store all vectors
     uint32_t vectorID = 0;
@@ -207,7 +210,7 @@ namespace gbe
       SelectionVector *v = block.vector;
       while (v) {
         GBE_ASSERT(vectorID < vectorNum);
-        vectors[vectorID++] = v;
+        this->vectors[vectorID++] = v;
         v = v->next;
       }
     });
@@ -215,19 +218,20 @@ namespace gbe
 
     // Heuristic (really simple...): sort them by the number of registers they
     // contain
-    std::sort(vectors, vectors + vectorNum, cmp);
+    std::sort(this->vectors.begin(), this->vectors.end(), cmp);
 
     // Insert MOVs when this is required
     for (vectorID = 0; vectorID < vectorNum; ++vectorID) {
-      SelectionVector *vector = vectors[vectorID];
+      SelectionVector *vector = this->vectors[vectorID];
       if (this->isAllocated(vector))
         continue;
       this->coalesce(selection, vector);
     }
 
+#if LINEAR_SCAN == 0
     // Allocate all the vector registers
     for (vectorID = 0; vectorID < vectorNum; ++vectorID) {
-      const SelectionVector *vector = vectors[vectorID];
+      const SelectionVector *vector = this->vectors[vectorID];
       const ir::Register first = vector->reg[0].reg;
 
       // Since there is no interference, if the first register is allocated,
@@ -241,7 +245,7 @@ namespace gbe
         continue;
       }
 
-      // Allocate all the vector registers consecutively
+      //  Allocate all the vector registers consecutively
       const uint32_t simdWidth = ctx.getSimdWidth();
       const uint32_t alignment = simdWidth * sizeof(uint32_t);
       const uint32_t size = vector->regNum * alignment;
@@ -260,7 +264,15 @@ namespace gbe
           NOT_SUPPORTED;
       }
     }
+#endif
   }
+
+#if LINEAR_SCAN
+  template <bool sortStartingPoint>
+  INLINE bool cmp(const GenRegInterval *i0, const GenRegInterval *i1) {
+    return sortStartingPoint ? i0->minID < i1->minID : i0->maxID < i1->maxID;
+  }
+#endif
 
   void GenRegAllocator::allocate(Selection &selection) {
     using namespace ir;
@@ -268,6 +280,16 @@ namespace gbe
     const Function &fn = ctx.getFunction();
     const uint32_t simdWidth = ctx.getSimdWidth();
     GBE_ASSERT(fn.getProfile() == PROFILE_OCL);
+
+#if LINEAR_SCAN
+    // Allocate all the vectors first since they need to be contiguous
+    this->allocateVector(selection);
+
+    // Now start the linear scan allocation
+    for (uint32_t regID = 0; regID < ctx.sel->regNum(); ++regID) {
+      this->intervals.push_back(ir::Register(regID));
+    }
+#endif
 
     // Allocate the special registers (only those which are actually used)
     allocatePayloadReg(GBE_CURBE_LOCAL_ID_X, ocl::lid0);
@@ -302,6 +324,9 @@ namespace gbe
       RA.insert(std::make_pair(ocl::blockip, GenReg::uw16grf(blockIPOffset, 0)));
     else
       NOT_SUPPORTED;
+#if LINEAR_SCAN
+    this->intervals[ocl::blockip].minID = 0;
+#endif
 
     // Allocate all (non-structure) argument parameters
     const uint32_t argNum = fn.argNum();
@@ -322,7 +347,7 @@ namespace gbe
       const Register reg = pushed.second.getRegister();
       allocatePayloadReg(GBE_CURBE_KERNEL_ARGUMENT, reg, argID, subOffset);
     }
-
+#if LINEAR_SCAN == 0
     // First we build the set of all used registers
     set<Register> usedRegs;
     selection.foreachInstruction([&](const SelectionInstruction &insn) {
@@ -338,20 +363,120 @@ namespace gbe
           usedRegs.insert(reg.reg);
       }
     });
-
-#if OLD_ALLOCATOR
-    // Allocate all the vectors first since they need to be contiguous
-    uint32_t grfOffset = this->allocateVector(selection);
-
-    // Allocate all used registers. Just crash when we run out-of-registers
-    for (auto reg : usedRegs)
-      grfOffset = this->createGenReg(reg, grfOffset);
 #else
+    int32_t insnID = 0;
+    selection.foreach([&](const SelectionBlock &block) {
+      int32_t lastID = insnID;
+
+      // Update the intervals of each used register
+      block.foreach([&](const SelectionInstruction &insn) {
+        const uint32_t srcNum = insn.srcNum, dstNum = insn.dstNum;
+        for (uint32_t srcID = 0; srcID < srcNum; ++srcID) {
+          const SelectionReg &selReg = insn.src[srcID];
+          const ir::Register reg = selReg.reg;
+          if (selReg.file != GEN_GENERAL_REGISTER_FILE)
+            return;
+          this->intervals[reg].minID = min(this->intervals[reg].minID, insnID);
+          this->intervals[reg].maxID = max(this->intervals[reg].maxID, insnID);
+        }
+        for (uint32_t dstID = 0; dstID < dstNum; ++dstID) {
+          const SelectionReg &selReg = insn.dst[dstID];
+          const ir::Register reg = selReg.reg;
+          if (selReg.file != GEN_GENERAL_REGISTER_FILE)
+            return;
+          this->intervals[reg].minID = min(this->intervals[reg].minID, insnID);
+          this->intervals[reg].maxID = max(this->intervals[reg].maxID, insnID);
+        }
+        lastID = insnID;
+        insnID++;
+      });
+
+      // All registers alive at the end of the block must have their intervals
+      // updated as well
+      const ir::BasicBlock *bb = block.bb;
+      const ir::Liveness::LiveOut &liveOut = ctx.getLiveOut(bb);
+      for (auto reg : liveOut) {
+        this->intervals[reg].minID = min(this->intervals[reg].minID, lastID);
+        this->intervals[reg].maxID = max(this->intervals[reg].maxID, lastID);
+      }
+    });
+#endif
+
+#if LINEAR_SCAN == 0
     // Allocate all the vectors first since they need to be contiguous
     this->allocateVector(selection);
-
     // Allocate all used registers. Just crash when we run out-of-registers
     for (auto reg : usedRegs) this->createGenReg(reg);
+#else
+    // Extend the liveness of the registers that belong to vectors. Actually,
+    // this is way too brutal, we should instead maintain a list of allocated
+    // intervals to handle vector registers independently while doing the linear
+    // scan (or anything else)
+    for (auto vector : this->vectors) {
+      const uint32_t regNum = vector->regNum;
+      const ir::Register first = vector->reg[0].reg;
+      int32_t minID = this->intervals[first].minID;
+      int32_t maxID = this->intervals[first].maxID;
+      for (uint32_t regID = 1; regID < regNum; ++regID) {
+        const ir::Register reg = vector->reg[regID].reg;
+        minID = min(minID, this->intervals[reg].minID);
+        maxID = max(maxID, this->intervals[reg].maxID);
+      }
+      for (uint32_t regID = 0; regID < regNum; ++regID) {
+        const ir::Register reg = vector->reg[regID].reg;
+        this->intervals[reg].minID = minID;
+        this->intervals[reg].maxID = maxID;
+      }
+    }
+
+    // Sort both intervals in starting point and ending point increasing orders
+    gbe::vector<GenRegInterval*> starting, ending;
+    uint32_t regNum = ctx.sel->regNum();
+    starting.resize(regNum);
+    ending.resize(regNum);
+    for (uint32_t regID = 0; regID < regNum; ++regID)
+      starting[regID] = ending[regID] = &intervals[regID];
+    std::sort(starting.begin(), starting.end(), cmp<true>);
+    std::sort(ending.begin(), ending.end(), cmp<false>);
+
+    // Perform the linear scan allocator
+    // uint32_t endID = 0;
+    for (uint32_t startID = 0; startID < regNum; ++startID) {
+      const GenRegInterval &interval = *starting[startID];
+      const ir::Register reg = interval.reg;
+      if (interval.minID == INT_MAX)
+        break; // Since this is sorted, all the others will be like this
+      if (RA.contains(reg))
+        continue; // already allocated
+
+      // Case 1: the register belongs to a vector, allocate all the registers in
+      // one piece
+      auto it = vectorMap.find(reg);
+      if (it != vectorMap.end()) {
+        const SelectionVector *vector = it->second.first;
+        const uint32_t simdWidth = ctx.getSimdWidth();
+        const uint32_t alignment = simdWidth * sizeof(uint32_t);
+        const uint32_t size = vector->regNum * alignment;
+        uint32_t grfOffset = ctx.allocate(size, alignment);
+        GBE_ASSERTM(grfOffset != 0, "Unable to register allocate");
+        for (uint32_t regID = 0; regID < vector->regNum; ++regID, grfOffset += alignment) {
+          const ir::Register reg = vector->reg[regID].reg;
+          const uint32_t nr = grfOffset / GEN_REG_SIZE;
+          const uint32_t subnr = (grfOffset % GEN_REG_SIZE) / sizeof(uint32_t);
+          GBE_ASSERT(RA.contains(reg) == false);
+          if (simdWidth == 16)
+            RA.insert(std::make_pair(reg, GenReg::f16grf(nr, subnr)));
+          else if (simdWidth == 8)
+            RA.insert(std::make_pair(reg, GenReg::f8grf(nr, subnr)));
+          else
+            NOT_SUPPORTED;
+        }
+      }
+      // Case 2: This is a regular scalar register, allocate it alone
+      else 
+        this->createGenReg(reg);
+    }
+
 #endif
   }
 

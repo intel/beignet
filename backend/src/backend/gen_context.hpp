@@ -29,6 +29,7 @@
 #include "backend/gen_eu.hpp"
 #include "backend/program.h"
 #include "ir/function.hpp"
+#include "ir/liveness.hpp"
 #include "sys/map.hpp"
 #include <string>
 
@@ -77,7 +78,10 @@ namespace gbe
     INLINE bool isSpecialReg(ir::Register reg) const {
       return fn.isSpecialReg(reg);
     }
-
+    /*! Get the liveOut information for the given block */
+    INLINE const ir::Liveness::LiveOut &getLiveOut(const ir::BasicBlock *bb) const {
+      return this->liveness->getLiveOut(bb);
+    }
     /*! Emit instruction per family */
     void emitUnaryInstruction(const ir::UnaryInstruction &insn);
     void emitBinaryInstruction(const ir::BinaryInstruction &insn);
