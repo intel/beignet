@@ -134,7 +134,10 @@ namespace gbe
     // Use shifts rather than muls which are limited to 32x16 bit sources
     const uint32_t perLaneShift = logi2(perLaneSize);
     const uint32_t perThreadShift = logi2(perThreadSize);
-    const GenReg stackptr = ra->genReg(ir::ocl::stackptr, TYPE_U32);
+    const SelectionReg selStatckPtr = this->simdWidth == 8 ?
+      SelectionReg::ud8grf(ir::ocl::stackptr) :
+      SelectionReg::ud16grf(ir::ocl::stackptr);
+    const GenReg stackptr = ra->genReg(selStatckPtr);
     const uint32_t nr = offset / GEN_REG_SIZE;
     const uint32_t subnr = (offset % GEN_REG_SIZE) / sizeof(uint32_t);
     const GenReg bufferptr = GenReg::ud1grf(nr, subnr);
@@ -153,7 +156,6 @@ namespace gbe
       p->ADD(stackptr, stackptr, GenReg::ud1grf(126,0));
     p->pop();
   }
-
 
   void GenContext::emitLabelInstruction(const SelectionInstruction &insn) {
     const ir::LabelIndex label(insn.index);

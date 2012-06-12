@@ -502,21 +502,5 @@ namespace gbe
     }
   }
 
-  GenReg GenRegAllocator::genReg(ir::Register reg, ir::Type type) {
-    const uint32_t genType = getGenType(type);
-    auto it = RA.find(reg);
-    GBE_ASSERT(it != RA.end());
-    return GenReg::retype(it->second, genType);
-  }
-
-  GenReg GenRegAllocator::genRegQn(ir::Register reg, uint32_t quarter, ir::Type type) {
-    GBE_ASSERT(quarter == 2 || quarter == 3 || quarter == 4);
-    GenReg genReg = this->genReg(reg, type);
-    if (ctx.isScalarReg(reg) == true)
-      return genReg;
-    else
-      return GenReg::Qn(genReg, quarter);
-  }
-
 } /* namespace gbe */
 

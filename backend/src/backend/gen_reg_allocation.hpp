@@ -51,8 +51,6 @@ namespace gbe
     GenReg genReg(const SelectionReg &reg);
     /*! Return the Gen register from the GenIR one */
     GenReg genReg(ir::Register, ir::Type type = ir::TYPE_FLOAT);
-    /*! Compute the quarterth register part when using SIMD8 with Qn (n in 2,3,4) */
-    GenReg genRegQn(ir::Register, uint32_t quarter, ir::Type type = ir::TYPE_FLOAT);
   private:
     /*! Expire one interval upto interval limit. Return true if one interval was
      *  successfully expired
