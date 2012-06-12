@@ -23,14 +23,15 @@
  * This is a revamped Gen ISA encoder from Mesa code base
  */
 
-#ifndef GEN_EU_H
-#define GEN_EU_H
+#ifndef __GBE_GEN_ENCODER_HPP__
+#define __GBE_GEN_ENCODER_HPP__
 
 #include "backend/gen_defs.hpp"
 #include "sys/platform.hpp"
+#include "sys/vector.hpp"
 #include <cassert>
 
-#define GEN_REG_SIZE (8*4)
+#define GEN_REG_SIZE 32
 #define GEN_EU_MAX_INSN_STACK 5
 
 namespace gbe
@@ -414,12 +415,10 @@ namespace gbe
   };
 
   /*! Helper structure to emit Gen instructions */
-  struct GenEmitter
+  struct GenEncoder
   {
     /*! simdWidth is the default width for the instructions */
-    GenEmitter(uint32_t simdWidth, uint32_t gen);
-    /*! TODO use a vector */
-    enum { MAX_INSN_NUM = 8192 };
+    GenEncoder(uint32_t simdWidth, uint32_t gen);
     /*! Size of the stack (should be large enough) */
     enum { MAX_STATE_NUM = 16 };
     /*! Push the current instruction state */
@@ -432,10 +431,8 @@ namespace gbe
       assert(stateNum > 0);
       curr = stack[--stateNum];
     }
-    /*! TODO Update that with a vector */
-    GenInstruction store[MAX_INSN_NUM]; 
-    /*! Number of instructions currently pushed */
-    uint32_t insnNum;
+    /*! The instruction stream we are building */
+    vector<GenInstruction> store;
     /*! Current instruction state to use */
     GenInstructionState curr;
     /*! State used to encode the instructions */
@@ -528,5 +525,5 @@ namespace gbe
 
 } /* namespace gbe */
 
-#endif /* GEN_EU_H */
+#endif /* __GBE_GEN_ENCODER_HPP__ */
 

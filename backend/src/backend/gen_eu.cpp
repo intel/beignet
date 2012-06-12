@@ -39,14 +39,14 @@ namespace gbe
       return false;
   }
 
-  INLINE bool needToSplitAlu1(GenEmitter *p, GenReg dst, GenReg src) {
+  INLINE bool needToSplitAlu1(GenEncoder *p, GenReg dst, GenReg src) {
     if (p->curr.execWidth != 16) return false;
     if (isVectorOfBytes(dst) == true) return true;
     if (isVectorOfBytes(src) == true) return true;
     return false;
   }
 
-  INLINE bool needToSplitAlu2(GenEmitter *p, GenReg dst, GenReg src0, GenReg src1) {
+  INLINE bool needToSplitAlu2(GenEncoder *p, GenReg dst, GenReg src0, GenReg src1) {
     if (p->curr.execWidth != 16) return false;
     if (isVectorOfBytes(dst) == true) return true;
     if (isVectorOfBytes(src0) == true) return true;
@@ -54,7 +54,7 @@ namespace gbe
     return false;
   }
 
-  INLINE bool needToSplitCmp(GenEmitter *p, GenReg src0, GenReg src1) {
+  INLINE bool needToSplitCmp(GenEncoder *p, GenReg src0, GenReg src1) {
     if (p->curr.execWidth != 16) return false;
     if (isVectorOfBytes(src0) == true) return true;
     if (isVectorOfBytes(src1) == true) return true;
@@ -68,8 +68,8 @@ namespace gbe
   //////////////////////////////////////////////////////////////////////////
   // Gen Emitter encoding class
   //////////////////////////////////////////////////////////////////////////
-  GenEmitter::GenEmitter(uint32_t simdWidth, uint32_t gen) :
-    insnNum(0), stateNum(0), gen(gen)
+  GenEncoder::GenEncoder(uint32_t simdWidth, uint32_t gen) :
+    stateNum(0), gen(gen)
   {
     this->curr.execWidth = simdWidth;
     this->curr.quarterControl = GEN_COMPRESSION_Q1;
@@ -80,7 +80,7 @@ namespace gbe
     this->curr.inversePredicate = 0;
   }
 
-  void GenEmitter::setHeader(GenInstruction *insn) {
+  void GenEncoder::setHeader(GenInstruction *insn) {
     if (this->curr.execWidth == 8)
       insn->header.execution_size = GEN_WIDTH_8;
     else if (this->curr.execWidth == 16)
@@ -99,8 +99,7 @@ namespace gbe
     }
   }
 
-  void GenEmitter::setDst(GenInstruction *insn, GenReg dest)
-  {
+  void GenEncoder::setDst(GenInstruction *insn, GenReg dest) {
      if (dest.file != GEN_ARCHITECTURE_REGISTER_FILE)
         assert(dest.nr < 128);
 
@@ -114,8 +113,7 @@ namespace gbe
      insn->bits1.da1.dest_horiz_stride = dest.hstride;
   }
 
-  void GenEmitter::setSrc0(GenInstruction *insn, GenReg reg)
-  {
+  void GenEncoder::setSrc0(GenInstruction *insn, GenReg reg) {
      if (reg.file != GEN_ARCHITECTURE_REGISTER_FILE)
         assert(reg.nr < 128);
 
@@ -156,8 +154,7 @@ namespace gbe
   }
 
 
-  void GenEmitter::setSrc1(GenInstruction *insn, GenReg reg)
-  {
+  void GenEncoder::setSrc1(GenInstruction *insn, GenReg reg) {
      assert(reg.nr < 128);
 
      insn->bits1.da1.src1_reg_file = reg.file;
@@ -193,7 +190,7 @@ namespace gbe
   }
 
   static void
-  brw_set_message_descriptor(GenEmitter *p,
+  brw_set_message_descriptor(GenEncoder *p,
                              GenInstruction *inst,
                              enum GenMessageTarget sfid,
                              unsigned msg_length,
@@ -210,7 +207,7 @@ namespace gbe
   }
 
   static void
-  set_dp_untyped_rw(GenEmitter *p,
+  set_dp_untyped_rw(GenEncoder *p,
                     GenInstruction *insn,
                     uint32_t bti,
                     uint32_t rgba,
@@ -232,7 +229,7 @@ namespace gbe
   }
 
   static void
-  set_dp_byte_scatter_gather(GenEmitter *p,
+  set_dp_byte_scatter_gather(GenEncoder *p,
                              GenInstruction *insn,
                              uint32_t bti,
                              uint32_t elem_size,
@@ -262,8 +259,7 @@ namespace gbe
   };
 
   void
-  GenEmitter::UNTYPED_READ(GenReg dst, GenReg src, uint32_t bti, uint32_t elemNum)
-  {
+  GenEncoder::UNTYPED_READ(GenReg dst, GenReg src, uint32_t bti, uint32_t elemNum) {
     GenInstruction *insn = this->next(GEN_OPCODE_SEND);
     assert(elemNum >= 1 || elemNum <= 4);
     uint32_t msg_length = 0;
@@ -291,8 +287,7 @@ namespace gbe
   }
 
   void
-  GenEmitter::UNTYPED_WRITE(GenReg msg, uint32_t bti, uint32_t elemNum)
-  {
+  GenEncoder::UNTYPED_WRITE(GenReg msg, uint32_t bti, uint32_t elemNum) {
     GenInstruction *insn = this->next(GEN_OPCODE_SEND);
     assert(elemNum >= 1 || elemNum <= 4);
     uint32_t msg_length = 0;
@@ -319,8 +314,7 @@ namespace gbe
   }
 
   void
-  GenEmitter::BYTE_GATHER(GenReg dst, GenReg src, uint32_t bti, uint32_t elemSize)
-  {
+  GenEncoder::BYTE_GATHER(GenReg dst, GenReg src, uint32_t bti, uint32_t elemSize) {
     GenInstruction *insn = this->next(GEN_OPCODE_SEND);
     uint32_t msg_length = 0;
     uint32_t response_length = 0;
@@ -347,8 +341,7 @@ namespace gbe
   }
 
   void
-  GenEmitter::BYTE_SCATTER(GenReg msg, uint32_t bti, uint32_t elemSize)
-  {
+  GenEncoder::BYTE_SCATTER(GenReg msg, uint32_t bti, uint32_t elemSize) {
     GenInstruction *insn = this->next(GEN_OPCODE_SEND);
     uint32_t msg_length = 0;
     uint32_t response_length = 0;
@@ -373,7 +366,7 @@ namespace gbe
   }
 
   static void
-  set_sampler_message(GenEmitter *p,
+  set_sampler_message(GenEncoder *p,
                       GenInstruction *insn,
                       uint32_t bti,
                       uint32_t sampler,
@@ -392,17 +385,15 @@ namespace gbe
      insn->bits3.sampler_gen7.simd_mode = simd_mode;
   }
 
-  GenInstruction *GenEmitter::next(uint32_t opcode)
-  {
-     GenInstruction *insn;
-     insn = &this->store[this->insnNum++];
-     std::memset(insn, 0, sizeof(GenInstruction));
-     insn->header.opcode = opcode;
-     return insn;
+  GenInstruction *GenEncoder::next(uint32_t opcode) {
+     GenInstruction insn;
+     std::memset(&insn, 0, sizeof(GenInstruction));
+     insn.header.opcode = opcode;
+     this->store.push_back(insn);
+     return &this->store.back();
   }
 
-  INLINE void alu1(GenEmitter *p, uint32_t opcode, GenReg dst, GenReg src)
-  {
+  INLINE void alu1(GenEncoder *p, uint32_t opcode, GenReg dst, GenReg src) {
      if (needToSplitAlu1(p, dst, src) == false) {
        GenInstruction *insn = p->next(opcode);
        p->setHeader(insn);
@@ -429,7 +420,7 @@ namespace gbe
      }
   }
 
-  INLINE void alu2(GenEmitter *p,
+  INLINE void alu2(GenEncoder *p,
                    uint32_t opcode,
                    GenReg dst,
                    GenReg src0,
@@ -479,7 +470,7 @@ namespace gbe
         return reg.subnr / 4;
   }
 
-  static GenInstruction *alu3(GenEmitter *p,
+  static GenInstruction *alu3(GenEncoder *p,
                               uint32_t opcode,
                               GenReg dest,
                               GenReg src0,
@@ -539,20 +530,17 @@ namespace gbe
 #endif
 
 #define ALU1(OP) \
-  void GenEmitter::OP(GenReg dest, GenReg src0) \
-  { \
+  void GenEncoder::OP(GenReg dest, GenReg src0) { \
     alu1(this, GEN_OPCODE_##OP, dest, src0); \
   }
 
 #define ALU2(OP) \
-  void GenEmitter::OP(GenReg dest, GenReg src0, GenReg src1) \
-  { \
+  void GenEncoder::OP(GenReg dest, GenReg src0, GenReg src1) { \
     alu2(this, GEN_OPCODE_##OP, dest, src0, src1); \
   }
 
 #define ALU3(OP) \
-  void GenEmitter::OP(GenReg dest, GenReg src0, GenReg src1, GenReg src2) \
-  { \
+  void GenEncoder::OP(GenReg dest, GenReg src0, GenReg src1, GenReg src2) { \
      alu3(this, GEN_OPCODE_##OP, dest, src0, src1, src2); \
   }
 
@@ -577,12 +565,11 @@ namespace gbe
   ALU2(PLN)
   // ALU3(MAD)
 
-  void GenEmitter::MACH(GenReg dest, GenReg src0, GenReg src1) {
+  void GenEncoder::MACH(GenReg dest, GenReg src0, GenReg src1) {
      alu2(this, GEN_OPCODE_MACH, dest, src0, src1, 1);
   }
 
-  void GenEmitter::ADD(GenReg dest, GenReg src0, GenReg src1)
-  {
+  void GenEncoder::ADD(GenReg dest, GenReg src0, GenReg src1) {
      if (src0.type == GEN_TYPE_F ||
          (src0.file == GEN_IMMEDIATE_VALUE &&
           src0.type == GEN_TYPE_VF)) {
@@ -600,8 +587,7 @@ namespace gbe
      alu2(this, GEN_OPCODE_ADD, dest, src0, src1);
   }
 
-  void GenEmitter::MUL(GenReg dest, GenReg src0, GenReg src1)
-  {
+  void GenEncoder::MUL(GenReg dest, GenReg src0, GenReg src1) {
      /* 6.32.38: mul */
      if (src0.type == GEN_TYPE_D ||
          src0.type == GEN_TYPE_UD ||
@@ -633,29 +619,25 @@ namespace gbe
   }
 
 
-  void GenEmitter::NOP(void)
-  {
+  void GenEncoder::NOP(void) {
     GenInstruction *insn = this->next(GEN_OPCODE_NOP);
     this->setDst(insn, GenReg::retype(GenReg::f4grf(0,0), GEN_TYPE_UD));
     this->setSrc0(insn, GenReg::retype(GenReg::f4grf(0,0), GEN_TYPE_UD));
     this->setSrc1(insn, GenReg::immud(0x0));
   }
 
-  void GenEmitter::JMPI(GenReg src)
-  {
+  void GenEncoder::JMPI(GenReg src) {
     alu2(this, GEN_OPCODE_JMPI, GenReg::ip(), GenReg::ip(), src);
   }
 
-  void GenEmitter::patchJMPI(uint32_t insnID, int32_t jumpDistance)
-  {
+  void GenEncoder::patchJMPI(uint32_t insnID, int32_t jumpDistance) {
     GenInstruction &insn = this->store[insnID];
-    assert(insnID < this->insnNum);
+    assert(insnID < this->store.size());
     assert(insn.header.opcode == GEN_OPCODE_JMPI);
     this->setSrc1(&insn, GenReg::immd(jumpDistance));
   }
 
-  void GenEmitter::CMP(uint32_t conditional, GenReg src0, GenReg src1)
-  {
+  void GenEncoder::CMP(uint32_t conditional, GenReg src0, GenReg src1) {
     if (needToSplitCmp(this, src0, src1) == false) {
       GenInstruction *insn = this->next(GEN_OPCODE_CMP);
       this->setHeader(insn);
@@ -688,11 +670,9 @@ namespace gbe
     }
   }
 
-  void GenEmitter::WAIT(void)
-  {
+  void GenEncoder::WAIT(void) {
      GenInstruction *insn = this->next(GEN_OPCODE_WAIT);
      GenReg src = GenReg::notification1();
-
      this->setDst(insn, src);
      this->setSrc0(insn, src);
      this->setSrc1(insn, GenReg::null());
@@ -701,10 +681,8 @@ namespace gbe
      insn->header.quarter_control = 0;
   }
 
-  void GenEmitter::MATH(GenReg dest, uint32_t function, GenReg src0, GenReg src1)
-  {
+  void GenEncoder::MATH(GenReg dest, uint32_t function, GenReg src0, GenReg src1) {
      GenInstruction *insn = this->next(GEN_OPCODE_MATH);
-
      assert(dest.file == GEN_GENERAL_REGISTER_FILE);
      assert(src0.file == GEN_GENERAL_REGISTER_FILE);
      assert(src1.file == GEN_GENERAL_REGISTER_FILE);
@@ -727,7 +705,7 @@ namespace gbe
      this->setSrc1(insn, src1);
   }
 
-  void GenEmitter::SAMPLE(GenReg dest,
+  void GenEncoder::SAMPLE(GenReg dest,
                           uint32_t msg_reg_nr,
                           GenReg src0,
                           uint32_t bti,
@@ -742,9 +720,7 @@ namespace gbe
   {
      if (writemask == 0) return;
 
-     GenInstruction *insn;
-
-     insn = this->next(GEN_OPCODE_SEND);
+     GenInstruction *insn = this->next(GEN_OPCODE_SEND);
      insn->header.predicate_control = 0; /* XXX */
      this->setHeader(insn);
      this->setDst(insn, dest);
@@ -761,11 +737,8 @@ namespace gbe
                          return_format);
   }
 
-  void GenEmitter::EOT(uint32_t msg)
-  {
-    GenInstruction *insn = NULL;
-
-    insn = this->next(GEN_OPCODE_SEND);
+  void GenEncoder::EOT(uint32_t msg) {
+    GenInstruction *insn = this->next(GEN_OPCODE_SEND);
     this->setDst(insn, GenReg::retype(GenReg::null(), GEN_TYPE_UD));
     this->setSrc0(insn, GenReg::ud8grf(msg,0));
     this->setSrc1(insn, GenReg::immud(0));

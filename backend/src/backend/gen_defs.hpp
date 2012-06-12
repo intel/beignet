@@ -31,10 +31,6 @@
 // Gen EU defines
 /////////////////////////////////////////////////////////////////////////////
 
-#define INTEL_MASK(high, low) (((1<<((high)-(low)+1))-1)<<(low))
-#define SET_FIELD(value, field) (((value) << field ## _SHIFT) & field ## _MASK)
-#define GET_FIELD(word, field) (((word)  & field ## _MASK) >> field ## _SHIFT)
-
 /* Execution Unit (EU) defines */
 #define GEN_ALIGN_1   0
 #define GEN_ALIGN_16  1
@@ -340,368 +336,354 @@ enum GenMessageTarget {
 /** Number of general purpose registers (VS, WM, etc) */
 #define GEN_MAX_GRF 128
 
-/**
- * First GRF used for the MRF hack.
- *
- * On gen7, MRFs are no longer used, and contiguous GRFs are used instead.  We
- * haven't converted our compiler to be aware of this, so it asks for MRFs and
- * brw_eu_emit.c quietly converts them to be accesses of the top GRFs.  The
- * register allocators have to be careful of this to avoid corrupting the "MRF"s
- * with actual GRF allocations.
- */
-#define GEN_MRF_HACK_START 112.
-
-/** Number of message register file registers */
-#define GEN_MAX_MRF 16
-
 /* Instruction format for the execution units */
 struct GenInstruction
 {
-   struct {
-      uint32_t opcode:7;
+  struct {
+    uint32_t opcode:7;
+    uint32_t pad:1;
+    uint32_t access_mode:1;
+    uint32_t mask_control:1;
+    uint32_t dependency_control:2;
+    uint32_t quarter_control:2;
+    uint32_t thread_control:2;
+    uint32_t predicate_control:4;
+    uint32_t predicate_inverse:1;
+    uint32_t execution_size:3;
+    uint32_t destreg_or_condmod:4;
+    uint32_t acc_wr_control:1;
+    uint32_t cmpt_control:1;
+    uint32_t debug_control:1;
+    uint32_t saturate:1;
+  } header;
+
+  union {
+    struct {
+      uint32_t dest_reg_file:2;
+      uint32_t dest_reg_type:3;
+      uint32_t src0_reg_file:2;
+      uint32_t src0_reg_type:3;
+      uint32_t src1_reg_file:2;
+      uint32_t src1_reg_type:3;
       uint32_t pad:1;
-      uint32_t access_mode:1;
-      uint32_t mask_control:1;
-      uint32_t dependency_control:2;
-      uint32_t quarter_control:2;
-      uint32_t thread_control:2;
-      uint32_t predicate_control:4;
-      uint32_t predicate_inverse:1;
-      uint32_t execution_size:3;
-      uint32_t destreg_or_condmod:4;
-      uint32_t acc_wr_control:1;
-      uint32_t cmpt_control:1;
-      uint32_t debug_control:1;
+      uint32_t dest_subreg_nr:5;
+      uint32_t dest_reg_nr:8;
+      uint32_t dest_horiz_stride:2;
+      uint32_t dest_address_mode:1;
+    } da1;
+
+    struct {
+      uint32_t dest_reg_file:2;
+      uint32_t dest_reg_type:3;
+      uint32_t src0_reg_file:2;
+      uint32_t src0_reg_type:3;
+      uint32_t src1_reg_file:2;        /* 0x00000c00 */
+      uint32_t src1_reg_type:3;        /* 0x00007000 */
+      uint32_t pad:1;
+      int dest_indirect_offset:10;        /* offset against the deref'd address reg */
+      uint32_t dest_subreg_nr:3; /* subnr for the address reg a0.x */
+      uint32_t dest_horiz_stride:2;
+      uint32_t dest_address_mode:1;
+    } ia1;
+
+    struct {
+      uint32_t dest_reg_file:2;
+      uint32_t dest_reg_type:3;
+      uint32_t src0_reg_file:2;
+      uint32_t src0_reg_type:3;
+      uint32_t src1_reg_file:2;
+      uint32_t src1_reg_type:3;
+      uint32_t pad:1;
+      uint32_t dest_writemask:4;
+      uint32_t dest_subreg_nr:1;
+      uint32_t dest_reg_nr:8;
+      uint32_t dest_horiz_stride:2;
+      uint32_t dest_address_mode:1;
+    } da16;
+
+    struct {
+      uint32_t dest_reg_file:2;
+      uint32_t dest_reg_type:3;
+      uint32_t src0_reg_file:2;
+      uint32_t src0_reg_type:3;
+      uint32_t pad0:6;
+      uint32_t dest_writemask:4;
+      int dest_indirect_offset:6;
+      uint32_t dest_subreg_nr:3;
+      uint32_t dest_horiz_stride:2;
+      uint32_t dest_address_mode:1;
+    } ia16;
+
+    struct {
+      uint32_t dest_reg_file:2;
+      uint32_t dest_reg_type:3;
+      uint32_t src0_reg_file:2;
+      uint32_t src0_reg_type:3;
+      uint32_t src1_reg_file:2;
+      uint32_t src1_reg_type:3;
+      uint32_t pad:1;
+      int jump_count:16;
+    } branch_gen6;
+
+    struct {
+      uint32_t dest_reg_file:1;
+      uint32_t flag_subreg_num:1;
+      uint32_t pad0:2;
+      uint32_t src0_abs:1;
+      uint32_t src0_negate:1;
+      uint32_t src1_abs:1;
+      uint32_t src1_negate:1;
+      uint32_t src2_abs:1;
+      uint32_t src2_negate:1;
+      uint32_t pad1:7;
+      uint32_t dest_writemask:4;
+      uint32_t dest_subreg_nr:3;
+      uint32_t dest_reg_nr:8;
+    } da3src;
+  } bits1;
+
+  union {
+    struct {
+      uint32_t src0_subreg_nr:5;
+      uint32_t src0_reg_nr:8;
+      uint32_t src0_abs:1;
+      uint32_t src0_negate:1;
+      uint32_t src0_address_mode:1;
+      uint32_t src0_horiz_stride:2;
+      uint32_t src0_width:3;
+      uint32_t src0_vert_stride:4;
+      uint32_t flag_sub_reg_nr:1;
+      uint32_t flag_reg_nr:1;
+      uint32_t pad:5;
+    } da1;
+
+    struct {
+      int src0_indirect_offset:10;
+      uint32_t src0_subreg_nr:3;
+      uint32_t src0_abs:1;
+      uint32_t src0_negate:1;
+      uint32_t src0_address_mode:1;
+      uint32_t src0_horiz_stride:2;
+      uint32_t src0_width:3;
+      uint32_t src0_vert_stride:4;
+      uint32_t flag_sub_reg_nr:1;
+      uint32_t flag_reg_nr:1;
+      uint32_t pad:5;
+    } ia1;
+
+    struct {
+      uint32_t src0_swz_x:2;
+      uint32_t src0_swz_y:2;
+      uint32_t src0_subreg_nr:1;
+      uint32_t src0_reg_nr:8;
+      uint32_t src0_abs:1;
+      uint32_t src0_negate:1;
+      uint32_t src0_address_mode:1;
+      uint32_t src0_swz_z:2;
+      uint32_t src0_swz_w:2;
+      uint32_t pad0:1;
+      uint32_t src0_vert_stride:4;
+      uint32_t flag_sub_reg_nr:1;
+      uint32_t flag_reg_nr:1;
+      uint32_t pad:5;
+    } da16;
+
+    struct {
+      uint32_t src0_swz_x:2;
+      uint32_t src0_swz_y:2;
+      int src0_indirect_offset:6;
+      uint32_t src0_subreg_nr:3;
+      uint32_t src0_abs:1;
+      uint32_t src0_negate:1;
+      uint32_t src0_address_mode:1;
+      uint32_t src0_swz_z:2;
+      uint32_t src0_swz_w:2;
+      uint32_t pad0:1;
+      uint32_t src0_vert_stride:4;
+      uint32_t flag_sub_reg_nr:1;
+      uint32_t flag_reg_nr:1;
+      uint32_t pad:5;
+    } ia16;
+
+    struct {
+      uint32_t src0_rep_ctrl:1;
+      uint32_t src0_swizzle:8;
+      uint32_t src0_subreg_nr:3;
+      uint32_t src0_reg_nr:8;
+      uint32_t pad0:1;
+      uint32_t src1_rep_ctrl:1;
+      uint32_t src1_swizzle:8;
+      uint32_t src1_subreg_nr_low:2;
+    } da3src;
+  } bits2;
+
+  union {
+    struct {
+      uint32_t src1_subreg_nr:5;
+      uint32_t src1_reg_nr:8;
+      uint32_t src1_abs:1;
+      uint32_t src1_negate:1;
+      uint32_t src1_address_mode:1;
+      uint32_t src1_horiz_stride:2;
+      uint32_t src1_width:3;
+      uint32_t src1_vert_stride:4;
+      uint32_t pad0:7;
+    } da1;
+
+    struct {
+      uint32_t src1_swz_x:2;
+      uint32_t src1_swz_y:2;
+      uint32_t src1_subreg_nr:1;
+      uint32_t src1_reg_nr:8;
+      uint32_t src1_abs:1;
+      uint32_t src1_negate:1;
+      uint32_t src1_address_mode:1;
+      uint32_t src1_swz_z:2;
+      uint32_t src1_swz_w:2;
+      uint32_t pad1:1;
+      uint32_t src1_vert_stride:4;
+      uint32_t pad2:7;
+    } da16;
+
+    struct {
+      int  src1_indirect_offset:10;
+      uint32_t src1_subreg_nr:3;
+      uint32_t src1_abs:1;
+      uint32_t src1_negate:1;
+      uint32_t src1_address_mode:1;
+      uint32_t src1_horiz_stride:2;
+      uint32_t src1_width:3;
+      uint32_t src1_vert_stride:4;
+      uint32_t pad1:7;
+    } ia1;
+
+    struct {
+      uint32_t src1_swz_x:2;
+      uint32_t src1_swz_y:2;
+      int  src1_indirect_offset:6;
+      uint32_t src1_subreg_nr:3;
+      uint32_t src1_abs:1;
+      uint32_t src1_negate:1;
+      uint32_t pad0:1;
+      uint32_t src1_swz_z:2;
+      uint32_t src1_swz_w:2;
+      uint32_t pad1:1;
+      uint32_t src1_vert_stride:4;
+      uint32_t pad2:7;
+    } ia16;
+
+    struct {
+      uint32_t function_control:19;
+      uint32_t header_present:1;
+      uint32_t response_length:5;
+      uint32_t msg_length:4;
+      uint32_t pad1:2;
+      uint32_t end_of_thread:1;
+    } generic_gen5;
+
+    struct {
+      uint32_t opcode:1;
+      uint32_t request:1;
+      uint32_t pad0:2;
+      uint32_t resource:1;
+      uint32_t pad1:14;
+      uint32_t header:1;
+      uint32_t response_length:5;
+      uint32_t msg_length:4;
+      uint32_t pad2:2;
+      uint32_t end_of_thread:1;
+    } spawner_gen5;
+
+    /** Ironlake PRM, Volume 4 Part 1, Section 6.1.1.1 */
+    struct {
+      uint32_t function:4;
+      uint32_t int_type:1;
+      uint32_t precision:1;
       uint32_t saturate:1;
-   } header;
+      uint32_t data_type:1;
+      uint32_t snapshot:1;
+      uint32_t pad0:10;
+      uint32_t header_present:1;
+      uint32_t response_length:5;
+      uint32_t msg_length:4;
+      uint32_t pad1:2;
+      uint32_t end_of_thread:1;
+    } math_gen5;
 
-   union {
-      struct {
-         uint32_t dest_reg_file:2;
-         uint32_t dest_reg_type:3;
-         uint32_t src0_reg_file:2;
-         uint32_t src0_reg_type:3;
-         uint32_t src1_reg_file:2;
-         uint32_t src1_reg_type:3;
-         uint32_t pad:1;
-         uint32_t dest_subreg_nr:5;
-         uint32_t dest_reg_nr:8;
-         uint32_t dest_horiz_stride:2;
-         uint32_t dest_address_mode:1;
-      } da1;
+    struct {
+      uint32_t bti:8;
+      uint32_t sampler:4;
+      uint32_t msg_type:5;
+      uint32_t simd_mode:2;
+      uint32_t header_present:1;
+      uint32_t response_length:5;
+      uint32_t msg_length:4;
+      uint32_t pad1:2;
+      uint32_t end_of_thread:1;
+    } sampler_gen7;
 
-      struct {
-         uint32_t dest_reg_file:2;
-         uint32_t dest_reg_type:3;
-         uint32_t src0_reg_file:2;
-         uint32_t src0_reg_type:3;
-         uint32_t src1_reg_file:2;        /* 0x00000c00 */
-         uint32_t src1_reg_type:3;        /* 0x00007000 */
-         uint32_t pad:1;
-         int dest_indirect_offset:10;        /* offset against the deref'd address reg */
-         uint32_t dest_subreg_nr:3; /* subnr for the address reg a0.x */
-         uint32_t dest_horiz_stride:2;
-         uint32_t dest_address_mode:1;
-      } ia1;
+    /**
+     * Message for the Sandybridge Sampler Cache or Constant Cache Data Port.
+     *
+     * See the Sandybridge PRM, Volume 4 Part 1, Section 3.9.2.1.1.
+     **/
+    struct {
+      uint32_t bti:8;
+      uint32_t msg_control:5;
+      uint32_t msg_type:3;
+      uint32_t pad0:3;
+      uint32_t header_present:1;
+      uint32_t response_length:5;
+      uint32_t msg_length:4;
+      uint32_t pad1:2;
+      uint32_t end_of_thread:1;
+    } gen6_dp_sampler_const_cache;
 
-      struct {
-         uint32_t dest_reg_file:2;
-         uint32_t dest_reg_type:3;
-         uint32_t src0_reg_file:2;
-         uint32_t src0_reg_type:3;
-         uint32_t src1_reg_file:2;
-         uint32_t src1_reg_type:3;
-         uint32_t pad:1;
-         uint32_t dest_writemask:4;
-         uint32_t dest_subreg_nr:1;
-         uint32_t dest_reg_nr:8;
-         uint32_t dest_horiz_stride:2;
-         uint32_t dest_address_mode:1;
-      } da16;
+    /*! Data port untyped read / write messages */
+    struct {
+      uint32_t bti:8;
+      uint32_t rgba:4;
+      uint32_t simd_mode:2;
+      uint32_t msg_type:4;
+      uint32_t category:1;
+      uint32_t header_present:1;
+      uint32_t response_length:5;
+      uint32_t msg_length:4;
+      uint32_t pad2:2;
+      uint32_t end_of_thread:1;
+    } gen7_untyped_rw;
 
-      struct {
-         uint32_t dest_reg_file:2;
-         uint32_t dest_reg_type:3;
-         uint32_t src0_reg_file:2;
-         uint32_t src0_reg_type:3;
-         uint32_t pad0:6;
-         uint32_t dest_writemask:4;
-         int dest_indirect_offset:6;
-         uint32_t dest_subreg_nr:3;
-         uint32_t dest_horiz_stride:2;
-         uint32_t dest_address_mode:1;
-      } ia16;
+    /*! Data port byte scatter / gather */
+    struct {
+      uint32_t bti:8;
+      uint32_t simd_mode:1;
+      uint32_t ignored0:1;
+      uint32_t data_size:2;
+      uint32_t ignored1:2;
+      uint32_t msg_type:4;
+      uint32_t category:1;
+      uint32_t header_present:1;
+      uint32_t response_length:5;
+      uint32_t msg_length:4;
+      uint32_t pad2:2;
+      uint32_t end_of_thread:1;
+    } gen7_byte_rw;
 
-      struct {
-         uint32_t dest_reg_file:2;
-         uint32_t dest_reg_type:3;
-         uint32_t src0_reg_file:2;
-         uint32_t src0_reg_type:3;
-         uint32_t src1_reg_file:2;
-         uint32_t src1_reg_type:3;
-         uint32_t pad:1;
-         int jump_count:16;
-      } branch_gen6;
+    struct {
+      uint32_t src1_subreg_nr_high:1;
+      uint32_t src1_reg_nr:8;
+      uint32_t pad0:1;
+      uint32_t src2_rep_ctrl:1;
+      uint32_t src2_swizzle:8;
+      uint32_t src2_subreg_nr:3;
+      uint32_t src2_reg_nr:8;
+      uint32_t pad1:2;
+    } da3src;
 
-      struct {
-         uint32_t dest_reg_file:1;
-         uint32_t flag_subreg_num:1;
-         uint32_t pad0:2;
-         uint32_t src0_abs:1;
-         uint32_t src0_negate:1;
-         uint32_t src1_abs:1;
-         uint32_t src1_negate:1;
-         uint32_t src2_abs:1;
-         uint32_t src2_negate:1;
-         uint32_t pad1:7;
-         uint32_t dest_writemask:4;
-         uint32_t dest_subreg_nr:3;
-         uint32_t dest_reg_nr:8;
-      } da3src;
-   } bits1;
-
-   union {
-      struct {
-         uint32_t src0_subreg_nr:5;
-         uint32_t src0_reg_nr:8;
-         uint32_t src0_abs:1;
-         uint32_t src0_negate:1;
-         uint32_t src0_address_mode:1;
-         uint32_t src0_horiz_stride:2;
-         uint32_t src0_width:3;
-         uint32_t src0_vert_stride:4;
-         uint32_t flag_sub_reg_nr:1;
-         uint32_t flag_reg_nr:1;
-         uint32_t pad:5;
-      } da1;
-
-      struct {
-         int src0_indirect_offset:10;
-         uint32_t src0_subreg_nr:3;
-         uint32_t src0_abs:1;
-         uint32_t src0_negate:1;
-         uint32_t src0_address_mode:1;
-         uint32_t src0_horiz_stride:2;
-         uint32_t src0_width:3;
-         uint32_t src0_vert_stride:4;
-         uint32_t flag_sub_reg_nr:1;
-         uint32_t flag_reg_nr:1;
-         uint32_t pad:5;
-      } ia1;
-
-      struct {
-         uint32_t src0_swz_x:2;
-         uint32_t src0_swz_y:2;
-         uint32_t src0_subreg_nr:1;
-         uint32_t src0_reg_nr:8;
-         uint32_t src0_abs:1;
-         uint32_t src0_negate:1;
-         uint32_t src0_address_mode:1;
-         uint32_t src0_swz_z:2;
-         uint32_t src0_swz_w:2;
-         uint32_t pad0:1;
-         uint32_t src0_vert_stride:4;
-         uint32_t flag_sub_reg_nr:1;
-         uint32_t flag_reg_nr:1;
-         uint32_t pad:5;
-      } da16;
-
-      struct {
-         uint32_t src0_swz_x:2;
-         uint32_t src0_swz_y:2;
-         int src0_indirect_offset:6;
-         uint32_t src0_subreg_nr:3;
-         uint32_t src0_abs:1;
-         uint32_t src0_negate:1;
-         uint32_t src0_address_mode:1;
-         uint32_t src0_swz_z:2;
-         uint32_t src0_swz_w:2;
-         uint32_t pad0:1;
-         uint32_t src0_vert_stride:4;
-         uint32_t flag_sub_reg_nr:1;
-         uint32_t flag_reg_nr:1;
-         uint32_t pad:5;
-      } ia16;
-
-      struct {
-         uint32_t src0_rep_ctrl:1;
-         uint32_t src0_swizzle:8;
-         uint32_t src0_subreg_nr:3;
-         uint32_t src0_reg_nr:8;
-         uint32_t pad0:1;
-         uint32_t src1_rep_ctrl:1;
-         uint32_t src1_swizzle:8;
-         uint32_t src1_subreg_nr_low:2;
-      } da3src;
-   } bits2;
-
-   union {
-      struct {
-         uint32_t src1_subreg_nr:5;
-         uint32_t src1_reg_nr:8;
-         uint32_t src1_abs:1;
-         uint32_t src1_negate:1;
-         uint32_t src1_address_mode:1;
-         uint32_t src1_horiz_stride:2;
-         uint32_t src1_width:3;
-         uint32_t src1_vert_stride:4;
-         uint32_t pad0:7;
-      } da1;
-
-      struct {
-         uint32_t src1_swz_x:2;
-         uint32_t src1_swz_y:2;
-         uint32_t src1_subreg_nr:1;
-         uint32_t src1_reg_nr:8;
-         uint32_t src1_abs:1;
-         uint32_t src1_negate:1;
-         uint32_t src1_address_mode:1;
-         uint32_t src1_swz_z:2;
-         uint32_t src1_swz_w:2;
-         uint32_t pad1:1;
-         uint32_t src1_vert_stride:4;
-         uint32_t pad2:7;
-      } da16;
-
-      struct {
-         int  src1_indirect_offset:10;
-         uint32_t src1_subreg_nr:3;
-         uint32_t src1_abs:1;
-         uint32_t src1_negate:1;
-         uint32_t src1_address_mode:1;
-         uint32_t src1_horiz_stride:2;
-         uint32_t src1_width:3;
-         uint32_t src1_vert_stride:4;
-         uint32_t pad1:7;
-      } ia1;
-
-      struct {
-         uint32_t src1_swz_x:2;
-         uint32_t src1_swz_y:2;
-         int  src1_indirect_offset:6;
-         uint32_t src1_subreg_nr:3;
-         uint32_t src1_abs:1;
-         uint32_t src1_negate:1;
-         uint32_t pad0:1;
-         uint32_t src1_swz_z:2;
-         uint32_t src1_swz_w:2;
-         uint32_t pad1:1;
-         uint32_t src1_vert_stride:4;
-         uint32_t pad2:7;
-      } ia16;
-
-      struct {
-         uint32_t function_control:19;
-         uint32_t header_present:1;
-         uint32_t response_length:5;
-         uint32_t msg_length:4;
-         uint32_t pad1:2;
-         uint32_t end_of_thread:1;
-      } generic_gen5;
-
-      struct {
-        uint32_t opcode:1;
-        uint32_t request:1;
-        uint32_t pad0:2;
-        uint32_t resource:1;
-        uint32_t pad1:14;
-        uint32_t header:1;
-        uint32_t response_length:5;
-        uint32_t msg_length:4;
-        uint32_t pad2:2;
-        uint32_t end_of_thread:1;
-      } spawner_gen5;
-
-      /** Ironlake PRM, Volume 4 Part 1, Section 6.1.1.1 */
-      struct {
-         uint32_t function:4;
-         uint32_t int_type:1;
-         uint32_t precision:1;
-         uint32_t saturate:1;
-         uint32_t data_type:1;
-         uint32_t snapshot:1;
-         uint32_t pad0:10;
-         uint32_t header_present:1;
-         uint32_t response_length:5;
-         uint32_t msg_length:4;
-         uint32_t pad1:2;
-         uint32_t end_of_thread:1;
-      } math_gen5;
-
-      struct {
-         uint32_t bti:8;
-         uint32_t sampler:4;
-         uint32_t msg_type:5;
-         uint32_t simd_mode:2;
-         uint32_t header_present:1;
-         uint32_t response_length:5;
-         uint32_t msg_length:4;
-         uint32_t pad1:2;
-         uint32_t end_of_thread:1;
-      } sampler_gen7;
-
-      /**
-       * Message for the Sandybridge Sampler Cache or Constant Cache Data Port.
-       *
-       * See the Sandybridge PRM, Volume 4 Part 1, Section 3.9.2.1.1.
-       **/
-      struct {
-         uint32_t bti:8;
-         uint32_t msg_control:5;
-         uint32_t msg_type:3;
-         uint32_t pad0:3;
-         uint32_t header_present:1;
-         uint32_t response_length:5;
-         uint32_t msg_length:4;
-         uint32_t pad1:2;
-         uint32_t end_of_thread:1;
-      } gen6_dp_sampler_const_cache;
-
-      /*! Data port untyped read / write messages */
-      struct {
-         uint32_t bti:8;
-         uint32_t rgba:4;
-         uint32_t simd_mode:2;
-         uint32_t msg_type:4;
-         uint32_t category:1;
-         uint32_t header_present:1;
-         uint32_t response_length:5;
-         uint32_t msg_length:4;
-         uint32_t pad2:2;
-         uint32_t end_of_thread:1;
-      } gen7_untyped_rw;
-
-      /*! Data port byte scatter / gather */
-      struct {
-         uint32_t bti:8;
-         uint32_t simd_mode:1;
-         uint32_t ignored0:1;
-         uint32_t data_size:2;
-         uint32_t ignored1:2;
-         uint32_t msg_type:4;
-         uint32_t category:1;
-         uint32_t header_present:1;
-         uint32_t response_length:5;
-         uint32_t msg_length:4;
-         uint32_t pad2:2;
-         uint32_t end_of_thread:1;
-      } gen7_byte_rw;
-
-      struct {
-         uint32_t src1_subreg_nr_high:1;
-         uint32_t src1_reg_nr:8;
-         uint32_t pad0:1;
-         uint32_t src2_rep_ctrl:1;
-         uint32_t src2_swizzle:8;
-         uint32_t src2_subreg_nr:3;
-         uint32_t src2_reg_nr:8;
-         uint32_t pad1:2;
-      } da3src;
-
-      int d;
-      uint32_t ud;
-      float f;
-   } bits3;
+    int d;
+    uint32_t ud;
+    float f;
+  } bits3;
 };
 
 #endif /* GEN_DEFINES_H */

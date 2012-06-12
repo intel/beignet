@@ -36,7 +36,7 @@
 namespace gbe
 {
   class Kernel;               // We build this structure
-  class GenEmitter;           // Helps emitting Gen ISA
+  class GenEncoder;           // Helps emitting Gen ISA
   class GenRegAllocator;      // Handle the register allocation
   class Selection;            // Performs instruction selection
   class SelectionInstruction; // Pre-RA Gen instruction
@@ -104,7 +104,7 @@ namespace gbe
     /*! Store the Gen instructions to patch */
     vector<std::pair<ir::LabelIndex, uint32_t>> branchPos2;
     /*! Encode Gen ISA */
-    GenEmitter *p;
+    GenEncoder *p;
     /*! Instruction selection on Gen ISA (pre-register allocation) */
     Selection *sel;
     /*! Perform the register allocation */

@@ -57,7 +57,7 @@ namespace gbe
   GenContext::GenContext(const ir::Unit &unit, const std::string &name) :
     Context(unit, name)
   {
-    this->p = GBE_NEW(GenEmitter, simdWidth, 7); // XXX handle more than Gen7
+    this->p = GBE_NEW(GenEncoder, simdWidth, 7); // XXX handle more than Gen7
     this->sel = newSimpleSelection(*this);
     this->ra = GBE_NEW(GenRegAllocator, *this);
   }
@@ -159,7 +159,7 @@ namespace gbe
 
   void GenContext::emitLabelInstruction(const SelectionInstruction &insn) {
     const ir::LabelIndex label(insn.index);
-    this->labelPos.insert(std::make_pair(label, p->insnNum));
+    this->labelPos.insert(std::make_pair(label, p->store.size()));
   }
 
   void GenContext::emitUnaryInstruction(const SelectionInstruction &insn) {
@@ -220,7 +220,7 @@ namespace gbe
   void GenContext::emitJumpInstruction(const SelectionInstruction &insn) {
     const ir::LabelIndex label(insn.index);
     const GenReg src = ra->genReg(insn.src[0]);
-    this->branchPos2.push_back(std::make_pair(label, p->insnNum));
+    this->branchPos2.push_back(std::make_pair(label, p->store.size()));
     p->JMPI(src);
   }
 
@@ -272,9 +272,9 @@ namespace gbe
     this->emitStackPointer();
     this->emitInstructionStream();
     this->patchBranches();
-    genKernel->insnNum = p->insnNum;
+    genKernel->insnNum = p->store.size();
     genKernel->insns = GBE_NEW_ARRAY(GenInstruction, genKernel->insnNum);
-    std::memcpy(genKernel->insns, p->store, genKernel->insnNum * sizeof(GenInstruction));
+    std::memcpy(genKernel->insns, &p->store[0], genKernel->insnNum * sizeof(GenInstruction));
     if (OCL_OUTPUT_ASM) {
       FILE *f = fopen("asm.dump", "wb");
       fwrite(genKernel->insns, 1, genKernel->insnNum * sizeof(GenInstruction), f);
