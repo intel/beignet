@@ -32,7 +32,7 @@ Then press 'c' to configure and 'g' to generate the code.
 The project depends on several external libraries:
 
 - Several X components (XLib, Xfixes, Xext)
-- libdrm libraries (libdrm and libdrm_intel)
+- libdrm libraries (libdrm and libdrm\_intel)
 - The compiler backend itself (libgbe)
 
 CMake will check the dependencies and will complain if it does not find them.
@@ -74,8 +74,8 @@ low-level parts of the code already supports it
 - We could be able to push NDRangeKernels into _different_ queues from several
 threads but it was never tested
 
-- No support for Enqueue*Buffer. I added a straightforward extension to map /
-unmap buffer. This extension `clIntelMapBuffer` directly maps dri_bo_map which
+- No support for Enqueue\*Buffer. I added a straightforward extension to map /
+unmap buffer. This extension `clIntelMapBuffer` directly maps `dri_bo_map` which
 is really convenient
 
 - No state tracking at all. One batch buffer is created at each "draw call"
@@ -90,7 +90,7 @@ to run anything else than your application to make Fulsim work with it. However,
 some specific step have to be completed first to make it work.
 
 - Compilation phase. You need to compile the project with fulsim enabled. You
-should choose "EMULATE_IVB ON" in ccmake options. Actually, Haswell has not been
+should choose `EMULATE_IVB ON` in ccmake options. Actually, Haswell has not been
 tested that much recently so there is a large probability it will not work
 properly
 
