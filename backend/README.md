@@ -14,6 +14,7 @@ The project uses CMake with three profiles:
   1. Debug (-g)
   2. RelWithDebInfo (-g with optimizations)
   3. Release (only optimizations)
+
 Basically, from the root directory of the project
 
 `> mkdir build`
@@ -39,7 +40,7 @@ How to run
 ----------
 
 There is nothing to do to run it. However, unit tests can be compiled (by
-setting GBE_COMPILE_UTESTS to true). Once compiled, you can simply run
+setting `GBE_COMPILE_UTESTS` to true). Once compiled, you can simply run
 
 `> ./tester # to run the unit tests`
 
@@ -55,10 +56,10 @@ Implementation details
 Several key decisions may use the hardware in an usual way. See the following
 documents for the technical details about the compiler implementation:
 
-- [Flat address space](doc/flat\_address\_space)
-- [Unstructured branches](doc/unstructured\_branches)
-- [Scalar intermediate representation](doc/gen\_ir)
-- [Clean backend implementation](doc/backend)
+- [Flat address space](doc/flat\_address\_space.html)
+- [Unstructured branches](doc/unstructured\_branches.html)
+- [Scalar intermediate representation](doc/gen\_ir.html)
+- [Clean backend implementation](doc/backend.html)
 
 Ben Segovia <benjamin.segovia@intel.com>
 

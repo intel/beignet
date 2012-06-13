@@ -1,0 +1,63 @@
+<h1>OpenCL Compiler</h1>
+
+<p>This code base contains the compiler part of the complete OpenCL stack. The
+run-time is not in this code base and is developed inside "OpenCL runtime"
+project. The compiler is responsible to take a OpenCL language string and to
+compile it into a binary that can be executed on Intel integrated GPUs.</p>
+
+<h2>How to build</h2>
+
+<p>The project uses CMake with three profiles:</p>
+
+<ol>
+<li>Debug (-g)</li>
+<li>RelWithDebInfo (-g with optimizations)</li>
+<li>Release (only optimizations)</li>
+</ol>
+
+<p>Basically, from the root directory of the project</p>
+
+<p><code>&gt; mkdir build</code></p>
+
+<p><code>&gt; ccmake ../ # to configure</code></p>
+
+<p>Choose whatever you want for the build</p>
+
+<p>Then press 'c' to configure and 'g' to generate the code</p>
+
+<p><code>&gt; make</code></p>
+
+<p>The project only depends on LLVM (Low-Level Virtual Machine project). Right
+now, the code has only been compiled with LLVM 3.0. It will not compile with
+any thing older. A small amount of work should be required to make it work
+with LLVM 3.1 but the port is not done. LLVM 3.0 can be downloaded at:</p>
+
+<p><a href="http://llvm.org/releases/">http://llvm.org/releases/</a></p>
+
+<p>Be careful and download LLVM <em>3.0</em></p>
+
+<h2>How to run</h2>
+
+<p>There is nothing to do to run it. However, unit tests can be compiled (by
+setting <code>GBE_COMPILE_UTESTS</code> to true). Once compiled, you can simply run</p>
+
+<p><code>&gt; ./tester # to run the unit tests</code></p>
+
+<h2>Limitations</h2>
+
+<p>Today, the compiler is far from complete. See doc/TODO.md for a (incomplete)
+lists of things to do.</p>
+
+<h2>Implementation details</h2>
+
+<p>Several key decisions may use the hardware in an usual way. See the following
+documents for the technical details about the compiler implementation:</p>
+
+<ul>
+<li><a href="doc/flat_address_space.html">Flat address space</a></li>
+<li><a href="doc/unstructured_branches.html">Unstructured branches</a></li>
+<li><a href="doc/gen_ir.html">Scalar intermediate representation</a></li>
+<li><a href="doc/backend.html">Clean backend implementation</a></li>
+</ul>
+
+<p>Ben Segovia <a href="&#109;&#x61;&#105;&#108;&#116;&#111;:&#x62;&#x65;&#110;j&#97;&#x6D;&#x69;&#110;&#x2E;&#x73;&#x65;&#x67;ov&#x69;&#x61;&#64;&#x69;n&#116;&#101;&#x6C;&#46;&#99;&#x6F;&#x6D;">&#x62;&#x65;&#110;j&#97;&#x6D;&#x69;&#110;&#x2E;&#x73;&#x65;&#x67;ov&#x69;&#x61;&#64;&#x69;n&#116;&#101;&#x6C;&#46;&#99;&#x6F;&#x6D;</a></p>
