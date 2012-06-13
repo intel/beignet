@@ -61,5 +61,5 @@ documents for the technical details about the compiler implementation:
 - [Scalar intermediate representation](doc/gen\_ir.html)
 - [Clean backend implementation](doc/backend.html)
 
-Ben Segovia <benjamin.segovia@intel.com>
+Ben Segovia (<benjamin.segovia@intel.com>)
 

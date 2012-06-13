@@ -689,8 +689,8 @@ namespace gbe
   }
 
   void SimpleSelection::emitForwardBranch(const ir::BranchInstruction &insn,
-                                       ir::LabelIndex dst,
-                                       ir::LabelIndex src)
+                                          ir::LabelIndex dst,
+                                          ir::LabelIndex src)
   {
     using namespace ir;
     const SelectionReg ip = this->selReg(ocl::blockip, TYPE_U16);
@@ -761,8 +761,8 @@ namespace gbe
   }
 
   void SimpleSelection::emitBackwardBranch(const ir::BranchInstruction &insn,
-                                        ir::LabelIndex dst,
-                                        ir::LabelIndex src)
+                                           ir::LabelIndex dst,
+                                           ir::LabelIndex src)
   {
     using namespace ir;
     const SelectionReg ip = this->selReg(ocl::blockip, TYPE_U16);
