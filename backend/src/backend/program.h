@@ -21,8 +21,8 @@
  * \file program.h
  * \author Benjamin Segovia <benjamin.segovia@intel.com>
  *
- * C interface for the gen kernels and programs (either real Gen ISA or Gen
- * simulator)
+ * C interface for the Gen kernels and programs (either real Gen ISA or Gen
+ * simulator). This is the only thing the run-time can see from the compiler
  */
 
 #ifndef __GBE_PROGRAM_H__

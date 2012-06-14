@@ -6,7 +6,7 @@ branches. Indeed LLVM does not make any distinction between structured branches.
 See [here](http://llvm.org/docs/LangRef.html) for a complete description of
 the LLVM assembly specification.
 
-The C code is simply lowered down in the following instructions:
+The C branching code is simply lowered down in the following instructions:
 
 - `ret` to return from the current function
 - `br` that, if predicated, possibly jumps to two destinations (one for the
@@ -34,9 +34,7 @@ reverse-engineering the LLVM code into the original C code.
 Unfortunately, there are several key problems:
 
 - OpenCL supports `goto` keyword that may jump to an arbitrary location
-
 - LLVM can transform the control flow graph in any kind of form
-
 - Worse is that a reducible control flow graph can be turned into an irreducible
 one by the optimizer.
 
@@ -120,11 +118,10 @@ we are not missing any computation done in block 4.
 
 To do so:
 - Instead of jumping from block 2 to block 5, we jump from block 2 to block 4. 
-
 - We implement a `JOIN` point on top of block 4. We check if any lane is going
 to be reactivated for the block 4. If not, we jump to block 5.
 
-This leads to the following altered CFG:
+This leads to the following linearized CFG:
 <pre>
 o-------o
 |       |
@@ -152,15 +149,15 @@ o-------o    |     |     |
     | o-->---o     |     |
     |              |     |
 o-------o          |     |
-|       |==========|=====|===O
-|   4   |<---------|-----o   #
-|       |<---------o         #
-o-------o                    #
-    |                        #
-    |                        #
-o-------o                    #
-|       |                    #
-|   5   |<===================O
+|       |==========|=====|====O
+|   4   |<---------|-----o    |
+|       |<---------o          |
+o-------o                     |
+    |                         |
+    |                         |
+o-------o                     |
+|       |                     |
+|   5   |<====================O
 |       |
 o-------o
 </pre>
@@ -196,12 +193,10 @@ predication, we can express all the different possibilities:
 
 - backward branches are always taken if _any_ of lanes in the predicate is true.
 We just use `<+f0.0.anyh>` predication.
-
 - forward branches is *not* taken if some of the lanes are going to activated in
 the next block. We therefore compare the blockIP with the ID of the _next_
 block. If all of them are strictly greater than the ID of the next block, we
 jump. We therefore use the `<+f0.0.allh>` predicate in that case.
-
 - `JOIN` points are even simpler. We simply jump if none of the lane is activated.
 We therefore use the `<-f0.0.anyh>` predicate.
 
@@ -217,7 +212,7 @@ The last problem is to compute `JOIN` point i.e. we need to know if we need to
 jump at the beginning of each block and if we do, what is the target of the
 branch. The code is relatively straightforward and can be found in
 `src/backend/context.cpp`. Function is `Context::buildJIPs`.
-
+</br>
 Actually, the current implementation is not that elegant. A colleague, Thomas
 Raoux, has a simpler and better idea to handle it.
 
@@ -227,7 +222,6 @@ Raoux, has a simpler and better idea to handle it.
 handle any kind of CFGs (reducible or not) and does not require any
 transformation. The use of shorts is also not random. 16-wide compares is issued
 in 2 cycles (so it is twice fast as 16-wide 32 bits compares).
-
 - Main drawback will be performance. Even if this is not so bad, we still need
 more instructions than if we used structured branches. Mostly
   * one or two instructions for `JOIN` points
@@ -249,7 +243,6 @@ Since we can handle any kind of CFG, handling the return statements are
 relatively straightforward. We first create one return block at the end of the
 program. Then we replace all other returns by a unconditional jump to this
 block. The CFG linearization will take care of the rest.
-
 We then simply encode the (only one) return instruction as a End-Of-Thread
 message (EOT).
 
@@ -258,6 +251,7 @@ Code examples
 
 Some tests were written to asser the correctness of the CFG linerization and the
 code generation. They can be found in the _run-time_ code base here:
+
 `utest/compiler_if_else.cpp`
 
 `utest/compiler_lower_return0.cpp`

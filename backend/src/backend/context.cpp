@@ -34,17 +34,63 @@
 
 namespace gbe
 {
-  ///////////////////////////////////////////////////////////////////////////
-  // RegisterFileAllocator (handles insertion and deletion of registers)
-  ///////////////////////////////////////////////////////////////////////////
-  RegisterFileAllocator::RegisterFileAllocator(void) {
+  /*! Structure that keeps track of allocation in the register file. This is
+   *  actually needed by Context (and not only by GenContext) because both
+   *  simulator and hardware have to deal with constant pushing which uses the
+   *  register file
+   *
+   *  Since Gen is pretty flexible, we just maintain a free list for the
+   *  register file (as a classical allocator) and coalesce blocks when required
+   */
+  class RegisterFilePartitioner
+  {
+  public:
+    RegisterFilePartitioner(void);
+    ~RegisterFilePartitioner(void);
+
+    /*! Allocate some memory in the register file. Return 0 if out-of-memory. By
+     *  the way, zero is not a valid offset since r0 is always preallocated by
+     *  the hardware. Note that we always use the left most block when
+     *  allocating, so it makes sense for constant pushing
+     */
+    int16_t allocate(int16_t size, int16_t alignment);
+
+    /*! Free the given register file piece */
+    void deallocate(int16_t offset);
+
+  private:
+    /*! May need to make that run-time in the future */
+    static const int16_t RegisterFileSize = 4*KB;
+
+    /*! Double chained list of free spaces */
+    struct Block {
+      Block(int16_t offset, int16_t size) :
+        prev(NULL), next(NULL), offset(offset), size(size) {}
+      Block *prev, *next; //!< Previous and next free blocks
+      int16_t offset;        //!< Where the free block starts
+      int16_t size;          //!< Size of the free block
+    };
+
+    /*! Try to coalesce two blocks (left and right). They must be in that order.
+     *  If the colascing was done, the left block is deleted
+     */
+    void coalesce(Block *left, Block *right);
+    /*! Head of the free list */
+    Block *head;
+    /*! Handle free list element allocation */
+    DECL_POOL(Block, blockPool);
+    /*! Track allocated memory blocks <offset, size> */
+    map<int16_t, int16_t> allocatedBlocks;
+  };
+
+  RegisterFilePartitioner::RegisterFilePartitioner(void) {
     // r0 is always set by the HW and used at the end by EOT
     const int16_t offset = GEN_REG_SIZE;
     const int16_t size = RegisterFileSize  - offset;
     head = this->newBlock(offset, size);
   }
 
-  RegisterFileAllocator::~RegisterFileAllocator(void) { 
+  RegisterFilePartitioner::~RegisterFilePartitioner(void) { 
     while (this->head) {
       Block *next = this->head->next;
       this->deleteBlock(this->head);
@@ -52,7 +98,7 @@ namespace gbe
     }
   }
 
-  int16_t RegisterFileAllocator::allocate(int16_t size, int16_t alignment)
+  int16_t RegisterFilePartitioner::allocate(int16_t size, int16_t alignment)
   {
     // Make it simple and just use the first block we find
     Block *list = head;
@@ -130,7 +176,7 @@ namespace gbe
     return 0;
   }
 
-  void RegisterFileAllocator::deallocate(int16_t offset)
+  void RegisterFilePartitioner::deallocate(int16_t offset)
   {
     // Retrieve the size in the allocation map
     auto it = allocatedBlocks.find(offset);
@@ -172,7 +218,7 @@ namespace gbe
     allocatedBlocks.erase(it);
   }
 
-  void RegisterFileAllocator::coalesce(Block *left, Block *right) {
+  void RegisterFilePartitioner::coalesce(Block *left, Block *right) {
     if (left == NULL || right == NULL) return;
     GBE_ASSERT(left->offset < right->offset);
     GBE_ASSERT(left->next == right);
@@ -199,9 +245,11 @@ namespace gbe
     GBE_ASSERT(unit.getPointerSize() == ir::POINTER_32_BITS);
     this->liveness = GBE_NEW(ir::Liveness, (ir::Function&) fn);
     this->dag = GBE_NEW(ir::FunctionDAG, *this->liveness);
+    this->partitioner = GBE_NEW(RegisterFilePartitioner);
     this->simdWidth = nextHighestPowerOf2(OCL_SIMD_WIDTH);
   }
   Context::~Context(void) {
+    GBE_SAFE_DELETE(this->partitioner);
     GBE_SAFE_DELETE(this->dag);
     GBE_SAFE_DELETE(this->liveness);
   }
@@ -218,6 +266,12 @@ namespace gbe
     return this->kernel;
   }
 
+  int16_t Context::allocate(int16_t size, int16_t alignment) {
+    return partitioner->allocate(size, alignment);
+  }
+
+  void Context::deallocate(int16_t offset) { partitioner->deallocate(offset); }
+
   void Context::buildStack(void) {
     const auto &stackUse = dag->getUse(ir::ocl::stackptr);
     if (stackUse.size() == 0)  // no stack is used if stackptr is unused
@@ -233,7 +287,7 @@ namespace gbe
                               uint32_t alignment)
   {
     alignment = alignment == 0 ? size : alignment;
-    const uint32_t offset = raFile.allocate(size, alignment);
+    const uint32_t offset = partitioner->allocate(size, alignment);
     GBE_ASSERT(offset >= GEN_REG_SIZE);
     kernel->patches.push_back(PatchInfo(value, subValue, offset - GEN_REG_SIZE));
     kernel->curbeSize = max(kernel->curbeSize, offset + size - GEN_REG_SIZE);

@@ -70,8 +70,9 @@ namespace gbe
   }
 
   /*! These are not hardware structs, just something useful to pass around */
-  struct GenReg
+  class GenReg
   {
+  public:
     /*! Empty constructor */
     INLINE GenReg(void) {}
 
@@ -415,8 +416,9 @@ namespace gbe
   };
 
   /*! Helper structure to emit Gen instructions */
-  struct GenEncoder
+  class GenEncoder
   {
+  public:
     /*! simdWidth is the default width for the instructions */
     GenEncoder(uint32_t simdWidth, uint32_t gen);
     /*! Size of the stack (should be large enough) */
@@ -521,6 +523,7 @@ namespace gbe
     void setSrc0(GenInstruction *insn, GenReg reg);
     void setSrc1(GenInstruction *insn, GenReg reg);
     GenInstruction *next(uint32_t opcode);
+    GBE_CLASS(GenEncoder); //!< Use custom allocators
   };
 
 } /* namespace gbe */

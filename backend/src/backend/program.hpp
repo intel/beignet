@@ -49,9 +49,9 @@ namespace gbe {
     INLINE PatchInfo(gbe_curbe_type type, uint32_t subType = 0u, uint32_t offset = 0u) :
       type(uint32_t(type)), subType(subType), offset(offset) {}
     INLINE PatchInfo(void) {}
-    uint32_t type : 8;
-    uint32_t subType : 8;
-    uint32_t offset : 16;
+    uint32_t type : 8;    //!< Type of the patch (see program.h for the list)
+    uint32_t subType : 8; //!< Optional sub-type of the patch (see program.h)
+    uint32_t offset : 16; //!< Optional offset to encode
   };
 
   /*! We will sort PatchInfo to make binary search */
@@ -61,15 +61,16 @@ namespace gbe {
   }
 
   /*! Describe a compiled kernel */
-  struct Kernel : public NonCopyable
+  class Kernel : public NonCopyable
   {
+  public:
     /*! Create an empty kernel with the given name */
     Kernel(const std::string &name);
     /*! Destroy it */
     virtual ~Kernel(void);
-    /*! Return the instruction stream */
+    /*! Return the instruction stream (to be implemented) */
     virtual const char *getCode(void) const = 0;
-    /*! Return the instruction stream size */
+    /*! Return the instruction stream size (to be implemented) */
     virtual size_t getCodeSize(void) const = 0;
     /*! Get the kernel name */
     INLINE const char *getName(void) const { return name.c_str(); }
@@ -92,19 +93,20 @@ namespace gbe {
     /*! Get the SIMD width for the kernel */
     uint32_t getSIMDWidth(void) const { return this->simdWidth; }
   protected:
-    friend class Context;       //!< Owns the kernels
-    const std::string name;     //!< Kernel name
-    KernelArgument *args;       //!< Each argument
-    uint32_t argNum;            //!< Number of function arguments
-    vector<PatchInfo> patches;  //!< Indicates how to build the curbe
-    uint32_t curbeSize;         //!< Size of the data to push
-    uint32_t simdWidth;         //!< SIMD size for the kernel
-    uint32_t stackSize;         //!< Stack size (may be 0 if unused)
+    friend class Context;      //!< Owns the kernels
+    const std::string name;    //!< Kernel name
+    KernelArgument *args;      //!< Each argument
+    vector<PatchInfo> patches; //!< Indicates how to build the curbe
+    uint32_t argNum;           //!< Number of function arguments
+    uint32_t curbeSize;        //!< Size of the data to push
+    uint32_t simdWidth;        //!< SIMD size for the kernel (lane number)
+    uint32_t stackSize;        //!< Stack size (may be 0 if unused)
   };
 
   /*! Describe a compiled program */
-  struct Program : public NonCopyable
+  class Program : public NonCopyable
   {
+  public:
     /*! Create an empty program */
     Program(void);
     /*! Destroy the program */
@@ -120,7 +122,7 @@ namespace gbe {
         return it->second;
     }
     /*! Get the kernel from its ID */
-    Kernel *getKernel(const uint32_t ID) const {
+    Kernel *getKernel(uint32_t ID) const {
       uint32_t currID = 0;
       Kernel *kernel = NULL;
       for (const auto &pair : kernels) {

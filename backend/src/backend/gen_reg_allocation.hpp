@@ -31,9 +31,9 @@
 
 namespace gbe
 {
-  class Selection;       // Pre-register allocation code generation
-  struct SelectionReg;   // Pre-register allocation Gen register
-  struct GenRegInterval; // Liveness interval for each register
+  class Selection;      // Pre-register allocation code generation
+  class SelectionReg;   // Pre-register allocation Gen register
+  class GenRegInterval; // Liveness interval for each register
 
   /*! Provides the location of a register in a vector */
   typedef std::pair<SelectionVector*, uint32_t> VectorLocation;
@@ -87,6 +87,8 @@ namespace gbe
     vector<GenRegInterval*> ending;
     /*! Current vector to expire */
     uint32_t expiringID;
+    /*! Use custom allocator */
+    GBE_CLASS(GenRegAllocator);
   };
 
 } /* namespace gbe */

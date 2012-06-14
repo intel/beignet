@@ -34,10 +34,10 @@ reverse-engineering the LLVM code into the original C code.
 Unfortunately, there are several key problems:</p>
 
 <ul>
-<li><p>OpenCL supports <code>goto</code> keyword that may jump to an arbitrary location</p></li>
-<li><p>LLVM can transform the control flow graph in any kind of form</p></li>
-<li><p>Worse is that a reducible control flow graph can be turned into an irreducible
-one by the optimizer.</p></li>
+<li>OpenCL supports <code>goto</code> keyword that may jump to an arbitrary location</li>
+<li>LLVM can transform the control flow graph in any kind of form</li>
+<li>Worse is that a reducible control flow graph can be turned into an irreducible
+one by the optimizer.</li>
 </ul>
 
 <p>This can lead to complicated code transform and basic block duplication. The
@@ -119,14 +119,11 @@ complicated. The problem is with the 2->5 jump. Indeed, we have to be sure that
 we are not missing any computation done in block 4.</p>
 
 <p>To do so:
-- Instead of jumping from block 2 to block 5, we jump from block 2 to block 4. </p>
+- Instead of jumping from block 2 to block 5, we jump from block 2 to block 4. 
+- We implement a <code>JOIN</code> point on top of block 4. We check if any lane is going
+to be reactivated for the block 4. If not, we jump to block 5.</p>
 
-<ul>
-<li>We implement a <code>JOIN</code> point on top of block 4. We check if any lane is going
-to be reactivated for the block 4. If not, we jump to block 5.</li>
-</ul>
-
-<p>This leads to the following altered CGF:</p>
+<p>This leads to the following altered CFG:</p>
 
 <pre>
 o-------o
@@ -198,14 +195,14 @@ the next block where some lanes is going to be activated.</p>
 predication, we can express all the different possibilities:</p>
 
 <ul>
-<li><p>backward branches are always taken if <em>any</em> of lanes in the predicate is true.
-We just use <code>&lt;+f0.0.anyh&gt;</code> predication.</p></li>
-<li><p>forward branches is <em>not</em> taken if some of the lanes are going to activated in
+<li>backward branches are always taken if <em>any</em> of lanes in the predicate is true.
+We just use <code>&lt;+f0.0.anyh&gt;</code> predication.</li>
+<li>forward branches is <em>not</em> taken if some of the lanes are going to activated in
 the next block. We therefore compare the blockIP with the ID of the <em>next</em>
 block. If all of them are strictly greater than the ID of the next block, we
-jump. We therefore use the <code>&lt;+f0.0.allh&gt;</code> predicate in that case.</p></li>
-<li><p><code>JOIN</code> points are even simpler. We simply jump if none of the lane is activated.
-We therefore use the <code>&lt;-f0.0.anyh&gt;</code> predicate.</p></li>
+jump. We therefore use the <code>&lt;+f0.0.allh&gt;</code> predicate in that case.</li>
+<li><code>JOIN</code> points are even simpler. We simply jump if none of the lane is activated.
+We therefore use the <code>&lt;-f0.0.anyh&gt;</code> predicate.</li>
 </ul>
 
 <p>The complete encoding is done in <code>src/backend/gen_insn_selection.cpp</code>. Forward
@@ -219,21 +216,20 @@ are at the top of each basic blocks, they are handled by
 <p>The last problem is to compute <code>JOIN</code> point i.e. we need to know if we need to
 jump at the beginning of each block and if we do, what is the target of the
 branch. The code is relatively straightforward and can be found in
-<code>src/backend/context.cpp</code>. Function is <code>Context::buildJIPs</code>.</p>
-
-<p>Actually, the current implementation is not that elegant. A colleague, Thomas
+<code>src/backend/context.cpp</code>. Function is <code>Context::buildJIPs</code>.
+</br>
+Actually, the current implementation is not that elegant. A colleague, Thomas
 Raoux, has a simpler and better idea to handle it.</p>
 
 <h3>Advantages and drawbacks of the method</h3>
 
 <ul>
-<li><p>The method has one decisive advantage: it is simple and extremely robust. It can
+<li>The method has one decisive advantage: it is simple and extremely robust. It can
 handle any kind of CFGs (reducible or not) and does not require any
 transformation. The use of shorts is also not random. 16-wide compares is issued
-in 2 cycles (so it is twice fast as 16-wide 32 bits compares).</p></li>
-<li><p>Main drawback will be performance. Even if this is not so bad, we still need
-more instructions than if we used structured branches. Mostly</p>
-
+in 2 cycles (so it is twice fast as 16-wide 32 bits compares).</li>
+<li>Main drawback will be performance. Even if this is not so bad, we still need
+more instructions than if we used structured branches. Mostly
 <ul>
 <li>one or two instructions for <code>JOIN</code> points</li>
 <li>three instructions for backward and forward jumps (two more than structured
@@ -254,16 +250,16 @@ for these two instructions. Once again, this would require only 2 cycles.</p>
 <p>Since we can handle any kind of CFG, handling the return statements are
 relatively straightforward. We first create one return block at the end of the
 program. Then we replace all other returns by a unconditional jump to this
-block. The CFG linearization will take care of the rest.</p>
-
-<p>We then simply encode the (only one) return instruction as a End-Of-Thread
+block. The CFG linearization will take care of the rest.
+We then simply encode the (only one) return instruction as a End-Of-Thread
 message (EOT).</p>
 
 <h2>Code examples</h2>
 
 <p>Some tests were written to asser the correctness of the CFG linerization and the
-code generation. They can be found in the <em>run-time</em> code base here:
-<code>utest/compiler_if_else.cpp</code></p>
+code generation. They can be found in the <em>run-time</em> code base here:</p>
+
+<p><code>utest/compiler_if_else.cpp</code></p>
 
 <p><code>utest/compiler_lower_return0.cpp</code></p>
 

@@ -18,7 +18,7 @@
  */
 
 /**
- * \file context.hpp
+ * \file gen_context.hpp
  * \author Benjamin Segovia <benjamin.segovia@intel.com>
  */
 
@@ -26,7 +26,6 @@
 #define __GBE_GEN_CONTEXT_HPP__
 
 #include "backend/context.hpp"
-#include "backend/gen_defs.hpp"
 #include "backend/program.h"
 #include "ir/function.hpp"
 #include "ir/liveness.hpp"
@@ -99,8 +98,6 @@ namespace gbe
     virtual Kernel *allocateKernel(void);
     /*! Store the position of each label instruction in the Gen ISA stream */
     map<ir::LabelIndex, uint32_t> labelPos;
-    /*! Store the position of each branch instruction in the Gen ISA stream */
-    map<const ir::Instruction*, uint32_t> branchPos;
     /*! Store the Gen instructions to patch */
     vector<std::pair<ir::LabelIndex, uint32_t>> branchPos2;
     /*! Encode Gen ISA */

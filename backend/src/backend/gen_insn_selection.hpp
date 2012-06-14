@@ -64,9 +64,10 @@ namespace gbe
     };
   }
 
-  /*! The state for each instruction */
-  struct SelectionState
+  /*! The state of each instruction */
+  class SelectionState
   {
+  public:
     INLINE SelectionState(uint32_t simdWidth = 8) {
       this->execWidth = simdWidth;
       this->quarterControl = GEN_COMPRESSION_Q1;
@@ -91,29 +92,9 @@ namespace gbe
    *  properly encoded later but it is not associated to a GRF, a flag or
    *  anything Gen related yet.
    */
-  struct SelectionReg
+  class SelectionReg
   {
-    /*! Associated virtual register */
-    ir::Register reg;
-
-    /*! For immediates */
-    union {
-      float f;
-      int32_t d;
-      uint32_t ud;
-    } immediate;
-
-    uint32_t nr:8;        //!< Just for some physical registers (acc, null)
-    uint32_t subnr:5;     //!< Idem
-    uint32_t type:4;      //!< Gen type
-    uint32_t file:2;      //!< Register file
-    uint32_t negation:1;  //!< For source
-    uint32_t absolute:1;  //!< For source
-    uint32_t vstride:4;   //!< Vertical stride
-    uint32_t width:3;     //!< Width
-    uint32_t hstride:2;   //!< Horizontal stride
-    uint32_t quarter:2;   //!< To choose which part we want
-
+  public:
     /*! Empty constructor */
     INLINE SelectionReg(void) {}
 
@@ -157,6 +138,27 @@ namespace gbe
       this->hstride = hstride;
       this->quarter = 0;
     }
+
+    /*! Associated virtual register */
+    ir::Register reg;
+
+    /*! For immediates */
+    union {
+      float f;
+      int32_t d;
+      uint32_t ud;
+    } immediate;
+
+    uint32_t nr:8;        //!< Just for some physical registers (acc, null)
+    uint32_t subnr:5;     //!< Idem
+    uint32_t type:4;      //!< Gen type
+    uint32_t file:2;      //!< Register file
+    uint32_t negation:1;  //!< For source
+    uint32_t absolute:1;  //!< For source
+    uint32_t vstride:4;   //!< Vertical stride
+    uint32_t width:3;     //!< Width
+    uint32_t hstride:2;   //!< Horizontal stride
+    uint32_t quarter:2;   //!< To choose which part we want
 
     static INLINE SelectionReg Qn(SelectionReg reg, uint32_t quarter) {
       if (reg.hstride == GEN_HORIZONTAL_STRIDE_0) // scalar register
@@ -489,17 +491,18 @@ namespace gbe
   /*! A selection instruction is also almost a Gen instruction but *before* the
    *  register allocation
    */
-  struct SelectionInstruction
+  class SelectionInstruction
   {
+  public:
     INLINE SelectionInstruction(void) : parent(NULL), prev(NULL), next(NULL) {}
-    /*! No more than 6 sources (used by typed writes) */
-    enum { MAX_SRC_NUM = 6 };
-    /*! No more than 4 destinations (used by samples and untyped reads) */
-    enum { MAX_DST_NUM = 4 };
     /*! Owns the instruction */
     SelectionBlock *parent;
     /*! Instruction are chained in the block */
     SelectionInstruction *prev, *next;
+    /*! No more than 6 sources (used by typed writes) */
+    enum { MAX_SRC_NUM = 6 };
+    /*! No more than 4 destinations (used by samples and untyped reads) */
+    enum { MAX_DST_NUM = 4 };
     /*! All destinations */
     SelectionReg dst[MAX_DST_NUM];
     /*! All sources */
@@ -523,8 +526,9 @@ namespace gbe
   /*! Some instructions like sends require to make some registers contiguous in
    *  memory
    */
-  struct SelectionVector
+  class SelectionVector
   {
+  public:
     INLINE SelectionVector(void) :
       insn(NULL), next(NULL), reg(NULL), regNum(0), isSrc(0) {}
     /*! The instruction that requires the vector of registers */
@@ -542,9 +546,12 @@ namespace gbe
   // Owns the selection block
   class Selection;
 
-  /*! A selection block is the counterpart of the ir::block */
-  struct SelectionBlock
+  /*! A selection block is the counterpart of the IR Basic block. It contains
+   *  the instructions generated from an IR basic block
+   */
+  class SelectionBlock
   {
+  public:
     INLINE SelectionBlock(const ir::BasicBlock *bb) :
       insnHead(NULL), insnTail(NULL), vector(NULL), next(NULL), bb(bb) {}
     /*! Minimum of temporary registers per block */
@@ -723,6 +730,7 @@ namespace gbe
     ALU1(LZD)
 #undef ALU1
 #undef ALU2
+
     /*! Encode a label instruction */
     void LABEL(ir::LabelIndex label);
     /*! Jump indexed instruction */

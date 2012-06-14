@@ -19,6 +19,8 @@ Basically, from the root directory of the project
 
 `> mkdir build`
 
+`> cd build`
+
 `> ccmake ../ # to configure`
 
 Choose whatever you want for the build
