@@ -100,3 +100,13 @@ Instruction scheduling
 Intra-basic block instruction scheduling is relatively simple. It is not
 implemented yet.
 
+Instruction encoding
+--------------------
+
+This is mostly done in `src/backend/gen_context.cpp` and
+`src/backend/gen_encoder./*pp`. This is mostly glue code and it is pretty
+straightforward. We just forward the selection code using the physically
+allocated registers. There is nothing special here. Just boilerplate.
+
+[Up](../README.html)
+

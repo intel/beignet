@@ -28,6 +28,7 @@
 #include "backend/gen_encoder.hpp"
 #include "backend/gen_insn_selection.hpp"
 #include "backend/gen_reg_allocation.hpp"
+#include "backend/gen/gen_mesa_disasm.h"
 #include "ir/function.hpp"
 #include "sys/cvar.hpp"
 #include <cstring>
@@ -258,11 +259,9 @@ namespace gbe
     genKernel->insnNum = p->store.size();
     genKernel->insns = GBE_NEW_ARRAY(GenInstruction, genKernel->insnNum);
     std::memcpy(genKernel->insns, &p->store[0], genKernel->insnNum * sizeof(GenInstruction));
-    if (OCL_OUTPUT_ASM) {
-      FILE *f = fopen("asm.dump", "wb");
-      fwrite(genKernel->insns, 1, genKernel->insnNum * sizeof(GenInstruction), f);
-      fclose(f);
-    }
+    if (OCL_OUTPUT_ASM)
+      for (uint32_t insnID = 0; insnID < genKernel->insnNum; ++insnID)
+        gen_disasm(stdout, &p->store[insnID]);
   }
 
   Kernel *GenContext::allocateKernel(void) {

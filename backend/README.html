@@ -38,6 +38,11 @@ with LLVM 3.1 but the port is not done. LLVM 3.0 can be downloaded at:</p>
 
 <p>Be careful and download LLVM <em>3.0</em></p>
 
+<p>Also note that the code was compiled on GCC 4.6 and GCC 4.7. Since the code uses
+really recent C++11 features, you may expect problems with older compilers. Last
+time I tried, the code breaks ICC 12 and Clang with internal compiler errors
+while compiling anonymous nested lambda functions.</p>
+
 <h2>How to run</h2>
 
 <p>There is nothing to do to run it. However, unit tests can be compiled (by
@@ -45,10 +50,43 @@ setting <code>GBE_COMPILE_UTESTS</code> to true). Once compiled, you can simply 
 
 <p><code>&gt; ./tester # to run the unit tests</code></p>
 
+<h2>Supported Hardware</h2>
+
+<p>Only IVB is supported right now. Actually, the code was only run on IVB GT2. You
+may expect some issues with IVB GT1. Also, the code should work as it is on HSW
+but it was not tested so you should expect number of issues with the HSW
+platform.</p>
+
 <h2>Limitations</h2>
 
-<p>Today, the compiler is far from complete. See doc/TODO.md for a (incomplete)
-lists of things to do.</p>
+<p>Today, the compiler is far from complete. See <a href="doc/TODO.html">here</a> for a
+(incomplete) lists of things to do.</p>
+
+<h2>Interface with the run-time</h2>
+
+<p>Even if the compiler makes a very liberal use of C++ (templates, variadic
+templates, macros), we really tried hard to make a very simple interface with
+the run-time. The interface is therefore a pure C99 interface and it is defined
+in <code>src/backend/program.h</code>.</p>
+
+<p>The goal is to hide the complexity of the inner data structures and to enable
+simple run-time implementation using straightforward C99.</p>
+
+<p>Note that the data structures are fully opaque: this allows us to use both the
+C++ simulator or the real Gen program in a relatively non-intrusive way.</p>
+
+<h2>Various environment variables</h2>
+
+<p>Environment variables are used all over the code. Most important ones are:</p>
+
+<ul>
+<li><p><code>OCL_SIMD_WIDTH</code> <code>(8 or 16)</code>. Change the number of lanes per hardware thread</p></li>
+<li><p><code>OCL_OUTPUT_GEN_IR</code> <code>(0 or 1)</code>. Output Gen ISA code into stdout</p></li>
+<li><p><code>OCL_OUTPUT_LLVM</code> <code>(0 or 1)</code>. Output LLVM code after the lowering passes</p></li>
+<li><p><code>OCL_OUTPUT_LLVM_BEFORE_EXTRA_PASS</code> <code>(0 or 1)</code>. Output LLVM code before the
+lowering passes</p></li>
+<li><p><code>OCL_OUTPUT_ASM</code> <code>(0 or 1)</code>. Output Gen ISA</p></li>
+</ul>
 
 <h2>Implementation details</h2>
 
@@ -60,6 +98,7 @@ documents for the technical details about the compiler implementation:</p>
 <li><a href="doc/unstructured_branches.html">Unstructured branches</a></li>
 <li><a href="doc/gen_ir.html">Scalar intermediate representation</a></li>
 <li><a href="doc/compiler_backend.html">Clean backend implementation</a></li>
+<li><a href="doc/c++_simulator.html">C++ OpenCL simulator</a></li>
 </ul>
 
-<p>Ben Segovia (<a href="m&#97;&#105;&#108;&#x74;&#x6F;:&#98;&#101;&#x6E;&#x6A;a&#109;&#x69;&#x6E;&#46;s&#101;&#103;&#x6F;&#x76;&#x69;&#x61;&#64;&#105;&#110;&#x74;&#101;l&#46;&#x63;&#x6F;&#109;">&#98;&#101;&#x6E;&#x6A;a&#109;&#x69;&#x6E;&#46;s&#101;&#103;&#x6F;&#x76;&#x69;&#x61;&#64;&#105;&#110;&#x74;&#101;l&#46;&#x63;&#x6F;&#109;</a>)</p>
+<p>Ben Segovia (<a href="&#109;&#x61;&#x69;&#x6C;&#x74;&#x6F;:&#98;&#101;&#x6E;&#106;&#x61;&#109;&#x69;&#x6E;&#46;s&#101;&#103;&#111;&#x76;&#x69;a&#64;&#x69;&#110;&#116;&#101;&#108;&#x2E;&#x63;&#x6F;&#109;">&#98;&#101;&#x6E;&#106;&#x61;&#109;&#x69;&#x6E;&#46;s&#101;&#103;&#111;&#x76;&#x69;a&#64;&#x69;&#110;&#116;&#101;&#108;&#x2E;&#x63;&#x6F;&#109;</a>)</p>

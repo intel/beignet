@@ -1,0 +1,85 @@
+TODO
+====
+
+The compiler is far from complete. Even if the skeleton is now done and should
+be solid, There are a _lot_ of things to do from trivial to complex.
+
+OpenCL standard library
+-----------------------
+
+Today we define the OpenCL API in header file `src/ocl_stdlib.h`. This file is
+from being complete.
+
+By the way, one question remains: do we want to implement
+the high-precision functions as _inline_ functions or as external functions to
+call? Indeed, inlining all functions may lead to severe code bloats while
+calling functions will require to implement a proper ABI. We certainly want to
+do both actually.
+
+LLVM front-end
+--------------
+
+The code is defined in `src/llvm/`.  We used the PTX ABI and the OpenCL profile
+to compile the code. Therefore, a good part of the job is already done. However,
+many things must be implemented:
+
+- Lowering down of various intrinsics like `llvm.memcpy`
+
+- Implementation of most of the OpenCL built-ins (`native_cos`, `native_sin`,
+  `mad`, atomic operations, barriers...)
+
+- Lowering down of int16 / int8 / float16 / char16 / char8 / char4 loads and
+  stores into the supported loads and stores
+
+- Support for constant buffers declared in the OpenCL source file
+
+- Support for local declaration of local array (the OpenCL profile will properly
+  declare them as global arrays)
+
+- Support for doubles
+
+- Support for images. This will require to ensure that images are only directly
+  accessed
+
+- Better resolving of the PHI functions. Today, we always generate MOV
+  instructions at the end of each basic block . They can be easily optimized.
+
+Gen IR
+------
+
+The code is defined in `src/ir/`. Main things to do are:
+
+- Bringing support for doubles
+
+- Adding proper support for SAMPLE and TYPED_WRITE instructions
+
+- Adding support for BARRIER instructions
+
+- Adding support for all the math instructions (native_cos, native_sin...)
+
+- Finishing the handling of function arguments (see the [IR
+  description](gen_ir.html) for more details)
+
+- Adding support for constant data per unit
+
+- Adding support for linking IR units together. OpenCL indeed allows to create
+programs from several sources
+
+Backend
+-------
+
+The code is defined in `src/backend`. Main things to do are:
+
+- Bringing backend support for the missing instructions described above
+  (native_sin, native_cos, barriers, samples...)
+
+- Implementing support for doubles
+
+- Implementing register spilling (see the [compiler backend
+  description](./compiler_backend.html) for more details)
+
+- Implementing proper instruction selection. A "simple" tree matching algorithm
+  should provide good results for Gen
+
+- Implementing the instruction scheduling pass
+

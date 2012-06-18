@@ -252,5 +252,5 @@ are in the TODO list for sure :-)
 Finally, we also provide a liveness analysis tool which simply figures out which
 registers are alive at the end of each block (classically "live out" sets).
 
-[Menu](../README.html)
+[Up](../README.html)
 

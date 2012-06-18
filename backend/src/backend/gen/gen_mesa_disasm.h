@@ -17,3 +17,29 @@
  * Author: Benjamin Segovia <benjamin.segovia@intel.com>
  */
 
+/**
+ * \file gen_mesa_disasm.h
+ * \author Benjamin Segovia <benjamin.segovia@intel.com>
+ *
+ * To decode and print one Gen ISA instruction. The code is directly taken
+ * from Mesa
+ */
+
+#ifndef __GBE_GEN_MESA_DISASM_H__
+#define __GBE_GEN_MESA_DISASM_H__
+
+#include <stdio.h>
+
+#ifdef __cplusplus
+extern "C" {
+#endif /* __cplusplus */
+
+extern int gen_disasm(FILE *file, const void *opaque_insn);
+
+#ifdef __cplusplus
+}
+#endif /* __cplusplus */
+
+#endif /* __GBE_GEN_MESA_DISASM_H__ */
+
+
