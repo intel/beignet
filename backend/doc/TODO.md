@@ -19,7 +19,7 @@ do both actually.
 LLVM front-end
 --------------
 
-The code is defined in `src/llvm/`.  We used the PTX ABI and the OpenCL profile
+The code is defined in `src/llvm`.  We used the PTX ABI and the OpenCL profile
 to compile the code. Therefore, a good part of the job is already done. However,
 many things must be implemented:
 
@@ -47,7 +47,7 @@ many things must be implemented:
 Gen IR
 ------
 
-The code is defined in `src/ir/`. Main things to do are:
+The code is defined in `src/ir`. Main things to do are:
 
 - Bringing support for doubles
 
@@ -82,4 +82,27 @@ The code is defined in `src/backend`. Main things to do are:
   should provide good results for Gen
 
 - Implementing the instruction scheduling pass
+
+General plumbering
+------------------
+
+I tried to keep the code clean, well, as far as C++ can be really clean. There
+are some header cleaning steps required though, in particular in the backend
+code.
+
+The context used in the IR code generation (see `src/ir/context.*pp`) should be
+split up and cleaned up too.
+
+I also purely and simply copied and pasted the Gen ISA disassembler from Mesa.
+This leads to code duplication. Also some messages used by OpenCL (untyped reads
+and writes) are not properly decoded yet.
+
+There are some quick and dirty hacks also like the use of function call `system`
+(...). This should be cleanly replaced by popen and stuff. I also directly
+called the LLVM compiler executable instead of using Clang library. All of this
+should be improved and cleaned up. Track "XXX" comments in the code.
+
+Parts of the code leaks memory when exceptions are used. There are some pointers
+to track and replace with std::unique_ptr. Note that we also add a custom memory
+debugger that nicely complements (i.e. it is fast) Valgrind.
 

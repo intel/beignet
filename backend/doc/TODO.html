@@ -16,14 +16,14 @@ do both actually.</p>
 
 <h2>LLVM front-end</h2>
 
-<p>The code is defined in <code>src/llvm/</code>.  We used the PTX ABI and the OpenCL profile
+<p>The code is defined in <code>src/llvm</code>.  We used the PTX ABI and the OpenCL profile
 to compile the code. Therefore, a good part of the job is already done. However,
 many things must be implemented:</p>
 
 <ul>
 <li><p>Lowering down of various intrinsics like <code>llvm.memcpy</code></p></li>
 <li><p>Implementation of most of the OpenCL built-ins (<code>native_cos</code>, <code>native_sin</code>,
-atomic operations, barriers...)</p></li>
+<code>mad</code>, atomic operations, barriers...)</p></li>
 <li><p>Lowering down of int16 / int8 / float16 / char16 / char8 / char4 loads and
 stores into the supported loads and stores</p></li>
 <li><p>Support for constant buffers declared in the OpenCL source file</p></li>
@@ -38,7 +38,7 @@ instructions at the end of each basic block . They can be easily optimized.</p><
 
 <h2>Gen IR</h2>
 
-<p>The code is defined in <code>src/ir/</code>. Main things to do are:</p>
+<p>The code is defined in <code>src/ir</code>. Main things to do are:</p>
 
 <ul>
 <li><p>Bringing support for doubles</p></li>
@@ -48,9 +48,43 @@ instructions at the end of each basic block . They can be easily optimized.</p><
 <li><p>Finishing the handling of function arguments (see the <a href="gen_ir.html">IR
 description</a> for more details)</p></li>
 <li><p>Adding support for constant data per unit</p></li>
-<li><p>Adding support for linking IR units together</p></li>
+<li><p>Adding support for linking IR units together. OpenCL indeed allows to create
+programs from several sources</p></li>
 </ul>
 
 <h2>Backend</h2>
 
 <p>The code is defined in <code>src/backend</code>. Main things to do are:</p>
+
+<ul>
+<li><p>Bringing backend support for the missing instructions described above
+(native<em>sin, native</em>cos, barriers, samples...)</p></li>
+<li><p>Implementing support for doubles</p></li>
+<li><p>Implementing register spilling (see the <a href="./compiler_backend.html">compiler backend
+description</a> for more details)</p></li>
+<li><p>Implementing proper instruction selection. A "simple" tree matching algorithm
+should provide good results for Gen</p></li>
+<li><p>Implementing the instruction scheduling pass</p></li>
+</ul>
+
+<h2>General plumbering</h2>
+
+<p>I tried to keep the code clean, well, as far as C++ can be really clean. There
+are some header cleaning steps required though, in particular in the backend
+code.</p>
+
+<p>The context used in the IR code generation (see <code>src/ir/context.*pp</code>) should be
+split up and cleaned up too.</p>
+
+<p>I also purely and simply copied and pasted the Gen ISA disassembler from Mesa.
+This leads to code duplication. Also some messages used by OpenCL (untyped reads
+and writes) are not properly decoded yet.</p>
+
+<p>There are some quick and dirty hacks also like the use of function call <code>system</code>
+(...). This should be cleanly replaced by popen and stuff. I also directly
+called the LLVM compiler executable instead of using Clang library. All of this
+should be improved and cleaned up. Track "XXX" comments in the code.</p>
+
+<p>Parts of the code leaks memory when exceptions are used. There are some pointers
+to track and replace with std::unique_ptr. Note that we also add a custom memory
+debugger that nicely complements (i.e. it is fast) Valgrind.</p>
