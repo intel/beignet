@@ -120,6 +120,8 @@ namespace ir {
     void initInstruction(BlockInfo &info, const Instruction &insn);
     /*! Now really compute LiveOut based on UEVar and VarKill */
     void computeLiveOut(void);
+    /*! Use custom allocators */
+    GBE_CLASS(Liveness);
   };
 
   /*! Output a nice ASCII reprensation of the liveness */

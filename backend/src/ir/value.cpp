@@ -68,6 +68,8 @@ namespace ir {
     void initializeOtherDef(void);
     /*! Iterate to completely transfer the liveness and get the def sets */
     void iterateLiveOut(void);
+    /*! Use custom allocators */
+    GBE_CLASS(LiveOutSet);
   };
 
   /*! Debug print of the liveout set */

@@ -81,6 +81,8 @@ namespace gbe
     DECL_POOL(Block, blockPool);
     /*! Track allocated memory blocks <offset, size> */
     map<int16_t, int16_t> allocatedBlocks;
+    /*! Use custom allocators */
+    GBE_CLASS(RegisterFilePartitioner);
   };
 
   RegisterFilePartitioner::RegisterFilePartitioner(void) {

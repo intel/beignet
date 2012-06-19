@@ -38,6 +38,10 @@ namespace gbe
   /*! Provides the location of a register in a vector */
   typedef std::pair<SelectionVector*, uint32_t> VectorLocation;
 
+  /*! Perform the register allocation (i.e. virtual to physical register
+   * mapping). TODO only define an abstract class in the header instead of this
+   * blob
+   */
   class GenRegAllocator
   {
   public:

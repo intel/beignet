@@ -757,6 +757,8 @@ namespace gbe
     void ALU1(uint32_t opcode, Reg dst, Reg src);
     /*! Encode binary instructions */
     void ALU2(uint32_t opcode, Reg dst, Reg src0, Reg src1);
+    /*! Use custom allocators */
+    GBE_CLASS(Selection);
   };
 
   /*! This is a simple one-to-many instruction selection */

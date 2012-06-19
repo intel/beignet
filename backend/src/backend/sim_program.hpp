@@ -34,8 +34,9 @@ namespace gbe {
   typedef void (SimKernelCallBack)();
 
   /*! Describe a compiled kernel */
-  struct SimKernel : public Kernel
+  class SimKernel : public Kernel
   {
+  public:
     /*! Create an empty kernel with the given name */
     SimKernel(const std::string &name);
     /*! Destroy it */
@@ -49,8 +50,9 @@ namespace gbe {
   };
 
   /*! Describe a compiled program */
-  struct SimProgram : public Program
+  class SimProgram : public Program
   {
+  public:
     /*! Create an empty program */
     SimProgram(void);
     /*! Destroy the program */

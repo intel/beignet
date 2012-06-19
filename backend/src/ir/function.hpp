@@ -134,6 +134,7 @@ namespace ir {
     Type type;     /*! Gives the type of argument we have */
     Register reg;  /*! Holds the argument */
     uint32_t size; /*! == sizeof(void*) for pointer, sizeof(elem) for the rest */
+    GBE_STRUCT(FunctionArgument);
   };
 
   /*! Maps the pushed register to the function argument */

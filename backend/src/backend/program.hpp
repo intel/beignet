@@ -101,6 +101,7 @@ namespace gbe {
     uint32_t curbeSize;        //!< Size of the data to push
     uint32_t simdWidth;        //!< SIMD size for the kernel (lane number)
     uint32_t stackSize;        //!< Stack size (may be 0 if unused)
+    GBE_CLASS(Kernel);         //!< Use custom allocators
   };
 
   /*! Describe a compiled program */
@@ -144,6 +145,8 @@ namespace gbe {
     virtual Kernel *compileKernel(const ir::Unit &unit, const std::string &name) = 0;
     /*! Kernels sorted by their name */
     hash_map<std::string, Kernel*> kernels;
+    /*! Use custom allocators */
+    GBE_CLASS(Program);
   };
 
 } /* namespace gbe */

@@ -55,6 +55,7 @@ namespace ir {
     uint32_t size;      //!< Size of the constant
     uint32_t alignment; //!< Alignment required for each constant
     uint32_t offset;    //!< Offset of the constant in the data segment
+    GBE_CLASS(Constant);
   };
 
   /*! A constant set is a set of immutable data associated to a compilation
@@ -68,6 +69,7 @@ namespace ir {
   private:
     vector<char> data;         //!< The constant data serialized in one array
     vector<Constant> constants;//!< Each constant description
+    GBE_CLASS(ConstantSet);
   };
 
 } /* namespace ir */

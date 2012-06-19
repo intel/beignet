@@ -1219,7 +1219,9 @@ namespace gbe
       NOT_SUPPORTED;
 
     // Get the name of the called function and handle it. We should use a hash
-    // map later
+    // map later. TODO This is just ugly. First hash the strings. Then, use a
+    // string -> int hash map and finally use a swicth case instead of that mess
+    // Or define new LLVM instrinsics
     const std::string fnName = Callee->getName();
     if (fnName == "__gen_ocl_get_group_id0")
       regTranslator.newScalarProxy(ir::ocl::groupid0, dst);

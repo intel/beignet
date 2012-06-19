@@ -68,6 +68,7 @@ namespace ir {
       double f64;
     } data;     //!< Value to store
     Type type;  //!< Type of the value
+    GBE_CLASS(Immediate);
   };
 
   /*! A value is stored in a per-function vector. This is the index to it */
