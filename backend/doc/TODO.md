@@ -63,7 +63,19 @@ The code is defined in `src/ir`. Main things to do are:
 - Adding support for constant data per unit
 
 - Adding support for linking IR units together. OpenCL indeed allows to create
-programs from several sources
+  programs from several sources
+
+- Uniform analysys. This is a major performance improvement. A "uniform" value
+  is basically a value where regardless the control flow, all the activated
+  lanes will be identical. Trivial examples are immediate values, function
+  arguments. Also, operations on uniform will produce uniform values and so
+  on...
+
+- Merging of independent uniform loads (and samples). This is a major
+  performance improvement once the uniform analysis is done. Basically, several
+  uniform loads may be collapsed into one load if no writes happens in-between.
+  This will obviously impact both instruction selection and the register
+  allocation.
 
 Backend
 -------
@@ -83,7 +95,7 @@ The code is defined in `src/backend`. Main things to do are:
 
 - Implementing the instruction scheduling pass
 
-General plumbering
+General plumbing
 ------------------
 
 I tried to keep the code clean, well, as far as C++ can be really clean. There

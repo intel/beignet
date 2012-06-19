@@ -2,7 +2,7 @@ Scalar Intermediate Representation
 ==================================
 
 The IR code is included in `src/ir/` of the compiler code base
-The IR as designed in this compiler is the fruit of a long reflexion I mostly
+The IR as designed in this compiler is the fruit of a long reflection I mostly
 have with Thomas Raoux. Note I usually call it "Gen IR".
 
 Scalar vs vector IR
@@ -43,7 +43,7 @@ output a store like:
 
 `store(%addr, %value)`
 
-which basiscally uses one scalar (the address) and one value (the vector to
+which basically uses one scalar (the address) and one value (the vector to
 write). Therefore even if we handle vectors in the IR, that will not directly
 solve the problem we have at the end for the send instructions.
 
@@ -82,7 +82,7 @@ require to be specifically handled at the very end of the code:
 problem
 
 - SIMD8 mode in SIMD16 code. Some send messages do not support SIMD16 encoding
-and require SIMD8. Typicall examples are typed writes i.e. scatters to textures.
+and require SIMD8. Typically examples are typed writes i.e. scatters to textures.
 Also, this cannot be encoded in some way in a regular scalar IR.
 
 For these reasons, most of the problems directly related to Gen naturally find
@@ -112,7 +112,7 @@ prevent us from choosing this path:
 - We only have a limited experience with LLVM and no experience at all with the
 LLVM backends
 
-- LLVM register allocators do not handle at all the specifities of Gen:
+- LLVM register allocators do not handle at all the peculiarities of Gen:
 
   * flexible register file. Gen registers are more like memory than registers
     and can be freely allocated and aliased. LLVM register allocators only
@@ -145,7 +145,7 @@ The IR is organized as follows:
   code is completely lowered down, there is no more reference to structures,
   pointers or vectors. Everything is scalar values and when "vectors" or
   "structures" would be needed, we use instead multiple scalar sources or
-  destiniations.
+  destinations.
 
 - Registers (defined in `src/ir/register.*pp`). They are untyped (since Gen IR
   are untyped) and we have 65,535 of them per function
@@ -167,7 +167,7 @@ The IR is organized as follows:
   blocks i.e. sequence of instructions that are executed linearly.
 
 - Units (defined in `src/ir/unit.*pp`). Units are just a collection of
-  functions and cosntants (not supported yet).
+  functions and constants (not supported yet).
 
 Function arguments and pushed constants
 ---------------------------------------

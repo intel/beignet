@@ -46,7 +46,7 @@ only.
 No support for stateless in required messages
 ---------------------------------------------
 
-Furthemore, in IVB, we are going four types of messages to implement the loads
+Furthermore, in IVB, we are going four types of messages to implement the loads
 and the stores
 
 - Byte scattered reads. They are used to read bytes/shorts/integers that are not

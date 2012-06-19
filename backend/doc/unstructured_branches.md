@@ -13,7 +13,7 @@ The C branching code is simply lowered down in the following instructions:
    taken branch and one for the other).
 - `switch` that implements the C switch/case construct.
 - `indirectbr` that implements a jump table
-- `invoke` and `resume` mostly used to handle execptions
+- `invoke` and `resume` mostly used to handle exceptions
 
 Exceptions and jump tables are not supported in OpenCL. Switch cases can be
 lowered down to a sequence of if/else statements (using a divide and conquer
@@ -59,7 +59,7 @@ architectures to such languages (see [here]
 
 ### Core idea
 
-- Linearizing the CFG initialle consists in removing all forward branches and
+- Linearizing the CFG initially consists in removing all forward branches and
 "replace" them by predication. Indeed, the program will be still correct if you
 predicate instructions based instead of forward jumps. This is basically the
 a control flow to data flow conversion.
@@ -249,7 +249,7 @@ message (EOT).
 Code examples
 -------------
 
-Some tests were written to asser the correctness of the CFG linerization and the
+Some tests were written to assert the correctness of the CFG linearization and the
 code generation. They can be found in the _run-time_ code base here:
 
 `utest/compiler_if_else.cpp`

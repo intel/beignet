@@ -2,7 +2,7 @@ OpenCL Compiler
 ===============
 
 This code base contains the compiler part of the complete OpenCL stack. The
-run-time is not in this code base and is developed inside "OpenCL runtime"
+run-time is not in this code base and is developed inside "OpenCL run-time"
 project. The compiler is responsible to take a OpenCL language string and to
 compile it into a binary that can be executed on Intel integrated GPUs.
 
@@ -27,7 +27,9 @@ Choose whatever you want for the build
 
 Then press 'c' to configure and 'g' to generate the code
 
-`> make`
+`> make # to build it`
+
+`> make install # to copy it in the proper place`
 
 The project only depends on LLVM (Low-Level Virtual Machine project). Right
 now, the code has only been compiled with LLVM 3.0. It will not compile with
@@ -87,7 +89,7 @@ Environment variables are used all over the code. Most important ones are:
 - `OCL_SIMD_WIDTH` `(8 or 16)`. Change the number of lanes per hardware thread
 
 - `OCL_OUTPUT_GEN_IR` `(0 or 1)`. Output Gen IR (scalar intermediate
-   representation) code
+  representation) code
 
 - `OCL_OUTPUT_LLVM` `(0 or 1)`. Output LLVM code after the lowering passes
 
