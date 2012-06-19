@@ -225,7 +225,7 @@ namespace gbe
     SelectionInstruction *insn = this->appendInsn();
     insn->opcode = SEL_OP_EOT;
     insn->state = this->curr;
-    insn->srcNum = 1;
+    insn->srcNum = 0;
     insn->dstNum = 0;
   }
 
