@@ -183,6 +183,7 @@ intel_driver_get_param(intel_driver_t *driver, int param, int *value)
   int ret;
   struct drm_i915_getparam gp;
 
+  memset(&gp, 0, sizeof(struct drm_i915_getparam));
   gp.param = param;
   gp.value = value;
 
@@ -218,7 +219,7 @@ intel_driver_init_master(intel_driver_t *driver, const char* dev_name)
   if (dev_fd == -1) return 0;
 
   // Check that we're authenticated and the only opener
-  client.idx = 0;
+  memset(&client, 0, sizeof(drm_client_t));
   int ret = ioctl(dev_fd, DRM_IOCTL_GET_CLIENT, &client);
   assert (ret == 0);
 
