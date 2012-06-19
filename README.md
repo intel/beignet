@@ -58,29 +58,41 @@ will run all the unit tests one after the others
 
 will only run `some_unit_test0` and `some_unit_test1` tests
 
-Limitations
------------
+TODO
+----
 
 The run-time is far from being complete. Most of the pieces have been put
-together to test and develop the OpenCL compiler.
+together to test and develop the OpenCL compiler. A partial list of things to
+do:
 
-- Some bugs may be still outstanding
+- Support for samplers / textures but it should be rather easy since the
+  low-level parts of the code already supports it
 
-- No support for samplers / textures but it should be rather easy since the
-low-level parts of the code already supports it
+- Support for events
 
-- No support for events
+- Check that NDRangeKernels can be pushed into _different_ queues from several
+  threads 
 
-- We could be able to push NDRangeKernels into _different_ queues from several
-threads but it was never tested
+- Support for Enqueue\*Buffer. I added a straightforward extension to map /
+  unmap buffer. This extension `clIntelMapBuffer` directly maps `dri_bo_map`
+  which is really convenient
 
-- No support for Enqueue\*Buffer. I added a straightforward extension to map /
-unmap buffer. This extension `clIntelMapBuffer` directly maps `dri_bo_map` which
-is really convenient
+- Full support for images. Today, the code just tiles everything *manually*
+  which is really bad. I think the best solution to copy and create images is to
+  use the GPU and typed writes (scatter to textures) or samplers. We would
+  however need the vmap extension proposed by Chris Wilson to be able to map
+  user pointers while doing to copies and the conversions.
 
 - No state tracking at all. One batch buffer is created at each "draw call"
-(i.e. for each NDRangeKernels). This is really inefficient since some expensive
-pipe controls are issued for each batch buffer
+  (i.e. for each NDRangeKernels). This is really inefficient since some
+  expensive pipe controls are issued for each batch buffer
+
+- Valgrind reports some leaks in libdrm. It sounds like a false positive but it
+  has to be checked. Idem for LLVM. There is one leak here to check
+
+More generally, everything in the run-time that triggers the "FATAL" macro means
+that something that must be supported is not implemented properly (either it
+does not comply with the standard or it is just missing)
 
 Fulsim
 ------
@@ -103,13 +115,13 @@ compile versions of it. They are all located in
 - Run-time phase. You need to fake the machine you want to simulate. Small
 scripts in the root directory of the project are responsible for doing that:
 
-  `> source setup_fulsim_ivb.sh 1`
+`> source setup_fulsim_ivb.sh 1`
 
-    will run fulsim in debug mode i.e. you will be able to step into the EU code
+will run fulsim in debug mode i.e. you will be able to step into the EU code
 
-  `> source setup_fulsim_ivb.sh 0`
+`> source setup_fulsim_ivb.sh 0`
 
-    will simply run fulsim
+will simply run fulsim
 
 - Modified libdrm. Unfortunately, to support fulsim, this run-time uses a
 modified libdrm library (in particular to support binary buffers and a seamless
@@ -118,11 +130,11 @@ integration with the run-time). See below.
 C++ simulator
 -------------
 
-The compiler is able to produce c++ file that simulate the behaviour of the
+The compiler is able to produce c++ file that simulate the behavior of the
 kernel. The idea is mostly to be able to gather statistics about how the kernel
 can run (SIMD occupancy, bank conflicts in shared local memory or cache hit/miss
 rates). Basically, the compiler generates a c++ file from the LLVM file (with
-some extra steps detailled in the OpenCL compiler documentation). Then, GCC (or
+some extra steps detailed in the OpenCL compiler documentation). Then, GCC (or
 ICC) is directly called to generate a shared object.
 
 The run-time is actually able to run the simulation code directly. To enable it
@@ -140,5 +152,5 @@ Right now, a modified libdrm is required to run fulsim. It completely disables
 the HW path (nothing will run on the HW at all) and allows to selectively dump
 any OpenCL buffer. Contact Ben Segovia to get the access to it.
 
-Ben Segovia <benjamin.segovia@intel.com>
+Ben Segovia (<benjamin.segovia@intel.com>)
 
