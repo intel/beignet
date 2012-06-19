@@ -26,7 +26,9 @@ set (TO_STRINGIFY_FILES ocl_stdlib)
 stringify ("${GBE_SOURCE_DIR}/src/" "${TO_STRINGIFY_FILES}")
 
 if (GBE_USE_BLOB)
-  set (GBE_SRC blob.cpp)
+  set (GBE_SRC
+       blob.cpp
+       backend/gen/gen_mesa_disasm.c)
 else (GBE_USE_BLOB)
   set (GBE_SRC
     ocl_stdlib.h
