@@ -32,6 +32,7 @@
 do { \
   fprintf(stderr, "error: "); \
   fprintf(stderr, __VA_ARGS__); \
+  fprintf(stderr, "\n");\
   assert(0); \
   exit(-1); \
 } while (0)
@@ -147,7 +148,7 @@ cl_kernel_init(const char *file_name, const char *kernel_name, int format)
   else if (format == SOURCE) {
     cl_file_map_t *fm = cl_file_map_new();
     FATAL_IF (cl_file_map_open(fm, ker_path) != CL_FILE_MAP_SUCCESS,
-              "Failed to open file");
+              "Failed to open file. Did you properly set OCL_KERNEL_PATH variable?");
     const char *src = cl_file_map_begin(fm);
     const size_t sz = cl_file_map_size(fm);
     program = clCreateProgramWithSource(ctx, 1, &src, &sz, &status);

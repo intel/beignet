@@ -24,8 +24,7 @@ main(int argc, char *argv[])
 {
   cl_mem dst[24];
   int *dst_buffer;
-  //const size_t n = 32 * 1024 * 1024;
-  const size_t n = 16;
+  const size_t n = 32 * 1024 * 1024;
   const size_t global_work_size = n;
   const size_t local_work_size = 16;
   int status = 0;
