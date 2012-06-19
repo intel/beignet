@@ -181,7 +181,7 @@ namespace gbe
   }
 
   /*! Will sort vector in decreasing order */
-  INLINE bool cmp(const SelectionVector *v0, const SelectionVector *v1) {
+  inline bool cmp(const SelectionVector *v0, const SelectionVector *v1) {
     return v0->regNum > v1->regNum;
   }
 
@@ -215,7 +215,7 @@ namespace gbe
   }
 
   template <bool sortStartingPoint>
-  INLINE bool cmp(const GenRegInterval *i0, const GenRegInterval *i1) {
+  inline bool cmp(const GenRegInterval *i0, const GenRegInterval *i1) {
     return sortStartingPoint ? i0->minID < i1->minID : i0->maxID < i1->maxID;
   }
 

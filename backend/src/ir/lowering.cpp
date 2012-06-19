@@ -359,8 +359,8 @@ namespace ir {
   }
 
   void FunctionArgumentLowerer::lower(uint32_t argID) {
+    IF_DEBUG(const ArgUse argUse = )this->getArgUse(argID);
 #if GBE_DEBUG
-    const ArgUse argUse = this->getArgUse(argID);
     GBE_ASSERTM(argUse != ARG_WRITTEN,
                 "TODO A store to a structure argument "
                 "(i.e. not a char/short/int/float argument) has been found. "
