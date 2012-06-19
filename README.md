@@ -48,7 +48,11 @@ Apart from the OpenCL library itself that can be used by any OpenCL application,
 this code also produces various tests to ensure the compiler and the run-time
 consistency. This small test framework uses a simple c++ registration system to
 register all the unit tests.
-Typically, in utests/:
+
+You need to set the variable `OCL_KERNEL_PATH` to locate the OCL kernels. They
+are with the run-time in `./kernels`.
+
+Then in `utests/`:
 
 `> ./run`
 
@@ -57,6 +61,11 @@ will run all the unit tests one after the others
 `> ./run some_unit_test0 some_unit_test1`
 
 will only run `some_unit_test0` and `some_unit_test1` tests
+
+As an important remark, the code was only tested on IVB GT2 with a rather
+minimal Linux distribution (ArchLinux) and a very small desktop (dwm). If you
+use something more sophisticated using compiz or similar stuffs, you may expect
+serious problems and GPU hangs.
 
 TODO
 ----
