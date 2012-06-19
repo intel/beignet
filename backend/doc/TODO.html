@@ -50,6 +50,16 @@ description</a> for more details)</p></li>
 <li><p>Adding support for constant data per unit</p></li>
 <li><p>Adding support for linking IR units together. OpenCL indeed allows to create
 programs from several sources</p></li>
+<li><p>Uniform analysys. This is a major performance improvement. A "uniform" value
+is basically a value where regardless the control flow, all the activated
+lanes will be identical. Trivial examples are immediate values, function
+arguments. Also, operations on uniform will produce uniform values and so
+on...</p></li>
+<li><p>Merging of independent uniform loads (and samples). This is a major
+performance improvement once the uniform analysis is done. Basically, several
+uniform loads may be collapsed into one load if no writes happens in-between.
+This will obviously impact both instruction selection and the register
+allocation.</p></li>
 </ul>
 
 <h2>Backend</h2>
@@ -67,7 +77,7 @@ should provide good results for Gen</p></li>
 <li><p>Implementing the instruction scheduling pass</p></li>
 </ul>
 
-<h2>General plumbering</h2>
+<h2>General plumbing</h2>
 
 <p>I tried to keep the code clean, well, as far as C++ can be really clean. There
 are some header cleaning steps required though, in particular in the backend

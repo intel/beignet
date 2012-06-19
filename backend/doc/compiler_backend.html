@@ -9,7 +9,7 @@ simple scalar IR to make it easy to parse and modify. The idea is to fix the
 unrelated problem (very Gen specific) where we can i.e. when the code is
 generated.</p>
 
-<p>The code generation in the compiler backend is classicaly divided into four
+<p>The code generation in the compiler backend is classically divided into four
 steps</p>
 
 <ul>
@@ -31,7 +31,7 @@ ISA.</p></li>
 <h2>Instruction selection</h2>
 
 <p>Usually, the instruction selection consists in mapping <code>p</code> instructions to <code>q</code>
-ISA instructions under a cost driven model. Each basic block is thefore <em>tiled</em>
+ISA instructions under a cost driven model. Each basic block is therefore <em>tiled</em>
 into some numbers of groups of ISA instructions such that the final cost is
 minimized.</p>
 
@@ -76,11 +76,11 @@ same time.</p>
 
 <p>Step 2 performs the register allocation i.e. it associates each virtual register
 to one (or several) physical registers. The first thing is that the Gen register
-file is very flexible i.e. it can (almost) be freely partioned. To handle this
-specifity, we simply implemented a free list based generic memory allocator as
+file is very flexible i.e. it can (almost) be freely partitioned. To handle this
+peculiarity, we simply implemented a free list based generic memory allocator as
 done with <code>RegisterFilePartitioner</code> in <code>src/backend/context.cpp</code>.</p>
 
-<p>We then simply implememented a linear scan allocator (see
+<p>We then simply implemented a linear scan allocator (see
 <code>gen_reg_allocation.cpp</code>). The spilling is not implemented and is still a work
 in progress. The thing is that spilling must be specifically handled with Gen.
 Indeed:</p>

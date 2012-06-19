@@ -5,7 +5,7 @@ branches. Indeed LLVM does not make any distinction between structured branches.
 See <a href="http://llvm.org/docs/LangRef.html">here</a> for a complete description of
 the LLVM assembly specification.</p>
 
-<p>The C code is simply lowered down in the following instructions:</p>
+<p>The C branching code is simply lowered down in the following instructions:</p>
 
 <ul>
 <li><code>ret</code> to return from the current function</li>
@@ -13,7 +13,7 @@ the LLVM assembly specification.</p>
 taken branch and one for the other).</li>
 <li><code>switch</code> that implements the C switch/case construct.</li>
 <li><code>indirectbr</code> that implements a jump table</li>
-<li><code>invoke</code> and <code>resume</code> mostly used to handle execptions</li>
+<li><code>invoke</code> and <code>resume</code> mostly used to handle exceptions</li>
 </ul>
 
 <p>Exceptions and jump tables are not supported in OpenCL. Switch cases can be
@@ -61,7 +61,7 @@ architectures to such languages (see [here]
 <h3>Core idea</h3>
 
 <ul>
-<li><p>Linearizing the CFG initialle consists in removing all forward branches and
+<li><p>Linearizing the CFG initially consists in removing all forward branches and
 "replace" them by predication. Indeed, the program will be still correct if you
 predicate instructions based instead of forward jumps. This is basically the
 a control flow to data flow conversion.</p></li>
@@ -123,7 +123,7 @@ we are not missing any computation done in block 4.</p>
 - We implement a <code>JOIN</code> point on top of block 4. We check if any lane is going
 to be reactivated for the block 4. If not, we jump to block 5.</p>
 
-<p>This leads to the following altered CFG:</p>
+<p>This leads to the following linearized CFG:</p>
 
 <pre>
 o-------o
@@ -152,15 +152,15 @@ o-------o    |     |     |
     | o-->---o     |     |
     |              |     |
 o-------o          |     |
-|       |==========|=====|===O
-|   4   |<---------|-----o   #
-|       |<---------o         #
-o-------o                    #
-    |                        #
-    |                        #
-o-------o                    #
-|       |                    #
-|   5   |<===================O
+|       |==========|=====|====O
+|   4   |<---------|-----o    |
+|       |<---------o          |
+o-------o                     |
+    |                         |
+    |                         |
+o-------o                     |
+|       |                     |
+|   5   |<====================O
 |       |
 o-------o
 </pre>
@@ -256,7 +256,7 @@ message (EOT).</p>
 
 <h2>Code examples</h2>
 
-<p>Some tests were written to asser the correctness of the CFG linerization and the
+<p>Some tests were written to assert the correctness of the CFG linearization and the
 code generation. They can be found in the <em>run-time</em> code base here:</p>
 
 <p><code>utest/compiler_if_else.cpp</code></p>
@@ -276,3 +276,5 @@ code generation. They can be found in the <em>run-time</em> code base here:</p>
 <p><code>utest/compiler_unstructured_branch2.cpp</code></p>
 
 <p><code>utest/compiler_unstructured_branch3.cpp</code></p>
+
+<p><a href="../README.html">Up</a></p>

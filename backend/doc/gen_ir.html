@@ -1,7 +1,7 @@
 <h1>Scalar Intermediate Representation</h1>
 
 <p>The IR code is included in <code>src/ir/</code> of the compiler code base
-The IR as designed in this compiler is the fruit of a long reflexion I mostly
+The IR as designed in this compiler is the fruit of a long reflection I mostly
 have with Thomas Raoux. Note I usually call it "Gen IR".</p>
 
 <h2>Scalar vs vector IR</h2>
@@ -42,7 +42,7 @@ output a store like:</p>
 
 <p><code>store(%addr, %value)</code></p>
 
-<p>which basiscally uses one scalar (the address) and one value (the vector to
+<p>which basically uses one scalar (the address) and one value (the vector to
 write). Therefore even if we handle vectors in the IR, that will not directly
 solve the problem we have at the end for the send instructions.</p>
 
@@ -79,7 +79,7 @@ require to be specifically handled at the very end of the code:</p>
 <li><p>send headers (value and register allocation) which are also part of the vector
 problem</p></li>
 <li><p>SIMD8 mode in SIMD16 code. Some send messages do not support SIMD16 encoding
-and require SIMD8. Typicall examples are typed writes i.e. scatters to textures.
+and require SIMD8. Typically examples are typed writes i.e. scatters to textures.
 Also, this cannot be encoded in some way in a regular scalar IR.</p></li>
 </ul>
 
@@ -109,7 +109,7 @@ prevent us from choosing this path:</p>
 <ul>
 <li><p>We only have a limited experience with LLVM and no experience at all with the
 LLVM backends</p></li>
-<li><p>LLVM register allocators do not handle at all the specifities of Gen:</p>
+<li><p>LLVM register allocators do not handle at all the peculiarities of Gen:</p>
 
 <ul>
 <li><p>flexible register file. Gen registers are more like memory than registers
@@ -143,7 +143,7 @@ to LLVM.</p>
 code is completely lowered down, there is no more reference to structures,
 pointers or vectors. Everything is scalar values and when "vectors" or
 "structures" would be needed, we use instead multiple scalar sources or
-destiniations.</p></li>
+destinations.</p></li>
 <li><p>Registers (defined in <code>src/ir/register.*pp</code>). They are untyped (since Gen IR
 are untyped) and we have 65,535 of them per function</p></li>
 <li><p>Instructions (defined in <code>src/ir/instruction.*pp</code>). They are typed (to
@@ -161,7 +161,7 @@ also defined one "register file" per function i.e. the registers are defined
 relatively to the function that uses them. Each function is made of basic
 blocks i.e. sequence of instructions that are executed linearly.</p></li>
 <li><p>Units (defined in <code>src/ir/unit.*pp</code>). Units are just a collection of
-functions and cosntants (not supported yet).</p></li>
+functions and constants (not supported yet).</p></li>
 </ul>
 
 <h2>Function arguments and pushed constants</h2>
@@ -245,4 +245,4 @@ are in the TODO list for sure :-)</p>
 <p>Finally, we also provide a liveness analysis tool which simply figures out which
 registers are alive at the end of each block (classically "live out" sets).</p>
 
-<p><a href="../README.html">Menu</a></p>
+<p><a href="../README.html">Up</a></p>
