@@ -1,7 +1,7 @@
 <h1>OpenCL Compiler</h1>
 
 <p>This code base contains the compiler part of the complete OpenCL stack. The
-run-time is not in this code base and is developed inside "OpenCL runtime"
+run-time is not in this code base and is developed inside "OpenCL run-time"
 project. The compiler is responsible to take a OpenCL language string and to
 compile it into a binary that can be executed on Intel integrated GPUs.</p>
 
@@ -27,7 +27,9 @@ compile it into a binary that can be executed on Intel integrated GPUs.</p>
 
 <p>Then press 'c' to configure and 'g' to generate the code</p>
 
-<p><code>&gt; make</code></p>
+<p><code>&gt; make # to build it</code></p>
+
+<p><code>&gt; make install # to copy it in the proper place</code></p>
 
 <p>The project only depends on LLVM (Low-Level Virtual Machine project). Right
 now, the code has only been compiled with LLVM 3.0. It will not compile with
@@ -102,4 +104,4 @@ documents for the technical details about the compiler implementation:</p>
 <li><a href="doc/c++_simulator.html">C++ OpenCL simulator</a></li>
 </ul>
 
-<p>Ben Segovia (<a href="&#x6D;&#x61;&#105;&#x6C;&#x74;&#111;:&#98;&#x65;&#x6E;j&#x61;&#x6D;&#105;&#110;&#x2E;&#115;&#x65;&#103;&#x6F;&#118;&#x69;&#x61;&#64;&#x69;&#110;&#116;&#101;&#x6C;&#46;&#x63;&#111;&#109;">&#98;&#x65;&#x6E;j&#x61;&#x6D;&#105;&#110;&#x2E;&#115;&#x65;&#103;&#x6F;&#118;&#x69;&#x61;&#64;&#x69;&#110;&#116;&#101;&#x6C;&#46;&#x63;&#111;&#109;</a>)</p>
+<p>Ben Segovia (<a href="&#x6D;&#x61;&#x69;&#x6C;&#116;&#x6F;:&#x62;&#101;n&#x6A;&#x61;&#x6D;&#105;&#110;&#x2E;s&#x65;&#x67;&#x6F;&#x76;&#105;&#x61;&#64;&#105;n&#116;&#x65;&#x6C;&#x2E;&#x63;&#x6F;&#109;">&#x62;&#101;n&#x6A;&#x61;&#x6D;&#105;&#110;&#x2E;s&#x65;&#x67;&#x6F;&#x76;&#105;&#x61;&#64;&#105;n&#116;&#x65;&#x6C;&#x2E;&#x63;&#x6F;&#109;</a>)</p>
