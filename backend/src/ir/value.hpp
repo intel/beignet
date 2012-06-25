@@ -190,7 +190,11 @@ namespace ir {
   /*! All possible definitions for a use */
   typedef set<ValueDef*> DefSet;
 
-  /*! Get the chains (in both directions) for the complete program */
+  /*! Get the chains (in both directions) for the complete program. This data
+   *  structure is unfortunately way too brutal. Using std::sets all over the
+   *  place just burns a huge amount of memory. There is work to do to decrease
+   *  the memory footprint
+   */
   class FunctionDAG : public NonCopyable
   {
   public:

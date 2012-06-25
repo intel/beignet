@@ -431,7 +431,7 @@ namespace gbe
     TheModule = &M;
 
     TAsm = new CBEMCAsmInfo();
-    TD = new TargetData(&M);
+    TD   = new TargetData(&M);
     MRI  = new MCRegisterInfo();
     TCtx = new MCContext(*TAsm, *MRI, NULL);
     Mang = new Mangler(*TCtx, *TD);

@@ -96,7 +96,7 @@ The code is defined in `src/backend`. Main things to do are:
 - Implementing the instruction scheduling pass
 
 General plumbing
-------------------
+----------------
 
 I tried to keep the code clean, well, as far as C++ can be really clean. There
 are some header cleaning steps required though, in particular in the backend

@@ -222,21 +222,21 @@ namespace gbe
 
     if(isa<GlobalVariable>(parentPointer)) //HACK: !!!!
     {
-#if FORMER_VERSION
+#if 1//FORMER_VERSION
       Function *constWrapper = 
         Function::Create(FunctionType::get(parentPointer->getType(),true),
             GlobalValue::ExternalLinkage,
-            Twine(CONSTWRAPPERNAME));
+            Twine("__gen_ocl_const_wrapper"));
 
-      std::vector<Value*> params;
-      params.push_back(parentPointer);
+      llvm::ArrayRef<Value*> params(parentPointer);
+      // params.push_back(parentPointer);
 
       //create and insert wrapper call
       CallInst * wrapperCall = 
-        CallInst::Create(constWrapper,params.begin(), params.end(),"",GEPInst);
+        CallInst::Create(constWrapper,params,"",GEPInst);
       parentPointer = wrapperCall;
 #else
-      NOT_IMPLEMENTED;
+      // NOT_IMPLEMENTED;
 #endif
     }
 

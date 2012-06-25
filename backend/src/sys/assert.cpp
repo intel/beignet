@@ -23,13 +23,17 @@
  */
 #if GBE_COMPILE_UTESTS
 
-#include "assert.hpp"
-#include "exception.hpp"
+#include "sys/assert.hpp"
+#include "sys/exception.hpp"
+#include "sys/cvar.hpp"
 #include <cassert>
 #include <cstdlib>
 
 namespace gbe
 {
+  BVAR(OCL_BREAK_POINT_IN_ASSERTION, false);
+  BVAR(OCL_ABORT_IN_ASSERTION, false);
+
   void onFailedAssertion(const char *msg, const char *file, const char *fn, int line)
   {
     char lineString[256];
@@ -40,7 +44,12 @@ namespace gbe
                           + std::string(file)
                           + ", function " + std::string(fn)
                           + ", line " + std::string(lineString);
-    // assert(0);
+    if (OCL_BREAK_POINT_IN_ASSERTION)
+      DEBUGBREAK();
+    if (OCL_ABORT_IN_ASSERTION) {
+      assert(false);
+      exit(-1);
+    }
     throw Exception(str);
   }
 } /* namespace gbe */
