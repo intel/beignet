@@ -1191,6 +1191,29 @@ namespace gbe
     }
   }
 
+  /*! All intrinsic Gen functions */
+  enum OCLInstrinsic {
+#define DECL_LLVM_GEN_FUNCTION(ID, NAME) GEN_OCL_##ID,
+#include "llvm_gen_ocl_function.hxx"
+#undef DECL_LLVM_GEN_FUNCTION
+  };
+
+  /*! Build the hash map for OCL functions on Gen */
+  struct OCLIntrinsicMap {
+    /*! Build the intrinsic hash map */
+    OCLIntrinsicMap(void) {
+#define DECL_LLVM_GEN_FUNCTION(ID, NAME) \
+  map.insert(std::make_pair("__gen_ocl_"#NAME, GEN_OCL_##ID));
+#include "llvm_gen_ocl_function.hxx"
+#undef DECL_LLVM_GEN_FUNCTION
+    }
+    /*! Sort intrinsics with their names */
+    hash_map<std::string, OCLInstrinsic> map;
+  };
+
+  /*! Sort the OCL Gen instrinsic functions (built on pre-main) */
+  static const OCLIntrinsicMap instrinsicMap;
+
   void GenWriter::regAllocateCallInst(CallInst &I) {
     Value *dst = &I;
     Value *Callee = I.getCalledValue();
@@ -1218,11 +1241,50 @@ namespace gbe
     if (I.getType() == Type::getVoidTy(I.getContext()))
       NOT_SUPPORTED;
 
-    // Get the name of the called function and handle it. We should use a hash
-    // map later. TODO This is just ugly. First hash the strings. Then, use a
-    // string -> int hash map and finally use a swicth case instead of that mess
-    // Or define new LLVM instrinsics
+    // Get the name of the called function and handle it
     const std::string fnName = Callee->getName();
+    auto it = instrinsicMap.map.find(fnName);
+    GBE_ASSERT(it != instrinsicMap.map.end());
+    switch (it->second) {
+      case GEN_OCL_GET_GROUP_ID0:
+        regTranslator.newScalarProxy(ir::ocl::groupid0, dst); break;
+      case GEN_OCL_GET_GROUP_ID1:
+        regTranslator.newScalarProxy(ir::ocl::groupid1, dst); break;
+      case GEN_OCL_GET_GROUP_ID2:
+        regTranslator.newScalarProxy(ir::ocl::groupid2, dst); break;
+      case GEN_OCL_GET_LOCAL_ID0:
+        regTranslator.newScalarProxy(ir::ocl::lid0, dst); break;
+      case GEN_OCL_GET_LOCAL_ID1:
+        regTranslator.newScalarProxy(ir::ocl::lid1, dst); break;
+      case GEN_OCL_GET_LOCAL_ID2:
+        regTranslator.newScalarProxy(ir::ocl::lid2, dst); break;
+      case GEN_OCL_GET_NUM_GROUPS0:
+        regTranslator.newScalarProxy(ir::ocl::numgroup0, dst); break;
+      case GEN_OCL_GET_NUM_GROUPS1:
+        regTranslator.newScalarProxy(ir::ocl::numgroup1, dst); break;
+      case GEN_OCL_GET_NUM_GROUPS2:
+        regTranslator.newScalarProxy(ir::ocl::numgroup2, dst); break;
+      case GEN_OCL_GET_LOCAL_SIZE0:
+        regTranslator.newScalarProxy(ir::ocl::lsize0, dst); break;
+      case GEN_OCL_GET_LOCAL_SIZE1:
+        regTranslator.newScalarProxy(ir::ocl::lsize1, dst); break;
+      case GEN_OCL_GET_LOCAL_SIZE2:
+        regTranslator.newScalarProxy(ir::ocl::lsize2, dst); break;
+      case GEN_OCL_GET_GLOBAL_SIZE0:
+        regTranslator.newScalarProxy(ir::ocl::gsize0, dst); break;
+      case GEN_OCL_GET_GLOBAL_SIZE1:
+        regTranslator.newScalarProxy(ir::ocl::gsize1, dst); break;
+      case GEN_OCL_GET_GLOBAL_SIZE2:
+        regTranslator.newScalarProxy(ir::ocl::gsize2, dst); break;
+      case GEN_OCL_GET_GLOBAL_OFFSET0:
+        regTranslator.newScalarProxy(ir::ocl::goffset0, dst); break;
+      case GEN_OCL_GET_GLOBAL_OFFSET1:
+        regTranslator.newScalarProxy(ir::ocl::goffset1, dst); break;
+      case GEN_OCL_GET_GLOBAL_OFFSET2:
+        regTranslator.newScalarProxy(ir::ocl::goffset2, dst); break;
+      default: NOT_SUPPORTED;
+    };
+#if 0
     if (fnName == "__gen_ocl_get_group_id0")
       regTranslator.newScalarProxy(ir::ocl::groupid0, dst);
     else if (fnName == "__gen_ocl_get_group_id1")
@@ -1261,6 +1323,7 @@ namespace gbe
       regTranslator.newScalarProxy(ir::ocl::goffset2, dst);
     else
       NOT_SUPPORTED;
+#endif
   }
 
   void GenWriter::emitCallInst(CallInst &I) {
