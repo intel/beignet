@@ -35,8 +35,8 @@ ADD_LIBRARY(utests SHARED
             compiler_function_argument.cpp
             compiler_function_argument0.cpp
             compiler_function_argument1.cpp
-            compiler_argument_structure.cpp
-            compiler_local_slm.cpp)
+            compiler_argument_structure.cpp)
+#compiler_local_slm.cpp)
 TARGET_LINK_LIBRARIES(utests cl m)
 
 ADD_EXECUTABLE(run utest_run.cpp)

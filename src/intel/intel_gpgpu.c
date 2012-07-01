@@ -216,38 +216,16 @@ intel_gpgpu_load_idrt(intel_gpgpu_t *gpgpu)
   ADVANCE_BATCH(gpgpu->batch);
 }
 
-static const uint32_t gpgpu_l3_config_reg1[] =
-{
-              // SLM    URB     DC      RO      I/S     C       T
-  0x00080040, //{ 0,    256,    0,      256,    0,      0,      0,      }
-  0x02040040, //{ 0,    256,    128,    128,    0,      0,      0,      }
-  0x00800040, //{ 0,    256,    32,     0,      64,     32,     128,    }
-  0x01000038, //{ 0,    224,    64,     0,      64,     32,     128,    }
-  0x02000030, //{ 0,    224,    128,    0,      64,     32,     64,     }
-  0x01000038, //{ 0,    224,    64,     0,      128,    32,     64,     }
-  0x00000038, //{ 0,    224,    0,      0,      128,    32,     128,    }
-  0x00000040, //{ 0,    256,    0,      0,      128,    0,      128,    }
-  0x0A140091, //{ 128,  128,    128,    128,    0,      0,      0,      }
-  0x09100091, //{ 128,  128,    64,     0,      64,     64,     64,     }
-  0x08900091, //{ 128,  128,    32,     0,      64,     32,     128,    }
-  0x08900091  //{ 128,  128,    32,     0,      128,    32,     64,     }
+static const uint32_t gpgpu_l3_config_reg1[] = {
+  0x00080040, 0x02040040, 0x00800040, 0x01000038,
+  0x02000030, 0x01000038, 0x00000038, 0x00000040,
+  0x0A140091, 0x09100091, 0x08900091, 0x08900091 
 };
 
-static const uint32_t gpgpu_l3_config_reg2[] =
-{
-              // SLM    URB     DC      RO      I/S     C       T
-  0x00000000, //{ 0,    256,    0,      256,    0,      0,      0,      }
-  0x00000000, //{ 0,    256,    128,    128,    0,      0,      0,      }
-  0x00080410, //{ 0,    256,    32,     0,      64,     32,     128,    }
-  0x00080410, //{ 0,    224,    64,     0,      64,     32,     128,    }
-  0x00040410, //{ 0,    224,    128,    0,      64,     32,     64,     }
-  0x00040420, //{ 0,    224,    64,     0,      128,    32,     64,     }
-  0x00080420, //{ 0,    224,    0,      0,      128,    32,     128,    }
-  0x00080020, //{ 0,    256,    0,      0,      128,    0,      128,    }
-  0x00204080, //{ 128,  128,    128,    128,    0,      0,      0,      }
-  0x00244890, //{ 128,  128,    64,     0,      64,     64,     64,     }
-  0x00284490, //{ 128,  128,    32,     0,      64,     32,     128,    }
-  0x002444A0  //{ 128,  128,    32,     0,      128,    32,     64,     }
+static const uint32_t gpgpu_l3_config_reg2[] = {
+  0x00000000, 0x00000000, 0x00080410, 0x00080410,
+  0x00040410, 0x00040420, 0x00080420, 0x00080020,
+  0x00204080, 0x00244890, 0x00284490, 0x002444A0
 };
 
 static void
@@ -547,16 +525,16 @@ intel_gpgpu_build_idrt(intel_gpgpu_t *gpgpu, cl_gpgpu_kernel *kernel)
     desc->desc5.group_threads_num = kernel->use_barrier ? kernel->thread_n : 0;
     desc->desc5.barrier_enable = kernel->use_barrier;
     if (slm_sz > 0) {
-      if (slm_sz <= 4 * KB)
-        slm_sz = 4 * KB; //4KB
-      else if (slm_sz <= 8 * KB)
-        slm_sz = 8 * KB; //8KB
-      else if (slm_sz <= 16 * KB)
-        slm_sz = 16 * KB; //16KB
-      else if (slm_sz <= 32 * KB)
-        slm_sz = 32 * KB; //32KB
-      else if (slm_sz <= 64 * KB)
-        slm_sz = 64 * KB; //64KB
+      if (slm_sz <= 4*KB)
+        slm_sz = 4*KB;
+      else if (slm_sz <= 8*KB)
+        slm_sz = 8*KB;
+      else if (slm_sz <= 16*KB)
+        slm_sz = 16*KB;
+      else if (slm_sz <= 32*KB)
+        slm_sz = 32*KB;
+      else if (slm_sz <= 64*KB)
+        slm_sz = 64*KB;
       slm_sz = slm_sz >> 12;
     }
     desc->desc5.slm_sz = slm_sz;
