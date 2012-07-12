@@ -1,0 +1,14 @@
+TOP=.
+SUBDIRS=src/backend src/backend/gen src/backend/sim src/ir src/llvm src/sys src
+include Makefile.defs
+
+LIBS=-Wl,--no-undefined $(shell llvm-config-3.0 --libs) -ldl -lpthread
+
+VERSION=0.0.1
+LIB=libgbe.so.$(VERSION)
+
+$(LIB): $(OBJ)
+	$(CXX) $(CXXFLAGS) -shared -o $@ $(OBJ) $(LIBS)
+
+clean:
+	rm -f $(LIB)
