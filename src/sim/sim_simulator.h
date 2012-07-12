@@ -20,7 +20,7 @@
 #ifndef __SIM_SIMULATOR_H__
 #define __SIM_SIMULATOR_H__
 
-#include "gen/simulator.h"
+#include "sim/simulator.h"
 
 /* Allocate and initialize a new Gen simulator that run the c++ backend code */
 extern gbe_simulator sim_simulator_new(void);

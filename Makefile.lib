@@ -1,0 +1,22 @@
+TOP=.
+SUBDIRS=src src/sim src/intel src/x11
+include Makefile.defs
+
+LIBS=-Wl,--no-undefined $(LIB_BACKEND) $(LOCAL_LIBS) -ldl -lpthread
+
+all: $(LIB) $(LIBMAJOR) $(LIBBASE)
+
+$(LIB): $(OBJ)
+	$(CXX) $(CXXFLAGS) -shared -o $@ $(OBJ) $(LIBS)
+
+$(LIBMAJOR): $(LIB)
+	rm -f $@
+	ln -s $(LIB) $@
+
+$(LIBBASE): $(LIBMAJOR)
+	rm -f $@
+	ln -s $(LIBMAJOR) $@
+
+clean:
+	rm -f $(LIB) $(LIBMAJOR) $(LIBBASE)
+

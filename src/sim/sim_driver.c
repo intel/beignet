@@ -23,8 +23,8 @@
 #include "sim/sim_driver.h"
 #include "CL/cl.h"
 #include "cl_driver.h"
-#include "gen/program.h"
-#include "gen/simulator.h"
+#include "program.h"
+#include "sim/simulator.h"
 #include "sim/sim_simulator.h"
 
 #include <stdlib.h>

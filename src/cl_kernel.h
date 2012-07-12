@@ -22,7 +22,7 @@
 
 #include "cl_internals.h"
 #include "cl_driver.h"
-#include "gen/program.h"
+#include "program.h"
 #include "CL/cl.h"
 
 #include <stdint.h>
