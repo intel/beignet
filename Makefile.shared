@@ -1,10 +1,10 @@
 include $(TOP)/Makefile.defs
 
-all: $(LIB)
+all:: $(LIB)
 
 $(OBJ): $(INC)
 
-clean:
+clean::
 	rm -f $(OBJ)
 	+cd $(TOP) && make -f Makefile.lib clean
 

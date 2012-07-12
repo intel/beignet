@@ -1,4 +1,4 @@
-GEN_BACKEND=$(TOP)/../gen-backend
+GEN_BACKEND=$(TOP)/backend
 
 LIB_BACKEND=$(GEN_BACKEND)/libgbe.so
 INC_BACKEND=$(GEN_BACKEND)/src/backend
