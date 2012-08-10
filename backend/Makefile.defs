@@ -15,5 +15,11 @@ CPP_SRC=$(shell for i in $(SUBDIRS); do ls $$i/*.cpp 2>/dev/null; done)
 
 OBJ=$(C_SRC:.c=.o) $(CPP_SRC:.cpp=.o)
 
-VERSION=0.0.1
-LIB=$(TOP)/libgbe.so.$(VERSION)
+LIBBASE=libgbe.so
+MAJOR=0
+MINOR=0
+REVISION=1
+
+VERSION=$(MAJOR).$(MINOR).$(REVISION)
+LIBMAJOR=$(LIBBASE).$(MAJOR)
+LIB=$(LIBMAJOR).$(MINOR).$(REVISION)
