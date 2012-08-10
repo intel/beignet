@@ -6,7 +6,7 @@ LIBS=-Wl,--no-undefined $(LIB_BACKEND) $(LOCAL_LIBS) -ldl -lpthread
 
 all: $(LIB) $(LIBMAJOR) $(LIBBASE)
 
-$(LIB): $(OBJ)
+$(LIB): $(OBJ) $(LIB_BACKEND)
 	$(CXX) $(CXXFLAGS) -shared -o $@ $(OBJ) $(LIBS)
 
 $(LIBMAJOR): $(LIB)
@@ -20,3 +20,5 @@ $(LIBBASE): $(LIBMAJOR)
 clean:
 	rm -f $(LIB) $(LIBMAJOR) $(LIBBASE)
 
+$(LIB_BACKEND):
+	+cd backend && make all
