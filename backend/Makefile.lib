@@ -2,7 +2,7 @@ TOP=.
 SUBDIRS=src/backend src/backend/gen src/backend/sim src/ir src/llvm src/sys src
 include Makefile.defs
 
-LIBS=-Wl,--no-undefined $(shell llvm-config-3.0 --libs) -ldl -lpthread
+LIBS=-Wl,--no-undefined -L$(shell llvm-config-3.0 --libdir) $(shell llvm-config-3.0 --libs) -ldl -lpthread
 
 VERSION=0.0.1
 

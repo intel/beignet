@@ -20,7 +20,7 @@ LOCAL_CFLAGS=-Wall -funroll-loops -Wstrict-aliasing -fstrict-aliasing \
 	-DNDEBUG -DGBE_DEBUG=0 -I$(TOP)/src -I$(TOP)/include \
 	-I$(INC_BACKEND) $(DRM_CFLAGS) $(XEXT_CFLAGS)
 
-LOCAL_LIBS=$(DRM_LIBS) $(XEXT_LIBS) $(LLVM_LIBS)
+LOCAL_LIBS=$(DRM_LIBS) $(XEXT_LIBS)
 
 LOCAL_CXXFLAGS=$(LOCAL_CFLAGS) -std=c++0x -fno-rtti -Wno-invalid-offsetof
 
