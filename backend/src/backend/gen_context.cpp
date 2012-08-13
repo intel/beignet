@@ -21,7 +21,6 @@
  * \file gen_context.cpp
  * \author Benjamin Segovia <benjamin.segovia@intel.com>
  */
-
 #include "backend/gen_context.hpp"
 #include "backend/gen_program.hpp"
 #include "backend/gen_defs.hpp"
@@ -110,7 +109,7 @@ namespace gbe
     // Check that everything is consistent in the kernel code
     const uint32_t perLaneSize = kernel->getStackSize();
     const uint32_t perThreadSize = perLaneSize * this->simdWidth;
-    const int32_t offset = kernel->getCurbeOffset(GBE_CURBE_EXTRA_ARGUMENT, GBE_STACK_BUFFER);
+    const int32_t offset = GEN_REG_SIZE + kernel->getCurbeOffset(GBE_CURBE_EXTRA_ARGUMENT, GBE_STACK_BUFFER);
     GBE_ASSERT(perLaneSize > 0);
     GBE_ASSERT(isPowerOf<2>(perLaneSize) == true);
     GBE_ASSERT(isPowerOf<2>(perThreadSize) == true);

@@ -409,12 +409,6 @@ namespace gbe
     });
   }
 
-  // The idea is that foward branches can by-pass the target of previous
-  // forward branches. Since we run in SIMD mode, we must be sure that we are
-  // not skipping some computations. The idea is therefore to put JOIN points at
-  // the head of each block and to restrict the distance where to jump when
-  // taking a forward branch. We traverse the blocks top to bottom and use a
-  // O(n^2) stupid algorithm to track down which branches we can by-pass
   void Context::buildJIPs(void) {
     using namespace ir;
 
@@ -427,7 +421,6 @@ namespace gbe
     // If some blocks are unused we mark them as such by setting their own label
     // as "invalid" (== noTarget)
     for (auto &bb : braTargets) bb = std::make_pair(noTarget, noTarget);
-
     fn.foreachBlock([&](const BasicBlock &bb) {
       const LabelIndex ownLabel = bb.getLabelIndex();
       const Instruction *last = bb.getLastInstruction();
@@ -439,71 +432,42 @@ namespace gbe
       }
     });
 
-    // For each block, we also figure out if the JOIN point (at the label
-    // instruction location) needs a branch to bypass useless computations
-    vector<LabelIndex> joinTargets;
-    joinTargets.resize(fn.labelNum());
-    for (auto &bb : joinTargets) bb = noTarget;
-
-    // We store here the labels bypassed by the current branch
-    vector<LabelIndex> bypassedLabels;
-    bypassedLabels.resize(blockNum);
+    // Stores the current forward targets
+    set<LabelIndex> fwdTargets;
 
     // Now retraverse the blocks and figure out all JIPs
     for (int32_t blockID = 0; blockID < blockNum; ++blockID) {
       const LabelIndex ownLabel = braTargets[blockID].first;
       const LabelIndex target = braTargets[blockID].second;
       const BasicBlock &bb = fn.getBlock(ownLabel);
-      const Instruction *insn = bb.getLastInstruction();
+      const Instruction *label = bb.getFirstInstruction();
+      const Instruction *bra = bb.getLastInstruction();
+
+      // Expires the branches that point to us (if any)
+      auto it = fwdTargets.find(ownLabel);
+      if (it != fwdTargets.end()) fwdTargets.erase(it);
+
+      // If there is an outstanding forward branch, compute a JIP for the label
+      auto lower = fwdTargets.lower_bound(LabelIndex(0));
+      GBE_ASSERT(label->isMemberOf<LabelInstruction>() == true);
+      if (lower != fwdTargets.end())
+        JIPs.insert(std::make_pair(label, *lower));
+
+      // Handle special cases and backward branches first
       if (ownLabel == noTarget) continue; // unused block
       if (target == noTarget) continue; // no branch at all
-      GBE_ASSERT(insn->isMemberOf<BranchInstruction>() == true);
+      GBE_ASSERT(bra->isMemberOf<BranchInstruction>() == true);
       if (target <= ownLabel) { // bwd branch: we always jump
-        JIPs.insert(std::make_pair(insn, LabelIndex(target)));
+        JIPs.insert(std::make_pair(bra, LabelIndex(target)));
         continue;
       }
 
-      // Traverse all previous blocks and see if we bypass their target
-      uint32_t bypassedNum = 0;
-      uint32_t JIP = target;
-      for (int32_t prevID = blockID-1; prevID >= 0; --prevID) {
-        const LabelIndex prevTarget = braTargets[prevID].second;
-        if (prevTarget == noTarget) continue; // no branch
-        if (prevTarget >= target) continue; // complete bypass
-        if (prevTarget <= ownLabel) continue; // branch falls before
-        bypassedLabels[bypassedNum++] = prevTarget;
-        JIP = min(uint32_t(JIP), uint32_t(prevTarget));
-      }
-
-      // We now have the (possibly) updated JIP for the branch
-      JIPs.insert(std::make_pair(insn, LabelIndex(JIP)));
-
-      // No bypassed targets
-      if (bypassedNum == 0) continue;
-
-      // When we have several bypassed targets, we must simply sort them and
-      // chain them such target_n points to target_{n+1}
-      bypassedLabels[bypassedNum++] = target;
-      std::sort(&bypassedLabels[0], &bypassedLabels[bypassedNum]);
-
-      // Bypassed labels have a JIP now. However, we will only insert the
-      // instructions later since *several* branches can bypass the same label.
-      // For that reason, we must consider the *minimum* JIP
-      for (uint32_t bypassedID = 0; bypassedID < bypassedNum-1; ++bypassedID) {
-        const LabelIndex curr = bypassedLabels[bypassedID];
-        const LabelIndex next = bypassedLabels[bypassedID+1];
-        joinTargets[curr] = min(joinTargets[curr], next);
-      }
+      // This is a forward jump, register it and get the JIP
+      fwdTargets.insert(target);
+      auto jip = fwdTargets.lower_bound(LabelIndex(0));
+      JIPs.insert(std::make_pair(bra, *jip));
     }
 
-    // Now we also processed all JOIN points (i.e. each label). We can insert
-    // the label instructions that have a JIP
-    for (uint32_t label = 0; label < fn.labelNum(); ++label) {
-      const LabelIndex target = joinTargets[label];
-      if (target == noTarget) continue;
-      const Instruction *insn = fn.getLabelInstruction(LabelIndex(label));
-      JIPs.insert(std::make_pair(insn, target));
-    }
   }
 
   bool Context::isScalarReg(const ir::Register &reg) const {

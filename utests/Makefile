@@ -11,7 +11,6 @@ C_SRC=utest_error.c
 CPP_SRC=\
 	app_mandelbrot.cpp \
 	compiler_argument_structure.cpp \
-	compiler_argument_structure_indirect.cpp \
 	compiler_array0.cpp \
 	compiler_array.cpp \
 	compiler_byte_scatter.cpp \
@@ -21,7 +20,6 @@ CPP_SRC=\
 	compiler_function_argument1.cpp \
 	compiler_function_argument.cpp \
 	compiler_if_else.cpp \
-	compiler_local_slm.cpp \
 	compiler_lower_return0.cpp \
 	compiler_lower_return1.cpp \
 	compiler_lower_return2.cpp \
@@ -42,6 +40,10 @@ CPP_SRC=\
 	utest.cpp \
 	utest_file_map.cpp \
 	utest_helper.cpp
+
+# unsupported for now
+# compiler_local_slm.cpp
+#compiler_argument_structure_indirect.cpp
 
 OBJ=$(C_SRC:.c=.o) $(CPP_SRC:.cpp=.o)
 

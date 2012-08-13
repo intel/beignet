@@ -53,7 +53,9 @@ namespace gbe
     // Get the global LLVM context
     llvm::LLVMContext& c = llvm::getGlobalContext();
     std::string errInfo;
-    std::unique_ptr<llvm::raw_fd_ostream> o(new llvm::raw_fd_ostream("-", errInfo));
+    std::unique_ptr<llvm::raw_fd_ostream> o = NULL;
+    if (OCL_OUTPUT_LLVM_BEFORE_EXTRA_PASS || OCL_OUTPUT_LLVM)
+      o = std::unique_ptr<llvm::raw_fd_ostream>(new llvm::raw_fd_ostream("-", errInfo));
 
     // Get the module from its file
     SMDiagnostic Err;
@@ -82,9 +84,11 @@ namespace gbe
     passes.run(mod);
 
     // raw_fd_ostream closes stdout. We must reopen it
-    o = NULL;
-    const int fd = open("/dev/tty", O_WRONLY);
-    stdout = fdopen(fd, "w");
+    if (OCL_OUTPUT_LLVM_BEFORE_EXTRA_PASS || OCL_OUTPUT_LLVM) {
+      o = NULL;
+      const int fd = open("/dev/tty", O_WRONLY);
+      stdout = fdopen(fd, "w");
+    }
 
     return true;
   }

@@ -1405,16 +1405,19 @@ namespace gbe
     const ir::Register reg = ctx.reg(pointerFamily);
     const ir::Immediate imm = ctx.getImmediate(immIndex);
 
+    // Set the destination register properly
+    ctx.MOV(imm.type, dst, stack);
+
     // Easy case, we just increment the stack pointer
     if (needMultiply == false) {
       ctx.LOADI(imm.type, reg, immIndex);
-      ctx.ADD(imm.type, dst, stack, reg);
+      ctx.ADD(imm.type, stack, stack, reg);
     }
     // Harder case (variable length array) that requires a multiply
     else {
       ctx.LOADI(imm.type, reg, immIndex);
       ctx.MUL(imm.type, reg, this->getRegister(src), reg);
-      ctx.ADD(imm.type, dst, stack, reg);
+      ctx.ADD(imm.type, stack, stack, reg);
     }
   }
 
