@@ -1,6 +1,6 @@
 include_directories(${CMAKE_CURRENT_SOURCE_DIR}
                     ${DRM_INCLUDE_PATH}
-                    ${GBE_INCLUDE_PATH}
+                    ${CMAKE_CURRENT_SOURCE_DIR}/../backend/src/backend/
                     ${CMAKE_CURRENT_SOURCE_DIR}/../include)
 
 set(OPENCL_SRC
@@ -18,9 +18,9 @@ set(OPENCL_SRC
     cl_command_queue.c
     cl_command_queue.h
     cl_command_queue_gen7.c
-    cl_driver.c
     cl_driver.h
     cl_driver.cpp
+    cl_driver_defs.c
     sim/sim_driver.c
     sim/sim_driver.h
     sim/sim_simulator.c
@@ -31,14 +31,14 @@ set(OPENCL_SRC
     x11/dricommon.c 
     x11/va_dri2.c)
 
+link_directories (${LLVM_LIBRARY_DIRS})
 add_library(cl SHARED ${OPENCL_SRC})
 target_link_libraries(cl
-                      ${GBE_LIBRARY}
-                      ${DRM_LIBRARY}
-                      ${DRM_INTEL_LIBRARY}
+                      gbe
                       ${XLIB_LIBRARY}
                       ${XEXT_LIBRARY}
                       ${XFIXES_LIBRARY}
+                      ${DRM_INTEL_LIBRARY}
                       ${DRM_LIBRARY})
 install (TARGETS cl LIBRARY DESTINATION lib)
 

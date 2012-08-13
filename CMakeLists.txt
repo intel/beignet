@@ -47,6 +47,9 @@ ENDIF (USE_FULSIM)
 SET(CMAKE_CXX_FLAGS "-Wall -Wno-invalid-offsetof -mfpmath=sse --no-rtti -Wcast-align -std=c++0x")
 SET(CMAKE_C_FLAGS "-Wall -mfpmath=sse -msse2 -Wcast-align")
 
+# Front end stuff we need
+Find_Package(LLVM REQUIRED)
+
 # XLib
 INCLUDE(CMake/FindXLib.cmake)
 IF(XLIB_FOUND)
@@ -95,7 +98,7 @@ ELSE(GBE_FOUND)
   MESSAGE(STATUS "Looking for Gen-Backend - not found")
 ENDIF(GBE_FOUND)
 
-# the run-time itself
+ADD_SUBDIRECTORY(backend)
 ADD_SUBDIRECTORY(src)
 ADD_SUBDIRECTORY(utests)
 
