@@ -29,7 +29,7 @@
 #include "gen_mesa_structs.h"
 
 static const struct {
-  char    *name;
+  const char    *name;
   int	    nsrc;
   int	    ndst;
 } opcode[128] = {
@@ -88,7 +88,7 @@ static const struct {
   [BRW_OPCODE_ENDIF] = { .name = "endif", .nsrc = 2, .ndst = 0 },
 };
 
-static char *conditional_modifier[16] = {
+static const char *conditional_modifier[16] = {
   [BRW_CONDITIONAL_NONE] = "",
   [BRW_CONDITIONAL_Z] = ".e",
   [BRW_CONDITIONAL_NZ] = ".ne",
@@ -101,17 +101,17 @@ static char *conditional_modifier[16] = {
   [BRW_CONDITIONAL_U] = ".u",
 };
 
-static char *negate[2] = {
+static const char *negate[2] = {
   [0] = "",
   [1] = "-",
 };
 
-static char *_abs[2] = {
+static const char *_abs[2] = {
   [0] = "",
   [1] = "(abs)",
 };
 
-static char *vert_stride[16] = {
+static const char *vert_stride[16] = {
   [0] = "0",
   [1] = "1",
   [2] = "2",
@@ -122,7 +122,7 @@ static char *vert_stride[16] = {
   [15] = "VxH",
 };
 
-static char *width[8] = {
+static const char *width[8] = {
   [0] = "1",
   [1] = "2",
   [2] = "4",
@@ -130,41 +130,41 @@ static char *width[8] = {
   [4] = "16",
 };
 
-static char *horiz_stride[4] = {
+static const char *horiz_stride[4] = {
   [0] = "0",
   [1] = "1",
   [2] = "2",
   [3] = "4"
 };
 
-static char *chan_sel[4] = {
+static const char *chan_sel[4] = {
   [0] = "x",
   [1] = "y",
   [2] = "z",
   [3] = "w",
 };
 
-static char *debug_ctrl[2] = {
+static const char *debug_ctrl[2] = {
   [0] = "",
   [1] = ".breakpoint"
 };
 
-static char *saturate[2] = {
+static const char *saturate[2] = {
   [0] = "",
   [1] = ".sat"
 };
 
-static char *accwr[2] = {
+static const char *accwr[2] = {
   [0] = "",
   [1] = "AccWrEnable"
 };
 
-static char *wectrl[2] = {
+static const char *wectrl[2] = {
   [0] = "WE_normal",
   [1] = "WE_all"
 };
 
-static char *exec_size[8] = {
+static const char *exec_size[8] = {
   [0] = "1",
   [1] = "2",
   [2] = "4",
@@ -173,12 +173,12 @@ static char *exec_size[8] = {
   [5] = "32"
 };
 
-static char *pred_inv[2] = {
+static const char *pred_inv[2] = {
   [0] = "+",
   [1] = "-"
 };
 
-static char *pred_ctrl_align16[16] = {
+static const char *pred_ctrl_align16[16] = {
   [1] = "",
   [2] = ".x",
   [3] = ".y",
@@ -188,7 +188,7 @@ static char *pred_ctrl_align16[16] = {
   [7] = ".all4h",
 };
 
-static char *pred_ctrl_align1[16] = {
+static const char *pred_ctrl_align1[16] = {
   [1] = "",
   [2] = ".anyv",
   [3] = ".allv",
@@ -202,36 +202,36 @@ static char *pred_ctrl_align1[16] = {
   [11] = ".all16h",
 };
 
-static char *thread_ctrl[4] = {
+static const char *thread_ctrl[4] = {
   [0] = "",
   [2] = "switch"
 };
 
-static char *compr_ctrl[4] = {
+static const char *compr_ctrl[4] = {
   [0] = "",
   [1] = "sechalf",
   [2] = "compr",
   [3] = "compr4",
 };
 
-static char *dep_ctrl[4] = {
+static const char *dep_ctrl[4] = {
   [0] = "",
   [1] = "NoDDClr",
   [2] = "NoDDChk",
   [3] = "NoDDClr,NoDDChk",
 };
 
-static char *mask_ctrl[4] = {
+static const char *mask_ctrl[4] = {
   [0] = "",
   [1] = "nomask",
 };
 
-static char *access_mode[2] = {
+static const char *access_mode[2] = {
   [0] = "align1",
   [1] = "align16",
 };
 
-static char *reg_encoding[8] = {
+static const char *reg_encoding[8] = {
   [0] = "UD",
   [1] = "D",
   [2] = "UW",
@@ -251,14 +251,14 @@ int reg_type_size[8] = {
   [7] = 4
 };
 
-static char *reg_file[4] = {
+static const char *reg_file[4] = {
   [0] = "A",
   [1] = "g",
   [2] = "m",
   [3] = "imm",
 };
 
-static char *writemask[16] = {
+static const char *writemask[16] = {
   [0x0] = ".",
   [0x1] = ".x",
   [0x2] = ".y",
@@ -277,12 +277,12 @@ static char *writemask[16] = {
   [0xf] = "",
 };
 
-static char *end_of_thread[2] = {
+static const char *end_of_thread[2] = {
   [0] = "",
   [1] = "EOT"
 };
 
-static char *target_function[16] = {
+static const char *target_function[16] = {
   [BRW_SFID_NULL] = "null",
   [BRW_SFID_MATH] = "math",
   [BRW_SFID_SAMPLER] = "sampler",
@@ -293,7 +293,7 @@ static char *target_function[16] = {
   [BRW_SFID_THREAD_SPAWNER] = "thread_spawner"
 };
 
-static char *target_function_gen6[16] = {
+static const char *target_function_gen6[16] = {
   [BRW_SFID_NULL] = "null",
   [BRW_SFID_MATH] = "math",
   [BRW_SFID_SAMPLER] = "sampler",
@@ -306,7 +306,7 @@ static char *target_function_gen6[16] = {
   [GEN7_SFID_DATAPORT_DATA_CACHE] = "data"
 };
 
-static char *dp_rc_msg_type_gen6[16] = {
+static const char *dp_rc_msg_type_gen6[16] = {
   [BRW_DATAPORT_READ_MESSAGE_OWORD_BLOCK_READ] = "OWORD block read",
   [GEN6_DATAPORT_READ_MESSAGE_RENDER_UNORM_READ] = "RT UNORM read",
   [GEN6_DATAPORT_READ_MESSAGE_OWORD_DUAL_BLOCK_READ] = "OWORD dual block read",
@@ -323,7 +323,7 @@ static char *dp_rc_msg_type_gen6[16] = {
   [GEN6_DATAPORT_WRITE_MESSAGE_RENDER_TARGET_UNORM_WRITE] = "RT UNORMc write",
 };
 
-static char *math_function[16] = {
+static const char *math_function[16] = {
   [BRW_MATH_FUNCTION_INV] = "inv",
   [BRW_MATH_FUNCTION_LOG] = "log",
   [BRW_MATH_FUNCTION_EXP] = "exp",
@@ -339,53 +339,53 @@ static char *math_function[16] = {
   [BRW_MATH_FUNCTION_INT_DIV_REMAINDER] = "intmod",
 };
 
-static char *math_saturate[2] = {
+static const char *math_saturate[2] = {
   [0] = "",
   [1] = "sat"
 };
 
-static char *math_signed[2] = {
+static const char *math_signed[2] = {
   [0] = "",
   [1] = "signed"
 };
 
-static char *math_scalar[2] = {
+static const char *math_scalar[2] = {
   [0] = "",
   [1] = "scalar"
 };
 
-static char *math_precision[2] = {
+static const char *math_precision[2] = {
   [0] = "",
   [1] = "partial_precision"
 };
 
-static char *urb_opcode[2] = {
+static const char *urb_opcode[2] = {
   [0] = "urb_write",
   [1] = "ff_sync",
 };
 
-static char *urb_swizzle[4] = {
+static const char *urb_swizzle[4] = {
   [BRW_URB_SWIZZLE_NONE] = "",
   [BRW_URB_SWIZZLE_INTERLEAVE] = "interleave",
   [BRW_URB_SWIZZLE_TRANSPOSE] = "transpose",
 };
 
-static char *urb_allocate[2] = {
+static const char *urb_allocate[2] = {
   [0] = "",
   [1] = "allocate"
 };
 
-static char *urb_used[2] = {
+static const char *urb_used[2] = {
   [0] = "",
   [1] = "used"
 };
 
-static char *urb_complete[2] = {
+static const char *urb_complete[2] = {
   [0] = "",
   [1] = "complete"
 };
 
-static char *sampler_target_format[4] = {
+static const char *sampler_target_format[4] = {
   [0] = "F",
   [2] = "UD",
   [3] = "D"
@@ -394,14 +394,14 @@ static char *sampler_target_format[4] = {
 
 static int column;
 
-static int string (FILE *file, char *string)
+static int string (FILE *file, const char *string)
 {
   fputs (string, file);
   column += strlen (string);
   return 0;
 }
 
-static int format (FILE *f, char *format, ...)
+static int format (FILE *f, const char *format, ...)
 {
   char    buf[1024];
   va_list	args;
@@ -428,7 +428,7 @@ static int pad (FILE *f, int c)
   return 0;
 }
 
-static int control (FILE *file, char *name, char *ctrl[], uint32_t id, int *space)
+static int control (FILE *file, const char *name, const char *ctrl[], uint32_t id, int *space)
 {
   if (!ctrl[id]) {
     fprintf (file, "*** invalid %s value %d ",
