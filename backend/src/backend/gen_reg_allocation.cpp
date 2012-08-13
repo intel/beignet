@@ -223,7 +223,7 @@ namespace gbe
     while (this->expiringID != ending.size()) {
       const GenRegInterval *toExpire = this->ending[this->expiringID];
       const ir::Register reg = toExpire->reg;
-      if (toExpire->minID >= limit.maxID)
+      if (toExpire->maxID >= limit.minID)
         return false;
       auto it = RA.find(reg);
       GBE_ASSERT(it != RA.end());
