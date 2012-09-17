@@ -26,6 +26,7 @@
 #include "ir/function.hpp"
 #include "backend/gen_insn_selection.hpp"
 #include "backend/gen_reg_allocation.hpp"
+#include "backend/gen_register.hpp"
 #include "backend/program.hpp"
 #include <algorithm>
 #include <climits>
@@ -50,16 +51,6 @@ namespace gbe
   GenRegAllocator::GenRegAllocator(GenContext &ctx) : ctx(ctx) {}
   GenRegAllocator::~GenRegAllocator(void) {}
 
-#define INSERT_REG(SIMD16, SIMD8, SIMD1) \
-  if (ctx.sel->isScalarOrBool(reg) == true) \
-    RA.insert(std::make_pair(reg, GenReg::SIMD1(nr, subnr))); \
-  else if (simdWidth == 8) \
-    RA.insert(std::make_pair(reg, GenReg::SIMD8(nr, subnr))); \
-  else if (simdWidth == 16) \
-    RA.insert(std::make_pair(reg, GenReg::SIMD16(nr, subnr))); \
-  else \
-    NOT_SUPPORTED;
-
   void GenRegAllocator::allocatePayloadReg(gbe_curbe_type value,
                                            ir::Register reg,
                                            uint32_t subValue,
@@ -67,24 +58,10 @@ namespace gbe
   {
     using namespace ir;
     const Kernel *kernel = ctx.getKernel();
-    const Function &fn = ctx.getFunction();
-    const uint32_t simdWidth = ctx.getSimdWidth();
     const int32_t curbeOffset = kernel->getCurbeOffset(value, subValue);
     if (curbeOffset >= 0) {
-      const uint32_t offset = curbeOffset + subOffset;
-      const ir::RegisterData data = fn.getRegisterData(reg);
-      const ir::RegisterFamily family = data.family;
-      const bool isScalar = ctx.sel->isScalarOrBool(reg);
-      const uint32_t typeSize = isScalar ? familyScalarSize[family] : familyVectorSize[family];
-      const uint32_t nr = (offset + GEN_REG_SIZE) / GEN_REG_SIZE;
-      const uint32_t subnr = ((offset + GEN_REG_SIZE) % GEN_REG_SIZE) / typeSize;
-      switch (family) {
-        case FAMILY_BOOL: INSERT_REG(uw1grf, uw1grf, uw1grf); break;
-        case FAMILY_WORD: INSERT_REG(uw16grf, uw8grf, uw1grf); break;
-        case FAMILY_BYTE: INSERT_REG(ub16grf, ub8grf, ub1grf); break;
-        case FAMILY_DWORD: INSERT_REG(f16grf, f8grf, f1grf); break;
-        default: NOT_SUPPORTED;
-      }
+      const uint32_t offset = GEN_REG_SIZE + curbeOffset + subOffset;
+      RA.insert(std::make_pair(reg, offset));
       this->intervals[reg].minID = 0;
     }
   }
@@ -102,24 +79,12 @@ namespace gbe
     const uint32_t regSize = simdWidth*typeSize;
     uint32_t grfOffset;
     while ((grfOffset = ctx.allocate(regSize, regSize)) == 0) {
-      IF_DEBUG(const bool success =) this->expire(interval);
+      IF_DEBUG(const bool success =) this->expireGRF(interval);
       GBE_ASSERTM(success, "Register allocation failed");
     }
-    if (grfOffset != 0) {
-      const uint32_t nr = grfOffset / GEN_REG_SIZE;
-      const uint32_t subnr = (grfOffset % GEN_REG_SIZE) / typeSize;
-      switch (family) {
-        case FAMILY_BOOL: INSERT_REG(uw1grf, uw1grf, uw1grf); break;
-        case FAMILY_WORD: INSERT_REG(uw16grf, uw8grf, uw1grf); break;
-        case FAMILY_BYTE: INSERT_REG(ub16grf, ub8grf, ub1grf); break;
-        case FAMILY_DWORD: INSERT_REG(f16grf, f8grf, f1grf); break;
-        default: NOT_SUPPORTED;
-      }
-    } else
-      GBE_ASSERTM(false, "Unable to register allocate");
+    GBE_ASSERTM(grfOffset != 0, "Unable to register allocate");
+    RA.insert(std::make_pair(reg, grfOffset));
   }
-
-#undef INSERT_REG
 
   bool GenRegAllocator::isAllocated(const SelectionVector *vector) const {
     const ir::Register first = vector->reg[0].reg;
@@ -219,19 +184,25 @@ namespace gbe
     return sortStartingPoint ? i0->minID < i1->minID : i0->maxID < i1->maxID;
   }
 
-  bool GenRegAllocator::expire(const GenRegInterval &limit) {
+  bool GenRegAllocator::expireGRF(const GenRegInterval &limit) {
     while (this->expiringID != ending.size()) {
       const GenRegInterval *toExpire = this->ending[this->expiringID];
       const ir::Register reg = toExpire->reg;
-      if (toExpire->minID >= limit.maxID)
+
+      // Ignore booleans that were allocated with flags
+      // if (ctx.getRegisterFamily(reg) == ir::FAMILY_BOOL && !grfBooleans.contains(reg)) {
+      if (ctx.sel->getRegisterFamily(reg) == ir::FAMILY_BOOL) {
+        this->expiringID++;
+        continue;
+      }
+      if (toExpire->maxID >= limit.minID)
         return false;
       auto it = RA.find(reg);
       GBE_ASSERT(it != RA.end());
 
       // Case 1 - it does not belong to a vector. Just remove it
       if (vectorMap.contains(reg) == false) {
-        const uint32_t offset = it->second.nr * GEN_REG_SIZE + it->second.subnr;
-        ctx.deallocate(offset);
+        ctx.deallocate(it->second);
         this->expiringID++;
         return true;
       // Case 2 - check that the vector has not been already removed. If not,
@@ -246,8 +217,7 @@ namespace gbe
           const ir::Register first = vector->reg[0].reg;
           auto it = RA.find(first);
           GBE_ASSERT(it != RA.end());
-          const uint32_t offset = it->second.nr * GEN_REG_SIZE + it->second.subnr;
-          ctx.deallocate(offset);
+          ctx.deallocate(it->second);
           expired.insert(vector);
           this->expiringID++;
           return true;
@@ -259,11 +229,188 @@ namespace gbe
     return false;
   }
 
+  void GenRegAllocator::allocateFlags(Selection &selection) {
+
+    // Store the registers allocated in the map
+    map<ir::Register, uint32_t> allocatedFlags;
+    GenRegInterval spill = ir::Register(ir::RegisterFile::MAX_INDEX);
+
+    // we have two flags we use for booleans f1.0 and f1.1
+    const uint32_t flagNum = 2;
+    uint32_t freeFlags[] = {0,1};
+    uint32_t freeNum = flagNum;
+
+    // Perform the linear scan allocator on the flag registers only. We only use
+    // two flags registers for the booleans right now: f1.0 and f1.1 
+    const uint32_t regNum = ctx.sel->regNum();
+    uint32_t endID = 0; // interval to expire
+    for (uint32_t startID = 0; startID < regNum; ++startID) {
+      const GenRegInterval &interval = *this->starting[startID];
+      const ir::Register reg = interval.reg;
+      if (ctx.sel->getRegisterFamily(reg) != ir::FAMILY_BOOL)
+        continue; // Not a flag. We don't care
+      if (grfBooleans.contains(reg))
+        continue; // Cannot use a flag register
+      if (interval.maxID == -INT_MAX)
+        continue; // Unused register
+      if (freeNum != 0) {
+        spill = interval;
+        allocatedFlags.insert(std::make_pair(reg, freeFlags[--freeNum]));
+      }
+      else {
+        // Try to expire one register
+        while (endID != ending.size()) {
+          const GenRegInterval *toExpire = this->ending[endID];
+          const ir::Register reg = toExpire->reg;
+          // We cannot expire this interval and the next ones
+          if (toExpire->maxID >= interval.minID)
+            break;
+          // Must be a boolean allocated with a flag register
+          if (ctx.sel->getRegisterFamily(reg) != ir::FAMILY_BOOL || grfBooleans.contains(reg)) {
+            endID++;
+            continue;
+          }
+          // We reuse a flag from a previous interval (the oldest one)
+          auto it = allocatedFlags.find(toExpire->reg);
+          GBE_ASSERT(it != allocatedFlags.end());
+          freeFlags[freeNum++] = it->second;
+          break;
+        }
+
+        // We need to spill one of the previous boolean values
+        if (freeNum == 0) {
+          GBE_ASSERT(uint16_t(spill.reg) != ir::RegisterFile::MAX_INDEX);
+          // We spill the last inserted boolean and use its flag instead for
+          // this one
+          if (spill.maxID > interval.maxID) {
+            auto it = allocatedFlags.find(spill.reg);
+            GBE_ASSERT(it != allocatedFlags.end());
+            allocatedFlags.insert(std::make_pair(reg, it->second));
+            allocatedFlags.erase(spill.reg);
+            grfBooleans.insert(spill.reg);
+            spill = interval;
+          }
+          // We will a grf for the current register
+          else
+            grfBooleans.insert(reg);
+        }
+        else
+          allocatedFlags.insert(std::make_pair(reg, freeFlags[--freeNum]));
+      }
+    }
+
+    // Now, we traverse all the selection instructions and we patch them to make
+    // them use flag registers
+    selection.foreachInstruction([&](SelectionInstruction &insn) {
+      const uint32_t srcNum = insn.srcNum, dstNum = insn.dstNum;
+
+      // Patch the source booleans
+      for (uint32_t srcID = 0; srcID < srcNum; ++srcID) {
+        const GenRegister selReg = insn.src[srcID];
+        const ir::Register reg = selReg.reg;
+        if (selReg.physical || ctx.sel->getRegisterFamily(reg) != ir::FAMILY_BOOL)
+          continue;
+        auto it = allocatedFlags.find(reg);
+        if (it == allocatedFlags.end())
+          continue;
+        // Use a flag register for it now
+        insn.src[srcID] = GenRegister::flag(1,it->second);
+      }
+
+      // Patch the destination booleans
+      for (uint32_t dstID = 0; dstID < dstNum; ++dstID) {
+        const GenRegister selReg = insn.dst[dstID];
+        const ir::Register reg = selReg.reg;
+        if (selReg.physical || ctx.sel->getRegisterFamily(reg) != ir::FAMILY_BOOL)
+          continue;
+        auto it = allocatedFlags.find(reg);
+        if (it == allocatedFlags.end())
+          continue;
+        // Use a flag register for it now
+        insn.dst[dstID] = GenRegister::flag(1,it->second);
+      }
+
+      // Patch the predicate now. Note that only compares actually modify it (it
+      // is called a "conditional modifier"). The other instructions just read
+      // it
+      if (insn.state.physicalFlag == 0) {
+        auto it = allocatedFlags.find(ir::Register(insn.state.flagIndex));
+        // Just patch it if we can use a flag directly
+        if (it != allocatedFlags.end()) {
+          insn.state.flag = 1;
+          insn.state.subFlag = it->second;
+          insn.state.physicalFlag = 1;
+        }
+        // When we let the boolean in a GRF, use f0.1 as a temporary
+        else {
+          // Mov the GRF to the flag such that the flag can be read
+          SelectionInstruction mov;
+          mov.opcode = SEL_OP_MOV;
+          mov.state = GenInstructionState(1);
+          mov.state.predicate = GEN_PREDICATE_NONE;
+          mov.state.noMask = 1;
+          mov.dstNum = mov.srcNum = 1;
+          mov.src[0] = GenRegister::uw1grf(ir::Register(insn.state.flagIndex));
+          mov.dst[0] = GenRegister::flag(0,1);
+          insn.appendBefore(mov);
+
+          // We can use f0.1 (our "backdoor" flag)
+          insn.state.flag = 0;
+          insn.state.subFlag = 1;
+          insn.state.physicalFlag = 1;
+
+          // Compare instructions update the flags so we must copy it back to
+          // the GRF
+          if (insn.opcode == SEL_OP_CMP) {
+            std::swap(mov.src[0], mov.dst[0]);
+            insn.appendAfter(mov);
+          }
+        }
+      }
+    });
+  }
+
+  void GenRegAllocator::allocateGRFs(Selection &selection) {
+
+    // Perform the linear scan allocator
+    const uint32_t regNum = ctx.sel->regNum();
+    for (uint32_t startID = 0; startID < regNum; ++startID) {
+      const GenRegInterval &interval = *this->starting[startID];
+      const ir::Register reg = interval.reg;
+      if (interval.maxID == -INT_MAX)
+        continue; // Unused register
+      if (RA.contains(reg))
+        continue; // already allocated
+
+      // Case 1: the register belongs to a vector, allocate all the registers in
+      // one piece
+      auto it = vectorMap.find(reg);
+      if (it != vectorMap.end()) {
+        const SelectionVector *vector = it->second.first;
+        const uint32_t simdWidth = ctx.getSimdWidth();
+        const uint32_t alignment = simdWidth * sizeof(uint32_t);
+        const uint32_t size = vector->regNum * alignment;
+        uint32_t grfOffset;
+        while ((grfOffset = ctx.allocate(size, alignment)) == 0) {
+          IF_DEBUG(const bool success =) this->expireGRF(interval);
+          GBE_ASSERTM(success, "Register allocation failed");
+        }
+        for (uint32_t regID = 0; regID < vector->regNum; ++regID, grfOffset += alignment) {
+          const ir::Register reg = vector->reg[regID].reg;
+          GBE_ASSERT(RA.contains(reg) == false);
+          RA.insert(std::make_pair(reg, grfOffset));
+        }
+      }
+      // Case 2: This is a regular scalar register, allocate it alone
+      else
+        this->createGenReg(interval);
+    }
+  }
+
   void GenRegAllocator::allocate(Selection &selection) {
     using namespace ir;
     const Kernel *kernel = ctx.getKernel();
     const Function &fn = ctx.getFunction();
-    const uint32_t simdWidth = ctx.getSimdWidth();
     GBE_ASSERT(fn.getProfile() == PROFILE_OCL);
 
     // Allocate all the vectors first since they need to be contiguous
@@ -292,20 +439,14 @@ namespace gbe
     allocatePayloadReg(GBE_CURBE_STACK_POINTER, ocl::stackptr);
 
     // Group IDs are always allocated by the hardware in r0
-    RA.insert(std::make_pair(ocl::groupid0, GenReg::f1grf(0, 1)));
-    RA.insert(std::make_pair(ocl::groupid1, GenReg::f1grf(0, 6)));
-    RA.insert(std::make_pair(ocl::groupid2, GenReg::f1grf(0, 7)));
+    RA.insert(std::make_pair(ocl::groupid0, 1*sizeof(float))); // r0.1
+    RA.insert(std::make_pair(ocl::groupid1, 6*sizeof(float))); // r0.6
+    RA.insert(std::make_pair(ocl::groupid2, 7*sizeof(float))); // r0.7
 
     // block IP used to handle the mask in SW is always allocated
-    int32_t blockIPOffset = GEN_REG_SIZE + kernel->getCurbeOffset(GBE_CURBE_BLOCK_IP,0);
+    const int32_t blockIPOffset = GEN_REG_SIZE + kernel->getCurbeOffset(GBE_CURBE_BLOCK_IP,0);
     GBE_ASSERT(blockIPOffset >= 0 && blockIPOffset % GEN_REG_SIZE == 0);
-    blockIPOffset /= GEN_REG_SIZE;
-    if (simdWidth == 8)
-      RA.insert(std::make_pair(ocl::blockip, GenReg::uw8grf(blockIPOffset, 0)));
-    else if (simdWidth == 16)
-      RA.insert(std::make_pair(ocl::blockip, GenReg::uw16grf(blockIPOffset, 0)));
-    else
-      NOT_SUPPORTED;
+    RA.insert(std::make_pair(ocl::blockip, blockIPOffset));
     this->intervals[ocl::blockip].minID = 0;
 
     // Allocate all (non-structure) argument parameters
@@ -337,7 +478,7 @@ namespace gbe
       block.foreach([&](const SelectionInstruction &insn) {
         const uint32_t srcNum = insn.srcNum, dstNum = insn.dstNum;
         for (uint32_t srcID = 0; srcID < srcNum; ++srcID) {
-          const SelectionReg &selReg = insn.src[srcID];
+          const GenRegister &selReg = insn.src[srcID];
           const ir::Register reg = selReg.reg;
           if (selReg.file != GEN_GENERAL_REGISTER_FILE ||
               reg == ir::ocl::groupid0 ||
@@ -348,13 +489,28 @@ namespace gbe
           this->intervals[reg].maxID = max(this->intervals[reg].maxID, insnID);
         }
         for (uint32_t dstID = 0; dstID < dstNum; ++dstID) {
-          const SelectionReg &selReg = insn.dst[dstID];
+          const GenRegister &selReg = insn.dst[dstID];
           const ir::Register reg = selReg.reg;
           if (selReg.file != GEN_GENERAL_REGISTER_FILE ||
               reg == ir::ocl::groupid0 ||
               reg == ir::ocl::groupid1 ||
               reg == ir::ocl::groupid2)
             continue;
+          this->intervals[reg].minID = min(this->intervals[reg].minID, insnID);
+          this->intervals[reg].maxID = max(this->intervals[reg].maxID, insnID);
+        }
+
+        // Flag registers can only go to src[0]
+        const SelectionOpcode opcode = SelectionOpcode(insn.opcode);
+        if (opcode == SEL_OP_AND || opcode == SEL_OP_OR) {
+          const ir::Register reg = insn.src[1].reg;
+          if (ctx.sel->getRegisterFamily(reg) == ir::FAMILY_BOOL)
+            grfBooleans.insert(reg);
+        }
+
+        // OK, a flag is used as a predicate or a conditional modifier
+        if (insn.state.physicalFlag == 0) {
+          const ir::Register reg = ir::Register(insn.state.flagIndex);
           this->intervals[reg].minID = min(this->intervals[reg].minID, insnID);
           this->intervals[reg].maxID = max(this->intervals[reg].maxID, insnID);
         }
@@ -394,7 +550,7 @@ namespace gbe
     }
 
     // Sort both intervals in starting point and ending point increasing orders
-    uint32_t regNum = ctx.sel->regNum();
+    const uint32_t regNum = ctx.sel->regNum();
     this->starting.resize(regNum);
     this->ending.resize(regNum);
     for (uint32_t regID = 0; regID < regNum; ++regID)
@@ -412,78 +568,37 @@ namespace gbe
         break;
     }
 
-    // Perform the linear scan allocator
-    for (uint32_t startID = 0; startID < regNum; ++startID) {
-      const GenRegInterval &interval = *this->starting[startID];
-      const ir::Register reg = interval.reg;
-      if (interval.maxID == -INT_MAX)
-        continue; // Unused register
-      if (RA.contains(reg))
-        continue; // already allocated
+    // First we try to put all booleans registers into flags
+    this->allocateFlags(selection);
 
-      // Case 1: the register belongs to a vector, allocate all the registers in
-      // one piece
-      auto it = vectorMap.find(reg);
-      if (it != vectorMap.end()) {
-        const SelectionVector *vector = it->second.first;
-        const uint32_t simdWidth = ctx.getSimdWidth();
-        const uint32_t alignment = simdWidth * sizeof(uint32_t);
-        const uint32_t size = vector->regNum * alignment;
-        uint32_t grfOffset;
-        while ((grfOffset = ctx.allocate(size, alignment)) == 0) {
-          IF_DEBUG(const bool success =) this->expire(interval);
-          GBE_ASSERTM(success, "Register allocation failed");
-        }
-        //GBE_ASSERTM(grfOffset != 0, "Unable to register allocate");
-        for (uint32_t regID = 0; regID < vector->regNum; ++regID, grfOffset += alignment) {
-          const ir::Register reg = vector->reg[regID].reg;
-          const uint32_t nr = grfOffset / GEN_REG_SIZE;
-          const uint32_t subnr = (grfOffset % GEN_REG_SIZE) / sizeof(uint32_t);
-          GBE_ASSERT(RA.contains(reg) == false);
-          if (simdWidth == 16)
-            RA.insert(std::make_pair(reg, GenReg::f16grf(nr, subnr)));
-          else if (simdWidth == 8)
-            RA.insert(std::make_pair(reg, GenReg::f8grf(nr, subnr)));
-          else
-            NOT_SUPPORTED;
-        }
-      }
-      // Case 2: This is a regular scalar register, allocate it alone
-      else
-        this->createGenReg(interval);
-    }
+    // Allocate all the GRFs now (regular register and boolean that are not in
+    // flag registers)
+    this->allocateGRFs(selection);
   }
 
-  INLINE void setGenReg(GenReg &dst, const SelectionReg &src) {
-    dst.type = src.type;
-    dst.file = src.file;
-    dst.negation = src.negation;
-    dst.absolute = src.absolute;
-    dst.vstride = src.vstride;
-    dst.width = src.width;
-    dst.hstride = src.hstride;
-    dst.address_mode = GEN_ADDRESS_DIRECT;
-    dst.dw1.ud = src.immediate.ud;
+  INLINE GenRegister setGenReg(const GenRegister &src, uint32_t grfOffset) {
+    GenRegister dst;
+    dst = src;
+    dst.physical = 1;
+    dst.nr = grfOffset / GEN_REG_SIZE;
+    dst.subnr = grfOffset % GEN_REG_SIZE;
+    return dst;
   }
 
-  GenReg GenRegAllocator::genReg(const SelectionReg &reg) {
+  GenRegister GenRegAllocator::genReg(const GenRegister &reg) {
     // Right now, only GRF are allocated (TODO bool) ...
     if (reg.file == GEN_GENERAL_REGISTER_FILE) {
       GBE_ASSERT(RA.contains(reg.reg) != false);
-      GenReg dst = RA.find(reg.reg)->second;
-      setGenReg(dst, reg);
+      const uint32_t grfOffset = RA.find(reg.reg)->second;
+      const GenRegister dst = setGenReg(reg, grfOffset);
       if (reg.quarter != 0)
-        dst = GenReg::Qn(dst, reg.quarter);
-      return dst;
+        return GenRegister::Qn(dst, reg.quarter);
+      else
+        return dst;
     }
     // Other registers are already physical registers
-    else {
-      GenReg dst;
-      setGenReg(dst, reg);
-      dst.nr = reg.nr;
-      dst.subnr = reg.subnr;
-      return dst;
-    }
+    else
+      return reg;
   }
 
 } /* namespace gbe */

@@ -27,12 +27,13 @@
 
 #include "ir/register.hpp"
 #include "backend/gen_context.hpp"
+#include "backend/gen_register.hpp"
 #include "backend/program.h"
 
 namespace gbe
 {
   class Selection;      // Pre-register allocation code generation
-  class SelectionReg;   // Pre-register allocation Gen register
+  class GenRegister;   // Pre-register allocation Gen register
   class GenRegInterval; // Liveness interval for each register
 
   /*! Provides the location of a register in a vector */
@@ -52,14 +53,18 @@ namespace gbe
     /*! Perform the register allocation */
     void allocate(Selection &selection);
     /*! Return the Gen register from the selection register */
-    GenReg genReg(const SelectionReg &reg);
+    GenRegister genReg(const GenRegister &reg);
     /*! Return the Gen register from the GenIR one */
-    GenReg genReg(ir::Register, ir::Type type = ir::TYPE_FLOAT);
+    GenRegister genReg(ir::Register, ir::Type type = ir::TYPE_FLOAT);
   private:
-    /*! Expire one interval upto interval limit. Return true if one interval was
-     *  successfully expired
-     */
-    bool expire(const GenRegInterval &limit);
+    /*! Expire one GRF interval. Return true if one was successfully expired */
+    bool expireGRF(const GenRegInterval &limit);
+    /*! Expire a flag register. Return true if one was successfully expired */
+    bool expireFlag(const GenRegInterval &limit);
+    /*! Allocate the virtual boolean (== flags) registers */
+    void allocateFlags(Selection &selection);
+    /*! Allocate the GRF registers */
+    void allocateGRFs(Selection &selection);
     /*! Create a Gen register from a register set in the payload */
     void allocatePayloadReg(gbe_curbe_type, ir::Register, uint32_t subValue = 0, uint32_t subOffset = 0);
     /*! Create the intervals for each register */
@@ -75,14 +80,16 @@ namespace gbe
     void coalesce(Selection &selection, SelectionVector *vector);
     /*! The context owns the register allocator */
     GenContext &ctx;
-    /*! Map virtual registers to physical registers */
-    map<ir::Register, GenReg> RA;
+    /*! Map virtual registers to offset in the (physical) register file */
+    map<ir::Register, uint32_t> RA;
     /*! Provides the position of each register in a vector */
     map<ir::Register, VectorLocation> vectorMap;
     /*! All vectors used in the selection */
     vector<SelectionVector*> vectors;
     /*! All vectors that are already expired */
     set<SelectionVector*> expired;
+    /*! The set of booleans that will go to GRF (cannot be kept into flags) */
+    set<ir::Register> grfBooleans;
     /*! All the register intervals */
     vector<GenRegInterval> intervals;
     /*! Intervals sorting based on starting point positions */

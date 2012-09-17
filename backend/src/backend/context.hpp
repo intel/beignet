@@ -21,6 +21,7 @@
  * \file context.hpp
  * \author Benjamin Segovia <benjamin.segovia@intel.com>
  */
+
 #ifndef __GBE_CONTEXT_HPP__
 #define __GBE_CONTEXT_HPP__
 

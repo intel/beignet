@@ -52,25 +52,14 @@ namespace gbe
     GBE_DELETE(this->p);
   }
 
-  /*! XXX Make both structures the same! */
-  INLINE void setInstructionState(GenInstructionState &dst,
-                                  const SelectionState &src)
-  {
-    dst.execWidth = src.execWidth;
-    dst.quarterControl = src.quarterControl;
-    dst.noMask = src.noMask;
-    dst.flag = src.flag;
-    dst.subFlag = src.subFlag;
-    dst.predicate = src.predicate;
-    dst.inversePredicate = src.inversePredicate;
-  }
-
   void GenContext::emitInstructionStream(void) {
     // Emit Gen ISA
     sel->foreachInstruction([&](const SelectionInstruction &insn) {
       const uint32_t opcode = insn.opcode;
       p->push();
-      setInstructionState(p->curr, insn.state);
+      // no more virtual register here in that part of the code generation
+      GBE_ASSERT(insn.state.physicalFlag);
+      p->curr = insn.state;
       switch (opcode) {
 #define DECL_SELECTION_IR(OPCODE, FAMILY) \
   case SEL_OP_##OPCODE: this->emit##FAMILY(insn); break;
@@ -109,26 +98,26 @@ namespace gbe
     // Use shifts rather than muls which are limited to 32x16 bit sources
     const uint32_t perLaneShift = logi2(perLaneSize);
     const uint32_t perThreadShift = logi2(perThreadSize);
-    const SelectionReg selStatckPtr = this->simdWidth == 8 ?
-      SelectionReg::ud8grf(ir::ocl::stackptr) :
-      SelectionReg::ud16grf(ir::ocl::stackptr);
-    const GenReg stackptr = ra->genReg(selStatckPtr);
+    const GenRegister selStatckPtr = this->simdWidth == 8 ?
+      GenRegister::ud8grf(ir::ocl::stackptr) :
+      GenRegister::ud16grf(ir::ocl::stackptr);
+    const GenRegister stackptr = ra->genReg(selStatckPtr);
     const uint32_t nr = offset / GEN_REG_SIZE;
     const uint32_t subnr = (offset % GEN_REG_SIZE) / sizeof(uint32_t);
-    const GenReg bufferptr = GenReg::ud1grf(nr, subnr);
+    const GenRegister bufferptr = GenRegister::ud1grf(nr, subnr);
 
     // We compute the per-lane stack pointer here
     p->push();
       p->curr.execWidth = 1;
       p->curr.predicate = GEN_PREDICATE_NONE;
-      p->SHR(GenReg::ud1grf(126,0), GenReg::ud1grf(0,5), GenReg::immud(10));
+      p->SHR(GenRegister::ud1grf(126,0), GenRegister::ud1grf(0,5), GenRegister::immud(10));
       p->curr.execWidth = this->simdWidth;
-      p->SHL(stackptr, stackptr, GenReg::immud(perLaneShift));
+      p->SHL(stackptr, stackptr, GenRegister::immud(perLaneShift));
       p->curr.execWidth = 1;
-      p->SHL(GenReg::ud1grf(126,0), GenReg::ud1grf(126,0), GenReg::immud(perThreadShift));
+      p->SHL(GenRegister::ud1grf(126,0), GenRegister::ud1grf(126,0), GenRegister::immud(perThreadShift));
       p->curr.execWidth = this->simdWidth;
       p->ADD(stackptr, stackptr, bufferptr);
-      p->ADD(stackptr, stackptr, GenReg::ud1grf(126,0));
+      p->ADD(stackptr, stackptr, GenRegister::ud1grf(126,0));
     p->pop();
   }
 
@@ -138,8 +127,8 @@ namespace gbe
   }
 
   void GenContext::emitUnaryInstruction(const SelectionInstruction &insn) {
-    const GenReg dst = ra->genReg(insn.dst[0]);
-    const GenReg src = ra->genReg(insn.src[0]);
+    const GenRegister dst = ra->genReg(insn.dst[0]);
+    const GenRegister src = ra->genReg(insn.src[0]);
     switch (insn.opcode) {
       case SEL_OP_MOV: p->MOV(dst, src); break;
       case SEL_OP_NOT: p->NOT(dst, src); break;
@@ -148,9 +137,9 @@ namespace gbe
   }
 
   void GenContext::emitBinaryInstruction(const SelectionInstruction &insn) { 
-    const GenReg dst = ra->genReg(insn.dst[0]);
-    const GenReg src0 = ra->genReg(insn.src[0]);
-    const GenReg src1 = ra->genReg(insn.src[1]);
+    const GenRegister dst = ra->genReg(insn.dst[0]);
+    const GenRegister src0 = ra->genReg(insn.src[0]);
+    const GenRegister src1 = ra->genReg(insn.src[1]);
     switch (insn.opcode) {
       case SEL_OP_SEL:  p->SEL(dst, src0, src1); break;
       case SEL_OP_AND:  p->AND(dst, src0, src1); break;
@@ -177,22 +166,22 @@ namespace gbe
   }
 
   void GenContext::emitMathInstruction(const SelectionInstruction &insn) {
-    const GenReg dst = ra->genReg(insn.dst[0]);
-    const GenReg src0 = ra->genReg(insn.src[0]);
-    const GenReg src1 = ra->genReg(insn.src[1]);
+    const GenRegister dst = ra->genReg(insn.dst[0]);
+    const GenRegister src0 = ra->genReg(insn.src[0]);
+    const GenRegister src1 = ra->genReg(insn.src[1]);
     const uint32_t function = insn.extra.function;
     p->MATH(dst, function, src0, src1);
   }
 
   void GenContext::emitCompareInstruction(const SelectionInstruction &insn) {
-    const GenReg src0 = ra->genReg(insn.src[0]);
-    const GenReg src1 = ra->genReg(insn.src[1]);
+    const GenRegister src0 = ra->genReg(insn.src[0]);
+    const GenRegister src1 = ra->genReg(insn.src[1]);
     p->CMP(insn.extra.function, src0, src1);
   }
 
   void GenContext::emitJumpInstruction(const SelectionInstruction &insn) {
     const ir::LabelIndex label(insn.index);
-    const GenReg src = ra->genReg(insn.src[0]);
+    const GenRegister src = ra->genReg(insn.src[0]);
     this->branchPos2.push_back(std::make_pair(label, p->store.size()));
     p->JMPI(src);
   }
@@ -202,36 +191,36 @@ namespace gbe
       p->curr.predicate = GEN_PREDICATE_NONE;
       p->curr.execWidth = 8;
       p->curr.noMask = 1;
-      p->MOV(GenReg::f8grf(127,0), GenReg::f8grf(0,0));
+      p->MOV(GenRegister::f8grf(127,0), GenRegister::f8grf(0,0));
       p->EOT(127);
     p->pop();
   }
 
   void GenContext::emitUntypedReadInstruction(const SelectionInstruction &insn) {
-    const GenReg dst = ra->genReg(insn.dst[0]);
-    const GenReg src = ra->genReg(insn.src[0]);
+    const GenRegister dst = ra->genReg(insn.dst[0]);
+    const GenRegister src = ra->genReg(insn.src[0]);
     const uint32_t bti = insn.extra.function;
     const uint32_t elemNum = insn.extra.elem;
     p->UNTYPED_READ(dst, src, bti, elemNum);
   }
 
   void GenContext::emitUntypedWriteInstruction(const SelectionInstruction &insn) {
-    const GenReg src = ra->genReg(insn.src[0]);
+    const GenRegister src = ra->genReg(insn.src[0]);
     const uint32_t bti = insn.extra.function;
     const uint32_t elemNum = insn.extra.elem;
     p->UNTYPED_WRITE(src, bti, elemNum);
   }
 
   void GenContext::emitByteGatherInstruction(const SelectionInstruction &insn) {
-    const GenReg dst = ra->genReg(insn.dst[0]);
-    const GenReg src = ra->genReg(insn.src[0]);
+    const GenRegister dst = ra->genReg(insn.dst[0]);
+    const GenRegister src = ra->genReg(insn.src[0]);
     const uint32_t bti = insn.extra.function;
     const uint32_t elemSize = insn.extra.elem;
     p->BYTE_GATHER(dst, src, bti, elemSize);
   }
 
   void GenContext::emitByteScatterInstruction(const SelectionInstruction &insn) {
-    const GenReg src = ra->genReg(insn.src[0]);
+    const GenRegister src = ra->genReg(insn.src[0]);
     const uint32_t bti = insn.extra.function;
     const uint32_t elemSize = insn.extra.elem;
     p->BYTE_SCATTER(src, bti, elemSize);
@@ -240,9 +229,9 @@ namespace gbe
   void GenContext::emitRegionInstruction(const SelectionInstruction &insn) {
     GBE_ASSERT(insn.dst[0].width == GEN_WIDTH_8 ||
                insn.dst[0].width == GEN_WIDTH_16);
-    const GenReg src = ra->genReg(insn.src[0]);
-    const GenReg dst = ra->genReg(insn.dst[1]);
-    const GenReg final = ra->genReg(insn.dst[0]);
+    const GenRegister src = ra->genReg(insn.src[0]);
+    const GenRegister dst = ra->genReg(insn.dst[1]);
+    const GenRegister final = ra->genReg(insn.dst[0]);
 
     // Region dimensions
     const uint32_t offset = insn.extra.offset;
@@ -270,72 +259,72 @@ namespace gbe
         {
           const uint32_t dstnr = dstOffset / GEN_REG_SIZE;
           const uint32_t dstsubnr = (dstOffset % GEN_REG_SIZE) / sizeof(int);
-          const GenReg dstReg = GenReg::f1grf(dstnr, dstsubnr);
+          const GenRegister dstReg = GenRegister::f1grf(dstnr, dstsubnr);
           if (srcOffset + sizeof(int) > end)
-            p->MOV(dstReg, GenReg::immf(0.f));
+            p->MOV(dstReg, GenRegister::immf(0.f));
           else {
             GBE_ASSERT(srcOffset % sizeof(int) == 0);
             const uint32_t srcnr = srcOffset / GEN_REG_SIZE;
             const uint32_t srcsubnr = (srcOffset % GEN_REG_SIZE) / sizeof(int);
-            const GenReg srcReg = GenReg::f1grf(srcnr, srcsubnr);
+            const GenRegister srcReg = GenRegister::f1grf(srcnr, srcsubnr);
             p->MOV(dstReg, srcReg);
           }
         }
       }
     p->pop();
-    p->MOV(GenReg::retype(final, GEN_TYPE_F), GenReg::retype(dst, GEN_TYPE_F));
+    p->MOV(GenRegister::retype(final, GEN_TYPE_F), GenRegister::retype(dst, GEN_TYPE_F));
   }
 
   void GenContext::emitRGatherInstruction(const SelectionInstruction &insn) {
-    const GenReg index0 = GenReg::retype(ra->genReg(insn.src[0]), GEN_TYPE_UW);
-    const GenReg dst0 = GenReg::retype(ra->genReg(insn.dst[0]), GEN_TYPE_F);
-    const GenReg src = ra->genReg(insn.src[1]);
+    const GenRegister index0 = GenRegister::retype(ra->genReg(insn.src[0]), GEN_TYPE_UW);
+    const GenRegister dst0 = GenRegister::retype(ra->genReg(insn.dst[0]), GEN_TYPE_F);
+    const GenRegister src = ra->genReg(insn.src[1]);
     const uint32_t offset = src.nr * GEN_REG_SIZE + src.subnr;
     p->push();
       p->curr.execWidth = 8;
-      p->SHL(GenReg::addr8(0), index0, GenReg::immuw(2));
-      p->ADD(GenReg::addr8(0), GenReg::addr8(0), GenReg::immuw(offset));
-      p->MOV(dst0, GenReg::indirect(GEN_TYPE_F, 0, GEN_WIDTH_8));
+      p->SHL(GenRegister::addr8(0), index0, GenRegister::immuw(2));
+      p->ADD(GenRegister::addr8(0), GenRegister::addr8(0), GenRegister::immuw(offset));
+      p->MOV(dst0, GenRegister::indirect(GEN_TYPE_F, 0, GEN_WIDTH_8));
     p->pop();
 
     if (simdWidth == 16) {
-      const GenReg dst1 = GenReg::Qn(dst0, 1);
-      const GenReg index1 = GenReg::Qn(index0, 1);
+      const GenRegister dst1 = GenRegister::Qn(dst0, 1);
+      const GenRegister index1 = GenRegister::Qn(index0, 1);
       p->push();
         p->curr.execWidth = 8;
         p->curr.quarterControl = GEN_COMPRESSION_Q2;
-        p->SHL(GenReg::addr8(0), index1, GenReg::immuw(2));
-        p->ADD(GenReg::addr8(0), GenReg::addr8(0), GenReg::immuw(offset));
-        p->MOV(dst1, GenReg::indirect(GEN_TYPE_F, 0, GEN_WIDTH_8));
+        p->SHL(GenRegister::addr8(0), index1, GenRegister::immuw(2));
+        p->ADD(GenRegister::addr8(0), GenRegister::addr8(0), GenRegister::immuw(offset));
+        p->MOV(dst1, GenRegister::indirect(GEN_TYPE_F, 0, GEN_WIDTH_8));
       p->pop();
     }
   }
 
   void GenContext::emitOBReadInstruction(const SelectionInstruction &insn) {
-    const GenReg dst = ra->genReg(insn.dst[0]);
-    const GenReg addr = ra->genReg(insn.src[0]);
-    const GenReg first = GenReg::ud1grf(addr.nr,addr.subnr/sizeof(float));
-    GenReg header;
+    const GenRegister dst = ra->genReg(insn.dst[0]);
+    const GenRegister addr = ra->genReg(insn.src[0]);
+    const GenRegister first = GenRegister::ud1grf(addr.nr,addr.subnr/sizeof(float));
+    GenRegister header;
     if (simdWidth == 8)
-      header = GenReg::retype(ra->genReg(insn.src[1]), GEN_TYPE_F);
+      header = GenRegister::retype(ra->genReg(insn.src[1]), GEN_TYPE_F);
     else
-      header = GenReg::retype(GenReg::Qn(ra->genReg(insn.src[1]),1), GEN_TYPE_F);
+      header = GenRegister::retype(GenRegister::Qn(ra->genReg(insn.src[1]),1), GEN_TYPE_F);
 
     p->push();
       // Copy r0 into the header first
       p->curr.execWidth = 8;
       p->curr.predicate = GEN_PREDICATE_NONE;
       p->curr.noMask = 1;
-      p->MOV(header, GenReg::f8grf(0,0));
+      p->MOV(header, GenRegister::f8grf(0,0));
 
       // Update the header with the current address
       p->curr.execWidth = 1;
       const uint32_t nr = header.nr;
       const uint32_t subnr = header.subnr / sizeof(float);
-      p->SHR(GenReg::ud1grf(nr, subnr+2), first, GenReg::immud(4));
+      p->SHR(GenRegister::ud1grf(nr, subnr+2), first, GenRegister::immud(4));
 
       // Put zero in the general state base address
-      p->MOV(GenReg::f1grf(nr, subnr+5), GenReg::immf(0));
+      p->MOV(GenRegister::f1grf(nr, subnr+5), GenRegister::immf(0));
 
       // Now read the data
       p->OBREAD(dst, header, insn.extra.function, insn.extra.elem);
@@ -343,29 +332,29 @@ namespace gbe
   }
 
   void GenContext::emitOBWriteInstruction(const SelectionInstruction &insn) {
-    const GenReg addr = ra->genReg(insn.src[2]);
-    const GenReg first = GenReg::ud1grf(addr.nr,addr.subnr/sizeof(float));
-    GenReg header;
+    const GenRegister addr = ra->genReg(insn.src[2]);
+    const GenRegister first = GenRegister::ud1grf(addr.nr,addr.subnr/sizeof(float));
+    GenRegister header;
     if (simdWidth == 8)
-      header = GenReg::retype(ra->genReg(insn.src[0]), GEN_TYPE_F);
+      header = GenRegister::retype(ra->genReg(insn.src[0]), GEN_TYPE_F);
     else
-      header = GenReg::retype(GenReg::Qn(ra->genReg(insn.src[0]),1), GEN_TYPE_F);
+      header = GenRegister::retype(GenRegister::Qn(ra->genReg(insn.src[0]),1), GEN_TYPE_F);
 
     p->push();
       // Copy r0 into the header first
       p->curr.execWidth = 8;
       p->curr.predicate = GEN_PREDICATE_NONE;
       p->curr.noMask = 1;
-      p->MOV(header, GenReg::f8grf(0,0));
+      p->MOV(header, GenRegister::f8grf(0,0));
 
       // Update the header with the current address
       p->curr.execWidth = 1;
       const uint32_t nr = header.nr;
       const uint32_t subnr = header.subnr / sizeof(float);
-      p->SHR(GenReg::ud1grf(nr, subnr+2), first, GenReg::immud(4));
+      p->SHR(GenRegister::ud1grf(nr, subnr+2), first, GenRegister::immud(4));
 
       // Put zero in the general state base address
-      p->MOV(GenReg::f1grf(nr, subnr+5), GenReg::immf(0));
+      p->MOV(GenRegister::f1grf(nr, subnr+5), GenRegister::immf(0));
 
       // Now read the data
       p->OBWRITE(header, insn.extra.function, insn.extra.elem);

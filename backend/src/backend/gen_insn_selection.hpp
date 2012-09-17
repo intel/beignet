@@ -27,7 +27,7 @@
 
 #include "ir/register.hpp"
 #include "ir/instruction.hpp"
-#include "backend/gen_defs.hpp"
+#include "backend/gen_register.hpp"
 #include "backend/gen_encoder.hpp"
 #include "backend/gen_context.hpp"
 #include "sys/vector.hpp"
@@ -64,418 +64,6 @@ namespace gbe
     };
   }
 
-  /*! The state of each instruction */
-  class SelectionState
-  {
-  public:
-    INLINE SelectionState(uint32_t simdWidth = 8) {
-      this->execWidth = simdWidth;
-      this->quarterControl = GEN_COMPRESSION_Q1;
-      this->noMask = 0;
-      this->flag = 0;
-      this->subFlag = 0;
-      this->predicate = GEN_PREDICATE_NORMAL;
-      this->inversePredicate = 0;
-    }
-    uint32_t execWidth:6;
-    uint32_t quarterControl:2;
-    uint32_t noMask:1;
-    uint32_t flag:1;
-    uint32_t subFlag:1;
-    uint32_t predicate:4;
-    uint32_t inversePredicate:1;
-  };
-
-  /*! This is a book-keeping structure that is not exactly a virtual register
-   *  and not exactly a physical register. Basically, it is a Gen register
-   *  *before* the register allocation i.e. it contains the info to get it
-   *  properly encoded later but it is not associated to a GRF, a flag or
-   *  anything Gen related yet.
-   */
-  class SelectionReg
-  {
-  public:
-    /*! Empty constructor */
-    INLINE SelectionReg(void) {}
-
-    /*! General constructor */
-    INLINE SelectionReg(uint32_t file,
-                        ir::Register reg,
-                        uint32_t type,
-                        uint32_t vstride,
-                        uint32_t width,
-                        uint32_t hstride)
-    {
-      this->type = type;
-      this->file = file;
-      this->reg = reg;
-      this->negation = 0;
-      this->absolute = 0;
-      this->vstride = vstride;
-      this->width = width;
-      this->hstride = hstride;
-      this->quarter = 0;
-      this->nr = this->subnr = 0;
-    }
-
-    /*! For specific physical registers only (acc, null) */
-    INLINE SelectionReg(uint32_t file,
-                        uint32_t nr,
-                        uint32_t subnr,
-                        uint32_t type,
-                        uint32_t vstride,
-                        uint32_t width,
-                        uint32_t hstride)
-    {
-      this->type = type;
-      this->file = file;
-      this->nr = nr;
-      this->subnr = subnr * typeSize(type);
-      this->negation = 0;
-      this->absolute = 0;
-      this->vstride = vstride;
-      this->width = width;
-      this->hstride = hstride;
-      this->quarter = 0;
-    }
-
-    /*! Associated virtual register */
-    ir::Register reg;
-
-    /*! For immediates */
-    union {
-      float f;
-      int32_t d;
-      uint32_t ud;
-    } immediate;
-
-    uint32_t nr:8;        //!< Just for some physical registers (acc, null)
-    uint32_t subnr:5;     //!< Idem
-    uint32_t type:4;      //!< Gen type
-    uint32_t file:2;      //!< Register file
-    uint32_t negation:1;  //!< For source
-    uint32_t absolute:1;  //!< For source
-    uint32_t vstride:4;   //!< Vertical stride
-    uint32_t width:3;     //!< Width
-    uint32_t hstride:2;   //!< Horizontal stride
-    uint32_t quarter:2;   //!< To choose which part we want
-
-    static INLINE SelectionReg Qn(SelectionReg reg, uint32_t quarter) {
-      if (reg.hstride == GEN_HORIZONTAL_STRIDE_0) // scalar register
-        return reg;
-      else {
-        reg.quarter = quarter;
-        return reg;
-      }
-    }
-
-    static INLINE SelectionReg vec16(uint32_t file, ir::Register reg) {
-      return SelectionReg(file,
-                          reg,
-                          GEN_TYPE_F,
-                          GEN_VERTICAL_STRIDE_8,
-                          GEN_WIDTH_8,
-                          GEN_HORIZONTAL_STRIDE_1);
-    }
-
-    static INLINE SelectionReg vec8(uint32_t file, ir::Register reg) {
-      return SelectionReg(file,
-                          reg,
-                          GEN_TYPE_F,
-                          GEN_VERTICAL_STRIDE_8,
-                          GEN_WIDTH_8,
-                          GEN_HORIZONTAL_STRIDE_1);
-    }
-
-    static INLINE SelectionReg vec4(uint32_t file, ir::Register reg) {
-      return SelectionReg(file,
-                          reg,
-                          GEN_TYPE_F,
-                          GEN_VERTICAL_STRIDE_4,
-                          GEN_WIDTH_4,
-                          GEN_HORIZONTAL_STRIDE_1);
-    }
-
-    static INLINE SelectionReg vec2(uint32_t file, ir::Register reg) {
-      return SelectionReg(file,
-                          reg,
-                          GEN_TYPE_F,
-                          GEN_VERTICAL_STRIDE_2,
-                          GEN_WIDTH_2,
-                          GEN_HORIZONTAL_STRIDE_1);
-    }
-
-    static INLINE SelectionReg vec1(uint32_t file, ir::Register reg) {
-      return SelectionReg(file,
-                          reg,
-                          GEN_TYPE_F,
-                          GEN_VERTICAL_STRIDE_0,
-                          GEN_WIDTH_1,
-                          GEN_HORIZONTAL_STRIDE_0);
-    }
-
-    static INLINE SelectionReg retype(SelectionReg reg, uint32_t type) {
-      reg.type = type;
-      return reg;
-    }
-
-    static INLINE SelectionReg ud16(uint32_t file, ir::Register reg) {
-      return retype(vec16(file, reg), GEN_TYPE_UD);
-    }
-
-    static INLINE SelectionReg ud8(uint32_t file, ir::Register reg) {
-      return retype(vec8(file, reg), GEN_TYPE_UD);
-    }
-
-    static INLINE SelectionReg ud1(uint32_t file, ir::Register reg) {
-      return retype(vec1(file, reg), GEN_TYPE_UD);
-    }
-
-    static INLINE SelectionReg d8(uint32_t file, ir::Register reg) {
-      return retype(vec8(file, reg), GEN_TYPE_D);
-    }
-
-    static INLINE SelectionReg uw16(uint32_t file, ir::Register reg) {
-      return retype(vec16(file, reg), GEN_TYPE_UW);
-    }
-
-    static INLINE SelectionReg uw8(uint32_t file, ir::Register reg) {
-      return retype(vec8(file, reg), GEN_TYPE_UW);
-    }
-
-    static INLINE SelectionReg uw1(uint32_t file, ir::Register reg) {
-      return retype(vec1(file, reg), GEN_TYPE_UW);
-    }
-
-    static INLINE SelectionReg ub16(uint32_t file, ir::Register reg) {
-      return SelectionReg(file,
-                          reg,
-                          GEN_TYPE_UB,
-                          GEN_VERTICAL_STRIDE_16,
-                          GEN_WIDTH_8,
-                          GEN_HORIZONTAL_STRIDE_2);
-    }
-
-    static INLINE SelectionReg ub8(uint32_t file, ir::Register reg) {
-      return SelectionReg(file,
-                          reg,
-                          GEN_TYPE_UB,
-                          GEN_VERTICAL_STRIDE_16,
-                          GEN_WIDTH_8,
-                          GEN_HORIZONTAL_STRIDE_2);
-    }
-
-    static INLINE SelectionReg ub1(uint32_t file, ir::Register reg) {
-      return retype(vec1(file, reg), GEN_TYPE_UB);
-    }
-
-    static INLINE SelectionReg unpacked_uw(ir::Register reg) {
-        return SelectionReg(GEN_GENERAL_REGISTER_FILE,
-                            reg,
-                            GEN_TYPE_UW,
-                            GEN_VERTICAL_STRIDE_16,
-                            GEN_WIDTH_8,
-                            GEN_HORIZONTAL_STRIDE_2);
-    }
-
-    static INLINE SelectionReg unpacked_ub(ir::Register reg) {
-      return SelectionReg(GEN_GENERAL_REGISTER_FILE,
-                          reg,
-                          GEN_TYPE_UB,
-                          GEN_VERTICAL_STRIDE_32,
-                          GEN_WIDTH_8,
-                          GEN_HORIZONTAL_STRIDE_4);
-    }
-
-    static INLINE SelectionReg imm(uint32_t type) {
-      return SelectionReg(GEN_IMMEDIATE_VALUE,
-                          ir::Register(),
-                          type,
-                          GEN_VERTICAL_STRIDE_0,
-                          GEN_WIDTH_1,
-                          GEN_HORIZONTAL_STRIDE_0);
-    }
-
-    static INLINE SelectionReg immf(float f) {
-      SelectionReg immediate = imm(GEN_TYPE_F);
-      immediate.immediate.f = f;
-      return immediate;
-    }
-
-    static INLINE SelectionReg immd(int d) {
-      SelectionReg immediate = imm(GEN_TYPE_D);
-      immediate.immediate.d = d;
-      return immediate;
-    }
-
-    static INLINE SelectionReg immud(uint32_t ud) {
-      SelectionReg immediate = imm(GEN_TYPE_UD);
-      immediate.immediate.ud = ud;
-      return immediate;
-    }
-
-    static INLINE SelectionReg immuw(uint16_t uw) {
-      SelectionReg immediate = imm(GEN_TYPE_UW);
-      immediate.immediate.ud = uw | (uw << 16);
-      return immediate;
-    }
-
-    static INLINE SelectionReg immw(int16_t w) {
-      SelectionReg immediate = imm(GEN_TYPE_W);
-      immediate.immediate.d = w | (w << 16);
-      return immediate;
-    }
-
-    static INLINE SelectionReg immv(uint32_t v) {
-      SelectionReg immediate = imm(GEN_TYPE_V);
-      immediate.vstride = GEN_VERTICAL_STRIDE_0;
-      immediate.width = GEN_WIDTH_8;
-      immediate.hstride = GEN_HORIZONTAL_STRIDE_1;
-      immediate.immediate.ud = v;
-      return immediate;
-    }
-
-    static INLINE SelectionReg immvf(uint32_t v) {
-      SelectionReg immediate = imm(GEN_TYPE_VF);
-      immediate.vstride = GEN_VERTICAL_STRIDE_0;
-      immediate.width = GEN_WIDTH_4;
-      immediate.hstride = GEN_HORIZONTAL_STRIDE_1;
-      immediate.immediate.ud = v;
-      return immediate;
-    }
-
-    static INLINE SelectionReg immvf4(uint32_t v0, uint32_t v1, uint32_t v2, uint32_t v3) {
-      SelectionReg immediate = imm(GEN_TYPE_VF);
-      immediate.vstride = GEN_VERTICAL_STRIDE_0;
-      immediate.width = GEN_WIDTH_4;
-      immediate.hstride = GEN_HORIZONTAL_STRIDE_1;
-      immediate.immediate.ud = ((v0 << 0) | (v1 << 8) | (v2 << 16) | (v3 << 24));
-      return immediate;
-    }
-
-    static INLINE SelectionReg f1grf(ir::Register reg) {
-      return vec1(GEN_GENERAL_REGISTER_FILE, reg);
-    }
-
-    static INLINE SelectionReg f2grf(ir::Register reg) {
-      return vec2(GEN_GENERAL_REGISTER_FILE, reg);
-    }
-
-    static INLINE SelectionReg f4grf(ir::Register reg) {
-      return vec4(GEN_GENERAL_REGISTER_FILE, reg);
-    }
-
-    static INLINE SelectionReg f8grf(ir::Register reg) {
-      return vec8(GEN_GENERAL_REGISTER_FILE, reg);
-    }
-
-    static INLINE SelectionReg f16grf(ir::Register reg) {
-      return vec16(GEN_GENERAL_REGISTER_FILE, reg);
-    }
-
-    static INLINE SelectionReg ud16grf(ir::Register reg) {
-      return ud16(GEN_GENERAL_REGISTER_FILE, reg);
-    }
-
-    static INLINE SelectionReg ud8grf(ir::Register reg) {
-      return ud8(GEN_GENERAL_REGISTER_FILE, reg);
-    }
-
-    static INLINE SelectionReg ud1grf(ir::Register reg) {
-      return ud1(GEN_GENERAL_REGISTER_FILE, reg);
-    }
-
-    static INLINE SelectionReg uw1grf(ir::Register reg) {
-      return uw1(GEN_GENERAL_REGISTER_FILE, reg);
-    }
-
-    static INLINE SelectionReg uw8grf(ir::Register reg) {
-      return uw8(GEN_GENERAL_REGISTER_FILE, reg);
-    }
-
-    static INLINE SelectionReg uw16grf(ir::Register reg) {
-      return uw16(GEN_GENERAL_REGISTER_FILE, reg);
-    }
-
-    static INLINE SelectionReg ub1grf(ir::Register reg) {
-      return ub1(GEN_GENERAL_REGISTER_FILE, reg);
-    }
-
-    static INLINE SelectionReg ub8grf(ir::Register reg) {
-      return ub8(GEN_GENERAL_REGISTER_FILE, reg);
-    }
-
-    static INLINE SelectionReg ub16grf(ir::Register reg) {
-      return ub16(GEN_GENERAL_REGISTER_FILE, reg);
-    }
-
-    static INLINE SelectionReg null(void) {
-      return SelectionReg(GEN_ARCHITECTURE_REGISTER_FILE,
-                          GEN_ARF_NULL,
-                          0,
-                          GEN_TYPE_F,
-                          GEN_VERTICAL_STRIDE_8,
-                          GEN_WIDTH_8,
-                          GEN_HORIZONTAL_STRIDE_1);
-    }
-
-    static INLINE SelectionReg acc(void) {
-      return SelectionReg(GEN_ARCHITECTURE_REGISTER_FILE,
-                          GEN_ARF_ACCUMULATOR,
-                          0,
-                          GEN_TYPE_F,
-                          GEN_VERTICAL_STRIDE_8,
-                          GEN_WIDTH_8,
-                          GEN_HORIZONTAL_STRIDE_1);
-    }
-
-    static INLINE SelectionReg ip(void) {
-      return SelectionReg(GEN_ARCHITECTURE_REGISTER_FILE,
-                          GEN_ARF_IP,
-                          0,
-                          GEN_TYPE_D,
-                          GEN_VERTICAL_STRIDE_4,
-                          GEN_WIDTH_1,
-                          GEN_HORIZONTAL_STRIDE_0);
-    }
-
-    static INLINE SelectionReg notification1(void) {
-      return SelectionReg(GEN_ARCHITECTURE_REGISTER_FILE,
-                          GEN_ARF_NOTIFICATION_COUNT,
-                          1,
-                          GEN_TYPE_UD,
-                          GEN_VERTICAL_STRIDE_0,
-                          GEN_WIDTH_1,
-                          GEN_HORIZONTAL_STRIDE_0);
-    }
-
-    static INLINE SelectionReg flag(uint32_t nr, uint32_t subnr) {
-      return SelectionReg(GEN_ARCHITECTURE_REGISTER_FILE,
-                          GEN_ARF_FLAG | nr,
-                          subnr,
-                          GEN_TYPE_UW,
-                          GEN_VERTICAL_STRIDE_0,
-                          GEN_WIDTH_1,
-                          GEN_HORIZONTAL_STRIDE_0);
-    }
-
-    static INLINE SelectionReg next(SelectionReg reg) {
-      reg.quarter++;
-      return reg;
-    }
-
-    static INLINE SelectionReg negate(SelectionReg reg) {
-      reg.negation ^= 1;
-      return reg;
-    }
-
-    static INLINE SelectionReg abs(SelectionReg reg) {
-      reg.absolute = 1;
-      reg.negation = 0;
-      return reg;
-    }
-  };
-
   /*! Selection opcodes properly encoded from 0 to n for fast jump tables
    *  generations
    */
@@ -499,16 +87,20 @@ namespace gbe
     SelectionBlock *parent;
     /*! Instruction are chained in the block */
     SelectionInstruction *prev, *next;
+    /*! Append an instruction before this one */
+    void appendBefore(const SelectionInstruction &insn);
+    /*! Append an instruction after this one */
+    void appendAfter(const SelectionInstruction &insn);
     /*! No more than 6 sources (used by typed writes) */
     enum { MAX_SRC_NUM = 8 };
     /*! No more than 4 destinations (used by samples and untyped reads) */
     enum { MAX_DST_NUM = 4 };
     /*! All destinations */
-    SelectionReg dst[MAX_DST_NUM];
+    GenRegister dst[MAX_DST_NUM];
     /*! All sources */
-    SelectionReg src[MAX_SRC_NUM];
+    GenRegister src[MAX_SRC_NUM];
     /*! State of the instruction (extra fields neeed for the encoding) */
-    SelectionState state;
+    GenInstructionState state;
     /*! Gen opcode */
     uint8_t opcode;
     union {
@@ -550,7 +142,7 @@ namespace gbe
     /*! We chain the selection vectors together */
     SelectionVector *next;
     /*! Directly points to the selection instruction registers */
-    SelectionReg *reg;
+    GenRegister *reg;
     /*! Number of registers in the vector */
     uint16_t regNum;
     /*! Indicate if this a destination or a source vector */
@@ -660,6 +252,10 @@ namespace gbe
     INLINE ir::RegisterData getRegisterData(ir::Register reg) const {
       return file.get(reg);
     }
+    /*! Get the family for the given register */
+    INLINE ir::RegisterFamily getRegisterFamily(ir::Register reg) const {
+      return file.get(reg).family;
+    }
     /*! Registers in the register file */
     INLINE uint32_t regNum(void) const { return file.regNum(); }
   protected:
@@ -691,9 +287,9 @@ namespace gbe
     /*! Append a new vector of registers in the current block */
     SelectionVector *appendVector(void);
     /*! Return the selection register from the GenIR one */
-    SelectionReg selReg(ir::Register, ir::Type type = ir::TYPE_FLOAT);
+    GenRegister selReg(ir::Register, ir::Type type = ir::TYPE_FLOAT);
     /*! Compute the nth register part when using SIMD8 with Qn (n in 2,3,4) */
-    SelectionReg selRegQn(ir::Register, uint32_t quarter, ir::Type type = ir::TYPE_FLOAT);
+    GenRegister selRegQn(ir::Register, uint32_t quarter, ir::Type type = ir::TYPE_FLOAT);
     /*! To handle selection block allocation */
     DECL_POOL(SelectionBlock, blockPool);
     /*! To handle selection instruction allocation */
@@ -707,9 +303,9 @@ namespace gbe
     /*! Currently processed block */
     SelectionBlock *block;
     /*! Current instruction state to use */
-    SelectionState curr;
+    GenInstructionState curr;
     /*! State used to encode the instructions */
-    SelectionState stack[MAX_STATE_NUM];
+    GenInstructionState stack[MAX_STATE_NUM];
     /*! We append new registers so we duplicate the function register file */
     ir::RegisterFile file;
     /*! Number of states currently pushed */
@@ -717,7 +313,7 @@ namespace gbe
     /*! Number of vector allocated */
     uint32_t vectorNum;
     /*! To make function prototypes more readable */
-    typedef const SelectionReg &Reg;
+    typedef const GenRegister &Reg;
 
 #define ALU1(OP) \
   INLINE void OP(Reg dst, Reg src) { ALU1(SEL_OP_##OP, dst, src); }
@@ -758,9 +354,9 @@ namespace gbe
     /*! Wait instruction (used for the barrier) */
     void WAIT(void);
     /*! Untyped read (up to 4 elements) */
-    void UNTYPED_READ(Reg addr, const SelectionReg *dst, uint32_t elemNum, uint32_t bti);
+    void UNTYPED_READ(Reg addr, const GenRegister *dst, uint32_t elemNum, uint32_t bti);
     /*! Untyped write (up to 4 elements) */
-    void UNTYPED_WRITE(Reg addr, const SelectionReg *src, uint32_t elemNum, uint32_t bti);
+    void UNTYPED_WRITE(Reg addr, const GenRegister *src, uint32_t elemNum, uint32_t bti);
     /*! Byte gather (for unaligned bytes, shorts and ints) */
     void BYTE_GATHER(Reg dst, Reg addr, uint32_t elemSize, uint32_t bti);
     /*! Byte scatter (for unaligned bytes, shorts and ints) */
@@ -776,11 +372,13 @@ namespace gbe
     /*! Encode binary instructions */
     void ALU2(uint32_t opcode, Reg dst, Reg src0, Reg src1);
     /*! Encode regioning */
-    void REGION(Reg dst0, Reg dst1, const SelectionReg *src, uint32_t offset, uint32_t vstride, uint32_t width, uint32_t hstride, uint32_t srcNum);
+    void REGION(Reg dst0, Reg dst1, const GenRegister *src, uint32_t offset, uint32_t vstride, uint32_t width, uint32_t hstride, uint32_t srcNum);
     /*! Encode regioning */
-    void RGATHER(Reg dst, const SelectionReg *src, uint32_t srcNum);
+    void RGATHER(Reg dst, const GenRegister *src, uint32_t srcNum);
     /*! Use custom allocators */
     GBE_CLASS(Selection);
+    friend class SelectionBlock;
+    friend class SelectionInstruction;
   };
 
   /*! This is a simple one-to-many instruction selection */

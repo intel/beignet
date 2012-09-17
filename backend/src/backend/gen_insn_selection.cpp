@@ -25,12 +25,48 @@
 #include "backend/gen_insn_selection.hpp"
 #include "backend/gen_context.hpp"
 #include "ir/function.hpp"
+#include "sys/cvar.hpp"
 
 namespace gbe
 {
   ///////////////////////////////////////////////////////////////////////////
+  // SelectionInstruction
+  ///////////////////////////////////////////////////////////////////////////
+
+  void SelectionInstruction::appendBefore(const SelectionInstruction &other) {
+    Selection *selection = this->parent->parent;
+    SelectionInstruction *toAppend = selection->newSelectionInstruction(other);
+    SelectionInstruction *prev = this->prev;
+    this->prev = toAppend;
+    toAppend->next = this;
+    if (prev) {
+      toAppend->prev = prev;
+      prev->next = toAppend;
+    } else {
+      GBE_ASSERT (this == this->parent->insnHead);
+      this->parent->insnHead = toAppend;
+    }
+  }
+
+  void SelectionInstruction::appendAfter(const SelectionInstruction &other) {
+    Selection *selection = this->parent->parent;
+    SelectionInstruction *toAppend = selection->newSelectionInstruction(other);
+    SelectionInstruction *next = this->next;
+    this->next = toAppend;
+    toAppend->prev = this;
+    if (next) {
+      toAppend->next = next;
+      next->prev = toAppend;
+    } else {
+      GBE_ASSERT (this == this->parent->insnTail);
+      this->parent->insnTail = toAppend;
+    }
+  }
+
+  ///////////////////////////////////////////////////////////////////////////
   // Selection
   ///////////////////////////////////////////////////////////////////////////
+
   Selection::Selection(GenContext &ctx) :
     ctx(ctx), blockHead(NULL), blockTail(NULL), block(NULL),
     curr(ctx.getSimdWidth()), file(ctx.getFunction().getRegisterFile()),
@@ -85,27 +121,13 @@ namespace gbe
     tmp = this->reg(ir::FAMILY_DWORD);
 
     // Generate the MOV instruction and replace the register in the instruction
-    SelectionInstruction *mov = this->newSelectionInstruction();
-    mov->opcode = SEL_OP_MOV;
-    mov->src[0] = SelectionReg::retype(insn->src[regID], GEN_TYPE_F);
-    mov->state = SelectionState(simdWidth);
-    mov->dstNum = mov->srcNum = 1;
-    if (simdWidth == 8)
-      insn->src[regID] = mov->dst[0] = SelectionReg::f8grf(tmp);
-    else
-      insn->src[regID] = mov->dst[0] = SelectionReg::f16grf(tmp);
-
-    // Insert the MOV instruction before the current instruction
-    SelectionInstruction *prev = insn->prev;
-    insn->prev = mov;
-    mov->next = insn;
-    if (prev) {
-      mov->prev = prev;
-      prev->next = mov;
-    } else {
-      GBE_ASSERT (insn == block->insnHead);
-      block->insnHead = mov;
-    }
+    SelectionInstruction mov;
+    mov.opcode = SEL_OP_MOV;
+    mov.src[0] = GenRegister::retype(insn->src[regID], GEN_TYPE_F);
+    mov.state = GenInstructionState(simdWidth);
+    mov.dstNum = mov.srcNum = 1;
+    insn->src[regID] = mov.dst[0] = GenRegister::fxgrf(simdWidth, tmp);
+    insn->appendBefore(mov);
 
     return tmp;
   }
@@ -120,27 +142,13 @@ namespace gbe
     tmp = this->reg(ir::FAMILY_DWORD);
 
     // Generate the MOV instruction and replace the register in the instruction
-    SelectionInstruction *mov = this->newSelectionInstruction();
-    mov->opcode = SEL_OP_MOV;
-    mov->dst[0] = SelectionReg::retype(insn->dst[regID], GEN_TYPE_F);
-    mov->state = SelectionState(simdWidth);
-    mov->dstNum = mov->srcNum = 1;
-    if (simdWidth == 8)
-      insn->dst[regID] = mov->src[0] = SelectionReg::f8grf(tmp);
-    else
-      insn->dst[regID] = mov->src[0] = SelectionReg::f16grf(tmp);
-
-    // Insert the MOV instruction after the current instruction
-    SelectionInstruction *next = insn->next;
-    insn->next = mov;
-    mov->prev = insn;
-    if (next) {
-      mov->next = next;
-      next->prev = mov;
-    } else {
-      GBE_ASSERT (insn == block->insnTail);
-      block->insnTail = mov;
-    }
+    SelectionInstruction mov;
+    mov.opcode = SEL_OP_MOV;
+    mov.dst[0] = GenRegister::retype(insn->dst[regID], GEN_TYPE_F);
+    mov.state = GenInstructionState(simdWidth);
+    mov.dstNum = mov.srcNum = 1;
+    insn->dst[regID] = mov.src[0] = GenRegister::fxgrf(simdWidth, tmp);
+    insn->appendAfter(mov);
 
     return tmp;
   }
@@ -156,15 +164,15 @@ namespace gbe
 
 #define SEL_REG(SIMD16, SIMD8, SIMD1) \
   if (ctx.sel->isScalarOrBool(reg) == true) \
-    return SelectionReg::retype(SelectionReg::SIMD1(reg), genType); \
+    return GenRegister::retype(GenRegister::SIMD1(reg), genType); \
   else if (simdWidth == 8) \
-    return SelectionReg::retype(SelectionReg::SIMD8(reg), genType); \
+    return GenRegister::retype(GenRegister::SIMD8(reg), genType); \
   else { \
     GBE_ASSERT (simdWidth == 16); \
-    return SelectionReg::retype(SelectionReg::SIMD16(reg), genType); \
+    return GenRegister::retype(GenRegister::SIMD16(reg), genType); \
   }
 
-  SelectionReg Selection::selReg(ir::Register reg, ir::Type type) {
+  GenRegister Selection::selReg(ir::Register reg, ir::Type type) {
     using namespace ir;
     const uint32_t genType = getGenType(type);
     const uint32_t simdWidth = ctx.getSimdWidth();
@@ -178,19 +186,19 @@ namespace gbe
       default: NOT_SUPPORTED;
     }
     GBE_ASSERT(false);
-    return SelectionReg();
+    return GenRegister();
   }
 
 #undef SEL_REG
 
-  SelectionReg Selection::selRegQn(ir::Register reg, uint32_t q, ir::Type type) {
-    SelectionReg sreg = this->selReg(reg, type);
+  GenRegister Selection::selRegQn(ir::Register reg, uint32_t q, ir::Type type) {
+    GenRegister sreg = this->selReg(reg, type);
     sreg.quarter = q;
     return sreg;
   }
 
   /*! Syntactic sugar for method declaration */
-  typedef const SelectionReg &Reg;
+  typedef const GenRegister &Reg;
 
   void Selection::LABEL(ir::LabelIndex index) {
     SelectionInstruction *insn = this->appendInsn();
@@ -244,7 +252,7 @@ namespace gbe
   }
 
   void Selection::UNTYPED_READ(Reg addr,
-                               const SelectionReg *dst,
+                               const GenRegister *dst,
                                uint32_t elemNum,
                                uint32_t bti)
   {
@@ -275,9 +283,9 @@ namespace gbe
   }
 
   void Selection::UNTYPED_WRITE(Reg addr,
-                               const SelectionReg *src,
-                               uint32_t elemNum,
-                               uint32_t bti)
+                                const GenRegister *src,
+                                uint32_t elemNum,
+                                uint32_t bti)
   {
     SelectionInstruction *insn = this->appendInsn();
     SelectionVector *vector = this->appendVector();
@@ -377,7 +385,7 @@ namespace gbe
     insn->dstNum = 1;
   }
 
-  void Selection::REGION(Reg dst0, Reg dst1, const SelectionReg *src,
+  void Selection::REGION(Reg dst0, Reg dst1, const GenRegister *src,
                          uint32_t offset, uint32_t vstride,
                          uint32_t width, uint32_t hstride,
                          uint32_t srcNum)
@@ -406,7 +414,7 @@ namespace gbe
     vector->isSrc = 1;
   }
 
-  void Selection::RGATHER(Reg dst, const SelectionReg *src, uint32_t srcNum)
+  void Selection::RGATHER(Reg dst, const GenRegister *src, uint32_t srcNum)
   {
     SelectionInstruction *insn = this->appendInsn();
     SelectionVector *vector = this->appendVector();
@@ -488,13 +496,13 @@ namespace gbe
     void emitFenceInstruction(const ir::FenceInstruction &insn);
     void emitLabelInstruction(const ir::LabelInstruction &insn);
     /*! It is not natively suppored on Gen. We implement it here */
-    void emitIntMul32x32(const ir::Instruction &insn, SelectionReg dst, SelectionReg src0, SelectionReg src1);
+    void emitIntMul32x32(const ir::Instruction &insn, GenRegister dst, GenRegister src0, GenRegister src1);
     /*! Use untyped writes and reads for everything aligned on 4 bytes */
-    void emitUntypedRead(const ir::LoadInstruction &insn, SelectionReg address);
+    void emitUntypedRead(const ir::LoadInstruction &insn, GenRegister address);
     void emitUntypedWrite(const ir::StoreInstruction &insn);
     /*! Use byte scatters and gathers for everything not aligned on 4 bytes */
-    void emitByteGather(const ir::LoadInstruction &insn, SelectionReg address, SelectionReg value);
-    void emitByteScatter(const ir::StoreInstruction &insn, SelectionReg address, SelectionReg value);
+    void emitByteGather(const ir::LoadInstruction &insn, GenRegister address, GenRegister value);
+    void emitByteScatter(const ir::StoreInstruction &insn, GenRegister address, GenRegister value);
     /*! Backward and forward branches are handled slightly differently */
     void emitForwardBranch(const ir::BranchInstruction&, ir::LabelIndex dst, ir::LabelIndex src);
     void emitBackwardBranch(const ir::BranchInstruction&, ir::LabelIndex dst, ir::LabelIndex src);
@@ -534,37 +542,37 @@ namespace gbe
   }
 
   void SimpleSelection::emitIntMul32x32(const ir::Instruction &insn,
-                                        SelectionReg dst,
-                                        SelectionReg src0,
-                                        SelectionReg src1)
+                                        GenRegister dst,
+                                        GenRegister src0,
+                                        GenRegister src1)
   {
     using namespace ir;
-    const uint32_t width = this->curr.execWidth;
+    const uint32_t simdWidth = this->curr.execWidth;
     this->push();
 
     // Either left part of the 16-wide register or just a simd 8 register
-    dst  = SelectionReg::retype(dst,  GEN_TYPE_D);
-    src0 = SelectionReg::retype(src0, GEN_TYPE_D);
-    src1 = SelectionReg::retype(src1, GEN_TYPE_D);
+    dst  = GenRegister::retype(dst,  GEN_TYPE_D);
+    src0 = GenRegister::retype(src0, GEN_TYPE_D);
+    src1 = GenRegister::retype(src1, GEN_TYPE_D);
     this->curr.execWidth = 8;
     this->curr.quarterControl = GEN_COMPRESSION_Q1;
-    this->MUL(SelectionReg::retype(SelectionReg::acc(), GEN_TYPE_D), src0, src1);
-    this->MACH(SelectionReg::retype(SelectionReg::null(), GEN_TYPE_D), src0, src1);
-    this->MOV(SelectionReg::retype(dst, GEN_TYPE_F), SelectionReg::acc());
+    this->MUL(GenRegister::retype(GenRegister::acc(), GEN_TYPE_D), src0, src1);
+    this->MACH(GenRegister::retype(GenRegister::null(), GEN_TYPE_D), src0, src1);
+    this->MOV(GenRegister::retype(dst, GEN_TYPE_F), GenRegister::acc());
 
     // Right part of the 16-wide register now
-    if (width == 16) {
+    if (simdWidth == 16) {
       this->curr.noMask = 1;
-      const SelectionReg nextSrc0 = this->selRegQn(insn.getSrc(0), 1, TYPE_S32);
-      const SelectionReg nextSrc1 = this->selRegQn(insn.getSrc(1), 1, TYPE_S32);
-      this->MUL(SelectionReg::retype(SelectionReg::acc(), GEN_TYPE_D), nextSrc0, nextSrc1);
-      this->MACH(SelectionReg::retype(SelectionReg::null(), GEN_TYPE_D), nextSrc0, nextSrc1);
+      const GenRegister nextSrc0 = this->selRegQn(insn.getSrc(0), 1, TYPE_S32);
+      const GenRegister nextSrc1 = this->selRegQn(insn.getSrc(1), 1, TYPE_S32);
+      this->MUL(GenRegister::retype(GenRegister::acc(), GEN_TYPE_D), nextSrc0, nextSrc1);
+      this->MACH(GenRegister::retype(GenRegister::null(), GEN_TYPE_D), nextSrc0, nextSrc1);
       this->curr.quarterControl = GEN_COMPRESSION_Q2;
       const ir::Register reg = this->reg(FAMILY_DWORD);
-      this->MOV(SelectionReg::f8grf(reg), SelectionReg::acc());
+      this->MOV(GenRegister::f8grf(reg), GenRegister::acc());
       this->curr.noMask = 0;
-      this->MOV(SelectionReg::retype(SelectionReg::next(dst), GEN_TYPE_F),
-                SelectionReg::f8grf(reg));
+      this->MOV(GenRegister::retype(GenRegister::next(dst), GEN_TYPE_F),
+                GenRegister::f8grf(reg));
     }
 
     this->pop();
@@ -574,9 +582,9 @@ namespace gbe
     using namespace ir;
     const Opcode opcode = insn.getOpcode();
     const Type type = insn.getType();
-    SelectionReg dst  = this->selReg(insn.getDst(0), type);
-    SelectionReg src0 = this->selReg(insn.getSrc(0), type);
-    SelectionReg src1 = this->selReg(insn.getSrc(1), type);
+    GenRegister dst  = this->selReg(insn.getDst(0), type);
+    GenRegister src0 = this->selReg(insn.getSrc(0), type);
+    GenRegister src1 = this->selReg(insn.getSrc(1), type);
 
     this->push();
 
@@ -590,7 +598,7 @@ namespace gbe
     // Output the binary instruction
     switch (opcode) {
       case OP_ADD: this->ADD(dst, src0, src1); break;
-      case OP_SUB: this->ADD(dst, src0, SelectionReg::negate(src1)); break;
+      case OP_SUB: this->ADD(dst, src0, GenRegister::negate(src1)); break;
       case OP_AND: this->AND(dst, src0, src1); break;
       case OP_XOR: this->XOR(dst, src0, src1); break;
       case OP_OR:  this->OR(dst, src0,  src1); break;
@@ -621,31 +629,23 @@ namespace gbe
 
     // Get all registers for the instruction
     const Type type = insn.getType();
-    const SelectionReg pred = this->selReg(insn.getPredicate(), TYPE_BOOL);
-    const SelectionReg dst  = this->selReg(insn.getDst(0), type);
-    const SelectionReg src0 = this->selReg(insn.getSrc(SelectInstruction::src0Index), type);
-    const SelectionReg src1 = this->selReg(insn.getSrc(SelectInstruction::src1Index), type);
+    const GenRegister dst  = this->selReg(insn.getDst(0), type);
+    const GenRegister src0 = this->selReg(insn.getSrc(SelectInstruction::src0Index), type);
+    const GenRegister src1 = this->selReg(insn.getSrc(SelectInstruction::src1Index), type);
 
     // Since we cannot predicate the select instruction with our current mask,
     // we need to perform the selection in two steps (one to select, one to
     // update the destination register)
     const RegisterFamily family = getFamily(type);
-    const SelectionReg tmp = this->selReg(this->reg(family), type);
+    const GenRegister tmp = this->selReg(this->reg(family), type);
     const uint32_t simdWidth = ctx.getSimdWidth();
-
+    const Register pred = insn.getPredicate();
     this->push();
-      // Move the predicate into a flag register (TODO use cmp:w with blockIP)
-      this->curr.predicate = GEN_PREDICATE_NONE;
-      this->curr.execWidth = 1;
-      this->curr.noMask = 1;
-      this->MOV(SelectionReg::flag(0,1), pred);
-
-      // Perform the selection
       this->curr.predicate = GEN_PREDICATE_NORMAL;
       this->curr.execWidth = simdWidth;
+      this->curr.physicalFlag = 0;
+      this->curr.flagIndex = uint16_t(pred);
       this->curr.noMask = 0;
-      this->curr.flag = 0;
-      this->curr.subFlag = 1;
       this->SEL(tmp, src0, src1);
     this->pop();
 
@@ -667,27 +667,27 @@ namespace gbe
     using namespace ir;
     const Type type = insn.getType();
     const Immediate imm = insn.getImmediate();
-    const SelectionReg dst = this->selReg(insn.getDst(0), type);
+    const GenRegister dst = this->selReg(insn.getDst(0), type);
 
     switch (type) {
-      case TYPE_U32: this->MOV(dst, SelectionReg::immud(imm.data.u32)); break;
-      case TYPE_S32: this->MOV(dst, SelectionReg::immd(imm.data.s32)); break;
-      case TYPE_U16: this->MOV(dst, SelectionReg::immuw(imm.data.u16)); break;
-      case TYPE_S16: this->MOV(dst, SelectionReg::immw(imm.data.s16)); break;
-      case TYPE_U8:  this->MOV(dst, SelectionReg::immuw(imm.data.u8)); break;
-      case TYPE_S8:  this->MOV(dst, SelectionReg::immw(imm.data.s8)); break;
-      case TYPE_FLOAT: this->MOV(dst, SelectionReg::immf(imm.data.f32)); break;
+      case TYPE_U32: this->MOV(dst, GenRegister::immud(imm.data.u32)); break;
+      case TYPE_S32: this->MOV(dst, GenRegister::immd(imm.data.s32)); break;
+      case TYPE_U16: this->MOV(dst, GenRegister::immuw(imm.data.u16)); break;
+      case TYPE_S16: this->MOV(dst, GenRegister::immw(imm.data.s16)); break;
+      case TYPE_U8:  this->MOV(dst, GenRegister::immuw(imm.data.u8)); break;
+      case TYPE_S8:  this->MOV(dst, GenRegister::immw(imm.data.s8)); break;
+      case TYPE_FLOAT: this->MOV(dst, GenRegister::immf(imm.data.f32)); break;
       default: NOT_SUPPORTED;
     }
   }
 
-  void SimpleSelection::emitUntypedRead(const ir::LoadInstruction &insn, SelectionReg addr)
+  void SimpleSelection::emitUntypedRead(const ir::LoadInstruction &insn, GenRegister addr)
   {
     using namespace ir;
     const uint32_t valueNum = insn.getValueNum();
-    SelectionReg dst[valueNum];
+    GenRegister dst[valueNum];
     for (uint32_t dstID = 0; dstID < valueNum; ++dstID)
-      dst[dstID] = SelectionReg::retype(this->selReg(insn.getValue(dstID)), GEN_TYPE_F);
+      dst[dstID] = GenRegister::retype(this->selReg(insn.getValue(dstID)), GEN_TYPE_F);
     this->UNTYPED_READ(addr, dst, valueNum, 0);
   }
 
@@ -710,8 +710,8 @@ namespace gbe
   }
 
   void SimpleSelection::emitByteGather(const ir::LoadInstruction &insn,
-                                       SelectionReg address,
-                                       SelectionReg value)
+                                       GenRegister address,
+                                       GenRegister value)
   {
     using namespace ir;
     GBE_ASSERT(insn.getValueNum() == 1);
@@ -724,31 +724,26 @@ namespace gbe
     if (elemSize == GEN_BYTE_SCATTER_WORD ||
         elemSize == GEN_BYTE_SCATTER_BYTE) {
       dst = this->reg(FAMILY_DWORD);
-      if (simdWidth == 8)
-        this->BYTE_GATHER(SelectionReg::f8grf(dst), address, elemSize, 0);
-      else if (simdWidth == 16)
-        this->BYTE_GATHER(SelectionReg::f16grf(dst), address, elemSize, 0);
-      else
-        NOT_IMPLEMENTED;
+      this->BYTE_GATHER(GenRegister::fxgrf(simdWidth, dst), address, elemSize, 0);
     }
 
     // Repack bytes or words using a converting mov instruction
     if (elemSize == GEN_BYTE_SCATTER_WORD)
-      this->MOV(SelectionReg::retype(value, GEN_TYPE_UW), SelectionReg::unpacked_uw(dst));
+      this->MOV(GenRegister::retype(value, GEN_TYPE_UW), GenRegister::unpacked_uw(dst));
     else if (elemSize == GEN_BYTE_SCATTER_BYTE)
-      this->MOV(SelectionReg::retype(value, GEN_TYPE_UB), SelectionReg::unpacked_ub(dst));
+      this->MOV(GenRegister::retype(value, GEN_TYPE_UB), GenRegister::unpacked_ub(dst));
   }
 
   void SimpleSelection::emitLoadInstruction(const ir::LoadInstruction &insn) {
     using namespace ir;
-    const SelectionReg address = this->selReg(insn.getAddress());
+    const GenRegister address = this->selReg(insn.getAddress());
     GBE_ASSERT(insn.getAddressSpace() == MEM_GLOBAL ||
                insn.getAddressSpace() == MEM_PRIVATE);
     GBE_ASSERT(ctx.isScalarReg(insn.getValue(0)) == false);
     if (insn.isAligned() == true)
       this->emitUntypedRead(insn, address);
     else {
-      const SelectionReg value = this->selReg(insn.getValue(0));
+      const GenRegister value = this->selReg(insn.getValue(0));
       this->emitByteGather(insn, address, value);
     }
   }
@@ -758,44 +753,32 @@ namespace gbe
     using namespace ir;
     const uint32_t valueNum = insn.getValueNum();
     const uint32_t addrID = ir::StoreInstruction::addressIndex;
-    SelectionReg addr, value[valueNum];
+    GenRegister addr, value[valueNum];
 
-    addr = SelectionReg::retype(this->selReg(insn.getSrc(addrID)), GEN_TYPE_F);;
+    addr = GenRegister::retype(this->selReg(insn.getSrc(addrID)), GEN_TYPE_F);;
     for (uint32_t valueID = 0; valueID < valueNum; ++valueID)
-      value[valueID] = SelectionReg::retype(this->selReg(insn.getValue(valueID)), GEN_TYPE_F);
+      value[valueID] = GenRegister::retype(this->selReg(insn.getValue(valueID)), GEN_TYPE_F);
     this->UNTYPED_WRITE(addr, value, valueNum, 0);
   }
 
   void SimpleSelection::emitByteScatter(const ir::StoreInstruction &insn,
-                                        SelectionReg addr,
-                                        SelectionReg value)
+                                        GenRegister addr,
+                                        GenRegister value)
   {
     using namespace ir;
     const Type type = insn.getValueType();
     const uint32_t elemSize = getByteScatterGatherSize(type);
     const uint32_t simdWidth = ctx.getSimdWidth();
-    const SelectionReg dst = value;
+    const GenRegister dst = value;
 
     GBE_ASSERT(insn.getValueNum() == 1);
-    if (simdWidth == 8) {
-      if (elemSize == GEN_BYTE_SCATTER_WORD) {
-        value = SelectionReg::ud8grf(this->reg(FAMILY_DWORD));
-        this->MOV(value, SelectionReg::retype(dst, GEN_TYPE_UW));
-      } else if (elemSize == GEN_BYTE_SCATTER_BYTE) {
-        value = SelectionReg::ud8grf(this->reg(FAMILY_DWORD));
-        this->MOV(value, SelectionReg::retype(dst, GEN_TYPE_UB));
-      }
-    } else if (simdWidth == 16) {
-      if (elemSize == GEN_BYTE_SCATTER_WORD) {
-        value = SelectionReg::ud16grf(this->reg(FAMILY_DWORD));
-        this->MOV(value, SelectionReg::retype(dst, GEN_TYPE_UW));
-      } else if (elemSize == GEN_BYTE_SCATTER_BYTE) {
-        value = SelectionReg::ud16grf(this->reg(FAMILY_DWORD));
-        this->MOV(value, SelectionReg::retype(dst, GEN_TYPE_UB));
-      }
-    } else
-      NOT_IMPLEMENTED;
-
+    if (elemSize == GEN_BYTE_SCATTER_WORD) {
+      value = GenRegister::udxgrf(simdWidth, this->reg(FAMILY_DWORD));
+      this->MOV(value, GenRegister::retype(dst, GEN_TYPE_UW));
+    } else if (elemSize == GEN_BYTE_SCATTER_BYTE) {
+      value = GenRegister::udxgrf(simdWidth, this->reg(FAMILY_DWORD));
+      this->MOV(value, GenRegister::retype(dst, GEN_TYPE_UB));
+    }
     this->BYTE_SCATTER(addr, value, elemSize, 1);
   }
 
@@ -804,8 +787,8 @@ namespace gbe
     if (insn.isAligned() == true)
       this->emitUntypedWrite(insn);
     else {
-      const SelectionReg address = this->selReg(insn.getAddress());
-      const SelectionReg value = this->selReg(insn.getValue(0));
+      const GenRegister address = this->selReg(insn.getAddress());
+      const GenRegister value = this->selReg(insn.getValue(0));
       this->emitByteScatter(insn, address, value);
     }
   }
@@ -815,7 +798,7 @@ namespace gbe
                                           ir::LabelIndex src)
   {
     using namespace ir;
-    const SelectionReg ip = this->selReg(ocl::blockip, TYPE_U16);
+    const GenRegister ip = this->selReg(ocl::blockip, TYPE_U16);
     const LabelIndex jip = ctx.getLabelIndex(&insn);
     const uint32_t simdWidth = ctx.getSimdWidth();
 
@@ -827,21 +810,13 @@ namespace gbe
     // Inefficient code. If the instruction is predicated, we build the flag
     // register from the boolean vector
     if (insn.isPredicated() == true) {
-      const SelectionReg pred = this->selReg(insn.getPredicateIndex(), TYPE_U16);
-
-      // Reset the flag register
-      this->push();
-        this->curr.predicate = GEN_PREDICATE_NONE;
-        this->curr.execWidth = 1;
-        this->curr.noMask = 1;
-        this->MOV(SelectionReg::flag(0,1), pred);
-      this->pop();
+      const Register pred = insn.getPredicateIndex();
 
       // Update the PcIPs
       this->push();
-        this->curr.flag = 0;
-        this->curr.subFlag = 1;
-        this->MOV(ip, SelectionReg::immuw(uint16_t(dst)));
+        this->curr.physicalFlag = 0;
+        this->curr.flagIndex = uint16_t(pred);
+        this->MOV(ip, GenRegister::immuw(uint16_t(dst)));
       this->pop();
 
       if (nextLabel == jip) return;
@@ -850,10 +825,10 @@ namespace gbe
       // all PcIPs are greater than the next block IP to be sure that we can
       // jump
       this->push();
+        this->curr.physicalFlag = 0;
+        this->curr.flagIndex = uint16_t(pred);
         this->curr.predicate = GEN_PREDICATE_NONE;
-        this->curr.flag = 0;
-        this->curr.subFlag = 1;
-        this->CMP(GEN_CONDITIONAL_G, ip, SelectionReg::immuw(nextLabel));
+        this->CMP(GEN_CONDITIONAL_G, ip, GenRegister::immuw(nextLabel));
 
         // Branch to the jump target
         if (simdWidth == 8)
@@ -864,12 +839,12 @@ namespace gbe
           NOT_SUPPORTED;
         this->curr.execWidth = 1;
         this->curr.noMask = 1;
-        this->JMPI(SelectionReg::immd(0), jip);
+        this->JMPI(GenRegister::immd(0), jip);
       this->pop();
 
     } else {
       // Update the PcIPs
-      this->MOV(ip, SelectionReg::immuw(uint16_t(dst)));
+      this->MOV(ip, GenRegister::immuw(uint16_t(dst)));
 
       // Do not emit branch when we go to the next block anyway
       if (nextLabel == jip) return;
@@ -877,7 +852,7 @@ namespace gbe
         this->curr.execWidth = 1;
         this->curr.noMask = 1;
         this->curr.predicate = GEN_PREDICATE_NONE;
-        this->JMPI(SelectionReg::immd(0), jip);
+        this->JMPI(GenRegister::immd(0), jip);
       this->pop();
     }
   }
@@ -887,7 +862,7 @@ namespace gbe
                                            ir::LabelIndex src)
   {
     using namespace ir;
-    const SelectionReg ip = this->selReg(ocl::blockip, TYPE_U16);
+    const GenRegister ip = this->selReg(ocl::blockip, TYPE_U16);
     const Function &fn = ctx.getFunction();
     const BasicBlock &bb = fn.getBlock(src);
     const LabelIndex jip = ctx.getLabelIndex(&insn);
@@ -896,28 +871,19 @@ namespace gbe
 
     // Inefficient code: we make a GRF to flag conversion
     if (insn.isPredicated() == true) {
-      const SelectionReg pred = this->selReg(insn.getPredicateIndex(), TYPE_U16);
+      const Register pred = insn.getPredicateIndex();
 
       // Update the PcIPs for all the branches. Just put the IPs of the next
       // block. Next instruction will properly reupdate the IPs of the lanes
       // that actually take the branch
       const LabelIndex next = bb.getNextBlock()->getLabelIndex();
-      this->MOV(ip, SelectionReg::immuw(uint16_t(next)));
-
-      // Rebuild the flag register by comparing the boolean with 1s
-      this->push();
-        this->curr.noMask = 1;
-        this->curr.execWidth = 1;
-        this->curr.predicate = GEN_PREDICATE_NONE;
-        this->MOV(SelectionReg::flag(0,1), pred);
-      this->pop();
+      this->MOV(ip, GenRegister::immuw(uint16_t(next)));
 
       this->push();
-        this->curr.flag = 0;
-        this->curr.subFlag = 1;
-
         // Re-update the PcIPs for the branches that takes the backward jump
-        this->MOV(ip, SelectionReg::immuw(uint16_t(dst)));
+        this->curr.physicalFlag = 0;
+        this->curr.flagIndex = uint16_t(pred);
+        this->MOV(ip, GenRegister::immuw(uint16_t(dst)));
 
         // Branch to the jump target
         if (simdWidth == 8)
@@ -928,54 +894,48 @@ namespace gbe
           NOT_SUPPORTED;
         this->curr.execWidth = 1;
         this->curr.noMask = 1;
-        this->JMPI(SelectionReg::immd(0), jip);
+        this->JMPI(GenRegister::immd(0), jip);
       this->pop();
 
     } else {
 
       // Update the PcIPs
-      this->MOV(ip, SelectionReg::immuw(uint16_t(dst)));
+      this->MOV(ip, GenRegister::immuw(uint16_t(dst)));
 
       // Branch to the jump target
       this->push();
         this->curr.execWidth = 1;
         this->curr.noMask = 1;
         this->curr.predicate = GEN_PREDICATE_NONE;
-        this->JMPI(SelectionReg::immd(0), jip);
+        this->JMPI(GenRegister::immd(0), jip);
       this->pop();
     }
   }
-
 
   void SimpleSelection::emitCompareInstruction(const ir::CompareInstruction &insn) {
     using namespace ir;
     const Opcode opcode = insn.getOpcode();
     const Type type = insn.getType();
     const uint32_t genCmp = getGenCompare(opcode);
-    const SelectionReg dst  = this->selReg(insn.getDst(0), TYPE_BOOL);
-    const SelectionReg src0 = this->selReg(insn.getSrc(0), type);
-    const SelectionReg src1 = this->selReg(insn.getSrc(1), type);
+    const Register dst  = insn.getDst(0);
+    const GenRegister src0 = this->selReg(insn.getSrc(0), type);
+    const GenRegister src1 = this->selReg(insn.getSrc(1), type);
 
-    // Copy the predicate to save it basically (TODO use cmp:w with blockIP)
+    // Limit the compare to the active lanes. Use the same compare as for f0.0
     this->push();
-      this->curr.noMask = 1;
-      this->curr.execWidth = 1;
+      const LabelIndex label = insn.getParent()->getLabelIndex();
+      const GenRegister blockip = this->selReg(ocl::blockip, TYPE_U16);
+      const GenRegister labelReg = GenRegister::immuw(label);
       this->curr.predicate = GEN_PREDICATE_NONE;
-      this->MOV(SelectionReg::flag(0,1), SelectionReg::flag(0,0));
+      this->curr.physicalFlag = 0;
+      this->curr.flagIndex = uint16_t(dst);
+      this->CMP(GEN_CONDITIONAL_LE, blockip, labelReg);
     this->pop();
 
-    // Emit the compare instruction itself
     this->push();
-      this->curr.flag = 0;
-      this->curr.subFlag = 1;
+      this->curr.physicalFlag = 0;
+      this->curr.flagIndex = uint16_t(dst);
       this->CMP(genCmp, src0, src1);
-    this->pop();
-
-    // We emit an unoptimized code where we store the resulting mask in a GRF
-    this->push();
-      this->curr.execWidth = 1;
-      this->curr.predicate = GEN_PREDICATE_NONE;
-      this->MOV(dst, SelectionReg::flag(0,1));
     this->pop();
   }
 
@@ -985,22 +945,22 @@ namespace gbe
     const Type srcType = insn.getSrcType();
     const RegisterFamily dstFamily = getFamily(dstType);
     const RegisterFamily srcFamily = getFamily(srcType);
-    const SelectionReg dst = this->selReg(insn.getDst(0), dstType);
-    const SelectionReg src = this->selReg(insn.getSrc(0), srcType);
+    const GenRegister dst = this->selReg(insn.getDst(0), dstType);
+    const GenRegister src = this->selReg(insn.getSrc(0), srcType);
 
     GBE_ASSERT(dstFamily != FAMILY_QWORD && srcFamily != FAMILY_QWORD);
 
     // We need two instructions to make the conversion
     if (dstFamily != FAMILY_DWORD && srcFamily == FAMILY_DWORD) {
-      SelectionReg unpacked;
+      GenRegister unpacked;
       if (dstFamily == FAMILY_WORD) {
         const uint32_t type = TYPE_U16 ? GEN_TYPE_UW : GEN_TYPE_W;
-        unpacked = SelectionReg::unpacked_uw(this->reg(FAMILY_DWORD));
-        unpacked = SelectionReg::retype(unpacked, type);
+        unpacked = GenRegister::unpacked_uw(this->reg(FAMILY_DWORD));
+        unpacked = GenRegister::retype(unpacked, type);
       } else {
         const uint32_t type = TYPE_U8 ? GEN_TYPE_UB : GEN_TYPE_B;
-        unpacked = SelectionReg::unpacked_ub(this->reg(FAMILY_DWORD));
-        unpacked = SelectionReg::retype(unpacked, type);
+        unpacked = GenRegister::unpacked_ub(this->reg(FAMILY_DWORD));
+        unpacked = GenRegister::retype(unpacked, type);
       }
       this->MOV(unpacked, src);
       this->MOV(dst, unpacked);
@@ -1030,8 +990,8 @@ namespace gbe
   void SimpleSelection::emitLabelInstruction(const ir::LabelInstruction &insn) {
     using namespace ir;
     const LabelIndex label = insn.getLabelIndex();
-    const SelectionReg src0 = this->selReg(ocl::blockip);
-    const SelectionReg src1 = SelectionReg::immuw(label);
+    const GenRegister src0 = this->selReg(ocl::blockip);
+    const GenRegister src1 = GenRegister::immuw(label);
     const uint32_t simdWidth = ctx.getSimdWidth();
     this->LABEL(label);
 
@@ -1039,7 +999,8 @@ namespace gbe
     this->push();
       this->curr.predicate = GEN_PREDICATE_NONE;
       this->curr.flag = 0;
-      this->CMP(GEN_CONDITIONAL_LE, SelectionReg::retype(src0, GEN_TYPE_UW), src1);
+      this->curr.subFlag = 0;
+      this->CMP(GEN_CONDITIONAL_LE, GenRegister::retype(src0, GEN_TYPE_UW), src1);
     this->pop();
 
     // If it is required, insert a JUMP to bypass the block
@@ -1057,7 +1018,7 @@ namespace gbe
         this->curr.flag = 0;
         this->curr.subFlag = 0;
         this->curr.noMask = 1;
-        this->JMPI(SelectionReg::immd(0), jip);
+        this->JMPI(GenRegister::immd(0), jip);
       this->pop();
     }
   }
@@ -1066,14 +1027,14 @@ namespace gbe
     using namespace ir;
 
     // Two destinations: one is the real destination, one is a temporary
-    SelectionReg dst0 = this->selReg(insn.getDst(0)), dst1;
+    GenRegister dst0 = this->selReg(insn.getDst(0)), dst1;
     if (ctx.getSimdWidth() == 8)
-      dst1 = SelectionReg::ud8grf(this->reg(FAMILY_DWORD));
+      dst1 = GenRegister::ud8grf(this->reg(FAMILY_DWORD));
     else
-      dst1 = SelectionReg::ud16grf(this->reg(FAMILY_DWORD));
+      dst1 = GenRegister::ud16grf(this->reg(FAMILY_DWORD));
 
     // Get all the sources
-    SelectionReg src[SelectionInstruction::MAX_SRC_NUM];
+    GenRegister src[SelectionInstruction::MAX_SRC_NUM];
     const uint32_t srcNum = insn.getSrcNum();
     GBE_ASSERT(srcNum <= SelectionInstruction::MAX_SRC_NUM);
     for (uint32_t srcID = 0; srcID < insn.getSrcNum(); ++srcID)
@@ -1090,16 +1051,18 @@ namespace gbe
   void SimpleSelection::emitVoteInstruction(const ir::VoteInstruction &insn) {
     using namespace ir;
     const uint32_t simdWidth = ctx.getSimdWidth();
-    const SelectionReg dst = this->selReg(insn.getDst(0), TYPE_U16);
-    const SelectionReg src = this->selReg(insn.getSrc(0), TYPE_U16);
+    const GenRegister dst = this->selReg(insn.getDst(0), TYPE_U16);
+    const GenRegister src = this->selReg(insn.getSrc(0), TYPE_U16);
 
-    // Limit the vote to the active lanes
+    // Limit the vote to the active lanes. Use the same compare as for f0.0
     this->push();
-      // Move the predicate into a flag register (TODO use cmp:w with blockIP)
+      const LabelIndex label = insn.getParent()->getLabelIndex();
+      const GenRegister blockip = this->selReg(ocl::blockip, TYPE_U16);
+      const GenRegister labelReg = GenRegister::immuw(label);
       this->curr.predicate = GEN_PREDICATE_NONE;
-      this->curr.execWidth = 1;
-      this->curr.noMask = 1;
-      this->MOV(SelectionReg::flag(0,1), SelectionReg::flag(0,0));
+      this->curr.flag = 0;
+      this->curr.subFlag = 1;
+      this->CMP(GEN_CONDITIONAL_LE, blockip, labelReg);
     this->pop();
 
     // Emit the compare instruction to get the flag register
@@ -1108,18 +1071,18 @@ namespace gbe
       const uint32_t genCmp = vote == VOTE_ANY ? GEN_CONDITIONAL_NEQ : GEN_CONDITIONAL_EQ;
       this->curr.flag = 0;
       this->curr.subFlag = 1;
-      this->CMP(genCmp, src, SelectionReg::immuw(0));
+      this->CMP(genCmp, src, GenRegister::immuw(0));
     this->pop();
 
     // Broadcast the result to the destination
     if (vote == VOTE_ANY)
-        this->MOV(dst, SelectionReg::flag(0,1));
+      this->MOV(dst, GenRegister::flag(0,1));
     else {
-      const SelectionReg tmp = this->selReg(this->reg(FAMILY_WORD), TYPE_U16);
+      const GenRegister tmp = this->selReg(this->reg(FAMILY_WORD), TYPE_U16);
       this->push();
         // Set all lanes of tmp to zero
         this->curr.predicate = GEN_PREDICATE_NONE;
-        this->MOV(tmp, SelectionReg::immuw(0));
+        this->MOV(tmp, GenRegister::immuw(0));
 
         // Compute the short values with no mask
         this->curr.flag = 0;
@@ -1128,7 +1091,7 @@ namespace gbe
         this->curr.predicate = simdWidth == 8 ?
           GEN_PREDICATE_ALIGN1_ANY8H :
           GEN_PREDICATE_ALIGN1_ANY16H;
-        this->MOV(tmp, SelectionReg::immuw(1));
+        this->MOV(tmp, GenRegister::immuw(1));
       this->pop();
 
       // Update the destination with the proper mask
@@ -1139,10 +1102,10 @@ namespace gbe
   void SimpleSelection::emitRGatherInstruction(const ir::RGatherInstruction &insn) {
     using namespace ir;
     // Two destinations: one is the real destination, one is a temporary
-    const SelectionReg dst = this->selReg(insn.getDst(0)), dst1;
+    const GenRegister dst = this->selReg(insn.getDst(0)), dst1;
 
     // Get all the sources
-    SelectionReg src[SelectionInstruction::MAX_SRC_NUM];
+    GenRegister src[SelectionInstruction::MAX_SRC_NUM];
     const uint32_t srcNum = insn.getSrcNum();
     GBE_ASSERT(srcNum <= SelectionInstruction::MAX_SRC_NUM);
     for (uint32_t srcID = 0; srcID < insn.getSrcNum(); ++srcID)
@@ -1154,18 +1117,18 @@ namespace gbe
 
   void SimpleSelection::emitOBReadInstruction(const ir::OBReadInstruction &insn) {
     using namespace ir;
-    const SelectionReg header = this->selReg(this->reg(FAMILY_DWORD), TYPE_U32);
-    const SelectionReg addr = this->selReg(insn.getAddress(), TYPE_U32);
-    const SelectionReg value = this->selReg(insn.getValue(), TYPE_U32);
+    const GenRegister header = this->selReg(this->reg(FAMILY_DWORD), TYPE_U32);
+    const GenRegister addr = this->selReg(insn.getAddress(), TYPE_U32);
+    const GenRegister value = this->selReg(insn.getValue(), TYPE_U32);
     const uint32_t simdWidth = ctx.getSimdWidth();
     this->OBREAD(value, addr, header, 0xff, simdWidth * sizeof(int));
   }
 
   void SimpleSelection::emitOBWriteInstruction(const ir::OBWriteInstruction &insn) {
     using namespace ir;
-    const SelectionReg header = this->selReg(this->reg(FAMILY_DWORD), TYPE_U32);
-    const SelectionReg addr = this->selReg(insn.getAddress(), TYPE_U32);
-    const SelectionReg value = this->selReg(insn.getValue(), TYPE_U32);
+    const GenRegister header = this->selReg(this->reg(FAMILY_DWORD), TYPE_U32);
+    const GenRegister addr = this->selReg(insn.getAddress(), TYPE_U32);
+    const GenRegister value = this->selReg(insn.getValue(), TYPE_U32);
     const uint32_t simdWidth = ctx.getSimdWidth();
     this->OBWRITE(addr, value, header, 0xff, simdWidth * sizeof(int));
   }

@@ -22,8 +22,8 @@
   *   Keith Whitwell <keith@tungstengraphics.com>
   */
 
-#ifndef GEN_DEFINES_H
-#define GEN_DEFINES_H
+#ifndef __GEN_DEFS_HPP__
+#define __GEN_DEFS_HPP__
 
 #include <cstdint>
 
@@ -34,6 +34,8 @@
 /* Execution Unit (EU) defines */
 #define GEN_ALIGN_1   0
 #define GEN_ALIGN_16  1
+
+#define GEN_REG_SIZE 32
 
 #define GEN_ADDRESS_DIRECT                        0
 #define GEN_ADDRESS_REGISTER_INDIRECT_REGISTER    1
@@ -703,5 +705,5 @@ struct GenInstruction
   } bits3;
 };
 
-#endif /* GEN_DEFINES_H */
+#endif /* __GEN_DEFS_HPP__ */
 

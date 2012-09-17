@@ -65,7 +65,7 @@ namespace gbe
     void emitInstructionStream(void);
     /*! Set the correct target values for the branches */
     void patchBranches(void);
-    /*! Forward ir::Function method */
+    /*! Forward ir::Function isSpecialReg method */
     INLINE bool isSpecialReg(ir::Register reg) const {
       return fn.isSpecialReg(reg);
     }
@@ -73,7 +73,6 @@ namespace gbe
     INLINE const ir::Liveness::LiveOut &getLiveOut(const ir::BasicBlock *bb) const {
       return this->liveness->getLiveOut(bb);
     }
-
     /*! Final Gen ISA emission helper functions */
     void emitLabelInstruction(const SelectionInstruction &insn);
     void emitUnaryInstruction(const SelectionInstruction &insn);
@@ -110,4 +109,5 @@ namespace gbe
 } /* namespace gbe */
 
 #endif /* __GBE_GEN_CONTEXT_HPP__ */
+
 
