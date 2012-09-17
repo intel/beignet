@@ -35,10 +35,11 @@ namespace gbe {
 namespace ir {
 
   /*! All opcodes */
-  enum Opcode : char {
+  enum Opcode : uint8_t {
 #define DECL_INSN(INSN, FAMILY) OP_##INSN,
 #include "ir/instruction.hxx"
 #undef DECL_INSN
+    OP_INVALID
   };
 
   /*! Different memory spaces */
@@ -85,7 +86,7 @@ namespace ir {
       predecessor = successor = NULL;
       parent = NULL;
     }
-    /*! Uninitialize instruction */
+    /*! Uninitialized instruction */
     INLINE Instruction(void) {}
     /*! Get the instruction opcode */
     INLINE Opcode getOpcode(void) const { return opcode; }
@@ -101,6 +102,12 @@ namespace ir {
     RegisterData getDstData(uint32_t ID = 0u) const;
     /*! Get the register of the given destination */
     RegisterData getSrcData(uint32_t ID = 0u) const;
+    /*! Set a register in src srcID */
+    void setSrc(uint32_t srcID, Register reg);
+    /*! Set a register in dst dstID */
+    void setDst(uint32_t dstID, Register reg);
+    /*! Is there any side effect in the memory sub-system? */
+    bool hasSideEffect(void) const;
     /*! Get / set the previous instruction in the stream */
     Instruction *getPredecessor(bool stayInBlock = true);
     const Instruction *getPredecessor(bool stayInBlock = true) const;
@@ -131,7 +138,8 @@ namespace ir {
     template <typename T> INLINE bool isMemberOf(void) const {
       return T::isClassOf(*this);
     }
-
+    static const uint32_t MAX_SRC_NUM = 8;
+    static const uint32_t MAX_DST_NUM = 8;
   protected:
     enum { opaqueSize = sizeof(uint64_t)-sizeof(uint8_t) };
     Opcode opcode;           //!< Idendifies the instruction
@@ -159,6 +167,8 @@ namespace ir {
   public:
     /*! Get the type manipulated by the instruction */
     Type getType(void) const;
+    /*! Commutative instructions can allow better optimizations */
+    bool commutes(void) const;
     /*! Return true if the given instruction is an instance of this class */
     static bool isClassOf(const Instruction &insn);
   };
@@ -434,6 +444,20 @@ namespace ir {
   INLINE const T &cast(const Instruction &insn) {
     GBE_ASSERTM(insn.isMemberOf<T>() == true, "Invalid instruction type");
     return reinterpret_cast<const T&>(insn);
+  }
+
+  /*! Indicates if the given opcode belongs the given instruction family */
+  template <typename T, typename U> struct EqualType {enum {value = false};};
+  template <typename T> struct EqualType<T,T> { enum {value = true};};
+  template <typename T>
+  INLINE bool isOpcodeFrom(Opcode op) {
+    switch (op) {
+#define DECL_INSN(OPCODE, FAMILY) \
+      case OP_##OPCODE: return EqualType<T, FAMILY>::value;
+#include "instruction.hxx"
+#undef DECL_INSN
+      default: NOT_SUPPORTED; return false;
+    }
   }
 
   ///////////////////////////////////////////////////////////////////////////

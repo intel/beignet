@@ -42,7 +42,7 @@ namespace gbe
     Context(unit, name)
   {
     this->p = GBE_NEW(GenEncoder, simdWidth, 7); // XXX handle more than Gen7
-    this->sel = newSimpleSelection(*this);
+    this->sel = newSelection(*this);
     this->ra = GBE_NEW(GenRegAllocator, *this);
   }
 
@@ -153,6 +153,17 @@ namespace gbe
       case SEL_OP_ADD:  p->ADD(dst, src0, src1); break;
       case SEL_OP_MUL:  p->MUL(dst, src0, src1); break;
       case SEL_OP_MACH: p->MACH(dst, src0, src1); break;
+      default: NOT_IMPLEMENTED;
+    }
+  }
+
+  void GenContext::emitTernaryInstruction(const SelectionInstruction &insn) {
+    const GenRegister dst = ra->genReg(insn.dst[0]);
+    const GenRegister src0 = ra->genReg(insn.src[0]);
+    const GenRegister src1 = ra->genReg(insn.src[1]);
+    const GenRegister src2 = ra->genReg(insn.src[2]);
+    switch (insn.opcode) {
+      case SEL_OP_MAD:  p->MAD(dst, src0, src1, src2); break;
       default: NOT_IMPLEMENTED;
     }
   }

@@ -701,7 +701,24 @@ namespace gbe
     }
 
     static INLINE GenRegister negate(GenRegister reg) {
-      reg.negation ^= 1;
+      if (reg.file != GEN_IMMEDIATE_VALUE)
+        reg.negation ^= 1;
+      else {
+        if (reg.type == GEN_TYPE_F)
+          reg.immediate.f = -reg.immediate.f;
+        else if (reg.type == GEN_TYPE_UD)
+          reg.immediate.ud = -reg.immediate.ud;
+        else if (reg.type == GEN_TYPE_D)
+          reg.immediate.d = -reg.immediate.d;
+        else if (reg.type == GEN_TYPE_UW) {
+          const uint16_t uw = reg.immediate.ud & 0xffff;
+          reg = GenRegister::immuw(-uw);
+        } else if (reg.type == GEN_TYPE_W) {
+          const uint16_t uw = reg.immediate.ud & 0xffff;
+          reg = GenRegister::immw(-(int16_t)uw);
+        } else
+          NOT_SUPPORTED;
+      }
       return reg;
     }
 

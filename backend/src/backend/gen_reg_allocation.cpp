@@ -352,7 +352,11 @@ namespace gbe
           mov.dstNum = mov.srcNum = 1;
           mov.src[0] = GenRegister::uw1grf(ir::Register(insn.state.flagIndex));
           mov.dst[0] = GenRegister::flag(0,1);
-          insn.appendBefore(mov);
+
+          // Do not prepend if the flag is not read (== used only as a
+          // conditional modifier)
+          if (insn.state.predicate != GEN_PREDICATE_NONE)
+            insn.prepend(mov);
 
           // We can use f0.1 (our "backdoor" flag)
           insn.state.flag = 0;
@@ -363,7 +367,7 @@ namespace gbe
           // the GRF
           if (insn.opcode == SEL_OP_CMP) {
             std::swap(mov.src[0], mov.dst[0]);
-            insn.appendAfter(mov);
+            insn.append(mov);
           }
         }
       }
@@ -503,9 +507,11 @@ namespace gbe
         // Flag registers can only go to src[0]
         const SelectionOpcode opcode = SelectionOpcode(insn.opcode);
         if (opcode == SEL_OP_AND || opcode == SEL_OP_OR) {
-          const ir::Register reg = insn.src[1].reg;
-          if (ctx.sel->getRegisterFamily(reg) == ir::FAMILY_BOOL)
-            grfBooleans.insert(reg);
+          if (insn.src[1].physical == 0) {
+            const ir::Register reg = insn.src[1].reg;
+            if (ctx.sel->getRegisterFamily(reg) == ir::FAMILY_BOOL)
+              grfBooleans.insert(reg);
+          }
         }
 
         // OK, a flag is used as a predicate or a conditional modifier

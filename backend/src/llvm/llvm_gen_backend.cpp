@@ -599,14 +599,23 @@ namespace gbe
         uint32_t elemNum;
         Type *llvmType = PN->getType();
         const ir::Type type = getVectorInfo(ctx, llvmType, PN, elemNum);
+        // Instruction *IVInsn = dyn_cast<Instruction>(IV);
 
         // Emit the MOV required by the PHI function. We do it simple and do not
         // try to optimize them. A next data flow analysis pass on the Gen IR
         // will remove them
         for (uint32_t elemID = 0; elemID < elemNum; ++elemID) {
           const ir::Register dst = this->getRegister(PN, elemID);
-          const ir::Register src = this->getRegister(IV, elemID);
-          ctx.MOV(type, dst, src);
+          Constant *CPV = dyn_cast<Constant>(IV);
+          if (CPV) {
+            GBE_ASSERT(isa<GlobalValue>(CPV) == false);
+            const ir::ImmediateIndex immIndex = this->newImmediate(CPV, elemID);
+            const ir::Immediate imm = ctx.getImmediate(immIndex);
+            ctx.LOADI(imm.type, dst, immIndex);
+          } else {
+            const ir::Register src = this->getRegister(IV, elemID);
+            ctx.MOV(type, dst, src);
+          }
         }
       }
     }
@@ -1296,6 +1305,7 @@ namespace gbe
       case GEN_OCL_RGATHER8:
       case GEN_OCL_ALL:
       case GEN_OCL_ANY:
+      case GEN_OCL_MAD:
         // No structure can be returned
         GBE_ASSERT(I.hasStructRetAttr() == false);
         this->newRegister(&I);
@@ -1456,6 +1466,15 @@ namespace gbe
             GBE_ASSERT(AI != AE);
             const ir::Register value = this->getRegister(*AI);
             ctx.OBWRITE(address, value);
+            break;
+          }
+          case GEN_OCL_MAD:
+          {
+            GBE_ASSERT(AI != AE); const ir::Register src0 = this->getRegister(*AI); ++AI;
+            GBE_ASSERT(AI != AE); const ir::Register src1 = this->getRegister(*AI); ++AI;
+            GBE_ASSERT(AI != AE); const ir::Register src2 = this->getRegister(*AI); ++AI;
+            const ir::Register dst = this->getRegister(&I);
+            ctx.MAD(ir::TYPE_FLOAT, dst, src0, src1, src2);
             break;
           }
           case GEN_OCL_FORCE_SIMD8: ctx.setSimdWidth(8); break;

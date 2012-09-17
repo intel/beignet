@@ -17,11 +17,6 @@
  * Author: Benjamin Segovia <benjamin.segovia@intel.com>
  */
 
-/**
- * \file context.hpp
- * \author Benjamin Segovia <benjamin.segovia@intel.com>
- */
-
 #ifndef __GBE_CONTEXT_HPP__
 #define __GBE_CONTEXT_HPP__
 
@@ -66,6 +61,10 @@ namespace gbe
     INLINE bool isLabelUsed(ir::LabelIndex index) const {
       return usedLabels.contains(index);
     }
+    /*! Get the function graph */
+    INLINE const ir::FunctionDAG &getFunctionDAG(void) const { return *dag; }
+    /*! Get the liveness information */
+    INLINE const ir::Liveness &getLiveness(void) const { return *liveness; }
     /*! Tells if the register is used */
     bool isRegUsed(const ir::Register &reg) const;
     /*! Indicate if a register is scalar or not */

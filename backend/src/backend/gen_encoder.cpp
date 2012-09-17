@@ -480,16 +480,7 @@ namespace gbe
     }
   }
 
-#if 0
-  static int
-  get_3src_subreg_nr(GenRegister reg)
-  {
-     if (reg.vstride == GEN_VERTICAL_STRIDE_0) {
-        assert(brw_is_single_value_swizzle(reg.dw1.bits.swizzle));
-        return reg.subnr / 4 + GEN_GET_SWZ(reg.dw1.bits.swizzle, 0);
-     } else
-        return reg.subnr / 4;
-  }
+#define NO_SWIZZLE ((0<<0) | (1<<2) | (2<<4) | (3<<6))
 
   static GenInstruction *alu3(GenEncoder *p,
                               uint32_t opcode,
@@ -500,8 +491,6 @@ namespace gbe
   {
      GenInstruction *insn = p->next(opcode);
 
-     assert(insn->header.access_mode == GEN_ALIGN_16);
-
      assert(dest.file == GEN_GENERAL_REGISTER_FILE);
      assert(dest.nr < 128);
      assert(dest.address_mode == GEN_ADDRESS_DIRECT);
@@ -509,15 +498,17 @@ namespace gbe
      insn->bits1.da3src.dest_reg_file = 0;
      insn->bits1.da3src.dest_reg_nr = dest.nr;
      insn->bits1.da3src.dest_subreg_nr = dest.subnr / 16;
-     insn->bits1.da3src.dest_writemask = dest.dw1.bits.writemask;
+     insn->bits1.da3src.dest_writemask = 0xf;
      p->setHeader(insn);
+     insn->header.access_mode = GEN_ALIGN_16;
+     insn->header.execution_size = GEN_WIDTH_8;
 
      assert(src0.file == GEN_GENERAL_REGISTER_FILE);
      assert(src0.address_mode == GEN_ADDRESS_DIRECT);
      assert(src0.nr < 128);
      assert(src0.type == GEN_TYPE_F);
-     insn->bits2.da3src.src0_swizzle = src0.dw1.bits.swizzle;
-     insn->bits2.da3src.src0_subreg_nr = get_3src_subreg_nr(src0);
+     insn->bits2.da3src.src0_swizzle = NO_SWIZZLE;
+     insn->bits2.da3src.src0_subreg_nr = src0.subnr / 4 ;
      insn->bits2.da3src.src0_reg_nr = src0.nr;
      insn->bits1.da3src.src0_abs = src0.absolute;
      insn->bits1.da3src.src0_negate = src0.negation;
@@ -527,9 +518,9 @@ namespace gbe
      assert(src1.address_mode == GEN_ADDRESS_DIRECT);
      assert(src1.nr < 128);
      assert(src1.type == GEN_TYPE_F);
-     insn->bits2.da3src.src1_swizzle = src1.dw1.bits.swizzle;
-     insn->bits2.da3src.src1_subreg_nr_low = get_3src_subreg_nr(src1) & 0x3;
-     insn->bits3.da3src.src1_subreg_nr_high = get_3src_subreg_nr(src1) >> 2;
+     insn->bits2.da3src.src1_swizzle = NO_SWIZZLE;
+     insn->bits2.da3src.src1_subreg_nr_low = (src1.subnr / 4) & 0x3;
+     insn->bits3.da3src.src1_subreg_nr_high = (src1.subnr / 4) >> 2;
      insn->bits2.da3src.src1_rep_ctrl = src1.vstride == GEN_VERTICAL_STRIDE_0;
      insn->bits3.da3src.src1_reg_nr = src1.nr;
      insn->bits1.da3src.src1_abs = src1.absolute;
@@ -539,16 +530,32 @@ namespace gbe
      assert(src2.address_mode == GEN_ADDRESS_DIRECT);
      assert(src2.nr < 128);
      assert(src2.type == GEN_TYPE_F);
-     insn->bits3.da3src.src2_swizzle = src2.dw1.bits.swizzle;
-     insn->bits3.da3src.src2_subreg_nr = get_3src_subreg_nr(src2);
+     insn->bits3.da3src.src2_swizzle = NO_SWIZZLE;
+     insn->bits3.da3src.src2_subreg_nr = src2.subnr / 4;
      insn->bits3.da3src.src2_rep_ctrl = src2.vstride == GEN_VERTICAL_STRIDE_0;
      insn->bits3.da3src.src2_reg_nr = src2.nr;
      insn->bits1.da3src.src2_abs = src2.absolute;
      insn->bits1.da3src.src2_negate = src2.negation;
 
+     // Emit second half of the instruction
+     if (p->curr.execWidth == 16) {
+      GenInstruction q1Insn = *insn;
+      insn = p->next(opcode);
+      *insn = q1Insn;
+      insn->header.quarter_control = GEN_COMPRESSION_Q2;
+      insn->bits1.da3src.dest_reg_nr++;
+      if (insn->bits2.da3src.src0_rep_ctrl == 0)
+        insn->bits2.da3src.src0_reg_nr++;
+      if (insn->bits2.da3src.src1_rep_ctrl == 0)
+        insn->bits3.da3src.src1_reg_nr++;
+      if (insn->bits3.da3src.src2_rep_ctrl == 0)
+        insn->bits3.da3src.src2_reg_nr++;
+     }
+
      return insn;
   }
-#endif
+
+#undef NO_SWIZZLE
 
 #define ALU1(OP) \
   void GenEncoder::OP(GenRegister dest, GenRegister src0) { \
@@ -584,7 +591,7 @@ namespace gbe
   ALU1(LZD)
   ALU2(LINE)
   ALU2(PLN)
-  // ALU3(MAD)
+  ALU3(MAD)
 
   void GenEncoder::MACH(GenRegister dest, GenRegister src0, GenRegister src1) {
      alu2(this, GEN_OPCODE_MACH, dest, src0, src1, 1);

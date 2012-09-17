@@ -104,6 +104,8 @@ namespace ir {
       const LabelInstruction *label = cast<LabelInstruction>(this->first);
       return label->getLabelIndex();
     }
+    /*! Get the number of instructions in the block (costly!) */
+    uint32_t getInstructionNum(void) const;
   private:
     friend class Function; //!< Owns the basic blocks
     BlockSet predecessors; //!< Incoming blocks
@@ -193,9 +195,13 @@ namespace ir {
     INLINE RegisterFamily getRegisterFamily(Register reg) const {
       return this->getRegisterData(reg).family;
     }
-    /*! Get the register index from the tuple vector */
+    /*! Get the register from the tuple vector */
     INLINE Register getRegister(Tuple ID, uint32_t which) const {
       return file.get(ID, which);
+    }
+    /*! Set the register from the tuple vector */
+    INLINE void setRegister(Tuple ID, uint32_t which, Register reg) {
+      file.set(ID, which, reg);
     }
     /*! Get the register file */
     INLINE const RegisterFile &getRegisterFile(void) const { return file; }

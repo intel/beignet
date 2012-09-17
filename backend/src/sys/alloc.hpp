@@ -160,18 +160,31 @@ namespace gbe
   class GrowingPool
   {
   public:
-    GrowingPool(void) : current(GBE_NEW(GrowingPoolElem, 1)), freeList(NULL) {}
+    GrowingPool(void) : current(GBE_NEW(GrowingPoolElem, 1)), free(NULL), freeList(NULL) {}
     ~GrowingPool(void) { GBE_ASSERT(current); GBE_DELETE(current); }
     void *allocate(void) {
+      // Pick up an element from the free list
       if (this->freeList != NULL) {
         void *data = (void*) freeList;
         this->freeList = *(void**) freeList;
         return data;
       }
-      if (UNLIKELY(current->allocated == current->maxElemNum)) {
-        GrowingPoolElem *elem = GBE_NEW(GrowingPoolElem, 2 * current->maxElemNum);
-        elem->next = current;
-        current = elem;
+      // Pick up an element from the current block (if not full)
+      if (this->current->allocated < this->current->maxElemNum) {
+        void *data = (T*) current->data + current->allocated++;
+        return data;
+      }
+      // Block is full. Try to pick up a free block
+      if (this->free) {
+        GBE_ASSERT(this->free->allocated < this->free->maxElemNum);
+        this->current = this->free;
+        this->free = this->free->next;
+      }
+      // No free block we must allocate a new one
+      else {
+        GrowingPoolElem *elem = GBE_NEW(GrowingPoolElem, 2 * this->current->maxElemNum);
+        elem->next = this->current;
+        this->current = elem;
       }
       void *data = (T*) current->data + current->allocated++;
       return data;
@@ -180,6 +193,22 @@ namespace gbe
       if (t == NULL) return;
       *(void**) t = this->freeList;
       this->freeList = t;
+    }
+    void rewind(void) {
+      // All free elements return to their blocks
+      this->freeList = NULL;
+      // Reverse the chain list and mark all blocks as empty
+      while (this->current) {
+        GrowingPoolElem *next = this->current->next;
+        this->current->allocated = 0;
+        this->current->next = this->free;
+        this->free = this->current;
+        this->current = next;
+      }
+      // Provide a valid current block
+      GBE_ASSERT(this->free);
+      this->current = this->free;
+      this->free = this->current->next;
     }
   private:
     /*! Chunk of elements to allocate */
@@ -202,6 +231,7 @@ namespace gbe
       size_t allocated, maxElemNum;
     };
     GrowingPoolElem *current; //!< To get new element from
+    GrowingPoolElem *free;    //!< Blocks that can be reused (after rewind)
     void *freeList;           //!< Elements that have been deallocated
     GBE_CLASS(GrowingPool);
   };

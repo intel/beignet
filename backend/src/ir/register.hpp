@@ -124,15 +124,14 @@ namespace ir {
     /*! To terminate variadic recursion */
     INLINE void appendTuple(void) {}
     /*! Return a copy of the register at index */
-    INLINE RegisterData get(Register index) const {
-      GBE_ASSERTM(index < regNum(), "Out-of-bound register");
-      return regs[index];
-    }
+    INLINE RegisterData get(Register index) const { return regs[index]; }
     /*! Get the register index from the tuple */
     INLINE Register get(Tuple index, uint32_t which) const {
-      GBE_ASSERTM(uint16_t(index) + which < regTuples.size(),
-                  "Out-of-bound index in the tuple file");
       return regTuples[uint16_t(index) + which];
+    }
+    /*! Set the register index from the tuple */
+    INLINE void set(Tuple index, uint32_t which, Register reg) {
+      regTuples[uint16_t(index) + which] = reg;
     }
     /*! Number of registers in the register file */
     INLINE uint32_t regNum(void) const { return regs.size(); }

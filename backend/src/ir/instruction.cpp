@@ -35,24 +35,6 @@ namespace ir {
   {
 #define ALIGNED_INSTRUCTION ALIGNED(AlignOf<Instruction>::value) 
 
-    /*! Use this when there is no source */
-    struct NoSrcPolicy {
-      INLINE uint32_t getSrcNum(void) const { return 0; }
-      INLINE Register getSrc(const Function &fn, uint32_t ID) const {
-        NOT_IMPLEMENTED;
-        return Register(0);
-      }
-    };
-
-    /*! Use this when there is no destination */
-    struct NoDstPolicy {
-      INLINE uint32_t getDstNum(void) const { return 0; }
-      INLINE Register getDst(const Function &fn, uint32_t ID) const {
-        NOT_IMPLEMENTED;
-        return Register(0);
-      }
-    };
-
     /*! Policy shared by all the internal instructions */
     struct BasePolicy {
       /*! Create an instruction from its internal representation */
@@ -65,6 +47,7 @@ namespace ir {
 #define DECL_INSN(OPCODE, CLASS) case OP_##OPCODE: out << #OPCODE; break;
 #include "instruction.hxx"
 #undef DECL_INSN
+          case OP_INVALID: NOT_SUPPORTED; break;
         };
       }
 
@@ -72,45 +55,80 @@ namespace ir {
       Opcode opcode;
     };
 
-    /*! All unary and binary arithmetic instructions */
-    template <uint32_t srcNum> // 1 or 2
-    class NaryInstruction : public BasePolicy
-    {
-    public:
+    /*! For regular n source instructions */
+    template <typename T, uint32_t srcNum> 
+    struct NSrcPolicy {
       INLINE uint32_t getSrcNum(void) const { return srcNum; }
-      INLINE uint32_t getDstNum(void) const { return 1; }
-      INLINE Register getDst(const Function &fn, uint32_t ID) const {
-        GBE_ASSERTM(ID == 0, "Only one destination for the instruction");
-        return dst;
-      }
       INLINE Register getSrc(const Function &fn, uint32_t ID) const {
         GBE_ASSERTM(ID < srcNum, "Out-of-bound source");
-        return src[ID];
+        return static_cast<const T*>(this)->src[ID];
       }
+      INLINE void setSrc(Function &fn, uint32_t ID, Register reg) {
+        GBE_ASSERTM(ID < srcNum, "Out-of-bound source");
+        static_cast<T*>(this)->src[ID] = reg;
+      }
+    };
+
+    /*! For regular n destinations instructions */
+    template <typename T, uint32_t dstNum>
+    struct NDstPolicy {
+      INLINE uint32_t getDstNum(void) const { return dstNum; }
+      INLINE Register getDst(const Function &fn, uint32_t ID) const {
+        GBE_ASSERTM(ID < dstNum, "Out-of-bound destination");
+        return static_cast<const T*>(this)->dst[ID];
+      }
+      INLINE void setDst(Function &fn, uint32_t ID, Register reg) {
+        GBE_ASSERTM(ID < dstNum, "Out-of-bound destination");
+        static_cast<T*>(this)->dst[ID] = reg;
+      }
+    };
+
+    /*! For instructions that use a tuple for source */
+    template <typename T>
+    struct TupleSrcPolicy {
+      INLINE uint32_t getSrcNum(void) const {
+        return static_cast<const T*>(this)->srcNum;
+      }
+      INLINE Register getSrc(const Function &fn, uint32_t ID) const {
+        GBE_ASSERTM(ID < static_cast<const T*>(this)->srcNum, "Out-of-bound source register");
+        return fn.getRegister(static_cast<const T*>(this)->src, ID);
+      }
+      INLINE void setSrc(Function &fn, uint32_t ID, Register reg) {
+        GBE_ASSERTM(ID < static_cast<const T*>(this)->srcNum, "Out-of-bound source register");
+        return fn.setRegister(static_cast<T*>(this)->src, ID, reg);
+      }
+    };
+
+    /*! All unary and binary arithmetic instructions */
+    template <uint32_t srcNum> // 1 or 2
+    class ALIGNED_INSTRUCTION NaryInstruction :
+      public BasePolicy,
+      public NSrcPolicy<NaryInstruction<srcNum>, srcNum>,
+      public NDstPolicy<NaryInstruction<1>, 1>
+    {
+    public:
       INLINE Type getType(void) const { return this->type; }
       INLINE bool wellFormed(const Function &fn, std::string &whyNot) const;
       INLINE void out(std::ostream &out, const Function &fn) const;
       Type type;            //!< Type of the instruction
-      Register dst;         //!< Index of the register in the register file
+      Register dst[1];      //!< Index of the register in the register file
       Register src[srcNum]; //!< Indices of the sources
     };
 
     /*! All 1-source arithmetic instructions */
-    class ALIGNED_INSTRUCTION UnaryInstruction :
-      public NaryInstruction<1>
+    class ALIGNED_INSTRUCTION UnaryInstruction : public NaryInstruction<1>
     {
     public:
       UnaryInstruction(Opcode opcode, Type type, Register dst, Register src) {
         this->opcode = opcode;
         this->type = type;
-        this->dst = dst;
+        this->dst[0] = dst;
         this->src[0] = src;
       }
     };
 
     /*! All 2-source arithmetic instructions */
-    class ALIGNED_INSTRUCTION BinaryInstruction :
-      public NaryInstruction<2>
+    class ALIGNED_INSTRUCTION BinaryInstruction : public NaryInstruction<2>
     {
     public:
       BinaryInstruction(Opcode opcode,
@@ -120,9 +138,21 @@ namespace ir {
                         Register src1) {
         this->opcode = opcode;
         this->type = type;
-        this->dst = dst;
+        this->dst[0] = dst;
         this->src[0] = src0;
         this->src[1] = src1;
+      }
+      INLINE bool commutes(void) const {
+        switch (opcode) {
+          case OP_ADD:
+          case OP_XOR:
+          case OP_OR:
+          case OP_AND:
+          case OP_MUL:
+            return true;
+          default:
+            return false;
+        }
       }
     };
 
@@ -130,62 +160,46 @@ namespace ir {
      *  bytes, we use tuples of registers
      */
     class ALIGNED_INSTRUCTION TernaryInstruction :
-      public BasePolicy
+      public BasePolicy,
+      public NDstPolicy<TernaryInstruction, 1>,
+      public TupleSrcPolicy<TernaryInstruction>
     {
     public:
-      TernaryInstruction(Opcode opcode, Type type, Register dst, Tuple src)
-      {
+      TernaryInstruction(Opcode opcode, Type type, Register dst, Tuple src) {
         this->opcode = opcode;
         this->type = type;
-        this->dst = dst;
+        this->dst[0] = dst;
         this->src = src;
-      }
-      INLINE uint32_t getSrcNum(void) const { return 3; }
-      INLINE uint32_t getDstNum(void) const { return 1; }
-      INLINE Register getDst(const Function &fn, uint32_t ID) const {
-        GBE_ASSERTM(ID == 0, "Only one destination for the instruction");
-        return dst;
-      }
-      INLINE Register getSrc(const Function &fn, uint32_t ID) const {
-        GBE_ASSERTM(ID < 3, "Out-of-bound source register");
-        return fn.getRegister(src, ID);
       }
       INLINE Type getType(void) const { return this->type; }
       INLINE bool wellFormed(const Function &fn, std::string &whyNot) const;
       INLINE void out(std::ostream &out, const Function &fn) const;
-      Type type;    //!< Type of the instruction
-      Register dst; //!< Dst is the register index
-      Tuple src;    //!< 3 sources do not fit in 8 bytes -> use a tuple
+      Type type;       //!< Type of the instruction
+      Register dst[1]; //!< Dst is the register index
+      Tuple src;       //!< 3 sources do not fit in 8 bytes -> use a tuple
+      static const uint32_t srcNum = 3;
     };
 
     /*! As for MADs, three sources mean we need a tuple to encode it */
     class ALIGNED_INSTRUCTION SelectInstruction :
-      public BasePolicy
+      public BasePolicy,
+      public NDstPolicy<SelectInstruction, 1>,
+      public TupleSrcPolicy<SelectInstruction>
     {
     public:
-      SelectInstruction(Type type, Register dst, Tuple src)
-      {
+      SelectInstruction(Type type, Register dst, Tuple src) {
         this->opcode = OP_SEL;
         this->type = type;
-        this->dst = dst;
+        this->dst[0] = dst;
         this->src = src;
-      }
-      INLINE uint32_t getSrcNum(void) const { return 3; }
-      INLINE uint32_t getDstNum(void) const { return 1; }
-      INLINE Register getDst(const Function &fn, uint32_t ID) const {
-        GBE_ASSERTM(ID == 0, "Only one destination for the instruction");
-        return dst;
-      }
-      INLINE Register getSrc(const Function &fn, uint32_t ID) const {
-        GBE_ASSERTM(ID < 3, "Out-of-bound source register");
-        return fn.getRegister(src, ID);
       }
       INLINE Type getType(void) const { return this->type; }
       INLINE bool wellFormed(const Function &fn, std::string &whyNot) const;
       INLINE void out(std::ostream &out, const Function &fn) const;
-      Type type;    //!< Type of the instruction
-      Register dst; //!< Dst is the register index
-      Tuple src;    //!< 3 sources do not fit in 8 bytes -> use a tuple
+      Type type;       //!< Type of the instruction
+      Register dst[1]; //!< Dst is the register index
+      Tuple src;       //!< 3 sources do not fit in 8 bytes -> use a tuple
+      static const uint32_t srcNum = 3;
     };
 
     /*! Comparison instructions take two sources of the same type and return a
@@ -205,7 +219,7 @@ namespace ir {
       {
         this->opcode = opcode;
         this->type = type;
-        this->dst = dst;
+        this->dst[0] = dst;
         this->src[0] = src0;
         this->src[1] = src1;
       }
@@ -213,7 +227,9 @@ namespace ir {
     };
 
     class ALIGNED_INSTRUCTION ConvertInstruction :
-      public BasePolicy
+      public BasePolicy,
+      public NDstPolicy<ConvertInstruction, 1>,
+      public NSrcPolicy<ConvertInstruction, 1>
     {
     public:
       ConvertInstruction(Type dstType,
@@ -222,33 +238,24 @@ namespace ir {
                          Register src)
       {
         this->opcode = OP_CVT;
-        this->dst = dst;
-        this->src = src;
+        this->dst[0] = dst;
+        this->src[0] = src;
         this->dstType = dstType;
         this->srcType = srcType;
       }
       INLINE Type getSrcType(void) const { return this->srcType; }
       INLINE Type getDstType(void) const { return this->dstType; }
-      INLINE uint32_t getSrcNum(void) const { return 1; }
-      INLINE uint32_t getDstNum(void) const { return 1; }
-      INLINE Register getDst(const Function &fn, uint32_t ID) const {
-        GBE_ASSERTM(ID == 0, "Only one destination for the convert instruction");
-        return dst;
-      }
-      INLINE Register getSrc(const Function &fn, uint32_t ID) const {
-        GBE_ASSERTM(ID == 0, "Only one source for the convert instruction");
-        return src;
-      }
       INLINE bool wellFormed(const Function &fn, std::string &whyNot) const;
       INLINE void out(std::ostream &out, const Function &fn) const;
-      Register dst; //!< Converted value
-      Register src; //!< To convert
+      Register dst[1];
+      Register src[1];
       Type dstType; //!< Type to convert to
       Type srcType; //!< Type to convert from
     };
 
     class ALIGNED_INSTRUCTION BranchInstruction :
-      public BasePolicy, public NoDstPolicy
+      public BasePolicy,
+      public NDstPolicy<BranchInstruction, 0>
     {
     public:
       INLINE BranchInstruction(Opcode op, LabelIndex labelIndex, Register predicate) {
@@ -282,6 +289,11 @@ namespace ir {
         GBE_ASSERTM(ID == 0, "Only one source for the branch instruction");
         return predicate;
       }
+      INLINE void setSrc(Function &fn, uint32_t ID, Register reg) {
+        GBE_ASSERTM(hasPredicate, "No source for unpredicated branches");
+        GBE_ASSERTM(ID == 0, "Only one source for the branch instruction");
+        predicate = reg;
+      }
       INLINE bool isPredicated(void) const { return hasPredicate; }
       INLINE bool wellFormed(const Function &fn, std::string &why) const;
       INLINE void out(std::ostream &out, const Function &fn) const;
@@ -289,10 +301,12 @@ namespace ir {
       LabelIndex labelIndex; //!< Index of the label the branch targets
       bool hasPredicate:1;   //!< Is it predicated?
       bool hasLabel:1;       //!< Is there any target label?
+      Register dst[0];       //!< No destination
     };
 
     class ALIGNED_INSTRUCTION LoadInstruction :
-      public BasePolicy
+      public BasePolicy,
+      public NSrcPolicy<LoadInstruction, 1>
     {
     public:
       LoadInstruction(Type type,
@@ -305,20 +319,19 @@ namespace ir {
         GBE_ASSERT(valueNum < 128);
         this->opcode = OP_LOAD;
         this->type = type;
-        this->offset = offset;
+        this->src[0] = offset;
         this->values = dstValues;
         this->addrSpace = addrSpace;
         this->valueNum = valueNum;
         this->dwAligned = dwAligned ? 1 : 0;
       }
-      INLINE Register getSrc(const Function &fn, uint32_t ID) const {
-        GBE_ASSERTM(ID == 0, "Only one source for the load instruction");
-        return offset;
-      }
-      INLINE uint32_t getSrcNum(void) const { return 1; }
       INLINE Register getDst(const Function &fn, uint32_t ID) const {
         GBE_ASSERTM(ID < valueNum, "Out-of-bound source register");
         return fn.getRegister(values, ID);
+      }
+      INLINE void setDst(Function &fn, uint32_t ID, Register reg) {
+        GBE_ASSERTM(ID < valueNum, "Out-of-bound source register");
+        fn.setRegister(values, ID, reg);
       }
       INLINE uint32_t getDstNum(void) const { return valueNum; }
       INLINE Type getValueType(void) const { return type; }
@@ -327,16 +340,17 @@ namespace ir {
       INLINE bool wellFormed(const Function &fn, std::string &why) const;
       INLINE void out(std::ostream &out, const Function &fn) const;
       INLINE bool isAligned(void) const { return !!dwAligned; }
-      Type type;            //!< Type to store
-      Register offset;      //!< First source is the offset where to store
-      Tuple values;         //!< Values to load
+      Type type;              //!< Type to store
+      Register src[0];        //!< Address where to load from
+      Register offset;        //!< Alias to make it similar to store
+      Tuple values;           //!< Values to load
       AddressSpace addrSpace; //!< Where to load
-      uint8_t valueNum:7;   //!< Number of values to load
-      uint8_t dwAligned:1;  //!< DWORD aligned is what matters with GEN
+      uint8_t valueNum:7;     //!< Number of values to load
+      uint8_t dwAligned:1;    //!< DWORD aligned is what matters with GEN
     };
 
     class ALIGNED_INSTRUCTION StoreInstruction :
-      public BasePolicy, public NoDstPolicy
+      public BasePolicy, public NDstPolicy<StoreInstruction, 0>
     {
     public:
       StoreInstruction(Type type,
@@ -362,6 +376,13 @@ namespace ir {
         else
           return fn.getRegister(values, ID - 1);
       }
+      INLINE void setSrc(Function &fn, uint32_t ID, Register reg) {
+        GBE_ASSERTM(ID < valueNum + 1u, "Out-of-bound source register for store");
+        if (ID == 0u)
+          offset = reg;
+        else
+          fn.setRegister(values, ID - 1, reg);
+      }
       INLINE uint32_t getSrcNum(void) const { return valueNum + 1u; }
       INLINE uint32_t getValueNum(void) const { return valueNum; }
       INLINE Type getValueType(void) const { return type; }
@@ -375,10 +396,13 @@ namespace ir {
       AddressSpace addrSpace; //!< Where to store
       uint8_t valueNum:7;     //!< Number of values to store
       uint8_t dwAligned:1;    //!< DWORD aligned is what matters with GEN
+      Register dst[0];
     };
 
     class ALIGNED_INSTRUCTION SampleInstruction : // TODO
-      public BasePolicy, public NoDstPolicy, public NoSrcPolicy
+      public BasePolicy,
+      public NDstPolicy<SampleInstruction, 0>,
+      public NSrcPolicy<SampleInstruction, 0>
     {
     public:
       INLINE SampleInstruction(void) { this->opcode = OP_SAMPLE; }
@@ -387,10 +411,13 @@ namespace ir {
         this->outOpcode(out);
         out << " ... TODO";
       }
+      Register dst[0], src[0];
     };
 
     class ALIGNED_INSTRUCTION TypedWriteInstruction : // TODO
-      public BasePolicy, public NoDstPolicy, public NoSrcPolicy
+      public BasePolicy,
+      public NDstPolicy<TypedWriteInstruction, 0>,
+      public NSrcPolicy<TypedWriteInstruction, 0>
     {
     public:
       INLINE TypedWriteInstruction(void) { this->opcode = OP_TYPED_WRITE; }
@@ -399,15 +426,18 @@ namespace ir {
         this->outOpcode(out);
         out << " ... TODO";
       }
+      Register dst[0], src[0];
     };
 
     class ALIGNED_INSTRUCTION LoadImmInstruction :
-      public BasePolicy, public NoSrcPolicy
+      public BasePolicy,
+      public NSrcPolicy<LoadImmInstruction, 0>,
+      public NDstPolicy<LoadImmInstruction, 1>
     {
     public:
       INLINE LoadImmInstruction(Type type, Register dst, ImmediateIndex index)
       {
-        this->dst = dst;
+        this->dst[0] = dst;
         this->opcode = OP_LOADI;
         this->immediateIndex = index;
         this->type = type;
@@ -415,21 +445,19 @@ namespace ir {
       INLINE Immediate getImmediate(const Function &fn) const {
         return fn.getImmediate(immediateIndex);
       }
-      INLINE uint32_t getDstNum(void) const{ return 1; }
-      INLINE Register getDst(const Function &fn, uint32_t ID) const {
-        GBE_ASSERTM(ID == 0, "Only one destination is supported for load immediate");
-        return dst;
-      }
       INLINE Type getType(void) const { return this->type; }
       bool wellFormed(const Function &fn, std::string &why) const;
       INLINE void out(std::ostream &out, const Function &fn) const;
-      Register dst;                  //!< RegisterData to store into
+      Register dst[1];               //!< RegisterData to store into
+      Register src[0];               //!< No source register
       ImmediateIndex immediateIndex; //!< Index in the vector of immediates
       Type type;                     //!< Type of the immediate
     };
 
     class ALIGNED_INSTRUCTION FenceInstruction :
-      public BasePolicy, public NoSrcPolicy, public NoDstPolicy
+      public BasePolicy,
+      public NSrcPolicy<FenceInstruction, 0>,
+      public NDstPolicy<FenceInstruction, 0>
     {
     public:
       INLINE FenceInstruction(AddressSpace addrSpace) {
@@ -442,10 +470,13 @@ namespace ir {
         out << "." << addrSpace;
       }
       AddressSpace addrSpace; //!< The loads and stores to order
+      Register dst[0], src[0];
     };
 
     class ALIGNED_INSTRUCTION LabelInstruction :
-      public BasePolicy, public NoDstPolicy, public NoSrcPolicy
+      public BasePolicy,
+      public NSrcPolicy<LabelInstruction, 0>,
+      public NDstPolicy<LabelInstruction, 0>
     {
     public:
       INLINE LabelInstruction(LabelIndex labelIndex) {
@@ -456,9 +487,13 @@ namespace ir {
       INLINE bool wellFormed(const Function &fn, std::string &why) const;
       INLINE void out(std::ostream &out, const Function &fn) const;
       LabelIndex labelIndex;  //!< Index of the label
+      Register dst[0], src[0];
     };
 
-    class ALIGNED_INSTRUCTION RegionInstruction : public BasePolicy
+    class ALIGNED_INSTRUCTION RegionInstruction :
+      public BasePolicy,
+      public NDstPolicy<RegionInstruction, 1>,
+      public TupleSrcPolicy<RegionInstruction>
     {
     public:
       RegionInstruction(Register dst,
@@ -470,7 +505,7 @@ namespace ir {
                         uint32_t hstride)
       {
         this->opcode = OP_REGION;
-        this->dst = dst;
+        this->dst[0] = dst;
         this->src = src;
         this->srcNum = srcNum;
         this->offset = offset;
@@ -482,123 +517,88 @@ namespace ir {
       INLINE uint32_t getVStride(void) const { return this->vstride; }
       INLINE uint32_t getWidth(void) const { return this->width; }
       INLINE uint32_t getHStride(void) const { return this->hstride; }
-      INLINE uint32_t getSrcNum(void) const { return this->srcNum; }
-      INLINE uint32_t getDstNum(void) const { return 1; }
-      INLINE Register getDst(const Function &fn, uint32_t ID) const {
-        GBE_ASSERTM(ID == 0, "Only one destination for the instruction");
-        return dst;
-      }
-      INLINE Register getSrc(const Function &fn, uint32_t ID) const {
-        GBE_ASSERTM(ID < this->srcNum, "Out-of-bound source register");
-        return fn.getRegister(src, ID);
-      }
       INLINE bool wellFormed(const Function &fn, std::string &whyNot) const;
       INLINE void out(std::ostream &out, const Function &fn) const;
       uint8_t srcNum:4;   //!< Number of sources in the tuple
       uint8_t width:4;    //!< width (1,2,4 or 8)
-      Register dst;       //!< Dst is the register index
+      Register dst[1];    //!< Dst is the register index
       Tuple src;          //!< Contiguous registers we gather data from
       uint16_t vstride:5; //!< vertical stride (0,1,2,4,8 or 16)
       uint16_t hstride:5; //!< horizontal stride (0,1,2,4,8 or 16)
       uint16_t offset:5;  //!< offset (0 to 7)
     };
 
-    class ALIGNED_INSTRUCTION VoteInstruction : public BasePolicy
+    class ALIGNED_INSTRUCTION VoteInstruction :
+      public BasePolicy,
+      public NDstPolicy<VoteInstruction, 1>,
+      public NSrcPolicy<VoteInstruction, 1>
     {
     public:
       VoteInstruction(Register dst, Register src, VotePredicate pred) {
         this->opcode = OP_VOTE;
-        this->dst = dst;
-        this->src = src;
+        this->dst[0] = dst;
+        this->src[0] = src;
         this->pred = pred;
-      }
-      INLINE uint32_t getSrcNum(void) const { return 1; }
-      INLINE uint32_t getDstNum(void) const { return 1; }
-      INLINE Register getDst(const Function &fn, uint32_t ID) const {
-        GBE_ASSERTM(ID == 0, "Out-of-bound destination register");
-        return dst;
-      }
-      INLINE Register getSrc(const Function &fn, uint32_t ID) const {
-        GBE_ASSERTM(ID == 0, "Out-of-bound source register");
-        return src;
       }
       INLINE VotePredicate getVotePredicate(void) const { return this->pred; }
       INLINE bool wellFormed(const Function &fn, std::string &whyNot) const;
       INLINE void out(std::ostream &out, const Function &fn) const;
-      Register dst;       //!< Destination boolean
-      Register src;       //!< Source boolean (n lanes internally)
+      Register dst[1];    //!< Destination boolean
+      Register src[1];    //!< Source boolean (n lanes internally)
       VotePredicate pred; //!< Operation to apply on the lanes
     };
 
-    class ALIGNED_INSTRUCTION RGatherInstruction : public BasePolicy
+    class ALIGNED_INSTRUCTION RGatherInstruction :
+      public BasePolicy,
+      public NDstPolicy<RGatherInstruction, 1>,
+      public TupleSrcPolicy<RGatherInstruction>
     {
     public:
-      RGatherInstruction(Register dst, Tuple src, uint32_t srcNum)
-      {
+      RGatherInstruction(Register dst, Tuple src, uint32_t srcNum) {
         this->opcode = OP_RGATHER;
-        this->dst = dst;
+        this->dst[0] = dst;
         this->src = src;
         this->srcNum = srcNum;
-      }
-      INLINE uint32_t getSrcNum(void) const { return this->srcNum; }
-      INLINE uint32_t getDstNum(void) const { return 1; }
-      INLINE Register getDst(const Function &fn, uint32_t ID) const {
-        GBE_ASSERTM(ID == 0, "Only one destination for the instruction");
-        return dst;
-      }
-      INLINE Register getSrc(const Function &fn, uint32_t ID) const {
-        GBE_ASSERTM(ID < this->srcNum, "Out-of-bound source register");
-        return fn.getRegister(src, ID);
       }
       INLINE bool wellFormed(const Function &fn, std::string &whyNot) const;
       INLINE void out(std::ostream &out, const Function &fn) const;
       uint8_t srcNum:4;   //!< Number of sources in the tuple
-      Register dst;       //!< Dst is the register index
+      Register dst[1];    //!< Dst is the register index
       Tuple src;          //!< Contiguous registers we gather data from
     };
 
-    class ALIGNED_INSTRUCTION OBReadInstruction : public BasePolicy
+    class ALIGNED_INSTRUCTION OBReadInstruction :
+      public BasePolicy,
+      public NDstPolicy<OBReadInstruction, 1>,
+      public NSrcPolicy<OBReadInstruction, 1>
     {
     public:
       OBReadInstruction(Register value, Register address) {
         this->opcode = OP_OBREAD;
-        this->value = value;
-        this->address = address;
-      }
-      INLINE uint32_t getSrcNum(void) const { return 1; }
-      INLINE uint32_t getDstNum(void) const { return 1; }
-      INLINE Register getDst(const Function &fn, uint32_t ID) const {
-        GBE_ASSERTM(ID == 0, "Only one destination for obread");
-        return value;
-      }
-      INLINE Register getSrc(const Function &fn, uint32_t ID) const {
-        GBE_ASSERTM(ID == 0, "Only one source for obread");
-        return address;
+        this->dst[0] = value;
+        this->src[0] = address;
       }
       INLINE bool wellFormed(const Function &fn, std::string &whyNot) const;
       INLINE void out(std::ostream &out, const Function &fn) const;
-      Register value;   //!< Value to get from memory
-      Register address; //!< Address to read
+      Register dst[1]; //!< Value to get from memory
+      Register src[1]; //!< Address to read
     };
 
     class ALIGNED_INSTRUCTION OBWriteInstruction :
-      public BasePolicy, public NoDstPolicy
+      public BasePolicy,
+      public NDstPolicy<OBWriteInstruction, 0>,
+      public NSrcPolicy<OBWriteInstruction, 2>
     {
     public:
       OBWriteInstruction(Register address, Register value) {
         this->opcode = OP_OBWRITE;
-        this->address = address;
-        this->value = value;
-      }
-      INLINE uint32_t getSrcNum(void) const { return 1; }
-      INLINE Register getSrc(const Function &fn, uint32_t ID) const {
-        GBE_ASSERTM(ID < 2, "Only two source registers for obwrite");
-        return ID == 0 ? address : value;
+        this->src[0] = address;
+        this->src[1] = value;
       }
       INLINE bool wellFormed(const Function &fn, std::string &whyNot) const;
       INLINE void out(std::ostream &out, const Function &fn) const;
-      Register address; //!< Address to write to
-      Register value;   //!< Value to write
+      Register src[2];  // src[0] == address, src[1] == value
+      Register dst[0];  //!< No destination
     };
 
 #undef ALIGNED_INSTRUCTION
@@ -667,9 +667,9 @@ namespace ir {
 
     // TODO add support for 64 bits values
     static const Type allButBool[] = {TYPE_S8,  TYPE_U8,
-                                        TYPE_S16, TYPE_U16,
-                                        TYPE_S32, TYPE_U32,
-                                        TYPE_FLOAT, TYPE_DOUBLE};
+                                      TYPE_S16, TYPE_U16,
+                                      TYPE_S32, TYPE_U32,
+                                      TYPE_FLOAT, TYPE_DOUBLE};
     static const uint32_t allButBoolNum = ARRAY_ELEM_NUM(allButBool);
 
     // TODO add support for 64 bits values
@@ -684,9 +684,9 @@ namespace ir {
     INLINE bool NaryInstruction<srcNum>::wellFormed(const Function &fn, std::string &whyNot) const
     {
       const RegisterFamily family = getFamily(this->type);
-      if (UNLIKELY(checkSpecialRegForWrite(dst, fn, whyNot) == false))
+      if (UNLIKELY(checkSpecialRegForWrite(dst[0], fn, whyNot) == false))
         return false;
-      if (UNLIKELY(checkRegisterData(family, dst, fn, whyNot) == false))
+      if (UNLIKELY(checkRegisterData(family, dst[0], fn, whyNot) == false))
         return false;
       for (uint32_t srcID = 0; srcID < srcNum; ++srcID)
         if (UNLIKELY(checkRegisterData(family, src[srcID], fn, whyNot) == false))
@@ -710,9 +710,9 @@ namespace ir {
     INLINE bool TernaryInstruction::wellFormed(const Function &fn, std::string &whyNot) const
     {
       const RegisterFamily family = getFamily(this->type);
-      if (UNLIKELY(checkSpecialRegForWrite(dst, fn, whyNot) == false))
+      if (UNLIKELY(checkSpecialRegForWrite(dst[0], fn, whyNot) == false))
         return false;
-      if (UNLIKELY(checkRegisterData(family, dst, fn, whyNot) == false))
+      if (UNLIKELY(checkRegisterData(family, dst[0], fn, whyNot) == false))
         return false;
       if (UNLIKELY(src + 3u > fn.tupleNum())) {
         whyNot = "Out-of-bound index for ternary instruction";
@@ -734,9 +734,9 @@ namespace ir {
     INLINE bool SelectInstruction::wellFormed(const Function &fn, std::string &whyNot) const
     {
       const RegisterFamily family = getFamily(this->type);
-      if (UNLIKELY(checkSpecialRegForWrite(dst, fn, whyNot) == false))
+      if (UNLIKELY(checkSpecialRegForWrite(dst[0], fn, whyNot) == false))
         return false;
-      if (UNLIKELY(checkRegisterData(family, dst, fn, whyNot) == false))
+      if (UNLIKELY(checkRegisterData(family, dst[0], fn, whyNot) == false))
         return false;
       if (UNLIKELY(src + 3u > fn.tupleNum())) {
         whyNot = "Out-of-bound index for ternary instruction";
@@ -758,9 +758,9 @@ namespace ir {
     // boolean
     INLINE bool CompareInstruction::wellFormed(const Function &fn, std::string &whyNot) const
     {
-      if (UNLIKELY(checkSpecialRegForWrite(dst, fn, whyNot) == false))
+      if (UNLIKELY(checkSpecialRegForWrite(dst[0], fn, whyNot) == false))
         return false;
-      if (UNLIKELY(checkRegisterData(FAMILY_BOOL, dst, fn, whyNot) == false))
+      if (UNLIKELY(checkRegisterData(FAMILY_BOOL, dst[0], fn, whyNot) == false))
         return false;
       const RegisterFamily family = getFamily(this->type);
       for (uint32_t srcID = 0; srcID < 2; ++srcID)
@@ -775,11 +775,11 @@ namespace ir {
     {
       const RegisterFamily dstFamily = getFamily(dstType);
       const RegisterFamily srcFamily = getFamily(srcType);
-      if (UNLIKELY(checkSpecialRegForWrite(dst, fn, whyNot) == false))
+      if (UNLIKELY(checkSpecialRegForWrite(dst[0], fn, whyNot) == false))
         return false;
-      if (UNLIKELY(checkRegisterData(dstFamily, dst, fn, whyNot) == false))
+      if (UNLIKELY(checkRegisterData(dstFamily, dst[0], fn, whyNot) == false))
         return false;
-      if (UNLIKELY(checkRegisterData(srcFamily, src, fn, whyNot) == false))
+      if (UNLIKELY(checkRegisterData(srcFamily, src[0], fn, whyNot) == false))
         return false;
       CHECK_TYPE(this->dstType, allButBool);
       CHECK_TYPE(this->srcType, allButBool);
@@ -817,11 +817,20 @@ namespace ir {
         const bool isOK = checkSpecialRegForWrite(reg, fn, whyNot);
         if (UNLIKELY(isOK == false)) return false;
       }
+      if (UNLIKELY(dstNum > Instruction::MAX_DST_NUM)) {
+        whyNot = "Too many destinations for load instruction";
+        return false;
+      }
       return wellFormedLoadStore(*this, fn, whyNot);
     }
 
     INLINE bool StoreInstruction::wellFormed(const Function &fn, std::string &whyNot) const
     {
+      const uint32_t srcNum = this->getSrcNum();
+      if (UNLIKELY(srcNum > Instruction::MAX_SRC_NUM)) {
+        whyNot = "Too many source for store instruction";
+        return false;
+      }
       return wellFormedLoadStore(*this, fn, whyNot);
     }
 
@@ -843,9 +852,9 @@ namespace ir {
         return false;
       }
       const RegisterFamily family = getFamily(type);
-      if (UNLIKELY(checkSpecialRegForWrite(dst, fn, whyNot) == false))
+      if (UNLIKELY(checkSpecialRegForWrite(dst[0], fn, whyNot) == false))
         return false;
-      if (UNLIKELY(checkRegisterData(family, dst, fn, whyNot) == false))
+      if (UNLIKELY(checkRegisterData(family, dst[0], fn, whyNot) == false))
         return false;
       CHECK_TYPE(this->type, allButBool);
       return true;
@@ -899,7 +908,7 @@ namespace ir {
         whyNot = "Invalid offset (must be smaller than 8)";
         return false;
       }
-      if (UNLIKELY(checkRegisterData(FAMILY_DWORD, dst, fn, whyNot) == false))
+      if (UNLIKELY(checkRegisterData(FAMILY_DWORD, dst[0], fn, whyNot) == false))
         return false;
       for (uint32_t srcID = 0; srcID < srcNum; ++srcID) {
         const Register regID = fn.getRegister(src, srcID);
@@ -912,9 +921,9 @@ namespace ir {
     // Boolean values for both source and destination
     INLINE bool VoteInstruction::wellFormed(const Function &fn, std::string &whyNot) const
     {
-      if (UNLIKELY(checkRegisterData(FAMILY_WORD, dst, fn, whyNot) == false))
+      if (UNLIKELY(checkRegisterData(FAMILY_WORD, dst[0], fn, whyNot) == false))
         return false;
-      if (UNLIKELY(checkRegisterData(FAMILY_WORD, src, fn, whyNot) == false))
+      if (UNLIKELY(checkRegisterData(FAMILY_WORD, src[0], fn, whyNot) == false))
         return false;
       return true;
     }
@@ -922,7 +931,7 @@ namespace ir {
     // Indices are always int16 and the rest is 32 bit integers
     INLINE bool RGatherInstruction::wellFormed(const Function &fn, std::string &whyNot) const
     {
-      if (UNLIKELY(checkRegisterData(FAMILY_DWORD, dst, fn, whyNot) == false))
+      if (UNLIKELY(checkRegisterData(FAMILY_DWORD, dst[0], fn, whyNot) == false))
         return false;
       if (UNLIKELY(checkRegisterData(FAMILY_WORD, fn.getRegister(src, 0), fn, whyNot) == false))
         return false;
@@ -938,9 +947,9 @@ namespace ir {
     INLINE bool OBReadInstruction::wellFormed(const Function &fn, std::string &whyNot) const
     {
       const RegisterFamily ptrFamily = fn.getPointerFamily();
-      if (UNLIKELY(checkRegisterData(ptrFamily, address, fn, whyNot) == false))
+      if (UNLIKELY(checkRegisterData(ptrFamily, src[0], fn, whyNot) == false))
         return false;
-      if (UNLIKELY(checkRegisterData(FAMILY_DWORD, value, fn, whyNot) == false))
+      if (UNLIKELY(checkRegisterData(FAMILY_DWORD, dst[0], fn, whyNot) == false))
         return false;
       return true;
     }
@@ -949,9 +958,9 @@ namespace ir {
     INLINE bool OBWriteInstruction::wellFormed(const Function &fn, std::string &whyNot) const
     {
       const RegisterFamily ptrFamily = fn.getPointerFamily();
-      if (UNLIKELY(checkRegisterData(ptrFamily, address, fn, whyNot) == false))
+      if (UNLIKELY(checkRegisterData(ptrFamily, src[0], fn, whyNot) == false))
         return false;
-      if (UNLIKELY(checkRegisterData(FAMILY_DWORD, value, fn, whyNot) == false))
+      if (UNLIKELY(checkRegisterData(FAMILY_DWORD, src[1], fn, whyNot) == false))
         return false;
       return true;
     }
@@ -1214,6 +1223,7 @@ END_INTROSPECTION(OBWriteInstruction)
     switch (op) {
 
 #define END_FUNCTION(CLASS, RET) \
+      case OP_INVALID: return RET(); \
     }; \
     return RET(); \
   }
@@ -1261,6 +1271,44 @@ END_FUNCTION(Instruction, Register)
 #undef END_FUNCTION
 #undef START_FUNCTION
 
+  void Instruction::setSrc(uint32_t srcID, Register reg) {
+    Function &fn = this->getFunction();
+#if GBE_DEBUG
+    const RegisterData oldData = this->getSrcData(srcID);
+    const RegisterData newData = fn.getRegisterData(reg);
+    GBE_ASSERT(oldData.family == newData.family);
+#endif /* GBE_DEBUG */
+    const Opcode op = this->getOpcode();
+    switch (op) {
+#define DECL_INSN(OP, FAMILY)\
+      case OP_##OP:\
+        reinterpret_cast<internal::FAMILY*>(this)->setSrc(fn, srcID, reg);\
+      break;
+#include "instruction.hxx"
+#undef DECL_INSN
+      case OP_INVALID: NOT_SUPPORTED; break;
+    };
+  }
+
+  void Instruction::setDst(uint32_t dstID, Register reg) {
+    Function &fn = this->getFunction();
+#if GBE_DEBUG
+    const RegisterData oldData = this->getDstData(dstID);
+    const RegisterData newData = fn.getRegisterData(reg);
+    GBE_ASSERT(oldData.family == newData.family);
+#endif /* GBE_DEBUG */
+    const Opcode op = this->getOpcode();
+    switch (op) {
+#define DECL_INSN(OP, FAMILY)\
+      case OP_##OP:\
+        reinterpret_cast<internal::FAMILY*>(this)->setDst(fn, dstID, reg);\
+      break;
+#include "instruction.hxx"
+#undef DECL_INSN
+      case OP_INVALID: NOT_SUPPORTED; break;
+    };
+  }
+
   const Function &Instruction::getFunction(void) const {
     const BasicBlock *bb = this->getParent();
     GBE_ASSERT(bb != NULL);
@@ -1301,6 +1349,13 @@ END_FUNCTION(Instruction, Register)
     fn.deleteInstruction(this);
   }
 
+  bool Instruction::hasSideEffect(void) const {
+    return opcode == OP_STORE || 
+           opcode == OP_OBWRITE ||
+           opcode == OP_TYPED_WRITE ||
+           opcode == OP_FENCE;
+  }
+
 #define DECL_MEM_FN(CLASS, RET, PROTOTYPE, CALL) \
   RET CLASS::PROTOTYPE const { \
     return reinterpret_cast<const internal::CLASS*>(this)->CALL; \
@@ -1308,6 +1363,7 @@ END_FUNCTION(Instruction, Register)
 
 DECL_MEM_FN(UnaryInstruction, Type, getType(void), getType())
 DECL_MEM_FN(BinaryInstruction, Type, getType(void), getType())
+DECL_MEM_FN(BinaryInstruction, bool, commutes(void), commutes())
 DECL_MEM_FN(TernaryInstruction, Type, getType(void), getType())
 DECL_MEM_FN(SelectInstruction, Type, getType(void), getType())
 DECL_MEM_FN(CompareInstruction, Type, getType(void), getType())
@@ -1490,6 +1546,7 @@ DECL_MEM_FN(VoteInstruction, VotePredicate, getVotePredicate(void), getVotePredi
         break;
 #include "instruction.hxx"
 #undef DECL_INSN
+      case OP_INVALID: NOT_SUPPORTED; break;
     };
     return out;
   }

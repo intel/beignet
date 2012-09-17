@@ -35,6 +35,12 @@ namespace ir {
     return locationMap.find(*this)->second;
   }
 
+  uint32_t BasicBlock::getInstructionNum(void) const {
+    uint32_t insnNum = 0;
+    this->foreach([&insnNum](const Instruction &insn) { insnNum++; });
+    return insnNum;
+  }
+
   Function::Function(const std::string &name, const Unit &unit, Profile profile) :
     name(name), unit(unit), profile(profile), simdWidth(0)
   {

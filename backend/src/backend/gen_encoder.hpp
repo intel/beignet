@@ -92,7 +92,7 @@ namespace gbe
     ALU1(LZD)
     ALU2(LINE)
     ALU2(PLN)
-    // ALU3(MAD)
+    ALU3(MAD)
 #undef ALU1
 #undef ALU2
 #undef ALU3
@@ -152,4 +152,5 @@ namespace gbe
 } /* namespace gbe */
 
 #endif /* __GBE_GEN_ENCODER_HPP__ */
+
 

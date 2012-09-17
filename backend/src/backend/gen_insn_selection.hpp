@@ -88,9 +88,9 @@ namespace gbe
     /*! Instruction are chained in the block */
     SelectionInstruction *prev, *next;
     /*! Append an instruction before this one */
-    void appendBefore(const SelectionInstruction &insn);
+    void prepend(const SelectionInstruction &insn);
     /*! Append an instruction after this one */
-    void appendAfter(const SelectionInstruction &insn);
+    void append(const SelectionInstruction &insn);
     /*! No more than 6 sources (used by typed writes) */
     enum { MAX_SRC_NUM = 8 };
     /*! No more than 4 destinations (used by samples and untyped reads) */
@@ -185,24 +185,13 @@ namespace gbe
       }
     }
     /*! Append a new temporary register */
-    INLINE void append(ir::Register reg) { tmp.push_back(reg); }
-    /*! Append a new selection instruction in the block */
-    INLINE void append(SelectionInstruction *insn) {
-      if (this->insnTail != NULL) {
-        this->insnTail->next = insn;
-        insn->prev = this->insnTail;
-      }
-      if (this->insnHead == NULL)
-        this->insnHead = insn;
-      this->insnTail = insn;
-      insn->parent = this;
-    }
+    void append(ir::Register reg);
+    /*! Append a new selection instruction at the end of the block */
+    void append(SelectionInstruction *insn);
+    /*! Append a new selection instruction at the beginning of the block */
+    void prepend(SelectionInstruction *insn);
     /*! Append a new selection vector in the block */
-    INLINE void append(SelectionVector *vec) {
-      SelectionVector *tmp = this->vector;
-      this->vector = vec;
-      this->vector->next = tmp;
-    }
+    void append(SelectionVector *vec);
   };
 
   /*! Owns the selection engine */
@@ -218,6 +207,10 @@ namespace gbe
     virtual ~Selection(void);
     /*! Implements the instruction selection itself */
     virtual void select(void) = 0;
+    /*! Start a backward generation (from the end of the block) */
+    void startBackwardGeneration(void);
+    /*! End backward code generation and output the code in the block */
+    void endBackwardGeneration(void);
     /*! Apply the given functor on all selection block */
     template <typename T>
     INLINE void foreach(const T &functor) const {
@@ -258,7 +251,10 @@ namespace gbe
     }
     /*! Registers in the register file */
     INLINE uint32_t regNum(void) const { return file.regNum(); }
-  protected:
+    /*! Return the selection register from the GenIR one */
+    GenRegister selReg(ir::Register, ir::Type type = ir::TYPE_FLOAT) const;
+    /*! Compute the nth register part when using SIMD8 with Qn (n in 2,3,4) */
+    GenRegister selRegQn(ir::Register, uint32_t quarter, ir::Type type = ir::TYPE_FLOAT) const;
     /*! Size of the stack (should be large enough) */
     enum { MAX_STATE_NUM = 16 };
     /*! Push the current instruction state */
@@ -286,10 +282,6 @@ namespace gbe
     SelectionInstruction *appendInsn(void);
     /*! Append a new vector of registers in the current block */
     SelectionVector *appendVector(void);
-    /*! Return the selection register from the GenIR one */
-    GenRegister selReg(ir::Register, ir::Type type = ir::TYPE_FLOAT);
-    /*! Compute the nth register part when using SIMD8 with Qn (n in 2,3,4) */
-    GenRegister selRegQn(ir::Register, uint32_t quarter, ir::Type type = ir::TYPE_FLOAT);
     /*! To handle selection block allocation */
     DECL_POOL(SelectionBlock, blockPool);
     /*! To handle selection instruction allocation */
@@ -298,6 +290,8 @@ namespace gbe
     DECL_POOL(SelectionVector, vecPool);
     /*! Owns this structure */
     GenContext &ctx;
+    /*! Tail of the code fragment for backward code generation */
+    SelectionInstruction *bwdTail;
     /*! List of emitted blocks */
     SelectionBlock *blockHead, *blockTail;
     /*! Currently processed block */
@@ -312,6 +306,8 @@ namespace gbe
     uint32_t stateNum;
     /*! Number of vector allocated */
     uint32_t vectorNum;
+    /*! If true, generate code backward */
+    bool bwdCodeGeneration;
     /*! To make function prototypes more readable */
     typedef const GenRegister &Reg;
 
@@ -319,6 +315,8 @@ namespace gbe
   INLINE void OP(Reg dst, Reg src) { ALU1(SEL_OP_##OP, dst, src); }
 #define ALU2(OP) \
   INLINE void OP(Reg dst, Reg src0, Reg src1) { ALU2(SEL_OP_##OP, dst, src0, src1); }
+#define ALU3(OP) \
+  INLINE void OP(Reg dst, Reg src0, Reg src1, Reg src2) { ALU3(SEL_OP_##OP, dst, src0, src1, src2); }
     ALU1(MOV)
     ALU1(RNDZ)
     ALU1(RNDE)
@@ -338,8 +336,10 @@ namespace gbe
     ALU1(RNDD)
     ALU2(MACH)
     ALU1(LZD)
+    ALU3(MAD)
 #undef ALU1
 #undef ALU2
+#undef ALU3
 
     /*! Encode a label instruction */
     void LABEL(ir::LabelIndex label);
@@ -371,6 +371,8 @@ namespace gbe
     void ALU1(uint32_t opcode, Reg dst, Reg src);
     /*! Encode binary instructions */
     void ALU2(uint32_t opcode, Reg dst, Reg src0, Reg src1);
+    /*! Encode ternary instructions */
+    void ALU3(uint32_t opcode, Reg dst, Reg src0, Reg src1, Reg src2);
     /*! Encode regioning */
     void REGION(Reg dst0, Reg dst1, const GenRegister *src, uint32_t offset, uint32_t vstride, uint32_t width, uint32_t hstride, uint32_t srcNum);
     /*! Encode regioning */
@@ -382,7 +384,7 @@ namespace gbe
   };
 
   /*! This is a simple one-to-many instruction selection */
-  Selection *newSimpleSelection(GenContext &ctx);
+  Selection *newSelection(GenContext &ctx);
 
 } /* namespace gbe */
 

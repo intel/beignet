@@ -77,6 +77,7 @@ namespace gbe
     void emitLabelInstruction(const SelectionInstruction &insn);
     void emitUnaryInstruction(const SelectionInstruction &insn);
     void emitBinaryInstruction(const SelectionInstruction &insn);
+    void emitTernaryInstruction(const SelectionInstruction &insn);
     void emitCompareInstruction(const SelectionInstruction &insn);
     void emitJumpInstruction(const SelectionInstruction &insn);
     void emitEotInstruction(const SelectionInstruction &insn);
@@ -109,5 +110,4 @@ namespace gbe
 } /* namespace gbe */
 
 #endif /* __GBE_GEN_CONTEXT_HPP__ */
-
 
