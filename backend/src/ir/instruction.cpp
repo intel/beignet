@@ -319,7 +319,7 @@ namespace ir {
         GBE_ASSERT(valueNum < 128);
         this->opcode = OP_LOAD;
         this->type = type;
-        this->src[0] = offset;
+        this->offset = offset;
         this->values = dstValues;
         this->addrSpace = addrSpace;
         this->valueNum = valueNum;
