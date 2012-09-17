@@ -1,22 +1,24 @@
 #include "utest_helper.hpp"
 
 static void cpu(int global_id, int *src, int *dst) {
-  const int id = global_id;
-  dst[id] = id;
-  while (dst[id] > src[id]) {
-    if (dst[id] > 10) return;
-    dst[id]--;
+  int tmp[32];
+  for (int i = 0; i < 16; ++i) {
+    for (int j = 0; j < 16; ++j)
+      tmp[j] = global_id;
+    for (int j = 0; j < src[0]; ++j)
+      tmp[j] = 1+src[j];
+    tmp[16+i] = tmp[i];
   }
-  dst[id] += 2;
+  dst[global_id] = tmp[16+global_id];
 }
 
-static void compiler_lower_return2(void)
+void compiler_array3(void)
 {
   const size_t n = 16;
   int cpu_dst[16], cpu_src[16];
 
   // Setup kernel and buffers
-  OCL_CREATE_KERNEL("compiler_lower_return2");
+  OCL_CREATE_KERNEL("compiler_array3");
   OCL_CREATE_BUFFER(buf[0], 0, n * sizeof(uint32_t), NULL);
   OCL_CREATE_BUFFER(buf[1], 0, n * sizeof(uint32_t), NULL);
   OCL_SET_ARG(0, sizeof(cl_mem), &buf[0]);
@@ -24,6 +26,7 @@ static void compiler_lower_return2(void)
   globals[0] = 16;
   locals[0] = 16;
 
+  // Run random tests
   for (uint32_t pass = 0; pass < 8; ++pass) {
     OCL_MAP_BUFFER(0);
     for (int32_t i = 0; i < (int32_t) n; ++i)
@@ -44,5 +47,5 @@ static void compiler_lower_return2(void)
   }
 }
 
-MAKE_UTEST_FROM_FUNCTION(compiler_lower_return2);
+MAKE_UTEST_FROM_FUNCTION(compiler_array3);
 
