@@ -40,6 +40,7 @@ namespace ir {
 
   /*! Commonly used in the CFG */
   typedef set<BasicBlock*> BlockSet;
+  class Unit; // Function belongs to a unit
 
   /*! Function basic blocks really belong to a function since:
    *  1 - registers used in the basic blocks belongs to the function register
@@ -166,7 +167,7 @@ namespace ir {
     /*! Map of all pushed location (i.e. part of function argument) */
     typedef map<PushLocation, Register> LocationMap;
     /*! Create an empty function */
-    Function(const std::string &name, Profile profile = PROFILE_OCL);
+    Function(const std::string &name, const Unit &unit, Profile profile = PROFILE_OCL);
     /*! Release everything *including* the basic block pointers */
     ~Function(void);
     /*! Says if this is the top basic block (entry point) */
@@ -184,6 +185,8 @@ namespace ir {
     }
     /*! Get the function name */
     const std::string &getName(void) const { return name; }
+    /*! Get the SIMD width (0 if not forced) */
+    uint32_t getSimdWidth(void) const { return simdWidth; }
     /*! Extract the register from the register file */
     INLINE RegisterData getRegisterData(Register reg) const { return file.get(reg); }
     /*! Get the register family from the register itself */
@@ -291,10 +294,10 @@ namespace ir {
     LabelIndex newLabel(void);
     /*! Create the control flow graph */
     void computeCFG(void);
-    /*! Sort the labels in increasing orders (ie top block has the smallest
-     *  labels)
-     */
+    /*! Sort labels in increasing orders (top block has the smallest label) */
     void sortLabels(void);
+    /*! Get the pointer family */
+    RegisterFamily getPointerFamily(void) const;
     /*! Number of registers in the register file */
     INLINE uint32_t regNum(void) const { return file.regNum(); }
     /*! Number of register tuples in the register file */
@@ -324,6 +327,7 @@ namespace ir {
   private:
     friend class Context;           //!< Can freely modify a function
     std::string name;               //!< Function name
+    const Unit &unit;               //!< Function belongs to this unit
     vector<FunctionArgument*> args; //!< Input registers of the function
     vector<Register> outputs;       //!< Output registers of the function
     vector<BasicBlock*> labels;     //!< Each label points to a basic block
@@ -331,8 +335,9 @@ namespace ir {
     vector<BasicBlock*> blocks;     //!< All chained basic blocks
     RegisterFile file;              //!< RegisterDatas used by the instructions
     Profile profile;                //!< Current function profile
-    PushMap pushMap;                //<! Pushed function arguments (reg->loc)
-    LocationMap locationMap;        //<! Pushed function arguments (loc->reg)
+    PushMap pushMap;                //!< Pushed function arguments (reg->loc)
+    LocationMap locationMap;        //!< Pushed function arguments (loc->reg)
+    uint32_t simdWidth;             //!< 8 or 16 if forced, 0 otherwise
     GBE_CLASS(Function);            //!< Use gbe allocators
   };
 

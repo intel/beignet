@@ -65,3 +65,10 @@ DECL_INSN(SAMPLE, SampleInstruction)
 DECL_INSN(FENCE, FenceInstruction)
 DECL_INSN(LABEL, LabelInstruction)
 
+// OpenCL Gen extensions
+DECL_INSN(REGION, RegionInstruction)
+DECL_INSN(VOTE, VoteInstruction)
+DECL_INSN(RGATHER, RGatherInstruction)
+DECL_INSN(OBREAD, OBReadInstruction)
+DECL_INSN(OBWRITE, OBWriteInstruction)
+

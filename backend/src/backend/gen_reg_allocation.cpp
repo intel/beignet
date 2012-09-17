@@ -74,7 +74,7 @@ namespace gbe
       const uint32_t offset = curbeOffset + subOffset;
       const ir::RegisterData data = fn.getRegisterData(reg);
       const ir::RegisterFamily family = data.family;
-      const bool isScalar = ctx.isScalarOrBool(reg);
+      const bool isScalar = ctx.sel->isScalarOrBool(reg);
       const uint32_t typeSize = isScalar ? familyScalarSize[family] : familyVectorSize[family];
       const uint32_t nr = (offset + GEN_REG_SIZE) / GEN_REG_SIZE;
       const uint32_t subnr = ((offset + GEN_REG_SIZE) % GEN_REG_SIZE) / typeSize;
@@ -223,7 +223,7 @@ namespace gbe
     while (this->expiringID != ending.size()) {
       const GenRegInterval *toExpire = this->ending[this->expiringID];
       const ir::Register reg = toExpire->reg;
-      if (toExpire->maxID >= limit.minID)
+      if (toExpire->minID >= limit.maxID)
         return false;
       auto it = RA.find(reg);
       GBE_ASSERT(it != RA.end());

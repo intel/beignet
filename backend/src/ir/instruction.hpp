@@ -49,6 +49,12 @@ namespace ir {
     MEM_PRIVATE     //!< Per thread private memory
   };
 
+  /* Vote function per hardware thread */
+  enum VotePredicate : uint8_t {
+    VOTE_ALL = 0,
+    VOTE_ANY
+  };
+
   /*! Output the memory space */
   std::ostream &operator<< (std::ostream &out, AddressSpace addrSpace);
 
@@ -171,6 +177,12 @@ namespace ir {
    */
   class SelectInstruction : public Instruction {
   public:
+    /*! Predicate is in slot 0. So first source to selec is in slot 1 */
+    static const uint32_t src0Index = 1;
+    /*! Second source to select is in slot 2 */
+    static const uint32_t src1Index = 2;
+    /*! Get the predicate of the selection instruction */
+    INLINE Register getPredicate(void) const { return this->getSrc(0); }
     /*! Get the type of both sources */
     Type getType(void) const;
     /*! Return true if the given instruction is an instance of this class */
@@ -329,6 +341,73 @@ namespace ir {
     static bool isClassOf(const Instruction &insn);
   };
 
+  /*! Register region instructions are specific to OpenCL Gen and allow to
+   *  manipulate the register file and to do cross lane shuffles (Gen extension)
+   */
+  class RegionInstruction : public Instruction {
+  public:
+    /*! Return the offset index (0..7) for the strided load*/
+    uint32_t getOffset(void) const;
+    /*! Return the vertical stride (0,1,2,4,8) */
+    uint32_t getVStride(void) const;
+    /*! Return the width (0,1,2,4,8) */
+    uint32_t getWidth(void) const;
+    /*! Return the horizontal stride (0,1,2,4,8) */
+    uint32_t getHStride(void) const;
+    /*! Return true if the given instruction is an instance of this class */
+    static bool isClassOf(const Instruction &insn);
+  };
+
+  /*! Vote instruction that operates accross lanes from the same hardware
+   *  thread (Gen extension)
+   */
+  class VoteInstruction : public Instruction {
+  public:
+    /*! Return the vote predicate */
+    VotePredicate getVotePredicate(void) const;
+    /*! Return true if the given instruction is an instance of this class */
+    static bool isClassOf(const Instruction &insn);
+  };
+
+  /*! Gather from register file instruction. Similar to register region but with
+   *  indirect addressing (Gen extension)
+   */
+  class RGatherInstruction : public Instruction {
+  public:
+    /*!< Source ID for the indices */
+    static const uint32_t indexID = 0;
+    /*! Get the indices for the gather */
+    INLINE Register getIndices(void) const { return this->getSrc(indexID); }
+    /*! Return true if the given instruction is an instance of this class */
+    static bool isClassOf(const Instruction &insn);
+  };
+
+  /*! OBlock read. Only the first lane is considered for the address
+   *  (Gen extension)
+   */
+  class OBReadInstruction : public Instruction {
+  public:
+    /*! Get the address register */
+    INLINE Register getAddress(void) const { return this->getSrc(0); }
+    /*! Get the value (i.e. destination here) */
+    INLINE Register getValue(void) const { return this->getDst(0); }
+    /*! Return true if the given instruction is an instance of this class */
+    static bool isClassOf(const Instruction &insn);
+  };
+
+  /*! OBlock write. Only the first lane is considered for the address
+   *  (Gen extension)
+   */
+  class OBWriteInstruction : public Instruction {
+  public:
+    /*! Get the address register */
+    INLINE Register getAddress(void) const { return this->getSrc(0); }
+    /*! Get the value to write */
+    INLINE Register getValue(void) const { return this->getSrc(1); }
+    /*! Return true if the given instruction is an instance of this class */
+    static bool isClassOf(const Instruction &insn);
+  };
+
   /*! Specialize the instruction. Also performs typechecking first based on the
    *  opcode. Crashes if it fails
    */
@@ -441,6 +520,16 @@ namespace ir {
   Instruction FENCE(AddressSpace space);
   /*! label labelIndex */
   Instruction LABEL(LabelIndex labelIndex);
+  /*! region.offset.stride dst {src1,...,src_srcNum} */
+  Instruction REGION(uint32_t offset, uint32_t vstride, uint32_t width, uint32_t hstride, Register dst, Tuple src, uint32_t srcNum);
+  /*! vote.predcate dst src */
+  Instruction VOTE(VotePredicate predicate, Register dst, Register src);
+  /*! rgather dst index {src...} (tuple contains index and sources) */
+  Instruction RGATHER(Register dst, Tuple tuple, uint32_t srcNum);
+  /*! obread dst address */
+  Instruction OBREAD(Register dst, Register address);
+  /*! obwrite address data */
+  Instruction OBWRITE(Register address, Register value);
 
 } /* namespace ir */
 } /* namespace gbe */

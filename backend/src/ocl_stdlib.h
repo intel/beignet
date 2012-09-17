@@ -162,19 +162,82 @@ DECL_SELECT4(int4, int, int4, 0x80000000)
 DECL_SELECT4(float4, float, int4, 0x80000000)
 #undef DECL_SELECT4
 
-__attribute__((overloadable,always_inline))
-inline float2 mad(float2 a, float2 b, float2 c) {
+INLINE_OVERLOADABLE inline float2 mad(float2 a, float2 b, float2 c) {
   return (float2)(mad(a.x,b.x,c.x), mad(a.y,b.y,c.y));
 }
-__attribute__((overloadable,always_inline))
-inline float3 mad(float3 a, float3 b, float3 c) {
+INLINE_OVERLOADABLE inline float3 mad(float3 a, float3 b, float3 c) {
   return (float3)(mad(a.x,b.x,c.x), mad(a.y,b.y,c.y), mad(a.z,b.z,c.z));
 }
-__attribute__((overloadable,always_inline))
-inline float4 mad(float4 a, float4 b, float4 c) {
+INLINE_OVERLOADABLE inline float4 mad(float4 a, float4 b, float4 c) {
   return (float4)(mad(a.x,b.x,c.x), mad(a.y,b.y,c.y),
                   mad(a.z,b.z,c.z), mad(a.w,b.w,c.w));
 }
 
+/////////////////////////////////////////////////////////////////////////////
+// Extensions to manipulate the register file
+/////////////////////////////////////////////////////////////////////////////
+
+// Direct addressing register regions
+OVERLOADABLE int __gen_ocl_region(int offset, int vstride, int width, int hstride, int);
+OVERLOADABLE int __gen_ocl_region(int offset, int vstride, int width, int hstride, int, int);
+OVERLOADABLE int __gen_ocl_region(int offset, int vstride, int width, int hstride, int, int, int);
+OVERLOADABLE int __gen_ocl_region(int offset, int vstride, int width, int hstride, int, int, int, int);
+OVERLOADABLE int __gen_ocl_region(int offset, int vstride, int width, int hstride, int, int, int, int, int);
+OVERLOADABLE int __gen_ocl_region(int offset, int vstride, int width, int hstride, int, int, int, int, int, int);
+OVERLOADABLE int __gen_ocl_region(int offset, int vstride, int width, int hstride, int, int, int, int, int, int, int);
+OVERLOADABLE int __gen_ocl_region(int offset, int vstride, int width, int hstride, int, int, int, int, int, int, int, int);
+
+// Gather from register file
+OVERLOADABLE int __gen_ocl_rgather(unsigned short index, int);
+OVERLOADABLE int __gen_ocl_rgather(unsigned short index, int, int);
+OVERLOADABLE int __gen_ocl_rgather(unsigned short index, int, int, int);
+OVERLOADABLE int __gen_ocl_rgather(unsigned short index, int, int, int, int);
+OVERLOADABLE int __gen_ocl_rgather(unsigned short index, int, int, int, int, int);
+OVERLOADABLE int __gen_ocl_rgather(unsigned short index, int, int, int, int, int, int);
+OVERLOADABLE int __gen_ocl_rgather(unsigned short index, int, int, int, int, int, int, int);
+OVERLOADABLE int __gen_ocl_rgather(unsigned short index, int, int, int, int, int, int, int, int);
+
+/////////////////////////////////////////////////////////////////////////////
+// Extension to have uniform condition per hardware thread
+/////////////////////////////////////////////////////////////////////////////
+
+OVERLOADABLE unsigned short __gen_ocl_any(unsigned short cond);
+OVERLOADABLE unsigned short __gen_ocl_all(unsigned short cond);
+
+/////////////////////////////////////////////////////////////////////////////
+// Extension to support OBlock reads / writes
+/////////////////////////////////////////////////////////////////////////////
+
+OVERLOADABLE int  __gen_ocl_obread(const __global void *address);
+OVERLOADABLE int  __gen_ocl_obread(const __constant void *address);
+OVERLOADABLE int  __gen_ocl_obread(const __local void *address);
+OVERLOADABLE void  __gen_ocl_obwrite(const __global void *address, int);
+OVERLOADABLE void  __gen_ocl_obwrite(const __local void *address, int);
+
+/////////////////////////////////////////////////////////////////////////////
+// Force the compilation to SIMD8 or SIMD16
+/////////////////////////////////////////////////////////////////////////////
+
+int __gen_ocl_force_simd8(void);
+int __gen_ocl_force_simd16(void);
+
+#define DECL_VOTE(TYPE) \
+__attribute__((overloadable,always_inline)) \
+TYPE __gen_ocl_any(TYPE cond) { \
+  return (TYPE) __gen_ocl_any((unsigned short) cond); \
+} \
+__attribute__((overloadable,always_inline)) \
+TYPE __gen_ocl_all(TYPE cond) { \
+  return (TYPE) __gen_ocl_all((unsigned short) cond); \
+}
+DECL_VOTE(unsigned int)
+DECL_VOTE(unsigned char)
+DECL_VOTE(int)
+DECL_VOTE(char)
+DECL_VOTE(short)
+DECL_VOTE(bool)
+#undef DECL_VOTE
 
 #define NULL ((void*)0)
+#undef INLINE_OVERLOADABLE
+

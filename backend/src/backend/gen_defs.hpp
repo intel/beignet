@@ -252,6 +252,8 @@ enum GenMessageTarget {
 #define GEN_UNTYPED_WRITE  13
 #define GEN_BYTE_GATHER     4
 #define GEN_BYTE_SCATTER   12
+#define GEN_OBLOCK_READ     0
+#define GEN_OBLOCK_WRITE    8
 
 /* For byte scatters and gathers, the element to write */
 #define GEN_BYTE_SCATTER_BYTE   0
@@ -668,6 +670,21 @@ struct GenInstruction
       uint32_t pad2:2;
       uint32_t end_of_thread:1;
     } gen7_byte_rw;
+
+    /*! Data port OBlock read / write */
+    struct {
+      uint32_t bti:8;
+      uint32_t block_size:3;
+      uint32_t ignored:2;
+      uint32_t invalidate_after_read:1;
+      uint32_t msg_type:4;
+      uint32_t category:1;
+      uint32_t header_present:1;
+      uint32_t response_length:5;
+      uint32_t msg_length:4;
+      uint32_t pad2:2;
+      uint32_t end_of_thread:1;
+    } gen7_oblock_rw;
 
     struct {
       uint32_t src1_subreg_nr_high:1;

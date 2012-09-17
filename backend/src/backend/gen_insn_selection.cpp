@@ -155,7 +155,7 @@ namespace gbe
   }
 
 #define SEL_REG(SIMD16, SIMD8, SIMD1) \
-  if (ctx.isScalarOrBool(reg) == true) \
+  if (ctx.sel->isScalarOrBool(reg) == true) \
     return SelectionReg::retype(SelectionReg::SIMD1(reg), genType); \
   else if (simdWidth == 8) \
     return SelectionReg::retype(SelectionReg::SIMD8(reg), genType); \
@@ -214,7 +214,7 @@ namespace gbe
     SelectionInstruction *insn = this->appendInsn();
     insn->src[0] = src0;
     insn->src[1] = src1;
-    insn->function = conditional;
+    insn->extra.function = conditional;
     insn->opcode = SEL_OP_CMP;
     insn->state = this->curr;
     insn->srcNum = 2;
@@ -257,8 +257,8 @@ namespace gbe
     for (uint32_t elemID = 0; elemID < elemNum; ++elemID)
       insn->dst[elemID] = dst[elemID];
     insn->src[0] = addr;
-    insn->function = bti;
-    insn->elem = elemNum;
+    insn->extra.function = bti;
+    insn->extra.elem = elemNum;
     insn->state = this->curr;
     insn->srcNum = 1;
     insn->dstNum = elemNum;
@@ -274,11 +274,11 @@ namespace gbe
     srcVector->reg = insn->src;
   }
 
- void Selection::UNTYPED_WRITE(Reg addr,
+  void Selection::UNTYPED_WRITE(Reg addr,
                                const SelectionReg *src,
                                uint32_t elemNum,
                                uint32_t bti)
- {
+  {
     SelectionInstruction *insn = this->appendInsn();
     SelectionVector *vector = this->appendVector();
 
@@ -287,8 +287,8 @@ namespace gbe
     insn->src[0] = addr;
     for (uint32_t elemID = 0; elemID < elemNum; ++elemID)
       insn->src[elemID+1] = src[elemID];
-    insn->function = bti;
-    insn->elem = elemNum;
+    insn->extra.function = bti;
+    insn->extra.elem = elemNum;
     insn->state = this->curr;
     insn->srcNum = elemNum+1;
     insn->dstNum = 0;
@@ -308,8 +308,8 @@ namespace gbe
     insn->opcode = SEL_OP_BYTE_GATHER;
     insn->src[0] = addr;
     insn->dst[0] = dst;
-    insn->function = bti;
-    insn->elem = elemSize;
+    insn->extra.function = bti;
+    insn->extra.elem = elemSize;
     insn->state = this->curr;
     insn->srcNum = 1;
     insn->dstNum = 1;
@@ -332,8 +332,8 @@ namespace gbe
     insn->opcode = SEL_OP_BYTE_SCATTER;
     insn->src[0] = addr;
     insn->src[1] = src;
-    insn->function = bti;
-    insn->elem = elemSize;
+    insn->extra.function = bti;
+    insn->extra.elem = elemSize;
     insn->state = this->curr;
     insn->srcNum = 2;
     insn->dstNum = 0;
@@ -350,7 +350,7 @@ namespace gbe
     insn->dst[0] = dst;
     insn->src[0] = src0;
     insn->src[1] = src1;
-    insn->function = function;
+    insn->extra.function = function;
     insn->state = this->curr;
     insn->srcNum = 2;
     insn->dstNum = 1;
@@ -375,6 +375,88 @@ namespace gbe
     insn->state = this->curr;
     insn->srcNum = 2;
     insn->dstNum = 1;
+  }
+
+  void Selection::REGION(Reg dst0, Reg dst1, const SelectionReg *src,
+                         uint32_t offset, uint32_t vstride,
+                         uint32_t width, uint32_t hstride,
+                         uint32_t srcNum)
+  {
+    SelectionInstruction *insn = this->appendInsn();
+    SelectionVector *vector = this->appendVector();
+
+    // Instruction to encode
+    insn->opcode = SEL_OP_REGION;
+    insn->dst[0] = dst0;
+    insn->dst[1] = dst1;
+    GBE_ASSERT(srcNum <= SelectionInstruction::MAX_SRC_NUM);
+    for (uint32_t srcID = 0; srcID < srcNum; ++srcID)
+      insn->src[srcID] = src[srcID];
+    insn->state = this->curr;
+    insn->srcNum = srcNum;
+    insn->dstNum = 2;
+    insn->extra.vstride = vstride;
+    insn->extra.width = width;
+    insn->extra.offset = offset;
+    insn->extra.hstride = hstride;
+
+    // Regioning requires contiguous allocation for the sources
+    vector->regNum = srcNum;
+    vector->reg = insn->src;
+    vector->isSrc = 1;
+  }
+
+  void Selection::RGATHER(Reg dst, const SelectionReg *src, uint32_t srcNum)
+  {
+    SelectionInstruction *insn = this->appendInsn();
+    SelectionVector *vector = this->appendVector();
+
+    // Instruction to encode
+    insn->opcode = SEL_OP_RGATHER;
+    insn->dst[0] = dst;
+    GBE_ASSERT(srcNum <= SelectionInstruction::MAX_SRC_NUM);
+    for (uint32_t srcID = 0; srcID < srcNum; ++srcID)
+      insn->src[srcID] = src[srcID];
+    insn->state = this->curr;
+    insn->srcNum = srcNum;
+    insn->dstNum = 1;
+
+    // Regioning requires contiguous allocation for the sources
+    vector->regNum = srcNum;
+    vector->reg = insn->src;
+    vector->isSrc = 1;
+  }
+
+  void Selection::OBREAD(Reg dst, Reg addr, Reg header, uint32_t bti, uint32_t size) {
+    SelectionInstruction *insn = this->appendInsn();
+    insn->opcode = SEL_OP_OBREAD;
+    insn->dst[0] = dst;
+    insn->src[0] = addr;
+    insn->src[1] = header;
+    insn->state = this->curr;
+    insn->srcNum = 2;
+    insn->dstNum = 1;
+    insn->extra.function = bti;
+    insn->extra.elem = size / sizeof(int[4]); // number of owords
+  }
+
+  void Selection::OBWRITE(Reg addr, Reg value, Reg header, uint32_t bti, uint32_t size) {
+    SelectionInstruction *insn = this->appendInsn();
+    SelectionVector *vector = this->appendVector();
+    insn->opcode = SEL_OP_OBWRITE;
+    insn->src[0] = header;
+    insn->src[1] = value;
+    insn->src[2] = addr;
+    insn->state = this->curr;
+    insn->srcNum = 3;
+    insn->dstNum = 0;
+    insn->extra.function = bti;
+    insn->extra.elem = size / sizeof(int[4]); // number of owords
+
+    // We need to put the header and the data together
+    vector->regNum = 2;
+    vector->reg = insn->src;
+    vector->isSrc = 1;
   }
 
   ///////////////////////////////////////////////////////////////////////////
@@ -416,6 +498,13 @@ namespace gbe
     /*! Backward and forward branches are handled slightly differently */
     void emitForwardBranch(const ir::BranchInstruction&, ir::LabelIndex dst, ir::LabelIndex src);
     void emitBackwardBranch(const ir::BranchInstruction&, ir::LabelIndex dst, ir::LabelIndex src);
+
+    // Gen OCL extensions
+    void emitRegionInstruction(const ir::RegionInstruction &insn);
+    void emitVoteInstruction(const ir::VoteInstruction &insn);
+    void emitRGatherInstruction(const ir::RGatherInstruction &insn);
+    void emitOBReadInstruction(const ir::OBReadInstruction &insn);
+    void emitOBWriteInstruction(const ir::OBWriteInstruction &insn);
   };
 
   SimpleSelection::SimpleSelection(GenContext &ctx) :
@@ -492,7 +581,7 @@ namespace gbe
     this->push();
 
     // Boolean values use scalars
-    if (ctx.isScalarOrBool(insn.getDst(0)) == true) {
+    if (ctx.sel->isScalarOrBool(insn.getDst(0)) == true) {
       this->curr.execWidth = 1;
       this->curr.predicate = GEN_PREDICATE_NONE;
       this->curr.noMask = 1;
@@ -527,10 +616,44 @@ namespace gbe
     this->pop();
   }
 
-  void SimpleSelection::emitTernaryInstruction(const ir::TernaryInstruction &insn) {
-    NOT_IMPLEMENTED;
-  }
   void SimpleSelection::emitSelectInstruction(const ir::SelectInstruction &insn) {
+    using namespace ir;
+
+    // Get all registers for the instruction
+    const Type type = insn.getType();
+    const SelectionReg pred = this->selReg(insn.getPredicate(), TYPE_BOOL);
+    const SelectionReg dst  = this->selReg(insn.getDst(0), type);
+    const SelectionReg src0 = this->selReg(insn.getSrc(SelectInstruction::src0Index), type);
+    const SelectionReg src1 = this->selReg(insn.getSrc(SelectInstruction::src1Index), type);
+
+    // Since we cannot predicate the select instruction with our current mask,
+    // we need to perform the selection in two steps (one to select, one to
+    // update the destination register)
+    const RegisterFamily family = getFamily(type);
+    const SelectionReg tmp = this->selReg(this->reg(family), type);
+    const uint32_t simdWidth = ctx.getSimdWidth();
+
+    this->push();
+      // Move the predicate into a flag register (TODO use cmp:w with blockIP)
+      this->curr.predicate = GEN_PREDICATE_NONE;
+      this->curr.execWidth = 1;
+      this->curr.noMask = 1;
+      this->MOV(SelectionReg::flag(0,1), pred);
+
+      // Perform the selection
+      this->curr.predicate = GEN_PREDICATE_NORMAL;
+      this->curr.execWidth = simdWidth;
+      this->curr.noMask = 0;
+      this->curr.flag = 0;
+      this->curr.subFlag = 1;
+      this->SEL(tmp, src0, src1);
+    this->pop();
+
+    // Update the destination register properly now
+    this->MOV(dst, tmp);
+  }
+
+  void SimpleSelection::emitTernaryInstruction(const ir::TernaryInstruction &insn) {
     NOT_IMPLEMENTED;
   }
   void SimpleSelection::emitSampleInstruction(const ir::SampleInstruction &insn) {
@@ -563,9 +686,8 @@ namespace gbe
     using namespace ir;
     const uint32_t valueNum = insn.getValueNum();
     SelectionReg dst[valueNum];
-
-      for (uint32_t dstID = 0; dstID < valueNum; ++dstID)
-        dst[dstID] = SelectionReg::retype(this->selReg(insn.getValue(dstID)), GEN_TYPE_F);
+    for (uint32_t dstID = 0; dstID < valueNum; ++dstID)
+      dst[dstID] = SelectionReg::retype(this->selReg(insn.getValue(dstID)), GEN_TYPE_F);
     this->UNTYPED_READ(addr, dst, valueNum, 0);
   }
 
@@ -588,8 +710,8 @@ namespace gbe
   }
 
   void SimpleSelection::emitByteGather(const ir::LoadInstruction &insn,
-                                    SelectionReg address,
-                                    SelectionReg value)
+                                       SelectionReg address,
+                                       SelectionReg value)
   {
     using namespace ir;
     GBE_ASSERT(insn.getValueNum() == 1);
@@ -834,7 +956,7 @@ namespace gbe
     const SelectionReg src0 = this->selReg(insn.getSrc(0), type);
     const SelectionReg src1 = this->selReg(insn.getSrc(1), type);
 
-    // Copy the predicate to save it basically
+    // Copy the predicate to save it basically (TODO use cmp:w with blockIP)
     this->push();
       this->curr.noMask = 1;
       this->curr.execWidth = 1;
@@ -886,22 +1008,12 @@ namespace gbe
       this->MOV(dst, src);
   }
 
-
   void SimpleSelection::emitBranchInstruction(const ir::BranchInstruction &insn) {
     using namespace ir;
     const Opcode opcode = insn.getOpcode();
-    if (opcode == OP_RET) {
-#if 0
-      this->push();
-        this->curr.predicate = GEN_PREDICATE_NONE;
-        this->curr.execWidth = 8;
-        this->curr.noMask = 1;
-        this->MOV(SelectionReg::f8grf(127,0), SelectionReg::f8grf(0,0));
-        this->EOT(127);
-      this->pop();
-#endif
+    if (opcode == OP_RET)
       this->EOT();
-    } else if (opcode == OP_BRA) {
+    else if (opcode == OP_BRA) {
       const LabelIndex dst = insn.getLabelIndex();
       const LabelIndex src = insn.getParent()->getLabelIndex();
 
@@ -950,7 +1062,116 @@ namespace gbe
     }
   }
 
+  void SimpleSelection::emitRegionInstruction(const ir::RegionInstruction &insn) {
+    using namespace ir;
+
+    // Two destinations: one is the real destination, one is a temporary
+    SelectionReg dst0 = this->selReg(insn.getDst(0)), dst1;
+    if (ctx.getSimdWidth() == 8)
+      dst1 = SelectionReg::ud8grf(this->reg(FAMILY_DWORD));
+    else
+      dst1 = SelectionReg::ud16grf(this->reg(FAMILY_DWORD));
+
+    // Get all the sources
+    SelectionReg src[SelectionInstruction::MAX_SRC_NUM];
+    const uint32_t srcNum = insn.getSrcNum();
+    GBE_ASSERT(srcNum <= SelectionInstruction::MAX_SRC_NUM);
+    for (uint32_t srcID = 0; srcID < insn.getSrcNum(); ++srcID)
+      src[srcID] = this->selReg(insn.getSrc(srcID));
+
+    // Get the region parameters
+    const uint32_t offset = insn.getOffset();
+    const uint32_t vstride = insn.getVStride();
+    const uint32_t width = insn.getWidth();
+    const uint32_t hstride = insn.getHStride();
+    this->REGION(dst0, dst1, src, offset, vstride, width, hstride, srcNum);
+  }
+
+  void SimpleSelection::emitVoteInstruction(const ir::VoteInstruction &insn) {
+    using namespace ir;
+    const uint32_t simdWidth = ctx.getSimdWidth();
+    const SelectionReg dst = this->selReg(insn.getDst(0), TYPE_U16);
+    const SelectionReg src = this->selReg(insn.getSrc(0), TYPE_U16);
+
+    // Limit the vote to the active lanes
+    this->push();
+      // Move the predicate into a flag register (TODO use cmp:w with blockIP)
+      this->curr.predicate = GEN_PREDICATE_NONE;
+      this->curr.execWidth = 1;
+      this->curr.noMask = 1;
+      this->MOV(SelectionReg::flag(0,1), SelectionReg::flag(0,0));
+    this->pop();
+
+    // Emit the compare instruction to get the flag register
+    this->push();
+      const VotePredicate vote = insn.getVotePredicate();
+      const uint32_t genCmp = vote == VOTE_ANY ? GEN_CONDITIONAL_NEQ : GEN_CONDITIONAL_EQ;
+      this->curr.flag = 0;
+      this->curr.subFlag = 1;
+      this->CMP(genCmp, src, SelectionReg::immuw(0));
+    this->pop();
+
+    // Broadcast the result to the destination
+    if (vote == VOTE_ANY)
+        this->MOV(dst, SelectionReg::flag(0,1));
+    else {
+      const SelectionReg tmp = this->selReg(this->reg(FAMILY_WORD), TYPE_U16);
+      this->push();
+        // Set all lanes of tmp to zero
+        this->curr.predicate = GEN_PREDICATE_NONE;
+        this->MOV(tmp, SelectionReg::immuw(0));
+
+        // Compute the short values with no mask
+        this->curr.flag = 0;
+        this->curr.subFlag = 1;
+        this->curr.inversePredicate = 1;
+        this->curr.predicate = simdWidth == 8 ?
+          GEN_PREDICATE_ALIGN1_ANY8H :
+          GEN_PREDICATE_ALIGN1_ANY16H;
+        this->MOV(tmp, SelectionReg::immuw(1));
+      this->pop();
+
+      // Update the destination with the proper mask
+      this->MOV(dst, tmp);
+    }
+  }
+
+  void SimpleSelection::emitRGatherInstruction(const ir::RGatherInstruction &insn) {
+    using namespace ir;
+    // Two destinations: one is the real destination, one is a temporary
+    const SelectionReg dst = this->selReg(insn.getDst(0)), dst1;
+
+    // Get all the sources
+    SelectionReg src[SelectionInstruction::MAX_SRC_NUM];
+    const uint32_t srcNum = insn.getSrcNum();
+    GBE_ASSERT(srcNum <= SelectionInstruction::MAX_SRC_NUM);
+    for (uint32_t srcID = 0; srcID < insn.getSrcNum(); ++srcID)
+      src[srcID] = this->selReg(insn.getSrc(srcID));
+
+    // Get the region parameters
+    this->RGATHER(dst, src, srcNum);
+  }
+
+  void SimpleSelection::emitOBReadInstruction(const ir::OBReadInstruction &insn) {
+    using namespace ir;
+    const SelectionReg header = this->selReg(this->reg(FAMILY_DWORD), TYPE_U32);
+    const SelectionReg addr = this->selReg(insn.getAddress(), TYPE_U32);
+    const SelectionReg value = this->selReg(insn.getValue(), TYPE_U32);
+    const uint32_t simdWidth = ctx.getSimdWidth();
+    this->OBREAD(value, addr, header, 0xff, simdWidth * sizeof(int));
+  }
+
+  void SimpleSelection::emitOBWriteInstruction(const ir::OBWriteInstruction &insn) {
+    using namespace ir;
+    const SelectionReg header = this->selReg(this->reg(FAMILY_DWORD), TYPE_U32);
+    const SelectionReg addr = this->selReg(insn.getAddress(), TYPE_U32);
+    const SelectionReg value = this->selReg(insn.getValue(), TYPE_U32);
+    const uint32_t simdWidth = ctx.getSimdWidth();
+    this->OBWRITE(addr, value, header, 0xff, simdWidth * sizeof(int));
+  }
+
   Selection *newSimpleSelection(GenContext &ctx) {
     return GBE_NEW(SimpleSelection, ctx);
   }
 } /* namespace gbe */
+

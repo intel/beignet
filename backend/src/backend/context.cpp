@@ -248,7 +248,11 @@ namespace gbe
     this->liveness = GBE_NEW(ir::Liveness, (ir::Function&) fn);
     this->dag = GBE_NEW(ir::FunctionDAG, *this->liveness);
     this->partitioner = GBE_NEW(RegisterFilePartitioner);
-    this->simdWidth = nextHighestPowerOf2(OCL_SIMD_WIDTH);
+    if (fn.getSimdWidth() == 0)
+      this->simdWidth = nextHighestPowerOf2(OCL_SIMD_WIDTH);
+    else
+      this->simdWidth = fn.getSimdWidth();
+
   }
   Context::~Context(void) {
     GBE_SAFE_DELETE(this->partitioner);

@@ -1,19 +1,51 @@
-DECL_LLVM_GEN_FUNCTION(GET_GROUP_ID0, get_group_id0)
-DECL_LLVM_GEN_FUNCTION(GET_GROUP_ID1, get_group_id1)
-DECL_LLVM_GEN_FUNCTION(GET_GROUP_ID2, get_group_id2)
-DECL_LLVM_GEN_FUNCTION(GET_LOCAL_ID0, get_local_id0)
-DECL_LLVM_GEN_FUNCTION(GET_LOCAL_ID1, get_local_id1)
-DECL_LLVM_GEN_FUNCTION(GET_LOCAL_ID2, get_local_id2)
-DECL_LLVM_GEN_FUNCTION(GET_NUM_GROUPS0, get_num_groups0)
-DECL_LLVM_GEN_FUNCTION(GET_NUM_GROUPS1, get_num_groups1)
-DECL_LLVM_GEN_FUNCTION(GET_NUM_GROUPS2, get_num_groups2)
-DECL_LLVM_GEN_FUNCTION(GET_LOCAL_SIZE0, get_local_size0)
-DECL_LLVM_GEN_FUNCTION(GET_LOCAL_SIZE1, get_local_size1)
-DECL_LLVM_GEN_FUNCTION(GET_LOCAL_SIZE2, get_local_size2)
-DECL_LLVM_GEN_FUNCTION(GET_GLOBAL_SIZE0, get_global_size0)
-DECL_LLVM_GEN_FUNCTION(GET_GLOBAL_SIZE1, get_global_size1)
-DECL_LLVM_GEN_FUNCTION(GET_GLOBAL_SIZE2, get_global_size2)
-DECL_LLVM_GEN_FUNCTION(GET_GLOBAL_OFFSET0, get_global_offset0)
-DECL_LLVM_GEN_FUNCTION(GET_GLOBAL_OFFSET1, get_global_offset1)
-DECL_LLVM_GEN_FUNCTION(GET_GLOBAL_OFFSET2, get_global_offset2)
+DECL_LLVM_GEN_FUNCTION(GET_GROUP_ID0, __gen_ocl_get_group_id0)
+DECL_LLVM_GEN_FUNCTION(GET_GROUP_ID1, __gen_ocl_get_group_id1)
+DECL_LLVM_GEN_FUNCTION(GET_GROUP_ID2, __gen_ocl_get_group_id2)
+DECL_LLVM_GEN_FUNCTION(GET_LOCAL_ID0, __gen_ocl_get_local_id0)
+DECL_LLVM_GEN_FUNCTION(GET_LOCAL_ID1, __gen_ocl_get_local_id1)
+DECL_LLVM_GEN_FUNCTION(GET_LOCAL_ID2, __gen_ocl_get_local_id2)
+DECL_LLVM_GEN_FUNCTION(GET_NUM_GROUPS0, __gen_ocl_get_num_groups0)
+DECL_LLVM_GEN_FUNCTION(GET_NUM_GROUPS1, __gen_ocl_get_num_groups1)
+DECL_LLVM_GEN_FUNCTION(GET_NUM_GROUPS2, __gen_ocl_get_num_groups2)
+DECL_LLVM_GEN_FUNCTION(GET_LOCAL_SIZE0, __gen_ocl_get_local_size0)
+DECL_LLVM_GEN_FUNCTION(GET_LOCAL_SIZE1, __gen_ocl_get_local_size1)
+DECL_LLVM_GEN_FUNCTION(GET_LOCAL_SIZE2, __gen_ocl_get_local_size2)
+DECL_LLVM_GEN_FUNCTION(GET_GLOBAL_SIZE0, __gen_ocl_get_global_size0)
+DECL_LLVM_GEN_FUNCTION(GET_GLOBAL_SIZE1, __gen_ocl_get_global_size1)
+DECL_LLVM_GEN_FUNCTION(GET_GLOBAL_SIZE2, __gen_ocl_get_global_size2)
+DECL_LLVM_GEN_FUNCTION(GET_GLOBAL_OFFSET0, __gen_ocl_get_global_offset0)
+DECL_LLVM_GEN_FUNCTION(GET_GLOBAL_OFFSET1, __gen_ocl_get_global_offset1)
+DECL_LLVM_GEN_FUNCTION(GET_GLOBAL_OFFSET2, __gen_ocl_get_global_offset2)
+
+// Register regions
+DECL_LLVM_GEN_FUNCTION(REGION1, _Z16__gen_ocl_regioniiiii) // order matters here!
+DECL_LLVM_GEN_FUNCTION(REGION2, _Z16__gen_ocl_regioniiiiii)
+DECL_LLVM_GEN_FUNCTION(REGION3, _Z16__gen_ocl_regioniiiiiii)
+DECL_LLVM_GEN_FUNCTION(REGION4, _Z16__gen_ocl_regioniiiiiiii)
+DECL_LLVM_GEN_FUNCTION(REGION5, _Z16__gen_ocl_regioniiiiiiiii)
+DECL_LLVM_GEN_FUNCTION(REGION6, _Z16__gen_ocl_regioniiiiiiiiii)
+DECL_LLVM_GEN_FUNCTION(REGION7, _Z16__gen_ocl_regioniiiiiiiiiii)
+DECL_LLVM_GEN_FUNCTION(REGION8, _Z16__gen_ocl_regioniiiiiiiiiiii)
+
+// Gather from register file
+DECL_LLVM_GEN_FUNCTION(RGATHER1, _Z17__gen_ocl_rgatherti) // order matters here!
+DECL_LLVM_GEN_FUNCTION(RGATHER2, _Z17__gen_ocl_rgathertii)
+DECL_LLVM_GEN_FUNCTION(RGATHER3, _Z17__gen_ocl_rgathertiii)
+DECL_LLVM_GEN_FUNCTION(RGATHER4, _Z17__gen_ocl_rgathertiiii)
+DECL_LLVM_GEN_FUNCTION(RGATHER5, _Z17__gen_ocl_rgathertiiiii)
+DECL_LLVM_GEN_FUNCTION(RGATHER6, _Z17__gen_ocl_rgathertiiiiii)
+DECL_LLVM_GEN_FUNCTION(RGATHER7, _Z17__gen_ocl_rgathertiiiiiii)
+DECL_LLVM_GEN_FUNCTION(RGATHER8, _Z17__gen_ocl_rgathertiiiiiiii)
+
+// Uniform conditions
+DECL_LLVM_GEN_FUNCTION(ALL, _Z13__gen_ocl_allt)
+DECL_LLVM_GEN_FUNCTION(ANY, _Z13__gen_ocl_anyt)
+
+// OBlock reads / writes
+DECL_LLVM_GEN_FUNCTION(OBREAD, _Z16__gen_ocl_obreadPKU3AS1v)
+DECL_LLVM_GEN_FUNCTION(OBWRITE, _Z17__gen_ocl_obwritePKU3AS1vi)
+
+// To force SIMD8/16 compilation
+DECL_LLVM_GEN_FUNCTION(FORCE_SIMD8,  __gen_ocl_force_simd8)
+DECL_LLVM_GEN_FUNCTION(FORCE_SIMD16, __gen_ocl_force_simd16)
 

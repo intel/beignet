@@ -18,7 +18,7 @@
  */
 
 /**
- * \file gen_eu.hpp
+ * \file gen_encoder.hpp
  * \author Benjamin Segovia <benjamin.segovia@intel.com>
  * This is a revamped Gen ISA encoder from Mesa code base
  */
@@ -63,6 +63,100 @@ namespace gbe
     if (src1.type == GEN_TYPE_D || src1.type == GEN_TYPE_UD || src1.type == GEN_TYPE_F)
       return true;
     return false;
+  }
+
+  static void setMessageDescriptor(GenEncoder *p,
+                                   GenInstruction *inst,
+                                   enum GenMessageTarget sfid,
+                                   unsigned msg_length,
+                                   unsigned response_length,
+                                   bool header_present = false,
+                                   bool end_of_thread = false)
+  {
+     p->setSrc1(inst, GenReg::immd(0));
+     inst->bits3.generic_gen5.header_present = header_present;
+     inst->bits3.generic_gen5.response_length = response_length;
+     inst->bits3.generic_gen5.msg_length = msg_length;
+     inst->bits3.generic_gen5.end_of_thread = end_of_thread;
+     inst->header.destreg_or_condmod = sfid;
+  }
+
+  static void setDPUntypedRW(GenEncoder *p,
+                             GenInstruction *insn,
+                             uint32_t bti,
+                             uint32_t rgba,
+                             uint32_t msg_type,
+                             uint32_t msg_length,
+                             uint32_t response_length)
+  {
+    const GenMessageTarget sfid = GEN_SFID_DATAPORT_DATA_CACHE;
+    setMessageDescriptor(p, insn, sfid, msg_length, response_length);
+    insn->bits3.gen7_untyped_rw.msg_type = msg_type;
+    insn->bits3.gen7_untyped_rw.bti = bti;
+    insn->bits3.gen7_untyped_rw.rgba = rgba;
+    if (p->curr.execWidth == 8)
+      insn->bits3.gen7_untyped_rw.simd_mode = GEN_UNTYPED_SIMD8;
+    else if (p->curr.execWidth == 16)
+      insn->bits3.gen7_untyped_rw.simd_mode = GEN_UNTYPED_SIMD16;
+    else
+      NOT_SUPPORTED;
+  }
+
+  static void setDPByteScatterGather(GenEncoder *p,
+                                     GenInstruction *insn,
+                                     uint32_t bti,
+                                     uint32_t elem_size,
+                                     uint32_t msg_type,
+                                     uint32_t msg_length,
+                                     uint32_t response_length)
+  {
+    const GenMessageTarget sfid = GEN_SFID_DATAPORT_DATA_CACHE;
+    setMessageDescriptor(p, insn, sfid, msg_length, response_length);
+    insn->bits3.gen7_byte_rw.msg_type = msg_type;
+    insn->bits3.gen7_byte_rw.bti = bti;
+    insn->bits3.gen7_byte_rw.data_size = elem_size;
+    if (p->curr.execWidth == 8)
+      insn->bits3.gen7_byte_rw.simd_mode = GEN_BYTE_SCATTER_SIMD8;
+    else if (p->curr.execWidth == 16)
+      insn->bits3.gen7_byte_rw.simd_mode = GEN_BYTE_SCATTER_SIMD16;
+    else
+      NOT_SUPPORTED;
+  }
+
+  static void setOBlockRW(GenEncoder *p,
+                          GenInstruction *insn,
+                          uint32_t bti,
+                          uint32_t size,
+                          uint32_t msg_type,
+                          uint32_t msg_length,
+                          uint32_t response_length)
+  {
+    const GenMessageTarget sfid = GEN_SFID_DATAPORT_DATA_CACHE;
+    setMessageDescriptor(p, insn, sfid, msg_length, response_length);
+    assert(size == 2 || size == 4);
+    insn->bits3.gen7_oblock_rw.msg_type = msg_type;
+    insn->bits3.gen7_oblock_rw.bti = bti;
+    insn->bits3.gen7_oblock_rw.block_size = size == 2 ? 2 : 3;
+    insn->bits3.gen7_oblock_rw.header_present = 1;
+  }
+
+  static void setSamplerMessage(GenEncoder *p,
+                                GenInstruction *insn,
+                                uint32_t bti,
+                                uint32_t sampler,
+                                uint32_t msg_type,
+                                uint32_t response_length,
+                                uint32_t msg_length,
+                                uint32_t header,
+                                uint32_t simd_mode,
+                                uint32_t return_format)
+  {
+     const GenMessageTarget sfid = GEN_SFID_SAMPLER;
+     setMessageDescriptor(p, insn, sfid, msg_length, response_length, header);
+     insn->bits3.sampler_gen7.bti = bti;
+     insn->bits3.sampler_gen7.sampler = sampler;
+     insn->bits3.sampler_gen7.msg_type = msg_type;
+     insn->bits3.sampler_gen7.simd_mode = simd_mode;
   }
 
   //////////////////////////////////////////////////////////////////////////
@@ -117,42 +211,54 @@ namespace gbe
      if (reg.file != GEN_ARCHITECTURE_REGISTER_FILE)
         assert(reg.nr < 128);
 
-     insn->bits1.da1.src0_reg_file = reg.file;
-     insn->bits1.da1.src0_reg_type = reg.type;
-     insn->bits2.da1.src0_abs = reg.absolute;
-     insn->bits2.da1.src0_negate = reg.negation;
-     insn->bits2.da1.src0_address_mode = reg.address_mode;
+     if (reg.address_mode == GEN_ADDRESS_DIRECT) {
+       insn->bits1.da1.src0_reg_file = reg.file;
+       insn->bits1.da1.src0_reg_type = reg.type;
+       insn->bits2.da1.src0_abs = reg.absolute;
+       insn->bits2.da1.src0_negate = reg.negation;
+       insn->bits2.da1.src0_address_mode = reg.address_mode;
 
-     if (reg.file == GEN_IMMEDIATE_VALUE) {
-        insn->bits3.ud = reg.dw1.ud;
+       if (reg.file == GEN_IMMEDIATE_VALUE) {
+          insn->bits3.ud = reg.dw1.ud;
 
-        /* Required to set some fields in src1 as well: */
-        insn->bits1.da1.src1_reg_file = 0; /* arf */
-        insn->bits1.da1.src1_reg_type = reg.type;
-     }
-     else {
-       if (insn->header.access_mode == GEN_ALIGN_1) {
-         insn->bits2.da1.src0_subreg_nr = reg.subnr;
-         insn->bits2.da1.src0_reg_nr = reg.nr;
-       } else {
-         insn->bits2.da16.src0_subreg_nr = reg.subnr / 16;
-         insn->bits2.da16.src0_reg_nr = reg.nr;
-       }
-
-       if (reg.width == GEN_WIDTH_1 &&
-           insn->header.execution_size == GEN_WIDTH_1) {
-         insn->bits2.da1.src0_horiz_stride = GEN_HORIZONTAL_STRIDE_0;
-         insn->bits2.da1.src0_width = GEN_WIDTH_1;
-         insn->bits2.da1.src0_vert_stride = GEN_VERTICAL_STRIDE_0;
+          /* Required to set some fields in src1 as well: */
+          insn->bits1.da1.src1_reg_file = 0; /* arf */
+          insn->bits1.da1.src1_reg_type = reg.type;
        }
        else {
-         insn->bits2.da1.src0_horiz_stride = reg.hstride;
-         insn->bits2.da1.src0_width = reg.width;
-         insn->bits2.da1.src0_vert_stride = reg.vstride;
-       }
-     }
-  }
+         if (insn->header.access_mode == GEN_ALIGN_1) {
+           insn->bits2.da1.src0_subreg_nr = reg.subnr;
+           insn->bits2.da1.src0_reg_nr = reg.nr;
+         } else {
+           insn->bits2.da16.src0_subreg_nr = reg.subnr / 16;
+           insn->bits2.da16.src0_reg_nr = reg.nr;
+         }
 
+         if (reg.width == GEN_WIDTH_1 &&
+             insn->header.execution_size == GEN_WIDTH_1) {
+           insn->bits2.da1.src0_horiz_stride = GEN_HORIZONTAL_STRIDE_0;
+           insn->bits2.da1.src0_width = GEN_WIDTH_1;
+           insn->bits2.da1.src0_vert_stride = GEN_VERTICAL_STRIDE_0;
+         }
+         else {
+           insn->bits2.da1.src0_horiz_stride = reg.hstride;
+           insn->bits2.da1.src0_width = reg.width;
+           insn->bits2.da1.src0_vert_stride = reg.vstride;
+         }
+       }
+    } else {
+       insn->bits1.ia1.src0_reg_file = GEN_GENERAL_REGISTER_FILE;
+       insn->bits1.ia1.src0_reg_type = reg.type;
+       insn->bits2.ia1.src0_subreg_nr = 0;
+       insn->bits2.ia1.src0_indirect_offset = 0;
+       insn->bits2.ia1.src0_abs = 0;
+       insn->bits2.ia1.src0_negate = 0;
+       insn->bits2.ia1.src0_address_mode = reg.address_mode;
+       insn->bits2.ia1.src0_horiz_stride = GEN_HORIZONTAL_STRIDE_0;
+       insn->bits2.ia1.src0_width = GEN_WIDTH_1;
+       insn->bits2.ia1.src0_vert_stride = GEN_VERTICAL_STRIDE_ONE_DIMENSIONAL;
+    }
+  }
 
   void GenEncoder::setSrc1(GenInstruction *insn, GenReg reg) {
      assert(reg.nr < 128);
@@ -189,67 +295,6 @@ namespace gbe
      }
   }
 
-  static void
-  brw_set_message_descriptor(GenEncoder *p,
-                             GenInstruction *inst,
-                             enum GenMessageTarget sfid,
-                             unsigned msg_length,
-                             unsigned response_length,
-                             bool header_present = false,
-                             bool end_of_thread = false)
-  {
-     p->setSrc1(inst, GenReg::immd(0));
-     inst->bits3.generic_gen5.header_present = header_present;
-     inst->bits3.generic_gen5.response_length = response_length;
-     inst->bits3.generic_gen5.msg_length = msg_length;
-     inst->bits3.generic_gen5.end_of_thread = end_of_thread;
-     inst->header.destreg_or_condmod = sfid;
-  }
-
-  static void
-  set_dp_untyped_rw(GenEncoder *p,
-                    GenInstruction *insn,
-                    uint32_t bti,
-                    uint32_t rgba,
-                    uint32_t msg_type,
-                    uint32_t msg_length,
-                    uint32_t response_length)
-  {
-     GenMessageTarget sfid = GEN_SFID_DATAPORT_DATA_CACHE;
-     brw_set_message_descriptor(p, insn, sfid, msg_length, response_length);
-     insn->bits3.gen7_untyped_rw.msg_type = msg_type;
-     insn->bits3.gen7_untyped_rw.bti = bti;
-     insn->bits3.gen7_untyped_rw.rgba = rgba;
-     if (p->curr.execWidth == 8)
-       insn->bits3.gen7_untyped_rw.simd_mode = GEN_UNTYPED_SIMD8;
-     else if (p->curr.execWidth == 16)
-       insn->bits3.gen7_untyped_rw.simd_mode = GEN_UNTYPED_SIMD16;
-     else
-       NOT_SUPPORTED;
-  }
-
-  static void
-  set_dp_byte_scatter_gather(GenEncoder *p,
-                             GenInstruction *insn,
-                             uint32_t bti,
-                             uint32_t elem_size,
-                             uint32_t msg_type,
-                             uint32_t msg_length,
-                             uint32_t response_length)
-  {
-     GenMessageTarget sfid = GEN_SFID_DATAPORT_DATA_CACHE;
-     brw_set_message_descriptor(p, insn, sfid, msg_length, response_length);
-     insn->bits3.gen7_byte_rw.msg_type = msg_type;
-     insn->bits3.gen7_byte_rw.bti = bti;
-     insn->bits3.gen7_byte_rw.data_size = elem_size;
-     if (p->curr.execWidth == 8)
-       insn->bits3.gen7_byte_rw.simd_mode = GEN_BYTE_SCATTER_SIMD8;
-     else if (p->curr.execWidth == 16)
-       insn->bits3.gen7_byte_rw.simd_mode = GEN_BYTE_SCATTER_SIMD16;
-     else
-       NOT_SUPPORTED;
-  }
-
   static const uint32_t untypedRWMask[] = {
     GEN_UNTYPED_ALPHA|GEN_UNTYPED_BLUE|GEN_UNTYPED_GREEN|GEN_UNTYPED_RED,
     GEN_UNTYPED_ALPHA|GEN_UNTYPED_BLUE|GEN_UNTYPED_GREEN,
@@ -258,8 +303,7 @@ namespace gbe
     0
   };
 
-  void
-  GenEncoder::UNTYPED_READ(GenReg dst, GenReg src, uint32_t bti, uint32_t elemNum) {
+  void GenEncoder::UNTYPED_READ(GenReg dst, GenReg src, uint32_t bti, uint32_t elemNum) {
     GenInstruction *insn = this->next(GEN_OPCODE_SEND);
     assert(elemNum >= 1 || elemNum <= 4);
     uint32_t msg_length = 0;
@@ -277,17 +321,16 @@ namespace gbe
     this->setDst(insn, GenReg::uw16grf(dst.nr, 0));
     this->setSrc0(insn, GenReg::ud8grf(src.nr, 0));
     this->setSrc1(insn, GenReg::immud(0));
-    set_dp_untyped_rw(this,
-                      insn,
-                      bti,
-                      untypedRWMask[elemNum],
-                      GEN_UNTYPED_READ,
-                      msg_length,
-                      response_length);
+    setDPUntypedRW(this,
+                   insn,
+                   bti,
+                   untypedRWMask[elemNum],
+                   GEN_UNTYPED_READ,
+                   msg_length,
+                   response_length);
   }
 
-  void
-  GenEncoder::UNTYPED_WRITE(GenReg msg, uint32_t bti, uint32_t elemNum) {
+  void GenEncoder::UNTYPED_WRITE(GenReg msg, uint32_t bti, uint32_t elemNum) {
     GenInstruction *insn = this->next(GEN_OPCODE_SEND);
     assert(elemNum >= 1 || elemNum <= 4);
     uint32_t msg_length = 0;
@@ -304,17 +347,16 @@ namespace gbe
       NOT_IMPLEMENTED;
     this->setSrc0(insn, GenReg::ud8grf(msg.nr, 0));
     this->setSrc1(insn, GenReg::immud(0));
-    set_dp_untyped_rw(this,
-                      insn,
-                      bti,
-                      untypedRWMask[elemNum],
-                      GEN_UNTYPED_WRITE,
-                      msg_length,
-                      response_length);
+    setDPUntypedRW(this,
+                   insn,
+                   bti,
+                   untypedRWMask[elemNum],
+                   GEN_UNTYPED_WRITE,
+                   msg_length,
+                   response_length);
   }
 
-  void
-  GenEncoder::BYTE_GATHER(GenReg dst, GenReg src, uint32_t bti, uint32_t elemSize) {
+  void GenEncoder::BYTE_GATHER(GenReg dst, GenReg src, uint32_t bti, uint32_t elemSize) {
     GenInstruction *insn = this->next(GEN_OPCODE_SEND);
     uint32_t msg_length = 0;
     uint32_t response_length = 0;
@@ -331,17 +373,16 @@ namespace gbe
     this->setDst(insn, GenReg::uw16grf(dst.nr, 0));
     this->setSrc0(insn, GenReg::ud8grf(src.nr, 0));
     this->setSrc1(insn, GenReg::immud(0));
-    set_dp_byte_scatter_gather(this,
-                               insn,
-                               bti,
-                               elemSize,
-                               GEN_BYTE_GATHER,
-                               msg_length,
-                               response_length);
+    setDPByteScatterGather(this,
+                           insn,
+                           bti,
+                           elemSize,
+                           GEN_BYTE_GATHER,
+                           msg_length,
+                           response_length);
   }
 
-  void
-  GenEncoder::BYTE_SCATTER(GenReg msg, uint32_t bti, uint32_t elemSize) {
+  void GenEncoder::BYTE_SCATTER(GenReg msg, uint32_t bti, uint32_t elemSize) {
     GenInstruction *insn = this->next(GEN_OPCODE_SEND);
     uint32_t msg_length = 0;
     uint32_t response_length = 0;
@@ -356,33 +397,13 @@ namespace gbe
       NOT_IMPLEMENTED;
     this->setSrc0(insn, GenReg::ud8grf(msg.nr, 0));
     this->setSrc1(insn, GenReg::immud(0));
-    set_dp_byte_scatter_gather(this,
-                               insn,
-                               bti,
-                               elemSize,
-                               GEN_BYTE_SCATTER,
-                               msg_length,
-                               response_length);
-  }
-
-  static void
-  set_sampler_message(GenEncoder *p,
-                      GenInstruction *insn,
-                      uint32_t bti,
-                      uint32_t sampler,
-                      uint32_t msg_type,
-                      uint32_t response_length,
-                      uint32_t msg_length,
-                      uint32_t header_present,
-                      uint32_t simd_mode,
-                      uint32_t return_format)
-  {
-     brw_set_message_descriptor(p, insn, GEN_SFID_SAMPLER, msg_length,
-                                response_length, header_present);
-     insn->bits3.sampler_gen7.bti = bti;
-     insn->bits3.sampler_gen7.sampler = sampler;
-     insn->bits3.sampler_gen7.msg_type = msg_type;
-     insn->bits3.sampler_gen7.simd_mode = simd_mode;
+    setDPByteScatterGather(this,
+                           insn,
+                           bti,
+                           elemSize,
+                           GEN_BYTE_SCATTER,
+                           msg_length,
+                           response_length);
   }
 
   GenInstruction *GenEncoder::next(uint32_t opcode) {
@@ -541,7 +562,7 @@ namespace gbe
 
 #define ALU3(OP) \
   void GenEncoder::OP(GenReg dest, GenReg src0, GenReg src1, GenReg src2) { \
-     alu3(this, GEN_OPCODE_##OP, dest, src0, src1, src2); \
+    alu3(this, GEN_OPCODE_##OP, dest, src0, src1, src2); \
   }
 
   ALU1(MOV)
@@ -588,13 +609,11 @@ namespace gbe
   }
 
   void GenEncoder::MUL(GenReg dest, GenReg src0, GenReg src1) {
-     /* 6.32.38: mul */
      if (src0.type == GEN_TYPE_D ||
          src0.type == GEN_TYPE_UD ||
          src1.type == GEN_TYPE_D ||
-         src1.type == GEN_TYPE_UD) {
+         src1.type == GEN_TYPE_UD)
         assert(dest.type != GEN_TYPE_F);
-     }
 
      if (src0.type == GEN_TYPE_F ||
          (src0.file == GEN_IMMEDIATE_VALUE &&
@@ -725,16 +744,52 @@ namespace gbe
      this->setHeader(insn);
      this->setDst(insn, dest);
      this->setSrc0(insn, src0);
-     set_sampler_message(this,
-                         insn,
-                         bti,
-                         sampler,
-                         msg_type,
-                         response_length, 
-                         msg_length,
-                         header_present,
-                         simd_mode,
-                         return_format);
+     setSamplerMessage(this,
+                       insn,
+                       bti,
+                       sampler,
+                       msg_type,
+                       response_length, 
+                       msg_length,
+                       header_present,
+                       simd_mode,
+                       return_format);
+  }
+
+  void GenEncoder::OBREAD(GenReg dst, GenReg header, uint32_t bti, uint32_t size) {
+    GenInstruction *insn = this->next(GEN_OPCODE_SEND);
+    const uint32_t msg_length = 1;
+    const uint32_t response_length = size / 2; // Size is in owords
+    this->setHeader(insn);
+    this->setDst(insn, GenReg::uw16grf(dst.nr, 0));
+    this->setSrc0(insn, GenReg::ud8grf(header.nr, 0));
+    this->setSrc1(insn, GenReg::immud(0));
+    insn->header.execution_size = response_length == 1 ? GEN_WIDTH_8 : GEN_WIDTH_16;
+    setOBlockRW(this,
+                insn,
+                bti,
+                size,
+                GEN_OBLOCK_READ,
+                msg_length,
+                response_length);
+  }
+
+  void GenEncoder::OBWRITE(GenReg header, uint32_t bti, uint32_t size) {
+    GenInstruction *insn = this->next(GEN_OPCODE_SEND);
+    const uint32_t msg_length = 1 + size / 2; // Size is in owords
+    const uint32_t response_length = 0;
+    this->setHeader(insn);
+    this->setSrc0(insn, GenReg::ud8grf(header.nr, 0));
+    this->setSrc1(insn, GenReg::immud(0));
+    this->setDst(insn, GenReg::retype(GenReg::null(), GEN_TYPE_UW));
+    insn->header.execution_size = msg_length == 2 ? GEN_WIDTH_8 : GEN_WIDTH_16;
+    setOBlockRW(this,
+                insn,
+                bti,
+                size,
+                GEN_OBLOCK_WRITE,
+                msg_length,
+                response_length);
   }
 
   void GenEncoder::EOT(uint32_t msg) {

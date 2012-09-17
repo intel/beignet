@@ -500,7 +500,7 @@ namespace gbe
     /*! Instruction are chained in the block */
     SelectionInstruction *prev, *next;
     /*! No more than 6 sources (used by typed writes) */
-    enum { MAX_SRC_NUM = 6 };
+    enum { MAX_SRC_NUM = 8 };
     /*! No more than 4 destinations (used by samples and untyped reads) */
     enum { MAX_DST_NUM = 4 };
     /*! All destinations */
@@ -511,10 +511,24 @@ namespace gbe
     SelectionState state;
     /*! Gen opcode */
     uint8_t opcode;
-    /*! For math and cmp instructions. Store bti for loads/stores */
-    uint8_t function:4;
-    /*! elemSize for byte scatters / gathers, elemNum for untyped msg */
-    uint8_t elem:4;
+    union {
+      struct {
+        /*! Store bti for loads/stores and function for math and compares */
+        uint16_t function:8;
+        /*! elemSize for byte scatters / gathers, elemNum for untyped msg */
+        uint16_t elem:8;
+      };
+      struct {
+        /*! Number of sources in the tuple */
+        uint8_t width:4;
+        /*! vertical stride (0,1,2,4,8 or 16) */
+        uint16_t vstride:5;
+        /*! horizontal stride (0,1,2,4,8 or 16) */
+        uint16_t hstride:5;
+        /*! offset (0 to 7) */
+        uint16_t offset:5;
+      };
+    } extra;
     /*! Number of sources */
     uint8_t srcNum:4;
     /*! Number of destinations */
@@ -751,12 +765,20 @@ namespace gbe
     void BYTE_GATHER(Reg dst, Reg addr, uint32_t elemSize, uint32_t bti);
     /*! Byte scatter (for unaligned bytes, shorts and ints) */
     void BYTE_SCATTER(Reg addr, Reg src, uint32_t elemSize, uint32_t bti);
+    /*! Oblock read */
+    void OBREAD(Reg dst, Reg addr, Reg header, uint32_t bti, uint32_t size);
+    /*! Oblock write */
+    void OBWRITE(Reg addr, Reg value, Reg header, uint32_t bti, uint32_t size);
     /*! Extended math function */
     void MATH(Reg dst, uint32_t function, Reg src0, Reg src1);
     /*! Encode unary instructions */
     void ALU1(uint32_t opcode, Reg dst, Reg src);
     /*! Encode binary instructions */
     void ALU2(uint32_t opcode, Reg dst, Reg src0, Reg src1);
+    /*! Encode regioning */
+    void REGION(Reg dst0, Reg dst1, const SelectionReg *src, uint32_t offset, uint32_t vstride, uint32_t width, uint32_t hstride, uint32_t srcNum);
+    /*! Encode regioning */
+    void RGATHER(Reg dst, const SelectionReg *src, uint32_t srcNum);
     /*! Use custom allocators */
     GBE_CLASS(Selection);
   };

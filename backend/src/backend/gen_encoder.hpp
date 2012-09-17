@@ -102,16 +102,32 @@ namespace gbe
       this->address_mode = GEN_ADDRESS_DIRECT;
     }
 
+    /*! Build an indirectly addressed source */
+    static INLINE GenReg indirect(uint32_t type, uint32_t subnr, uint32_t width) {
+      GenReg reg;
+      reg.type = type;
+      reg.file = GEN_GENERAL_REGISTER_FILE;
+      reg.address_mode = GEN_ADDRESS_REGISTER_INDIRECT_REGISTER;
+      reg.width = width;
+      reg.subnr = subnr;
+      reg.nr = 0;
+      reg.negation = 0;
+      reg.absolute = 0;
+      reg.vstride = 0;
+      reg.hstride = 0;
+      return reg;
+    }
+
     static INLINE GenReg Qn(GenReg reg, uint32_t quarter) {
       if (reg.hstride == GEN_HORIZONTAL_STRIDE_0) // scalar register
         return reg;
       else {
         const uint32_t typeSz = typeSize(reg.type);
         const uint32_t horizontal = stride(reg.hstride);
-        const uint32_t grfOffset = reg.nr*GEN_REG_SIZE + typeSz*reg.subnr;
-        const uint32_t nextOffset = grfOffset + 8*quarter*typeSz*horizontal;
+        const uint32_t grfOffset = reg.nr*GEN_REG_SIZE + reg.subnr;
+        const uint32_t nextOffset = grfOffset + 8*quarter*horizontal*typeSz;
         reg.nr = nextOffset / GEN_REG_SIZE;
-        reg.subnr = (nextOffset % GEN_REG_SIZE) / typeSz;
+        reg.subnr = (nextOffset % GEN_REG_SIZE);
         return reg;
       }
     }
@@ -369,6 +385,14 @@ namespace gbe
       return uw1(GEN_ARCHITECTURE_REGISTER_FILE, GEN_ARF_MASK, subnr);
     }
 
+    static INLINE GenReg addr1(uint32_t subnr) {
+      return uw1(GEN_ARCHITECTURE_REGISTER_FILE, GEN_ARF_ADDRESS, subnr);
+    }
+
+    static INLINE GenReg addr8(uint32_t subnr) {
+      return uw8(GEN_ARCHITECTURE_REGISTER_FILE, GEN_ARF_ADDRESS, subnr);
+    }
+
     static INLINE GenReg next(GenReg reg) {
       reg.nr++;
       return reg;
@@ -496,6 +520,10 @@ namespace gbe
     void BYTE_GATHER(GenReg dst, GenReg src, uint32_t bti, uint32_t elemSize);
     /*! Byte scatter (for unaligned bytes, shorts and ints) */
     void BYTE_SCATTER(GenReg src, uint32_t bti, uint32_t elemSize);
+    /*! OBlock read */
+    void OBREAD(GenReg dst, GenReg header, uint32_t bti, uint32_t elemSize);
+    /*! OBlock read */
+    void OBWRITE(GenReg header, uint32_t bti, uint32_t elemSize);
     /*! Send instruction for the sampler */
     void SAMPLE(GenReg dest,
                 uint32_t msg_reg_nr,

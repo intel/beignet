@@ -65,10 +65,6 @@ namespace gbe
     void emitInstructionStream(void);
     /*! Set the correct target values for the branches */
     void patchBranches(void);
-    /*! Bool registers will use scalar words. So we will consider them as
-     *  scalars in Gen backend
-     */
-    bool isScalarOrBool(ir::Register reg) const;
     /*! Forward ir::Function method */
     INLINE bool isSpecialReg(ir::Register reg) const {
       return fn.isSpecialReg(reg);
@@ -82,7 +78,6 @@ namespace gbe
     void emitLabelInstruction(const SelectionInstruction &insn);
     void emitUnaryInstruction(const SelectionInstruction &insn);
     void emitBinaryInstruction(const SelectionInstruction &insn);
-    void emitSelectInstruction(const SelectionInstruction &insn);
     void emitCompareInstruction(const SelectionInstruction &insn);
     void emitJumpInstruction(const SelectionInstruction &insn);
     void emitEotInstruction(const SelectionInstruction &insn);
@@ -93,6 +88,10 @@ namespace gbe
     void emitUntypedWriteInstruction(const SelectionInstruction &insn);
     void emitByteGatherInstruction(const SelectionInstruction &insn);
     void emitByteScatterInstruction(const SelectionInstruction &insn);
+    void emitRegionInstruction(const SelectionInstruction &insn);
+    void emitRGatherInstruction(const SelectionInstruction &insn);
+    void emitOBReadInstruction(const SelectionInstruction &insn);
+    void emitOBWriteInstruction(const SelectionInstruction &insn);
 
     /*! Implements base class */
     virtual Kernel *allocateKernel(void);

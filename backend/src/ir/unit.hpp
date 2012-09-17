@@ -34,14 +34,6 @@ namespace ir {
   // A unit contains a set of functions
   class Function;
 
-  /*! Defines the size of the pointers. All the functions from the unit will
-   *  use the same pointer size as the unit they belong to
-   */
-  enum PointerSize {
-    POINTER_32_BITS = 32,
-    POINTER_64_BITS = 64
-  };
-
   /*! Complete unit of compilation. It contains a set of functions and a set of
    *  constant the functions may refer to.
    */

@@ -22,6 +22,7 @@
  * \author Benjamin Segovia <benjamin.segovia@intel.com>
  */
 #include "ir/function.hpp"
+#include "ir/unit.hpp"
 #include "sys/string.hpp"
 #include "sys/map.hpp"
 
@@ -34,12 +35,19 @@ namespace ir {
     return locationMap.find(*this)->second;
   }
 
-  Function::Function(const std::string &name, Profile profile) :
-    name(name), profile(profile) { initProfile(*this); }
+  Function::Function(const std::string &name, const Unit &unit, Profile profile) :
+    name(name), unit(unit), profile(profile), simdWidth(0)
+  {
+    initProfile(*this);
+  }
 
   Function::~Function(void) {
     for (auto block : blocks) GBE_DELETE(block);
     for (auto arg : args) GBE_DELETE(arg);
+  }
+
+  RegisterFamily Function::getPointerFamily(void) const {
+    return unit.getPointerFamily();
   }
 
   void Function::sortLabels(void) {

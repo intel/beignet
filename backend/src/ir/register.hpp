@@ -30,6 +30,14 @@
 namespace gbe {
 namespace ir {
 
+  /*! Defines the size of the pointers. All the functions from the unit will
+   *  use the same pointer size as the unit they belong to
+   */
+  enum PointerSize {
+    POINTER_32_BITS = 32,
+    POINTER_64_BITS = 64
+  };
+
   /*! Basically provides the size of the register */
   enum RegisterFamily : uint8_t {
     FAMILY_BOOL  = 0,

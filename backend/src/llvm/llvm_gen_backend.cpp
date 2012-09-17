@@ -1203,7 +1203,7 @@ namespace gbe
     /*! Build the intrinsic hash map */
     OCLIntrinsicMap(void) {
 #define DECL_LLVM_GEN_FUNCTION(ID, NAME) \
-  map.insert(std::make_pair("__gen_ocl_"#NAME, GEN_OCL_##ID));
+  map.insert(std::make_pair(#NAME, GEN_OCL_##ID));
 #include "llvm_gen_ocl_function.hxx"
 #undef DECL_LLVM_GEN_FUNCTION
     }
@@ -1235,11 +1235,6 @@ namespace gbe
         return;
       }
     }
-
-    // With OCL there is no side effect for any called functions. So do nothing
-    // when there is no returned value
-    if (I.getType() == Type::getVoidTy(I.getContext()))
-      NOT_SUPPORTED;
 
     // Get the name of the called function and handle it
     const std::string fnName = Callee->getName();
@@ -1282,49 +1277,44 @@ namespace gbe
         regTranslator.newScalarProxy(ir::ocl::goffset1, dst); break;
       case GEN_OCL_GET_GLOBAL_OFFSET2:
         regTranslator.newScalarProxy(ir::ocl::goffset2, dst); break;
+      case GEN_OCL_OBREAD:
+      case GEN_OCL_REGION1:
+      case GEN_OCL_REGION2:
+      case GEN_OCL_REGION3:
+      case GEN_OCL_REGION4:
+      case GEN_OCL_REGION5:
+      case GEN_OCL_REGION6:
+      case GEN_OCL_REGION7:
+      case GEN_OCL_REGION8:
+      case GEN_OCL_RGATHER1:
+      case GEN_OCL_RGATHER2:
+      case GEN_OCL_RGATHER3:
+      case GEN_OCL_RGATHER4:
+      case GEN_OCL_RGATHER5:
+      case GEN_OCL_RGATHER6:
+      case GEN_OCL_RGATHER7:
+      case GEN_OCL_RGATHER8:
+      case GEN_OCL_ALL:
+      case GEN_OCL_ANY:
+        // No structure can be returned
+        GBE_ASSERT(I.hasStructRetAttr() == false);
+        this->newRegister(&I);
+        break;
+      case GEN_OCL_OBWRITE:
+      case GEN_OCL_FORCE_SIMD8:
+      case GEN_OCL_FORCE_SIMD16:
+        break;
       default: NOT_SUPPORTED;
     };
-#if 0
-    if (fnName == "__gen_ocl_get_group_id0")
-      regTranslator.newScalarProxy(ir::ocl::groupid0, dst);
-    else if (fnName == "__gen_ocl_get_group_id1")
-      regTranslator.newScalarProxy(ir::ocl::groupid1, dst);
-    else if (fnName == "__gen_ocl_get_group_id2")
-      regTranslator.newScalarProxy(ir::ocl::groupid2, dst);
-    else if (fnName == "__gen_ocl_get_local_id0")
-      regTranslator.newScalarProxy(ir::ocl::lid0, dst);
-    else if (fnName == "__gen_ocl_get_local_id1")
-      regTranslator.newScalarProxy(ir::ocl::lid1, dst);
-    else if (fnName == "__gen_ocl_get_local_id2")
-      regTranslator.newScalarProxy(ir::ocl::lid2, dst);
-    else if (fnName == "__gen_ocl_get_num_groups0")
-      regTranslator.newScalarProxy(ir::ocl::numgroup0, dst);
-    else if (fnName == "__gen_ocl_get_num_groups1")
-      regTranslator.newScalarProxy(ir::ocl::numgroup1, dst);
-    else if (fnName == "__gen_ocl_get_num_groups2")
-      regTranslator.newScalarProxy(ir::ocl::numgroup2, dst);
-    else if (fnName == "__gen_ocl_get_local_size0")
-      regTranslator.newScalarProxy(ir::ocl::lsize0, dst);
-    else if (fnName == "__gen_ocl_get_local_size1")
-      regTranslator.newScalarProxy(ir::ocl::lsize1, dst);
-    else if (fnName == "__gen_ocl_get_local_size2")
-      regTranslator.newScalarProxy(ir::ocl::lsize2, dst);
-    else if (fnName == "__gen_ocl_get_global_size0")
-      regTranslator.newScalarProxy(ir::ocl::gsize0, dst);
-    else if (fnName == "__gen_ocl_get_global_size1")
-      regTranslator.newScalarProxy(ir::ocl::gsize1, dst);
-    else if (fnName == "__gen_ocl_get_global_size2")
-      regTranslator.newScalarProxy(ir::ocl::gsize2, dst);
-    else if (fnName == "__gen_ocl_get_global_offset0")
-      regTranslator.newScalarProxy(ir::ocl::goffset0, dst);
-    else if (fnName == "__gen_ocl_get_global_offset1")
-      regTranslator.newScalarProxy(ir::ocl::goffset1, dst);
-    else if (fnName == "__gen_ocl_get_global_offset2")
-      regTranslator.newScalarProxy(ir::ocl::goffset2, dst);
-    else
-      NOT_SUPPORTED;
-#endif
   }
+
+  struct U64CPVExtractFunctor {
+    U64CPVExtractFunctor(ir::Context &ctx) : ctx(ctx) {}
+    template <typename T> INLINE uint64_t operator() (const T &t) {
+      return uint64_t(t);
+    }
+    ir::Context &ctx;
+  };
 
   void GenWriter::emitCallInst(CallInst &I) {
     if (Function *F = I.getCalledFunction()) {
@@ -1349,19 +1339,133 @@ namespace gbe
           break;
           default: NOT_IMPLEMENTED;
         }
+      } else {
+        // Get the name of the called function and handle it
+        Value *Callee = I.getCalledValue();
+        const std::string fnName = Callee->getName();
+        auto it = instrinsicMap.map.find(fnName);
+        GBE_ASSERT(it != instrinsicMap.map.end());
+
+        // Get the function arguments
+        CallSite CS(&I);
+        CallSite::arg_iterator AI = CS.arg_begin();
+#if GBE_DEBUG
+        CallSite::arg_iterator AE = CS.arg_end();
+#endif /* GBE_DEBUG */
+
+
+        switch (it->second) {
+          case GEN_OCL_REGION1:
+          case GEN_OCL_REGION2:
+          case GEN_OCL_REGION3:
+          case GEN_OCL_REGION4:
+          case GEN_OCL_REGION5:
+          case GEN_OCL_REGION6:
+          case GEN_OCL_REGION7:
+          case GEN_OCL_REGION8:
+          {
+            // Get region offset
+            GBE_ASSERT(AI != AE);
+            Constant *CPV = dyn_cast<Constant>(*AI);
+            GBE_ASSERTM(CPV != NULL, "offset for register region must be constant");
+            const uint32_t offset = processConstant<uint32_t>(CPV, U64CPVExtractFunctor(ctx));
+            ++AI;
+
+            // Get region vertical stride
+            GBE_ASSERT(AI != AE);
+            CPV = dyn_cast<Constant>(*AI);
+            GBE_ASSERTM(CPV != NULL, "vstride for register region must be constant");
+            const uint32_t vstride = processConstant<uint32_t>(CPV, U64CPVExtractFunctor(ctx));
+            ++AI;
+
+            // Get region width
+            GBE_ASSERT(AI != AE);
+            CPV = dyn_cast<Constant>(*AI);
+            GBE_ASSERTM(CPV != NULL, "width for register region must be constant");
+            const uint32_t width = processConstant<uint32_t>(CPV, U64CPVExtractFunctor(ctx));
+            ++AI;
+
+            // Get region horizontal stride
+            GBE_ASSERT(AI != AE);
+            CPV = dyn_cast<Constant>(*AI);
+            GBE_ASSERTM(CPV != NULL, "vstride for register region must be constant");
+            const uint32_t hstride = processConstant<uint32_t>(CPV, U64CPVExtractFunctor(ctx));
+            ++AI;
+
+            // Build the tuple data for the sources and the destination register
+            const uint32_t srcNum = uint32_t(it->second) - GEN_OCL_REGION1 + 1;
+            vector<ir::Register> tupleData; // put registers here
+            for (uint32_t srcID = 0; srcID < srcNum; ++srcID) {
+              GBE_ASSERT(AI != AE);
+              const ir::Register reg = this->getRegister(*AI);
+              tupleData.push_back(reg);
+              ++AI;
+            }
+            GBE_ASSERT(AI == AE);
+            const ir::Tuple tuple = ctx.arrayTuple(&tupleData[0], srcNum);
+            const ir::Register dst = this->getRegister(&I);
+            ctx.REGION(offset, vstride, width, hstride, dst, tuple, srcNum);
+            break;
+          }
+          case GEN_OCL_RGATHER1:
+          case GEN_OCL_RGATHER2:
+          case GEN_OCL_RGATHER3:
+          case GEN_OCL_RGATHER4:
+          case GEN_OCL_RGATHER5:
+          case GEN_OCL_RGATHER6:
+          case GEN_OCL_RGATHER7:
+          case GEN_OCL_RGATHER8:
+          {
+            // Build the tuple data for the sources and the destination register
+            const uint32_t srcNum = uint32_t(it->second) - GEN_OCL_RGATHER1 + 2;
+            vector<ir::Register> tupleData; // put registers here
+            for (uint32_t srcID = 0; srcID < srcNum; ++srcID) {
+              GBE_ASSERT(AI != AE);
+              const ir::Register reg = this->getRegister(*AI);
+              tupleData.push_back(reg);
+              ++AI;
+            }
+            GBE_ASSERT(AI == AE);
+            const ir::Tuple tuple = ctx.arrayTuple(&tupleData[0], srcNum);
+            const ir::Register dst = this->getRegister(&I);
+            ctx.RGATHER(dst, tuple, srcNum);
+            break;
+          }
+          case GEN_OCL_ALL:
+          case GEN_OCL_ANY:
+          {
+            GBE_ASSERT(AI != AE);
+            const ir::Register src = this->getRegister(*AI);
+            const ir::Register dst = this->getRegister(&I);
+            const ir::VotePredicate pred = it->second == GEN_OCL_ANY ? ir::VOTE_ANY : ir::VOTE_ALL;
+            ctx.VOTE(pred, dst, src);
+            break;
+          }
+          case GEN_OCL_OBREAD:
+          {
+            GBE_ASSERT(AI != AE);
+            const ir::Register dst = this->getRegister(&I);
+            const ir::Register src = this->getRegister(*AI);
+            ctx.OBREAD(dst, src);
+            break;
+          }
+          case GEN_OCL_OBWRITE:
+          {
+            GBE_ASSERT(AI != AE);
+            const ir::Register address = this->getRegister(*AI); ++AI;
+            GBE_ASSERT(AI != AE);
+            const ir::Register value = this->getRegister(*AI);
+            ctx.OBWRITE(address, value);
+            break;
+          }
+          case GEN_OCL_FORCE_SIMD8: ctx.setSimdWidth(8); break;
+          case GEN_OCL_FORCE_SIMD16: ctx.setSimdWidth(16); break;
+          default:
+            break;
+        }
       }
     }
   }
-
-  struct AllocaSizeFunctor
-  {
-    AllocaSizeFunctor(ir::Context &ctx) : ctx(ctx) {}
-    template <typename T> INLINE uint64_t operator() (const T &t) {
-      return uint64_t(t);
-    }
-    ir::Context &ctx;
-  };
-
 
   void GenWriter::regAllocateAllocaInst(AllocaInst &I) {
     this->newRegister(&I);
@@ -1384,7 +1488,7 @@ namespace gbe
     else {
       Constant *CPV = dyn_cast<Constant>(src);
       if (CPV) {
-        const uint64_t elemNum = processConstant<uint64_t>(CPV, AllocaSizeFunctor(ctx));
+        const uint64_t elemNum = processConstant<uint64_t>(CPV, U64CPVExtractFunctor(ctx));
         ir::Immediate imm = ctx.getImmediate(immIndex);
         imm.data.u64 = ALIGN(imm.data.u64 * elemNum, 4);
         ctx.setImmediate(immIndex, imm);

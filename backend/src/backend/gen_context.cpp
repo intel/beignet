@@ -21,6 +21,7 @@
  * \file gen_context.cpp
  * \author Benjamin Segovia <benjamin.segovia@intel.com>
  */
+
 #include "backend/gen_context.hpp"
 #include "backend/gen_program.hpp"
 #include "backend/gen_defs.hpp"
@@ -49,15 +50,6 @@ namespace gbe
     GBE_DELETE(this->ra);
     GBE_DELETE(this->sel);
     GBE_DELETE(this->p);
-  }
-
-  bool GenContext::isScalarOrBool(ir::Register reg) const {
-    if (this->isScalarReg(reg))
-      return true;
-    else {
-      const ir::RegisterFamily family = fn.getRegisterFamily(reg);
-      return family == ir::FAMILY_BOOL;
-    }
   }
 
   /*! XXX Make both structures the same! */
@@ -150,6 +142,7 @@ namespace gbe
     const GenReg src = ra->genReg(insn.src[0]);
     switch (insn.opcode) {
       case SEL_OP_MOV: p->MOV(dst, src); break;
+      case SEL_OP_NOT: p->NOT(dst, src); break;
       default: NOT_IMPLEMENTED;
     }
   }
@@ -159,8 +152,9 @@ namespace gbe
     const GenReg src0 = ra->genReg(insn.src[0]);
     const GenReg src1 = ra->genReg(insn.src[1]);
     switch (insn.opcode) {
+      case SEL_OP_SEL:  p->SEL(dst, src0, src1); break;
       case SEL_OP_AND:  p->AND(dst, src0, src1); break;
-      case SEL_OP_OR:   p->OR(dst, src0, src1);  break;
+      case SEL_OP_OR:   p->OR (dst, src0, src1);  break;
       case SEL_OP_XOR:  p->XOR(dst, src0, src1); break;
       case SEL_OP_SHR:  p->SHR(dst, src0, src1); break;
       case SEL_OP_SHL:  p->SHL(dst, src0, src1); break;
@@ -172,10 +166,6 @@ namespace gbe
       case SEL_OP_MACH: p->MACH(dst, src0, src1); break;
       default: NOT_IMPLEMENTED;
     }
-  }
-
-  void GenContext::emitSelectInstruction(const SelectionInstruction &insn) {
-    NOT_IMPLEMENTED;
   }
 
   void GenContext::emitNoOpInstruction(const SelectionInstruction &insn) {
@@ -190,14 +180,14 @@ namespace gbe
     const GenReg dst = ra->genReg(insn.dst[0]);
     const GenReg src0 = ra->genReg(insn.src[0]);
     const GenReg src1 = ra->genReg(insn.src[1]);
-    const uint32_t function = insn.function;
+    const uint32_t function = insn.extra.function;
     p->MATH(dst, function, src0, src1);
   }
 
   void GenContext::emitCompareInstruction(const SelectionInstruction &insn) {
     const GenReg src0 = ra->genReg(insn.src[0]);
     const GenReg src1 = ra->genReg(insn.src[1]);
-    p->CMP(insn.function, src0, src1);
+    p->CMP(insn.extra.function, src0, src1);
   }
 
   void GenContext::emitJumpInstruction(const SelectionInstruction &insn) {
@@ -220,31 +210,166 @@ namespace gbe
   void GenContext::emitUntypedReadInstruction(const SelectionInstruction &insn) {
     const GenReg dst = ra->genReg(insn.dst[0]);
     const GenReg src = ra->genReg(insn.src[0]);
-    const uint32_t bti = insn.function;
-    const uint32_t elemNum = insn.elem;
+    const uint32_t bti = insn.extra.function;
+    const uint32_t elemNum = insn.extra.elem;
     p->UNTYPED_READ(dst, src, bti, elemNum);
   }
 
   void GenContext::emitUntypedWriteInstruction(const SelectionInstruction &insn) {
     const GenReg src = ra->genReg(insn.src[0]);
-    const uint32_t bti = insn.function;
-    const uint32_t elemNum = insn.elem;
+    const uint32_t bti = insn.extra.function;
+    const uint32_t elemNum = insn.extra.elem;
     p->UNTYPED_WRITE(src, bti, elemNum);
   }
 
   void GenContext::emitByteGatherInstruction(const SelectionInstruction &insn) {
     const GenReg dst = ra->genReg(insn.dst[0]);
     const GenReg src = ra->genReg(insn.src[0]);
-    const uint32_t bti = insn.function;
-    const uint32_t elemSize = insn.elem;
+    const uint32_t bti = insn.extra.function;
+    const uint32_t elemSize = insn.extra.elem;
     p->BYTE_GATHER(dst, src, bti, elemSize);
   }
 
   void GenContext::emitByteScatterInstruction(const SelectionInstruction &insn) {
     const GenReg src = ra->genReg(insn.src[0]);
-    const uint32_t bti = insn.function;
-    const uint32_t elemSize = insn.elem;
+    const uint32_t bti = insn.extra.function;
+    const uint32_t elemSize = insn.extra.elem;
     p->BYTE_SCATTER(src, bti, elemSize);
+  }
+
+  void GenContext::emitRegionInstruction(const SelectionInstruction &insn) {
+    GBE_ASSERT(insn.dst[0].width == GEN_WIDTH_8 ||
+               insn.dst[0].width == GEN_WIDTH_16);
+    const GenReg src = ra->genReg(insn.src[0]);
+    const GenReg dst = ra->genReg(insn.dst[1]);
+    const GenReg final = ra->genReg(insn.dst[0]);
+
+    // Region dimensions
+    const uint32_t offset = insn.extra.offset;
+    const uint32_t width = insn.extra.width;
+    const uint32_t height = simdWidth / insn.extra.width;
+    const uint32_t vstride = insn.extra.vstride;
+    const uint32_t hstride = insn.extra.hstride;
+
+    // Region spanning in the grf
+    const uint32_t start = src.nr * GEN_REG_SIZE + src.subnr + offset * sizeof(int);
+    const uint32_t end = start + insn.srcNum * simdWidth * sizeof(int);
+    GBE_ASSERT(simdWidth % width == 0);
+
+    // Right now we simply emit scalar MOVs instead of the region
+    p->push();
+      p->curr.predicate = GEN_PREDICATE_NONE;
+      p->curr.execWidth = 1;
+      p->curr.noMask = 1;
+      uint32_t dstOffset = dst.nr * GEN_REG_SIZE + dst.subnr;
+      for (uint32_t y = 0; y < height; ++y) {
+        uint32_t srcOffset = start + sizeof(int) * vstride * y;
+        for (uint32_t x = 0; x < width; ++x,
+             srcOffset += sizeof(int) * hstride,
+             dstOffset += sizeof(int))
+        {
+          const uint32_t dstnr = dstOffset / GEN_REG_SIZE;
+          const uint32_t dstsubnr = (dstOffset % GEN_REG_SIZE) / sizeof(int);
+          const GenReg dstReg = GenReg::f1grf(dstnr, dstsubnr);
+          if (srcOffset + sizeof(int) > end)
+            p->MOV(dstReg, GenReg::immf(0.f));
+          else {
+            GBE_ASSERT(srcOffset % sizeof(int) == 0);
+            const uint32_t srcnr = srcOffset / GEN_REG_SIZE;
+            const uint32_t srcsubnr = (srcOffset % GEN_REG_SIZE) / sizeof(int);
+            const GenReg srcReg = GenReg::f1grf(srcnr, srcsubnr);
+            p->MOV(dstReg, srcReg);
+          }
+        }
+      }
+    p->pop();
+    p->MOV(GenReg::retype(final, GEN_TYPE_F), GenReg::retype(dst, GEN_TYPE_F));
+  }
+
+  void GenContext::emitRGatherInstruction(const SelectionInstruction &insn) {
+    const GenReg index0 = GenReg::retype(ra->genReg(insn.src[0]), GEN_TYPE_UW);
+    const GenReg dst0 = GenReg::retype(ra->genReg(insn.dst[0]), GEN_TYPE_F);
+    const GenReg src = ra->genReg(insn.src[1]);
+    const uint32_t offset = src.nr * GEN_REG_SIZE + src.subnr;
+    p->push();
+      p->curr.execWidth = 8;
+      p->SHL(GenReg::addr8(0), index0, GenReg::immuw(2));
+      p->ADD(GenReg::addr8(0), GenReg::addr8(0), GenReg::immuw(offset));
+      p->MOV(dst0, GenReg::indirect(GEN_TYPE_F, 0, GEN_WIDTH_8));
+    p->pop();
+
+    if (simdWidth == 16) {
+      const GenReg dst1 = GenReg::Qn(dst0, 1);
+      const GenReg index1 = GenReg::Qn(index0, 1);
+      p->push();
+        p->curr.execWidth = 8;
+        p->curr.quarterControl = GEN_COMPRESSION_Q2;
+        p->SHL(GenReg::addr8(0), index1, GenReg::immuw(2));
+        p->ADD(GenReg::addr8(0), GenReg::addr8(0), GenReg::immuw(offset));
+        p->MOV(dst1, GenReg::indirect(GEN_TYPE_F, 0, GEN_WIDTH_8));
+      p->pop();
+    }
+  }
+
+  void GenContext::emitOBReadInstruction(const SelectionInstruction &insn) {
+    const GenReg dst = ra->genReg(insn.dst[0]);
+    const GenReg addr = ra->genReg(insn.src[0]);
+    const GenReg first = GenReg::ud1grf(addr.nr,addr.subnr/sizeof(float));
+    GenReg header;
+    if (simdWidth == 8)
+      header = GenReg::retype(ra->genReg(insn.src[1]), GEN_TYPE_F);
+    else
+      header = GenReg::retype(GenReg::Qn(ra->genReg(insn.src[1]),1), GEN_TYPE_F);
+
+    p->push();
+      // Copy r0 into the header first
+      p->curr.execWidth = 8;
+      p->curr.predicate = GEN_PREDICATE_NONE;
+      p->curr.noMask = 1;
+      p->MOV(header, GenReg::f8grf(0,0));
+
+      // Update the header with the current address
+      p->curr.execWidth = 1;
+      const uint32_t nr = header.nr;
+      const uint32_t subnr = header.subnr / sizeof(float);
+      p->SHR(GenReg::ud1grf(nr, subnr+2), first, GenReg::immud(4));
+
+      // Put zero in the general state base address
+      p->MOV(GenReg::f1grf(nr, subnr+5), GenReg::immf(0));
+
+      // Now read the data
+      p->OBREAD(dst, header, insn.extra.function, insn.extra.elem);
+    p->pop();
+  }
+
+  void GenContext::emitOBWriteInstruction(const SelectionInstruction &insn) {
+    const GenReg addr = ra->genReg(insn.src[2]);
+    const GenReg first = GenReg::ud1grf(addr.nr,addr.subnr/sizeof(float));
+    GenReg header;
+    if (simdWidth == 8)
+      header = GenReg::retype(ra->genReg(insn.src[0]), GEN_TYPE_F);
+    else
+      header = GenReg::retype(GenReg::Qn(ra->genReg(insn.src[0]),1), GEN_TYPE_F);
+
+    p->push();
+      // Copy r0 into the header first
+      p->curr.execWidth = 8;
+      p->curr.predicate = GEN_PREDICATE_NONE;
+      p->curr.noMask = 1;
+      p->MOV(header, GenReg::f8grf(0,0));
+
+      // Update the header with the current address
+      p->curr.execWidth = 1;
+      const uint32_t nr = header.nr;
+      const uint32_t subnr = header.subnr / sizeof(float);
+      p->SHR(GenReg::ud1grf(nr, subnr+2), first, GenReg::immud(4));
+
+      // Put zero in the general state base address
+      p->MOV(GenReg::f1grf(nr, subnr+5), GenReg::immf(0));
+
+      // Now read the data
+      p->OBWRITE(header, insn.extra.function, insn.extra.elem);
+    p->pop();
   }
 
   BVAR(OCL_OUTPUT_ASM, false);

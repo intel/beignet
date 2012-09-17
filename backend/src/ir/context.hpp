@@ -53,6 +53,11 @@ namespace ir {
     INLINE Unit &getUnit(void) { return unit; }
     /*! Get the current processed function */
     Function &getFunction(void);
+    /*! Set the SIMD width of the function */
+    void setSimdWidth(uint32_t width) const {
+      GBE_ASSERT(width == 8 || width == 16);
+      fn->simdWidth = width;
+    }
     /*! Append a new pushed constant */
     void appendPushedConstant(Register reg, const PushLocation &pushed);
     /*! Create a new register with the given family for the current function */
