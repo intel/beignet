@@ -130,6 +130,14 @@ namespace ir {
     }
   }
 
+  uint32_t Function::getLargestBlockSize(void) const {
+    uint32_t insnNum = 0;
+    foreachBlock([&insnNum](const ir::BasicBlock &bb) {
+      insnNum = std::max(insnNum, bb.getInstructionNum());
+    });
+    return insnNum;
+  }
+
   uint32_t Function::getFirstSpecialReg(void) const {
     return this->profile == PROFILE_OCL ? 0u : ~0u;
   }

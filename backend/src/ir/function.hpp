@@ -286,6 +286,8 @@ namespace ir {
       const Instruction *first = bb->getFirstInstruction();
       return cast<LabelInstruction>(first);
     }
+    /*! Return the number of instructions of the largest basic block */
+    uint32_t getLargestBlockSize(void) const;
     /*! Get the first index of the special registers and number of them */
     uint32_t getFirstSpecialReg(void) const;
     uint32_t getSpecialRegNum(void) const;

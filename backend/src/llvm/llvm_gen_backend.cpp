@@ -68,8 +68,10 @@
 #include "llvm/llvm_gen_backend.hpp"
 #include "ir/context.hpp"
 #include "ir/unit.hpp"
+#include "ir/liveness.hpp"
 #include "sys/map.hpp"
 #include "sys/set.hpp"
+#include "sys/cvar.hpp"
 #include <algorithm>
 
 using namespace llvm;
@@ -377,6 +379,8 @@ namespace gbe
     INLINE void simplifyTerminator(BasicBlock *bb);
     /*! Helper function to emit loads and stores */
     template <bool isLoad, typename T> void emitLoadOrStore(T &I);
+    /*! Will try to remove MOVs due to PHI resolution */
+    void removeMOVs(ir::Function &fn);
 
     // Currently supported instructions
 #define DECL_VISIT_FN(NAME, TYPE) \
@@ -598,8 +602,9 @@ namespace gbe
       if (!isa<UndefValue>(IV)) {
         uint32_t elemNum;
         Type *llvmType = PN->getType();
+        GBE_ASSERTM(llvmType != Type::getInt1Ty(llvmType->getContext()),
+          "TODO Boolean values cannot escape their definition basic block");
         const ir::Type type = getVectorInfo(ctx, llvmType, PN, elemNum);
-        // Instruction *IVInsn = dyn_cast<Instruction>(IV);
 
         // Emit the MOV required by the PHI function. We do it simple and do not
         // try to optimize them. A next data flow analysis pass on the Gen IR
@@ -690,6 +695,111 @@ namespace gbe
            (DstTy->isFloatingPointTy() && SrcTy->isIntegerTy());
   }
 
+  /*! To track last read and write of the registers */
+  struct RegInfoForMov {
+    ir::Instruction *lastWriteInsn;
+    ir::Instruction *lastReadInsn;
+    uint32_t lastWrite;
+    uint32_t lastRead;
+  };
+
+  /*! Replace register "from" by register "to" in the destination(s) */
+  static void replaceDst(ir::Instruction *insn, ir::Register from, ir::Register to) {
+    const uint32_t dstNum = insn->getDstNum();
+    for (uint32_t dstID = 0; dstID < dstNum; ++dstID)
+      if (insn->getDst(dstID) == from)
+        insn->setDst(dstID, to);
+  }
+
+  /*! Replace register "from" by register "to" in the source(s) */
+  static void replaceSrc(ir::Instruction *insn, ir::Register from, ir::Register to) {
+    const uint32_t srcNum = insn->getSrcNum();
+    for (uint32_t srcID = 0; srcID < srcNum; ++srcID)
+      if (insn->getSrc(srcID) == from)
+        insn->setSrc(srcID, to);
+  }
+
+  void GenWriter::removeMOVs(ir::Function &fn)
+  {
+    // We store the last write and last read for each register
+    const uint32_t regNum = fn.regNum();
+    vector<RegInfoForMov> lastUse;
+    lastUse.resize(regNum);
+
+    // We do not try to remove MOV for variables that outlives the block. So we
+    // use liveness information to figure out which variable is alive
+    const ir::Liveness liveness(const_cast<ir::Function&>(fn));
+
+    // Remove the MOVs per block (local analysis only)
+    fn.foreachBlock([&](const ir::BasicBlock &bb) {
+      // Clear the register usages
+      for (auto &x : lastUse) {
+        x.lastWrite = x.lastRead = 0;
+        x.lastWriteInsn = x.lastReadInsn = NULL;
+      }
+
+      // Find use intervals for all registers
+      uint32_t insnID = 1;
+      bb.foreach([&](ir::Instruction &insn) {
+        const uint32_t dstNum = insn.getDstNum();
+        const uint32_t srcNum = insn.getSrcNum();
+        for (uint32_t dstID = 0; dstID < dstNum; ++dstID) {
+          const ir::Register reg = insn.getDst(dstID);
+          lastUse[reg].lastWrite = insnID;
+          lastUse[reg].lastWriteInsn = &insn;
+        }
+        for (uint32_t srcID = 0; srcID < srcNum; ++srcID) {
+          const ir::Register reg = insn.getSrc(srcID);
+          lastUse[reg].lastRead = insnID;
+          lastUse[reg].lastReadInsn = &insn;
+        }
+        insnID++;
+      });
+
+      // Liveinfo helps us to know if the source outlives the block
+      const ir::Liveness::BlockInfo &info = liveness.getBlockInfo(&bb);
+
+      // Now, we know which MOVs can be removed
+      ir::Instruction *insn = bb.getLastInstruction();
+      if (insn->isMemberOf<ir::BranchInstruction>())
+        insn = insn->getPredecessor();
+      while (insn) {
+        const ir::Opcode op = insn->getOpcode();
+        if (op == ir::OP_MOV) {
+          const ir::Register dst = insn->getDst(0);
+          const ir::Register src = insn->getSrc(0);
+          // Outlives the block. We do not do anything
+          if (info.inLiveOut(src))
+            goto next;
+          const RegInfoForMov &dstInfo = lastUse[dst];
+          const RegInfoForMov &srcInfo = lastUse[src];
+          // The source is not computed in this block
+          if (srcInfo.lastWrite == 0)
+            goto next;
+          // dst is read after src is written. We cannot overwrite dst
+          if (dstInfo.lastRead > srcInfo.lastWrite)
+            goto next;
+          // We are good. We first patch the destination then all the sources
+          replaceDst(srcInfo.lastWriteInsn, src, dst);
+          // Then we patch all subsequent uses of the source
+          ir::Instruction *next = srcInfo.lastWriteInsn->getSuccessor();
+          while (next != insn) {
+            replaceSrc(next, src, dst);
+            next = next->getSuccessor();
+          }
+          insn->remove();
+        } else if (op == ir::OP_LOADI)
+          goto next;
+        else
+          break;
+      next:
+        insn = insn->getPredecessor();
+      }
+    });
+  }
+
+  BVAR(OCL_OPTIMIZE_PHI_MOVES, true);
+
   void GenWriter::emitFunction(Function &F)
   {
     switch (F.getCallingConv()) {
@@ -724,7 +834,11 @@ namespace gbe
     pass = PASS_EMIT_INSTRUCTIONS;
     for (Function::iterator BB = F.begin(), E = F.end(); BB != E; ++BB)
       emitBasicBlock(BB);
+    ir::Function &fn = ctx.getFunction();
     ctx.endFunction();
+
+    if (OCL_OPTIMIZE_PHI_MOVES)
+      this->removeMOVs(fn);
   }
 
   void GenWriter::regAllocateReturnInst(ReturnInst &I) {}

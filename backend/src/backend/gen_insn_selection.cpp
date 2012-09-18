@@ -1663,7 +1663,6 @@ namespace gbe
   {
   public:
     GreedySelection(GenContext &ctx);
-    virtual ~GreedySelection(void);
     /*! Perform the instruction selection */
     virtual void select(void);
     /*! Build a DAG for the basic block (return number of instructions) */
@@ -1672,33 +1671,26 @@ namespace gbe
     void matchBasicBlock(uint32_t insnNum);
     /*! A root instruction needs to be generated */
     bool isRoot(const ir::Instruction &insn) const;
+    /*! Maximum number of instructions in the basic blocks */
+    uint32_t maxInsnNum;
     /*! Speed up instruction dag allocation */
     DECL_POOL(SelectionDAG, dagPool);
     /*! Per register information used with top-down block sweeping */
     vector<SelectionDAG*> regDAG;
     /*! Store one DAG per instruction */
-    SelectionDAG **insnDAG;
+    vector<SelectionDAG*> insnDAG;
     /*! Total number of registers in the function we encode */
     uint32_t regNum;
   };
 
   GreedySelection::GreedySelection(GenContext &ctx) :
-    Selection(ctx)
+    Selection(ctx),
+    maxInsnNum(ctx.getFunction().getLargestBlockSize()), dagPool(maxInsnNum)
   {
     const ir::Function &fn = ctx.getFunction();
     this->regNum = fn.regNum();
     this->regDAG.resize(regNum);
-
-    // Find the biggest basic block and allocate an array as big as it
-    uint32_t insnNum = 0;
-    fn.foreachBlock([&insnNum](const ir::BasicBlock &bb) {
-      insnNum = std::max(insnNum, bb.getInstructionNum());
-    });
-    this->insnDAG = GBE_NEW_ARRAY(SelectionDAG*, insnNum);
-  }
-
-  GreedySelection::~GreedySelection(void) {
-    GBE_DELETE_ARRAY(this->insnDAG);
+    this->insnDAG.resize(maxInsnNum);
   }
 
   bool GreedySelection::isRoot(const ir::Instruction &insn) const {
@@ -1818,7 +1810,7 @@ namespace gbe
 
     // Perform the selection per basic block
     fn.foreachBlock([&](const BasicBlock &bb) {
-      // this->dagPool.rewind();
+       this->dagPool.rewind();
       this->appendBlock(bb);
       const uint32_t insnNum = this->buildBasicBlockDAG(bb);
       this->matchBasicBlock(insnNum);

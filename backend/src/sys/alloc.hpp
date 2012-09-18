@@ -160,7 +160,9 @@ namespace gbe
   class GrowingPool
   {
   public:
-    GrowingPool(void) : current(GBE_NEW(GrowingPoolElem, 1)), free(NULL), freeList(NULL) {}
+    GrowingPool(uint32_t elemNum = 1) :
+      current(GBE_NEW(GrowingPoolElem, elemNum <= 1 ? 1 : elemNum)),
+      free(NULL), freeList(NULL) {}
     ~GrowingPool(void) { GBE_ASSERT(current); GBE_DELETE(current); }
     void *allocate(void) {
       // Pick up an element from the free list
