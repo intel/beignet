@@ -141,6 +141,16 @@ namespace gbe
     this->bwdCodeGeneration = false;
   }
 
+  uint32_t Selection::getLargestBlockSize(void) const {
+    uint32_t maxInsnNum = 0;
+    this->foreach([&](const SelectionBlock &bb) {
+      uint32_t insnNum = 0;
+      bb.foreach([&](const SelectionInstruction &insn) {insnNum++;});
+      maxInsnNum = std::max(maxInsnNum, insnNum);
+    });
+    return maxInsnNum;
+  }
+
   void Selection::appendBlock(const ir::BasicBlock &bb) {
     this->block = this->newSelectionBlock(&bb);
     this->block->parent = this;

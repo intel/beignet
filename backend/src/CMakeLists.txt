@@ -94,6 +94,8 @@ else (GBE_USE_BLOB)
     backend/gen/gen_mesa_structs.h
     backend/gen_insn_selection.cpp
     backend/gen_insn_selection.hpp
+    backend/gen_insn_scheduling.cpp
+    backend/gen_insn_scheduling.hpp
     backend/gen_reg_allocation.cpp
     backend/gen_reg_allocation.hpp
     backend/gen_context.cpp

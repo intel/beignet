@@ -231,6 +231,8 @@ namespace gbe
         curr = succ;
       }
     }
+    /*! Get the number of instructions of the largest block */
+    uint32_t getLargestBlockSize(void) const;
     /*! Number of register vectors in the selection */
     INLINE uint32_t getVectorNum(void) const { return this->vectorNum; }
     /*! Replace a source by the returned temporary register */
