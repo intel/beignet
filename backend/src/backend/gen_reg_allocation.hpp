@@ -26,9 +26,7 @@
 #define __GBE_GEN_REG_ALLOCATION_HPP__
 
 #include "ir/register.hpp"
-#include "backend/gen_context.hpp"
 #include "backend/gen_register.hpp"
-#include "backend/program.h"
 
 namespace gbe
 {
@@ -36,13 +34,7 @@ namespace gbe
   class GenRegister;   // Pre-register allocation Gen register
   class GenRegInterval; // Liveness interval for each register
 
-  /*! Provides the location of a register in a vector */
-  typedef std::pair<SelectionVector*, uint32_t> VectorLocation;
-
-  /*! Perform the register allocation (i.e. virtual to physical register
-   * mapping). TODO only define an abstract class in the header instead of this
-   * blob
-   */
+  /*! Register allocate (i.e. virtual to physical register mapping) */
   class GenRegAllocator
   {
   public:
@@ -52,52 +44,13 @@ namespace gbe
     ~GenRegAllocator(void);
     /*! Perform the register allocation */
     void allocate(Selection &selection);
-    /*! Return the Gen register from the selection register */
+    /*! Virtual to physical translation */
     GenRegister genReg(const GenRegister &reg);
-    /*! Return the Gen register from the GenIR one */
-    GenRegister genReg(ir::Register, ir::Type type = ir::TYPE_FLOAT);
   private:
-    /*! Expire one GRF interval. Return true if one was successfully expired */
-    bool expireGRF(const GenRegInterval &limit);
-    /*! Expire a flag register. Return true if one was successfully expired */
-    bool expireFlag(const GenRegInterval &limit);
-    /*! Allocate the virtual boolean (== flags) registers */
-    void allocateFlags(Selection &selection);
-    /*! Allocate the GRF registers */
-    void allocateGRFs(Selection &selection);
-    /*! Create a Gen register from a register set in the payload */
-    void allocatePayloadReg(gbe_curbe_type, ir::Register, uint32_t subValue = 0, uint32_t subOffset = 0);
-    /*! Create the intervals for each register */
-    /*! Allocate the vectors detected in the instruction selection pass */
-    void allocateVector(Selection &selection);
-    /*! Create the given interval */
-    void createGenReg(const GenRegInterval &interval);
-    /*! Indicate if the registers are already allocated in vectors */
-    bool isAllocated(const SelectionVector *vector) const;
-    /*! Reallocate registers if needed to make the registers in the vector
-     *  contigous in memory
-     */
-    void coalesce(Selection &selection, SelectionVector *vector);
-    /*! The context owns the register allocator */
-    GenContext &ctx;
-    /*! Map virtual registers to offset in the (physical) register file */
-    map<ir::Register, uint32_t> RA;
-    /*! Provides the position of each register in a vector */
-    map<ir::Register, VectorLocation> vectorMap;
-    /*! All vectors used in the selection */
-    vector<SelectionVector*> vectors;
-    /*! All vectors that are already expired */
-    set<SelectionVector*> expired;
-    /*! The set of booleans that will go to GRF (cannot be kept into flags) */
-    set<ir::Register> grfBooleans;
-    /*! All the register intervals */
-    vector<GenRegInterval> intervals;
-    /*! Intervals sorting based on starting point positions */
-    vector<GenRegInterval*> starting;
-    /*! Intervals sorting based on ending point positions */
-    vector<GenRegInterval*> ending;
-    /*! Current vector to expire */
-    uint32_t expiringID;
+    /*! Actual implementation of the register allocator (use Pimpl) */
+    class Opaque;
+    /*! Created and destroyed in cpp */
+    Opaque *opaque;
     /*! Use custom allocator */
     GBE_CLASS(GenRegAllocator);
   };
