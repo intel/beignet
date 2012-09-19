@@ -22,7 +22,6 @@
  * \author Benjamin Segovia <benjamin.segovia@intel.com>
  */
 #include "ir/register.hpp"
-#include "sys/string.hpp"
 
 namespace gbe {
 namespace ir {
@@ -42,7 +41,7 @@ namespace ir {
   std::ostream &operator<< (std::ostream &out, const RegisterFile &file)
   {
     out << "## " << file.regNum() << " register"
-        << plural(file.regNum()) << " ##" << std::endl;
+        << (file.regNum() ? "s" : "") << " ##" << std::endl;
     for (uint32_t i = 0; i < file.regNum(); ++i) {
       const RegisterData reg = file.get(Register(i));
       out << ".decl." << reg << " %" << i << std::endl;

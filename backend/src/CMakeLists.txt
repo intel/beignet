@@ -40,16 +40,10 @@ else (GBE_USE_BLOB)
     sys/exception.hpp
     sys/assert.cpp
     sys/assert.hpp
-    sys/string.cpp
-    sys/string.hpp
     sys/alloc.cpp
     sys/alloc.hpp
-    sys/sysinfo.cpp
-    sys/sysinfo.hpp
     sys/mutex.cpp
     sys/mutex.hpp
-    sys/condition.cpp
-    sys/condition.hpp
     sys/platform.cpp
     sys/platform.hpp
     sys/cvar.cpp

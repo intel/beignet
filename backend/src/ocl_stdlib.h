@@ -17,6 +17,12 @@
  * Author: Benjamin Segovia <benjamin.segovia@intel.com>
  */
 
+#ifndef __GEN_OCL_STDLIB_H__
+#define __GEN_OCL_STDLIB_H__
+
+#define INLINE_OVERLOADABLE __attribute__((overloadable,always_inline))
+#define OVERLOADABLE __attribute__((overloadable))
+
 /////////////////////////////////////////////////////////////////////////////
 // OpenCL basic types
 /////////////////////////////////////////////////////////////////////////////
@@ -240,4 +246,5 @@ DECL_VOTE(bool)
 
 #define NULL ((void*)0)
 #undef INLINE_OVERLOADABLE
+#endif /* __GEN_OCL_STDLIB_H__ */
 

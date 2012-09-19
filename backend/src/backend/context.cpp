@@ -296,7 +296,7 @@ namespace gbe
     const uint32_t offset = partitioner->allocate(size, alignment);
     GBE_ASSERT(offset >= GEN_REG_SIZE);
     kernel->patches.push_back(PatchInfo(value, subValue, offset - GEN_REG_SIZE));
-    kernel->curbeSize = max(kernel->curbeSize, offset + size - GEN_REG_SIZE);
+    kernel->curbeSize = std::max(kernel->curbeSize, offset + size - GEN_REG_SIZE);
   }
 
   void Context::buildPatchList(void) {

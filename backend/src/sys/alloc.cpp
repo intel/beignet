@@ -29,11 +29,7 @@
 #include "sys/mutex.hpp"
 
 #if GBE_DEBUG_MEMORY
-#ifdef __MSVC__
-#include <unordered_map>
-#else
 #include <tr1/unordered_map>
-#endif /* __MSVC__ */
 #include <cstring>
 #endif /* GBE_DEBUG_MEMORY */
 
@@ -47,6 +43,7 @@
 ////////////////////////////////////////////////////////////////////////////////
 /// Memory debugger
 ////////////////////////////////////////////////////////////////////////////////
+
 #if GBE_DEBUG_MEMORY
 namespace gbe
 {
@@ -271,29 +268,6 @@ namespace gbe
 #else /* GBE_DEBUG_MEMORY */
 
 ////////////////////////////////////////////////////////////////////////////////
-/// Windows Platform
-////////////////////////////////////////////////////////////////////////////////
-
-#if defined(__WIN32__)
-
-#define WIN32_LEAN_AND_MEAN
-#include <windows.h>
-
-namespace gbe
-{
-  void* alignedMalloc(size_t size, size_t align) {
-    void* ptr = _mm_malloc(size,align);
-    FATAL_IF (!ptr && size, "memory allocation failed");
-    MemDebuggerInitializeMem(ptr, size);
-    return ptr;
-  }
-
-  void alignedFree(void *ptr) { if (ptr) _mm_free(ptr); }
-} /* namespace gbe */
-
-#endif /* __WIN32__ */
-
-////////////////////////////////////////////////////////////////////////////////
 /// Linux Platform
 ////////////////////////////////////////////////////////////////////////////////
 
@@ -317,34 +291,10 @@ namespace gbe
   void alignedFree(void *ptr) { if (ptr) std::free(ptr); }
 } /* namespace gbe */
 
+#else
+#error "Unsupported platform"
 #endif /* __LINUX__ */
-
-////////////////////////////////////////////////////////////////////////////////
-/// MacOS Platform
-////////////////////////////////////////////////////////////////////////////////
-
-#if defined(__MACOSX__)
-
-#include <cstdlib>
-
-namespace gbe
-{
-  void* alignedMalloc(size_t size, size_t align) {
-    void* mem = malloc(size+align+sizeof(void*));
-    FATAL_IF (!mem && size, "memory allocation failed");
-    char* aligned = ((char*)mem) + sizeof(void*);
-    aligned += align - ((uintptr_t)aligned & (align - 1));
-    ((void**)aligned)[-1] = mem;
-    MemDebuggerInitializeMem(aligned, size);
-    return aligned;
-  }
-
-  void alignedFree(void* ptr) { if (ptr) free(((void**)ptr)[-1]); }
-} /* namespace gbe */
-
-#endif /* __MACOSX__ */
-
-#endif /* GBE_DEBUG_MEMORY */
+#endif
 
 ////////////////////////////////////////////////////////////////////////////////
 // Linear allocator
@@ -372,6 +322,9 @@ namespace gbe
 
   void *LinearAllocator::allocate(size_t size)
   {
+#if GBE_DEBUG_SPECIAL_ALLOCATOR
+    if (ptr) GBE_ALIGNED_MALLOC(size, sizeof(void*));
+#else
     // Try to use the current segment. This is the most likely condition here
     this->curr->offset = ALIGN(this->curr->offset, sizeof(void*));
     if (this->curr->offset + size <= this->curr->size) {
@@ -399,6 +352,7 @@ namespace gbe
     char *ptr = (char*) curr->data;
     this->curr->offset += size;
     return ptr;
+#endif
   }
 
 } /* namespace gbe */

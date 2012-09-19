@@ -260,6 +260,10 @@ private: \
 /*! Default alignment for the platform */
 #define GBE_DEFAULT_ALIGNMENT 16
 
+/*! Useful constants */
+#define KB 1024
+#define MB (KB*KB)
+
 /*! Portable AlignOf */
 template <typename T>
 struct AlignOf {
@@ -336,7 +340,6 @@ private:
 /// Default Includes and Functions
 ////////////////////////////////////////////////////////////////////////////////
 
-#include "sys/constants.hpp"
 #include "sys/alloc.hpp"
 
 namespace gbe

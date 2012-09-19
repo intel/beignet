@@ -23,7 +23,6 @@
  */
 #include "ir/function.hpp"
 #include "ir/unit.hpp"
-#include "sys/string.hpp"
 #include "sys/map.hpp"
 
 namespace gbe {
@@ -190,7 +189,7 @@ namespace ir {
     out << ".decl_function " << fn.getName() << std::endl;
     out << fn.getRegisterFile();
     out << "## " << fn.argNum() << " input register"
-        << plural(fn.argNum())  << " ##" << std::endl;
+        << (fn.argNum() ? "s" : "") << " ##" << std::endl;
     for (uint32_t i = 0; i < fn.argNum(); ++i) {
       const FunctionArgument &input = fn.getArg(i);
       out << "decl_input.";
@@ -207,7 +206,7 @@ namespace ir {
       out << " %" << input.reg << std::endl;
     }
     out << "## " << fn.outputNum() << " output register"
-        << plural(fn.outputNum()) << " ##" << std::endl;
+        << (fn.outputNum() ? "s" : "") << " ##" << std::endl;
     for (uint32_t i = 0; i < fn.outputNum(); ++i)
       out << "decl_output %" << fn.getOutput(i) << std::endl;
     out << "## " << fn.pushedNum() << " pushed register" << std::endl;
@@ -218,7 +217,7 @@ namespace ir {
            << pushed.second.offset << "}" << std::endl;
     }
     out << "## " << fn.blockNum() << " block"
-        << plural(fn.blockNum()) << " ##" << std::endl;
+        << (fn.blockNum() ? "s" : "") << " ##" << std::endl;
     fn.foreachBlock([&](const BasicBlock &bb) {
       bb.foreach([&out] (const Instruction &insn) {
         out << insn << std::endl;

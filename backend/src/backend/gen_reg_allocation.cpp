@@ -555,8 +555,8 @@ namespace gbe
               reg == ir::ocl::groupid1 ||
               reg == ir::ocl::groupid2)
             continue;
-          this->intervals[reg].minID = min(this->intervals[reg].minID, insnID);
-          this->intervals[reg].maxID = max(this->intervals[reg].maxID, insnID);
+          this->intervals[reg].minID = std::min(this->intervals[reg].minID, insnID);
+          this->intervals[reg].maxID = std::max(this->intervals[reg].maxID, insnID);
         }
         for (uint32_t dstID = 0; dstID < dstNum; ++dstID) {
           const GenRegister &selReg = insn.dst(dstID);
@@ -566,8 +566,8 @@ namespace gbe
               reg == ir::ocl::groupid1 ||
               reg == ir::ocl::groupid2)
             continue;
-          this->intervals[reg].minID = min(this->intervals[reg].minID, insnID);
-          this->intervals[reg].maxID = max(this->intervals[reg].maxID, insnID);
+          this->intervals[reg].minID = std::min(this->intervals[reg].minID, insnID);
+          this->intervals[reg].maxID = std::max(this->intervals[reg].maxID, insnID);
         }
 
         // Flag registers can only go to src[0]
@@ -583,8 +583,8 @@ namespace gbe
         // OK, a flag is used as a predicate or a conditional modifier
         if (insn.state.physicalFlag == 0) {
           const ir::Register reg = ir::Register(insn.state.flagIndex);
-          this->intervals[reg].minID = min(this->intervals[reg].minID, insnID);
-          this->intervals[reg].maxID = max(this->intervals[reg].maxID, insnID);
+          this->intervals[reg].minID = std::min(this->intervals[reg].minID, insnID);
+          this->intervals[reg].maxID = std::max(this->intervals[reg].maxID, insnID);
         }
         lastID = insnID;
         insnID++;
@@ -595,8 +595,8 @@ namespace gbe
       const ir::BasicBlock *bb = block.bb;
       const ir::Liveness::LiveOut &liveOut = ctx.getLiveOut(bb);
       for (auto reg : liveOut) {
-        this->intervals[reg].minID = min(this->intervals[reg].minID, lastID);
-        this->intervals[reg].maxID = max(this->intervals[reg].maxID, lastID);
+        this->intervals[reg].minID = std::min(this->intervals[reg].minID, lastID);
+        this->intervals[reg].maxID = std::max(this->intervals[reg].maxID, lastID);
       }
     });
 
@@ -611,8 +611,8 @@ namespace gbe
       int32_t maxID = this->intervals[first].maxID;
       for (uint32_t regID = 1; regID < regNum; ++regID) {
         const ir::Register reg = vector->reg[regID].reg();
-        minID = min(minID, this->intervals[reg].minID);
-        maxID = max(maxID, this->intervals[reg].maxID);
+        minID = std::min(minID, this->intervals[reg].minID);
+        maxID = std::max(maxID, this->intervals[reg].maxID);
       }
       for (uint32_t regID = 0; regID < regNum; ++regID) {
         const ir::Register reg = vector->reg[regID].reg();

@@ -26,7 +26,7 @@
 
 #include "sys/platform.hpp"
 #include "sys/assert.hpp"
-#include "math/math.hpp"
+#include <algorithm>
 
 namespace gbe
 {
@@ -153,6 +153,11 @@ namespace gbe
     INLINE bool operator!=(Allocator const& a) { return !operator==(a); }
   };
 
+// Deactivate fast allocators
+#ifndef GBE_DEBUG_SPECIAL_ALLOCATOR
+#define GBE_DEBUG_SPECIAL_ALLOCATOR 0
+#endif
+
   /*! A growing pool never gives memory to the system but chain free elements
    *  together such as deallocation can be quickly done
    */
@@ -165,6 +170,9 @@ namespace gbe
       free(NULL), freeList(NULL) {}
     ~GrowingPool(void) { GBE_ASSERT(curr); GBE_DELETE(curr); }
     void *allocate(void) {
+#if GBE_DEBUG_SPECIAL_ALLOCATOR
+      return GBE_ALIGNED_MALLOC(sizeof(T), AlignOf<T>::value);
+#else
       // Pick up an element from the free list
       if (this->freeList != NULL) {
         void *data = (void*) freeList;
@@ -190,13 +198,19 @@ namespace gbe
       }
       void *data = (T*) curr->data + curr->allocated++;
       return data;
+#endif /* GBE_DEBUG_SPECIAL_ALLOCATOR */
     }
     void deallocate(void *t) {
       if (t == NULL) return;
+#if GBE_DEBUG_SPECIAL_ALLOCATOR
+      GBE_ALIGNED_FREE(t);
+#else
       *(void**) t = this->freeList;
       this->freeList = t;
+#endif
     }
     void rewind(void) {
+#if GBE_DEBUG_SPECIAL_ALLOCATOR == 0
       // All free elements return to their blocks
       this->freeList = NULL;
       // Reverse the chain list and mark all blocks as empty
@@ -211,6 +225,7 @@ namespace gbe
       GBE_ASSERT(this->free);
       this->curr = this->free;
       this->free = this->curr->next;
+#endif /* GBE_DEBUG_SPECIAL_ALLOCATOR */
     }
   private:
     /*! Chunk of elements to allocate */
@@ -218,7 +233,7 @@ namespace gbe
     {
       friend class GrowingPool;
       GrowingPoolElem(size_t elemNum) {
-        const size_t sz = max(sizeof(T), sizeof(void*));
+        const size_t sz = std::max(sizeof(T), sizeof(void*));
         this->data = (T*) GBE_ALIGNED_MALLOC(elemNum * sz, AlignOf<T>::value);
         this->next = NULL;
         this->maxElemNum = elemNum;
@@ -263,7 +278,11 @@ namespace gbe
     /*! Allocate size bytes */
     void *allocate(size_t size);
     /*! Nothing here */
-    INLINE void deallocate(void *ptr) {}
+    INLINE void deallocate(void *ptr) {
+#if GBE_DEBUG_SPECIAL_ALLOCATOR
+      if (ptr) GBE_ALIGNED_FREE(ptr);
+#endif /* GBE_DEBUG_SPECIAL_ALLOCATOR */
+    }
   private:
     /*! Helds an allocated segment of memory */
     struct Segment {

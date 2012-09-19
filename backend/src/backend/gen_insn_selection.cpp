@@ -462,8 +462,8 @@ namespace gbe
   }
 
   SelectionInstruction *Selection::Opaque::appendInsn(SelectionOpcode opcode,
-                                              uint32_t dstNum,
-                                              uint32_t srcNum)
+                                                      uint32_t dstNum,
+                                                      uint32_t srcNum)
   {
     GBE_ASSERT(this->block != NULL);
     SelectionInstruction *insn = this->create(opcode, dstNum, srcNum);
@@ -603,9 +603,9 @@ namespace gbe
   void Selection::Opaque::WAIT(void) { this->appendInsn(SEL_OP_WAIT, 0, 0); }
 
   void Selection::Opaque::UNTYPED_READ(Reg addr,
-                               const GenRegister *dst,
-                               uint32_t elemNum,
-                               uint32_t bti)
+                                       const GenRegister *dst,
+                                       uint32_t elemNum,
+                                       uint32_t bti)
   {
     SelectionInstruction *insn = this->appendInsn(SEL_OP_UNTYPED_READ, elemNum, 1);
     SelectionVector *srcVector = this->appendVector();
@@ -630,9 +630,9 @@ namespace gbe
   }
 
   void Selection::Opaque::UNTYPED_WRITE(Reg addr,
-                                const GenRegister *src,
-                                uint32_t elemNum,
-                                uint32_t bti)
+                                        const GenRegister *src,
+                                        uint32_t elemNum,
+                                        uint32_t bti)
   {
     SelectionInstruction *insn = this->appendInsn(SEL_OP_UNTYPED_WRITE, 0, elemNum+1);
     SelectionVector *vector = this->appendVector();
@@ -717,9 +717,9 @@ namespace gbe
   }
 
   void Selection::Opaque::REGION(Reg dst0, Reg dst1, const GenRegister *src,
-                         uint32_t offset, uint32_t vstride,
-                         uint32_t width, uint32_t hstride,
-                         uint32_t srcNum)
+                                 uint32_t offset, uint32_t vstride,
+                                 uint32_t width, uint32_t hstride,
+                                 uint32_t srcNum)
   {
     SelectionInstruction *insn = this->appendInsn(SEL_OP_REGION, 2, srcNum);
     SelectionVector *vector = this->appendVector();
