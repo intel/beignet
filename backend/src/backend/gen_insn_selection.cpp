@@ -121,6 +121,16 @@ namespace gbe
     }
   }
 
+  SelectionInstruction *Selection::newSelectionInstruction(SelectionOpcode opcode,
+                                                           uint32_t dstNum,
+                                                           uint32_t srcNum)
+  {
+    const size_t regSize =  (dstNum+srcNum)*sizeof(GenRegister);
+    const size_t size = sizeof(SelectionInstruction) + regSize;
+    void *ptr = insnAllocator.allocate(size);
+    return new (ptr) SelectionInstruction(opcode, dstNum, srcNum);
+  }
+
   void Selection::startBackwardGeneration(void) {
     this->bwdCodeGeneration = true;
   }
@@ -204,9 +214,9 @@ namespace gbe
 
     // Generate the MOV instruction and replace the register in the instruction
     SelectionInstruction *mov = this->newSelectionInstruction(SEL_OP_MOV, 1, 1);
-    mov->src[0] = GenRegister::retype(insn->src[regID], GEN_TYPE_F);
+    mov->src(0) = GenRegister::retype(insn->src(regID), GEN_TYPE_F);
     mov->state = GenInstructionState(simdWidth);
-    insn->src[regID] = mov->dst[0] = GenRegister::fxgrf(simdWidth, tmp);
+    insn->src(regID) = mov->dst(0) = GenRegister::fxgrf(simdWidth, tmp);
     insn->prepend(*mov);
 
     return tmp;
@@ -223,9 +233,9 @@ namespace gbe
 
     // Generate the MOV instruction and replace the register in the instruction
     SelectionInstruction *mov = this->newSelectionInstruction(SEL_OP_MOV, 1, 1);
-    mov->dst[0] = GenRegister::retype(insn->dst[regID], GEN_TYPE_F);
+    mov->dst(0) = GenRegister::retype(insn->dst(regID), GEN_TYPE_F);
     mov->state = GenInstructionState(simdWidth);
-    insn->dst[regID] = mov->src[0] = GenRegister::fxgrf(simdWidth, tmp);
+    insn->dst(regID) = mov->src(0) = GenRegister::fxgrf(simdWidth, tmp);
     insn->append(*mov);
 
     return tmp;
@@ -285,14 +295,14 @@ namespace gbe
 
   void Selection::JMPI(Reg src, ir::LabelIndex index) {
     SelectionInstruction *insn = this->appendInsn(SEL_OP_JMPI, 0, 1);
-    insn->src[0] = src;
+    insn->src(0) = src;
     insn->index = uint16_t(index);
   }
 
   void Selection::CMP(uint32_t conditional, Reg src0, Reg src1) {
     SelectionInstruction *insn = this->appendInsn(SEL_OP_CMP, 0, 2);
-    insn->src[0] = src0;
-    insn->src[1] = src1;
+    insn->src(0) = src0;
+    insn->src(1) = src1;
     insn->extra.function = conditional;
   }
 
@@ -311,20 +321,20 @@ namespace gbe
 
     // Regular instruction to encode
     for (uint32_t elemID = 0; elemID < elemNum; ++elemID)
-      insn->dst[elemID] = dst[elemID];
-    insn->src[0] = addr;
+      insn->dst(elemID) = dst[elemID];
+    insn->src(0) = addr;
     insn->extra.function = bti;
     insn->extra.elem = elemNum;
 
     // Sends require contiguous allocation
     dstVector->regNum = elemNum;
     dstVector->isSrc = 0;
-    dstVector->reg = insn->dst;
+    dstVector->reg = &insn->dst(0);
 
     // Source cannot be scalar (yet)
     srcVector->regNum = 1;
     srcVector->isSrc = 1;
-    srcVector->reg = insn->src;
+    srcVector->reg = &insn->src(0);
   }
 
   void Selection::UNTYPED_WRITE(Reg addr,
@@ -336,15 +346,15 @@ namespace gbe
     SelectionVector *vector = this->appendVector();
 
     // Regular instruction to encode
-    insn->src[0] = addr;
+    insn->src(0) = addr;
     for (uint32_t elemID = 0; elemID < elemNum; ++elemID)
-      insn->src[elemID+1] = src[elemID];
+      insn->src(elemID+1) = src[elemID];
     insn->extra.function = bti;
     insn->extra.elem = elemNum;
 
     // Sends require contiguous allocation for the sources
     vector->regNum = elemNum+1;
-    vector->reg = insn->src;
+    vector->reg = &insn->src(0);
     vector->isSrc = 1;
   }
 
@@ -354,8 +364,8 @@ namespace gbe
     SelectionVector *dstVector = this->appendVector();
 
     // Instruction to encode
-    insn->src[0] = addr;
-    insn->dst[0] = dst;
+    insn->src(0) = addr;
+    insn->dst(0) = dst;
     insn->extra.function = bti;
     insn->extra.elem = elemSize;
 
@@ -363,10 +373,10 @@ namespace gbe
     // (yet)
     dstVector->regNum = 1;
     dstVector->isSrc = 0;
-    dstVector->reg = insn->dst;
+    dstVector->reg = &insn->dst(0);
     srcVector->regNum = 1;
     srcVector->isSrc = 1;
-    srcVector->reg = insn->src;
+    srcVector->reg = &insn->src(0);
   }
 
   void Selection::BYTE_SCATTER(Reg addr, Reg src, uint32_t elemSize, uint32_t bti) {
@@ -374,44 +384,44 @@ namespace gbe
     SelectionVector *vector = this->appendVector();
 
     // Instruction to encode
-    insn->src[0] = addr;
-    insn->src[1] = src;
+    insn->src(0) = addr;
+    insn->src(1) = src;
     insn->extra.function = bti;
     insn->extra.elem = elemSize;
 
     // value and address are contiguous in the send
     vector->regNum = 2;
     vector->isSrc = 1;
-    vector->reg = insn->src;
+    vector->reg = &insn->src(0);
   }
 
   void Selection::MATH(Reg dst, uint32_t function, Reg src0, Reg src1) {
     SelectionInstruction *insn = this->appendInsn(SEL_OP_MATH, 1, 2);
-    insn->dst[0] = dst;
-    insn->src[0] = src0;
-    insn->src[1] = src1;
+    insn->dst(0) = dst;
+    insn->src(0) = src0;
+    insn->src(1) = src1;
     insn->extra.function = function;
   }
 
   void Selection::ALU1(SelectionOpcode opcode, Reg dst, Reg src) {
     SelectionInstruction *insn = this->appendInsn(opcode, 1, 1);
-    insn->dst[0] = dst;
-    insn->src[0] = src;
+    insn->dst(0) = dst;
+    insn->src(0) = src;
   }
 
   void Selection::ALU2(SelectionOpcode opcode, Reg dst, Reg src0, Reg src1) {
     SelectionInstruction *insn = this->appendInsn(opcode, 1, 2);
-    insn->dst[0] = dst;
-    insn->src[0] = src0;
-    insn->src[1] = src1;
+    insn->dst(0) = dst;
+    insn->src(0) = src0;
+    insn->src(1) = src1;
   }
 
   void Selection::ALU3(SelectionOpcode opcode, Reg dst, Reg src0, Reg src1, Reg src2) {
     SelectionInstruction *insn = this->appendInsn(opcode, 1, 3);
-    insn->dst[0] = dst;
-    insn->src[0] = src0;
-    insn->src[1] = src1;
-    insn->src[2] = src2;
+    insn->dst(0) = dst;
+    insn->src(0) = src0;
+    insn->src(1) = src1;
+    insn->src(2) = src2;
   }
 
   void Selection::REGION(Reg dst0, Reg dst1, const GenRegister *src,
@@ -423,11 +433,11 @@ namespace gbe
     SelectionVector *vector = this->appendVector();
 
     // Instruction to encode
-    insn->dst[0] = dst0;
-    insn->dst[1] = dst1;
+    insn->dst(0) = dst0;
+    insn->dst(1) = dst1;
     GBE_ASSERT(srcNum <= SelectionInstruction::MAX_SRC_NUM);
     for (uint32_t srcID = 0; srcID < srcNum; ++srcID)
-      insn->src[srcID] = src[srcID];
+      insn->src(srcID) = src[srcID];
     insn->extra.vstride = vstride;
     insn->extra.width = width;
     insn->extra.offset = offset;
@@ -435,7 +445,7 @@ namespace gbe
 
     // Regioning requires contiguous allocation for the sources
     vector->regNum = srcNum;
-    vector->reg = insn->src;
+    vector->reg = &insn->src(0);
     vector->isSrc = 1;
   }
 
@@ -445,22 +455,22 @@ namespace gbe
     SelectionVector *vector = this->appendVector();
 
     // Instruction to encode
-    insn->dst[0] = dst;
+    insn->dst(0) = dst;
     GBE_ASSERT(srcNum <= SelectionInstruction::MAX_SRC_NUM);
     for (uint32_t srcID = 0; srcID < srcNum; ++srcID)
-      insn->src[srcID] = src[srcID];
+      insn->src(srcID) = src[srcID];
 
     // Regioning requires contiguous allocation for the sources
     vector->regNum = srcNum;
-    vector->reg = insn->src;
+    vector->reg = &insn->src(0);
     vector->isSrc = 1;
   }
 
   void Selection::OBREAD(Reg dst, Reg addr, Reg header, uint32_t bti, uint32_t size) {
     SelectionInstruction *insn = this->appendInsn(SEL_OP_OBREAD, 1, 2);
-    insn->dst[0] = dst;
-    insn->src[0] = addr;
-    insn->src[1] = header;
+    insn->dst(0) = dst;
+    insn->src(0) = addr;
+    insn->src(1) = header;
     insn->extra.function = bti;
     insn->extra.elem = size / sizeof(int[4]); // number of owords
   }
@@ -469,16 +479,16 @@ namespace gbe
     SelectionInstruction *insn = this->appendInsn(SEL_OP_OBWRITE, 0, 3);
     SelectionVector *vector = this->appendVector();
     insn->opcode = SEL_OP_OBWRITE;
-    insn->src[0] = header;
-    insn->src[1] = value;
-    insn->src[2] = addr;
+    insn->src(0) = header;
+    insn->src(1) = value;
+    insn->src(2) = addr;
     insn->state = this->curr;
     insn->extra.function = bti;
     insn->extra.elem = size / sizeof(int[4]); // number of owords
 
     // We need to put the header and the data together
     vector->regNum = 2;
-    vector->reg = insn->src;
+    vector->reg = &insn->src(0);
     vector->isSrc = 1;
   }
 

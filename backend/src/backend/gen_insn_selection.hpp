@@ -93,6 +93,12 @@ namespace gbe
     void prepend(SelectionInstruction &insn);
     /*! Append an instruction after this one */
     void append(SelectionInstruction &insn);
+    /*! Get the destination register */
+    GenRegister &dst(uint32_t dstID) { return regs[dstID]; }
+    const GenRegister &dst(uint32_t dstID) const { return regs[dstID]; }
+    /*! Get the source register */
+    GenRegister &src(uint32_t srcID) { return regs[dstNum+srcID]; }
+    const GenRegister &src(uint32_t srcID) const { return regs[dstNum+srcID]; }
     /*! No more than 6 sources (used by typed writes) */
     enum { MAX_SRC_NUM = 8 };
     /*! No more than 4 destinations (used by samples and untyped reads) */
@@ -125,10 +131,8 @@ namespace gbe
     uint8_t srcNum:4;
     /*! To store various indices */
     uint16_t index;
-    /*! All destinations */
-    GenRegister dst[MAX_DST_NUM];
-    /*! All sources */
-    GenRegister src[MAX_SRC_NUM];
+    /*! Variable sized. Destinations and sources go here */
+    GenRegister regs[];
   private:
     /*! Just Selection class can create SelectionInstruction */
     INLINE SelectionInstruction(SelectionOpcode opcode,
@@ -287,6 +291,8 @@ namespace gbe
       block->append(reg);
       return reg;
     }
+    /*! Create a new selection instruction */
+    SelectionInstruction *newSelectionInstruction(SelectionOpcode, uint32_t dstNum, uint32_t srcNum);
     /*! Append a block at the block stream tail. It becomes the current block */
     void appendBlock(const ir::BasicBlock &bb);
     /*! Append an instruction in the current block */
@@ -296,7 +302,7 @@ namespace gbe
     /*! To handle selection block allocation */
     DECL_POOL(SelectionBlock, blockPool);
     /*! To handle selection instruction allocation */
-    DECL_POOL(SelectionInstruction, insnPool);
+    LinearAllocator insnAllocator;
     /*! To handle selection vector allocation */
     DECL_POOL(SelectionVector, vecPool);
     /*! Owns this structure */

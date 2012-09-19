@@ -306,7 +306,7 @@ namespace gbe
 
       // Patch the source booleans
       for (uint32_t srcID = 0; srcID < srcNum; ++srcID) {
-        const GenRegister selReg = insn.src[srcID];
+        const GenRegister selReg = insn.src(srcID);
         const ir::Register reg = selReg.reg();
         if (selReg.physical || ctx.sel->getRegisterFamily(reg) != ir::FAMILY_BOOL)
           continue;
@@ -314,12 +314,12 @@ namespace gbe
         if (it == allocatedFlags.end())
           continue;
         // Use a flag register for it now
-        insn.src[srcID] = GenRegister::flag(1,it->second);
+        insn.src(srcID) = GenRegister::flag(1,it->second);
       }
 
       // Patch the destination booleans
       for (uint32_t dstID = 0; dstID < dstNum; ++dstID) {
-        const GenRegister selReg = insn.dst[dstID];
+        const GenRegister selReg = insn.dst(dstID);
         const ir::Register reg = selReg.reg();
         if (selReg.physical || ctx.sel->getRegisterFamily(reg) != ir::FAMILY_BOOL)
           continue;
@@ -327,7 +327,7 @@ namespace gbe
         if (it == allocatedFlags.end())
           continue;
         // Use a flag register for it now
-        insn.dst[dstID] = GenRegister::flag(1,it->second);
+        insn.dst(dstID) = GenRegister::flag(1,it->second);
       }
 
       // Patch the predicate now. Note that only compares actually modify it (it
@@ -348,8 +348,8 @@ namespace gbe
           mov0->state = GenInstructionState(1);
           mov0->state.predicate = GEN_PREDICATE_NONE;
           mov0->state.noMask = 1;
-          mov0->src[0] = GenRegister::uw1grf(ir::Register(insn.state.flagIndex));
-          mov0->dst[0] = GenRegister::flag(0,1);
+          mov0->src(0) = GenRegister::uw1grf(ir::Register(insn.state.flagIndex));
+          mov0->dst(0) = GenRegister::flag(0,1);
 
           // Do not prepend if the flag is not read (== used only as a
           // conditional modifier)
@@ -366,8 +366,8 @@ namespace gbe
           if (insn.opcode == SEL_OP_CMP) {
             SelectionInstruction *mov1 = selection.newSelectionInstruction(SEL_OP_MOV,1,1);
             mov1->state = mov0->state;
-            mov1->dst[0] = mov0->src[0];
-            mov1->src[0] = mov0->dst[0];
+            mov1->dst(0) = mov0->src(0);
+            mov1->src(0) = mov0->dst(0);
             insn.append(*mov1);
           }
         }
@@ -483,7 +483,7 @@ namespace gbe
       block.foreach([&](const SelectionInstruction &insn) {
         const uint32_t srcNum = insn.srcNum, dstNum = insn.dstNum;
         for (uint32_t srcID = 0; srcID < srcNum; ++srcID) {
-          const GenRegister &selReg = insn.src[srcID];
+          const GenRegister &selReg = insn.src(srcID);
           const ir::Register reg = selReg.reg();
           if (selReg.file != GEN_GENERAL_REGISTER_FILE ||
               reg == ir::ocl::groupid0 ||
@@ -494,7 +494,7 @@ namespace gbe
           this->intervals[reg].maxID = max(this->intervals[reg].maxID, insnID);
         }
         for (uint32_t dstID = 0; dstID < dstNum; ++dstID) {
-          const GenRegister &selReg = insn.dst[dstID];
+          const GenRegister &selReg = insn.dst(dstID);
           const ir::Register reg = selReg.reg();
           if (selReg.file != GEN_GENERAL_REGISTER_FILE ||
               reg == ir::ocl::groupid0 ||
@@ -508,8 +508,8 @@ namespace gbe
         // Flag registers can only go to src[0]
         const SelectionOpcode opcode = SelectionOpcode(insn.opcode);
         if (opcode == SEL_OP_AND || opcode == SEL_OP_OR) {
-          if (insn.src[1].physical == 0) {
-            const ir::Register reg = insn.src[1].reg();
+          if (insn.src(1).physical == 0) {
+            const ir::Register reg = insn.src(1).reg();
             if (ctx.sel->getRegisterFamily(reg) == ir::FAMILY_BOOL)
               grfBooleans.insert(reg);
           }
