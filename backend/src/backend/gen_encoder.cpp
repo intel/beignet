@@ -219,7 +219,7 @@ namespace gbe
        insn->bits2.da1.src0_address_mode = reg.address_mode;
 
        if (reg.file == GEN_IMMEDIATE_VALUE) {
-          insn->bits3.ud = reg.immediate.ud;
+          insn->bits3.ud = reg.value.ud;
 
           /* Required to set some fields in src1 as well: */
           insn->bits1.da1.src1_reg_file = 0; /* arf */
@@ -271,7 +271,7 @@ namespace gbe
      assert(insn->bits1.da1.src0_reg_file != GEN_IMMEDIATE_VALUE);
 
      if (reg.file == GEN_IMMEDIATE_VALUE)
-       insn->bits3.ud = reg.immediate.ud;
+       insn->bits3.ud = reg.value.ud;
      else {
        assert (reg.address_mode == GEN_ADDRESS_DIRECT);
        if (insn->header.access_mode == GEN_ALIGN_1) {

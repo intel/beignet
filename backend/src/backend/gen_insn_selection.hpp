@@ -73,36 +73,32 @@ namespace gbe
 #undef DECL_SELECTION_IR
   };
 
-  // Owns the selection instructions
+  // Owns and Allocates selection instructions
+  class Selection;
+
+  // List of SelectionInstruction forms a block
   class SelectionBlock;
 
   /*! A selection instruction is also almost a Gen instruction but *before* the
    *  register allocation
    */
-  class SelectionInstruction
+  class SelectionInstruction : public NonCopyable
   {
   public:
-    INLINE SelectionInstruction(void) : parent(NULL), prev(NULL), next(NULL) {}
     /*! Owns the instruction */
     SelectionBlock *parent;
     /*! Instruction are chained in the block */
     SelectionInstruction *prev, *next;
     /*! Append an instruction before this one */
-    void prepend(const SelectionInstruction &insn);
+    void prepend(SelectionInstruction &insn);
     /*! Append an instruction after this one */
-    void append(const SelectionInstruction &insn);
+    void append(SelectionInstruction &insn);
     /*! No more than 6 sources (used by typed writes) */
     enum { MAX_SRC_NUM = 8 };
     /*! No more than 4 destinations (used by samples and untyped reads) */
     enum { MAX_DST_NUM = 4 };
-    /*! All destinations */
-    GenRegister dst[MAX_DST_NUM];
-    /*! All sources */
-    GenRegister src[MAX_SRC_NUM];
     /*! State of the instruction (extra fields neeed for the encoding) */
     GenInstructionState state;
-    /*! Gen opcode */
-    uint8_t opcode;
     union {
       struct {
         /*! Store bti for loads/stores and function for math and compares */
@@ -112,7 +108,7 @@ namespace gbe
       };
       struct {
         /*! Number of sources in the tuple */
-        uint8_t width:4;
+        uint16_t width:4;
         /*! vertical stride (0,1,2,4,8 or 16) */
         uint16_t vstride:5;
         /*! horizontal stride (0,1,2,4,8 or 16) */
@@ -121,12 +117,27 @@ namespace gbe
         uint16_t offset:5;
       };
     } extra;
-    /*! Number of sources */
-    uint8_t srcNum:4;
+    /*! Gen opcode */
+    uint8_t opcode;
     /*! Number of destinations */
     uint8_t dstNum:4;
+    /*! Number of sources */
+    uint8_t srcNum:4;
     /*! To store various indices */
     uint16_t index;
+    /*! All destinations */
+    GenRegister dst[MAX_DST_NUM];
+    /*! All sources */
+    GenRegister src[MAX_SRC_NUM];
+  private:
+    /*! Just Selection class can create SelectionInstruction */
+    INLINE SelectionInstruction(SelectionOpcode opcode,
+                                uint32_t dstNum, uint32_t srcNum) :
+      parent(NULL), prev(NULL), next(NULL),
+      opcode(opcode), dstNum(dstNum), srcNum(srcNum)
+    {}
+    // Allocates (with a linear allocator) and own SelectionInstruction
+    friend Selection;
   };
 
   /*! Some instructions like sends require to make some registers contiguous in
@@ -160,8 +171,6 @@ namespace gbe
   public:
     INLINE SelectionBlock(const ir::BasicBlock *bb) :
       insnHead(NULL), insnTail(NULL), vector(NULL), next(NULL), bb(bb) {}
-    /*! Minimum of temporary registers per block */
-    enum { MAX_TMP_REGISTER = 8 };
     /*! All the emitted instructions in the block */
     SelectionInstruction *insnHead, *insnTail;
     /*! The vectors that may be required by some instructions of the block */
@@ -174,6 +183,14 @@ namespace gbe
     SelectionBlock *next;
     /*! Associated IR basic block */
     const ir::BasicBlock *bb;
+    /*! Append a new temporary register */
+    void append(ir::Register reg);
+    /*! Append a new selection instruction at the end of the block */
+    void append(SelectionInstruction *insn);
+    /*! Append a new selection instruction at the beginning of the block */
+    void prepend(SelectionInstruction *insn);
+    /*! Append a new selection vector in the block */
+    void append(SelectionVector *vec);
     /*! Apply the given functor on all the instructions */
     template <typename T>
     INLINE void foreach(const T &functor) const {
@@ -184,14 +201,6 @@ namespace gbe
         curr = succ;
       }
     }
-    /*! Append a new temporary register */
-    void append(ir::Register reg);
-    /*! Append a new selection instruction at the end of the block */
-    void append(SelectionInstruction *insn);
-    /*! Append a new selection instruction at the beginning of the block */
-    void prepend(SelectionInstruction *insn);
-    /*! Append a new selection vector in the block */
-    void append(SelectionVector *vec);
   };
 
   /*! Owns the selection engine */
@@ -281,7 +290,7 @@ namespace gbe
     /*! Append a block at the block stream tail. It becomes the current block */
     void appendBlock(const ir::BasicBlock &bb);
     /*! Append an instruction in the current block */
-    SelectionInstruction *appendInsn(void);
+    SelectionInstruction *appendInsn(SelectionOpcode, uint32_t dstNum, uint32_t srcNum);
     /*! Append a new vector of registers in the current block */
     SelectionVector *appendVector(void);
     /*! To handle selection block allocation */
@@ -370,11 +379,11 @@ namespace gbe
     /*! Extended math function */
     void MATH(Reg dst, uint32_t function, Reg src0, Reg src1);
     /*! Encode unary instructions */
-    void ALU1(uint32_t opcode, Reg dst, Reg src);
+    void ALU1(SelectionOpcode opcode, Reg dst, Reg src);
     /*! Encode binary instructions */
-    void ALU2(uint32_t opcode, Reg dst, Reg src0, Reg src1);
+    void ALU2(SelectionOpcode opcode, Reg dst, Reg src0, Reg src1);
     /*! Encode ternary instructions */
-    void ALU3(uint32_t opcode, Reg dst, Reg src0, Reg src1, Reg src2);
+    void ALU3(SelectionOpcode opcode, Reg dst, Reg src0, Reg src1, Reg src2);
     /*! Encode regioning */
     void REGION(Reg dst0, Reg dst1, const GenRegister *src, uint32_t offset, uint32_t vstride, uint32_t width, uint32_t hstride, uint32_t srcNum);
     /*! Encode regioning */

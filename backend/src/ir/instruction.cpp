@@ -301,7 +301,7 @@ namespace ir {
       LabelIndex labelIndex; //!< Index of the label the branch targets
       bool hasPredicate:1;   //!< Is it predicated?
       bool hasLabel:1;       //!< Is there any target label?
-      Register dst[0];       //!< No destination
+      Register dst[];        //!< No destination
     };
 
     class ALIGNED_INSTRUCTION LoadInstruction :
@@ -341,7 +341,7 @@ namespace ir {
       INLINE void out(std::ostream &out, const Function &fn) const;
       INLINE bool isAligned(void) const { return !!dwAligned; }
       Type type;              //!< Type to store
-      Register src[0];        //!< Address where to load from
+      Register src[];         //!< Address where to load from
       Register offset;        //!< Alias to make it similar to store
       Tuple values;           //!< Values to load
       AddressSpace addrSpace; //!< Where to load
@@ -396,7 +396,7 @@ namespace ir {
       AddressSpace addrSpace; //!< Where to store
       uint8_t valueNum:7;     //!< Number of values to store
       uint8_t dwAligned:1;    //!< DWORD aligned is what matters with GEN
-      Register dst[0];
+      Register dst[];         //!< No destination
     };
 
     class ALIGNED_INSTRUCTION SampleInstruction : // TODO
@@ -411,7 +411,7 @@ namespace ir {
         this->outOpcode(out);
         out << " ... TODO";
       }
-      Register dst[0], src[0];
+      Register dst[], src[];
     };
 
     class ALIGNED_INSTRUCTION TypedWriteInstruction : // TODO
@@ -426,7 +426,7 @@ namespace ir {
         this->outOpcode(out);
         out << " ... TODO";
       }
-      Register dst[0], src[0];
+      Register dst[], src[];
     };
 
     class ALIGNED_INSTRUCTION LoadImmInstruction :
@@ -449,7 +449,7 @@ namespace ir {
       bool wellFormed(const Function &fn, std::string &why) const;
       INLINE void out(std::ostream &out, const Function &fn) const;
       Register dst[1];               //!< RegisterData to store into
-      Register src[0];               //!< No source register
+      Register src[];                //!< No source register
       ImmediateIndex immediateIndex; //!< Index in the vector of immediates
       Type type;                     //!< Type of the immediate
     };
@@ -470,7 +470,7 @@ namespace ir {
         out << "." << addrSpace;
       }
       AddressSpace addrSpace; //!< The loads and stores to order
-      Register dst[0], src[0];
+      Register dst[], src[];
     };
 
     class ALIGNED_INSTRUCTION LabelInstruction :
@@ -487,7 +487,7 @@ namespace ir {
       INLINE bool wellFormed(const Function &fn, std::string &why) const;
       INLINE void out(std::ostream &out, const Function &fn) const;
       LabelIndex labelIndex;  //!< Index of the label
-      Register dst[0], src[0];
+      Register dst[], src[];
     };
 
     class ALIGNED_INSTRUCTION RegionInstruction :

@@ -161,9 +161,9 @@ namespace gbe
   {
   public:
     GrowingPool(uint32_t elemNum = 1) :
-      current(GBE_NEW(GrowingPoolElem, elemNum <= 1 ? 1 : elemNum)),
+      curr(GBE_NEW(GrowingPoolElem, elemNum <= 1 ? 1 : elemNum)),
       free(NULL), freeList(NULL) {}
-    ~GrowingPool(void) { GBE_ASSERT(current); GBE_DELETE(current); }
+    ~GrowingPool(void) { GBE_ASSERT(curr); GBE_DELETE(curr); }
     void *allocate(void) {
       // Pick up an element from the free list
       if (this->freeList != NULL) {
@@ -172,23 +172,23 @@ namespace gbe
         return data;
       }
       // Pick up an element from the current block (if not full)
-      if (this->current->allocated < this->current->maxElemNum) {
-        void *data = (T*) current->data + current->allocated++;
+      if (this->curr->allocated < this->curr->maxElemNum) {
+        void *data = (T*) curr->data + curr->allocated++;
         return data;
       }
       // Block is full. Try to pick up a free block
       if (this->free) {
         GBE_ASSERT(this->free->allocated < this->free->maxElemNum);
-        this->current = this->free;
+        this->curr = this->free;
         this->free = this->free->next;
       }
       // No free block we must allocate a new one
       else {
-        GrowingPoolElem *elem = GBE_NEW(GrowingPoolElem, 2 * this->current->maxElemNum);
-        elem->next = this->current;
-        this->current = elem;
+        GrowingPoolElem *elem = GBE_NEW(GrowingPoolElem, 2 * this->curr->maxElemNum);
+        elem->next = this->curr;
+        this->curr = elem;
       }
-      void *data = (T*) current->data + current->allocated++;
+      void *data = (T*) curr->data + curr->allocated++;
       return data;
     }
     void deallocate(void *t) {
@@ -200,17 +200,17 @@ namespace gbe
       // All free elements return to their blocks
       this->freeList = NULL;
       // Reverse the chain list and mark all blocks as empty
-      while (this->current) {
-        GrowingPoolElem *next = this->current->next;
-        this->current->allocated = 0;
-        this->current->next = this->free;
-        this->free = this->current;
-        this->current = next;
+      while (this->curr) {
+        GrowingPoolElem *next = this->curr->next;
+        this->curr->allocated = 0;
+        this->curr->next = this->free;
+        this->free = this->curr;
+        this->curr = next;
       }
-      // Provide a valid current block
+      // Provide a valid curr block
       GBE_ASSERT(this->free);
-      this->current = this->free;
-      this->free = this->current->next;
+      this->curr = this->free;
+      this->free = this->curr->next;
     }
   private:
     /*! Chunk of elements to allocate */
@@ -232,23 +232,64 @@ namespace gbe
       GrowingPoolElem *next;
       size_t allocated, maxElemNum;
     };
-    GrowingPoolElem *current; //!< To get new element from
-    GrowingPoolElem *free;    //!< Blocks that can be reused (after rewind)
-    void *freeList;           //!< Elements that have been deallocated
+    GrowingPoolElem *curr; //!< To get new element from
+    GrowingPoolElem *free; //!< Blocks that can be reused (after rewind)
+    void *freeList;        //!< Elements that have been deallocated
     GBE_CLASS(GrowingPool);
   };
 
-/*! Helper macros to build and destroy objects with a pool */
+/*! Helper macros to build and destroy objects with a growing pool */
 #define DECL_POOL(TYPE, POOL) \
   GrowingPool<TYPE> POOL; \
   template <typename... Args> \
-  TYPE *new##TYPE(Args... args) { \
+  TYPE *new##TYPE(Args&&... args) { \
     return new (POOL.allocate()) TYPE(args...); \
   } \
   void delete##TYPE(TYPE *ptr) { \
     ptr->~TYPE(); \
     POOL.deallocate(ptr); \
   }
+
+  /*! A linear allocator just grows and does not reuse freed memory. It can
+   *  however allocate objects of any size
+   */
+  class LinearAllocator
+  {
+  public:
+    /*! Initiate the linear allocator (one segment is allocated) */
+    LinearAllocator(size_t minSize = CACHE_LINE, size_t maxSize = 64*KB);
+    /*! Free up everything */
+    ~LinearAllocator(void);
+    /*! Allocate size bytes */
+    void *allocate(size_t size);
+    /*! Nothing here */
+    INLINE void deallocate(void *ptr) {}
+  private:
+    /*! Helds an allocated segment of memory */
+    struct Segment {
+      /*! Allocate a new segment */
+      Segment(size_t size);
+      /*! Destroy the segment and the next ones */
+      ~Segment(void);
+      /* Size of the segment */
+      size_t size;
+      /*! Offset to the next free bytes (if any left) */
+      size_t offset;
+      /*! Pointer to valid data */
+      void *data;
+      /*! Pointer to the next segment */
+      Segment *next;
+      /*! Use internal allocator */
+      GBE_STRUCT(Segment);
+    };
+    /*! Points to the current segment we can allocate from */
+    Segment *curr;
+    /*! Maximum segment size */
+    size_t maxSize;
+    /*! Use internal allocator */
+    GBE_CLASS(LinearAllocator);
+  };
+
 } /* namespace gbe */
 
 #endif /* __GBE_ALLOC_HPP__ */

@@ -37,33 +37,31 @@ namespace gbe
   // SelectionInstruction
   ///////////////////////////////////////////////////////////////////////////
 
-  void SelectionInstruction::prepend(const SelectionInstruction &other) {
-    Selection *selection = this->parent->parent;
-    SelectionInstruction *toAppend = selection->newSelectionInstruction(other);
-    SelectionInstruction *prev = this->prev;
-    this->prev = toAppend;
-    toAppend->next = this;
-    if (prev) {
-      toAppend->prev = prev;
-      prev->next = toAppend;
+  void SelectionInstruction::prepend(SelectionInstruction &other) {
+    SelectionInstruction *before = this->prev;
+    this->prev = &other;
+    other.next = this;
+    other.parent = this->parent;
+    if (before) {
+      other.prev = before;
+      before->next = &other;
     } else {
-      GBE_ASSERT (this == this->parent->insnHead);
-      this->parent->insnHead = toAppend;
+      GBE_ASSERT(this == this->parent->insnHead);
+      this->parent->insnHead = &other;
     }
   }
 
-  void SelectionInstruction::append(const SelectionInstruction &other) {
-    Selection *selection = this->parent->parent;
-    SelectionInstruction *toAppend = selection->newSelectionInstruction(other);
-    SelectionInstruction *next = this->next;
-    this->next = toAppend;
-    toAppend->prev = this;
-    if (next) {
-      toAppend->next = next;
-      next->prev = toAppend;
+  void SelectionInstruction::append(SelectionInstruction &other) {
+    SelectionInstruction *after = this->next;
+    this->next = &other;
+    other.prev = this;
+    other.parent = this->parent;
+    if (after) {
+      other.next = after;
+      after->prev = &other;
     } else {
-      GBE_ASSERT (this == this->parent->insnTail);
-      this->parent->insnTail = toAppend;
+      GBE_ASSERT(this == this->parent->insnTail);
+      this->parent->insnTail = &other;
     }
   }
 
@@ -161,9 +159,12 @@ namespace gbe
     this->blockTail = this->block;
   }
 
-  SelectionInstruction *Selection::appendInsn(void) {
+  SelectionInstruction *Selection::appendInsn(SelectionOpcode opcode,
+                                              uint32_t dstNum,
+                                              uint32_t srcNum)
+  {
     GBE_ASSERT(this->block != NULL);
-    SelectionInstruction *insn = this->newSelectionInstruction();
+    SelectionInstruction *insn = this->newSelectionInstruction(opcode, dstNum, srcNum);
     if (this->bwdCodeGeneration) {
       if (this->bwdTail) {
         this->bwdTail->next = insn;
@@ -172,6 +173,7 @@ namespace gbe
       this->bwdTail = insn;
     } else
       this->block->append(insn);
+    insn->state = this->curr;
     return insn;
   }
 
@@ -201,13 +203,11 @@ namespace gbe
     tmp = this->reg(ir::FAMILY_DWORD);
 
     // Generate the MOV instruction and replace the register in the instruction
-    SelectionInstruction mov;
-    mov.opcode = SEL_OP_MOV;
-    mov.src[0] = GenRegister::retype(insn->src[regID], GEN_TYPE_F);
-    mov.state = GenInstructionState(simdWidth);
-    mov.dstNum = mov.srcNum = 1;
-    insn->src[regID] = mov.dst[0] = GenRegister::fxgrf(simdWidth, tmp);
-    insn->prepend(mov);
+    SelectionInstruction *mov = this->newSelectionInstruction(SEL_OP_MOV, 1, 1);
+    mov->src[0] = GenRegister::retype(insn->src[regID], GEN_TYPE_F);
+    mov->state = GenInstructionState(simdWidth);
+    insn->src[regID] = mov->dst[0] = GenRegister::fxgrf(simdWidth, tmp);
+    insn->prepend(*mov);
 
     return tmp;
   }
@@ -222,13 +222,11 @@ namespace gbe
     tmp = this->reg(ir::FAMILY_DWORD);
 
     // Generate the MOV instruction and replace the register in the instruction
-    SelectionInstruction mov;
-    mov.opcode = SEL_OP_MOV;
-    mov.dst[0] = GenRegister::retype(insn->dst[regID], GEN_TYPE_F);
-    mov.state = GenInstructionState(simdWidth);
-    mov.dstNum = mov.srcNum = 1;
-    insn->dst[regID] = mov.src[0] = GenRegister::fxgrf(simdWidth, tmp);
-    insn->append(mov);
+    SelectionInstruction *mov = this->newSelectionInstruction(SEL_OP_MOV, 1, 1);
+    mov->dst[0] = GenRegister::retype(insn->dst[regID], GEN_TYPE_F);
+    mov->state = GenInstructionState(simdWidth);
+    insn->dst[regID] = mov->src[0] = GenRegister::fxgrf(simdWidth, tmp);
+    insn->append(*mov);
 
     return tmp;
   }
@@ -281,75 +279,42 @@ namespace gbe
   typedef const GenRegister &Reg;
 
   void Selection::LABEL(ir::LabelIndex index) {
-    SelectionInstruction *insn = this->appendInsn();
-    insn->opcode = SEL_OP_LABEL;
-    insn->state = this->curr;
+    SelectionInstruction *insn = this->appendInsn(SEL_OP_LABEL, 0, 0);
     insn->index = uint16_t(index);
-    insn->srcNum = insn->dstNum = 0;
   }
 
   void Selection::JMPI(Reg src, ir::LabelIndex index) {
-    SelectionInstruction *insn = this->appendInsn();
+    SelectionInstruction *insn = this->appendInsn(SEL_OP_JMPI, 0, 1);
     insn->src[0] = src;
-    insn->opcode = SEL_OP_JMPI;
-    insn->state = this->curr;
     insn->index = uint16_t(index);
-    insn->srcNum = 1;
-    insn->dstNum = 0;
   }
 
   void Selection::CMP(uint32_t conditional, Reg src0, Reg src1) {
-    SelectionInstruction *insn = this->appendInsn();
+    SelectionInstruction *insn = this->appendInsn(SEL_OP_CMP, 0, 2);
     insn->src[0] = src0;
     insn->src[1] = src1;
     insn->extra.function = conditional;
-    insn->opcode = SEL_OP_CMP;
-    insn->state = this->curr;
-    insn->srcNum = 2;
-    insn->dstNum = 0;
   }
 
-  void Selection::EOT(void) {
-    SelectionInstruction *insn = this->appendInsn();
-    insn->opcode = SEL_OP_EOT;
-    insn->state = this->curr;
-    insn->srcNum = 0;
-    insn->dstNum = 0;
-  }
-
-  void Selection::NOP(void) {
-    SelectionInstruction *insn = this->appendInsn();
-    insn->opcode = SEL_OP_NOP;
-    insn->state = this->curr;
-    insn->srcNum = insn->dstNum = 0;
-  }
-
-  void Selection::WAIT(void) {
-    SelectionInstruction *insn = this->appendInsn();
-    insn->opcode = SEL_OP_WAIT;
-    insn->state = this->curr;
-    insn->srcNum = insn->dstNum = 0;
-  }
+  void Selection::EOT(void) { this->appendInsn(SEL_OP_EOT, 0, 0); }
+  void Selection::NOP(void) { this->appendInsn(SEL_OP_NOP, 0, 0); }
+  void Selection::WAIT(void) { this->appendInsn(SEL_OP_WAIT, 0, 0); }
 
   void Selection::UNTYPED_READ(Reg addr,
                                const GenRegister *dst,
                                uint32_t elemNum,
                                uint32_t bti)
   {
-    SelectionInstruction *insn = this->appendInsn();
+    SelectionInstruction *insn = this->appendInsn(SEL_OP_UNTYPED_READ, elemNum, 1);
     SelectionVector *srcVector = this->appendVector();
     SelectionVector *dstVector = this->appendVector();
 
     // Regular instruction to encode
-    insn->opcode = SEL_OP_UNTYPED_READ;
     for (uint32_t elemID = 0; elemID < elemNum; ++elemID)
       insn->dst[elemID] = dst[elemID];
     insn->src[0] = addr;
     insn->extra.function = bti;
     insn->extra.elem = elemNum;
-    insn->state = this->curr;
-    insn->srcNum = 1;
-    insn->dstNum = elemNum;
 
     // Sends require contiguous allocation
     dstVector->regNum = elemNum;
@@ -367,19 +332,15 @@ namespace gbe
                                 uint32_t elemNum,
                                 uint32_t bti)
   {
-    SelectionInstruction *insn = this->appendInsn();
+    SelectionInstruction *insn = this->appendInsn(SEL_OP_UNTYPED_WRITE, 0, elemNum+1);
     SelectionVector *vector = this->appendVector();
 
     // Regular instruction to encode
-    insn->opcode = SEL_OP_UNTYPED_WRITE;
     insn->src[0] = addr;
     for (uint32_t elemID = 0; elemID < elemNum; ++elemID)
       insn->src[elemID+1] = src[elemID];
     insn->extra.function = bti;
     insn->extra.elem = elemNum;
-    insn->state = this->curr;
-    insn->srcNum = elemNum+1;
-    insn->dstNum = 0;
 
     // Sends require contiguous allocation for the sources
     vector->regNum = elemNum+1;
@@ -388,19 +349,15 @@ namespace gbe
   }
 
   void Selection::BYTE_GATHER(Reg dst, Reg addr, uint32_t elemSize, uint32_t bti) {
-    SelectionInstruction *insn = this->appendInsn();
+    SelectionInstruction *insn = this->appendInsn(SEL_OP_BYTE_GATHER, 1, 1);
     SelectionVector *srcVector = this->appendVector();
     SelectionVector *dstVector = this->appendVector();
 
     // Instruction to encode
-    insn->opcode = SEL_OP_BYTE_GATHER;
     insn->src[0] = addr;
     insn->dst[0] = dst;
     insn->extra.function = bti;
     insn->extra.elem = elemSize;
-    insn->state = this->curr;
-    insn->srcNum = 1;
-    insn->dstNum = 1;
 
     // byte gather requires vector in the sense that scalar are not allowed
     // (yet)
@@ -413,18 +370,14 @@ namespace gbe
   }
 
   void Selection::BYTE_SCATTER(Reg addr, Reg src, uint32_t elemSize, uint32_t bti) {
-    SelectionInstruction *insn = this->appendInsn();
+    SelectionInstruction *insn = this->appendInsn(SEL_OP_BYTE_SCATTER, 0, 2);
     SelectionVector *vector = this->appendVector();
 
     // Instruction to encode
-    insn->opcode = SEL_OP_BYTE_SCATTER;
     insn->src[0] = addr;
     insn->src[1] = src;
     insn->extra.function = bti;
     insn->extra.elem = elemSize;
-    insn->state = this->curr;
-    insn->srcNum = 2;
-    insn->dstNum = 0;
 
     // value and address are contiguous in the send
     vector->regNum = 2;
@@ -433,48 +386,32 @@ namespace gbe
   }
 
   void Selection::MATH(Reg dst, uint32_t function, Reg src0, Reg src1) {
-    SelectionInstruction *insn = this->appendInsn();
-    insn->opcode = SEL_OP_MATH;
+    SelectionInstruction *insn = this->appendInsn(SEL_OP_MATH, 1, 2);
     insn->dst[0] = dst;
     insn->src[0] = src0;
     insn->src[1] = src1;
     insn->extra.function = function;
-    insn->state = this->curr;
-    insn->srcNum = 2;
-    insn->dstNum = 1;
   }
 
-  void Selection::ALU1(uint32_t opcode, Reg dst, Reg src) {
-    SelectionInstruction *insn = this->appendInsn();
-    insn->opcode = opcode;
+  void Selection::ALU1(SelectionOpcode opcode, Reg dst, Reg src) {
+    SelectionInstruction *insn = this->appendInsn(opcode, 1, 1);
     insn->dst[0] = dst;
     insn->src[0] = src;
-    insn->state = this->curr;
-    insn->srcNum = 1;
-    insn->dstNum = 1;
   }
 
-  void Selection::ALU2(uint32_t opcode, Reg dst, Reg src0, Reg src1) {
-    SelectionInstruction *insn = this->appendInsn();
-    insn->opcode = opcode;
+  void Selection::ALU2(SelectionOpcode opcode, Reg dst, Reg src0, Reg src1) {
+    SelectionInstruction *insn = this->appendInsn(opcode, 1, 2);
     insn->dst[0] = dst;
     insn->src[0] = src0;
     insn->src[1] = src1;
-    insn->state = this->curr;
-    insn->srcNum = 2;
-    insn->dstNum = 1;
   }
 
-  void Selection::ALU3(uint32_t opcode, Reg dst, Reg src0, Reg src1, Reg src2) {
-    SelectionInstruction *insn = this->appendInsn();
-    insn->opcode = opcode;
+  void Selection::ALU3(SelectionOpcode opcode, Reg dst, Reg src0, Reg src1, Reg src2) {
+    SelectionInstruction *insn = this->appendInsn(opcode, 1, 3);
     insn->dst[0] = dst;
     insn->src[0] = src0;
     insn->src[1] = src1;
     insn->src[2] = src2;
-    insn->state = this->curr;
-    insn->srcNum = 3;
-    insn->dstNum = 1;
   }
 
   void Selection::REGION(Reg dst0, Reg dst1, const GenRegister *src,
@@ -482,19 +419,15 @@ namespace gbe
                          uint32_t width, uint32_t hstride,
                          uint32_t srcNum)
   {
-    SelectionInstruction *insn = this->appendInsn();
+    SelectionInstruction *insn = this->appendInsn(SEL_OP_REGION, 2, srcNum);
     SelectionVector *vector = this->appendVector();
 
     // Instruction to encode
-    insn->opcode = SEL_OP_REGION;
     insn->dst[0] = dst0;
     insn->dst[1] = dst1;
     GBE_ASSERT(srcNum <= SelectionInstruction::MAX_SRC_NUM);
     for (uint32_t srcID = 0; srcID < srcNum; ++srcID)
       insn->src[srcID] = src[srcID];
-    insn->state = this->curr;
-    insn->srcNum = srcNum;
-    insn->dstNum = 2;
     insn->extra.vstride = vstride;
     insn->extra.width = width;
     insn->extra.offset = offset;
@@ -508,18 +441,14 @@ namespace gbe
 
   void Selection::RGATHER(Reg dst, const GenRegister *src, uint32_t srcNum)
   {
-    SelectionInstruction *insn = this->appendInsn();
+    SelectionInstruction *insn = this->appendInsn(SEL_OP_RGATHER, 1, srcNum);
     SelectionVector *vector = this->appendVector();
 
     // Instruction to encode
-    insn->opcode = SEL_OP_RGATHER;
     insn->dst[0] = dst;
     GBE_ASSERT(srcNum <= SelectionInstruction::MAX_SRC_NUM);
     for (uint32_t srcID = 0; srcID < srcNum; ++srcID)
       insn->src[srcID] = src[srcID];
-    insn->state = this->curr;
-    insn->srcNum = srcNum;
-    insn->dstNum = 1;
 
     // Regioning requires contiguous allocation for the sources
     vector->regNum = srcNum;
@@ -528,28 +457,22 @@ namespace gbe
   }
 
   void Selection::OBREAD(Reg dst, Reg addr, Reg header, uint32_t bti, uint32_t size) {
-    SelectionInstruction *insn = this->appendInsn();
-    insn->opcode = SEL_OP_OBREAD;
+    SelectionInstruction *insn = this->appendInsn(SEL_OP_OBREAD, 1, 2);
     insn->dst[0] = dst;
     insn->src[0] = addr;
     insn->src[1] = header;
-    insn->state = this->curr;
-    insn->srcNum = 2;
-    insn->dstNum = 1;
     insn->extra.function = bti;
     insn->extra.elem = size / sizeof(int[4]); // number of owords
   }
 
   void Selection::OBWRITE(Reg addr, Reg value, Reg header, uint32_t bti, uint32_t size) {
-    SelectionInstruction *insn = this->appendInsn();
+    SelectionInstruction *insn = this->appendInsn(SEL_OP_OBWRITE, 0, 3);
     SelectionVector *vector = this->appendVector();
     insn->opcode = SEL_OP_OBWRITE;
     insn->src[0] = header;
     insn->src[1] = value;
     insn->src[2] = addr;
     insn->state = this->curr;
-    insn->srcNum = 3;
-    insn->dstNum = 0;
     insn->extra.function = bti;
     insn->extra.elem = size / sizeof(int[4]); // number of owords
 
@@ -582,8 +505,8 @@ namespace gbe
   class SelectionDAG
   {
   public:
-    INLINE SelectionDAG(const ir::Instruction *insn) :
-      insn(*insn), mergeable(0), childNum(insn->getSrcNum()), isRoot(0) {
+    INLINE SelectionDAG(const ir::Instruction &insn) :
+      insn(insn), mergeable(0), childNum(insn.getSrcNum()), isRoot(0) {
       for (uint32_t childID = 0; childID < childNum; ++childID)
         this->child[childID] = NULL;
     }
@@ -1082,7 +1005,7 @@ namespace gbe
       const uint32_t simdWidth = sel.ctx.getSimdWidth();
 
       // We need a temporary register if we read bytes or words
-      Register dst = value.reg;
+      Register dst = Register(value.value.reg);
       if (elemSize == GEN_BYTE_SCATTER_WORD ||
           elemSize == GEN_BYTE_SCATTER_BYTE) {
         dst = sel.reg(FAMILY_DWORD);
@@ -1739,7 +1662,7 @@ namespace gbe
     bb.foreach([&](const Instruction &insn) {
 
       // Build a selectionDAG node for instruction
-      SelectionDAG *dag = this->newSelectionDAG(&insn);
+      SelectionDAG *dag = this->newSelectionDAG(insn);
 
       // Point to non-root children
       const uint32_t srcNum = insn.getSrcNum();

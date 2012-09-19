@@ -121,7 +121,7 @@ namespace gbe
       this->type = type;
       this->file = file;
       this->physical = 0;
-      this->reg = reg;
+      this->value.reg = reg;
       this->negation = 0;
       this->absolute = 0;
       this->vstride = vstride;
@@ -155,15 +155,16 @@ namespace gbe
       this->address_mode = GEN_ADDRESS_DIRECT;
     }
 
-    /*! Associated virtual register */
-    ir::Register reg;
+    /*! Return the IR virtual register */
+    INLINE ir::Register reg(void) const { return ir::Register(value.reg); }
 
-    /*! For immediates */
+    /*! For immediates or virtual register */
     union {
       float f;
       int32_t d;
       uint32_t ud;
-    } immediate;
+      uint16_t reg;
+    } value;
 
     uint32_t nr:7;         //!< Just for some physical registers (acc, null)
     uint32_t subnr:5;      //!< Idem
@@ -173,10 +174,10 @@ namespace gbe
     uint32_t negation:1;   //!< For source
     uint32_t absolute:1;   //!< For source
     uint32_t vstride:4;    //!< Vertical stride
-    uint32_t width:3;      //!< Width
-    uint32_t hstride:2;    //!< Horizontal stride
-    uint32_t quarter:1;    //!< To choose which part we want (Q1 / Q2)
-    uint32_t address_mode; //!< direct or indirec2t
+    uint32_t width:3;        //!< Width
+    uint32_t hstride:2;      //!< Horizontal stride
+    uint32_t quarter:1;      //!< To choose which part we want (Q1 / Q2)
+    uint32_t address_mode:1; //!< direct or indirect
 
     static INLINE GenRegister QnVirtual(GenRegister reg, uint32_t quarter) {
       GBE_ASSERT(reg.physical == 0);
@@ -340,31 +341,31 @@ namespace gbe
 
     static INLINE GenRegister immf(float f) {
       GenRegister immediate = imm(GEN_TYPE_F);
-      immediate.immediate.f = f;
+      immediate.value.f = f;
       return immediate;
     }
 
     static INLINE GenRegister immd(int d) {
       GenRegister immediate = imm(GEN_TYPE_D);
-      immediate.immediate.d = d;
+      immediate.value.d = d;
       return immediate;
     }
 
     static INLINE GenRegister immud(uint32_t ud) {
       GenRegister immediate = imm(GEN_TYPE_UD);
-      immediate.immediate.ud = ud;
+      immediate.value.ud = ud;
       return immediate;
     }
 
     static INLINE GenRegister immuw(uint16_t uw) {
       GenRegister immediate = imm(GEN_TYPE_UW);
-      immediate.immediate.ud = uw | (uw << 16);
+      immediate.value.ud = uw | (uw << 16);
       return immediate;
     }
 
     static INLINE GenRegister immw(int16_t w) {
       GenRegister immediate = imm(GEN_TYPE_W);
-      immediate.immediate.d = w | (w << 16);
+      immediate.value.d = w | (w << 16);
       return immediate;
     }
 
@@ -373,7 +374,7 @@ namespace gbe
       immediate.vstride = GEN_VERTICAL_STRIDE_0;
       immediate.width = GEN_WIDTH_8;
       immediate.hstride = GEN_HORIZONTAL_STRIDE_1;
-      immediate.immediate.ud = v;
+      immediate.value.ud = v;
       return immediate;
     }
 
@@ -382,7 +383,7 @@ namespace gbe
       immediate.vstride = GEN_VERTICAL_STRIDE_0;
       immediate.width = GEN_WIDTH_4;
       immediate.hstride = GEN_HORIZONTAL_STRIDE_1;
-      immediate.immediate.ud = v;
+      immediate.value.ud = v;
       return immediate;
     }
 
@@ -391,7 +392,7 @@ namespace gbe
       immediate.vstride = GEN_VERTICAL_STRIDE_0;
       immediate.width = GEN_WIDTH_4;
       immediate.hstride = GEN_HORIZONTAL_STRIDE_1;
-      immediate.immediate.ud = ((v0 << 0) | (v1 << 8) | (v2 << 16) | (v3 << 24));
+      immediate.value.ud = ((v0 << 0) | (v1 << 8) | (v2 << 16) | (v3 << 24));
       return immediate;
     }
 
@@ -705,16 +706,16 @@ namespace gbe
         reg.negation ^= 1;
       else {
         if (reg.type == GEN_TYPE_F)
-          reg.immediate.f = -reg.immediate.f;
+          reg.value.f = -reg.value.f;
         else if (reg.type == GEN_TYPE_UD)
-          reg.immediate.ud = -reg.immediate.ud;
+          reg.value.ud = -reg.value.ud;
         else if (reg.type == GEN_TYPE_D)
-          reg.immediate.d = -reg.immediate.d;
+          reg.value.d = -reg.value.d;
         else if (reg.type == GEN_TYPE_UW) {
-          const uint16_t uw = reg.immediate.ud & 0xffff;
+          const uint16_t uw = reg.value.ud & 0xffff;
           reg = GenRegister::immuw(-uw);
         } else if (reg.type == GEN_TYPE_W) {
-          const uint16_t uw = reg.immediate.ud & 0xffff;
+          const uint16_t uw = reg.value.ud & 0xffff;
           reg = GenRegister::immw(-(int16_t)uw);
         } else
           NOT_SUPPORTED;

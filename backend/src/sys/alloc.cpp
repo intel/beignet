@@ -50,7 +50,6 @@
 #if GBE_DEBUG_MEMORY
 namespace gbe
 {
-
   /*! Store each allocation data */
   struct AllocData {
     INLINE AllocData(void) {}
@@ -346,4 +345,61 @@ namespace gbe
 #endif /* __MACOSX__ */
 
 #endif /* GBE_DEBUG_MEMORY */
+
+////////////////////////////////////////////////////////////////////////////////
+// Linear allocator
+////////////////////////////////////////////////////////////////////////////////
+
+namespace gbe
+{
+  LinearAllocator::Segment::Segment(size_t size) :
+    size(size), offset(0u), data(alignedMalloc(size, CACHE_LINE)), next(NULL){}
+
+  LinearAllocator::Segment::~Segment(void) {
+    alignedFree(data);
+    if (this->next) GBE_DELETE(this->next);
+  }
+
+  LinearAllocator::LinearAllocator(size_t minSize, size_t maxSize) :
+    maxSize(std::max(maxSize, size_t(CACHE_LINE)))
+  {
+    this->curr = GBE_NEW(LinearAllocator::Segment, std::max(minSize, size_t(1)));
+  }
+
+  LinearAllocator::~LinearAllocator(void) {
+    if (this->curr) GBE_DELETE(this->curr);
+  }
+
+  void *LinearAllocator::allocate(size_t size)
+  {
+    // Try to use the current segment. This is the most likely condition here
+    this->curr->offset = ALIGN(this->curr->offset, sizeof(void*));
+    if (this->curr->offset + size <= this->curr->size) {
+      char *ptr = (char*) curr->data + this->curr->offset;
+      this->curr->offset += size;
+      return (void*) ptr;
+    }
+
+    // Well not really a use case in this code base
+    if (UNLIKELY(size > maxSize)) {
+      // This is really bad since we do two allocations
+      Segment *unfortunate = GBE_NEW(Segment, size);
+      GBE_ASSERT(this->curr);
+      Segment *next = this->curr->next;
+      this->curr->next = unfortunate;
+      unfortunate->next = next;
+      return unfortunate->data;
+    }
+
+    // OK. We need a new segment
+    const size_t segmentSize = std::max(size, 2*this->curr->size);
+    Segment *next = GBE_NEW(Segment, segmentSize);
+    next->next = curr;
+    this->curr = next;
+    char *ptr = (char*) curr->data;
+    this->curr->offset += size;
+    return ptr;
+  }
+
+} /* namespace gbe */
 
