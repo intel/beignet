@@ -135,23 +135,16 @@ namespace gbe
     GenRegister regs[];
   private:
     /*! Just Selection class can create SelectionInstruction */
-    INLINE SelectionInstruction(SelectionOpcode opcode,
-                                uint32_t dstNum, uint32_t srcNum) :
-      parent(NULL), prev(NULL), next(NULL),
-      opcode(opcode), dstNum(dstNum), srcNum(srcNum)
-    {}
-    // Allocates (with a linear allocator) and own SelectionInstruction
+    SelectionInstruction(SelectionOpcode, uint32_t dstNum, uint32_t srcNum);
+    // Allocates (with a linear allocator) and owns SelectionInstruction
     friend Selection;
   };
 
-  /*! Some instructions like sends require to make some registers contiguous in
-   *  memory
-   */
+  /*! Instructions like sends require to make registers contiguous in GRF */
   class SelectionVector
   {
   public:
-    INLINE SelectionVector(void) :
-      insn(NULL), next(NULL), reg(NULL), regNum(0), isSrc(0) {}
+    SelectionVector(void);
     /*! The instruction that requires the vector of registers */
     SelectionInstruction *insn;
     /*! We chain the selection vectors together */
@@ -173,14 +166,11 @@ namespace gbe
   class SelectionBlock
   {
   public:
-    INLINE SelectionBlock(const ir::BasicBlock *bb) :
-      insnHead(NULL), insnTail(NULL), vector(NULL), next(NULL), bb(bb) {}
+    SelectionBlock(const ir::BasicBlock *bb);
     /*! All the emitted instructions in the block */
     SelectionInstruction *insnHead, *insnTail;
     /*! The vectors that may be required by some instructions of the block */
     SelectionVector *vector;
-    /*! Own the selection block */
-    Selection *parent;
     /*! Extra registers needed by the block (only live in the block) */
     gbe::vector<ir::Register> tmp;
     /*! We chain the blocks together */
@@ -214,16 +204,30 @@ namespace gbe
   class Selection
   {
   public:
-    /*! simdWidth is the default width for the instructions */
+    /*! Initialize internal structures used for the selection */
     Selection(GenContext &ctx);
     /*! Release everything */
-    virtual ~Selection(void);
+    ~Selection(void);
     /*! Implements the instruction selection itself */
-    virtual void select(void) = 0;
-    /*! Start a backward generation (from the end of the block) */
-    void startBackwardGeneration(void);
-    /*! End backward code generation and output the code in the block */
-    void endBackwardGeneration(void);
+    void select(void);
+    /*! Bool and scalar register use scalar physical registers */
+    bool isScalarOrBool(ir::Register reg) const;
+    /*! Get the number of instructions of the largest block */
+    uint32_t getLargestBlockSize(void) const;
+    /*! Number of register vectors in the selection */
+    uint32_t getVectorNum(void) const;
+    /*! Number of registers (temporary are created during selection) */
+    uint32_t getRegNum(void) const;
+    /*! Get the family for the given register */
+    ir::RegisterFamily getRegisterFamily(ir::Register reg) const;
+    /*! Get the data for the given register */
+    ir::RegisterData getRegisterData(ir::Register reg) const;
+    /*! Replace a source by the returned temporary register */
+    ir::Register replaceSrc(SelectionInstruction *insn, uint32_t regID);
+    /*! Replace a destination to the returned temporary register */
+    ir::Register replaceDst(SelectionInstruction *insn, uint32_t regID);
+    /*! Create a new selection instruction */
+    SelectionInstruction *create(SelectionOpcode, uint32_t dstNum, uint32_t srcNum);
     /*! Apply the given functor on all selection block */
     template <typename T>
     INLINE void foreach(const T &functor) const {
@@ -244,164 +248,15 @@ namespace gbe
         curr = succ;
       }
     }
-    /*! Get the number of instructions of the largest block */
-    uint32_t getLargestBlockSize(void) const;
-    /*! Number of register vectors in the selection */
-    INLINE uint32_t getVectorNum(void) const { return this->vectorNum; }
-    /*! Replace a source by the returned temporary register */
-    ir::Register replaceSrc(SelectionInstruction *insn, uint32_t regID);
-    /*! Replace a destination to the returned temporary register */
-    ir::Register replaceDst(SelectionInstruction *insn, uint32_t regID);
-    /*! Bool registers will use scalar words. So we will consider them as
-     *  scalars in Gen backend
-     */
-    bool isScalarOrBool(ir::Register reg) const;
-    /*! Get the data for the given register */
-    INLINE ir::RegisterData getRegisterData(ir::Register reg) const {
-      return file.get(reg);
-    }
-    /*! Get the family for the given register */
-    INLINE ir::RegisterFamily getRegisterFamily(ir::Register reg) const {
-      return file.get(reg).family;
-    }
-    /*! Registers in the register file */
-    INLINE uint32_t regNum(void) const { return file.regNum(); }
-    /*! Return the selection register from the GenIR one */
-    GenRegister selReg(ir::Register, ir::Type type = ir::TYPE_FLOAT) const;
-    /*! Compute the nth register part when using SIMD8 with Qn (n in 2,3,4) */
-    GenRegister selRegQn(ir::Register, uint32_t quarter, ir::Type type = ir::TYPE_FLOAT) const;
-    /*! Size of the stack (should be large enough) */
-    enum { MAX_STATE_NUM = 16 };
-    /*! Push the current instruction state */
-    INLINE void push(void) {
-      assert(stateNum < MAX_STATE_NUM);
-      stack[stateNum++] = curr;
-    }
-    /*! Pop the latest pushed state */
-    INLINE void pop(void) {
-      assert(stateNum > 0);
-      curr = stack[--stateNum];
-    }
-    /*! Create a new register in the register file and append it in the
-     *  temporary list of the current block
-     */
-    INLINE ir::Register reg(ir::RegisterFamily family) {
-      GBE_ASSERT(block != NULL);
-      const ir::Register reg = file.append(family);
-      block->append(reg);
-      return reg;
-    }
-    /*! Create a new selection instruction */
-    SelectionInstruction *newSelectionInstruction(SelectionOpcode, uint32_t dstNum, uint32_t srcNum);
-    /*! Append a block at the block stream tail. It becomes the current block */
-    void appendBlock(const ir::BasicBlock &bb);
-    /*! Append an instruction in the current block */
-    SelectionInstruction *appendInsn(SelectionOpcode, uint32_t dstNum, uint32_t srcNum);
-    /*! Append a new vector of registers in the current block */
-    SelectionVector *appendVector(void);
-    /*! To handle selection block allocation */
-    DECL_POOL(SelectionBlock, blockPool);
-    /*! To handle selection instruction allocation */
-    LinearAllocator insnAllocator;
-    /*! To handle selection vector allocation */
-    DECL_POOL(SelectionVector, vecPool);
-    /*! Owns this structure */
-    GenContext &ctx;
-    /*! Tail of the code fragment for backward code generation */
-    SelectionInstruction *bwdTail;
     /*! List of emitted blocks */
     SelectionBlock *blockHead, *blockTail;
-    /*! Currently processed block */
-    SelectionBlock *block;
-    /*! Current instruction state to use */
-    GenInstructionState curr;
-    /*! State used to encode the instructions */
-    GenInstructionState stack[MAX_STATE_NUM];
-    /*! We append new registers so we duplicate the function register file */
-    ir::RegisterFile file;
-    /*! Number of states currently pushed */
-    uint32_t stateNum;
-    /*! Number of vector allocated */
-    uint32_t vectorNum;
-    /*! If true, generate code backward */
-    bool bwdCodeGeneration;
-    /*! To make function prototypes more readable */
-    typedef const GenRegister &Reg;
-
-#define ALU1(OP) \
-  INLINE void OP(Reg dst, Reg src) { ALU1(SEL_OP_##OP, dst, src); }
-#define ALU2(OP) \
-  INLINE void OP(Reg dst, Reg src0, Reg src1) { ALU2(SEL_OP_##OP, dst, src0, src1); }
-#define ALU3(OP) \
-  INLINE void OP(Reg dst, Reg src0, Reg src1, Reg src2) { ALU3(SEL_OP_##OP, dst, src0, src1, src2); }
-    ALU1(MOV)
-    ALU1(RNDZ)
-    ALU1(RNDE)
-    ALU2(SEL)
-    ALU1(NOT)
-    ALU2(AND)
-    ALU2(OR)
-    ALU2(XOR)
-    ALU2(SHR)
-    ALU2(SHL)
-    ALU2(RSR)
-    ALU2(RSL)
-    ALU2(ASR)
-    ALU2(ADD)
-    ALU2(MUL)
-    ALU1(FRC)
-    ALU1(RNDD)
-    ALU2(MACH)
-    ALU1(LZD)
-    ALU3(MAD)
-#undef ALU1
-#undef ALU2
-#undef ALU3
-
-    /*! Encode a label instruction */
-    void LABEL(ir::LabelIndex label);
-    /*! Jump indexed instruction */
-    void JMPI(Reg src, ir::LabelIndex target);
-    /*! Compare instructions */
-    void CMP(uint32_t conditional, Reg src0, Reg src1);
-    /*! EOT is used to finish GPGPU threads */
-    void EOT(void);
-    /*! No-op */
-    void NOP(void);
-    /*! Wait instruction (used for the barrier) */
-    void WAIT(void);
-    /*! Untyped read (up to 4 elements) */
-    void UNTYPED_READ(Reg addr, const GenRegister *dst, uint32_t elemNum, uint32_t bti);
-    /*! Untyped write (up to 4 elements) */
-    void UNTYPED_WRITE(Reg addr, const GenRegister *src, uint32_t elemNum, uint32_t bti);
-    /*! Byte gather (for unaligned bytes, shorts and ints) */
-    void BYTE_GATHER(Reg dst, Reg addr, uint32_t elemSize, uint32_t bti);
-    /*! Byte scatter (for unaligned bytes, shorts and ints) */
-    void BYTE_SCATTER(Reg addr, Reg src, uint32_t elemSize, uint32_t bti);
-    /*! Oblock read */
-    void OBREAD(Reg dst, Reg addr, Reg header, uint32_t bti, uint32_t size);
-    /*! Oblock write */
-    void OBWRITE(Reg addr, Reg value, Reg header, uint32_t bti, uint32_t size);
-    /*! Extended math function */
-    void MATH(Reg dst, uint32_t function, Reg src0, Reg src1);
-    /*! Encode unary instructions */
-    void ALU1(SelectionOpcode opcode, Reg dst, Reg src);
-    /*! Encode binary instructions */
-    void ALU2(SelectionOpcode opcode, Reg dst, Reg src0, Reg src1);
-    /*! Encode ternary instructions */
-    void ALU3(SelectionOpcode opcode, Reg dst, Reg src0, Reg src1, Reg src2);
-    /*! Encode regioning */
-    void REGION(Reg dst0, Reg dst1, const GenRegister *src, uint32_t offset, uint32_t vstride, uint32_t width, uint32_t hstride, uint32_t srcNum);
-    /*! Encode regioning */
-    void RGATHER(Reg dst, const GenRegister *src, uint32_t srcNum);
-    /*! Use custom allocators */
+    /*! Actual implementation of the register allocator (use Pimpl) */
+    class Opaque;
+    /*! Created and destroyed in cpp */
+    Opaque *opaque;
+    /*! Use custom allocator */
     GBE_CLASS(Selection);
-    friend class SelectionBlock;
-    friend class SelectionInstruction;
   };
-
-  /*! This is a simple one-to-many instruction selection */
-  Selection *newSelection(GenContext &ctx);
 
 } /* namespace gbe */
 

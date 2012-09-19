@@ -42,7 +42,7 @@ namespace gbe
     Context(unit, name)
   {
     this->p = GBE_NEW(GenEncoder, simdWidth, 7); // XXX handle more than Gen7
-    this->sel = newSelection(*this);
+    this->sel = GBE_NEW(Selection, *this);
     this->ra = GBE_NEW(GenRegAllocator, *this);
   }
 

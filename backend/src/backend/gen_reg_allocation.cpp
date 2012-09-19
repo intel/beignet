@@ -34,7 +34,7 @@
 namespace gbe
 {
   /////////////////////////////////////////////////////////////////////////////
-  // Register alloacator internal implementation
+  // Register allocator internal implementation
   /////////////////////////////////////////////////////////////////////////////
 
   /*! Provides the location of a register in a vector */
@@ -53,9 +53,6 @@ namespace gbe
     /*! Return the Gen register from the selection register */
     GenRegister genReg(const GenRegister &reg);
   private:
-    /*! Actual implementation of the register allocator (use Pimpl) */
-    class LinearScan;
-    LinearScan *linearScan;
     /*! Expire one GRF interval. Return true if one was successfully expired */
     bool expireGRF(const GenRegInterval &limit);
     /*! Expire a flag register. Return true if one was successfully expired */
@@ -310,7 +307,7 @@ namespace gbe
 
     // Perform the linear scan allocator on the flag registers only. We only use
     // two flags registers for the booleans right now: f1.0 and f1.1 
-    const uint32_t regNum = ctx.sel->regNum();
+    const uint32_t regNum = ctx.sel->getRegNum();
     uint32_t endID = 0; // interval to expire
     for (uint32_t startID = 0; startID < regNum; ++startID) {
       const GenRegInterval &interval = *this->starting[startID];
@@ -412,7 +409,7 @@ namespace gbe
         // When we let the boolean in a GRF, use f0.1 as a temporary
         else {
           // Mov the GRF to the flag such that the flag can be read
-          SelectionInstruction *mov0 = selection.newSelectionInstruction(SEL_OP_MOV,1,1);
+          SelectionInstruction *mov0 = selection.create(SEL_OP_MOV,1,1);
           mov0->state = GenInstructionState(1);
           mov0->state.predicate = GEN_PREDICATE_NONE;
           mov0->state.noMask = 1;
@@ -432,7 +429,7 @@ namespace gbe
           // Compare instructions update the flags so we must copy it back to
           // the GRF
           if (insn.opcode == SEL_OP_CMP) {
-            SelectionInstruction *mov1 = selection.newSelectionInstruction(SEL_OP_MOV,1,1);
+            SelectionInstruction *mov1 = selection.create(SEL_OP_MOV,1,1);
             mov1->state = mov0->state;
             mov1->dst(0) = mov0->src(0);
             mov1->src(0) = mov0->dst(0);
@@ -446,7 +443,7 @@ namespace gbe
   void GenRegAllocator::Opaque::allocateGRFs(Selection &selection) {
 
     // Perform the linear scan allocator
-    const uint32_t regNum = ctx.sel->regNum();
+    const uint32_t regNum = ctx.sel->getRegNum();
     for (uint32_t startID = 0; startID < regNum; ++startID) {
       const GenRegInterval &interval = *this->starting[startID];
       const ir::Register reg = interval.reg;
@@ -490,7 +487,7 @@ namespace gbe
     this->allocateVector(selection);
 
     // Now start the linear scan allocation
-    for (uint32_t regID = 0; regID < ctx.sel->regNum(); ++regID)
+    for (uint32_t regID = 0; regID < ctx.sel->getRegNum(); ++regID)
       this->intervals.push_back(ir::Register(regID));
 
     // Allocate the special registers (only those which are actually used)
@@ -625,7 +622,7 @@ namespace gbe
     }
 
     // Sort both intervals in starting point and ending point increasing orders
-    const uint32_t regNum = ctx.sel->regNum();
+    const uint32_t regNum = ctx.sel->getRegNum();
     this->starting.resize(regNum);
     this->ending.resize(regNum);
     for (uint32_t regID = 0; regID < regNum; ++regID)
@@ -675,7 +672,7 @@ namespace gbe
   }
 
   /////////////////////////////////////////////////////////////////////////////
-  // Register alloacator public implementation
+  // Register allocator public implementation
   /////////////////////////////////////////////////////////////////////////////
 
   GenRegAllocator::GenRegAllocator(GenContext &ctx) {

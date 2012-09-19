@@ -37,6 +37,10 @@ namespace gbe
   // SelectionInstruction
   ///////////////////////////////////////////////////////////////////////////
 
+  SelectionInstruction::SelectionInstruction(SelectionOpcode op, uint32_t dst, uint32_t src) :
+    parent(NULL), prev(NULL), next(NULL), opcode(op), dstNum(dst), srcNum(src)
+  {}
+
   void SelectionInstruction::prepend(SelectionInstruction &other) {
     SelectionInstruction *before = this->prev;
     this->prev = &other;
@@ -66,8 +70,19 @@ namespace gbe
   }
 
   ///////////////////////////////////////////////////////////////////////////
+  // SelectionVector
+  ///////////////////////////////////////////////////////////////////////////
+  SelectionVector::SelectionVector(void) :
+    insn(NULL), next(NULL), reg(NULL), regNum(0), isSrc(0)
+  {}
+
+  ///////////////////////////////////////////////////////////////////////////
   // SelectionBlock
   ///////////////////////////////////////////////////////////////////////////
+
+  SelectionBlock::SelectionBlock(const ir::BasicBlock *bb) :
+    insnHead(NULL), insnTail(NULL), vector(NULL), next(NULL), bb(bb)
+  {}
 
   void SelectionBlock::append(ir::Register reg) { tmp.push_back(reg); }
 
@@ -100,415 +115,7 @@ namespace gbe
   }
 
   ///////////////////////////////////////////////////////////////////////////
-  // Selection
-  ///////////////////////////////////////////////////////////////////////////
-
-  Selection::Selection(GenContext &ctx) :
-    ctx(ctx), bwdTail(NULL), blockHead(NULL), blockTail(NULL), block(NULL),
-    curr(ctx.getSimdWidth()), file(ctx.getFunction().getRegisterFile()),
-    stateNum(0), vectorNum(0), bwdCodeGeneration(false) {}
-
-  Selection::~Selection(void) {
-    while (this->blockHead) {
-      SelectionBlock *next = this->blockHead->next;
-      while (this->blockHead->vector) {
-        SelectionVector *next = this->blockHead->vector->next;
-        this->deleteSelectionVector(this->blockHead->vector);
-        this->blockHead->vector = next;
-      }
-      this->deleteSelectionBlock(this->blockHead);
-      this->blockHead = next;
-    }
-  }
-
-  SelectionInstruction *Selection::newSelectionInstruction(SelectionOpcode opcode,
-                                                           uint32_t dstNum,
-                                                           uint32_t srcNum)
-  {
-    const size_t regSize =  (dstNum+srcNum)*sizeof(GenRegister);
-    const size_t size = sizeof(SelectionInstruction) + regSize;
-    void *ptr = insnAllocator.allocate(size);
-    return new (ptr) SelectionInstruction(opcode, dstNum, srcNum);
-  }
-
-  void Selection::startBackwardGeneration(void) {
-    this->bwdCodeGeneration = true;
-  }
-
-  void Selection::endBackwardGeneration(void) {
-    // Attach the code fragment to the basic block
-    if (this->bwdTail) {
-      GBE_ASSERT(this->block != NULL);
-      // Prepend the code from last to first
-      while (this->bwdTail) {
-        this->block->prepend(this->bwdTail);
-        this->bwdTail = this->bwdTail->prev;
-      }
-    }
-    this->bwdTail = NULL;
-    this->bwdCodeGeneration = false;
-  }
-
-  uint32_t Selection::getLargestBlockSize(void) const {
-    uint32_t maxInsnNum = 0;
-    this->foreach([&](const SelectionBlock &bb) {
-      uint32_t insnNum = 0;
-      bb.foreach([&](const SelectionInstruction &insn) {insnNum++;});
-      maxInsnNum = std::max(maxInsnNum, insnNum);
-    });
-    return maxInsnNum;
-  }
-
-  void Selection::appendBlock(const ir::BasicBlock &bb) {
-    this->block = this->newSelectionBlock(&bb);
-    this->block->parent = this;
-    if (this->blockTail != NULL)
-      this->blockTail->next = this->block;
-    if (this->blockHead == NULL)
-      this->blockHead = this->block;
-    this->blockTail = this->block;
-  }
-
-  SelectionInstruction *Selection::appendInsn(SelectionOpcode opcode,
-                                              uint32_t dstNum,
-                                              uint32_t srcNum)
-  {
-    GBE_ASSERT(this->block != NULL);
-    SelectionInstruction *insn = this->newSelectionInstruction(opcode, dstNum, srcNum);
-    if (this->bwdCodeGeneration) {
-      if (this->bwdTail) {
-        this->bwdTail->next = insn;
-        insn->prev = this->bwdTail;
-      }
-      this->bwdTail = insn;
-    } else
-      this->block->append(insn);
-    insn->state = this->curr;
-    return insn;
-  }
-
-  SelectionVector *Selection::appendVector(void) {
-    GBE_ASSERT(this->block != NULL);
-    SelectionVector *vector = this->newSelectionVector();
-
-    if (this->bwdCodeGeneration) {
-      GBE_ASSERT(this->bwdTail != NULL);
-      vector->insn = this->bwdTail;
-    } else {
-      GBE_ASSERT(this->block->insnTail != NULL);
-      vector->insn = this->block->insnTail;
-    }
-    this->block->append(vector);
-    this->vectorNum++;
-    return vector;
-  }
-
-  ir::Register Selection::replaceSrc(SelectionInstruction *insn, uint32_t regID) {
-    SelectionBlock *block = insn->parent;
-    const uint32_t simdWidth = ctx.getSimdWidth();
-    ir::Register tmp;
-
-    // This will append the temporary register in the instruction block
-    this->block = block;
-    tmp = this->reg(ir::FAMILY_DWORD);
-
-    // Generate the MOV instruction and replace the register in the instruction
-    SelectionInstruction *mov = this->newSelectionInstruction(SEL_OP_MOV, 1, 1);
-    mov->src(0) = GenRegister::retype(insn->src(regID), GEN_TYPE_F);
-    mov->state = GenInstructionState(simdWidth);
-    insn->src(regID) = mov->dst(0) = GenRegister::fxgrf(simdWidth, tmp);
-    insn->prepend(*mov);
-
-    return tmp;
-  }
-
-  ir::Register Selection::replaceDst(SelectionInstruction *insn, uint32_t regID) {
-    SelectionBlock *block = insn->parent;
-    const uint32_t simdWidth = ctx.getSimdWidth();
-    ir::Register tmp;
-
-    // This will append the temporary register in the instruction block
-    this->block = block;
-    tmp = this->reg(ir::FAMILY_DWORD);
-
-    // Generate the MOV instruction and replace the register in the instruction
-    SelectionInstruction *mov = this->newSelectionInstruction(SEL_OP_MOV, 1, 1);
-    mov->dst(0) = GenRegister::retype(insn->dst(regID), GEN_TYPE_F);
-    mov->state = GenInstructionState(simdWidth);
-    insn->dst(regID) = mov->src(0) = GenRegister::fxgrf(simdWidth, tmp);
-    insn->append(*mov);
-
-    return tmp;
-  }
-
-  bool Selection::isScalarOrBool(ir::Register reg) const {
-    if (ctx.isScalarReg(reg))
-      return true;
-    else {
-      const ir::RegisterFamily family = file.get(reg).family;
-      return family == ir::FAMILY_BOOL;
-    }
-  }
-
-#define SEL_REG(SIMD16, SIMD8, SIMD1) \
-  if (ctx.sel->isScalarOrBool(reg) == true) \
-    return GenRegister::retype(GenRegister::SIMD1(reg), genType); \
-  else if (simdWidth == 8) \
-    return GenRegister::retype(GenRegister::SIMD8(reg), genType); \
-  else { \
-    GBE_ASSERT (simdWidth == 16); \
-    return GenRegister::retype(GenRegister::SIMD16(reg), genType); \
-  }
-
-  GenRegister Selection::selReg(ir::Register reg, ir::Type type) const {
-    using namespace ir;
-    const uint32_t genType = getGenType(type);
-    const uint32_t simdWidth = ctx.getSimdWidth();
-    const RegisterData data = file.get(reg);
-    const RegisterFamily family = data.family;
-    switch (family) {
-      case FAMILY_BOOL: SEL_REG(uw1grf, uw1grf, uw1grf); break;
-      case FAMILY_WORD: SEL_REG(uw16grf, uw8grf, uw1grf); break;
-      case FAMILY_BYTE: SEL_REG(ub16grf, ub8grf, ub1grf); break;
-      case FAMILY_DWORD: SEL_REG(f16grf, f8grf, f1grf); break;
-      default: NOT_SUPPORTED;
-    }
-    GBE_ASSERT(false);
-    return GenRegister();
-  }
-
-#undef SEL_REG
-
-  GenRegister Selection::selRegQn(ir::Register reg, uint32_t q, ir::Type type) const {
-    GenRegister sreg = this->selReg(reg, type);
-    sreg.quarter = q;
-    return sreg;
-  }
-
-  /*! Syntactic sugar for method declaration */
-  typedef const GenRegister &Reg;
-
-  void Selection::LABEL(ir::LabelIndex index) {
-    SelectionInstruction *insn = this->appendInsn(SEL_OP_LABEL, 0, 0);
-    insn->index = uint16_t(index);
-  }
-
-  void Selection::JMPI(Reg src, ir::LabelIndex index) {
-    SelectionInstruction *insn = this->appendInsn(SEL_OP_JMPI, 0, 1);
-    insn->src(0) = src;
-    insn->index = uint16_t(index);
-  }
-
-  void Selection::CMP(uint32_t conditional, Reg src0, Reg src1) {
-    SelectionInstruction *insn = this->appendInsn(SEL_OP_CMP, 0, 2);
-    insn->src(0) = src0;
-    insn->src(1) = src1;
-    insn->extra.function = conditional;
-  }
-
-  void Selection::EOT(void) { this->appendInsn(SEL_OP_EOT, 0, 0); }
-  void Selection::NOP(void) { this->appendInsn(SEL_OP_NOP, 0, 0); }
-  void Selection::WAIT(void) { this->appendInsn(SEL_OP_WAIT, 0, 0); }
-
-  void Selection::UNTYPED_READ(Reg addr,
-                               const GenRegister *dst,
-                               uint32_t elemNum,
-                               uint32_t bti)
-  {
-    SelectionInstruction *insn = this->appendInsn(SEL_OP_UNTYPED_READ, elemNum, 1);
-    SelectionVector *srcVector = this->appendVector();
-    SelectionVector *dstVector = this->appendVector();
-
-    // Regular instruction to encode
-    for (uint32_t elemID = 0; elemID < elemNum; ++elemID)
-      insn->dst(elemID) = dst[elemID];
-    insn->src(0) = addr;
-    insn->extra.function = bti;
-    insn->extra.elem = elemNum;
-
-    // Sends require contiguous allocation
-    dstVector->regNum = elemNum;
-    dstVector->isSrc = 0;
-    dstVector->reg = &insn->dst(0);
-
-    // Source cannot be scalar (yet)
-    srcVector->regNum = 1;
-    srcVector->isSrc = 1;
-    srcVector->reg = &insn->src(0);
-  }
-
-  void Selection::UNTYPED_WRITE(Reg addr,
-                                const GenRegister *src,
-                                uint32_t elemNum,
-                                uint32_t bti)
-  {
-    SelectionInstruction *insn = this->appendInsn(SEL_OP_UNTYPED_WRITE, 0, elemNum+1);
-    SelectionVector *vector = this->appendVector();
-
-    // Regular instruction to encode
-    insn->src(0) = addr;
-    for (uint32_t elemID = 0; elemID < elemNum; ++elemID)
-      insn->src(elemID+1) = src[elemID];
-    insn->extra.function = bti;
-    insn->extra.elem = elemNum;
-
-    // Sends require contiguous allocation for the sources
-    vector->regNum = elemNum+1;
-    vector->reg = &insn->src(0);
-    vector->isSrc = 1;
-  }
-
-  void Selection::BYTE_GATHER(Reg dst, Reg addr, uint32_t elemSize, uint32_t bti) {
-    SelectionInstruction *insn = this->appendInsn(SEL_OP_BYTE_GATHER, 1, 1);
-    SelectionVector *srcVector = this->appendVector();
-    SelectionVector *dstVector = this->appendVector();
-
-    // Instruction to encode
-    insn->src(0) = addr;
-    insn->dst(0) = dst;
-    insn->extra.function = bti;
-    insn->extra.elem = elemSize;
-
-    // byte gather requires vector in the sense that scalar are not allowed
-    // (yet)
-    dstVector->regNum = 1;
-    dstVector->isSrc = 0;
-    dstVector->reg = &insn->dst(0);
-    srcVector->regNum = 1;
-    srcVector->isSrc = 1;
-    srcVector->reg = &insn->src(0);
-  }
-
-  void Selection::BYTE_SCATTER(Reg addr, Reg src, uint32_t elemSize, uint32_t bti) {
-    SelectionInstruction *insn = this->appendInsn(SEL_OP_BYTE_SCATTER, 0, 2);
-    SelectionVector *vector = this->appendVector();
-
-    // Instruction to encode
-    insn->src(0) = addr;
-    insn->src(1) = src;
-    insn->extra.function = bti;
-    insn->extra.elem = elemSize;
-
-    // value and address are contiguous in the send
-    vector->regNum = 2;
-    vector->isSrc = 1;
-    vector->reg = &insn->src(0);
-  }
-
-  void Selection::MATH(Reg dst, uint32_t function, Reg src0, Reg src1) {
-    SelectionInstruction *insn = this->appendInsn(SEL_OP_MATH, 1, 2);
-    insn->dst(0) = dst;
-    insn->src(0) = src0;
-    insn->src(1) = src1;
-    insn->extra.function = function;
-  }
-
-  void Selection::ALU1(SelectionOpcode opcode, Reg dst, Reg src) {
-    SelectionInstruction *insn = this->appendInsn(opcode, 1, 1);
-    insn->dst(0) = dst;
-    insn->src(0) = src;
-  }
-
-  void Selection::ALU2(SelectionOpcode opcode, Reg dst, Reg src0, Reg src1) {
-    SelectionInstruction *insn = this->appendInsn(opcode, 1, 2);
-    insn->dst(0) = dst;
-    insn->src(0) = src0;
-    insn->src(1) = src1;
-  }
-
-  void Selection::ALU3(SelectionOpcode opcode, Reg dst, Reg src0, Reg src1, Reg src2) {
-    SelectionInstruction *insn = this->appendInsn(opcode, 1, 3);
-    insn->dst(0) = dst;
-    insn->src(0) = src0;
-    insn->src(1) = src1;
-    insn->src(2) = src2;
-  }
-
-  void Selection::REGION(Reg dst0, Reg dst1, const GenRegister *src,
-                         uint32_t offset, uint32_t vstride,
-                         uint32_t width, uint32_t hstride,
-                         uint32_t srcNum)
-  {
-    SelectionInstruction *insn = this->appendInsn(SEL_OP_REGION, 2, srcNum);
-    SelectionVector *vector = this->appendVector();
-
-    // Instruction to encode
-    insn->dst(0) = dst0;
-    insn->dst(1) = dst1;
-    GBE_ASSERT(srcNum <= SelectionInstruction::MAX_SRC_NUM);
-    for (uint32_t srcID = 0; srcID < srcNum; ++srcID)
-      insn->src(srcID) = src[srcID];
-    insn->extra.vstride = vstride;
-    insn->extra.width = width;
-    insn->extra.offset = offset;
-    insn->extra.hstride = hstride;
-
-    // Regioning requires contiguous allocation for the sources
-    vector->regNum = srcNum;
-    vector->reg = &insn->src(0);
-    vector->isSrc = 1;
-  }
-
-  void Selection::RGATHER(Reg dst, const GenRegister *src, uint32_t srcNum)
-  {
-    SelectionInstruction *insn = this->appendInsn(SEL_OP_RGATHER, 1, srcNum);
-    SelectionVector *vector = this->appendVector();
-
-    // Instruction to encode
-    insn->dst(0) = dst;
-    GBE_ASSERT(srcNum <= SelectionInstruction::MAX_SRC_NUM);
-    for (uint32_t srcID = 0; srcID < srcNum; ++srcID)
-      insn->src(srcID) = src[srcID];
-
-    // Regioning requires contiguous allocation for the sources
-    vector->regNum = srcNum;
-    vector->reg = &insn->src(0);
-    vector->isSrc = 1;
-  }
-
-  void Selection::OBREAD(Reg dst, Reg addr, Reg header, uint32_t bti, uint32_t size) {
-    SelectionInstruction *insn = this->appendInsn(SEL_OP_OBREAD, 1, 2);
-    insn->dst(0) = dst;
-    insn->src(0) = addr;
-    insn->src(1) = header;
-    insn->extra.function = bti;
-    insn->extra.elem = size / sizeof(int[4]); // number of owords
-  }
-
-  void Selection::OBWRITE(Reg addr, Reg value, Reg header, uint32_t bti, uint32_t size) {
-    SelectionInstruction *insn = this->appendInsn(SEL_OP_OBWRITE, 0, 3);
-    SelectionVector *vector = this->appendVector();
-    insn->opcode = SEL_OP_OBWRITE;
-    insn->src(0) = header;
-    insn->src(1) = value;
-    insn->src(2) = addr;
-    insn->state = this->curr;
-    insn->extra.function = bti;
-    insn->extra.elem = size / sizeof(int[4]); // number of owords
-
-    // We need to put the header and the data together
-    vector->regNum = 2;
-    vector->reg = &insn->src(0);
-    vector->isSrc = 1;
-  }
-
-  GenRegister getRegisterFromImmediate(ir::Immediate imm) 
-  {
-    using namespace ir;
-    switch (imm.type) {
-      case TYPE_U32:   return GenRegister::immud(imm.data.u32);
-      case TYPE_S32:   return GenRegister::immd(imm.data.s32);
-      case TYPE_FLOAT: return GenRegister::immf(imm.data.f32);
-      case TYPE_U16: return GenRegister::immuw(imm.data.u16);
-      case TYPE_S16: return  GenRegister::immw(imm.data.s16);
-      case TYPE_U8:  return GenRegister::immuw(imm.data.u8);
-      case TYPE_S8:  return GenRegister::immw(imm.data.s8);
-      default: NOT_SUPPORTED; return GenRegister::immuw(0);
-    }
-  }
-
-  ///////////////////////////////////////////////////////////////////////////
-  // Maximal munch selection on the DAG
+  // Maximal munch selection on DAG
   ///////////////////////////////////////////////////////////////////////////
 
   /*! All instructions in a block are organized into a DAG */
@@ -548,7 +155,7 @@ namespace gbe
     /*! This is an abstract class */
     virtual ~SelectionPattern(void) {}
     /*! Emit Gen code in the selection. Return false if no match */
-    virtual bool emit(Selection &sel, SelectionDAG &dag) const = 0;
+    virtual bool emit(Selection::Opaque &sel, SelectionDAG &dag) const = 0;
     /*! Directly mark all sources as root (when no match is found) */
     void markAllChildren(SelectionDAG &dag) const {
       // Do not merge anything, so all sources become roots
@@ -584,6 +191,804 @@ namespace gbe
     vector<const SelectionPattern*> toFree;
   };
 
+  ///////////////////////////////////////////////////////////////////////////
+  // Code selection internal implementation
+  ///////////////////////////////////////////////////////////////////////////
+
+  /*! Actual implementation of the instruction selection engine */
+  class Selection::Opaque
+  {
+  public:
+    /*! simdWidth is the default width for the instructions */
+    Opaque(GenContext &ctx);
+    /*! Release everything */
+    virtual ~Opaque(void);
+    /*! Implements the instruction selection itself */
+    void select(void);
+    /*! Start a backward generation (from the end of the block) */
+    void startBackwardGeneration(void);
+    /*! End backward code generation and output the code in the block */
+    void endBackwardGeneration(void);
+    /*! Apply the given functor on all selection block */
+    template <typename T>
+    INLINE void foreach(const T &functor) const {
+      SelectionBlock *curr = blockHead;
+      while (curr) {
+        SelectionBlock *succ = curr->next;
+        functor(*curr);
+        curr = succ;
+      }
+    }
+    /*! Implement public class */
+    uint32_t getLargestBlockSize(void) const;
+    /*! Implement public class */
+    INLINE uint32_t getVectorNum(void) const { return this->vectorNum; }
+    /*! Implement public class */
+    INLINE ir::Register replaceSrc(SelectionInstruction *insn, uint32_t regID);
+    /*! Implement public class */
+    INLINE ir::Register replaceDst(SelectionInstruction *insn, uint32_t regID);
+    /*! Implement public class */
+    INLINE uint32_t getRegNum(void) const { return file.regNum(); }
+    /*! Implements public interface */
+    bool isScalarOrBool(ir::Register reg) const;
+    /*! Implements public interface */
+    INLINE ir::RegisterData getRegisterData(ir::Register reg) const {
+      return file.get(reg);
+    }
+    /*! Implement public class */
+    INLINE ir::RegisterFamily getRegisterFamily(ir::Register reg) const {
+      return file.get(reg).family;
+    }
+    /*! Implement public class */
+    SelectionInstruction *create(SelectionOpcode, uint32_t dstNum, uint32_t srcNum);
+    /*! Return the selection register from the GenIR one */
+    GenRegister selReg(ir::Register, ir::Type type = ir::TYPE_FLOAT) const;
+    /*! Compute the nth register part when using SIMD8 with Qn (n in 2,3,4) */
+    GenRegister selRegQn(ir::Register, uint32_t quarter, ir::Type type = ir::TYPE_FLOAT) const;
+    /*! Size of the stack (should be large enough) */
+    enum { MAX_STATE_NUM = 16 };
+    /*! Push the current instruction state */
+    INLINE void push(void) {
+      assert(stateNum < MAX_STATE_NUM);
+      stack[stateNum++] = curr;
+    }
+    /*! Pop the latest pushed state */
+    INLINE void pop(void) {
+      assert(stateNum > 0);
+      curr = stack[--stateNum];
+    }
+    /*! Create a new register in the register file and append it in the
+     *  temporary list of the current block
+     */
+    INLINE ir::Register reg(ir::RegisterFamily family) {
+      GBE_ASSERT(block != NULL);
+      const ir::Register reg = file.append(family);
+      block->append(reg);
+      return reg;
+    }
+    /*! Append a block at the block stream tail. It becomes the current block */
+    void appendBlock(const ir::BasicBlock &bb);
+    /*! Append an instruction in the current block */
+    SelectionInstruction *appendInsn(SelectionOpcode, uint32_t dstNum, uint32_t srcNum);
+    /*! Append a new vector of registers in the current block */
+    SelectionVector *appendVector(void);
+    /*! Build a DAG for the basic block (return number of instructions) */
+    uint32_t buildBasicBlockDAG(const ir::BasicBlock &bb);
+    /*! Perform the selection on the basic block */
+    void matchBasicBlock(uint32_t insnNum);
+    /*! A root instruction needs to be generated */
+    bool isRoot(const ir::Instruction &insn) const;
+
+    /*! To handle selection block allocation */
+    DECL_POOL(SelectionBlock, blockPool);
+    /*! To handle selection instruction allocation */
+    LinearAllocator insnAllocator;
+    /*! To handle selection vector allocation */
+    DECL_POOL(SelectionVector, vecPool);
+    /*! Per register information used with top-down block sweeping */
+    vector<SelectionDAG*> regDAG;
+    /*! Store one DAG per instruction */
+    vector<SelectionDAG*> insnDAG;
+    /*! Owns this structure */
+    GenContext &ctx;
+    /*! Tail of the code fragment for backward code generation */
+    SelectionInstruction *bwdTail;
+    /*! List of emitted blocks */
+    SelectionBlock *blockHead, *blockTail;
+    /*! Currently processed block */
+    SelectionBlock *block;
+    /*! Current instruction state to use */
+    GenInstructionState curr;
+    /*! We append new registers so we duplicate the function register file */
+    ir::RegisterFile file;
+    /*! State used to encode the instructions */
+    GenInstructionState stack[MAX_STATE_NUM];
+    /*! Maximum number of instructions in the basic blocks */
+    uint32_t maxInsnNum;
+    /*! Speed up instruction dag allocation */
+    DECL_POOL(SelectionDAG, dagPool);
+    /*! Total number of registers in the function we encode */
+    uint32_t regNum;
+    /*! Number of states currently pushed */
+    uint32_t stateNum;
+    /*! Number of vector allocated */
+    uint32_t vectorNum;
+    /*! If true, generate code backward */
+    bool bwdCodeGeneration;
+    /*! To make function prototypes more readable */
+    typedef const GenRegister &Reg;
+
+#define ALU1(OP) \
+  INLINE void OP(Reg dst, Reg src) { ALU1(SEL_OP_##OP, dst, src); }
+#define ALU2(OP) \
+  INLINE void OP(Reg dst, Reg src0, Reg src1) { ALU2(SEL_OP_##OP, dst, src0, src1); }
+#define ALU3(OP) \
+  INLINE void OP(Reg dst, Reg src0, Reg src1, Reg src2) { ALU3(SEL_OP_##OP, dst, src0, src1, src2); }
+    ALU1(MOV)
+    ALU1(RNDZ)
+    ALU1(RNDE)
+    ALU2(SEL)
+    ALU1(NOT)
+    ALU2(AND)
+    ALU2(OR)
+    ALU2(XOR)
+    ALU2(SHR)
+    ALU2(SHL)
+    ALU2(RSR)
+    ALU2(RSL)
+    ALU2(ASR)
+    ALU2(ADD)
+    ALU2(MUL)
+    ALU1(FRC)
+    ALU1(RNDD)
+    ALU2(MACH)
+    ALU1(LZD)
+    ALU3(MAD)
+#undef ALU1
+#undef ALU2
+#undef ALU3
+
+    /*! Encode a label instruction */
+    void LABEL(ir::LabelIndex label);
+    /*! Jump indexed instruction */
+    void JMPI(Reg src, ir::LabelIndex target);
+    /*! Compare instructions */
+    void CMP(uint32_t conditional, Reg src0, Reg src1);
+    /*! EOT is used to finish GPGPU threads */
+    void EOT(void);
+    /*! No-op */
+    void NOP(void);
+    /*! Wait instruction (used for the barrier) */
+    void WAIT(void);
+    /*! Untyped read (up to 4 elements) */
+    void UNTYPED_READ(Reg addr, const GenRegister *dst, uint32_t elemNum, uint32_t bti);
+    /*! Untyped write (up to 4 elements) */
+    void UNTYPED_WRITE(Reg addr, const GenRegister *src, uint32_t elemNum, uint32_t bti);
+    /*! Byte gather (for unaligned bytes, shorts and ints) */
+    void BYTE_GATHER(Reg dst, Reg addr, uint32_t elemSize, uint32_t bti);
+    /*! Byte scatter (for unaligned bytes, shorts and ints) */
+    void BYTE_SCATTER(Reg addr, Reg src, uint32_t elemSize, uint32_t bti);
+    /*! Oblock read */
+    void OBREAD(Reg dst, Reg addr, Reg header, uint32_t bti, uint32_t size);
+    /*! Oblock write */
+    void OBWRITE(Reg addr, Reg value, Reg header, uint32_t bti, uint32_t size);
+    /*! Extended math function */
+    void MATH(Reg dst, uint32_t function, Reg src0, Reg src1);
+    /*! Encode unary instructions */
+    void ALU1(SelectionOpcode opcode, Reg dst, Reg src);
+    /*! Encode binary instructions */
+    void ALU2(SelectionOpcode opcode, Reg dst, Reg src0, Reg src1);
+    /*! Encode ternary instructions */
+    void ALU3(SelectionOpcode opcode, Reg dst, Reg src0, Reg src1, Reg src2);
+    /*! Encode regioning */
+    void REGION(Reg dst0, Reg dst1, const GenRegister *src, uint32_t offset, uint32_t vstride, uint32_t width, uint32_t hstride, uint32_t srcNum);
+    /*! Encode regioning */
+    void RGATHER(Reg dst, const GenRegister *src, uint32_t srcNum);
+    /*! Use custom allocators */
+    GBE_CLASS(Opaque);
+    friend class SelectionBlock;
+    friend class SelectionInstruction;
+  };
+
+  Selection::Opaque::Opaque(GenContext &ctx) :
+    ctx(ctx), bwdTail(NULL), blockHead(NULL), blockTail(NULL), block(NULL),
+    curr(ctx.getSimdWidth()), file(ctx.getFunction().getRegisterFile()),
+    maxInsnNum(ctx.getFunction().getLargestBlockSize()), dagPool(maxInsnNum),
+    stateNum(0), vectorNum(0), bwdCodeGeneration(false)
+  {
+    const ir::Function &fn = ctx.getFunction();
+    this->regNum = fn.regNum();
+    this->regDAG.resize(regNum);
+    this->insnDAG.resize(maxInsnNum);
+  }
+
+  Selection::Opaque::~Opaque(void) {
+    while (this->blockHead) {
+      SelectionBlock *next = this->blockHead->next;
+      while (this->blockHead->vector) {
+        SelectionVector *next = this->blockHead->vector->next;
+        this->deleteSelectionVector(this->blockHead->vector);
+        this->blockHead->vector = next;
+      }
+      this->deleteSelectionBlock(this->blockHead);
+      this->blockHead = next;
+    }
+  }
+
+  SelectionInstruction*
+  Selection::Opaque::create(SelectionOpcode opcode, uint32_t dstNum, uint32_t srcNum)
+  {
+    const size_t regSize =  (dstNum+srcNum)*sizeof(GenRegister);
+    const size_t size = sizeof(SelectionInstruction) + regSize;
+    void *ptr = insnAllocator.allocate(size);
+    return new (ptr) SelectionInstruction(opcode, dstNum, srcNum);
+  }
+
+  void Selection::Opaque::startBackwardGeneration(void) {
+    this->bwdCodeGeneration = true;
+  }
+
+  void Selection::Opaque::endBackwardGeneration(void) {
+    // Attach the code fragment to the basic block
+    if (this->bwdTail) {
+      GBE_ASSERT(this->block != NULL);
+      // Prepend the code from last to first
+      while (this->bwdTail) {
+        this->block->prepend(this->bwdTail);
+        this->bwdTail = this->bwdTail->prev;
+      }
+    }
+    this->bwdTail = NULL;
+    this->bwdCodeGeneration = false;
+  }
+
+  uint32_t Selection::Opaque::getLargestBlockSize(void) const {
+    uint32_t maxInsnNum = 0;
+    this->foreach([&](const SelectionBlock &bb) {
+      uint32_t insnNum = 0;
+      bb.foreach([&](const SelectionInstruction &insn) {insnNum++;});
+      maxInsnNum = std::max(maxInsnNum, insnNum);
+    });
+    return maxInsnNum;
+  }
+
+  void Selection::Opaque::appendBlock(const ir::BasicBlock &bb) {
+    this->block = this->newSelectionBlock(&bb);
+    if (this->blockTail != NULL)
+      this->blockTail->next = this->block;
+    if (this->blockHead == NULL)
+      this->blockHead = this->block;
+    this->blockTail = this->block;
+  }
+
+  SelectionInstruction *Selection::Opaque::appendInsn(SelectionOpcode opcode,
+                                              uint32_t dstNum,
+                                              uint32_t srcNum)
+  {
+    GBE_ASSERT(this->block != NULL);
+    SelectionInstruction *insn = this->create(opcode, dstNum, srcNum);
+    if (this->bwdCodeGeneration) {
+      if (this->bwdTail) {
+        this->bwdTail->next = insn;
+        insn->prev = this->bwdTail;
+      }
+      this->bwdTail = insn;
+    } else
+      this->block->append(insn);
+    insn->state = this->curr;
+    return insn;
+  }
+
+  SelectionVector *Selection::Opaque::appendVector(void) {
+    GBE_ASSERT(this->block != NULL);
+    SelectionVector *vector = this->newSelectionVector();
+
+    if (this->bwdCodeGeneration) {
+      GBE_ASSERT(this->bwdTail != NULL);
+      vector->insn = this->bwdTail;
+    } else {
+      GBE_ASSERT(this->block->insnTail != NULL);
+      vector->insn = this->block->insnTail;
+    }
+    this->block->append(vector);
+    this->vectorNum++;
+    return vector;
+  }
+
+  ir::Register Selection::Opaque::replaceSrc(SelectionInstruction *insn, uint32_t regID) {
+    SelectionBlock *block = insn->parent;
+    const uint32_t simdWidth = ctx.getSimdWidth();
+    ir::Register tmp;
+
+    // This will append the temporary register in the instruction block
+    this->block = block;
+    tmp = this->reg(ir::FAMILY_DWORD);
+
+    // Generate the MOV instruction and replace the register in the instruction
+    SelectionInstruction *mov = this->create(SEL_OP_MOV, 1, 1);
+    mov->src(0) = GenRegister::retype(insn->src(regID), GEN_TYPE_F);
+    mov->state = GenInstructionState(simdWidth);
+    insn->src(regID) = mov->dst(0) = GenRegister::fxgrf(simdWidth, tmp);
+    insn->prepend(*mov);
+
+    return tmp;
+  }
+
+  ir::Register Selection::Opaque::replaceDst(SelectionInstruction *insn, uint32_t regID) {
+    SelectionBlock *block = insn->parent;
+    const uint32_t simdWidth = ctx.getSimdWidth();
+    ir::Register tmp;
+
+    // This will append the temporary register in the instruction block
+    this->block = block;
+    tmp = this->reg(ir::FAMILY_DWORD);
+
+    // Generate the MOV instruction and replace the register in the instruction
+    SelectionInstruction *mov = this->create(SEL_OP_MOV, 1, 1);
+    mov->dst(0) = GenRegister::retype(insn->dst(regID), GEN_TYPE_F);
+    mov->state = GenInstructionState(simdWidth);
+    insn->dst(regID) = mov->src(0) = GenRegister::fxgrf(simdWidth, tmp);
+    insn->append(*mov);
+
+    return tmp;
+  }
+
+  bool Selection::Opaque::isScalarOrBool(ir::Register reg) const {
+    if (ctx.isScalarReg(reg))
+      return true;
+    else {
+      const ir::RegisterFamily family = file.get(reg).family;
+      return family == ir::FAMILY_BOOL;
+    }
+  }
+
+#define SEL_REG(SIMD16, SIMD8, SIMD1) \
+  if (ctx.sel->isScalarOrBool(reg) == true) \
+    return GenRegister::retype(GenRegister::SIMD1(reg), genType); \
+  else if (simdWidth == 8) \
+    return GenRegister::retype(GenRegister::SIMD8(reg), genType); \
+  else { \
+    GBE_ASSERT (simdWidth == 16); \
+    return GenRegister::retype(GenRegister::SIMD16(reg), genType); \
+  }
+
+  GenRegister Selection::Opaque::selReg(ir::Register reg, ir::Type type) const {
+    using namespace ir;
+    const uint32_t genType = getGenType(type);
+    const uint32_t simdWidth = ctx.getSimdWidth();
+    const RegisterData data = file.get(reg);
+    const RegisterFamily family = data.family;
+    switch (family) {
+      case FAMILY_BOOL: SEL_REG(uw1grf, uw1grf, uw1grf); break;
+      case FAMILY_WORD: SEL_REG(uw16grf, uw8grf, uw1grf); break;
+      case FAMILY_BYTE: SEL_REG(ub16grf, ub8grf, ub1grf); break;
+      case FAMILY_DWORD: SEL_REG(f16grf, f8grf, f1grf); break;
+      default: NOT_SUPPORTED;
+    }
+    GBE_ASSERT(false);
+    return GenRegister();
+  }
+
+#undef SEL_REG
+
+  GenRegister Selection::Opaque::selRegQn(ir::Register reg, uint32_t q, ir::Type type) const {
+    GenRegister sreg = this->selReg(reg, type);
+    sreg.quarter = q;
+    return sreg;
+  }
+
+  /*! Syntactic sugar for method declaration */
+  typedef const GenRegister &Reg;
+
+  void Selection::Opaque::LABEL(ir::LabelIndex index) {
+    SelectionInstruction *insn = this->appendInsn(SEL_OP_LABEL, 0, 0);
+    insn->index = uint16_t(index);
+  }
+
+  void Selection::Opaque::JMPI(Reg src, ir::LabelIndex index) {
+    SelectionInstruction *insn = this->appendInsn(SEL_OP_JMPI, 0, 1);
+    insn->src(0) = src;
+    insn->index = uint16_t(index);
+  }
+
+  void Selection::Opaque::CMP(uint32_t conditional, Reg src0, Reg src1) {
+    SelectionInstruction *insn = this->appendInsn(SEL_OP_CMP, 0, 2);
+    insn->src(0) = src0;
+    insn->src(1) = src1;
+    insn->extra.function = conditional;
+  }
+
+  void Selection::Opaque::EOT(void) { this->appendInsn(SEL_OP_EOT, 0, 0); }
+  void Selection::Opaque::NOP(void) { this->appendInsn(SEL_OP_NOP, 0, 0); }
+  void Selection::Opaque::WAIT(void) { this->appendInsn(SEL_OP_WAIT, 0, 0); }
+
+  void Selection::Opaque::UNTYPED_READ(Reg addr,
+                               const GenRegister *dst,
+                               uint32_t elemNum,
+                               uint32_t bti)
+  {
+    SelectionInstruction *insn = this->appendInsn(SEL_OP_UNTYPED_READ, elemNum, 1);
+    SelectionVector *srcVector = this->appendVector();
+    SelectionVector *dstVector = this->appendVector();
+
+    // Regular instruction to encode
+    for (uint32_t elemID = 0; elemID < elemNum; ++elemID)
+      insn->dst(elemID) = dst[elemID];
+    insn->src(0) = addr;
+    insn->extra.function = bti;
+    insn->extra.elem = elemNum;
+
+    // Sends require contiguous allocation
+    dstVector->regNum = elemNum;
+    dstVector->isSrc = 0;
+    dstVector->reg = &insn->dst(0);
+
+    // Source cannot be scalar (yet)
+    srcVector->regNum = 1;
+    srcVector->isSrc = 1;
+    srcVector->reg = &insn->src(0);
+  }
+
+  void Selection::Opaque::UNTYPED_WRITE(Reg addr,
+                                const GenRegister *src,
+                                uint32_t elemNum,
+                                uint32_t bti)
+  {
+    SelectionInstruction *insn = this->appendInsn(SEL_OP_UNTYPED_WRITE, 0, elemNum+1);
+    SelectionVector *vector = this->appendVector();
+
+    // Regular instruction to encode
+    insn->src(0) = addr;
+    for (uint32_t elemID = 0; elemID < elemNum; ++elemID)
+      insn->src(elemID+1) = src[elemID];
+    insn->extra.function = bti;
+    insn->extra.elem = elemNum;
+
+    // Sends require contiguous allocation for the sources
+    vector->regNum = elemNum+1;
+    vector->reg = &insn->src(0);
+    vector->isSrc = 1;
+  }
+
+  void Selection::Opaque::BYTE_GATHER(Reg dst, Reg addr, uint32_t elemSize, uint32_t bti) {
+    SelectionInstruction *insn = this->appendInsn(SEL_OP_BYTE_GATHER, 1, 1);
+    SelectionVector *srcVector = this->appendVector();
+    SelectionVector *dstVector = this->appendVector();
+
+    // Instruction to encode
+    insn->src(0) = addr;
+    insn->dst(0) = dst;
+    insn->extra.function = bti;
+    insn->extra.elem = elemSize;
+
+    // byte gather requires vector in the sense that scalar are not allowed
+    // (yet)
+    dstVector->regNum = 1;
+    dstVector->isSrc = 0;
+    dstVector->reg = &insn->dst(0);
+    srcVector->regNum = 1;
+    srcVector->isSrc = 1;
+    srcVector->reg = &insn->src(0);
+  }
+
+  void Selection::Opaque::BYTE_SCATTER(Reg addr, Reg src, uint32_t elemSize, uint32_t bti) {
+    SelectionInstruction *insn = this->appendInsn(SEL_OP_BYTE_SCATTER, 0, 2);
+    SelectionVector *vector = this->appendVector();
+
+    // Instruction to encode
+    insn->src(0) = addr;
+    insn->src(1) = src;
+    insn->extra.function = bti;
+    insn->extra.elem = elemSize;
+
+    // value and address are contiguous in the send
+    vector->regNum = 2;
+    vector->isSrc = 1;
+    vector->reg = &insn->src(0);
+  }
+
+  void Selection::Opaque::MATH(Reg dst, uint32_t function, Reg src0, Reg src1) {
+    SelectionInstruction *insn = this->appendInsn(SEL_OP_MATH, 1, 2);
+    insn->dst(0) = dst;
+    insn->src(0) = src0;
+    insn->src(1) = src1;
+    insn->extra.function = function;
+  }
+
+  void Selection::Opaque::ALU1(SelectionOpcode opcode, Reg dst, Reg src) {
+    SelectionInstruction *insn = this->appendInsn(opcode, 1, 1);
+    insn->dst(0) = dst;
+    insn->src(0) = src;
+  }
+
+  void Selection::Opaque::ALU2(SelectionOpcode opcode, Reg dst, Reg src0, Reg src1) {
+    SelectionInstruction *insn = this->appendInsn(opcode, 1, 2);
+    insn->dst(0) = dst;
+    insn->src(0) = src0;
+    insn->src(1) = src1;
+  }
+
+  void Selection::Opaque::ALU3(SelectionOpcode opcode, Reg dst, Reg src0, Reg src1, Reg src2) {
+    SelectionInstruction *insn = this->appendInsn(opcode, 1, 3);
+    insn->dst(0) = dst;
+    insn->src(0) = src0;
+    insn->src(1) = src1;
+    insn->src(2) = src2;
+  }
+
+  void Selection::Opaque::REGION(Reg dst0, Reg dst1, const GenRegister *src,
+                         uint32_t offset, uint32_t vstride,
+                         uint32_t width, uint32_t hstride,
+                         uint32_t srcNum)
+  {
+    SelectionInstruction *insn = this->appendInsn(SEL_OP_REGION, 2, srcNum);
+    SelectionVector *vector = this->appendVector();
+
+    // Instruction to encode
+    insn->dst(0) = dst0;
+    insn->dst(1) = dst1;
+    GBE_ASSERT(srcNum <= SelectionInstruction::MAX_SRC_NUM);
+    for (uint32_t srcID = 0; srcID < srcNum; ++srcID)
+      insn->src(srcID) = src[srcID];
+    insn->extra.vstride = vstride;
+    insn->extra.width = width;
+    insn->extra.offset = offset;
+    insn->extra.hstride = hstride;
+
+    // Regioning requires contiguous allocation for the sources
+    vector->regNum = srcNum;
+    vector->reg = &insn->src(0);
+    vector->isSrc = 1;
+  }
+
+  void Selection::Opaque::RGATHER(Reg dst, const GenRegister *src, uint32_t srcNum)
+  {
+    SelectionInstruction *insn = this->appendInsn(SEL_OP_RGATHER, 1, srcNum);
+    SelectionVector *vector = this->appendVector();
+
+    // Instruction to encode
+    insn->dst(0) = dst;
+    GBE_ASSERT(srcNum <= SelectionInstruction::MAX_SRC_NUM);
+    for (uint32_t srcID = 0; srcID < srcNum; ++srcID)
+      insn->src(srcID) = src[srcID];
+
+    // Regioning requires contiguous allocation for the sources
+    vector->regNum = srcNum;
+    vector->reg = &insn->src(0);
+    vector->isSrc = 1;
+  }
+
+  void Selection::Opaque::OBREAD(Reg dst, Reg addr, Reg header, uint32_t bti, uint32_t size) {
+    SelectionInstruction *insn = this->appendInsn(SEL_OP_OBREAD, 1, 2);
+    insn->dst(0) = dst;
+    insn->src(0) = addr;
+    insn->src(1) = header;
+    insn->extra.function = bti;
+    insn->extra.elem = size / sizeof(int[4]); // number of owords
+  }
+
+  void Selection::Opaque::OBWRITE(Reg addr, Reg value, Reg header, uint32_t bti, uint32_t size) {
+    SelectionInstruction *insn = this->appendInsn(SEL_OP_OBWRITE, 0, 3);
+    SelectionVector *vector = this->appendVector();
+    insn->opcode = SEL_OP_OBWRITE;
+    insn->src(0) = header;
+    insn->src(1) = value;
+    insn->src(2) = addr;
+    insn->state = this->curr;
+    insn->extra.function = bti;
+    insn->extra.elem = size / sizeof(int[4]); // number of owords
+
+    // We need to put the header and the data together
+    vector->regNum = 2;
+    vector->reg = &insn->src(0);
+    vector->isSrc = 1;
+  }
+
+  // Boiler plate to initialize the selection library at c++ pre-main
+  static SelectionLibrary *selLib = NULL;
+  static void destroySelectionLibrary(void) { GBE_DELETE(selLib); }
+  static struct SelectionLibraryInitializer {
+    SelectionLibraryInitializer(void) {
+      selLib = GBE_NEW(SelectionLibrary);
+      atexit(destroySelectionLibrary);
+    }
+  } selectionLibraryInitializer;
+
+  bool Selection::Opaque::isRoot(const ir::Instruction &insn) const {
+    if (insn.getDstNum() > 1 ||
+        insn.hasSideEffect() ||
+        insn.isMemberOf<ir::BranchInstruction>() ||
+        insn.isMemberOf<ir::LabelInstruction>())
+    return true;
+
+    // No side effect, not a branch and no destination? Impossible
+    GBE_ASSERT(insn.getDstNum() == 1);
+
+    // Root if alive outside the block.
+    // XXX we should use Value and not registers in liveness info
+    const ir::BasicBlock *insnBlock = insn.getParent();
+    const ir::Liveness &liveness = this->ctx.getLiveness();
+    const ir::Liveness::LiveOut &liveOut = liveness.getLiveOut(insnBlock);
+    const ir::Register reg = insn.getDst(0);
+    if (liveOut.contains(reg))
+      return true;
+
+    // The instruction is only used in the current basic block
+    return false;
+  }
+
+  uint32_t Selection::Opaque::buildBasicBlockDAG(const ir::BasicBlock &bb)
+  {
+    using namespace ir;
+
+    // Clear all registers
+    for (uint32_t regID = 0; regID < this->regNum; ++regID)
+      this->regDAG[regID] = NULL;
+
+    // Build the DAG on the fly
+    uint32_t insnNum = 0;
+    bb.foreach([&](const Instruction &insn) {
+
+      // Build a selectionDAG node for instruction
+      SelectionDAG *dag = this->newSelectionDAG(insn);
+
+      // Point to non-root children
+      const uint32_t srcNum = insn.getSrcNum();
+      for (uint32_t srcID = 0; srcID < srcNum; ++srcID) {
+        const ir::Register reg = insn.getSrc(srcID);
+        SelectionDAG *child = this->regDAG[reg];
+        if (child) {
+          const ir::Instruction &childInsn = child->insn;
+          const uint32_t childSrcNum = childInsn.getSrcNum();
+
+          // We can merge a child only if its sources are still valid
+          bool mergeable = true;
+          for (uint32_t otherID = 0; otherID < childSrcNum; ++otherID) {
+            const SelectionDAG *srcDAG = child->child[otherID];
+            const ir::Register srcReg = childInsn.getSrc(otherID);
+            SelectionDAG *currDAG = this->regDAG[srcReg];
+            if (srcDAG != currDAG) {
+              mergeable = false;
+              break;
+            }
+          }
+          if (mergeable) dag->setAsMergeable(srcID);
+          dag->child[srcID] = child;
+        } else
+          dag->child[srcID] = NULL;
+      }
+
+      // Make it a root if we must
+      if (this->isRoot(insn)) dag->isRoot = 1;
+
+      // Save the DAG <-> instruction mapping
+      this->insnDAG[insnNum++] = dag;
+
+      // Associate all output registers to this instruction
+      const uint32_t dstNum = insn.getDstNum();
+      for (uint32_t dstID = 0; dstID < dstNum; ++dstID) {
+        const ir::Register reg = insn.getDst(dstID);
+        this->regDAG[reg] = dag;
+      }
+    });
+
+    return insnNum;
+  }
+
+  void Selection::Opaque::matchBasicBlock(uint32_t insnNum)
+  {
+    // Bottom up code generation
+    for (int32_t insnID = insnNum-1; insnID >= 0; --insnID) {
+      // Process all possible patterns for this instruction
+      SelectionDAG &dag = *insnDAG[insnID];
+      if (dag.isRoot) {
+        const ir::Instruction &insn = dag.insn;
+        const ir::Opcode opcode = insn.getOpcode();
+        auto it = selLib->patterns[opcode].begin();
+        const auto end = selLib->patterns[opcode].end();
+
+        // Start a new code fragment
+        this->startBackwardGeneration();
+
+        // Try all the patterns from best to worst
+        do {
+          if ((*it)->emit(*this, dag))
+            break;
+          ++it;
+        } while (it != end);
+        GBE_ASSERT(it != end);
+
+        // Output the code in the current basic block
+        this->endBackwardGeneration();
+      }
+    }
+  }
+
+  void Selection::Opaque::select(void)
+  {
+    using namespace ir;
+    const Function &fn = ctx.getFunction();
+
+    // Perform the selection per basic block
+    fn.foreachBlock([&](const BasicBlock &bb) {
+       this->dagPool.rewind();
+      this->appendBlock(bb);
+      const uint32_t insnNum = this->buildBasicBlockDAG(bb);
+      this->matchBasicBlock(insnNum);
+    });
+  }
+
+  ///////////////////////////////////////////////////////////////////////////
+  // Code selection public implementation
+  ///////////////////////////////////////////////////////////////////////////
+
+  Selection::Selection(GenContext &ctx) {
+    this->opaque = GBE_NEW(Selection::Opaque, ctx);
+  }
+
+  Selection::~Selection(void) { GBE_DELETE(this->opaque); }
+
+  void Selection::select(void) {
+    this->opaque->select();
+    this->blockHead = this->opaque->blockHead;
+    this->blockTail = this->opaque->blockTail;
+  }
+
+  bool Selection::isScalarOrBool(ir::Register reg) const {
+    return this->opaque->isScalarOrBool(reg);
+  }
+
+  uint32_t Selection::getLargestBlockSize(void) const {
+    return this->opaque->getLargestBlockSize();
+  }
+
+  uint32_t Selection::getVectorNum(void) const {
+    return this->opaque->getVectorNum();
+  }
+
+  uint32_t Selection::getRegNum(void) const {
+    return this->opaque->getRegNum();
+  }
+
+  ir::RegisterFamily Selection::getRegisterFamily(ir::Register reg) const {
+    return this->opaque->getRegisterFamily(reg);
+  }
+
+  ir::RegisterData Selection::getRegisterData(ir::Register reg) const {
+    return this->opaque->getRegisterData(reg);
+  }
+
+  ir::Register Selection::replaceSrc(SelectionInstruction *insn, uint32_t regID) {
+    return this->opaque->replaceSrc(insn, regID);
+  }
+
+  ir::Register Selection::replaceDst(SelectionInstruction *insn, uint32_t regID) {
+    return this->opaque->replaceDst(insn, regID);
+  }
+
+  SelectionInstruction *Selection::create(SelectionOpcode opcode, uint32_t dstNum, uint32_t srcNum) {
+    return this->opaque->create(opcode, dstNum, srcNum);
+  }
+
+  ///////////////////////////////////////////////////////////////////////////
+  // Implementation of all patterns
+  ///////////////////////////////////////////////////////////////////////////
+
+  GenRegister getRegisterFromImmediate(ir::Immediate imm) 
+  {
+    using namespace ir;
+    switch (imm.type) {
+      case TYPE_U32:   return GenRegister::immud(imm.data.u32);
+      case TYPE_S32:   return GenRegister::immd(imm.data.s32);
+      case TYPE_FLOAT: return GenRegister::immf(imm.data.f32);
+      case TYPE_U16: return GenRegister::immuw(imm.data.u16);
+      case TYPE_S16: return  GenRegister::immw(imm.data.s16);
+      case TYPE_U8:  return GenRegister::immuw(imm.data.u8);
+      case TYPE_S8:  return GenRegister::immw(imm.data.s8);
+      default: NOT_SUPPORTED; return GenRegister::immuw(0);
+    }
+  }
+
   /*! Template for the one-to-many instruction patterns */
   template <typename T, typename U>
   class OneToManyPattern : public SelectionPattern
@@ -598,7 +1003,7 @@ namespace gbe
           this->opcodes.push_back(ir::Opcode(op));
     }
     /*! Call the child method with the proper prototype */
-    virtual bool emit(Selection &sel, SelectionDAG &dag) const {
+    virtual bool emit(Selection::Opaque &sel, SelectionDAG &dag) const {
       if (static_cast<const T*>(this)->emitOne(sel, ir::cast<U>(dag.insn))) {
         this->markAllChildren(dag);
         return true;
@@ -617,7 +1022,7 @@ namespace gbe
   /*! Unary instruction patterns */
   DECL_PATTERN(UnaryInstruction)
   {
-    INLINE bool emitOne(Selection &sel, const ir::UnaryInstruction &insn) const {
+    INLINE bool emitOne(Selection::Opaque &sel, const ir::UnaryInstruction &insn) const {
       GBE_ASSERT(insn.getOpcode() == ir::OP_MOV);
       sel.MOV(sel.selReg(insn.getDst(0)), sel.selReg(insn.getSrc(0)));
       return true;
@@ -629,7 +1034,7 @@ namespace gbe
 
   DECL_PATTERN(TernaryInstruction)
   {
-    INLINE bool emitOne(Selection &sel, const ir::TernaryInstruction &insn) const {
+    INLINE bool emitOne(Selection::Opaque &sel, const ir::TernaryInstruction &insn) const {
       using namespace ir;
       const Opcode opcode = insn.getOpcode();
       const Type type = insn.getType();
@@ -654,7 +1059,7 @@ namespace gbe
           this->opcodes.push_back(ir::Opcode(op));
     }
 
-    INLINE bool emit(Selection &sel, SelectionDAG &dag) const
+    INLINE bool emit(Selection::Opaque &sel, SelectionDAG &dag) const
     {
       using namespace ir;
       const ir::BinaryInstruction &insn = cast<BinaryInstruction>(dag.insn);
@@ -744,7 +1149,7 @@ namespace gbe
     }
 
     /*! Implements base class */
-    virtual bool emit(Selection &sel, SelectionDAG &dag) const
+    virtual bool emit(Selection::Opaque  &sel, SelectionDAG &dag) const
     {
       using namespace ir;
       const ir::BinaryInstruction &insn = cast<ir::BinaryInstruction>(dag.insn);
@@ -789,7 +1194,7 @@ namespace gbe
     }
 
     /*! Implements base class */
-    virtual bool emit(Selection &sel, SelectionDAG &dag) const
+    virtual bool emit(Selection::Opaque  &sel, SelectionDAG &dag) const
     {
       using namespace ir;
       const ir::BinaryInstruction &insn = cast<ir::BinaryInstruction>(dag.insn);
@@ -859,7 +1264,7 @@ namespace gbe
     }
 
     /*! Try to emit a multiply where child childID is a 16 immediate */
-    bool emitMulImmediate(Selection &sel, SelectionDAG &dag, uint32_t childID) const {
+    bool emitMulImmediate(Selection::Opaque  &sel, SelectionDAG &dag, uint32_t childID) const {
       using namespace ir;
       const ir::BinaryInstruction &insn = cast<ir::BinaryInstruction>(dag.insn);
       const Register dst  = insn.getDst(0);
@@ -893,7 +1298,7 @@ namespace gbe
     }
 
     /*! Try to emit a multiply with a 16 bit special register */
-    bool emitMulSpecialReg(Selection &sel, SelectionDAG &dag, uint32_t childID) const {
+    bool emitMulSpecialReg(Selection::Opaque &sel, SelectionDAG &dag, uint32_t childID) const {
       using namespace ir;
       const BinaryInstruction &insn = cast<ir::BinaryInstruction>(dag.insn);
       const Type type = insn.getType();
@@ -910,7 +1315,7 @@ namespace gbe
       return false;
     }
 
-    virtual bool emit(Selection &sel, SelectionDAG &dag) const
+    virtual bool emit(Selection::Opaque &sel, SelectionDAG &dag) const
     {
       using namespace ir;
       const BinaryInstruction &insn = cast<ir::BinaryInstruction>(dag.insn);
@@ -932,7 +1337,7 @@ namespace gbe
 #define DECL_NOT_IMPLEMENTED_ONE_TO_MANY(FAMILY) \
   struct FAMILY##Pattern : public OneToManyPattern<FAMILY##Pattern, ir::FAMILY>\
   {\
-    INLINE bool emitOne(Selection &sel, const ir::FAMILY &insn) const {\
+    INLINE bool emitOne(Selection::Opaque &sel, const ir::FAMILY &insn) const {\
       NOT_IMPLEMENTED;\
       return false;\
     }\
@@ -946,7 +1351,7 @@ namespace gbe
   /*! Load immediate pattern */
   DECL_PATTERN(LoadImmInstruction)
   {
-    INLINE bool emitOne(Selection &sel, const ir::LoadImmInstruction &insn) const
+    INLINE bool emitOne(Selection::Opaque &sel, const ir::LoadImmInstruction &insn) const
     {
       using namespace ir;
       const Type type = insn.getType();
@@ -993,7 +1398,7 @@ namespace gbe
   /*! Load instruction pattern */
   DECL_PATTERN(LoadInstruction)
   {
-    void emitUntypedRead(Selection &sel, const ir::LoadInstruction &insn, GenRegister addr) const
+    void emitUntypedRead(Selection::Opaque &sel, const ir::LoadInstruction &insn, GenRegister addr) const
     {
       using namespace ir;
       const uint32_t valueNum = insn.getValueNum();
@@ -1003,7 +1408,7 @@ namespace gbe
       sel.UNTYPED_READ(addr, dst, valueNum, 0);
     }
 
-    void emitByteGather(Selection &sel,
+    void emitByteGather(Selection::Opaque &sel,
                         const ir::LoadInstruction &insn,
                         GenRegister address,
                         GenRegister value) const
@@ -1029,7 +1434,7 @@ namespace gbe
         sel.MOV(GenRegister::retype(value, GEN_TYPE_UB), GenRegister::unpacked_ub(dst));
     }
 
-    INLINE bool emitOne(Selection &sel, const ir::LoadInstruction &insn) const {
+    INLINE bool emitOne(Selection::Opaque &sel, const ir::LoadInstruction &insn) const {
       using namespace ir;
       const GenRegister address = sel.selReg(insn.getAddress());
       GBE_ASSERT(insn.getAddressSpace() == MEM_GLOBAL ||
@@ -1049,7 +1454,7 @@ namespace gbe
   /*! Store instruction pattern */
   DECL_PATTERN(StoreInstruction)
   {
-    void emitUntypedWrite(Selection &sel, const ir::StoreInstruction &insn) const
+    void emitUntypedWrite(Selection::Opaque &sel, const ir::StoreInstruction &insn) const
     {
       using namespace ir;
       const uint32_t valueNum = insn.getValueNum();
@@ -1062,7 +1467,7 @@ namespace gbe
       sel.UNTYPED_WRITE(addr, value, valueNum, 0);
     }
 
-    void emitByteScatter(Selection &sel,
+    void emitByteScatter(Selection::Opaque &sel,
                          const ir::StoreInstruction &insn,
                          GenRegister addr,
                          GenRegister value) const
@@ -1084,7 +1489,7 @@ namespace gbe
       sel.BYTE_SCATTER(addr, value, elemSize, 1);
     }
 
-    INLINE bool emitOne(Selection &sel, const ir::StoreInstruction &insn) const {
+    INLINE bool emitOne(Selection::Opaque &sel, const ir::StoreInstruction &insn) const {
       using namespace ir;
       if (insn.isAligned() == true)
         this->emitUntypedWrite(sel, insn);
@@ -1101,7 +1506,7 @@ namespace gbe
   /*! Compare instruction pattern */
   DECL_PATTERN(CompareInstruction)
   {
-    INLINE bool emitOne(Selection &sel, const ir::CompareInstruction &insn) const
+    INLINE bool emitOne(Selection::Opaque &sel, const ir::CompareInstruction &insn) const
     {
       using namespace ir;
       const Opcode opcode = insn.getOpcode();
@@ -1135,7 +1540,7 @@ namespace gbe
   /*! Convert instruction pattern */
   DECL_PATTERN(ConvertInstruction)
   {
-    INLINE bool emitOne(Selection &sel, const ir::ConvertInstruction &insn) const
+    INLINE bool emitOne(Selection::Opaque &sel, const ir::ConvertInstruction &insn) const
     {
       using namespace ir;
       const Type dstType = insn.getDstType();
@@ -1169,7 +1574,7 @@ namespace gbe
   /*! Select instruction pattern */
   DECL_PATTERN(SelectInstruction)
   {
-    INLINE bool emitOne(Selection &sel, const ir::SelectInstruction &insn) const
+    INLINE bool emitOne(Selection::Opaque &sel, const ir::SelectInstruction &insn) const
     {
       using namespace ir;
 
@@ -1205,7 +1610,7 @@ namespace gbe
   /*! Label instruction pattern */
   DECL_PATTERN(LabelInstruction)
   {
-    INLINE bool emitOne(Selection &sel, const ir::LabelInstruction &insn) const
+    INLINE bool emitOne(Selection::Opaque &sel, const ir::LabelInstruction &insn) const
     {
       using namespace ir;
       const LabelIndex label = insn.getLabelIndex();
@@ -1252,7 +1657,7 @@ namespace gbe
   /*! Region instruction pattern */
   DECL_PATTERN(RegionInstruction)
   {
-    INLINE bool emitOne(Selection &sel, const ir::RegionInstruction &insn) const
+    INLINE bool emitOne(Selection::Opaque &sel, const ir::RegionInstruction &insn) const
     {
       using namespace ir;
 
@@ -1284,7 +1689,7 @@ namespace gbe
   /*! Vote instruction pattern */
   DECL_PATTERN(VoteInstruction)
   {
-    INLINE bool emitOne(Selection &sel, const ir::VoteInstruction &insn) const
+    INLINE bool emitOne(Selection::Opaque &sel, const ir::VoteInstruction &insn) const
     {
       using namespace ir;
       const uint32_t simdWidth = sel.ctx.getSimdWidth();
@@ -1343,7 +1748,7 @@ namespace gbe
   /*! Register file gather instruction pattern */
   DECL_PATTERN(RGatherInstruction)
   {
-    INLINE bool emitOne(Selection &sel, const ir::RGatherInstruction &insn) const
+    INLINE bool emitOne(Selection::Opaque &sel, const ir::RGatherInstruction &insn) const
     {
       using namespace ir;
       // Two destinations: one is the real destination, one is a temporary
@@ -1367,7 +1772,7 @@ namespace gbe
   /*! OBlock read instruction pattern */
   DECL_PATTERN(OBReadInstruction)
   {
-    INLINE bool emitOne(Selection &sel, const ir::OBReadInstruction &insn) const
+    INLINE bool emitOne(Selection::Opaque &sel, const ir::OBReadInstruction &insn) const
     {
       using namespace ir;
       const GenRegister header = sel.selReg(sel.reg(FAMILY_DWORD), TYPE_U32);
@@ -1384,7 +1789,7 @@ namespace gbe
   /*! OBlock write instruction pattern */
   DECL_PATTERN(OBWriteInstruction)
   {
-    INLINE bool emitOne(Selection &sel, const ir::OBWriteInstruction &insn) const
+    INLINE bool emitOne(Selection::Opaque &sel, const ir::OBWriteInstruction &insn) const
     {
       using namespace ir;
       const GenRegister header = sel.selReg(sel.reg(FAMILY_DWORD), TYPE_U32);
@@ -1401,7 +1806,7 @@ namespace gbe
   /*! Branch instruction pattern */
   DECL_PATTERN(BranchInstruction)
   {
-    void emitForwardBranch(Selection &sel,
+    void emitForwardBranch(Selection::Opaque &sel,
                            const ir::BranchInstruction &insn,
                            ir::LabelIndex dst,
                            ir::LabelIndex src) const
@@ -1464,7 +1869,7 @@ namespace gbe
       }
     }
 
-    void emitBackwardBranch(Selection &sel,
+    void emitBackwardBranch(Selection::Opaque &sel,
                             const ir::BranchInstruction &insn,
                             ir::LabelIndex dst,
                             ir::LabelIndex src) const
@@ -1519,7 +1924,7 @@ namespace gbe
       }
     }
 
-    INLINE bool emitOne(Selection &sel, const ir::BranchInstruction &insn) const {
+    INLINE bool emitOne(Selection::Opaque &sel, const ir::BranchInstruction &insn) const {
       using namespace ir;
       const Opcode opcode = insn.getOpcode();
       if (opcode == OP_RET)
@@ -1591,177 +1996,5 @@ namespace gbe
       this->patterns[opcode].push_back(pattern);
   }
 
-  // Boiler plate to initialize the selection library at c++ pre-main
-  static SelectionLibrary *selLib = NULL;
-  static void destroySelectionLibrary(void) { GBE_DELETE(selLib); }
-  static struct SelectionLibraryInitializer {
-    SelectionLibraryInitializer(void) {
-      selLib = GBE_NEW(SelectionLibrary);
-      atexit(destroySelectionLibrary);
-    }
-  } selectionLibraryInitializer;
-
-  /*! This is a maximal munch selection engine */
-  class GreedySelection : public Selection
-  {
-  public:
-    GreedySelection(GenContext &ctx);
-    /*! Perform the instruction selection */
-    virtual void select(void);
-    /*! Build a DAG for the basic block (return number of instructions) */
-    uint32_t buildBasicBlockDAG(const ir::BasicBlock &bb);
-    /*! Perform the selection on the basic block */
-    void matchBasicBlock(uint32_t insnNum);
-    /*! A root instruction needs to be generated */
-    bool isRoot(const ir::Instruction &insn) const;
-    /*! Maximum number of instructions in the basic blocks */
-    uint32_t maxInsnNum;
-    /*! Speed up instruction dag allocation */
-    DECL_POOL(SelectionDAG, dagPool);
-    /*! Per register information used with top-down block sweeping */
-    vector<SelectionDAG*> regDAG;
-    /*! Store one DAG per instruction */
-    vector<SelectionDAG*> insnDAG;
-    /*! Total number of registers in the function we encode */
-    uint32_t regNum;
-  };
-
-  GreedySelection::GreedySelection(GenContext &ctx) :
-    Selection(ctx),
-    maxInsnNum(ctx.getFunction().getLargestBlockSize()), dagPool(maxInsnNum)
-  {
-    const ir::Function &fn = ctx.getFunction();
-    this->regNum = fn.regNum();
-    this->regDAG.resize(regNum);
-    this->insnDAG.resize(maxInsnNum);
-  }
-
-  bool GreedySelection::isRoot(const ir::Instruction &insn) const {
-    if (insn.getDstNum() > 1 ||
-        insn.hasSideEffect() ||
-        insn.isMemberOf<ir::BranchInstruction>() ||
-        insn.isMemberOf<ir::LabelInstruction>())
-    return true;
-
-    // No side effect, not a branch and no destination? Impossible
-    GBE_ASSERT(insn.getDstNum() == 1);
-
-    // Root if alive outside the block.
-    // XXX we should use Value and not registers in liveness info
-    const ir::BasicBlock *insnBlock = insn.getParent();
-    const ir::Liveness &liveness = this->ctx.getLiveness();
-    const ir::Liveness::LiveOut &liveOut = liveness.getLiveOut(insnBlock);
-    const ir::Register reg = insn.getDst(0);
-    if (liveOut.contains(reg))
-      return true;
-
-    // The instruction is only used in the current basic block
-    return false;
-  }
-
-  uint32_t GreedySelection::buildBasicBlockDAG(const ir::BasicBlock &bb)
-  {
-    using namespace ir;
-
-    // Clear all registers
-    for (uint32_t regID = 0; regID < this->regNum; ++regID)
-      this->regDAG[regID] = NULL;
-
-    // Build the DAG on the fly
-    uint32_t insnNum = 0;
-    bb.foreach([&](const Instruction &insn) {
-
-      // Build a selectionDAG node for instruction
-      SelectionDAG *dag = this->newSelectionDAG(insn);
-
-      // Point to non-root children
-      const uint32_t srcNum = insn.getSrcNum();
-      for (uint32_t srcID = 0; srcID < srcNum; ++srcID) {
-        const ir::Register reg = insn.getSrc(srcID);
-        SelectionDAG *child = this->regDAG[reg];
-        if (child) {
-          const ir::Instruction &childInsn = child->insn;
-          const uint32_t childSrcNum = childInsn.getSrcNum();
-
-          // We can merge a child only if its sources are still valid
-          bool mergeable = true;
-          for (uint32_t otherID = 0; otherID < childSrcNum; ++otherID) {
-            const SelectionDAG *srcDAG = child->child[otherID];
-            const ir::Register srcReg = childInsn.getSrc(otherID);
-            SelectionDAG *currDAG = this->regDAG[srcReg];
-            if (srcDAG != currDAG) {
-              mergeable = false;
-              break;
-            }
-          }
-          if (mergeable) dag->setAsMergeable(srcID);
-          dag->child[srcID] = child;
-        } else
-          dag->child[srcID] = NULL;
-      }
-
-      // Make it a root if we must
-      if (this->isRoot(insn)) dag->isRoot = 1;
-
-      // Save the DAG <-> instruction mapping
-      this->insnDAG[insnNum++] = dag;
-
-      // Associate all output registers to this instruction
-      const uint32_t dstNum = insn.getDstNum();
-      for (uint32_t dstID = 0; dstID < dstNum; ++dstID) {
-        const ir::Register reg = insn.getDst(dstID);
-        this->regDAG[reg] = dag;
-      }
-    });
-
-    return insnNum;
-  }
-
-  void GreedySelection::matchBasicBlock(uint32_t insnNum)
-  {
-    // Bottom up code generation
-    for (int32_t insnID = insnNum-1; insnID >= 0; --insnID) {
-      // Process all possible patterns for this instruction
-      SelectionDAG &dag = *insnDAG[insnID];
-      if (dag.isRoot) {
-        const ir::Instruction &insn = dag.insn;
-        const ir::Opcode opcode = insn.getOpcode();
-        auto it = selLib->patterns[opcode].begin();
-        const auto end = selLib->patterns[opcode].end();
-
-        // Start a new code fragment
-        this->startBackwardGeneration();
-
-        // Try all the patterns from best to worst
-        do {
-          if ((*it)->emit(*this, dag))
-            break;
-          ++it;
-        } while (it != end);
-        GBE_ASSERT(it != end);
-
-        // Output the code in the current basic block
-        this->endBackwardGeneration();
-      }
-    }
-  }
-
-  void GreedySelection::select(void)
-  {
-    using namespace ir;
-    const Function &fn = ctx.getFunction();
-
-    // Perform the selection per basic block
-    fn.foreachBlock([&](const BasicBlock &bb) {
-       this->dagPool.rewind();
-      this->appendBlock(bb);
-      const uint32_t insnNum = this->buildBasicBlockDAG(bb);
-      this->matchBasicBlock(insnNum);
-    });
-  }
-
-  Selection *newSelection(GenContext &ctx) {
-    return GBE_NEW(GreedySelection, ctx);
-  }
 } /* namespace gbe */
 
