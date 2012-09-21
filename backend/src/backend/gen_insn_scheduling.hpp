@@ -27,10 +27,11 @@
 
 namespace gbe
 {
-  class Selection; // Pre ISA code
+  class Selection;  // Pre ISA code
+  class GenContext; // Handle compilation for Gen
 
   /*! Schedule the code per basic block */
-  void schedulePreRegAllocation(Selection &selection);
+  void schedulePreRegAllocation(GenContext &ctx, Selection &selection);
 
 } /* namespace gbe */
 

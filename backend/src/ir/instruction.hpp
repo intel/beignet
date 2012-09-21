@@ -47,7 +47,8 @@ namespace ir {
     MEM_GLOBAL = 0, //!< Global memory (a la OCL)
     MEM_LOCAL,      //!< Local memory (thread group memory)
     MEM_CONSTANT,   //!< Immutable global memory
-    MEM_PRIVATE     //!< Per thread private memory
+    MEM_PRIVATE,    //!< Per thread private memory
+    MEM_INVALID
   };
 
   /* Vote function per hardware thread */
@@ -74,8 +75,8 @@ namespace ir {
   /// All public instruction classes as manipulated by all public classes
   ///////////////////////////////////////////////////////////////////////////
 
-  /*! Store the instruction description in 8 bytes */
-  class ALIGNED(sizeof(uint64_t)) Instruction
+  /*! Store the instruction description in 32 bytes */
+  class Instruction
   {
   public:
     /*! Initialize the instruction from a 8 bytes stream */

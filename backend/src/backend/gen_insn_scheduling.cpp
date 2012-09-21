@@ -26,53 +26,227 @@
 
 namespace gbe
 {
-  /*! Chain selection instruction together */
-  struct SelectionInstructionList {
-    INLINE SelectionInstructionList(SelectionInstruction &insn) :
-      next(NULL), insn(insn) {}
-    /*! We chain the selection instruction together */
-    SelectionInstructionList *next;
+  // Helper structure to schedule the basic blocks
+  struct SelectionScheduler;
+
+  // Node for the schedule DAG
+  struct ScheduleNode;
+
+  /*! We need to chain together the node we point */
+  struct ScheduleNodeList {
+    INLINE ScheduleNodeList(ScheduleNode *node) : node(node), next(NULL), prev(NULL) {}
+    /*! Pointed node */
+    ScheduleNode *node;
+    /*! Next and previous dependent node in the list */
+    ScheduleNodeList *next, *prev;
+  };
+
+  /*! Node of the DAG */
+  struct ScheduleNode {
+    INLINE ScheduleNode(SelectionInstruction &insn) :
+      children(NULL), insn(insn), refNum(0), retiredCycle(0) {}
+    /*! Children that depends on us */
+    ScheduleNodeList *children;
     /*! Instruction after code selection */
     SelectionInstruction &insn;
+    /*! Number of nodes that point to us (i.e. nodes we depend on) */
+    uint32_t refNum;
+    /*! Cycle when the instruction is retired */
+    uint32_t retiredCycle;
+  };
+
+  /*! To track loads and stores */
+  enum GenMemory : uint8_t {
+    GLOBAL_MEMORY = 0,
+    LOCAL_MEMORY,
+    MAX_MEM_SYSTEM
+  };
+
+  /*! Helper structure to handle dependencies while scheduling. Takes into
+   *  account virtual and physical registers and memory sub-systems
+   */
+  struct DependencyTracker
+  {
+    DependencyTracker(const Selection &selection, SelectionScheduler &scheduler);
+    /*! Reset it before scheduling a new block */
+    void clear(void);
+    /*! Get an index in the node array for the given register */
+    uint32_t getIndex(GenRegister reg) const;
+    /*! Get an index in the node array for the given memory system */
+    uint32_t getIndex(uint32_t bti) const;
+    /*! Add a new dependency "node0 depends on node1" */
+    void addDependency(ScheduleNode *node0, ScheduleNode *node1);
+    /*! Add a new dependency "node0 depends on node located at index" */
+    void addDependency(ScheduleNode *node0, uint32_t index);
+    /*! Add a new dependency "node located at index depends on node0" */
+    void addDependency(uint32_t index, ScheduleNode *node0);
+    /*! Add a new dependency "node0 depends on node set for register reg" */
+    INLINE void addDependency(ScheduleNode *node0, GenRegister reg) {
+      const uint32_t index = this->getIndex(reg);
+      this->addDependency(node0, index);
+    }
+    /*! Add a new dependency "node set for register reg depends on node0" */
+    INLINE void addDependency(GenRegister reg, ScheduleNode *node0) {
+      const uint32_t index = this->getIndex(reg);
+      this->addDependency(index, node0);
+    }
+    /*! Make the node located at insnID a barrier */
+    void makeBarrier(int32_t insnID, int32_t insnNum);
+    /*! Update all the writes (memory, predicates, registers) */
+    void updateWrites(ScheduleNode *node);
+    /*! Maximum number of *physical* flag registers */
+    static const uint32_t MAX_FLAG_REGISTER = 8u;
+    /*! Maximum number of *physical* accumulators registers */
+    static const uint32_t MAX_ACC_REGISTER = 8u;
+    /*! Owns the tracker */
+    SelectionScheduler &scheduler;
+    /*! Stores the last node that wrote to a register / memory ... */
+    vector<ScheduleNode*> nodes;
+    /*! Stores the nodes per instruction */
+    vector<ScheduleNode*> insnNodes;
+    /*! Number of virtual register in the selection */
+    uint32_t virtualNum;
   };
 
   /*! Perform the instruction scheduling */
   struct SelectionScheduler
   {
     /*! Init the book keeping structures */
-    SelectionScheduler(Selection &selection);
-    /*! Reschedule the instructions */
-    void schedule(void);
-    /*! Make their allocation faster */
-    DECL_POOL(SelectionInstructionList, listPool);
+    SelectionScheduler(GenContext &ctx, Selection &selection);
+    /*! Return the number of instructions to schedule in the DAG */
+    int32_t buildDAG(SelectionBlock &bb);
+    /*! Schedule the DAG */
+    void scheduleDAG(SelectionBlock &bb, int32_t insnNum);
+    /*! When an instruction is done, update the dependencies and remove it */
+    void retire(ScheduleNodeList *node);
+    /*! Insert the instruction in the ready list (it can be scheduled) */
+    void makeReady(ScheduleNodeList *node);
+    /*! Schedule the instruction (i.e. insert it in the new insn stream) */
+    void schedule(ScheduleNodeList *node, uint32_t cycle);
+    /*! Make ScheduleNodeList allocation faster */
+    DECL_POOL(ScheduleNodeList, listPool);
+    /*! Make ScheduleNode allocation faster */
+    DECL_POOL(ScheduleNode, nodePool);
     /*! Scheduled instructions go here */
     SelectionInstruction *scheduled;
     /*! Ready list is instructions that can be scheduled */
-    SelectionInstructionList *ready;
+    ScheduleNodeList *readyTail, *readyHead;
     /*! Active list is instructions that are executing */
-    SelectionInstructionList *active;
+    ScheduleNodeList *active;
+    /*! Handle complete compilation */
+    GenContext &ctx;
+    /*! Code to schedule */
+    Selection &selection;
+    /*! To help tracking dependencies */
+    DependencyTracker tracker;
   };
-#if 0
+
+  DependencyTracker::DependencyTracker(const Selection &selection, SelectionScheduler &scheduler) :
+    scheduler(scheduler)
+  {
+    this->virtualNum = selection.getRegNum();
+    nodes.resize(virtualNum + MAX_FLAG_REGISTER + MAX_ACC_REGISTER + MAX_MEM_SYSTEM);
+    insnNodes.resize(selection.getLargestBlockSize());
+  }
+
+  void DependencyTracker::clear(void) { for (auto &x : nodes) x = NULL; }
+
+  void DependencyTracker::addDependency(ScheduleNode *node0, ScheduleNode *node1) {
+    if (node0 != NULL && node1 != NULL && node0 != node1) {
+      ScheduleNodeList *dep = scheduler.newScheduleNodeList(node0);
+      node0->refNum++;
+      dep->next = node1->children;
+      node1->children = dep;
+      if (dep->next)
+        dep->next->prev = dep;
+    }
+  }
+
+  void DependencyTracker::addDependency(ScheduleNode *node, uint32_t index) {
+    this->addDependency(node, this->nodes[index]);
+  }
+
+  void DependencyTracker::addDependency(uint32_t index, ScheduleNode *node) {
+    this->addDependency(this->nodes[index], node);
+  }
+
+  void DependencyTracker::makeBarrier(int32_t barrierID, int32_t insnNum) {
+    ScheduleNode *barrier = this->nodes[barrierID];
+
+    // The barrier depends on all nodes before it
+    for (int32_t insnID = 0; insnID < barrierID; ++insnID) {
+      ScheduleNode *node = this->nodes[insnID];
+      this->addDependency(barrier, node);
+    }
+
+    // All nodes after barriers depend on the barrier
+    for (int32_t insnID = barrierID + 1; insnID < insnNum; ++insnID) {
+      ScheduleNode *node = this->nodes[insnID];
+      this->addDependency(node, barrier);
+    }
+  }
+
+  static GenRegister getFlag(const SelectionInstruction &insn) {
+    if (insn.state.physicalFlag) {
+      const uint32_t nr = insn.state.flag;
+      const uint32_t subnr = insn.state.subFlag;
+      return GenRegister::flag(nr, subnr);
+    } else
+      return GenRegister::uw1grf(ir::Register(insn.state.flagIndex));
+  }
+
+  uint32_t DependencyTracker::getIndex(GenRegister reg) const {
+    if (reg.physical) {
+      GBE_ASSERT (reg.file == GEN_ARCHITECTURE_REGISTER_FILE);
+      const uint32_t file = reg.nr & 0xf0;
+      const uint32_t nr = reg.nr & 0x0f;
+      if (file == GEN_ARF_FLAG) {
+        GBE_ASSERT(nr < MAX_FLAG_REGISTER && (reg.subnr == 0 || reg.subnr == 1));
+        return virtualNum + 2*nr + reg.subnr;
+      } else if (file == GEN_ARF_ACCUMULATOR) {
+        GBE_ASSERT(nr < MAX_ACC_REGISTER);
+        return virtualNum + MAX_FLAG_REGISTER + nr;
+      } else {
+        NOT_SUPPORTED;
+        return 0;
+      }
+    } else
+      return reg.value.reg;
+  }
+
+  uint32_t DependencyTracker::getIndex(uint32_t bti) const {
+    return bti == 0xfe ? LOCAL_MEMORY : GLOBAL_MEMORY;
+  }
+
+  void DependencyTracker::updateWrites(ScheduleNode *node) {
+    const SelectionInstruction &insn = node->insn;
+
+    // Track writes in registers
+    for (uint32_t dstID = 0; dstID < insn.dstNum; ++dstID) {
+      const uint32_t index = this->getIndex(insn.dst(dstID));
+      this->nodes[index] = node;
+    }
+
+    // Track writes in predicates
+    if (insn.opcode == SEL_OP_CMP) {
+      const uint32_t index = this->getIndex(getFlag(insn));
+      this->nodes[index] = node;
+    }
+
+    // Track writes in memory
+    if (insn.isWrite()) {
+      const uint32_t index = this->getIndex(insn.extra.function);
+      this->nodes[index] = node;
+    }
+  }
+
   /*! Kind-of roughly estimated latency. Nothing real here */
-  static uint32_t Gen7GetLatency(const SelectionInstruction &insn) {
-    const uint32_t LabelInstructionLatency = 0;
-    const uint32_t UnaryInstructionLatency = 20;
-    const uint32_t BinaryInstructionLatency = 20;
-    const uint32_t TernaryInstructionLatency = 20;
-    const uint32_t CompareInstructionLatency = 20;
-    const uint32_t JumpInstructionLatency = 20;
-    const uint32_t EotInstructionLatency = 20;
-    const uint32_t NoOpInstructionLatency  = 4;
-    const uint32_t WaitInstructionLatency  = 20;
-    const uint32_t MathInstructionLatency = 20;
-    const uint32_t UntypedReadInstructionLatency  = 80;
-    const uint32_t UntypedWriteInstructionLatency  = 80;
-    const uint32_t ByteGatherInstructionLatency = 80;
-    const uint32_t ByteScatterInstructionLatency = 80;
-    const uint32_t RGatherInstructionLatency = 30;
-    const uint32_t RegionInstructionLatency = 20;
-    const uint32_t OBReadInstructionLatency = 80;
-    const uint32_t OBWriteInstructionLatency = 80;
+  static uint32_t getLatencyGen7(const SelectionInstruction &insn) {
+#define DECL_GEN7_SCHEDULE(FAMILY, LATENCY, SIMD16, SIMD8)\
+    const uint32_t FAMILY##InstructionLatency = LATENCY;
+#include "gen_insn_gen7_schedule_info.hxx"
+#undef DECL_GEN7_SCHEDULE
+
     switch (insn.opcode) {
 #define DECL_SELECTION_IR(OP, FAMILY) case SEL_OP_##OP: return FAMILY##Latency;
 #include "backend/gen_insn_selection.hxx"
@@ -82,25 +256,12 @@ namespace gbe
   }
 
   /*! Throughput in cycles for SIMD8 or SIMD16 */
-  static uint32_t Gen7GetThroughput(const SelectionInstruction &insn, bool isSIMD8) {
-    const uint32_t LabelInstructionThroughput = 0;
-    const uint32_t UnaryInstructionThroughput = isSIMD8 ? 2 : 4;
-    const uint32_t BinaryInstructionThroughput = isSIMD8 ? 2 : 4;
-    const uint32_t TernaryInstructionThroughput = isSIMD8 ? 2 : 4;
-    const uint32_t CompareInstructionThroughput = isSIMD8 ? 2 : 4;
-    const uint32_t JumpInstructionThroughput = 1;
-    const uint32_t EotInstructionThroughput = 1;
-    const uint32_t NoOpInstructionThroughput = isSIMD8 ? 2 : 4;
-    const uint32_t WaitInstructionThroughput = 1;
-    const uint32_t MathInstructionThroughput = isSIMD8 ? 2 : 4;
-    const uint32_t UntypedReadInstructionThroughput  = 1;
-    const uint32_t UntypedWriteInstructionThroughput  = 1;
-    const uint32_t ByteGatherInstructionThroughput = 1;
-    const uint32_t ByteScatterInstructionThroughput = 1;
-    const uint32_t RGatherInstructionThroughput = 1;
-    const uint32_t RegionInstructionThroughput = isSIMD8 ? 2 : 4;
-    const uint32_t OBReadInstructionThroughput = 1;
-    const uint32_t OBWriteInstructionThroughput = 1;
+  static uint32_t getThroughputGen7(const SelectionInstruction &insn, bool isSIMD8) {
+#define DECL_GEN7_SCHEDULE(FAMILY, LATENCY, SIMD16, SIMD8)\
+    const uint32_t FAMILY##InstructionThroughput = isSIMD8 ? SIMD8 : SIMD16;
+#include "gen_insn_gen7_schedule_info.hxx"
+#undef DECL_GEN7_SCHEDULE
+
     switch (insn.opcode) {
 #define DECL_SELECTION_IR(OP, FAMILY) case SEL_OP_##OP: return FAMILY##Throughput;
 #include "backend/gen_insn_selection.hxx"
@@ -108,19 +269,182 @@ namespace gbe
     };
     return 0;
   }
-#endif
-  SelectionScheduler::SelectionScheduler(Selection &selection) :
+
+  SelectionScheduler::SelectionScheduler(GenContext &ctx, Selection &selection) :
     listPool(nextHighestPowerOf2(selection.getLargestBlockSize())),
-    scheduled(NULL), ready(NULL), active(NULL)
+    scheduled(NULL), readyTail(NULL), readyHead(NULL), active(NULL),
+    ctx(ctx), selection(selection), tracker(tracker)
   {}
 
-  void SelectionScheduler::schedule(void) {
+  int32_t SelectionScheduler::buildDAG(SelectionBlock &bb) {
+    nodePool.rewind();
+    listPool.rewind();
+    tracker.clear();
 
+    // Track write-after-write and read-after-write dependencies
+    int32_t insnNum = 0;
+    bb.foreach([&](SelectionInstruction &insn) {
+      // Create a new node for this instruction
+      ScheduleNode *node = this->newScheduleNode(insn);
+      tracker.insnNodes[insnNum++] = node;
+
+      // read-after-write in registers
+      for (uint32_t srcID = 0; srcID < insn.srcNum; ++srcID)
+        tracker.addDependency(node, insn.src(srcID));
+
+      // read-after-write for predicate
+      if (insn.state.predicate != GEN_PREDICATE_NONE)
+        tracker.addDependency(node, getFlag(insn));
+
+      // read-after-write in memory
+      if (insn.isRead()) {
+        const uint32_t index = tracker.getIndex(insn.extra.function);
+        tracker.addDependency(node, index);
+      }
+
+      // write-after-write in registers
+      for (uint32_t dstID = 0; dstID < insn.dstNum; ++dstID)
+        tracker.addDependency(node, insn.dst(dstID));
+
+      // write-after-write for predicate
+      if (insn.opcode == SEL_OP_CMP)
+        tracker.addDependency(node, getFlag(insn));
+
+      // write-after-write in memory
+      if (insn.isWrite()) {
+        const uint32_t index = tracker.getIndex(insn.extra.function);
+        tracker.addDependency(node, index);
+      }
+
+      // Track all writes done by the instruction
+      tracker.updateWrites(node);
+    });
+
+    // Track write-after-read dependencies
+    tracker.clear();
+    for (int32_t insnID = insnNum-1; insnID >= 0; --insnID) {
+      ScheduleNode *node = tracker.insnNodes[insnID];
+      const SelectionInstruction &insn = node->insn;
+
+      // write-after-reads in registers
+      for (uint32_t srcID = 0; srcID < insn.srcNum; ++srcID)
+        tracker.addDependency(insn.src(srcID), node);
+
+      // write-after-read for predicate
+      if (insn.state.predicate != GEN_PREDICATE_NONE)
+        tracker.addDependency(getFlag(insn), node);
+
+      // write-after-read in memory
+      if (insn.isRead()) {
+        const uint32_t index = tracker.getIndex(insn.extra.function);
+        tracker.addDependency(index, node);
+      }
+
+      // Track all writes done by the instruction
+      tracker.updateWrites(node);
+    }
+
+    // Make labels and branches non-schedulable (i.e. they act as barriers)
+    for (int32_t insnID = 0; insnID < insnNum; ++insnID) {
+      ScheduleNode *node = tracker.nodes[insnID];
+      if (node->insn.isBranch() || node->insn.isLabel())
+        tracker.makeBarrier(insnID, insnNum);
+    }
+
+    // Build the initial ready list
+    for (int32_t insnID = 0; insnID < insnNum; ++insnID) {
+      ScheduleNode *node = tracker.nodes[insnID];
+      if (node->refNum == 0) {
+        ScheduleNodeList *nodeList = this->newScheduleNodeList(node);
+        this->makeReady(nodeList);
+      }
+    }
+
+    return insnNum;
   }
 
-  void schedulePreRegAllocation(Selection &selection) {
-    SelectionScheduler scheduler(selection);
-    scheduler.schedule();
+  void SelectionScheduler::makeReady(ScheduleNodeList *list) {
+    // Remove it from the current list
+    GBE_ASSERT(list);
+    if (list->prev) list->prev->next = list->next;
+    if (list->next) list->next->prev = list->prev;
+
+    // Insert it in the ready list
+    list->prev = this->readyHead;
+    this->readyHead = list;
+    if (this->readyTail == NULL)
+      this->readyTail = list;
+  }
+
+  void SelectionScheduler::retire(ScheduleNodeList *list) {
+    // Update list
+    if (list->prev) list->prev->next = list->next;
+    if (list->next) list->next->prev = list->prev;
+
+    // Update the active list
+    if (list == this->active) this->active = list->next;
+
+    // Update children reference counters and possibly make them active
+    ScheduleNode *node = list->node;
+    ScheduleNodeList *children = node->children;
+    while (children) {
+      ScheduleNodeList *next = children->next;
+      if (--node->children->node->refNum == 0)
+        this->makeReady(children);
+      children = next;
+    }
+  }
+
+  void SelectionScheduler::schedule(ScheduleNodeList *list, uint32_t cycle) {
+    // Update list
+    if (list->prev) list->prev->next = list->next;
+    if (list->next) list->next->prev = list->prev;
+
+    // Update the ready list
+    if (list == this->readyHead) this->readyHead = list->prev;
+    if (list == this->readyTail) this->readyTail = list->next;
+
+    // Insert it in the active list
+    list->next = this->active;
+    list->prev = NULL;
+    this->active = list;
+
+    // To know when the instruction retires
+    list->node->retiredCycle = cycle + getLatencyGen7(list->node->insn);
+  }
+
+  void SelectionScheduler::scheduleDAG(SelectionBlock &bb, int32_t insnNum) {
+    uint32_t cycle = 0;
+    const bool isSIMD8 = this->ctx.getSimdWidth() == 8;
+    while (insnNum) {
+
+      // Retire all the instructions that finished
+      ScheduleNodeList *toRetire = this->active;
+      while (toRetire) {
+        ScheduleNodeList *next = toRetire->next;
+        if (toRetire->node->retiredCycle <= cycle)
+          this->retire(toRetire);
+        toRetire = next;
+      }
+
+      // Try to schedule something
+      ScheduleNodeList *toSchedule = this->readyTail;
+      if (toSchedule) {
+        cycle += getThroughputGen7(toSchedule->node->insn, isSIMD8);
+        this->schedule(toSchedule, cycle);
+        bb.append(&toSchedule->node->insn);
+      } else 
+        cycle++;
+    }
+  }
+
+  void schedulePreRegAllocation(GenContext &ctx, Selection &selection) {
+    SelectionScheduler scheduler(ctx, selection);
+    selection.foreach([&](SelectionBlock &bb) {
+      const int32_t insnNum = scheduler.buildDAG(bb);
+      bb.insnHead = bb.insnTail = NULL;
+      scheduler.scheduleDAG(bb, insnNum);
+    });
   }
 
 } /* namespace gbe */

@@ -28,7 +28,7 @@
 #include "ir/liveness.hpp"
 #include "ir/profile.hpp"
 #include "sys/cvar.hpp"
-#include "sys/list.hpp"
+#include "sys/vector.hpp"
 #include <algorithm>
 
 namespace gbe
@@ -69,9 +69,30 @@ namespace gbe
     }
   }
 
+  bool SelectionInstruction::isRead(void) const {
+    return this->opcode == SEL_OP_OBREAD ||
+           this->opcode == SEL_OP_UNTYPED_READ ||
+           this->opcode == SEL_OP_BYTE_GATHER;
+  }
+
+  bool SelectionInstruction::isWrite(void) const {
+    return this->opcode == SEL_OP_OBWRITE ||
+           this->opcode == SEL_OP_UNTYPED_WRITE ||
+           this->opcode == SEL_OP_BYTE_SCATTER;
+  }
+
+  bool SelectionInstruction::isBranch(void) const {
+    return this->opcode == SEL_OP_JMPI;
+  }
+
+  bool SelectionInstruction::isLabel(void) const {
+    return this->opcode == SEL_OP_LABEL;
+  }
+
   ///////////////////////////////////////////////////////////////////////////
   // SelectionVector
   ///////////////////////////////////////////////////////////////////////////
+
   SelectionVector::SelectionVector(void) :
     insn(NULL), next(NULL), reg(NULL), regNum(0), isSrc(0)
   {}

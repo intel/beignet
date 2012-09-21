@@ -93,11 +93,21 @@ namespace gbe
     void prepend(SelectionInstruction &insn);
     /*! Append an instruction after this one */
     void append(SelectionInstruction &insn);
+    /*! Does it read memory? */
+    bool isRead(void) const;
+    /*! Does it write memory? */
+    bool isWrite(void) const;
+    /*! Is it a branch instruction (i.e. modify control flow) */
+    bool isBranch(void) const;
+    /*! Is it a label instruction (i.e. change the implicit mask) */
+    bool isLabel(void) const;
     /*! Get the destination register */
     GenRegister &dst(uint32_t dstID) { return regs[dstID]; }
-    const GenRegister &dst(uint32_t dstID) const { return regs[dstID]; }
     /*! Get the source register */
     GenRegister &src(uint32_t srcID) { return regs[dstNum+srcID]; }
+    /*! Damn C++ */
+    const GenRegister &dst(uint32_t dstID) const { return regs[dstID]; }
+    /*! Damn C++ */
     const GenRegister &src(uint32_t srcID) const { return regs[dstNum+srcID]; }
     /*! No more than 6 sources (used by typed writes) */
     enum { MAX_SRC_NUM = 8 };
@@ -216,7 +226,7 @@ namespace gbe
     uint32_t getLargestBlockSize(void) const;
     /*! Number of register vectors in the selection */
     uint32_t getVectorNum(void) const;
-    /*! Number of registers (temporary are created during selection) */
+    /*! Number of registers (temporaries are created during selection) */
     uint32_t getRegNum(void) const;
     /*! Get the family for the given register */
     ir::RegisterFamily getRegisterFamily(ir::Register reg) const;
