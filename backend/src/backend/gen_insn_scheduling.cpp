@@ -45,6 +45,17 @@ namespace gbe
   struct ScheduleNode {
     INLINE ScheduleNode(SelectionInstruction &insn) :
       children(NULL), insn(insn), refNum(0), retiredCycle(0) {}
+    bool dependsOn(ScheduleNode *node) const {
+      GBE_ASSERT(node != NULL);
+      ScheduleNodeList *dep = node->children;
+      while (dep) {
+        if (dep->node == this)
+          return true;
+        else
+          dep = dep->next;
+      }
+      return false;
+    }
     /*! Children that depends on us */
     ScheduleNodeList *children;
     /*! Instruction after code selection */
@@ -65,7 +76,7 @@ namespace gbe
   /*! Helper structure to handle dependencies while scheduling. Takes into
    *  account virtual and physical registers and memory sub-systems
    */
-  struct DependencyTracker
+  struct DependencyTracker : public NonCopyable
   {
     DependencyTracker(const Selection &selection, SelectionScheduler &scheduler);
     /*! Reset it before scheduling a new block */
@@ -82,13 +93,17 @@ namespace gbe
     void addDependency(uint32_t index, ScheduleNode *node0);
     /*! Add a new dependency "node0 depends on node set for register reg" */
     INLINE void addDependency(ScheduleNode *node0, GenRegister reg) {
-      const uint32_t index = this->getIndex(reg);
-      this->addDependency(node0, index);
+      if (reg.file != GEN_IMMEDIATE_VALUE) {
+        const uint32_t index = this->getIndex(reg);
+        this->addDependency(node0, index);
+      }
     }
     /*! Add a new dependency "node set for register reg depends on node0" */
     INLINE void addDependency(GenRegister reg, ScheduleNode *node0) {
-      const uint32_t index = this->getIndex(reg);
-      this->addDependency(index, node0);
+      if (reg.file != GEN_IMMEDIATE_VALUE) {
+        const uint32_t index = this->getIndex(reg);
+        this->addDependency(index, node0);
+      }
     }
     /*! Make the node located at insnID a barrier */
     void makeBarrier(int32_t insnID, int32_t insnNum);
@@ -109,10 +124,12 @@ namespace gbe
   };
 
   /*! Perform the instruction scheduling */
-  struct SelectionScheduler
+  struct SelectionScheduler : public NonCopyable
   {
     /*! Init the book keeping structures */
     SelectionScheduler(GenContext &ctx, Selection &selection);
+    /*! Make all lists empty */
+    void clearLists(void);
     /*! Return the number of instructions to schedule in the DAG */
     int32_t buildDAG(SelectionBlock &bb);
     /*! Schedule the DAG */
@@ -152,7 +169,7 @@ namespace gbe
   void DependencyTracker::clear(void) { for (auto &x : nodes) x = NULL; }
 
   void DependencyTracker::addDependency(ScheduleNode *node0, ScheduleNode *node1) {
-    if (node0 != NULL && node1 != NULL && node0 != node1) {
+    if (node0 != NULL && node1 != NULL && node0 != node1 && node0->dependsOn(node1) == false) {
       ScheduleNodeList *dep = scheduler.newScheduleNodeList(node0);
       node0->refNum++;
       dep->next = node1->children;
@@ -171,19 +188,15 @@ namespace gbe
   }
 
   void DependencyTracker::makeBarrier(int32_t barrierID, int32_t insnNum) {
-    ScheduleNode *barrier = this->nodes[barrierID];
+    ScheduleNode *barrier = this->insnNodes[barrierID];
 
     // The barrier depends on all nodes before it
-    for (int32_t insnID = 0; insnID < barrierID; ++insnID) {
-      ScheduleNode *node = this->nodes[insnID];
-      this->addDependency(barrier, node);
-    }
+    for (int32_t insnID = 0; insnID < barrierID; ++insnID)
+      this->addDependency(barrier, this->insnNodes[insnID]);
 
     // All nodes after barriers depend on the barrier
-    for (int32_t insnID = barrierID + 1; insnID < insnNum; ++insnID) {
-      ScheduleNode *node = this->nodes[insnID];
-      this->addDependency(node, barrier);
-    }
+    for (int32_t insnID = barrierID + 1; insnID < insnNum; ++insnID)
+      this->addDependency(this->insnNodes[insnID], barrier);
   }
 
   static GenRegister getFlag(const SelectionInstruction &insn) {
@@ -272,14 +285,23 @@ namespace gbe
 
   SelectionScheduler::SelectionScheduler(GenContext &ctx, Selection &selection) :
     listPool(nextHighestPowerOf2(selection.getLargestBlockSize())),
-    scheduled(NULL), readyTail(NULL), readyHead(NULL), active(NULL),
-    ctx(ctx), selection(selection), tracker(tracker)
-  {}
+    ctx(ctx), selection(selection), tracker(selection, *this)
+  {
+    this->clearLists();
+  }
+
+  void SelectionScheduler::clearLists(void) {
+    this->scheduled = NULL;
+    this->readyTail = NULL;
+    this->readyHead = NULL;
+    this->active = NULL;
+  }
 
   int32_t SelectionScheduler::buildDAG(SelectionBlock &bb) {
     nodePool.rewind();
     listPool.rewind();
     tracker.clear();
+    this->clearLists();
 
     // Track write-after-write and read-after-write dependencies
     int32_t insnNum = 0;
@@ -346,14 +368,14 @@ namespace gbe
 
     // Make labels and branches non-schedulable (i.e. they act as barriers)
     for (int32_t insnID = 0; insnID < insnNum; ++insnID) {
-      ScheduleNode *node = tracker.nodes[insnID];
-      if (node->insn.isBranch() || node->insn.isLabel())
+      ScheduleNode *node = tracker.insnNodes[insnID];
+      if (node->insn.isBranch() || node->insn.isLabel() || node->insn.opcode == SEL_OP_EOT)
         tracker.makeBarrier(insnID, insnNum);
     }
 
     // Build the initial ready list
     for (int32_t insnID = 0; insnID < insnNum; ++insnID) {
-      ScheduleNode *node = tracker.nodes[insnID];
+      ScheduleNode *node = tracker.insnNodes[insnID];
       if (node->refNum == 0) {
         ScheduleNodeList *nodeList = this->newScheduleNodeList(node);
         this->makeReady(nodeList);
@@ -371,9 +393,10 @@ namespace gbe
 
     // Insert it in the ready list
     list->prev = this->readyHead;
+    list->next = NULL;
+    if (this->readyHead != NULL) this->readyHead->next = list;
+    if (this->readyTail == NULL) this->readyTail = list;
     this->readyHead = list;
-    if (this->readyTail == NULL)
-      this->readyTail = list;
   }
 
   void SelectionScheduler::retire(ScheduleNodeList *list) {
@@ -385,11 +408,10 @@ namespace gbe
     if (list == this->active) this->active = list->next;
 
     // Update children reference counters and possibly make them active
-    ScheduleNode *node = list->node;
-    ScheduleNodeList *children = node->children;
+    ScheduleNodeList *children = list->node->children;
     while (children) {
       ScheduleNodeList *next = children->next;
-      if (--node->children->node->refNum == 0)
+      if (--children->node->refNum == 0)
         this->makeReady(children);
       children = next;
     }
@@ -407,6 +429,7 @@ namespace gbe
     // Insert it in the active list
     list->next = this->active;
     list->prev = NULL;
+    if (this->active) this->active->prev = list;
     this->active = list;
 
     // To know when the instruction retires
@@ -432,7 +455,9 @@ namespace gbe
       if (toSchedule) {
         cycle += getThroughputGen7(toSchedule->node->insn, isSIMD8);
         this->schedule(toSchedule, cycle);
+        toSchedule->node->insn.next = toSchedule->node->insn.prev = NULL;
         bb.append(&toSchedule->node->insn);
+        insnNum--;
       } else 
         cycle++;
     }

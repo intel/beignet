@@ -1,4 +1,4 @@
-/* 
+/*
  * Copyright © 2012 Intel Corporation
  *
  * This library is free software; you can redistribute it and/or
@@ -25,6 +25,7 @@
 #include "ir/profile.hpp"
 #include "ir/function.hpp"
 #include "backend/gen_insn_selection.hpp"
+#include "backend/gen_insn_scheduling.hpp"
 #include "backend/gen_reg_allocation.hpp"
 #include "backend/gen_register.hpp"
 #include "backend/program.hpp"
@@ -484,6 +485,7 @@ namespace gbe
     GBE_ASSERT(fn.getProfile() == PROFILE_OCL);
 
     // Allocate all the vectors first since they need to be contiguous
+    // schedulePreRegAllocation(ctx, selection);
     this->allocateVector(selection);
 
     // Now start the linear scan allocation
