@@ -167,8 +167,12 @@ namespace gbe
   public:
     GrowingPool(uint32_t elemNum = 1) :
       curr(GBE_NEW(GrowingPoolElem, elemNum <= 1 ? 1 : elemNum)),
-      free(NULL), freeList(NULL) {}
-    ~GrowingPool(void) { GBE_ASSERT(curr); GBE_DELETE(curr); }
+      free(NULL), full(NULL), freeList(NULL) {}
+    ~GrowingPool(void) {
+      GBE_SAFE_DELETE(curr);
+      GBE_SAFE_DELETE(free);
+      GBE_SAFE_DELETE(full);
+    }
     void *allocate(void) {
 #if GBE_DEBUG_SPECIAL_ALLOCATOR
       return GBE_ALIGNED_MALLOC(sizeof(T), AlignOf<T>::value);
@@ -179,23 +183,28 @@ namespace gbe
         this->freeList = *(void**) freeList;
         return data;
       }
+
       // Pick up an element from the current block (if not full)
       if (this->curr->allocated < this->curr->maxElemNum) {
         void *data = (T*) curr->data + curr->allocated++;
         return data;
       }
-      // Block is full. Try to pick up a free block
+
+      // Block is full
+      this->curr->next = this->full;
+      this->full = this->curr;
+
+      // Try to pick up a free block
       if (this->free) {
         GBE_ASSERT(this->free->allocated < this->free->maxElemNum);
         this->curr = this->free;
         this->free = this->free->next;
+        this->curr->next = NULL;
       }
       // No free block we must allocate a new one
-      else {
-        GrowingPoolElem *elem = GBE_NEW(GrowingPoolElem, 2 * this->curr->maxElemNum);
-        elem->next = this->curr;
-        this->curr = elem;
-      }
+      else
+        this->curr = GBE_NEW(GrowingPoolElem, 2 * this->curr->maxElemNum);
+
       void *data = (T*) curr->data + curr->allocated++;
       return data;
 #endif /* GBE_DEBUG_SPECIAL_ALLOCATOR */
@@ -207,24 +216,33 @@ namespace gbe
 #else
       *(void**) t = this->freeList;
       this->freeList = t;
-#endif
+#endif /* GBE_DEBUG_SPECIAL_ALLOCATOR */
     }
     void rewind(void) {
 #if GBE_DEBUG_SPECIAL_ALLOCATOR == 0
       // All free elements return to their blocks
       this->freeList = NULL;
-      // Reverse the chain list and mark all blocks as empty
-      while (this->curr) {
-        GrowingPoolElem *next = this->curr->next;
-        this->curr->allocated = 0;
-        this->curr->next = this->free;
-        this->free = this->curr;
-        this->curr = next;
+
+      // Put back current block in full list
+      if (this->curr) {
+        this->curr->next = this->full;
+        this->full = this->curr;
+        this->curr = NULL;
       }
-      // Provide a valid curr block
+
+      // Reverse the chain list and mark all blocks as empty
+      while (this->full) {
+        GrowingPoolElem *next = this->full->next;
+        this->full->allocated = 0;
+        this->full->next = this->free;
+        this->free = this->full;
+        this->full = next;
+      }
+      // Provide a valid current block
       GBE_ASSERT(this->free);
       this->curr = this->free;
-      this->free = this->curr->next;
+      this->free = this->free->next;
+      this->curr->next = NULL;
 #endif /* GBE_DEBUG_SPECIAL_ALLOCATOR */
     }
   private:
@@ -249,6 +267,7 @@ namespace gbe
     };
     GrowingPoolElem *curr; //!< To get new element from
     GrowingPoolElem *free; //!< Blocks that can be reused (after rewind)
+    GrowingPoolElem *full; //!< Blocks fully used
     void *freeList;        //!< Elements that have been deallocated
     GBE_CLASS(GrowingPool);
   };

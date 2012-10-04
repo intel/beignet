@@ -299,8 +299,8 @@ namespace gbe
   }
 
   int32_t SelectionScheduler::buildDAG(SelectionBlock &bb) {
-    //nodePool.rewind();
-    //listPool.rewind();
+    nodePool.rewind();
+    listPool.rewind();
     tracker.clear();
     this->clearLists();
 
