@@ -228,7 +228,8 @@ namespace gbe
   }
 
   uint32_t DependencyTracker::getIndex(uint32_t bti) const {
-    return bti == 0xfe ? LOCAL_MEMORY : GLOBAL_MEMORY;
+    const uint32_t memDelta = virtualNum + MAX_FLAG_REGISTER + MAX_ACC_REGISTER;
+    return bti == 0xfe ? memDelta + LOCAL_MEMORY : memDelta + GLOBAL_MEMORY;
   }
 
   void DependencyTracker::updateWrites(ScheduleNode *node) {
@@ -298,8 +299,8 @@ namespace gbe
   }
 
   int32_t SelectionScheduler::buildDAG(SelectionBlock &bb) {
-    nodePool.rewind();
-    listPool.rewind();
+    //nodePool.rewind();
+    //listPool.rewind();
     tracker.clear();
     this->clearLists();
 
@@ -348,7 +349,7 @@ namespace gbe
       ScheduleNode *node = tracker.insnNodes[insnID];
       const SelectionInstruction &insn = node->insn;
 
-      // write-after-reads in registers
+      // write-after-read in registers
       for (uint32_t srcID = 0; srcID < insn.srcNum; ++srcID)
         tracker.addDependency(insn.src(srcID), node);
 

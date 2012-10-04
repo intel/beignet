@@ -386,7 +386,6 @@ namespace gbe
     if (OCL_OUTPUT_ASM)
       for (uint32_t insnID = 0; insnID < genKernel->insnNum; ++insnID)
         gen_disasm(stdout, &p->store[insnID]);
-    exit(0);
   }
 
   Kernel *GenContext::allocateKernel(void) {
