@@ -1087,6 +1087,7 @@ namespace ir {
       case MEM_LOCAL: return out << "local";
       case MEM_CONSTANT: return out << "constant";
       case MEM_PRIVATE: return out << "private";
+      case MEM_INVALID: NOT_SUPPORTED; return out;
     };
     return out;
   }

@@ -195,12 +195,8 @@ namespace gbe
       this->full = this->curr;
 
       // Try to pick up a free block
-      if (this->free) {
-        GBE_ASSERT(this->free->allocated < this->free->maxElemNum);
-        this->curr = this->free;
-        this->free = this->free->next;
-        this->curr->next = NULL;
-      }
+      if (this->free) this->getFreeBlock();
+
       // No free block we must allocate a new one
       else
         this->curr = GBE_NEW(GrowingPoolElem, 2 * this->curr->maxElemNum);
@@ -238,14 +234,19 @@ namespace gbe
         this->free = this->full;
         this->full = next;
       }
+
       // Provide a valid current block
+      this->getFreeBlock();
+#endif /* GBE_DEBUG_SPECIAL_ALLOCATOR */
+    }
+  private:
+    /*! Pick-up a free block */
+    INLINE void getFreeBlock(void) {
       GBE_ASSERT(this->free);
       this->curr = this->free;
       this->free = this->free->next;
       this->curr->next = NULL;
-#endif /* GBE_DEBUG_SPECIAL_ALLOCATOR */
     }
-  private:
     /*! Chunk of elements to allocate */
     class GrowingPoolElem
     {
