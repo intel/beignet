@@ -91,16 +91,26 @@ namespace gbe
     void addDependency(ScheduleNode *node0, uint32_t index);
     /*! Add a new dependency "node located at index depends on node0" */
     void addDependency(uint32_t index, ScheduleNode *node0);
+    /*! No dependency for null registers and immediate */
+    INLINE bool ignoreDependency(GenRegister reg) const {
+      if (reg.file == GEN_IMMEDIATE_VALUE)
+        return true;
+      else if (reg.file == GEN_ARCHITECTURE_REGISTER_FILE) {
+        if ((reg.nr & 0xf0) == GEN_ARF_NULL)
+          return true;
+      }
+      return false;
+    }
     /*! Add a new dependency "node0 depends on node set for register reg" */
     INLINE void addDependency(ScheduleNode *node0, GenRegister reg) {
-      if (reg.file != GEN_IMMEDIATE_VALUE) {
+      if (this->ignoreDependency(reg) == false) {
         const uint32_t index = this->getIndex(reg);
         this->addDependency(node0, index);
       }
     }
     /*! Add a new dependency "node set for register reg depends on node0" */
     INLINE void addDependency(GenRegister reg, ScheduleNode *node0) {
-      if (reg.file != GEN_IMMEDIATE_VALUE) {
+      if (this->ignoreDependency(reg) == false) {
         const uint32_t index = this->getIndex(reg);
         this->addDependency(index, node0);
       }
@@ -237,8 +247,11 @@ namespace gbe
 
     // Track writes in registers
     for (uint32_t dstID = 0; dstID < insn.dstNum; ++dstID) {
-      const uint32_t index = this->getIndex(insn.dst(dstID));
-      this->nodes[index] = node;
+      const GenRegister dst = insn.dst(dstID);
+      if (this->ignoreDependency(dst) == false) {
+        const uint32_t index = this->getIndex(dst);
+        this->nodes[index] = node;
+      }
     }
 
     // Track writes in predicates

@@ -80,6 +80,7 @@ namespace gbe
     INLINE GenInstructionState(uint32_t simdWidth = 8) {
       this->execWidth = simdWidth;
       this->quarterControl = GEN_COMPRESSION_Q1;
+      this->accWrEnable = 0;
       this->noMask = 0;
       this->flag = 0;
       this->subFlag = 0;
@@ -93,7 +94,8 @@ namespace gbe
     uint32_t subFlag:1;      //!< Only if physical flag
     uint32_t flagIndex:16;   //!< Only if virtual flag (index of the register)
     uint32_t execWidth:5;
-    uint32_t quarterControl:2;
+    uint32_t quarterControl:1;
+    uint32_t accWrEnable:1;
     uint32_t noMask:1;
     uint32_t predicate:4;
     uint32_t inversePredicate:1;

@@ -183,6 +183,7 @@ namespace gbe
       insn->header.execution_size = GEN_WIDTH_1;
     else
       NOT_IMPLEMENTED;
+    insn->header.acc_wr_control = this->curr.accWrEnable;
     insn->header.quarter_control = this->curr.quarterControl;
     insn->header.mask_control = this->curr.noMask;
     insn->bits2.ia1.flag_reg_nr = this->curr.flag;
@@ -445,13 +446,11 @@ namespace gbe
                    uint32_t opcode,
                    GenRegister dst,
                    GenRegister src0,
-                   GenRegister src1,
-                   int accWriteControl = 0)
+                   GenRegister src1)
   {
-     if (needToSplitAlu2(p, dst, src0, src1) == false) {
+    if (needToSplitAlu2(p, dst, src0, src1) == false) {
        GenInstruction *insn = p->next(opcode);
        p->setHeader(insn);
-       insn->header.acc_wr_control = accWriteControl;
        p->setDst(insn, dst);
        p->setSrc0(insn, src0);
        p->setSrc1(insn, src1);
@@ -461,7 +460,6 @@ namespace gbe
        // Instruction for the first quarter
        insnQ1 = p->next(opcode);
        p->setHeader(insnQ1);
-       insnQ1->header.acc_wr_control = accWriteControl;
        insnQ1->header.quarter_control = GEN_COMPRESSION_Q1;
        insnQ1->header.execution_size = GEN_WIDTH_8;
        p->setDst(insnQ1, dst);
@@ -471,7 +469,6 @@ namespace gbe
        // Instruction for the second quarter
        insnQ2 = p->next(opcode);
        p->setHeader(insnQ2);
-       insnQ2->header.acc_wr_control = accWriteControl;
        insnQ2->header.quarter_control = GEN_COMPRESSION_Q2;
        insnQ2->header.execution_size = GEN_WIDTH_8;
        p->setDst(insnQ2, GenRegister::Qn(dst, 1));
@@ -591,11 +588,8 @@ namespace gbe
   ALU1(LZD)
   ALU2(LINE)
   ALU2(PLN)
+  ALU2(MACH)
   ALU3(MAD)
-
-  void GenEncoder::MACH(GenRegister dest, GenRegister src0, GenRegister src1) {
-     alu2(this, GEN_OPCODE_MACH, dest, src0, src1, 1);
-  }
 
   void GenEncoder::ADD(GenRegister dest, GenRegister src0, GenRegister src1) {
      if (src0.type == GEN_TYPE_F ||

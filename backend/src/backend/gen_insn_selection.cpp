@@ -1235,7 +1235,9 @@ namespace gbe
         sel.curr.execWidth = 8;
         sel.curr.quarterControl = GEN_COMPRESSION_Q1;
         sel.MUL(GenRegister::retype(GenRegister::acc(), GEN_TYPE_D), src0, src1);
+        sel.curr.accWrEnable = 1;
         sel.MACH(GenRegister::retype(GenRegister::null(), GEN_TYPE_D), src0, src1);
+        sel.curr.accWrEnable = 0;
         sel.MOV(GenRegister::retype(dst, GEN_TYPE_F), GenRegister::acc());
 
         // Right part of the 16-wide register now
@@ -1244,7 +1246,9 @@ namespace gbe
           const GenRegister nextSrc0 = sel.selRegQn(insn.getSrc(0), 1, TYPE_S32);
           const GenRegister nextSrc1 = sel.selRegQn(insn.getSrc(1), 1, TYPE_S32);
           sel.MUL(GenRegister::retype(GenRegister::acc(), GEN_TYPE_D), nextSrc0, nextSrc1);
+          sel.curr.accWrEnable = 1;
           sel.MACH(GenRegister::retype(GenRegister::null(), GEN_TYPE_D), nextSrc0, nextSrc1);
+          sel.curr.accWrEnable = 0;
           sel.curr.quarterControl = GEN_COMPRESSION_Q2;
           const ir::Register reg = sel.reg(FAMILY_DWORD);
           sel.MOV(GenRegister::f8grf(reg), GenRegister::acc());
