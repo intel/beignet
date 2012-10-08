@@ -25,8 +25,9 @@
  * test with the provided macro and unit tests are then run
  */
 #include "utest.hpp"
-#include "sys/string.hpp"
 #include "sys/vector.hpp"
+#include <string>
+#include <cstring>
 
 namespace gbe
 {
@@ -49,7 +50,7 @@ namespace gbe
     for (size_t i = 0; i < utestList->size(); ++i) {
       const UTest &utest = (*utestList)[i];
       if (utest.name == NULL || utest.fn == NULL) continue;
-      if (strequal(utest.name, name)) {
+      if (strcmp(utest.name, name) == 0) {
         std::cout << utest.name << ":" << std::endl;
         (utest.fn)();
         std::cout << std::endl;

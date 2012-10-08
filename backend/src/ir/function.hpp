@@ -187,6 +187,8 @@ namespace ir {
     }
     /*! Get the function name */
     const std::string &getName(void) const { return name; }
+    /*! When set, we do not have choice any more in the back end for it */
+    INLINE void setSimdWidth(uint32_t width) { simdWidth = width; }
     /*! Get the SIMD width (0 if not forced) */
     uint32_t getSimdWidth(void) const { return simdWidth; }
     /*! Extract the register from the register file */

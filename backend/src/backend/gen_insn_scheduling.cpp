@@ -23,6 +23,7 @@
  */
 
 #include "backend/gen_insn_selection.hpp"
+#include "sys/cvar.hpp"
 
 namespace gbe
 {
@@ -122,7 +123,7 @@ namespace gbe
     /*! Maximum number of *physical* flag registers */
     static const uint32_t MAX_FLAG_REGISTER = 8u;
     /*! Maximum number of *physical* accumulators registers */
-    static const uint32_t MAX_ACC_REGISTER = 8u;
+    static const uint32_t MAX_ACC_REGISTER = 1u;
     /*! Owns the tracker */
     SelectionScheduler &scheduler;
     /*! Stores the last node that wrote to a register / memory ... */
@@ -260,6 +261,12 @@ namespace gbe
       this->nodes[index] = node;
     }
 
+    // Track writes in accumulators
+    if (insn.state.accWrEnable) {
+      const uint32_t index = this->getIndex(GenRegister::acc());
+      this->nodes[index] = node;
+    }
+
     // Track writes in memory
     if (insn.isWrite()) {
       const uint32_t index = this->getIndex(insn.extra.function);
@@ -345,6 +352,10 @@ namespace gbe
       // write-after-write for predicate
       if (insn.opcode == SEL_OP_CMP)
         tracker.addDependency(node, getFlag(insn));
+
+      // write-after-write for accumulators
+      if (insn.state.accWrEnable)
+        tracker.addDependency(node, GenRegister::acc());
 
       // write-after-write in memory
       if (insn.isWrite()) {
@@ -477,13 +488,17 @@ namespace gbe
     }
   }
 
+  BVAR(OCL_SCHEDULE_INSN, true);
+
   void schedulePreRegAllocation(GenContext &ctx, Selection &selection) {
-    SelectionScheduler scheduler(ctx, selection);
-    selection.foreach([&](SelectionBlock &bb) {
-      const int32_t insnNum = scheduler.buildDAG(bb);
-      bb.insnHead = bb.insnTail = NULL;
-      scheduler.scheduleDAG(bb, insnNum);
-    });
+    if (OCL_SCHEDULE_INSN) {
+      SelectionScheduler scheduler(ctx, selection);
+      selection.foreach([&](SelectionBlock &bb) {
+        const int32_t insnNum = scheduler.buildDAG(bb);
+        bb.insnHead = bb.insnTail = NULL;
+        scheduler.scheduleDAG(bb, insnNum);
+      });
+    }
   }
 
 } /* namespace gbe */

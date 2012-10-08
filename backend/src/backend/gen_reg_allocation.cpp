@@ -29,6 +29,7 @@
 #include "backend/gen_reg_allocation.hpp"
 #include "backend/gen_register.hpp"
 #include "backend/program.hpp"
+#include "sys/exception.hpp"
 #include <algorithm>
 #include <climits>
 
@@ -463,8 +464,10 @@ namespace gbe
         const uint32_t size = vector->regNum * alignment;
         uint32_t grfOffset;
         while ((grfOffset = ctx.allocate(size, alignment)) == 0) {
-          IF_DEBUG(const bool success =) this->expireGRF(interval);
-          GBE_ASSERTM(success, "Register allocation failed");
+          const bool success = this->expireGRF(interval);
+          if (UNLIKELY(success == false))
+            throw NotEnoughRegisterException();
+          // GBE_ASSERTM(success, "Register allocation failed");
         }
         for (uint32_t regID = 0; regID < vector->regNum; ++regID, grfOffset += alignment) {
           const ir::Register reg = vector->reg[regID].reg();
@@ -486,7 +489,7 @@ namespace gbe
 
     // Allocate all the vectors first since they need to be contiguous
     this->allocateVector(selection);
-    // schedulePreRegAllocation(ctx, selection);
+    schedulePreRegAllocation(ctx, selection);
 
     // Now start the linear scan allocation
     for (uint32_t regID = 0; regID < ctx.sel->getRegNum(); ++regID)

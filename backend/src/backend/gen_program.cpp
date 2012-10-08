@@ -27,9 +27,12 @@
 #include "backend/gen_program.hpp"
 #include "backend/gen_context.hpp"
 #include "backend/gen_defs.hpp"
+#include "backend/gen_reg_allocation.hpp"
+#include "ir/unit.hpp"
 #include "llvm/llvm_to_gen.hpp"
 
 #include <cstring>
+#include <memory>
 
 namespace gbe {
 
@@ -45,9 +48,20 @@ namespace gbe {
 
   Kernel *GenProgram::compileKernel(const ir::Unit &unit, const std::string &name) {
     Context *ctx = GBE_NEW(GenContext, unit, name);
-    Kernel *ker = ctx->compileKernel();
+    Kernel *kernel = NULL;
+
+    // register allocation may fail. We may need to recompile in that case
+    try {
+      kernel = ctx->compileKernel();
+    } catch (NotEnoughRegisterException e) {
+      GBE_SAFE_DELETE(ctx->getKernel());
+      GBE_SAFE_DELETE(ctx);
+      unit.getFunction(name)->setSimdWidth(8);
+      ctx = GBE_NEW(GenContext, unit, name);
+      kernel = ctx->compileKernel();
+    }
     GBE_DELETE(ctx);
-    return ker;
+    return kernel;
   }
 
   static gbe_program genProgramNewFromBinary(const char *binary, size_t size) {

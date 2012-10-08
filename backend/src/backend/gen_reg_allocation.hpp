@@ -27,12 +27,14 @@
 
 #include "ir/register.hpp"
 #include "backend/gen_register.hpp"
+#include <exception>
 
 namespace gbe
 {
   class Selection;      // Pre-register allocation code generation
   class GenRegister;    // Pre-register allocation Gen register
   class GenRegInterval; // Liveness interval for each register
+  class GenContext;     // Gen specific context
 
   /*! Register allocate (i.e. virtual to physical register mapping) */
   class GenRegAllocator
@@ -53,6 +55,15 @@ namespace gbe
     Opaque *opaque;
     /*! Use custom allocator */
     GBE_CLASS(GenRegAllocator);
+  };
+
+  /*! Thrown when not enough register during register allocation */
+  class NotEnoughRegisterException : public std::exception
+  {
+  public:
+    const char *what(void) const throw() {
+      return "Not enough register to allocate";
+    }
   };
 
 } /* namespace gbe */

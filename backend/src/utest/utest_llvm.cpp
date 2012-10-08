@@ -30,6 +30,8 @@
 #include "ir/liveness.hpp"
 #include "ir/value.hpp"
 #include <cstdlib>
+#include <string>
+#include <cstring>
 
 namespace gbe
 {

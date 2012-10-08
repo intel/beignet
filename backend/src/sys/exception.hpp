@@ -27,8 +27,8 @@
 
 #if GBE_COMPILE_UTESTS
 
-#include "string.hpp"
 #include <exception>
+#include <string>
 
 namespace gbe
 {

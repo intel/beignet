@@ -374,7 +374,10 @@ namespace gbe
 
   void Context::buildArgList(void) {
     kernel->argNum = fn.argNum();
-    kernel->args = GBE_NEW_ARRAY(KernelArgument, kernel->argNum);
+    if (kernel->argNum)
+      kernel->args = GBE_NEW_ARRAY(KernelArgument, kernel->argNum);
+    else
+      kernel->args = NULL;
     for (uint32_t argID = 0; argID < kernel->argNum; ++argID) {
       const auto &arg = fn.getArg(argID);
       switch (arg.type) {
@@ -471,7 +474,6 @@ namespace gbe
       auto jip = fwdTargets.lower_bound(LabelIndex(0));
       JIPs.insert(std::make_pair(bra, *jip));
     }
-
   }
 
   bool Context::isScalarReg(const ir::Register &reg) const {
