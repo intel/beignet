@@ -75,22 +75,38 @@ namespace ir {
   /// All public instruction classes as manipulated by all public classes
   ///////////////////////////////////////////////////////////////////////////
 
-  /*! Store the instruction description in 32 bytes */
-  class Instruction
+  /*! Stores instruction internal data and opcode */
+  class InstructionBase
   {
   public:
     /*! Initialize the instruction from a 8 bytes stream */
-    INLINE Instruction(const char *stream) {
+    INLINE InstructionBase(const char *stream) {
       opcode = Opcode(stream[0]);
       for (uint32_t byte = 0; byte < opaqueSize; ++byte)
         opaque[byte] = stream[byte+1];
-      predecessor = successor = NULL;
+    }
+    /*! Uninitialized instruction */
+    INLINE InstructionBase(void) {}
+    /*! Get the instruction opcode */
+    INLINE Opcode getOpcode(void) const { return opcode; }
+  protected:
+    enum { opaqueSize = sizeof(uint64_t)-sizeof(uint8_t) };
+    Opcode opcode;               //!< Idendifies the instruction
+    char opaque[opaqueSize];     //!< Remainder of it
+    GBE_CLASS(InstructionBase);  //!< Use internal allocators
+  };
+
+  /*! Store the instruction description in 32 bytes */
+  class Instruction : public InstructionBase
+  {
+  public:
+    /*! Initialize the instruction from a 8 bytes stream */
+    INLINE Instruction(const char *stream) : InstructionBase(stream) {
       parent = NULL;
+      predecessor = successor = NULL;
     }
     /*! Uninitialized instruction */
     INLINE Instruction(void) {}
-    /*! Get the instruction opcode */
-    INLINE Opcode getOpcode(void) const { return opcode; }
     /*! Get the number of sources for this instruction  */
     uint32_t getSrcNum(void) const;
     /*! Get the number of destination for this instruction */
@@ -142,9 +158,6 @@ namespace ir {
     static const uint32_t MAX_SRC_NUM = 8;
     static const uint32_t MAX_DST_NUM = 8;
   protected:
-    enum { opaqueSize = sizeof(uint64_t)-sizeof(uint8_t) };
-    Opcode opcode;           //!< Idendifies the instruction
-    char opaque[opaqueSize]; //!< Remainder of it
     Instruction *predecessor;//!< Previous instruction in the basic block
     Instruction *successor;  //!< Next instruction in the basic block
     BasicBlock *parent;      //!< The basic block containing the instruction

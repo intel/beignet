@@ -382,7 +382,7 @@ namespace gbe
         tracker.makeBarrier(insnID, insnNum);
     }
 
-    // Build the initial ready list
+    // Build the initial ready list (should only be the label actually)
     for (int32_t insnID = 0; insnID < insnNum; ++insnID) {
       ScheduleDAGNode *node = tracker.insnNodes[insnID];
       if (node->refNum == 0) {
