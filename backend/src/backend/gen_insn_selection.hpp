@@ -150,14 +150,12 @@ namespace gbe
   };
 
   /*! Instructions like sends require to make registers contiguous in GRF */
-  class SelectionVector
+  class SelectionVector : public NonCopyable, public intrusive_list_node
   {
   public:
     SelectionVector(void);
     /*! The instruction that requires the vector of registers */
     SelectionInstruction *insn;
-    /*! We chain the selection vectors together */
-    SelectionVector *next;
     /*! Directly points to the selection instruction registers */
     GenRegister *reg;
     /*! Number of registers in the vector */
@@ -179,19 +177,19 @@ namespace gbe
     /*! All the emitted instructions in the block */
     intrusive_list<SelectionInstruction> insnList;
     /*! The vectors that may be required by some instructions of the block */
-    SelectionVector *vector;
+    intrusive_list<SelectionVector> vectorList;
     /*! Extra registers needed by the block (only live in the block) */
     gbe::vector<ir::Register> tmp;
     /*! Associated IR basic block */
     const ir::BasicBlock *bb;
     /*! Append a new temporary register */
     void append(ir::Register reg);
+    /*! Append a new selection vector in the block */
+    void append(SelectionVector *vec);
     /*! Append a new selection instruction at the end of the block */
     void append(SelectionInstruction *insn);
     /*! Append a new selection instruction at the beginning of the block */
     void prepend(SelectionInstruction *insn);
-    /*! Append a new selection vector in the block */
-    void append(SelectionVector *vec);
   };
 
   /*! Owns the selection engine */

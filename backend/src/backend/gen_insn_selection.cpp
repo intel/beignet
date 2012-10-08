@@ -76,16 +76,14 @@ namespace gbe
   ///////////////////////////////////////////////////////////////////////////
 
   SelectionVector::SelectionVector(void) :
-    insn(NULL), next(NULL), reg(NULL), regNum(0), isSrc(0)
+    insn(NULL), reg(NULL), regNum(0), isSrc(0)
   {}
 
   ///////////////////////////////////////////////////////////////////////////
   // SelectionBlock
   ///////////////////////////////////////////////////////////////////////////
 
-  SelectionBlock::SelectionBlock(const ir::BasicBlock *bb) :
-    vector(NULL), bb(bb)
-  {}
+  SelectionBlock::SelectionBlock(const ir::BasicBlock *bb) : bb(bb) {}
 
   void SelectionBlock::append(ir::Register reg) { tmp.push_back(reg); }
 
@@ -100,9 +98,7 @@ namespace gbe
   }
 
   void SelectionBlock::append(SelectionVector *vec) {
-    SelectionVector *tmp = this->vector;
-    this->vector = vec;
-    this->vector->next = tmp;
+    this->vectorList.push_back(vec);
   }
 
   ///////////////////////////////////////////////////////////////////////////

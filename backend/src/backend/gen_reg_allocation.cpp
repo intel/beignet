@@ -223,14 +223,9 @@ namespace gbe
 
     // First we find and store all vectors
     uint32_t vectorID = 0;
-    for (auto &block : *selection.blockList) {
-      SelectionVector *v = block.vector;
-      while (v) {
-        GBE_ASSERT(vectorID < vectorNum);
-        this->vectors[vectorID++] = v;
-        v = v->next;
-      }
-    }
+    for (auto &block : *selection.blockList)
+      for (auto &v : block.vectorList)
+        this->vectors[vectorID++] = &v;
     GBE_ASSERT(vectorID == vectorNum);
 
     // Heuristic (really simple...): sort them by the number of registers they
