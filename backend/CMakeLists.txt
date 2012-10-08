@@ -10,7 +10,6 @@ set (CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${GBE_CMAKE_DIR}")
 ##############################################################
 
 set (GBE_DEBUG_MEMORY false CACHE bool "Activate the memory debugger")
-set (GBE_COMPILE_UTESTS false CACHE bool "Will compile the unit tests")
 set (GBE_USE_BLOB false CACHE bool "Compile everything from one big file")
 
 ##############################################################
@@ -33,16 +32,8 @@ else (GBE_DEBUG_MEMORY)
   set (GBE_DEBUG_MEMORY_FLAG "-DGBE_DEBUG_MEMORY=0")
 endif (GBE_DEBUG_MEMORY)
 
-if (GBE_COMPILE_UTESTS)
-  set (GBE_COMPILE_UTESTS_FLAG "-DGBE_COMPILE_UTESTS=1")
-else (GBE_COMPILE_UTESTS)
-  set (GBE_COMPILE_UTESTS_FLAG "-DGBE_COMPILE_UTESTS=0")
-endif (GBE_COMPILE_UTESTS)
-
 # Hide all symbols and allows the symbols declared as visible to be exported
-if (NOT GBE_COMPILE_UTESTS)
-  set (CMAKE_C_CXX_FLAGS "-fvisibility=hidden")
-endif (NOT GBE_COMPILE_UTESTS)
+set (CMAKE_C_CXX_FLAGS "-fvisibility=hidden")
 
 if (COMPILER STREQUAL "GCC")
   set (CMAKE_C_CXX_FLAGS "${CMAKE_C_CXX_FLAGS} -funroll-loops -Wstrict-aliasing=2 -fstrict-aliasing -msse2 -msse3 -mssse3 -msse4.1 -ffast-math -fPIC -Wall")

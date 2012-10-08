@@ -103,17 +103,6 @@ else (GBE_USE_BLOB)
 
 endif (GBE_USE_BLOB)
 
-if (GBE_COMPILE_UTESTS)
-  set (GBE_SRC
-       ${GBE_SRC}
-       utest/utest_vector.cpp
-       utest/utest_llvm.cpp
-       utest/utest_test_utest.cpp
-       utest/utest_context.cpp
-       utest/utest.cpp
-       utest/utest.hpp)
-endif (GBE_COMPILE_UTESTS)
-
 include_directories (.)
 link_directories (${LLVM_LIBRARY_DIRS})
 add_library (gbe SHARED ${GBE_SRC})
@@ -131,12 +120,6 @@ target_link_libraries (gbe
   LLVMMCParser
   LLVMAsmParser
   LLVMBitReader)
-
-if (GBE_COMPILE_UTESTS)
-  set (TESTER_SRC utest/tester.cpp)
-  add_executable (tester utest/tester.cpp)
-  target_link_libraries (tester gbe)
-endif (GBE_COMPILE_UTESTS)
 
 install (TARGETS gbe LIBRARY DESTINATION lib)
 install (FILES backend/program.h backend/sim/simulator.h DESTINATION include/gen)

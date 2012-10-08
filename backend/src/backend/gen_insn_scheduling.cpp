@@ -225,8 +225,9 @@ namespace gbe
       const uint32_t file = reg.nr & 0xf0;
       const uint32_t nr = reg.nr & 0x0f;
       if (file == GEN_ARF_FLAG) {
-        GBE_ASSERT(nr < MAX_FLAG_REGISTER && (reg.subnr == 0 || reg.subnr == 1));
-        return virtualNum + 2*nr + reg.subnr;
+        const uint32_t subnr = reg.subnr / sizeof(uint16_t);
+        GBE_ASSERT(nr < MAX_FLAG_REGISTER && (subnr == 0 || subnr == 1));
+        return virtualNum + 2*nr + subnr;
       } else if (file == GEN_ARF_ACCUMULATOR) {
         GBE_ASSERT(nr < MAX_ACC_REGISTER);
         return virtualNum + MAX_FLAG_REGISTER + nr;
