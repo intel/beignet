@@ -1,3 +1,26 @@
+/* The MIT License
+ *
+ * Copyright (c) 2007 Maciej Sinilo
+ *
+ * Permission is hereby granted, free of charge, to any person obtaining a copy
+ * of this software and associated documentation files (the "Software"), to deal
+ * in the Software without restriction, including without limitation the rights
+ * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+ * copies of the Software, and to permit persons to whom the Software is
+ * furnished to do so, subject to the following conditions:
+ *
+ * The above copyright notice and this permission notice shall be included in
+ * all copies or substantial portions of the Software.
+ *
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+ * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+ * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+ * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+ * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+ * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
+ * THE SOFTWARE.
+ */
+
 #include "intrusive_list.hpp"
 
 namespace gbe
@@ -14,15 +37,27 @@ namespace gbe
     return numNodes - 1;
   }
 
-  void intrusive_list_base::link(intrusive_list_node* node, intrusive_list_node* nextNode) {
+  void append(intrusive_list_node *node, intrusive_list_node *prev) {
     GBE_ASSERT(!node->in_list());
-    node->prev = nextNode->prev;
-    node->prev->next = node;
-    nextNode->prev = node;
-    node->next = nextNode;
+    node->next = prev->next;
+    node->next->prev = node;
+    prev->next = node;
+    node->prev = prev;
   }
 
-  void intrusive_list_base::unlink(intrusive_list_node* node) {
+  void prepend(intrusive_list_node *node, intrusive_list_node *next) {
+    GBE_ASSERT(!node->in_list());
+    node->prev = next->prev;
+    node->prev->next = node;
+    next->prev = node;
+    node->next = next;
+  }
+
+  void link(intrusive_list_node* node, intrusive_list_node* nextNode) {
+    prepend(node, nextNode);
+  }
+
+  void unlink(intrusive_list_node* node) {
     GBE_ASSERT(node->in_list());
     node->prev->next = node->next;
     node->next->prev = node->prev;

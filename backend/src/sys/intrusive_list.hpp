@@ -33,9 +33,18 @@ namespace gbe
   {
     INLINE intrusive_list_node(void) { next = prev = this; }
     INLINE bool in_list(void) const  { return this != next; }
-    intrusive_list_node*  next;
-    intrusive_list_node*  prev;
+    intrusive_list_node *next;
+    intrusive_list_node *prev;
   };
+
+  /*! Insert node such that prev -> node */
+  void append(intrusive_list_node *node, intrusive_list_node *prev);
+  /*! Insert node such that node -> next */
+  void prepend(intrusive_list_node *node, intrusive_list_node *next);
+  /*! Same as prepend */
+  void link(intrusive_list_node* node, intrusive_list_node* nextNode);
+  /*! Remove the node from its current list */
+  void unlink(intrusive_list_node* node);
 
   template<typename Pointer, typename Reference>
   class intrusive_list_iterator
@@ -86,19 +95,16 @@ namespace gbe
   class intrusive_list_base
   {
   public:
-    typedef size_t  size_type;
+    typedef size_t size_type;
 
     INLINE void pop_back(void) { unlink(m_root.prev); }
     INLINE void pop_front(void) { unlink(m_root.next); }
-    size_type size(void) const;
     INLINE bool empty(void) const  { return !m_root.in_list(); }
+    size_type size(void) const;
 
   protected:
     intrusive_list_base(void);
     INLINE ~intrusive_list_base(void) {}
-
-    static void link(intrusive_list_node* node, intrusive_list_node* nextNode);
-    static void unlink(intrusive_list_node* node);
 
     intrusive_list_node m_root;
 
@@ -124,15 +130,19 @@ namespace gbe
     void push_back(value_type* v) { link(v, &m_root); }
     void push_front(value_type* v) { link(v, m_root.next); }
 
-    iterator begin(void) { return iterator(upcast(m_root.next)); }
-    iterator end(void)   { return iterator(upcast(&m_root)); }
-    const_iterator begin(void) const { return const_iterator(upcast(m_root.next)); }
-    const_iterator end(void) const   { return const_iterator(upcast(&m_root)); }
+    iterator begin(void)  { return iterator(upcast(m_root.next)); }
+    iterator end(void)    { return iterator(upcast(&m_root)); }
+    iterator rbegin(void) { return iterator(upcast(m_root.prev)); }
+    iterator rend(void)   { return iterator(upcast(&m_root)); }
+    const_iterator begin(void) const  { return const_iterator(upcast(m_root.next)); }
+    const_iterator end(void) const    { return const_iterator(upcast(&m_root)); }
+    const_iterator rbegin(void) const { return const_iterator(upcast(m_root.prev)); }
+    const_iterator rend(void) const   { return const_iterator(upcast(&m_root)); }
 
-    value_type* front(void) { return upcast(m_root.next); }
-    value_type* back(void)  { return upcast(m_root.prev); }
-    const value_type* front(void) const { return upcast(m_root.next); }
-    const value_type* back(void) const  { return upcast(m_root.prev); }
+    INLINE value_type* front(void) { return upcast(m_root.next); }
+    INLINE value_type* back(void)  { return upcast(m_root.prev); }
+    INLINE const value_type* front(void) const { return upcast(m_root.next); }
+    INLINE const value_type* back(void) const  { return upcast(m_root.prev); }
 
     iterator insert(iterator pos, value_type* v) {
       link(v, pos.node());
@@ -151,7 +161,6 @@ namespace gbe
 
     void clear(void) { erase(begin(), end()); }
     void fast_clear(void) { m_root.next = m_root.prev = &m_root; }
-
     static void remove(value_type* v) { unlink(v); }
 
   private:
