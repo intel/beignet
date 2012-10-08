@@ -24,7 +24,6 @@
 #include "ir/function.hpp"
 #include "ir/unit.hpp"
 #include "sys/map.hpp"
-#include "sys/intrusive_list.hpp"
 
 namespace gbe {
 namespace ir {

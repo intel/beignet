@@ -85,9 +85,6 @@ else (GBE_USE_BLOB)
     backend/sim/sim_vector_str.cpp
     backend/sim/sim_vector.h
     backend/gen/gen_mesa_disasm.c
-    backend/gen/gen_mesa_disasm.h
-    backend/gen/gen_mesa_defines.h
-    backend/gen/gen_mesa_structs.h
     backend/gen_insn_selection.cpp
     backend/gen_insn_selection.hpp
     backend/gen_insn_scheduling.cpp

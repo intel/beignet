@@ -29,7 +29,8 @@
 namespace gbe
 {
   /*! List elements must inherit from it */
-  struct intrusive_list_node {
+  struct intrusive_list_node
+  {
     INLINE intrusive_list_node(void) { next = prev = this; }
     INLINE bool in_list(void) const  { return this != next; }
     intrusive_list_node*  next;
@@ -44,11 +45,10 @@ namespace gbe
     typedef Reference reference;
 
     INLINE intrusive_list_iterator(void): m_node(0) {}
-    INLINE explicit intrusive_list_iterator(Pointer iterNode) : m_node(iterNode)
-    {}
+    INLINE intrusive_list_iterator(Pointer iterNode) : m_node(iterNode) {}
 
     INLINE Reference operator*(void) const {
-      RDE_ASSERT(m_node);
+      GBE_ASSERT(m_node);
       return *m_node;
     }
     INLINE Pointer operator->(void) const { return m_node; }
@@ -97,7 +97,6 @@ namespace gbe
     intrusive_list_base(void);
     INLINE ~intrusive_list_base(void) {}
 
-    // links 'node' before 'nextNode'
     static void link(intrusive_list_node* node, intrusive_list_node* nextNode);
     static void unlink(intrusive_list_node* node);
 
@@ -151,6 +150,7 @@ namespace gbe
     }
 
     void clear(void) { erase(begin(), end()); }
+    void fast_clear(void) { m_root.next = m_root.prev = &m_root; }
 
     static void remove(value_type* v) { unlink(v); }
 

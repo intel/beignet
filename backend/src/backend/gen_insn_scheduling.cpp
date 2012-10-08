@@ -24,6 +24,7 @@
 
 #include "backend/gen_insn_selection.hpp"
 #include "sys/cvar.hpp"
+#include "sys/intrusive_list.hpp"
 
 namespace gbe
 {
@@ -31,34 +32,29 @@ namespace gbe
   struct SelectionScheduler;
 
   // Node for the schedule DAG
-  struct ScheduleNode;
+  struct ScheduleDAGNode;
 
   /*! We need to chain together the node we point */
-  struct ScheduleNodeList {
-    INLINE ScheduleNodeList(ScheduleNode *node) : node(node), next(NULL), prev(NULL) {}
-    /*! Pointed node */
-    ScheduleNode *node;
-    /*! Next and previous dependent node in the list */
-    ScheduleNodeList *next, *prev;
+  struct ScheduleListNode : public intrusive_list_node
+  {
+    INLINE ScheduleListNode(ScheduleDAGNode *node) : node(node) {}
+    ScheduleDAGNode *node;
   };
 
   /*! Node of the DAG */
-  struct ScheduleNode {
-    INLINE ScheduleNode(SelectionInstruction &insn) :
-      children(NULL), insn(insn), refNum(0), retiredCycle(0) {}
-    bool dependsOn(ScheduleNode *node) const {
+  struct ScheduleDAGNode
+  {
+    INLINE ScheduleDAGNode(SelectionInstruction &insn) :
+      insn(insn), refNum(0), retiredCycle(0) {}
+    bool dependsOn(ScheduleDAGNode *node) const {
       GBE_ASSERT(node != NULL);
-      ScheduleNodeList *dep = node->children;
-      while (dep) {
-        if (dep->node == this)
+      for (auto child : children)
+        if (child.node == this)
           return true;
-        else
-          dep = dep->next;
-      }
       return false;
     }
     /*! Children that depends on us */
-    ScheduleNodeList *children;
+    intrusive_list<ScheduleListNode> children;
     /*! Instruction after code selection */
     SelectionInstruction &insn;
     /*! Number of nodes that point to us (i.e. nodes we depend on) */
@@ -87,11 +83,11 @@ namespace gbe
     /*! Get an index in the node array for the given memory system */
     uint32_t getIndex(uint32_t bti) const;
     /*! Add a new dependency "node0 depends on node1" */
-    void addDependency(ScheduleNode *node0, ScheduleNode *node1);
+    void addDependency(ScheduleDAGNode *node0, ScheduleDAGNode *node1);
     /*! Add a new dependency "node0 depends on node located at index" */
-    void addDependency(ScheduleNode *node0, uint32_t index);
+    void addDependency(ScheduleDAGNode *node0, uint32_t index);
     /*! Add a new dependency "node located at index depends on node0" */
-    void addDependency(uint32_t index, ScheduleNode *node0);
+    void addDependency(uint32_t index, ScheduleDAGNode *node0);
     /*! No dependency for null registers and immediate */
     INLINE bool ignoreDependency(GenRegister reg) const {
       if (reg.file == GEN_IMMEDIATE_VALUE)
@@ -103,14 +99,14 @@ namespace gbe
       return false;
     }
     /*! Add a new dependency "node0 depends on node set for register reg" */
-    INLINE void addDependency(ScheduleNode *node0, GenRegister reg) {
+    INLINE void addDependency(ScheduleDAGNode *node0, GenRegister reg) {
       if (this->ignoreDependency(reg) == false) {
         const uint32_t index = this->getIndex(reg);
         this->addDependency(node0, index);
       }
     }
     /*! Add a new dependency "node set for register reg depends on node0" */
-    INLINE void addDependency(GenRegister reg, ScheduleNode *node0) {
+    INLINE void addDependency(GenRegister reg, ScheduleDAGNode *node0) {
       if (this->ignoreDependency(reg) == false) {
         const uint32_t index = this->getIndex(reg);
         this->addDependency(index, node0);
@@ -119,7 +115,7 @@ namespace gbe
     /*! Make the node located at insnID a barrier */
     void makeBarrier(int32_t insnID, int32_t insnNum);
     /*! Update all the writes (memory, predicates, registers) */
-    void updateWrites(ScheduleNode *node);
+    void updateWrites(ScheduleDAGNode *node);
     /*! Maximum number of *physical* flag registers */
     static const uint32_t MAX_FLAG_REGISTER = 8u;
     /*! Maximum number of *physical* accumulators registers */
@@ -127,9 +123,9 @@ namespace gbe
     /*! Owns the tracker */
     SelectionScheduler &scheduler;
     /*! Stores the last node that wrote to a register / memory ... */
-    vector<ScheduleNode*> nodes;
+    vector<ScheduleDAGNode*> nodes;
     /*! Stores the nodes per instruction */
-    vector<ScheduleNode*> insnNodes;
+    vector<ScheduleDAGNode*> insnNodes;
     /*! Number of virtual register in the selection */
     uint32_t virtualNum;
   };
@@ -145,22 +141,14 @@ namespace gbe
     int32_t buildDAG(SelectionBlock &bb);
     /*! Schedule the DAG */
     void scheduleDAG(SelectionBlock &bb, int32_t insnNum);
-    /*! When an instruction is done, update the dependencies and remove it */
-    void retire(ScheduleNodeList *node);
-    /*! Insert the instruction in the ready list (it can be scheduled) */
-    void makeReady(ScheduleNodeList *node);
-    /*! Schedule the instruction (i.e. insert it in the new insn stream) */
-    void schedule(ScheduleNodeList *node, uint32_t cycle);
-    /*! Make ScheduleNodeList allocation faster */
-    DECL_POOL(ScheduleNodeList, listPool);
-    /*! Make ScheduleNode allocation faster */
-    DECL_POOL(ScheduleNode, nodePool);
-    /*! Scheduled instructions go here */
-    SelectionInstruction *scheduled;
+    /*! Make ScheduleListNode allocation faster */
+    DECL_POOL(ScheduleListNode, listPool);
+    /*! Make ScheduleDAGNode allocation faster */
+    DECL_POOL(ScheduleDAGNode, nodePool);
     /*! Ready list is instructions that can be scheduled */
-    ScheduleNodeList *readyTail, *readyHead;
+    intrusive_list<ScheduleListNode> ready;
     /*! Active list is instructions that are executing */
-    ScheduleNodeList *active;
+    intrusive_list<ScheduleListNode> active;
     /*! Handle complete compilation */
     GenContext &ctx;
     /*! Code to schedule */
@@ -179,27 +167,24 @@ namespace gbe
 
   void DependencyTracker::clear(void) { for (auto &x : nodes) x = NULL; }
 
-  void DependencyTracker::addDependency(ScheduleNode *node0, ScheduleNode *node1) {
+  void DependencyTracker::addDependency(ScheduleDAGNode *node0, ScheduleDAGNode *node1) {
     if (node0 != NULL && node1 != NULL && node0 != node1 && node0->dependsOn(node1) == false) {
-      ScheduleNodeList *dep = scheduler.newScheduleNodeList(node0);
+      ScheduleListNode *dep = scheduler.newScheduleListNode(node0);
       node0->refNum++;
-      dep->next = node1->children;
-      node1->children = dep;
-      if (dep->next)
-        dep->next->prev = dep;
+      node1->children.push_back(dep);
     }
   }
 
-  void DependencyTracker::addDependency(ScheduleNode *node, uint32_t index) {
+  void DependencyTracker::addDependency(ScheduleDAGNode *node, uint32_t index) {
     this->addDependency(node, this->nodes[index]);
   }
 
-  void DependencyTracker::addDependency(uint32_t index, ScheduleNode *node) {
+  void DependencyTracker::addDependency(uint32_t index, ScheduleDAGNode *node) {
     this->addDependency(this->nodes[index], node);
   }
 
   void DependencyTracker::makeBarrier(int32_t barrierID, int32_t insnNum) {
-    ScheduleNode *barrier = this->insnNodes[barrierID];
+    ScheduleDAGNode *barrier = this->insnNodes[barrierID];
 
     // The barrier depends on all nodes before it
     for (int32_t insnID = 0; insnID < barrierID; ++insnID)
@@ -244,7 +229,7 @@ namespace gbe
     return bti == 0xfe ? memDelta + LOCAL_MEMORY : memDelta + GLOBAL_MEMORY;
   }
 
-  void DependencyTracker::updateWrites(ScheduleNode *node) {
+  void DependencyTracker::updateWrites(ScheduleDAGNode *node) {
     const SelectionInstruction &insn = node->insn;
 
     // Track writes in registers
@@ -313,10 +298,8 @@ namespace gbe
   }
 
   void SelectionScheduler::clearLists(void) {
-    this->scheduled = NULL;
-    this->readyTail = NULL;
-    this->readyHead = NULL;
-    this->active = NULL;
+    this->ready.fast_clear();
+    this->active.fast_clear();
   }
 
   int32_t SelectionScheduler::buildDAG(SelectionBlock &bb) {
@@ -329,7 +312,7 @@ namespace gbe
     int32_t insnNum = 0;
     bb.foreach([&](SelectionInstruction &insn) {
       // Create a new node for this instruction
-      ScheduleNode *node = this->newScheduleNode(insn);
+      ScheduleDAGNode *node = this->newScheduleDAGNode(insn);
       tracker.insnNodes[insnNum++] = node;
 
       // read-after-write in registers
@@ -371,7 +354,7 @@ namespace gbe
     // Track write-after-read dependencies
     tracker.clear();
     for (int32_t insnID = insnNum-1; insnID >= 0; --insnID) {
-      ScheduleNode *node = tracker.insnNodes[insnID];
+      ScheduleDAGNode *node = tracker.insnNodes[insnID];
       const SelectionInstruction &insn = node->insn;
 
       // write-after-read in registers
@@ -394,72 +377,21 @@ namespace gbe
 
     // Make labels and branches non-schedulable (i.e. they act as barriers)
     for (int32_t insnID = 0; insnID < insnNum; ++insnID) {
-      ScheduleNode *node = tracker.insnNodes[insnID];
+      ScheduleDAGNode *node = tracker.insnNodes[insnID];
       if (node->insn.isBranch() || node->insn.isLabel() || node->insn.opcode == SEL_OP_EOT)
         tracker.makeBarrier(insnID, insnNum);
     }
 
     // Build the initial ready list
     for (int32_t insnID = 0; insnID < insnNum; ++insnID) {
-      ScheduleNode *node = tracker.insnNodes[insnID];
+      ScheduleDAGNode *node = tracker.insnNodes[insnID];
       if (node->refNum == 0) {
-        ScheduleNodeList *nodeList = this->newScheduleNodeList(node);
-        this->makeReady(nodeList);
+        ScheduleListNode *listNode = this->newScheduleListNode(node);
+        this->ready.push_back(listNode);
       }
     }
 
     return insnNum;
-  }
-
-  void SelectionScheduler::makeReady(ScheduleNodeList *list) {
-    // Remove it from the current list
-    GBE_ASSERT(list);
-    if (list->prev) list->prev->next = list->next;
-    if (list->next) list->next->prev = list->prev;
-
-    // Insert it in the ready list
-    list->prev = this->readyHead;
-    list->next = NULL;
-    if (this->readyHead != NULL) this->readyHead->next = list;
-    if (this->readyTail == NULL) this->readyTail = list;
-    this->readyHead = list;
-  }
-
-  void SelectionScheduler::retire(ScheduleNodeList *list) {
-    // Update list
-    if (list->prev) list->prev->next = list->next;
-    if (list->next) list->next->prev = list->prev;
-
-    // Update the active list
-    if (list == this->active) this->active = list->next;
-
-    // Update children reference counters and possibly make them active
-    ScheduleNodeList *children = list->node->children;
-    while (children) {
-      ScheduleNodeList *next = children->next;
-      if (--children->node->refNum == 0)
-        this->makeReady(children);
-      children = next;
-    }
-  }
-
-  void SelectionScheduler::schedule(ScheduleNodeList *list, uint32_t cycle) {
-    // Update list
-    if (list->prev) list->prev->next = list->next;
-    if (list->next) list->next->prev = list->prev;
-
-    // Update the ready list
-    if (list == this->readyHead) this->readyHead = list->prev;
-    if (list == this->readyTail) this->readyTail = list->next;
-
-    // Insert it in the active list
-    list->next = this->active;
-    list->prev = NULL;
-    if (this->active) this->active->prev = list;
-    this->active = list;
-
-    // To know when the instruction retires
-    list->node->retiredCycle = cycle + getLatencyGen7(list->node->insn);
   }
 
   void SelectionScheduler::scheduleDAG(SelectionBlock &bb, int32_t insnNum) {
@@ -468,23 +400,38 @@ namespace gbe
     while (insnNum) {
 
       // Retire all the instructions that finished
-      ScheduleNodeList *toRetire = this->active;
-      while (toRetire) {
-        ScheduleNodeList *next = toRetire->next;
-        if (toRetire->node->retiredCycle <= cycle)
-          this->retire(toRetire);
-        toRetire = next;
+      for (auto toRetireIt = active.begin(); toRetireIt != active.end();) {
+        ScheduleDAGNode *toRetireNode = toRetireIt.node()->node;
+        // Instruction is now complete
+        if (toRetireNode->retiredCycle <= cycle) {
+          toRetireIt = this->active.erase(toRetireIt);
+          // Traverse all children and make them ready if no more dependency
+          auto &children = toRetireNode->children;
+          for (auto it = children.begin(); it != children.end();) {
+            if (--it->node->refNum == 0) {
+              ScheduleListNode *listNode = it.node();
+              it = children.erase(it);
+              this->ready.push_back(listNode);
+            } else
+              ++it;
+          }
+        }
+        // Get the next one
+        else
+          ++toRetireIt;
       }
 
-      // Try to schedule something
-      ScheduleNodeList *toSchedule = this->readyTail;
-      if (toSchedule) {
+      // Try to schedule something from the ready list
+      auto toSchedule = this->ready.begin();
+      if (toSchedule != this->ready.end()) {
         cycle += getThroughputGen7(toSchedule->node->insn, isSIMD8);
-        this->schedule(toSchedule, cycle);
+        this->ready.erase(toSchedule);
+        this->active.push_back(toSchedule.node());
+        toSchedule->node->retiredCycle = cycle + getLatencyGen7(toSchedule->node->insn);
         toSchedule->node->insn.next = toSchedule->node->insn.prev = NULL;
         bb.append(&toSchedule->node->insn);
         insnNum--;
-      } else 
+      } else
         cycle++;
     }
   }
