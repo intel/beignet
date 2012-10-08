@@ -428,7 +428,6 @@ namespace gbe
         this->ready.erase(toSchedule);
         this->active.push_back(toSchedule.node());
         toSchedule->node->retiredCycle = cycle + getLatencyGen7(toSchedule->node->insn);
-        toSchedule->node->insn.next = toSchedule->node->insn.prev = NULL;
         bb.append(&toSchedule->node->insn);
         insnNum--;
       } else
@@ -443,7 +442,8 @@ namespace gbe
       SelectionScheduler scheduler(ctx, selection);
       selection.foreach([&](SelectionBlock &bb) {
         const int32_t insnNum = scheduler.buildDAG(bb);
-        bb.insnHead = bb.insnTail = NULL;
+        bb.insnList.clear();
+        // bb.insnHead = bb.insnTail = NULL;
         scheduler.scheduleDAG(bb, insnNum);
       });
     }

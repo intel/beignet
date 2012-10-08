@@ -31,6 +31,7 @@
 #include "backend/gen_encoder.hpp"
 #include "backend/gen_context.hpp"
 #include "sys/vector.hpp"
+#include "sys/intrusive_list.hpp"
 
 namespace gbe
 {
@@ -82,13 +83,11 @@ namespace gbe
   /*! A selection instruction is also almost a Gen instruction but *before* the
    *  register allocation
    */
-  class SelectionInstruction : public NonCopyable
+  class SelectionInstruction : public NonCopyable, public intrusive_list_node
   {
   public:
     /*! Owns the instruction */
     SelectionBlock *parent;
-    /*! Instruction are chained in the block */
-    SelectionInstruction *prev, *next;
     /*! Append an instruction before this one */
     void prepend(SelectionInstruction &insn);
     /*! Append an instruction after this one */
@@ -178,7 +177,7 @@ namespace gbe
   public:
     SelectionBlock(const ir::BasicBlock *bb);
     /*! All the emitted instructions in the block */
-    SelectionInstruction *insnHead, *insnTail;
+    intrusive_list<SelectionInstruction> insnList;
     /*! The vectors that may be required by some instructions of the block */
     SelectionVector *vector;
     /*! Extra registers needed by the block (only live in the block) */
@@ -198,11 +197,18 @@ namespace gbe
     /*! Apply the given functor on all the instructions */
     template <typename T>
     INLINE void foreach(const T &functor) const {
-      SelectionInstruction *curr = insnHead;
-      while (curr) {
-        SelectionInstruction *succ = curr->next;
-        functor(*curr);
-        curr = succ;
+      for (auto it = insnList.begin(); it != insnList.end();) {
+        const SelectionInstruction &curr = *it;
+        ++it;
+        functor(curr);
+      }
+    }
+    template <typename T>
+    INLINE void foreach(const T &functor) {
+      for (auto it = insnList.begin(); it != insnList.end();) {
+        SelectionInstruction &curr = *it;
+        ++it;
+        functor(curr);
       }
     }
   };

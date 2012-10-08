@@ -38,35 +38,17 @@ namespace gbe
   ///////////////////////////////////////////////////////////////////////////
 
   SelectionInstruction::SelectionInstruction(SelectionOpcode op, uint32_t dst, uint32_t src) :
-    parent(NULL), prev(NULL), next(NULL), opcode(op), dstNum(dst), srcNum(src)
+    parent(NULL), opcode(op), dstNum(dst), srcNum(src)
   {}
 
   void SelectionInstruction::prepend(SelectionInstruction &other) {
-    SelectionInstruction *before = this->prev;
-    this->prev = &other;
-    other.next = this;
+    gbe::prepend(&other, this);
     other.parent = this->parent;
-    if (before) {
-      other.prev = before;
-      before->next = &other;
-    } else {
-      GBE_ASSERT(this == this->parent->insnHead);
-      this->parent->insnHead = &other;
-    }
   }
 
   void SelectionInstruction::append(SelectionInstruction &other) {
-    SelectionInstruction *after = this->next;
-    this->next = &other;
-    other.prev = this;
+    gbe::append(&other, this);
     other.parent = this->parent;
-    if (after) {
-      other.next = after;
-      after->prev = &other;
-    } else {
-      GBE_ASSERT(this == this->parent->insnTail);
-      this->parent->insnTail = &other;
-    }
   }
 
   bool SelectionInstruction::isRead(void) const {
@@ -102,30 +84,18 @@ namespace gbe
   ///////////////////////////////////////////////////////////////////////////
 
   SelectionBlock::SelectionBlock(const ir::BasicBlock *bb) :
-    insnHead(NULL), insnTail(NULL), vector(NULL), next(NULL), bb(bb)
+    vector(NULL), next(NULL), bb(bb)
   {}
 
   void SelectionBlock::append(ir::Register reg) { tmp.push_back(reg); }
 
   void SelectionBlock::append(SelectionInstruction *insn) {
-    if (this->insnTail != NULL) {
-      this->insnTail->next = insn;
-      insn->prev = this->insnTail;
-    }
-    if (this->insnHead == NULL)
-      this->insnHead = insn;
-    this->insnTail = insn;
+    this->insnList.push_back(insn);
     insn->parent = this;
   }
 
   void SelectionBlock::prepend(SelectionInstruction *insn) {
-    if (this->insnHead != NULL) {
-      this->insnHead->prev = insn;
-      insn->next = this->insnHead;
-    }
-    if (this->insnTail == NULL)
-      this->insnTail = insn;
-    this->insnHead = insn;
+    this->insnList.push_front(insn);
     insn->parent = this;
   }
 
@@ -313,7 +283,7 @@ namespace gbe
     /*! Owns this structure */
     GenContext &ctx;
     /*! Tail of the code fragment for backward code generation */
-    SelectionInstruction *bwdTail;
+    intrusive_list<SelectionInstruction> bwdList;
     /*! List of emitted blocks */
     SelectionBlock *blockHead, *blockTail;
     /*! Currently processed block */
@@ -412,7 +382,7 @@ namespace gbe
   };
 
   Selection::Opaque::Opaque(GenContext &ctx) :
-    ctx(ctx), bwdTail(NULL), blockHead(NULL), blockTail(NULL), block(NULL),
+    ctx(ctx), blockHead(NULL), blockTail(NULL), block(NULL),
     curr(ctx.getSimdWidth()), file(ctx.getFunction().getRegisterFile()),
     maxInsnNum(ctx.getFunction().getLargestBlockSize()), dagPool(maxInsnNum),
     stateNum(0), vectorNum(0), bwdCodeGeneration(false)
@@ -450,16 +420,13 @@ namespace gbe
   }
 
   void Selection::Opaque::endBackwardGeneration(void) {
-    // Attach the code fragment to the basic block
-    if (this->bwdTail) {
-      GBE_ASSERT(this->block != NULL);
-      // Prepend the code from last to first
-      while (this->bwdTail) {
-        this->block->prepend(this->bwdTail);
-        this->bwdTail = this->bwdTail->prev;
-      }
+    for (auto it = bwdList.rbegin(); it != bwdList.rend();) {
+      SelectionInstruction &insn = *it;
+      auto toRemoveIt = it--;
+      bwdList.erase(toRemoveIt);
+      this->block->prepend(&insn);
     }
-    this->bwdTail = NULL;
+
     this->bwdCodeGeneration = false;
   }
 
@@ -488,13 +455,9 @@ namespace gbe
   {
     GBE_ASSERT(this->block != NULL);
     SelectionInstruction *insn = this->create(opcode, dstNum, srcNum);
-    if (this->bwdCodeGeneration) {
-      if (this->bwdTail) {
-        this->bwdTail->next = insn;
-        insn->prev = this->bwdTail;
-      }
-      this->bwdTail = insn;
-    } else
+    if (this->bwdCodeGeneration)
+      this->bwdList.push_back(insn);
+    else
       this->block->append(insn);
     insn->state = this->curr;
     return insn;
@@ -504,13 +467,10 @@ namespace gbe
     GBE_ASSERT(this->block != NULL);
     SelectionVector *vector = this->newSelectionVector();
 
-    if (this->bwdCodeGeneration) {
-      GBE_ASSERT(this->bwdTail != NULL);
-      vector->insn = this->bwdTail;
-    } else {
-      GBE_ASSERT(this->block->insnTail != NULL);
-      vector->insn = this->block->insnTail;
-    }
+    if (this->bwdCodeGeneration)
+      vector->insn = this->bwdList.back();
+    else
+      vector->insn = this->block->insnList.back();
     this->block->append(vector);
     this->vectorNum++;
     return vector;
