@@ -37,6 +37,8 @@ else (GBE_USE_BLOB)
     sys/hash_map.hpp
     sys/map.hpp
     sys/set.hpp
+    sys/intrusive_list.hpp
+    sys/intrusive_list.cpp
     sys/exception.hpp
     sys/assert.cpp
     sys/assert.hpp

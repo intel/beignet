@@ -1057,13 +1057,15 @@ namespace gbe
   {
     INLINE bool emitOne(Selection::Opaque &sel, const ir::TernaryInstruction &insn) const {
       using namespace ir;
-      const Opcode opcode = insn.getOpcode();
       const Type type = insn.getType();
       const GenRegister dst  = sel.selReg(insn.getDst(0), type);
       const GenRegister src0 = sel.selReg(insn.getSrc(0), type);
       const GenRegister src1 = sel.selReg(insn.getSrc(1), type);
       const GenRegister src2 = sel.selReg(insn.getSrc(2), type);
+#if GBE_DEBUG
+      const Opcode opcode = insn.getOpcode();
       GBE_ASSERT(opcode == OP_MAD && type == TYPE_FLOAT);
+#endif /* GBE_DEBUG */
       sel.MAD(dst, src2, src0, src1); // order different on the HW!
       return true;
     }
