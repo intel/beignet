@@ -310,7 +310,7 @@ namespace gbe
 
     // Track write-after-write and read-after-write dependencies
     int32_t insnNum = 0;
-    bb.foreach([&](SelectionInstruction &insn) {
+    for (auto &insn : bb.insnList) {
       // Create a new node for this instruction
       ScheduleDAGNode *node = this->newScheduleDAGNode(insn);
       tracker.insnNodes[insnNum++] = node;
@@ -349,7 +349,7 @@ namespace gbe
 
       // Track all writes done by the instruction
       tracker.updateWrites(node);
-    });
+    }
 
     // Track write-after-read dependencies
     tracker.clear();
@@ -440,12 +440,11 @@ namespace gbe
   void schedulePreRegAllocation(GenContext &ctx, Selection &selection) {
     if (OCL_SCHEDULE_INSN) {
       SelectionScheduler scheduler(ctx, selection);
-      selection.foreach([&](SelectionBlock &bb) {
+      for (auto &bb : *selection.blockList) {
         const int32_t insnNum = scheduler.buildDAG(bb);
         bb.insnList.clear();
-        // bb.insnHead = bb.insnTail = NULL;
         scheduler.scheduleDAG(bb, insnNum);
-      });
+      }
     }
   }
 

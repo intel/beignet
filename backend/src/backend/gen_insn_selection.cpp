@@ -84,7 +84,7 @@ namespace gbe
   ///////////////////////////////////////////////////////////////////////////
 
   SelectionBlock::SelectionBlock(const ir::BasicBlock *bb) :
-    vector(NULL), next(NULL), bb(bb)
+    vector(NULL), bb(bb)
   {}
 
   void SelectionBlock::append(ir::Register reg) { tmp.push_back(reg); }
@@ -200,16 +200,6 @@ namespace gbe
     void startBackwardGeneration(void);
     /*! End backward code generation and output the code in the block */
     void endBackwardGeneration(void);
-    /*! Apply the given functor on all selection block */
-    template <typename T>
-    INLINE void foreach(const T &functor) const {
-      SelectionBlock *curr = blockHead;
-      while (curr) {
-        SelectionBlock *succ = curr->next;
-        functor(*curr);
-        curr = succ;
-      }
-    }
     /*! Implement public class */
     uint32_t getLargestBlockSize(void) const;
     /*! Implement public class */
@@ -285,7 +275,7 @@ namespace gbe
     /*! Tail of the code fragment for backward code generation */
     intrusive_list<SelectionInstruction> bwdList;
     /*! List of emitted blocks */
-    SelectionBlock *blockHead, *blockTail;
+    intrusive_list<SelectionBlock> blockList;
     /*! Currently processed block */
     SelectionBlock *block;
     /*! Current instruction state to use */
@@ -382,7 +372,7 @@ namespace gbe
   };
 
   Selection::Opaque::Opaque(GenContext &ctx) :
-    ctx(ctx), blockHead(NULL), blockTail(NULL), block(NULL),
+    ctx(ctx), block(NULL),
     curr(ctx.getSimdWidth()), file(ctx.getFunction().getRegisterFile()),
     maxInsnNum(ctx.getFunction().getLargestBlockSize()), dagPool(maxInsnNum),
     stateNum(0), vectorNum(0), bwdCodeGeneration(false)
@@ -394,15 +384,10 @@ namespace gbe
   }
 
   Selection::Opaque::~Opaque(void) {
-    while (this->blockHead) {
-      SelectionBlock *next = this->blockHead->next;
-      while (this->blockHead->vector) {
-        SelectionVector *next = this->blockHead->vector->next;
-        this->deleteSelectionVector(this->blockHead->vector);
-        this->blockHead->vector = next;
-      }
-      this->deleteSelectionBlock(this->blockHead);
-      this->blockHead = next;
+    for (auto it = blockList.begin(); it != blockList.end();) {
+      SelectionBlock &block = *it;
+      ++it;
+      this->deleteSelectionBlock(&block);
     }
   }
 
@@ -431,22 +416,15 @@ namespace gbe
   }
 
   uint32_t Selection::Opaque::getLargestBlockSize(void) const {
-    uint32_t maxInsnNum = 0;
-    this->foreach([&](const SelectionBlock &bb) {
-      uint32_t insnNum = 0;
-      bb.foreach([&](const SelectionInstruction &insn) {insnNum++;});
-      maxInsnNum = std::max(maxInsnNum, insnNum);
-    });
-    return maxInsnNum;
+    size_t maxInsnNum = 0;
+    for (const auto &bb : blockList)
+      maxInsnNum = std::max(maxInsnNum, bb.insnList.size());
+    return uint32_t(maxInsnNum);
   }
 
   void Selection::Opaque::appendBlock(const ir::BasicBlock &bb) {
     this->block = this->newSelectionBlock(&bb);
-    if (this->blockTail != NULL)
-      this->blockTail->next = this->block;
-    if (this->blockHead == NULL)
-      this->blockHead = this->block;
-    this->blockTail = this->block;
+    this->blockList.push_back(this->block);
   }
 
   SelectionInstruction *Selection::Opaque::appendInsn(SelectionOpcode opcode,
@@ -892,7 +870,7 @@ namespace gbe
 
     // Perform the selection per basic block
     fn.foreachBlock([&](const BasicBlock &bb) {
-       this->dagPool.rewind();
+      this->dagPool.rewind();
       this->appendBlock(bb);
       const uint32_t insnNum = this->buildBasicBlockDAG(bb);
       this->matchBasicBlock(insnNum);
@@ -904,6 +882,7 @@ namespace gbe
   ///////////////////////////////////////////////////////////////////////////
 
   Selection::Selection(GenContext &ctx) {
+    this->blockList = NULL;
     this->opaque = GBE_NEW(Selection::Opaque, ctx);
   }
 
@@ -911,8 +890,7 @@ namespace gbe
 
   void Selection::select(void) {
     this->opaque->select();
-    this->blockHead = this->opaque->blockHead;
-    this->blockTail = this->opaque->blockTail;
+    this->blockList = &this->opaque->blockList;
   }
 
   bool Selection::isScalarOrBool(ir::Register reg) const {

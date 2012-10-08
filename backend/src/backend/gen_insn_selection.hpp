@@ -172,7 +172,7 @@ namespace gbe
   /*! A selection block is the counterpart of the IR Basic block. It contains
    *  the instructions generated from an IR basic block
    */
-  class SelectionBlock
+  class SelectionBlock : public NonCopyable, public intrusive_list_node
   {
   public:
     SelectionBlock(const ir::BasicBlock *bb);
@@ -182,8 +182,6 @@ namespace gbe
     SelectionVector *vector;
     /*! Extra registers needed by the block (only live in the block) */
     gbe::vector<ir::Register> tmp;
-    /*! We chain the blocks together */
-    SelectionBlock *next;
     /*! Associated IR basic block */
     const ir::BasicBlock *bb;
     /*! Append a new temporary register */
@@ -194,23 +192,6 @@ namespace gbe
     void prepend(SelectionInstruction *insn);
     /*! Append a new selection vector in the block */
     void append(SelectionVector *vec);
-    /*! Apply the given functor on all the instructions */
-    template <typename T>
-    INLINE void foreach(const T &functor) const {
-      for (auto it = insnList.begin(); it != insnList.end();) {
-        const SelectionInstruction &curr = *it;
-        ++it;
-        functor(curr);
-      }
-    }
-    template <typename T>
-    INLINE void foreach(const T &functor) {
-      for (auto it = insnList.begin(); it != insnList.end();) {
-        SelectionInstruction &curr = *it;
-        ++it;
-        functor(curr);
-      }
-    }
   };
 
   /*! Owns the selection engine */
@@ -244,28 +225,8 @@ namespace gbe
     ir::Register replaceDst(SelectionInstruction *insn, uint32_t regID);
     /*! Create a new selection instruction */
     SelectionInstruction *create(SelectionOpcode, uint32_t dstNum, uint32_t srcNum);
-    /*! Apply the given functor on all selection block */
-    template <typename T>
-    INLINE void foreach(const T &functor) const {
-      SelectionBlock *curr = blockHead;
-      while (curr) {
-        SelectionBlock *succ = curr->next;
-        functor(*curr);
-        curr = succ;
-      }
-    }
-    /*! Apply the given functor all the instructions */
-    template <typename T>
-    INLINE void foreachInstruction(const T &functor) const {
-      SelectionBlock *curr = blockHead;
-      while (curr) {
-        SelectionBlock *succ = curr->next;
-        curr->foreach(functor);
-        curr = succ;
-      }
-    }
     /*! List of emitted blocks */
-    SelectionBlock *blockHead, *blockTail;
+    intrusive_list<SelectionBlock> *blockList;
     /*! Actual implementation of the register allocator (use Pimpl) */
     class Opaque;
     /*! Created and destroyed in cpp */

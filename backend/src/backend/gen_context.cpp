@@ -54,7 +54,8 @@ namespace gbe
 
   void GenContext::emitInstructionStream(void) {
     // Emit Gen ISA
-    sel->foreachInstruction([&](const SelectionInstruction &insn) {
+    for (auto &block : *sel->blockList)
+    for (auto &insn : block.insnList) {
       const uint32_t opcode = insn.opcode;
       p->push();
       // no more virtual register here in that part of the code generation
@@ -67,7 +68,7 @@ namespace gbe
 #undef DECL_INSN
       }
       p->pop();
-    });
+    }
   }
 
   void GenContext::patchBranches(void) {

@@ -223,14 +223,14 @@ namespace gbe
 
     // First we find and store all vectors
     uint32_t vectorID = 0;
-    selection.foreach([&](SelectionBlock &block) {
+    for (auto &block : *selection.blockList) {
       SelectionVector *v = block.vector;
       while (v) {
         GBE_ASSERT(vectorID < vectorNum);
         this->vectors[vectorID++] = v;
         v = v->next;
       }
-    });
+    }
     GBE_ASSERT(vectorID == vectorNum);
 
     // Heuristic (really simple...): sort them by the number of registers they
@@ -368,7 +368,9 @@ namespace gbe
 
     // Now, we traverse all the selection instructions and we patch them to make
     // them use flag registers
-    selection.foreachInstruction([&](SelectionInstruction &insn) {
+    for (auto &block : *selection.blockList)
+    for (auto &insn : block.insnList)
+    {
       const uint32_t srcNum = insn.srcNum, dstNum = insn.dstNum;
 
       // Patch the source booleans
@@ -439,7 +441,7 @@ namespace gbe
           }
         }
       }
-    });
+    }
   }
 
   void GenRegAllocator::Opaque::allocateGRFs(Selection &selection) {
@@ -546,11 +548,11 @@ namespace gbe
 
     // Compute the intervals
     int32_t insnID = 0;
-    selection.foreach([&](const SelectionBlock &block) {
+    for (auto &block : *selection.blockList) {
       int32_t lastID = insnID;
       // Update the intervals of each used register. Note that we do not
       // register allocate R0, so we skip all sub-registers in r0
-      block.foreach([&](const SelectionInstruction &insn) {
+      for (auto &insn : block.insnList) {
         const uint32_t srcNum = insn.srcNum, dstNum = insn.dstNum;
         for (uint32_t srcID = 0; srcID < srcNum; ++srcID) {
           const GenRegister &selReg = insn.src(srcID);
@@ -593,7 +595,7 @@ namespace gbe
         }
         lastID = insnID;
         insnID++;
-      });
+      }
 
       // All registers alive at the end of the block must have their intervals
       // updated as well
@@ -603,7 +605,7 @@ namespace gbe
         this->intervals[reg].minID = std::min(this->intervals[reg].minID, lastID);
         this->intervals[reg].maxID = std::max(this->intervals[reg].maxID, lastID);
       }
-    });
+    }
 
     // Extend the liveness of the registers that belong to vectors. Actually,
     // this is way too brutal, we should instead maintain a list of allocated
