@@ -147,7 +147,7 @@ namespace gbe
     /*! Just Selection class can create SelectionInstruction */
     SelectionInstruction(SelectionOpcode, uint32_t dstNum, uint32_t srcNum);
     // Allocates (with a linear allocator) and owns SelectionInstruction
-    friend Selection;
+    friend class Selection;
   };
 
   /*! Instructions like sends require to make registers contiguous in GRF */
