@@ -25,7 +25,7 @@
 #ifndef __GEN_DEFS_HPP__
 #define __GEN_DEFS_HPP__
 
-#include <cstdint>
+#include <stdint.h>
 
 /////////////////////////////////////////////////////////////////////////////
 // Gen EU defines
