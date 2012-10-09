@@ -27,6 +27,7 @@
 #include <cstdint>
 #include <cstring>
 #include <cassert>
+#include <cmath>
 
 #define FATAL(...) \
 do { \
@@ -358,8 +359,8 @@ struct bmphdr {
 int *cl_read_bmp(const char *filename, int *width, int *height)
 {
   struct bmphdr hdr;
-
-  FILE *fp = fopen(filename, "rb");
+  char *bmppath = do_kiss_path(filename, device);
+  FILE *fp = fopen(bmppath, "rb");
   assert(fp);
 
   char magic[2];
@@ -393,6 +394,7 @@ int *cl_read_bmp(const char *filename, int *width, int *height)
   fclose(fp);
   *width = hdr.width;
   *height = hdr.height;
+  free(bmppath);
   return rgb32;
 }
 
@@ -410,14 +412,14 @@ void cl_write_bmp(const int *data, int width, int height, const char *filename)
   for (y = 0; y < height; y++) {
     for (x = 0; x < width; x++) {
       int c = *data++;
-      *p++ = ((c >> 16) & 0x0ff);
-      *p++ = ((c >> 8) & 0x0ff);
-      *p++ = ((c >> 0) & 0x0ff);
+      *p++ = ((c >> 16) & 0xff);
+      *p++ = ((c >> 8) & 0xff);
+      *p++ = ((c >> 0) & 0xff);
     }
     while (x & 3) {
       *p++ = 0;
       x++;
-    }		// pad to dword
+    } // pad to dword
   }
   int sizeraw = p - raw;
   int scanline = (width * 3 + 3) & ~3;
@@ -449,5 +451,32 @@ void cl_write_bmp(const int *data, int width, int height, const char *filename)
 
   fclose(fp);
   free(raw);
+}
+
+static const float pixel_threshold = 0.05f;
+static const float max_error_ratio = 0.001f;
+
+int cl_check_image(const int *img, int w, int h, const char *bmp)
+{
+  int refw, refh;
+  int *ref = cl_read_bmp(bmp, &refw, &refh);
+  if (ref == NULL || refw != w || refh != h) return 0;
+  const int n = w*h;
+  int discrepancy = 0;
+  for (int i = 0; i < n; ++i) {
+    const float r = (float) (img[i] & 0xff);
+    const float g = (float) ((img[i] >> 8) & 0xff);
+    const float b = (float) ((img[i] >> 16) & 0xff);
+    const float rr = (float) (ref[i] & 0xff);
+    const float rg = (float) ((ref[i] >> 8) & 0xff);
+    const float rb = (float) ((ref[i] >> 16) & 0xff);
+    const float dr = fabs(r-rr) / (1.f/255.f + std::max(r,rr));
+    const float dg = fabs(g-rg) / (1.f/255.f + std::max(g,rg));
+    const float db = fabs(b-rb) / (1.f/255.f + std::max(b,rb));
+    const float err = sqrtf(dr*dr+dg*dg+db*db);
+    if (err > pixel_threshold) discrepancy++;
+  }
+  free(ref);
+  return (float(discrepancy) / float(n) > max_error_ratio) ? 0 : 1;
 }
 

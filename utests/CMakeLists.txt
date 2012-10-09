@@ -5,6 +5,8 @@ link_directories (${LLVM_LIBRARY_DIRS})
 ADD_LIBRARY(utests SHARED
   utest_error.c
   app_mandelbrot.cpp
+  compiler_box_blur_float.cpp
+  compiler_box_blur.cpp
   compiler_argument_structure.cpp
   compiler_array0.cpp
   compiler_array.cpp
@@ -44,6 +46,7 @@ ADD_LIBRARY(utests SHARED
   compiler_write_only_bytes.cpp
   compiler_write_only.cpp
   compiler_write_only_shorts.cpp
+  compiler_switch.cpp
   utest_assert.cpp
   utest.cpp
   utest_file_map.cpp

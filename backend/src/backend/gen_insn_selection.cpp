@@ -1078,11 +1078,14 @@ namespace gbe
         case OP_SUB: sel.ADD(dst, src0, GenRegister::negate(src1)); break;
         case OP_SHL: sel.SHL(dst, src0, src1); break;
         case OP_SHR: sel.SHR(dst, src0, src1); break;
+        case OP_ASR: sel.ASR(dst, src0, src1); break;
         case OP_MUL:
           if (type == TYPE_FLOAT)
             sel.MUL(dst, src0, src1);
-          else if (type == TYPE_U32 || type == TYPE_S32)
+          else if (type == TYPE_U32 || type == TYPE_S32) {
+            sel.pop();
             return false;
+          }
           else
             NOT_IMPLEMENTED;
         break;

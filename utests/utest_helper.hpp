@@ -84,6 +84,10 @@
     OCL_CALL (clSetKernelArg, kernel, ID, SIZE, ARG); \
   } while (0)
 
+#define OCL_CHECK_IMAGE(DATA, W, H, FILENAME) \
+  if (cl_check_image(DATA, W, H, FILENAME) == 0) \
+    OCL_ASSERTM(false, "image mismatch")
+
 enum { MAX_BUFFER_N = 16 };
 extern cl_platform_id platform;
 extern cl_device_id device;
@@ -131,6 +135,9 @@ extern int *cl_read_bmp(const char *filename, int *width, int *height);
 
 /* Write a bmp to a file */
 extern void cl_write_bmp(const int *data, int width, int height, const char *filename);
+
+/* Check data from img against bmp file located at "bmp" */
+extern int cl_check_image(const int *img, int w, int h, const char *bmp);
 
 #endif /* __UTEST_HELPER_HPP__ */
 

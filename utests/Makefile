@@ -10,6 +10,8 @@ C_SRC=utest_error.c
 
 CPP_SRC=\
 	app_mandelbrot.cpp \
+	compiler_box_blur.cpp \
+	compiler_box_blur_float.cpp \
 	compiler_argument_structure.cpp \
 	compiler_array0.cpp \
 	compiler_array.cpp \
@@ -49,6 +51,7 @@ CPP_SRC=\
 	compiler_write_only_bytes.cpp \
 	compiler_write_only.cpp \
 	compiler_write_only_shorts.cpp \
+	compiler_switch.cpp \
 	utest_assert.cpp \
 	utest.cpp \
 	utest_file_map.cpp \

@@ -119,9 +119,9 @@ namespace gbe
   GenRegAllocator::Opaque::~Opaque(void) {}
 
   void GenRegAllocator::Opaque::allocatePayloadReg(gbe_curbe_type value,
-                                           ir::Register reg,
-                                           uint32_t subValue,
-                                           uint32_t subOffset)
+                                                   ir::Register reg,
+                                                   uint32_t subValue,
+                                                   uint32_t subOffset)
   {
     using namespace ir;
     const Kernel *kernel = ctx.getKernel();
@@ -146,8 +146,11 @@ namespace gbe
     const uint32_t regSize = simdWidth*typeSize;
     uint32_t grfOffset;
     while ((grfOffset = ctx.allocate(regSize, regSize)) == 0) {
-      IF_DEBUG(const bool success =) this->expireGRF(interval);
-      GBE_ASSERTM(success, "Register allocation failed");
+      //IF_DEBUG(const bool success =) this->expireGRF(interval);
+      //GBE_ASSERTM(success, "Register allocation failed");
+      const bool success = this->expireGRF(interval);
+      if (UNLIKELY(success == false))
+        throw NotEnoughRegisterException();
     }
     GBE_ASSERTM(grfOffset != 0, "Unable to register allocate");
     RA.insert(std::make_pair(reg, grfOffset));
@@ -336,6 +339,7 @@ namespace gbe
           auto it = allocatedFlags.find(toExpire->reg);
           GBE_ASSERT(it != allocatedFlags.end());
           freeFlags[freeNum++] = it->second;
+          endID++;
           break;
         }
 
@@ -364,8 +368,7 @@ namespace gbe
     // Now, we traverse all the selection instructions and we patch them to make
     // them use flag registers
     for (auto &block : *selection.blockList)
-    for (auto &insn : block.insnList)
-    {
+    for (auto &insn : block.insnList) {
       const uint32_t srcNum = insn.srcNum, dstNum = insn.dstNum;
 
       // Patch the source booleans
@@ -464,7 +467,6 @@ namespace gbe
           const bool success = this->expireGRF(interval);
           if (UNLIKELY(success == false))
             throw NotEnoughRegisterException();
-          // GBE_ASSERTM(success, "Register allocation failed");
         }
         for (uint32_t regID = 0; regID < vector->regNum; ++regID, grfOffset += alignment) {
           const ir::Register reg = vector->reg[regID].reg();

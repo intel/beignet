@@ -179,6 +179,22 @@ INLINE_OVERLOADABLE inline float4 mad(float4 a, float4 b, float4 c) {
                   mad(a.z,b.z,c.z), mad(a.w,b.w,c.w));
 }
 
+#define DECL_MIN_MAX(TYPE) \
+INLINE_OVERLOADABLE inline TYPE max(TYPE a, TYPE b) { \
+  return a > b ? a : b; \
+} \
+INLINE_OVERLOADABLE inline TYPE min(TYPE a, TYPE b) { \
+  return a < b ? a : b; \
+}
+DECL_MIN_MAX(float)
+DECL_MIN_MAX(int)
+DECL_MIN_MAX(short)
+DECL_MIN_MAX(char)
+DECL_MIN_MAX(uint)
+DECL_MIN_MAX(unsigned short)
+DECL_MIN_MAX(unsigned char)
+#undef DECL_MIN_MAX
+
 /////////////////////////////////////////////////////////////////////////////
 // Extensions to manipulate the register file
 /////////////////////////////////////////////////////////////////////////////
