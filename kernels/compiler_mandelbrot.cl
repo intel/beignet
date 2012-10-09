@@ -4,7 +4,7 @@ int ID(int x, int y, int width) { return 4*width*y + x*4; }
 float mapX(float x) { return x*3.25f - 2.f; }
 float mapY(float y) { return y*2.5f - 1.25f; }
 
-__kernel void mandelbrot(__global char *out) {
+__kernel void compiler_mandelbrot(__global char *out) {
   int x_dim = get_global_id(0);
   int y_dim = get_global_id(1);
   int width = get_global_size(0);

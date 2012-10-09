@@ -20,17 +20,17 @@
 #include "utest_helper.hpp"
 
 static int *dst = NULL;
-static const size_t w = 64;
-static const size_t h = 64;
+static const size_t w = 16;
+static const size_t h = 16;
 static const size_t iter = 4;
 
-static void mandelbrot(void)
+static void compiler_mandelbrot(void)
 {
   const size_t global[2] = {w, h};
   const size_t local[2] = {16, 1};
   const size_t sz = w * h * sizeof(char[4]);
 
-  OCL_CREATE_KERNEL("mandelbrot");
+  OCL_CREATE_KERNEL("compiler_mandelbrot");
 
   cl_mem cl_dst = clCreateBuffer(ctx, 0, sz, NULL, NULL);
   OCL_CALL (clSetKernelArg, kernel, 0, sizeof(cl_mem), &cl_dst);
@@ -42,5 +42,5 @@ static void mandelbrot(void)
   OCL_CALL (clReleaseMemObject, cl_dst);
 }
 
-MAKE_UTEST_FROM_FUNCTION(mandelbrot);
+MAKE_UTEST_FROM_FUNCTION(compiler_mandelbrot);
 

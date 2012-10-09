@@ -1,5 +1,5 @@
 /* 
- * Copyright © 2012 Intel Corporation
+uint* Copyright © 2012 Intel Corporation
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -20,7 +20,7 @@
 #ifndef __GEN_OCL_STDLIB_H__
 #define __GEN_OCL_STDLIB_H__
 
-#define INLINE_OVERLOADABLE __attribute__((overloadable,always_inline))
+#define INLINE_OVERLOADABLE __attribute__((overloadable,always_inline)) inline
 #define OVERLOADABLE __attribute__((overloadable))
 
 /////////////////////////////////////////////////////////////////////////////
@@ -138,11 +138,11 @@ inline uint get_global_id(uint dim) {
 __attribute__ ((pure, const, overloadable)) float mad(float a, float b, float c);
 __attribute__((overloadable, always_inline))
 inline uint select(uint src0, uint src1, uint cond) {
-  return cond ? src0 : src1;
+  return cond ? src1 : src0;
 }
 __attribute__((overloadable, always_inline))
 inline int select(int src0, int src1, int cond) {
-  return cond ? src0 : src1;
+  return cond ? src1 : src0;
 }
 
 // This will be optimized out by LLVM and will output LLVM select instructions
@@ -168,22 +168,22 @@ DECL_SELECT4(int4, int, int4, 0x80000000)
 DECL_SELECT4(float4, float, int4, 0x80000000)
 #undef DECL_SELECT4
 
-INLINE_OVERLOADABLE inline float2 mad(float2 a, float2 b, float2 c) {
+INLINE_OVERLOADABLE float2 mad(float2 a, float2 b, float2 c) {
   return (float2)(mad(a.x,b.x,c.x), mad(a.y,b.y,c.y));
 }
-INLINE_OVERLOADABLE inline float3 mad(float3 a, float3 b, float3 c) {
+INLINE_OVERLOADABLE float3 mad(float3 a, float3 b, float3 c) {
   return (float3)(mad(a.x,b.x,c.x), mad(a.y,b.y,c.y), mad(a.z,b.z,c.z));
 }
-INLINE_OVERLOADABLE inline float4 mad(float4 a, float4 b, float4 c) {
+INLINE_OVERLOADABLE float4 mad(float4 a, float4 b, float4 c) {
   return (float4)(mad(a.x,b.x,c.x), mad(a.y,b.y,c.y),
                   mad(a.z,b.z,c.z), mad(a.w,b.w,c.w));
 }
 
 #define DECL_MIN_MAX(TYPE) \
-INLINE_OVERLOADABLE inline TYPE max(TYPE a, TYPE b) { \
+INLINE_OVERLOADABLE TYPE max(TYPE a, TYPE b) { \
   return a > b ? a : b; \
 } \
-INLINE_OVERLOADABLE inline TYPE min(TYPE a, TYPE b) { \
+INLINE_OVERLOADABLE TYPE min(TYPE a, TYPE b) { \
   return a < b ? a : b; \
 }
 DECL_MIN_MAX(float)

@@ -9,7 +9,8 @@ SUBDIRS=.
 C_SRC=utest_error.c
 
 CPP_SRC=\
-	app_mandelbrot.cpp \
+	compiler_mandelbrot.cpp \
+	compiler_mandelbrot_alternate.cpp \
 	compiler_box_blur.cpp \
 	compiler_box_blur_float.cpp \
 	compiler_argument_structure.cpp \
