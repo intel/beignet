@@ -218,7 +218,7 @@ INLINE_OVERLOADABLE float native_tan(float x) {
 }
 
 /////////////////////////////////////////////////////////////////////////////
-// Declare function for vector types
+// Declare functions for vector types which are derived from scalar ones
 /////////////////////////////////////////////////////////////////////////////
 #define DECL_VECTOR_1OP(NAME, TYPE) \
   INLINE_OVERLOADABLE TYPE##2 NAME(TYPE##2 v) { \
@@ -250,6 +250,30 @@ DECL_VECTOR_1OP(native_rsqrt, float);
 DECL_VECTOR_1OP(native_log2, float);
 DECL_VECTOR_1OP(native_recip, float);
 #undef DECL_VECTOR_1OP
+
+/////////////////////////////////////////////////////////////////////////////
+// Geometric functions
+/////////////////////////////////////////////////////////////////////////////
+INLINE_OVERLOADABLE float dot(float2 p0, float2 p1) {
+  return mad(p0.x,p1.x,p0.y*p1.y);
+}
+INLINE_OVERLOADABLE float dot(float3 p0, float3 p1) {
+  return mad(p0.x,p1.x,mad(p0.z,p1.z,p0.y*p1.y));
+}
+INLINE_OVERLOADABLE float dot(float4 p0, float4 p1) {
+  return mad(p0.x,p1.x,mad(p0.w,p1.w,mad(p0.z,p1.z,p0.y*p1.y)));
+}
+
+INLINE_OVERLOADABLE float dot(float8 p0, float8 p1) {
+  return mad(p0.x,p1.x,mad(p0.s7,p1.s7, mad(p0.s6,p1.s6,mad(p0.s5,p1.s5,
+         mad(p0.s4,p1.s4,mad(p0.w,p1.w, mad(p0.z,p1.z,p0.y*p1.y)))))));
+}
+INLINE_OVERLOADABLE float dot(float16 p0, float16 p1) {
+  return mad(p0.sc,p1.sc,mad(p0.sd,p1.sd,mad(p0.se,p1.se,mad(p0.sf,p1.sf,
+         mad(p0.s8,p1.s8,mad(p0.s9,p1.s9,mad(p0.sa,p1.sa,mad(p0.sb,p1.sb,
+         mad(p0.x,p1.x,mad(p0.s7,p1.s7, mad(p0.s6,p1.s6,mad(p0.s5,p1.s5,
+         mad(p0.s4,p1.s4,mad(p0.w,p1.w, mad(p0.z,p1.z,p0.y*p1.y)))))))))))))));
+}
 
 /////////////////////////////////////////////////////////////////////////////
 // Extensions to manipulate the register file
