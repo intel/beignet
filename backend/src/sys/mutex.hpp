@@ -14,13 +14,7 @@
  * You should have received a copy of the GNU Lesser General Public
  * License along with this library. If not, see <http://www.gnu.org/licenses/>.
  *
- * Author: Benjamin Segovia <benjamin.segovia@intel.com>
  */
-
-//////////////////////////////////////////////////////////////////////////////////////////
-// Part of this file is taken from the Apache licensed Intel Embree project here:       //
-// http://software.intel.com/en-us/articles/embree-photo-realistic-ray-tracing-kernels/ //
-//////////////////////////////////////////////////////////////////////////////////////////
 
 #ifndef __GBE_MUTEX_HPP__
 #define __GBE_MUTEX_HPP__

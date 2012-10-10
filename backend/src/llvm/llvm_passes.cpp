@@ -15,6 +15,7 @@
  * License along with this library. If not, see <http://www.gnu.org/licenses/>.
  *
  * Author: Benjamin Segovia <benjamin.segovia@intel.com>
+ *         Heldge RHodin <alice.rhodin@alice-dsl.net>
  */
 
 /**

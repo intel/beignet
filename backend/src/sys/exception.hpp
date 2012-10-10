@@ -22,6 +22,7 @@
  *
  * \author Benjamin Segovia <benjamin.segovia@intel.com>
  */
+
 #ifndef __GBE_EXCEPTION_HPP__
 #define __GBE_EXCEPTION_HPP__
 

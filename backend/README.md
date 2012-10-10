@@ -1,7 +1,7 @@
 OpenCL Compiler
 ===============
 
-This code base contains the compiler part of the complete OpenCL stack. The
+This code base contains the compiler part of the OpenCL stack. The
 run-time is not in this code base and is developed inside "OpenCL run-time"
 project. The compiler is responsible to take a OpenCL language string and to
 compile it into a binary that can be executed on Intel integrated GPUs.
