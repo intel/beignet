@@ -349,8 +349,10 @@ namespace gbe
     void OBREAD(Reg dst, Reg addr, Reg header, uint32_t bti, uint32_t size);
     /*! Oblock write */
     void OBWRITE(Reg addr, Reg value, Reg header, uint32_t bti, uint32_t size);
-    /*! Extended math function */
+    /*! Extended math function (2 arguments) */
     void MATH(Reg dst, uint32_t function, Reg src0, Reg src1);
+    /*! Extended math function (1 argument) */
+    void MATH(Reg dst, uint32_t function, Reg src);
     /*! Encode unary instructions */
     void ALU1(SelectionOpcode opcode, Reg dst, Reg src);
     /*! Encode binary instructions */
@@ -647,6 +649,13 @@ namespace gbe
     insn->dst(0) = dst;
     insn->src(0) = src0;
     insn->src(1) = src1;
+    insn->extra.function = function;
+  }
+
+  void Selection::Opaque::MATH(Reg dst, uint32_t function, Reg src) {
+    SelectionInstruction *insn = this->appendInsn(SEL_OP_MATH, 1, 1);
+    insn->dst(0) = dst;
+    insn->src(0) = src;
     insn->extra.function = function;
   }
 
@@ -978,8 +987,19 @@ namespace gbe
   DECL_PATTERN(UnaryInstruction)
   {
     INLINE bool emitOne(Selection::Opaque &sel, const ir::UnaryInstruction &insn) const {
-      GBE_ASSERT(insn.getOpcode() == ir::OP_MOV);
-      sel.MOV(sel.selReg(insn.getDst(0)), sel.selReg(insn.getSrc(0)));
+      const ir::Opcode opcode = insn.getOpcode();
+      const GenRegister dst = sel.selReg(insn.getDst(0));
+      const GenRegister src = sel.selReg(insn.getSrc(0));
+      switch (opcode) {
+        case ir::OP_MOV: sel.MOV(dst, src); break;
+        case ir::OP_COS: sel.MATH(dst, GEN_MATH_FUNCTION_COS, src); break;
+        case ir::OP_SIN: sel.MATH(dst, GEN_MATH_FUNCTION_SIN, src); break;
+        case ir::OP_LOG: sel.MATH(dst, GEN_MATH_FUNCTION_LOG, src); break;
+        case ir::OP_SQR: sel.MATH(dst, GEN_MATH_FUNCTION_SQRT, src); break;
+        case ir::OP_RSQ: sel.MATH(dst, GEN_MATH_FUNCTION_RSQ, src); break;
+        case ir::OP_RCP: sel.MATH(dst, GEN_MATH_FUNCTION_INV, src); break;
+        default: NOT_SUPPORTED;
+      }
       return true;
     }
     DECL_CTOR(UnaryInstruction, 1, 1)

@@ -478,6 +478,8 @@ namespace ir {
   /// All emission functions
   ///////////////////////////////////////////////////////////////////////////
 
+  /*! alu1.type dst src */
+  Instruction ALU1(Opcode opcode, Type type, Register dst, Register src);
   /*! mov.type dst src */
   Instruction MOV(Type type, Register dst, Register src);
   /*! cos.type dst src */
@@ -485,7 +487,7 @@ namespace ir {
   /*! sin.type dst src */
   Instruction SIN(Type type, Register dst, Register src);
   /*! tan.type dst src */
-  Instruction TAN(Type type, Register dst, Register src);
+  Instruction RCP(Type type, Register dst, Register src);
   /*! log.type dst src */
   Instruction LOG(Type type, Register dst, Register src);
   /*! sqr.type dst src */

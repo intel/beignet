@@ -53,6 +53,7 @@ CPP_SRC=\
 	compiler_write_only.cpp \
 	compiler_write_only_shorts.cpp \
 	compiler_switch.cpp \
+	compiler_math.cpp \
 	utest_assert.cpp \
 	utest.cpp \
 	utest_file_map.cpp \

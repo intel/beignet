@@ -282,6 +282,30 @@ namespace gbe
     }
   };
 
+  /*! All intrinsic Gen functions */
+  enum OCLInstrinsic {
+#define DECL_LLVM_GEN_FUNCTION(ID, NAME) GEN_OCL_##ID,
+#include "llvm_gen_ocl_function.hxx"
+#undef DECL_LLVM_GEN_FUNCTION
+  };
+
+  /*! Build the hash map for OCL functions on Gen */
+  struct OCLIntrinsicMap {
+    /*! Build the intrinsic hash map */
+    OCLIntrinsicMap(void) {
+#define DECL_LLVM_GEN_FUNCTION(ID, NAME) \
+  map.insert(std::make_pair(#NAME, GEN_OCL_##ID));
+#include "llvm_gen_ocl_function.hxx"
+#undef DECL_LLVM_GEN_FUNCTION
+    }
+    /*! Sort intrinsics with their names */
+    hash_map<std::string, OCLInstrinsic> map;
+  };
+
+  /*! Sort the OCL Gen instrinsic functions (built on pre-main) */
+  static const OCLIntrinsicMap instrinsicMap;
+
+
   /*! Translate LLVM IR code to Gen IR code */
   class GenWriter : public FunctionPass, public InstVisitor<GenWriter>
   {
@@ -408,6 +432,9 @@ namespace gbe
     DECL_VISIT_FN(PHINode, PHINode);
     DECL_VISIT_FN(AllocaInst, AllocaInst);
 #undef DECL_VISIT_FN
+
+    // Emit unary instructions from gen native function
+    void emitUnaryCallInst(CallInst &I, CallSite &CS, ir::Opcode opcode);
 
     // These instructions are not supported at all
     void visitVAArgInst(VAArgInst &I) {NOT_SUPPORTED;}
@@ -1314,29 +1341,6 @@ namespace gbe
     }
   }
 
-  /*! All intrinsic Gen functions */
-  enum OCLInstrinsic {
-#define DECL_LLVM_GEN_FUNCTION(ID, NAME) GEN_OCL_##ID,
-#include "llvm_gen_ocl_function.hxx"
-#undef DECL_LLVM_GEN_FUNCTION
-  };
-
-  /*! Build the hash map for OCL functions on Gen */
-  struct OCLIntrinsicMap {
-    /*! Build the intrinsic hash map */
-    OCLIntrinsicMap(void) {
-#define DECL_LLVM_GEN_FUNCTION(ID, NAME) \
-  map.insert(std::make_pair(#NAME, GEN_OCL_##ID));
-#include "llvm_gen_ocl_function.hxx"
-#undef DECL_LLVM_GEN_FUNCTION
-    }
-    /*! Sort intrinsics with their names */
-    hash_map<std::string, OCLInstrinsic> map;
-  };
-
-  /*! Sort the OCL Gen instrinsic functions (built on pre-main) */
-  static const OCLIntrinsicMap instrinsicMap;
-
   void GenWriter::regAllocateCallInst(CallInst &I) {
     Value *dst = &I;
     Value *Callee = I.getCalledValue();
@@ -1420,6 +1424,13 @@ namespace gbe
       case GEN_OCL_ALL:
       case GEN_OCL_ANY:
       case GEN_OCL_MAD:
+      case GEN_OCL_COS:
+      case GEN_OCL_SIN:
+      case GEN_OCL_SQR:
+      case GEN_OCL_RSQ:
+      case GEN_OCL_LOG:
+      case GEN_OCL_POW:
+      case GEN_OCL_RCP:
         // No structure can be returned
         GBE_ASSERT(I.hasStructRetAttr() == false);
         this->newRegister(&I);
@@ -1439,6 +1450,17 @@ namespace gbe
     }
     ir::Context &ctx;
   };
+
+  void GenWriter::emitUnaryCallInst(CallInst &I, CallSite &CS, ir::Opcode opcode) {
+    CallSite::arg_iterator AI = CS.arg_begin();
+#if GBE_DEBUG
+    CallSite::arg_iterator AE = CS.arg_end();
+#endif /* GBE_DEBUG */
+    GBE_ASSERT(AI != AE);
+    const ir::Register src = this->getRegister(*AI);
+    const ir::Register dst = this->getRegister(&I);
+    ctx.ALU1(opcode, ir::TYPE_FLOAT, dst, src);
+  }
 
   void GenWriter::emitCallInst(CallInst &I) {
     if (Function *F = I.getCalledFunction()) {
@@ -1591,6 +1613,12 @@ namespace gbe
             ctx.MAD(ir::TYPE_FLOAT, dst, src0, src1, src2);
             break;
           }
+          case GEN_OCL_COS: this->emitUnaryCallInst(I,CS,ir::OP_COS); break;
+          case GEN_OCL_SIN: this->emitUnaryCallInst(I,CS,ir::OP_SIN); break;
+          case GEN_OCL_LOG: this->emitUnaryCallInst(I,CS,ir::OP_LOG); break;
+          case GEN_OCL_SQR: this->emitUnaryCallInst(I,CS,ir::OP_SQR); break;
+          case GEN_OCL_RSQ: this->emitUnaryCallInst(I,CS,ir::OP_RSQ); break;
+          case GEN_OCL_RCP: this->emitUnaryCallInst(I,CS,ir::OP_RCP); break;
           case GEN_OCL_FORCE_SIMD8: ctx.setSimdWidth(8); break;
           case GEN_OCL_FORCE_SIMD16: ctx.setSimdWidth(16); break;
           default:

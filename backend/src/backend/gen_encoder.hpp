@@ -157,8 +157,10 @@ namespace gbe
                 uint32_t header_present,
                 uint32_t simd_mode,
                 uint32_t return_format);
-    /*! Extended math function */
+    /*! Extended math function (2 sources) */
     void MATH(GenRegister dst, uint32_t function, GenRegister src0, GenRegister src1);
+    /*! Extended math function (1 source) */
+    void MATH(GenRegister dst, uint32_t function, GenRegister src);
 
     /*! Patch JMPI (located at index insnID) with the given jump distance */
     void patchJMPI(uint32_t insnID, int32_t jumpDistance);

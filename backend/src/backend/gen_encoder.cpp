@@ -726,12 +726,12 @@ namespace gbe
      insn->header.quarter_control = 0;
   }
 
-  void GenEncoder::MATH(GenRegister dest, uint32_t function, GenRegister src0, GenRegister src1) {
+  void GenEncoder::MATH(GenRegister dst, uint32_t function, GenRegister src0, GenRegister src1) {
      GenInstruction *insn = this->next(GEN_OPCODE_MATH);
-     assert(dest.file == GEN_GENERAL_REGISTER_FILE);
+     assert(dst.file == GEN_GENERAL_REGISTER_FILE);
      assert(src0.file == GEN_GENERAL_REGISTER_FILE);
      assert(src1.file == GEN_GENERAL_REGISTER_FILE);
-     assert(dest.hstride == GEN_HORIZONTAL_STRIDE_1);
+     assert(dst.hstride == GEN_HORIZONTAL_STRIDE_1);
 
      if (function == GEN_MATH_FUNCTION_INT_DIV_QUOTIENT ||
          function == GEN_MATH_FUNCTION_INT_DIV_REMAINDER ||
@@ -745,9 +745,22 @@ namespace gbe
 
      insn->header.destreg_or_condmod = function;
      this->setHeader(insn);
-     this->setDst(insn, dest);
+     this->setDst(insn, dst);
      this->setSrc0(insn, src0);
      this->setSrc1(insn, src1);
+  }
+
+  void GenEncoder::MATH(GenRegister dst, uint32_t function, GenRegister src) {
+     GenInstruction *insn = this->next(GEN_OPCODE_MATH);
+     assert(dst.file == GEN_GENERAL_REGISTER_FILE);
+     assert(src.file == GEN_GENERAL_REGISTER_FILE);
+     assert(dst.hstride == GEN_HORIZONTAL_STRIDE_1);
+     assert(src.type == GEN_TYPE_F);
+
+     insn->header.destreg_or_condmod = function;
+     this->setHeader(insn);
+     this->setDst(insn, dst);
+     this->setSrc0(insn, src);
   }
 
   void GenEncoder::SAMPLE(GenRegister dest,

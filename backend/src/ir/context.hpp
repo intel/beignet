@@ -139,11 +139,17 @@ namespace ir {
                      Register src2) \
     { \
       const Tuple index = this->tuple(src0, src1, src2); \
-      return this->NAME(type, dst, index); \
+      this->NAME(type, dst, index); \
     }
     DECL_THREE_SRC_INSN(MAD);
     DECL_THREE_SRC_INSN(SEL);
 #undef DECL_THREE_SRC_INSN
+
+    /*! For all unary functions */
+    void ALU1(Opcode opcode, Type type, Register dst, Register src) {
+      const Instruction insn = gbe::ir::ALU1(opcode, type, dst, src);
+      this->append(insn);
+    }
 
     /*! LOAD with the destinations directly specified */
     template <typename... Args>

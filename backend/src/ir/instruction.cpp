@@ -702,6 +702,15 @@ namespace ir {
         default:
           CHECK_TYPE(this->type, allButBool);
           break;
+        case OP_COS:
+        case OP_SIN:
+        case OP_RCP:
+        case OP_RSQ:
+        case OP_SQR:
+          const Type fp = TYPE_FLOAT;
+          if (UNLIKELY(checkTypeFamily(TYPE_FLOAT, &fp, 1, whyNot)) == false)
+            return false;
+          break;
       }
       return true;
     }
@@ -1093,7 +1102,7 @@ namespace ir {
   }
 
   ///////////////////////////////////////////////////////////////////////////
-  // Implements the various instrospection functions
+  // Implements the various introspection functions
   ///////////////////////////////////////////////////////////////////////////
   template <typename T, typename U> struct HelperIntrospection {
     enum { value = 0 };
@@ -1399,16 +1408,20 @@ DECL_MEM_FN(VoteInstruction, VotePredicate, getVotePredicate(void), getVotePredi
   // Implements the emission functions
   ///////////////////////////////////////////////////////////////////////////
 
+  // For all unary functions with given opcode
+  Instruction ALU1(Opcode opcode, Type type, Register dst, Register src) {
+    return internal::UnaryInstruction(opcode, type, dst, src).convert();
+  }
+
   // All unary functions
 #define DECL_EMIT_FUNCTION(NAME) \
   Instruction NAME(Type type, Register dst, Register src) { \
-    return internal::UnaryInstruction(OP_##NAME, type, dst, src).convert(); \
+    return ALU1(OP_##NAME, type, dst, src);\
   }
 
   DECL_EMIT_FUNCTION(MOV)
   DECL_EMIT_FUNCTION(COS)
   DECL_EMIT_FUNCTION(SIN)
-  DECL_EMIT_FUNCTION(TAN)
   DECL_EMIT_FUNCTION(LOG)
   DECL_EMIT_FUNCTION(SQR)
   DECL_EMIT_FUNCTION(RSQ)

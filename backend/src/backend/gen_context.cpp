@@ -180,9 +180,12 @@ namespace gbe
   void GenContext::emitMathInstruction(const SelectionInstruction &insn) {
     const GenRegister dst = ra->genReg(insn.dst(0));
     const GenRegister src0 = ra->genReg(insn.src(0));
-    const GenRegister src1 = ra->genReg(insn.src(1));
     const uint32_t function = insn.extra.function;
-    p->MATH(dst, function, src0, src1);
+    if (insn.srcNum == 2) {
+      const GenRegister src1 = ra->genReg(insn.src(1));
+      p->MATH(dst, function, src0, src1);
+    } else
+      p->MATH(dst, function, src0);
   }
 
   void GenContext::emitCompareInstruction(const SelectionInstruction &insn) {

@@ -196,6 +196,62 @@ DECL_MIN_MAX(unsigned char)
 #undef DECL_MIN_MAX
 
 /////////////////////////////////////////////////////////////////////////////
+// Math intrinsic functions
+/////////////////////////////////////////////////////////////////////////////
+__attribute__((pure,const)) float __gen_ocl_sin(float x);
+__attribute__((pure,const)) float __gen_ocl_cos(float x);
+__attribute__((pure,const)) float __gen_ocl_sqrt(float x);
+__attribute__((pure,const)) float __gen_ocl_rsqrt(float x);
+__attribute__((pure,const)) float __gen_ocl_log(float x);
+__attribute__((pure,const)) float __gen_ocl_pow(float x, float y);
+__attribute__((pure,const)) float __gen_ocl_rcp(float x);
+
+INLINE_OVERLOADABLE float native_cos(float x) { return __gen_ocl_cos(x); }
+INLINE_OVERLOADABLE float native_sin(float x) { return __gen_ocl_sin(x); }
+INLINE_OVERLOADABLE float native_sqrt(float x) { return __gen_ocl_sqrt(x); }
+INLINE_OVERLOADABLE float native_rsqrt(float x) { return __gen_ocl_rsqrt(x); }
+INLINE_OVERLOADABLE float native_log2(float x) { return __gen_ocl_log(x); }
+INLINE_OVERLOADABLE float native_powr(float x, float y) { return __gen_ocl_pow(x,y); }
+INLINE_OVERLOADABLE float native_recip(float x) { return __gen_ocl_rcp(x); }
+INLINE_OVERLOADABLE float native_tan(float x) {
+  return native_sin(x) / native_cos(x);
+}
+
+/////////////////////////////////////////////////////////////////////////////
+// Declare function for vector types
+/////////////////////////////////////////////////////////////////////////////
+#define DECL_VECTOR_1OP(NAME, TYPE) \
+  INLINE_OVERLOADABLE TYPE##2 NAME(TYPE##2 v) { \
+    return (TYPE##2)(NAME(v.x), NAME(v.y)); \
+  }\
+  INLINE_OVERLOADABLE TYPE##3 NAME(TYPE##3 v) { \
+    return (TYPE##3)(NAME(v.x), NAME(v.y), NAME(v.z)); \
+  }\
+  INLINE_OVERLOADABLE TYPE##4 NAME(TYPE##4 v) { \
+    return (TYPE##4)(NAME(v.x), NAME(v.y), NAME(v.z), NAME(v.w)); \
+  }\
+  INLINE_OVERLOADABLE TYPE##8 NAME(TYPE##8 v) { \
+    TYPE##8 dst;\
+    dst.s0123 = NAME(v.s0123);\
+    dst.s4567 = NAME(v.s4567);\
+    return dst;\
+  }\
+  INLINE_OVERLOADABLE TYPE##16 NAME(TYPE##16 v) { \
+    TYPE##16 dst;\
+    dst.s01234567 = NAME(v.s01234567);\
+    dst.s89abcdef = NAME(v.s89abcdef);\
+    return dst;\
+  }
+DECL_VECTOR_1OP(native_cos, float);
+DECL_VECTOR_1OP(native_sin, float);
+DECL_VECTOR_1OP(native_tan, float);
+DECL_VECTOR_1OP(native_sqrt, float);
+DECL_VECTOR_1OP(native_rsqrt, float);
+DECL_VECTOR_1OP(native_log2, float);
+DECL_VECTOR_1OP(native_recip, float);
+#undef DECL_VECTOR_1OP
+
+/////////////////////////////////////////////////////////////////////////////
 // Extensions to manipulate the register file
 /////////////////////////////////////////////////////////////////////////////
 
