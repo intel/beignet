@@ -76,7 +76,7 @@ namespace ir {
   ///////////////////////////////////////////////////////////////////////////
 
   /*! Stores instruction internal data and opcode */
-  class InstructionBase
+  class ALIGNED(sizeof(uint64_t)) InstructionBase
   {
   public:
     /*! Initialize the instruction from a 8 bytes stream */
