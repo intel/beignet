@@ -45,7 +45,7 @@ namespace gbe
     /*! Release all taken resources */
     ~GenRegAllocator(void);
     /*! Perform the register allocation */
-    void allocate(Selection &selection);
+    bool allocate(Selection &selection);
     /*! Virtual to physical translation */
     GenRegister genReg(const GenRegister &reg);
   private:

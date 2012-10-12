@@ -377,10 +377,11 @@ namespace gbe
   }
 
   BVAR(OCL_OUTPUT_ASM, false);
-  void GenContext::emitCode(void) {
+  bool GenContext::emitCode(void) {
     GenKernel *genKernel = static_cast<GenKernel*>(this->kernel);
     sel->select();
-    ra->allocate(*this->sel);
+    if (UNLIKELY(ra->allocate(*this->sel) == false))
+      return false;
     this->emitStackPointer();
     this->emitInstructionStream();
     this->patchBranches();
@@ -390,6 +391,7 @@ namespace gbe
     if (OCL_OUTPUT_ASM)
       for (uint32_t insnID = 0; insnID < genKernel->insnNum; ++insnID)
         gen_disasm(stdout, &p->store[insnID]);
+    return true;
   }
 
   Kernel *GenContext::allocateKernel(void) {

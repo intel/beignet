@@ -23,7 +23,7 @@ int
 main(int argc, char *argv[])
 {
   cl_mem dst[24];
-  int *dst_buffer;
+  int *dst_buffer = NULL;
   const size_t n = 32 * 1024 * 1024;
   const size_t global_work_size = n;
   const size_t local_work_size = 16;
@@ -56,7 +56,11 @@ main(int argc, char *argv[])
     dst_buffer = (int *) clIntelMapBuffer(dst[j], &status);
     if (status != CL_SUCCESS)
       goto error;
-    for (uint32_t i = 0; i < n; ++i) assert(dst_buffer[i] == int(i));
+    for (uint32_t i = 0; i < n; ++i)
+      if (dst_buffer[i] != int(i)) {
+        fprintf(stderr, "run-time flat address space failed\n");
+        exit(-1);
+      }
     OCL_CALL (clIntelUnmapBuffer, dst[j]);
   }
 

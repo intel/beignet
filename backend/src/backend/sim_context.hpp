@@ -47,7 +47,7 @@ namespace gbe
     /*! Release everything needed */
     ~SimContext(void);
     /*! Implements base class */
-    virtual void emitCode(void);
+    virtual bool emitCode(void);
     /*! Emit all the register declarations */
     void emitRegisters(void);
     /*! Load the curbe data into the registers */

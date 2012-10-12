@@ -87,8 +87,8 @@ namespace gbe
     /*! Deallocate previously allocated memory */
     void deallocate(int16_t offset);
   protected:
-    /*! Build the instruction stream (to be implemented) */
-    virtual void emitCode(void) = 0;
+    /*! Build the instruction stream. Return false if failed */
+    virtual bool emitCode(void) = 0;
     /*! Allocate a new empty kernel (to be implemented) */
     virtual Kernel *allocateKernel(void) = 0;
     /*! Look if a stack is needed and allocate it */

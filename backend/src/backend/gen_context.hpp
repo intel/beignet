@@ -54,7 +54,7 @@ namespace gbe
     /*! Release everything needed */
     ~GenContext(void);
     /*! Implements base class */
-    virtual void emitCode(void);
+    virtual bool emitCode(void);
     /*! Function we emit code for */
     INLINE const ir::Function &getFunction(void) const { return fn; }
     /*! Simd width chosen for the current function */

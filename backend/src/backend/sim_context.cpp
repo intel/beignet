@@ -390,7 +390,7 @@ namespace gbe
   SVAR(OCL_ICC_SIM_COMPILER_OPTIONS, "-Wall -ldl -fabi-version=2 -fPIC -shared -O3 -g");
   BVAR(OCL_USE_ICC, false);
 
-  void SimContext::emitCode(void) {
+  bool SimContext::emitCode(void) {
     SimKernel *simKernel = static_cast<SimKernel*>(this->kernel);
     char srcStr[L_tmpnam+1], libStr[L_tmpnam+1];
     const std::string srcName = std::string(tmpnam_r(srcStr)) + ".cpp"; /* unsafe! */
@@ -440,6 +440,7 @@ namespace gbe
     simKernel->fn = (SimKernelCallBack*) dlsym(simKernel->handle, name.c_str());
     if (UNLIKELY(simKernel->fn == NULL))
       FATAL("Failed to get the symbol from the compiled shared object");
+    return true;
   }
 } /* namespace gbe */
 

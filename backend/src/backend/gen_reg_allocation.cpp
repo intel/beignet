@@ -50,8 +50,8 @@ namespace gbe
     Opaque(GenContext &ctx);
     /*! Release all taken resources */
     ~Opaque(void);
-    /*! Perform the register allocation */
-    void allocate(Selection &selection);
+    /*! Perform the register allocation. Return true if success */
+    bool allocate(Selection &selection);
     /*! Return the Gen register from the selection register */
     GenRegister genReg(const GenRegister &reg);
   private:
@@ -62,14 +62,14 @@ namespace gbe
     /*! Allocate the virtual boolean (== flags) registers */
     void allocateFlags(Selection &selection);
     /*! Allocate the GRF registers */
-    void allocateGRFs(Selection &selection);
+    bool allocateGRFs(Selection &selection);
     /*! Create a Gen register from a register set in the payload */
     void allocatePayloadReg(gbe_curbe_type, ir::Register, uint32_t subValue = 0, uint32_t subOffset = 0);
     /*! Create the intervals for each register */
     /*! Allocate the vectors detected in the instruction selection pass */
     void allocateVector(Selection &selection);
-    /*! Create the given interval */
-    void createGenReg(const GenRegInterval &interval);
+    /*! Allocate the given interval. Return true if success */
+    bool createGenReg(const GenRegInterval &interval);
     /*! Indicate if the registers are already allocated in vectors */
     bool isAllocated(const SelectionVector *vector) const;
     /*! Reallocate registers if needed to make the registers in the vector
@@ -133,11 +133,12 @@ namespace gbe
     }
   }
 
-  void GenRegAllocator::Opaque::createGenReg(const GenRegInterval &interval) {
+  bool GenRegAllocator::Opaque::createGenReg(const GenRegInterval &interval) {
     using namespace ir;
     const ir::Register reg = interval.reg;
     const uint32_t simdWidth = ctx.getSimdWidth();
-    if (RA.contains(reg) == true) return; // already allocated
+    if (RA.contains(reg) == true)
+      return true; // already allocated
     GBE_ASSERT(ctx.isScalarReg(reg) == false);
     const bool isScalar = ctx.sel->isScalarOrBool(reg);
     const RegisterData regData = ctx.sel->getRegisterData(reg);
@@ -146,14 +147,12 @@ namespace gbe
     const uint32_t regSize = simdWidth*typeSize;
     uint32_t grfOffset;
     while ((grfOffset = ctx.allocate(regSize, regSize)) == 0) {
-      //IF_DEBUG(const bool success =) this->expireGRF(interval);
-      //GBE_ASSERTM(success, "Register allocation failed");
       const bool success = this->expireGRF(interval);
-      if (UNLIKELY(success == false))
-        throw NotEnoughRegisterException();
+      if (UNLIKELY(success == false)) return false;
     }
     GBE_ASSERTM(grfOffset != 0, "Unable to register allocate");
     RA.insert(std::make_pair(reg, grfOffset));
+    return true;
   }
 
   bool GenRegAllocator::Opaque::isAllocated(const SelectionVector *vector) const {
@@ -442,7 +441,7 @@ namespace gbe
     }
   }
 
-  void GenRegAllocator::Opaque::allocateGRFs(Selection &selection) {
+  bool GenRegAllocator::Opaque::allocateGRFs(Selection &selection) {
 
     // Perform the linear scan allocator
     const uint32_t regNum = ctx.sel->getRegNum();
@@ -465,8 +464,7 @@ namespace gbe
         uint32_t grfOffset;
         while ((grfOffset = ctx.allocate(size, alignment)) == 0) {
           const bool success = this->expireGRF(interval);
-          if (UNLIKELY(success == false))
-            throw NotEnoughRegisterException();
+          if (success == false) return false;
         }
         for (uint32_t regID = 0; regID < vector->regNum; ++regID, grfOffset += alignment) {
           const ir::Register reg = vector->reg[regID].reg();
@@ -475,12 +473,13 @@ namespace gbe
         }
       }
       // Case 2: This is a regular scalar register, allocate it alone
-      else
-        this->createGenReg(interval);
+      else if (this->createGenReg(interval) == false)
+        return false;
     }
+    return true;
   }
 
-  INLINE void GenRegAllocator::Opaque::allocate(Selection &selection) {
+  INLINE bool GenRegAllocator::Opaque::allocate(Selection &selection) {
     using namespace ir;
     const Kernel *kernel = ctx.getKernel();
     const Function &fn = ctx.getFunction();
@@ -649,7 +648,7 @@ namespace gbe
 
     // Allocate all the GRFs now (regular register and boolean that are not in
     // flag registers)
-    this->allocateGRFs(selection);
+    return this->allocateGRFs(selection);
   }
 
   INLINE GenRegister setGenReg(const GenRegister &src, uint32_t grfOffset) {
@@ -687,8 +686,8 @@ namespace gbe
     GBE_DELETE(this->opaque);
   }
 
-  void GenRegAllocator::allocate(Selection &selection) {
-    this->opaque->allocate(selection);
+  bool GenRegAllocator::allocate(Selection &selection) {
+    return this->opaque->allocate(selection);
   }
 
   GenRegister GenRegAllocator::genReg(const GenRegister &reg) {

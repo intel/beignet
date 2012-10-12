@@ -48,17 +48,15 @@ namespace gbe {
 
   Kernel *GenProgram::compileKernel(const ir::Unit &unit, const std::string &name) {
     Context *ctx = GBE_NEW(GenContext, unit, name);
-    Kernel *kernel = NULL;
+    Kernel *kernel = ctx->compileKernel();
 
     // register allocation may fail. We may need to recompile in that case
-    try {
-      kernel = ctx->compileKernel();
-    } catch (NotEnoughRegisterException e) {
-      GBE_SAFE_DELETE(ctx->getKernel());
+    if (kernel == NULL) {
       GBE_SAFE_DELETE(ctx);
       unit.getFunction(name)->setSimdWidth(8);
       ctx = GBE_NEW(GenContext, unit, name);
       kernel = ctx->compileKernel();
+      GBE_ASSERT(kernel != NULL); // XXX spill must be implemented
     }
     GBE_DELETE(ctx);
     return kernel;

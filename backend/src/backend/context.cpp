@@ -268,7 +268,10 @@ namespace gbe
     this->buildUsedLabels();
     this->buildJIPs();
     this->buildStack();
-    this->emitCode();
+    if (this->emitCode() == false) {
+      GBE_DELETE(this->kernel);
+      this->kernel = NULL;
+    }
     return this->kernel;
   }
 
