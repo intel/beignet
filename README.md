@@ -1,17 +1,23 @@
-OpenCL Runtime
-==============
+Beignet
+=======
 
-This code base contains the code to run OpenCL programs on Intel GPUs. This is
-basically the run-time code i.e. it defines the OpenCL host functions required
-to initialize the device, create the command queues, the kernels and the
-programs and run them on the GPU. The run-time does *not* contain the compiler.
-The OpenCL compiler has its own shared object and both the run-time and the
-compiler are interfaced with a regular C layer.
+Beignet is an open source implementaion of the OpenCL specification - a generic
+compute oriented API. This code base contains the code to run OpenCL programs on
+Intel GPUs which bsically defines and implements the OpenCL host functions
+required to initialize the device, create the command queues, the kernels and
+the programs and run them on the GPU. The code base also contains the compiler
+part of the stack which is included in `backend/`. For more specific information
+about the compiler, please refer to `backend/README.md`
 
 How to build
 ------------
 
-The project uses CMake with three profiles:
+There are two ways to build Beignet.
+
+The first one uses a simple Makefile. Just type `make` and the project will
+build if everything is properly installed.
+
+The project also uses CMake with three profiles:
 
 1. Debug (-g)
 2. RelWithDebInfo (-g with optimizations)
@@ -33,13 +39,28 @@ The project depends on several external libraries:
 
 - Several X components (XLib, Xfixes, Xext)
 - libdrm libraries (libdrm and libdrm\_intel)
-- The compiler backend itself (libgbe)
+- Various LLVM components
 
 CMake will check the dependencies and will complain if it does not find them.
 
 Once built, the run-time produces a shared object libcl.so which basically
 directly implements the OpenCL API. A set of tests are also produced. They may
-be found in utests.
+be found in `utests/`.
+
+Note that the compiler depends on LLVM (Low-Level Virtual Machine project).
+Right now, the code has only been compiled with LLVM 3.0. It will not compile
+with any thing older. A small amount of work should be required to make it work
+with LLVM 3.1 but the port is not done. LLVM 3.0 can be downloaded at:
+
+[http://llvm.org/releases/](http://llvm.org/releases/)
+
+Be careful and download LLVM *3.0*. The code will not compile with LLVM 3.2
+since the ptx ABI has been deprecated and replaced by the nvptx one.
+
+Also note that the code was compiled on GCC 4.6 and GCC 4.7. Since the code uses
+really recent C++11 features, you may expect problems with older compilers. Last
+time I tried, the code breaks ICC 12 and Clang with internal compiler errors
+while compiling anonymous nested lambda functions.
 
 How to run
 ----------
@@ -54,18 +75,24 @@ are with the run-time in `./kernels`.
 
 Then in `utests/`:
 
-`> ./run`
+`> ./utest_run`
 
 will run all the unit tests one after the others
 
-`> ./run some_unit_test0 some_unit_test1`
+`> ./utest_run some_unit_test0 some_unit_test1`
 
 will only run `some_unit_test0` and `some_unit_test1` tests
+
+Supported Hardware
+------------------
 
 As an important remark, the code was only tested on IVB GT2 with a rather
 minimal Linux distribution (ArchLinux) and a very small desktop (dwm). If you
 use something more sophisticated using compiz or similar stuffs, you may expect
 serious problems and GPU hangs.
+
+Only IVB is supported right now. Actually, the code was only run on IVB GT2. You
+may expect some issues with IVB GT1.
 
 TODO
 ----
@@ -102,64 +129,6 @@ do:
 More generally, everything in the run-time that triggers the "FATAL" macro means
 that something that must be supported is not implemented properly (either it
 does not comply with the standard or it is just missing)
-
-Fulsim
-------
-
-The code base supports a seamless integration with Fulsim i.e. you do not need
-to run anything else than your application to make Fulsim work with it. However,
-some specific step have to be completed first to make it work.
-
-- Compilation phase. You need to compile the project with fulsim enabled. You
-should choose `EMULATE_IVB ON` in ccmake options. Actually, Haswell has not been
-tested that much recently so there is a large probability it will not work
-properly
-
-- Fulsim executables and DLL. Copy and paste fulsim *Windows* executables and
-DLLs into the directory where you run your code. The run-time will simply call
-AubLoad.exe to run Fulsim. You can get fulsim from our subversion server. We
-compile versions of it. They are all located in
-[here](https://subversion.jf.intel.com/cag/gen/gpgpu/fulsim/)
-
-- Run-time phase. You need to fake the machine you want to simulate. Small
-scripts in the root directory of the project are responsible for doing that:
-
-`> source setup_fulsim_ivb.sh 1`
-
-will run fulsim in debug mode i.e. you will be able to step into the EU code
-
-`> source setup_fulsim_ivb.sh 0`
-
-will simply run fulsim
-
-- Modified libdrm. Unfortunately, to support fulsim, this run-time uses a
-modified libdrm library (in particular to support binary buffers and a seamless
-integration with the run-time). See below.
-
-C++ simulator
--------------
-
-The compiler is able to produce c++ file that simulate the behavior of the
-kernel. The idea is mostly to be able to gather statistics about how the kernel
-can run (SIMD occupancy, bank conflicts in shared local memory or cache hit/miss
-rates). Basically, the compiler generates a c++ file from the LLVM file (with
-some extra steps detailed in the OpenCL compiler documentation). Then, GCC (or
-ICC) is directly called to generate a shared object.
-
-The run-time is actually able to run the simulation code directly. To enable it
-(and to also enable the c++ path in the compile code), a small script in the
-root directory has to be run:
-
-`> source setup_perfim_ivb.sh`
-
-Doing that, the complete C++ simulation path is enabled.
-
-Modified libdrm
----------------
-
-Right now, a modified libdrm is required to run fulsim. It completely disables
-the HW path (nothing will run on the HW at all) and allows to selectively dump
-any OpenCL buffer. Contact Ben Segovia to get the access to it.
 
 Ben Segovia (<benjamin.segovia@intel.com>)
 
