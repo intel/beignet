@@ -56,7 +56,7 @@ ADD_LIBRARY(utests SHARED
 
 TARGET_LINK_LIBRARIES(utests cl m)
 
-ADD_EXECUTABLE(run utest_run.cpp)
+ADD_EXECUTABLE(utest_run utest_run.cpp)
 TARGET_LINK_LIBRARIES(run utests)
 
 ADD_EXECUTABLE(flat_address_space runtime_flat_address_space.cpp)
