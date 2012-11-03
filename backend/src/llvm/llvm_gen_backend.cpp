@@ -470,6 +470,17 @@ namespace gbe
     return false;
   }
 
+  static Constant *extractConstantElem(Constant *CPV, uint32_t index) {
+    ConstantVector *CV = dyn_cast<ConstantVector>(CPV);
+    GBE_ASSERT(CV != NULL);
+#if GBE_DEBUG
+    const uint32_t elemNum = CV->getNumOperands();
+    GBE_ASSERTM(index < elemNum, "Out-of-bound constant vector access");
+#endif /* GBE_DEBUG */
+    CPV = cast<Constant>(CV->getOperand(index));
+    return CPV;
+  }
+
   template <typename U, typename T>
   static U processConstant(Constant *CPV, T doIt, uint32_t index = 0u)
   {
@@ -478,13 +489,8 @@ namespace gbe
     else if (isa<UndefValue>(CPV) && CPV->getType()->isSingleValueType())
       GBE_ASSERTM(false, "Unsupported constant expression");
 
-    if (ConstantVector *CV = dyn_cast<ConstantVector>(CPV)) {
-#if GBE_DEBUG
-      const uint32_t elemNum = CV->getNumOperands();
-      GBE_ASSERTM(index < elemNum, "Out-of-bound constant vector access");
-#endif /* GBE_DEBUG */
-      CPV = cast<Constant>(CV->getOperand(index));
-    }
+    if (dyn_cast<ConstantVector>(CPV))
+      CPV = extractConstantElem(CPV, index);
 
     // Integers
     if (ConstantInt *CI = dyn_cast<ConstantInt>(CPV)) {
@@ -516,6 +522,8 @@ namespace gbe
       case Type::DoubleTyID:
       {
         ConstantFP *FPC = cast<ConstantFP>(CPV);
+        GBE_ASSERT(isa<UndefValue>(CPV) == false);
+
         if (FPC->getType() == Type::getFloatTy(CPV->getContext())) {
           const float f32 = FPC->getValueAPF().convertToFloat();
           return doIt(f32);
@@ -1231,10 +1239,12 @@ namespace gbe
       for (uint32_t elemID = 0; elemID < elemNum; ++elemID)
         if (elemID != modifiedID) {
           Constant *sourceCPV = dyn_cast<Constant>(modified);
-          const ir::ImmediateIndex immIndex = this->newImmediate(sourceCPV, elemID);
-          const ir::Immediate imm = ctx.getImmediate(immIndex);
-          const ir::Register reg = regTranslator.getScalar(&I, elemID);
-          ctx.LOADI(imm.type, reg, immIndex);
+          if (isa<UndefValue>(extractConstantElem(sourceCPV, elemID)) == false) {
+            const ir::ImmediateIndex immIndex = this->newImmediate(sourceCPV, elemID);
+            const ir::Immediate imm = ctx.getImmediate(immIndex);
+            const ir::Register reg = regTranslator.getScalar(&I, elemID);
+            ctx.LOADI(imm.type, reg, immIndex);
+          }
         }
     }
 

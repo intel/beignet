@@ -253,12 +253,19 @@ namespace gbe
       const GenRegInterval *toExpire = this->ending[this->expiringID];
       const ir::Register reg = toExpire->reg;
 
+      // Dead code produced by the insn selection -> we skip it
+      if (toExpire->minID > toExpire->maxID) {
+        this->expiringID++;
+        continue;
+      }
+
       // Ignore booleans that were allocated with flags
       // if (ctx.getRegisterFamily(reg) == ir::FAMILY_BOOL && !grfBooleans.contains(reg)) {
       if (ctx.sel->getRegisterFamily(reg) == ir::FAMILY_BOOL) {
         this->expiringID++;
         continue;
       }
+
       if (toExpire->maxID >= limit.minID)
         return false;
       auto it = RA.find(reg);
@@ -326,6 +333,11 @@ namespace gbe
         while (endID != ending.size()) {
           const GenRegInterval *toExpire = this->ending[endID];
           const ir::Register reg = toExpire->reg;
+          // Dead code produced by the insn selection -> we skip it
+          if (toExpire->minID > toExpire->maxID) {
+            endID++;
+            continue;
+          }
           // We cannot expire this interval and the next ones
           if (toExpire->maxID >= interval.minID)
             break;

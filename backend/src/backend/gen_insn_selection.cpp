@@ -992,6 +992,7 @@ namespace gbe
       const GenRegister dst = sel.selReg(insn.getDst(0));
       const GenRegister src = sel.selReg(insn.getSrc(0));
       switch (opcode) {
+        case ir::OP_ABS: sel.MOV(dst, GenRegister::abs(src)); break;
         case ir::OP_MOV: sel.MOV(dst, src); break;
         case ir::OP_RNDD: sel.RNDD(dst, src); break;
         case ir::OP_RNDE: sel.RNDE(dst, src); break;
@@ -1504,7 +1505,7 @@ namespace gbe
       const Opcode opcode = insn.getOpcode();
       const Type type = insn.getType();
       const uint32_t genCmp = getGenCompare(opcode);
-      const Register dst  = insn.getDst(0);
+      const Register dst = insn.getDst(0);
       const GenRegister src0 = sel.selReg(insn.getSrc(0), type);
       const GenRegister src1 = sel.selReg(insn.getSrc(1), type);
 
@@ -1522,6 +1523,7 @@ namespace gbe
       sel.push();
         sel.curr.physicalFlag = 0;
         sel.curr.flagIndex = uint16_t(dst);
+        printf("%i\n",(int) dst);
         sel.CMP(genCmp, src0, src1);
       sel.pop();
       return true;
