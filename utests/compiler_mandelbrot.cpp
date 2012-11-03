@@ -20,9 +20,8 @@
 #include "utest_helper.hpp"
 
 static int *dst = NULL;
-static const size_t w = 64;
-static const size_t h = 64;
-static const size_t iter = 4;
+static const size_t w = 256;
+static const size_t h = 256;
 
 static void compiler_mandelbrot(void)
 {
@@ -32,14 +31,17 @@ static void compiler_mandelbrot(void)
 
   OCL_CREATE_KERNEL("compiler_mandelbrot");
 
-  cl_mem cl_dst = clCreateBuffer(ctx, 0, sz, NULL, NULL);
-  OCL_CALL (clSetKernelArg, kernel, 0, sizeof(cl_mem), &cl_dst);
+  OCL_CREATE_BUFFER(buf[0], 0, sz, NULL);
+  OCL_CALL (clSetKernelArg, kernel, 0, sizeof(cl_mem), &buf[0]);
   OCL_CALL (clEnqueueNDRangeKernel, queue, kernel, 2, NULL, global, local, 0, NULL, NULL);
-  dst = (int *) clIntelMapBuffer(cl_dst, NULL);
+  OCL_MAP_BUFFER(0);
+  dst = (int *) buf_data[0];
 
-  cl_write_bmp(dst, w, h, "mandelbrot.bmp");
-  OCL_CALL (clIntelUnmapBuffer, cl_dst);
-  OCL_CALL (clReleaseMemObject, cl_dst);
+  /* Save the image (for debug purpose) */
+  cl_write_bmp(dst, w, h, "compiler_mandelbrot.bmp");
+
+  /* Compare with the golden image */
+  OCL_CHECK_IMAGE(dst, w, h, "compiler_mandelbrot_ref.bmp");
 }
 
 MAKE_UTEST_FROM_FUNCTION(compiler_mandelbrot);

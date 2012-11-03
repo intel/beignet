@@ -22,6 +22,56 @@
  * \author Benjamin Segovia <benjamin.segovia@intel.com>
  */
 
+/* This is the instruction selection code. First of all, this is a bunch of c++
+ * crap. Sorry if this is not that readable. Anyway, the goal here is to take
+ * GenIR code (i.e. the very regular, very RISC IR) and to produce GenISA with
+ * virtual registers (i.e. regular GenIR registers). 
+ *
+ * Overall idea:
+ * =============
+ *
+ * There is a lot of papers and research about that but I tried to keep it
+ * simple. No dynamic programming, nothing like this. Just a recursive maximal
+ * munch.
+ *
+ * Basically, the code is executed per basic block from bottom to top. Patterns
+ * of GenIR instructions are defined and each instruction is matched against the
+ * best pattern i.e. the pattern that catches the largest number of
+ * instructions. Once matched, a sequence of instructions is output.
+ *
+ * Each instruction the match depends on is then marked as "root" i.e. we
+ * indicate that each of these instructions must be generated: we indeed need their
+ * destinations for the next instructions (remember that we generate the code in
+ * reverse order)
+ *
+ * Patterns:
+ * =========
+ *
+ * There is a lot of patterns and I did not implement all of them obviously. I
+ * just quickly gather the complete code to make pattern implementation kind of
+ * easy. This is pretty verbose to add a pattern but it should be not too hard
+ * to add new ones.
+ *
+ * To create and register patterns, I just abused C++ pre-main. A bunch of
+ * patterns is then created and sorted per opcode (i.e. the opcode of the root
+ * of the pattern): this creates a library of patterns that may be used in
+ * run-time.
+ *
+ * TODO:
+ * =====
+ *
+ * Sadly, I recreated here a new DAG class. This is just a bad idea since we
+ * already have the DAG per basic block with the Function graph i.e. the
+ * complete graph of uses and definitions. I think we should be able to save a
+ * lot of code here if we can simply reuse the code from UD / DU chains.
+ *
+ * Finally, cross-block instruction selection is quite possible with this simple
+ * approach. Basically, instructions from dominating blocks could be merged and
+ * matched with other instructions in the dominated block. This leads to the
+ * interesting approach which consists in traversing the dominator tree in post
+ * order
+ */
+
 #include "backend/gen_insn_selection.hpp"
 #include "backend/gen_context.hpp"
 #include "ir/function.hpp"
@@ -1497,17 +1547,23 @@ namespace gbe
   };
 
   /*! Compare instruction pattern */
-  DECL_PATTERN(CompareInstruction)
+  class CompareInstructionPattern : public SelectionPattern
   {
-    INLINE bool emitOne(Selection::Opaque &sel, const ir::CompareInstruction &insn) const
+  public:
+    CompareInstructionPattern(void) : SelectionPattern(1,1) {
+      for (uint32_t op = 0; op < ir::OP_INVALID; ++op)
+        if (ir::isOpcodeFrom<ir::CompareInstruction>(ir::Opcode(op)) == true)
+          this->opcodes.push_back(ir::Opcode(op));
+    }
+
+    INLINE bool emit(Selection::Opaque &sel, SelectionDAG &dag) const
     {
       using namespace ir;
+      const ir::CompareInstruction &insn = cast<CompareInstruction>(dag.insn);
       const Opcode opcode = insn.getOpcode();
       const Type type = insn.getType();
       const uint32_t genCmp = getGenCompare(opcode);
       const Register dst = insn.getDst(0);
-      const GenRegister src0 = sel.selReg(insn.getSrc(0), type);
-      const GenRegister src1 = sel.selReg(insn.getSrc(1), type);
 
       // Limit the compare to the active lanes. Use the same compare as for f0.0
       sel.push();
@@ -1520,15 +1576,30 @@ namespace gbe
         sel.CMP(GEN_CONDITIONAL_LE, blockip, labelReg);
       sel.pop();
 
+      // Look for immediate values for the right source
+      GenRegister src0, src1;
+      SelectionDAG *dag0 = dag.child[0];
+      SelectionDAG *dag1 = dag.child[1];
+
+      // Right source can always be an immediate
+      if (OCL_OPTIMIZE_IMMEDIATE && dag1 != NULL && dag1->insn.getOpcode() == OP_LOADI) {
+        const auto &childInsn = cast<LoadImmInstruction>(dag1->insn);
+        src0 = sel.selReg(insn.getSrc(0), type);
+        src1 = getRegisterFromImmediate(childInsn.getImmediate());
+        if (dag0) dag0->isRoot = 1;
+      } else {
+        src0 = sel.selReg(insn.getSrc(0), type);
+        src1 = sel.selReg(insn.getSrc(1), type);
+        this->markAllChildren(dag);
+      }
+
       sel.push();
         sel.curr.physicalFlag = 0;
         sel.curr.flagIndex = uint16_t(dst);
-        printf("%i\n",(int) dst);
         sel.CMP(genCmp, src0, src1);
       sel.pop();
       return true;
     }
-    DECL_CTOR(CompareInstruction, 1, 1);
   };
 
   /*! Convert instruction pattern */
@@ -1566,17 +1637,42 @@ namespace gbe
   };
 
   /*! Select instruction pattern */
-  DECL_PATTERN(SelectInstruction)
+  class SelectInstructionPattern : public SelectionPattern
   {
-    INLINE bool emitOne(Selection::Opaque &sel, const ir::SelectInstruction &insn) const
+  public:
+    SelectInstructionPattern(void) : SelectionPattern(1,1) {
+      for (uint32_t op = 0; op < ir::OP_INVALID; ++op)
+        if (ir::isOpcodeFrom<ir::SelectInstruction>(ir::Opcode(op)) == true)
+          this->opcodes.push_back(ir::Opcode(op));
+    }
+
+    INLINE bool emit(Selection::Opaque &sel, SelectionDAG &dag) const
     {
       using namespace ir;
+      const ir::SelectInstruction &insn = cast<SelectInstruction>(dag.insn);
 
       // Get all registers for the instruction
       const Type type = insn.getType();
       const GenRegister dst  = sel.selReg(insn.getDst(0), type);
-      const GenRegister src0 = sel.selReg(insn.getSrc(SelectInstruction::src0Index), type);
-      const GenRegister src1 = sel.selReg(insn.getSrc(SelectInstruction::src1Index), type);
+
+      // Look for immediate values for the right source
+      GenRegister src0, src1;
+      SelectionDAG *dag0 = dag.child[0]; // source 0 is the predicate!
+      SelectionDAG *dag1 = dag.child[1];
+      SelectionDAG *dag2 = dag.child[2];
+
+      // Right source can always be an immediate
+      if (OCL_OPTIMIZE_IMMEDIATE && dag2 != NULL && dag2->insn.getOpcode() == OP_LOADI) {
+        const auto &childInsn = cast<LoadImmInstruction>(dag2->insn);
+        src0 = sel.selReg(insn.getSrc(SelectInstruction::src0Index), type);
+        src1 = getRegisterFromImmediate(childInsn.getImmediate());
+        if (dag0) dag0->isRoot = 1;
+        if (dag1) dag1->isRoot = 1;
+      } else {
+        src0 = sel.selReg(insn.getSrc(SelectInstruction::src0Index), type);
+        src1 = sel.selReg(insn.getSrc(SelectInstruction::src1Index), type);
+        this->markAllChildren(dag);
+      }
 
       // Since we cannot predicate the select instruction with our current mask,
       // we need to perform the selection in two steps (one to select, one to
@@ -1598,7 +1694,6 @@ namespace gbe
       sel.MOV(dst, tmp);
       return true;
     }
-    DECL_CTOR(SelectInstruction, 1, 1);
   };
 
   /*! Label instruction pattern */

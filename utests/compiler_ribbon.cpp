@@ -20,8 +20,8 @@
 #include "utest_helper.hpp"
 
 static int *dst = NULL;
-static const int w = 1024;
-static const int h = 1024;
+static const int w = 256;
+static const int h = 256;
 
 static void compiler_ribbon(void)
 {
@@ -32,19 +32,21 @@ static void compiler_ribbon(void)
   const float fy = float(h);
   OCL_CREATE_KERNEL("compiler_ribbon");
 
-  cl_mem cl_dst = clCreateBuffer(ctx, 0, sz, NULL, NULL);
-  OCL_CALL (clSetKernelArg, kernel, 0, sizeof(cl_mem), &cl_dst);
+  OCL_CREATE_BUFFER(buf[0], 0, sz, NULL);
+  OCL_CALL (clSetKernelArg, kernel, 0, sizeof(cl_mem), &buf[0]);
   OCL_CALL (clSetKernelArg, kernel, 1, sizeof(float), &fx);
   OCL_CALL (clSetKernelArg, kernel, 2, sizeof(float), &fy);
   OCL_CALL (clSetKernelArg, kernel, 3, sizeof(int), &w);
   OCL_CALL (clEnqueueNDRangeKernel, queue, kernel, 2, NULL, global, local, 0, NULL, NULL);
-  dst = (int *) clIntelMapBuffer(cl_dst, NULL);
+  OCL_MAP_BUFFER(0);
+  dst = (int*) buf_data[0];
 
-  cl_write_bmp(dst, w, h, "ribbon.bmp");
-  OCL_CALL (clIntelUnmapBuffer, cl_dst);
-  OCL_CALL (clReleaseMemObject, cl_dst);
+  /* Save the image (for debug purpose) */
+  cl_write_bmp(dst, w, h, "compiler_ribbon.bmp");
+
+  /* Compare with the golden image */
+  OCL_CHECK_IMAGE(dst, w, h, "compiler_ribbon_ref.bmp");
 }
 
 MAKE_UTEST_FROM_FUNCTION(compiler_ribbon);
-
 
