@@ -1166,8 +1166,12 @@ namespace gbe
     Value *modified = I.getOperand(0);
     Value *toInsert = I.getOperand(1);
     Value *index = I.getOperand(2);
+#if 0
     GBE_ASSERTM(!isa<Constant>(modified) || isa<UndefValue>(modified),
-                "TODO SUPPORT constant vector for insert");
+                "TODO support constant vector for insert");
+#endif
+
+    // Get the index for the insertion
     Constant *CPV = dyn_cast<Constant>(index);
     GBE_ASSERTM(CPV != NULL, "only constant indices when inserting values");
     auto x = processConstant<ir::Immediate>(CPV, InsertExtractFunctor(ctx));
@@ -1180,35 +1184,66 @@ namespace gbe
     const uint32_t modifiedID = x.data.u32;
     GBE_ASSERTM(modifiedID < elemNum, "Out-of-bound index for InsertElement");
 
-    // Non modified values are just proxies
-    for (uint32_t elemID = 0; elemID < elemNum; ++elemID)
-      if (elemID != modifiedID)
-        regTranslator.newValueProxy(modified, &I, elemID, elemID);
+    // The source vector is not constant
+    if (!isa<Constant>(modified) || isa<UndefValue>(modified)) {
+       // Non modified values are just proxies
+       for (uint32_t elemID = 0; elemID < elemNum; ++elemID)
+         if (elemID != modifiedID)
+           regTranslator.newValueProxy(modified, &I, elemID, elemID);
+     }
+     // The source vector is constant
+     else {
+       // Non modified values will use LOADI
+       for (uint32_t elemID = 0; elemID < elemNum; ++elemID)
+         if (elemID != modifiedID) {
+           const ir::Type type = getType(ctx, toInsert->getType());
+           const ir::Register reg = ctx.reg(getFamily(type));
+           regTranslator.insertRegister(reg, &I, elemID);
+         }
+     }
 
-    // If the element to insert is an immediate we will generate a LOADI.
-    // Otherwise, the value is just a proxy of the inserted value
-    if (dyn_cast<Constant>(toInsert) != NULL) {
-      const ir::Type type = getType(ctx, toInsert->getType());
-      const ir::Register reg = ctx.reg(getFamily(type));
-      regTranslator.insertRegister(reg, &I, modifiedID);
-    } else
-      regTranslator.newValueProxy(toInsert, &I, 0, modifiedID);
+     // If the element to insert is an immediate we will generate a LOADI.
+     // Otherwise, the value is just a proxy of the inserted value
+     if (dyn_cast<Constant>(toInsert) != NULL) {
+       const ir::Type type = getType(ctx, toInsert->getType());
+       const ir::Register reg = ctx.reg(getFamily(type));
+       regTranslator.insertRegister(reg, &I, modifiedID);
+     } else
+       regTranslator.newValueProxy(toInsert, &I, 0, modifiedID);
   }
 
   void GenWriter::emitInsertElement(InsertElementInst &I) {
     // Note that we check everything in regAllocateInsertElement
+    Value *modified = I.getOperand(0);
     Value *toInsert = I.getOperand(1);
     Value *index = I.getOperand(2);
 
-    // If this is not a constant, we just use a proxy
+    // Get the index of the value to insert
+    Constant *indexCPV = dyn_cast<Constant>(index);
+    auto x = processConstant<ir::Immediate>(indexCPV, InsertExtractFunctor(ctx));
+    const uint32_t modifiedID = x.data.u32;
+
+    // The source vector is constant. We need to insert LOADI for the unmodified
+    // values
+    if (isa<Constant>(modified) && !isa<UndefValue>(modified)) {
+      VectorType *vectorType = cast<VectorType>(modified->getType());
+      const uint32_t elemNum = vectorType->getNumElements();
+      for (uint32_t elemID = 0; elemID < elemNum; ++elemID)
+        if (elemID != modifiedID) {
+          Constant *sourceCPV = dyn_cast<Constant>(modified);
+          const ir::ImmediateIndex immIndex = this->newImmediate(sourceCPV, elemID);
+          const ir::Immediate imm = ctx.getImmediate(immIndex);
+          const ir::Register reg = regTranslator.getScalar(&I, elemID);
+          ctx.LOADI(imm.type, reg, immIndex);
+        }
+    }
+
+    // If the inserted value is not a constant, we just use a proxy
     if (dyn_cast<Constant>(toInsert) == NULL)
       return;
 
-    // We need a LOADI if we insert a immediate
-    Constant *indexCPV = dyn_cast<Constant>(index);
+    // We need a LOADI if we insert an immediate
     Constant *toInsertCPV = dyn_cast<Constant>(toInsert);
-    auto x = processConstant<ir::Immediate>(indexCPV, InsertExtractFunctor(ctx));
-    const uint32_t modifiedID = x.data.u32;
     const ir::ImmediateIndex immIndex = this->newImmediate(toInsertCPV);
     const ir::Immediate imm = ctx.getImmediate(immIndex);
     const ir::Register reg = regTranslator.getScalar(&I, modifiedID);
@@ -1219,7 +1254,7 @@ namespace gbe
     Value *extracted = I.getOperand(0);
     Value *index = I.getOperand(1);
     GBE_ASSERTM(isa<Constant>(extracted) == false,
-                "TODO SUPPORT constant vector for extract");
+                "TODO support constant vector for extract");
     Constant *CPV = dyn_cast<Constant>(index);
     GBE_ASSERTM(CPV != NULL, "only constant indices when inserting values");
     auto x = processConstant<ir::Immediate>(CPV, InsertExtractFunctor(ctx));

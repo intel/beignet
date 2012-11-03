@@ -7,9 +7,10 @@ ADD_LIBRARY(utests SHARED
   compiler_mandelbrot.cpp
   compiler_mandelbrot_alternate.cpp
   compiler_clod.cpp
-# compiler_ribbon.cpp
+  compiler_ribbon.cpp
   compiler_box_blur_float.cpp
   compiler_box_blur.cpp
+  compiler_insert_to_constant.cpp
   compiler_argument_structure.cpp
   compiler_array0.cpp
   compiler_array.cpp
