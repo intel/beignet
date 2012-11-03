@@ -11,8 +11,11 @@ C_SRC=utest_error.c
 CPP_SRC=\
 	compiler_mandelbrot.cpp \
 	compiler_mandelbrot_alternate.cpp \
+	compiler_ribbon.cpp \
+	compiler_clod.cpp \
 	compiler_box_blur.cpp \
 	compiler_box_blur_float.cpp \
+  compiler_insert_to_constant.cpp \
 	compiler_argument_structure.cpp \
 	compiler_array0.cpp \
 	compiler_array.cpp \
