@@ -488,12 +488,22 @@ namespace ir {
   Instruction SIN(Type type, Register dst, Register src);
   /*! tan.type dst src */
   Instruction RCP(Type type, Register dst, Register src);
+  /*! abs.type dst src */
+  Instruction ABS(Type type, Register dst, Register src);
   /*! log.type dst src */
   Instruction LOG(Type type, Register dst, Register src);
   /*! sqr.type dst src */
   Instruction SQR(Type type, Register dst, Register src);
   /*! rsq.type dst src */
   Instruction RSQ(Type type, Register dst, Register src);
+  /*! rndd.type dst src */
+  Instruction RNDD(Type type, Register dst, Register src);
+  /*! rnde.type dst src */
+  Instruction RNDE(Type type, Register dst, Register src);
+  /*! rndu.type dst src */
+  Instruction RNDU(Type type, Register dst, Register src);
+  /*! rndz.type dst src */
+  Instruction RNDZ(Type type, Register dst, Register src);
   /*! pow.type dst src0 src1 */
   Instruction POW(Type type, Register dst, Register src0, Register src1);
   /*! mul.type dst src0 src1 */

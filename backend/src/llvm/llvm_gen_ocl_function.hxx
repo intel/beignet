@@ -39,6 +39,7 @@ DECL_LLVM_GEN_FUNCTION(RGATHER7, _Z17__gen_ocl_rgathertiiiiiii)
 DECL_LLVM_GEN_FUNCTION(RGATHER8, _Z17__gen_ocl_rgathertiiiiiiii)
 
 // Math function
+DECL_LLVM_GEN_FUNCTION(ABS, __gen_ocl_fabs)
 DECL_LLVM_GEN_FUNCTION(COS, __gen_ocl_cos)
 DECL_LLVM_GEN_FUNCTION(SIN, __gen_ocl_sin)
 DECL_LLVM_GEN_FUNCTION(SQR, __gen_ocl_sqrt)
@@ -46,6 +47,10 @@ DECL_LLVM_GEN_FUNCTION(RSQ, __gen_ocl_rsqrt)
 DECL_LLVM_GEN_FUNCTION(LOG, __gen_ocl_log)
 DECL_LLVM_GEN_FUNCTION(POW, __gen_ocl_pow)
 DECL_LLVM_GEN_FUNCTION(RCP, __gen_ocl_rcp)
+DECL_LLVM_GEN_FUNCTION(RNDZ, __gen_ocl_rndz)
+DECL_LLVM_GEN_FUNCTION(RNDE, __gen_ocl_rnde)
+DECL_LLVM_GEN_FUNCTION(RNDU, __gen_ocl_rndu)
+DECL_LLVM_GEN_FUNCTION(RNDD, __gen_ocl_rndd)
 
 // Uniform conditions
 DECL_LLVM_GEN_FUNCTION(ALL, _Z13__gen_ocl_allt)

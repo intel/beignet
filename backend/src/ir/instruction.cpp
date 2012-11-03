@@ -702,11 +702,17 @@ namespace ir {
         default:
           CHECK_TYPE(this->type, allButBool);
           break;
+        case OP_POW:
         case OP_COS:
         case OP_SIN:
         case OP_RCP:
+        case OP_ABS:
         case OP_RSQ:
         case OP_SQR:
+        case OP_RNDD:
+        case OP_RNDE:
+        case OP_RNDU:
+        case OP_RNDZ:
           const Type fp = TYPE_FLOAT;
           if (UNLIKELY(checkTypeFamily(TYPE_FLOAT, &fp, 1, whyNot)) == false)
             return false;
@@ -1425,6 +1431,10 @@ DECL_MEM_FN(VoteInstruction, VotePredicate, getVotePredicate(void), getVotePredi
   DECL_EMIT_FUNCTION(LOG)
   DECL_EMIT_FUNCTION(SQR)
   DECL_EMIT_FUNCTION(RSQ)
+  DECL_EMIT_FUNCTION(RNDD)
+  DECL_EMIT_FUNCTION(RNDE)
+  DECL_EMIT_FUNCTION(RNDU)
+  DECL_EMIT_FUNCTION(RNDZ)
 
 #undef DECL_EMIT_FUNCTION
 
@@ -1434,6 +1444,7 @@ DECL_MEM_FN(VoteInstruction, VotePredicate, getVotePredicate(void), getVotePredi
     return internal::BinaryInstruction(OP_##NAME, type, dst, src0, src1).convert(); \
   }
 
+  DECL_EMIT_FUNCTION(POW)
   DECL_EMIT_FUNCTION(MUL)
   DECL_EMIT_FUNCTION(ADD)
   DECL_EMIT_FUNCTION(SUB)

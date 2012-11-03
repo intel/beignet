@@ -133,6 +133,10 @@ namespace gbe
     switch (insn.opcode) {
       case SEL_OP_MOV: p->MOV(dst, src); break;
       case SEL_OP_NOT: p->NOT(dst, src); break;
+      case SEL_OP_RNDD: p->RNDD(dst, src); break;
+      case SEL_OP_RNDU: p->RNDU(dst, src); break;
+      case SEL_OP_RNDE: p->RNDE(dst, src); break;
+      case SEL_OP_RNDZ: p->RNDZ(dst, src); break;
       default: NOT_IMPLEMENTED;
     }
   }
@@ -206,8 +210,7 @@ namespace gbe
       p->curr.predicate = GEN_PREDICATE_NONE;
       p->curr.execWidth = 8;
       p->curr.noMask = 1;
-      p->MOV(GenRegister::f8grf(127,0), GenRegister::f8grf(0,0));
-      p->EOT(127);
+      p->EOT(0);
     p->pop();
   }
 

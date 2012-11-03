@@ -318,6 +318,7 @@ namespace gbe
     ALU2(MUL)
     ALU1(FRC)
     ALU1(RNDD)
+    ALU1(RNDU)
     ALU2(MACH)
     ALU1(LZD)
     ALU3(MAD)
@@ -992,6 +993,10 @@ namespace gbe
       const GenRegister src = sel.selReg(insn.getSrc(0));
       switch (opcode) {
         case ir::OP_MOV: sel.MOV(dst, src); break;
+        case ir::OP_RNDD: sel.RNDD(dst, src); break;
+        case ir::OP_RNDE: sel.RNDE(dst, src); break;
+        case ir::OP_RNDU: sel.RNDU(dst, src); break;
+        case ir::OP_RNDZ: sel.RNDZ(dst, src); break;
         case ir::OP_COS: sel.MATH(dst, GEN_MATH_FUNCTION_COS, src); break;
         case ir::OP_SIN: sel.MATH(dst, GEN_MATH_FUNCTION_SIN, src); break;
         case ir::OP_LOG: sel.MATH(dst, GEN_MATH_FUNCTION_LOG, src); break;
@@ -1045,11 +1050,14 @@ namespace gbe
       GenRegister dst  = sel.selReg(insn.getDst(0), type);
 
       // Immediates not supported
-      if (opcode == OP_DIV) {
+      if (opcode == OP_DIV || opcode == OP_POW) {
         GBE_ASSERT(type == TYPE_FLOAT);
-        GenRegister src0 = sel.selReg(insn.getSrc(0), type);
-        GenRegister src1 = sel.selReg(insn.getSrc(1), type);
-        sel.MATH(dst, GEN_MATH_FUNCTION_FDIV, src0, src1);
+        const GenRegister src0 = sel.selReg(insn.getSrc(0), type);
+        const GenRegister src1 = sel.selReg(insn.getSrc(1), type);
+        const uint32_t mathOp = opcode == OP_DIV ?
+                                GEN_MATH_FUNCTION_FDIV :
+                                GEN_MATH_FUNCTION_POW;
+        sel.MATH(dst, mathOp, src0, src1);
         this->markAllChildren(dag);
         return true;
       }

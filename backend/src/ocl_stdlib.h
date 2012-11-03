@@ -20,8 +20,10 @@ uint* Copyright © 2012 Intel Corporation
 #ifndef __GEN_OCL_STDLIB_H__
 #define __GEN_OCL_STDLIB_H__
 
-#define INLINE_OVERLOADABLE __attribute__((overloadable,always_inline)) inline
+#define INLINE __attribute__((always_inline)) inline
 #define OVERLOADABLE __attribute__((overloadable))
+#define PURE __attribute__((pure))
+#define CONST __attribute__((const))
 
 /////////////////////////////////////////////////////////////////////////////
 // OpenCL basic types
@@ -62,12 +64,15 @@ typedef bool bool16 __attribute__((ext_vector_type(16)));
 #define private __private
 
 /////////////////////////////////////////////////////////////////////////////
-// Work groups and work items functions
+// Work Items functions (see 6.11.1 of OCL 1.1 spec)
 /////////////////////////////////////////////////////////////////////////////
+// TODO get_global_offset
+// TODO get_work_dim
+
 #define DECL_INTERNAL_WORK_ITEM_FN(NAME) \
-__attribute__((pure,const)) unsigned int __gen_ocl_##NAME##0(void); \
-__attribute__((pure,const)) unsigned int __gen_ocl_##NAME##1(void); \
-__attribute__((pure,const)) unsigned int __gen_ocl_##NAME##2(void);
+PURE CONST unsigned int __gen_ocl_##NAME##0(void); \
+PURE CONST unsigned int __gen_ocl_##NAME##1(void); \
+PURE CONST unsigned int __gen_ocl_##NAME##2(void);
 DECL_INTERNAL_WORK_ITEM_FN(get_group_id)
 DECL_INTERNAL_WORK_ITEM_FN(get_local_id)
 DECL_INTERNAL_WORK_ITEM_FN(get_local_size)
@@ -89,6 +94,186 @@ DECL_PUBLIC_WORK_ITEM_FN(get_global_size)
 DECL_PUBLIC_WORK_ITEM_FN(get_num_groups)
 #undef DECL_PUBLIC_WORK_ITEM_FN
 
+INLINE uint get_global_id(uint dim) {
+  return get_local_id(dim) + get_local_size(dim) * get_group_id(dim);
+}
+
+/////////////////////////////////////////////////////////////////////////////
+// Math Functions (see 6.11.2 of OCL 1.1 spec)
+/////////////////////////////////////////////////////////////////////////////
+PURE CONST float __gen_ocl_fabs(float x);
+PURE CONST float __gen_ocl_sin(float x);
+PURE CONST float __gen_ocl_cos(float x);
+PURE CONST float __gen_ocl_sqrt(float x);
+PURE CONST float __gen_ocl_rsqrt(float x);
+PURE CONST float __gen_ocl_log(float x);
+PURE CONST float __gen_ocl_pow(float x, float y);
+PURE CONST float __gen_ocl_rcp(float x);
+PURE CONST float __gen_ocl_rndz(float x);
+PURE CONST float __gen_ocl_rnde(float x);
+PURE CONST float __gen_ocl_rndu(float x);
+PURE CONST float __gen_ocl_rndd(float x);
+INLINE OVERLOADABLE float native_cos(float x) { return __gen_ocl_cos(x); }
+INLINE OVERLOADABLE float native_sin(float x) { return __gen_ocl_sin(x); }
+INLINE OVERLOADABLE float native_sqrt(float x) { return __gen_ocl_sqrt(x); }
+INLINE OVERLOADABLE float native_rsqrt(float x) { return __gen_ocl_rsqrt(x); }
+INLINE OVERLOADABLE float native_log2(float x) { return __gen_ocl_log(x); }
+INLINE OVERLOADABLE float native_powr(float x, float y) { return __gen_ocl_pow(x,y); }
+INLINE OVERLOADABLE float native_recip(float x) { return __gen_ocl_rcp(x); }
+INLINE OVERLOADABLE float native_tan(float x) {
+  return native_sin(x) / native_cos(x);
+}
+
+// TODO make them actually compliant precision-wise
+#define cos native_cos   // XXX work-around ptx profile: cos already defined
+#define sin native_sin   // XXX work-around ptr profile: sin already defined
+#define sqrt native_sqrt // XXX work-around ptr profile: sin already defined
+
+INLINE OVERLOADABLE float rsqrt(float x) { return native_rsqrt(x); }
+INLINE OVERLOADABLE float fabs(float x) { return __gen_ocl_fabs(x); }
+INLINE OVERLOADABLE float trunc(float x) { return __gen_ocl_rndz(x); }
+INLINE OVERLOADABLE float round(float x) { return __gen_ocl_rnde(x); }
+INLINE OVERLOADABLE float floor(float x) { return __gen_ocl_rndd(x); }
+INLINE OVERLOADABLE float ceil(float x)  { return __gen_ocl_rndu(x); }
+INLINE OVERLOADABLE float powr(float x, float y) { return __gen_ocl_pow(x,y); }
+INLINE OVERLOADABLE float fmod(float x, float y) { return x-y*trunc(x/y); }
+
+// Hack pow is already a builtin
+#define pow powr
+
+PURE CONST OVERLOADABLE float mad(float a, float b, float c);
+OVERLOADABLE INLINE uint select(uint src0, uint src1, uint cond) {
+  return cond ? src1 : src0;
+}
+OVERLOADABLE INLINE int select(int src0, int src1, int cond) {
+  return cond ? src1 : src0;
+}
+
+// This will be optimized out by LLVM and will output LLVM select instructions
+#define DECL_SELECT4(TYPE4, TYPE, COND_TYPE4, MASK) \
+OVERLOADABLE INLINE TYPE4 select(TYPE4 src0, TYPE4 src1, COND_TYPE4 cond) { \
+  TYPE4 dst; \
+  const TYPE x0 = src0.x; /* Fix performance issue with CLANG */ \
+  const TYPE x1 = src1.x; \
+  const TYPE y0 = src0.y; \
+  const TYPE y1 = src1.y; \
+  const TYPE z0 = src0.z; \
+  const TYPE z1 = src1.z; \
+  const TYPE w0 = src0.w; \
+  const TYPE w1 = src1.w; \
+  dst.x = (cond.x & MASK) ? x1 : x0; \
+  dst.y = (cond.y & MASK) ? y1 : y0; \
+  dst.z = (cond.z & MASK) ? z1 : z0; \
+  dst.w = (cond.w & MASK) ? w1 : w0; \
+  return dst; \
+}
+DECL_SELECT4(int4, int, int4, 0x80000000)
+DECL_SELECT4(float4, float, int4, 0x80000000)
+#undef DECL_SELECT4
+
+#if 0
+INLINE OVERLOADABLE float2 mad(float2 a, float2 b, float2 c) {
+  return (float2)(mad(a.x,b.x,c.x), mad(a.y,b.y,c.y));
+}
+INLINE OVERLOADABLE float3 mad(float3 a, float3 b, float3 c) {
+  return (float3)(mad(a.x,b.x,c.x), mad(a.y,b.y,c.y), mad(a.z,b.z,c.z));
+}
+INLINE OVERLOADABLE float4 mad(float4 a, float4 b, float4 c) {
+  return (float4)(mad(a.x,b.x,c.x), mad(a.y,b.y,c.y),
+                  mad(a.z,b.z,c.z), mad(a.w,b.w,c.w));
+}
+#endif
+
+/////////////////////////////////////////////////////////////////////////////
+// Common Functions (see 6.11.4 of OCL 1.1 spec)
+/////////////////////////////////////////////////////////////////////////////
+#define DECL_MIN_MAX(TYPE) \
+INLINE OVERLOADABLE TYPE max(TYPE a, TYPE b) { \
+  return a > b ? a : b; \
+} \
+INLINE OVERLOADABLE TYPE min(TYPE a, TYPE b) { \
+  return a < b ? a : b; \
+}
+DECL_MIN_MAX(float)
+DECL_MIN_MAX(int)
+DECL_MIN_MAX(short)
+DECL_MIN_MAX(char)
+DECL_MIN_MAX(uint)
+DECL_MIN_MAX(unsigned short)
+DECL_MIN_MAX(unsigned char)
+#undef DECL_MIN_MAX
+
+INLINE OVERLOADABLE float mix(float x, float y, float a) { return x + (y-x)*a;}
+
+/////////////////////////////////////////////////////////////////////////////
+// Geometric functions (see 6.11.5 of OCL 1.1 spec)
+/////////////////////////////////////////////////////////////////////////////
+INLINE OVERLOADABLE float dot(float2 p0, float2 p1) {
+  return mad(p0.x,p1.x,p0.y*p1.y);
+}
+INLINE OVERLOADABLE float dot(float3 p0, float3 p1) {
+  return mad(p0.x,p1.x,mad(p0.z,p1.z,p0.y*p1.y));
+}
+INLINE OVERLOADABLE float dot(float4 p0, float4 p1) {
+  return mad(p0.x,p1.x,mad(p0.w,p1.w,mad(p0.z,p1.z,p0.y*p1.y)));
+}
+
+INLINE OVERLOADABLE float dot(float8 p0, float8 p1) {
+  return mad(p0.x,p1.x,mad(p0.s7,p1.s7, mad(p0.s6,p1.s6,mad(p0.s5,p1.s5,
+         mad(p0.s4,p1.s4,mad(p0.w,p1.w, mad(p0.z,p1.z,p0.y*p1.y)))))));
+}
+INLINE OVERLOADABLE float dot(float16 p0, float16 p1) {
+  return mad(p0.sc,p1.sc,mad(p0.sd,p1.sd,mad(p0.se,p1.se,mad(p0.sf,p1.sf,
+         mad(p0.s8,p1.s8,mad(p0.s9,p1.s9,mad(p0.sa,p1.sa,mad(p0.sb,p1.sb,
+         mad(p0.x,p1.x,mad(p0.s7,p1.s7, mad(p0.s6,p1.s6,mad(p0.s5,p1.s5,
+         mad(p0.s4,p1.s4,mad(p0.w,p1.w, mad(p0.z,p1.z,p0.y*p1.y)))))))))))))));
+}
+
+INLINE OVERLOADABLE float length(float x) { return __gen_ocl_fabs(x); }
+INLINE OVERLOADABLE float length(float2 x) { return sqrt(dot(x,x)); }
+INLINE OVERLOADABLE float length(float3 x) { return sqrt(dot(x,x)); }
+INLINE OVERLOADABLE float length(float4 x) { return sqrt(dot(x,x)); }
+INLINE OVERLOADABLE float length(float8 x) { return sqrt(dot(x,x)); }
+INLINE OVERLOADABLE float length(float16 x) { return sqrt(dot(x,x)); }
+INLINE OVERLOADABLE float distance(float x, float y) { return length(x-y); }
+INLINE OVERLOADABLE float distance(float2 x, float2 y) { return length(x-y); }
+INLINE OVERLOADABLE float distance(float3 x, float3 y) { return length(x-y); }
+INLINE OVERLOADABLE float distance(float4 x, float4 y) { return length(x-y); }
+INLINE OVERLOADABLE float distance(float8 x, float8 y) { return length(x-y); }
+INLINE OVERLOADABLE float distance(float16 x, float16 y) { return length(x-y); }
+INLINE OVERLOADABLE float normalize(float x) { return 1.f; }
+INLINE OVERLOADABLE float2 normalize(float2 x) { return x * rsqrt(dot(x, x)); }
+INLINE OVERLOADABLE float3 normalize(float3 x) { return x * rsqrt(dot(x, x)); }
+INLINE OVERLOADABLE float4 normalize(float4 x) { return x * rsqrt(dot(x, x)); }
+INLINE OVERLOADABLE float8 normalize(float8 x) { return x * rsqrt(dot(x, x)); }
+INLINE OVERLOADABLE float16 normalize(float16 x) { return x * rsqrt(dot(x, x)); }
+
+INLINE OVERLOADABLE float fast_length(float x) { return __gen_ocl_fabs(x); }
+INLINE OVERLOADABLE float fast_length(float2 x) { return sqrt(dot(x,x)); }
+INLINE OVERLOADABLE float fast_length(float3 x) { return sqrt(dot(x,x)); }
+INLINE OVERLOADABLE float fast_length(float4 x) { return sqrt(dot(x,x)); }
+INLINE OVERLOADABLE float fast_length(float8 x) { return sqrt(dot(x,x)); }
+INLINE OVERLOADABLE float fast_length(float16 x) { return sqrt(dot(x,x)); }
+INLINE OVERLOADABLE float fast_distance(float x, float y) { return length(x-y); }
+INLINE OVERLOADABLE float fast_distance(float2 x, float2 y) { return length(x-y); }
+INLINE OVERLOADABLE float fast_distance(float3 x, float3 y) { return length(x-y); }
+INLINE OVERLOADABLE float fast_distance(float4 x, float4 y) { return length(x-y); }
+INLINE OVERLOADABLE float fast_distance(float8 x, float8 y) { return length(x-y); }
+INLINE OVERLOADABLE float fast_distance(float16 x, float16 y) { return length(x-y); }
+INLINE OVERLOADABLE float fast_normalize(float x) { return 1.f; }
+INLINE OVERLOADABLE float2 fast_normalize(float2 x) { return x * rsqrt(dot(x, x)); }
+INLINE OVERLOADABLE float3 fast_normalize(float3 x) { return x * rsqrt(dot(x, x)); }
+INLINE OVERLOADABLE float4 fast_normalize(float4 x) { return x * rsqrt(dot(x, x)); }
+INLINE OVERLOADABLE float8 fast_normalize(float8 x) { return x * rsqrt(dot(x, x)); }
+INLINE OVERLOADABLE float16 fast_normalize(float16 x) { return x * rsqrt(dot(x, x)); }
+
+INLINE OVERLOADABLE float3 cross(float3 v0, float3 v1) {
+   return v0.yzx*v1.zxy-v0.zxy*v1.yzx;
+}
+INLINE OVERLOADABLE float4 cross(float4 v0, float4 v1) {
+   return (float4)(v0.yzx*v1.zxy-v0.zxy*v1.yzx, 0.f);
+}
+
 /////////////////////////////////////////////////////////////////////////////
 // Vector loads and stores
 /////////////////////////////////////////////////////////////////////////////
@@ -97,12 +282,10 @@ DECL_PUBLIC_WORK_ITEM_FN(get_num_groups)
 // cast to vector loads / stores. Not C99 compliant BTW due to aliasing issue.
 // Well we do not care, we do not activate TBAA in the compiler
 #define DECL_UNTYPED_RW_SPACE_N(TYPE, DIM, SPACE) \
-__attribute__((always_inline, overloadable)) \
-inline TYPE##DIM vload##DIM(size_t offset, const SPACE TYPE *p) { \
+INLINE OVERLOADABLE TYPE##DIM vload##DIM(size_t offset, const SPACE TYPE *p) { \
   return *(SPACE TYPE##DIM *) (p + DIM * offset); \
 } \
-__attribute__((always_inline, overloadable)) \
-inline void vstore##DIM(TYPE##DIM v, size_t offset, SPACE TYPE *p) { \
+INLINE OVERLOADABLE void vstore##DIM(TYPE##DIM v, size_t offset, SPACE TYPE *p) { \
   *(SPACE TYPE##DIM *) (p + DIM * offset) = v; \
 }
 
@@ -128,115 +311,25 @@ DECL_UNTYPED_RW_ALL(int)
 #undef DECL_UNTYPED_RW_SPACE_N
 
 /////////////////////////////////////////////////////////////////////////////
-// Arithmetic functions
-/////////////////////////////////////////////////////////////////////////////
-__attribute__((always_inline))
-inline uint get_global_id(uint dim) {
-  return get_local_id(dim) + get_local_size(dim) * get_group_id(dim);
-}
-
-__attribute__ ((pure, const, overloadable)) float mad(float a, float b, float c);
-__attribute__((overloadable, always_inline))
-inline uint select(uint src0, uint src1, uint cond) {
-  return cond ? src1 : src0;
-}
-__attribute__((overloadable, always_inline))
-inline int select(int src0, int src1, int cond) {
-  return cond ? src1 : src0;
-}
-
-// This will be optimized out by LLVM and will output LLVM select instructions
-#define DECL_SELECT4(TYPE4, TYPE, COND_TYPE4, MASK) \
-__attribute__((overloadable)) \
-inline TYPE4 select(TYPE4 src0, TYPE4 src1, COND_TYPE4 cond) { \
-  TYPE4 dst; \
-  const TYPE x0 = src0.x; /* Fix performance issue with CLANG */ \
-  const TYPE x1 = src1.x; \
-  const TYPE y0 = src0.y; \
-  const TYPE y1 = src1.y; \
-  const TYPE z0 = src0.z; \
-  const TYPE z1 = src1.z; \
-  const TYPE w0 = src0.w; \
-  const TYPE w1 = src1.w; \
-  dst.x = (cond.x & MASK) ? x1 : x0; \
-  dst.y = (cond.y & MASK) ? y1 : y0; \
-  dst.z = (cond.z & MASK) ? z1 : z0; \
-  dst.w = (cond.w & MASK) ? w1 : w0; \
-  return dst; \
-}
-DECL_SELECT4(int4, int, int4, 0x80000000)
-DECL_SELECT4(float4, float, int4, 0x80000000)
-#undef DECL_SELECT4
-
-INLINE_OVERLOADABLE float2 mad(float2 a, float2 b, float2 c) {
-  return (float2)(mad(a.x,b.x,c.x), mad(a.y,b.y,c.y));
-}
-INLINE_OVERLOADABLE float3 mad(float3 a, float3 b, float3 c) {
-  return (float3)(mad(a.x,b.x,c.x), mad(a.y,b.y,c.y), mad(a.z,b.z,c.z));
-}
-INLINE_OVERLOADABLE float4 mad(float4 a, float4 b, float4 c) {
-  return (float4)(mad(a.x,b.x,c.x), mad(a.y,b.y,c.y),
-                  mad(a.z,b.z,c.z), mad(a.w,b.w,c.w));
-}
-
-#define DECL_MIN_MAX(TYPE) \
-INLINE_OVERLOADABLE TYPE max(TYPE a, TYPE b) { \
-  return a > b ? a : b; \
-} \
-INLINE_OVERLOADABLE TYPE min(TYPE a, TYPE b) { \
-  return a < b ? a : b; \
-}
-DECL_MIN_MAX(float)
-DECL_MIN_MAX(int)
-DECL_MIN_MAX(short)
-DECL_MIN_MAX(char)
-DECL_MIN_MAX(uint)
-DECL_MIN_MAX(unsigned short)
-DECL_MIN_MAX(unsigned char)
-#undef DECL_MIN_MAX
-
-/////////////////////////////////////////////////////////////////////////////
-// Math intrinsic functions
-/////////////////////////////////////////////////////////////////////////////
-__attribute__((pure,const)) float __gen_ocl_sin(float x);
-__attribute__((pure,const)) float __gen_ocl_cos(float x);
-__attribute__((pure,const)) float __gen_ocl_sqrt(float x);
-__attribute__((pure,const)) float __gen_ocl_rsqrt(float x);
-__attribute__((pure,const)) float __gen_ocl_log(float x);
-__attribute__((pure,const)) float __gen_ocl_pow(float x, float y);
-__attribute__((pure,const)) float __gen_ocl_rcp(float x);
-
-INLINE_OVERLOADABLE float native_cos(float x) { return __gen_ocl_cos(x); }
-INLINE_OVERLOADABLE float native_sin(float x) { return __gen_ocl_sin(x); }
-INLINE_OVERLOADABLE float native_sqrt(float x) { return __gen_ocl_sqrt(x); }
-INLINE_OVERLOADABLE float native_rsqrt(float x) { return __gen_ocl_rsqrt(x); }
-INLINE_OVERLOADABLE float native_log2(float x) { return __gen_ocl_log(x); }
-INLINE_OVERLOADABLE float native_powr(float x, float y) { return __gen_ocl_pow(x,y); }
-INLINE_OVERLOADABLE float native_recip(float x) { return __gen_ocl_rcp(x); }
-INLINE_OVERLOADABLE float native_tan(float x) {
-  return native_sin(x) / native_cos(x);
-}
-
-/////////////////////////////////////////////////////////////////////////////
 // Declare functions for vector types which are derived from scalar ones
 /////////////////////////////////////////////////////////////////////////////
 #define DECL_VECTOR_1OP(NAME, TYPE) \
-  INLINE_OVERLOADABLE TYPE##2 NAME(TYPE##2 v) { \
+  INLINE OVERLOADABLE TYPE##2 NAME(TYPE##2 v) { \
     return (TYPE##2)(NAME(v.x), NAME(v.y)); \
   }\
-  INLINE_OVERLOADABLE TYPE##3 NAME(TYPE##3 v) { \
+  INLINE OVERLOADABLE TYPE##3 NAME(TYPE##3 v) { \
     return (TYPE##3)(NAME(v.x), NAME(v.y), NAME(v.z)); \
   }\
-  INLINE_OVERLOADABLE TYPE##4 NAME(TYPE##4 v) { \
+  INLINE OVERLOADABLE TYPE##4 NAME(TYPE##4 v) { \
     return (TYPE##4)(NAME(v.x), NAME(v.y), NAME(v.z), NAME(v.w)); \
   }\
-  INLINE_OVERLOADABLE TYPE##8 NAME(TYPE##8 v) { \
+  INLINE OVERLOADABLE TYPE##8 NAME(TYPE##8 v) { \
     TYPE##8 dst;\
     dst.s0123 = NAME(v.s0123);\
     dst.s4567 = NAME(v.s4567);\
     return dst;\
   }\
-  INLINE_OVERLOADABLE TYPE##16 NAME(TYPE##16 v) { \
+  INLINE OVERLOADABLE TYPE##16 NAME(TYPE##16 v) { \
     TYPE##16 dst;\
     dst.s01234567 = NAME(v.s01234567);\
     dst.s89abcdef = NAME(v.s89abcdef);\
@@ -249,31 +342,73 @@ DECL_VECTOR_1OP(native_sqrt, float);
 DECL_VECTOR_1OP(native_rsqrt, float);
 DECL_VECTOR_1OP(native_log2, float);
 DECL_VECTOR_1OP(native_recip, float);
+DECL_VECTOR_1OP(fabs, float);
+DECL_VECTOR_1OP(trunc, float);
+DECL_VECTOR_1OP(round, float);
+DECL_VECTOR_1OP(floor, float);
+DECL_VECTOR_1OP(ceil, float);
 #undef DECL_VECTOR_1OP
 
-/////////////////////////////////////////////////////////////////////////////
-// Geometric functions
-/////////////////////////////////////////////////////////////////////////////
-INLINE_OVERLOADABLE float dot(float2 p0, float2 p1) {
-  return mad(p0.x,p1.x,p0.y*p1.y);
-}
-INLINE_OVERLOADABLE float dot(float3 p0, float3 p1) {
-  return mad(p0.x,p1.x,mad(p0.z,p1.z,p0.y*p1.y));
-}
-INLINE_OVERLOADABLE float dot(float4 p0, float4 p1) {
-  return mad(p0.x,p1.x,mad(p0.w,p1.w,mad(p0.z,p1.z,p0.y*p1.y)));
-}
+#define DECL_VECTOR_2OP(NAME, TYPE) \
+  INLINE OVERLOADABLE TYPE##2 NAME(TYPE##2 v0, TYPE##2 v1) { \
+    return (TYPE##2)(NAME(v0.x, v1.x), NAME(v1.y, v1.y)); \
+  }\
+  INLINE OVERLOADABLE TYPE##3 NAME(TYPE##3 v0, TYPE##3 v1) { \
+    return (TYPE##3)(NAME(v0.x, v1.x), NAME(v0.y, v1.y), NAME(v0.z, v1.z)); \
+  }\
+  INLINE OVERLOADABLE TYPE##4 NAME(TYPE##4 v0, TYPE##4 v1) { \
+    return (TYPE##4)(NAME(v0.x, v1.x), NAME(v0.y, v1.y), NAME(v0.z, v1.z), NAME(v0.w, v1.w)); \
+  }\
+  INLINE OVERLOADABLE TYPE##8 NAME(TYPE##8 v0, TYPE##8 v1) { \
+    TYPE##8 dst;\
+    dst.s0123 = NAME(v0.s0123, v1.s0123);\
+    dst.s4567 = NAME(v0.s4567, v1.s4567);\
+    return dst;\
+  }\
+  INLINE OVERLOADABLE TYPE##16 NAME(TYPE##16 v0, TYPE##16 v1) { \
+    TYPE##16 dst;\
+    dst.s01234567 = NAME(v0.s01234567, v1.s01234567);\
+    dst.s89abcdef = NAME(v0.s89abcdef, v1.s89abcdef);\
+    return dst;\
+  }
+DECL_VECTOR_2OP(min, float);
+DECL_VECTOR_2OP(max, float);
+DECL_VECTOR_2OP(fmod, float);
+DECL_VECTOR_2OP(powr, float);
+#undef DECL_VECTOR_2OP
 
-INLINE_OVERLOADABLE float dot(float8 p0, float8 p1) {
-  return mad(p0.x,p1.x,mad(p0.s7,p1.s7, mad(p0.s6,p1.s6,mad(p0.s5,p1.s5,
-         mad(p0.s4,p1.s4,mad(p0.w,p1.w, mad(p0.z,p1.z,p0.y*p1.y)))))));
-}
-INLINE_OVERLOADABLE float dot(float16 p0, float16 p1) {
-  return mad(p0.sc,p1.sc,mad(p0.sd,p1.sd,mad(p0.se,p1.se,mad(p0.sf,p1.sf,
-         mad(p0.s8,p1.s8,mad(p0.s9,p1.s9,mad(p0.sa,p1.sa,mad(p0.sb,p1.sb,
-         mad(p0.x,p1.x,mad(p0.s7,p1.s7, mad(p0.s6,p1.s6,mad(p0.s5,p1.s5,
-         mad(p0.s4,p1.s4,mad(p0.w,p1.w, mad(p0.z,p1.z,p0.y*p1.y)))))))))))))));
-}
+#define DECL_VECTOR_3OP(NAME, TYPE) \
+  INLINE OVERLOADABLE TYPE##2 NAME(TYPE##2 v0, TYPE##2 v1, TYPE##2 v2) { \
+    return (TYPE##2)(NAME(v0.x, v1.x, v2.x), NAME(v1.y, v1.y, v2.y)); \
+  }\
+  INLINE OVERLOADABLE TYPE##3 NAME(TYPE##3 v0, TYPE##3 v1, TYPE##3 v2) { \
+    return (TYPE##3)(NAME(v0.x, v1.x, v2.x), NAME(v0.y, v1.y, v2.y), NAME(v0.z, v1.z, v2.z)); \
+  }\
+  INLINE OVERLOADABLE TYPE##4 NAME(TYPE##4 v0, TYPE##4 v1, TYPE##4 v2) { \
+    return (TYPE##4)(NAME(v0.x, v1.x, v2.x), NAME(v0.y, v1.y, v2.y), NAME(v0.z, v1.z, v2.z), NAME(v0.w, v1.w, v2.w)); \
+  }\
+  INLINE OVERLOADABLE TYPE##8 NAME(TYPE##8 v0, TYPE##8 v1, TYPE##8 v2) { \
+    TYPE##8 dst;\
+    dst.s0123 = NAME(v0.s0123, v1.s0123, v2.s0123);\
+    dst.s4567 = NAME(v0.s4567, v1.s4567, v2.s4567);\
+    return dst;\
+  }\
+  INLINE OVERLOADABLE TYPE##16 NAME(TYPE##16 v0, TYPE##16 v1, TYPE##16 v2) { \
+    TYPE##16 dst;\
+    dst.s01234567 = NAME(v0.s01234567, v1.s01234567, v2.s01234567);\
+    dst.s89abcdef = NAME(v0.s89abcdef, v1.s89abcdef, v2.s89abcdef);\
+    return dst;\
+  }
+DECL_VECTOR_3OP(mad, float);
+DECL_VECTOR_3OP(mix, float);
+#undef DECL_VECTOR_3OP
+
+// mix requires more variants
+INLINE OVERLOADABLE float2 mix(float2 x, float2 y, float a) { return mix(x,y,(float2)(a));}
+INLINE OVERLOADABLE float3 mix(float3 x, float3 y, float a) { return mix(x,y,(float3)(a));}
+INLINE OVERLOADABLE float4 mix(float4 x, float4 y, float a) { return mix(x,y,(float4)(a));}
+INLINE OVERLOADABLE float8 mix(float8 x, float8 y, float a) { return mix(x,y,(float8)(a));}
+INLINE OVERLOADABLE float16 mix(float16 x, float16 y, float a) { return mix(x,y,(float16)(a));}
 
 /////////////////////////////////////////////////////////////////////////////
 // Extensions to manipulate the register file
@@ -324,12 +459,10 @@ int __gen_ocl_force_simd8(void);
 int __gen_ocl_force_simd16(void);
 
 #define DECL_VOTE(TYPE) \
-__attribute__((overloadable,always_inline)) \
-TYPE __gen_ocl_any(TYPE cond) { \
+INLINE OVERLOADABLE TYPE __gen_ocl_any(TYPE cond) { \
   return (TYPE) __gen_ocl_any((unsigned short) cond); \
 } \
-__attribute__((overloadable,always_inline)) \
-TYPE __gen_ocl_all(TYPE cond) { \
+INLINE OVERLOADABLE TYPE __gen_ocl_all(TYPE cond) { \
   return (TYPE) __gen_ocl_all((unsigned short) cond); \
 }
 DECL_VOTE(unsigned int)
@@ -341,6 +474,9 @@ DECL_VOTE(bool)
 #undef DECL_VOTE
 
 #define NULL ((void*)0)
-#undef INLINE_OVERLOADABLE
+#undef PURE
+#undef CONST
+#undef OVERLOADABLE
+#undef INLINE
 #endif /* __GEN_OCL_STDLIB_H__ */
 

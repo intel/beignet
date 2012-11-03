@@ -6,6 +6,8 @@ ADD_LIBRARY(utests SHARED
   utest_error.c
   compiler_mandelbrot.cpp
   compiler_mandelbrot_alternate.cpp
+  compiler_clod.cpp
+# compiler_ribbon.cpp
   compiler_box_blur_float.cpp
   compiler_box_blur.cpp
   compiler_argument_structure.cpp
@@ -57,7 +59,7 @@ ADD_LIBRARY(utests SHARED
 TARGET_LINK_LIBRARIES(utests cl m)
 
 ADD_EXECUTABLE(utest_run utest_run.cpp)
-TARGET_LINK_LIBRARIES(run utests)
+TARGET_LINK_LIBRARIES(utest_run utests)
 
 ADD_EXECUTABLE(flat_address_space runtime_flat_address_space.cpp)
 TARGET_LINK_LIBRARIES(flat_address_space utests)

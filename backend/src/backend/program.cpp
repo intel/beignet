@@ -106,7 +106,7 @@ namespace gbe {
 
     // Now compile the code to llvm using clang
     // XXX use popen and stuff instead of that
-    std::string compileCmd = "clang -emit-llvm -O3 -ccc-host-triple ptx32 -c ";
+    std::string compileCmd = "clang -x cl -emit-llvm -O3 -ccc-host-triple ptx32 -c ";
     compileCmd += clName;
     compileCmd += " -o ";
     compileCmd += llName;

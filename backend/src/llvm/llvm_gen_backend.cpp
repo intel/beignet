@@ -666,7 +666,8 @@ namespace gbe
       uint32_t argID = 1; // Start at one actually
       for (; I != E; ++I, ++argID) {
         Type *type = I->getType();
-        GBE_ASSERT(isScalarType(type) == true);
+        GBE_ASSERTM(isScalarType(type) == true,
+                    "vector type in the function argument is not supported yet");
         const ir::Register reg = regTranslator.newScalar(I);
         if (type->isPointerTy() == false)
           ctx.input(ir::FunctionArgument::VALUE, reg, getTypeByteSize(unit, type));
@@ -1431,6 +1432,11 @@ namespace gbe
       case GEN_OCL_LOG:
       case GEN_OCL_POW:
       case GEN_OCL_RCP:
+      case GEN_OCL_ABS:
+      case GEN_OCL_RNDZ:
+      case GEN_OCL_RNDE:
+      case GEN_OCL_RNDU:
+      case GEN_OCL_RNDD:
         // No structure can be returned
         GBE_ASSERT(I.hasStructRetAttr() == false);
         this->newRegister(&I);
@@ -1613,16 +1619,28 @@ namespace gbe
             ctx.MAD(ir::TYPE_FLOAT, dst, src0, src1, src2);
             break;
           }
+          case GEN_OCL_POW:
+          {
+            const ir::Register src0 = this->getRegister(*AI); ++AI;
+            const ir::Register src1 = this->getRegister(*AI);
+            const ir::Register dst = this->getRegister(&I);
+            ctx.POW(ir::TYPE_FLOAT, dst, src0, src1);
+            break;
+          }
           case GEN_OCL_COS: this->emitUnaryCallInst(I,CS,ir::OP_COS); break;
           case GEN_OCL_SIN: this->emitUnaryCallInst(I,CS,ir::OP_SIN); break;
           case GEN_OCL_LOG: this->emitUnaryCallInst(I,CS,ir::OP_LOG); break;
           case GEN_OCL_SQR: this->emitUnaryCallInst(I,CS,ir::OP_SQR); break;
           case GEN_OCL_RSQ: this->emitUnaryCallInst(I,CS,ir::OP_RSQ); break;
           case GEN_OCL_RCP: this->emitUnaryCallInst(I,CS,ir::OP_RCP); break;
+          case GEN_OCL_ABS: this->emitUnaryCallInst(I,CS,ir::OP_ABS); break;
+          case GEN_OCL_RNDZ: this->emitUnaryCallInst(I,CS,ir::OP_RNDZ); break;
+          case GEN_OCL_RNDE: this->emitUnaryCallInst(I,CS,ir::OP_RNDE); break;
+          case GEN_OCL_RNDU: this->emitUnaryCallInst(I,CS,ir::OP_RNDU); break;
+          case GEN_OCL_RNDD: this->emitUnaryCallInst(I,CS,ir::OP_RNDD); break;
           case GEN_OCL_FORCE_SIMD8: ctx.setSimdWidth(8); break;
           case GEN_OCL_FORCE_SIMD16: ctx.setSimdWidth(16); break;
-          default:
-            break;
+          default: break;
         }
       }
     }
