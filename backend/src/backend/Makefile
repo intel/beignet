@@ -1,4 +1,4 @@
 TOP=../..
-SUBDIRS=. gen sim
+SUBDIRS=. gen
 
 include $(TOP)/Makefile.shared

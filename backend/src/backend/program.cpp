@@ -25,7 +25,6 @@
 #include "program.h"
 #include "program.hpp"
 #include "gen_program.h"
-#include "sim_program.h"
 #include "sys/platform.hpp"
 #include "sys/cvar.hpp"
 #include "ir/liveness.hpp"
@@ -240,11 +239,7 @@ namespace gbe
       gbe_kernel_get_curbe_size = gbe::kernelGetCurbeSize;
       gbe_kernel_get_stack_size = gbe::kernelGetStackSize;
       gbe_kernel_get_required_work_group_size = gbe::kernelGetRequiredWorkGroupSize;
-      const char *run_it = getenv("OCL_SIMULATOR");
-      if (run_it != NULL && !strcmp(run_it, "2"))
-        simSetupCallBacks();
-      else
-        genSetupCallBacks();
+      genSetupCallBacks();
     }
   };
 

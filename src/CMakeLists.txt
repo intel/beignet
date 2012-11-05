@@ -21,10 +21,6 @@ set(OPENCL_SRC
     cl_driver.h
     cl_driver.cpp
     cl_driver_defs.c
-    sim/sim_driver.c
-    sim/sim_driver.h
-    sim/sim_simulator.c
-    sim/sim_simulator.h
     intel/intel_gpgpu.c
     intel/intel_batchbuffer.c
     intel/intel_driver.c

@@ -18,7 +18,6 @@
  */
 
 extern "C" {
-#include "sim/sim_driver.h"
 #include "intel/intel_driver.h"
 #include "cl_utils.h"
 #include <stdlib.h>
@@ -31,11 +30,7 @@ namespace
   struct OCLDriverCallBackInitializer
   {
     OCLDriverCallBackInitializer(void) {
-      const char *run_it = getenv("OCL_SIMULATOR");
-      if (run_it != NULL && !strcmp(run_it, "2"))
-        sim_setup_callbacks();
-      else
-        intel_setup_callbacks();
+      intel_setup_callbacks();
     }
   };
 

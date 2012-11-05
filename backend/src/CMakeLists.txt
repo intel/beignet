@@ -20,8 +20,6 @@ foreach (to_stringify_file ${TO_STRINGIFY_FILES})
 endforeach (to_stringify_file)
 endmacro (stringify)
 
-set (TO_STRINGIFY_FILES simulator sim_vector)
-stringify ("${GBE_SOURCE_DIR}/src/backend/sim/" "${TO_STRINGIFY_FILES}")
 set (TO_STRINGIFY_FILES ocl_stdlib)
 stringify ("${GBE_SOURCE_DIR}/src/" "${TO_STRINGIFY_FILES}")
 
@@ -76,14 +74,6 @@ else (GBE_USE_BLOB)
     backend/program.cpp
     backend/program.hpp
     backend/program.h
-    backend/sim_context.cpp
-    backend/sim_context.hpp
-    backend/sim_program.cpp
-    backend/sim_program.hpp
-    backend/sim_program.h
-    backend/sim/simulator_str.cpp
-    backend/sim/sim_vector_str.cpp
-    backend/sim/sim_vector.h
     backend/gen/gen_mesa_disasm.c
     backend/gen_insn_selection.cpp
     backend/gen_insn_selection.hpp
@@ -121,5 +111,5 @@ target_link_libraries (gbe
   LLVMBitReader)
 
 install (TARGETS gbe LIBRARY DESTINATION lib)
-install (FILES backend/program.h backend/sim/simulator.h DESTINATION include/gen)
+install (FILES backend/program.h DESTINATION include/gen)
 
