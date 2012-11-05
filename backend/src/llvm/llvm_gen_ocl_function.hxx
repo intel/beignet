@@ -18,26 +18,6 @@ DECL_LLVM_GEN_FUNCTION(GET_GLOBAL_OFFSET1, __gen_ocl_get_global_offset1)
 DECL_LLVM_GEN_FUNCTION(GET_GLOBAL_OFFSET2, __gen_ocl_get_global_offset2)
 DECL_LLVM_GEN_FUNCTION(MAD, _Z3madfff)
 
-// Register regions
-DECL_LLVM_GEN_FUNCTION(REGION1, _Z16__gen_ocl_regioniiiii) // order matters here!
-DECL_LLVM_GEN_FUNCTION(REGION2, _Z16__gen_ocl_regioniiiiii)
-DECL_LLVM_GEN_FUNCTION(REGION3, _Z16__gen_ocl_regioniiiiiii)
-DECL_LLVM_GEN_FUNCTION(REGION4, _Z16__gen_ocl_regioniiiiiiii)
-DECL_LLVM_GEN_FUNCTION(REGION5, _Z16__gen_ocl_regioniiiiiiiii)
-DECL_LLVM_GEN_FUNCTION(REGION6, _Z16__gen_ocl_regioniiiiiiiiii)
-DECL_LLVM_GEN_FUNCTION(REGION7, _Z16__gen_ocl_regioniiiiiiiiiii)
-DECL_LLVM_GEN_FUNCTION(REGION8, _Z16__gen_ocl_regioniiiiiiiiiiii)
-
-// Gather from register file
-DECL_LLVM_GEN_FUNCTION(RGATHER1, _Z17__gen_ocl_rgatherti) // order matters here!
-DECL_LLVM_GEN_FUNCTION(RGATHER2, _Z17__gen_ocl_rgathertii)
-DECL_LLVM_GEN_FUNCTION(RGATHER3, _Z17__gen_ocl_rgathertiii)
-DECL_LLVM_GEN_FUNCTION(RGATHER4, _Z17__gen_ocl_rgathertiiii)
-DECL_LLVM_GEN_FUNCTION(RGATHER5, _Z17__gen_ocl_rgathertiiiii)
-DECL_LLVM_GEN_FUNCTION(RGATHER6, _Z17__gen_ocl_rgathertiiiiii)
-DECL_LLVM_GEN_FUNCTION(RGATHER7, _Z17__gen_ocl_rgathertiiiiiii)
-DECL_LLVM_GEN_FUNCTION(RGATHER8, _Z17__gen_ocl_rgathertiiiiiiii)
-
 // Math function
 DECL_LLVM_GEN_FUNCTION(ABS, __gen_ocl_fabs)
 DECL_LLVM_GEN_FUNCTION(COS, __gen_ocl_cos)
@@ -51,14 +31,6 @@ DECL_LLVM_GEN_FUNCTION(RNDZ, __gen_ocl_rndz)
 DECL_LLVM_GEN_FUNCTION(RNDE, __gen_ocl_rnde)
 DECL_LLVM_GEN_FUNCTION(RNDU, __gen_ocl_rndu)
 DECL_LLVM_GEN_FUNCTION(RNDD, __gen_ocl_rndd)
-
-// Uniform conditions
-DECL_LLVM_GEN_FUNCTION(ALL, _Z13__gen_ocl_allt)
-DECL_LLVM_GEN_FUNCTION(ANY, _Z13__gen_ocl_anyt)
-
-// OBlock reads / writes
-DECL_LLVM_GEN_FUNCTION(OBREAD, _Z16__gen_ocl_obreadPKU3AS1v)
-DECL_LLVM_GEN_FUNCTION(OBWRITE, _Z17__gen_ocl_obwritePKU3AS1vi)
 
 // To force SIMD8/16 compilation
 DECL_LLVM_GEN_FUNCTION(FORCE_SIMD8,  __gen_ocl_force_simd8)

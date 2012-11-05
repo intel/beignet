@@ -28,18 +28,10 @@ CPP_SRC=\
 	compiler_function_argument0.cpp \
 	compiler_function_argument1.cpp \
 	compiler_function_argument.cpp \
-	compiler_gather_register_file.cpp \
-	compiler_gather_register_file0.cpp \
-	compiler_gather_register_file1.cpp \
 	compiler_if_else.cpp \
 	compiler_lower_return0.cpp \
 	compiler_lower_return1.cpp \
 	compiler_lower_return2.cpp \
-	compiler_obread.cpp \
-	compiler_obwrite.cpp \
-	compiler_region.cpp \
-	compiler_region0.cpp \
-	compiler_region1.cpp \
 	compiler_short_scatter.cpp \
 	compiler_sub_bytes.cpp \
 	compiler_sub_shorts.cpp \
@@ -50,8 +42,6 @@ CPP_SRC=\
 	compiler_unstructured_branch1.cpp \
 	compiler_unstructured_branch2.cpp \
 	compiler_unstructured_branch3.cpp \
-	compiler_vote_all.cpp \
-	compiler_vote_any.cpp \
 	compiler_write_only_bytes.cpp \
 	compiler_write_only.cpp \
 	compiler_write_only_shorts.cpp \

@@ -1450,25 +1450,6 @@ namespace gbe
         regTranslator.newScalarProxy(ir::ocl::goffset1, dst); break;
       case GEN_OCL_GET_GLOBAL_OFFSET2:
         regTranslator.newScalarProxy(ir::ocl::goffset2, dst); break;
-      case GEN_OCL_OBREAD:
-      case GEN_OCL_REGION1:
-      case GEN_OCL_REGION2:
-      case GEN_OCL_REGION3:
-      case GEN_OCL_REGION4:
-      case GEN_OCL_REGION5:
-      case GEN_OCL_REGION6:
-      case GEN_OCL_REGION7:
-      case GEN_OCL_REGION8:
-      case GEN_OCL_RGATHER1:
-      case GEN_OCL_RGATHER2:
-      case GEN_OCL_RGATHER3:
-      case GEN_OCL_RGATHER4:
-      case GEN_OCL_RGATHER5:
-      case GEN_OCL_RGATHER6:
-      case GEN_OCL_RGATHER7:
-      case GEN_OCL_RGATHER8:
-      case GEN_OCL_ALL:
-      case GEN_OCL_ANY:
       case GEN_OCL_MAD:
       case GEN_OCL_COS:
       case GEN_OCL_SIN:
@@ -1486,7 +1467,6 @@ namespace gbe
         GBE_ASSERT(I.hasStructRetAttr() == false);
         this->newRegister(&I);
         break;
-      case GEN_OCL_OBWRITE:
       case GEN_OCL_FORCE_SIMD8:
       case GEN_OCL_FORCE_SIMD16:
         break;
@@ -1552,109 +1532,6 @@ namespace gbe
 
 
         switch (it->second) {
-          case GEN_OCL_REGION1:
-          case GEN_OCL_REGION2:
-          case GEN_OCL_REGION3:
-          case GEN_OCL_REGION4:
-          case GEN_OCL_REGION5:
-          case GEN_OCL_REGION6:
-          case GEN_OCL_REGION7:
-          case GEN_OCL_REGION8:
-          {
-            // Get region offset
-            GBE_ASSERT(AI != AE);
-            Constant *CPV = dyn_cast<Constant>(*AI);
-            GBE_ASSERTM(CPV != NULL, "offset for register region must be constant");
-            const uint32_t offset = processConstant<uint32_t>(CPV, U64CPVExtractFunctor(ctx));
-            ++AI;
-
-            // Get region vertical stride
-            GBE_ASSERT(AI != AE);
-            CPV = dyn_cast<Constant>(*AI);
-            GBE_ASSERTM(CPV != NULL, "vstride for register region must be constant");
-            const uint32_t vstride = processConstant<uint32_t>(CPV, U64CPVExtractFunctor(ctx));
-            ++AI;
-
-            // Get region width
-            GBE_ASSERT(AI != AE);
-            CPV = dyn_cast<Constant>(*AI);
-            GBE_ASSERTM(CPV != NULL, "width for register region must be constant");
-            const uint32_t width = processConstant<uint32_t>(CPV, U64CPVExtractFunctor(ctx));
-            ++AI;
-
-            // Get region horizontal stride
-            GBE_ASSERT(AI != AE);
-            CPV = dyn_cast<Constant>(*AI);
-            GBE_ASSERTM(CPV != NULL, "vstride for register region must be constant");
-            const uint32_t hstride = processConstant<uint32_t>(CPV, U64CPVExtractFunctor(ctx));
-            ++AI;
-
-            // Build the tuple data for the sources and the destination register
-            const uint32_t srcNum = uint32_t(it->second) - GEN_OCL_REGION1 + 1;
-            vector<ir::Register> tupleData; // put registers here
-            for (uint32_t srcID = 0; srcID < srcNum; ++srcID) {
-              GBE_ASSERT(AI != AE);
-              const ir::Register reg = this->getRegister(*AI);
-              tupleData.push_back(reg);
-              ++AI;
-            }
-            GBE_ASSERT(AI == AE);
-            const ir::Tuple tuple = ctx.arrayTuple(&tupleData[0], srcNum);
-            const ir::Register dst = this->getRegister(&I);
-            ctx.REGION(offset, vstride, width, hstride, dst, tuple, srcNum);
-            break;
-          }
-          case GEN_OCL_RGATHER1:
-          case GEN_OCL_RGATHER2:
-          case GEN_OCL_RGATHER3:
-          case GEN_OCL_RGATHER4:
-          case GEN_OCL_RGATHER5:
-          case GEN_OCL_RGATHER6:
-          case GEN_OCL_RGATHER7:
-          case GEN_OCL_RGATHER8:
-          {
-            // Build the tuple data for the sources and the destination register
-            const uint32_t srcNum = uint32_t(it->second) - GEN_OCL_RGATHER1 + 2;
-            vector<ir::Register> tupleData; // put registers here
-            for (uint32_t srcID = 0; srcID < srcNum; ++srcID) {
-              GBE_ASSERT(AI != AE);
-              const ir::Register reg = this->getRegister(*AI);
-              tupleData.push_back(reg);
-              ++AI;
-            }
-            GBE_ASSERT(AI == AE);
-            const ir::Tuple tuple = ctx.arrayTuple(&tupleData[0], srcNum);
-            const ir::Register dst = this->getRegister(&I);
-            ctx.RGATHER(dst, tuple, srcNum);
-            break;
-          }
-          case GEN_OCL_ALL:
-          case GEN_OCL_ANY:
-          {
-            GBE_ASSERT(AI != AE);
-            const ir::Register src = this->getRegister(*AI);
-            const ir::Register dst = this->getRegister(&I);
-            const ir::VotePredicate pred = it->second == GEN_OCL_ANY ? ir::VOTE_ANY : ir::VOTE_ALL;
-            ctx.VOTE(pred, dst, src);
-            break;
-          }
-          case GEN_OCL_OBREAD:
-          {
-            GBE_ASSERT(AI != AE);
-            const ir::Register dst = this->getRegister(&I);
-            const ir::Register src = this->getRegister(*AI);
-            ctx.OBREAD(dst, src);
-            break;
-          }
-          case GEN_OCL_OBWRITE:
-          {
-            GBE_ASSERT(AI != AE);
-            const ir::Register address = this->getRegister(*AI); ++AI;
-            GBE_ASSERT(AI != AE);
-            const ir::Register value = this->getRegister(*AI);
-            ctx.OBWRITE(address, value);
-            break;
-          }
           case GEN_OCL_MAD:
           {
             GBE_ASSERT(AI != AE); const ir::Register src0 = this->getRegister(*AI); ++AI;

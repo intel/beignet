@@ -105,10 +105,11 @@ namespace gbe {
 
     // Now compile the code to llvm using clang
     // XXX use popen and stuff instead of that
-    std::string compileCmd = "clang -x cl -emit-llvm -O3 -ccc-host-triple ptx32 -c ";
+    std::string compileCmd = "clang -x cl -fno-color-diagnostics -emit-llvm -O3 -ccc-host-triple ptx32 -c ";
     compileCmd += clName;
     compileCmd += " -o ";
     compileCmd += llName;
+    std::cout << "HACK: using \"system()\" to run clang. Use clang API instead!\n";
     if (UNLIKELY(system(compileCmd.c_str()) != 0)) return NULL;
 
     // Now build the program from llvm
