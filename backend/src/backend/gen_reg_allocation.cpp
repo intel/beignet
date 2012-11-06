@@ -144,7 +144,7 @@ namespace gbe
     const RegisterData regData = ctx.sel->getRegisterData(reg);
     const RegisterFamily family = regData.family;
     const uint32_t typeSize = isScalar ? familyScalarSize[family] : familyVectorSize[family];
-    const uint32_t regSize = simdWidth*typeSize;
+    const uint32_t regSize = isScalar ? typeSize : simdWidth*typeSize;
     uint32_t grfOffset;
     while ((grfOffset = ctx.allocate(regSize, regSize)) == 0) {
       const bool success = this->expireGRF(interval);

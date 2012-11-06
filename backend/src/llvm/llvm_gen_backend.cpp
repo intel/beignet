@@ -779,22 +779,23 @@ namespace gbe
         x.lastWriteInsn = x.lastReadInsn = NULL;
       }
 
-      // Find use intervals for all registers
-      uint32_t insnID = 1;
+      // Find use intervals for all registers (distinguish sources and
+      // destinations)
+      uint32_t insnID = 2;
       bb.foreach([&](ir::Instruction &insn) {
         const uint32_t dstNum = insn.getDstNum();
         const uint32_t srcNum = insn.getSrcNum();
-        for (uint32_t dstID = 0; dstID < dstNum; ++dstID) {
-          const ir::Register reg = insn.getDst(dstID);
-          lastUse[reg].lastWrite = insnID;
-          lastUse[reg].lastWriteInsn = &insn;
-        }
         for (uint32_t srcID = 0; srcID < srcNum; ++srcID) {
           const ir::Register reg = insn.getSrc(srcID);
           lastUse[reg].lastRead = insnID;
           lastUse[reg].lastReadInsn = &insn;
         }
-        insnID++;
+        for (uint32_t dstID = 0; dstID < dstNum; ++dstID) {
+          const ir::Register reg = insn.getDst(dstID);
+          lastUse[reg].lastWrite = insnID+1;
+          lastUse[reg].lastWriteInsn = &insn;
+        }
+        insnID+=2;
       });
 
       // Liveinfo helps us to know if the source outlives the block

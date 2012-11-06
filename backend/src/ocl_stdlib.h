@@ -118,6 +118,12 @@ INLINE OVERLOADABLE float native_sin(float x) { return __gen_ocl_sin(x); }
 INLINE OVERLOADABLE float native_sqrt(float x) { return __gen_ocl_sqrt(x); }
 INLINE OVERLOADABLE float native_rsqrt(float x) { return __gen_ocl_rsqrt(x); }
 INLINE OVERLOADABLE float native_log2(float x) { return __gen_ocl_log(x); }
+INLINE OVERLOADABLE float native_log(float x) {
+  return native_log2(x) * 0.6931472002f;
+}
+INLINE OVERLOADABLE float native_log10(float x) {
+  return native_log2(x) * 0.3010299956f;
+}
 INLINE OVERLOADABLE float native_powr(float x, float y) { return __gen_ocl_pow(x,y); }
 INLINE OVERLOADABLE float native_recip(float x) { return __gen_ocl_rcp(x); }
 INLINE OVERLOADABLE float native_tan(float x) {
@@ -135,6 +141,9 @@ INLINE OVERLOADABLE float trunc(float x) { return __gen_ocl_rndz(x); }
 INLINE OVERLOADABLE float round(float x) { return __gen_ocl_rnde(x); }
 INLINE OVERLOADABLE float floor(float x) { return __gen_ocl_rndd(x); }
 INLINE OVERLOADABLE float ceil(float x)  { return __gen_ocl_rndu(x); }
+INLINE OVERLOADABLE float log(float x) { return native_log(x); }
+INLINE OVERLOADABLE float log2(float x) { return native_log2(x); }
+INLINE OVERLOADABLE float log10(float x) { return native_log10(x); }
 INLINE OVERLOADABLE float powr(float x, float y) { return __gen_ocl_pow(x,y); }
 INLINE OVERLOADABLE float exp(float x, float y) { return native_exp(x); }
 INLINE OVERLOADABLE float fmod(float x, float y) { return x-y*trunc(x/y); }
@@ -155,7 +164,6 @@ INLINE OVERLOADABLE int select(int src0, int src1, int cond) {
 INLINE OVERLOADABLE float select(float src0, float src1, int cond) {
   return cond ? src1 : src0;
 }
-
 
 // This will be optimized out by LLVM and will output LLVM select instructions
 #define DECL_SELECT4(TYPE4, TYPE, COND_TYPE4, MASK) \
@@ -344,6 +352,9 @@ DECL_VECTOR_1OP(trunc, float);
 DECL_VECTOR_1OP(round, float);
 DECL_VECTOR_1OP(floor, float);
 DECL_VECTOR_1OP(ceil, float);
+DECL_VECTOR_1OP(log, float);
+DECL_VECTOR_1OP(log2, float);
+DECL_VECTOR_1OP(log10, float);
 #undef DECL_VECTOR_1OP
 
 #define DECL_VECTOR_2OP(NAME, TYPE) \
