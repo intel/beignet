@@ -16,9 +16,13 @@
  *
  * Author: Benjamin Segovia <benjamin.segovia@intel.com>
  */
+#ifndef __COMPILER_SHADER_TOY_HPP__
+#define __COMPILER_SHADER_TOY_HPP__
 
-#include "compiler_shader_toy.hpp"
+#include "utest_helper.hpp"
 
-static void compiler_ribbon(void) { run_kernel(256, 256, "compiler_ribbon"); }
-MAKE_UTEST_FROM_FUNCTION(compiler_ribbon);
+/*! Run and check the output */
+void run_kernel(int w, int h, const char *name);
+
+#endif /* __COMPILER_SHADER_TOY_HPP__ */
 

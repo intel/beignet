@@ -4,10 +4,9 @@ INCLUDE_DIRECTORIES(${CMAKE_CURRENT_SOURCE_DIR}
 link_directories (${LLVM_LIBRARY_DIRS})
 ADD_LIBRARY(utests SHARED
   utest_error.c
+  compiler_shader_toy.cpp
   compiler_mandelbrot.cpp
   compiler_mandelbrot_alternate.cpp
-  compiler_clod.cpp
-  compiler_ribbon.cpp
   compiler_box_blur_float.cpp
   compiler_box_blur.cpp
   compiler_insert_to_constant.cpp
