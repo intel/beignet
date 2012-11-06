@@ -492,6 +492,9 @@ namespace gbe
     if (dyn_cast<ConstantVector>(CPV))
       CPV = extractConstantElem(CPV, index);
 
+    if (dyn_cast<ConstantAggregateZero>(CPV))
+      return doIt(uint32_t(0));
+
     // Integers
     if (ConstantInt *CI = dyn_cast<ConstantInt>(CPV)) {
       Type* Ty = CI->getType();
@@ -517,7 +520,8 @@ namespace gbe
     }
 
     // Floats and doubles
-    switch (CPV->getType()->getTypeID()) {
+    const Type::TypeID typeID = CPV->getType()->getTypeID();
+    switch (typeID) {
       case Type::FloatTyID:
       case Type::DoubleTyID:
       {
@@ -535,6 +539,7 @@ namespace gbe
       break;
       default:
         GBE_ASSERTM(false, "Unsupported constant type");
+        break;
     }
     const uint64_t imm(8);
     return doIt(imm);

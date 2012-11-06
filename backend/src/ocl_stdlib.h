@@ -123,12 +123,12 @@ INLINE OVERLOADABLE float native_recip(float x) { return __gen_ocl_rcp(x); }
 INLINE OVERLOADABLE float native_tan(float x) {
   return native_sin(x) / native_cos(x);
 }
+#define E 2.71828182845904523536f
+INLINE OVERLOADABLE float native_exp(float x) { return native_powr(E, x); }
+#undef E
 
 // TODO make them actually compliant precision-wise
-#define cos native_cos   // XXX work-around ptx profile: cos already defined
-#define sin native_sin   // XXX work-around ptr profile: sin already defined
 #define sqrt native_sqrt // XXX work-around ptr profile: sin already defined
-
 INLINE OVERLOADABLE float rsqrt(float x) { return native_rsqrt(x); }
 INLINE OVERLOADABLE float fabs(float x) { return __gen_ocl_fabs(x); }
 INLINE OVERLOADABLE float trunc(float x) { return __gen_ocl_rndz(x); }
@@ -136,22 +136,30 @@ INLINE OVERLOADABLE float round(float x) { return __gen_ocl_rnde(x); }
 INLINE OVERLOADABLE float floor(float x) { return __gen_ocl_rndd(x); }
 INLINE OVERLOADABLE float ceil(float x)  { return __gen_ocl_rndu(x); }
 INLINE OVERLOADABLE float powr(float x, float y) { return __gen_ocl_pow(x,y); }
+INLINE OVERLOADABLE float exp(float x, float y) { return native_exp(x); }
 INLINE OVERLOADABLE float fmod(float x, float y) { return x-y*trunc(x/y); }
 
-// Hack pow is already a builtin
+// TODO use llvm intrinsics definitions
+#define cos native_cos
+#define sin native_sin
 #define pow powr
 
 PURE CONST OVERLOADABLE float mad(float a, float b, float c);
-OVERLOADABLE INLINE uint select(uint src0, uint src1, uint cond) {
+
+INLINE OVERLOADABLE uint select(uint src0, uint src1, uint cond) {
   return cond ? src1 : src0;
 }
-OVERLOADABLE INLINE int select(int src0, int src1, int cond) {
+INLINE OVERLOADABLE int select(int src0, int src1, int cond) {
+  return cond ? src1 : src0;
+}
+INLINE OVERLOADABLE float select(float src0, float src1, int cond) {
   return cond ? src1 : src0;
 }
 
+
 // This will be optimized out by LLVM and will output LLVM select instructions
 #define DECL_SELECT4(TYPE4, TYPE, COND_TYPE4, MASK) \
-OVERLOADABLE INLINE TYPE4 select(TYPE4 src0, TYPE4 src1, COND_TYPE4 cond) { \
+INLINE OVERLOADABLE TYPE4 select(TYPE4 src0, TYPE4 src1, COND_TYPE4 cond) { \
   TYPE4 dst; \
   const TYPE x0 = src0.x; /* Fix performance issue with CLANG */ \
   const TYPE x1 = src1.x; \
@@ -170,19 +178,6 @@ OVERLOADABLE INLINE TYPE4 select(TYPE4 src0, TYPE4 src1, COND_TYPE4 cond) { \
 DECL_SELECT4(int4, int, int4, 0x80000000)
 DECL_SELECT4(float4, float, int4, 0x80000000)
 #undef DECL_SELECT4
-
-#if 0
-INLINE OVERLOADABLE float2 mad(float2 a, float2 b, float2 c) {
-  return (float2)(mad(a.x,b.x,c.x), mad(a.y,b.y,c.y));
-}
-INLINE OVERLOADABLE float3 mad(float3 a, float3 b, float3 c) {
-  return (float3)(mad(a.x,b.x,c.x), mad(a.y,b.y,c.y), mad(a.z,b.z,c.z));
-}
-INLINE OVERLOADABLE float4 mad(float4 a, float4 b, float4 c) {
-  return (float4)(mad(a.x,b.x,c.x), mad(a.y,b.y,c.y),
-                  mad(a.z,b.z,c.z), mad(a.w,b.w,c.w));
-}
-#endif
 
 /////////////////////////////////////////////////////////////////////////////
 // Common Functions (see 6.11.4 of OCL 1.1 spec)
@@ -203,6 +198,8 @@ DECL_MIN_MAX(unsigned short)
 DECL_MIN_MAX(unsigned char)
 #undef DECL_MIN_MAX
 
+INLINE OVERLOADABLE float fmax(float a, float b) { return max(a,b); }
+INLINE OVERLOADABLE float fmin(float a, float b) { return min(a,b); }
 INLINE OVERLOADABLE float mix(float x, float y, float a) { return x + (y-x)*a;}
 
 /////////////////////////////////////////////////////////////////////////////
@@ -411,67 +408,11 @@ INLINE OVERLOADABLE float8 mix(float8 x, float8 y, float a) { return mix(x,y,(fl
 INLINE OVERLOADABLE float16 mix(float16 x, float16 y, float a) { return mix(x,y,(float16)(a));}
 
 /////////////////////////////////////////////////////////////////////////////
-// Extensions to manipulate the register file
-/////////////////////////////////////////////////////////////////////////////
-
-// Direct addressing register regions
-OVERLOADABLE int __gen_ocl_region(int offset, int vstride, int width, int hstride, int);
-OVERLOADABLE int __gen_ocl_region(int offset, int vstride, int width, int hstride, int, int);
-OVERLOADABLE int __gen_ocl_region(int offset, int vstride, int width, int hstride, int, int, int);
-OVERLOADABLE int __gen_ocl_region(int offset, int vstride, int width, int hstride, int, int, int, int);
-OVERLOADABLE int __gen_ocl_region(int offset, int vstride, int width, int hstride, int, int, int, int, int);
-OVERLOADABLE int __gen_ocl_region(int offset, int vstride, int width, int hstride, int, int, int, int, int, int);
-OVERLOADABLE int __gen_ocl_region(int offset, int vstride, int width, int hstride, int, int, int, int, int, int, int);
-OVERLOADABLE int __gen_ocl_region(int offset, int vstride, int width, int hstride, int, int, int, int, int, int, int, int);
-
-// Gather from register file
-OVERLOADABLE int __gen_ocl_rgather(unsigned short index, int);
-OVERLOADABLE int __gen_ocl_rgather(unsigned short index, int, int);
-OVERLOADABLE int __gen_ocl_rgather(unsigned short index, int, int, int);
-OVERLOADABLE int __gen_ocl_rgather(unsigned short index, int, int, int, int);
-OVERLOADABLE int __gen_ocl_rgather(unsigned short index, int, int, int, int, int);
-OVERLOADABLE int __gen_ocl_rgather(unsigned short index, int, int, int, int, int, int);
-OVERLOADABLE int __gen_ocl_rgather(unsigned short index, int, int, int, int, int, int, int);
-OVERLOADABLE int __gen_ocl_rgather(unsigned short index, int, int, int, int, int, int, int, int);
-
-/////////////////////////////////////////////////////////////////////////////
-// Extension to have uniform condition per hardware thread
-/////////////////////////////////////////////////////////////////////////////
-
-OVERLOADABLE unsigned short __gen_ocl_any(unsigned short cond);
-OVERLOADABLE unsigned short __gen_ocl_all(unsigned short cond);
-
-/////////////////////////////////////////////////////////////////////////////
-// Extension to support OBlock reads / writes
-/////////////////////////////////////////////////////////////////////////////
-
-OVERLOADABLE int  __gen_ocl_obread(const __global void *address);
-OVERLOADABLE int  __gen_ocl_obread(const __constant void *address);
-OVERLOADABLE int  __gen_ocl_obread(const __local void *address);
-OVERLOADABLE void  __gen_ocl_obwrite(const __global void *address, int);
-OVERLOADABLE void  __gen_ocl_obwrite(const __local void *address, int);
-
-/////////////////////////////////////////////////////////////////////////////
 // Force the compilation to SIMD8 or SIMD16
 /////////////////////////////////////////////////////////////////////////////
 
 int __gen_ocl_force_simd8(void);
 int __gen_ocl_force_simd16(void);
-
-#define DECL_VOTE(TYPE) \
-INLINE OVERLOADABLE TYPE __gen_ocl_any(TYPE cond) { \
-  return (TYPE) __gen_ocl_any((unsigned short) cond); \
-} \
-INLINE OVERLOADABLE TYPE __gen_ocl_all(TYPE cond) { \
-  return (TYPE) __gen_ocl_all((unsigned short) cond); \
-}
-DECL_VOTE(unsigned int)
-DECL_VOTE(unsigned char)
-DECL_VOTE(int)
-DECL_VOTE(char)
-DECL_VOTE(short)
-DECL_VOTE(bool)
-#undef DECL_VOTE
 
 #define NULL ((void*)0)
 #undef PURE

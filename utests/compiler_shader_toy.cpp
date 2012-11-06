@@ -27,9 +27,11 @@
  * The code here is just to wrap the common code used by all the kernels (to run
  * the code and assert its correctness)
  */
-#include "compiler_shader_toy.hpp"
+#include "utest_helper.hpp"
 
-void run_kernel(int w, int h, const char *name)
+static const int dim = 256;
+
+static void run_kernel(int w, int h, const char *name)
 {
   const size_t global[2] = {size_t(w), size_t(h)};
   const size_t local[2] = {16, 1};
@@ -65,8 +67,11 @@ void run_kernel(int w, int h, const char *name)
   static void NAME(void) { run_kernel(W,H,#NAME); } \
   MAKE_UTEST_FROM_FUNCTION(NAME);
 
-DECL_SHADER_TOY_TEST(256,256,compiler_clod);
-DECL_SHADER_TOY_TEST(256,256,compiler_ribbon);
+DECL_SHADER_TOY_TEST(dim,dim,compiler_clod);
+DECL_SHADER_TOY_TEST(dim,dim,compiler_ribbon);
+DECL_SHADER_TOY_TEST(dim,dim,compiler_chocolux);
+DECL_SHADER_TOY_TEST(dim,dim,compiler_nautilus);
+DECL_SHADER_TOY_TEST(dim,dim,compiler_menger_sponge);
 
 #undef DECL_SHADER_TOY_TEST
 
