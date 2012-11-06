@@ -1097,9 +1097,6 @@ namespace gbe
     }
   };
 
-  /*! Force MAD pattern */
-  BVAR(OCL_FORCE_MAD_PATTERN, false);
-
   /*! MAD pattern */
   class MulAddInstructionPattern : public SelectionPattern
   {
@@ -1816,6 +1813,9 @@ namespace gbe
   }
 
   SelectionLibrary::SelectionLibrary(void) {
+    /*! Force MAD pattern */
+    BVAR(OCL_FORCE_MAD_PATTERN, false);
+
     this->insert<UnaryInstructionPattern>();
     this->insert<BinaryInstructionPattern>();
     this->insert<TernaryInstructionPattern>();

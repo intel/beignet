@@ -74,7 +74,7 @@ namespace gbe
   static gbe::CVarInit __CVAR##NAME##__LINE__##__(#NAME, &NAME, STR);
 
 /*! Declare a Boolean variable (just an integer in {0,1}) */
-#define BVAR(NAME, CURR) IVAR(NAME, 0, CURR, 1)
+#define BVAR(NAME, CURR) IVAR(NAME, 0, CURR ? 1 : 0, 1)
 
 #endif /* __GBE_CVAR_HPP__ */
 

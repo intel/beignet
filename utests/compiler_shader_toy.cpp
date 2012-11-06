@@ -22,7 +22,7 @@
  * http://www.iquilezles.org/apps/shadertoy/index.html
  *
  * They are pretty cool and rather complex kernels. Just the right thing to have
- * something a bit more complicated and interesting than unit test.
+ * something a bit more complicated and interesting than unit tests.
  *
  * The code here is just to wrap the common code used by all the kernels (to run
  * the code and assert its correctness)
