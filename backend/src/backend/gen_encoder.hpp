@@ -141,10 +141,6 @@ namespace gbe
     void BYTE_GATHER(GenRegister dst, GenRegister src, uint32_t bti, uint32_t elemSize);
     /*! Byte scatter (for unaligned bytes, shorts and ints) */
     void BYTE_SCATTER(GenRegister src, uint32_t bti, uint32_t elemSize);
-    /*! OBlock read */
-    void OBREAD(GenRegister dst, GenRegister header, uint32_t bti, uint32_t elemSize);
-    /*! OBlock read */
-    void OBWRITE(GenRegister header, uint32_t bti, uint32_t elemSize);
     /*! Send instruction for the sampler */
     void SAMPLE(GenRegister dest,
                 uint32_t msg_reg_nr,

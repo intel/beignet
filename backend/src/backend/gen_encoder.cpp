@@ -796,42 +796,6 @@ namespace gbe
                        return_format);
   }
 
-  void GenEncoder::OBREAD(GenRegister dst, GenRegister header, uint32_t bti, uint32_t size) {
-    GenInstruction *insn = this->next(GEN_OPCODE_SEND);
-    const uint32_t msg_length = 1;
-    const uint32_t response_length = size / 2; // Size is in owords
-    this->setHeader(insn);
-    this->setDst(insn, GenRegister::uw16grf(dst.nr, 0));
-    this->setSrc0(insn, GenRegister::ud8grf(header.nr, 0));
-    this->setSrc1(insn, GenRegister::immud(0));
-    insn->header.execution_size = response_length == 1 ? GEN_WIDTH_8 : GEN_WIDTH_16;
-    setOBlockRW(this,
-                insn,
-                bti,
-                size,
-                GEN_OBLOCK_READ,
-                msg_length,
-                response_length);
-  }
-
-  void GenEncoder::OBWRITE(GenRegister header, uint32_t bti, uint32_t size) {
-    GenInstruction *insn = this->next(GEN_OPCODE_SEND);
-    const uint32_t msg_length = 1 + size / 2; // Size is in owords
-    const uint32_t response_length = 0;
-    this->setHeader(insn);
-    this->setSrc0(insn, GenRegister::ud8grf(header.nr, 0));
-    this->setSrc1(insn, GenRegister::immud(0));
-    this->setDst(insn, GenRegister::retype(GenRegister::null(), GEN_TYPE_UW));
-    insn->header.execution_size = msg_length == 2 ? GEN_WIDTH_8 : GEN_WIDTH_16;
-    setOBlockRW(this,
-                insn,
-                bti,
-                size,
-                GEN_OBLOCK_WRITE,
-                msg_length,
-                response_length);
-  }
-
   void GenEncoder::EOT(uint32_t msg) {
     GenInstruction *insn = this->next(GEN_OPCODE_SEND);
     this->setDst(insn, GenRegister::retype(GenRegister::null(), GEN_TYPE_UD));

@@ -490,117 +490,6 @@ namespace ir {
       Register dst[], src[];
     };
 
-    class ALIGNED_INSTRUCTION RegionInstruction :
-      public BasePolicy,
-      public NDstPolicy<RegionInstruction, 1>,
-      public TupleSrcPolicy<RegionInstruction>
-    {
-    public:
-      RegionInstruction(Register dst,
-                        Tuple src,
-                        uint32_t srcNum,
-                        uint32_t offset,
-                        uint32_t vstride,
-                        uint32_t width,
-                        uint32_t hstride)
-      {
-        this->opcode = OP_REGION;
-        this->dst[0] = dst;
-        this->src = src;
-        this->srcNum = srcNum;
-        this->offset = offset;
-        this->vstride = vstride;
-        this->width = width;
-        this->hstride = hstride;
-      }
-      INLINE uint32_t getOffset(void) const { return this->offset; }
-      INLINE uint32_t getVStride(void) const { return this->vstride; }
-      INLINE uint32_t getWidth(void) const { return this->width; }
-      INLINE uint32_t getHStride(void) const { return this->hstride; }
-      INLINE bool wellFormed(const Function &fn, std::string &whyNot) const;
-      INLINE void out(std::ostream &out, const Function &fn) const;
-      uint8_t srcNum:4;   //!< Number of sources in the tuple
-      uint8_t width:4;    //!< width (1,2,4 or 8)
-      Register dst[1];    //!< Dst is the register index
-      Tuple src;          //!< Contiguous registers we gather data from
-      uint16_t vstride:5; //!< vertical stride (0,1,2,4,8 or 16)
-      uint16_t hstride:5; //!< horizontal stride (0,1,2,4,8 or 16)
-      uint16_t offset:5;  //!< offset (0 to 7)
-    };
-
-    class ALIGNED_INSTRUCTION VoteInstruction :
-      public BasePolicy,
-      public NDstPolicy<VoteInstruction, 1>,
-      public NSrcPolicy<VoteInstruction, 1>
-    {
-    public:
-      VoteInstruction(Register dst, Register src, VotePredicate pred) {
-        this->opcode = OP_VOTE;
-        this->dst[0] = dst;
-        this->src[0] = src;
-        this->pred = pred;
-      }
-      INLINE VotePredicate getVotePredicate(void) const { return this->pred; }
-      INLINE bool wellFormed(const Function &fn, std::string &whyNot) const;
-      INLINE void out(std::ostream &out, const Function &fn) const;
-      Register dst[1];    //!< Destination boolean
-      Register src[1];    //!< Source boolean (n lanes internally)
-      VotePredicate pred; //!< Operation to apply on the lanes
-    };
-
-    class ALIGNED_INSTRUCTION RGatherInstruction :
-      public BasePolicy,
-      public NDstPolicy<RGatherInstruction, 1>,
-      public TupleSrcPolicy<RGatherInstruction>
-    {
-    public:
-      RGatherInstruction(Register dst, Tuple src, uint32_t srcNum) {
-        this->opcode = OP_RGATHER;
-        this->dst[0] = dst;
-        this->src = src;
-        this->srcNum = srcNum;
-      }
-      INLINE bool wellFormed(const Function &fn, std::string &whyNot) const;
-      INLINE void out(std::ostream &out, const Function &fn) const;
-      uint8_t srcNum:4;   //!< Number of sources in the tuple
-      Register dst[1];    //!< Dst is the register index
-      Tuple src;          //!< Contiguous registers we gather data from
-    };
-
-    class ALIGNED_INSTRUCTION OBReadInstruction :
-      public BasePolicy,
-      public NDstPolicy<OBReadInstruction, 1>,
-      public NSrcPolicy<OBReadInstruction, 1>
-    {
-    public:
-      OBReadInstruction(Register value, Register address) {
-        this->opcode = OP_OBREAD;
-        this->dst[0] = value;
-        this->src[0] = address;
-      }
-      INLINE bool wellFormed(const Function &fn, std::string &whyNot) const;
-      INLINE void out(std::ostream &out, const Function &fn) const;
-      Register dst[1]; //!< Value to get from memory
-      Register src[1]; //!< Address to read
-    };
-
-    class ALIGNED_INSTRUCTION OBWriteInstruction :
-      public BasePolicy,
-      public NDstPolicy<OBWriteInstruction, 0>,
-      public NSrcPolicy<OBWriteInstruction, 2>
-    {
-    public:
-      OBWriteInstruction(Register address, Register value) {
-        this->opcode = OP_OBWRITE;
-        this->src[0] = address;
-        this->src[1] = value;
-      }
-      INLINE bool wellFormed(const Function &fn, std::string &whyNot) const;
-      INLINE void out(std::ostream &out, const Function &fn) const;
-      Register src[2];  // src[0] == address, src[1] == value
-      Register dst[0];  //!< No destination
-    };
-
 #undef ALIGNED_INSTRUCTION
 
     /////////////////////////////////////////////////////////////////////////
@@ -904,82 +793,6 @@ namespace ir {
       return true;
     }
 
-    // Stride is 1,2,4,8 offset goes from 0 to 15 and registers must be dwords
-    INLINE bool RegionInstruction::wellFormed(const Function &fn, std::string &whyNot) const
-    {
-      if (UNLIKELY(vstride != 0 && vstride != 1 && vstride != 2 && vstride != 4 && vstride != 8 && vstride != 16)) {
-        whyNot = "Invalid vertical stride (must be 0, 1, 2, 4 or 8)";
-        return false;
-      }
-      if (UNLIKELY(hstride != 0 && hstride != 1 && hstride != 2 && hstride != 4 && hstride != 8 && hstride != 16)) {
-        whyNot = "Invalid horizontal stride (must be 0, 1, 2, 4 or 8)";
-        return false;
-      }
-      if (UNLIKELY(width != 0 && width != 1 && width != 2 && width != 4 && width != 8)) {
-        whyNot = "Invalid width (must be 1, 2, 4 or 8)";
-        return false;
-      }
-      if (UNLIKELY(offset > 7)) {
-        whyNot = "Invalid offset (must be smaller than 8)";
-        return false;
-      }
-      if (UNLIKELY(checkRegisterData(FAMILY_DWORD, dst[0], fn, whyNot) == false))
-        return false;
-      for (uint32_t srcID = 0; srcID < srcNum; ++srcID) {
-        const Register regID = fn.getRegister(src, srcID);
-        if (UNLIKELY(checkRegisterData(FAMILY_DWORD, regID, fn, whyNot) == false))
-          return false;
-      }
-      return true;
-    }
-
-    // Boolean values for both source and destination
-    INLINE bool VoteInstruction::wellFormed(const Function &fn, std::string &whyNot) const
-    {
-      if (UNLIKELY(checkRegisterData(FAMILY_WORD, dst[0], fn, whyNot) == false))
-        return false;
-      if (UNLIKELY(checkRegisterData(FAMILY_WORD, src[0], fn, whyNot) == false))
-        return false;
-      return true;
-    }
-
-    // Indices are always int16 and the rest is 32 bit integers
-    INLINE bool RGatherInstruction::wellFormed(const Function &fn, std::string &whyNot) const
-    {
-      if (UNLIKELY(checkRegisterData(FAMILY_DWORD, dst[0], fn, whyNot) == false))
-        return false;
-      if (UNLIKELY(checkRegisterData(FAMILY_WORD, fn.getRegister(src, 0), fn, whyNot) == false))
-        return false;
-      for (uint32_t srcID = 1; srcID < srcNum; ++srcID) {
-        const Register regID = fn.getRegister(src, srcID);
-        if (UNLIKELY(checkRegisterData(FAMILY_DWORD, regID, fn, whyNot) == false))
-          return false;
-      }
-      return true;
-    }
-
-    // Source is an address. Destination is a 32 bit integer
-    INLINE bool OBReadInstruction::wellFormed(const Function &fn, std::string &whyNot) const
-    {
-      const RegisterFamily ptrFamily = fn.getPointerFamily();
-      if (UNLIKELY(checkRegisterData(ptrFamily, src[0], fn, whyNot) == false))
-        return false;
-      if (UNLIKELY(checkRegisterData(FAMILY_DWORD, dst[0], fn, whyNot) == false))
-        return false;
-      return true;
-    }
-
-    // First source is the address. Second source is the value to write
-    INLINE bool OBWriteInstruction::wellFormed(const Function &fn, std::string &whyNot) const
-    {
-      const RegisterFamily ptrFamily = fn.getPointerFamily();
-      if (UNLIKELY(checkRegisterData(ptrFamily, src[0], fn, whyNot) == false))
-        return false;
-      if (UNLIKELY(checkRegisterData(FAMILY_DWORD, src[1], fn, whyNot) == false))
-        return false;
-      return true;
-    }
-
 #undef CHECK_TYPE
 
     /////////////////////////////////////////////////////////////////////////
@@ -1056,42 +869,6 @@ namespace ir {
       out << "." << type;
       out << " %" << this->getDst(fn,0) << " ";
       fn.outImmediate(out, immediateIndex);
-    }
-
-    INLINE void RegionInstruction::out(std::ostream &out, const Function &fn) const {
-      this->outOpcode(out);
-      out << "<" << uint32_t(vstride) << ";"
-                 << uint32_t(width) << "," << uint32_t(hstride)
-                 << ">." << uint32_t(offset) << " ";
-      out << "%" << this->getDst(fn, 0) << " ";
-      for (uint32_t i = 0; i < this->getSrcNum(); ++i)
-        out << "%" << this->getSrc(fn, i) << (i != (srcNum-1u) ? " " : "");
-    }
-
-    INLINE void VoteInstruction::out(std::ostream &out, const Function &fn) const {
-      this->outOpcode(out);
-      out << "." << (this->getVotePredicate() == VOTE_ALL ? "all" : "any")
-          << " %" << this->getDst(fn, 0)
-          << " %" << this->getSrc(fn, 0);
-    }
-
-    INLINE void RGatherInstruction::out(std::ostream &out, const Function &fn) const {
-      this->outOpcode(out);
-      out << " %" << this->getDst(fn, 0);
-      for (uint32_t i = 0; i < this->getSrcNum(); ++i)
-        out << " %" << this->getSrc(fn, i);
-    }
-
-    INLINE void OBReadInstruction::out(std::ostream &out, const Function &fn) const {
-      this->outOpcode(out);
-      out << " %" << this->getDst(fn, 0);
-      out << " %" << this->getSrc(fn, 0);
-    }
-
-    INLINE void OBWriteInstruction::out(std::ostream &out, const Function &fn) const {
-      this->outOpcode(out);
-      out << " %" << this->getSrc(fn, 0);
-      out << " %" << this->getSrc(fn, 1);
     }
 
   } /* namespace internal */
@@ -1200,26 +977,6 @@ END_INTROSPECTION(FenceInstruction)
 START_INTROSPECTION(LabelInstruction)
 #include "ir/instruction.hxx"
 END_INTROSPECTION(LabelInstruction)
-
-START_INTROSPECTION(RegionInstruction)
-#include "ir/instruction.hxx"
-END_INTROSPECTION(RegionInstruction)
-
-START_INTROSPECTION(VoteInstruction)
-#include "ir/instruction.hxx"
-END_INTROSPECTION(VoteInstruction)
-
-START_INTROSPECTION(RGatherInstruction)
-#include "ir/instruction.hxx"
-END_INTROSPECTION(RGatherInstruction)
-
-START_INTROSPECTION(OBReadInstruction)
-#include "ir/instruction.hxx"
-END_INTROSPECTION(OBReadInstruction)
-
-START_INTROSPECTION(OBWriteInstruction)
-#include "ir/instruction.hxx"
-END_INTROSPECTION(OBWriteInstruction)
 
 #undef END_INTROSPECTION
 #undef START_INTROSPECTION
@@ -1367,7 +1124,6 @@ END_FUNCTION(Instruction, Register)
 
   bool Instruction::hasSideEffect(void) const {
     return opcode == OP_STORE || 
-           opcode == OP_OBWRITE ||
            opcode == OP_TYPED_WRITE ||
            opcode == OP_FENCE;
   }
@@ -1397,11 +1153,6 @@ DECL_MEM_FN(LoadImmInstruction, Type, getType(void), getType())
 DECL_MEM_FN(LabelInstruction, LabelIndex, getLabelIndex(void), getLabelIndex())
 DECL_MEM_FN(BranchInstruction, bool, isPredicated(void), isPredicated())
 DECL_MEM_FN(BranchInstruction, LabelIndex, getLabelIndex(void), getLabelIndex())
-DECL_MEM_FN(RegionInstruction, uint32_t, getOffset(void), getOffset())
-DECL_MEM_FN(RegionInstruction, uint32_t, getVStride(void), getVStride())
-DECL_MEM_FN(RegionInstruction, uint32_t, getWidth(void), getWidth())
-DECL_MEM_FN(RegionInstruction, uint32_t, getHStride(void), getHStride())
-DECL_MEM_FN(VoteInstruction, VotePredicate, getVotePredicate(void), getVotePredicate())
 
 #undef DECL_MEM_FN
 
@@ -1535,31 +1286,6 @@ DECL_MEM_FN(VoteInstruction, VotePredicate, getVotePredicate(void), getVotePredi
   // LABEL
   Instruction LABEL(LabelIndex labelIndex) {
     return internal::LabelInstruction(labelIndex).convert();
-  }
-
-  // REGION
-  Instruction REGION(uint32_t offset, uint32_t vstride, uint32_t width, uint32_t hstride, Register dst, Tuple src, uint32_t srcNum) {
-    return internal::RegionInstruction(dst, src, srcNum, offset, vstride, width, hstride).convert();
-  }
-
-  // VOTE
-  Instruction VOTE(VotePredicate pred, Register dst, Register src) {
-    return internal::VoteInstruction(dst, src, pred).convert();
-  }
-
-  // RGATHER
-  Instruction RGATHER(Register dst, Tuple src, uint32_t srcNum) {
-    return internal::RGatherInstruction(dst, src, srcNum).convert();
-  }
-
-  // OBREAD
-  Instruction OBREAD(Register dst, Register address) {
-    return internal::OBReadInstruction(dst, address).convert();
-  }
-
-  // OBWRITE
-  Instruction OBWRITE(Register address, Register value) {
-    return internal::OBWriteInstruction(address, value).convert();
   }
 
   std::ostream &operator<< (std::ostream &out, const Instruction &insn) {

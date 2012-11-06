@@ -102,14 +102,12 @@ namespace gbe
   }
 
   bool SelectionInstruction::isRead(void) const {
-    return this->opcode == SEL_OP_OBREAD ||
-           this->opcode == SEL_OP_UNTYPED_READ ||
+    return this->opcode == SEL_OP_UNTYPED_READ ||
            this->opcode == SEL_OP_BYTE_GATHER;
   }
 
   bool SelectionInstruction::isWrite(void) const {
-    return this->opcode == SEL_OP_OBWRITE ||
-           this->opcode == SEL_OP_UNTYPED_WRITE ||
+    return this->opcode == SEL_OP_UNTYPED_WRITE ||
            this->opcode == SEL_OP_BYTE_SCATTER;
   }
 
@@ -396,10 +394,6 @@ namespace gbe
     void BYTE_GATHER(Reg dst, Reg addr, uint32_t elemSize, uint32_t bti);
     /*! Byte scatter (for unaligned bytes, shorts and ints) */
     void BYTE_SCATTER(Reg addr, Reg src, uint32_t elemSize, uint32_t bti);
-    /*! Oblock read */
-    void OBREAD(Reg dst, Reg addr, Reg header, uint32_t bti, uint32_t size);
-    /*! Oblock write */
-    void OBWRITE(Reg addr, Reg value, Reg header, uint32_t bti, uint32_t size);
     /*! Extended math function (2 arguments) */
     void MATH(Reg dst, uint32_t function, Reg src0, Reg src1);
     /*! Extended math function (1 argument) */
@@ -410,10 +404,6 @@ namespace gbe
     void ALU2(SelectionOpcode opcode, Reg dst, Reg src0, Reg src1);
     /*! Encode ternary instructions */
     void ALU3(SelectionOpcode opcode, Reg dst, Reg src0, Reg src1, Reg src2);
-    /*! Encode regioning */
-    void REGION(Reg dst0, Reg dst1, const GenRegister *src, uint32_t offset, uint32_t vstride, uint32_t width, uint32_t hstride, uint32_t srcNum);
-    /*! Encode regioning */
-    void RGATHER(Reg dst, const GenRegister *src, uint32_t srcNum);
     /*! Use custom allocators */
     GBE_CLASS(Opaque);
     friend class SelectionBlock;
@@ -729,74 +719,6 @@ namespace gbe
     insn->src(0) = src0;
     insn->src(1) = src1;
     insn->src(2) = src2;
-  }
-
-  void Selection::Opaque::REGION(Reg dst0, Reg dst1, const GenRegister *src,
-                                 uint32_t offset, uint32_t vstride,
-                                 uint32_t width, uint32_t hstride,
-                                 uint32_t srcNum)
-  {
-    SelectionInstruction *insn = this->appendInsn(SEL_OP_REGION, 2, srcNum);
-    SelectionVector *vector = this->appendVector();
-
-    // Instruction to encode
-    insn->dst(0) = dst0;
-    insn->dst(1) = dst1;
-    GBE_ASSERT(srcNum <= SelectionInstruction::MAX_SRC_NUM);
-    for (uint32_t srcID = 0; srcID < srcNum; ++srcID)
-      insn->src(srcID) = src[srcID];
-    insn->extra.vstride = vstride;
-    insn->extra.width = width;
-    insn->extra.offset = offset;
-    insn->extra.hstride = hstride;
-
-    // Regioning requires contiguous allocation for the sources
-    vector->regNum = srcNum;
-    vector->reg = &insn->src(0);
-    vector->isSrc = 1;
-  }
-
-  void Selection::Opaque::RGATHER(Reg dst, const GenRegister *src, uint32_t srcNum)
-  {
-    SelectionInstruction *insn = this->appendInsn(SEL_OP_RGATHER, 1, srcNum);
-    SelectionVector *vector = this->appendVector();
-
-    // Instruction to encode
-    insn->dst(0) = dst;
-    GBE_ASSERT(srcNum <= SelectionInstruction::MAX_SRC_NUM);
-    for (uint32_t srcID = 0; srcID < srcNum; ++srcID)
-      insn->src(srcID) = src[srcID];
-
-    // Regioning requires contiguous allocation for the sources
-    vector->regNum = srcNum;
-    vector->reg = &insn->src(0);
-    vector->isSrc = 1;
-  }
-
-  void Selection::Opaque::OBREAD(Reg dst, Reg addr, Reg header, uint32_t bti, uint32_t size) {
-    SelectionInstruction *insn = this->appendInsn(SEL_OP_OBREAD, 1, 2);
-    insn->dst(0) = dst;
-    insn->src(0) = addr;
-    insn->src(1) = header;
-    insn->extra.function = bti;
-    insn->extra.elem = size / sizeof(int[4]); // number of owords
-  }
-
-  void Selection::Opaque::OBWRITE(Reg addr, Reg value, Reg header, uint32_t bti, uint32_t size) {
-    SelectionInstruction *insn = this->appendInsn(SEL_OP_OBWRITE, 0, 3);
-    SelectionVector *vector = this->appendVector();
-    insn->opcode = SEL_OP_OBWRITE;
-    insn->src(0) = header;
-    insn->src(1) = value;
-    insn->src(2) = addr;
-    insn->state = this->curr;
-    insn->extra.function = bti;
-    insn->extra.elem = size / sizeof(int[4]); // number of owords
-
-    // We need to put the header and the data together
-    vector->regNum = 2;
-    vector->reg = &insn->src(0);
-    vector->isSrc = 1;
   }
 
   // Boiler plate to initialize the selection library at c++ pre-main
@@ -1743,155 +1665,6 @@ namespace gbe
     DECL_CTOR(LabelInstruction, 1, 1);
   };
 
-  /*! Region instruction pattern */
-  DECL_PATTERN(RegionInstruction)
-  {
-    INLINE bool emitOne(Selection::Opaque &sel, const ir::RegionInstruction &insn) const
-    {
-      using namespace ir;
-
-      // Two destinations: one is the real destination, one is a temporary
-      GenRegister dst0 = sel.selReg(insn.getDst(0)), dst1;
-      if (sel.ctx.getSimdWidth() == 8)
-        dst1 = GenRegister::ud8grf(sel.reg(FAMILY_DWORD));
-      else
-        dst1 = GenRegister::ud16grf(sel.reg(FAMILY_DWORD));
-
-      // Get all the sources
-      GenRegister src[SelectionInstruction::MAX_SRC_NUM];
-      const uint32_t srcNum = insn.getSrcNum();
-      GBE_ASSERT(srcNum <= SelectionInstruction::MAX_SRC_NUM);
-      for (uint32_t srcID = 0; srcID < insn.getSrcNum(); ++srcID)
-        src[srcID] = sel.selReg(insn.getSrc(srcID));
-
-      // Get the region parameters
-      const uint32_t offset = insn.getOffset();
-      const uint32_t vstride = insn.getVStride();
-      const uint32_t width = insn.getWidth();
-      const uint32_t hstride = insn.getHStride();
-      sel.REGION(dst0, dst1, src, offset, vstride, width, hstride, srcNum);
-      return true;
-    }
-    DECL_CTOR(RegionInstruction, 1, 1);
-  };
-
-  /*! Vote instruction pattern */
-  DECL_PATTERN(VoteInstruction)
-  {
-    INLINE bool emitOne(Selection::Opaque &sel, const ir::VoteInstruction &insn) const
-    {
-      using namespace ir;
-      const uint32_t simdWidth = sel.ctx.getSimdWidth();
-      const GenRegister dst = sel.selReg(insn.getDst(0), TYPE_U16);
-      const GenRegister src = sel.selReg(insn.getSrc(0), TYPE_U16);
-
-      // Limit the vote to the active lanes. Use the same compare as for f0.0
-      sel.push();
-        const LabelIndex label = insn.getParent()->getLabelIndex();
-        const GenRegister blockip = sel.selReg(ocl::blockip, TYPE_U16);
-        const GenRegister labelReg = GenRegister::immuw(label);
-        sel.curr.predicate = GEN_PREDICATE_NONE;
-        sel.curr.flag = 0;
-        sel.curr.subFlag = 1;
-        sel.CMP(GEN_CONDITIONAL_LE, blockip, labelReg);
-      sel.pop();
-
-      // Emit the compare instruction to get the flag register
-      sel.push();
-        const VotePredicate vote = insn.getVotePredicate();
-        const uint32_t genCmp = vote == VOTE_ANY ? GEN_CONDITIONAL_NEQ : GEN_CONDITIONAL_EQ;
-        sel.curr.flag = 0;
-        sel.curr.subFlag = 1;
-        sel.CMP(genCmp, src, GenRegister::immuw(0));
-      sel.pop();
-
-      // Broadcast the result to the destination
-      if (vote == VOTE_ANY)
-        sel.MOV(dst, GenRegister::flag(0,1));
-      else {
-        const GenRegister tmp = sel.selReg(sel.reg(FAMILY_WORD), TYPE_U16);
-        sel.push();
-          // Set all lanes of tmp to zero
-          sel.curr.predicate = GEN_PREDICATE_NONE;
-          sel.MOV(tmp, GenRegister::immuw(0));
-
-          // Compute the short values with no mask
-          sel.curr.flag = 0;
-          sel.curr.subFlag = 1;
-          sel.curr.inversePredicate = 1;
-          sel.curr.predicate = simdWidth == 8 ?
-            GEN_PREDICATE_ALIGN1_ANY8H :
-            GEN_PREDICATE_ALIGN1_ANY16H;
-          sel.MOV(tmp, GenRegister::immuw(1));
-        sel.pop();
-
-        // Update the destination with the proper mask
-        sel.MOV(dst, tmp);
-      }
-      return true;
-    }
-
-    DECL_CTOR(VoteInstruction, 1, 1);
-  };
-
-  /*! Register file gather instruction pattern */
-  DECL_PATTERN(RGatherInstruction)
-  {
-    INLINE bool emitOne(Selection::Opaque &sel, const ir::RGatherInstruction &insn) const
-    {
-      using namespace ir;
-      // Two destinations: one is the real destination, one is a temporary
-      const GenRegister dst = sel.selReg(insn.getDst(0)), dst1;
-
-      // Get all the sources
-      GenRegister src[SelectionInstruction::MAX_SRC_NUM];
-      const uint32_t srcNum = insn.getSrcNum();
-      GBE_ASSERT(srcNum <= SelectionInstruction::MAX_SRC_NUM);
-      for (uint32_t srcID = 0; srcID < insn.getSrcNum(); ++srcID)
-        src[srcID] = sel.selReg(insn.getSrc(srcID));
-
-      // Get the region parameters
-      sel.RGATHER(dst, src, srcNum);
-      return true;
-    }
-
-    DECL_CTOR(RGatherInstruction, 1, 1);
-  };
-
-  /*! OBlock read instruction pattern */
-  DECL_PATTERN(OBReadInstruction)
-  {
-    INLINE bool emitOne(Selection::Opaque &sel, const ir::OBReadInstruction &insn) const
-    {
-      using namespace ir;
-      const GenRegister header = sel.selReg(sel.reg(FAMILY_DWORD), TYPE_U32);
-      const GenRegister addr = sel.selReg(insn.getAddress(), TYPE_U32);
-      const GenRegister value = sel.selReg(insn.getValue(), TYPE_U32);
-      const uint32_t simdWidth = sel.ctx.getSimdWidth();
-      sel.OBREAD(value, addr, header, 0xff, simdWidth * sizeof(int));
-      return true;
-    }
-
-    DECL_CTOR(OBReadInstruction, 1, 1);
-  };
-
-  /*! OBlock write instruction pattern */
-  DECL_PATTERN(OBWriteInstruction)
-  {
-    INLINE bool emitOne(Selection::Opaque &sel, const ir::OBWriteInstruction &insn) const
-    {
-      using namespace ir;
-      const GenRegister header = sel.selReg(sel.reg(FAMILY_DWORD), TYPE_U32);
-      const GenRegister addr = sel.selReg(insn.getAddress(), TYPE_U32);
-      const GenRegister value = sel.selReg(insn.getValue(), TYPE_U32);
-      const uint32_t simdWidth = sel.ctx.getSimdWidth();
-      sel.OBWRITE(addr, value, header, 0xff, simdWidth * sizeof(int));
-      return true;
-    }
-
-    DECL_CTOR(OBWriteInstruction, 1, 1);
-  };
-
   /*! Branch instruction pattern */
   DECL_PATTERN(BranchInstruction)
   {
@@ -2056,11 +1829,6 @@ namespace gbe
     this->insert<CompareInstructionPattern>();
     this->insert<ConvertInstructionPattern>();
     this->insert<LabelInstructionPattern>();
-    this->insert<RegionInstructionPattern>();
-    this->insert<VoteInstructionPattern>();
-    this->insert<RGatherInstructionPattern>();
-    this->insert<OBReadInstructionPattern>();
-    this->insert<OBWriteInstructionPattern>();
     this->insert<BranchInstructionPattern>();
     this->insert<Int32x32MulInstructionPattern>();
     this->insert<Int32x16MulInstructionPattern>();

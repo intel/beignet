@@ -13,8 +13,4 @@ DECL_GEN7_SCHEDULE(UntypedRead,     80,        1,        1)
 DECL_GEN7_SCHEDULE(UntypedWrite,    80,        1,        1)
 DECL_GEN7_SCHEDULE(ByteGather,      80,        1,        1)
 DECL_GEN7_SCHEDULE(ByteScatter,     80,        1,        1)
-DECL_GEN7_SCHEDULE(Region,          20,        1,        1)
-DECL_GEN7_SCHEDULE(RGather,         30,        4,        2)
-DECL_GEN7_SCHEDULE(OBRead,          80,        1,        1)
-DECL_GEN7_SCHEDULE(OBWrite,         80,        1,        1)
 
