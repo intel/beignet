@@ -751,7 +751,8 @@ namespace ir {
         whyNot = "Out-of-bound immediate value index";
         return false;
       }
-      if (UNLIKELY(type != fn.getImmediate(immediateIndex).type)) {
+      const ir::Type immType = fn.getImmediate(immediateIndex).type;
+      if (UNLIKELY(type != immType)) {
         whyNot = "Inconsistant type for the immediate value to load";
         return false;
       }

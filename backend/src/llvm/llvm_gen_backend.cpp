@@ -1780,21 +1780,77 @@ namespace gbe
       VectorType *vectorType = cast<VectorType>(llvmType);
       Type *elemType = vectorType->getElementType();
 
-      // Build the tuple data in the vector
-      vector<ir::Register> tupleData; // put registers here
+      // We follow OCL spec and support 2,3,4,8,16 elements only
       const uint32_t elemNum = vectorType->getNumElements();
-      for (uint32_t elemID = 0; elemID < elemNum; ++elemID) {
-        const ir::Register reg = this->getRegister(llvmValues, elemID);
-        tupleData.push_back(reg);
-      }
-      const ir::Tuple tuple = ctx.arrayTuple(&tupleData[0], elemNum);
+      GBE_ASSERTM(elemNum == 2 || elemNum == 3 || elemNum == 4 || elemNum == 8 || elemNum == 16,
+                  "Only vectors of 2,3,4,8 or 16 elements are supported");
 
-      // Emit the instruction
+      // The code is going to be fairly different from types to types (based on
+      // size of each vector element)
       const ir::Type type = getType(ctx, elemType);
-      if (isLoad)
-        ctx.LOAD(type, tuple, ptr, addrSpace, elemNum, dwAligned);
-      else
-        ctx.STORE(type, tuple, ptr, addrSpace, elemNum, dwAligned);
+      const ir::RegisterFamily pointerFamily = ctx.getPointerFamily();
+
+      if (type == ir::TYPE_FLOAT || type == ir::TYPE_U32 || type == ir::TYPE_S32) {
+        // One message is enough here. Nothing special to do
+        if (elemNum <= 4) {
+          // Build the tuple data in the vector
+          vector<ir::Register> tupleData; // put registers here
+          for (uint32_t elemID = 0; elemID < elemNum; ++elemID) {
+            const ir::Register reg = this->getRegister(llvmValues, elemID);
+            tupleData.push_back(reg);
+          }
+          const ir::Tuple tuple = ctx.arrayTuple(&tupleData[0], elemNum);
+
+          // Emit the instruction
+          if (isLoad)
+            ctx.LOAD(type, tuple, ptr, addrSpace, elemNum, dwAligned);
+          else
+            ctx.STORE(type, tuple, ptr, addrSpace, elemNum, dwAligned);
+        }
+        // Not supported by the hardware. So, we split the message and we use
+        // strided loads and stores
+        else {
+          // We simply use several uint4 loads
+          const uint32_t msgNum = elemNum / 4;
+          for (uint32_t msg = 0; msg < msgNum; ++msg) {
+            // Build the tuple data in the vector
+            vector<ir::Register> tupleData; // put registers here
+            for (uint32_t elemID = 0; elemID < 4; ++elemID) {
+              const ir::Register reg = this->getRegister(llvmValues, 4*msg+elemID);
+              tupleData.push_back(reg);
+            }
+            const ir::Tuple tuple = ctx.arrayTuple(&tupleData[0], 4);
+
+            // We may need to update to offset the pointer
+            ir::Register addr;
+            if (msg == 0)
+              addr = ptr;
+            else {
+              const ir::Register offset = ctx.reg(pointerFamily);
+              ir::ImmediateIndex immIndex;
+              ir::Type immType;
+              if (pointerFamily == ir::FAMILY_DWORD) {
+                immIndex = ctx.newImmediate(int32_t(msg*sizeof(uint32_t[4])));
+                immType = ir::TYPE_S32;
+              } else {
+                immIndex = ctx.newImmediate(int64_t(msg*sizeof(uint64_t[4])));
+                immType = ir::TYPE_S64;
+              }
+
+              addr = ctx.reg(pointerFamily);
+              ctx.LOADI(immType, offset, immIndex);
+              ctx.ADD(immType, addr, ptr, offset);
+            }
+
+            // Emit the instruction
+            if (isLoad)
+              ctx.LOAD(type, tuple, addr, addrSpace, 4, true);
+            else
+              ctx.STORE(type, tuple, addr, addrSpace, 4, true);
+          }
+        }
+      } else
+        NOT_IMPLEMENTED;
     }
   }
 

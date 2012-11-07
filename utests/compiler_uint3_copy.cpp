@@ -38,4 +38,3 @@ static void compiler_uint3_copy(void)
 
 MAKE_UTEST_FROM_FUNCTION(compiler_uint3_copy);
 
-

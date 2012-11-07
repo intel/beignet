@@ -31,6 +31,8 @@ ADD_LIBRARY(utests SHARED
   compiler_sub_shorts.cpp
   compiler_uint2_copy.cpp
   compiler_uint3_copy.cpp
+  compiler_uint8_copy.cpp
+  compiler_uint16_copy.cpp
   compiler_uint3_unaligned_copy.cpp
   compiler_unstructured_branch0.cpp
   compiler_unstructured_branch1.cpp
