@@ -762,6 +762,37 @@ namespace gbe
         insn->setSrc(srcID, to);
   }
 
+  /*! lastUse maintains data about last uses (reads/writes) for each
+   * ir::Register
+   */
+  static void buildRegInfo(const ir::BasicBlock &bb, vector<RegInfoForMov> &lastUse)
+  {
+    // Clear the register usages
+    for (auto &x : lastUse) {
+      x.lastWrite = x.lastRead = 0;
+      x.lastWriteInsn = x.lastReadInsn = NULL;
+    }
+
+    // Find use intervals for all registers (distinguish sources and
+    // destinations)
+    uint32_t insnID = 2;
+    bb.foreach([&](ir::Instruction &insn) {
+      const uint32_t dstNum = insn.getDstNum();
+      const uint32_t srcNum = insn.getSrcNum();
+      for (uint32_t srcID = 0; srcID < srcNum; ++srcID) {
+        const ir::Register reg = insn.getSrc(srcID);
+        lastUse[reg].lastRead = insnID;
+        lastUse[reg].lastReadInsn = &insn;
+      }
+      for (uint32_t dstID = 0; dstID < dstNum; ++dstID) {
+        const ir::Register reg = insn.getDst(dstID);
+        lastUse[reg].lastWrite = insnID+1;
+        lastUse[reg].lastWriteInsn = &insn;
+      }
+      insnID+=2;
+    });
+  }
+
   void GenWriter::removeMOVs(const ir::Liveness &liveness, ir::Function &fn)
   {
     // We store the last write and last read for each register
@@ -772,8 +803,10 @@ namespace gbe
     // Remove the MOVs per block (local analysis only) Note that we do not try
     // to remove MOV for variables that outlives the block. So we use liveness
     // information to figure out which variable is alive
-    fn.foreachBlock([&](const ir::BasicBlock &bb) {
-      // Clear the register usages
+    fn.foreachBlock([&](const ir::BasicBlock &bb)
+    {
+#if 0
+        // Clear the register usages
       for (auto &x : lastUse) {
         x.lastWrite = x.lastRead = 0;
         x.lastWriteInsn = x.lastReadInsn = NULL;
@@ -797,7 +830,10 @@ namespace gbe
         }
         insnID+=2;
       });
-
+#else
+      // We need to know when each register will be read or written
+      buildRegInfo(bb, lastUse);
+#endif
       // Liveinfo helps us to know if the source outlives the block
       const ir::Liveness::BlockInfo &info = liveness.getBlockInfo(&bb);
 
@@ -842,8 +878,73 @@ namespace gbe
 
   void GenWriter::removeLOADIs(const ir::Liveness &liveness, ir::Function &fn)
   {
+    // We store the last write and last read for each register
+    const uint32_t regNum = fn.regNum();
+    vector<RegInfoForMov> lastUse;
+    lastUse.resize(regNum);
 
+    // Traverse all blocks and remove redundant immediates. Do *not* remove
+    // immediates that outlive the block
+    fn.foreachBlock([&](const ir::BasicBlock &bb)
+    {
+      // Each immediate that is already loaded in the block
+      map<ir::Immediate, ir::Register> loadedImm;
 
+      // Immediate to immediate translation
+      map<ir::Register, ir::Register> immTranslate;
+
+      // Liveinfo helps us to know if the loaded immediate outlives the block
+      const ir::Liveness::BlockInfo &info = liveness.getBlockInfo(&bb);
+
+      // We need to know when each register will be read or written
+      buildRegInfo(bb, lastUse);
+
+      // Top bottom traversal -> remove useless LOADIs
+      uint32_t insnID = 2;
+      bb.foreach([&](ir::Instruction &insn)
+      {
+        // We either try to remove the LOADI or we will try to use it as a
+        // replacement for the next same LOADIs
+        if (insn.isMemberOf<ir::LoadImmInstruction>()) {
+          ir::LoadImmInstruction &loadImm = cast<ir::LoadImmInstruction>(insn);
+          const ir::Immediate imm = loadImm.getImmediate();
+          const ir::Register dst = loadImm.getDst(0);
+
+          // Not here: cool, we put it in the map if the register is not
+          // overwritten. If it is, we just ignore it for simplicity. Note that
+          // it should not happen with the way we "unSSA" the code
+          auto it = loadedImm.find(imm);
+          auto end = loadedImm.end();
+          if (it == end && lastUse[dst].lastWrite == insnID+1)
+            loadedImm.insert(std::make_pair(imm, dst));
+          // We already pushed the same immediate and we do not outlive the
+          // block. We are good to replace this immediate by the previous one
+          else if (it != end && info.inLiveOut(dst) == false) {
+            immTranslate.insert(std::make_pair(dst, it->second));
+            insn.remove();
+          }
+        }
+        // Traverse all the destinations and sources and perform the
+        // substitutions (if any)
+        else {
+          const uint32_t srcNum = insn.getSrcNum();
+          const uint32_t dstNum = insn.getSrcNum();
+          for (uint32_t srcID = 0; srcID < srcNum; ++srcID) {
+            const ir::Register src = insn.getSrc(srcID);
+            auto it = immTranslate.find(src);
+            if (it != immTranslate.end())
+              insn.setSrc(srcID, it->second);
+          }
+          for (uint32_t dstID = 0; dstID < dstNum; ++dstID) {
+            const ir::Register dst = insn.getSrc(dstID);
+            auto it = immTranslate.find(dst);
+            if (it != immTranslate.end())
+              insn.setDst(dstID, it->second);
+          }
+        }
+        insnID += 2;
+      });
+    });
   }
 
   BVAR(OCL_OPTIMIZE_PHI_MOVES, true);

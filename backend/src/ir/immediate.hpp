@@ -71,6 +71,13 @@ namespace ir {
     GBE_CLASS(Immediate);
   };
 
+  /*! Compare two immediates */
+  INLINE bool operator< (const Immediate &imm0, const Immediate &imm1) {
+    if (imm0.type != imm1.type)
+      return uint32_t(imm0.type) < uint32_t(imm1.type);
+    return imm0.data.u64 < imm1.data.u64;
+  }
+
   /*! A value is stored in a per-function vector. This is the index to it */
   TYPE_SAFE(ImmediateIndex, uint16_t)
 
