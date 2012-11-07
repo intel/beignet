@@ -22,6 +22,64 @@
  * \author Benjamin Segovia <benjamin.segovia@intel.com>
  */
 
+/* This is the instruction scheduling part of the code. With Gen, we actually
+ * have a simple strategy to follow. Indeed, here are the constraints:
+ *
+ * 1 - the number of registers per HW thread is constant and given (128 32 bytes
+ * GRF per thread). So, we can use all these registers with no penalty
+ * 2 - spilling is super bad. Instruction latency matters but the top priority
+ * is to avoid as much as possible spilling
+ *
+ * Overall idea:
+ * =============
+ *
+ * We schedule twice using at each time a local forward list scheduler
+ *
+ * Before the register allocation
+ * ------------------------------
+ *
+ * We try to limit the register pressure.
+ * Well, this is a hard problem and we have a decent strategy now that we called
+ * "zero cycled LIFO scheduling".
+ * We use a local forward list scheduling and we schedule the instructions in a
+ * LIFO order i.e. as a stack. Basically, we take the most recent instruction
+ * and schedule it right away. Obviously we ignore completely the real latencies
+ * and throuputs and just simulate instructions that are issued and completed in
+ * zero cycle. For the complex kernels we already have (like menger sponge),
+ * this provides a pretty good strategy enabling SIMD16 code generation where
+ * when scheduling is deactivated, even SIMD8 fails
+ *
+ * One may argue that this strategy is bad, latency wise. This is not true since
+ * the register allocator will anyway try to burn as many registers as possible.
+ * So, there is still opportunities to schedule after register allocation.
+ *
+ * Our idea seems to work decently. There is however a strong research article
+ * that is able to near-optimally reschudle the instructions to minimize
+ * register use. This is:
+
+ * "Minimum Register Instruction Sequence Problem: Revisiting Optimal Code
+ *  Generation for DAGs"
+ *
+ * After the register allocation
+ * ------------------------------
+ *
+ * This is here a pretty simple strategy based on a regular forward list
+ * scheduling. Since Gen is a co-issue based machine, this is useless to take
+ * into account really precise timings since instruction issues will happen
+ * out-of-order based on other thread executions.
+ *
+ * Note that we over-simplify the problem. Indeed, Gen register file is flexible
+ * and we are able to use sub-registers of GRF in particular when we handle
+ * uniforms or mask registers which are spilled in GRFs. Thing is that two
+ * uniforms may not interfere even if they belong to the same GRF (i.e. they use
+ * two different sub-registers). This means that the interference relation is
+ * not transitive for Gen. To simplify everything, we just take consider full
+ * GRFs (in SIMD8) or double full GRFs (in SIMD16) regardless of the fact this
+ * is a uniform, a mask or a regular GRF.
+ *
+ * Obviously, this leads to extra dependencies in the code
+ */
+
 #include "backend/gen_insn_selection.hpp"
 #include "backend/gen_reg_allocation.hpp"
 #include "sys/cvar.hpp"
@@ -457,10 +515,19 @@ namespace gbe
         // toSchedule = this->ready.begin();
 
       if (toSchedule != this->ready.end()) {
-        cycle += getThroughputGen7(toSchedule->node->insn, isSIMD8);
+        // The instruction is instantaneously issued to simulate zero cycle
+        // scheduling
+        if (policy == POST_ALLOC)
+          cycle += getThroughputGen7(toSchedule->node->insn, isSIMD8);
+
         this->ready.erase(toSchedule);
         this->active.push_back(toSchedule.node());
-        toSchedule->node->retiredCycle = cycle + getLatencyGen7(toSchedule->node->insn);
+        // When we schedule before allocation, instruction is instantaneously
+        // ready. This allows to have a real LIFO strategy
+        if (policy == POST_ALLOC)
+          toSchedule->node->retiredCycle = cycle + getLatencyGen7(toSchedule->node->insn);
+        else
+          toSchedule->node->retiredCycle = cycle;
         bb.append(&toSchedule->node->insn);
         insnNum--;
       } else

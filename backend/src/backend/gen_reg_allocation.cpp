@@ -21,7 +21,6 @@
  * \file gen_reg_allocation.cpp
  * \author Benjamin Segovia <benjamin.segovia@intel.com>
  */
-
 #include "ir/profile.hpp"
 #include "ir/function.hpp"
 #include "backend/gen_insn_selection.hpp"

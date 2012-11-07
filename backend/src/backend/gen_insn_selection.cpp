@@ -1112,8 +1112,10 @@ namespace gbe
       using namespace ir;
 
       // MAD tend to increase liveness of the sources (since there are three of
-      // them)
-      if (sel.ctx.limitRegisterPressure)
+      // them). TODO refine this strategy. Well, we should be able at least to
+      // evaluate per basic block register pressure and selectively enable
+      // disable MADs
+       if (sel.ctx.limitRegisterPressure)
         return false;
 
       // We are good to try. We need a MUL for one of the two sources

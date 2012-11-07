@@ -38,9 +38,7 @@ float jinteresct(vec3 rO, vec3 rD, vec4 c, float *ao)
     vec4 z,nz;
     int update_ao = 1;
     *ao = 0.0f;
-    //for(t=0.0f;t<6.0;t+=dist)
-    t = 0.f;
-    for (int j = 0; j < 100; ++j)
+    for(t=0.0f;t<6.0f;t+=dist)
     {
         if (update_ao) *ao += 1.0f;
         vec3 p=rO+t*rD;
@@ -67,19 +65,11 @@ float jinteresct(vec3 rO, vec3 rD, vec4 c, float *ao)
          }
 
          dist=0.25f*sqrt(mz2/md2)*log(mz2);
-#if 1
-         if(dist<0.0005f)
-         {
-             res=t;
-             update_ao = 0;
-         }
-#else
          if(dist<0.0005f)
          {
              res=t;
              break;
          }
-#endif
          t+= dist;
     }
 

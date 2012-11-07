@@ -442,6 +442,24 @@ namespace gbe
       }
     });
 
+    // Backward jumps are special. We must insert the label of the next block
+    // when we hit the "DO" i.e. the target label of the backward branch (as in
+    // do { } while) . So, we store the bwd jumps per targets
+    // XXX does not use custom allocator
+    std::multimap<LabelIndex, LabelIndex> bwdTargets;
+    for (int32_t blockID = 0; blockID < blockNum; ++blockID) {
+      const LabelIndex ownLabel = braTargets[blockID].first;
+      const LabelIndex target = braTargets[blockID].second;
+      if (ownLabel == noTarget) continue; // unused block
+      if (target == noTarget) continue; // no branch
+      if (target <= ownLabel) { // This is a backward jump
+        // Last block is just "RET". So, it cannot be the last block
+        GBE_ASSERT(blockID < blockNum - 1);
+        const LabelIndex fallThrough = braTargets[blockID+1].first;
+        bwdTargets.insert(std::make_pair(target, fallThrough));
+      }
+    }
+
     // Stores the current forward targets
     set<LabelIndex> fwdTargets;
 
@@ -456,6 +474,11 @@ namespace gbe
       // Expires the branches that point to us (if any)
       auto it = fwdTargets.find(ownLabel);
       if (it != fwdTargets.end()) fwdTargets.erase(it);
+
+      // Insert the fall through of the bwd branches that point to us if any
+      auto ii = bwdTargets.equal_range(ownLabel);
+      for (auto it = ii.first; it != ii.second; ++it)
+        fwdTargets.insert(it->second);
 
       // If there is an outstanding forward branch, compute a JIP for the label
       auto lower = fwdTargets.lower_bound(LabelIndex(0));
