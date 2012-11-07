@@ -22,7 +22,10 @@
  * \author Benjamin Segovia <benjamin.segovia@intel.com>
  */
 
-/* This is the instruction scheduling part of the code. With Gen, we actually
+/*
+ * Overall idea:
+ *  =============
+ * This is the instruction scheduling part of the code. With Gen, we actually
  * have a simple strategy to follow. Indeed, here are the constraints:
  *
  * 1 - the number of registers per HW thread is constant and given (128 32 bytes
@@ -30,13 +33,11 @@
  * 2 - spilling is super bad. Instruction latency matters but the top priority
  * is to avoid as much as possible spilling
  *
- * Overall idea:
- * =============
  *
  * We schedule twice using at each time a local forward list scheduler
  *
  * Before the register allocation
- * ------------------------------
+ * ==============================
  *
  * We try to limit the register pressure.
  * Well, this is a hard problem and we have a decent strategy now that we called
@@ -61,7 +62,7 @@
  *  Generation for DAGs"
  *
  * After the register allocation
- * ------------------------------
+ * ==============================
  *
  * This is here a pretty simple strategy based on a regular forward list
  * scheduling. Since Gen is a co-issue based machine, this is useless to take
