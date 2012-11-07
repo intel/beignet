@@ -23,6 +23,7 @@
  */
 
 #include "backend/gen_insn_selection.hpp"
+#include "backend/gen_reg_allocation.hpp"
 #include "sys/cvar.hpp"
 #include "sys/intrusive_list.hpp"
 
@@ -68,6 +69,12 @@ namespace gbe
     GLOBAL_MEMORY = 0,
     LOCAL_MEMORY,
     MAX_MEM_SYSTEM
+  };
+
+  /*! Do we allocate after or before the register allocation? */
+  enum SchedulePolicy {
+    PRE_ALLOC = 0, // LIFO scheduling (tends to limit register pressure)
+    POST_ALLOC     // FIFO scheduling (limits latency problems)
   };
 
   /*! Helper structure to handle dependencies while scheduling. Takes into
@@ -127,20 +134,22 @@ namespace gbe
     /*! Stores the nodes per instruction */
     vector<ScheduleDAGNode*> insnNodes;
     /*! Number of virtual register in the selection */
-    uint32_t virtualNum;
+    uint32_t grfNum;
   };
 
   /*! Perform the instruction scheduling */
   struct SelectionScheduler : public NonCopyable
   {
     /*! Init the book keeping structures */
-    SelectionScheduler(GenContext &ctx, Selection &selection);
+    SelectionScheduler(GenContext &ctx, Selection &selection, SchedulePolicy policy);
     /*! Make all lists empty */
     void clearLists(void);
     /*! Return the number of instructions to schedule in the DAG */
     int32_t buildDAG(SelectionBlock &bb);
     /*! Schedule the DAG */
     void scheduleDAG(SelectionBlock &bb, int32_t insnNum);
+    /*! To limit register pressure or limit insn latency problems */
+    SchedulePolicy policy;
     /*! Make ScheduleListNode allocation faster */
     DECL_POOL(ScheduleListNode, listPool);
     /*! Make ScheduleDAGNode allocation faster */
@@ -160,8 +169,15 @@ namespace gbe
   DependencyTracker::DependencyTracker(const Selection &selection, SelectionScheduler &scheduler) :
     scheduler(scheduler)
   {
-    this->virtualNum = selection.getRegNum();
-    nodes.resize(virtualNum + MAX_FLAG_REGISTER + MAX_ACC_REGISTER + MAX_MEM_SYSTEM);
+    if (scheduler.policy == PRE_ALLOC) {
+      this->grfNum = selection.getRegNum();
+      nodes.resize(grfNum + MAX_FLAG_REGISTER + MAX_ACC_REGISTER + MAX_MEM_SYSTEM);
+    } else {
+      const uint32_t simdWidth = scheduler.ctx.getSimdWidth();
+      GBE_ASSERT(simdWidth == 8 || simdWidth == 16);
+      this->grfNum = simdWidth == 8 ? 128 : 64;
+      nodes.resize(grfNum + MAX_FLAG_REGISTER + MAX_ACC_REGISTER + MAX_MEM_SYSTEM);
+    }
     insnNodes.resize(selection.getLargestBlockSize());
   }
 
@@ -205,6 +221,7 @@ namespace gbe
   }
 
   uint32_t DependencyTracker::getIndex(GenRegister reg) const {
+    // Non GRF physical register
     if (reg.physical) {
       GBE_ASSERT (reg.file == GEN_ARCHITECTURE_REGISTER_FILE);
       const uint32_t file = reg.nr & 0xf0;
@@ -212,20 +229,28 @@ namespace gbe
       if (file == GEN_ARF_FLAG) {
         const uint32_t subnr = reg.subnr / sizeof(uint16_t);
         GBE_ASSERT(nr < MAX_FLAG_REGISTER && (subnr == 0 || subnr == 1));
-        return virtualNum + 2*nr + subnr;
+        return grfNum + 2*nr + subnr;
       } else if (file == GEN_ARF_ACCUMULATOR) {
         GBE_ASSERT(nr < MAX_ACC_REGISTER);
-        return virtualNum + MAX_FLAG_REGISTER + nr;
+        return grfNum + MAX_FLAG_REGISTER + nr;
       } else {
         NOT_SUPPORTED;
         return 0;
       }
-    } else
+    }
+    // We directly manipulate physical GRFs here
+    else if (scheduler.policy == POST_ALLOC) {
+      const GenRegister physical = scheduler.ctx.ra->genReg(reg);
+      const uint32_t simdWidth = scheduler.ctx.getSimdWidth();
+      return simdWidth == 8 ? physical.nr : physical.nr / 2;
+    }
+    // We use virtual registers since allocation is not done yet
+    else 
       return reg.value.reg;
   }
 
   uint32_t DependencyTracker::getIndex(uint32_t bti) const {
-    const uint32_t memDelta = virtualNum + MAX_FLAG_REGISTER + MAX_ACC_REGISTER;
+    const uint32_t memDelta = grfNum + MAX_FLAG_REGISTER + MAX_ACC_REGISTER;
     return bti == 0xfe ? memDelta + LOCAL_MEMORY : memDelta + GLOBAL_MEMORY;
   }
 
@@ -290,8 +315,10 @@ namespace gbe
     return 0;
   }
 
-  SelectionScheduler::SelectionScheduler(GenContext &ctx, Selection &selection) :
-    listPool(nextHighestPowerOf2(selection.getLargestBlockSize())),
+  SelectionScheduler::SelectionScheduler(GenContext &ctx,
+                                         Selection &selection,
+                                         SchedulePolicy policy) :
+    policy(policy), listPool(nextHighestPowerOf2(selection.getLargestBlockSize())),
     ctx(ctx), selection(selection), tracker(selection, *this)
   {
     this->clearLists();
@@ -422,7 +449,13 @@ namespace gbe
       }
 
       // Try to schedule something from the ready list
-      auto toSchedule = this->ready.begin();
+      intrusive_list<ScheduleListNode>::iterator toSchedule;
+      if (policy == POST_ALLOC) // FIFO scheduling
+        toSchedule = this->ready.begin();
+      else                      // LIFO scheduling
+        toSchedule = this->ready.rbegin();
+        // toSchedule = this->ready.begin();
+
       if (toSchedule != this->ready.end()) {
         cycle += getThroughputGen7(toSchedule->node->insn, isSIMD8);
         this->ready.erase(toSchedule);
@@ -435,11 +468,23 @@ namespace gbe
     }
   }
 
-  BVAR(OCL_SCHEDULE_INSN, true);
+  BVAR(OCL_POST_ALLOC_INSN_SCHEDULE, true);
+  BVAR(OCL_PRE_ALLOC_INSN_SCHEDULE, true);
+
+  void schedulePostRegAllocation(GenContext &ctx, Selection &selection) {
+    if (OCL_POST_ALLOC_INSN_SCHEDULE) {
+      SelectionScheduler scheduler(ctx, selection, POST_ALLOC);
+      for (auto &bb : *selection.blockList) {
+        const int32_t insnNum = scheduler.buildDAG(bb);
+        bb.insnList.clear();
+        scheduler.scheduleDAG(bb, insnNum);
+      }
+    }
+  }
 
   void schedulePreRegAllocation(GenContext &ctx, Selection &selection) {
-    if (OCL_SCHEDULE_INSN) {
-      SelectionScheduler scheduler(ctx, selection);
+    if (OCL_PRE_ALLOC_INSN_SCHEDULE) {
+      SelectionScheduler scheduler(ctx, selection, PRE_ALLOC);
       for (auto &bb : *selection.blockList) {
         const int32_t insnNum = scheduler.buildDAG(bb);
         bb.insnList.clear();

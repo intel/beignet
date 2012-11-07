@@ -46,19 +46,43 @@ namespace gbe {
   GenProgram::GenProgram(void) {}
   GenProgram::~GenProgram(void) {}
 
-  Kernel *GenProgram::compileKernel(const ir::Unit &unit, const std::string &name) {
-    Context *ctx = GBE_NEW(GenContext, unit, name);
-    Kernel *kernel = ctx->compileKernel();
+  /*! We must avoid spilling at all cost with Gen */
+  static const struct CodeGenStrategy {
+    uint32_t simdWidth;
+    bool limitRegisterPressure;
+  } codeGenStrategy[] = {
+    {16,false},
+    {16,true},
+    {8,false},
+    {8,true},
+  };
 
-    // register allocation may fail. We may need to recompile in that case
-    if (kernel == NULL) {
-      GBE_SAFE_DELETE(ctx);
-      unit.getFunction(name)->setSimdWidth(8);
-      ctx = GBE_NEW(GenContext, unit, name);
+  Kernel *GenProgram::compileKernel(const ir::Unit &unit, const std::string &name) {
+
+    // Be careful when the simdWidth is forced by the programmer. We can see it
+    // when the function already provides the simd width we need to use (i.e.
+    // non zero)
+    const ir::Function *fn = unit.getFunction(name);
+    const uint32_t codeGenNum = fn->getSimdWidth() != 0 ? 2 : 4;
+    uint32_t codeGen = fn->getSimdWidth() == 8 ? 2 : 0;
+    Kernel *kernel = NULL;
+
+    // Stop when compilation is successful
+    for (; codeGen < codeGenNum; ++codeGen) {
+      const uint32_t simdWidth = codeGenStrategy[codeGen].simdWidth;
+      const bool limitRegisterPressure = codeGenStrategy[codeGen].limitRegisterPressure;
+
+      // Force the SIMD width now and try to compile
+      unit.getFunction(name)->setSimdWidth(simdWidth);
+      Context *ctx = GBE_NEW(GenContext, unit, name, limitRegisterPressure);
       kernel = ctx->compileKernel();
-      GBE_ASSERT(kernel != NULL); // XXX spill must be implemented
+      GBE_DELETE(ctx);
+      if (kernel != NULL)
+        break;
     }
-    GBE_DELETE(ctx);
+
+    // XXX spill must be implemented
+    GBE_ASSERTM(kernel != NULL, "Register spilling not supported yet!");
     return kernel;
   }
 

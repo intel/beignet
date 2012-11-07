@@ -71,7 +71,7 @@ DECL_SHADER_TOY_TEST(dim,dim,compiler_clod);
 DECL_SHADER_TOY_TEST(dim,dim,compiler_ribbon);
 DECL_SHADER_TOY_TEST(dim,dim,compiler_chocolux);
 DECL_SHADER_TOY_TEST(dim,dim,compiler_nautilus);
-DECL_SHADER_TOY_TEST(dim,dim,compiler_menger_sponge);
+// DECL_SHADER_TOY_TEST(dim,dim,compiler_menger_sponge);
 DECL_SHADER_TOY_TEST(dim,dim,compiler_julia);
 
 #undef DECL_SHADER_TOY_TEST

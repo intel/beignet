@@ -27,6 +27,7 @@
 #include "backend/gen_defs.hpp"
 #include "backend/gen_encoder.hpp"
 #include "backend/gen_insn_selection.hpp"
+#include "backend/gen_insn_scheduling.hpp"
 #include "backend/gen_reg_allocation.hpp"
 #include "backend/gen/gen_mesa_disasm.h"
 #include "ir/function.hpp"
@@ -38,8 +39,10 @@ namespace gbe
   ///////////////////////////////////////////////////////////////////////////
   // GenContext implementation
   ///////////////////////////////////////////////////////////////////////////
-  GenContext::GenContext(const ir::Unit &unit, const std::string &name) :
-    Context(unit, name)
+  GenContext::GenContext(const ir::Unit &unit,
+                         const std::string &name,
+                         bool limitRegisterPressure) :
+    Context(unit, name), limitRegisterPressure(limitRegisterPressure)
   {
     this->p = GBE_NEW(GenEncoder, simdWidth, 7); // XXX handle more than Gen7
     this->sel = GBE_NEW(Selection, *this);
@@ -248,8 +251,10 @@ namespace gbe
   bool GenContext::emitCode(void) {
     GenKernel *genKernel = static_cast<GenKernel*>(this->kernel);
     sel->select();
+    schedulePreRegAllocation(*this, *this->sel);
     if (UNLIKELY(ra->allocate(*this->sel) == false))
       return false;
+    schedulePostRegAllocation(*this, *this->sel);
     this->emitStackPointer();
     this->emitInstructionStream();
     this->patchBranches();

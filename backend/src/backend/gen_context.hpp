@@ -50,7 +50,7 @@ namespace gbe
     /*! Create a new context. name is the name of the function we want to
      *  compile
      */
-    GenContext(const ir::Unit &unit, const std::string &name);
+    GenContext(const ir::Unit &unit, const std::string &name, bool limitRegisterPressure = false);
     /*! Release everything needed */
     ~GenContext(void);
     /*! Implements base class */
@@ -101,6 +101,10 @@ namespace gbe
     Selection *sel;
     /*! Perform the register allocation */
     GenRegAllocator *ra;
+    /*! Indicate if we need to tackle a register pressure issue when
+     * regenerating the code
+     */
+    bool limitRegisterPressure;
   };
 
 } /* namespace gbe */

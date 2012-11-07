@@ -25,7 +25,6 @@
 #include "ir/profile.hpp"
 #include "ir/function.hpp"
 #include "backend/gen_insn_selection.hpp"
-#include "backend/gen_insn_scheduling.hpp"
 #include "backend/gen_reg_allocation.hpp"
 #include "backend/gen_register.hpp"
 #include "backend/program.hpp"
@@ -499,7 +498,7 @@ namespace gbe
 
     // Allocate all the vectors first since they need to be contiguous
     this->allocateVector(selection);
-    schedulePreRegAllocation(ctx, selection);
+    // schedulePreRegAllocation(ctx, selection);
 
     // Now start the linear scan allocation
     for (uint32_t regID = 0; regID < ctx.sel->getRegNum(); ++regID)

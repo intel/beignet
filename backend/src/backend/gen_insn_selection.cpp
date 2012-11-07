@@ -1813,9 +1813,6 @@ namespace gbe
   }
 
   SelectionLibrary::SelectionLibrary(void) {
-    /*! Force MAD pattern */
-    BVAR(OCL_FORCE_MAD_PATTERN, false);
-
     this->insert<UnaryInstructionPattern>();
     this->insert<BinaryInstructionPattern>();
     this->insert<TernaryInstructionPattern>();
@@ -1832,8 +1829,7 @@ namespace gbe
     this->insert<BranchInstructionPattern>();
     this->insert<Int32x32MulInstructionPattern>();
     this->insert<Int32x16MulInstructionPattern>();
-    if (OCL_FORCE_MAD_PATTERN)
-      this->insert<MulAddInstructionPattern>();
+    this->insert<MulAddInstructionPattern>();
 
     // Sort all the patterns with the number of instructions they output
     for (uint32_t op = 0; op < ir::OP_INVALID; ++op)

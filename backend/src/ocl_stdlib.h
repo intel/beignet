@@ -153,7 +153,10 @@ INLINE OVERLOADABLE float fmod(float x, float y) { return x-y*trunc(x/y); }
 #define sin native_sin
 #define pow powr
 
-PURE CONST OVERLOADABLE float mad(float a, float b, float c);
+//PURE CONST OVERLOADABLE float mad(float a, float b, float c);
+INLINE OVERLOADABLE float mad(float a, float b, float c) {
+  return a*b+c;
+}
 
 INLINE OVERLOADABLE uint select(uint src0, uint src1, uint cond) {
   return cond ? src1 : src0;
