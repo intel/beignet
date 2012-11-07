@@ -198,7 +198,13 @@ namespace gbe
   void GenContext::emitCompareInstruction(const SelectionInstruction &insn) {
     const GenRegister src0 = ra->genReg(insn.src(0));
     const GenRegister src1 = ra->genReg(insn.src(1));
-    p->CMP(insn.extra.function, src0, src1);
+    if (insn.opcode == SEL_OP_CMP)
+      p->CMP(insn.extra.function, src0, src1);
+    else {
+      GBE_ASSERT(insn.opcode == SEL_OP_SEL_CMP);
+      const GenRegister dst = ra->genReg(insn.dst(0));
+      p->SEL_CMP(insn.extra.function, dst, src0, src1);
+    }
   }
 
   void GenContext::emitJumpInstruction(const SelectionInstruction &insn) {

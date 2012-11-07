@@ -191,13 +191,6 @@ namespace gbe
     virtual ~SelectionPattern(void) {}
     /*! Emit Gen code in the selection. Return false if no match */
     virtual bool emit(Selection::Opaque &sel, SelectionDAG &dag) const = 0;
-    /*! Directly mark all sources as root (when no match is found) */
-    void markAllChildren(SelectionDAG &dag) const {
-      // Do not merge anything, so all sources become roots
-      for (uint32_t childID = 0; childID < dag.childNum; ++childID)
-        if (dag.child[childID]) 
-          dag.child[childID]->isRoot = 1;
-    }
     /*! All the possible opcodes for this pattern (for fast sort) */
     vector<ir::Opcode> opcodes;
     /*! Number of instruction generated */
@@ -380,6 +373,8 @@ namespace gbe
     void JMPI(Reg src, ir::LabelIndex target);
     /*! Compare instructions */
     void CMP(uint32_t conditional, Reg src0, Reg src1);
+    /*! Select instruction with embedded comparison */
+    void SEL_CMP(uint32_t conditional, Reg dst, Reg src0, Reg src1);
     /*! EOT is used to finish GPGPU threads */
     void EOT(void);
     /*! No-op */
@@ -409,6 +404,33 @@ namespace gbe
     friend class SelectionBlock;
     friend class SelectionInstruction;
   };
+
+  ///////////////////////////////////////////////////////////////////////////
+  // Helper function
+  ///////////////////////////////////////////////////////////////////////////
+
+  /*! Directly mark all sources as root (when no match is found) */
+  static void markAllChildren(SelectionDAG &dag) {
+    // Do not merge anything, so all sources become roots
+    for (uint32_t childID = 0; childID < dag.childNum; ++childID)
+      if (dag.child[childID]) 
+        dag.child[childID]->isRoot = 1;
+  }
+
+  /*! Helper function to figure if two sources are the same */
+  static bool sourceMatch(SelectionDAG *src0DAG, uint32_t src0ID,
+                          SelectionDAG *src1DAG, uint32_t src1ID)
+  {
+    GBE_ASSERT(src0DAG && src1DAG);
+    // Ensure they are the same physical registers
+    const ir::Register src0 = src0DAG->insn.getSrc(src0ID);
+    const ir::Register src1 = src1DAG->insn.getSrc(src1ID);
+    if (src0 != src1)
+      return false;
+    // Ensure they contain the same values
+    return src0DAG->child[src0ID] == src1DAG->child[src1ID];
+  }
+
 
   Selection::Opaque::Opaque(GenContext &ctx) :
     ctx(ctx), block(NULL),
@@ -591,6 +613,14 @@ namespace gbe
 
   void Selection::Opaque::CMP(uint32_t conditional, Reg src0, Reg src1) {
     SelectionInstruction *insn = this->appendInsn(SEL_OP_CMP, 0, 2);
+    insn->src(0) = src0;
+    insn->src(1) = src1;
+    insn->extra.function = conditional;
+  }
+
+  void Selection::Opaque::SEL_CMP(uint32_t conditional, Reg dst, Reg src0, Reg src1) {
+    SelectionInstruction *insn = this->appendInsn(SEL_OP_SEL_CMP, 1, 2);
+    insn->dst(0) = dst;
     insn->src(0) = src0;
     insn->src(1) = src1;
     insn->extra.function = conditional;
@@ -942,7 +972,7 @@ namespace gbe
     /*! Call the child method with the proper prototype */
     virtual bool emit(Selection::Opaque &sel, SelectionDAG &dag) const {
       if (static_cast<const T*>(this)->emitOne(sel, ir::cast<U>(dag.insn))) {
-        this->markAllChildren(dag);
+        markAllChildren(dag);
         return true;
       }
       return false;
@@ -1031,7 +1061,7 @@ namespace gbe
                                 GEN_MATH_FUNCTION_FDIV :
                                 GEN_MATH_FUNCTION_POW;
         sel.MATH(dst, mathOp, src0, src1);
-        this->markAllChildren(dag);
+        markAllChildren(dag);
         return true;
       }
 
@@ -1067,7 +1097,7 @@ namespace gbe
       else {
         src0 = sel.selReg(insn.getSrc(0), type);
         src1 = sel.selReg(insn.getSrc(1), type);
-        this->markAllChildren(dag);
+        markAllChildren(dag);
       }
 
       // Output the binary instruction
@@ -1151,6 +1181,67 @@ namespace gbe
     }
   };
 
+  /*! sel.{le,l,ge...} like patterns */
+  class SelectModifierInstructionPattern : public SelectionPattern
+  {
+  public:
+    /*! Register the pattern for all opcodes of the family */
+    SelectModifierInstructionPattern(void) : SelectionPattern(2, 1) {
+      this->opcodes.push_back(ir::OP_SEL);
+    }
+
+    /*! Implements base class */
+    virtual bool emit(Selection::Opaque &sel, SelectionDAG &dag) const
+    {
+      using namespace ir;
+      SelectionDAG *cmp = dag.child[0];
+      const SelectInstruction &insn = cast<SelectInstruction>(dag.insn);
+
+      // Not in this block
+      if (cmp == NULL) return false;
+
+      // We need to match a compare
+      if (cmp->insn.isMemberOf<CompareInstruction>() == false) return false;
+
+      // We look for something like that:
+      // cmp.{le,ge...} flag src0 src1
+      // sel dst flag src0 src1
+      // So both sources must match
+      if (sourceMatch(cmp, 0, &dag, 1) == false) return false;
+      if (sourceMatch(cmp, 1, &dag, 2) == false) return false;
+
+      // OK, we merge the instructions
+      const ir::CompareInstruction &cmpInsn = cast<CompareInstruction>(cmp->insn);
+      const ir::Opcode opcode = cmpInsn.getOpcode();
+      const uint32_t genCmp = getGenCompare(opcode);
+
+      // Like for regular selects, we need a temporary since we cannot predicate
+      // properly
+      const ir::Type type = cmpInsn.getType();
+      const RegisterFamily family = getFamily(type);
+      const GenRegister tmp = sel.selReg(sel.reg(family), type);
+      const uint32_t simdWidth = sel.curr.execWidth;
+      const GenRegister dst  = sel.selReg(insn.getDst(0), type);
+      const GenRegister src0 = sel.selReg(cmpInsn.getSrc(0), type);
+      const GenRegister src1 = sel.selReg(cmpInsn.getSrc(1), type);
+
+      sel.push();
+        sel.curr.predicate = GEN_PREDICATE_NONE;
+        sel.curr.execWidth = simdWidth;
+        sel.curr.physicalFlag = 0;
+        sel.SEL_CMP(genCmp, tmp, src0, src1);
+      sel.pop();
+
+      // Update the destination register properly now
+      sel.MOV(dst, tmp);
+
+      // We need the sources of the compare instruction
+      markAllChildren(*cmp);
+
+      return true;
+    }
+  };
+
   /*! 32 bits integer multiply needs more instructions */
   class Int32x32MulInstructionPattern : public SelectionPattern
   {
@@ -1161,7 +1252,7 @@ namespace gbe
     }
 
     /*! Implements base class */
-    virtual bool emit(Selection::Opaque  &sel, SelectionDAG &dag) const
+    virtual bool emit(Selection::Opaque &sel, SelectionDAG &dag) const
     {
       using namespace ir;
       const ir::BinaryInstruction &insn = cast<ir::BinaryInstruction>(dag.insn);
@@ -1206,7 +1297,7 @@ namespace gbe
         sel.pop();
 
         // All children are marked as root
-        this->markAllChildren(dag);
+        markAllChildren(dag);
         return true;
       } else
         return false;
@@ -1280,7 +1371,7 @@ namespace gbe
         sel.MUL(sel.selReg(dst, type),
                 sel.selReg(src1, type),
                 sel.selReg(src0, TYPE_U16));
-        this->markAllChildren(dag);
+        markAllChildren(dag);
         return true;
       }
       return false;
@@ -1518,7 +1609,7 @@ namespace gbe
       } else {
         src0 = sel.selReg(insn.getSrc(0), type);
         src1 = sel.selReg(insn.getSrc(1), type);
-        this->markAllChildren(dag);
+        markAllChildren(dag);
       }
 
       sel.push();
@@ -1599,7 +1690,7 @@ namespace gbe
       } else {
         src0 = sel.selReg(insn.getSrc(SelectInstruction::src0Index), type);
         src1 = sel.selReg(insn.getSrc(SelectInstruction::src1Index), type);
-        this->markAllChildren(dag);
+        markAllChildren(dag);
       }
 
       // Since we cannot predicate the select instruction with our current mask,
@@ -1839,6 +1930,7 @@ namespace gbe
     this->insert<Int32x32MulInstructionPattern>();
     this->insert<Int32x16MulInstructionPattern>();
     this->insert<MulAddInstructionPattern>();
+    this->insert<SelectModifierInstructionPattern>();
 
     // Sort all the patterns with the number of instructions they output
     for (uint32_t op = 0; op < ir::OP_INVALID; ++op)

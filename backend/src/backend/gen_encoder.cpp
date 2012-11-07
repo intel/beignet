@@ -147,7 +147,7 @@ namespace gbe
     else
       NOT_SUPPORTED;
   }
-
+#if 0
   static void setOBlockRW(GenEncoder *p,
                           GenInstruction *insn,
                           uint32_t bti,
@@ -164,6 +164,7 @@ namespace gbe
     insn->bits3.gen7_oblock_rw.block_size = size == 2 ? 2 : 3;
     insn->bits3.gen7_oblock_rw.header_present = 1;
   }
+#endif
 
   static void setSamplerMessage(GenEncoder *p,
                                 GenInstruction *insn,
@@ -714,6 +715,20 @@ namespace gbe
       this->setSrc0(insnQ2, GenRegister::Qn(src0, 1));
       this->setSrc1(insnQ2, GenRegister::Qn(src1, 1));
     }
+  }
+
+  void GenEncoder::SEL_CMP(uint32_t conditional,
+                           GenRegister dst,
+                           GenRegister src0,
+                           GenRegister src1)
+  {
+    GenInstruction *insn = this->next(GEN_OPCODE_SEL);
+    GBE_ASSERT(curr.predicate == GEN_PREDICATE_NONE);
+    this->setHeader(insn);
+    insn->header.destreg_or_condmod = conditional;
+    this->setDst(insn, dst);
+    this->setSrc0(insn, src0);
+    this->setSrc1(insn, src1);
   }
 
   void GenEncoder::WAIT(void) {

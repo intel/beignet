@@ -24,7 +24,8 @@
 
 /*
  * Overall idea:
- *  =============
+ * =============
+ *
  * This is the instruction scheduling part of the code. With Gen, we actually
  * have a simple strategy to follow. Indeed, here are the constraints:
  *
@@ -57,7 +58,7 @@
  * Our idea seems to work decently. There is however a strong research article
  * that is able to near-optimally reschudle the instructions to minimize
  * register use. This is:
-
+ *
  * "Minimum Register Instruction Sequence Problem: Revisiting Optimal Code
  *  Generation for DAGs"
  *
@@ -78,7 +79,7 @@
  * GRFs (in SIMD8) or double full GRFs (in SIMD16) regardless of the fact this
  * is a uniform, a mask or a regular GRF.
  *
- * Obviously, this leads to extra dependencies in the code
+ * Obviously, this leads to extra dependencies in the code.
  */
 
 #include "backend/gen_insn_selection.hpp"

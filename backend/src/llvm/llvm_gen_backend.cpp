@@ -404,7 +404,9 @@ namespace gbe
     /*! Helper function to emit loads and stores */
     template <bool isLoad, typename T> void emitLoadOrStore(T &I);
     /*! Will try to remove MOVs due to PHI resolution */
-    void removeMOVs(ir::Function &fn);
+    void removeMOVs(const ir::Liveness &liveness, ir::Function &fn);
+    /*! Will try to remove redundants LOADI in basic blocks */
+    void removeLOADIs(const ir::Liveness &liveness, ir::Function &fn);
 
     // Currently supported instructions
 #define DECL_VISIT_FN(NAME, TYPE) \
@@ -760,18 +762,16 @@ namespace gbe
         insn->setSrc(srcID, to);
   }
 
-  void GenWriter::removeMOVs(ir::Function &fn)
+  void GenWriter::removeMOVs(const ir::Liveness &liveness, ir::Function &fn)
   {
     // We store the last write and last read for each register
     const uint32_t regNum = fn.regNum();
     vector<RegInfoForMov> lastUse;
     lastUse.resize(regNum);
 
-    // We do not try to remove MOV for variables that outlives the block. So we
-    // use liveness information to figure out which variable is alive
-    const ir::Liveness liveness(const_cast<ir::Function&>(fn));
-
-    // Remove the MOVs per block (local analysis only)
+    // Remove the MOVs per block (local analysis only) Note that we do not try
+    // to remove MOV for variables that outlives the block. So we use liveness
+    // information to figure out which variable is alive
     fn.foreachBlock([&](const ir::BasicBlock &bb) {
       // Clear the register usages
       for (auto &x : lastUse) {
@@ -840,7 +840,14 @@ namespace gbe
     });
   }
 
+  void GenWriter::removeLOADIs(const ir::Liveness &liveness, ir::Function &fn)
+  {
+
+
+  }
+
   BVAR(OCL_OPTIMIZE_PHI_MOVES, true);
+  BVAR(OCL_OPTIMIZE_LOADI, true);
 
   void GenWriter::emitFunction(Function &F)
   {
@@ -879,8 +886,11 @@ namespace gbe
     ir::Function &fn = ctx.getFunction();
     ctx.endFunction();
 
-    if (OCL_OPTIMIZE_PHI_MOVES)
-      this->removeMOVs(fn);
+    // Liveness can be shared when we optimized the immediates and the MOVs
+    const ir::Liveness liveness(const_cast<ir::Function&>(fn));
+
+    if (OCL_OPTIMIZE_LOADI) this->removeLOADIs(liveness, fn);
+    if (OCL_OPTIMIZE_PHI_MOVES) this->removeMOVs(liveness, fn);
   }
 
   void GenWriter::regAllocateReturnInst(ReturnInst &I) {}
