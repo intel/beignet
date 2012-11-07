@@ -1110,6 +1110,13 @@ namespace gbe
     virtual bool emit(Selection::Opaque  &sel, SelectionDAG &dag) const
     {
       using namespace ir;
+
+      // MAD tend to increase liveness of the sources (since there are three of
+      // them)
+      if (sel.ctx.limitRegisterPressure)
+        return false;
+
+      // We are good to try. We need a MUL for one of the two sources
       const ir::BinaryInstruction &insn = cast<ir::BinaryInstruction>(dag.insn);
       if (insn.getType() != TYPE_FLOAT)
         return false;
