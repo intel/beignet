@@ -267,9 +267,7 @@ namespace ir {
     for (const auto &pair : set.defMap) {
       // To recognize the block, just print its instructions
       out << "Block:" << std::endl;
-      pair.first->foreach([&out] (const Instruction &insn) {
-        out << insn << std::endl;
-      });
+      for (const auto &insn : *pair.first) out << insn << std::endl;
 
       // Iterate over all alive registers to get their definitions
       const LiveOutSet::BlockDefMap *defMap = pair.second;
@@ -360,7 +358,7 @@ namespace ir {
       set<DefSet*> unused;
 
       // For each instruction build the UD chains
-      bb.foreach([&](const Instruction &insn) {
+      const_cast<BasicBlock&>(bb).foreach([&](const Instruction &insn) {
         // Instruction sources consumes definitions
         const uint32_t srcNum = insn.getSrcNum();
         for (uint32_t srcID = 0; srcID < srcNum; ++srcID) {

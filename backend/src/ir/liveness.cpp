@@ -42,7 +42,7 @@ namespace ir {
     GBE_ASSERT(liveness.contains(&bb) == false);
     BlockInfo *info = GBE_NEW(BlockInfo, bb);
     // Traverse all instructions to handle UEVar and VarKill
-    bb.foreach([this, info](const Instruction &insn) {
+    const_cast<BasicBlock&>(bb).foreach([this, info](const Instruction &insn) {
       this->initInstruction(*info, insn);
     });
     liveness[&bb] = info;
@@ -104,10 +104,10 @@ namespace ir {
     POS_HERE = 1,
     POS_AFTER = 2
   };
-
+#if OLD_VERSION
   /*! Compute the use of a register in all direction in a block */
   template <UsePosition pos>
-  static INLINE uint32_t usage(const Instruction &insn, Register reg) {
+  static uint32_t usage(const Instruction &insn, Register reg) {
     const Instruction *curr = &insn;
     uint32_t use = USE_NONE;
 
@@ -250,7 +250,7 @@ namespace ir {
     });
     return out;
   }
-
+#endif
 } /* namespace ir */
 } /* namespace gbe */
 

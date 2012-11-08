@@ -794,7 +794,7 @@ namespace gbe
 
     // Build the DAG on the fly
     uint32_t insnNum = 0;
-    bb.foreach([&](const Instruction &insn) {
+    const_cast<BasicBlock&>(bb).foreach([&](const Instruction &insn) {
 
       // Build a selectionDAG node for instruction
       SelectionDAG *dag = this->newSelectionDAG(insn);

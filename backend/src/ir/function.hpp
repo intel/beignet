@@ -47,7 +47,7 @@ namespace ir {
    *      file
    *  2 - branches point to basic blocks of the same function
    */
-  class BasicBlock : public NonCopyable
+  class BasicBlock : public NonCopyable, public intrusive_list<Instruction>
   {
   public:
     /*! Empty basic block */
@@ -56,16 +56,22 @@ namespace ir {
     ~BasicBlock(void);
     /*! Append a new instruction in the stream */
     void append(Instruction &insn) {
+#if OLD_VERSION
       if (last != NULL) last->setSuccessor(&insn);
       if (first == NULL) first = &insn;
       insn.setParent(this);
       insn.setSuccessor(NULL);
       insn.setPredecessor(last);
       last = &insn;
+#else
+      insn.setParent(this);
+      this->push_back(&insn);
+#endif
     }
     /*! Apply the given functor on all instructions */
     template <typename T>
-    INLINE void foreach(const T &functor) const {
+    INLINE void foreach(const T &functor) {
+#if OLD_VERSION
       Instruction *curr = first;
       while (curr) {
         // Be aware the current instruction can be destroyed in functor
@@ -73,10 +79,18 @@ namespace ir {
         functor(*curr);
         curr = succ;
       }
+#else
+      auto it = this->begin();
+      while (it != this->end()) {
+        auto curr = it++;
+        functor(*curr);
+      }
+#endif
     }
     /*! Apply the given functor on all instructions (reverse order) */
     template <typename T>
     INLINE void rforeach(const T &functor) const {
+#if OLD_VERSION
       Instruction *curr = last;
       while (curr) {
         // Be aware the current instruction can be destroyed in functor
@@ -84,6 +98,17 @@ namespace ir {
         functor(*curr);
         curr = pred;
       }
+#else
+      if (this->end() != this->begin()) {
+        auto it = --this->end();
+        for (;;) {
+          auto curr = it--;
+          functor(*curr);
+          if (curr == this->begin())
+            break;
+        }
+      }
+#endif
     }
     /*! Get the parent function */
     Function &getParent(void) { return fn; }
@@ -92,18 +117,32 @@ namespace ir {
     BasicBlock *getNextBlock(void) const { return this->nextBlock; }
     BasicBlock *getPrevBlock(void) const { return this->prevBlock; }
     /*! Get / set the first and last instructions */
+#if OLD_VERSION
     Instruction *getFirstInstruction(void) const { return this->first; }
     Instruction *getLastInstruction(void) const { return this->last; }
     void setFirstInstruction(Instruction *insn) { this->first = insn; }
     void setLastInstruction(Instruction *insn) { this->last = insn; }
+#else
+    Instruction *getFirstInstruction(void) const { return &const_cast<Instruction&>(*this->begin()); }
+    Instruction *getLastInstruction(void) const { return &const_cast<Instruction&>(*(--this->end())); }
+#endif
     /*! Get successors and predecessors */
     const BlockSet &getSuccessorSet(void) const { return successors; }
     const BlockSet &getPredecessorSet(void) const { return predecessors; }
+#if OLD_VERSION
     /*! Get the label index of this block */
     LabelIndex getLabelIndex(void) const {
       const LabelInstruction *label = cast<LabelInstruction>(this->first);
       return label->getLabelIndex();
     }
+#else
+    /*! Get the label index of this block */
+    LabelIndex getLabelIndex(void) const {
+      const Instruction *first = this->getFirstInstruction();
+      const LabelInstruction *label = cast<LabelInstruction>(first);
+      return label->getLabelIndex();
+    }
+#endif
     /*! Get the number of instructions in the block (costly!) */
     uint32_t getInstructionNum(void) const;
   private:
@@ -112,8 +151,10 @@ namespace ir {
     BlockSet successors;   //!< Outgoing blocks
     BasicBlock *nextBlock; //!< Block allocated just after this one
     BasicBlock *prevBlock; //!< Block allocated just before this one
+#if 0
     Instruction *first;    //!< First instruction in the block
     Instruction *last;     //!< Last instruction in the block
+#endif
     Function &fn;          //!< Function the block belongs to
     GBE_CLASS(BasicBlock);
   };

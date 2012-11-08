@@ -28,11 +28,14 @@
 #include "ir/immediate.hpp"
 #include "ir/type.hpp"
 #include "sys/platform.hpp"
+#include "sys/intrusive_list.hpp"
 
 #include <ostream>
 
 namespace gbe {
 namespace ir {
+
+#define OLD_VERSION 0
 
   /*! All opcodes */
   enum Opcode : uint8_t {
@@ -98,13 +101,25 @@ namespace ir {
 
   /*! Store the instruction description in 32 bytes */
   class Instruction : public InstructionBase
+#if OLD_VERSION == 0
+                      , public intrusive_list_node
+#endif
   {
   public:
     /*! Initialize the instruction from a 8 bytes stream */
     INLINE Instruction(const char *stream) : InstructionBase(stream) {
       parent = NULL;
-      predecessor = successor = NULL;
     }
+    /*! Copy the private fields and give it the same parent */
+    INLINE Instruction(const Instruction &other) :
+      Instruction(reinterpret_cast<const char*>(&other.opcode))
+    {}
+  private:
+    /*! To be consistant with copy constructor */
+    Instruction &operator= (const Instruction &other) { return *this; }
+  public:
+    /*! Nothing to do here */
+    INLINE ~Instruction(void) {}
     /*! Uninitialized instruction */
     INLINE Instruction(void) {}
     /*! Get the number of sources for this instruction  */
@@ -125,6 +140,7 @@ namespace ir {
     void setDst(uint32_t dstID, Register reg);
     /*! Is there any side effect in the memory sub-system? */
     bool hasSideEffect(void) const;
+#if OLD_VERSION
     /*! Get / set the previous instruction in the stream */
     Instruction *getPredecessor(bool stayInBlock = true);
     const Instruction *getPredecessor(bool stayInBlock = true) const;
@@ -133,6 +149,7 @@ namespace ir {
     Instruction *getSuccessor(bool stayInBlock = true);
     const Instruction *getSuccessor(bool stayInBlock = true) const;
     void setSuccessor(Instruction *insn) { this->successor = insn; }
+#endif
     /*! Get / set the parent basic block */
     BasicBlock *getParent(void) { return parent; }
     const BasicBlock *getParent(void) const { return parent; }
@@ -158,8 +175,10 @@ namespace ir {
     static const uint32_t MAX_SRC_NUM = 8;
     static const uint32_t MAX_DST_NUM = 8;
   protected:
+#if OLD_VERSION
     Instruction *predecessor;//!< Previous instruction in the basic block
     Instruction *successor;  //!< Next instruction in the basic block
+#endif
     BasicBlock *parent;      //!< The basic block containing the instruction
     GBE_CLASS(Instruction);  //!< Use internal allocators
   };

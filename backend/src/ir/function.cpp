@@ -36,7 +36,8 @@ namespace ir {
 
   uint32_t BasicBlock::getInstructionNum(void) const {
     uint32_t insnNum = 0;
-    this->foreach([&insnNum](const Instruction &insn) { insnNum++; });
+    const_cast<BasicBlock*>(this)->foreach([&insnNum](const Instruction &insn)
+    { insnNum++; });
     return insnNum;
   }
 
@@ -167,12 +168,28 @@ namespace ir {
         bb.predecessors.insert(jumpToNext);
         jumpToNext = NULL;
       }
+#if OLD_VERSION
       if (bb.last == NULL) return;
+#else
+      if (bb.size() == 0) return;
+#endif
+#if OLD_VERSION
       if (bb.last->isMemberOf<BranchInstruction>() == false) {
         jumpToNext = &bb;
         return;
       }
+#else
+      Instruction *last = bb.getLastInstruction();
+      if (last->isMemberOf<BranchInstruction>() == false) {
+        jumpToNext = &bb;
+        return;
+      }
+#endif
+#if OLD_VERSION
       const BranchInstruction &insn = cast<BranchInstruction>(*bb.last);
+#else
+      const BranchInstruction &insn = cast<BranchInstruction>(*last);
+#endif
       if (insn.getOpcode() == OP_BRA) {
         const LabelIndex label = insn.getLabelIndex();
         BasicBlock *target = this->blocks[label];
@@ -219,7 +236,7 @@ namespace ir {
     out << "## " << fn.blockNum() << " block"
         << (fn.blockNum() ? "s" : "") << " ##" << std::endl;
     fn.foreachBlock([&](const BasicBlock &bb) {
-      bb.foreach([&out] (const Instruction &insn) {
+      const_cast<BasicBlock&>(bb).foreach([&out] (const Instruction &insn) {
         out << insn << std::endl;
       });
       out << std::endl;
@@ -229,7 +246,9 @@ namespace ir {
   }
 
   BasicBlock::BasicBlock(Function &fn) : fn(fn) {
+#if OLD_VERSION
     this->first = this->last = NULL;
+#endif
     this->nextBlock = this->prevBlock = NULL;
   }
   BasicBlock::~BasicBlock(void) {
@@ -237,7 +256,7 @@ namespace ir {
      this->fn.deleteInstruction(&insn);
     });
   }
-
+#if OLD_VERSION
 #define DECL_GET_PRED \
   if (predecessor != NULL) return predecessor; \
   if (stayInBlock == true) return NULL; \
@@ -279,6 +298,7 @@ namespace ir {
   }
 
 #undef DECL_GET_SUCC
+#endif
 
 } /* namespace ir */
 } /* namespace gbe */

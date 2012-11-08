@@ -765,7 +765,7 @@ namespace gbe
   /*! lastUse maintains data about last uses (reads/writes) for each
    * ir::Register
    */
-  static void buildRegInfo(const ir::BasicBlock &bb, vector<RegInfoForMov> &lastUse)
+  static void buildRegInfo(ir::BasicBlock &bb, vector<RegInfoForMov> &lastUse)
   {
     // Clear the register usages
     for (auto &x : lastUse) {
@@ -803,75 +803,74 @@ namespace gbe
     // Remove the MOVs per block (local analysis only) Note that we do not try
     // to remove MOV for variables that outlives the block. So we use liveness
     // information to figure out which variable is alive
-    fn.foreachBlock([&](const ir::BasicBlock &bb)
+    fn.foreachBlock([&](ir::BasicBlock &bb)
     {
-#if 0
-        // Clear the register usages
-      for (auto &x : lastUse) {
-        x.lastWrite = x.lastRead = 0;
-        x.lastWriteInsn = x.lastReadInsn = NULL;
-      }
-
-      // Find use intervals for all registers (distinguish sources and
-      // destinations)
-      uint32_t insnID = 2;
-      bb.foreach([&](ir::Instruction &insn) {
-        const uint32_t dstNum = insn.getDstNum();
-        const uint32_t srcNum = insn.getSrcNum();
-        for (uint32_t srcID = 0; srcID < srcNum; ++srcID) {
-          const ir::Register reg = insn.getSrc(srcID);
-          lastUse[reg].lastRead = insnID;
-          lastUse[reg].lastReadInsn = &insn;
-        }
-        for (uint32_t dstID = 0; dstID < dstNum; ++dstID) {
-          const ir::Register reg = insn.getDst(dstID);
-          lastUse[reg].lastWrite = insnID+1;
-          lastUse[reg].lastWriteInsn = &insn;
-        }
-        insnID+=2;
-      });
-#else
       // We need to know when each register will be read or written
       buildRegInfo(bb, lastUse);
-#endif
+
       // Liveinfo helps us to know if the source outlives the block
       const ir::Liveness::BlockInfo &info = liveness.getBlockInfo(&bb);
 
+#if OLD_VERSION
       // Now, we know which MOVs can be removed
       ir::Instruction *insn = bb.getLastInstruction();
       if (insn->isMemberOf<ir::BranchInstruction>())
         insn = insn->getPredecessor();
       while (insn) {
+#else
+      auto it = --bb.end();
+      if (it->isMemberOf<ir::BranchInstruction>() == true) --it;
+      for (auto it = --bb.end(); it != bb.end();) {
+        ir::Instruction *insn = &*it; it--;
+#endif
         const ir::Opcode op = insn->getOpcode();
         if (op == ir::OP_MOV) {
           const ir::Register dst = insn->getDst(0);
           const ir::Register src = insn->getSrc(0);
           // Outlives the block. We do not do anything
           if (info.inLiveOut(src))
-            goto next;
+            continue;
           const RegInfoForMov &dstInfo = lastUse[dst];
           const RegInfoForMov &srcInfo = lastUse[src];
           // The source is not computed in this block
           if (srcInfo.lastWrite == 0)
-            goto next;
+            continue;
           // dst is read after src is written. We cannot overwrite dst
           if (dstInfo.lastRead > srcInfo.lastWrite)
-            goto next;
+            continue;
           // We are good. We first patch the destination then all the sources
           replaceDst(srcInfo.lastWriteInsn, src, dst);
           // Then we patch all subsequent uses of the source
+#if OLD_VERSION
           ir::Instruction *next = srcInfo.lastWriteInsn->getSuccessor();
+#else
+          ir::Instruction *next = static_cast<ir::Instruction*>(srcInfo.lastWriteInsn->next);
+#endif
           while (next != insn) {
             replaceSrc(next, src, dst);
+#if OLD_VERSION
             next = next->getSuccessor();
+#else
+          next = static_cast<ir::Instruction*>(next->next);
+#endif
           }
           insn->remove();
-        } else if (op == ir::OP_LOADI)
+        } else
+#if OLD_VERSION
+          if (op == ir::OP_LOADI)
           goto next;
         else
           break;
+#else
+        if (op == ir::OP_LOADI)
+          continue;
+        else
+          break;
+#endif
+#if OLD_VERSION
       next:
         insn = insn->getPredecessor();
+#endif
       }
     });
   }
@@ -885,7 +884,7 @@ namespace gbe
 
     // Traverse all blocks and remove redundant immediates. Do *not* remove
     // immediates that outlive the block
-    fn.foreachBlock([&](const ir::BasicBlock &bb)
+    fn.foreachBlock([&](ir::BasicBlock &bb)
     {
       // Each immediate that is already loaded in the block
       map<ir::Immediate, ir::Register> loadedImm;
@@ -988,7 +987,7 @@ namespace gbe
     ctx.endFunction();
 
     // Liveness can be shared when we optimized the immediates and the MOVs
-    const ir::Liveness liveness(const_cast<ir::Function&>(fn));
+    const ir::Liveness liveness(fn);
 
     if (OCL_OPTIMIZE_LOADI) this->removeLOADIs(liveness, fn);
     if (OCL_OPTIMIZE_PHI_MOVES) this->removeMOVs(liveness, fn);
