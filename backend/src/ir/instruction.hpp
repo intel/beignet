@@ -35,8 +35,6 @@
 namespace gbe {
 namespace ir {
 
-#define OLD_VERSION 0
-
   /*! All opcodes */
   enum Opcode : uint8_t {
 #define DECL_INSN(INSN, FAMILY) OP_##INSN,
@@ -100,10 +98,7 @@ namespace ir {
   };
 
   /*! Store the instruction description in 32 bytes */
-  class Instruction : public InstructionBase
-#if OLD_VERSION == 0
-                      , public intrusive_list_node
-#endif
+  class Instruction : public InstructionBase, public intrusive_list_node
   {
   public:
     /*! Initialize the instruction from a 8 bytes stream */
@@ -116,7 +111,7 @@ namespace ir {
     {}
   private:
     /*! To be consistant with copy constructor */
-    Instruction &operator= (const Instruction &other) { return *this; }
+    INLINE Instruction &operator= (const Instruction &other) { return *this; }
   public:
     /*! Nothing to do here */
     INLINE ~Instruction(void) {}
@@ -140,16 +135,6 @@ namespace ir {
     void setDst(uint32_t dstID, Register reg);
     /*! Is there any side effect in the memory sub-system? */
     bool hasSideEffect(void) const;
-#if OLD_VERSION
-    /*! Get / set the previous instruction in the stream */
-    Instruction *getPredecessor(bool stayInBlock = true);
-    const Instruction *getPredecessor(bool stayInBlock = true) const;
-    void setPredecessor(Instruction *insn) { this->predecessor = insn; }
-    /*! Get / set the next instruction in the stream */
-    Instruction *getSuccessor(bool stayInBlock = true);
-    const Instruction *getSuccessor(bool stayInBlock = true) const;
-    void setSuccessor(Instruction *insn) { this->successor = insn; }
-#endif
     /*! Get / set the parent basic block */
     BasicBlock *getParent(void) { return parent; }
     const BasicBlock *getParent(void) const { return parent; }
@@ -175,10 +160,6 @@ namespace ir {
     static const uint32_t MAX_SRC_NUM = 8;
     static const uint32_t MAX_DST_NUM = 8;
   protected:
-#if OLD_VERSION
-    Instruction *predecessor;//!< Previous instruction in the basic block
-    Instruction *successor;  //!< Next instruction in the basic block
-#endif
     BasicBlock *parent;      //!< The basic block containing the instruction
     GBE_CLASS(Instruction);  //!< Use internal allocators
   };

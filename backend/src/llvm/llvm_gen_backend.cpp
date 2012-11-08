@@ -811,18 +811,10 @@ namespace gbe
       // Liveinfo helps us to know if the source outlives the block
       const ir::Liveness::BlockInfo &info = liveness.getBlockInfo(&bb);
 
-#if OLD_VERSION
-      // Now, we know which MOVs can be removed
-      ir::Instruction *insn = bb.getLastInstruction();
-      if (insn->isMemberOf<ir::BranchInstruction>())
-        insn = insn->getPredecessor();
-      while (insn) {
-#else
       auto it = --bb.end();
       if (it->isMemberOf<ir::BranchInstruction>() == true) --it;
       for (auto it = --bb.end(); it != bb.end();) {
         ir::Instruction *insn = &*it; it--;
-#endif
         const ir::Opcode op = insn->getOpcode();
         if (op == ir::OP_MOV) {
           const ir::Register dst = insn->getDst(0);
@@ -841,36 +833,16 @@ namespace gbe
           // We are good. We first patch the destination then all the sources
           replaceDst(srcInfo.lastWriteInsn, src, dst);
           // Then we patch all subsequent uses of the source
-#if OLD_VERSION
-          ir::Instruction *next = srcInfo.lastWriteInsn->getSuccessor();
-#else
           ir::Instruction *next = static_cast<ir::Instruction*>(srcInfo.lastWriteInsn->next);
-#endif
           while (next != insn) {
             replaceSrc(next, src, dst);
-#if OLD_VERSION
-            next = next->getSuccessor();
-#else
-          next = static_cast<ir::Instruction*>(next->next);
-#endif
+            next = static_cast<ir::Instruction*>(next->next);
           }
           insn->remove();
-        } else
-#if OLD_VERSION
-          if (op == ir::OP_LOADI)
-          goto next;
-        else
-          break;
-#else
-        if (op == ir::OP_LOADI)
+        } else if (op == ir::OP_LOADI)
           continue;
         else
           break;
-#endif
-#if OLD_VERSION
-      next:
-        insn = insn->getPredecessor();
-#endif
       }
     });
   }
@@ -1290,10 +1262,6 @@ namespace gbe
     Value *modified = I.getOperand(0);
     Value *toInsert = I.getOperand(1);
     Value *index = I.getOperand(2);
-#if 0
-    GBE_ASSERTM(!isa<Constant>(modified) || isa<UndefValue>(modified),
-                "TODO support constant vector for insert");
-#endif
 
     // Get the index for the insertion
     Constant *CPV = dyn_cast<Constant>(index);

@@ -168,28 +168,13 @@ namespace ir {
         bb.predecessors.insert(jumpToNext);
         jumpToNext = NULL;
       }
-#if OLD_VERSION
-      if (bb.last == NULL) return;
-#else
       if (bb.size() == 0) return;
-#endif
-#if OLD_VERSION
-      if (bb.last->isMemberOf<BranchInstruction>() == false) {
-        jumpToNext = &bb;
-        return;
-      }
-#else
       Instruction *last = bb.getLastInstruction();
       if (last->isMemberOf<BranchInstruction>() == false) {
         jumpToNext = &bb;
         return;
       }
-#endif
-#if OLD_VERSION
-      const BranchInstruction &insn = cast<BranchInstruction>(*bb.last);
-#else
       const BranchInstruction &insn = cast<BranchInstruction>(*last);
-#endif
       if (insn.getOpcode() == OP_BRA) {
         const LabelIndex label = insn.getLabelIndex();
         BasicBlock *target = this->blocks[label];
@@ -246,9 +231,6 @@ namespace ir {
   }
 
   BasicBlock::BasicBlock(Function &fn) : fn(fn) {
-#if OLD_VERSION
-    this->first = this->last = NULL;
-#endif
     this->nextBlock = this->prevBlock = NULL;
   }
   BasicBlock::~BasicBlock(void) {
@@ -256,50 +238,6 @@ namespace ir {
      this->fn.deleteInstruction(&insn);
     });
   }
-#if OLD_VERSION
-#define DECL_GET_PRED \
-  if (predecessor != NULL) return predecessor; \
-  if (stayInBlock == true) return NULL; \
-  const BasicBlock *parent = this->getParent(); \
-  const BasicBlock *prev = parent->getPrevBlock(); \
-  while (prev) { \
-    Instruction *last = prev->getLastInstruction(); \
-    if (last) return last; \
-    prev = prev->getPrevBlock(); \
-  } \
-  return NULL;
-
-  Instruction *Instruction::getPredecessor(bool stayInBlock) {
-    DECL_GET_PRED;
-  }
-  const Instruction *Instruction::getPredecessor(bool stayInBlock) const {
-    DECL_GET_PRED;
-  }
-
-#undef DECL_GET_PRED
-
-#define DECL_GET_SUCC \
-  if (successor != NULL) return successor; \
-  if (stayInBlock == true) return NULL; \
-  const BasicBlock *parent = this->getParent(); \
-  const BasicBlock *next = parent->getNextBlock(); \
-  while (next) { \
-    Instruction *first = next->getFirstInstruction(); \
-    if (first) return first; \
-    next = next->getNextBlock(); \
-  } \
-  return NULL;
-
-  Instruction *Instruction::getSuccessor(bool stayInBlock) {
-    DECL_GET_SUCC;
-  }
-  const Instruction *Instruction::getSuccessor(bool stayInBlock) const {
-    DECL_GET_SUCC;
-  }
-
-#undef DECL_GET_SUCC
-#endif
-
 } /* namespace ir */
 } /* namespace gbe */
 

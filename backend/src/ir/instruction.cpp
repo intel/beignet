@@ -1097,39 +1097,15 @@ END_FUNCTION(Instruction, Register)
   void Instruction::replace(Instruction *other) const {
     Function &fn = other->getFunction();
     Instruction *insn = fn.newInstruction(*this);
-#if OLD_VERSION
-    BasicBlock *bb = other->getParent();
-    if (bb->getFirstInstruction() == other) bb->setFirstInstruction(insn);
-    if (bb->getLastInstruction() == other) bb->setLastInstruction(insn);
-    if (other->predecessor) other->predecessor->successor = insn;
-    if (other->successor) other->successor->predecessor = insn;
-    insn->parent = other->parent;
-    insn->predecessor = other->predecessor;
-    insn->successor = other->successor;
-#else
     intrusive_list_node *prev = other->prev;
     insn->parent = other->parent;
     other->remove();
     append(insn, prev);
-#endif
   }
 
   void Instruction::remove(void) {
-
     Function &fn = this->getFunction();
-#if OLD_VERSION
-    BasicBlock *bb = this->getParent();
-    if (bb->getFirstInstruction() == this)
-      bb->setFirstInstruction(this->successor);
-    if (bb->getLastInstruction() == this)
-      bb->setLastInstruction(this->predecessor);
-    if (this->predecessor)
-      this->predecessor->successor = this->successor;
-    if (this->successor)
-      this->successor->predecessor = this->predecessor;
-#else
     unlink(this);
-#endif
     fn.deleteInstruction(this);
   }
 
