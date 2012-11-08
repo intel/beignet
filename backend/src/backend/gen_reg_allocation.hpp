@@ -27,7 +27,6 @@
 
 #include "ir/register.hpp"
 #include "backend/gen_register.hpp"
-#include <exception>
 
 namespace gbe
 {
@@ -55,15 +54,6 @@ namespace gbe
     Opaque *opaque;
     /*! Use custom allocator */
     GBE_CLASS(GenRegAllocator);
-  };
-
-  /*! Thrown when not enough register during register allocation */
-  class NotEnoughRegisterException : public std::exception
-  {
-  public:
-    const char *what(void) const throw() {
-      return "Not enough register to allocate";
-    }
   };
 
 } /* namespace gbe */

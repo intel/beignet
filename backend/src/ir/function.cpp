@@ -147,6 +147,49 @@ namespace ir {
     return this->profile == PROFILE_OCL ? ocl::regNum : ~0u;
   }
 
+  bool Function::isEntryBlock(const BasicBlock &bb) const {
+    if (this->blockNum() == 0)
+      return false;
+    else
+      return &bb == this->blocks[0];
+  }
+
+  const BasicBlock &Function::getTopBlock(void) const {
+    GBE_ASSERT(blockNum() > 0 && blocks[0] != NULL);
+    return *blocks[0];
+  }
+
+  const BasicBlock &Function::getBottomBlock(void) const {
+    const uint32_t n = blockNum();
+    GBE_ASSERT(n > 0 && blocks[n-1] != NULL);
+    return *blocks[n-1];
+  }
+
+  BasicBlock &Function::getBottomBlock(void) {
+    const uint32_t n = blockNum();
+    GBE_ASSERT(n > 0 && blocks[n-1] != NULL);
+    return *blocks[n-1];
+  }
+
+  const BasicBlock &Function::getBlock(LabelIndex label) const {
+    GBE_ASSERT(label < labelNum() && labels[label] != NULL);
+    return *labels[label];
+  }
+
+  const LabelInstruction *Function::getLabelInstruction(LabelIndex index) const {
+    const BasicBlock *bb = this->labels[index];
+    const Instruction *first = bb->getFirstInstruction();
+    return cast<LabelInstruction>(first);
+  }
+
+  /*! Indicate if the given register is a special one (like localID in OCL) */
+  bool Function::isSpecialReg(const Register &reg) const {
+    const uint32_t ID = uint32_t(reg);
+    const uint32_t firstID = this->getFirstSpecialReg();
+    const uint32_t specialNum = this->getSpecialRegNum();
+    return ID >= firstID && ID < firstID + specialNum;
+  }
+
   void Function::computeCFG(void) {
     // Clear possible previously computed CFG and compute the direct
     // predecessors and successors
@@ -238,10 +281,16 @@ namespace ir {
   BasicBlock::BasicBlock(Function &fn) : fn(fn) {
     this->nextBlock = this->prevBlock = NULL;
   }
+
   BasicBlock::~BasicBlock(void) {
     this->foreach([this] (Instruction &insn) {
      this->fn.deleteInstruction(&insn);
     });
+  }
+
+  void BasicBlock::append(Instruction &insn) {
+    insn.setParent(this);
+    this->push_back(&insn);
   }
 
   Instruction *BasicBlock::getFirstInstruction(void) const {

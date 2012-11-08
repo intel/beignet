@@ -68,15 +68,9 @@ namespace gbe
     /*! Size of the stack (should be large enough) */
     enum { MAX_STATE_NUM = 16 };
     /*! Push the current instruction state */
-    INLINE void push(void) {
-      assert(stateNum < MAX_STATE_NUM);
-      stack[stateNum++] = curr;
-    }
+    void push(void);
     /*! Pop the latest pushed state */
-    INLINE void pop(void) {
-      assert(stateNum > 0);
-      curr = stack[--stateNum];
-    }
+    void pop(void);
     /*! The instruction stream we are building */
     vector<GenInstruction> store;
     /*! Current instruction state to use */

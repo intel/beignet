@@ -36,34 +36,10 @@
 namespace gbe
 {
   /*! Translate IR type to Gen type */
-  INLINE uint32_t getGenType(ir::Type type) {
-    using namespace ir;
-    switch (type) {
-      case TYPE_BOOL: return GEN_TYPE_UW;
-      case TYPE_S8: return GEN_TYPE_B;
-      case TYPE_U8: return GEN_TYPE_UB;
-      case TYPE_S16: return GEN_TYPE_W;
-      case TYPE_U16: return GEN_TYPE_UW;
-      case TYPE_S32: return GEN_TYPE_D;
-      case TYPE_U32: return GEN_TYPE_UD;
-      case TYPE_FLOAT: return GEN_TYPE_F;
-      default: NOT_SUPPORTED; return GEN_TYPE_F;
-    }
-  }
+  uint32_t getGenType(ir::Type type);
 
   /*! Translate IR compare to Gen compare */
-  INLINE uint32_t getGenCompare(ir::Opcode opcode) {
-    using namespace ir;
-    switch (opcode) {
-      case OP_LE: return GEN_CONDITIONAL_LE;
-      case OP_LT: return GEN_CONDITIONAL_L;
-      case OP_GE: return GEN_CONDITIONAL_GE;
-      case OP_GT: return GEN_CONDITIONAL_G;
-      case OP_EQ: return GEN_CONDITIONAL_EQ;
-      case OP_NE: return GEN_CONDITIONAL_NEQ;
-      default: NOT_SUPPORTED; return 0u;
-    };
-  }
+  uint32_t getGenCompare(ir::Opcode opcode);
 
   /*! Selection opcodes properly encoded from 0 to n for fast jump tables
    *  generations

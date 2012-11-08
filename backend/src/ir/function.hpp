@@ -54,20 +54,8 @@ namespace ir {
     BasicBlock(Function &fn);
     /*! Releases all the instructions */
     ~BasicBlock(void);
-    /*! Append a new instruction in the stream */
-    void append(Instruction &insn) {
-      insn.setParent(this);
-      this->push_back(&insn);
-    }
-    /*! Apply the given functor on all instructions */
-    template <typename T>
-    INLINE void foreach(const T &functor) {
-      auto it = this->begin();
-      while (it != this->end()) {
-        auto curr = it++;
-        functor(*curr);
-      }
-    }
+    /*! Append a new instruction at the end of the stream */
+    void append(Instruction &insn);
     /*! Get the parent function */
     Function &getParent(void) { return fn; }
     const Function &getParent(void) const { return fn; }
@@ -82,6 +70,15 @@ namespace ir {
     const BlockSet &getPredecessorSet(void) const { return predecessors; }
     /*! Get the label index of this block */
     LabelIndex getLabelIndex(void) const;
+    /*! Apply the given functor on all instructions */
+    template <typename T>
+    INLINE void foreach(const T &functor) {
+      auto it = this->begin();
+      while (it != this->end()) {
+        auto curr = it++;
+        functor(*curr);
+      }
+    }
   private:
     friend class Function; //!< Owns the basic blocks
     BlockSet predecessors; //!< Incoming blocks
@@ -108,10 +105,10 @@ namespace ir {
     /*! Create a function input argument */
     INLINE FunctionArgument(Type type, Register reg, uint32_t size) :
       type(type), reg(reg), size(size) {}
-    Type type;     /*! Gives the type of argument we have */
-    Register reg;  /*! Holds the argument */
-    uint32_t size; /*! == sizeof(void*) for pointer, sizeof(elem) for the rest */
-    GBE_STRUCT(FunctionArgument);
+    Type type;     //!< Gives the type of argument we have
+    Register reg;  //!< Holds the argument
+    uint32_t size; //!< == sizeof(void*) for ptr, sizeof(elem) for the rest
+    GBE_STRUCT(FunctionArgument); // Use custom allocator
   };
 
   /*! Maps the pushed register to the function argument */
@@ -123,7 +120,7 @@ namespace ir {
     const Function &fn;       //!< Function it belongs to
     uint32_t argID;           //!< Function argument
     uint32_t offset;          //!< Offset in the function argument
-    GBE_STRUCT(PushLocation); // Use GBE allocator
+    GBE_STRUCT(PushLocation); // Use custom allocator
   };
 
   /*! For maps and sets */
@@ -132,8 +129,10 @@ namespace ir {
     return arg0.offset < arg1.offset;
   }
 
-  /*! A function is no more that a set of declared registers and a set of
-   *  basic blocks
+  /*! A function is :
+   *  - a register file
+   *  - a set of basic block layout into a CGF
+   *  - input arguments
    */
   class Function : public NonCopyable
   {
@@ -146,13 +145,6 @@ namespace ir {
     Function(const std::string &name, const Unit &unit, Profile profile = PROFILE_OCL);
     /*! Release everything *including* the basic block pointers */
     ~Function(void);
-    /*! Says if this is the top basic block (entry point) */
-    INLINE bool isEntryBlock(const BasicBlock &bb) const {
-      if (this->blockNum() == 0)
-        return false;
-      else
-        return &bb == this->blocks[0];
-    }
     /*! Get the function profile */
     INLINE Profile getProfile(void) const { return profile; }
     /*! Get a new valid register */
@@ -183,7 +175,6 @@ namespace ir {
     INLINE const RegisterFile &getRegisterFile(void) const { return file; }
     /*! Get the given value ie immediate from the function */
     INLINE Immediate getImmediate(ImmediateIndex ID) const {
-      GBE_ASSERT(ID < immediateNum());
       return immediates[ID];
     }
     /*! Create a new immediate and returns its index */
@@ -196,11 +187,11 @@ namespace ir {
     DECL_POOL(Instruction, insnPool);
     /*! Get input argument */
     INLINE const FunctionArgument &getArg(uint32_t ID) const {
-      GBE_ASSERT(ID < argNum() && args[ID] != NULL);
+      GBE_ASSERT(args[ID] != NULL);
       return *args[ID];
     }
     INLINE FunctionArgument &getArg(uint32_t ID) {
-      GBE_ASSERT(ID < argNum() && args[ID] != NULL);
+      GBE_ASSERT(args[ID] != NULL);
       return *args[ID];
     }
     /*! Get the number of pushed registers */
@@ -225,55 +216,31 @@ namespace ir {
       return NULL;
     }
     /*! Get output register */
-    INLINE Register getOutput(uint32_t ID) const {
-      GBE_ASSERT(ID < outputNum());
-      return outputs[ID];
-    }
+    INLINE Register getOutput(uint32_t ID) const { return outputs[ID]; }
     /*! Get the argument location for the pushed register */
     INLINE const PushLocation &getPushLocation(Register reg) {
       GBE_ASSERT(pushMap.contains(reg) == true);
       return pushMap.find(reg)->second;
     }
+    /*! Says if this is the top basic block (entry point) */
+    bool isEntryBlock(const BasicBlock &bb) const;
     /*! Get function the entry point block */
-    INLINE const BasicBlock &getTopBlock(void) const {
-      GBE_ASSERT(blockNum() > 0 && blocks[0] != NULL);
-      return *blocks[0];
-    }
+    const BasicBlock &getTopBlock(void) const;
     /*! Get the last block */
-    INLINE const BasicBlock &getBottomBlock(void) const {
-      const uint32_t n = blockNum();
-      GBE_ASSERT(n > 0 && blocks[n-1] != NULL);
-      return *blocks[n-1];
-    }
+    const BasicBlock &getBottomBlock(void) const;
     /*! Get the last block */
-    INLINE BasicBlock &getBottomBlock(void) {
-      const uint32_t n = blockNum();
-      GBE_ASSERT(n > 0 && blocks[n-1] != NULL);
-      return *blocks[n-1];
-    }
+    BasicBlock &getBottomBlock(void);
     /*! Get block from its label */
-    INLINE const BasicBlock &getBlock(LabelIndex label) const {
-      GBE_ASSERT(label < labelNum() && labels[label] != NULL);
-      return *labels[label];
-    }
+    const BasicBlock &getBlock(LabelIndex label) const;
     /*! Get the label instruction from its label index */
-    INLINE const LabelInstruction *getLabelInstruction(LabelIndex index) const {
-      const BasicBlock *bb = this->labels[index];
-      const Instruction *first = bb->getFirstInstruction();
-      return cast<LabelInstruction>(first);
-    }
+    const LabelInstruction *getLabelInstruction(LabelIndex index) const;
     /*! Return the number of instructions of the largest basic block */
     uint32_t getLargestBlockSize(void) const;
     /*! Get the first index of the special registers and number of them */
     uint32_t getFirstSpecialReg(void) const;
     uint32_t getSpecialRegNum(void) const;
-    /*! Indicate if the given register is a special one */
-    INLINE bool isSpecialReg(const Register &reg) const {
-      const uint32_t ID = uint32_t(reg);
-      const uint32_t firstID = this->getFirstSpecialReg();
-      const uint32_t specialNum = this->getSpecialRegNum();
-      return ID >= firstID && ID < firstID + specialNum;
-    }
+    /*! Indicate if the given register is a special one (like localID in OCL) */
+    bool isSpecialReg(const Register &reg) const;
     /*! Create a new label (still not bound to a basic block) */
     LabelIndex newLabel(void);
     /*! Create the control flow graph */
@@ -322,7 +289,7 @@ namespace ir {
     PushMap pushMap;                //!< Pushed function arguments (reg->loc)
     LocationMap locationMap;        //!< Pushed function arguments (loc->reg)
     uint32_t simdWidth;             //!< 8 or 16 if forced, 0 otherwise
-    GBE_CLASS(Function);            //!< Use gbe allocators
+    GBE_CLASS(Function);            //!< Use custom allocator
   };
 
   /*! Output the function string in the given stream */

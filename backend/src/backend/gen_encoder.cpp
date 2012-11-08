@@ -200,6 +200,16 @@ namespace gbe
     this->curr.inversePredicate = 0;
   }
 
+  void GenEncoder::push(void) {
+    assert(stateNum < MAX_STATE_NUM);
+    stack[stateNum++] = curr;
+  }
+
+  void GenEncoder::pop(void) {
+    assert(stateNum > 0);
+    curr = stack[--stateNum];
+  }
+
   void GenEncoder::setHeader(GenInstruction *insn) {
     if (this->curr.execWidth == 8)
       insn->header.execution_size = GEN_WIDTH_8;
