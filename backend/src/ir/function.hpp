@@ -68,19 +68,6 @@ namespace ir {
         functor(*curr);
       }
     }
-    /*! Apply the given functor on all instructions (reverse order) */
-    template <typename T>
-    INLINE void rforeach(const T &functor) const {
-      if (this->end() != this->begin()) {
-        auto it = --this->end();
-        for (;;) {
-          auto curr = it--;
-          functor(*curr);
-          if (curr == this->begin())
-            break;
-        }
-      }
-    }
     /*! Get the parent function */
     Function &getParent(void) { return fn; }
     const Function &getParent(void) const { return fn; }
@@ -88,19 +75,13 @@ namespace ir {
     BasicBlock *getNextBlock(void) const { return this->nextBlock; }
     BasicBlock *getPrevBlock(void) const { return this->prevBlock; }
     /*! Get / set the first and last instructions */
-    Instruction *getFirstInstruction(void) const { return &const_cast<Instruction&>(*this->begin()); }
-    Instruction *getLastInstruction(void) const { return &const_cast<Instruction&>(*(--this->end())); }
+    Instruction *getFirstInstruction(void) const;
+    Instruction *getLastInstruction(void) const;
     /*! Get successors and predecessors */
     const BlockSet &getSuccessorSet(void) const { return successors; }
     const BlockSet &getPredecessorSet(void) const { return predecessors; }
     /*! Get the label index of this block */
-    LabelIndex getLabelIndex(void) const {
-      const Instruction *first = this->getFirstInstruction();
-      const LabelInstruction *label = cast<LabelInstruction>(first);
-      return label->getLabelIndex();
-    }
-    /*! Get the number of instructions in the block (costly!) */
-    uint32_t getInstructionNum(void) const;
+    LabelIndex getLabelIndex(void) const;
   private:
     friend class Function; //!< Owns the basic blocks
     BlockSet predecessors; //!< Incoming blocks

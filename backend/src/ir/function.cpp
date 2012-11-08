@@ -28,18 +28,19 @@
 namespace gbe {
 namespace ir {
 
+  ///////////////////////////////////////////////////////////////////////////
+  // PushLocation
+  ///////////////////////////////////////////////////////////////////////////
+
   Register PushLocation::getRegister(void) const {
     const Function::LocationMap &locationMap = fn.getLocationMap();
     GBE_ASSERT(locationMap.contains(*this) == true);
     return locationMap.find(*this)->second;
   }
 
-  uint32_t BasicBlock::getInstructionNum(void) const {
-    uint32_t insnNum = 0;
-    const_cast<BasicBlock*>(this)->foreach([&insnNum](const Instruction &insn)
-    { insnNum++; });
-    return insnNum;
-  }
+  ///////////////////////////////////////////////////////////////////////////
+  // Function
+  ///////////////////////////////////////////////////////////////////////////
 
   Function::Function(const std::string &name, const Unit &unit, Profile profile) :
     name(name), unit(unit), profile(profile), simdWidth(0)
@@ -133,7 +134,7 @@ namespace ir {
   uint32_t Function::getLargestBlockSize(void) const {
     uint32_t insnNum = 0;
     foreachBlock([&insnNum](const ir::BasicBlock &bb) {
-      insnNum = std::max(insnNum, bb.getInstructionNum());
+      insnNum = std::max(insnNum, uint32_t(bb.size()));
     });
     return insnNum;
   }
@@ -230,6 +231,10 @@ namespace ir {
     return out;
   }
 
+  ///////////////////////////////////////////////////////////////////////////
+  // Basic Block
+  ///////////////////////////////////////////////////////////////////////////
+
   BasicBlock::BasicBlock(Function &fn) : fn(fn) {
     this->nextBlock = this->prevBlock = NULL;
   }
@@ -238,6 +243,25 @@ namespace ir {
      this->fn.deleteInstruction(&insn);
     });
   }
+
+  Instruction *BasicBlock::getFirstInstruction(void) const {
+    GBE_ASSERT(this->begin() != this->end());
+    const Instruction &insn = *this->begin();
+    return const_cast<Instruction*>(&insn);
+  }
+
+  Instruction *BasicBlock::getLastInstruction(void) const {
+    GBE_ASSERT(this->begin() != this->end());
+    const Instruction &insn = *(--this->end());
+    return const_cast<Instruction*>(&insn);
+  }
+
+  LabelIndex BasicBlock::getLabelIndex(void) const {
+    const Instruction *first = this->getFirstInstruction();
+    const LabelInstruction *label = cast<LabelInstruction>(first);
+    return label->getLabelIndex();
+  }
+
 } /* namespace ir */
 } /* namespace gbe */
 

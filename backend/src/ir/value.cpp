@@ -150,7 +150,8 @@ namespace ir {
       // Now traverse the blocks backwards and find the definition of each
       // liveOut register
       set<Register> defined;
-      bb.rforeach([&](const Instruction &insn) {
+      for (auto it = --bb.end(); it != bb.end(); --it) {
+        const Instruction &insn = *it;
         const uint32_t dstNum = insn.getDstNum();
         for (uint32_t dstID = 0; dstID < dstNum; ++dstID) {
           const Register reg = insn.getDst(dstID);
@@ -165,7 +166,7 @@ namespace ir {
           GBE_ASSERT(regDefSet != blockDefMap->end() && def != NULL);
           regDefSet->second->insert(def);
         }
-      });
+      }
     });
   }
 
