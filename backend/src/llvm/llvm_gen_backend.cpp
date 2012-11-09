@@ -120,7 +120,7 @@
 #define LLVM_VERSION_MINOR 0
 #endif /* !defined(LLVM_VERSION_MINOR) */
 
-#if (LLVM_VERSION_MAJOR != 3) || (LLVM_VERSION_MINOR >= 2)
+#if (LLVM_VERSION_MAJOR != 3) || (LLVM_VERSION_MINOR > 2)
 #error "Only LLVM 3.0 / 3.1 is supported"
 #endif /* (LLVM_VERSION_MAJOR != 3) && (LLVM_VERSION_MINOR >= 2) */
 
@@ -525,13 +525,11 @@ namespace gbe
   template <typename U, typename T>
   static U processConstant(Constant *CPV, T doIt, uint32_t index = 0u)
   {
-    if (dyn_cast<ConstantExpr>(CPV))
+#if GBE_DEBUG
+    GBE_ASSERTM(dyn_cast<ConstantExpr>(CPV) == NULL, "Unsupported constant expression");
+    if (isa<UndefValue>(CPV) && CPV->getType()->isSingleValueType())
       GBE_ASSERTM(false, "Unsupported constant expression");
-    else if (isa<UndefValue>(CPV) && CPV->getType()->isSingleValueType())
-      GBE_ASSERTM(false, "Unsupported constant expression");
-
-    GBE_ASSERTM(dyn_cast<ConstantExpr>(CPV),
-                "Constant expressions are not supported yet");
+#endif /* GBE_DEBUG */
 
 #if LLVM_VERSION_MINOR > 0
     ConstantDataSequential *seq = dyn_cast<ConstantDataSequential>(CPV);
@@ -568,6 +566,7 @@ namespace gbe
     } else {
       if (dyn_cast<ConstantVector>(CPV)) 
         CPV = extractConstantElem(CPV, index);
+      GBE_ASSERTM(dyn_cast<ConstantExpr>(CPV) == NULL, "Unsupported constant expression");
 
       // Integers
       if (ConstantInt *CI = dyn_cast<ConstantInt>(CPV)) {
