@@ -83,7 +83,7 @@
 #define LLVM_VERSION_MINOR 0
 #endif /* !defined(LLVM_VERSION_MINOR) */
 
-#if (LLVM_VERSION_MAJOR != 3) || (LLVM_VERSION_MINOR > 2)
+#if (LLVM_VERSION_MAJOR != 3) || (LLVM_VERSION_MINOR >= 2)
 #error "Only LLVM 3.0 / 3.1 is supported"
 #endif /* (LLVM_VERSION_MAJOR != 3) && (LLVM_VERSION_MINOR >= 2) */
 
