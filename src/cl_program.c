@@ -271,7 +271,7 @@ cl_program_build(cl_program p)
 
   if (p->source_type == FROM_SOURCE) {
     /* XXX support multiple sources later */
-    FATAL_IF (p->src_n != 1, "Only ONE source supported");
+    FATAL_IF (p->src_n != 1, "Only ONE source file supported");
     p->opaque = gbe_program_new_from_source(p->sources[0], 0, NULL, NULL);
     if (UNLIKELY(p->opaque == NULL)) {
       err = CL_INVALID_PROGRAM;

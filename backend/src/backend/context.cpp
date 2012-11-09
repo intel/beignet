@@ -245,7 +245,7 @@ namespace gbe
     unit(unit), fn(*unit.getFunction(name)), name(name), liveness(NULL), dag(NULL)
   {
     GBE_ASSERT(unit.getPointerSize() == ir::POINTER_32_BITS);
-    this->liveness = GBE_NEW(ir::Liveness, (ir::Function&) fn);
+    this->liveness = GBE_NEW(ir::Liveness, const_cast<ir::Function&>(fn));
     this->dag = GBE_NEW(ir::FunctionDAG, *this->liveness);
     this->partitioner = GBE_NEW_NO_ARG(RegisterFilePartitioner);
     if (fn.getSimdWidth() == 0)

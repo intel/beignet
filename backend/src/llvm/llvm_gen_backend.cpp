@@ -1680,7 +1680,6 @@ namespace gbe
         CallSite::arg_iterator AE = CS.arg_end();
 #endif /* GBE_DEBUG */
 
-
         switch (it->second) {
           case GEN_OCL_MAD:
           {

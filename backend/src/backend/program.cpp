@@ -115,16 +115,22 @@ namespace gbe {
     fclose(clFile);
 
     // Now compile the code to llvm using clang
-    // XXX use popen and stuff instead of that
 #if LLVM_VERSION_MINOR <= 1
-    std::string compileCmd = "clang -x cl -fno-color-diagnostics -emit-llvm -O3 -ccc-host-triple ptx32 -c ";
+    std::string compileCmd = LLVM_PREFIX "/bin/clang -x cl -fno-color-diagnostics -emit-llvm -O3 -ccc-host-triple ptx32 -c ";
 #else
-    std::string compileCmd = "clang -target nvptx -x cl -fno-color-diagnostics -emit-llvm -O3 -c ";
+    std::string compileCmd = LLVM_PREFIX "/bin/clang -target nvptx -x cl -fno-color-diagnostics -emit-llvm -O3 -c ";
 #endif /* LLVM_VERSION_MINOR <= 1 */
     compileCmd += clName;
     compileCmd += " -o ";
     compileCmd += llName;
-    if (UNLIKELY(system(compileCmd.c_str()) != 0)) return NULL;
+
+    // Open a pipe and compile from here. Using Clang API instead is better
+    FILE *pipe = popen(compileCmd.c_str(), "r");
+    FATAL_IF (pipe == NULL, "Unable to run extern compilation command");
+    char msg[256];
+    while (fgets(msg, sizeof(msg), pipe))
+      std::cout << msg;
+    pclose(pipe);
 
     // Now build the program from llvm
     return gbe_program_new_from_llvm(llName.c_str(), stringSize, err, errSize);
