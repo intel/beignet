@@ -269,6 +269,16 @@ namespace gbe
     }
     /*! Says if the value exists. Otherwise, it is undefined */
     bool valueExists(Value *value, uint32_t index) {
+      auto end = valueMap.end();
+      for (;;) {
+        auto it = valueMap.find(std::make_pair(value, index));
+        if (it == end)
+          break;
+        else {
+          value = it->second.first;
+          index = it->second.second;
+        }
+      }
       const auto key = std::make_pair(value, index);
       return scalarMap.find(key) != scalarMap.end();
     }
@@ -687,11 +697,9 @@ namespace gbe
             const ir::ImmediateIndex immIndex = this->newImmediate(CP, elemID);
             const ir::Immediate imm = ctx.getImmediate(immIndex);
             ctx.LOADI(imm.type, dst, immIndex);
-          } else {
-            if (regTranslator.valueExists(IV,elemID)) {
-              const ir::Register src = this->getRegister(IV, elemID);
-              ctx.MOV(type, dst, src);
-            }
+          } else if (regTranslator.valueExists(IV,elemID) || dyn_cast<Constant>(IV)) {
+            const ir::Register src = this->getRegister(IV, elemID);
+            ctx.MOV(type, dst, src);
           }
         }
       }
