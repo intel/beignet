@@ -432,8 +432,8 @@ namespace ir {
     const uint32_t regNum = fn.regNum();
     for (uint32_t regID = 0; regID < regNum; ++regID) {
       const Register reg(regID);
-      UseSet *useSet = GBE_NEW(UseSet);
-      DefSet *defSet = GBE_NEW(DefSet);
+      UseSet *useSet = GBE_NEW_NO_ARG(UseSet);
+      DefSet *defSet = GBE_NEW_NO_ARG(DefSet);
       regUse.insert(std::make_pair(reg, useSet));
       regDef.insert(std::make_pair(reg, defSet));
     }

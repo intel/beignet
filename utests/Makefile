@@ -14,7 +14,7 @@ CPP_SRC=\
 	compiler_mandelbrot_alternate.cpp \
 	compiler_box_blur.cpp \
 	compiler_box_blur_float.cpp \
-  compiler_insert_to_constant.cpp \
+	compiler_insert_to_constant.cpp \
 	compiler_argument_structure.cpp \
 	compiler_array0.cpp \
 	compiler_array.cpp \
@@ -46,9 +46,9 @@ CPP_SRC=\
 	compiler_write_only_shorts.cpp \
 	compiler_switch.cpp \
 	compiler_math.cpp \
-  compiler_insn_selection_min.cpp \
-  compiler_insn_selection_max.cpp \
-  compiler_insn_selection_masked_min_max.cpp \
+	compiler_insn_selection_min.cpp \
+	compiler_insn_selection_max.cpp \
+	compiler_insn_selection_masked_min_max.cpp \
 	utest_assert.cpp \
 	utest.cpp \
 	utest_file_map.cpp \

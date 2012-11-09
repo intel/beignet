@@ -84,8 +84,14 @@ public: \
 #define GBE_NEW(T,...) \
   gbe::_MemDebuggerInsertAlloc(new T(__VA_ARGS__), __FILE__, __FUNCTION__, __LINE__)
 
+#define GBE_NEW_NO_ARG(T) \
+  gbe::_MemDebuggerInsertAlloc(new T, __FILE__, __FUNCTION__, __LINE__)
+
 #define GBE_NEW_ARRAY(T,N,...) \
   gbe::_MemDebuggerInsertAlloc(new T[N](__VA_ARGS__), __FILE__, __FUNCTION__, __LINE__)
+
+#define GBE_NEW_ARRAY_NO_ARG(T,N)\
+  gbe::_MemDebuggerInsertAlloc(new T[N], __FILE__, __FUNCTION__, __LINE__)
 
 #define GBE_NEW_P(T,X,...) \
   gbe::_MemDebuggerInsertAlloc(new (X) T(__VA_ARGS__), __FILE__, __FUNCTION__, __LINE__)

@@ -52,7 +52,7 @@ namespace ir {
   void Context::startFunction(const std::string &name) {
     fnStack.push_back(StackElem(fn,bb,usedLabels));
     fn = unit.newFunction(name);
-    usedLabels = GBE_NEW(vector<uint8_t>);
+    usedLabels = GBE_NEW_NO_ARG(vector<uint8_t>);
     bb = NULL;
   }
 

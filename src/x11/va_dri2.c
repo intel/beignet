@@ -287,7 +287,7 @@ LOCAL VA_DRI2Buffer *VA_DRI2GetBuffers(Display *dpy, XID drawable,
 	return NULL;
     }
 
-    for (i = 0; i < rep.count; i++) {
+    for (i = 0; i < (int) rep.count; i++) {
 	_XReadPad(dpy, (char *) &repBuffer, sizeof repBuffer);
 	buffers[i].attachment = repBuffer.attachment;
 	buffers[i].name = repBuffer.name;

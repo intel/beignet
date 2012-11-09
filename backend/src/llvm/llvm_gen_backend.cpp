@@ -74,6 +74,10 @@
 #include "sys/cvar.hpp"
 #include <algorithm>
 
+#if (LLVM_VERSION_MAJOR != 3) && (LLVM_VERSION_MINOR > 1)
+#error "Only LLVM 3.0 / 3.1 is supported"
+#endif /* (LLVM_VERSION_MAJOR != 3) && (LLVM_VERSION_MINOR > 1) */
+
 using namespace llvm;
 
 namespace gbe
@@ -442,7 +446,9 @@ namespace gbe
     void visitVAArgInst(VAArgInst &I) {NOT_SUPPORTED;}
     void visitSwitchInst(SwitchInst &I) {NOT_SUPPORTED;}
     void visitInvokeInst(InvokeInst &I) {NOT_SUPPORTED;}
+#if LLVM_VERSION_MINOR == 0
     void visitUnwindInst(UnwindInst &I) {NOT_SUPPORTED;}
+#endif /* __LLVM_30__ */
     void visitResumeInst(ResumeInst &I) {NOT_SUPPORTED;}
     void visitInlineAsm(CallInst &I) {NOT_SUPPORTED;}
     void visitIndirectBrInst(IndirectBrInst &I) {NOT_SUPPORTED;}
@@ -491,60 +497,92 @@ namespace gbe
     else if (isa<UndefValue>(CPV) && CPV->getType()->isSingleValueType())
       GBE_ASSERTM(false, "Unsupported constant expression");
 
-    if (dyn_cast<ConstantVector>(CPV))
-      CPV = extractConstantElem(CPV, index);
+#if LLVM_VERSION_MINOR > 0
+    ConstantDataSequential *seq = dyn_cast<ConstantDataSequential>(CPV);
 
-    if (dyn_cast<ConstantAggregateZero>(CPV))
-      return doIt(uint32_t(0));
-
-    // Integers
-    if (ConstantInt *CI = dyn_cast<ConstantInt>(CPV)) {
-      Type* Ty = CI->getType();
+    if (seq) {
+      Type *Ty = seq->getElementType();
       if (Ty == Type::getInt1Ty(CPV->getContext())) {
-        const bool b = CI->getZExtValue();
-        return doIt(b);
+        const uint64_t u64 = seq->getElementAsInteger(index);
+        return doIt(bool(u64));
       } else if (Ty == Type::getInt8Ty(CPV->getContext())) {
-        const uint8_t u8 = CI->getZExtValue();
-        return doIt(u8);
+        const uint64_t u64 = seq->getElementAsInteger(index);
+        return doIt(uint8_t(u64));
       } else if (Ty == Type::getInt16Ty(CPV->getContext())) {
-        const uint16_t u16 = CI->getZExtValue();
-        return doIt(u16);
+        const uint64_t u64 = seq->getElementAsInteger(index);
+        return doIt(uint16_t(u64));
       } else if (Ty == Type::getInt32Ty(CPV->getContext())) {
-        const uint32_t u32 = CI->getZExtValue();
-        return doIt(u32);
+        const uint64_t u64 = seq->getElementAsInteger(index);
+        return doIt(uint32_t(u64));
       } else if (Ty == Type::getInt64Ty(CPV->getContext())) {
-        const uint64_t u64 = CI->getZExtValue();
+        const uint64_t u64 = seq->getElementAsInteger(index);
         return doIt(u64);
-      } else {
-        GBE_ASSERTM(false, "Unsupported integer size");
-        return doIt(uint64_t(0));
+      } else if (Ty == Type::getFloatTy(CPV->getContext())) {
+        const float f32 = seq->getElementAsFloat(index);
+        return doIt(f32);
+      } else if (Ty == Type::getDoubleTy(CPV->getContext())) {
+        const float f64 = seq->getElementAsDouble(index);
+        return doIt(f64);
       }
-    }
+    } else
+#endif /* LLVM_VERSION_MINOR > 0 */
 
-    // Floats and doubles
-    const Type::TypeID typeID = CPV->getType()->getTypeID();
-    switch (typeID) {
-      case Type::FloatTyID:
-      case Type::DoubleTyID:
-      {
-        ConstantFP *FPC = cast<ConstantFP>(CPV);
-        GBE_ASSERT(isa<UndefValue>(CPV) == false);
+    if (dyn_cast<ConstantAggregateZero>(CPV)) {
+      return doIt(uint32_t(0)); // XXX Handle type
+    } else {
+      if (dyn_cast<ConstantVector>(CPV)) 
+        CPV = extractConstantElem(CPV, index);
 
-        if (FPC->getType() == Type::getFloatTy(CPV->getContext())) {
-          const float f32 = FPC->getValueAPF().convertToFloat();
-          return doIt(f32);
+      // Integers
+      if (ConstantInt *CI = dyn_cast<ConstantInt>(CPV)) {
+        Type* Ty = CI->getType();
+        if (Ty == Type::getInt1Ty(CPV->getContext())) {
+          const bool b = CI->getZExtValue();
+          return doIt(b);
+        } else if (Ty == Type::getInt8Ty(CPV->getContext())) {
+          const uint8_t u8 = CI->getZExtValue();
+          return doIt(u8);
+        } else if (Ty == Type::getInt16Ty(CPV->getContext())) {
+          const uint16_t u16 = CI->getZExtValue();
+          return doIt(u16);
+        } else if (Ty == Type::getInt32Ty(CPV->getContext())) {
+          const uint32_t u32 = CI->getZExtValue();
+          return doIt(u32);
+        } else if (Ty == Type::getInt64Ty(CPV->getContext())) {
+          const uint64_t u64 = CI->getZExtValue();
+          return doIt(u64);
         } else {
-          const double f64 = FPC->getValueAPF().convertToDouble();
-          return doIt(f64);
+          GBE_ASSERTM(false, "Unsupported integer size");
+          return doIt(uint64_t(0));
         }
       }
-      break;
-      default:
-        GBE_ASSERTM(false, "Unsupported constant type");
+
+      // Floats and doubles
+      const Type::TypeID typeID = CPV->getType()->getTypeID();
+      switch (typeID) {
+        case Type::FloatTyID:
+        case Type::DoubleTyID:
+        {
+          ConstantFP *FPC = cast<ConstantFP>(CPV);
+          GBE_ASSERT(isa<UndefValue>(CPV) == false);
+
+          if (FPC->getType() == Type::getFloatTy(CPV->getContext())) {
+            const float f32 = FPC->getValueAPF().convertToFloat();
+            return doIt(f32);
+          } else {
+            const double f64 = FPC->getValueAPF().convertToDouble();
+            return doIt(f64);
+          }
+        }
         break;
+        default:
+          GBE_ASSERTM(false, "Unsupported constant type");
+          break;
+      }
     }
-    const uint64_t imm(8);
-    return doIt(imm);
+
+    GBE_ASSERTM(false, "Unsupported constant type");
+    return doIt(uint64_t(0));
   }
 
   /*! Pfff. I cannot use a lambda, since it is templated. Congratulation c++ */

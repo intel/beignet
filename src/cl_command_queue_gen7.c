@@ -126,7 +126,7 @@ cl_curbe_fill(cl_kernel ker,
     const uint32_t simd_sz = gbe_kernel_get_simd_width(ker->opaque);
     uint32_t *stackptr = (uint32_t *) (ker->curbe + offset);
     int32_t i;
-    for (i = 0; i < simd_sz; ++i) stackptr[i] = i;
+    for (i = 0; i < (int32_t) simd_sz; ++i) stackptr[i] = i;
   }
 }
 

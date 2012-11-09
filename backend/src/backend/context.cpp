@@ -247,7 +247,7 @@ namespace gbe
     GBE_ASSERT(unit.getPointerSize() == ir::POINTER_32_BITS);
     this->liveness = GBE_NEW(ir::Liveness, (ir::Function&) fn);
     this->dag = GBE_NEW(ir::FunctionDAG, *this->liveness);
-    this->partitioner = GBE_NEW(RegisterFilePartitioner);
+    this->partitioner = GBE_NEW_NO_ARG(RegisterFilePartitioner);
     if (fn.getSimdWidth() == 0)
       this->simdWidth = nextHighestPowerOf2(OCL_SIMD_WIDTH);
     else
@@ -357,7 +357,7 @@ namespace gbe
         INSERT_REG(numgroup0, GROUP_NUM_X, 1)
         INSERT_REG(numgroup1, GROUP_NUM_Y, 1)
         INSERT_REG(numgroup2, GROUP_NUM_Z, 1)
-        INSERT_REG(stackptr, STACK_POINTER, this->simdWidth);
+        {INSERT_REG(stackptr, STACK_POINTER, this->simdWidth);}
         specialRegs.insert(reg);
       }
     });
@@ -378,7 +378,7 @@ namespace gbe
   void Context::buildArgList(void) {
     kernel->argNum = fn.argNum();
     if (kernel->argNum)
-      kernel->args = GBE_NEW_ARRAY(KernelArgument, kernel->argNum);
+      kernel->args = GBE_NEW_ARRAY_NO_ARG(KernelArgument, kernel->argNum);
     else
       kernel->args = NULL;
     for (uint32_t argID = 0; argID < kernel->argNum; ++argID) {

@@ -789,7 +789,7 @@ namespace gbe
   static void destroySelectionLibrary(void) { GBE_DELETE(selLib); }
   static struct SelectionLibraryInitializer {
     SelectionLibraryInitializer(void) {
-      selLib = GBE_NEW(SelectionLibrary);
+      selLib = GBE_NEW_NO_ARG(SelectionLibrary);
       atexit(destroySelectionLibrary);
     }
   } selectionLibraryInitializer;
@@ -1977,7 +1977,7 @@ namespace gbe
 
   template <typename PatternType>
   void SelectionLibrary::insert(void) {
-    const SelectionPattern *pattern = GBE_NEW(PatternType);
+    const SelectionPattern *pattern = GBE_NEW_NO_ARG(PatternType);
     this->toFree.push_back(pattern);
     for (auto opcode : pattern->opcodes)
       this->patterns[opcode].push_back(pattern);

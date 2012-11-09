@@ -36,7 +36,7 @@ namespace ir {
   public:
     /*! Initialize a context dedicated to return instruction lowering */
     ContextReturn(Unit &unit) : Context(unit) {
-      this->usedLabels = GBE_NEW(vector<uint8_t>);
+      this->usedLabels = GBE_NEW_NO_ARG(vector<uint8_t>);
     }
     /*! Lower the return instruction to gotos for the given function */
     void lower(const std::string &functionName);

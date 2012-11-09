@@ -8,7 +8,8 @@ add_llvm_target(GenBackend
   llvm_to_gen.cpp
   llvm_gen_backend.cpp
   llvm_passes.cpp)
-add_llvm_library_dependencies(LLVMGenBackend
+target_link_libraries (LLVMGenBackend
+#add_llvm_library_dependencies(LLVMGenBackend
   LLVMAnalysis
   LLVMCodeGen
   LLVMCore

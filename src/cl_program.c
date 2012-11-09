@@ -35,7 +35,7 @@
 static void
 cl_program_release_sources(cl_program p)
 {
-  int i;
+  uint32_t i;
   if (p->sources == NULL) return;
   for (i = 0; i < p->src_n; ++i)
     if (p->sources[i]) cl_free(p->sources[i]);
@@ -241,7 +241,7 @@ cl_program_create_from_source(cl_context ctx,
   // yet the compilation options
   program = cl_program_new(ctx);
   TRY_ALLOC (program->sources, cl_calloc(count, sizeof(char*)));
-  for (i = 0; i < count; ++i) {
+  for (i = 0; i < (int) count; ++i) {
     size_t len;
     if (lengths == NULL || lengths[i] == 0)
       len = strlen(strings[i]);

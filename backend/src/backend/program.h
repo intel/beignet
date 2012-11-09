@@ -48,7 +48,7 @@ enum gbe_arg_type {
   GBE_ARG_CONSTANT_PTR = 2,     // __constant
   GBE_ARG_LOCAL_PTR = 3,        // __local
   GBE_ARG_IMAGE = 4,            // image2d_t, image3d_t
-  GBE_ARG_INVALID = 0xffffffff
+  GBE_ARG_INVALID = 5
 };
 
 /*! Constant buffer values (ie values to setup in the constant buffer) */

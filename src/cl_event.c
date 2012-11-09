@@ -16,4 +16,5 @@
  *
  * Author: Benjamin Segovia <benjamin.segovia@intel.com>
  */
+struct empty {int dummy;};
 

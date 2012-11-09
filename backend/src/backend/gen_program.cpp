@@ -97,7 +97,7 @@ namespace gbe {
                                            size_t *errSize)
   {
     using namespace gbe;
-    GenProgram *program = GBE_NEW(GenProgram);
+    GenProgram *program = GBE_NEW_NO_ARG(GenProgram);
     std::string error;
     // Try to compile the program
     if (program->buildFromLLVMFile(fileName, error) == false) {

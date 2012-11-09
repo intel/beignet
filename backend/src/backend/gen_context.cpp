@@ -265,7 +265,7 @@ namespace gbe
     this->emitInstructionStream();
     this->patchBranches();
     genKernel->insnNum = p->store.size();
-    genKernel->insns = GBE_NEW_ARRAY(GenInstruction, genKernel->insnNum);
+    genKernel->insns = GBE_NEW_ARRAY_NO_ARG(GenInstruction, genKernel->insnNum);
     std::memcpy(genKernel->insns, &p->store[0], genKernel->insnNum * sizeof(GenInstruction));
     if (OCL_OUTPUT_ASM)
       for (uint32_t insnID = 0; insnID < genKernel->insnNum; ++insnID)

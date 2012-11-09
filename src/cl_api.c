@@ -975,7 +975,7 @@ clEnqueueNDRangeKernel(cl_command_queue  command_queue,
   size_t fixed_global_sz[] = {1,1,1};
   size_t fixed_local_sz[] = {16,1,1};
   cl_int err = CL_SUCCESS;
-  cl_int i;
+  size_t i;
 
   CHECK_QUEUE(command_queue);
   CHECK_KERNEL(kernel);
