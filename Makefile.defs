@@ -17,7 +17,7 @@ LLVM_CXXFLAGS=$(shell llvm-config --cxxflags | sed 's/\-pedantic//g')
 
 LOCAL_CFLAGS=-Wall -funroll-loops -Wstrict-aliasing -fstrict-aliasing \
 	-msse2 -msse3 -mssse3 -msse4.1 -ffast-math -fPIC -Wall \
-	-DNDEBUG -DGBE_DEBUG=0 -I$(TOP)/src -I$(TOP)/include \
+	-DGBE_DEBUG=1 -I$(TOP)/src -I$(TOP)/include \
 	-I$(INC_BACKEND) $(DRM_CFLAGS) $(XEXT_CFLAGS)
 
 LOCAL_LIBS=$(DRM_LIBS) $(XEXT_LIBS)
