@@ -20,9 +20,46 @@
 /**
  * \file llvm_gen_backend.cpp
  * \author Benjamin Segovia <benjamin.segovia@intel.com>
- *
- * Transform the LLVM IR code into Gen IR code
  */
+
+/* Transform the LLVM IR code into Gen IR code i.e. our temporary representation
+ * for programs running on Gen.
+ *
+ * Overview
+ * ========
+ *
+ * This code is mostly inspired by the (now defunct and replaced by CppBackend)
+ * CBackend. Basically, there are two ways to transform LLVM code into machine
+ * code (or anything else)
+ * - You write a complete LLVM backend by the book. LLVM proposes a lot of
+ *   useful tools to do so. This is obviously the path chosen by all CPU guys
+ *   but also by AMD and nVidia which both use the backend infrastructure to
+ *   output their own intermediate language. The good point is that you can
+ *   reuse a lot of tools (like proper PHI elimination with phi congruence and
+ *   global copy propagation a la Chaitin). Bad points are:
+ *     1/ It is a *long* journey to generate anything.
+ *     2/ More importantly, the code is hugely biased towards CPUs. Typically,
+ *        the way registers are defined do not fit well Gen register file (which
+ *        is really more like a regular piece of memory). Same issue apply for
+ *        predicated instructions with mask which is a bit boring to use with
+ *        SSA. Indeed, since DAGSelection still manipulates SSA values, anything
+ *        predicated requires to insert extra sources
+ * - You write function passes to do the translation yourself. Obviously, you
+ *   reinvent the wheel. However, it is easy to do and easier to maintain
+ *   (somehow)
+ *
+ * So, the code here just traverses LLVM asm and generates our own ISA. The
+ * generated code is OK even if a global copy propagation pass is still overdue.
+ * Right now, it is pretty straighforward and simplistic in that regard
+ *
+ * Problems
+ * ========
+ *
+ * Several things regarding constants like ConstantExpr are not properly handled.
+ * More importantly, the lost copy problem is *NOT* handled so the generated
+ * code may be incorrect. Just a matter of adding extra MOVs.
+ */
+
 #include "llvm/CallingConv.h"
 #include "llvm/Constants.h"
 #include "llvm/DerivedTypes.h"
@@ -492,6 +529,9 @@ namespace gbe
       GBE_ASSERTM(false, "Unsupported constant expression");
     else if (isa<UndefValue>(CPV) && CPV->getType()->isSingleValueType())
       GBE_ASSERTM(false, "Unsupported constant expression");
+
+    GBE_ASSERTM(dyn_cast<ConstantExpr>(CPV),
+                "Constant expressions are not supported yet");
 
 #if LLVM_VERSION_MINOR > 0
     ConstantDataSequential *seq = dyn_cast<ConstantDataSequential>(CPV);
