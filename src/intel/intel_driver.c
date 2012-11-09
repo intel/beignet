@@ -93,6 +93,8 @@ intel_driver_delete(intel_driver_t *driver)
 {
   if (driver == NULL)
     return;
+  if (driver->bufmgr)
+    drm_intel_bufmgr_destroy(driver->bufmgr);
   cl_free(driver);
 }
 
@@ -118,9 +120,9 @@ error:
 static void
 intel_driver_memman_init(intel_driver_t *driver)
 {
-  driver->bufmgr = intel_bufmgr_gem_init(driver->fd, BATCH_SIZE);
+  driver->bufmgr = drm_intel_bufmgr_gem_init(driver->fd, BATCH_SIZE);
   assert(driver->bufmgr);
-  intel_bufmgr_gem_enable_reuse(driver->bufmgr);
+  drm_intel_bufmgr_gem_enable_reuse(driver->bufmgr);
 }
 
 static void 
