@@ -357,7 +357,8 @@ namespace gbe
         INSERT_REG(numgroup0, GROUP_NUM_X, 1)
         INSERT_REG(numgroup1, GROUP_NUM_Y, 1)
         INSERT_REG(numgroup2, GROUP_NUM_Z, 1)
-        {INSERT_REG(stackptr, STACK_POINTER, this->simdWidth);}
+        INSERT_REG(stackptr, STACK_POINTER, this->simdWidth)
+        do {} while (0);
         specialRegs.insert(reg);
       }
     });

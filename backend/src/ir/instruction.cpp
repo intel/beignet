@@ -60,11 +60,11 @@ namespace ir {
     struct NSrcPolicy {
       INLINE uint32_t getSrcNum(void) const { return srcNum; }
       INLINE Register getSrc(const Function &fn, uint32_t ID) const {
-        GBE_ASSERTM(ID < srcNum, "Out-of-bound source");
+        GBE_ASSERTM((int) ID < (int) srcNum, "Out-of-bound source");
         return static_cast<const T*>(this)->src[ID];
       }
       INLINE void setSrc(Function &fn, uint32_t ID, Register reg) {
-        GBE_ASSERTM(ID < srcNum, "Out-of-bound source");
+        GBE_ASSERTM((int) ID < (int) srcNum, "Out-of-bound source");
         static_cast<T*>(this)->src[ID] = reg;
       }
     };
@@ -74,11 +74,11 @@ namespace ir {
     struct NDstPolicy {
       INLINE uint32_t getDstNum(void) const { return dstNum; }
       INLINE Register getDst(const Function &fn, uint32_t ID) const {
-        GBE_ASSERTM(ID < dstNum, "Out-of-bound destination");
+        GBE_ASSERTM((int) ID < (int) dstNum, "Out-of-bound destination");
         return static_cast<const T*>(this)->dst[ID];
       }
       INLINE void setDst(Function &fn, uint32_t ID, Register reg) {
-        GBE_ASSERTM(ID < dstNum, "Out-of-bound destination");
+        GBE_ASSERTM((int) ID < (int) dstNum, "Out-of-bound destination");
         static_cast<T*>(this)->dst[ID] = reg;
       }
     };

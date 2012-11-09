@@ -100,7 +100,7 @@ cl_file_map_open(cl_file_map_t *fm, const char *name)
   fm->size = lseek(fm->fd, 0, SEEK_END);
   lseek(fm->fd, 0, SEEK_SET);
   fm->start = mmap(0, fm->size, PROT_READ, MAP_SHARED, fm->fd, 0);
-  if(fm->start <= 0) {
+  if(fm->start == NULL) {
     err = CL_FILE_MAP_FAILED_TO_MMAP;
     goto error;
   }
