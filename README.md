@@ -49,13 +49,12 @@ be found in `utests/`.
 
 Note that the compiler depends on LLVM (Low-Level Virtual Machine project).
 Right now, the code has only been compiled with LLVM 3.0. It will not compile
-with any thing older. A small amount of work should be required to make it work
-with LLVM 3.1 but the port is not done. LLVM 3.0 can be downloaded at:
+with any thing older. 
 
 [http://llvm.org/releases/](http://llvm.org/releases/)
 
-Be careful and download LLVM *3.0*. The code will not compile with LLVM 3.2
-since the ptx ABI has been deprecated and replaced by the nvptx one.
+LLVM 3.0 and 3.1 are supported. LLVM 3.2 is partially supported right now. More
+work is needed to make it fully work.
 
 Also note that the code was compiled on GCC 4.6 and GCC 4.7. Since the code uses
 really recent C++11 features, you may expect problems with older compilers. Last
