@@ -52,12 +52,25 @@
  * generated code is OK even if a global copy propagation pass is still overdue.
  * Right now, it is pretty straighforward and simplistic in that regard
  *
+ * About Clang and the ABI / target
+ * ================================
+ *
+ * A major question is: how did we actually generate this LLVM code from OpenCL?
+ * Well, thing is that there is no generic target in LLVM since there are many
+ * dependencies on endianness or ABIs. Fortunately, the ptx (and nvptx for LLVM
+ * 3.2) profile is pretty well adapted to our needs since NV and Gen GPU are
+ * kind of similar, or at least they are similar enough to share the same front
+ * end. 
+ *
  * Problems
  * ========
  *
- * Several things regarding constants like ConstantExpr are not properly handled.
- * More importantly, the lost copy problem is *NOT* handled so the generated
- * code may be incorrect. Just a matter of adding extra MOVs.
+ * - Several things regarding constants like ConstantExpr are not properly handled.
+ * - More importantly, the lost copy problem is *NOT* handled so the generated
+ *   code may be incorrect. Just a matter of adding extra MOVs.
+ * - ptx front end generates function calls. Since we do not support them yet,
+ *   the user needs to force the inlining of all functions. If a function call
+ *   is intercepted, we just abort
  */
 
 #include "llvm/CallingConv.h"
@@ -1577,8 +1590,8 @@ namespace gbe
             this->newRegister(&I);
           break;
 #endif /* LLVM_VERSION_MINOR == 2 */
-
-          default: NOT_IMPLEMENTED;
+          default:
+          GBE_ASSERTM(false, "Unsupported intrinsics");
         }
         return;
       }
@@ -1644,7 +1657,8 @@ namespace gbe
       case GEN_OCL_FORCE_SIMD8:
       case GEN_OCL_FORCE_SIMD16:
         break;
-      default: NOT_SUPPORTED;
+      default:
+        GBE_ASSERTM(false, "Function call are not supported yet");
     };
   }
 
