@@ -94,19 +94,18 @@ endif (GBE_USE_BLOB)
 
 include_directories (.)
 link_directories (${LLVM_LIBRARY_DIRS})
+include_directories(${LLVM_INCLUDE_DIRS})
 add_library (gbe SHARED ${GBE_SRC})
 include (${LLVM_DIR}/AddLLVMDefinitions.cmake)
 target_link_libraries (gbe
   LLVMGenBackend
   LLVMTransformUtils
   LLVMCore
-  LLVMTarget
   LLVMAnalysis
   LLVMCodeGen
   LLVMScalarOpts
   LLVMSelectionDAG
-  LLVMAsmPrinter
-  LLVMMCParser
+  LLVMSupport
   LLVMAsmParser
   LLVMBitReader)
 

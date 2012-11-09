@@ -9,13 +9,11 @@ add_llvm_target(GenBackend
   llvm_gen_backend.cpp
   llvm_passes.cpp)
 target_link_libraries (LLVMGenBackend
-#add_llvm_library_dependencies(LLVMGenBackend
+  LLVMSupport
   LLVMAnalysis
   LLVMCodeGen
   LLVMCore
-  LLVMMC
   LLVMScalarOpts
-  LLVMSupport
   LLVMTarget
   LLVMTransformUtils)
 

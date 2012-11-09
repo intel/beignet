@@ -74,9 +74,9 @@
 #include "sys/cvar.hpp"
 #include <algorithm>
 
-#if (LLVM_VERSION_MAJOR != 3) && (LLVM_VERSION_MINOR > 1)
+#if (LLVM_VERSION_MAJOR != 3) || (LLVM_VERSION_MINOR >= 2)
 #error "Only LLVM 3.0 / 3.1 is supported"
-#endif /* (LLVM_VERSION_MAJOR != 3) && (LLVM_VERSION_MINOR > 1) */
+#endif /* (LLVM_VERSION_MAJOR != 3) && (LLVM_VERSION_MINOR >= 2) */
 
 using namespace llvm;
 
@@ -258,6 +258,11 @@ namespace gbe
       GBE_ASSERT(scalarMap.find(key) == scalarMap.end());
       scalarMap[key] = reg;
     }
+    /*! Says if the value exists. Otherwise, it is undefined */
+    bool valueExists(Value *value, uint32_t index) {
+      const auto key = std::make_pair(value, index);
+      return scalarMap.find(key) != scalarMap.end();
+    }
   private:
     /*! This creates a scalar register for a Value (index is the vector index when
      *  the value is a vector of scalars)
@@ -277,15 +282,6 @@ namespace gbe
     /*! Actually allocates the registers */
     ir::Context &ctx;
   };
-
-  class CBEMCAsmInfo : public MCAsmInfo {
-  public:
-    CBEMCAsmInfo() {
-      GlobalPrefix = "";
-      PrivateGlobalPrefix = "";
-    }
-  };
-
   /*! All intrinsic Gen functions */
   enum OCLInstrinsic {
 #define DECL_LLVM_GEN_FUNCTION(ID, NAME) GEN_OCL_##ID,
@@ -333,13 +329,8 @@ namespace gbe
       PASS_EMIT_INSTRUCTIONS = 1
     } pass;
 
-    Mangler *Mang;
     LoopInfo *LI;
     const Module *TheModule;
-    const TargetData* TD;
-    const MCAsmInfo* TAsm;
-    const MCRegisterInfo *MRI;
-    MCContext *TCtx;
 
   public:
     static char ID;
@@ -348,8 +339,8 @@ namespace gbe
         unit(unit),
         ctx(unit),
         regTranslator(ctx),
-        Mang(0), LI(0),
-        TheModule(0), TD(0)
+        LI(0),
+        TheModule(0)
     {
       initializeLoopInfoPass(*PassRegistry::getPassRegistry());
       pass = PASS_EMIT_REGISTERS;
@@ -376,14 +367,7 @@ namespace gbe
       return false;
     }
 
-    virtual bool doFinalization(Module &M) {
-      delete TD;
-      delete TAsm;
-      delete Mang;
-      delete TCtx;
-      delete MRI;
-      return false;
-    }
+    virtual bool doFinalization(Module &M) { return false; }
 
     /*! Emit the complete function code and declaration */
     void emitFunction(Function &F);
@@ -468,13 +452,6 @@ namespace gbe
 
     // Initialize
     TheModule = &M;
-
-    TAsm = new CBEMCAsmInfo();
-    TD   = new TargetData(&M);
-    MRI  = new MCRegisterInfo();
-    TCtx = new MCContext(*TAsm, *MRI, NULL);
-    Mang = new Mangler(*TCtx, *TD);
-
     return false;
   }
 
@@ -691,15 +668,21 @@ namespace gbe
         // will remove them
         for (uint32_t elemID = 0; elemID < elemNum; ++elemID) {
           const ir::Register dst = this->getRegister(PN, elemID);
-          Constant *CPV = dyn_cast<Constant>(IV);
-          if (CPV) {
-            GBE_ASSERT(isa<GlobalValue>(CPV) == false);
-            const ir::ImmediateIndex immIndex = this->newImmediate(CPV, elemID);
+          Constant *CP = dyn_cast<Constant>(IV);
+          if (CP) {
+            GBE_ASSERT(isa<GlobalValue>(CP) == false);
+            ConstantVector *CPV = dyn_cast<ConstantVector>(CP);
+            if (dyn_cast<ConstantVector>(CPV) &&
+                isa<UndefValue>(extractConstantElem(CPV, elemID)))
+              continue;
+            const ir::ImmediateIndex immIndex = this->newImmediate(CP, elemID);
             const ir::Immediate imm = ctx.getImmediate(immIndex);
             ctx.LOADI(imm.type, dst, immIndex);
           } else {
-            const ir::Register src = this->getRegister(IV, elemID);
-            ctx.MOV(type, dst, src);
+            if (regTranslator.valueExists(IV,elemID)) {
+              const ir::Register src = this->getRegister(IV, elemID);
+              ctx.MOV(type, dst, src);
+            }
           }
         }
       }
@@ -727,7 +710,11 @@ namespace gbe
         else {
           PointerType *pointerType = dyn_cast<PointerType>(type);
           // By value structure
+#if LLVM_VERSION_MINOR <= 1
           if (PAL.paramHasAttr(argID, Attribute::ByVal)) {
+#else
+          if (PAL.getParamAttributes(argID).hasAttribute(Attributes::ByVal)) {
+#endif /* LLVM_VERSION_MINOR <= 1 */
             Type *pointed = pointerType->getElementType();
             const size_t structSize = getTypeByteSize(unit, pointed);
             ctx.input(ir::FunctionArgument::STRUCTURE, reg, structSize);
@@ -1518,13 +1505,23 @@ namespace gbe
 
     // We only support a small number of intrinsics right now
     if (Function *F = I.getCalledFunction()) {
-      if (F->getIntrinsicID() != 0) {
+      const Intrinsic::ID intrinsicID = (Intrinsic::ID) F->getIntrinsicID();
+      if (intrinsicID != 0) {
         switch (F->getIntrinsicID()) {
           case Intrinsic::stacksave:
             this->newRegister(&I);
           break;
           case Intrinsic::stackrestore:
           break;
+#if LLVM_VERSION_MINOR == 2
+          case Intrinsic::lifetime_start:
+          case Intrinsic::lifetime_end:
+          break;
+          case Intrinsic::fmuladd:
+            this->newRegister(&I);
+          break;
+#endif /* LLVM_VERSION_MINOR == 2 */
+
           default: NOT_IMPLEMENTED;
         }
         return;
@@ -1586,7 +1583,6 @@ namespace gbe
       case GEN_OCL_RNDU:
       case GEN_OCL_RNDD:
         // No structure can be returned
-        GBE_ASSERT(I.hasStructRetAttr() == false);
         this->newRegister(&I);
         break;
       case GEN_OCL_FORCE_SIMD8:
@@ -1636,6 +1632,21 @@ namespace gbe
             ctx.MOV(ir::getType(family), dst, src);
           }
           break;
+#if LLVM_VERSION_MINOR == 2
+          case Intrinsic::fmuladd:
+          {
+            const ir::Register dst  = this->getRegister(&I);
+            const ir::Register src0 = this->getRegister(I.getOperand(0));
+            const ir::Register src1 = this->getRegister(I.getOperand(1));
+            const ir::Register src2 = this->getRegister(I.getOperand(2));
+            ctx.MAD(ir::TYPE_FLOAT, dst, src0, src1, src2);
+            break;
+          }
+          break;
+          case Intrinsic::lifetime_start:
+          case Intrinsic::lifetime_end:
+          break;
+#endif /* LLVM_VERSION_MINOR == 2 */
           default: NOT_IMPLEMENTED;
         }
       } else {
@@ -1855,7 +1866,7 @@ namespace gbe
           }
         }
       } else
-        NOT_IMPLEMENTED;
+        GBE_ASSERTM(false, "loads / stores of vectors of short / chars is not supported yet");
     }
   }
 

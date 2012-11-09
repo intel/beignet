@@ -31,6 +31,7 @@
 #include "ir/value.hpp"
 #include "ir/unit.hpp"
 #include "llvm/llvm_to_gen.hpp"
+#include "llvm/Config/config.h"
 #include <cstring>
 #include <algorithm>
 #include <fstream>
@@ -105,11 +106,14 @@ namespace gbe {
 
     // Now compile the code to llvm using clang
     // XXX use popen and stuff instead of that
+#if LLVM_VERSION_MINOR <= 1
     std::string compileCmd = "clang -x cl -fno-color-diagnostics -emit-llvm -O3 -ccc-host-triple ptx32 -c ";
+#else
+    std::string compileCmd = "clang -target nvptx -x cl -fno-color-diagnostics -emit-llvm -O3 -c ";
+#endif /* LLVM_VERSION_MINOR <= 1 */
     compileCmd += clName;
     compileCmd += " -o ";
     compileCmd += llName;
-    std::cout << "HACK: using \"system()\" to run clang. Use clang API instead!\n";
     if (UNLIKELY(system(compileCmd.c_str()) != 0)) return NULL;
 
     // Now build the program from llvm
