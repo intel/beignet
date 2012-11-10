@@ -31,6 +31,11 @@ DECL_LLVM_GEN_FUNCTION(RNDE, __gen_ocl_rnde)
 DECL_LLVM_GEN_FUNCTION(RNDU, __gen_ocl_rndu)
 DECL_LLVM_GEN_FUNCTION(RNDD, __gen_ocl_rndd)
 
+// Barrier function
+DECL_LLVM_GEN_FUNCTION(LBARRIER, __gen_ocl_barrier_local)
+DECL_LLVM_GEN_FUNCTION(GBARRIER, __gen_ocl_barrier_global)
+DECL_LLVM_GEN_FUNCTION(LGBARRIER, __gen_ocl_barrier_local_and_global)
+
 // To force SIMD8/16 compilation
 DECL_LLVM_GEN_FUNCTION(FORCE_SIMD8,  __gen_ocl_force_simd8)
 DECL_LLVM_GEN_FUNCTION(FORCE_SIMD16, __gen_ocl_force_simd16)

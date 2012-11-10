@@ -57,6 +57,27 @@
  * of the pattern): this creates a library of patterns that may be used in
  * run-time.
  *
+ * Predication / Masking and CFG linearization
+ * ===========================================
+ *
+ * The current version is based on an unfortunate choice. Basically, the problem
+ * to solve is how to map unstructured branches (i.e. regular gotos) onto Gen.
+ * Gen has a native support for structured branches (if/else/endif/while...) but
+ * nothing really native for unstructured branches.
+ *
+ * The idea we implemented is simple. We stole one flag register (here f0.0) to
+ * mask all the instructions (and only activate the proper SIMD lanes) and we
+ * use the CFG linearization technique to properly handle the control flow. This
+ * is not really good for one particular reason: Gen instructions must use the
+ * *same* flag register for the predicates (used for masking) and the
+ * conditional modifier (used as a destination for CMP). This leads to extra
+ * complications with compare instructions and select instructions. Basically,
+ * we need to insert extra MOVs. 
+ *
+ * Also, there is some extra kludge to handle the predicates for JMPI.
+ *
+ * See TODO for a better idea for branching and masking
+ *
  * TODO:
  * =====
  *
@@ -70,6 +91,15 @@
  * matched with other instructions in the dominated block. This leads to the
  * interesting approach which consists in traversing the dominator tree in post
  * order
+ *
+ * About masking and branching, a much better idea (that I found later unfortunately)
+ * is to replace the use of the flag by uses of if/endif to enclose the basic
+ * block. So, instead of using predication, we use auto-masking. The very cool
+ * consequence is that we can reintegrate back the structured branches.
+ * Basically, we will be able to identify branches that can be mapped to
+ * structured branches and mix nicely unstructured branches (which will use
+ * jpmi, if/endif to mask the blocks) and structured branches (which are pretty
+ * fast)
  */
 
 #include "backend/gen_insn_selection.hpp"

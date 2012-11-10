@@ -66,6 +66,6 @@ DECL_INSN(LOAD, LoadInstruction)
 DECL_INSN(STORE, StoreInstruction)
 DECL_INSN(TYPED_WRITE, TypedWriteInstruction)
 DECL_INSN(SAMPLE, SampleInstruction)
-DECL_INSN(FENCE, FenceInstruction)
+DECL_INSN(SYNC, SyncInstruction)
 DECL_INSN(LABEL, LabelInstruction)
 

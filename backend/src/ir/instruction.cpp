@@ -430,14 +430,14 @@ namespace ir {
       Type type;                     //!< Type of the immediate
     };
 
-    class ALIGNED_INSTRUCTION FenceInstruction :
+    class ALIGNED_INSTRUCTION SyncInstruction :
       public BasePolicy,
-      public NSrcPolicy<FenceInstruction, 0>,
-      public NDstPolicy<FenceInstruction, 0>
+      public NSrcPolicy<SyncInstruction, 0>,
+      public NDstPolicy<SyncInstruction, 0>
     {
     public:
-      INLINE FenceInstruction(AddressSpace addrSpace) {
-        this->opcode = OP_FENCE;
+      INLINE SyncInstruction(AddressSpace addrSpace) {
+        this->opcode = OP_SYNC;
         this->addrSpace = addrSpace;
       }
       bool wellFormed(const Function &fn, std::string &why) const;
@@ -718,7 +718,7 @@ namespace ir {
     }
 
     // Nothing can go wrong here
-    INLINE bool FenceInstruction::wellFormed(const Function &fn, std::string &whyNot) const
+    INLINE bool SyncInstruction::wellFormed(const Function &fn, std::string &whyNot) const
     {
       return true;
     }
@@ -915,9 +915,9 @@ START_INTROSPECTION(StoreInstruction)
 #include "ir/instruction.hxx"
 END_INTROSPECTION(StoreInstruction)
 
-START_INTROSPECTION(FenceInstruction)
+START_INTROSPECTION(SyncInstruction)
 #include "ir/instruction.hxx"
-END_INTROSPECTION(FenceInstruction)
+END_INTROSPECTION(SyncInstruction)
 
 START_INTROSPECTION(LabelInstruction)
 #include "ir/instruction.hxx"
@@ -1056,7 +1056,7 @@ END_FUNCTION(Instruction, Register)
   bool Instruction::hasSideEffect(void) const {
     return opcode == OP_STORE || 
            opcode == OP_TYPED_WRITE ||
-           opcode == OP_FENCE;
+           opcode == OP_SYNC;
   }
 
 #define DECL_MEM_FN(CLASS, RET, PROTOTYPE, CALL) \
@@ -1205,7 +1205,7 @@ DECL_MEM_FN(BranchInstruction, LabelIndex, getLabelIndex(void), getLabelIndex())
 
   // FENCE
   Instruction FENCE(AddressSpace space) {
-    return internal::FenceInstruction(space).convert();
+    return internal::SyncInstruction(space).convert();
   }
 
   // LABEL

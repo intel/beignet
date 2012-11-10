@@ -347,10 +347,10 @@ namespace ir {
     static bool isClassOf(const Instruction &insn);
   };
 
-  /*! Fence instructions are used to order loads and stores for a given memory
-   *  space
+  /*! Sync instructions are used to order loads and stores for a given memory
+   *  space and/or to serialize threads at a given point in the program
    */
-  class FenceInstruction : public Instruction {
+  class SyncInstruction : public Instruction {
   public:
     /*! Return true if the given instruction is an instance of this class */
     static bool isClassOf(const Instruction &insn);
@@ -488,8 +488,8 @@ namespace ir {
   Instruction TYPED_WRITE(void);
   /*! sample TODO */
   Instruction SAMPLE(void);
-  /*! fence.space */
-  Instruction FENCE(AddressSpace space);
+  /*! sync.space */
+  Instruction SYNC(AddressSpace space);
   /*! label labelIndex */
   Instruction LABEL(LabelIndex labelIndex);
 
