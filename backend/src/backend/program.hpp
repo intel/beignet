@@ -87,11 +87,13 @@ namespace gbe {
     /*! Get the offset where to patch. Returns -1 if no patch needed */
     int32_t getCurbeOffset(gbe_curbe_type type, uint32_t subType) const;
     /*! Get the curbe size required by the kernel */
-    uint32_t getCurbeSize(void) const { return this->curbeSize; }
+    INLINE uint32_t getCurbeSize(void) const { return this->curbeSize; }
     /*! Return the size of the stack (zero if none) */
-    uint32_t getStackSize(void) const { return this->stackSize; }
+    INLINE uint32_t getStackSize(void) const { return this->stackSize; }
     /*! Get the SIMD width for the kernel */
-    uint32_t getSIMDWidth(void) const { return this->simdWidth; }
+    INLINE uint32_t getSIMDWidth(void) const { return this->simdWidth; }
+    /*! Says if SLM is needed for it */
+    INLINE bool getUseSLM(void) const { return this->useSLM; }
   protected:
     friend class Context;      //!< Owns the kernels
     const std::string name;    //!< Kernel name
@@ -101,6 +103,7 @@ namespace gbe {
     uint32_t curbeSize;        //!< Size of the data to push
     uint32_t simdWidth;        //!< SIMD size for the kernel (lane number)
     uint32_t stackSize;        //!< Stack size (may be 0 if unused)
+    bool useSLM;               //!< SLM requires a special HW config
     GBE_CLASS(Kernel);         //!< Use custom allocators
   };
 

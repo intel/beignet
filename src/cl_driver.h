@@ -90,7 +90,7 @@ typedef struct cl_gpgpu_kernel {
   uint32_t cst_sz;         /* total size of all constants */
   cl_buffer bo;            /* kernel code in the proper addr space */
   int32_t barrierID;       /* barrierID for _this_ kernel */
-  uint32_t use_barrier:1;  /* For gen7 (automatic barrier management) */
+  uint32_t use_slm:1;      /* For gen7 (automatic barrier management) */
   uint32_t thread_n:15;    /* For gen7 (automatic barrier management) */
   uint32_t slm_sz:16;      /* For gen7 (automatic SLM allocation) */
 } cl_gpgpu_kernel;

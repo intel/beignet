@@ -95,7 +95,8 @@ error:
   return err;
 }
 
-static void
+/* Will return the total amount of slm used */
+static int32_t
 cl_curbe_fill(cl_kernel ker,
               const size_t *global_wk_off,
               const size_t *global_wk_sz,
@@ -128,6 +129,22 @@ cl_curbe_fill(cl_kernel ker,
     int32_t i;
     for (i = 0; i < (int32_t) simd_sz; ++i) stackptr[i] = i;
   }
+
+  /* Handle the various offsets to SLM */
+  const int32_t arg_n = gbe_kernel_get_arg_num(ker->opaque);
+  int32_t arg, slm_offset = 0;
+  for (arg = 0; arg < arg_n; ++arg) {
+    const enum gbe_arg_type type = gbe_kernel_get_arg_type(ker->opaque, arg);
+    if (type != GBE_ARG_LOCAL_PTR)
+      continue;
+    offset = gbe_kernel_get_curbe_offset(ker->opaque, GBE_CURBE_KERNEL_ARGUMENT, arg);
+    assert(offset >= 0);
+    uint32_t *slmptr = (uint32_t *) (ker->curbe + offset);
+    *slmptr = slm_offset;
+    slm_offset += ker->args[arg].local_sz;
+  }
+
+  return slm_offset;
 }
 
 static void
@@ -176,12 +193,12 @@ cl_command_queue_ND_range_gen7(cl_command_queue queue,
   kernel.grf_blocks = 128;
   kernel.bo = ker->bo;
   kernel.barrierID = 0;
-  kernel.use_barrier = 0;
   kernel.slm_sz = 0;
+  kernel.use_slm = gbe_kernel_use_slm(ker->opaque);
 
   /* Curbe step 1: fill the constant buffer data shared by all threads */
   if (ker->curbe)
-    cl_curbe_fill(ker, global_wk_off, global_wk_sz, local_wk_sz);
+    kernel.slm_sz = cl_curbe_fill(ker, global_wk_off, global_wk_sz, local_wk_sz);
 
   /* Compute the number of HW threads we need */
   TRY (cl_kernel_work_group_sz, ker, local_wk_sz, 3, &local_sz);

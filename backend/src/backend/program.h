@@ -162,6 +162,10 @@ extern gbe_kernel_get_curbe_offset_cb *gbe_kernel_get_curbe_offset;
 typedef uint32_t (gbe_kernel_get_required_work_group_size_cb)(gbe_kernel, uint32_t dim);
 extern gbe_kernel_get_required_work_group_size_cb *gbe_kernel_get_required_work_group_size;
 
+/*! Says if SLM is used. Required to reconfigure the L3 complex */
+typedef int32_t (gbe_kernel_use_slm_cb)(gbe_kernel);
+extern gbe_kernel_use_slm_cb *gbe_kernel_use_slm;
+
 #ifdef __cplusplus
 }
 #endif /* __cplusplus */

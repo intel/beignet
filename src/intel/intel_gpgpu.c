@@ -248,24 +248,23 @@ intel_gpgpu_pipe_control(intel_gpgpu_t *gpgpu)
 }
 
 static void
-intel_gpgpu_set_L3(intel_gpgpu_t *gpgpu, uint32_t use_barrier)
+intel_gpgpu_set_L3(intel_gpgpu_t *gpgpu, uint32_t use_slm)
 {
   BEGIN_BATCH(gpgpu->batch, 6);
   OUT_BATCH(gpgpu->batch, CMD_LOAD_REGISTER_IMM | 1); /* length - 2 */
   OUT_BATCH(gpgpu->batch, GEN7_L3_CNTL_REG2_ADDRESS_OFFSET);
-  if (use_barrier)
+  if (use_slm)
     OUT_BATCH(gpgpu->batch, gpgpu_l3_config_reg1[8]);
   else
     OUT_BATCH(gpgpu->batch, gpgpu_l3_config_reg1[4]);
 
   OUT_BATCH(gpgpu->batch, CMD_LOAD_REGISTER_IMM | 1); /* length - 2 */
   OUT_BATCH(gpgpu->batch, GEN7_L3_CNTL_REG3_ADDRESS_OFFSET);
-  if (use_barrier)
+  if (use_slm)
     OUT_BATCH(gpgpu->batch, gpgpu_l3_config_reg2[8]);
   else
     OUT_BATCH(gpgpu->batch, gpgpu_l3_config_reg2[4]);
   ADVANCE_BATCH(gpgpu->batch);
-
   intel_gpgpu_pipe_control(gpgpu);
 }
 
@@ -274,7 +273,7 @@ intel_gpgpu_batch_start(intel_gpgpu_t *gpgpu)
 {
   intel_batchbuffer_start_atomic(gpgpu->batch, 256);
   intel_gpgpu_pipe_control(gpgpu);
-  intel_gpgpu_set_L3(gpgpu, gpgpu->ker->use_barrier);
+  intel_gpgpu_set_L3(gpgpu, gpgpu->ker->use_slm);
   intel_gpgpu_select_pipeline(gpgpu);
   intel_gpgpu_set_base_address(gpgpu);
   intel_gpgpu_load_vfe_state(gpgpu);
@@ -523,8 +522,8 @@ intel_gpgpu_build_idrt(intel_gpgpu_t *gpgpu, cl_gpgpu_kernel *kernel)
   /* Barriers / SLM are automatically handled on Gen7+ */
   if (gpgpu->drv->gen_ver == 7 || gpgpu->drv->gen_ver == 75) {
     size_t slm_sz = kernel->slm_sz;
-    desc->desc5.group_threads_num = kernel->use_barrier ? kernel->thread_n : 0;
-    desc->desc5.barrier_enable = kernel->use_barrier;
+    desc->desc5.group_threads_num = kernel->use_slm ? kernel->thread_n : 0;
+    desc->desc5.barrier_enable = kernel->use_slm;
     if (slm_sz > 0) {
       if (slm_sz <= 4*KB)
         slm_sz = 4*KB;

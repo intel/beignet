@@ -799,6 +799,7 @@ namespace gbe
               break;
               case ir::MEM_LOCAL:
                 ctx.input(ir::FunctionArgument::LOCAL_POINTER, reg, ptrSize);
+                ctx.getFunction().setUseSLM(true);
               break;
               case ir::MEM_CONSTANT:
                 ctx.input(ir::FunctionArgument::CONSTANT_POINTER, reg, ptrSize);

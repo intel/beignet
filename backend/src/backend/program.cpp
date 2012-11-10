@@ -49,7 +49,7 @@
 namespace gbe {
 
   Kernel::Kernel(const std::string &name) :
-    name(name), args(NULL), argNum(0), curbeSize(0), stackSize(0)
+    name(name), args(NULL), argNum(0), curbeSize(0), stackSize(0), useSLM(false)
   {}
   Kernel::~Kernel(void) {
     GBE_SAFE_DELETE_ARRAY(args);
@@ -214,6 +214,12 @@ namespace gbe {
     return kernel->getStackSize();
   }
 
+  static int32_t kernelUseSLM(gbe_kernel genKernel) {
+    if (genKernel == NULL) return 0;
+    const gbe::Kernel *kernel = (const gbe::Kernel*) genKernel;
+    return kernel->getUseSLM() ? 1 : 0;
+  }
+
   static uint32_t kernelGetRequiredWorkGroupSize(gbe_kernel kernel, uint32_t dim) {
     return 0u;
   }
@@ -237,6 +243,7 @@ GBE_EXPORT_SYMBOL gbe_kernel_get_curbe_offset_cb *gbe_kernel_get_curbe_offset = 
 GBE_EXPORT_SYMBOL gbe_kernel_get_curbe_size_cb *gbe_kernel_get_curbe_size = NULL;
 GBE_EXPORT_SYMBOL gbe_kernel_get_stack_size_cb *gbe_kernel_get_stack_size = NULL;
 GBE_EXPORT_SYMBOL gbe_kernel_get_required_work_group_size_cb *gbe_kernel_get_required_work_group_size = NULL;
+GBE_EXPORT_SYMBOL gbe_kernel_use_slm_cb *gbe_kernel_use_slm = NULL;
 
 namespace gbe
 {
@@ -260,6 +267,7 @@ namespace gbe
       gbe_kernel_get_curbe_size = gbe::kernelGetCurbeSize;
       gbe_kernel_get_stack_size = gbe::kernelGetStackSize;
       gbe_kernel_get_required_work_group_size = gbe::kernelGetRequiredWorkGroupSize;
+      gbe_kernel_use_slm = gbe::kernelUseSLM;
       genSetupCallBacks();
     }
   };

@@ -43,7 +43,7 @@ namespace ir {
   ///////////////////////////////////////////////////////////////////////////
 
   Function::Function(const std::string &name, const Unit &unit, Profile profile) :
-    name(name), unit(unit), profile(profile), simdWidth(0)
+    name(name), unit(unit), profile(profile), simdWidth(0), useSLM(false)
   {
     initProfile(*this);
   }

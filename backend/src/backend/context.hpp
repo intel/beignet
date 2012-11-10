@@ -103,6 +103,8 @@ namespace gbe
      *  the branch target due to unstructured branches
      */
     void buildJIPs(void);
+    /*! Configure SLM use if needed */
+    void handleSLM(void);
     /*! Insert a new entry with the given size in the Curbe. Return the offset
      *  of the entry
      */

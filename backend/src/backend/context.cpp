@@ -268,6 +268,7 @@ namespace gbe
     this->buildUsedLabels();
     this->buildJIPs();
     this->buildStack();
+    this->handleSLM();
     if (this->emitCode() == false) {
       GBE_DELETE(this->kernel);
       this->kernel = NULL;
@@ -315,6 +316,7 @@ namespace gbe
       const ir::FunctionArgument &arg = fn.getArg(argID);
       // For pointers and values, we have nothing to do. We just push the values
       if (arg.type == ir::FunctionArgument::GLOBAL_POINTER ||
+          arg.type == ir::FunctionArgument::LOCAL_POINTER ||
           arg.type == ir::FunctionArgument::CONSTANT_POINTER ||
           arg.type == ir::FunctionArgument::VALUE ||
           arg.type == ir::FunctionArgument::STRUCTURE)
@@ -400,7 +402,7 @@ namespace gbe
           break;
         case ir::FunctionArgument::LOCAL_POINTER:
           kernel->args[argID].type = GBE_ARG_LOCAL_PTR;
-          kernel->args[argID].size = sizeof(void*);
+          kernel->args[argID].size = 0;
           break;
         case ir::FunctionArgument::IMAGE:
           kernel->args[argID].type = GBE_ARG_IMAGE;
@@ -501,6 +503,11 @@ namespace gbe
       auto jip = fwdTargets.lower_bound(LabelIndex(0));
       JIPs.insert(std::make_pair(bra, *jip));
     }
+  }
+
+  void Context::handleSLM(void) {
+    const bool useSLM = fn.getUseSLM();
+    kernel->useSLM = useSLM;
   }
 
   bool Context::isScalarReg(const ir::Register &reg) const {

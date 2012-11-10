@@ -538,6 +538,7 @@ namespace gbe
       const FunctionArgument &arg = fn.getArg(argID);
       GBE_ASSERT(arg.type == FunctionArgument::GLOBAL_POINTER ||
                  arg.type == FunctionArgument::CONSTANT_POINTER ||
+                 arg.type == FunctionArgument::LOCAL_POINTER ||
                  arg.type == FunctionArgument::VALUE ||
                  arg.type == FunctionArgument::STRUCTURE);
       allocatePayloadReg(GBE_CURBE_KERNEL_ARGUMENT, arg.reg, argID);

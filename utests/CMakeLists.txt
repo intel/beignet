@@ -46,6 +46,8 @@ ADD_LIBRARY(utests SHARED
   compiler_insn_selection_min.cpp
   compiler_insn_selection_max.cpp
   compiler_insn_selection_masked_min_max.cpp
+  compiler_local_memory.cpp
+  compiler_local_memory_two_ptr.cpp
   utest_assert.cpp
   utest.cpp
   utest_file_map.cpp

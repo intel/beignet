@@ -19,14 +19,16 @@
 
 #include "utest_helper.hpp"
 
-static void compiler_write_only(void)
+static void compiler_local_memory_two_ptr(void)
 {
-  const size_t n = 2048;
+  const size_t n = 1024;
 
   // Setup kernel and buffers
-  OCL_CREATE_KERNEL("test_write_only");
+  OCL_CREATE_KERNEL("compiler_local_memory_two_ptr");
   OCL_CREATE_BUFFER(buf[0], 0, n * sizeof(uint32_t), NULL);
   OCL_SET_ARG(0, sizeof(cl_mem), &buf[0]);
+  OCL_SET_ARG(1, 64, NULL); // 16 x int
+  OCL_SET_ARG(2, 64, NULL); // 16 x int
 
   // Run the kernel
   globals[0] = n;
@@ -35,9 +37,14 @@ static void compiler_write_only(void)
   OCL_MAP_BUFFER(0);
 
   // Check results
-  for (uint32_t i = 0; i < n; ++i)
-    OCL_ASSERT(((uint32_t*)buf_data[0])[i] == i);
+  int32_t *dst = (int32_t*)buf_data[0];
+  for (int32_t i = 0; i < (int) n; i+=16)
+  for (int32_t j = 0; j < 16; ++j) {
+    const int gid = i + j;
+    const int tid = j;
+    OCL_ASSERT(dst[i+j] == (gid&~0xf) + 15-tid + 15-tid);
+  }
 }
 
-MAKE_UTEST_FROM_FUNCTION(compiler_write_only);
+MAKE_UTEST_FROM_FUNCTION(compiler_local_memory_two_ptr);
 

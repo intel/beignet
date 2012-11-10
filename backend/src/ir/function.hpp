@@ -275,6 +275,10 @@ namespace ir {
     INLINE void foreachInstruction(const T &functor) const {
       for (auto block : blocks) block->foreach(functor);
     }
+    /*! Does it use SLM */
+    INLINE bool getUseSLM(void) const { return this->useSLM; }
+    /*! Change the SLM config for the function */
+    INLINE bool setUseSLM(bool useSLM) { return this->useSLM = useSLM; }
   private:
     friend class Context;           //!< Can freely modify a function
     std::string name;               //!< Function name
@@ -289,6 +293,7 @@ namespace ir {
     PushMap pushMap;                //!< Pushed function arguments (reg->loc)
     LocationMap locationMap;        //!< Pushed function arguments (loc->reg)
     uint32_t simdWidth;             //!< 8 or 16 if forced, 0 otherwise
+    bool useSLM;                    //!< Is SLM required?
     GBE_CLASS(Function);            //!< Use custom allocator
   };
 
