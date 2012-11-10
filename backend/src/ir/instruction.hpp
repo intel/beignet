@@ -187,15 +187,6 @@ namespace ir {
     static bool isClassOf(const Instruction &insn);
   };
 
-  /*! Ternary instructions is mostly for MADs */
-  class TernaryInstruction : public Instruction {
-  public:
-    /*! Get the type manipulated by the instruction */
-    Type getType(void) const;
-    /*! Return true if the given instruction is an instance of this class */
-    static bool isClassOf(const Instruction &insn);
-  };
-
   /*! Select instructions writes src0 to dst if cond is true. Otherwise, it
    *  writes src1
    */
@@ -465,8 +456,6 @@ namespace ir {
   Instruction XOR(Type type, Register dst, Register src0, Register src1);
   /*! and.type dst src0 src1 */
   Instruction AND(Type type, Register dst, Register src0, Register src1);
-  /*! mad.type dst {src0, src1, src2} (== src) */
-  Instruction MAD(Type type, Register dst, Tuple src);
   /*! sel.type dst {cond, src0, src1} (== src) */
   Instruction SEL(Type type, Register dst, Tuple src);
   /*! eq.type dst src0 src1 */

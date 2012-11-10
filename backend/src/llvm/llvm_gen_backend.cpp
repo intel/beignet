@@ -1639,7 +1639,6 @@ namespace gbe
         regTranslator.newScalarProxy(ir::ocl::goffset1, dst); break;
       case GEN_OCL_GET_GLOBAL_OFFSET2:
         regTranslator.newScalarProxy(ir::ocl::goffset2, dst); break;
-      case GEN_OCL_MAD:
       case GEN_OCL_COS:
       case GEN_OCL_SIN:
       case GEN_OCL_SQR:
@@ -1706,11 +1705,13 @@ namespace gbe
 #if LLVM_VERSION_MINOR == 2
           case Intrinsic::fmuladd:
           {
+            const ir::Register tmp  = ctx.reg(ir::FAMILY_DWORD);
             const ir::Register dst  = this->getRegister(&I);
             const ir::Register src0 = this->getRegister(I.getOperand(0));
             const ir::Register src1 = this->getRegister(I.getOperand(1));
             const ir::Register src2 = this->getRegister(I.getOperand(2));
-            ctx.MAD(ir::TYPE_FLOAT, dst, src0, src1, src2);
+            ctx.MUL(ir::TYPE_FLOAT, tmp, src0, src1);
+            ctx.ADD(ir::TYPE_FLOAT, dst, tmp, src2);
             break;
           }
           break;
@@ -1735,15 +1736,6 @@ namespace gbe
 #endif /* GBE_DEBUG */
 
         switch (it->second) {
-          case GEN_OCL_MAD:
-          {
-            GBE_ASSERT(AI != AE); const ir::Register src0 = this->getRegister(*AI); ++AI;
-            GBE_ASSERT(AI != AE); const ir::Register src1 = this->getRegister(*AI); ++AI;
-            GBE_ASSERT(AI != AE); const ir::Register src2 = this->getRegister(*AI); ++AI;
-            const ir::Register dst = this->getRegister(&I);
-            ctx.MAD(ir::TYPE_FLOAT, dst, src0, src1, src2);
-            break;
-          }
           case GEN_OCL_POW:
           {
             const ir::Register src0 = this->getRegister(*AI); ++AI;

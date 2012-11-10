@@ -156,31 +156,7 @@ namespace ir {
       }
     };
 
-    /*! This is for MADs mostly. Since three sources cannot be encoded in 64
-     *  bytes, we use tuples of registers
-     */
-    class ALIGNED_INSTRUCTION TernaryInstruction :
-      public BasePolicy,
-      public NDstPolicy<TernaryInstruction, 1>,
-      public TupleSrcPolicy<TernaryInstruction>
-    {
-    public:
-      TernaryInstruction(Opcode opcode, Type type, Register dst, Tuple src) {
-        this->opcode = opcode;
-        this->type = type;
-        this->dst[0] = dst;
-        this->src = src;
-      }
-      INLINE Type getType(void) const { return this->type; }
-      INLINE bool wellFormed(const Function &fn, std::string &whyNot) const;
-      INLINE void out(std::ostream &out, const Function &fn) const;
-      Type type;       //!< Type of the instruction
-      Register dst[1]; //!< Dst is the register index
-      Tuple src;       //!< 3 sources do not fit in 8 bytes -> use a tuple
-      static const uint32_t srcNum = 3;
-    };
-
-    /*! As for MADs, three sources mean we need a tuple to encode it */
+    /*! Three sources mean we need a tuple to encode it */
     class ALIGNED_INSTRUCTION SelectInstruction :
       public BasePolicy,
       public NDstPolicy<SelectInstruction, 1>,
@@ -610,30 +586,6 @@ namespace ir {
       return true;
     }
 
-    // Idem for ternary instructions except that sources are in a tuple
-    INLINE bool TernaryInstruction::wellFormed(const Function &fn, std::string &whyNot) const
-    {
-      const RegisterFamily family = getFamily(this->type);
-      if (UNLIKELY(checkSpecialRegForWrite(dst[0], fn, whyNot) == false))
-        return false;
-      if (UNLIKELY(checkRegisterData(family, dst[0], fn, whyNot) == false))
-        return false;
-      if (UNLIKELY(src + 3u > fn.tupleNum())) {
-        whyNot = "Out-of-bound index for ternary instruction";
-        return false;
-      }
-      for (uint32_t srcID = 0; srcID < 3; ++srcID) {
-        const Register regID = fn.getRegister(src, srcID);
-        if (UNLIKELY(checkRegisterData(family, regID, fn, whyNot) == false))
-          return false;
-      }
-      if (this->opcode == OP_MAD)
-        CHECK_TYPE(this->type, madType);
-      else
-        NOT_IMPLEMENTED;
-      return true;
-    }
-
     // First source must a boolean. Other must match the destination type
     INLINE bool SelectInstruction::wellFormed(const Function &fn, std::string &whyNot) const
     {
@@ -818,10 +770,6 @@ namespace ir {
           << " %" << insn.getSrc(fn, 2);
     }
 
-    INLINE void TernaryInstruction::out(std::ostream &out, const Function &fn) const {
-      ternaryOrSelectOut(*this, out, fn);
-    }
-
     INLINE void SelectInstruction::out(std::ostream &out, const Function &fn) const {
       ternaryOrSelectOut(*this, out, fn);
     }
@@ -930,10 +878,6 @@ END_INTROSPECTION(UnaryInstruction)
 START_INTROSPECTION(BinaryInstruction)
 #include "ir/instruction.hxx"
 END_INTROSPECTION(BinaryInstruction)
-
-START_INTROSPECTION(TernaryInstruction)
-#include "ir/instruction.hxx"
-END_INTROSPECTION(TernaryInstruction)
 
 START_INTROSPECTION(CompareInstruction)
 #include "ir/instruction.hxx"
@@ -1123,7 +1067,6 @@ END_FUNCTION(Instruction, Register)
 DECL_MEM_FN(UnaryInstruction, Type, getType(void), getType())
 DECL_MEM_FN(BinaryInstruction, Type, getType(void), getType())
 DECL_MEM_FN(BinaryInstruction, bool, commutes(void), commutes())
-DECL_MEM_FN(TernaryInstruction, Type, getType(void), getType())
 DECL_MEM_FN(SelectInstruction, Type, getType(void), getType())
 DECL_MEM_FN(CompareInstruction, Type, getType(void), getType())
 DECL_MEM_FN(ConvertInstruction, Type, getSrcType(void), getSrcType())
@@ -1198,11 +1141,6 @@ DECL_MEM_FN(BranchInstruction, LabelIndex, getLabelIndex(void), getLabelIndex())
   DECL_EMIT_FUNCTION(AND)
 
 #undef DECL_EMIT_FUNCTION
-
-  // MAD
-  Instruction MAD(Type type, Register dst, Tuple src) {
-    return internal::TernaryInstruction(OP_MAD, type, dst, src).convert();
-  }
 
   // SEL
   Instruction SEL(Type type, Register dst, Tuple src) {

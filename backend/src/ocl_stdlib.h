@@ -133,8 +133,7 @@ INLINE OVERLOADABLE float native_tan(float x) {
 INLINE OVERLOADABLE float native_exp(float x) { return native_powr(E, x); }
 #undef E
 
-// TODO make them actually compliant precision-wise
-#define sqrt native_sqrt // XXX work-around ptr profile: sin already defined
+#define sqrt native_sqrt // XXX work-around PTX profile: sin already defined
 INLINE OVERLOADABLE float rsqrt(float x) { return native_rsqrt(x); }
 INLINE OVERLOADABLE float fabs(float x) { return __gen_ocl_fabs(x); }
 INLINE OVERLOADABLE float trunc(float x) { return __gen_ocl_rndz(x); }
@@ -153,7 +152,6 @@ INLINE OVERLOADABLE float fmod(float x, float y) { return x-y*trunc(x/y); }
 #define sin native_sin
 #define pow powr
 
-//PURE CONST OVERLOADABLE float mad(float a, float b, float c);
 INLINE OVERLOADABLE float mad(float a, float b, float c) {
   return a*b+c;
 }

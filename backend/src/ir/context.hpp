@@ -141,7 +141,6 @@ namespace ir {
       const Tuple index = this->tuple(src0, src1, src2); \
       this->NAME(type, dst, index); \
     }
-    DECL_THREE_SRC_INSN(MAD);
     DECL_THREE_SRC_INSN(SEL);
 #undef DECL_THREE_SRC_INSN
 

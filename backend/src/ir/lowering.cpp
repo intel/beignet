@@ -266,8 +266,7 @@ namespace ir {
       if (opcode == OP_STORE && srcID == StoreInstruction::addressIndex)
         return true;
       if (insn->isMemberOf<UnaryInstruction>() == false &&
-          insn->isMemberOf<BinaryInstruction>() == false &&
-          insn->isMemberOf<TernaryInstruction>() == false)
+          insn->isMemberOf<BinaryInstruction>() == false)
         continue;
       else {
         const uint32_t dstNum = insn->getDstNum();

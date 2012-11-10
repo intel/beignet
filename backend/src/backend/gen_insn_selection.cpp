@@ -1048,25 +1048,6 @@ namespace gbe
 
   BVAR(OCL_OPTIMIZE_IMMEDIATE, true);
 
-  DECL_PATTERN(TernaryInstruction)
-  {
-    INLINE bool emitOne(Selection::Opaque &sel, const ir::TernaryInstruction &insn) const {
-      using namespace ir;
-      const Type type = insn.getType();
-      const GenRegister dst  = sel.selReg(insn.getDst(0), type);
-      const GenRegister src0 = sel.selReg(insn.getSrc(0), type);
-      const GenRegister src1 = sel.selReg(insn.getSrc(1), type);
-      const GenRegister src2 = sel.selReg(insn.getSrc(2), type);
-#if GBE_DEBUG
-      const Opcode opcode = insn.getOpcode();
-      GBE_ASSERT(opcode == OP_MAD && type == TYPE_FLOAT);
-#endif /* GBE_DEBUG */
-      sel.MAD(dst, src2, src0, src1); // order different on the HW!
-      return true;
-    }
-    DECL_CTOR(TernaryInstruction, 1, 1)
-  };
-
   /*! Binary regular instruction pattern */
   class BinaryInstructionPattern : public SelectionPattern
   {
@@ -1960,7 +1941,6 @@ namespace gbe
   SelectionLibrary::SelectionLibrary(void) {
     this->insert<UnaryInstructionPattern>();
     this->insert<BinaryInstructionPattern>();
-    this->insert<TernaryInstructionPattern>();
     this->insert<SampleInstructionPattern>();
     this->insert<TypedWriteInstructionPattern>();
     this->insert<FenceInstructionPattern>();

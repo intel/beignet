@@ -16,7 +16,6 @@ DECL_LLVM_GEN_FUNCTION(GET_GLOBAL_SIZE2, __gen_ocl_get_global_size2)
 DECL_LLVM_GEN_FUNCTION(GET_GLOBAL_OFFSET0, __gen_ocl_get_global_offset0)
 DECL_LLVM_GEN_FUNCTION(GET_GLOBAL_OFFSET1, __gen_ocl_get_global_offset1)
 DECL_LLVM_GEN_FUNCTION(GET_GLOBAL_OFFSET2, __gen_ocl_get_global_offset2)
-DECL_LLVM_GEN_FUNCTION(MAD, _Z3madfff)
 
 // Math function
 DECL_LLVM_GEN_FUNCTION(ABS, __gen_ocl_fabs)
