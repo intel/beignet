@@ -429,7 +429,8 @@ namespace gbe
 #undef ALU1
 #undef ALU2
 #undef ALU3
-
+    /*! Encode a barrier instruction */
+    void BARRIER(GenRegister src);
     /*! Encode a label instruction */
     void LABEL(ir::LabelIndex label);
     /*! Jump indexed instruction */
@@ -666,6 +667,11 @@ namespace gbe
   void Selection::Opaque::LABEL(ir::LabelIndex index) {
     SelectionInstruction *insn = this->appendInsn(SEL_OP_LABEL, 0, 0);
     insn->index = uint16_t(index);
+  }
+
+  void Selection::Opaque::BARRIER(GenRegister src) {
+    SelectionInstruction *insn = this->appendInsn(SEL_OP_BARRIER, 0, 1);
+    insn->src(0) = src;
   }
 
   void Selection::Opaque::JMPI(Reg src, ir::LabelIndex index) {
@@ -1451,7 +1457,6 @@ namespace gbe
   }
   DECL_NOT_IMPLEMENTED_ONE_TO_MANY(SampleInstruction);
   DECL_NOT_IMPLEMENTED_ONE_TO_MANY(TypedWriteInstruction);
-  DECL_NOT_IMPLEMENTED_ONE_TO_MANY(FenceInstruction);
 #undef DECL_NOT_IMPLEMENTED_ONE_TO_MANY
 
   /*! Load immediate pattern */
@@ -1481,6 +1486,28 @@ namespace gbe
     }
 
     DECL_CTOR(LoadImmInstruction, 1,1);
+  };
+
+  /*! Sync instruction */
+  DECL_PATTERN(SyncInstruction)
+  {
+    INLINE bool emitOne(Selection::Opaque &sel, const ir::SyncInstruction &insn) const
+    {
+      using namespace ir;
+      const uint32_t params = insn.getParameters();
+      GBE_ASSERTM(params == syncLocalBarrier,
+                  "Only barrier(CLK_LOCAL_MEM_FENCE) is supported right now "
+                  "for the synchronization primitives");
+      const ir::Register reg = sel.reg(FAMILY_DWORD);
+
+      // A barrier is OK to start the thread synchronization *and* SLM fence
+      sel.BARRIER(GenRegister::f8grf(reg));
+      // Now we wait for the other threads
+      sel.WAIT();
+      return true;
+    }
+
+    DECL_CTOR(SyncInstruction, 1,1);
   };
 
   INLINE uint32_t getByteScatterGatherSize(ir::Type type) {
@@ -1973,7 +2000,7 @@ namespace gbe
     this->insert<BinaryInstructionPattern>();
     this->insert<SampleInstructionPattern>();
     this->insert<TypedWriteInstructionPattern>();
-    this->insert<FenceInstructionPattern>();
+    this->insert<SyncInstructionPattern>();
     this->insert<LoadImmInstructionPattern>();
     this->insert<LoadInstructionPattern>();
     this->insert<StoreInstructionPattern>();

@@ -181,7 +181,12 @@ namespace gbe
   }
 
   void GenContext::emitWaitInstruction(const SelectionInstruction &insn) {
-    NOT_IMPLEMENTED;
+    p->WAIT();
+  }
+
+  void GenContext::emitBarrierInstruction(const SelectionInstruction &insn) {
+    const GenRegister src = ra->genReg(insn.src(0));
+    p->BARRIER(src);
   }
 
   void GenContext::emitMathInstruction(const SelectionInstruction &insn) {

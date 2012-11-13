@@ -683,6 +683,15 @@ namespace gbe
     this->setSrc1(insn, GenRegister::immud(0x0));
   }
 
+  void GenEncoder::BARRIER(GenRegister src) {
+     GenInstruction *insn = this->next(GEN_OPCODE_SEND);
+     this->setHeader(insn);
+     this->setDst(insn, GenRegister::null());
+     this->setSrc0(insn, src);
+     setMessageDescriptor(this, insn, GEN_SFID_MESSAGE_GATEWAY, 1, 0);
+     insn->bits3.msg_gateway.sub_function_id = GEN_BARRIER_MSG;
+  }
+
   void GenEncoder::JMPI(GenRegister src) {
     alu2(this, GEN_OPCODE_JMPI, GenRegister::ip(), GenRegister::ip(), src);
   }

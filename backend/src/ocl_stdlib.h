@@ -425,12 +425,13 @@ INLINE OVERLOADABLE float16 mix(float16 x, float16 y, float a) { return mix(x,y,
 #define CLK_LOCAL_MEM_FENCE  (1 << 0)
 #define CLK_GLOBAL_MEM_FENCE (1 << 1)
 
-extern void __gen_ocl_barrier_local(void);
-extern void __gen_ocl_barrier_global(void);
-extern void __gen_ocl_barrier_local_and_global(void);
+void __gen_ocl_barrier_local(void);
+void __gen_ocl_barrier_global(void);
+void __gen_ocl_barrier_local_and_global(void);
 
+typedef uint cl_mem_fence_flags;
 INLINE void barrier(cl_mem_fence_flags flags) {
-  if (flags == CLK_LOCAL_MEM_FENCE | CLK_GLOBAL_MEM_FENCE)
+  if (flags == (CLK_LOCAL_MEM_FENCE | CLK_GLOBAL_MEM_FENCE))
     __gen_ocl_barrier_local_and_global();
   else if (flags == CLK_LOCAL_MEM_FENCE)
     __gen_ocl_barrier_local();

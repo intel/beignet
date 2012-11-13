@@ -436,16 +436,14 @@ namespace ir {
       public NDstPolicy<SyncInstruction, 0>
     {
     public:
-      INLINE SyncInstruction(AddressSpace addrSpace) {
+      INLINE SyncInstruction(uint32_t parameters) {
         this->opcode = OP_SYNC;
-        this->addrSpace = addrSpace;
+        this->parameters = parameters;
       }
-      bool wellFormed(const Function &fn, std::string &why) const;
-      INLINE void out(std::ostream &out, const Function &fn) const {
-        this->outOpcode(out);
-        out << "." << addrSpace;
-      }
-      AddressSpace addrSpace; //!< The loads and stores to order
+      INLINE uint32_t getParameters(void) const { return this->parameters; }
+      INLINE bool wellFormed(const Function &fn, std::string &why) const;
+      INLINE void out(std::ostream &out, const Function &fn) const;
+      uint32_t parameters;
       Register dst[], src[];
     };
 
@@ -717,9 +715,20 @@ namespace ir {
       return true;
     }
 
-    // Nothing can go wrong here
     INLINE bool SyncInstruction::wellFormed(const Function &fn, std::string &whyNot) const
     {
+      const uint32_t maxParams = SYNC_WORKGROUP_EXEC |
+                                 SYNC_LOCAL_READ_FENCE |
+                                 SYNC_LOCAL_WRITE_FENCE |
+                                 SYNC_GLOBAL_READ_FENCE |
+                                 SYNC_GLOBAL_WRITE_FENCE;
+      if (UNLIKELY(this->parameters > maxParams)) {
+        whyNot = "Invalid parameters for sync instruction";
+        return false;
+      } else if (UNLIKELY(this->parameters == 0)) {
+        whyNot = "Missing parameters for sync instruction";
+        return false;
+      }
       return true;
     }
 
@@ -819,6 +828,18 @@ namespace ir {
       out << " %" << this->getDst(fn,0) << " ";
       fn.outImmediate(out, immediateIndex);
     }
+
+    static const char *syncStr[syncFieldNum] = {
+      "workgroup", "local_read", "local_write", "global_read", "global_write"
+    };
+
+    INLINE void SyncInstruction::out(std::ostream &out, const Function &fn) const {
+      this->outOpcode(out);
+      for (uint32_t field = 0; field < syncFieldNum; ++field)
+        if (this->parameters & (1 << field))
+          out << "." << syncStr[field];
+    }
+
 
   } /* namespace internal */
 
@@ -1083,6 +1104,7 @@ DECL_MEM_FN(LoadImmInstruction, Type, getType(void), getType())
 DECL_MEM_FN(LabelInstruction, LabelIndex, getLabelIndex(void), getLabelIndex())
 DECL_MEM_FN(BranchInstruction, bool, isPredicated(void), isPredicated())
 DECL_MEM_FN(BranchInstruction, LabelIndex, getLabelIndex(void), getLabelIndex())
+DECL_MEM_FN(SyncInstruction, uint32_t, getParameters(void), getParameters())
 
 #undef DECL_MEM_FN
 
@@ -1204,8 +1226,8 @@ DECL_MEM_FN(BranchInstruction, LabelIndex, getLabelIndex(void), getLabelIndex())
 #undef DECL_EMIT_FUNCTION
 
   // FENCE
-  Instruction FENCE(AddressSpace space) {
-    return internal::SyncInstruction(space).convert();
+  Instruction SYNC(uint32_t parameters) {
+    return internal::SyncInstruction(parameters).convert();
   }
 
   // LABEL

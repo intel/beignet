@@ -116,7 +116,8 @@ namespace gbe
 #undef ALU1
 #undef ALU2
 #undef ALU3
-
+    /*! Barrier message (to synchronize threads of a workgroup) */
+    void BARRIER(GenRegister src);
     /*! Jump indexed instruction */
     void JMPI(GenRegister src);
     /*! Compare instructions */

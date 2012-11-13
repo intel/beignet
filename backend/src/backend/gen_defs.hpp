@@ -359,6 +359,15 @@ enum GenMessageTarget {
 
 #define GEN_MAX_NUM_BUFFER_ENTRIES (1 << 27)
 
+/* Message gateway */
+#define GEN_OPEN_GATEWAY          0b000
+#define GEN_CLOSE_GATEWAY         0b001
+#define GEN_FORWARD_MSG           0b010
+#define GEN_GET_TIME_STAMP        0b011
+#define GEN_BARRIER_MSG           0b100
+#define GEN_UPDATE_GATEWAT_STATE  0b101
+#define GEN_MMIO_READ_WRITE       0b110
+
 /////////////////////////////////////////////////////////////////////////////
 // Gen EU structures
 /////////////////////////////////////////////////////////////////////////////
@@ -610,6 +619,19 @@ struct GenInstruction
       uint32_t pad1:2;
       uint32_t end_of_thread:1;
     } generic_gen5;
+
+    struct {
+      uint32_t sub_function_id:3;
+      uint32_t pad0:11;
+      uint32_t ack_req:1;
+      uint32_t notify:2;
+      uint32_t pad1:2;
+      uint32_t header:1;
+      uint32_t response_length:5;
+      uint32_t msg_length:4;
+      uint32_t pad2:2;
+      uint32_t end_of_thread:1;
+    } msg_gateway;
 
     struct {
       uint32_t opcode:1;

@@ -1656,6 +1656,9 @@ namespace gbe
         break;
       case GEN_OCL_FORCE_SIMD8:
       case GEN_OCL_FORCE_SIMD16:
+      case GEN_OCL_LBARRIER:
+      case GEN_OCL_GBARRIER:
+      case GEN_OCL_LGBARRIER:
         break;
       default:
         GBE_ASSERTM(false, "Function call are not supported yet");
@@ -1757,6 +1760,9 @@ namespace gbe
           case GEN_OCL_RNDD: this->emitUnaryCallInst(I,CS,ir::OP_RNDD); break;
           case GEN_OCL_FORCE_SIMD8: ctx.setSimdWidth(8); break;
           case GEN_OCL_FORCE_SIMD16: ctx.setSimdWidth(16); break;
+          case GEN_OCL_LBARRIER: ctx.SYNC(ir::syncLocalBarrier); break;
+          case GEN_OCL_GBARRIER: ctx.SYNC(ir::syncGlobalBarrier); break;
+          case GEN_OCL_LGBARRIER: ctx.SYNC(ir::syncLocalBarrier | ir::syncGlobalBarrier); break;
           default: break;
         }
       }

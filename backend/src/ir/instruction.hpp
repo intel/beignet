@@ -347,11 +347,32 @@ namespace ir {
     static bool isClassOf(const Instruction &insn);
   };
 
+  /*! Mapped to OpenCL (mem_fence, read_mem_fence, write_mem_fence, barrier) */
+  enum {
+    SYNC_WORKGROUP_EXEC     = 1<<0,
+    SYNC_LOCAL_READ_FENCE   = 1<<1,
+    SYNC_LOCAL_WRITE_FENCE  = 1<<2,
+    SYNC_GLOBAL_READ_FENCE  = 1<<3,
+    SYNC_GLOBAL_WRITE_FENCE = 1<<4,
+    SYNC_INVALID            = 1<<5
+  };
+
+  /*! 5 bits to encode all possible synchronization capablities */
+  static const uint32_t syncFieldNum = 5u;
+
+  /*! When barrier(CLK_LOCAL_MEM_FENCE) is issued */
+  static const uint32_t syncLocalBarrier = SYNC_WORKGROUP_EXEC |SYNC_LOCAL_WRITE_FENCE | SYNC_LOCAL_READ_FENCE;
+
+  /*! When barrier(CLK_GLOBAL_MEM_FENCE) is issued */
+  static const uint32_t syncGlobalBarrier = SYNC_WORKGROUP_EXEC | SYNC_GLOBAL_WRITE_FENCE | SYNC_GLOBAL_READ_FENCE;
+
   /*! Sync instructions are used to order loads and stores for a given memory
    *  space and/or to serialize threads at a given point in the program
    */
   class SyncInstruction : public Instruction {
   public:
+    /*! Get the parameters (bitfields) of the sync instructions (see above) */
+    uint32_t getParameters(void) const;
     /*! Return true if the given instruction is an instance of this class */
     static bool isClassOf(const Instruction &insn);
   };
@@ -484,6 +505,8 @@ namespace ir {
   Instruction STORE(Type type, Tuple src, Register offset, AddressSpace space, uint32_t valueNum, bool dwAligned);
   /*! loadi.type dst value */
   Instruction LOADI(Type type, Register dst, ImmediateIndex value);
+  /*! sync.params... (see Sync instruction) */
+  Instruction SYNC(uint32_t parameters);
   /*! typed write TODO */
   Instruction TYPED_WRITE(void);
   /*! sample TODO */
