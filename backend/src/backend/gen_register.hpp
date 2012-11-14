@@ -198,8 +198,8 @@ namespace gbe
       uint16_t reg;
     } value;
 
-    uint32_t nr:7;         //!< Just for some physical registers (acc, null)
-    uint32_t subnr:5;      //!< Idem
+    uint32_t nr:8;         //!< Just for some physical registers (acc, null)
+    uint32_t subnr:8;      //!< Idem
     uint32_t physical:1;   //!< 1 if physical, 0 otherwise
     uint32_t type:4;       //!< Gen type
     uint32_t file:2;       //!< Register file
@@ -517,7 +517,7 @@ namespace gbe
     static INLINE GenRegister notification1(void) {
       return GenRegister(GEN_ARCHITECTURE_REGISTER_FILE,
                          GEN_ARF_NOTIFICATION_COUNT,
-                         1,
+                         0,
                          GEN_TYPE_UD,
                          GEN_VERTICAL_STRIDE_0,
                          GEN_WIDTH_1,

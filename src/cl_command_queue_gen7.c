@@ -100,7 +100,8 @@ static int32_t
 cl_curbe_fill(cl_kernel ker,
               const size_t *global_wk_off,
               const size_t *global_wk_sz,
-              const size_t *local_wk_sz)
+              const size_t *local_wk_sz,
+              size_t thread_n)
 {
   int32_t offset;
 #define UPLOAD(ENUM, VALUE) \
@@ -118,6 +119,7 @@ cl_curbe_fill(cl_kernel ker,
   UPLOAD(GBE_CURBE_GROUP_NUM_X, global_wk_sz[0]/local_wk_sz[0]);
   UPLOAD(GBE_CURBE_GROUP_NUM_Y, global_wk_sz[1]/local_wk_sz[1]);
   UPLOAD(GBE_CURBE_GROUP_NUM_Z, global_wk_sz[2]/local_wk_sz[2]);
+  UPLOAD(GBE_CURBE_THREAD_NUM, thread_n);
 #undef UPLOAD
 
   /* Write identity for the stack pointer. This is required by the stack pointer
@@ -196,14 +198,14 @@ cl_command_queue_ND_range_gen7(cl_command_queue queue,
   kernel.slm_sz = 0;
   kernel.use_slm = gbe_kernel_use_slm(ker->opaque);
 
-  /* Curbe step 1: fill the constant buffer data shared by all threads */
-  if (ker->curbe)
-    kernel.slm_sz = cl_curbe_fill(ker, global_wk_off, global_wk_sz, local_wk_sz);
-
   /* Compute the number of HW threads we need */
   TRY (cl_kernel_work_group_sz, ker, local_wk_sz, 3, &local_sz);
   kernel.thread_n = thread_n = local_sz / simd_sz;
   kernel.cst_sz = cst_sz;
+
+  /* Curbe step 1: fill the constant buffer data shared by all threads */
+  if (ker->curbe)
+    kernel.slm_sz = cl_curbe_fill(ker, global_wk_off, global_wk_sz, local_wk_sz, thread_n);
 
   /* Setup the kernel */
   cl_gpgpu_state_init(gpgpu, ctx->device->max_compute_unit, cst_sz / 32);

@@ -61,7 +61,9 @@ namespace ir {
     static const Register goffset2 = Register(17); // get_global_offset(2)
     static const Register stackptr = Register(18); // stack pointer
     static const Register blockip = Register(19);  // blockip
-    static const uint32_t regNum = 20;             // number of special registers
+    static const Register barrierid = Register(20);// barrierid
+    static const Register threadn = Register(21);  // number of threads
+    static const uint32_t regNum = 22;             // number of special registers
   } /* namespace ocl */
 
   /*! Initialize the profile of the given function */

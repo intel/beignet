@@ -1500,10 +1500,23 @@ namespace gbe
                   "for the synchronization primitives");
       const ir::Register reg = sel.reg(FAMILY_DWORD);
 
-      // A barrier is OK to start the thread synchronization *and* SLM fence
-      sel.BARRIER(GenRegister::f8grf(reg));
-      // Now we wait for the other threads
-      sel.WAIT();
+      sel.push();
+        sel.curr.predicate = GEN_PREDICATE_NONE;
+        sel.curr.execWidth = 8;
+        sel.curr.physicalFlag = 0;
+        sel.curr.noMask = 1;
+        sel.SHL(GenRegister::ud8grf(reg),
+                GenRegister::ud1grf(ocl::threadn),
+                GenRegister::immud(0x9));
+        sel.OR(GenRegister::ud8grf(reg),
+               GenRegister::ud8grf(reg),
+               GenRegister::immud(0x00088000));
+        // A barrier is OK to start the thread synchronization *and* SLM fence
+        sel.BARRIER(GenRegister::f8grf(reg));
+        // Now we wait for the other threads
+        sel.curr.execWidth = 1;
+        sel.WAIT();
+      sel.pop();
       return true;
     }
 

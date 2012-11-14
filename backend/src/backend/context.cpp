@@ -341,12 +341,15 @@ namespace gbe
     if (specialRegs.find(reg) != specialRegs.end()) continue; \
     this->newCurbeEntry(GBE_CURBE_##PATCH, 0, ptrSize * WIDTH); \
   } else
+
+    bool useStackPtr = false;
     fn.foreachInstruction([&](const ir::Instruction &insn) {
       const uint32_t srcNum = insn.getSrcNum();
       for (uint32_t srcID = 0; srcID < srcNum; ++srcID) {
         const ir::Register reg = insn.getSrc(srcID);
         if (fn.isSpecialReg(reg) == false) continue;
         if (specialRegs.contains(reg) == true) continue;
+        if (reg == ir::ocl::stackptr) useStackPtr = true;
         INSERT_REG(lsize0, LOCAL_SIZE_X, 1)
         INSERT_REG(lsize1, LOCAL_SIZE_Y, 1)
         INSERT_REG(lsize2, LOCAL_SIZE_Z, 1)
@@ -366,8 +369,11 @@ namespace gbe
     });
 #undef INSERT_REG
 
+    // Insert the number of threads
+    this->newCurbeEntry(GBE_CURBE_THREAD_NUM, 0, sizeof(uint32_t));
+
     // Insert the stack buffer if used
-    if (kernel->getCurbeOffset(GBE_CURBE_STACK_POINTER, 0) >= 0)
+    if (useStackPtr)
       this->newCurbeEntry(GBE_CURBE_EXTRA_ARGUMENT, GBE_STACK_BUFFER, ptrSize);
 
     // After this point the vector is immutable. Sorting it will make
@@ -517,6 +523,8 @@ namespace gbe
     if (reg == ir::ocl::groupid0  ||
         reg == ir::ocl::groupid1  ||
         reg == ir::ocl::groupid2  ||
+        reg == ir::ocl::barrierid ||
+        reg == ir::ocl::threadn   ||
         reg == ir::ocl::numgroup0 ||
         reg == ir::ocl::numgroup1 ||
         reg == ir::ocl::numgroup2 ||

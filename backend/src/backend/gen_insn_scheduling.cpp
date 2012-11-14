@@ -343,6 +343,13 @@ namespace gbe
       const uint32_t index = this->getIndex(insn.extra.function);
       this->nodes[index] = node;
     }
+
+    // Consider barriers and wait write to memory
+    if (insn.opcode == SEL_OP_BARRIER || insn.opcode == SEL_OP_WAIT) {
+      const uint32_t local = this->getIndex(0xfe);
+      const uint32_t global = this->getIndex(0x00);
+      this->nodes[local] = this->nodes[global] = node;
+    }
   }
 
   /*! Kind-of roughly estimated latency. Nothing real here */
@@ -416,6 +423,14 @@ namespace gbe
         tracker.addDependency(node, index);
       }
 
+      // Consider barriers and wait are reading memory (local and global)
+      if (insn.opcode == SEL_OP_BARRIER || insn.opcode == SEL_OP_WAIT) {
+        const uint32_t local = tracker.getIndex(0xfe);
+        const uint32_t global = tracker.getIndex(0x00);
+        tracker.addDependency(node, local);
+        tracker.addDependency(node, global);
+      }
+
       // write-after-write in registers
       for (uint32_t dstID = 0; dstID < insn.dstNum; ++dstID)
         tracker.addDependency(node, insn.dst(dstID));
@@ -432,6 +447,14 @@ namespace gbe
       if (insn.isWrite()) {
         const uint32_t index = tracker.getIndex(insn.extra.function);
         tracker.addDependency(node, index);
+      }
+
+      // Consider barriers and wait are writing memory (local and global)
+      if (insn.opcode == SEL_OP_BARRIER || insn.opcode == SEL_OP_WAIT) {
+        const uint32_t local = tracker.getIndex(0xfe);
+        const uint32_t global = tracker.getIndex(0x00);
+        tracker.addDependency(node, local);
+        tracker.addDependency(node, global);
       }
 
       // Track all writes done by the instruction
@@ -456,6 +479,14 @@ namespace gbe
       if (insn.isRead()) {
         const uint32_t index = tracker.getIndex(insn.extra.function);
         tracker.addDependency(index, node);
+      }
+
+      // Consider barriers and wait are reading memory (local and global)
+      if (insn.opcode == SEL_OP_BARRIER || insn.opcode == SEL_OP_WAIT) {
+        const uint32_t local = tracker.getIndex(0xfe);
+        const uint32_t global = tracker.getIndex(0x00);
+        tracker.addDependency(local, node);
+        tracker.addDependency(global, node);
       }
 
       // Track all writes done by the instruction

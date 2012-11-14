@@ -524,19 +524,17 @@ intel_gpgpu_build_idrt(intel_gpgpu_t *gpgpu, cl_gpgpu_kernel *kernel)
     size_t slm_sz = kernel->slm_sz;
     desc->desc5.group_threads_num = kernel->use_slm ? kernel->thread_n : 0;
     desc->desc5.barrier_enable = kernel->use_slm;
-    if (slm_sz > 0) {
-      if (slm_sz <= 4*KB)
-        slm_sz = 4*KB;
-      else if (slm_sz <= 8*KB)
-        slm_sz = 8*KB;
-      else if (slm_sz <= 16*KB)
-        slm_sz = 16*KB;
-      else if (slm_sz <= 32*KB)
-        slm_sz = 32*KB;
-      else if (slm_sz <= 64*KB)
-        slm_sz = 64*KB;
-      slm_sz = slm_sz >> 12;
-    }
+    if (slm_sz <= 4*KB)
+      slm_sz = 4*KB;
+    else if (slm_sz <= 8*KB)
+      slm_sz = 8*KB;
+    else if (slm_sz <= 16*KB)
+      slm_sz = 16*KB;
+    else if (slm_sz <= 32*KB)
+      slm_sz = 32*KB;
+    else if (slm_sz <= 64*KB)
+      slm_sz = 64*KB;
+    slm_sz = slm_sz >> 12;
     desc->desc5.slm_sz = slm_sz;
   }
   else

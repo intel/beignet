@@ -511,8 +511,6 @@ namespace ir {
   Instruction TYPED_WRITE(void);
   /*! sample TODO */
   Instruction SAMPLE(void);
-  /*! sync.space */
-  Instruction SYNC(AddressSpace space);
   /*! label labelIndex */
   Instruction LABEL(LabelIndex labelIndex);
 

@@ -520,11 +520,13 @@ namespace gbe
     allocatePayloadReg(GBE_CURBE_GROUP_NUM_Y, ocl::numgroup1);
     allocatePayloadReg(GBE_CURBE_GROUP_NUM_Z, ocl::numgroup2);
     allocatePayloadReg(GBE_CURBE_STACK_POINTER, ocl::stackptr);
+    allocatePayloadReg(GBE_CURBE_THREAD_NUM, ocl::threadn);
 
-    // Group IDs are always allocated by the hardware in r0
-    RA.insert(std::make_pair(ocl::groupid0, 1*sizeof(float))); // r0.1
-    RA.insert(std::make_pair(ocl::groupid1, 6*sizeof(float))); // r0.6
-    RA.insert(std::make_pair(ocl::groupid2, 7*sizeof(float))); // r0.7
+    // Group and barrier IDs are always allocated by the hardware in r0
+    RA.insert(std::make_pair(ocl::groupid0,  1*sizeof(float))); // r0.1
+    RA.insert(std::make_pair(ocl::groupid1,  6*sizeof(float))); // r0.6
+    RA.insert(std::make_pair(ocl::groupid2,  7*sizeof(float))); // r0.7
+    RA.insert(std::make_pair(ocl::barrierid, 2*sizeof(float))); // r0.2
 
     // block IP used to handle the mask in SW is always allocated
     const int32_t blockIPOffset = GEN_REG_SIZE + kernel->getCurbeOffset(GBE_CURBE_BLOCK_IP,0);
@@ -565,8 +567,9 @@ namespace gbe
           const GenRegister &selReg = insn.src(srcID);
           const ir::Register reg = selReg.reg();
           if (selReg.file != GEN_GENERAL_REGISTER_FILE ||
-              reg == ir::ocl::groupid0 ||
-              reg == ir::ocl::groupid1 ||
+              reg == ir::ocl::barrierid ||
+              reg == ir::ocl::groupid0  ||
+              reg == ir::ocl::groupid1  ||
               reg == ir::ocl::groupid2)
             continue;
           this->intervals[reg].minID = std::min(this->intervals[reg].minID, insnID);
@@ -576,6 +579,7 @@ namespace gbe
           const GenRegister &selReg = insn.dst(dstID);
           const ir::Register reg = selReg.reg();
           if (selReg.file != GEN_GENERAL_REGISTER_FILE ||
+              reg == ir::ocl::barrierid ||
               reg == ir::ocl::groupid0 ||
               reg == ir::ocl::groupid1 ||
               reg == ir::ocl::groupid2)

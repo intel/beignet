@@ -60,6 +60,8 @@ namespace ir {
       DECL_NEW_REG(FAMILY_DWORD, goffset2);
       DECL_NEW_REG(FAMILY_DWORD, stackptr);
       DECL_NEW_REG(FAMILY_WORD, blockip);
+      DECL_NEW_REG(FAMILY_DWORD, barrierid);
+      DECL_NEW_REG(FAMILY_DWORD, threadn);
     }
 #undef DECL_NEW_REG
 

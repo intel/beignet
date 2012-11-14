@@ -690,6 +690,7 @@ namespace gbe
      this->setSrc0(insn, src);
      setMessageDescriptor(this, insn, GEN_SFID_MESSAGE_GATEWAY, 1, 0);
      insn->bits3.msg_gateway.sub_function_id = GEN_BARRIER_MSG;
+     insn->bits3.msg_gateway.notify = 0x1;
   }
 
   void GenEncoder::JMPI(GenRegister src) {
@@ -753,7 +754,7 @@ namespace gbe
   void GenEncoder::WAIT(void) {
      GenInstruction *insn = this->next(GEN_OPCODE_WAIT);
      GenRegister src = GenRegister::notification1();
-     this->setDst(insn, src);
+     this->setDst(insn, GenRegister::null());
      this->setSrc0(insn, src);
      this->setSrc1(insn, GenRegister::null());
      insn->header.execution_size = 0; /* must */
