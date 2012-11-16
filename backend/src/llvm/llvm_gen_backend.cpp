@@ -133,7 +133,7 @@
 #define LLVM_VERSION_MINOR 0
 #endif /* !defined(LLVM_VERSION_MINOR) */
 
-#if (LLVM_VERSION_MAJOR != 3) || (LLVM_VERSION_MINOR >= 2)
+#if (LLVM_VERSION_MAJOR != 3) || (LLVM_VERSION_MINOR > 2)
 #error "Only LLVM 3.0 / 3.1 is supported"
 #endif /* (LLVM_VERSION_MAJOR != 3) && (LLVM_VERSION_MINOR >= 2) */
 
@@ -264,7 +264,7 @@ namespace gbe
       scalarMap[key] = reg;
     }
     /*! Allocate a new scalar register */
-    ir::Register newScalar(Value *value, uint32_t index = 0u)
+    ir::Register newScalar(Value *value, Value *key = NULL, uint32_t index = 0u)
     {
       GBE_ASSERT(dyn_cast<Constant>(value) == NULL);
       Type *type = value->getType();
@@ -275,7 +275,7 @@ namespace gbe
         case Type::DoubleTyID:
         case Type::PointerTyID:
           GBE_ASSERT(index == 0);
-          return this->newScalar(value, type, index);
+          return this->newScalar(value, key, type, index);
           break;
         case Type::VectorTyID:
         {
@@ -286,7 +286,7 @@ namespace gbe
               elementTypeID != Type::FloatTyID &&
               elementTypeID != Type::DoubleTyID)
             GBE_ASSERTM(false, "Vectors of elements are not supported");
-            return this->newScalar(value, elementType, index);
+            return this->newScalar(value, key, elementType, index);
           break;
         }
         default: NOT_SUPPORTED;
@@ -336,10 +336,11 @@ namespace gbe
     /*! This creates a scalar register for a Value (index is the vector index when
      *  the value is a vector of scalars)
      */
-    ir::Register newScalar(Value *value, Type *type, uint32_t index) {
+    ir::Register newScalar(Value *value, Value *key, Type *type, uint32_t index) {
       const ir::RegisterFamily family = getFamily(ctx, type);
       const ir::Register reg = ctx.reg(family);
-      this->insertRegister(reg, value, index);
+      key = key == NULL ? value : key;
+      this->insertRegister(reg, key, index);
       return reg;
     }
     /*! Indices will be zero for scalar values */
@@ -373,7 +374,6 @@ namespace gbe
 
   /*! Sort the OCL Gen instrinsic functions (built on pre-main) */
   static const OCLIntrinsicMap instrinsicMap;
-
 
   /*! Translate LLVM IR code to Gen IR code */
   class GenWriter : public FunctionPass, public InstVisitor<GenWriter>
@@ -447,7 +447,7 @@ namespace gbe
     /*! Each block end may require to emit MOVs for further PHIs */
     void emitMovForPHI(BasicBlock *curr, BasicBlock *succ);
     /*! Alocate one or several registers (if vector) for the value */
-    INLINE void newRegister(Value *value);
+    INLINE void newRegister(Value *value, Value *key = NULL);
     /*! Return a valid register from an operand (can use LOADI to make one) */
     INLINE ir::Register getRegister(Value *value, uint32_t index = 0);
     /*! Create a new immediate from a constant */
@@ -464,7 +464,10 @@ namespace gbe
     void removeMOVs(const ir::Liveness &liveness, ir::Function &fn);
     /*! Will try to remove redundants LOADI in basic blocks */
     void removeLOADIs(const ir::Liveness &liveness, ir::Function &fn);
-
+    /*! To avoid lost copy, we need two values for PHI. This function create a
+     * fake value for the copy (basically ptr+1)
+     */
+    INLINE Value *getPHICopy(Value *PHI);
     // Currently supported instructions
 #define DECL_VISIT_FN(NAME, TYPE) \
     void regAllocate##NAME(TYPE &I); \
@@ -647,7 +650,7 @@ namespace gbe
     return processConstant<ir::ImmediateIndex>(CPV, NewImmediateFunctor(ctx), index);
   }
 
-  void GenWriter::newRegister(Value *value) {
+  void GenWriter::newRegister(Value *value, Value *key) {
     auto type = value->getType();
     auto typeID = type->getTypeID();
     switch (typeID) {
@@ -655,14 +658,14 @@ namespace gbe
       case Type::FloatTyID:
       case Type::DoubleTyID:
       case Type::PointerTyID:
-        regTranslator.newScalar(value);
+        regTranslator.newScalar(value, key);
         break;
       case Type::VectorTyID:
       {
         auto vectorType = cast<VectorType>(type);
         const uint32_t elemNum = vectorType->getNumElements();
         for (uint32_t elemID = 0; elemID < elemNum; ++elemID)
-          regTranslator.newScalar(value, elemID);
+          regTranslator.newScalar(value, key, elemID);
         break;
       }
       default: NOT_SUPPORTED;
@@ -681,6 +684,11 @@ namespace gbe
     }
     else
       return regTranslator.getScalar(value, elemID);
+  }
+
+  INLINE Value *GenWriter::getPHICopy(Value *PHI) {
+    const uintptr_t ptr = (uintptr_t) PHI;
+    return (Value*) (ptr+1);
   }
 
   void GenWriter::newLabelIndex(const BasicBlock *bb) {
@@ -738,7 +746,8 @@ namespace gbe
         // try to optimize them. A next data flow analysis pass on the Gen IR
         // will remove them
         for (uint32_t elemID = 0; elemID < elemNum; ++elemID) {
-          const ir::Register dst = this->getRegister(PN, elemID);
+          Value *PHICopy = this->getPHICopy(PN);
+          const ir::Register dst = this->getRegister(PHICopy, elemID);
           Constant *CP = dyn_cast<Constant>(IV);
           if (CP) {
             GBE_ASSERT(isa<GlobalValue>(CP) == false);
@@ -1514,8 +1523,26 @@ namespace gbe
     }
   }
 
-  void GenWriter::regAllocatePHINode(PHINode &I) { this->newRegister(&I); }
-  void GenWriter::emitPHINode(PHINode &I) {}
+  void GenWriter::regAllocatePHINode(PHINode &I) {
+    // Copy 1 for the PHI
+    this->newRegister(&I);
+    // Copy 2 to avoid lost copy issue
+    Value *copy = this->getPHICopy(&I);
+    this->newRegister(&I, copy);
+  }
+
+  void GenWriter::emitPHINode(PHINode &I) {
+    Value *copy = this->getPHICopy(&I);
+    uint32_t elemNum;
+    const ir::Type type = getVectorInfo(ctx, I.getType(), &I, elemNum);
+
+    // Emit the MOVs to avoid the lost copy issue
+    for (uint32_t elemID = 0; elemID < elemNum; ++elemID) {
+      const ir::Register dst = this->getRegister(&I, elemID);
+      const ir::Register src = this->getRegister(copy, elemID);
+      ctx.MOV(type, dst, src);
+    }
+  }
 
   void GenWriter::regAllocateBranchInst(BranchInst &I) {}
 
