@@ -57,7 +57,7 @@ typedef bool bool16 __attribute__((ext_vector_type(16)));
 #define __private __attribute__((address_space(0)))
 #define __global __attribute__((address_space(1)))
 #define __constant __attribute__((address_space(2)))
-//#define __local __attribute__((address_space(3)))
+#define __local __attribute__((address_space(4)))
 #define global __global
 //#define local __local
 #define constant __constant
@@ -133,19 +133,20 @@ INLINE OVERLOADABLE float native_tan(float x) {
 INLINE OVERLOADABLE float native_exp(float x) { return native_powr(E, x); }
 #undef E
 
-#define sqrt native_sqrt // XXX work-around PTX profile: sin already defined
+// XXX work-around PTX profile
+#define sqrt native_sqrt
 INLINE OVERLOADABLE float rsqrt(float x) { return native_rsqrt(x); }
-INLINE OVERLOADABLE float fabs(float x) { return __gen_ocl_fabs(x); }
-INLINE OVERLOADABLE float trunc(float x) { return __gen_ocl_rndz(x); }
-INLINE OVERLOADABLE float round(float x) { return __gen_ocl_rnde(x); }
-INLINE OVERLOADABLE float floor(float x) { return __gen_ocl_rndd(x); }
-INLINE OVERLOADABLE float ceil(float x)  { return __gen_ocl_rndu(x); }
-INLINE OVERLOADABLE float log(float x) { return native_log(x); }
-INLINE OVERLOADABLE float log2(float x) { return native_log2(x); }
-INLINE OVERLOADABLE float log10(float x) { return native_log10(x); }
+INLINE OVERLOADABLE float __gen_ocl_internal_fabs(float x)  { return __gen_ocl_fabs(x); }
+INLINE OVERLOADABLE float __gen_ocl_internal_trunc(float x) { return __gen_ocl_rndz(x); }
+INLINE OVERLOADABLE float __gen_ocl_internal_round(float x) { return __gen_ocl_rnde(x); }
+INLINE OVERLOADABLE float __gen_ocl_internal_floor(float x) { return __gen_ocl_rndd(x); }
+INLINE OVERLOADABLE float __gen_ocl_internal_ceil(float x)  { return __gen_ocl_rndu(x); }
+INLINE OVERLOADABLE float __gen_ocl_internal_log(float x)   { return native_log(x); }
+INLINE OVERLOADABLE float __gen_ocl_internal_log2(float x)  { return native_log2(x); }
+INLINE OVERLOADABLE float __gen_ocl_internal_log10(float x) { return native_log10(x); }
+INLINE OVERLOADABLE float __gen_ocl_internal_exp(float x, float y)  { return native_exp(x); }
 INLINE OVERLOADABLE float powr(float x, float y) { return __gen_ocl_pow(x,y); }
-INLINE OVERLOADABLE float exp(float x, float y) { return native_exp(x); }
-INLINE OVERLOADABLE float fmod(float x, float y) { return x-y*trunc(x/y); }
+INLINE OVERLOADABLE float fmod(float x, float y) { return x-y*__gen_ocl_rndz(x/y); }
 
 // TODO use llvm intrinsics definitions
 #define cos native_cos
@@ -207,8 +208,8 @@ DECL_MIN_MAX(unsigned short)
 DECL_MIN_MAX(unsigned char)
 #undef DECL_MIN_MAX
 
-INLINE OVERLOADABLE float fmax(float a, float b) { return max(a,b); }
-INLINE OVERLOADABLE float fmin(float a, float b) { return min(a,b); }
+INLINE OVERLOADABLE float __gen_ocl_internal_fmax(float a, float b) { return max(a,b); }
+INLINE OVERLOADABLE float __gen_ocl_internal_fmin(float a, float b) { return min(a,b); }
 INLINE OVERLOADABLE float mix(float x, float y, float a) { return x + (y-x)*a;}
 
 /////////////////////////////////////////////////////////////////////////////
@@ -348,14 +349,14 @@ DECL_VECTOR_1OP(native_sqrt, float);
 DECL_VECTOR_1OP(native_rsqrt, float);
 DECL_VECTOR_1OP(native_log2, float);
 DECL_VECTOR_1OP(native_recip, float);
-DECL_VECTOR_1OP(fabs, float);
-DECL_VECTOR_1OP(trunc, float);
-DECL_VECTOR_1OP(round, float);
-DECL_VECTOR_1OP(floor, float);
-DECL_VECTOR_1OP(ceil, float);
-DECL_VECTOR_1OP(log, float);
-DECL_VECTOR_1OP(log2, float);
-DECL_VECTOR_1OP(log10, float);
+DECL_VECTOR_1OP(__gen_ocl_internal_fabs, float);
+DECL_VECTOR_1OP(__gen_ocl_internal_trunc, float);
+DECL_VECTOR_1OP(__gen_ocl_internal_round, float);
+DECL_VECTOR_1OP(__gen_ocl_internal_floor, float);
+DECL_VECTOR_1OP(__gen_ocl_internal_ceil, float);
+DECL_VECTOR_1OP(__gen_ocl_internal_log, float);
+DECL_VECTOR_1OP(__gen_ocl_internal_log2, float);
+DECL_VECTOR_1OP(__gen_ocl_internal_log10, float);
 #undef DECL_VECTOR_1OP
 
 #define DECL_VECTOR_2OP(NAME, TYPE) \
@@ -418,6 +419,19 @@ INLINE OVERLOADABLE float3 mix(float3 x, float3 y, float a) { return mix(x,y,(fl
 INLINE OVERLOADABLE float4 mix(float4 x, float4 y, float a) { return mix(x,y,(float4)(a));}
 INLINE OVERLOADABLE float8 mix(float8 x, float8 y, float a) { return mix(x,y,(float8)(a));}
 INLINE OVERLOADABLE float16 mix(float16 x, float16 y, float a) { return mix(x,y,(float16)(a));}
+
+// XXX workaround ptx profile
+#define fabs __gen_ocl_internal_fabs
+#define trunc __gen_ocl_internal_trunc
+#define round __gen_ocl_internal_round
+#define floor __gen_ocl_internal_floor
+#define ceil __gen_ocl_internal_ceil,
+#define log __gen_ocl_internal_log
+#define log2 __gen_ocl_internal_log2
+#define log10 __gen_ocl_internal_log10
+#define exp __gen_ocl_internal_exp
+#define fmin __gen_ocl_internal_fmin
+#define fmax __gen_ocl_internal_fmax
 
 /////////////////////////////////////////////////////////////////////////////
 // Synchronization functions

@@ -5,7 +5,6 @@ typedef float4 vec4;
 #define sin native_sin
 #define cos native_cos
 #define tan native_tan
-#define exp native_exp
 #define normalize fast_normalize
 #define length fast_length
 #define mod fmod
