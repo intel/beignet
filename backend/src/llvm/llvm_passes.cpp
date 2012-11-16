@@ -24,6 +24,14 @@
  * \author Heldge RHodin <alice.rhodin@alice-dsl.net>
  */
 
+/* THIS CODE IS DERIVED FROM GPL LLVM PTX BACKEND. CODE IS HERE:
+ * http://sourceforge.net/scm/?type=git&group_id=319085
+ * Note that however, the original author, Heldge Rhodin, granted me (Benjamin
+ * Segovia) the right to use another license for it (MIT here)
+ */
+
+#define __STDC_LIMIT_MACROS
+#define __STDC_CONSTANT_MACROS
 #include "llvm/CallingConv.h"
 #include "llvm/Constants.h"
 #include "llvm/DerivedTypes.h"

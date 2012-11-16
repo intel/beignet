@@ -47,7 +47,7 @@ static struct _cl_platform_id intel_platform_data = {
   DECL_INFO_STRING(version, "OpenCL 1.1")
   DECL_INFO_STRING(name, "Experiment Intel Gen OCL Driver")
   DECL_INFO_STRING(vendor, "Intel")
-  DECL_INFO_STRING(extensions, "")
+  DECL_INFO_STRING(extensions, "cl_khr_gl_sharing")
 };
 
 #undef DECL_INFO_STRING

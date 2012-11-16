@@ -46,11 +46,13 @@ typedef struct _cl_driver *cl_driver;
 /* Encapsulates the gpgpu stream of commands */
 typedef struct _cl_gpgpu *cl_gpgpu;
 
+typedef struct _cl_context_prop *cl_context_prop;
+
 /**************************************************************************
  * Driver
  **************************************************************************/
 /* Create a new driver */
-typedef cl_driver (cl_driver_new_cb)(void);
+typedef cl_driver (cl_driver_new_cb)(cl_context_prop);
 extern cl_driver_new_cb *cl_driver_new;
 
 /* Delete the driver */
@@ -177,6 +179,11 @@ extern cl_gpgpu_walker_cb *cl_gpgpu_walker;
 /* Allocate a buffer */
 typedef cl_buffer (cl_buffer_alloc_cb)(cl_buffer_mgr, const char*, unsigned long, unsigned long);
 extern cl_buffer_alloc_cb *cl_buffer_alloc;
+
+#include <GL/gl.h>
+#include "CL/cl.h"
+typedef cl_buffer (cl_buffer_alloc_from_texture_cb)(cl_context, cl_mem_flags, GLenum, GLint, GLuint, GLuint);
+extern cl_buffer_alloc_from_texture_cb *cl_buffer_alloc_from_texture;
 
 /* Unref a buffer and destroy it if no more ref */
 typedef void (cl_buffer_unreference_cb)(cl_buffer);

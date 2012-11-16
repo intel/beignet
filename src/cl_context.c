@@ -27,6 +27,7 @@
 #include "cl_driver.h"
 
 #include "CL/cl.h"
+#include "CL/cl_gl.h"
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -34,27 +35,52 @@
 #include <assert.h>
 
 static cl_int
-cl_context_properties_is_ok(const cl_context_properties *properties)
+cl_context_properties_process(const cl_context_properties *prop,
+                              struct _cl_context_prop *cl_props)
 {
-  const cl_context_properties *prop = properties;
-  size_t prop_n = 0;
   cl_int err = CL_SUCCESS;
 
-  if (properties == NULL)
+  cl_props->gl_type = CL_GL_NOSHARE;
+  cl_props->platform_id = 0;
+
+  if (prop == NULL)
     goto exit;
-  while (*prop) {
+
+
+  while(*prop) {
+    switch (*prop) {
+    case CL_CONTEXT_PLATFORM:
+      cl_props->platform_id = *(prop + 1);
+      if (UNLIKELY((cl_platform_id) cl_props->platform_id != intel_platform)) {
+        err = CL_INVALID_PLATFORM;
+        goto error;
+      }
+      break;
+    case CL_GL_CONTEXT_KHR:
+      cl_props->gl_context = *(prop + 1);
+      break;
+    case CL_EGL_DISPLAY_KHR:
+      cl_props->gl_type = CL_GL_EGL_DISPLAY;
+      cl_props->egl_display = *(prop + 1);
+      break;
+    case CL_GLX_DISPLAY_KHR:
+      cl_props->gl_type = CL_GL_GLX_DISPLAY;
+      cl_props->glx_display = *(prop + 1);
+      break;
+    case CL_WGL_HDC_KHR:
+      cl_props->gl_type = CL_GL_WGL_HDC;
+      cl_props->wgl_hdc = *(prop + 1);
+      break;
+    case CL_CGL_SHAREGROUP_KHR:
+      cl_props->gl_type = CL_GL_CGL_SHAREGROUP;
+      cl_props->cgl_sharegroup = *(prop + 1);
+      break;
+    default:
+      err = CL_INVALID_PROPERTY;
+      goto error;
+    }
     prop += 2;
-    prop_n++;
   }
-
-  /* XXX */
-  FATAL_IF (prop_n > 1, "Only one property is supported now");
-  INVALID_VALUE_IF (*properties != CL_CONTEXT_PLATFORM);
-  if (UNLIKELY((cl_platform_id) properties[1] != intel_platform)) {
-    err = CL_INVALID_PLATFORM;
-    goto error;
-  }
-
 exit:
 error:
   return err;
@@ -75,6 +101,7 @@ cl_create_context(const cl_context_properties *  properties,
                   cl_int *                       errcode_ret)
 {
   /* cl_platform_id platform = NULL; */
+  struct _cl_context_prop props;
   cl_context ctx = NULL;
   cl_int err = CL_SUCCESS;
 
@@ -88,7 +115,10 @@ cl_create_context(const cl_context_properties *  properties,
   FATAL_IF (num_devices != 1, "Only one device is supported");
 
   /* Check that we are getting the right platform */
-  if (UNLIKELY((err = cl_context_properties_is_ok(properties)) != CL_SUCCESS))
+//  if (UNLIKELY((err = cl_context_properties_is_ok(properties)) != CL_SUCCESS))
+//    goto error;
+
+  if (UNLIKELY(((err = cl_context_properties_process(properties, &props)) != CL_SUCCESS)))
     goto error;
   /* platform = intel_platform; */
 
@@ -99,7 +129,7 @@ cl_create_context(const cl_context_properties *  properties,
   }
 
   /* We are good */
-  if (UNLIKELY((ctx = cl_context_new()) == NULL)) {
+  if (UNLIKELY((ctx = cl_context_new(&props)) == NULL)) {
     err = CL_OUT_OF_HOST_MEMORY;
     goto error;
   }
@@ -118,12 +148,13 @@ error:
 }
 
 LOCAL cl_context
-cl_context_new(void)
+cl_context_new(struct _cl_context_prop *props)
 {
   cl_context ctx = NULL;
 
   TRY_ALLOC_NO_ERR (ctx, CALLOC(struct _cl_context));
-  TRY_ALLOC_NO_ERR (ctx->drv, cl_driver_new());
+  TRY_ALLOC_NO_ERR (ctx->drv, cl_driver_new(props));
+  ctx->props = *props;
   ctx->magic = CL_MAGIC_CONTEXT_HEADER;
   ctx->ref_n = 1;
   ctx->ver = cl_driver_get_ver(ctx->drv);

@@ -144,6 +144,8 @@ typedef struct _cl_buffer_region {
 #define CL_INVALID_GLOBAL_WORK_SIZE                 -63
 #define CL_INVALID_PROPERTY                         -64
 
+#define CL_INVALID_TEXTURE                          -65
+
 /* OpenCL Version */
 #define CL_VERSION_1_0                              1
 #define CL_VERSION_1_1                              1

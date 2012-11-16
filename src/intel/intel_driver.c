@@ -45,6 +45,7 @@
  *    Zou Nan hai <nanhai.zou@intel.com>
  *
  */
+#define GL_GLEXT_PROTOTYPES
 #include "intel_driver.h"
 #include "intel_gpgpu.h"
 #include "intel_batchbuffer.h"
@@ -61,6 +62,7 @@
 
 #include "cl_utils.h"
 #include "cl_alloc.h"
+#include "cl_context.h"
 #include "cl_driver.h"
 
 #define SET_BLOCKED_SIGSET(DRIVER)   do {                     \
@@ -163,9 +165,19 @@ intel_driver_init(intel_driver_t *driver, int dev_fd)
 }
 
 static void
-intel_driver_open(intel_driver_t *intel)
+intel_driver_open(intel_driver_t *intel, cl_context_prop props)
 {
   int cardi;
+  /* XXX We should use the display to get the correct dri driver to open.
+   * for now, we just use generic way to open a dri driver.*/
+  if (props != NULL
+      && props->gl_type != CL_GL_NOSHARE
+      && props->gl_type != CL_GL_GLX_DISPLAY
+      && props->gl_type != CL_GL_EGL_DISPLAY) {
+    printf("Unsupported gl share type %d.\n", props->gl_type);
+    exit(-1);
+  }
+  
   intel->x11_display = XOpenDisplay(":0.0");
 
   if(intel->x11_display) {
@@ -317,7 +329,7 @@ intel_driver_shared_name(intel_driver_t *driver, dri_bo *bo)
   dri_bo_flink(bo, &name);
   return name;
 }
-
+/* XXX a null props is ok? */
 static int
 intel_get_device_id(void)
 {
@@ -326,7 +338,7 @@ intel_get_device_id(void)
 
   driver = intel_driver_new();
   assert(driver != NULL);
-  intel_driver_open(driver);
+  intel_driver_open(driver, NULL);
   intel_device_id = driver->device_id;
   intel_driver_close(driver);
   intel_driver_terminate(driver);
@@ -346,11 +358,11 @@ cl_intel_driver_delete(intel_driver_t *driver)
 }
 
 static intel_driver_t*
-cl_intel_driver_new(void)
+cl_intel_driver_new(cl_context_prop props)
 {
   intel_driver_t *driver = NULL;
   TRY_ALLOC_NO_ERR (driver, intel_driver_new());
-  intel_driver_open(driver);
+  intel_driver_open(driver, props);
 
 exit:
   return driver;
@@ -375,6 +387,26 @@ intel_driver_get_ver(struct intel_driver *drv)
 static size_t drm_intel_bo_get_size(drm_intel_bo *bo) { return bo->size; }
 static void* drm_intel_bo_get_virtual(drm_intel_bo *bo) { return bo->virtual; }
 
+#include <GL/gl.h>
+#include <GL/glext.h>
+static cl_buffer intel_alloc_buffer_from_texture(cl_context ctx,
+                                                 cl_mem_flags flags,
+                                                 GLenum texture_target,
+                                                 GLint miplevel,
+                                                 GLuint texture,
+                                                 GLuint dim)
+{
+  GLuint name;
+  drm_intel_bo *bo;
+  
+  glGetOCLSharedTexturesINTEL(texture_target, miplevel, 1, &texture, (void**)&bo);
+
+  dri_bo_flink(bo, &name);
+
+  return (cl_buffer)intel_driver_share_buffer((intel_driver_t *)ctx->drv, name);
+}
+
+
 LOCAL void
 intel_setup_callbacks(void)
 {
@@ -384,6 +416,7 @@ intel_setup_callbacks(void)
   cl_driver_get_bufmgr = (cl_driver_get_bufmgr_cb *) intel_driver_get_bufmgr;
   cl_driver_get_device_id = (cl_driver_get_device_id_cb *) intel_get_device_id;
   cl_buffer_alloc = (cl_buffer_alloc_cb *) drm_intel_bo_alloc;
+  cl_buffer_alloc_from_texture = (cl_buffer_alloc_from_texture_cb *) intel_alloc_buffer_from_texture;
   cl_buffer_reference = (cl_buffer_reference_cb *) drm_intel_bo_reference;
   cl_buffer_unreference = (cl_buffer_unreference_cb *) drm_intel_bo_unreference;
   cl_buffer_map = (cl_buffer_map_cb *) drm_intel_bo_map;

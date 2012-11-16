@@ -30,6 +30,26 @@
 /* DRI device created at create context */
 struct intel_driver;
 
+enum _cl_gl_context_type {
+  CL_GL_NOSHARE,
+  CL_GL_EGL_DISPLAY,
+  CL_GL_GLX_DISPLAY,
+  CL_GL_WGL_HDC,
+  CL_GL_CGL_SHAREGROUP
+};
+
+struct _cl_context_prop {
+  cl_context_properties platform_id;
+  enum _cl_gl_context_type gl_type;
+  cl_context_properties gl_context;
+  union {
+    cl_context_properties egl_display; 
+    cl_context_properties glx_display; 
+    cl_context_properties wgl_hdc;
+    cl_context_properties cgl_sharegroup;
+  };
+};
+
 /* Encapsulate the whole device */
 struct _cl_context {
   uint64_t magic;                   /* To identify it as a context */
@@ -45,6 +65,7 @@ struct _cl_context {
   pthread_mutex_t buffer_lock;      /* To allocate and deallocate buffers */
   pthread_mutex_t sampler_lock;     /* To allocate and deallocate samplers */
   uint32_t ver;                     /* Gen version */
+  struct _cl_context_prop props;
 };
 
 /* Implement OpenCL function */
@@ -56,7 +77,7 @@ extern cl_context cl_create_context(const cl_context_properties*,
                                     cl_int*);
 
 /* Allocate and initialize a context */
-extern cl_context cl_context_new(void);
+extern cl_context cl_context_new(struct _cl_context_prop *);
 
 /* Destroy and deallocate a context */
 extern void cl_context_delete(cl_context);
