@@ -66,8 +66,6 @@
  * ========
  *
  * - Several things regarding constants like ConstantExpr are not properly handled.
- * - More importantly, the lost copy problem is *NOT* handled so the generated
- *   code may be incorrect. Just a matter of adding extra MOVs.
  * - ptx front end generates function calls. Since we do not support them yet,
  *   the user needs to force the inlining of all functions. If a function call
  *   is intercepted, we just abort
