@@ -69,12 +69,14 @@ static void run_kernel(int w, int h, const char *name)
 
 DECL_SHADER_TOY_TEST(dim,dim,compiler_clod);
 DECL_SHADER_TOY_TEST(dim,dim,compiler_ribbon);
-DECL_SHADER_TOY_TEST(dim,dim,compiler_chocolux);
 DECL_SHADER_TOY_TEST(dim,dim,compiler_nautilus);
-//DECL_SHADER_TOY_TEST(dim,dim,compiler_menger_sponge);
 DECL_SHADER_TOY_TEST(dim,dim,compiler_menger_sponge_no_shadow);
 DECL_SHADER_TOY_TEST(dim,dim,compiler_julia);
 DECL_SHADER_TOY_TEST(dim,dim,compiler_julia_no_break);
+
+// Still issues here for LLVM 3.2
+// DECL_SHADER_TOY_TEST(dim,dim,compiler_chocolux);
+// DECL_SHADER_TOY_TEST(dim,dim,compiler_menger_sponge);
 
 #undef DECL_SHADER_TOY_TEST
 

@@ -118,7 +118,7 @@ namespace gbe {
 #if LLVM_VERSION_MINOR <= 1
     std::string compileCmd = LLVM_PREFIX "/bin/clang -x cl -fno-color-diagnostics -emit-llvm -O3 -ccc-host-triple ptx32 -c ";
 #else
-    std::string compileCmd = LLVM_PREFIX "/bin/clang -target nvptx -x cl -fno-color-diagnostics -emit-llvm -O3 -c ";
+    std::string compileCmd = LLVM_PREFIX "/bin/clang -ffp-contract=off -target nvptx -x cl -fno-color-diagnostics -emit-llvm -O3 -c ";
 #endif /* LLVM_VERSION_MINOR <= 1 */
     compileCmd += clName;
     compileCmd += " -o ";

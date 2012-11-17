@@ -116,11 +116,13 @@ vec4 intersect( vec3 ro, vec3 rd )
 __attribute__((always_inline))
 vec3 calcNormal(vec3 pos)
 {
-    vec3 eps = (vec3)(.001f,0.0f,0.0f);
+    vec3 epsxyy = (vec3)(.001f,0.0f,0.0f);
+    vec3 epsyxy = (vec3)(0.0f,.001f,0.0f);
+    vec3 epsyyx = (vec3)(0.0f,0.0f,.001f);
     vec3 nor;
-    nor.x = map(pos+eps.xyy).x - map(pos-eps.xyy).x;
-    nor.y = map(pos+eps.yxy).x - map(pos-eps.yxy).x;
-    nor.z = map(pos+eps.yyx).x - map(pos-eps.yyx).x;
+    nor.x = map(pos+epsxyy).x - map(pos-epsxyy).x;
+    nor.y = map(pos+epsyxy).x - map(pos-epsyxy).x;
+    nor.z = map(pos+epsyyx).x - map(pos-epsyyx).x;
     return normalize(nor);
 }
 

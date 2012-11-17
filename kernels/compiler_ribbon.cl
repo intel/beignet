@@ -28,10 +28,12 @@ inline float o(vec3 q) { return min(oa(q),ob(q)); }
 
 // Get Normal XXX Not inline by LLVM
 __attribute__((always_inline)) vec3 gn(vec3 q) {
- const vec3 f = (vec3)(.01f, 0.f, 0.f);
- return normalize((vec3)(o(q+f.xyy),
-                         o(q+f.yxy),
-                         o(q+f.yyx)));
+ const vec3 fxyy = (vec3)(.01f, 0.f, 0.f);
+ const vec3 fyxy = (vec3)(0.f, .01f, 0.f);
+ const vec3 fyyx = (vec3)(0.f, 0.f, .01f);
+ return normalize((vec3)(o(q+fxyy),
+                         o(q+fyxy),
+                         o(q+fyyx)));
 }
 
 inline uint pack_fp4(float4 u4) {

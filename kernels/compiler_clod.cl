@@ -52,9 +52,11 @@ __attribute((always_inline)) vec3 s(vec3 o,vec3 d)
 
     t = t - dt*nh/(nh-lh);
 
-    vec3 e=(vec3)(.1f,0.0f,0.0f);
+    vec3 exyy=(vec3)(0.1f,0.0f,0.0f);
+    vec3 eyxy=(vec3)(0.0f,0.1f,0.0f);
+    vec3 eyyx=(vec3)(0.0f,0.0f,0.1f);
     vec3 p=o+d*t;
-    vec3 n=-normalize((vec3)(f(p+e),f(p+e.yxy),f(p+e.yyx))+(vec3)((sin(p*75.f)))*.01f);
+    vec3 n=-normalize((vec3)(f(p+exyy),f(p+eyxy),f(p+eyyx))+(vec3)((sin(p*75.f)))*.01f);
 
     return (vec3)(mix( ((max(-dot(n,(vec3)(.577f)),0.f) + 0.125f*max(-dot(n,(vec3)(-.707f,-.707f,0.f)),0.f)))*(mod
     (length(p.xy)*20.f,2.f)<1.0f?(vec3)(.71f,.85f,.25f):(vec3)(.79f,.93f,.4f))

@@ -147,7 +147,7 @@ std::string ocl_stdlib_str =
 "INLINE OVERLOADABLE float __gen_ocl_internal_log(float x)   { return native_log(x); }\n"
 "INLINE OVERLOADABLE float __gen_ocl_internal_log2(float x)  { return native_log2(x); }\n"
 "INLINE OVERLOADABLE float __gen_ocl_internal_log10(float x) { return native_log10(x); }\n"
-"INLINE OVERLOADABLE float __gen_ocl_internal_exp(float x, float y)  { return native_exp(x); }\n"
+"INLINE OVERLOADABLE float __gen_ocl_internal_exp(float x)   { return native_exp(x); }\n"
 "INLINE OVERLOADABLE float powr(float x, float y) { return __gen_ocl_pow(x,y); }\n"
 "INLINE OVERLOADABLE float fmod(float x, float y) { return x-y*__gen_ocl_rndz(x/y); }\n"
 "\n"
