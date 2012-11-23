@@ -3,6 +3,8 @@
 
 void compiler_sampler(void)
 {
+  OCL_CREATE_KERNEL("compiler_sampler");
+
   OCL_ASSERT(ctx != 0);
   cl_sampler s;
   cl_int err;
