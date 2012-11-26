@@ -33,7 +33,7 @@ __kernel void compiler_data_types()
                 long##sz l##sz;   \
                 ulong##sz ul##sz; \
                 float##sz f##sz;
-#if 0
+#if 1
    VEC(2);
    VEC(3);
    VEC(4);
