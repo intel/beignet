@@ -1,5 +1,5 @@
 /* test case for OpenCL 1.1 Preprocessor Directives & Macros (section 6.9) */
-__kernel void compiler_preprocessor_macros()
+__kernel_exec(1, float4) void compiler_preprocessor_macros()
 {
 #pragma OPENCL FP_CONTRACT ON
 #pragma OPENCL FP_CONTRACT OFF
