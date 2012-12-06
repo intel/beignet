@@ -26,31 +26,34 @@ uint* Copyright © 2012 Intel Corporation
 #define CONST __attribute__((const))
 
 /////////////////////////////////////////////////////////////////////////////
-// OpenCL basic types
+// OpenCL built-in scalar data types
 /////////////////////////////////////////////////////////////////////////////
+typedef unsigned char uchar;
+typedef unsigned short ushort;
 typedef unsigned int uint;
+typedef unsigned long ulong;
 typedef unsigned int size_t;
-typedef float float2 __attribute__((ext_vector_type(2)));
-typedef float float3 __attribute__((ext_vector_type(3)));
-typedef float float4 __attribute__((ext_vector_type(4)));
-typedef float float8 __attribute__((ext_vector_type(8)));
-typedef float float16 __attribute__((ext_vector_type(16)));
-typedef int int2 __attribute__((ext_vector_type(2)));
-typedef int int3 __attribute__((ext_vector_type(3)));
-typedef int int4 __attribute__((ext_vector_type(4)));
-typedef int int8 __attribute__((ext_vector_type(8)));
-typedef int int16 __attribute__((ext_vector_type(16)));
-typedef unsigned int uint2 __attribute__((ext_vector_type(2)));
-typedef unsigned uint3 __attribute__((ext_vector_type(3)));
-typedef unsigned uint4 __attribute__((ext_vector_type(4)));
-typedef unsigned uint8 __attribute__((ext_vector_type(8)));
-typedef unsigned uint16 __attribute__((ext_vector_type(16)));
-typedef bool bool2 __attribute__((ext_vector_type(2)));
-typedef bool bool3 __attribute__((ext_vector_type(3)));
-typedef bool bool4 __attribute__((ext_vector_type(4)));
-typedef bool bool8 __attribute__((ext_vector_type(8)));
-typedef bool bool16 __attribute__((ext_vector_type(16)));
-
+typedef signed int ptrdiff_t;
+typedef signed int intptr_t;
+typedef unsigned int uintptr_t;
+/////////////////////////////////////////////////////////////////////////////
+// OpenCL built-in vector data types
+/////////////////////////////////////////////////////////////////////////////
+#define DEF(type) typedef type type##2 __attribute__((ext_vector_type(2)));\\
+                  typedef type type##3 __attribute__((ext_vector_type(3)));\\
+                  typedef type type##4 __attribute__((ext_vector_type(4)));\\
+                  typedef type type##8 __attribute__((ext_vector_type(8)));\\
+                  typedef type type##16 __attribute__((ext_vector_type(16)));
+DEF(char);
+DEF(uchar);
+DEF(short);
+DEF(ushort);
+DEF(int);
+DEF(uint);
+DEF(long);
+DEF(ulong);
+DEF(float);
+#undef DEF
 /////////////////////////////////////////////////////////////////////////////
 // OpenCL address space
 /////////////////////////////////////////////////////////////////////////////
