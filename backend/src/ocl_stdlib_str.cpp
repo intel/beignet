@@ -73,6 +73,7 @@ std::string ocl_stdlib_str =
 "#define __OPENCL_VERSION__ 110\n"
 "#define __CL_VERSION_1_0__ 100\n"
 "#define __CL_VERSION_1_1__ 110\n"
+"#define __ENDIAN_LITTLE__ 1\n"
 "/////////////////////////////////////////////////////////////////////////////\n"
 "// OpenCL floating-point macros and pragmas\n"
 "/////////////////////////////////////////////////////////////////////////////\n"
