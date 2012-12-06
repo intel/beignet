@@ -32,8 +32,8 @@ typedef unsigned char uchar;
 typedef unsigned short ushort;
 typedef unsigned int uint;
 typedef unsigned long ulong;
-typedef unsigned int size_t;
-typedef signed int ptrdiff_t;
+typedef __typeof__(sizeof(int)) size_t;
+typedef __typeof__((int *)0-(int *)0) ptrdiff_t;
 typedef signed int intptr_t;
 typedef unsigned int uintptr_t;
 /////////////////////////////////////////////////////////////////////////////
