@@ -86,6 +86,7 @@ enum gbe_extra_argument {
 /*! Create a new program from the given source code (zero terminated string) */
 typedef gbe_program (gbe_program_new_from_source_cb)(const char *source,
                                                      size_t stringSize,
+                                                     const char *options,
                                                      char *err,
                                                      size_t *err_size);
 extern gbe_program_new_from_source_cb *gbe_program_new_from_source;

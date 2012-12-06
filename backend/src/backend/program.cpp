@@ -100,6 +100,7 @@ namespace gbe {
   extern std::string ocl_stdlib_str;
   static gbe_program programNewFromSource(const char *source,
                                           size_t stringSize,
+                                          const char *options,
                                           char *err,
                                           size_t *errSize)
   {
@@ -121,6 +122,9 @@ namespace gbe {
     std::string compileCmd = LLVM_PREFIX "/bin/clang -ffp-contract=off -target nvptx -x cl -fno-color-diagnostics -emit-llvm -O3 -c ";
 #endif /* LLVM_VERSION_MINOR <= 1 */
     compileCmd += clName;
+    compileCmd += " ";
+    if(options)
+      compileCmd += options;
     compileCmd += " -o ";
     compileCmd += llName;
 

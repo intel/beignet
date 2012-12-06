@@ -265,14 +265,14 @@ error:
 }
 
 LOCAL cl_int
-cl_program_build(cl_program p)
+cl_program_build(cl_program p, const char *options)
 {
   cl_int err = CL_SUCCESS;
 
   if (p->source_type == FROM_SOURCE) {
     /* XXX support multiple sources later */
     FATAL_IF (p->src_n != 1, "Only ONE source file supported");
-    p->opaque = gbe_program_new_from_source(p->sources[0], 0, NULL, NULL);
+    p->opaque = gbe_program_new_from_source(p->sources[0], 0, options, NULL, NULL);
     if (UNLIKELY(p->opaque == NULL)) {
       err = CL_INVALID_PROGRAM;
       goto error;
