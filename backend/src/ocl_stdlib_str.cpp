@@ -76,6 +76,7 @@ std::string ocl_stdlib_str =
 "#define __ENDIAN_LITTLE__ 1\n"
 "#define __kernel_exec(X, TYPE) __kernel __attribute__((work_group_size_hint(X,1,1))) \\\n"
 "                                        __attribute__((vec_type_hint(TYPE)))\n"
+"#define kernel_exec(X, TYPE) __kernel_exec(X, TYPE)\n"
 "/////////////////////////////////////////////////////////////////////////////\n"
 "// OpenCL floating-point macros and pragmas\n"
 "/////////////////////////////////////////////////////////////////////////////\n"

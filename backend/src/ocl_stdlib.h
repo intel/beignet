@@ -72,6 +72,7 @@ typedef size_t event_t;
 #define __ENDIAN_LITTLE__ 1
 #define __kernel_exec(X, TYPE) __kernel __attribute__((work_group_size_hint(X,1,1))) \
                                         __attribute__((vec_type_hint(TYPE)))
+#define kernel_exec(X, TYPE) __kernel_exec(X, TYPE)
 /////////////////////////////////////////////////////////////////////////////
 // OpenCL floating-point macros and pragmas
 /////////////////////////////////////////////////////////////////////////////
