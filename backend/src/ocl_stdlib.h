@@ -24,6 +24,7 @@ uint* Copyright © 2012 Intel Corporation
 #define OVERLOADABLE __attribute__((overloadable))
 #define PURE __attribute__((pure))
 #define CONST __attribute__((const))
+#define INLINE_OVERLOADABLE __attribute__((overloadable,always_inline))
 
 /////////////////////////////////////////////////////////////////////////////
 // OpenCL built-in scalar data types
@@ -113,22 +114,22 @@ typedef size_t event_t;
             DECL(int4, float4); \
             DECL(int8, float8); \
             DECL(int16, float16);
-#define DECL(ret, type) ret __attribute__((always_inline,overloadable)) isequal(type x, type y) { return x == y; }
+#define DECL(ret, type) ret INLINE_OVERLOADABLE isequal(type x, type y) { return x == y; }
 DEF;
 #undef DECL
-#define DECL(ret, type) ret __attribute__((always_inline,overloadable)) isnotequal(type x, type y) { return x != y; }
+#define DECL(ret, type) ret INLINE_OVERLOADABLE isnotequal(type x, type y) { return x != y; }
 DEF;
 #undef DECL
-#define DECL(ret, type) ret __attribute__((always_inline,overloadable)) isgreater(type x, type y) { return x > y; }
+#define DECL(ret, type) ret INLINE_OVERLOADABLE isgreater(type x, type y) { return x > y; }
 DEF;
 #undef DECL
-#define DECL(ret, type) ret __attribute__((always_inline,overloadable)) isgreaterequal(type x, type y) { return x >= y; }
+#define DECL(ret, type) ret INLINE_OVERLOADABLE isgreaterequal(type x, type y) { return x >= y; }
 DEF;
 #undef DECL
-#define DECL(ret, type) ret __attribute__((always_inline,overloadable)) isless(type x, type y) { return x < y; }
+#define DECL(ret, type) ret INLINE_OVERLOADABLE isless(type x, type y) { return x < y; }
 DEF;
 #undef DECL
-#define DECL(ret, type) ret __attribute__((always_inline,overloadable)) islessequal(type x, type y) { return x <= y; }
+#define DECL(ret, type) ret INLINE_OVERLOADABLE islessequal(type x, type y) { return x <= y; }
 DEF;
 #undef DECL
 #undef DEF
