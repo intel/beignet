@@ -133,6 +133,70 @@ DEF;
 DEF;
 #undef DECL
 #undef DEF
+
+#define DEC2(name) INLINE_OVERLOADABLE int2 name(float2 x) { return (name(x.s0), name(x.s1)); }
+#define DEC3(name) INLINE_OVERLOADABLE int3 name(float3 x) { return (name(x.s0), name(x.s1), name(x.s2)); }
+#define DEC4(name) INLINE_OVERLOADABLE int4 name(float4 x) { return (name(x.s0), name(x.s1), name(x.s2), name(x.s3)); }
+#define DEC8(name) INLINE_OVERLOADABLE int8 name(float8 x) { return (name(x.s0), name(x.s1), name(x.s2), name(x.s3), name(x.s4), name(x.s5), name(x.s6), name(x.s7)); }
+#define DEC16(name) INLINE_OVERLOADABLE int16 name(float16 x) { return (name(x.s0), name(x.s1), name(x.s2), name(x.s3), name(x.s4), name(x.s5), name(x.s6), name(x.s7), name(x.s8), name(x.s9), name(x.sA), name(x.sB), name(x.sC), name(x.sD), name(x.sE), name(x.sF)); }
+INLINE_OVERLOADABLE int isfinite(float x) { return __builtin_isfinite(x); }
+DEC2(isfinite);
+DEC3(isfinite);
+DEC4(isfinite);
+DEC8(isfinite);
+DEC16(isfinite);
+INLINE_OVERLOADABLE int isinf(float x) { return __builtin_isinf(x); }
+DEC2(isinf);
+DEC3(isinf);
+DEC4(isinf);
+DEC8(isinf);
+DEC16(isinf);
+INLINE_OVERLOADABLE int isnan(float x) { return __builtin_isnan(x); }
+DEC2(isnan);
+DEC3(isnan);
+DEC4(isnan);
+DEC8(isnan);
+DEC16(isnan);
+INLINE_OVERLOADABLE int isnormal(float x) { return __builtin_isnormal(x); }
+DEC2(isnormal);
+DEC3(isnormal);
+DEC4(isnormal);
+DEC8(isnormal);
+DEC16(isnormal);
+#undef DEC2
+#undef DEC3
+#undef DEC4
+#undef DEC8
+#undef DEC16
+
+#define DEC2(name) INLINE_OVERLOADABLE int2 name(float2 x, float2 y) { return (name(x.s0, y.s0), name(x.s1, y.s1)); }
+#define DEC3(name) INLINE_OVERLOADABLE int3 name(float3 x, float3 y) { return (name(x.s0, y.s0), name(x.s1, y.s1), name(x.s2, y.s2)); }
+#define DEC4(name) INLINE_OVERLOADABLE int4 name(float4 x, float4 y) { return (name(x.s0, y.s0), name(x.s1, y.s1), name(x.s2, y.s2), name(x.s3, y.s3)); }
+#define DEC8(name) INLINE_OVERLOADABLE int8 name(float8 x, float8 y) { return (name(x.s0, y.s0), name(x.s1, y.s1), name(x.s2, y.s2), name(x.s3, y.s3), name(x.s4, y.s4), name(x.s5, y.s5), name(x.s6, y.s6), name(x.s7, y.s7)); }
+#define DEC16(name) INLINE_OVERLOADABLE int16 name(float16 x, float16 y) { return (name(x.s0, y.s0), name(x.s1, y.s1), name(x.s2, y.s2), name(x.s3, y.s3), name(x.s4, y.s4), name(x.s5, y.s5), name(x.s6, y.s6), name(x.s7, y.s7), name(x.s8, y.s8), name(x.s9, y.s9), name(x.sA, y.sA), name(x.sB, y.sB), name(x.sC, y.sC), name(x.sD, y.sD), name(x.sE, y.sE), name(x.sF, y.sF)); }
+INLINE_OVERLOADABLE int islessgreater(float x, float y) { return (x<y)||(x>y); }
+DEC2(islessgreater);
+DEC3(islessgreater);
+DEC4(islessgreater);
+DEC8(islessgreater);
+DEC16(islessgreater);
+INLINE_OVERLOADABLE int isordered(float x, float y) { return isequal(x,x) && isequal(y,y); }
+DEC2(isordered);
+DEC3(isordered);
+DEC4(isordered);
+DEC8(isordered);
+DEC16(isordered);
+INLINE_OVERLOADABLE int isunordered(float x, float y) { return isnan(x) || isnan(y); }
+DEC2(isunordered);
+DEC3(isunordered);
+DEC4(isunordered);
+DEC8(isunordered);
+DEC16(isunordered);
+#undef DEC2
+#undef DEC3
+#undef DEC4
+#undef DEC8
+#undef DEC16
 /////////////////////////////////////////////////////////////////////////////
 // OpenCL address space
 /////////////////////////////////////////////////////////////////////////////
