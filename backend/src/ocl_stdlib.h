@@ -39,10 +39,10 @@ typedef unsigned int uintptr_t;
 /////////////////////////////////////////////////////////////////////////////
 // OpenCL built-in vector data types
 /////////////////////////////////////////////////////////////////////////////
-#define DEF(type) typedef type type##2 __attribute__((ext_vector_type(2)));\\
-                  typedef type type##3 __attribute__((ext_vector_type(3)));\\
-                  typedef type type##4 __attribute__((ext_vector_type(4)));\\
-                  typedef type type##8 __attribute__((ext_vector_type(8)));\\
+#define DEF(type) typedef type type##2 __attribute__((ext_vector_type(2)));\
+                  typedef type type##3 __attribute__((ext_vector_type(3)));\
+                  typedef type type##4 __attribute__((ext_vector_type(4)));\
+                  typedef type type##8 __attribute__((ext_vector_type(8)));\
                   typedef type type##16 __attribute__((ext_vector_type(16)));
 DEF(char);
 DEF(uchar);
@@ -90,7 +90,7 @@ typedef size_t event_t;
 #define MAXFLOAT     3.40282347e38F
 #define HUGE_VALF    (__builtin_huge_valf())
 #define INFINITY     (__builtin_inff())
-#define NAN          (__builtin_nanf(\"\"))
+#define NAN          (__builtin_nanf(""))
 #define M_E_F        2.718281828459045F
 #define M_LOG2E_F    1.4426950408889634F
 #define M_LOG10E_F   0.43429448190325176F
@@ -104,6 +104,34 @@ typedef size_t event_t;
 #define M_2_SQRTPI_F 1.1283791670955126F
 #define M_SQRT2_F    1.4142135623730951F
 #define M_SQRT1_2_F  0.7071067811865476F
+/////////////////////////////////////////////////////////////////////////////
+// OpenCL relational built-in functions
+/////////////////////////////////////////////////////////////////////////////
+#define DEF DECL(int, float); \
+            DECL(int2, float2); \
+            DECL(int3, float3); \
+            DECL(int4, float4); \
+            DECL(int8, float8); \
+            DECL(int16, float16);
+#define DECL(ret, type) ret __attribute__((always_inline,overloadable)) isequal(type x, type y) { return x == y; }
+DEF;
+#undef DECL
+#define DECL(ret, type) ret __attribute__((always_inline,overloadable)) isnotequal(type x, type y) { return x != y; }
+DEF;
+#undef DECL
+#define DECL(ret, type) ret __attribute__((always_inline,overloadable)) isgreater(type x, type y) { return x > y; }
+DEF;
+#undef DECL
+#define DECL(ret, type) ret __attribute__((always_inline,overloadable)) isgreaterequal(type x, type y) { return x >= y; }
+DEF;
+#undef DECL
+#define DECL(ret, type) ret __attribute__((always_inline,overloadable)) isless(type x, type y) { return x < y; }
+DEF;
+#undef DECL
+#define DECL(ret, type) ret __attribute__((always_inline,overloadable)) islessequal(type x, type y) { return x <= y; }
+DEF;
+#undef DECL
+#undef DEF
 /////////////////////////////////////////////////////////////////////////////
 // OpenCL address space
 /////////////////////////////////////////////////////////////////////////////
