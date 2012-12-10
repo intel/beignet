@@ -163,6 +163,12 @@ DEC3(isnormal);
 DEC4(isnormal);
 DEC8(isnormal);
 DEC16(isnormal);
+INLINE_OVERLOADABLE int signbit(float x) { return __builtin_signbit(x); }
+DEC2(signbit);
+DEC3(signbit);
+DEC4(signbit);
+DEC8(signbit);
+DEC16(signbit);
 #undef DEC2
 #undef DEC3
 #undef DEC4
