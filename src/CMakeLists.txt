@@ -5,6 +5,8 @@ include_directories(${CMAKE_CURRENT_SOURCE_DIR}
 
 set(OPENCL_SRC
     cl_api.c
+    cl_mem_gl.c
+    cl_gl_api.c
     cl_alloc.c
     cl_kernel.c
     cl_program.c
@@ -29,12 +31,14 @@ set(OPENCL_SRC
 
 link_directories (${LLVM_LIBRARY_DIRS})
 add_library(cl SHARED ${OPENCL_SRC})
-target_link_libraries(cl
+target_link_libraries(
+                      cl
                       gbe
                       ${XLIB_LIBRARY}
                       ${XEXT_LIBRARY}
                       ${XFIXES_LIBRARY}
                       ${DRM_INTEL_LIBRARY}
-                      ${DRM_LIBRARY})
+                      ${DRM_LIBRARY}
+                      ${OPENGL_LIBRARIES})
 install (TARGETS cl LIBRARY DESTINATION lib)
 

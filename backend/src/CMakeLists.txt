@@ -1,4 +1,4 @@
-add_subdirectory(llvm)
+#add_subdirectory(llvm)
 
 macro (stringify TO_STRINGIFY_PATH TO_STRINGIFY_FILES)
 foreach (to_stringify_file ${TO_STRINGIFY_FILES})
@@ -74,6 +74,12 @@ else (GBE_USE_BLOB)
     backend/program.cpp
     backend/program.hpp
     backend/program.h
+    llvm/llvm_gen_backend.cpp
+    llvm/llvm_passes.cpp
+    llvm/llvm_to_gen.cpp
+    llvm/llvm_gen_backend.hpp
+    llvm/llvm_gen_ocl_function.hxx
+    llvm/llvm_to_gen.hpp
     backend/gen/gen_mesa_disasm.c
     backend/gen_insn_selection.cpp
     backend/gen_insn_selection.hpp
@@ -96,18 +102,15 @@ include_directories (.)
 link_directories (${LLVM_LIBRARY_DIRS})
 include_directories(${LLVM_INCLUDE_DIRS})
 add_library (gbe SHARED ${GBE_SRC})
-include (${LLVM_DIR}/AddLLVMDefinitions.cmake)
-target_link_libraries (gbe
-  LLVMGenBackend
-  LLVMTransformUtils
-  LLVMCore
-  LLVMAnalysis
-  LLVMCodeGen
-  LLVMScalarOpts
-  LLVMSelectionDAG
-  LLVMSupport
-  LLVMAsmParser
-  LLVMBitReader)
+
+target_link_libraries(
+                      gbe
+                      ${DRM_INTEL_LIBRARY}
+                      ${DRM_LIBRARY}
+                      ${OPENGL_LIBRARIES}
+                      ${LLVM_MODULE_LIBS}
+                      ${CMAKE_THREAD_LIBS_INIT}
+                      ${CMAKE_DL_LIBS})
 
 install (TARGETS gbe LIBRARY DESTINATION lib)
 install (FILES backend/program.h DESTINATION include/gen)

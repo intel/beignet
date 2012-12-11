@@ -27,11 +27,6 @@ compiler_shader_toy.cpp
   compiler_lower_return1.cpp
   compiler_lower_return2.cpp
   compiler_multiple_kernels.cpp
-  compiler_obread.cpp
-  compiler_obwrite.cpp
-  compiler_region.cpp
-  compiler_region0.cpp
-  compiler_region1.cpp
   compiler_short_scatter.cpp
   compiler_sub_bytes.cpp
   compiler_sub_shorts.cpp
@@ -61,7 +56,8 @@ compiler_shader_toy.cpp
   utest_file_map.cpp
   utest_helper.cpp)
 
-TARGET_LINK_LIBRARIES(utests cl m)
+TARGET_LINK_LIBRARIES(utests cl m ${OPENGL_LIBRARIES} ${CMAKE_THREAD_LIBS_INIT})
+
 
 ADD_EXECUTABLE(utest_run utest_run.cpp)
 TARGET_LINK_LIBRARIES(utest_run utests)

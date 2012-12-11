@@ -44,11 +44,11 @@ ELSE (USE_FULSIM)
   ADD_DEFINITIONS(-DUSE_FULSIM=0)
 ENDIF (USE_FULSIM)
 
-SET(CMAKE_CXX_FLAGS "-Wall -Wno-invalid-offsetof -mfpmath=sse --no-rtti -Wcast-align -std=c++0x")
-SET(CMAKE_C_FLAGS "-Wall -mfpmath=sse -msse2 -Wcast-align")
+SET(CMAKE_CXX_FLAGS "-Wall -Wno-invalid-offsetof -mfpmath=sse --no-rtti -Wcast-align -std=c++0x -msse2 -msse3 -mssse3 -msse4.1 ")
+SET(CMAKE_C_FLAGS "-Wall -mfpmath=sse -msse2 -Wcast-align -msse2 -msse3 -mssse3 -msse4.1 ")
 
 # Front end stuff we need
-Find_Package(LLVM REQUIRED)
+INCLUDE(CMake/FindLLVM.cmake)
 
 # XLib
 INCLUDE(CMake/FindXLib.cmake)
@@ -66,6 +66,10 @@ ELSE(DRM_FOUND)
   MESSAGE(STATUS "Looking for DRM - not found")
 ENDIF(DRM_FOUND)
 
+# OpenGL
+find_package(OpenGL)
+# Threads
+find_package(Threads)
 # DRM Intel
 INCLUDE(CMake/FindDRMIntel.cmake)
 IF(DRM_INTEL_FOUND)

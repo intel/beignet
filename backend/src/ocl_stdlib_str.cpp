@@ -2,7 +2,7 @@
 namespace gbe {
 std::string ocl_stdlib_str = 
 "/* \n"
-"uint* Copyright © 2012 Intel Corporation\n"
+" * Copyright © 2012 Intel Corporation\n"
 " *\n"
 " * This library is free software; you can redistribute it and/or\n"
 " * modify it under the terms of the GNU Lesser General Public\n"
@@ -24,6 +24,7 @@ std::string ocl_stdlib_str =
 "#define __GEN_OCL_STDLIB_H__\n"
 "\n"
 "#define INLINE __attribute__((always_inline)) inline\n"
+"#define INLINE_OVERLOADABLE __attribute__((overloadable,always_inline))\n"
 "#define OVERLOADABLE __attribute__((overloadable))\n"
 "#define PURE __attribute__((pure))\n"
 "#define CONST __attribute__((const))\n"
@@ -58,7 +59,6 @@ std::string ocl_stdlib_str =
 "DEF(ulong);\n"
 "DEF(float);\n"
 "#undef DEF\n"
-"\n"
 "/////////////////////////////////////////////////////////////////////////////\n"
 "// OpenCL other built-in data types\n"
 "/////////////////////////////////////////////////////////////////////////////\n"
@@ -660,6 +660,7 @@ std::string ocl_stdlib_str =
 "  else if (flags == CLK_GLOBAL_MEM_FENCE)\n"
 "    __gen_ocl_barrier_global();\n"
 "}\n"
+"\n"
 "\n"
 "/////////////////////////////////////////////////////////////////////////////\n"
 "// Force the compilation to SIMD8 or SIMD16\n"
