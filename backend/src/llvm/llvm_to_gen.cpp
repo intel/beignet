@@ -22,8 +22,6 @@
  * \author Benjamin Segovia <benjamin.segovia@intel.com>
  */
 
-#define __STDC_LIMIT_MACROS
-#define __STDC_CONSTANT_MACROS
 #include "llvm/LLVMContext.h"
 #include "llvm/Module.h"
 #include "llvm/PassManager.h"

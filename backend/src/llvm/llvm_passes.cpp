@@ -30,8 +30,6 @@
  * Segovia) the right to use another license for it (MIT here)
  */
 
-#define __STDC_LIMIT_MACROS
-#define __STDC_CONSTANT_MACROS
 #include "llvm/CallingConv.h"
 #include "llvm/Constants.h"
 #include "llvm/DerivedTypes.h"
