@@ -779,11 +779,9 @@ namespace gbe
     // Loop over the arguments and output registers for them
     if (!F.arg_empty()) {
       Function::arg_iterator I = F.arg_begin(), E = F.arg_end();
-      const AttrListPtr &PAL = F.getAttributes();
 
       // Insert a new register for each function argument
-      uint32_t argID = 1; // Start at one actually
-      for (; I != E; ++I, ++argID) {
+      for (; I != E; ++I) {
         Type *type = I->getType();
         GBE_ASSERTM(isScalarType(type) == true,
                     "vector type in the function argument is not supported yet");
@@ -796,7 +794,7 @@ namespace gbe
 #if LLVM_VERSION_MINOR <= 1
           if (PAL.paramHasAttr(argID, Attribute::ByVal)) {
 #else
-          if (PAL.getParamAttributes(argID).hasAttribute(Attributes::ByVal)) {
+          if (I->hasByValAttr()) {
 #endif /* LLVM_VERSION_MINOR <= 1 */
             Type *pointed = pointerType->getElementType();
             const size_t structSize = getTypeByteSize(unit, pointed);
