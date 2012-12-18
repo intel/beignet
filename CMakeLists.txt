@@ -12,6 +12,7 @@ PROJECT(OCL)
 INCLUDE_DIRECTORIES(${CMAKE_CURRENT_BINARY_DIR} ${CMAKE_CURRENT_SOURCE_DIR})
 
 SET(CMAKE_VERBOSE_MAKEFILE "false")
+set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${CMAKE_SOURCE_DIR}/CMake/")
 SET(EMULATE_IVB false CACHE BOOL "To emulate IVB")
 SET(EMULATE_SNB false CACHE BOOL "To emulate SNB")
 SET(EMULATE_HSW false CACHE BOOL "To emulate HSW")
@@ -23,6 +24,10 @@ if (NOT CMAKE_BUILD_TYPE)
 endif (NOT CMAKE_BUILD_TYPE)
 set (CMAKE_BUILD_TYPE ${CMAKE_BUILD_TYPE} CACHE STRING "assure config" FORCE)
 message(STATUS "Building mode: " ${CMAKE_BUILD_TYPE})
+
+SET(CMAKE_BUILD_TYPE DEBUGO0)
+SET(CMAKE_CXX_FLAGS_DEBUGO0 "-O0 -g")
+SET(CMAKE_C_FLAGS_DEBUGO0 "-O0 -g")
 
 IF (EMULATE_HSW)
   SET (USE_FULSIM "true")
@@ -48,18 +53,19 @@ SET(CMAKE_CXX_FLAGS "-Wall -Wno-invalid-offsetof -mfpmath=sse --no-rtti -Wcast-a
 SET(CMAKE_C_FLAGS "-Wall -mfpmath=sse -msse2 -Wcast-align -msse2 -msse3 -mssse3 -msse4.1 ")
 
 # Front end stuff we need
-INCLUDE(CMake/FindLLVM.cmake)
+#INCLUDE(CMake/FindLLVM.cmake)
+Find_Package(LLVM 3.3)
 
 # XLib
-INCLUDE(CMake/FindXLib.cmake)
-IF(XLIB_FOUND)
+Find_Package(X11)
+IF(X11_FOUND)
   MESSAGE(STATUS "Looking for XLib - found")
-ELSE(XLIB_FOUND)
+ELSE(X11_FOUND)
   MESSAGE(STATUS "Looking for XLib - not found")
-ENDIF(XLIB_FOUND)
+ENDIF(X11_FOUND)
 
 # DRM
-INCLUDE(CMake/FindDRM.cmake)
+Find_Package(DRM)
 IF(DRM_FOUND)
   MESSAGE(STATUS "Looking for DRM - found")
 ELSE(DRM_FOUND)
@@ -67,11 +73,11 @@ ELSE(DRM_FOUND)
 ENDIF(DRM_FOUND)
 
 # OpenGL
-find_package(OpenGL)
+Find_Package(OpenGL)
 # Threads
-find_package(Threads)
+Find_Package(Threads)
 # DRM Intel
-INCLUDE(CMake/FindDRMIntel.cmake)
+Find_Package(DRMIntel)
 IF(DRM_INTEL_FOUND)
   MESSAGE(STATUS "Looking for DRM Intel - found")
 ELSE(DRM_INTEL_FOUND)
@@ -79,7 +85,7 @@ ELSE(DRM_INTEL_FOUND)
 ENDIF(DRM_INTEL_FOUND)
 
 # Xext
-INCLUDE(CMake/FindXext.cmake)
+Find_Package(Xext)
 IF(XEXT_FOUND)
   MESSAGE(STATUS "Looking for Xext - found")
 ELSE(XEXT_FOUND)
@@ -87,7 +93,7 @@ ELSE(XEXT_FOUND)
 ENDIF(XEXT_FOUND)
 
 # Xfixes
-INCLUDE(CMake/FindXfixes.cmake)
+Find_Package(Xfixes)
 IF(XFIXES_FOUND)
   MESSAGE(STATUS "Looking for Xfixes - found")
 ELSE(XFIXES_FOUND)
@@ -95,7 +101,7 @@ ELSE(XFIXES_FOUND)
 ENDIF(XFIXES_FOUND)
 
 # Gen-backend (compiler)
-INCLUDE(CMake/FindGBE.cmake)
+Find_Package(GBE)
 IF(GBE_FOUND)
   MESSAGE(STATUS "Looking for Gen-Backend - found")
 ELSE(GBE_FOUND)

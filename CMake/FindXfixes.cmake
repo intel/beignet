@@ -6,6 +6,13 @@
 # XFIXES_LIBRARY
 # 
 
+FIND_PATH(XFIXES_INCLUDE_PATH X11/extensions/Xfixes.h
+  /usr/include
+  /usr/local/include
+  /sw/include
+  /opt/local/include
+  DOC "The directory where Xfixes.h resides")
+
 FIND_LIBRARY(XFIXES_LIBRARY
   NAMES XFIXES Xfixes
   PATHS

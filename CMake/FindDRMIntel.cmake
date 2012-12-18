@@ -6,6 +6,14 @@
 # DRM_INTEL_INCLUDE_PATH
 # 
 
+FIND_PATH(DRM_INTEL_INCLUDE_PATH intel_bufmgr.h
+  ~/include/libdrm/
+  /usr/include/libdrm/
+  /usr/local/include/libdrm/
+  /sw/include/libdrm/
+  /opt/local/include/libdrm/
+  DOC "The directory where intel_bufmgr.h resides")
+
 FIND_LIBRARY(DRM_INTEL_LIBRARY
   NAMES DRM_INTEL drm_intel
   PATHS

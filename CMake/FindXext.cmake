@@ -6,6 +6,13 @@
 # XEXT_LIBRARY
 # 
 
+FIND_PATH(XEXT_INCLUDE_PATH X11/extensions/Xext.h
+  /usr/include
+  /usr/local/include
+  /sw/include
+  /opt/local/include
+  DOC "The directory where Xext.h resides")
+
 FIND_LIBRARY(XEXT_LIBRARY
   NAMES XEXT Xext
   PATHS
