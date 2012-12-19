@@ -542,7 +542,8 @@ namespace gbe
                  arg.type == FunctionArgument::CONSTANT_POINTER ||
                  arg.type == FunctionArgument::LOCAL_POINTER ||
                  arg.type == FunctionArgument::VALUE ||
-                 arg.type == FunctionArgument::STRUCTURE);
+                 arg.type == FunctionArgument::STRUCTURE ||
+                 arg.type == FunctionArgument::IMAGE);
       allocatePayloadReg(GBE_CURBE_KERNEL_ARGUMENT, arg.reg, argID);
     }
 

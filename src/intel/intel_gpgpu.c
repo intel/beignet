@@ -526,6 +526,7 @@ intel_gpgpu_bind_image2D_gen7(intel_gpgpu_t *gpgpu,
     ss->ss0.tiled_surface = 1;
     ss->ss0.tile_walk = I965_TILEWALK_YMAJOR;
   }
+  ss->ss0.render_cache_rw_mode = 1; /* XXX do we need to set it? */
   intel_gpgpu_set_buf_reloc_gen7(gpgpu, index, obj_bo);
   *curbe_index = index;
   gpgpu->binded_img[index - gpgpu->img_index_base] = obj_bo;

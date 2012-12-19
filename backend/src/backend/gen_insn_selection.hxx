@@ -32,4 +32,4 @@ DECL_SELECTION_IR(UNTYPED_READ, UntypedReadInstruction)
 DECL_SELECTION_IR(UNTYPED_WRITE, UntypedWriteInstruction)
 DECL_SELECTION_IR(BYTE_GATHER, ByteGatherInstruction)
 DECL_SELECTION_IR(BYTE_SCATTER, ByteScatterInstruction)
-
+DECL_SELECTION_IR(SAMPLE, SampleInstruction)

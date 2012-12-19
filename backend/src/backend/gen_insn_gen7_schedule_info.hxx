@@ -14,4 +14,5 @@ DECL_GEN7_SCHEDULE(UntypedRead,     80,        1,        1)
 DECL_GEN7_SCHEDULE(UntypedWrite,    80,        1,        1)
 DECL_GEN7_SCHEDULE(ByteGather,      80,        1,        1)
 DECL_GEN7_SCHEDULE(ByteScatter,     80,        1,        1)
+DECL_GEN7_SCHEDULE(Sample,          80,        1,        1)
 

@@ -37,6 +37,21 @@ typedef __typeof__(sizeof(int)) size_t;
 typedef __typeof__((int *)0-(int *)0) ptrdiff_t;
 typedef signed int intptr_t;
 typedef unsigned int uintptr_t;
+
+/////////////////////////////////////////////////////////////////////////////
+// OpenCL address space
+/////////////////////////////////////////////////////////////////////////////
+#define __private __attribute__((address_space(0)))
+#define __global __attribute__((address_space(1)))
+#define __constant __attribute__((address_space(2)))
+#define __local __attribute__((address_space(3)))
+#define __texture __attribute__((address_space(4)))
+#define __sampler __attribute__((address_space(5)))
+#define global __global
+//#define local __local
+#define constant __constant
+#define private __private
+
 /////////////////////////////////////////////////////////////////////////////
 // OpenCL built-in vector data types
 /////////////////////////////////////////////////////////////////////////////
@@ -59,10 +74,10 @@ DEF(float);
 // OpenCL other built-in data types
 /////////////////////////////////////////////////////////////////////////////
 struct _image2d_t;
-typedef struct _image2d_t* image2d_t;
+typedef __texture struct _image2d_t* image2d_t;
 struct _image3d_t;
-typedef struct _image3d_t* image3d_t;
-typedef uint sampler_t;
+typedef __texture struct _image3d_t* image3d_t;
+typedef __sampler uint* sampler_t;
 typedef size_t event_t;
 /////////////////////////////////////////////////////////////////////////////
 // OpenCL conversions & type casting
@@ -302,17 +317,6 @@ DEC(16);
 #undef DEC4
 #undef DEC8
 #undef DEC16
-/////////////////////////////////////////////////////////////////////////////
-// OpenCL address space
-/////////////////////////////////////////////////////////////////////////////
-#define __private __attribute__((address_space(0)))
-#define __global __attribute__((address_space(1)))
-#define __constant __attribute__((address_space(2)))
-#define __local __attribute__((address_space(4)))
-#define global __global
-//#define local __local
-#define constant __constant
-#define private __private
 
 /////////////////////////////////////////////////////////////////////////////
 // Work Items functions (see 6.11.1 of OCL 1.1 spec)
@@ -713,7 +717,6 @@ INLINE void barrier(cl_mem_fence_flags flags) {
     __gen_ocl_barrier_global();
 }
 
-
 /////////////////////////////////////////////////////////////////////////////
 // Force the compilation to SIMD8 or SIMD16
 /////////////////////////////////////////////////////////////////////////////
@@ -722,6 +725,57 @@ int __gen_ocl_force_simd8(void);
 int __gen_ocl_force_simd16(void);
 
 #define NULL ((void*)0)
+
+/////////////////////////////////////////////////////////////////////////////
+// Image access functions
+/////////////////////////////////////////////////////////////////////////////
+
+OVERLOADABLE int4 __gen_ocl_read_imagei(uint surface_id, uint sampler, int u, int v);
+OVERLOADABLE int4 __gen_ocl_read_imagei(uint surface_id, uint sampler, float u, float v);
+OVERLOADABLE uint4 __gen_ocl_read_imageui(uint surface_id, uint sampler, int u, int v);
+OVERLOADABLE uint4 __gen_ocl_read_imageui(uint surface_id, uint sampler, float u, float v);
+OVERLOADABLE float4 __gen_ocl_read_imagef(uint surface_id, uint sampler, int u, int v);
+OVERLOADABLE float4 __gen_ocl_read_imagef(uint surface_id, uint sampler, float u, float v);
+OVERLOADABLE void __gen_ocl_write_imagei(uint surface_id, int u, int v, int4 color);
+OVERLOADABLE void __gen_ocl_write_imagei(uint surface_id, float u, float v, int4 color);
+OVERLOADABLE void __gen_ocl_write_imageui(uint surface_id, int u, int v, uint4 color);
+OVERLOADABLE void __gen_ocl_write_imageui(uint surface_id, float u, float v, uint4 color);
+OVERLOADABLE void __gen_ocl_write_imagef(uint surface_id, int u, int v, float4 color);
+OVERLOADABLE void __gen_ocl_write_imagef(uint surface_id, float u, float v, float4 color);
+
+#define GET_IMAGE(cl_image, surface_id) \
+    uint surface_id = (uint)cl_image
+
+#define DECL_READ_IMAGE(type, suffix, coord_type) \
+  INLINE_OVERLOADABLE type read_image ##suffix(image2d_t cl_image, sampler_t sampler, coord_type coord) \
+  {\
+    GET_IMAGE(cl_image, surface_id);\
+    return __gen_ocl_read_image ##suffix(surface_id, (uint)sampler, coord.s0, coord.s1);\
+  }
+
+#define DECL_WRITE_IMAGE(type, suffix, coord_type) \
+  INLINE_OVERLOADABLE void write_image ##suffix(image2d_t cl_image, coord_type coord, type color)\
+  {\
+    GET_IMAGE(cl_image, surface_id);\
+    __gen_ocl_write_image ##suffix(surface_id, coord.s0, coord.s1, color);\
+  }
+
+#define DECL_IMAGE(type, suffix)        \
+  DECL_READ_IMAGE(type, suffix, int2)   \
+  DECL_READ_IMAGE(type, suffix, float2) \
+  DECL_WRITE_IMAGE(type, suffix, int2)   \
+  DECL_WRITE_IMAGE(type, suffix, float2)
+
+DECL_IMAGE(int4, i)
+DECL_IMAGE(uint4, ui)
+DECL_IMAGE(float4, f)
+
+#undef GET_IMAGE
+#undef DECL_IMAGE
+#undef DECL_READ_IMAGE
+#undef DECL_WRITE_IMAGE
+#undef INLINE_OVERLOADABLE
+
 #undef PURE
 #undef CONST
 #undef OVERLOADABLE

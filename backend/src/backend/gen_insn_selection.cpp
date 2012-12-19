@@ -463,6 +463,7 @@ namespace gbe
     void ALU2(SelectionOpcode opcode, Reg dst, Reg src0, Reg src1);
     /*! Encode ternary instructions */
     void ALU3(SelectionOpcode opcode, Reg dst, Reg src0, Reg src1, Reg src2);
+    void SAMPLE(GenRegister *dst, GenRegister *src, GenRegister *msgPayloads);
     /*! Use custom allocators */
     GBE_CLASS(Opaque);
     friend class SelectionBlock;
@@ -952,6 +953,30 @@ namespace gbe
       const uint32_t insnNum = this->buildBasicBlockDAG(bb);
       this->matchBasicBlock(insnNum);
     });
+   }
+ /* XXX always 4 return values? */
+  void Selection::Opaque::SAMPLE(GenRegister *dst, GenRegister *src, GenRegister *msgPayloads) {
+    uint32_t elemNum = 4;
+    SelectionInstruction *insn = this->appendInsn(SEL_OP_SAMPLE, elemNum, 8);
+    SelectionVector *dstVector = this->appendVector();
+    SelectionVector *msgVector = this->appendVector();
+
+    // Regular instruction to encode
+    for (uint32_t elemID = 0; elemID < elemNum; ++elemID)
+    {
+      insn->dst(elemID) = dst[elemID];
+      insn->src(elemID) = msgPayloads[elemID];
+      insn->src(4 + elemID) = src[elemID];
+    }
+
+    // Sends require contiguous allocation
+    dstVector->regNum = 4;
+    dstVector->isSrc = 0;
+    dstVector->reg = &insn->dst(0);
+
+    msgVector->regNum = 4;
+    msgVector->isSrc = 1;
+    msgVector->reg = &insn->src(0);
   }
 
   ///////////////////////////////////////////////////////////////////////////
@@ -1458,7 +1483,6 @@ namespace gbe
     }\
     DECL_CTOR(FAMILY, 1, 1); \
   }
-  DECL_NOT_IMPLEMENTED_ONE_TO_MANY(SampleInstruction);
   DECL_NOT_IMPLEMENTED_ONE_TO_MANY(TypedWriteInstruction);
 #undef DECL_NOT_IMPLEMENTED_ONE_TO_MANY
 
@@ -1861,6 +1885,31 @@ namespace gbe
     DECL_CTOR(LabelInstruction, 1, 1);
   };
 
+  /* Sample instruction pattern */
+
+  DECL_PATTERN(SampleInstruction)
+  {
+    INLINE bool emitOne(Selection::Opaque &sel, const ir::SampleInstruction &insn) const
+    {
+      using namespace ir;
+      GenRegister msgPayloads[4];
+      GenRegister dst[4], src[4];
+
+      for( int i = 0; i < 4; ++i)
+        msgPayloads[i] = sel.selReg(sel.reg(FAMILY_DWORD), TYPE_U32);
+
+      for (uint32_t valueID = 0; valueID < 4; ++valueID)
+      {
+        dst[valueID] = sel.selReg(insn.getDst(valueID), insn.getDstType());
+        src[valueID] = sel.selReg(insn.getSrc(valueID), insn.getSrcType());
+      }
+
+      sel.SAMPLE(dst, src, msgPayloads);
+      return true;
+    }
+    DECL_CTOR(SampleInstruction, 1, 1);
+  };
+
   /*! Branch instruction pattern */
   DECL_PATTERN(BranchInstruction)
   {
@@ -2029,6 +2078,7 @@ namespace gbe
     this->insert<Int32x16MulInstructionPattern>();
     this->insert<MulAddInstructionPattern>();
     this->insert<SelectModifierInstructionPattern>();
+    this->insert<SampleInstructionPattern>();
 
     // Sort all the patterns with the number of instructions they output
     for (uint32_t op = 0; op < ir::OP_INVALID; ++op)

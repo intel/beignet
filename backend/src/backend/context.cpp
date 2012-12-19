@@ -319,7 +319,9 @@ namespace gbe
           arg.type == ir::FunctionArgument::LOCAL_POINTER ||
           arg.type == ir::FunctionArgument::CONSTANT_POINTER ||
           arg.type == ir::FunctionArgument::VALUE ||
-          arg.type == ir::FunctionArgument::STRUCTURE)
+          arg.type == ir::FunctionArgument::STRUCTURE ||
+          arg.type == ir::FunctionArgument::IMAGE ||
+          arg.type == ir::FunctionArgument::SAMPLER)
         this->newCurbeEntry(GBE_CURBE_KERNEL_ARGUMENT, argID, arg.size, ptrSize);
     }
 
@@ -412,6 +414,10 @@ namespace gbe
           break;
         case ir::FunctionArgument::IMAGE:
           kernel->args[argID].type = GBE_ARG_IMAGE;
+          kernel->args[argID].size = sizeof(void*);
+          break;
+        case ir::FunctionArgument::SAMPLER:
+          kernel->args[argID].type = GBE_ARG_SAMPLER;
           kernel->args[argID].size = sizeof(void*);
           break;
       }

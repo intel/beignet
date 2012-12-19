@@ -49,6 +49,8 @@ namespace ir {
     MEM_LOCAL,      //!< Local memory (thread group memory)
     MEM_CONSTANT,   //!< Immutable global memory
     MEM_PRIVATE,    //!< Per thread private memory
+    IMAGE,          //!< For texture image.
+    SAMPLER,        //!< For sampler.
     MEM_INVALID
   };
 
@@ -304,6 +306,8 @@ namespace ir {
   public:
     /*! Return true if the given instruction is an instance of this class */
     static bool isClassOf(const Instruction &insn);
+    Type getSrcType(void) const;
+    Type getDstType(void) const;
   };
 
   /*! Branch instruction is the unified way to branch (with or without
@@ -509,8 +513,8 @@ namespace ir {
   Instruction SYNC(uint32_t parameters);
   /*! typed write TODO */
   Instruction TYPED_WRITE(void);
-  /*! sample TODO */
-  Instruction SAMPLE(void);
+  /*! sample textures */
+  Instruction SAMPLE(Tuple dst, Tuple msg, Type dstType, Type srcType);
   /*! label labelIndex */
   Instruction LABEL(LabelIndex labelIndex);
 

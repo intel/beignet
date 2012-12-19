@@ -100,7 +100,8 @@ namespace ir {
       LOCAL_POINTER     = 2, // __local
       VALUE             = 3, // int, float
       STRUCTURE         = 4, // struct foo
-      IMAGE             = 5  // image*d_t
+      IMAGE             = 5,  // image*d_t
+      SAMPLER           = 6
     };
     /*! Create a function input argument */
     INLINE FunctionArgument(Type type, Register reg, uint32_t size) :

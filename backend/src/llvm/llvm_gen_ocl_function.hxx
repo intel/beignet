@@ -40,3 +40,18 @@ DECL_LLVM_GEN_FUNCTION(LGBARRIER, __gen_ocl_barrier_local_and_global)
 DECL_LLVM_GEN_FUNCTION(FORCE_SIMD8,  __gen_ocl_force_simd8)
 DECL_LLVM_GEN_FUNCTION(FORCE_SIMD16, __gen_ocl_force_simd16)
 
+// To read_image functions.
+DECL_LLVM_GEN_FUNCTION(READ_IMAGE0, _Z21__gen_ocl_read_imageijjii)
+DECL_LLVM_GEN_FUNCTION(READ_IMAGE1, _Z21__gen_ocl_read_imageijjff)
+DECL_LLVM_GEN_FUNCTION(READ_IMAGE2, _Z22__gen_ocl_read_imageuijjii)
+DECL_LLVM_GEN_FUNCTION(READ_IMAGE3, _Z22__gen_ocl_read_imageuijjff)
+DECL_LLVM_GEN_FUNCTION(READ_IMAGE4, _Z21__gen_ocl_read_imagefjjii)
+DECL_LLVM_GEN_FUNCTION(READ_IMAGE5, _Z21__gen_ocl_read_imagefjjff)
+
+// To write_image functions.
+DECL_LLVM_GEN_FUNCTION(WRITE_IMAGE0, _Z22__gen_ocl_write_imageijiiDv4_i)
+DECL_LLVM_GEN_FUNCTION(WRITE_IMAGE1, _Z22__gen_ocl_write_imageijffDv4_i)
+DECL_LLVM_GEN_FUNCTION(WRITE_IMAGE4, _Z22__gen_ocl_write_imagefjiiDv4_f)
+DECL_LLVM_GEN_FUNCTION(WRITE_IMAGE5, _Z22__gen_ocl_write_imagefjffDv4_f)
+DECL_LLVM_GEN_FUNCTION(WRITE_IMAGE2, _Z23__gen_ocl_write_imageuijiiDv4_j)
+DECL_LLVM_GEN_FUNCTION(WRITE_IMAGE3, _Z23__gen_ocl_write_imageuijffDv4_j)

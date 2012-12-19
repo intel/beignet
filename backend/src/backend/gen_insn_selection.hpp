@@ -205,7 +205,7 @@ namespace gbe
     class Opaque;
     /*! Created and destroyed in cpp */
     Opaque *opaque;
-    /*! Use custom allocator */
+    /*! Use custom allocators */
     GBE_CLASS(Selection);
   };
 

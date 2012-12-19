@@ -258,6 +258,36 @@ namespace gbe
     p->BYTE_SCATTER(src, bti, elemSize);
   }
 
+  void GenContext::emitSampleInstruction(const SelectionInstruction &insn) {
+    const GenRegister dst = ra->genReg(insn.dst(0));
+    const GenRegister msgPayload = GenRegister::retype(ra->genReg(insn.src(0)), GEN_TYPE_F);
+    const GenRegister bti = ra->genReg(insn.src(4));
+    const GenRegister sampler = ra->genReg(insn.src(5));
+    const GenRegister ucoord = ra->genReg(insn.src(6));
+    const GenRegister vcoord = ra->genReg(insn.src(7));
+    const GenRegister temp = GenRegister::ud1grf(msgPayload.nr, msgPayload.subnr/sizeof(float) + 4);
+    const GenRegister a0_0 = GenRegister::ud1arf(GEN_ARF_ADDRESS, 0);
+    uint32_t simdWidth = p->curr.execWidth;
+    p->push();
+    const uint32_t nr = msgPayload.nr;
+    const uint32_t subnr = msgPayload.subnr / sizeof(float);
+    // prepare mesg desc and move to a0.0.
+    // desc = bti | (sampler << 8) | (0 << 12) | (2 << 16) | (0 << 18) | (0 << 19) | (4 << 20) | (1 << 25) | (0 < 29) | (0 << 31)
+    p->curr.execWidth = 1;
+    p->MOV(a0_0, GenRegister::immud((0 << 12) | (2 << 17) | ((4 * (simdWidth/8)) << 20) | ((2 * (simdWidth/8)) << 25)));
+    p->SHL(temp, GenRegister::ud1grf(sampler.nr, sampler.subnr/sizeof(float)), GenRegister::immud(8));
+    p->OR(a0_0, a0_0, temp);
+    p->OR(a0_0, a0_0, GenRegister::ud1grf(bti.nr, bti.subnr/sizeof(float)));
+    p->curr.execWidth = simdWidth;
+    /* Prepare message payload. */
+    p->MOV(GenRegister::f8grf(nr , 0), ucoord);
+    p->MOV(GenRegister::f8grf(nr + (simdWidth/8), 0), vcoord);
+    p->MOV(dst, GenRegister::immud(0));
+    p->SAMPLE(dst, msgPayload, a0_0, -1, 0);
+
+    p->pop();
+  }
+
   BVAR(OCL_OUTPUT_ASM, false);
   bool GenContext::emitCode(void) {
     GenKernel *genKernel = static_cast<GenKernel*>(this->kernel);

@@ -228,7 +228,9 @@ namespace gbe
       case 0: return ir::MEM_PRIVATE;
       case 1: return ir::MEM_GLOBAL;
       case 2: return ir::MEM_CONSTANT;
-      case 4: return ir::MEM_LOCAL;
+      case 3: return ir::MEM_LOCAL;
+      case 4: return ir::IMAGE;
+      case 5: return ir::SAMPLER;
     }
     GBE_ASSERT(false);
     return ir::MEM_GLOBAL;
@@ -815,6 +817,12 @@ namespace gbe
               break;
               case ir::MEM_CONSTANT:
                 ctx.input(ir::FunctionArgument::CONSTANT_POINTER, reg, ptrSize);
+              break;
+              case ir::IMAGE:
+                ctx.input(ir::FunctionArgument::IMAGE, reg, ptrSize);
+              break;
+              case ir::SAMPLER:
+                ctx.input(ir::FunctionArgument::SAMPLER, reg, ptrSize);
               break;
               default: GBE_ASSERT(addrSpace != ir::MEM_PRIVATE);
             }
@@ -1690,6 +1698,25 @@ namespace gbe
       case GEN_OCL_GBARRIER:
       case GEN_OCL_LGBARRIER:
         break;
+      case GEN_OCL_WRITE_IMAGE0:
+      case GEN_OCL_WRITE_IMAGE1:
+      case GEN_OCL_WRITE_IMAGE2:
+      case GEN_OCL_WRITE_IMAGE3:
+      case GEN_OCL_WRITE_IMAGE4:
+        break;
+      case GEN_OCL_READ_IMAGE0:
+      case GEN_OCL_READ_IMAGE1:
+      case GEN_OCL_READ_IMAGE2:
+      case GEN_OCL_READ_IMAGE3:
+      case GEN_OCL_READ_IMAGE4:
+      {
+      // dst is a 4 elements vector. We allocate all 4 registers here.
+        uint32_t elemNum;
+        (void)getVectorInfo(ctx, I.getType(), &I, elemNum);
+        GBE_ASSERT(elemNum == 4);
+        this->newRegister(&I);
+        break;
+      }
       default:
         GBE_ASSERTM(false, "Function call are not supported yet");
     };
@@ -1793,6 +1820,65 @@ namespace gbe
           case GEN_OCL_LBARRIER: ctx.SYNC(ir::syncLocalBarrier); break;
           case GEN_OCL_GBARRIER: ctx.SYNC(ir::syncGlobalBarrier); break;
           case GEN_OCL_LGBARRIER: ctx.SYNC(ir::syncLocalBarrier | ir::syncGlobalBarrier); break;
+          case GEN_OCL_READ_IMAGE0:
+          case GEN_OCL_READ_IMAGE1:
+          case GEN_OCL_READ_IMAGE2:
+          case GEN_OCL_READ_IMAGE3:
+          case GEN_OCL_READ_IMAGE4:
+          case GEN_OCL_READ_IMAGE5:
+          {
+            GBE_ASSERT(AI != AE); const ir::Register surface_id = this->getRegister(*AI); ++AI;
+            GBE_ASSERT(AI != AE); const ir::Register sampler = this->getRegister(*AI); ++AI;
+            GBE_ASSERT(AI != AE); const ir::Register ucoord = this->getRegister(*AI); ++AI;
+            GBE_ASSERT(AI != AE); const ir::Register vcoord = this->getRegister(*AI); ++AI;
+
+            vector<ir::Register> dstTupleData, srcTupleData;
+            const uint32_t elemNum = 4;
+            for (uint32_t elemID = 0; elemID < elemNum; ++elemID) {
+              const ir::Register reg = this->getRegister(&I, elemID);
+              dstTupleData.push_back(reg);
+            }
+            srcTupleData.push_back(surface_id);
+            srcTupleData.push_back(sampler);
+            srcTupleData.push_back(ucoord);
+            srcTupleData.push_back(vcoord);
+            const ir::Tuple dstTuple = ctx.arrayTuple(&dstTupleData[0], elemNum);
+            const ir::Tuple srcTuple = ctx.arrayTuple(&srcTupleData[0], 4);
+
+            ir::Type srcType, dstType;
+
+            switch(it->second) {
+              case GEN_OCL_READ_IMAGE0:
+              case GEN_OCL_READ_IMAGE2:
+                srcType = dstType = ir::TYPE_U32;
+                break;
+              case GEN_OCL_READ_IMAGE1:
+              case GEN_OCL_READ_IMAGE3:
+                dstType = ir::TYPE_U32;
+                srcType = ir::TYPE_FLOAT;
+                break;
+              case GEN_OCL_READ_IMAGE4:
+                dstType = ir::TYPE_FLOAT;
+                srcType = ir::TYPE_U32;
+                break;
+              case GEN_OCL_READ_IMAGE5:
+                srcType = dstType = ir::TYPE_FLOAT;
+                break;
+              default:
+                GBE_ASSERT(0); // never been here.
+            }
+
+            ctx.SAMPLE(dstTuple, srcTuple, dstType, srcType);
+            break;
+          }
+          case GEN_OCL_WRITE_IMAGE0:
+          case GEN_OCL_WRITE_IMAGE1:
+          case GEN_OCL_WRITE_IMAGE2:
+          case GEN_OCL_WRITE_IMAGE3:
+          case GEN_OCL_WRITE_IMAGE4:
+            NOT_IMPLEMENTED;
+            break;
+
           default: break;
         }
       }

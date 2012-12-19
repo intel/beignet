@@ -140,16 +140,9 @@ namespace gbe
     void BYTE_SCATTER(GenRegister src, uint32_t bti, uint32_t elemSize);
     /*! Send instruction for the sampler */
     void SAMPLE(GenRegister dest,
-                uint32_t msg_reg_nr,
                 GenRegister src0,
-                uint32_t bti,
-                uint32_t sampler,
+                GenRegister src1,
                 uint32_t writemask,
-                uint32_t msg_type,
-                uint32_t response_length,
-                uint32_t msg_length,
-                uint32_t header_present,
-                uint32_t simd_mode,
                 uint32_t return_format);
     /*! Extended math function (2 sources) */
     void MATH(GenRegister dst, uint32_t function, GenRegister src0, GenRegister src1);

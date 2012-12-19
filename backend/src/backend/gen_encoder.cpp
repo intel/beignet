@@ -166,25 +166,6 @@ namespace gbe
   }
 #endif
 
-  static void setSamplerMessage(GenEncoder *p,
-                                GenInstruction *insn,
-                                uint32_t bti,
-                                uint32_t sampler,
-                                uint32_t msg_type,
-                                uint32_t response_length,
-                                uint32_t msg_length,
-                                uint32_t header,
-                                uint32_t simd_mode,
-                                uint32_t return_format)
-  {
-     const GenMessageTarget sfid = GEN_SFID_SAMPLER;
-     setMessageDescriptor(p, insn, sfid, msg_length, response_length, header);
-     insn->bits3.sampler_gen7.bti = bti;
-     insn->bits3.sampler_gen7.sampler = sampler;
-     insn->bits3.sampler_gen7.msg_type = msg_type;
-     insn->bits3.sampler_gen7.simd_mode = simd_mode;
-  }
-
   //////////////////////////////////////////////////////////////////////////
   // Gen Emitter encoding class
   //////////////////////////////////////////////////////////////////////////
@@ -800,16 +781,9 @@ namespace gbe
   }
 
   void GenEncoder::SAMPLE(GenRegister dest,
-                          uint32_t msg_reg_nr,
                           GenRegister src0,
-                          uint32_t bti,
-                          uint32_t sampler,
+                          GenRegister src1,
                           uint32_t writemask,
-                          uint32_t msg_type,
-                          uint32_t response_length,
-                          uint32_t msg_length,
-                          uint32_t header_present,
-                          uint32_t simd_mode,
                           uint32_t return_format)
   {
      if (writemask == 0) return;
@@ -819,16 +793,8 @@ namespace gbe
      this->setHeader(insn);
      this->setDst(insn, dest);
      this->setSrc0(insn, src0);
-     setSamplerMessage(this,
-                       insn,
-                       bti,
-                       sampler,
-                       msg_type,
-                       response_length, 
-                       msg_length,
-                       header_present,
-                       simd_mode,
-                       return_format);
+     this->setSrc1(insn, src1);
+     insn->header.destreg_or_condmod = GEN_SFID_SAMPLER;
   }
 
   void GenEncoder::EOT(uint32_t msg) {
