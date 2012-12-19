@@ -1,7 +1,7 @@
 INCLUDE_DIRECTORIES(${CMAKE_CURRENT_SOURCE_DIR}
                     ${CMAKE_CURRENT_SOURCE_DIR}/../include)
 
-link_directories (${LLVM_LIBRARY_DIRS})
+link_directories (${LLVM_LIBRARY_DIR})
 ADD_LIBRARY(utests SHARED
   utest_error.c
 compiler_shader_toy.cpp

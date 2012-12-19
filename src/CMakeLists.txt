@@ -29,7 +29,7 @@ set(OPENCL_SRC
     x11/dricommon.c 
     x11/va_dri2.c)
 
-link_directories (${LLVM_LIBRARY_DIRS})
+link_directories (${LLVM_LIBRARY_DIR})
 add_library(cl SHARED ${OPENCL_SRC})
 target_link_libraries(
                       cl
