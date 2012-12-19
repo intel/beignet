@@ -1,7 +1,7 @@
 # Find the native LLVM includes and library
 #
 #  LLVM_INCLUDE_DIR - where to find llvm include files
-#  LLVM_LIBRARY_DIR - where to find llvm libs
+#  LLVM_LIBRARY_DIRS - where to find llvm libs
 #  LLVM_CFLAGS      - llvm compiler flags
 #  LLVM_LFLAGS      - llvm linker flags
 #  LLVM_MODULE_LIBS - list of llvm libs for working with modules.
@@ -39,7 +39,7 @@ execute_process(
 
 execute_process(
   COMMAND ${LLVM_CONFIG_EXECUTABLE} --libdir
-  OUTPUT_VARIABLE LLVM_LIBRARY_DIR
+  OUTPUT_VARIABLE LLVM_LIBRARY_DIRS
   OUTPUT_STRIP_TRAILING_WHITESPACE
 )
 
