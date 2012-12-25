@@ -1,0 +1,3 @@
+FILE(GLOB HEADER_FILES "CL/*.h")
+
+install (FILES ${HEADER_FILES} DESTINATION include/CL)
