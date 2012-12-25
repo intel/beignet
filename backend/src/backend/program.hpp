@@ -134,6 +134,7 @@ namespace gbe {
           kernel = pair.second;
           break;
         }
+        currID++;
       }
       return kernel;
     }

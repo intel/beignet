@@ -52,6 +52,11 @@
     OCL_CALL (cl_kernel_init, NAME".cl", NAME, SOURCE); \
   } while (0)
 
+#define OCL_CREATE_KERNEL_FROM_FILE(FILE_NAME, KERNEL_NAME) \
+  do { \
+    OCL_CALL(cl_kernel_init, FILE_NAME".cl", KERNEL_NAME, SOURCE); \
+  } while (0)
+
 #define OCL_CREATE_BUFFER(BUFFER, FLAGS, SIZE, DATA) \
   do { \
     cl_int status; \

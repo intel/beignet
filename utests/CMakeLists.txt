@@ -26,6 +26,12 @@ compiler_shader_toy.cpp
   compiler_lower_return0.cpp
   compiler_lower_return1.cpp
   compiler_lower_return2.cpp
+  compiler_multiple_kernels.cpp
+  compiler_obread.cpp
+  compiler_obwrite.cpp
+  compiler_region.cpp
+  compiler_region0.cpp
+  compiler_region1.cpp
   compiler_short_scatter.cpp
   compiler_sub_bytes.cpp
   compiler_sub_shorts.cpp
