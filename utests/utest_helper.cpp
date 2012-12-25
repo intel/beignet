@@ -149,7 +149,8 @@ cl_kernel_init(const char *file_name, const char *kernel_name, int format)
   else if (format == SOURCE) {
     cl_file_map_t *fm = cl_file_map_new();
     FATAL_IF (cl_file_map_open(fm, ker_path) != CL_FILE_MAP_SUCCESS,
-              "Failed to open file. Did you properly set OCL_KERNEL_PATH variable?");
+              "Failed to open file \"%s\" with kernel \"%s\". Did you properly set OCL_KERNEL_PATH variable?",
+              file_name, kernel_name);
     const char *src = cl_file_map_begin(fm);
     const size_t sz = cl_file_map_size(fm);
     program = clCreateProgramWithSource(ctx, 1, &src, &sz, &status);
