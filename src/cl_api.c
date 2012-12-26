@@ -304,12 +304,12 @@ error:
 }
 
 cl_int
-clGetSupportedImageFormats(cl_context       ctx,
-                           cl_mem_flags     flags,
-                           cl_mem_type      image_type,
-                           cl_uint          num_entries,
-                           cl_image_format *image_formats,
-                           cl_uint *        num_image_formats)
+clGetSupportedImageFormats(cl_context         ctx,
+                           cl_mem_flags       flags,
+                           cl_mem_object_type image_type,
+                           cl_uint            num_entries,
+                           cl_image_format *  image_formats,
+                           cl_uint *          num_image_formats)
 {
   cl_int err = CL_SUCCESS;
   CHECK_CONTEXT (ctx);

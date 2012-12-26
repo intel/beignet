@@ -67,7 +67,7 @@ cl_mem_allocate(cl_context ctx,
   assert(bufmgr);
   mem->bo = cl_buffer_alloc(bufmgr, "CL memory object", sz, alignment);
   if (UNLIKELY(mem->bo == NULL)) {
-    err = CL_MEM_ALLOCATION_FAILURE;
+    err = CL_MEM_OBJECT_ALLOCATION_FAILURE;
     goto error;
   }
 
@@ -376,7 +376,7 @@ cl_mem_pin(cl_mem mem)
 {
   assert(mem);
   if (UNLIKELY((mem->flags & CL_MEM_PINNABLE) == 0))
-    return CL_INVALID_MEM;
+    return CL_INVALID_MEM_OBJECT;
   cl_buffer_pin(mem->bo, 4096);
   return CL_SUCCESS;
 }
@@ -386,7 +386,7 @@ cl_mem_unpin(cl_mem mem)
 {
   assert(mem);
   if (UNLIKELY((mem->flags & CL_MEM_PINNABLE) == 0))
-    return CL_INVALID_MEM;
+    return CL_INVALID_MEM_OBJECT;
   cl_buffer_unpin(mem->bo);
   return CL_SUCCESS;
 }

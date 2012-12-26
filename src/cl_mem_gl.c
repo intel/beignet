@@ -56,7 +56,7 @@ static int cl_get_clformat_from_texture(GLint tex_format, cl_image_format * cl_f
     cl_format->image_channel_order = CL_BGRA;
     break;
   default:
-    ret = CL_INVALID_TEXTURE;
+    ret = CL_INVALID_IMAGE_DESCRIPTOR;
     goto error;
   }
 
@@ -94,7 +94,7 @@ static int cl_get_clformat_from_texture(GLint tex_format, cl_image_format * cl_f
     cl_format->image_channel_order = CL_FLOAT;
     break;
   default:
-    ret = CL_INVALID_TEXTURE;
+    ret = CL_INVALID_IMAGE_DESCRIPTOR;
     goto error;
   }
 
@@ -119,7 +119,7 @@ static int cl_mem_process_texture(cl_context ctx,
 
   if ((dim == 2 && texture_target != GL_TEXTURE_2D)
       || (dim == 3 && texture_target != GL_TEXTURE_3D)) {
-    err = CL_INVALID_TEXTURE;
+    err = CL_INVALID_IMAGE_DESCRIPTOR;
     goto error;
   }
 
@@ -144,7 +144,7 @@ static int cl_mem_process_texture(cl_context ctx,
   intel_fmt = cl_image_get_intel_format(&cl_format);
 
   if (intel_fmt == INTEL_UNSUPPORTED_FORMAT) {
-    err = CL_INVALID_TEXTURE;
+    err = CL_INVALID_IMAGE_DESCRIPTOR;
     goto error;
   }
 
@@ -194,14 +194,14 @@ LOCAL cl_mem cl_mem_new_gl_texture(cl_context ctx,
   TRY_ALLOC (mem, CALLOC(struct _cl_mem));
   if (cl_mem_process_texture(ctx, flags, texture_target, miplevel, texture, dim, mem) != CL_SUCCESS) {
     printf("invalid texture.\n");
-    err = CL_INVALID_TEXTURE;
+    err = CL_INVALID_IMAGE_DESCRIPTOR;
     goto error;
   }
 
   mem->bo = cl_buffer_alloc_from_texture(ctx, flags, texture_target, miplevel, texture, dim);
 
   if (UNLIKELY(mem->bo == NULL)) {
-    err = CL_MEM_ALLOCATION_FAILURE;
+    err = CL_MEM_OBJECT_ALLOCATION_FAILURE;
     goto error;
   }
 

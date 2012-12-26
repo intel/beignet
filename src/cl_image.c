@@ -189,7 +189,7 @@ static const size_t cl_image_type_n = SIZEOF32(cl_image_type);
 
 cl_int
 cl_image_get_supported_fmt(cl_context ctx,
-                           cl_mem_type image_type,
+                           cl_mem_object_type image_type,
                            cl_uint num_entries,
                            cl_image_format *image_formats,
                            cl_uint *num_image_formats)

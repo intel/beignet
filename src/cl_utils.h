@@ -121,11 +121,11 @@ do {                                                        \
 #define CHECK_MEM(MEM)                                      \
 do {                                                        \
   if (UNLIKELY(MEM == NULL)) {                              \
-    err = CL_INVALID_MEM;                                   \
+    err = CL_INVALID_MEM_OBJECT;                            \
     goto error;                                             \
   }                                                         \
   if (UNLIKELY(MEM->magic != CL_MAGIC_MEM_HEADER)) {        \
-    err = CL_INVALID_MEM;                                   \
+    err = CL_INVALID_MEM_OBJECT;                            \
     goto error;                                             \
   }                                                         \
 } while (0)
