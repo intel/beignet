@@ -1,9 +1,2 @@
 *.o
 *.so*
-kernels/BitonicSort.cl
-kernels/GodRays.cl
-kernels/MedianFilter.cl
-kernels/ShallowWater.cl
-kernels/SimpleOptimizations.cl
-kernels/ToneMapping.cl
-kernels/ToneMappingMultiDevice.cl
