@@ -777,8 +777,15 @@ clEnqueueWriteBuffer(cl_command_queue    command_queue,
                      const cl_event *    event_wait_list,
                      cl_event *          event)
 {
-  NOT_IMPLEMENTED;
-  return 0;
+  if (blocking_write != CL_TRUE)
+    NOT_IMPLEMENTED;
+  cl_int err;
+  void *p = clIntelMapBuffer(buffer, &err);
+  if (err != CL_SUCCESS)
+    return err;
+  memcpy(p + offset, ptr, cb);
+  err = clIntelUnmapBuffer(buffer);
+  return err;
 }
 
 cl_int
