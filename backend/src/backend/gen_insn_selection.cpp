@@ -1104,13 +1104,16 @@ namespace gbe
 
       // Immediates not supported
       if (opcode == OP_DIV || opcode == OP_POW) {
-        GBE_ASSERT(type == TYPE_FLOAT);
-        const GenRegister src0 = sel.selReg(insn.getSrc(0), type);
-        const GenRegister src1 = sel.selReg(insn.getSrc(1), type);
-        const uint32_t mathOp = opcode == OP_DIV ?
-                                GEN_MATH_FUNCTION_FDIV :
-                                GEN_MATH_FUNCTION_POW;
-        sel.MATH(dst, mathOp, src0, src1);
+        GenRegister src0 = sel.selReg(insn.getSrc(0), type);
+        GenRegister src1 = sel.selReg(insn.getSrc(1), type);
+        uint32_t function;
+        if (type == TYPE_S32 || type == TYPE_U32)
+          function = GEN_MATH_FUNCTION_INT_DIV_QUOTIENT;
+        else
+          function = opcode == OP_DIV ?
+                     GEN_MATH_FUNCTION_FDIV :
+                     GEN_MATH_FUNCTION_POW;
+        sel.MATH(dst, function, src0, src1);
         markAllChildren(dag);
         return true;
       }
