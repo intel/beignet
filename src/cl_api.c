@@ -968,8 +968,7 @@ clEnqueueUnmapMemObject(cl_command_queue  command_queue,
                         const cl_event *  event_wait_list,
                         cl_event *        event)
 {
-  NOT_IMPLEMENTED;
-  return 0;
+  return clIntelUnmapBuffer(memobj);
 }
 
 cl_int
