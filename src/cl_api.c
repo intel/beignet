@@ -933,8 +933,13 @@ clEnqueueMapBuffer(cl_command_queue  command_queue,
                    cl_event *        event,
                    cl_int *          errcode_ret)
 {
-  NOT_IMPLEMENTED;
-  return NULL;
+  void *p;
+  if (blocking_map != CL_TRUE)
+     NOT_IMPLEMENTED;
+  if (offset != 0)
+     NOT_IMPLEMENTED;
+  p = clIntelMapBuffer(buffer, errcode_ret);
+  return p;
 }
 
 void *
