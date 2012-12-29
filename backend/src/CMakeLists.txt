@@ -20,7 +20,7 @@ foreach (to_stringify_file ${TO_STRINGIFY_FILES})
 endforeach (to_stringify_file)
 endmacro (stringify)
 
-set (TO_STRINGIFY_FILES ocl_stdlib)
+set (TO_STRINGIFY_FILES ocl_stdlib ocl_common_defines)
 stringify ("${GBE_SOURCE_DIR}/src/" "${TO_STRINGIFY_FILES}")
 
 if (GBE_USE_BLOB)
@@ -31,6 +31,9 @@ else (GBE_USE_BLOB)
   set (GBE_SRC
     ocl_stdlib.h
     ocl_stdlib_str.cpp  # this file is auto-generated.
+    ocl_stdlib_str.cpp
+    ocl_common_defines.h
+    ocl_common_defines_str.cpp # this file is auto-generated.
     sys/vector.hpp
     sys/hash_map.hpp
     sys/map.hpp
