@@ -132,8 +132,8 @@ cl_kernel_set_arg(cl_kernel k, cl_uint index, size_t sz, const void *value)
   mem = *(cl_mem*) value;
   if (UNLIKELY(mem->magic != CL_MAGIC_MEM_HEADER))
     return CL_INVALID_ARG_VALUE;
-  if (mem->is_image)
-    if (UNLIKELY(arg_type == GBE_ARG_IMAGE))
+  if (UNLIKELY((arg_type == GBE_ARG_IMAGE && !mem->is_image)
+     || (arg_type != GBE_ARG_IMAGE && mem->is_image)))
       return CL_INVALID_ARG_VALUE;
   cl_mem_add_ref(mem);
   if (k->args[index].mem)

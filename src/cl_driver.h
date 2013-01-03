@@ -111,7 +111,7 @@ extern cl_gpgpu_bind_buf_cb *cl_gpgpu_bind_buf;
 
 /* Set a 2d texture */
 typedef void (cl_gpgpu_bind_image2D_cb)(cl_gpgpu state,
-                                        int32_t index,
+                                        uint32_t *curbe_index,
                                         cl_buffer obj_bo,
                                         uint32_t format,
                                         int32_t w,

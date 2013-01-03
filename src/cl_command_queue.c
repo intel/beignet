@@ -101,13 +101,23 @@ cl_command_queue_bind_surface(cl_command_queue queue, cl_kernel k)
 {
   /* Bind all user buffers (given by clSetKernelArg) */
   uint32_t i;
+  enum gbe_arg_type arg_type; /* kind of argument */
   for (i = 0; i < k->arg_n; ++i) {
     uint32_t offset; // location of the address in the curbe
-    if (gbe_kernel_get_arg_type(k->opaque, i) != GBE_ARG_GLOBAL_PTR &&
-        gbe_kernel_get_arg_type(k->opaque, i) != GBE_ARG_CONSTANT_PTR)
+    arg_type = gbe_kernel_get_arg_type(k->opaque, i);
+    if (arg_type != GBE_ARG_GLOBAL_PTR &&
+        arg_type != GBE_ARG_CONSTANT_PTR &&
+        arg_type != GBE_ARG_IMAGE)
       continue;
     offset = gbe_kernel_get_curbe_offset(k->opaque, GBE_CURBE_KERNEL_ARGUMENT, i);
-    cl_gpgpu_bind_buf(queue->gpgpu, k->args[i].mem->bo, offset, cc_llc_l3);
+    if (arg_type == GBE_ARG_IMAGE) {
+      uint32_t *curbe_index = (uint32_t*)(k->curbe + offset);
+      cl_gpgpu_bind_image2D(queue->gpgpu, curbe_index, k->args[i].mem->bo,
+                            k->args[i].mem->intel_fmt, k->args[i].mem->w,
+                            k->args[i].mem->h, k->args[i].mem->pitch,
+                            k->args[i].mem->tiling);
+    } else
+      cl_gpgpu_bind_buf(queue->gpgpu, k->args[i].mem->bo, offset, cc_llc_l3);
   }
 
   return CL_SUCCESS;

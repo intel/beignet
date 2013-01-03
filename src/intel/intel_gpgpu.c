@@ -54,6 +54,8 @@ typedef struct surface_heap {
 /* We can bind only a limited number of buffers */
 enum { max_buf_n = 128 };
 
+enum { max_img_n = 32 };
+
 /* Handle GPGPU state */
 struct intel_gpgpu
 {
@@ -63,6 +65,10 @@ struct intel_gpgpu
   drm_intel_bo *binded_buf[max_buf_n];  /* all buffers binded for the call */
   uint32_t binded_offset[max_buf_n];    /* their offsets in the constant buffer */
   uint32_t binded_n;                    /* number of buffers binded */
+
+  unsigned int img_bitmap;              /* image usage bitmap. */
+  unsigned int img_index_base;          /* base index for image surface.*/
+  drm_intel_bo *binded_img[max_img_n];  /* all images binded for the call */
 
   struct { drm_intel_bo *bo; } stack_b;
   struct { drm_intel_bo *bo; } idrt_b;
@@ -339,6 +345,8 @@ intel_gpgpu_state_init(intel_gpgpu_t *gpgpu,
 
   /* Binded buffers */
   gpgpu->binded_n = 0;
+  gpgpu->img_bitmap = 0;
+  gpgpu->img_index_base = 2;
 
   /* URB */
   gpgpu->urb.num_cs_entries = 64;
@@ -437,9 +445,45 @@ intel_gpgpu_map_address_space(intel_gpgpu_t *gpgpu)
   heap->binding_table[1] = sizeof(gen7_surface_state_t) + offsetof(surface_heap_t, surface);
 }
 
+#ifdef __i386__
+static inline unsigned long
+__fls(unsigned long x)
+{
+        asm("bsr %1,%0"
+            : "=r" (x)
+            : "rm" (x));
+        return 31 - x;
+}
+#else
+static inline unsigned long
+__fls(unsigned long x)
+{
+   int n;
+
+   if (x == 0) return(0);
+   n = 0;
+   if (x <= 0x0000FFFF) {n = n +16; x = x <<16;}
+   if (x <= 0x00FFFFFF) {n = n + 8; x = x << 8;}
+   if (x <= 0x0FFFFFFF) {n = n + 4; x = x << 4;}
+   if (x <= 0x3FFFFFFF) {n = n + 2; x = x << 2;}
+   if (x <= 0x7FFFFFFF) {n = n + 1;}
+   return 31 - n;
+}
+#endif
+
+static int
+intel_gpgpu_get_free_img_index(intel_gpgpu_t *gpgpu)
+{
+  int slot;
+  assert(~gpgpu->img_bitmap != 0);
+  slot = __fls(~gpgpu->img_bitmap);
+  gpgpu->img_bitmap |= (1 << (31 - slot));
+  return slot + gpgpu->img_index_base;
+}
+
 static void
 intel_gpgpu_bind_image2D_gen7(intel_gpgpu_t *gpgpu,
-                              int32_t index,
+                              uint32_t *curbe_index,
                               dri_bo* obj_bo,
                               uint32_t format,
                               int32_t w,
@@ -447,8 +491,10 @@ intel_gpgpu_bind_image2D_gen7(intel_gpgpu_t *gpgpu,
                               int32_t pitch,
                               int32_t tiling)
 {
+  int32_t index = intel_gpgpu_get_free_img_index(gpgpu);
   surface_heap_t *heap = gpgpu->surface_heap_b.bo->virtual;
   gen7_surface_state_t *ss = (gen7_surface_state_t *) heap->surface[index];
+
   memset(ss, 0, sizeof(*ss));
   ss->ss0.surface_type = I965_SURFACE_2D;
   ss->ss0.surface_format = format;
@@ -465,6 +511,8 @@ intel_gpgpu_bind_image2D_gen7(intel_gpgpu_t *gpgpu,
     ss->ss0.tile_walk = I965_TILEWALK_YMAJOR;
   }
   intel_gpgpu_set_buf_reloc_gen7(gpgpu, index, obj_bo);
+  *curbe_index = index;
+  gpgpu->binded_img[index - gpgpu->img_index_base] = obj_bo;
 }
 
 static void
@@ -486,7 +534,7 @@ intel_gpgpu_set_stack(intel_gpgpu_t *gpgpu, uint32_t offset, uint32_t size, uint
 
 static void
 intel_gpgpu_bind_image2D(intel_gpgpu_t *gpgpu,
-                         int32_t index,
+                         uint32_t *index,
                          cl_buffer *obj_bo,
                          uint32_t format,
                          int32_t w,
@@ -494,8 +542,8 @@ intel_gpgpu_bind_image2D(intel_gpgpu_t *gpgpu,
                          int32_t pitch,
                          cl_gpgpu_tiling tiling)
 {
-  assert(index < GEN_MAX_SURFACES);
   intel_gpgpu_bind_image2D_gen7(gpgpu, index, (drm_intel_bo*) obj_bo, format, w, h, pitch, tiling);
+  assert(*index < GEN_MAX_SURFACES);
 }
 
 static void
