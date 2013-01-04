@@ -580,6 +580,13 @@ DECL_VECTOR_1OP(__gen_ocl_internal_log, float);
 DECL_VECTOR_1OP(__gen_ocl_internal_log2, float);
 DECL_VECTOR_1OP(__gen_ocl_internal_log10, float);
 #undef DECL_VECTOR_1OP
+// Synchronization, explicit memory fence
+/////////////////////////////////////////////////////////////////////////////
+#define CLK_LOCAL_MEM_FENCE 1
+#define CLK_GLOBAL_MEM_FENCE 2
+/////////////////////////////////////////////////////////////////////////////
+// Arithmetic functions
+/////////////////////////////////////////////////////////////////////////////
 
 #define DECL_VECTOR_2OP(NAME, TYPE) \
   INLINE OVERLOADABLE TYPE##2 NAME(TYPE##2 v0, TYPE##2 v1) { \
