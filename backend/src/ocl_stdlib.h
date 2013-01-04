@@ -106,6 +106,24 @@ typedef size_t event_t;
 #define M_SQRT2_F    1.4142135623730951F
 #define M_SQRT1_2_F  0.7071067811865476F
 /////////////////////////////////////////////////////////////////////////////
+// OpenCL integer built-in macros
+/////////////////////////////////////////////////////////////////////////////
+#define CHAR_BIT    8
+#define CHAR_MAX    SCHAR_MAX
+#define CHAR_MIN    SCHAR_MIN
+#define INT_MAX     2147483647
+#define INT_MIN     (-2147483647 - 1)
+#define LONG_MAX    0x7fffffffffffffffL
+#define LONG_MIN    (-0x7fffffffffffffffL - 1)
+#define SCHAR_MAX   127
+#define SCHAR_MIN   (-127 - 1)
+#define SHRT_MAX    32767
+#define SHRT_MIN    (-32767 - 1)
+#define UCHAR_MAX   255
+#define USHRT_MAX   65535
+#define UINT_MAX    0xffffffff
+#define ULONG_MAX   0xffffffffffffffffUL
+/////////////////////////////////////////////////////////////////////////////
 // OpenCL relational built-in functions
 /////////////////////////////////////////////////////////////////////////////
 #define DEF DECL(int, float); \
