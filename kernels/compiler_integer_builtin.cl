@@ -2,6 +2,7 @@
 __kernel void compiler_integer_builtin() {
   int i = 0, i1 = -1, i2 = -2;
   unsigned u = 1, u1 = 2, u2 = 3;
+  i = CHAR_MAX;
   i = abs(u);
   i = abs_diff(u1, u2);
   i = add_sat(i1, i2);
