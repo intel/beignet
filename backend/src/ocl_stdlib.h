@@ -65,6 +65,32 @@ typedef struct _image3d_t* image3d_t;
 typedef uint sampler_t;
 typedef size_t event_t;
 /////////////////////////////////////////////////////////////////////////////
+// OpenCL conversions & type casting
+/////////////////////////////////////////////////////////////////////////////
+#define DEF(type, n, type2) type##n INLINE_OVERLOADABLE convert_##type##n(type2##n d) { \
+    return (type##n)((type)(d.s0), (type)(d.s1), (type)(d.s2), (type)(d.s3)); \
+ }
+#define DEF2(type) DEF(type, 4, char); \
+                   DEF(type, 4, uchar); \
+                   DEF(type, 4, short); \
+                   DEF(type, 4, ushort); \
+                   DEF(type, 4, int); \
+                   DEF(type, 4, uint); \
+                   DEF(type, 4, long); \
+                   DEF(type, 4, ulong); \
+                   DEF(type, 4, float);
+DEF2(char);
+DEF2(uchar);
+DEF2(short);
+DEF2(ushort);
+DEF2(int);
+DEF2(uint);
+DEF2(long);
+DEF2(ulong);
+DEF2(float);
+#undef DEF2
+#undef DEF
+/////////////////////////////////////////////////////////////////////////////
 // OpenCL preprocessor directives & macros
 /////////////////////////////////////////////////////////////////////////////
 #define __OPENCL_VERSION__ 110
