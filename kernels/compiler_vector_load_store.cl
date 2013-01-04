@@ -5,6 +5,11 @@ kernel void compiler_vector_load_store() {
   f4 = vload4(0, p);
   vstore4(f4, 0, p);
   
+  long x[16], l;
+  long16 l16;
+  l = vload16(0, x);
+  vstore16(l16, 0, x);
+
   half h[16];
   half4 h4;
   f = vload_half(0, h);
