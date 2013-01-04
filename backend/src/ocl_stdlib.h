@@ -67,6 +67,15 @@ typedef size_t event_t;
 /////////////////////////////////////////////////////////////////////////////
 // OpenCL conversions & type casting
 /////////////////////////////////////////////////////////////////////////////
+union type_cast_4_b {
+  float f;
+  uchar4 u4;
+};
+uchar4 INLINE_OVERLOADABLE as_uchar4(float f) {
+    union type_cast_4_b u;
+    u.f = f;
+    return u.u4;
+}
 #define DEF(type, n, type2) type##n INLINE_OVERLOADABLE convert_##type##n(type2##n d) { \
     return (type##n)((type)(d.s0), (type)(d.s1), (type)(d.s2), (type)(d.s3)); \
  }
