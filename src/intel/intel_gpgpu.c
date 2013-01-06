@@ -37,6 +37,7 @@
 
 #include "cl_alloc.h"
 #include "cl_utils.h"
+#include "cl_sampler.h"
 
 #define GEN_CMD_MEDIA_OBJECT  (0x71000000)
 #define MO_TS_BIT             (1 << 24)
@@ -56,6 +57,8 @@ enum { max_buf_n = 128 };
 
 enum { max_img_n = 32 };
 
+enum {max_sampler_n = 16 };
+
 /* Handle GPGPU state */
 struct intel_gpgpu
 {
@@ -69,6 +72,8 @@ struct intel_gpgpu
   unsigned int img_bitmap;              /* image usage bitmap. */
   unsigned int img_index_base;          /* base index for image surface.*/
   drm_intel_bo *binded_img[max_img_n];  /* all images binded for the call */
+
+  unsigned int sampler_bitmap;          /* sampler usage bitmap. */
 
   struct { drm_intel_bo *bo; } stack_b;
   struct { drm_intel_bo *bo; } idrt_b;
@@ -347,6 +352,7 @@ intel_gpgpu_state_init(intel_gpgpu_t *gpgpu,
   gpgpu->binded_n = 0;
   gpgpu->img_bitmap = 0;
   gpgpu->img_index_base = 2;
+  gpgpu->sampler_bitmap = ~((1 << max_sampler_n) - 1);
 
   /* URB */
   gpgpu->urb.num_cs_entries = 64;
@@ -479,6 +485,16 @@ intel_gpgpu_get_free_img_index(intel_gpgpu_t *gpgpu)
   slot = __fls(~gpgpu->img_bitmap);
   gpgpu->img_bitmap |= (1 << (31 - slot));
   return slot + gpgpu->img_index_base;
+}
+
+static int
+intel_gpgpu_get_free_sampler_index(intel_gpgpu_t *gpgpu)
+{
+  int slot;
+  assert(~gpgpu->sampler_bitmap != 0);
+  slot = __fls(~gpgpu->sampler_bitmap);
+  gpgpu->sampler_bitmap |= (1 << (31 - slot));
+  return slot - max_sampler_n;
 }
 
 static void
@@ -638,6 +654,88 @@ intel_gpgpu_upload_samplers(intel_gpgpu_t *gpgpu, const void *data, uint32_t n)
   }
 }
 
+int translate_wrap_mode(uint32_t cl_address_mode, int using_nearest)
+{
+   switch( cl_address_mode ) {
+   case CL_ADDRESS_NONE:
+   case CL_ADDRESS_REPEAT:
+      return GEN_TEXCOORDMODE_WRAP;
+   case CL_ADDRESS_CLAMP:
+      /* GL_CLAMP is the weird mode where coordinates are clamped to
+       * [0.0, 1.0], so linear filtering of coordinates outside of
+       * [0.0, 1.0] give you half edge texel value and half border
+       * color.  The fragment shader will clamp the coordinates, and
+       * we set clamp_border here, which gets the result desired.  We
+       * just use clamp(_to_edge) for nearest, because for nearest
+       * clamping to 1.0 gives border color instead of the desired
+       * edge texels.
+       */
+      if (using_nearest)
+         return GEN_TEXCOORDMODE_CLAMP;
+      else
+         return GEN_TEXCOORDMODE_CLAMP_BORDER;
+   case CL_ADDRESS_CLAMP_TO_EDGE:
+      return GEN_TEXCOORDMODE_CLAMP;
+   case CL_ADDRESS_MIRRORED_REPEAT:
+      return GEN_TEXCOORDMODE_MIRROR;
+   default:
+      return GEN_TEXCOORDMODE_WRAP;
+   }
+}
+
+static void
+intel_gpgpu_insert_sampler(intel_gpgpu_t *gpgpu, uint32_t *curbe_index, cl_sampler cl_sampler)
+{
+  int index;
+  int using_nearest = 0;
+  uint32_t wrap_mode;
+  gen7_sampler_state_t *sampler;
+
+  index = intel_gpgpu_get_free_sampler_index(gpgpu);
+  sampler = (gen7_sampler_state_t *)gpgpu->sampler_state_b.bo->virtual + index;
+  if (!cl_sampler->normalized_coords)
+    sampler->ss3.non_normalized_coord = 1;
+  else
+    sampler->ss3.non_normalized_coord = 0;
+
+  switch (cl_sampler->filter) {
+  case CL_FILTER_NEAREST:
+    sampler->ss0.min_filter = GEN_MAPFILTER_NEAREST;
+    sampler->ss0.mip_filter = GEN_MIPFILTER_NONE;
+    sampler->ss0.mag_filter = GEN_MAPFILTER_NEAREST;
+    using_nearest = 1;
+    break;
+  case CL_FILTER_LINEAR:
+    sampler->ss0.min_filter = GEN_MAPFILTER_LINEAR;
+    sampler->ss0.mip_filter = GEN_MIPFILTER_NONE;
+    sampler->ss0.mag_filter = GEN_MAPFILTER_LINEAR;
+    break;
+  }
+
+  wrap_mode = translate_wrap_mode(cl_sampler->address, using_nearest);
+  sampler->ss3.r_wrap_mode = wrap_mode;
+  sampler->ss3.s_wrap_mode = wrap_mode;
+  sampler->ss3.t_wrap_mode = wrap_mode;
+
+  sampler->ss0.lod_preclamp = 1; /* OpenGL mode */
+  sampler->ss0.default_color_mode = 0; /* OpenGL/DX10 mode */
+
+  sampler->ss0.base_level = 0;
+
+  sampler->ss1.max_lod = 0;
+  sampler->ss1.min_lod = 0;
+
+  if (sampler->ss0.min_filter != GEN_MAPFILTER_NEAREST)
+     sampler->ss3.address_round |= GEN_ADDRESS_ROUNDING_ENABLE_U_MIN |
+                                   GEN_ADDRESS_ROUNDING_ENABLE_V_MIN |
+                                   GEN_ADDRESS_ROUNDING_ENABLE_R_MIN;
+  if (sampler->ss0.mag_filter != GEN_MAPFILTER_NEAREST)
+     sampler->ss3.address_round |= GEN_ADDRESS_ROUNDING_ENABLE_U_MAG |
+                                   GEN_ADDRESS_ROUNDING_ENABLE_V_MAG |
+                                   GEN_ADDRESS_ROUNDING_ENABLE_R_MAG;
+  *curbe_index = index;
+}
+
 static void
 intel_gpgpu_states_setup(intel_gpgpu_t *gpgpu, cl_gpgpu_kernel *kernel)
 {
@@ -712,5 +810,6 @@ intel_set_gpgpu_callbacks(void)
   cl_gpgpu_batch_end = (cl_gpgpu_batch_end_cb *) intel_gpgpu_batch_end;
   cl_gpgpu_flush = (cl_gpgpu_flush_cb *) intel_gpgpu_flush;
   cl_gpgpu_walker = (cl_gpgpu_walker_cb *) intel_gpgpu_walker;
+  cl_gpgpu_insert_sampler = (cl_gpgpu_insert_sampler_cb *) intel_gpgpu_insert_sampler;
 }
 

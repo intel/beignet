@@ -47,6 +47,7 @@ typedef struct _cl_driver *cl_driver;
 typedef struct _cl_gpgpu *cl_gpgpu;
 
 typedef struct _cl_context_prop *cl_context_prop;
+typedef struct _cl_sampler *cl_sampler;
 
 /**************************************************************************
  * Driver
@@ -108,6 +109,10 @@ extern cl_gpgpu_delete_cb *cl_gpgpu_delete;
 /* Bind a regular unformatted buffer */
 typedef void (cl_gpgpu_bind_buf_cb)(cl_gpgpu, cl_buffer, uint32_t offset, uint32_t cchint);
 extern cl_gpgpu_bind_buf_cb *cl_gpgpu_bind_buf;
+
+/* Insert a sampler */
+typedef void (cl_gpgpu_insert_sampler_cb)(cl_gpgpu, uint32_t *curbe_index, cl_sampler sampler);
+extern cl_gpgpu_insert_sampler_cb *cl_gpgpu_insert_sampler;
 
 /* Set a 2d texture */
 typedef void (cl_gpgpu_bind_image2D_cb)(cl_gpgpu state,

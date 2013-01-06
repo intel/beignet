@@ -25,6 +25,7 @@
 #include "cl_alloc.h"
 #include "cl_utils.h"
 #include "CL/cl.h"
+#include "cl_sampler.h"
 
 #include <stdio.h>
 #include <string.h>
@@ -124,6 +125,22 @@ cl_kernel_set_arg(cl_kernel k, cl_uint index, size_t sz, const void *value)
     k->args[index].is_set = 1;
     k->args[index].mem = NULL;
     return CL_SUCCESS;
+  }
+
+  /* For a sampler*/
+  if (arg_type == GBE_ARG_SAMPLER) {
+     cl_sampler sampler;
+     if (UNLIKELY(value == NULL))
+      return CL_INVALID_KERNEL_ARGS;
+     sampler = *(cl_sampler*)value;
+
+     if (UNLIKELY(sampler->magic != CL_MAGIC_SAMPLER_HEADER))
+       return CL_INVALID_ARG_VALUE;
+     k->args[index].local_sz = 0;
+     k->args[index].is_set = 1;
+     k->args[index].mem = NULL;
+     k->args[index].sampler = sampler;
+     return CL_SUCCESS;
   }
 
   /* Otherwise, we just need to check that this is a buffer */

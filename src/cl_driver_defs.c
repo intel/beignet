@@ -57,4 +57,5 @@ LOCAL cl_gpgpu_batch_start_cb *cl_gpgpu_batch_start = NULL;
 LOCAL cl_gpgpu_batch_end_cb *cl_gpgpu_batch_end = NULL;
 LOCAL cl_gpgpu_flush_cb *cl_gpgpu_flush = NULL;
 LOCAL cl_gpgpu_walker_cb *cl_gpgpu_walker = NULL;
+LOCAL cl_gpgpu_insert_sampler_cb *cl_gpgpu_insert_sampler = NULL;
 
