@@ -463,7 +463,11 @@ namespace gbe
     void ALU2(SelectionOpcode opcode, Reg dst, Reg src0, Reg src1);
     /*! Encode ternary instructions */
     void ALU3(SelectionOpcode opcode, Reg dst, Reg src0, Reg src1, Reg src2);
+    /*! Encode sample instructions */
     void SAMPLE(GenRegister *dst, GenRegister *src, GenRegister *msgPayloads);
+    /*! Encode typed write instructions */
+    void TYPED_WRITE(GenRegister *dst, uint32_t dstNum, GenRegister *src,
+                     uint32_t srcNum, GenRegister *msgs, uint32_t msgNum);
     /*! Use custom allocators */
     GBE_CLASS(Opaque);
     friend class SelectionBlock;
@@ -988,6 +992,27 @@ namespace gbe
     this->opaque = GBE_NEW(Selection::Opaque, ctx);
   }
 
+  void Selection::Opaque::TYPED_WRITE(GenRegister *dst, uint32_t dstNum, GenRegister *src,
+                              uint32_t srcNum, GenRegister *msgs, uint32_t msgNum) {
+    uint32_t elemID = 0;
+    uint32_t i;
+    SelectionInstruction *insn = this->appendInsn(SEL_OP_TYPED_WRITE, 0, msgNum + dstNum + srcNum);
+    SelectionVector *msgVector = this->appendVector();;
+
+    for( i = 0; i < msgNum; ++i, ++elemID)
+      insn->src(elemID) = msgs[i];
+    for (i = 0; i < dstNum; ++i, ++elemID)
+      insn->src(elemID) = dst[i];
+    for (i = 0; i < srcNum; ++i, ++elemID)
+      insn->src(elemID) = src[i];
+
+    insn->extra.elem = msgNum;
+    // Sends require contiguous allocation
+    msgVector->regNum = msgNum;
+    msgVector->isSrc = 1;
+    msgVector->reg = &insn->src(0);
+  }
+
   Selection::~Selection(void) { GBE_DELETE(this->opaque); }
 
   void Selection::select(void) {
@@ -1483,7 +1508,6 @@ namespace gbe
     }\
     DECL_CTOR(FAMILY, 1, 1); \
   }
-  DECL_NOT_IMPLEMENTED_ONE_TO_MANY(TypedWriteInstruction);
 #undef DECL_NOT_IMPLEMENTED_ONE_TO_MANY
 
   /*! Load immediate pattern */
@@ -1885,8 +1909,6 @@ namespace gbe
     DECL_CTOR(LabelInstruction, 1, 1);
   };
 
-  /* Sample instruction pattern */
-
   DECL_PATTERN(SampleInstruction)
   {
     INLINE bool emitOne(Selection::Opaque &sel, const ir::SampleInstruction &insn) const
@@ -1908,6 +1930,31 @@ namespace gbe
       return true;
     }
     DECL_CTOR(SampleInstruction, 1, 1);
+  };
+
+  /*! Typed write instruction pattern. */
+  DECL_PATTERN(TypedWriteInstruction)
+  {
+    INLINE bool emitOne(Selection::Opaque &sel, const ir::TypedWriteInstruction &insn) const
+    {
+      using namespace ir;
+      const uint32_t simdWidth = sel.ctx.getSimdWidth();
+      GenRegister msgs[9]; // (header + U + V + R + LOD + 4)
+      GenRegister dst[4], src[4];
+      uint32_t msgNum = (8 / (simdWidth / 8)) + 1;
+
+      for(uint32_t i = 0; i < msgNum; i++)
+        msgs[i] = sel.selReg(sel.reg(FAMILY_DWORD), TYPE_U32);
+
+      for (uint32_t valueID = 0; valueID < insn.getDstNum(); ++valueID)
+        dst[valueID] = sel.selReg(insn.getDst(valueID), insn.getDstType());
+      for (uint32_t valueID = 0; valueID < insn.getSrcNum(); ++valueID)
+        src[valueID] = sel.selReg(insn.getSrc(valueID), insn.getSrcType());
+
+      sel.TYPED_WRITE(dst, insn.getDstNum(), src, insn.getSrcNum(), msgs, msgNum);
+      return true;
+    }
+    DECL_CTOR(TypedWriteInstruction, 1, 1);
   };
 
   /*! Branch instruction pattern */

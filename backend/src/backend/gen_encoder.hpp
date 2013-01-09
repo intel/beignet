@@ -144,6 +144,10 @@ namespace gbe
                 GenRegister src1,
                 uint32_t writemask,
                 uint32_t return_format);
+
+    /*! TypedWrite instruction for texture */
+    void TYPED_WRITE(GenRegister header,
+                     GenRegister desc);
     /*! Extended math function (2 sources) */
     void MATH(GenRegister dst, uint32_t function, GenRegister src0, GenRegister src1);
     /*! Extended math function (1 source) */

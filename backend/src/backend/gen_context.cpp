@@ -270,11 +270,12 @@ namespace gbe
     uint32_t simdWidth = p->curr.execWidth;
     p->push();
     const uint32_t nr = msgPayload.nr;
-    const uint32_t subnr = msgPayload.subnr / sizeof(float);
     // prepare mesg desc and move to a0.0.
     // desc = bti | (sampler << 8) | (0 << 12) | (2 << 16) | (0 << 18) | (0 << 19) | (4 << 20) | (1 << 25) | (0 < 29) | (0 << 31)
     p->curr.execWidth = 1;
-    p->MOV(a0_0, GenRegister::immud((0 << 12) | (2 << 17) | ((4 * (simdWidth/8)) << 20) | ((2 * (simdWidth/8)) << 25)));
+    p->MOV(a0_0, GenRegister::immud((GEN_SAMPLER_MESSAGE_SIMD16_SAMPLE << 12) | (2 << 17)
+                                    | ((4 * (simdWidth/8)) << 20)
+                                    | ((2 * (simdWidth/8)) << 25)));
     p->SHL(temp, GenRegister::ud1grf(sampler.nr, sampler.subnr/sizeof(float)), GenRegister::immud(8));
     p->OR(a0_0, a0_0, temp);
     p->OR(a0_0, a0_0, GenRegister::ud1grf(bti.nr, bti.subnr/sizeof(float)));
@@ -282,8 +283,59 @@ namespace gbe
     /* Prepare message payload. */
     p->MOV(GenRegister::f8grf(nr , 0), ucoord);
     p->MOV(GenRegister::f8grf(nr + (simdWidth/8), 0), vcoord);
-    p->MOV(dst, GenRegister::immud(0));
     p->SAMPLE(dst, msgPayload, a0_0, -1, 0);
+
+    p->pop();
+  }
+
+  void GenContext::emitTypedWriteInstruction(const SelectionInstruction &insn) {
+    const GenRegister header = GenRegister::retype(ra->genReg(insn.src(0)), GEN_TYPE_UD);
+    const GenRegister bti = ra->genReg(insn.src(0 + insn.extra.elem));
+    const GenRegister ucoord = ra->genReg(insn.src(1 + insn.extra.elem));
+    const GenRegister vcoord = ra->genReg(insn.src(2 + insn.extra.elem));
+    const GenRegister R = ra->genReg(insn.src(3 + insn.extra.elem));
+    const GenRegister G = ra->genReg(insn.src(4 + insn.extra.elem));
+    const GenRegister B = ra->genReg(insn.src(5 + insn.extra.elem));
+    const GenRegister A = ra->genReg(insn.src(6 + insn.extra.elem));
+    const GenRegister a0_0 = GenRegister::ud1arf(GEN_ARF_ADDRESS, 0);
+
+    p->push();
+    uint32_t simdWidth = p->curr.execWidth;
+    const uint32_t nr = header.nr;
+    p->curr.predicate = GEN_PREDICATE_NONE;
+    p->curr.noMask = 1;
+    p->MOV(header, GenRegister::immud(0x0));
+    p->curr.execWidth = 1;
+
+    // prepare mesg desc and move to a0.0.
+    // desc = bti | (msg_type << 14) | (header_present << 19))
+    p->MOV(a0_0, GenRegister::immud((GEN_TYPED_WRITE << 14) | (1 << 19) | (9 << 25)));
+    p->OR(a0_0, a0_0, GenRegister::ud1grf(bti.nr, bti.subnr/sizeof(float)));
+    // prepare header, we need to enable all the 8 planes.
+    p->MOV(GenRegister::ud8grf(nr, 7), GenRegister::immud(0xff));
+    // Typed write only support SIMD8.
+    p->curr.execWidth = 8;
+    // Prepare message payload U + V + R(ignored) + LOD(0) + RGBA.
+    // XXX currently only support U32 surface type with RGBA.
+    p->MOV(GenRegister::ud8grf(nr + 4, 0), GenRegister::immud(0)); //LOD
+
+    // TYPED WRITE send instruction only support SIMD8, if we are SIMD16, we
+    // need to call it twice.
+    uint32_t quarterNum = (simdWidth == 8) ? 1 : 2;
+
+    for( uint32_t quarter = 0; quarter < quarterNum; quarter++)
+    {
+#define QUARTER_MOV(dst_nr, src) p->MOV(GenRegister::ud8grf(dst_nr, 0), \
+                                        GenRegister::retype(GenRegister::ud8grf(src.nr + quarter, 0), src.type))
+      QUARTER_MOV(nr + 1, ucoord);
+      QUARTER_MOV(nr + 2, vcoord);
+      QUARTER_MOV(nr + 5, R);
+      QUARTER_MOV(nr + 6, G);
+      QUARTER_MOV(nr + 7, B);
+      QUARTER_MOV(nr + 8, A);
+#undef QUARTER_MOV
+      p->TYPED_WRITE(header, a0_0);
+    }
 
     p->pop();
   }

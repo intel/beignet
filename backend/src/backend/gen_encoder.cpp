@@ -797,6 +797,17 @@ namespace gbe
      insn->header.destreg_or_condmod = GEN_SFID_SAMPLER;
   }
 
+  void GenEncoder::TYPED_WRITE(GenRegister header, GenRegister desc)
+  {
+     GenInstruction *insn = this->next(GEN_OPCODE_SEND);
+     insn->header.predicate_control = 0; /* XXX */
+     this->setHeader(insn);
+     this->setDst(insn, GenRegister::retype(GenRegister::null(), GEN_TYPE_UD));
+     this->setSrc0(insn, header);
+     this->setSrc1(insn, desc);
+     insn->header.destreg_or_condmod = GEN6_SFID_DATAPORT_RENDER_CACHE;
+  }
+
   void GenEncoder::EOT(uint32_t msg) {
     GenInstruction *insn = this->next(GEN_OPCODE_SEND);
     this->setDst(insn, GenRegister::retype(GenRegister::null(), GEN_TYPE_UD));

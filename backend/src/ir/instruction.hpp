@@ -299,6 +299,8 @@ namespace ir {
   public:
     /*! Return true if the given instruction is an instance of this class */
     static bool isClassOf(const Instruction &insn);
+    Type getSrcType(void) const;
+    Type getDstType(void) const;
   };
 
   /*! Load texels from a texture */
@@ -511,10 +513,10 @@ namespace ir {
   Instruction LOADI(Type type, Register dst, ImmediateIndex value);
   /*! sync.params... (see Sync instruction) */
   Instruction SYNC(uint32_t parameters);
-  /*! typed write TODO */
-  Instruction TYPED_WRITE(void);
+  /*! typed write */
+  Instruction TYPED_WRITE(Tuple dst, Tuple src, Type dstType, Type srcType);
   /*! sample textures */
-  Instruction SAMPLE(Tuple dst, Tuple msg, Type dstType, Type srcType);
+  Instruction SAMPLE(Tuple dst, Tuple src, Type dstType, Type srcType);
   /*! label labelIndex */
   Instruction LABEL(LabelIndex labelIndex);
 

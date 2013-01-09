@@ -85,7 +85,7 @@ namespace gbe
     /*! Damn C++ */
     const GenRegister &src(uint32_t srcID) const { return regs[dstNum+srcID]; }
     /*! No more than 6 sources (used by typed writes) */
-    enum { MAX_SRC_NUM = 8 };
+    enum { MAX_SRC_NUM = 16 };
     /*! No more than 4 destinations (used by samples and untyped reads) */
     enum { MAX_DST_NUM = 4 };
     /*! State of the instruction (extra fields neeed for the encoding) */

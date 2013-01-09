@@ -424,17 +424,50 @@ namespace ir {
 
     class ALIGNED_INSTRUCTION TypedWriteInstruction : // TODO
       public BasePolicy,
-      public NDstPolicy<TypedWriteInstruction, 0>,
-      public NSrcPolicy<TypedWriteInstruction, 0>
+      public TupleSrcPolicy<TypedWriteInstruction>
     {
     public:
-      INLINE TypedWriteInstruction(void) { this->opcode = OP_TYPED_WRITE; }
+
+      INLINE TypedWriteInstruction(Tuple dstTuple, Tuple srcTuple, Type dstType, Type srcType) {
+        this->opcode = OP_TYPED_WRITE;
+        this->dst = dstTuple;
+        this->src = srcTuple;
+        this->dstType = dstType;
+        this->srcType = srcType;
+      }
       INLINE bool wellFormed(const Function &fn, std::string &why) const;
       INLINE void out(std::ostream &out, const Function &fn) const {
         this->outOpcode(out);
-        out << " ... TODO";
+        out << "." << this->getDstType()
+            << "." << this->getSrcType()
+            << " %" << this->getDst(fn, 0)
+            << " %" << this->getDst(fn, 1)
+            << " %" << this->getDst(fn, 2)
+            << " %" << this->getDst(fn, 3)
+            << " %" << this->getSrc(fn, 0)
+            << " %" << this->getSrc(fn, 1)
+            << " %" << this->getSrc(fn, 2)
+            << " %" << this->getSrc(fn, 3);
       }
-      Register dst[], src[];
+
+      Tuple src;
+      Tuple dst;
+      Type srcType;
+      Type dstType;
+
+      INLINE Register getDst(const Function &fn, uint32_t ID) const {
+        GBE_ASSERTM(ID < 4, "Out-of-bound source register");
+        return fn.getRegister(dst, ID);
+      }
+      INLINE void setDst(Function &fn, uint32_t ID, Register reg) {
+        GBE_ASSERTM(ID < 4, "Out-of-bound source register");
+        fn.setRegister(dst, ID, reg);
+      }
+      INLINE uint32_t getDstNum(void) const { return 3; }
+      INLINE uint32_t getSrcNum(void) const { return 4; }
+
+      INLINE Type getSrcType(void) const { return this->srcType; }
+      INLINE Type getDstType(void) const { return this->dstType; }
     };
 
     class ALIGNED_INSTRUCTION LoadImmInstruction :
@@ -1140,6 +1173,8 @@ DECL_MEM_FN(BranchInstruction, LabelIndex, getLabelIndex(void), getLabelIndex())
 DECL_MEM_FN(SyncInstruction, uint32_t, getParameters(void), getParameters())
 DECL_MEM_FN(SampleInstruction, Type, getSrcType(void), getSrcType())
 DECL_MEM_FN(SampleInstruction, Type, getDstType(void), getDstType())
+DECL_MEM_FN(TypedWriteInstruction, Type, getSrcType(void), getSrcType())
+DECL_MEM_FN(TypedWriteInstruction, Type, getDstType(void), getDstType())
 
 #undef DECL_MEM_FN
 
@@ -1273,6 +1308,10 @@ DECL_MEM_FN(SampleInstruction, Type, getDstType(void), getDstType())
   // SAMPLE
   Instruction SAMPLE(Tuple dst, Tuple src, Type dstType, Type srcType) {
     return internal::SampleInstruction(dst, src, dstType, srcType).convert();
+  }
+
+  Instruction TYPED_WRITE(Tuple dst, Tuple src, Type dstType, Type srcType) {
+    return internal::TypedWriteInstruction(dst, src, dstType, srcType).convert();
   }
 
   std::ostream &operator<< (std::ostream &out, const Instruction &insn) {
