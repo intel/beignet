@@ -275,13 +275,29 @@ enum GenMessageTarget {
 #define GEN_BYTE_SCATTER_SIMD8    0
 #define GEN_BYTE_SCATTER_SIMD16   1
 
-/* Data port message type */
-#define GEN_UNTYPED_READ    5
-#define GEN_UNTYPED_WRITE  13
-#define GEN_BYTE_GATHER     4
-#define GEN_BYTE_SCATTER   12
-#define GEN_OBLOCK_READ     0
-#define GEN_OBLOCK_WRITE    8
+/* Data port message type*/
+#define GEN_OBLOCK_READ           0 //0000: OWord Block Read
+#define GEN_UNALIGNED_OBLOCK_READ 1 //0001: Unaligned OWord Block Read
+#define GEN_ODBLOCK_READ          2 //0010: OWord Dual Block Read
+#define GEN_DWORD_GATHER          3 //0011: DWord Scattered Read
+#define GEN_BYTE_GATHER           4 //0100: Byte Scattered Read
+#define GEN_UNTYPED_READ          5 //0101: Untyped Surface Read
+#define GEN_UNTYPED_ATOMIC_READ   6 //0110: Untyped Atomic Operation
+#define GEN_MEMORY_FENCE          7 //0111: Memory Fence
+#define GEN_OBLOCK_WRITE          8 //1000: OWord Block Write
+#define GEN_ODBLOCK_WRITE         10//1010: OWord Dual Block Write
+#define GEN_DWORD_SCATTER         11//1011: DWord Scattered Write
+#define GEN_BYTE_SCATTER          12//1100: Byte Scattered Write
+#define GEN_UNTYPED_WRITE         13//1101: Untyped Surface Write
+
+/* Data port render cache Message Type*/
+#define GEN_MBLOCK_READ           4  //0100: Media Block Read
+#define GEN_TYPED_READ            5  //0101: Typed Surface Read
+#define GEN_TYPED_ATOMIC          6  //0110: Typed Atomic Operation
+#define GEN_MEM_FENCE             7  //0111: Memory Fence
+#define GEN_MBLOCK_WRITE          10 //1010: Media Block Write
+#define GEN_RENDER_WRITE          12 //1100: Render Target Write
+#define GEN_TYPED_WRITE           13 //1101: Typed Surface Write
 
 /* For byte scatters and gathers, the element to write */
 #define GEN_BYTE_SCATTER_BYTE   0
@@ -735,6 +751,21 @@ struct GenInstruction
       uint32_t pad2:2;
       uint32_t end_of_thread:1;
     } gen7_oblock_rw;
+
+    /*! Data port typed read / write messages */
+    struct {
+      uint32_t bti:8;
+      uint32_t chan_mask:4;
+      uint32_t pad:1;
+      uint32_t slot:1;
+      uint32_t msg_type:4;
+      uint32_t pad2:1;
+      uint32_t header_present:1;
+      uint32_t response_length:5;
+      uint32_t msg_length:4;
+      uint32_t pad3:2;
+      uint32_t end_of_thread:1;
+    } gen7_typed_rw;
 
     struct {
       uint32_t src1_subreg_nr_high:1;
