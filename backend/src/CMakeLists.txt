@@ -30,7 +30,7 @@ if (GBE_USE_BLOB)
 else (GBE_USE_BLOB)
   set (GBE_SRC
     ocl_stdlib.h
-    ocl_stdlib_str.cpp
+    ocl_stdlib_str.cpp  # this file is auto-generated.
     sys/vector.hpp
     sys/hash_map.hpp
     sys/map.hpp
