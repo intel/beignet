@@ -35,7 +35,7 @@
 static void
 cl_program_release_sources(cl_program p)
 {
-  uint32_t i;
+  size_t i;
   if (p->sources == NULL) return;
   for (i = 0; i < p->src_n; ++i)
     if (p->sources[i]) cl_free(p->sources[i]);
@@ -231,7 +231,7 @@ cl_program_create_from_source(cl_context ctx,
 {
   cl_program program = NULL;
   cl_int err = CL_SUCCESS;
-  cl_int i;
+  cl_uint i;
 
   assert(ctx);
   INVALID_VALUE_IF (count == 0);
