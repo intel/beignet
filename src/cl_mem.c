@@ -41,13 +41,22 @@ cl_mem_allocate(cl_context ctx,
   cl_mem mem = NULL;
   cl_int err = CL_SUCCESS;
   size_t alignment = 64;
+  cl_ulong max_mem_size;
 
   assert(ctx);
   FATAL_IF (flags & CL_MEM_ALLOC_HOST_PTR,
             "CL_MEM_ALLOC_HOST_PTR unsupported"); /* XXX */
   FATAL_IF (flags & CL_MEM_USE_HOST_PTR,
             "CL_MEM_USE_HOST_PTR unsupported");   /* XXX */
-  if (UNLIKELY(sz == 0)) {
+
+  if ((err = cl_get_device_info(ctx->device,
+                                CL_DEVICE_MAX_MEM_ALLOC_SIZE,
+                                sizeof(max_mem_size),
+                                &max_mem_size,
+                                NULL)) != CL_SUCCESS) {
+    goto error;
+  }
+  if (UNLIKELY(sz == 0 || sz > max_mem_size)) {
     err = CL_INVALID_BUFFER_SIZE;
     goto error;
   }

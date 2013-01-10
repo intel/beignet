@@ -3,6 +3,7 @@ INCLUDE_DIRECTORIES(${CMAKE_CURRENT_SOURCE_DIR}
 
 link_directories (${LLVM_LIBRARY_DIR})
 ADD_LIBRARY(utests SHARED
+  cl_create_kernel.cpp
   utest_error.c
 compiler_shader_toy.cpp
   compiler_mandelbrot.cpp
