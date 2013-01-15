@@ -99,6 +99,22 @@ namespace ir {
       }
     };
 
+    /*! For instructions that use a tuple for destination */
+    template <typename T>
+    struct TupleDstPolicy {
+      INLINE uint32_t getDstNum(void) const {
+        return static_cast<const T*>(this)->dstNum;
+      }
+      INLINE Register getDst(const Function &fn, uint32_t ID) const {
+        GBE_ASSERTM(ID < static_cast<const T*>(this)->dstNum, "Out-of-bound source register");
+        return fn.getRegister(static_cast<const T*>(this)->dst, ID);
+      }
+      INLINE void setDst(Function &fn, uint32_t ID, Register reg) {
+        GBE_ASSERTM(ID < static_cast<const T*>(this)->dstNum, "Out-of-bound source register");
+        return fn.setRegister(static_cast<T*>(this)->dst, ID, reg);
+      }
+    };
+
     /*! All unary and binary arithmetic instructions */
     template <uint32_t srcNum> // 1 or 2
     class ALIGNED_INSTRUCTION NaryInstruction :
