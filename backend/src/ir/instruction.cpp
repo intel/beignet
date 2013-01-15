@@ -393,8 +393,8 @@ namespace ir {
 
     class ALIGNED_INSTRUCTION SampleInstruction : // TODO
       public BasePolicy,
-      public TupleSrcPolicy<SampleInstruction>
-
+      public TupleSrcPolicy<SampleInstruction>,
+      public TupleDstPolicy<SampleInstruction>
     {
     public:
       SampleInstruction(Tuple dstTuple, Tuple srcTuple, Type dstType, Type srcType) {
@@ -423,24 +423,17 @@ namespace ir {
       Type srcType;
       Type dstType;
 
-      INLINE Register getDst(const Function &fn, uint32_t ID) const {
-        GBE_ASSERTM(ID < 4, "Out-of-bound source register");
-        return fn.getRegister(dst, ID);
-      }
-      INLINE void setDst(Function &fn, uint32_t ID, Register reg) {
-        GBE_ASSERTM(ID < 4, "Out-of-bound source register");
-        fn.setRegister(dst, ID, reg);
-      }
-      INLINE uint32_t getDstNum(void) const { return 4; }
-      INLINE uint32_t getSrcNum(void) const { return 4; }
-
       INLINE Type getSrcType(void) const { return this->srcType; }
       INLINE Type getDstType(void) const { return this->dstType; }
+
+      static const uint32_t srcNum = 4;
+      static const uint32_t dstNum = 4;
     };
 
     class ALIGNED_INSTRUCTION TypedWriteInstruction : // TODO
       public BasePolicy,
-      public TupleSrcPolicy<TypedWriteInstruction>
+      public TupleSrcPolicy<TypedWriteInstruction>,
+      public TupleDstPolicy<TypedWriteInstruction>
     {
     public:
 
@@ -471,19 +464,11 @@ namespace ir {
       Type srcType;
       Type dstType;
 
-      INLINE Register getDst(const Function &fn, uint32_t ID) const {
-        GBE_ASSERTM(ID < 4, "Out-of-bound source register");
-        return fn.getRegister(dst, ID);
-      }
-      INLINE void setDst(Function &fn, uint32_t ID, Register reg) {
-        GBE_ASSERTM(ID < 4, "Out-of-bound source register");
-        fn.setRegister(dst, ID, reg);
-      }
-      INLINE uint32_t getDstNum(void) const { return 3; }
-      INLINE uint32_t getSrcNum(void) const { return 4; }
-
       INLINE Type getSrcType(void) const { return this->srcType; }
       INLINE Type getDstType(void) const { return this->dstType; }
+
+      static const uint32_t srcNum = 4;
+      static const uint32_t dstNum = 3;
     };
 
     class ALIGNED_INSTRUCTION LoadImmInstruction :
