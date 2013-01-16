@@ -64,6 +64,20 @@
     if (status != CL_SUCCESS) OCL_THROW_ERROR(FN, status); \
   } while (0)
 
+#define OCL_CREATE_IMAGE(IMAGE, FLAGS, FORMAT, W, H, PITCH, DATA) \
+  do { \
+    cl_int status; \
+    IMAGE = clCreateImage2D(ctx, FLAGS, FORMAT, W, H, PITCH, DATA, &status);\
+    if (status != CL_SUCCESS) OCL_THROW_ERROR(FN, status); \
+  } while (0)
+
+#define OCL_CREATE_SAMPLER(SAMPLER, ADDRESS_MODE, FILTER_MODE)          \
+  do { \
+    cl_int status; \
+    SAMPLER = clCreateSampler(ctx, 0, CL_ADDRESS_CLAMP, CL_FILTER_NEAREST, &status);\
+    if (status != CL_SUCCESS) OCL_THROW_ERROR(FN, status); \
+  } while(0)
+
 #define OCL_MAP_BUFFER(ID) \
   do { \
     cl_int status; \
