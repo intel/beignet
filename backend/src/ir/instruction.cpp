@@ -433,42 +433,38 @@ namespace ir {
     class ALIGNED_INSTRUCTION TypedWriteInstruction : // TODO
       public BasePolicy,
       public TupleSrcPolicy<TypedWriteInstruction>,
-      public TupleDstPolicy<TypedWriteInstruction>
+      public NDstPolicy<TypedWriteInstruction, 0>
     {
     public:
 
-      INLINE TypedWriteInstruction(Tuple dstTuple, Tuple srcTuple, Type dstType, Type srcType) {
+      INLINE TypedWriteInstruction(Tuple srcTuple, Type srcType, Type coordType) {
         this->opcode = OP_TYPED_WRITE;
-        this->dst = dstTuple;
         this->src = srcTuple;
-        this->dstType = dstType;
+        this->coordType = coordType;
         this->srcType = srcType;
       }
       INLINE bool wellFormed(const Function &fn, std::string &why) const;
       INLINE void out(std::ostream &out, const Function &fn) const {
         this->outOpcode(out);
-        out << "." << this->getDstType()
-            << "." << this->getSrcType()
-            << " %" << this->getDst(fn, 0)
-            << " %" << this->getDst(fn, 1)
-            << " %" << this->getDst(fn, 2)
-            << " %" << this->getDst(fn, 3)
-            << " %" << this->getSrc(fn, 0)
-            << " %" << this->getSrc(fn, 1)
-            << " %" << this->getSrc(fn, 2)
-            << " %" << this->getSrc(fn, 3);
+        out << "." << this->getSrcType()
+            << " surface id %" << this->getSrc(fn, 0)
+            << " coord u %" << this->getSrc(fn, 1)
+            << " coord v %" << this->getSrc(fn, 2)
+            << " %" << this->getSrc(fn, 3)
+            << " %" << this->getSrc(fn, 4)
+            << " %" << this->getSrc(fn, 5)
+            << " %" << this->getSrc(fn, 6);
       }
 
       Tuple src;
-      Tuple dst;
       Type srcType;
-      Type dstType;
+      Type coordType;
 
       INLINE Type getSrcType(void) const { return this->srcType; }
-      INLINE Type getDstType(void) const { return this->dstType; }
-
-      static const uint32_t srcNum = 4;
-      static const uint32_t dstNum = 3;
+      INLINE Type getCoordType(void) const { return this->coordType; }
+      // bti, u, v, 4 data elements
+      static const uint32_t srcNum = 7;
+      Register dst[0];               //!< No dest register
     };
 
     class ALIGNED_INSTRUCTION LoadImmInstruction :
@@ -1175,7 +1171,7 @@ DECL_MEM_FN(SyncInstruction, uint32_t, getParameters(void), getParameters())
 DECL_MEM_FN(SampleInstruction, Type, getSrcType(void), getSrcType())
 DECL_MEM_FN(SampleInstruction, Type, getDstType(void), getDstType())
 DECL_MEM_FN(TypedWriteInstruction, Type, getSrcType(void), getSrcType())
-DECL_MEM_FN(TypedWriteInstruction, Type, getDstType(void), getDstType())
+DECL_MEM_FN(TypedWriteInstruction, Type, getCoordType(void), getCoordType())
 
 #undef DECL_MEM_FN
 
@@ -1311,8 +1307,8 @@ DECL_MEM_FN(TypedWriteInstruction, Type, getDstType(void), getDstType())
     return internal::SampleInstruction(dst, src, dstType, srcType).convert();
   }
 
-  Instruction TYPED_WRITE(Tuple dst, Tuple src, Type dstType, Type srcType) {
-    return internal::TypedWriteInstruction(dst, src, dstType, srcType).convert();
+  Instruction TYPED_WRITE(Tuple src, Type srcType, Type coordType) {
+    return internal::TypedWriteInstruction(src, srcType, coordType).convert();
   }
 
   std::ostream &operator<< (std::ostream &out, const Instruction &insn) {

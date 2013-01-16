@@ -300,7 +300,7 @@ namespace ir {
     /*! Return true if the given instruction is an instance of this class */
     static bool isClassOf(const Instruction &insn);
     Type getSrcType(void) const;
-    Type getDstType(void) const;
+    Type getCoordType(void) const;
   };
 
   /*! Load texels from a texture */
@@ -514,7 +514,7 @@ namespace ir {
   /*! sync.params... (see Sync instruction) */
   Instruction SYNC(uint32_t parameters);
   /*! typed write */
-  Instruction TYPED_WRITE(Tuple dst, Tuple src, Type dstType, Type srcType);
+  Instruction TYPED_WRITE(Tuple src, Type srcType, Type coordType);
   /*! sample textures */
   Instruction SAMPLE(Tuple dst, Tuple src, Type dstType, Type srcType);
   /*! label labelIndex */

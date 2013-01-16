@@ -1884,45 +1884,43 @@ namespace gbe
             GBE_ASSERT(AI != AE); const ir::Register ucoord = this->getRegister(*AI); ++AI;
             GBE_ASSERT(AI != AE); const ir::Register vcoord = this->getRegister(*AI); ++AI;
             GBE_ASSERT(AI != AE);
-            vector<ir::Register> dstTupleData, srcTupleData;
+            vector<ir::Register> srcTupleData;
+
+            srcTupleData.push_back(surface_id);
+            srcTupleData.push_back(ucoord);
+            srcTupleData.push_back(vcoord);
 
             const uint32_t elemNum = 4;
             for (uint32_t elemID = 0; elemID < elemNum; ++elemID) {
               const ir::Register reg = this->getRegister(*AI, elemID);
               srcTupleData.push_back(reg);
             }
+            const ir::Tuple srcTuple = ctx.arrayTuple(&srcTupleData[0], 7);
 
-            dstTupleData.push_back(surface_id);
-            dstTupleData.push_back(ucoord);
-            dstTupleData.push_back(vcoord);
-
-            const ir::Tuple dstTuple = ctx.arrayTuple(&dstTupleData[0], 4);
-            const ir::Tuple srcTuple = ctx.arrayTuple(&srcTupleData[0], 4);
-
-            ir::Type srcType, dstType;
+            ir::Type srcType, coordType;
 
             switch(it->second) {
               case GEN_OCL_WRITE_IMAGE0:
               case GEN_OCL_WRITE_IMAGE2:
-                srcType = dstType = ir::TYPE_U32;
+                srcType = coordType = ir::TYPE_U32;
                 break;
               case GEN_OCL_WRITE_IMAGE1:
               case GEN_OCL_WRITE_IMAGE3:
-                dstType = ir::TYPE_FLOAT;
+                coordType = ir::TYPE_FLOAT;
                 srcType = ir::TYPE_U32;
                 break;
               case GEN_OCL_WRITE_IMAGE4:
                 srcType = ir::TYPE_FLOAT;
-                dstType = ir::TYPE_U32;
+                coordType = ir::TYPE_U32;
                 break;
               case GEN_OCL_WRITE_IMAGE5:
-                srcType = dstType = ir::TYPE_FLOAT;
+                srcType = coordType = ir::TYPE_FLOAT;
                 break;
               default:
                 GBE_ASSERT(0); // never been here.
             }
 
-            ctx.TYPED_WRITE(dstTuple, srcTuple, dstType, srcType);
+            ctx.TYPED_WRITE(srcTuple, srcType, coordType);
             break;
           }
           default: break;

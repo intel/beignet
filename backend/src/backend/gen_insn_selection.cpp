@@ -466,8 +466,7 @@ namespace gbe
     /*! Encode sample instructions */
     void SAMPLE(GenRegister *dst, GenRegister *src, GenRegister *msgPayloads);
     /*! Encode typed write instructions */
-    void TYPED_WRITE(GenRegister *dst, uint32_t dstNum, GenRegister *src,
-                     uint32_t srcNum, GenRegister *msgs, uint32_t msgNum);
+    void TYPED_WRITE(GenRegister *src, uint32_t srcNum, GenRegister *msgs, uint32_t msgNum);
     /*! Use custom allocators */
     GBE_CLASS(Opaque);
     friend class SelectionBlock;
@@ -992,17 +991,15 @@ namespace gbe
     this->opaque = GBE_NEW(Selection::Opaque, ctx);
   }
 
-  void Selection::Opaque::TYPED_WRITE(GenRegister *dst, uint32_t dstNum, GenRegister *src,
-                              uint32_t srcNum, GenRegister *msgs, uint32_t msgNum) {
+  void Selection::Opaque::TYPED_WRITE(GenRegister *src, uint32_t srcNum,
+                              GenRegister *msgs, uint32_t msgNum) {
     uint32_t elemID = 0;
     uint32_t i;
-    SelectionInstruction *insn = this->appendInsn(SEL_OP_TYPED_WRITE, 0, msgNum + dstNum + srcNum);
+    SelectionInstruction *insn = this->appendInsn(SEL_OP_TYPED_WRITE, 0, msgNum + srcNum);
     SelectionVector *msgVector = this->appendVector();;
 
     for( i = 0; i < msgNum; ++i, ++elemID)
       insn->src(elemID) = msgs[i];
-    for (i = 0; i < dstNum; ++i, ++elemID)
-      insn->src(elemID) = dst[i];
     for (i = 0; i < srcNum; ++i, ++elemID)
       insn->src(elemID) = src[i];
 
@@ -1939,19 +1936,25 @@ namespace gbe
     {
       using namespace ir;
       const uint32_t simdWidth = sel.ctx.getSimdWidth();
+      uint32_t valueID = 0;
       GenRegister msgs[9]; // (header + U + V + R + LOD + 4)
-      GenRegister dst[4], src[4];
+      GenRegister src[7];
       uint32_t msgNum = (8 / (simdWidth / 8)) + 1;
 
       for(uint32_t i = 0; i < msgNum; i++)
         msgs[i] = sel.selReg(sel.reg(FAMILY_DWORD), TYPE_U32);
 
-      for (uint32_t valueID = 0; valueID < insn.getDstNum(); ++valueID)
-        dst[valueID] = sel.selReg(insn.getDst(valueID), insn.getDstType());
-      for (uint32_t valueID = 0; valueID < insn.getSrcNum(); ++valueID)
+      // bti always uses TYPE_U32.
+      src[valueID] = sel.selReg(insn.getSrc(valueID), TYPE_U32);
+      valueID++;
+
+      for (; valueID < 3; ++valueID)
+        src[valueID] = sel.selReg(insn.getSrc(valueID), insn.getCoordType());
+
+      for (; valueID < insn.getSrcNum(); ++valueID)
         src[valueID] = sel.selReg(insn.getSrc(valueID), insn.getSrcType());
 
-      sel.TYPED_WRITE(dst, insn.getDstNum(), src, insn.getSrcNum(), msgs, msgNum);
+      sel.TYPED_WRITE(src, insn.getSrcNum(), msgs, msgNum);
       return true;
     }
     DECL_CTOR(TypedWriteInstruction, 1, 1);
