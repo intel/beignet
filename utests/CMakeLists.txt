@@ -22,6 +22,7 @@ compiler_shader_toy.cpp
   compiler_copy_image.cpp
   compiler_copy_buffer_row.cpp
   compiler_fill_image.cpp
+  compiler_fill_image0.cpp
   compiler_function_argument0.cpp
   compiler_function_argument1.cpp
   compiler_function_argument.cpp
