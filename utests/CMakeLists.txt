@@ -19,6 +19,7 @@ compiler_shader_toy.cpp
   compiler_array3.cpp
   compiler_byte_scatter.cpp
   compiler_copy_buffer.cpp
+  compiler_copy_image.cpp
   compiler_copy_buffer_row.cpp
   compiler_function_argument0.cpp
   compiler_function_argument1.cpp
