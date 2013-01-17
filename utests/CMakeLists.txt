@@ -5,7 +5,7 @@ link_directories (${LLVM_LIBRARY_DIR})
 ADD_LIBRARY(utests SHARED
   cl_create_kernel.cpp
   utest_error.c
-compiler_shader_toy.cpp
+  compiler_shader_toy.cpp
   compiler_mandelbrot.cpp
   compiler_mandelbrot_alternate.cpp
   compiler_box_blur_float.cpp
@@ -31,6 +31,7 @@ compiler_shader_toy.cpp
   compiler_lower_return1.cpp
   compiler_lower_return2.cpp
   compiler_multiple_kernels.cpp
+  compiler_saturate.cpp
   compiler_short_scatter.cpp
   compiler_sub_bytes.cpp
   compiler_sub_shorts.cpp
