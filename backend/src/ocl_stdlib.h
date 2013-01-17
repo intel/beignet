@@ -202,6 +202,23 @@ DEF;
 #undef DECL
 #undef DEF
 
+#define SDEF(TYPE)                                                              \
+INLINE_OVERLOADABLE TYPE ocl_sadd_sat(TYPE x, TYPE y);                          \
+INLINE_OVERLOADABLE TYPE add_sat(TYPE x, TYPE y) { return ocl_sadd_sat(x, y); }
+SDEF(char);
+SDEF(short);
+SDEF(int);
+SDEF(long);
+#undef SDEF
+#define UDEF(TYPE)                                                              \
+INLINE_OVERLOADABLE TYPE ocl_uadd_sat(TYPE x, TYPE y);                          \
+INLINE_OVERLOADABLE TYPE add_sat(TYPE x, TYPE y) { return ocl_uadd_sat(x, y); }
+UDEF(uchar);
+UDEF(ushort);
+UDEF(uint);
+UDEF(ulong);
+#undef UDEF
+
 #define DEC2(name) INLINE_OVERLOADABLE int2 name(float2 x) { return (name(x.s0), name(x.s1)); }
 #define DEC3(name) INLINE_OVERLOADABLE int3 name(float3 x) { return (name(x.s0), name(x.s1), name(x.s2)); }
 #define DEC4(name) INLINE_OVERLOADABLE int4 name(float4 x) { return (name(x.s0), name(x.s1), name(x.s2), name(x.s3)); }

@@ -161,6 +161,7 @@ namespace ir {
       INLINE bool commutes(void) const {
         switch (opcode) {
           case OP_ADD:
+          case OP_ADDSAT:
           case OP_XOR:
           case OP_OR:
           case OP_AND:
@@ -1217,6 +1218,7 @@ DECL_MEM_FN(TypedWriteInstruction, Type, getCoordType(void), getCoordType())
   DECL_EMIT_FUNCTION(POW)
   DECL_EMIT_FUNCTION(MUL)
   DECL_EMIT_FUNCTION(ADD)
+  DECL_EMIT_FUNCTION(ADDSAT)
   DECL_EMIT_FUNCTION(SUB)
   DECL_EMIT_FUNCTION(DIV)
   DECL_EMIT_FUNCTION(REM)

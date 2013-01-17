@@ -184,6 +184,24 @@ namespace gbe
     return ir::TYPE_S64;
   }
 
+  /*! LLVM IR Type to Gen IR unsigned type translation */
+  static ir::Type getUnsignedType(const ir::Context &ctx, const Type *type)
+  {
+    GBE_ASSERT(type->isIntegerTy() == true);
+    if (type == Type::getInt1Ty(type->getContext()))
+      return ir::TYPE_BOOL;
+    if (type == Type::getInt8Ty(type->getContext()))
+      return ir::TYPE_U8;
+    if (type == Type::getInt16Ty(type->getContext()))
+      return ir::TYPE_U16;
+    if (type == Type::getInt32Ty(type->getContext()))
+      return ir::TYPE_U32;
+    if (type == Type::getInt64Ty(type->getContext()))
+      return ir::TYPE_U64;
+    GBE_ASSERT(0);
+    return ir::TYPE_U64;
+  }
+
   /*! Type to register family translation */
   static ir::RegisterFamily getFamily(const ir::Context &ctx, const Type *type)
   {
@@ -1719,6 +1737,16 @@ namespace gbe
         this->newRegister(&I);
         break;
       }
+      case GEN_OCL_SADD_SAT_CHAR:
+      case GEN_OCL_SADD_SAT_SHORT:
+      case GEN_OCL_SADD_SAT_INT:
+      case GEN_OCL_SADD_SAT_LONG:
+      case GEN_OCL_UADD_SAT_CHAR:
+      case GEN_OCL_UADD_SAT_SHORT:
+      case GEN_OCL_UADD_SAT_INT:
+      case GEN_OCL_UADD_SAT_LONG:
+        this->newRegister(&I);
+        break;
       default:
         GBE_ASSERTM(false, "Function call are not supported yet");
     };
@@ -1921,6 +1949,28 @@ namespace gbe
             }
 
             ctx.TYPED_WRITE(srcTuple, srcType, coordType);
+            break;
+          }
+          case GEN_OCL_SADD_SAT_CHAR:
+          case GEN_OCL_SADD_SAT_SHORT:
+          case GEN_OCL_SADD_SAT_INT:
+          case GEN_OCL_SADD_SAT_LONG:
+          {
+            GBE_ASSERT(AI != AE); const ir::Register src0 = this->getRegister(*AI); ++AI;
+            GBE_ASSERT(AI != AE); const ir::Register src1 = this->getRegister(*AI); ++AI;
+            const ir::Register dst = this->getRegister(&I);
+            ctx.ADDSAT(getType(ctx, I.getType()), dst, src0, src1);
+            break;
+          }
+          case GEN_OCL_UADD_SAT_CHAR:
+          case GEN_OCL_UADD_SAT_SHORT:
+          case GEN_OCL_UADD_SAT_INT:
+          case GEN_OCL_UADD_SAT_LONG:
+          {
+            GBE_ASSERT(AI != AE); const ir::Register src0 = this->getRegister(*AI); ++AI;
+            GBE_ASSERT(AI != AE); const ir::Register src1 = this->getRegister(*AI); ++AI;
+            const ir::Register dst = this->getRegister(&I);
+            ctx.ADDSAT(getUnsignedType(ctx, I.getType()), dst, src0, src1);
             break;
           }
           default: break;

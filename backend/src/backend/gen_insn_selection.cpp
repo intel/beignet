@@ -1203,6 +1203,12 @@ namespace gbe
       // Output the binary instruction
       switch (opcode) {
         case OP_ADD: sel.ADD(dst, src0, src1); break;
+        case OP_ADDSAT:
+          sel.push();
+            sel.curr.saturate = GEN_MATH_SATURATE_SATURATE;
+            sel.ADD(dst, src0, src1);
+          sel.pop();
+          break;
         case OP_XOR: sel.XOR(dst, src0, src1); break;
         case OP_OR:  sel.OR(dst, src0,  src1); break;
         case OP_AND: sel.AND(dst, src0, src1); break;

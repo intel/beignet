@@ -461,6 +461,8 @@ namespace ir {
   Instruction MUL(Type type, Register dst, Register src0, Register src1);
   /*! add.type dst src0 src1 */
   Instruction ADD(Type type, Register dst, Register src0, Register src1);
+  /*! addsat.type dst src0 src1 */
+  Instruction ADDSAT(Type type, Register dst, Register src0, Register src1);
   /*! sub.type dst src0 src1 */
   Instruction SUB(Type type, Register dst, Register src0, Register src1);
   /*! div.type dst src0 src1 */

@@ -55,3 +55,13 @@ DECL_LLVM_GEN_FUNCTION(WRITE_IMAGE4, _Z22__gen_ocl_write_imagefjiiDv4_f)
 DECL_LLVM_GEN_FUNCTION(WRITE_IMAGE5, _Z22__gen_ocl_write_imagefjffDv4_f)
 DECL_LLVM_GEN_FUNCTION(WRITE_IMAGE2, _Z23__gen_ocl_write_imageuijiiDv4_j)
 DECL_LLVM_GEN_FUNCTION(WRITE_IMAGE3, _Z23__gen_ocl_write_imageuijffDv4_j)
+
+// saturation related functions.
+DECL_LLVM_GEN_FUNCTION(SADD_SAT_CHAR, _Z12ocl_sadd_satcc)
+DECL_LLVM_GEN_FUNCTION(SADD_SAT_SHORT, _Z12ocl_sadd_satss)
+DECL_LLVM_GEN_FUNCTION(SADD_SAT_INT, _Z12ocl_sadd_satii)
+DECL_LLVM_GEN_FUNCTION(SADD_SAT_LONG, _Z12ocl_sadd_satll)
+DECL_LLVM_GEN_FUNCTION(UADD_SAT_CHAR, _Z12ocl_uadd_sathh)
+DECL_LLVM_GEN_FUNCTION(UADD_SAT_SHORT, _Z12ocl_uadd_sattt)
+DECL_LLVM_GEN_FUNCTION(UADD_SAT_INT, _Z12ocl_uadd_satjj)
+DECL_LLVM_GEN_FUNCTION(UADD_SAT_LONG, _Z12ocl_uadd_satmm)
