@@ -118,6 +118,7 @@ namespace gbe
       this->inversePredicate = 0;
       this->physicalFlag = 1;
       this->flagIndex = 0;
+      this->saturate = GEN_MATH_SATURATE_NONE;
     }
     uint32_t physicalFlag:1; //!< Physical or virtual flag register
     uint32_t flag:1;         //!< Only if physical flag
@@ -129,9 +130,8 @@ namespace gbe
     uint32_t noMask:1;
     uint32_t predicate:4;
     uint32_t inversePredicate:1;
+    uint32_t saturate:1;
   };
-
-  static_assert(sizeof(GenInstructionState) == sizeof(uint32_t), "Invalid state size");
 
   /*! This is a book-keeping structure used to encode both virtual and physical
    *  registers

@@ -209,6 +209,7 @@ namespace gbe
       insn->header.predicate_control = this->curr.predicate;
       insn->header.predicate_inverse = this->curr.inversePredicate;
     }
+    insn->header.saturate = this->curr.saturate;
   }
 
   void GenEncoder::setDst(GenInstruction *insn, GenRegister dest) {
