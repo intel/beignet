@@ -325,14 +325,16 @@ namespace gbe
 
     for( uint32_t quarter = 0; quarter < quarterNum; quarter++)
     {
-#define QUARTER_MOV(dst_nr, src) p->MOV(GenRegister::ud8grf(dst_nr, 0), \
+#define QUARTER_MOV0(dst_nr, src) p->MOV(GenRegister::ud8grf(dst_nr, 0), \
                                         GenRegister::retype(GenRegister::ud8grf(src.nr + quarter, 0), src.type))
-      QUARTER_MOV(nr + 1, ucoord);
-      QUARTER_MOV(nr + 2, vcoord);
-      QUARTER_MOV(nr + 5, R);
-      QUARTER_MOV(nr + 6, G);
-      QUARTER_MOV(nr + 7, B);
-      QUARTER_MOV(nr + 8, A);
+#define QUARTER_MOV1(dst_nr, src) p->MOV(GenRegister::retype(GenRegister::ud8grf(dst_nr, 0), src.type), \
+                                        GenRegister::retype(GenRegister::ud8grf(src.nr + quarter, 0), src.type))
+      QUARTER_MOV0(nr + 1, ucoord);
+      QUARTER_MOV0(nr + 2, vcoord);
+      QUARTER_MOV1(nr + 5, R);
+      QUARTER_MOV1(nr + 6, G);
+      QUARTER_MOV1(nr + 7, B);
+      QUARTER_MOV1(nr + 8, A);
 #undef QUARTER_MOV
       p->TYPED_WRITE(header, a0_0);
     }
