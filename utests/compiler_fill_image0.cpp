@@ -5,7 +5,6 @@ static void compiler_fill_image0(void)
   const size_t w = 512;
   const size_t h = 512;
   cl_image_format format;
-  cl_sampler sampler;
 
   format.image_channel_order = CL_RGBA;
   format.image_channel_data_type = CL_UNSIGNED_INT8;

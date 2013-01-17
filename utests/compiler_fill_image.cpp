@@ -5,7 +5,6 @@ static void compiler_fill_image(void)
   const size_t w = 512;
   const size_t h = 512;
   cl_image_format format;
-  cl_sampler sampler;
   uint32_t color = 0x12345678;
 
   format.image_channel_order = CL_RGBA;
