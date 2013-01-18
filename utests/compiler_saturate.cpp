@@ -1,5 +1,7 @@
 #include "utest_helper.hpp"
 
+namespace {
+
 constexpr int n = 16;
 
 // declaration only, we should create each template specification for each type.
@@ -91,6 +93,8 @@ void test(const char *kernel_name)
     OCL_ASSERT(((T*)buf_data[0])[i] == get_data<T>(i, 2));
   }
   OCL_UNMAP_BUFFER(0);
+}
+
 }
 
 static void compiler_saturate(void)
