@@ -1213,6 +1213,12 @@ namespace gbe
         case OP_OR:  sel.OR(dst, src0,  src1); break;
         case OP_AND: sel.AND(dst, src0, src1); break;
         case OP_SUB: sel.ADD(dst, src0, GenRegister::negate(src1)); break;
+        case OP_SUBSAT:
+          sel.push();
+            sel.curr.saturate = GEN_MATH_SATURATE_SATURATE;
+            sel.ADD(dst, src0, GenRegister::negate(src1));
+          sel.pop();
+          break;
         case OP_SHL: sel.SHL(dst, src0, src1); break;
         case OP_SHR: sel.SHR(dst, src0, src1); break;
         case OP_ASR: sel.ASR(dst, src0, src1); break;

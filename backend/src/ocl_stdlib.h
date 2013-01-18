@@ -204,7 +204,9 @@ DEF;
 
 #define SDEF(TYPE)                                                              \
 INLINE_OVERLOADABLE TYPE ocl_sadd_sat(TYPE x, TYPE y);                          \
-INLINE_OVERLOADABLE TYPE add_sat(TYPE x, TYPE y) { return ocl_sadd_sat(x, y); }
+INLINE_OVERLOADABLE TYPE ocl_ssub_sat(TYPE x, TYPE y);                          \
+INLINE_OVERLOADABLE TYPE add_sat(TYPE x, TYPE y) { return ocl_sadd_sat(x, y); } \
+INLINE_OVERLOADABLE TYPE sub_sat(TYPE x, TYPE y) { return ocl_ssub_sat(x, y); }
 SDEF(char);
 SDEF(short);
 SDEF(int);
@@ -212,7 +214,9 @@ SDEF(long);
 #undef SDEF
 #define UDEF(TYPE)                                                              \
 INLINE_OVERLOADABLE TYPE ocl_uadd_sat(TYPE x, TYPE y);                          \
-INLINE_OVERLOADABLE TYPE add_sat(TYPE x, TYPE y) { return ocl_uadd_sat(x, y); }
+INLINE_OVERLOADABLE TYPE ocl_usub_sat(TYPE x, TYPE y);                          \
+INLINE_OVERLOADABLE TYPE add_sat(TYPE x, TYPE y) { return ocl_uadd_sat(x, y); } \
+INLINE_OVERLOADABLE TYPE sub_sat(TYPE x, TYPE y) { return ocl_usub_sat(x, y); }
 UDEF(uchar);
 UDEF(ushort);
 UDEF(uint);

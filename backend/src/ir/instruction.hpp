@@ -465,6 +465,8 @@ namespace ir {
   Instruction ADDSAT(Type type, Register dst, Register src0, Register src1);
   /*! sub.type dst src0 src1 */
   Instruction SUB(Type type, Register dst, Register src0, Register src1);
+  /*! subsat.type dst src0 src1 */
+  Instruction SUBSAT(Type type, Register dst, Register src0, Register src1);
   /*! div.type dst src0 src1 */
   Instruction DIV(Type type, Register dst, Register src0, Register src1);
   /*! rem.type dst src0 src1 */
