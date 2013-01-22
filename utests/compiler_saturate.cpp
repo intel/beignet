@@ -97,16 +97,18 @@ void test(const char *kernel_name)
 
 }
 
-static void compiler_saturate(void)
-{
-  test<int8_t>("test_char");
-  test<uint8_t>("test_uchar");
-  test<int16_t>("test_short");
-  test<uint16_t>("test_ushort");
-  test<int32_t>("test_int");
-  test<uint32_t>("test_uint");
-//  test<int64_t>("test_long");
-//  test<uint64_t>("test_ulong");
-}
+#define compiler_saturate(type, kernel) \
+static void compiler_saturate_ ##type(void)\
+{\
+  test<type>(# kernel);\
+}\
+MAKE_UTEST_FROM_FUNCTION(compiler_saturate_ ## type);
 
-MAKE_UTEST_FROM_FUNCTION(compiler_saturate);
+compiler_saturate(int8_t, test_char)
+compiler_saturate(uint8_t, test_uchar)
+compiler_saturate(int16_t, test_short)
+compiler_saturate(uint16_t, test_ushort)
+compiler_saturate(int32_t, test_int)
+compiler_saturate(uint32_t, test_uint)
+//compiler_saturate(int64_t, test_long)
+//compiler_saturate(uint64_t, test_ulong)
