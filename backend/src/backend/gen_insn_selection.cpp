@@ -1164,6 +1164,16 @@ namespace gbe
         markAllChildren(dag);
         return true;
       }
+      if (opcode == OP_REM) {
+        GenRegister src0 = sel.selReg(insn.getSrc(0), type);
+        GenRegister src1 = sel.selReg(insn.getSrc(1), type);
+        if (type == TYPE_U32 || type == TYPE_S32) {
+          sel.MATH(dst, GEN_MATH_FUNCTION_INT_DIV_REMAINDER, src0, src1);
+          markAllChildren(dag);
+        } else
+          NOT_IMPLEMENTED;
+        return true;
+      }
 
       sel.push();
 

@@ -766,6 +766,24 @@ namespace gbe
      this->setDst(insn, dst);
      this->setSrc0(insn, src0);
      this->setSrc1(insn, src1);
+
+     if (function == GEN_MATH_FUNCTION_INT_DIV_QUOTIENT ||
+         function == GEN_MATH_FUNCTION_INT_DIV_REMAINDER) {
+        assert(insn->header.execution_size == GEN_WIDTH_16);
+        insn->header.execution_size = GEN_WIDTH_8;
+
+        GenInstruction *insn2 = this->next(GEN_OPCODE_MATH);
+        GenRegister new_dest, new_src0, new_src1;
+        new_dest = GenRegister::QnPhysical(dst, 1);
+        new_src0 = GenRegister::QnPhysical(src0, 1);
+        new_src1 = GenRegister::QnPhysical(src1, 1);
+        insn2->header.destreg_or_condmod = function;
+        this->setHeader(insn2);
+        insn2->header.execution_size = GEN_WIDTH_8;
+        this->setDst(insn2, new_dest);
+        this->setSrc0(insn2, new_src0);
+        this->setSrc1(insn2, new_src1);
+     }
   }
 
   void GenEncoder::MATH(GenRegister dst, uint32_t function, GenRegister src) {
