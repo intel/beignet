@@ -225,17 +225,23 @@ namespace gbe
   /*! Get number of element to process dealing either with a vector or a scalar
    *  value
    */
-  static ir::Type getVectorInfo(const ir::Context &ctx, Type *llvmType, Value *value, uint32_t &elemNum)
+  static ir::Type getVectorInfo(const ir::Context &ctx, Type *llvmType, Value *value, uint32_t &elemNum, bool useUnsigned = false)
   {
     ir::Type type;
     if (llvmType->isVectorTy() == true) {
       VectorType *vectorType = cast<VectorType>(llvmType);
       Type *elementType = vectorType->getElementType();
       elemNum = vectorType->getNumElements();
-      type = getType(ctx, elementType);
+      if (useUnsigned)
+        type = getUnsignedType(ctx, elementType);
+      else
+        type = getType(ctx, elementType);
     } else {
       elemNum = 1;
-      type = getType(ctx, llvmType);
+      if (useUnsigned)
+        type = getUnsignedType(ctx, llvmType);
+      else
+        type = getType(ctx, llvmType);
     }
     return type;
   }
@@ -1351,7 +1357,12 @@ namespace gbe
         Type *llvmDstType = I.getType();
         Type *llvmSrcType = I.getOperand(0)->getType();
         const ir::Type dstType = getVectorInfo(ctx, llvmDstType, &I, elemNum);
-        const ir::Type srcType = getVectorInfo(ctx, llvmSrcType, &I, elemNum);
+        ir::Type srcType;
+        if (I.getOpcode() == Instruction::ZExt) {
+          srcType = getVectorInfo(ctx, llvmSrcType, &I, elemNum, true);
+        } else {
+          srcType = getVectorInfo(ctx, llvmSrcType, &I, elemNum);
+        }
 
         // We use a select (0,1) not a convert when the destination is a boolean
         if (srcType == ir::TYPE_BOOL) {
