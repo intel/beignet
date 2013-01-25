@@ -21,6 +21,7 @@ ADD_LIBRARY(utests SHARED
   compiler_copy_buffer.cpp
   compiler_copy_image.cpp
   compiler_copy_buffer_row.cpp
+  compiler_fabs.cpp
   compiler_fill_image.cpp
   compiler_fill_image0.cpp
   compiler_function_argument0.cpp
