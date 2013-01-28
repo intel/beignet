@@ -69,11 +69,11 @@ struct intel_gpgpu
   uint32_t binded_offset[max_buf_n];    /* their offsets in the constant buffer */
   uint32_t binded_n;                    /* number of buffers binded */
 
-  unsigned int img_bitmap;              /* image usage bitmap. */
+  unsigned long img_bitmap;              /* image usage bitmap. */
   unsigned int img_index_base;          /* base index for image surface.*/
   drm_intel_bo *binded_img[max_img_n];  /* all images binded for the call */
 
-  unsigned int sampler_bitmap;          /* sampler usage bitmap. */
+  unsigned long sampler_bitmap;          /* sampler usage bitmap. */
 
   struct { drm_intel_bo *bo; } stack_b;
   struct { drm_intel_bo *bo; } idrt_b;
@@ -451,31 +451,14 @@ intel_gpgpu_map_address_space(intel_gpgpu_t *gpgpu)
   heap->binding_table[1] = sizeof(gen7_surface_state_t) + offsetof(surface_heap_t, surface);
 }
 
-#ifdef __i386__
 static inline unsigned long
 __fls(unsigned long x)
 {
-        asm("bsr %1,%0"
+        asm("bsf %1,%0"
             : "=r" (x)
             : "rm" (x));
-        return 31 - x;
+        return x;
 }
-#else
-static inline unsigned long
-__fls(unsigned long x)
-{
-   int n;
-
-   if (x == 0) return(0);
-   n = 0;
-   if (x <= 0x0000FFFF) {n = n +16; x = x <<16;}
-   if (x <= 0x00FFFFFF) {n = n + 8; x = x << 8;}
-   if (x <= 0x0FFFFFFF) {n = n + 4; x = x << 4;}
-   if (x <= 0x3FFFFFFF) {n = n + 2; x = x << 2;}
-   if (x <= 0x7FFFFFFF) {n = n + 1;}
-   return 31 - n;
-}
-#endif
 
 static int
 intel_gpgpu_get_free_img_index(intel_gpgpu_t *gpgpu)
@@ -483,7 +466,7 @@ intel_gpgpu_get_free_img_index(intel_gpgpu_t *gpgpu)
   int slot;
   assert(~gpgpu->img_bitmap != 0);
   slot = __fls(~gpgpu->img_bitmap);
-  gpgpu->img_bitmap |= (1 << (31 - slot));
+  gpgpu->img_bitmap |= (1 << slot);
   return slot + gpgpu->img_index_base;
 }
 
@@ -493,8 +476,8 @@ intel_gpgpu_get_free_sampler_index(intel_gpgpu_t *gpgpu)
   int slot;
   assert(~gpgpu->sampler_bitmap != 0);
   slot = __fls(~gpgpu->sampler_bitmap);
-  gpgpu->sampler_bitmap |= (1 << (31 - slot));
-  return slot - max_sampler_n;
+  gpgpu->sampler_bitmap |= (1 << slot);
+  return slot;
 }
 
 static int
