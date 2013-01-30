@@ -601,7 +601,7 @@ intel_gpgpu_build_idrt(intel_gpgpu_t *gpgpu, cl_gpgpu_kernel *kernel)
       slm_sz = 16*KB;
     else if (slm_sz <= 32*KB)
       slm_sz = 32*KB;
-    else if (slm_sz <= 64*KB)
+    else
       slm_sz = 64*KB;
     slm_sz = slm_sz >> 12;
     desc->desc5.slm_sz = slm_sz;

@@ -95,7 +95,7 @@ typedef struct cl_gpgpu_kernel {
   int32_t barrierID;       /* barrierID for _this_ kernel */
   uint32_t use_slm:1;      /* For gen7 (automatic barrier management) */
   uint32_t thread_n:15;    /* For gen7 (automatic barrier management) */
-  uint32_t slm_sz:16;      /* For gen7 (automatic SLM allocation) */
+  uint32_t slm_sz;         /* For gen7 (automatic SLM allocation) */
 } cl_gpgpu_kernel;
 
 /* Create a new gpgpu state */
