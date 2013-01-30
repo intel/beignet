@@ -223,6 +223,11 @@ UDEF(uint);
 UDEF(ulong);
 #undef UDEF
 
+
+uchar INLINE_OVERLOADABLE convert_uchar_sat(float x) {
+    return add_sat((uchar)x, (uchar)0);
+}
+
 #define DEC2(name) INLINE_OVERLOADABLE int2 name(float2 x) { return (name(x.s0), name(x.s1)); }
 #define DEC3(name) INLINE_OVERLOADABLE int3 name(float3 x) { return (name(x.s0), name(x.s1), name(x.s2)); }
 #define DEC4(name) INLINE_OVERLOADABLE int4 name(float4 x) { return (name(x.s0), name(x.s1), name(x.s2), name(x.s3)); }

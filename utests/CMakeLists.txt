@@ -18,6 +18,7 @@ ADD_LIBRARY(utests SHARED
   compiler_array2.cpp
   compiler_array3.cpp
   compiler_byte_scatter.cpp
+  compiler_convert_uchar_sat.cpp
   compiler_copy_buffer.cpp
   compiler_copy_image.cpp
   compiler_copy_buffer_row.cpp
