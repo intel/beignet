@@ -12,6 +12,7 @@ ADD_LIBRARY(utests SHARED
   compiler_box_blur.cpp
   compiler_insert_to_constant.cpp
   compiler_argument_structure.cpp
+  compiler_arith_shift_right.cpp
   compiler_array0.cpp
   compiler_array.cpp
   compiler_array1.cpp
