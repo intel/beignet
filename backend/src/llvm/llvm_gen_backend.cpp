@@ -1163,7 +1163,7 @@ namespace gbe
         case Instruction::Or:   ctx.OR(type, dst, src0, src1); break;
         case Instruction::Xor:  ctx.XOR(type, dst, src0, src1); break;
         case Instruction::Shl:  ctx.SHL(type, dst, src0, src1); break;
-        case Instruction::LShr: ctx.SHR(type, dst, src0, src1); break;
+        case Instruction::LShr: ctx.SHR(getUnsignedType(ctx, I.getType()), dst, src0, src1); break;
         case Instruction::AShr: ctx.ASR(type, dst, src0, src1); break;
         default: NOT_SUPPORTED;
       }

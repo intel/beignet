@@ -37,6 +37,7 @@ ADD_LIBRARY(utests SHARED
   compiler_multiple_kernels.cpp
   compiler_saturate.cpp
   compiler_saturate_sub.cpp
+  compiler_shift_right.cpp
   compiler_short_scatter.cpp
   compiler_sub_bytes.cpp
   compiler_sub_shorts.cpp
