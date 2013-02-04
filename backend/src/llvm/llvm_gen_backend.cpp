@@ -1894,7 +1894,7 @@ namespace gbe
             const ir::Tuple dstTuple = ctx.arrayTuple(&dstTupleData[0], elemNum);
             const ir::Tuple srcTuple = ctx.arrayTuple(&srcTupleData[0], 4);
 
-            ir::Type srcType, dstType;
+            ir::Type srcType = ir::TYPE_U32, dstType = ir::TYPE_U32;
 
             switch(it->second) {
               case GEN_OCL_READ_IMAGE0:
@@ -1944,7 +1944,7 @@ namespace gbe
             }
             const ir::Tuple srcTuple = ctx.arrayTuple(&srcTupleData[0], 7);
 
-            ir::Type srcType, coordType;
+            ir::Type srcType = ir::TYPE_U32, coordType = ir::TYPE_U32;
 
             switch(it->second) {
               case GEN_OCL_WRITE_IMAGE0:
