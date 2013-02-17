@@ -47,9 +47,9 @@ namespace ir {
     static const Register groupid0 = Register(3);  // get_group_id(0)
     static const Register groupid1 = Register(4);  // get_group_id(1)
     static const Register groupid2 = Register(5);  // get_group_id(2)
-    static const Register numgroup0 = Register(6); // get_group_id(0)
-    static const Register numgroup1 = Register(7); // get_group_id(1)
-    static const Register numgroup2 = Register(8); // get_group_id(2)
+    static const Register numgroup0 = Register(6); // get_num_groups(0)
+    static const Register numgroup1 = Register(7); // get_num_groups(1)
+    static const Register numgroup2 = Register(8); // get_num_groups(2)
     static const Register lsize0 = Register(9);    // get_local_size(0)
     static const Register lsize1 = Register(10);   // get_local_size(1)
     static const Register lsize2 = Register(11);   // get_local_size(2)
@@ -64,6 +64,7 @@ namespace ir {
     static const Register barrierid = Register(20);// barrierid
     static const Register threadn = Register(21);  // number of threads
     static const uint32_t regNum = 22;             // number of special registers
+    extern const char *specialRegMean[];           // special register name.
   } /* namespace ocl */
 
   /*! Initialize the profile of the given function */

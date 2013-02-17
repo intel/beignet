@@ -30,6 +30,17 @@ namespace ir {
 
   namespace ocl
   {
+    const char *specialRegMean[] = {
+        "local_id_0", "local_id_1", "local_id_2",
+        "group_id_0", "group_id_1", "group_id_2",
+        "num_groups_0", "num_groups_1", "num_groups_2",
+        "local_size_0", "local_size_1", "local_size_2",
+        "global_size_0", "global_size_1", "global_size_2",
+        "global_offset_0", "global_offset_1", "global_offset_2",
+        "stack_pointer",
+        "block_ip",
+    };
+
 #if GBE_DEBUG
 #define DECL_NEW_REG(FAMILY, REG) \
    r = fn.newRegister(FAMILY_DWORD); \

@@ -21,6 +21,7 @@
  * \file register.cpp
  * \author Benjamin Segovia <benjamin.segovia@intel.com>
  */
+#include "ir/profile.hpp"
 #include "ir/register.hpp"
 
 namespace gbe {
@@ -44,7 +45,10 @@ namespace ir {
         << (file.regNum() ? "s" : "") << " ##" << std::endl;
     for (uint32_t i = 0; i < file.regNum(); ++i) {
       const RegisterData reg = file.get(Register(i));
-      out << ".decl." << reg << " %" << i << std::endl;
+      out << ".decl." << reg << " %" << i;
+      if (i < ocl::regNum)
+        out << " " << ocl::specialRegMean[i];
+      out << std::endl;
     }
     return out;
   }
