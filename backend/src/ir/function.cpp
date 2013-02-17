@@ -250,7 +250,7 @@ namespace ir {
         case FunctionArgument::IMAGE: out << "image"; break;
         default: break;
       }
-      out << " %" << input.reg << std::endl;
+      out << " %" << input.reg << " " << input.name << std::endl;
     }
     out << "## " << fn.outputNum() << " output register"
         << (fn.outputNum() ? "s" : "") << " ##" << std::endl;

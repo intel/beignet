@@ -101,7 +101,7 @@ namespace ir {
     /*! Create a new label for the current function */
     LabelIndex label(void);
     /*! Append a new input register for the function */
-    void input(FunctionArgument::Type type, Register reg, uint32_t elemSz = 0u);
+    void input(const std::string &name, FunctionArgument::Type type, Register reg, uint32_t elemSz = 0u);
     /*! Append a new output register for the function */
     void output(Register reg);
     /*! Get the immediate value */

@@ -808,12 +808,13 @@ namespace gbe
 
       // Insert a new register for each function argument
       for (; I != E; ++I) {
+        const std::string &argName = I->getName().str();
         Type *type = I->getType();
         GBE_ASSERTM(isScalarType(type) == true,
                     "vector type in the function argument is not supported yet");
         const ir::Register reg = regTranslator.newScalar(I);
         if (type->isPointerTy() == false)
-          ctx.input(ir::FunctionArgument::VALUE, reg, getTypeByteSize(unit, type));
+          ctx.input(argName, ir::FunctionArgument::VALUE, reg, getTypeByteSize(unit, type));
         else {
           PointerType *pointerType = dyn_cast<PointerType>(type);
           // By value structure
@@ -824,7 +825,7 @@ namespace gbe
 #endif /* LLVM_VERSION_MINOR <= 1 */
             Type *pointed = pointerType->getElementType();
             const size_t structSize = getTypeByteSize(unit, pointed);
-            ctx.input(ir::FunctionArgument::STRUCTURE, reg, structSize);
+            ctx.input(argName, ir::FunctionArgument::STRUCTURE, reg, structSize);
           }
           // Regular user provided pointer (global, local or constant)
           else {
@@ -833,20 +834,20 @@ namespace gbe
             const uint32_t ptrSize = getTypeByteSize(unit, type);
               switch (addrSpace) {
               case ir::MEM_GLOBAL:
-                ctx.input(ir::FunctionArgument::GLOBAL_POINTER, reg, ptrSize);
+                ctx.input(argName, ir::FunctionArgument::GLOBAL_POINTER, reg, ptrSize);
               break;
               case ir::MEM_LOCAL:
-                ctx.input(ir::FunctionArgument::LOCAL_POINTER, reg, ptrSize);
+                ctx.input(argName, ir::FunctionArgument::LOCAL_POINTER, reg, ptrSize);
                 ctx.getFunction().setUseSLM(true);
               break;
               case ir::MEM_CONSTANT:
-                ctx.input(ir::FunctionArgument::CONSTANT_POINTER, reg, ptrSize);
+                ctx.input(argName, ir::FunctionArgument::CONSTANT_POINTER, reg, ptrSize);
               break;
               case ir::IMAGE:
-                ctx.input(ir::FunctionArgument::IMAGE, reg, ptrSize);
+                ctx.input(argName, ir::FunctionArgument::IMAGE, reg, ptrSize);
               break;
               case ir::SAMPLER:
-                ctx.input(ir::FunctionArgument::SAMPLER, reg, ptrSize);
+                ctx.input(argName, ir::FunctionArgument::SAMPLER, reg, ptrSize);
               break;
               default: GBE_ASSERT(addrSpace != ir::MEM_PRIVATE);
             }

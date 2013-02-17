@@ -104,11 +104,12 @@ namespace ir {
       SAMPLER           = 6
     };
     /*! Create a function input argument */
-    INLINE FunctionArgument(Type type, Register reg, uint32_t size) :
-      type(type), reg(reg), size(size) {}
+    INLINE FunctionArgument(Type type, Register reg, uint32_t size, const std::string &name) :
+      type(type), reg(reg), size(size), name(name) {}
     Type type;     //!< Gives the type of argument we have
     Register reg;  //!< Holds the argument
     uint32_t size; //!< == sizeof(void*) for ptr, sizeof(elem) for the rest
+    const std::string name; //!< Holds the function name for IR output
     GBE_STRUCT(FunctionArgument); // Use custom allocator
   };
 
