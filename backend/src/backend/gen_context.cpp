@@ -342,6 +342,7 @@ namespace gbe
     p->pop();
   }
 
+  BVAR(OCL_OUTPUT_REG_ALLOC, false);
   BVAR(OCL_OUTPUT_ASM, false);
   bool GenContext::emitCode(void) {
     GenKernel *genKernel = static_cast<GenKernel*>(this->kernel);
@@ -350,6 +351,8 @@ namespace gbe
     if (UNLIKELY(ra->allocate(*this->sel) == false))
       return false;
     schedulePostRegAllocation(*this, *this->sel);
+    if (OCL_OUTPUT_REG_ALLOC)
+      ra->outputAllocation();
     this->emitStackPointer();
     this->emitInstructionStream();
     this->patchBranches();

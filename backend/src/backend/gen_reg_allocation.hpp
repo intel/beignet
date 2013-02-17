@@ -47,6 +47,8 @@ namespace gbe
     bool allocate(Selection &selection);
     /*! Virtual to physical translation */
     GenRegister genReg(const GenRegister &reg);
+    /*! Output the register allocation */
+    void outputAllocation(void);
   private:
     /*! Actual implementation of the register allocator (use Pimpl) */
     class Opaque;

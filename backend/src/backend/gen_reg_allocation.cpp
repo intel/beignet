@@ -52,6 +52,8 @@ namespace gbe
     bool allocate(Selection &selection);
     /*! Return the Gen register from the selection register */
     GenRegister genReg(const GenRegister &reg);
+    /*! Output the register allocation */
+    void outputAllocation(void);
   private:
     /*! Expire one GRF interval. Return true if one was successfully expired */
     bool expireGRF(const GenRegInterval &limit);
@@ -668,6 +670,18 @@ namespace gbe
     return this->allocateGRFs(selection);
   }
 
+  INLINE void GenRegAllocator::Opaque::outputAllocation(void) {
+    std::cout << "## register allocation ##" << std::endl;
+    for(auto &i : RA) {
+        int vReg = (int)i.first;
+        int offst = (int)i.second / sizeof(float);
+        int reg = offst / 8;
+        int subreg = offst % 8;
+        std::cout << "%" << vReg << " g" << reg << "." << subreg << "D" << std::endl;
+    }
+    std::cout << std::endl;
+  }
+
   INLINE GenRegister setGenReg(const GenRegister &src, uint32_t grfOffset) {
     GenRegister dst;
     dst = src;
@@ -709,6 +723,10 @@ namespace gbe
 
   GenRegister GenRegAllocator::genReg(const GenRegister &reg) {
     return this->opaque->genReg(reg);
+  }
+
+  void GenRegAllocator::outputAllocation(void) {
+    this->opaque->outputAllocation();
   }
 
 } /* namespace gbe */
