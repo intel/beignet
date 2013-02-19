@@ -200,17 +200,17 @@ namespace gbe
       GBE_ASSERT(prev->offset + prev->size <= offset);
       prev->next = newBlock;
       newBlock->prev = prev;
-    }
+    } else
+      this->head = newBlock;  // prev is NULL means newBlock should be the head.
+
     if (list) {
       GBE_ASSERT(offset + size <= list->offset);
       list->prev = newBlock;
       newBlock->next = list;
     }
 
-    // There were no block anymore
-    if (prev == NULL && list == NULL)
-      this->head = newBlock;
-    else {
+    if (prev != NULL || list != NULL)
+    {
       // Coalesce the blocks if possible
       this->coalesce(prev, newBlock);
       this->coalesce(newBlock, list);
