@@ -63,6 +63,7 @@ ADD_LIBRARY(utests SHARED
   compiler_local_memory_two_ptr.cpp
   compiler_local_memory_barrier.cpp
   compiler_local_memory_barrier_wg64.cpp
+  compiler_movforphi_undef.cpp
   utest_assert.cpp
   utest.cpp
   utest_file_map.cpp
