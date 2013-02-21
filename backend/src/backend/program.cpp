@@ -137,9 +137,12 @@ namespace gbe {
     while (fgets(msg, sizeof(msg), pipe))
       std::cout << msg;
     pclose(pipe);
+    remove(clName.c_str());
 
     // Now build the program from llvm
-    return gbe_program_new_from_llvm(llName.c_str(), stringSize, err, errSize);
+    gbe_program p = gbe_program_new_from_llvm(llName.c_str(), stringSize, err, errSize);
+    remove(llName.c_str());
+    return p;
   }
 
   static uint32_t programGetKernelNum(gbe_program gbeProgram) {
