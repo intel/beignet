@@ -391,8 +391,7 @@ static cl_buffer intel_alloc_buffer_from_texture(cl_context ctx,
                                                  cl_mem_flags flags,
                                                  GLenum texture_target,
                                                  GLint miplevel,
-                                                 GLuint texture,
-                                                 GLuint dim)
+                                                 GLuint texture)
 {
   GLuint name;
   drm_intel_bo *bo;

@@ -237,15 +237,17 @@ cl_mem_copy_data_tiley(cl_mem mem,
   cl_buffer_unmap(mem->bo);
 }
 
-LOCAL cl_mem
-cl_mem_new_image2D(cl_context ctx,
-                   cl_mem_flags flags,
-                   const cl_image_format *fmt,
-                   size_t w,
-                   size_t h,
-                   size_t pitch,
-                   void *data,
-                   cl_int *errcode_ret)
+static cl_mem
+_cl_mem_new_image(cl_context ctx,
+                  cl_mem_flags flags,
+                  const cl_image_format *fmt,
+                  const cl_mem_object_type image_type,
+                  size_t w,
+                  size_t h,
+                  size_t pitch,
+                  int depth,
+                  void *data,
+                  cl_int *errcode_ret)
 {
   cl_int err = CL_SUCCESS;
   cl_mem mem = NULL;
@@ -278,14 +280,17 @@ cl_mem_new_image2D(cl_context ctx,
   } while (0);
   if (UNLIKELY(w == 0)) DO_IMAGE_ERROR;
   if (UNLIKELY(h == 0)) DO_IMAGE_ERROR;
-  if (UNLIKELY(w > ctx->device->image2d_max_width)) DO_IMAGE_ERROR;
-  if (UNLIKELY(h > ctx->device->image2d_max_height)) DO_IMAGE_ERROR;
-  if (UNLIKELY(bpp*w > pitch)) DO_IMAGE_ERROR;
-#undef DO_IMAGE_ERROR
 
-  /* Pick up tiling mode (we do only linear on SNB) */
-  if (cl_driver_get_ver(ctx->drv) != 6)
-    tiling = CL_TILE_Y;
+  if (image_type == CL_MEM_OBJECT_IMAGE2D) {
+    if (UNLIKELY(w > ctx->device->image2d_max_width)) DO_IMAGE_ERROR;
+    if (UNLIKELY(h > ctx->device->image2d_max_height)) DO_IMAGE_ERROR;
+    if (UNLIKELY(data && (bpp*w > pitch))) DO_IMAGE_ERROR;
+
+    /* Pick up tiling mode (we do only linear on SNB) */
+    if (cl_driver_get_ver(ctx->drv) != 6)
+      tiling = CL_TILE_Y;
+  }
+#undef DO_IMAGE_ERROR
 
   /* Tiling requires to align both pitch and height */
   if (tiling == CL_NO_TILE) {
@@ -322,6 +327,7 @@ cl_mem_new_image2D(cl_context ctx,
   mem->is_image = 1;
   mem->pitch = aligned_pitch;
   mem->tiling = tiling;
+  mem->type = image_type;
 
 exit:
   if (errcode_ret)
@@ -331,6 +337,34 @@ error:
   cl_mem_delete(mem);
   mem = NULL;
   goto exit;
+}
+
+LOCAL cl_mem
+cl_mem_new_image(cl_context context,
+                 cl_mem_flags flags,
+                 const cl_image_format *image_format,
+                 const cl_image_desc *image_desc,
+                 void *host_ptr,
+                 cl_int *errcode_ret)
+{
+  switch (image_desc->image_type) {
+  case CL_MEM_OBJECT_IMAGE1D:
+  case CL_MEM_OBJECT_IMAGE2D:
+    return _cl_mem_new_image(context, flags, image_format, image_desc->image_type,
+                             image_desc->image_width, image_desc->image_height,
+                             image_desc->image_row_pitch, image_desc->image_depth,
+                             host_ptr, errcode_ret);
+  case CL_MEM_OBJECT_IMAGE3D:
+  case CL_MEM_OBJECT_IMAGE2D_ARRAY:
+  case CL_MEM_OBJECT_IMAGE1D_ARRAY:
+  case CL_MEM_OBJECT_IMAGE1D_BUFFER:
+    NOT_IMPLEMENTED;
+    break;
+  case CL_MEM_OBJECT_BUFFER:
+  default:
+    assert(0);
+  }
+  return NULL;
 }
 
 LOCAL void

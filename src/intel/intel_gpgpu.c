@@ -497,11 +497,29 @@ intel_gpgpu_get_free_sampler_index(intel_gpgpu_t *gpgpu)
   return slot - max_sampler_n;
 }
 
+static int
+intel_get_surface_type(cl_mem_object_type type)
+{
+  switch (type) {
+  case CL_MEM_OBJECT_IMAGE1D: return I965_SURFACE_1D;
+  case CL_MEM_OBJECT_IMAGE2D: return I965_SURFACE_2D;
+  case CL_MEM_OBJECT_IMAGE3D: return I965_SURFACE_3D;
+  case CL_MEM_OBJECT_IMAGE1D_BUFFER:
+  case CL_MEM_OBJECT_IMAGE2D_ARRAY:
+  case CL_MEM_OBJECT_IMAGE1D_ARRAY:
+    NOT_IMPLEMENTED;
+    break;
+  default:
+      assert(0);
+  }
+}
+
 static void
-intel_gpgpu_bind_image2D_gen7(intel_gpgpu_t *gpgpu,
+intel_gpgpu_bind_image_gen7(intel_gpgpu_t *gpgpu,
                               uint32_t *curbe_index,
                               dri_bo* obj_bo,
                               uint32_t format,
+                              cl_mem_object_type type,
                               int32_t w,
                               int32_t h,
                               int32_t pitch,
@@ -512,7 +530,8 @@ intel_gpgpu_bind_image2D_gen7(intel_gpgpu_t *gpgpu,
   gen7_surface_state_t *ss = (gen7_surface_state_t *) heap->surface[index];
 
   memset(ss, 0, sizeof(*ss));
-  ss->ss0.surface_type = I965_SURFACE_2D;
+
+  ss->ss0.surface_type = intel_get_surface_type(type);
   ss->ss0.surface_format = format;
   ss->ss1.base_addr = obj_bo->offset;
   ss->ss2.width = w - 1;
@@ -550,16 +569,17 @@ intel_gpgpu_set_stack(intel_gpgpu_t *gpgpu, uint32_t offset, uint32_t size, uint
 }
 
 static void
-intel_gpgpu_bind_image2D(intel_gpgpu_t *gpgpu,
-                         uint32_t *index,
-                         cl_buffer *obj_bo,
-                         uint32_t format,
-                         int32_t w,
-                         int32_t h,
-                         int32_t pitch,
-                         cl_gpgpu_tiling tiling)
+intel_gpgpu_bind_image(intel_gpgpu_t *gpgpu,
+                       uint32_t *index,
+                       cl_buffer *obj_bo,
+                       uint32_t format,
+                       cl_mem_object_type type,
+                       int32_t w,
+                       int32_t h,
+                       int32_t pitch,
+                       cl_gpgpu_tiling tiling)
 {
-  intel_gpgpu_bind_image2D_gen7(gpgpu, index, (drm_intel_bo*) obj_bo, format, w, h, pitch, tiling);
+  intel_gpgpu_bind_image_gen7(gpgpu, index, (drm_intel_bo*) obj_bo, format, type, w, h, pitch, tiling);
   assert(*index < GEN_MAX_SURFACES);
 }
 
@@ -798,7 +818,7 @@ intel_set_gpgpu_callbacks(void)
 {
   cl_gpgpu_new = (cl_gpgpu_new_cb *) intel_gpgpu_new;
   cl_gpgpu_delete = (cl_gpgpu_delete_cb *) intel_gpgpu_delete;
-  cl_gpgpu_bind_image2D = (cl_gpgpu_bind_image2D_cb *) intel_gpgpu_bind_image2D;
+  cl_gpgpu_bind_image = (cl_gpgpu_bind_image_cb *) intel_gpgpu_bind_image;
   cl_gpgpu_bind_buf = (cl_gpgpu_bind_buf_cb *) intel_gpgpu_bind_buf;
   cl_gpgpu_set_stack = (cl_gpgpu_set_stack_cb *) intel_gpgpu_set_stack;
   cl_gpgpu_state_init = (cl_gpgpu_state_init_cb *) intel_gpgpu_state_init;

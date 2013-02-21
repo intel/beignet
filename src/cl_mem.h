@@ -40,6 +40,7 @@ struct _cl_mem {
   cl_mem_flags flags;       /* Flags specified at the creation time */
   uint32_t is_image;        /* Indicate if this is an image or not */
   cl_image_format fmt;      /* only for images */
+  cl_mem_object_type type;  /* only for images 1D/2D...*/
   size_t w,h,depth,pitch;   /* only for images (depth is only for 3d images) */
   uint32_t intel_fmt;       /* format to provide in the surface state */
   uint32_t bpp;             /* number of bytes per pixel */
@@ -50,14 +51,13 @@ struct _cl_mem {
 extern cl_mem cl_mem_new(cl_context, cl_mem_flags, size_t, void*, cl_int*);
 
 /* Idem but this is an image */
-extern cl_mem cl_mem_new_image2D(cl_context,
-                                 cl_mem_flags,
-                                 const cl_image_format*,
-                                 size_t w,
-                                 size_t h,
-                                 size_t pitch,
-                                 void *,
-                                 cl_int *);
+extern cl_mem
+cl_mem_new_image(cl_context context,
+                 cl_mem_flags flags,
+                 const cl_image_format *image_format,
+                 const cl_image_desc *image_desc,
+                 void *host_ptr,
+                 cl_int *errcode_ret);
 
 cl_mem cl_mem_new_gl_buffer(cl_context ctx,
                             cl_mem_flags flags,
@@ -69,7 +69,6 @@ cl_mem cl_mem_new_gl_texture(cl_context ctx,
                              GLenum texture_target,
                              GLint miplevel,
                              GLuint texture,
-                             GLuint dim,
                              cl_int *errcode_ret);
 
 /* Unref the object and delete it if no more reference */

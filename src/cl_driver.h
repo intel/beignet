@@ -115,15 +115,16 @@ typedef void (cl_gpgpu_insert_sampler_cb)(cl_gpgpu, uint32_t *curbe_index, cl_sa
 extern cl_gpgpu_insert_sampler_cb *cl_gpgpu_insert_sampler;
 
 /* Set a 2d texture */
-typedef void (cl_gpgpu_bind_image2D_cb)(cl_gpgpu state,
+typedef void (cl_gpgpu_bind_image_cb)(cl_gpgpu state,
                                         uint32_t *curbe_index,
                                         cl_buffer obj_bo,
                                         uint32_t format,
+                                        uint32_t type,
                                         int32_t w,
                                         int32_t h,
                                         int pitch,
                                         cl_gpgpu_tiling tiling);
-extern cl_gpgpu_bind_image2D_cb *cl_gpgpu_bind_image2D;
+extern cl_gpgpu_bind_image_cb *cl_gpgpu_bind_image;
 
 /* Setup a stack */
 typedef void (cl_gpgpu_set_stack_cb)(cl_gpgpu, uint32_t offset, uint32_t size, uint32_t cchint);
@@ -187,7 +188,7 @@ extern cl_buffer_alloc_cb *cl_buffer_alloc;
 
 #include <GL/gl.h>
 #include "CL/cl.h"
-typedef cl_buffer (cl_buffer_alloc_from_texture_cb)(cl_context, cl_mem_flags, GLenum, GLint, GLuint, GLuint);
+typedef cl_buffer (cl_buffer_alloc_from_texture_cb)(cl_context, cl_mem_flags, GLenum, GLint, GLuint);
 extern cl_buffer_alloc_from_texture_cb *cl_buffer_alloc_from_texture;
 
 /* Unref a buffer and destroy it if no more ref */

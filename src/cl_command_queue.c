@@ -113,10 +113,10 @@ cl_command_queue_bind_surface(cl_command_queue queue, cl_kernel k)
     offset = gbe_kernel_get_curbe_offset(k->opaque, GBE_CURBE_KERNEL_ARGUMENT, i);
     if (arg_type == GBE_ARG_IMAGE) {
       uint32_t *curbe_index = (uint32_t*)(k->curbe + offset);
-      cl_gpgpu_bind_image2D(queue->gpgpu, curbe_index, k->args[i].mem->bo,
-                            k->args[i].mem->intel_fmt, k->args[i].mem->w,
-                            k->args[i].mem->h, k->args[i].mem->pitch,
-                            k->args[i].mem->tiling);
+      cl_gpgpu_bind_image(queue->gpgpu, curbe_index, k->args[i].mem->bo,
+                          k->args[i].mem->intel_fmt, k->args[i].mem->type,
+                          k->args[i].mem->w, k->args[i].mem->h,
+                          k->args[i].mem->pitch, k->args[i].mem->tiling);
     } else if (arg_type == GBE_ARG_SAMPLER) {
       uint32_t *curbe_index = (uint32_t*)(k->curbe + offset);
       cl_gpgpu_insert_sampler(queue->gpgpu, curbe_index, k->args[i].sampler);

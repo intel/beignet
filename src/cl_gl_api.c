@@ -44,7 +44,6 @@ do {                                                      \
   }                                                       \
 } while (0)
 
-
 cl_mem
 clCreateFromGLBuffer(cl_context    context,
                      cl_mem_flags  flags,
@@ -76,7 +75,7 @@ clCreateFromGLTexture2D(cl_context    context,
   CHECK_CONTEXT (context);
   CHECK_GL_CONTEXT (context);
 
-  mem = cl_mem_new_gl_texture(context, flags, texture_target, miplevel, texture, 2, &err);
+  mem = cl_mem_new_gl_texture(context, flags, texture_target, miplevel, texture, &err);
 error:
   if (errcode_ret)
     *errcode_ret = err;
@@ -96,11 +95,32 @@ clCreateFromGLTexture3D(cl_context    context,
   CHECK_CONTEXT (context);
   CHECK_GL_CONTEXT (context);
 
-  mem = cl_mem_new_gl_texture(context, flags, texture_target, miplevel, texture, 3, &err);
+  mem = cl_mem_new_gl_texture(context, flags, texture_target, miplevel, texture, &err);
 error:
   if (errcode_ret)
     *errcode_ret = err;
   return mem;
+}
+
+cl_mem
+clCreateFromGLTexture(cl_context      context,
+                      cl_mem_flags    flags,
+                      cl_GLenum       target,
+                      cl_GLint        miplevel,
+                      cl_GLuint       texture,
+                      cl_int *        errcode_ret)
+{
+  cl_mem mem = NULL;
+  cl_int err = CL_SUCCESS;
+  CHECK_CONTEXT (context);
+  CHECK_GL_CONTEXT (context);
+
+  mem = cl_mem_new_gl_texture(context, flags, target, miplevel, texture, &err);
+error:
+  if (errcode_ret)
+    *errcode_ret = err;
+  return mem;
+
 }
 
 /* XXX NULL function currently. */

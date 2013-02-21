@@ -16,7 +16,6 @@
  *
  * Author: Zhigang Gong <zhigang.gong@intel.com>
  */
-
 #include "cl_mem.h"
 #include "cl_image.h"
 #include "cl_context.h"
@@ -102,12 +101,26 @@ error:
   return ret;
 }
 
+static cl_mem_object_type
+get_mem_type_from_target(GLenum texture_target)
+{
+  switch(texture_target) {
+  case GL_TEXTURE_1D: return CL_MEM_OBJECT_IMAGE1D;
+  case GL_TEXTURE_2D: return CL_MEM_OBJECT_IMAGE2D;
+  case GL_TEXTURE_3D: return CL_MEM_OBJECT_IMAGE3D;
+  case GL_TEXTURE_1D_ARRAY: return CL_MEM_OBJECT_IMAGE1D_ARRAY;
+  case GL_TEXTURE_2D_ARRAY: return CL_MEM_OBJECT_IMAGE2D_ARRAY;
+  default:
+    assert(0);
+  }
+  return 0;
+}
+
 static int cl_mem_process_texture(cl_context ctx,
                                   cl_mem_flags flags,
                                   GLenum texture_target,
                                   GLint miplevel,
                                   GLuint texture,
-                                  GLuint dim,
                                   cl_mem mem)
 {
   cl_int err = CL_SUCCESS;
@@ -117,30 +130,14 @@ static int cl_mem_process_texture(cl_context ctx,
   uint32_t intel_fmt, bpp, aligned_pitch;
   int w,h;
 
-  if ((dim == 2 && texture_target != GL_TEXTURE_2D)
-      || (dim == 3 && texture_target != GL_TEXTURE_3D)) {
-    err = CL_INVALID_IMAGE_DESCRIPTOR;
-    goto error;
-  }
-
-  if (dim == 2)
-    glBindTexture(GL_TEXTURE_2D, texture);
-  else if (dim == 3)
-    glBindTexture(GL_TEXTURE_3D, texture);
-
-        glTexParameteri(GL_TEXTURE_2D,
-                        GL_TEXTURE_MIN_FILTER,
-                        GL_NEAREST);
-        glTexParameteri(GL_TEXTURE_2D,
-                        GL_TEXTURE_MAG_FILTER,
-                        GL_NEAREST);
-
+  glBindTexture(texture_target, texture);
   glGetTexLevelParameteriv(texture_target, miplevel, GL_TEXTURE_WIDTH, &w);
   glGetTexLevelParameteriv(texture_target, miplevel, GL_TEXTURE_HEIGHT, &h);
   glGetTexLevelParameteriv(texture_target, miplevel, GL_TEXTURE_INTERNAL_FORMAT, &tex_format);
 
   cl_get_clformat_from_texture(tex_format, &cl_format);
 
+  /* XXX Maybe we'd better to check the hw format in driver? */
   intel_fmt = cl_image_get_intel_format(&cl_format);
 
   if (intel_fmt == INTEL_UNSUPPORTED_FORMAT) {
@@ -151,7 +148,8 @@ static int cl_mem_process_texture(cl_context ctx,
   cl_image_byte_per_pixel(&cl_format, &bpp);
 
   /* XXX What's the tiling? */
-  aligned_pitch = w * bpp;
+  mem->type = get_mem_type_from_target(texture_target);
+  aligned_pitch = ALIGN(w * bpp, 512); /*default tile format is tilex, the width should be 512 alignment.*/
   mem->w = w;
   mem->h = h;
   mem->fmt = cl_format;
@@ -175,12 +173,11 @@ LOCAL cl_mem cl_mem_new_gl_buffer(cl_context ctx,
 
 
 LOCAL cl_mem cl_mem_new_gl_texture(cl_context ctx,
-                                     cl_mem_flags flags,
-                                     GLenum texture_target,
-                                     GLint miplevel,
-                                     GLuint texture,
-                                     GLuint dim,
-                                     cl_int *errcode_ret)
+                                   cl_mem_flags flags,
+                                   GLenum texture_target,
+                                   GLint miplevel,
+                                   GLuint texture,
+                                   cl_int *errcode_ret)
 {
   cl_int err = CL_SUCCESS;
   cl_mem mem = NULL;
@@ -192,13 +189,13 @@ LOCAL cl_mem cl_mem_new_gl_texture(cl_context ctx,
   }
 
   TRY_ALLOC (mem, CALLOC(struct _cl_mem));
-  if (cl_mem_process_texture(ctx, flags, texture_target, miplevel, texture, dim, mem) != CL_SUCCESS) {
+  if (cl_mem_process_texture(ctx, flags, texture_target, miplevel, texture, mem) != CL_SUCCESS) {
     printf("invalid texture.\n");
     err = CL_INVALID_IMAGE_DESCRIPTOR;
     goto error;
   }
 
-  mem->bo = cl_buffer_alloc_from_texture(ctx, flags, texture_target, miplevel, texture, dim);
+  mem->bo = cl_buffer_alloc_from_texture(ctx, flags, texture_target, miplevel, texture);
 
   if (UNLIKELY(mem->bo == NULL)) {
     err = CL_MEM_OBJECT_ALLOCATION_FAILURE;
