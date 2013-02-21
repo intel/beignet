@@ -209,6 +209,14 @@ extern cl_buffer_map_cb *cl_buffer_map;
 typedef int (cl_buffer_unmap_cb)(cl_buffer);
 extern cl_buffer_unmap_cb *cl_buffer_unmap;
 
+/* Map a buffer in the GTT domain */
+typedef int (cl_buffer_map_gtt_cb)(cl_buffer);
+extern cl_buffer_map_gtt_cb *cl_buffer_map_gtt;
+
+/* Unmap a buffer in the GTT domain */
+typedef int (cl_buffer_unmap_gtt_cb)(cl_buffer);
+extern cl_buffer_unmap_gtt_cb *cl_buffer_unmap_gtt;
+
 /* Get the virtual address (when mapped) */
 typedef void* (cl_buffer_get_virtual_cb)(cl_buffer);
 extern cl_buffer_get_virtual_cb *cl_buffer_get_virtual;

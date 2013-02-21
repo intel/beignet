@@ -481,6 +481,8 @@ intel_setup_callbacks(void)
   cl_buffer_unreference = (cl_buffer_unreference_cb *) drm_intel_bo_unreference;
   cl_buffer_map = (cl_buffer_map_cb *) drm_intel_bo_map;
   cl_buffer_unmap = (cl_buffer_unmap_cb *) drm_intel_bo_unmap;
+  cl_buffer_map_gtt = (cl_buffer_map_gtt_cb *) drm_intel_gem_bo_map_gtt;
+  cl_buffer_unmap_gtt = (cl_buffer_unmap_gtt_cb *) drm_intel_gem_bo_unmap_gtt;
   cl_buffer_get_virtual = (cl_buffer_get_virtual_cb *) drm_intel_bo_get_virtual;
   cl_buffer_get_size = (cl_buffer_get_size_cb *) drm_intel_bo_get_size;
   cl_buffer_pin = (cl_buffer_pin_cb *) drm_intel_bo_pin;
