@@ -64,10 +64,10 @@
     if (status != CL_SUCCESS) OCL_THROW_ERROR(FN, status); \
   } while (0)
 
-#define OCL_CREATE_IMAGE(IMAGE, FLAGS, FORMAT, W, H, PITCH, DATA) \
+#define OCL_CREATE_IMAGE(IMAGE, FLAGS, FORMAT, DESC, DATA) \
   do { \
     cl_int status; \
-    IMAGE = clCreateImage2D(ctx, FLAGS, FORMAT, W, H, PITCH, DATA, &status);\
+    IMAGE = clCreateImage(ctx, FLAGS, FORMAT, DESC, DATA, &status);\
     if (status != CL_SUCCESS) OCL_THROW_ERROR(FN, status); \
   } while (0)
 
