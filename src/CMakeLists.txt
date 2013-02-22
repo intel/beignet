@@ -15,6 +15,7 @@ set(OPENCL_SRC
     cl_image.c
     cl_mem.c
     cl_platform_id.c
+    cl_extensions.c
     cl_device_id.c
     cl_context.c
     cl_command_queue.c
@@ -39,6 +40,8 @@ target_link_libraries(
                       ${XFIXES_LIBRARY}
                       ${DRM_INTEL_LIBRARY}
                       ${DRM_LIBRARY}
-                      ${OPENGL_LIBRARIES})
+                      ${OPENGL_LIBRARIES}
+                      ${EGL_LIBRARY}
+                      ${GBM_LIBRARY})
 install (TARGETS cl LIBRARY DESTINATION lib)
 

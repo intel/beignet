@@ -25,19 +25,6 @@
 #include <stdlib.h>
 #include <string.h>
 
-struct _cl_platform_id {
-  const char *profile;
-  const char *version;
-  const char *name;
-  const char *vendor;
-  const char *extensions;
-  size_t profile_sz;
-  size_t version_sz;
-  size_t name_sz;
-  size_t vendor_sz;
-  size_t extensions_sz;
-};
-
 #define DECL_INFO_STRING(FIELD, STRING) \
     .FIELD = STRING,                    \
     .JOIN(FIELD,_sz) = sizeof(STRING) + 1,
@@ -47,7 +34,6 @@ static struct _cl_platform_id intel_platform_data = {
   DECL_INFO_STRING(version, "OpenCL 1.1")
   DECL_INFO_STRING(name, "Experiment Intel Gen OCL Driver")
   DECL_INFO_STRING(vendor, "Intel")
-  DECL_INFO_STRING(extensions, "cl_khr_gl_sharing")
 };
 
 #undef DECL_INFO_STRING
@@ -75,6 +61,7 @@ cl_get_platform_ids(cl_uint          num_entries,
   if (UNLIKELY(num_platforms != NULL && platforms == NULL))
     return CL_INVALID_VALUE;
 
+  cl_intel_platform_extension_init(intel_platform);
   /* Easy right now, only one platform is supported */
   *platforms = intel_platform;
   return CL_SUCCESS;

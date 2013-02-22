@@ -21,7 +21,22 @@
 #define __CL_PLATFORM_ID_H__
 
 #include "cl_internals.h"
+#include "cl_extensions.h"
 #include "CL/cl.h"
+
+struct _cl_platform_id {
+  const char *profile;
+  const char *version;
+  const char *name;
+  const char *vendor;
+  char *extensions;
+  size_t profile_sz;
+  size_t version_sz;
+  size_t name_sz;
+  size_t vendor_sz;
+  size_t extensions_sz;
+  struct cl_extensions *internal_extensions;
+};
 
 /* Platform implemented by this run-time */
 extern cl_platform_id const intel_platform;
