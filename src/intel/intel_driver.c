@@ -168,8 +168,6 @@ static void
 intel_driver_open(intel_driver_t *intel, cl_context_prop props)
 {
   int cardi;
-  /* XXX We should use the display to get the correct dri driver to open.
-   * for now, we just use generic way to open a dri driver.*/
   if (props != NULL
       && props->gl_type != CL_GL_NOSHARE
       && props->gl_type != CL_GL_GLX_DISPLAY
@@ -178,7 +176,7 @@ intel_driver_open(intel_driver_t *intel, cl_context_prop props)
     exit(-1);
   }
   
-  intel->x11_display = XOpenDisplay(":0.0");
+  intel->x11_display = XOpenDisplay(NULL);
 
   if(intel->x11_display) {
     if((intel->dri_ctx = getDRI2State(intel->x11_display,
