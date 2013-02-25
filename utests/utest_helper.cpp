@@ -365,10 +365,13 @@ int *cl_read_bmp(const char *filename, int *width, int *height)
   assert(fp);
 
   char magic[2];
-  fread(&magic[0], 1, 2, fp);
+  int ret;
+  ret = fread(&magic[0], 1, 2, fp);
+  assert(2 == ret);
   assert(magic[0] == 'B' && magic[1] == 'M');
 
-  fread(&hdr, 1, sizeof(hdr), fp);
+  ret = fread(&hdr, sizeof(hdr), 1, fp);
+  assert(1 == ret);
 
   assert(hdr.width > 0 && hdr.height > 0 && hdr.nplanes == 1 && hdr.compression == 0);
 
