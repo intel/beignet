@@ -186,10 +186,12 @@ extern cl_gpgpu_walker_cb *cl_gpgpu_walker;
 typedef cl_buffer (cl_buffer_alloc_cb)(cl_buffer_mgr, const char*, unsigned long, unsigned long);
 extern cl_buffer_alloc_cb *cl_buffer_alloc;
 
-#include <GL/gl.h>
-#include "CL/cl.h"
-typedef cl_buffer (cl_buffer_alloc_from_texture_cb)(cl_context, cl_mem_flags, GLenum, GLint, GLuint);
-extern cl_buffer_alloc_from_texture_cb *cl_buffer_alloc_from_texture;
+#include "cl_context.h"
+typedef struct _cl_context *cl_context;
+
+typedef cl_buffer (cl_buffer_alloc_from_eglimage_cb)(cl_context, void*, unsigned int *,
+                                                     int *, int *, int *, int *);
+extern cl_buffer_alloc_from_eglimage_cb *cl_buffer_alloc_from_eglimage;
 
 /* Unref a buffer and destroy it if no more ref */
 typedef void (cl_buffer_unreference_cb)(cl_buffer);

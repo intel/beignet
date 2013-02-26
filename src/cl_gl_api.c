@@ -16,6 +16,14 @@
  *
  * Author: Zhigang Gong <zhigang.gong@intel.com>
  */
+
+#include <stdio.h>
+#include <string.h>
+#include <assert.h>
+#ifdef HAS_EGL
+#include <GL/gl.h>
+#endif
+
 #include "cl_platform_id.h"
 #include "cl_device_id.h" 
 #include "cl_context.h"
@@ -31,10 +39,7 @@
 #include "CL/cl.h"
 #include "CL/cl_gl.h"
 #include "CL/cl_intel.h"
-
-#include <stdio.h>
-#include <string.h>
-#include <assert.h>
+#include "cl_mem_gl.h"
 
 #define CHECK_GL_CONTEXT(CTX)                             \
 do {                                                      \

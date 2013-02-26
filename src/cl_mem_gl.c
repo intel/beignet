@@ -16,6 +16,13 @@
  *
  * Author: Zhigang Gong <zhigang.gong@intel.com>
  */
+#include <GL/gl.h>
+#include <GL/glext.h>
+#include <EGL/egl.h>
+#include <EGL/eglext.h>
+#include <assert.h>
+#include <stdio.h>
+
 #include "cl_mem.h"
 #include "cl_image.h"
 #include "cl_context.h"
@@ -23,15 +30,12 @@
 #include "cl_alloc.h"
 #include "cl_device_id.h"
 #include "cl_driver.h"
+#include "cl_platform_id.h"
+#include "cl_mem_gl.h"
 
-#include <GL/gl.h>
-#define GL_GLEXT_PROTOTYPES 1
-#include <GL/glext.h>
 #include "CL/cl.h"
 #include "CL/cl_intel.h"
 #include "CL/cl_gl.h"
-#include <assert.h>
-#include <stdio.h>
 
 static int cl_get_clformat_from_texture(GLint tex_format, cl_image_format * cl_format)
 {
@@ -116,53 +120,6 @@ get_mem_type_from_target(GLenum texture_target)
   return 0;
 }
 
-static int cl_mem_process_texture(cl_context ctx,
-                                  cl_mem_flags flags,
-                                  GLenum texture_target,
-                                  GLint miplevel,
-                                  GLuint texture,
-                                  cl_mem mem)
-{
-  cl_int err = CL_SUCCESS;
-  GLint tex_format;
-  cl_image_format cl_format;
-  /* XXX why we use vendor related structure in this layer? */
-  uint32_t intel_fmt, bpp, aligned_pitch;
-  int w,h;
-
-  glBindTexture(texture_target, texture);
-  glGetTexLevelParameteriv(texture_target, miplevel, GL_TEXTURE_WIDTH, &w);
-  glGetTexLevelParameteriv(texture_target, miplevel, GL_TEXTURE_HEIGHT, &h);
-  glGetTexLevelParameteriv(texture_target, miplevel, GL_TEXTURE_INTERNAL_FORMAT, &tex_format);
-
-  cl_get_clformat_from_texture(tex_format, &cl_format);
-
-  /* XXX Maybe we'd better to check the hw format in driver? */
-  intel_fmt = cl_image_get_intel_format(&cl_format);
-
-  if (intel_fmt == INTEL_UNSUPPORTED_FORMAT) {
-    err = CL_INVALID_IMAGE_DESCRIPTOR;
-    goto error;
-  }
-
-  cl_image_byte_per_pixel(&cl_format, &bpp);
-
-  /* XXX What's the tiling? */
-  mem->type = get_mem_type_from_target(texture_target);
-  aligned_pitch = ALIGN(w * bpp, 512); /*default tile format is tilex, the width should be 512 alignment.*/
-  mem->w = w;
-  mem->h = h;
-  mem->fmt = cl_format;
-  mem->intel_fmt = intel_fmt;
-  mem->bpp = bpp;
-  mem->is_image = 1;
-  mem->pitch = aligned_pitch;
-  mem->tiling = 0;
- 
-error:
-  return err;
-}
-
 LOCAL cl_mem cl_mem_new_gl_buffer(cl_context ctx,
                                   cl_mem_flags flags,
                                   GLuint buf_obj, 
@@ -171,6 +128,30 @@ LOCAL cl_mem cl_mem_new_gl_buffer(cl_context ctx,
   NOT_IMPLEMENTED;
 }
 
+EGLImageKHR cl_create_textured_egl_image(cl_context ctx,
+                                         GLenum texture_target,
+                                         GLint miplevel,
+                                         GLuint texture)
+{
+  struct cl_gl_ext_deps *egl_funcs;
+  EGLDisplay egl_display;
+  EGLContext egl_context;
+  EGLint egl_attribs[] = { EGL_GL_TEXTURE_LEVEL_KHR, miplevel, EGL_NONE};
+
+  assert(ctx->props.gl_type == CL_GL_EGL_DISPLAY);
+/* cl.h defined cl_khr_gl_sharing to 1. we have to undefine it here.*/
+#ifdef cl_khr_gl_sharing
+#undef cl_khr_gl_sharing
+#endif
+  egl_funcs =  CL_EXTENSION_GET_FUNCS(ctx, cl_khr_gl_sharing, gl_ext_deps);
+  assert(egl_funcs != NULL);
+  egl_display = (EGLDisplay)ctx->props.egl_display;
+  egl_context = (EGLDisplay)ctx->props.gl_context;
+  return egl_funcs->eglCreateImageKHR_func(egl_display, egl_context,
+                                           EGL_GL_TEXTURE_2D_KHR,
+                                           (EGLClientBuffer)texture,
+                                           &egl_attribs[0]);
+}
 
 LOCAL cl_mem cl_mem_new_gl_texture(cl_context ctx,
                                    cl_mem_flags flags,
@@ -181,7 +162,11 @@ LOCAL cl_mem cl_mem_new_gl_texture(cl_context ctx,
 {
   cl_int err = CL_SUCCESS;
   cl_mem mem = NULL;
-
+  EGLImageKHR egl_image;
+  int w, h, pitch, tiling;
+  unsigned int bpp, intel_fmt;
+  cl_image_format cl_format;
+  unsigned int gl_format;
   /* Check flags consistency */
   if (UNLIKELY(flags & CL_MEM_COPY_HOST_PTR)) {
     err = CL_INVALID_ARG_VALUE;
@@ -189,23 +174,43 @@ LOCAL cl_mem cl_mem_new_gl_texture(cl_context ctx,
   }
 
   TRY_ALLOC (mem, CALLOC(struct _cl_mem));
-  if (cl_mem_process_texture(ctx, flags, texture_target, miplevel, texture, mem) != CL_SUCCESS) {
-    printf("invalid texture.\n");
-    err = CL_INVALID_IMAGE_DESCRIPTOR;
+  mem->ctx = ctx;
+  cl_context_add_ref(ctx);
+
+  egl_image = cl_create_textured_egl_image(ctx, texture_target, miplevel, texture);
+
+  if (egl_image == NULL) {
+    err = CL_INVALID_GL_OBJECT;
     goto error;
   }
-
-  mem->bo = cl_buffer_alloc_from_texture(ctx, flags, texture_target, miplevel, texture);
-
+  mem->bo = cl_buffer_alloc_from_eglimage(ctx, (void*)egl_image, &gl_format, &w, &h, &pitch, &tiling);
   if (UNLIKELY(mem->bo == NULL)) {
     err = CL_MEM_OBJECT_ALLOCATION_FAILURE;
     goto error;
   }
+  cl_get_clformat_from_texture(gl_format, &cl_format);
 
+  /* XXX Maybe we'd better to check the hw format in driver? */
+  intel_fmt = cl_image_get_intel_format(&cl_format);
+
+  if (intel_fmt == INTEL_UNSUPPORTED_FORMAT) {
+    err = CL_INVALID_IMAGE_DESCRIPTOR;
+    goto error;
+  }
+  cl_image_byte_per_pixel(&cl_format, &bpp);
+
+  mem->type = get_mem_type_from_target(texture_target);
+  mem->w = w;
+  mem->h = h;
+  mem->fmt = cl_format;
+  mem->intel_fmt = intel_fmt;
+  mem->bpp = bpp;
+  mem->is_image = 1;
+  mem->pitch = pitch;
+  mem->tiling = tiling;
   mem->ref_n = 1;
   mem->magic = CL_MAGIC_MEM_HEADER;
   mem->flags = flags;
-  mem->ctx = ctx;
 
   /* Append the buffer in the context buffer list */
   pthread_mutex_lock(&ctx->buffer_lock);
@@ -214,8 +219,6 @@ LOCAL cl_mem cl_mem_new_gl_texture(cl_context ctx,
       ctx->buffers->prev = mem;
     ctx->buffers = mem;
   pthread_mutex_unlock(&ctx->buffer_lock);
-  mem->ctx = ctx;
-  cl_context_add_ref(ctx);
 
 exit:
   if (errcode_ret)

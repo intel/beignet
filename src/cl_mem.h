@@ -59,18 +59,6 @@ cl_mem_new_image(cl_context context,
                  void *host_ptr,
                  cl_int *errcode_ret);
 
-cl_mem cl_mem_new_gl_buffer(cl_context ctx,
-                            cl_mem_flags flags,
-                            GLuint buf_obj, 
-                            cl_int *errcode_ret);
-
-cl_mem cl_mem_new_gl_texture(cl_context ctx,
-                             cl_mem_flags flags,
-                             GLenum texture_target,
-                             GLint miplevel,
-                             GLuint texture,
-                             cl_int *errcode_ret);
-
 /* Unref the object and delete it if no more reference */
 extern void cl_mem_delete(cl_mem);
 

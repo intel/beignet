@@ -49,6 +49,7 @@
 #include "intel_driver.h"
 #include "intel_gpgpu.h"
 #include "intel_batchbuffer.h"
+#include "intel_bufmgr.h"
 #include "x11/dricommon.h"
 
 #include <assert.h>
@@ -175,7 +176,7 @@ intel_driver_open(intel_driver_t *intel, cl_context_prop props)
     printf("Unsupported gl share type %d.\n", props->gl_type);
     exit(-1);
   }
-  
+
   intel->x11_display = XOpenDisplay(NULL);
 
   if(intel->x11_display) {
@@ -204,11 +205,25 @@ intel_driver_open(intel_driver_t *intel, cl_context_prop props)
     printf("Device open failed\n");
     exit(-1);
   }
+
+#if defined(HAS_GBM) && defined(HAS_EGL)
+  if (props && props->gl_type == CL_GL_EGL_DISPLAY) {
+    intel->gbm = gbm_create_device(intel->fd);
+    if (intel->gbm == NULL) {
+      printf("GBM device create failed.\n");
+      exit(-1);
+    }
+    cl_gbm_set_image_extension(intel->gbm, (void*)props->egl_display);
+  }
+#endif
 }
 
 static void
 intel_driver_close(intel_driver_t *intel)
 {
+#ifdef HAS_GBM
+  if(intel->gbm) gbm_device_destroy(intel->gbm);
+#endif
   if(intel->dri_ctx) dri_state_release(intel->dri_ctx);
   if(intel->x11_display) XCloseDisplay(intel->x11_display);
   if(intel->fd) close(intel->fd);
@@ -385,24 +400,70 @@ intel_driver_get_ver(struct intel_driver *drv)
 static size_t drm_intel_bo_get_size(drm_intel_bo *bo) { return bo->size; }
 static void* drm_intel_bo_get_virtual(drm_intel_bo *bo) { return bo->virtual; }
 
-#include <GL/gl.h>
-#include <GL/glext.h>
-static cl_buffer intel_alloc_buffer_from_texture(cl_context ctx,
-                                                 cl_mem_flags flags,
-                                                 GLenum texture_target,
-                                                 GLint miplevel,
-                                                 GLuint texture)
+#if defined(HAS_EGL) && defined(HAS_GBM)
+#include "gbm.h"
+#include "GL/gl.h"
+#include "EGL/egl.h"
+#include "EGL/eglext.h"
+#include "cl_mem.h"
+static int get_cl_tiling(uint32_t drm_tiling)
 {
-  GLuint name;
-  drm_intel_bo *bo;
-  
-  glGetOCLSharedTexturesINTEL(texture_target, miplevel, 1, &texture, (void**)&bo);
-
-  dri_bo_flink(bo, &name);
-
-  return (cl_buffer)intel_driver_share_buffer((intel_driver_t *)ctx->drv, name);
+  switch(drm_tiling) {
+  case I915_TILING_X: return CL_TILE_X;
+  case I915_TILING_Y: return CL_TILE_Y;
+  case I915_TILING_NONE: return CL_NO_TILE;
+  default:
+    assert(0);
+  }
+  return CL_NO_TILE;
 }
 
+static unsigned int get_gl_format(uint32_t gbm_format)
+{
+  switch(gbm_format) {
+  case GBM_FORMAT_ARGB8888: return GL_BGRA;
+  case GBM_FORMAT_ABGR8888: return GL_RGBA;
+  default:
+    NOT_IMPLEMENTED;
+  }
+  return 0;
+}
+
+cl_buffer intel_alloc_buffer_from_eglimage(cl_context ctx,
+                                           void* image,
+                                           unsigned int *gl_format,
+                                           int *w, int *h, int *pitch,
+                                           int *tiling)
+{
+  struct gbm_bo *bo;
+  uint32_t gbm_format;
+  drm_intel_bo *intel_bo;
+  int32_t name;
+  uint32_t drm_tiling, swizzle;
+  EGLImageKHR egl_image = (EGLImageKHR)image;
+  intel_driver_t *intel = (intel_driver_t*)ctx->drv;
+
+  bo = gbm_bo_import(intel->gbm, GBM_BO_IMPORT_EGL_IMAGE, (void*)egl_image, 0);
+
+  *w = gbm_bo_get_width(bo);
+  *h = gbm_bo_get_height(bo);
+  *pitch = gbm_bo_get_stride(bo);
+  gbm_format = gbm_bo_get_format(bo);
+  *gl_format = get_gl_format(gbm_format);
+  name = cl_gbm_bo_get_name(bo);
+
+  intel_bo = intel_driver_share_buffer((intel_driver_t *)ctx->drv, name);
+
+  if (drm_intel_bo_get_tiling(intel_bo, &drm_tiling, &swizzle)!= 0)
+    assert(0);
+  *tiling = get_cl_tiling(drm_tiling);
+
+  gbm_bo_destroy(bo);
+
+  return (cl_buffer)intel_bo;
+
+}
+#endif
 
 LOCAL void
 intel_setup_callbacks(void)
@@ -413,7 +474,9 @@ intel_setup_callbacks(void)
   cl_driver_get_bufmgr = (cl_driver_get_bufmgr_cb *) intel_driver_get_bufmgr;
   cl_driver_get_device_id = (cl_driver_get_device_id_cb *) intel_get_device_id;
   cl_buffer_alloc = (cl_buffer_alloc_cb *) drm_intel_bo_alloc;
-  cl_buffer_alloc_from_texture = (cl_buffer_alloc_from_texture_cb *) intel_alloc_buffer_from_texture;
+#ifdef HAS_EGL
+  cl_buffer_alloc_from_eglimage = (cl_buffer_alloc_from_eglimage_cb *) intel_alloc_buffer_from_eglimage;
+#endif
   cl_buffer_reference = (cl_buffer_reference_cb *) drm_intel_bo_reference;
   cl_buffer_unreference = (cl_buffer_unreference_cb *) drm_intel_bo_unreference;
   cl_buffer_map = (cl_buffer_map_cb *) drm_intel_bo_map;

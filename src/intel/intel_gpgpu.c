@@ -512,6 +512,7 @@ intel_get_surface_type(cl_mem_object_type type)
   default:
       assert(0);
   }
+  return 0;
 }
 
 static void

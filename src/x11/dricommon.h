@@ -94,6 +94,11 @@ void dri_state_release(dri_state_t*);
 
 // Create a dri2 state from dpy and screen
 dri_state_t *getDRI2State(Display* dpy, int screen, char **driver_name);
+#ifdef HAS_GBM
+#include<gbm.h>
+void cl_gbm_set_image_extension(struct gbm_device *gbm, void *display);
+int cl_gbm_bo_get_name(struct gbm_bo *bo);
+#endif
 
 #endif /* _VA_DRICOMMON_H_ */
 

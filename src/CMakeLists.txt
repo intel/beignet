@@ -5,8 +5,6 @@ include_directories(${CMAKE_CURRENT_SOURCE_DIR}
 
 set(OPENCL_SRC
     cl_api.c
-    cl_mem_gl.c
-    cl_gl_api.c
     cl_alloc.c
     cl_kernel.c
     cl_program.c
@@ -30,6 +28,12 @@ set(OPENCL_SRC
     x11/dricommon.c 
     x11/va_dri2.c)
 
+if (EGL_FOUND)
+set (OPENCL_SRC ${OPENCL_SRC} cl_mem_gl.c cl_gl_api.c x11/gbm_dri2_x11_platform.c)
+SET(CMAKE_CXX_FLAGS "-DHAS_EGL ${CMAKE_CXX_FLAGS}")
+SET(CMAKE_C_FLAGS "-DHAS_EGL ${CMAKE_C_FLAGS}")
+endif (EGL_FOUND)
+
 link_directories (${LLVM_LIBRARY_DIR})
 add_library(cl SHARED ${OPENCL_SRC})
 target_link_libraries(
@@ -44,4 +48,3 @@ target_link_libraries(
                       ${EGL_LIBRARY}
                       ${GBM_LIBRARY})
 install (TARGETS cl LIBRARY DESTINATION lib)
-
