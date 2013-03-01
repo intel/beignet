@@ -67,7 +67,11 @@
 #include "llvm/Support/ErrorHandling.h"
 #include "llvm/Support/FormattedStream.h"
 #include "llvm/Support/GetElementPtrTypeIterator.h"
+#ifdef LLVM_32
 #include "llvm/Support/InstVisitor.h"
+#else
+#include "llvm/InstVisitor.h"
+#endif
 #include "llvm/Support/MathExtras.h"
 #include "llvm/Support/TargetRegistry.h"
 #include "llvm/Support/Host.h"
