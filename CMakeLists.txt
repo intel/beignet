@@ -8,6 +8,13 @@
 
 CMAKE_MINIMUM_REQUIRED(VERSION 2.6.0)
 PROJECT(OCL)
+set (LIBCL_VERSION_MAJOR 0)
+set (LIBCL_VERSION_MINOR 1)
+
+configure_file (
+  "src/OCLConfig.h.in"
+  "src/OCLConfig.h"
+)
 
 INCLUDE_DIRECTORIES(${CMAKE_CURRENT_BINARY_DIR} ${CMAKE_CURRENT_SOURCE_DIR})
 
@@ -49,7 +56,7 @@ ELSE (USE_FULSIM)
 ENDIF (USE_FULSIM)
 
 SET(CMAKE_CXX_FLAGS "-Wall -Wno-invalid-offsetof -mfpmath=sse --no-rtti -Wcast-align -std=c++0x -msse2 -msse3 -mssse3 -msse4.1 ")
-SET(CMAKE_C_FLAGS "-Wall -mfpmath=sse -msse2 -Wcast-align -msse2 -msse3 -mssse3 -msse4.1 ")
+SET(CMAKE_C_FLAGS "-Wall -mfpmath=sse -msse2 -Wcast-align -msse2 -msse3 -mssse3 -msse4.1")
 
 # Front end stuff we need
 #INCLUDE(CMake/FindLLVM.cmake)

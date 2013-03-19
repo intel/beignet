@@ -1,4 +1,11 @@
 project (GBE)
+set (LIBGBE_VERSION_MAJOR 0)
+set (LIBGBE_VERSION_MINOR 1)
+
+configure_file (
+  "src/GBEConfig.h.in"
+  "src/GBEConfig.h"
+)
 
 cmake_minimum_required (VERSION 2.6.0)
 

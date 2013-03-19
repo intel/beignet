@@ -1,0 +1,3 @@
+// the configured options and settings for LIBCL
+#define LIBCL_VERSION_MAJOR @LIBCL_VERSION_MAJOR@
+#define LIBCL_VERSION_MINOR @LIBCL_VERSION_MINOR@

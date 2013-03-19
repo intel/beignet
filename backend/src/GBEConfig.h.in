@@ -1,0 +1,3 @@
+// the configured options and settings for LIBGBE
+#define LIBGBE_VERSION_MAJOR @LIBGBE_VERSION_MAJOR@
+#define LIBGBE_VERSION_MINOR @LIBGBE_VERSION_MINOR@
