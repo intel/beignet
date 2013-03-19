@@ -53,5 +53,13 @@ extern cl_int cl_get_platform_into(cl_platform_id    platform,
                                    void *            param_value,
                                    size_t *          param_value_size_ret);
 
+#define OCL_VERSION_MAJOR 1
+#define OCL_VERSION_MINOR 0
+
+#define _STR(x) #x
+#define _JOINT(x, y) "OpenCL " _STR(x) "." _STR(y)
+
+#define OCL_VERSION_STRING _JOINT(OCL_VERSION_MAJOR, OCL_VERSION_MINOR)
+
 #endif /* __CL_PLATFORM_ID_H__ */
 

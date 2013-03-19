@@ -68,7 +68,7 @@
     .JOIN(FIELD,_sz) = sizeof(STRING) + 1,
 DECL_INFO_STRING(name, "Intel HD Graphics Family")
 DECL_INFO_STRING(vendor, "Intel")
-DECL_INFO_STRING(version, "OpenCL 1.10")
+DECL_INFO_STRING(version, OCL_VERSION_STRING)
 DECL_INFO_STRING(profile, "FULL_PROFILE")
 DECL_INFO_STRING(opencl_c_version, "OpenCL 1.10")
 DECL_INFO_STRING(extensions, "")
