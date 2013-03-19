@@ -322,7 +322,8 @@ err_out:
   if (fd >= 0)
     close(fd);
 
-  *driver_name = NULL;
+  if (driver_name)
+    *driver_name = NULL;
 
   return state;
 }
