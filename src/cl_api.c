@@ -103,7 +103,7 @@ clCreateContext(const cl_context_properties *  properties,
 }
 
 cl_context
-clCreateContextFromtype(const cl_context_properties *  properties,
+clCreateContextFromType(const cl_context_properties *  properties,
                         cl_device_type                 device_type,
                         void (CL_CALLBACK *pfn_notify) (const char *, const void *, size_t, void *),
                         void *                         user_data,
