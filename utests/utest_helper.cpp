@@ -195,11 +195,23 @@ error:
     printf("platform_" #LOWER_NAME " \"%s\"\n", str.c_str()); \
   }
 
+#define GET_DEVICE_STR_INFO(LOWER_NAME, NAME) \
+  { \
+    size_t param_value_size; \
+    OCL_CALL (clGetDeviceInfo, device, CL_DEVICE_##NAME, 0, 0, &param_value_size); \
+    std::vector<char> param_value(param_value_size); \
+    OCL_CALL (clGetDeviceInfo, device, CL_DEVICE_##NAME, \
+              param_value_size, param_value.empty() ? NULL : &param_value.front(), \
+              &param_value_size); \
+    std::string str; \
+    if (!param_value.empty()) \
+      str = std::string(&param_value.front(), param_value_size-1); \
+    printf("device_" #LOWER_NAME " \"%s\"\n", str.c_str()); \
+  }
 int
 cl_ocl_init(void)
 {
   cl_int status = CL_SUCCESS;
-  char name[128];
   cl_uint platform_n;
   size_t i;
 
@@ -217,14 +229,10 @@ cl_ocl_init(void)
 
   /* Get the device (only GPU device is supported right now) */
   OCL_CALL (clGetDeviceIDs, platform, CL_DEVICE_TYPE_GPU, 1, &device, NULL);
-  OCL_CALL (clGetDeviceInfo, device, CL_DEVICE_PROFILE, sizeof(name), name, NULL);
-  printf("device_profile \"%s\"\n", name);
-  OCL_CALL (clGetDeviceInfo, device, CL_DEVICE_NAME, sizeof(name), name, NULL);
-  printf("device_name \"%s\"\n", name);
-  OCL_CALL (clGetDeviceInfo, device, CL_DEVICE_VENDOR, sizeof(name), name, NULL);
-  printf("device_vendor \"%s\"\n", name);
-  OCL_CALL (clGetDeviceInfo, device, CL_DEVICE_VERSION, sizeof(name), name, NULL);
-  printf("device_version \"%s\"\n", name);
+  GET_DEVICE_STR_INFO(profile, PROFILE);
+  GET_DEVICE_STR_INFO(name, NAME);
+  GET_DEVICE_STR_INFO(vendor, VENDOR);
+  GET_DEVICE_STR_INFO(version, VERSION);
 
   /* Now create a context */
   ctx = clCreateContext(0, 1, &device, NULL, NULL, &status);
