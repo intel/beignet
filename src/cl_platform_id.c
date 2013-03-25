@@ -78,6 +78,12 @@ cl_get_platform_ids(cl_uint          num_entries,
            intel_platform->JOIN(FIELD,_sz));                    \
       return CL_SUCCESS;
 
+#define GET_FIELD_SZ(CASE,FIELD)                                \
+  case JOIN(CL_,CASE):                                          \
+    if (param_value_size_ret != NULL)                           \
+      *param_value_size_ret = intel_platform->JOIN(FIELD,_sz);  \
+    return CL_SUCCESS;
+
 LOCAL cl_int
 cl_get_platform_into(cl_platform_id    platform,
                      cl_platform_info  param_name,
@@ -88,8 +94,17 @@ cl_get_platform_into(cl_platform_id    platform,
   /* Only one platform. This is easy */
   if (UNLIKELY(platform != NULL && platform != intel_platform))
     return CL_INVALID_PLATFORM;
-  if (UNLIKELY(param_value == NULL))
-    return CL_INVALID_VALUE;
+
+  if (param_value == NULL) {
+    switch (param_name) {
+      GET_FIELD_SZ (PLATFORM_PROFILE,    profile);
+      GET_FIELD_SZ (PLATFORM_VERSION,    version);
+      GET_FIELD_SZ (PLATFORM_NAME,       name);
+      GET_FIELD_SZ (PLATFORM_VENDOR,     vendor);
+      GET_FIELD_SZ (PLATFORM_EXTENSIONS, extensions);
+      default: return CL_INVALID_VALUE;
+    }
+  }
 
   /* Fetch the platform inform */
   switch (param_name) {
