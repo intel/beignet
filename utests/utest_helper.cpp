@@ -181,6 +181,20 @@ error:
   goto exit;
 }
 
+#define GET_PLATFORM_STR_INFO(LOWER_NAME, NAME) \
+  { \
+    size_t param_value_size; \
+    OCL_CALL (clGetPlatformInfo, platform, CL_PLATFORM_##NAME, 0, 0, &param_value_size); \
+    std::vector<char> param_value(param_value_size); \
+    OCL_CALL (clGetPlatformInfo, platform, CL_PLATFORM_##NAME, \
+              param_value_size, param_value.empty() ? NULL : &param_value.front(), \
+              &param_value_size); \
+    std::string str; \
+    if (!param_value.empty()) \
+      str = std::string(&param_value.front(), param_value_size-1); \
+    printf("platform_" #LOWER_NAME " \"%s\"\n", str.c_str()); \
+  }
+
 int
 cl_ocl_init(void)
 {
@@ -196,14 +210,10 @@ cl_ocl_init(void)
 
   /* Get a valid platform */
   OCL_CALL (clGetPlatformIDs, 1, &platform, &platform_n);
-  OCL_CALL (clGetPlatformInfo, platform, CL_PLATFORM_PROFILE, sizeof(name), name, NULL);
-  printf("platform_profile \"%s\"\n", name);
-  OCL_CALL (clGetPlatformInfo, platform, CL_PLATFORM_NAME, sizeof(name), name, NULL);
-  printf("platform_name \"%s\"\n", name);
-  OCL_CALL (clGetPlatformInfo, platform, CL_PLATFORM_VENDOR, sizeof(name), name, NULL);
-  printf("platform_vendor \"%s\"\n", name);
-  OCL_CALL (clGetPlatformInfo, platform, CL_PLATFORM_VERSION, sizeof(name), name, NULL);
-  printf("platform_version \"%s\"\n", name);
+  GET_PLATFORM_STR_INFO(profile, PROFILE);
+  GET_PLATFORM_STR_INFO(name, NAME);
+  GET_PLATFORM_STR_INFO(vendor, VENDOR);
+  GET_PLATFORM_STR_INFO(version, VERSION);
 
   /* Get the device (only GPU device is supported right now) */
   OCL_CALL (clGetDeviceIDs, platform, CL_DEVICE_TYPE_GPU, 1, &device, NULL);
