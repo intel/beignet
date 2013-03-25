@@ -146,6 +146,12 @@ cl_get_device_ids(cl_platform_id    platform,
     memcpy(param_value, device->FIELD, device->JOIN(FIELD,_sz));    \
     return CL_SUCCESS;
 
+#define GET_STRING_FIELD_SIZE(CASE,FIELD)                           \
+  case JOIN(CL_DEVICE_,CASE):                                       \
+    if (param_value_size_ret != NULL)                               \
+      *param_value_size_ret = device->JOIN(FIELD,_sz);              \
+    return CL_SUCCESS;
+
 LOCAL cl_int
 cl_get_device_info(cl_device_id     device,
                    cl_device_info   param_name,
@@ -157,8 +163,17 @@ cl_get_device_info(cl_device_id     device,
                device != &intel_ivb_gt2_device &&
                device != &intel_hsw_device))
     return CL_INVALID_DEVICE;
-  if (UNLIKELY(param_value == NULL))
-    return CL_INVALID_VALUE;
+
+  if (param_value == NULL) {
+    switch (param_name) {
+      GET_STRING_FIELD_SIZE(NAME, name)
+      GET_STRING_FIELD_SIZE(VENDOR, vendor)
+      GET_STRING_FIELD_SIZE(VERSION, version)
+      GET_STRING_FIELD_SIZE(PROFILE, profile)
+      GET_STRING_FIELD_SIZE(OPENCL_C_VERSION, opencl_c_version)
+      default: return CL_INVALID_VALUE;
+    }
+  }
 
   /* Find the correct parameter */
   switch (param_name) {
