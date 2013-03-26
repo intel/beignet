@@ -37,7 +37,7 @@
 .native_vector_width_half = 16,
 .address_bits = 32,
 .max_mem_alloc_size = 128 * 1024 * 1024,
-.image_support = CL_FALSE,
+.image_support = CL_TRUE,
 .max_read_image_args = 0,
 .max_write_image_args = 0,
 .image2d_max_width = 8192,
