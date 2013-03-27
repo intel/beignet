@@ -1,0 +1,280 @@
+<h1>Unstructured Branches</h1>
+
+<p>A major challenge in making a OpenCL compiler is certainly to handle any kind of
+branches. Indeed LLVM does not make any distinction between structured branches.
+See <a href="http://llvm.org/docs/LangRef.html">here</a> for a complete description of
+the LLVM assembly specification.</p>
+
+<p>The C branching code is simply lowered down in the following instructions:</p>
+
+<ul>
+<li><code>ret</code> to return from the current function</li>
+<li><code>br</code> that, if predicated, possibly jumps to two destinations (one for the
+taken branch and one for the other).</li>
+<li><code>switch</code> that implements the C switch/case construct.</li>
+<li><code>indirectbr</code> that implements a jump table</li>
+<li><code>invoke</code> and <code>resume</code> mostly used to handle exceptions</li>
+</ul>
+
+<p>Exceptions and jump tables are not supported in OpenCL. Switch cases can be
+lowered down to a sequence of if/else statements (using a divide and conquer
+approach a switch/case can be dispatched in log(n) complexity where n is the
+number of targets).</p>
+
+<p>This leads us to properly implement <code>br</code> and <code>ret</code> instructions.</p>
+
+<h2>Solution 1 - Using Gen structured branches</h2>
+
+<p>Gen structured branches are the following instructions:</p>
+
+<p><code>if</code> <code>else</code> <code>endif</code> <code>break</code> <code>continue</code> <code>while</code> <code>brd</code> <code>brc</code></p>
+
+<p>Transforming the LLVM IR code into structured code results in basically
+reverse-engineering the LLVM code into the original C code.
+Unfortunately, there are several key problems:</p>
+
+<ul>
+<li>OpenCL supports <code>goto</code> keyword that may jump to an arbitrary location</li>
+<li>LLVM can transform the control flow graph in any kind of form</li>
+<li>Worse is that a reducible control flow graph can be turned into an irreducible
+one by the optimizer.</li>
+</ul>
+
+<p>This can lead to complicated code transform and basic block duplication. The
+specification allows the compiler to abort if an irreducible control flow is
+detected but as an implementor, this is quite awkward to abort the compilation
+because the optimizer turns an reducible CFG to an irreducible one. Using
+structured branches is the open door to many corner cases.</p>
+
+<p>Thing is it exists a pretty elegant solution that can be almost seamlessly
+supported by Gen. This is the solution we retained.</p>
+
+<h2>Solution 2 - Linearizing the control flow graph</h2>
+
+<p>The general problem is to map a general control flow graph to a SIMD machine.
+The problem is fairly well understood today. A recent research paper actually
+dedicated to OpenCL like languages which use the "SPMD" (single program multiple
+data) programming model present interesting insights about how to map SIMD
+architectures to such languages (see [here]
+(http://www.cdl.uni-saarland.de/papers/karrenberg_opencl.pdf)).</p>
+
+<h3>Core idea</h3>
+
+<ul>
+<li><p>Linearizing the CFG initially consists in removing all forward branches and
+"replace" them by predication. Indeed, the program will be still correct if you
+predicate instructions based instead of forward jumps. This is basically the
+a control flow to data flow conversion.</p></li>
+<li><p>Of course, removing all forward branches is inefficient. To improve that, we
+simply introduce "if conditions" in the head of basic blocks to know if we run
+the basic block. If no lanes is going to be activated in the basic block, we
+jump to another basic block where <em>potentially</em> some lanes are going to be
+reactivated.</p></li>
+</ul>
+
+<p>Consider the following CFG:</p>
+
+<pre>
+o-------o
+|       |
+|   1   |---->-----o
+|       |          |
+o-------o          |
+    |              |
+    |              |
+o-------o          |
+|       |          |
+|   2   |---->-----------o
+|       |          |     |
+o-------o          |     |
+    |              |     |
+    |              |     |
+    | o------o     |     |
+    | |      |     |     |
+    | v      |     |     |
+o-------o    |     |     |
+|       |    |     |     |
+|   3   |    |     |     |
+|       |    |     |     |
+o-------o    |     |     |
+    | |      |     |     |
+    | o------o     |     |
+    |              |     |
+o-------o          |     |
+|       |          |     |
+|   4   |<---------o     |
+|       |                |
+o-------o                |
+    |                    |
+    |                    |
+o-------o                |
+|       |                |
+|   5   |<----------------o
+|       |
+o-------o
+</pre>
+
+<p>Mapping it to a SIMD machine may seem challenging. Actually it is not too
+complicated. The problem is with the 2->5 jump. Indeed, we have to be sure that
+we are not missing any computation done in block 4.</p>
+
+<p>To do so:
+- Instead of jumping from block 2 to block 5, we jump from block 2 to block 4. 
+- We implement a <code>JOIN</code> point on top of block 4. We check if any lane is going
+to be reactivated for the block 4. If not, we jump to block 5.</p>
+
+<p>This leads to the following linearized CFG:</p>
+
+<pre>
+o-------o
+|       |
+|   1   |---->-----o
+|       |          |
+o-------o          |
+    |              |
+    |              |
+o-------o          |
+|       |          |
+|   2   |---->-----------o
+|       |          |     |
+o-------o          |     |
+    |              |     |
+    |              |     |
+    | o--<---o     |     |
+    | |      |     |     |
+    | v      |     |     |
+o-------o    |     |     |
+|       |    |     |     |
+|   3   |    ^     |     |
+|       |    |     |     |
+o-------o    |     |     |
+    | |      |     |     |
+    | o-->---o     |     |
+    |              |     |
+o-------o          |     |
+|       |==========|=====|====O
+|   4   |<---------|-----o    |
+|       |<---------o          |
+o-------o                     |
+    |                         |
+    |                         |
+o-------o                     |
+|       |                     |
+|   5   |<====================O
+|       |
+o-------o
+</pre>
+
+<p>There is a new jump from block 4 to block 5.</p>
+
+<h3>Implementation on Gen</h3>
+
+<p>When using structured branches, Gen can supports auto-masking i.e. based on the
+branches which are taken, the control flow is properly handled and masks are
+automatically applied on all instructions.</p>
+
+<p>However, there is no similar support for unstructured branches. We therefore
+decided to mask instructions manually and use single program flow. This is
+actually quite easy to do since Gen is able to predicate any branches.</p>
+
+<p>Now, how to evaluate the if conditions in an efficient way?</p>
+
+<p>The choice we did is to use <em>per-lane block IPs</em>: for each SIMD lane, we store a
+short (16 bits) for each lane in a regular 256 bits GPR (general purpose
+register). This "blockIP" register is used in the following way:</p>
+
+<p>At the beginning of each block, we compare the blockIP register with the ID of
+the block. The lane is going to be <em>activated</em> if its blockIP is <em>smaller</em> than
+the ID of the block. Otherwise, the lane is deactivated.</p>
+
+<p>Therefore, we build a flag register at the entry of each basic block with a
+single 16-wide uint16_t compare. If no lane is activated, a jump is performed to
+the next block where some lanes is going to be activated.</p>
+
+<p>Since this is regular jumps, we just use <code>jmpi</code> instruction. With the help of
+predication, we can express all the different possibilities:</p>
+
+<ul>
+<li>backward branches are always taken if <em>any</em> of lanes in the predicate is true.
+We just use <code>&lt;+f0.0.anyh&gt;</code> predication.</li>
+<li>forward branches is <em>not</em> taken if some of the lanes are going to activated in
+the next block. We therefore compare the blockIP with the ID of the <em>next</em>
+block. If all of them are strictly greater than the ID of the next block, we
+jump. We therefore use the <code>&lt;+f0.0.allh&gt;</code> predicate in that case.</li>
+<li><code>JOIN</code> points are even simpler. We simply jump if none of the lane is activated.
+We therefore use the <code>&lt;-f0.0.anyh&gt;</code> predicate.</li>
+</ul>
+
+<p>The complete encoding is done in <code>src/backend/gen_insn_selection.cpp</code>. Forward
+branches are handled by <code>SimpleSelection::emitForwardBranch</code>. Backward branches
+are handled by <code>SimpleSelection::emitBackwardBranch</code>. Finally, since <code>JOIN</code> points
+are at the top of each basic blocks, they are handled by
+<code>SimpleSelection::emitLabelInstruction</code>.</p>
+
+<h3>Computing <code>JOIN</code> points</h3>
+
+<p>The last problem is to compute <code>JOIN</code> point i.e. we need to know if we need to
+jump at the beginning of each block and if we do, what is the target of the
+branch. The code is relatively straightforward and can be found in
+<code>src/backend/context.cpp</code>. Function is <code>Context::buildJIPs</code>.
+</br>
+Actually, the current implementation is not that elegant. A colleague, Thomas
+Raoux, has a simpler and better idea to handle it.</p>
+
+<h3>Advantages and drawbacks of the method</h3>
+
+<ul>
+<li>The method has one decisive advantage: it is simple and extremely robust. It can
+handle any kind of CFGs (reducible or not) and does not require any
+transformation. The use of shorts is also not random. 16-wide compares is issued
+in 2 cycles (so it is twice fast as 16-wide 32 bits compares).</li>
+<li>Main drawback will be performance. Even if this is not so bad, we still need
+more instructions than if we used structured branches. Mostly
+<ul>
+<li>one or two instructions for <code>JOIN</code> points</li>
+<li>three instructions for backward and forward jumps (two more than structured
+branches that just require the branch instruction itself)</li>
+</ul></li>
+</ul>
+
+<p>Note that all extra instructions are 16 bits instructions (i.e. they use shorts)
+so they will only cost 2 cycles anyway.</p>
+
+<p>The last point is that Gen encoding restricts conditional modifiers and
+predicates to be the same in the instruction. This requires to copy or recompute
+the flag register for compares and select. So one more instruction is required
+for these two instructions. Once again, this would require only 2 cycles.</p>
+
+<h2>Remarks on <code>ret</code> instructions</h2>
+
+<p>Since we can handle any kind of CFG, handling the return statements are
+relatively straightforward. We first create one return block at the end of the
+program. Then we replace all other returns by a unconditional jump to this
+block. The CFG linearization will take care of the rest.
+We then simply encode the (only one) return instruction as a End-Of-Thread
+message (EOT).</p>
+
+<h2>Code examples</h2>
+
+<p>Some tests were written to assert the correctness of the CFG linearization and the
+code generation. They can be found in the <em>run-time</em> code base here:</p>
+
+<p><code>utest/compiler_if_else.cpp</code></p>
+
+<p><code>utest/compiler_lower_return0.cpp</code></p>
+
+<p><code>utest/compiler_lower_return1.cpp</code></p>
+
+<p><code>utest/compiler_lower_return2.cpp</code></p>
+
+<p><code>utest/compiler_short_scatter.cpp</code></p>
+
+<p><code>utest/compiler_unstructured_branch0.cpp</code></p>
+
+<p><code>utest/compiler_unstructured_branch1.cpp</code></p>
+
+<p><code>utest/compiler_unstructured_branch2.cpp</code></p>
+
+<p><code>utest/compiler_unstructured_branch3.cpp</code></p>
+
+<p><a href="../README.html">Up</a></p>

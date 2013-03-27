@@ -1,0 +1,52 @@
+<h1>Beignet Compiler</h1>
+
+<p>This code base contains the compiler part of the Beignet OpenCL stack. The
+compiler is responsible to take a OpenCL language string and to compile it into
+a binary that can be executed on Intel integrated GPUs.</p>
+
+<h2>Limitations</h2>
+
+<p>Today, the compiler is far from complete. See <a href="doc/TODO.html">here</a> for a
+(incomplete) lists of things to do.</p>
+
+<h2>Interface with the run-time</h2>
+
+<p>Even if the compiler makes a very liberal use of C++ (templates, variadic
+templates, macros), we really tried hard to make a very simple interface with
+the run-time. The interface is therefore a pure C99 interface and it is defined
+in <code>src/backend/program.h</code>.</p>
+
+<p>The goal is to hide the complexity of the inner data structures and to enable
+simple run-time implementation using straightforward C99.</p>
+
+<p>Note that the data structures are fully opaque: this allows us to use both the
+C++ simulator or the real Gen program in a relatively non-intrusive way.</p>
+
+<h2>Various environment variables</h2>
+
+<p>Environment variables are used all over the code. Most important ones are:</p>
+
+<ul>
+<li><p><code>OCL_SIMD_WIDTH</code> <code>(8 or 16)</code>. Change the number of lanes per hardware thread</p></li>
+<li><p><code>OCL_OUTPUT_GEN_IR</code> <code>(0 or 1)</code>. Output Gen IR (scalar intermediate
+representation) code</p></li>
+<li><p><code>OCL_OUTPUT_LLVM</code> <code>(0 or 1)</code>. Output LLVM code after the lowering passes</p></li>
+<li><p><code>OCL_OUTPUT_LLVM_BEFORE_EXTRA_PASS</code> <code>(0 or 1)</code>. Output LLVM code before the
+lowering passes</p></li>
+<li><p><code>OCL_OUTPUT_ASM</code> <code>(0 or 1)</code>. Output Gen ISA</p></li>
+<li><p><code>OCL_OUTPUT_REG_ALLOC</code> <code>(0 or 1)</code>. Output Gen register allocations</p></li>
+</ul>
+
+<h2>Implementation details</h2>
+
+<p>Several key decisions may use the hardware in an usual way. See the following
+documents for the technical details about the compiler implementation:</p>
+
+<ul>
+<li><a href="doc/flat_address_space.html">Flat address space</a></li>
+<li><a href="doc/unstructured_branches.html">Unstructured branches</a></li>
+<li><a href="doc/gen_ir.html">Scalar intermediate representation</a></li>
+<li><a href="doc/compiler_backend.html">Clean backend implementation</a></li>
+</ul>
+
+<p>Ben Segovia. </p>

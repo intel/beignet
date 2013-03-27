@@ -29,7 +29,7 @@ Basically, from the root directory of the project
 
 `> cd build`
 
-`> ccmake ../ # to configure`
+`> cmake ../ # to configure`
 
 Choose whatever you want for the build.
 
@@ -42,21 +42,25 @@ The project depends on several external libraries:
 - Several X components (XLib, Xfixes, Xext)
 - libdrm libraries (libdrm and libdrm\_intel)
 - Various LLVM components
+- The compiler backend itself (libgbe)
+- Mesa git master version built with gbm enabled to support extension cl\_khr\_gl\_sharing.
 
 CMake will check the dependencies and will complain if it does not find them.
+
+The cmake will also build the backend project. Please refer to:
+[OpenCL Gen Backend](backend/README.html) to get more dependencies.
 
 Once built, the run-time produces a shared object libcl.so which basically
 directly implements the OpenCL API. A set of tests are also produced. They may
 be found in `utests/`.
 
 Note that the compiler depends on LLVM (Low-Level Virtual Machine project).
-Right now, the code has only been compiled with LLVM 3.0. It will not compile
+Right now, the code has been compiled with LLVM 3.1/3.2. It will not compile
 with any thing older. 
 
 [http://llvm.org/releases/](http://llvm.org/releases/)
 
-LLVM 3.0 and 3.1 are supported. LLVM 3.2 is partially supported right now. More
-work is needed to make it fully work.
+LLVM 3.1 and 3.2 are supported.
 
 Also note that the code was compiled on GCC 4.6 and GCC 4.7. Since the code uses
 really recent C++11 features, you may expect problems with older compilers. Last
@@ -102,34 +106,42 @@ The run-time is far from being complete. Most of the pieces have been put
 together to test and develop the OpenCL compiler. A partial list of things to
 do:
 
-- Support for samplers / textures but it should be rather easy since the
-  low-level parts of the code already supports it
+- Support dynamic sampler assignment in kernel. We now only support user to use
+  clCreateSampler at host side and then pass the sampler to kernel.
 
-- Support for events
+- Complete cl\_khr\_gl\_sharing support. We lack of some APIs implementation such
+  as clCreateFromGLBuffer,clCreateFromGLRenderbuffer,clGetGLObjectInfo... Currently,
+  the working APIs are clCreateFromGLTexture,clCreateFromGLTexture2D.
+
+- Support for events.
 
 - Check that NDRangeKernels can be pushed into _different_ queues from several
-  threads 
+  threads.
 
-- Support for Enqueue\*Buffer. I added a straightforward extension to map /
-  unmap buffer. This extension `clIntelMapBuffer` directly maps `dri_bo_map`
-  which is really convenient
-
-- Full support for images. Today, the code just tiles everything *manually*
-  which is really bad. I think the best solution to copy and create images is to
-  use the GPU and typed writes (scatter to textures) or samplers. We would
-  however need the vmap extension proposed by Chris Wilson to be able to map
-  user pointers while doing to copies and the conversions.
+- Support for nonblocking mode Enqueue\*Buffer. Now we only use the map extension to
+  implement those Enqueue\*Buffer functions. 
 
 - No state tracking at all. One batch buffer is created at each "draw call"
   (i.e. for each NDRangeKernels). This is really inefficient since some
   expensive pipe controls are issued for each batch buffer
 
 - Valgrind reports some leaks in libdrm. It sounds like a false positive but it
-  has to be checked. Idem for LLVM. There is one leak here to check
+  has to be checked. Idem for LLVM. There is one leak here to check.
+
+- Support image/samplers in C++ simulator.
 
 More generally, everything in the run-time that triggers the "FATAL" macro means
 that something that must be supported is not implemented properly (either it
 does not comply with the standard or it is just missing)
 
-Ben Segovia (<benjamin.segovia@intel.com>)
+Project repository
 
+Right now, we host our project on fdo at: git://anongit.freedesktop.org/beignet.
+
+The team
+--------
+This project was created by Ben Segovia when he was working for Intel. Now we
+have a team in China OTC graphics department continue to work on this project.
+We haven't set up a public mail list for this project, but we will do so in
+the near furture. Before that, the contact is as below:
+Zou Nanhai (<nanhai.zou@intel.com>).

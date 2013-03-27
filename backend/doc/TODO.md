@@ -25,8 +25,8 @@ many things must be implemented:
 
 - Lowering down of various intrinsics like `llvm.memcpy`
 
-- Implementation of most of the OpenCL built-ins (`native_cos`, `native_sin`,
-  `mad`, atomic operations, barriers...)
+-  Conformance test for all OpenCL built-ins (`native_cos`, `native_sin`,
+  `mad`, atomic operations, barriers...).
 
 - Lowering down of int16 / int8 / float16 / char16 / char8 / char4 loads and
   stores into the supported loads and stores
@@ -38,9 +38,6 @@ many things must be implemented:
 
 - Support for doubles
 
-- Support for images. This will require to ensure that images are only directly
-  accessed
-
 - Better resolving of the PHI functions. Today, we always generate MOV
   instructions at the end of each basic block . They can be easily optimized.
 
@@ -50,12 +47,6 @@ Gen IR
 The code is defined in `src/ir`. Main things to do are:
 
 - Bringing support for doubles
-
-- Adding proper support for SAMPLE and TYPED_WRITE instructions
-
-- Adding support for BARRIER instructions
-
-- Adding support for all the math instructions (native_cos, native_sin...)
 
 - Finishing the handling of function arguments (see the [IR
   description](gen_ir.html) for more details)
@@ -81,9 +72,6 @@ Backend
 -------
 
 The code is defined in `src/backend`. Main things to do are:
-
-- Bringing backend support for the missing instructions described above
-  (native_sin, native_cos, barriers, samples...)
 
 - Implementing support for doubles
 

@@ -1,0 +1,107 @@
+<h1>Compiler Back End</h1>
+
+<p>Well, the complete code base is somehow a compiler backend for LLVM. Here, we
+really speak about the final code generation passes that you may find in
+<code>src/backend</code>.</p>
+
+<p>As explained in <a href="./gen_ir.html">the scalar IR presentation</a>, we bet on a very
+simple scalar IR to make it easy to parse and modify. The idea is to fix the
+unrelated problem (very Gen specific) where we can i.e. when the code is
+generated.</p>
+
+<p>The code generation in the compiler backend is classically divided into four
+steps</p>
+
+<ul>
+<li><p>Instruction selection (defined in <code>src/backend/gen_insn_selection.*pp</code>). We
+expose an interface for the instruction selection engine. We implemented a
+very simple selection (called <code>SimpleSelection</code>) that does a quick and dirty
+one-to-many instruction generation.</p></li>
+<li><p>Register allocation (defined in <code>src/backend/gen_reg_allocation.*pp</code>). The
+code implements a linear scan allocator on the code selected in the previous
+pass. See below for more details about register vector allocations.</p></li>
+<li><p>Instruction scheduling. This one is not done yet. We just output the same
+instruction order as the program order. Note that we plan to implement an
+adaptive scheduling between register allocation and instruction  selection (to
+avoid spilling as much as possible)</p></li>
+<li><p>Instruction encoding. This is the final step that encodes the program into Gen
+ISA.</p></li>
+</ul>
+
+<h2>Instruction selection</h2>
+
+<p>Usually, the instruction selection consists in mapping <code>p</code> instructions to <code>q</code>
+ISA instructions under a cost driven model. Each basic block is therefore <em>tiled</em>
+into some numbers of groups of ISA instructions such that the final cost is
+minimized.</p>
+
+<p>The literature is particularly dense on the subject. Compilers usually use today
+either tree matching methods or selection DAG techniques (as LLVM backends do)</p>
+
+<p>The instruction selection is still a work in progress in our compiler and we
+only implement the most stupid (and inefficient) technique: we simply generate
+as many instructions as we need for each <em>individual</em> IR instructions. Since we
+do not support immediate sources, this in particular leads to really ugly
+looking code such as <code>mov (16) r2:f 1.f</code>. It is still a work in progress.</p>
+
+<p>Other than that, the instruction selection is really a book keeping structure.
+We basically output <code>SelectionInstruction</code> objects which are the 1-to-1 mapping
+of Gen ISA encoding functions defined in <code>src/backend/gen_encoder.*pp</code>.</p>
+
+<p>However, the <code>SelectionInstruction</code> still use unallocated virtual registers and
+do <em>not</em> use vectors but simply tuples of virtual registers.</p>
+
+<h2>Register allocation</h2>
+
+<p>The register allocation actually consists in two steps:</p>
+
+<ol>
+<li><p>Handling the vector for all the instructions that require them</p></li>
+<li><p>Performing the register allocation itself</p></li>
+</ol>
+
+<p>Step 1 consists in scanning all the vectors required by sends. Obviously, the
+same register may be used in different vectors and that may lead to
+interferences. We simply sort the vectors from the largest to the smallest and
+allocate them in that order. As an optimization we also identify sub-vectors
+i.e. vectors included in larger ones and no not allocate them.</p>
+
+<p>The code may be largely improved in particular if we take into account liveness
+interferences as well. Basically, a register may be part of several vectors if the
+registers that are not in both vectors at the same location are not alive at the
+same time.</p>
+
+<p>This is still a work in progress. Code is right now handled by method
+<code>GenRegAllocator::allocateVector</code>.</p>
+
+<p>Step 2 performs the register allocation i.e. it associates each virtual register
+to one (or several) physical registers. The first thing is that the Gen register
+file is very flexible i.e. it can (almost) be freely partitioned. To handle this
+peculiarity, we simply implemented a free list based generic memory allocator as
+done with <code>RegisterFilePartitioner</code> in <code>src/backend/context.cpp</code>.</p>
+
+<p>We then simply implemented a linear scan allocator (see
+<code>gen_reg_allocation.cpp</code>). The spilling is not implemented and is still a work
+in progress. The thing is that spilling must be specifically handled with Gen.
+Indeed:</p>
+
+<ol>
+<li><p>Bad point. Spilling is expensive and require to assemble messages for it</p></li>
+<li><p>Good point. Gen is able to spill up to 256 <em>contiguous</em> bytes in one message.
+This must be used for high performance spilling and this may require to reorder
+properly registers to spill.</p></li>
+</ol>
+
+<h2>Instruction scheduling</h2>
+
+<p>Intra-basic block instruction scheduling is relatively simple. It is not
+implemented yet.</p>
+
+<h2>Instruction encoding</h2>
+
+<p>This is mostly done in <code>src/backend/gen_context.cpp</code> and
+<code>src/backend/gen_encoder./*pp</code>. This is mostly glue code and it is pretty
+straightforward. We just forward the selection code using the physically
+allocated registers. There is nothing special here. Just boilerplate.</p>
+
+<p><a href="../README.html">Up</a></p>

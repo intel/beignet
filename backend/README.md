@@ -42,6 +42,8 @@ Environment variables are used all over the code. Most important ones are:
 
 - `OCL_OUTPUT_ASM` `(0 or 1)`. Output Gen ISA
 
+- `OCL_OUTPUT_REG_ALLOC` `(0 or 1)`. Output Gen register allocations
+
 Implementation details
 ----------------------
 
@@ -53,5 +55,5 @@ documents for the technical details about the compiler implementation:
 - [Scalar intermediate representation](doc/gen\_ir.html)
 - [Clean backend implementation](doc/compiler_backend.html)
 
-Ben Segovia (<benjamin.segovia@intel.com>)
+Ben Segovia. 
 
