@@ -750,7 +750,7 @@ namespace gbe
           if (CP) {
             GBE_ASSERT(isa<GlobalValue>(CP) == false);
             ConstantVector *CPV = dyn_cast<ConstantVector>(CP);
-            if (dyn_cast<ConstantVector>(CPV) &&
+            if (CPV && dyn_cast<ConstantVector>(CPV) &&
                 isa<UndefValue>(extractConstantElem(CPV, elemID)))
               continue;
             const ir::ImmediateIndex immIndex = this->newImmediate(CP, elemID);
