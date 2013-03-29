@@ -52,7 +52,9 @@
 #include "llvm/MC/MCRegisterInfo.h"
 #include "llvm/MC/MCSubtargetInfo.h"
 #include "llvm/MC/MCSymbol.h"
+#if !defined(LLVM_VERSION_MAJOR) || (LLVM_VERSION_MINOR == 1)
 #include "llvm/Target/TargetData.h"
+#endif
 #include "llvm/Support/CallSite.h"
 #include "llvm/Support/CFG.h"
 #include "llvm/Support/ErrorHandling.h"
