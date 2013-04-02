@@ -1169,7 +1169,7 @@ clEnqueueBarrier(cl_command_queue  command_queue)
 void*
 clGetExtensionFunctionAddress(const char *func_name)
 {
-  NOT_IMPLEMENTED;
+  /* No extensions supported at present */
   return NULL;
 }
 
