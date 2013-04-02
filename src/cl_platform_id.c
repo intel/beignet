@@ -86,7 +86,7 @@ cl_get_platform_ids(cl_uint          num_entries,
     return CL_SUCCESS;
 
 LOCAL cl_int
-cl_get_platform_into(cl_platform_id    platform,
+cl_get_platform_info(cl_platform_id    platform,
                      cl_platform_info  param_name,
                      size_t            param_value_size,
                      void *            param_value,

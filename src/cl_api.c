@@ -51,7 +51,7 @@ clGetPlatformInfo(cl_platform_id    platform,
                   void *            param_value,
                   size_t *          param_value_size_ret)
 {
-  return cl_get_platform_into(platform,
+  return cl_get_platform_info(platform,
                               param_name,
                               param_value_size,
                               param_value,
