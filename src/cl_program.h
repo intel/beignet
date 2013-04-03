@@ -38,6 +38,7 @@ enum {
 
 /* This maps an OCL file containing some kernels */
 struct _cl_program {
+  DEFINE_ICD(dispatch)
   uint64_t magic;         /* To identify it as a program */
   volatile int ref_n;     /* We reference count this object */
   gbe_program opaque;     /* (Opaque) program as ouput by the compiler */

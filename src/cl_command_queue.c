@@ -26,6 +26,7 @@
 #include "cl_utils.h"
 #include "cl_alloc.h"
 #include "cl_driver.h"
+#include "cl_khr_icd.h"
 
 #include <assert.h>
 #include <stdio.h>
@@ -38,6 +39,7 @@ cl_command_queue_new(cl_context ctx)
 
   assert(ctx);
   TRY_ALLOC_NO_ERR (queue, CALLOC(struct _cl_command_queue));
+  SET_ICD(queue->dispatch)
   queue->magic = CL_MAGIC_QUEUE_HEADER;
   queue->ref_n = 1;
   queue->ctx = ctx;

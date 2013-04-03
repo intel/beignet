@@ -29,6 +29,7 @@ struct intel_gpgpu;
 
 /* Basically, this is a (kind-of) batch buffer */
 struct _cl_command_queue {
+  DEFINE_ICD(dispatch)
   uint64_t magic;              /* To identify it as a command queue */
   volatile int ref_n;          /* We reference count this object */
   cl_context ctx;              /* Its parent context */

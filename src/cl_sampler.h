@@ -25,6 +25,7 @@
 
 /* How to access images */
 struct _cl_sampler {
+  DEFINE_ICD(dispatch)
   uint64_t magic;            /* To identify it as a sampler object */
   volatile int ref_n;        /* This object is reference counted */
   cl_sampler prev, next;     /* We chain the samplers in the allocator */

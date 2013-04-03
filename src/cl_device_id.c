@@ -23,6 +23,7 @@
 #include "cl_utils.h"
 #include "cl_driver.h"
 #include "cl_device_data.h"
+#include "cl_khr_icd.h"
 #include "CL/cl.h"
 
 #include <assert.h>
@@ -30,6 +31,7 @@
 #include <string.h>
 
 static struct _cl_device_id intel_ivb_gt2_device = {
+  INIT_ICD(dispatch)
   .max_compute_unit = 128,
   .max_thread_per_unit = 8,
   .max_work_item_sizes = {512, 512, 512},
@@ -41,6 +43,7 @@ static struct _cl_device_id intel_ivb_gt2_device = {
 };
 
 static struct _cl_device_id intel_ivb_gt1_device = {
+  INIT_ICD(dispatch)
   .max_compute_unit = 64,
   .max_thread_per_unit = 8,
   .max_work_item_sizes = {512, 512, 512},
@@ -53,6 +56,7 @@ static struct _cl_device_id intel_ivb_gt1_device = {
 
 /* XXX we clone IVB for HSW now */
 static struct _cl_device_id intel_hsw_device = {
+  INIT_ICD(dispatch)
   .max_compute_unit = 64,
   .max_thread_per_unit = 8,
   .max_work_item_sizes = {512, 512, 512},

@@ -22,6 +22,7 @@
 
 /* Store complete information about the device */
 struct _cl_device_id {
+  DEFINE_ICD(dispatch)
   cl_device_type device_type;
   cl_uint  vendor_id;
   cl_uint  max_compute_unit;

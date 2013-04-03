@@ -22,19 +22,23 @@
 
 #include "cl_internals.h"
 #include "cl_extensions.h"
+#include "cl_khr_icd.h"
 #include "CL/cl.h"
 
 struct _cl_platform_id {
+  DEFINE_ICD(dispatch)
   const char *profile;
   const char *version;
   const char *name;
   const char *vendor;
   char *extensions;
+  const char *icd_suffix_khr;
   size_t profile_sz;
   size_t version_sz;
   size_t name_sz;
   size_t vendor_sz;
   size_t extensions_sz;
+  size_t icd_suffix_khr_sz;
   struct cl_extensions *internal_extensions;
 };
 

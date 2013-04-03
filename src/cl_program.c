@@ -23,6 +23,7 @@
 #include "cl_context.h"
 #include "cl_alloc.h"
 #include "cl_utils.h"
+#include "cl_khr_icd.h"
 #include "CL/cl.h"
 #include "CL/cl_intel.h"
 
@@ -91,6 +92,7 @@ cl_program_new(cl_context ctx)
 
   /* Allocate the structure */
   TRY_ALLOC_NO_ERR (p, CALLOC(struct _cl_program));
+  SET_ICD(p->dispatch)
   p->ref_n = 1;
   p->magic = CL_MAGIC_PROGRAM_HEADER;
   p->ctx = ctx;

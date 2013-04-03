@@ -23,6 +23,7 @@
 #include "cl_internals.h"
 #include "cl_driver.h"
 #include "CL/cl.h"
+#include "cl_khr_icd.h"
 
 #include <stdint.h>
 #include <pthread.h>
@@ -52,6 +53,7 @@ struct _cl_context_prop {
 
 /* Encapsulate the whole device */
 struct _cl_context {
+  DEFINE_ICD(dispatch)
   uint64_t magic;                   /* To identify it as a context */
   volatile int ref_n;               /* We reference count this object */
   cl_driver drv;                    /* Handles HW or simulator */

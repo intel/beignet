@@ -21,6 +21,7 @@
 #include "cl_internals.h"
 #include "cl_utils.h"
 #include "CL/cl.h"
+#include "CL/cl_ext.h"
 
 #include <stdlib.h>
 #include <string.h>
@@ -30,10 +31,12 @@
     .JOIN(FIELD,_sz) = sizeof(STRING) + 1,
 
 static struct _cl_platform_id intel_platform_data = {
+  INIT_ICD(dispatch)
   DECL_INFO_STRING(profile, "FULL_PROFILE")
   DECL_INFO_STRING(version, OCL_VERSION_STRING)
   DECL_INFO_STRING(name, "Experiment Intel Gen OCL Driver")
   DECL_INFO_STRING(vendor, "Intel")
+  DECL_INFO_STRING(icd_suffix_khr, "Intel")
 };
 
 #undef DECL_INFO_STRING
@@ -103,6 +106,7 @@ cl_get_platform_info(cl_platform_id    platform,
       GET_FIELD_SZ (PLATFORM_NAME,       name);
       GET_FIELD_SZ (PLATFORM_VENDOR,     vendor);
       GET_FIELD_SZ (PLATFORM_EXTENSIONS, extensions);
+      GET_FIELD_SZ (PLATFORM_ICD_SUFFIX_KHR, icd_suffix_khr);
       default: return CL_INVALID_VALUE;
     }
   }
@@ -114,6 +118,7 @@ cl_get_platform_info(cl_platform_id    platform,
     DECL_FIELD (PLATFORM_NAME,       name);
     DECL_FIELD (PLATFORM_VENDOR,     vendor);
     DECL_FIELD (PLATFORM_EXTENSIONS, extensions);
+    DECL_FIELD (PLATFORM_ICD_SUFFIX_KHR, icd_suffix_khr);
     default: return CL_INVALID_VALUE;
   }
 }

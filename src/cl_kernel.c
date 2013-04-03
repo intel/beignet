@@ -24,6 +24,7 @@
 #include "cl_mem.h"
 #include "cl_alloc.h"
 #include "cl_utils.h"
+#include "cl_khr_icd.h"
 #include "CL/cl.h"
 #include "cl_sampler.h"
 
@@ -64,6 +65,7 @@ cl_kernel_new(cl_program p)
 {
   cl_kernel k = NULL;
   TRY_ALLOC_NO_ERR (k, CALLOC(struct _cl_kernel));
+  SET_ICD(k->dispatch)
   k->ref_n = 1;
   k->magic = CL_MAGIC_KERNEL_HEADER;
   k->program = p;

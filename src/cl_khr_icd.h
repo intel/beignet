@@ -1,5 +1,5 @@
 /* 
- * Copyright © 2012 Intel Corporation
+ * Copyright © 2013 Simon Richter
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -13,16 +13,18 @@
  *
  * You should have received a copy of the GNU Lesser General Public
  * License along with this library. If not, see <http://www.gnu.org/licenses/>.
- *
- * Author: Benjamin Segovia <benjamin.segovia@intel.com>
  */
 
-#ifndef __CL_EVENT_H__
-#define __CL_EVENT_H__
+#ifdef HAS_OCLIcd
 
-struct _cl_event {
-  DEFINE_ICD(dispatch)
-};
+#define SET_ICD(dispatch) \
+  dispatch = &cl_khr_icd_dispatch;
+#define INIT_ICD(member)  .member = &cl_khr_icd_dispatch,
+#define DEFINE_ICD(member) struct _cl_icd_dispatch const *member;
 
-#endif /* __CL_EVENT_H__ */
-
+extern struct _cl_icd_dispatch const cl_khr_icd_dispatch;
+#else
+#define SET_ICD(dispatch)
+#define INIT_ICD(member)
+#define DEFINE_ICD(member)
+#endif

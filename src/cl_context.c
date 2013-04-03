@@ -25,6 +25,7 @@
 #include "cl_alloc.h"
 #include "cl_utils.h"
 #include "cl_driver.h"
+#include "cl_khr_icd.h"
 
 #include "CL/cl.h"
 #include "CL/cl_gl.h"
@@ -154,6 +155,7 @@ cl_context_new(struct _cl_context_prop *props)
 
   TRY_ALLOC_NO_ERR (ctx, CALLOC(struct _cl_context));
   TRY_ALLOC_NO_ERR (ctx->drv, cl_driver_new(props));
+  SET_ICD(ctx->dispatch)
   ctx->props = *props;
   ctx->magic = CL_MAGIC_CONTEXT_HEADER;
   ctx->ref_n = 1;

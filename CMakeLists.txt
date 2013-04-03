@@ -130,6 +130,13 @@ ELSE(EGL_FOUND)
   MESSAGE(STATUS "Looking for EGL - not found")
 ENDIF(EGL_FOUND)
 
+Find_Package(OCLIcd)
+IF(OCLIcd_FOUND)
+  MESSAGE(STATUS "Looking for OCL ICD header file - found")
+ELSE(OCLIcd_FOUND)
+  MESSAGE(STATUS "Looking for OCL ICD header file - not found")
+ENDIF(OCLIcd_FOUND)
+
 ADD_SUBDIRECTORY(include)
 ADD_SUBDIRECTORY(backend)
 ADD_SUBDIRECTORY(src)

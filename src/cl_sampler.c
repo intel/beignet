@@ -21,6 +21,7 @@
 #include "cl_sampler.h"
 #include "cl_utils.h"
 #include "cl_alloc.h"
+#include "cl_khr_icd.h"
 
 #include <assert.h>
 
@@ -36,6 +37,7 @@ cl_sampler_new(cl_context ctx,
 
   /* Allocate and inialize the structure itself */
   TRY_ALLOC (sampler, CALLOC(struct _cl_sampler));
+  SET_ICD(sampler->dispatch)
   sampler->ref_n = 1;
   sampler->magic = CL_MAGIC_SAMPLER_HEADER;
   sampler->normalized_coords = normalized_coords;

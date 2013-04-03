@@ -32,6 +32,7 @@ typedef enum cl_image_tiling {
 
 /* Used for buffers and images */
 struct _cl_mem {
+  DEFINE_ICD(dispatch)
   uint64_t magic;           /* To identify it as a memory object */
   volatile int ref_n;       /* This object is reference counted */
   cl_buffer bo;             /* Data in GPU memory */

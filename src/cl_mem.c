@@ -24,6 +24,7 @@
 #include "cl_alloc.h"
 #include "cl_device_id.h"
 #include "cl_driver.h"
+#include "cl_khr_icd.h"
 
 #include "CL/cl.h"
 #include "CL/cl_intel.h"
@@ -63,6 +64,7 @@ cl_mem_allocate(cl_context ctx,
 
   /* Allocate and inialize the structure itself */
   TRY_ALLOC (mem, CALLOC(struct _cl_mem));
+  SET_ICD(mem->dispatch)
   mem->ref_n = 1;
   mem->magic = CL_MAGIC_MEM_HEADER;
   mem->flags = flags;

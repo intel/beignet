@@ -31,6 +31,14 @@ void check_basic_extension(cl_extensions_t *extensions)
       extensions->extensions[id].base.ext_enabled = 1;
 }
 
+void check_opt1_extension(cl_extensions_t *extensions)
+{
+  int id;
+  for(id = OPT1_EXT_START_ID; id <= OPT1_EXT_END_ID; id++)
+    if (id == EXT_ID(khr_icd))
+      extensions->extensions[id].base.ext_enabled = 1;
+}
+
 void
 check_gl_extension(cl_extensions_t *extensions) {
 #ifdef HAS_EGL
@@ -101,6 +109,7 @@ cl_intel_platform_extension_init(cl_platform_id intel_platform)
     return;
   }
   check_basic_extension(&intel_extensions);
+  check_opt1_extension(&intel_extensions);
   check_gl_extension(&intel_extensions);
   check_intel_extension(&intel_extensions);
   process_extension_str(&intel_extensions);

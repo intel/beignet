@@ -43,6 +43,7 @@ typedef struct cl_argument {
 
 /* One OCL function */
 struct _cl_kernel {
+  DEFINE_ICD(dispatch)
   uint64_t magic;             /* To identify it as a kernel */
   volatile int ref_n;         /* We reference count this object */
   cl_buffer bo;               /* The code itself */

@@ -52,10 +52,13 @@ cl_khr_extension_id_max
 
 #define BASE_EXT_START_ID EXT_ID(khr_global_int32_base_atomics)
 #define BASE_EXT_END_ID EXT_ID(khr_fp64)
+#define OPT1_EXT_START_ID EXT_ID(khr_int64_base_atomics)
+#define OPT1_EXT_END_ID EXT_ID(khr_icd)
 #define GL_EXT_START_ID EXT_ID(khr_gl_sharing)
 #define GL_EXT_END_ID EXT_ID(khr_gl_msaa_sharing)
 
 #define IS_BASE_EXTENSION(id)  (id >= BASE_EXT_START_ID && id <= BASE_EXT_END_ID)
+#define IS_OPT1_EXTENSION(id)  (id >= OPT1_EXT_START_ID && id <= OPT1_EXT_END_ID)
 #define IS_GL_EXTENSION(id)    (id >= GL_EXT_START_ID && id <= GL_EXT_END_ID)
 
 struct cl_extension_base {

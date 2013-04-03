@@ -30,6 +30,7 @@
 #include "cl_utils.h"
 
 #include "CL/cl.h"
+#include "CL/cl_ext.h"
 #include "CL/cl_intel.h"
 
 #include <stdio.h>
@@ -1169,7 +1170,13 @@ clEnqueueBarrier(cl_command_queue  command_queue)
 void*
 clGetExtensionFunctionAddress(const char *func_name)
 {
-  /* No extensions supported at present */
+  if (func_name == NULL)
+    return NULL;
+#ifdef HAS_OCLIcd
+  /* cl_khr_icd */
+  if (strcmp("clIcdGetPlatformIDsKHR", func_name) == 0)
+    return (void *)clIcdGetPlatformIDsKHR;
+#endif
   return NULL;
 }
 
