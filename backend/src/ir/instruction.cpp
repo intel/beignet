@@ -914,6 +914,7 @@ namespace ir {
       case MEM_PRIVATE: return out << "private";
       case IMAGE: return out << "image";
       case SAMPLER: return out << "sampler";
+      case MEM_INVALID: return out << "invalid";
     };
     return out;
   }
