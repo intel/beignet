@@ -109,8 +109,9 @@ namespace ir {
     }
     /*! Copy the private fields and give it the same parent */
     INLINE Instruction(const Instruction &other) :
-      Instruction(reinterpret_cast<const char*>(&other.opcode))
-    {}
+      InstructionBase(reinterpret_cast<const char*>(&other.opcode)) {
+      parent = other.parent;
+    }
   private:
     /*! To be consistant with copy constructor */
     INLINE Instruction &operator= (const Instruction &other) { return *this; }
