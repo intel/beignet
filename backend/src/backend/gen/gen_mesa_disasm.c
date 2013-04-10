@@ -393,6 +393,13 @@ static int pad (FILE *f, int c)
   return 0;
 }
 
+static int flag_reg (FILE *file, const int flag_nr, const int flag_sub_reg_nr)
+{
+  if (flag_nr || flag_sub_reg_nr)
+    return format (file, ".f%d.%d", flag_nr, flag_sub_reg_nr);
+  return 0;
+}
+
 static int control (FILE *file, const char *name, const char *ctrl[], uint32_t id, int *space)
 {
   if (!ctrl[id]) {
@@ -1004,9 +1011,9 @@ int gen_disasm (FILE *file, const void *opaque_insn)
   if (inst->header.predicate_control) {
     string (file, "(");
     err |= control (file, "predicate inverse", pred_inv, inst->header.predicate_inverse, NULL);
-    string (file, "f0");
-    if (inst->bits2.da1.flag_reg_nr)
-      format (file, ".%d", inst->bits2.da1.flag_reg_nr);
+    format (file, "f%d", inst->bits2.da1.flag_reg_nr);
+    if (inst->bits2.da1.flag_sub_reg_nr)
+      format (file, ".%d", inst->bits2.da1.flag_sub_reg_nr);
     if (inst->header.access_mode == GEN_ALIGN_1)
       err |= control (file, "predicate control align1", pred_ctrl_align1,
           inst->header.predicate_control, NULL);
@@ -1025,9 +1032,14 @@ int gen_disasm (FILE *file, const void *opaque_insn)
     err |= control (file, "function", math_function,
         inst->header.destreg_or_condmod, NULL);
   } else if (inst->header.opcode != GEN_OPCODE_SEND &&
-      inst->header.opcode != GEN_OPCODE_SENDC)
+      inst->header.opcode != GEN_OPCODE_SENDC) {
     err |= control (file, "conditional modifier", conditional_modifier,
                     inst->header.destreg_or_condmod, NULL);
+    if (inst->header.destreg_or_condmod)
+      err |= flag_reg (file,
+                       inst->bits2.da1.flag_reg_nr,
+                       inst->bits2.da1.flag_sub_reg_nr);
+  }
 
   if (inst->header.opcode != GEN_OPCODE_NOP) {
     string (file, "(");
