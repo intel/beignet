@@ -34,6 +34,15 @@
 #include <cstdio>
 #include <cstdlib>
 
+#ifdef HAS_EGL
+#define EGL_WINDOW_WIDTH 256
+#define EGL_WINDOW_HEIGHT 256
+#include  <GL/gl.h>
+#include  <EGL/egl.h>
+#include  <EGL/eglext.h>
+#include <CL/cl_gl.h>
+#endif
+
 #define OCL_THROW_ERROR(FN, STATUS) \
   do { \
     char msg[2048]; \
@@ -57,6 +66,11 @@
     OCL_CALL(cl_kernel_init, FILE_NAME".cl", KERNEL_NAME, SOURCE); \
   } while (0)
 
+#define OCL_FLUSH() \
+  do { \
+    OCL_CALL(clFlush, queue); \
+  } while(0)
+
 #define OCL_CREATE_BUFFER(BUFFER, FLAGS, SIZE, DATA) \
   do { \
     cl_int status; \
@@ -70,6 +84,21 @@
     IMAGE = clCreateImage(ctx, FLAGS, FORMAT, DESC, DATA, &status);\
     if (status != CL_SUCCESS) OCL_THROW_ERROR(FN, status); \
   } while (0)
+
+#define OCL_CREATE_GL_IMAGE(IMAGE, FLAGS, TARGET, LEVEL, TEXTURE) \
+  do { \
+    cl_int status; \
+    IMAGE = clCreateFromGLTexture(ctx, FLAGS, TARGET, LEVEL, TEXTURE, &status);\
+    if (status != CL_SUCCESS) OCL_THROW_ERROR(FN, status); \
+  } while (0)
+
+#define OCL_ENQUEUE_ACQUIRE_GL_OBJECTS(ID) \
+  do { \
+    clEnqueueAcquireGLObjects(queue, 1, &buf[ID], 0,0, 0); \
+  } while(0)
+
+#define OCL_SWAP_EGL_BUFFERS() \
+  eglSwapBuffers(eglDisplay, eglSurface);
 
 #define OCL_CREATE_SAMPLER(SAMPLER, ADDRESS_MODE, FILTER_MODE)          \
   do { \
@@ -118,6 +147,10 @@ extern cl_mem buf[MAX_BUFFER_N];
 extern void* buf_data[MAX_BUFFER_N];
 extern size_t globals[3];
 extern size_t locals[3];
+extern Display    *xDisplay;
+extern EGLDisplay  eglDisplay;
+extern EGLSurface  eglSurface;
+
 
 enum {
   SOURCE = 0,

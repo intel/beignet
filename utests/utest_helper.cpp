@@ -54,6 +54,101 @@ void *buf_data[MAX_BUFFER_N] = {};
 size_t globals[3] = {};
 size_t locals[3] = {};
 
+#ifdef HAS_EGL
+Display    *xDisplay;
+EGLDisplay  eglDisplay;
+EGLContext  eglContext = NULL;
+EGLSurface  eglSurface;
+Window xWindow;
+
+void cl_ocl_destroy_egl_window() {
+    eglMakeCurrent(eglDisplay, EGL_NO_SURFACE, EGL_NO_SURFACE, EGL_NO_CONTEXT);
+    eglDestroyContext(eglDisplay, eglContext);
+    eglDestroySurface(eglDisplay, eglSurface);
+    XDestroyWindow(xDisplay, xWindow);
+    XCloseDisplay(xDisplay);
+}
+
+bool init_egl_window(int width, int height) {
+    XSetWindowAttributes swa;
+    Window      win, root;
+    EGLint attr[] = {       // some attributes to set up our egl-interface
+    EGL_BUFFER_SIZE, 16,
+    EGL_RENDERABLE_TYPE,
+    EGL_OPENGL_BIT,
+    EGL_NONE
+    };
+    //// egl-contexts collect all state descriptions needed required for operation
+    EGLint ctxattr[] = {
+            #if 0
+            EGL_CONTEXT_CLIENT_VERSION, 2,
+            #endif
+            EGL_NONE
+    };
+
+    EGLConfig  ecfg;
+    EGLint     numConfig;
+
+    xDisplay = XOpenDisplay(NULL);
+    if (xDisplay == NULL) {
+      fprintf(stderr, "Failed to open DISPLAY.\n");
+      return false;
+    }
+    root = DefaultRootWindow(xDisplay);
+    swa.event_mask = ExposureMask | PointerMotionMask | KeyPressMask;
+
+    win = XCreateWindow(
+                    xDisplay, root, 0, 0, width, height, 0,
+                    CopyFromParent, InputOutput,
+                    CopyFromParent, CWEventMask,
+                    &swa);
+    xWindow = win;
+
+    ///////  the egl part  //////////////////////////////////////////////////////////////////
+    //  egl provides an interface to connect the graphics related functionality of openGL ES
+    //  with the windowing interface and functionality of the native operation system (X11
+    //  in our case.
+
+    eglDisplay  =  eglGetDisplay( (EGLNativeDisplayType) xDisplay );
+    if ( eglDisplay == EGL_NO_DISPLAY ) {
+            fprintf(stderr, "Got no EGL display.\n");
+            return false;
+    }
+    eglBindAPI(EGL_OPENGL_API);
+    int m,n;
+    if ( !eglInitialize( eglDisplay, &m, &n ) ) {
+      fprintf(stderr, "Unable to initialize EGL\n");
+      return false;
+    }
+    if ( !eglChooseConfig( eglDisplay, attr, &ecfg, 1, &numConfig ) ) {
+      fprintf(stderr, "Failed to choose config (eglError: %d)\n", eglGetError());
+      return false;
+    }
+    if ( numConfig != 1 ) {
+      fprintf(stderr, "Didn't get exactly one config, but %d", numConfig);
+      return false;
+    }
+    eglSurface = eglCreateWindowSurface ( eglDisplay, ecfg, win, NULL );
+    if ( eglSurface == EGL_NO_SURFACE ) {
+      fprintf(stderr, "Unable to create EGL surface (eglError: %d)\n", eglGetError());
+      return false;
+    }
+    eglContext = eglCreateContext ( eglDisplay, ecfg, EGL_NO_CONTEXT, ctxattr );
+    if ( eglContext == EGL_NO_CONTEXT ) {
+      fprintf(stderr, "Unable to create EGL context (eglError: %d)\n", eglGetError());
+      return false;
+    }
+    //// associate the egl-context with the egl-surface
+    eglMakeCurrent( eglDisplay, eglSurface, eglSurface, eglContext);
+
+    glClearColor(1.0, 1.0, 1.0, 1.0);
+    glClear(GL_COLOR_BUFFER_BIT);
+    glFinish();
+    eglSwapBuffers(eglDisplay, eglSurface);
+    return true;
+}
+#endif
+
 static const char*
 cl_test_channel_order_string(cl_channel_order order)
 {
@@ -195,25 +290,29 @@ error:
     printf("platform_" #LOWER_NAME " \"%s\"\n", str.c_str()); \
   }
 
+#include <cstring>
 #define GET_DEVICE_STR_INFO(LOWER_NAME, NAME) \
-  { \
-    size_t param_value_size; \
+    std::string LOWER_NAME ##Str; \
     OCL_CALL (clGetDeviceInfo, device, CL_DEVICE_##NAME, 0, 0, &param_value_size); \
-    std::vector<char> param_value(param_value_size); \
-    OCL_CALL (clGetDeviceInfo, device, CL_DEVICE_##NAME, \
-              param_value_size, param_value.empty() ? NULL : &param_value.front(), \
-              &param_value_size); \
-    std::string str; \
-    if (!param_value.empty()) \
-      str = std::string(&param_value.front(), param_value_size-1); \
-    printf("device_" #LOWER_NAME " \"%s\"\n", str.c_str()); \
-  }
+    { \
+      std::vector<char> param_value(param_value_size); \
+      OCL_CALL (clGetDeviceInfo, device, CL_DEVICE_##NAME, \
+                param_value_size, param_value.empty() ? NULL : &param_value.front(), \
+                &param_value_size); \
+      if (!param_value.empty()) \
+        LOWER_NAME ##Str = std::string(&param_value.front(), param_value_size-1); \
+    } \
+    printf("device_" #LOWER_NAME " \"%s\"\n", LOWER_NAME ##Str.c_str());
+
+
 int
 cl_ocl_init(void)
 {
   cl_int status = CL_SUCCESS;
   cl_uint platform_n;
   size_t i;
+  bool hasGLExt = false;
+  cl_context_properties *props = NULL;
 
   /* Get the platform number */
   OCL_CALL (clGetPlatformIDs, 0, NULL, &platform_n);
@@ -226,16 +325,37 @@ cl_ocl_init(void)
   GET_PLATFORM_STR_INFO(name, NAME);
   GET_PLATFORM_STR_INFO(vendor, VENDOR);
   GET_PLATFORM_STR_INFO(version, VERSION);
+  GET_PLATFORM_STR_INFO(extensions, EXTENSIONS);
 
   /* Get the device (only GPU device is supported right now) */
   OCL_CALL (clGetDeviceIDs, platform, CL_DEVICE_TYPE_GPU, 1, &device, NULL);
-  GET_DEVICE_STR_INFO(profile, PROFILE);
-  GET_DEVICE_STR_INFO(name, NAME);
-  GET_DEVICE_STR_INFO(vendor, VENDOR);
-  GET_DEVICE_STR_INFO(version, VERSION);
+  {
+    size_t param_value_size;
+    GET_DEVICE_STR_INFO(profile, PROFILE);
+    GET_DEVICE_STR_INFO(name, NAME);
+    GET_DEVICE_STR_INFO(vendor, VENDOR);
+    GET_DEVICE_STR_INFO(version, VERSION);
+    GET_DEVICE_STR_INFO(extensions, EXTENSIONS);
+    if (std::strstr(extensionsStr.c_str(), "cl_khr_gl_sharing")) {
+      hasGLExt = true;
+    }
+  }
 
+#ifdef HAS_EGL
+  if (hasGLExt) {
+    init_egl_window(EGL_WINDOW_WIDTH, EGL_WINDOW_HEIGHT);
+    props = new cl_context_properties[7];
+    props[0] = CL_CONTEXT_PLATFORM;
+    props[1] = (cl_context_properties)platform;
+    props[2] = CL_EGL_DISPLAY_KHR;
+    props[3] = (cl_context_properties)eglGetCurrentDisplay();
+    props[4] = CL_GL_CONTEXT_KHR;
+    props[5] = (cl_context_properties)eglGetCurrentContext();
+    props[6] = 0;
+  }
+#endif
   /* Now create a context */
-  ctx = clCreateContext(0, 1, &device, NULL, NULL, &status);
+  ctx = clCreateContext(props, 1, &device, NULL, NULL, &status);
   if (status != CL_SUCCESS) {
     fprintf(stderr, "error calling clCreateContext\n");
     goto error;
@@ -259,6 +379,8 @@ cl_ocl_init(void)
   }
 
 error:
+  if (props)
+    delete props;
   return status;
 }
 
@@ -293,6 +415,12 @@ cl_ocl_destroy(void)
 {
   clReleaseCommandQueue(queue);
   clReleaseContext(ctx);
+#ifdef HAS_EGL
+  if (eglContext != NULL) {
+    cl_ocl_destroy_egl_window();
+    eglContext = NULL;
+  }
+#endif
 }
 
 void

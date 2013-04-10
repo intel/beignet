@@ -2,7 +2,7 @@ INCLUDE_DIRECTORIES(${CMAKE_CURRENT_SOURCE_DIR}
                     ${CMAKE_CURRENT_SOURCE_DIR}/../include)
 
 link_directories (${LLVM_LIBRARY_DIR})
-ADD_LIBRARY(utests SHARED
+set (utests_sources
   cl_create_kernel.cpp
   utest_error.c
   compiler_shader_toy.cpp
@@ -71,8 +71,14 @@ ADD_LIBRARY(utests SHARED
   utest_file_map.cpp
   utest_helper.cpp)
 
-TARGET_LINK_LIBRARIES(utests cl m ${OPENGL_LIBRARIES} ${CMAKE_THREAD_LIBS_INIT})
+if (EGL_FOUND)
+SET(CMAKE_CXX_FLAGS "-DHAS_EGL ${CMAKE_CXX_FLAGS}")
+SET(CMAKE_C_FLAGS "-DHAS_EGL ${CMAKE_C_FLAGS}")
+endif (EGL_FOUND)
 
+ADD_LIBRARY(utests SHARED ${utests_sources})
+
+TARGET_LINK_LIBRARIES(utests cl m ${OPENGL_LIBRARIES} ${CMAKE_THREAD_LIBS_INIT})
 
 ADD_EXECUTABLE(utest_run utest_run.cpp)
 TARGET_LINK_LIBRARIES(utest_run utests)
