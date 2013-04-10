@@ -117,6 +117,9 @@ cl_get_device_ids(cl_platform_id    platform,
   if (devices && UNLIKELY((*devices = cl_get_gt_device()) != NULL)) {
     if (num_devices)
       *num_devices = 1;
+
+    (*devices)->extensions = intel_platform->extensions;
+    (*devices)->extensions_sz = intel_platform->extensions_sz;
     return CL_SUCCESS;
   }
   else {
@@ -171,6 +174,7 @@ cl_get_device_info(cl_device_id     device,
       GET_STRING_FIELD_SIZE(VERSION, version)
       GET_STRING_FIELD_SIZE(PROFILE, profile)
       GET_STRING_FIELD_SIZE(OPENCL_C_VERSION, opencl_c_version)
+      GET_STRING_FIELD_SIZE(EXTENSIONS, extensions)
       default: return CL_INVALID_VALUE;
     }
   }
@@ -235,6 +239,7 @@ cl_get_device_info(cl_device_id     device,
     DECL_STRING_FIELD(VERSION, version)
     DECL_STRING_FIELD(PROFILE, profile)
     DECL_STRING_FIELD(OPENCL_C_VERSION, opencl_c_version)
+    DECL_STRING_FIELD(EXTENSIONS, extensions);
     default: return CL_INVALID_VALUE;
   };
 }
