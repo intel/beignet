@@ -33,7 +33,7 @@ namespace ir {
   ///////////////////////////////////////////////////////////////////////////
   namespace internal
   {
-#define ALIGNED_INSTRUCTION ALIGNED(AlignOf<Instruction>::value) 
+#define ALIGNED_INSTRUCTION ALIGNED(ALIGNOF(Instruction))
 
     /*! Policy shared by all the internal instructions */
     struct BasePolicy {

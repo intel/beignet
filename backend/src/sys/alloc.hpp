@@ -139,13 +139,13 @@ namespace gbe
     INLINE pointer address(reference r) { return &r; }
     INLINE const_pointer address(const_reference r) { return &r; }
     INLINE pointer allocate(size_type n, void_allocator_ptr = 0) {
-      if (AlignOf<T>::value > sizeof(uintptr_t))
-        return (pointer) GBE_ALIGNED_MALLOC(n*sizeof(T), AlignOf<T>::value);
+      if (ALIGNOF(T) > sizeof(uintptr_t))
+        return (pointer) GBE_ALIGNED_MALLOC(n*sizeof(T), ALIGNOF(T));
       else
         return (pointer) GBE_MALLOC(n * sizeof(T));
     }
     INLINE void deallocate(pointer p, size_type) {
-      if (AlignOf<T>::value > sizeof(uintptr_t))
+      if (ALIGNOF(T) > sizeof(uintptr_t))
         GBE_ALIGNED_FREE(p);
       else
         GBE_FREE(p);
@@ -181,7 +181,7 @@ namespace gbe
     }
     void *allocate(void) {
 #if GBE_DEBUG_SPECIAL_ALLOCATOR
-      return GBE_ALIGNED_MALLOC(sizeof(T), AlignOf<T>::value);
+      return GBE_ALIGNED_MALLOC(sizeof(T), ALIGNOF(T));
 #else
       // Pick up an element from the free list
       if (this->freeList != NULL) {
@@ -259,7 +259,7 @@ namespace gbe
       friend class GrowingPool;
       GrowingPoolElem(size_t elemNum) {
         const size_t sz = std::max(sizeof(T), sizeof(void*));
-        this->data = (T*) GBE_ALIGNED_MALLOC(elemNum * sz, AlignOf<T>::value);
+        this->data = (T*) GBE_ALIGNED_MALLOC(elemNum * sz, ALIGNOF(T));
         this->next = NULL;
         this->maxElemNum = elemNum;
         this->allocated = 0;

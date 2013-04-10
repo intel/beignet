@@ -266,6 +266,13 @@ struct AlignOf {
   enum { value = offsetof(Helper, t) };
 };
 
+//gcc 4.8+ support C++11 alignof keyword
+#if (__GNUC__ >= 4 && __GNUC_MINOR__ >= 8)
+#define ALIGNOF(T) (alignof(T))
+#else
+#define ALIGNOF(T) (AlignOf<T>::value)
+#endif
+
 ////////////////////////////////////////////////////////////////////////////////
 /// Visibility parameters (DLL export and so on)
 ////////////////////////////////////////////////////////////////////////////////
