@@ -778,6 +778,20 @@ struct GenInstruction
       uint32_t pad1:2;
     } da3src;
 
+    /*! Message gateway */
+    struct {
+      uint32_t subfunc:3;
+      uint32_t pad:11;
+      uint32_t ackreq:1;
+      uint32_t notify:2;
+      uint32_t pad2:2;
+      uint32_t header_present:1;
+      uint32_t response_length:5;
+      uint32_t msg_length:4;
+      uint32_t pad3:2;
+      uint32_t end_of_thread:1;
+    } gen7_msg_gw;
+
     int d;
     uint32_t ud;
     float f;

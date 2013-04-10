@@ -310,6 +310,17 @@ static const char *target_function_gen6[16] = {
   [GEN_SFID_DATAPORT_DATA_CACHE] = "data"
 };
 
+static const char *gateway_sub_function[8] = {
+  [0] = "open gateway",
+  [1] = "close gateway",
+  [2] = "forward gateway",
+  [3] = "get time stamp",
+  [4] = "barrier",
+  [5] = "update gateway state",
+  [6] = "MMIO R/W",
+  [7] = "reserved"
+};
+
 static const char *math_function[16] = {
   [GEN_MATH_FUNCTION_INV] = "inv",
   [GEN_MATH_FUNCTION_LOG] = "log",
@@ -1105,6 +1116,12 @@ int gen_disasm (FILE *file, const void *opaque_insn)
                 inst->bits3.gen7_untyped_rw.rgba,
                 inst->bits3.gen7_untyped_rw.simd_mode,
                 inst->bits3.gen7_untyped_rw.msg_type);
+        break;
+      case GEN_SFID_MESSAGE_GATEWAY:
+        format (file, " (subfunc: %s, notify: %d, ackreq: %d)",
+            gateway_sub_function[inst->bits3.gen7_msg_gw.subfunc],
+            inst->bits3.gen7_msg_gw.notify,
+            inst->bits3.gen7_msg_gw.ackreq);
         break;
 
       default:
