@@ -754,7 +754,10 @@ clGetEventProfilingInfo(cl_event             event,
 cl_int
 clFlush(cl_command_queue command_queue)
 {
-  NOT_IMPLEMENTED;
+  /* have nothing to do now, as currently
+   * clEnqueueNDRangeKernel will flush at
+   * the end of each calling. we may need
+   * to optimize it latter.*/
   return 0;
 }
 
