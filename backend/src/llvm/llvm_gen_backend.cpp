@@ -2093,7 +2093,6 @@ namespace gbe
   template <bool isLoad, typename T>
   INLINE void GenWriter::emitLoadOrStore(T &I)
   {
-    GBE_ASSERTM(I.isVolatile() == false, "Volatile pointer is not supported");
     unsigned int llvmSpace = I.getPointerAddressSpace();
     Value *llvmPtr = I.getPointerOperand();
     Value *llvmValues = getLoadOrStoreValue(I);
