@@ -71,48 +71,33 @@
     OCL_CALL(clFlush, queue); \
   } while(0)
 
-#define OCL_CREATE_BUFFER(BUFFER, FLAGS, SIZE, DATA) \
+#define OCL_CALL2(FN, RET, ...) \
   do { \
     cl_int status; \
-    BUFFER = clCreateBuffer(ctx, FLAGS, SIZE, DATA, &status); \
+    RET = FN(__VA_ARGS__, &status);\
     if (status != CL_SUCCESS) OCL_THROW_ERROR(FN, status); \
   } while (0)
+
+#define OCL_CREATE_BUFFER(BUFFER, FLAGS, SIZE, DATA) \
+    OCL_CALL2(clCreateBuffer, BUFFER, ctx, FLAGS, SIZE, DATA)
 
 #define OCL_CREATE_IMAGE(IMAGE, FLAGS, FORMAT, DESC, DATA) \
-  do { \
-    cl_int status; \
-    IMAGE = clCreateImage(ctx, FLAGS, FORMAT, DESC, DATA, &status);\
-    if (status != CL_SUCCESS) OCL_THROW_ERROR(FN, status); \
-  } while (0)
+    OCL_CALL2(clCreateImage, IMAGE, ctx, FLAGS, FORMAT, DESC, DATA)
 
 #define OCL_CREATE_GL_IMAGE(IMAGE, FLAGS, TARGET, LEVEL, TEXTURE) \
-  do { \
-    cl_int status; \
-    IMAGE = clCreateFromGLTexture(ctx, FLAGS, TARGET, LEVEL, TEXTURE, &status);\
-    if (status != CL_SUCCESS) OCL_THROW_ERROR(FN, status); \
-  } while (0)
+    OCL_CALL2(clCreateFromGLTexture, IMAGE, ctx, FLAGS, TARGET, LEVEL, TEXTURE)
 
 #define OCL_ENQUEUE_ACQUIRE_GL_OBJECTS(ID) \
-  do { \
-    clEnqueueAcquireGLObjects(queue, 1, &buf[ID], 0,0, 0); \
-  } while(0)
+    OCL_CALL(clEnqueueAcquireGLObjects, queue, 1, &buf[ID], 0, 0, 0)
 
 #define OCL_SWAP_EGL_BUFFERS() \
   eglSwapBuffers(eglDisplay, eglSurface);
 
 #define OCL_CREATE_SAMPLER(SAMPLER, ADDRESS_MODE, FILTER_MODE)          \
-  do { \
-    cl_int status; \
-    SAMPLER = clCreateSampler(ctx, 0, CL_ADDRESS_CLAMP, CL_FILTER_NEAREST, &status);\
-    if (status != CL_SUCCESS) OCL_THROW_ERROR(FN, status); \
-  } while(0)
+    OCL_CALL2(clCreateSampler, SAMPLER, ctx, 0, ADDRESS_MODE, FILTER_MODE)
 
 #define OCL_MAP_BUFFER(ID) \
-  do { \
-    cl_int status; \
-    buf_data[ID] = (int *) clIntelMapBuffer(buf[ID], &status); \
-    if (status != CL_SUCCESS) OCL_THROW_ERROR(FN, status); \
-  } while (0)
+    OCL_CALL2(clIntelMapBuffer, buf_data[ID], buf[ID])
 
 #define OCL_UNMAP_BUFFER(ID) \
   do { \
@@ -123,14 +108,10 @@
   } while (0)
 
 #define OCL_NDRANGE(DIM_N) \
-  do { \
-    OCL_CALL (clEnqueueNDRangeKernel, queue, kernel, DIM_N, NULL, globals, locals, 0, NULL, NULL); \
-  } while (0)
+    OCL_CALL (clEnqueueNDRangeKernel, queue, kernel, DIM_N, NULL, globals, locals, 0, NULL, NULL)
 
 #define OCL_SET_ARG(ID, SIZE, ARG) \
-  do { \
-    OCL_CALL (clSetKernelArg, kernel, ID, SIZE, ARG); \
-  } while (0)
+    OCL_CALL (clSetKernelArg, kernel, ID, SIZE, ARG)
 
 #define OCL_CHECK_IMAGE(DATA, W, H, FILENAME) \
   if (cl_check_image(DATA, W, H, FILENAME) == 0) \
