@@ -271,7 +271,7 @@ namespace gbe
 /// Linux Platform
 ////////////////////////////////////////////////////////////////////////////////
 
-#if defined(__LINUX__)
+#if defined(__LINUX__) || defined(__GLIBC__)
 
 #include <unistd.h>
 #include <sys/mman.h>
