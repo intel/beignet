@@ -117,7 +117,7 @@ namespace gbe
     /*! To store various indices */
     uint16_t index;
     /*! Variable sized. Destinations and sources go here */
-    GenRegister regs[];
+    GenRegister regs[0];
   private:
     /*! Just Selection class can create SelectionInstruction */
     SelectionInstruction(SelectionOpcode, uint32_t dstNum, uint32_t srcNum);
