@@ -1621,10 +1621,10 @@ namespace gbe
     {
       using namespace ir;
       const uint32_t valueNum = insn.getValueNum();
-      GenRegister dst[valueNum];
+      vector<GenRegister> dst(valueNum);
       for (uint32_t dstID = 0; dstID < valueNum; ++dstID)
         dst[dstID] = GenRegister::retype(sel.selReg(insn.getValue(dstID)), GEN_TYPE_F);
-      sel.UNTYPED_READ(addr, dst, valueNum, bti);
+      sel.UNTYPED_READ(addr, dst.data(), valueNum, bti);
     }
 
     void emitByteGather(Selection::Opaque &sel,
@@ -1683,12 +1683,13 @@ namespace gbe
       using namespace ir;
       const uint32_t valueNum = insn.getValueNum();
       const uint32_t addrID = ir::StoreInstruction::addressIndex;
-      GenRegister addr, value[valueNum];
+      GenRegister addr;
+      vector<GenRegister> value(valueNum);
 
       addr = GenRegister::retype(sel.selReg(insn.getSrc(addrID)), GEN_TYPE_F);;
       for (uint32_t valueID = 0; valueID < valueNum; ++valueID)
         value[valueID] = GenRegister::retype(sel.selReg(insn.getValue(valueID)), GEN_TYPE_F);
-      sel.UNTYPED_WRITE(addr, value, valueNum, bti);
+      sel.UNTYPED_WRITE(addr, value.data(), valueNum, bti);
     }
 
     void emitByteScatter(Selection::Opaque &sel,
