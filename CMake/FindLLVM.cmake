@@ -7,9 +7,9 @@
 # LLVM_MODULE_LIBS - list of llvm libs for working with modules.
 # LLVM_FOUND       - True if llvm found.
 if (LLVM_INSTALL_DIR)
-  find_program(LLVM_CONFIG_EXECUTABLE NAMES llvm-config llvm-config-32 llvm-config-3.0 DOC "llvm-config executable" PATHS ${LLVM_INSTALL_DIR} NO_DEFAULT_PATH)
-else (LLVM_INSTALL_DIR)
-  find_program(LLVM_CONFIG_EXECUTABLE NAMES llvm-config llvm-config-32 llvm-config-3.0 DOC "llvm-config executable")
+  find_program(LLVM_CONFIG_EXECUTABLE NAMES llvm-config-32 llvm-config-3.2 llvm-config DOC "llvm-config executable" PATHS ${LLVM_INSTALL_DIR} NO_DEFAULT_PATH)
+else (LLVM_INSTALL_DIR)                                                                
+  find_program(LLVM_CONFIG_EXECUTABLE NAMES llvm-config-32 llvm-config-3.2 llvm-config DOC "llvm-config executable")
 endif (LLVM_INSTALL_DIR)
 
 if (LLVM_CONFIG_EXECUTABLE)
