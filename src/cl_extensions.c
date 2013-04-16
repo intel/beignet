@@ -15,7 +15,7 @@ static struct cl_extensions intel_extensions =
 {
   {
 #define DECL_EXT(name) \
-  {(struct cl_extension_base){.ext_id = name##_ext_id, .ext_name = #name, .ext_enabled = 0}},
+  {(struct cl_extension_base){.ext_id = cl_##name##_ext_id, .ext_name = "cl_" #name, .ext_enabled = 0}},
   DECL_ALL_EXTENSIONS
   },
 #undef DECL_EXT
@@ -27,7 +27,7 @@ void check_basic_extension(cl_extensions_t *extensions)
   int id;
   for(id = BASE_EXT_START_ID; id <= BASE_EXT_END_ID; id++)
     //It seems we only support this mandatory extension.
-    if (id == EXT_ID(cl_khr_byte_addressable_store))
+    if (id == EXT_ID(khr_byte_addressable_store))
       extensions->extensions[id].base.ext_enabled = 1;
 }
 
@@ -48,9 +48,9 @@ static struct cl_gl_ext_deps egl_funcs;
       && egl_funcs.eglDestroyImageKHR_func != NULL) {
       /* For now, we only support cl_khr_gl_sharing. */
     for(id = GL_EXT_START_ID; id <= GL_EXT_END_ID; id++)
-      if (id == EXT_ID(cl_khr_gl_sharing)) {
+      if (id == EXT_ID(khr_gl_sharing)) {
         extensions->extensions[id].base.ext_enabled = 1;
-        extensions->extensions[id].EXT_STRUCT_NAME(cl_khr_gl_sharing).gl_ext_deps = &egl_funcs;
+        extensions->extensions[id].EXT_STRUCT_NAME(khr_gl_sharing).gl_ext_deps = &egl_funcs;
       }
   }
 #endif

@@ -139,11 +139,7 @@ EGLImageKHR cl_create_textured_egl_image(cl_context ctx,
   EGLint egl_attribs[] = { EGL_GL_TEXTURE_LEVEL_KHR, miplevel, EGL_NONE};
 
   assert(ctx->props.gl_type == CL_GL_EGL_DISPLAY);
-/* cl.h defined cl_khr_gl_sharing to 1. we have to undefine it here.*/
-#ifdef cl_khr_gl_sharing
-#undef cl_khr_gl_sharing
-#endif
-  egl_funcs =  CL_EXTENSION_GET_FUNCS(ctx, cl_khr_gl_sharing, gl_ext_deps);
+  egl_funcs =  CL_EXTENSION_GET_FUNCS(ctx, khr_gl_sharing, gl_ext_deps);
   assert(egl_funcs != NULL);
   egl_display = (EGLDisplay)ctx->props.egl_display;
   egl_context = (EGLDisplay)ctx->props.gl_context;
