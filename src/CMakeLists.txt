@@ -32,6 +32,9 @@ if (EGL_FOUND)
 set (OPENCL_SRC ${OPENCL_SRC} cl_mem_gl.c cl_gl_api.c x11/gbm_dri2_x11_platform.c)
 SET(CMAKE_CXX_FLAGS "-DHAS_EGL ${CMAKE_CXX_FLAGS}")
 SET(CMAKE_C_FLAGS "-DHAS_EGL ${CMAKE_C_FLAGS}")
+SET(OPTIONAL_EGL_LIBRARY "${EGL_LIBRARY}")
+else(EGL_FOUND)
+SET(OPTIONAL_EGL_LIBRARY "")
 endif (EGL_FOUND)
 
 if (OCLIcd_FOUND)
@@ -53,6 +56,6 @@ target_link_libraries(
                       ${DRM_INTEL_LIBRARY}
                       ${DRM_LIBRARY}
                       ${OPENGL_LIBRARIES}
-                      ${EGL_LIBRARY}
+                      ${OPTIONAL_EGL_LIBRARY}
                       ${GBM_LIBRARY})
 install (TARGETS cl LIBRARY DESTINATION lib)

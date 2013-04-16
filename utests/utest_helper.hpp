@@ -41,6 +41,10 @@
 #include  <EGL/egl.h>
 #include  <EGL/eglext.h>
 #include <CL/cl_gl.h>
+
+extern EGLDisplay  eglDisplay;
+extern EGLContext  eglContext;
+extern EGLSurface  eglSurface;
 #endif
 
 #define OCL_THROW_ERROR(FN, STATUS) \
@@ -128,10 +132,6 @@ extern cl_mem buf[MAX_BUFFER_N];
 extern void* buf_data[MAX_BUFFER_N];
 extern size_t globals[3];
 extern size_t locals[3];
-extern Display    *xDisplay;
-extern EGLDisplay  eglDisplay;
-extern EGLSurface  eglSurface;
-
 
 enum {
   SOURCE = 0,
