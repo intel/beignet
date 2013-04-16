@@ -42,17 +42,17 @@ namespace gbe
   /*! active mutex */
   class MutexActive {
   public:
-    INLINE MutexActive(void) : $lock(LOCK_IS_FREE) {}
+    INLINE MutexActive(void) : _lock(LOCK_IS_FREE) {}
     INLINE void lock(void) {
       GBE_COMPILER_READ_BARRIER;
-      while (cmpxchg($lock, LOCK_IS_TAKEN, LOCK_IS_FREE) != LOCK_IS_FREE)
+      while (cmpxchg(_lock, LOCK_IS_TAKEN, LOCK_IS_FREE) != LOCK_IS_FREE)
         _mm_pause();
       GBE_COMPILER_READ_BARRIER;
     }
-    INLINE void unlock(void) { $lock.storeRelease(LOCK_IS_FREE); }
+    INLINE void unlock(void) { _lock.storeRelease(LOCK_IS_FREE); }
   protected:
-    enum ${ LOCK_IS_FREE = 0, LOCK_IS_TAKEN = 1 };
-    Atomic $lock;
+    enum { LOCK_IS_FREE = 0, LOCK_IS_TAKEN = 1 };
+    Atomic _lock;
     MutexActive(const MutexActive&); // don't implement
     MutexActive& operator=(const MutexActive&); // don't implement
     GBE_CLASS(MutexActive);
