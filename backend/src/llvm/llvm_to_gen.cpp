@@ -55,7 +55,7 @@ namespace gbe
     std::string errInfo;
     std::unique_ptr<llvm::raw_fd_ostream> o = NULL;
     if (OCL_OUTPUT_LLVM_BEFORE_EXTRA_PASS || OCL_OUTPUT_LLVM)
-      o = std::unique_ptr<llvm::raw_fd_ostream>(new llvm::raw_fd_ostream("-", errInfo));
+      o = std::unique_ptr<llvm::raw_fd_ostream>(new llvm::raw_fd_ostream(fileno(stdout), false));
 
     // Get the module from its file
     SMDiagnostic Err;
@@ -82,13 +82,6 @@ namespace gbe
     if (OCL_OUTPUT_LLVM)
       passes.add(createPrintModulePass(&*o));
     passes.run(mod);
-
-    // raw_fd_ostream closes stdout. We must reopen it
-    if (OCL_OUTPUT_LLVM_BEFORE_EXTRA_PASS || OCL_OUTPUT_LLVM) {
-      o = NULL;
-      const int fd = open("/dev/tty", O_WRONLY);
-      stdout = fdopen(fd, "w");
-    }
 
     return true;
   }
