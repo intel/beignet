@@ -32,7 +32,7 @@ namespace gbe
 {
   class Selection;      // Pre-register allocation code generation
   class GenRegister;    // Pre-register allocation Gen register
-  class GenRegInterval; // Liveness interval for each register
+  struct GenRegInterval; // Liveness interval for each register
   class GenContext;     // Gen specific context
 
   /*! Register allocate (i.e. virtual to physical register mapping) */
