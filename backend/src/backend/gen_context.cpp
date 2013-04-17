@@ -326,9 +326,9 @@ namespace gbe
     for( uint32_t quarter = 0; quarter < quarterNum; quarter++)
     {
 #define QUARTER_MOV0(dst_nr, src) p->MOV(GenRegister::ud8grf(dst_nr, 0), \
-                                        GenRegister::retype(GenRegister::ud8grf(src.nr + quarter, 0), src.type))
+                                        GenRegister::retype(GenRegister::QnPhysical(src, quarter), src.type))
 #define QUARTER_MOV1(dst_nr, src) p->MOV(GenRegister::retype(GenRegister::ud8grf(dst_nr, 0), src.type), \
-                                        GenRegister::retype(GenRegister::ud8grf(src.nr + quarter, 0), src.type))
+                                        GenRegister::retype(GenRegister::QnPhysical(src,quarter), src.type))
       QUARTER_MOV0(nr + 1, ucoord);
       QUARTER_MOV0(nr + 2, vcoord);
       QUARTER_MOV1(nr + 5, R);
