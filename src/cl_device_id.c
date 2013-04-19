@@ -230,6 +230,18 @@ cl_get_device_info(cl_device_id     device,
     DECL_STRING_FIELD(PROFILE, profile)
     DECL_STRING_FIELD(OPENCL_C_VERSION, opencl_c_version)
     DECL_STRING_FIELD(EXTENSIONS, extensions);
+
+    case CL_DRIVER_VERSION:
+      if (param_value_size_ret) {
+        *param_value_size_ret = device->driver_version_sz;
+        if (!param_value)
+          return CL_SUCCESS;
+      }
+      if (param_value_size < device->driver_version_sz)
+        return CL_INVALID_VALUE;
+      memcpy(param_value, device->driver_version, device->driver_version_sz);
+      return CL_SUCCESS;
+
     default: return CL_INVALID_VALUE;
   };
 }

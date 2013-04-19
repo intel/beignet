@@ -25,6 +25,8 @@
 #include "cl_khr_icd.h"
 #include "CL/cl.h"
 
+#include "src/OCLConfig.h"
+
 struct _cl_platform_id {
   DEFINE_ICD(dispatch)
   const char *profile;
@@ -61,9 +63,10 @@ extern cl_int cl_get_platform_info(cl_platform_id    platform,
 #define OCL_VERSION_MINOR 0
 
 #define _STR(x) #x
-#define _JOINT(x, y) "OpenCL " _STR(x) "." _STR(y)
+#define _JOINT(x, y) _STR(x) "." _STR(y)
 
-#define OCL_VERSION_STRING _JOINT(OCL_VERSION_MAJOR, OCL_VERSION_MINOR)
+#define OCL_VERSION_STRING "OpenCL " _JOINT(OCL_VERSION_MAJOR, OCL_VERSION_MINOR)
+#define LIBCL_VERSION_STRING _JOINT(LIBCL_VERSION_MAJOR, LIBCL_VERSION_MINOR)
 
 #endif /* __CL_PLATFORM_ID_H__ */
 
