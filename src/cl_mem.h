@@ -48,6 +48,9 @@ struct _cl_mem {
   cl_image_tiling_t tiling; /* only IVB+ supports TILE_[X,Y] (image only) */
 };
 
+/* Query information about a memory object */
+extern cl_int cl_get_mem_object_info(cl_mem, cl_mem_info, size_t, void *, size_t *);
+
 /* Create a new memory object and initialize it with possible user data */
 extern cl_mem cl_mem_new(cl_context, cl_mem_flags, size_t, void*, cl_int*);
 

@@ -31,6 +31,66 @@
 #include <assert.h>
 #include <stdio.h>
 
+#define FIELD_SIZE(CASE,TYPE)               \
+  case JOIN(CL_,CASE):                      \
+    if(param_value_size_ret)                \
+      *param_value_size_ret = sizeof(TYPE); \
+    if(!param_value)                        \
+      return CL_SUCCESS;                    \
+    if(param_value_size < sizeof(TYPE))     \
+      return CL_INVALID_VALUE;              \
+    break;
+
+LOCAL cl_int
+cl_get_mem_object_info(cl_mem mem,
+                cl_mem_info param_name,
+                size_t param_value_size,
+                void *param_value,
+                size_t *param_value_size_ret)
+{
+  switch(param_name)
+  {
+    FIELD_SIZE(MEM_TYPE, cl_mem_object_type);
+    FIELD_SIZE(MEM_FLAGS, cl_mem_flags);
+    FIELD_SIZE(MEM_SIZE, size_t);
+    FIELD_SIZE(MEM_HOST_PTR, void *);
+    FIELD_SIZE(MEM_MAP_COUNT, cl_uint);
+    FIELD_SIZE(MEM_REFERENCE_COUNT, cl_uint);
+    FIELD_SIZE(MEM_CONTEXT, cl_context);
+  default:
+    return CL_INVALID_VALUE;
+  }
+
+  switch(param_name)
+  {
+  case CL_MEM_TYPE:
+    *((cl_mem_object_type *)param_value) = mem->type;
+    break;
+  case CL_MEM_FLAGS:
+    *((cl_mem_flags *)param_value) = mem->flags;
+    break;
+  case CL_MEM_SIZE:
+    *((size_t *)param_value) = cl_buffer_get_size(mem->bo);
+    break;
+  case CL_MEM_HOST_PTR:
+    NOT_IMPLEMENTED;
+    break;
+  case CL_MEM_MAP_COUNT:
+    NOT_IMPLEMENTED;
+    break;
+  case CL_MEM_REFERENCE_COUNT:
+    NOT_IMPLEMENTED;
+    break;
+  case CL_MEM_CONTEXT:
+    NOT_IMPLEMENTED;
+    break;
+  }
+
+  return CL_SUCCESS;
+}
+
+#undef FIELD_SIZE
+
 static cl_mem
 cl_mem_allocate(cl_context ctx,
                 cl_mem_flags flags,
