@@ -135,28 +135,26 @@ cl_get_device_ids(cl_platform_id    platform,
 
 #define DECL_FIELD(CASE,FIELD)                                      \
   case JOIN(CL_DEVICE_,CASE):                                       \
-      if (param_value_size < sizeof(((cl_device_id)NULL)->FIELD))   \
-        return CL_INVALID_VALUE;                                    \
-      if (param_value_size_ret != NULL)                             \
-        *param_value_size_ret = sizeof(((cl_device_id)NULL)->FIELD);\
-      memcpy(param_value,                                           \
-             &device->FIELD,                                        \
-             sizeof(((cl_device_id)NULL)->FIELD));                  \
-        return CL_SUCCESS;
+    if (param_value_size_ret) {                                     \
+      *param_value_size_ret = sizeof device->FIELD;                 \
+      if (!param_value)                                             \
+        return CL_SUCCESS;                                          \
+    }                                                               \
+    if (param_value_size < sizeof device->FIELD)                    \
+      return CL_INVALID_VALUE;                                      \
+    memcpy(param_value, &device->FIELD, sizeof device->FIELD);      \
+    return CL_SUCCESS;
 
 #define DECL_STRING_FIELD(CASE,FIELD)                               \
   case JOIN(CL_DEVICE_,CASE):                                       \
+    if (param_value_size_ret) {                                     \
+      *param_value_size_ret = device->JOIN(FIELD,_sz);              \
+      if (!param_value)                                             \
+        return CL_SUCCESS;                                          \
+    }                                                               \
     if (param_value_size < device->JOIN(FIELD,_sz))                 \
       return CL_INVALID_VALUE;                                      \
-    if (param_value_size_ret != NULL)                               \
-      *param_value_size_ret = device->JOIN(FIELD,_sz);              \
     memcpy(param_value, device->FIELD, device->JOIN(FIELD,_sz));    \
-    return CL_SUCCESS;
-
-#define GET_STRING_FIELD_SIZE(CASE,FIELD)                           \
-  case JOIN(CL_DEVICE_,CASE):                                       \
-    if (param_value_size_ret != NULL)                               \
-      *param_value_size_ret = device->JOIN(FIELD,_sz);              \
     return CL_SUCCESS;
 
 LOCAL cl_int
@@ -170,18 +168,6 @@ cl_get_device_info(cl_device_id     device,
                device != &intel_ivb_gt2_device &&
                device != &intel_hsw_device))
     return CL_INVALID_DEVICE;
-
-  if (param_value == NULL) {
-    switch (param_name) {
-      GET_STRING_FIELD_SIZE(NAME, name)
-      GET_STRING_FIELD_SIZE(VENDOR, vendor)
-      GET_STRING_FIELD_SIZE(VERSION, version)
-      GET_STRING_FIELD_SIZE(PROFILE, profile)
-      GET_STRING_FIELD_SIZE(OPENCL_C_VERSION, opencl_c_version)
-      GET_STRING_FIELD_SIZE(EXTENSIONS, extensions)
-      default: return CL_INVALID_VALUE;
-    }
-  }
 
   /* Find the correct parameter */
   switch (param_name) {
