@@ -8,13 +8,6 @@ static void compiler_movforphi_undef(void)
   cl_image_format format;
   cl_image_desc desc;
 
-  format.image_channel_order = CL_RGBA;
-  format.image_channel_data_type = CL_UNSIGNED_INT8;
-  desc.image_type = CL_MEM_OBJECT_IMAGE2D;
-  desc.image_width = w;
-  desc.image_height = h;
-  desc.image_row_pitch = w * sizeof(uint32_t);
-
   // Setup kernel and images
   OCL_CREATE_KERNEL("test_movforphi_undef");
   buf_data[0] = (uint32_t*) malloc(sizeof(uint32_t) * w * h);
@@ -22,7 +15,15 @@ static void compiler_movforphi_undef(void)
     for (uint32_t i = 0; i < w; i++)
       ((uint32_t*)buf_data[0])[j * w + i] = j * w + i;
 
+  format.image_channel_order = CL_RGBA;
+  format.image_channel_data_type = CL_UNSIGNED_INT8;
+  desc.image_type = CL_MEM_OBJECT_IMAGE2D;
+  desc.image_width = w;
+  desc.image_height = h;
+  desc.image_row_pitch = w * sizeof(uint32_t);
   OCL_CREATE_IMAGE(buf[0], CL_MEM_COPY_HOST_PTR, &format, &desc, buf_data[0]);
+
+  desc.image_row_pitch = 0;
   OCL_CREATE_IMAGE(buf[1], 0, &format, &desc, NULL);
   OCL_CREATE_SAMPLER(sampler, CL_ADDRESS_REPEAT, CL_FILTER_NEAREST);
   free(buf_data[0]);

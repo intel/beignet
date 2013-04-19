@@ -21,8 +21,9 @@ static void compiler_copy_image(void)
   desc.image_width = w;
   desc.image_height = h;
   desc.image_row_pitch = w * sizeof(uint32_t);
-
   OCL_CREATE_IMAGE(buf[0], CL_MEM_COPY_HOST_PTR, &format, &desc, buf_data[0]);
+
+  desc.image_row_pitch = 0;
   OCL_CREATE_IMAGE(buf[1], 0, &format, &desc, NULL);
   OCL_CREATE_SAMPLER(sampler, CL_ADDRESS_REPEAT, CL_FILTER_NEAREST);
   free(buf_data[0]);

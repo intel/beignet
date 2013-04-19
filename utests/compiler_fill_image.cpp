@@ -13,7 +13,7 @@ static void compiler_fill_image(void)
   desc.image_type = CL_MEM_OBJECT_IMAGE2D;
   desc.image_width = w;
   desc.image_height = h;
-  desc.image_row_pitch = w * sizeof(uint32_t);
+  desc.image_row_pitch = 0;
 
   // Setup kernel and images
   OCL_CREATE_KERNEL("test_fill_image");
