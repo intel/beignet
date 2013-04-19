@@ -284,9 +284,13 @@ _cl_mem_new_image(cl_context ctx,
   if (UNLIKELY(h == 0)) DO_IMAGE_ERROR;
 
   if (image_type == CL_MEM_OBJECT_IMAGE2D) {
+    size_t min_pitch = bpp * w;
+    if (data && pitch == 0)
+      pitch = min_pitch;
     if (UNLIKELY(w > ctx->device->image2d_max_width)) DO_IMAGE_ERROR;
     if (UNLIKELY(h > ctx->device->image2d_max_height)) DO_IMAGE_ERROR;
-    if (UNLIKELY(data && (bpp*w > pitch))) DO_IMAGE_ERROR;
+    if (UNLIKELY(data && min_pitch > pitch)) DO_IMAGE_ERROR;
+    if (UNLIKELY(!data && pitch != 0)) DO_IMAGE_ERROR;
 
     /* Pick up tiling mode (we do only linear on SNB) */
     if (cl_driver_get_ver(ctx->drv) != 6)
