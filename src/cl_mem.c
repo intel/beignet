@@ -141,6 +141,7 @@ cl_mem_allocate(cl_context ctx,
     err = CL_MEM_OBJECT_ALLOCATION_FAILURE;
     goto error;
   }
+  mem->size = sz;
 
   /* Append the buffer in the context buffer list */
   pthread_mutex_lock(&ctx->buffer_lock);

@@ -186,7 +186,8 @@ cl_command_queue_ND_range_gen7(cl_command_queue queue,
   char *final_curbe = NULL;  /* Includes them and one sub-buffer per group */
   cl_gpgpu_kernel kernel;
   const uint32_t simd_sz = cl_kernel_get_simd_width(ker);
-  size_t i, batch_sz = 0u, local_sz = 0u, cst_sz = ker->curbe_sz;
+  size_t i, batch_sz = 0u, local_sz = 0u;
+  size_t cst_sz = ker->curbe_sz= gbe_kernel_get_curbe_size(ker->opaque);
   size_t thread_n = 0u;
   cl_int err = CL_SUCCESS;
 
@@ -224,8 +225,10 @@ cl_command_queue_ND_range_gen7(cl_command_queue queue,
   if (ker->curbe) {
     assert(cst_sz > 0);
     TRY_ALLOC (final_curbe, (char*) alloca(thread_n * cst_sz));
-      for (i = 0; i < thread_n; ++i)
+    for (i = 0; i < thread_n; ++i) {
         memcpy(final_curbe + cst_sz * i, ker->curbe, cst_sz);
+        cl_command_queue_upload_constant_buffer(ker, final_curbe + cst_sz * i);
+    }
     TRY (cl_set_varying_payload, ker, final_curbe, local_wk_sz, simd_sz, cst_sz, thread_n);
     cl_gpgpu_upload_constants(gpgpu, final_curbe, thread_n*cst_sz);
   }

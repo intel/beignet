@@ -1,4 +1,4 @@
-/* 
+/*
  * Copyright © 2012 Intel Corporation
  *
  * This library is free software; you can redistribute it and/or
@@ -154,6 +154,17 @@ cl_kernel_set_arg(cl_kernel k, cl_uint index, size_t sz, const void *value)
   if (UNLIKELY((arg_type == GBE_ARG_IMAGE && !mem->is_image)
      || (arg_type != GBE_ARG_IMAGE && mem->is_image)))
       return CL_INVALID_ARG_VALUE;
+
+  if(arg_type == GBE_ARG_CONSTANT_PTR) {
+    int32_t cbOffset;
+    cbOffset = gbe_kernel_set_const_buffer_size(k->opaque, index, mem->size);
+    //constant ptr's curbe offset changed, update it
+    if(cbOffset >= 0) {
+      offset = gbe_kernel_get_curbe_offset(k->opaque, GBE_CURBE_KERNEL_ARGUMENT, index);
+      *((uint32_t *)(k->curbe + offset)) = cbOffset;  //cb offset in curbe
+    }
+  }
+
   cl_mem_add_ref(mem);
   if (k->args[index].mem)
     cl_mem_delete(k->args[index].mem);
@@ -176,6 +187,9 @@ cl_kernel_setup(cl_kernel k, gbe_kernel opaque)
 {
   cl_context ctx = k->program->ctx;
   cl_buffer_mgr bufmgr = cl_context_get_bufmgr(ctx);
+
+  if(k->bo != NULL)
+    cl_buffer_unreference(k->bo);
 
   /* Allocate the gen code here */
   const uint32_t code_sz = gbe_kernel_get_code_size(opaque);
