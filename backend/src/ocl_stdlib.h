@@ -438,13 +438,22 @@ INLINE OVERLOADABLE float mad(float a, float b, float c) {
   return a*b+c;
 }
 
+INLINE OVERLOADABLE uint select(uint src0, uint src1, int cond) {
+  return cond ? src1 : src0;
+}
 INLINE OVERLOADABLE uint select(uint src0, uint src1, uint cond) {
   return cond ? src1 : src0;
 }
 INLINE OVERLOADABLE int select(int src0, int src1, int cond) {
   return cond ? src1 : src0;
 }
+INLINE OVERLOADABLE int select(int src0, int src1, uint cond) {
+  return cond ? src1 : src0;
+}
 INLINE OVERLOADABLE float select(float src0, float src1, int cond) {
+  return cond ? src1 : src0;
+}
+INLINE OVERLOADABLE float select(float src0, float src1, uint cond) {
   return cond ? src1 : src0;
 }
 
@@ -467,7 +476,9 @@ INLINE OVERLOADABLE TYPE4 select(TYPE4 src0, TYPE4 src1, COND_TYPE4 cond) { \
   return dst; \
 }
 DECL_SELECT4(int4, int, int4, 0x80000000)
+DECL_SELECT4(int4, int, uint4, 0x80000000)
 DECL_SELECT4(float4, float, int4, 0x80000000)
+DECL_SELECT4(float4, float, uint4, 0x80000000)
 #undef DECL_SELECT4
 
 /////////////////////////////////////////////////////////////////////////////
