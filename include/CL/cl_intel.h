@@ -32,21 +32,31 @@ extern "C" {
 extern CL_API_ENTRY cl_int CL_API_CALL
 clReportUnfreedIntel(void);
 
+typedef CL_API_ENTRY cl_int (CL_API_CALL *clReportUnfreedIntel_fn)(void);
+
 /* 1 to 1 mapping of drm_intel_bo_map */
 extern CL_API_ENTRY void* CL_API_CALL
 clMapBufferIntel(cl_mem, cl_int*);
+
+typedef CL_API_ENTRY void* (CL_API_CALL *clMapBufferIntel_fn)(cl_mem, cl_int*);
 
 /* 1 to 1 mapping of drm_intel_bo_unmap */
 extern CL_API_ENTRY cl_int CL_API_CALL
 clUnmapBufferIntel(cl_mem);
 
+typedef CL_API_ENTRY cl_int (CL_API_CALL *clUnmapBufferIntel_fn)(cl_mem);
+
 /* 1 to 1 mapping of drm_intel_gem_bo_map_gtt */
 extern CL_API_ENTRY void* CL_API_CALL
 clMapBufferGTTIntel(cl_mem, cl_int*);
 
+typedef CL_API_ENTRY void* (CL_API_CALL *clMapBufferGTTIntel_fn)(cl_mem, cl_int*);
+
 /* 1 to 1 mapping of drm_intel_gem_bo_unmap_gtt */
 extern CL_API_ENTRY cl_int CL_API_CALL
 clUnmapBufferGTTIntel(cl_mem);
+
+typedef CL_API_ENTRY cl_int (CL_API_CALL *clUnmapBufferGTTIntel_fn)(cl_mem);
 
 /* Pin /Unpin the buffer in GPU memory (must be root) */
 extern CL_API_ENTRY cl_int CL_API_CALL
@@ -54,9 +64,16 @@ clPinBufferIntel(cl_mem);
 extern CL_API_ENTRY cl_int CL_API_CALL
 clUnpinBufferIntel(cl_mem);
 
+typedef CL_API_ENTRY cl_int (CL_API_CALL *clPinBufferIntel_fn)(cl_mem);
+typedef CL_API_ENTRY cl_int (CL_API_CALL *clUnpinBufferIntel_fn)(cl_mem);
+
 /* Get the generation of the Gen device (used to load the proper binary) */
 extern CL_API_ENTRY cl_int CL_API_CALL
 clGetGenVersionIntel(cl_device_id device, cl_int *ver);
+
+typedef CL_API_ENTRY cl_int (CL_API_CALL *clGetGenVersionIntel_fn)(
+                             cl_device_id device,
+                             cl_int *ver);
 
 /* Create a program from a LLVM source file */
 extern CL_API_ENTRY cl_program CL_API_CALL
@@ -65,6 +82,13 @@ clCreateProgramWithLLVMIntel(cl_context              /* context */,
                              const cl_device_id *    /* device_list */,
                              const char *            /* file */,
                              cl_int *                /* errcode_ret */);
+
+typedef CL_API_ENTRY cl_program (CL_API_CALL *clCreateProgramWithLLVMIntel_fn)(
+                                 cl_context              /* context */,
+                                 cl_uint                 /* num_devices */,
+                                 const cl_device_id *    /* device_list */,
+                                 const char *            /* file */,
+                                 cl_int *                /* errcode_ret */);
 
 #ifdef __cplusplus
 }
