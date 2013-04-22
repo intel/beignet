@@ -53,7 +53,7 @@ namespace gbe
      *  the hardware. Note that we always use the left most block when
      *  allocating, so it makes sense for constant pushing
      */
-    int16_t allocate(int16_t size, int16_t alignment, bool bFwd=0);
+    int16_t allocate(int16_t size, int16_t alignment, bool bFwd=false);
 
     /*! Free the given register file piece */
     void deallocate(int16_t offset);
@@ -299,6 +299,8 @@ namespace gbe
       GBE_DELETE(this->kernel);
       this->kernel = NULL;
     }
+    if(this->kernel != NULL)
+      this->kernel->ctx = this;
     return this->kernel;
   }
 
@@ -307,6 +309,27 @@ namespace gbe
   }
 
   void Context::deallocate(int16_t offset) { partitioner->deallocate(offset); }
+
+  int32_t Context::allocConstBuf(uint32_t argID) {
+     GBE_ASSERT(kernel->args[argID].type == GBE_ARG_CONSTANT_PTR);
+
+    //free previous
+    int32_t offset = kernel->getCurbeOffset(GBE_CURBE_EXTRA_ARGUMENT, argID+GBE_CONSTANT_BUFFER);
+    if(offset >= 0)
+        deallocate(offset+GEN_REG_SIZE);
+
+    if(kernel->args[argID].bufSize > 0) {
+      //use 32 alignment here as GEN_REG_SIZE, need dynamic by type?
+      newCurbeEntry(GBE_CURBE_EXTRA_ARGUMENT, GBE_CONSTANT_BUFFER+argID, kernel->args[argID].bufSize, 32);
+    }
+
+    std::sort(kernel->patches.begin(), kernel->patches.end());
+    offset = kernel->getCurbeOffset(GBE_CURBE_EXTRA_ARGUMENT, argID+GBE_CONSTANT_BUFFER);
+    GBE_ASSERT(offset>=0);
+
+    kernel->curbeSize = ALIGN(kernel->curbeSize, GEN_REG_SIZE);
+    return offset + GEN_REG_SIZE;
+  }
 
   void Context::buildStack(void) {
     const auto &stackUse = dag->getUse(ir::ocl::stackptr);

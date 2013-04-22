@@ -1,4 +1,4 @@
-/* 
+/*
  * Copyright © 2012 Intel Corporation
  *
  * This library is free software; you can redistribute it and/or
@@ -25,7 +25,7 @@
 /* This is the instruction selection code. First of all, this is a bunch of c++
  * crap. Sorry if this is not that readable. Anyway, the goal here is to take
  * GenIR code (i.e. the very regular, very RISC IR) and to produce GenISA with
- * virtual registers (i.e. regular GenIR registers). 
+ * virtual registers (i.e. regular GenIR registers).
  *
  * Overall idea:
  * =============
@@ -72,7 +72,7 @@
  * *same* flag register for the predicates (used for masking) and the
  * conditional modifier (used as a destination for CMP). This leads to extra
  * complications with compare instructions and select instructions. Basically,
- * we need to insert extra MOVs. 
+ * we need to insert extra MOVs.
  *
  * Also, there is some extra kludge to handle the predicates for JMPI.
  *
@@ -439,6 +439,8 @@ namespace gbe
     void CMP(uint32_t conditional, Reg src0, Reg src1);
     /*! Select instruction with embedded comparison */
     void SEL_CMP(uint32_t conditional, Reg dst, Reg src0, Reg src1);
+    /* Constant buffer move instruction */
+    void CB_MOVE(Reg dst, Reg src);
     /*! EOT is used to finish GPGPU threads */
     void EOT(void);
     /*! No-op */
@@ -481,7 +483,7 @@ namespace gbe
   static void markAllChildren(SelectionDAG &dag) {
     // Do not merge anything, so all sources become roots
     for (uint32_t childID = 0; childID < dag.childNum; ++childID)
-      if (dag.child[childID]) 
+      if (dag.child[childID])
         dag.child[childID]->isRoot = 1;
   }
 
@@ -697,6 +699,11 @@ namespace gbe
     insn->src(0) = src0;
     insn->src(1) = src1;
     insn->extra.function = conditional;
+  }
+  void Selection::Opaque::CB_MOVE(Reg dst, Reg src) {
+    SelectionInstruction *insn = this->appendInsn(SEL_OP_CB_MOVE, 1, 1);
+    insn->dst(0) = dst;
+    insn->src(0) = src;
   }
 
   void Selection::Opaque::EOT(void) { this->appendInsn(SEL_OP_EOT, 0, 0); }
@@ -1057,7 +1064,7 @@ namespace gbe
   // Implementation of all patterns
   ///////////////////////////////////////////////////////////////////////////
 
-  GenRegister getRegisterFromImmediate(ir::Immediate imm) 
+  GenRegister getRegisterFromImmediate(ir::Immediate imm)
   {
     using namespace ir;
     switch (imm.type) {
@@ -1654,15 +1661,30 @@ namespace gbe
         sel.MOV(GenRegister::retype(value, GEN_TYPE_UB), GenRegister::unpacked_ub(dst));
     }
 
+    void emitCBMove(Selection::Opaque &sel,
+                         const ir::LoadInstruction &insn,
+                         GenRegister address) const
+    {
+      using namespace ir;
+      GBE_ASSERT(insn.getValueNum() == 1);   //todo: handle vec later
+
+      const GenRegister dst = sel.selReg(insn.getValue(0), insn.getValueType());
+      const GenRegister src = address;
+      sel.CB_MOVE(dst, src);
+    }
+
     INLINE bool emitOne(Selection::Opaque &sel, const ir::LoadInstruction &insn) const {
       using namespace ir;
       const GenRegister address = sel.selReg(insn.getAddress());
       const AddressSpace space = insn.getAddressSpace();
       GBE_ASSERT(insn.getAddressSpace() == MEM_GLOBAL ||
+                 insn.getAddressSpace() == MEM_CONSTANT ||
                  insn.getAddressSpace() == MEM_PRIVATE ||
                  insn.getAddressSpace() == MEM_LOCAL);
       GBE_ASSERT(sel.ctx.isScalarReg(insn.getValue(0)) == false);
-      if (insn.isAligned() == true)
+      if (insn.getAddressSpace() == MEM_CONSTANT)
+        this->emitCBMove(sel, insn, address);
+      else if (insn.isAligned() == true)
         this->emitUntypedRead(sel, insn, address, space == MEM_LOCAL ? 0xfe : 0x00);
       else {
         const GenRegister value = sel.selReg(insn.getValue(0));

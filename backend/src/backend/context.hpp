@@ -86,6 +86,8 @@ namespace gbe
     int16_t allocate(int16_t size, int16_t alignment);
     /*! Deallocate previously allocated memory */
     void deallocate(int16_t offset);
+    /* allocate curbe for constant ptr argument */
+    int32_t allocConstBuf(uint32_t argID);
   protected:
     /*! Build the instruction stream. Return false if failed */
     virtual bool emitCode(void) = 0;

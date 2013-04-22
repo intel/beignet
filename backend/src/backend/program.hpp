@@ -1,4 +1,4 @@
-/* 
+/*
  * Copyright © 2012 Intel Corporation
  *
  * This library is free software; you can redistribute it and/or
@@ -26,6 +26,7 @@
 #define __GBE_PROGRAM_HPP__
 
 #include "backend/program.h"
+#include "backend/context.hpp"
 #include "sys/hash_map.hpp"
 #include "sys/vector.hpp"
 #include <string>
@@ -42,6 +43,7 @@ namespace gbe {
   struct KernelArgument {
     gbe_arg_type type; //!< Pointer, structure, image, regular value?
     uint32_t size;     //!< Size of the argument
+    uint32_t bufSize;  //!< Contant buffer size
   };
 
   /*! Stores the offset where to patch where to patch */
@@ -94,6 +96,16 @@ namespace gbe {
     INLINE uint32_t getSIMDWidth(void) const { return this->simdWidth; }
     /*! Says if SLM is needed for it */
     INLINE bool getUseSLM(void) const { return this->useSLM; }
+    /*! set constant buffer size and return the cb curbe offset */
+    int32_t setConstBufSize(uint32_t argID, size_t sz) {
+      if(argID >= argNum) return -1;
+      if(args[argID].type != GBE_ARG_CONSTANT_PTR) return -1;
+      if(args[argID].bufSize != sz) {
+        args[argID].bufSize = sz;
+        return ctx->allocConstBuf(argID);
+      }
+      return -1;
+    }
   protected:
     friend class Context;      //!< Owns the kernels
     const std::string name;    //!< Kernel name
@@ -104,6 +116,7 @@ namespace gbe {
     uint32_t simdWidth;        //!< SIMD size for the kernel (lane number)
     uint32_t stackSize;        //!< Stack size (may be 0 if unused)
     bool useSLM;               //!< SLM requires a special HW config
+    Context *ctx;              //!< Save context after compiler to alloc constant buffer curbe
     GBE_CLASS(Kernel);         //!< Use custom allocators
   };
 

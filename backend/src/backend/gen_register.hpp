@@ -725,6 +725,16 @@ namespace gbe
       return ub16(GEN_GENERAL_REGISTER_FILE, nr, subnr);
     }
 
+    static INLINE GenRegister unpacked_uw(uint32_t nr, uint32_t subnr) {
+      return GenRegister(GEN_GENERAL_REGISTER_FILE,
+                         nr,
+                         subnr,
+                         GEN_TYPE_UW,
+                         GEN_VERTICAL_STRIDE_16,
+                         GEN_WIDTH_8,
+                         GEN_HORIZONTAL_STRIDE_2);
+    }
+
     static INLINE GenRegister mask(uint32_t subnr) {
       return uw1(GEN_ARCHITECTURE_REGISTER_FILE, GEN_ARF_MASK, subnr);
     }

@@ -144,7 +144,7 @@ namespace gbe
     }
   }
 
-  void GenContext::emitBinaryInstruction(const SelectionInstruction &insn) { 
+  void GenContext::emitBinaryInstruction(const SelectionInstruction &insn) {
     const GenRegister dst = ra->genReg(insn.dst(0));
     const GenRegister src0 = ra->genReg(insn.src(0));
     const GenRegister src1 = ra->genReg(insn.src(1));
@@ -209,6 +209,32 @@ namespace gbe
       GBE_ASSERT(insn.opcode == SEL_OP_SEL_CMP);
       const GenRegister dst = ra->genReg(insn.dst(0));
       p->SEL_CMP(insn.extra.function, dst, src0, src1);
+    }
+  }
+
+  void GenContext::emitCBMoveInstruction(const SelectionInstruction &insn) {
+    const GenRegister src = GenRegister::unpacked_uw(ra->genReg(insn.src(0)).nr, 0);
+    const GenRegister dst = ra->genReg(insn.dst(0));
+    const GenRegister a0 = GenRegister::addr8(0);
+    uint32_t simdWidth = p->curr.execWidth;
+
+    p->push();
+      p->curr.execWidth = 8;
+      p->curr.quarterControl = GEN_COMPRESSION_Q1;
+      p->MOV(a0, src);
+      p->MOV(dst, GenRegister::indirect(dst.type, 0, GEN_WIDTH_8));
+    p->pop();
+
+    if (simdWidth == 16) {
+      p->push();
+        p->curr.execWidth = 8;
+        p->curr.quarterControl = GEN_COMPRESSION_Q2;
+
+        const GenRegister nextDst = GenRegister::Qn(dst, 1);
+        const GenRegister nextSrc = GenRegister::Qn(src, 1);
+        p->MOV(a0, nextSrc);
+        p->MOV(nextDst, GenRegister::indirect(dst.type, 0, GEN_WIDTH_8));
+      p->pop();
     }
   }
 

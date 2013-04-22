@@ -76,9 +76,10 @@ namespace gbe {
       unit.getFunction(name)->setSimdWidth(simdWidth);
       Context *ctx = GBE_NEW(GenContext, unit, name, limitRegisterPressure);
       kernel = ctx->compileKernel();
-      GBE_DELETE(ctx);
-      if (kernel != NULL)
+      if (kernel != NULL) {
         break;
+      }
+      GBE_DELETE(ctx);
     }
 
     // XXX spill must be implemented
