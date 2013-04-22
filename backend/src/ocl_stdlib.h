@@ -684,6 +684,8 @@ DECL_VECTOR_1OP(__gen_ocl_internal_log10, float);
   }
 DECL_VECTOR_2OP(min, float);
 DECL_VECTOR_2OP(max, float);
+DECL_VECTOR_2OP(__gen_ocl_internal_fmin, float);
+DECL_VECTOR_2OP(__gen_ocl_internal_fmax, float);
 DECL_VECTOR_2OP(fmod, float);
 DECL_VECTOR_2OP(powr, float);
 #undef DECL_VECTOR_2OP
