@@ -481,6 +481,21 @@ cl_mem_unmap(cl_mem mem)
   return CL_SUCCESS;
 }
 
+LOCAL void*
+cl_mem_map_gtt(cl_mem mem)
+{
+  cl_buffer_map_gtt(mem->bo);
+  assert(cl_buffer_get_virtual(mem->bo));
+  return cl_buffer_get_virtual(mem->bo);
+}
+
+LOCAL cl_int
+cl_mem_unmap_gtt(cl_mem mem)
+{
+  cl_buffer_unmap_gtt(mem->bo);
+  return CL_SUCCESS;
+}
+
 LOCAL cl_int
 cl_mem_pin(cl_mem mem)
 {

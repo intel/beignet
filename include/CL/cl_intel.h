@@ -40,6 +40,14 @@ clIntelMapBuffer(cl_mem, cl_int*);
 extern CL_API_ENTRY cl_int CL_API_CALL
 clIntelUnmapBuffer(cl_mem);
 
+/* 1 to 1 mapping of drm_intel_gem_bo_map_gtt */
+extern CL_API_ENTRY void* CL_API_CALL
+clIntelMapBufferGTT(cl_mem, cl_int*);
+
+/* 1 to 1 mapping of drm_intel_gem_bo_unmap_gtt */
+extern CL_API_ENTRY cl_int CL_API_CALL
+clIntelUnmapBufferGTT(cl_mem);
+
 /* Pin /Unpin the buffer in GPU memory (must be root) */
 extern CL_API_ENTRY cl_int CL_API_CALL
 clIntelPinBuffer(cl_mem);

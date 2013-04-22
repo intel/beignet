@@ -1212,6 +1212,29 @@ error:
   return err;
 }
 
+void*
+clIntelMapBufferGTT(cl_mem mem, cl_int *errcode_ret)
+{
+  void *ptr = NULL;
+  cl_int err = CL_SUCCESS;
+  CHECK_MEM (mem);
+  ptr = cl_mem_map_gtt(mem);
+error:
+  if (errcode_ret)
+    *errcode_ret = err;
+  return ptr;
+}
+
+cl_int
+clIntelUnmapBufferGTT(cl_mem mem)
+{
+  cl_int err = CL_SUCCESS;
+  CHECK_MEM (mem);
+  err = cl_mem_unmap_gtt(mem);
+error:
+  return err;
+}
+
 cl_int
 clIntelPinBuffer(cl_mem mem)
 {
