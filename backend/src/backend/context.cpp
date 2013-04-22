@@ -1,4 +1,4 @@
-/* 
+/*
  * Copyright © 2012 Intel Corporation
  *
  * This library is free software; you can redistribute it and/or
@@ -53,7 +53,7 @@ namespace gbe
      *  the hardware. Note that we always use the left most block when
      *  allocating, so it makes sense for constant pushing
      */
-    int16_t allocate(int16_t size, int16_t alignment);
+    int16_t allocate(int16_t size, int16_t alignment, bool bFwd=0);
 
     /*! Free the given register file piece */
     void deallocate(int16_t offset);
@@ -75,8 +75,9 @@ namespace gbe
      *  If the colascing was done, the left block is deleted
      */
     void coalesce(Block *left, Block *right);
-    /*! Head of the free list */
+    /*! Head and tail of the free list */
     Block *head;
+    Block *tail;
     /*! Handle free list element allocation */
     DECL_POOL(Block, blockPool);
     /*! Track allocated memory blocks <offset, size> */
@@ -89,10 +90,10 @@ namespace gbe
     // r0 is always set by the HW and used at the end by EOT
     const int16_t offset = GEN_REG_SIZE;
     const int16_t size = RegisterFileSize  - offset;
-    head = this->newBlock(offset, size);
+    tail = head = this->newBlock(offset, size);
   }
 
-  RegisterFilePartitioner::~RegisterFilePartitioner(void) { 
+  RegisterFilePartitioner::~RegisterFilePartitioner(void) {
     while (this->head) {
       Block *next = this->head->next;
       this->deleteBlock(this->head);
@@ -100,80 +101,104 @@ namespace gbe
     }
   }
 
-  int16_t RegisterFilePartitioner::allocate(int16_t size, int16_t alignment)
+  int16_t RegisterFilePartitioner::allocate(int16_t size, int16_t alignment, bool bFwd)
   {
     // Make it simple and just use the first block we find
-    Block *list = head;
+    Block *list = bFwd ? head : tail;
     while (list) {
-      const int16_t aligned = ALIGN(list->offset, alignment);
-      const int16_t spaceOnLeft = aligned - list->offset;
-      const int16_t spaceOnRight = list->size - size - spaceOnLeft;
+      int16_t aligned;
+      int16_t spaceOnLeft;
+      int16_t spaceOnRight;
+      if(bFwd) {
+        aligned = ALIGN(list->offset, alignment);
+        spaceOnLeft = aligned - list->offset;
+        spaceOnRight = list->size - size - spaceOnLeft;
 
       // Not enough space in this block
-      if (spaceOnRight < 0) {
-        list = list->next;
-        continue;
+        if (spaceOnRight < 0) {
+          list = list->next;
+          continue;
+        }
+      } else {
+        aligned = ALIGN(list->offset+list->size-size-(alignment-1), alignment);   //alloc from block's tail
+        spaceOnLeft = aligned - list->offset;
+        spaceOnRight = list->size - size - spaceOnLeft;
+
+        // Not enough space in this block
+        if (spaceOnLeft < 0) {
+          list = list->prev;
+          continue;
+        }
       }
+
       // Cool we can use this block
-      else {
-        Block *left = list->prev;
-        Block *right = list->next;
+      Block *left = list->prev;
+      Block *right = list->next;
 
-        // If we left a hole on the left, create a new block
-        if (spaceOnLeft) {
-          Block *newBlock = this->newBlock(list->offset, spaceOnLeft);
-          if (left) {
-            left->next = newBlock;
-            newBlock->prev = left;
-          }
-          if (right) {
-            newBlock->next = right;
-            right->prev = newBlock;
-          }
-          left = newBlock;
+      // If we left a hole on the left, create a new block
+      if (spaceOnLeft) {
+        Block *newBlock = this->newBlock(list->offset, spaceOnLeft);
+        if (left) {
+          left->next = newBlock;
+          newBlock->prev = left;
         }
-
-        // If we left a hole on the right, create a new block as well
-        if (spaceOnRight) {
-          Block *newBlock = this->newBlock(aligned + size, spaceOnRight);
-          if (left) {
-            left->next = newBlock;
-            newBlock->prev = left;
-          }
-          if (right) {
-            right->prev = newBlock;
-            newBlock->next = right;
-          }
-          right = newBlock;
+        if (right) {
+          newBlock->next = right;
+          right->prev = newBlock;
         }
-
-        // Chain both successors and predecessors when the entire block was
-        // allocated
-        if (spaceOnLeft == 0 && spaceOnRight == 0) {
-          if (left) left->next = right;
-          if (right) right->prev = left;
-        }
-
-        // Update the head of the free blocks
-        if (list == head) {
-          if (left)
-            head = left;
-          else if (right)
-            head = right;
-          else
-            head = NULL;
-        }
-
-        // Free the block and check the consistency
-        this->deleteBlock(list);
-        if (head && head->next) GBE_ASSERT(head->next->prev == head);
-
-        // Track the allocation to retrieve the size later
-        allocatedBlocks.insert(std::make_pair(aligned, size));
-
-        // We have a valid offset now
-        return aligned;
+        left = newBlock;
       }
+
+      // If we left a hole on the right, create a new block as well
+      if (spaceOnRight) {
+        Block *newBlock = this->newBlock(aligned + size, spaceOnRight);
+        if (left) {
+          left->next = newBlock;
+          newBlock->prev = left;
+        }
+        if (right) {
+          right->prev = newBlock;
+          newBlock->next = right;
+        }
+        right = newBlock;
+      }
+
+      // Chain both successors and predecessors when the entire block was
+      // allocated
+      if (spaceOnLeft == 0 && spaceOnRight == 0) {
+        if (left) left->next = right;
+        if (right) right->prev = left;
+      }
+
+      // Update the head of the free blocks
+      if (list == head) {
+        if (left)
+          head = left;
+        else if (right)
+          head = right;
+        else
+          head = NULL;
+      }
+
+      // Update the tail of the free blocks
+      if (list == tail) {
+        if (right)
+          tail = right;
+        else if (left)
+          tail = left;
+        else
+          tail = NULL;
+      }
+      // Free the block and check the consistency
+      this->deleteBlock(list);
+      if (head && head->next) GBE_ASSERT(head->next->prev == head);
+      if (tail && tail->prev) GBE_ASSERT(tail->prev->next == tail);
+
+      // Track the allocation to retrieve the size later
+      allocatedBlocks.insert(std::make_pair(aligned, size));
+
+      // We have a valid offset now
+      return aligned;
     }
     return 0;
   }
@@ -186,34 +211,35 @@ namespace gbe
     const int16_t size = it->second;
 
     // Find the two blocks where to insert the new block
-    Block *list = head, *prev = NULL;
+    Block *list = tail, *next = NULL;
     while (list != NULL) {
-      if (list->offset > offset)
+      if (list->offset < offset)
         break;
-      prev = list;
-      list = list->next;
+      next = list;
+      list = list->prev;
     }
 
     // Create the block and insert it
     Block *newBlock = this->newBlock(offset, size);
-    if (prev) {
-      GBE_ASSERT(prev->offset + prev->size <= offset);
-      prev->next = newBlock;
-      newBlock->prev = prev;
-    } else
-      this->head = newBlock;  // prev is NULL means newBlock should be the head.
-
     if (list) {
-      GBE_ASSERT(offset + size <= list->offset);
-      list->prev = newBlock;
-      newBlock->next = list;
-    }
+      GBE_ASSERT(list->offset + list->size <= offset);
+      list->next = newBlock;
+      newBlock->prev = list;
+    } else
+      this->head = newBlock;  // list is NULL means newBlock should be the head.
 
-    if (prev != NULL || list != NULL)
+    if (next) {
+      GBE_ASSERT(offset + size <= next->offset);
+      next->prev = newBlock;
+      newBlock->next = next;
+    } else
+      this->tail = newBlock;  // next is NULL means newBlock should be the tail.
+
+    if (list != NULL || next != NULL)
     {
       // Coalesce the blocks if possible
-      this->coalesce(prev, newBlock);
-      this->coalesce(newBlock, list);
+      this->coalesce(list, newBlock);
+      this->coalesce(newBlock, next);
     }
 
     // Do not track this allocation anymore
@@ -297,7 +323,7 @@ namespace gbe
                               uint32_t alignment)
   {
     alignment = alignment == 0 ? size : alignment;
-    const uint32_t offset = partitioner->allocate(size, alignment);
+    const uint32_t offset = partitioner->allocate(size, alignment, 1);
     GBE_ASSERT(offset >= GEN_REG_SIZE);
     kernel->patches.push_back(PatchInfo(value, subValue, offset - GEN_REG_SIZE));
     kernel->curbeSize = std::max(kernel->curbeSize, offset + size - GEN_REG_SIZE);
