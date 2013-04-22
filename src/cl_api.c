@@ -1170,6 +1170,10 @@ clEnqueueBarrier(cl_command_queue  command_queue)
   return 0;
 }
 
+#define EXTFUNC(x)                      \
+  if (strcmp(#x, func_name) == 0)       \
+    return (void *)x;
+
 void*
 clGetExtensionFunctionAddress(const char *func_name)
 {
@@ -1177,11 +1181,21 @@ clGetExtensionFunctionAddress(const char *func_name)
     return NULL;
 #ifdef HAS_OCLIcd
   /* cl_khr_icd */
-  if (strcmp("clIcdGetPlatformIDsKHR", func_name) == 0)
-    return (void *)clIcdGetPlatformIDsKHR;
+  EXTFUNC(clIcdGetPlatformIDsKHR)
 #endif
+  EXTFUNC(clCreateProgramWithLLVMIntel)
+  EXTFUNC(clGetGenVersionIntel)
+  EXTFUNC(clMapBufferIntel)
+  EXTFUNC(clUnmapBufferIntel)
+  EXTFUNC(clMapBufferGTTIntel)
+  EXTFUNC(clUnmapBufferGTTIntel)
+  EXTFUNC(clPinBufferIntel)
+  EXTFUNC(clUnpinBufferIntel)
+  EXTFUNC(clReportUnfreedIntel)
   return NULL;
 }
+
+#undef EXTFUNC
 
 cl_int
 clReportUnfreedIntel(void)
