@@ -793,7 +793,7 @@ clEnqueueReadBuffer(cl_command_queue command_queue,
 	cl_int err = CL_SUCCESS;
 	assert(ptr != NULL);
 	void* temp_ptr = NULL;
-	temp_ptr = clIntelMapBuffer(buffer, &err);
+	temp_ptr = clMapBufferIntel(buffer, &err);
 	assert(err == CL_SUCCESS);
 	memcpy(ptr, temp_ptr, cb);
 	return err;
@@ -833,11 +833,11 @@ clEnqueueWriteBuffer(cl_command_queue    command_queue,
   if (blocking_write != CL_TRUE)
     NOT_IMPLEMENTED;
   cl_int err;
-  void *p = clIntelMapBuffer(buffer, &err);
+  void *p = clMapBufferIntel(buffer, &err);
   if (err != CL_SUCCESS)
     return err;
   memcpy(p + offset, ptr, cb);
-  err = clIntelUnmapBuffer(buffer);
+  err = clUnmapBufferIntel(buffer);
   return err;
 }
 
@@ -991,7 +991,7 @@ clEnqueueMapBuffer(cl_command_queue  command_queue,
      NOT_IMPLEMENTED;
   if (offset != 0)
      NOT_IMPLEMENTED;
-  p = clIntelMapBuffer(buffer, errcode_ret);
+  p = clMapBufferIntel(buffer, errcode_ret);
   return p;
 }
 
@@ -1021,7 +1021,7 @@ clEnqueueUnmapMemObject(cl_command_queue  command_queue,
                         const cl_event *  event_wait_list,
                         cl_event *        event)
 {
-  return clIntelUnmapBuffer(memobj);
+  return clUnmapBufferIntel(memobj);
 }
 
 cl_int
@@ -1184,13 +1184,13 @@ clGetExtensionFunctionAddress(const char *func_name)
 }
 
 cl_int
-clIntelReportUnfreed(void)
+clReportUnfreedIntel(void)
 {
   return cl_report_unfreed();
 }
 
 void*
-clIntelMapBuffer(cl_mem mem, cl_int *errcode_ret)
+clMapBufferIntel(cl_mem mem, cl_int *errcode_ret)
 {
   void *ptr = NULL;
   cl_int err = CL_SUCCESS;
@@ -1203,7 +1203,7 @@ error:
 }
 
 cl_int
-clIntelUnmapBuffer(cl_mem mem)
+clUnmapBufferIntel(cl_mem mem)
 {
   cl_int err = CL_SUCCESS;
   CHECK_MEM (mem);
@@ -1213,7 +1213,7 @@ error:
 }
 
 void*
-clIntelMapBufferGTT(cl_mem mem, cl_int *errcode_ret)
+clMapBufferGTTIntel(cl_mem mem, cl_int *errcode_ret)
 {
   void *ptr = NULL;
   cl_int err = CL_SUCCESS;
@@ -1226,7 +1226,7 @@ error:
 }
 
 cl_int
-clIntelUnmapBufferGTT(cl_mem mem)
+clUnmapBufferGTTIntel(cl_mem mem)
 {
   cl_int err = CL_SUCCESS;
   CHECK_MEM (mem);
@@ -1236,7 +1236,7 @@ error:
 }
 
 cl_int
-clIntelPinBuffer(cl_mem mem)
+clPinBufferIntel(cl_mem mem)
 {
   cl_int err = CL_SUCCESS;
   CHECK_MEM (mem);
@@ -1246,7 +1246,7 @@ error:
 }
 
 cl_int
-clIntelUnpinBuffer(cl_mem mem)
+clUnpinBufferIntel(cl_mem mem)
 {
   cl_int err = CL_SUCCESS;
   CHECK_MEM (mem);
@@ -1256,17 +1256,17 @@ error:
 }
 
 cl_int
-clIntelGetGenVersion(cl_device_id device, cl_int *ver)
+clGetGenVersionIntel(cl_device_id device, cl_int *ver)
 {
   return cl_device_get_version(device, ver);
 }
 
 cl_program
-clCreateProgramWithLLVM(cl_context              context,
-                        cl_uint                 num_devices,
-                        const cl_device_id *    devices,
-                        const char *            filename,
-                        cl_int *                errcode_ret)
+clCreateProgramWithLLVMIntel(cl_context              context,
+                             cl_uint                 num_devices,
+                             const cl_device_id *    devices,
+                             const char *            filename,
+                             cl_int *                errcode_ret)
 {
   return cl_program_create_from_llvm(context,
                                      num_devices,

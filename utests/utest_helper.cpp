@@ -216,7 +216,7 @@ do_kiss_path(const char *file, cl_device_id device)
   if (device == NULL)
     sub_path = "";
   else {
-    if (clIntelGetGenVersion(device, &ver) != CL_SUCCESS)
+    if (clGetGenVersionIntel(device, &ver) != CL_SUCCESS)
       clpanic("Unable to get Gen version", -1);
     sub_path = "";
   }
@@ -240,7 +240,7 @@ cl_kernel_init(const char *file_name, const char *kernel_name, int format)
   /* Load the program and build it */
   ker_path = do_kiss_path(file_name, device);
   if (format == LLVM)
-    program = clCreateProgramWithLLVM(ctx, 1, &device, ker_path, &status);
+    program = clCreateProgramWithLLVMIntel(ctx, 1, &device, ker_path, &status);
   else if (format == SOURCE) {
     cl_file_map_t *fm = cl_file_map_new();
     FATAL_IF (cl_file_map_open(fm, ker_path) != CL_FILE_MAP_SUCCESS,
@@ -428,8 +428,8 @@ cl_test_destroy(void)
 {
   cl_kernel_destroy();
   cl_ocl_destroy();
-  printf("%i memory leaks\n", clIntelReportUnfreed());
-  assert(clIntelReportUnfreed() == 0);
+  printf("%i memory leaks\n", clReportUnfreedIntel());
+  assert(clReportUnfreedIntel() == 0);
 }
 
 void
@@ -438,7 +438,7 @@ cl_buffer_destroy(void)
   int i;
   for (i = 0; i < MAX_BUFFER_N; ++i) {
     if (buf_data[i] != NULL) {
-      clIntelUnmapBuffer(buf[i]);
+      clUnmapBufferIntel(buf[i]);
       buf_data[i] = NULL;
     }
     if (buf[i] != NULL) {
@@ -456,7 +456,7 @@ cl_report_perf_counters(cl_mem perf)
   uint32_t i;
   if (perf == NULL)
     return;
-  start = (uint32_t*) clIntelMapBuffer(perf, &status);
+  start = (uint32_t*) clMapBufferIntel(perf, &status);
   assert(status == CL_SUCCESS && start != NULL);
   end = start + 128;
 
@@ -481,7 +481,7 @@ cl_report_perf_counters(cl_mem perf)
   }
   printf("\n\n");
 
-  clIntelUnmapBuffer(perf);
+  clUnmapBufferIntel(perf);
 }
 
 struct bmphdr {

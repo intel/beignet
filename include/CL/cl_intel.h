@@ -30,41 +30,41 @@ extern "C" {
 
 /* Track allocations and report current number of unfreed allocations */
 extern CL_API_ENTRY cl_int CL_API_CALL
-clIntelReportUnfreed(void);
+clReportUnfreedIntel(void);
 
 /* 1 to 1 mapping of drm_intel_bo_map */
 extern CL_API_ENTRY void* CL_API_CALL
-clIntelMapBuffer(cl_mem, cl_int*);
+clMapBufferIntel(cl_mem, cl_int*);
 
 /* 1 to 1 mapping of drm_intel_bo_unmap */
 extern CL_API_ENTRY cl_int CL_API_CALL
-clIntelUnmapBuffer(cl_mem);
+clUnmapBufferIntel(cl_mem);
 
 /* 1 to 1 mapping of drm_intel_gem_bo_map_gtt */
 extern CL_API_ENTRY void* CL_API_CALL
-clIntelMapBufferGTT(cl_mem, cl_int*);
+clMapBufferGTTIntel(cl_mem, cl_int*);
 
 /* 1 to 1 mapping of drm_intel_gem_bo_unmap_gtt */
 extern CL_API_ENTRY cl_int CL_API_CALL
-clIntelUnmapBufferGTT(cl_mem);
+clUnmapBufferGTTIntel(cl_mem);
 
 /* Pin /Unpin the buffer in GPU memory (must be root) */
 extern CL_API_ENTRY cl_int CL_API_CALL
-clIntelPinBuffer(cl_mem);
+clPinBufferIntel(cl_mem);
 extern CL_API_ENTRY cl_int CL_API_CALL
-clIntelUnpinBuffer(cl_mem);
+clUnpinBufferIntel(cl_mem);
 
 /* Get the generation of the Gen device (used to load the proper binary) */
 extern CL_API_ENTRY cl_int CL_API_CALL
-clIntelGetGenVersion(cl_device_id device, cl_int *ver);
+clGetGenVersionIntel(cl_device_id device, cl_int *ver);
 
 /* Create a program from a LLVM source file */
 extern CL_API_ENTRY cl_program CL_API_CALL
-clCreateProgramWithLLVM(cl_context              /* context */,
-                        cl_uint                 /* num_devices */,
-                        const cl_device_id *    /* device_list */,
-                        const char *            /* file */,
-                        cl_int *                /* errcode_ret */);
+clCreateProgramWithLLVMIntel(cl_context              /* context */,
+                             cl_uint                 /* num_devices */,
+                             const cl_device_id *    /* device_list */,
+                             const char *            /* file */,
+                             cl_int *                /* errcode_ret */);
 
 #ifdef __cplusplus
 }

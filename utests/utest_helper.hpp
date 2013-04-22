@@ -101,12 +101,12 @@ extern EGLSurface  eglSurface;
     OCL_CALL2(clCreateSampler, SAMPLER, ctx, 0, ADDRESS_MODE, FILTER_MODE)
 
 #define OCL_MAP_BUFFER(ID) \
-    OCL_CALL2(clIntelMapBuffer, buf_data[ID], buf[ID])
+    OCL_CALL2(clMapBufferIntel, buf_data[ID], buf[ID])
 
 #define OCL_UNMAP_BUFFER(ID) \
   do { \
     if (buf[ID] != NULL) { \
-      OCL_CALL (clIntelUnmapBuffer, buf[ID]); \
+      OCL_CALL (clUnmapBufferIntel, buf[ID]); \
       buf_data[ID] = NULL; \
     } \
   } while (0)
