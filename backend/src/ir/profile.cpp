@@ -39,6 +39,7 @@ namespace ir {
         "global_offset_0", "global_offset_1", "global_offset_2",
         "stack_pointer",
         "block_ip",
+        "barrier_id", "thread_number",
     };
 
 #if GBE_DEBUG
