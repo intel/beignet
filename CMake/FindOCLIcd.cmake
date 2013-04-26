@@ -15,6 +15,7 @@ FIND_PATH(OCLIcd_INCLUDE_PATH ocl_icd.h
   DOC "The directory where ocl_icd.h resides")
 
 IF(OCLIcd_INCLUDE_PATH)
+  INCLUDE_DIRECTORIES(${OCLIcd_INCLUDE_PATH})
   SET(OCLIcd_FOUND 1 CACHE STRING "Set to 1 if OCLIcd is found, 0 otherwise")
 ELSE(OCLIcd_INCLUDE_PATH)
   SET(OCLIcd_FOUND 0 CACHE STRING "Set to 1 if OCLIcd is found, 0 otherwise")
