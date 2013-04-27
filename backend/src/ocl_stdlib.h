@@ -728,7 +728,7 @@ INLINE OVERLOADABLE float16 mix(float16 x, float16 y, float a) { return mix(x,y,
 #define trunc __gen_ocl_internal_trunc
 #define round __gen_ocl_internal_round
 #define floor __gen_ocl_internal_floor
-#define ceil __gen_ocl_internal_ceil,
+#define ceil __gen_ocl_internal_ceil
 #define log __gen_ocl_internal_log
 #define log2 __gen_ocl_internal_log2
 #define log10 __gen_ocl_internal_log10
