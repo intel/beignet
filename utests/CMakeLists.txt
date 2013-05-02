@@ -33,6 +33,8 @@ set (utests_sources
   compiler_function_constant0.cpp
   compiler_function_constant1.cpp
   compiler_function_constant.cpp
+  compiler_global_constant.cpp
+  compiler_global_constant_2.cpp
   compiler_if_else.cpp
   compiler_integer_division.cpp
   compiler_integer_remainder.cpp
