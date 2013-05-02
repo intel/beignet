@@ -63,9 +63,10 @@ namespace gbe {
     return it->offset; // we found it!
   }
 
-  Program::Program(void) {}
+  Program::Program(void) : constantSet(NULL) {}
   Program::~Program(void) {
     for (auto &kernel : kernels) GBE_DELETE(kernel.second);
+    if (constantSet) delete constantSet;
   }
 
   BVAR(OCL_OUTPUT_GEN_IR, false);
@@ -81,6 +82,7 @@ namespace gbe {
   }
 
   bool Program::buildFromUnit(const ir::Unit &unit, std::string &error) {
+    constantSet = new ir::ConstantSet(unit.getConstantSet());
     const auto &set = unit.getFunctionSet();
     const uint32_t kernelNum = set.size();
     if (OCL_OUTPUT_GEN_IR) std::cout << unit;
@@ -144,6 +146,18 @@ namespace gbe {
     gbe_program p = gbe_program_new_from_llvm(llName.c_str(), stringSize, err, errSize);
     remove(llName.c_str());
     return p;
+  }
+
+  static size_t programGetGlobalConstantSize(gbe_program gbeProgram) {
+    if (gbeProgram == NULL) return 0;
+    const gbe::Program *program = (const gbe::Program*) gbeProgram;
+    return program->getGlobalConstantSize();
+  }
+
+  static void programGetGlobalConstantData(gbe_program gbeProgram, char *mem) {
+    if (gbeProgram == NULL) return;
+    const gbe::Program *program = (const gbe::Program*) gbeProgram;
+    program->getGlobalConstantData(mem);
   }
 
   static uint32_t programGetKernelNum(gbe_program gbeProgram) {
@@ -244,6 +258,8 @@ namespace gbe {
 GBE_EXPORT_SYMBOL gbe_program_new_from_source_cb *gbe_program_new_from_source = NULL;
 GBE_EXPORT_SYMBOL gbe_program_new_from_binary_cb *gbe_program_new_from_binary = NULL;
 GBE_EXPORT_SYMBOL gbe_program_new_from_llvm_cb *gbe_program_new_from_llvm = NULL;
+GBE_EXPORT_SYMBOL gbe_program_get_global_constant_size_cb *gbe_program_get_global_constant_size = NULL;
+GBE_EXPORT_SYMBOL gbe_program_get_global_constant_data_cb *gbe_program_get_global_constant_data = NULL;
 GBE_EXPORT_SYMBOL gbe_program_delete_cb *gbe_program_delete = NULL;
 GBE_EXPORT_SYMBOL gbe_program_get_kernel_num_cb *gbe_program_get_kernel_num = NULL;
 GBE_EXPORT_SYMBOL gbe_program_get_kernel_by_name_cb *gbe_program_get_kernel_by_name = NULL;
@@ -269,6 +285,8 @@ namespace gbe
   {
     CallBackInitializer(void) {
       gbe_program_new_from_source = gbe::programNewFromSource;
+      gbe_program_get_global_constant_size = gbe::programGetGlobalConstantSize;
+      gbe_program_get_global_constant_data = gbe::programGetGlobalConstantData;
       gbe_program_delete = gbe::programDelete;
       gbe_program_get_kernel_num = gbe::programGetKernelNum;
       gbe_program_get_kernel_by_name = gbe::programGetKernelByName;

@@ -69,6 +69,8 @@ enum gbe_curbe_type {
   GBE_CURBE_GROUP_NUM_X,
   GBE_CURBE_GROUP_NUM_Y,
   GBE_CURBE_GROUP_NUM_Z,
+  GBE_CURBE_GLOBAL_CONSTANT_OFFSET,
+  GBE_CURBE_GLOBAL_CONSTANT_DATA,
   GBE_CURBE_IMAGE_WIDTH,
   GBE_CURBE_IMAGE_HEIGHT,
   GBE_CURBE_IMAGE_DEPTH,
@@ -103,6 +105,14 @@ typedef gbe_program (gbe_program_new_from_llvm_cb)(const char *fileName,
                                                    char *err,
                                                    size_t *err_size);
 extern gbe_program_new_from_llvm_cb *gbe_program_new_from_llvm;
+
+/*! Get the size of global constants */
+typedef size_t (gbe_program_get_global_constant_size_cb)(gbe_program gbeProgram);
+extern gbe_program_get_global_constant_size_cb *gbe_program_get_global_constant_size;
+
+/*! Get the content of global constants */
+typedef void (gbe_program_get_global_constant_data_cb)(gbe_program gbeProgram, char *mem);
+extern gbe_program_get_global_constant_data_cb *gbe_program_get_global_constant_data;
 
 /*! Destroy and deallocate the given program */
 typedef void (gbe_program_delete_cb)(gbe_program);

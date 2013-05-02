@@ -27,6 +27,8 @@
 
 #include "backend/program.h"
 #include "backend/context.hpp"
+#include "ir/constant.hpp"
+#include "ir/unit.hpp"
 #include "sys/hash_map.hpp"
 #include "sys/vector.hpp"
 #include <string>
@@ -157,11 +159,17 @@ namespace gbe {
     bool buildFromLLVMFile(const char *fileName, std::string &error);
     /*! Buils a program from a OCL string */
     bool buildFromSource(const char *source, std::string &error);
+    /*! Get size of the global constant arrays */
+    size_t getGlobalConstantSize(void) const { return constantSet->getDataSize(); }
+    /*! Get the content of global constant arrays */
+    void getGlobalConstantData(char *mem) const { constantSet->getData(mem); }
   protected:
     /*! Compile a kernel */
     virtual Kernel *compileKernel(const ir::Unit &unit, const std::string &name) = 0;
     /*! Kernels sorted by their name */
     hash_map<std::string, Kernel*> kernels;
+    /*! Global (constants) outside any kernel */
+    ir::ConstantSet *constantSet;
     /*! Use custom allocators */
     GBE_CLASS(Program);
   };
