@@ -455,6 +455,8 @@ namespace gbe
 
     virtual bool doInitialization(Module &M);
 
+    void collectGlobalConstant(void) const;
+
     bool runOnFunction(Function &F) {
      // Do not codegen any 'available_externally' functions at all, they have
      // definitions outside the translation unit.
@@ -550,11 +552,60 @@ namespace gbe
 
   char GenWriter::ID = 0;
 
+  void GenWriter::collectGlobalConstant(void) const {
+    const Module::GlobalListType &globalList = TheModule->getGlobalList();
+    for(auto i = globalList.begin(); i != globalList.end(); i ++) {
+      const GlobalVariable &v = *i;
+      const char *name = v.getName().data();
+      unsigned addrSpace = v.getType()->getAddressSpace();
+      if(addrSpace == ir::AddressSpace::MEM_CONSTANT) {
+        GBE_ASSERT(v.hasInitializer());
+        const Constant *c = v.getInitializer();
+        GBE_ASSERT(c->getType()->getTypeID() == Type::ArrayTyID);
+        const ConstantDataArray *cda = dyn_cast<ConstantDataArray>(c);
+        GBE_ASSERT(cda);
+        unsigned len = cda->getNumElements();
+        uint64_t elementSize = cda->getElementByteSize();
+        Type::TypeID typeID = cda->getElementType()->getTypeID();
+        if(typeID == Type::TypeID::IntegerTyID)
+          elementSize = sizeof(unsigned);
+        void *mem = malloc(elementSize * len);
+        for(unsigned j = 0; j < len; j ++) {
+          switch(typeID) {
+            case Type::TypeID::FloatTyID:
+             {
+              float f = cda->getElementAsFloat(j);
+              memcpy((float *)mem + j, &f, elementSize);
+             }
+              break;
+            case Type::TypeID::DoubleTyID:
+             {
+              double d = cda->getElementAsDouble(j);
+              memcpy((double *)mem + j, &d, elementSize);
+             }
+              break;
+            case Type::TypeID::IntegerTyID:
+             {
+              unsigned u = (unsigned) cda->getElementAsInteger(j);
+              memcpy((unsigned *)mem + j, &u, elementSize);
+             }
+              break;
+            default:
+              NOT_IMPLEMENTED;
+          }
+        }
+        unit.newConstant((char *)mem, name, elementSize * len, sizeof(unsigned));
+        free(mem);
+      }
+    }
+  }
+
   bool GenWriter::doInitialization(Module &M) {
     FunctionPass::doInitialization(M);
 
     // Initialize
     TheModule = &M;
+    collectGlobalConstant();
     return false;
   }
 
@@ -704,6 +755,17 @@ namespace gbe
   }
 
   ir::Register GenWriter::getRegister(Value *value, uint32_t elemID) {
+    if (dyn_cast<ConstantExpr>(value)) {
+      ConstantExpr *ce = dyn_cast<ConstantExpr>(value);
+      if(ce->isCast()) {
+        GBE_ASSERT(ce->getOpcode() == Instruction::PtrToInt);
+        const Value *pointer = ce->getOperand(0);
+        GBE_ASSERT(pointer->hasName());
+        auto name = pointer->getName().str();
+        uint16_t reg = unit.getConstantSet().getConstant(name).getReg();
+        return ir::Register(reg);
+      }
+    }
     Constant *CPV = dyn_cast<Constant>(value);
     if (CPV) {
       GBE_ASSERT(isa<GlobalValue>(CPV) == false);
@@ -1075,6 +1137,30 @@ namespace gbe
     this->regTranslator.clear();
     this->labelMap.clear();
     this->emitFunctionPrototype(F);
+
+    // Allocate a virtual register for each global constant array
+    const Module::GlobalListType &globalList = TheModule->getGlobalList();
+    size_t j = 0;
+    for(auto i = globalList.begin(); i != globalList.end(); i ++) {
+      const GlobalVariable &v = *i;
+      unsigned addrSpace = v.getType()->getAddressSpace();
+      if(addrSpace != ir::AddressSpace::MEM_CONSTANT)
+        continue;
+      GBE_ASSERT(v.hasInitializer());
+      const Constant *c = v.getInitializer();
+      GBE_ASSERT(c->getType()->getTypeID() == Type::ArrayTyID);
+      const ConstantDataArray *cda = dyn_cast<ConstantDataArray>(c);
+      GBE_ASSERT(cda);
+      ir::Register reg = ctx.reg(ir::RegisterFamily::FAMILY_DWORD);
+      ir::Constant &con = unit.getConstantSet().getConstant(j ++);
+      con.setReg(reg.value());
+      if(con.getOffset() != 0) {
+        ctx.LOADI(ir::TYPE_S32, reg, ctx.newIntegerImmediate(con.getOffset(), ir::TYPE_S32));
+        ctx.ADD(ir::TYPE_S32, reg, ir::ocl::constoffst, reg);
+      } else {
+        ctx.MOV(ir::TYPE_S32, reg, ir::ocl::constoffst);
+      }
+    }
 
     // Visit all the instructions and emit the IR registers or the value to
     // value mapping when a new register is not needed

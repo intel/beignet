@@ -523,6 +523,7 @@ namespace gbe
     allocatePayloadReg(GBE_CURBE_GROUP_NUM_Z, ocl::numgroup2);
     allocatePayloadReg(GBE_CURBE_STACK_POINTER, ocl::stackptr);
     allocatePayloadReg(GBE_CURBE_THREAD_NUM, ocl::threadn);
+    allocatePayloadReg(GBE_CURBE_GLOBAL_CONSTANT_OFFSET, ocl::constoffst);
 
     // Group and barrier IDs are always allocated by the hardware in r0
     RA.insert(std::make_pair(ocl::groupid0,  1*sizeof(float))); // r0.1

@@ -120,6 +120,7 @@ cl_curbe_fill(cl_kernel ker,
   UPLOAD(GBE_CURBE_GROUP_NUM_Y, global_wk_sz[1]/local_wk_sz[1]);
   UPLOAD(GBE_CURBE_GROUP_NUM_Z, global_wk_sz[2]/local_wk_sz[2]);
   UPLOAD(GBE_CURBE_THREAD_NUM, thread_n);
+  UPLOAD(GBE_CURBE_GLOBAL_CONSTANT_OFFSET, gbe_kernel_get_curbe_offset(ker->opaque, GBE_CURBE_GLOBAL_CONSTANT_DATA, 0) + 32);
 #undef UPLOAD
 
   /* Write identity for the stack pointer. This is required by the stack pointer
@@ -130,6 +131,13 @@ cl_curbe_fill(cl_kernel ker,
     uint32_t *stackptr = (uint32_t *) (ker->curbe + offset);
     int32_t i;
     for (i = 0; i < (int32_t) simd_sz; ++i) stackptr[i] = i;
+  }
+
+  /* Write global constant arrays */
+  if ((offset = gbe_kernel_get_curbe_offset(ker->opaque, GBE_CURBE_GLOBAL_CONSTANT_DATA, 0)) >= 0) {
+    /* Write the global constant arrays */
+    gbe_program prog = ker->program->opaque;
+    gbe_program_get_global_constant_data(prog, ker->curbe + offset);
   }
 
   /* Handle the various offsets to SLM */
