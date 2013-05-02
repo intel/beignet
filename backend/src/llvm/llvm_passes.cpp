@@ -228,26 +228,6 @@ namespace gbe
 #endif
     CompositeType* CompTy = cast<CompositeType>(parentPointer->getType());
 
-    if(isa<GlobalVariable>(parentPointer)) //HACK: !!!!
-    {
-#if 1//FORMER_VERSION
-      Function *constWrapper = 
-        Function::Create(FunctionType::get(parentPointer->getType(),true),
-            GlobalValue::ExternalLinkage,
-            Twine("__gen_ocl_const_wrapper"));
-
-      llvm::ArrayRef<Value*> params(parentPointer);
-      // params.push_back(parentPointer);
-
-      //create and insert wrapper call
-      CallInst * wrapperCall = 
-        CallInst::Create(constWrapper,params,"",GEPInst);
-      parentPointer = wrapperCall;
-#else
-      // NOT_IMPLEMENTED;
-#endif
-    }
-
     Value* currentAddrInst = 
       new PtrToIntInst(parentPointer, IntegerType::get(GEPInst->getContext(), ptrSize), "", GEPInst);
 
