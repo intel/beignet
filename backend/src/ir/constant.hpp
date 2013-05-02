@@ -36,25 +36,31 @@ namespace ir {
   public:
     /*! Build a constant description */
     INLINE Constant(const std::string &name, uint32_t size, uint32_t alignment, uint32_t offset) :
-      name(name), size(size), alignment(alignment), offset(offset) {}
+      name(name), size(size), alignment(alignment), offset(offset), reg(0) {}
     /*! Copy constructor */
     INLINE Constant(const Constant &other) :
-      name(other.name), size(other.size), alignment(other.alignment), offset(other.offset) {}
+      name(other.name), size(other.size), alignment(other.alignment), offset(other.offset), reg(other.reg) {}
     /*! Copy operator */
     INLINE Constant& operator= (const Constant &other) {
       this->name = other.name;
       this->size = other.size;
       this->alignment = other.alignment;
       this->offset = other.offset;
+      this->reg = other.reg;
       return *this;
     }
     /*! Nothing happens here */
     INLINE ~Constant(void) {}
+    const std::string& getName(void) const { return name; }
+    uint32_t getOffset(void) const { return offset; }
+    uint16_t getReg(void) const { return reg; }
+    void setReg(uint16_t reg) { this->reg = reg; }
   private:
     std::string name; //!< Optional name of the constant
     uint32_t size;      //!< Size of the constant
     uint32_t alignment; //!< Alignment required for each constant
     uint32_t offset;    //!< Offset of the constant in the data segment
+    uint16_t reg; //!< Virtual register number
     GBE_CLASS(Constant);
   };
 
@@ -66,6 +72,35 @@ namespace ir {
   public:
     /*! Append a new constant in the constant set */
     void append(const char*, const std::string&, uint32_t size, uint32_t alignment);
+    /*! Number of constants */
+    size_t getConstantNum(void) const { return constants.size(); }
+    /*! Get a special constant */
+    Constant& getConstant(size_t i) { return constants[i]; }
+    /*! Get a special constant */
+    Constant& getConstant(const std::string & name) {
+      for (auto & c : constants) {
+        if (c.getName() == name)
+          return c;
+      }
+      GBE_ASSERT(false);
+      return *(Constant *)nullptr;
+    }
+    /*! Number of bytes of serialized constant data */
+    size_t getDataSize(void) const { return data.size(); }
+    /*! Store serialized constant data into an array */
+    void getData(char *mem) const {
+      for (size_t i = 0; i < data.size(); i ++)
+        mem[i] = data[i];
+    }
+    ConstantSet() {}
+    ConstantSet(const ConstantSet& other) : data(other.data), constants(other.constants) {}
+    ConstantSet & operator = (const ConstantSet& other) {
+      if (&other != this) {
+        data = other.data;
+        constants = other.constants;
+      }
+      return *this;
+    }
   private:
     vector<char> data;         //!< The constant data serialized in one array
     vector<Constant> constants;//!< Each constant description
