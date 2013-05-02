@@ -67,6 +67,10 @@ namespace ir {
       else
         return FAMILY_QWORD;
     }
+    /*! Return the constant set */
+    ConstantSet& getConstantSet(void) { return constantSet; }
+    /*! Return the constant set */
+    const ConstantSet& getConstantSet(void) const { return constantSet; }
   private:
     friend class ContextInterface; //!< Can free modify the unit
     hash_map<std::string, Function*> functions; //!< All the defined functions
