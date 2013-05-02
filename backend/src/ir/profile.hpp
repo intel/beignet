@@ -63,7 +63,8 @@ namespace ir {
     static const Register blockip = Register(19);  // blockip
     static const Register barrierid = Register(20);// barrierid
     static const Register threadn = Register(21);  // number of threads
-    static const uint32_t regNum = 22;             // number of special registers
+    static const Register constoffst = Register(22); // offset of global constant array's curbe
+    static const uint32_t regNum = 23;             // number of special registers
     extern const char *specialRegMean[];           // special register name.
   } /* namespace ocl */
 
