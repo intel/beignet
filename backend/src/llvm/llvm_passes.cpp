@@ -61,13 +61,15 @@
 #if !defined(LLVM_VERSION_MAJOR) || (LLVM_VERSION_MINOR == 1)
 #include "llvm/Target/TargetData.h"
 #endif
+#if (LLVM_VERSION_MAJOR == 3) && (LLVM_VERSION_MINOR == 2)
 #include "llvm/DataLayout.h"
+#endif
 #include "llvm/Support/CallSite.h"
 #include "llvm/Support/CFG.h"
 #include "llvm/Support/ErrorHandling.h"
 #include "llvm/Support/FormattedStream.h"
 #include "llvm/Support/GetElementPtrTypeIterator.h"
-#ifdef LLVM_32
+#if (LLVM_VERSION_MAJOR == 3) && (LLVM_VERSION_MINOR <= 2)
 #include "llvm/Support/InstVisitor.h"
 #else
 #include "llvm/InstVisitor.h"

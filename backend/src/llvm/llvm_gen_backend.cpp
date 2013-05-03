@@ -102,13 +102,15 @@
 #if !defined(LLVM_VERSION_MAJOR) || (LLVM_VERSION_MINOR == 1)
 #include "llvm/Target/TargetData.h"
 #endif
+#if (LLVM_VERSION_MAJOR == 3) && (LLVM_VERSION_MINOR == 2)
 #include "llvm/DataLayout.h"
+#endif
 #include "llvm/Support/CallSite.h"
 #include "llvm/Support/CFG.h"
 #include "llvm/Support/ErrorHandling.h"
 #include "llvm/Support/FormattedStream.h"
 #include "llvm/Support/GetElementPtrTypeIterator.h"
-#ifdef LLVM_32
+#if (LLVM_VERSION_MAJOR == 3) && (LLVM_VERSION_MINOR <= 2)
 #include "llvm/Support/InstVisitor.h"
 #else
 #include "llvm/InstVisitor.h"
@@ -869,7 +871,13 @@ namespace gbe
       Function::arg_iterator I = F.arg_begin(), E = F.arg_end();
 
       // Insert a new register for each function argument
+#if LLVM_VERSION_MINOR <= 1
+      const AttrListPtr &PAL = F.getAttributes();
+      uint32_t argID = 1; // Start at one actually
+      for (; I != E; ++I, ++argID) {
+#else
       for (; I != E; ++I) {
+#endif /* LLVM_VERSION_MINOR <= 1 */
         const std::string &argName = I->getName().str();
         Type *type = I->getType();
         GBE_ASSERTM(isScalarType(type) == true,
