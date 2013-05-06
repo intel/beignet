@@ -23,10 +23,13 @@ set (utests_sources
   compiler_convert_uchar_sat.cpp
   compiler_copy_buffer.cpp
   compiler_copy_image.cpp
+  compiler_copy_image_3d.cpp
   compiler_copy_buffer_row.cpp
   compiler_fabs.cpp
   compiler_fill_image.cpp
   compiler_fill_image0.cpp
+  compiler_fill_image_3d.cpp
+  compiler_fill_image_3d_2.cpp
   compiler_function_argument0.cpp
   compiler_function_argument1.cpp
   compiler_function_argument.cpp
