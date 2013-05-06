@@ -307,8 +307,9 @@ _cl_mem_new_image(cl_context ctx,
                   const cl_mem_object_type image_type,
                   size_t w,
                   size_t h,
+                  size_t depth,
                   size_t pitch,
-                  int depth,
+                  size_t slice_pitch,
                   void *data,
                   cl_int *errcode_ret)
 {
@@ -356,6 +357,27 @@ _cl_mem_new_image(cl_context ctx,
     /* Pick up tiling mode (we do only linear on SNB) */
     if (cl_driver_get_ver(ctx->drv) != 6)
       tiling = CL_TILE_Y;
+    depth = 1;
+  }
+
+  if (image_type == CL_MEM_OBJECT_IMAGE3D) {
+    size_t min_pitch = bpp * w;
+    if (data && pitch == 0)
+      pitch = min_pitch;
+    size_t min_slice_pitch = min_pitch * h;
+    if (data && slice_pitch == 0)
+      slice_pitch = min_slice_pitch;
+    if (UNLIKELY(w > ctx->device->image3d_max_width)) DO_IMAGE_ERROR;
+    if (UNLIKELY(h > ctx->device->image3d_max_height)) DO_IMAGE_ERROR;
+    if (UNLIKELY(depth > ctx->device->image3d_max_depth)) DO_IMAGE_ERROR;
+    if (UNLIKELY(data && min_pitch > pitch)) DO_IMAGE_ERROR;
+    if (UNLIKELY(data && min_slice_pitch > slice_pitch)) DO_IMAGE_ERROR;
+    if (UNLIKELY(!data && pitch != 0)) DO_IMAGE_ERROR;
+    if (UNLIKELY(!data && slice_pitch != 0)) DO_IMAGE_ERROR;
+
+    /* Pick up tiling mode (we do only linear on SNB) */
+    if (cl_driver_get_ver(ctx->drv) != 6)
+      tiling = CL_TILE_Y;
   }
 #undef DO_IMAGE_ERROR
 
@@ -371,7 +393,7 @@ _cl_mem_new_image(cl_context ctx,
     aligned_h     = ALIGN(h, tiley_h);
   }
 
-  sz = aligned_pitch * aligned_h;
+  sz = aligned_pitch * aligned_h * depth;
   mem = cl_mem_allocate(ctx, flags, sz, tiling != CL_NO_TILE, &err);
   if (mem == NULL || err != CL_SUCCESS)
     goto error;
@@ -417,11 +439,11 @@ cl_mem_new_image(cl_context context,
   switch (image_desc->image_type) {
   case CL_MEM_OBJECT_IMAGE1D:
   case CL_MEM_OBJECT_IMAGE2D:
-    return _cl_mem_new_image(context, flags, image_format, image_desc->image_type,
-                             image_desc->image_width, image_desc->image_height,
-                             image_desc->image_row_pitch, image_desc->image_depth,
-                             host_ptr, errcode_ret);
   case CL_MEM_OBJECT_IMAGE3D:
+    return _cl_mem_new_image(context, flags, image_format, image_desc->image_type,
+                             image_desc->image_width, image_desc->image_height, image_desc->image_depth,
+                             image_desc->image_row_pitch, image_desc->image_slice_pitch,
+                             host_ptr, errcode_ret);
   case CL_MEM_OBJECT_IMAGE2D_ARRAY:
   case CL_MEM_OBJECT_IMAGE1D_ARRAY:
   case CL_MEM_OBJECT_IMAGE1D_BUFFER:

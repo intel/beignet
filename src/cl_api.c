@@ -343,8 +343,28 @@ clCreateImage3D(cl_context              context,
                 void *                  host_ptr,
                 cl_int *                errcode_ret)
 {
-  NOT_IMPLEMENTED;
-  return NULL;
+  cl_mem mem = NULL;
+  cl_int err = CL_SUCCESS;
+  CHECK_CONTEXT (context);
+  cl_image_desc image_desc;
+
+  image_desc.image_type = CL_MEM_OBJECT_IMAGE3D;
+  image_desc.image_width = image_width;
+  image_desc.image_height = image_height;
+  image_desc.image_depth = image_depth;
+  image_desc.image_row_pitch = image_row_pitch;
+  image_desc.image_slice_pitch = image_slice_pitch;
+
+  mem = cl_mem_new_image(context,
+                         flags,
+                         image_format,
+                         &image_desc,
+                         host_ptr,
+                         errcode_ret);
+error:
+  if (errcode_ret)
+    *errcode_ret = err;
+  return mem;
 }
 
 cl_int
