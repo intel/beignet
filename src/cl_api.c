@@ -159,7 +159,24 @@ clGetContextInfo(cl_context      context,
                  void *          param_value,
                  size_t *        param_value_size_ret)
 {
-  NOT_IMPLEMENTED;
+  switch (param_name) {
+    case CL_CONTEXT_DEVICES:
+      if (param_value) {
+        if (param_value_size < sizeof(cl_device_id))
+          return CL_INVALID_VALUE;
+          cl_device_id *device_list = (cl_device_id*)param_value;
+          device_list[0] = context->device;
+          if (param_value_size_ret)
+            *param_value_size_ret = sizeof(cl_device_id);
+          return CL_SUCCESS;
+        }
+        if (param_value_size_ret) {
+          *param_value_size_ret = sizeof(cl_device_id);
+          return CL_SUCCESS;
+        }
+    default:
+      NOT_IMPLEMENTED;
+  }
   return 0;
 }
 
