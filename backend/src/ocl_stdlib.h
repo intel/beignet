@@ -775,12 +775,27 @@ OVERLOADABLE uint4 __gen_ocl_read_imageui(uint surface_id, uint sampler, int u, 
 OVERLOADABLE uint4 __gen_ocl_read_imageui(uint surface_id, uint sampler, float u, float v);
 OVERLOADABLE float4 __gen_ocl_read_imagef(uint surface_id, uint sampler, int u, int v);
 OVERLOADABLE float4 __gen_ocl_read_imagef(uint surface_id, uint sampler, float u, float v);
+
+OVERLOADABLE int4 __gen_ocl_read_imagei(uint surface_id, uint sampler, int u, int v, int w);
+OVERLOADABLE int4 __gen_ocl_read_imagei(uint surface_id, uint sampler, float u, float v, float w);
+OVERLOADABLE uint4 __gen_ocl_read_imageui(uint surface_id, uint sampler, int u, int v, int w);
+OVERLOADABLE uint4 __gen_ocl_read_imageui(uint surface_id, uint sampler, float u, float v, float w);
+OVERLOADABLE float4 __gen_ocl_read_imagef(uint surface_id, uint sampler, int u, int v, int w);
+OVERLOADABLE float4 __gen_ocl_read_imagef(uint surface_id, uint sampler, float u, float v, float w);
+
 OVERLOADABLE void __gen_ocl_write_imagei(uint surface_id, int u, int v, int4 color);
 OVERLOADABLE void __gen_ocl_write_imagei(uint surface_id, float u, float v, int4 color);
 OVERLOADABLE void __gen_ocl_write_imageui(uint surface_id, int u, int v, uint4 color);
 OVERLOADABLE void __gen_ocl_write_imageui(uint surface_id, float u, float v, uint4 color);
 OVERLOADABLE void __gen_ocl_write_imagef(uint surface_id, int u, int v, float4 color);
 OVERLOADABLE void __gen_ocl_write_imagef(uint surface_id, float u, float v, float4 color);
+
+OVERLOADABLE void __gen_ocl_write_imagei(uint surface_id, int u, int v, int w, int4 color);
+OVERLOADABLE void __gen_ocl_write_imagei(uint surface_id, float u, float v, float w, int4 color);
+OVERLOADABLE void __gen_ocl_write_imageui(uint surface_id, int u, int v, int w, uint4 color);
+OVERLOADABLE void __gen_ocl_write_imageui(uint surface_id, float u, float v, float w, uint4 color);
+OVERLOADABLE void __gen_ocl_write_imagef(uint surface_id, int u, int v, int w, float4 color);
+OVERLOADABLE void __gen_ocl_write_imagef(uint surface_id, float u, float v, float w, float4 color);
 
 #define GET_IMAGE(cl_image, surface_id) \
     uint surface_id = (uint)cl_image
@@ -809,10 +824,39 @@ DECL_IMAGE(int4, i)
 DECL_IMAGE(uint4, ui)
 DECL_IMAGE(float4, f)
 
-#undef GET_IMAGE
 #undef DECL_IMAGE
 #undef DECL_READ_IMAGE
 #undef DECL_WRITE_IMAGE
+
+#define DECL_READ_IMAGE(type, suffix, coord_type) \
+  INLINE_OVERLOADABLE type read_image ## suffix(image3d_t cl_image, sampler_t sampler, coord_type coord) \
+  {\
+    GET_IMAGE(cl_image, surface_id);\
+    return __gen_ocl_read_image ## suffix(surface_id, (uint)sampler, coord.s0, coord.s1, coord.s2);\
+  }
+
+#define DECL_WRITE_IMAGE(type, suffix, coord_type) \
+  INLINE_OVERLOADABLE void write_image ## suffix(image3d_t cl_image, coord_type coord, type color)\
+  {\
+    GET_IMAGE(cl_image, surface_id);\
+    __gen_ocl_write_image ## suffix(surface_id, coord.s0, coord.s1, coord.s2, color);\
+  }
+
+#define DECL_IMAGE(type, suffix)        \
+  DECL_READ_IMAGE(type, suffix, int4)   \
+  DECL_READ_IMAGE(type, suffix, float4) \
+  DECL_WRITE_IMAGE(type, suffix, int4)   \
+  DECL_WRITE_IMAGE(type, suffix, float4)
+
+DECL_IMAGE(int4, i)
+DECL_IMAGE(uint4, ui)
+DECL_IMAGE(float4, f)
+
+#undef DECL_IMAGE
+#undef DECL_READ_IMAGE
+#undef DECL_WRITE_IMAGE
+
+#undef GET_IMAGE
 #undef INLINE_OVERLOADABLE
 
 #undef PURE
