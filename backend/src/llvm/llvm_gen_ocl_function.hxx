@@ -48,6 +48,13 @@ DECL_LLVM_GEN_FUNCTION(READ_IMAGE3, _Z22__gen_ocl_read_imageuijjff)
 DECL_LLVM_GEN_FUNCTION(READ_IMAGE4, _Z21__gen_ocl_read_imagefjjii)
 DECL_LLVM_GEN_FUNCTION(READ_IMAGE5, _Z21__gen_ocl_read_imagefjjff)
 
+DECL_LLVM_GEN_FUNCTION(READ_IMAGE10, _Z21__gen_ocl_read_imageijjiii)
+DECL_LLVM_GEN_FUNCTION(READ_IMAGE11, _Z21__gen_ocl_read_imageijjfff)
+DECL_LLVM_GEN_FUNCTION(READ_IMAGE12, _Z22__gen_ocl_read_imageuijjiii)
+DECL_LLVM_GEN_FUNCTION(READ_IMAGE13, _Z22__gen_ocl_read_imageuijjfff)
+DECL_LLVM_GEN_FUNCTION(READ_IMAGE14, _Z21__gen_ocl_read_imagefjjiii)
+DECL_LLVM_GEN_FUNCTION(READ_IMAGE15, _Z21__gen_ocl_read_imagefjjfff)
+
 // To write_image functions.
 DECL_LLVM_GEN_FUNCTION(WRITE_IMAGE0, _Z22__gen_ocl_write_imageijiiDv4_i)
 DECL_LLVM_GEN_FUNCTION(WRITE_IMAGE1, _Z22__gen_ocl_write_imageijffDv4_i)
@@ -55,6 +62,13 @@ DECL_LLVM_GEN_FUNCTION(WRITE_IMAGE4, _Z22__gen_ocl_write_imagefjiiDv4_f)
 DECL_LLVM_GEN_FUNCTION(WRITE_IMAGE5, _Z22__gen_ocl_write_imagefjffDv4_f)
 DECL_LLVM_GEN_FUNCTION(WRITE_IMAGE2, _Z23__gen_ocl_write_imageuijiiDv4_j)
 DECL_LLVM_GEN_FUNCTION(WRITE_IMAGE3, _Z23__gen_ocl_write_imageuijffDv4_j)
+
+DECL_LLVM_GEN_FUNCTION(WRITE_IMAGE10, _Z22__gen_ocl_write_imageijiiiDv4_i)
+DECL_LLVM_GEN_FUNCTION(WRITE_IMAGE11, _Z22__gen_ocl_write_imageijfffDv4_i)
+DECL_LLVM_GEN_FUNCTION(WRITE_IMAGE12, _Z23__gen_ocl_write_imageuijiiiDv4_j)
+DECL_LLVM_GEN_FUNCTION(WRITE_IMAGE13, _Z23__gen_ocl_write_imageuijfffDv4_j)
+DECL_LLVM_GEN_FUNCTION(WRITE_IMAGE14, _Z22__gen_ocl_write_imagefjiiiDv4_f)
+DECL_LLVM_GEN_FUNCTION(WRITE_IMAGE15, _Z22__gen_ocl_write_imagefjfffDv4_f)
 
 // saturation related functions.
 DECL_LLVM_GEN_FUNCTION(SADD_SAT_CHAR, _Z12ocl_sadd_satcc)
