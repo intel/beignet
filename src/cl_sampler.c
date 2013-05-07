@@ -22,8 +22,49 @@
 #include "cl_utils.h"
 #include "cl_alloc.h"
 #include "cl_khr_icd.h"
+#include "cl_kernel.h"
 
 #include <assert.h>
+
+uint32_t cl_to_clk(cl_bool normalized_coords,
+                   cl_addressing_mode address,
+                   cl_filter_mode filter)
+{
+  int clk_address;
+  int clk_filter;
+  switch (address) {
+  case CL_ADDRESS_NONE: clk_address = CLK_ADDRESS_NONE; break;
+  case CL_ADDRESS_CLAMP: clk_address = CLK_ADDRESS_CLAMP; break;
+  case CL_ADDRESS_CLAMP_TO_EDGE: clk_address = CLK_ADDRESS_CLAMP_TO_EDGE; break;
+  case CL_ADDRESS_REPEAT: clk_address = CLK_ADDRESS_REPEAT; break;
+  case CL_ADDRESS_MIRRORED_REPEAT: clk_address = CLK_ADDRESS_MIRRORED_REPEAT; break;
+  default:
+    assert(0);
+  }
+  switch(filter) {
+  case CL_FILTER_NEAREST: clk_filter = CLK_FILTER_NEAREST; break;
+  case CL_FILTER_LINEAR: clk_filter = CLK_FILTER_LINEAR; break;
+  default:
+    assert(0);
+  }
+  return (clk_address << __CLK_ADDRESS_BASE)
+         | (normalized_coords << __CLK_NORMALIZED_BASE)
+         | (clk_filter << __CLK_FILTER_BASE);
+}
+
+int cl_arg_sampler_insert(cl_kernel k, cl_sampler sampler)
+{
+  int i, slot_id;
+  for(i = 0; i < k->sampler_sz; i++)
+  {
+    if (k->samplers[i] == sampler->clkSamplerValue)
+      return i;
+  }
+  slot_id = k->sampler_sz + k->arg_sampler_sz;
+  k->samplers[slot_id] = sampler->clkSamplerValue;
+  k->arg_sampler_sz++;
+  return slot_id;
+}
 
 LOCAL cl_sampler
 cl_sampler_new(cl_context ctx,
@@ -53,6 +94,8 @@ cl_sampler_new(cl_context ctx,
   pthread_mutex_unlock(&ctx->sampler_lock);
   sampler->ctx = ctx;
   cl_context_add_ref(ctx);
+
+  sampler->clkSamplerValue = cl_to_clk(normalized_coords, address, filter);
 
 exit:
   if (errcode_ret)

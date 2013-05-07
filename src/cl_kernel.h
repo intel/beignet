@@ -52,7 +52,10 @@ struct _cl_kernel {
   gbe_kernel opaque;          /* (Opaque) compiler structure for the OCL kernel */
   char *curbe;                /* One curbe per kernel */
   size_t curbe_sz;            /* Size of it */
+  uint32_t samplers[GEN_MAX_SAMPLERS]; /* samplers defined in kernel */
+  size_t sampler_sz;          /* sampler size defined in kernel */
   cl_argument *args;          /* To track argument setting */
+  size_t arg_sampler_sz;      /* sampler size defined in kernel args */
   uint32_t arg_n:31;          /* Number of arguments */
   uint32_t ref_its_program:1; /* True only for the user kernel (created by clCreateKernel) */
 };

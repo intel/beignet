@@ -471,16 +471,6 @@ intel_gpgpu_get_free_img_index(intel_gpgpu_t *gpgpu)
 }
 
 static int
-intel_gpgpu_get_free_sampler_index(intel_gpgpu_t *gpgpu)
-{
-  int slot;
-  assert(~gpgpu->sampler_bitmap != 0);
-  slot = __fls(~gpgpu->sampler_bitmap);
-  gpgpu->sampler_bitmap |= (1 << slot);
-  return slot;
-}
-
-static int
 intel_get_surface_type(cl_mem_object_type type)
 {
   switch (type) {
@@ -662,10 +652,10 @@ intel_gpgpu_upload_samplers(intel_gpgpu_t *gpgpu, const void *data, uint32_t n)
 int translate_wrap_mode(uint32_t cl_address_mode, int using_nearest)
 {
    switch( cl_address_mode ) {
-   case CL_ADDRESS_NONE:
-   case CL_ADDRESS_REPEAT:
+   case CLK_ADDRESS_NONE:
+   case CLK_ADDRESS_REPEAT:
       return GEN_TEXCOORDMODE_WRAP;
-   case CL_ADDRESS_CLAMP:
+   case CLK_ADDRESS_CLAMP:
       /* GL_CLAMP is the weird mode where coordinates are clamped to
        * [0.0, 1.0], so linear filtering of coordinates outside of
        * [0.0, 1.0] give you half edge texel value and half border
@@ -679,9 +669,9 @@ int translate_wrap_mode(uint32_t cl_address_mode, int using_nearest)
          return GEN_TEXCOORDMODE_CLAMP;
       else
          return GEN_TEXCOORDMODE_CLAMP_BORDER;
-   case CL_ADDRESS_CLAMP_TO_EDGE:
+   case CLK_ADDRESS_CLAMP_TO_EDGE:
       return GEN_TEXCOORDMODE_CLAMP;
-   case CL_ADDRESS_MIRRORED_REPEAT:
+   case CLK_ADDRESS_MIRRORED_REPEAT:
       return GEN_TEXCOORDMODE_MIRROR;
    default:
       return GEN_TEXCOORDMODE_WRAP;
@@ -689,35 +679,33 @@ int translate_wrap_mode(uint32_t cl_address_mode, int using_nearest)
 }
 
 static void
-intel_gpgpu_insert_sampler(intel_gpgpu_t *gpgpu, uint32_t *curbe_index, cl_sampler cl_sampler)
+intel_gpgpu_insert_sampler(intel_gpgpu_t *gpgpu, uint32_t index, uint32_t clk_sampler)
 {
-  int index;
   int using_nearest = 0;
   uint32_t wrap_mode;
   gen7_sampler_state_t *sampler;
 
-  index = intel_gpgpu_get_free_sampler_index(gpgpu);
   sampler = (gen7_sampler_state_t *)gpgpu->sampler_state_b.bo->virtual + index;
-  if (!cl_sampler->normalized_coords)
+  if ((clk_sampler & __CLK_NORMALIZED_MASK) == CLK_NORMALIZED_COORDS_FALSE)
     sampler->ss3.non_normalized_coord = 1;
   else
     sampler->ss3.non_normalized_coord = 0;
 
-  switch (cl_sampler->filter) {
-  case CL_FILTER_NEAREST:
+  switch (clk_sampler & __CLK_FILTER_MASK) {
+  case CLK_FILTER_NEAREST:
     sampler->ss0.min_filter = GEN_MAPFILTER_NEAREST;
     sampler->ss0.mip_filter = GEN_MIPFILTER_NONE;
     sampler->ss0.mag_filter = GEN_MAPFILTER_NEAREST;
     using_nearest = 1;
     break;
-  case CL_FILTER_LINEAR:
+  case CLK_FILTER_LINEAR:
     sampler->ss0.min_filter = GEN_MAPFILTER_LINEAR;
     sampler->ss0.mip_filter = GEN_MIPFILTER_NONE;
     sampler->ss0.mag_filter = GEN_MAPFILTER_LINEAR;
     break;
   }
 
-  wrap_mode = translate_wrap_mode(cl_sampler->address, using_nearest);
+  wrap_mode = translate_wrap_mode(clk_sampler & __CLK_ADDRESS_MASK, using_nearest);
   sampler->ss3.r_wrap_mode = wrap_mode;
   sampler->ss3.s_wrap_mode = wrap_mode;
   sampler->ss3.t_wrap_mode = wrap_mode;
@@ -738,7 +726,15 @@ intel_gpgpu_insert_sampler(intel_gpgpu_t *gpgpu, uint32_t *curbe_index, cl_sampl
      sampler->ss3.address_round |= GEN_ADDRESS_ROUNDING_ENABLE_U_MAG |
                                    GEN_ADDRESS_ROUNDING_ENABLE_V_MAG |
                                    GEN_ADDRESS_ROUNDING_ENABLE_R_MAG;
-  *curbe_index = index;
+}
+
+static void
+intel_gpgpu_bind_sampler(intel_gpgpu_t *gpgpu, uint32_t *samplers, size_t sampler_sz)
+{
+  int index;
+  assert(sampler_sz <= GEN_MAX_SAMPLERS);
+  for(index = 0; index < sampler_sz; index++)
+    intel_gpgpu_insert_sampler(gpgpu, index, samplers[index]);
 }
 
 static void
@@ -815,6 +811,6 @@ intel_set_gpgpu_callbacks(void)
   cl_gpgpu_batch_end = (cl_gpgpu_batch_end_cb *) intel_gpgpu_batch_end;
   cl_gpgpu_flush = (cl_gpgpu_flush_cb *) intel_gpgpu_flush;
   cl_gpgpu_walker = (cl_gpgpu_walker_cb *) intel_gpgpu_walker;
-  cl_gpgpu_insert_sampler = (cl_gpgpu_insert_sampler_cb *) intel_gpgpu_insert_sampler;
+  cl_gpgpu_bind_sampler = (cl_gpgpu_bind_sampler_cb *) intel_gpgpu_bind_sampler;
 }
 

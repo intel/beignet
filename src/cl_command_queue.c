@@ -119,8 +119,6 @@ cl_command_queue_bind_surface(cl_command_queue queue, cl_kernel k)
                           k->args[i].mem->w, k->args[i].mem->h,
                           k->args[i].mem->pitch, k->args[i].mem->tiling);
     } else if (arg_type == GBE_ARG_SAMPLER) {
-      uint32_t *curbe_index = (uint32_t*)(k->curbe + offset);
-      cl_gpgpu_insert_sampler(queue->gpgpu, curbe_index, k->args[i].sampler);
     } else
       cl_gpgpu_bind_buf(queue->gpgpu, k->args[i].mem->bo, offset, cc_llc_l3);
   }
@@ -378,6 +376,8 @@ cl_command_queue_ND_range(cl_command_queue queue,
     TRY (cl_command_queue_ND_range_gen7, queue, k, global_wk_off, global_wk_sz, local_wk_sz);
   else
     FATAL ("Unknown Gen Device");
+
+  k->arg_sampler_sz = 0;
 
 #if USE_FULSIM
   if (run_it != NULL && strcmp(run_it, "1") == 0) {

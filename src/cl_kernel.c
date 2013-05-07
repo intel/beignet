@@ -110,6 +110,7 @@ cl_kernel_set_arg(cl_kernel k, cl_uint index, size_t sz, const void *value)
   if (arg_type == GBE_ARG_VALUE) {
     if (UNLIKELY(value == NULL))
       return CL_INVALID_KERNEL_ARGS;
+
     offset = gbe_kernel_get_curbe_offset(k->opaque, GBE_CURBE_KERNEL_ARGUMENT, index);
     assert(offset + sz <= k->curbe_sz);
     memcpy(k->curbe + offset, value, sz);
@@ -129,20 +130,22 @@ cl_kernel_set_arg(cl_kernel k, cl_uint index, size_t sz, const void *value)
     return CL_SUCCESS;
   }
 
-  /* For a sampler*/
+  /* Is it a sampler*/
   if (arg_type == GBE_ARG_SAMPLER) {
-     cl_sampler sampler;
-     if (UNLIKELY(value == NULL))
+    cl_sampler sampler;
+    memcpy(&sampler, value, sz);
+    if (UNLIKELY(sampler->magic != CL_MAGIC_SAMPLER_HEADER))
       return CL_INVALID_KERNEL_ARGS;
-     sampler = *(cl_sampler*)value;
-
-     if (UNLIKELY(sampler->magic != CL_MAGIC_SAMPLER_HEADER))
-       return CL_INVALID_ARG_VALUE;
-     k->args[index].local_sz = 0;
-     k->args[index].is_set = 1;
-     k->args[index].mem = NULL;
-     k->args[index].sampler = sampler;
-     return CL_SUCCESS;
+    uint32_t slot;
+    k->args[index].local_sz = 0;
+    k->args[index].is_set = 1;
+    k->args[index].mem = NULL;
+    k->args[index].sampler = sampler;
+    slot = cl_arg_sampler_insert(k, sampler);
+    offset = gbe_kernel_get_curbe_offset(k->opaque, GBE_CURBE_KERNEL_ARGUMENT, index);
+    assert(offset + sz <= k->curbe_sz);
+    memcpy(k->curbe + offset, &slot, sizeof(slot));
+    return CL_SUCCESS;
   }
 
   /* Otherwise, we just need to check that this is a buffer */
@@ -203,6 +206,12 @@ cl_kernel_setup(cl_kernel k, gbe_kernel opaque)
 
   /* Create the curbe */
   k->curbe_sz = gbe_kernel_get_curbe_size(k->opaque);
+
+  /* Get sampler data & size */
+  k->sampler_sz = gbe_kernel_get_sampler_size(k->opaque);
+  k->arg_sampler_sz = 0;
+  assert(k->sampler_sz <= GEN_MAX_SAMPLERS);
+  gbe_kernel_get_sampler_data(k->opaque, k->samplers);
 }
 
 LOCAL cl_kernel
@@ -221,6 +230,9 @@ cl_kernel_dup(cl_kernel from)
   to->program = from->program;
   to->arg_n = from->arg_n;
   to->curbe_sz = from->curbe_sz;
+  to->sampler_sz = from->sampler_sz;
+  to->arg_sampler_sz = from->arg_sampler_sz;
+  memcpy(to->samplers, from->samplers, to->sampler_sz * sizeof(uint32_t));
   TRY_ALLOC_NO_ERR(to->args, cl_calloc(to->arg_n, sizeof(cl_argument)));
   if (to->curbe_sz) TRY_ALLOC_NO_ERR(to->curbe, cl_calloc(1, to->curbe_sz));
 

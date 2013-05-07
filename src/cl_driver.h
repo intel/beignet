@@ -110,9 +110,9 @@ extern cl_gpgpu_delete_cb *cl_gpgpu_delete;
 typedef void (cl_gpgpu_bind_buf_cb)(cl_gpgpu, cl_buffer, uint32_t offset, uint32_t cchint);
 extern cl_gpgpu_bind_buf_cb *cl_gpgpu_bind_buf;
 
-/* Insert a sampler */
-typedef void (cl_gpgpu_insert_sampler_cb)(cl_gpgpu, uint32_t *curbe_index, cl_sampler sampler);
-extern cl_gpgpu_insert_sampler_cb *cl_gpgpu_insert_sampler;
+/* bind samplers defined in both kernel and kernel args. */
+typedef void (cl_gpgpu_bind_sampler_cb)(cl_gpgpu, uint32_t *samplers, size_t sampler_sz);
+extern cl_gpgpu_bind_sampler_cb *cl_gpgpu_bind_sampler;
 
 /* Set a 2d texture */
 typedef void (cl_gpgpu_bind_image_cb)(cl_gpgpu state,
