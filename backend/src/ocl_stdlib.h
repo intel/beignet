@@ -46,7 +46,6 @@ typedef unsigned int uintptr_t;
 #define __constant __attribute__((address_space(2)))
 #define __local __attribute__((address_space(3)))
 #define __texture __attribute__((address_space(4)))
-#define __sampler __attribute__((address_space(5)))
 #define global __global
 //#define local __local
 #define constant __constant
@@ -77,7 +76,8 @@ struct _image2d_t;
 typedef __texture struct _image2d_t* image2d_t;
 struct _image3d_t;
 typedef __texture struct _image3d_t* image3d_t;
-typedef __sampler uint* sampler_t;
+//typedef __sampler const uint* sampler_t;
+typedef uint sampler_t;
 typedef size_t event_t;
 /////////////////////////////////////////////////////////////////////////////
 // OpenCL conversions & type casting
@@ -804,7 +804,7 @@ OVERLOADABLE void __gen_ocl_write_imagef(uint surface_id, float u, float v, floa
   INLINE_OVERLOADABLE type read_image ##suffix(image2d_t cl_image, sampler_t sampler, coord_type coord) \
   {\
     GET_IMAGE(cl_image, surface_id);\
-    return __gen_ocl_read_image ##suffix(surface_id, (uint)sampler, coord.s0, coord.s1);\
+    return __gen_ocl_read_image ##suffix(surface_id, sampler, coord.s0, coord.s1);\
   }
 
 #define DECL_WRITE_IMAGE(type, suffix, coord_type) \

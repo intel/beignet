@@ -49,10 +49,11 @@
 namespace gbe {
 
   Kernel::Kernel(const std::string &name) :
-    name(name), args(NULL), argNum(0), curbeSize(0), stackSize(0), useSLM(false), ctx(NULL)
+    name(name), args(NULL), argNum(0), curbeSize(0), stackSize(0), useSLM(false), ctx(NULL), samplerSet(NULL)
   {}
   Kernel::~Kernel(void) {
     if(ctx) GBE_DELETE(ctx);
+    if(samplerSet) GBE_DELETE(samplerSet);
     GBE_SAFE_DELETE_ARRAY(args);
   }
   int32_t Kernel::getCurbeOffset(gbe_curbe_type type, uint32_t subType) const {
@@ -90,6 +91,7 @@ namespace gbe {
     for (const auto &pair : set) {
       const std::string &name = pair.first;
       Kernel *kernel = this->compileKernel(unit, name);
+      kernel->setSamplerSet(pair.second->getSamplerSet());
       kernels.insert(std::make_pair(name, kernel));
     }
     return true;
@@ -250,6 +252,18 @@ namespace gbe {
     return kernel->setConstBufSize(argID, sz);
   }
 
+  static size_t kernelGetSamplerSize(gbe_kernel gbeKernel) {
+    if (gbeKernel == NULL) return 0;
+    const gbe::Kernel *kernel = (const gbe::Kernel*) gbeKernel;
+    return kernel->getSamplerSize();
+  }
+
+  static void kernelGetSamplerData(gbe_kernel gbeKernel, uint32_t *samplers) {
+    if (gbeKernel == NULL) return;
+    const gbe::Kernel *kernel = (const gbe::Kernel*) gbeKernel;
+    kernel->getSamplerData(samplers);
+  }
+
   static uint32_t kernelGetRequiredWorkGroupSize(gbe_kernel kernel, uint32_t dim) {
     return 0u;
   }
@@ -277,6 +291,8 @@ GBE_EXPORT_SYMBOL gbe_kernel_get_stack_size_cb *gbe_kernel_get_stack_size = NULL
 GBE_EXPORT_SYMBOL gbe_kernel_set_const_buffer_size_cb *gbe_kernel_set_const_buffer_size = NULL;
 GBE_EXPORT_SYMBOL gbe_kernel_get_required_work_group_size_cb *gbe_kernel_get_required_work_group_size = NULL;
 GBE_EXPORT_SYMBOL gbe_kernel_use_slm_cb *gbe_kernel_use_slm = NULL;
+GBE_EXPORT_SYMBOL gbe_kernel_get_sampler_size_cb *gbe_kernel_get_sampler_size = NULL;
+GBE_EXPORT_SYMBOL gbe_kernel_get_sampler_data_cb *gbe_kernel_get_sampler_data = NULL;
 
 namespace gbe
 {
@@ -304,6 +320,8 @@ namespace gbe
       gbe_kernel_set_const_buffer_size = gbe::kernelSetConstBufSize;
       gbe_kernel_get_required_work_group_size = gbe::kernelGetRequiredWorkGroupSize;
       gbe_kernel_use_slm = gbe::kernelUseSLM;
+      gbe_kernel_get_sampler_size = gbe::kernelGetSamplerSize;
+      gbe_kernel_get_sampler_data = gbe::kernelGetSamplerData;
       genSetupCallBacks();
     }
   };

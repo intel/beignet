@@ -46,6 +46,7 @@ namespace ir {
     name(name), unit(unit), profile(profile), simdWidth(0), useSLM(false)
   {
     initProfile(*this);
+    samplerSet = GBE_NEW(SamplerSet);
   }
 
   Function::~Function(void) {

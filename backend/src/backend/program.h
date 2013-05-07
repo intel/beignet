@@ -114,6 +114,14 @@ extern gbe_program_get_global_constant_size_cb *gbe_program_get_global_constant_
 typedef void (gbe_program_get_global_constant_data_cb)(gbe_program gbeProgram, char *mem);
 extern gbe_program_get_global_constant_data_cb *gbe_program_get_global_constant_data;
 
+/*! Get the size of defined samplers */
+typedef size_t (gbe_kernel_get_sampler_size_cb)(gbe_kernel gbeKernel);
+extern gbe_kernel_get_sampler_size_cb *gbe_kernel_get_sampler_size;
+
+/*! Get the content of defined samplers */
+typedef void (gbe_kernel_get_sampler_data_cb)(gbe_kernel gbeKernel, uint32_t *samplers);
+extern gbe_kernel_get_sampler_data_cb *gbe_kernel_get_sampler_data;
+
 /*! Destroy and deallocate the given program */
 typedef void (gbe_program_delete_cb)(gbe_program);
 extern gbe_program_delete_cb *gbe_program_delete;

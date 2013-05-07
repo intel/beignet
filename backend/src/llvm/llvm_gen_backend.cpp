@@ -1990,7 +1990,27 @@ namespace gbe
           case GEN_OCL_READ_IMAGE15:
           {
             GBE_ASSERT(AI != AE); const ir::Register surface_id = this->getRegister(*AI); ++AI;
-            GBE_ASSERT(AI != AE); const ir::Register sampler = this->getRegister(*AI); ++AI;
+            GBE_ASSERT(AI != AE);
+            Constant *CPV = dyn_cast<Constant>(*AI);
+            ir::Register sampler;
+            if (CPV != NULL)
+            {
+              // This is not a kernel argument sampler, we need to append it to sampler set,
+              // and allocate a sampler slot for it.
+               auto x = processConstant<ir::Immediate>(CPV, InsertExtractFunctor(ctx));
+               GBE_ASSERTM(x.type == ir::TYPE_U32 || x.type == ir::TYPE_S32, "Invalid sampler type");
+               sampler = ctx.getFunction().getSamplerSet()->append(x.data.u32, &ctx);
+            } else {
+              // XXX As LLVM 3.2/3.1 doesn't have a new data type for the sampler_t, we have to fix up the argument
+              // type here. Once we switch to the LLVM and use the new data type sampler_t, we can remove this
+              // work around.
+              sampler = this->getRegister(*AI);
+              ir::FunctionArgument *arg =  ctx.getFunction().getArg(sampler);
+              GBE_ASSERT(arg != NULL);
+              arg->type = ir::FunctionArgument::SAMPLER;
+            }
+            ++AI;
+
             GBE_ASSERT(AI != AE); const ir::Register ucoord = this->getRegister(*AI); ++AI;
             GBE_ASSERT(AI != AE); const ir::Register vcoord = this->getRegister(*AI); ++AI;
             ir::Register wcoord;

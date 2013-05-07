@@ -28,6 +28,7 @@
 #include "ir/register.hpp"
 #include "ir/instruction.hpp"
 #include "ir/profile.hpp"
+#include "ir/sampler.hpp"
 #include "sys/vector.hpp"
 #include "sys/set.hpp"
 #include "sys/map.hpp"
@@ -217,6 +218,12 @@ namespace ir {
       for (auto arg : args) if (arg->reg == reg) return arg;
       return NULL;
     }
+
+    INLINE FunctionArgument *getArg(const Register &reg) {
+      for (auto arg : args) if (arg->reg == reg) return arg;
+      return NULL;
+    }
+
     /*! Get output register */
     INLINE Register getOutput(uint32_t ID) const { return outputs[ID]; }
     /*! Get the argument location for the pushed register */
@@ -281,6 +288,9 @@ namespace ir {
     INLINE bool getUseSLM(void) const { return this->useSLM; }
     /*! Change the SLM config for the function */
     INLINE bool setUseSLM(bool useSLM) { return this->useSLM = useSLM; }
+    /*! Get sampler set in this function */
+    SamplerSet* getSamplerSet(void) {return samplerSet; }
+    //const SamplerSet& getSamplerSet(void) const {return samplerSet; }
   private:
     friend class Context;           //!< Can freely modify a function
     std::string name;               //!< Function name
@@ -296,6 +306,7 @@ namespace ir {
     LocationMap locationMap;        //!< Pushed function arguments (loc->reg)
     uint32_t simdWidth;             //!< 8 or 16 if forced, 0 otherwise
     bool useSLM;                    //!< Is SLM required?
+    SamplerSet *samplerSet;
     GBE_CLASS(Function);            //!< Use custom allocator
   };
 

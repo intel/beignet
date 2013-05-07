@@ -29,6 +29,8 @@
 #include "backend/context.hpp"
 #include "ir/constant.hpp"
 #include "ir/unit.hpp"
+#include "ir/function.hpp"
+#include "ir/sampler.hpp"
 #include "sys/hash_map.hpp"
 #include "sys/vector.hpp"
 #include <string>
@@ -108,6 +110,14 @@ namespace gbe {
       }
       return -1;
     }
+    /*! Set sampler set. */
+    void setSamplerSet(ir::SamplerSet *from) {
+      samplerSet = from;
+    }
+    /*! Get defined sampler size */
+    size_t getSamplerSize(void) const { return samplerSet->getDataSize(); }
+    /*! Get defined sampler value array */
+    void getSamplerData(uint32_t *samplers) const { samplerSet->getData(samplers); }
   protected:
     friend class Context;      //!< Owns the kernels
     const std::string name;    //!< Kernel name
@@ -119,6 +129,7 @@ namespace gbe {
     uint32_t stackSize;        //!< Stack size (may be 0 if unused)
     bool useSLM;               //!< SLM requires a special HW config
     Context *ctx;              //!< Save context after compiler to alloc constant buffer curbe
+    ir::SamplerSet *samplerSet;//!< Copy from the corresponding function.
     GBE_CLASS(Kernel);         //!< Use custom allocators
   };
 
