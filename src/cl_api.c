@@ -1073,13 +1073,6 @@ clEnqueueNDRangeKernel(cl_command_queue  command_queue,
     goto error;
   }
 
-  /* Local size must be non-null */
-  for (i = 0; i < work_dim; ++i)
-    if (UNLIKELY(local_work_size[i] == 0)) {
-      err = CL_INVALID_WORK_GROUP_SIZE;
-      goto error;
-    }
-
   /* Check offset values. We add a non standard restriction. The offsets must
    * also be evenly divided by the local sizes
    */
@@ -1089,16 +1082,16 @@ clEnqueueNDRangeKernel(cl_command_queue  command_queue,
         err = CL_INVALID_GLOBAL_OFFSET;
         goto error;
       }
-      if (UNLIKELY(global_work_offset[i] % local_work_size[i])) {
+      if (UNLIKELY(local_work_size != NULL && global_work_offset[i] % local_work_size[i])) {
         err = CL_INVALID_GLOBAL_OFFSET;
         goto error;
       }
     }
 
-  /* Local sizes must divide global sizes */
+  /* Local sizes must be non-null and divide global sizes */
   if (local_work_size != NULL) 
     for (i = 0; i < work_dim; ++i) 
-      if (UNLIKELY(global_work_size[i] % local_work_size[i])) {
+      if (UNLIKELY(local_work_size[i] == 0 || global_work_size[i] % local_work_size[i])) {
         err = CL_INVALID_WORK_GROUP_SIZE;
         goto error;
       }
