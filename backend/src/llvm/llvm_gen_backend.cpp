@@ -1828,6 +1828,12 @@ namespace gbe
       case GEN_OCL_WRITE_IMAGE3:
       case GEN_OCL_WRITE_IMAGE4:
       case GEN_OCL_WRITE_IMAGE5:
+      case GEN_OCL_WRITE_IMAGE10:
+      case GEN_OCL_WRITE_IMAGE11:
+      case GEN_OCL_WRITE_IMAGE12:
+      case GEN_OCL_WRITE_IMAGE13:
+      case GEN_OCL_WRITE_IMAGE14:
+      case GEN_OCL_WRITE_IMAGE15:
         break;
       case GEN_OCL_READ_IMAGE0:
       case GEN_OCL_READ_IMAGE1:
@@ -1835,6 +1841,12 @@ namespace gbe
       case GEN_OCL_READ_IMAGE3:
       case GEN_OCL_READ_IMAGE4:
       case GEN_OCL_READ_IMAGE5:
+      case GEN_OCL_READ_IMAGE10:
+      case GEN_OCL_READ_IMAGE11:
+      case GEN_OCL_READ_IMAGE12:
+      case GEN_OCL_READ_IMAGE13:
+      case GEN_OCL_READ_IMAGE14:
+      case GEN_OCL_READ_IMAGE15:
       {
       // dst is a 4 elements vector. We allocate all 4 registers here.
         uint32_t elemNum;
@@ -1970,11 +1982,26 @@ namespace gbe
           case GEN_OCL_READ_IMAGE3:
           case GEN_OCL_READ_IMAGE4:
           case GEN_OCL_READ_IMAGE5:
+          case GEN_OCL_READ_IMAGE10:
+          case GEN_OCL_READ_IMAGE11:
+          case GEN_OCL_READ_IMAGE12:
+          case GEN_OCL_READ_IMAGE13:
+          case GEN_OCL_READ_IMAGE14:
+          case GEN_OCL_READ_IMAGE15:
           {
             GBE_ASSERT(AI != AE); const ir::Register surface_id = this->getRegister(*AI); ++AI;
             GBE_ASSERT(AI != AE); const ir::Register sampler = this->getRegister(*AI); ++AI;
             GBE_ASSERT(AI != AE); const ir::Register ucoord = this->getRegister(*AI); ++AI;
             GBE_ASSERT(AI != AE); const ir::Register vcoord = this->getRegister(*AI); ++AI;
+            ir::Register wcoord;
+            if (it->second == GEN_OCL_READ_IMAGE10 ||
+                it->second == GEN_OCL_READ_IMAGE11 ||
+                it->second == GEN_OCL_READ_IMAGE12 ||
+                it->second == GEN_OCL_READ_IMAGE13 ||
+                it->second == GEN_OCL_READ_IMAGE14) {
+              GBE_ASSERT(AI != AE); wcoord = this->getRegister(*AI); ++AI;
+            } else
+              wcoord = ir::Register(0);
 
             vector<ir::Register> dstTupleData, srcTupleData;
             const uint32_t elemNum = 4;
@@ -1986,26 +2013,33 @@ namespace gbe
             srcTupleData.push_back(sampler);
             srcTupleData.push_back(ucoord);
             srcTupleData.push_back(vcoord);
+            srcTupleData.push_back(wcoord);
             const ir::Tuple dstTuple = ctx.arrayTuple(&dstTupleData[0], elemNum);
-            const ir::Tuple srcTuple = ctx.arrayTuple(&srcTupleData[0], 4);
+            const ir::Tuple srcTuple = ctx.arrayTuple(&srcTupleData[0], 5);
 
             ir::Type srcType = ir::TYPE_U32, dstType = ir::TYPE_U32;
 
             switch(it->second) {
               case GEN_OCL_READ_IMAGE0:
               case GEN_OCL_READ_IMAGE2:
+              case GEN_OCL_READ_IMAGE10:
+              case GEN_OCL_READ_IMAGE12:
                 srcType = dstType = ir::TYPE_U32;
                 break;
               case GEN_OCL_READ_IMAGE1:
               case GEN_OCL_READ_IMAGE3:
+              case GEN_OCL_READ_IMAGE11:
+              case GEN_OCL_READ_IMAGE13:
                 dstType = ir::TYPE_U32;
                 srcType = ir::TYPE_FLOAT;
                 break;
               case GEN_OCL_READ_IMAGE4:
+              case GEN_OCL_READ_IMAGE14:
                 dstType = ir::TYPE_FLOAT;
                 srcType = ir::TYPE_U32;
                 break;
               case GEN_OCL_READ_IMAGE5:
+              case GEN_OCL_READ_IMAGE15:
                 srcType = dstType = ir::TYPE_FLOAT;
                 break;
               default:
@@ -2021,41 +2055,63 @@ namespace gbe
           case GEN_OCL_WRITE_IMAGE3:
           case GEN_OCL_WRITE_IMAGE4:
           case GEN_OCL_WRITE_IMAGE5:
+          case GEN_OCL_WRITE_IMAGE10:
+          case GEN_OCL_WRITE_IMAGE11:
+          case GEN_OCL_WRITE_IMAGE12:
+          case GEN_OCL_WRITE_IMAGE13:
+          case GEN_OCL_WRITE_IMAGE14:
+          case GEN_OCL_WRITE_IMAGE15:
           {
             GBE_ASSERT(AI != AE); const ir::Register surface_id = this->getRegister(*AI); ++AI;
             GBE_ASSERT(AI != AE); const ir::Register ucoord = this->getRegister(*AI); ++AI;
             GBE_ASSERT(AI != AE); const ir::Register vcoord = this->getRegister(*AI); ++AI;
+            ir::Register wcoord;
+            if(it->second == GEN_OCL_WRITE_IMAGE10 ||
+               it->second == GEN_OCL_WRITE_IMAGE11 ||
+               it->second == GEN_OCL_WRITE_IMAGE12 ||
+               it->second == GEN_OCL_WRITE_IMAGE13 ||
+               it->second == GEN_OCL_WRITE_IMAGE14) {
+              GBE_ASSERT(AI != AE); wcoord = this->getRegister(*AI); ++AI;
+            } else
+              wcoord = ir::Register(0);
             GBE_ASSERT(AI != AE);
             vector<ir::Register> srcTupleData;
 
             srcTupleData.push_back(surface_id);
             srcTupleData.push_back(ucoord);
             srcTupleData.push_back(vcoord);
+            srcTupleData.push_back(wcoord);
 
             const uint32_t elemNum = 4;
             for (uint32_t elemID = 0; elemID < elemNum; ++elemID) {
               const ir::Register reg = this->getRegister(*AI, elemID);
               srcTupleData.push_back(reg);
             }
-            const ir::Tuple srcTuple = ctx.arrayTuple(&srcTupleData[0], 7);
+            const ir::Tuple srcTuple = ctx.arrayTuple(&srcTupleData[0], 8);
 
             ir::Type srcType = ir::TYPE_U32, coordType = ir::TYPE_U32;
 
             switch(it->second) {
               case GEN_OCL_WRITE_IMAGE0:
               case GEN_OCL_WRITE_IMAGE2:
+              case GEN_OCL_WRITE_IMAGE10:
+              case GEN_OCL_WRITE_IMAGE12:
                 srcType = coordType = ir::TYPE_U32;
                 break;
               case GEN_OCL_WRITE_IMAGE1:
               case GEN_OCL_WRITE_IMAGE3:
+              case GEN_OCL_WRITE_IMAGE11:
+              case GEN_OCL_WRITE_IMAGE13:
                 coordType = ir::TYPE_FLOAT;
                 srcType = ir::TYPE_U32;
                 break;
               case GEN_OCL_WRITE_IMAGE4:
+              case GEN_OCL_WRITE_IMAGE14:
                 srcType = ir::TYPE_FLOAT;
                 coordType = ir::TYPE_U32;
                 break;
               case GEN_OCL_WRITE_IMAGE5:
+              case GEN_OCL_WRITE_IMAGE15:
                 srcType = coordType = ir::TYPE_FLOAT;
                 break;
               default:

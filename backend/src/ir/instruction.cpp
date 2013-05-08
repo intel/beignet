@@ -414,6 +414,7 @@ namespace ir {
             << " sampler %" << this->getSrc(fn, 1)
             << " coord u %" << this->getSrc(fn, 2)
             << " coord v %" << this->getSrc(fn, 3)
+            << " coord w %" << this->getSrc(fn, 4)
             << " %" << this->getDst(fn, 0)
             << " %" << this->getDst(fn, 1)
             << " %" << this->getDst(fn, 2)
@@ -427,7 +428,7 @@ namespace ir {
       INLINE Type getSrcType(void) const { return this->srcType; }
       INLINE Type getDstType(void) const { return this->dstType; }
 
-      static const uint32_t srcNum = 4;
+      static const uint32_t srcNum = 5;
       static const uint32_t dstNum = 4;
     };
 
@@ -451,10 +452,11 @@ namespace ir {
             << " surface id %" << this->getSrc(fn, 0)
             << " coord u %" << this->getSrc(fn, 1)
             << " coord v %" << this->getSrc(fn, 2)
-            << " %" << this->getSrc(fn, 3)
+            << " coord w %" << this->getSrc(fn, 3)
             << " %" << this->getSrc(fn, 4)
             << " %" << this->getSrc(fn, 5)
-            << " %" << this->getSrc(fn, 6);
+            << " %" << this->getSrc(fn, 6)
+            << " %" << this->getSrc(fn, 7);
       }
 
       Tuple src;
@@ -463,8 +465,8 @@ namespace ir {
 
       INLINE Type getSrcType(void) const { return this->srcType; }
       INLINE Type getCoordType(void) const { return this->coordType; }
-      // bti, u, v, 4 data elements
-      static const uint32_t srcNum = 7;
+      // bti, u, v, w, 4 data elements
+      static const uint32_t srcNum = 8;
       Register dst[0];               //!< No dest register
     };
 

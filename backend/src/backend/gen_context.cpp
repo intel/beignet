@@ -291,6 +291,7 @@ namespace gbe
     const GenRegister sampler = ra->genReg(insn.src(5));
     const GenRegister ucoord = ra->genReg(insn.src(6));
     const GenRegister vcoord = ra->genReg(insn.src(7));
+    const GenRegister wcoord = ra->genReg(insn.src(8));
     const GenRegister temp = GenRegister::ud1grf(msgPayload.nr, msgPayload.subnr/sizeof(float) + 4);
     const GenRegister a0_0 = GenRegister::ud1arf(GEN_ARF_ADDRESS, 0);
     uint32_t simdWidth = p->curr.execWidth;
@@ -309,6 +310,8 @@ namespace gbe
     /* Prepare message payload. */
     p->MOV(GenRegister::f8grf(nr , 0), ucoord);
     p->MOV(GenRegister::f8grf(nr + (simdWidth/8), 0), vcoord);
+    if (insn.src(8).reg() != 0)
+      p->MOV(GenRegister::f8grf(nr + (simdWidth/4), 0), wcoord);
     p->SAMPLE(dst, msgPayload, a0_0, -1, 0);
 
     p->pop();
@@ -319,10 +322,11 @@ namespace gbe
     const GenRegister bti = ra->genReg(insn.src(0 + insn.extra.elem));
     const GenRegister ucoord = ra->genReg(insn.src(1 + insn.extra.elem));
     const GenRegister vcoord = ra->genReg(insn.src(2 + insn.extra.elem));
-    const GenRegister R = ra->genReg(insn.src(3 + insn.extra.elem));
-    const GenRegister G = ra->genReg(insn.src(4 + insn.extra.elem));
-    const GenRegister B = ra->genReg(insn.src(5 + insn.extra.elem));
-    const GenRegister A = ra->genReg(insn.src(6 + insn.extra.elem));
+    const GenRegister wcoord = ra->genReg(insn.src(3 + insn.extra.elem));
+    const GenRegister R = ra->genReg(insn.src(4 + insn.extra.elem));
+    const GenRegister G = ra->genReg(insn.src(5 + insn.extra.elem));
+    const GenRegister B = ra->genReg(insn.src(6 + insn.extra.elem));
+    const GenRegister A = ra->genReg(insn.src(7 + insn.extra.elem));
     const GenRegister a0_0 = GenRegister::ud1arf(GEN_ARF_ADDRESS, 0);
 
     p->push();
@@ -357,6 +361,8 @@ namespace gbe
                                         GenRegister::retype(GenRegister::QnPhysical(src,quarter), src.type))
       QUARTER_MOV0(nr + 1, ucoord);
       QUARTER_MOV0(nr + 2, vcoord);
+      if (insn.src(3 + insn.extra.elem).reg() != 0)
+        QUARTER_MOV0(nr + 3, wcoord);
       QUARTER_MOV1(nr + 5, R);
       QUARTER_MOV1(nr + 6, G);
       QUARTER_MOV1(nr + 7, B);
