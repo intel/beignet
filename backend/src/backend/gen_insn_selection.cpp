@@ -466,7 +466,7 @@ namespace gbe
     /*! Encode ternary instructions */
     void ALU3(SelectionOpcode opcode, Reg dst, Reg src0, Reg src1, Reg src2);
     /*! Encode sample instructions */
-    void SAMPLE(GenRegister *dst, GenRegister *src, GenRegister *msgPayloads);
+    void SAMPLE(GenRegister *dst, uint32_t dstNum, GenRegister *src, uint32_t srcNum, GenRegister *msgPayloads, uint32_t msgNum);
     /*! Encode typed write instructions */
     void TYPED_WRITE(GenRegister *src, uint32_t srcNum, GenRegister *msgs, uint32_t msgNum);
     /*! Use custom allocators */
@@ -965,26 +965,26 @@ namespace gbe
     });
    }
  /* XXX always 4 return values? */
-  void Selection::Opaque::SAMPLE(GenRegister *dst, GenRegister *src, GenRegister *msgPayloads) {
-    uint32_t elemNum = 4;
-    SelectionInstruction *insn = this->appendInsn(SEL_OP_SAMPLE, elemNum, 8);
+  void Selection::Opaque::SAMPLE(GenRegister *dst, uint32_t dstNum, GenRegister *src, uint32_t srcNum, GenRegister *msgPayloads, uint32_t msgNum) {
+    SelectionInstruction *insn = this->appendInsn(SEL_OP_SAMPLE, dstNum, msgNum + srcNum);
     SelectionVector *dstVector = this->appendVector();
     SelectionVector *msgVector = this->appendVector();
 
     // Regular instruction to encode
-    for (uint32_t elemID = 0; elemID < elemNum; ++elemID)
-    {
+    for (uint32_t elemID = 0; elemID < dstNum; ++elemID)
       insn->dst(elemID) = dst[elemID];
+    for (uint32_t elemID = 0; elemID < msgNum; ++elemID)
       insn->src(elemID) = msgPayloads[elemID];
-      insn->src(4 + elemID) = src[elemID];
-    }
+    for (uint32_t elemID = 0; elemID < srcNum; ++elemID)
+      insn->src(msgNum + elemID) = src[elemID];
 
     // Sends require contiguous allocation
-    dstVector->regNum = 4;
+    dstVector->regNum = dstNum;
     dstVector->isSrc = 0;
     dstVector->reg = &insn->dst(0);
 
-    msgVector->regNum = 4;
+    // Only the messages require contiguous registers.
+    msgVector->regNum = msgNum;
     msgVector->isSrc = 1;
     msgVector->reg = &insn->src(0);
   }
@@ -1957,18 +1957,18 @@ namespace gbe
     {
       using namespace ir;
       GenRegister msgPayloads[4];
-      GenRegister dst[4], src[4];
+      GenRegister dst[insn.getDstNum()], src[insn.getSrcNum()];
 
       for( int i = 0; i < 4; ++i)
         msgPayloads[i] = sel.selReg(sel.reg(FAMILY_DWORD), TYPE_U32);
 
-      for (uint32_t valueID = 0; valueID < 4; ++valueID)
-      {
+      for (uint32_t valueID = 0; valueID < insn.getDstNum(); ++valueID)
         dst[valueID] = sel.selReg(insn.getDst(valueID), insn.getDstType());
-        src[valueID] = sel.selReg(insn.getSrc(valueID), insn.getSrcType());
-      }
 
-      sel.SAMPLE(dst, src, msgPayloads);
+      for (uint32_t valueID = 0; valueID < insn.getSrcNum(); ++valueID)
+        src[valueID] = sel.selReg(insn.getSrc(valueID), insn.getSrcType());
+
+      sel.SAMPLE(dst, insn.getDstNum(), src, insn.getSrcNum(), msgPayloads, 4);
       return true;
     }
     DECL_CTOR(SampleInstruction, 1, 1);
@@ -1983,8 +1983,9 @@ namespace gbe
       const uint32_t simdWidth = sel.ctx.getSimdWidth();
       uint32_t valueID = 0;
       GenRegister msgs[9]; // (header + U + V + R + LOD + 4)
-      GenRegister src[7];
+      GenRegister src[insn.getSrcNum()];
       uint32_t msgNum = (8 / (simdWidth / 8)) + 1;
+      uint32_t coordNum = (insn.getSrcNum() == 7) ? 2 : 3;
 
       for(uint32_t i = 0; i < msgNum; i++)
         msgs[i] = sel.selReg(sel.reg(FAMILY_DWORD), TYPE_U32);
@@ -1992,8 +1993,8 @@ namespace gbe
       // bti always uses TYPE_U32.
       src[valueID] = sel.selReg(insn.getSrc(valueID), TYPE_U32);
       valueID++;
-
-      for (; valueID < 3; ++valueID)
+      // u, v, w coords should use coord type.
+      for (; valueID < 1 + coordNum; ++valueID)
         src[valueID] = sel.selReg(insn.getSrc(valueID), insn.getCoordType());
 
       for (; valueID < insn.getSrcNum(); ++valueID)
