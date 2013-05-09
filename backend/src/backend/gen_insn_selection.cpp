@@ -440,7 +440,7 @@ namespace gbe
     /*! Select instruction with embedded comparison */
     void SEL_CMP(uint32_t conditional, Reg dst, Reg src0, Reg src1);
     /* Constant buffer move instruction */
-    void CB_MOVE(Reg dst, Reg src);
+    void INDIRECT_MOVE(Reg dst, Reg src);
     /*! EOT is used to finish GPGPU threads */
     void EOT(void);
     /*! No-op */
@@ -700,8 +700,8 @@ namespace gbe
     insn->src(1) = src1;
     insn->extra.function = conditional;
   }
-  void Selection::Opaque::CB_MOVE(Reg dst, Reg src) {
-    SelectionInstruction *insn = this->appendInsn(SEL_OP_CB_MOVE, 1, 1);
+  void Selection::Opaque::INDIRECT_MOVE(Reg dst, Reg src) {
+    SelectionInstruction *insn = this->appendInsn(SEL_OP_INDIRECT_MOVE, 1, 1);
     insn->dst(0) = dst;
     insn->src(0) = src;
   }
@@ -1677,7 +1677,7 @@ namespace gbe
         sel.MOV(GenRegister::retype(value, GEN_TYPE_UB), GenRegister::unpacked_ub(dst));
     }
 
-    void emitCBMove(Selection::Opaque &sel,
+    void emitIndirectMove(Selection::Opaque &sel,
                          const ir::LoadInstruction &insn,
                          GenRegister address) const
     {
@@ -1686,7 +1686,7 @@ namespace gbe
 
       const GenRegister dst = sel.selReg(insn.getValue(0), insn.getValueType());
       const GenRegister src = address;
-      sel.CB_MOVE(dst, src);
+      sel.INDIRECT_MOVE(dst, src);
     }
 
     INLINE bool emitOne(Selection::Opaque &sel, const ir::LoadInstruction &insn) const {
@@ -1699,7 +1699,7 @@ namespace gbe
                  insn.getAddressSpace() == MEM_LOCAL);
       GBE_ASSERT(sel.ctx.isScalarReg(insn.getValue(0)) == false);
       if (insn.getAddressSpace() == MEM_CONSTANT)
-        this->emitCBMove(sel, insn, address);
+        this->emitIndirectMove(sel, insn, address);
       else if (insn.isAligned() == true)
         this->emitUntypedRead(sel, insn, address, space == MEM_LOCAL ? 0xfe : 0x00);
       else {

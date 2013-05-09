@@ -212,7 +212,7 @@ namespace gbe
     }
   }
 
-  void GenContext::emitCBMoveInstruction(const SelectionInstruction &insn) {
+  void GenContext::emitIndirectMoveInstruction(const SelectionInstruction &insn) {
     const GenRegister src = GenRegister::unpacked_uw(ra->genReg(insn.src(0)).nr, 0);
     const GenRegister dst = ra->genReg(insn.dst(0));
     const GenRegister a0 = GenRegister::addr8(0);

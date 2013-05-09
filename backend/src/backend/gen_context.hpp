@@ -80,7 +80,7 @@ namespace gbe
     void emitTernaryInstruction(const SelectionInstruction &insn);
     void emitCompareInstruction(const SelectionInstruction &insn);
     void emitJumpInstruction(const SelectionInstruction &insn);
-    void emitCBMoveInstruction(const SelectionInstruction &insn);
+    void emitIndirectMoveInstruction(const SelectionInstruction &insn);
     void emitEotInstruction(const SelectionInstruction &insn);
     void emitNoOpInstruction(const SelectionInstruction &insn);
     void emitWaitInstruction(const SelectionInstruction &insn);
