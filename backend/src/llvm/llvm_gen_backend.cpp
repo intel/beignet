@@ -256,7 +256,6 @@ namespace gbe
       case 2: return ir::MEM_CONSTANT;
       case 3: return ir::MEM_LOCAL;
       case 4: return ir::IMAGE;
-      case 5: return ir::SAMPLER;
     }
     GBE_ASSERT(false);
     return ir::MEM_GLOBAL;
@@ -916,8 +915,6 @@ namespace gbe
               case ir::IMAGE:
                 ctx.input(argName, ir::FunctionArgument::IMAGE, reg, ptrSize);
               break;
-              case ir::SAMPLER:
-                ctx.input(argName, ir::FunctionArgument::SAMPLER, reg, ptrSize);
               break;
               default: GBE_ASSERT(addrSpace != ir::MEM_PRIVATE);
             }

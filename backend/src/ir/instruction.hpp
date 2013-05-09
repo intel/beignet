@@ -50,7 +50,6 @@ namespace ir {
     MEM_CONSTANT,   //!< Immutable global memory
     MEM_PRIVATE,    //!< Per thread private memory
     IMAGE,          //!< For texture image.
-    SAMPLER,        //!< For sampler.
     MEM_INVALID
   };
 
