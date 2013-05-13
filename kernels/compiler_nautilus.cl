@@ -14,8 +14,6 @@ inline vec3 reflect(vec3 I, vec3 N) {
   return I - 2.0f * dot(N, I) * N;
 }
 
-inline float clamp(x,m,M) { return max(min(x,M),m); }
-
 inline uint pack_fp4(float4 u4) {
   uint u;
   u = (((uint) u4.x)) |
@@ -59,7 +57,7 @@ __kernel void compiler_nautilus(__global uint *dst, float resx, float resy, int 
   for(int q=0;q<100;q++)
   {
      float l = e(o+0.5f*(vec3)(cos(1.1f*(float)(q)),cos(1.6f*(float)(q)),cos(1.4f*(float)(q))))-m;
-     a+=clamp(4.0f*l,0.0f,1.0f);
+     a+=floor(clamp(4.0f*l,0.0f,1.0f));
   }
   v*=a/100.0f;
   vec4 gl_FragColor=(vec4)(v,1.0f);

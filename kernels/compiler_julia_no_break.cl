@@ -14,8 +14,6 @@ inline vec3 reflect(vec3 I, vec3 N) {
   return I - 2.0f * dot(N, I) * N;
 }
 
-inline float clamp(x,m,M) { return max(min(x,M),m); }
-
 inline uint pack_fp4(float4 u4) {
   uint u;
   u = (((uint) u4.x)) |

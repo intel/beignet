@@ -651,21 +651,24 @@ DECL_SELECT4(float4, float, uint4, 0x80000000)
 /////////////////////////////////////////////////////////////////////////////
 // Common Functions (see 6.11.4 of OCL 1.1 spec)
 /////////////////////////////////////////////////////////////////////////////
-#define DECL_MIN_MAX(TYPE) \
+#define DECL_MIN_MAX_CLAMP(TYPE) \
 INLINE OVERLOADABLE TYPE max(TYPE a, TYPE b) { \
   return a > b ? a : b; \
 } \
 INLINE OVERLOADABLE TYPE min(TYPE a, TYPE b) { \
   return a < b ? a : b; \
+} \
+INLINE OVERLOADABLE TYPE clamp(TYPE v, TYPE l, TYPE u) { \
+  return max(min(v, u), l); \
 }
-DECL_MIN_MAX(float)
-DECL_MIN_MAX(int)
-DECL_MIN_MAX(short)
-DECL_MIN_MAX(char)
-DECL_MIN_MAX(uint)
-DECL_MIN_MAX(unsigned short)
-DECL_MIN_MAX(unsigned char)
-#undef DECL_MIN_MAX
+DECL_MIN_MAX_CLAMP(float)
+DECL_MIN_MAX_CLAMP(int)
+DECL_MIN_MAX_CLAMP(short)
+DECL_MIN_MAX_CLAMP(char)
+DECL_MIN_MAX_CLAMP(uint)
+DECL_MIN_MAX_CLAMP(unsigned short)
+DECL_MIN_MAX_CLAMP(unsigned char)
+#undef DECL_MIN_MAX_CLAMP
 
 INLINE OVERLOADABLE float __gen_ocl_internal_fmax(float a, float b) { return max(a,b); }
 INLINE OVERLOADABLE float __gen_ocl_internal_fmin(float a, float b) { return min(a,b); }
