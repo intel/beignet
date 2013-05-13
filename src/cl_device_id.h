@@ -29,7 +29,7 @@ struct _cl_device_id {
   cl_uint  max_thread_per_unit;
   cl_uint  max_work_item_dimensions;
   size_t   max_work_item_sizes[3];
-  cl_uint  max_work_group_size;
+  size_t   max_work_group_size;
   cl_uint  preferred_vector_width_char;
   cl_uint  preferred_vector_width_short;
   cl_uint  preferred_vector_width_int;
@@ -56,7 +56,7 @@ struct _cl_device_id {
   size_t   image3d_max_height;
   size_t   image3d_max_depth;
   cl_uint  max_samplers;
-  cl_uint  max_parameter_size;
+  size_t   max_parameter_size;
   cl_uint  mem_base_addr_align;
   cl_uint  min_data_type_align_size;
   cl_device_fp_config single_fp_config;
