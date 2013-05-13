@@ -54,6 +54,8 @@ struct _cl_kernel {
   size_t curbe_sz;            /* Size of it */
   uint32_t samplers[GEN_MAX_SAMPLERS]; /* samplers defined in kernel & kernel args */
   size_t sampler_sz;          /* sampler size defined in kernel & kernel args. */
+  struct ImageInfo *images;   /* images defined in kernel args */
+  size_t image_sz;            /* image count in kernel args */
   cl_argument *args;          /* To track argument setting */
   uint32_t arg_n:31;          /* Number of arguments */
   uint32_t ref_its_program:1; /* True only for the user kernel (created by clCreateKernel) */

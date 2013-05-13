@@ -451,25 +451,6 @@ intel_gpgpu_map_address_space(intel_gpgpu_t *gpgpu)
   heap->binding_table[1] = sizeof(gen7_surface_state_t) + offsetof(surface_heap_t, surface);
 }
 
-static inline unsigned long
-__fls(unsigned long x)
-{
-        asm("bsf %1,%0"
-            : "=r" (x)
-            : "rm" (x));
-        return x;
-}
-
-static int
-intel_gpgpu_get_free_img_index(intel_gpgpu_t *gpgpu)
-{
-  int slot;
-  assert(~gpgpu->img_bitmap != 0);
-  slot = __fls(~gpgpu->img_bitmap);
-  gpgpu->img_bitmap |= (1 << slot);
-  return slot + gpgpu->img_index_base;
-}
-
 static int
 intel_get_surface_type(cl_mem_object_type type)
 {
@@ -490,7 +471,7 @@ intel_get_surface_type(cl_mem_object_type type)
 
 static void
 intel_gpgpu_bind_image_gen7(intel_gpgpu_t *gpgpu,
-                              uint32_t *curbe_index,
+                              uint32_t index,
                               dri_bo* obj_bo,
                               uint32_t format,
                               cl_mem_object_type type,
@@ -499,7 +480,6 @@ intel_gpgpu_bind_image_gen7(intel_gpgpu_t *gpgpu,
                               int32_t pitch,
                               int32_t tiling)
 {
-  int32_t index = intel_gpgpu_get_free_img_index(gpgpu);
   surface_heap_t *heap = gpgpu->surface_heap_b.bo->virtual;
   gen7_surface_state_t *ss = (gen7_surface_state_t *) heap->surface[index];
 
@@ -521,7 +501,6 @@ intel_gpgpu_bind_image_gen7(intel_gpgpu_t *gpgpu,
   }
   ss->ss0.render_cache_rw_mode = 1; /* XXX do we need to set it? */
   intel_gpgpu_set_buf_reloc_gen7(gpgpu, index, obj_bo);
-  *curbe_index = index;
   gpgpu->binded_img[index - gpgpu->img_index_base] = obj_bo;
 }
 
@@ -544,7 +523,7 @@ intel_gpgpu_set_stack(intel_gpgpu_t *gpgpu, uint32_t offset, uint32_t size, uint
 
 static void
 intel_gpgpu_bind_image(intel_gpgpu_t *gpgpu,
-                       uint32_t *index,
+                       uint32_t index,
                        cl_buffer *obj_bo,
                        uint32_t format,
                        cl_mem_object_type type,
@@ -554,7 +533,7 @@ intel_gpgpu_bind_image(intel_gpgpu_t *gpgpu,
                        cl_gpgpu_tiling tiling)
 {
   intel_gpgpu_bind_image_gen7(gpgpu, index, (drm_intel_bo*) obj_bo, format, type, w, h, pitch, tiling);
-  assert(*index < GEN_MAX_SURFACES);
+  assert(index < GEN_MAX_SURFACES);
 }
 
 static void

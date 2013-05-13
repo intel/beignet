@@ -116,14 +116,15 @@ extern cl_gpgpu_bind_sampler_cb *cl_gpgpu_bind_sampler;
 
 /* Set a 2d texture */
 typedef void (cl_gpgpu_bind_image_cb)(cl_gpgpu state,
-                                        uint32_t *curbe_index,
-                                        cl_buffer obj_bo,
-                                        uint32_t format,
-                                        uint32_t type,
-                                        int32_t w,
-                                        int32_t h,
-                                        int pitch,
-                                        cl_gpgpu_tiling tiling);
+                                      uint32_t id,
+                                      cl_buffer obj_bo,
+                                      uint32_t format,
+                                      uint32_t type,
+                                      int32_t w,
+                                      int32_t h,
+                                      int pitch,
+                                      cl_gpgpu_tiling tiling);
+
 extern cl_gpgpu_bind_image_cb *cl_gpgpu_bind_image;
 
 /* Setup a stack */

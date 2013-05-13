@@ -140,14 +140,18 @@ namespace gbe
     void BYTE_SCATTER(GenRegister src, uint32_t bti, uint32_t elemSize);
     /*! Send instruction for the sampler */
     void SAMPLE(GenRegister dest,
-                GenRegister src0,
-                GenRegister src1,
+                GenRegister msg,
+                bool header_present,
+                unsigned char bti,
+                unsigned char sampler,
+                unsigned int simdWidth,
                 uint32_t writemask,
                 uint32_t return_format);
 
     /*! TypedWrite instruction for texture */
     void TYPED_WRITE(GenRegister header,
-                     GenRegister desc);
+                     bool header_present,
+                     unsigned char bti);
     /*! Extended math function (2 sources) */
     void MATH(GenRegister dst, uint32_t function, GenRegister src0, GenRegister src1);
     /*! Extended math function (1 source) */

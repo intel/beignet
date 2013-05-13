@@ -297,6 +297,9 @@ namespace ir {
   /*! Store data in an texture */
   class TypedWriteInstruction : public Instruction {
   public:
+    enum {
+     SURFACE_BTI = 0
+    };
     /*! Return true if the given instruction is an instance of this class */
     static bool isClassOf(const Instruction &insn);
     Type getSrcType(void) const;
@@ -306,6 +309,10 @@ namespace ir {
   /*! Load texels from a texture */
   class SampleInstruction : public Instruction {
   public:
+    enum {
+     SURFACE_BTI = 0,
+     SAMPLER_BTI = 1
+    };
     /*! Return true if the given instruction is an instance of this class */
     static bool isClassOf(const Instruction &insn);
     Type getSrcType(void) const;

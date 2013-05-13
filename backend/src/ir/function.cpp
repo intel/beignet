@@ -47,6 +47,7 @@ namespace ir {
   {
     initProfile(*this);
     samplerSet = GBE_NEW(SamplerSet);
+    imageSet = GBE_NEW(ImageSet);
   }
 
   Function::~Function(void) {

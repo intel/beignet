@@ -87,6 +87,31 @@ enum gbe_extra_argument {
   GBE_CONSTANT_BUFFER = 1 /* constant buffer argument location in curbe */
 };
 
+typedef struct ImageInfo {
+    int32_t arg_idx;
+    int32_t idx;
+    int32_t wSlot;
+    int32_t hSlot;
+    int32_t depthSlot;
+    int32_t dataTypeSlot;
+    int32_t channelOrderSlot;
+    int32_t dimOrderSlot;
+} ImageInfo;
+
+typedef void (gbe_set_image_base_index_cb)(uint32_t base_idx);
+extern gbe_set_image_base_index_cb *gbe_set_image_base_index;
+
+typedef uint32_t (gbe_get_image_base_index_cb)();
+extern gbe_get_image_base_index_cb *gbe_get_image_base_index;
+
+/*! Get the size of defined images */
+typedef size_t (gbe_kernel_get_image_size_cb)(gbe_kernel gbeKernel);
+extern gbe_kernel_get_image_size_cb *gbe_kernel_get_image_size;
+
+/*! Get the content of defined images */
+typedef void (gbe_kernel_get_image_data_cb)(gbe_kernel gbeKernel, ImageInfo *images);
+extern gbe_kernel_get_image_data_cb *gbe_kernel_get_image_data;
+
 /*! Create a new program from the given source code (zero terminated string) */
 typedef gbe_program (gbe_program_new_from_source_cb)(const char *source,
                                                      size_t stringSize,

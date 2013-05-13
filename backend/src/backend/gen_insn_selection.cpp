@@ -466,9 +466,9 @@ namespace gbe
     /*! Encode ternary instructions */
     void ALU3(SelectionOpcode opcode, Reg dst, Reg src0, Reg src1, Reg src2);
     /*! Encode sample instructions */
-    void SAMPLE(GenRegister *dst, uint32_t dstNum, GenRegister *src, uint32_t srcNum, GenRegister *msgPayloads, uint32_t msgNum);
+    void SAMPLE(GenRegister *dst, uint32_t dstNum, GenRegister *src, uint32_t srcNum, GenRegister *msgPayloads, uint32_t msgNum, uint32_t bti, uint32_t sampler);
     /*! Encode typed write instructions */
-    void TYPED_WRITE(GenRegister *src, uint32_t srcNum, GenRegister *msgs, uint32_t msgNum);
+    void TYPED_WRITE(GenRegister *src, uint32_t srcNum, GenRegister *msgs, uint32_t msgNum, uint32_t bti);
     /*! Use custom allocators */
     GBE_CLASS(Opaque);
     friend class SelectionBlock;
@@ -964,8 +964,11 @@ namespace gbe
       this->matchBasicBlock(insnNum);
     });
    }
- /* XXX always 4 return values? */
-  void Selection::Opaque::SAMPLE(GenRegister *dst, uint32_t dstNum, GenRegister *src, uint32_t srcNum, GenRegister *msgPayloads, uint32_t msgNum) {
+
+  void Selection::Opaque::SAMPLE(GenRegister *dst, uint32_t dstNum,
+                                 GenRegister *src, uint32_t srcNum,
+                                 GenRegister *msgPayloads, uint32_t msgNum,
+                                 uint32_t bti, uint32_t sampler) {
     SelectionInstruction *insn = this->appendInsn(SEL_OP_SAMPLE, dstNum, msgNum + srcNum);
     SelectionVector *dstVector = this->appendVector();
     SelectionVector *msgVector = this->appendVector();
@@ -987,6 +990,9 @@ namespace gbe
     msgVector->regNum = msgNum;
     msgVector->isSrc = 1;
     msgVector->reg = &insn->src(0);
+
+    insn->extra.function = bti;
+    insn->extra.elem = sampler;
   }
 
   ///////////////////////////////////////////////////////////////////////////
@@ -999,7 +1005,8 @@ namespace gbe
   }
 
   void Selection::Opaque::TYPED_WRITE(GenRegister *src, uint32_t srcNum,
-                              GenRegister *msgs, uint32_t msgNum) {
+                                      GenRegister *msgs, uint32_t msgNum,
+                                      uint32_t bti) {
     uint32_t elemID = 0;
     uint32_t i;
     SelectionInstruction *insn = this->appendInsn(SEL_OP_TYPED_WRITE, 0, msgNum + srcNum);
@@ -1010,6 +1017,7 @@ namespace gbe
     for (i = 0; i < srcNum; ++i, ++elemID)
       insn->src(elemID) = src[i];
 
+    insn->extra.function = bti;
     insn->extra.elem = msgNum;
     // Sends require contiguous allocation
     msgVector->regNum = msgNum;
@@ -1965,7 +1973,7 @@ namespace gbe
     {
       using namespace ir;
       GenRegister msgPayloads[4];
-      GenRegister dst[insn.getDstNum()], src[insn.getSrcNum()];
+      GenRegister dst[insn.getDstNum()], src[insn.getSrcNum() - 2];
 
       for( int i = 0; i < 4; ++i)
         msgPayloads[i] = sel.selReg(sel.reg(FAMILY_DWORD), TYPE_U32);
@@ -1973,10 +1981,15 @@ namespace gbe
       for (uint32_t valueID = 0; valueID < insn.getDstNum(); ++valueID)
         dst[valueID] = sel.selReg(insn.getDst(valueID), insn.getDstType());
 
-      for (uint32_t valueID = 0; valueID < insn.getSrcNum(); ++valueID)
-        src[valueID] = sel.selReg(insn.getSrc(valueID), insn.getSrcType());
+      for (uint32_t valueID = 0; valueID < insn.getSrcNum() - 2; ++valueID)
+        src[valueID] = sel.selReg(insn.getSrc(valueID + 2), insn.getSrcType());
 
-      sel.SAMPLE(dst, insn.getDstNum(), src, insn.getSrcNum(), msgPayloads, 4);
+      uint32_t bti = sel.ctx.getFunction().getImageSet()->getIdx
+                       (insn.getSrc(SampleInstruction::SURFACE_BTI));
+      uint32_t sampler = sel.ctx.getFunction().getSamplerSet()->getIdx
+                           (insn.getSrc(SampleInstruction::SAMPLER_BTI));
+
+      sel.SAMPLE(dst, insn.getDstNum(), src, insn.getSrcNum() - 2, msgPayloads, 4, bti, sampler);
       return true;
     }
     DECL_CTOR(SampleInstruction, 1, 1);
@@ -1998,17 +2011,16 @@ namespace gbe
       for(uint32_t i = 0; i < msgNum; i++)
         msgs[i] = sel.selReg(sel.reg(FAMILY_DWORD), TYPE_U32);
 
-      // bti always uses TYPE_U32.
-      src[valueID] = sel.selReg(insn.getSrc(valueID), TYPE_U32);
-      valueID++;
       // u, v, w coords should use coord type.
       for (; valueID < 1 + coordNum; ++valueID)
-        src[valueID] = sel.selReg(insn.getSrc(valueID), insn.getCoordType());
+        src[valueID] = sel.selReg(insn.getSrc(valueID + 1), insn.getCoordType());
 
-      for (; valueID < insn.getSrcNum(); ++valueID)
-        src[valueID] = sel.selReg(insn.getSrc(valueID), insn.getSrcType());
+      for (; (valueID + 1) < insn.getSrcNum(); ++valueID)
+        src[valueID] = sel.selReg(insn.getSrc(valueID + 1), insn.getSrcType());
 
-      sel.TYPED_WRITE(src, insn.getSrcNum(), msgs, msgNum);
+      uint32_t bti = sel.ctx.getFunction().getImageSet()->getIdx
+                       (insn.getSrc(TypedWriteInstruction::SURFACE_BTI));
+      sel.TYPED_WRITE(src, insn.getSrcNum() - 1, msgs, msgNum, bti);
       return true;
     }
     DECL_CTOR(TypedWriteInstruction, 1, 1);

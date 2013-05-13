@@ -63,6 +63,8 @@ else (GBE_USE_BLOB)
     ir/constant.hpp
     ir/sampler.cpp
     ir/sampler.hpp
+    ir/image.cpp
+    ir/image.hpp
     ir/instruction.cpp
     ir/instruction.hpp
     ir/liveness.cpp

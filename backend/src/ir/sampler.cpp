@@ -36,12 +36,10 @@ namespace ir {
 
   void SamplerSet::appendReg(const Register reg, uint32_t key, Context *ctx) {
     struct SamplerRegSlot samplerSlot;
-    // This register is just used as a key.
     samplerSlot.reg = reg;
     samplerSlot.slot = samplerMap.size();
     samplerMap.insert(std::make_pair(key, samplerSlot));
     regMap.insert(std::make_pair(samplerSlot.reg, samplerSlot));
-    ctx->LOADI(ir::TYPE_S32, samplerSlot.reg, ctx->newIntegerImmediate(samplerSlot.slot, ir::TYPE_S32));
   }
 
   Register SamplerSet::append(uint32_t samplerValue, Context *ctx)
@@ -49,6 +47,7 @@ namespace ir {
     auto it = samplerMap.find(samplerValue);
     if (it != samplerMap.end())
         return it->second.reg;
+    // This register is just used as a key.
     Register reg = ctx->reg(FAMILY_DWORD);
     appendReg(reg, samplerValue, ctx);
     return reg;

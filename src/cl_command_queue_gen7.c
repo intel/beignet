@@ -224,6 +224,8 @@ cl_command_queue_ND_range_gen7(cl_command_queue queue,
 
   /* Bind user buffers */
   cl_command_queue_bind_surface(queue, ker);
+  /* Bind user images */
+  cl_command_queue_bind_image(queue, ker);
   /* Bind all samplers */
   cl_gpgpu_bind_sampler(queue->gpgpu, ker->samplers, ker->sampler_sz);
 

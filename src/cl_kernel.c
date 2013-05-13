@@ -56,6 +56,8 @@ cl_kernel_delete(cl_kernel k)
         cl_mem_delete(k->args[i].mem);
     cl_free(k->args);
   }
+  if (k->image_sz)
+    cl_free(k->images);
   k->magic = CL_MAGIC_DEAD_HEADER; /* For safety */
   cl_free(k);
 }
@@ -208,6 +210,18 @@ cl_kernel_setup(cl_kernel k, gbe_kernel opaque)
   assert(k->sampler_sz <= GEN_MAX_SAMPLERS);
   if (k->sampler_sz > 0)
     gbe_kernel_get_sampler_data(k->opaque, k->samplers);
+  /* Get image data & size */
+  k->image_sz = gbe_kernel_get_image_size(k->opaque);
+  assert(k->sampler_sz <= GEN_MAX_SURFACES);
+  if (k->image_sz > 0) {
+    TRY_ALLOC_NO_ERR(k->images, cl_calloc(k->image_sz, sizeof(k->images[0])));
+    gbe_kernel_get_image_data(k->opaque, k->images);
+  } else
+    k->images = NULL;
+  return;
+error:
+  cl_buffer_unreference(k->bo);
+  k->bo = NULL;
 }
 
 LOCAL cl_kernel
@@ -227,8 +241,14 @@ cl_kernel_dup(cl_kernel from)
   to->arg_n = from->arg_n;
   to->curbe_sz = from->curbe_sz;
   to->sampler_sz = from->sampler_sz;
+  to->image_sz = from->image_sz;
   if (to->sampler_sz)
     memcpy(to->samplers, from->samplers, to->sampler_sz * sizeof(uint32_t));
+  if (to->image_sz) {
+    TRY_ALLOC_NO_ERR(to->images, cl_calloc(to->image_sz, sizeof(to->images[0])));
+    memcpy(to->images, from->images, to->image_sz * sizeof(to->images[0]));
+  } else
+    to->images = NULL;
   TRY_ALLOC_NO_ERR(to->args, cl_calloc(to->arg_n, sizeof(cl_argument)));
   if (to->curbe_sz) TRY_ALLOC_NO_ERR(to->curbe, cl_calloc(1, to->curbe_sz));
 

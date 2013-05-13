@@ -166,6 +166,39 @@ namespace gbe
   }
 #endif
 
+  static void setSamplerMessage(GenEncoder *p,
+                                GenInstruction *insn,
+                                unsigned char bti,
+                                unsigned char sampler,
+                                uint32_t msg_type,
+                                uint32_t response_length,
+                                uint32_t msg_length,
+                                bool header_present,
+                                uint32_t simd_mode,
+                                uint32_t return_format)
+  {
+     const GenMessageTarget sfid = GEN_SFID_SAMPLER;
+     setMessageDescriptor(p, insn, sfid, msg_length, response_length);
+     insn->bits3.sampler_gen7.bti = bti;
+     insn->bits3.sampler_gen7.sampler = sampler;
+     insn->bits3.sampler_gen7.msg_type = msg_type;
+     insn->bits3.sampler_gen7.simd_mode = simd_mode;
+  }
+
+
+  static void setTypedWriteMessage(GenEncoder *p,
+                                   GenInstruction *insn,
+                                   unsigned char bti,
+                                   unsigned char msg_type,
+                                   uint32_t msg_length,
+                                   bool header_present)
+  {
+     const GenMessageTarget sfid = GEN6_SFID_DATAPORT_RENDER_CACHE;
+     setMessageDescriptor(p, insn, sfid, msg_length, 0, header_present);
+     insn->bits3.gen7_typed_rw.bti = bti;
+     insn->bits3.gen7_typed_rw.msg_type = msg_type;
+  }
+
   //////////////////////////////////////////////////////////////////////////
   // Gen Emitter encoding class
   //////////////////////////////////////////////////////////////////////////
@@ -800,31 +833,44 @@ namespace gbe
   }
 
   void GenEncoder::SAMPLE(GenRegister dest,
-                          GenRegister src0,
-                          GenRegister src1,
+                          GenRegister msg,
+                          bool header_present,
+                          unsigned char bti,
+                          unsigned char sampler,
+                          uint32_t simdWidth,
                           uint32_t writemask,
                           uint32_t return_format)
   {
      if (writemask == 0) return;
-
+     uint32_t msg_type = (simdWidth == 16) ?
+                            GEN_SAMPLER_MESSAGE_SIMD16_SAMPLE : GEN_SAMPLER_MESSAGE_SIMD8_SAMPLE;
+     uint32_t response_length = (4 * (simdWidth / 8));
+     uint32_t msg_length = (2 * (simdWidth / 8));
+     if (header_present)
+       msg_length++;
+     uint32_t simd_mode = (simdWidth == 16) ?
+                            GEN_SAMPLER_SIMD_MODE_SIMD16 : GEN_SAMPLER_SIMD_MODE_SIMD8;
      GenInstruction *insn = this->next(GEN_OPCODE_SEND);
      insn->header.predicate_control = 0; /* XXX */
      this->setHeader(insn);
      this->setDst(insn, dest);
-     this->setSrc0(insn, src0);
-     this->setSrc1(insn, src1);
-     insn->header.destreg_or_condmod = GEN_SFID_SAMPLER;
+     this->setSrc0(insn, msg);
+     setSamplerMessage(this, insn, bti, sampler, msg_type,
+                       response_length, msg_length,
+                       header_present,
+                       simd_mode, return_format);
   }
 
-  void GenEncoder::TYPED_WRITE(GenRegister header, GenRegister desc)
+  void GenEncoder::TYPED_WRITE(GenRegister msg, bool header_present, unsigned char bti)
   {
      GenInstruction *insn = this->next(GEN_OPCODE_SEND);
+     uint32_t msg_type = GEN_TYPED_WRITE;
+     uint32_t msg_length = header_present ? 9 : 8;
      insn->header.predicate_control = 0; /* XXX */
      this->setHeader(insn);
      this->setDst(insn, GenRegister::retype(GenRegister::null(), GEN_TYPE_UD));
-     this->setSrc0(insn, header);
-     this->setSrc1(insn, desc);
-     insn->header.destreg_or_condmod = GEN6_SFID_DATAPORT_RENDER_CACHE;
+     this->setSrc0(insn, msg);
+     setTypedWriteMessage(this, insn, bti, msg_type, msg_length, header_present);
   }
 
   void GenEncoder::EOT(uint32_t msg) {

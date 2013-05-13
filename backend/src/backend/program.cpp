@@ -49,11 +49,12 @@
 namespace gbe {
 
   Kernel::Kernel(const std::string &name) :
-    name(name), args(NULL), argNum(0), curbeSize(0), stackSize(0), useSLM(false), ctx(NULL), samplerSet(NULL)
+    name(name), args(NULL), argNum(0), curbeSize(0), stackSize(0), useSLM(false), ctx(NULL), samplerSet(NULL), imageSet(NULL)
   {}
   Kernel::~Kernel(void) {
     if(ctx) GBE_DELETE(ctx);
     if(samplerSet) GBE_DELETE(samplerSet);
+    if(imageSet) GBE_DELETE(imageSet);
     GBE_SAFE_DELETE_ARRAY(args);
   }
   int32_t Kernel::getCurbeOffset(gbe_curbe_type type, uint32_t subType) const {
@@ -92,6 +93,7 @@ namespace gbe {
       const std::string &name = pair.first;
       Kernel *kernel = this->compileKernel(unit, name);
       kernel->setSamplerSet(pair.second->getSamplerSet());
+      kernel->setImageSet(pair.second->getImageSet());
       kernels.insert(std::make_pair(name, kernel));
     }
     return true;
@@ -264,6 +266,27 @@ namespace gbe {
     kernel->getSamplerData(samplers);
   }
 
+  static size_t kernelGetImageSize(gbe_kernel gbeKernel) {
+    if (gbeKernel == NULL) return 0;
+    const gbe::Kernel *kernel = (const gbe::Kernel*) gbeKernel;
+    return kernel->getImageSize();
+  }
+
+  static void kernelGetImageData(gbe_kernel gbeKernel, ImageInfo *images) {
+    if (gbeKernel == NULL) return;
+    const gbe::Kernel *kernel = (const gbe::Kernel*) gbeKernel;
+    kernel->getImageData(images);
+  }
+
+  static uint32_t gbeImageBaseIndex = 0;
+  static void setImageBaseIndex(uint32_t baseIdx) {
+     gbeImageBaseIndex = baseIdx;
+  }
+
+  static uint32_t getImageBaseIndex() {
+    return gbeImageBaseIndex;
+  }
+
   static uint32_t kernelGetRequiredWorkGroupSize(gbe_kernel kernel, uint32_t dim) {
     return 0u;
   }
@@ -293,6 +316,10 @@ GBE_EXPORT_SYMBOL gbe_kernel_get_required_work_group_size_cb *gbe_kernel_get_req
 GBE_EXPORT_SYMBOL gbe_kernel_use_slm_cb *gbe_kernel_use_slm = NULL;
 GBE_EXPORT_SYMBOL gbe_kernel_get_sampler_size_cb *gbe_kernel_get_sampler_size = NULL;
 GBE_EXPORT_SYMBOL gbe_kernel_get_sampler_data_cb *gbe_kernel_get_sampler_data = NULL;
+GBE_EXPORT_SYMBOL gbe_kernel_get_image_size_cb *gbe_kernel_get_image_size = NULL;
+GBE_EXPORT_SYMBOL gbe_kernel_get_image_data_cb *gbe_kernel_get_image_data = NULL;
+GBE_EXPORT_SYMBOL gbe_set_image_base_index_cb *gbe_set_image_base_index = NULL;
+GBE_EXPORT_SYMBOL gbe_get_image_base_index_cb *gbe_get_image_base_index = NULL;
 
 namespace gbe
 {
@@ -322,6 +349,10 @@ namespace gbe
       gbe_kernel_use_slm = gbe::kernelUseSLM;
       gbe_kernel_get_sampler_size = gbe::kernelGetSamplerSize;
       gbe_kernel_get_sampler_data = gbe::kernelGetSamplerData;
+      gbe_kernel_get_image_size = gbe::kernelGetImageSize;
+      gbe_kernel_get_image_data = gbe::kernelGetImageData;
+      gbe_get_image_base_index = gbe::getImageBaseIndex;
+      gbe_set_image_base_index = gbe::setImageBaseIndex;
       genSetupCallBacks();
     }
   };

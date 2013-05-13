@@ -118,6 +118,14 @@ namespace gbe {
     size_t getSamplerSize(void) const { return samplerSet->getDataSize(); }
     /*! Get defined sampler value array */
     void getSamplerData(uint32_t *samplers) const { samplerSet->getData(samplers); }
+    /*! Set image set. */
+    void setImageSet(ir::ImageSet * from) {
+      imageSet = from;
+    }
+    /*! Get defined image size */
+    size_t getImageSize(void) const { return imageSet->getDataSize(); }
+    /*! Get defined image value array */
+    void getImageData(ImageInfo *images) const { imageSet->getData(images); }
   protected:
     friend class Context;      //!< Owns the kernels
     const std::string name;    //!< Kernel name
@@ -130,6 +138,7 @@ namespace gbe {
     bool useSLM;               //!< SLM requires a special HW config
     Context *ctx;              //!< Save context after compiler to alloc constant buffer curbe
     ir::SamplerSet *samplerSet;//!< Copy from the corresponding function.
+    ir::ImageSet *imageSet;    //!< Copy from the corresponding function.
     GBE_CLASS(Kernel);         //!< Use custom allocators
   };
 

@@ -914,6 +914,7 @@ namespace gbe
               break;
               case ir::IMAGE:
                 ctx.input(argName, ir::FunctionArgument::IMAGE, reg, ptrSize);
+                ctx.getFunction().getImageSet()->append(reg, &ctx);
               break;
               break;
               default: GBE_ASSERT(addrSpace != ir::MEM_PRIVATE);
