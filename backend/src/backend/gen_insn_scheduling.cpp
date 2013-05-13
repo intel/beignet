@@ -109,7 +109,7 @@ namespace gbe
       insn(insn), refNum(0), retiredCycle(0) {}
     bool dependsOn(ScheduleDAGNode *node) const {
       GBE_ASSERT(node != NULL);
-      for (auto child : children)
+      for (auto child : node->children)
         if (child.node == this)
           return true;
       return false;
