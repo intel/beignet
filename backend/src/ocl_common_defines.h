@@ -111,9 +111,12 @@ typedef enum clk_sampler_type {
     __CLK_SAMPLER_MASK             = __CLK_MIP_MASK | __CLK_FILTER_MASK |
                                      __CLK_NORMALIZED_MASK | __CLK_ADDRESS_MASK,
 
-    __CLK_ANISOTROPIC_RATIO_BITS   = 5,
-    __CLK_ANISOTROPIC_RATIO_MASK   = (int) 0x80000000 >>
-                                      (__CLK_ANISOTROPIC_RATIO_BITS-1)
+    __CLK_SAMPLER_ARG_BASE         = __CLK_MIP_BASE + __CLK_SAMPLER_BITS,
+    __CLK_SAMPLER_ARG_BITS         = 8,
+    __CLK_SAMPLER_ARG_MASK         = ((1 << __CLK_SAMPLER_ARG_BITS) - 1) << __CLK_SAMPLER_ARG_BASE,
+    __CLK_SAMPLER_ARG_KEY_BIT      = (1 << (__CLK_SAMPLER_ARG_BASE + __CLK_SAMPLER_ARG_BITS)),
+    __CLK_SAMPLER_ARG_KEY_BITS     = 1,
+
 } clk_sampler_type;
 
 // Memory synchronization

@@ -734,7 +734,7 @@ intel_gpgpu_bind_sampler(intel_gpgpu_t *gpgpu, uint32_t *samplers, size_t sample
   int index;
   assert(sampler_sz <= GEN_MAX_SAMPLERS);
   for(index = 0; index < sampler_sz; index++)
-    intel_gpgpu_insert_sampler(gpgpu, index, samplers[index]);
+    intel_gpgpu_insert_sampler(gpgpu, index, samplers[index] & __CLK_SAMPLER_MASK);
 }
 
 static void

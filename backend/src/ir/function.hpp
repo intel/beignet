@@ -197,6 +197,18 @@ namespace ir {
       GBE_ASSERT(args[ID] != NULL);
       return *args[ID];
     }
+
+    /*! Get arg ID. */
+    INLINE int32_t getArgID(FunctionArgument *requestArg) {
+      for (uint32_t ID = 0; ID < args.size(); ID++)
+      {
+        if ( args[ID] == requestArg )
+          return ID;
+      }
+      GBE_ASSERTM(0, "Failed to get a valid argument ID.");
+      return -1;
+    }
+
     /*! Get the number of pushed registers */
     INLINE uint32_t pushedNum(void) const { return pushMap.size(); }
     /*! Get the pushed data location for the given register */
@@ -289,8 +301,7 @@ namespace ir {
     /*! Change the SLM config for the function */
     INLINE bool setUseSLM(bool useSLM) { return this->useSLM = useSLM; }
     /*! Get sampler set in this function */
-    SamplerSet* getSamplerSet(void) {return samplerSet; }
-    //const SamplerSet& getSamplerSet(void) const {return samplerSet; }
+    SamplerSet* getSamplerSet(void) const {return samplerSet; }
   private:
     friend class Context;           //!< Can freely modify a function
     std::string name;               //!< Function name
@@ -306,7 +317,7 @@ namespace ir {
     LocationMap locationMap;        //!< Pushed function arguments (loc->reg)
     uint32_t simdWidth;             //!< 8 or 16 if forced, 0 otherwise
     bool useSLM;                    //!< Is SLM required?
-    SamplerSet *samplerSet;
+    SamplerSet *samplerSet;          //!< samplers used in this function.
     GBE_CLASS(Function);            //!< Use custom allocator
   };
 

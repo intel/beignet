@@ -27,7 +27,6 @@
 #include "ir/register.hpp"
 #include "sys/map.hpp"
 
-
 namespace gbe {
 namespace ir {
 
@@ -37,6 +36,11 @@ namespace ir {
    */
   class Context;
 
+  struct SamplerRegSlot {
+    Register reg;
+    uint32_t slot;
+  };
+
   class SamplerSet
   {
   public:
@@ -44,21 +48,28 @@ namespace ir {
      *  If the speficied sampler is exist, only return the previous offset and
      *  don't append it again. Return -1, if failed.*/
     Register append(uint32_t clkSamplerValue, Context *ctx);
-    size_t getDataSize(void) { return regMap.size(); }
-    size_t getDataSize(void) const { return regMap.size(); }
+    /*! Append a sampler defined in kernel args. */
+    void append(Register samplerArg, Context *ctx);
+    /*! Get the sampler idx (actual location) */
+    const uint32_t getIdx(const Register reg) const;
+    size_t getDataSize(void) { return samplerMap.size(); }
+    size_t getDataSize(void) const { return samplerMap.size(); }
     void getData(uint32_t *samplers) const {
-      for ( auto &it : regMap)
-        *samplers++ = it.first;
+      for(auto &it : samplerMap)
+        samplers[it.second.slot] = it.first;
     }
 
     void operator = (const SamplerSet& other) {
       regMap.insert(other.regMap.begin(), other.regMap.end());
+      samplerMap.insert(other.samplerMap.begin(), other.samplerMap.end());
     }
 
-    SamplerSet(const SamplerSet& other) : regMap(other.regMap.begin(), other.regMap.end()) { }
+    SamplerSet(const SamplerSet& other) : samplerMap(other.samplerMap.begin(), other.samplerMap.end()) { }
     SamplerSet() {}
   private:
-    map<uint32_t, Register> regMap;
+    void appendReg(const Register reg, uint32_t key, Context *ctx);
+    map<uint32_t, SamplerRegSlot> samplerMap;
+    map<Register, SamplerRegSlot> regMap;
     GBE_CLASS(SamplerSet);
   };
 } /* namespace ir */

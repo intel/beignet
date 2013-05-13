@@ -52,18 +52,22 @@ uint32_t cl_to_clk(cl_bool normalized_coords,
          | (clk_filter << __CLK_FILTER_BASE);
 }
 
-int cl_arg_sampler_insert(cl_kernel k, cl_sampler sampler)
+#define IS_SAMPLER_ARG(v) (v & __CLK_SAMPLER_ARG_KEY_BIT)
+#define SAMPLER_ARG_ID(v) ((v & __CLK_SAMPLER_ARG_MASK) >> __CLK_SAMPLER_ARG_BASE)
+int cl_set_sampler_arg_slot(cl_kernel k, int index, cl_sampler sampler)
 {
-  int i, slot_id;
-  for(i = 0; i < k->sampler_sz; i++)
+  int slot_id;
+  for(slot_id = 0; slot_id < k->sampler_sz; slot_id++)
   {
-    if (k->samplers[i] == sampler->clkSamplerValue)
-      return i;
+    if (IS_SAMPLER_ARG(k->samplers[slot_id])) {
+     if (SAMPLER_ARG_ID(k->samplers[slot_id]) == index) {
+       k->samplers[slot_id] = (k->samplers[slot_id] & (~__CLK_SAMPLER_MASK))
+                              | sampler->clkSamplerValue;
+       return slot_id;
+     }
+    }
   }
-  slot_id = k->sampler_sz + k->arg_sampler_sz;
-  k->samplers[slot_id] = sampler->clkSamplerValue;
-  k->arg_sampler_sz++;
-  return slot_id;
+  assert(0);
 }
 
 LOCAL cl_sampler

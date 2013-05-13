@@ -1998,13 +1998,8 @@ namespace gbe
                GBE_ASSERTM(x.type == ir::TYPE_U32 || x.type == ir::TYPE_S32, "Invalid sampler type");
                sampler = ctx.getFunction().getSamplerSet()->append(x.data.u32, &ctx);
             } else {
-              // XXX As LLVM 3.2/3.1 doesn't have a new data type for the sampler_t, we have to fix up the argument
-              // type here. Once we switch to the LLVM and use the new data type sampler_t, we can remove this
-              // work around.
               sampler = this->getRegister(*AI);
-              ir::FunctionArgument *arg =  ctx.getFunction().getArg(sampler);
-              GBE_ASSERT(arg != NULL);
-              arg->type = ir::FunctionArgument::SAMPLER;
+              ctx.getFunction().getSamplerSet()->append(sampler, &ctx);
             }
             ++AI;
 

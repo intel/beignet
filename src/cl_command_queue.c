@@ -377,8 +377,6 @@ cl_command_queue_ND_range(cl_command_queue queue,
   else
     FATAL ("Unknown Gen Device");
 
-  k->arg_sampler_sz = 0;
-
 #if USE_FULSIM
   if (run_it != NULL && strcmp(run_it, "1") == 0) {
     TRY (cl_fulsim_dump_all_surfaces, queue, k);

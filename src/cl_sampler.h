@@ -50,8 +50,8 @@ extern void cl_sampler_delete(cl_sampler);
 /* Add one more reference to this object */
 extern void cl_sampler_add_ref(cl_sampler);
 
-/* insert a new argument sampler */
-int cl_arg_sampler_insert(cl_kernel k, cl_sampler sampler);
+/* set a sampler kernel argument */
+int cl_set_sampler_arg_slot(cl_kernel k, int index, cl_sampler sampler);
 
 #endif /* __CL_SAMPLER_H__ */
 
