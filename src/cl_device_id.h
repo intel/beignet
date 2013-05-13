@@ -84,6 +84,7 @@ struct _cl_device_id {
   const char *opencl_c_version;
   const char *extensions;
   const char *driver_version;
+  const char *built_in_kernels;
   size_t name_sz;
   size_t vendor_sz;
   size_t version_sz;
@@ -91,6 +92,7 @@ struct _cl_device_id {
   size_t opencl_c_version_sz;
   size_t extensions_sz;
   size_t driver_version_sz;
+  size_t built_in_kernels_sz;
   /* Kernel specific info that we're assigning statically */
   size_t wg_sz;
   size_t compile_wg_sz[3];
