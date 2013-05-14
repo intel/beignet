@@ -120,7 +120,12 @@ namespace gbe
           continue;
         }
       } else {
-        aligned = ALIGN(list->offset+list->size-size-(alignment-1), alignment);   //alloc from block's tail
+        int16_t unaligned = list->offset + list->size - size - (alignment-1);
+        if(unaligned < 0) {
+          list = list->prev;
+          continue;
+        }
+        aligned = ALIGN(unaligned, alignment);   //alloc from block's tail
         spaceOnLeft = aligned - list->offset;
         spaceOnRight = list->size - size - spaceOnLeft;
 
@@ -196,7 +201,6 @@ namespace gbe
 
       // Track the allocation to retrieve the size later
       allocatedBlocks.insert(std::make_pair(aligned, size));
-
       // We have a valid offset now
       return aligned;
     }
