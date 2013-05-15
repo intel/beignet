@@ -303,7 +303,6 @@ namespace gbe
     if (insn.src(8).reg() != 0)
       p->MOV(GenRegister::f8grf(nr + (simdWidth/4), 0), wcoord);
     p->SAMPLE(dst, msgPayload, false, bti, sampler, simdWidth, -1, 0);
-
     p->pop();
   }
 
@@ -329,13 +328,17 @@ namespace gbe
     // prepare mesg desc and move to a0.0.
     // desc = bti | (msg_type << 14) | (header_present << 19))
     // prepare header, we need to enable all the 8 planes.
-    p->MOV(GenRegister::ud8grf(nr, 7), GenRegister::immud(0xff));
-    // Typed write only support SIMD8.
+    p->MOV(GenRegister::ud8grf(nr, 7), GenRegister::immud(0xffff));
     p->curr.execWidth = 8;
+    // Typed write only support SIMD8.
     // Prepare message payload U + V + R(ignored) + LOD(0) + RGBA.
-    // XXX currently only support U32 surface type with RGBA.
+    // Currently, we don't support non-zero lod, so we clear all lod to
+    // zero for both quarters thus save one instruction here.
+    // Thus we must put this instruction in noMask and no predication state.
     p->MOV(GenRegister::ud8grf(nr + 4, 0), GenRegister::immud(0)); //LOD
-
+    p->pop();
+    p->push();
+    p->curr.execWidth = 8;
     // TYPED WRITE send instruction only support SIMD8, if we are SIMD16, we
     // need to call it twice.
     uint32_t quarterNum = (simdWidth == 8) ? 1 : 2;
@@ -346,6 +349,8 @@ namespace gbe
                                         GenRegister::retype(GenRegister::QnPhysical(src, quarter), src.type))
 #define QUARTER_MOV1(dst_nr, src) p->MOV(GenRegister::retype(GenRegister::ud8grf(dst_nr, 0), src.type), \
                                         GenRegister::retype(GenRegister::QnPhysical(src,quarter), src.type))
+      if (quarter == 1)
+        p->curr.quarterControl = GEN_COMPRESSION_Q2;
       QUARTER_MOV0(nr + 1, ucoord);
       QUARTER_MOV0(nr + 2, vcoord);
       if (insn.src(3 + insn.extra.elem).reg() != 0)
@@ -357,7 +362,6 @@ namespace gbe
 #undef QUARTER_MOV
       p->TYPED_WRITE(header, true, bti);
     }
-
     p->pop();
   }
 

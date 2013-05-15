@@ -851,7 +851,6 @@ namespace gbe
      uint32_t simd_mode = (simdWidth == 16) ?
                             GEN_SAMPLER_SIMD_MODE_SIMD16 : GEN_SAMPLER_SIMD_MODE_SIMD8;
      GenInstruction *insn = this->next(GEN_OPCODE_SEND);
-     insn->header.predicate_control = 0; /* XXX */
      this->setHeader(insn);
      this->setDst(insn, dest);
      this->setSrc0(insn, msg);
@@ -866,7 +865,6 @@ namespace gbe
      GenInstruction *insn = this->next(GEN_OPCODE_SEND);
      uint32_t msg_type = GEN_TYPED_WRITE;
      uint32_t msg_length = header_present ? 9 : 8;
-     insn->header.predicate_control = 0; /* XXX */
      this->setHeader(insn);
      this->setDst(insn, GenRegister::retype(GenRegister::null(), GEN_TYPE_UD));
      this->setSrc0(insn, msg);
