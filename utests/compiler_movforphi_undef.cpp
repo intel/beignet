@@ -47,8 +47,8 @@ static void compiler_movforphi_undef(void)
   for (uint32_t j = 0; j < 1; ++j)
     for (uint32_t i = 0; i < 3; i++)
     {
-      if (i < w - 1)
-       OCL_ASSERT(((uint32_t*)buf_data[0])[j * w + i + 1] == ((uint32_t*)buf_data[1])[j * w + i]);
+      if (i == 0)
+        OCL_ASSERT(((uint32_t*)buf_data[0])[j * w + i + 1] == ((uint32_t*)buf_data[1])[j * w + i]);
     }
   OCL_UNMAP_BUFFER(0);
   OCL_UNMAP_BUFFER(1);
