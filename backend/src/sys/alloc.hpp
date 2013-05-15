@@ -27,6 +27,7 @@
 #include "sys/platform.hpp"
 #include "sys/assert.hpp"
 #include <algorithm>
+#include <limits>
 
 namespace gbe
 {
