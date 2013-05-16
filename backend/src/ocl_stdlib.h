@@ -1107,6 +1107,13 @@ OVERLOADABLE void __gen_ocl_write_imagef(uint surface_id, float u, float v, floa
     return __gen_ocl_read_image ##suffix(surface_id, sampler, coord.s0, coord.s1);\
   }
 
+#define DECL_READ_IMAGE_NOSAMPLER(type, suffix, coord_type) \
+  INLINE_OVERLOADABLE type read_image ##suffix(image2d_t cl_image, coord_type coord) \
+  {\
+    GET_IMAGE(cl_image, surface_id);\
+    return __gen_ocl_read_image ##suffix(surface_id, CLK_NORMALIZED_COORDS_FALSE|CLK_ADDRESS_NONE|CLK_FILTER_NEAREST, coord.s0, coord.s1);\
+  }
+
 #define DECL_WRITE_IMAGE(type, suffix, coord_type) \
   INLINE_OVERLOADABLE void write_image ##suffix(image2d_t cl_image, coord_type coord, type color)\
   {\
@@ -1117,6 +1124,7 @@ OVERLOADABLE void __gen_ocl_write_imagef(uint surface_id, float u, float v, floa
 #define DECL_IMAGE(type, suffix)        \
   DECL_READ_IMAGE(type, suffix, int2)   \
   DECL_READ_IMAGE(type, suffix, float2) \
+  DECL_READ_IMAGE_NOSAMPLER(type, suffix, int2) \
   DECL_WRITE_IMAGE(type, suffix, int2)   \
   DECL_WRITE_IMAGE(type, suffix, float2)
 
@@ -1126,6 +1134,7 @@ DECL_IMAGE(float4, f)
 
 #undef DECL_IMAGE
 #undef DECL_READ_IMAGE
+#undef DECL_READ_IMAGE_NOSAMPLER
 #undef DECL_WRITE_IMAGE
 
 #define DECL_READ_IMAGE(type, suffix, coord_type) \
@@ -1133,6 +1142,13 @@ DECL_IMAGE(float4, f)
   {\
     GET_IMAGE(cl_image, surface_id);\
     return __gen_ocl_read_image ## suffix(surface_id, (uint)sampler, coord.s0, coord.s1, coord.s2);\
+  }
+
+#define DECL_READ_IMAGE_NOSAMPLER(type, suffix, coord_type) \
+  INLINE_OVERLOADABLE type read_image ## suffix(image3d_t cl_image, coord_type coord) \
+  {\
+    GET_IMAGE(cl_image, surface_id);\
+    return __gen_ocl_read_image ## suffix(surface_id, CLK_NORMALIZED_COORDS_FALSE|CLK_ADDRESS_NONE|CLK_FILTER_NEAREST, coord.s0, coord.s1, coord.s2);\
   }
 
 #define DECL_WRITE_IMAGE(type, suffix, coord_type) \
@@ -1145,6 +1161,7 @@ DECL_IMAGE(float4, f)
 #define DECL_IMAGE(type, suffix)        \
   DECL_READ_IMAGE(type, suffix, int4)   \
   DECL_READ_IMAGE(type, suffix, float4) \
+  DECL_READ_IMAGE_NOSAMPLER(type, suffix, int4) \
   DECL_WRITE_IMAGE(type, suffix, int4)   \
   DECL_WRITE_IMAGE(type, suffix, float4)
 
@@ -1154,6 +1171,7 @@ DECL_IMAGE(float4, f)
 
 #undef DECL_IMAGE
 #undef DECL_READ_IMAGE
+#undef DECL_READ_IMAGE_NOSAMPLER
 #undef DECL_WRITE_IMAGE
 
 #undef GET_IMAGE
