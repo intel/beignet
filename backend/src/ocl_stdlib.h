@@ -1096,6 +1096,9 @@ OVERLOADABLE void __gen_ocl_write_imageui(uint surface_id, int u, int v, int w, 
 OVERLOADABLE void __gen_ocl_write_imageui(uint surface_id, float u, float v, float w, uint4 color);
 OVERLOADABLE void __gen_ocl_write_imagef(uint surface_id, int u, int v, int w, float4 color);
 OVERLOADABLE void __gen_ocl_write_imagef(uint surface_id, float u, float v, float w, float4 color);
+int __gen_ocl_get_image_width(uint surface_id);
+int __gen_ocl_get_image_height(uint surface_id);
+//OVERLOADABLE int __gen_ocl_get_image_depth(image3d_t image);
 
 #define GET_IMAGE(cl_image, surface_id) \
     uint surface_id = (uint)cl_image
@@ -1136,6 +1139,53 @@ DECL_IMAGE(float4, f)
 #undef DECL_READ_IMAGE
 #undef DECL_READ_IMAGE_NOSAMPLER
 #undef DECL_WRITE_IMAGE
+
+#define DECL_IMAGE_INFO(image_type)    \
+  INLINE_OVERLOADABLE  int get_image_width(image_type image) \
+  { \
+    GET_IMAGE(image, surface_id);\
+    return __gen_ocl_get_image_width(surface_id);\
+  } \
+  INLINE_OVERLOADABLE  int get_image_height(image_type image)\
+  { \
+    GET_IMAGE(image, surface_id);\
+    return __gen_ocl_get_image_height(surface_id); \
+  }
+#if 0
+  INLINE_OVERLOADABLE  int get_image_channel_data_type(image_type image)\
+  { NOT_IMPLEMENTED; }\
+  INLINE_OVERLOADABLE  int get_image_channel_order(image_type image)\
+  { NOT_IMPLEMENTED; }
+#endif
+
+
+DECL_IMAGE_INFO(image2d_t)
+DECL_IMAGE_INFO(image3d_t)
+#if 0
+/* The following functions are not implemented yet. */
+DECL_IMAGE_INFO(image1d_t)
+DECL_IMAGE_INFO(image1d_buffer_t)
+DECL_IMAGE_INFO(image1d_array_t)
+DECL_IMAGE_INFO(image2d_array_t)
+
+INLINE_OVERLOADABLE  int get_image_depth(image3d_t image)
+  { return __gen_ocl_get_image_depth(image); }
+
+INLINE_OVERLOADABLE  int2 get_image_dim(image2d_t image)
+  { return __gen_ocl_get_image_dim(image); }
+
+INLINE_OVERLOADABLE  int2 get_image_dim(image2d_array_t image)
+  { return __gen_ocl_get_image_dim(image); }
+
+INLINE_OVERLOADABLE  int4 get_image_dim(image2d_array_t image)
+  { return __gen_ocl_get_image_dim(image); }
+
+INLINE_OVERLOADABLE  size_t get_image_array_size(image2d_array_t image)
+  { return __gen_ocl_get_image_array_size(image); }
+
+INLINE_OVERLOADABLE  size_t get_image_array_size(image1d_array_t image)
+  { return __gen_ocl_get_image_array_size(image); }
+#endif
 
 #define DECL_READ_IMAGE(type, suffix, coord_type) \
   INLINE_OVERLOADABLE type read_image ## suffix(image3d_t cl_image, sampler_t sampler, coord_type coord) \
