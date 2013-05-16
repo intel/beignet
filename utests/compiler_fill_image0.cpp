@@ -14,7 +14,6 @@ static void compiler_fill_image0(void)
   desc.image_height = h;
   desc.image_row_pitch = 0;
 
-
   // Setup kernel and images
   OCL_CREATE_KERNEL("test_fill_image0");
 
@@ -29,11 +28,11 @@ static void compiler_fill_image0(void)
   OCL_NDRANGE(2);
 
   // Check result
-  OCL_MAP_BUFFER(0);
+  OCL_MAP_BUFFER_GTT(0);
   for (uint32_t j = 0; j < h; ++j)
     for (uint32_t i = 0; i < w; i++)
-      OCL_ASSERT(((uint32_t*)buf_data[0])[j * w + i] == 0x78563412);
-  OCL_UNMAP_BUFFER(0);
+      OCL_ASSERT(((uint32_t*)buf_data[0])[j * w + i] == (i << 16 | j));
+  OCL_UNMAP_BUFFER_GTT(0);
 }
 
 MAKE_UTEST_FROM_FUNCTION(compiler_fill_image0);

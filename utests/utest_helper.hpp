@@ -111,6 +111,17 @@ extern EGLSurface  eglSurface;
     } \
   } while (0)
 
+#define OCL_MAP_BUFFER_GTT(ID) \
+    OCL_CALL2(clMapBufferGTTIntel, buf_data[ID], buf[ID])
+
+#define OCL_UNMAP_BUFFER_GTT(ID) \
+  do { \
+    if (buf[ID] != NULL) { \
+      OCL_CALL (clUnmapBufferGTTIntel, buf[ID]); \
+      buf_data[ID] = NULL; \
+    } \
+  } while (0)
+
 #define OCL_NDRANGE(DIM_N) \
     OCL_CALL (clEnqueueNDRangeKernel, queue, kernel, DIM_N, NULL, globals, locals, 0, NULL, NULL)
 
