@@ -87,6 +87,31 @@ clGetDeviceInfo(cl_device_id   device,
                             param_value_size_ret);
 }
 
+cl_int
+clCreateSubDevices(cl_device_id                         in_device,
+                   const cl_device_partition_property * properties,
+                   cl_uint                              num_devices,
+                   cl_device_id *                       out_devices,
+                   cl_uint *                            num_devices_ret)
+{
+  NOT_IMPLEMENTED;
+  return 0;
+}
+
+cl_int
+clRetainDevice(cl_device_id device)
+{
+  // XXX stub for C++ Bindings
+  return CL_SUCCESS;
+}
+
+cl_int
+clReleaseDevice(cl_device_id device)
+{
+  // XXX stub for C++ Bindings
+  return CL_SUCCESS;
+}
+
 cl_context
 clCreateContext(const cl_context_properties *  properties,
                 cl_uint                        num_devices,
