@@ -393,8 +393,15 @@ PURE CONST float __gen_ocl_rndz(float x);
 PURE CONST float __gen_ocl_rnde(float x);
 PURE CONST float __gen_ocl_rndu(float x);
 PURE CONST float __gen_ocl_rndd(float x);
+INLINE OVERLOADABLE float hypot(float x, float y) { return __gen_ocl_sqrt(x*x + y*y); }
 INLINE OVERLOADABLE float native_cos(float x) { return __gen_ocl_cos(x); }
+INLINE OVERLOADABLE float __gen_ocl_internal_cospi(float x) {
+  return __gen_ocl_cos(x * M_PI_F);
+}
 INLINE OVERLOADABLE float native_sin(float x) { return __gen_ocl_sin(x); }
+INLINE OVERLOADABLE float __gen_ocl_internal_sinpi(float x) {
+  return __gen_ocl_sin(x * M_PI_F);
+}
 INLINE OVERLOADABLE float native_sqrt(float x) { return __gen_ocl_sqrt(x); }
 INLINE OVERLOADABLE float native_rsqrt(float x) { return __gen_ocl_rsqrt(x); }
 INLINE OVERLOADABLE float native_log2(float x) { return __gen_ocl_log(x); }
@@ -404,14 +411,150 @@ INLINE OVERLOADABLE float native_log(float x) {
 INLINE OVERLOADABLE float native_log10(float x) {
   return native_log2(x) * 0.3010299956f;
 }
+INLINE OVERLOADABLE float log1p(float x) { return native_log(x + 1); }
+INLINE OVERLOADABLE float logb(float x) { return __gen_ocl_rndd(native_log2(x)); }
+INLINE OVERLOADABLE int ilogb(float x) { return __gen_ocl_rndd(native_log2(x)); }
+INLINE OVERLOADABLE int2 ilogb(float2 x) {
+  return (int2)(ilogb(x.s0), ilogb(x.s1));
+}
+INLINE OVERLOADABLE int4 ilogb(float4 x) {
+  return (int4)(ilogb(x.s01), ilogb(x.s23));
+}
+INLINE OVERLOADABLE int8 ilogb(float8 x) {
+  return (int8)(ilogb(x.s0123), ilogb(x.s4567));
+}
+INLINE OVERLOADABLE int16 ilogb(float16 x) {
+  return (int16)(ilogb(x.s01234567), ilogb(x.s89abcdef));
+}
+INLINE OVERLOADABLE float nan(uint code) {
+  return NAN;
+}
+INLINE OVERLOADABLE float2 nan(uint2 code) {
+  return (float2)(nan(code.s0), nan(code.s1));
+}
+INLINE OVERLOADABLE float4 nan(uint4 code) {
+  return (float4)(nan(code.s01), nan(code.s23));
+}
+INLINE OVERLOADABLE float8 nan(uint8 code) {
+  return (float8)(nan(code.s0123), nan(code.s4567));
+}
+INLINE OVERLOADABLE float16 nan(uint16 code) {
+  return (float16)(nan(code.s01234567), nan(code.s89abcdef));
+}
 INLINE OVERLOADABLE float native_powr(float x, float y) { return __gen_ocl_pow(x,y); }
 INLINE OVERLOADABLE float native_recip(float x) { return __gen_ocl_rcp(x); }
 INLINE OVERLOADABLE float native_tan(float x) {
   return native_sin(x) / native_cos(x);
 }
-#define E 2.71828182845904523536f
-INLINE OVERLOADABLE float native_exp(float x) { return native_powr(E, x); }
-#undef E
+INLINE OVERLOADABLE float __gen_ocl_internal_tanpi(float x) {
+  return native_tan(x * M_PI_F);
+}
+INLINE OVERLOADABLE float native_exp(float x) { return __gen_ocl_pow(M_E_F, x); }
+INLINE OVERLOADABLE float native_exp2(float x) { return __gen_ocl_pow(2, x); }
+INLINE OVERLOADABLE float native_exp10(float x) { return __gen_ocl_pow(10, x); }
+INLINE OVERLOADABLE float __gen_ocl_internal_expm1(float x) { return __gen_ocl_pow(M_E_F, x) - 1; }
+INLINE OVERLOADABLE float __gen_ocl_internal_cbrt(float x) {
+  return __gen_ocl_pow(x, 0.3333333333f);
+}
+INLINE OVERLOADABLE float __gen_ocl_internal_sincos(float x, float *cosval) {
+  *cosval = native_cos(x);
+  return native_sin(x);
+}
+INLINE OVERLOADABLE float2 __gen_ocl_internal_sincos(float2 x, float2 *cosval) {
+  return (float2)(__gen_ocl_internal_sincos(x.s0, (float *)cosval),
+                  __gen_ocl_internal_sincos(x.s1, 1 + (float *)cosval));
+}
+INLINE OVERLOADABLE float4 __gen_ocl_internal_sincos(float4 x, float4 *cosval) {
+  return (float4)(__gen_ocl_internal_sincos(x.s0, (float *)cosval),
+                  __gen_ocl_internal_sincos(x.s1, 1 + (float *)cosval),
+                  __gen_ocl_internal_sincos(x.s2, 2 + (float *)cosval),
+                  __gen_ocl_internal_sincos(x.s3, 3 + (float *)cosval));
+}
+INLINE OVERLOADABLE float8 __gen_ocl_internal_sincos(float8 x, float8 *cosval) {
+  return (float8)(__gen_ocl_internal_sincos(x.s0, (float *)cosval),
+                  __gen_ocl_internal_sincos(x.s1, 1 + (float *)cosval),
+                  __gen_ocl_internal_sincos(x.s2, 2 + (float *)cosval),
+                  __gen_ocl_internal_sincos(x.s3, 3 + (float *)cosval),
+                  __gen_ocl_internal_sincos(x.s4, 4 + (float *)cosval),
+                  __gen_ocl_internal_sincos(x.s5, 5 + (float *)cosval),
+                  __gen_ocl_internal_sincos(x.s6, 6 + (float *)cosval),
+                  __gen_ocl_internal_sincos(x.s7, 7 + (float *)cosval));
+}
+INLINE OVERLOADABLE float16 __gen_ocl_internal_sincos(float16 x, float16 *cosval) {
+  return (float16)(__gen_ocl_internal_sincos(x.s0, (float *)cosval),
+                   __gen_ocl_internal_sincos(x.s1, 1 + (float *)cosval),
+                   __gen_ocl_internal_sincos(x.s2, 2 + (float *)cosval),
+                   __gen_ocl_internal_sincos(x.s3, 3 + (float *)cosval),
+                   __gen_ocl_internal_sincos(x.s4, 4 + (float *)cosval),
+                   __gen_ocl_internal_sincos(x.s5, 5 + (float *)cosval),
+                   __gen_ocl_internal_sincos(x.s6, 6 + (float *)cosval),
+                   __gen_ocl_internal_sincos(x.s7, 7 + (float *)cosval),
+                   __gen_ocl_internal_sincos(x.s8, 8 + (float *)cosval),
+                   __gen_ocl_internal_sincos(x.s9, 9 + (float *)cosval),
+                   __gen_ocl_internal_sincos(x.sa, 10 + (float *)cosval),
+                   __gen_ocl_internal_sincos(x.sb, 11 + (float *)cosval),
+                   __gen_ocl_internal_sincos(x.sc, 12 + (float *)cosval),
+                   __gen_ocl_internal_sincos(x.sd, 13 + (float *)cosval),
+                   __gen_ocl_internal_sincos(x.se, 14 + (float *)cosval),
+                   __gen_ocl_internal_sincos(x.sf, 15 + (float *)cosval));
+}
+INLINE OVERLOADABLE float __gen_ocl_internal_sinh(float x) {
+  return (1 - native_exp(-2 * x)) / (2 * native_exp(-x));
+}
+INLINE OVERLOADABLE float __gen_ocl_internal_cosh(float x) {
+  return (1 + native_exp(-2 * x)) / (2 * native_exp(-x));
+}
+INLINE OVERLOADABLE float __gen_ocl_internal_tanh(float x) {
+  float y = native_exp(-2 * x);
+  return (1 - y) / (1 + y);
+}
+INLINE OVERLOADABLE float __gen_ocl_internal_asin(float x) {
+  return x + __gen_ocl_pow(x, 3) / 6 + __gen_ocl_pow(x, 5) * 3 / 40 + __gen_ocl_pow(x, 7) * 5 / 112;
+}
+INLINE OVERLOADABLE float __gen_ocl_internal_asinpi(float x) {
+  return __gen_ocl_internal_asin(x) / M_PI_F;
+}
+INLINE OVERLOADABLE float __gen_ocl_internal_acos(float x) {
+  return M_PI_2_F - __gen_ocl_internal_asin(x);
+}
+INLINE OVERLOADABLE float __gen_ocl_internal_acospi(float x) {
+  return __gen_ocl_internal_acos(x) / M_PI_F;
+}
+INLINE OVERLOADABLE float __gen_ocl_internal_atan(float x) {
+  float a = 0, c = 1;
+  if (x <= -1) {
+    a = - M_PI_2_F;
+    x = 1 / x;
+    c = -1;
+  }
+  if (x >= 1) {
+    a = M_PI_2_F;
+    x = 1 / x;
+    c = -1;
+  }
+  return a + c * (x - __gen_ocl_pow(x, 3) / 3 + __gen_ocl_pow(x, 5) / 5 - __gen_ocl_pow(x, 7) / 7 + __gen_ocl_pow(x, 9) / 9 - __gen_ocl_pow(x, 11) / 11);
+}
+INLINE OVERLOADABLE float __gen_ocl_internal_atanpi(float x) {
+  return __gen_ocl_internal_atan(x) / M_PI_F;
+}
+INLINE OVERLOADABLE float __gen_ocl_internal_asinh(float x) {
+  return native_log(x + native_sqrt(x * x + 1));
+}
+INLINE OVERLOADABLE float __gen_ocl_internal_acosh(float x) {
+  return native_log(x + native_sqrt(x + 1) * native_sqrt(x - 1));
+}
+INLINE OVERLOADABLE float __gen_ocl_internal_atanh(float x) {
+  return 0.5f * native_sqrt((1 + x) / (1 - x));
+}
+INLINE OVERLOADABLE float __gen_ocl_internal_copysign(float x, float y) {
+  return x * y < 0 ? -x : x;
+}
+INLINE OVERLOADABLE float __gen_ocl_internal_erf(float x) {
+  return M_2_SQRTPI_F * (x - __gen_ocl_pow(x, 3) / 3 + __gen_ocl_pow(x, 5) / 10 - __gen_ocl_pow(x, 7) / 42 + __gen_ocl_pow(x, 9) / 216);
+}
+INLINE OVERLOADABLE float __gen_ocl_internal_erfc(float x) {
+  return 1 - __gen_ocl_internal_erf(x);
+}
 
 // XXX work-around PTX profile
 #define sqrt native_sqrt
@@ -427,11 +570,36 @@ INLINE OVERLOADABLE float __gen_ocl_internal_log10(float x) { return native_log1
 INLINE OVERLOADABLE float __gen_ocl_internal_exp(float x)   { return native_exp(x); }
 INLINE OVERLOADABLE float powr(float x, float y) { return __gen_ocl_pow(x,y); }
 INLINE OVERLOADABLE float fmod(float x, float y) { return x-y*__gen_ocl_rndz(x/y); }
-
+INLINE OVERLOADABLE float remainder(float x, float y) { return x-y*__gen_ocl_rnde(x/y); }
+INLINE OVERLOADABLE float __gen_ocl_internal_rint(float x) {
+  return 2 * __gen_ocl_internal_round(x / 2);
+}
 // TODO use llvm intrinsics definitions
 #define cos native_cos
+#define cospi __gen_ocl_internal_cospi
+#define cosh __gen_ocl_internal_cosh
+#define acos __gen_ocl_internal_acos
+#define acospi __gen_ocl_internal_acospi
+#define acosh __gen_ocl_internal_acosh
 #define sin native_sin
+#define sinpi __gen_ocl_internal_sinpi
+#define sinh __gen_ocl_internal_sinh
+#define sincos __gen_ocl_internal_sincos
+#define asin __gen_ocl_internal_asin
+#define asinpi __gen_ocl_internal_asinpi
+#define asinh __gen_ocl_internal_asinh
+#define tan native_tan
+#define tanpi __gen_ocl_internal_tanpi
+#define tanh __gen_ocl_internal_tanh
+#define atan __gen_ocl_internal_atan
+#define atanpi __gen_ocl_internal_atanpi
+#define atanh __gen_ocl_internal_atanh
 #define pow powr
+#define cbrt __gen_ocl_internal_cbrt
+#define rint __gen_ocl_internal_rint
+#define copysign __gen_ocl_internal_copysign
+#define erf __gen_ocl_internal_erf
+#define erfc __gen_ocl_internal_erfc
 
 INLINE OVERLOADABLE float mad(float a, float b, float c) {
   return a*b+c;
@@ -501,7 +669,72 @@ DECL_MIN_MAX(unsigned char)
 
 INLINE OVERLOADABLE float __gen_ocl_internal_fmax(float a, float b) { return max(a,b); }
 INLINE OVERLOADABLE float __gen_ocl_internal_fmin(float a, float b) { return min(a,b); }
+INLINE OVERLOADABLE float __gen_ocl_internal_maxmag(float x, float y) {
+  float a = __gen_ocl_fabs(x), b = __gen_ocl_fabs(y);
+  return a > b ? x : b > a ? y : max(x, y);
+}
+INLINE OVERLOADABLE float __gen_ocl_internal_minmag(float x, float y) {
+  float a = __gen_ocl_fabs(x), b = __gen_ocl_fabs(y);
+  return a < b ? x : b < a ? y : min(x, y);
+}
 INLINE OVERLOADABLE float mix(float x, float y, float a) { return x + (y-x)*a;}
+INLINE OVERLOADABLE float __gen_ocl_internal_fdim(float x, float y) {
+  return __gen_ocl_internal_fmax(x, y) - y;
+}
+INLINE OVERLOADABLE float fract(float x, float *p) {
+  *p = __gen_ocl_internal_floor(x);
+  return __gen_ocl_internal_fmin(x - *p, 0x1.FFFFFep-1F);
+}
+INLINE OVERLOADABLE float2 fract(float2 x, float2 *p) {
+  return (float2)(fract(x.s0, (float *)p),
+                  fract(x.s1, 1 + (float *)p));
+}
+INLINE OVERLOADABLE float4 fract(float4 x, float4 *p) {
+  return (float4)(fract(x.s0, (float *)p),
+                  fract(x.s1, 1 + (float *)p),
+                  fract(x.s2, 2 + (float *)p),
+                  fract(x.s3, 3 + (float *)p));
+}
+INLINE OVERLOADABLE float8 fract(float8 x, float8 *p) {
+  return (float8)(fract(x.s0, (float *)p),
+                  fract(x.s1, 1 + (float *)p),
+                  fract(x.s2, 2 + (float *)p),
+                  fract(x.s3, 3 + (float *)p),
+                  fract(x.s4, 4 + (float *)p),
+                  fract(x.s5, 5 + (float *)p),
+                  fract(x.s6, 6 + (float *)p),
+                  fract(x.s7, 7 + (float *)p));
+}
+INLINE OVERLOADABLE float16 fract(float16 x, float16 *p) {
+  return (float16)(fract(x.s0, (float *)p),
+                   fract(x.s1, 1 + (float *)p),
+                   fract(x.s2, 2 + (float *)p),
+                   fract(x.s3, 3 + (float *)p),
+                   fract(x.s4, 4 + (float *)p),
+                   fract(x.s5, 5 + (float *)p),
+                   fract(x.s6, 6 + (float *)p),
+                   fract(x.s7, 7 + (float *)p),
+                   fract(x.s8, 8 + (float *)p),
+                   fract(x.s9, 9 + (float *)p),
+                   fract(x.sa, 10 + (float *)p),
+                   fract(x.sb, 11 + (float *)p),
+                   fract(x.sc, 12 + (float *)p),
+                   fract(x.sd, 13 + (float *)p),
+                   fract(x.se, 14 + (float *)p),
+                   fract(x.sf, 15 + (float *)p));
+}
+INLINE OVERLOADABLE float native_divide(float x, float y) { return x/y; }
+INLINE OVERLOADABLE float ldexp(float x, int n) {
+  return __gen_ocl_pow(2, n) * x;
+}
+INLINE OVERLOADABLE float pown(float x, int n) {
+  if (x == 0 && n == 0)
+    return 1;
+  return powr(x, n);
+}
+INLINE OVERLOADABLE float rootn(float x, int n) {
+  return powr(x, 1.f / n);
+}
 
 /////////////////////////////////////////////////////////////////////////////
 // Geometric functions (see 6.11.5 of OCL 1.1 spec)
@@ -640,12 +873,33 @@ DECL_UNTYPED_RW_ALL(float)
     return dst;\
   }
 DECL_VECTOR_1OP(native_cos, float);
+DECL_VECTOR_1OP(__gen_ocl_internal_cospi, float);
+DECL_VECTOR_1OP(__gen_ocl_internal_cosh, float);
+DECL_VECTOR_1OP(__gen_ocl_internal_acos, float);
+DECL_VECTOR_1OP(__gen_ocl_internal_acospi, float);
+DECL_VECTOR_1OP(__gen_ocl_internal_acosh, float);
 DECL_VECTOR_1OP(native_sin, float);
+DECL_VECTOR_1OP(__gen_ocl_internal_sinpi, float);
+DECL_VECTOR_1OP(__gen_ocl_internal_sinh, float);
+DECL_VECTOR_1OP(__gen_ocl_internal_asin, float);
+DECL_VECTOR_1OP(__gen_ocl_internal_asinpi, float);
+DECL_VECTOR_1OP(__gen_ocl_internal_asinh, float);
 DECL_VECTOR_1OP(native_tan, float);
+DECL_VECTOR_1OP(__gen_ocl_internal_tanpi, float);
+DECL_VECTOR_1OP(__gen_ocl_internal_tanh, float);
+DECL_VECTOR_1OP(__gen_ocl_internal_atan, float);
+DECL_VECTOR_1OP(__gen_ocl_internal_atanpi, float);
+DECL_VECTOR_1OP(__gen_ocl_internal_atanh, float);
 DECL_VECTOR_1OP(native_sqrt, float);
 DECL_VECTOR_1OP(native_rsqrt, float);
 DECL_VECTOR_1OP(native_log2, float);
+DECL_VECTOR_1OP(log1p, float);
+DECL_VECTOR_1OP(logb, float);
 DECL_VECTOR_1OP(native_recip, float);
+DECL_VECTOR_1OP(native_exp2, float);
+DECL_VECTOR_1OP(native_exp10, float);
+DECL_VECTOR_1OP(__gen_ocl_internal_expm1, float);
+DECL_VECTOR_1OP(__gen_ocl_internal_cbrt, float);
 DECL_VECTOR_1OP(__gen_ocl_internal_fabs, float);
 DECL_VECTOR_1OP(__gen_ocl_internal_trunc, float);
 DECL_VECTOR_1OP(__gen_ocl_internal_round, float);
@@ -654,6 +908,9 @@ DECL_VECTOR_1OP(__gen_ocl_internal_ceil, float);
 DECL_VECTOR_1OP(__gen_ocl_internal_log, float);
 DECL_VECTOR_1OP(__gen_ocl_internal_log2, float);
 DECL_VECTOR_1OP(__gen_ocl_internal_log10, float);
+DECL_VECTOR_1OP(__gen_ocl_internal_rint, float);
+DECL_VECTOR_1OP(__gen_ocl_internal_erf, float);
+DECL_VECTOR_1OP(__gen_ocl_internal_erfc, float);
 #undef DECL_VECTOR_1OP
 /////////////////////////////////////////////////////////////////////////////
 // Arithmetic functions
@@ -681,12 +938,46 @@ DECL_VECTOR_1OP(__gen_ocl_internal_log10, float);
     dst.s89abcdef = NAME(v0.s89abcdef, v1.s89abcdef);\
     return dst;\
   }
+DECL_VECTOR_2OP(hypot, float);
 DECL_VECTOR_2OP(min, float);
 DECL_VECTOR_2OP(max, float);
 DECL_VECTOR_2OP(__gen_ocl_internal_fmin, float);
 DECL_VECTOR_2OP(__gen_ocl_internal_fmax, float);
+DECL_VECTOR_2OP(__gen_ocl_internal_fdim, float);
 DECL_VECTOR_2OP(fmod, float);
+DECL_VECTOR_2OP(remainder, float);
 DECL_VECTOR_2OP(powr, float);
+DECL_VECTOR_2OP(native_divide, float);
+DECL_VECTOR_2OP(copysign, float);
+DECL_VECTOR_2OP(__gen_ocl_internal_maxmag, float);
+DECL_VECTOR_2OP(__gen_ocl_internal_minmag, float);
+#undef DECL_VECTOR_2OP
+
+#define DECL_VECTOR_2OP(NAME, TYPE, TYPE2) \
+  INLINE OVERLOADABLE TYPE##2 NAME(TYPE##2 v0, TYPE2##2 v1) { \
+    return (TYPE##2)(NAME(v0.x, v1.x), NAME(v1.y, v1.y)); \
+  }\
+  INLINE OVERLOADABLE TYPE##3 NAME(TYPE##3 v0, TYPE2##3 v1) { \
+    return (TYPE##3)(NAME(v0.x, v1.x), NAME(v0.y, v1.y), NAME(v0.z, v1.z)); \
+  }\
+  INLINE OVERLOADABLE TYPE##4 NAME(TYPE##4 v0, TYPE2##4 v1) { \
+    return (TYPE##4)(NAME(v0.x, v1.x), NAME(v0.y, v1.y), NAME(v0.z, v1.z), NAME(v0.w, v1.w)); \
+  }\
+  INLINE OVERLOADABLE TYPE##8 NAME(TYPE##8 v0, TYPE2##8 v1) { \
+    TYPE##8 dst;\
+    dst.s0123 = NAME(v0.s0123, v1.s0123);\
+    dst.s4567 = NAME(v0.s4567, v1.s4567);\
+    return dst;\
+  }\
+  INLINE OVERLOADABLE TYPE##16 NAME(TYPE##16 v0, TYPE2##16 v1) { \
+    TYPE##16 dst;\
+    dst.s01234567 = NAME(v0.s01234567, v1.s01234567);\
+    dst.s89abcdef = NAME(v0.s89abcdef, v1.s89abcdef);\
+    return dst;\
+  }
+DECL_VECTOR_2OP(ldexp, float, int);
+DECL_VECTOR_2OP(pown, float, int);
+DECL_VECTOR_2OP(rootn, float, int);
 #undef DECL_VECTOR_2OP
 
 #define DECL_VECTOR_3OP(NAME, TYPE) \
@@ -732,8 +1023,15 @@ INLINE OVERLOADABLE float16 mix(float16 x, float16 y, float a) { return mix(x,y,
 #define log2 __gen_ocl_internal_log2
 #define log10 __gen_ocl_internal_log10
 #define exp __gen_ocl_internal_exp
+#define exp2 native_exp2
+#define exp10 native_exp10
+#define expm1 __gen_ocl_internal_expm1
 #define fmin __gen_ocl_internal_fmin
 #define fmax __gen_ocl_internal_fmax
+#define fma mad
+#define fdim __gen_ocl_internal_fdim
+#define maxmag __gen_ocl_internal_maxmag
+#define minmag __gen_ocl_internal_minmag
 
 /////////////////////////////////////////////////////////////////////////////
 // Synchronization functions
