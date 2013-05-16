@@ -45,12 +45,12 @@
  *    Zou Nan hai <nanhai.zou@intel.com>
  *
  */
-#define GL_GLEXT_PROTOTYPES
 #include "intel_driver.h"
 #include "intel_gpgpu.h"
 #include "intel_batchbuffer.h"
 #include "intel_bufmgr.h"
 #include "x11/dricommon.h"
+#include "cl_mem.h"
 
 #include <assert.h>
 #include <unistd.h>
@@ -408,7 +408,6 @@ static void* drm_intel_bo_get_virtual(drm_intel_bo *bo) { return bo->virtual; }
 #include "GL/gl.h"
 #include "EGL/egl.h"
 #include "EGL/eglext.h"
-#include "cl_mem.h"
 static int get_cl_tiling(uint32_t drm_tiling)
 {
   switch(drm_tiling) {
@@ -468,6 +467,38 @@ cl_buffer intel_alloc_buffer_from_eglimage(cl_context ctx,
 }
 #endif
 
+static int32_t get_intel_tiling(cl_int tiling, uint32_t *intel_tiling)
+{
+  switch (tiling) {
+    case CL_NO_TILE:
+      *intel_tiling = I915_TILING_NONE;
+      break;
+    case CL_TILE_X:
+      *intel_tiling = I915_TILING_X;
+      break;
+    case CL_TILE_Y:
+      *intel_tiling = I915_TILING_Y;
+      break;
+    default:
+      assert(0);
+      return -1;
+  }
+  return 0;
+}
+
+static int intel_buffer_set_tiling(cl_buffer bo,
+                                   cl_image_tiling_t tiling, size_t stride)
+{
+  uint32_t intel_tiling, required_tiling;
+  int ret;
+  if (UNLIKELY((get_intel_tiling(tiling, &intel_tiling)) < 0))
+    return -1;
+  required_tiling = intel_tiling;
+  ret = drm_intel_bo_set_tiling((drm_intel_bo*)bo, &intel_tiling, stride);
+  assert(intel_tiling == required_tiling);
+  return ret;
+}
+
 LOCAL void
 intel_setup_callbacks(void)
 {
@@ -477,6 +508,7 @@ intel_setup_callbacks(void)
   cl_driver_get_bufmgr = (cl_driver_get_bufmgr_cb *) intel_driver_get_bufmgr;
   cl_driver_get_device_id = (cl_driver_get_device_id_cb *) intel_get_device_id;
   cl_buffer_alloc = (cl_buffer_alloc_cb *) drm_intel_bo_alloc;
+  cl_buffer_set_tiling = (cl_buffer_set_tiling_cb *) intel_buffer_set_tiling;
 #ifdef HAS_EGL
   cl_buffer_alloc_from_eglimage = (cl_buffer_alloc_from_eglimage_cb *) intel_alloc_buffer_from_eglimage;
 #endif

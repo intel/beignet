@@ -418,6 +418,8 @@ _cl_mem_new_image(cl_context ctx,
   mem->tiling = tiling;
   mem->type = image_type;
 
+  cl_buffer_set_tiling(mem->bo, tiling, aligned_pitch);
+
 exit:
   if (errcode_ret)
     *errcode_ret = err;

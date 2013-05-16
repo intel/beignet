@@ -29,6 +29,7 @@ LOCAL cl_driver_get_device_id_cb *cl_driver_get_device_id = NULL;
 
 /* Buffer */
 LOCAL cl_buffer_alloc_cb *cl_buffer_alloc = NULL;
+LOCAL cl_buffer_set_tiling_cb *cl_buffer_set_tiling = NULL;
 LOCAL cl_buffer_alloc_from_eglimage_cb *cl_buffer_alloc_from_eglimage = NULL;
 LOCAL cl_buffer_reference_cb *cl_buffer_reference = NULL;
 LOCAL cl_buffer_unreference_cb *cl_buffer_unreference = NULL;

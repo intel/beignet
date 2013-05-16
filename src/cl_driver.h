@@ -184,8 +184,12 @@ extern cl_gpgpu_walker_cb *cl_gpgpu_walker;
  * Buffer
  **************************************************************************/
 /* Allocate a buffer */
-typedef cl_buffer (cl_buffer_alloc_cb)(cl_buffer_mgr, const char*, unsigned long, unsigned long);
+typedef cl_buffer (cl_buffer_alloc_cb)(cl_buffer_mgr, const char*, size_t, size_t);
 extern cl_buffer_alloc_cb *cl_buffer_alloc;
+
+/* Set a buffer's tiling mode */
+typedef cl_buffer (cl_buffer_set_tiling_cb)(cl_buffer, int tiling, size_t stride);
+extern cl_buffer_set_tiling_cb *cl_buffer_set_tiling;
 
 #include "cl_context.h"
 typedef struct _cl_context *cl_context;
