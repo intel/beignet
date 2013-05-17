@@ -410,11 +410,13 @@ _cl_mem_new_image(cl_context ctx,
 
   mem->w = w;
   mem->h = h;
+  mem->depth = depth;
   mem->fmt = *fmt;
   mem->intel_fmt = intel_fmt;
   mem->bpp = bpp;
   mem->is_image = 1;
-  mem->pitch = aligned_pitch;
+  mem->row_pitch = aligned_pitch;
+  mem->slice_pitch = image_type == CL_MEM_OBJECT_IMAGE1D || image_type == CL_MEM_OBJECT_IMAGE2D ? 0 : aligned_pitch*aligned_h;
   mem->tiling = tiling;
   mem->type = image_type;
 

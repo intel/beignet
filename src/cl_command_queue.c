@@ -118,7 +118,7 @@ cl_command_queue_bind_image(cl_command_queue queue, cl_kernel k)
     cl_gpgpu_bind_image(queue->gpgpu, k->images[i].idx, k->args[id].mem->bo,
                         k->args[id].mem->intel_fmt, k->args[id].mem->type,
                         k->args[id].mem->w, k->args[id].mem->h,
-                        k->args[id].mem->pitch, k->args[id].mem->tiling);
+                        k->args[id].mem->row_pitch, k->args[id].mem->tiling);
   }
   return CL_SUCCESS;
 }

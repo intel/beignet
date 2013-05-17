@@ -198,11 +198,13 @@ LOCAL cl_mem cl_mem_new_gl_texture(cl_context ctx,
   mem->type = get_mem_type_from_target(texture_target);
   mem->w = w;
   mem->h = h;
+  mem->depth = 1;
   mem->fmt = cl_format;
   mem->intel_fmt = intel_fmt;
   mem->bpp = bpp;
   mem->is_image = 1;
-  mem->pitch = pitch;
+  mem->row_pitch = pitch;
+  mem->slice_pitch = 0;
   mem->tiling = tiling;
   mem->ref_n = 1;
   mem->magic = CL_MAGIC_MEM_HEADER;
