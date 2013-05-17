@@ -75,6 +75,7 @@ set (utests_sources
   compiler_movforphi_undef.cpp
   compiler_volatile.cpp
   compiler_copy_image1.cpp
+  compiler_get_image_size.cpp
   runtime_createcontext.cpp
   utest_assert.cpp
   utest.cpp
