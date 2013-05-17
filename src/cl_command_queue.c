@@ -98,6 +98,15 @@ cl_command_queue_add_ref(cl_command_queue queue)
   atomic_inc(&queue->ref_n);
 }
 
+static void
+set_image_info(char *curbe, struct ImageInfo * image_info, cl_mem image)
+{
+  if (image_info->wSlot >= 0)
+    memcpy(curbe + image_info->wSlot, &image->w, sizeof(image->w));
+  if (image_info->hSlot >= 0)
+    memcpy(curbe + image_info->hSlot, &image->h, sizeof(image->h));
+}
+
 LOCAL cl_int
 cl_command_queue_bind_image(cl_command_queue queue, cl_kernel k)
 {
@@ -105,6 +114,7 @@ cl_command_queue_bind_image(cl_command_queue queue, cl_kernel k)
   for (i = 0; i < k->image_sz; i++) {
     int id = k->images[i].arg_idx;
     assert(gbe_kernel_get_arg_type(k->opaque, id) == GBE_ARG_IMAGE);
+    set_image_info(k->curbe, &k->images[i], k->args[id].mem);
     cl_gpgpu_bind_image(queue->gpgpu, k->images[i].idx, k->args[id].mem->bo,
                         k->args[id].mem->intel_fmt, k->args[id].mem->type,
                         k->args[id].mem->w, k->args[id].mem->h,
