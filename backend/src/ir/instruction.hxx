@@ -70,4 +70,4 @@ DECL_INSN(TYPED_WRITE, TypedWriteInstruction)
 DECL_INSN(SAMPLE, SampleInstruction)
 DECL_INSN(SYNC, SyncInstruction)
 DECL_INSN(LABEL, LabelInstruction)
-
+DECL_INSN(GET_IMAGE_INFO, GetImageInfoInstruction)

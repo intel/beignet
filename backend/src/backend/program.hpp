@@ -55,9 +55,9 @@ namespace gbe {
     INLINE PatchInfo(gbe_curbe_type type, uint32_t subType = 0u, uint32_t offset = 0u) :
       type(uint32_t(type)), subType(subType), offset(offset) {}
     INLINE PatchInfo(void) {}
-    uint32_t type : 8;    //!< Type of the patch (see program.h for the list)
-    uint32_t subType : 8; //!< Optional sub-type of the patch (see program.h)
-    uint32_t offset : 16; //!< Optional offset to encode
+    uint64_t type : 16;    //!< Type of the patch (see program.h for the list)
+    uint64_t subType : 32; //!< Optional sub-type of the patch (see program.h)
+    uint64_t offset : 16; //!< Optional offset to encode
   };
 
   /*! We will sort PatchInfo to make binary search */

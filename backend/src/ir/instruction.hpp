@@ -319,6 +319,41 @@ namespace ir {
     Type getDstType(void) const;
   };
 
+  typedef union {
+    struct {
+     uint16_t index; /*! the allocated image index */
+     uint16_t type;  /*! the information type */
+    };
+    uint32_t data;
+  } ImageInfoKey;
+  /*! Get image information */
+  class GetImageInfoInstruction : public Instruction {
+  public:
+    enum {
+     SURFACE_BTI = 0
+    };
+    enum {
+     WIDTH = 0,
+     HEIGHT = 1,
+    };
+
+    static INLINE uint32_t getDstNum4Type(int infoType) {
+      switch (infoType) {
+        case GetImageInfoInstruction::WIDTH:
+        case GetImageInfoInstruction::HEIGHT:
+          return 1;
+        break;
+        default:
+          GBE_ASSERT(0);
+     }
+     return 0;
+   }
+
+    uint32_t getInfoType() const;
+    /*! Return true if the given instruction is an instance of this class */
+    static bool isClassOf(const Instruction &insn);
+  };
+
   /*! Branch instruction is the unified way to branch (with or without
    *  predicate)
    */
@@ -528,6 +563,8 @@ namespace ir {
   Instruction TYPED_WRITE(Tuple src, Type srcType, Type coordType);
   /*! sample textures */
   Instruction SAMPLE(Tuple dst, Tuple src, Type dstType, Type srcType);
+  /*! get image information , such as width/height/depth/... */
+  Instruction GET_IMAGE_INFO(int infoType, Tuple dst, Register src);
   /*! label labelIndex */
   Instruction LABEL(LabelIndex labelIndex);
 

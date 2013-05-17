@@ -469,6 +469,8 @@ namespace gbe
     void SAMPLE(GenRegister *dst, uint32_t dstNum, GenRegister *src, uint32_t srcNum, GenRegister *msgPayloads, uint32_t msgNum, uint32_t bti, uint32_t sampler);
     /*! Encode typed write instructions */
     void TYPED_WRITE(GenRegister *src, uint32_t srcNum, GenRegister *msgs, uint32_t msgNum, uint32_t bti);
+    /*! Get image information */
+    void GET_IMAGE_INFO(uint32_t type, GenRegister *dst, uint32_t dst_num, uint32_t bti);
     /*! Use custom allocators */
     GBE_CLASS(Opaque);
     friend class SelectionBlock;
@@ -1023,6 +1025,17 @@ namespace gbe
     msgVector->regNum = msgNum;
     msgVector->isSrc = 1;
     msgVector->reg = &insn->src(0);
+  }
+
+  void Selection::Opaque::GET_IMAGE_INFO(uint32_t infoType, GenRegister *dst,
+                                    uint32_t dstNum, uint32_t bti) {
+    SelectionInstruction *insn = this->appendInsn(SEL_OP_GET_IMAGE_INFO, dstNum, 0);
+
+    for(uint32_t i = 0; i < dstNum; ++i)
+      insn->dst(i) = dst[i];
+
+    insn->extra.function = bti;
+    insn->extra.elem = infoType;
   }
 
   Selection::~Selection(void) { GBE_DELETE(this->opaque); }
@@ -2026,6 +2039,25 @@ namespace gbe
     DECL_CTOR(TypedWriteInstruction, 1, 1);
   };
 
+  /*! get image info instruction pattern. */
+  DECL_PATTERN(GetImageInfoInstruction)
+  {
+    INLINE bool emitOne(Selection::Opaque &sel, const ir::GetImageInfoInstruction &insn) const
+    {
+      using namespace ir;
+      const uint32_t infoType = insn.getInfoType();
+      GenRegister dst[4];
+      uint32_t dstNum = ir::GetImageInfoInstruction::getDstNum4Type(infoType);
+      for (uint32_t valueID = 0; valueID < dstNum; ++valueID)
+        dst[valueID] = sel.selReg(insn.getDst(valueID), TYPE_U32);
+      uint32_t bti = sel.ctx.getFunction().getImageSet()->getIdx
+                       (insn.getSrc(0));
+      sel.GET_IMAGE_INFO(infoType, dst, dstNum, bti);
+      return true;
+    }
+    DECL_CTOR(GetImageInfoInstruction, 1, 1);
+  };
+
   /*! Branch instruction pattern */
   DECL_PATTERN(BranchInstruction)
   {
@@ -2179,7 +2211,6 @@ namespace gbe
   SelectionLibrary::SelectionLibrary(void) {
     this->insert<UnaryInstructionPattern>();
     this->insert<BinaryInstructionPattern>();
-    this->insert<SampleInstructionPattern>();
     this->insert<TypedWriteInstructionPattern>();
     this->insert<SyncInstructionPattern>();
     this->insert<LoadImmInstructionPattern>();
@@ -2195,6 +2226,7 @@ namespace gbe
     this->insert<MulAddInstructionPattern>();
     this->insert<SelectModifierInstructionPattern>();
     this->insert<SampleInstructionPattern>();
+    this->insert<GetImageInfoInstructionPattern>();
 
     // Sort all the patterns with the number of instructions they output
     for (uint32_t op = 0; op < ir::OP_INVALID; ++op)

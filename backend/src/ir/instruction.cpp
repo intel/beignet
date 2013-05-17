@@ -470,6 +470,39 @@ namespace ir {
       Register dst[0];               //!< No dest register
     };
 
+    class ALIGNED_INSTRUCTION GetImageInfoInstruction :
+      public BasePolicy,
+      public NSrcPolicy<GetImageInfoInstruction, 1>,
+      public TupleDstPolicy<GetImageInfoInstruction>
+    {
+    public:
+      GetImageInfoInstruction( int type,
+                               Tuple dst,
+                               Register src)
+      {
+        this->opcode = OP_GET_IMAGE_INFO;
+        this->infoType = type;
+        this->dst = dst;
+        this->src[0] = src;
+      }
+
+      INLINE uint32_t getInfoType(void) const { return infoType; }
+      INLINE bool wellFormed(const Function &fn, std::string &why) const;
+      INLINE void out(std::ostream &out, const Function &fn) const {
+        this->outOpcode(out);
+        out << "." << this->getInfoType()
+            << " surface id %" << this->getSrc(fn, 0)
+            << " %" << this->getDst(fn, 0);
+      }
+
+      uint8_t infoType;                 //!< Type of the requested information.
+      Register src[1];                  //!< Surface to get info
+      Tuple dst;                        //!< dest register to put the information.
+      static const uint32_t dstNum = 4; //! The maximum dst number. Not the actual number
+                                        // of destination tuple. We use the infoType to determin
+                                        // the actual num.
+    };
+
     class ALIGNED_INSTRUCTION LoadImmInstruction :
       public BasePolicy,
       public NSrcPolicy<LoadImmInstruction, 0>,
@@ -758,6 +791,8 @@ namespace ir {
     { return true; }
     INLINE bool TypedWriteInstruction::wellFormed(const Function &fn, std::string &why) const
     { return true; }
+    INLINE bool GetImageInfoInstruction::wellFormed(const Function &fn, std::string &why) const
+    { return true; }
 
     // Ensure that types and register family match
     INLINE bool LoadImmInstruction::wellFormed(const Function &fn, std::string &whyNot) const
@@ -990,6 +1025,10 @@ START_INTROSPECTION(TypedWriteInstruction)
 #include "ir/instruction.hxx"
 END_INTROSPECTION(TypedWriteInstruction)
 
+START_INTROSPECTION(GetImageInfoInstruction)
+#include "ir/instruction.hxx"
+END_INTROSPECTION(GetImageInfoInstruction)
+
 START_INTROSPECTION(LoadImmInstruction)
 #include "ir/instruction.hxx"
 END_INTROSPECTION(LoadImmInstruction)
@@ -1175,6 +1214,7 @@ DECL_MEM_FN(SampleInstruction, Type, getSrcType(void), getSrcType())
 DECL_MEM_FN(SampleInstruction, Type, getDstType(void), getDstType())
 DECL_MEM_FN(TypedWriteInstruction, Type, getSrcType(void), getSrcType())
 DECL_MEM_FN(TypedWriteInstruction, Type, getCoordType(void), getCoordType())
+DECL_MEM_FN(GetImageInfoInstruction, uint32_t, getInfoType(void), getInfoType())
 
 #undef DECL_MEM_FN
 
@@ -1314,6 +1354,10 @@ DECL_MEM_FN(TypedWriteInstruction, Type, getCoordType(void), getCoordType())
 
   Instruction TYPED_WRITE(Tuple src, Type srcType, Type coordType) {
     return internal::TypedWriteInstruction(src, srcType, coordType).convert();
+  }
+
+  Instruction GET_IMAGE_INFO(int infoType, Tuple dst, Register src) {
+    return internal::GetImageInfoInstruction(infoType, dst, src).convert();
   }
 
   std::ostream &operator<< (std::ostream &out, const Instruction &insn) {

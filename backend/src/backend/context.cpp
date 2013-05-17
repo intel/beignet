@@ -29,6 +29,8 @@
 #include "ir/profile.hpp"
 #include "ir/liveness.hpp"
 #include "ir/value.hpp"
+#include "ir/image.hpp"
+#include "ir/sampler.hpp"
 #include "sys/cvar.hpp"
 #include <algorithm>
 
@@ -354,6 +356,20 @@ namespace gbe
     GBE_ASSERT(offset >= GEN_REG_SIZE);
     kernel->patches.push_back(PatchInfo(value, subValue, offset - GEN_REG_SIZE));
     kernel->curbeSize = std::max(kernel->curbeSize, offset + size - GEN_REG_SIZE);
+  }
+
+  uint32_t Context::getImageInfoCurbeOffset(ir::ImageInfoKey key, size_t size)
+  {
+    int32_t offset = fn.getImageSet()->getInfoOffset(key);
+    if (offset >= 0)
+      return offset;
+    newCurbeEntry(GBE_CURBE_IMAGE_INFO, key.data, size, 4);
+    std::sort(kernel->patches.begin(), kernel->patches.end());
+
+    offset = kernel->getCurbeOffset(GBE_CURBE_IMAGE_INFO, key.data);
+    GBE_ASSERT(offset >= 0); // XXX do we need to spill it out to bo?
+    fn.getImageSet()->appendInfo(key, offset);
+    return offset;
   }
 
   void Context::buildPatchList(void) {

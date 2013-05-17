@@ -638,6 +638,8 @@ namespace gbe {
           case GEN_OCL_READ_IMAGE13:
           case GEN_OCL_READ_IMAGE14:
           case GEN_OCL_READ_IMAGE15:
+          case GEN_OCL_GET_IMAGE_WIDTH:
+          case GEN_OCL_GET_IMAGE_HEIGHT:
           {
             extractFromeVector(call);
             break;

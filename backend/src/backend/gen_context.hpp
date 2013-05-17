@@ -92,6 +92,7 @@ namespace gbe
     void emitByteScatterInstruction(const SelectionInstruction &insn);
     void emitSampleInstruction(const SelectionInstruction &insn);
     void emitTypedWriteInstruction(const SelectionInstruction &insn);
+    void emitGetImageInfoInstruction(const SelectionInstruction &insn);
 
     /*! Implements base class */
     virtual Kernel *allocateKernel(void);

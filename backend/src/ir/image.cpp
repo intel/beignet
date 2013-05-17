@@ -28,6 +28,36 @@
 namespace gbe {
 namespace ir {
 
+  static uint32_t getInfoOffset4Type(struct ImageInfo *imageInfo, int type)
+  {
+    switch (type) {
+      case GetImageInfoInstruction::WIDTH: return imageInfo->wSlot;
+      case GetImageInfoInstruction::HEIGHT: return imageInfo->hSlot;
+      default:
+        NOT_IMPLEMENTED;
+    }
+    return 0;
+  }
+
+  static uint32_t setInfoOffset4Type(struct ImageInfo *imageInfo, int type, uint32_t offset)
+  {
+    switch (type) {
+      case GetImageInfoInstruction::WIDTH: imageInfo->wSlot = offset; break;
+      case GetImageInfoInstruction::HEIGHT: imageInfo->hSlot = offset; break;
+      default:
+        NOT_IMPLEMENTED;
+    }
+    return 0;
+  }
+
+  void ImageSet::appendInfo(ImageInfoKey key, uint32_t offset)
+  {
+    auto it = indexMap.find(key.index);
+    assert(it != indexMap.end());
+    struct ImageInfo *imageInfo = it->second;
+    setInfoOffset4Type(imageInfo, key.type, offset);
+  }
+
   void ImageSet::append(Register imageReg, Context *ctx)
   {
     ir::FunctionArgument *arg =  ctx->getFunction().getArg(imageReg);
@@ -44,8 +74,17 @@ namespace ir {
     imageInfo->dataTypeSlot = -1;
     imageInfo->channelOrderSlot = -1;
     imageInfo->dimOrderSlot = -1;
-
     regMap.insert(std::make_pair(imageReg, imageInfo));
+    indexMap.insert(std::make_pair(imageInfo->idx, imageInfo));
+  }
+
+  const int32_t ImageSet::getInfoOffset(ImageInfoKey key) const
+  {
+    auto it = indexMap.find(key.index);
+    if (it == indexMap.end())
+      return -1;
+    struct ImageInfo *imageInfo = it->second;
+    return getInfoOffset4Type(imageInfo, key.type);
   }
 
   const uint32_t ImageSet::getIdx(const Register imageReg) const

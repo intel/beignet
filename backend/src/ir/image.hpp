@@ -24,6 +24,7 @@
 #define __GBE_IR_IMAGE_HPP__
 
 #include "ir/register.hpp"
+#include "ir/instruction.hpp" // for ImageInfoKey
 #include "sys/map.hpp"
 
 extern "C" {
@@ -44,10 +45,14 @@ namespace ir {
   public:
     /*! Append an image argument. */
     void append(Register imageReg, Context *ctx);
+    /*! Append an image info slot. */
+    void appendInfo(ImageInfoKey key, uint32_t offset);
     /*! Get the image's index(actual location). */
     const uint32_t getIdx(const Register imageReg) const;
     size_t getDataSize(void) { return regMap.size(); }
     size_t getDataSize(void) const { return regMap.size(); }
+
+    const int32_t getInfoOffset(ImageInfoKey key) const;
     void getData(struct ImageInfo *imageInfos) const;
     void operator = (const ImageSet& other) {
       regMap.insert(other.regMap.begin(), other.regMap.end());
@@ -57,6 +62,7 @@ namespace ir {
     ~ImageSet();
   private:
     map<Register, struct ImageInfo *> regMap;
+    map<uint32_t, struct ImageInfo *> indexMap;
     GBE_CLASS(ImageSet);
   };
 } /* namespace ir */
