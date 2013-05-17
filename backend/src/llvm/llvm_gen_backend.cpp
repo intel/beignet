@@ -1,4 +1,4 @@
-/* 
+/*
  * Copyright © 2012 Intel Corporation
  *
  * This library is free software; you can redistribute it and/or
@@ -60,7 +60,7 @@
  * dependencies on endianness or ABIs. Fortunately, the ptx (and nvptx for LLVM
  * 3.2) profile is pretty well adapted to our needs since NV and Gen GPU are
  * kind of similar, or at least they are similar enough to share the same front
- * end. 
+ * end.
  *
  * Problems
  * ========
@@ -126,10 +126,8 @@
 #include "ir/context.hpp"
 #include "ir/unit.hpp"
 #include "ir/liveness.hpp"
-#include "sys/map.hpp"
 #include "sys/set.hpp"
 #include "sys/cvar.hpp"
-#include <algorithm>
 
 /* Not defined for LLVM 3.0 */
 #if !defined(LLVM_VERSION_MAJOR)
@@ -207,7 +205,7 @@ namespace gbe
   /*! Type to register family translation */
   static ir::RegisterFamily getFamily(const ir::Context &ctx, const Type *type)
   {
-    GBE_ASSERT(isScalarType(type) == true); 
+    GBE_ASSERT(isScalarType(type) == true);
     if (type == Type::getInt1Ty(type->getContext()))
       return ir::FAMILY_BOOL;
     if (type == Type::getInt8Ty(type->getContext()))
@@ -269,6 +267,8 @@ namespace gbe
   class RegisterTranslator
   {
   public:
+    /*! Indices will be zero for scalar values */
+    typedef std::pair<Value*, uint32_t> ValueIndex;
     RegisterTranslator(ir::Context &ctx) : ctx(ctx) {}
 
     /*! Empty the maps */
@@ -288,6 +288,11 @@ namespace gbe
       const ValueIndex value(real, realIndex);
       GBE_ASSERT(valueMap.find(key) == valueMap.end()); // Do not insert twice
       valueMap[key] = value;
+    }
+    /*! After scalarize pass, there are some valueMap in unit,
+     *  use this function to copy from unit valueMap */
+    void initValueMap(const map<ValueIndex, ValueIndex>& vMap) {
+      valueMap.insert(vMap.begin(), vMap.end());
     }
     /*! Mostly used for the preallocated registers (lids, gids) */
     void newScalarProxy(ir::Register reg, Value *value, uint32_t index = 0u) {
@@ -325,10 +330,9 @@ namespace gbe
       };
       return ir::Register();
     }
-    /*! Get the register from the given value at given index possibly iterating
-     *  in the value map to get the final real register
-     */
-    ir::Register getScalar(Value *value, uint32_t index = 0u) {
+
+    /*! iterating in the value map to get the final real register */
+    void getRealValue(Value* &value, uint32_t& index) {
       auto end = valueMap.end();
       for (;;) {
         auto it = valueMap.find(std::make_pair(value, index));
@@ -339,6 +343,14 @@ namespace gbe
           index = it->second.second;
         }
       }
+    }
+
+    /*! Get the register from the given value at given index possibly iterating
+     *  in the value map to get the final real register
+     */
+    ir::Register getScalar(Value *value, uint32_t index = 0u) {
+      getRealValue(value, index);
+
       const auto key = std::make_pair(value, index);
       GBE_ASSERT(scalarMap.find(key) != scalarMap.end());
       return scalarMap[key];
@@ -351,16 +363,8 @@ namespace gbe
     }
     /*! Says if the value exists. Otherwise, it is undefined */
     bool valueExists(Value *value, uint32_t index) {
-      auto end = valueMap.end();
-      for (;;) {
-        auto it = valueMap.find(std::make_pair(value, index));
-        if (it == end)
-          break;
-        else {
-          value = it->second.first;
-          index = it->second.second;
-        }
-      }
+      getRealValue(value, index);
+
       const auto key = std::make_pair(value, index);
       return scalarMap.find(key) != scalarMap.end();
     }
@@ -375,8 +379,6 @@ namespace gbe
       this->insertRegister(reg, key, index);
       return reg;
     }
-    /*! Indices will be zero for scalar values */
-    typedef std::pair<Value*, uint32_t> ValueIndex;
     /*! Map value to ir::Register */
     map<ValueIndex, ir::Register> scalarMap;
     /*! Map values to values when this is only a translation (eq bitcast) */
@@ -384,28 +386,6 @@ namespace gbe
     /*! Actually allocates the registers */
     ir::Context &ctx;
   };
-  /*! All intrinsic Gen functions */
-  enum OCLInstrinsic {
-#define DECL_LLVM_GEN_FUNCTION(ID, NAME) GEN_OCL_##ID,
-#include "llvm_gen_ocl_function.hxx"
-#undef DECL_LLVM_GEN_FUNCTION
-  };
-
-  /*! Build the hash map for OCL functions on Gen */
-  struct OCLIntrinsicMap {
-    /*! Build the intrinsic hash map */
-    OCLIntrinsicMap(void) {
-#define DECL_LLVM_GEN_FUNCTION(ID, NAME) \
-  map.insert(std::make_pair(#NAME, GEN_OCL_##ID));
-#include "llvm_gen_ocl_function.hxx"
-#undef DECL_LLVM_GEN_FUNCTION
-    }
-    /*! Sort intrinsics with their names */
-    hash_map<std::string, OCLInstrinsic> map;
-  };
-
-  /*! Sort the OCL Gen instrinsic functions (built on pre-main) */
-  static const OCLIntrinsicMap instrinsicMap;
 
   /*! Translate LLVM IR code to Gen IR code */
   class GenWriter : public FunctionPass, public InstVisitor<GenWriter>
@@ -423,7 +403,7 @@ namespace gbe
      */
     set<const Value*> conditionSet;
     /*! We visit each function twice. Once to allocate the registers and once to
-     *  emit the Gen IR instructions 
+     *  emit the Gen IR instructions
      */
     enum Pass {
       PASS_EMIT_REGISTERS = 0,
@@ -663,7 +643,7 @@ namespace gbe
     if (dyn_cast<ConstantAggregateZero>(CPV)) {
       return doIt(uint32_t(0)); // XXX Handle type
     } else {
-      if (dyn_cast<ConstantVector>(CPV)) 
+      if (dyn_cast<ConstantVector>(CPV))
         CPV = extractConstantElem(CPV, index);
       GBE_ASSERTM(dyn_cast<ConstantExpr>(CPV) == NULL, "Unsupported constant expression");
 
@@ -756,6 +736,9 @@ namespace gbe
   }
 
   ir::Register GenWriter::getRegister(Value *value, uint32_t elemID) {
+    //the real value may be constant, so get real value before constant check
+    regTranslator.getRealValue(value, elemID);
+
     if (dyn_cast<ConstantExpr>(value)) {
       ConstantExpr *ce = dyn_cast<ConstantExpr>(value);
       if(ce->isCast()) {
@@ -867,6 +850,7 @@ namespace gbe
                 "Returned value for kernel functions is forbidden");
     // Loop over the arguments and output registers for them
     if (!F.arg_empty()) {
+      uint32_t argID = 0;
       Function::arg_iterator I = F.arg_begin(), E = F.arg_end();
 
       // Insert a new register for each function argument
@@ -875,10 +859,33 @@ namespace gbe
       uint32_t argID = 1; // Start at one actually
       for (; I != E; ++I, ++argID) {
 #else
-      for (; I != E; ++I) {
+      for (; I != E; ++I, ++argID) {
 #endif /* LLVM_VERSION_MINOR <= 1 */
         const std::string &argName = I->getName().str();
         Type *type = I->getType();
+
+        //add support for vector argument
+        if(type->isVectorTy()) {
+          VectorType *vectorType = cast<VectorType>(type);
+
+          this->newRegister(I);
+          ir::Register reg = getRegister(I, 0);
+
+          Type *elemType = vectorType->getElementType();
+          const uint32_t elemSize = getTypeByteSize(unit, elemType);
+          const uint32_t elemNum = vectorType->getNumElements();
+          //vector's elemType always scalar type
+          ctx.input(argName, ir::FunctionArgument::VALUE, reg, elemNum*elemSize);
+
+          ir::Function& fn = ctx.getFunction();
+          for(uint32_t i=1; i < elemNum; i++) {
+            ir::PushLocation argLocation(fn, argID, elemSize*i);
+            reg = getRegister(I, i);
+            ctx.appendPushedConstant(reg, argLocation);  //add to push map for reg alloc
+          }
+          continue;
+        }
+
         GBE_ASSERTM(isScalarType(type) == true,
                     "vector type in the function argument is not supported yet");
         const ir::Register reg = regTranslator.newScalar(I);
@@ -915,7 +922,6 @@ namespace gbe
               case ir::IMAGE:
                 ctx.input(argName, ir::FunctionArgument::IMAGE, reg, ptrSize);
                 ctx.getFunction().getImageSet()->append(reg, &ctx);
-              break;
               break;
               default: GBE_ASSERT(addrSpace != ir::MEM_PRIVATE);
             }
@@ -1141,6 +1147,7 @@ namespace gbe
 
     ctx.startFunction(F.getName());
     this->regTranslator.clear();
+    this->regTranslator.initValueMap(unit.getValueMap());
     this->labelMap.clear();
     this->emitFunctionPrototype(F);
 
@@ -1495,141 +1502,15 @@ namespace gbe
     ir::Context &ctx;
   };
 
-  void GenWriter::regAllocateInsertElement(InsertElementInst &I) {
-    Value *modified = I.getOperand(0);
-    Value *toInsert = I.getOperand(1);
-    Value *index = I.getOperand(2);
+  /*! Because there are still fake insert/extract instruction for
+   *  load/store, so keep empty function here */
+  void GenWriter::regAllocateInsertElement(InsertElementInst &I) {}
+  void GenWriter::emitInsertElement(InsertElementInst &I) {}
 
-    // Get the index for the insertion
-    Constant *CPV = dyn_cast<Constant>(index);
-    GBE_ASSERTM(CPV != NULL, "only constant indices when inserting values");
-    auto x = processConstant<ir::Immediate>(CPV, InsertExtractFunctor(ctx));
-    GBE_ASSERTM(x.type == ir::TYPE_U32 || x.type == ir::TYPE_S32,
-                "Invalid index type for InsertElement");
+  void GenWriter::regAllocateExtractElement(ExtractElementInst &I) {}
+  void GenWriter::emitExtractElement(ExtractElementInst &I) {}
 
-    // Crash on overrun
-    VectorType *vectorType = cast<VectorType>(modified->getType());
-    const uint32_t elemNum = vectorType->getNumElements();
-    const uint32_t modifiedID = x.data.u32;
-    GBE_ASSERTM(modifiedID < elemNum, "Out-of-bound index for InsertElement");
-
-    // The source vector is not constant
-    if (!isa<Constant>(modified) || isa<UndefValue>(modified)) {
-       // Non modified values are just proxies
-       for (uint32_t elemID = 0; elemID < elemNum; ++elemID)
-         if (elemID != modifiedID)
-           regTranslator.newValueProxy(modified, &I, elemID, elemID);
-     }
-     // The source vector is constant
-     else {
-       // Non modified values will use LOADI
-       for (uint32_t elemID = 0; elemID < elemNum; ++elemID)
-         if (elemID != modifiedID) {
-           const ir::Type type = getType(ctx, toInsert->getType());
-           const ir::Register reg = ctx.reg(getFamily(type));
-           regTranslator.insertRegister(reg, &I, elemID);
-         }
-     }
-
-     // If the element to insert is an immediate we will generate a LOADI.
-     // Otherwise, the value is just a proxy of the inserted value
-     if (dyn_cast<Constant>(toInsert) != NULL) {
-       const ir::Type type = getType(ctx, toInsert->getType());
-       const ir::Register reg = ctx.reg(getFamily(type));
-       regTranslator.insertRegister(reg, &I, modifiedID);
-     } else
-       regTranslator.newValueProxy(toInsert, &I, 0, modifiedID);
-  }
-
-  void GenWriter::emitInsertElement(InsertElementInst &I) {
-    // Note that we check everything in regAllocateInsertElement
-    Value *modified = I.getOperand(0);
-    Value *toInsert = I.getOperand(1);
-    Value *index = I.getOperand(2);
-
-    // Get the index of the value to insert
-    Constant *indexCPV = dyn_cast<Constant>(index);
-    auto x = processConstant<ir::Immediate>(indexCPV, InsertExtractFunctor(ctx));
-    const uint32_t modifiedID = x.data.u32;
-
-    // The source vector is constant. We need to insert LOADI for the unmodified
-    // values
-    if (isa<Constant>(modified) && !isa<UndefValue>(modified)) {
-      VectorType *vectorType = cast<VectorType>(modified->getType());
-      const uint32_t elemNum = vectorType->getNumElements();
-      for (uint32_t elemID = 0; elemID < elemNum; ++elemID)
-        if (elemID != modifiedID) {
-          Constant *sourceCPV = dyn_cast<Constant>(modified);
-          if (isa<UndefValue>(extractConstantElem(sourceCPV, elemID)) == false) {
-            const ir::ImmediateIndex immIndex = this->newImmediate(sourceCPV, elemID);
-            const ir::Immediate imm = ctx.getImmediate(immIndex);
-            const ir::Register reg = regTranslator.getScalar(&I, elemID);
-            ctx.LOADI(imm.type, reg, immIndex);
-          }
-        }
-    }
-
-    // If the inserted value is not a constant, we just use a proxy
-    if (dyn_cast<Constant>(toInsert) == NULL)
-      return;
-
-    // We need a LOADI if we insert an immediate
-    Constant *toInsertCPV = dyn_cast<Constant>(toInsert);
-    const ir::ImmediateIndex immIndex = this->newImmediate(toInsertCPV);
-    const ir::Immediate imm = ctx.getImmediate(immIndex);
-    const ir::Register reg = regTranslator.getScalar(&I, modifiedID);
-    ctx.LOADI(imm.type, reg, immIndex);
-  }
-
-  void GenWriter::regAllocateExtractElement(ExtractElementInst &I) {
-    Value *extracted = I.getOperand(0);
-    Value *index = I.getOperand(1);
-    GBE_ASSERTM(isa<Constant>(extracted) == false,
-                "TODO support constant vector for extract");
-    Constant *CPV = dyn_cast<Constant>(index);
-    GBE_ASSERTM(CPV != NULL, "only constant indices when inserting values");
-    auto x = processConstant<ir::Immediate>(CPV, InsertExtractFunctor(ctx));
-    GBE_ASSERTM(x.type == ir::TYPE_U32 || x.type == ir::TYPE_S32,
-                "Invalid index type for InsertElement");
-
-    // Crash on overrun
-    const uint32_t extractedID = x.data.u32;
-#if GBE_DEBUG
-    VectorType *vectorType = cast<VectorType>(extracted->getType());
-    const uint32_t elemNum = vectorType->getNumElements();
-    GBE_ASSERTM(extractedID < elemNum, "Out-of-bound index for InsertElement");
-#endif /* GBE_DEBUG */
-
-    // Easy when the vector is not immediate
-    regTranslator.newValueProxy(extracted, &I, extractedID, 0);
-  }
-
-  void GenWriter::emitExtractElement(ExtractElementInst &I) {
-    // TODO -> insert LOADI when the extracted vector is constant
-  }
-
-  void GenWriter::regAllocateShuffleVectorInst(ShuffleVectorInst &I) {
-    Value *first = I.getOperand(0);
-    Value *second = I.getOperand(1);
-    GBE_ASSERTM(!isa<Constant>(first) || isa<UndefValue>(first),
-                "TODO support constant vector for shuffle");
-    GBE_ASSERTM(!isa<Constant>(second) || isa<UndefValue>(second),
-                "TODO support constant vector for shuffle");
-    VectorType *dstType = cast<VectorType>(I.getType());
-    VectorType *srcType = cast<VectorType>(first->getType());
-    const uint32_t dstElemNum = dstType->getNumElements();
-    const uint32_t srcElemNum = srcType->getNumElements();
-    for (uint32_t elemID = 0; elemID < dstElemNum; ++elemID) {
-      uint32_t srcID = I.getMaskValue(elemID);
-      Value *src = first;
-      if (srcID >= srcElemNum) {
-        srcID -= srcElemNum;
-        src = second;
-      }
-      regTranslator.newValueProxy(src, &I, srcID, elemID);
-    }
-  }
-
+  void GenWriter::regAllocateShuffleVectorInst(ShuffleVectorInst &I) {}
   void GenWriter::emitShuffleVectorInst(ShuffleVectorInst &I) {}
 
   void GenWriter::regAllocateSelectInst(SelectInst &I) {

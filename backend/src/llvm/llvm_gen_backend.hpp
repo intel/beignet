@@ -1,4 +1,4 @@
-/* 
+/*
  * Copyright © 2012 Intel Corporation
  *
  * This library is free software; you can redistribute it and/or
@@ -28,6 +28,9 @@
 
 #include "llvm/Pass.h"
 #include "sys/platform.hpp"
+#include "sys/map.hpp"
+#include "sys/hash_map.hpp"
+#include <algorithm>
 
 // LLVM Type
 namespace llvm { class Type; }
@@ -36,6 +39,29 @@ namespace gbe
 {
   // Final target of the Gen backend
   namespace ir { class Unit; }
+
+  /*! All intrinsic Gen functions */
+  enum OCLInstrinsic {
+#define DECL_LLVM_GEN_FUNCTION(ID, NAME) GEN_OCL_##ID,
+#include "llvm_gen_ocl_function.hxx"
+#undef DECL_LLVM_GEN_FUNCTION
+  };
+
+  /*! Build the hash map for OCL functions on Gen */
+  struct OCLIntrinsicMap {
+    /*! Build the intrinsic hash map */
+    OCLIntrinsicMap(void) {
+#define DECL_LLVM_GEN_FUNCTION(ID, NAME) \
+  map.insert(std::make_pair(#NAME, GEN_OCL_##ID));
+#include "llvm_gen_ocl_function.hxx"
+#undef DECL_LLVM_GEN_FUNCTION
+    }
+    /*! Sort intrinsics with their names */
+    hash_map<std::string, OCLInstrinsic> map;
+  };
+
+  /*! Sort the OCL Gen instrinsic functions (built on pre-main) */
+  static const OCLIntrinsicMap instrinsicMap;
 
   /*! Pad the offset */
   uint32_t getPadding(uint32_t offset, uint32_t align);
@@ -54,6 +80,8 @@ namespace gbe
 
   /*! Remove the GEP instructions */
   llvm::BasicBlockPass *createRemoveGEPPass(const ir::Unit &unit);
+
+  llvm::FunctionPass* createScalarizePass(ir::Unit &unit);
 
 } /* namespace gbe */
 

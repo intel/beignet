@@ -83,6 +83,7 @@ else (GBE_USE_BLOB)
     backend/program.h
     llvm/llvm_gen_backend.cpp
     llvm/llvm_passes.cpp
+    llvm/llvm_scalarize.cpp
     llvm/llvm_to_gen.cpp
     llvm/llvm_gen_backend.hpp
     llvm/llvm_gen_ocl_function.hxx

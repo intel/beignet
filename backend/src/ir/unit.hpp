@@ -1,4 +1,4 @@
-/* 
+/*
  * Copyright © 2012 Intel Corporation
  *
  * This library is free software; you can redistribute it and/or
@@ -24,9 +24,12 @@
 #ifndef __GBE_IR_UNIT_HPP__
 #define __GBE_IR_UNIT_HPP__
 
+#include "llvm/Value.h"
+
 #include "ir/constant.hpp"
 #include "ir/register.hpp"
 #include "sys/hash_map.hpp"
+#include "sys/map.hpp"
 
 namespace gbe {
 namespace ir {
@@ -41,6 +44,7 @@ namespace ir {
   {
   public:
     typedef hash_map<std::string, Function*> FunctionSet;
+    typedef std::pair<llvm::Value*, uint32_t> ValueIndex;
     /*! Create an empty unit */
     Unit(PointerSize pointerSize = POINTER_32_BITS);
     /*! Release everything (*including* the function pointers) */
@@ -71,11 +75,27 @@ namespace ir {
     ConstantSet& getConstantSet(void) { return constantSet; }
     /*! Return the constant set */
     const ConstantSet& getConstantSet(void) const { return constantSet; }
+
+    /*! Some values will not be allocated. For example a vector extract and
+     * a vector insertion when scalarize the vector load/store
+     */
+    void newValueProxy(llvm::Value *real,
+                       llvm::Value *fake,
+                       uint32_t realIndex = 0u,
+                       uint32_t fakeIndex = 0u) {
+      const ValueIndex key(fake, fakeIndex);
+      const ValueIndex value(real, realIndex);
+      GBE_ASSERT(valueMap.find(key) == valueMap.end()); // Do not insert twice
+      valueMap[key] = value;
+    }
+    /*! Return the value map */
+    const map<ValueIndex, ValueIndex>& getValueMap(void) const { return valueMap; }
   private:
     friend class ContextInterface; //!< Can free modify the unit
     hash_map<std::string, Function*> functions; //!< All the defined functions
     ConstantSet constantSet; //!< All the constants defined in the unit
     PointerSize pointerSize; //!< Size shared by all pointers
+    map<ValueIndex, ValueIndex> valueMap; //!< fake to real value map for vector load/store
     GBE_CLASS(Unit);
   };
 
