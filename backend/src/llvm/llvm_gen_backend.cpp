@@ -813,32 +813,29 @@ namespace gbe
       PHINode *PN = cast<PHINode>(I);
       Value *IV = PN->getIncomingValueForBlock(curr);
       if (!isa<UndefValue>(IV)) {
-        uint32_t elemNum;
         Type *llvmType = PN->getType();
         GBE_ASSERTM(llvmType != Type::getInt1Ty(llvmType->getContext()),
           "TODO Boolean values cannot escape their definition basic block");
-        const ir::Type type = getVectorInfo(ctx, llvmType, PN, elemNum);
+        const ir::Type type = getType(ctx, llvmType);
 
         // Emit the MOV required by the PHI function. We do it simple and do not
         // try to optimize them. A next data flow analysis pass on the Gen IR
         // will remove them
-        for (uint32_t elemID = 0; elemID < elemNum; ++elemID) {
-          Value *PHICopy = this->getPHICopy(PN);
-          const ir::Register dst = this->getRegister(PHICopy, elemID);
-          Constant *CP = dyn_cast<Constant>(IV);
-          if (CP) {
-            GBE_ASSERT(isa<GlobalValue>(CP) == false);
-            ConstantVector *CPV = dyn_cast<ConstantVector>(CP);
-            if (CPV && dyn_cast<ConstantVector>(CPV) &&
-                isa<UndefValue>(extractConstantElem(CPV, elemID)))
-              continue;
-            const ir::ImmediateIndex immIndex = this->newImmediate(CP, elemID);
-            const ir::Immediate imm = ctx.getImmediate(immIndex);
-            ctx.LOADI(imm.type, dst, immIndex);
-          } else if (regTranslator.valueExists(IV,elemID) || dyn_cast<Constant>(IV)) {
-            const ir::Register src = this->getRegister(IV, elemID);
-            ctx.MOV(type, dst, src);
-          }
+        Value *PHICopy = this->getPHICopy(PN);
+        const ir::Register dst = this->getRegister(PHICopy);
+        Constant *CP = dyn_cast<Constant>(IV);
+        if (CP) {
+          GBE_ASSERT(isa<GlobalValue>(CP) == false);
+          ConstantVector *CPV = dyn_cast<ConstantVector>(CP);
+          if (CPV && dyn_cast<ConstantVector>(CPV) &&
+              isa<UndefValue>(extractConstantElem(CPV, 0)))
+            continue;
+          const ir::ImmediateIndex immIndex = this->newImmediate(CP);
+          const ir::Immediate imm = ctx.getImmediate(immIndex);
+          ctx.LOADI(imm.type, dst, immIndex);
+        } else if (regTranslator.valueExists(IV,0) || dyn_cast<Constant>(IV)) {
+          const ir::Register src = this->getRegister(IV);
+          ctx.MOV(type, dst, src);
         }
       }
     }
@@ -1237,36 +1234,33 @@ namespace gbe
 #endif /* GBE_DEBUG */
 
     // Get the element type for a vector
-    uint32_t elemNum;
-    const ir::Type type = getVectorInfo(ctx, I.getType(), &I, elemNum);
+    const ir::Type type = getType(ctx, I.getType());
 
     // Emit the instructions in a row
-    for (uint32_t elemID = 0; elemID < elemNum; ++elemID) {
-      const ir::Register dst = this->getRegister(&I, elemID);
-      const ir::Register src0 = this->getRegister(I.getOperand(0), elemID);
-      const ir::Register src1 = this->getRegister(I.getOperand(1), elemID);
+    const ir::Register dst = this->getRegister(&I);
+    const ir::Register src0 = this->getRegister(I.getOperand(0));
+    const ir::Register src1 = this->getRegister(I.getOperand(1));
 
-      switch (I.getOpcode()) {
-        case Instruction::Add:
-        case Instruction::FAdd: ctx.ADD(type, dst, src0, src1); break;
-        case Instruction::Sub:
-        case Instruction::FSub: ctx.SUB(type, dst, src0, src1); break;
-        case Instruction::Mul:
-        case Instruction::FMul: ctx.MUL(type, dst, src0, src1); break;
-        case Instruction::URem:
-        case Instruction::SRem:
-        case Instruction::FRem: ctx.REM(type, dst, src0, src1); break;
-        case Instruction::UDiv:
-        case Instruction::SDiv:
-        case Instruction::FDiv: ctx.DIV(type, dst, src0, src1); break;
-        case Instruction::And:  ctx.AND(type, dst, src0, src1); break;
-        case Instruction::Or:   ctx.OR(type, dst, src0, src1); break;
-        case Instruction::Xor:  ctx.XOR(type, dst, src0, src1); break;
-        case Instruction::Shl:  ctx.SHL(type, dst, src0, src1); break;
-        case Instruction::LShr: ctx.SHR(getUnsignedType(ctx, I.getType()), dst, src0, src1); break;
-        case Instruction::AShr: ctx.ASR(type, dst, src0, src1); break;
-        default: NOT_SUPPORTED;
-      }
+    switch (I.getOpcode()) {
+      case Instruction::Add:
+      case Instruction::FAdd: ctx.ADD(type, dst, src0, src1); break;
+      case Instruction::Sub:
+      case Instruction::FSub: ctx.SUB(type, dst, src0, src1); break;
+      case Instruction::Mul:
+      case Instruction::FMul: ctx.MUL(type, dst, src0, src1); break;
+      case Instruction::URem:
+      case Instruction::SRem:
+      case Instruction::FRem: ctx.REM(type, dst, src0, src1); break;
+      case Instruction::UDiv:
+      case Instruction::SDiv:
+      case Instruction::FDiv: ctx.DIV(type, dst, src0, src1); break;
+      case Instruction::And:  ctx.AND(type, dst, src0, src1); break;
+      case Instruction::Or:   ctx.OR(type, dst, src0, src1); break;
+      case Instruction::Xor:  ctx.XOR(type, dst, src0, src1); break;
+      case Instruction::Shl:  ctx.SHL(type, dst, src0, src1); break;
+      case Instruction::LShr: ctx.SHR(getUnsignedType(ctx, I.getType()), dst, src0, src1); break;
+      case Instruction::AShr: ctx.ASR(type, dst, src0, src1); break;
+      default: NOT_SUPPORTED;
     }
   }
 
@@ -1294,49 +1288,46 @@ namespace gbe
     GBE_ASSERT(I.getOperand(0)->getType() != Type::getInt1Ty(I.getContext()));
 
     // Get the element type and the number of elements
-    uint32_t elemNum;
     Type *operandType = I.getOperand(0)->getType();
-    const ir::Type type = getVectorInfo(ctx, operandType, &I, elemNum);
+    const ir::Type type = getType(ctx, operandType);
     const ir::Type signedType = makeTypeSigned(type);
     const ir::Type unsignedType = makeTypeUnsigned(type);
 
     // Emit the instructions in a row
-    for (uint32_t elemID = 0; elemID < elemNum; ++elemID) {
-      const ir::Register dst = this->getRegister(&I, elemID);
-      const ir::Register src0 = this->getRegister(I.getOperand(0), elemID);
-      const ir::Register src1 = this->getRegister(I.getOperand(1), elemID);
+    const ir::Register dst = this->getRegister(&I);
+    const ir::Register src0 = this->getRegister(I.getOperand(0));
+    const ir::Register src1 = this->getRegister(I.getOperand(1));
 
-      // We must invert the condition to simplify the branch code
-      if (conditionSet.find(&I) != conditionSet.end()) {
-        switch (I.getPredicate()) {
-          case ICmpInst::ICMP_EQ:  ctx.NE(type, dst, src0, src1); break;
-          case ICmpInst::ICMP_NE:  ctx.EQ(type, dst, src0, src1); break;
-          case ICmpInst::ICMP_ULE: ctx.GT((unsignedType), dst, src0, src1); break;
-          case ICmpInst::ICMP_SLE: ctx.GT(signedType, dst, src0, src1); break;
-          case ICmpInst::ICMP_UGE: ctx.LT(unsignedType, dst, src0, src1); break;
-          case ICmpInst::ICMP_SGE: ctx.LT(signedType, dst, src0, src1); break;
-          case ICmpInst::ICMP_ULT: ctx.GE(unsignedType, dst, src0, src1); break;
-          case ICmpInst::ICMP_SLT: ctx.GE(signedType, dst, src0, src1); break;
-          case ICmpInst::ICMP_UGT: ctx.LE(unsignedType, dst, src0, src1); break;
-          case ICmpInst::ICMP_SGT: ctx.LE(signedType, dst, src0, src1); break;
-          default: NOT_SUPPORTED;
-        }
+    // We must invert the condition to simplify the branch code
+    if (conditionSet.find(&I) != conditionSet.end()) {
+      switch (I.getPredicate()) {
+        case ICmpInst::ICMP_EQ:  ctx.NE(type, dst, src0, src1); break;
+        case ICmpInst::ICMP_NE:  ctx.EQ(type, dst, src0, src1); break;
+        case ICmpInst::ICMP_ULE: ctx.GT((unsignedType), dst, src0, src1); break;
+        case ICmpInst::ICMP_SLE: ctx.GT(signedType, dst, src0, src1); break;
+        case ICmpInst::ICMP_UGE: ctx.LT(unsignedType, dst, src0, src1); break;
+        case ICmpInst::ICMP_SGE: ctx.LT(signedType, dst, src0, src1); break;
+        case ICmpInst::ICMP_ULT: ctx.GE(unsignedType, dst, src0, src1); break;
+        case ICmpInst::ICMP_SLT: ctx.GE(signedType, dst, src0, src1); break;
+        case ICmpInst::ICMP_UGT: ctx.LE(unsignedType, dst, src0, src1); break;
+        case ICmpInst::ICMP_SGT: ctx.LE(signedType, dst, src0, src1); break;
+        default: NOT_SUPPORTED;
       }
-      // Nothing special to do
-      else {
-        switch (I.getPredicate()) {
-          case ICmpInst::ICMP_EQ:  ctx.EQ(type, dst, src0, src1); break;
-          case ICmpInst::ICMP_NE:  ctx.NE(type, dst, src0, src1); break;
-          case ICmpInst::ICMP_ULE: ctx.LE((unsignedType), dst, src0, src1); break;
-          case ICmpInst::ICMP_SLE: ctx.LE(signedType, dst, src0, src1); break;
-          case ICmpInst::ICMP_UGE: ctx.GE(unsignedType, dst, src0, src1); break;
-          case ICmpInst::ICMP_SGE: ctx.GE(signedType, dst, src0, src1); break;
-          case ICmpInst::ICMP_ULT: ctx.LT(unsignedType, dst, src0, src1); break;
-          case ICmpInst::ICMP_SLT: ctx.LT(signedType, dst, src0, src1); break;
-          case ICmpInst::ICMP_UGT: ctx.GT(unsignedType, dst, src0, src1); break;
-          case ICmpInst::ICMP_SGT: ctx.GT(signedType, dst, src0, src1); break;
-          default: NOT_SUPPORTED;
-        }
+    }
+    // Nothing special to do
+    else {
+      switch (I.getPredicate()) {
+        case ICmpInst::ICMP_EQ:  ctx.EQ(type, dst, src0, src1); break;
+        case ICmpInst::ICMP_NE:  ctx.NE(type, dst, src0, src1); break;
+        case ICmpInst::ICMP_ULE: ctx.LE((unsignedType), dst, src0, src1); break;
+        case ICmpInst::ICMP_SLE: ctx.LE(signedType, dst, src0, src1); break;
+        case ICmpInst::ICMP_UGE: ctx.GE(unsignedType, dst, src0, src1); break;
+        case ICmpInst::ICMP_SGE: ctx.GE(signedType, dst, src0, src1); break;
+        case ICmpInst::ICMP_ULT: ctx.LT(unsignedType, dst, src0, src1); break;
+        case ICmpInst::ICMP_SLT: ctx.LT(signedType, dst, src0, src1); break;
+        case ICmpInst::ICMP_UGT: ctx.GT(unsignedType, dst, src0, src1); break;
+        case ICmpInst::ICMP_SGT: ctx.GT(signedType, dst, src0, src1); break;
+        default: NOT_SUPPORTED;
       }
     }
   }
@@ -1348,31 +1339,28 @@ namespace gbe
   void GenWriter::emitFCmpInst(FCmpInst &I) {
 
     // Get the element type and the number of elements
-    uint32_t elemNum;
     Type *operandType = I.getOperand(0)->getType();
-    const ir::Type type = getVectorInfo(ctx, operandType, &I, elemNum);
+    const ir::Type type = getType(ctx, operandType);
 
     // Emit the instructions in a row
-    for (uint32_t elemID = 0; elemID < elemNum; ++elemID) {
-      const ir::Register dst = this->getRegister(&I, elemID);
-      const ir::Register src0 = this->getRegister(I.getOperand(0), elemID);
-      const ir::Register src1 = this->getRegister(I.getOperand(1), elemID);
+    const ir::Register dst = this->getRegister(&I);
+    const ir::Register src0 = this->getRegister(I.getOperand(0));
+    const ir::Register src1 = this->getRegister(I.getOperand(1));
 
-      switch (I.getPredicate()) {
-        case ICmpInst::FCMP_OEQ:
-        case ICmpInst::FCMP_UEQ: ctx.EQ(type, dst, src0, src1); break;
-        case ICmpInst::FCMP_ONE:
-        case ICmpInst::FCMP_UNE: ctx.NE(type, dst, src0, src1); break;
-        case ICmpInst::FCMP_OLE:
-        case ICmpInst::FCMP_ULE: ctx.LE(type, dst, src0, src1); break;
-        case ICmpInst::FCMP_OGE:
-        case ICmpInst::FCMP_UGE: ctx.GE(type, dst, src0, src1); break;
-        case ICmpInst::FCMP_OLT:
-        case ICmpInst::FCMP_ULT: ctx.LT(type, dst, src0, src1); break;
-        case ICmpInst::FCMP_OGT:
-        case ICmpInst::FCMP_UGT: ctx.GT(type, dst, src0, src1); break;
-        default: NOT_SUPPORTED;
-      }
+    switch (I.getPredicate()) {
+      case ICmpInst::FCMP_OEQ:
+      case ICmpInst::FCMP_UEQ: ctx.EQ(type, dst, src0, src1); break;
+      case ICmpInst::FCMP_ONE:
+      case ICmpInst::FCMP_UNE: ctx.NE(type, dst, src0, src1); break;
+      case ICmpInst::FCMP_OLE:
+      case ICmpInst::FCMP_ULE: ctx.LE(type, dst, src0, src1); break;
+      case ICmpInst::FCMP_OGE:
+      case ICmpInst::FCMP_UGE: ctx.GE(type, dst, src0, src1); break;
+      case ICmpInst::FCMP_OLT:
+      case ICmpInst::FCMP_ULT: ctx.LT(type, dst, src0, src1); break;
+      case ICmpInst::FCMP_OGT:
+      case ICmpInst::FCMP_UGT: ctx.GT(type, dst, src0, src1); break;
+      default: NOT_SUPPORTED;
     }
   }
 
@@ -1402,10 +1390,7 @@ namespace gbe
       // Bitcast just forward registers
       case Instruction::BitCast:
       {
-        uint32_t elemNum;
-        getVectorInfo(ctx, I.getType(), &I, elemNum);
-        for (uint32_t elemID = 0; elemID < elemNum; ++elemID)
-          regTranslator.newValueProxy(srcValue, dstValue, elemID, elemID);
+        regTranslator.newValueProxy(srcValue, dstValue);
       }
       break;
       // Various conversion operations -> just allocate registers for them
@@ -1453,15 +1438,14 @@ namespace gbe
       case Instruction::Trunc:
       {
         // Get the element type for a vector
-        uint32_t elemNum;
         Type *llvmDstType = I.getType();
         Type *llvmSrcType = I.getOperand(0)->getType();
-        const ir::Type dstType = getVectorInfo(ctx, llvmDstType, &I, elemNum);
+        const ir::Type dstType = getType(ctx, llvmDstType);
         ir::Type srcType;
         if (I.getOpcode() == Instruction::ZExt) {
-          srcType = getVectorInfo(ctx, llvmSrcType, &I, elemNum, true);
+          srcType = getUnsignedType(ctx, llvmSrcType);
         } else {
-          srcType = getVectorInfo(ctx, llvmSrcType, &I, elemNum);
+          srcType = getType(ctx, llvmSrcType);
         }
 
         // We use a select (0,1) not a convert when the destination is a boolean
@@ -1473,19 +1457,15 @@ namespace gbe
           const ir::Register oneReg = ctx.reg(family);
           ctx.LOADI(dstType, zeroReg, zero);
           ctx.LOADI(dstType, oneReg, one);
-          for (uint32_t elemID = 0; elemID < elemNum; ++elemID) {
-            const ir::Register dst = this->getRegister(&I, elemID);
-            const ir::Register src = this->getRegister(I.getOperand(0), elemID);
-            ctx.SEL(dstType, dst, src, oneReg, zeroReg);
-          }
+          const ir::Register dst = this->getRegister(&I);
+          const ir::Register src = this->getRegister(I.getOperand(0));
+          ctx.SEL(dstType, dst, src, oneReg, zeroReg);
         }
         // Use a convert for the other cases
         else {
-          for (uint32_t elemID = 0; elemID < elemNum; ++elemID) {
-            const ir::Register dst = this->getRegister(&I, elemID);
-            const ir::Register src = this->getRegister(I.getOperand(0), elemID);
-            ctx.CVT(dstType, srcType, dst, src);
-          }
+          const ir::Register dst = this->getRegister(&I);
+          const ir::Register src = this->getRegister(I.getOperand(0));
+          ctx.CVT(dstType, srcType, dst, src);
         }
       }
       break;
@@ -1519,22 +1499,14 @@ namespace gbe
 
   void GenWriter::emitSelectInst(SelectInst &I) {
     // Get the element type for a vector
-    uint32_t elemNum;
-    const ir::Type type = getVectorInfo(ctx, I.getType(), &I, elemNum);
-
-    // Condition can be either a vector or a scalar
-    Type *condType = I.getOperand(0)->getType();
-    const bool isVectorCond = isa<VectorType>(condType);
+    const ir::Type type = getType(ctx, I.getType());
 
     // Emit the instructions in a row
-    for (uint32_t elemID = 0; elemID < elemNum; ++elemID) {
-      const ir::Register dst = this->getRegister(&I, elemID);
-      const uint32_t condID = isVectorCond ? elemID : 0;
-      const ir::Register cond = this->getRegister(I.getOperand(0), condID);
-      const ir::Register src0 = this->getRegister(I.getOperand(1), elemID);
-      const ir::Register src1 = this->getRegister(I.getOperand(2), elemID);
-      ctx.SEL(type, dst, cond, src0, src1);
-    }
+    const ir::Register dst = this->getRegister(&I);
+    const ir::Register cond = this->getRegister(I.getOperand(0));
+    const ir::Register src0 = this->getRegister(I.getOperand(1));
+    const ir::Register src1 = this->getRegister(I.getOperand(2));
+    ctx.SEL(type, dst, cond, src0, src1);
   }
 
   void GenWriter::regAllocatePHINode(PHINode &I) {
@@ -1547,15 +1519,11 @@ namespace gbe
 
   void GenWriter::emitPHINode(PHINode &I) {
     Value *copy = this->getPHICopy(&I);
-    uint32_t elemNum;
-    const ir::Type type = getVectorInfo(ctx, I.getType(), &I, elemNum);
+    const ir::Type type = getType(ctx, I.getType());
 
-    // Emit the MOVs to avoid the lost copy issue
-    for (uint32_t elemID = 0; elemID < elemNum; ++elemID) {
-      const ir::Register dst = this->getRegister(&I, elemID);
-      const ir::Register src = this->getRegister(copy, elemID);
-      ctx.MOV(type, dst, src);
-    }
+    const ir::Register dst = this->getRegister(&I);
+    const ir::Register src = this->getRegister(copy);
+    ctx.MOV(type, dst, src);
   }
 
   void GenWriter::regAllocateBranchInst(BranchInst &I) {}
@@ -1727,7 +1695,7 @@ namespace gbe
       case GEN_OCL_READ_IMAGE14:
       case GEN_OCL_READ_IMAGE15:
       {
-      // dst is a 4 elements vector. We allocate all 4 registers here.
+        // dst is a 4 elements vector. We allocate all 4 registers here.
         uint32_t elemNum;
         (void)getVectorInfo(ctx, I.getType(), &I, elemNum);
         GBE_ASSERT(elemNum == 4);
