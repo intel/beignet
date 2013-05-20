@@ -1048,13 +1048,30 @@ clEnqueueMapBuffer(cl_command_queue  command_queue,
                    cl_event *        event,
                    cl_int *          errcode_ret)
 {
-  void *p;
+  void *ptr = NULL;
+  cl_int err = CL_SUCCESS;
+
+  CHECK_QUEUE(command_queue);
+  CHECK_MEM(buffer);
+  if (command_queue->ctx != buffer->ctx) {
+    err = CL_INVALID_CONTEXT;
+    goto error;
+  }
+
   if (blocking_map != CL_TRUE)
      NOT_IMPLEMENTED;
   if (offset != 0)
      NOT_IMPLEMENTED;
-  p = clMapBufferIntel(buffer, errcode_ret);
-  return p;
+
+  if (!(ptr = cl_mem_map_auto(buffer))) {
+    err = CL_MAP_FAILURE;
+    goto error;
+  }
+
+error:
+  if (errcode_ret)
+    *errcode_ret = err;
+  return ptr;
 }
 
 void *
@@ -1071,8 +1088,54 @@ clEnqueueMapImage(cl_command_queue   command_queue,
                   cl_event *         event,
                   cl_int *           errcode_ret)
 {
-  NOT_IMPLEMENTED;
-  return NULL;
+  void *ptr = NULL;
+  cl_int err = CL_SUCCESS;
+
+  CHECK_QUEUE(command_queue);
+  CHECK_IMAGE(image);
+  if (command_queue->ctx != image->ctx) {
+    err = CL_INVALID_CONTEXT;
+    goto error;
+  }
+
+  if (blocking_map != CL_TRUE)
+    NOT_IMPLEMENTED;
+
+  if (!origin || !region || origin[0] + region[0] > image->w || origin[1] + region[1] > image->h || origin[2] + region[2] > image->depth) {
+    err = CL_INVALID_VALUE;
+    goto error;
+  }
+
+  if (!image_row_pitch || (image->slice_pitch && !image_slice_pitch)) {
+    err = CL_INVALID_VALUE;
+    goto error;
+  }
+
+  *image_row_pitch = image->row_pitch;
+  if (image_slice_pitch)
+    *image_slice_pitch = image->slice_pitch;
+
+  if ((map_flags & CL_MAP_READ &&
+       image->flags & (CL_MEM_HOST_WRITE_ONLY | CL_MEM_HOST_NO_ACCESS)) ||
+      (map_flags & (CL_MAP_WRITE | CL_MAP_WRITE_INVALIDATE_REGION) &&
+       image->flags & (CL_MEM_HOST_READ_ONLY | CL_MEM_HOST_NO_ACCESS)))
+  {
+    err = CL_INVALID_OPERATION;
+    goto error;
+  }
+
+  if (!(ptr = cl_mem_map_auto(image))) {
+    err = CL_MAP_FAILURE;
+    goto error;
+  }
+
+  size_t offset = image->bpp*origin[0] + image->row_pitch*origin[1] + image->slice_pitch*origin[2];
+  ptr = (char*)ptr + offset;
+
+error:
+  if (errcode_ret)
+    *errcode_ret = err;
+  return ptr;
 }
 
 cl_int
@@ -1083,7 +1146,7 @@ clEnqueueUnmapMemObject(cl_command_queue  command_queue,
                         const cl_event *  event_wait_list,
                         cl_event *        event)
 {
-  return clUnmapBufferIntel(memobj);
+  return cl_mem_unmap_auto(memobj);
 }
 
 cl_int

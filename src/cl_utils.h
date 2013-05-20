@@ -130,6 +130,15 @@ do {                                                        \
   }                                                         \
 } while (0)
 
+#define CHECK_IMAGE(IMAGE)                                  \
+CHECK_MEM(image);                                           \
+do {                                                        \
+  if (UNLIKELY(!IMAGE->is_image)) {                         \
+    err = CL_INVALID_MEM_OBJECT;                            \
+    goto error;                                             \
+  }                                                         \
+} while (0)
+
 #define CHECK_SAMPLER(SAMPLER)                              \
 do {                                                        \
   if (UNLIKELY(SAMPLER == NULL)) {                          \

@@ -83,6 +83,12 @@ extern void *cl_mem_map_gtt(cl_mem);
 /* Unmap a memory object in GTT mode */
 extern cl_int cl_mem_unmap_gtt(cl_mem);
 
+/* Directly map a memory object - tiled images are mapped in GTT mode */
+extern void *cl_mem_map_auto(cl_mem);
+
+/* Unmap a memory object - tiled images are unmapped in GTT mode */
+extern cl_int cl_mem_unmap_auto(cl_mem);
+
 /* Pin/unpin the buffer in memory (you must be root) */
 extern cl_int cl_mem_pin(cl_mem);
 extern cl_int cl_mem_unpin(cl_mem);

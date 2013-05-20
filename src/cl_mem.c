@@ -522,6 +522,25 @@ cl_mem_unmap_gtt(cl_mem mem)
   return CL_SUCCESS;
 }
 
+LOCAL void*
+cl_mem_map_auto(cl_mem mem)
+{
+  if (mem->is_image && mem->tiling != CL_NO_TILE)
+    return cl_mem_map_gtt(mem);
+  else
+    return cl_mem_map(mem);
+}
+
+LOCAL cl_int
+cl_mem_unmap_auto(cl_mem mem)
+{
+  if (mem->is_image && mem->tiling != CL_NO_TILE)
+    cl_buffer_unmap_gtt(mem->bo);
+  else
+    cl_buffer_unmap(mem->bo);
+  return CL_SUCCESS;
+}
+
 LOCAL cl_int
 cl_mem_pin(cl_mem mem)
 {
