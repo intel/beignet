@@ -102,9 +102,9 @@ static void
 set_image_info(char *curbe, struct ImageInfo * image_info, cl_mem image)
 {
   if (image_info->wSlot >= 0)
-    memcpy(curbe + image_info->wSlot, &image->w, sizeof(image->w));
+    *(uint32_t*)(curbe + image_info->wSlot) = image->w;
   if (image_info->hSlot >= 0)
-    memcpy(curbe + image_info->hSlot, &image->h, sizeof(image->h));
+    *(uint32_t*)(curbe + image_info->hSlot) = image->h;
 }
 
 LOCAL cl_int
