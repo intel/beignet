@@ -105,6 +105,12 @@ set_image_info(char *curbe, struct ImageInfo * image_info, cl_mem image)
     *(uint32_t*)(curbe + image_info->wSlot) = image->w;
   if (image_info->hSlot >= 0)
     *(uint32_t*)(curbe + image_info->hSlot) = image->h;
+  if (image_info->depthSlot >= 0)
+    *(uint32_t*)(curbe + image_info->depthSlot) = image->depth;
+  if (image_info->channelOrderSlot >= 0)
+    *(uint32_t*)(curbe + image_info->channelOrderSlot) = image->fmt.image_channel_order;
+  if (image_info->dataTypeSlot >= 0)
+    *(uint32_t*)(curbe + image_info->dataTypeSlot) = image->fmt.image_channel_data_type;
 }
 
 LOCAL cl_int

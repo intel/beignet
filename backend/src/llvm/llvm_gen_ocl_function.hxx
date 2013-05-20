@@ -73,6 +73,9 @@ DECL_LLVM_GEN_FUNCTION(WRITE_IMAGE15, _Z22__gen_ocl_write_imagefjfffDv4_f)
 // To get image info function
 DECL_LLVM_GEN_FUNCTION(GET_IMAGE_WIDTH, __gen_ocl_get_image_width)
 DECL_LLVM_GEN_FUNCTION(GET_IMAGE_HEIGHT, __gen_ocl_get_image_height)
+DECL_LLVM_GEN_FUNCTION(GET_IMAGE_DEPTH,  __gen_ocl_get_image_depth)
+DECL_LLVM_GEN_FUNCTION(GET_IMAGE_CHANNEL_DATA_TYPE,  __gen_ocl_get_image_channel_data_type)
+DECL_LLVM_GEN_FUNCTION(GET_IMAGE_CHANNEL_ORDER,  __gen_ocl_get_image_channel_order)
 
 // saturation related functions.
 DECL_LLVM_GEN_FUNCTION(SADD_SAT_CHAR, _Z12ocl_sadd_satcc)

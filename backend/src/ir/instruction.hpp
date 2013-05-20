@@ -335,12 +335,18 @@ namespace ir {
     enum {
      WIDTH = 0,
      HEIGHT = 1,
+     DEPTH = 2,
+     CHANNEL_DATA_TYPE = 3,
+     CHANNEL_ORDER = 4,
     };
 
     static INLINE uint32_t getDstNum4Type(int infoType) {
       switch (infoType) {
-        case GetImageInfoInstruction::WIDTH:
-        case GetImageInfoInstruction::HEIGHT:
+        case WIDTH:
+        case HEIGHT:
+        case DEPTH:
+        case CHANNEL_DATA_TYPE:
+        case CHANNEL_ORDER:
           return 1;
         break;
         default:

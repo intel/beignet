@@ -1662,6 +1662,9 @@ namespace gbe
       case GEN_OCL_RNDD:
       case GEN_OCL_GET_IMAGE_WIDTH:
       case GEN_OCL_GET_IMAGE_HEIGHT:
+      case GEN_OCL_GET_IMAGE_CHANNEL_DATA_TYPE:
+      case GEN_OCL_GET_IMAGE_CHANNEL_ORDER:
+      case GEN_OCL_GET_IMAGE_DEPTH:
         // No structure can be returned
         this->newRegister(&I);
         break;
@@ -1827,6 +1830,9 @@ namespace gbe
           case GEN_OCL_LGBARRIER: ctx.SYNC(ir::syncLocalBarrier | ir::syncGlobalBarrier); break;
           case GEN_OCL_GET_IMAGE_WIDTH:
           case GEN_OCL_GET_IMAGE_HEIGHT:
+          case GEN_OCL_GET_IMAGE_DEPTH:
+          case GEN_OCL_GET_IMAGE_CHANNEL_DATA_TYPE:
+          case GEN_OCL_GET_IMAGE_CHANNEL_ORDER:
           {
             GBE_ASSERT(AI != AE); const ir::Register surface_id = this->getRegister(*AI); ++AI;
             uint32_t elemNum;

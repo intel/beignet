@@ -1098,7 +1098,9 @@ OVERLOADABLE void __gen_ocl_write_imagef(uint surface_id, int u, int v, int w, f
 OVERLOADABLE void __gen_ocl_write_imagef(uint surface_id, float u, float v, float w, float4 color);
 int __gen_ocl_get_image_width(uint surface_id);
 int __gen_ocl_get_image_height(uint surface_id);
-//OVERLOADABLE int __gen_ocl_get_image_depth(image3d_t image);
+int __gen_ocl_get_image_channel_data_type(uint surface_id);
+int __gen_ocl_get_image_channel_order(uint surface_id);
+int __gen_ocl_get_image_depth(uint surface_id);
 
 #define GET_IMAGE(cl_image, surface_id) \
     uint surface_id = (uint)cl_image
@@ -1150,29 +1152,38 @@ DECL_IMAGE(float4, f)
   { \
     GET_IMAGE(image, surface_id);\
     return __gen_ocl_get_image_height(surface_id); \
-  }
-#if 0
+  } \
   INLINE_OVERLOADABLE  int get_image_channel_data_type(image_type image)\
-  { NOT_IMPLEMENTED; }\
+  { \
+    GET_IMAGE(image, surface_id);\
+    return __gen_ocl_get_image_channel_data_type(surface_id); \
+  }\
   INLINE_OVERLOADABLE  int get_image_channel_order(image_type image)\
-  { NOT_IMPLEMENTED; }
-#endif
-
+  { \
+    GET_IMAGE(image, surface_id);\
+    return __gen_ocl_get_image_channel_order(surface_id); \
+  }
 
 DECL_IMAGE_INFO(image2d_t)
 DECL_IMAGE_INFO(image3d_t)
+
+INLINE_OVERLOADABLE  int get_image_depth(image3d_t image)
+  {
+   GET_IMAGE(image, surface_id);
+   return __gen_ocl_get_image_depth(surface_id);
+  }
+
+INLINE_OVERLOADABLE  int2 get_image_dim(image2d_t image)
+  { return (int2){get_image_width(image), get_image_height(image)}; }
+
+INLINE_OVERLOADABLE  int4 get_image_dim(image3d_t image)
+  { return (int4){get_image_width(image), get_image_height(image), get_image_depth(image), 0}; }
 #if 0
 /* The following functions are not implemented yet. */
 DECL_IMAGE_INFO(image1d_t)
 DECL_IMAGE_INFO(image1d_buffer_t)
 DECL_IMAGE_INFO(image1d_array_t)
 DECL_IMAGE_INFO(image2d_array_t)
-
-INLINE_OVERLOADABLE  int get_image_depth(image3d_t image)
-  { return __gen_ocl_get_image_depth(image); }
-
-INLINE_OVERLOADABLE  int2 get_image_dim(image2d_t image)
-  { return __gen_ocl_get_image_dim(image); }
 
 INLINE_OVERLOADABLE  int2 get_image_dim(image2d_array_t image)
   { return __gen_ocl_get_image_dim(image); }

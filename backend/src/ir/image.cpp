@@ -31,8 +31,11 @@ namespace ir {
   static uint32_t getInfoOffset4Type(struct ImageInfo *imageInfo, int type)
   {
     switch (type) {
-      case GetImageInfoInstruction::WIDTH: return imageInfo->wSlot;
-      case GetImageInfoInstruction::HEIGHT: return imageInfo->hSlot;
+      case GetImageInfoInstruction::WIDTH:              return imageInfo->wSlot;
+      case GetImageInfoInstruction::HEIGHT:             return imageInfo->hSlot;
+      case GetImageInfoInstruction::DEPTH:              return imageInfo->depthSlot;
+      case GetImageInfoInstruction::CHANNEL_DATA_TYPE:  return imageInfo->dataTypeSlot;
+      case GetImageInfoInstruction::CHANNEL_ORDER:      return imageInfo->channelOrderSlot;
       default:
         NOT_IMPLEMENTED;
     }
@@ -42,8 +45,11 @@ namespace ir {
   static uint32_t setInfoOffset4Type(struct ImageInfo *imageInfo, int type, uint32_t offset)
   {
     switch (type) {
-      case GetImageInfoInstruction::WIDTH: imageInfo->wSlot = offset; break;
-      case GetImageInfoInstruction::HEIGHT: imageInfo->hSlot = offset; break;
+      case GetImageInfoInstruction::WIDTH:              imageInfo->wSlot = offset; break;
+      case GetImageInfoInstruction::HEIGHT:             imageInfo->hSlot = offset; break;
+      case GetImageInfoInstruction::DEPTH:              imageInfo->depthSlot = offset; break;
+      case GetImageInfoInstruction::CHANNEL_DATA_TYPE:  imageInfo->dataTypeSlot = offset; break;
+      case GetImageInfoInstruction::CHANNEL_ORDER:      imageInfo->channelOrderSlot = offset; break;
       default:
         NOT_IMPLEMENTED;
     }
