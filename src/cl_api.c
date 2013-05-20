@@ -970,8 +970,86 @@ clEnqueueReadImage(cl_command_queue      command_queue,
                    const cl_event *      event_wait_list,
                    cl_event *            event)
 {
-  NOT_IMPLEMENTED;
-  return 0;
+  cl_int err = CL_SUCCESS;
+  void* src_ptr;
+
+  CHECK_QUEUE(command_queue);
+  CHECK_IMAGE(image);
+  if (command_queue->ctx != image->ctx) {
+     err = CL_INVALID_CONTEXT;
+     goto error;
+  }
+
+  if (blocking_read != CL_TRUE)
+     NOT_IMPLEMENTED;
+
+  if (!origin || !region || origin[0] + region[0] > image->w || origin[1] + region[1] > image->h || origin[2] + region[2] > image->depth) {
+     err = CL_INVALID_VALUE;
+     goto error;
+  }
+
+  if (!row_pitch)
+    row_pitch = image->bpp*region[0];
+  else if (row_pitch < image->bpp*region[0]) {
+     err = CL_INVALID_VALUE;
+     goto error;
+  }
+
+  if (image->slice_pitch) {
+    if (!slice_pitch)
+      slice_pitch = row_pitch*region[1];
+    else if (slice_pitch < row_pitch*region[1]) {
+      err = CL_INVALID_VALUE;
+      goto error;
+    }
+  }
+  else if (slice_pitch) {
+     err = CL_INVALID_VALUE;
+     goto error;
+  }
+
+  if (!ptr) {
+     err = CL_INVALID_VALUE;
+     goto error;
+  }
+
+  if (image->flags & (CL_MEM_HOST_WRITE_ONLY | CL_MEM_HOST_NO_ACCESS)) {
+     err = CL_INVALID_OPERATION;
+     goto error;
+  }
+
+  if (!(src_ptr = cl_mem_map_auto(image))) {
+    err = CL_MAP_FAILURE;
+    goto error;
+  }
+
+  size_t offset = image->bpp*origin[0] + image->row_pitch*origin[1] + image->slice_pitch*origin[2];
+  src_ptr = (char*)src_ptr + offset;
+
+  if (!origin[0] && region[0] == image->w && row_pitch == image->row_pitch &&
+      (region[2] == 1 || (!origin[1] && region[1] == image->h && slice_pitch == image->slice_pitch)))
+  {
+    memcpy(ptr, src_ptr, region[2] == 1 ? row_pitch*region[1] : slice_pitch*region[2]);
+  }
+  else {
+    cl_uint y, z;
+    for (z = 0; z < region[2]; z++) {
+      const char* src = src_ptr;
+      char* dst = ptr;
+      for (y = 0; y < region[1]; y++) {
+	memcpy(dst, src, image->bpp*region[0]);
+	src += image->row_pitch;
+	dst += row_pitch;
+      }
+      src_ptr = (char*)src_ptr + image->slice_pitch;
+      ptr = (char*)ptr + slice_pitch;
+    }
+  }
+
+  err = cl_mem_unmap_auto(image);
+
+error:
+  return err;
 }
 
 cl_int
@@ -980,15 +1058,93 @@ clEnqueueWriteImage(cl_command_queue     command_queue,
                     cl_bool              blocking_write,
                     const size_t *       origin,
                     const size_t *       region,
-                    size_t               input_row_pitch,
-                    size_t               input_slice_pitch,
+                    size_t               row_pitch,
+                    size_t               slice_pitch,
                     const void *         ptr,
                     cl_uint              num_events_in_wait_list,
                     const cl_event *     event_wait_list,
                     cl_event *           event)
 {
-  NOT_IMPLEMENTED;
-  return 0;
+  cl_int err = CL_SUCCESS;
+  void* dst_ptr;
+
+  CHECK_QUEUE(command_queue);
+  CHECK_IMAGE(image);
+  if (command_queue->ctx != image->ctx) {
+    err = CL_INVALID_CONTEXT;
+    goto error;
+  }
+
+  if (blocking_write != CL_TRUE)
+    NOT_IMPLEMENTED;
+
+  if (!origin || !region || origin[0] + region[0] > image->w || origin[1] + region[1] > image->h || origin[2] + region[2] > image->depth) {
+    err = CL_INVALID_VALUE;
+    goto error;
+  }
+
+  if (!row_pitch)
+    row_pitch = image->bpp*region[0];
+  else if (row_pitch < image->bpp*region[0]) {
+    err = CL_INVALID_VALUE;
+    goto error;
+  }
+
+  if (image->slice_pitch) {
+    if (!slice_pitch)
+      slice_pitch = row_pitch*region[1];
+    else if (slice_pitch < row_pitch*region[1]) {
+      err = CL_INVALID_VALUE;
+      goto error;
+    }
+  }
+  else if (slice_pitch) {
+    err = CL_INVALID_VALUE;
+    goto error;
+  }
+
+  if (!ptr) {
+    err = CL_INVALID_VALUE;
+    goto error;
+  }
+
+  if (image->flags & (CL_MEM_HOST_READ_ONLY | CL_MEM_HOST_NO_ACCESS)) {
+    err = CL_INVALID_OPERATION;
+    goto error;
+  }
+
+  if (!(dst_ptr = cl_mem_map_auto(image))) {
+    err = CL_MAP_FAILURE;
+    goto error;
+  }
+
+  size_t offset = image->bpp*origin[0] + image->row_pitch*origin[1] + image->slice_pitch*origin[2];
+  dst_ptr = (char*)dst_ptr + offset;
+
+  if (!origin[0] && region[0] == image->w && row_pitch == image->row_pitch &&
+      (region[2] == 1 || (!origin[1] && region[1] == image->h && slice_pitch == image->slice_pitch)))
+  {
+    memcpy(dst_ptr, ptr, region[2] == 1 ? row_pitch*region[1] : slice_pitch*region[2]);
+  }
+  else {
+    cl_uint y, z;
+    for (z = 0; z < region[2]; z++) {
+      const char* src = ptr;
+      char* dst = dst_ptr;
+      for (y = 0; y < region[1]; y++) {
+	memcpy(dst, src, image->bpp*region[0]);
+	src += row_pitch;
+	dst += image->row_pitch;
+      }
+      ptr = (char*)ptr + slice_pitch;
+      dst_ptr = (char*)dst_ptr + image->slice_pitch;
+    }
+  }
+
+  err = cl_mem_unmap_auto(image);
+
+error:
+  return err;
 }
 
 cl_int
