@@ -317,7 +317,7 @@ clCreateImage(cl_context context,
                          image_format,
                          image_desc,
                          host_ptr,
-                         errcode_ret);
+                         &err);
 error:
   if (errcode_ret)
     *errcode_ret = err;
