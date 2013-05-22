@@ -798,6 +798,9 @@ namespace gbe {
 
     dce();
 
+    incompletePhis.clear();
+    vectorVals.clear();
+
     delete builder;
     builder = 0;
 
