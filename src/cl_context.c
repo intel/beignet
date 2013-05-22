@@ -225,6 +225,7 @@ exit:
   return queue;
 error:
   cl_command_queue_delete(queue);
+  queue = NULL;
   goto exit;
 }
 

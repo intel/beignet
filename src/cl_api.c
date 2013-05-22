@@ -135,9 +135,10 @@ clCreateContextFromType(const cl_context_properties *  properties,
                         void *                         user_data,
                         cl_int *                       errcode_ret)
 {
+  cl_context context = NULL;
+  cl_int err = CL_SUCCESS;
   cl_device_id devices[1];
   cl_uint num_devices = 1;
-  cl_int err;
 
   err = cl_get_device_ids(NULL,
                           device_type,
@@ -145,16 +146,19 @@ clCreateContextFromType(const cl_context_properties *  properties,
                           &devices[0],
                           &num_devices);
   if (err != CL_SUCCESS) {
-    *errcode_ret = err;
-    return NULL;
+    goto error;
   }
 
-  return cl_create_context(properties,
-                           num_devices,
-                           devices,
-                           pfn_notify,
-                           user_data,
-                           errcode_ret);
+  context = cl_create_context(properties,
+                              num_devices,
+                              devices,
+                              pfn_notify,
+                              user_data,
+                              &err);
+error:
+  if (errcode_ret)
+    *errcode_ret = err;
+  return context;
 }
 
 cl_int
@@ -214,9 +218,11 @@ clCreateCommandQueue(cl_context                   context,
   cl_command_queue queue = NULL;
   cl_int err = CL_SUCCESS;
   CHECK_CONTEXT (context);
-  queue = cl_context_create_queue(context, device, properties, errcode_ret);
+  queue = cl_context_create_queue(context, device, properties, &err);
 error:
-  return err == CL_SUCCESS ? queue : NULL;
+  if (errcode_ret)
+    *errcode_ret = err;
+  return queue;
 }
 
 cl_int
@@ -349,7 +355,7 @@ clCreateImage2D(cl_context              context,
                          image_format,
                          &image_desc,
                          host_ptr,
-                         errcode_ret);
+                         &err);
 error:
   if (errcode_ret)
     *errcode_ret = err;
@@ -385,7 +391,7 @@ clCreateImage3D(cl_context              context,
                          image_format,
                          &image_desc,
                          host_ptr,
-                         errcode_ret);
+                         &err);
 error:
   if (errcode_ret)
     *errcode_ret = err;
@@ -668,14 +674,12 @@ clCreateKernel(cl_program   program,
     err = CL_INVALID_PROGRAM_EXECUTABLE;
     goto error;
   }
-  kernel = cl_program_create_kernel(program, kernel_name, errcode_ret);
+  kernel = cl_program_create_kernel(program, kernel_name, &err);
 
-exit:
-  return kernel;
 error:
   if (errcode_ret)
     *errcode_ret = err;
-  goto exit;
+  return kernel;
 }
 
 cl_int
@@ -835,10 +839,8 @@ clFinish(cl_command_queue command_queue)
   CHECK_QUEUE (command_queue);
   err = cl_command_queue_finish(command_queue);
 
-exit:
-  return err;
 error:
-  goto exit;
+  return err;
 }
 
 cl_int
