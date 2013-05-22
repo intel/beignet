@@ -232,6 +232,7 @@ cl_kernel_dup(cl_kernel from)
   if (UNLIKELY(from == NULL))
     return NULL;
   TRY_ALLOC_NO_ERR (to, CALLOC(struct _cl_kernel));
+  SET_ICD(to->dispatch)
   to->bo = from->bo;
   to->const_bo = from->const_bo;
   to->opaque = from->opaque;
