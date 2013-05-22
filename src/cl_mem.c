@@ -30,6 +30,7 @@
 #include "CL/cl_intel.h"
 #include <assert.h>
 #include <stdio.h>
+#include <string.h>
 
 #define FIELD_SIZE(CASE,TYPE)               \
   case JOIN(CL_,CASE):                      \
@@ -200,27 +201,34 @@ error:
 }
 
 static void
-cl_mem_copy_data_linear(cl_mem mem,
-                        size_t w,
-                        size_t h,
-                        size_t pitch,
-                        uint32_t bpp,
-                        void *data)
+cl_mem_copy_image(cl_mem image,
+		  size_t row_pitch,
+		  size_t slice_pitch,
+		  void* host_ptr)
 {
-  size_t x, y, p;
-  char *dst;
-  cl_buffer_map(mem->bo, 1);
-  dst = cl_buffer_get_virtual(mem->bo);
-  for (y = 0; y < h; ++y) {
-    char *src = (char*) data + pitch * y;
-    for (x = 0; x < w; ++x) {
-      for (p = 0; p < bpp; ++p)
-        dst[p] = src[p];
-      dst += bpp;
-      src += bpp;
+  char* dst_ptr = cl_mem_map_auto(image);
+
+  if (row_pitch == image->row_pitch &&
+      (image->depth == 1 || slice_pitch == image->slice_pitch))
+  {
+    memcpy(dst_ptr, host_ptr, image->depth == 1 ? row_pitch*image->h : slice_pitch*image->depth);
+  }
+  else {
+    size_t y, z;
+    for (z = 0; z < image->depth; z++) {
+      const char* src = host_ptr;
+      char* dst = dst_ptr;
+      for (y = 0; y < image->h; y++) {
+	memcpy(dst, src, image->bpp*image->w);
+	src += row_pitch;
+	dst += image->row_pitch;
+      }
+      host_ptr = (char*)host_ptr + slice_pitch;
+      dst_ptr = (char*)dst_ptr + image->slice_pitch;
     }
   }
-  cl_buffer_unmap(mem->bo);
+
+  cl_mem_unmap_auto(image);
 }
 
 static const uint32_t tile_sz = 4096; /* 4KB per tile */
@@ -228,77 +236,6 @@ static const uint32_t tilex_w = 512;  /* tileX width in bytes */
 static const uint32_t tilex_h = 8;    /* tileX height in number of rows */
 static const uint32_t tiley_w = 128;  /* tileY width in bytes */
 static const uint32_t tiley_h = 32;   /* tileY height in number of rows */
-
-static void
-cl_mem_copy_data_tilex(cl_mem mem,
-                       size_t w,
-                       size_t h,
-                       size_t pitch,
-                       uint32_t bpp,
-                       void *data)
-{
-  const size_t tile_w = tilex_w;
-  const size_t tile_h = tilex_h;
-  const size_t aligned_pitch  = ALIGN(w * bpp, tile_w);
-  const size_t aligned_height = ALIGN(h, tile_h);
-  const size_t tilex_n = aligned_pitch  / tile_w;
-  const size_t tiley_n = aligned_height / tile_h;
-  size_t x, y, tilex, tiley;
-  char *img = NULL;
-  char *end = (char*) data + pitch * h;
-
-  cl_buffer_map(mem->bo, 1);
-  img = cl_buffer_get_virtual(mem->bo);
-  for (tiley = 0; tiley < tiley_n; ++tiley)
-  for (tilex = 0; tilex < tilex_n; ++tilex) {
-    char *tile = img + (tilex + tiley * tilex_n) * tile_sz;
-    for (y = 0; y < tile_h; ++y) {
-      char *src = (char*) data + (tiley*tile_h+y)*pitch + tilex*tile_w;
-      char *dst = tile + y*tile_w;
-      for (x = 0; x < tile_w; ++x, ++dst, ++src) {
-        if ((uintptr_t) src < (uintptr_t) end)
-          *dst = *src;
-      }
-    }
-  }
-  cl_buffer_unmap(mem->bo);
-}
-
-static void
-cl_mem_copy_data_tiley(cl_mem mem,
-                       size_t w,
-                       size_t h,
-                       size_t pitch,
-                       uint32_t bpp,
-                       void *data)
-{
-  const size_t tile_w = tiley_w;
-  const size_t tile_h = tiley_h;
-  const size_t aligned_pitch  = ALIGN(w * bpp, tile_w);
-  const size_t aligned_height = ALIGN(h, tile_h);
-  const size_t tilex_n = aligned_pitch  / tile_w;
-  const size_t tiley_n = aligned_height / tile_h;
-  size_t x, y, tilex, tiley, byte;
-  char *img = NULL;
-  char *end = (char*) data + pitch * h;
-
-  cl_buffer_map(mem->bo, 1);
-  img = cl_buffer_get_virtual(mem->bo);
-  for (tiley = 0; tiley < tiley_n; ++tiley)
-  for (tilex = 0; tilex < tilex_n; ++tilex) {
-    char *tile = img + (tiley * tilex_n + tilex) * tile_sz;
-    for (x = 0; x < tile_w; x += 16) {
-      char *src = (char*) data + tiley*tile_h*pitch + tilex*tile_w+x;
-      char *dst = tile + x*tile_h;
-      for (y = 0; y < tile_h; ++y, dst += 16, src += pitch) {
-        for (byte = 0; byte < 16; ++byte)
-          if ((uintptr_t) src  + byte < (uintptr_t) end)
-            dst[byte] = src[byte];
-      }
-    }
-  }
-  cl_buffer_unmap(mem->bo);
-}
 
 static cl_mem
 _cl_mem_new_image(cl_context ctx,
@@ -398,16 +335,6 @@ _cl_mem_new_image(cl_context ctx,
   if (mem == NULL || err != CL_SUCCESS)
     goto error;
 
-  /* Copy the data if required */
-  if (flags & CL_MEM_COPY_HOST_PTR) {
-    if (tiling == CL_NO_TILE)
-      cl_mem_copy_data_linear(mem, w, h, pitch, bpp, data);
-    else if (tiling == CL_TILE_X)
-      cl_mem_copy_data_tilex(mem, w, h, pitch, bpp, data);
-    else if (tiling == CL_TILE_Y)
-      cl_mem_copy_data_tiley(mem, w, h, pitch, bpp, data);
-  }
-
   mem->w = w;
   mem->h = h;
   mem->depth = depth;
@@ -421,6 +348,10 @@ _cl_mem_new_image(cl_context ctx,
   mem->type = image_type;
 
   cl_buffer_set_tiling(mem->bo, tiling, aligned_pitch);
+
+  /* Copy the data if required */
+  if (flags & CL_MEM_COPY_HOST_PTR)
+    cl_mem_copy_image(mem, pitch, slice_pitch, data);
 
 exit:
   if (errcode_ret)
