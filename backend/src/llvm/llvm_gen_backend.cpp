@@ -853,11 +853,8 @@ namespace gbe
       // Insert a new register for each function argument
 #if LLVM_VERSION_MINOR <= 1
       const AttrListPtr &PAL = F.getAttributes();
-      uint32_t argID = 1; // Start at one actually
-      for (; I != E; ++I, ++argID) {
-#else
-      for (; I != E; ++I, ++argID) {
 #endif /* LLVM_VERSION_MINOR <= 1 */
+      for (; I != E; ++I, ++argID) {
         const std::string &argName = I->getName().str();
         Type *type = I->getType();
 
@@ -892,7 +889,7 @@ namespace gbe
           PointerType *pointerType = dyn_cast<PointerType>(type);
           // By value structure
 #if LLVM_VERSION_MINOR <= 1
-          if (PAL.paramHasAttr(argID, Attribute::ByVal)) {
+          if (PAL.paramHasAttr(argID+1, Attribute::ByVal)) {
 #else
           if (I->hasByValAttr()) {
 #endif /* LLVM_VERSION_MINOR <= 1 */

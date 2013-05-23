@@ -71,7 +71,11 @@
 #include "llvm/IntrinsicInst.h"
 #include "llvm/Module.h"
 #include "llvm/Pass.h"
+#if LLVM_VERSION_MINOR <= 1
+#include "llvm/Support/IRBuilder.h"
+#else
 #include "llvm/IRBuilder.h"
+#endif /* LLVM_VERSION_MINOR <= 1 */
 #include "llvm/Support/CallSite.h"
 #include "llvm/Support/CFG.h"
 #include "llvm/Support/raw_ostream.h"
@@ -730,13 +734,7 @@ namespace gbe {
 
     Function::arg_iterator I = F.arg_begin(), E = F.arg_end();
 
-#if LLVM_VERSION_MINOR <= 1
-    const AttrListPtr &PAL = F.getAttributes();
-    uint32_t argID = 1; // Start at one actually
-    for (; I != E; ++I, ++argID) {
-#else
     for (; I != E; ++I) {
-#endif /* LLVM_VERSION_MINOR <= 1 */
       Type *type = I->getType();
 
       if(type->isVectorTy())
