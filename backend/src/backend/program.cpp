@@ -46,6 +46,23 @@
 #define LLVM_VERSION_MINOR 0
 #endif /* !defined(LLVM_VERSION_MINOR) */
 
+#include <clang/CodeGen/CodeGenAction.h>
+#include <clang/Frontend/CompilerInstance.h>
+#include <clang/Frontend/CompilerInvocation.h>
+#if LLVM_VERSION_MINOR <= 1
+#include <clang/Frontend/DiagnosticOptions.h>
+#else
+#include <clang/Basic/DiagnosticOptions.h>
+#endif  /* LLVM_VERSION_MINOR <= 1 */
+#include <clang/Frontend/TextDiagnosticPrinter.h>
+#include <clang/Basic/TargetInfo.h>
+#include <clang/Basic/TargetOptions.h>
+#include <llvm/ADT/IntrusiveRefCntPtr.h>
+#include <llvm/ADT/OwningPtr.h>
+#include <llvm/Module.h>
+#include <llvm/Bitcode/ReaderWriter.h>
+#include <llvm/Support/raw_ostream.h>
+
 namespace gbe {
 
   Kernel::Kernel(const std::string &name) :
@@ -104,6 +121,71 @@ namespace gbe {
     GBE_SAFE_DELETE(program);
   }
 
+  static void buildModuleFromSource(const char* input, const char* output) {
+    // Arguments to pass to the clang frontend
+    vector<const char *> args;
+    args.push_back("-emit-llvm");
+    args.push_back("-O3");
+    args.push_back("-triple");
+    args.push_back("nvptx");
+    args.push_back(input);
+
+    // The compiler invocation needs a DiagnosticsEngine so it can report problems
+#if LLVM_VERSION_MINOR <= 1
+    args.push_back("-triple");
+    args.push_back("ptx32");
+
+    clang::TextDiagnosticPrinter *DiagClient =
+                             new clang::TextDiagnosticPrinter(llvm::errs(), clang::DiagnosticOptions());
+    llvm::IntrusiveRefCntPtr<clang::DiagnosticIDs> DiagID(new clang::DiagnosticIDs());
+    clang::DiagnosticsEngine Diags(DiagID, DiagClient);
+#else
+    args.push_back("-ffp-contract=off");
+    args.push_back("-triple");
+    args.push_back("nvptx");
+
+    llvm::IntrusiveRefCntPtr<clang::DiagnosticOptions> DiagOpts = new clang::DiagnosticOptions();
+    clang::TextDiagnosticPrinter *DiagClient =
+                             new clang::TextDiagnosticPrinter(llvm::errs(), &*DiagOpts);
+    llvm::IntrusiveRefCntPtr<clang::DiagnosticIDs> DiagID(new clang::DiagnosticIDs());
+    clang::DiagnosticsEngine Diags(DiagID, &*DiagOpts, DiagClient);
+#endif /* LLVM_VERSION_MINOR <= 1 */
+
+    // Create the compiler invocation
+    llvm::OwningPtr<clang::CompilerInvocation> CI(new clang::CompilerInvocation);
+    clang::CompilerInvocation::CreateFromArgs(*CI,
+                                              &args[0],
+                                              &args[0] + args.size(),
+                                              Diags);
+
+    // Create the compiler instance
+    clang::CompilerInstance Clang;
+    Clang.setInvocation(CI.take());
+    // Get ready to report problems
+    Clang.createDiagnostics(args.size(), &args[0]);
+    if (!Clang.hasDiagnostics())
+      return;
+
+    // Set Language
+    clang::LangOptions & lang_opts = Clang.getLangOpts();
+    lang_opts.OpenCL = 1;
+
+    // Create an action and make the compiler instance carry it out
+    llvm::OwningPtr<clang::CodeGenAction> Act(new clang::EmitLLVMOnlyAction());
+    if (!Clang.ExecuteAction(*Act))
+      return;
+
+    llvm::Module *module = Act->takeModule();
+
+    std::string ErrorInfo;
+    llvm::raw_fd_ostream OS(output, ErrorInfo,llvm::raw_fd_ostream::F_Binary);
+    //still write to temp file for code simply, otherwise need add another function.
+    //because gbe_program_new_from_llvm also be used by cl_program_create_from_llvm, can't be removed
+    //TODO: Pass module to llvmToGen, if use module, should return Act and use OwningPtr out of this funciton
+    llvm::WriteBitcodeToFile(module, OS);
+    OS.close();
+  }
+
   extern std::string ocl_stdlib_str;
   extern std::string ocl_common_defines_str;
   static gbe_program programNewFromSource(const char *source,
@@ -124,26 +206,7 @@ namespace gbe {
     fwrite(source, strlen(source), 1, clFile);
     fclose(clFile);
 
-    // Now compile the code to llvm using clang
-#if LLVM_VERSION_MINOR <= 1
-    std::string compileCmd = "clang -x cl -fno-color-diagnostics -emit-llvm -O3 -ccc-host-triple ptx32 -c ";
-#else
-    std::string compileCmd = "clang -ffp-contract=off -emit-llvm -O3 -target nvptx -x cl -c ";
-#endif /* LLVM_VERSION_MINOR <= 1 */
-    compileCmd += clName;
-    compileCmd += " ";
-    if(options)
-      compileCmd += options;
-    compileCmd += " -o ";
-    compileCmd += llName;
-
-    // Open a pipe and compile from here. Using Clang API instead is better
-    FILE *pipe = popen(compileCmd.c_str(), "r");
-    FATAL_IF (pipe == NULL, "Unable to run extern compilation command");
-    char msg[256];
-    while (fgets(msg, sizeof(msg), pipe))
-      std::cout << msg;
-    pclose(pipe);
+    buildModuleFromSource(clName.c_str(), llName.c_str());
     remove(clName.c_str());
 
     // Now build the program from llvm

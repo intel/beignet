@@ -8,7 +8,7 @@
 # LLVM_FOUND       - True if llvm found.
 if (LLVM_INSTALL_DIR)
   find_program(LLVM_CONFIG_EXECUTABLE NAMES llvm-config-32 llvm-config-3.2 llvm-config DOC "llvm-config executable" PATHS ${LLVM_INSTALL_DIR} NO_DEFAULT_PATH)
-else (LLVM_INSTALL_DIR)                                                                
+else (LLVM_INSTALL_DIR)
   find_program(LLVM_CONFIG_EXECUTABLE NAMES llvm-config-32 llvm-config-3.2 llvm-config DOC "llvm-config executable")
 endif (LLVM_INSTALL_DIR)
 
@@ -66,3 +66,28 @@ execute_process(
   OUTPUT_VARIABLE LLVM_MODULE_LIBS
   OUTPUT_STRIP_TRAILING_WHITESPACE
 )
+
+macro(add_one_lib name)
+  FIND_LIBRARY(CLANG_LIB
+    NAMES ${name}
+    PATHS ${LLVM_LIBRARY_DIR} )
+  set(CLANG_LIBRARIES ${CLANG_LIBRARIES} ${CLANG_LIB})
+	unset(CLANG_LIB CACHE)
+endmacro()
+
+#Assume clang lib path same as llvm lib path
+add_one_lib("clangFrontend")
+add_one_lib("clangSerialization")
+add_one_lib("clangDriver")
+add_one_lib("clangCodeGen")
+add_one_lib("clangSema")
+add_one_lib("clangStaticAnalyzerFrontend")
+add_one_lib("clangStaticAnalyzerCheckers")
+add_one_lib("clangStaticAnalyzerCore")
+add_one_lib("clangAnalysis")
+add_one_lib("clangEdit")
+add_one_lib("clangAST")
+add_one_lib("clangParse")
+add_one_lib("clangSema")
+add_one_lib("clangLex")
+add_one_lib("clangBasic")

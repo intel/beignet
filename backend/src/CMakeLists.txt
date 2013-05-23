@@ -116,6 +116,7 @@ target_link_libraries(
                       ${DRM_INTEL_LIBRARY}
                       ${DRM_LIBRARY}
                       ${OPENGL_LIBRARIES}
+                      ${CLANG_LIBRARIES}
                       ${LLVM_MODULE_LIBS}
                       ${CMAKE_THREAD_LIBS_INIT}
                       ${CMAKE_DL_LIBS})
