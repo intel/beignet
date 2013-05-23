@@ -1665,14 +1665,13 @@ namespace gbe
 
     void emitByteGather(Selection::Opaque &sel,
                         const ir::LoadInstruction &insn,
+                        const uint32_t elemSize,
                         GenRegister address,
                         GenRegister value,
                         uint32_t bti) const
     {
       using namespace ir;
       GBE_ASSERT(insn.getValueNum() == 1);
-      const Type type = insn.getValueType();
-      const uint32_t elemSize = getByteScatterGatherSize(type);
       const uint32_t simdWidth = sel.ctx.getSimdWidth();
 
       // We need a temporary register if we read bytes or words
@@ -1711,13 +1710,15 @@ namespace gbe
                  insn.getAddressSpace() == MEM_PRIVATE ||
                  insn.getAddressSpace() == MEM_LOCAL);
       GBE_ASSERT(sel.ctx.isScalarReg(insn.getValue(0)) == false);
+      const Type type = insn.getValueType();
+      const uint32_t elemSize = getByteScatterGatherSize(type);
       if (insn.getAddressSpace() == MEM_CONSTANT)
         this->emitIndirectMove(sel, insn, address);
-      else if (insn.isAligned() == true)
+      else if (insn.isAligned() == true && elemSize == GEN_BYTE_SCATTER_DWORD)
         this->emitUntypedRead(sel, insn, address, space == MEM_LOCAL ? 0xfe : 0x00);
       else {
         const GenRegister value = sel.selReg(insn.getValue(0));
-        this->emitByteGather(sel, insn, address, value, space == MEM_LOCAL ? 0xfe : 0x01);
+        this->emitByteGather(sel, insn, elemSize, address, value, space == MEM_LOCAL ? 0xfe : 0x01);
       }
       return true;
     }
@@ -1745,13 +1746,12 @@ namespace gbe
 
     void emitByteScatter(Selection::Opaque &sel,
                          const ir::StoreInstruction &insn,
+                         const uint32_t elemSize,
                          GenRegister addr,
                          GenRegister value,
                          uint32_t bti) const
     {
       using namespace ir;
-      const Type type = insn.getValueType();
-      const uint32_t elemSize = getByteScatterGatherSize(type);
       const uint32_t simdWidth = sel.ctx.getSimdWidth();
       const GenRegister dst = value;
 
@@ -1771,12 +1771,14 @@ namespace gbe
       using namespace ir;
       const AddressSpace space = insn.getAddressSpace();
       const uint32_t bti = space == MEM_LOCAL ? 0xfe : 0x01;
-      if (insn.isAligned() == true)
+      const Type type = insn.getValueType();
+      const uint32_t elemSize = getByteScatterGatherSize(type);
+      if (insn.isAligned() == true && elemSize == GEN_BYTE_SCATTER_DWORD)
         this->emitUntypedWrite(sel, insn, bti);
       else {
         const GenRegister address = sel.selReg(insn.getAddress());
         const GenRegister value = sel.selReg(insn.getValue(0));
-        this->emitByteScatter(sel, insn, address, value, bti);
+        this->emitByteScatter(sel, insn, elemSize, address, value, bti);
       }
       return true;
     }
