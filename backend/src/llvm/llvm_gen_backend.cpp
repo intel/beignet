@@ -2224,8 +2224,27 @@ namespace gbe
               ctx.STORE(type, tuple, addr, addrSpace, 4, true);
           }
         }
-      } else
-        GBE_ASSERTM(false, "loads / stores of vectors of short / chars is not supported yet");
+      } else {
+        for (uint32_t elemID = 0; elemID < elemNum; elemID++) {
+          const ir::Register reg = this->getRegister(llvmValues, elemID);
+          ir::Register addr;
+          if (elemID == 0)
+            addr = ptr;
+          else {
+              const ir::Register offset = ctx.reg(pointerFamily);
+              ir::ImmediateIndex immIndex;
+              int elemSize = getTypeByteSize(unit, elemType);
+              immIndex = ctx.newImmediate(int32_t(elemID * elemSize));
+              addr = ctx.reg(pointerFamily);
+              ctx.LOADI(ir::TYPE_S32, offset, immIndex);
+              ctx.ADD(ir::TYPE_S32, addr, ptr, offset);
+          }
+          if (isLoad)
+           ctx.LOAD(type, addr, addrSpace, dwAligned, reg);
+          else
+           ctx.STORE(type, addr, addrSpace, dwAligned, reg);
+        }
+      }
     }
   }
 
