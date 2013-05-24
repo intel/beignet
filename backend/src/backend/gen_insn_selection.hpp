@@ -84,8 +84,8 @@ namespace gbe
     const GenRegister &dst(uint32_t dstID) const { return regs[dstID]; }
     /*! Damn C++ */
     const GenRegister &src(uint32_t srcID) const { return regs[dstNum+srcID]; }
-    /*! No more than 6 sources (used by typed writes) */
-    enum { MAX_SRC_NUM = 16 };
+    /*! No more than 17 sources (used by typed writes on simd8 mode.) */
+    enum { MAX_SRC_NUM = 17 };
     /*! No more than 4 destinations (used by samples and untyped reads) */
     enum { MAX_DST_NUM = 4 };
     /*! State of the instruction (extra fields neeed for the encoding) */
@@ -111,9 +111,9 @@ namespace gbe
     /*! Gen opcode */
     uint8_t opcode;
     /*! Number of destinations */
-    uint8_t dstNum:4;
+    uint8_t dstNum:3;
     /*! Number of sources */
-    uint8_t srcNum:4;
+    uint8_t srcNum:5;
     /*! To store various indices */
     uint16_t index;
     /*! Variable sized. Destinations and sources go here */
