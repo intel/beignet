@@ -31,12 +31,12 @@ many things must be implemented:
 - Lowering down of int16 / int8 / float16 / char16 / char8 / char4 loads and
   stores into the supported loads and stores
 
-- Support for constant buffers declared in the OpenCL source file
-
 - Support for local declaration of local array (the OpenCL profile will properly
   declare them as global arrays)
 
 - Support for doubles
+
+- Support atomic extensions.
 
 - Better resolving of the PHI functions. Today, we always generate MOV
   instructions at the end of each basic block . They can be easily optimized.
@@ -48,10 +48,10 @@ The code is defined in `src/ir`. Main things to do are:
 
 - Bringing support for doubles
 
+- Adding support for atomic extensions.
+
 - Finishing the handling of function arguments (see the [IR
   description](gen_ir.html) for more details)
-
-- Adding support for constant data per unit
 
 - Adding support for linking IR units together. OpenCL indeed allows to create
   programs from several sources
@@ -75,13 +75,15 @@ The code is defined in `src/backend`. Main things to do are:
 
 - Implementing support for doubles
 
+- Implementing atomic extensions.
+
 - Implementing register spilling (see the [compiler backend
   description](./compiler_backend.html) for more details)
 
 - Implementing proper instruction selection. A "simple" tree matching algorithm
   should provide good results for Gen
 
-- Implementing the instruction scheduling pass
+- Improving the instruction scheduling pass
 
 General plumbing
 ----------------

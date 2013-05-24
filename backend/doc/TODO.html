@@ -26,10 +26,10 @@ many things must be implemented:</p>
 <code>mad</code>, atomic operations, barriers...).</p></li>
 <li><p>Lowering down of int16 / int8 / float16 / char16 / char8 / char4 loads and
 stores into the supported loads and stores</p></li>
-<li><p>Support for constant buffers declared in the OpenCL source file</p></li>
 <li><p>Support for local declaration of local array (the OpenCL profile will properly
 declare them as global arrays)</p></li>
 <li><p>Support for doubles</p></li>
+<li><p>Support atomic extensions.</p></li>
 <li><p>Better resolving of the PHI functions. Today, we always generate MOV
 instructions at the end of each basic block . They can be easily optimized.</p></li>
 </ul>
@@ -40,9 +40,9 @@ instructions at the end of each basic block . They can be easily optimized.</p><
 
 <ul>
 <li><p>Bringing support for doubles</p></li>
+<li><p>Adding support for atomic extensions.</p></li>
 <li><p>Finishing the handling of function arguments (see the <a href="gen_ir.html">IR
 description</a> for more details)</p></li>
-<li><p>Adding support for constant data per unit</p></li>
 <li><p>Adding support for linking IR units together. OpenCL indeed allows to create
 programs from several sources</p></li>
 <li><p>Uniform analysys. This is a major performance improvement. A "uniform" value
@@ -63,11 +63,12 @@ allocation.</p></li>
 
 <ul>
 <li><p>Implementing support for doubles</p></li>
+<li><p>Implementing atomic extensions.</p></li>
 <li><p>Implementing register spilling (see the <a href="./compiler_backend.html">compiler backend
 description</a> for more details)</p></li>
 <li><p>Implementing proper instruction selection. A "simple" tree matching algorithm
 should provide good results for Gen</p></li>
-<li><p>Implementing the instruction scheduling pass</p></li>
+<li><p>Improving the instruction scheduling pass</p></li>
 </ul>
 
 <h2>General plumbing</h2>

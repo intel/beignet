@@ -10,12 +10,7 @@ about the compiler, please refer to <code>backend/README.md</code></p>
 
 <h2>How to build</h2>
 
-<p>There are two ways to build Beignet.</p>
-
-<p>The first one uses a simple Makefile. Just type <code>make</code> and the project will
-build if everything is properly installed.</p>
-
-<p>The project also uses CMake with three profiles:</p>
+<p>The project uses CMake with three profiles:</p>
 
 <ol>
 <li>Debug (-g)</li>
@@ -91,12 +86,8 @@ are with the run-time in <code>./kernels</code>.</p>
 
 <h2>Supported Hardware</h2>
 
-<p>As an important remark, the code was only tested on IVB GT2 with a rather
-minimal Linux distribution (ArchLinux) and a very small desktop (dwm). If you
-use something more sophisticated using compiz or similar stuffs, you may expect
-serious problems and GPU hangs.</p>
-
-<p>Only IVB is supported right now. Actually, the code was only run on IVB GT2. You
+<p>The code was tested on IVB GT2 with ubuntu and fedora core distribution.
+Currently Only IVB is supported right now. Actually, the code was only run on IVB GT2. You
 may expect some issues with IVB GT1.</p>
 
 <h2>TODO</h2>
@@ -106,8 +97,6 @@ together to test and develop the OpenCL compiler. A partial list of things to
 do:</p>
 
 <ul>
-<li><p>Support dynamic sampler assignment in kernel. We now only support user to use
-clCreateSampler at host side and then pass the sampler to kernel.</p></li>
 <li><p>Complete cl_khr_gl_sharing support. We lack of some APIs implementation such
 as clCreateFromGLBuffer,clCreateFromGLRenderbuffer,clGetGLObjectInfo... Currently,
 the working APIs are clCreateFromGLTexture,clCreateFromGLTexture2D.</p></li>
@@ -121,14 +110,13 @@ implement those Enqueue*Buffer functions. </p></li>
 expensive pipe controls are issued for each batch buffer</p></li>
 <li><p>Valgrind reports some leaks in libdrm. It sounds like a false positive but it
 has to be checked. Idem for LLVM. There is one leak here to check.</p></li>
-<li><p>Support image/samplers in C++ simulator.</p></li>
 </ul>
 
 <p>More generally, everything in the run-time that triggers the "FATAL" macro means
 that something that must be supported is not implemented properly (either it
 does not comply with the standard or it is just missing)</p>
 
-<p>Project repository</p>
+<h2>Project repository</h2>
 
 <p>Right now, we host our project on fdo at: git://anongit.freedesktop.org/beignet.</p>
 
@@ -136,6 +124,11 @@ does not comply with the standard or it is just missing)</p>
 
 <p>This project was created by Ben Segovia when he was working for Intel. Now we
 have a team in China OTC graphics department continue to work on this project.
-We haven't set up a public mail list for this project, but we will do so in
-the near furture. Before that, the contact is as below:
-Zou Nanhai (<a href="&#x6D;&#x61;&#x69;&#108;&#x74;&#111;:&#x6E;&#97;&#x6E;&#104;&#x61;&#105;&#x2E;&#122;&#x6F;&#x75;&#64;&#x69;&#x6E;&#x74;&#101;&#x6C;&#x2E;&#x63;&#111;&#109;">&#x6E;&#97;&#x6E;&#104;&#x61;&#105;&#x2E;&#122;&#x6F;&#x75;&#64;&#x69;&#x6E;&#x74;&#101;&#x6C;&#x2E;&#x63;&#111;&#109;</a>).</p>
+The official contact for this project is: Zou Nanhai (<a href="&#109;&#97;il&#x74;&#111;:&#110;&#x61;n&#x68;&#97;&#x69;&#46;&#x7A;&#x6F;&#x75;&#64;i&#x6E;&#x74;&#101;&#x6C;&#x2E;&#99;&#x6F;&#109;">&#110;&#x61;n&#x68;&#97;&#x69;&#46;&#x7A;&#x6F;&#x75;&#64;i&#x6E;&#x74;&#101;&#x6C;&#x2E;&#99;&#x6F;&#109;</a>).</p>
+
+<h2>How to contribute</h2>
+
+<p>You are always welcome to contribute to this project, just need to subscribe
+to the beignet mail list and send patches to it for review.
+The official mail list is as below:
+http://lists.freedesktop.org/mailman/listinfo/beignet</p>

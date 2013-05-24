@@ -12,12 +12,7 @@ about the compiler, please refer to `backend/README.md`
 How to build
 ------------
 
-There are two ways to build Beignet.
-
-The first one uses a simple Makefile. Just type `make` and the project will
-build if everything is properly installed.
-
-The project also uses CMake with three profiles:
+The project uses CMake with three profiles:
 
 1. Debug (-g)
 2. RelWithDebInfo (-g with optimizations)
@@ -91,12 +86,8 @@ will only run `some_unit_test0` and `some_unit_test1` tests
 Supported Hardware
 ------------------
 
-As an important remark, the code was only tested on IVB GT2 with a rather
-minimal Linux distribution (ArchLinux) and a very small desktop (dwm). If you
-use something more sophisticated using compiz or similar stuffs, you may expect
-serious problems and GPU hangs.
-
-Only IVB is supported right now. Actually, the code was only run on IVB GT2. You
+The code was tested on IVB GT2 with ubuntu and fedora core distribution.
+Currently Only IVB is supported right now. Actually, the code was only run on IVB GT2. You
 may expect some issues with IVB GT1.
 
 TODO
@@ -105,9 +96,6 @@ TODO
 The run-time is far from being complete. Most of the pieces have been put
 together to test and develop the OpenCL compiler. A partial list of things to
 do:
-
-- Support dynamic sampler assignment in kernel. We now only support user to use
-  clCreateSampler at host side and then pass the sampler to kernel.
 
 - Complete cl\_khr\_gl\_sharing support. We lack of some APIs implementation such
   as clCreateFromGLBuffer,clCreateFromGLRenderbuffer,clGetGLObjectInfo... Currently,
@@ -128,20 +116,23 @@ do:
 - Valgrind reports some leaks in libdrm. It sounds like a false positive but it
   has to be checked. Idem for LLVM. There is one leak here to check.
 
-- Support image/samplers in C++ simulator.
-
 More generally, everything in the run-time that triggers the "FATAL" macro means
 that something that must be supported is not implemented properly (either it
 does not comply with the standard or it is just missing)
 
 Project repository
-
+------------------
 Right now, we host our project on fdo at: git://anongit.freedesktop.org/beignet.
 
 The team
 --------
 This project was created by Ben Segovia when he was working for Intel. Now we
 have a team in China OTC graphics department continue to work on this project.
-We haven't set up a public mail list for this project, but we will do so in
-the near furture. Before that, the contact is as below:
-Zou Nanhai (<nanhai.zou@intel.com>).
+The official contact for this project is: Zou Nanhai (<nanhai.zou@intel.com>).
+
+How to contribute
+-----------------
+You are always welcome to contribute to this project, just need to subscribe
+to the beignet mail list and send patches to it for review.
+The official mail list is as below:
+http://lists.freedesktop.org/mailman/listinfo/beignet
