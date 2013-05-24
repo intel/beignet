@@ -271,7 +271,7 @@ namespace gbe
   ///////////////////////////////////////////////////////////////////////////
   // Generic Context (shared by the simulator and the HW context)
   ///////////////////////////////////////////////////////////////////////////
-  IVAR(OCL_SIMD_WIDTH, 8, 16, 32);
+  IVAR(OCL_SIMD_WIDTH, 8, 15, 16);
 
   Context::Context(const ir::Unit &unit, const std::string &name) :
     unit(unit), fn(*unit.getFunction(name)), name(name), liveness(NULL), dag(NULL)
@@ -280,12 +280,12 @@ namespace gbe
     this->liveness = GBE_NEW(ir::Liveness, const_cast<ir::Function&>(fn));
     this->dag = GBE_NEW(ir::FunctionDAG, *this->liveness);
     this->partitioner = GBE_NEW_NO_ARG(RegisterFilePartitioner);
-    if (fn.getSimdWidth() == 0)
+    if (fn.getSimdWidth() == 0 || OCL_SIMD_WIDTH != 15)
       this->simdWidth = nextHighestPowerOf2(OCL_SIMD_WIDTH);
     else
       this->simdWidth = fn.getSimdWidth();
-
   }
+
   Context::~Context(void) {
     GBE_SAFE_DELETE(this->partitioner);
     GBE_SAFE_DELETE(this->dag);
