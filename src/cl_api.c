@@ -848,19 +848,46 @@ clEnqueueReadBuffer(cl_command_queue command_queue,
                     cl_mem           buffer,
                     cl_bool          blocking_read,
                     size_t           offset,
-                    size_t           cb,
+                    size_t           size,
                     void *           ptr,
                     cl_uint          num_events_in_wait_list,
                     const cl_event * event_wait_list,
                     cl_event *       event)
 {
-	cl_int err = CL_SUCCESS;
-	assert(ptr != NULL);
-	void* temp_ptr = NULL;
-	temp_ptr = clMapBufferIntel(buffer, &err);
-	assert(err == CL_SUCCESS);
-	memcpy(ptr, temp_ptr, cb);
-	return err;
+  cl_int err = CL_SUCCESS;
+  void* src_ptr;
+
+  CHECK_QUEUE(command_queue);
+  CHECK_MEM(buffer);
+  if (command_queue->ctx != buffer->ctx) {
+     err = CL_INVALID_CONTEXT;
+     goto error;
+  }
+
+  if (blocking_read != CL_TRUE)
+     NOT_IMPLEMENTED;
+
+  if (!ptr || !size || offset + size > buffer->size) {
+     err = CL_INVALID_VALUE;
+     goto error;
+  }
+
+  if (buffer->flags & (CL_MEM_HOST_WRITE_ONLY | CL_MEM_HOST_NO_ACCESS)) {
+     err = CL_INVALID_OPERATION;
+     goto error;
+  }
+
+  if (!(src_ptr = cl_mem_map_auto(buffer))) {
+    err = CL_MAP_FAILURE;
+    goto error;
+  }
+
+  memcpy(ptr, (char*)src_ptr + offset, size);
+
+  err = cl_mem_unmap_auto(buffer);
+
+error:
+  return err;
 }
 
 cl_int
@@ -888,20 +915,45 @@ clEnqueueWriteBuffer(cl_command_queue    command_queue,
                      cl_mem              buffer,
                      cl_bool             blocking_write,
                      size_t              offset,
-                     size_t              cb,
+                     size_t              size,
                      const void *        ptr,
                      cl_uint             num_events_in_wait_list,
                      const cl_event *    event_wait_list,
                      cl_event *          event)
 {
+  cl_int err = CL_SUCCESS;
+  void* dst_ptr;
+
+  CHECK_QUEUE(command_queue);
+  CHECK_MEM(buffer);
+  if (command_queue->ctx != buffer->ctx) {
+    err = CL_INVALID_CONTEXT;
+    goto error;
+  }
+
   if (blocking_write != CL_TRUE)
     NOT_IMPLEMENTED;
-  cl_int err;
-  void *p = clMapBufferIntel(buffer, &err);
-  if (err != CL_SUCCESS)
-    return err;
-  memcpy(p + offset, ptr, cb);
-  err = clUnmapBufferIntel(buffer);
+
+  if (!ptr || !size || offset + size > buffer->size) {
+    err = CL_INVALID_VALUE;
+    goto error;
+  }
+
+  if (buffer->flags & (CL_MEM_HOST_READ_ONLY | CL_MEM_HOST_NO_ACCESS)) {
+    err = CL_INVALID_OPERATION;
+    goto error;
+  }
+
+  if (!(dst_ptr = cl_mem_map_auto(buffer))) {
+    err = CL_MAP_FAILURE;
+    goto error;
+  }
+
+  memcpy((char*)dst_ptr + offset, ptr, size);
+
+  err = cl_mem_unmap_auto(buffer);
+
+error:
   return err;
 }
 
@@ -1200,7 +1252,7 @@ clEnqueueMapBuffer(cl_command_queue  command_queue,
                    cl_bool           blocking_map,
                    cl_map_flags      map_flags,
                    size_t            offset,
-                   size_t            cb,
+                   size_t            size,
                    cl_uint           num_events_in_wait_list,
                    const cl_event *  event_wait_list,
                    cl_event *        event,
@@ -1217,14 +1269,28 @@ clEnqueueMapBuffer(cl_command_queue  command_queue,
   }
 
   if (blocking_map != CL_TRUE)
-     NOT_IMPLEMENTED;
-  if (offset != 0)
-     NOT_IMPLEMENTED;
+    NOT_IMPLEMENTED;
+
+  if (!size || offset + size > buffer->size) {
+    err = CL_INVALID_VALUE;
+    goto error;
+  }
+
+  if ((map_flags & CL_MAP_READ &&
+       buffer->flags & (CL_MEM_HOST_WRITE_ONLY | CL_MEM_HOST_NO_ACCESS)) ||
+      (map_flags & (CL_MAP_WRITE | CL_MAP_WRITE_INVALIDATE_REGION) &&
+       buffer->flags & (CL_MEM_HOST_READ_ONLY | CL_MEM_HOST_NO_ACCESS)))
+  {
+    err = CL_INVALID_OPERATION;
+    goto error;
+  }
 
   if (!(ptr = cl_mem_map_auto(buffer))) {
     err = CL_MAP_FAILURE;
     goto error;
   }
+
+  ptr = (char*)ptr + offset;
 
 error:
   if (errcode_ret)
