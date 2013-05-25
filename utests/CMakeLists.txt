@@ -9,6 +9,7 @@ set (utests_sources
   compiler_mandelbrot.cpp
   compiler_mandelbrot_alternate.cpp
   compiler_box_blur_float.cpp
+  compiler_box_blur_image.cpp
   compiler_box_blur.cpp
   compiler_insert_to_constant.cpp
   compiler_argument_structure.cpp
