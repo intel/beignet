@@ -105,30 +105,48 @@ cl_get_device_ids(cl_platform_id    platform,
                   cl_device_id *    devices,
                   cl_uint *         num_devices)
 {
+  cl_device_id device;
+
   /* Check parameter consistency */
-  if (UNLIKELY(num_entries == 0 && devices == NULL && num_devices == NULL))
-    return CL_SUCCESS;
   if (UNLIKELY(devices == NULL && num_devices == NULL))
-    return CL_INVALID_VALUE;
-  if (UNLIKELY(platform != NULL && platform != intel_platform))
-    return CL_INVALID_PLATFORM;
-  if (num_devices && (device_type == CL_DEVICE_TYPE_CPU)) {
-    *num_devices = 0;
-    return CL_SUCCESS;	
-  }
-
-  /* Detect our device (reject a non intel one or gen<6) */
-  if (devices && UNLIKELY((*devices = cl_get_gt_device()) != NULL)) {
-    if (num_devices)
-      *num_devices = 1;
-
-    (*devices)->extensions = intel_platform->extensions;
-    (*devices)->extensions_sz = intel_platform->extensions_sz;
     return CL_SUCCESS;
+  if (UNLIKELY(platform && platform != intel_platform))
+    return CL_INVALID_PLATFORM;
+  if (UNLIKELY(
+      device_type != CL_DEVICE_TYPE_GPU &&
+      device_type != CL_DEVICE_TYPE_DEFAULT &&
+      device_type != CL_DEVICE_TYPE_ALL
+    ))
+  {
+    if (num_devices)
+      *num_devices = 0;
+
+    if (device_type == CL_DEVICE_TYPE_CPU ||
+        device_type == CL_DEVICE_TYPE_ACCELERATOR
+       )
+       return CL_DEVICE_NOT_FOUND;
+    else
+       return CL_INVALID_DEVICE_TYPE;
   }
-  else {
+  if (UNLIKELY(devices && num_entries == 0))
+    return CL_INVALID_VALUE;
+
+  /* Do we have a usable device? */
+  device = cl_get_gt_device();
+  if (!device) {
+    if (num_devices)
+      *num_devices = 0;
+    if (devices)
+      *devices = 0;
+    return CL_DEVICE_NOT_FOUND;
+  } else {
     if (num_devices)
       *num_devices = 1;
+    if (devices) {
+      *devices = device;
+      (*devices)->extensions = intel_platform->extensions;
+      (*devices)->extensions_sz = intel_platform->extensions_sz;
+    }
     return CL_SUCCESS;
   }
 }
