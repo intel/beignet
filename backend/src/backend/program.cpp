@@ -121,11 +121,32 @@ namespace gbe {
     GBE_SAFE_DELETE(program);
   }
 
-  static void buildModuleFromSource(const char* input, const char* output) {
+  static void buildModuleFromSource(const char* input, const char* output, std::string options) {
     // Arguments to pass to the clang frontend
     vector<const char *> args;
+    bool bOpt = true;
+
+    vector<std::string> useless; //hold substrings to avoid c_str free
+    uint32_t start = 0, end = 0;
+    /* clang unsupport options:
+       -cl-denorms-are-zero, -cl-strict-aliasing
+       -cl-no-signed-zeros, -cl-fp32-correctly-rounded-divide-sqrt
+       all support options, refer to clang/include/clang/Driver/Options.inc
+       Maybe can filter these options to avoid warning
+    */
+    while (end != std::string::npos) {
+      end = options.find(' ', start);
+      std::string str = options.substr(start, end - start);
+      if(str.size() == 0)
+        continue;
+      if(str == "-cl-opt-disable") bOpt = false;
+      useless.push_back(str);
+      args.push_back(str.c_str());
+      start = end + 1;
+    }
+
     args.push_back("-emit-llvm");
-    args.push_back("-O3");
+    if(bOpt)  args.push_back("-O3");
     args.push_back("-triple");
     args.push_back("nvptx");
     args.push_back(input);
@@ -206,7 +227,7 @@ namespace gbe {
     fwrite(source, strlen(source), 1, clFile);
     fclose(clFile);
 
-    buildModuleFromSource(clName.c_str(), llName.c_str());
+    buildModuleFromSource(clName.c_str(), llName.c_str(), options ? options : "");
     remove(clName.c_str());
 
     // Now build the program from llvm
