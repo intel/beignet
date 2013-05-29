@@ -1907,14 +1907,15 @@ namespace gbe
             const ir::Tuple dstTuple = ctx.arrayTuple(&dstTupleData[0], elemNum);
             const ir::Tuple srcTuple = ctx.arrayTuple(&srcTupleData[0], 5);
 
-            ir::Type srcType = ir::TYPE_U32, dstType = ir::TYPE_U32;
+            ir::Type srcType = ir::TYPE_S32, dstType = ir::TYPE_U32;
 
             switch(it->second) {
               case GEN_OCL_READ_IMAGE0:
               case GEN_OCL_READ_IMAGE2:
               case GEN_OCL_READ_IMAGE10:
               case GEN_OCL_READ_IMAGE12:
-                srcType = dstType = ir::TYPE_U32;
+                dstType = ir::TYPE_U32;
+                srcType = ir::TYPE_S32;
                 break;
               case GEN_OCL_READ_IMAGE1:
               case GEN_OCL_READ_IMAGE3:
@@ -1926,7 +1927,7 @@ namespace gbe
               case GEN_OCL_READ_IMAGE4:
               case GEN_OCL_READ_IMAGE14:
                 dstType = ir::TYPE_FLOAT;
-                srcType = ir::TYPE_U32;
+                srcType = ir::TYPE_S32;
                 break;
               case GEN_OCL_READ_IMAGE5:
               case GEN_OCL_READ_IMAGE15:
