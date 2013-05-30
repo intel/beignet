@@ -127,7 +127,7 @@ namespace gbe {
     bool bOpt = true;
 
     vector<std::string> useless; //hold substrings to avoid c_str free
-    uint32_t start = 0, end = 0;
+    size_t start = 0, end = 0;
     /* clang unsupport options:
        -cl-denorms-are-zero, -cl-strict-aliasing
        -cl-no-signed-zeros, -cl-fp32-correctly-rounded-divide-sqrt
