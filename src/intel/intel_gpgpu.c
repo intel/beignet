@@ -748,7 +748,15 @@ intel_gpgpu_walker(intel_gpgpu_t *gpgpu,
     global_wk_sz[1] / local_wk_sz[1],
     global_wk_sz[2] / local_wk_sz[2]
   };
+  uint32_t right_mask = ~0x0;
+  size_t group_sz = local_wk_sz[0] * local_wk_sz[1] * local_wk_sz[2];
+
   assert(simd_sz == 8 || simd_sz == 16);
+
+  uint32_t shift = (group_sz & (simd_sz - 1));
+  shift = (shift == 0) ? simd_sz : shift;
+  right_mask = (1 << shift) - 1;
+
   BEGIN_BATCH(gpgpu->batch, 11);
   OUT_BATCH(gpgpu->batch, CMD_GPGPU_WALKER | 9);
   OUT_BATCH(gpgpu->batch, 0);                        /* kernel index == 0 */
@@ -762,8 +770,8 @@ intel_gpgpu_walker(intel_gpgpu_t *gpgpu,
   OUT_BATCH(gpgpu->batch, global_wk_dim[1]);
   OUT_BATCH(gpgpu->batch, global_wk_off[2]);
   OUT_BATCH(gpgpu->batch, global_wk_dim[2]);
-  OUT_BATCH(gpgpu->batch, ~0x0);
-  OUT_BATCH(gpgpu->batch, ~0x0);
+  OUT_BATCH(gpgpu->batch, right_mask);
+  OUT_BATCH(gpgpu->batch, ~0x0);                     /* we always set height as 1, so set bottom mask as all 1*/
   ADVANCE_BATCH(gpgpu->batch);
 
   BEGIN_BATCH(gpgpu->batch, 2);

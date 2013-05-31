@@ -209,7 +209,7 @@ cl_command_queue_ND_range_gen7(cl_command_queue queue,
 
   /* Compute the number of HW threads we need */
   TRY (cl_kernel_work_group_sz, ker, local_wk_sz, 3, &local_sz);
-  kernel.thread_n = thread_n = local_sz / simd_sz;
+  kernel.thread_n = thread_n = (local_sz + simd_sz - 1) / simd_sz;
   kernel.cst_sz = cst_sz;
 
   /* Curbe step 1: fill the constant buffer data shared by all threads */

@@ -292,7 +292,7 @@ cl_kernel_work_group_sz(cl_kernel ker,
   sz = local_wk_sz[0];
   for (i = 1; i < wk_dim; ++i)
     sz *= local_wk_sz[i];
-  FATAL_IF (sz % 16, "Work group size must be a multiple of 16");
+
   if (sz > ker->program->ctx->device->max_work_group_size) {
     err = CL_INVALID_WORK_ITEM_SIZE;
     goto error;
