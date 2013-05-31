@@ -518,6 +518,7 @@ namespace gbe
     allocatePayloadReg(GBE_CURBE_GLOBAL_OFFSET_X, ocl::goffset0);
     allocatePayloadReg(GBE_CURBE_GLOBAL_OFFSET_Y, ocl::goffset1);
     allocatePayloadReg(GBE_CURBE_GLOBAL_OFFSET_Z, ocl::goffset2);
+    allocatePayloadReg(GBE_CURBE_WORK_DIM, ocl::workdim);
     allocatePayloadReg(GBE_CURBE_GROUP_NUM_X, ocl::numgroup0);
     allocatePayloadReg(GBE_CURBE_GROUP_NUM_Y, ocl::numgroup1);
     allocatePayloadReg(GBE_CURBE_GROUP_NUM_Z, ocl::numgroup2);

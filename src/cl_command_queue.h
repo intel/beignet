@@ -54,6 +54,7 @@ extern void cl_command_queue_add_ref(cl_command_queue);
 /* Map ND range kernel from OCL API */
 extern cl_int cl_command_queue_ND_range(cl_command_queue queue,
                                         cl_kernel ker,
+                                        const uint32_t work_dim,
                                         const size_t *global_work_offset,
                                         const size_t *global_work_size,
                                         const size_t *local_work_size);

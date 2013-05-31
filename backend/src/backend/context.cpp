@@ -430,6 +430,7 @@ namespace gbe
         INSERT_REG(goffset0, GLOBAL_OFFSET_X, 1)
         INSERT_REG(goffset1, GLOBAL_OFFSET_Y, 1)
         INSERT_REG(goffset2, GLOBAL_OFFSET_Z, 1)
+        INSERT_REG(workdim, WORK_DIM, 1)
         INSERT_REG(numgroup0, GROUP_NUM_X, 1)
         INSERT_REG(numgroup1, GROUP_NUM_Y, 1)
         INSERT_REG(numgroup2, GROUP_NUM_Z, 1)
@@ -621,6 +622,7 @@ namespace gbe
         reg == ir::ocl::goffset0  ||
         reg == ir::ocl::goffset1  ||
         reg == ir::ocl::goffset2  ||
+        reg == ir::ocl::workdim   ||
         reg == ir::ocl::constoffst)
       return true;
     return false;

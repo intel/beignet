@@ -98,6 +98,7 @@ error:
 /* Will return the total amount of slm used */
 static int32_t
 cl_curbe_fill(cl_kernel ker,
+              const uint32_t work_dim,
               const size_t *global_wk_off,
               const size_t *global_wk_sz,
               const size_t *local_wk_sz,
@@ -120,6 +121,7 @@ cl_curbe_fill(cl_kernel ker,
   UPLOAD(GBE_CURBE_GROUP_NUM_Y, global_wk_sz[1]/local_wk_sz[1]);
   UPLOAD(GBE_CURBE_GROUP_NUM_Z, global_wk_sz[2]/local_wk_sz[2]);
   UPLOAD(GBE_CURBE_THREAD_NUM, thread_n);
+  UPLOAD(GBE_CURBE_WORK_DIM, work_dim);
   UPLOAD(GBE_CURBE_GLOBAL_CONSTANT_OFFSET, gbe_kernel_get_curbe_offset(ker->opaque, GBE_CURBE_GLOBAL_CONSTANT_DATA, 0) + 32);
 #undef UPLOAD
 
@@ -185,6 +187,7 @@ cl_bind_stack(cl_gpgpu gpgpu, cl_kernel ker)
 LOCAL cl_int
 cl_command_queue_ND_range_gen7(cl_command_queue queue,
                                cl_kernel ker,
+                               const uint32_t work_dim,
                                const size_t *global_wk_off,
                                const size_t *global_wk_sz,
                                const size_t *local_wk_sz)
@@ -214,7 +217,7 @@ cl_command_queue_ND_range_gen7(cl_command_queue queue,
 
   /* Curbe step 1: fill the constant buffer data shared by all threads */
   if (ker->curbe)
-    kernel.slm_sz = cl_curbe_fill(ker, global_wk_off, global_wk_sz, local_wk_sz, thread_n);
+    kernel.slm_sz = cl_curbe_fill(ker, work_dim, global_wk_off, global_wk_sz, local_wk_sz, thread_n);
 
   /* Setup the kernel */
   cl_gpgpu_state_init(gpgpu, ctx->device->max_compute_unit, cst_sz / 32);

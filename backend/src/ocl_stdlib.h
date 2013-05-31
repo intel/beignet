@@ -346,8 +346,11 @@ DEC(16);
 /////////////////////////////////////////////////////////////////////////////
 // Work Items functions (see 6.11.1 of OCL 1.1 spec)
 /////////////////////////////////////////////////////////////////////////////
-// TODO get_global_offset
-// TODO get_work_dim
+
+PURE CONST uint __gen_ocl_get_work_dim(void);
+INLINE uint get_work_dim(void) {
+  return __gen_ocl_get_work_dim();
+}
 
 #define DECL_INTERNAL_WORK_ITEM_FN(NAME) \
 PURE CONST unsigned int __gen_ocl_##NAME##0(void); \
@@ -357,6 +360,7 @@ DECL_INTERNAL_WORK_ITEM_FN(get_group_id)
 DECL_INTERNAL_WORK_ITEM_FN(get_local_id)
 DECL_INTERNAL_WORK_ITEM_FN(get_local_size)
 DECL_INTERNAL_WORK_ITEM_FN(get_global_size)
+DECL_INTERNAL_WORK_ITEM_FN(get_global_offset)
 DECL_INTERNAL_WORK_ITEM_FN(get_num_groups)
 #undef DECL_INTERNAL_WORK_ITEM_FN
 
@@ -371,6 +375,7 @@ DECL_PUBLIC_WORK_ITEM_FN(get_group_id)
 DECL_PUBLIC_WORK_ITEM_FN(get_local_id)
 DECL_PUBLIC_WORK_ITEM_FN(get_local_size)
 DECL_PUBLIC_WORK_ITEM_FN(get_global_size)
+DECL_PUBLIC_WORK_ITEM_FN(get_global_offset)
 DECL_PUBLIC_WORK_ITEM_FN(get_num_groups)
 #undef DECL_PUBLIC_WORK_ITEM_FN
 

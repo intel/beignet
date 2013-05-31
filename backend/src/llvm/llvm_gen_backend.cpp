@@ -1653,6 +1653,8 @@ namespace gbe
         regTranslator.newScalarProxy(ir::ocl::goffset1, dst); break;
       case GEN_OCL_GET_GLOBAL_OFFSET2:
         regTranslator.newScalarProxy(ir::ocl::goffset2, dst); break;
+      case GEN_OCL_GET_WORK_DIM:
+        regTranslator.newScalarProxy(ir::ocl::workdim, dst); break;
       case GEN_OCL_COS:
       case GEN_OCL_SIN:
       case GEN_OCL_SQR:

@@ -1453,6 +1453,7 @@ clEnqueueNDRangeKernel(cl_command_queue  command_queue,
   /* Do device specific checks are enqueue the kernel */
   err = cl_command_queue_ND_range(command_queue,
                                   kernel,
+                                  work_dim,
                                   fixed_global_off,
                                   fixed_global_sz,
                                   fixed_local_sz);

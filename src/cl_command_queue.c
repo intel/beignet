@@ -356,7 +356,7 @@ error:
 }
 #endif
 
-extern cl_int cl_command_queue_ND_range_gen7(cl_command_queue, cl_kernel, const size_t *, const size_t *, const size_t *);
+extern cl_int cl_command_queue_ND_range_gen7(cl_command_queue, cl_kernel, uint32_t, const size_t *, const size_t *, const size_t *);
 
 static cl_int
 cl_kernel_check_args(cl_kernel k)
@@ -371,6 +371,7 @@ cl_kernel_check_args(cl_kernel k)
 LOCAL cl_int
 cl_command_queue_ND_range(cl_command_queue queue,
                           cl_kernel k,
+                          const uint32_t work_dim,
                           const size_t *global_wk_off,
                           const size_t *global_wk_sz,
                           const size_t *local_wk_sz)
@@ -394,7 +395,7 @@ cl_command_queue_ND_range(cl_command_queue queue,
 #endif /* USE_FULSIM */
 
   if (ver == 7 || ver == 75)
-    TRY (cl_command_queue_ND_range_gen7, queue, k, global_wk_off, global_wk_sz, local_wk_sz);
+    TRY (cl_command_queue_ND_range_gen7, queue, k, work_dim, global_wk_off, global_wk_sz, local_wk_sz);
   else
     FATAL ("Unknown Gen Device");
 
