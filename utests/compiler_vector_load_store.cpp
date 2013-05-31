@@ -42,7 +42,7 @@ MAKE_UTEST_FROM_FUNCTION(compiler_vector_ ## kernel_type ##n ##_load_store);
 
 #define test_all_vector(type, kernel_type) \
   compiler_vector_load_store(type, 2, kernel_type) \
-  /*compiler_vector_load_store(type, 3, kernel_type)*/ \
+  compiler_vector_load_store(type, 3, kernel_type) \
   compiler_vector_load_store(type, 4, kernel_type) \
   compiler_vector_load_store(type, 8, kernel_type) \
   compiler_vector_load_store(type, 16, kernel_type)

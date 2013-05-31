@@ -18,12 +18,12 @@ __kernel void test_##type ##n(__global type *pin, \
 }
 
 #define TEST_ALL_TYPE(n) \
-  TEST_TYPE(char,n) \
+  TEST_TYPE(char,n)  \
   TEST_TYPE(uchar,n) \
   TEST_TYPE(short,n) \
-  TEST_TYPE(ushort,n) \
-  TEST_TYPE(int,n) \
-  TEST_TYPE(uint,n) \
+  TEST_TYPE(ushort,n)\
+  TEST_TYPE(int,n)   \
+  TEST_TYPE(uint,n)  \
   TEST_TYPE(float,n)
 
 #if 0
@@ -34,7 +34,7 @@ __kernel void test_##type ##n(__global type *pin, \
 #endif
 
 TEST_ALL_TYPE(2)
-//TEST_ALL_TYPE(3)
+TEST_ALL_TYPE(3)
 TEST_ALL_TYPE(4)
 TEST_ALL_TYPE(8)
 TEST_ALL_TYPE(16)
