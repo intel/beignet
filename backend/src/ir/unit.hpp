@@ -88,6 +88,8 @@ namespace ir {
       GBE_ASSERT(valueMap.find(key) == valueMap.end()); // Do not insert twice
       valueMap[key] = value;
     }
+    /* remove fake values that removed by other pass */
+    void removeDeadValues(void);
     /*! Return the value map */
     const map<ValueIndex, ValueIndex>& getValueMap(void) const { return valueMap; }
   private:

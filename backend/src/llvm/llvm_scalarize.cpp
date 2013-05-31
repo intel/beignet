@@ -182,7 +182,7 @@ namespace gbe {
     bool IsPerComponentOp(const Value* value);
 
     //these function used to add extract and insert instructions when load/store etc.
-    void extractFromeVector(Value* insn);
+    void extractFromVector(Value* insn);
     Value* InsertToVector(Value* insn, Value* vecValue);
 
     Type* GetBasicType(Value* value) {
@@ -581,7 +581,7 @@ namespace gbe {
     return true;
   }
 
-  void Scalarize::extractFromeVector(Value* insn) {
+  void Scalarize::extractFromVector(Value* insn) {
     VectorValues& vVals = vectorVals[insn];
 
     for (int i = 0; i < GetComponentCount(insn); ++i) {
@@ -645,7 +645,7 @@ namespace gbe {
           case GEN_OCL_GET_IMAGE_WIDTH:
           case GEN_OCL_GET_IMAGE_HEIGHT:
           {
-            extractFromeVector(call);
+            extractFromVector(call);
             break;
           }
           case GEN_OCL_WRITE_IMAGE10:
@@ -673,7 +673,7 @@ namespace gbe {
 
   bool Scalarize::scalarizeLoad(LoadInst* ld)
   {
-    extractFromeVector(ld);
+    extractFromVector(ld);
     return false;
   }
 
@@ -738,7 +738,7 @@ namespace gbe {
       Type *type = I->getType();
 
       if(type->isVectorTy())
-        extractFromeVector(I);
+        extractFromVector(I);
     }
     return;
   }
@@ -758,9 +758,9 @@ namespace gbe {
     intTy = IntegerType::get(module->getContext(), 32);
     floatTy = Type::getFloatTy(module->getContext());
     builder = new IRBuilder<>(module->getContext());
+    unit.removeDeadValues();
 
     scalarizeArgs(F);
-
     typedef ReversePostOrderTraversal<Function*> RPOTType;
     RPOTType rpot(&F);
     for (RPOTType::rpo_iterator bbI = rpot.begin(), bbE = rpot.end(); bbI != bbE; ++bbI) {

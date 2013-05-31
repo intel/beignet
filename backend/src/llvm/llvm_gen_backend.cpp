@@ -1140,6 +1140,7 @@ namespace gbe
     }
 
     ctx.startFunction(F.getName());
+    unit.removeDeadValues();
     this->regTranslator.clear();
     this->regTranslator.initValueMap(unit.getValueMap());
     this->labelMap.clear();

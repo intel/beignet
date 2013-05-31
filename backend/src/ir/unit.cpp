@@ -21,6 +21,7 @@
  * \file unit.cpp
  * \author Benjamin Segovia <benjamin.segovia@intel.com>
  */
+#include "llvm/Instructions.h"
 #include "ir/unit.hpp"
 #include "ir/function.hpp"
 
@@ -53,10 +54,17 @@ namespace ir {
     constantSet.append(data, name, size, alignment);
   }
 
+  void Unit::removeDeadValues()
+  {
+    for(auto &it : valueMap) {
+      llvm::Instruction* I = llvm::dyn_cast<llvm::Instruction>(it.first.first);  //fake value
+      if((I == NULL) || (I->getParent() == NULL))
+        valueMap.erase(it.first);
+    }
+  }
   std::ostream &operator<< (std::ostream &out, const Unit &unit) {
     unit.apply([&out] (const Function &fn) { out << fn << std::endl; });
     return out;
   }
 } /* namespace ir */
 } /* namespace gbe */
-
