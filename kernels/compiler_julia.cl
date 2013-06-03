@@ -27,7 +27,7 @@ inline uint pack_fp4(float4 u4) {
   dst[get_global_id(0) + get_global_id(1) * w] = pack_fp4(final); \
 } while (0)
 
-__attribute__((always_inline))
+inline __attribute__((always_inline))
 float jinteresct(vec3 rO, vec3 rD, vec4 c, float *ao)
 {
     float mz2,md2,dist,t;
@@ -74,7 +74,7 @@ float jinteresct(vec3 rO, vec3 rD, vec4 c, float *ao)
 }
 
 #if 1
-__attribute__((always_inline))
+inline __attribute__((always_inline))
 vec3 calcNormal(vec3 p, vec4 c)
 {
     vec4 nz,ndz,dz[4];

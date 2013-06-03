@@ -59,7 +59,11 @@
 #include <clang/Basic/TargetOptions.h>
 #include <llvm/ADT/IntrusiveRefCntPtr.h>
 #include <llvm/ADT/OwningPtr.h>
+#if LLVM_VERSION_MINOR <= 2
 #include <llvm/Module.h>
+#else
+#include <llvm/IR/Module.h>
+#endif  /* LLVM_VERSION_MINOR <= 2 */
 #include <llvm/Bitcode/ReaderWriter.h>
 #include <llvm/Support/raw_ostream.h>
 
@@ -147,8 +151,15 @@ namespace gbe {
 
     args.push_back("-emit-llvm");
     if(bOpt)  args.push_back("-O3");
+#if LLVM_VERSION_MINOR <= 2
     args.push_back("-triple");
     args.push_back("nvptx");
+#else
+    args.push_back("-x");
+    args.push_back("cl");
+    args.push_back("-triple");
+    args.push_back("spir");
+#endif /* LLVM_VERSION_MINOR <= 2 */
     args.push_back(input);
 
     // The compiler invocation needs a DiagnosticsEngine so it can report problems
@@ -162,8 +173,6 @@ namespace gbe {
     clang::DiagnosticsEngine Diags(DiagID, DiagClient);
 #else
     args.push_back("-ffp-contract=off");
-    args.push_back("-triple");
-    args.push_back("nvptx");
 
     llvm::IntrusiveRefCntPtr<clang::DiagnosticOptions> DiagOpts = new clang::DiagnosticOptions();
     clang::TextDiagnosticPrinter *DiagClient =
@@ -183,7 +192,11 @@ namespace gbe {
     clang::CompilerInstance Clang;
     Clang.setInvocation(CI.take());
     // Get ready to report problems
+#if LLVM_VERSION_MINOR <= 2
     Clang.createDiagnostics(args.size(), &args[0]);
+#else
+    Clang.createDiagnostics();
+#endif /* LLVM_VERSION_MINOR <= 2 */
     if (!Clang.hasDiagnostics())
       return;
 

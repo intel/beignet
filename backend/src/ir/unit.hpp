@@ -24,7 +24,12 @@
 #ifndef __GBE_IR_UNIT_HPP__
 #define __GBE_IR_UNIT_HPP__
 
+#include "llvm/Config/config.h"
+#if LLVM_VERSION_MINOR <= 2
 #include "llvm/Value.h"
+#else
+#include "llvm/IR/Value.h"
+#endif  /* LLVM_VERSION_MINOR <= 2 */
 
 #include "ir/constant.hpp"
 #include "ir/register.hpp"

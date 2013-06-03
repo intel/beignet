@@ -22,11 +22,22 @@
  * \author Benjamin Segovia <benjamin.segovia@intel.com>
  */
 
+#include "llvm/Config/config.h"
+#if LLVM_VERSION_MINOR <= 2
 #include "llvm/LLVMContext.h"
 #include "llvm/Module.h"
+#else
+#include "llvm/IR/LLVMContext.h"
+#include "llvm/IR/Module.h"
+#endif  /* LLVM_VERSION_MINOR <= 2 */
 #include "llvm/PassManager.h"
 #include "llvm/Pass.h"
+#if LLVM_VERSION_MINOR <= 2
 #include "llvm/Support/IRReader.h"
+#else
+#include "llvm/IRReader/IRReader.h"
+#include "llvm/Support/SourceMgr.h"
+#endif  /* LLVM_VERSION_MINOR <= 2 */
 #include "llvm/Support/raw_ostream.h"
 #include "llvm/Transforms/Scalar.h"
 #include "llvm/Assembly/PrintModulePass.h"
@@ -58,7 +69,7 @@ namespace gbe
       o = std::unique_ptr<llvm::raw_fd_ostream>(new llvm::raw_fd_ostream(fileno(stdout), false));
 
     // Get the module from its file
-    SMDiagnostic Err;
+    llvm::SMDiagnostic Err;
     std::auto_ptr<Module> M;
     M.reset(ParseIRFile(fileName, Err, c));
     if (M.get() == 0) return false;

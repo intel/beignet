@@ -71,16 +71,31 @@
  *   is intercepted, we just abort
  */
 
+#include "llvm/Config/config.h"
+#if LLVM_VERSION_MINOR <= 2
 #include "llvm/CallingConv.h"
 #include "llvm/Constants.h"
 #include "llvm/DerivedTypes.h"
 #include "llvm/Module.h"
 #include "llvm/Instructions.h"
+#else
+#include "llvm/IR/CallingConv.h"
+#include "llvm/IR/Constants.h"
+#include "llvm/IR/DerivedTypes.h"
+#include "llvm/IR/Module.h"
+#include "llvm/IR/Instructions.h"
+#endif  /* LLVM_VERSION_MINOR <= 2 */
 #include "llvm/Pass.h"
 #include "llvm/PassManager.h"
+#if LLVM_VERSION_MINOR <= 2
 #include "llvm/Intrinsics.h"
 #include "llvm/IntrinsicInst.h"
 #include "llvm/InlineAsm.h"
+#else
+#include "llvm/IR/Intrinsics.h"
+#include "llvm/IR/IntrinsicInst.h"
+#include "llvm/IR/InlineAsm.h"
+#endif  /* LLVM_VERSION_MINOR <= 2 */
 #include "llvm/ADT/StringExtras.h"
 #include "llvm/ADT/SmallString.h"
 #include "llvm/ADT/STLExtras.h"
@@ -101,9 +116,10 @@
 #include "llvm/MC/MCSymbol.h"
 #if !defined(LLVM_VERSION_MAJOR) || (LLVM_VERSION_MINOR == 1)
 #include "llvm/Target/TargetData.h"
-#endif
-#if (LLVM_VERSION_MAJOR == 3) && (LLVM_VERSION_MINOR == 2)
+#elif LLVM_VERSION_MINOR == 2
 #include "llvm/DataLayout.h"
+#else
+#include "llvm/IR/DataLayout.h"
 #endif
 #include "llvm/Support/CallSite.h"
 #include "llvm/Support/CFG.h"
@@ -138,9 +154,9 @@
 #define LLVM_VERSION_MINOR 0
 #endif /* !defined(LLVM_VERSION_MINOR) */
 
-#if (LLVM_VERSION_MAJOR != 3) || (LLVM_VERSION_MINOR > 2)
-#error "Only LLVM 3.0 / 3.1 is supported"
-#endif /* (LLVM_VERSION_MAJOR != 3) && (LLVM_VERSION_MINOR >= 2) */
+#if (LLVM_VERSION_MAJOR != 3) || (LLVM_VERSION_MINOR > 3)
+#error "Only LLVM 3.0 - 3.3 is supported"
+#endif /* (LLVM_VERSION_MAJOR != 3) || (LLVM_VERSION_MINOR > 3) */
 
 using namespace llvm;
 
@@ -1139,9 +1155,13 @@ namespace gbe
   void GenWriter::emitFunction(Function &F)
   {
     switch (F.getCallingConv()) {
+#if LLVM_VERSION_MINOR <= 2
       case CallingConv::PTX_Device: // we do not emit device function
         return;
       case CallingConv::PTX_Kernel:
+#else
+      case CallingConv::C:
+#endif
         break;
       default: GBE_ASSERTM(false, "Unsupported calling convention");
     }
@@ -1597,14 +1617,14 @@ namespace gbe
           break;
           case Intrinsic::stackrestore:
           break;
-#if LLVM_VERSION_MINOR == 2
+#if LLVM_VERSION_MINOR >= 2
           case Intrinsic::lifetime_start:
           case Intrinsic::lifetime_end:
           break;
           case Intrinsic::fmuladd:
             this->newRegister(&I);
           break;
-#endif /* LLVM_VERSION_MINOR == 2 */
+#endif /* LLVM_VERSION_MINOR >= 2 */
           default:
           GBE_ASSERTM(false, "Unsupported intrinsics");
         }
@@ -1777,7 +1797,7 @@ namespace gbe
             ctx.MOV(ir::getType(family), dst, src);
           }
           break;
-#if LLVM_VERSION_MINOR == 2
+#if LLVM_VERSION_MINOR >= 2
           case Intrinsic::fmuladd:
           {
             const ir::Register tmp  = ctx.reg(ir::FAMILY_DWORD);
@@ -1793,7 +1813,7 @@ namespace gbe
           case Intrinsic::lifetime_start:
           case Intrinsic::lifetime_end:
           break;
-#endif /* LLVM_VERSION_MINOR == 2 */
+#endif /* LLVM_VERSION_MINOR >= 2 */
           default: NOT_IMPLEMENTED;
         }
       } else {

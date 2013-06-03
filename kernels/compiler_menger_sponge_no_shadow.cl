@@ -14,11 +14,11 @@ typedef float4 vec4;
 #define time 1.f
 
 // fmod is not like glsl mod!
-__attribute__((always_inline, overloadable))
+inline __attribute__((always_inline, overloadable))
 float glsl_mod(float x,float y) { return x-y*floor(x/y); }
-__attribute__((always_inline, overloadable))
+inline __attribute__((always_inline, overloadable))
 float2 glsl_mod(float2 a,float2 b) { return (float2)(glsl_mod(a.x,b.x), glsl_mod(a.y,b.y)); }
-__attribute__((always_inline, overloadable))
+inline __attribute__((always_inline, overloadable))
 float3 glsl_mod(float3 a,float3 b) { return (float3)(glsl_mod(a.x,b.x), glsl_mod(a.y,b.y), glsl_mod(a.z,b.z)); }
 
 inline vec3 reflect(vec3 I, vec3 N) {
@@ -38,10 +38,10 @@ inline uint pack_fp4(float4 u4) {
   dst[get_global_id(0) + get_global_id(1) * w] = pack_fp4(final); \
 } while (0)
 
-__attribute__((always_inline))
+inline __attribute__((always_inline))
 float maxcomp(vec3 p) { return max(p.x,max(p.y,p.z));}
 
-__attribute__((always_inline))
+inline __attribute__((always_inline))
 float sdBox(vec3 p, vec3 b)
 {
   vec3  di = fabs(p) - b;
@@ -49,7 +49,7 @@ float sdBox(vec3 p, vec3 b)
   return min(mc,length(max(di,0.0f)));
 }
 
-__attribute__((always_inline))
+inline __attribute__((always_inline))
 vec4 map(vec3 p)
 {
    float d = sdBox(p,(vec3)(1.0f));
@@ -78,7 +78,7 @@ vec4 map(vec3 p)
 }
 
 // GLSL ES doesn't seem to like loops with conditional break/return...
-__attribute__((always_inline))
+inline __attribute__((always_inline))
 vec4 intersect( vec3 ro, vec3 rd )
 {
     float t = 0.0f;

@@ -28,7 +28,7 @@ inline uint pack_fp4(float4 u4) {
 
 #define time 1.f
 
-float f(vec3 o)
+inline float f(vec3 o)
 {
     float a=(sin(o.x)+o.y*.25f)*.35f;
     o=(vec3)(cos(a)*o.x-sin(a)*o.y,sin(a)*o.x+cos(a)*o.y,o.z);
@@ -36,7 +36,7 @@ float f(vec3 o)
 }
 
 // XXX front end does not inline this function
-__attribute((always_inline)) vec3 s(vec3 o,vec3 d)
+inline __attribute((always_inline)) vec3 s(vec3 o,vec3 d)
 {
     float t=0.0f;
     float dt = 0.2f;

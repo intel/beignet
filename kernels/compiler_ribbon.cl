@@ -27,7 +27,7 @@ inline float ob(vec3 q) {
 inline float o(vec3 q) { return min(oa(q),ob(q)); }
 
 // Get Normal XXX Not inline by LLVM
-__attribute__((always_inline)) vec3 gn(vec3 q) {
+inline __attribute__((always_inline)) vec3 gn(vec3 q) {
  const vec3 fxyy = (vec3)(.01f, 0.f, 0.f);
  const vec3 fyxy = (vec3)(0.f, .01f, 0.f);
  const vec3 fyyx = (vec3)(0.f, 0.f, .01f);

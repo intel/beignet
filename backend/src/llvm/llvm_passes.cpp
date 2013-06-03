@@ -30,16 +30,31 @@
  * Segovia) the right to use another license for it (MIT here)
  */
 
+#include "llvm/Config/config.h"
+#if LLVM_VERSION_MINOR <= 2
 #include "llvm/CallingConv.h"
 #include "llvm/Constants.h"
 #include "llvm/DerivedTypes.h"
 #include "llvm/Module.h"
 #include "llvm/Instructions.h"
+#else
+#include "llvm/IR/CallingConv.h"
+#include "llvm/IR/Constants.h"
+#include "llvm/IR/DerivedTypes.h"
+#include "llvm/IR/Module.h"
+#include "llvm/IR/Instructions.h"
+#endif  /* LLVM_VERSION_MINOR <= 2 */
 #include "llvm/Pass.h"
 #include "llvm/PassManager.h"
+#if LLVM_VERSION_MINOR <= 2
 #include "llvm/Intrinsics.h"
 #include "llvm/IntrinsicInst.h"
 #include "llvm/InlineAsm.h"
+#else
+#include "llvm/IR/Intrinsics.h"
+#include "llvm/IR/IntrinsicInst.h"
+#include "llvm/IR/InlineAsm.h"
+#endif  /* LLVM_VERSION_MINOR <= 2 */
 #include "llvm/ADT/StringExtras.h"
 #include "llvm/ADT/SmallString.h"
 #include "llvm/ADT/STLExtras.h"
@@ -60,9 +75,10 @@
 #include "llvm/MC/MCSymbol.h"
 #if !defined(LLVM_VERSION_MAJOR) || (LLVM_VERSION_MINOR == 1)
 #include "llvm/Target/TargetData.h"
-#endif
-#if (LLVM_VERSION_MAJOR == 3) && (LLVM_VERSION_MINOR == 2)
+#elif LLVM_VERSION_MINOR == 2
 #include "llvm/DataLayout.h"
+#else
+#include "llvm/IR/DataLayout.h"
 #endif
 #include "llvm/Support/CallSite.h"
 #include "llvm/Support/CFG.h"

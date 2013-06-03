@@ -21,7 +21,12 @@
  * \file unit.cpp
  * \author Benjamin Segovia <benjamin.segovia@intel.com>
  */
+#include "llvm/Config/config.h"
+#if LLVM_VERSION_MINOR <= 2
 #include "llvm/Instructions.h"
+#else
+#include "llvm/IR/Instructions.h"
+#endif  /* LLVM_VERSION_MINOR <= 2 */
 #include "ir/unit.hpp"
 #include "ir/function.hpp"
 

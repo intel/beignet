@@ -1,6 +1,6 @@
-int offset(int x, int y, int width) { return width*y + x; }
-float mapX(float x) {return x*3.25f - 2.f;}
-float mapY(float y) {return y*2.5f - 1.25f;}
+inline int offset(int x, int y, int width) { return width*y + x; }
+inline float mapX(float x) {return x*3.25f - 2.f;}
+inline float mapY(float y) {return y*2.5f - 1.25f;}
 
 __kernel void compiler_mandelbrot_alternate(__global uint *out,
                                             float rcpWidth,
