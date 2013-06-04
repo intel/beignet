@@ -921,7 +921,7 @@ DECL_VECTOR_1OP(__gen_ocl_internal_erfc, float);
 
 #define DECL_VECTOR_2OP(NAME, TYPE) \
   INLINE OVERLOADABLE TYPE##2 NAME(TYPE##2 v0, TYPE##2 v1) { \
-    return (TYPE##2)(NAME(v0.x, v1.x), NAME(v1.y, v1.y)); \
+    return (TYPE##2)(NAME(v0.x, v1.x), NAME(v0.y, v1.y)); \
   }\
   INLINE OVERLOADABLE TYPE##3 NAME(TYPE##3 v0, TYPE##3 v1) { \
     return (TYPE##3)(NAME(v0.x, v1.x), NAME(v0.y, v1.y), NAME(v0.z, v1.z)); \
@@ -954,11 +954,25 @@ DECL_VECTOR_2OP(native_divide, float);
 DECL_VECTOR_2OP(copysign, float);
 DECL_VECTOR_2OP(__gen_ocl_internal_maxmag, float);
 DECL_VECTOR_2OP(__gen_ocl_internal_minmag, float);
+
+#define DECL_VECTOR_NOP_ALL_INT_TYPES(NOP, NAME) \
+NOP(NAME, char)   \
+NOP(NAME, uchar)  \
+NOP(NAME, short)  \
+NOP(NAME, ushort) \
+NOP(NAME, int)    \
+NOP(NAME, uint)   \
+NOP(NAME, long)   \
+NOP(NAME, ulong)
+
+DECL_VECTOR_NOP_ALL_INT_TYPES(DECL_VECTOR_2OP, add_sat)
+DECL_VECTOR_NOP_ALL_INT_TYPES(DECL_VECTOR_2OP, sub_sat)
+#undef DECL_VECTOR_NOP_ALL_INT_TYPES
 #undef DECL_VECTOR_2OP
 
 #define DECL_VECTOR_2OP(NAME, TYPE, TYPE2) \
   INLINE OVERLOADABLE TYPE##2 NAME(TYPE##2 v0, TYPE2##2 v1) { \
-    return (TYPE##2)(NAME(v0.x, v1.x), NAME(v1.y, v1.y)); \
+    return (TYPE##2)(NAME(v0.x, v1.x), NAME(v0.y, v1.y)); \
   }\
   INLINE OVERLOADABLE TYPE##3 NAME(TYPE##3 v0, TYPE2##3 v1) { \
     return (TYPE##3)(NAME(v0.x, v1.x), NAME(v0.y, v1.y), NAME(v0.z, v1.z)); \
@@ -985,7 +999,7 @@ DECL_VECTOR_2OP(rootn, float, int);
 
 #define DECL_VECTOR_3OP(NAME, TYPE) \
   INLINE OVERLOADABLE TYPE##2 NAME(TYPE##2 v0, TYPE##2 v1, TYPE##2 v2) { \
-    return (TYPE##2)(NAME(v0.x, v1.x, v2.x), NAME(v1.y, v1.y, v2.y)); \
+    return (TYPE##2)(NAME(v0.x, v1.x, v2.x), NAME(v0.y, v1.y, v2.y)); \
   }\
   INLINE OVERLOADABLE TYPE##3 NAME(TYPE##3 v0, TYPE##3 v1, TYPE##3 v2) { \
     return (TYPE##3)(NAME(v0.x, v1.x, v2.x), NAME(v0.y, v1.y, v2.y), NAME(v0.z, v1.z, v2.z)); \
