@@ -5,6 +5,7 @@ link_directories (${LLVM_LIBRARY_DIR})
 set (utests_sources
   cl_create_kernel.cpp
   utest_error.c
+  compiler_displacement_map_element.cpp
   compiler_shader_toy.cpp
   compiler_mandelbrot.cpp
   compiler_mandelbrot_alternate.cpp
