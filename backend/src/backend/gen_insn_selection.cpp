@@ -1429,7 +1429,10 @@ namespace gbe
 
         // Right part of the 16-wide register now
         if (simdWidth == 16) {
+          int predicate = sel.curr.predicate;
+          int noMask = sel.curr.noMask;
           sel.curr.noMask = 1;
+          sel.curr.predicate = GEN_PREDICATE_NONE;
           const GenRegister nextSrc0 = sel.selRegQn(insn.getSrc(0), 1, TYPE_S32);
           const GenRegister nextSrc1 = sel.selRegQn(insn.getSrc(1), 1, TYPE_S32);
           sel.MUL(GenRegister::retype(GenRegister::acc(), GEN_TYPE_D), nextSrc0, nextSrc1);
@@ -1437,11 +1440,15 @@ namespace gbe
           sel.MACH(GenRegister::retype(GenRegister::null(), GEN_TYPE_D), nextSrc0, nextSrc1);
           sel.curr.accWrEnable = 0;
           sel.curr.quarterControl = GEN_COMPRESSION_Q2;
-          const ir::Register reg = sel.reg(FAMILY_DWORD);
-          sel.MOV(GenRegister::f8grf(reg), GenRegister::acc());
-          sel.curr.noMask = 0;
-          sel.MOV(GenRegister::retype(GenRegister::next(dst), GEN_TYPE_F),
-                  GenRegister::f8grf(reg));
+          if (predicate != GEN_PREDICATE_NONE || noMask != 1) {
+            const ir::Register reg = sel.reg(FAMILY_DWORD);
+            sel.MOV(GenRegister::f8grf(reg), GenRegister::acc());
+            sel.curr.noMask = noMask;;
+            sel.curr.predicate = predicate;
+            sel.MOV(GenRegister::retype(GenRegister::next(dst), GEN_TYPE_F),
+                    GenRegister::f8grf(reg));
+          } else
+            sel.MOV(GenRegister::retype(GenRegister::next(dst), GEN_TYPE_F), GenRegister::acc());
         }
 
         sel.pop();
