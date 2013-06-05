@@ -86,4 +86,3 @@ __kernel void compiler_ribbon(__global uint *dst, float resx, float resy, int w)
   const vec4 final = 255.f * max(min(color, (vec4)(1.f)), (vec4)(0.f));
   dst[get_global_id(0) + get_global_id(1) * w] = pack_fp4(final);
 }
-

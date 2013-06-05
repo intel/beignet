@@ -6,4 +6,3 @@ test_copy_buffer_row(__global int *src, __global int *dst, __global int *data)
   int id = (int) get_global_id(0);
   for (; id < size; id += row) dst[id] = src[id];
 }
-
