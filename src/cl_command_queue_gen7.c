@@ -216,8 +216,11 @@ cl_command_queue_ND_range_gen7(cl_command_queue queue,
   kernel.cst_sz = cst_sz;
 
   /* Curbe step 1: fill the constant buffer data shared by all threads */
-  if (ker->curbe)
+  if (ker->curbe) {
     kernel.slm_sz = cl_curbe_fill(ker, work_dim, global_wk_off, global_wk_sz, local_wk_sz, thread_n);
+    if (kernel.slm_sz > ker->program->ctx->device->local_mem_size)
+      return CL_OUT_OF_RESOURCES;
+  }
 
   /* Setup the kernel */
   cl_gpgpu_state_init(gpgpu, ctx->device->max_compute_unit, cst_sz / 32);
