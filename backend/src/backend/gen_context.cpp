@@ -72,6 +72,10 @@ namespace gbe
       }
       p->pop();
     }
+    /* per spec, pad the instruction stream with 8 nop to avoid
+	instruction prefetcher prefetch into an invalide page */
+    for(int i = 0; i < 8; i++)
+	p->NOP();
   }
 
   void GenContext::patchBranches(void) {
