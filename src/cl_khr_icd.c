@@ -43,7 +43,7 @@ clIcdGetPlatformIDsKHR(cl_uint          num_entries,
                  cl_platform_id * platforms,
                  cl_uint *        num_platforms)
 {
-  return cl_get_platform_ids(num_entries, platforms, num_platforms);
+  return clGetPlatformIDs(num_entries, platforms, num_platforms);
 }
 
 struct _cl_icd_dispatch const cl_khr_icd_dispatch = {

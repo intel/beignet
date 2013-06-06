@@ -51,22 +51,11 @@ cl_get_platform_ids(cl_uint          num_entries,
 {
   if (num_platforms != NULL)
     *num_platforms = 1;
-  if (UNLIKELY(platforms == NULL))
-    return CL_SUCCESS;
-  if (UNLIKELY(num_entries == 0))
-    return CL_INVALID_VALUE;
-  if (UNLIKELY(num_platforms == NULL && platforms == NULL))
-    return CL_SUCCESS;
-#if 0
-  if (UNLIKELY(num_platforms == NULL && platforms != NULL))
-    return CL_INVALID_VALUE;
-#endif
-  if (UNLIKELY(num_platforms != NULL && platforms == NULL))
-    return CL_INVALID_VALUE;
 
   cl_intel_platform_extension_init(intel_platform);
   /* Easy right now, only one platform is supported */
-  *platforms = intel_platform;
+  if(platforms)
+    *platforms = intel_platform;
   intel_platform->extensions_sz = strlen(intel_platform->extensions) + 1;
   return CL_SUCCESS;
 }
@@ -95,10 +84,6 @@ cl_get_platform_info(cl_platform_id    platform,
                      void *            param_value,
                      size_t *          param_value_size_ret)
 {
-  /* Only one platform. This is easy */
-  if (UNLIKELY(platform != NULL && platform != intel_platform))
-    return CL_INVALID_PLATFORM;
-
   if (param_value == NULL) {
     switch (param_name) {
       GET_FIELD_SZ (PLATFORM_PROFILE,    profile);

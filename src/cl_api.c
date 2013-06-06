@@ -42,6 +42,11 @@ clGetPlatformIDs(cl_uint          num_entries,
                  cl_platform_id * platforms,
                  cl_uint *        num_platforms)
 {
+  if(UNLIKELY(platforms == NULL && num_platforms == NULL))
+    return CL_INVALID_VALUE;
+  if(UNLIKELY(num_entries == 0 && platforms != NULL))
+    return CL_INVALID_VALUE;
+
   return cl_get_platform_ids(num_entries, platforms, num_platforms);
 }
 
@@ -52,6 +57,10 @@ clGetPlatformInfo(cl_platform_id    platform,
                   void *            param_value,
                   size_t *          param_value_size_ret)
 {
+  /* Only one platform. This is easy */
+  if (UNLIKELY(platform != NULL && platform != intel_platform))
+    return CL_INVALID_PLATFORM;
+
   return cl_get_platform_info(platform,
                               param_name,
                               param_value_size,
