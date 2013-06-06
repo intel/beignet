@@ -87,11 +87,7 @@ error:
   return err;
 }
 
-static cl_int
-cl_device_id_is_ok(const cl_device_id device)
-{
-  return device != cl_get_gt_device() ? CL_FALSE : CL_TRUE;
-}
+
 
 LOCAL cl_context
 cl_create_context(const cl_context_properties *  properties,
@@ -106,28 +102,13 @@ cl_create_context(const cl_context_properties *  properties,
   cl_context ctx = NULL;
   cl_int err = CL_SUCCESS;
 
-  /* Assert parameters correctness */
-  INVALID_VALUE_IF (devices == NULL);
-  INVALID_VALUE_IF (num_devices == 0);
-  INVALID_VALUE_IF (pfn_notify == NULL && user_data != NULL);
-
   /* XXX */
   FATAL_IF (pfn_notify != NULL || user_data != NULL, "Unsupported call back");
   FATAL_IF (num_devices != 1, "Only one device is supported");
 
   /* Check that we are getting the right platform */
-//  if (UNLIKELY((err = cl_context_properties_is_ok(properties)) != CL_SUCCESS))
-//    goto error;
-
   if (UNLIKELY(((err = cl_context_properties_process(properties, &props)) != CL_SUCCESS)))
     goto error;
-  /* platform = intel_platform; */
-
-  /* Now check if the user is asking for the right device */
-  if (UNLIKELY(cl_device_id_is_ok(*devices) == CL_FALSE)) {
-    err = CL_INVALID_DEVICE;
-    goto error;
-  }
 
   /* We are good */
   if (UNLIKELY((ctx = cl_context_new(&props)) == NULL)) {

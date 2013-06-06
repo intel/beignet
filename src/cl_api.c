@@ -55,6 +55,12 @@ cl_check_device_type(cl_device_type device_type)
   return CL_SUCCESS;
 }
 
+static cl_int
+cl_device_id_is_ok(const cl_device_id device)
+{
+  return device != cl_get_gt_device() ? CL_FALSE : CL_TRUE;
+}
+
 cl_int
 clGetPlatformIDs(cl_uint          num_entries,
                  cl_platform_id * platforms,
@@ -161,12 +167,27 @@ clCreateContext(const cl_context_properties *  properties,
                 void *                         user_data,
                 cl_int *                       errcode_ret)
 {
-  return cl_create_context(properties,
+  cl_int err = CL_SUCCESS;
+  cl_context context = NULL;
+
+  /* Assert parameters correctness */
+  INVALID_VALUE_IF (devices == NULL);
+  INVALID_VALUE_IF (num_devices == 0);
+  INVALID_VALUE_IF (pfn_notify == NULL && user_data != NULL);
+
+  /* Now check if the user is asking for the right device */
+  INVALID_DEVICE_IF (cl_device_id_is_ok(*devices) == CL_FALSE);
+
+  context = cl_create_context(properties,
                            num_devices,
                            devices,
                            pfn_notify,
                            user_data,
-                           errcode_ret);
+                           &err);
+error:
+  if (errcode_ret)
+    *errcode_ret = err;
+  return context;
 }
 
 cl_context
@@ -180,6 +201,8 @@ clCreateContextFromType(const cl_context_properties *  properties,
   cl_int err = CL_SUCCESS;
   cl_device_id devices[1];
   cl_uint num_devices = 1;
+
+  INVALID_VALUE_IF (pfn_notify == NULL && user_data != NULL);
 
   err = cl_check_device_type(device_type);
   if(err != CL_SUCCESS) {
