@@ -253,6 +253,7 @@ static const char *reg_encoding[8] = {
   [3] = "W",
   [4] = "UB",
   [5] = "B",
+  [6] = "DF",
   [7] = "F"
 };
 
@@ -263,6 +264,7 @@ int reg_type_size[8] = {
   [3] = 2,
   [4] = 1,
   [5] = 1,
+  [6] = 8,
   [7] = 4
 };
 
@@ -354,6 +356,33 @@ static const char *math_scalar[2] = {
 static const char *math_precision[2] = {
   [0] = "",
   [1] = "partial_precision"
+};
+
+static const char *data_port_data_cache_simd_mode[] = {
+  "SIMD4x2",
+  "SIMD16",
+  "SIMD8",
+};
+
+static const char *data_port_data_cache_category[] = {
+  "legacy",
+  "scratch",
+};
+
+static const char *data_port_data_cache_msg_type[] = {
+  [0] = "OWord Block Read",
+  [1] = "Unaligned OWord Block Read",
+  [2] = "OWord Dual Block Read",
+  [3] = "DWord Scattered Read",
+  [4] = "Byte Scattered Read",
+  [5] = "Untyped Surface Read",
+  [6] = "Untyped Atomic Operation",
+  [7] = "Memory Fence",
+  [8] = "OWord Block Write",
+  [10] = "OWord Dual Block Write",
+  [11] = "DWord Scattered Write",
+  [12] = "Byte Scattered Write",
+  [13] = "Untyped Surface Write",
 };
 
 static int column;
@@ -816,25 +845,25 @@ static int src2_3src (FILE *file, const struct GenInstruction *inst)
 static int imm (FILE *file, uint32_t type, const struct GenInstruction *inst) {
   switch (type) {
     case GEN_TYPE_UD:
-      format (file, "0x%08xUD", inst->bits3.ud);
+      format (file, "0x%xUD", inst->bits3.ud);
       break;
     case GEN_TYPE_D:
       format (file, "%dD", inst->bits3.d);
       break;
     case GEN_TYPE_UW:
-      format (file, "0x%04xUW", (uint16_t) inst->bits3.ud);
+      format (file, "0x%xUW", (uint16_t) inst->bits3.ud);
       break;
     case GEN_TYPE_W:
       format (file, "%dW", (int16_t) inst->bits3.d);
       break;
     case GEN_TYPE_UB:
-      format (file, "0x%02xUB", (int8_t) inst->bits3.ud);
+      format (file, "0x%xUB", (int8_t) inst->bits3.ud);
       break;
     case GEN_TYPE_VF:
       format (file, "Vector Float");
       break;
     case GEN_TYPE_V:
-      format (file, "0x%08xV", inst->bits3.ud);
+      format (file, "0x%xV", inst->bits3.ud);
       break;
     case GEN_TYPE_F:
       format (file, "%-gF", inst->bits3.f);
@@ -1122,11 +1151,12 @@ int gen_disasm (FILE *file, const void *opaque_insn)
                 inst->bits3.sampler_gen7.simd_mode);
         break;
       case GEN_SFID_DATAPORT_DATA_CACHE:
-        format (file, " (%d, %d, %d, %d)",
+        format (file, " (bti: %d, rgba: %d, %s, %s, %s)",
                 inst->bits3.gen7_untyped_rw.bti,
                 inst->bits3.gen7_untyped_rw.rgba,
-                inst->bits3.gen7_untyped_rw.simd_mode,
-                inst->bits3.gen7_untyped_rw.msg_type);
+                data_port_data_cache_simd_mode[inst->bits3.gen7_untyped_rw.simd_mode],
+                data_port_data_cache_category[inst->bits3.gen7_untyped_rw.category],
+                data_port_data_cache_msg_type[inst->bits3.gen7_untyped_rw.msg_type]);
         break;
       case GEN_SFID_MESSAGE_GATEWAY:
         format (file, " (subfunc: %s, notify: %d, ackreq: %d)",
