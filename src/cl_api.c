@@ -37,6 +37,24 @@
 #include <string.h>
 #include <assert.h>
 
+static cl_int
+cl_check_device_type(cl_device_type device_type)
+{
+  const cl_device_type valid =  CL_DEVICE_TYPE_GPU
+                              | CL_DEVICE_TYPE_CPU
+                              | CL_DEVICE_TYPE_ACCELERATOR
+                              | CL_DEVICE_TYPE_DEFAULT
+                              | CL_DEVICE_TYPE_CUSTOM;
+
+  if( (device_type & valid) == 0) {
+    return CL_INVALID_DEVICE_TYPE;
+  }
+  if(UNLIKELY(!(device_type & CL_DEVICE_TYPE_DEFAULT) && !(device_type & CL_DEVICE_TYPE_GPU)))
+    return CL_DEVICE_NOT_FOUND;
+
+  return CL_SUCCESS;
+}
+
 cl_int
 clGetPlatformIDs(cl_uint          num_entries,
                  cl_platform_id * platforms,
@@ -75,6 +93,20 @@ clGetDeviceIDs(cl_platform_id platform,
                cl_device_id * devices,
                cl_uint *      num_devices)
 {
+  cl_int err = CL_SUCCESS;
+
+  /* Check parameter consistency */
+  if (UNLIKELY(devices == NULL && num_devices == NULL))
+    return CL_INVALID_VALUE;
+  if (UNLIKELY(platform && platform != intel_platform))
+    return CL_INVALID_PLATFORM;
+  if (UNLIKELY(devices && num_entries == 0))
+    return CL_INVALID_VALUE;
+
+  err = cl_check_device_type(device_type);
+  if(err != CL_SUCCESS)
+    return err;
+
   return cl_get_device_ids(platform,
                            device_type,
                            num_entries,
@@ -148,6 +180,11 @@ clCreateContextFromType(const cl_context_properties *  properties,
   cl_int err = CL_SUCCESS;
   cl_device_id devices[1];
   cl_uint num_devices = 1;
+
+  err = cl_check_device_type(device_type);
+  if(err != CL_SUCCESS) {
+    goto error;
+  }
 
   err = cl_get_device_ids(NULL,
                           device_type,

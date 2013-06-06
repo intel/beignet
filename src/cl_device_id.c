@@ -107,30 +107,6 @@ cl_get_device_ids(cl_platform_id    platform,
 {
   cl_device_id device;
 
-  /* Check parameter consistency */
-  if (UNLIKELY(devices == NULL && num_devices == NULL))
-    return CL_SUCCESS;
-  if (UNLIKELY(platform && platform != intel_platform))
-    return CL_INVALID_PLATFORM;
-  if (UNLIKELY(
-      device_type != CL_DEVICE_TYPE_GPU &&
-      device_type != CL_DEVICE_TYPE_DEFAULT &&
-      device_type != CL_DEVICE_TYPE_ALL
-    ))
-  {
-    if (num_devices)
-      *num_devices = 0;
-
-    if (device_type == CL_DEVICE_TYPE_CPU ||
-        device_type == CL_DEVICE_TYPE_ACCELERATOR
-       )
-       return CL_DEVICE_NOT_FOUND;
-    else
-       return CL_INVALID_DEVICE_TYPE;
-  }
-  if (UNLIKELY(devices && num_entries == 0))
-    return CL_INVALID_VALUE;
-
   /* Do we have a usable device? */
   device = cl_get_gt_device();
   if (!device) {
