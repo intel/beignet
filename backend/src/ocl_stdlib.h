@@ -1085,6 +1085,13 @@ INLINE void barrier(cl_mem_fence_flags flags) {
     __gen_ocl_barrier_global();
 }
 
+INLINE void mem_fence(cl_mem_fence_flags flags) {
+}
+INLINE void read_mem_fence(cl_mem_fence_flags flags) {
+}
+INLINE void write_mem_fence(cl_mem_fence_flags flags) {
+}
+
 /////////////////////////////////////////////////////////////////////////////
 // Force the compilation to SIMD8 or SIMD16
 /////////////////////////////////////////////////////////////////////////////
