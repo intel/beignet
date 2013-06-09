@@ -270,7 +270,11 @@ namespace gbe
         return false;
       auto it = RA.find(reg);
       GBE_ASSERT(it != RA.end());
-
+      // offset less than 32 means it is not managed by our reg allocator.
+      if (it->second < 32) {
+        this->expiringID++;
+        continue;
+      }
       // Case 1 - it does not belong to a vector. Just remove it
       if (vectorMap.contains(reg) == false) {
         ctx.deallocate(it->second);
