@@ -91,15 +91,1138 @@ typedef size_t __event_t;
 /////////////////////////////////////////////////////////////////////////////
 // OpenCL conversions & type casting
 /////////////////////////////////////////////////////////////////////////////
-union type_cast_4_b {
-  float f;
-  uchar4 u4;
+
+// ##BEGIN_AS##
+union _type_cast_1_b {
+  char _char;
+  uchar _uchar;
 };
-uchar4 INLINE_OVERLOADABLE as_uchar4(float f) {
-    union type_cast_4_b u;
-    u.f = f;
-    return u.u4;
+
+INLINE OVERLOADABLE uchar as_uchar(char v) {
+  union _type_cast_1_b u;
+  u._char = v;
+  return u._uchar;
 }
+
+INLINE OVERLOADABLE char as_char(uchar v) {
+  union _type_cast_1_b u;
+  u._uchar = v;
+  return u._char;
+}
+
+union _type_cast_2_b {
+  short _short;
+  ushort _ushort;
+  char2 _char2;
+  uchar2 _uchar2;
+};
+
+INLINE OVERLOADABLE ushort as_ushort(short v) {
+  union _type_cast_2_b u;
+  u._short = v;
+  return u._ushort;
+}
+
+INLINE OVERLOADABLE char2 as_char2(short v) {
+  union _type_cast_2_b u;
+  u._short = v;
+  return u._char2;
+}
+
+INLINE OVERLOADABLE uchar2 as_uchar2(short v) {
+  union _type_cast_2_b u;
+  u._short = v;
+  return u._uchar2;
+}
+
+INLINE OVERLOADABLE short as_short(ushort v) {
+  union _type_cast_2_b u;
+  u._ushort = v;
+  return u._short;
+}
+
+INLINE OVERLOADABLE char2 as_char2(ushort v) {
+  union _type_cast_2_b u;
+  u._ushort = v;
+  return u._char2;
+}
+
+INLINE OVERLOADABLE uchar2 as_uchar2(ushort v) {
+  union _type_cast_2_b u;
+  u._ushort = v;
+  return u._uchar2;
+}
+
+INLINE OVERLOADABLE short as_short(char2 v) {
+  union _type_cast_2_b u;
+  u._char2 = v;
+  return u._short;
+}
+
+INLINE OVERLOADABLE ushort as_ushort(char2 v) {
+  union _type_cast_2_b u;
+  u._char2 = v;
+  return u._ushort;
+}
+
+INLINE OVERLOADABLE uchar2 as_uchar2(char2 v) {
+  union _type_cast_2_b u;
+  u._char2 = v;
+  return u._uchar2;
+}
+
+INLINE OVERLOADABLE short as_short(uchar2 v) {
+  union _type_cast_2_b u;
+  u._uchar2 = v;
+  return u._short;
+}
+
+INLINE OVERLOADABLE ushort as_ushort(uchar2 v) {
+  union _type_cast_2_b u;
+  u._uchar2 = v;
+  return u._ushort;
+}
+
+INLINE OVERLOADABLE char2 as_char2(uchar2 v) {
+  union _type_cast_2_b u;
+  u._uchar2 = v;
+  return u._char2;
+}
+
+union _type_cast_3_b {
+  char3 _char3;
+  uchar3 _uchar3;
+};
+
+INLINE OVERLOADABLE uchar3 as_uchar3(char3 v) {
+  union _type_cast_3_b u;
+  u._char3 = v;
+  return u._uchar3;
+}
+
+INLINE OVERLOADABLE char3 as_char3(uchar3 v) {
+  union _type_cast_3_b u;
+  u._uchar3 = v;
+  return u._char3;
+}
+
+union _type_cast_4_b {
+  int _int;
+  uint _uint;
+  short2 _short2;
+  ushort2 _ushort2;
+  char4 _char4;
+  uchar4 _uchar4;
+  float _float;
+};
+
+INLINE OVERLOADABLE uint as_uint(int v) {
+  union _type_cast_4_b u;
+  u._int = v;
+  return u._uint;
+}
+
+INLINE OVERLOADABLE short2 as_short2(int v) {
+  union _type_cast_4_b u;
+  u._int = v;
+  return u._short2;
+}
+
+INLINE OVERLOADABLE ushort2 as_ushort2(int v) {
+  union _type_cast_4_b u;
+  u._int = v;
+  return u._ushort2;
+}
+
+INLINE OVERLOADABLE char4 as_char4(int v) {
+  union _type_cast_4_b u;
+  u._int = v;
+  return u._char4;
+}
+
+INLINE OVERLOADABLE uchar4 as_uchar4(int v) {
+  union _type_cast_4_b u;
+  u._int = v;
+  return u._uchar4;
+}
+
+INLINE OVERLOADABLE float as_float(int v) {
+  union _type_cast_4_b u;
+  u._int = v;
+  return u._float;
+}
+
+INLINE OVERLOADABLE int as_int(uint v) {
+  union _type_cast_4_b u;
+  u._uint = v;
+  return u._int;
+}
+
+INLINE OVERLOADABLE short2 as_short2(uint v) {
+  union _type_cast_4_b u;
+  u._uint = v;
+  return u._short2;
+}
+
+INLINE OVERLOADABLE ushort2 as_ushort2(uint v) {
+  union _type_cast_4_b u;
+  u._uint = v;
+  return u._ushort2;
+}
+
+INLINE OVERLOADABLE char4 as_char4(uint v) {
+  union _type_cast_4_b u;
+  u._uint = v;
+  return u._char4;
+}
+
+INLINE OVERLOADABLE uchar4 as_uchar4(uint v) {
+  union _type_cast_4_b u;
+  u._uint = v;
+  return u._uchar4;
+}
+
+INLINE OVERLOADABLE float as_float(uint v) {
+  union _type_cast_4_b u;
+  u._uint = v;
+  return u._float;
+}
+
+INLINE OVERLOADABLE int as_int(short2 v) {
+  union _type_cast_4_b u;
+  u._short2 = v;
+  return u._int;
+}
+
+INLINE OVERLOADABLE uint as_uint(short2 v) {
+  union _type_cast_4_b u;
+  u._short2 = v;
+  return u._uint;
+}
+
+INLINE OVERLOADABLE ushort2 as_ushort2(short2 v) {
+  union _type_cast_4_b u;
+  u._short2 = v;
+  return u._ushort2;
+}
+
+INLINE OVERLOADABLE char4 as_char4(short2 v) {
+  union _type_cast_4_b u;
+  u._short2 = v;
+  return u._char4;
+}
+
+INLINE OVERLOADABLE uchar4 as_uchar4(short2 v) {
+  union _type_cast_4_b u;
+  u._short2 = v;
+  return u._uchar4;
+}
+
+INLINE OVERLOADABLE float as_float(short2 v) {
+  union _type_cast_4_b u;
+  u._short2 = v;
+  return u._float;
+}
+
+INLINE OVERLOADABLE int as_int(ushort2 v) {
+  union _type_cast_4_b u;
+  u._ushort2 = v;
+  return u._int;
+}
+
+INLINE OVERLOADABLE uint as_uint(ushort2 v) {
+  union _type_cast_4_b u;
+  u._ushort2 = v;
+  return u._uint;
+}
+
+INLINE OVERLOADABLE short2 as_short2(ushort2 v) {
+  union _type_cast_4_b u;
+  u._ushort2 = v;
+  return u._short2;
+}
+
+INLINE OVERLOADABLE char4 as_char4(ushort2 v) {
+  union _type_cast_4_b u;
+  u._ushort2 = v;
+  return u._char4;
+}
+
+INLINE OVERLOADABLE uchar4 as_uchar4(ushort2 v) {
+  union _type_cast_4_b u;
+  u._ushort2 = v;
+  return u._uchar4;
+}
+
+INLINE OVERLOADABLE float as_float(ushort2 v) {
+  union _type_cast_4_b u;
+  u._ushort2 = v;
+  return u._float;
+}
+
+INLINE OVERLOADABLE int as_int(char4 v) {
+  union _type_cast_4_b u;
+  u._char4 = v;
+  return u._int;
+}
+
+INLINE OVERLOADABLE uint as_uint(char4 v) {
+  union _type_cast_4_b u;
+  u._char4 = v;
+  return u._uint;
+}
+
+INLINE OVERLOADABLE short2 as_short2(char4 v) {
+  union _type_cast_4_b u;
+  u._char4 = v;
+  return u._short2;
+}
+
+INLINE OVERLOADABLE ushort2 as_ushort2(char4 v) {
+  union _type_cast_4_b u;
+  u._char4 = v;
+  return u._ushort2;
+}
+
+INLINE OVERLOADABLE uchar4 as_uchar4(char4 v) {
+  union _type_cast_4_b u;
+  u._char4 = v;
+  return u._uchar4;
+}
+
+INLINE OVERLOADABLE float as_float(char4 v) {
+  union _type_cast_4_b u;
+  u._char4 = v;
+  return u._float;
+}
+
+INLINE OVERLOADABLE int as_int(uchar4 v) {
+  union _type_cast_4_b u;
+  u._uchar4 = v;
+  return u._int;
+}
+
+INLINE OVERLOADABLE uint as_uint(uchar4 v) {
+  union _type_cast_4_b u;
+  u._uchar4 = v;
+  return u._uint;
+}
+
+INLINE OVERLOADABLE short2 as_short2(uchar4 v) {
+  union _type_cast_4_b u;
+  u._uchar4 = v;
+  return u._short2;
+}
+
+INLINE OVERLOADABLE ushort2 as_ushort2(uchar4 v) {
+  union _type_cast_4_b u;
+  u._uchar4 = v;
+  return u._ushort2;
+}
+
+INLINE OVERLOADABLE char4 as_char4(uchar4 v) {
+  union _type_cast_4_b u;
+  u._uchar4 = v;
+  return u._char4;
+}
+
+INLINE OVERLOADABLE float as_float(uchar4 v) {
+  union _type_cast_4_b u;
+  u._uchar4 = v;
+  return u._float;
+}
+
+INLINE OVERLOADABLE int as_int(float v) {
+  union _type_cast_4_b u;
+  u._float = v;
+  return u._int;
+}
+
+INLINE OVERLOADABLE uint as_uint(float v) {
+  union _type_cast_4_b u;
+  u._float = v;
+  return u._uint;
+}
+
+INLINE OVERLOADABLE short2 as_short2(float v) {
+  union _type_cast_4_b u;
+  u._float = v;
+  return u._short2;
+}
+
+INLINE OVERLOADABLE ushort2 as_ushort2(float v) {
+  union _type_cast_4_b u;
+  u._float = v;
+  return u._ushort2;
+}
+
+INLINE OVERLOADABLE char4 as_char4(float v) {
+  union _type_cast_4_b u;
+  u._float = v;
+  return u._char4;
+}
+
+INLINE OVERLOADABLE uchar4 as_uchar4(float v) {
+  union _type_cast_4_b u;
+  u._float = v;
+  return u._uchar4;
+}
+
+union _type_cast_6_b {
+  short3 _short3;
+  ushort3 _ushort3;
+};
+
+INLINE OVERLOADABLE ushort3 as_ushort3(short3 v) {
+  union _type_cast_6_b u;
+  u._short3 = v;
+  return u._ushort3;
+}
+
+INLINE OVERLOADABLE short3 as_short3(ushort3 v) {
+  union _type_cast_6_b u;
+  u._ushort3 = v;
+  return u._short3;
+}
+
+union _type_cast_8_b {
+  int2 _int2;
+  uint2 _uint2;
+  short4 _short4;
+  ushort4 _ushort4;
+  char8 _char8;
+  uchar8 _uchar8;
+  float2 _float2;
+};
+
+INLINE OVERLOADABLE uint2 as_uint2(int2 v) {
+  union _type_cast_8_b u;
+  u._int2 = v;
+  return u._uint2;
+}
+
+INLINE OVERLOADABLE short4 as_short4(int2 v) {
+  union _type_cast_8_b u;
+  u._int2 = v;
+  return u._short4;
+}
+
+INLINE OVERLOADABLE ushort4 as_ushort4(int2 v) {
+  union _type_cast_8_b u;
+  u._int2 = v;
+  return u._ushort4;
+}
+
+INLINE OVERLOADABLE char8 as_char8(int2 v) {
+  union _type_cast_8_b u;
+  u._int2 = v;
+  return u._char8;
+}
+
+INLINE OVERLOADABLE uchar8 as_uchar8(int2 v) {
+  union _type_cast_8_b u;
+  u._int2 = v;
+  return u._uchar8;
+}
+
+INLINE OVERLOADABLE float2 as_float2(int2 v) {
+  union _type_cast_8_b u;
+  u._int2 = v;
+  return u._float2;
+}
+
+INLINE OVERLOADABLE int2 as_int2(uint2 v) {
+  union _type_cast_8_b u;
+  u._uint2 = v;
+  return u._int2;
+}
+
+INLINE OVERLOADABLE short4 as_short4(uint2 v) {
+  union _type_cast_8_b u;
+  u._uint2 = v;
+  return u._short4;
+}
+
+INLINE OVERLOADABLE ushort4 as_ushort4(uint2 v) {
+  union _type_cast_8_b u;
+  u._uint2 = v;
+  return u._ushort4;
+}
+
+INLINE OVERLOADABLE char8 as_char8(uint2 v) {
+  union _type_cast_8_b u;
+  u._uint2 = v;
+  return u._char8;
+}
+
+INLINE OVERLOADABLE uchar8 as_uchar8(uint2 v) {
+  union _type_cast_8_b u;
+  u._uint2 = v;
+  return u._uchar8;
+}
+
+INLINE OVERLOADABLE float2 as_float2(uint2 v) {
+  union _type_cast_8_b u;
+  u._uint2 = v;
+  return u._float2;
+}
+
+INLINE OVERLOADABLE int2 as_int2(short4 v) {
+  union _type_cast_8_b u;
+  u._short4 = v;
+  return u._int2;
+}
+
+INLINE OVERLOADABLE uint2 as_uint2(short4 v) {
+  union _type_cast_8_b u;
+  u._short4 = v;
+  return u._uint2;
+}
+
+INLINE OVERLOADABLE ushort4 as_ushort4(short4 v) {
+  union _type_cast_8_b u;
+  u._short4 = v;
+  return u._ushort4;
+}
+
+INLINE OVERLOADABLE char8 as_char8(short4 v) {
+  union _type_cast_8_b u;
+  u._short4 = v;
+  return u._char8;
+}
+
+INLINE OVERLOADABLE uchar8 as_uchar8(short4 v) {
+  union _type_cast_8_b u;
+  u._short4 = v;
+  return u._uchar8;
+}
+
+INLINE OVERLOADABLE float2 as_float2(short4 v) {
+  union _type_cast_8_b u;
+  u._short4 = v;
+  return u._float2;
+}
+
+INLINE OVERLOADABLE int2 as_int2(ushort4 v) {
+  union _type_cast_8_b u;
+  u._ushort4 = v;
+  return u._int2;
+}
+
+INLINE OVERLOADABLE uint2 as_uint2(ushort4 v) {
+  union _type_cast_8_b u;
+  u._ushort4 = v;
+  return u._uint2;
+}
+
+INLINE OVERLOADABLE short4 as_short4(ushort4 v) {
+  union _type_cast_8_b u;
+  u._ushort4 = v;
+  return u._short4;
+}
+
+INLINE OVERLOADABLE char8 as_char8(ushort4 v) {
+  union _type_cast_8_b u;
+  u._ushort4 = v;
+  return u._char8;
+}
+
+INLINE OVERLOADABLE uchar8 as_uchar8(ushort4 v) {
+  union _type_cast_8_b u;
+  u._ushort4 = v;
+  return u._uchar8;
+}
+
+INLINE OVERLOADABLE float2 as_float2(ushort4 v) {
+  union _type_cast_8_b u;
+  u._ushort4 = v;
+  return u._float2;
+}
+
+INLINE OVERLOADABLE int2 as_int2(char8 v) {
+  union _type_cast_8_b u;
+  u._char8 = v;
+  return u._int2;
+}
+
+INLINE OVERLOADABLE uint2 as_uint2(char8 v) {
+  union _type_cast_8_b u;
+  u._char8 = v;
+  return u._uint2;
+}
+
+INLINE OVERLOADABLE short4 as_short4(char8 v) {
+  union _type_cast_8_b u;
+  u._char8 = v;
+  return u._short4;
+}
+
+INLINE OVERLOADABLE ushort4 as_ushort4(char8 v) {
+  union _type_cast_8_b u;
+  u._char8 = v;
+  return u._ushort4;
+}
+
+INLINE OVERLOADABLE uchar8 as_uchar8(char8 v) {
+  union _type_cast_8_b u;
+  u._char8 = v;
+  return u._uchar8;
+}
+
+INLINE OVERLOADABLE float2 as_float2(char8 v) {
+  union _type_cast_8_b u;
+  u._char8 = v;
+  return u._float2;
+}
+
+INLINE OVERLOADABLE int2 as_int2(uchar8 v) {
+  union _type_cast_8_b u;
+  u._uchar8 = v;
+  return u._int2;
+}
+
+INLINE OVERLOADABLE uint2 as_uint2(uchar8 v) {
+  union _type_cast_8_b u;
+  u._uchar8 = v;
+  return u._uint2;
+}
+
+INLINE OVERLOADABLE short4 as_short4(uchar8 v) {
+  union _type_cast_8_b u;
+  u._uchar8 = v;
+  return u._short4;
+}
+
+INLINE OVERLOADABLE ushort4 as_ushort4(uchar8 v) {
+  union _type_cast_8_b u;
+  u._uchar8 = v;
+  return u._ushort4;
+}
+
+INLINE OVERLOADABLE char8 as_char8(uchar8 v) {
+  union _type_cast_8_b u;
+  u._uchar8 = v;
+  return u._char8;
+}
+
+INLINE OVERLOADABLE float2 as_float2(uchar8 v) {
+  union _type_cast_8_b u;
+  u._uchar8 = v;
+  return u._float2;
+}
+
+INLINE OVERLOADABLE int2 as_int2(float2 v) {
+  union _type_cast_8_b u;
+  u._float2 = v;
+  return u._int2;
+}
+
+INLINE OVERLOADABLE uint2 as_uint2(float2 v) {
+  union _type_cast_8_b u;
+  u._float2 = v;
+  return u._uint2;
+}
+
+INLINE OVERLOADABLE short4 as_short4(float2 v) {
+  union _type_cast_8_b u;
+  u._float2 = v;
+  return u._short4;
+}
+
+INLINE OVERLOADABLE ushort4 as_ushort4(float2 v) {
+  union _type_cast_8_b u;
+  u._float2 = v;
+  return u._ushort4;
+}
+
+INLINE OVERLOADABLE char8 as_char8(float2 v) {
+  union _type_cast_8_b u;
+  u._float2 = v;
+  return u._char8;
+}
+
+INLINE OVERLOADABLE uchar8 as_uchar8(float2 v) {
+  union _type_cast_8_b u;
+  u._float2 = v;
+  return u._uchar8;
+}
+
+union _type_cast_12_b {
+  int3 _int3;
+  uint3 _uint3;
+  float3 _float3;
+};
+
+INLINE OVERLOADABLE uint3 as_uint3(int3 v) {
+  union _type_cast_12_b u;
+  u._int3 = v;
+  return u._uint3;
+}
+
+INLINE OVERLOADABLE float3 as_float3(int3 v) {
+  union _type_cast_12_b u;
+  u._int3 = v;
+  return u._float3;
+}
+
+INLINE OVERLOADABLE int3 as_int3(uint3 v) {
+  union _type_cast_12_b u;
+  u._uint3 = v;
+  return u._int3;
+}
+
+INLINE OVERLOADABLE float3 as_float3(uint3 v) {
+  union _type_cast_12_b u;
+  u._uint3 = v;
+  return u._float3;
+}
+
+INLINE OVERLOADABLE int3 as_int3(float3 v) {
+  union _type_cast_12_b u;
+  u._float3 = v;
+  return u._int3;
+}
+
+INLINE OVERLOADABLE uint3 as_uint3(float3 v) {
+  union _type_cast_12_b u;
+  u._float3 = v;
+  return u._uint3;
+}
+
+union _type_cast_16_b {
+  int4 _int4;
+  uint4 _uint4;
+  short8 _short8;
+  ushort8 _ushort8;
+  char16 _char16;
+  uchar16 _uchar16;
+  float4 _float4;
+};
+
+INLINE OVERLOADABLE uint4 as_uint4(int4 v) {
+  union _type_cast_16_b u;
+  u._int4 = v;
+  return u._uint4;
+}
+
+INLINE OVERLOADABLE short8 as_short8(int4 v) {
+  union _type_cast_16_b u;
+  u._int4 = v;
+  return u._short8;
+}
+
+INLINE OVERLOADABLE ushort8 as_ushort8(int4 v) {
+  union _type_cast_16_b u;
+  u._int4 = v;
+  return u._ushort8;
+}
+
+INLINE OVERLOADABLE char16 as_char16(int4 v) {
+  union _type_cast_16_b u;
+  u._int4 = v;
+  return u._char16;
+}
+
+INLINE OVERLOADABLE uchar16 as_uchar16(int4 v) {
+  union _type_cast_16_b u;
+  u._int4 = v;
+  return u._uchar16;
+}
+
+INLINE OVERLOADABLE float4 as_float4(int4 v) {
+  union _type_cast_16_b u;
+  u._int4 = v;
+  return u._float4;
+}
+
+INLINE OVERLOADABLE int4 as_int4(uint4 v) {
+  union _type_cast_16_b u;
+  u._uint4 = v;
+  return u._int4;
+}
+
+INLINE OVERLOADABLE short8 as_short8(uint4 v) {
+  union _type_cast_16_b u;
+  u._uint4 = v;
+  return u._short8;
+}
+
+INLINE OVERLOADABLE ushort8 as_ushort8(uint4 v) {
+  union _type_cast_16_b u;
+  u._uint4 = v;
+  return u._ushort8;
+}
+
+INLINE OVERLOADABLE char16 as_char16(uint4 v) {
+  union _type_cast_16_b u;
+  u._uint4 = v;
+  return u._char16;
+}
+
+INLINE OVERLOADABLE uchar16 as_uchar16(uint4 v) {
+  union _type_cast_16_b u;
+  u._uint4 = v;
+  return u._uchar16;
+}
+
+INLINE OVERLOADABLE float4 as_float4(uint4 v) {
+  union _type_cast_16_b u;
+  u._uint4 = v;
+  return u._float4;
+}
+
+INLINE OVERLOADABLE int4 as_int4(short8 v) {
+  union _type_cast_16_b u;
+  u._short8 = v;
+  return u._int4;
+}
+
+INLINE OVERLOADABLE uint4 as_uint4(short8 v) {
+  union _type_cast_16_b u;
+  u._short8 = v;
+  return u._uint4;
+}
+
+INLINE OVERLOADABLE ushort8 as_ushort8(short8 v) {
+  union _type_cast_16_b u;
+  u._short8 = v;
+  return u._ushort8;
+}
+
+INLINE OVERLOADABLE char16 as_char16(short8 v) {
+  union _type_cast_16_b u;
+  u._short8 = v;
+  return u._char16;
+}
+
+INLINE OVERLOADABLE uchar16 as_uchar16(short8 v) {
+  union _type_cast_16_b u;
+  u._short8 = v;
+  return u._uchar16;
+}
+
+INLINE OVERLOADABLE float4 as_float4(short8 v) {
+  union _type_cast_16_b u;
+  u._short8 = v;
+  return u._float4;
+}
+
+INLINE OVERLOADABLE int4 as_int4(ushort8 v) {
+  union _type_cast_16_b u;
+  u._ushort8 = v;
+  return u._int4;
+}
+
+INLINE OVERLOADABLE uint4 as_uint4(ushort8 v) {
+  union _type_cast_16_b u;
+  u._ushort8 = v;
+  return u._uint4;
+}
+
+INLINE OVERLOADABLE short8 as_short8(ushort8 v) {
+  union _type_cast_16_b u;
+  u._ushort8 = v;
+  return u._short8;
+}
+
+INLINE OVERLOADABLE char16 as_char16(ushort8 v) {
+  union _type_cast_16_b u;
+  u._ushort8 = v;
+  return u._char16;
+}
+
+INLINE OVERLOADABLE uchar16 as_uchar16(ushort8 v) {
+  union _type_cast_16_b u;
+  u._ushort8 = v;
+  return u._uchar16;
+}
+
+INLINE OVERLOADABLE float4 as_float4(ushort8 v) {
+  union _type_cast_16_b u;
+  u._ushort8 = v;
+  return u._float4;
+}
+
+INLINE OVERLOADABLE int4 as_int4(char16 v) {
+  union _type_cast_16_b u;
+  u._char16 = v;
+  return u._int4;
+}
+
+INLINE OVERLOADABLE uint4 as_uint4(char16 v) {
+  union _type_cast_16_b u;
+  u._char16 = v;
+  return u._uint4;
+}
+
+INLINE OVERLOADABLE short8 as_short8(char16 v) {
+  union _type_cast_16_b u;
+  u._char16 = v;
+  return u._short8;
+}
+
+INLINE OVERLOADABLE ushort8 as_ushort8(char16 v) {
+  union _type_cast_16_b u;
+  u._char16 = v;
+  return u._ushort8;
+}
+
+INLINE OVERLOADABLE uchar16 as_uchar16(char16 v) {
+  union _type_cast_16_b u;
+  u._char16 = v;
+  return u._uchar16;
+}
+
+INLINE OVERLOADABLE float4 as_float4(char16 v) {
+  union _type_cast_16_b u;
+  u._char16 = v;
+  return u._float4;
+}
+
+INLINE OVERLOADABLE int4 as_int4(uchar16 v) {
+  union _type_cast_16_b u;
+  u._uchar16 = v;
+  return u._int4;
+}
+
+INLINE OVERLOADABLE uint4 as_uint4(uchar16 v) {
+  union _type_cast_16_b u;
+  u._uchar16 = v;
+  return u._uint4;
+}
+
+INLINE OVERLOADABLE short8 as_short8(uchar16 v) {
+  union _type_cast_16_b u;
+  u._uchar16 = v;
+  return u._short8;
+}
+
+INLINE OVERLOADABLE ushort8 as_ushort8(uchar16 v) {
+  union _type_cast_16_b u;
+  u._uchar16 = v;
+  return u._ushort8;
+}
+
+INLINE OVERLOADABLE char16 as_char16(uchar16 v) {
+  union _type_cast_16_b u;
+  u._uchar16 = v;
+  return u._char16;
+}
+
+INLINE OVERLOADABLE float4 as_float4(uchar16 v) {
+  union _type_cast_16_b u;
+  u._uchar16 = v;
+  return u._float4;
+}
+
+INLINE OVERLOADABLE int4 as_int4(float4 v) {
+  union _type_cast_16_b u;
+  u._float4 = v;
+  return u._int4;
+}
+
+INLINE OVERLOADABLE uint4 as_uint4(float4 v) {
+  union _type_cast_16_b u;
+  u._float4 = v;
+  return u._uint4;
+}
+
+INLINE OVERLOADABLE short8 as_short8(float4 v) {
+  union _type_cast_16_b u;
+  u._float4 = v;
+  return u._short8;
+}
+
+INLINE OVERLOADABLE ushort8 as_ushort8(float4 v) {
+  union _type_cast_16_b u;
+  u._float4 = v;
+  return u._ushort8;
+}
+
+INLINE OVERLOADABLE char16 as_char16(float4 v) {
+  union _type_cast_16_b u;
+  u._float4 = v;
+  return u._char16;
+}
+
+INLINE OVERLOADABLE uchar16 as_uchar16(float4 v) {
+  union _type_cast_16_b u;
+  u._float4 = v;
+  return u._uchar16;
+}
+
+union _type_cast_32_b {
+  int8 _int8;
+  uint8 _uint8;
+  short16 _short16;
+  ushort16 _ushort16;
+  float8 _float8;
+};
+
+INLINE OVERLOADABLE uint8 as_uint8(int8 v) {
+  union _type_cast_32_b u;
+  u._int8 = v;
+  return u._uint8;
+}
+
+INLINE OVERLOADABLE short16 as_short16(int8 v) {
+  union _type_cast_32_b u;
+  u._int8 = v;
+  return u._short16;
+}
+
+INLINE OVERLOADABLE ushort16 as_ushort16(int8 v) {
+  union _type_cast_32_b u;
+  u._int8 = v;
+  return u._ushort16;
+}
+
+INLINE OVERLOADABLE float8 as_float8(int8 v) {
+  union _type_cast_32_b u;
+  u._int8 = v;
+  return u._float8;
+}
+
+INLINE OVERLOADABLE int8 as_int8(uint8 v) {
+  union _type_cast_32_b u;
+  u._uint8 = v;
+  return u._int8;
+}
+
+INLINE OVERLOADABLE short16 as_short16(uint8 v) {
+  union _type_cast_32_b u;
+  u._uint8 = v;
+  return u._short16;
+}
+
+INLINE OVERLOADABLE ushort16 as_ushort16(uint8 v) {
+  union _type_cast_32_b u;
+  u._uint8 = v;
+  return u._ushort16;
+}
+
+INLINE OVERLOADABLE float8 as_float8(uint8 v) {
+  union _type_cast_32_b u;
+  u._uint8 = v;
+  return u._float8;
+}
+
+INLINE OVERLOADABLE int8 as_int8(short16 v) {
+  union _type_cast_32_b u;
+  u._short16 = v;
+  return u._int8;
+}
+
+INLINE OVERLOADABLE uint8 as_uint8(short16 v) {
+  union _type_cast_32_b u;
+  u._short16 = v;
+  return u._uint8;
+}
+
+INLINE OVERLOADABLE ushort16 as_ushort16(short16 v) {
+  union _type_cast_32_b u;
+  u._short16 = v;
+  return u._ushort16;
+}
+
+INLINE OVERLOADABLE float8 as_float8(short16 v) {
+  union _type_cast_32_b u;
+  u._short16 = v;
+  return u._float8;
+}
+
+INLINE OVERLOADABLE int8 as_int8(ushort16 v) {
+  union _type_cast_32_b u;
+  u._ushort16 = v;
+  return u._int8;
+}
+
+INLINE OVERLOADABLE uint8 as_uint8(ushort16 v) {
+  union _type_cast_32_b u;
+  u._ushort16 = v;
+  return u._uint8;
+}
+
+INLINE OVERLOADABLE short16 as_short16(ushort16 v) {
+  union _type_cast_32_b u;
+  u._ushort16 = v;
+  return u._short16;
+}
+
+INLINE OVERLOADABLE float8 as_float8(ushort16 v) {
+  union _type_cast_32_b u;
+  u._ushort16 = v;
+  return u._float8;
+}
+
+INLINE OVERLOADABLE int8 as_int8(float8 v) {
+  union _type_cast_32_b u;
+  u._float8 = v;
+  return u._int8;
+}
+
+INLINE OVERLOADABLE uint8 as_uint8(float8 v) {
+  union _type_cast_32_b u;
+  u._float8 = v;
+  return u._uint8;
+}
+
+INLINE OVERLOADABLE short16 as_short16(float8 v) {
+  union _type_cast_32_b u;
+  u._float8 = v;
+  return u._short16;
+}
+
+INLINE OVERLOADABLE ushort16 as_ushort16(float8 v) {
+  union _type_cast_32_b u;
+  u._float8 = v;
+  return u._ushort16;
+}
+
+union _type_cast_64_b {
+  int16 _int16;
+  uint16 _uint16;
+  float16 _float16;
+};
+
+INLINE OVERLOADABLE uint16 as_uint16(int16 v) {
+  union _type_cast_64_b u;
+  u._int16 = v;
+  return u._uint16;
+}
+
+INLINE OVERLOADABLE float16 as_float16(int16 v) {
+  union _type_cast_64_b u;
+  u._int16 = v;
+  return u._float16;
+}
+
+INLINE OVERLOADABLE int16 as_int16(uint16 v) {
+  union _type_cast_64_b u;
+  u._uint16 = v;
+  return u._int16;
+}
+
+INLINE OVERLOADABLE float16 as_float16(uint16 v) {
+  union _type_cast_64_b u;
+  u._uint16 = v;
+  return u._float16;
+}
+
+INLINE OVERLOADABLE int16 as_int16(float16 v) {
+  union _type_cast_64_b u;
+  u._float16 = v;
+  return u._int16;
+}
+
+INLINE OVERLOADABLE uint16 as_uint16(float16 v) {
+  union _type_cast_64_b u;
+  u._float16 = v;
+  return u._uint16;
+}
+
+// ##END_AS##
+
 #define DEF(type, n, type2) type##n INLINE_OVERLOADABLE convert_##type##n(type2##n d) { \
     return (type##n)((type)(d.s0), (type)(d.s1), (type)(d.s2), (type)(d.s3)); \
  }
