@@ -236,8 +236,6 @@ cl_program_create_from_source(cl_context ctx,
   cl_uint i;
 
   assert(ctx);
-  INVALID_VALUE_IF (count == 0);
-  INVALID_VALUE_IF (strings == NULL);
 
   // the real compilation step will be done at build time since we do not have
   // yet the compilation options
@@ -296,11 +294,6 @@ cl_program_create_kernel(cl_program p, const char *name, cl_int *errcode_ret)
   cl_kernel from = NULL, to = NULL;
   cl_int err = CL_SUCCESS;
   uint32_t i = 0;
-
-  if (UNLIKELY(name == NULL)) {
-    err = CL_INVALID_KERNEL_NAME;
-    goto error;
-  }
 
   /* Find the program first */
   for (i = 0; i < p->ker_n; ++i) {

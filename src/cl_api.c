@@ -616,8 +616,17 @@ clCreateProgramWithSource(cl_context     context,
 {
   cl_program program = NULL;
   cl_int err = CL_SUCCESS;
+  cl_uint i;
 
   CHECK_CONTEXT (context);
+  INVALID_VALUE_IF (count == 0);
+  INVALID_VALUE_IF (strings == NULL);
+  for(i = 0; i < count; i++) {
+    if(UNLIKELY(strings[i] == NULL)) {
+      err = CL_INVALID_VALUE;
+      goto error;
+    }
+  }
   program = cl_program_create_from_source(context,
                                           count,
                                           strings,
@@ -691,10 +700,7 @@ clBuildProgram(cl_program            program,
   /* Everything is easy. We only support one device anyway */
   if (num_devices != 0) {
     assert(program->ctx);
-    if (UNLIKELY(device_list[0] != program->ctx->device)) {
-      err = CL_INVALID_DEVICE;
-      goto error;
-    }
+    INVALID_DEVICE_IF (device_list[0] != program->ctx->device);
   }
 
   /* TODO support create program from binary */
@@ -752,6 +758,7 @@ clCreateKernel(cl_program   program,
     err = CL_INVALID_PROGRAM_EXECUTABLE;
     goto error;
   }
+  INVALID_VALUE_IF (kernel_name == NULL);
   kernel = cl_program_create_kernel(program, kernel_name, &err);
 
 error:
