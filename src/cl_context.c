@@ -192,10 +192,7 @@ cl_context_create_queue(cl_context ctx,
   cl_command_queue queue = NULL;
   cl_int err = CL_SUCCESS;
 
-  if (UNLIKELY(device != ctx->device)) {
-    err = CL_INVALID_DEVICE;
-    goto error;
-  }
+
 
   /* We create the command queue and store it in the context list of queues */
   TRY_ALLOC (queue, cl_command_queue_new(ctx));

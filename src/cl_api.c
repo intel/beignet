@@ -287,6 +287,15 @@ clCreateCommandQueue(cl_context                   context,
   cl_command_queue queue = NULL;
   cl_int err = CL_SUCCESS;
   CHECK_CONTEXT (context);
+
+  INVALID_DEVICE_IF (device != context->device);
+  INVALID_VALUE_IF (properties & ~(CL_QUEUE_OUT_OF_ORDER_EXEC_MODE_ENABLE | CL_QUEUE_PROFILING_ENABLE));
+
+  if(properties) {
+    err = CL_INVALID_QUEUE_PROPERTIES;
+    goto error;
+  }
+
   queue = cl_context_create_queue(context, device, properties, &err);
 error:
   if (errcode_ret)
