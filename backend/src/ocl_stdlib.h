@@ -1223,29 +1223,849 @@ INLINE OVERLOADABLE uint16 as_uint16(float16 v) {
 
 // ##END_AS##
 
-#define DEF(type, n, type2) type##n INLINE_OVERLOADABLE convert_##type##n(type2##n d) { \
-    return (type##n)((type)(d.s0), (type)(d.s1), (type)(d.s2), (type)(d.s3)); \
- }
-#define DEF2(type) DEF(type, 4, char); \
-                   DEF(type, 4, uchar); \
-                   DEF(type, 4, short); \
-                   DEF(type, 4, ushort); \
-                   DEF(type, 4, int); \
-                   DEF(type, 4, uint); \
-                   DEF(type, 4, long); \
-                   DEF(type, 4, ulong); \
-                   DEF(type, 4, float);
-DEF2(char);
-DEF2(uchar);
-DEF2(short);
-DEF2(ushort);
-DEF2(int);
-DEF2(uint);
-DEF2(long);
-DEF2(ulong);
-DEF2(float);
-#undef DEF2
-#undef DEF
+// ##BEGIN_CONVERT##
+INLINE OVERLOADABLE uint2 convert_uint2(int2 v) {
+  return (uint2)((uint)(v.s0), (uint)(v.s1));
+}
+
+INLINE OVERLOADABLE short2 convert_short2(int2 v) {
+  return (short2)((short)(v.s0), (short)(v.s1));
+}
+
+INLINE OVERLOADABLE ushort2 convert_ushort2(int2 v) {
+  return (ushort2)((ushort)(v.s0), (ushort)(v.s1));
+}
+
+INLINE OVERLOADABLE char2 convert_char2(int2 v) {
+  return (char2)((char)(v.s0), (char)(v.s1));
+}
+
+INLINE OVERLOADABLE uchar2 convert_uchar2(int2 v) {
+  return (uchar2)((uchar)(v.s0), (uchar)(v.s1));
+}
+
+INLINE OVERLOADABLE float2 convert_float2(int2 v) {
+  return (float2)((float)(v.s0), (float)(v.s1));
+}
+
+INLINE OVERLOADABLE int2 convert_int2(uint2 v) {
+  return (int2)((int)(v.s0), (int)(v.s1));
+}
+
+INLINE OVERLOADABLE short2 convert_short2(uint2 v) {
+  return (short2)((short)(v.s0), (short)(v.s1));
+}
+
+INLINE OVERLOADABLE ushort2 convert_ushort2(uint2 v) {
+  return (ushort2)((ushort)(v.s0), (ushort)(v.s1));
+}
+
+INLINE OVERLOADABLE char2 convert_char2(uint2 v) {
+  return (char2)((char)(v.s0), (char)(v.s1));
+}
+
+INLINE OVERLOADABLE uchar2 convert_uchar2(uint2 v) {
+  return (uchar2)((uchar)(v.s0), (uchar)(v.s1));
+}
+
+INLINE OVERLOADABLE float2 convert_float2(uint2 v) {
+  return (float2)((float)(v.s0), (float)(v.s1));
+}
+
+INLINE OVERLOADABLE int2 convert_int2(short2 v) {
+  return (int2)((int)(v.s0), (int)(v.s1));
+}
+
+INLINE OVERLOADABLE uint2 convert_uint2(short2 v) {
+  return (uint2)((uint)(v.s0), (uint)(v.s1));
+}
+
+INLINE OVERLOADABLE ushort2 convert_ushort2(short2 v) {
+  return (ushort2)((ushort)(v.s0), (ushort)(v.s1));
+}
+
+INLINE OVERLOADABLE char2 convert_char2(short2 v) {
+  return (char2)((char)(v.s0), (char)(v.s1));
+}
+
+INLINE OVERLOADABLE uchar2 convert_uchar2(short2 v) {
+  return (uchar2)((uchar)(v.s0), (uchar)(v.s1));
+}
+
+INLINE OVERLOADABLE float2 convert_float2(short2 v) {
+  return (float2)((float)(v.s0), (float)(v.s1));
+}
+
+INLINE OVERLOADABLE int2 convert_int2(ushort2 v) {
+  return (int2)((int)(v.s0), (int)(v.s1));
+}
+
+INLINE OVERLOADABLE uint2 convert_uint2(ushort2 v) {
+  return (uint2)((uint)(v.s0), (uint)(v.s1));
+}
+
+INLINE OVERLOADABLE short2 convert_short2(ushort2 v) {
+  return (short2)((short)(v.s0), (short)(v.s1));
+}
+
+INLINE OVERLOADABLE char2 convert_char2(ushort2 v) {
+  return (char2)((char)(v.s0), (char)(v.s1));
+}
+
+INLINE OVERLOADABLE uchar2 convert_uchar2(ushort2 v) {
+  return (uchar2)((uchar)(v.s0), (uchar)(v.s1));
+}
+
+INLINE OVERLOADABLE float2 convert_float2(ushort2 v) {
+  return (float2)((float)(v.s0), (float)(v.s1));
+}
+
+INLINE OVERLOADABLE int2 convert_int2(char2 v) {
+  return (int2)((int)(v.s0), (int)(v.s1));
+}
+
+INLINE OVERLOADABLE uint2 convert_uint2(char2 v) {
+  return (uint2)((uint)(v.s0), (uint)(v.s1));
+}
+
+INLINE OVERLOADABLE short2 convert_short2(char2 v) {
+  return (short2)((short)(v.s0), (short)(v.s1));
+}
+
+INLINE OVERLOADABLE ushort2 convert_ushort2(char2 v) {
+  return (ushort2)((ushort)(v.s0), (ushort)(v.s1));
+}
+
+INLINE OVERLOADABLE uchar2 convert_uchar2(char2 v) {
+  return (uchar2)((uchar)(v.s0), (uchar)(v.s1));
+}
+
+INLINE OVERLOADABLE float2 convert_float2(char2 v) {
+  return (float2)((float)(v.s0), (float)(v.s1));
+}
+
+INLINE OVERLOADABLE int2 convert_int2(uchar2 v) {
+  return (int2)((int)(v.s0), (int)(v.s1));
+}
+
+INLINE OVERLOADABLE uint2 convert_uint2(uchar2 v) {
+  return (uint2)((uint)(v.s0), (uint)(v.s1));
+}
+
+INLINE OVERLOADABLE short2 convert_short2(uchar2 v) {
+  return (short2)((short)(v.s0), (short)(v.s1));
+}
+
+INLINE OVERLOADABLE ushort2 convert_ushort2(uchar2 v) {
+  return (ushort2)((ushort)(v.s0), (ushort)(v.s1));
+}
+
+INLINE OVERLOADABLE char2 convert_char2(uchar2 v) {
+  return (char2)((char)(v.s0), (char)(v.s1));
+}
+
+INLINE OVERLOADABLE float2 convert_float2(uchar2 v) {
+  return (float2)((float)(v.s0), (float)(v.s1));
+}
+
+INLINE OVERLOADABLE int2 convert_int2(float2 v) {
+  return (int2)((int)(v.s0), (int)(v.s1));
+}
+
+INLINE OVERLOADABLE uint2 convert_uint2(float2 v) {
+  return (uint2)((uint)(v.s0), (uint)(v.s1));
+}
+
+INLINE OVERLOADABLE short2 convert_short2(float2 v) {
+  return (short2)((short)(v.s0), (short)(v.s1));
+}
+
+INLINE OVERLOADABLE ushort2 convert_ushort2(float2 v) {
+  return (ushort2)((ushort)(v.s0), (ushort)(v.s1));
+}
+
+INLINE OVERLOADABLE char2 convert_char2(float2 v) {
+  return (char2)((char)(v.s0), (char)(v.s1));
+}
+
+INLINE OVERLOADABLE uchar2 convert_uchar2(float2 v) {
+  return (uchar2)((uchar)(v.s0), (uchar)(v.s1));
+}
+
+INLINE OVERLOADABLE uint3 convert_uint3(int3 v) {
+  return (uint3)((uint)(v.s0), (uint)(v.s1), (uint)(v.s2));
+}
+
+INLINE OVERLOADABLE short3 convert_short3(int3 v) {
+  return (short3)((short)(v.s0), (short)(v.s1), (short)(v.s2));
+}
+
+INLINE OVERLOADABLE ushort3 convert_ushort3(int3 v) {
+  return (ushort3)((ushort)(v.s0), (ushort)(v.s1), (ushort)(v.s2));
+}
+
+INLINE OVERLOADABLE char3 convert_char3(int3 v) {
+  return (char3)((char)(v.s0), (char)(v.s1), (char)(v.s2));
+}
+
+INLINE OVERLOADABLE uchar3 convert_uchar3(int3 v) {
+  return (uchar3)((uchar)(v.s0), (uchar)(v.s1), (uchar)(v.s2));
+}
+
+INLINE OVERLOADABLE float3 convert_float3(int3 v) {
+  return (float3)((float)(v.s0), (float)(v.s1), (float)(v.s2));
+}
+
+INLINE OVERLOADABLE int3 convert_int3(uint3 v) {
+  return (int3)((int)(v.s0), (int)(v.s1), (int)(v.s2));
+}
+
+INLINE OVERLOADABLE short3 convert_short3(uint3 v) {
+  return (short3)((short)(v.s0), (short)(v.s1), (short)(v.s2));
+}
+
+INLINE OVERLOADABLE ushort3 convert_ushort3(uint3 v) {
+  return (ushort3)((ushort)(v.s0), (ushort)(v.s1), (ushort)(v.s2));
+}
+
+INLINE OVERLOADABLE char3 convert_char3(uint3 v) {
+  return (char3)((char)(v.s0), (char)(v.s1), (char)(v.s2));
+}
+
+INLINE OVERLOADABLE uchar3 convert_uchar3(uint3 v) {
+  return (uchar3)((uchar)(v.s0), (uchar)(v.s1), (uchar)(v.s2));
+}
+
+INLINE OVERLOADABLE float3 convert_float3(uint3 v) {
+  return (float3)((float)(v.s0), (float)(v.s1), (float)(v.s2));
+}
+
+INLINE OVERLOADABLE int3 convert_int3(short3 v) {
+  return (int3)((int)(v.s0), (int)(v.s1), (int)(v.s2));
+}
+
+INLINE OVERLOADABLE uint3 convert_uint3(short3 v) {
+  return (uint3)((uint)(v.s0), (uint)(v.s1), (uint)(v.s2));
+}
+
+INLINE OVERLOADABLE ushort3 convert_ushort3(short3 v) {
+  return (ushort3)((ushort)(v.s0), (ushort)(v.s1), (ushort)(v.s2));
+}
+
+INLINE OVERLOADABLE char3 convert_char3(short3 v) {
+  return (char3)((char)(v.s0), (char)(v.s1), (char)(v.s2));
+}
+
+INLINE OVERLOADABLE uchar3 convert_uchar3(short3 v) {
+  return (uchar3)((uchar)(v.s0), (uchar)(v.s1), (uchar)(v.s2));
+}
+
+INLINE OVERLOADABLE float3 convert_float3(short3 v) {
+  return (float3)((float)(v.s0), (float)(v.s1), (float)(v.s2));
+}
+
+INLINE OVERLOADABLE int3 convert_int3(ushort3 v) {
+  return (int3)((int)(v.s0), (int)(v.s1), (int)(v.s2));
+}
+
+INLINE OVERLOADABLE uint3 convert_uint3(ushort3 v) {
+  return (uint3)((uint)(v.s0), (uint)(v.s1), (uint)(v.s2));
+}
+
+INLINE OVERLOADABLE short3 convert_short3(ushort3 v) {
+  return (short3)((short)(v.s0), (short)(v.s1), (short)(v.s2));
+}
+
+INLINE OVERLOADABLE char3 convert_char3(ushort3 v) {
+  return (char3)((char)(v.s0), (char)(v.s1), (char)(v.s2));
+}
+
+INLINE OVERLOADABLE uchar3 convert_uchar3(ushort3 v) {
+  return (uchar3)((uchar)(v.s0), (uchar)(v.s1), (uchar)(v.s2));
+}
+
+INLINE OVERLOADABLE float3 convert_float3(ushort3 v) {
+  return (float3)((float)(v.s0), (float)(v.s1), (float)(v.s2));
+}
+
+INLINE OVERLOADABLE int3 convert_int3(char3 v) {
+  return (int3)((int)(v.s0), (int)(v.s1), (int)(v.s2));
+}
+
+INLINE OVERLOADABLE uint3 convert_uint3(char3 v) {
+  return (uint3)((uint)(v.s0), (uint)(v.s1), (uint)(v.s2));
+}
+
+INLINE OVERLOADABLE short3 convert_short3(char3 v) {
+  return (short3)((short)(v.s0), (short)(v.s1), (short)(v.s2));
+}
+
+INLINE OVERLOADABLE ushort3 convert_ushort3(char3 v) {
+  return (ushort3)((ushort)(v.s0), (ushort)(v.s1), (ushort)(v.s2));
+}
+
+INLINE OVERLOADABLE uchar3 convert_uchar3(char3 v) {
+  return (uchar3)((uchar)(v.s0), (uchar)(v.s1), (uchar)(v.s2));
+}
+
+INLINE OVERLOADABLE float3 convert_float3(char3 v) {
+  return (float3)((float)(v.s0), (float)(v.s1), (float)(v.s2));
+}
+
+INLINE OVERLOADABLE int3 convert_int3(uchar3 v) {
+  return (int3)((int)(v.s0), (int)(v.s1), (int)(v.s2));
+}
+
+INLINE OVERLOADABLE uint3 convert_uint3(uchar3 v) {
+  return (uint3)((uint)(v.s0), (uint)(v.s1), (uint)(v.s2));
+}
+
+INLINE OVERLOADABLE short3 convert_short3(uchar3 v) {
+  return (short3)((short)(v.s0), (short)(v.s1), (short)(v.s2));
+}
+
+INLINE OVERLOADABLE ushort3 convert_ushort3(uchar3 v) {
+  return (ushort3)((ushort)(v.s0), (ushort)(v.s1), (ushort)(v.s2));
+}
+
+INLINE OVERLOADABLE char3 convert_char3(uchar3 v) {
+  return (char3)((char)(v.s0), (char)(v.s1), (char)(v.s2));
+}
+
+INLINE OVERLOADABLE float3 convert_float3(uchar3 v) {
+  return (float3)((float)(v.s0), (float)(v.s1), (float)(v.s2));
+}
+
+INLINE OVERLOADABLE int3 convert_int3(float3 v) {
+  return (int3)((int)(v.s0), (int)(v.s1), (int)(v.s2));
+}
+
+INLINE OVERLOADABLE uint3 convert_uint3(float3 v) {
+  return (uint3)((uint)(v.s0), (uint)(v.s1), (uint)(v.s2));
+}
+
+INLINE OVERLOADABLE short3 convert_short3(float3 v) {
+  return (short3)((short)(v.s0), (short)(v.s1), (short)(v.s2));
+}
+
+INLINE OVERLOADABLE ushort3 convert_ushort3(float3 v) {
+  return (ushort3)((ushort)(v.s0), (ushort)(v.s1), (ushort)(v.s2));
+}
+
+INLINE OVERLOADABLE char3 convert_char3(float3 v) {
+  return (char3)((char)(v.s0), (char)(v.s1), (char)(v.s2));
+}
+
+INLINE OVERLOADABLE uchar3 convert_uchar3(float3 v) {
+  return (uchar3)((uchar)(v.s0), (uchar)(v.s1), (uchar)(v.s2));
+}
+
+INLINE OVERLOADABLE uint4 convert_uint4(int4 v) {
+  return (uint4)((uint)(v.s0), (uint)(v.s1), (uint)(v.s2), (uint)(v.s3));
+}
+
+INLINE OVERLOADABLE short4 convert_short4(int4 v) {
+  return (short4)((short)(v.s0), (short)(v.s1), (short)(v.s2), (short)(v.s3));
+}
+
+INLINE OVERLOADABLE ushort4 convert_ushort4(int4 v) {
+  return (ushort4)((ushort)(v.s0), (ushort)(v.s1), (ushort)(v.s2), (ushort)(v.s3));
+}
+
+INLINE OVERLOADABLE char4 convert_char4(int4 v) {
+  return (char4)((char)(v.s0), (char)(v.s1), (char)(v.s2), (char)(v.s3));
+}
+
+INLINE OVERLOADABLE uchar4 convert_uchar4(int4 v) {
+  return (uchar4)((uchar)(v.s0), (uchar)(v.s1), (uchar)(v.s2), (uchar)(v.s3));
+}
+
+INLINE OVERLOADABLE float4 convert_float4(int4 v) {
+  return (float4)((float)(v.s0), (float)(v.s1), (float)(v.s2), (float)(v.s3));
+}
+
+INLINE OVERLOADABLE int4 convert_int4(uint4 v) {
+  return (int4)((int)(v.s0), (int)(v.s1), (int)(v.s2), (int)(v.s3));
+}
+
+INLINE OVERLOADABLE short4 convert_short4(uint4 v) {
+  return (short4)((short)(v.s0), (short)(v.s1), (short)(v.s2), (short)(v.s3));
+}
+
+INLINE OVERLOADABLE ushort4 convert_ushort4(uint4 v) {
+  return (ushort4)((ushort)(v.s0), (ushort)(v.s1), (ushort)(v.s2), (ushort)(v.s3));
+}
+
+INLINE OVERLOADABLE char4 convert_char4(uint4 v) {
+  return (char4)((char)(v.s0), (char)(v.s1), (char)(v.s2), (char)(v.s3));
+}
+
+INLINE OVERLOADABLE uchar4 convert_uchar4(uint4 v) {
+  return (uchar4)((uchar)(v.s0), (uchar)(v.s1), (uchar)(v.s2), (uchar)(v.s3));
+}
+
+INLINE OVERLOADABLE float4 convert_float4(uint4 v) {
+  return (float4)((float)(v.s0), (float)(v.s1), (float)(v.s2), (float)(v.s3));
+}
+
+INLINE OVERLOADABLE int4 convert_int4(short4 v) {
+  return (int4)((int)(v.s0), (int)(v.s1), (int)(v.s2), (int)(v.s3));
+}
+
+INLINE OVERLOADABLE uint4 convert_uint4(short4 v) {
+  return (uint4)((uint)(v.s0), (uint)(v.s1), (uint)(v.s2), (uint)(v.s3));
+}
+
+INLINE OVERLOADABLE ushort4 convert_ushort4(short4 v) {
+  return (ushort4)((ushort)(v.s0), (ushort)(v.s1), (ushort)(v.s2), (ushort)(v.s3));
+}
+
+INLINE OVERLOADABLE char4 convert_char4(short4 v) {
+  return (char4)((char)(v.s0), (char)(v.s1), (char)(v.s2), (char)(v.s3));
+}
+
+INLINE OVERLOADABLE uchar4 convert_uchar4(short4 v) {
+  return (uchar4)((uchar)(v.s0), (uchar)(v.s1), (uchar)(v.s2), (uchar)(v.s3));
+}
+
+INLINE OVERLOADABLE float4 convert_float4(short4 v) {
+  return (float4)((float)(v.s0), (float)(v.s1), (float)(v.s2), (float)(v.s3));
+}
+
+INLINE OVERLOADABLE int4 convert_int4(ushort4 v) {
+  return (int4)((int)(v.s0), (int)(v.s1), (int)(v.s2), (int)(v.s3));
+}
+
+INLINE OVERLOADABLE uint4 convert_uint4(ushort4 v) {
+  return (uint4)((uint)(v.s0), (uint)(v.s1), (uint)(v.s2), (uint)(v.s3));
+}
+
+INLINE OVERLOADABLE short4 convert_short4(ushort4 v) {
+  return (short4)((short)(v.s0), (short)(v.s1), (short)(v.s2), (short)(v.s3));
+}
+
+INLINE OVERLOADABLE char4 convert_char4(ushort4 v) {
+  return (char4)((char)(v.s0), (char)(v.s1), (char)(v.s2), (char)(v.s3));
+}
+
+INLINE OVERLOADABLE uchar4 convert_uchar4(ushort4 v) {
+  return (uchar4)((uchar)(v.s0), (uchar)(v.s1), (uchar)(v.s2), (uchar)(v.s3));
+}
+
+INLINE OVERLOADABLE float4 convert_float4(ushort4 v) {
+  return (float4)((float)(v.s0), (float)(v.s1), (float)(v.s2), (float)(v.s3));
+}
+
+INLINE OVERLOADABLE int4 convert_int4(char4 v) {
+  return (int4)((int)(v.s0), (int)(v.s1), (int)(v.s2), (int)(v.s3));
+}
+
+INLINE OVERLOADABLE uint4 convert_uint4(char4 v) {
+  return (uint4)((uint)(v.s0), (uint)(v.s1), (uint)(v.s2), (uint)(v.s3));
+}
+
+INLINE OVERLOADABLE short4 convert_short4(char4 v) {
+  return (short4)((short)(v.s0), (short)(v.s1), (short)(v.s2), (short)(v.s3));
+}
+
+INLINE OVERLOADABLE ushort4 convert_ushort4(char4 v) {
+  return (ushort4)((ushort)(v.s0), (ushort)(v.s1), (ushort)(v.s2), (ushort)(v.s3));
+}
+
+INLINE OVERLOADABLE uchar4 convert_uchar4(char4 v) {
+  return (uchar4)((uchar)(v.s0), (uchar)(v.s1), (uchar)(v.s2), (uchar)(v.s3));
+}
+
+INLINE OVERLOADABLE float4 convert_float4(char4 v) {
+  return (float4)((float)(v.s0), (float)(v.s1), (float)(v.s2), (float)(v.s3));
+}
+
+INLINE OVERLOADABLE int4 convert_int4(uchar4 v) {
+  return (int4)((int)(v.s0), (int)(v.s1), (int)(v.s2), (int)(v.s3));
+}
+
+INLINE OVERLOADABLE uint4 convert_uint4(uchar4 v) {
+  return (uint4)((uint)(v.s0), (uint)(v.s1), (uint)(v.s2), (uint)(v.s3));
+}
+
+INLINE OVERLOADABLE short4 convert_short4(uchar4 v) {
+  return (short4)((short)(v.s0), (short)(v.s1), (short)(v.s2), (short)(v.s3));
+}
+
+INLINE OVERLOADABLE ushort4 convert_ushort4(uchar4 v) {
+  return (ushort4)((ushort)(v.s0), (ushort)(v.s1), (ushort)(v.s2), (ushort)(v.s3));
+}
+
+INLINE OVERLOADABLE char4 convert_char4(uchar4 v) {
+  return (char4)((char)(v.s0), (char)(v.s1), (char)(v.s2), (char)(v.s3));
+}
+
+INLINE OVERLOADABLE float4 convert_float4(uchar4 v) {
+  return (float4)((float)(v.s0), (float)(v.s1), (float)(v.s2), (float)(v.s3));
+}
+
+INLINE OVERLOADABLE int4 convert_int4(float4 v) {
+  return (int4)((int)(v.s0), (int)(v.s1), (int)(v.s2), (int)(v.s3));
+}
+
+INLINE OVERLOADABLE uint4 convert_uint4(float4 v) {
+  return (uint4)((uint)(v.s0), (uint)(v.s1), (uint)(v.s2), (uint)(v.s3));
+}
+
+INLINE OVERLOADABLE short4 convert_short4(float4 v) {
+  return (short4)((short)(v.s0), (short)(v.s1), (short)(v.s2), (short)(v.s3));
+}
+
+INLINE OVERLOADABLE ushort4 convert_ushort4(float4 v) {
+  return (ushort4)((ushort)(v.s0), (ushort)(v.s1), (ushort)(v.s2), (ushort)(v.s3));
+}
+
+INLINE OVERLOADABLE char4 convert_char4(float4 v) {
+  return (char4)((char)(v.s0), (char)(v.s1), (char)(v.s2), (char)(v.s3));
+}
+
+INLINE OVERLOADABLE uchar4 convert_uchar4(float4 v) {
+  return (uchar4)((uchar)(v.s0), (uchar)(v.s1), (uchar)(v.s2), (uchar)(v.s3));
+}
+
+INLINE OVERLOADABLE uint8 convert_uint8(int8 v) {
+  return (uint8)((uint)(v.s0), (uint)(v.s1), (uint)(v.s2), (uint)(v.s3), (uint)(v.s4), (uint)(v.s5), (uint)(v.s6), (uint)(v.s7));
+}
+
+INLINE OVERLOADABLE short8 convert_short8(int8 v) {
+  return (short8)((short)(v.s0), (short)(v.s1), (short)(v.s2), (short)(v.s3), (short)(v.s4), (short)(v.s5), (short)(v.s6), (short)(v.s7));
+}
+
+INLINE OVERLOADABLE ushort8 convert_ushort8(int8 v) {
+  return (ushort8)((ushort)(v.s0), (ushort)(v.s1), (ushort)(v.s2), (ushort)(v.s3), (ushort)(v.s4), (ushort)(v.s5), (ushort)(v.s6), (ushort)(v.s7));
+}
+
+INLINE OVERLOADABLE char8 convert_char8(int8 v) {
+  return (char8)((char)(v.s0), (char)(v.s1), (char)(v.s2), (char)(v.s3), (char)(v.s4), (char)(v.s5), (char)(v.s6), (char)(v.s7));
+}
+
+INLINE OVERLOADABLE uchar8 convert_uchar8(int8 v) {
+  return (uchar8)((uchar)(v.s0), (uchar)(v.s1), (uchar)(v.s2), (uchar)(v.s3), (uchar)(v.s4), (uchar)(v.s5), (uchar)(v.s6), (uchar)(v.s7));
+}
+
+INLINE OVERLOADABLE float8 convert_float8(int8 v) {
+  return (float8)((float)(v.s0), (float)(v.s1), (float)(v.s2), (float)(v.s3), (float)(v.s4), (float)(v.s5), (float)(v.s6), (float)(v.s7));
+}
+
+INLINE OVERLOADABLE int8 convert_int8(uint8 v) {
+  return (int8)((int)(v.s0), (int)(v.s1), (int)(v.s2), (int)(v.s3), (int)(v.s4), (int)(v.s5), (int)(v.s6), (int)(v.s7));
+}
+
+INLINE OVERLOADABLE short8 convert_short8(uint8 v) {
+  return (short8)((short)(v.s0), (short)(v.s1), (short)(v.s2), (short)(v.s3), (short)(v.s4), (short)(v.s5), (short)(v.s6), (short)(v.s7));
+}
+
+INLINE OVERLOADABLE ushort8 convert_ushort8(uint8 v) {
+  return (ushort8)((ushort)(v.s0), (ushort)(v.s1), (ushort)(v.s2), (ushort)(v.s3), (ushort)(v.s4), (ushort)(v.s5), (ushort)(v.s6), (ushort)(v.s7));
+}
+
+INLINE OVERLOADABLE char8 convert_char8(uint8 v) {
+  return (char8)((char)(v.s0), (char)(v.s1), (char)(v.s2), (char)(v.s3), (char)(v.s4), (char)(v.s5), (char)(v.s6), (char)(v.s7));
+}
+
+INLINE OVERLOADABLE uchar8 convert_uchar8(uint8 v) {
+  return (uchar8)((uchar)(v.s0), (uchar)(v.s1), (uchar)(v.s2), (uchar)(v.s3), (uchar)(v.s4), (uchar)(v.s5), (uchar)(v.s6), (uchar)(v.s7));
+}
+
+INLINE OVERLOADABLE float8 convert_float8(uint8 v) {
+  return (float8)((float)(v.s0), (float)(v.s1), (float)(v.s2), (float)(v.s3), (float)(v.s4), (float)(v.s5), (float)(v.s6), (float)(v.s7));
+}
+
+INLINE OVERLOADABLE int8 convert_int8(short8 v) {
+  return (int8)((int)(v.s0), (int)(v.s1), (int)(v.s2), (int)(v.s3), (int)(v.s4), (int)(v.s5), (int)(v.s6), (int)(v.s7));
+}
+
+INLINE OVERLOADABLE uint8 convert_uint8(short8 v) {
+  return (uint8)((uint)(v.s0), (uint)(v.s1), (uint)(v.s2), (uint)(v.s3), (uint)(v.s4), (uint)(v.s5), (uint)(v.s6), (uint)(v.s7));
+}
+
+INLINE OVERLOADABLE ushort8 convert_ushort8(short8 v) {
+  return (ushort8)((ushort)(v.s0), (ushort)(v.s1), (ushort)(v.s2), (ushort)(v.s3), (ushort)(v.s4), (ushort)(v.s5), (ushort)(v.s6), (ushort)(v.s7));
+}
+
+INLINE OVERLOADABLE char8 convert_char8(short8 v) {
+  return (char8)((char)(v.s0), (char)(v.s1), (char)(v.s2), (char)(v.s3), (char)(v.s4), (char)(v.s5), (char)(v.s6), (char)(v.s7));
+}
+
+INLINE OVERLOADABLE uchar8 convert_uchar8(short8 v) {
+  return (uchar8)((uchar)(v.s0), (uchar)(v.s1), (uchar)(v.s2), (uchar)(v.s3), (uchar)(v.s4), (uchar)(v.s5), (uchar)(v.s6), (uchar)(v.s7));
+}
+
+INLINE OVERLOADABLE float8 convert_float8(short8 v) {
+  return (float8)((float)(v.s0), (float)(v.s1), (float)(v.s2), (float)(v.s3), (float)(v.s4), (float)(v.s5), (float)(v.s6), (float)(v.s7));
+}
+
+INLINE OVERLOADABLE int8 convert_int8(ushort8 v) {
+  return (int8)((int)(v.s0), (int)(v.s1), (int)(v.s2), (int)(v.s3), (int)(v.s4), (int)(v.s5), (int)(v.s6), (int)(v.s7));
+}
+
+INLINE OVERLOADABLE uint8 convert_uint8(ushort8 v) {
+  return (uint8)((uint)(v.s0), (uint)(v.s1), (uint)(v.s2), (uint)(v.s3), (uint)(v.s4), (uint)(v.s5), (uint)(v.s6), (uint)(v.s7));
+}
+
+INLINE OVERLOADABLE short8 convert_short8(ushort8 v) {
+  return (short8)((short)(v.s0), (short)(v.s1), (short)(v.s2), (short)(v.s3), (short)(v.s4), (short)(v.s5), (short)(v.s6), (short)(v.s7));
+}
+
+INLINE OVERLOADABLE char8 convert_char8(ushort8 v) {
+  return (char8)((char)(v.s0), (char)(v.s1), (char)(v.s2), (char)(v.s3), (char)(v.s4), (char)(v.s5), (char)(v.s6), (char)(v.s7));
+}
+
+INLINE OVERLOADABLE uchar8 convert_uchar8(ushort8 v) {
+  return (uchar8)((uchar)(v.s0), (uchar)(v.s1), (uchar)(v.s2), (uchar)(v.s3), (uchar)(v.s4), (uchar)(v.s5), (uchar)(v.s6), (uchar)(v.s7));
+}
+
+INLINE OVERLOADABLE float8 convert_float8(ushort8 v) {
+  return (float8)((float)(v.s0), (float)(v.s1), (float)(v.s2), (float)(v.s3), (float)(v.s4), (float)(v.s5), (float)(v.s6), (float)(v.s7));
+}
+
+INLINE OVERLOADABLE int8 convert_int8(char8 v) {
+  return (int8)((int)(v.s0), (int)(v.s1), (int)(v.s2), (int)(v.s3), (int)(v.s4), (int)(v.s5), (int)(v.s6), (int)(v.s7));
+}
+
+INLINE OVERLOADABLE uint8 convert_uint8(char8 v) {
+  return (uint8)((uint)(v.s0), (uint)(v.s1), (uint)(v.s2), (uint)(v.s3), (uint)(v.s4), (uint)(v.s5), (uint)(v.s6), (uint)(v.s7));
+}
+
+INLINE OVERLOADABLE short8 convert_short8(char8 v) {
+  return (short8)((short)(v.s0), (short)(v.s1), (short)(v.s2), (short)(v.s3), (short)(v.s4), (short)(v.s5), (short)(v.s6), (short)(v.s7));
+}
+
+INLINE OVERLOADABLE ushort8 convert_ushort8(char8 v) {
+  return (ushort8)((ushort)(v.s0), (ushort)(v.s1), (ushort)(v.s2), (ushort)(v.s3), (ushort)(v.s4), (ushort)(v.s5), (ushort)(v.s6), (ushort)(v.s7));
+}
+
+INLINE OVERLOADABLE uchar8 convert_uchar8(char8 v) {
+  return (uchar8)((uchar)(v.s0), (uchar)(v.s1), (uchar)(v.s2), (uchar)(v.s3), (uchar)(v.s4), (uchar)(v.s5), (uchar)(v.s6), (uchar)(v.s7));
+}
+
+INLINE OVERLOADABLE float8 convert_float8(char8 v) {
+  return (float8)((float)(v.s0), (float)(v.s1), (float)(v.s2), (float)(v.s3), (float)(v.s4), (float)(v.s5), (float)(v.s6), (float)(v.s7));
+}
+
+INLINE OVERLOADABLE int8 convert_int8(uchar8 v) {
+  return (int8)((int)(v.s0), (int)(v.s1), (int)(v.s2), (int)(v.s3), (int)(v.s4), (int)(v.s5), (int)(v.s6), (int)(v.s7));
+}
+
+INLINE OVERLOADABLE uint8 convert_uint8(uchar8 v) {
+  return (uint8)((uint)(v.s0), (uint)(v.s1), (uint)(v.s2), (uint)(v.s3), (uint)(v.s4), (uint)(v.s5), (uint)(v.s6), (uint)(v.s7));
+}
+
+INLINE OVERLOADABLE short8 convert_short8(uchar8 v) {
+  return (short8)((short)(v.s0), (short)(v.s1), (short)(v.s2), (short)(v.s3), (short)(v.s4), (short)(v.s5), (short)(v.s6), (short)(v.s7));
+}
+
+INLINE OVERLOADABLE ushort8 convert_ushort8(uchar8 v) {
+  return (ushort8)((ushort)(v.s0), (ushort)(v.s1), (ushort)(v.s2), (ushort)(v.s3), (ushort)(v.s4), (ushort)(v.s5), (ushort)(v.s6), (ushort)(v.s7));
+}
+
+INLINE OVERLOADABLE char8 convert_char8(uchar8 v) {
+  return (char8)((char)(v.s0), (char)(v.s1), (char)(v.s2), (char)(v.s3), (char)(v.s4), (char)(v.s5), (char)(v.s6), (char)(v.s7));
+}
+
+INLINE OVERLOADABLE float8 convert_float8(uchar8 v) {
+  return (float8)((float)(v.s0), (float)(v.s1), (float)(v.s2), (float)(v.s3), (float)(v.s4), (float)(v.s5), (float)(v.s6), (float)(v.s7));
+}
+
+INLINE OVERLOADABLE int8 convert_int8(float8 v) {
+  return (int8)((int)(v.s0), (int)(v.s1), (int)(v.s2), (int)(v.s3), (int)(v.s4), (int)(v.s5), (int)(v.s6), (int)(v.s7));
+}
+
+INLINE OVERLOADABLE uint8 convert_uint8(float8 v) {
+  return (uint8)((uint)(v.s0), (uint)(v.s1), (uint)(v.s2), (uint)(v.s3), (uint)(v.s4), (uint)(v.s5), (uint)(v.s6), (uint)(v.s7));
+}
+
+INLINE OVERLOADABLE short8 convert_short8(float8 v) {
+  return (short8)((short)(v.s0), (short)(v.s1), (short)(v.s2), (short)(v.s3), (short)(v.s4), (short)(v.s5), (short)(v.s6), (short)(v.s7));
+}
+
+INLINE OVERLOADABLE ushort8 convert_ushort8(float8 v) {
+  return (ushort8)((ushort)(v.s0), (ushort)(v.s1), (ushort)(v.s2), (ushort)(v.s3), (ushort)(v.s4), (ushort)(v.s5), (ushort)(v.s6), (ushort)(v.s7));
+}
+
+INLINE OVERLOADABLE char8 convert_char8(float8 v) {
+  return (char8)((char)(v.s0), (char)(v.s1), (char)(v.s2), (char)(v.s3), (char)(v.s4), (char)(v.s5), (char)(v.s6), (char)(v.s7));
+}
+
+INLINE OVERLOADABLE uchar8 convert_uchar8(float8 v) {
+  return (uchar8)((uchar)(v.s0), (uchar)(v.s1), (uchar)(v.s2), (uchar)(v.s3), (uchar)(v.s4), (uchar)(v.s5), (uchar)(v.s6), (uchar)(v.s7));
+}
+
+INLINE OVERLOADABLE uint16 convert_uint16(int16 v) {
+  return (uint16)((uint)(v.s0), (uint)(v.s1), (uint)(v.s2), (uint)(v.s3), (uint)(v.s4), (uint)(v.s5), (uint)(v.s6), (uint)(v.s7), (uint)(v.s8), (uint)(v.s9), (uint)(v.sA), (uint)(v.sB), (uint)(v.sC), (uint)(v.sD), (uint)(v.sE), (uint)(v.sF));
+}
+
+INLINE OVERLOADABLE short16 convert_short16(int16 v) {
+  return (short16)((short)(v.s0), (short)(v.s1), (short)(v.s2), (short)(v.s3), (short)(v.s4), (short)(v.s5), (short)(v.s6), (short)(v.s7), (short)(v.s8), (short)(v.s9), (short)(v.sA), (short)(v.sB), (short)(v.sC), (short)(v.sD), (short)(v.sE), (short)(v.sF));
+}
+
+INLINE OVERLOADABLE ushort16 convert_ushort16(int16 v) {
+  return (ushort16)((ushort)(v.s0), (ushort)(v.s1), (ushort)(v.s2), (ushort)(v.s3), (ushort)(v.s4), (ushort)(v.s5), (ushort)(v.s6), (ushort)(v.s7), (ushort)(v.s8), (ushort)(v.s9), (ushort)(v.sA), (ushort)(v.sB), (ushort)(v.sC), (ushort)(v.sD), (ushort)(v.sE), (ushort)(v.sF));
+}
+
+INLINE OVERLOADABLE char16 convert_char16(int16 v) {
+  return (char16)((char)(v.s0), (char)(v.s1), (char)(v.s2), (char)(v.s3), (char)(v.s4), (char)(v.s5), (char)(v.s6), (char)(v.s7), (char)(v.s8), (char)(v.s9), (char)(v.sA), (char)(v.sB), (char)(v.sC), (char)(v.sD), (char)(v.sE), (char)(v.sF));
+}
+
+INLINE OVERLOADABLE uchar16 convert_uchar16(int16 v) {
+  return (uchar16)((uchar)(v.s0), (uchar)(v.s1), (uchar)(v.s2), (uchar)(v.s3), (uchar)(v.s4), (uchar)(v.s5), (uchar)(v.s6), (uchar)(v.s7), (uchar)(v.s8), (uchar)(v.s9), (uchar)(v.sA), (uchar)(v.sB), (uchar)(v.sC), (uchar)(v.sD), (uchar)(v.sE), (uchar)(v.sF));
+}
+
+INLINE OVERLOADABLE float16 convert_float16(int16 v) {
+  return (float16)((float)(v.s0), (float)(v.s1), (float)(v.s2), (float)(v.s3), (float)(v.s4), (float)(v.s5), (float)(v.s6), (float)(v.s7), (float)(v.s8), (float)(v.s9), (float)(v.sA), (float)(v.sB), (float)(v.sC), (float)(v.sD), (float)(v.sE), (float)(v.sF));
+}
+
+INLINE OVERLOADABLE int16 convert_int16(uint16 v) {
+  return (int16)((int)(v.s0), (int)(v.s1), (int)(v.s2), (int)(v.s3), (int)(v.s4), (int)(v.s5), (int)(v.s6), (int)(v.s7), (int)(v.s8), (int)(v.s9), (int)(v.sA), (int)(v.sB), (int)(v.sC), (int)(v.sD), (int)(v.sE), (int)(v.sF));
+}
+
+INLINE OVERLOADABLE short16 convert_short16(uint16 v) {
+  return (short16)((short)(v.s0), (short)(v.s1), (short)(v.s2), (short)(v.s3), (short)(v.s4), (short)(v.s5), (short)(v.s6), (short)(v.s7), (short)(v.s8), (short)(v.s9), (short)(v.sA), (short)(v.sB), (short)(v.sC), (short)(v.sD), (short)(v.sE), (short)(v.sF));
+}
+
+INLINE OVERLOADABLE ushort16 convert_ushort16(uint16 v) {
+  return (ushort16)((ushort)(v.s0), (ushort)(v.s1), (ushort)(v.s2), (ushort)(v.s3), (ushort)(v.s4), (ushort)(v.s5), (ushort)(v.s6), (ushort)(v.s7), (ushort)(v.s8), (ushort)(v.s9), (ushort)(v.sA), (ushort)(v.sB), (ushort)(v.sC), (ushort)(v.sD), (ushort)(v.sE), (ushort)(v.sF));
+}
+
+INLINE OVERLOADABLE char16 convert_char16(uint16 v) {
+  return (char16)((char)(v.s0), (char)(v.s1), (char)(v.s2), (char)(v.s3), (char)(v.s4), (char)(v.s5), (char)(v.s6), (char)(v.s7), (char)(v.s8), (char)(v.s9), (char)(v.sA), (char)(v.sB), (char)(v.sC), (char)(v.sD), (char)(v.sE), (char)(v.sF));
+}
+
+INLINE OVERLOADABLE uchar16 convert_uchar16(uint16 v) {
+  return (uchar16)((uchar)(v.s0), (uchar)(v.s1), (uchar)(v.s2), (uchar)(v.s3), (uchar)(v.s4), (uchar)(v.s5), (uchar)(v.s6), (uchar)(v.s7), (uchar)(v.s8), (uchar)(v.s9), (uchar)(v.sA), (uchar)(v.sB), (uchar)(v.sC), (uchar)(v.sD), (uchar)(v.sE), (uchar)(v.sF));
+}
+
+INLINE OVERLOADABLE float16 convert_float16(uint16 v) {
+  return (float16)((float)(v.s0), (float)(v.s1), (float)(v.s2), (float)(v.s3), (float)(v.s4), (float)(v.s5), (float)(v.s6), (float)(v.s7), (float)(v.s8), (float)(v.s9), (float)(v.sA), (float)(v.sB), (float)(v.sC), (float)(v.sD), (float)(v.sE), (float)(v.sF));
+}
+
+INLINE OVERLOADABLE int16 convert_int16(short16 v) {
+  return (int16)((int)(v.s0), (int)(v.s1), (int)(v.s2), (int)(v.s3), (int)(v.s4), (int)(v.s5), (int)(v.s6), (int)(v.s7), (int)(v.s8), (int)(v.s9), (int)(v.sA), (int)(v.sB), (int)(v.sC), (int)(v.sD), (int)(v.sE), (int)(v.sF));
+}
+
+INLINE OVERLOADABLE uint16 convert_uint16(short16 v) {
+  return (uint16)((uint)(v.s0), (uint)(v.s1), (uint)(v.s2), (uint)(v.s3), (uint)(v.s4), (uint)(v.s5), (uint)(v.s6), (uint)(v.s7), (uint)(v.s8), (uint)(v.s9), (uint)(v.sA), (uint)(v.sB), (uint)(v.sC), (uint)(v.sD), (uint)(v.sE), (uint)(v.sF));
+}
+
+INLINE OVERLOADABLE ushort16 convert_ushort16(short16 v) {
+  return (ushort16)((ushort)(v.s0), (ushort)(v.s1), (ushort)(v.s2), (ushort)(v.s3), (ushort)(v.s4), (ushort)(v.s5), (ushort)(v.s6), (ushort)(v.s7), (ushort)(v.s8), (ushort)(v.s9), (ushort)(v.sA), (ushort)(v.sB), (ushort)(v.sC), (ushort)(v.sD), (ushort)(v.sE), (ushort)(v.sF));
+}
+
+INLINE OVERLOADABLE char16 convert_char16(short16 v) {
+  return (char16)((char)(v.s0), (char)(v.s1), (char)(v.s2), (char)(v.s3), (char)(v.s4), (char)(v.s5), (char)(v.s6), (char)(v.s7), (char)(v.s8), (char)(v.s9), (char)(v.sA), (char)(v.sB), (char)(v.sC), (char)(v.sD), (char)(v.sE), (char)(v.sF));
+}
+
+INLINE OVERLOADABLE uchar16 convert_uchar16(short16 v) {
+  return (uchar16)((uchar)(v.s0), (uchar)(v.s1), (uchar)(v.s2), (uchar)(v.s3), (uchar)(v.s4), (uchar)(v.s5), (uchar)(v.s6), (uchar)(v.s7), (uchar)(v.s8), (uchar)(v.s9), (uchar)(v.sA), (uchar)(v.sB), (uchar)(v.sC), (uchar)(v.sD), (uchar)(v.sE), (uchar)(v.sF));
+}
+
+INLINE OVERLOADABLE float16 convert_float16(short16 v) {
+  return (float16)((float)(v.s0), (float)(v.s1), (float)(v.s2), (float)(v.s3), (float)(v.s4), (float)(v.s5), (float)(v.s6), (float)(v.s7), (float)(v.s8), (float)(v.s9), (float)(v.sA), (float)(v.sB), (float)(v.sC), (float)(v.sD), (float)(v.sE), (float)(v.sF));
+}
+
+INLINE OVERLOADABLE int16 convert_int16(ushort16 v) {
+  return (int16)((int)(v.s0), (int)(v.s1), (int)(v.s2), (int)(v.s3), (int)(v.s4), (int)(v.s5), (int)(v.s6), (int)(v.s7), (int)(v.s8), (int)(v.s9), (int)(v.sA), (int)(v.sB), (int)(v.sC), (int)(v.sD), (int)(v.sE), (int)(v.sF));
+}
+
+INLINE OVERLOADABLE uint16 convert_uint16(ushort16 v) {
+  return (uint16)((uint)(v.s0), (uint)(v.s1), (uint)(v.s2), (uint)(v.s3), (uint)(v.s4), (uint)(v.s5), (uint)(v.s6), (uint)(v.s7), (uint)(v.s8), (uint)(v.s9), (uint)(v.sA), (uint)(v.sB), (uint)(v.sC), (uint)(v.sD), (uint)(v.sE), (uint)(v.sF));
+}
+
+INLINE OVERLOADABLE short16 convert_short16(ushort16 v) {
+  return (short16)((short)(v.s0), (short)(v.s1), (short)(v.s2), (short)(v.s3), (short)(v.s4), (short)(v.s5), (short)(v.s6), (short)(v.s7), (short)(v.s8), (short)(v.s9), (short)(v.sA), (short)(v.sB), (short)(v.sC), (short)(v.sD), (short)(v.sE), (short)(v.sF));
+}
+
+INLINE OVERLOADABLE char16 convert_char16(ushort16 v) {
+  return (char16)((char)(v.s0), (char)(v.s1), (char)(v.s2), (char)(v.s3), (char)(v.s4), (char)(v.s5), (char)(v.s6), (char)(v.s7), (char)(v.s8), (char)(v.s9), (char)(v.sA), (char)(v.sB), (char)(v.sC), (char)(v.sD), (char)(v.sE), (char)(v.sF));
+}
+
+INLINE OVERLOADABLE uchar16 convert_uchar16(ushort16 v) {
+  return (uchar16)((uchar)(v.s0), (uchar)(v.s1), (uchar)(v.s2), (uchar)(v.s3), (uchar)(v.s4), (uchar)(v.s5), (uchar)(v.s6), (uchar)(v.s7), (uchar)(v.s8), (uchar)(v.s9), (uchar)(v.sA), (uchar)(v.sB), (uchar)(v.sC), (uchar)(v.sD), (uchar)(v.sE), (uchar)(v.sF));
+}
+
+INLINE OVERLOADABLE float16 convert_float16(ushort16 v) {
+  return (float16)((float)(v.s0), (float)(v.s1), (float)(v.s2), (float)(v.s3), (float)(v.s4), (float)(v.s5), (float)(v.s6), (float)(v.s7), (float)(v.s8), (float)(v.s9), (float)(v.sA), (float)(v.sB), (float)(v.sC), (float)(v.sD), (float)(v.sE), (float)(v.sF));
+}
+
+INLINE OVERLOADABLE int16 convert_int16(char16 v) {
+  return (int16)((int)(v.s0), (int)(v.s1), (int)(v.s2), (int)(v.s3), (int)(v.s4), (int)(v.s5), (int)(v.s6), (int)(v.s7), (int)(v.s8), (int)(v.s9), (int)(v.sA), (int)(v.sB), (int)(v.sC), (int)(v.sD), (int)(v.sE), (int)(v.sF));
+}
+
+INLINE OVERLOADABLE uint16 convert_uint16(char16 v) {
+  return (uint16)((uint)(v.s0), (uint)(v.s1), (uint)(v.s2), (uint)(v.s3), (uint)(v.s4), (uint)(v.s5), (uint)(v.s6), (uint)(v.s7), (uint)(v.s8), (uint)(v.s9), (uint)(v.sA), (uint)(v.sB), (uint)(v.sC), (uint)(v.sD), (uint)(v.sE), (uint)(v.sF));
+}
+
+INLINE OVERLOADABLE short16 convert_short16(char16 v) {
+  return (short16)((short)(v.s0), (short)(v.s1), (short)(v.s2), (short)(v.s3), (short)(v.s4), (short)(v.s5), (short)(v.s6), (short)(v.s7), (short)(v.s8), (short)(v.s9), (short)(v.sA), (short)(v.sB), (short)(v.sC), (short)(v.sD), (short)(v.sE), (short)(v.sF));
+}
+
+INLINE OVERLOADABLE ushort16 convert_ushort16(char16 v) {
+  return (ushort16)((ushort)(v.s0), (ushort)(v.s1), (ushort)(v.s2), (ushort)(v.s3), (ushort)(v.s4), (ushort)(v.s5), (ushort)(v.s6), (ushort)(v.s7), (ushort)(v.s8), (ushort)(v.s9), (ushort)(v.sA), (ushort)(v.sB), (ushort)(v.sC), (ushort)(v.sD), (ushort)(v.sE), (ushort)(v.sF));
+}
+
+INLINE OVERLOADABLE uchar16 convert_uchar16(char16 v) {
+  return (uchar16)((uchar)(v.s0), (uchar)(v.s1), (uchar)(v.s2), (uchar)(v.s3), (uchar)(v.s4), (uchar)(v.s5), (uchar)(v.s6), (uchar)(v.s7), (uchar)(v.s8), (uchar)(v.s9), (uchar)(v.sA), (uchar)(v.sB), (uchar)(v.sC), (uchar)(v.sD), (uchar)(v.sE), (uchar)(v.sF));
+}
+
+INLINE OVERLOADABLE float16 convert_float16(char16 v) {
+  return (float16)((float)(v.s0), (float)(v.s1), (float)(v.s2), (float)(v.s3), (float)(v.s4), (float)(v.s5), (float)(v.s6), (float)(v.s7), (float)(v.s8), (float)(v.s9), (float)(v.sA), (float)(v.sB), (float)(v.sC), (float)(v.sD), (float)(v.sE), (float)(v.sF));
+}
+
+INLINE OVERLOADABLE int16 convert_int16(uchar16 v) {
+  return (int16)((int)(v.s0), (int)(v.s1), (int)(v.s2), (int)(v.s3), (int)(v.s4), (int)(v.s5), (int)(v.s6), (int)(v.s7), (int)(v.s8), (int)(v.s9), (int)(v.sA), (int)(v.sB), (int)(v.sC), (int)(v.sD), (int)(v.sE), (int)(v.sF));
+}
+
+INLINE OVERLOADABLE uint16 convert_uint16(uchar16 v) {
+  return (uint16)((uint)(v.s0), (uint)(v.s1), (uint)(v.s2), (uint)(v.s3), (uint)(v.s4), (uint)(v.s5), (uint)(v.s6), (uint)(v.s7), (uint)(v.s8), (uint)(v.s9), (uint)(v.sA), (uint)(v.sB), (uint)(v.sC), (uint)(v.sD), (uint)(v.sE), (uint)(v.sF));
+}
+
+INLINE OVERLOADABLE short16 convert_short16(uchar16 v) {
+  return (short16)((short)(v.s0), (short)(v.s1), (short)(v.s2), (short)(v.s3), (short)(v.s4), (short)(v.s5), (short)(v.s6), (short)(v.s7), (short)(v.s8), (short)(v.s9), (short)(v.sA), (short)(v.sB), (short)(v.sC), (short)(v.sD), (short)(v.sE), (short)(v.sF));
+}
+
+INLINE OVERLOADABLE ushort16 convert_ushort16(uchar16 v) {
+  return (ushort16)((ushort)(v.s0), (ushort)(v.s1), (ushort)(v.s2), (ushort)(v.s3), (ushort)(v.s4), (ushort)(v.s5), (ushort)(v.s6), (ushort)(v.s7), (ushort)(v.s8), (ushort)(v.s9), (ushort)(v.sA), (ushort)(v.sB), (ushort)(v.sC), (ushort)(v.sD), (ushort)(v.sE), (ushort)(v.sF));
+}
+
+INLINE OVERLOADABLE char16 convert_char16(uchar16 v) {
+  return (char16)((char)(v.s0), (char)(v.s1), (char)(v.s2), (char)(v.s3), (char)(v.s4), (char)(v.s5), (char)(v.s6), (char)(v.s7), (char)(v.s8), (char)(v.s9), (char)(v.sA), (char)(v.sB), (char)(v.sC), (char)(v.sD), (char)(v.sE), (char)(v.sF));
+}
+
+INLINE OVERLOADABLE float16 convert_float16(uchar16 v) {
+  return (float16)((float)(v.s0), (float)(v.s1), (float)(v.s2), (float)(v.s3), (float)(v.s4), (float)(v.s5), (float)(v.s6), (float)(v.s7), (float)(v.s8), (float)(v.s9), (float)(v.sA), (float)(v.sB), (float)(v.sC), (float)(v.sD), (float)(v.sE), (float)(v.sF));
+}
+
+INLINE OVERLOADABLE int16 convert_int16(float16 v) {
+  return (int16)((int)(v.s0), (int)(v.s1), (int)(v.s2), (int)(v.s3), (int)(v.s4), (int)(v.s5), (int)(v.s6), (int)(v.s7), (int)(v.s8), (int)(v.s9), (int)(v.sA), (int)(v.sB), (int)(v.sC), (int)(v.sD), (int)(v.sE), (int)(v.sF));
+}
+
+INLINE OVERLOADABLE uint16 convert_uint16(float16 v) {
+  return (uint16)((uint)(v.s0), (uint)(v.s1), (uint)(v.s2), (uint)(v.s3), (uint)(v.s4), (uint)(v.s5), (uint)(v.s6), (uint)(v.s7), (uint)(v.s8), (uint)(v.s9), (uint)(v.sA), (uint)(v.sB), (uint)(v.sC), (uint)(v.sD), (uint)(v.sE), (uint)(v.sF));
+}
+
+INLINE OVERLOADABLE short16 convert_short16(float16 v) {
+  return (short16)((short)(v.s0), (short)(v.s1), (short)(v.s2), (short)(v.s3), (short)(v.s4), (short)(v.s5), (short)(v.s6), (short)(v.s7), (short)(v.s8), (short)(v.s9), (short)(v.sA), (short)(v.sB), (short)(v.sC), (short)(v.sD), (short)(v.sE), (short)(v.sF));
+}
+
+INLINE OVERLOADABLE ushort16 convert_ushort16(float16 v) {
+  return (ushort16)((ushort)(v.s0), (ushort)(v.s1), (ushort)(v.s2), (ushort)(v.s3), (ushort)(v.s4), (ushort)(v.s5), (ushort)(v.s6), (ushort)(v.s7), (ushort)(v.s8), (ushort)(v.s9), (ushort)(v.sA), (ushort)(v.sB), (ushort)(v.sC), (ushort)(v.sD), (ushort)(v.sE), (ushort)(v.sF));
+}
+
+INLINE OVERLOADABLE char16 convert_char16(float16 v) {
+  return (char16)((char)(v.s0), (char)(v.s1), (char)(v.s2), (char)(v.s3), (char)(v.s4), (char)(v.s5), (char)(v.s6), (char)(v.s7), (char)(v.s8), (char)(v.s9), (char)(v.sA), (char)(v.sB), (char)(v.sC), (char)(v.sD), (char)(v.sE), (char)(v.sF));
+}
+
+INLINE OVERLOADABLE uchar16 convert_uchar16(float16 v) {
+  return (uchar16)((uchar)(v.s0), (uchar)(v.s1), (uchar)(v.s2), (uchar)(v.s3), (uchar)(v.s4), (uchar)(v.s5), (uchar)(v.s6), (uchar)(v.s7), (uchar)(v.s8), (uchar)(v.s9), (uchar)(v.sA), (uchar)(v.sB), (uchar)(v.sC), (uchar)(v.sD), (uchar)(v.sE), (uchar)(v.sF));
+}
+
+// ##END_CONVERT##
+
 /////////////////////////////////////////////////////////////////////////////
 // OpenCL preprocessor directives & macros
 /////////////////////////////////////////////////////////////////////////////
