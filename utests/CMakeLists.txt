@@ -82,6 +82,7 @@ set (utests_sources
   compiler_vector_load_store.cpp
   compiler_cl_finish.cpp
   buildin_work_dim.cpp
+  builtin_global_size.cpp
   runtime_createcontext.cpp
   runtime_null_kernel_arg.cpp
   utest_assert.cpp
