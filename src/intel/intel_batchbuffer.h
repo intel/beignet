@@ -78,6 +78,8 @@ typedef struct intel_batchbuffer
 {
   struct intel_driver *intel;
   drm_intel_bo *buffer;
+  /** Last bo submitted to the hardware.  used for clFinish. */
+  drm_intel_bo *last_bo;
   uint32_t size;
   uint8_t *map;
   uint8_t *ptr;

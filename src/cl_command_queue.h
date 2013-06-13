@@ -37,7 +37,6 @@ struct _cl_command_queue {
   cl_gpgpu gpgpu;              /* Setup all GEN commands */
   cl_mem perf;                 /* Where to put the perf counters */
   cl_mem fulsim_out;           /* Fulsim will output this buffer */
-  cl_buffer last_batch;        /* To synchronize using clFinish */
 };
 
 /* Allocate and initialize a new command queue. Also insert it in the list of

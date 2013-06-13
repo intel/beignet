@@ -84,7 +84,6 @@ cl_command_queue_delete(cl_command_queue queue)
     cl_mem_delete(queue->fulsim_out);
     queue->fulsim_out = NULL;
   }
-  cl_buffer_unreference(queue->last_batch);
   cl_mem_delete(queue->perf);
   cl_context_delete(queue->ctx);
   cl_gpgpu_delete(queue->gpgpu);
@@ -416,11 +415,7 @@ error:
 LOCAL cl_int
 cl_command_queue_finish(cl_command_queue queue)
 {
-  if (queue->last_batch == NULL)
-    return CL_SUCCESS;
-  cl_buffer_wait_rendering(queue->last_batch);
-  cl_buffer_unreference(queue->last_batch);
-  queue->last_batch = NULL;
+  cl_gpgpu_sync(queue->gpgpu);
   return CL_SUCCESS;
 }
 

@@ -93,6 +93,14 @@ struct intel_gpgpu
 
 typedef struct intel_gpgpu intel_gpgpu_t;
 
+
+static void
+intel_gpgpu_sync(intel_gpgpu_t *gpgpu)
+{
+    if (gpgpu->batch->last_bo)
+	drm_intel_bo_wait_rendering(gpgpu->batch->last_bo);
+}
+
 static void
 intel_gpgpu_delete(intel_gpgpu_t *gpgpu)
 {
@@ -785,6 +793,7 @@ intel_set_gpgpu_callbacks(void)
 {
   cl_gpgpu_new = (cl_gpgpu_new_cb *) intel_gpgpu_new;
   cl_gpgpu_delete = (cl_gpgpu_delete_cb *) intel_gpgpu_delete;
+  cl_gpgpu_sync = (cl_gpgpu_sync_cb *) intel_gpgpu_sync;
   cl_gpgpu_bind_image = (cl_gpgpu_bind_image_cb *) intel_gpgpu_bind_image;
   cl_gpgpu_bind_buf = (cl_gpgpu_bind_buf_cb *) intel_gpgpu_bind_buf;
   cl_gpgpu_set_stack = (cl_gpgpu_set_stack_cb *) intel_gpgpu_set_stack;

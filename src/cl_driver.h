@@ -106,6 +106,10 @@ extern cl_gpgpu_new_cb *cl_gpgpu_new;
 typedef void (cl_gpgpu_delete_cb)(cl_gpgpu);
 extern cl_gpgpu_delete_cb *cl_gpgpu_delete;
 
+/* Synchonize GPU with CPU */
+typedef cl_gpgpu (cl_gpgpu_sync_cb)(cl_gpgpu);
+extern cl_gpgpu_sync_cb *cl_gpgpu_sync;
+
 /* Bind a regular unformatted buffer */
 typedef void (cl_gpgpu_bind_buf_cb)(cl_gpgpu, cl_buffer, uint32_t offset, uint32_t cchint);
 extern cl_gpgpu_bind_buf_cb *cl_gpgpu_bind_buf;

@@ -59,6 +59,7 @@ intel_batchbuffer_reset(intel_batchbuffer_t *batch, size_t sz)
   if (batch->buffer != NULL) {
     dri_bo_unreference(batch->buffer);
     batch->buffer = NULL;
+    batch->last_bo = NULL;
   }
 
   batch->buffer = dri_bo_alloc(batch->intel->bufmgr,
@@ -72,6 +73,7 @@ intel_batchbuffer_reset(intel_batchbuffer_t *batch, size_t sz)
   batch->size = sz;
   batch->ptr = batch->map;
   batch->atomic = 0;
+  batch->last_bo = batch->buffer;
 }
 
 LOCAL void
@@ -172,6 +174,7 @@ intel_batchbuffer_delete(intel_batchbuffer_t *batch)
     return;
   if(batch->buffer)
     intel_batchbuffer_terminate(batch);
+
   cl_free(batch);
 }
 

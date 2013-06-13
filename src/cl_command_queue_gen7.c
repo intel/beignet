@@ -224,9 +224,6 @@ cl_command_queue_ND_range_gen7(cl_command_queue queue,
 
   /* Setup the kernel */
   cl_gpgpu_state_init(gpgpu, ctx->device->max_compute_unit, cst_sz / 32);
-  if (queue->last_batch != NULL)
-    cl_buffer_unreference(queue->last_batch);
-  queue->last_batch = NULL;
 
   /* Bind user buffers */
   cl_command_queue_bind_surface(queue, ker);
