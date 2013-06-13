@@ -75,6 +75,11 @@ extern EGLSurface  eglSurface;
     OCL_CALL(clFlush, queue); \
   } while(0)
 
+#define OCL_FINISH() \
+  do { \
+    OCL_CALL(clFinish, queue); \
+  } while(0)
+
 #define OCL_CALL2(FN, RET, ...) \
   do { \
     cl_int status; \
