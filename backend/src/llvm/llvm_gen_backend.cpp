@@ -693,7 +693,10 @@ namespace gbe
           return doIt(uint64_t(0));
         }
       }
-
+      // NULL pointers
+      if(isa<ConstantPointerNull>(CPV)) {
+        return doIt(uint32_t(0));
+      }
       // Floats and doubles
       const Type::TypeID typeID = CPV->getType()->getTypeID();
       switch (typeID) {

@@ -105,14 +105,42 @@ cl_kernel_set_arg(cl_kernel k, cl_uint index, size_t sz, const void *value)
     return CL_INVALID_ARG_INDEX;
   arg_type = gbe_kernel_get_arg_type(k->opaque, index);
   arg_sz = gbe_kernel_get_arg_size(k->opaque, index);
+
   if (UNLIKELY(arg_type != GBE_ARG_LOCAL_PTR && arg_sz != sz))
     return CL_INVALID_ARG_SIZE;
 
+  if(UNLIKELY(arg_type == GBE_ARG_LOCAL_PTR && sz == 0))
+    return CL_INVALID_ARG_SIZE;
+  if(arg_type == GBE_ARG_VALUE) {
+    if(UNLIKELY(value == NULL))
+      return CL_INVALID_ARG_VALUE;
+  } else if(arg_type == GBE_ARG_LOCAL_PTR) {
+    if(UNLIKELY(value != NULL))
+      return CL_INVALID_ARG_VALUE;
+  } else if(arg_type == GBE_ARG_SAMPLER) {
+    if (UNLIKELY(value == NULL))
+      return CL_INVALID_ARG_VALUE;
+
+    cl_sampler s = *(cl_sampler*)value;
+    if(s->magic != CL_MAGIC_SAMPLER_HEADER)
+      return CL_INVALID_SAMPLER;
+  } else {
+    // should be image, GLOBAL_PTR, CONSTANT_PTR
+    if (UNLIKELY(value == NULL && arg_type == GBE_ARG_IMAGE))
+      return CL_INVALID_ARG_VALUE;
+    if(value != NULL) {
+      mem = *(cl_mem*)value;
+      if (UNLIKELY(mem->magic != CL_MAGIC_MEM_HEADER))
+        return CL_INVALID_MEM_OBJECT;
+
+      if (UNLIKELY((arg_type == GBE_ARG_IMAGE && !mem->is_image)
+         || (arg_type != GBE_ARG_IMAGE && mem->is_image)))
+          return CL_INVALID_ARG_VALUE;
+    }
+  }
+
   /* Copy the structure or the value directly into the curbe */
   if (arg_type == GBE_ARG_VALUE) {
-    if (UNLIKELY(value == NULL))
-      return CL_INVALID_KERNEL_ARGS;
-
     offset = gbe_kernel_get_curbe_offset(k->opaque, GBE_CURBE_KERNEL_ARGUMENT, index);
     assert(offset + sz <= k->curbe_sz);
     memcpy(k->curbe + offset, value, sz);
@@ -124,8 +152,6 @@ cl_kernel_set_arg(cl_kernel k, cl_uint index, size_t sz, const void *value)
 
   /* For a local pointer just save the size */
   if (arg_type == GBE_ARG_LOCAL_PTR) {
-    if (UNLIKELY(value != NULL))
-      return CL_INVALID_KERNEL_ARGS;
     k->args[index].local_sz = sz;
     k->args[index].is_set = 1;
     k->args[index].mem = NULL;
@@ -136,8 +162,6 @@ cl_kernel_set_arg(cl_kernel k, cl_uint index, size_t sz, const void *value)
   if (arg_type == GBE_ARG_SAMPLER) {
     cl_sampler sampler;
     memcpy(&sampler, value, sz);
-    if (UNLIKELY(sampler->magic != CL_MAGIC_SAMPLER_HEADER))
-      return CL_INVALID_KERNEL_ARGS;
     k->args[index].local_sz = 0;
     k->args[index].is_set = 1;
     k->args[index].mem = NULL;
@@ -146,15 +170,21 @@ cl_kernel_set_arg(cl_kernel k, cl_uint index, size_t sz, const void *value)
     return CL_SUCCESS;
   }
 
-  /* Otherwise, we just need to check that this is a buffer */
-  if (UNLIKELY(value == NULL))
-    return CL_INVALID_KERNEL_ARGS;
+  if(value == NULL) {
+    /* for buffer object GLOBAL_PTR CONSTANT_PTR, it maybe NULL */
+    int32_t offset = gbe_kernel_get_curbe_offset(k->opaque, GBE_CURBE_KERNEL_ARGUMENT, index);
+    *((uint32_t *)(k->curbe + offset)) = 0;
+    assert(arg_type == GBE_ARG_GLOBAL_PTR || arg_type == GBE_ARG_CONSTANT_PTR);
+
+    if (k->args[index].mem)
+      cl_mem_delete(k->args[index].mem);
+    k->args[index].mem = NULL;
+    k->args[index].is_set = 1;
+    k->args[index].local_sz = 0;
+    return CL_SUCCESS;
+  }
+
   mem = *(cl_mem*) value;
-  if (UNLIKELY(mem->magic != CL_MAGIC_MEM_HEADER))
-    return CL_INVALID_ARG_VALUE;
-  if (UNLIKELY((arg_type == GBE_ARG_IMAGE && !mem->is_image)
-     || (arg_type != GBE_ARG_IMAGE && mem->is_image)))
-      return CL_INVALID_ARG_VALUE;
 
   if(arg_type == GBE_ARG_CONSTANT_PTR) {
     int32_t cbOffset;

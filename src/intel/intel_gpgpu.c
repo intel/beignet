@@ -341,11 +341,19 @@ intel_gpgpu_batch_reset(intel_gpgpu_t *gpgpu, size_t sz)
 {
   intel_batchbuffer_reset(gpgpu->batch, sz);
 }
-
+/* check we do not get a 0 starting address for binded buf */
+static void
+intel_gpgpu_check_binded_buf_address(intel_gpgpu_t *gpgpu)
+{
+  uint32_t i;
+  for (i = 0; i < gpgpu->binded_n; ++i)
+    assert(gpgpu->binded_buf[i]->offset != 0);
+}
 static void
 intel_gpgpu_flush(intel_gpgpu_t *gpgpu)
 {
   intel_batchbuffer_flush(gpgpu->batch);
+  intel_gpgpu_check_binded_buf_address(gpgpu);
 }
 
 static void
