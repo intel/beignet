@@ -83,6 +83,7 @@ set (utests_sources
   compiler_cl_finish.cpp
   buildin_work_dim.cpp
   runtime_createcontext.cpp
+  runtime_null_kernel_arg.cpp
   utest_assert.cpp
   utest.cpp
   utest_file_map.cpp
