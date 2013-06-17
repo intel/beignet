@@ -71,7 +71,7 @@ set (utests_sources
   compiler_insn_selection_min.cpp
   compiler_insn_selection_max.cpp
   compiler_insn_selection_masked_min_max.cpp
-#  compiler_global_memory_barrier.cpp
+  compiler_global_memory_barrier.cpp
   compiler_local_memory_two_ptr.cpp
   compiler_local_memory_barrier.cpp
   compiler_local_memory_barrier_wg64.cpp
