@@ -431,6 +431,8 @@ namespace gbe
 #undef ALU3
     /*! Encode a barrier instruction */
     void BARRIER(GenRegister src);
+    /*! Encode a barrier instruction */
+    void FENCE(GenRegister dst);
     /*! Encode a label instruction */
     void LABEL(ir::LabelIndex label);
     /*! Jump indexed instruction */
@@ -680,6 +682,11 @@ namespace gbe
   void Selection::Opaque::BARRIER(GenRegister src) {
     SelectionInstruction *insn = this->appendInsn(SEL_OP_BARRIER, 0, 1);
     insn->src(0) = src;
+  }
+
+  void Selection::Opaque::FENCE(GenRegister dst) {
+    SelectionInstruction *insn = this->appendInsn(SEL_OP_FENCE, 1, 0);
+    insn->dst(0) = dst;
   }
 
   void Selection::Opaque::JMPI(Reg src, ir::LabelIndex index) {
@@ -1607,17 +1614,21 @@ namespace gbe
     INLINE bool emitOne(Selection::Opaque &sel, const ir::SyncInstruction &insn) const
     {
       using namespace ir;
-      const uint32_t params = insn.getParameters();
-      GBE_ASSERTM(params == syncLocalBarrier,
-                  "Only barrier(CLK_LOCAL_MEM_FENCE) is supported right now "
-                  "for the synchronization primitives");
       const ir::Register reg = sel.reg(FAMILY_DWORD);
+
+      const uint32_t params = insn.getParameters();
+      //need to double check local barrier whether need fence or not
+      if(params == syncGlobalBarrier) {
+        const ir::Register fenceDst = sel.reg(FAMILY_DWORD);
+        sel.FENCE(sel.selReg(fenceDst, ir::TYPE_U32));
+      }
 
       sel.push();
         sel.curr.predicate = GEN_PREDICATE_NONE;
         sel.curr.execWidth = 8;
         sel.curr.physicalFlag = 0;
         sel.curr.noMask = 1;
+
         sel.SHL(GenRegister::ud8grf(reg),
                 GenRegister::ud1grf(ocl::threadn),
                 GenRegister::immud(0x9));

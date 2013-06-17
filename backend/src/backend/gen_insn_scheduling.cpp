@@ -1,4 +1,4 @@
-/* 
+/*
  * Copyright © 2012 Intel Corporation
  *
  * This library is free software; you can redistribute it and/or
@@ -305,7 +305,7 @@ namespace gbe
       return simdWidth == 8 ? physical.nr : physical.nr / 2;
     }
     // We use virtual registers since allocation is not done yet
-    else 
+    else
       return reg.value.reg;
   }
 
@@ -345,7 +345,9 @@ namespace gbe
     }
 
     // Consider barriers and wait write to memory
-    if (insn.opcode == SEL_OP_BARRIER || insn.opcode == SEL_OP_WAIT) {
+    if (insn.opcode == SEL_OP_BARRIER ||
+        insn.opcode == SEL_OP_FENCE ||
+        insn.opcode == SEL_OP_WAIT) {
       const uint32_t local = this->getIndex(0xfe);
       const uint32_t global = this->getIndex(0x00);
       this->nodes[local] = this->nodes[global] = node;
@@ -424,7 +426,9 @@ namespace gbe
       }
 
       // Consider barriers and wait are reading memory (local and global)
-      if (insn.opcode == SEL_OP_BARRIER || insn.opcode == SEL_OP_WAIT) {
+    if (insn.opcode == SEL_OP_BARRIER ||
+        insn.opcode == SEL_OP_FENCE ||
+        insn.opcode == SEL_OP_WAIT) {
         const uint32_t local = tracker.getIndex(0xfe);
         const uint32_t global = tracker.getIndex(0x00);
         tracker.addDependency(node, local);
@@ -450,7 +454,9 @@ namespace gbe
       }
 
       // Consider barriers and wait are writing memory (local and global)
-      if (insn.opcode == SEL_OP_BARRIER || insn.opcode == SEL_OP_WAIT) {
+    if (insn.opcode == SEL_OP_BARRIER ||
+        insn.opcode == SEL_OP_FENCE ||
+        insn.opcode == SEL_OP_WAIT) {
         const uint32_t local = tracker.getIndex(0xfe);
         const uint32_t global = tracker.getIndex(0x00);
         tracker.addDependency(node, local);
@@ -482,7 +488,9 @@ namespace gbe
       }
 
       // Consider barriers and wait are reading memory (local and global)
-      if (insn.opcode == SEL_OP_BARRIER || insn.opcode == SEL_OP_WAIT) {
+      if (insn.opcode == SEL_OP_BARRIER ||
+          insn.opcode == SEL_OP_FENCE ||
+          insn.opcode == SEL_OP_WAIT) {
         const uint32_t local = tracker.getIndex(0xfe);
         const uint32_t global = tracker.getIndex(0x00);
         tracker.addDependency(local, node);

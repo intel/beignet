@@ -765,6 +765,20 @@ struct GenInstruction
       uint32_t end_of_thread:1;
     } gen7_typed_rw;
 
+    /*! Memory fence */
+    struct {
+      uint32_t bti:8;
+      uint32_t ingored:5;
+      uint32_t commit_enable:1;
+      uint32_t msg_type:4;
+      uint32_t pad2:1;
+      uint32_t header_present:1;
+      uint32_t response_length:5;
+      uint32_t msg_length:4;
+      uint32_t pad3:2;
+      uint32_t end_of_thread:1;
+    } gen7_memory_fence;
+
     struct {
       uint32_t src1_subreg_nr_high:1;
       uint32_t src1_reg_nr:8;

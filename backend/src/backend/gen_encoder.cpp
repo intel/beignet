@@ -707,6 +707,15 @@ namespace gbe
      insn->bits3.msg_gateway.sub_function_id = GEN_BARRIER_MSG;
      insn->bits3.msg_gateway.notify = 0x1;
   }
+  void GenEncoder::FENCE(GenRegister dst) {
+    GenInstruction *insn = this->next(GEN_OPCODE_SEND);
+    this->setHeader(insn);
+    this->setDst(insn, dst);
+    this->setSrc0(insn, dst);
+    setMessageDescriptor(this, insn, GEN_SFID_DATAPORT_DATA_CACHE, 1, 1, 1);
+    insn->bits3.gen7_memory_fence.msg_type = GEN_MEM_FENCE;
+    insn->bits3.gen7_memory_fence.commit_enable = 0x1;
+  }
 
   void GenEncoder::JMPI(GenRegister src) {
     alu2(this, GEN_OPCODE_JMPI, GenRegister::ip(), GenRegister::ip(), src);

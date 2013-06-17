@@ -118,6 +118,8 @@ namespace gbe
 #undef ALU3
     /*! Barrier message (to synchronize threads of a workgroup) */
     void BARRIER(GenRegister src);
+    /*! Memory fence message (to order loads and stores between threads) */
+    void FENCE(GenRegister dst);
     /*! Jump indexed instruction */
     void JMPI(GenRegister src);
     /*! Compare instructions */

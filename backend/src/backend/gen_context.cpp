@@ -193,6 +193,12 @@ namespace gbe
     p->BARRIER(src);
   }
 
+  void GenContext::emitFenceInstruction(const SelectionInstruction &insn) {
+    const GenRegister dst = ra->genReg(insn.dst(0));
+    p->FENCE(dst);
+    p->MOV(dst, dst);
+  }
+
   void GenContext::emitMathInstruction(const SelectionInstruction &insn) {
     const GenRegister dst = ra->genReg(insn.dst(0));
     const GenRegister src0 = ra->genReg(insn.src(0));
