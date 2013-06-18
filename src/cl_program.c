@@ -56,6 +56,12 @@ cl_program_delete(cl_program p)
   /* Destroy the sources if still allocated */
   cl_program_release_sources(p);
 
+  /* Release the build options. */
+  if (p->build_opts) {
+    cl_free(p->build_opts);
+    p->build_opts = NULL;
+  }
+
   /* Remove it from the list */
   assert(p->ctx);
   pthread_mutex_lock(&p->ctx->program_lock);
@@ -274,6 +280,18 @@ LOCAL cl_int
 cl_program_build(cl_program p, const char *options)
 {
   cl_int err = CL_SUCCESS;
+  int i = 0;
+  int copyed = 0;
+
+  if (options) {
+    if(p->build_opts) {
+      cl_free(p->build_opts);
+      p->build_opts = NULL;
+    }
+
+    TRY_ALLOC (p->build_opts, cl_calloc(strlen(options) + 1, sizeof(char)));
+    memcpy(p->build_opts, options, strlen(options));
+  }
 
   if (p->source_type == FROM_SOURCE) {
     p->opaque = gbe_program_new_from_source(p->source, 0, options, NULL, NULL);
@@ -285,6 +303,20 @@ cl_program_build(cl_program p, const char *options)
     /* Create all the kernels */
     TRY (cl_program_load_gen_program, p);
     p->source_type = FROM_LLVM;
+  }
+
+  for (i = 0; i < p->ker_n; i ++) {
+    const gbe_kernel opaque = gbe_program_get_kernel(p->opaque, i);
+    p->bin_sz += gbe_kernel_get_code_size(opaque);
+  }
+
+  TRY_ALLOC (p->bin, cl_calloc(p->bin_sz, sizeof(char)));
+  for (i = 0; i < p->ker_n; i ++) {
+    const gbe_kernel opaque = gbe_program_get_kernel(p->opaque, i);
+    size_t sz = gbe_kernel_get_code_size(opaque);
+
+    memcpy(p->bin + copyed, gbe_kernel_get_code(opaque), sz);
+    copyed += sz;
   }
 
   p->is_built = 1;

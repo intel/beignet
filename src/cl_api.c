@@ -725,6 +725,19 @@ clUnloadCompiler(void)
   return 0;
 }
 
+#define FILL_AND_RET(TYPE, ELT, VAL, RET) \
+	do { \
+	  if (param_value && param_value_size < sizeof(TYPE)*ELT) \
+	      return CL_INVALID_VALUE;  \
+	  if (param_value) { \
+	      memcpy(param_value, (VAL), sizeof(TYPE)*ELT); \
+	  } \
+          \
+	  if (param_value_size_ret) \
+	      *param_value_size_ret = sizeof(TYPE)*ELT; \
+	  return RET; \
+	} while(0)
+
 cl_int
 clGetProgramInfo(cl_program       program,
                  cl_program_info  param_name,
@@ -732,8 +745,50 @@ clGetProgramInfo(cl_program       program,
                  void *           param_value,
                  size_t *         param_value_size_ret)
 {
-  NOT_IMPLEMENTED;
-  return 0;
+  cl_int err = CL_SUCCESS;
+  char * ret_str = "";
+
+  CHECK_PROGRAM (program);
+
+  if (param_name == CL_PROGRAM_REFERENCE_COUNT) {
+    cl_uint ref = program->ref_n;
+    FILL_AND_RET (cl_uint, 1, (&ref), CL_SUCCESS);
+  } else if (param_name == CL_PROGRAM_CONTEXT) {
+    cl_context context = program->ctx;
+    FILL_AND_RET (cl_context, 1, &context, CL_SUCCESS);
+  } else if (param_name == CL_PROGRAM_NUM_DEVICES) {
+    cl_uint num_dev = 1; // Just 1 dev now.
+    FILL_AND_RET (cl_uint, 1, &num_dev, CL_SUCCESS);
+  } else if (param_name == CL_PROGRAM_DEVICES) {
+    cl_device_id dev_id = program->ctx->device;
+    FILL_AND_RET (cl_device_id, 1, &dev_id, CL_SUCCESS);
+  } else if (param_name == CL_PROGRAM_SOURCE) {
+
+    if (!program->source)
+      FILL_AND_RET (char, 1, &ret_str, CL_SUCCESS);
+    FILL_AND_RET (char, (strlen(program->source) + 1),
+                   program->source, CL_SUCCESS);
+  } else if (param_name == CL_PROGRAM_BINARY_SIZES) {
+    FILL_AND_RET (size_t, 1, (&program->bin_sz), CL_SUCCESS);
+  } else if (param_name == CL_PROGRAM_BINARIES) {
+    if (!param_value)
+      return CL_SUCCESS;
+
+    /* param_value points to an array of n
+       pointers allocated by the caller */
+    if (program->bin_sz > 0) {
+      memcpy(*((void **)param_value), program->bin, program->bin_sz);
+    } else {
+      memcpy(*((void **)param_value), ret_str, 1);
+    }
+
+    return CL_SUCCESS;
+  } else {
+    return CL_INVALID_VALUE;
+  }
+
+error:
+    return err;
 }
 
 cl_int
@@ -744,9 +799,41 @@ clGetProgramBuildInfo(cl_program             program,
                       void *                 param_value,
                       size_t *               param_value_size_ret)
 {
-  NOT_IMPLEMENTED;
-  return 0;
+  cl_int err = CL_SUCCESS;
+  char * ret_str = "";
+
+  CHECK_PROGRAM (program);
+  INVALID_DEVICE_IF (device != program->ctx->device);
+
+  if (param_name == CL_PROGRAM_BUILD_STATUS) {
+    cl_build_status status;
+
+    if (!program->is_built)
+      status = CL_BUILD_NONE;
+    else if (program->ker_n > 0)
+      status = CL_BUILD_SUCCESS;
+    else
+      status = CL_BUILD_ERROR;
+    // TODO: Support CL_BUILD_IN_PROGRESS ?
+
+    FILL_AND_RET (cl_build_status, 1, &status, CL_SUCCESS);
+  } else if (param_name == CL_PROGRAM_BUILD_OPTIONS) {
+    if (program->is_built && program->build_opts)
+      ret_str = program->build_opts;
+
+    FILL_AND_RET (char, (strlen(ret_str)+1), ret_str, CL_SUCCESS);
+  } else if (param_name == CL_PROGRAM_BUILD_LOG) {
+    // TODO: need to add logs in backend when compiling.
+    FILL_AND_RET (char, (strlen(ret_str)+1), ret_str, CL_SUCCESS);
+  } else {
+    return CL_INVALID_VALUE;
+  }
+
+error:
+    return err;
 }
+
+#undef FILL_AND_RET
 
 cl_kernel
 clCreateKernel(cl_program   program,
