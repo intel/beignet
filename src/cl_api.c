@@ -37,6 +37,15 @@
 #include <string.h>
 #include <assert.h>
 
+#ifndef CL_VERSION_1_2
+#define CL_MAP_WRITE_INVALIDATE_REGION              (1 << 2)
+#define CL_DEVICE_TYPE_CUSTOM                       (1 << 4)
+#define CL_MEM_HOST_WRITE_ONLY                      (1 << 7)
+#define CL_MEM_HOST_READ_ONLY                       (1 << 8)
+#define CL_MEM_HOST_NO_ACCESS                       (1 << 9)
+typedef intptr_t cl_device_partition_property;
+#endif
+
 static cl_int
 cl_check_device_type(cl_device_type device_type)
 {

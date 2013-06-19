@@ -39,6 +39,13 @@
 #include "cl_utils.h"
 #include "cl_sampler.h"
 
+#ifndef CL_VERSION_1_2
+#define CL_MEM_OBJECT_IMAGE1D                       0x10F4
+#define CL_MEM_OBJECT_IMAGE1D_ARRAY                 0x10F5
+#define CL_MEM_OBJECT_IMAGE1D_BUFFER                0x10F6
+#define CL_MEM_OBJECT_IMAGE2D_ARRAY                 0x10F3
+#endif
+
 #define GEN_CMD_MEDIA_OBJECT  (0x71000000)
 #define MO_TS_BIT             (1 << 24)
 #define MO_RETAIN_BIT         (1 << 28)

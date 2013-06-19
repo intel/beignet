@@ -7,21 +7,14 @@ static void compiler_fill_image_3d(void)
   const size_t depth = 1;
   uint32_t color = 0x12345678;
   cl_image_format format;
-  cl_image_desc desc;
 
   format.image_channel_order = CL_RGBA;
   format.image_channel_data_type = CL_UNSIGNED_INT8;
-  desc.image_type = CL_MEM_OBJECT_IMAGE3D;
-  desc.image_width = w;
-  desc.image_height = h;
-  desc.image_depth = depth;
-  desc.image_row_pitch = 0;
-  desc.image_slice_pitch = 0;
 
   // Setup kernel and images
   OCL_CREATE_KERNEL("test_fill_image_3d");
 
-  OCL_CREATE_IMAGE(buf[0], 0, &format, &desc, NULL);
+  OCL_CREATE_IMAGE3D(buf[0], 0, &format, w, h, depth, 0, 0, NULL);
 
   // Run the kernel
   OCL_SET_ARG(0, sizeof(cl_mem), &buf[0]);

@@ -30,6 +30,10 @@
 #include <stdio.h>
 #include <string.h>
 
+#ifndef CL_VERSION_1_2
+#define CL_DEVICE_BUILT_IN_KERNELS 0x103F
+#endif
+
 static struct _cl_device_id intel_ivb_gt2_device = {
   INIT_ICD(dispatch)
   .max_compute_unit = 128,

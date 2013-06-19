@@ -6,7 +6,6 @@ static void compiler_copy_image_3d(void)
   const size_t h = 512;
   const size_t depth = 1;
   cl_image_format format;
-  cl_image_desc desc;
   cl_sampler sampler;
 
   // Setup kernel and images
@@ -19,14 +18,8 @@ static void compiler_copy_image_3d(void)
 
   format.image_channel_order = CL_RGBA;
   format.image_channel_data_type = CL_UNSIGNED_INT8;
-  desc.image_type = CL_MEM_OBJECT_IMAGE3D;
-  desc.image_width = w;
-  desc.image_height = h;
-  desc.image_depth = depth;
-  desc.image_row_pitch = 0;
-  desc.image_slice_pitch = 0;
-  OCL_CREATE_IMAGE(buf[0], CL_MEM_COPY_HOST_PTR, &format, &desc, buf_data[0]);
-  OCL_CREATE_IMAGE(buf[1], 0, &format, &desc, NULL);
+  OCL_CREATE_IMAGE3D(buf[0], CL_MEM_COPY_HOST_PTR, &format, w, h, depth, 0, 0, buf_data[0]);
+  OCL_CREATE_IMAGE3D(buf[1], 0, &format, w, h, depth, 0, 0, NULL);
   OCL_CREATE_SAMPLER(sampler, CL_ADDRESS_REPEAT, CL_FILTER_NEAREST);
   free(buf_data[0]);
   buf_data[0] = NULL;

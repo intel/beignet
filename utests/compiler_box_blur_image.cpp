@@ -4,7 +4,6 @@ static void compiler_box_blur_image()
 {
   int w, h;
   cl_image_format format = { };
-  cl_image_desc desc = { };
   size_t origin[3] = { };
   size_t region[3];
   int *src, *dst;
@@ -16,17 +15,11 @@ static void compiler_box_blur_image()
 
   format.image_channel_order = CL_RGBA;
   format.image_channel_data_type = CL_UNORM_INT8;
-  desc.image_type = CL_MEM_OBJECT_IMAGE2D;
-  desc.image_width = w;
-  desc.image_height = h;
-  desc.image_depth = 1;
-  desc.image_row_pitch = w*sizeof(uint32_t);
 
   /* Run the kernel */
-  OCL_CREATE_IMAGE(buf[0], CL_MEM_COPY_HOST_PTR, &format, &desc, src);
+  OCL_CREATE_IMAGE2D(buf[0], CL_MEM_COPY_HOST_PTR, &format, w, h, w*sizeof(uint32_t), src);
   free(src);
-  desc.image_row_pitch = 0;
-  OCL_CREATE_IMAGE(buf[1], 0, &format, &desc, NULL);
+  OCL_CREATE_IMAGE2D(buf[1], 0, &format, w, h, 0, NULL);
   OCL_SET_ARG(0, sizeof(cl_mem), &buf[0]);
   OCL_SET_ARG(1, sizeof(cl_mem), &buf[1]);
   globals[0] = w;

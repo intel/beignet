@@ -6,24 +6,14 @@ static void compiler_get_image_info(void)
   const size_t h = 512;
   const size_t depth = 3;
   cl_image_format format;
-  cl_image_desc desc;
 
   format.image_channel_order = CL_RGBA;
   format.image_channel_data_type = CL_UNSIGNED_INT8;
-  desc.image_type = CL_MEM_OBJECT_IMAGE3D;
-  desc.image_width = w;
-  desc.image_height = h;
-  desc.image_depth = depth;
-  desc.image_row_pitch = 0;
-  desc.image_slice_pitch = 0;
-  desc.num_mip_levels = 0;
-  desc.num_samples = 0;
-  desc.buffer = NULL;
 
   // Setup kernel and images
   OCL_CREATE_KERNEL("test_get_image_info");
 
-  OCL_CREATE_IMAGE(buf[0], 0, &format, &desc, NULL);
+  OCL_CREATE_IMAGE3D(buf[0], 0, &format, w, h, depth, 0, 0, NULL);
   OCL_CREATE_BUFFER(buf[1], 0, 32 * sizeof(int), NULL);
   OCL_CREATE_BUFFER(buf[2], 0, 32 * sizeof(int), NULL);
 

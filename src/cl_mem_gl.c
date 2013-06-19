@@ -37,6 +37,10 @@
 #include "CL/cl_intel.h"
 #include "CL/cl_gl.h"
 
+#ifndef CL_VERSION_1_2
+#define CL_INVALID_IMAGE_DESCRIPTOR -65
+#endif
+
 static int cl_get_clformat_from_texture(GLint tex_format, cl_image_format * cl_format)
 {
   cl_int ret = CL_SUCCESS;

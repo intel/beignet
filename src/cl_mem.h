@@ -24,6 +24,25 @@
 #include "cl_driver.h"
 #include "CL/cl.h"
 
+#ifndef CL_VERSION_1_2
+#define CL_MEM_OBJECT_IMAGE1D                       0x10F4
+#define CL_MEM_OBJECT_IMAGE1D_ARRAY                 0x10F5
+#define CL_MEM_OBJECT_IMAGE1D_BUFFER                0x10F6
+#define CL_MEM_OBJECT_IMAGE2D_ARRAY                 0x10F3
+typedef struct _cl_image_desc {
+    cl_mem_object_type      image_type;
+    size_t                  image_width;
+    size_t                  image_height;
+    size_t                  image_depth;
+    size_t                  image_array_size;
+    size_t                  image_row_pitch;
+    size_t                  image_slice_pitch;
+    cl_uint                 num_mip_levels;
+    cl_uint                 num_samples;
+    cl_mem                  buffer;
+} cl_image_desc;
+#endif
+
 typedef enum cl_image_tiling {
   CL_NO_TILE = 0,
   CL_TILE_X  = 1,
