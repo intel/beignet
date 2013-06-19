@@ -825,11 +825,13 @@ namespace gbe {
     //two passes delete for some phinode
     for (std::vector<Instruction*>::reverse_iterator i = deadList.rbegin(), e = deadList.rend(); i != e; ++i) {
       (*i)->dropAllReferences();
-      if((*i)->use_empty())
+      if((*i)->use_empty()) {
         (*i)->eraseFromParent();
+        (*i) = NULL;
+      }
     }
     for (std::vector<Instruction*>::reverse_iterator i = deadList.rbegin(), e = deadList.rend(); i != e; ++i) {
-      if((*i)->getParent())
+      if((*i) && (*i)->getParent())
         (*i)->eraseFromParent();
     }
     deadList.clear();
