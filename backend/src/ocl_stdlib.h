@@ -72,6 +72,7 @@ DEF(uint);
 DEF(long);
 DEF(ulong);
 DEF(float);
+DEF(double);
 #undef DEF
 /////////////////////////////////////////////////////////////////////////////
 // OpenCL other built-in data types
