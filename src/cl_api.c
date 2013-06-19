@@ -696,6 +696,7 @@ clBuildProgram(cl_program            program,
   INVALID_VALUE_IF (num_devices > 1);
   INVALID_VALUE_IF (num_devices == 0 && device_list != NULL);
   INVALID_VALUE_IF (num_devices != 0 && device_list == NULL);
+  INVALID_VALUE_IF (pfn_notify  == 0 && user_data   != NULL);
 
   /* Everything is easy. We only support one device anyway */
   if (num_devices != 0) {
@@ -706,7 +707,9 @@ clBuildProgram(cl_program            program,
   /* TODO support create program from binary */
   assert(program->source_type == FROM_LLVM ||
          program->source_type == FROM_SOURCE);
-  cl_program_build(program, options);
+  if((err = cl_program_build(program, options)) != CL_SUCCESS) {
+    goto error;
+  }
   program->is_built = CL_TRUE;
 
   if (pfn_notify) pfn_notify(program, user_data);

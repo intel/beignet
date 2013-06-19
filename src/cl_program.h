@@ -47,8 +47,7 @@ struct _cl_program {
   cl_context ctx;         /* Its parent context */
   char *bin;              /* The program copied verbatim */
   size_t bin_sz;          /* Its size in memory */
-  char **sources;         /* Program sources */
-  size_t src_n;           /* Number of sources */
+  char *source;           /* Program sources */
   uint32_t ker_n;         /* Number of declared kernels */
   uint32_t source_type:2; /* Built from binary, source or LLVM */
   uint32_t is_built:1;    /* Did we call clBuildProgram on it? */

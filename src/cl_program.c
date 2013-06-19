@@ -36,13 +36,10 @@
 static void
 cl_program_release_sources(cl_program p)
 {
-  size_t i;
-  if (p->sources == NULL) return;
-  for (i = 0; i < p->src_n; ++i)
-    if (p->sources[i]) cl_free(p->sources[i]);
-  cl_free(p->sources);
-  p->sources = NULL;
-  p->src_n = 0;
+  if (p->source) {
+    cl_free(p->source);
+    p->source = NULL;
+  }
 }
 
 LOCAL void
@@ -234,27 +231,36 @@ cl_program_create_from_source(cl_context ctx,
   cl_program program = NULL;
   cl_int err = CL_SUCCESS;
   cl_uint i;
-
+  int32_t * lens = NULL;
+  int32_t len_total = 0;
   assert(ctx);
-
+  char * p = NULL;
   // the real compilation step will be done at build time since we do not have
   // yet the compilation options
   program = cl_program_new(ctx);
-  TRY_ALLOC (program->sources, cl_calloc(count, sizeof(char*)));
+  TRY_ALLOC (lens, cl_calloc(count, sizeof(int32_t)));
   for (i = 0; i < (int) count; ++i) {
     size_t len;
     if (lengths == NULL || lengths[i] == 0)
       len = strlen(strings[i]);
     else
       len = lengths[i];
-    TRY_ALLOC (program->sources[i], cl_calloc(len+1, sizeof(char)));
-    memcpy(program->sources[i], strings[i], len);
-    program->sources[i][len] = 0;
+    lens[i] = len;
+    len_total += len;
   }
-  program->src_n = count;
+  TRY_ALLOC(program->source, cl_calloc(len_total+1, sizeof(char)));
+  p = program->source;
+  for (i = 0; i < (int) count; ++i) {
+    memcpy(p, strings[i], lens[i]);
+    p += lens[i];
+  }
+  *p = '\0';
+
   program->source_type = FROM_SOURCE;
 
 exit:
+  cl_free(lens);
+  lens = NULL;
   if (errcode_ret)
     *errcode_ret = err;
   return program;
@@ -270,9 +276,7 @@ cl_program_build(cl_program p, const char *options)
   cl_int err = CL_SUCCESS;
 
   if (p->source_type == FROM_SOURCE) {
-    /* XXX support multiple sources later */
-    FATAL_IF (p->src_n != 1, "Only ONE source file supported");
-    p->opaque = gbe_program_new_from_source(p->sources[0], 0, options, NULL, NULL);
+    p->opaque = gbe_program_new_from_source(p->source, 0, options, NULL, NULL);
     if (UNLIKELY(p->opaque == NULL)) {
       err = CL_INVALID_PROGRAM;
       goto error;
