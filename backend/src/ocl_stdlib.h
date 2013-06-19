@@ -53,6 +53,8 @@ typedef unsigned int uintptr_t;
 #define private __private
 #endif
 
+#pragma OPENCL EXTENSION cl_khr_fp64 : enable
+
 /////////////////////////////////////////////////////////////////////////////
 // OpenCL built-in vector data types
 /////////////////////////////////////////////////////////////////////////////
@@ -4429,6 +4431,8 @@ INLINE_OVERLOADABLE  size_t get_image_array_size(image1d_array_t image)
 DECL_IMAGE(int4, i)
 DECL_IMAGE(uint4, ui)
 DECL_IMAGE(float4, f)
+
+#pragma OPENCL EXTENSION cl_khr_fp64 : disable
 
 #undef DECL_IMAGE
 #undef DECL_READ_IMAGE
