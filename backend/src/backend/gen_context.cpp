@@ -223,7 +223,12 @@ namespace gbe
   }
 
   void GenContext::emitIndirectMoveInstruction(const SelectionInstruction &insn) {
-    const GenRegister src = GenRegister::unpacked_uw(ra->genReg(insn.src(0)).nr, 0);
+    GenRegister src = ra->genReg(insn.src(0));
+    if(isScalarReg(src.reg()))
+      src = GenRegister::retype(src, GEN_TYPE_UW);
+    else
+      src = GenRegister::unpacked_uw(src.nr, src.subnr / typeSize(GEN_TYPE_UW));
+
     const GenRegister dst = ra->genReg(insn.dst(0));
     const GenRegister a0 = GenRegister::addr8(0);
     uint32_t simdWidth = p->curr.execWidth;

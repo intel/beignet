@@ -8,7 +8,7 @@ void compiler_function_constant0(void)
   // Setup kernel and buffers
   OCL_CREATE_KERNEL("compiler_function_constant0");
   OCL_CREATE_BUFFER(buf[0], 0, 75 * sizeof(short), NULL);
-  OCL_CREATE_BUFFER(buf[1], 0, 256 * sizeof(char), NULL);
+  OCL_CREATE_BUFFER(buf[1], 0, 1 * sizeof(char), NULL);
   OCL_CREATE_BUFFER(buf[2], 0, n * sizeof(uint32_t), NULL);
   OCL_SET_ARG(0, sizeof(cl_mem), &buf[0]);
   OCL_SET_ARG(1, sizeof(cl_mem), &buf[1]);
@@ -21,9 +21,7 @@ void compiler_function_constant0(void)
   OCL_UNMAP_BUFFER(0);
 
   OCL_MAP_BUFFER(1);
-  for(uint32_t i = 0; i < 256; ++i)
-    ((char *)buf_data[1])[i] = 10;
-  ((char *)buf_data[1])[15] = 15;
+  ((char *)buf_data[1])[0] = 15;
   OCL_UNMAP_BUFFER(1);
 
   // Run the kernel
