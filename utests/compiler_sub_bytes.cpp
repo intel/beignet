@@ -11,7 +11,7 @@ static void compiler_sub_bytes(void)
   for (uint32_t i = 0; i < n; ++i) ((int8_t*)buf_data[0])[i] = (int8_t) rand();
   for (uint32_t i = 0; i < n; ++i) ((int8_t*)buf_data[1])[i] = (int8_t) rand();
   OCL_CREATE_BUFFER(buf[0], CL_MEM_COPY_HOST_PTR, n * sizeof(int8_t), buf_data[0]);
-  OCL_CREATE_BUFFER(buf[1], CL_MEM_COPY_HOST_PTR, n * sizeof(int8_t), buf_data[0]);
+  OCL_CREATE_BUFFER(buf[1], CL_MEM_COPY_HOST_PTR, n * sizeof(int8_t), buf_data[1]);
   OCL_CREATE_BUFFER(buf[2], 0, n * sizeof(int8_t), NULL);
 
   // Run the kernel
@@ -25,7 +25,7 @@ static void compiler_sub_bytes(void)
   // Check result
   OCL_MAP_BUFFER(2);
   for (uint32_t i = 0; i < n; ++i)
-    OCL_ASSERT(((int8_t*)buf_data[2])[i] = ((int8_t*)buf_data[0])[i] - ((int8_t*)buf_data[1])[i]);
+    OCL_ASSERT(((int8_t*)buf_data[2])[i] == (int8_t)(((int8_t*)buf_data[0])[i] - ((int8_t*)buf_data[1])[i]));
   free(buf_data[0]);
   free(buf_data[1]);
   buf_data[0] = buf_data[1] = NULL;
