@@ -85,6 +85,7 @@ set (utests_sources
   compiler_get_image_info.cpp
   compiler_vector_load_store.cpp
   compiler_cl_finish.cpp
+  get_program_info.cpp
   buildin_work_dim.cpp
   builtin_global_size.cpp
   runtime_createcontext.cpp
