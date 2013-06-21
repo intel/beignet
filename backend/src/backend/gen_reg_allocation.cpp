@@ -458,7 +458,6 @@ namespace gbe
   }
 
   bool GenRegAllocator::Opaque::allocateGRFs(Selection &selection) {
-
     // Perform the linear scan allocator
     const uint32_t regNum = ctx.sel->getRegNum();
     for (uint32_t startID = 0; startID < regNum; ++startID) {

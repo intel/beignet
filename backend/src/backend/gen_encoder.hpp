@@ -113,9 +113,11 @@ namespace gbe
     ALU2(LINE)
     ALU2(PLN)
     ALU3(MAD)
+    ALU2(MOV_DF);
 #undef ALU1
 #undef ALU2
 #undef ALU3
+    void LOAD_DF_IMM(GenRegister dest, GenRegister tmp, double value);
     /*! Barrier message (to synchronize threads of a workgroup) */
     void BARRIER(GenRegister src);
     /*! Memory fence message (to order loads and stores between threads) */
@@ -132,6 +134,10 @@ namespace gbe
     void NOP(void);
     /*! Wait instruction (used for the barrier) */
     void WAIT(void);
+    /*! Read 64-bits float arrays */
+    void READ_FLOAT64(GenRegister dst, GenRegister src, uint32_t bti, uint32_t elemNum);
+    /*! Write 64-bits float arrays */
+    void WRITE_FLOAT64(GenRegister src, uint32_t bti, uint32_t elemNum);
     /*! Untyped read (upto 4 channels) */
     void UNTYPED_READ(GenRegister dst, GenRegister src, uint32_t bti, uint32_t elemNum);
     /*! Untyped write (upto 4 channels) */

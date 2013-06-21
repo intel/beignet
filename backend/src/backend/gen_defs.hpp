@@ -215,6 +215,7 @@ enum GenMessageTarget {
 #define GEN_TYPE_VF  5 /* packed float vector, immediates only? */
 #define GEN_TYPE_HF  6
 #define GEN_TYPE_V   6 /* packed int vector, immediates only, uword dest only */
+#define GEN_TYPE_DF  6
 #define GEN_TYPE_F   7
 
 #define GEN_ARF_NULL                  0x00
@@ -303,6 +304,7 @@ enum GenMessageTarget {
 #define GEN_BYTE_SCATTER_BYTE   0
 #define GEN_BYTE_SCATTER_WORD   1
 #define GEN_BYTE_SCATTER_DWORD  2
+#define GEN_BYTE_SCATTER_QWORD  3
 
 #define GEN_SAMPLER_RETURN_FORMAT_FLOAT32     0
 #define GEN_SAMPLER_RETURN_FORMAT_UINT32      2
@@ -418,7 +420,7 @@ struct GenInstruction
       uint32_t src0_reg_type:3;
       uint32_t src1_reg_file:2;
       uint32_t src1_reg_type:3;
-      uint32_t pad:1;
+      uint32_t nib_ctrl:1;
       uint32_t dest_subreg_nr:5;
       uint32_t dest_reg_nr:8;
       uint32_t dest_horiz_stride:2;
@@ -432,7 +434,7 @@ struct GenInstruction
       uint32_t src0_reg_type:3;
       uint32_t src1_reg_file:2;        /* 0x00000c00 */
       uint32_t src1_reg_type:3;        /* 0x00007000 */
-      uint32_t pad:1;
+      uint32_t nib_ctrl:1;
       int dest_indirect_offset:10;        /* offset against the deref'd address reg */
       uint32_t dest_subreg_nr:3; /* subnr for the address reg a0.x */
       uint32_t dest_horiz_stride:2;
@@ -446,7 +448,7 @@ struct GenInstruction
       uint32_t src0_reg_type:3;
       uint32_t src1_reg_file:2;
       uint32_t src1_reg_type:3;
-      uint32_t pad:1;
+      uint32_t nib_ctrl:1;
       uint32_t dest_writemask:4;
       uint32_t dest_subreg_nr:1;
       uint32_t dest_reg_nr:8;
@@ -459,7 +461,7 @@ struct GenInstruction
       uint32_t dest_reg_type:3;
       uint32_t src0_reg_file:2;
       uint32_t src0_reg_type:3;
-      uint32_t pad0:6;
+      uint32_t nib_ctrl:1;
       uint32_t dest_writemask:4;
       int dest_indirect_offset:6;
       uint32_t dest_subreg_nr:3;

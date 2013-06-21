@@ -129,6 +129,7 @@ namespace gbe
       case TYPE_S32: return GEN_TYPE_D;
       case TYPE_U32: return GEN_TYPE_UD;
       case TYPE_FLOAT: return GEN_TYPE_F;
+      case TYPE_DOUBLE: return GEN_TYPE_DF;
       default: NOT_SUPPORTED; return GEN_TYPE_F;
     }
   }
@@ -166,11 +167,13 @@ namespace gbe
 
   bool SelectionInstruction::isRead(void) const {
     return this->opcode == SEL_OP_UNTYPED_READ ||
+           this->opcode == SEL_OP_READ_FLOAT64 ||
            this->opcode == SEL_OP_BYTE_GATHER;
   }
 
   bool SelectionInstruction::isWrite(void) const {
     return this->opcode == SEL_OP_UNTYPED_WRITE ||
+           this->opcode == SEL_OP_WRITE_FLOAT64 ||
            this->opcode == SEL_OP_BYTE_SCATTER;
   }
 
@@ -406,6 +409,8 @@ namespace gbe
 #define ALU3(OP) \
   INLINE void OP(Reg dst, Reg src0, Reg src1, Reg src2) { ALU3(SEL_OP_##OP, dst, src0, src1, src2); }
     ALU1(MOV)
+    ALU2(MOV_DF)
+    ALU2(LOAD_DF_IMM)
     ALU1(RNDZ)
     ALU1(RNDE)
     ALU2(SEL)
@@ -449,6 +454,10 @@ namespace gbe
     void NOP(void);
     /*! Wait instruction (used for the barrier) */
     void WAIT(void);
+    /*! Read 64 bits float array */
+    void READ_FLOAT64(Reg addr, const GenRegister *dst, uint32_t elemNum, uint32_t bti);
+    /*! Write 64 bits float array */
+    void WRITE_FLOAT64(Reg addr, const GenRegister *src, uint32_t elemNum, uint32_t bti);
     /*! Untyped read (up to 4 elements) */
     void UNTYPED_READ(Reg addr, const GenRegister *dst, uint32_t elemNum, uint32_t bti);
     /*! Untyped write (up to 4 elements) */
@@ -610,20 +619,23 @@ namespace gbe
 
   ir::Register Selection::Opaque::replaceDst(SelectionInstruction *insn, uint32_t regID) {
     SelectionBlock *block = insn->parent;
-    const uint32_t simdWidth = ctx.getSimdWidth();
+    uint32_t simdWidth = ctx.getSimdWidth();
     ir::Register tmp;
+    ir::RegisterFamily f = file.get(insn->dst(regID).reg()).family;
+    int genType = f == ir::FAMILY_QWORD ? GEN_TYPE_DF : GEN_TYPE_F;
+    GenRegister gr;
 
     // This will append the temporary register in the instruction block
     this->block = block;
-    tmp = this->reg(ir::FAMILY_DWORD);
+    tmp = this->reg(f);
 
     // Generate the MOV instruction and replace the register in the instruction
     SelectionInstruction *mov = this->create(SEL_OP_MOV, 1, 1);
-    mov->dst(0) = GenRegister::retype(insn->dst(regID), GEN_TYPE_F);
+    mov->dst(0) = GenRegister::retype(insn->dst(regID), genType);
     mov->state = GenInstructionState(simdWidth);
-    insn->dst(regID) = mov->src(0) = GenRegister::fxgrf(simdWidth, tmp);
+    gr = f == ir::FAMILY_QWORD ? GenRegister::dfxgrf(simdWidth, tmp) : GenRegister::fxgrf(simdWidth, tmp);
+    insn->dst(regID) = mov->src(0) = gr;
     insn->append(*mov);
-
     return tmp;
   }
 
@@ -657,6 +669,7 @@ namespace gbe
       case FAMILY_WORD: SEL_REG(uw16grf, uw8grf, uw1grf); break;
       case FAMILY_BYTE: SEL_REG(ub16grf, ub8grf, ub1grf); break;
       case FAMILY_DWORD: SEL_REG(f16grf, f8grf, f1grf); break;
+      case FAMILY_QWORD: SEL_REG(df16grf, df8grf, df1grf); break;
       default: NOT_SUPPORTED;
     }
     GBE_ASSERT(false);
@@ -719,6 +732,33 @@ namespace gbe
   void Selection::Opaque::NOP(void) { this->appendInsn(SEL_OP_NOP, 0, 0); }
   void Selection::Opaque::WAIT(void) { this->appendInsn(SEL_OP_WAIT, 0, 0); }
 
+  void Selection::Opaque::READ_FLOAT64(Reg addr,
+                                       const GenRegister *dst,
+                                       uint32_t elemNum,
+                                       uint32_t bti)
+  {
+    SelectionInstruction *insn = this->appendInsn(SEL_OP_READ_FLOAT64, elemNum, 1);
+    SelectionVector *srcVector = this->appendVector();
+    SelectionVector *dstVector = this->appendVector();
+
+    // Regular instruction to encode
+    for (uint32_t elemID = 0; elemID < elemNum; ++elemID)
+      insn->dst(elemID) = dst[elemID];
+    insn->src(0) = addr;
+    insn->extra.function = bti;
+    insn->extra.elem = elemNum;
+
+    // Sends require contiguous allocation
+    dstVector->regNum = elemNum;
+    dstVector->isSrc = 0;
+    dstVector->reg = &insn->dst(0);
+
+    // Source cannot be scalar (yet)
+    srcVector->regNum = 1;
+    srcVector->isSrc = 1;
+    srcVector->reg = &insn->src(0);
+  }
+
   void Selection::Opaque::UNTYPED_READ(Reg addr,
                                        const GenRegister *dst,
                                        uint32_t elemNum,
@@ -744,6 +784,27 @@ namespace gbe
     srcVector->regNum = 1;
     srcVector->isSrc = 1;
     srcVector->reg = &insn->src(0);
+  }
+
+  void Selection::Opaque::WRITE_FLOAT64(Reg addr,
+                                        const GenRegister *src,
+                                        uint32_t elemNum,
+                                        uint32_t bti)
+  {
+    SelectionInstruction *insn = this->appendInsn(SEL_OP_WRITE_FLOAT64, 0, elemNum+1);
+    SelectionVector *vector = this->appendVector();
+
+    // Regular instruction to encode
+    insn->src(0) = addr;
+    for (uint32_t elemID = 0; elemID < elemNum; ++elemID)
+      insn->src(elemID+1) = src[elemID];
+    insn->extra.function = bti;
+    insn->extra.elem = elemNum;
+
+    // Sends require contiguous allocation for the sources
+    vector->regNum = elemNum+1;
+    vector->reg = &insn->src(0);
+    vector->isSrc = 1;
   }
 
   void Selection::Opaque::UNTYPED_WRITE(Reg addr,
@@ -1092,6 +1153,15 @@ namespace gbe
   // Implementation of all patterns
   ///////////////////////////////////////////////////////////////////////////
 
+  bool canGetRegisterFromImmediate(const ir::Instruction &insn) {
+    using namespace ir;
+    const auto &childInsn = cast<LoadImmInstruction>(insn);
+    const auto &imm = childInsn.getImmediate();
+    if(imm.type != TYPE_DOUBLE)
+      return true;
+    return false;
+  }
+
   GenRegister getRegisterFromImmediate(ir::Immediate imm)
   {
     using namespace ir;
@@ -1103,6 +1173,7 @@ namespace gbe
       case TYPE_S16: return  GenRegister::immw(imm.data.s16);
       case TYPE_U8:  return GenRegister::immuw(imm.data.u8);
       case TYPE_S8:  return GenRegister::immw(imm.data.s8);
+      case TYPE_DOUBLE: return GenRegister::immdf(imm.data.f64);
       default: NOT_SUPPORTED; return GenRegister::immuw(0);
     }
   }
@@ -1146,7 +1217,13 @@ namespace gbe
       const GenRegister src = sel.selReg(insn.getSrc(0));
       switch (opcode) {
         case ir::OP_ABS: sel.MOV(dst, GenRegister::abs(src)); break;
-        case ir::OP_MOV: sel.MOV(dst, src); break;
+        case ir::OP_MOV:
+          if (dst.isdf()) {
+            ir::Register r = sel.reg(ir::RegisterFamily::FAMILY_QWORD);
+            sel.MOV_DF(dst, src, sel.selReg(r));
+          } else
+            sel.MOV(dst, src);
+          break;
         case ir::OP_RNDD: sel.RNDD(dst, src); break;
         case ir::OP_RNDE: sel.RNDE(dst, src); break;
         case ir::OP_RNDU: sel.RNDU(dst, src); break;
@@ -1225,14 +1302,14 @@ namespace gbe
       SelectionDAG *dag1 = dag.child[1];
 
       // Right source can always be an immediate
-      if (OCL_OPTIMIZE_IMMEDIATE && dag1 != NULL && dag1->insn.getOpcode() == OP_LOADI) {
+      if (OCL_OPTIMIZE_IMMEDIATE && dag1 != NULL && dag1->insn.getOpcode() == OP_LOADI && canGetRegisterFromImmediate(dag1->insn)) {
         const auto &childInsn = cast<LoadImmInstruction>(dag1->insn);
         src0 = sel.selReg(insn.getSrc(0), type);
         src1 = getRegisterFromImmediate(childInsn.getImmediate());
         if (dag0) dag0->isRoot = 1;
       }
       // Left source cannot be immediate but it is OK if we can commute
-      else if (OCL_OPTIMIZE_IMMEDIATE && dag0 != NULL && insn.commutes() && dag0->insn.getOpcode() == OP_LOADI) {
+      else if (OCL_OPTIMIZE_IMMEDIATE && dag0 != NULL && insn.commutes() && dag0->insn.getOpcode() == OP_LOADI && canGetRegisterFromImmediate(dag0->insn)) {
         const auto &childInsn = cast<LoadImmInstruction>(dag0->insn);
         src0 = sel.selReg(insn.getSrc(1), type);
         src1 = getRegisterFromImmediate(childInsn.getImmediate());
@@ -1268,7 +1345,7 @@ namespace gbe
         case OP_SHR: sel.SHR(dst, src0, src1); break;
         case OP_ASR: sel.ASR(dst, src0, src1); break;
         case OP_MUL:
-          if (type == TYPE_FLOAT)
+          if (type == TYPE_FLOAT || type == TYPE_DOUBLE)
             sel.MUL(dst, src0, src1);
           else if (type == TYPE_U32 || type == TYPE_S32) {
             sel.pop();
@@ -1599,6 +1676,7 @@ namespace gbe
         case TYPE_S16: sel.MOV(dst, GenRegister::immw(imm.data.s16)); break;
         case TYPE_U8:  sel.MOV(dst, GenRegister::immuw(imm.data.u8)); break;
         case TYPE_S8:  sel.MOV(dst, GenRegister::immw(imm.data.s8)); break;
+        case TYPE_DOUBLE: sel.LOAD_DF_IMM(dst, GenRegister::immdf(imm.data.f64), sel.selReg(sel.reg(FAMILY_QWORD))); break;
         default: NOT_SUPPORTED;
       }
       sel.pop();
@@ -1650,6 +1728,8 @@ namespace gbe
   INLINE uint32_t getByteScatterGatherSize(ir::Type type) {
     using namespace ir;
     switch (type) {
+      case TYPE_DOUBLE:
+        return GEN_BYTE_SCATTER_QWORD;
       case TYPE_FLOAT:
       case TYPE_U32:
       case TYPE_S32:
@@ -1679,6 +1759,22 @@ namespace gbe
       for (uint32_t dstID = 0; dstID < valueNum; ++dstID)
         dst[dstID] = GenRegister::retype(sel.selReg(insn.getValue(dstID)), GEN_TYPE_F);
       sel.UNTYPED_READ(addr, dst.data(), valueNum, bti);
+    }
+
+    void emitReadFloat64(Selection::Opaque &sel,
+                         const ir::LoadInstruction &insn,
+                         GenRegister addr,
+                         uint32_t bti) const
+    {
+      using namespace ir;
+      const uint32_t valueNum = insn.getValueNum();
+      vector<GenRegister> dst(valueNum);
+      for (uint32_t dstID = 0; dstID < valueNum; ++dstID)
+        dst[dstID] = GenRegister::retype(sel.selReg(insn.getValue(dstID)), GEN_TYPE_F);
+      dst.push_back(sel.selReg(sel.reg(FAMILY_QWORD)));
+      if (sel.ctx.getSimdWidth() == 16)
+        dst.push_back(sel.selReg(sel.reg(FAMILY_QWORD)));
+      sel.READ_FLOAT64(addr, dst.data(), dst.size(), bti);
     }
 
     void emitByteGather(Selection::Opaque &sel,
@@ -1732,6 +1828,8 @@ namespace gbe
       const uint32_t elemSize = getByteScatterGatherSize(type);
       if (insn.getAddressSpace() == MEM_CONSTANT)
         this->emitIndirectMove(sel, insn, address);
+      else if (insn.isAligned() == true && elemSize == GEN_BYTE_SCATTER_QWORD)
+        this->emitReadFloat64(sel, insn, address, space == MEM_LOCAL ? 0xfe : 0x00);
       else if (insn.isAligned() == true && elemSize == GEN_BYTE_SCATTER_DWORD)
         this->emitUntypedRead(sel, insn, address, space == MEM_LOCAL ? 0xfe : 0x00);
       else {
@@ -1760,6 +1858,25 @@ namespace gbe
       for (uint32_t valueID = 0; valueID < valueNum; ++valueID)
         value[valueID] = GenRegister::retype(sel.selReg(insn.getValue(valueID)), GEN_TYPE_F);
       sel.UNTYPED_WRITE(addr, value.data(), valueNum, bti);
+    }
+
+    void emitWriteFloat64(Selection::Opaque &sel,
+                          const ir::StoreInstruction &insn,
+                          uint32_t bti) const
+    {
+      using namespace ir;
+      const uint32_t valueNum = insn.getValueNum();
+      const uint32_t addrID = ir::StoreInstruction::addressIndex;
+      GenRegister addr;
+      vector<GenRegister> value(valueNum);
+
+      addr = GenRegister::retype(sel.selReg(insn.getSrc(addrID)), GEN_TYPE_F);
+      for (uint32_t valueID = 0; valueID < valueNum; ++valueID)
+        value[valueID] = GenRegister::retype(sel.selReg(insn.getValue(valueID)), GEN_TYPE_F);
+      value.push_back(sel.selReg(sel.reg(FAMILY_QWORD)));
+      if (sel.ctx.getSimdWidth() == 16)
+        value.push_back(sel.selReg(sel.reg(FAMILY_QWORD)));
+      sel.WRITE_FLOAT64(addr, value.data(), value.size(), bti);
     }
 
     void emitByteScatter(Selection::Opaque &sel,
@@ -1791,7 +1908,9 @@ namespace gbe
       const uint32_t bti = space == MEM_LOCAL ? 0xfe : 0x01;
       const Type type = insn.getValueType();
       const uint32_t elemSize = getByteScatterGatherSize(type);
-      if (insn.isAligned() == true && elemSize == GEN_BYTE_SCATTER_DWORD)
+      if (insn.isAligned() == true && elemSize == GEN_BYTE_SCATTER_QWORD)
+        this->emitWriteFloat64(sel, insn, bti);
+      else if (insn.isAligned() == true && elemSize == GEN_BYTE_SCATTER_DWORD)
         this->emitUntypedWrite(sel, insn, bti);
       else {
         const GenRegister address = sel.selReg(insn.getAddress());
@@ -1839,7 +1958,7 @@ namespace gbe
       SelectionDAG *dag1 = dag.child[1];
 
       // Right source can always be an immediate
-      if (OCL_OPTIMIZE_IMMEDIATE && dag1 != NULL && dag1->insn.getOpcode() == OP_LOADI) {
+      if (OCL_OPTIMIZE_IMMEDIATE && dag1 != NULL && dag1->insn.getOpcode() == OP_LOADI && canGetRegisterFromImmediate(dag1->insn)) {
         const auto &childInsn = cast<LoadImmInstruction>(dag1->insn);
         src0 = sel.selReg(insn.getSrc(0), type);
         src1 = getRegisterFromImmediate(childInsn.getImmediate());
@@ -1873,7 +1992,7 @@ namespace gbe
       const GenRegister src = sel.selReg(insn.getSrc(0), srcType);
 
       // We need two instructions to make the conversion
-      if (dstFamily != FAMILY_DWORD && srcFamily == FAMILY_DWORD) {
+      if (dstFamily != FAMILY_DWORD && dstFamily != FAMILY_QWORD && srcFamily == FAMILY_DWORD) {
         GenRegister unpacked;
         if (dstFamily == FAMILY_WORD) {
           const uint32_t type = TYPE_U16 ? GEN_TYPE_UW : GEN_TYPE_W;
@@ -1886,6 +2005,9 @@ namespace gbe
         }
         sel.MOV(unpacked, src);
         sel.MOV(dst, unpacked);
+      } else if (dst.isdf()) {
+        ir::Register r = sel.reg(ir::RegisterFamily::FAMILY_QWORD);
+        sel.MOV_DF(dst, src, sel.selReg(r));
       } else
         sel.MOV(dst, src);
       return true;
@@ -1919,7 +2041,7 @@ namespace gbe
       SelectionDAG *dag2 = dag.child[2];
 
       // Right source can always be an immediate
-      if (OCL_OPTIMIZE_IMMEDIATE && dag2 != NULL && dag2->insn.getOpcode() == OP_LOADI) {
+      if (OCL_OPTIMIZE_IMMEDIATE && dag2 != NULL && dag2->insn.getOpcode() == OP_LOADI && canGetRegisterFromImmediate(dag2->insn)) {
         const auto &childInsn = cast<LoadImmInstruction>(dag2->insn);
         src0 = sel.selReg(insn.getSrc(SelectInstruction::src0Index), type);
         src1 = getRegisterFromImmediate(childInsn.getImmediate());

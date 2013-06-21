@@ -87,6 +87,8 @@ namespace gbe
     void emitBarrierInstruction(const SelectionInstruction &insn);
     void emitFenceInstruction(const SelectionInstruction &insn);
     void emitMathInstruction(const SelectionInstruction &insn);
+    void emitReadFloat64Instruction(const SelectionInstruction &insn);
+    void emitWriteFloat64Instruction(const SelectionInstruction &insn);
     void emitUntypedReadInstruction(const SelectionInstruction &insn);
     void emitUntypedWriteInstruction(const SelectionInstruction &insn);
     void emitByteGatherInstruction(const SelectionInstruction &insn);

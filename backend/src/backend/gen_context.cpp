@@ -153,6 +153,8 @@ namespace gbe
     const GenRegister src0 = ra->genReg(insn.src(0));
     const GenRegister src1 = ra->genReg(insn.src(1));
     switch (insn.opcode) {
+      case SEL_OP_LOAD_DF_IMM: p->LOAD_DF_IMM(dst, src1, src0.value.df); break;
+      case SEL_OP_MOV_DF: p->MOV_DF(dst, src0, src1); break;
       case SEL_OP_SEL:  p->SEL(dst, src0, src1); break;
       case SEL_OP_AND:  p->AND(dst, src0, src1); break;
       case SEL_OP_OR:   p->OR (dst, src0, src1);  break;
@@ -269,12 +271,27 @@ namespace gbe
     p->pop();
   }
 
+  void GenContext::emitReadFloat64Instruction(const SelectionInstruction &insn) {
+    const GenRegister dst = ra->genReg(insn.dst(0));
+    const GenRegister src = ra->genReg(insn.src(0));
+    const uint32_t bti = insn.extra.function;
+    const uint32_t elemNum = insn.extra.elem;
+    p->READ_FLOAT64(dst, src, bti, elemNum);
+  }
+
   void GenContext::emitUntypedReadInstruction(const SelectionInstruction &insn) {
     const GenRegister dst = ra->genReg(insn.dst(0));
     const GenRegister src = ra->genReg(insn.src(0));
     const uint32_t bti = insn.extra.function;
     const uint32_t elemNum = insn.extra.elem;
     p->UNTYPED_READ(dst, src, bti, elemNum);
+  }
+
+  void GenContext::emitWriteFloat64Instruction(const SelectionInstruction &insn) {
+    const GenRegister src = ra->genReg(insn.src(0));
+    const uint32_t bti = insn.extra.function;
+    const uint32_t elemNum = insn.extra.elem;
+    p->WRITE_FLOAT64(src, bti, elemNum);
   }
 
   void GenContext::emitUntypedWriteInstruction(const SelectionInstruction &insn) {

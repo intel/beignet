@@ -69,11 +69,12 @@ namespace gbe
   /*! Type size in bytes for each Gen type */
   INLINE int typeSize(uint32_t type) {
     switch(type) {
+      case GEN_TYPE_DF:
+        return 8;
       case GEN_TYPE_UD:
       case GEN_TYPE_D:
       case GEN_TYPE_F:
         return 4;
-      case GEN_TYPE_HF:
       case GEN_TYPE_UW:
       case GEN_TYPE_W:
         return 2;
@@ -110,6 +111,7 @@ namespace gbe
     INLINE GenInstructionState(uint32_t simdWidth = 8) {
       this->execWidth = simdWidth;
       this->quarterControl = GEN_COMPRESSION_Q1;
+      this->nibControl = 0;
       this->accWrEnable = 0;
       this->noMask = 0;
       this->flag = 0;
@@ -126,6 +128,7 @@ namespace gbe
     uint32_t flagIndex:16;   //!< Only if virtual flag (index of the register)
     uint32_t execWidth:5;
     uint32_t quarterControl:1;
+    uint32_t nibControl:1;
     uint32_t accWrEnable:1;
     uint32_t noMask:1;
     uint32_t predicate:4;
@@ -192,6 +195,7 @@ namespace gbe
 
     /*! For immediates or virtual register */
     union {
+      double df;
       float f;
       int32_t d;
       uint32_t ud;
@@ -210,6 +214,31 @@ namespace gbe
     uint32_t hstride:2;      //!< Horizontal stride
     uint32_t quarter:1;      //!< To choose which part we want (Q1 / Q2)
     uint32_t address_mode:1; //!< direct or indirect
+
+    static INLINE GenRegister offset(GenRegister reg, int nr, int subnr = 0) {
+      GenRegister r = reg;
+      r.nr += nr;
+      r.subnr += subnr;
+      return r;
+    }
+
+    INLINE bool isimmdf(void) const {
+      if (type == GEN_TYPE_DF && file == GEN_IMMEDIATE_VALUE)
+        return true;
+      return false;
+    }
+
+    INLINE bool isdf(void) const {
+      if (type == GEN_TYPE_DF && file == GEN_GENERAL_REGISTER_FILE)
+        return true;
+      return false;
+    }
+
+    static INLINE GenRegister h2(GenRegister reg) {
+      GenRegister r = reg;
+      r.hstride = GEN_HORIZONTAL_STRIDE_2;
+      return r;
+    }
 
     static INLINE GenRegister QnVirtual(GenRegister reg, uint32_t quarter) {
       GBE_ASSERT(reg.physical == 0);
@@ -293,6 +322,18 @@ namespace gbe
       return reg;
     }
 
+    static INLINE GenRegister df16(uint32_t file, ir::Register reg) {
+      return retype(vec16(file, reg), GEN_TYPE_DF);
+    }
+
+    static INLINE GenRegister df8(uint32_t file, ir::Register reg) {
+      return retype(vec8(file, reg), GEN_TYPE_DF);
+    }
+
+    static INLINE GenRegister df1(uint32_t file, ir::Register reg) {
+      return retype(vec1(file, reg), GEN_TYPE_DF);
+    }
+
     static INLINE GenRegister ud16(uint32_t file, ir::Register reg) {
       return retype(vec16(file, reg), GEN_TYPE_UD);
     }
@@ -371,6 +412,12 @@ namespace gbe
                          GEN_HORIZONTAL_STRIDE_0);
     }
 
+    static INLINE GenRegister immdf(double df) {
+      GenRegister immediate = imm(GEN_TYPE_DF);
+      immediate.value.df = df;
+      return immediate;
+    }
+
     static INLINE GenRegister immf(float f) {
       GenRegister immediate = imm(GEN_TYPE_F);
       immediate.value.f = f;
@@ -446,6 +493,18 @@ namespace gbe
 
     static INLINE GenRegister f16grf(ir::Register reg) {
       return vec16(GEN_GENERAL_REGISTER_FILE, reg);
+    }
+
+    static INLINE GenRegister df1grf(ir::Register reg) {
+      return df1(GEN_GENERAL_REGISTER_FILE, reg);
+    }
+
+    static INLINE GenRegister df8grf(ir::Register reg) {
+      return df8(GEN_GENERAL_REGISTER_FILE, reg);
+    }
+
+    static INLINE GenRegister df16grf(ir::Register reg) {
+      return df16(GEN_GENERAL_REGISTER_FILE, reg);
     }
 
     static INLINE GenRegister ud16grf(ir::Register reg) {
@@ -608,9 +667,35 @@ namespace gbe
                     GEN_HORIZONTAL_STRIDE_0);
     }
 
+    static INLINE int hstride_size(GenRegister reg) {
+      switch (reg.hstride) {
+        case GEN_HORIZONTAL_STRIDE_0: return 0;
+        case GEN_HORIZONTAL_STRIDE_1: return 1;
+        case GEN_HORIZONTAL_STRIDE_2: return 2;
+        case GEN_HORIZONTAL_STRIDE_4: return 4;
+        default: NOT_IMPLEMENTED; return 0;
+      }
+    }
+
     static INLINE GenRegister suboffset(GenRegister reg, uint32_t delta) {
-      reg.subnr += delta * typeSize(reg.type);
+      if (reg.hstride != GEN_HORIZONTAL_STRIDE_0) {
+        reg.subnr += delta * typeSize(reg.type);
+        reg.nr += reg.subnr / 32;
+        reg.subnr %= 32;
+      }
       return reg;
+    }
+
+    static INLINE GenRegister df16(uint32_t file, uint32_t nr, uint32_t subnr) {
+      return retype(vec16(file, nr, subnr), GEN_TYPE_DF);
+    }
+
+    static INLINE GenRegister df8(uint32_t file, uint32_t nr, uint32_t subnr) {
+      return retype(vec8(file, nr, subnr), GEN_TYPE_DF);
+    }
+
+    static INLINE GenRegister df1(uint32_t file, uint32_t nr, uint32_t subnr) {
+      return retype(vec1(file, nr, subnr), GEN_TYPE_DF);
     }
 
     static INLINE GenRegister ud16(uint32_t file, uint32_t nr, uint32_t subnr) {
@@ -683,6 +768,18 @@ namespace gbe
 
     static INLINE GenRegister f16grf(uint32_t nr, uint32_t subnr) {
       return vec16(GEN_GENERAL_REGISTER_FILE, nr, subnr);
+    }
+
+    static INLINE GenRegister df16grf(uint32_t nr, uint32_t subnr) {
+      return df16(GEN_GENERAL_REGISTER_FILE, nr, subnr);
+    }
+
+    static INLINE GenRegister df8grf(uint32_t nr, uint32_t subnr) {
+      return df8(GEN_GENERAL_REGISTER_FILE, nr, subnr);
+    }
+
+    static INLINE GenRegister df1grf(uint32_t nr, uint32_t subnr) {
+      return df1(GEN_GENERAL_REGISTER_FILE, nr, subnr);
     }
 
     static INLINE GenRegister ud16grf(uint32_t nr, uint32_t subnr) {
@@ -790,6 +887,7 @@ namespace gbe
         return SIMD1(values...); \
       } \
     }
+    DECL_REG_ENCODER(dfxgrf, df16grf, df8grf, df1grf);
     DECL_REG_ENCODER(fxgrf, f16grf, f8grf, f1grf);
     DECL_REG_ENCODER(uwxgrf, uw16grf, uw8grf, uw1grf);
     DECL_REG_ENCODER(udxgrf, ud16grf, ud8grf, ud1grf);

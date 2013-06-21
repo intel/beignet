@@ -235,6 +235,7 @@ namespace gbe
       NOT_IMPLEMENTED;
     insn->header.acc_wr_control = this->curr.accWrEnable;
     insn->header.quarter_control = this->curr.quarterControl;
+    insn->bits1.ia1.nib_ctrl = this->curr.nibControl;
     insn->header.mask_control = this->curr.noMask;
     insn->bits2.ia1.flag_reg_nr = this->curr.flag;
     insn->bits2.ia1.flag_sub_reg_nr = this->curr.subFlag;
@@ -355,6 +356,105 @@ namespace gbe
     0
   };
 
+  static int dst_type(int exec_width) {
+    if (exec_width == 8)
+      return GEN_TYPE_UD;
+    if (exec_width == 16)
+      return GEN_TYPE_UW;
+    NOT_IMPLEMENTED;
+    return 0;
+  }
+
+  void GenEncoder::READ_FLOAT64(GenRegister dst, GenRegister src, uint32_t bti, uint32_t elemNum) {
+    int w = curr.execWidth;
+    dst = GenRegister::h2(dst);
+    dst.type = GEN_TYPE_UD;
+    src.type = GEN_TYPE_UD;
+    GenRegister r = GenRegister::retype(GenRegister::suboffset(src, w*2), GEN_TYPE_UD);
+    GenRegister imm4 = GenRegister::immud(4);
+    GenInstruction *insn;
+    insn = next(GEN_OPCODE_SEND);
+    setHeader(insn);
+    setDst(insn, GenRegister::uw16grf(r.nr, 0));
+    setSrc0(insn, GenRegister::ud8grf(src.nr, 0));
+    setSrc1(insn, GenRegister::immud(0));
+    setDPUntypedRW(this, insn, bti, untypedRWMask[1], GEN_UNTYPED_READ, curr.execWidth / 8, curr.execWidth / 8);
+    push();
+    curr.quarterControl = 0;
+    curr.nibControl = 0;
+    MOV(dst, r);
+    if (w == 8)
+      curr.nibControl = 1;
+    else
+      curr.quarterControl = 1;
+    MOV(GenRegister::suboffset(dst, w), GenRegister::suboffset(r, w / 2));
+    pop();
+    ADD(src, src, imm4);
+    insn = next(GEN_OPCODE_SEND);
+    setHeader(insn);
+    setDst(insn, GenRegister::uw16grf(r.nr, 0));
+    setSrc0(insn, GenRegister::ud8grf(src.nr, 0));
+    setSrc1(insn, GenRegister::immud(0));
+    setDPUntypedRW(this, insn, bti, untypedRWMask[1], GEN_UNTYPED_READ, curr.execWidth / 8, curr.execWidth / 8);
+    push();
+    curr.quarterControl = 0;
+    curr.nibControl = 0;
+    MOV(GenRegister::suboffset(dst, 1), r);
+    if (w == 8)
+      curr.nibControl = 1;
+    else
+      curr.quarterControl = 1;
+    MOV(GenRegister::suboffset(dst, w + 1), GenRegister::suboffset(r, w / 2));
+    pop();
+  }
+
+  void GenEncoder::WRITE_FLOAT64(GenRegister msg, uint32_t bti, uint32_t elemNum) {
+    int w = curr.execWidth;
+    GenRegister r = GenRegister::retype(GenRegister::suboffset(msg, w*3), GEN_TYPE_UD);
+    r.type = GEN_TYPE_UD;
+    GenRegister hdr = GenRegister::h2(r);
+    GenRegister src = GenRegister::ud16grf(msg.nr + w / 8, 0);
+    src.hstride = GEN_HORIZONTAL_STRIDE_2;
+    GenRegister data = GenRegister::offset(r, w / 8);
+    GenRegister imm4 = GenRegister::immud(4);
+    MOV(r, GenRegister::ud8grf(msg.nr, 0));
+    push();
+    curr.quarterControl = 0;
+    curr.nibControl = 0;
+    MOV(data, src);
+    if (w == 8)
+      curr.nibControl = 1;
+    else
+      curr.quarterControl = 1;
+    MOV(GenRegister::suboffset(data, w / 2), GenRegister::suboffset(src, w));
+    pop();
+    GenInstruction *insn;
+    insn = next(GEN_OPCODE_SEND);
+    setHeader(insn);
+    setDst(insn, GenRegister::retype(GenRegister::null(), dst_type(curr.execWidth)));
+    setSrc0(insn, GenRegister::ud8grf(hdr.nr, 0));
+    setSrc1(insn, GenRegister::immud(0));
+    setDPUntypedRW(this, insn, bti, untypedRWMask[1], GEN_UNTYPED_WRITE, curr.execWidth / 4, 0);
+
+    ADD(r, GenRegister::ud8grf(msg.nr, 0), imm4);
+    push();
+    curr.quarterControl = 0;
+    curr.nibControl = 0;
+    MOV(data, GenRegister::suboffset(src, 1));
+    if (w == 8)
+      curr.nibControl = 1;
+    else
+      curr.quarterControl = 1;
+    MOV(GenRegister::suboffset(data, w / 2), GenRegister::suboffset(src, w + 1));
+    pop();
+    insn = next(GEN_OPCODE_SEND);
+    setHeader(insn);
+    setDst(insn, GenRegister::retype(GenRegister::null(), dst_type(curr.execWidth)));
+    setSrc0(insn, GenRegister::ud8grf(hdr.nr, 0));
+    setSrc1(insn, GenRegister::immud(0));
+    setDPUntypedRW(this, insn, bti, untypedRWMask[1], GEN_UNTYPED_WRITE, curr.execWidth / 4, 0);
+  }
+
   void GenEncoder::UNTYPED_READ(GenRegister dst, GenRegister src, uint32_t bti, uint32_t elemNum) {
     GenInstruction *insn = this->next(GEN_OPCODE_SEND);
     assert(elemNum >= 1 || elemNum <= 4);
@@ -467,7 +567,25 @@ namespace gbe
   }
 
   INLINE void alu1(GenEncoder *p, uint32_t opcode, GenRegister dst, GenRegister src) {
-     if (needToSplitAlu1(p, dst, src) == false) {
+     if (dst.isdf() && src.isdf()) {
+       int w = p->curr.execWidth;
+       p->push();
+       p->curr.quarterControl = 0;
+       p->curr.nibControl = 0;
+       GenInstruction *insn = p->next(opcode);
+       p->setHeader(insn);
+       p->setDst(insn, dst);
+       p->setSrc0(insn, src);
+       if (w == 8)
+         p->curr.nibControl = 1; // second 1/8 mask
+       else // w == 16
+         p->curr.quarterControl = 1; // second 1/4 mask
+       insn = p->next(opcode);
+       p->setHeader(insn);
+       p->setDst(insn, GenRegister::suboffset(dst, w / 2));
+       p->setSrc0(insn, GenRegister::suboffset(src, w / 2));
+       p->pop();
+     } else if (needToSplitAlu1(p, dst, src) == false) {
        GenInstruction *insn = p->next(opcode);
        p->setHeader(insn);
        p->setDst(insn, dst);
@@ -499,7 +617,27 @@ namespace gbe
                    GenRegister src0,
                    GenRegister src1)
   {
-    if (needToSplitAlu2(p, dst, src0, src1) == false) {
+    if (dst.isdf() && src0.isdf() && src1.isdf()) {
+       int w = p->curr.execWidth;
+       p->push();
+       p->curr.quarterControl = 0;
+       p->curr.nibControl = 0;
+       GenInstruction *insn = p->next(opcode);
+       p->setHeader(insn);
+       p->setDst(insn, dst);
+       p->setSrc0(insn, src0);
+       p->setSrc1(insn, src1);
+       if (w == 8)
+         p->curr.nibControl = 1; // second 1/8 mask
+       else // w == 16
+         p->curr.quarterControl = 1; // second 1/4 mask
+       insn = p->next(opcode);
+       p->setHeader(insn);
+       p->setDst(insn, GenRegister::suboffset(dst, w / 2));
+       p->setSrc0(insn, GenRegister::suboffset(src0, w / 2));
+       p->setSrc1(insn, GenRegister::suboffset(src1, w / 2));
+       p->pop();
+    } else if (needToSplitAlu2(p, dst, src0, src1) == false) {
        GenInstruction *insn = p->next(opcode);
        p->setHeader(insn);
        p->setDst(insn, dst);
@@ -618,6 +756,67 @@ namespace gbe
 #define ALU3(OP) \
   void GenEncoder::OP(GenRegister dest, GenRegister src0, GenRegister src1, GenRegister src2) { \
     alu3(this, GEN_OPCODE_##OP, dest, src0, src1, src2); \
+  }
+
+  void GenEncoder::LOAD_DF_IMM(GenRegister dest, GenRegister tmp, double value) {
+    union { double d; unsigned u[2]; } u;
+    u.d = value;
+    GenRegister r = GenRegister::retype(tmp, GEN_TYPE_UD);
+    push();
+    curr.predicate = GEN_PREDICATE_NONE;
+    curr.execWidth = 1;
+    MOV(r, GenRegister::immud(u.u[1]));
+    MOV(GenRegister::suboffset(r, 1), GenRegister::immud(u.u[0]));
+    pop();
+    r.type = GEN_TYPE_DF;
+    r.vstride = GEN_VERTICAL_STRIDE_0;
+    r.width = GEN_WIDTH_1;
+    r.hstride = GEN_HORIZONTAL_STRIDE_0;
+    push();
+    MOV(dest, r);
+    pop();
+  }
+
+  void GenEncoder::MOV_DF(GenRegister dest, GenRegister src0, GenRegister r) {
+    int w = curr.execWidth;
+    if (src0.isdf()) {
+      push();
+      curr.execWidth = 16;
+      MOV(dest, src0);
+      if (w == 16) {
+        curr.quarterControl = 1;
+        MOV(GenRegister::QnPhysical(dest, w / 4), GenRegister::QnPhysical(src0, w / 4));
+      }
+      pop();
+    } else {
+      GenRegister r0 = GenRegister::h2(r);
+      push();
+      curr.execWidth = 8;
+      curr.predicate = GEN_PREDICATE_NONE;
+      MOV(r0, src0);
+      MOV(GenRegister::suboffset(r0, 8), GenRegister::suboffset(src0, 4));
+      curr.predicate = GEN_PREDICATE_NORMAL;
+      curr.quarterControl = 0;
+      curr.nibControl = 0;
+      MOV(dest, r);
+      curr.nibControl = 1;
+      MOV(GenRegister::suboffset(dest, 4), GenRegister::suboffset(r, 8));
+      pop();
+      if (w == 16) {
+        push();
+        curr.execWidth = 8;
+        curr.predicate = GEN_PREDICATE_NONE;
+        MOV(r0, GenRegister::suboffset(src0, 8));
+        MOV(GenRegister::suboffset(r0, 8), GenRegister::suboffset(src0, 12));
+        curr.predicate = GEN_PREDICATE_NORMAL;
+        curr.quarterControl = 1;
+        curr.nibControl = 0;
+        MOV(GenRegister::suboffset(dest, 8), r);
+        curr.nibControl = 1;
+        MOV(GenRegister::suboffset(dest, 12), GenRegister::suboffset(r, 8));
+        pop();
+      }
+    }
   }
 
   ALU1(MOV)
