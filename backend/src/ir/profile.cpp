@@ -41,6 +41,7 @@ namespace ir {
         "block_ip",
         "barrier_id", "thread_number",
         "const_curbe_offset",
+        "work_dimension",
     };
 
 #if GBE_DEBUG
