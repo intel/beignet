@@ -27,6 +27,9 @@ set (utests_sources
   compiler_copy_image.cpp
   compiler_copy_image_3d.cpp
   compiler_copy_buffer_row.cpp
+  compiler_double.cpp
+  compiler_double_2.cpp
+  compiler_double_3.cpp
   compiler_fabs.cpp
   compiler_fill_image.cpp
   compiler_fill_image0.cpp
