@@ -1010,7 +1010,9 @@ namespace gbe
 
      if (function == GEN_MATH_FUNCTION_INT_DIV_QUOTIENT ||
          function == GEN_MATH_FUNCTION_INT_DIV_REMAINDER) {
-        if(insn->header.execution_size == GEN_WIDTH_16) {
+        insn->header.execution_size = GEN_WIDTH_8;
+
+        if(this->curr.execWidth == 16) {
           GenInstruction *insn2 = this->next(GEN_OPCODE_MATH);
           GenRegister new_dest, new_src0, new_src1;
           new_dest = GenRegister::QnPhysical(dst, 1);
@@ -1024,7 +1026,6 @@ namespace gbe
           this->setSrc1(insn2, new_src1);
         }
 
-        insn->header.execution_size = GEN_WIDTH_8;
      }
   }
 
