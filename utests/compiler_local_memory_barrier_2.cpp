@@ -1,6 +1,6 @@
 #include "utest_helper.hpp"
 
-static void compiler_global_memory_barrier(void)
+static void compiler_local_memory_barrier_2(void)
 {
   const size_t n = 16*1024;
 
@@ -26,4 +26,4 @@ static void compiler_global_memory_barrier(void)
   OCL_UNMAP_BUFFER(0);
 }
 
-MAKE_UTEST_FROM_FUNCTION(compiler_global_memory_barrier);
+MAKE_UTEST_FROM_FUNCTION(compiler_local_memory_barrier_2);
