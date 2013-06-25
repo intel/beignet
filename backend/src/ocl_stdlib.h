@@ -4379,11 +4379,9 @@ DECL_INTERNAL_WORK_ITEM_FN(get_num_groups)
 #define DECL_PUBLIC_WORK_ITEM_FN(NAME, OTHER_RET)    \
 INLINE unsigned NAME(unsigned int dim) {             \
   if (dim == 0) return __gen_ocl_##NAME##0();        \
-  else if (dim > 0 && dim < get_work_dim()) {        \
-    if (dim == 1) return __gen_ocl_##NAME##1();      \
-    else if (dim == 2) return __gen_ocl_##NAME##2(); \
-  }                                                  \
-  return OTHER_RET;                                  \
+  else if (dim == 1) return __gen_ocl_##NAME##1();   \
+  else if (dim == 2) return __gen_ocl_##NAME##2();   \
+  else return OTHER_RET;                             \
 }
 
 DECL_PUBLIC_WORK_ITEM_FN(get_group_id, 0)
