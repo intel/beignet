@@ -8,10 +8,9 @@
 
 using namespace std;
 
-/* ********************************************** *
- * This file to test the API of:                  *
- * clGetProgramInfo                               *
- * ********************************************** */
+/* ***************************************************** *
+ * This file to test all the API like: clGetXXXXInfo     *
+ * ***************************************************** */
 #define NO_STANDARD_REF 0xFFFFF
 
 template <typename T = cl_uint>
@@ -155,18 +154,23 @@ Info_Result<T>* cast_as(void *info)
 }
 
 
-#define CALL_PROGINFO_AND_RET(TYPE) \
+#define CALL_INFO_AND_RET(TYPE, FUNC, OBJ) \
     do { \
 	cl_int ret; \
 	size_t ret_size; \
 	\
 	Info_Result<TYPE>* info = cast_as<TYPE>(x.second); \
-	ret = clGetProgramInfo(program, x.first, \
+	ret = FUNC (OBJ, x.first, \
 		info->size, info->get_ret(), &ret_size); \
 	OCL_ASSERT((!ret)); \
 	OCL_ASSERT((info->check_result())); \
 	delete info; \
     } while(0)
+
+/* ***************************************************** *
+ * clGetProgramInfo                                      *
+ * ***************************************************** */
+#define CALL_PROGINFO_AND_RET(TYPE) CALL_INFO_AND_RET(TYPE, clGetProgramInfo, program)
 
 void get_program_info(void)
 {
@@ -179,7 +183,7 @@ void get_program_info(void)
     string line;
     string source_code;
 
-    sprintf(ker_path, "%s/%s", kiss_path, "get_program_info.cl");
+    sprintf(ker_path, "%s/%s", kiss_path, "compiler_if_else.cl");
 
     ifstream in(ker_path);
     while (getline(in,line)) {
@@ -192,7 +196,7 @@ void get_program_info(void)
 
     expect_source = (char *)source_code.c_str();
 
-    OCL_CREATE_KERNEL("get_program_info");
+    OCL_CREATE_KERNEL("compiler_if_else");
 
     /* First test for clGetProgramInfo. We just have 1 devices now */
     expect_value = 2;//One program, one kernel.
@@ -244,4 +248,72 @@ void get_program_info(void)
 }
 
 MAKE_UTEST_FROM_FUNCTION(get_program_info);
+
+/* ***************************************************** *
+ * clGetCommandQueueInfo                                 *
+ * ***************************************************** */
+#define CALL_QUEUEINFO_AND_RET(TYPE) CALL_INFO_AND_RET(TYPE, clGetCommandQueueInfo, queue)
+
+void get_queue_info(void)
+{
+    /* use the compiler_fabs case to test us. */
+    const size_t n = 16;
+    map<cl_program_info, void *> maps;
+    int expect_ref;
+    cl_command_queue_properties prop;
+
+    OCL_CREATE_BUFFER(buf[0], 0, n * sizeof(float), NULL);
+    OCL_CREATE_BUFFER(buf[1], 0, n * sizeof(float), NULL);
+    OCL_CREATE_KERNEL("compiler_fabs");
+
+    OCL_SET_ARG(0, sizeof(cl_mem), &buf[0]);
+    OCL_SET_ARG(1, sizeof(cl_mem), &buf[1]);
+
+    globals[0] = 16;
+    locals[0] = 16;
+
+    OCL_MAP_BUFFER(0);
+    for (int32_t i = 0; i < (int32_t) n; ++i)
+        ((float*)buf_data[0])[i] = .1f * (rand() & 15) - .75f;
+    OCL_UNMAP_BUFFER(0);
+
+    // Run the kernel on GPU
+    OCL_NDRANGE(1);
+
+    /* Do our test.*/
+    maps.insert(make_pair(CL_QUEUE_CONTEXT,
+                          (void *)(new Info_Result<cl_context>(ctx))));
+    maps.insert(make_pair(CL_QUEUE_DEVICE,
+                          (void *)(new Info_Result<cl_device_id>(device))));
+
+    expect_ref = 1;
+    maps.insert(make_pair(CL_QUEUE_REFERENCE_COUNT,
+                          (void *)(new Info_Result<>(((cl_uint)expect_ref)))));
+
+    prop = 0;
+    maps.insert(make_pair(CL_QUEUE_PROPERTIES,
+                          (void *)(new Info_Result<cl_command_queue_properties>(
+                                       ((cl_command_queue_properties)prop)))));
+
+    std::for_each(maps.begin(), maps.end(), [](pair<cl_program_info, void *> x) {
+        switch (x.first) {
+        case CL_QUEUE_CONTEXT:
+            CALL_QUEUEINFO_AND_RET(cl_context);
+            break;
+        case CL_QUEUE_DEVICE:
+            CALL_QUEUEINFO_AND_RET(cl_device_id);
+            break;
+        case CL_QUEUE_REFERENCE_COUNT:
+            CALL_QUEUEINFO_AND_RET(cl_uint);
+            break;
+        case CL_QUEUE_PROPERTIES:
+            CALL_QUEUEINFO_AND_RET(cl_command_queue_properties);
+            break;
+        default:
+            break;
+        }
+    });
+}
+
+MAKE_UTEST_FROM_FUNCTION(get_queue_info);
 
