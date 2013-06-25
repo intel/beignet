@@ -5,7 +5,7 @@ Well, the complete code base is somehow a compiler backend for LLVM. Here, we
 really speak about the final code generation passes that you may find in
 `src/backend`.
 
-As explained in [the scalar IR presentation](./gen_ir.html), we bet on a very
+As explained in [[the scalar IR presentation|gen_ir]], we bet on a very
 simple scalar IR to make it easy to parse and modify. The idea is to fix the
 unrelated problem (very Gen specific) where we can i.e. when the code is
 generated.
@@ -107,6 +107,4 @@ This is mostly done in `src/backend/gen_context.cpp` and
 `src/backend/gen_encoder./*pp`. This is mostly glue code and it is pretty
 straightforward. We just forward the selection code using the physically
 allocated registers. There is nothing special here. Just boilerplate.
-
-[Up](../README.html)
 

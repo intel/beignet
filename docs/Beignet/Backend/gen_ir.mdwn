@@ -126,6 +126,7 @@ more hard-coded path with a in-house IR. Note that will not prevent us from
 implementing later a LLVM backend "by the book" as Nvidia does today with PTX
 (using a LLVM backend to do the LLVM IR -> PTX conversion)
 
+
 SSA or no SSA
 -------------
 
@@ -251,6 +252,3 @@ are in the TODO list for sure :-)
 
 Finally, we also provide a liveness analysis tool which simply figures out which
 registers are alive at the end of each block (classically "live out" sets).
-
-[Up](../README.html)
-

@@ -50,8 +50,8 @@ The code is defined in `src/ir`. Main things to do are:
 
 - Adding support for atomic extensions.
 
-- Finishing the handling of function arguments (see the [IR
-  description](gen_ir.html) for more details)
+- Finishing the handling of function arguments (see the [[IR
+  description|gen_ir]] for more details)
 
 - Adding support for linking IR units together. OpenCL indeed allows to create
   programs from several sources
@@ -77,8 +77,8 @@ The code is defined in `src/backend`. Main things to do are:
 
 - Implementing atomic extensions.
 
-- Implementing register spilling (see the [compiler backend
-  description](./compiler_backend.html) for more details)
+- Implementing register spilling (see the [[compiler backend
+  description|compiler_backend]] for more details)
 
 - Implementing proper instruction selection. A "simple" tree matching algorithm
   should provide good results for Gen
@@ -107,4 +107,3 @@ should be improved and cleaned up. Track "XXX" comments in the code.
 Parts of the code leaks memory when exceptions are used. There are some pointers
 to track and replace with std::unique_ptr. Note that we also add a custom memory
 debugger that nicely complements (i.e. it is fast) Valgrind.
-

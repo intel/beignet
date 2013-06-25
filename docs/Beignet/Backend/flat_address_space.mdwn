@@ -96,6 +96,3 @@ the complete GTT space, there is no protection at all. Each write can therefore
 potentially modify any buffer including the command buffer, the frame buffer or
 the kernel code. There is *no* protection at all in the hardware to prevent
 that.
-
-[Up](../README.html)
-

@@ -117,7 +117,7 @@ complicated. The problem is with the 2->5 jump. Indeed, we have to be sure that
 we are not missing any computation done in block 4.
 
 To do so:
-- Instead of jumping from block 2 to block 5, we jump from block 2 to block 4. 
+- Instead of jumping from block 2 to block 5, we jump from block 2 to block 4.
 - We implement a `JOIN` point on top of block 4. We check if any lane is going
 to be reactivated for the block 4. If not, we jump to block 5.
 
@@ -245,7 +245,6 @@ program. Then we replace all other returns by a unconditional jump to this
 block. The CFG linearization will take care of the rest.
 We then simply encode the (only one) return instruction as a End-Of-Thread
 message (EOT).
-
 Code examples
 -------------
 
@@ -269,6 +268,4 @@ code generation. They can be found in the _run-time_ code base here:
 `utest/compiler_unstructured_branch2.cpp`
 
 `utest/compiler_unstructured_branch3.cpp`
-
-[Up](../README.html)
 

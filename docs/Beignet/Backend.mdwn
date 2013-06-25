@@ -8,7 +8,7 @@ a binary that can be executed on Intel integrated GPUs.
 Limitations
 -----------
 
-Today, the compiler is far from complete. See [here](doc/TODO.html) for a
+Today, the compiler is far from complete. See [[here|Backend/TODO]] for a
 (incomplete) lists of things to do.
 
 Interface with the run-time
@@ -50,10 +50,9 @@ Implementation details
 Several key decisions may use the hardware in an usual way. See the following
 documents for the technical details about the compiler implementation:
 
-- [Flat address space](doc/flat\_address\_space.html)
-- [Unstructured branches](doc/unstructured\_branches.html)
-- [Scalar intermediate representation](doc/gen\_ir.html)
-- [Clean backend implementation](doc/compiler_backend.html)
+- [[Flat address space|flat_address_space]]
+- [[Unstructured branches|unstructured_branches]]
+- [[Scalar intermediate representation|gen_ir]]
+- [[Clean backend implementation|compiler_backend]]
 
-Ben Segovia. 
-
+Ben Segovia.
