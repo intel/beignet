@@ -1,4 +1,4 @@
-__kernel void compiler_global_memory_barrier_2(__global int *dst, __local int *src) {
+__kernel void compiler_local_memory_barrier_2(__global int *dst, __local int *src) {
   src[get_local_id(0)] = get_local_id(0);
   src[get_local_size(0) + get_local_id(0)] = get_local_id(0);
   barrier(CLK_LOCAL_MEM_FENCE);
