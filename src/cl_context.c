@@ -196,6 +196,7 @@ cl_context_create_queue(cl_context ctx,
 
   /* We create the command queue and store it in the context list of queues */
   TRY_ALLOC (queue, cl_command_queue_new(ctx));
+  queue->props = properties;
 
 exit:
   if (errcode_ret)

@@ -46,6 +46,19 @@
 typedef intptr_t cl_device_partition_property;
 #endif
 
+#define FILL_GETINFO_RET(TYPE, ELT, VAL, RET) \
+	do { \
+	  if (param_value && param_value_size < sizeof(TYPE)*ELT) \
+	      return CL_INVALID_VALUE;  \
+	  if (param_value) { \
+	      memcpy(param_value, (VAL), sizeof(TYPE)*ELT); \
+	  } \
+          \
+	  if (param_value_size_ret) \
+	      *param_value_size_ret = sizeof(TYPE)*ELT; \
+	  return RET; \
+	} while(0)
+
 static cl_int
 cl_check_device_type(cl_device_type device_type)
 {
@@ -341,7 +354,20 @@ clGetCommandQueueInfo(cl_command_queue       command_queue,
 {
   cl_int err = CL_SUCCESS;
   CHECK_QUEUE (command_queue);
-  NOT_IMPLEMENTED;
+
+  if (param_name == CL_QUEUE_CONTEXT) {
+    FILL_GETINFO_RET (cl_context, 1, &command_queue->ctx, CL_SUCCESS);
+  } else if (param_name == CL_QUEUE_DEVICE) {
+    FILL_GETINFO_RET (cl_device_id, 1, &command_queue->ctx->device, CL_SUCCESS);
+  } else if (param_name == CL_QUEUE_REFERENCE_COUNT) {
+    cl_uint ref = command_queue->ref_n;
+    FILL_GETINFO_RET (cl_uint, 1, &ref, CL_SUCCESS);
+  } else if (param_name == CL_QUEUE_PROPERTIES) {
+    FILL_GETINFO_RET (cl_command_queue_properties, 1, &command_queue->props, CL_SUCCESS);
+  } else {
+    return CL_INVALID_VALUE;
+  }
+
 error:
   return err;
 }
@@ -734,19 +760,6 @@ clUnloadCompiler(void)
   return 0;
 }
 
-#define FILL_AND_RET(TYPE, ELT, VAL, RET) \
-	do { \
-	  if (param_value && param_value_size < sizeof(TYPE)*ELT) \
-	      return CL_INVALID_VALUE;  \
-	  if (param_value) { \
-	      memcpy(param_value, (VAL), sizeof(TYPE)*ELT); \
-	  } \
-          \
-	  if (param_value_size_ret) \
-	      *param_value_size_ret = sizeof(TYPE)*ELT; \
-	  return RET; \
-	} while(0)
-
 cl_int
 clGetProgramInfo(cl_program       program,
                  cl_program_info  param_name,
@@ -761,24 +774,24 @@ clGetProgramInfo(cl_program       program,
 
   if (param_name == CL_PROGRAM_REFERENCE_COUNT) {
     cl_uint ref = program->ref_n;
-    FILL_AND_RET (cl_uint, 1, (&ref), CL_SUCCESS);
+    FILL_GETINFO_RET (cl_uint, 1, (&ref), CL_SUCCESS);
   } else if (param_name == CL_PROGRAM_CONTEXT) {
     cl_context context = program->ctx;
-    FILL_AND_RET (cl_context, 1, &context, CL_SUCCESS);
+    FILL_GETINFO_RET (cl_context, 1, &context, CL_SUCCESS);
   } else if (param_name == CL_PROGRAM_NUM_DEVICES) {
     cl_uint num_dev = 1; // Just 1 dev now.
-    FILL_AND_RET (cl_uint, 1, &num_dev, CL_SUCCESS);
+    FILL_GETINFO_RET (cl_uint, 1, &num_dev, CL_SUCCESS);
   } else if (param_name == CL_PROGRAM_DEVICES) {
     cl_device_id dev_id = program->ctx->device;
-    FILL_AND_RET (cl_device_id, 1, &dev_id, CL_SUCCESS);
+    FILL_GETINFO_RET (cl_device_id, 1, &dev_id, CL_SUCCESS);
   } else if (param_name == CL_PROGRAM_SOURCE) {
 
     if (!program->source)
-      FILL_AND_RET (char, 1, &ret_str, CL_SUCCESS);
-    FILL_AND_RET (char, (strlen(program->source) + 1),
+      FILL_GETINFO_RET (char, 1, &ret_str, CL_SUCCESS);
+    FILL_GETINFO_RET (char, (strlen(program->source) + 1),
                    program->source, CL_SUCCESS);
   } else if (param_name == CL_PROGRAM_BINARY_SIZES) {
-    FILL_AND_RET (size_t, 1, (&program->bin_sz), CL_SUCCESS);
+    FILL_GETINFO_RET (size_t, 1, (&program->bin_sz), CL_SUCCESS);
   } else if (param_name == CL_PROGRAM_BINARIES) {
     if (!param_value)
       return CL_SUCCESS;
@@ -825,15 +838,15 @@ clGetProgramBuildInfo(cl_program             program,
       status = CL_BUILD_ERROR;
     // TODO: Support CL_BUILD_IN_PROGRESS ?
 
-    FILL_AND_RET (cl_build_status, 1, &status, CL_SUCCESS);
+    FILL_GETINFO_RET (cl_build_status, 1, &status, CL_SUCCESS);
   } else if (param_name == CL_PROGRAM_BUILD_OPTIONS) {
     if (program->is_built && program->build_opts)
       ret_str = program->build_opts;
 
-    FILL_AND_RET (char, (strlen(ret_str)+1), ret_str, CL_SUCCESS);
+    FILL_GETINFO_RET (char, (strlen(ret_str)+1), ret_str, CL_SUCCESS);
   } else if (param_name == CL_PROGRAM_BUILD_LOG) {
     // TODO: need to add logs in backend when compiling.
-    FILL_AND_RET (char, (strlen(ret_str)+1), ret_str, CL_SUCCESS);
+    FILL_GETINFO_RET (char, (strlen(ret_str)+1), ret_str, CL_SUCCESS);
   } else {
     return CL_INVALID_VALUE;
   }
@@ -841,8 +854,6 @@ clGetProgramBuildInfo(cl_program             program,
 error:
     return err;
 }
-
-#undef FILL_AND_RET
 
 cl_kernel
 clCreateKernel(cl_program   program,

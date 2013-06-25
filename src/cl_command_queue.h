@@ -30,13 +30,14 @@ struct intel_gpgpu;
 /* Basically, this is a (kind-of) batch buffer */
 struct _cl_command_queue {
   DEFINE_ICD(dispatch)
-  uint64_t magic;              /* To identify it as a command queue */
-  volatile int ref_n;          /* We reference count this object */
-  cl_context ctx;              /* Its parent context */
-  cl_command_queue prev, next; /* We chain the command queues together */
-  cl_gpgpu gpgpu;              /* Setup all GEN commands */
-  cl_mem perf;                 /* Where to put the perf counters */
-  cl_mem fulsim_out;           /* Fulsim will output this buffer */
+  uint64_t magic;                      /* To identify it as a command queue */
+  volatile int ref_n;                  /* We reference count this object */
+  cl_context ctx;                      /* Its parent context */
+  cl_command_queue_properties  props;  /* Queue properties */
+  cl_command_queue prev, next;         /* We chain the command queues together */
+  cl_gpgpu gpgpu;                      /* Setup all GEN commands */
+  cl_mem perf;                         /* Where to put the perf counters */
+  cl_mem fulsim_out;                   /* Fulsim will output this buffer */
 };
 
 /* Allocate and initialize a new command queue. Also insert it in the list of
