@@ -135,4 +135,7 @@ How to contribute
 You are always welcome to contribute to this project, just need to subscribe
 to the beignet mail list and send patches to it for review.
 The official mail list is as below:
-http://lists.freedesktop.org/mailman/listinfo/beignet
+[http://lists.freedesktop.org/mailman/listinfo/beignet](http://lists.freedesktop.org/mailman/listinfo/beignet)
+
+The wiki url is as below:
+[http://www.freedesktop.org/wiki/Software/Beignet/](http://www.freedesktop.org/wiki/Software/Beignet/)

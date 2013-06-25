@@ -25,30 +25,18 @@ many things must be implemented:
 
 - Lowering down of various intrinsics like `llvm.memcpy`
 
--  Conformance test for all OpenCL built-ins (`native_cos`, `native_sin`,
-  `mad`, atomic operations, barriers...).
-
-- Lowering down of int16 / int8 / float16 / char16 / char8 / char4 loads and
-  stores into the supported loads and stores
-
-- Support for local declaration of local array (the OpenCL profile will properly
-  declare them as global arrays)
-
-- Support for doubles
-
-- Support atomic extensions.
-
 - Better resolving of the PHI functions. Today, we always generate MOV
   instructions at the end of each basic block . They can be easily optimized.
+
+- From LLVM 3.3, we use SPIR IR. We need to use the compiler defined type to
+  represent sampler_t/image2d_t/image1d_t/....
+
+- Adding support for long (int64).
 
 Gen IR
 ------
 
 The code is defined in `src/ir`. Main things to do are:
-
-- Bringing support for doubles
-
-- Adding support for atomic extensions.
 
 - Finishing the handling of function arguments (see the [[IR
   description|gen_ir]] for more details)
@@ -68,14 +56,14 @@ The code is defined in `src/ir`. Main things to do are:
   This will obviously impact both instruction selection and the register
   allocation.
 
+- Adding support for long (int64).
+
 Backend
 -------
 
 The code is defined in `src/backend`. Main things to do are:
 
-- Implementing support for doubles
-
-- Implementing atomic extensions.
+- Int64 support?
 
 - Implementing register spilling (see the [[compiler backend
   description|compiler_backend]] for more details)
@@ -99,10 +87,8 @@ I also purely and simply copied and pasted the Gen ISA disassembler from Mesa.
 This leads to code duplication. Also some messages used by OpenCL (untyped reads
 and writes) are not properly decoded yet.
 
-There are some quick and dirty hacks also like the use of function call `system`
-(...). This should be cleanly replaced by popen and stuff. I also directly
-called the LLVM compiler executable instead of using Clang library. All of this
-should be improved and cleaned up. Track "XXX" comments in the code.
+All of those code should be improved and cleaned up are tracked with "XXX"
+comments in the code.
 
 Parts of the code leaks memory when exceptions are used. There are some pointers
 to track and replace with std::unique_ptr. Note that we also add a custom memory
