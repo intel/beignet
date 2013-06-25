@@ -1695,8 +1695,8 @@ namespace gbe
       const ir::Register reg = sel.reg(FAMILY_DWORD);
 
       const uint32_t params = insn.getParameters();
-      //need to double check local barrier whether need fence or not
-      if(params == syncGlobalBarrier) {
+      //XXX TODO need to double check local barrier whether need fence or not
+      if(params == syncGlobalBarrier || params == syncLocalBarrier) {
         const ir::Register fenceDst = sel.reg(FAMILY_DWORD);
         sel.FENCE(sel.selReg(fenceDst, ir::TYPE_U32));
       }
