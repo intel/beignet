@@ -1263,6 +1263,54 @@ namespace gbe
           this->opcodes.push_back(ir::Opcode(op));
     }
 
+    bool emitDivRemInst(Selection::Opaque &sel, SelectionDAG &dag, ir::Opcode op) const
+    {
+      using namespace ir;
+      const ir::BinaryInstruction &insn = cast<BinaryInstruction>(dag.insn);
+      const Type type = insn.getType();
+      GenRegister dst  = sel.selReg(insn.getDst(0), type);
+      GenRegister src0 = sel.selReg(insn.getSrc(0), type);
+      GenRegister src1 = sel.selReg(insn.getSrc(1), type);
+      const uint32_t simdWidth = sel.curr.execWidth;
+      const RegisterFamily family = getFamily(type);
+      uint32_t function = (op == OP_DIV)?
+                          GEN_MATH_FUNCTION_INT_DIV_QUOTIENT :
+                          GEN_MATH_FUNCTION_INT_DIV_REMAINDER;
+
+      //bytes and shorts must be converted to int for DIV and REM per GEN restriction
+      if((family == FAMILY_WORD || family == FAMILY_BYTE)) {
+        GenRegister tmp0, tmp1;
+        ir::Register reg = sel.reg(FAMILY_DWORD);
+
+        tmp0 = GenRegister::udxgrf(simdWidth, reg);
+        tmp0 = GenRegister::retype(tmp0, GEN_TYPE_D);
+        sel.MOV(tmp0, src0);
+
+        tmp1 = GenRegister::udxgrf(simdWidth, sel.reg(FAMILY_DWORD));
+        tmp1 = GenRegister::retype(tmp1, GEN_TYPE_D);
+        sel.MOV(tmp1, src1);
+
+        sel.MATH(tmp0, function, tmp0, tmp1);
+        GenRegister unpacked;
+        if(family == FAMILY_WORD) {
+          unpacked = GenRegister::unpacked_uw(reg);
+        } else {
+          unpacked = GenRegister::unpacked_ub(reg);
+        }
+        unpacked = GenRegister::retype(unpacked, getGenType(type));
+        sel.MOV(dst, unpacked);
+      } else if (type == TYPE_S32 || type == TYPE_U32 ) {
+        sel.MATH(dst, function, src0, src1);
+      } else if(type == TYPE_FLOAT) {
+        GBE_ASSERT(op != OP_REM);
+        sel.MATH(dst, GEN_MATH_FUNCTION_FDIV, src0, src1);
+      } else {
+        NOT_IMPLEMENTED;
+      }
+      markAllChildren(dag);
+      return true;
+    }
+
     INLINE bool emit(Selection::Opaque &sel, SelectionDAG &dag) const
     {
       using namespace ir;
@@ -1271,29 +1319,20 @@ namespace gbe
       const Type type = insn.getType();
       GenRegister dst  = sel.selReg(insn.getDst(0), type);
 
-      // Immediates not supported
-      if (opcode == OP_DIV || opcode == OP_POW) {
-        GenRegister src0 = sel.selReg(insn.getSrc(0), type);
-        GenRegister src1 = sel.selReg(insn.getSrc(1), type);
-        uint32_t function;
-        if (type == TYPE_S32 || type == TYPE_U32)
-          function = GEN_MATH_FUNCTION_INT_DIV_QUOTIENT;
-        else
-          function = opcode == OP_DIV ?
-                     GEN_MATH_FUNCTION_FDIV :
-                     GEN_MATH_FUNCTION_POW;
-        sel.MATH(dst, function, src0, src1);
-        markAllChildren(dag);
-        return true;
+      if(opcode == OP_DIV || opcode == OP_REM) {
+        return this->emitDivRemInst(sel, dag, opcode);
       }
-      if (opcode == OP_REM) {
+      // Immediates not supported
+      if (opcode == OP_POW) {
         GenRegister src0 = sel.selReg(insn.getSrc(0), type);
         GenRegister src1 = sel.selReg(insn.getSrc(1), type);
-        if (type == TYPE_U32 || type == TYPE_S32) {
-          sel.MATH(dst, GEN_MATH_FUNCTION_INT_DIV_REMAINDER, src0, src1);
-          markAllChildren(dag);
-        } else
+
+        if(type == TYPE_FLOAT) {
+          sel.MATH(dst, GEN_MATH_FUNCTION_POW, src0, src1);
+        } else {
           NOT_IMPLEMENTED;
+        }
+        markAllChildren(dag);
         return true;
       }
 
@@ -1355,14 +1394,14 @@ namespace gbe
         case OP_SHR: sel.SHR(dst, src0, src1); break;
         case OP_ASR: sel.ASR(dst, src0, src1); break;
         case OP_MUL:
-          if (type == TYPE_FLOAT || type == TYPE_DOUBLE)
-            sel.MUL(dst, src0, src1);
-          else if (type == TYPE_U32 || type == TYPE_S32) {
+          if (type == TYPE_U32 || type == TYPE_S32) {
             sel.pop();
             return false;
           }
-          else
-            NOT_IMPLEMENTED;
+          else {
+            GBE_ASSERTM((type != TYPE_S64 && type != TYPE_U64), "64bit integer not supported yet!" );
+            sel.MUL(dst, src0, src1);
+          }
         break;
         default: NOT_IMPLEMENTED;
       }

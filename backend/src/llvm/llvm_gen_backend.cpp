@@ -1276,10 +1276,10 @@ namespace gbe
       case Instruction::FSub: ctx.SUB(type, dst, src0, src1); break;
       case Instruction::Mul:
       case Instruction::FMul: ctx.MUL(type, dst, src0, src1); break;
-      case Instruction::URem:
+      case Instruction::URem: ctx.REM(getUnsignedType(ctx, I.getType()), dst, src0, src1); break;
       case Instruction::SRem:
       case Instruction::FRem: ctx.REM(type, dst, src0, src1); break;
-      case Instruction::UDiv:
+      case Instruction::UDiv: ctx.DIV(getUnsignedType(ctx, I.getType()), dst, src0, src1); break;
       case Instruction::SDiv:
       case Instruction::FDiv: ctx.DIV(type, dst, src0, src1); break;
       case Instruction::And:  ctx.AND(type, dst, src0, src1); break;
