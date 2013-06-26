@@ -5,6 +5,7 @@ link_directories (${LLVM_LIBRARY_DIR})
 set (utests_sources
   cl_create_kernel.cpp
   utest_error.c
+  compiler_basic_arithmetic.cpp
   compiler_displacement_map_element.cpp
   compiler_shader_toy.cpp
   compiler_mandelbrot.cpp
@@ -57,8 +58,6 @@ set (utests_sources
   compiler_saturate_sub.cpp
   compiler_shift_right.cpp
   compiler_short_scatter.cpp
-  compiler_sub_bytes.cpp
-  compiler_sub_shorts.cpp
   compiler_uint2_copy.cpp
   compiler_uint3_copy.cpp
   compiler_uint8_copy.cpp
