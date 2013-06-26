@@ -22,6 +22,8 @@ set (utests_sources
   compiler_array3.cpp
   compiler_byte_scatter.cpp
   compiler_ceil.cpp
+  compiler_clz_short.cpp
+  compiler_clz_int.cpp
   compiler_convert_uchar_sat.cpp
   compiler_copy_buffer.cpp
   compiler_copy_image.cpp
