@@ -62,12 +62,12 @@ extern EGLSurface  eglSurface;
 
 #define OCL_CREATE_KERNEL(NAME) \
   do { \
-    OCL_CALL (cl_kernel_init, NAME".cl", NAME, SOURCE); \
+    OCL_CALL (cl_kernel_init, NAME".cl", NAME, SOURCE, NULL); \
   } while (0)
 
 #define OCL_CREATE_KERNEL_FROM_FILE(FILE_NAME, KERNEL_NAME) \
   do { \
-    OCL_CALL(cl_kernel_init, FILE_NAME".cl", KERNEL_NAME, SOURCE); \
+    OCL_CALL(cl_kernel_init, FILE_NAME".cl", KERNEL_NAME, SOURCE, NULL); \
   } while (0)
 
 #define OCL_FLUSH() \
@@ -177,7 +177,8 @@ enum {
 extern int cl_ocl_init(void);
 
 /* Init program and kernel for the test */
-extern int cl_kernel_init(const char *file_name, const char *kernel_name, int format);
+extern int cl_kernel_init(const char *file_name,
+                const char *kernel_name, int format, const char * build_opt);
 
 /* init the bunch of global varaibles here */
 extern int cl_test_init(const char *file_name, const char *kernel_name, int format);

@@ -154,13 +154,13 @@ Info_Result<T>* cast_as(void *info)
 }
 
 
-#define CALL_INFO_AND_RET(TYPE, FUNC, OBJ) \
+#define CALL_INFO_AND_RET(TYPE, FUNC, ...) \
     do { \
 	cl_int ret; \
 	size_t ret_size; \
 	\
 	Info_Result<TYPE>* info = cast_as<TYPE>(x.second); \
-	ret = FUNC (OBJ, x.first, \
+	ret = FUNC (__VA_ARGS__, x.first, \
 		info->size, info->get_ret(), &ret_size); \
 	OCL_ASSERT((!ret)); \
 	OCL_ASSERT((info->check_result())); \
@@ -317,3 +317,48 @@ void get_queue_info(void)
 
 MAKE_UTEST_FROM_FUNCTION(get_queue_info);
 
+/* ***************************************************** *
+ * clGetProgramBuildInfo                                 *
+ * ***************************************************** */
+#define CALL_PROG_BUILD_INFO_AND_RET(TYPE)  CALL_INFO_AND_RET(TYPE, \
+             clGetProgramBuildInfo, program, device)
+
+void get_program_build_info(void)
+{
+    map<cl_program_info, void *> maps;
+    cl_build_status expect_status;
+    char build_opt[] = "-emit-llvm";
+    char log[] = "";
+    int sz;
+
+    OCL_CALL (cl_kernel_init, "compiler_if_else.cl", "compiler_if_else", SOURCE, build_opt);
+
+    /* Do our test.*/
+    expect_status = CL_BUILD_SUCCESS;
+    maps.insert(make_pair(CL_PROGRAM_BUILD_STATUS,
+                          (void *)(new Info_Result<cl_build_status>(expect_status))));
+    sz = strlen(build_opt) + 1;
+    maps.insert(make_pair(CL_PROGRAM_BUILD_OPTIONS,
+                          (void *)(new Info_Result<char *>(build_opt, sz))));
+    sz = strlen(log) + 1;
+    maps.insert(make_pair(CL_PROGRAM_BUILD_LOG, /* not supported now, just "" */
+                          (void *)(new Info_Result<char *>(log, sz))));
+
+    std::for_each(maps.begin(), maps.end(), [](pair<cl_program_info, void *> x) {
+        switch (x.first) {
+        case CL_PROGRAM_BUILD_STATUS:
+            CALL_PROG_BUILD_INFO_AND_RET(cl_build_status);
+            break;
+        case CL_PROGRAM_BUILD_OPTIONS:
+            CALL_PROG_BUILD_INFO_AND_RET(char *);
+            break;
+        case CL_PROGRAM_BUILD_LOG:
+            CALL_PROG_BUILD_INFO_AND_RET(char *);
+            break;
+        default:
+            break;
+        }
+    });
+}
+
+MAKE_UTEST_FROM_FUNCTION(get_program_build_info);

@@ -45,7 +45,7 @@ static void run_kernel(int w, int h, const char *name)
   snprintf(kernel_file, sizeof(kernel_file), "%s.cl", name);
   snprintf(dst_img, sizeof(dst_img), "%s.bmp", name);
   snprintf(ref_img, sizeof(ref_img), "%s_ref.bmp", name);
-  OCL_CALL (cl_kernel_init, kernel_file, name, SOURCE);
+  OCL_CALL (cl_kernel_init, kernel_file, name, SOURCE, NULL);
 
   OCL_CREATE_BUFFER(buf[0], 0, sz, NULL);
   OCL_CALL (clSetKernelArg, kernel, 0, sizeof(cl_mem), &buf[0]);

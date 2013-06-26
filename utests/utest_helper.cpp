@@ -231,7 +231,7 @@ do_kiss_path(const char *file, cl_device_id device)
 }
 
 int
-cl_kernel_init(const char *file_name, const char *kernel_name, int format)
+cl_kernel_init(const char *file_name, const char *kernel_name, int format, const char * build_opt)
 {
   cl_file_map_t *fm = NULL;
   char *ker_path = NULL;
@@ -259,7 +259,7 @@ cl_kernel_init(const char *file_name, const char *kernel_name, int format)
   }
 
   /* OCL requires to build the program even if it is created from a binary */
-  OCL_CALL (clBuildProgram, program, 1, &device, NULL, NULL, NULL);
+  OCL_CALL (clBuildProgram, program, 1, &device, build_opt, NULL, NULL);
 
   /* Create a kernel from the program */
   kernel = clCreateKernel(program, kernel_name, &status);
@@ -394,7 +394,7 @@ cl_test_init(const char *file_name, const char *kernel_name, int format)
     goto error;
 
   /* Load the kernel */
-  if ((status = cl_kernel_init(file_name, kernel_name, format)) != CL_SUCCESS)
+  if ((status = cl_kernel_init(file_name, kernel_name, format, NULL)) != CL_SUCCESS)
     goto error;
 
 error:
