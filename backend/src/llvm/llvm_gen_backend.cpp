@@ -1484,7 +1484,12 @@ namespace gbe
         if (srcType == ir::TYPE_BOOL) {
           const ir::RegisterFamily family = getFamily(dstType);
           const ir::ImmediateIndex zero = ctx.newIntegerImmediate(0, dstType);
-          const ir::ImmediateIndex one = ctx.newIntegerImmediate(1, dstType);
+          ir::ImmediateIndex one;
+          if (I.getOpcode() == Instruction::SExt
+              && (dstType == ir::TYPE_S8 || dstType == ir::TYPE_S16 || dstType == ir::TYPE_S32))
+            one = ctx.newIntegerImmediate(-1, dstType);
+          else
+            one = ctx.newIntegerImmediate(1, dstType);
           const ir::Register zeroReg = ctx.reg(family);
           const ir::Register oneReg = ctx.reg(family);
           ctx.LOADI(dstType, zeroReg, zero);
