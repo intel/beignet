@@ -485,6 +485,10 @@ namespace ir {
   Instruction COS(Type type, Register dst, Register src);
   /*! sin.type dst src */
   Instruction SIN(Type type, Register dst, Register src);
+  /*! fbh.type dst src */
+  Instruction FBH(Type type, Register dst, Register src);
+  /*! fbl.type dst src */
+  Instruction FBL(Type type, Register dst, Register src);
   /*! tan.type dst src */
   Instruction RCP(Type type, Register dst, Register src);
   /*! abs.type dst src */

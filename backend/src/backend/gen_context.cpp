@@ -139,6 +139,8 @@ namespace gbe
     const GenRegister src = ra->genReg(insn.src(0));
     switch (insn.opcode) {
       case SEL_OP_MOV: p->MOV(dst, src); break;
+      case SEL_OP_FBH: p->FBH(dst, src); break;
+      case SEL_OP_FBL: p->FBL(dst, src); break;
       case SEL_OP_NOT: p->NOT(dst, src); break;
       case SEL_OP_RNDD: p->RNDD(dst, src); break;
       case SEL_OP_RNDU: p->RNDU(dst, src); break;

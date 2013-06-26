@@ -824,6 +824,8 @@ namespace gbe
   ALU1(RNDE)
   ALU1(RNDD)
   ALU1(RNDU)
+  ALU1(FBH)
+  ALU1(FBL)
   ALU2(SEL)
   ALU1(NOT)
   ALU2(AND)

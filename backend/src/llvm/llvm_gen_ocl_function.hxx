@@ -96,3 +96,7 @@ DECL_LLVM_GEN_FUNCTION(USUB_SAT_CHAR, _Z12ocl_usub_sathh)
 DECL_LLVM_GEN_FUNCTION(USUB_SAT_SHORT, _Z12ocl_usub_sattt)
 DECL_LLVM_GEN_FUNCTION(USUB_SAT_INT, _Z12ocl_usub_satjj)
 DECL_LLVM_GEN_FUNCTION(USUB_SAT_LONG, _Z12ocl_usub_satmm)
+
+// integer built-in functions
+DECL_LLVM_GEN_FUNCTION(FBH, __gen_ocl_fbh)
+DECL_LLVM_GEN_FUNCTION(FBL, __gen_ocl_fbl)

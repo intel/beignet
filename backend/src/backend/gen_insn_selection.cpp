@@ -431,6 +431,8 @@ namespace gbe
     ALU2(MACH)
     ALU1(LZD)
     ALU3(MAD)
+    ALU1(FBH)
+    ALU1(FBL)
 #undef ALU1
 #undef ALU2
 #undef ALU3
@@ -1211,10 +1213,16 @@ namespace gbe
   /*! Unary instruction patterns */
   DECL_PATTERN(UnaryInstruction)
   {
+    static ir::Type getType(const ir::Opcode opcode) {
+      if (opcode == ir::OP_FBH || opcode == ir::OP_FBL)
+        return ir::TYPE_U32;
+      return ir::TYPE_FLOAT;
+    }
+
     INLINE bool emitOne(Selection::Opaque &sel, const ir::UnaryInstruction &insn) const {
       const ir::Opcode opcode = insn.getOpcode();
-      const GenRegister dst = sel.selReg(insn.getDst(0));
-      const GenRegister src = sel.selReg(insn.getSrc(0));
+      const GenRegister dst = sel.selReg(insn.getDst(0), getType(opcode));
+      const GenRegister src = sel.selReg(insn.getSrc(0), getType(opcode));
       switch (opcode) {
         case ir::OP_ABS: sel.MOV(dst, GenRegister::abs(src)); break;
         case ir::OP_MOV:
@@ -1228,6 +1236,8 @@ namespace gbe
         case ir::OP_RNDE: sel.RNDE(dst, src); break;
         case ir::OP_RNDU: sel.RNDU(dst, src); break;
         case ir::OP_RNDZ: sel.RNDZ(dst, src); break;
+        case ir::OP_FBH: sel.FBH(dst, src); break;
+        case ir::OP_FBL: sel.FBL(dst, src); break;
         case ir::OP_COS: sel.MATH(dst, GEN_MATH_FUNCTION_COS, src); break;
         case ir::OP_SIN: sel.MATH(dst, GEN_MATH_FUNCTION_SIN, src); break;
         case ir::OP_LOG: sel.MATH(dst, GEN_MATH_FUNCTION_LOG, src); break;

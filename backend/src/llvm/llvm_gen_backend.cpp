@@ -1678,6 +1678,8 @@ namespace gbe
         regTranslator.newScalarProxy(ir::ocl::goffset2, dst); break;
       case GEN_OCL_GET_WORK_DIM:
         regTranslator.newScalarProxy(ir::ocl::workdim, dst); break;
+      case GEN_OCL_FBH:
+      case GEN_OCL_FBL:
       case GEN_OCL_COS:
       case GEN_OCL_SIN:
       case GEN_OCL_SQR:
@@ -1842,6 +1844,8 @@ namespace gbe
             ctx.POW(ir::TYPE_FLOAT, dst, src0, src1);
             break;
           }
+          case GEN_OCL_FBH: this->emitUnaryCallInst(I,CS,ir::OP_FBH); break;
+          case GEN_OCL_FBL: this->emitUnaryCallInst(I,CS,ir::OP_FBL); break;
           case GEN_OCL_COS: this->emitUnaryCallInst(I,CS,ir::OP_COS); break;
           case GEN_OCL_SIN: this->emitUnaryCallInst(I,CS,ir::OP_SIN); break;
           case GEN_OCL_LOG: this->emitUnaryCallInst(I,CS,ir::OP_LOG); break;

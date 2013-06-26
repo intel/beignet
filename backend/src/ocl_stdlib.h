@@ -4290,7 +4290,71 @@ DEC(16);
 #undef DEC4
 #undef DEC8
 #undef DEC16
+/////////////////////////////////////////////////////////////////////////////
+// Integer built-in functions
+/////////////////////////////////////////////////////////////////////////////
+PURE CONST uint __gen_ocl_fbh(uint);
+PURE CONST uint __gen_ocl_fbl(uint);
 
+INLINE_OVERLOADABLE char clz(char x) {
+  if (x < 0)
+    return 0;
+  if (x == 0)
+    return 8;
+  return __gen_ocl_fbl(x) - 24;
+}
+
+INLINE_OVERLOADABLE uchar clz(uchar x) {
+  if (x == 0)
+    return 8;
+  return __gen_ocl_fbl(x) - 24;
+}
+
+INLINE_OVERLOADABLE short clz(short x) {
+  if (x < 0)
+    return 0;
+  if (x == 0)
+    return 16;
+  return __gen_ocl_fbh(x) - 16;
+}
+
+INLINE_OVERLOADABLE ushort clz(ushort x) {
+  if (x == 0)
+    return 16;
+  return __gen_ocl_fbh(x) - 16;
+}
+
+INLINE_OVERLOADABLE int clz(int x) {
+  if (x < 0)
+    return 0;
+  if (x == 0)
+    return 32;
+  return __gen_ocl_fbh(x);
+}
+
+INLINE_OVERLOADABLE uint clz(uint x) {
+  if (x == 0)
+    return 32;
+  return __gen_ocl_fbh(x);
+}
+
+#define DEC2(type) INLINE_OVERLOADABLE type##2 clz(type##2 a) { return (clz(a.s0), clz(a.s1)); }
+#define DEC3(type) INLINE_OVERLOADABLE type##3 clz(type##3 a) { return (clz(a.s0), clz(a.s1), clz(a.s2)); }
+#define DEC4(type) INLINE_OVERLOADABLE type##4 clz(type##4 a) { return (clz(a.s0), clz(a.s1), clz(a.s2), clz(a.s3)); }
+#define DEC8(type) INLINE_OVERLOADABLE type##8 clz(type##8 a) { return (clz(a.s0), clz(a.s1), clz(a.s2), clz(a.s3), clz(a.s4), clz(a.s5), clz(a.s6), clz(a.s7)); }
+#define DEC16(type) INLINE_OVERLOADABLE type##16 clz(type##16 a) { return (clz(a.s0), clz(a.s1), clz(a.s2), clz(a.s3), clz(a.s4), clz(a.s5), clz(a.s6), clz(a.s7), clz(a.s8), clz(a.s9), clz(a.sa), clz(a.sb), clz(a.sc), clz(a.sd), clz(a.se), clz(a.sf)); }
+#define DEC(n) DEC##n(char); DEC##n(uchar); DEC##n(short); DEC##n(ushort); DEC##n(int); DEC##n(uint) 
+DEC(2)
+DEC(3)
+DEC(4)
+DEC(8)
+DEC(16)
+#undef DEC
+#undef DEC2
+#undef DEC3
+#undef DEC4
+#undef DEC8
+#undef DEC16
 /////////////////////////////////////////////////////////////////////////////
 // Work Items functions (see 6.11.1 of OCL 1.1 spec)
 /////////////////////////////////////////////////////////////////////////////

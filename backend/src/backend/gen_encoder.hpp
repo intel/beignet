@@ -90,6 +90,8 @@ namespace gbe
 #define ALU2(OP) void OP(GenRegister dest, GenRegister src0, GenRegister src1);
 #define ALU3(OP) void OP(GenRegister dest, GenRegister src0, GenRegister src1, GenRegister src2);
     ALU1(MOV)
+    ALU1(FBH)
+    ALU1(FBL)
     ALU1(RNDZ)
     ALU1(RNDE)
     ALU1(RNDD)
