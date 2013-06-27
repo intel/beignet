@@ -73,6 +73,7 @@ set (utests_sources
   compiler_write_only_shorts.cpp
   compiler_switch.cpp
   compiler_math.cpp
+  compiler_atomic_functions.cpp
   compiler_insn_selection_min.cpp
   compiler_insn_selection_max.cpp
   compiler_insn_selection_masked_min_max.cpp
