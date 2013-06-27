@@ -86,6 +86,7 @@ set (utests_sources
   compiler_volatile.cpp
   compiler_copy_image1.cpp
   compiler_get_image_info.cpp
+  compiler_vect_compare.cpp
   compiler_vector_load_store.cpp
   compiler_cl_finish.cpp
   get_cl_info.cpp
