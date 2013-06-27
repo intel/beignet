@@ -372,19 +372,6 @@ error:
   return err;
 }
 
-cl_int
-clSetCommandQueueProperty(cl_command_queue               command_queue,
-                          cl_command_queue_properties    properties,
-                          cl_bool                        enable,
-                          cl_command_queue_properties *  old_properties)
-{
-  cl_int err = CL_SUCCESS;
-  CHECK_QUEUE (command_queue);
-  NOT_IMPLEMENTED;
-error:
-  return err;
-}
-
 cl_mem
 clCreateBuffer(cl_context    context,
                cl_mem_flags  flags,
