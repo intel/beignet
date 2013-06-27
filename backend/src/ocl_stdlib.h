@@ -4355,6 +4355,39 @@ DEC(16)
 #undef DEC4
 #undef DEC8
 #undef DEC16
+
+INLINE_OVERLOADABLE uchar __rotate_left(uchar x, uchar y) { return (x << y) | (x >> (8 - y)); }
+INLINE_OVERLOADABLE char __rotate_left(char x, char y) { return __rotate_left((uchar)x, (uchar)y); }
+INLINE_OVERLOADABLE ushort __rotate_left(ushort x, ushort y) { return (x << y) | (x >> (16 - y)); }
+INLINE_OVERLOADABLE short __rotate_left(short x, short y) { return __rotate_left((ushort)x, (ushort)y); }
+INLINE_OVERLOADABLE uint __rotate_left(uint x, uint y) { return (x << y) | (x >> (32 - y)); }
+INLINE_OVERLOADABLE int __rotate_left(int x, int y) { return __rotate_left((uint)x, (uint)y); }
+#define DEF(type, m) INLINE_OVERLOADABLE type rotate(type x, type y) { return __rotate_left(x, (type)(y & m)); }
+DEF(char, 7)
+DEF(uchar, 7)
+DEF(short, 15)
+DEF(ushort, 15)
+DEF(int, 31)
+DEF(uint, 31)
+#undef DEF
+#define DEC2(type) INLINE_OVERLOADABLE type##2 rotate(type##2 a, type##2 b) { return (rotate(a.s0, b.s0), rotate(a.s1, b.s1)); }
+#define DEC3(type) INLINE_OVERLOADABLE type##3 rotate(type##3 a, type##3 b) { return (rotate(a.s0, b.s0), rotate(a.s1, b.s1), rotate(a.s2, b.s2)); }
+#define DEC4(type) INLINE_OVERLOADABLE type##4 rotate(type##4 a, type##4 b) { return (rotate(a.s0, b.s0), rotate(a.s1, b.s1), rotate(a.s2, b.s2), rotate(a.s3, b.s3)); }
+#define DEC8(type) INLINE_OVERLOADABLE type##8 rotate(type##8 a, type##8 b) { return (rotate(a.s0, b.s0), rotate(a.s1, b.s1), rotate(a.s2, b.s2), rotate(a.s3, b.s3), rotate(a.s4, b.s4), rotate(a.s5, b.s5), rotate(a.s6, b.s6), rotate(a.s7, b.s7)); }
+#define DEC16(type) INLINE_OVERLOADABLE type##16 rotate(type##16 a, type##16 b) { return (rotate(a.s0, b.s0), rotate(a.s1, b.s1), rotate(a.s2, b.s2), rotate(a.s3, b.s3), rotate(a.s4, b.s4), rotate(a.s5, b.s5), rotate(a.s6, b.s6), rotate(a.s7, b.s7), rotate(a.s8, b.s8), rotate(a.s9, b.s9), rotate(a.sa, b.sa), rotate(a.sb, b.sb), rotate(a.sc, b.sc), rotate(a.sd, b.sd), rotate(a.se, b.se), rotate(a.sf, b.sf)); }
+#define DEF(n) DEC##n(char); DEC##n(uchar); DEC##n(short); DEC##n(ushort); DEC##n(int); DEC##n(uint)
+DEF(2)
+DEF(3)
+DEF(4)
+DEF(8)
+DEF(16)
+#undef DEF
+#undef DEC2
+#undef DEC3
+#undef DEC4
+#undef DEC8
+#undef DEC16
+
 /////////////////////////////////////////////////////////////////////////////
 // Work Items functions (see 6.11.1 of OCL 1.1 spec)
 /////////////////////////////////////////////////////////////////////////////
