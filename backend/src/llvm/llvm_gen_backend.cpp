@@ -534,6 +534,8 @@ namespace gbe
 
     // Emit unary instructions from gen native function
     void emitUnaryCallInst(CallInst &I, CallSite &CS, ir::Opcode opcode);
+    // Emit unary instructions from gen native function
+    void emitAtomicInst(CallInst &I, CallSite &CS, ir::AtomicOps opcode);
 
     // These instructions are not supported at all
     void visitVAArgInst(VAArgInst &I) {NOT_SUPPORTED;}
@@ -693,10 +695,12 @@ namespace gbe
           return doIt(uint64_t(0));
         }
       }
+
       // NULL pointers
       if(isa<ConstantPointerNull>(CPV)) {
         return doIt(uint32_t(0));
       }
+
       // Floats and doubles
       const Type::TypeID typeID = CPV->getType()->getTypeID();
       switch (typeID) {
@@ -1697,6 +1701,32 @@ namespace gbe
       case GEN_OCL_GET_IMAGE_CHANNEL_DATA_TYPE:
       case GEN_OCL_GET_IMAGE_CHANNEL_ORDER:
       case GEN_OCL_GET_IMAGE_DEPTH:
+      case GEN_OCL_ATOMIC_ADD0:
+      case GEN_OCL_ATOMIC_ADD1:
+      case GEN_OCL_ATOMIC_SUB0:
+      case GEN_OCL_ATOMIC_SUB1:
+      case GEN_OCL_ATOMIC_AND0:
+      case GEN_OCL_ATOMIC_AND1:
+      case GEN_OCL_ATOMIC_OR0:
+      case GEN_OCL_ATOMIC_OR1:
+      case GEN_OCL_ATOMIC_XOR0:
+      case GEN_OCL_ATOMIC_XOR1:
+      case GEN_OCL_ATOMIC_XCHG0:
+      case GEN_OCL_ATOMIC_XCHG1:
+      case GEN_OCL_ATOMIC_UMAX0:
+      case GEN_OCL_ATOMIC_UMAX1:
+      case GEN_OCL_ATOMIC_UMIN0:
+      case GEN_OCL_ATOMIC_UMIN1:
+      case GEN_OCL_ATOMIC_IMAX0:
+      case GEN_OCL_ATOMIC_IMAX1:
+      case GEN_OCL_ATOMIC_IMIN0:
+      case GEN_OCL_ATOMIC_IMIN1:
+      case GEN_OCL_ATOMIC_INC0:
+      case GEN_OCL_ATOMIC_INC1:
+      case GEN_OCL_ATOMIC_DEC0:
+      case GEN_OCL_ATOMIC_DEC1:
+      case GEN_OCL_ATOMIC_CMPXCHG0:
+      case GEN_OCL_ATOMIC_CMPXCHG1:
         // No structure can be returned
         this->newRegister(&I);
         break;
@@ -1781,6 +1811,26 @@ namespace gbe
     ctx.ALU1(opcode, ir::TYPE_FLOAT, dst, src);
   }
 
+  void GenWriter::emitAtomicInst(CallInst &I, CallSite &CS, ir::AtomicOps opcode) {
+    CallSite::arg_iterator AI = CS.arg_begin();
+#if GBE_DEBUG
+    CallSite::arg_iterator AE = CS.arg_end();
+#endif /* GBE_DEBUG */
+    GBE_ASSERT(AI != AE);
+    unsigned int llvmSpace = (*AI)->getType()->getPointerAddressSpace();
+    const ir::AddressSpace addrSpace = addressSpaceLLVMToGen(llvmSpace);
+    const ir::Register dst = this->getRegister(&I);
+
+    vector<ir::Register> src;
+    uint32_t srcNum = 0;
+    while(AI != AE) {
+      src.push_back(this->getRegister(*(AI++)));
+      srcNum++;
+    }
+    const ir::Tuple srcTuple = ctx.arrayTuple(&src[0], srcNum);
+    ctx.ATOMIC(opcode, dst, addrSpace, srcTuple);
+  }
+
   void GenWriter::emitCallInst(CallInst &I) {
     if (Function *F = I.getCalledFunction()) {
       if (F->getIntrinsicID() != 0) {
@@ -1862,6 +1912,32 @@ namespace gbe
           case GEN_OCL_LBARRIER: ctx.SYNC(ir::syncLocalBarrier); break;
           case GEN_OCL_GBARRIER: ctx.SYNC(ir::syncGlobalBarrier); break;
           case GEN_OCL_LGBARRIER: ctx.SYNC(ir::syncLocalBarrier | ir::syncGlobalBarrier); break;
+          case GEN_OCL_ATOMIC_ADD0:
+          case GEN_OCL_ATOMIC_ADD1: this->emitAtomicInst(I,CS,ir::ATOMIC_OP_ADD); break;
+          case GEN_OCL_ATOMIC_SUB0:
+          case GEN_OCL_ATOMIC_SUB1: this->emitAtomicInst(I,CS,ir::ATOMIC_OP_SUB); break;
+          case GEN_OCL_ATOMIC_AND0:
+          case GEN_OCL_ATOMIC_AND1: this->emitAtomicInst(I,CS,ir::ATOMIC_OP_AND); break;
+          case GEN_OCL_ATOMIC_OR0:
+          case GEN_OCL_ATOMIC_OR1: this->emitAtomicInst(I,CS,ir::ATOMIC_OP_OR); break;
+          case GEN_OCL_ATOMIC_XOR0:
+          case GEN_OCL_ATOMIC_XOR1: this->emitAtomicInst(I,CS,ir::ATOMIC_OP_XOR); break;
+          case GEN_OCL_ATOMIC_XCHG0:
+          case GEN_OCL_ATOMIC_XCHG1: this->emitAtomicInst(I,CS,ir::ATOMIC_OP_XCHG); break;
+          case GEN_OCL_ATOMIC_INC0:
+          case GEN_OCL_ATOMIC_INC1: this->emitAtomicInst(I,CS,ir::ATOMIC_OP_INC); break;
+          case GEN_OCL_ATOMIC_DEC0:
+          case GEN_OCL_ATOMIC_DEC1: this->emitAtomicInst(I,CS,ir::ATOMIC_OP_DEC); break;
+          case GEN_OCL_ATOMIC_UMIN0:
+          case GEN_OCL_ATOMIC_UMIN1: this->emitAtomicInst(I,CS,ir::ATOMIC_OP_UMIN); break;
+          case GEN_OCL_ATOMIC_UMAX0:
+          case GEN_OCL_ATOMIC_UMAX1: this->emitAtomicInst(I,CS,ir::ATOMIC_OP_UMAX); break;
+          case GEN_OCL_ATOMIC_IMIN0:
+          case GEN_OCL_ATOMIC_IMIN1: this->emitAtomicInst(I,CS,ir::ATOMIC_OP_IMIN); break;
+          case GEN_OCL_ATOMIC_IMAX0:
+          case GEN_OCL_ATOMIC_IMAX1: this->emitAtomicInst(I,CS,ir::ATOMIC_OP_IMAX); break;
+          case GEN_OCL_ATOMIC_CMPXCHG0:
+          case GEN_OCL_ATOMIC_CMPXCHG1: this->emitAtomicInst(I,CS,ir::ATOMIC_OP_CMPXCHG); break;
           case GEN_OCL_GET_IMAGE_WIDTH:
           case GEN_OCL_GET_IMAGE_HEIGHT:
           case GEN_OCL_GET_IMAGE_DEPTH:

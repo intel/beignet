@@ -1,4 +1,4 @@
-/* 
+/*
  * Copyright © 2012 Intel Corporation
  *
  * This library is free software; you can redistribute it and/or
@@ -5127,6 +5127,104 @@ INLINE void read_mem_fence(cl_mem_fence_flags flags) {
 }
 INLINE void write_mem_fence(cl_mem_fence_flags flags) {
 }
+
+/////////////////////////////////////////////////////////////////////////////
+// Atomic functions
+/////////////////////////////////////////////////////////////////////////////
+OVERLOADABLE uint __gen_ocl_atomic_add(__global uint *p, uint val);
+OVERLOADABLE uint __gen_ocl_atomic_add(__local uint *p, uint val);
+OVERLOADABLE uint __gen_ocl_atomic_sub(__global uint *p, uint val);
+OVERLOADABLE uint __gen_ocl_atomic_sub(__local uint *p, uint val);
+OVERLOADABLE uint __gen_ocl_atomic_and(__global uint *p, uint val);
+OVERLOADABLE uint __gen_ocl_atomic_and(__local uint *p, uint val);
+OVERLOADABLE uint __gen_ocl_atomic_or(__global uint *p, uint val);
+OVERLOADABLE uint __gen_ocl_atomic_or(__local uint *p, uint val);
+OVERLOADABLE uint __gen_ocl_atomic_xor(__global uint *p, uint val);
+OVERLOADABLE uint __gen_ocl_atomic_xor(__local uint *p, uint val);
+OVERLOADABLE uint __gen_ocl_atomic_xchg(__global uint *p, uint val);
+OVERLOADABLE uint __gen_ocl_atomic_xchg(__local uint *p, uint val);
+OVERLOADABLE uint __gen_ocl_atomic_inc(__global uint *p);
+OVERLOADABLE uint __gen_ocl_atomic_inc(__local uint *p);
+OVERLOADABLE uint __gen_ocl_atomic_dec(__global uint *p);
+OVERLOADABLE uint __gen_ocl_atomic_dec(__local uint *p);
+OVERLOADABLE uint __gen_ocl_atomic_cmpxchg(__global uint *p, uint cmp, uint val);
+OVERLOADABLE uint __gen_ocl_atomic_cmpxchg(__local uint *p, uint cmp, uint val);
+OVERLOADABLE uint __gen_ocl_atomic_imin(__global uint *p, uint val);
+OVERLOADABLE uint __gen_ocl_atomic_imin(__local uint *p, uint val);
+OVERLOADABLE uint __gen_ocl_atomic_imax(__global uint *p, uint val);
+OVERLOADABLE uint __gen_ocl_atomic_imax(__local uint *p, uint val);
+OVERLOADABLE uint __gen_ocl_atomic_umin(__global uint *p, uint val);
+OVERLOADABLE uint __gen_ocl_atomic_umin(__local uint *p, uint val);
+OVERLOADABLE uint __gen_ocl_atomic_umax(__global uint *p, uint val);
+OVERLOADABLE uint __gen_ocl_atomic_umax(__local uint *p, uint val);
+
+#define DECL_ATOMIC_OP_SPACE(NAME, TYPE, SPACE, PREFIX)                        \
+  INLINE_OVERLOADABLE TYPE atomic_##NAME (volatile SPACE TYPE *p, TYPE val) { \
+    return (TYPE)__gen_ocl_##PREFIX##NAME((SPACE uint *)p, val);            \
+  }
+
+#define DECL_ATOMIC_OP_TYPE(NAME, TYPE, PREFIX) \
+  DECL_ATOMIC_OP_SPACE(NAME, TYPE, __global, PREFIX) \
+  DECL_ATOMIC_OP_SPACE(NAME, TYPE, __local, PREFIX) \
+
+#define DECL_ATOMIC_OP(NAME) \
+  DECL_ATOMIC_OP_TYPE(NAME, uint, atomic_)              \
+  DECL_ATOMIC_OP_TYPE(NAME, int, atomic_)
+
+DECL_ATOMIC_OP(add)
+DECL_ATOMIC_OP(sub)
+DECL_ATOMIC_OP(and)
+DECL_ATOMIC_OP(or)
+DECL_ATOMIC_OP(xor)
+DECL_ATOMIC_OP(xchg)
+DECL_ATOMIC_OP_TYPE(xchg, float, atomic_)
+DECL_ATOMIC_OP_TYPE(min, int, atomic_i)
+DECL_ATOMIC_OP_TYPE(max, int, atomic_i)
+DECL_ATOMIC_OP_TYPE(min, uint, atomic_u)
+DECL_ATOMIC_OP_TYPE(max, uint, atomic_u)
+
+#undef DECL_ATOMIC_OP
+#undef DECL_ATOMIC_OP_TYPE
+#undef DECL_ATOMIC_OP_SPACE
+
+#define DECL_ATOMIC_OP_SPACE(NAME, TYPE, SPACE) \
+  INLINE_OVERLOADABLE TYPE atomic_##NAME (volatile SPACE TYPE *p) { \
+    return (TYPE)__gen_ocl_atomic_##NAME((SPACE uint *)p); \
+  }
+
+#define DECL_ATOMIC_OP_TYPE(NAME, TYPE) \
+  DECL_ATOMIC_OP_SPACE(NAME, TYPE, __global) \
+  DECL_ATOMIC_OP_SPACE(NAME, TYPE, __local)
+
+#define DECL_ATOMIC_OP(NAME) \
+  DECL_ATOMIC_OP_TYPE(NAME, uint) \
+  DECL_ATOMIC_OP_TYPE(NAME, int)
+
+DECL_ATOMIC_OP(inc)
+DECL_ATOMIC_OP(dec)
+
+#undef DECL_ATOMIC_OP
+#undef DECL_ATOMIC_OP_TYPE
+#undef DECL_ATOMIC_OP_SPACE
+
+#define DECL_ATOMIC_OP_SPACE(NAME, TYPE, SPACE)  \
+  INLINE_OVERLOADABLE TYPE atomic_##NAME (volatile SPACE TYPE *p, TYPE cmp, TYPE val) { \
+    return (TYPE)__gen_ocl_atomic_##NAME((SPACE uint *)p, (uint)cmp, (uint)val); \
+  }
+
+#define DECL_ATOMIC_OP_TYPE(NAME, TYPE) \
+  DECL_ATOMIC_OP_SPACE(NAME, TYPE, __global) \
+  DECL_ATOMIC_OP_SPACE(NAME, TYPE, __local)
+
+#define DECL_ATOMIC_OP(NAME) \
+  DECL_ATOMIC_OP_TYPE(NAME, uint) \
+  DECL_ATOMIC_OP_TYPE(NAME, int)
+
+DECL_ATOMIC_OP(cmpxchg)
+
+#undef DECL_ATOMIC_OP
+#undef DECL_ATOMIC_OP_TYPE
+#undef DECL_ATOMIC_OP_SPACE
 
 /////////////////////////////////////////////////////////////////////////////
 // Force the compilation to SIMD8 or SIMD16
