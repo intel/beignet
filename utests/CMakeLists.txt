@@ -54,6 +54,7 @@ set (utests_sources
   compiler_lower_return1.cpp
   compiler_lower_return2.cpp
   compiler_multiple_kernels.cpp
+  compiler_rotate.cpp
   compiler_saturate.cpp
   compiler_saturate_sub.cpp
   compiler_shift_right.cpp
