@@ -136,6 +136,8 @@ namespace gbe
     void NOP(void);
     /*! Wait instruction (used for the barrier) */
     void WAIT(void);
+    /*! Atomic instructions */
+    void ATOMIC(GenRegister dst, uint32_t function, GenRegister src, uint32_t bti, uint32_t srcNum);
     /*! Read 64-bits float arrays */
     void READ_FLOAT64(GenRegister dst, GenRegister src, uint32_t bti, uint32_t elemNum);
     /*! Write 64-bits float arrays */

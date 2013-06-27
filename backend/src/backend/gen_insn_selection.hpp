@@ -92,9 +92,9 @@ namespace gbe
     GenInstructionState state;
     union {
       struct {
-        /*! Store bti for loads/stores and function for math and compares */
+        /*! Store bti for loads/stores and function for math, atomic and compares */
         uint16_t function:8;
-        /*! elemSize for byte scatters / gathers, elemNum for untyped msg */
+        /*! elemSize for byte scatters / gathers, elemNum for untyped msg, bti for atomic */
         uint16_t elem:8;
       };
       struct {

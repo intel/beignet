@@ -21,4 +21,4 @@ DECL_GEN7_SCHEDULE(ByteScatter,     80,        1,        1)
 DECL_GEN7_SCHEDULE(Sample,          80,        1,        1)
 DECL_GEN7_SCHEDULE(TypedWrite,      80,        1,        1)
 DECL_GEN7_SCHEDULE(GetImageInfo,    20,        4,        2)
-
+DECL_GEN7_SCHEDULE(Atomic,          80,        1,        1)

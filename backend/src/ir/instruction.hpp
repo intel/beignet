@@ -1,4 +1,4 @@
-/* 
+/*
  * Copyright © 2012 Intel Corporation
  *
  * This library is free software; you can redistribute it and/or
@@ -51,6 +51,23 @@ namespace ir {
     MEM_PRIVATE,    //!< Per thread private memory
     IMAGE,          //!< For texture image.
     MEM_INVALID
+  };
+
+  enum AtomicOps {
+    ATOMIC_OP_AND       = 1,
+    ATOMIC_OP_OR        = 2,
+    ATOMIC_OP_XOR       = 3,
+    ATOMIC_OP_XCHG      = 4,
+    ATOMIC_OP_INC       = 5,
+    ATOMIC_OP_DEC       = 6,
+    ATOMIC_OP_ADD       = 7,
+    ATOMIC_OP_SUB       = 8,
+    ATOMIC_OP_IMAX      = 10,
+    ATOMIC_OP_IMIN      = 11,
+    ATOMIC_OP_UMAX      = 12,
+    ATOMIC_OP_UMIN      = 13,
+    ATOMIC_OP_CMPXCHG   = 14,
+    ATOMIC_OP_INVALID
   };
 
   /* Vote function per hardware thread */
@@ -224,6 +241,21 @@ namespace ir {
     Type getSrcType(void) const;
     /*! Get the type of the destination */
     Type getDstType(void) const;
+    /*! Return true if the given instruction is an instance of this class */
+    static bool isClassOf(const Instruction &insn);
+  };
+
+  /*! Atomic instruction */
+  class AtomicInstruction : public Instruction {
+  public:
+    /*! Where the address register goes */
+    static const uint32_t addressIndex = 0;
+    /*! Address space that is manipulated here */
+    AddressSpace getAddressSpace(void) const;
+    /*! Return the atomic function code */
+    AtomicOps getAtomicOpcode(void) const;
+    /*! Return the register that contains the addresses */
+    INLINE Register getAddress(void) const { return this->getSrc(addressIndex); }
     /*! Return true if the given instruction is an instance of this class */
     static bool isClassOf(const Instruction &insn);
   };
@@ -555,6 +587,8 @@ namespace ir {
   Instruction GT(Type type, Register dst, Register src0, Register src1);
   /*! cvt.{dstType <- srcType} dst src */
   Instruction CVT(Type dstType, Type srcType, Register dst, Register src);
+  /*! atomic dst addr.space {src1 {src2}} */
+  Instruction ATOMIC(AtomicOps opcode, Register dst, AddressSpace space, Tuple src);
   /*! bra labelIndex */
   Instruction BRA(LabelIndex labelIndex);
   /*! (pred) bra labelIndex */

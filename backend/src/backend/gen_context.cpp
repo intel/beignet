@@ -226,6 +226,15 @@ namespace gbe
     }
   }
 
+  void GenContext::emitAtomicInstruction(const SelectionInstruction &insn) {
+    const GenRegister src = ra->genReg(insn.src(0));
+    const GenRegister dst = ra->genReg(insn.dst(0));
+    const uint32_t function = insn.extra.function;
+    const uint32_t bti = insn.extra.elem;
+
+    p->ATOMIC(dst, function, src, bti, insn.srcNum);
+  }
+
   void GenContext::emitIndirectMoveInstruction(const SelectionInstruction &insn) {
     GenRegister src = ra->genReg(insn.src(0));
     if(isScalarReg(src.reg()))

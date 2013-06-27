@@ -1,4 +1,4 @@
-/* 
+/*
  * Copyright © 2012 Intel Corporation
  *
  * This library is free software; you can redistribute it and/or
@@ -21,7 +21,7 @@
  Copyright (C) Intel Corp.  2006.  All Rights Reserved.
  Intel funded Tungsten Graphics (http://www.tungstengraphics.com) to
  develop this 3D driver.
- 
+
  Permission is hereby granted, free of charge, to any person obtaining
  a copy of this software and associated documentation files (the
  "Software"), to deal in the Software without restriction, including
@@ -29,11 +29,11 @@
  distribute, sublicense, and/or sell copies of the Software, and to
  permit persons to whom the Software is furnished to do so, subject to
  the following conditions:
- 
+
  The above copyright notice and this permission notice (including the
  next paragraph) shall be included in all copies or substantial
  portions of the Software.
- 
+
  THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,
  EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
  MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.
@@ -41,7 +41,7 @@
  LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION
  OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION
  WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
- 
+
  **********************************************************************/
  /*
   * Authors:
@@ -167,6 +167,28 @@ enum opcode {
   GEN_OPCODE_PLN = 90,
   GEN_OPCODE_MAD = 91,
   GEN_OPCODE_NOP = 126,
+};
+
+#define GEN_ATOMIC_SIMD16   0
+#define GEN_ATOMIC_SIMD8    1
+
+enum GenAtomicOpCode {
+  GEN_ATOMIC_OP_CMPWR8B   = 0,
+  GEN_ATOMIC_OP_AND       = 1,
+  GEN_ATOMIC_OP_OR        = 2,
+  GEN_ATOMIC_OP_XOR       = 3,
+  GEN_ATOMIC_OP_MOV       = 4,
+  GEN_ATOMIC_OP_INC       = 5,
+  GEN_ATOMIC_OP_DEC       = 6,
+  GEN_ATOMIC_OP_ADD       = 7,
+  GEN_ATOMIC_OP_SUB       = 8,
+  GEN_ATOMIC_OP_REVSUB    = 9,
+  GEN_ATOMIC_OP_IMAX      = 10,
+  GEN_ATOMIC_OP_IMIN      = 11,
+  GEN_ATOMIC_OP_UMAX      = 12,
+  GEN_ATOMIC_OP_UMIN      = 13,
+  GEN_ATOMIC_OP_CMPWR     = 14,
+  GEN_ATOMIC_OP_PREDEC    = 15
 };
 
 /*! Gen SFID */
@@ -772,7 +794,7 @@ struct GenInstruction
     /*! Memory fence */
     struct {
       uint32_t bti:8;
-      uint32_t ingored:5;
+      uint32_t pad:5;
       uint32_t commit_enable:1;
       uint32_t msg_type:4;
       uint32_t pad2:1;
@@ -782,6 +804,21 @@ struct GenInstruction
       uint32_t pad3:2;
       uint32_t end_of_thread:1;
     } gen7_memory_fence;
+
+    /*! atomic messages */
+    struct {
+      uint32_t bti:8;
+      uint32_t aop_type:4;
+      uint32_t simd_mode:1;
+      uint32_t return_data:1;
+      uint32_t msg_type:4;
+      uint32_t category:1;
+      uint32_t header_present:1;
+      uint32_t response_length:5;
+      uint32_t msg_length:4;
+      uint32_t pad3:2;
+      uint32_t end_of_thread:1;
+    } gen7_atomic_op;
 
     struct {
       uint32_t src1_subreg_nr_high:1;

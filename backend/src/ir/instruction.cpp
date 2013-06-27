@@ -1,4 +1,4 @@
-/* 
+/*
  * Copyright © 2012 Intel Corporation
  *
  * This library is free software; you can redistribute it and/or
@@ -56,7 +56,7 @@ namespace ir {
     };
 
     /*! For regular n source instructions */
-    template <typename T, uint32_t srcNum> 
+    template <typename T, uint32_t srcNum>
     struct NSrcPolicy {
       INLINE uint32_t getSrcNum(void) const { return srcNum; }
       INLINE Register getSrc(const Function &fn, uint32_t ID) const {
@@ -244,6 +244,40 @@ namespace ir {
       Register src[1];
       Type dstType; //!< Type to convert to
       Type srcType; //!< Type to convert from
+    };
+
+    class ALIGNED_INSTRUCTION AtomicInstruction :
+      public BasePolicy,
+      public TupleSrcPolicy<AtomicInstruction>,
+      public NDstPolicy<AtomicInstruction, 1>
+    {
+    public:
+      AtomicInstruction(AtomicOps atomicOp,
+                         Register dst,
+                         AddressSpace addrSpace,
+                         Tuple src)
+      {
+        this->opcode = OP_ATOMIC;
+        this->atomicOp = atomicOp;
+        this->dst[0] = dst;
+        this->src = src;
+        this->addrSpace = addrSpace;
+        srcNum = 2;
+        if((atomicOp == ATOMIC_OP_INC) ||
+          (atomicOp == ATOMIC_OP_DEC))
+          srcNum = 1;
+        if(atomicOp == ATOMIC_OP_CMPXCHG)
+          srcNum = 3;
+      }
+      INLINE AddressSpace getAddressSpace(void) const { return this->addrSpace; }
+      INLINE AtomicOps getAtomicOpcode(void) const { return this->atomicOp; }
+      INLINE bool wellFormed(const Function &fn, std::string &whyNot) const;
+      INLINE void out(std::ostream &out, const Function &fn) const;
+      Register dst[1];
+      Tuple src;
+      AddressSpace addrSpace; //!< Address space
+      uint8_t srcNum:2;     //!<Source Number
+      AtomicOps atomicOp:6;     //!<Source Number
     };
 
     class ALIGNED_INSTRUCTION BranchInstruction :
@@ -738,6 +772,20 @@ namespace ir {
       return true;
     }
 
+    // We can convert anything to anything, but types and families must match
+    INLINE bool AtomicInstruction::wellFormed(const Function &fn, std::string &whyNot) const
+    {
+      if (UNLIKELY(checkSpecialRegForWrite(dst[0], fn, whyNot) == false))
+        return false;
+      if (UNLIKELY(checkRegisterData(FAMILY_DWORD, dst[0], fn, whyNot) == false))
+        return false;
+      for (uint32_t srcID = 0; srcID < srcNum; ++srcID)
+        if (UNLIKELY(checkRegisterData(FAMILY_DWORD, getSrc(fn, srcID), fn, whyNot) == false))
+          return false;
+
+      return true;
+    }
+
     /*! Loads and stores follow the same restrictions */
     template <typename T>
     INLINE bool wellFormedLoadStore(const T &insn, const Function &fn, std::string &whyNot)
@@ -883,6 +931,15 @@ namespace ir {
       ternaryOrSelectOut(*this, out, fn);
     }
 
+    INLINE void AtomicInstruction::out(std::ostream &out, const Function &fn) const {
+      this->outOpcode(out);
+      out << "." << addrSpace;
+      out << " %" << this->getDst(fn, 0);
+      out << " {" << "%" << this->getSrc(fn, 0) << "}";
+      for (uint32_t i = 1; i < srcNum; ++i)
+        out << " %" << this->getSrc(fn, i);
+    }
+
     INLINE void ConvertInstruction::out(std::ostream &out, const Function &fn) const {
       this->outOpcode(out);
       out << "." << this->getDstType()
@@ -1008,6 +1065,10 @@ END_INTROSPECTION(CompareInstruction)
 START_INTROSPECTION(ConvertInstruction)
 #include "ir/instruction.hxx"
 END_INTROSPECTION(ConvertInstruction)
+
+START_INTROSPECTION(AtomicInstruction)
+#include "ir/instruction.hxx"
+END_INTROSPECTION(AtomicInstruction)
 
 START_INTROSPECTION(SelectInstruction)
 #include "ir/instruction.hxx"
@@ -1180,9 +1241,10 @@ END_FUNCTION(Instruction, Register)
   }
 
   bool Instruction::hasSideEffect(void) const {
-    return opcode == OP_STORE || 
+    return opcode == OP_STORE ||
            opcode == OP_TYPED_WRITE ||
-           opcode == OP_SYNC;
+           opcode == OP_SYNC ||
+           opcode == OP_ATOMIC;
   }
 
 #define DECL_MEM_FN(CLASS, RET, PROTOTYPE, CALL) \
@@ -1197,6 +1259,8 @@ DECL_MEM_FN(SelectInstruction, Type, getType(void), getType())
 DECL_MEM_FN(CompareInstruction, Type, getType(void), getType())
 DECL_MEM_FN(ConvertInstruction, Type, getSrcType(void), getSrcType())
 DECL_MEM_FN(ConvertInstruction, Type, getDstType(void), getDstType())
+DECL_MEM_FN(AtomicInstruction, AddressSpace, getAddressSpace(void), getAddressSpace())
+DECL_MEM_FN(AtomicInstruction, AtomicOps, getAtomicOpcode(void), getAtomicOpcode())
 DECL_MEM_FN(StoreInstruction, Type, getValueType(void), getValueType())
 DECL_MEM_FN(StoreInstruction, uint32_t, getValueNum(void), getValueNum())
 DECL_MEM_FN(StoreInstruction, AddressSpace, getAddressSpace(void), getAddressSpace())
@@ -1302,6 +1366,11 @@ DECL_MEM_FN(GetImageInfoInstruction, uint32_t, getInfoType(void), getInfoType())
   // CVT
   Instruction CVT(Type dstType, Type srcType, Register dst, Register src) {
     return internal::ConvertInstruction(dstType, srcType, dst, src).convert();
+  }
+
+  // For all unary functions with given opcode
+  Instruction ATOMIC(AtomicOps atomicOp, Register dst, AddressSpace space, Tuple src) {
+    return internal::AtomicInstruction(atomicOp, dst, space, src).convert();
   }
 
   // BRA

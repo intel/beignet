@@ -168,12 +168,14 @@ namespace gbe
   bool SelectionInstruction::isRead(void) const {
     return this->opcode == SEL_OP_UNTYPED_READ ||
            this->opcode == SEL_OP_READ_FLOAT64 ||
+           this->opcode == SEL_OP_ATOMIC       ||
            this->opcode == SEL_OP_BYTE_GATHER;
   }
 
   bool SelectionInstruction::isWrite(void) const {
     return this->opcode == SEL_OP_UNTYPED_WRITE ||
            this->opcode == SEL_OP_WRITE_FLOAT64 ||
+           this->opcode == SEL_OP_ATOMIC        ||
            this->opcode == SEL_OP_BYTE_SCATTER;
   }
 
@@ -456,6 +458,8 @@ namespace gbe
     void NOP(void);
     /*! Wait instruction (used for the barrier) */
     void WAIT(void);
+    /*! Atomic instruction */
+    void ATOMIC(Reg dst, uint32_t function, uint32_t srcNum, Reg src0, Reg src1, Reg src2, uint32_t bti);
     /*! Read 64 bits float array */
     void READ_FLOAT64(Reg addr, const GenRegister *dst, uint32_t elemNum, uint32_t bti);
     /*! Write 64 bits float array */
@@ -728,6 +732,23 @@ namespace gbe
     SelectionInstruction *insn = this->appendInsn(SEL_OP_INDIRECT_MOVE, 1, 1);
     insn->dst(0) = dst;
     insn->src(0) = src;
+  }
+
+  void Selection::Opaque::ATOMIC(Reg dst, uint32_t function,
+                                     uint32_t srcNum, Reg src0,
+                                     Reg src1, Reg src2, uint32_t bti) {
+    SelectionInstruction *insn = this->appendInsn(SEL_OP_ATOMIC, 1, srcNum);
+    insn->dst(0) = dst;
+    insn->src(0) = src0;
+    if(srcNum > 1) insn->src(1) = src1;
+    if(srcNum > 2) insn->src(2) = src2;
+    insn->extra.function = function;
+    insn->extra.elem     = bti;
+    SelectionVector *vector = this->appendVector();
+
+    vector->regNum = srcNum;
+    vector->reg = &insn->src(0);
+    vector->isSrc = 1;
   }
 
   void Selection::Opaque::EOT(void) { this->appendInsn(SEL_OP_EOT, 0, 0); }
@@ -2064,6 +2085,28 @@ namespace gbe
     DECL_CTOR(ConvertInstruction, 1, 1);
   };
 
+  /*! Convert instruction pattern */
+  DECL_PATTERN(AtomicInstruction)
+  {
+    INLINE bool emitOne(Selection::Opaque &sel, const ir::AtomicInstruction &insn) const
+    {
+      using namespace ir;
+      const AtomicOps atomicOp = insn.getAtomicOpcode();
+      const AddressSpace space = insn.getAddressSpace();
+      const uint32_t bti = space == MEM_LOCAL ? 0xfe : 0x01;
+      const uint32_t srcNum = insn.getSrcNum();
+      const GenRegister src0 = sel.selReg(insn.getSrc(0), TYPE_U32);   //address
+      GenRegister src1 = src0, src2 = src0;
+      if(srcNum > 1) src1 = sel.selReg(insn.getSrc(1), TYPE_U32);
+      if(srcNum > 2) src2 = sel.selReg(insn.getSrc(2), TYPE_U32);
+      GenRegister dst  = sel.selReg(insn.getDst(0), TYPE_U32);
+      GenAtomicOpCode genAtomicOp = (GenAtomicOpCode)atomicOp;
+      sel.ATOMIC(dst, genAtomicOp, srcNum, src0, src1, src2, bti);
+      return true;
+    }
+    DECL_CTOR(AtomicInstruction, 1, 1);
+  };
+
   /*! Select instruction pattern */
   class SelectInstructionPattern : public SelectionPattern
   {
@@ -2410,6 +2453,7 @@ namespace gbe
     this->insert<SelectInstructionPattern>();
     this->insert<CompareInstructionPattern>();
     this->insert<ConvertInstructionPattern>();
+    this->insert<AtomicInstructionPattern>();
     this->insert<LabelInstructionPattern>();
     this->insert<BranchInstructionPattern>();
     this->insert<Int32x32MulInstructionPattern>();

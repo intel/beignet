@@ -558,6 +558,41 @@ namespace gbe
                            response_length);
   }
 
+  void GenEncoder::ATOMIC(GenRegister dst, uint32_t function, GenRegister src, uint32_t bti, uint32_t srcNum) {
+    GenInstruction *insn = this->next(GEN_OPCODE_SEND);
+    uint32_t msg_length = 0;
+    uint32_t response_length = 0;
+
+    if (this->curr.execWidth == 8) {
+      msg_length = srcNum;
+      response_length = 1;
+    } else if (this->curr.execWidth == 16) {
+      msg_length = 2*srcNum;
+      response_length = 2;
+    } else
+      NOT_IMPLEMENTED;
+
+    this->setHeader(insn);
+    this->setDst(insn, GenRegister::uw16grf(dst.nr, 0));
+    this->setSrc0(insn, GenRegister::ud8grf(src.nr, 0));
+    this->setSrc1(insn, GenRegister::immud(0));
+
+    const GenMessageTarget sfid = GEN_SFID_DATAPORT_DATA_CACHE;
+    setMessageDescriptor(this, insn, sfid, msg_length, response_length);
+    insn->bits3.gen7_atomic_op.msg_type = GEN_UNTYPED_ATOMIC_READ;
+    insn->bits3.gen7_atomic_op.bti = bti;
+    insn->bits3.gen7_atomic_op.return_data = 1;
+    insn->bits3.gen7_atomic_op.aop_type = function;
+
+    if (this->curr.execWidth == 8)
+      insn->bits3.gen7_atomic_op.simd_mode = GEN_ATOMIC_SIMD8;
+    else if (this->curr.execWidth == 16)
+      insn->bits3.gen7_atomic_op.simd_mode = GEN_ATOMIC_SIMD16;
+    else
+      NOT_SUPPORTED;
+
+  }
+
   GenInstruction *GenEncoder::next(uint32_t opcode) {
      GenInstruction insn;
      std::memset(&insn, 0, sizeof(GenInstruction));
