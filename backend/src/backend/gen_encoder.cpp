@@ -1048,6 +1048,7 @@ namespace gbe
      if (function == GEN_MATH_FUNCTION_INT_DIV_QUOTIENT ||
          function == GEN_MATH_FUNCTION_INT_DIV_REMAINDER) {
         insn->header.execution_size = GEN_WIDTH_8;
+        insn->header.quarter_control = GEN_COMPRESSION_Q1;
 
         if(this->curr.execWidth == 16) {
           GenInstruction *insn2 = this->next(GEN_OPCODE_MATH);
@@ -1058,6 +1059,7 @@ namespace gbe
           insn2->header.destreg_or_condmod = function;
           this->setHeader(insn2);
           insn2->header.execution_size = GEN_WIDTH_8;
+          insn2->header.quarter_control = GEN_COMPRESSION_Q2;
           this->setDst(insn2, new_dest);
           this->setSrc0(insn2, new_src0);
           this->setSrc1(insn2, new_src1);

@@ -7,8 +7,8 @@ __kernel void compiler_atomic_functions(__global int *dst, __local int *tmp, __g
     case 1: atomic_dec(&tmp[i]); break;
     case 2: atomic_add(&tmp[i], src[lid]); break;
     case 3: atomic_sub(&tmp[i], src[lid]); break;
-    case 4: atomic_and(&tmp[i], ~(src[lid]<<(lid>>2))); break;
-    case 5: atomic_or (&tmp[i], src[lid]<<(lid>>2)); break;
+    case 4: atomic_and(&tmp[i], ~(src[lid]<<(lid / 4))); break;
+    case 5: atomic_or (&tmp[i], src[lid]<<(lid / 4)); break;
     case 6: atomic_xor(&tmp[i], src[lid]); break;
     case 7: atomic_min(&tmp[i], -src[lid]); break;
     case 8: atomic_max(&tmp[i], src[lid]); break;
@@ -23,8 +23,8 @@ __kernel void compiler_atomic_functions(__global int *dst, __local int *tmp, __g
     case 1: atomic_dec(&dst[i]); break;
     case 2: atomic_add(&dst[i], src[lid]); break;
     case 3: atomic_sub(&dst[i], src[lid]); break;
-    case 4: atomic_and(&dst[i], ~(src[lid]<<(lid>>2))); break;
-    case 5: atomic_or (&dst[i], src[lid]<<(lid>>2)); break;
+    case 4: atomic_and(&dst[i], ~(src[lid]<<(lid / 4))); break;
+    case 5: atomic_or (&dst[i], src[lid]<<(lid / 4)); break;
     case 6: atomic_xor(&dst[i], src[lid]); break;
     case 7: atomic_min(&dst[i], -src[lid]); break;
     case 8: atomic_max(&dst[i], src[lid]); break;
