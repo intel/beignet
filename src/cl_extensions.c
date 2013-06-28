@@ -26,8 +26,6 @@ void check_basic_extension(cl_extensions_t *extensions)
 {
   int id;
   for(id = BASE_EXT_START_ID; id <= BASE_EXT_END_ID; id++)
-    //It seems we only support this mandatory extension.
-    if (id == EXT_ID(khr_byte_addressable_store))
       extensions->extensions[id].base.ext_enabled = 1;
 }
 
