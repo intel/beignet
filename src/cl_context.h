@@ -68,6 +68,8 @@ struct _cl_context {
   pthread_mutex_t sampler_lock;     /* To allocate and deallocate samplers */
   uint32_t ver;                     /* Gen version */
   struct _cl_context_prop props;
+  cl_context_properties * prop_user; /* a copy of user passed context properties when create context */
+  cl_uint                 prop_len;  /* count of the properties */
 };
 
 /* Implement OpenCL function */

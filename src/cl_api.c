@@ -279,25 +279,30 @@ clGetContextInfo(cl_context      context,
                  void *          param_value,
                  size_t *        param_value_size_ret)
 {
-  switch (param_name) {
-    case CL_CONTEXT_DEVICES:
-      if (param_value) {
-        if (param_value_size < sizeof(cl_device_id))
-          return CL_INVALID_VALUE;
-          cl_device_id *device_list = (cl_device_id*)param_value;
-          device_list[0] = context->device;
-          if (param_value_size_ret)
-            *param_value_size_ret = sizeof(cl_device_id);
-          return CL_SUCCESS;
-        }
-        if (param_value_size_ret) {
-          *param_value_size_ret = sizeof(cl_device_id);
-          return CL_SUCCESS;
-        }
-    default:
-      NOT_IMPLEMENTED;
+  cl_int err = CL_SUCCESS;
+  CHECK_CONTEXT (context);
+
+  if (param_name == CL_CONTEXT_DEVICES) {
+    FILL_GETINFO_RET (cl_device_id, 1, &context->device, CL_SUCCESS);
+  } else if (param_name == CL_CONTEXT_NUM_DEVICES) {
+    cl_uint n = 1;
+    FILL_GETINFO_RET (cl_uint, 1, &n, CL_SUCCESS);
+  } else if (param_name == CL_CONTEXT_REFERENCE_COUNT) {
+    cl_uint ref = context->ref_n;
+    FILL_GETINFO_RET (cl_uint, 1, &ref, CL_SUCCESS);
+  } else if (param_name == CL_CONTEXT_PROPERTIES) {
+    if(context->prop_len > 0) {
+      FILL_GETINFO_RET (cl_context_properties, context->prop_len, context->prop_user, CL_SUCCESS);
+    } else {
+      cl_context_properties n = 0;
+      FILL_GETINFO_RET (cl_context_properties, 1, &n, CL_SUCCESS);
+    }
+  } else {
+    return CL_INVALID_VALUE;
   }
-  return 0;
+
+error:
+  return err;
 }
 
 cl_command_queue

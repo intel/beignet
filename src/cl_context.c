@@ -34,10 +34,11 @@
 #include <stdlib.h>
 #include <stdint.h>
 #include <assert.h>
+#include <string.h>
 
 static cl_int
 cl_context_properties_process(const cl_context_properties *prop,
-                              struct _cl_context_prop *cl_props)
+                              struct _cl_context_prop *cl_props, cl_uint * prop_len)
 {
   cl_int err = CL_SUCCESS;
 
@@ -81,6 +82,7 @@ cl_context_properties_process(const cl_context_properties *prop,
       goto error;
     }
     prop += 2;
+    *prop_len += 2;
   }
 exit:
 error:
@@ -101,13 +103,13 @@ cl_create_context(const cl_context_properties *  properties,
   struct _cl_context_prop props;
   cl_context ctx = NULL;
   cl_int err = CL_SUCCESS;
-
+  cl_uint prop_len = 0;
   /* XXX */
   FATAL_IF (pfn_notify != NULL || user_data != NULL, "Unsupported call back");
   FATAL_IF (num_devices != 1, "Only one device is supported");
 
   /* Check that we are getting the right platform */
-  if (UNLIKELY(((err = cl_context_properties_process(properties, &props)) != CL_SUCCESS)))
+  if (UNLIKELY(((err = cl_context_properties_process(properties, &props, &prop_len)) != CL_SUCCESS)))
     goto error;
 
   /* We are good */
@@ -116,6 +118,11 @@ cl_create_context(const cl_context_properties *  properties,
     goto error;
   }
 
+  if(properties != NULL && prop_len > 0) {
+    TRY_ALLOC (ctx->prop_user, CALLOC_ARRAY(cl_context_properties, prop_len));
+    memcpy(ctx->prop_user, properties, sizeof(cl_context_properties)*prop_len);
+  }
+  ctx->prop_len = prop_len;
   /* Attach the device to the context */
   ctx->device = *devices;
 
@@ -171,6 +178,7 @@ cl_context_delete(cl_context ctx)
   assert(ctx->programs == NULL);
   assert(ctx->buffers == NULL);
   assert(ctx->drv);
+  cl_free(ctx->prop_user);
   cl_driver_delete(ctx->drv);
   ctx->magic = CL_MAGIC_DEAD_HEADER; /* For safety */
   cl_free(ctx);
