@@ -919,8 +919,29 @@ clGetKernelInfo(cl_kernel        kernel,
                 void *           param_value,
                 size_t *         param_value_size_ret)
 {
-  NOT_IMPLEMENTED;
-  return 0;
+  cl_int err;
+
+  CHECK_KERNEL(kernel);
+
+  if (param_name == CL_KERNEL_CONTEXT) {
+    FILL_GETINFO_RET (cl_context, 1, &kernel->program->ctx, CL_SUCCESS);
+  } else if (param_name == CL_KERNEL_PROGRAM) {
+    FILL_GETINFO_RET (cl_program, 1, &kernel->program, CL_SUCCESS);
+  } else if (param_name == CL_KERNEL_NUM_ARGS) {
+    cl_uint n = kernel->arg_n;
+    FILL_GETINFO_RET (cl_uint, 1, &n, CL_SUCCESS);
+  } else if (param_name == CL_KERNEL_REFERENCE_COUNT) {
+    cl_int ref = kernel->ref_n;
+    FILL_GETINFO_RET (cl_int, 1, &ref, CL_SUCCESS);
+  } else if (param_name == CL_KERNEL_FUNCTION_NAME) {
+    const char * n = cl_kernel_get_name(kernel);
+    FILL_GETINFO_RET (cl_char, strlen(n)+1, n, CL_SUCCESS);
+  } else {
+    return CL_INVALID_VALUE;
+  }
+
+error:
+  return err;
 }
 
 cl_int
