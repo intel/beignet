@@ -44,7 +44,7 @@ struct Info_Result<char *> {
     int size;
     typedef char* type_value;
 
-    Info_Result(char *other, int sz) {
+    Info_Result(const char *other, int sz): refer(NULL) {
         size = sz;
         ret = (char *)malloc(sizeof(char) * sz);
         if (other) {
@@ -362,3 +362,133 @@ void get_program_build_info(void)
 }
 
 MAKE_UTEST_FROM_FUNCTION(get_program_build_info);
+
+/* ***************************************************** *
+ * clGetContextInfo                                      *
+ * ***************************************************** */
+#define CALL_CONTEXTINFO_AND_RET(TYPE) CALL_INFO_AND_RET(TYPE, clGetContextInfo, ctx)
+
+void get_context_info(void)
+{
+    /* use the compiler_fabs case to test us. */
+    const size_t n = 16;
+    map<cl_context_info, void *> maps;
+    int expect_ref;
+
+    OCL_CREATE_BUFFER(buf[0], 0, n * sizeof(float), NULL);
+    OCL_CREATE_BUFFER(buf[1], 0, n * sizeof(float), NULL);
+    OCL_CREATE_KERNEL("compiler_fabs");
+
+    OCL_SET_ARG(0, sizeof(cl_mem), &buf[0]);
+    OCL_SET_ARG(1, sizeof(cl_mem), &buf[1]);
+
+    globals[0] = 16;
+    locals[0] = 16;
+
+    OCL_MAP_BUFFER(0);
+    for (int32_t i = 0; i < (int32_t) n; ++i)
+        ((float*)buf_data[0])[i] = .1f * (rand() & 15) - .75f;
+    OCL_UNMAP_BUFFER(0);
+
+    // Run the kernel on GPU
+    OCL_NDRANGE(1);
+
+    /* Do our test.*/
+    expect_ref = 1;
+    maps.insert(make_pair(CL_CONTEXT_NUM_DEVICES,
+                          (void *)(new Info_Result<cl_uint>(expect_ref))));
+    maps.insert(make_pair(CL_CONTEXT_DEVICES,
+                          (void *)(new Info_Result<cl_device_id>(device))));
+    // reference count seems depends on the implementation
+    expect_ref = NO_STANDARD_REF;
+    maps.insert(make_pair(CL_CONTEXT_REFERENCE_COUNT,
+                          (void *)(new Info_Result<>(((cl_uint)expect_ref)))));
+
+    maps.insert(make_pair(CL_CONTEXT_PROPERTIES,
+                          (void *)(new Info_Result<char*>(
+                                       (const char*)NULL, 100*sizeof(cl_context_properties)))));
+
+    std::for_each(maps.begin(), maps.end(), [](pair<cl_context_info, void *> x) {
+        switch (x.first) {
+        case CL_CONTEXT_NUM_DEVICES:
+            CALL_CONTEXTINFO_AND_RET(cl_uint);
+            break;
+        case CL_CONTEXT_DEVICES:
+            CALL_CONTEXTINFO_AND_RET(cl_device_id);
+            break;
+        case CL_CONTEXT_REFERENCE_COUNT:
+            CALL_CONTEXTINFO_AND_RET(cl_uint);
+            break;
+        case CL_CONTEXT_PROPERTIES:
+            CALL_CONTEXTINFO_AND_RET(char*);
+            break;
+        default:
+            break;
+        }
+    });
+}
+
+MAKE_UTEST_FROM_FUNCTION(get_context_info);
+
+/* ***************************************************** *
+ * clGetKernelInfo                                      *
+ * ***************************************************** */
+#define CALL_KERNELINFO_AND_RET(TYPE) CALL_INFO_AND_RET(TYPE, clGetKernelInfo, kernel)
+
+void get_kernel_info(void)
+{
+    /* use the compiler_fabs case to test us. */
+    const size_t n = 16;
+    map<cl_kernel_info, void *> maps;
+    int expect_ref;
+
+    OCL_CREATE_BUFFER(buf[0], 0, n * sizeof(float), NULL);
+    OCL_CREATE_BUFFER(buf[1], 0, n * sizeof(float), NULL);
+    OCL_CREATE_KERNEL("compiler_fabs");
+
+    OCL_SET_ARG(0, sizeof(cl_mem), &buf[0]);
+    OCL_SET_ARG(1, sizeof(cl_mem), &buf[1]);
+
+    // Run the kernel on GPU
+
+    maps.insert(make_pair(CL_KERNEL_PROGRAM,
+                          (void *)(new Info_Result<cl_program>(program))));
+    maps.insert(make_pair(CL_KERNEL_CONTEXT,
+                          (void *)(new Info_Result<cl_context>(ctx))));
+    // reference count seems depends on the implementation
+    expect_ref = NO_STANDARD_REF;
+    maps.insert(make_pair(CL_KERNEL_REFERENCE_COUNT,
+                          (void *)(new Info_Result<>(((cl_uint)expect_ref)))));
+
+    expect_ref = 2;
+    maps.insert(make_pair(CL_KERNEL_NUM_ARGS,
+                          (void *)(new Info_Result<cl_uint>(expect_ref))));
+
+    const char * expected_name = "compiler_fabs";
+    maps.insert(make_pair(CL_KERNEL_FUNCTION_NAME,
+                          (void *)(new Info_Result<char*>(expected_name, strlen(expected_name)+1))));
+
+    std::for_each(maps.begin(), maps.end(), [](pair<cl_kernel_info, void *> x) {
+        switch (x.first) {
+        case CL_KERNEL_PROGRAM:
+            CALL_KERNELINFO_AND_RET(cl_program);
+            break;
+        case CL_KERNEL_CONTEXT:
+            CALL_KERNELINFO_AND_RET(cl_context);
+            break;
+        case CL_KERNEL_REFERENCE_COUNT:
+            CALL_KERNELINFO_AND_RET(cl_uint);
+            break;
+        case CL_KERNEL_NUM_ARGS:
+            CALL_KERNELINFO_AND_RET(cl_uint);
+            break;
+        case CL_KERNEL_FUNCTION_NAME:
+            CALL_KERNELINFO_AND_RET(char*);
+            break;
+        default:
+            break;
+        }
+    });
+}
+
+MAKE_UTEST_FROM_FUNCTION(get_kernel_info);
