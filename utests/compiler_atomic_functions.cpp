@@ -1,6 +1,7 @@
 #include "utest_helper.hpp"
 #include <cmath>
 #include <algorithm>
+#include <string.h>
 
 #define GROUP_NUM 16
 #define LOCAL_SIZE 64
@@ -70,6 +71,10 @@ static void compiler_atomic_functions(void)
   OCL_SET_ARG(0, sizeof(cl_mem), &buf[0]);
   OCL_SET_ARG(1, 16 * sizeof(int), NULL);
   OCL_SET_ARG(2, sizeof(cl_mem), &buf[1]);
+
+  OCL_MAP_BUFFER(0);
+  memset(buf_data[0], 0, 16 * sizeof(int));
+  OCL_UNMAP_BUFFER(0);
 
   OCL_MAP_BUFFER(1);
   for (uint32_t i = 0; i < locals[0]; ++i)
