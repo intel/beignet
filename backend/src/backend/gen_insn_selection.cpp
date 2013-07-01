@@ -1245,7 +1245,16 @@ namespace gbe
       const GenRegister dst = sel.selReg(insn.getDst(0), getType(opcode));
       const GenRegister src = sel.selReg(insn.getSrc(0), getType(opcode));
       switch (opcode) {
-        case ir::OP_ABS: sel.MOV(dst, GenRegister::abs(src)); break;
+        case ir::OP_ABS:
+          if (insn.getType() == ir::TYPE_S32) {
+            const GenRegister src_ = GenRegister::retype(src, GEN_TYPE_D);
+            const GenRegister dst_ = GenRegister::retype(dst, GEN_TYPE_D);
+            sel.MOV(dst_, GenRegister::abs(src_));
+          } else {
+            GBE_ASSERT(insn.getType() == ir::TYPE_FLOAT);
+            sel.MOV(dst, GenRegister::abs(src));
+          }
+          break;
         case ir::OP_MOV:
           if (dst.isdf()) {
             ir::Register r = sel.reg(ir::RegisterFamily::FAMILY_QWORD);

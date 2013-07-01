@@ -4388,6 +4388,42 @@ DEF(16)
 #undef DEC8
 #undef DEC16
 
+int __gen_ocl_abs(int x);
+#define ABS_I(I, CVT)  (CVT)__gen_ocl_abs(x.s##I)
+#define ABS_VEC1(CVT)  (CVT)__gen_ocl_abs(x)
+#define ABS_VEC2(CVT)  ABS_I(0, CVT), ABS_I(1, CVT)
+#define ABS_VEC4(CVT)  ABS_VEC2(CVT), ABS_I(2, CVT), ABS_I(3, CVT)
+#define ABS_VEC8(CVT)  ABS_VEC4(CVT), ABS_I(4, CVT), ABS_I(5, CVT),\
+	               ABS_I(6, CVT), ABS_I(7, CVT)
+#define ABS_VEC16(CVT) ABS_VEC8(CVT), ABS_I(8, CVT), ABS_I(9, CVT), \
+	               ABS_I(A, CVT), ABS_I(B, CVT), ABS_I(C, CVT), \
+	               ABS_I(D, CVT), ABS_I(E, CVT), ABS_I(F, CVT)
+
+#define DEC_1(TYPE) INLINE_OVERLOADABLE u##TYPE abs(TYPE x) { return ABS_VEC1(u##TYPE); }
+#define DEC_N(TYPE, N) INLINE_OVERLOADABLE u##TYPE##N abs(TYPE##N x) { return (u##TYPE##N)(ABS_VEC##N(u##TYPE)); };
+#define DEC(TYPE) DEC_1(TYPE) DEC_N(TYPE, 2) DEC_N(TYPE, 4) DEC_N(TYPE, 8) DEC_N(TYPE, 16)
+
+DEC(int)
+DEC(short)
+DEC(char)
+#undef DEC_1
+#undef DEC_N
+/* For unsigned types, do nothing. */
+#define DEC_1(TYPE) INLINE_OVERLOADABLE TYPE abs(TYPE x) { return x; }
+#define DEC_N(TYPE, N) INLINE_OVERLOADABLE TYPE##N abs(TYPE##N x) { return x; }
+DEC(uint)
+DEC(ushort)
+DEC(uchar)
+#undef DEC
+#undef DEC_1
+#undef DEC_N
+#undef ABS_I
+#undef ABS_VEC1
+#undef ABS_VEC2
+#undef ABS_VEC4
+#undef ABS_VEC8
+#undef ABS_VEC16
+
 /////////////////////////////////////////////////////////////////////////////
 // Work Items functions (see 6.11.1 of OCL 1.1 spec)
 /////////////////////////////////////////////////////////////////////////////

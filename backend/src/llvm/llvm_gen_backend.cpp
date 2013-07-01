@@ -1697,6 +1697,7 @@ namespace gbe
       case GEN_OCL_POW:
       case GEN_OCL_RCP:
       case GEN_OCL_ABS:
+      case GEN_OCL_FABS:
       case GEN_OCL_RNDZ:
       case GEN_OCL_RNDE:
       case GEN_OCL_RNDU:
@@ -1901,13 +1902,20 @@ namespace gbe
           }
           case GEN_OCL_FBH: this->emitUnaryCallInst(I,CS,ir::OP_FBH); break;
           case GEN_OCL_FBL: this->emitUnaryCallInst(I,CS,ir::OP_FBL); break;
+          case GEN_OCL_ABS:
+          {
+            const ir::Register src = this->getRegister(*AI);
+            const ir::Register dst = this->getRegister(&I);
+            ctx.ALU1(ir::OP_ABS, ir::TYPE_S32, dst, src);
+            break;
+          }
           case GEN_OCL_COS: this->emitUnaryCallInst(I,CS,ir::OP_COS); break;
           case GEN_OCL_SIN: this->emitUnaryCallInst(I,CS,ir::OP_SIN); break;
           case GEN_OCL_LOG: this->emitUnaryCallInst(I,CS,ir::OP_LOG); break;
           case GEN_OCL_SQR: this->emitUnaryCallInst(I,CS,ir::OP_SQR); break;
           case GEN_OCL_RSQ: this->emitUnaryCallInst(I,CS,ir::OP_RSQ); break;
           case GEN_OCL_RCP: this->emitUnaryCallInst(I,CS,ir::OP_RCP); break;
-          case GEN_OCL_ABS: this->emitUnaryCallInst(I,CS,ir::OP_ABS); break;
+          case GEN_OCL_FABS: this->emitUnaryCallInst(I,CS,ir::OP_ABS); break;
           case GEN_OCL_RNDZ: this->emitUnaryCallInst(I,CS,ir::OP_RNDZ); break;
           case GEN_OCL_RNDE: this->emitUnaryCallInst(I,CS,ir::OP_RNDE); break;
           case GEN_OCL_RNDU: this->emitUnaryCallInst(I,CS,ir::OP_RNDU); break;
