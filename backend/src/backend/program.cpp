@@ -141,12 +141,12 @@ namespace gbe {
     while (end != std::string::npos) {
       end = options.find(' ', start);
       std::string str = options.substr(start, end - start);
+      start = end + 1;
       if(str.size() == 0)
         continue;
       if(str == "-cl-opt-disable") bOpt = false;
       useless.push_back(str);
       args.push_back(str.c_str());
-      start = end + 1;
     }
 
     args.push_back("-emit-llvm");
