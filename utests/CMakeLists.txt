@@ -34,6 +34,7 @@ set (utests_sources
   compiler_double_2.cpp
   compiler_double_3.cpp
   compiler_fabs.cpp
+  compiler_abs.cpp
   compiler_fill_image.cpp
   compiler_fill_image0.cpp
   compiler_fill_image_3d.cpp
