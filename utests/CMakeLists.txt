@@ -45,6 +45,7 @@ set (utests_sources
   compiler_global_constant.cpp
   compiler_global_constant_2.cpp
   compiler_group_size.cpp
+  compiler_hadd.cpp
   compiler_if_else.cpp
   compiler_integer_division.cpp
   compiler_integer_remainder.cpp
@@ -52,6 +53,7 @@ set (utests_sources
   compiler_lower_return1.cpp
   compiler_lower_return2.cpp
   compiler_multiple_kernels.cpp
+  compiler_rhadd.cpp
   compiler_rotate.cpp
   compiler_saturate.cpp
   compiler_saturate_sub.cpp
