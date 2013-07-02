@@ -433,6 +433,7 @@ namespace gbe
     ALU2(MACH)
     ALU1(LZD)
     ALU3(MAD)
+    ALU3(MUL_HI)
     ALU1(FBH)
     ALU1(FBL)
     ALU3(HADD)
@@ -1425,6 +1426,11 @@ namespace gbe
         case OP_SHL: sel.SHL(dst, src0, src1); break;
         case OP_SHR: sel.SHR(dst, src0, src1); break;
         case OP_ASR: sel.ASR(dst, src0, src1); break;
+        case OP_MUL_HI: {
+            GenRegister temp = GenRegister::retype(sel.selReg(sel.reg(FAMILY_DWORD)), GEN_TYPE_UD);
+            sel.MUL_HI(dst, src0, src1, temp);
+            break;
+          }
         case OP_MUL:
           if (type == TYPE_U32 || type == TYPE_S32) {
             sel.pop();

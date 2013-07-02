@@ -179,6 +179,34 @@ namespace gbe
     const GenRegister src1 = ra->genReg(insn.src(1));
     const GenRegister src2 = ra->genReg(insn.src(2));
     switch (insn.opcode) {
+      case SEL_OP_MUL_HI:
+       {
+        int w = p->curr.execWidth;
+        p->push();
+        p->curr.execWidth = 8;
+        p->curr.quarterControl = 0;
+        p->push();
+        p->curr.predicate = GEN_PREDICATE_NONE;
+        p->MUL(GenRegister::retype(GenRegister::acc(), GEN_TYPE_UD), src0, src1);
+        p->curr.accWrEnable = 1;
+        p->MACH(src2, src0, src1);
+        p->curr.accWrEnable = 0;
+        p->pop();
+        p->MOV(dst, src2);
+        if (w == 16) {
+          p->push();
+          p->curr.predicate = GEN_PREDICATE_NONE;
+          p->MUL(GenRegister::retype(GenRegister::acc(), GEN_TYPE_UD), GenRegister::Qn(src0, 1), GenRegister::Qn(src1, 1));
+          p->curr.accWrEnable = 1;
+          p->MACH(src2, GenRegister::Qn(src0, 1), GenRegister::Qn(src1, 1));
+          p->curr.accWrEnable = 0;
+          p->pop();
+          p->curr.quarterControl = 1;
+          p->MOV(GenRegister::Qn(dst, 1), src2);
+        }
+        p->pop();
+        break;
+       }
       case SEL_OP_MAD:  p->MAD(dst, src0, src1, src2); break;
       case SEL_OP_HADD:
        {

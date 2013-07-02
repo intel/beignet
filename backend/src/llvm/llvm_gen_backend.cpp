@@ -1775,6 +1775,8 @@ namespace gbe
         this->newRegister(&I);
         break;
       }
+      case GEN_OCL_MUL_HI_INT:
+      case GEN_OCL_MUL_HI_UINT:
       case GEN_OCL_SADD_SAT_CHAR:
       case GEN_OCL_SADD_SAT_SHORT:
       case GEN_OCL_SADD_SAT_INT:
@@ -2138,6 +2140,22 @@ namespace gbe
             }
 
             ctx.TYPED_WRITE(srcTuple, srcType, coordType);
+            break;
+          }
+          case GEN_OCL_MUL_HI_INT:
+          {
+            GBE_ASSERT(AI != AE); const ir::Register src0 = this->getRegister(*AI); ++AI;
+            GBE_ASSERT(AI != AE); const ir::Register src1 = this->getRegister(*AI); ++AI;
+            const ir::Register dst = this->getRegister(&I);
+            ctx.MUL_HI(getType(ctx, I.getType()), dst, src0, src1);
+            break;
+          }
+          case GEN_OCL_MUL_HI_UINT:
+          {
+            GBE_ASSERT(AI != AE); const ir::Register src0 = this->getRegister(*AI); ++AI;
+            GBE_ASSERT(AI != AE); const ir::Register src1 = this->getRegister(*AI); ++AI;
+            const ir::Register dst = this->getRegister(&I);
+            ctx.MUL_HI(getUnsignedType(ctx, I.getType()), dst, src0, src1);
             break;
           }
           case GEN_OCL_SADD_SAT_CHAR:
