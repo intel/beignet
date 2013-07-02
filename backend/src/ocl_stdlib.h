@@ -4388,6 +4388,43 @@ DEF(16)
 #undef DEC8
 #undef DEC16
 
+PURE CONST uint __gen_ocl_hadd(uint x, uint y);
+PURE CONST uint __gen_ocl_rhadd(uint x, uint y);
+#define DEC DEF(char); DEF(uchar); DEF(short); DEF(ushort)
+#define DEF(type) INLINE_OVERLOADABLE type hadd(type x, type y) { return (x + y) >> 1; }
+DEC
+#undef DEF
+#define DEF(type) INLINE_OVERLOADABLE type rhadd(type x, type y) { return (x + y + 1) >> 1; }
+DEC
+#undef DEF
+#undef DEC
+INLINE_OVERLOADABLE int hadd(int x, int y) { return (x < 0 && y > 0) || (x > 0 && y < 0) ? ((x + y) >> 1) : __gen_ocl_hadd(x, y); }
+INLINE_OVERLOADABLE uint hadd(uint x, uint y) { return __gen_ocl_hadd(x, y); }
+INLINE_OVERLOADABLE int rhadd(int x, int y) { return (x < 0 && y > 0) || (x > 0 && y < 0) ? ((x + y + 1) >> 1) : __gen_ocl_rhadd(x, y); }
+INLINE_OVERLOADABLE uint rhadd(uint x, uint y) { return __gen_ocl_rhadd(x, y); }
+#define DEC2(func, type) INLINE_OVERLOADABLE type##2 func(type##2 a, type##2 b) { return (func(a.s0, b.s0), func(a.s1, b.s1)); }
+#define DEC3(func, type) INLINE_OVERLOADABLE type##3 func(type##3 a, type##3 b) { return (func(a.s0, b.s0), func(a.s1, b.s1), func(a.s2, b.s2)); }
+#define DEC4(func, type) INLINE_OVERLOADABLE type##4 func(type##4 a, type##4 b) { return (func(a.s0, b.s0), func(a.s1, b.s1), func(a.s2, b.s2), func(a.s3, b.s3)); }
+#define DEC8(func, type) INLINE_OVERLOADABLE type##8 func(type##8 a, type##8 b) { return (func(a.s0, b.s0), func(a.s1, b.s1), func(a.s2, b.s2), func(a.s3, b.s3), func(a.s4, b.s4), func(a.s5, b.s5), func(a.s6, b.s6), func(a.s7, b.s7)); }
+#define DEC16(func, type) INLINE_OVERLOADABLE type##16 func(type##16 a, type##16 b) { return (func(a.s0, b.s0), func(a.s1, b.s1), func(a.s2, b.s2), func(a.s3, b.s3), func(a.s4, b.s4), func(a.s5, b.s5), func(a.s6, b.s6), func(a.s7, b.s7), func(a.s8, b.s8), func(a.s9, b.s9), func(a.sa, b.sa), func(a.sb, b.sb), func(a.sc, b.sc), func(a.sd, b.sd), func(a.se, b.se), func(a.sf, b.sf)); }
+#define DEF(func, n) DEC##n(func, char); DEC##n(func, uchar); DEC##n(func, short); DEC##n(func, ushort); DEC##n(func, int); DEC##n(func, uint)
+DEF(hadd, 2)
+DEF(hadd, 3)
+DEF(hadd, 4)
+DEF(hadd, 8)
+DEF(hadd, 16)
+DEF(rhadd, 2)
+DEF(rhadd, 3)
+DEF(rhadd, 4)
+DEF(rhadd, 8)
+DEF(rhadd, 16)
+#undef DEF
+#undef DEC2
+#undef DEC3
+#undef DEC4
+#undef DEC8
+#undef DEC16
+
 int __gen_ocl_abs(int x);
 #define ABS_I(I, CVT)  (CVT)__gen_ocl_abs(x.s##I)
 #define ABS_VEC1(CVT)  (CVT)__gen_ocl_abs(x)

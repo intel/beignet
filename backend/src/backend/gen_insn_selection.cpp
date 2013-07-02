@@ -435,6 +435,8 @@ namespace gbe
     ALU3(MAD)
     ALU1(FBH)
     ALU1(FBL)
+    ALU3(HADD)
+    ALU3(RHADD)
 #undef ALU1
 #undef ALU2
 #undef ALU3
@@ -1433,6 +1435,16 @@ namespace gbe
             sel.MUL(dst, src0, src1);
           }
         break;
+        case OP_HADD: {
+            GenRegister temp = GenRegister::retype(sel.selReg(sel.reg(FAMILY_DWORD)), GEN_TYPE_D);
+            sel.HADD(dst, src0, src1, temp);
+            break;
+          }
+        case OP_RHADD: {
+            GenRegister temp = GenRegister::retype(sel.selReg(sel.reg(FAMILY_DWORD)), GEN_TYPE_D);
+            sel.RHADD(dst, src0, src1, temp);
+            break;
+          }
         default: NOT_IMPLEMENTED;
       }
       sel.pop();

@@ -521,6 +521,10 @@ namespace ir {
   Instruction FBH(Type type, Register dst, Register src);
   /*! fbl.type dst src */
   Instruction FBL(Type type, Register dst, Register src);
+  /*! hadd.type dst src */
+  Instruction HADD(Type type, Register dst, Register src0, Register src1);
+  /*! rhadd.type dst src */
+  Instruction RHADD(Type type, Register dst, Register src0, Register src1);
   /*! tan.type dst src */
   Instruction RCP(Type type, Register dst, Register src);
   /*! abs.type dst src */

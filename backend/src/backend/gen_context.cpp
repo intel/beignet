@@ -180,6 +180,48 @@ namespace gbe
     const GenRegister src2 = ra->genReg(insn.src(2));
     switch (insn.opcode) {
       case SEL_OP_MAD:  p->MAD(dst, src0, src1, src2); break;
+      case SEL_OP_HADD:
+       {
+        int w = p->curr.execWidth;
+        p->push();
+        p->curr.execWidth = 8;
+        p->curr.quarterControl = 0;
+        p->ADDC(dst, src0, src1);
+        p->SHR(dst, dst, GenRegister::immud(1));
+        p->SHL(src2, GenRegister::retype(GenRegister::acc(), GEN_TYPE_D), GenRegister::immud(31));
+        p->OR(dst, dst, src2);
+        if (w == 16) {
+          p->curr.quarterControl = 1;
+          p->ADDC(GenRegister::Qn(dst, 1), GenRegister::Qn(src0, 1), GenRegister::Qn(src1, 1));
+          p->SHR(GenRegister::Qn(dst, 1), GenRegister::Qn(dst, 1), GenRegister::immud(1));
+          p->SHL(GenRegister::Qn(src2, 1), GenRegister::retype(GenRegister::acc(), GEN_TYPE_D), GenRegister::immud(31));
+          p->OR(GenRegister::Qn(dst, 1), GenRegister::Qn(dst, 1), GenRegister::Qn(src2, 1));
+        }
+        p->pop();
+        break;
+       }
+      case SEL_OP_RHADD:
+       {
+        int w = p->curr.execWidth;
+        p->push();
+        p->curr.execWidth = 8;
+        p->curr.quarterControl = 0;
+        p->ADDC(dst, src0, src1);
+        p->ADD(dst, dst, GenRegister::immud(1));
+        p->SHR(dst, dst, GenRegister::immud(1));
+        p->SHL(src2, GenRegister::retype(GenRegister::acc(), GEN_TYPE_D), GenRegister::immud(31));
+        p->OR(dst, dst, src2);
+        if (w == 16) {
+          p->curr.quarterControl = 1;
+          p->ADDC(GenRegister::Qn(dst, 1), GenRegister::Qn(src0, 1), GenRegister::Qn(src1, 1));
+          p->ADD(GenRegister::Qn(dst, 1), GenRegister::Qn(dst, 1), GenRegister::immud(1));
+          p->SHR(GenRegister::Qn(dst, 1), GenRegister::Qn(dst, 1), GenRegister::immud(1));
+          p->SHL(GenRegister::Qn(src2, 1), GenRegister::retype(GenRegister::acc(), GEN_TYPE_D), GenRegister::immud(31));
+          p->OR(GenRegister::Qn(dst, 1), GenRegister::Qn(dst, 1), GenRegister::Qn(src2, 1));
+        }
+        p->pop();
+        break;
+       }
       default: NOT_IMPLEMENTED;
     }
   }

@@ -107,6 +107,7 @@ namespace gbe
     ALU2(RSL)
     ALU2(ASR)
     ALU2(ADD)
+    ALU2(ADDC)
     ALU2(MUL)
     ALU1(FRC)
     ALU2(MAC)

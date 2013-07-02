@@ -879,6 +879,13 @@ namespace gbe
   ALU2(MACH)
   ALU3(MAD)
 
+  void GenEncoder::ADDC(GenRegister dest, GenRegister src0, GenRegister src1) {
+    push();
+    curr.accWrEnable = 1;
+    alu2(this, GEN_OPCODE_ADDC, dest, src0, src1);
+    pop();
+  }
+
   void GenEncoder::ADD(GenRegister dest, GenRegister src0, GenRegister src1) {
      if (src0.type == GEN_TYPE_F ||
          (src0.file == GEN_IMMEDIATE_VALUE &&

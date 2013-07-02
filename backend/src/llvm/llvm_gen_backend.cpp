@@ -1791,6 +1791,8 @@ namespace gbe
       case GEN_OCL_USUB_SAT_SHORT:
       case GEN_OCL_USUB_SAT_INT:
       case GEN_OCL_USUB_SAT_LONG:
+      case GEN_OCL_HADD:
+      case GEN_OCL_RHADD:
         this->newRegister(&I);
         break;
       default:
@@ -2180,6 +2182,20 @@ namespace gbe
             GBE_ASSERT(AI != AE); const ir::Register src1 = this->getRegister(*AI); ++AI;
             const ir::Register dst = this->getRegister(&I);
             ctx.SUBSAT(getUnsignedType(ctx, I.getType()), dst, src0, src1);
+            break;
+          }
+          case GEN_OCL_HADD: {
+            GBE_ASSERT(AI != AE); const ir::Register src0 = this->getRegister(*AI); ++AI;
+            GBE_ASSERT(AI != AE); const ir::Register src1 = this->getRegister(*AI); ++AI;
+            const ir::Register dst = this->getRegister(&I);
+            ctx.HADD(getUnsignedType(ctx, I.getType()), dst, src0, src1);
+            break;
+          }
+          case GEN_OCL_RHADD: {
+            GBE_ASSERT(AI != AE); const ir::Register src0 = this->getRegister(*AI); ++AI;
+            GBE_ASSERT(AI != AE); const ir::Register src1 = this->getRegister(*AI); ++AI;
+            const ir::Register dst = this->getRegister(&I);
+            ctx.RHADD(getUnsignedType(ctx, I.getType()), dst, src0, src1);
             break;
           }
           default: break;
