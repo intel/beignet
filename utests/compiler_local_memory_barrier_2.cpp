@@ -5,7 +5,7 @@ static void compiler_local_memory_barrier_2(void)
   const size_t n = 16*1024;
 
   globals[0] = n/2;
-  locals[0] = 32;
+  locals[0] = 256;
 
   // Setup kernel and buffers
   OCL_CREATE_KERNEL("compiler_local_memory_barrier_2");

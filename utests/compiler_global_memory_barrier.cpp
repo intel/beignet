@@ -13,7 +13,7 @@ static void compiler_global_memory_barrier(void)
 
   // Run the kernel
   globals[0] = n/2;
-  locals[0] = 32;
+  locals[0] = 256;
   OCL_NDRANGE(1);
   OCL_MAP_BUFFER(0);
 
