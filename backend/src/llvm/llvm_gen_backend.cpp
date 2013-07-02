@@ -1824,10 +1824,9 @@ namespace gbe
 
   void GenWriter::emitAtomicInst(CallInst &I, CallSite &CS, ir::AtomicOps opcode) {
     CallSite::arg_iterator AI = CS.arg_begin();
-#if GBE_DEBUG
     CallSite::arg_iterator AE = CS.arg_end();
-#endif /* GBE_DEBUG */
     GBE_ASSERT(AI != AE);
+
     unsigned int llvmSpace = (*AI)->getType()->getPointerAddressSpace();
     const ir::AddressSpace addrSpace = addressSpaceLLVMToGen(llvmSpace);
     const ir::Register dst = this->getRegister(&I);

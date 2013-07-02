@@ -39,14 +39,22 @@ struct JOIN(__,JOIN(__,__LINE__)) {                                 \
 }
 
 /* Throw errors */
-#define ERR(ERROR, ...)                                             \
-do {                                                                \
-  fprintf(stderr, "error in %s line %i\n", __FILE__, __LINE__);     \
-  fprintf(stderr, __VA_ARGS__);                                     \
-  fprintf(stderr, "\n");                                            \
-  err = ERROR;                                                      \
-  goto error;                                                       \
-} while (0)
+#ifdef NDEBUG
+  #define ERR(ERROR, ...)                                             \
+  do {                                                                \
+    err = ERROR;                                                      \
+    goto error;                                                       \
+  } while (0)
+#else
+  #define ERR(ERROR, ...)                                             \
+  do {                                                                \
+    fprintf(stderr, "error in %s line %i\n", __FILE__, __LINE__);     \
+    fprintf(stderr, __VA_ARGS__);                                     \
+    fprintf(stderr, "\n");                                            \
+    err = ERROR;                                                      \
+    goto error;                                                       \
+  } while (0)
+#endif
 
 #define DO_ALLOC_ERR                                                \
 do {                                                                \
