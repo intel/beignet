@@ -1741,6 +1741,7 @@ namespace gbe
       case GEN_OCL_LBARRIER:
       case GEN_OCL_GBARRIER:
       case GEN_OCL_LGBARRIER:
+        ctx.getFunction().setUseSLM(true);
         break;
       case GEN_OCL_WRITE_IMAGE0:
       case GEN_OCL_WRITE_IMAGE1:

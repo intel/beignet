@@ -1792,24 +1792,22 @@ namespace gbe
       const ir::Register reg = sel.reg(FAMILY_DWORD);
 
       const uint32_t params = insn.getParameters();
-      //XXX TODO need to double check local barrier whether need fence or not
-      if(params == syncGlobalBarrier || params == syncLocalBarrier) {
+      if(params == syncGlobalBarrier) {
         const ir::Register fenceDst = sel.reg(FAMILY_DWORD);
         sel.FENCE(sel.selReg(fenceDst, ir::TYPE_U32));
       }
 
       sel.push();
         sel.curr.predicate = GEN_PREDICATE_NONE;
+
+        // As only the payload.2 is used and all the other regions are ignored
+        // SIMD8 mode here is safe.
         sel.curr.execWidth = 8;
         sel.curr.physicalFlag = 0;
         sel.curr.noMask = 1;
+        // Copy barrier id from r0.
+        sel.AND(GenRegister::ud8grf(reg), GenRegister::ud1grf(ir::ocl::barrierid), GenRegister::immud(0x0f000000));
 
-        sel.SHL(GenRegister::ud8grf(reg),
-                GenRegister::ud1grf(ocl::threadn),
-                GenRegister::immud(0x9));
-        sel.OR(GenRegister::ud8grf(reg),
-               GenRegister::ud8grf(reg),
-               GenRegister::immud(0x00088000));
         // A barrier is OK to start the thread synchronization *and* SLM fence
         sel.BARRIER(GenRegister::f8grf(reg));
         // Now we wait for the other threads
