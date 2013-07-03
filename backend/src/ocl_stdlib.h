@@ -4175,11 +4175,11 @@ uchar INLINE_OVERLOADABLE convert_uchar_sat(float x) {
     return add_sat((uchar)x, (uchar)0);
 }
 
-#define DEC2(name) INLINE_OVERLOADABLE int2 name(float2 x) { return (name(x.s0), name(x.s1)); }
-#define DEC3(name) INLINE_OVERLOADABLE int3 name(float3 x) { return (name(x.s0), name(x.s1), name(x.s2)); }
-#define DEC4(name) INLINE_OVERLOADABLE int4 name(float4 x) { return (name(x.s0), name(x.s1), name(x.s2), name(x.s3)); }
-#define DEC8(name) INLINE_OVERLOADABLE int8 name(float8 x) { return (name(x.s0), name(x.s1), name(x.s2), name(x.s3), name(x.s4), name(x.s5), name(x.s6), name(x.s7)); }
-#define DEC16(name) INLINE_OVERLOADABLE int16 name(float16 x) { return (name(x.s0), name(x.s1), name(x.s2), name(x.s3), name(x.s4), name(x.s5), name(x.s6), name(x.s7), name(x.s8), name(x.s9), name(x.sA), name(x.sB), name(x.sC), name(x.sD), name(x.sE), name(x.sF)); }
+#define DEC2(name) INLINE_OVERLOADABLE int2 name(float2 x) { return (int2)(name(x.s0), name(x.s1)); }
+#define DEC3(name) INLINE_OVERLOADABLE int3 name(float3 x) { return (int3)(name(x.s0), name(x.s1), name(x.s2)); }
+#define DEC4(name) INLINE_OVERLOADABLE int4 name(float4 x) { return (int4)(name(x.s0), name(x.s1), name(x.s2), name(x.s3)); }
+#define DEC8(name) INLINE_OVERLOADABLE int8 name(float8 x) { return (int8)(name(x.s0), name(x.s1), name(x.s2), name(x.s3), name(x.s4), name(x.s5), name(x.s6), name(x.s7)); }
+#define DEC16(name) INLINE_OVERLOADABLE int16 name(float16 x) { return (int16)(name(x.s0), name(x.s1), name(x.s2), name(x.s3), name(x.s4), name(x.s5), name(x.s6), name(x.s7), name(x.s8), name(x.s9), name(x.sA), name(x.sB), name(x.sC), name(x.sD), name(x.sE), name(x.sF)); }
 INLINE_OVERLOADABLE int isfinite(float x) { return __builtin_isfinite(x); }
 DEC2(isfinite);
 DEC3(isfinite);
@@ -4216,11 +4216,11 @@ DEC16(signbit);
 #undef DEC8
 #undef DEC16
 
-#define DEC2(name) INLINE_OVERLOADABLE int2 name(float2 x, float2 y) { return (name(x.s0, y.s0), name(x.s1, y.s1)); }
-#define DEC3(name) INLINE_OVERLOADABLE int3 name(float3 x, float3 y) { return (name(x.s0, y.s0), name(x.s1, y.s1), name(x.s2, y.s2)); }
-#define DEC4(name) INLINE_OVERLOADABLE int4 name(float4 x, float4 y) { return (name(x.s0, y.s0), name(x.s1, y.s1), name(x.s2, y.s2), name(x.s3, y.s3)); }
-#define DEC8(name) INLINE_OVERLOADABLE int8 name(float8 x, float8 y) { return (name(x.s0, y.s0), name(x.s1, y.s1), name(x.s2, y.s2), name(x.s3, y.s3), name(x.s4, y.s4), name(x.s5, y.s5), name(x.s6, y.s6), name(x.s7, y.s7)); }
-#define DEC16(name) INLINE_OVERLOADABLE int16 name(float16 x, float16 y) { return (name(x.s0, y.s0), name(x.s1, y.s1), name(x.s2, y.s2), name(x.s3, y.s3), name(x.s4, y.s4), name(x.s5, y.s5), name(x.s6, y.s6), name(x.s7, y.s7), name(x.s8, y.s8), name(x.s9, y.s9), name(x.sA, y.sA), name(x.sB, y.sB), name(x.sC, y.sC), name(x.sD, y.sD), name(x.sE, y.sE), name(x.sF, y.sF)); }
+#define DEC2(name) INLINE_OVERLOADABLE int2 name(float2 x, float2 y) { return (int2)(name(x.s0, y.s0), name(x.s1, y.s1)); }
+#define DEC3(name) INLINE_OVERLOADABLE int3 name(float3 x, float3 y) { return (int3)(name(x.s0, y.s0), name(x.s1, y.s1), name(x.s2, y.s2)); }
+#define DEC4(name) INLINE_OVERLOADABLE int4 name(float4 x, float4 y) { return (int4)(name(x.s0, y.s0), name(x.s1, y.s1), name(x.s2, y.s2), name(x.s3, y.s3)); }
+#define DEC8(name) INLINE_OVERLOADABLE int8 name(float8 x, float8 y) { return (int8)(name(x.s0, y.s0), name(x.s1, y.s1), name(x.s2, y.s2), name(x.s3, y.s3), name(x.s4, y.s4), name(x.s5, y.s5), name(x.s6, y.s6), name(x.s7, y.s7)); }
+#define DEC16(name) INLINE_OVERLOADABLE int16 name(float16 x, float16 y) { return (int16)(name(x.s0, y.s0), name(x.s1, y.s1), name(x.s2, y.s2), name(x.s3, y.s3), name(x.s4, y.s4), name(x.s5, y.s5), name(x.s6, y.s6), name(x.s7, y.s7), name(x.s8, y.s8), name(x.s9, y.s9), name(x.sA, y.sA), name(x.sB, y.sB), name(x.sC, y.sC), name(x.sD, y.sD), name(x.sE, y.sE), name(x.sF, y.sF)); }
 INLINE_OVERLOADABLE int islessgreater(float x, float y) { return (x<y)||(x>y); }
 DEC2(islessgreater);
 DEC3(islessgreater);
@@ -4338,11 +4338,11 @@ INLINE_OVERLOADABLE uint clz(uint x) {
   return __gen_ocl_fbh(x);
 }
 
-#define DEC2(type) INLINE_OVERLOADABLE type##2 clz(type##2 a) { return (clz(a.s0), clz(a.s1)); }
-#define DEC3(type) INLINE_OVERLOADABLE type##3 clz(type##3 a) { return (clz(a.s0), clz(a.s1), clz(a.s2)); }
-#define DEC4(type) INLINE_OVERLOADABLE type##4 clz(type##4 a) { return (clz(a.s0), clz(a.s1), clz(a.s2), clz(a.s3)); }
-#define DEC8(type) INLINE_OVERLOADABLE type##8 clz(type##8 a) { return (clz(a.s0), clz(a.s1), clz(a.s2), clz(a.s3), clz(a.s4), clz(a.s5), clz(a.s6), clz(a.s7)); }
-#define DEC16(type) INLINE_OVERLOADABLE type##16 clz(type##16 a) { return (clz(a.s0), clz(a.s1), clz(a.s2), clz(a.s3), clz(a.s4), clz(a.s5), clz(a.s6), clz(a.s7), clz(a.s8), clz(a.s9), clz(a.sa), clz(a.sb), clz(a.sc), clz(a.sd), clz(a.se), clz(a.sf)); }
+#define DEC2(type) INLINE_OVERLOADABLE type##2 clz(type##2 a) { return (type##2)(clz(a.s0), clz(a.s1)); }
+#define DEC3(type) INLINE_OVERLOADABLE type##3 clz(type##3 a) { return (type##3)(clz(a.s0), clz(a.s1), clz(a.s2)); }
+#define DEC4(type) INLINE_OVERLOADABLE type##4 clz(type##4 a) { return (type##4)(clz(a.s0), clz(a.s1), clz(a.s2), clz(a.s3)); }
+#define DEC8(type) INLINE_OVERLOADABLE type##8 clz(type##8 a) { return (type##8)(clz(a.s0), clz(a.s1), clz(a.s2), clz(a.s3), clz(a.s4), clz(a.s5), clz(a.s6), clz(a.s7)); }
+#define DEC16(type) INLINE_OVERLOADABLE type##16 clz(type##16 a) { return (type##16)(clz(a.s0), clz(a.s1), clz(a.s2), clz(a.s3), clz(a.s4), clz(a.s5), clz(a.s6), clz(a.s7), clz(a.s8), clz(a.s9), clz(a.sa), clz(a.sb), clz(a.sc), clz(a.sd), clz(a.se), clz(a.sf)); }
 #define DEC(n) DEC##n(char); DEC##n(uchar); DEC##n(short); DEC##n(ushort); DEC##n(int); DEC##n(uint) 
 DEC(2)
 DEC(3)
@@ -4364,11 +4364,11 @@ INLINE_OVERLOADABLE short mul_hi(short x, short y) { return (x * y) >> 16; }
 INLINE_OVERLOADABLE ushort mul_hi(ushort x, ushort y) { return (x * y) >> 16; }
 INLINE_OVERLOADABLE int mul_hi(int x, int y) { return __gen_ocl_mul_hi(x, y); }
 INLINE_OVERLOADABLE uint mul_hi(uint x, uint y) { return __gen_ocl_mul_hi(x, y); }
-#define DEC2(type) INLINE_OVERLOADABLE type##2 mul_hi(type##2 a, type##2 b) { return (mul_hi(a.s0, b.s0), mul_hi(a.s1, b.s1)); }
-#define DEC3(type) INLINE_OVERLOADABLE type##3 mul_hi(type##3 a, type##3 b) { return (mul_hi(a.s0, b.s0), mul_hi(a.s1, b.s1), mul_hi(a.s2, b.s2)); }
-#define DEC4(type) INLINE_OVERLOADABLE type##4 mul_hi(type##4 a, type##4 b) { return (mul_hi(a.s0, b.s0), mul_hi(a.s1, b.s1), mul_hi(a.s2, b.s2), mul_hi(a.s3, b.s3)); }
-#define DEC8(type) INLINE_OVERLOADABLE type##8 mul_hi(type##8 a, type##8 b) { return (mul_hi(a.s0, b.s0), mul_hi(a.s1, b.s1), mul_hi(a.s2, b.s2), mul_hi(a.s3, b.s3), mul_hi(a.s4, b.s4), mul_hi(a.s5, b.s5), mul_hi(a.s6, b.s6), mul_hi(a.s7, b.s7)); }
-#define DEC16(type) INLINE_OVERLOADABLE type##16 mul_hi(type##16 a, type##16 b) { return (mul_hi(a.s0, b.s0), mul_hi(a.s1, b.s1), mul_hi(a.s2, b.s2), mul_hi(a.s3, b.s3), mul_hi(a.s4, b.s4), mul_hi(a.s5, b.s5), mul_hi(a.s6, b.s6), mul_hi(a.s7, b.s7), mul_hi(a.s8, b.s8), mul_hi(a.s9, b.s9), mul_hi(a.sa, b.sa), mul_hi(a.sb, b.sb), mul_hi(a.sc, b.sc), mul_hi(a.sd, b.sd), mul_hi(a.se, b.se), mul_hi(a.sf, b.sf)); }
+#define DEC2(type) INLINE_OVERLOADABLE type##2 mul_hi(type##2 a, type##2 b) { return (type##2)(mul_hi(a.s0, b.s0), mul_hi(a.s1, b.s1)); }
+#define DEC3(type) INLINE_OVERLOADABLE type##3 mul_hi(type##3 a, type##3 b) { return (type##3)(mul_hi(a.s0, b.s0), mul_hi(a.s1, b.s1), mul_hi(a.s2, b.s2)); }
+#define DEC4(type) INLINE_OVERLOADABLE type##4 mul_hi(type##4 a, type##4 b) { return (type##4)(mul_hi(a.s0, b.s0), mul_hi(a.s1, b.s1), mul_hi(a.s2, b.s2), mul_hi(a.s3, b.s3)); }
+#define DEC8(type) INLINE_OVERLOADABLE type##8 mul_hi(type##8 a, type##8 b) { return (type##8)(mul_hi(a.s0, b.s0), mul_hi(a.s1, b.s1), mul_hi(a.s2, b.s2), mul_hi(a.s3, b.s3), mul_hi(a.s4, b.s4), mul_hi(a.s5, b.s5), mul_hi(a.s6, b.s6), mul_hi(a.s7, b.s7)); }
+#define DEC16(type) INLINE_OVERLOADABLE type##16 mul_hi(type##16 a, type##16 b) { return (type##16)(mul_hi(a.s0, b.s0), mul_hi(a.s1, b.s1), mul_hi(a.s2, b.s2), mul_hi(a.s3, b.s3), mul_hi(a.s4, b.s4), mul_hi(a.s5, b.s5), mul_hi(a.s6, b.s6), mul_hi(a.s7, b.s7), mul_hi(a.s8, b.s8), mul_hi(a.s9, b.s9), mul_hi(a.sa, b.sa), mul_hi(a.sb, b.sb), mul_hi(a.sc, b.sc), mul_hi(a.sd, b.sd), mul_hi(a.se, b.se), mul_hi(a.sf, b.sf)); }
 #define DEF(n) DEC##n(char); DEC##n(uchar); DEC##n(short); DEC##n(ushort); DEC##n(int); DEC##n(uint)
 DEF(2)
 DEF(3)
@@ -4390,11 +4390,11 @@ DEF(ushort)
 DEF(int)
 DEF(uint)
 #undef DEF
-#define DEC2(type) INLINE_OVERLOADABLE type##2 mad_hi(type##2 a, type##2 b, type##2 c) { return (mad_hi(a.s0, b.s0, c.s0), mad_hi(a.s1, b.s1, c.s1)); }
-#define DEC3(type) INLINE_OVERLOADABLE type##3 mad_hi(type##3 a, type##3 b, type##3 c) { return (mad_hi(a.s0, b.s0, c.s0), mad_hi(a.s1, b.s1, c.s1), mad_hi(a.s2, b.s2, c.s2)); }
-#define DEC4(type) INLINE_OVERLOADABLE type##4 mad_hi(type##4 a, type##4 b, type##4 c) { return (mad_hi(a.s0, b.s0, c.s0), mad_hi(a.s1, b.s1, c.s1), mad_hi(a.s2, b.s2, c.s2), mad_hi(a.s3, b.s3, c.s3)); }
-#define DEC8(type) INLINE_OVERLOADABLE type##8 mad_hi(type##8 a, type##8 b, type##8 c) { return (mad_hi(a.s0, b.s0, c.s0), mad_hi(a.s1, b.s1, c.s1), mad_hi(a.s2, b.s2, c.s2), mad_hi(a.s3, b.s3, c.s3), mad_hi(a.s4, b.s4, c.s4), mad_hi(a.s5, b.s5, c.s5), mad_hi(a.s6, b.s6, c.s6), mad_hi(a.s7, b.s7, c.s7)); }
-#define DEC16(type) INLINE_OVERLOADABLE type##16 mad_hi(type##16 a, type##16 b, type##16 c) { return (mad_hi(a.s0, b.s0, c.s0), mad_hi(a.s1, b.s1, c.s1), mad_hi(a.s2, b.s2, c.s2), mad_hi(a.s3, b.s3, c.s3), mad_hi(a.s4, b.s4, c.s4), mad_hi(a.s5, b.s5, c.s5), mad_hi(a.s6, b.s6, c.s6), mad_hi(a.s7, b.s7, c.s7), mad_hi(a.s8, b.s8, c.s8), mad_hi(a.s9, b.s9, c.s9), mad_hi(a.sa, b.sa, c.sa), mad_hi(a.sb, b.sb, c.sb), mad_hi(a.sc, b.sc, c.sc), mad_hi(a.sd, b.sd, c.sd), mad_hi(a.se, b.se, c.se), mad_hi(a.sf, b.sf, c.sf)); }
+#define DEC2(type) INLINE_OVERLOADABLE type##2 mad_hi(type##2 a, type##2 b, type##2 c) { return (type##2)(mad_hi(a.s0, b.s0, c.s0), mad_hi(a.s1, b.s1, c.s1)); }
+#define DEC3(type) INLINE_OVERLOADABLE type##3 mad_hi(type##3 a, type##3 b, type##3 c) { return (type##3)(mad_hi(a.s0, b.s0, c.s0), mad_hi(a.s1, b.s1, c.s1), mad_hi(a.s2, b.s2, c.s2)); }
+#define DEC4(type) INLINE_OVERLOADABLE type##4 mad_hi(type##4 a, type##4 b, type##4 c) { return (type##4)(mad_hi(a.s0, b.s0, c.s0), mad_hi(a.s1, b.s1, c.s1), mad_hi(a.s2, b.s2, c.s2), mad_hi(a.s3, b.s3, c.s3)); }
+#define DEC8(type) INLINE_OVERLOADABLE type##8 mad_hi(type##8 a, type##8 b, type##8 c) { return (type##8)(mad_hi(a.s0, b.s0, c.s0), mad_hi(a.s1, b.s1, c.s1), mad_hi(a.s2, b.s2, c.s2), mad_hi(a.s3, b.s3, c.s3), mad_hi(a.s4, b.s4, c.s4), mad_hi(a.s5, b.s5, c.s5), mad_hi(a.s6, b.s6, c.s6), mad_hi(a.s7, b.s7, c.s7)); }
+#define DEC16(type) INLINE_OVERLOADABLE type##16 mad_hi(type##16 a, type##16 b, type##16 c) { return (type##16)(mad_hi(a.s0, b.s0, c.s0), mad_hi(a.s1, b.s1, c.s1), mad_hi(a.s2, b.s2, c.s2), mad_hi(a.s3, b.s3, c.s3), mad_hi(a.s4, b.s4, c.s4), mad_hi(a.s5, b.s5, c.s5), mad_hi(a.s6, b.s6, c.s6), mad_hi(a.s7, b.s7, c.s7), mad_hi(a.s8, b.s8, c.s8), mad_hi(a.s9, b.s9, c.s9), mad_hi(a.sa, b.sa, c.sa), mad_hi(a.sb, b.sb, c.sb), mad_hi(a.sc, b.sc, c.sc), mad_hi(a.sd, b.sd, c.sd), mad_hi(a.se, b.se, c.se), mad_hi(a.sf, b.sf, c.sf)); }
 #define DEF(n) DEC##n(char); DEC##n(uchar); DEC##n(short); DEC##n(ushort); DEC##n(int); DEC##n(uint)
 DEF(2)
 DEF(3)
@@ -4422,11 +4422,11 @@ DEF(ushort, 15)
 DEF(int, 31)
 DEF(uint, 31)
 #undef DEF
-#define DEC2(type) INLINE_OVERLOADABLE type##2 rotate(type##2 a, type##2 b) { return (rotate(a.s0, b.s0), rotate(a.s1, b.s1)); }
-#define DEC3(type) INLINE_OVERLOADABLE type##3 rotate(type##3 a, type##3 b) { return (rotate(a.s0, b.s0), rotate(a.s1, b.s1), rotate(a.s2, b.s2)); }
-#define DEC4(type) INLINE_OVERLOADABLE type##4 rotate(type##4 a, type##4 b) { return (rotate(a.s0, b.s0), rotate(a.s1, b.s1), rotate(a.s2, b.s2), rotate(a.s3, b.s3)); }
-#define DEC8(type) INLINE_OVERLOADABLE type##8 rotate(type##8 a, type##8 b) { return (rotate(a.s0, b.s0), rotate(a.s1, b.s1), rotate(a.s2, b.s2), rotate(a.s3, b.s3), rotate(a.s4, b.s4), rotate(a.s5, b.s5), rotate(a.s6, b.s6), rotate(a.s7, b.s7)); }
-#define DEC16(type) INLINE_OVERLOADABLE type##16 rotate(type##16 a, type##16 b) { return (rotate(a.s0, b.s0), rotate(a.s1, b.s1), rotate(a.s2, b.s2), rotate(a.s3, b.s3), rotate(a.s4, b.s4), rotate(a.s5, b.s5), rotate(a.s6, b.s6), rotate(a.s7, b.s7), rotate(a.s8, b.s8), rotate(a.s9, b.s9), rotate(a.sa, b.sa), rotate(a.sb, b.sb), rotate(a.sc, b.sc), rotate(a.sd, b.sd), rotate(a.se, b.se), rotate(a.sf, b.sf)); }
+#define DEC2(type) INLINE_OVERLOADABLE type##2 rotate(type##2 a, type##2 b) { return (type##2)(rotate(a.s0, b.s0), rotate(a.s1, b.s1)); }
+#define DEC3(type) INLINE_OVERLOADABLE type##3 rotate(type##3 a, type##3 b) { return (type##3)(rotate(a.s0, b.s0), rotate(a.s1, b.s1), rotate(a.s2, b.s2)); }
+#define DEC4(type) INLINE_OVERLOADABLE type##4 rotate(type##4 a, type##4 b) { return (type##4)(rotate(a.s0, b.s0), rotate(a.s1, b.s1), rotate(a.s2, b.s2), rotate(a.s3, b.s3)); }
+#define DEC8(type) INLINE_OVERLOADABLE type##8 rotate(type##8 a, type##8 b) { return (type##8)(rotate(a.s0, b.s0), rotate(a.s1, b.s1), rotate(a.s2, b.s2), rotate(a.s3, b.s3), rotate(a.s4, b.s4), rotate(a.s5, b.s5), rotate(a.s6, b.s6), rotate(a.s7, b.s7)); }
+#define DEC16(type) INLINE_OVERLOADABLE type##16 rotate(type##16 a, type##16 b) { return (type##16)(rotate(a.s0, b.s0), rotate(a.s1, b.s1), rotate(a.s2, b.s2), rotate(a.s3, b.s3), rotate(a.s4, b.s4), rotate(a.s5, b.s5), rotate(a.s6, b.s6), rotate(a.s7, b.s7), rotate(a.s8, b.s8), rotate(a.s9, b.s9), rotate(a.sa, b.sa), rotate(a.sb, b.sb), rotate(a.sc, b.sc), rotate(a.sd, b.sd), rotate(a.se, b.se), rotate(a.sf, b.sf)); }
 #define DEF(n) DEC##n(char); DEC##n(uchar); DEC##n(short); DEC##n(ushort); DEC##n(int); DEC##n(uint)
 DEF(2)
 DEF(3)
@@ -4454,11 +4454,11 @@ INLINE_OVERLOADABLE int hadd(int x, int y) { return (x < 0 && y > 0) || (x > 0 &
 INLINE_OVERLOADABLE uint hadd(uint x, uint y) { return __gen_ocl_hadd(x, y); }
 INLINE_OVERLOADABLE int rhadd(int x, int y) { return (x < 0 && y > 0) || (x > 0 && y < 0) ? ((x + y + 1) >> 1) : __gen_ocl_rhadd(x, y); }
 INLINE_OVERLOADABLE uint rhadd(uint x, uint y) { return __gen_ocl_rhadd(x, y); }
-#define DEC2(func, type) INLINE_OVERLOADABLE type##2 func(type##2 a, type##2 b) { return (func(a.s0, b.s0), func(a.s1, b.s1)); }
-#define DEC3(func, type) INLINE_OVERLOADABLE type##3 func(type##3 a, type##3 b) { return (func(a.s0, b.s0), func(a.s1, b.s1), func(a.s2, b.s2)); }
-#define DEC4(func, type) INLINE_OVERLOADABLE type##4 func(type##4 a, type##4 b) { return (func(a.s0, b.s0), func(a.s1, b.s1), func(a.s2, b.s2), func(a.s3, b.s3)); }
-#define DEC8(func, type) INLINE_OVERLOADABLE type##8 func(type##8 a, type##8 b) { return (func(a.s0, b.s0), func(a.s1, b.s1), func(a.s2, b.s2), func(a.s3, b.s3), func(a.s4, b.s4), func(a.s5, b.s5), func(a.s6, b.s6), func(a.s7, b.s7)); }
-#define DEC16(func, type) INLINE_OVERLOADABLE type##16 func(type##16 a, type##16 b) { return (func(a.s0, b.s0), func(a.s1, b.s1), func(a.s2, b.s2), func(a.s3, b.s3), func(a.s4, b.s4), func(a.s5, b.s5), func(a.s6, b.s6), func(a.s7, b.s7), func(a.s8, b.s8), func(a.s9, b.s9), func(a.sa, b.sa), func(a.sb, b.sb), func(a.sc, b.sc), func(a.sd, b.sd), func(a.se, b.se), func(a.sf, b.sf)); }
+#define DEC2(func, type) INLINE_OVERLOADABLE type##2 func(type##2 a, type##2 b) { return (type##2)(func(a.s0, b.s0), func(a.s1, b.s1)); }
+#define DEC3(func, type) INLINE_OVERLOADABLE type##3 func(type##3 a, type##3 b) { return (type##3)(func(a.s0, b.s0), func(a.s1, b.s1), func(a.s2, b.s2)); }
+#define DEC4(func, type) INLINE_OVERLOADABLE type##4 func(type##4 a, type##4 b) { return (type##4)(func(a.s0, b.s0), func(a.s1, b.s1), func(a.s2, b.s2), func(a.s3, b.s3)); }
+#define DEC8(func, type) INLINE_OVERLOADABLE type##8 func(type##8 a, type##8 b) { return (type##8)(func(a.s0, b.s0), func(a.s1, b.s1), func(a.s2, b.s2), func(a.s3, b.s3), func(a.s4, b.s4), func(a.s5, b.s5), func(a.s6, b.s6), func(a.s7, b.s7)); }
+#define DEC16(func, type) INLINE_OVERLOADABLE type##16 func(type##16 a, type##16 b) { return (type##16)(func(a.s0, b.s0), func(a.s1, b.s1), func(a.s2, b.s2), func(a.s3, b.s3), func(a.s4, b.s4), func(a.s5, b.s5), func(a.s6, b.s6), func(a.s7, b.s7), func(a.s8, b.s8), func(a.s9, b.s9), func(a.sa, b.sa), func(a.sb, b.sb), func(a.sc, b.sc), func(a.sd, b.sd), func(a.se, b.se), func(a.sf, b.sf)); }
 #define DEF(func, n) DEC##n(func, char); DEC##n(func, uchar); DEC##n(func, short); DEC##n(func, ushort); DEC##n(func, int); DEC##n(func, uint)
 DEF(hadd, 2)
 DEF(hadd, 3)
