@@ -31,36 +31,36 @@ struct cl_vec {
         return !memcmp (this->ptr, other.ptr, sizeof(T) * N);
     }
 
-    void abs(void) {
+    void abs_diff(vec_type & other) {
         int i = 0;
         for (; i < N; i++) {
-            T f = ptr[i];
-            f = f < 0 ? -f : f;
+            T a = ptr[i];
+            T b = other.ptr[i];
+            T f = a > b ? (a - b) : (b - a);
             ptr[i] = f;
         }
     }
 };
 
 template <typename T, typename U, int N> static void cpu (int global_id,
-        cl_vec<T, N> *src, cl_vec<U, N> *dst)
+        cl_vec<T, N> *x, cl_vec<T, N> *y, cl_vec<U, N> *diff)
 {
-    cl_vec<T, N> v  = src[global_id];
-    v.abs();
-    dst[global_id] = v;
+    cl_vec<T, N> v  = x[global_id];
+    v.abs_diff(y[global_id]);
+    diff[global_id] = v;
 }
 
-template <typename T, typename U> static void cpu(int global_id, T *src, U *dst)
+template <typename T, typename U> static void cpu(int global_id, T *x, T *y, U *diff)
 {
-    T f = src[global_id];
-    f = f < 0 ? -f : f;
-    dst[global_id] = (U)f;
+    T a = x[global_id];
+    T b = y[global_id];
+    U f = a > b ? (a - b) : (b - a);
+    diff[global_id] = f;
 }
 
 template <typename T, int N> static void gen_rand_val (cl_vec<T, N>& vect)
 {
     int i = 0;
-
-    memset(vect.ptr, 0, sizeof(T) * ((N+1)/2)*2);
     for (; i < N; i++) {
         vect.ptr[i] = static_cast<T>((rand() & 63) - 32);
     }
@@ -80,109 +80,125 @@ inline static void print_data (T& val)
         printf(" %d", val);
 }
 
-template <typename T, typename U, int N> static void dump_data (cl_vec<T, N>* src,
-        cl_vec<U, N>* dst, int n)
+template <typename T, typename U, int N> static void dump_data (cl_vec<T, N>* x,
+        cl_vec<T, N>* y, cl_vec<U, N>* diff, int n)
 {
-    U* val = reinterpret_cast<U *>(dst);
+    U* val = reinterpret_cast<U *>(diff);
 
     n = n*((N+1)/2)*2;
 
-    printf("\nRaw: \n");
+    printf("\nRaw x: \n");
     for (int32_t i = 0; i < (int32_t) n; ++i) {
         print_data(((T *)buf_data[0])[i]);
     }
+    printf("\nRaw y: \n");
+    for (int32_t i = 0; i < (int32_t) n; ++i) {
+        print_data(((T *)buf_data[1])[i]);
+    }
 
-    printf("\nCPU: \n");
+    printf("\nCPU diff: \n");
     for (int32_t i = 0; i < (int32_t) n; ++i) {
         print_data(val[i]);
     }
-    printf("\nGPU: \n");
+    printf("\nGPU diff: \n");
     for (int32_t i = 0; i < (int32_t) n; ++i) {
-        print_data(((U *)buf_data[1])[i]);
+        print_data(((U *)buf_data[2])[i]);
     }
 }
 
-template <typename T, typename U> static void dump_data (T* src, U* dst, int n)
+template <typename T, typename U> static void dump_data (T* x, T* y, U* diff, int n)
 {
-    printf("\nRaw: \n");
+    printf("\nRaw x: \n");
     for (int32_t i = 0; i < (int32_t) n; ++i) {
         print_data(((T *)buf_data[0])[i]);
     }
-
-    printf("\nCPU: \n");
+    printf("\nRaw y: \n");
     for (int32_t i = 0; i < (int32_t) n; ++i) {
-        print_data(dst[i]);
+        print_data(((T *)buf_data[1])[i]);
     }
-    printf("\nGPU: \n");
+
+    printf("\nCPU diff: \n");
     for (int32_t i = 0; i < (int32_t) n; ++i) {
-        print_data(((U *)buf_data[1])[i]);
+        print_data(diff[i]);
+    }
+    printf("\nGPU diff: \n");
+    for (int32_t i = 0; i < (int32_t) n; ++i) {
+        print_data(((U *)buf_data[2])[i]);
     }
 }
 
-template <typename T, typename U> static void compiler_abs_with_type(void)
+template <typename T, typename U> static void compiler_abs_diff_with_type(void)
 {
     const size_t n = 16;
-    U cpu_dst[16];
-    T cpu_src[16];
+    U cpu_diff[16];
+    T cpu_x[16];
+    T cpu_y[16];
 
     // Setup buffers
     OCL_CREATE_BUFFER(buf[0], 0, n * sizeof(T), NULL);
     OCL_CREATE_BUFFER(buf[1], 0, n * sizeof(T), NULL);
+    OCL_CREATE_BUFFER(buf[2], 0, n * sizeof(U), NULL);
     OCL_SET_ARG(0, sizeof(cl_mem), &buf[0]);
     OCL_SET_ARG(1, sizeof(cl_mem), &buf[1]);
+    OCL_SET_ARG(2, sizeof(cl_mem), &buf[2]);
     globals[0] = 16;
     locals[0] = 16;
 
     // Run random tests
     for (uint32_t pass = 0; pass < 8; ++pass) {
         OCL_MAP_BUFFER(0);
+        OCL_MAP_BUFFER(1);
 
         /* Clear the dst buffer to avoid random data. */
-        OCL_MAP_BUFFER(1);
-        memset(buf_data[1], 0, sizeof(U) * n);
-        OCL_UNMAP_BUFFER(1);
+        OCL_MAP_BUFFER(2);
+        memset(buf_data[2], 0, sizeof(U) * n);
+        OCL_UNMAP_BUFFER(2);
 
         for (int32_t i = 0; i < (int32_t) n; ++i) {
-            gen_rand_val(cpu_src[i]);
+            gen_rand_val(cpu_x[i]);
+            gen_rand_val(cpu_y[i]);
         }
 
-        memcpy(buf_data[0], cpu_src, sizeof(T) * n);
+        memcpy(buf_data[0], cpu_x, sizeof(T) * n);
+        memcpy(buf_data[1], cpu_y, sizeof(T) * n);
 
         // Run the kernel on GPU
         OCL_NDRANGE(1);
 
         // Run on CPU
         for (int32_t i = 0; i < (int32_t) n; ++i)
-            cpu(i, cpu_src, cpu_dst);
+            cpu(i, cpu_x, cpu_y, cpu_diff);
 
         // Compare
-        OCL_MAP_BUFFER(1);
+        OCL_MAP_BUFFER(2);
 
-//      dump_data(cpu_src, cpu_dst, n);
+//      dump_data(cpu_x, cpu_y, cpu_diff, n);
 
-        OCL_ASSERT(!memcmp(buf_data[1], cpu_dst, sizeof(T) * n));
-        OCL_UNMAP_BUFFER(1);
+        OCL_ASSERT(!memcmp(buf_data[2], cpu_diff, sizeof(T) * n));
+
         OCL_UNMAP_BUFFER(0);
+        OCL_UNMAP_BUFFER(1);
+        OCL_UNMAP_BUFFER(2);
     }
 }
 
-#define ABS_TEST_TYPE(TYPE, UTYPE) \
-	static void compiler_abs_##TYPE (void) \
+#define ABS_TEST_DIFF_TYPE(TYPE, UTYPE) \
+	static void compiler_abs_diff_##TYPE (void) \
         { \
-           OCL_CALL (cl_kernel_init, "compiler_abs.cl", "compiler_abs_"#TYPE, SOURCE, NULL);  \
-           compiler_abs_with_type<TYPE, UTYPE>(); \
+           OCL_CALL (cl_kernel_init, "compiler_abs_diff.cl", "compiler_abs_diff_"#TYPE, SOURCE, NULL);  \
+           compiler_abs_diff_with_type<TYPE, UTYPE>(); \
         } \
-	MAKE_UTEST_FROM_FUNCTION(compiler_abs_##TYPE);
+	MAKE_UTEST_FROM_FUNCTION(compiler_abs_diff_##TYPE);
 
 typedef unsigned char uchar;
 typedef unsigned short ushort;
 typedef unsigned int uint;
-ABS_TEST_TYPE(int, uint)
-ABS_TEST_TYPE(short, ushort)
-ABS_TEST_TYPE(char, uchar)
-ABS_TEST_TYPE(uint, uint)
-ABS_TEST_TYPE(ushort, ushort)
-ABS_TEST_TYPE(uchar, uchar)
+ABS_TEST_DIFF_TYPE(int, uint)
+ABS_TEST_DIFF_TYPE(short, ushort)
+ABS_TEST_DIFF_TYPE(char, uchar)
+ABS_TEST_DIFF_TYPE(uint, uint)
+ABS_TEST_DIFF_TYPE(ushort, ushort)
+ABS_TEST_DIFF_TYPE(uchar, uchar)
 
 
 typedef cl_vec<int, 2> int2;
@@ -195,16 +211,16 @@ typedef cl_vec<unsigned int, 3> uint3;
 typedef cl_vec<unsigned int, 4> uint4;
 typedef cl_vec<unsigned int, 8> uint8;
 typedef cl_vec<unsigned int, 16> uint16;
-ABS_TEST_TYPE(int2, uint2)
-ABS_TEST_TYPE(int3, uint3)
-ABS_TEST_TYPE(int4, uint4)
-ABS_TEST_TYPE(int8, uint8)
-ABS_TEST_TYPE(int16, uint16)
-ABS_TEST_TYPE(uint2, uint2)
-ABS_TEST_TYPE(uint3, uint3)
-ABS_TEST_TYPE(uint4, uint4)
-ABS_TEST_TYPE(uint8, uint8)
-ABS_TEST_TYPE(uint16, uint16)
+ABS_TEST_DIFF_TYPE(int2, uint2)
+ABS_TEST_DIFF_TYPE(int3, uint3)
+ABS_TEST_DIFF_TYPE(int4, uint4)
+ABS_TEST_DIFF_TYPE(int8, uint8)
+ABS_TEST_DIFF_TYPE(int16, uint16)
+ABS_TEST_DIFF_TYPE(uint2, uint2)
+ABS_TEST_DIFF_TYPE(uint3, uint3)
+ABS_TEST_DIFF_TYPE(uint4, uint4)
+ABS_TEST_DIFF_TYPE(uint8, uint8)
+ABS_TEST_DIFF_TYPE(uint16, uint16)
 
 
 typedef cl_vec<char, 2> char2;
@@ -217,16 +233,16 @@ typedef cl_vec<unsigned char, 3> uchar3;
 typedef cl_vec<unsigned char, 4> uchar4;
 typedef cl_vec<unsigned char, 8> uchar8;
 typedef cl_vec<unsigned char, 16> uchar16;
-ABS_TEST_TYPE(char2, uchar2)
-ABS_TEST_TYPE(char3, uchar3)
-ABS_TEST_TYPE(char4, uchar4)
-ABS_TEST_TYPE(char8, uchar8)
-ABS_TEST_TYPE(char16, uchar16)
-ABS_TEST_TYPE(uchar2, uchar2)
-ABS_TEST_TYPE(uchar3, uchar3)
-ABS_TEST_TYPE(uchar4, uchar4)
-ABS_TEST_TYPE(uchar8, uchar8)
-ABS_TEST_TYPE(uchar16, uchar16)
+ABS_TEST_DIFF_TYPE(char2, uchar2)
+ABS_TEST_DIFF_TYPE(char3, uchar3)
+ABS_TEST_DIFF_TYPE(char4, uchar4)
+ABS_TEST_DIFF_TYPE(char8, uchar8)
+ABS_TEST_DIFF_TYPE(char16, uchar16)
+ABS_TEST_DIFF_TYPE(uchar2, uchar2)
+ABS_TEST_DIFF_TYPE(uchar3, uchar3)
+ABS_TEST_DIFF_TYPE(uchar4, uchar4)
+ABS_TEST_DIFF_TYPE(uchar8, uchar8)
+ABS_TEST_DIFF_TYPE(uchar16, uchar16)
 
 
 typedef cl_vec<short, 2> short2;
@@ -239,13 +255,13 @@ typedef cl_vec<unsigned short, 3> ushort3;
 typedef cl_vec<unsigned short, 4> ushort4;
 typedef cl_vec<unsigned short, 8> ushort8;
 typedef cl_vec<unsigned short, 16> ushort16;
-ABS_TEST_TYPE(short2, ushort2)
-ABS_TEST_TYPE(short3, ushort3)
-ABS_TEST_TYPE(short4, ushort4)
-ABS_TEST_TYPE(short8, ushort8)
-ABS_TEST_TYPE(short16, ushort16)
-ABS_TEST_TYPE(ushort2, ushort2)
-ABS_TEST_TYPE(ushort3, ushort3)
-ABS_TEST_TYPE(ushort4, ushort4)
-ABS_TEST_TYPE(ushort8, ushort8)
-ABS_TEST_TYPE(ushort16, ushort16)
+ABS_TEST_DIFF_TYPE(short2, ushort2)
+ABS_TEST_DIFF_TYPE(short3, ushort3)
+ABS_TEST_DIFF_TYPE(short4, ushort4)
+ABS_TEST_DIFF_TYPE(short8, ushort8)
+ABS_TEST_DIFF_TYPE(short16, ushort16)
+ABS_TEST_DIFF_TYPE(ushort2, ushort2)
+ABS_TEST_DIFF_TYPE(ushort3, ushort3)
+ABS_TEST_DIFF_TYPE(ushort4, ushort4)
+ABS_TEST_DIFF_TYPE(ushort8, ushort8)
+ABS_TEST_DIFF_TYPE(ushort16, ushort16)
