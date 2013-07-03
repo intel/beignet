@@ -4515,6 +4515,90 @@ DEC(uchar)
 #undef ABS_VEC8
 #undef ABS_VEC16
 
+
+/* Char and short type abs diff */
+/* promote char and short to int and will be no module overflow */
+#define ABS_DIFF(CVT) (CVT)(abs((int)x - (int)y))
+#define ABS_DIFF_I(CVT, I)  (CVT)(abs((int)x.s##I - (int)y.s##I))
+
+#define ABS_DIFF_VEC1(CVT)  ABS_DIFF(CVT)
+#define ABS_DIFF_VEC2(CVT)  ABS_DIFF_I(CVT, 0), ABS_DIFF_I(CVT, 1)
+#define ABS_DIFF_VEC3(CVT)  ABS_DIFF_I(CVT, 0), ABS_DIFF_I(CVT, 1), ABS_DIFF_I(CVT, 2)
+#define ABS_DIFF_VEC4(CVT)  ABS_DIFF_VEC2(CVT), ABS_DIFF_I(CVT, 2), ABS_DIFF_I(CVT, 3)
+#define ABS_DIFF_VEC8(CVT)  ABS_DIFF_VEC4(CVT), ABS_DIFF_I(CVT, 4), ABS_DIFF_I(CVT, 5), \
+                            ABS_DIFF_I(CVT, 6), ABS_DIFF_I(CVT, 7)
+#define ABS_DIFF_VEC16(CVT)  ABS_DIFF_VEC8(CVT), ABS_DIFF_I(CVT, 8), ABS_DIFF_I(CVT, 9), \
+                            ABS_DIFF_I(CVT, A), ABS_DIFF_I(CVT, B), \
+                            ABS_DIFF_I(CVT, C), ABS_DIFF_I(CVT, D), \
+                            ABS_DIFF_I(CVT, E), ABS_DIFF_I(CVT, F)
+
+#define DEC_1(TYPE, UTYPE) INLINE_OVERLOADABLE UTYPE abs_diff(TYPE x, TYPE y) \
+                           { return ABS_DIFF_VEC1(UTYPE); }
+#define DEC_N(TYPE, UTYPE, N) INLINE_OVERLOADABLE UTYPE##N abs_diff(TYPE##N x, TYPE##N y) \
+                              { return (UTYPE##N)(ABS_DIFF_VEC##N(UTYPE)); };
+#define DEC(TYPE, UTYPE)  DEC_1(TYPE, UTYPE) DEC_N(TYPE, UTYPE, 2)  DEC_N(TYPE, UTYPE, 3 ) \
+                          DEC_N(TYPE, UTYPE, 4) DEC_N(TYPE, UTYPE, 8) DEC_N(TYPE, UTYPE, 16)
+DEC(char, uchar)
+DEC(uchar, uchar)
+DEC(short, ushort)
+DEC(ushort, ushort)
+
+#undef DEC
+#undef DEC_1
+#undef DEC_N
+#undef ABS_DIFF
+#undef ABS_DIFF_I
+#undef ABS_DIFF_VEC1
+#undef ABS_DIFF_VEC2
+#undef ABS_DIFF_VEC3
+#undef ABS_DIFF_VEC4
+#undef ABS_DIFF_VEC8
+#undef ABS_DIFF_VEC16
+
+INLINE_OVERLOADABLE uint abs_diff (uint x, uint y) {
+    /* same signed will never overflow. */
+    return y > x ? (y -x) : (x - y);
+}
+
+INLINE_OVERLOADABLE uint abs_diff (int x, int y) {
+    /* same signed will never module overflow. */
+    if ((x >= 0 && y >= 0) || (x <= 0 && y <= 0))
+        return abs(x - y);
+
+    return (abs(x) + abs(y));
+}
+
+#define ABS_DIFF_I(I)  abs_diff(x.s##I, y.s##I)
+
+#define ABS_DIFF_VEC2  ABS_DIFF_I(0), ABS_DIFF_I(1)
+#define ABS_DIFF_VEC3  ABS_DIFF_I(0), ABS_DIFF_I(1), ABS_DIFF_I(2)
+#define ABS_DIFF_VEC4  ABS_DIFF_VEC2, ABS_DIFF_I(2), ABS_DIFF_I(3)
+#define ABS_DIFF_VEC8  ABS_DIFF_VEC4, ABS_DIFF_I(4), ABS_DIFF_I(5), \
+                       ABS_DIFF_I(6), ABS_DIFF_I(7)
+#define ABS_DIFF_VEC16  ABS_DIFF_VEC8, ABS_DIFF_I(8), ABS_DIFF_I(9), \
+                            ABS_DIFF_I(A), ABS_DIFF_I(B), \
+                            ABS_DIFF_I(C), ABS_DIFF_I(D), \
+                            ABS_DIFF_I(E), ABS_DIFF_I(F)
+
+#define DEC_N(TYPE, N) INLINE_OVERLOADABLE uint##N abs_diff(TYPE##N x, TYPE##N y) \
+				      { return (uint##N)(ABS_DIFF_VEC##N); };
+#define DEC(TYPE)   DEC_N(TYPE, 2)  DEC_N(TYPE, 3 ) \
+                           DEC_N(TYPE, 4) DEC_N(TYPE, 8) DEC_N(TYPE, 16)
+DEC(int)
+DEC(uint)
+
+#undef DEC
+#undef DEC_1
+#undef DEC_N
+#undef ABS_DIFF
+#undef ABS_DIFF_I
+#undef ABS_DIFF_VEC1
+#undef ABS_DIFF_VEC2
+#undef ABS_DIFF_VEC3
+#undef ABS_DIFF_VEC4
+#undef ABS_DIFF_VEC8
+#undef ABS_DIFF_VEC16
+
 /////////////////////////////////////////////////////////////////////////////
 // Work Items functions (see 6.11.1 of OCL 1.1 spec)
 /////////////////////////////////////////////////////////////////////////////
