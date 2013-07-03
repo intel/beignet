@@ -55,6 +55,7 @@ struct _cl_mem {
   uint64_t magic;           /* To identify it as a memory object */
   volatile int ref_n;       /* This object is reference counted */
   cl_buffer bo;             /* Data in GPU memory */
+  void *egl_image;          /* created from external egl image*/
   size_t size;              /* original request size, not alignment size, used in constant buffer */
   cl_mem prev, next;        /* We chain the memory buffers together */
   cl_context ctx;           /* Context it belongs to */
@@ -86,6 +87,9 @@ cl_mem_new_image(cl_context context,
 
 /* Unref the object and delete it if no more reference */
 extern void cl_mem_delete(cl_mem);
+
+/* Destroy egl image. */
+extern void cl_mem_gl_delete(cl_mem);
 
 /* Add one more reference to this object */
 extern void cl_mem_add_ref(cl_mem);

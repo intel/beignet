@@ -183,6 +183,7 @@ LOCAL cl_mem cl_mem_new_gl_texture(cl_context ctx,
     err = CL_INVALID_GL_OBJECT;
     goto error;
   }
+  mem->egl_image = egl_image;
   mem->bo = cl_buffer_alloc_from_eglimage(ctx, (void*)egl_image, &gl_format, &w, &h, &pitch, &tiling);
   if (UNLIKELY(mem->bo == NULL)) {
     err = CL_MEM_OBJECT_ALLOCATION_FAILURE;
@@ -231,4 +232,12 @@ error:
   mem = NULL;
   goto exit;
 
+}
+
+LOCAL void cl_mem_gl_delete(cl_mem mem)
+{
+  struct cl_gl_ext_deps *egl_funcs;
+  EGLDisplay egl_display = (EGLDisplay)mem->ctx->props.egl_display;
+  egl_funcs =  CL_EXTENSION_GET_FUNCS(mem->ctx, khr_gl_sharing, gl_ext_deps);
+  egl_funcs->eglDestroyImageKHR_func(egl_display, mem->egl_image);
 }

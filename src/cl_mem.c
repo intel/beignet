@@ -400,6 +400,11 @@ cl_mem_delete(cl_mem mem)
     return;
   if (LIKELY(mem->bo != NULL))
     cl_buffer_unreference(mem->bo);
+#ifdef HAS_EGL
+  if (UNLIKELY(mem->egl_image != NULL)) {
+     cl_mem_gl_delete(mem);
+  }
+#endif
 
   /* Remove it from the list */
   assert(mem->ctx);
