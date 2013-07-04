@@ -567,6 +567,35 @@ namespace gbe
       if(addrSpace == ir::AddressSpace::MEM_CONSTANT) {
         GBE_ASSERT(v.hasInitializer());
         const Constant *c = v.getInitializer();
+        if (c->getType()->getTypeID() != Type::ArrayTyID) {
+          void *mem = malloc(sizeof(double));
+          int size = 0;
+          switch(c->getType()->getTypeID()) {
+            case Type::TypeID::IntegerTyID: {
+              const ConstantInt *ci = dyn_cast<ConstantInt>(c);
+              *(int *)mem = ci->isNegative() ? ci->getSExtValue() : ci->getZExtValue();
+              size = sizeof(int);
+              break;
+            }
+            case Type::TypeID::FloatTyID: {
+              const ConstantFP *cf = dyn_cast<ConstantFP>(c);
+              *(float *)mem = cf->getValueAPF().convertToFloat();
+              size = sizeof(float);
+              break;
+            }
+            case Type::TypeID::DoubleTyID: {
+              const ConstantFP *cf = dyn_cast<ConstantFP>(c);
+              *(double *)mem = cf->getValueAPF().convertToDouble();
+              size = sizeof(double);
+              break;
+            }
+            default:
+              NOT_IMPLEMENTED;
+          }
+          unit.newConstant((char *)mem, name, size, size);
+          free(mem);
+          continue;
+        }
         GBE_ASSERT(c->getType()->getTypeID() == Type::ArrayTyID);
         const ConstantDataArray *cda = dyn_cast<ConstantDataArray>(c);
         GBE_ASSERT(cda);
@@ -782,7 +811,11 @@ namespace gbe
     }
     Constant *CPV = dyn_cast<Constant>(value);
     if (CPV) {
-      GBE_ASSERT(isa<GlobalValue>(CPV) == false);
+      if (isa<GlobalValue>(CPV)) {
+        auto name = CPV->getName().str();
+        uint16_t reg = unit.getConstantSet().getConstant(name).getReg();
+        return ir::Register(reg);
+      }
       const ir::ImmediateIndex immIndex = this->newImmediate(CPV, elemID);
       const ir::Immediate imm = ctx.getImmediate(immIndex);
       const ir::Register reg = ctx.reg(getFamily(imm.type));
@@ -1189,10 +1222,6 @@ namespace gbe
       if(addrSpace != ir::AddressSpace::MEM_CONSTANT)
         continue;
       GBE_ASSERT(v.hasInitializer());
-      const Constant *c = v.getInitializer();
-      GBE_ASSERT(c->getType()->getTypeID() == Type::ArrayTyID);
-      const ConstantDataArray *cda = dyn_cast<ConstantDataArray>(c);
-      GBE_ASSERT(cda);
       ir::Register reg = ctx.reg(ir::RegisterFamily::FAMILY_DWORD);
       ir::Constant &con = unit.getConstantSet().getConstant(j ++);
       con.setReg(reg.value());
