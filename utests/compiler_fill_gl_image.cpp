@@ -33,6 +33,10 @@ static void compiler_fill_gl_image(void)
   uint32_t *resultColor;
   GLuint tex;
 
+  if (eglContext == EGL_NO_CONTEXT) {
+    fprintf(stderr, "There is no valid egl context. Ignore this case.\n");
+    return;
+  }
   // Setup kernel and images
   glGenTextures(1, &tex);
   glBindTexture(GL_TEXTURE_2D, tex);

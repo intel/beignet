@@ -89,6 +89,7 @@ bool init_egl_window(int width, int height) {
     EGLConfig  ecfg;
     EGLint     numConfig;
 
+    eglContext = EGL_NO_CONTEXT;
     xDisplay = XOpenDisplay(NULL);
     if (xDisplay == NULL) {
       fprintf(stderr, "Failed to open DISPLAY.\n");
@@ -343,15 +344,17 @@ cl_ocl_init(void)
 
 #ifdef HAS_EGL
   if (hasGLExt) {
-    init_egl_window(EGL_WINDOW_WIDTH, EGL_WINDOW_HEIGHT);
+    int i = 0;
     props = new cl_context_properties[7];
-    props[0] = CL_CONTEXT_PLATFORM;
-    props[1] = (cl_context_properties)platform;
-    props[2] = CL_EGL_DISPLAY_KHR;
-    props[3] = (cl_context_properties)eglGetCurrentDisplay();
-    props[4] = CL_GL_CONTEXT_KHR;
-    props[5] = (cl_context_properties)eglGetCurrentContext();
-    props[6] = 0;
+    props[i++] = CL_CONTEXT_PLATFORM;
+    props[i++] = (cl_context_properties)platform;
+    if (init_egl_window(EGL_WINDOW_WIDTH, EGL_WINDOW_HEIGHT)) {
+      props[i++] = CL_EGL_DISPLAY_KHR;
+      props[i++] = (cl_context_properties)eglGetCurrentDisplay();
+      props[i++] = CL_GL_CONTEXT_KHR;
+      props[i++] = (cl_context_properties)eglGetCurrentContext();
+    }
+    props[i++] = 0;
   }
 #endif
   /* Now create a context */

@@ -208,6 +208,7 @@ intel_driver_open(intel_driver_t *intel, cl_context_prop props)
 
 #if defined(HAS_GBM) && defined(HAS_EGL)
   if (props && props->gl_type == CL_GL_EGL_DISPLAY) {
+    assert(props->egl_display);
     intel->gbm = gbm_create_device(intel->fd);
     if (intel->gbm == NULL) {
       printf("GBM device create failed.\n");
