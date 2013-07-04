@@ -56,6 +56,8 @@ set (utests_sources
   compiler_lower_return2.cpp
   compiler_mad_hi.cpp
   compiler_mul_hi.cpp
+  compiler_mad24.cpp
+  compiler_mul24.cpp
   compiler_multiple_kernels.cpp
   compiler_rhadd.cpp
   compiler_rotate.cpp
