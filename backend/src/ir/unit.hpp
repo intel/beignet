@@ -24,13 +24,6 @@
 #ifndef __GBE_IR_UNIT_HPP__
 #define __GBE_IR_UNIT_HPP__
 
-#include "llvm/Config/config.h"
-#if LLVM_VERSION_MINOR <= 2
-#include "llvm/Value.h"
-#else
-#include "llvm/IR/Value.h"
-#endif  /* LLVM_VERSION_MINOR <= 2 */
-
 #include "ir/constant.hpp"
 #include "ir/register.hpp"
 #include "sys/hash_map.hpp"
@@ -49,7 +42,7 @@ namespace ir {
   {
   public:
     typedef hash_map<std::string, Function*> FunctionSet;
-    typedef std::pair<llvm::Value*, uint32_t> ValueIndex;
+    typedef std::pair<void*, uint32_t> ValueIndex;
     /*! Create an empty unit */
     Unit(PointerSize pointerSize = POINTER_32_BITS);
     /*! Release everything (*including* the function pointers) */
@@ -84,8 +77,8 @@ namespace ir {
     /*! Some values will not be allocated. For example a vector extract and
      * a vector insertion when scalarize the vector load/store
      */
-    void newValueProxy(llvm::Value *real,
-                       llvm::Value *fake,
+    void newValueProxy(void *real,
+                       void *fake,
                        uint32_t realIndex = 0u,
                        uint32_t fakeIndex = 0u) {
       const ValueIndex key(fake, fakeIndex);
@@ -93,10 +86,11 @@ namespace ir {
       GBE_ASSERT(valueMap.find(key) == valueMap.end()); // Do not insert twice
       valueMap[key] = value;
     }
-    /* remove fake values that removed by other pass */
-    void removeDeadValues(void);
+
+    void clearValueMap() { valueMap.clear(); }
+
     /*! Return the value map */
-    const map<ValueIndex, ValueIndex>& getValueMap(void) const { return valueMap; }
+    const map<ValueIndex, ValueIndex> &getValueMap(void) const { return valueMap; }
   private:
     friend class ContextInterface; //!< Can free modify the unit
     hash_map<std::string, Function*> functions; //!< All the defined functions

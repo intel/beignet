@@ -307,8 +307,10 @@ namespace gbe
     }
     /*! After scalarize pass, there are some valueMap in unit,
      *  use this function to copy from unit valueMap */
-    void initValueMap(const map<ValueIndex, ValueIndex>& vMap) {
-      valueMap.insert(vMap.begin(), vMap.end());
+    void initValueMap(const map<ir::Unit::ValueIndex, ir::Unit::ValueIndex> &vMap) {
+      for(auto &it : vMap)
+        newValueProxy((Value*)it.second.first, (Value*)it.first.first,
+                      it.second.second, it.first.second);
     }
     /*! Mostly used for the preallocated registers (lids, gids) */
     void newScalarProxy(ir::Register reg, Value *value, uint32_t index = 0u) {
@@ -1207,7 +1209,6 @@ namespace gbe
     }
 
     ctx.startFunction(F.getName());
-    unit.removeDeadValues();
     this->regTranslator.clear();
     this->regTranslator.initValueMap(unit.getValueMap());
     this->labelMap.clear();

@@ -773,7 +773,7 @@ namespace gbe {
     intTy = IntegerType::get(module->getContext(), 32);
     floatTy = Type::getFloatTy(module->getContext());
     builder = new IRBuilder<>(module->getContext());
-    unit.removeDeadValues();
+    unit.clearValueMap();
 
     scalarizeArgs(F);
     typedef ReversePostOrderTraversal<Function*> RPOTType;

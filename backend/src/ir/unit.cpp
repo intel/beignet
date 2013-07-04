@@ -21,12 +21,6 @@
  * \file unit.cpp
  * \author Benjamin Segovia <benjamin.segovia@intel.com>
  */
-#include "llvm/Config/config.h"
-#if LLVM_VERSION_MINOR <= 2
-#include "llvm/Instructions.h"
-#else
-#include "llvm/IR/Instructions.h"
-#endif  /* LLVM_VERSION_MINOR <= 2 */
 #include "ir/unit.hpp"
 #include "ir/function.hpp"
 
@@ -59,14 +53,6 @@ namespace ir {
     constantSet.append(data, name, size, alignment);
   }
 
-  void Unit::removeDeadValues()
-  {
-    for(auto &it : valueMap) {
-      llvm::Instruction* I = llvm::dyn_cast<llvm::Instruction>(it.first.first);  //fake value
-      if((I == NULL) || (I->getParent() == NULL))
-        valueMap.erase(it.first);
-    }
-  }
   std::ostream &operator<< (std::ostream &out, const Unit &unit) {
     unit.apply([&out] (const Function &fn) { out << fn << std::endl; });
     return out;
