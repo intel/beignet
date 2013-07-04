@@ -4913,6 +4913,52 @@ DECL_SELECT4(float4, float, uint4, 0x80000000)
 /////////////////////////////////////////////////////////////////////////////
 // Common Functions (see 6.11.4 of OCL 1.1 spec)
 /////////////////////////////////////////////////////////////////////////////
+INLINE_OVERLOADABLE float step(float edge, float x) {
+  return x < edge ? 0.0 : 1.0;
+}
+#define STEP(I)  x.s##I < edge.s##I ? 0.0 : 1.0
+INLINE_OVERLOADABLE float2 step(float2 edge, float2 x) {
+  return (float2)(STEP(0), STEP(1));
+}
+INLINE_OVERLOADABLE float3 step(float3 edge, float3 x) {
+  return (float3)(STEP(0), STEP(1), STEP(2));
+}
+INLINE_OVERLOADABLE float4 step(float4 edge, float4 x) {
+  return (float4)(STEP(0), STEP(1), STEP(2), STEP(3));
+}
+INLINE_OVERLOADABLE float8 step(float8 edge, float8 x) {
+  return (float8)(STEP(0), STEP(1), STEP(2), STEP(3),
+                  STEP(4), STEP(5), STEP(6), STEP(7));
+}
+INLINE_OVERLOADABLE float16 step(float16 edge, float16 x) {
+  return (float16)(STEP(0), STEP(1), STEP(2), STEP(3),
+                   STEP(4), STEP(5), STEP(6), STEP(7),
+                   STEP(8), STEP(9), STEP(A), STEP(B),
+                   STEP(C), STEP(D), STEP(E), STEP(F));
+}
+#undef STEP
+#define STEP(I)  x.s##I < edge ? 0.0 : 1.0
+INLINE_OVERLOADABLE float2 step(float edge, float2 x) {
+  return (float2)(STEP(0), STEP(1));
+}
+INLINE_OVERLOADABLE float3 step(float edge, float3 x) {
+  return (float3)(STEP(0), STEP(1), STEP(2));
+}
+INLINE_OVERLOADABLE float4 step(float edge, float4 x) {
+  return (float4)(STEP(0), STEP(1), STEP(2), STEP(3));
+}
+INLINE_OVERLOADABLE float8 step(float edge, float8 x) {
+  return (float8)(STEP(0), STEP(1), STEP(2), STEP(3),
+                  STEP(4), STEP(5), STEP(6), STEP(7));
+}
+INLINE_OVERLOADABLE float16 step(float edge, float16 x) {
+  return (float16)(STEP(0), STEP(1), STEP(2), STEP(3),
+                   STEP(4), STEP(5), STEP(6), STEP(7),
+                   STEP(8), STEP(9), STEP(A), STEP(B),
+                   STEP(C), STEP(D), STEP(E), STEP(F));
+}
+#undef STEP
+
 #define DECL_MIN_MAX_CLAMP(TYPE) \
 INLINE_OVERLOADABLE TYPE max(TYPE a, TYPE b) { \
   return a > b ? a : b; \
