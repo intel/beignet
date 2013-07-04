@@ -30,6 +30,7 @@ set (utests_sources
   compiler_copy_image.cpp
   compiler_copy_image_3d.cpp
   compiler_copy_buffer_row.cpp
+  compiler_step.cpp
   compiler_fabs.cpp
   compiler_abs.cpp
   compiler_abs_diff.cpp
