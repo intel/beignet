@@ -4408,6 +4408,46 @@ DEF(16)
 #undef DEC8
 #undef DEC16
 
+INLINE_OVERLOADABLE int mul24(int a, int b) { return ((a << 8) >> 8) * ((b << 8) >> 8); }
+INLINE_OVERLOADABLE uint mul24(uint a, uint b) { return (a & 0xFFFFFF) * (b & 0xFFFFFF); }
+#define DEC2(type) INLINE_OVERLOADABLE type##2 mul24(type##2 a, type##2 b) { return (type##2)(mul24(a.s0, b.s0), mul24(a.s1, b.s1)); }
+#define DEC3(type) INLINE_OVERLOADABLE type##3 mul24(type##3 a, type##3 b) { return (type##3)(mul24(a.s0, b.s0), mul24(a.s1, b.s1), mul24(a.s2, b.s2)); }
+#define DEC4(type) INLINE_OVERLOADABLE type##4 mul24(type##4 a, type##4 b) { return (type##4)(mul24(a.s0, b.s0), mul24(a.s1, b.s1), mul24(a.s2, b.s2), mul24(a.s3, b.s3)); }
+#define DEC8(type) INLINE_OVERLOADABLE type##8 mul24(type##8 a, type##8 b) { return (type##8)(mul24(a.s0, b.s0), mul24(a.s1, b.s1), mul24(a.s2, b.s2), mul24(a.s3, b.s3), mul24(a.s4, b.s4), mul24(a.s5, b.s5), mul24(a.s6, b.s6), mul24(a.s7, b.s7)); }
+#define DEC16(type) INLINE_OVERLOADABLE type##16 mul24(type##16 a, type##16 b) { return (type##16)(mul24(a.s0, b.s0), mul24(a.s1, b.s1), mul24(a.s2, b.s2), mul24(a.s3, b.s3), mul24(a.s4, b.s4), mul24(a.s5, b.s5), mul24(a.s6, b.s6), mul24(a.s7, b.s7), mul24(a.s8, b.s8), mul24(a.s9, b.s9), mul24(a.sa, b.sa), mul24(a.sb, b.sb), mul24(a.sc, b.sc), mul24(a.sd, b.sd), mul24(a.se, b.se), mul24(a.sf, b.sf)); }
+#define DEF(n) DEC##n(int); DEC##n(uint)
+DEF(2)
+DEF(3)
+DEF(4)
+DEF(8)
+DEF(16)
+#undef DEF
+#undef DEC2
+#undef DEC3
+#undef DEC4
+#undef DEC8
+#undef DEC16
+
+INLINE_OVERLOADABLE int mad24(int a, int b, int c) { return mul24(a, b) + c; }
+INLINE_OVERLOADABLE uint mad24(uint a, uint b, uint c) { return mul24(a, b) + c; }
+#define DEC2(type) INLINE_OVERLOADABLE type##2 mad24(type##2 a, type##2 b, type##2 c) { return (type##2)(mad24(a.s0, b.s0, c.s0), mad24(a.s1, b.s1, c.s1)); }
+#define DEC3(type) INLINE_OVERLOADABLE type##3 mad24(type##3 a, type##3 b, type##3 c) { return (type##3)(mad24(a.s0, b.s0, c.s0), mad24(a.s1, b.s1, c.s1), mad24(a.s2, b.s2, c.s2)); }
+#define DEC4(type) INLINE_OVERLOADABLE type##4 mad24(type##4 a, type##4 b, type##4 c) { return (type##4)(mad24(a.s0, b.s0, c.s0), mad24(a.s1, b.s1, c.s1), mad24(a.s2, b.s2, c.s2), mad24(a.s3, b.s3, c.s3)); }
+#define DEC8(type) INLINE_OVERLOADABLE type##8 mad24(type##8 a, type##8 b, type##8 c) { return (type##8)(mad24(a.s0, b.s0, c.s0), mad24(a.s1, b.s1, c.s1), mad24(a.s2, b.s2, c.s2), mad24(a.s3, b.s3, c.s3), mad24(a.s4, b.s4, c.s4), mad24(a.s5, b.s5, c.s5), mad24(a.s6, b.s6, c.s6), mad24(a.s7, b.s7, c.s7)); }
+#define DEC16(type) INLINE_OVERLOADABLE type##16 mad24(type##16 a, type##16 b, type##16 c) { return (type##16)(mad24(a.s0, b.s0, c.s0), mad24(a.s1, b.s1, c.s1), mad24(a.s2, b.s2, c.s2), mad24(a.s3, b.s3, c.s3), mad24(a.s4, b.s4, c.s4), mad24(a.s5, b.s5, c.s5), mad24(a.s6, b.s6, c.s6), mad24(a.s7, b.s7, c.s7), mad24(a.s8, b.s8, c.s8), mad24(a.s9, b.s9, c.s9), mad24(a.sa, b.sa, c.sa), mad24(a.sb, b.sb, c.sb), mad24(a.sc, b.sc, c.sc), mad24(a.sd, b.sd, c.sd), mad24(a.se, b.se, c.se), mad24(a.sf, b.sf, c.sf)); }
+#define DEF(n) DEC##n(int); DEC##n(uint)
+DEF(2)
+DEF(3)
+DEF(4)
+DEF(8)
+DEF(16)
+#undef DEF
+#undef DEC2
+#undef DEC3
+#undef DEC4
+#undef DEC8
+#undef DEC16
+
 INLINE_OVERLOADABLE uchar __rotate_left(uchar x, uchar y) { return (x << y) | (x >> (8 - y)); }
 INLINE_OVERLOADABLE char __rotate_left(char x, char y) { return __rotate_left((uchar)x, (uchar)y); }
 INLINE_OVERLOADABLE ushort __rotate_left(ushort x, ushort y) { return (x << y) | (x >> (16 - y)); }
