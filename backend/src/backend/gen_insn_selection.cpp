@@ -438,6 +438,8 @@ namespace gbe
     ALU1(FBL)
     ALU3(HADD)
     ALU3(RHADD)
+    ALU2(UPSAMPLE_SHORT)
+    ALU2(UPSAMPLE_INT)
 #undef ALU1
 #undef ALU2
 #undef ALU3
@@ -1451,6 +1453,12 @@ namespace gbe
             sel.RHADD(dst, src0, src1, temp);
             break;
           }
+        case OP_UPSAMPLE_SHORT:
+          sel.UPSAMPLE_SHORT(dst, src0, src1);
+          break;
+        case OP_UPSAMPLE_INT:
+          sel.UPSAMPLE_INT(dst, src0, src1);
+          break;
         default: NOT_IMPLEMENTED;
       }
       sel.pop();

@@ -812,6 +812,30 @@ namespace gbe
     pop();
   }
 
+  void GenEncoder::UPSAMPLE_SHORT(GenRegister dest, GenRegister src0, GenRegister src1) {
+    dest.type = GEN_TYPE_B;
+    dest.hstride = GEN_HORIZONTAL_STRIDE_2;
+    src0.type = GEN_TYPE_B;
+    src0.hstride = GEN_HORIZONTAL_STRIDE_2;
+    src1.type = GEN_TYPE_B;
+    src1.hstride = GEN_HORIZONTAL_STRIDE_2;
+    MOV(dest, src1);
+    dest.subnr ++;
+    MOV(dest, src0);
+  }
+
+  void GenEncoder::UPSAMPLE_INT(GenRegister dest, GenRegister src0, GenRegister src1) {
+    dest.type = GEN_TYPE_W;
+    dest.hstride = GEN_HORIZONTAL_STRIDE_2;
+    src0.type = GEN_TYPE_W;
+    src0.hstride = GEN_HORIZONTAL_STRIDE_2;
+    src1.type = GEN_TYPE_W;
+    src1.hstride = GEN_HORIZONTAL_STRIDE_2;
+    MOV(dest, src1);
+    dest.subnr += 2;
+    MOV(dest, src0);
+  }
+
   void GenEncoder::MOV_DF(GenRegister dest, GenRegister src0, GenRegister r) {
     int w = curr.execWidth;
     if (src0.isdf()) {

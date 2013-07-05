@@ -4440,6 +4440,47 @@ DEF(16)
 #undef DEC8
 #undef DEC16
 
+OVERLOADABLE short __gen_ocl_upsample(short hi, short lo);
+OVERLOADABLE int __gen_ocl_upsample(int hi, int lo);
+INLINE_OVERLOADABLE short upsample(char hi, uchar lo) { return __gen_ocl_upsample((short)hi, (short)lo); }
+INLINE_OVERLOADABLE ushort upsample(uchar hi, uchar lo) { return __gen_ocl_upsample((short)hi, (short)lo); }
+INLINE_OVERLOADABLE int upsample(short hi, ushort lo) { return __gen_ocl_upsample((int)hi, (int)lo); }
+INLINE_OVERLOADABLE uint upsample(ushort hi, ushort lo) { return __gen_ocl_upsample((int)hi, (int)lo); }
+#define DEC2(type, type2) INLINE_OVERLOADABLE type2##2 upsample(type##2 a, type##2 b) { return (type2##2)(upsample(a.s0, b.s0), upsample(a.s1, b.s1)); }
+#define DEC3(type, type2) INLINE_OVERLOADABLE type2##3 upsample(type##3 a, type##3 b) { return (type2##3)(upsample(a.s0, b.s0), upsample(a.s1, b.s1), upsample(a.s2, b.s2)); }
+#define DEC4(type, type2) INLINE_OVERLOADABLE type2##4 upsample(type##4 a, type##4 b) { return (type2##4)(upsample(a.s0, b.s0), upsample(a.s1, b.s1), upsample(a.s2, b.s2), upsample(a.s3, b.s3)); }
+#define DEC8(type, type2) INLINE_OVERLOADABLE type2##8 upsample(type##8 a, type##8 b) { return (type2##8)(upsample(a.s0, b.s0), upsample(a.s1, b.s1), upsample(a.s2, b.s2), upsample(a.s3, b.s3), upsample(a.s4, b.s4), upsample(a.s5, b.s5), upsample(a.s6, b.s6), upsample(a.s7, b.s7)); }
+#define DEC16(type, type2) INLINE_OVERLOADABLE type2##16 upsample(type##16 a, type##16 b) { return (type2##16)(upsample(a.s0, b.s0), upsample(a.s1, b.s1), upsample(a.s2, b.s2), upsample(a.s3, b.s3), upsample(a.s4, b.s4), upsample(a.s5, b.s5), upsample(a.s6, b.s6), upsample(a.s7, b.s7), upsample(a.s8, b.s8), upsample(a.s9, b.s9), upsample(a.sa, b.sa), upsample(a.sb, b.sb), upsample(a.sc, b.sc), upsample(a.sd, b.sd), upsample(a.se, b.se), upsample(a.sf, b.sf)); }
+#define DEF(n) DEC##n(uchar, ushort); DEC##n(ushort, uint)
+DEF(2)
+DEF(3)
+DEF(4)
+DEF(8)
+DEF(16)
+#undef DEF
+#undef DEC2
+#undef DEC3
+#undef DEC4
+#undef DEC8
+#undef DEC16
+#define DEC2(type, type2) INLINE_OVERLOADABLE type2##2 upsample(type##2 a, u##type##2 b) { return (type2##2)(upsample(a.s0, b.s0), upsample(a.s1, b.s1)); }
+#define DEC3(type, type2) INLINE_OVERLOADABLE type2##3 upsample(type##3 a, u##type##3 b) { return (type2##3)(upsample(a.s0, b.s0), upsample(a.s1, b.s1), upsample(a.s2, b.s2)); }
+#define DEC4(type, type2) INLINE_OVERLOADABLE type2##4 upsample(type##4 a, u##type##4 b) { return (type2##4)(upsample(a.s0, b.s0), upsample(a.s1, b.s1), upsample(a.s2, b.s2), upsample(a.s3, b.s3)); }
+#define DEC8(type, type2) INLINE_OVERLOADABLE type2##8 upsample(type##8 a, u##type##8 b) { return (type2##8)(upsample(a.s0, b.s0), upsample(a.s1, b.s1), upsample(a.s2, b.s2), upsample(a.s3, b.s3), upsample(a.s4, b.s4), upsample(a.s5, b.s5), upsample(a.s6, b.s6), upsample(a.s7, b.s7)); }
+#define DEC16(type, type2) INLINE_OVERLOADABLE type2##16 upsample(type##16 a, u##type##16 b) { return (type2##16)(upsample(a.s0, b.s0), upsample(a.s1, b.s1), upsample(a.s2, b.s2), upsample(a.s3, b.s3), upsample(a.s4, b.s4), upsample(a.s5, b.s5), upsample(a.s6, b.s6), upsample(a.s7, b.s7), upsample(a.s8, b.s8), upsample(a.s9, b.s9), upsample(a.sa, b.sa), upsample(a.sb, b.sb), upsample(a.sc, b.sc), upsample(a.sd, b.sd), upsample(a.se, b.se), upsample(a.sf, b.sf)); }
+#define DEF(n) DEC##n(char, short); DEC##n(short, int)
+DEF(2)
+DEF(3)
+DEF(4)
+DEF(8)
+DEF(16)
+#undef DEF
+#undef DEC2
+#undef DEC3
+#undef DEC4
+#undef DEC8
+#undef DEC16
+
 PURE CONST uint __gen_ocl_hadd(uint x, uint y);
 PURE CONST uint __gen_ocl_rhadd(uint x, uint y);
 #define DEC DEF(char); DEF(uchar); DEF(short); DEF(ushort)
