@@ -68,6 +68,7 @@ set (utests_sources
   compiler_uint8_copy.cpp
   compiler_uint16_copy.cpp
   compiler_uint3_unaligned_copy.cpp
+  compiler_upsample_int.cpp
   compiler_unstructured_branch0.cpp
   compiler_unstructured_branch1.cpp
   compiler_unstructured_branch2.cpp
