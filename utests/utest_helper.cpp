@@ -294,17 +294,16 @@ error:
 #include <cstring>
 #define GET_DEVICE_STR_INFO(LOWER_NAME, NAME) \
     std::string LOWER_NAME ##Str; \
-    OCL_CALL (clGetDeviceInfo, device, CL_DEVICE_##NAME, 0, 0, &param_value_size); \
+    OCL_CALL (clGetDeviceInfo, device, NAME, 0, 0, &param_value_size); \
     { \
       std::vector<char> param_value(param_value_size); \
-      OCL_CALL (clGetDeviceInfo, device, CL_DEVICE_##NAME, \
+      OCL_CALL (clGetDeviceInfo, device, NAME, \
                 param_value_size, param_value.empty() ? NULL : &param_value.front(), \
                 &param_value_size); \
       if (!param_value.empty()) \
         LOWER_NAME ##Str = std::string(&param_value.front(), param_value_size-1); \
     } \
     printf("device_" #LOWER_NAME " \"%s\"\n", LOWER_NAME ##Str.c_str());
-
 
 int
 cl_ocl_init(void)
@@ -332,11 +331,13 @@ cl_ocl_init(void)
   OCL_CALL (clGetDeviceIDs, platform, CL_DEVICE_TYPE_GPU, 1, &device, NULL);
   {
     size_t param_value_size;
-    GET_DEVICE_STR_INFO(profile, PROFILE);
-    GET_DEVICE_STR_INFO(name, NAME);
-    GET_DEVICE_STR_INFO(vendor, VENDOR);
-    GET_DEVICE_STR_INFO(version, VERSION);
-    GET_DEVICE_STR_INFO(extensions, EXTENSIONS);
+    GET_DEVICE_STR_INFO(profile, CL_DEVICE_PROFILE);
+    GET_DEVICE_STR_INFO(name, CL_DEVICE_NAME);
+    GET_DEVICE_STR_INFO(vendor, CL_DEVICE_VENDOR);
+    GET_DEVICE_STR_INFO(version, CL_DEVICE_VERSION);
+    GET_DEVICE_STR_INFO(opencl_c_version, CL_DEVICE_OPENCL_C_VERSION);
+    GET_DEVICE_STR_INFO(driver_version, CL_DRIVER_VERSION);
+    GET_DEVICE_STR_INFO(extensions, CL_DEVICE_EXTENSIONS);
     if (std::strstr(extensionsStr.c_str(), "cl_khr_gl_sharing")) {
       hasGLExt = true;
     }
