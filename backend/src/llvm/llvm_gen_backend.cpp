@@ -818,6 +818,23 @@ namespace gbe
         uint16_t reg = unit.getConstantSet().getConstant(name).getReg();
         return ir::Register(reg);
       }
+      if (isa<ConstantExpr>(CPV)) {
+        ConstantExpr *CE = dyn_cast<ConstantExpr>(CPV);
+        GBE_ASSERT(CE->isGEPWithNoNotionalOverIndexing());
+        auto pointer = CE->getOperand(0);
+        auto offset1 = dyn_cast<ConstantInt>(CE->getOperand(1));
+        GBE_ASSERT(offset1->getZExtValue() == 0);
+        auto offset2 = dyn_cast<ConstantInt>(CE->getOperand(2));
+        int type_size = pointer->getType()->getTypeID() == Type::TypeID::DoubleTyID ? sizeof(double) : sizeof(int);
+        int type_offset = offset2->getSExtValue() * type_size;
+        auto pointer_name = pointer->getName().str();
+        ir::Register pointer_reg = ir::Register(unit.getConstantSet().getConstant(pointer_name).getReg());
+        ir::Register offset_reg = ctx.reg(ir::RegisterFamily::FAMILY_DWORD);
+        ctx.LOADI(ir::Type::TYPE_S32, offset_reg, ctx.newIntegerImmediate(type_offset, ir::Type::TYPE_S32));
+        ir::Register reg = ctx.reg(ir::RegisterFamily::FAMILY_DWORD);
+        ctx.ADD(ir::Type::TYPE_S32, reg, pointer_reg, offset_reg);
+        return reg;
+      }
       const ir::ImmediateIndex immIndex = this->newImmediate(CPV, elemID);
       const ir::Immediate imm = ctx.getImmediate(immIndex);
       const ir::Register reg = ctx.reg(getFamily(imm.type));
