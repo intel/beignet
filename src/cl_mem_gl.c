@@ -149,7 +149,7 @@ EGLImageKHR cl_create_textured_egl_image(cl_context ctx,
   egl_context = (EGLDisplay)ctx->props.gl_context;
   return egl_funcs->eglCreateImageKHR_func(egl_display, egl_context,
                                            EGL_GL_TEXTURE_2D_KHR,
-                                           (EGLClientBuffer)texture,
+                                           (EGLClientBuffer)(uintptr_t)texture,
                                            &egl_attribs[0]);
 }
 
