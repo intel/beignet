@@ -30,6 +30,7 @@ set (utests_sources
   compiler_copy_image.cpp
   compiler_copy_image_3d.cpp
   compiler_copy_buffer_row.cpp
+  compiler_degrees.cpp
   compiler_step.cpp
   compiler_fabs.cpp
   compiler_abs.cpp
@@ -59,6 +60,7 @@ set (utests_sources
   compiler_mad24.cpp
   compiler_mul24.cpp
   compiler_multiple_kernels.cpp
+  compiler_radians.cpp
   compiler_rhadd.cpp
   compiler_rotate.cpp
   compiler_saturate.cpp
