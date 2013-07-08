@@ -5059,6 +5059,19 @@ DECL_MIN_MAX_CLAMP(unsigned short)
 DECL_MIN_MAX_CLAMP(unsigned char)
 #undef DECL_MIN_MAX_CLAMP
 
+INLINE_OVERLOADABLE float degrees(float radians) { return (180 / M_PI_F) * radians; }
+INLINE_OVERLOADABLE float2 degrees(float2 r) { return (float2)(degrees(r.s0), degrees(r.s1)); }
+INLINE_OVERLOADABLE float3 degrees(float3 r) { return (float3)(degrees(r.s0), degrees(r.s1), degrees(r.s2)); }
+INLINE_OVERLOADABLE float4 degrees(float4 r) { return (float4)(degrees(r.s0), degrees(r.s1), degrees(r.s2), degrees(r.s3)); }
+INLINE_OVERLOADABLE float8 degrees(float8 r) { return (float8)(degrees(r.s0), degrees(r.s1), degrees(r.s2), degrees(r.s3), degrees(r.s4), degrees(r.s5), degrees(r.s6), degrees(r.s7)); }
+INLINE_OVERLOADABLE float16 degrees(float16 r) { return (float16)(degrees(r.s0), degrees(r.s1), degrees(r.s2), degrees(r.s3), degrees(r.s4), degrees(r.s5), degrees(r.s6), degrees(r.s7), degrees(r.s8), degrees(r.s9), degrees(r.sa), degrees(r.sb), degrees(r.sc), degrees(r.sd), degrees(r.se), degrees(r.sf)); }
+INLINE_OVERLOADABLE float radians(float degrees) { return (M_PI_F / 180) * degrees; }
+INLINE_OVERLOADABLE float2 radians(float2 r) { return (float2)(radians(r.s0), radians(r.s1)); }
+INLINE_OVERLOADABLE float3 radians(float3 r) { return (float3)(radians(r.s0), radians(r.s1), radians(r.s2)); }
+INLINE_OVERLOADABLE float4 radians(float4 r) { return (float4)(radians(r.s0), radians(r.s1), radians(r.s2), radians(r.s3)); }
+INLINE_OVERLOADABLE float8 radians(float8 r) { return (float8)(radians(r.s0), radians(r.s1), radians(r.s2), radians(r.s3), radians(r.s4), radians(r.s5), radians(r.s6), radians(r.s7)); }
+INLINE_OVERLOADABLE float16 radians(float16 r) { return (float16)(radians(r.s0), radians(r.s1), radians(r.s2), radians(r.s3), radians(r.s4), radians(r.s5), radians(r.s6), radians(r.s7), radians(r.s8), radians(r.s9), radians(r.sa), radians(r.sb), radians(r.sc), radians(r.sd), radians(r.se), radians(r.sf)); }
+
 INLINE_OVERLOADABLE float __gen_ocl_internal_fmax(float a, float b) { return max(a,b); }
 INLINE_OVERLOADABLE float __gen_ocl_internal_fmin(float a, float b) { return min(a,b); }
 INLINE_OVERLOADABLE float __gen_ocl_internal_maxmag(float x, float y) {
