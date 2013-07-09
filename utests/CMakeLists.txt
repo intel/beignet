@@ -67,6 +67,7 @@ set (utests_sources
   compiler_saturate_sub.cpp
   compiler_shift_right.cpp
   compiler_short_scatter.cpp
+  compiler_smoothstep.cpp
   compiler_uint2_copy.cpp
   compiler_uint3_copy.cpp
   compiler_uint8_copy.cpp
