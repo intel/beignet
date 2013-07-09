@@ -5097,6 +5097,11 @@ INLINE_OVERLOADABLE float4 radians(float4 r) { return (float4)(radians(r.s0), ra
 INLINE_OVERLOADABLE float8 radians(float8 r) { return (float8)(radians(r.s0), radians(r.s1), radians(r.s2), radians(r.s3), radians(r.s4), radians(r.s5), radians(r.s6), radians(r.s7)); }
 INLINE_OVERLOADABLE float16 radians(float16 r) { return (float16)(radians(r.s0), radians(r.s1), radians(r.s2), radians(r.s3), radians(r.s4), radians(r.s5), radians(r.s6), radians(r.s7), radians(r.s8), radians(r.s9), radians(r.sa), radians(r.sb), radians(r.sc), radians(r.sd), radians(r.se), radians(r.sf)); }
 
+INLINE_OVERLOADABLE float smoothstep(float e0, float e1, float x) {
+  x = clamp((x - e0) / (e1 - e0), 0.f, 1.f);
+  return x * x * (3 - 2 * x);
+}
+
 INLINE_OVERLOADABLE float __gen_ocl_internal_fmax(float a, float b) { return max(a,b); }
 INLINE_OVERLOADABLE float __gen_ocl_internal_fmin(float a, float b) { return min(a,b); }
 INLINE_OVERLOADABLE float __gen_ocl_internal_maxmag(float x, float y) {
@@ -5448,6 +5453,7 @@ DECL_VECTOR_2OP(rootn, float, int);
   }
 DECL_VECTOR_3OP(mad, float);
 DECL_VECTOR_3OP(mix, float);
+DECL_VECTOR_3OP(smoothstep, float);
 #undef DECL_VECTOR_3OP
 
 // mix requires more variants
