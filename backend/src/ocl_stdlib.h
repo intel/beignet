@@ -4473,6 +4473,56 @@ DEF(16)
 #undef DEC8
 #undef DEC16
 
+INLINE_OVERLOADABLE char mad_sat(char a, char b, char c) {
+  int x = (int)a * (int)b + (int)c;
+  if (x > 127)
+    x = 127;
+  if (x < -128)
+    x = -128;
+  return x;
+}
+
+INLINE_OVERLOADABLE uchar mad_sat(uchar a, uchar b, uchar c) {
+  uint x = (uint)a * (uint)b + (uint)c;
+  if (x > 255)
+    x = 255;
+  return x;
+}
+
+INLINE_OVERLOADABLE short mad_sat(short a, short b, short c) {
+  int x = (int)a * (int)b + (int)c;
+  if (x > 32767)
+    x = 32767;
+  if (x < -32768)
+    x = -32768;
+  return x;
+}
+
+INLINE_OVERLOADABLE ushort mad_sat(ushort a, ushort b, ushort c) {
+  uint x = (uint)a * (uint)b + (uint)c;
+  if (x > 65535)
+    x = 65535;
+  return x;
+}
+
+#define DEC2(type) INLINE_OVERLOADABLE type##2 mad_sat(type##2 a, type##2 b, type##2 c) { return (type##2)(mad_sat(a.s0, b.s0, c.s0), mad_sat(a.s1, b.s1, c.s1)); }
+#define DEC3(type) INLINE_OVERLOADABLE type##3 mad_sat(type##3 a, type##3 b, type##3 c) { return (type##3)(mad_sat(a.s0, b.s0, c.s0), mad_sat(a.s1, b.s1, c.s1), mad_sat(a.s2, b.s2, c.s2)); }
+#define DEC4(type) INLINE_OVERLOADABLE type##4 mad_sat(type##4 a, type##4 b, type##4 c) { return (type##4)(mad_sat(a.s0, b.s0, c.s0), mad_sat(a.s1, b.s1, c.s1), mad_sat(a.s2, b.s2, c.s2), mad_sat(a.s3, b.s3, c.s3)); }
+#define DEC8(type) INLINE_OVERLOADABLE type##8 mad_sat(type##8 a, type##8 b, type##8 c) { return (type##8)(mad_sat(a.s0, b.s0, c.s0), mad_sat(a.s1, b.s1, c.s1), mad_sat(a.s2, b.s2, c.s2), mad_sat(a.s3, b.s3, c.s3), mad_sat(a.s4, b.s4, c.s4), mad_sat(a.s5, b.s5, c.s5), mad_sat(a.s6, b.s6, c.s6), mad_sat(a.s7, b.s7, c.s7)); }
+#define DEC16(type) INLINE_OVERLOADABLE type##16 mad_sat(type##16 a, type##16 b, type##16 c) { return (type##16)(mad_sat(a.s0, b.s0, c.s0), mad_sat(a.s1, b.s1, c.s1), mad_sat(a.s2, b.s2, c.s2), mad_sat(a.s3, b.s3, c.s3), mad_sat(a.s4, b.s4, c.s4), mad_sat(a.s5, b.s5, c.s5), mad_sat(a.s6, b.s6, c.s6), mad_sat(a.s7, b.s7, c.s7), mad_sat(a.s8, b.s8, c.s8), mad_sat(a.s9, b.s9, c.s9), mad_sat(a.sa, b.sa, c.sa), mad_sat(a.sb, b.sb, c.sb), mad_sat(a.sc, b.sc, c.sc), mad_sat(a.sd, b.sd, c.sd), mad_sat(a.se, b.se, c.se), mad_sat(a.sf, b.sf, c.sf)); }
+#define DEF(n) DEC##n(char); DEC##n(uchar); DEC##n(short); DEC##n(ushort)
+DEF(2)
+DEF(3)
+DEF(4)
+DEF(8)
+DEF(16)
+#undef DEF
+#undef DEC2
+#undef DEC3
+#undef DEC4
+#undef DEC8
+#undef DEC16
+
 INLINE_OVERLOADABLE uchar __rotate_left(uchar x, uchar y) { return (x << y) | (x >> (8 - y)); }
 INLINE_OVERLOADABLE char __rotate_left(char x, char y) { return __rotate_left((uchar)x, (uchar)y); }
 INLINE_OVERLOADABLE ushort __rotate_left(ushort x, ushort y) { return (x << y) | (x >> (16 - y)); }
