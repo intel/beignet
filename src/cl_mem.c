@@ -90,6 +90,57 @@ cl_get_mem_object_info(cl_mem mem,
   return CL_SUCCESS;
 }
 
+LOCAL cl_int
+cl_get_image_info(cl_mem mem,
+                  cl_image_info param_name,
+                  size_t param_value_size,
+                  void *param_value,
+                  size_t *param_value_size_ret)
+{
+  if(!mem || !mem->is_image)
+    return CL_INVALID_MEM_OBJECT;
+
+  switch(param_name)
+  {
+    FIELD_SIZE(IMAGE_FORMAT, cl_image_format);
+    FIELD_SIZE(IMAGE_ELEMENT_SIZE, size_t);
+    FIELD_SIZE(IMAGE_ROW_PITCH, size_t);
+    FIELD_SIZE(IMAGE_SLICE_PITCH, size_t);
+    FIELD_SIZE(IMAGE_WIDTH, size_t);
+    FIELD_SIZE(IMAGE_HEIGHT, size_t);
+    FIELD_SIZE(IMAGE_DEPTH, size_t);
+  default:
+    return CL_INVALID_VALUE;
+  }
+
+  switch(param_name)
+  {
+  case CL_IMAGE_FORMAT:
+    *(cl_image_format *)param_value = mem->fmt;
+    break;
+  case CL_IMAGE_ELEMENT_SIZE:
+    *(size_t *)param_value = mem->bpp;
+    break;
+  case CL_IMAGE_ROW_PITCH:
+    *(size_t *)param_value = mem->row_pitch;
+    break;
+  case CL_IMAGE_SLICE_PITCH:
+    *(size_t *)param_value = mem->slice_pitch;
+    break;
+  case CL_IMAGE_WIDTH:
+    *(size_t *)param_value = mem->w;
+    break;
+  case CL_IMAGE_HEIGHT:
+    *(size_t *)param_value = mem->h;
+    break;
+  case CL_IMAGE_DEPTH:
+    *(size_t *)param_value = mem->depth;
+    break;
+  }
+
+  return CL_SUCCESS;
+}
+
 #undef FIELD_SIZE
 
 static cl_mem

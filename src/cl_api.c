@@ -573,8 +573,11 @@ clGetImageInfo(cl_mem         image,
                void *         param_value,
                size_t *       param_value_size_ret)
 {
-  NOT_IMPLEMENTED;
-  return 0;
+  return cl_get_image_info(image,
+                           param_name,
+                           param_value_size,
+                           param_value,
+                           param_value_size_ret);
 }
 
 cl_int
