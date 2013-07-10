@@ -36,10 +36,22 @@
 #include <assert.h>
 #include <string.h>
 
+#define CHECK(var) \
+  if (var) \
+    return CL_INVALID_PROPERTY; \
+  else \
+    var = 1;
+
 static cl_int
 cl_context_properties_process(const cl_context_properties *prop,
                               struct _cl_context_prop *cl_props, cl_uint * prop_len)
 {
+  int set_cl_context_platform = 0,
+      set_cl_gl_context_khr = 0,
+      set_cl_egl_display_khr = 0,
+      set_cl_glx_display_khr = 0,
+      set_cl_wgl_hdc_khr = 0,
+      set_cl_cgl_sharegroup_khr = 0;
   cl_int err = CL_SUCCESS;
 
   cl_props->gl_type = CL_GL_NOSHARE;
@@ -52,6 +64,7 @@ cl_context_properties_process(const cl_context_properties *prop,
   while(*prop) {
     switch (*prop) {
     case CL_CONTEXT_PLATFORM:
+      CHECK (set_cl_context_platform);
       cl_props->platform_id = *(prop + 1);
       if (UNLIKELY((cl_platform_id) cl_props->platform_id != intel_platform)) {
         err = CL_INVALID_PLATFORM;
@@ -59,21 +72,26 @@ cl_context_properties_process(const cl_context_properties *prop,
       }
       break;
     case CL_GL_CONTEXT_KHR:
+      CHECK (set_cl_gl_context_khr);
       cl_props->gl_context = *(prop + 1);
       break;
     case CL_EGL_DISPLAY_KHR:
+      CHECK (set_cl_egl_display_khr);
       cl_props->gl_type = CL_GL_EGL_DISPLAY;
       cl_props->egl_display = *(prop + 1);
       break;
     case CL_GLX_DISPLAY_KHR:
+      CHECK (set_cl_glx_display_khr);
       cl_props->gl_type = CL_GL_GLX_DISPLAY;
       cl_props->glx_display = *(prop + 1);
       break;
     case CL_WGL_HDC_KHR:
+      CHECK (set_cl_wgl_hdc_khr);
       cl_props->gl_type = CL_GL_WGL_HDC;
       cl_props->wgl_hdc = *(prop + 1);
       break;
     case CL_CGL_SHAREGROUP_KHR:
+      CHECK (set_cl_cgl_sharegroup_khr);
       cl_props->gl_type = CL_GL_CGL_SHAREGROUP;
       cl_props->cgl_sharegroup = *(prop + 1);
       break;
