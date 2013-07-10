@@ -4290,6 +4290,31 @@ DEC(16);
 #undef DEC4
 #undef DEC8
 #undef DEC16
+
+#define DEF(type) INLINE_OVERLOADABLE type bitselect(type a, type b, type c) { return (a & ~c) | (b & c); }
+DEF(char); DEF(uchar); DEF(short); DEF(ushort); DEF(int); DEF(uint)
+#undef DEF
+INLINE_OVERLOADABLE float bitselect(float a, float b, float c) {
+  return as_float(bitselect(as_int(a), as_int(b), as_int(c)));
+}
+#define DEC2(type) INLINE_OVERLOADABLE type##2 bitselect(type##2 a, type##2 b, type##2 c) { return (type##2)(bitselect(a.s0, b.s0, c.s0), bitselect(a.s1, b.s1, c.s1)); }
+#define DEC3(type) INLINE_OVERLOADABLE type##3 bitselect(type##3 a, type##3 b, type##3 c) { return (type##3)(bitselect(a.s0, b.s0, c.s0), bitselect(a.s1, b.s1, c.s1), bitselect(a.s2, b.s2, c.s2)); }
+#define DEC4(type) INLINE_OVERLOADABLE type##4 bitselect(type##4 a, type##4 b, type##4 c) { return (type##4)(bitselect(a.s0, b.s0, c.s0), bitselect(a.s1, b.s1, c.s1), bitselect(a.s2, b.s2, c.s2), bitselect(a.s3, b.s3, c.s3)); }
+#define DEC8(type) INLINE_OVERLOADABLE type##8 bitselect(type##8 a, type##8 b, type##8 c) { return (type##8)(bitselect(a.s0, b.s0, c.s0), bitselect(a.s1, b.s1, c.s1), bitselect(a.s2, b.s2, c.s2), bitselect(a.s3, b.s3, c.s3), bitselect(a.s4, b.s4, c.s4), bitselect(a.s5, b.s5, c.s5), bitselect(a.s6, b.s6, c.s6), bitselect(a.s7, b.s7, c.s7)); }
+#define DEC16(type) INLINE_OVERLOADABLE type##16 bitselect(type##16 a, type##16 b, type##16 c) { return (type##16)(bitselect(a.s0, b.s0, c.s0), bitselect(a.s1, b.s1, c.s1), bitselect(a.s2, b.s2, c.s2), bitselect(a.s3, b.s3, c.s3), bitselect(a.s4, b.s4, c.s4), bitselect(a.s5, b.s5, c.s5), bitselect(a.s6, b.s6, c.s6), bitselect(a.s7, b.s7, c.s7), bitselect(a.s8, b.s8, c.s8), bitselect(a.s9, b.s9, c.s9), bitselect(a.sa, b.sa, c.sa), bitselect(a.sb, b.sb, c.sb), bitselect(a.sc, b.sc, c.sc), bitselect(a.sd, b.sd, c.sd), bitselect(a.se, b.se, c.se), bitselect(a.sf, b.sf, c.sf)); }
+#define DEF(n) DEC##n(char); DEC##n(uchar); DEC##n(short); DEC##n(ushort); DEC##n(int); DEC##n(uint); DEC##n(float)
+DEF(2)
+DEF(3)
+DEF(4)
+DEF(8)
+DEF(16)
+#undef DEF
+#undef DEC2
+#undef DEC3
+#undef DEC4
+#undef DEC8
+#undef DEC16
+
 /////////////////////////////////////////////////////////////////////////////
 // Integer built-in functions
 /////////////////////////////////////////////////////////////////////////////
