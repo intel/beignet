@@ -5133,6 +5133,46 @@ DECL_MIN_MAX_CLAMP(uint)
 DECL_MIN_MAX_CLAMP(unsigned short)
 DECL_MIN_MAX_CLAMP(unsigned char)
 #undef DECL_MIN_MAX_CLAMP
+#define DEC2(func, type) INLINE_OVERLOADABLE type##2 func(type##2 a, type##2 b) { return (type##2)(func(a.s0, b.s0), func(a.s1, b.s1)); }
+#define DEC3(func, type) INLINE_OVERLOADABLE type##3 func(type##3 a, type##3 b) { return (type##3)(func(a.s0, b.s0), func(a.s1, b.s1), func(a.s2, b.s2)); }
+#define DEC4(func, type) INLINE_OVERLOADABLE type##4 func(type##4 a, type##4 b) { return (type##4)(func(a.s0, b.s0), func(a.s1, b.s1), func(a.s2, b.s2), func(a.s3, b.s3)); }
+#define DEC8(func, type) INLINE_OVERLOADABLE type##8 func(type##8 a, type##8 b) { return (type##8)(func(a.s0, b.s0), func(a.s1, b.s1), func(a.s2, b.s2), func(a.s3, b.s3), func(a.s4, b.s4), func(a.s5, b.s5), func(a.s6, b.s6), func(a.s7, b.s7)); }
+#define DEC16(func, type) INLINE_OVERLOADABLE type##16 func(type##16 a, type##16 b) { return (type##16)(func(a.s0, b.s0), func(a.s1, b.s1), func(a.s2, b.s2), func(a.s3, b.s3), func(a.s4, b.s4), func(a.s5, b.s5), func(a.s6, b.s6), func(a.s7, b.s7), func(a.s8, b.s8), func(a.s9, b.s9), func(a.sa, b.sa), func(a.sb, b.sb), func(a.sc, b.sc), func(a.sd, b.sd), func(a.se, b.se), func(a.sf, b.sf)); }
+#define DEF(func, n) DEC##n(func, char); DEC##n(func, uchar); DEC##n(func, short); DEC##n(func, ushort); DEC##n(func, int); DEC##n(func, uint)
+DEF(max, 2)
+DEF(max, 3)
+DEF(max, 4)
+DEF(max, 8)
+DEF(max, 16)
+DEF(min, 2)
+DEF(min, 3)
+DEF(min, 4)
+DEF(min, 8)
+DEF(min, 16)
+#undef DEF
+#undef DEC2
+#undef DEC3
+#undef DEC4
+#undef DEC8
+#undef DEC16
+
+#define DEC2(type) INLINE_OVERLOADABLE type##2 clamp(type##2 a, type##2 b, type##2 c) { return (type##2)(clamp(a.s0, b.s0, c.s0), clamp(a.s1, b.s1, c.s1)); }
+#define DEC3(type) INLINE_OVERLOADABLE type##3 clamp(type##3 a, type##3 b, type##3 c) { return (type##3)(clamp(a.s0, b.s0, c.s0), clamp(a.s1, b.s1, c.s1), clamp(a.s2, b.s2, c.s2)); }
+#define DEC4(type) INLINE_OVERLOADABLE type##4 clamp(type##4 a, type##4 b, type##4 c) { return (type##4)(clamp(a.s0, b.s0, c.s0), clamp(a.s1, b.s1, c.s1), clamp(a.s2, b.s2, c.s2), clamp(a.s3, b.s3, c.s3)); }
+#define DEC8(type) INLINE_OVERLOADABLE type##8 clamp(type##8 a, type##8 b, type##8 c) { return (type##8)(clamp(a.s0, b.s0, c.s0), clamp(a.s1, b.s1, c.s1), clamp(a.s2, b.s2, c.s2), clamp(a.s3, b.s3, c.s3), clamp(a.s4, b.s4, c.s4), clamp(a.s5, b.s5, c.s5), clamp(a.s6, b.s6, c.s6), clamp(a.s7, b.s7, c.s7)); }
+#define DEC16(type) INLINE_OVERLOADABLE type##16 clamp(type##16 a, type##16 b, type##16 c) { return (type##16)(clamp(a.s0, b.s0, c.s0), clamp(a.s1, b.s1, c.s1), clamp(a.s2, b.s2, c.s2), clamp(a.s3, b.s3, c.s3), clamp(a.s4, b.s4, c.s4), clamp(a.s5, b.s5, c.s5), clamp(a.s6, b.s6, c.s6), clamp(a.s7, b.s7, c.s7), clamp(a.s8, b.s8, c.s8), clamp(a.s9, b.s9, c.s9), clamp(a.sa, b.sa, c.sa), clamp(a.sb, b.sb, c.sb), clamp(a.sc, b.sc, c.sc), clamp(a.sd, b.sd, c.sd), clamp(a.se, b.se, c.se), clamp(a.sf, b.sf, c.sf)); }
+#define DEF(n) DEC##n(char); DEC##n(uchar); DEC##n(short); DEC##n(ushort); DEC##n(int); DEC##n(uint); DEC##n(float)
+DEF(2)
+DEF(3)
+DEF(4)
+DEF(8)
+DEF(16)
+#undef DEF
+#undef DEC2
+#undef DEC3
+#undef DEC4
+#undef DEC8
+#undef DEC16
 
 INLINE_OVERLOADABLE float degrees(float radians) { return (180 / M_PI_F) * radians; }
 INLINE_OVERLOADABLE float2 degrees(float2 r) { return (float2)(degrees(r.s0), degrees(r.s1)); }
