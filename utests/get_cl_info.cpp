@@ -492,3 +492,48 @@ void get_kernel_info(void)
 }
 
 MAKE_UTEST_FROM_FUNCTION(get_kernel_info);
+
+/* ***************************************************** *
+ * clGetImageInfo                                        *
+ * ***************************************************** */
+void get_image_info(void)
+{
+  const size_t w = 512;
+  const size_t h = 512;
+  cl_image_format format;
+  format.image_channel_order = CL_RGBA;
+  format.image_channel_data_type = CL_UNSIGNED_INT8;
+  OCL_CREATE_IMAGE2D(buf[0], 0, &format, w, h, 0, NULL);
+  cl_mem image = buf[0];
+
+  cl_image_format ret_format;
+  OCL_CALL(clGetImageInfo, image, CL_IMAGE_FORMAT, sizeof(ret_format), &ret_format, NULL);
+  OCL_ASSERT(format.image_channel_order == ret_format.image_channel_order);
+  OCL_ASSERT(format.image_channel_data_type == ret_format.image_channel_data_type);
+
+  size_t element_size;
+  OCL_CALL(clGetImageInfo, image, CL_IMAGE_ELEMENT_SIZE, sizeof(element_size), &element_size, NULL);
+  OCL_ASSERT(element_size == 4);
+
+  size_t row_pitch;
+  OCL_CALL(clGetImageInfo, image, CL_IMAGE_ROW_PITCH, sizeof(row_pitch), &row_pitch, NULL);
+  OCL_ASSERT(row_pitch == 4 * w);
+
+  size_t slice_pitch;
+  OCL_CALL(clGetImageInfo, image, CL_IMAGE_SLICE_PITCH, sizeof(slice_pitch), &slice_pitch, NULL);
+  OCL_ASSERT(slice_pitch == 0);
+
+  size_t width;
+  OCL_CALL(clGetImageInfo, image, CL_IMAGE_WIDTH, sizeof(width), &width, NULL);
+  OCL_ASSERT(width == w);
+
+  size_t height;
+  OCL_CALL(clGetImageInfo, image, CL_IMAGE_HEIGHT, sizeof(height), &height, NULL);
+  OCL_ASSERT(height == h);
+
+  size_t depth;
+  OCL_CALL(clGetImageInfo, image, CL_IMAGE_DEPTH, sizeof(depth), &depth, NULL);
+  OCL_ASSERT(depth == 1);
+}
+
+MAKE_UTEST_FROM_FUNCTION(get_image_info);
