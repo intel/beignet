@@ -5152,6 +5152,16 @@ INLINE_OVERLOADABLE float smoothstep(float e0, float e1, float x) {
   return x * x * (3 - 2 * x);
 }
 
+INLINE_OVERLOADABLE float sign(float x) {
+  if(x > 0)
+    return 1;
+  if(x < 0)
+    return -1;
+  if(x == -0.f)
+    return -0.f;
+  return 0.f;
+}
+
 INLINE_OVERLOADABLE float __gen_ocl_internal_fmax(float a, float b) { return max(a,b); }
 INLINE_OVERLOADABLE float __gen_ocl_internal_fmin(float a, float b) { return min(a,b); }
 INLINE_OVERLOADABLE float __gen_ocl_internal_maxmag(float x, float y) {
@@ -5357,6 +5367,7 @@ DECL_UNTYPED_RW_ALL(float)
     dst.s89abcdef = NAME(v.s89abcdef);\
     return dst;\
   }
+DECL_VECTOR_1OP(sign, float);
 DECL_VECTOR_1OP(native_cos, float);
 DECL_VECTOR_1OP(__gen_ocl_internal_cospi, float);
 DECL_VECTOR_1OP(__gen_ocl_internal_cosh, float);
