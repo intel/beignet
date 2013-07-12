@@ -102,6 +102,7 @@ set (utests_sources
   get_cl_info.cpp
   builtin_bitselect.cpp
   builtin_mad_sat.cpp
+  builtin_sign.cpp
   buildin_work_dim.cpp
   builtin_global_size.cpp
   runtime_createcontext.cpp
