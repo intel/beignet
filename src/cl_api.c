@@ -559,11 +559,16 @@ clGetMemObjectInfo(cl_mem      memobj,
                    void *      param_value,
                    size_t *    param_value_size_ret)
 {
-  return cl_get_mem_object_info(memobj,
-                                param_name,
-                                param_value_size,
-                                param_value,
-                                param_value_size_ret);
+  cl_int err = CL_SUCCESS;
+  CHECK_MEM(memobj);
+
+  err = cl_get_mem_object_info(memobj,
+                               param_name,
+                               param_value_size,
+                               param_value,
+                               param_value_size_ret);
+error:
+  return err;
 }
 
 cl_int

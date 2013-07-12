@@ -30,6 +30,7 @@ struct Info_Result {
     }
 
     bool check_result (void) {
+        //printf("The refer is %d, we get result is %d\n", refer, ret);
         if (ret != refer && refer != (T)NO_STANDARD_REF)
             return false;
 
@@ -537,3 +538,71 @@ void get_image_info(void)
 }
 
 MAKE_UTEST_FROM_FUNCTION(get_image_info);
+
+/* ***************************************************** *
+ * clGetMemObjectInfo                                    *
+ * ***************************************************** */
+#define CALL_GETMEMINFO_AND_RET(TYPE) CALL_INFO_AND_RET(TYPE, clGetMemObjectInfo, (buf[0]))
+
+void get_mem_info(void)
+{
+    map<cl_mem_info, void *> maps;
+    int expect_ref;
+
+    OCL_CREATE_BUFFER(buf[0], 0, 64, NULL);
+    void * map_ptr = clEnqueueMapBuffer(queue, buf[0], 1, CL_MAP_READ, 0, 64, 0, NULL, NULL, NULL);
+
+    expect_ref = CL_MEM_OBJECT_BUFFER;
+    maps.insert(make_pair(CL_MEM_TYPE,
+                          (void *)(new Info_Result<cl_mem_object_type>((cl_mem_object_type)expect_ref))));
+    expect_ref = 0;
+    maps.insert(make_pair(CL_MEM_FLAGS,
+                          (void *)(new Info_Result<cl_mem_flags>(expect_ref))));
+    expect_ref = 64;
+    maps.insert(make_pair(CL_MEM_SIZE,
+                          (void *)(new Info_Result<size_t>(((size_t)expect_ref)))));
+    expect_ref = 0;
+    maps.insert(make_pair(CL_MEM_HOST_PTR,
+                          (void *)(new Info_Result<size_t>(((size_t)expect_ref)))));
+    expect_ref = 1;
+    maps.insert(make_pair(CL_MEM_MAP_COUNT,
+                          (void *)(new Info_Result<cl_uint>(((cl_uint)expect_ref)))));
+    expect_ref = 1;
+    maps.insert(make_pair(CL_MEM_REFERENCE_COUNT,
+                          (void *)(new Info_Result<cl_uint>(((cl_uint)expect_ref)))));
+    maps.insert(make_pair(CL_MEM_CONTEXT,
+                          (void *)(new Info_Result<cl_context>(((cl_context)ctx)))));
+
+    std::for_each(maps.begin(), maps.end(), [](pair<cl_mem_info, void *> x) {
+        switch (x.first) {
+        case CL_MEM_TYPE:
+            CALL_GETMEMINFO_AND_RET(cl_mem_object_type);
+            break;
+        case CL_MEM_FLAGS:
+            CALL_GETMEMINFO_AND_RET(cl_mem_flags);
+            break;
+        case CL_MEM_SIZE:
+            CALL_GETMEMINFO_AND_RET(size_t);
+            break;
+        case CL_MEM_HOST_PTR:
+            CALL_GETMEMINFO_AND_RET(size_t);
+            break;
+        case CL_MEM_MAP_COUNT:
+            CALL_GETMEMINFO_AND_RET(cl_uint);
+            break;
+        case CL_MEM_REFERENCE_COUNT:
+            CALL_GETMEMINFO_AND_RET(cl_uint);
+            break;
+        case CL_MEM_CONTEXT:
+            CALL_GETMEMINFO_AND_RET(cl_context);
+            break;
+
+        default:
+            break;
+        }
+    });
+
+    clEnqueueUnmapMemObject(queue, buf[0], map_ptr, 0, NULL, NULL);
+}
+
+MAKE_UTEST_FROM_FUNCTION(get_mem_info);

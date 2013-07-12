@@ -58,6 +58,8 @@ cl_get_mem_object_info(cl_mem mem,
     FIELD_SIZE(MEM_MAP_COUNT, cl_uint);
     FIELD_SIZE(MEM_REFERENCE_COUNT, cl_uint);
     FIELD_SIZE(MEM_CONTEXT, cl_context);
+    FIELD_SIZE(MEM_ASSOCIATED_MEMOBJECT, cl_mem);
+    FIELD_SIZE(MEM_OFFSET, size_t);
   default:
     return CL_INVALID_VALUE;
   }
@@ -71,18 +73,25 @@ cl_get_mem_object_info(cl_mem mem,
     *((cl_mem_flags *)param_value) = mem->flags;
     break;
   case CL_MEM_SIZE:
-    *((size_t *)param_value) = cl_buffer_get_size(mem->bo);
+    *((size_t *)param_value) = mem->size;
     break;
   case CL_MEM_HOST_PTR:
-    NOT_IMPLEMENTED;
+    *((size_t *)param_value) = (size_t)mem->host_ptr;
     break;
   case CL_MEM_MAP_COUNT:
-    NOT_IMPLEMENTED;
+    *((cl_uint *)param_value) = mem->map_ref;
     break;
   case CL_MEM_REFERENCE_COUNT:
-    NOT_IMPLEMENTED;
+    *((cl_uint *)param_value) = mem->ref_n;
     break;
   case CL_MEM_CONTEXT:
+    *((cl_context *)param_value) = mem->ctx;
+    break;
+  // TODO: Need to implement sub buffer first.
+  case CL_MEM_ASSOCIATED_MEMOBJECT:
+    NOT_IMPLEMENTED;
+    break;
+  case CL_MEM_OFFSET:
     NOT_IMPLEMENTED;
     break;
   }
@@ -257,11 +266,13 @@ cl_mem_new(cl_context ctx,
   if (mem == NULL || err != CL_SUCCESS)
     goto error;
 
+  mem->type = CL_MEM_OBJECT_BUFFER;
+
   /* Copy the data if required */
   if (flags & CL_MEM_COPY_HOST_PTR || flags & CL_MEM_USE_HOST_PTR)
     cl_buffer_subdata(mem->bo, 0, sz, data);
 
-  if (flags & CL_MEM_USE_HOST_PTR)
+  if (flags & CL_MEM_USE_HOST_PTR || flags & CL_MEM_COPY_HOST_PTR)
     mem->host_ptr = data;
 
 exit:
