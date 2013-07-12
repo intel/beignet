@@ -498,6 +498,16 @@ cl_mem_delete(cl_mem mem)
   if (mem->mapped_ptr)
     free(mem->mapped_ptr);
 
+  if (mem->dstr_cb) {
+    cl_mem_dstr_cb *cb = mem->dstr_cb;
+    while (mem->dstr_cb) {
+      cb = mem->dstr_cb;
+      cb->pfn_notify(mem, cb->user_data);
+      mem->dstr_cb = cb->next;
+      free(cb);
+    }
+  }
+
   cl_free(mem);
 }
 

@@ -55,6 +55,12 @@ typedef struct _cl_mapped_ptr {
   size_t size;
 }cl_mapped_ptr;
 
+typedef struct _cl_mem_dstr_cb {
+  struct _cl_mem_dstr_cb * next;
+  void (CL_CALLBACK *pfn_notify)(cl_mem memobj, void *user_data);
+  void *user_data;
+}cl_mem_dstr_cb;
+
 /* Used for buffers and images */
 struct _cl_mem {
   DEFINE_ICD(dispatch)
@@ -78,6 +84,7 @@ struct _cl_mem {
   cl_mapped_ptr* mapped_ptr;/* Store the mapped addresses and size by caller. */
   int mapped_ptr_sz;        /* The array size of mapped_ptr. */
   int map_ref;              /* The mapped count. */
+  cl_mem_dstr_cb *dstr_cb;  /* The destroy callback. */
 };
 
 /* Query information about a memory object */

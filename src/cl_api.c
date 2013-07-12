@@ -585,8 +585,24 @@ clSetMemObjectDestructorCallback(cl_mem  memobj,
                                  void (CL_CALLBACK *pfn_notify) (cl_mem, void*),
                                  void * user_data)
 {
-  NOT_IMPLEMENTED;
-  return 0;
+  cl_int err = CL_SUCCESS;
+  CHECK_MEM(memobj);
+  INVALID_VALUE_IF (pfn_notify == 0);
+
+  cl_mem_dstr_cb *cb = (cl_mem_dstr_cb*)malloc(sizeof(cl_mem_dstr_cb));
+  if (!cb) {
+    err = CL_OUT_OF_HOST_MEMORY;
+    goto error;
+  }
+
+  memset(cb, 0, sizeof(cl_mem_dstr_cb));
+  cb->pfn_notify = pfn_notify;
+  cb->user_data = user_data;
+  cb->next = memobj->dstr_cb;
+  memobj->dstr_cb = cb;
+
+error:
+  return err;
 }
 
 cl_sampler
