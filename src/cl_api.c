@@ -1470,7 +1470,9 @@ clEnqueueMapBuffer(cl_command_queue  command_queue,
                    cl_int *          errcode_ret)
 {
   void *ptr = NULL;
+  void *mem_ptr = NULL;
   cl_int err = CL_SUCCESS;
+  int slot = -1;
 
   CHECK_QUEUE(command_queue);
   CHECK_MEM(buffer);
@@ -1503,10 +1505,66 @@ clEnqueueMapBuffer(cl_command_queue  command_queue,
 
   ptr = (char*)ptr + offset;
 
+  if(buffer->flags & CL_MEM_USE_HOST_PTR) {
+    assert(buffer->host_ptr);
+    memcpy(buffer->host_ptr + offset, ptr, size);
+    mem_ptr = buffer->host_ptr + offset;
+  } else {
+    mem_ptr = ptr;
+  }
+
+  /* Record the mapped address. */
+  if (!buffer->mapped_ptr_sz) {
+    buffer->mapped_ptr_sz = 16;
+    buffer->mapped_ptr = (cl_mapped_ptr *)malloc(
+          sizeof(cl_mapped_ptr) * buffer->mapped_ptr_sz);
+    if (!buffer->mapped_ptr) {
+      cl_mem_unmap_auto (buffer);
+      err = CL_OUT_OF_HOST_MEMORY;
+      ptr = NULL;
+      goto error;
+    }
+
+    memset(buffer->mapped_ptr, 0, buffer->mapped_ptr_sz * sizeof(cl_mapped_ptr));
+    slot = 0;
+  } else {
+    int i = 0;
+    for (; i < buffer->mapped_ptr_sz; i++) {
+      if (buffer->mapped_ptr[i].ptr == NULL) {
+        slot = i;
+        break;
+      }
+    }
+
+    if (i == buffer->mapped_ptr_sz) {
+      cl_mapped_ptr *new_ptr = (cl_mapped_ptr *)malloc(
+          sizeof(cl_mapped_ptr) * buffer->mapped_ptr_sz * 2);
+      if (!new_ptr) {
+        cl_mem_unmap_auto (buffer);
+        err = CL_OUT_OF_HOST_MEMORY;
+        ptr = NULL;
+        goto error;
+      }
+      memset(new_ptr, 0, 2 * buffer->mapped_ptr_sz * sizeof(cl_mapped_ptr));
+      memcpy(new_ptr, buffer->mapped_ptr,
+             buffer->mapped_ptr_sz * sizeof(cl_mapped_ptr));
+      slot = buffer->mapped_ptr_sz;
+      buffer->mapped_ptr_sz *= 2;
+      free(buffer->mapped_ptr);
+      buffer->mapped_ptr = new_ptr;
+    }
+  }
+
+  assert(slot != -1);
+  buffer->mapped_ptr[slot].ptr = mem_ptr;
+  buffer->mapped_ptr[slot].v_ptr = ptr;
+  buffer->mapped_ptr[slot].size = size;
+  buffer->map_ref++;
+
 error:
   if (errcode_ret)
     *errcode_ret = err;
-  return ptr;
+  return mem_ptr;
 }
 
 void *
@@ -1581,7 +1639,70 @@ clEnqueueUnmapMemObject(cl_command_queue  command_queue,
                         const cl_event *  event_wait_list,
                         cl_event *        event)
 {
-  return cl_mem_unmap_auto(memobj);
+  cl_int err = CL_SUCCESS;
+  int i;
+  size_t mapped_size = 0;
+  void * v_ptr = NULL;
+
+  CHECK_QUEUE(command_queue);
+  CHECK_MEM(memobj);
+  if (command_queue->ctx != memobj->ctx) {
+    err = CL_INVALID_CONTEXT;
+    goto error;
+  }
+
+  assert(memobj->mapped_ptr_sz >= memobj->map_ref);
+  INVALID_VALUE_IF(!mapped_ptr);
+  for (i = 0; i < memobj->mapped_ptr_sz; i++) {
+    if (memobj->mapped_ptr[i].ptr == mapped_ptr) {
+      memobj->mapped_ptr[i].ptr = NULL;
+      mapped_size = memobj->mapped_ptr[i].size;
+      v_ptr = memobj->mapped_ptr[i].v_ptr;
+      memobj->mapped_ptr[i].size = 0;
+      memobj->mapped_ptr[i].v_ptr = NULL;
+      memobj->map_ref--;
+      break;
+    }
+  }
+  /* can not find a mapped address? */
+  INVALID_VALUE_IF(i == memobj->mapped_ptr_sz);
+
+  if (memobj->flags & CL_MEM_USE_HOST_PTR) {
+    assert(mapped_ptr >= memobj->host_ptr &&
+      mapped_ptr + mapped_size <= memobj->host_ptr + memobj->size);
+    /* Sync the data. */
+    memcpy(v_ptr, mapped_ptr, mapped_size);
+  } else {
+    assert(v_ptr == mapped_ptr);
+  }
+
+  cl_mem_unmap_auto(memobj);
+
+  /* shrink the mapped slot. */
+  if (memobj->mapped_ptr_sz/2 > memobj->map_ref) {
+    int j = 0;
+    cl_mapped_ptr *new_ptr = (cl_mapped_ptr *)malloc(
+	sizeof(cl_mapped_ptr) * (memobj->mapped_ptr_sz/2));
+    if (!new_ptr) {
+      /* Just do nothing. */
+      goto error;
+    }
+    memset(new_ptr, 0, (memobj->mapped_ptr_sz/2) * sizeof(cl_mapped_ptr));
+
+    for (i = 0; i < memobj->mapped_ptr_sz; i++) {
+      if (memobj->mapped_ptr[i].ptr) {
+        new_ptr[j] = memobj->mapped_ptr[i];
+        j++;
+        assert(j < memobj->mapped_ptr_sz/2);
+      }
+    }
+    memobj->mapped_ptr_sz = memobj->mapped_ptr_sz/2;
+    free(memobj->mapped_ptr);
+    memobj->mapped_ptr = new_ptr;
+  }
+
+error:
+  return err;
 }
 
 cl_int

@@ -157,10 +157,6 @@ cl_mem_allocate(cl_context ctx,
   cl_ulong max_mem_size;
 
   assert(ctx);
-  FATAL_IF (flags & CL_MEM_ALLOC_HOST_PTR,
-            "CL_MEM_ALLOC_HOST_PTR unsupported"); /* XXX */
-  FATAL_IF (flags & CL_MEM_USE_HOST_PTR,
-            "CL_MEM_USE_HOST_PTR unsupported");   /* XXX */
 
   if ((err = cl_get_device_info(ctx->device,
                                 CL_DEVICE_MAX_MEM_ALLOC_SIZE,
@@ -223,11 +219,35 @@ cl_mem_new(cl_context ctx,
            void *data,
            cl_int *errcode_ret)
 {
+  /* Possible mem type combination:
+       CL_MEM_ALLOC_HOST_PTR
+       CL_MEM_ALLOC_HOST_PTR | CL_MEM_COPY_HOST_PTR
+       CL_MEM_USE_HOST_PTR
+       CL_MEM_COPY_HOST_PTR   */
+
   cl_int err = CL_SUCCESS;
   cl_mem mem = NULL;
 
-  /* Check flags consistency */
-  if (UNLIKELY(flags & CL_MEM_COPY_HOST_PTR && data == NULL)) {
+  /* This flag is valid only if host_ptr is not NULL */
+  if (UNLIKELY((flags & CL_MEM_COPY_HOST_PTR ||
+                flags & CL_MEM_USE_HOST_PTR) &&
+                data == NULL)) {
+    err = CL_INVALID_HOST_PTR;
+    goto error;
+  }
+
+  /* CL_MEM_ALLOC_HOST_PTR and CL_MEM_USE_HOST_PTR
+     are mutually exclusive. */
+  if (UNLIKELY(flags & CL_MEM_ALLOC_HOST_PTR &&
+               flags & CL_MEM_USE_HOST_PTR)) {
+    err = CL_INVALID_HOST_PTR;
+    goto error;
+  }
+
+  /* CL_MEM_COPY_HOST_PTR and CL_MEM_USE_HOST_PTR
+     are mutually exclusive. */
+  if (UNLIKELY(flags & CL_MEM_COPY_HOST_PTR &&
+               flags & CL_MEM_USE_HOST_PTR)) {
     err = CL_INVALID_HOST_PTR;
     goto error;
   }
@@ -238,8 +258,11 @@ cl_mem_new(cl_context ctx,
     goto error;
 
   /* Copy the data if required */
-  if (flags & CL_MEM_COPY_HOST_PTR) /* TODO check other flags too */
+  if (flags & CL_MEM_COPY_HOST_PTR || flags & CL_MEM_USE_HOST_PTR)
     cl_buffer_subdata(mem->bo, 0, sz, data);
+
+  if (flags & CL_MEM_USE_HOST_PTR)
+    mem->host_ptr = data;
 
 exit:
   if (errcode_ret)
@@ -468,6 +491,12 @@ cl_mem_delete(cl_mem mem)
       mem->ctx->buffers = NULL;
   pthread_mutex_unlock(&mem->ctx->buffer_lock);
   cl_context_delete(mem->ctx);
+
+  /* Someone still mapped? */
+  assert(!mem->map_ref);
+
+  if (mem->mapped_ptr)
+    free(mem->mapped_ptr);
 
   cl_free(mem);
 }

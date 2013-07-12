@@ -49,6 +49,12 @@ typedef enum cl_image_tiling {
   CL_TILE_Y  = 2
 } cl_image_tiling_t;
 
+typedef struct _cl_mapped_ptr {
+  void * ptr;
+  void * v_ptr;
+  size_t size;
+}cl_mapped_ptr;
+
 /* Used for buffers and images */
 struct _cl_mem {
   DEFINE_ICD(dispatch)
@@ -68,6 +74,10 @@ struct _cl_mem {
   uint32_t intel_fmt;       /* format to provide in the surface state */
   uint32_t bpp;             /* number of bytes per pixel */
   cl_image_tiling_t tiling; /* only IVB+ supports TILE_[X,Y] (image only) */
+  void * host_ptr;          /* Pointer of the host mem specified by CL_MEM_ALLOC_HOST_PTR */
+  cl_mapped_ptr* mapped_ptr;/* Store the mapped addresses and size by caller. */
+  int mapped_ptr_sz;        /* The array size of mapped_ptr. */
+  int map_ref;              /* The mapped count. */
 };
 
 /* Query information about a memory object */
