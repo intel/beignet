@@ -101,6 +101,7 @@ set (utests_sources
   compiler_cl_finish.cpp
   get_cl_info.cpp
   builtin_bitselect.cpp
+  builtin_frexp.cpp
   builtin_mad_sat.cpp
   builtin_sign.cpp
   buildin_work_dim.cpp
