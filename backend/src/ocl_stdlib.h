@@ -5221,6 +5221,22 @@ INLINE_OVERLOADABLE float4 radians(float4 r) { return (float4)(radians(r.s0), ra
 INLINE_OVERLOADABLE float8 radians(float8 r) { return (float8)(radians(r.s0), radians(r.s1), radians(r.s2), radians(r.s3), radians(r.s4), radians(r.s5), radians(r.s6), radians(r.s7)); }
 INLINE_OVERLOADABLE float16 radians(float16 r) { return (float16)(radians(r.s0), radians(r.s1), radians(r.s2), radians(r.s3), radians(r.s4), radians(r.s5), radians(r.s6), radians(r.s7), radians(r.s8), radians(r.s9), radians(r.sa), radians(r.sb), radians(r.sc), radians(r.sd), radians(r.se), radians(r.sf)); }
 
+INLINE_OVERLOADABLE float nextafter(float x, float y) {
+  uint hx = as_uint(x), ix = hx & 0x7FFFFFFF;
+  uint hy = as_uint(y), iy = hy & 0x7FFFFFFF;
+  if (ix > 0x7F800000 || iy > 0x7F800000)
+    return nan(0u);
+  if (hx == hy)
+    return x;
+  if (ix == 0)
+    return as_float((hy & 0x80000000u) | 1);
+  if (((0 == (hx & 0x80000000u)) && y > x) || ((hx & 0x80000000u) && y < x))
+    hx ++;
+  else
+    hx --;
+  return as_float(hx);
+}
+
 INLINE_OVERLOADABLE float smoothstep(float e0, float e1, float x) {
   x = clamp((x - e0) / (e1 - e0), 0.f, 1.f);
   return x * x * (3 - 2 * x);
@@ -5508,6 +5524,7 @@ DECL_VECTOR_1OP(__gen_ocl_internal_erfc, float);
     dst.s89abcdef = NAME(v0.s89abcdef, v1.s89abcdef);\
     return dst;\
   }
+DECL_VECTOR_2OP(nextafter, float);
 DECL_VECTOR_2OP(hypot, float);
 DECL_VECTOR_2OP(min, float);
 DECL_VECTOR_2OP(max, float);
