@@ -5174,6 +5174,40 @@ DEF(16)
 #undef DEC8
 #undef DEC16
 
+INLINE_OVERLOADABLE float frexp(float x, int *exp) {
+  uint u = as_uint(x);
+  if ((u & 0x7FFFFFFFu) == 0) {
+    *exp = 0;
+    return x;
+  }
+  int e = (u >> 23) & 255;
+  if (e == 255)
+    return x;
+  *exp = e - 126;
+  u = (u & (0x807FFFFFu)) | 0x3F000000;
+  return as_float(u);
+}
+
+INLINE_OVERLOADABLE float2 frexp(float2 x, int2 *exp) {
+  return (float2)(frexp(x.s0, (int *)exp), frexp(x.s1, 1 + (int *)exp));
+}
+
+INLINE_OVERLOADABLE float3 frexp(float3 x, int3 *exp) {
+  return (float3)(frexp(x.s0, (int *)exp), frexp(x.s1, 1 + (int *)exp), frexp(x.s2, 2 + (int *)exp));
+}
+
+INLINE_OVERLOADABLE float4 frexp(float4 x, int4 *exp) {
+  return (float4)(frexp(x.s0, (int *)exp), frexp(x.s1, 1 + (int *)exp), frexp(x.s2, 2 + (int *)exp), frexp(x.s3, 3 + (int *)exp));
+}
+
+INLINE_OVERLOADABLE float8 frexp(float8 x, int8 *exp) {
+  return (float8)(frexp(x.s0, (int *)exp), frexp(x.s1, 1 + (int *)exp), frexp(x.s2, 2 + (int *)exp), frexp(x.s3, 3 + (int *)exp), frexp(x.s4, 4 + (int *)exp), frexp(x.s5, 5 + (int *)exp), frexp(x.s6, 6 + (int *)exp), frexp(x.s7, 7 + (int *)exp));
+}
+
+INLINE_OVERLOADABLE float16 frexp(float16 x, int16 *exp) {
+  return (float16)(frexp(x.s0, (int *)exp), frexp(x.s1, 1 + (int *)exp), frexp(x.s2, 2 + (int *)exp), frexp(x.s3, 3 + (int *)exp), frexp(x.s4, 4 + (int *)exp), frexp(x.s5, 5 + (int *)exp), frexp(x.s6, 6 + (int *)exp), frexp(x.s7, 7 + (int *)exp), frexp(x.s8, 8 + (int *)exp), frexp(x.s9, 9 + (int *)exp), frexp(x.sa, 10 + (int *)exp), frexp(x.sb, 11 + (int *)exp), frexp(x.sc, 12 + (int *)exp), frexp(x.sd, 13 + (int *)exp), frexp(x.se, 14 + (int *)exp), frexp(x.sf, 15 + (int *)exp));
+}
+
 INLINE_OVERLOADABLE float degrees(float radians) { return (180 / M_PI_F) * radians; }
 INLINE_OVERLOADABLE float2 degrees(float2 r) { return (float2)(degrees(r.s0), degrees(r.s1)); }
 INLINE_OVERLOADABLE float3 degrees(float3 r) { return (float3)(degrees(r.s0), degrees(r.s1), degrees(r.s2)); }
