@@ -1,36 +1,26 @@
-#add_subdirectory(llvm)
-
-macro (stringify TO_STRINGIFY_PATH TO_STRINGIFY_FILES)
-foreach (to_stringify_file ${TO_STRINGIFY_FILES})
-  set (input_file ${TO_STRINGIFY_PATH}/${to_stringify_file}.h)
-  set (output_file ${TO_STRINGIFY_PATH}/${to_stringify_file}_str.cpp)
-  set (string_header "\\\"string\\\"")
-  add_custom_command(
-    OUTPUT ${output_file}
-    COMMAND rm -rf ${output_file}
-    COMMAND echo "\\\#include ${string_header}" >> ${output_file}
-    COMMAND echo "namespace gbe {" >> ${output_file}
-    COMMAND echo "std::string ${to_stringify_file}_str = " >> ${output_file}
-    # Yeah!!! welcome to back slash hell
-    COMMAND cat ${input_file} |sed 's/\\\\/\\\\\\\\/g' | sed 's/\\\"/\\\\\\\"/g' | awk '{ printf \(\"\\"%s\\\\n\\"\\n\", $$0\) }' >> ${output_file}
-    COMMAND echo "\;" >> ${output_file}
-    COMMAND echo "}" >> ${output_file}
-    COMMAND echo "" >> ${output_file}
-    DEPENDS ${input_file})
-endforeach (to_stringify_file)
-endmacro (stringify)
-
-set (TO_STRINGIFY_FILES ocl_stdlib ocl_common_defines)
-stringify ("${GBE_SOURCE_DIR}/src/" "${TO_STRINGIFY_FILES}")
-
 set (ocl_vector_spec_file ${GBE_SOURCE_DIR}/src/builtin_vector_proto.def)
 set (ocl_vector_file ${GBE_SOURCE_DIR}/src/ocl_vector.h)
 set (ocl_as_file ${GBE_SOURCE_DIR}/src/ocl_as.h)
 set (ocl_convert_file ${GBE_SOURCE_DIR}/src/ocl_convert.h)
 set (ocl_stdlib_tmpl_file ${GBE_SOURCE_DIR}/src/ocl_stdlib.tmpl.h)
-set (ocl_blob_file ${GBE_SOURCE_DIR}/src/ocl_stdlib.h)
+set (ocl_blob_file ${CMAKE_CURRENT_BINARY_DIR}/ocl_stdlib.h)
+set (ocl_blob_cpp_file ${GBE_SOURCE_DIR}/src/ocl_stdlib_str.cpp)
 set (ocl_gen_blob_cmd ${GBE_SOURCE_DIR}/src/update_blob_ocl_header.py)
 set (ocl_gen_vector_cmd ${GBE_SOURCE_DIR}/src/gen_builtin_vector.py)
+
+set (string_header "\\\"string\\\"")
+add_custom_command(
+    OUTPUT ${ocl_blob_cpp_file}
+    COMMAND rm -rf ${ocl_blob_cpp_file}
+    COMMAND echo "\\\#include ${string_header}" >> ${ocl_blob_cpp_file}
+    COMMAND echo "namespace gbe {" >> ${ocl_blob_cpp_file}
+    COMMAND echo "std::string ocl_stdlib_str = " >> ${ocl_blob_cpp_file}
+    # Yeah!!! welcome to back slash hell
+    COMMAND cat ${ocl_blob_file} |sed 's/\\\\/\\\\\\\\/g' | sed 's/\\\"/\\\\\\\"/g' | awk '{ printf \(\"\\"%s\\\\n\\"\\n\", $$0\) }' >> ${ocl_blob_cpp_file}
+    COMMAND echo "\;" >> ${ocl_blob_cpp_file}
+    COMMAND echo "}" >> ${ocl_blob_cpp_file}
+    COMMAND echo "" >> ${ocl_blob_cpp_file}
+    DEPENDS ${ocl_blob_file})
 
 set_property(DIRECTORY APPEND PROPERTY ADDITIONAL_MAKE_CLEAN_FILES "ocl_vector.h;ocl_stdlib.h")
 
@@ -42,7 +32,31 @@ add_custom_command(
 add_custom_command(
   OUTPUT ${ocl_blob_file}
   COMMAND ${ocl_gen_blob_cmd} ${ocl_stdlib_tmpl_file} ${ocl_blob_file}
-  DEPENDS ${ocl_gen_blob_cmd} ${ocl_vector_file} ${ocl_as_file} ${ocl_convert_file})
+  DEPENDS ${ocl_gen_blob_cmd} ${ocl_stdlib_tmpl_file} ${ocl_vector_file} ${ocl_as_file} ${ocl_convert_file})
+
+
+set (pch_object ${ocl_blob_file}.pch)
+# generate pch object
+if (LLVM_VERSION_NODOT VERSION_GREATER 32)
+    set (clang_cmd -cc1 -x cl -triple spir -ffp-contract=off -emit-pch)
+else (LLVM_VERSION_NODOT VERSION_GREATER 32)
+    if (LLVM_VERSION_NODOT VERSION_GREATER 31)
+        set (clang_cmd -cc1 -x cl -triple nvptx -ffp-contract=off -emit-pch)
+    else (LLVM_VERSION_NODOT VERSION_GREATER 31)
+        set (clang_cmd -cc1 -x cl -triple ptx32 -emit-pch)
+    endif (LLVM_VERSION_NODOT VERSION_GREATER 31)
+endif (LLVM_VERSION_NODOT VERSION_GREATER 32)
+set (clang_cmd ${clang_cmd} -fno-builtin)
+
+add_custom_command(
+     OUTPUT ${pch_object}
+     COMMAND rm -f ${pch_object}
+     COMMAND clang ${clang_cmd} ${ocl_blob_file} -o ${pch_object}
+     DEPENDS ${ocl_blob_file}
+     )
+
+add_custom_target(pch_object
+                  DEPENDS ${pch_object})
 
 if (GBE_USE_BLOB)
   set (GBE_SRC
@@ -52,9 +66,6 @@ else (GBE_USE_BLOB)
   set (GBE_SRC
     ocl_stdlib.h
     ocl_stdlib_str.cpp  # this file is auto-generated.
-    ocl_stdlib_str.cpp
-    ocl_common_defines.h
-    ocl_common_defines_str.cpp # this file is auto-generated.
     sys/vector.hpp
     sys/hash_map.hpp
     sys/map.hpp
@@ -132,6 +143,7 @@ link_directories (${LLVM_LIBRARY_DIRS})
 include_directories(${LLVM_INCLUDE_DIRS})
 add_library (gbe SHARED ${GBE_SRC})
 
+ADD_DEPENDENCIES (gbe pch_object)
 target_link_libraries(
                       gbe
                       ${DRM_INTEL_LIBRARY}
@@ -143,5 +155,11 @@ target_link_libraries(
                       ${CMAKE_DL_LIBS})
 
 install (TARGETS gbe LIBRARY DESTINATION lib)
+install (FILES ${pch_object} DESTINATION lib)
 install (FILES backend/program.h DESTINATION include/gen)
 
+set (PCH_OBJECT_DIR "${pch_object};${CMAKE_INSTALL_PREFIX}/lib/ocl_stdlib.h.pch")
+configure_file (
+  "GBEConfig.h.in"
+  "GBEConfig.h"
+)

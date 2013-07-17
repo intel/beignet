@@ -22,7 +22,7 @@ import os
 
 if len(sys.argv) != 3:
     print "Invalid argument {}".format(sys.argv)
-    print "use {} spec_file_name output_file_name".format(sys.argv[0])
+    print "use {} tmpl_file_name output_file_name".format(sys.argv[0])
     raise
 
 def safeUnlink(filename):
@@ -31,7 +31,7 @@ def safeUnlink(filename):
     except OSError:
         pass
 
-
+header_segments = [ "vector", "as", "convert", "common_defines"]
 blobFileName = sys.argv[2]
 blobTempName = sys.argv[2] + '.tmp'
 safeUnlink(blobFileName)
@@ -40,7 +40,6 @@ blob = open(sys.argv[2] + '.tmp', 'w')
 path = os.path.dirname(sys.argv[1])
 if path == '':
     path = '.'
-header_segments = [ "vector", "as", "convert"]
 
 matched_header = ""
 for tline in tmplFile:

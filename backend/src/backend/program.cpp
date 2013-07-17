@@ -35,6 +35,8 @@
 #include <cstring>
 #include <algorithm>
 #include <fstream>
+#include <dlfcn.h>
+#include <sstream>
 
 /* Not defined for LLVM 3.0 */
 #if !defined(LLVM_VERSION_MAJOR)
@@ -66,6 +68,7 @@
 #endif  /* LLVM_VERSION_MINOR <= 2 */
 #include <llvm/Bitcode/ReaderWriter.h>
 #include <llvm/Support/raw_ostream.h>
+#include "src/GBEConfig.h"
 
 namespace gbe {
 
@@ -224,7 +227,8 @@ namespace gbe {
   }
 
   extern std::string ocl_stdlib_str;
-  extern std::string ocl_common_defines_str;
+
+  BVAR(OCL_USE_PCH, true);
   static gbe_program programNewFromSource(const char *source,
                                           size_t stringSize,
                                           const char *options,
@@ -234,16 +238,45 @@ namespace gbe {
     char clStr[L_tmpnam+1], llStr[L_tmpnam+1];
     const std::string clName = std::string(tmpnam_r(clStr)) + ".cl"; /* unsafe! */
     const std::string llName = std::string(tmpnam_r(llStr)) + ".ll"; /* unsafe! */
+    std::string pchHeaderName;
+    std::string clOpt;
 
-    // Write the source to the cl file
     FILE *clFile = fopen(clName.c_str(), "w");
     FATAL_IF(clFile == NULL, "Failed to open temporary file");
-    fwrite(ocl_common_defines_str.c_str(), strlen(ocl_common_defines_str.c_str()), 1, clFile);
-    fwrite(ocl_stdlib_str.c_str(), strlen(ocl_stdlib_str.c_str()), 1, clFile);
+
+    bool usePCH = false;
+
+    if(options)
+      clOpt += options;
+
+    if (options || !OCL_USE_PCH) {
+      /* Some building option may cause the prebuild pch header file
+         not compatible with the XXX.cl source. We need rebuild all here.*/
+      usePCH = false;
+    } else {
+      std::string dirs = PCH_OBJECT_DIR;
+      std::istringstream idirs(dirs);
+
+      while (getline(idirs, pchHeaderName, ';')) {
+        FILE *pchFile = fopen(pchHeaderName.c_str(), "r");
+        if (pchFile != NULL) {
+          usePCH = true;
+          fclose(pchFile);
+          break;
+        }
+      }
+    }
+    if (usePCH) {
+      clOpt += " -include-pch ";
+      clOpt += pchHeaderName;
+      clOpt += " ";
+    } else
+      fwrite(ocl_stdlib_str.c_str(), strlen(ocl_stdlib_str.c_str()), 1, clFile);
+    // Write the source to the cl file
     fwrite(source, strlen(source), 1, clFile);
     fclose(clFile);
 
-    buildModuleFromSource(clName.c_str(), llName.c_str(), options ? options : "");
+    buildModuleFromSource(clName.c_str(), llName.c_str(), clOpt.c_str());
     remove(clName.c_str());
 
     // Now build the program from llvm

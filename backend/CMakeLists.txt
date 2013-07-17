@@ -1,12 +1,6 @@
 project (GBE)
 set (LIBGBE_VERSION_MAJOR 0)
-set (LIBGBE_VERSION_MINOR 1)
-
-configure_file (
-  "src/GBEConfig.h.in"
-  "src/GBEConfig.h"
-)
-
+set (LIBGBE_VERSION_MINOR 2)
 cmake_minimum_required (VERSION 2.6.0)
 
 set (GBE_CMAKE_DIR "${GBE_SOURCE_DIR}/cmake")
@@ -97,7 +91,7 @@ elseif (COMPILER STREQUAL "ICC")
   set (CCMAKE_CXX_FLAGS_MINSIZEREL "-Os -DGBE_DEBUG=0")
   set (CMAKE_EXE_LINKER_FLAGS "")
 endif ()
-
+include_directories (${CMAKE_CURRENT_BINARY_DIR})
 ##############################################################
 # Project source code
 ##############################################################
