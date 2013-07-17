@@ -5252,6 +5252,40 @@ INLINE_OVERLOADABLE float sign(float x) {
   return 0.f;
 }
 
+INLINE_OVERLOADABLE float modf(float x, float *i) {
+  uint hx = as_uint(x), ix = hx & 0x7FFFFFFF;
+  if (ix > 0x7F800000) {
+    *i = nan(0u);
+    return nan(0u);
+  }
+  if (ix == 0x7F800000) {
+    *i = x;
+    return as_float(hx & 0x80000000u);
+  }
+  *i = __gen_ocl_rndz(x);
+  return x - *i;
+}
+
+INLINE_OVERLOADABLE float2 modf(float2 x, float2 *i) {
+  return (float2)(modf(x.s0, (float *)i), modf(x.s1, 1 + (float *)i));
+}
+
+INLINE_OVERLOADABLE float3 modf(float3 x, float3 *i) {
+  return (float3)(modf(x.s0, (float *)i), modf(x.s1, 1 + (float *)i), modf(x.s2, 2 + (float *)i));
+}
+
+INLINE_OVERLOADABLE float4 modf(float4 x, float4 *i) {
+  return (float4)(modf(x.s0, (float *)i), modf(x.s1, 1 + (float *)i), modf(x.s2, 2 + (float *)i), modf(x.s3, 3 + (float *)i));
+}
+
+INLINE_OVERLOADABLE float8 modf(float8 x, float8 *i) {
+  return (float8)(modf(x.s0, (float *)i), modf(x.s1, 1 + (float *)i), modf(x.s2, 2 + (float *)i), modf(x.s3, 3 + (float *)i), modf(x.s4, 4 + (float *)i), modf(x.s5, 5 + (float *)i), modf(x.s6, 6 + (float *)i), modf(x.s7, 7 + (float *)i));
+}
+
+INLINE_OVERLOADABLE float16 modf(float16 x, float16 *i) {
+  return (float16)(modf(x.s0, (float *)i), modf(x.s1, 1 + (float *)i), modf(x.s2, 2 + (float *)i), modf(x.s3, 3 + (float *)i), modf(x.s4, 4 + (float *)i), modf(x.s5, 5 + (float *)i), modf(x.s6, 6 + (float *)i), modf(x.s7, 7 + (float *)i), modf(x.s8, 8 + (float *)i), modf(x.s9, 9 + (float *)i), modf(x.sa, 10 + (float *)i), modf(x.sb, 11 + (float *)i), modf(x.sc, 12 + (float *)i), modf(x.sd, 13 + (float *)i), modf(x.se, 14 + (float *)i), modf(x.sf, 15 + (float *)i));
+}
+
 INLINE_OVERLOADABLE float __gen_ocl_internal_fmax(float a, float b) { return max(a,b); }
 INLINE_OVERLOADABLE float __gen_ocl_internal_fmin(float a, float b) { return min(a,b); }
 INLINE_OVERLOADABLE float __gen_ocl_internal_maxmag(float x, float y) {
