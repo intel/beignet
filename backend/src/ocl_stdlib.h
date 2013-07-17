@@ -4123,31 +4123,13 @@ INLINE OVERLOADABLE double16 convert_double16(float16 v) {
 /////////////////////////////////////////////////////////////////////////////
 // OpenCL relational built-in functions
 /////////////////////////////////////////////////////////////////////////////
-#define DEF DECL(int, float); \
-            DECL(int2, float2); \
-            DECL(int3, float3); \
-            DECL(int4, float4); \
-            DECL(int8, float8); \
-            DECL(int16, float16);
-#define DECL(ret, type) ret INLINE_OVERLOADABLE isequal(type x, type y) { return x == y; }
-DEF;
-#undef DECL
-#define DECL(ret, type) ret INLINE_OVERLOADABLE isnotequal(type x, type y) { return x != y; }
-DEF;
-#undef DECL
-#define DECL(ret, type) ret INLINE_OVERLOADABLE isgreater(type x, type y) { return x > y; }
-DEF;
-#undef DECL
-#define DECL(ret, type) ret INLINE_OVERLOADABLE isgreaterequal(type x, type y) { return x >= y; }
-DEF;
-#undef DECL
-#define DECL(ret, type) ret INLINE_OVERLOADABLE isless(type x, type y) { return x < y; }
-DEF;
-#undef DECL
-#define DECL(ret, type) ret INLINE_OVERLOADABLE islessequal(type x, type y) { return x <= y; }
-DEF;
-#undef DECL
-#undef DEF
+
+int INLINE_OVERLOADABLE isequal(float x, float y) { return x == y; }
+int INLINE_OVERLOADABLE isnotequal(float x, float y) { return x != y; }
+int INLINE_OVERLOADABLE isgreater(float x, float y) { return x > y; }
+int INLINE_OVERLOADABLE isgreaterequal(float x, float y) { return x >= y; }
+int INLINE_OVERLOADABLE isless(float x, float y) { return x < y; }
+int INLINE_OVERLOADABLE islessequal(float x, float y) { return x <= y; }
 
 #define SDEF(TYPE)                                                              \
 OVERLOADABLE TYPE ocl_sadd_sat(TYPE x, TYPE y);                          \
@@ -4175,75 +4157,12 @@ uchar INLINE_OVERLOADABLE convert_uchar_sat(float x) {
     return add_sat((uchar)x, (uchar)0);
 }
 
-#define DEC2(name) INLINE_OVERLOADABLE int2 name(float2 x) { return (int2)(name(x.s0), name(x.s1)); }
-#define DEC3(name) INLINE_OVERLOADABLE int3 name(float3 x) { return (int3)(name(x.s0), name(x.s1), name(x.s2)); }
-#define DEC4(name) INLINE_OVERLOADABLE int4 name(float4 x) { return (int4)(name(x.s0), name(x.s1), name(x.s2), name(x.s3)); }
-#define DEC8(name) INLINE_OVERLOADABLE int8 name(float8 x) { return (int8)(name(x.s0), name(x.s1), name(x.s2), name(x.s3), name(x.s4), name(x.s5), name(x.s6), name(x.s7)); }
-#define DEC16(name) INLINE_OVERLOADABLE int16 name(float16 x) { return (int16)(name(x.s0), name(x.s1), name(x.s2), name(x.s3), name(x.s4), name(x.s5), name(x.s6), name(x.s7), name(x.s8), name(x.s9), name(x.sA), name(x.sB), name(x.sC), name(x.sD), name(x.sE), name(x.sF)); }
 INLINE_OVERLOADABLE int isfinite(float x) { return __builtin_isfinite(x); }
-DEC2(isfinite);
-DEC3(isfinite);
-DEC4(isfinite);
-DEC8(isfinite);
-DEC16(isfinite);
 INLINE_OVERLOADABLE int isinf(float x) { return __builtin_isinf(x); }
-DEC2(isinf);
-DEC3(isinf);
-DEC4(isinf);
-DEC8(isinf);
-DEC16(isinf);
 INLINE_OVERLOADABLE int isnan(float x) { return __builtin_isnan(x); }
-DEC2(isnan);
-DEC3(isnan);
-DEC4(isnan);
-DEC8(isnan);
-DEC16(isnan);
 INLINE_OVERLOADABLE int isnormal(float x) { return __builtin_isnormal(x); }
-DEC2(isnormal);
-DEC3(isnormal);
-DEC4(isnormal);
-DEC8(isnormal);
-DEC16(isnormal);
 INLINE_OVERLOADABLE int signbit(float x) { return __builtin_signbit(x); }
-DEC2(signbit);
-DEC3(signbit);
-DEC4(signbit);
-DEC8(signbit);
-DEC16(signbit);
-#undef DEC2
-#undef DEC3
-#undef DEC4
-#undef DEC8
-#undef DEC16
 
-#define DEC2(name) INLINE_OVERLOADABLE int2 name(float2 x, float2 y) { return (int2)(name(x.s0, y.s0), name(x.s1, y.s1)); }
-#define DEC3(name) INLINE_OVERLOADABLE int3 name(float3 x, float3 y) { return (int3)(name(x.s0, y.s0), name(x.s1, y.s1), name(x.s2, y.s2)); }
-#define DEC4(name) INLINE_OVERLOADABLE int4 name(float4 x, float4 y) { return (int4)(name(x.s0, y.s0), name(x.s1, y.s1), name(x.s2, y.s2), name(x.s3, y.s3)); }
-#define DEC8(name) INLINE_OVERLOADABLE int8 name(float8 x, float8 y) { return (int8)(name(x.s0, y.s0), name(x.s1, y.s1), name(x.s2, y.s2), name(x.s3, y.s3), name(x.s4, y.s4), name(x.s5, y.s5), name(x.s6, y.s6), name(x.s7, y.s7)); }
-#define DEC16(name) INLINE_OVERLOADABLE int16 name(float16 x, float16 y) { return (int16)(name(x.s0, y.s0), name(x.s1, y.s1), name(x.s2, y.s2), name(x.s3, y.s3), name(x.s4, y.s4), name(x.s5, y.s5), name(x.s6, y.s6), name(x.s7, y.s7), name(x.s8, y.s8), name(x.s9, y.s9), name(x.sA, y.sA), name(x.sB, y.sB), name(x.sC, y.sC), name(x.sD, y.sD), name(x.sE, y.sE), name(x.sF, y.sF)); }
-INLINE_OVERLOADABLE int islessgreater(float x, float y) { return (x<y)||(x>y); }
-DEC2(islessgreater);
-DEC3(islessgreater);
-DEC4(islessgreater);
-DEC8(islessgreater);
-DEC16(islessgreater);
-INLINE_OVERLOADABLE int isordered(float x, float y) { return isequal(x,x) && isequal(y,y); }
-DEC2(isordered);
-DEC3(isordered);
-DEC4(isordered);
-DEC8(isordered);
-DEC16(isordered);
-INLINE_OVERLOADABLE int isunordered(float x, float y) { return isnan(x) || isnan(y); }
-DEC2(isunordered);
-DEC3(isunordered);
-DEC4(isunordered);
-DEC8(isunordered);
-DEC16(isunordered);
-#undef DEC2
-#undef DEC3
-#undef DEC4
-#undef DEC8
-#undef DEC16
 #define DEC1(type) INLINE_OVERLOADABLE int any(type a) { return a<0; }
 #define DEC2(type) INLINE_OVERLOADABLE int any(type a) { return a.s0<0 || a.s1<0; }
 #define DEC3(type) INLINE_OVERLOADABLE int any(type a) { return a.s0<0 || a.s1<0 || a.s2<0; }
@@ -4297,23 +4216,6 @@ DEF(char); DEF(uchar); DEF(short); DEF(ushort); DEF(int); DEF(uint)
 INLINE_OVERLOADABLE float bitselect(float a, float b, float c) {
   return as_float(bitselect(as_int(a), as_int(b), as_int(c)));
 }
-#define DEC2(type) INLINE_OVERLOADABLE type##2 bitselect(type##2 a, type##2 b, type##2 c) { return (type##2)(bitselect(a.s0, b.s0, c.s0), bitselect(a.s1, b.s1, c.s1)); }
-#define DEC3(type) INLINE_OVERLOADABLE type##3 bitselect(type##3 a, type##3 b, type##3 c) { return (type##3)(bitselect(a.s0, b.s0, c.s0), bitselect(a.s1, b.s1, c.s1), bitselect(a.s2, b.s2, c.s2)); }
-#define DEC4(type) INLINE_OVERLOADABLE type##4 bitselect(type##4 a, type##4 b, type##4 c) { return (type##4)(bitselect(a.s0, b.s0, c.s0), bitselect(a.s1, b.s1, c.s1), bitselect(a.s2, b.s2, c.s2), bitselect(a.s3, b.s3, c.s3)); }
-#define DEC8(type) INLINE_OVERLOADABLE type##8 bitselect(type##8 a, type##8 b, type##8 c) { return (type##8)(bitselect(a.s0, b.s0, c.s0), bitselect(a.s1, b.s1, c.s1), bitselect(a.s2, b.s2, c.s2), bitselect(a.s3, b.s3, c.s3), bitselect(a.s4, b.s4, c.s4), bitselect(a.s5, b.s5, c.s5), bitselect(a.s6, b.s6, c.s6), bitselect(a.s7, b.s7, c.s7)); }
-#define DEC16(type) INLINE_OVERLOADABLE type##16 bitselect(type##16 a, type##16 b, type##16 c) { return (type##16)(bitselect(a.s0, b.s0, c.s0), bitselect(a.s1, b.s1, c.s1), bitselect(a.s2, b.s2, c.s2), bitselect(a.s3, b.s3, c.s3), bitselect(a.s4, b.s4, c.s4), bitselect(a.s5, b.s5, c.s5), bitselect(a.s6, b.s6, c.s6), bitselect(a.s7, b.s7, c.s7), bitselect(a.s8, b.s8, c.s8), bitselect(a.s9, b.s9, c.s9), bitselect(a.sa, b.sa, c.sa), bitselect(a.sb, b.sb, c.sb), bitselect(a.sc, b.sc, c.sc), bitselect(a.sd, b.sd, c.sd), bitselect(a.se, b.se, c.se), bitselect(a.sf, b.sf, c.sf)); }
-#define DEF(n) DEC##n(char); DEC##n(uchar); DEC##n(short); DEC##n(ushort); DEC##n(int); DEC##n(uint); DEC##n(float)
-DEF(2)
-DEF(3)
-DEF(4)
-DEF(8)
-DEF(16)
-#undef DEF
-#undef DEC2
-#undef DEC3
-#undef DEC4
-#undef DEC8
-#undef DEC16
 
 /////////////////////////////////////////////////////////////////////////////
 // Integer built-in functions
@@ -4363,24 +4265,6 @@ INLINE_OVERLOADABLE uint clz(uint x) {
   return __gen_ocl_fbh(x);
 }
 
-#define DEC2(type) INLINE_OVERLOADABLE type##2 clz(type##2 a) { return (type##2)(clz(a.s0), clz(a.s1)); }
-#define DEC3(type) INLINE_OVERLOADABLE type##3 clz(type##3 a) { return (type##3)(clz(a.s0), clz(a.s1), clz(a.s2)); }
-#define DEC4(type) INLINE_OVERLOADABLE type##4 clz(type##4 a) { return (type##4)(clz(a.s0), clz(a.s1), clz(a.s2), clz(a.s3)); }
-#define DEC8(type) INLINE_OVERLOADABLE type##8 clz(type##8 a) { return (type##8)(clz(a.s0), clz(a.s1), clz(a.s2), clz(a.s3), clz(a.s4), clz(a.s5), clz(a.s6), clz(a.s7)); }
-#define DEC16(type) INLINE_OVERLOADABLE type##16 clz(type##16 a) { return (type##16)(clz(a.s0), clz(a.s1), clz(a.s2), clz(a.s3), clz(a.s4), clz(a.s5), clz(a.s6), clz(a.s7), clz(a.s8), clz(a.s9), clz(a.sa), clz(a.sb), clz(a.sc), clz(a.sd), clz(a.se), clz(a.sf)); }
-#define DEC(n) DEC##n(char); DEC##n(uchar); DEC##n(short); DEC##n(ushort); DEC##n(int); DEC##n(uint) 
-DEC(2)
-DEC(3)
-DEC(4)
-DEC(8)
-DEC(16)
-#undef DEC
-#undef DEC2
-#undef DEC3
-#undef DEC4
-#undef DEC8
-#undef DEC16
-
 OVERLOADABLE int __gen_ocl_mul_hi(int x, int y);
 OVERLOADABLE uint __gen_ocl_mul_hi(uint x, uint y);
 INLINE_OVERLOADABLE char mul_hi(char x, char y) { return (x * y) >> 8; }
@@ -4389,23 +4273,6 @@ INLINE_OVERLOADABLE short mul_hi(short x, short y) { return (x * y) >> 16; }
 INLINE_OVERLOADABLE ushort mul_hi(ushort x, ushort y) { return (x * y) >> 16; }
 INLINE_OVERLOADABLE int mul_hi(int x, int y) { return __gen_ocl_mul_hi(x, y); }
 INLINE_OVERLOADABLE uint mul_hi(uint x, uint y) { return __gen_ocl_mul_hi(x, y); }
-#define DEC2(type) INLINE_OVERLOADABLE type##2 mul_hi(type##2 a, type##2 b) { return (type##2)(mul_hi(a.s0, b.s0), mul_hi(a.s1, b.s1)); }
-#define DEC3(type) INLINE_OVERLOADABLE type##3 mul_hi(type##3 a, type##3 b) { return (type##3)(mul_hi(a.s0, b.s0), mul_hi(a.s1, b.s1), mul_hi(a.s2, b.s2)); }
-#define DEC4(type) INLINE_OVERLOADABLE type##4 mul_hi(type##4 a, type##4 b) { return (type##4)(mul_hi(a.s0, b.s0), mul_hi(a.s1, b.s1), mul_hi(a.s2, b.s2), mul_hi(a.s3, b.s3)); }
-#define DEC8(type) INLINE_OVERLOADABLE type##8 mul_hi(type##8 a, type##8 b) { return (type##8)(mul_hi(a.s0, b.s0), mul_hi(a.s1, b.s1), mul_hi(a.s2, b.s2), mul_hi(a.s3, b.s3), mul_hi(a.s4, b.s4), mul_hi(a.s5, b.s5), mul_hi(a.s6, b.s6), mul_hi(a.s7, b.s7)); }
-#define DEC16(type) INLINE_OVERLOADABLE type##16 mul_hi(type##16 a, type##16 b) { return (type##16)(mul_hi(a.s0, b.s0), mul_hi(a.s1, b.s1), mul_hi(a.s2, b.s2), mul_hi(a.s3, b.s3), mul_hi(a.s4, b.s4), mul_hi(a.s5, b.s5), mul_hi(a.s6, b.s6), mul_hi(a.s7, b.s7), mul_hi(a.s8, b.s8), mul_hi(a.s9, b.s9), mul_hi(a.sa, b.sa), mul_hi(a.sb, b.sb), mul_hi(a.sc, b.sc), mul_hi(a.sd, b.sd), mul_hi(a.se, b.se), mul_hi(a.sf, b.sf)); }
-#define DEF(n) DEC##n(char); DEC##n(uchar); DEC##n(short); DEC##n(ushort); DEC##n(int); DEC##n(uint)
-DEF(2)
-DEF(3)
-DEF(4)
-DEF(8)
-DEF(16)
-#undef DEF
-#undef DEC2
-#undef DEC3
-#undef DEC4
-#undef DEC8
-#undef DEC16
 
 #define DEF(type) INLINE_OVERLOADABLE type mad_hi(type a, type b, type c) { return mul_hi(a, b) + c; }
 DEF(char)
@@ -4415,63 +4282,12 @@ DEF(ushort)
 DEF(int)
 DEF(uint)
 #undef DEF
-#define DEC2(type) INLINE_OVERLOADABLE type##2 mad_hi(type##2 a, type##2 b, type##2 c) { return (type##2)(mad_hi(a.s0, b.s0, c.s0), mad_hi(a.s1, b.s1, c.s1)); }
-#define DEC3(type) INLINE_OVERLOADABLE type##3 mad_hi(type##3 a, type##3 b, type##3 c) { return (type##3)(mad_hi(a.s0, b.s0, c.s0), mad_hi(a.s1, b.s1, c.s1), mad_hi(a.s2, b.s2, c.s2)); }
-#define DEC4(type) INLINE_OVERLOADABLE type##4 mad_hi(type##4 a, type##4 b, type##4 c) { return (type##4)(mad_hi(a.s0, b.s0, c.s0), mad_hi(a.s1, b.s1, c.s1), mad_hi(a.s2, b.s2, c.s2), mad_hi(a.s3, b.s3, c.s3)); }
-#define DEC8(type) INLINE_OVERLOADABLE type##8 mad_hi(type##8 a, type##8 b, type##8 c) { return (type##8)(mad_hi(a.s0, b.s0, c.s0), mad_hi(a.s1, b.s1, c.s1), mad_hi(a.s2, b.s2, c.s2), mad_hi(a.s3, b.s3, c.s3), mad_hi(a.s4, b.s4, c.s4), mad_hi(a.s5, b.s5, c.s5), mad_hi(a.s6, b.s6, c.s6), mad_hi(a.s7, b.s7, c.s7)); }
-#define DEC16(type) INLINE_OVERLOADABLE type##16 mad_hi(type##16 a, type##16 b, type##16 c) { return (type##16)(mad_hi(a.s0, b.s0, c.s0), mad_hi(a.s1, b.s1, c.s1), mad_hi(a.s2, b.s2, c.s2), mad_hi(a.s3, b.s3, c.s3), mad_hi(a.s4, b.s4, c.s4), mad_hi(a.s5, b.s5, c.s5), mad_hi(a.s6, b.s6, c.s6), mad_hi(a.s7, b.s7, c.s7), mad_hi(a.s8, b.s8, c.s8), mad_hi(a.s9, b.s9, c.s9), mad_hi(a.sa, b.sa, c.sa), mad_hi(a.sb, b.sb, c.sb), mad_hi(a.sc, b.sc, c.sc), mad_hi(a.sd, b.sd, c.sd), mad_hi(a.se, b.se, c.se), mad_hi(a.sf, b.sf, c.sf)); }
-#define DEF(n) DEC##n(char); DEC##n(uchar); DEC##n(short); DEC##n(ushort); DEC##n(int); DEC##n(uint)
-DEF(2)
-DEF(3)
-DEF(4)
-DEF(8)
-DEF(16)
-#undef DEF
-#undef DEC2
-#undef DEC3
-#undef DEC4
-#undef DEC8
-#undef DEC16
 
 INLINE_OVERLOADABLE int mul24(int a, int b) { return ((a << 8) >> 8) * ((b << 8) >> 8); }
 INLINE_OVERLOADABLE uint mul24(uint a, uint b) { return (a & 0xFFFFFF) * (b & 0xFFFFFF); }
-#define DEC2(type) INLINE_OVERLOADABLE type##2 mul24(type##2 a, type##2 b) { return (type##2)(mul24(a.s0, b.s0), mul24(a.s1, b.s1)); }
-#define DEC3(type) INLINE_OVERLOADABLE type##3 mul24(type##3 a, type##3 b) { return (type##3)(mul24(a.s0, b.s0), mul24(a.s1, b.s1), mul24(a.s2, b.s2)); }
-#define DEC4(type) INLINE_OVERLOADABLE type##4 mul24(type##4 a, type##4 b) { return (type##4)(mul24(a.s0, b.s0), mul24(a.s1, b.s1), mul24(a.s2, b.s2), mul24(a.s3, b.s3)); }
-#define DEC8(type) INLINE_OVERLOADABLE type##8 mul24(type##8 a, type##8 b) { return (type##8)(mul24(a.s0, b.s0), mul24(a.s1, b.s1), mul24(a.s2, b.s2), mul24(a.s3, b.s3), mul24(a.s4, b.s4), mul24(a.s5, b.s5), mul24(a.s6, b.s6), mul24(a.s7, b.s7)); }
-#define DEC16(type) INLINE_OVERLOADABLE type##16 mul24(type##16 a, type##16 b) { return (type##16)(mul24(a.s0, b.s0), mul24(a.s1, b.s1), mul24(a.s2, b.s2), mul24(a.s3, b.s3), mul24(a.s4, b.s4), mul24(a.s5, b.s5), mul24(a.s6, b.s6), mul24(a.s7, b.s7), mul24(a.s8, b.s8), mul24(a.s9, b.s9), mul24(a.sa, b.sa), mul24(a.sb, b.sb), mul24(a.sc, b.sc), mul24(a.sd, b.sd), mul24(a.se, b.se), mul24(a.sf, b.sf)); }
-#define DEF(n) DEC##n(int); DEC##n(uint)
-DEF(2)
-DEF(3)
-DEF(4)
-DEF(8)
-DEF(16)
-#undef DEF
-#undef DEC2
-#undef DEC3
-#undef DEC4
-#undef DEC8
-#undef DEC16
 
 INLINE_OVERLOADABLE int mad24(int a, int b, int c) { return mul24(a, b) + c; }
 INLINE_OVERLOADABLE uint mad24(uint a, uint b, uint c) { return mul24(a, b) + c; }
-#define DEC2(type) INLINE_OVERLOADABLE type##2 mad24(type##2 a, type##2 b, type##2 c) { return (type##2)(mad24(a.s0, b.s0, c.s0), mad24(a.s1, b.s1, c.s1)); }
-#define DEC3(type) INLINE_OVERLOADABLE type##3 mad24(type##3 a, type##3 b, type##3 c) { return (type##3)(mad24(a.s0, b.s0, c.s0), mad24(a.s1, b.s1, c.s1), mad24(a.s2, b.s2, c.s2)); }
-#define DEC4(type) INLINE_OVERLOADABLE type##4 mad24(type##4 a, type##4 b, type##4 c) { return (type##4)(mad24(a.s0, b.s0, c.s0), mad24(a.s1, b.s1, c.s1), mad24(a.s2, b.s2, c.s2), mad24(a.s3, b.s3, c.s3)); }
-#define DEC8(type) INLINE_OVERLOADABLE type##8 mad24(type##8 a, type##8 b, type##8 c) { return (type##8)(mad24(a.s0, b.s0, c.s0), mad24(a.s1, b.s1, c.s1), mad24(a.s2, b.s2, c.s2), mad24(a.s3, b.s3, c.s3), mad24(a.s4, b.s4, c.s4), mad24(a.s5, b.s5, c.s5), mad24(a.s6, b.s6, c.s6), mad24(a.s7, b.s7, c.s7)); }
-#define DEC16(type) INLINE_OVERLOADABLE type##16 mad24(type##16 a, type##16 b, type##16 c) { return (type##16)(mad24(a.s0, b.s0, c.s0), mad24(a.s1, b.s1, c.s1), mad24(a.s2, b.s2, c.s2), mad24(a.s3, b.s3, c.s3), mad24(a.s4, b.s4, c.s4), mad24(a.s5, b.s5, c.s5), mad24(a.s6, b.s6, c.s6), mad24(a.s7, b.s7, c.s7), mad24(a.s8, b.s8, c.s8), mad24(a.s9, b.s9, c.s9), mad24(a.sa, b.sa, c.sa), mad24(a.sb, b.sb, c.sb), mad24(a.sc, b.sc, c.sc), mad24(a.sd, b.sd, c.sd), mad24(a.se, b.se, c.se), mad24(a.sf, b.sf, c.sf)); }
-#define DEF(n) DEC##n(int); DEC##n(uint)
-DEF(2)
-DEF(3)
-DEF(4)
-DEF(8)
-DEF(16)
-#undef DEF
-#undef DEC2
-#undef DEC3
-#undef DEC4
-#undef DEC8
-#undef DEC16
 
 INLINE_OVERLOADABLE char mad_sat(char a, char b, char c) {
   int x = (int)a * (int)b + (int)c;
@@ -4505,23 +4321,14 @@ INLINE_OVERLOADABLE ushort mad_sat(ushort a, ushort b, ushort c) {
   return x;
 }
 
-#define DEC2(type) INLINE_OVERLOADABLE type##2 mad_sat(type##2 a, type##2 b, type##2 c) { return (type##2)(mad_sat(a.s0, b.s0, c.s0), mad_sat(a.s1, b.s1, c.s1)); }
-#define DEC3(type) INLINE_OVERLOADABLE type##3 mad_sat(type##3 a, type##3 b, type##3 c) { return (type##3)(mad_sat(a.s0, b.s0, c.s0), mad_sat(a.s1, b.s1, c.s1), mad_sat(a.s2, b.s2, c.s2)); }
-#define DEC4(type) INLINE_OVERLOADABLE type##4 mad_sat(type##4 a, type##4 b, type##4 c) { return (type##4)(mad_sat(a.s0, b.s0, c.s0), mad_sat(a.s1, b.s1, c.s1), mad_sat(a.s2, b.s2, c.s2), mad_sat(a.s3, b.s3, c.s3)); }
-#define DEC8(type) INLINE_OVERLOADABLE type##8 mad_sat(type##8 a, type##8 b, type##8 c) { return (type##8)(mad_sat(a.s0, b.s0, c.s0), mad_sat(a.s1, b.s1, c.s1), mad_sat(a.s2, b.s2, c.s2), mad_sat(a.s3, b.s3, c.s3), mad_sat(a.s4, b.s4, c.s4), mad_sat(a.s5, b.s5, c.s5), mad_sat(a.s6, b.s6, c.s6), mad_sat(a.s7, b.s7, c.s7)); }
-#define DEC16(type) INLINE_OVERLOADABLE type##16 mad_sat(type##16 a, type##16 b, type##16 c) { return (type##16)(mad_sat(a.s0, b.s0, c.s0), mad_sat(a.s1, b.s1, c.s1), mad_sat(a.s2, b.s2, c.s2), mad_sat(a.s3, b.s3, c.s3), mad_sat(a.s4, b.s4, c.s4), mad_sat(a.s5, b.s5, c.s5), mad_sat(a.s6, b.s6, c.s6), mad_sat(a.s7, b.s7, c.s7), mad_sat(a.s8, b.s8, c.s8), mad_sat(a.s9, b.s9, c.s9), mad_sat(a.sa, b.sa, c.sa), mad_sat(a.sb, b.sb, c.sb), mad_sat(a.sc, b.sc, c.sc), mad_sat(a.sd, b.sd, c.sd), mad_sat(a.se, b.se, c.se), mad_sat(a.sf, b.sf, c.sf)); }
-#define DEF(n) DEC##n(char); DEC##n(uchar); DEC##n(short); DEC##n(ushort)
-DEF(2)
-DEF(3)
-DEF(4)
-DEF(8)
-DEF(16)
-#undef DEF
-#undef DEC2
-#undef DEC3
-#undef DEC4
-#undef DEC8
-#undef DEC16
+/* XXX not implemented. */
+INLINE_OVERLOADABLE int mad_sat(int a, int b, int c) {
+  return 0;
+}
+
+INLINE_OVERLOADABLE uint mad_sat(uint a, uint b, uint c) {
+  return 0;
+}
 
 INLINE_OVERLOADABLE uchar __rotate_left(uchar x, uchar y) { return (x << y) | (x >> (8 - y)); }
 INLINE_OVERLOADABLE char __rotate_left(char x, char y) { return __rotate_left((uchar)x, (uchar)y); }
@@ -4537,23 +4344,6 @@ DEF(ushort, 15)
 DEF(int, 31)
 DEF(uint, 31)
 #undef DEF
-#define DEC2(type) INLINE_OVERLOADABLE type##2 rotate(type##2 a, type##2 b) { return (type##2)(rotate(a.s0, b.s0), rotate(a.s1, b.s1)); }
-#define DEC3(type) INLINE_OVERLOADABLE type##3 rotate(type##3 a, type##3 b) { return (type##3)(rotate(a.s0, b.s0), rotate(a.s1, b.s1), rotate(a.s2, b.s2)); }
-#define DEC4(type) INLINE_OVERLOADABLE type##4 rotate(type##4 a, type##4 b) { return (type##4)(rotate(a.s0, b.s0), rotate(a.s1, b.s1), rotate(a.s2, b.s2), rotate(a.s3, b.s3)); }
-#define DEC8(type) INLINE_OVERLOADABLE type##8 rotate(type##8 a, type##8 b) { return (type##8)(rotate(a.s0, b.s0), rotate(a.s1, b.s1), rotate(a.s2, b.s2), rotate(a.s3, b.s3), rotate(a.s4, b.s4), rotate(a.s5, b.s5), rotate(a.s6, b.s6), rotate(a.s7, b.s7)); }
-#define DEC16(type) INLINE_OVERLOADABLE type##16 rotate(type##16 a, type##16 b) { return (type##16)(rotate(a.s0, b.s0), rotate(a.s1, b.s1), rotate(a.s2, b.s2), rotate(a.s3, b.s3), rotate(a.s4, b.s4), rotate(a.s5, b.s5), rotate(a.s6, b.s6), rotate(a.s7, b.s7), rotate(a.s8, b.s8), rotate(a.s9, b.s9), rotate(a.sa, b.sa), rotate(a.sb, b.sb), rotate(a.sc, b.sc), rotate(a.sd, b.sd), rotate(a.se, b.se), rotate(a.sf, b.sf)); }
-#define DEF(n) DEC##n(char); DEC##n(uchar); DEC##n(short); DEC##n(ushort); DEC##n(int); DEC##n(uint)
-DEF(2)
-DEF(3)
-DEF(4)
-DEF(8)
-DEF(16)
-#undef DEF
-#undef DEC2
-#undef DEC3
-#undef DEC4
-#undef DEC8
-#undef DEC16
 
 OVERLOADABLE short __gen_ocl_upsample(short hi, short lo);
 OVERLOADABLE int __gen_ocl_upsample(int hi, int lo);
@@ -4561,40 +4351,6 @@ INLINE_OVERLOADABLE short upsample(char hi, uchar lo) { return __gen_ocl_upsampl
 INLINE_OVERLOADABLE ushort upsample(uchar hi, uchar lo) { return __gen_ocl_upsample((short)hi, (short)lo); }
 INLINE_OVERLOADABLE int upsample(short hi, ushort lo) { return __gen_ocl_upsample((int)hi, (int)lo); }
 INLINE_OVERLOADABLE uint upsample(ushort hi, ushort lo) { return __gen_ocl_upsample((int)hi, (int)lo); }
-#define DEC2(type, type2) INLINE_OVERLOADABLE type2##2 upsample(type##2 a, type##2 b) { return (type2##2)(upsample(a.s0, b.s0), upsample(a.s1, b.s1)); }
-#define DEC3(type, type2) INLINE_OVERLOADABLE type2##3 upsample(type##3 a, type##3 b) { return (type2##3)(upsample(a.s0, b.s0), upsample(a.s1, b.s1), upsample(a.s2, b.s2)); }
-#define DEC4(type, type2) INLINE_OVERLOADABLE type2##4 upsample(type##4 a, type##4 b) { return (type2##4)(upsample(a.s0, b.s0), upsample(a.s1, b.s1), upsample(a.s2, b.s2), upsample(a.s3, b.s3)); }
-#define DEC8(type, type2) INLINE_OVERLOADABLE type2##8 upsample(type##8 a, type##8 b) { return (type2##8)(upsample(a.s0, b.s0), upsample(a.s1, b.s1), upsample(a.s2, b.s2), upsample(a.s3, b.s3), upsample(a.s4, b.s4), upsample(a.s5, b.s5), upsample(a.s6, b.s6), upsample(a.s7, b.s7)); }
-#define DEC16(type, type2) INLINE_OVERLOADABLE type2##16 upsample(type##16 a, type##16 b) { return (type2##16)(upsample(a.s0, b.s0), upsample(a.s1, b.s1), upsample(a.s2, b.s2), upsample(a.s3, b.s3), upsample(a.s4, b.s4), upsample(a.s5, b.s5), upsample(a.s6, b.s6), upsample(a.s7, b.s7), upsample(a.s8, b.s8), upsample(a.s9, b.s9), upsample(a.sa, b.sa), upsample(a.sb, b.sb), upsample(a.sc, b.sc), upsample(a.sd, b.sd), upsample(a.se, b.se), upsample(a.sf, b.sf)); }
-#define DEF(n) DEC##n(uchar, ushort); DEC##n(ushort, uint)
-DEF(2)
-DEF(3)
-DEF(4)
-DEF(8)
-DEF(16)
-#undef DEF
-#undef DEC2
-#undef DEC3
-#undef DEC4
-#undef DEC8
-#undef DEC16
-#define DEC2(type, type2) INLINE_OVERLOADABLE type2##2 upsample(type##2 a, u##type##2 b) { return (type2##2)(upsample(a.s0, b.s0), upsample(a.s1, b.s1)); }
-#define DEC3(type, type2) INLINE_OVERLOADABLE type2##3 upsample(type##3 a, u##type##3 b) { return (type2##3)(upsample(a.s0, b.s0), upsample(a.s1, b.s1), upsample(a.s2, b.s2)); }
-#define DEC4(type, type2) INLINE_OVERLOADABLE type2##4 upsample(type##4 a, u##type##4 b) { return (type2##4)(upsample(a.s0, b.s0), upsample(a.s1, b.s1), upsample(a.s2, b.s2), upsample(a.s3, b.s3)); }
-#define DEC8(type, type2) INLINE_OVERLOADABLE type2##8 upsample(type##8 a, u##type##8 b) { return (type2##8)(upsample(a.s0, b.s0), upsample(a.s1, b.s1), upsample(a.s2, b.s2), upsample(a.s3, b.s3), upsample(a.s4, b.s4), upsample(a.s5, b.s5), upsample(a.s6, b.s6), upsample(a.s7, b.s7)); }
-#define DEC16(type, type2) INLINE_OVERLOADABLE type2##16 upsample(type##16 a, u##type##16 b) { return (type2##16)(upsample(a.s0, b.s0), upsample(a.s1, b.s1), upsample(a.s2, b.s2), upsample(a.s3, b.s3), upsample(a.s4, b.s4), upsample(a.s5, b.s5), upsample(a.s6, b.s6), upsample(a.s7, b.s7), upsample(a.s8, b.s8), upsample(a.s9, b.s9), upsample(a.sa, b.sa), upsample(a.sb, b.sb), upsample(a.sc, b.sc), upsample(a.sd, b.sd), upsample(a.se, b.se), upsample(a.sf, b.sf)); }
-#define DEF(n) DEC##n(char, short); DEC##n(short, int)
-DEF(2)
-DEF(3)
-DEF(4)
-DEF(8)
-DEF(16)
-#undef DEF
-#undef DEC2
-#undef DEC3
-#undef DEC4
-#undef DEC8
-#undef DEC16
 
 PURE CONST uint __gen_ocl_hadd(uint x, uint y);
 PURE CONST uint __gen_ocl_rhadd(uint x, uint y);
@@ -4610,106 +4366,29 @@ INLINE_OVERLOADABLE int hadd(int x, int y) { return (x < 0 && y > 0) || (x > 0 &
 INLINE_OVERLOADABLE uint hadd(uint x, uint y) { return __gen_ocl_hadd(x, y); }
 INLINE_OVERLOADABLE int rhadd(int x, int y) { return (x < 0 && y > 0) || (x > 0 && y < 0) ? ((x + y + 1) >> 1) : __gen_ocl_rhadd(x, y); }
 INLINE_OVERLOADABLE uint rhadd(uint x, uint y) { return __gen_ocl_rhadd(x, y); }
-#define DEC2(func, type) INLINE_OVERLOADABLE type##2 func(type##2 a, type##2 b) { return (type##2)(func(a.s0, b.s0), func(a.s1, b.s1)); }
-#define DEC3(func, type) INLINE_OVERLOADABLE type##3 func(type##3 a, type##3 b) { return (type##3)(func(a.s0, b.s0), func(a.s1, b.s1), func(a.s2, b.s2)); }
-#define DEC4(func, type) INLINE_OVERLOADABLE type##4 func(type##4 a, type##4 b) { return (type##4)(func(a.s0, b.s0), func(a.s1, b.s1), func(a.s2, b.s2), func(a.s3, b.s3)); }
-#define DEC8(func, type) INLINE_OVERLOADABLE type##8 func(type##8 a, type##8 b) { return (type##8)(func(a.s0, b.s0), func(a.s1, b.s1), func(a.s2, b.s2), func(a.s3, b.s3), func(a.s4, b.s4), func(a.s5, b.s5), func(a.s6, b.s6), func(a.s7, b.s7)); }
-#define DEC16(func, type) INLINE_OVERLOADABLE type##16 func(type##16 a, type##16 b) { return (type##16)(func(a.s0, b.s0), func(a.s1, b.s1), func(a.s2, b.s2), func(a.s3, b.s3), func(a.s4, b.s4), func(a.s5, b.s5), func(a.s6, b.s6), func(a.s7, b.s7), func(a.s8, b.s8), func(a.s9, b.s9), func(a.sa, b.sa), func(a.sb, b.sb), func(a.sc, b.sc), func(a.sd, b.sd), func(a.se, b.se), func(a.sf, b.sf)); }
-#define DEF(func, n) DEC##n(func, char); DEC##n(func, uchar); DEC##n(func, short); DEC##n(func, ushort); DEC##n(func, int); DEC##n(func, uint)
-DEF(hadd, 2)
-DEF(hadd, 3)
-DEF(hadd, 4)
-DEF(hadd, 8)
-DEF(hadd, 16)
-DEF(rhadd, 2)
-DEF(rhadd, 3)
-DEF(rhadd, 4)
-DEF(rhadd, 8)
-DEF(rhadd, 16)
-#undef DEF
-#undef DEC2
-#undef DEC3
-#undef DEC4
-#undef DEC8
-#undef DEC16
 
 int __gen_ocl_abs(int x);
-#define ABS_I(I, CVT)  (CVT)__gen_ocl_abs(x.s##I)
-#define ABS_VEC1(CVT)  (CVT)__gen_ocl_abs(x)
-#define ABS_VEC2(CVT)  ABS_I(0, CVT), ABS_I(1, CVT)
-#define ABS_VEC3(CVT)  ABS_I(0, CVT), ABS_I(1, CVT), ABS_I(2, CVT)
-#define ABS_VEC4(CVT)  ABS_VEC2(CVT), ABS_I(2, CVT), ABS_I(3, CVT)
-#define ABS_VEC8(CVT)  ABS_VEC4(CVT), ABS_I(4, CVT), ABS_I(5, CVT),\
-	               ABS_I(6, CVT), ABS_I(7, CVT)
-#define ABS_VEC16(CVT) ABS_VEC8(CVT), ABS_I(8, CVT), ABS_I(9, CVT), \
-	               ABS_I(A, CVT), ABS_I(B, CVT), ABS_I(C, CVT), \
-	               ABS_I(D, CVT), ABS_I(E, CVT), ABS_I(F, CVT)
-
-#define DEC_1(TYPE) INLINE_OVERLOADABLE u##TYPE abs(TYPE x) { return ABS_VEC1(u##TYPE); }
-#define DEC_N(TYPE, N) INLINE_OVERLOADABLE u##TYPE##N abs(TYPE##N x) { return (u##TYPE##N)(ABS_VEC##N(u##TYPE)); };
-#define DEC(TYPE) DEC_1(TYPE) DEC_N(TYPE, 2) DEC_N(TYPE, 3) DEC_N(TYPE, 4) DEC_N(TYPE, 8) DEC_N(TYPE, 16)
-
+#define DEC(TYPE) INLINE_OVERLOADABLE u##TYPE abs(TYPE x) { return (u##TYPE) __gen_ocl_abs(x); }
 DEC(int)
 DEC(short)
 DEC(char)
-#undef DEC_1
-#undef DEC_N
+#undef DEC
 /* For unsigned types, do nothing. */
-#define DEC_1(TYPE) INLINE_OVERLOADABLE TYPE abs(TYPE x) { return x; }
-#define DEC_N(TYPE, N) INLINE_OVERLOADABLE TYPE##N abs(TYPE##N x) { return x; }
+#define DEC(TYPE) INLINE_OVERLOADABLE TYPE abs(TYPE x) { return x; }
 DEC(uint)
 DEC(ushort)
 DEC(uchar)
 #undef DEC
-#undef DEC_1
-#undef DEC_N
-#undef ABS_I
-#undef ABS_VEC1
-#undef ABS_VEC2
-#undef ABS_VEC3
-#undef ABS_VEC4
-#undef ABS_VEC8
-#undef ABS_VEC16
-
 
 /* Char and short type abs diff */
 /* promote char and short to int and will be no module overflow */
-#define ABS_DIFF(CVT) (CVT)(abs((int)x - (int)y))
-#define ABS_DIFF_I(CVT, I)  (CVT)(abs((int)x.s##I - (int)y.s##I))
-
-#define ABS_DIFF_VEC1(CVT)  ABS_DIFF(CVT)
-#define ABS_DIFF_VEC2(CVT)  ABS_DIFF_I(CVT, 0), ABS_DIFF_I(CVT, 1)
-#define ABS_DIFF_VEC3(CVT)  ABS_DIFF_I(CVT, 0), ABS_DIFF_I(CVT, 1), ABS_DIFF_I(CVT, 2)
-#define ABS_DIFF_VEC4(CVT)  ABS_DIFF_VEC2(CVT), ABS_DIFF_I(CVT, 2), ABS_DIFF_I(CVT, 3)
-#define ABS_DIFF_VEC8(CVT)  ABS_DIFF_VEC4(CVT), ABS_DIFF_I(CVT, 4), ABS_DIFF_I(CVT, 5), \
-                            ABS_DIFF_I(CVT, 6), ABS_DIFF_I(CVT, 7)
-#define ABS_DIFF_VEC16(CVT)  ABS_DIFF_VEC8(CVT), ABS_DIFF_I(CVT, 8), ABS_DIFF_I(CVT, 9), \
-                            ABS_DIFF_I(CVT, A), ABS_DIFF_I(CVT, B), \
-                            ABS_DIFF_I(CVT, C), ABS_DIFF_I(CVT, D), \
-                            ABS_DIFF_I(CVT, E), ABS_DIFF_I(CVT, F)
-
-#define DEC_1(TYPE, UTYPE) INLINE_OVERLOADABLE UTYPE abs_diff(TYPE x, TYPE y) \
-                           { return ABS_DIFF_VEC1(UTYPE); }
-#define DEC_N(TYPE, UTYPE, N) INLINE_OVERLOADABLE UTYPE##N abs_diff(TYPE##N x, TYPE##N y) \
-                              { return (UTYPE##N)(ABS_DIFF_VEC##N(UTYPE)); };
-#define DEC(TYPE, UTYPE)  DEC_1(TYPE, UTYPE) DEC_N(TYPE, UTYPE, 2)  DEC_N(TYPE, UTYPE, 3 ) \
-                          DEC_N(TYPE, UTYPE, 4) DEC_N(TYPE, UTYPE, 8) DEC_N(TYPE, UTYPE, 16)
+#define DEC(TYPE, UTYPE) INLINE_OVERLOADABLE UTYPE abs_diff(TYPE x, TYPE y) \
+                         { return (UTYPE) (abs((int)x - (int)y)); }
 DEC(char, uchar)
 DEC(uchar, uchar)
 DEC(short, ushort)
 DEC(ushort, ushort)
-
 #undef DEC
-#undef DEC_1
-#undef DEC_N
-#undef ABS_DIFF
-#undef ABS_DIFF_I
-#undef ABS_DIFF_VEC1
-#undef ABS_DIFF_VEC2
-#undef ABS_DIFF_VEC3
-#undef ABS_DIFF_VEC4
-#undef ABS_DIFF_VEC8
-#undef ABS_DIFF_VEC16
 
 INLINE_OVERLOADABLE uint abs_diff (uint x, uint y) {
     /* same signed will never overflow. */
@@ -4723,37 +4402,6 @@ INLINE_OVERLOADABLE uint abs_diff (int x, int y) {
 
     return (abs(x) + abs(y));
 }
-
-#define ABS_DIFF_I(I)  abs_diff(x.s##I, y.s##I)
-
-#define ABS_DIFF_VEC2  ABS_DIFF_I(0), ABS_DIFF_I(1)
-#define ABS_DIFF_VEC3  ABS_DIFF_I(0), ABS_DIFF_I(1), ABS_DIFF_I(2)
-#define ABS_DIFF_VEC4  ABS_DIFF_VEC2, ABS_DIFF_I(2), ABS_DIFF_I(3)
-#define ABS_DIFF_VEC8  ABS_DIFF_VEC4, ABS_DIFF_I(4), ABS_DIFF_I(5), \
-                       ABS_DIFF_I(6), ABS_DIFF_I(7)
-#define ABS_DIFF_VEC16  ABS_DIFF_VEC8, ABS_DIFF_I(8), ABS_DIFF_I(9), \
-                            ABS_DIFF_I(A), ABS_DIFF_I(B), \
-                            ABS_DIFF_I(C), ABS_DIFF_I(D), \
-                            ABS_DIFF_I(E), ABS_DIFF_I(F)
-
-#define DEC_N(TYPE, N) INLINE_OVERLOADABLE uint##N abs_diff(TYPE##N x, TYPE##N y) \
-				      { return (uint##N)(ABS_DIFF_VEC##N); };
-#define DEC(TYPE)   DEC_N(TYPE, 2)  DEC_N(TYPE, 3 ) \
-                           DEC_N(TYPE, 4) DEC_N(TYPE, 8) DEC_N(TYPE, 16)
-DEC(int)
-DEC(uint)
-
-#undef DEC
-#undef DEC_1
-#undef DEC_N
-#undef ABS_DIFF
-#undef ABS_DIFF_I
-#undef ABS_DIFF_VEC1
-#undef ABS_DIFF_VEC2
-#undef ABS_DIFF_VEC3
-#undef ABS_DIFF_VEC4
-#undef ABS_DIFF_VEC8
-#undef ABS_DIFF_VEC16
 
 /////////////////////////////////////////////////////////////////////////////
 // Work Items functions (see 6.11.1 of OCL 1.1 spec)
@@ -4832,32 +4480,8 @@ INLINE_OVERLOADABLE float native_log10(float x) {
 INLINE_OVERLOADABLE float log1p(float x) { return native_log(x + 1); }
 INLINE_OVERLOADABLE float logb(float x) { return __gen_ocl_rndd(native_log2(x)); }
 INLINE_OVERLOADABLE int ilogb(float x) { return __gen_ocl_rndd(native_log2(x)); }
-INLINE_OVERLOADABLE int2 ilogb(float2 x) {
-  return (int2)(ilogb(x.s0), ilogb(x.s1));
-}
-INLINE_OVERLOADABLE int4 ilogb(float4 x) {
-  return (int4)(ilogb(x.s01), ilogb(x.s23));
-}
-INLINE_OVERLOADABLE int8 ilogb(float8 x) {
-  return (int8)(ilogb(x.s0123), ilogb(x.s4567));
-}
-INLINE_OVERLOADABLE int16 ilogb(float16 x) {
-  return (int16)(ilogb(x.s01234567), ilogb(x.s89abcdef));
-}
 INLINE_OVERLOADABLE float nan(uint code) {
   return NAN;
-}
-INLINE_OVERLOADABLE float2 nan(uint2 code) {
-  return (float2)(nan(code.s0), nan(code.s1));
-}
-INLINE_OVERLOADABLE float4 nan(uint4 code) {
-  return (float4)(nan(code.s01), nan(code.s23));
-}
-INLINE_OVERLOADABLE float8 nan(uint8 code) {
-  return (float8)(nan(code.s0123), nan(code.s4567));
-}
-INLINE_OVERLOADABLE float16 nan(uint16 code) {
-  return (float16)(nan(code.s01234567), nan(code.s89abcdef));
 }
 INLINE_OVERLOADABLE float native_powr(float x, float y) { return __gen_ocl_pow(x,y); }
 INLINE_OVERLOADABLE float native_recip(float x) { return __gen_ocl_rcp(x); }
@@ -5074,48 +4698,6 @@ DECL_SELECT4(float4, float, uint4, 0x80000000)
 INLINE_OVERLOADABLE float step(float edge, float x) {
   return x < edge ? 0.0 : 1.0;
 }
-#define STEP(I)  x.s##I < edge.s##I ? 0.0 : 1.0
-INLINE_OVERLOADABLE float2 step(float2 edge, float2 x) {
-  return (float2)(STEP(0), STEP(1));
-}
-INLINE_OVERLOADABLE float3 step(float3 edge, float3 x) {
-  return (float3)(STEP(0), STEP(1), STEP(2));
-}
-INLINE_OVERLOADABLE float4 step(float4 edge, float4 x) {
-  return (float4)(STEP(0), STEP(1), STEP(2), STEP(3));
-}
-INLINE_OVERLOADABLE float8 step(float8 edge, float8 x) {
-  return (float8)(STEP(0), STEP(1), STEP(2), STEP(3),
-                  STEP(4), STEP(5), STEP(6), STEP(7));
-}
-INLINE_OVERLOADABLE float16 step(float16 edge, float16 x) {
-  return (float16)(STEP(0), STEP(1), STEP(2), STEP(3),
-                   STEP(4), STEP(5), STEP(6), STEP(7),
-                   STEP(8), STEP(9), STEP(A), STEP(B),
-                   STEP(C), STEP(D), STEP(E), STEP(F));
-}
-#undef STEP
-#define STEP(I)  x.s##I < edge ? 0.0 : 1.0
-INLINE_OVERLOADABLE float2 step(float edge, float2 x) {
-  return (float2)(STEP(0), STEP(1));
-}
-INLINE_OVERLOADABLE float3 step(float edge, float3 x) {
-  return (float3)(STEP(0), STEP(1), STEP(2));
-}
-INLINE_OVERLOADABLE float4 step(float edge, float4 x) {
-  return (float4)(STEP(0), STEP(1), STEP(2), STEP(3));
-}
-INLINE_OVERLOADABLE float8 step(float edge, float8 x) {
-  return (float8)(STEP(0), STEP(1), STEP(2), STEP(3),
-                  STEP(4), STEP(5), STEP(6), STEP(7));
-}
-INLINE_OVERLOADABLE float16 step(float edge, float16 x) {
-  return (float16)(STEP(0), STEP(1), STEP(2), STEP(3),
-                   STEP(4), STEP(5), STEP(6), STEP(7),
-                   STEP(8), STEP(9), STEP(A), STEP(B),
-                   STEP(C), STEP(D), STEP(E), STEP(F));
-}
-#undef STEP
 
 #define DECL_MIN_MAX_CLAMP(TYPE) \
 INLINE_OVERLOADABLE TYPE max(TYPE a, TYPE b) { \
@@ -5135,46 +4717,6 @@ DECL_MIN_MAX_CLAMP(uint)
 DECL_MIN_MAX_CLAMP(unsigned short)
 DECL_MIN_MAX_CLAMP(unsigned char)
 #undef DECL_MIN_MAX_CLAMP
-#define DEC2(func, type) INLINE_OVERLOADABLE type##2 func(type##2 a, type##2 b) { return (type##2)(func(a.s0, b.s0), func(a.s1, b.s1)); }
-#define DEC3(func, type) INLINE_OVERLOADABLE type##3 func(type##3 a, type##3 b) { return (type##3)(func(a.s0, b.s0), func(a.s1, b.s1), func(a.s2, b.s2)); }
-#define DEC4(func, type) INLINE_OVERLOADABLE type##4 func(type##4 a, type##4 b) { return (type##4)(func(a.s0, b.s0), func(a.s1, b.s1), func(a.s2, b.s2), func(a.s3, b.s3)); }
-#define DEC8(func, type) INLINE_OVERLOADABLE type##8 func(type##8 a, type##8 b) { return (type##8)(func(a.s0, b.s0), func(a.s1, b.s1), func(a.s2, b.s2), func(a.s3, b.s3), func(a.s4, b.s4), func(a.s5, b.s5), func(a.s6, b.s6), func(a.s7, b.s7)); }
-#define DEC16(func, type) INLINE_OVERLOADABLE type##16 func(type##16 a, type##16 b) { return (type##16)(func(a.s0, b.s0), func(a.s1, b.s1), func(a.s2, b.s2), func(a.s3, b.s3), func(a.s4, b.s4), func(a.s5, b.s5), func(a.s6, b.s6), func(a.s7, b.s7), func(a.s8, b.s8), func(a.s9, b.s9), func(a.sa, b.sa), func(a.sb, b.sb), func(a.sc, b.sc), func(a.sd, b.sd), func(a.se, b.se), func(a.sf, b.sf)); }
-#define DEF(func, n) DEC##n(func, char); DEC##n(func, uchar); DEC##n(func, short); DEC##n(func, ushort); DEC##n(func, int); DEC##n(func, uint)
-DEF(max, 2)
-DEF(max, 3)
-DEF(max, 4)
-DEF(max, 8)
-DEF(max, 16)
-DEF(min, 2)
-DEF(min, 3)
-DEF(min, 4)
-DEF(min, 8)
-DEF(min, 16)
-#undef DEF
-#undef DEC2
-#undef DEC3
-#undef DEC4
-#undef DEC8
-#undef DEC16
-
-#define DEC2(type) INLINE_OVERLOADABLE type##2 clamp(type##2 a, type##2 b, type##2 c) { return (type##2)(clamp(a.s0, b.s0, c.s0), clamp(a.s1, b.s1, c.s1)); }
-#define DEC3(type) INLINE_OVERLOADABLE type##3 clamp(type##3 a, type##3 b, type##3 c) { return (type##3)(clamp(a.s0, b.s0, c.s0), clamp(a.s1, b.s1, c.s1), clamp(a.s2, b.s2, c.s2)); }
-#define DEC4(type) INLINE_OVERLOADABLE type##4 clamp(type##4 a, type##4 b, type##4 c) { return (type##4)(clamp(a.s0, b.s0, c.s0), clamp(a.s1, b.s1, c.s1), clamp(a.s2, b.s2, c.s2), clamp(a.s3, b.s3, c.s3)); }
-#define DEC8(type) INLINE_OVERLOADABLE type##8 clamp(type##8 a, type##8 b, type##8 c) { return (type##8)(clamp(a.s0, b.s0, c.s0), clamp(a.s1, b.s1, c.s1), clamp(a.s2, b.s2, c.s2), clamp(a.s3, b.s3, c.s3), clamp(a.s4, b.s4, c.s4), clamp(a.s5, b.s5, c.s5), clamp(a.s6, b.s6, c.s6), clamp(a.s7, b.s7, c.s7)); }
-#define DEC16(type) INLINE_OVERLOADABLE type##16 clamp(type##16 a, type##16 b, type##16 c) { return (type##16)(clamp(a.s0, b.s0, c.s0), clamp(a.s1, b.s1, c.s1), clamp(a.s2, b.s2, c.s2), clamp(a.s3, b.s3, c.s3), clamp(a.s4, b.s4, c.s4), clamp(a.s5, b.s5, c.s5), clamp(a.s6, b.s6, c.s6), clamp(a.s7, b.s7, c.s7), clamp(a.s8, b.s8, c.s8), clamp(a.s9, b.s9, c.s9), clamp(a.sa, b.sa, c.sa), clamp(a.sb, b.sb, c.sb), clamp(a.sc, b.sc, c.sc), clamp(a.sd, b.sd, c.sd), clamp(a.se, b.se, c.se), clamp(a.sf, b.sf, c.sf)); }
-#define DEF(n) DEC##n(char); DEC##n(uchar); DEC##n(short); DEC##n(ushort); DEC##n(int); DEC##n(uint); DEC##n(float)
-DEF(2)
-DEF(3)
-DEF(4)
-DEF(8)
-DEF(16)
-#undef DEF
-#undef DEC2
-#undef DEC3
-#undef DEC4
-#undef DEC8
-#undef DEC16
 
 INLINE_OVERLOADABLE float __gen_ocl_frexp(float x, int *exp) {
   uint u = as_uint(x);
@@ -5213,17 +4755,7 @@ INLINE_OVERLOADABLE float16 frexp(float16 x, int16 *exp) {
 }
 
 INLINE_OVERLOADABLE float degrees(float radians) { return (180 / M_PI_F) * radians; }
-INLINE_OVERLOADABLE float2 degrees(float2 r) { return (float2)(degrees(r.s0), degrees(r.s1)); }
-INLINE_OVERLOADABLE float3 degrees(float3 r) { return (float3)(degrees(r.s0), degrees(r.s1), degrees(r.s2)); }
-INLINE_OVERLOADABLE float4 degrees(float4 r) { return (float4)(degrees(r.s0), degrees(r.s1), degrees(r.s2), degrees(r.s3)); }
-INLINE_OVERLOADABLE float8 degrees(float8 r) { return (float8)(degrees(r.s0), degrees(r.s1), degrees(r.s2), degrees(r.s3), degrees(r.s4), degrees(r.s5), degrees(r.s6), degrees(r.s7)); }
-INLINE_OVERLOADABLE float16 degrees(float16 r) { return (float16)(degrees(r.s0), degrees(r.s1), degrees(r.s2), degrees(r.s3), degrees(r.s4), degrees(r.s5), degrees(r.s6), degrees(r.s7), degrees(r.s8), degrees(r.s9), degrees(r.sa), degrees(r.sb), degrees(r.sc), degrees(r.sd), degrees(r.se), degrees(r.sf)); }
 INLINE_OVERLOADABLE float radians(float degrees) { return (M_PI_F / 180) * degrees; }
-INLINE_OVERLOADABLE float2 radians(float2 r) { return (float2)(radians(r.s0), radians(r.s1)); }
-INLINE_OVERLOADABLE float3 radians(float3 r) { return (float3)(radians(r.s0), radians(r.s1), radians(r.s2)); }
-INLINE_OVERLOADABLE float4 radians(float4 r) { return (float4)(radians(r.s0), radians(r.s1), radians(r.s2), radians(r.s3)); }
-INLINE_OVERLOADABLE float8 radians(float8 r) { return (float8)(radians(r.s0), radians(r.s1), radians(r.s2), radians(r.s3), radians(r.s4), radians(r.s5), radians(r.s6), radians(r.s7)); }
-INLINE_OVERLOADABLE float16 radians(float16 r) { return (float16)(radians(r.s0), radians(r.s1), radians(r.s2), radians(r.s3), radians(r.s4), radians(r.s5), radians(r.s6), radians(r.s7), radians(r.s8), radians(r.s9), radians(r.sa), radians(r.sb), radians(r.sc), radians(r.sd), radians(r.se), radians(r.sf)); }
 
 INLINE_OVERLOADABLE float nextafter(float x, float y) {
   uint hx = as_uint(x), ix = hx & 0x7FFFFFFF;
@@ -5593,189 +5125,6 @@ DECL_UNTYPED_RW_ALL(float)
 #undef DECL_UNTYPED_RW_ALL_SPACE
 #undef DECL_UNTYPED_RW_SPACE_N
 
-/////////////////////////////////////////////////////////////////////////////
-// Declare functions for vector types which are derived from scalar ones
-/////////////////////////////////////////////////////////////////////////////
-#define DECL_VECTOR_1OP(NAME, TYPE) \
-  INLINE_OVERLOADABLE TYPE##2 NAME(TYPE##2 v) { \
-    return (TYPE##2)(NAME(v.x), NAME(v.y)); \
-  }\
-  INLINE_OVERLOADABLE TYPE##3 NAME(TYPE##3 v) { \
-    return (TYPE##3)(NAME(v.x), NAME(v.y), NAME(v.z)); \
-  }\
-  INLINE_OVERLOADABLE TYPE##4 NAME(TYPE##4 v) { \
-    return (TYPE##4)(NAME(v.x), NAME(v.y), NAME(v.z), NAME(v.w)); \
-  }\
-  INLINE_OVERLOADABLE TYPE##8 NAME(TYPE##8 v) { \
-    TYPE##8 dst;\
-    dst.s0123 = NAME(v.s0123);\
-    dst.s4567 = NAME(v.s4567);\
-    return dst;\
-  }\
-  INLINE_OVERLOADABLE TYPE##16 NAME(TYPE##16 v) { \
-    TYPE##16 dst;\
-    dst.s01234567 = NAME(v.s01234567);\
-    dst.s89abcdef = NAME(v.s89abcdef);\
-    return dst;\
-  }
-DECL_VECTOR_1OP(sign, float);
-DECL_VECTOR_1OP(native_cos, float);
-DECL_VECTOR_1OP(__gen_ocl_internal_cospi, float);
-DECL_VECTOR_1OP(__gen_ocl_internal_cosh, float);
-DECL_VECTOR_1OP(__gen_ocl_internal_acos, float);
-DECL_VECTOR_1OP(__gen_ocl_internal_acospi, float);
-DECL_VECTOR_1OP(__gen_ocl_internal_acosh, float);
-DECL_VECTOR_1OP(native_sin, float);
-DECL_VECTOR_1OP(__gen_ocl_internal_sinpi, float);
-DECL_VECTOR_1OP(__gen_ocl_internal_sinh, float);
-DECL_VECTOR_1OP(__gen_ocl_internal_asin, float);
-DECL_VECTOR_1OP(__gen_ocl_internal_asinpi, float);
-DECL_VECTOR_1OP(__gen_ocl_internal_asinh, float);
-DECL_VECTOR_1OP(native_tan, float);
-DECL_VECTOR_1OP(__gen_ocl_internal_tanpi, float);
-DECL_VECTOR_1OP(__gen_ocl_internal_tanh, float);
-DECL_VECTOR_1OP(__gen_ocl_internal_atan, float);
-DECL_VECTOR_1OP(__gen_ocl_internal_atanpi, float);
-DECL_VECTOR_1OP(__gen_ocl_internal_atanh, float);
-DECL_VECTOR_1OP(native_sqrt, float);
-DECL_VECTOR_1OP(native_rsqrt, float);
-DECL_VECTOR_1OP(native_log2, float);
-DECL_VECTOR_1OP(log1p, float);
-DECL_VECTOR_1OP(logb, float);
-DECL_VECTOR_1OP(native_recip, float);
-DECL_VECTOR_1OP(native_exp2, float);
-DECL_VECTOR_1OP(native_exp10, float);
-DECL_VECTOR_1OP(__gen_ocl_internal_expm1, float);
-DECL_VECTOR_1OP(__gen_ocl_internal_cbrt, float);
-DECL_VECTOR_1OP(__gen_ocl_internal_fabs, float);
-DECL_VECTOR_1OP(__gen_ocl_internal_trunc, float);
-DECL_VECTOR_1OP(__gen_ocl_internal_round, float);
-DECL_VECTOR_1OP(__gen_ocl_internal_floor, float);
-DECL_VECTOR_1OP(__gen_ocl_internal_ceil, float);
-DECL_VECTOR_1OP(__gen_ocl_internal_log, float);
-DECL_VECTOR_1OP(__gen_ocl_internal_log2, float);
-DECL_VECTOR_1OP(__gen_ocl_internal_log10, float);
-DECL_VECTOR_1OP(__gen_ocl_internal_rint, float);
-DECL_VECTOR_1OP(__gen_ocl_internal_erf, float);
-DECL_VECTOR_1OP(__gen_ocl_internal_erfc, float);
-#undef DECL_VECTOR_1OP
-/////////////////////////////////////////////////////////////////////////////
-// Arithmetic functions
-/////////////////////////////////////////////////////////////////////////////
-
-#define DECL_VECTOR_2OP(NAME, TYPE) \
-  INLINE_OVERLOADABLE TYPE##2 NAME(TYPE##2 v0, TYPE##2 v1) { \
-    return (TYPE##2)(NAME(v0.x, v1.x), NAME(v0.y, v1.y)); \
-  }\
-  INLINE_OVERLOADABLE TYPE##3 NAME(TYPE##3 v0, TYPE##3 v1) { \
-    return (TYPE##3)(NAME(v0.x, v1.x), NAME(v0.y, v1.y), NAME(v0.z, v1.z)); \
-  }\
-  INLINE_OVERLOADABLE TYPE##4 NAME(TYPE##4 v0, TYPE##4 v1) { \
-    return (TYPE##4)(NAME(v0.x, v1.x), NAME(v0.y, v1.y), NAME(v0.z, v1.z), NAME(v0.w, v1.w)); \
-  }\
-  INLINE_OVERLOADABLE TYPE##8 NAME(TYPE##8 v0, TYPE##8 v1) { \
-    TYPE##8 dst;\
-    dst.s0123 = NAME(v0.s0123, v1.s0123);\
-    dst.s4567 = NAME(v0.s4567, v1.s4567);\
-    return dst;\
-  }\
-  INLINE_OVERLOADABLE TYPE##16 NAME(TYPE##16 v0, TYPE##16 v1) { \
-    TYPE##16 dst;\
-    dst.s01234567 = NAME(v0.s01234567, v1.s01234567);\
-    dst.s89abcdef = NAME(v0.s89abcdef, v1.s89abcdef);\
-    return dst;\
-  }
-DECL_VECTOR_2OP(nextafter, float);
-DECL_VECTOR_2OP(hypot, float);
-DECL_VECTOR_2OP(min, float);
-DECL_VECTOR_2OP(max, float);
-DECL_VECTOR_2OP(__gen_ocl_internal_fmin, float);
-DECL_VECTOR_2OP(__gen_ocl_internal_fmax, float);
-DECL_VECTOR_2OP(__gen_ocl_internal_fdim, float);
-DECL_VECTOR_2OP(fmod, float);
-DECL_VECTOR_2OP(remainder, float);
-DECL_VECTOR_2OP(powr, float);
-DECL_VECTOR_2OP(native_divide, float);
-DECL_VECTOR_2OP(copysign, float);
-DECL_VECTOR_2OP(__gen_ocl_internal_maxmag, float);
-DECL_VECTOR_2OP(__gen_ocl_internal_minmag, float);
-
-#define DECL_VECTOR_NOP_ALL_INT_TYPES(NOP, NAME) \
-NOP(NAME, char)   \
-NOP(NAME, uchar)  \
-NOP(NAME, short)  \
-NOP(NAME, ushort) \
-NOP(NAME, int)    \
-NOP(NAME, uint)   \
-NOP(NAME, long)   \
-NOP(NAME, ulong)
-
-DECL_VECTOR_NOP_ALL_INT_TYPES(DECL_VECTOR_2OP, add_sat)
-DECL_VECTOR_NOP_ALL_INT_TYPES(DECL_VECTOR_2OP, sub_sat)
-#undef DECL_VECTOR_NOP_ALL_INT_TYPES
-#undef DECL_VECTOR_2OP
-
-#define DECL_VECTOR_2OP(NAME, TYPE, TYPE2) \
-  INLINE_OVERLOADABLE TYPE##2 NAME(TYPE##2 v0, TYPE2##2 v1) { \
-    return (TYPE##2)(NAME(v0.x, v1.x), NAME(v0.y, v1.y)); \
-  }\
-  INLINE_OVERLOADABLE TYPE##3 NAME(TYPE##3 v0, TYPE2##3 v1) { \
-    return (TYPE##3)(NAME(v0.x, v1.x), NAME(v0.y, v1.y), NAME(v0.z, v1.z)); \
-  }\
-  INLINE_OVERLOADABLE TYPE##4 NAME(TYPE##4 v0, TYPE2##4 v1) { \
-    return (TYPE##4)(NAME(v0.x, v1.x), NAME(v0.y, v1.y), NAME(v0.z, v1.z), NAME(v0.w, v1.w)); \
-  }\
-  INLINE_OVERLOADABLE TYPE##8 NAME(TYPE##8 v0, TYPE2##8 v1) { \
-    TYPE##8 dst;\
-    dst.s0123 = NAME(v0.s0123, v1.s0123);\
-    dst.s4567 = NAME(v0.s4567, v1.s4567);\
-    return dst;\
-  }\
-  INLINE_OVERLOADABLE TYPE##16 NAME(TYPE##16 v0, TYPE2##16 v1) { \
-    TYPE##16 dst;\
-    dst.s01234567 = NAME(v0.s01234567, v1.s01234567);\
-    dst.s89abcdef = NAME(v0.s89abcdef, v1.s89abcdef);\
-    return dst;\
-  }
-DECL_VECTOR_2OP(ldexp, float, int);
-DECL_VECTOR_2OP(pown, float, int);
-DECL_VECTOR_2OP(rootn, float, int);
-#undef DECL_VECTOR_2OP
-
-#define DECL_VECTOR_3OP(NAME, TYPE) \
-  INLINE_OVERLOADABLE TYPE##2 NAME(TYPE##2 v0, TYPE##2 v1, TYPE##2 v2) { \
-    return (TYPE##2)(NAME(v0.x, v1.x, v2.x), NAME(v0.y, v1.y, v2.y)); \
-  }\
-  INLINE_OVERLOADABLE TYPE##3 NAME(TYPE##3 v0, TYPE##3 v1, TYPE##3 v2) { \
-    return (TYPE##3)(NAME(v0.x, v1.x, v2.x), NAME(v0.y, v1.y, v2.y), NAME(v0.z, v1.z, v2.z)); \
-  }\
-  INLINE_OVERLOADABLE TYPE##4 NAME(TYPE##4 v0, TYPE##4 v1, TYPE##4 v2) { \
-    return (TYPE##4)(NAME(v0.x, v1.x, v2.x), NAME(v0.y, v1.y, v2.y), NAME(v0.z, v1.z, v2.z), NAME(v0.w, v1.w, v2.w)); \
-  }\
-  INLINE_OVERLOADABLE TYPE##8 NAME(TYPE##8 v0, TYPE##8 v1, TYPE##8 v2) { \
-    TYPE##8 dst;\
-    dst.s0123 = NAME(v0.s0123, v1.s0123, v2.s0123);\
-    dst.s4567 = NAME(v0.s4567, v1.s4567, v2.s4567);\
-    return dst;\
-  }\
-  INLINE_OVERLOADABLE TYPE##16 NAME(TYPE##16 v0, TYPE##16 v1, TYPE##16 v2) { \
-    TYPE##16 dst;\
-    dst.s01234567 = NAME(v0.s01234567, v1.s01234567, v2.s01234567);\
-    dst.s89abcdef = NAME(v0.s89abcdef, v1.s89abcdef, v2.s89abcdef);\
-    return dst;\
-  }
-DECL_VECTOR_3OP(mad, float);
-DECL_VECTOR_3OP(mix, float);
-DECL_VECTOR_3OP(smoothstep, float);
-#undef DECL_VECTOR_3OP
-
-// mix requires more variants
-INLINE_OVERLOADABLE float2 mix(float2 x, float2 y, float a) { return mix(x,y,(float2)(a));}
-INLINE_OVERLOADABLE float3 mix(float3 x, float3 y, float a) { return mix(x,y,(float3)(a));}
-INLINE_OVERLOADABLE float4 mix(float4 x, float4 y, float a) { return mix(x,y,(float4)(a));}
-INLINE_OVERLOADABLE float8 mix(float8 x, float8 y, float a) { return mix(x,y,(float8)(a));}
-INLINE_OVERLOADABLE float16 mix(float16 x, float16 y, float a) { return mix(x,y,(float16)(a));}
-
 // XXX workaround ptx profile
 #define fabs __gen_ocl_internal_fabs
 #define trunc __gen_ocl_internal_trunc
@@ -6103,11 +5452,5694 @@ DECL_IMAGE(float4, f)
 #undef DECL_WRITE_IMAGE
 
 #undef GET_IMAGE
-#undef INLINE_OVERLOADABLE
+// ##BEGIN_BUILTIN_VECTOR##
+//gentype acos (gentype)
 
+INLINE_OVERLOADABLE float2 acos (float2 param0)
+{return (float2)(acos(param0.s0), acos(param0.s1)); }
+
+INLINE_OVERLOADABLE float3 acos (float3 param0)
+{return (float3)(acos(param0.s0), acos(param0.s1),
+                 acos(param0.s2)); }
+
+INLINE_OVERLOADABLE float4 acos (float4 param0)
+{return (float4)(acos(param0.s0), acos(param0.s1),
+                 acos(param0.s2), acos(param0.s3)); }
+
+INLINE_OVERLOADABLE float8 acos (float8 param0)
+{return (float8)(acos(param0.s0), acos(param0.s1),
+                 acos(param0.s2), acos(param0.s3),
+                 acos(param0.s4), acos(param0.s5),
+                 acos(param0.s6), acos(param0.s7)); }
+
+INLINE_OVERLOADABLE float16 acos (float16 param0)
+{return (float16)(acos(param0.s0),  acos(param0.s1),
+                  acos(param0.s2),  acos(param0.s3),
+                  acos(param0.s4),  acos(param0.s5),
+                  acos(param0.s6),  acos(param0.s7),
+                  acos(param0.s8),  acos(param0.s9),
+                  acos(param0.sa), acos(param0.sb),
+                  acos(param0.sc), acos(param0.sd),
+                  acos(param0.se), acos(param0.sf)); }
+
+
+//gentype acosh (gentype)
+
+INLINE_OVERLOADABLE float2 acosh (float2 param0)
+{return (float2)(acosh(param0.s0), acosh(param0.s1)); }
+
+INLINE_OVERLOADABLE float3 acosh (float3 param0)
+{return (float3)(acosh(param0.s0), acosh(param0.s1),
+                 acosh(param0.s2)); }
+
+INLINE_OVERLOADABLE float4 acosh (float4 param0)
+{return (float4)(acosh(param0.s0), acosh(param0.s1),
+                 acosh(param0.s2), acosh(param0.s3)); }
+
+INLINE_OVERLOADABLE float8 acosh (float8 param0)
+{return (float8)(acosh(param0.s0), acosh(param0.s1),
+                 acosh(param0.s2), acosh(param0.s3),
+                 acosh(param0.s4), acosh(param0.s5),
+                 acosh(param0.s6), acosh(param0.s7)); }
+
+INLINE_OVERLOADABLE float16 acosh (float16 param0)
+{return (float16)(acosh(param0.s0),  acosh(param0.s1),
+                  acosh(param0.s2),  acosh(param0.s3),
+                  acosh(param0.s4),  acosh(param0.s5),
+                  acosh(param0.s6),  acosh(param0.s7),
+                  acosh(param0.s8),  acosh(param0.s9),
+                  acosh(param0.sa), acosh(param0.sb),
+                  acosh(param0.sc), acosh(param0.sd),
+                  acosh(param0.se), acosh(param0.sf)); }
+
+
+//gentype acospi (gentype x)
+
+INLINE_OVERLOADABLE float2 acospi (float2 param0)
+{return (float2)(acospi(param0.s0), acospi(param0.s1)); }
+
+INLINE_OVERLOADABLE float3 acospi (float3 param0)
+{return (float3)(acospi(param0.s0), acospi(param0.s1),
+                 acospi(param0.s2)); }
+
+INLINE_OVERLOADABLE float4 acospi (float4 param0)
+{return (float4)(acospi(param0.s0), acospi(param0.s1),
+                 acospi(param0.s2), acospi(param0.s3)); }
+
+INLINE_OVERLOADABLE float8 acospi (float8 param0)
+{return (float8)(acospi(param0.s0), acospi(param0.s1),
+                 acospi(param0.s2), acospi(param0.s3),
+                 acospi(param0.s4), acospi(param0.s5),
+                 acospi(param0.s6), acospi(param0.s7)); }
+
+INLINE_OVERLOADABLE float16 acospi (float16 param0)
+{return (float16)(acospi(param0.s0),  acospi(param0.s1),
+                  acospi(param0.s2),  acospi(param0.s3),
+                  acospi(param0.s4),  acospi(param0.s5),
+                  acospi(param0.s6),  acospi(param0.s7),
+                  acospi(param0.s8),  acospi(param0.s9),
+                  acospi(param0.sa), acospi(param0.sb),
+                  acospi(param0.sc), acospi(param0.sd),
+                  acospi(param0.se), acospi(param0.sf)); }
+
+
+//gentype asin (gentype)
+
+INLINE_OVERLOADABLE float2 asin (float2 param0)
+{return (float2)(asin(param0.s0), asin(param0.s1)); }
+
+INLINE_OVERLOADABLE float3 asin (float3 param0)
+{return (float3)(asin(param0.s0), asin(param0.s1),
+                 asin(param0.s2)); }
+
+INLINE_OVERLOADABLE float4 asin (float4 param0)
+{return (float4)(asin(param0.s0), asin(param0.s1),
+                 asin(param0.s2), asin(param0.s3)); }
+
+INLINE_OVERLOADABLE float8 asin (float8 param0)
+{return (float8)(asin(param0.s0), asin(param0.s1),
+                 asin(param0.s2), asin(param0.s3),
+                 asin(param0.s4), asin(param0.s5),
+                 asin(param0.s6), asin(param0.s7)); }
+
+INLINE_OVERLOADABLE float16 asin (float16 param0)
+{return (float16)(asin(param0.s0),  asin(param0.s1),
+                  asin(param0.s2),  asin(param0.s3),
+                  asin(param0.s4),  asin(param0.s5),
+                  asin(param0.s6),  asin(param0.s7),
+                  asin(param0.s8),  asin(param0.s9),
+                  asin(param0.sa), asin(param0.sb),
+                  asin(param0.sc), asin(param0.sd),
+                  asin(param0.se), asin(param0.sf)); }
+
+
+//gentype asinh (gentype)
+
+INLINE_OVERLOADABLE float2 asinh (float2 param0)
+{return (float2)(asinh(param0.s0), asinh(param0.s1)); }
+
+INLINE_OVERLOADABLE float3 asinh (float3 param0)
+{return (float3)(asinh(param0.s0), asinh(param0.s1),
+                 asinh(param0.s2)); }
+
+INLINE_OVERLOADABLE float4 asinh (float4 param0)
+{return (float4)(asinh(param0.s0), asinh(param0.s1),
+                 asinh(param0.s2), asinh(param0.s3)); }
+
+INLINE_OVERLOADABLE float8 asinh (float8 param0)
+{return (float8)(asinh(param0.s0), asinh(param0.s1),
+                 asinh(param0.s2), asinh(param0.s3),
+                 asinh(param0.s4), asinh(param0.s5),
+                 asinh(param0.s6), asinh(param0.s7)); }
+
+INLINE_OVERLOADABLE float16 asinh (float16 param0)
+{return (float16)(asinh(param0.s0),  asinh(param0.s1),
+                  asinh(param0.s2),  asinh(param0.s3),
+                  asinh(param0.s4),  asinh(param0.s5),
+                  asinh(param0.s6),  asinh(param0.s7),
+                  asinh(param0.s8),  asinh(param0.s9),
+                  asinh(param0.sa), asinh(param0.sb),
+                  asinh(param0.sc), asinh(param0.sd),
+                  asinh(param0.se), asinh(param0.sf)); }
+
+
+//gentype asinpi (gentype x)
+
+INLINE_OVERLOADABLE float2 asinpi (float2 param0)
+{return (float2)(asinpi(param0.s0), asinpi(param0.s1)); }
+
+INLINE_OVERLOADABLE float3 asinpi (float3 param0)
+{return (float3)(asinpi(param0.s0), asinpi(param0.s1),
+                 asinpi(param0.s2)); }
+
+INLINE_OVERLOADABLE float4 asinpi (float4 param0)
+{return (float4)(asinpi(param0.s0), asinpi(param0.s1),
+                 asinpi(param0.s2), asinpi(param0.s3)); }
+
+INLINE_OVERLOADABLE float8 asinpi (float8 param0)
+{return (float8)(asinpi(param0.s0), asinpi(param0.s1),
+                 asinpi(param0.s2), asinpi(param0.s3),
+                 asinpi(param0.s4), asinpi(param0.s5),
+                 asinpi(param0.s6), asinpi(param0.s7)); }
+
+INLINE_OVERLOADABLE float16 asinpi (float16 param0)
+{return (float16)(asinpi(param0.s0),  asinpi(param0.s1),
+                  asinpi(param0.s2),  asinpi(param0.s3),
+                  asinpi(param0.s4),  asinpi(param0.s5),
+                  asinpi(param0.s6),  asinpi(param0.s7),
+                  asinpi(param0.s8),  asinpi(param0.s9),
+                  asinpi(param0.sa), asinpi(param0.sb),
+                  asinpi(param0.sc), asinpi(param0.sd),
+                  asinpi(param0.se), asinpi(param0.sf)); }
+
+
+//gentype atan (gentype y_over_x)
+
+INLINE_OVERLOADABLE float2 atan (float2 param0)
+{return (float2)(atan(param0.s0), atan(param0.s1)); }
+
+INLINE_OVERLOADABLE float3 atan (float3 param0)
+{return (float3)(atan(param0.s0), atan(param0.s1),
+                 atan(param0.s2)); }
+
+INLINE_OVERLOADABLE float4 atan (float4 param0)
+{return (float4)(atan(param0.s0), atan(param0.s1),
+                 atan(param0.s2), atan(param0.s3)); }
+
+INLINE_OVERLOADABLE float8 atan (float8 param0)
+{return (float8)(atan(param0.s0), atan(param0.s1),
+                 atan(param0.s2), atan(param0.s3),
+                 atan(param0.s4), atan(param0.s5),
+                 atan(param0.s6), atan(param0.s7)); }
+
+INLINE_OVERLOADABLE float16 atan (float16 param0)
+{return (float16)(atan(param0.s0),  atan(param0.s1),
+                  atan(param0.s2),  atan(param0.s3),
+                  atan(param0.s4),  atan(param0.s5),
+                  atan(param0.s6),  atan(param0.s7),
+                  atan(param0.s8),  atan(param0.s9),
+                  atan(param0.sa), atan(param0.sb),
+                  atan(param0.sc), atan(param0.sd),
+                  atan(param0.se), atan(param0.sf)); }
+
+
+//gentype atanh (gentype)
+
+INLINE_OVERLOADABLE float2 atanh (float2 param0)
+{return (float2)(atanh(param0.s0), atanh(param0.s1)); }
+
+INLINE_OVERLOADABLE float3 atanh (float3 param0)
+{return (float3)(atanh(param0.s0), atanh(param0.s1),
+                 atanh(param0.s2)); }
+
+INLINE_OVERLOADABLE float4 atanh (float4 param0)
+{return (float4)(atanh(param0.s0), atanh(param0.s1),
+                 atanh(param0.s2), atanh(param0.s3)); }
+
+INLINE_OVERLOADABLE float8 atanh (float8 param0)
+{return (float8)(atanh(param0.s0), atanh(param0.s1),
+                 atanh(param0.s2), atanh(param0.s3),
+                 atanh(param0.s4), atanh(param0.s5),
+                 atanh(param0.s6), atanh(param0.s7)); }
+
+INLINE_OVERLOADABLE float16 atanh (float16 param0)
+{return (float16)(atanh(param0.s0),  atanh(param0.s1),
+                  atanh(param0.s2),  atanh(param0.s3),
+                  atanh(param0.s4),  atanh(param0.s5),
+                  atanh(param0.s6),  atanh(param0.s7),
+                  atanh(param0.s8),  atanh(param0.s9),
+                  atanh(param0.sa), atanh(param0.sb),
+                  atanh(param0.sc), atanh(param0.sd),
+                  atanh(param0.se), atanh(param0.sf)); }
+
+
+//gentype atanpi (gentype x)
+
+INLINE_OVERLOADABLE float2 atanpi (float2 param0)
+{return (float2)(atanpi(param0.s0), atanpi(param0.s1)); }
+
+INLINE_OVERLOADABLE float3 atanpi (float3 param0)
+{return (float3)(atanpi(param0.s0), atanpi(param0.s1),
+                 atanpi(param0.s2)); }
+
+INLINE_OVERLOADABLE float4 atanpi (float4 param0)
+{return (float4)(atanpi(param0.s0), atanpi(param0.s1),
+                 atanpi(param0.s2), atanpi(param0.s3)); }
+
+INLINE_OVERLOADABLE float8 atanpi (float8 param0)
+{return (float8)(atanpi(param0.s0), atanpi(param0.s1),
+                 atanpi(param0.s2), atanpi(param0.s3),
+                 atanpi(param0.s4), atanpi(param0.s5),
+                 atanpi(param0.s6), atanpi(param0.s7)); }
+
+INLINE_OVERLOADABLE float16 atanpi (float16 param0)
+{return (float16)(atanpi(param0.s0),  atanpi(param0.s1),
+                  atanpi(param0.s2),  atanpi(param0.s3),
+                  atanpi(param0.s4),  atanpi(param0.s5),
+                  atanpi(param0.s6),  atanpi(param0.s7),
+                  atanpi(param0.s8),  atanpi(param0.s9),
+                  atanpi(param0.sa), atanpi(param0.sb),
+                  atanpi(param0.sc), atanpi(param0.sd),
+                  atanpi(param0.se), atanpi(param0.sf)); }
+
+
+//gentype cbrt (gentype)
+
+INLINE_OVERLOADABLE float2 cbrt (float2 param0)
+{return (float2)(cbrt(param0.s0), cbrt(param0.s1)); }
+
+INLINE_OVERLOADABLE float3 cbrt (float3 param0)
+{return (float3)(cbrt(param0.s0), cbrt(param0.s1),
+                 cbrt(param0.s2)); }
+
+INLINE_OVERLOADABLE float4 cbrt (float4 param0)
+{return (float4)(cbrt(param0.s0), cbrt(param0.s1),
+                 cbrt(param0.s2), cbrt(param0.s3)); }
+
+INLINE_OVERLOADABLE float8 cbrt (float8 param0)
+{return (float8)(cbrt(param0.s0), cbrt(param0.s1),
+                 cbrt(param0.s2), cbrt(param0.s3),
+                 cbrt(param0.s4), cbrt(param0.s5),
+                 cbrt(param0.s6), cbrt(param0.s7)); }
+
+INLINE_OVERLOADABLE float16 cbrt (float16 param0)
+{return (float16)(cbrt(param0.s0),  cbrt(param0.s1),
+                  cbrt(param0.s2),  cbrt(param0.s3),
+                  cbrt(param0.s4),  cbrt(param0.s5),
+                  cbrt(param0.s6),  cbrt(param0.s7),
+                  cbrt(param0.s8),  cbrt(param0.s9),
+                  cbrt(param0.sa), cbrt(param0.sb),
+                  cbrt(param0.sc), cbrt(param0.sd),
+                  cbrt(param0.se), cbrt(param0.sf)); }
+
+
+//gentype ceil (gentype)
+
+INLINE_OVERLOADABLE float2 ceil (float2 param0)
+{return (float2)(ceil(param0.s0), ceil(param0.s1)); }
+
+INLINE_OVERLOADABLE float3 ceil (float3 param0)
+{return (float3)(ceil(param0.s0), ceil(param0.s1),
+                 ceil(param0.s2)); }
+
+INLINE_OVERLOADABLE float4 ceil (float4 param0)
+{return (float4)(ceil(param0.s0), ceil(param0.s1),
+                 ceil(param0.s2), ceil(param0.s3)); }
+
+INLINE_OVERLOADABLE float8 ceil (float8 param0)
+{return (float8)(ceil(param0.s0), ceil(param0.s1),
+                 ceil(param0.s2), ceil(param0.s3),
+                 ceil(param0.s4), ceil(param0.s5),
+                 ceil(param0.s6), ceil(param0.s7)); }
+
+INLINE_OVERLOADABLE float16 ceil (float16 param0)
+{return (float16)(ceil(param0.s0),  ceil(param0.s1),
+                  ceil(param0.s2),  ceil(param0.s3),
+                  ceil(param0.s4),  ceil(param0.s5),
+                  ceil(param0.s6),  ceil(param0.s7),
+                  ceil(param0.s8),  ceil(param0.s9),
+                  ceil(param0.sa), ceil(param0.sb),
+                  ceil(param0.sc), ceil(param0.sd),
+                  ceil(param0.se), ceil(param0.sf)); }
+
+
+//gentype copysign (gentype x, gentype y)
+
+INLINE_OVERLOADABLE float2 copysign (float2 param0, float2 param1)
+{return (float2)(copysign(param0.s0, param1.s0), copysign(param0.s1, param1.s1)); }
+
+INLINE_OVERLOADABLE float3 copysign (float3 param0, float3 param1)
+{return (float3)(copysign(param0.s0, param1.s0), copysign(param0.s1, param1.s1),
+                 copysign(param0.s2, param1.s2)); }
+
+INLINE_OVERLOADABLE float4 copysign (float4 param0, float4 param1)
+{return (float4)(copysign(param0.s0, param1.s0), copysign(param0.s1, param1.s1),
+                 copysign(param0.s2, param1.s2), copysign(param0.s3, param1.s3)); }
+
+INLINE_OVERLOADABLE float8 copysign (float8 param0, float8 param1)
+{return (float8)(copysign(param0.s0, param1.s0), copysign(param0.s1, param1.s1),
+                 copysign(param0.s2, param1.s2), copysign(param0.s3, param1.s3),
+                 copysign(param0.s4, param1.s4), copysign(param0.s5, param1.s5),
+                 copysign(param0.s6, param1.s6), copysign(param0.s7, param1.s7)); }
+
+INLINE_OVERLOADABLE float16 copysign (float16 param0, float16 param1)
+{return (float16)(copysign(param0.s0,  param1.s0),  copysign(param0.s1,  param1.s1),
+                  copysign(param0.s2,  param1.s2),  copysign(param0.s3,  param1.s3),
+                  copysign(param0.s4,  param1.s4),  copysign(param0.s5,  param1.s5),
+                  copysign(param0.s6,  param1.s6),  copysign(param0.s7,  param1.s7),
+                  copysign(param0.s8,  param1.s8),  copysign(param0.s9,  param1.s9),
+                  copysign(param0.sa, param1.sa), copysign(param0.sb, param1.sb),
+                  copysign(param0.sc, param1.sc), copysign(param0.sd, param1.sd),
+                  copysign(param0.se, param1.se), copysign(param0.sf, param1.sf)); }
+
+
+//gentype cos (gentype)
+
+INLINE_OVERLOADABLE float2 cos (float2 param0)
+{return (float2)(cos(param0.s0), cos(param0.s1)); }
+
+INLINE_OVERLOADABLE float3 cos (float3 param0)
+{return (float3)(cos(param0.s0), cos(param0.s1),
+                 cos(param0.s2)); }
+
+INLINE_OVERLOADABLE float4 cos (float4 param0)
+{return (float4)(cos(param0.s0), cos(param0.s1),
+                 cos(param0.s2), cos(param0.s3)); }
+
+INLINE_OVERLOADABLE float8 cos (float8 param0)
+{return (float8)(cos(param0.s0), cos(param0.s1),
+                 cos(param0.s2), cos(param0.s3),
+                 cos(param0.s4), cos(param0.s5),
+                 cos(param0.s6), cos(param0.s7)); }
+
+INLINE_OVERLOADABLE float16 cos (float16 param0)
+{return (float16)(cos(param0.s0),  cos(param0.s1),
+                  cos(param0.s2),  cos(param0.s3),
+                  cos(param0.s4),  cos(param0.s5),
+                  cos(param0.s6),  cos(param0.s7),
+                  cos(param0.s8),  cos(param0.s9),
+                  cos(param0.sa), cos(param0.sb),
+                  cos(param0.sc), cos(param0.sd),
+                  cos(param0.se), cos(param0.sf)); }
+
+
+//gentype cosh (gentype)
+
+INLINE_OVERLOADABLE float2 cosh (float2 param0)
+{return (float2)(cosh(param0.s0), cosh(param0.s1)); }
+
+INLINE_OVERLOADABLE float3 cosh (float3 param0)
+{return (float3)(cosh(param0.s0), cosh(param0.s1),
+                 cosh(param0.s2)); }
+
+INLINE_OVERLOADABLE float4 cosh (float4 param0)
+{return (float4)(cosh(param0.s0), cosh(param0.s1),
+                 cosh(param0.s2), cosh(param0.s3)); }
+
+INLINE_OVERLOADABLE float8 cosh (float8 param0)
+{return (float8)(cosh(param0.s0), cosh(param0.s1),
+                 cosh(param0.s2), cosh(param0.s3),
+                 cosh(param0.s4), cosh(param0.s5),
+                 cosh(param0.s6), cosh(param0.s7)); }
+
+INLINE_OVERLOADABLE float16 cosh (float16 param0)
+{return (float16)(cosh(param0.s0),  cosh(param0.s1),
+                  cosh(param0.s2),  cosh(param0.s3),
+                  cosh(param0.s4),  cosh(param0.s5),
+                  cosh(param0.s6),  cosh(param0.s7),
+                  cosh(param0.s8),  cosh(param0.s9),
+                  cosh(param0.sa), cosh(param0.sb),
+                  cosh(param0.sc), cosh(param0.sd),
+                  cosh(param0.se), cosh(param0.sf)); }
+
+
+//gentype cospi (gentype x)
+
+INLINE_OVERLOADABLE float2 cospi (float2 param0)
+{return (float2)(cospi(param0.s0), cospi(param0.s1)); }
+
+INLINE_OVERLOADABLE float3 cospi (float3 param0)
+{return (float3)(cospi(param0.s0), cospi(param0.s1),
+                 cospi(param0.s2)); }
+
+INLINE_OVERLOADABLE float4 cospi (float4 param0)
+{return (float4)(cospi(param0.s0), cospi(param0.s1),
+                 cospi(param0.s2), cospi(param0.s3)); }
+
+INLINE_OVERLOADABLE float8 cospi (float8 param0)
+{return (float8)(cospi(param0.s0), cospi(param0.s1),
+                 cospi(param0.s2), cospi(param0.s3),
+                 cospi(param0.s4), cospi(param0.s5),
+                 cospi(param0.s6), cospi(param0.s7)); }
+
+INLINE_OVERLOADABLE float16 cospi (float16 param0)
+{return (float16)(cospi(param0.s0),  cospi(param0.s1),
+                  cospi(param0.s2),  cospi(param0.s3),
+                  cospi(param0.s4),  cospi(param0.s5),
+                  cospi(param0.s6),  cospi(param0.s7),
+                  cospi(param0.s8),  cospi(param0.s9),
+                  cospi(param0.sa), cospi(param0.sb),
+                  cospi(param0.sc), cospi(param0.sd),
+                  cospi(param0.se), cospi(param0.sf)); }
+
+
+//gentype erfc (gentype)
+
+INLINE_OVERLOADABLE float2 erfc (float2 param0)
+{return (float2)(erfc(param0.s0), erfc(param0.s1)); }
+
+INLINE_OVERLOADABLE float3 erfc (float3 param0)
+{return (float3)(erfc(param0.s0), erfc(param0.s1),
+                 erfc(param0.s2)); }
+
+INLINE_OVERLOADABLE float4 erfc (float4 param0)
+{return (float4)(erfc(param0.s0), erfc(param0.s1),
+                 erfc(param0.s2), erfc(param0.s3)); }
+
+INLINE_OVERLOADABLE float8 erfc (float8 param0)
+{return (float8)(erfc(param0.s0), erfc(param0.s1),
+                 erfc(param0.s2), erfc(param0.s3),
+                 erfc(param0.s4), erfc(param0.s5),
+                 erfc(param0.s6), erfc(param0.s7)); }
+
+INLINE_OVERLOADABLE float16 erfc (float16 param0)
+{return (float16)(erfc(param0.s0),  erfc(param0.s1),
+                  erfc(param0.s2),  erfc(param0.s3),
+                  erfc(param0.s4),  erfc(param0.s5),
+                  erfc(param0.s6),  erfc(param0.s7),
+                  erfc(param0.s8),  erfc(param0.s9),
+                  erfc(param0.sa), erfc(param0.sb),
+                  erfc(param0.sc), erfc(param0.sd),
+                  erfc(param0.se), erfc(param0.sf)); }
+
+
+//gentype erf (gentype)
+
+INLINE_OVERLOADABLE float2 erf (float2 param0)
+{return (float2)(erf(param0.s0), erf(param0.s1)); }
+
+INLINE_OVERLOADABLE float3 erf (float3 param0)
+{return (float3)(erf(param0.s0), erf(param0.s1),
+                 erf(param0.s2)); }
+
+INLINE_OVERLOADABLE float4 erf (float4 param0)
+{return (float4)(erf(param0.s0), erf(param0.s1),
+                 erf(param0.s2), erf(param0.s3)); }
+
+INLINE_OVERLOADABLE float8 erf (float8 param0)
+{return (float8)(erf(param0.s0), erf(param0.s1),
+                 erf(param0.s2), erf(param0.s3),
+                 erf(param0.s4), erf(param0.s5),
+                 erf(param0.s6), erf(param0.s7)); }
+
+INLINE_OVERLOADABLE float16 erf (float16 param0)
+{return (float16)(erf(param0.s0),  erf(param0.s1),
+                  erf(param0.s2),  erf(param0.s3),
+                  erf(param0.s4),  erf(param0.s5),
+                  erf(param0.s6),  erf(param0.s7),
+                  erf(param0.s8),  erf(param0.s9),
+                  erf(param0.sa), erf(param0.sb),
+                  erf(param0.sc), erf(param0.sd),
+                  erf(param0.se), erf(param0.sf)); }
+
+
+//gentype exp (gentype x)
+
+INLINE_OVERLOADABLE float2 exp (float2 param0)
+{return (float2)(exp(param0.s0), exp(param0.s1)); }
+
+INLINE_OVERLOADABLE float3 exp (float3 param0)
+{return (float3)(exp(param0.s0), exp(param0.s1),
+                 exp(param0.s2)); }
+
+INLINE_OVERLOADABLE float4 exp (float4 param0)
+{return (float4)(exp(param0.s0), exp(param0.s1),
+                 exp(param0.s2), exp(param0.s3)); }
+
+INLINE_OVERLOADABLE float8 exp (float8 param0)
+{return (float8)(exp(param0.s0), exp(param0.s1),
+                 exp(param0.s2), exp(param0.s3),
+                 exp(param0.s4), exp(param0.s5),
+                 exp(param0.s6), exp(param0.s7)); }
+
+INLINE_OVERLOADABLE float16 exp (float16 param0)
+{return (float16)(exp(param0.s0),  exp(param0.s1),
+                  exp(param0.s2),  exp(param0.s3),
+                  exp(param0.s4),  exp(param0.s5),
+                  exp(param0.s6),  exp(param0.s7),
+                  exp(param0.s8),  exp(param0.s9),
+                  exp(param0.sa), exp(param0.sb),
+                  exp(param0.sc), exp(param0.sd),
+                  exp(param0.se), exp(param0.sf)); }
+
+
+//gentype exp2 (gentype)
+
+INLINE_OVERLOADABLE float2 exp2 (float2 param0)
+{return (float2)(exp2(param0.s0), exp2(param0.s1)); }
+
+INLINE_OVERLOADABLE float3 exp2 (float3 param0)
+{return (float3)(exp2(param0.s0), exp2(param0.s1),
+                 exp2(param0.s2)); }
+
+INLINE_OVERLOADABLE float4 exp2 (float4 param0)
+{return (float4)(exp2(param0.s0), exp2(param0.s1),
+                 exp2(param0.s2), exp2(param0.s3)); }
+
+INLINE_OVERLOADABLE float8 exp2 (float8 param0)
+{return (float8)(exp2(param0.s0), exp2(param0.s1),
+                 exp2(param0.s2), exp2(param0.s3),
+                 exp2(param0.s4), exp2(param0.s5),
+                 exp2(param0.s6), exp2(param0.s7)); }
+
+INLINE_OVERLOADABLE float16 exp2 (float16 param0)
+{return (float16)(exp2(param0.s0),  exp2(param0.s1),
+                  exp2(param0.s2),  exp2(param0.s3),
+                  exp2(param0.s4),  exp2(param0.s5),
+                  exp2(param0.s6),  exp2(param0.s7),
+                  exp2(param0.s8),  exp2(param0.s9),
+                  exp2(param0.sa), exp2(param0.sb),
+                  exp2(param0.sc), exp2(param0.sd),
+                  exp2(param0.se), exp2(param0.sf)); }
+
+
+//gentype exp10 (gentype)
+
+INLINE_OVERLOADABLE float2 exp10 (float2 param0)
+{return (float2)(exp10(param0.s0), exp10(param0.s1)); }
+
+INLINE_OVERLOADABLE float3 exp10 (float3 param0)
+{return (float3)(exp10(param0.s0), exp10(param0.s1),
+                 exp10(param0.s2)); }
+
+INLINE_OVERLOADABLE float4 exp10 (float4 param0)
+{return (float4)(exp10(param0.s0), exp10(param0.s1),
+                 exp10(param0.s2), exp10(param0.s3)); }
+
+INLINE_OVERLOADABLE float8 exp10 (float8 param0)
+{return (float8)(exp10(param0.s0), exp10(param0.s1),
+                 exp10(param0.s2), exp10(param0.s3),
+                 exp10(param0.s4), exp10(param0.s5),
+                 exp10(param0.s6), exp10(param0.s7)); }
+
+INLINE_OVERLOADABLE float16 exp10 (float16 param0)
+{return (float16)(exp10(param0.s0),  exp10(param0.s1),
+                  exp10(param0.s2),  exp10(param0.s3),
+                  exp10(param0.s4),  exp10(param0.s5),
+                  exp10(param0.s6),  exp10(param0.s7),
+                  exp10(param0.s8),  exp10(param0.s9),
+                  exp10(param0.sa), exp10(param0.sb),
+                  exp10(param0.sc), exp10(param0.sd),
+                  exp10(param0.se), exp10(param0.sf)); }
+
+
+//gentype expm1 (gentype x)
+
+INLINE_OVERLOADABLE float2 expm1 (float2 param0)
+{return (float2)(expm1(param0.s0), expm1(param0.s1)); }
+
+INLINE_OVERLOADABLE float3 expm1 (float3 param0)
+{return (float3)(expm1(param0.s0), expm1(param0.s1),
+                 expm1(param0.s2)); }
+
+INLINE_OVERLOADABLE float4 expm1 (float4 param0)
+{return (float4)(expm1(param0.s0), expm1(param0.s1),
+                 expm1(param0.s2), expm1(param0.s3)); }
+
+INLINE_OVERLOADABLE float8 expm1 (float8 param0)
+{return (float8)(expm1(param0.s0), expm1(param0.s1),
+                 expm1(param0.s2), expm1(param0.s3),
+                 expm1(param0.s4), expm1(param0.s5),
+                 expm1(param0.s6), expm1(param0.s7)); }
+
+INLINE_OVERLOADABLE float16 expm1 (float16 param0)
+{return (float16)(expm1(param0.s0),  expm1(param0.s1),
+                  expm1(param0.s2),  expm1(param0.s3),
+                  expm1(param0.s4),  expm1(param0.s5),
+                  expm1(param0.s6),  expm1(param0.s7),
+                  expm1(param0.s8),  expm1(param0.s9),
+                  expm1(param0.sa), expm1(param0.sb),
+                  expm1(param0.sc), expm1(param0.sd),
+                  expm1(param0.se), expm1(param0.sf)); }
+
+
+//gentype fabs (gentype)
+
+INLINE_OVERLOADABLE float2 fabs (float2 param0)
+{return (float2)(fabs(param0.s0), fabs(param0.s1)); }
+
+INLINE_OVERLOADABLE float3 fabs (float3 param0)
+{return (float3)(fabs(param0.s0), fabs(param0.s1),
+                 fabs(param0.s2)); }
+
+INLINE_OVERLOADABLE float4 fabs (float4 param0)
+{return (float4)(fabs(param0.s0), fabs(param0.s1),
+                 fabs(param0.s2), fabs(param0.s3)); }
+
+INLINE_OVERLOADABLE float8 fabs (float8 param0)
+{return (float8)(fabs(param0.s0), fabs(param0.s1),
+                 fabs(param0.s2), fabs(param0.s3),
+                 fabs(param0.s4), fabs(param0.s5),
+                 fabs(param0.s6), fabs(param0.s7)); }
+
+INLINE_OVERLOADABLE float16 fabs (float16 param0)
+{return (float16)(fabs(param0.s0),  fabs(param0.s1),
+                  fabs(param0.s2),  fabs(param0.s3),
+                  fabs(param0.s4),  fabs(param0.s5),
+                  fabs(param0.s6),  fabs(param0.s7),
+                  fabs(param0.s8),  fabs(param0.s9),
+                  fabs(param0.sa), fabs(param0.sb),
+                  fabs(param0.sc), fabs(param0.sd),
+                  fabs(param0.se), fabs(param0.sf)); }
+
+
+//gentype fdim (gentype x, gentype y)
+
+INLINE_OVERLOADABLE float2 fdim (float2 param0, float2 param1)
+{return (float2)(fdim(param0.s0, param1.s0), fdim(param0.s1, param1.s1)); }
+
+INLINE_OVERLOADABLE float3 fdim (float3 param0, float3 param1)
+{return (float3)(fdim(param0.s0, param1.s0), fdim(param0.s1, param1.s1),
+                 fdim(param0.s2, param1.s2)); }
+
+INLINE_OVERLOADABLE float4 fdim (float4 param0, float4 param1)
+{return (float4)(fdim(param0.s0, param1.s0), fdim(param0.s1, param1.s1),
+                 fdim(param0.s2, param1.s2), fdim(param0.s3, param1.s3)); }
+
+INLINE_OVERLOADABLE float8 fdim (float8 param0, float8 param1)
+{return (float8)(fdim(param0.s0, param1.s0), fdim(param0.s1, param1.s1),
+                 fdim(param0.s2, param1.s2), fdim(param0.s3, param1.s3),
+                 fdim(param0.s4, param1.s4), fdim(param0.s5, param1.s5),
+                 fdim(param0.s6, param1.s6), fdim(param0.s7, param1.s7)); }
+
+INLINE_OVERLOADABLE float16 fdim (float16 param0, float16 param1)
+{return (float16)(fdim(param0.s0,  param1.s0),  fdim(param0.s1,  param1.s1),
+                  fdim(param0.s2,  param1.s2),  fdim(param0.s3,  param1.s3),
+                  fdim(param0.s4,  param1.s4),  fdim(param0.s5,  param1.s5),
+                  fdim(param0.s6,  param1.s6),  fdim(param0.s7,  param1.s7),
+                  fdim(param0.s8,  param1.s8),  fdim(param0.s9,  param1.s9),
+                  fdim(param0.sa, param1.sa), fdim(param0.sb, param1.sb),
+                  fdim(param0.sc, param1.sc), fdim(param0.sd, param1.sd),
+                  fdim(param0.se, param1.se), fdim(param0.sf, param1.sf)); }
+
+
+//gentype floor (gentype)
+
+INLINE_OVERLOADABLE float2 floor (float2 param0)
+{return (float2)(floor(param0.s0), floor(param0.s1)); }
+
+INLINE_OVERLOADABLE float3 floor (float3 param0)
+{return (float3)(floor(param0.s0), floor(param0.s1),
+                 floor(param0.s2)); }
+
+INLINE_OVERLOADABLE float4 floor (float4 param0)
+{return (float4)(floor(param0.s0), floor(param0.s1),
+                 floor(param0.s2), floor(param0.s3)); }
+
+INLINE_OVERLOADABLE float8 floor (float8 param0)
+{return (float8)(floor(param0.s0), floor(param0.s1),
+                 floor(param0.s2), floor(param0.s3),
+                 floor(param0.s4), floor(param0.s5),
+                 floor(param0.s6), floor(param0.s7)); }
+
+INLINE_OVERLOADABLE float16 floor (float16 param0)
+{return (float16)(floor(param0.s0),  floor(param0.s1),
+                  floor(param0.s2),  floor(param0.s3),
+                  floor(param0.s4),  floor(param0.s5),
+                  floor(param0.s6),  floor(param0.s7),
+                  floor(param0.s8),  floor(param0.s9),
+                  floor(param0.sa), floor(param0.sb),
+                  floor(param0.sc), floor(param0.sd),
+                  floor(param0.se), floor(param0.sf)); }
+
+
+//gentype fmax (gentype x, gentype y)
+
+INLINE_OVERLOADABLE float2 fmax (float2 param0, float2 param1)
+{return (float2)(fmax(param0.s0, param1.s0), fmax(param0.s1, param1.s1)); }
+
+INLINE_OVERLOADABLE float3 fmax (float3 param0, float3 param1)
+{return (float3)(fmax(param0.s0, param1.s0), fmax(param0.s1, param1.s1),
+                 fmax(param0.s2, param1.s2)); }
+
+INLINE_OVERLOADABLE float4 fmax (float4 param0, float4 param1)
+{return (float4)(fmax(param0.s0, param1.s0), fmax(param0.s1, param1.s1),
+                 fmax(param0.s2, param1.s2), fmax(param0.s3, param1.s3)); }
+
+INLINE_OVERLOADABLE float8 fmax (float8 param0, float8 param1)
+{return (float8)(fmax(param0.s0, param1.s0), fmax(param0.s1, param1.s1),
+                 fmax(param0.s2, param1.s2), fmax(param0.s3, param1.s3),
+                 fmax(param0.s4, param1.s4), fmax(param0.s5, param1.s5),
+                 fmax(param0.s6, param1.s6), fmax(param0.s7, param1.s7)); }
+
+INLINE_OVERLOADABLE float16 fmax (float16 param0, float16 param1)
+{return (float16)(fmax(param0.s0,  param1.s0),  fmax(param0.s1,  param1.s1),
+                  fmax(param0.s2,  param1.s2),  fmax(param0.s3,  param1.s3),
+                  fmax(param0.s4,  param1.s4),  fmax(param0.s5,  param1.s5),
+                  fmax(param0.s6,  param1.s6),  fmax(param0.s7,  param1.s7),
+                  fmax(param0.s8,  param1.s8),  fmax(param0.s9,  param1.s9),
+                  fmax(param0.sa, param1.sa), fmax(param0.sb, param1.sb),
+                  fmax(param0.sc, param1.sc), fmax(param0.sd, param1.sd),
+                  fmax(param0.se, param1.se), fmax(param0.sf, param1.sf)); }
+
+
+//gentypef fmax (gentypef x, float y)
+
+INLINE_OVERLOADABLE float2 fmax (float2 param0, float param1)
+{return (float2)(fmax(param0.s0, param1), fmax(param0.s1, param1)); }
+
+INLINE_OVERLOADABLE float3 fmax (float3 param0, float param1)
+{return (float3)(fmax(param0.s0, param1), fmax(param0.s1, param1),
+                 fmax(param0.s2, param1)); }
+
+INLINE_OVERLOADABLE float4 fmax (float4 param0, float param1)
+{return (float4)(fmax(param0.s0, param1), fmax(param0.s1, param1),
+                 fmax(param0.s2, param1), fmax(param0.s3, param1)); }
+
+INLINE_OVERLOADABLE float8 fmax (float8 param0, float param1)
+{return (float8)(fmax(param0.s0, param1), fmax(param0.s1, param1),
+                 fmax(param0.s2, param1), fmax(param0.s3, param1),
+                 fmax(param0.s4, param1), fmax(param0.s5, param1),
+                 fmax(param0.s6, param1), fmax(param0.s7, param1)); }
+
+INLINE_OVERLOADABLE float16 fmax (float16 param0, float param1)
+{return (float16)(fmax(param0.s0,  param1),  fmax(param0.s1,  param1),
+                  fmax(param0.s2,  param1),  fmax(param0.s3,  param1),
+                  fmax(param0.s4,  param1),  fmax(param0.s5,  param1),
+                  fmax(param0.s6,  param1),  fmax(param0.s7,  param1),
+                  fmax(param0.s8,  param1),  fmax(param0.s9,  param1),
+                  fmax(param0.sa, param1), fmax(param0.sb, param1),
+                  fmax(param0.sc, param1), fmax(param0.sd, param1),
+                  fmax(param0.se, param1), fmax(param0.sf, param1)); }
+
+
+//gentyped fmax (gentyped x, double y)
+
+
+//gentype fmin (gentype x, gentype y)
+
+INLINE_OVERLOADABLE float2 fmin (float2 param0, float2 param1)
+{return (float2)(fmin(param0.s0, param1.s0), fmin(param0.s1, param1.s1)); }
+
+INLINE_OVERLOADABLE float3 fmin (float3 param0, float3 param1)
+{return (float3)(fmin(param0.s0, param1.s0), fmin(param0.s1, param1.s1),
+                 fmin(param0.s2, param1.s2)); }
+
+INLINE_OVERLOADABLE float4 fmin (float4 param0, float4 param1)
+{return (float4)(fmin(param0.s0, param1.s0), fmin(param0.s1, param1.s1),
+                 fmin(param0.s2, param1.s2), fmin(param0.s3, param1.s3)); }
+
+INLINE_OVERLOADABLE float8 fmin (float8 param0, float8 param1)
+{return (float8)(fmin(param0.s0, param1.s0), fmin(param0.s1, param1.s1),
+                 fmin(param0.s2, param1.s2), fmin(param0.s3, param1.s3),
+                 fmin(param0.s4, param1.s4), fmin(param0.s5, param1.s5),
+                 fmin(param0.s6, param1.s6), fmin(param0.s7, param1.s7)); }
+
+INLINE_OVERLOADABLE float16 fmin (float16 param0, float16 param1)
+{return (float16)(fmin(param0.s0,  param1.s0),  fmin(param0.s1,  param1.s1),
+                  fmin(param0.s2,  param1.s2),  fmin(param0.s3,  param1.s3),
+                  fmin(param0.s4,  param1.s4),  fmin(param0.s5,  param1.s5),
+                  fmin(param0.s6,  param1.s6),  fmin(param0.s7,  param1.s7),
+                  fmin(param0.s8,  param1.s8),  fmin(param0.s9,  param1.s9),
+                  fmin(param0.sa, param1.sa), fmin(param0.sb, param1.sb),
+                  fmin(param0.sc, param1.sc), fmin(param0.sd, param1.sd),
+                  fmin(param0.se, param1.se), fmin(param0.sf, param1.sf)); }
+
+
+//gentypef fmin (gentypef x, float y)
+
+INLINE_OVERLOADABLE float2 fmin (float2 param0, float param1)
+{return (float2)(fmin(param0.s0, param1), fmin(param0.s1, param1)); }
+
+INLINE_OVERLOADABLE float3 fmin (float3 param0, float param1)
+{return (float3)(fmin(param0.s0, param1), fmin(param0.s1, param1),
+                 fmin(param0.s2, param1)); }
+
+INLINE_OVERLOADABLE float4 fmin (float4 param0, float param1)
+{return (float4)(fmin(param0.s0, param1), fmin(param0.s1, param1),
+                 fmin(param0.s2, param1), fmin(param0.s3, param1)); }
+
+INLINE_OVERLOADABLE float8 fmin (float8 param0, float param1)
+{return (float8)(fmin(param0.s0, param1), fmin(param0.s1, param1),
+                 fmin(param0.s2, param1), fmin(param0.s3, param1),
+                 fmin(param0.s4, param1), fmin(param0.s5, param1),
+                 fmin(param0.s6, param1), fmin(param0.s7, param1)); }
+
+INLINE_OVERLOADABLE float16 fmin (float16 param0, float param1)
+{return (float16)(fmin(param0.s0,  param1),  fmin(param0.s1,  param1),
+                  fmin(param0.s2,  param1),  fmin(param0.s3,  param1),
+                  fmin(param0.s4,  param1),  fmin(param0.s5,  param1),
+                  fmin(param0.s6,  param1),  fmin(param0.s7,  param1),
+                  fmin(param0.s8,  param1),  fmin(param0.s9,  param1),
+                  fmin(param0.sa, param1), fmin(param0.sb, param1),
+                  fmin(param0.sc, param1), fmin(param0.sd, param1),
+                  fmin(param0.se, param1), fmin(param0.sf, param1)); }
+
+
+//gentyped fmin (gentyped x, double y)
+
+
+//gentype fmod (gentype x, gentype y)
+
+INLINE_OVERLOADABLE float2 fmod (float2 param0, float2 param1)
+{return (float2)(fmod(param0.s0, param1.s0), fmod(param0.s1, param1.s1)); }
+
+INLINE_OVERLOADABLE float3 fmod (float3 param0, float3 param1)
+{return (float3)(fmod(param0.s0, param1.s0), fmod(param0.s1, param1.s1),
+                 fmod(param0.s2, param1.s2)); }
+
+INLINE_OVERLOADABLE float4 fmod (float4 param0, float4 param1)
+{return (float4)(fmod(param0.s0, param1.s0), fmod(param0.s1, param1.s1),
+                 fmod(param0.s2, param1.s2), fmod(param0.s3, param1.s3)); }
+
+INLINE_OVERLOADABLE float8 fmod (float8 param0, float8 param1)
+{return (float8)(fmod(param0.s0, param1.s0), fmod(param0.s1, param1.s1),
+                 fmod(param0.s2, param1.s2), fmod(param0.s3, param1.s3),
+                 fmod(param0.s4, param1.s4), fmod(param0.s5, param1.s5),
+                 fmod(param0.s6, param1.s6), fmod(param0.s7, param1.s7)); }
+
+INLINE_OVERLOADABLE float16 fmod (float16 param0, float16 param1)
+{return (float16)(fmod(param0.s0,  param1.s0),  fmod(param0.s1,  param1.s1),
+                  fmod(param0.s2,  param1.s2),  fmod(param0.s3,  param1.s3),
+                  fmod(param0.s4,  param1.s4),  fmod(param0.s5,  param1.s5),
+                  fmod(param0.s6,  param1.s6),  fmod(param0.s7,  param1.s7),
+                  fmod(param0.s8,  param1.s8),  fmod(param0.s9,  param1.s9),
+                  fmod(param0.sa, param1.sa), fmod(param0.sb, param1.sb),
+                  fmod(param0.sc, param1.sc), fmod(param0.sd, param1.sd),
+                  fmod(param0.se, param1.se), fmod(param0.sf, param1.sf)); }
+
+
+//gentype hypot (gentype x, gentype y)
+
+INLINE_OVERLOADABLE float2 hypot (float2 param0, float2 param1)
+{return (float2)(hypot(param0.s0, param1.s0), hypot(param0.s1, param1.s1)); }
+
+INLINE_OVERLOADABLE float3 hypot (float3 param0, float3 param1)
+{return (float3)(hypot(param0.s0, param1.s0), hypot(param0.s1, param1.s1),
+                 hypot(param0.s2, param1.s2)); }
+
+INLINE_OVERLOADABLE float4 hypot (float4 param0, float4 param1)
+{return (float4)(hypot(param0.s0, param1.s0), hypot(param0.s1, param1.s1),
+                 hypot(param0.s2, param1.s2), hypot(param0.s3, param1.s3)); }
+
+INLINE_OVERLOADABLE float8 hypot (float8 param0, float8 param1)
+{return (float8)(hypot(param0.s0, param1.s0), hypot(param0.s1, param1.s1),
+                 hypot(param0.s2, param1.s2), hypot(param0.s3, param1.s3),
+                 hypot(param0.s4, param1.s4), hypot(param0.s5, param1.s5),
+                 hypot(param0.s6, param1.s6), hypot(param0.s7, param1.s7)); }
+
+INLINE_OVERLOADABLE float16 hypot (float16 param0, float16 param1)
+{return (float16)(hypot(param0.s0,  param1.s0),  hypot(param0.s1,  param1.s1),
+                  hypot(param0.s2,  param1.s2),  hypot(param0.s3,  param1.s3),
+                  hypot(param0.s4,  param1.s4),  hypot(param0.s5,  param1.s5),
+                  hypot(param0.s6,  param1.s6),  hypot(param0.s7,  param1.s7),
+                  hypot(param0.s8,  param1.s8),  hypot(param0.s9,  param1.s9),
+                  hypot(param0.sa, param1.sa), hypot(param0.sb, param1.sb),
+                  hypot(param0.sc, param1.sc), hypot(param0.sd, param1.sd),
+                  hypot(param0.se, param1.se), hypot(param0.sf, param1.sf)); }
+
+
+//intn ilogb (floatn x)
+
+INLINE_OVERLOADABLE int2 ilogb (float2 param0)
+{return (int2)(ilogb(param0.s0), ilogb(param0.s1)); }
+
+INLINE_OVERLOADABLE int3 ilogb (float3 param0)
+{return (int3)(ilogb(param0.s0), ilogb(param0.s1),
+               ilogb(param0.s2)); }
+
+INLINE_OVERLOADABLE int4 ilogb (float4 param0)
+{return (int4)(ilogb(param0.s0), ilogb(param0.s1),
+               ilogb(param0.s2), ilogb(param0.s3)); }
+
+INLINE_OVERLOADABLE int8 ilogb (float8 param0)
+{return (int8)(ilogb(param0.s0), ilogb(param0.s1),
+               ilogb(param0.s2), ilogb(param0.s3),
+               ilogb(param0.s4), ilogb(param0.s5),
+               ilogb(param0.s6), ilogb(param0.s7)); }
+
+INLINE_OVERLOADABLE int16 ilogb (float16 param0)
+{return (int16)(ilogb(param0.s0),  ilogb(param0.s1),
+                ilogb(param0.s2),  ilogb(param0.s3),
+                ilogb(param0.s4),  ilogb(param0.s5),
+                ilogb(param0.s6),  ilogb(param0.s7),
+                ilogb(param0.s8),  ilogb(param0.s9),
+                ilogb(param0.sa), ilogb(param0.sb),
+                ilogb(param0.sc), ilogb(param0.sd),
+                ilogb(param0.se), ilogb(param0.sf)); }
+
+
+//int ilogb (float x)
+
+
+//intn ilogb (doublen x)
+
+
+//int ilogb (double x)
+
+
+//floatn ldexp (floatn x, intn k)
+
+INLINE_OVERLOADABLE float2 ldexp (float2 param0, int2 param1)
+{return (float2)(ldexp(param0.s0, param1.s0), ldexp(param0.s1, param1.s1)); }
+
+INLINE_OVERLOADABLE float3 ldexp (float3 param0, int3 param1)
+{return (float3)(ldexp(param0.s0, param1.s0), ldexp(param0.s1, param1.s1),
+                 ldexp(param0.s2, param1.s2)); }
+
+INLINE_OVERLOADABLE float4 ldexp (float4 param0, int4 param1)
+{return (float4)(ldexp(param0.s0, param1.s0), ldexp(param0.s1, param1.s1),
+                 ldexp(param0.s2, param1.s2), ldexp(param0.s3, param1.s3)); }
+
+INLINE_OVERLOADABLE float8 ldexp (float8 param0, int8 param1)
+{return (float8)(ldexp(param0.s0, param1.s0), ldexp(param0.s1, param1.s1),
+                 ldexp(param0.s2, param1.s2), ldexp(param0.s3, param1.s3),
+                 ldexp(param0.s4, param1.s4), ldexp(param0.s5, param1.s5),
+                 ldexp(param0.s6, param1.s6), ldexp(param0.s7, param1.s7)); }
+
+INLINE_OVERLOADABLE float16 ldexp (float16 param0, int16 param1)
+{return (float16)(ldexp(param0.s0,  param1.s0),  ldexp(param0.s1,  param1.s1),
+                  ldexp(param0.s2,  param1.s2),  ldexp(param0.s3,  param1.s3),
+                  ldexp(param0.s4,  param1.s4),  ldexp(param0.s5,  param1.s5),
+                  ldexp(param0.s6,  param1.s6),  ldexp(param0.s7,  param1.s7),
+                  ldexp(param0.s8,  param1.s8),  ldexp(param0.s9,  param1.s9),
+                  ldexp(param0.sa, param1.sa), ldexp(param0.sb, param1.sb),
+                  ldexp(param0.sc, param1.sc), ldexp(param0.sd, param1.sd),
+                  ldexp(param0.se, param1.se), ldexp(param0.sf, param1.sf)); }
+
+
+//floatn ldexp (floatn x, int k)
+
+INLINE_OVERLOADABLE float2 ldexp (float2 param0, int param1)
+{return (float2)(ldexp(param0.s0, param1), ldexp(param0.s1, param1)); }
+
+INLINE_OVERLOADABLE float3 ldexp (float3 param0, int param1)
+{return (float3)(ldexp(param0.s0, param1), ldexp(param0.s1, param1),
+                 ldexp(param0.s2, param1)); }
+
+INLINE_OVERLOADABLE float4 ldexp (float4 param0, int param1)
+{return (float4)(ldexp(param0.s0, param1), ldexp(param0.s1, param1),
+                 ldexp(param0.s2, param1), ldexp(param0.s3, param1)); }
+
+INLINE_OVERLOADABLE float8 ldexp (float8 param0, int param1)
+{return (float8)(ldexp(param0.s0, param1), ldexp(param0.s1, param1),
+                 ldexp(param0.s2, param1), ldexp(param0.s3, param1),
+                 ldexp(param0.s4, param1), ldexp(param0.s5, param1),
+                 ldexp(param0.s6, param1), ldexp(param0.s7, param1)); }
+
+INLINE_OVERLOADABLE float16 ldexp (float16 param0, int param1)
+{return (float16)(ldexp(param0.s0,  param1),  ldexp(param0.s1,  param1),
+                  ldexp(param0.s2,  param1),  ldexp(param0.s3,  param1),
+                  ldexp(param0.s4,  param1),  ldexp(param0.s5,  param1),
+                  ldexp(param0.s6,  param1),  ldexp(param0.s7,  param1),
+                  ldexp(param0.s8,  param1),  ldexp(param0.s9,  param1),
+                  ldexp(param0.sa, param1), ldexp(param0.sb, param1),
+                  ldexp(param0.sc, param1), ldexp(param0.sd, param1),
+                  ldexp(param0.se, param1), ldexp(param0.sf, param1)); }
+
+
+//float ldexp (float x, int k)
+
+
+//doublen ldexp (doublen x, intn k)
+
+
+//doublen ldexp (doublen x, int k)
+
+
+//double ldexp (double x, int k)
+
+
+//gentype log (gentype)
+
+INLINE_OVERLOADABLE float2 log (float2 param0)
+{return (float2)(log(param0.s0), log(param0.s1)); }
+
+INLINE_OVERLOADABLE float3 log (float3 param0)
+{return (float3)(log(param0.s0), log(param0.s1),
+                 log(param0.s2)); }
+
+INLINE_OVERLOADABLE float4 log (float4 param0)
+{return (float4)(log(param0.s0), log(param0.s1),
+                 log(param0.s2), log(param0.s3)); }
+
+INLINE_OVERLOADABLE float8 log (float8 param0)
+{return (float8)(log(param0.s0), log(param0.s1),
+                 log(param0.s2), log(param0.s3),
+                 log(param0.s4), log(param0.s5),
+                 log(param0.s6), log(param0.s7)); }
+
+INLINE_OVERLOADABLE float16 log (float16 param0)
+{return (float16)(log(param0.s0),  log(param0.s1),
+                  log(param0.s2),  log(param0.s3),
+                  log(param0.s4),  log(param0.s5),
+                  log(param0.s6),  log(param0.s7),
+                  log(param0.s8),  log(param0.s9),
+                  log(param0.sa), log(param0.sb),
+                  log(param0.sc), log(param0.sd),
+                  log(param0.se), log(param0.sf)); }
+
+
+//gentype log2 (gentype)
+
+INLINE_OVERLOADABLE float2 log2 (float2 param0)
+{return (float2)(log2(param0.s0), log2(param0.s1)); }
+
+INLINE_OVERLOADABLE float3 log2 (float3 param0)
+{return (float3)(log2(param0.s0), log2(param0.s1),
+                 log2(param0.s2)); }
+
+INLINE_OVERLOADABLE float4 log2 (float4 param0)
+{return (float4)(log2(param0.s0), log2(param0.s1),
+                 log2(param0.s2), log2(param0.s3)); }
+
+INLINE_OVERLOADABLE float8 log2 (float8 param0)
+{return (float8)(log2(param0.s0), log2(param0.s1),
+                 log2(param0.s2), log2(param0.s3),
+                 log2(param0.s4), log2(param0.s5),
+                 log2(param0.s6), log2(param0.s7)); }
+
+INLINE_OVERLOADABLE float16 log2 (float16 param0)
+{return (float16)(log2(param0.s0),  log2(param0.s1),
+                  log2(param0.s2),  log2(param0.s3),
+                  log2(param0.s4),  log2(param0.s5),
+                  log2(param0.s6),  log2(param0.s7),
+                  log2(param0.s8),  log2(param0.s9),
+                  log2(param0.sa), log2(param0.sb),
+                  log2(param0.sc), log2(param0.sd),
+                  log2(param0.se), log2(param0.sf)); }
+
+
+//gentype log10 (gentype)
+
+INLINE_OVERLOADABLE float2 log10 (float2 param0)
+{return (float2)(log10(param0.s0), log10(param0.s1)); }
+
+INLINE_OVERLOADABLE float3 log10 (float3 param0)
+{return (float3)(log10(param0.s0), log10(param0.s1),
+                 log10(param0.s2)); }
+
+INLINE_OVERLOADABLE float4 log10 (float4 param0)
+{return (float4)(log10(param0.s0), log10(param0.s1),
+                 log10(param0.s2), log10(param0.s3)); }
+
+INLINE_OVERLOADABLE float8 log10 (float8 param0)
+{return (float8)(log10(param0.s0), log10(param0.s1),
+                 log10(param0.s2), log10(param0.s3),
+                 log10(param0.s4), log10(param0.s5),
+                 log10(param0.s6), log10(param0.s7)); }
+
+INLINE_OVERLOADABLE float16 log10 (float16 param0)
+{return (float16)(log10(param0.s0),  log10(param0.s1),
+                  log10(param0.s2),  log10(param0.s3),
+                  log10(param0.s4),  log10(param0.s5),
+                  log10(param0.s6),  log10(param0.s7),
+                  log10(param0.s8),  log10(param0.s9),
+                  log10(param0.sa), log10(param0.sb),
+                  log10(param0.sc), log10(param0.sd),
+                  log10(param0.se), log10(param0.sf)); }
+
+
+//gentype log1p (gentype x)
+
+INLINE_OVERLOADABLE float2 log1p (float2 param0)
+{return (float2)(log1p(param0.s0), log1p(param0.s1)); }
+
+INLINE_OVERLOADABLE float3 log1p (float3 param0)
+{return (float3)(log1p(param0.s0), log1p(param0.s1),
+                 log1p(param0.s2)); }
+
+INLINE_OVERLOADABLE float4 log1p (float4 param0)
+{return (float4)(log1p(param0.s0), log1p(param0.s1),
+                 log1p(param0.s2), log1p(param0.s3)); }
+
+INLINE_OVERLOADABLE float8 log1p (float8 param0)
+{return (float8)(log1p(param0.s0), log1p(param0.s1),
+                 log1p(param0.s2), log1p(param0.s3),
+                 log1p(param0.s4), log1p(param0.s5),
+                 log1p(param0.s6), log1p(param0.s7)); }
+
+INLINE_OVERLOADABLE float16 log1p (float16 param0)
+{return (float16)(log1p(param0.s0),  log1p(param0.s1),
+                  log1p(param0.s2),  log1p(param0.s3),
+                  log1p(param0.s4),  log1p(param0.s5),
+                  log1p(param0.s6),  log1p(param0.s7),
+                  log1p(param0.s8),  log1p(param0.s9),
+                  log1p(param0.sa), log1p(param0.sb),
+                  log1p(param0.sc), log1p(param0.sd),
+                  log1p(param0.se), log1p(param0.sf)); }
+
+
+//gentype logb (gentype x)
+
+INLINE_OVERLOADABLE float2 logb (float2 param0)
+{return (float2)(logb(param0.s0), logb(param0.s1)); }
+
+INLINE_OVERLOADABLE float3 logb (float3 param0)
+{return (float3)(logb(param0.s0), logb(param0.s1),
+                 logb(param0.s2)); }
+
+INLINE_OVERLOADABLE float4 logb (float4 param0)
+{return (float4)(logb(param0.s0), logb(param0.s1),
+                 logb(param0.s2), logb(param0.s3)); }
+
+INLINE_OVERLOADABLE float8 logb (float8 param0)
+{return (float8)(logb(param0.s0), logb(param0.s1),
+                 logb(param0.s2), logb(param0.s3),
+                 logb(param0.s4), logb(param0.s5),
+                 logb(param0.s6), logb(param0.s7)); }
+
+INLINE_OVERLOADABLE float16 logb (float16 param0)
+{return (float16)(logb(param0.s0),  logb(param0.s1),
+                  logb(param0.s2),  logb(param0.s3),
+                  logb(param0.s4),  logb(param0.s5),
+                  logb(param0.s6),  logb(param0.s7),
+                  logb(param0.s8),  logb(param0.s9),
+                  logb(param0.sa), logb(param0.sb),
+                  logb(param0.sc), logb(param0.sd),
+                  logb(param0.se), logb(param0.sf)); }
+
+
+//gentype mad (gentype a, gentype b, gentype c)
+
+INLINE_OVERLOADABLE float2 mad (float2 param0, float2 param1, float2 param2)
+{return (float2)(mad(param0.s0, param1.s0, param2.s0), mad(param0.s1, param1.s1, param2.s1)); }
+
+INLINE_OVERLOADABLE float3 mad (float3 param0, float3 param1, float3 param2)
+{return (float3)(mad(param0.s0, param1.s0, param2.s0), mad(param0.s1, param1.s1, param2.s1),
+                 mad(param0.s2, param1.s2, param2.s2)); }
+
+INLINE_OVERLOADABLE float4 mad (float4 param0, float4 param1, float4 param2)
+{return (float4)(mad(param0.s0, param1.s0, param2.s0), mad(param0.s1, param1.s1, param2.s1),
+                 mad(param0.s2, param1.s2, param2.s2), mad(param0.s3, param1.s3, param2.s3)); }
+
+INLINE_OVERLOADABLE float8 mad (float8 param0, float8 param1, float8 param2)
+{return (float8)(mad(param0.s0, param1.s0, param2.s0), mad(param0.s1, param1.s1, param2.s1),
+                 mad(param0.s2, param1.s2, param2.s2), mad(param0.s3, param1.s3, param2.s3),
+                 mad(param0.s4, param1.s4, param2.s4), mad(param0.s5, param1.s5, param2.s5),
+                 mad(param0.s6, param1.s6, param2.s6), mad(param0.s7, param1.s7, param2.s7)); }
+
+INLINE_OVERLOADABLE float16 mad (float16 param0, float16 param1, float16 param2)
+{return (float16)(mad(param0.s0,  param1.s0,  param2.s0),  mad(param0.s1,  param1.s1,  param2.s1),
+                  mad(param0.s2,  param1.s2,  param2.s2),  mad(param0.s3,  param1.s3,  param2.s3),
+                  mad(param0.s4,  param1.s4,  param2.s4),  mad(param0.s5,  param1.s5,  param2.s5),
+                  mad(param0.s6,  param1.s6,  param2.s6),  mad(param0.s7,  param1.s7,  param2.s7),
+                  mad(param0.s8,  param1.s8,  param2.s8),  mad(param0.s9,  param1.s9,  param2.s9),
+                  mad(param0.sa, param1.sa, param2.sa), mad(param0.sb, param1.sb, param2.sb),
+                  mad(param0.sc, param1.sc, param2.sc), mad(param0.sd, param1.sd, param2.sd),
+                  mad(param0.se, param1.se, param2.se), mad(param0.sf, param1.sf, param2.sf)); }
+
+
+//gentype maxmag (gentype x, gentype y)
+
+INLINE_OVERLOADABLE float2 maxmag (float2 param0, float2 param1)
+{return (float2)(maxmag(param0.s0, param1.s0), maxmag(param0.s1, param1.s1)); }
+
+INLINE_OVERLOADABLE float3 maxmag (float3 param0, float3 param1)
+{return (float3)(maxmag(param0.s0, param1.s0), maxmag(param0.s1, param1.s1),
+                 maxmag(param0.s2, param1.s2)); }
+
+INLINE_OVERLOADABLE float4 maxmag (float4 param0, float4 param1)
+{return (float4)(maxmag(param0.s0, param1.s0), maxmag(param0.s1, param1.s1),
+                 maxmag(param0.s2, param1.s2), maxmag(param0.s3, param1.s3)); }
+
+INLINE_OVERLOADABLE float8 maxmag (float8 param0, float8 param1)
+{return (float8)(maxmag(param0.s0, param1.s0), maxmag(param0.s1, param1.s1),
+                 maxmag(param0.s2, param1.s2), maxmag(param0.s3, param1.s3),
+                 maxmag(param0.s4, param1.s4), maxmag(param0.s5, param1.s5),
+                 maxmag(param0.s6, param1.s6), maxmag(param0.s7, param1.s7)); }
+
+INLINE_OVERLOADABLE float16 maxmag (float16 param0, float16 param1)
+{return (float16)(maxmag(param0.s0,  param1.s0),  maxmag(param0.s1,  param1.s1),
+                  maxmag(param0.s2,  param1.s2),  maxmag(param0.s3,  param1.s3),
+                  maxmag(param0.s4,  param1.s4),  maxmag(param0.s5,  param1.s5),
+                  maxmag(param0.s6,  param1.s6),  maxmag(param0.s7,  param1.s7),
+                  maxmag(param0.s8,  param1.s8),  maxmag(param0.s9,  param1.s9),
+                  maxmag(param0.sa, param1.sa), maxmag(param0.sb, param1.sb),
+                  maxmag(param0.sc, param1.sc), maxmag(param0.sd, param1.sd),
+                  maxmag(param0.se, param1.se), maxmag(param0.sf, param1.sf)); }
+
+
+//gentype minmag (gentype x, gentype y)
+
+INLINE_OVERLOADABLE float2 minmag (float2 param0, float2 param1)
+{return (float2)(minmag(param0.s0, param1.s0), minmag(param0.s1, param1.s1)); }
+
+INLINE_OVERLOADABLE float3 minmag (float3 param0, float3 param1)
+{return (float3)(minmag(param0.s0, param1.s0), minmag(param0.s1, param1.s1),
+                 minmag(param0.s2, param1.s2)); }
+
+INLINE_OVERLOADABLE float4 minmag (float4 param0, float4 param1)
+{return (float4)(minmag(param0.s0, param1.s0), minmag(param0.s1, param1.s1),
+                 minmag(param0.s2, param1.s2), minmag(param0.s3, param1.s3)); }
+
+INLINE_OVERLOADABLE float8 minmag (float8 param0, float8 param1)
+{return (float8)(minmag(param0.s0, param1.s0), minmag(param0.s1, param1.s1),
+                 minmag(param0.s2, param1.s2), minmag(param0.s3, param1.s3),
+                 minmag(param0.s4, param1.s4), minmag(param0.s5, param1.s5),
+                 minmag(param0.s6, param1.s6), minmag(param0.s7, param1.s7)); }
+
+INLINE_OVERLOADABLE float16 minmag (float16 param0, float16 param1)
+{return (float16)(minmag(param0.s0,  param1.s0),  minmag(param0.s1,  param1.s1),
+                  minmag(param0.s2,  param1.s2),  minmag(param0.s3,  param1.s3),
+                  minmag(param0.s4,  param1.s4),  minmag(param0.s5,  param1.s5),
+                  minmag(param0.s6,  param1.s6),  minmag(param0.s7,  param1.s7),
+                  minmag(param0.s8,  param1.s8),  minmag(param0.s9,  param1.s9),
+                  minmag(param0.sa, param1.sa), minmag(param0.sb, param1.sb),
+                  minmag(param0.sc, param1.sc), minmag(param0.sd, param1.sd),
+                  minmag(param0.se, param1.se), minmag(param0.sf, param1.sf)); }
+
+
+//floatn nan (uintn nancode)
+
+INLINE_OVERLOADABLE float2 nan (uint2 param0)
+{return (float2)(nan(param0.s0), nan(param0.s1)); }
+
+INLINE_OVERLOADABLE float3 nan (uint3 param0)
+{return (float3)(nan(param0.s0), nan(param0.s1),
+                 nan(param0.s2)); }
+
+INLINE_OVERLOADABLE float4 nan (uint4 param0)
+{return (float4)(nan(param0.s0), nan(param0.s1),
+                 nan(param0.s2), nan(param0.s3)); }
+
+INLINE_OVERLOADABLE float8 nan (uint8 param0)
+{return (float8)(nan(param0.s0), nan(param0.s1),
+                 nan(param0.s2), nan(param0.s3),
+                 nan(param0.s4), nan(param0.s5),
+                 nan(param0.s6), nan(param0.s7)); }
+
+INLINE_OVERLOADABLE float16 nan (uint16 param0)
+{return (float16)(nan(param0.s0),  nan(param0.s1),
+                  nan(param0.s2),  nan(param0.s3),
+                  nan(param0.s4),  nan(param0.s5),
+                  nan(param0.s6),  nan(param0.s7),
+                  nan(param0.s8),  nan(param0.s9),
+                  nan(param0.sa), nan(param0.sb),
+                  nan(param0.sc), nan(param0.sd),
+                  nan(param0.se), nan(param0.sf)); }
+
+
+//float nan (uint nancode)
+
+
+//doublen nan (ulongn nancode)
+
+
+//double nan (ulong nancode)
+
+
+//gentype pow (gentype x, gentype y)
+
+INLINE_OVERLOADABLE float2 pow (float2 param0, float2 param1)
+{return (float2)(pow(param0.s0, param1.s0), pow(param0.s1, param1.s1)); }
+
+INLINE_OVERLOADABLE float3 pow (float3 param0, float3 param1)
+{return (float3)(pow(param0.s0, param1.s0), pow(param0.s1, param1.s1),
+                 pow(param0.s2, param1.s2)); }
+
+INLINE_OVERLOADABLE float4 pow (float4 param0, float4 param1)
+{return (float4)(pow(param0.s0, param1.s0), pow(param0.s1, param1.s1),
+                 pow(param0.s2, param1.s2), pow(param0.s3, param1.s3)); }
+
+INLINE_OVERLOADABLE float8 pow (float8 param0, float8 param1)
+{return (float8)(pow(param0.s0, param1.s0), pow(param0.s1, param1.s1),
+                 pow(param0.s2, param1.s2), pow(param0.s3, param1.s3),
+                 pow(param0.s4, param1.s4), pow(param0.s5, param1.s5),
+                 pow(param0.s6, param1.s6), pow(param0.s7, param1.s7)); }
+
+INLINE_OVERLOADABLE float16 pow (float16 param0, float16 param1)
+{return (float16)(pow(param0.s0,  param1.s0),  pow(param0.s1,  param1.s1),
+                  pow(param0.s2,  param1.s2),  pow(param0.s3,  param1.s3),
+                  pow(param0.s4,  param1.s4),  pow(param0.s5,  param1.s5),
+                  pow(param0.s6,  param1.s6),  pow(param0.s7,  param1.s7),
+                  pow(param0.s8,  param1.s8),  pow(param0.s9,  param1.s9),
+                  pow(param0.sa, param1.sa), pow(param0.sb, param1.sb),
+                  pow(param0.sc, param1.sc), pow(param0.sd, param1.sd),
+                  pow(param0.se, param1.se), pow(param0.sf, param1.sf)); }
+
+
+//floatn pown (floatn x, intn y)
+
+INLINE_OVERLOADABLE float2 pown (float2 param0, int2 param1)
+{return (float2)(pown(param0.s0, param1.s0), pown(param0.s1, param1.s1)); }
+
+INLINE_OVERLOADABLE float3 pown (float3 param0, int3 param1)
+{return (float3)(pown(param0.s0, param1.s0), pown(param0.s1, param1.s1),
+                 pown(param0.s2, param1.s2)); }
+
+INLINE_OVERLOADABLE float4 pown (float4 param0, int4 param1)
+{return (float4)(pown(param0.s0, param1.s0), pown(param0.s1, param1.s1),
+                 pown(param0.s2, param1.s2), pown(param0.s3, param1.s3)); }
+
+INLINE_OVERLOADABLE float8 pown (float8 param0, int8 param1)
+{return (float8)(pown(param0.s0, param1.s0), pown(param0.s1, param1.s1),
+                 pown(param0.s2, param1.s2), pown(param0.s3, param1.s3),
+                 pown(param0.s4, param1.s4), pown(param0.s5, param1.s5),
+                 pown(param0.s6, param1.s6), pown(param0.s7, param1.s7)); }
+
+INLINE_OVERLOADABLE float16 pown (float16 param0, int16 param1)
+{return (float16)(pown(param0.s0,  param1.s0),  pown(param0.s1,  param1.s1),
+                  pown(param0.s2,  param1.s2),  pown(param0.s3,  param1.s3),
+                  pown(param0.s4,  param1.s4),  pown(param0.s5,  param1.s5),
+                  pown(param0.s6,  param1.s6),  pown(param0.s7,  param1.s7),
+                  pown(param0.s8,  param1.s8),  pown(param0.s9,  param1.s9),
+                  pown(param0.sa, param1.sa), pown(param0.sb, param1.sb),
+                  pown(param0.sc, param1.sc), pown(param0.sd, param1.sd),
+                  pown(param0.se, param1.se), pown(param0.sf, param1.sf)); }
+
+
+//float pown (float x, int y)
+
+
+//doublen pown (doublen x, intn y)
+
+
+//double pown (double x, int y)
+
+
+//gentype remainder (gentype x, gentype y)
+
+INLINE_OVERLOADABLE float2 remainder (float2 param0, float2 param1)
+{return (float2)(remainder(param0.s0, param1.s0), remainder(param0.s1, param1.s1)); }
+
+INLINE_OVERLOADABLE float3 remainder (float3 param0, float3 param1)
+{return (float3)(remainder(param0.s0, param1.s0), remainder(param0.s1, param1.s1),
+                 remainder(param0.s2, param1.s2)); }
+
+INLINE_OVERLOADABLE float4 remainder (float4 param0, float4 param1)
+{return (float4)(remainder(param0.s0, param1.s0), remainder(param0.s1, param1.s1),
+                 remainder(param0.s2, param1.s2), remainder(param0.s3, param1.s3)); }
+
+INLINE_OVERLOADABLE float8 remainder (float8 param0, float8 param1)
+{return (float8)(remainder(param0.s0, param1.s0), remainder(param0.s1, param1.s1),
+                 remainder(param0.s2, param1.s2), remainder(param0.s3, param1.s3),
+                 remainder(param0.s4, param1.s4), remainder(param0.s5, param1.s5),
+                 remainder(param0.s6, param1.s6), remainder(param0.s7, param1.s7)); }
+
+INLINE_OVERLOADABLE float16 remainder (float16 param0, float16 param1)
+{return (float16)(remainder(param0.s0,  param1.s0),  remainder(param0.s1,  param1.s1),
+                  remainder(param0.s2,  param1.s2),  remainder(param0.s3,  param1.s3),
+                  remainder(param0.s4,  param1.s4),  remainder(param0.s5,  param1.s5),
+                  remainder(param0.s6,  param1.s6),  remainder(param0.s7,  param1.s7),
+                  remainder(param0.s8,  param1.s8),  remainder(param0.s9,  param1.s9),
+                  remainder(param0.sa, param1.sa), remainder(param0.sb, param1.sb),
+                  remainder(param0.sc, param1.sc), remainder(param0.sd, param1.sd),
+                  remainder(param0.se, param1.se), remainder(param0.sf, param1.sf)); }
+
+
+//gentype rint (gentype)
+
+INLINE_OVERLOADABLE float2 rint (float2 param0)
+{return (float2)(rint(param0.s0), rint(param0.s1)); }
+
+INLINE_OVERLOADABLE float3 rint (float3 param0)
+{return (float3)(rint(param0.s0), rint(param0.s1),
+                 rint(param0.s2)); }
+
+INLINE_OVERLOADABLE float4 rint (float4 param0)
+{return (float4)(rint(param0.s0), rint(param0.s1),
+                 rint(param0.s2), rint(param0.s3)); }
+
+INLINE_OVERLOADABLE float8 rint (float8 param0)
+{return (float8)(rint(param0.s0), rint(param0.s1),
+                 rint(param0.s2), rint(param0.s3),
+                 rint(param0.s4), rint(param0.s5),
+                 rint(param0.s6), rint(param0.s7)); }
+
+INLINE_OVERLOADABLE float16 rint (float16 param0)
+{return (float16)(rint(param0.s0),  rint(param0.s1),
+                  rint(param0.s2),  rint(param0.s3),
+                  rint(param0.s4),  rint(param0.s5),
+                  rint(param0.s6),  rint(param0.s7),
+                  rint(param0.s8),  rint(param0.s9),
+                  rint(param0.sa), rint(param0.sb),
+                  rint(param0.sc), rint(param0.sd),
+                  rint(param0.se), rint(param0.sf)); }
+
+
+//floatn rootn (floatn x, intn y)
+
+INLINE_OVERLOADABLE float2 rootn (float2 param0, int2 param1)
+{return (float2)(rootn(param0.s0, param1.s0), rootn(param0.s1, param1.s1)); }
+
+INLINE_OVERLOADABLE float3 rootn (float3 param0, int3 param1)
+{return (float3)(rootn(param0.s0, param1.s0), rootn(param0.s1, param1.s1),
+                 rootn(param0.s2, param1.s2)); }
+
+INLINE_OVERLOADABLE float4 rootn (float4 param0, int4 param1)
+{return (float4)(rootn(param0.s0, param1.s0), rootn(param0.s1, param1.s1),
+                 rootn(param0.s2, param1.s2), rootn(param0.s3, param1.s3)); }
+
+INLINE_OVERLOADABLE float8 rootn (float8 param0, int8 param1)
+{return (float8)(rootn(param0.s0, param1.s0), rootn(param0.s1, param1.s1),
+                 rootn(param0.s2, param1.s2), rootn(param0.s3, param1.s3),
+                 rootn(param0.s4, param1.s4), rootn(param0.s5, param1.s5),
+                 rootn(param0.s6, param1.s6), rootn(param0.s7, param1.s7)); }
+
+INLINE_OVERLOADABLE float16 rootn (float16 param0, int16 param1)
+{return (float16)(rootn(param0.s0,  param1.s0),  rootn(param0.s1,  param1.s1),
+                  rootn(param0.s2,  param1.s2),  rootn(param0.s3,  param1.s3),
+                  rootn(param0.s4,  param1.s4),  rootn(param0.s5,  param1.s5),
+                  rootn(param0.s6,  param1.s6),  rootn(param0.s7,  param1.s7),
+                  rootn(param0.s8,  param1.s8),  rootn(param0.s9,  param1.s9),
+                  rootn(param0.sa, param1.sa), rootn(param0.sb, param1.sb),
+                  rootn(param0.sc, param1.sc), rootn(param0.sd, param1.sd),
+                  rootn(param0.se, param1.se), rootn(param0.sf, param1.sf)); }
+
+
+//doublen rootn (doublen x, intn y)
+
+
+//doublen rootn (double x, int y)
+
+
+//gentype round (gentype x)
+
+INLINE_OVERLOADABLE float2 round (float2 param0)
+{return (float2)(round(param0.s0), round(param0.s1)); }
+
+INLINE_OVERLOADABLE float3 round (float3 param0)
+{return (float3)(round(param0.s0), round(param0.s1),
+                 round(param0.s2)); }
+
+INLINE_OVERLOADABLE float4 round (float4 param0)
+{return (float4)(round(param0.s0), round(param0.s1),
+                 round(param0.s2), round(param0.s3)); }
+
+INLINE_OVERLOADABLE float8 round (float8 param0)
+{return (float8)(round(param0.s0), round(param0.s1),
+                 round(param0.s2), round(param0.s3),
+                 round(param0.s4), round(param0.s5),
+                 round(param0.s6), round(param0.s7)); }
+
+INLINE_OVERLOADABLE float16 round (float16 param0)
+{return (float16)(round(param0.s0),  round(param0.s1),
+                  round(param0.s2),  round(param0.s3),
+                  round(param0.s4),  round(param0.s5),
+                  round(param0.s6),  round(param0.s7),
+                  round(param0.s8),  round(param0.s9),
+                  round(param0.sa), round(param0.sb),
+                  round(param0.sc), round(param0.sd),
+                  round(param0.se), round(param0.sf)); }
+
+
+//gentype rsqrt (gentype)
+
+INLINE_OVERLOADABLE float2 rsqrt (float2 param0)
+{return (float2)(rsqrt(param0.s0), rsqrt(param0.s1)); }
+
+INLINE_OVERLOADABLE float3 rsqrt (float3 param0)
+{return (float3)(rsqrt(param0.s0), rsqrt(param0.s1),
+                 rsqrt(param0.s2)); }
+
+INLINE_OVERLOADABLE float4 rsqrt (float4 param0)
+{return (float4)(rsqrt(param0.s0), rsqrt(param0.s1),
+                 rsqrt(param0.s2), rsqrt(param0.s3)); }
+
+INLINE_OVERLOADABLE float8 rsqrt (float8 param0)
+{return (float8)(rsqrt(param0.s0), rsqrt(param0.s1),
+                 rsqrt(param0.s2), rsqrt(param0.s3),
+                 rsqrt(param0.s4), rsqrt(param0.s5),
+                 rsqrt(param0.s6), rsqrt(param0.s7)); }
+
+INLINE_OVERLOADABLE float16 rsqrt (float16 param0)
+{return (float16)(rsqrt(param0.s0),  rsqrt(param0.s1),
+                  rsqrt(param0.s2),  rsqrt(param0.s3),
+                  rsqrt(param0.s4),  rsqrt(param0.s5),
+                  rsqrt(param0.s6),  rsqrt(param0.s7),
+                  rsqrt(param0.s8),  rsqrt(param0.s9),
+                  rsqrt(param0.sa), rsqrt(param0.sb),
+                  rsqrt(param0.sc), rsqrt(param0.sd),
+                  rsqrt(param0.se), rsqrt(param0.sf)); }
+
+
+//gentype sin (gentype)
+
+INLINE_OVERLOADABLE float2 sin (float2 param0)
+{return (float2)(sin(param0.s0), sin(param0.s1)); }
+
+INLINE_OVERLOADABLE float3 sin (float3 param0)
+{return (float3)(sin(param0.s0), sin(param0.s1),
+                 sin(param0.s2)); }
+
+INLINE_OVERLOADABLE float4 sin (float4 param0)
+{return (float4)(sin(param0.s0), sin(param0.s1),
+                 sin(param0.s2), sin(param0.s3)); }
+
+INLINE_OVERLOADABLE float8 sin (float8 param0)
+{return (float8)(sin(param0.s0), sin(param0.s1),
+                 sin(param0.s2), sin(param0.s3),
+                 sin(param0.s4), sin(param0.s5),
+                 sin(param0.s6), sin(param0.s7)); }
+
+INLINE_OVERLOADABLE float16 sin (float16 param0)
+{return (float16)(sin(param0.s0),  sin(param0.s1),
+                  sin(param0.s2),  sin(param0.s3),
+                  sin(param0.s4),  sin(param0.s5),
+                  sin(param0.s6),  sin(param0.s7),
+                  sin(param0.s8),  sin(param0.s9),
+                  sin(param0.sa), sin(param0.sb),
+                  sin(param0.sc), sin(param0.sd),
+                  sin(param0.se), sin(param0.sf)); }
+
+
+//gentype sinh (gentype)
+
+INLINE_OVERLOADABLE float2 sinh (float2 param0)
+{return (float2)(sinh(param0.s0), sinh(param0.s1)); }
+
+INLINE_OVERLOADABLE float3 sinh (float3 param0)
+{return (float3)(sinh(param0.s0), sinh(param0.s1),
+                 sinh(param0.s2)); }
+
+INLINE_OVERLOADABLE float4 sinh (float4 param0)
+{return (float4)(sinh(param0.s0), sinh(param0.s1),
+                 sinh(param0.s2), sinh(param0.s3)); }
+
+INLINE_OVERLOADABLE float8 sinh (float8 param0)
+{return (float8)(sinh(param0.s0), sinh(param0.s1),
+                 sinh(param0.s2), sinh(param0.s3),
+                 sinh(param0.s4), sinh(param0.s5),
+                 sinh(param0.s6), sinh(param0.s7)); }
+
+INLINE_OVERLOADABLE float16 sinh (float16 param0)
+{return (float16)(sinh(param0.s0),  sinh(param0.s1),
+                  sinh(param0.s2),  sinh(param0.s3),
+                  sinh(param0.s4),  sinh(param0.s5),
+                  sinh(param0.s6),  sinh(param0.s7),
+                  sinh(param0.s8),  sinh(param0.s9),
+                  sinh(param0.sa), sinh(param0.sb),
+                  sinh(param0.sc), sinh(param0.sd),
+                  sinh(param0.se), sinh(param0.sf)); }
+
+
+//gentype sinpi (gentype x)
+
+INLINE_OVERLOADABLE float2 sinpi (float2 param0)
+{return (float2)(sinpi(param0.s0), sinpi(param0.s1)); }
+
+INLINE_OVERLOADABLE float3 sinpi (float3 param0)
+{return (float3)(sinpi(param0.s0), sinpi(param0.s1),
+                 sinpi(param0.s2)); }
+
+INLINE_OVERLOADABLE float4 sinpi (float4 param0)
+{return (float4)(sinpi(param0.s0), sinpi(param0.s1),
+                 sinpi(param0.s2), sinpi(param0.s3)); }
+
+INLINE_OVERLOADABLE float8 sinpi (float8 param0)
+{return (float8)(sinpi(param0.s0), sinpi(param0.s1),
+                 sinpi(param0.s2), sinpi(param0.s3),
+                 sinpi(param0.s4), sinpi(param0.s5),
+                 sinpi(param0.s6), sinpi(param0.s7)); }
+
+INLINE_OVERLOADABLE float16 sinpi (float16 param0)
+{return (float16)(sinpi(param0.s0),  sinpi(param0.s1),
+                  sinpi(param0.s2),  sinpi(param0.s3),
+                  sinpi(param0.s4),  sinpi(param0.s5),
+                  sinpi(param0.s6),  sinpi(param0.s7),
+                  sinpi(param0.s8),  sinpi(param0.s9),
+                  sinpi(param0.sa), sinpi(param0.sb),
+                  sinpi(param0.sc), sinpi(param0.sd),
+                  sinpi(param0.se), sinpi(param0.sf)); }
+
+
+//gentype sqrt (gentype)
+
+INLINE_OVERLOADABLE float2 sqrt (float2 param0)
+{return (float2)(sqrt(param0.s0), sqrt(param0.s1)); }
+
+INLINE_OVERLOADABLE float3 sqrt (float3 param0)
+{return (float3)(sqrt(param0.s0), sqrt(param0.s1),
+                 sqrt(param0.s2)); }
+
+INLINE_OVERLOADABLE float4 sqrt (float4 param0)
+{return (float4)(sqrt(param0.s0), sqrt(param0.s1),
+                 sqrt(param0.s2), sqrt(param0.s3)); }
+
+INLINE_OVERLOADABLE float8 sqrt (float8 param0)
+{return (float8)(sqrt(param0.s0), sqrt(param0.s1),
+                 sqrt(param0.s2), sqrt(param0.s3),
+                 sqrt(param0.s4), sqrt(param0.s5),
+                 sqrt(param0.s6), sqrt(param0.s7)); }
+
+INLINE_OVERLOADABLE float16 sqrt (float16 param0)
+{return (float16)(sqrt(param0.s0),  sqrt(param0.s1),
+                  sqrt(param0.s2),  sqrt(param0.s3),
+                  sqrt(param0.s4),  sqrt(param0.s5),
+                  sqrt(param0.s6),  sqrt(param0.s7),
+                  sqrt(param0.s8),  sqrt(param0.s9),
+                  sqrt(param0.sa), sqrt(param0.sb),
+                  sqrt(param0.sc), sqrt(param0.sd),
+                  sqrt(param0.se), sqrt(param0.sf)); }
+
+
+//gentype tan (gentype)
+
+INLINE_OVERLOADABLE float2 tan (float2 param0)
+{return (float2)(tan(param0.s0), tan(param0.s1)); }
+
+INLINE_OVERLOADABLE float3 tan (float3 param0)
+{return (float3)(tan(param0.s0), tan(param0.s1),
+                 tan(param0.s2)); }
+
+INLINE_OVERLOADABLE float4 tan (float4 param0)
+{return (float4)(tan(param0.s0), tan(param0.s1),
+                 tan(param0.s2), tan(param0.s3)); }
+
+INLINE_OVERLOADABLE float8 tan (float8 param0)
+{return (float8)(tan(param0.s0), tan(param0.s1),
+                 tan(param0.s2), tan(param0.s3),
+                 tan(param0.s4), tan(param0.s5),
+                 tan(param0.s6), tan(param0.s7)); }
+
+INLINE_OVERLOADABLE float16 tan (float16 param0)
+{return (float16)(tan(param0.s0),  tan(param0.s1),
+                  tan(param0.s2),  tan(param0.s3),
+                  tan(param0.s4),  tan(param0.s5),
+                  tan(param0.s6),  tan(param0.s7),
+                  tan(param0.s8),  tan(param0.s9),
+                  tan(param0.sa), tan(param0.sb),
+                  tan(param0.sc), tan(param0.sd),
+                  tan(param0.se), tan(param0.sf)); }
+
+
+//gentype tanh (gentype)
+
+INLINE_OVERLOADABLE float2 tanh (float2 param0)
+{return (float2)(tanh(param0.s0), tanh(param0.s1)); }
+
+INLINE_OVERLOADABLE float3 tanh (float3 param0)
+{return (float3)(tanh(param0.s0), tanh(param0.s1),
+                 tanh(param0.s2)); }
+
+INLINE_OVERLOADABLE float4 tanh (float4 param0)
+{return (float4)(tanh(param0.s0), tanh(param0.s1),
+                 tanh(param0.s2), tanh(param0.s3)); }
+
+INLINE_OVERLOADABLE float8 tanh (float8 param0)
+{return (float8)(tanh(param0.s0), tanh(param0.s1),
+                 tanh(param0.s2), tanh(param0.s3),
+                 tanh(param0.s4), tanh(param0.s5),
+                 tanh(param0.s6), tanh(param0.s7)); }
+
+INLINE_OVERLOADABLE float16 tanh (float16 param0)
+{return (float16)(tanh(param0.s0),  tanh(param0.s1),
+                  tanh(param0.s2),  tanh(param0.s3),
+                  tanh(param0.s4),  tanh(param0.s5),
+                  tanh(param0.s6),  tanh(param0.s7),
+                  tanh(param0.s8),  tanh(param0.s9),
+                  tanh(param0.sa), tanh(param0.sb),
+                  tanh(param0.sc), tanh(param0.sd),
+                  tanh(param0.se), tanh(param0.sf)); }
+
+
+//gentype tanpi (gentype x)
+
+INLINE_OVERLOADABLE float2 tanpi (float2 param0)
+{return (float2)(tanpi(param0.s0), tanpi(param0.s1)); }
+
+INLINE_OVERLOADABLE float3 tanpi (float3 param0)
+{return (float3)(tanpi(param0.s0), tanpi(param0.s1),
+                 tanpi(param0.s2)); }
+
+INLINE_OVERLOADABLE float4 tanpi (float4 param0)
+{return (float4)(tanpi(param0.s0), tanpi(param0.s1),
+                 tanpi(param0.s2), tanpi(param0.s3)); }
+
+INLINE_OVERLOADABLE float8 tanpi (float8 param0)
+{return (float8)(tanpi(param0.s0), tanpi(param0.s1),
+                 tanpi(param0.s2), tanpi(param0.s3),
+                 tanpi(param0.s4), tanpi(param0.s5),
+                 tanpi(param0.s6), tanpi(param0.s7)); }
+
+INLINE_OVERLOADABLE float16 tanpi (float16 param0)
+{return (float16)(tanpi(param0.s0),  tanpi(param0.s1),
+                  tanpi(param0.s2),  tanpi(param0.s3),
+                  tanpi(param0.s4),  tanpi(param0.s5),
+                  tanpi(param0.s6),  tanpi(param0.s7),
+                  tanpi(param0.s8),  tanpi(param0.s9),
+                  tanpi(param0.sa), tanpi(param0.sb),
+                  tanpi(param0.sc), tanpi(param0.sd),
+                  tanpi(param0.se), tanpi(param0.sf)); }
+
+
+//gentype trunc (gentype)
+
+INLINE_OVERLOADABLE float2 trunc (float2 param0)
+{return (float2)(trunc(param0.s0), trunc(param0.s1)); }
+
+INLINE_OVERLOADABLE float3 trunc (float3 param0)
+{return (float3)(trunc(param0.s0), trunc(param0.s1),
+                 trunc(param0.s2)); }
+
+INLINE_OVERLOADABLE float4 trunc (float4 param0)
+{return (float4)(trunc(param0.s0), trunc(param0.s1),
+                 trunc(param0.s2), trunc(param0.s3)); }
+
+INLINE_OVERLOADABLE float8 trunc (float8 param0)
+{return (float8)(trunc(param0.s0), trunc(param0.s1),
+                 trunc(param0.s2), trunc(param0.s3),
+                 trunc(param0.s4), trunc(param0.s5),
+                 trunc(param0.s6), trunc(param0.s7)); }
+
+INLINE_OVERLOADABLE float16 trunc (float16 param0)
+{return (float16)(trunc(param0.s0),  trunc(param0.s1),
+                  trunc(param0.s2),  trunc(param0.s3),
+                  trunc(param0.s4),  trunc(param0.s5),
+                  trunc(param0.s6),  trunc(param0.s7),
+                  trunc(param0.s8),  trunc(param0.s9),
+                  trunc(param0.sa), trunc(param0.sb),
+                  trunc(param0.sc), trunc(param0.sd),
+                  trunc(param0.se), trunc(param0.sf)); }
+
+
+//gentype native_recip (gentype x)
+
+INLINE_OVERLOADABLE float2 native_recip (float2 param0)
+{return (float2)(native_recip(param0.s0), native_recip(param0.s1)); }
+
+INLINE_OVERLOADABLE float3 native_recip (float3 param0)
+{return (float3)(native_recip(param0.s0), native_recip(param0.s1),
+                 native_recip(param0.s2)); }
+
+INLINE_OVERLOADABLE float4 native_recip (float4 param0)
+{return (float4)(native_recip(param0.s0), native_recip(param0.s1),
+                 native_recip(param0.s2), native_recip(param0.s3)); }
+
+INLINE_OVERLOADABLE float8 native_recip (float8 param0)
+{return (float8)(native_recip(param0.s0), native_recip(param0.s1),
+                 native_recip(param0.s2), native_recip(param0.s3),
+                 native_recip(param0.s4), native_recip(param0.s5),
+                 native_recip(param0.s6), native_recip(param0.s7)); }
+
+INLINE_OVERLOADABLE float16 native_recip (float16 param0)
+{return (float16)(native_recip(param0.s0),  native_recip(param0.s1),
+                  native_recip(param0.s2),  native_recip(param0.s3),
+                  native_recip(param0.s4),  native_recip(param0.s5),
+                  native_recip(param0.s6),  native_recip(param0.s7),
+                  native_recip(param0.s8),  native_recip(param0.s9),
+                  native_recip(param0.sa), native_recip(param0.sb),
+                  native_recip(param0.sc), native_recip(param0.sd),
+                  native_recip(param0.se), native_recip(param0.sf)); }
+
+
+//ugentype abs (gentype x)
+
+INLINE_OVERLOADABLE uchar2 abs (char2 param0)
+{return (uchar2)(abs(param0.s0), abs(param0.s1)); }
+
+INLINE_OVERLOADABLE uchar3 abs (char3 param0)
+{return (uchar3)(abs(param0.s0), abs(param0.s1),
+                 abs(param0.s2)); }
+
+INLINE_OVERLOADABLE uchar4 abs (char4 param0)
+{return (uchar4)(abs(param0.s0), abs(param0.s1),
+                 abs(param0.s2), abs(param0.s3)); }
+
+INLINE_OVERLOADABLE uchar8 abs (char8 param0)
+{return (uchar8)(abs(param0.s0), abs(param0.s1),
+                 abs(param0.s2), abs(param0.s3),
+                 abs(param0.s4), abs(param0.s5),
+                 abs(param0.s6), abs(param0.s7)); }
+
+INLINE_OVERLOADABLE uchar16 abs (char16 param0)
+{return (uchar16)(abs(param0.s0),  abs(param0.s1),
+                  abs(param0.s2),  abs(param0.s3),
+                  abs(param0.s4),  abs(param0.s5),
+                  abs(param0.s6),  abs(param0.s7),
+                  abs(param0.s8),  abs(param0.s9),
+                  abs(param0.sa), abs(param0.sb),
+                  abs(param0.sc), abs(param0.sd),
+                  abs(param0.se), abs(param0.sf)); }
+
+INLINE_OVERLOADABLE ushort2 abs (short2 param0)
+{return (ushort2)(abs(param0.s0), abs(param0.s1)); }
+
+INLINE_OVERLOADABLE ushort3 abs (short3 param0)
+{return (ushort3)(abs(param0.s0), abs(param0.s1),
+                  abs(param0.s2)); }
+
+INLINE_OVERLOADABLE ushort4 abs (short4 param0)
+{return (ushort4)(abs(param0.s0), abs(param0.s1),
+                  abs(param0.s2), abs(param0.s3)); }
+
+INLINE_OVERLOADABLE ushort8 abs (short8 param0)
+{return (ushort8)(abs(param0.s0), abs(param0.s1),
+                  abs(param0.s2), abs(param0.s3),
+                  abs(param0.s4), abs(param0.s5),
+                  abs(param0.s6), abs(param0.s7)); }
+
+INLINE_OVERLOADABLE ushort16 abs (short16 param0)
+{return (ushort16)(abs(param0.s0),  abs(param0.s1),
+                   abs(param0.s2),  abs(param0.s3),
+                   abs(param0.s4),  abs(param0.s5),
+                   abs(param0.s6),  abs(param0.s7),
+                   abs(param0.s8),  abs(param0.s9),
+                   abs(param0.sa), abs(param0.sb),
+                   abs(param0.sc), abs(param0.sd),
+                   abs(param0.se), abs(param0.sf)); }
+
+INLINE_OVERLOADABLE uint2 abs (int2 param0)
+{return (uint2)(abs(param0.s0), abs(param0.s1)); }
+
+INLINE_OVERLOADABLE uint3 abs (int3 param0)
+{return (uint3)(abs(param0.s0), abs(param0.s1),
+                abs(param0.s2)); }
+
+INLINE_OVERLOADABLE uint4 abs (int4 param0)
+{return (uint4)(abs(param0.s0), abs(param0.s1),
+                abs(param0.s2), abs(param0.s3)); }
+
+INLINE_OVERLOADABLE uint8 abs (int8 param0)
+{return (uint8)(abs(param0.s0), abs(param0.s1),
+                abs(param0.s2), abs(param0.s3),
+                abs(param0.s4), abs(param0.s5),
+                abs(param0.s6), abs(param0.s7)); }
+
+INLINE_OVERLOADABLE uint16 abs (int16 param0)
+{return (uint16)(abs(param0.s0),  abs(param0.s1),
+                 abs(param0.s2),  abs(param0.s3),
+                 abs(param0.s4),  abs(param0.s5),
+                 abs(param0.s6),  abs(param0.s7),
+                 abs(param0.s8),  abs(param0.s9),
+                 abs(param0.sa), abs(param0.sb),
+                 abs(param0.sc), abs(param0.sd),
+                 abs(param0.se), abs(param0.sf)); }
+
+INLINE_OVERLOADABLE uchar2 abs (uchar2 param0)
+{return (uchar2)(abs(param0.s0), abs(param0.s1)); }
+
+INLINE_OVERLOADABLE uchar3 abs (uchar3 param0)
+{return (uchar3)(abs(param0.s0), abs(param0.s1),
+                 abs(param0.s2)); }
+
+INLINE_OVERLOADABLE uchar4 abs (uchar4 param0)
+{return (uchar4)(abs(param0.s0), abs(param0.s1),
+                 abs(param0.s2), abs(param0.s3)); }
+
+INLINE_OVERLOADABLE uchar8 abs (uchar8 param0)
+{return (uchar8)(abs(param0.s0), abs(param0.s1),
+                 abs(param0.s2), abs(param0.s3),
+                 abs(param0.s4), abs(param0.s5),
+                 abs(param0.s6), abs(param0.s7)); }
+
+INLINE_OVERLOADABLE uchar16 abs (uchar16 param0)
+{return (uchar16)(abs(param0.s0),  abs(param0.s1),
+                  abs(param0.s2),  abs(param0.s3),
+                  abs(param0.s4),  abs(param0.s5),
+                  abs(param0.s6),  abs(param0.s7),
+                  abs(param0.s8),  abs(param0.s9),
+                  abs(param0.sa), abs(param0.sb),
+                  abs(param0.sc), abs(param0.sd),
+                  abs(param0.se), abs(param0.sf)); }
+
+INLINE_OVERLOADABLE ushort2 abs (ushort2 param0)
+{return (ushort2)(abs(param0.s0), abs(param0.s1)); }
+
+INLINE_OVERLOADABLE ushort3 abs (ushort3 param0)
+{return (ushort3)(abs(param0.s0), abs(param0.s1),
+                  abs(param0.s2)); }
+
+INLINE_OVERLOADABLE ushort4 abs (ushort4 param0)
+{return (ushort4)(abs(param0.s0), abs(param0.s1),
+                  abs(param0.s2), abs(param0.s3)); }
+
+INLINE_OVERLOADABLE ushort8 abs (ushort8 param0)
+{return (ushort8)(abs(param0.s0), abs(param0.s1),
+                  abs(param0.s2), abs(param0.s3),
+                  abs(param0.s4), abs(param0.s5),
+                  abs(param0.s6), abs(param0.s7)); }
+
+INLINE_OVERLOADABLE ushort16 abs (ushort16 param0)
+{return (ushort16)(abs(param0.s0),  abs(param0.s1),
+                   abs(param0.s2),  abs(param0.s3),
+                   abs(param0.s4),  abs(param0.s5),
+                   abs(param0.s6),  abs(param0.s7),
+                   abs(param0.s8),  abs(param0.s9),
+                   abs(param0.sa), abs(param0.sb),
+                   abs(param0.sc), abs(param0.sd),
+                   abs(param0.se), abs(param0.sf)); }
+
+INLINE_OVERLOADABLE uint2 abs (uint2 param0)
+{return (uint2)(abs(param0.s0), abs(param0.s1)); }
+
+INLINE_OVERLOADABLE uint3 abs (uint3 param0)
+{return (uint3)(abs(param0.s0), abs(param0.s1),
+                abs(param0.s2)); }
+
+INLINE_OVERLOADABLE uint4 abs (uint4 param0)
+{return (uint4)(abs(param0.s0), abs(param0.s1),
+                abs(param0.s2), abs(param0.s3)); }
+
+INLINE_OVERLOADABLE uint8 abs (uint8 param0)
+{return (uint8)(abs(param0.s0), abs(param0.s1),
+                abs(param0.s2), abs(param0.s3),
+                abs(param0.s4), abs(param0.s5),
+                abs(param0.s6), abs(param0.s7)); }
+
+INLINE_OVERLOADABLE uint16 abs (uint16 param0)
+{return (uint16)(abs(param0.s0),  abs(param0.s1),
+                 abs(param0.s2),  abs(param0.s3),
+                 abs(param0.s4),  abs(param0.s5),
+                 abs(param0.s6),  abs(param0.s7),
+                 abs(param0.s8),  abs(param0.s9),
+                 abs(param0.sa), abs(param0.sb),
+                 abs(param0.sc), abs(param0.sd),
+                 abs(param0.se), abs(param0.sf)); }
+
+
+//ugentype abs_diff (gentype x, gentype y)
+
+INLINE_OVERLOADABLE uchar2 abs_diff (char2 param0, char2 param1)
+{return (uchar2)(abs_diff(param0.s0, param1.s0), abs_diff(param0.s1, param1.s1)); }
+
+INLINE_OVERLOADABLE uchar3 abs_diff (char3 param0, char3 param1)
+{return (uchar3)(abs_diff(param0.s0, param1.s0), abs_diff(param0.s1, param1.s1),
+                 abs_diff(param0.s2, param1.s2)); }
+
+INLINE_OVERLOADABLE uchar4 abs_diff (char4 param0, char4 param1)
+{return (uchar4)(abs_diff(param0.s0, param1.s0), abs_diff(param0.s1, param1.s1),
+                 abs_diff(param0.s2, param1.s2), abs_diff(param0.s3, param1.s3)); }
+
+INLINE_OVERLOADABLE uchar8 abs_diff (char8 param0, char8 param1)
+{return (uchar8)(abs_diff(param0.s0, param1.s0), abs_diff(param0.s1, param1.s1),
+                 abs_diff(param0.s2, param1.s2), abs_diff(param0.s3, param1.s3),
+                 abs_diff(param0.s4, param1.s4), abs_diff(param0.s5, param1.s5),
+                 abs_diff(param0.s6, param1.s6), abs_diff(param0.s7, param1.s7)); }
+
+INLINE_OVERLOADABLE uchar16 abs_diff (char16 param0, char16 param1)
+{return (uchar16)(abs_diff(param0.s0,  param1.s0),  abs_diff(param0.s1,  param1.s1),
+                  abs_diff(param0.s2,  param1.s2),  abs_diff(param0.s3,  param1.s3),
+                  abs_diff(param0.s4,  param1.s4),  abs_diff(param0.s5,  param1.s5),
+                  abs_diff(param0.s6,  param1.s6),  abs_diff(param0.s7,  param1.s7),
+                  abs_diff(param0.s8,  param1.s8),  abs_diff(param0.s9,  param1.s9),
+                  abs_diff(param0.sa, param1.sa), abs_diff(param0.sb, param1.sb),
+                  abs_diff(param0.sc, param1.sc), abs_diff(param0.sd, param1.sd),
+                  abs_diff(param0.se, param1.se), abs_diff(param0.sf, param1.sf)); }
+
+INLINE_OVERLOADABLE ushort2 abs_diff (short2 param0, short2 param1)
+{return (ushort2)(abs_diff(param0.s0, param1.s0), abs_diff(param0.s1, param1.s1)); }
+
+INLINE_OVERLOADABLE ushort3 abs_diff (short3 param0, short3 param1)
+{return (ushort3)(abs_diff(param0.s0, param1.s0), abs_diff(param0.s1, param1.s1),
+                  abs_diff(param0.s2, param1.s2)); }
+
+INLINE_OVERLOADABLE ushort4 abs_diff (short4 param0, short4 param1)
+{return (ushort4)(abs_diff(param0.s0, param1.s0), abs_diff(param0.s1, param1.s1),
+                  abs_diff(param0.s2, param1.s2), abs_diff(param0.s3, param1.s3)); }
+
+INLINE_OVERLOADABLE ushort8 abs_diff (short8 param0, short8 param1)
+{return (ushort8)(abs_diff(param0.s0, param1.s0), abs_diff(param0.s1, param1.s1),
+                  abs_diff(param0.s2, param1.s2), abs_diff(param0.s3, param1.s3),
+                  abs_diff(param0.s4, param1.s4), abs_diff(param0.s5, param1.s5),
+                  abs_diff(param0.s6, param1.s6), abs_diff(param0.s7, param1.s7)); }
+
+INLINE_OVERLOADABLE ushort16 abs_diff (short16 param0, short16 param1)
+{return (ushort16)(abs_diff(param0.s0,  param1.s0),  abs_diff(param0.s1,  param1.s1),
+                   abs_diff(param0.s2,  param1.s2),  abs_diff(param0.s3,  param1.s3),
+                   abs_diff(param0.s4,  param1.s4),  abs_diff(param0.s5,  param1.s5),
+                   abs_diff(param0.s6,  param1.s6),  abs_diff(param0.s7,  param1.s7),
+                   abs_diff(param0.s8,  param1.s8),  abs_diff(param0.s9,  param1.s9),
+                   abs_diff(param0.sa, param1.sa), abs_diff(param0.sb, param1.sb),
+                   abs_diff(param0.sc, param1.sc), abs_diff(param0.sd, param1.sd),
+                   abs_diff(param0.se, param1.se), abs_diff(param0.sf, param1.sf)); }
+
+INLINE_OVERLOADABLE uint2 abs_diff (int2 param0, int2 param1)
+{return (uint2)(abs_diff(param0.s0, param1.s0), abs_diff(param0.s1, param1.s1)); }
+
+INLINE_OVERLOADABLE uint3 abs_diff (int3 param0, int3 param1)
+{return (uint3)(abs_diff(param0.s0, param1.s0), abs_diff(param0.s1, param1.s1),
+                abs_diff(param0.s2, param1.s2)); }
+
+INLINE_OVERLOADABLE uint4 abs_diff (int4 param0, int4 param1)
+{return (uint4)(abs_diff(param0.s0, param1.s0), abs_diff(param0.s1, param1.s1),
+                abs_diff(param0.s2, param1.s2), abs_diff(param0.s3, param1.s3)); }
+
+INLINE_OVERLOADABLE uint8 abs_diff (int8 param0, int8 param1)
+{return (uint8)(abs_diff(param0.s0, param1.s0), abs_diff(param0.s1, param1.s1),
+                abs_diff(param0.s2, param1.s2), abs_diff(param0.s3, param1.s3),
+                abs_diff(param0.s4, param1.s4), abs_diff(param0.s5, param1.s5),
+                abs_diff(param0.s6, param1.s6), abs_diff(param0.s7, param1.s7)); }
+
+INLINE_OVERLOADABLE uint16 abs_diff (int16 param0, int16 param1)
+{return (uint16)(abs_diff(param0.s0,  param1.s0),  abs_diff(param0.s1,  param1.s1),
+                 abs_diff(param0.s2,  param1.s2),  abs_diff(param0.s3,  param1.s3),
+                 abs_diff(param0.s4,  param1.s4),  abs_diff(param0.s5,  param1.s5),
+                 abs_diff(param0.s6,  param1.s6),  abs_diff(param0.s7,  param1.s7),
+                 abs_diff(param0.s8,  param1.s8),  abs_diff(param0.s9,  param1.s9),
+                 abs_diff(param0.sa, param1.sa), abs_diff(param0.sb, param1.sb),
+                 abs_diff(param0.sc, param1.sc), abs_diff(param0.sd, param1.sd),
+                 abs_diff(param0.se, param1.se), abs_diff(param0.sf, param1.sf)); }
+
+INLINE_OVERLOADABLE uchar2 abs_diff (uchar2 param0, uchar2 param1)
+{return (uchar2)(abs_diff(param0.s0, param1.s0), abs_diff(param0.s1, param1.s1)); }
+
+INLINE_OVERLOADABLE uchar3 abs_diff (uchar3 param0, uchar3 param1)
+{return (uchar3)(abs_diff(param0.s0, param1.s0), abs_diff(param0.s1, param1.s1),
+                 abs_diff(param0.s2, param1.s2)); }
+
+INLINE_OVERLOADABLE uchar4 abs_diff (uchar4 param0, uchar4 param1)
+{return (uchar4)(abs_diff(param0.s0, param1.s0), abs_diff(param0.s1, param1.s1),
+                 abs_diff(param0.s2, param1.s2), abs_diff(param0.s3, param1.s3)); }
+
+INLINE_OVERLOADABLE uchar8 abs_diff (uchar8 param0, uchar8 param1)
+{return (uchar8)(abs_diff(param0.s0, param1.s0), abs_diff(param0.s1, param1.s1),
+                 abs_diff(param0.s2, param1.s2), abs_diff(param0.s3, param1.s3),
+                 abs_diff(param0.s4, param1.s4), abs_diff(param0.s5, param1.s5),
+                 abs_diff(param0.s6, param1.s6), abs_diff(param0.s7, param1.s7)); }
+
+INLINE_OVERLOADABLE uchar16 abs_diff (uchar16 param0, uchar16 param1)
+{return (uchar16)(abs_diff(param0.s0,  param1.s0),  abs_diff(param0.s1,  param1.s1),
+                  abs_diff(param0.s2,  param1.s2),  abs_diff(param0.s3,  param1.s3),
+                  abs_diff(param0.s4,  param1.s4),  abs_diff(param0.s5,  param1.s5),
+                  abs_diff(param0.s6,  param1.s6),  abs_diff(param0.s7,  param1.s7),
+                  abs_diff(param0.s8,  param1.s8),  abs_diff(param0.s9,  param1.s9),
+                  abs_diff(param0.sa, param1.sa), abs_diff(param0.sb, param1.sb),
+                  abs_diff(param0.sc, param1.sc), abs_diff(param0.sd, param1.sd),
+                  abs_diff(param0.se, param1.se), abs_diff(param0.sf, param1.sf)); }
+
+INLINE_OVERLOADABLE ushort2 abs_diff (ushort2 param0, ushort2 param1)
+{return (ushort2)(abs_diff(param0.s0, param1.s0), abs_diff(param0.s1, param1.s1)); }
+
+INLINE_OVERLOADABLE ushort3 abs_diff (ushort3 param0, ushort3 param1)
+{return (ushort3)(abs_diff(param0.s0, param1.s0), abs_diff(param0.s1, param1.s1),
+                  abs_diff(param0.s2, param1.s2)); }
+
+INLINE_OVERLOADABLE ushort4 abs_diff (ushort4 param0, ushort4 param1)
+{return (ushort4)(abs_diff(param0.s0, param1.s0), abs_diff(param0.s1, param1.s1),
+                  abs_diff(param0.s2, param1.s2), abs_diff(param0.s3, param1.s3)); }
+
+INLINE_OVERLOADABLE ushort8 abs_diff (ushort8 param0, ushort8 param1)
+{return (ushort8)(abs_diff(param0.s0, param1.s0), abs_diff(param0.s1, param1.s1),
+                  abs_diff(param0.s2, param1.s2), abs_diff(param0.s3, param1.s3),
+                  abs_diff(param0.s4, param1.s4), abs_diff(param0.s5, param1.s5),
+                  abs_diff(param0.s6, param1.s6), abs_diff(param0.s7, param1.s7)); }
+
+INLINE_OVERLOADABLE ushort16 abs_diff (ushort16 param0, ushort16 param1)
+{return (ushort16)(abs_diff(param0.s0,  param1.s0),  abs_diff(param0.s1,  param1.s1),
+                   abs_diff(param0.s2,  param1.s2),  abs_diff(param0.s3,  param1.s3),
+                   abs_diff(param0.s4,  param1.s4),  abs_diff(param0.s5,  param1.s5),
+                   abs_diff(param0.s6,  param1.s6),  abs_diff(param0.s7,  param1.s7),
+                   abs_diff(param0.s8,  param1.s8),  abs_diff(param0.s9,  param1.s9),
+                   abs_diff(param0.sa, param1.sa), abs_diff(param0.sb, param1.sb),
+                   abs_diff(param0.sc, param1.sc), abs_diff(param0.sd, param1.sd),
+                   abs_diff(param0.se, param1.se), abs_diff(param0.sf, param1.sf)); }
+
+INLINE_OVERLOADABLE uint2 abs_diff (uint2 param0, uint2 param1)
+{return (uint2)(abs_diff(param0.s0, param1.s0), abs_diff(param0.s1, param1.s1)); }
+
+INLINE_OVERLOADABLE uint3 abs_diff (uint3 param0, uint3 param1)
+{return (uint3)(abs_diff(param0.s0, param1.s0), abs_diff(param0.s1, param1.s1),
+                abs_diff(param0.s2, param1.s2)); }
+
+INLINE_OVERLOADABLE uint4 abs_diff (uint4 param0, uint4 param1)
+{return (uint4)(abs_diff(param0.s0, param1.s0), abs_diff(param0.s1, param1.s1),
+                abs_diff(param0.s2, param1.s2), abs_diff(param0.s3, param1.s3)); }
+
+INLINE_OVERLOADABLE uint8 abs_diff (uint8 param0, uint8 param1)
+{return (uint8)(abs_diff(param0.s0, param1.s0), abs_diff(param0.s1, param1.s1),
+                abs_diff(param0.s2, param1.s2), abs_diff(param0.s3, param1.s3),
+                abs_diff(param0.s4, param1.s4), abs_diff(param0.s5, param1.s5),
+                abs_diff(param0.s6, param1.s6), abs_diff(param0.s7, param1.s7)); }
+
+INLINE_OVERLOADABLE uint16 abs_diff (uint16 param0, uint16 param1)
+{return (uint16)(abs_diff(param0.s0,  param1.s0),  abs_diff(param0.s1,  param1.s1),
+                 abs_diff(param0.s2,  param1.s2),  abs_diff(param0.s3,  param1.s3),
+                 abs_diff(param0.s4,  param1.s4),  abs_diff(param0.s5,  param1.s5),
+                 abs_diff(param0.s6,  param1.s6),  abs_diff(param0.s7,  param1.s7),
+                 abs_diff(param0.s8,  param1.s8),  abs_diff(param0.s9,  param1.s9),
+                 abs_diff(param0.sa, param1.sa), abs_diff(param0.sb, param1.sb),
+                 abs_diff(param0.sc, param1.sc), abs_diff(param0.sd, param1.sd),
+                 abs_diff(param0.se, param1.se), abs_diff(param0.sf, param1.sf)); }
+
+
+//gentype add_sat (gentype x,  gentype y)
+
+INLINE_OVERLOADABLE char2 add_sat (char2 param0, char2 param1)
+{return (char2)(add_sat(param0.s0, param1.s0), add_sat(param0.s1, param1.s1)); }
+
+INLINE_OVERLOADABLE char3 add_sat (char3 param0, char3 param1)
+{return (char3)(add_sat(param0.s0, param1.s0), add_sat(param0.s1, param1.s1),
+                add_sat(param0.s2, param1.s2)); }
+
+INLINE_OVERLOADABLE char4 add_sat (char4 param0, char4 param1)
+{return (char4)(add_sat(param0.s0, param1.s0), add_sat(param0.s1, param1.s1),
+                add_sat(param0.s2, param1.s2), add_sat(param0.s3, param1.s3)); }
+
+INLINE_OVERLOADABLE char8 add_sat (char8 param0, char8 param1)
+{return (char8)(add_sat(param0.s0, param1.s0), add_sat(param0.s1, param1.s1),
+                add_sat(param0.s2, param1.s2), add_sat(param0.s3, param1.s3),
+                add_sat(param0.s4, param1.s4), add_sat(param0.s5, param1.s5),
+                add_sat(param0.s6, param1.s6), add_sat(param0.s7, param1.s7)); }
+
+INLINE_OVERLOADABLE char16 add_sat (char16 param0, char16 param1)
+{return (char16)(add_sat(param0.s0,  param1.s0),  add_sat(param0.s1,  param1.s1),
+                 add_sat(param0.s2,  param1.s2),  add_sat(param0.s3,  param1.s3),
+                 add_sat(param0.s4,  param1.s4),  add_sat(param0.s5,  param1.s5),
+                 add_sat(param0.s6,  param1.s6),  add_sat(param0.s7,  param1.s7),
+                 add_sat(param0.s8,  param1.s8),  add_sat(param0.s9,  param1.s9),
+                 add_sat(param0.sa, param1.sa), add_sat(param0.sb, param1.sb),
+                 add_sat(param0.sc, param1.sc), add_sat(param0.sd, param1.sd),
+                 add_sat(param0.se, param1.se), add_sat(param0.sf, param1.sf)); }
+
+INLINE_OVERLOADABLE short2 add_sat (short2 param0, short2 param1)
+{return (short2)(add_sat(param0.s0, param1.s0), add_sat(param0.s1, param1.s1)); }
+
+INLINE_OVERLOADABLE short3 add_sat (short3 param0, short3 param1)
+{return (short3)(add_sat(param0.s0, param1.s0), add_sat(param0.s1, param1.s1),
+                 add_sat(param0.s2, param1.s2)); }
+
+INLINE_OVERLOADABLE short4 add_sat (short4 param0, short4 param1)
+{return (short4)(add_sat(param0.s0, param1.s0), add_sat(param0.s1, param1.s1),
+                 add_sat(param0.s2, param1.s2), add_sat(param0.s3, param1.s3)); }
+
+INLINE_OVERLOADABLE short8 add_sat (short8 param0, short8 param1)
+{return (short8)(add_sat(param0.s0, param1.s0), add_sat(param0.s1, param1.s1),
+                 add_sat(param0.s2, param1.s2), add_sat(param0.s3, param1.s3),
+                 add_sat(param0.s4, param1.s4), add_sat(param0.s5, param1.s5),
+                 add_sat(param0.s6, param1.s6), add_sat(param0.s7, param1.s7)); }
+
+INLINE_OVERLOADABLE short16 add_sat (short16 param0, short16 param1)
+{return (short16)(add_sat(param0.s0,  param1.s0),  add_sat(param0.s1,  param1.s1),
+                  add_sat(param0.s2,  param1.s2),  add_sat(param0.s3,  param1.s3),
+                  add_sat(param0.s4,  param1.s4),  add_sat(param0.s5,  param1.s5),
+                  add_sat(param0.s6,  param1.s6),  add_sat(param0.s7,  param1.s7),
+                  add_sat(param0.s8,  param1.s8),  add_sat(param0.s9,  param1.s9),
+                  add_sat(param0.sa, param1.sa), add_sat(param0.sb, param1.sb),
+                  add_sat(param0.sc, param1.sc), add_sat(param0.sd, param1.sd),
+                  add_sat(param0.se, param1.se), add_sat(param0.sf, param1.sf)); }
+
+INLINE_OVERLOADABLE int2 add_sat (int2 param0, int2 param1)
+{return (int2)(add_sat(param0.s0, param1.s0), add_sat(param0.s1, param1.s1)); }
+
+INLINE_OVERLOADABLE int3 add_sat (int3 param0, int3 param1)
+{return (int3)(add_sat(param0.s0, param1.s0), add_sat(param0.s1, param1.s1),
+               add_sat(param0.s2, param1.s2)); }
+
+INLINE_OVERLOADABLE int4 add_sat (int4 param0, int4 param1)
+{return (int4)(add_sat(param0.s0, param1.s0), add_sat(param0.s1, param1.s1),
+               add_sat(param0.s2, param1.s2), add_sat(param0.s3, param1.s3)); }
+
+INLINE_OVERLOADABLE int8 add_sat (int8 param0, int8 param1)
+{return (int8)(add_sat(param0.s0, param1.s0), add_sat(param0.s1, param1.s1),
+               add_sat(param0.s2, param1.s2), add_sat(param0.s3, param1.s3),
+               add_sat(param0.s4, param1.s4), add_sat(param0.s5, param1.s5),
+               add_sat(param0.s6, param1.s6), add_sat(param0.s7, param1.s7)); }
+
+INLINE_OVERLOADABLE int16 add_sat (int16 param0, int16 param1)
+{return (int16)(add_sat(param0.s0,  param1.s0),  add_sat(param0.s1,  param1.s1),
+                add_sat(param0.s2,  param1.s2),  add_sat(param0.s3,  param1.s3),
+                add_sat(param0.s4,  param1.s4),  add_sat(param0.s5,  param1.s5),
+                add_sat(param0.s6,  param1.s6),  add_sat(param0.s7,  param1.s7),
+                add_sat(param0.s8,  param1.s8),  add_sat(param0.s9,  param1.s9),
+                add_sat(param0.sa, param1.sa), add_sat(param0.sb, param1.sb),
+                add_sat(param0.sc, param1.sc), add_sat(param0.sd, param1.sd),
+                add_sat(param0.se, param1.se), add_sat(param0.sf, param1.sf)); }
+
+INLINE_OVERLOADABLE uchar2 add_sat (uchar2 param0, uchar2 param1)
+{return (uchar2)(add_sat(param0.s0, param1.s0), add_sat(param0.s1, param1.s1)); }
+
+INLINE_OVERLOADABLE uchar3 add_sat (uchar3 param0, uchar3 param1)
+{return (uchar3)(add_sat(param0.s0, param1.s0), add_sat(param0.s1, param1.s1),
+                 add_sat(param0.s2, param1.s2)); }
+
+INLINE_OVERLOADABLE uchar4 add_sat (uchar4 param0, uchar4 param1)
+{return (uchar4)(add_sat(param0.s0, param1.s0), add_sat(param0.s1, param1.s1),
+                 add_sat(param0.s2, param1.s2), add_sat(param0.s3, param1.s3)); }
+
+INLINE_OVERLOADABLE uchar8 add_sat (uchar8 param0, uchar8 param1)
+{return (uchar8)(add_sat(param0.s0, param1.s0), add_sat(param0.s1, param1.s1),
+                 add_sat(param0.s2, param1.s2), add_sat(param0.s3, param1.s3),
+                 add_sat(param0.s4, param1.s4), add_sat(param0.s5, param1.s5),
+                 add_sat(param0.s6, param1.s6), add_sat(param0.s7, param1.s7)); }
+
+INLINE_OVERLOADABLE uchar16 add_sat (uchar16 param0, uchar16 param1)
+{return (uchar16)(add_sat(param0.s0,  param1.s0),  add_sat(param0.s1,  param1.s1),
+                  add_sat(param0.s2,  param1.s2),  add_sat(param0.s3,  param1.s3),
+                  add_sat(param0.s4,  param1.s4),  add_sat(param0.s5,  param1.s5),
+                  add_sat(param0.s6,  param1.s6),  add_sat(param0.s7,  param1.s7),
+                  add_sat(param0.s8,  param1.s8),  add_sat(param0.s9,  param1.s9),
+                  add_sat(param0.sa, param1.sa), add_sat(param0.sb, param1.sb),
+                  add_sat(param0.sc, param1.sc), add_sat(param0.sd, param1.sd),
+                  add_sat(param0.se, param1.se), add_sat(param0.sf, param1.sf)); }
+
+INLINE_OVERLOADABLE ushort2 add_sat (ushort2 param0, ushort2 param1)
+{return (ushort2)(add_sat(param0.s0, param1.s0), add_sat(param0.s1, param1.s1)); }
+
+INLINE_OVERLOADABLE ushort3 add_sat (ushort3 param0, ushort3 param1)
+{return (ushort3)(add_sat(param0.s0, param1.s0), add_sat(param0.s1, param1.s1),
+                  add_sat(param0.s2, param1.s2)); }
+
+INLINE_OVERLOADABLE ushort4 add_sat (ushort4 param0, ushort4 param1)
+{return (ushort4)(add_sat(param0.s0, param1.s0), add_sat(param0.s1, param1.s1),
+                  add_sat(param0.s2, param1.s2), add_sat(param0.s3, param1.s3)); }
+
+INLINE_OVERLOADABLE ushort8 add_sat (ushort8 param0, ushort8 param1)
+{return (ushort8)(add_sat(param0.s0, param1.s0), add_sat(param0.s1, param1.s1),
+                  add_sat(param0.s2, param1.s2), add_sat(param0.s3, param1.s3),
+                  add_sat(param0.s4, param1.s4), add_sat(param0.s5, param1.s5),
+                  add_sat(param0.s6, param1.s6), add_sat(param0.s7, param1.s7)); }
+
+INLINE_OVERLOADABLE ushort16 add_sat (ushort16 param0, ushort16 param1)
+{return (ushort16)(add_sat(param0.s0,  param1.s0),  add_sat(param0.s1,  param1.s1),
+                   add_sat(param0.s2,  param1.s2),  add_sat(param0.s3,  param1.s3),
+                   add_sat(param0.s4,  param1.s4),  add_sat(param0.s5,  param1.s5),
+                   add_sat(param0.s6,  param1.s6),  add_sat(param0.s7,  param1.s7),
+                   add_sat(param0.s8,  param1.s8),  add_sat(param0.s9,  param1.s9),
+                   add_sat(param0.sa, param1.sa), add_sat(param0.sb, param1.sb),
+                   add_sat(param0.sc, param1.sc), add_sat(param0.sd, param1.sd),
+                   add_sat(param0.se, param1.se), add_sat(param0.sf, param1.sf)); }
+
+INLINE_OVERLOADABLE uint2 add_sat (uint2 param0, uint2 param1)
+{return (uint2)(add_sat(param0.s0, param1.s0), add_sat(param0.s1, param1.s1)); }
+
+INLINE_OVERLOADABLE uint3 add_sat (uint3 param0, uint3 param1)
+{return (uint3)(add_sat(param0.s0, param1.s0), add_sat(param0.s1, param1.s1),
+                add_sat(param0.s2, param1.s2)); }
+
+INLINE_OVERLOADABLE uint4 add_sat (uint4 param0, uint4 param1)
+{return (uint4)(add_sat(param0.s0, param1.s0), add_sat(param0.s1, param1.s1),
+                add_sat(param0.s2, param1.s2), add_sat(param0.s3, param1.s3)); }
+
+INLINE_OVERLOADABLE uint8 add_sat (uint8 param0, uint8 param1)
+{return (uint8)(add_sat(param0.s0, param1.s0), add_sat(param0.s1, param1.s1),
+                add_sat(param0.s2, param1.s2), add_sat(param0.s3, param1.s3),
+                add_sat(param0.s4, param1.s4), add_sat(param0.s5, param1.s5),
+                add_sat(param0.s6, param1.s6), add_sat(param0.s7, param1.s7)); }
+
+INLINE_OVERLOADABLE uint16 add_sat (uint16 param0, uint16 param1)
+{return (uint16)(add_sat(param0.s0,  param1.s0),  add_sat(param0.s1,  param1.s1),
+                 add_sat(param0.s2,  param1.s2),  add_sat(param0.s3,  param1.s3),
+                 add_sat(param0.s4,  param1.s4),  add_sat(param0.s5,  param1.s5),
+                 add_sat(param0.s6,  param1.s6),  add_sat(param0.s7,  param1.s7),
+                 add_sat(param0.s8,  param1.s8),  add_sat(param0.s9,  param1.s9),
+                 add_sat(param0.sa, param1.sa), add_sat(param0.sb, param1.sb),
+                 add_sat(param0.sc, param1.sc), add_sat(param0.sd, param1.sd),
+                 add_sat(param0.se, param1.se), add_sat(param0.sf, param1.sf)); }
+
+
+//gentype hadd (gentype x,  gentype y)
+
+INLINE_OVERLOADABLE char2 hadd (char2 param0, char2 param1)
+{return (char2)(hadd(param0.s0, param1.s0), hadd(param0.s1, param1.s1)); }
+
+INLINE_OVERLOADABLE char3 hadd (char3 param0, char3 param1)
+{return (char3)(hadd(param0.s0, param1.s0), hadd(param0.s1, param1.s1),
+                hadd(param0.s2, param1.s2)); }
+
+INLINE_OVERLOADABLE char4 hadd (char4 param0, char4 param1)
+{return (char4)(hadd(param0.s0, param1.s0), hadd(param0.s1, param1.s1),
+                hadd(param0.s2, param1.s2), hadd(param0.s3, param1.s3)); }
+
+INLINE_OVERLOADABLE char8 hadd (char8 param0, char8 param1)
+{return (char8)(hadd(param0.s0, param1.s0), hadd(param0.s1, param1.s1),
+                hadd(param0.s2, param1.s2), hadd(param0.s3, param1.s3),
+                hadd(param0.s4, param1.s4), hadd(param0.s5, param1.s5),
+                hadd(param0.s6, param1.s6), hadd(param0.s7, param1.s7)); }
+
+INLINE_OVERLOADABLE char16 hadd (char16 param0, char16 param1)
+{return (char16)(hadd(param0.s0,  param1.s0),  hadd(param0.s1,  param1.s1),
+                 hadd(param0.s2,  param1.s2),  hadd(param0.s3,  param1.s3),
+                 hadd(param0.s4,  param1.s4),  hadd(param0.s5,  param1.s5),
+                 hadd(param0.s6,  param1.s6),  hadd(param0.s7,  param1.s7),
+                 hadd(param0.s8,  param1.s8),  hadd(param0.s9,  param1.s9),
+                 hadd(param0.sa, param1.sa), hadd(param0.sb, param1.sb),
+                 hadd(param0.sc, param1.sc), hadd(param0.sd, param1.sd),
+                 hadd(param0.se, param1.se), hadd(param0.sf, param1.sf)); }
+
+INLINE_OVERLOADABLE short2 hadd (short2 param0, short2 param1)
+{return (short2)(hadd(param0.s0, param1.s0), hadd(param0.s1, param1.s1)); }
+
+INLINE_OVERLOADABLE short3 hadd (short3 param0, short3 param1)
+{return (short3)(hadd(param0.s0, param1.s0), hadd(param0.s1, param1.s1),
+                 hadd(param0.s2, param1.s2)); }
+
+INLINE_OVERLOADABLE short4 hadd (short4 param0, short4 param1)
+{return (short4)(hadd(param0.s0, param1.s0), hadd(param0.s1, param1.s1),
+                 hadd(param0.s2, param1.s2), hadd(param0.s3, param1.s3)); }
+
+INLINE_OVERLOADABLE short8 hadd (short8 param0, short8 param1)
+{return (short8)(hadd(param0.s0, param1.s0), hadd(param0.s1, param1.s1),
+                 hadd(param0.s2, param1.s2), hadd(param0.s3, param1.s3),
+                 hadd(param0.s4, param1.s4), hadd(param0.s5, param1.s5),
+                 hadd(param0.s6, param1.s6), hadd(param0.s7, param1.s7)); }
+
+INLINE_OVERLOADABLE short16 hadd (short16 param0, short16 param1)
+{return (short16)(hadd(param0.s0,  param1.s0),  hadd(param0.s1,  param1.s1),
+                  hadd(param0.s2,  param1.s2),  hadd(param0.s3,  param1.s3),
+                  hadd(param0.s4,  param1.s4),  hadd(param0.s5,  param1.s5),
+                  hadd(param0.s6,  param1.s6),  hadd(param0.s7,  param1.s7),
+                  hadd(param0.s8,  param1.s8),  hadd(param0.s9,  param1.s9),
+                  hadd(param0.sa, param1.sa), hadd(param0.sb, param1.sb),
+                  hadd(param0.sc, param1.sc), hadd(param0.sd, param1.sd),
+                  hadd(param0.se, param1.se), hadd(param0.sf, param1.sf)); }
+
+INLINE_OVERLOADABLE int2 hadd (int2 param0, int2 param1)
+{return (int2)(hadd(param0.s0, param1.s0), hadd(param0.s1, param1.s1)); }
+
+INLINE_OVERLOADABLE int3 hadd (int3 param0, int3 param1)
+{return (int3)(hadd(param0.s0, param1.s0), hadd(param0.s1, param1.s1),
+               hadd(param0.s2, param1.s2)); }
+
+INLINE_OVERLOADABLE int4 hadd (int4 param0, int4 param1)
+{return (int4)(hadd(param0.s0, param1.s0), hadd(param0.s1, param1.s1),
+               hadd(param0.s2, param1.s2), hadd(param0.s3, param1.s3)); }
+
+INLINE_OVERLOADABLE int8 hadd (int8 param0, int8 param1)
+{return (int8)(hadd(param0.s0, param1.s0), hadd(param0.s1, param1.s1),
+               hadd(param0.s2, param1.s2), hadd(param0.s3, param1.s3),
+               hadd(param0.s4, param1.s4), hadd(param0.s5, param1.s5),
+               hadd(param0.s6, param1.s6), hadd(param0.s7, param1.s7)); }
+
+INLINE_OVERLOADABLE int16 hadd (int16 param0, int16 param1)
+{return (int16)(hadd(param0.s0,  param1.s0),  hadd(param0.s1,  param1.s1),
+                hadd(param0.s2,  param1.s2),  hadd(param0.s3,  param1.s3),
+                hadd(param0.s4,  param1.s4),  hadd(param0.s5,  param1.s5),
+                hadd(param0.s6,  param1.s6),  hadd(param0.s7,  param1.s7),
+                hadd(param0.s8,  param1.s8),  hadd(param0.s9,  param1.s9),
+                hadd(param0.sa, param1.sa), hadd(param0.sb, param1.sb),
+                hadd(param0.sc, param1.sc), hadd(param0.sd, param1.sd),
+                hadd(param0.se, param1.se), hadd(param0.sf, param1.sf)); }
+
+INLINE_OVERLOADABLE uchar2 hadd (uchar2 param0, uchar2 param1)
+{return (uchar2)(hadd(param0.s0, param1.s0), hadd(param0.s1, param1.s1)); }
+
+INLINE_OVERLOADABLE uchar3 hadd (uchar3 param0, uchar3 param1)
+{return (uchar3)(hadd(param0.s0, param1.s0), hadd(param0.s1, param1.s1),
+                 hadd(param0.s2, param1.s2)); }
+
+INLINE_OVERLOADABLE uchar4 hadd (uchar4 param0, uchar4 param1)
+{return (uchar4)(hadd(param0.s0, param1.s0), hadd(param0.s1, param1.s1),
+                 hadd(param0.s2, param1.s2), hadd(param0.s3, param1.s3)); }
+
+INLINE_OVERLOADABLE uchar8 hadd (uchar8 param0, uchar8 param1)
+{return (uchar8)(hadd(param0.s0, param1.s0), hadd(param0.s1, param1.s1),
+                 hadd(param0.s2, param1.s2), hadd(param0.s3, param1.s3),
+                 hadd(param0.s4, param1.s4), hadd(param0.s5, param1.s5),
+                 hadd(param0.s6, param1.s6), hadd(param0.s7, param1.s7)); }
+
+INLINE_OVERLOADABLE uchar16 hadd (uchar16 param0, uchar16 param1)
+{return (uchar16)(hadd(param0.s0,  param1.s0),  hadd(param0.s1,  param1.s1),
+                  hadd(param0.s2,  param1.s2),  hadd(param0.s3,  param1.s3),
+                  hadd(param0.s4,  param1.s4),  hadd(param0.s5,  param1.s5),
+                  hadd(param0.s6,  param1.s6),  hadd(param0.s7,  param1.s7),
+                  hadd(param0.s8,  param1.s8),  hadd(param0.s9,  param1.s9),
+                  hadd(param0.sa, param1.sa), hadd(param0.sb, param1.sb),
+                  hadd(param0.sc, param1.sc), hadd(param0.sd, param1.sd),
+                  hadd(param0.se, param1.se), hadd(param0.sf, param1.sf)); }
+
+INLINE_OVERLOADABLE ushort2 hadd (ushort2 param0, ushort2 param1)
+{return (ushort2)(hadd(param0.s0, param1.s0), hadd(param0.s1, param1.s1)); }
+
+INLINE_OVERLOADABLE ushort3 hadd (ushort3 param0, ushort3 param1)
+{return (ushort3)(hadd(param0.s0, param1.s0), hadd(param0.s1, param1.s1),
+                  hadd(param0.s2, param1.s2)); }
+
+INLINE_OVERLOADABLE ushort4 hadd (ushort4 param0, ushort4 param1)
+{return (ushort4)(hadd(param0.s0, param1.s0), hadd(param0.s1, param1.s1),
+                  hadd(param0.s2, param1.s2), hadd(param0.s3, param1.s3)); }
+
+INLINE_OVERLOADABLE ushort8 hadd (ushort8 param0, ushort8 param1)
+{return (ushort8)(hadd(param0.s0, param1.s0), hadd(param0.s1, param1.s1),
+                  hadd(param0.s2, param1.s2), hadd(param0.s3, param1.s3),
+                  hadd(param0.s4, param1.s4), hadd(param0.s5, param1.s5),
+                  hadd(param0.s6, param1.s6), hadd(param0.s7, param1.s7)); }
+
+INLINE_OVERLOADABLE ushort16 hadd (ushort16 param0, ushort16 param1)
+{return (ushort16)(hadd(param0.s0,  param1.s0),  hadd(param0.s1,  param1.s1),
+                   hadd(param0.s2,  param1.s2),  hadd(param0.s3,  param1.s3),
+                   hadd(param0.s4,  param1.s4),  hadd(param0.s5,  param1.s5),
+                   hadd(param0.s6,  param1.s6),  hadd(param0.s7,  param1.s7),
+                   hadd(param0.s8,  param1.s8),  hadd(param0.s9,  param1.s9),
+                   hadd(param0.sa, param1.sa), hadd(param0.sb, param1.sb),
+                   hadd(param0.sc, param1.sc), hadd(param0.sd, param1.sd),
+                   hadd(param0.se, param1.se), hadd(param0.sf, param1.sf)); }
+
+INLINE_OVERLOADABLE uint2 hadd (uint2 param0, uint2 param1)
+{return (uint2)(hadd(param0.s0, param1.s0), hadd(param0.s1, param1.s1)); }
+
+INLINE_OVERLOADABLE uint3 hadd (uint3 param0, uint3 param1)
+{return (uint3)(hadd(param0.s0, param1.s0), hadd(param0.s1, param1.s1),
+                hadd(param0.s2, param1.s2)); }
+
+INLINE_OVERLOADABLE uint4 hadd (uint4 param0, uint4 param1)
+{return (uint4)(hadd(param0.s0, param1.s0), hadd(param0.s1, param1.s1),
+                hadd(param0.s2, param1.s2), hadd(param0.s3, param1.s3)); }
+
+INLINE_OVERLOADABLE uint8 hadd (uint8 param0, uint8 param1)
+{return (uint8)(hadd(param0.s0, param1.s0), hadd(param0.s1, param1.s1),
+                hadd(param0.s2, param1.s2), hadd(param0.s3, param1.s3),
+                hadd(param0.s4, param1.s4), hadd(param0.s5, param1.s5),
+                hadd(param0.s6, param1.s6), hadd(param0.s7, param1.s7)); }
+
+INLINE_OVERLOADABLE uint16 hadd (uint16 param0, uint16 param1)
+{return (uint16)(hadd(param0.s0,  param1.s0),  hadd(param0.s1,  param1.s1),
+                 hadd(param0.s2,  param1.s2),  hadd(param0.s3,  param1.s3),
+                 hadd(param0.s4,  param1.s4),  hadd(param0.s5,  param1.s5),
+                 hadd(param0.s6,  param1.s6),  hadd(param0.s7,  param1.s7),
+                 hadd(param0.s8,  param1.s8),  hadd(param0.s9,  param1.s9),
+                 hadd(param0.sa, param1.sa), hadd(param0.sb, param1.sb),
+                 hadd(param0.sc, param1.sc), hadd(param0.sd, param1.sd),
+                 hadd(param0.se, param1.se), hadd(param0.sf, param1.sf)); }
+
+
+//gentype rhadd (gentype x, gentype y)
+
+INLINE_OVERLOADABLE char2 rhadd (char2 param0, char2 param1)
+{return (char2)(rhadd(param0.s0, param1.s0), rhadd(param0.s1, param1.s1)); }
+
+INLINE_OVERLOADABLE char3 rhadd (char3 param0, char3 param1)
+{return (char3)(rhadd(param0.s0, param1.s0), rhadd(param0.s1, param1.s1),
+                rhadd(param0.s2, param1.s2)); }
+
+INLINE_OVERLOADABLE char4 rhadd (char4 param0, char4 param1)
+{return (char4)(rhadd(param0.s0, param1.s0), rhadd(param0.s1, param1.s1),
+                rhadd(param0.s2, param1.s2), rhadd(param0.s3, param1.s3)); }
+
+INLINE_OVERLOADABLE char8 rhadd (char8 param0, char8 param1)
+{return (char8)(rhadd(param0.s0, param1.s0), rhadd(param0.s1, param1.s1),
+                rhadd(param0.s2, param1.s2), rhadd(param0.s3, param1.s3),
+                rhadd(param0.s4, param1.s4), rhadd(param0.s5, param1.s5),
+                rhadd(param0.s6, param1.s6), rhadd(param0.s7, param1.s7)); }
+
+INLINE_OVERLOADABLE char16 rhadd (char16 param0, char16 param1)
+{return (char16)(rhadd(param0.s0,  param1.s0),  rhadd(param0.s1,  param1.s1),
+                 rhadd(param0.s2,  param1.s2),  rhadd(param0.s3,  param1.s3),
+                 rhadd(param0.s4,  param1.s4),  rhadd(param0.s5,  param1.s5),
+                 rhadd(param0.s6,  param1.s6),  rhadd(param0.s7,  param1.s7),
+                 rhadd(param0.s8,  param1.s8),  rhadd(param0.s9,  param1.s9),
+                 rhadd(param0.sa, param1.sa), rhadd(param0.sb, param1.sb),
+                 rhadd(param0.sc, param1.sc), rhadd(param0.sd, param1.sd),
+                 rhadd(param0.se, param1.se), rhadd(param0.sf, param1.sf)); }
+
+INLINE_OVERLOADABLE short2 rhadd (short2 param0, short2 param1)
+{return (short2)(rhadd(param0.s0, param1.s0), rhadd(param0.s1, param1.s1)); }
+
+INLINE_OVERLOADABLE short3 rhadd (short3 param0, short3 param1)
+{return (short3)(rhadd(param0.s0, param1.s0), rhadd(param0.s1, param1.s1),
+                 rhadd(param0.s2, param1.s2)); }
+
+INLINE_OVERLOADABLE short4 rhadd (short4 param0, short4 param1)
+{return (short4)(rhadd(param0.s0, param1.s0), rhadd(param0.s1, param1.s1),
+                 rhadd(param0.s2, param1.s2), rhadd(param0.s3, param1.s3)); }
+
+INLINE_OVERLOADABLE short8 rhadd (short8 param0, short8 param1)
+{return (short8)(rhadd(param0.s0, param1.s0), rhadd(param0.s1, param1.s1),
+                 rhadd(param0.s2, param1.s2), rhadd(param0.s3, param1.s3),
+                 rhadd(param0.s4, param1.s4), rhadd(param0.s5, param1.s5),
+                 rhadd(param0.s6, param1.s6), rhadd(param0.s7, param1.s7)); }
+
+INLINE_OVERLOADABLE short16 rhadd (short16 param0, short16 param1)
+{return (short16)(rhadd(param0.s0,  param1.s0),  rhadd(param0.s1,  param1.s1),
+                  rhadd(param0.s2,  param1.s2),  rhadd(param0.s3,  param1.s3),
+                  rhadd(param0.s4,  param1.s4),  rhadd(param0.s5,  param1.s5),
+                  rhadd(param0.s6,  param1.s6),  rhadd(param0.s7,  param1.s7),
+                  rhadd(param0.s8,  param1.s8),  rhadd(param0.s9,  param1.s9),
+                  rhadd(param0.sa, param1.sa), rhadd(param0.sb, param1.sb),
+                  rhadd(param0.sc, param1.sc), rhadd(param0.sd, param1.sd),
+                  rhadd(param0.se, param1.se), rhadd(param0.sf, param1.sf)); }
+
+INLINE_OVERLOADABLE int2 rhadd (int2 param0, int2 param1)
+{return (int2)(rhadd(param0.s0, param1.s0), rhadd(param0.s1, param1.s1)); }
+
+INLINE_OVERLOADABLE int3 rhadd (int3 param0, int3 param1)
+{return (int3)(rhadd(param0.s0, param1.s0), rhadd(param0.s1, param1.s1),
+               rhadd(param0.s2, param1.s2)); }
+
+INLINE_OVERLOADABLE int4 rhadd (int4 param0, int4 param1)
+{return (int4)(rhadd(param0.s0, param1.s0), rhadd(param0.s1, param1.s1),
+               rhadd(param0.s2, param1.s2), rhadd(param0.s3, param1.s3)); }
+
+INLINE_OVERLOADABLE int8 rhadd (int8 param0, int8 param1)
+{return (int8)(rhadd(param0.s0, param1.s0), rhadd(param0.s1, param1.s1),
+               rhadd(param0.s2, param1.s2), rhadd(param0.s3, param1.s3),
+               rhadd(param0.s4, param1.s4), rhadd(param0.s5, param1.s5),
+               rhadd(param0.s6, param1.s6), rhadd(param0.s7, param1.s7)); }
+
+INLINE_OVERLOADABLE int16 rhadd (int16 param0, int16 param1)
+{return (int16)(rhadd(param0.s0,  param1.s0),  rhadd(param0.s1,  param1.s1),
+                rhadd(param0.s2,  param1.s2),  rhadd(param0.s3,  param1.s3),
+                rhadd(param0.s4,  param1.s4),  rhadd(param0.s5,  param1.s5),
+                rhadd(param0.s6,  param1.s6),  rhadd(param0.s7,  param1.s7),
+                rhadd(param0.s8,  param1.s8),  rhadd(param0.s9,  param1.s9),
+                rhadd(param0.sa, param1.sa), rhadd(param0.sb, param1.sb),
+                rhadd(param0.sc, param1.sc), rhadd(param0.sd, param1.sd),
+                rhadd(param0.se, param1.se), rhadd(param0.sf, param1.sf)); }
+
+INLINE_OVERLOADABLE uchar2 rhadd (uchar2 param0, uchar2 param1)
+{return (uchar2)(rhadd(param0.s0, param1.s0), rhadd(param0.s1, param1.s1)); }
+
+INLINE_OVERLOADABLE uchar3 rhadd (uchar3 param0, uchar3 param1)
+{return (uchar3)(rhadd(param0.s0, param1.s0), rhadd(param0.s1, param1.s1),
+                 rhadd(param0.s2, param1.s2)); }
+
+INLINE_OVERLOADABLE uchar4 rhadd (uchar4 param0, uchar4 param1)
+{return (uchar4)(rhadd(param0.s0, param1.s0), rhadd(param0.s1, param1.s1),
+                 rhadd(param0.s2, param1.s2), rhadd(param0.s3, param1.s3)); }
+
+INLINE_OVERLOADABLE uchar8 rhadd (uchar8 param0, uchar8 param1)
+{return (uchar8)(rhadd(param0.s0, param1.s0), rhadd(param0.s1, param1.s1),
+                 rhadd(param0.s2, param1.s2), rhadd(param0.s3, param1.s3),
+                 rhadd(param0.s4, param1.s4), rhadd(param0.s5, param1.s5),
+                 rhadd(param0.s6, param1.s6), rhadd(param0.s7, param1.s7)); }
+
+INLINE_OVERLOADABLE uchar16 rhadd (uchar16 param0, uchar16 param1)
+{return (uchar16)(rhadd(param0.s0,  param1.s0),  rhadd(param0.s1,  param1.s1),
+                  rhadd(param0.s2,  param1.s2),  rhadd(param0.s3,  param1.s3),
+                  rhadd(param0.s4,  param1.s4),  rhadd(param0.s5,  param1.s5),
+                  rhadd(param0.s6,  param1.s6),  rhadd(param0.s7,  param1.s7),
+                  rhadd(param0.s8,  param1.s8),  rhadd(param0.s9,  param1.s9),
+                  rhadd(param0.sa, param1.sa), rhadd(param0.sb, param1.sb),
+                  rhadd(param0.sc, param1.sc), rhadd(param0.sd, param1.sd),
+                  rhadd(param0.se, param1.se), rhadd(param0.sf, param1.sf)); }
+
+INLINE_OVERLOADABLE ushort2 rhadd (ushort2 param0, ushort2 param1)
+{return (ushort2)(rhadd(param0.s0, param1.s0), rhadd(param0.s1, param1.s1)); }
+
+INLINE_OVERLOADABLE ushort3 rhadd (ushort3 param0, ushort3 param1)
+{return (ushort3)(rhadd(param0.s0, param1.s0), rhadd(param0.s1, param1.s1),
+                  rhadd(param0.s2, param1.s2)); }
+
+INLINE_OVERLOADABLE ushort4 rhadd (ushort4 param0, ushort4 param1)
+{return (ushort4)(rhadd(param0.s0, param1.s0), rhadd(param0.s1, param1.s1),
+                  rhadd(param0.s2, param1.s2), rhadd(param0.s3, param1.s3)); }
+
+INLINE_OVERLOADABLE ushort8 rhadd (ushort8 param0, ushort8 param1)
+{return (ushort8)(rhadd(param0.s0, param1.s0), rhadd(param0.s1, param1.s1),
+                  rhadd(param0.s2, param1.s2), rhadd(param0.s3, param1.s3),
+                  rhadd(param0.s4, param1.s4), rhadd(param0.s5, param1.s5),
+                  rhadd(param0.s6, param1.s6), rhadd(param0.s7, param1.s7)); }
+
+INLINE_OVERLOADABLE ushort16 rhadd (ushort16 param0, ushort16 param1)
+{return (ushort16)(rhadd(param0.s0,  param1.s0),  rhadd(param0.s1,  param1.s1),
+                   rhadd(param0.s2,  param1.s2),  rhadd(param0.s3,  param1.s3),
+                   rhadd(param0.s4,  param1.s4),  rhadd(param0.s5,  param1.s5),
+                   rhadd(param0.s6,  param1.s6),  rhadd(param0.s7,  param1.s7),
+                   rhadd(param0.s8,  param1.s8),  rhadd(param0.s9,  param1.s9),
+                   rhadd(param0.sa, param1.sa), rhadd(param0.sb, param1.sb),
+                   rhadd(param0.sc, param1.sc), rhadd(param0.sd, param1.sd),
+                   rhadd(param0.se, param1.se), rhadd(param0.sf, param1.sf)); }
+
+INLINE_OVERLOADABLE uint2 rhadd (uint2 param0, uint2 param1)
+{return (uint2)(rhadd(param0.s0, param1.s0), rhadd(param0.s1, param1.s1)); }
+
+INLINE_OVERLOADABLE uint3 rhadd (uint3 param0, uint3 param1)
+{return (uint3)(rhadd(param0.s0, param1.s0), rhadd(param0.s1, param1.s1),
+                rhadd(param0.s2, param1.s2)); }
+
+INLINE_OVERLOADABLE uint4 rhadd (uint4 param0, uint4 param1)
+{return (uint4)(rhadd(param0.s0, param1.s0), rhadd(param0.s1, param1.s1),
+                rhadd(param0.s2, param1.s2), rhadd(param0.s3, param1.s3)); }
+
+INLINE_OVERLOADABLE uint8 rhadd (uint8 param0, uint8 param1)
+{return (uint8)(rhadd(param0.s0, param1.s0), rhadd(param0.s1, param1.s1),
+                rhadd(param0.s2, param1.s2), rhadd(param0.s3, param1.s3),
+                rhadd(param0.s4, param1.s4), rhadd(param0.s5, param1.s5),
+                rhadd(param0.s6, param1.s6), rhadd(param0.s7, param1.s7)); }
+
+INLINE_OVERLOADABLE uint16 rhadd (uint16 param0, uint16 param1)
+{return (uint16)(rhadd(param0.s0,  param1.s0),  rhadd(param0.s1,  param1.s1),
+                 rhadd(param0.s2,  param1.s2),  rhadd(param0.s3,  param1.s3),
+                 rhadd(param0.s4,  param1.s4),  rhadd(param0.s5,  param1.s5),
+                 rhadd(param0.s6,  param1.s6),  rhadd(param0.s7,  param1.s7),
+                 rhadd(param0.s8,  param1.s8),  rhadd(param0.s9,  param1.s9),
+                 rhadd(param0.sa, param1.sa), rhadd(param0.sb, param1.sb),
+                 rhadd(param0.sc, param1.sc), rhadd(param0.sd, param1.sd),
+                 rhadd(param0.se, param1.se), rhadd(param0.sf, param1.sf)); }
+
+
+//gentype clamp (gentype x, gentype minval, gentype maxval)
+
+INLINE_OVERLOADABLE char2 clamp (char2 param0, char2 param1, char2 param2)
+{return (char2)(clamp(param0.s0, param1.s0, param2.s0), clamp(param0.s1, param1.s1, param2.s1)); }
+
+INLINE_OVERLOADABLE char3 clamp (char3 param0, char3 param1, char3 param2)
+{return (char3)(clamp(param0.s0, param1.s0, param2.s0), clamp(param0.s1, param1.s1, param2.s1),
+                clamp(param0.s2, param1.s2, param2.s2)); }
+
+INLINE_OVERLOADABLE char4 clamp (char4 param0, char4 param1, char4 param2)
+{return (char4)(clamp(param0.s0, param1.s0, param2.s0), clamp(param0.s1, param1.s1, param2.s1),
+                clamp(param0.s2, param1.s2, param2.s2), clamp(param0.s3, param1.s3, param2.s3)); }
+
+INLINE_OVERLOADABLE char8 clamp (char8 param0, char8 param1, char8 param2)
+{return (char8)(clamp(param0.s0, param1.s0, param2.s0), clamp(param0.s1, param1.s1, param2.s1),
+                clamp(param0.s2, param1.s2, param2.s2), clamp(param0.s3, param1.s3, param2.s3),
+                clamp(param0.s4, param1.s4, param2.s4), clamp(param0.s5, param1.s5, param2.s5),
+                clamp(param0.s6, param1.s6, param2.s6), clamp(param0.s7, param1.s7, param2.s7)); }
+
+INLINE_OVERLOADABLE char16 clamp (char16 param0, char16 param1, char16 param2)
+{return (char16)(clamp(param0.s0,  param1.s0,  param2.s0),  clamp(param0.s1,  param1.s1,  param2.s1),
+                 clamp(param0.s2,  param1.s2,  param2.s2),  clamp(param0.s3,  param1.s3,  param2.s3),
+                 clamp(param0.s4,  param1.s4,  param2.s4),  clamp(param0.s5,  param1.s5,  param2.s5),
+                 clamp(param0.s6,  param1.s6,  param2.s6),  clamp(param0.s7,  param1.s7,  param2.s7),
+                 clamp(param0.s8,  param1.s8,  param2.s8),  clamp(param0.s9,  param1.s9,  param2.s9),
+                 clamp(param0.sa, param1.sa, param2.sa), clamp(param0.sb, param1.sb, param2.sb),
+                 clamp(param0.sc, param1.sc, param2.sc), clamp(param0.sd, param1.sd, param2.sd),
+                 clamp(param0.se, param1.se, param2.se), clamp(param0.sf, param1.sf, param2.sf)); }
+
+INLINE_OVERLOADABLE short2 clamp (short2 param0, short2 param1, short2 param2)
+{return (short2)(clamp(param0.s0, param1.s0, param2.s0), clamp(param0.s1, param1.s1, param2.s1)); }
+
+INLINE_OVERLOADABLE short3 clamp (short3 param0, short3 param1, short3 param2)
+{return (short3)(clamp(param0.s0, param1.s0, param2.s0), clamp(param0.s1, param1.s1, param2.s1),
+                 clamp(param0.s2, param1.s2, param2.s2)); }
+
+INLINE_OVERLOADABLE short4 clamp (short4 param0, short4 param1, short4 param2)
+{return (short4)(clamp(param0.s0, param1.s0, param2.s0), clamp(param0.s1, param1.s1, param2.s1),
+                 clamp(param0.s2, param1.s2, param2.s2), clamp(param0.s3, param1.s3, param2.s3)); }
+
+INLINE_OVERLOADABLE short8 clamp (short8 param0, short8 param1, short8 param2)
+{return (short8)(clamp(param0.s0, param1.s0, param2.s0), clamp(param0.s1, param1.s1, param2.s1),
+                 clamp(param0.s2, param1.s2, param2.s2), clamp(param0.s3, param1.s3, param2.s3),
+                 clamp(param0.s4, param1.s4, param2.s4), clamp(param0.s5, param1.s5, param2.s5),
+                 clamp(param0.s6, param1.s6, param2.s6), clamp(param0.s7, param1.s7, param2.s7)); }
+
+INLINE_OVERLOADABLE short16 clamp (short16 param0, short16 param1, short16 param2)
+{return (short16)(clamp(param0.s0,  param1.s0,  param2.s0),  clamp(param0.s1,  param1.s1,  param2.s1),
+                  clamp(param0.s2,  param1.s2,  param2.s2),  clamp(param0.s3,  param1.s3,  param2.s3),
+                  clamp(param0.s4,  param1.s4,  param2.s4),  clamp(param0.s5,  param1.s5,  param2.s5),
+                  clamp(param0.s6,  param1.s6,  param2.s6),  clamp(param0.s7,  param1.s7,  param2.s7),
+                  clamp(param0.s8,  param1.s8,  param2.s8),  clamp(param0.s9,  param1.s9,  param2.s9),
+                  clamp(param0.sa, param1.sa, param2.sa), clamp(param0.sb, param1.sb, param2.sb),
+                  clamp(param0.sc, param1.sc, param2.sc), clamp(param0.sd, param1.sd, param2.sd),
+                  clamp(param0.se, param1.se, param2.se), clamp(param0.sf, param1.sf, param2.sf)); }
+
+INLINE_OVERLOADABLE int2 clamp (int2 param0, int2 param1, int2 param2)
+{return (int2)(clamp(param0.s0, param1.s0, param2.s0), clamp(param0.s1, param1.s1, param2.s1)); }
+
+INLINE_OVERLOADABLE int3 clamp (int3 param0, int3 param1, int3 param2)
+{return (int3)(clamp(param0.s0, param1.s0, param2.s0), clamp(param0.s1, param1.s1, param2.s1),
+               clamp(param0.s2, param1.s2, param2.s2)); }
+
+INLINE_OVERLOADABLE int4 clamp (int4 param0, int4 param1, int4 param2)
+{return (int4)(clamp(param0.s0, param1.s0, param2.s0), clamp(param0.s1, param1.s1, param2.s1),
+               clamp(param0.s2, param1.s2, param2.s2), clamp(param0.s3, param1.s3, param2.s3)); }
+
+INLINE_OVERLOADABLE int8 clamp (int8 param0, int8 param1, int8 param2)
+{return (int8)(clamp(param0.s0, param1.s0, param2.s0), clamp(param0.s1, param1.s1, param2.s1),
+               clamp(param0.s2, param1.s2, param2.s2), clamp(param0.s3, param1.s3, param2.s3),
+               clamp(param0.s4, param1.s4, param2.s4), clamp(param0.s5, param1.s5, param2.s5),
+               clamp(param0.s6, param1.s6, param2.s6), clamp(param0.s7, param1.s7, param2.s7)); }
+
+INLINE_OVERLOADABLE int16 clamp (int16 param0, int16 param1, int16 param2)
+{return (int16)(clamp(param0.s0,  param1.s0,  param2.s0),  clamp(param0.s1,  param1.s1,  param2.s1),
+                clamp(param0.s2,  param1.s2,  param2.s2),  clamp(param0.s3,  param1.s3,  param2.s3),
+                clamp(param0.s4,  param1.s4,  param2.s4),  clamp(param0.s5,  param1.s5,  param2.s5),
+                clamp(param0.s6,  param1.s6,  param2.s6),  clamp(param0.s7,  param1.s7,  param2.s7),
+                clamp(param0.s8,  param1.s8,  param2.s8),  clamp(param0.s9,  param1.s9,  param2.s9),
+                clamp(param0.sa, param1.sa, param2.sa), clamp(param0.sb, param1.sb, param2.sb),
+                clamp(param0.sc, param1.sc, param2.sc), clamp(param0.sd, param1.sd, param2.sd),
+                clamp(param0.se, param1.se, param2.se), clamp(param0.sf, param1.sf, param2.sf)); }
+
+INLINE_OVERLOADABLE uchar2 clamp (uchar2 param0, uchar2 param1, uchar2 param2)
+{return (uchar2)(clamp(param0.s0, param1.s0, param2.s0), clamp(param0.s1, param1.s1, param2.s1)); }
+
+INLINE_OVERLOADABLE uchar3 clamp (uchar3 param0, uchar3 param1, uchar3 param2)
+{return (uchar3)(clamp(param0.s0, param1.s0, param2.s0), clamp(param0.s1, param1.s1, param2.s1),
+                 clamp(param0.s2, param1.s2, param2.s2)); }
+
+INLINE_OVERLOADABLE uchar4 clamp (uchar4 param0, uchar4 param1, uchar4 param2)
+{return (uchar4)(clamp(param0.s0, param1.s0, param2.s0), clamp(param0.s1, param1.s1, param2.s1),
+                 clamp(param0.s2, param1.s2, param2.s2), clamp(param0.s3, param1.s3, param2.s3)); }
+
+INLINE_OVERLOADABLE uchar8 clamp (uchar8 param0, uchar8 param1, uchar8 param2)
+{return (uchar8)(clamp(param0.s0, param1.s0, param2.s0), clamp(param0.s1, param1.s1, param2.s1),
+                 clamp(param0.s2, param1.s2, param2.s2), clamp(param0.s3, param1.s3, param2.s3),
+                 clamp(param0.s4, param1.s4, param2.s4), clamp(param0.s5, param1.s5, param2.s5),
+                 clamp(param0.s6, param1.s6, param2.s6), clamp(param0.s7, param1.s7, param2.s7)); }
+
+INLINE_OVERLOADABLE uchar16 clamp (uchar16 param0, uchar16 param1, uchar16 param2)
+{return (uchar16)(clamp(param0.s0,  param1.s0,  param2.s0),  clamp(param0.s1,  param1.s1,  param2.s1),
+                  clamp(param0.s2,  param1.s2,  param2.s2),  clamp(param0.s3,  param1.s3,  param2.s3),
+                  clamp(param0.s4,  param1.s4,  param2.s4),  clamp(param0.s5,  param1.s5,  param2.s5),
+                  clamp(param0.s6,  param1.s6,  param2.s6),  clamp(param0.s7,  param1.s7,  param2.s7),
+                  clamp(param0.s8,  param1.s8,  param2.s8),  clamp(param0.s9,  param1.s9,  param2.s9),
+                  clamp(param0.sa, param1.sa, param2.sa), clamp(param0.sb, param1.sb, param2.sb),
+                  clamp(param0.sc, param1.sc, param2.sc), clamp(param0.sd, param1.sd, param2.sd),
+                  clamp(param0.se, param1.se, param2.se), clamp(param0.sf, param1.sf, param2.sf)); }
+
+INLINE_OVERLOADABLE ushort2 clamp (ushort2 param0, ushort2 param1, ushort2 param2)
+{return (ushort2)(clamp(param0.s0, param1.s0, param2.s0), clamp(param0.s1, param1.s1, param2.s1)); }
+
+INLINE_OVERLOADABLE ushort3 clamp (ushort3 param0, ushort3 param1, ushort3 param2)
+{return (ushort3)(clamp(param0.s0, param1.s0, param2.s0), clamp(param0.s1, param1.s1, param2.s1),
+                  clamp(param0.s2, param1.s2, param2.s2)); }
+
+INLINE_OVERLOADABLE ushort4 clamp (ushort4 param0, ushort4 param1, ushort4 param2)
+{return (ushort4)(clamp(param0.s0, param1.s0, param2.s0), clamp(param0.s1, param1.s1, param2.s1),
+                  clamp(param0.s2, param1.s2, param2.s2), clamp(param0.s3, param1.s3, param2.s3)); }
+
+INLINE_OVERLOADABLE ushort8 clamp (ushort8 param0, ushort8 param1, ushort8 param2)
+{return (ushort8)(clamp(param0.s0, param1.s0, param2.s0), clamp(param0.s1, param1.s1, param2.s1),
+                  clamp(param0.s2, param1.s2, param2.s2), clamp(param0.s3, param1.s3, param2.s3),
+                  clamp(param0.s4, param1.s4, param2.s4), clamp(param0.s5, param1.s5, param2.s5),
+                  clamp(param0.s6, param1.s6, param2.s6), clamp(param0.s7, param1.s7, param2.s7)); }
+
+INLINE_OVERLOADABLE ushort16 clamp (ushort16 param0, ushort16 param1, ushort16 param2)
+{return (ushort16)(clamp(param0.s0,  param1.s0,  param2.s0),  clamp(param0.s1,  param1.s1,  param2.s1),
+                   clamp(param0.s2,  param1.s2,  param2.s2),  clamp(param0.s3,  param1.s3,  param2.s3),
+                   clamp(param0.s4,  param1.s4,  param2.s4),  clamp(param0.s5,  param1.s5,  param2.s5),
+                   clamp(param0.s6,  param1.s6,  param2.s6),  clamp(param0.s7,  param1.s7,  param2.s7),
+                   clamp(param0.s8,  param1.s8,  param2.s8),  clamp(param0.s9,  param1.s9,  param2.s9),
+                   clamp(param0.sa, param1.sa, param2.sa), clamp(param0.sb, param1.sb, param2.sb),
+                   clamp(param0.sc, param1.sc, param2.sc), clamp(param0.sd, param1.sd, param2.sd),
+                   clamp(param0.se, param1.se, param2.se), clamp(param0.sf, param1.sf, param2.sf)); }
+
+INLINE_OVERLOADABLE uint2 clamp (uint2 param0, uint2 param1, uint2 param2)
+{return (uint2)(clamp(param0.s0, param1.s0, param2.s0), clamp(param0.s1, param1.s1, param2.s1)); }
+
+INLINE_OVERLOADABLE uint3 clamp (uint3 param0, uint3 param1, uint3 param2)
+{return (uint3)(clamp(param0.s0, param1.s0, param2.s0), clamp(param0.s1, param1.s1, param2.s1),
+                clamp(param0.s2, param1.s2, param2.s2)); }
+
+INLINE_OVERLOADABLE uint4 clamp (uint4 param0, uint4 param1, uint4 param2)
+{return (uint4)(clamp(param0.s0, param1.s0, param2.s0), clamp(param0.s1, param1.s1, param2.s1),
+                clamp(param0.s2, param1.s2, param2.s2), clamp(param0.s3, param1.s3, param2.s3)); }
+
+INLINE_OVERLOADABLE uint8 clamp (uint8 param0, uint8 param1, uint8 param2)
+{return (uint8)(clamp(param0.s0, param1.s0, param2.s0), clamp(param0.s1, param1.s1, param2.s1),
+                clamp(param0.s2, param1.s2, param2.s2), clamp(param0.s3, param1.s3, param2.s3),
+                clamp(param0.s4, param1.s4, param2.s4), clamp(param0.s5, param1.s5, param2.s5),
+                clamp(param0.s6, param1.s6, param2.s6), clamp(param0.s7, param1.s7, param2.s7)); }
+
+INLINE_OVERLOADABLE uint16 clamp (uint16 param0, uint16 param1, uint16 param2)
+{return (uint16)(clamp(param0.s0,  param1.s0,  param2.s0),  clamp(param0.s1,  param1.s1,  param2.s1),
+                 clamp(param0.s2,  param1.s2,  param2.s2),  clamp(param0.s3,  param1.s3,  param2.s3),
+                 clamp(param0.s4,  param1.s4,  param2.s4),  clamp(param0.s5,  param1.s5,  param2.s5),
+                 clamp(param0.s6,  param1.s6,  param2.s6),  clamp(param0.s7,  param1.s7,  param2.s7),
+                 clamp(param0.s8,  param1.s8,  param2.s8),  clamp(param0.s9,  param1.s9,  param2.s9),
+                 clamp(param0.sa, param1.sa, param2.sa), clamp(param0.sb, param1.sb, param2.sb),
+                 clamp(param0.sc, param1.sc, param2.sc), clamp(param0.sd, param1.sd, param2.sd),
+                 clamp(param0.se, param1.se, param2.se), clamp(param0.sf, param1.sf, param2.sf)); }
+
+
+//gentype clamp (gentype x, sgentype minval, sgentype maxval)
+
+INLINE_OVERLOADABLE char2 clamp (char2 param0, char param1, char param2)
+{return (char2)(clamp(param0.s0, param1, param2), clamp(param0.s1, param1, param2)); }
+
+INLINE_OVERLOADABLE char3 clamp (char3 param0, char param1, char param2)
+{return (char3)(clamp(param0.s0, param1, param2), clamp(param0.s1, param1, param2),
+                clamp(param0.s2, param1, param2)); }
+
+INLINE_OVERLOADABLE char4 clamp (char4 param0, char param1, char param2)
+{return (char4)(clamp(param0.s0, param1, param2), clamp(param0.s1, param1, param2),
+                clamp(param0.s2, param1, param2), clamp(param0.s3, param1, param2)); }
+
+INLINE_OVERLOADABLE char8 clamp (char8 param0, char param1, char param2)
+{return (char8)(clamp(param0.s0, param1, param2), clamp(param0.s1, param1, param2),
+                clamp(param0.s2, param1, param2), clamp(param0.s3, param1, param2),
+                clamp(param0.s4, param1, param2), clamp(param0.s5, param1, param2),
+                clamp(param0.s6, param1, param2), clamp(param0.s7, param1, param2)); }
+
+INLINE_OVERLOADABLE char16 clamp (char16 param0, char param1, char param2)
+{return (char16)(clamp(param0.s0,  param1,  param2),  clamp(param0.s1,  param1,  param2),
+                 clamp(param0.s2,  param1,  param2),  clamp(param0.s3,  param1,  param2),
+                 clamp(param0.s4,  param1,  param2),  clamp(param0.s5,  param1,  param2),
+                 clamp(param0.s6,  param1,  param2),  clamp(param0.s7,  param1,  param2),
+                 clamp(param0.s8,  param1,  param2),  clamp(param0.s9,  param1,  param2),
+                 clamp(param0.sa, param1, param2), clamp(param0.sb, param1, param2),
+                 clamp(param0.sc, param1, param2), clamp(param0.sd, param1, param2),
+                 clamp(param0.se, param1, param2), clamp(param0.sf, param1, param2)); }
+
+INLINE_OVERLOADABLE short2 clamp (short2 param0, short param1, short param2)
+{return (short2)(clamp(param0.s0, param1, param2), clamp(param0.s1, param1, param2)); }
+
+INLINE_OVERLOADABLE short3 clamp (short3 param0, short param1, short param2)
+{return (short3)(clamp(param0.s0, param1, param2), clamp(param0.s1, param1, param2),
+                 clamp(param0.s2, param1, param2)); }
+
+INLINE_OVERLOADABLE short4 clamp (short4 param0, short param1, short param2)
+{return (short4)(clamp(param0.s0, param1, param2), clamp(param0.s1, param1, param2),
+                 clamp(param0.s2, param1, param2), clamp(param0.s3, param1, param2)); }
+
+INLINE_OVERLOADABLE short8 clamp (short8 param0, short param1, short param2)
+{return (short8)(clamp(param0.s0, param1, param2), clamp(param0.s1, param1, param2),
+                 clamp(param0.s2, param1, param2), clamp(param0.s3, param1, param2),
+                 clamp(param0.s4, param1, param2), clamp(param0.s5, param1, param2),
+                 clamp(param0.s6, param1, param2), clamp(param0.s7, param1, param2)); }
+
+INLINE_OVERLOADABLE short16 clamp (short16 param0, short param1, short param2)
+{return (short16)(clamp(param0.s0,  param1,  param2),  clamp(param0.s1,  param1,  param2),
+                  clamp(param0.s2,  param1,  param2),  clamp(param0.s3,  param1,  param2),
+                  clamp(param0.s4,  param1,  param2),  clamp(param0.s5,  param1,  param2),
+                  clamp(param0.s6,  param1,  param2),  clamp(param0.s7,  param1,  param2),
+                  clamp(param0.s8,  param1,  param2),  clamp(param0.s9,  param1,  param2),
+                  clamp(param0.sa, param1, param2), clamp(param0.sb, param1, param2),
+                  clamp(param0.sc, param1, param2), clamp(param0.sd, param1, param2),
+                  clamp(param0.se, param1, param2), clamp(param0.sf, param1, param2)); }
+
+INLINE_OVERLOADABLE int2 clamp (int2 param0, int param1, int param2)
+{return (int2)(clamp(param0.s0, param1, param2), clamp(param0.s1, param1, param2)); }
+
+INLINE_OVERLOADABLE int3 clamp (int3 param0, int param1, int param2)
+{return (int3)(clamp(param0.s0, param1, param2), clamp(param0.s1, param1, param2),
+               clamp(param0.s2, param1, param2)); }
+
+INLINE_OVERLOADABLE int4 clamp (int4 param0, int param1, int param2)
+{return (int4)(clamp(param0.s0, param1, param2), clamp(param0.s1, param1, param2),
+               clamp(param0.s2, param1, param2), clamp(param0.s3, param1, param2)); }
+
+INLINE_OVERLOADABLE int8 clamp (int8 param0, int param1, int param2)
+{return (int8)(clamp(param0.s0, param1, param2), clamp(param0.s1, param1, param2),
+               clamp(param0.s2, param1, param2), clamp(param0.s3, param1, param2),
+               clamp(param0.s4, param1, param2), clamp(param0.s5, param1, param2),
+               clamp(param0.s6, param1, param2), clamp(param0.s7, param1, param2)); }
+
+INLINE_OVERLOADABLE int16 clamp (int16 param0, int param1, int param2)
+{return (int16)(clamp(param0.s0,  param1,  param2),  clamp(param0.s1,  param1,  param2),
+                clamp(param0.s2,  param1,  param2),  clamp(param0.s3,  param1,  param2),
+                clamp(param0.s4,  param1,  param2),  clamp(param0.s5,  param1,  param2),
+                clamp(param0.s6,  param1,  param2),  clamp(param0.s7,  param1,  param2),
+                clamp(param0.s8,  param1,  param2),  clamp(param0.s9,  param1,  param2),
+                clamp(param0.sa, param1, param2), clamp(param0.sb, param1, param2),
+                clamp(param0.sc, param1, param2), clamp(param0.sd, param1, param2),
+                clamp(param0.se, param1, param2), clamp(param0.sf, param1, param2)); }
+
+INLINE_OVERLOADABLE uchar2 clamp (uchar2 param0, uchar param1, uchar param2)
+{return (uchar2)(clamp(param0.s0, param1, param2), clamp(param0.s1, param1, param2)); }
+
+INLINE_OVERLOADABLE uchar3 clamp (uchar3 param0, uchar param1, uchar param2)
+{return (uchar3)(clamp(param0.s0, param1, param2), clamp(param0.s1, param1, param2),
+                 clamp(param0.s2, param1, param2)); }
+
+INLINE_OVERLOADABLE uchar4 clamp (uchar4 param0, uchar param1, uchar param2)
+{return (uchar4)(clamp(param0.s0, param1, param2), clamp(param0.s1, param1, param2),
+                 clamp(param0.s2, param1, param2), clamp(param0.s3, param1, param2)); }
+
+INLINE_OVERLOADABLE uchar8 clamp (uchar8 param0, uchar param1, uchar param2)
+{return (uchar8)(clamp(param0.s0, param1, param2), clamp(param0.s1, param1, param2),
+                 clamp(param0.s2, param1, param2), clamp(param0.s3, param1, param2),
+                 clamp(param0.s4, param1, param2), clamp(param0.s5, param1, param2),
+                 clamp(param0.s6, param1, param2), clamp(param0.s7, param1, param2)); }
+
+INLINE_OVERLOADABLE uchar16 clamp (uchar16 param0, uchar param1, uchar param2)
+{return (uchar16)(clamp(param0.s0,  param1,  param2),  clamp(param0.s1,  param1,  param2),
+                  clamp(param0.s2,  param1,  param2),  clamp(param0.s3,  param1,  param2),
+                  clamp(param0.s4,  param1,  param2),  clamp(param0.s5,  param1,  param2),
+                  clamp(param0.s6,  param1,  param2),  clamp(param0.s7,  param1,  param2),
+                  clamp(param0.s8,  param1,  param2),  clamp(param0.s9,  param1,  param2),
+                  clamp(param0.sa, param1, param2), clamp(param0.sb, param1, param2),
+                  clamp(param0.sc, param1, param2), clamp(param0.sd, param1, param2),
+                  clamp(param0.se, param1, param2), clamp(param0.sf, param1, param2)); }
+
+INLINE_OVERLOADABLE ushort2 clamp (ushort2 param0, ushort param1, ushort param2)
+{return (ushort2)(clamp(param0.s0, param1, param2), clamp(param0.s1, param1, param2)); }
+
+INLINE_OVERLOADABLE ushort3 clamp (ushort3 param0, ushort param1, ushort param2)
+{return (ushort3)(clamp(param0.s0, param1, param2), clamp(param0.s1, param1, param2),
+                  clamp(param0.s2, param1, param2)); }
+
+INLINE_OVERLOADABLE ushort4 clamp (ushort4 param0, ushort param1, ushort param2)
+{return (ushort4)(clamp(param0.s0, param1, param2), clamp(param0.s1, param1, param2),
+                  clamp(param0.s2, param1, param2), clamp(param0.s3, param1, param2)); }
+
+INLINE_OVERLOADABLE ushort8 clamp (ushort8 param0, ushort param1, ushort param2)
+{return (ushort8)(clamp(param0.s0, param1, param2), clamp(param0.s1, param1, param2),
+                  clamp(param0.s2, param1, param2), clamp(param0.s3, param1, param2),
+                  clamp(param0.s4, param1, param2), clamp(param0.s5, param1, param2),
+                  clamp(param0.s6, param1, param2), clamp(param0.s7, param1, param2)); }
+
+INLINE_OVERLOADABLE ushort16 clamp (ushort16 param0, ushort param1, ushort param2)
+{return (ushort16)(clamp(param0.s0,  param1,  param2),  clamp(param0.s1,  param1,  param2),
+                   clamp(param0.s2,  param1,  param2),  clamp(param0.s3,  param1,  param2),
+                   clamp(param0.s4,  param1,  param2),  clamp(param0.s5,  param1,  param2),
+                   clamp(param0.s6,  param1,  param2),  clamp(param0.s7,  param1,  param2),
+                   clamp(param0.s8,  param1,  param2),  clamp(param0.s9,  param1,  param2),
+                   clamp(param0.sa, param1, param2), clamp(param0.sb, param1, param2),
+                   clamp(param0.sc, param1, param2), clamp(param0.sd, param1, param2),
+                   clamp(param0.se, param1, param2), clamp(param0.sf, param1, param2)); }
+
+INLINE_OVERLOADABLE uint2 clamp (uint2 param0, uint param1, uint param2)
+{return (uint2)(clamp(param0.s0, param1, param2), clamp(param0.s1, param1, param2)); }
+
+INLINE_OVERLOADABLE uint3 clamp (uint3 param0, uint param1, uint param2)
+{return (uint3)(clamp(param0.s0, param1, param2), clamp(param0.s1, param1, param2),
+                clamp(param0.s2, param1, param2)); }
+
+INLINE_OVERLOADABLE uint4 clamp (uint4 param0, uint param1, uint param2)
+{return (uint4)(clamp(param0.s0, param1, param2), clamp(param0.s1, param1, param2),
+                clamp(param0.s2, param1, param2), clamp(param0.s3, param1, param2)); }
+
+INLINE_OVERLOADABLE uint8 clamp (uint8 param0, uint param1, uint param2)
+{return (uint8)(clamp(param0.s0, param1, param2), clamp(param0.s1, param1, param2),
+                clamp(param0.s2, param1, param2), clamp(param0.s3, param1, param2),
+                clamp(param0.s4, param1, param2), clamp(param0.s5, param1, param2),
+                clamp(param0.s6, param1, param2), clamp(param0.s7, param1, param2)); }
+
+INLINE_OVERLOADABLE uint16 clamp (uint16 param0, uint param1, uint param2)
+{return (uint16)(clamp(param0.s0,  param1,  param2),  clamp(param0.s1,  param1,  param2),
+                 clamp(param0.s2,  param1,  param2),  clamp(param0.s3,  param1,  param2),
+                 clamp(param0.s4,  param1,  param2),  clamp(param0.s5,  param1,  param2),
+                 clamp(param0.s6,  param1,  param2),  clamp(param0.s7,  param1,  param2),
+                 clamp(param0.s8,  param1,  param2),  clamp(param0.s9,  param1,  param2),
+                 clamp(param0.sa, param1, param2), clamp(param0.sb, param1, param2),
+                 clamp(param0.sc, param1, param2), clamp(param0.sd, param1, param2),
+                 clamp(param0.se, param1, param2), clamp(param0.sf, param1, param2)); }
+
+
+//gentype clz (gentype x)
+
+INLINE_OVERLOADABLE char2 clz (char2 param0)
+{return (char2)(clz(param0.s0), clz(param0.s1)); }
+
+INLINE_OVERLOADABLE char3 clz (char3 param0)
+{return (char3)(clz(param0.s0), clz(param0.s1),
+                clz(param0.s2)); }
+
+INLINE_OVERLOADABLE char4 clz (char4 param0)
+{return (char4)(clz(param0.s0), clz(param0.s1),
+                clz(param0.s2), clz(param0.s3)); }
+
+INLINE_OVERLOADABLE char8 clz (char8 param0)
+{return (char8)(clz(param0.s0), clz(param0.s1),
+                clz(param0.s2), clz(param0.s3),
+                clz(param0.s4), clz(param0.s5),
+                clz(param0.s6), clz(param0.s7)); }
+
+INLINE_OVERLOADABLE char16 clz (char16 param0)
+{return (char16)(clz(param0.s0),  clz(param0.s1),
+                 clz(param0.s2),  clz(param0.s3),
+                 clz(param0.s4),  clz(param0.s5),
+                 clz(param0.s6),  clz(param0.s7),
+                 clz(param0.s8),  clz(param0.s9),
+                 clz(param0.sa), clz(param0.sb),
+                 clz(param0.sc), clz(param0.sd),
+                 clz(param0.se), clz(param0.sf)); }
+
+INLINE_OVERLOADABLE short2 clz (short2 param0)
+{return (short2)(clz(param0.s0), clz(param0.s1)); }
+
+INLINE_OVERLOADABLE short3 clz (short3 param0)
+{return (short3)(clz(param0.s0), clz(param0.s1),
+                 clz(param0.s2)); }
+
+INLINE_OVERLOADABLE short4 clz (short4 param0)
+{return (short4)(clz(param0.s0), clz(param0.s1),
+                 clz(param0.s2), clz(param0.s3)); }
+
+INLINE_OVERLOADABLE short8 clz (short8 param0)
+{return (short8)(clz(param0.s0), clz(param0.s1),
+                 clz(param0.s2), clz(param0.s3),
+                 clz(param0.s4), clz(param0.s5),
+                 clz(param0.s6), clz(param0.s7)); }
+
+INLINE_OVERLOADABLE short16 clz (short16 param0)
+{return (short16)(clz(param0.s0),  clz(param0.s1),
+                  clz(param0.s2),  clz(param0.s3),
+                  clz(param0.s4),  clz(param0.s5),
+                  clz(param0.s6),  clz(param0.s7),
+                  clz(param0.s8),  clz(param0.s9),
+                  clz(param0.sa), clz(param0.sb),
+                  clz(param0.sc), clz(param0.sd),
+                  clz(param0.se), clz(param0.sf)); }
+
+INLINE_OVERLOADABLE int2 clz (int2 param0)
+{return (int2)(clz(param0.s0), clz(param0.s1)); }
+
+INLINE_OVERLOADABLE int3 clz (int3 param0)
+{return (int3)(clz(param0.s0), clz(param0.s1),
+               clz(param0.s2)); }
+
+INLINE_OVERLOADABLE int4 clz (int4 param0)
+{return (int4)(clz(param0.s0), clz(param0.s1),
+               clz(param0.s2), clz(param0.s3)); }
+
+INLINE_OVERLOADABLE int8 clz (int8 param0)
+{return (int8)(clz(param0.s0), clz(param0.s1),
+               clz(param0.s2), clz(param0.s3),
+               clz(param0.s4), clz(param0.s5),
+               clz(param0.s6), clz(param0.s7)); }
+
+INLINE_OVERLOADABLE int16 clz (int16 param0)
+{return (int16)(clz(param0.s0),  clz(param0.s1),
+                clz(param0.s2),  clz(param0.s3),
+                clz(param0.s4),  clz(param0.s5),
+                clz(param0.s6),  clz(param0.s7),
+                clz(param0.s8),  clz(param0.s9),
+                clz(param0.sa), clz(param0.sb),
+                clz(param0.sc), clz(param0.sd),
+                clz(param0.se), clz(param0.sf)); }
+
+INLINE_OVERLOADABLE uchar2 clz (uchar2 param0)
+{return (uchar2)(clz(param0.s0), clz(param0.s1)); }
+
+INLINE_OVERLOADABLE uchar3 clz (uchar3 param0)
+{return (uchar3)(clz(param0.s0), clz(param0.s1),
+                 clz(param0.s2)); }
+
+INLINE_OVERLOADABLE uchar4 clz (uchar4 param0)
+{return (uchar4)(clz(param0.s0), clz(param0.s1),
+                 clz(param0.s2), clz(param0.s3)); }
+
+INLINE_OVERLOADABLE uchar8 clz (uchar8 param0)
+{return (uchar8)(clz(param0.s0), clz(param0.s1),
+                 clz(param0.s2), clz(param0.s3),
+                 clz(param0.s4), clz(param0.s5),
+                 clz(param0.s6), clz(param0.s7)); }
+
+INLINE_OVERLOADABLE uchar16 clz (uchar16 param0)
+{return (uchar16)(clz(param0.s0),  clz(param0.s1),
+                  clz(param0.s2),  clz(param0.s3),
+                  clz(param0.s4),  clz(param0.s5),
+                  clz(param0.s6),  clz(param0.s7),
+                  clz(param0.s8),  clz(param0.s9),
+                  clz(param0.sa), clz(param0.sb),
+                  clz(param0.sc), clz(param0.sd),
+                  clz(param0.se), clz(param0.sf)); }
+
+INLINE_OVERLOADABLE ushort2 clz (ushort2 param0)
+{return (ushort2)(clz(param0.s0), clz(param0.s1)); }
+
+INLINE_OVERLOADABLE ushort3 clz (ushort3 param0)
+{return (ushort3)(clz(param0.s0), clz(param0.s1),
+                  clz(param0.s2)); }
+
+INLINE_OVERLOADABLE ushort4 clz (ushort4 param0)
+{return (ushort4)(clz(param0.s0), clz(param0.s1),
+                  clz(param0.s2), clz(param0.s3)); }
+
+INLINE_OVERLOADABLE ushort8 clz (ushort8 param0)
+{return (ushort8)(clz(param0.s0), clz(param0.s1),
+                  clz(param0.s2), clz(param0.s3),
+                  clz(param0.s4), clz(param0.s5),
+                  clz(param0.s6), clz(param0.s7)); }
+
+INLINE_OVERLOADABLE ushort16 clz (ushort16 param0)
+{return (ushort16)(clz(param0.s0),  clz(param0.s1),
+                   clz(param0.s2),  clz(param0.s3),
+                   clz(param0.s4),  clz(param0.s5),
+                   clz(param0.s6),  clz(param0.s7),
+                   clz(param0.s8),  clz(param0.s9),
+                   clz(param0.sa), clz(param0.sb),
+                   clz(param0.sc), clz(param0.sd),
+                   clz(param0.se), clz(param0.sf)); }
+
+INLINE_OVERLOADABLE uint2 clz (uint2 param0)
+{return (uint2)(clz(param0.s0), clz(param0.s1)); }
+
+INLINE_OVERLOADABLE uint3 clz (uint3 param0)
+{return (uint3)(clz(param0.s0), clz(param0.s1),
+                clz(param0.s2)); }
+
+INLINE_OVERLOADABLE uint4 clz (uint4 param0)
+{return (uint4)(clz(param0.s0), clz(param0.s1),
+                clz(param0.s2), clz(param0.s3)); }
+
+INLINE_OVERLOADABLE uint8 clz (uint8 param0)
+{return (uint8)(clz(param0.s0), clz(param0.s1),
+                clz(param0.s2), clz(param0.s3),
+                clz(param0.s4), clz(param0.s5),
+                clz(param0.s6), clz(param0.s7)); }
+
+INLINE_OVERLOADABLE uint16 clz (uint16 param0)
+{return (uint16)(clz(param0.s0),  clz(param0.s1),
+                 clz(param0.s2),  clz(param0.s3),
+                 clz(param0.s4),  clz(param0.s5),
+                 clz(param0.s6),  clz(param0.s7),
+                 clz(param0.s8),  clz(param0.s9),
+                 clz(param0.sa), clz(param0.sb),
+                 clz(param0.sc), clz(param0.sd),
+                 clz(param0.se), clz(param0.sf)); }
+
+
+//gentype mad_hi (gentype a, gentype b, gentype c)
+
+INLINE_OVERLOADABLE char2 mad_hi (char2 param0, char2 param1, char2 param2)
+{return (char2)(mad_hi(param0.s0, param1.s0, param2.s0), mad_hi(param0.s1, param1.s1, param2.s1)); }
+
+INLINE_OVERLOADABLE char3 mad_hi (char3 param0, char3 param1, char3 param2)
+{return (char3)(mad_hi(param0.s0, param1.s0, param2.s0), mad_hi(param0.s1, param1.s1, param2.s1),
+                mad_hi(param0.s2, param1.s2, param2.s2)); }
+
+INLINE_OVERLOADABLE char4 mad_hi (char4 param0, char4 param1, char4 param2)
+{return (char4)(mad_hi(param0.s0, param1.s0, param2.s0), mad_hi(param0.s1, param1.s1, param2.s1),
+                mad_hi(param0.s2, param1.s2, param2.s2), mad_hi(param0.s3, param1.s3, param2.s3)); }
+
+INLINE_OVERLOADABLE char8 mad_hi (char8 param0, char8 param1, char8 param2)
+{return (char8)(mad_hi(param0.s0, param1.s0, param2.s0), mad_hi(param0.s1, param1.s1, param2.s1),
+                mad_hi(param0.s2, param1.s2, param2.s2), mad_hi(param0.s3, param1.s3, param2.s3),
+                mad_hi(param0.s4, param1.s4, param2.s4), mad_hi(param0.s5, param1.s5, param2.s5),
+                mad_hi(param0.s6, param1.s6, param2.s6), mad_hi(param0.s7, param1.s7, param2.s7)); }
+
+INLINE_OVERLOADABLE char16 mad_hi (char16 param0, char16 param1, char16 param2)
+{return (char16)(mad_hi(param0.s0,  param1.s0,  param2.s0),  mad_hi(param0.s1,  param1.s1,  param2.s1),
+                 mad_hi(param0.s2,  param1.s2,  param2.s2),  mad_hi(param0.s3,  param1.s3,  param2.s3),
+                 mad_hi(param0.s4,  param1.s4,  param2.s4),  mad_hi(param0.s5,  param1.s5,  param2.s5),
+                 mad_hi(param0.s6,  param1.s6,  param2.s6),  mad_hi(param0.s7,  param1.s7,  param2.s7),
+                 mad_hi(param0.s8,  param1.s8,  param2.s8),  mad_hi(param0.s9,  param1.s9,  param2.s9),
+                 mad_hi(param0.sa, param1.sa, param2.sa), mad_hi(param0.sb, param1.sb, param2.sb),
+                 mad_hi(param0.sc, param1.sc, param2.sc), mad_hi(param0.sd, param1.sd, param2.sd),
+                 mad_hi(param0.se, param1.se, param2.se), mad_hi(param0.sf, param1.sf, param2.sf)); }
+
+INLINE_OVERLOADABLE short2 mad_hi (short2 param0, short2 param1, short2 param2)
+{return (short2)(mad_hi(param0.s0, param1.s0, param2.s0), mad_hi(param0.s1, param1.s1, param2.s1)); }
+
+INLINE_OVERLOADABLE short3 mad_hi (short3 param0, short3 param1, short3 param2)
+{return (short3)(mad_hi(param0.s0, param1.s0, param2.s0), mad_hi(param0.s1, param1.s1, param2.s1),
+                 mad_hi(param0.s2, param1.s2, param2.s2)); }
+
+INLINE_OVERLOADABLE short4 mad_hi (short4 param0, short4 param1, short4 param2)
+{return (short4)(mad_hi(param0.s0, param1.s0, param2.s0), mad_hi(param0.s1, param1.s1, param2.s1),
+                 mad_hi(param0.s2, param1.s2, param2.s2), mad_hi(param0.s3, param1.s3, param2.s3)); }
+
+INLINE_OVERLOADABLE short8 mad_hi (short8 param0, short8 param1, short8 param2)
+{return (short8)(mad_hi(param0.s0, param1.s0, param2.s0), mad_hi(param0.s1, param1.s1, param2.s1),
+                 mad_hi(param0.s2, param1.s2, param2.s2), mad_hi(param0.s3, param1.s3, param2.s3),
+                 mad_hi(param0.s4, param1.s4, param2.s4), mad_hi(param0.s5, param1.s5, param2.s5),
+                 mad_hi(param0.s6, param1.s6, param2.s6), mad_hi(param0.s7, param1.s7, param2.s7)); }
+
+INLINE_OVERLOADABLE short16 mad_hi (short16 param0, short16 param1, short16 param2)
+{return (short16)(mad_hi(param0.s0,  param1.s0,  param2.s0),  mad_hi(param0.s1,  param1.s1,  param2.s1),
+                  mad_hi(param0.s2,  param1.s2,  param2.s2),  mad_hi(param0.s3,  param1.s3,  param2.s3),
+                  mad_hi(param0.s4,  param1.s4,  param2.s4),  mad_hi(param0.s5,  param1.s5,  param2.s5),
+                  mad_hi(param0.s6,  param1.s6,  param2.s6),  mad_hi(param0.s7,  param1.s7,  param2.s7),
+                  mad_hi(param0.s8,  param1.s8,  param2.s8),  mad_hi(param0.s9,  param1.s9,  param2.s9),
+                  mad_hi(param0.sa, param1.sa, param2.sa), mad_hi(param0.sb, param1.sb, param2.sb),
+                  mad_hi(param0.sc, param1.sc, param2.sc), mad_hi(param0.sd, param1.sd, param2.sd),
+                  mad_hi(param0.se, param1.se, param2.se), mad_hi(param0.sf, param1.sf, param2.sf)); }
+
+INLINE_OVERLOADABLE int2 mad_hi (int2 param0, int2 param1, int2 param2)
+{return (int2)(mad_hi(param0.s0, param1.s0, param2.s0), mad_hi(param0.s1, param1.s1, param2.s1)); }
+
+INLINE_OVERLOADABLE int3 mad_hi (int3 param0, int3 param1, int3 param2)
+{return (int3)(mad_hi(param0.s0, param1.s0, param2.s0), mad_hi(param0.s1, param1.s1, param2.s1),
+               mad_hi(param0.s2, param1.s2, param2.s2)); }
+
+INLINE_OVERLOADABLE int4 mad_hi (int4 param0, int4 param1, int4 param2)
+{return (int4)(mad_hi(param0.s0, param1.s0, param2.s0), mad_hi(param0.s1, param1.s1, param2.s1),
+               mad_hi(param0.s2, param1.s2, param2.s2), mad_hi(param0.s3, param1.s3, param2.s3)); }
+
+INLINE_OVERLOADABLE int8 mad_hi (int8 param0, int8 param1, int8 param2)
+{return (int8)(mad_hi(param0.s0, param1.s0, param2.s0), mad_hi(param0.s1, param1.s1, param2.s1),
+               mad_hi(param0.s2, param1.s2, param2.s2), mad_hi(param0.s3, param1.s3, param2.s3),
+               mad_hi(param0.s4, param1.s4, param2.s4), mad_hi(param0.s5, param1.s5, param2.s5),
+               mad_hi(param0.s6, param1.s6, param2.s6), mad_hi(param0.s7, param1.s7, param2.s7)); }
+
+INLINE_OVERLOADABLE int16 mad_hi (int16 param0, int16 param1, int16 param2)
+{return (int16)(mad_hi(param0.s0,  param1.s0,  param2.s0),  mad_hi(param0.s1,  param1.s1,  param2.s1),
+                mad_hi(param0.s2,  param1.s2,  param2.s2),  mad_hi(param0.s3,  param1.s3,  param2.s3),
+                mad_hi(param0.s4,  param1.s4,  param2.s4),  mad_hi(param0.s5,  param1.s5,  param2.s5),
+                mad_hi(param0.s6,  param1.s6,  param2.s6),  mad_hi(param0.s7,  param1.s7,  param2.s7),
+                mad_hi(param0.s8,  param1.s8,  param2.s8),  mad_hi(param0.s9,  param1.s9,  param2.s9),
+                mad_hi(param0.sa, param1.sa, param2.sa), mad_hi(param0.sb, param1.sb, param2.sb),
+                mad_hi(param0.sc, param1.sc, param2.sc), mad_hi(param0.sd, param1.sd, param2.sd),
+                mad_hi(param0.se, param1.se, param2.se), mad_hi(param0.sf, param1.sf, param2.sf)); }
+
+INLINE_OVERLOADABLE uchar2 mad_hi (uchar2 param0, uchar2 param1, uchar2 param2)
+{return (uchar2)(mad_hi(param0.s0, param1.s0, param2.s0), mad_hi(param0.s1, param1.s1, param2.s1)); }
+
+INLINE_OVERLOADABLE uchar3 mad_hi (uchar3 param0, uchar3 param1, uchar3 param2)
+{return (uchar3)(mad_hi(param0.s0, param1.s0, param2.s0), mad_hi(param0.s1, param1.s1, param2.s1),
+                 mad_hi(param0.s2, param1.s2, param2.s2)); }
+
+INLINE_OVERLOADABLE uchar4 mad_hi (uchar4 param0, uchar4 param1, uchar4 param2)
+{return (uchar4)(mad_hi(param0.s0, param1.s0, param2.s0), mad_hi(param0.s1, param1.s1, param2.s1),
+                 mad_hi(param0.s2, param1.s2, param2.s2), mad_hi(param0.s3, param1.s3, param2.s3)); }
+
+INLINE_OVERLOADABLE uchar8 mad_hi (uchar8 param0, uchar8 param1, uchar8 param2)
+{return (uchar8)(mad_hi(param0.s0, param1.s0, param2.s0), mad_hi(param0.s1, param1.s1, param2.s1),
+                 mad_hi(param0.s2, param1.s2, param2.s2), mad_hi(param0.s3, param1.s3, param2.s3),
+                 mad_hi(param0.s4, param1.s4, param2.s4), mad_hi(param0.s5, param1.s5, param2.s5),
+                 mad_hi(param0.s6, param1.s6, param2.s6), mad_hi(param0.s7, param1.s7, param2.s7)); }
+
+INLINE_OVERLOADABLE uchar16 mad_hi (uchar16 param0, uchar16 param1, uchar16 param2)
+{return (uchar16)(mad_hi(param0.s0,  param1.s0,  param2.s0),  mad_hi(param0.s1,  param1.s1,  param2.s1),
+                  mad_hi(param0.s2,  param1.s2,  param2.s2),  mad_hi(param0.s3,  param1.s3,  param2.s3),
+                  mad_hi(param0.s4,  param1.s4,  param2.s4),  mad_hi(param0.s5,  param1.s5,  param2.s5),
+                  mad_hi(param0.s6,  param1.s6,  param2.s6),  mad_hi(param0.s7,  param1.s7,  param2.s7),
+                  mad_hi(param0.s8,  param1.s8,  param2.s8),  mad_hi(param0.s9,  param1.s9,  param2.s9),
+                  mad_hi(param0.sa, param1.sa, param2.sa), mad_hi(param0.sb, param1.sb, param2.sb),
+                  mad_hi(param0.sc, param1.sc, param2.sc), mad_hi(param0.sd, param1.sd, param2.sd),
+                  mad_hi(param0.se, param1.se, param2.se), mad_hi(param0.sf, param1.sf, param2.sf)); }
+
+INLINE_OVERLOADABLE ushort2 mad_hi (ushort2 param0, ushort2 param1, ushort2 param2)
+{return (ushort2)(mad_hi(param0.s0, param1.s0, param2.s0), mad_hi(param0.s1, param1.s1, param2.s1)); }
+
+INLINE_OVERLOADABLE ushort3 mad_hi (ushort3 param0, ushort3 param1, ushort3 param2)
+{return (ushort3)(mad_hi(param0.s0, param1.s0, param2.s0), mad_hi(param0.s1, param1.s1, param2.s1),
+                  mad_hi(param0.s2, param1.s2, param2.s2)); }
+
+INLINE_OVERLOADABLE ushort4 mad_hi (ushort4 param0, ushort4 param1, ushort4 param2)
+{return (ushort4)(mad_hi(param0.s0, param1.s0, param2.s0), mad_hi(param0.s1, param1.s1, param2.s1),
+                  mad_hi(param0.s2, param1.s2, param2.s2), mad_hi(param0.s3, param1.s3, param2.s3)); }
+
+INLINE_OVERLOADABLE ushort8 mad_hi (ushort8 param0, ushort8 param1, ushort8 param2)
+{return (ushort8)(mad_hi(param0.s0, param1.s0, param2.s0), mad_hi(param0.s1, param1.s1, param2.s1),
+                  mad_hi(param0.s2, param1.s2, param2.s2), mad_hi(param0.s3, param1.s3, param2.s3),
+                  mad_hi(param0.s4, param1.s4, param2.s4), mad_hi(param0.s5, param1.s5, param2.s5),
+                  mad_hi(param0.s6, param1.s6, param2.s6), mad_hi(param0.s7, param1.s7, param2.s7)); }
+
+INLINE_OVERLOADABLE ushort16 mad_hi (ushort16 param0, ushort16 param1, ushort16 param2)
+{return (ushort16)(mad_hi(param0.s0,  param1.s0,  param2.s0),  mad_hi(param0.s1,  param1.s1,  param2.s1),
+                   mad_hi(param0.s2,  param1.s2,  param2.s2),  mad_hi(param0.s3,  param1.s3,  param2.s3),
+                   mad_hi(param0.s4,  param1.s4,  param2.s4),  mad_hi(param0.s5,  param1.s5,  param2.s5),
+                   mad_hi(param0.s6,  param1.s6,  param2.s6),  mad_hi(param0.s7,  param1.s7,  param2.s7),
+                   mad_hi(param0.s8,  param1.s8,  param2.s8),  mad_hi(param0.s9,  param1.s9,  param2.s9),
+                   mad_hi(param0.sa, param1.sa, param2.sa), mad_hi(param0.sb, param1.sb, param2.sb),
+                   mad_hi(param0.sc, param1.sc, param2.sc), mad_hi(param0.sd, param1.sd, param2.sd),
+                   mad_hi(param0.se, param1.se, param2.se), mad_hi(param0.sf, param1.sf, param2.sf)); }
+
+INLINE_OVERLOADABLE uint2 mad_hi (uint2 param0, uint2 param1, uint2 param2)
+{return (uint2)(mad_hi(param0.s0, param1.s0, param2.s0), mad_hi(param0.s1, param1.s1, param2.s1)); }
+
+INLINE_OVERLOADABLE uint3 mad_hi (uint3 param0, uint3 param1, uint3 param2)
+{return (uint3)(mad_hi(param0.s0, param1.s0, param2.s0), mad_hi(param0.s1, param1.s1, param2.s1),
+                mad_hi(param0.s2, param1.s2, param2.s2)); }
+
+INLINE_OVERLOADABLE uint4 mad_hi (uint4 param0, uint4 param1, uint4 param2)
+{return (uint4)(mad_hi(param0.s0, param1.s0, param2.s0), mad_hi(param0.s1, param1.s1, param2.s1),
+                mad_hi(param0.s2, param1.s2, param2.s2), mad_hi(param0.s3, param1.s3, param2.s3)); }
+
+INLINE_OVERLOADABLE uint8 mad_hi (uint8 param0, uint8 param1, uint8 param2)
+{return (uint8)(mad_hi(param0.s0, param1.s0, param2.s0), mad_hi(param0.s1, param1.s1, param2.s1),
+                mad_hi(param0.s2, param1.s2, param2.s2), mad_hi(param0.s3, param1.s3, param2.s3),
+                mad_hi(param0.s4, param1.s4, param2.s4), mad_hi(param0.s5, param1.s5, param2.s5),
+                mad_hi(param0.s6, param1.s6, param2.s6), mad_hi(param0.s7, param1.s7, param2.s7)); }
+
+INLINE_OVERLOADABLE uint16 mad_hi (uint16 param0, uint16 param1, uint16 param2)
+{return (uint16)(mad_hi(param0.s0,  param1.s0,  param2.s0),  mad_hi(param0.s1,  param1.s1,  param2.s1),
+                 mad_hi(param0.s2,  param1.s2,  param2.s2),  mad_hi(param0.s3,  param1.s3,  param2.s3),
+                 mad_hi(param0.s4,  param1.s4,  param2.s4),  mad_hi(param0.s5,  param1.s5,  param2.s5),
+                 mad_hi(param0.s6,  param1.s6,  param2.s6),  mad_hi(param0.s7,  param1.s7,  param2.s7),
+                 mad_hi(param0.s8,  param1.s8,  param2.s8),  mad_hi(param0.s9,  param1.s9,  param2.s9),
+                 mad_hi(param0.sa, param1.sa, param2.sa), mad_hi(param0.sb, param1.sb, param2.sb),
+                 mad_hi(param0.sc, param1.sc, param2.sc), mad_hi(param0.sd, param1.sd, param2.sd),
+                 mad_hi(param0.se, param1.se, param2.se), mad_hi(param0.sf, param1.sf, param2.sf)); }
+
+
+//gentype mad_sat (gentype a, gentype b, gentype c)
+
+INLINE_OVERLOADABLE char2 mad_sat (char2 param0, char2 param1, char2 param2)
+{return (char2)(mad_sat(param0.s0, param1.s0, param2.s0), mad_sat(param0.s1, param1.s1, param2.s1)); }
+
+INLINE_OVERLOADABLE char3 mad_sat (char3 param0, char3 param1, char3 param2)
+{return (char3)(mad_sat(param0.s0, param1.s0, param2.s0), mad_sat(param0.s1, param1.s1, param2.s1),
+                mad_sat(param0.s2, param1.s2, param2.s2)); }
+
+INLINE_OVERLOADABLE char4 mad_sat (char4 param0, char4 param1, char4 param2)
+{return (char4)(mad_sat(param0.s0, param1.s0, param2.s0), mad_sat(param0.s1, param1.s1, param2.s1),
+                mad_sat(param0.s2, param1.s2, param2.s2), mad_sat(param0.s3, param1.s3, param2.s3)); }
+
+INLINE_OVERLOADABLE char8 mad_sat (char8 param0, char8 param1, char8 param2)
+{return (char8)(mad_sat(param0.s0, param1.s0, param2.s0), mad_sat(param0.s1, param1.s1, param2.s1),
+                mad_sat(param0.s2, param1.s2, param2.s2), mad_sat(param0.s3, param1.s3, param2.s3),
+                mad_sat(param0.s4, param1.s4, param2.s4), mad_sat(param0.s5, param1.s5, param2.s5),
+                mad_sat(param0.s6, param1.s6, param2.s6), mad_sat(param0.s7, param1.s7, param2.s7)); }
+
+INLINE_OVERLOADABLE char16 mad_sat (char16 param0, char16 param1, char16 param2)
+{return (char16)(mad_sat(param0.s0,  param1.s0,  param2.s0),  mad_sat(param0.s1,  param1.s1,  param2.s1),
+                 mad_sat(param0.s2,  param1.s2,  param2.s2),  mad_sat(param0.s3,  param1.s3,  param2.s3),
+                 mad_sat(param0.s4,  param1.s4,  param2.s4),  mad_sat(param0.s5,  param1.s5,  param2.s5),
+                 mad_sat(param0.s6,  param1.s6,  param2.s6),  mad_sat(param0.s7,  param1.s7,  param2.s7),
+                 mad_sat(param0.s8,  param1.s8,  param2.s8),  mad_sat(param0.s9,  param1.s9,  param2.s9),
+                 mad_sat(param0.sa, param1.sa, param2.sa), mad_sat(param0.sb, param1.sb, param2.sb),
+                 mad_sat(param0.sc, param1.sc, param2.sc), mad_sat(param0.sd, param1.sd, param2.sd),
+                 mad_sat(param0.se, param1.se, param2.se), mad_sat(param0.sf, param1.sf, param2.sf)); }
+
+INLINE_OVERLOADABLE short2 mad_sat (short2 param0, short2 param1, short2 param2)
+{return (short2)(mad_sat(param0.s0, param1.s0, param2.s0), mad_sat(param0.s1, param1.s1, param2.s1)); }
+
+INLINE_OVERLOADABLE short3 mad_sat (short3 param0, short3 param1, short3 param2)
+{return (short3)(mad_sat(param0.s0, param1.s0, param2.s0), mad_sat(param0.s1, param1.s1, param2.s1),
+                 mad_sat(param0.s2, param1.s2, param2.s2)); }
+
+INLINE_OVERLOADABLE short4 mad_sat (short4 param0, short4 param1, short4 param2)
+{return (short4)(mad_sat(param0.s0, param1.s0, param2.s0), mad_sat(param0.s1, param1.s1, param2.s1),
+                 mad_sat(param0.s2, param1.s2, param2.s2), mad_sat(param0.s3, param1.s3, param2.s3)); }
+
+INLINE_OVERLOADABLE short8 mad_sat (short8 param0, short8 param1, short8 param2)
+{return (short8)(mad_sat(param0.s0, param1.s0, param2.s0), mad_sat(param0.s1, param1.s1, param2.s1),
+                 mad_sat(param0.s2, param1.s2, param2.s2), mad_sat(param0.s3, param1.s3, param2.s3),
+                 mad_sat(param0.s4, param1.s4, param2.s4), mad_sat(param0.s5, param1.s5, param2.s5),
+                 mad_sat(param0.s6, param1.s6, param2.s6), mad_sat(param0.s7, param1.s7, param2.s7)); }
+
+INLINE_OVERLOADABLE short16 mad_sat (short16 param0, short16 param1, short16 param2)
+{return (short16)(mad_sat(param0.s0,  param1.s0,  param2.s0),  mad_sat(param0.s1,  param1.s1,  param2.s1),
+                  mad_sat(param0.s2,  param1.s2,  param2.s2),  mad_sat(param0.s3,  param1.s3,  param2.s3),
+                  mad_sat(param0.s4,  param1.s4,  param2.s4),  mad_sat(param0.s5,  param1.s5,  param2.s5),
+                  mad_sat(param0.s6,  param1.s6,  param2.s6),  mad_sat(param0.s7,  param1.s7,  param2.s7),
+                  mad_sat(param0.s8,  param1.s8,  param2.s8),  mad_sat(param0.s9,  param1.s9,  param2.s9),
+                  mad_sat(param0.sa, param1.sa, param2.sa), mad_sat(param0.sb, param1.sb, param2.sb),
+                  mad_sat(param0.sc, param1.sc, param2.sc), mad_sat(param0.sd, param1.sd, param2.sd),
+                  mad_sat(param0.se, param1.se, param2.se), mad_sat(param0.sf, param1.sf, param2.sf)); }
+
+INLINE_OVERLOADABLE int2 mad_sat (int2 param0, int2 param1, int2 param2)
+{return (int2)(mad_sat(param0.s0, param1.s0, param2.s0), mad_sat(param0.s1, param1.s1, param2.s1)); }
+
+INLINE_OVERLOADABLE int3 mad_sat (int3 param0, int3 param1, int3 param2)
+{return (int3)(mad_sat(param0.s0, param1.s0, param2.s0), mad_sat(param0.s1, param1.s1, param2.s1),
+               mad_sat(param0.s2, param1.s2, param2.s2)); }
+
+INLINE_OVERLOADABLE int4 mad_sat (int4 param0, int4 param1, int4 param2)
+{return (int4)(mad_sat(param0.s0, param1.s0, param2.s0), mad_sat(param0.s1, param1.s1, param2.s1),
+               mad_sat(param0.s2, param1.s2, param2.s2), mad_sat(param0.s3, param1.s3, param2.s3)); }
+
+INLINE_OVERLOADABLE int8 mad_sat (int8 param0, int8 param1, int8 param2)
+{return (int8)(mad_sat(param0.s0, param1.s0, param2.s0), mad_sat(param0.s1, param1.s1, param2.s1),
+               mad_sat(param0.s2, param1.s2, param2.s2), mad_sat(param0.s3, param1.s3, param2.s3),
+               mad_sat(param0.s4, param1.s4, param2.s4), mad_sat(param0.s5, param1.s5, param2.s5),
+               mad_sat(param0.s6, param1.s6, param2.s6), mad_sat(param0.s7, param1.s7, param2.s7)); }
+
+INLINE_OVERLOADABLE int16 mad_sat (int16 param0, int16 param1, int16 param2)
+{return (int16)(mad_sat(param0.s0,  param1.s0,  param2.s0),  mad_sat(param0.s1,  param1.s1,  param2.s1),
+                mad_sat(param0.s2,  param1.s2,  param2.s2),  mad_sat(param0.s3,  param1.s3,  param2.s3),
+                mad_sat(param0.s4,  param1.s4,  param2.s4),  mad_sat(param0.s5,  param1.s5,  param2.s5),
+                mad_sat(param0.s6,  param1.s6,  param2.s6),  mad_sat(param0.s7,  param1.s7,  param2.s7),
+                mad_sat(param0.s8,  param1.s8,  param2.s8),  mad_sat(param0.s9,  param1.s9,  param2.s9),
+                mad_sat(param0.sa, param1.sa, param2.sa), mad_sat(param0.sb, param1.sb, param2.sb),
+                mad_sat(param0.sc, param1.sc, param2.sc), mad_sat(param0.sd, param1.sd, param2.sd),
+                mad_sat(param0.se, param1.se, param2.se), mad_sat(param0.sf, param1.sf, param2.sf)); }
+
+INLINE_OVERLOADABLE uchar2 mad_sat (uchar2 param0, uchar2 param1, uchar2 param2)
+{return (uchar2)(mad_sat(param0.s0, param1.s0, param2.s0), mad_sat(param0.s1, param1.s1, param2.s1)); }
+
+INLINE_OVERLOADABLE uchar3 mad_sat (uchar3 param0, uchar3 param1, uchar3 param2)
+{return (uchar3)(mad_sat(param0.s0, param1.s0, param2.s0), mad_sat(param0.s1, param1.s1, param2.s1),
+                 mad_sat(param0.s2, param1.s2, param2.s2)); }
+
+INLINE_OVERLOADABLE uchar4 mad_sat (uchar4 param0, uchar4 param1, uchar4 param2)
+{return (uchar4)(mad_sat(param0.s0, param1.s0, param2.s0), mad_sat(param0.s1, param1.s1, param2.s1),
+                 mad_sat(param0.s2, param1.s2, param2.s2), mad_sat(param0.s3, param1.s3, param2.s3)); }
+
+INLINE_OVERLOADABLE uchar8 mad_sat (uchar8 param0, uchar8 param1, uchar8 param2)
+{return (uchar8)(mad_sat(param0.s0, param1.s0, param2.s0), mad_sat(param0.s1, param1.s1, param2.s1),
+                 mad_sat(param0.s2, param1.s2, param2.s2), mad_sat(param0.s3, param1.s3, param2.s3),
+                 mad_sat(param0.s4, param1.s4, param2.s4), mad_sat(param0.s5, param1.s5, param2.s5),
+                 mad_sat(param0.s6, param1.s6, param2.s6), mad_sat(param0.s7, param1.s7, param2.s7)); }
+
+INLINE_OVERLOADABLE uchar16 mad_sat (uchar16 param0, uchar16 param1, uchar16 param2)
+{return (uchar16)(mad_sat(param0.s0,  param1.s0,  param2.s0),  mad_sat(param0.s1,  param1.s1,  param2.s1),
+                  mad_sat(param0.s2,  param1.s2,  param2.s2),  mad_sat(param0.s3,  param1.s3,  param2.s3),
+                  mad_sat(param0.s4,  param1.s4,  param2.s4),  mad_sat(param0.s5,  param1.s5,  param2.s5),
+                  mad_sat(param0.s6,  param1.s6,  param2.s6),  mad_sat(param0.s7,  param1.s7,  param2.s7),
+                  mad_sat(param0.s8,  param1.s8,  param2.s8),  mad_sat(param0.s9,  param1.s9,  param2.s9),
+                  mad_sat(param0.sa, param1.sa, param2.sa), mad_sat(param0.sb, param1.sb, param2.sb),
+                  mad_sat(param0.sc, param1.sc, param2.sc), mad_sat(param0.sd, param1.sd, param2.sd),
+                  mad_sat(param0.se, param1.se, param2.se), mad_sat(param0.sf, param1.sf, param2.sf)); }
+
+INLINE_OVERLOADABLE ushort2 mad_sat (ushort2 param0, ushort2 param1, ushort2 param2)
+{return (ushort2)(mad_sat(param0.s0, param1.s0, param2.s0), mad_sat(param0.s1, param1.s1, param2.s1)); }
+
+INLINE_OVERLOADABLE ushort3 mad_sat (ushort3 param0, ushort3 param1, ushort3 param2)
+{return (ushort3)(mad_sat(param0.s0, param1.s0, param2.s0), mad_sat(param0.s1, param1.s1, param2.s1),
+                  mad_sat(param0.s2, param1.s2, param2.s2)); }
+
+INLINE_OVERLOADABLE ushort4 mad_sat (ushort4 param0, ushort4 param1, ushort4 param2)
+{return (ushort4)(mad_sat(param0.s0, param1.s0, param2.s0), mad_sat(param0.s1, param1.s1, param2.s1),
+                  mad_sat(param0.s2, param1.s2, param2.s2), mad_sat(param0.s3, param1.s3, param2.s3)); }
+
+INLINE_OVERLOADABLE ushort8 mad_sat (ushort8 param0, ushort8 param1, ushort8 param2)
+{return (ushort8)(mad_sat(param0.s0, param1.s0, param2.s0), mad_sat(param0.s1, param1.s1, param2.s1),
+                  mad_sat(param0.s2, param1.s2, param2.s2), mad_sat(param0.s3, param1.s3, param2.s3),
+                  mad_sat(param0.s4, param1.s4, param2.s4), mad_sat(param0.s5, param1.s5, param2.s5),
+                  mad_sat(param0.s6, param1.s6, param2.s6), mad_sat(param0.s7, param1.s7, param2.s7)); }
+
+INLINE_OVERLOADABLE ushort16 mad_sat (ushort16 param0, ushort16 param1, ushort16 param2)
+{return (ushort16)(mad_sat(param0.s0,  param1.s0,  param2.s0),  mad_sat(param0.s1,  param1.s1,  param2.s1),
+                   mad_sat(param0.s2,  param1.s2,  param2.s2),  mad_sat(param0.s3,  param1.s3,  param2.s3),
+                   mad_sat(param0.s4,  param1.s4,  param2.s4),  mad_sat(param0.s5,  param1.s5,  param2.s5),
+                   mad_sat(param0.s6,  param1.s6,  param2.s6),  mad_sat(param0.s7,  param1.s7,  param2.s7),
+                   mad_sat(param0.s8,  param1.s8,  param2.s8),  mad_sat(param0.s9,  param1.s9,  param2.s9),
+                   mad_sat(param0.sa, param1.sa, param2.sa), mad_sat(param0.sb, param1.sb, param2.sb),
+                   mad_sat(param0.sc, param1.sc, param2.sc), mad_sat(param0.sd, param1.sd, param2.sd),
+                   mad_sat(param0.se, param1.se, param2.se), mad_sat(param0.sf, param1.sf, param2.sf)); }
+
+INLINE_OVERLOADABLE uint2 mad_sat (uint2 param0, uint2 param1, uint2 param2)
+{return (uint2)(mad_sat(param0.s0, param1.s0, param2.s0), mad_sat(param0.s1, param1.s1, param2.s1)); }
+
+INLINE_OVERLOADABLE uint3 mad_sat (uint3 param0, uint3 param1, uint3 param2)
+{return (uint3)(mad_sat(param0.s0, param1.s0, param2.s0), mad_sat(param0.s1, param1.s1, param2.s1),
+                mad_sat(param0.s2, param1.s2, param2.s2)); }
+
+INLINE_OVERLOADABLE uint4 mad_sat (uint4 param0, uint4 param1, uint4 param2)
+{return (uint4)(mad_sat(param0.s0, param1.s0, param2.s0), mad_sat(param0.s1, param1.s1, param2.s1),
+                mad_sat(param0.s2, param1.s2, param2.s2), mad_sat(param0.s3, param1.s3, param2.s3)); }
+
+INLINE_OVERLOADABLE uint8 mad_sat (uint8 param0, uint8 param1, uint8 param2)
+{return (uint8)(mad_sat(param0.s0, param1.s0, param2.s0), mad_sat(param0.s1, param1.s1, param2.s1),
+                mad_sat(param0.s2, param1.s2, param2.s2), mad_sat(param0.s3, param1.s3, param2.s3),
+                mad_sat(param0.s4, param1.s4, param2.s4), mad_sat(param0.s5, param1.s5, param2.s5),
+                mad_sat(param0.s6, param1.s6, param2.s6), mad_sat(param0.s7, param1.s7, param2.s7)); }
+
+INLINE_OVERLOADABLE uint16 mad_sat (uint16 param0, uint16 param1, uint16 param2)
+{return (uint16)(mad_sat(param0.s0,  param1.s0,  param2.s0),  mad_sat(param0.s1,  param1.s1,  param2.s1),
+                 mad_sat(param0.s2,  param1.s2,  param2.s2),  mad_sat(param0.s3,  param1.s3,  param2.s3),
+                 mad_sat(param0.s4,  param1.s4,  param2.s4),  mad_sat(param0.s5,  param1.s5,  param2.s5),
+                 mad_sat(param0.s6,  param1.s6,  param2.s6),  mad_sat(param0.s7,  param1.s7,  param2.s7),
+                 mad_sat(param0.s8,  param1.s8,  param2.s8),  mad_sat(param0.s9,  param1.s9,  param2.s9),
+                 mad_sat(param0.sa, param1.sa, param2.sa), mad_sat(param0.sb, param1.sb, param2.sb),
+                 mad_sat(param0.sc, param1.sc, param2.sc), mad_sat(param0.sd, param1.sd, param2.sd),
+                 mad_sat(param0.se, param1.se, param2.se), mad_sat(param0.sf, param1.sf, param2.sf)); }
+
+
+//gentype max (gentype x,  gentype y)
+
+INLINE_OVERLOADABLE char2 max (char2 param0, char2 param1)
+{return (char2)(max(param0.s0, param1.s0), max(param0.s1, param1.s1)); }
+
+INLINE_OVERLOADABLE char3 max (char3 param0, char3 param1)
+{return (char3)(max(param0.s0, param1.s0), max(param0.s1, param1.s1),
+                max(param0.s2, param1.s2)); }
+
+INLINE_OVERLOADABLE char4 max (char4 param0, char4 param1)
+{return (char4)(max(param0.s0, param1.s0), max(param0.s1, param1.s1),
+                max(param0.s2, param1.s2), max(param0.s3, param1.s3)); }
+
+INLINE_OVERLOADABLE char8 max (char8 param0, char8 param1)
+{return (char8)(max(param0.s0, param1.s0), max(param0.s1, param1.s1),
+                max(param0.s2, param1.s2), max(param0.s3, param1.s3),
+                max(param0.s4, param1.s4), max(param0.s5, param1.s5),
+                max(param0.s6, param1.s6), max(param0.s7, param1.s7)); }
+
+INLINE_OVERLOADABLE char16 max (char16 param0, char16 param1)
+{return (char16)(max(param0.s0,  param1.s0),  max(param0.s1,  param1.s1),
+                 max(param0.s2,  param1.s2),  max(param0.s3,  param1.s3),
+                 max(param0.s4,  param1.s4),  max(param0.s5,  param1.s5),
+                 max(param0.s6,  param1.s6),  max(param0.s7,  param1.s7),
+                 max(param0.s8,  param1.s8),  max(param0.s9,  param1.s9),
+                 max(param0.sa, param1.sa), max(param0.sb, param1.sb),
+                 max(param0.sc, param1.sc), max(param0.sd, param1.sd),
+                 max(param0.se, param1.se), max(param0.sf, param1.sf)); }
+
+INLINE_OVERLOADABLE short2 max (short2 param0, short2 param1)
+{return (short2)(max(param0.s0, param1.s0), max(param0.s1, param1.s1)); }
+
+INLINE_OVERLOADABLE short3 max (short3 param0, short3 param1)
+{return (short3)(max(param0.s0, param1.s0), max(param0.s1, param1.s1),
+                 max(param0.s2, param1.s2)); }
+
+INLINE_OVERLOADABLE short4 max (short4 param0, short4 param1)
+{return (short4)(max(param0.s0, param1.s0), max(param0.s1, param1.s1),
+                 max(param0.s2, param1.s2), max(param0.s3, param1.s3)); }
+
+INLINE_OVERLOADABLE short8 max (short8 param0, short8 param1)
+{return (short8)(max(param0.s0, param1.s0), max(param0.s1, param1.s1),
+                 max(param0.s2, param1.s2), max(param0.s3, param1.s3),
+                 max(param0.s4, param1.s4), max(param0.s5, param1.s5),
+                 max(param0.s6, param1.s6), max(param0.s7, param1.s7)); }
+
+INLINE_OVERLOADABLE short16 max (short16 param0, short16 param1)
+{return (short16)(max(param0.s0,  param1.s0),  max(param0.s1,  param1.s1),
+                  max(param0.s2,  param1.s2),  max(param0.s3,  param1.s3),
+                  max(param0.s4,  param1.s4),  max(param0.s5,  param1.s5),
+                  max(param0.s6,  param1.s6),  max(param0.s7,  param1.s7),
+                  max(param0.s8,  param1.s8),  max(param0.s9,  param1.s9),
+                  max(param0.sa, param1.sa), max(param0.sb, param1.sb),
+                  max(param0.sc, param1.sc), max(param0.sd, param1.sd),
+                  max(param0.se, param1.se), max(param0.sf, param1.sf)); }
+
+INLINE_OVERLOADABLE int2 max (int2 param0, int2 param1)
+{return (int2)(max(param0.s0, param1.s0), max(param0.s1, param1.s1)); }
+
+INLINE_OVERLOADABLE int3 max (int3 param0, int3 param1)
+{return (int3)(max(param0.s0, param1.s0), max(param0.s1, param1.s1),
+               max(param0.s2, param1.s2)); }
+
+INLINE_OVERLOADABLE int4 max (int4 param0, int4 param1)
+{return (int4)(max(param0.s0, param1.s0), max(param0.s1, param1.s1),
+               max(param0.s2, param1.s2), max(param0.s3, param1.s3)); }
+
+INLINE_OVERLOADABLE int8 max (int8 param0, int8 param1)
+{return (int8)(max(param0.s0, param1.s0), max(param0.s1, param1.s1),
+               max(param0.s2, param1.s2), max(param0.s3, param1.s3),
+               max(param0.s4, param1.s4), max(param0.s5, param1.s5),
+               max(param0.s6, param1.s6), max(param0.s7, param1.s7)); }
+
+INLINE_OVERLOADABLE int16 max (int16 param0, int16 param1)
+{return (int16)(max(param0.s0,  param1.s0),  max(param0.s1,  param1.s1),
+                max(param0.s2,  param1.s2),  max(param0.s3,  param1.s3),
+                max(param0.s4,  param1.s4),  max(param0.s5,  param1.s5),
+                max(param0.s6,  param1.s6),  max(param0.s7,  param1.s7),
+                max(param0.s8,  param1.s8),  max(param0.s9,  param1.s9),
+                max(param0.sa, param1.sa), max(param0.sb, param1.sb),
+                max(param0.sc, param1.sc), max(param0.sd, param1.sd),
+                max(param0.se, param1.se), max(param0.sf, param1.sf)); }
+
+INLINE_OVERLOADABLE uchar2 max (uchar2 param0, uchar2 param1)
+{return (uchar2)(max(param0.s0, param1.s0), max(param0.s1, param1.s1)); }
+
+INLINE_OVERLOADABLE uchar3 max (uchar3 param0, uchar3 param1)
+{return (uchar3)(max(param0.s0, param1.s0), max(param0.s1, param1.s1),
+                 max(param0.s2, param1.s2)); }
+
+INLINE_OVERLOADABLE uchar4 max (uchar4 param0, uchar4 param1)
+{return (uchar4)(max(param0.s0, param1.s0), max(param0.s1, param1.s1),
+                 max(param0.s2, param1.s2), max(param0.s3, param1.s3)); }
+
+INLINE_OVERLOADABLE uchar8 max (uchar8 param0, uchar8 param1)
+{return (uchar8)(max(param0.s0, param1.s0), max(param0.s1, param1.s1),
+                 max(param0.s2, param1.s2), max(param0.s3, param1.s3),
+                 max(param0.s4, param1.s4), max(param0.s5, param1.s5),
+                 max(param0.s6, param1.s6), max(param0.s7, param1.s7)); }
+
+INLINE_OVERLOADABLE uchar16 max (uchar16 param0, uchar16 param1)
+{return (uchar16)(max(param0.s0,  param1.s0),  max(param0.s1,  param1.s1),
+                  max(param0.s2,  param1.s2),  max(param0.s3,  param1.s3),
+                  max(param0.s4,  param1.s4),  max(param0.s5,  param1.s5),
+                  max(param0.s6,  param1.s6),  max(param0.s7,  param1.s7),
+                  max(param0.s8,  param1.s8),  max(param0.s9,  param1.s9),
+                  max(param0.sa, param1.sa), max(param0.sb, param1.sb),
+                  max(param0.sc, param1.sc), max(param0.sd, param1.sd),
+                  max(param0.se, param1.se), max(param0.sf, param1.sf)); }
+
+INLINE_OVERLOADABLE ushort2 max (ushort2 param0, ushort2 param1)
+{return (ushort2)(max(param0.s0, param1.s0), max(param0.s1, param1.s1)); }
+
+INLINE_OVERLOADABLE ushort3 max (ushort3 param0, ushort3 param1)
+{return (ushort3)(max(param0.s0, param1.s0), max(param0.s1, param1.s1),
+                  max(param0.s2, param1.s2)); }
+
+INLINE_OVERLOADABLE ushort4 max (ushort4 param0, ushort4 param1)
+{return (ushort4)(max(param0.s0, param1.s0), max(param0.s1, param1.s1),
+                  max(param0.s2, param1.s2), max(param0.s3, param1.s3)); }
+
+INLINE_OVERLOADABLE ushort8 max (ushort8 param0, ushort8 param1)
+{return (ushort8)(max(param0.s0, param1.s0), max(param0.s1, param1.s1),
+                  max(param0.s2, param1.s2), max(param0.s3, param1.s3),
+                  max(param0.s4, param1.s4), max(param0.s5, param1.s5),
+                  max(param0.s6, param1.s6), max(param0.s7, param1.s7)); }
+
+INLINE_OVERLOADABLE ushort16 max (ushort16 param0, ushort16 param1)
+{return (ushort16)(max(param0.s0,  param1.s0),  max(param0.s1,  param1.s1),
+                   max(param0.s2,  param1.s2),  max(param0.s3,  param1.s3),
+                   max(param0.s4,  param1.s4),  max(param0.s5,  param1.s5),
+                   max(param0.s6,  param1.s6),  max(param0.s7,  param1.s7),
+                   max(param0.s8,  param1.s8),  max(param0.s9,  param1.s9),
+                   max(param0.sa, param1.sa), max(param0.sb, param1.sb),
+                   max(param0.sc, param1.sc), max(param0.sd, param1.sd),
+                   max(param0.se, param1.se), max(param0.sf, param1.sf)); }
+
+INLINE_OVERLOADABLE uint2 max (uint2 param0, uint2 param1)
+{return (uint2)(max(param0.s0, param1.s0), max(param0.s1, param1.s1)); }
+
+INLINE_OVERLOADABLE uint3 max (uint3 param0, uint3 param1)
+{return (uint3)(max(param0.s0, param1.s0), max(param0.s1, param1.s1),
+                max(param0.s2, param1.s2)); }
+
+INLINE_OVERLOADABLE uint4 max (uint4 param0, uint4 param1)
+{return (uint4)(max(param0.s0, param1.s0), max(param0.s1, param1.s1),
+                max(param0.s2, param1.s2), max(param0.s3, param1.s3)); }
+
+INLINE_OVERLOADABLE uint8 max (uint8 param0, uint8 param1)
+{return (uint8)(max(param0.s0, param1.s0), max(param0.s1, param1.s1),
+                max(param0.s2, param1.s2), max(param0.s3, param1.s3),
+                max(param0.s4, param1.s4), max(param0.s5, param1.s5),
+                max(param0.s6, param1.s6), max(param0.s7, param1.s7)); }
+
+INLINE_OVERLOADABLE uint16 max (uint16 param0, uint16 param1)
+{return (uint16)(max(param0.s0,  param1.s0),  max(param0.s1,  param1.s1),
+                 max(param0.s2,  param1.s2),  max(param0.s3,  param1.s3),
+                 max(param0.s4,  param1.s4),  max(param0.s5,  param1.s5),
+                 max(param0.s6,  param1.s6),  max(param0.s7,  param1.s7),
+                 max(param0.s8,  param1.s8),  max(param0.s9,  param1.s9),
+                 max(param0.sa, param1.sa), max(param0.sb, param1.sb),
+                 max(param0.sc, param1.sc), max(param0.sd, param1.sd),
+                 max(param0.se, param1.se), max(param0.sf, param1.sf)); }
+
+
+//gentype max (gentype x,  sgentype y)
+
+INLINE_OVERLOADABLE char2 max (char2 param0, char param1)
+{return (char2)(max(param0.s0, param1), max(param0.s1, param1)); }
+
+INLINE_OVERLOADABLE char3 max (char3 param0, char param1)
+{return (char3)(max(param0.s0, param1), max(param0.s1, param1),
+                max(param0.s2, param1)); }
+
+INLINE_OVERLOADABLE char4 max (char4 param0, char param1)
+{return (char4)(max(param0.s0, param1), max(param0.s1, param1),
+                max(param0.s2, param1), max(param0.s3, param1)); }
+
+INLINE_OVERLOADABLE char8 max (char8 param0, char param1)
+{return (char8)(max(param0.s0, param1), max(param0.s1, param1),
+                max(param0.s2, param1), max(param0.s3, param1),
+                max(param0.s4, param1), max(param0.s5, param1),
+                max(param0.s6, param1), max(param0.s7, param1)); }
+
+INLINE_OVERLOADABLE char16 max (char16 param0, char param1)
+{return (char16)(max(param0.s0,  param1),  max(param0.s1,  param1),
+                 max(param0.s2,  param1),  max(param0.s3,  param1),
+                 max(param0.s4,  param1),  max(param0.s5,  param1),
+                 max(param0.s6,  param1),  max(param0.s7,  param1),
+                 max(param0.s8,  param1),  max(param0.s9,  param1),
+                 max(param0.sa, param1), max(param0.sb, param1),
+                 max(param0.sc, param1), max(param0.sd, param1),
+                 max(param0.se, param1), max(param0.sf, param1)); }
+
+INLINE_OVERLOADABLE short2 max (short2 param0, short param1)
+{return (short2)(max(param0.s0, param1), max(param0.s1, param1)); }
+
+INLINE_OVERLOADABLE short3 max (short3 param0, short param1)
+{return (short3)(max(param0.s0, param1), max(param0.s1, param1),
+                 max(param0.s2, param1)); }
+
+INLINE_OVERLOADABLE short4 max (short4 param0, short param1)
+{return (short4)(max(param0.s0, param1), max(param0.s1, param1),
+                 max(param0.s2, param1), max(param0.s3, param1)); }
+
+INLINE_OVERLOADABLE short8 max (short8 param0, short param1)
+{return (short8)(max(param0.s0, param1), max(param0.s1, param1),
+                 max(param0.s2, param1), max(param0.s3, param1),
+                 max(param0.s4, param1), max(param0.s5, param1),
+                 max(param0.s6, param1), max(param0.s7, param1)); }
+
+INLINE_OVERLOADABLE short16 max (short16 param0, short param1)
+{return (short16)(max(param0.s0,  param1),  max(param0.s1,  param1),
+                  max(param0.s2,  param1),  max(param0.s3,  param1),
+                  max(param0.s4,  param1),  max(param0.s5,  param1),
+                  max(param0.s6,  param1),  max(param0.s7,  param1),
+                  max(param0.s8,  param1),  max(param0.s9,  param1),
+                  max(param0.sa, param1), max(param0.sb, param1),
+                  max(param0.sc, param1), max(param0.sd, param1),
+                  max(param0.se, param1), max(param0.sf, param1)); }
+
+INLINE_OVERLOADABLE int2 max (int2 param0, int param1)
+{return (int2)(max(param0.s0, param1), max(param0.s1, param1)); }
+
+INLINE_OVERLOADABLE int3 max (int3 param0, int param1)
+{return (int3)(max(param0.s0, param1), max(param0.s1, param1),
+               max(param0.s2, param1)); }
+
+INLINE_OVERLOADABLE int4 max (int4 param0, int param1)
+{return (int4)(max(param0.s0, param1), max(param0.s1, param1),
+               max(param0.s2, param1), max(param0.s3, param1)); }
+
+INLINE_OVERLOADABLE int8 max (int8 param0, int param1)
+{return (int8)(max(param0.s0, param1), max(param0.s1, param1),
+               max(param0.s2, param1), max(param0.s3, param1),
+               max(param0.s4, param1), max(param0.s5, param1),
+               max(param0.s6, param1), max(param0.s7, param1)); }
+
+INLINE_OVERLOADABLE int16 max (int16 param0, int param1)
+{return (int16)(max(param0.s0,  param1),  max(param0.s1,  param1),
+                max(param0.s2,  param1),  max(param0.s3,  param1),
+                max(param0.s4,  param1),  max(param0.s5,  param1),
+                max(param0.s6,  param1),  max(param0.s7,  param1),
+                max(param0.s8,  param1),  max(param0.s9,  param1),
+                max(param0.sa, param1), max(param0.sb, param1),
+                max(param0.sc, param1), max(param0.sd, param1),
+                max(param0.se, param1), max(param0.sf, param1)); }
+
+INLINE_OVERLOADABLE uchar2 max (uchar2 param0, uchar param1)
+{return (uchar2)(max(param0.s0, param1), max(param0.s1, param1)); }
+
+INLINE_OVERLOADABLE uchar3 max (uchar3 param0, uchar param1)
+{return (uchar3)(max(param0.s0, param1), max(param0.s1, param1),
+                 max(param0.s2, param1)); }
+
+INLINE_OVERLOADABLE uchar4 max (uchar4 param0, uchar param1)
+{return (uchar4)(max(param0.s0, param1), max(param0.s1, param1),
+                 max(param0.s2, param1), max(param0.s3, param1)); }
+
+INLINE_OVERLOADABLE uchar8 max (uchar8 param0, uchar param1)
+{return (uchar8)(max(param0.s0, param1), max(param0.s1, param1),
+                 max(param0.s2, param1), max(param0.s3, param1),
+                 max(param0.s4, param1), max(param0.s5, param1),
+                 max(param0.s6, param1), max(param0.s7, param1)); }
+
+INLINE_OVERLOADABLE uchar16 max (uchar16 param0, uchar param1)
+{return (uchar16)(max(param0.s0,  param1),  max(param0.s1,  param1),
+                  max(param0.s2,  param1),  max(param0.s3,  param1),
+                  max(param0.s4,  param1),  max(param0.s5,  param1),
+                  max(param0.s6,  param1),  max(param0.s7,  param1),
+                  max(param0.s8,  param1),  max(param0.s9,  param1),
+                  max(param0.sa, param1), max(param0.sb, param1),
+                  max(param0.sc, param1), max(param0.sd, param1),
+                  max(param0.se, param1), max(param0.sf, param1)); }
+
+INLINE_OVERLOADABLE ushort2 max (ushort2 param0, ushort param1)
+{return (ushort2)(max(param0.s0, param1), max(param0.s1, param1)); }
+
+INLINE_OVERLOADABLE ushort3 max (ushort3 param0, ushort param1)
+{return (ushort3)(max(param0.s0, param1), max(param0.s1, param1),
+                  max(param0.s2, param1)); }
+
+INLINE_OVERLOADABLE ushort4 max (ushort4 param0, ushort param1)
+{return (ushort4)(max(param0.s0, param1), max(param0.s1, param1),
+                  max(param0.s2, param1), max(param0.s3, param1)); }
+
+INLINE_OVERLOADABLE ushort8 max (ushort8 param0, ushort param1)
+{return (ushort8)(max(param0.s0, param1), max(param0.s1, param1),
+                  max(param0.s2, param1), max(param0.s3, param1),
+                  max(param0.s4, param1), max(param0.s5, param1),
+                  max(param0.s6, param1), max(param0.s7, param1)); }
+
+INLINE_OVERLOADABLE ushort16 max (ushort16 param0, ushort param1)
+{return (ushort16)(max(param0.s0,  param1),  max(param0.s1,  param1),
+                   max(param0.s2,  param1),  max(param0.s3,  param1),
+                   max(param0.s4,  param1),  max(param0.s5,  param1),
+                   max(param0.s6,  param1),  max(param0.s7,  param1),
+                   max(param0.s8,  param1),  max(param0.s9,  param1),
+                   max(param0.sa, param1), max(param0.sb, param1),
+                   max(param0.sc, param1), max(param0.sd, param1),
+                   max(param0.se, param1), max(param0.sf, param1)); }
+
+INLINE_OVERLOADABLE uint2 max (uint2 param0, uint param1)
+{return (uint2)(max(param0.s0, param1), max(param0.s1, param1)); }
+
+INLINE_OVERLOADABLE uint3 max (uint3 param0, uint param1)
+{return (uint3)(max(param0.s0, param1), max(param0.s1, param1),
+                max(param0.s2, param1)); }
+
+INLINE_OVERLOADABLE uint4 max (uint4 param0, uint param1)
+{return (uint4)(max(param0.s0, param1), max(param0.s1, param1),
+                max(param0.s2, param1), max(param0.s3, param1)); }
+
+INLINE_OVERLOADABLE uint8 max (uint8 param0, uint param1)
+{return (uint8)(max(param0.s0, param1), max(param0.s1, param1),
+                max(param0.s2, param1), max(param0.s3, param1),
+                max(param0.s4, param1), max(param0.s5, param1),
+                max(param0.s6, param1), max(param0.s7, param1)); }
+
+INLINE_OVERLOADABLE uint16 max (uint16 param0, uint param1)
+{return (uint16)(max(param0.s0,  param1),  max(param0.s1,  param1),
+                 max(param0.s2,  param1),  max(param0.s3,  param1),
+                 max(param0.s4,  param1),  max(param0.s5,  param1),
+                 max(param0.s6,  param1),  max(param0.s7,  param1),
+                 max(param0.s8,  param1),  max(param0.s9,  param1),
+                 max(param0.sa, param1), max(param0.sb, param1),
+                 max(param0.sc, param1), max(param0.sd, param1),
+                 max(param0.se, param1), max(param0.sf, param1)); }
+
+
+//gentype min (gentype x,  gentype y)
+
+INLINE_OVERLOADABLE char2 min (char2 param0, char2 param1)
+{return (char2)(min(param0.s0, param1.s0), min(param0.s1, param1.s1)); }
+
+INLINE_OVERLOADABLE char3 min (char3 param0, char3 param1)
+{return (char3)(min(param0.s0, param1.s0), min(param0.s1, param1.s1),
+                min(param0.s2, param1.s2)); }
+
+INLINE_OVERLOADABLE char4 min (char4 param0, char4 param1)
+{return (char4)(min(param0.s0, param1.s0), min(param0.s1, param1.s1),
+                min(param0.s2, param1.s2), min(param0.s3, param1.s3)); }
+
+INLINE_OVERLOADABLE char8 min (char8 param0, char8 param1)
+{return (char8)(min(param0.s0, param1.s0), min(param0.s1, param1.s1),
+                min(param0.s2, param1.s2), min(param0.s3, param1.s3),
+                min(param0.s4, param1.s4), min(param0.s5, param1.s5),
+                min(param0.s6, param1.s6), min(param0.s7, param1.s7)); }
+
+INLINE_OVERLOADABLE char16 min (char16 param0, char16 param1)
+{return (char16)(min(param0.s0,  param1.s0),  min(param0.s1,  param1.s1),
+                 min(param0.s2,  param1.s2),  min(param0.s3,  param1.s3),
+                 min(param0.s4,  param1.s4),  min(param0.s5,  param1.s5),
+                 min(param0.s6,  param1.s6),  min(param0.s7,  param1.s7),
+                 min(param0.s8,  param1.s8),  min(param0.s9,  param1.s9),
+                 min(param0.sa, param1.sa), min(param0.sb, param1.sb),
+                 min(param0.sc, param1.sc), min(param0.sd, param1.sd),
+                 min(param0.se, param1.se), min(param0.sf, param1.sf)); }
+
+INLINE_OVERLOADABLE short2 min (short2 param0, short2 param1)
+{return (short2)(min(param0.s0, param1.s0), min(param0.s1, param1.s1)); }
+
+INLINE_OVERLOADABLE short3 min (short3 param0, short3 param1)
+{return (short3)(min(param0.s0, param1.s0), min(param0.s1, param1.s1),
+                 min(param0.s2, param1.s2)); }
+
+INLINE_OVERLOADABLE short4 min (short4 param0, short4 param1)
+{return (short4)(min(param0.s0, param1.s0), min(param0.s1, param1.s1),
+                 min(param0.s2, param1.s2), min(param0.s3, param1.s3)); }
+
+INLINE_OVERLOADABLE short8 min (short8 param0, short8 param1)
+{return (short8)(min(param0.s0, param1.s0), min(param0.s1, param1.s1),
+                 min(param0.s2, param1.s2), min(param0.s3, param1.s3),
+                 min(param0.s4, param1.s4), min(param0.s5, param1.s5),
+                 min(param0.s6, param1.s6), min(param0.s7, param1.s7)); }
+
+INLINE_OVERLOADABLE short16 min (short16 param0, short16 param1)
+{return (short16)(min(param0.s0,  param1.s0),  min(param0.s1,  param1.s1),
+                  min(param0.s2,  param1.s2),  min(param0.s3,  param1.s3),
+                  min(param0.s4,  param1.s4),  min(param0.s5,  param1.s5),
+                  min(param0.s6,  param1.s6),  min(param0.s7,  param1.s7),
+                  min(param0.s8,  param1.s8),  min(param0.s9,  param1.s9),
+                  min(param0.sa, param1.sa), min(param0.sb, param1.sb),
+                  min(param0.sc, param1.sc), min(param0.sd, param1.sd),
+                  min(param0.se, param1.se), min(param0.sf, param1.sf)); }
+
+INLINE_OVERLOADABLE int2 min (int2 param0, int2 param1)
+{return (int2)(min(param0.s0, param1.s0), min(param0.s1, param1.s1)); }
+
+INLINE_OVERLOADABLE int3 min (int3 param0, int3 param1)
+{return (int3)(min(param0.s0, param1.s0), min(param0.s1, param1.s1),
+               min(param0.s2, param1.s2)); }
+
+INLINE_OVERLOADABLE int4 min (int4 param0, int4 param1)
+{return (int4)(min(param0.s0, param1.s0), min(param0.s1, param1.s1),
+               min(param0.s2, param1.s2), min(param0.s3, param1.s3)); }
+
+INLINE_OVERLOADABLE int8 min (int8 param0, int8 param1)
+{return (int8)(min(param0.s0, param1.s0), min(param0.s1, param1.s1),
+               min(param0.s2, param1.s2), min(param0.s3, param1.s3),
+               min(param0.s4, param1.s4), min(param0.s5, param1.s5),
+               min(param0.s6, param1.s6), min(param0.s7, param1.s7)); }
+
+INLINE_OVERLOADABLE int16 min (int16 param0, int16 param1)
+{return (int16)(min(param0.s0,  param1.s0),  min(param0.s1,  param1.s1),
+                min(param0.s2,  param1.s2),  min(param0.s3,  param1.s3),
+                min(param0.s4,  param1.s4),  min(param0.s5,  param1.s5),
+                min(param0.s6,  param1.s6),  min(param0.s7,  param1.s7),
+                min(param0.s8,  param1.s8),  min(param0.s9,  param1.s9),
+                min(param0.sa, param1.sa), min(param0.sb, param1.sb),
+                min(param0.sc, param1.sc), min(param0.sd, param1.sd),
+                min(param0.se, param1.se), min(param0.sf, param1.sf)); }
+
+INLINE_OVERLOADABLE uchar2 min (uchar2 param0, uchar2 param1)
+{return (uchar2)(min(param0.s0, param1.s0), min(param0.s1, param1.s1)); }
+
+INLINE_OVERLOADABLE uchar3 min (uchar3 param0, uchar3 param1)
+{return (uchar3)(min(param0.s0, param1.s0), min(param0.s1, param1.s1),
+                 min(param0.s2, param1.s2)); }
+
+INLINE_OVERLOADABLE uchar4 min (uchar4 param0, uchar4 param1)
+{return (uchar4)(min(param0.s0, param1.s0), min(param0.s1, param1.s1),
+                 min(param0.s2, param1.s2), min(param0.s3, param1.s3)); }
+
+INLINE_OVERLOADABLE uchar8 min (uchar8 param0, uchar8 param1)
+{return (uchar8)(min(param0.s0, param1.s0), min(param0.s1, param1.s1),
+                 min(param0.s2, param1.s2), min(param0.s3, param1.s3),
+                 min(param0.s4, param1.s4), min(param0.s5, param1.s5),
+                 min(param0.s6, param1.s6), min(param0.s7, param1.s7)); }
+
+INLINE_OVERLOADABLE uchar16 min (uchar16 param0, uchar16 param1)
+{return (uchar16)(min(param0.s0,  param1.s0),  min(param0.s1,  param1.s1),
+                  min(param0.s2,  param1.s2),  min(param0.s3,  param1.s3),
+                  min(param0.s4,  param1.s4),  min(param0.s5,  param1.s5),
+                  min(param0.s6,  param1.s6),  min(param0.s7,  param1.s7),
+                  min(param0.s8,  param1.s8),  min(param0.s9,  param1.s9),
+                  min(param0.sa, param1.sa), min(param0.sb, param1.sb),
+                  min(param0.sc, param1.sc), min(param0.sd, param1.sd),
+                  min(param0.se, param1.se), min(param0.sf, param1.sf)); }
+
+INLINE_OVERLOADABLE ushort2 min (ushort2 param0, ushort2 param1)
+{return (ushort2)(min(param0.s0, param1.s0), min(param0.s1, param1.s1)); }
+
+INLINE_OVERLOADABLE ushort3 min (ushort3 param0, ushort3 param1)
+{return (ushort3)(min(param0.s0, param1.s0), min(param0.s1, param1.s1),
+                  min(param0.s2, param1.s2)); }
+
+INLINE_OVERLOADABLE ushort4 min (ushort4 param0, ushort4 param1)
+{return (ushort4)(min(param0.s0, param1.s0), min(param0.s1, param1.s1),
+                  min(param0.s2, param1.s2), min(param0.s3, param1.s3)); }
+
+INLINE_OVERLOADABLE ushort8 min (ushort8 param0, ushort8 param1)
+{return (ushort8)(min(param0.s0, param1.s0), min(param0.s1, param1.s1),
+                  min(param0.s2, param1.s2), min(param0.s3, param1.s3),
+                  min(param0.s4, param1.s4), min(param0.s5, param1.s5),
+                  min(param0.s6, param1.s6), min(param0.s7, param1.s7)); }
+
+INLINE_OVERLOADABLE ushort16 min (ushort16 param0, ushort16 param1)
+{return (ushort16)(min(param0.s0,  param1.s0),  min(param0.s1,  param1.s1),
+                   min(param0.s2,  param1.s2),  min(param0.s3,  param1.s3),
+                   min(param0.s4,  param1.s4),  min(param0.s5,  param1.s5),
+                   min(param0.s6,  param1.s6),  min(param0.s7,  param1.s7),
+                   min(param0.s8,  param1.s8),  min(param0.s9,  param1.s9),
+                   min(param0.sa, param1.sa), min(param0.sb, param1.sb),
+                   min(param0.sc, param1.sc), min(param0.sd, param1.sd),
+                   min(param0.se, param1.se), min(param0.sf, param1.sf)); }
+
+INLINE_OVERLOADABLE uint2 min (uint2 param0, uint2 param1)
+{return (uint2)(min(param0.s0, param1.s0), min(param0.s1, param1.s1)); }
+
+INLINE_OVERLOADABLE uint3 min (uint3 param0, uint3 param1)
+{return (uint3)(min(param0.s0, param1.s0), min(param0.s1, param1.s1),
+                min(param0.s2, param1.s2)); }
+
+INLINE_OVERLOADABLE uint4 min (uint4 param0, uint4 param1)
+{return (uint4)(min(param0.s0, param1.s0), min(param0.s1, param1.s1),
+                min(param0.s2, param1.s2), min(param0.s3, param1.s3)); }
+
+INLINE_OVERLOADABLE uint8 min (uint8 param0, uint8 param1)
+{return (uint8)(min(param0.s0, param1.s0), min(param0.s1, param1.s1),
+                min(param0.s2, param1.s2), min(param0.s3, param1.s3),
+                min(param0.s4, param1.s4), min(param0.s5, param1.s5),
+                min(param0.s6, param1.s6), min(param0.s7, param1.s7)); }
+
+INLINE_OVERLOADABLE uint16 min (uint16 param0, uint16 param1)
+{return (uint16)(min(param0.s0,  param1.s0),  min(param0.s1,  param1.s1),
+                 min(param0.s2,  param1.s2),  min(param0.s3,  param1.s3),
+                 min(param0.s4,  param1.s4),  min(param0.s5,  param1.s5),
+                 min(param0.s6,  param1.s6),  min(param0.s7,  param1.s7),
+                 min(param0.s8,  param1.s8),  min(param0.s9,  param1.s9),
+                 min(param0.sa, param1.sa), min(param0.sb, param1.sb),
+                 min(param0.sc, param1.sc), min(param0.sd, param1.sd),
+                 min(param0.se, param1.se), min(param0.sf, param1.sf)); }
+
+
+//gentype min (gentype x,  sgentype y)
+
+INLINE_OVERLOADABLE char2 min (char2 param0, char param1)
+{return (char2)(min(param0.s0, param1), min(param0.s1, param1)); }
+
+INLINE_OVERLOADABLE char3 min (char3 param0, char param1)
+{return (char3)(min(param0.s0, param1), min(param0.s1, param1),
+                min(param0.s2, param1)); }
+
+INLINE_OVERLOADABLE char4 min (char4 param0, char param1)
+{return (char4)(min(param0.s0, param1), min(param0.s1, param1),
+                min(param0.s2, param1), min(param0.s3, param1)); }
+
+INLINE_OVERLOADABLE char8 min (char8 param0, char param1)
+{return (char8)(min(param0.s0, param1), min(param0.s1, param1),
+                min(param0.s2, param1), min(param0.s3, param1),
+                min(param0.s4, param1), min(param0.s5, param1),
+                min(param0.s6, param1), min(param0.s7, param1)); }
+
+INLINE_OVERLOADABLE char16 min (char16 param0, char param1)
+{return (char16)(min(param0.s0,  param1),  min(param0.s1,  param1),
+                 min(param0.s2,  param1),  min(param0.s3,  param1),
+                 min(param0.s4,  param1),  min(param0.s5,  param1),
+                 min(param0.s6,  param1),  min(param0.s7,  param1),
+                 min(param0.s8,  param1),  min(param0.s9,  param1),
+                 min(param0.sa, param1), min(param0.sb, param1),
+                 min(param0.sc, param1), min(param0.sd, param1),
+                 min(param0.se, param1), min(param0.sf, param1)); }
+
+INLINE_OVERLOADABLE short2 min (short2 param0, short param1)
+{return (short2)(min(param0.s0, param1), min(param0.s1, param1)); }
+
+INLINE_OVERLOADABLE short3 min (short3 param0, short param1)
+{return (short3)(min(param0.s0, param1), min(param0.s1, param1),
+                 min(param0.s2, param1)); }
+
+INLINE_OVERLOADABLE short4 min (short4 param0, short param1)
+{return (short4)(min(param0.s0, param1), min(param0.s1, param1),
+                 min(param0.s2, param1), min(param0.s3, param1)); }
+
+INLINE_OVERLOADABLE short8 min (short8 param0, short param1)
+{return (short8)(min(param0.s0, param1), min(param0.s1, param1),
+                 min(param0.s2, param1), min(param0.s3, param1),
+                 min(param0.s4, param1), min(param0.s5, param1),
+                 min(param0.s6, param1), min(param0.s7, param1)); }
+
+INLINE_OVERLOADABLE short16 min (short16 param0, short param1)
+{return (short16)(min(param0.s0,  param1),  min(param0.s1,  param1),
+                  min(param0.s2,  param1),  min(param0.s3,  param1),
+                  min(param0.s4,  param1),  min(param0.s5,  param1),
+                  min(param0.s6,  param1),  min(param0.s7,  param1),
+                  min(param0.s8,  param1),  min(param0.s9,  param1),
+                  min(param0.sa, param1), min(param0.sb, param1),
+                  min(param0.sc, param1), min(param0.sd, param1),
+                  min(param0.se, param1), min(param0.sf, param1)); }
+
+INLINE_OVERLOADABLE int2 min (int2 param0, int param1)
+{return (int2)(min(param0.s0, param1), min(param0.s1, param1)); }
+
+INLINE_OVERLOADABLE int3 min (int3 param0, int param1)
+{return (int3)(min(param0.s0, param1), min(param0.s1, param1),
+               min(param0.s2, param1)); }
+
+INLINE_OVERLOADABLE int4 min (int4 param0, int param1)
+{return (int4)(min(param0.s0, param1), min(param0.s1, param1),
+               min(param0.s2, param1), min(param0.s3, param1)); }
+
+INLINE_OVERLOADABLE int8 min (int8 param0, int param1)
+{return (int8)(min(param0.s0, param1), min(param0.s1, param1),
+               min(param0.s2, param1), min(param0.s3, param1),
+               min(param0.s4, param1), min(param0.s5, param1),
+               min(param0.s6, param1), min(param0.s7, param1)); }
+
+INLINE_OVERLOADABLE int16 min (int16 param0, int param1)
+{return (int16)(min(param0.s0,  param1),  min(param0.s1,  param1),
+                min(param0.s2,  param1),  min(param0.s3,  param1),
+                min(param0.s4,  param1),  min(param0.s5,  param1),
+                min(param0.s6,  param1),  min(param0.s7,  param1),
+                min(param0.s8,  param1),  min(param0.s9,  param1),
+                min(param0.sa, param1), min(param0.sb, param1),
+                min(param0.sc, param1), min(param0.sd, param1),
+                min(param0.se, param1), min(param0.sf, param1)); }
+
+INLINE_OVERLOADABLE uchar2 min (uchar2 param0, uchar param1)
+{return (uchar2)(min(param0.s0, param1), min(param0.s1, param1)); }
+
+INLINE_OVERLOADABLE uchar3 min (uchar3 param0, uchar param1)
+{return (uchar3)(min(param0.s0, param1), min(param0.s1, param1),
+                 min(param0.s2, param1)); }
+
+INLINE_OVERLOADABLE uchar4 min (uchar4 param0, uchar param1)
+{return (uchar4)(min(param0.s0, param1), min(param0.s1, param1),
+                 min(param0.s2, param1), min(param0.s3, param1)); }
+
+INLINE_OVERLOADABLE uchar8 min (uchar8 param0, uchar param1)
+{return (uchar8)(min(param0.s0, param1), min(param0.s1, param1),
+                 min(param0.s2, param1), min(param0.s3, param1),
+                 min(param0.s4, param1), min(param0.s5, param1),
+                 min(param0.s6, param1), min(param0.s7, param1)); }
+
+INLINE_OVERLOADABLE uchar16 min (uchar16 param0, uchar param1)
+{return (uchar16)(min(param0.s0,  param1),  min(param0.s1,  param1),
+                  min(param0.s2,  param1),  min(param0.s3,  param1),
+                  min(param0.s4,  param1),  min(param0.s5,  param1),
+                  min(param0.s6,  param1),  min(param0.s7,  param1),
+                  min(param0.s8,  param1),  min(param0.s9,  param1),
+                  min(param0.sa, param1), min(param0.sb, param1),
+                  min(param0.sc, param1), min(param0.sd, param1),
+                  min(param0.se, param1), min(param0.sf, param1)); }
+
+INLINE_OVERLOADABLE ushort2 min (ushort2 param0, ushort param1)
+{return (ushort2)(min(param0.s0, param1), min(param0.s1, param1)); }
+
+INLINE_OVERLOADABLE ushort3 min (ushort3 param0, ushort param1)
+{return (ushort3)(min(param0.s0, param1), min(param0.s1, param1),
+                  min(param0.s2, param1)); }
+
+INLINE_OVERLOADABLE ushort4 min (ushort4 param0, ushort param1)
+{return (ushort4)(min(param0.s0, param1), min(param0.s1, param1),
+                  min(param0.s2, param1), min(param0.s3, param1)); }
+
+INLINE_OVERLOADABLE ushort8 min (ushort8 param0, ushort param1)
+{return (ushort8)(min(param0.s0, param1), min(param0.s1, param1),
+                  min(param0.s2, param1), min(param0.s3, param1),
+                  min(param0.s4, param1), min(param0.s5, param1),
+                  min(param0.s6, param1), min(param0.s7, param1)); }
+
+INLINE_OVERLOADABLE ushort16 min (ushort16 param0, ushort param1)
+{return (ushort16)(min(param0.s0,  param1),  min(param0.s1,  param1),
+                   min(param0.s2,  param1),  min(param0.s3,  param1),
+                   min(param0.s4,  param1),  min(param0.s5,  param1),
+                   min(param0.s6,  param1),  min(param0.s7,  param1),
+                   min(param0.s8,  param1),  min(param0.s9,  param1),
+                   min(param0.sa, param1), min(param0.sb, param1),
+                   min(param0.sc, param1), min(param0.sd, param1),
+                   min(param0.se, param1), min(param0.sf, param1)); }
+
+INLINE_OVERLOADABLE uint2 min (uint2 param0, uint param1)
+{return (uint2)(min(param0.s0, param1), min(param0.s1, param1)); }
+
+INLINE_OVERLOADABLE uint3 min (uint3 param0, uint param1)
+{return (uint3)(min(param0.s0, param1), min(param0.s1, param1),
+                min(param0.s2, param1)); }
+
+INLINE_OVERLOADABLE uint4 min (uint4 param0, uint param1)
+{return (uint4)(min(param0.s0, param1), min(param0.s1, param1),
+                min(param0.s2, param1), min(param0.s3, param1)); }
+
+INLINE_OVERLOADABLE uint8 min (uint8 param0, uint param1)
+{return (uint8)(min(param0.s0, param1), min(param0.s1, param1),
+                min(param0.s2, param1), min(param0.s3, param1),
+                min(param0.s4, param1), min(param0.s5, param1),
+                min(param0.s6, param1), min(param0.s7, param1)); }
+
+INLINE_OVERLOADABLE uint16 min (uint16 param0, uint param1)
+{return (uint16)(min(param0.s0,  param1),  min(param0.s1,  param1),
+                 min(param0.s2,  param1),  min(param0.s3,  param1),
+                 min(param0.s4,  param1),  min(param0.s5,  param1),
+                 min(param0.s6,  param1),  min(param0.s7,  param1),
+                 min(param0.s8,  param1),  min(param0.s9,  param1),
+                 min(param0.sa, param1), min(param0.sb, param1),
+                 min(param0.sc, param1), min(param0.sd, param1),
+                 min(param0.se, param1), min(param0.sf, param1)); }
+
+
+//gentype mul_hi (gentype x,  gentype y)
+
+INLINE_OVERLOADABLE char2 mul_hi (char2 param0, char2 param1)
+{return (char2)(mul_hi(param0.s0, param1.s0), mul_hi(param0.s1, param1.s1)); }
+
+INLINE_OVERLOADABLE char3 mul_hi (char3 param0, char3 param1)
+{return (char3)(mul_hi(param0.s0, param1.s0), mul_hi(param0.s1, param1.s1),
+                mul_hi(param0.s2, param1.s2)); }
+
+INLINE_OVERLOADABLE char4 mul_hi (char4 param0, char4 param1)
+{return (char4)(mul_hi(param0.s0, param1.s0), mul_hi(param0.s1, param1.s1),
+                mul_hi(param0.s2, param1.s2), mul_hi(param0.s3, param1.s3)); }
+
+INLINE_OVERLOADABLE char8 mul_hi (char8 param0, char8 param1)
+{return (char8)(mul_hi(param0.s0, param1.s0), mul_hi(param0.s1, param1.s1),
+                mul_hi(param0.s2, param1.s2), mul_hi(param0.s3, param1.s3),
+                mul_hi(param0.s4, param1.s4), mul_hi(param0.s5, param1.s5),
+                mul_hi(param0.s6, param1.s6), mul_hi(param0.s7, param1.s7)); }
+
+INLINE_OVERLOADABLE char16 mul_hi (char16 param0, char16 param1)
+{return (char16)(mul_hi(param0.s0,  param1.s0),  mul_hi(param0.s1,  param1.s1),
+                 mul_hi(param0.s2,  param1.s2),  mul_hi(param0.s3,  param1.s3),
+                 mul_hi(param0.s4,  param1.s4),  mul_hi(param0.s5,  param1.s5),
+                 mul_hi(param0.s6,  param1.s6),  mul_hi(param0.s7,  param1.s7),
+                 mul_hi(param0.s8,  param1.s8),  mul_hi(param0.s9,  param1.s9),
+                 mul_hi(param0.sa, param1.sa), mul_hi(param0.sb, param1.sb),
+                 mul_hi(param0.sc, param1.sc), mul_hi(param0.sd, param1.sd),
+                 mul_hi(param0.se, param1.se), mul_hi(param0.sf, param1.sf)); }
+
+INLINE_OVERLOADABLE short2 mul_hi (short2 param0, short2 param1)
+{return (short2)(mul_hi(param0.s0, param1.s0), mul_hi(param0.s1, param1.s1)); }
+
+INLINE_OVERLOADABLE short3 mul_hi (short3 param0, short3 param1)
+{return (short3)(mul_hi(param0.s0, param1.s0), mul_hi(param0.s1, param1.s1),
+                 mul_hi(param0.s2, param1.s2)); }
+
+INLINE_OVERLOADABLE short4 mul_hi (short4 param0, short4 param1)
+{return (short4)(mul_hi(param0.s0, param1.s0), mul_hi(param0.s1, param1.s1),
+                 mul_hi(param0.s2, param1.s2), mul_hi(param0.s3, param1.s3)); }
+
+INLINE_OVERLOADABLE short8 mul_hi (short8 param0, short8 param1)
+{return (short8)(mul_hi(param0.s0, param1.s0), mul_hi(param0.s1, param1.s1),
+                 mul_hi(param0.s2, param1.s2), mul_hi(param0.s3, param1.s3),
+                 mul_hi(param0.s4, param1.s4), mul_hi(param0.s5, param1.s5),
+                 mul_hi(param0.s6, param1.s6), mul_hi(param0.s7, param1.s7)); }
+
+INLINE_OVERLOADABLE short16 mul_hi (short16 param0, short16 param1)
+{return (short16)(mul_hi(param0.s0,  param1.s0),  mul_hi(param0.s1,  param1.s1),
+                  mul_hi(param0.s2,  param1.s2),  mul_hi(param0.s3,  param1.s3),
+                  mul_hi(param0.s4,  param1.s4),  mul_hi(param0.s5,  param1.s5),
+                  mul_hi(param0.s6,  param1.s6),  mul_hi(param0.s7,  param1.s7),
+                  mul_hi(param0.s8,  param1.s8),  mul_hi(param0.s9,  param1.s9),
+                  mul_hi(param0.sa, param1.sa), mul_hi(param0.sb, param1.sb),
+                  mul_hi(param0.sc, param1.sc), mul_hi(param0.sd, param1.sd),
+                  mul_hi(param0.se, param1.se), mul_hi(param0.sf, param1.sf)); }
+
+INLINE_OVERLOADABLE int2 mul_hi (int2 param0, int2 param1)
+{return (int2)(mul_hi(param0.s0, param1.s0), mul_hi(param0.s1, param1.s1)); }
+
+INLINE_OVERLOADABLE int3 mul_hi (int3 param0, int3 param1)
+{return (int3)(mul_hi(param0.s0, param1.s0), mul_hi(param0.s1, param1.s1),
+               mul_hi(param0.s2, param1.s2)); }
+
+INLINE_OVERLOADABLE int4 mul_hi (int4 param0, int4 param1)
+{return (int4)(mul_hi(param0.s0, param1.s0), mul_hi(param0.s1, param1.s1),
+               mul_hi(param0.s2, param1.s2), mul_hi(param0.s3, param1.s3)); }
+
+INLINE_OVERLOADABLE int8 mul_hi (int8 param0, int8 param1)
+{return (int8)(mul_hi(param0.s0, param1.s0), mul_hi(param0.s1, param1.s1),
+               mul_hi(param0.s2, param1.s2), mul_hi(param0.s3, param1.s3),
+               mul_hi(param0.s4, param1.s4), mul_hi(param0.s5, param1.s5),
+               mul_hi(param0.s6, param1.s6), mul_hi(param0.s7, param1.s7)); }
+
+INLINE_OVERLOADABLE int16 mul_hi (int16 param0, int16 param1)
+{return (int16)(mul_hi(param0.s0,  param1.s0),  mul_hi(param0.s1,  param1.s1),
+                mul_hi(param0.s2,  param1.s2),  mul_hi(param0.s3,  param1.s3),
+                mul_hi(param0.s4,  param1.s4),  mul_hi(param0.s5,  param1.s5),
+                mul_hi(param0.s6,  param1.s6),  mul_hi(param0.s7,  param1.s7),
+                mul_hi(param0.s8,  param1.s8),  mul_hi(param0.s9,  param1.s9),
+                mul_hi(param0.sa, param1.sa), mul_hi(param0.sb, param1.sb),
+                mul_hi(param0.sc, param1.sc), mul_hi(param0.sd, param1.sd),
+                mul_hi(param0.se, param1.se), mul_hi(param0.sf, param1.sf)); }
+
+INLINE_OVERLOADABLE uchar2 mul_hi (uchar2 param0, uchar2 param1)
+{return (uchar2)(mul_hi(param0.s0, param1.s0), mul_hi(param0.s1, param1.s1)); }
+
+INLINE_OVERLOADABLE uchar3 mul_hi (uchar3 param0, uchar3 param1)
+{return (uchar3)(mul_hi(param0.s0, param1.s0), mul_hi(param0.s1, param1.s1),
+                 mul_hi(param0.s2, param1.s2)); }
+
+INLINE_OVERLOADABLE uchar4 mul_hi (uchar4 param0, uchar4 param1)
+{return (uchar4)(mul_hi(param0.s0, param1.s0), mul_hi(param0.s1, param1.s1),
+                 mul_hi(param0.s2, param1.s2), mul_hi(param0.s3, param1.s3)); }
+
+INLINE_OVERLOADABLE uchar8 mul_hi (uchar8 param0, uchar8 param1)
+{return (uchar8)(mul_hi(param0.s0, param1.s0), mul_hi(param0.s1, param1.s1),
+                 mul_hi(param0.s2, param1.s2), mul_hi(param0.s3, param1.s3),
+                 mul_hi(param0.s4, param1.s4), mul_hi(param0.s5, param1.s5),
+                 mul_hi(param0.s6, param1.s6), mul_hi(param0.s7, param1.s7)); }
+
+INLINE_OVERLOADABLE uchar16 mul_hi (uchar16 param0, uchar16 param1)
+{return (uchar16)(mul_hi(param0.s0,  param1.s0),  mul_hi(param0.s1,  param1.s1),
+                  mul_hi(param0.s2,  param1.s2),  mul_hi(param0.s3,  param1.s3),
+                  mul_hi(param0.s4,  param1.s4),  mul_hi(param0.s5,  param1.s5),
+                  mul_hi(param0.s6,  param1.s6),  mul_hi(param0.s7,  param1.s7),
+                  mul_hi(param0.s8,  param1.s8),  mul_hi(param0.s9,  param1.s9),
+                  mul_hi(param0.sa, param1.sa), mul_hi(param0.sb, param1.sb),
+                  mul_hi(param0.sc, param1.sc), mul_hi(param0.sd, param1.sd),
+                  mul_hi(param0.se, param1.se), mul_hi(param0.sf, param1.sf)); }
+
+INLINE_OVERLOADABLE ushort2 mul_hi (ushort2 param0, ushort2 param1)
+{return (ushort2)(mul_hi(param0.s0, param1.s0), mul_hi(param0.s1, param1.s1)); }
+
+INLINE_OVERLOADABLE ushort3 mul_hi (ushort3 param0, ushort3 param1)
+{return (ushort3)(mul_hi(param0.s0, param1.s0), mul_hi(param0.s1, param1.s1),
+                  mul_hi(param0.s2, param1.s2)); }
+
+INLINE_OVERLOADABLE ushort4 mul_hi (ushort4 param0, ushort4 param1)
+{return (ushort4)(mul_hi(param0.s0, param1.s0), mul_hi(param0.s1, param1.s1),
+                  mul_hi(param0.s2, param1.s2), mul_hi(param0.s3, param1.s3)); }
+
+INLINE_OVERLOADABLE ushort8 mul_hi (ushort8 param0, ushort8 param1)
+{return (ushort8)(mul_hi(param0.s0, param1.s0), mul_hi(param0.s1, param1.s1),
+                  mul_hi(param0.s2, param1.s2), mul_hi(param0.s3, param1.s3),
+                  mul_hi(param0.s4, param1.s4), mul_hi(param0.s5, param1.s5),
+                  mul_hi(param0.s6, param1.s6), mul_hi(param0.s7, param1.s7)); }
+
+INLINE_OVERLOADABLE ushort16 mul_hi (ushort16 param0, ushort16 param1)
+{return (ushort16)(mul_hi(param0.s0,  param1.s0),  mul_hi(param0.s1,  param1.s1),
+                   mul_hi(param0.s2,  param1.s2),  mul_hi(param0.s3,  param1.s3),
+                   mul_hi(param0.s4,  param1.s4),  mul_hi(param0.s5,  param1.s5),
+                   mul_hi(param0.s6,  param1.s6),  mul_hi(param0.s7,  param1.s7),
+                   mul_hi(param0.s8,  param1.s8),  mul_hi(param0.s9,  param1.s9),
+                   mul_hi(param0.sa, param1.sa), mul_hi(param0.sb, param1.sb),
+                   mul_hi(param0.sc, param1.sc), mul_hi(param0.sd, param1.sd),
+                   mul_hi(param0.se, param1.se), mul_hi(param0.sf, param1.sf)); }
+
+INLINE_OVERLOADABLE uint2 mul_hi (uint2 param0, uint2 param1)
+{return (uint2)(mul_hi(param0.s0, param1.s0), mul_hi(param0.s1, param1.s1)); }
+
+INLINE_OVERLOADABLE uint3 mul_hi (uint3 param0, uint3 param1)
+{return (uint3)(mul_hi(param0.s0, param1.s0), mul_hi(param0.s1, param1.s1),
+                mul_hi(param0.s2, param1.s2)); }
+
+INLINE_OVERLOADABLE uint4 mul_hi (uint4 param0, uint4 param1)
+{return (uint4)(mul_hi(param0.s0, param1.s0), mul_hi(param0.s1, param1.s1),
+                mul_hi(param0.s2, param1.s2), mul_hi(param0.s3, param1.s3)); }
+
+INLINE_OVERLOADABLE uint8 mul_hi (uint8 param0, uint8 param1)
+{return (uint8)(mul_hi(param0.s0, param1.s0), mul_hi(param0.s1, param1.s1),
+                mul_hi(param0.s2, param1.s2), mul_hi(param0.s3, param1.s3),
+                mul_hi(param0.s4, param1.s4), mul_hi(param0.s5, param1.s5),
+                mul_hi(param0.s6, param1.s6), mul_hi(param0.s7, param1.s7)); }
+
+INLINE_OVERLOADABLE uint16 mul_hi (uint16 param0, uint16 param1)
+{return (uint16)(mul_hi(param0.s0,  param1.s0),  mul_hi(param0.s1,  param1.s1),
+                 mul_hi(param0.s2,  param1.s2),  mul_hi(param0.s3,  param1.s3),
+                 mul_hi(param0.s4,  param1.s4),  mul_hi(param0.s5,  param1.s5),
+                 mul_hi(param0.s6,  param1.s6),  mul_hi(param0.s7,  param1.s7),
+                 mul_hi(param0.s8,  param1.s8),  mul_hi(param0.s9,  param1.s9),
+                 mul_hi(param0.sa, param1.sa), mul_hi(param0.sb, param1.sb),
+                 mul_hi(param0.sc, param1.sc), mul_hi(param0.sd, param1.sd),
+                 mul_hi(param0.se, param1.se), mul_hi(param0.sf, param1.sf)); }
+
+
+//gentype rotate (gentype v,  gentype i)
+
+INLINE_OVERLOADABLE char2 rotate (char2 param0, char2 param1)
+{return (char2)(rotate(param0.s0, param1.s0), rotate(param0.s1, param1.s1)); }
+
+INLINE_OVERLOADABLE char3 rotate (char3 param0, char3 param1)
+{return (char3)(rotate(param0.s0, param1.s0), rotate(param0.s1, param1.s1),
+                rotate(param0.s2, param1.s2)); }
+
+INLINE_OVERLOADABLE char4 rotate (char4 param0, char4 param1)
+{return (char4)(rotate(param0.s0, param1.s0), rotate(param0.s1, param1.s1),
+                rotate(param0.s2, param1.s2), rotate(param0.s3, param1.s3)); }
+
+INLINE_OVERLOADABLE char8 rotate (char8 param0, char8 param1)
+{return (char8)(rotate(param0.s0, param1.s0), rotate(param0.s1, param1.s1),
+                rotate(param0.s2, param1.s2), rotate(param0.s3, param1.s3),
+                rotate(param0.s4, param1.s4), rotate(param0.s5, param1.s5),
+                rotate(param0.s6, param1.s6), rotate(param0.s7, param1.s7)); }
+
+INLINE_OVERLOADABLE char16 rotate (char16 param0, char16 param1)
+{return (char16)(rotate(param0.s0,  param1.s0),  rotate(param0.s1,  param1.s1),
+                 rotate(param0.s2,  param1.s2),  rotate(param0.s3,  param1.s3),
+                 rotate(param0.s4,  param1.s4),  rotate(param0.s5,  param1.s5),
+                 rotate(param0.s6,  param1.s6),  rotate(param0.s7,  param1.s7),
+                 rotate(param0.s8,  param1.s8),  rotate(param0.s9,  param1.s9),
+                 rotate(param0.sa, param1.sa), rotate(param0.sb, param1.sb),
+                 rotate(param0.sc, param1.sc), rotate(param0.sd, param1.sd),
+                 rotate(param0.se, param1.se), rotate(param0.sf, param1.sf)); }
+
+INLINE_OVERLOADABLE short2 rotate (short2 param0, short2 param1)
+{return (short2)(rotate(param0.s0, param1.s0), rotate(param0.s1, param1.s1)); }
+
+INLINE_OVERLOADABLE short3 rotate (short3 param0, short3 param1)
+{return (short3)(rotate(param0.s0, param1.s0), rotate(param0.s1, param1.s1),
+                 rotate(param0.s2, param1.s2)); }
+
+INLINE_OVERLOADABLE short4 rotate (short4 param0, short4 param1)
+{return (short4)(rotate(param0.s0, param1.s0), rotate(param0.s1, param1.s1),
+                 rotate(param0.s2, param1.s2), rotate(param0.s3, param1.s3)); }
+
+INLINE_OVERLOADABLE short8 rotate (short8 param0, short8 param1)
+{return (short8)(rotate(param0.s0, param1.s0), rotate(param0.s1, param1.s1),
+                 rotate(param0.s2, param1.s2), rotate(param0.s3, param1.s3),
+                 rotate(param0.s4, param1.s4), rotate(param0.s5, param1.s5),
+                 rotate(param0.s6, param1.s6), rotate(param0.s7, param1.s7)); }
+
+INLINE_OVERLOADABLE short16 rotate (short16 param0, short16 param1)
+{return (short16)(rotate(param0.s0,  param1.s0),  rotate(param0.s1,  param1.s1),
+                  rotate(param0.s2,  param1.s2),  rotate(param0.s3,  param1.s3),
+                  rotate(param0.s4,  param1.s4),  rotate(param0.s5,  param1.s5),
+                  rotate(param0.s6,  param1.s6),  rotate(param0.s7,  param1.s7),
+                  rotate(param0.s8,  param1.s8),  rotate(param0.s9,  param1.s9),
+                  rotate(param0.sa, param1.sa), rotate(param0.sb, param1.sb),
+                  rotate(param0.sc, param1.sc), rotate(param0.sd, param1.sd),
+                  rotate(param0.se, param1.se), rotate(param0.sf, param1.sf)); }
+
+INLINE_OVERLOADABLE int2 rotate (int2 param0, int2 param1)
+{return (int2)(rotate(param0.s0, param1.s0), rotate(param0.s1, param1.s1)); }
+
+INLINE_OVERLOADABLE int3 rotate (int3 param0, int3 param1)
+{return (int3)(rotate(param0.s0, param1.s0), rotate(param0.s1, param1.s1),
+               rotate(param0.s2, param1.s2)); }
+
+INLINE_OVERLOADABLE int4 rotate (int4 param0, int4 param1)
+{return (int4)(rotate(param0.s0, param1.s0), rotate(param0.s1, param1.s1),
+               rotate(param0.s2, param1.s2), rotate(param0.s3, param1.s3)); }
+
+INLINE_OVERLOADABLE int8 rotate (int8 param0, int8 param1)
+{return (int8)(rotate(param0.s0, param1.s0), rotate(param0.s1, param1.s1),
+               rotate(param0.s2, param1.s2), rotate(param0.s3, param1.s3),
+               rotate(param0.s4, param1.s4), rotate(param0.s5, param1.s5),
+               rotate(param0.s6, param1.s6), rotate(param0.s7, param1.s7)); }
+
+INLINE_OVERLOADABLE int16 rotate (int16 param0, int16 param1)
+{return (int16)(rotate(param0.s0,  param1.s0),  rotate(param0.s1,  param1.s1),
+                rotate(param0.s2,  param1.s2),  rotate(param0.s3,  param1.s3),
+                rotate(param0.s4,  param1.s4),  rotate(param0.s5,  param1.s5),
+                rotate(param0.s6,  param1.s6),  rotate(param0.s7,  param1.s7),
+                rotate(param0.s8,  param1.s8),  rotate(param0.s9,  param1.s9),
+                rotate(param0.sa, param1.sa), rotate(param0.sb, param1.sb),
+                rotate(param0.sc, param1.sc), rotate(param0.sd, param1.sd),
+                rotate(param0.se, param1.se), rotate(param0.sf, param1.sf)); }
+
+INLINE_OVERLOADABLE uchar2 rotate (uchar2 param0, uchar2 param1)
+{return (uchar2)(rotate(param0.s0, param1.s0), rotate(param0.s1, param1.s1)); }
+
+INLINE_OVERLOADABLE uchar3 rotate (uchar3 param0, uchar3 param1)
+{return (uchar3)(rotate(param0.s0, param1.s0), rotate(param0.s1, param1.s1),
+                 rotate(param0.s2, param1.s2)); }
+
+INLINE_OVERLOADABLE uchar4 rotate (uchar4 param0, uchar4 param1)
+{return (uchar4)(rotate(param0.s0, param1.s0), rotate(param0.s1, param1.s1),
+                 rotate(param0.s2, param1.s2), rotate(param0.s3, param1.s3)); }
+
+INLINE_OVERLOADABLE uchar8 rotate (uchar8 param0, uchar8 param1)
+{return (uchar8)(rotate(param0.s0, param1.s0), rotate(param0.s1, param1.s1),
+                 rotate(param0.s2, param1.s2), rotate(param0.s3, param1.s3),
+                 rotate(param0.s4, param1.s4), rotate(param0.s5, param1.s5),
+                 rotate(param0.s6, param1.s6), rotate(param0.s7, param1.s7)); }
+
+INLINE_OVERLOADABLE uchar16 rotate (uchar16 param0, uchar16 param1)
+{return (uchar16)(rotate(param0.s0,  param1.s0),  rotate(param0.s1,  param1.s1),
+                  rotate(param0.s2,  param1.s2),  rotate(param0.s3,  param1.s3),
+                  rotate(param0.s4,  param1.s4),  rotate(param0.s5,  param1.s5),
+                  rotate(param0.s6,  param1.s6),  rotate(param0.s7,  param1.s7),
+                  rotate(param0.s8,  param1.s8),  rotate(param0.s9,  param1.s9),
+                  rotate(param0.sa, param1.sa), rotate(param0.sb, param1.sb),
+                  rotate(param0.sc, param1.sc), rotate(param0.sd, param1.sd),
+                  rotate(param0.se, param1.se), rotate(param0.sf, param1.sf)); }
+
+INLINE_OVERLOADABLE ushort2 rotate (ushort2 param0, ushort2 param1)
+{return (ushort2)(rotate(param0.s0, param1.s0), rotate(param0.s1, param1.s1)); }
+
+INLINE_OVERLOADABLE ushort3 rotate (ushort3 param0, ushort3 param1)
+{return (ushort3)(rotate(param0.s0, param1.s0), rotate(param0.s1, param1.s1),
+                  rotate(param0.s2, param1.s2)); }
+
+INLINE_OVERLOADABLE ushort4 rotate (ushort4 param0, ushort4 param1)
+{return (ushort4)(rotate(param0.s0, param1.s0), rotate(param0.s1, param1.s1),
+                  rotate(param0.s2, param1.s2), rotate(param0.s3, param1.s3)); }
+
+INLINE_OVERLOADABLE ushort8 rotate (ushort8 param0, ushort8 param1)
+{return (ushort8)(rotate(param0.s0, param1.s0), rotate(param0.s1, param1.s1),
+                  rotate(param0.s2, param1.s2), rotate(param0.s3, param1.s3),
+                  rotate(param0.s4, param1.s4), rotate(param0.s5, param1.s5),
+                  rotate(param0.s6, param1.s6), rotate(param0.s7, param1.s7)); }
+
+INLINE_OVERLOADABLE ushort16 rotate (ushort16 param0, ushort16 param1)
+{return (ushort16)(rotate(param0.s0,  param1.s0),  rotate(param0.s1,  param1.s1),
+                   rotate(param0.s2,  param1.s2),  rotate(param0.s3,  param1.s3),
+                   rotate(param0.s4,  param1.s4),  rotate(param0.s5,  param1.s5),
+                   rotate(param0.s6,  param1.s6),  rotate(param0.s7,  param1.s7),
+                   rotate(param0.s8,  param1.s8),  rotate(param0.s9,  param1.s9),
+                   rotate(param0.sa, param1.sa), rotate(param0.sb, param1.sb),
+                   rotate(param0.sc, param1.sc), rotate(param0.sd, param1.sd),
+                   rotate(param0.se, param1.se), rotate(param0.sf, param1.sf)); }
+
+INLINE_OVERLOADABLE uint2 rotate (uint2 param0, uint2 param1)
+{return (uint2)(rotate(param0.s0, param1.s0), rotate(param0.s1, param1.s1)); }
+
+INLINE_OVERLOADABLE uint3 rotate (uint3 param0, uint3 param1)
+{return (uint3)(rotate(param0.s0, param1.s0), rotate(param0.s1, param1.s1),
+                rotate(param0.s2, param1.s2)); }
+
+INLINE_OVERLOADABLE uint4 rotate (uint4 param0, uint4 param1)
+{return (uint4)(rotate(param0.s0, param1.s0), rotate(param0.s1, param1.s1),
+                rotate(param0.s2, param1.s2), rotate(param0.s3, param1.s3)); }
+
+INLINE_OVERLOADABLE uint8 rotate (uint8 param0, uint8 param1)
+{return (uint8)(rotate(param0.s0, param1.s0), rotate(param0.s1, param1.s1),
+                rotate(param0.s2, param1.s2), rotate(param0.s3, param1.s3),
+                rotate(param0.s4, param1.s4), rotate(param0.s5, param1.s5),
+                rotate(param0.s6, param1.s6), rotate(param0.s7, param1.s7)); }
+
+INLINE_OVERLOADABLE uint16 rotate (uint16 param0, uint16 param1)
+{return (uint16)(rotate(param0.s0,  param1.s0),  rotate(param0.s1,  param1.s1),
+                 rotate(param0.s2,  param1.s2),  rotate(param0.s3,  param1.s3),
+                 rotate(param0.s4,  param1.s4),  rotate(param0.s5,  param1.s5),
+                 rotate(param0.s6,  param1.s6),  rotate(param0.s7,  param1.s7),
+                 rotate(param0.s8,  param1.s8),  rotate(param0.s9,  param1.s9),
+                 rotate(param0.sa, param1.sa), rotate(param0.sb, param1.sb),
+                 rotate(param0.sc, param1.sc), rotate(param0.sd, param1.sd),
+                 rotate(param0.se, param1.se), rotate(param0.sf, param1.sf)); }
+
+
+//gentype sub_sat (gentype x,  gentype y)
+
+INLINE_OVERLOADABLE char2 sub_sat (char2 param0, char2 param1)
+{return (char2)(sub_sat(param0.s0, param1.s0), sub_sat(param0.s1, param1.s1)); }
+
+INLINE_OVERLOADABLE char3 sub_sat (char3 param0, char3 param1)
+{return (char3)(sub_sat(param0.s0, param1.s0), sub_sat(param0.s1, param1.s1),
+                sub_sat(param0.s2, param1.s2)); }
+
+INLINE_OVERLOADABLE char4 sub_sat (char4 param0, char4 param1)
+{return (char4)(sub_sat(param0.s0, param1.s0), sub_sat(param0.s1, param1.s1),
+                sub_sat(param0.s2, param1.s2), sub_sat(param0.s3, param1.s3)); }
+
+INLINE_OVERLOADABLE char8 sub_sat (char8 param0, char8 param1)
+{return (char8)(sub_sat(param0.s0, param1.s0), sub_sat(param0.s1, param1.s1),
+                sub_sat(param0.s2, param1.s2), sub_sat(param0.s3, param1.s3),
+                sub_sat(param0.s4, param1.s4), sub_sat(param0.s5, param1.s5),
+                sub_sat(param0.s6, param1.s6), sub_sat(param0.s7, param1.s7)); }
+
+INLINE_OVERLOADABLE char16 sub_sat (char16 param0, char16 param1)
+{return (char16)(sub_sat(param0.s0,  param1.s0),  sub_sat(param0.s1,  param1.s1),
+                 sub_sat(param0.s2,  param1.s2),  sub_sat(param0.s3,  param1.s3),
+                 sub_sat(param0.s4,  param1.s4),  sub_sat(param0.s5,  param1.s5),
+                 sub_sat(param0.s6,  param1.s6),  sub_sat(param0.s7,  param1.s7),
+                 sub_sat(param0.s8,  param1.s8),  sub_sat(param0.s9,  param1.s9),
+                 sub_sat(param0.sa, param1.sa), sub_sat(param0.sb, param1.sb),
+                 sub_sat(param0.sc, param1.sc), sub_sat(param0.sd, param1.sd),
+                 sub_sat(param0.se, param1.se), sub_sat(param0.sf, param1.sf)); }
+
+INLINE_OVERLOADABLE short2 sub_sat (short2 param0, short2 param1)
+{return (short2)(sub_sat(param0.s0, param1.s0), sub_sat(param0.s1, param1.s1)); }
+
+INLINE_OVERLOADABLE short3 sub_sat (short3 param0, short3 param1)
+{return (short3)(sub_sat(param0.s0, param1.s0), sub_sat(param0.s1, param1.s1),
+                 sub_sat(param0.s2, param1.s2)); }
+
+INLINE_OVERLOADABLE short4 sub_sat (short4 param0, short4 param1)
+{return (short4)(sub_sat(param0.s0, param1.s0), sub_sat(param0.s1, param1.s1),
+                 sub_sat(param0.s2, param1.s2), sub_sat(param0.s3, param1.s3)); }
+
+INLINE_OVERLOADABLE short8 sub_sat (short8 param0, short8 param1)
+{return (short8)(sub_sat(param0.s0, param1.s0), sub_sat(param0.s1, param1.s1),
+                 sub_sat(param0.s2, param1.s2), sub_sat(param0.s3, param1.s3),
+                 sub_sat(param0.s4, param1.s4), sub_sat(param0.s5, param1.s5),
+                 sub_sat(param0.s6, param1.s6), sub_sat(param0.s7, param1.s7)); }
+
+INLINE_OVERLOADABLE short16 sub_sat (short16 param0, short16 param1)
+{return (short16)(sub_sat(param0.s0,  param1.s0),  sub_sat(param0.s1,  param1.s1),
+                  sub_sat(param0.s2,  param1.s2),  sub_sat(param0.s3,  param1.s3),
+                  sub_sat(param0.s4,  param1.s4),  sub_sat(param0.s5,  param1.s5),
+                  sub_sat(param0.s6,  param1.s6),  sub_sat(param0.s7,  param1.s7),
+                  sub_sat(param0.s8,  param1.s8),  sub_sat(param0.s9,  param1.s9),
+                  sub_sat(param0.sa, param1.sa), sub_sat(param0.sb, param1.sb),
+                  sub_sat(param0.sc, param1.sc), sub_sat(param0.sd, param1.sd),
+                  sub_sat(param0.se, param1.se), sub_sat(param0.sf, param1.sf)); }
+
+INLINE_OVERLOADABLE int2 sub_sat (int2 param0, int2 param1)
+{return (int2)(sub_sat(param0.s0, param1.s0), sub_sat(param0.s1, param1.s1)); }
+
+INLINE_OVERLOADABLE int3 sub_sat (int3 param0, int3 param1)
+{return (int3)(sub_sat(param0.s0, param1.s0), sub_sat(param0.s1, param1.s1),
+               sub_sat(param0.s2, param1.s2)); }
+
+INLINE_OVERLOADABLE int4 sub_sat (int4 param0, int4 param1)
+{return (int4)(sub_sat(param0.s0, param1.s0), sub_sat(param0.s1, param1.s1),
+               sub_sat(param0.s2, param1.s2), sub_sat(param0.s3, param1.s3)); }
+
+INLINE_OVERLOADABLE int8 sub_sat (int8 param0, int8 param1)
+{return (int8)(sub_sat(param0.s0, param1.s0), sub_sat(param0.s1, param1.s1),
+               sub_sat(param0.s2, param1.s2), sub_sat(param0.s3, param1.s3),
+               sub_sat(param0.s4, param1.s4), sub_sat(param0.s5, param1.s5),
+               sub_sat(param0.s6, param1.s6), sub_sat(param0.s7, param1.s7)); }
+
+INLINE_OVERLOADABLE int16 sub_sat (int16 param0, int16 param1)
+{return (int16)(sub_sat(param0.s0,  param1.s0),  sub_sat(param0.s1,  param1.s1),
+                sub_sat(param0.s2,  param1.s2),  sub_sat(param0.s3,  param1.s3),
+                sub_sat(param0.s4,  param1.s4),  sub_sat(param0.s5,  param1.s5),
+                sub_sat(param0.s6,  param1.s6),  sub_sat(param0.s7,  param1.s7),
+                sub_sat(param0.s8,  param1.s8),  sub_sat(param0.s9,  param1.s9),
+                sub_sat(param0.sa, param1.sa), sub_sat(param0.sb, param1.sb),
+                sub_sat(param0.sc, param1.sc), sub_sat(param0.sd, param1.sd),
+                sub_sat(param0.se, param1.se), sub_sat(param0.sf, param1.sf)); }
+
+INLINE_OVERLOADABLE uchar2 sub_sat (uchar2 param0, uchar2 param1)
+{return (uchar2)(sub_sat(param0.s0, param1.s0), sub_sat(param0.s1, param1.s1)); }
+
+INLINE_OVERLOADABLE uchar3 sub_sat (uchar3 param0, uchar3 param1)
+{return (uchar3)(sub_sat(param0.s0, param1.s0), sub_sat(param0.s1, param1.s1),
+                 sub_sat(param0.s2, param1.s2)); }
+
+INLINE_OVERLOADABLE uchar4 sub_sat (uchar4 param0, uchar4 param1)
+{return (uchar4)(sub_sat(param0.s0, param1.s0), sub_sat(param0.s1, param1.s1),
+                 sub_sat(param0.s2, param1.s2), sub_sat(param0.s3, param1.s3)); }
+
+INLINE_OVERLOADABLE uchar8 sub_sat (uchar8 param0, uchar8 param1)
+{return (uchar8)(sub_sat(param0.s0, param1.s0), sub_sat(param0.s1, param1.s1),
+                 sub_sat(param0.s2, param1.s2), sub_sat(param0.s3, param1.s3),
+                 sub_sat(param0.s4, param1.s4), sub_sat(param0.s5, param1.s5),
+                 sub_sat(param0.s6, param1.s6), sub_sat(param0.s7, param1.s7)); }
+
+INLINE_OVERLOADABLE uchar16 sub_sat (uchar16 param0, uchar16 param1)
+{return (uchar16)(sub_sat(param0.s0,  param1.s0),  sub_sat(param0.s1,  param1.s1),
+                  sub_sat(param0.s2,  param1.s2),  sub_sat(param0.s3,  param1.s3),
+                  sub_sat(param0.s4,  param1.s4),  sub_sat(param0.s5,  param1.s5),
+                  sub_sat(param0.s6,  param1.s6),  sub_sat(param0.s7,  param1.s7),
+                  sub_sat(param0.s8,  param1.s8),  sub_sat(param0.s9,  param1.s9),
+                  sub_sat(param0.sa, param1.sa), sub_sat(param0.sb, param1.sb),
+                  sub_sat(param0.sc, param1.sc), sub_sat(param0.sd, param1.sd),
+                  sub_sat(param0.se, param1.se), sub_sat(param0.sf, param1.sf)); }
+
+INLINE_OVERLOADABLE ushort2 sub_sat (ushort2 param0, ushort2 param1)
+{return (ushort2)(sub_sat(param0.s0, param1.s0), sub_sat(param0.s1, param1.s1)); }
+
+INLINE_OVERLOADABLE ushort3 sub_sat (ushort3 param0, ushort3 param1)
+{return (ushort3)(sub_sat(param0.s0, param1.s0), sub_sat(param0.s1, param1.s1),
+                  sub_sat(param0.s2, param1.s2)); }
+
+INLINE_OVERLOADABLE ushort4 sub_sat (ushort4 param0, ushort4 param1)
+{return (ushort4)(sub_sat(param0.s0, param1.s0), sub_sat(param0.s1, param1.s1),
+                  sub_sat(param0.s2, param1.s2), sub_sat(param0.s3, param1.s3)); }
+
+INLINE_OVERLOADABLE ushort8 sub_sat (ushort8 param0, ushort8 param1)
+{return (ushort8)(sub_sat(param0.s0, param1.s0), sub_sat(param0.s1, param1.s1),
+                  sub_sat(param0.s2, param1.s2), sub_sat(param0.s3, param1.s3),
+                  sub_sat(param0.s4, param1.s4), sub_sat(param0.s5, param1.s5),
+                  sub_sat(param0.s6, param1.s6), sub_sat(param0.s7, param1.s7)); }
+
+INLINE_OVERLOADABLE ushort16 sub_sat (ushort16 param0, ushort16 param1)
+{return (ushort16)(sub_sat(param0.s0,  param1.s0),  sub_sat(param0.s1,  param1.s1),
+                   sub_sat(param0.s2,  param1.s2),  sub_sat(param0.s3,  param1.s3),
+                   sub_sat(param0.s4,  param1.s4),  sub_sat(param0.s5,  param1.s5),
+                   sub_sat(param0.s6,  param1.s6),  sub_sat(param0.s7,  param1.s7),
+                   sub_sat(param0.s8,  param1.s8),  sub_sat(param0.s9,  param1.s9),
+                   sub_sat(param0.sa, param1.sa), sub_sat(param0.sb, param1.sb),
+                   sub_sat(param0.sc, param1.sc), sub_sat(param0.sd, param1.sd),
+                   sub_sat(param0.se, param1.se), sub_sat(param0.sf, param1.sf)); }
+
+INLINE_OVERLOADABLE uint2 sub_sat (uint2 param0, uint2 param1)
+{return (uint2)(sub_sat(param0.s0, param1.s0), sub_sat(param0.s1, param1.s1)); }
+
+INLINE_OVERLOADABLE uint3 sub_sat (uint3 param0, uint3 param1)
+{return (uint3)(sub_sat(param0.s0, param1.s0), sub_sat(param0.s1, param1.s1),
+                sub_sat(param0.s2, param1.s2)); }
+
+INLINE_OVERLOADABLE uint4 sub_sat (uint4 param0, uint4 param1)
+{return (uint4)(sub_sat(param0.s0, param1.s0), sub_sat(param0.s1, param1.s1),
+                sub_sat(param0.s2, param1.s2), sub_sat(param0.s3, param1.s3)); }
+
+INLINE_OVERLOADABLE uint8 sub_sat (uint8 param0, uint8 param1)
+{return (uint8)(sub_sat(param0.s0, param1.s0), sub_sat(param0.s1, param1.s1),
+                sub_sat(param0.s2, param1.s2), sub_sat(param0.s3, param1.s3),
+                sub_sat(param0.s4, param1.s4), sub_sat(param0.s5, param1.s5),
+                sub_sat(param0.s6, param1.s6), sub_sat(param0.s7, param1.s7)); }
+
+INLINE_OVERLOADABLE uint16 sub_sat (uint16 param0, uint16 param1)
+{return (uint16)(sub_sat(param0.s0,  param1.s0),  sub_sat(param0.s1,  param1.s1),
+                 sub_sat(param0.s2,  param1.s2),  sub_sat(param0.s3,  param1.s3),
+                 sub_sat(param0.s4,  param1.s4),  sub_sat(param0.s5,  param1.s5),
+                 sub_sat(param0.s6,  param1.s6),  sub_sat(param0.s7,  param1.s7),
+                 sub_sat(param0.s8,  param1.s8),  sub_sat(param0.s9,  param1.s9),
+                 sub_sat(param0.sa, param1.sa), sub_sat(param0.sb, param1.sb),
+                 sub_sat(param0.sc, param1.sc), sub_sat(param0.sd, param1.sd),
+                 sub_sat(param0.se, param1.se), sub_sat(param0.sf, param1.sf)); }
+
+
+//shortn upsample (charn hi, ucharn lo)
+
+INLINE_OVERLOADABLE short2 upsample (char2 param0, uchar2 param1)
+{return (short2)(upsample(param0.s0, param1.s0), upsample(param0.s1, param1.s1)); }
+
+INLINE_OVERLOADABLE short3 upsample (char3 param0, uchar3 param1)
+{return (short3)(upsample(param0.s0, param1.s0), upsample(param0.s1, param1.s1),
+                 upsample(param0.s2, param1.s2)); }
+
+INLINE_OVERLOADABLE short4 upsample (char4 param0, uchar4 param1)
+{return (short4)(upsample(param0.s0, param1.s0), upsample(param0.s1, param1.s1),
+                 upsample(param0.s2, param1.s2), upsample(param0.s3, param1.s3)); }
+
+INLINE_OVERLOADABLE short8 upsample (char8 param0, uchar8 param1)
+{return (short8)(upsample(param0.s0, param1.s0), upsample(param0.s1, param1.s1),
+                 upsample(param0.s2, param1.s2), upsample(param0.s3, param1.s3),
+                 upsample(param0.s4, param1.s4), upsample(param0.s5, param1.s5),
+                 upsample(param0.s6, param1.s6), upsample(param0.s7, param1.s7)); }
+
+INLINE_OVERLOADABLE short16 upsample (char16 param0, uchar16 param1)
+{return (short16)(upsample(param0.s0,  param1.s0),  upsample(param0.s1,  param1.s1),
+                  upsample(param0.s2,  param1.s2),  upsample(param0.s3,  param1.s3),
+                  upsample(param0.s4,  param1.s4),  upsample(param0.s5,  param1.s5),
+                  upsample(param0.s6,  param1.s6),  upsample(param0.s7,  param1.s7),
+                  upsample(param0.s8,  param1.s8),  upsample(param0.s9,  param1.s9),
+                  upsample(param0.sa, param1.sa), upsample(param0.sb, param1.sb),
+                  upsample(param0.sc, param1.sc), upsample(param0.sd, param1.sd),
+                  upsample(param0.se, param1.se), upsample(param0.sf, param1.sf)); }
+
+
+//ushortn upsample (ucharn hi, ucharn lo)
+
+INLINE_OVERLOADABLE ushort2 upsample (uchar2 param0, uchar2 param1)
+{return (ushort2)(upsample(param0.s0, param1.s0), upsample(param0.s1, param1.s1)); }
+
+INLINE_OVERLOADABLE ushort3 upsample (uchar3 param0, uchar3 param1)
+{return (ushort3)(upsample(param0.s0, param1.s0), upsample(param0.s1, param1.s1),
+                  upsample(param0.s2, param1.s2)); }
+
+INLINE_OVERLOADABLE ushort4 upsample (uchar4 param0, uchar4 param1)
+{return (ushort4)(upsample(param0.s0, param1.s0), upsample(param0.s1, param1.s1),
+                  upsample(param0.s2, param1.s2), upsample(param0.s3, param1.s3)); }
+
+INLINE_OVERLOADABLE ushort8 upsample (uchar8 param0, uchar8 param1)
+{return (ushort8)(upsample(param0.s0, param1.s0), upsample(param0.s1, param1.s1),
+                  upsample(param0.s2, param1.s2), upsample(param0.s3, param1.s3),
+                  upsample(param0.s4, param1.s4), upsample(param0.s5, param1.s5),
+                  upsample(param0.s6, param1.s6), upsample(param0.s7, param1.s7)); }
+
+INLINE_OVERLOADABLE ushort16 upsample (uchar16 param0, uchar16 param1)
+{return (ushort16)(upsample(param0.s0,  param1.s0),  upsample(param0.s1,  param1.s1),
+                   upsample(param0.s2,  param1.s2),  upsample(param0.s3,  param1.s3),
+                   upsample(param0.s4,  param1.s4),  upsample(param0.s5,  param1.s5),
+                   upsample(param0.s6,  param1.s6),  upsample(param0.s7,  param1.s7),
+                   upsample(param0.s8,  param1.s8),  upsample(param0.s9,  param1.s9),
+                   upsample(param0.sa, param1.sa), upsample(param0.sb, param1.sb),
+                   upsample(param0.sc, param1.sc), upsample(param0.sd, param1.sd),
+                   upsample(param0.se, param1.se), upsample(param0.sf, param1.sf)); }
+
+
+//intn upsample (shortn hi, ushortn lo)
+
+INLINE_OVERLOADABLE int2 upsample (short2 param0, ushort2 param1)
+{return (int2)(upsample(param0.s0, param1.s0), upsample(param0.s1, param1.s1)); }
+
+INLINE_OVERLOADABLE int3 upsample (short3 param0, ushort3 param1)
+{return (int3)(upsample(param0.s0, param1.s0), upsample(param0.s1, param1.s1),
+               upsample(param0.s2, param1.s2)); }
+
+INLINE_OVERLOADABLE int4 upsample (short4 param0, ushort4 param1)
+{return (int4)(upsample(param0.s0, param1.s0), upsample(param0.s1, param1.s1),
+               upsample(param0.s2, param1.s2), upsample(param0.s3, param1.s3)); }
+
+INLINE_OVERLOADABLE int8 upsample (short8 param0, ushort8 param1)
+{return (int8)(upsample(param0.s0, param1.s0), upsample(param0.s1, param1.s1),
+               upsample(param0.s2, param1.s2), upsample(param0.s3, param1.s3),
+               upsample(param0.s4, param1.s4), upsample(param0.s5, param1.s5),
+               upsample(param0.s6, param1.s6), upsample(param0.s7, param1.s7)); }
+
+INLINE_OVERLOADABLE int16 upsample (short16 param0, ushort16 param1)
+{return (int16)(upsample(param0.s0,  param1.s0),  upsample(param0.s1,  param1.s1),
+                upsample(param0.s2,  param1.s2),  upsample(param0.s3,  param1.s3),
+                upsample(param0.s4,  param1.s4),  upsample(param0.s5,  param1.s5),
+                upsample(param0.s6,  param1.s6),  upsample(param0.s7,  param1.s7),
+                upsample(param0.s8,  param1.s8),  upsample(param0.s9,  param1.s9),
+                upsample(param0.sa, param1.sa), upsample(param0.sb, param1.sb),
+                upsample(param0.sc, param1.sc), upsample(param0.sd, param1.sd),
+                upsample(param0.se, param1.se), upsample(param0.sf, param1.sf)); }
+
+
+//uintn upsample (ushortn hi, ushortn lo)
+
+INLINE_OVERLOADABLE uint2 upsample (ushort2 param0, ushort2 param1)
+{return (uint2)(upsample(param0.s0, param1.s0), upsample(param0.s1, param1.s1)); }
+
+INLINE_OVERLOADABLE uint3 upsample (ushort3 param0, ushort3 param1)
+{return (uint3)(upsample(param0.s0, param1.s0), upsample(param0.s1, param1.s1),
+                upsample(param0.s2, param1.s2)); }
+
+INLINE_OVERLOADABLE uint4 upsample (ushort4 param0, ushort4 param1)
+{return (uint4)(upsample(param0.s0, param1.s0), upsample(param0.s1, param1.s1),
+                upsample(param0.s2, param1.s2), upsample(param0.s3, param1.s3)); }
+
+INLINE_OVERLOADABLE uint8 upsample (ushort8 param0, ushort8 param1)
+{return (uint8)(upsample(param0.s0, param1.s0), upsample(param0.s1, param1.s1),
+                upsample(param0.s2, param1.s2), upsample(param0.s3, param1.s3),
+                upsample(param0.s4, param1.s4), upsample(param0.s5, param1.s5),
+                upsample(param0.s6, param1.s6), upsample(param0.s7, param1.s7)); }
+
+INLINE_OVERLOADABLE uint16 upsample (ushort16 param0, ushort16 param1)
+{return (uint16)(upsample(param0.s0,  param1.s0),  upsample(param0.s1,  param1.s1),
+                 upsample(param0.s2,  param1.s2),  upsample(param0.s3,  param1.s3),
+                 upsample(param0.s4,  param1.s4),  upsample(param0.s5,  param1.s5),
+                 upsample(param0.s6,  param1.s6),  upsample(param0.s7,  param1.s7),
+                 upsample(param0.s8,  param1.s8),  upsample(param0.s9,  param1.s9),
+                 upsample(param0.sa, param1.sa), upsample(param0.sb, param1.sb),
+                 upsample(param0.sc, param1.sc), upsample(param0.sd, param1.sd),
+                 upsample(param0.se, param1.se), upsample(param0.sf, param1.sf)); }
+
+
+//longn upsample (intn hi, uintn lo)
+
+
+//ulongn upsample (uintn hi, uintn lo)
+
+
+//gentype mad24 (gentype x, gentype y, gentype z)
+
+INLINE_OVERLOADABLE uint2 mad24 (uint2 param0, uint2 param1, uint2 param2)
+{return (uint2)(mad24(param0.s0, param1.s0, param2.s0), mad24(param0.s1, param1.s1, param2.s1)); }
+
+INLINE_OVERLOADABLE uint3 mad24 (uint3 param0, uint3 param1, uint3 param2)
+{return (uint3)(mad24(param0.s0, param1.s0, param2.s0), mad24(param0.s1, param1.s1, param2.s1),
+                mad24(param0.s2, param1.s2, param2.s2)); }
+
+INLINE_OVERLOADABLE uint4 mad24 (uint4 param0, uint4 param1, uint4 param2)
+{return (uint4)(mad24(param0.s0, param1.s0, param2.s0), mad24(param0.s1, param1.s1, param2.s1),
+                mad24(param0.s2, param1.s2, param2.s2), mad24(param0.s3, param1.s3, param2.s3)); }
+
+INLINE_OVERLOADABLE uint8 mad24 (uint8 param0, uint8 param1, uint8 param2)
+{return (uint8)(mad24(param0.s0, param1.s0, param2.s0), mad24(param0.s1, param1.s1, param2.s1),
+                mad24(param0.s2, param1.s2, param2.s2), mad24(param0.s3, param1.s3, param2.s3),
+                mad24(param0.s4, param1.s4, param2.s4), mad24(param0.s5, param1.s5, param2.s5),
+                mad24(param0.s6, param1.s6, param2.s6), mad24(param0.s7, param1.s7, param2.s7)); }
+
+INLINE_OVERLOADABLE uint16 mad24 (uint16 param0, uint16 param1, uint16 param2)
+{return (uint16)(mad24(param0.s0,  param1.s0,  param2.s0),  mad24(param0.s1,  param1.s1,  param2.s1),
+                 mad24(param0.s2,  param1.s2,  param2.s2),  mad24(param0.s3,  param1.s3,  param2.s3),
+                 mad24(param0.s4,  param1.s4,  param2.s4),  mad24(param0.s5,  param1.s5,  param2.s5),
+                 mad24(param0.s6,  param1.s6,  param2.s6),  mad24(param0.s7,  param1.s7,  param2.s7),
+                 mad24(param0.s8,  param1.s8,  param2.s8),  mad24(param0.s9,  param1.s9,  param2.s9),
+                 mad24(param0.sa, param1.sa, param2.sa), mad24(param0.sb, param1.sb, param2.sb),
+                 mad24(param0.sc, param1.sc, param2.sc), mad24(param0.sd, param1.sd, param2.sd),
+                 mad24(param0.se, param1.se, param2.se), mad24(param0.sf, param1.sf, param2.sf)); }
+
+INLINE_OVERLOADABLE int2 mad24 (int2 param0, int2 param1, int2 param2)
+{return (int2)(mad24(param0.s0, param1.s0, param2.s0), mad24(param0.s1, param1.s1, param2.s1)); }
+
+INLINE_OVERLOADABLE int3 mad24 (int3 param0, int3 param1, int3 param2)
+{return (int3)(mad24(param0.s0, param1.s0, param2.s0), mad24(param0.s1, param1.s1, param2.s1),
+               mad24(param0.s2, param1.s2, param2.s2)); }
+
+INLINE_OVERLOADABLE int4 mad24 (int4 param0, int4 param1, int4 param2)
+{return (int4)(mad24(param0.s0, param1.s0, param2.s0), mad24(param0.s1, param1.s1, param2.s1),
+               mad24(param0.s2, param1.s2, param2.s2), mad24(param0.s3, param1.s3, param2.s3)); }
+
+INLINE_OVERLOADABLE int8 mad24 (int8 param0, int8 param1, int8 param2)
+{return (int8)(mad24(param0.s0, param1.s0, param2.s0), mad24(param0.s1, param1.s1, param2.s1),
+               mad24(param0.s2, param1.s2, param2.s2), mad24(param0.s3, param1.s3, param2.s3),
+               mad24(param0.s4, param1.s4, param2.s4), mad24(param0.s5, param1.s5, param2.s5),
+               mad24(param0.s6, param1.s6, param2.s6), mad24(param0.s7, param1.s7, param2.s7)); }
+
+INLINE_OVERLOADABLE int16 mad24 (int16 param0, int16 param1, int16 param2)
+{return (int16)(mad24(param0.s0,  param1.s0,  param2.s0),  mad24(param0.s1,  param1.s1,  param2.s1),
+                mad24(param0.s2,  param1.s2,  param2.s2),  mad24(param0.s3,  param1.s3,  param2.s3),
+                mad24(param0.s4,  param1.s4,  param2.s4),  mad24(param0.s5,  param1.s5,  param2.s5),
+                mad24(param0.s6,  param1.s6,  param2.s6),  mad24(param0.s7,  param1.s7,  param2.s7),
+                mad24(param0.s8,  param1.s8,  param2.s8),  mad24(param0.s9,  param1.s9,  param2.s9),
+                mad24(param0.sa, param1.sa, param2.sa), mad24(param0.sb, param1.sb, param2.sb),
+                mad24(param0.sc, param1.sc, param2.sc), mad24(param0.sd, param1.sd, param2.sd),
+                mad24(param0.se, param1.se, param2.se), mad24(param0.sf, param1.sf, param2.sf)); }
+
+
+//gentype mul24 (gentype x, gentype y)
+
+INLINE_OVERLOADABLE uint2 mul24 (uint2 param0, uint2 param1)
+{return (uint2)(mul24(param0.s0, param1.s0), mul24(param0.s1, param1.s1)); }
+
+INLINE_OVERLOADABLE uint3 mul24 (uint3 param0, uint3 param1)
+{return (uint3)(mul24(param0.s0, param1.s0), mul24(param0.s1, param1.s1),
+                mul24(param0.s2, param1.s2)); }
+
+INLINE_OVERLOADABLE uint4 mul24 (uint4 param0, uint4 param1)
+{return (uint4)(mul24(param0.s0, param1.s0), mul24(param0.s1, param1.s1),
+                mul24(param0.s2, param1.s2), mul24(param0.s3, param1.s3)); }
+
+INLINE_OVERLOADABLE uint8 mul24 (uint8 param0, uint8 param1)
+{return (uint8)(mul24(param0.s0, param1.s0), mul24(param0.s1, param1.s1),
+                mul24(param0.s2, param1.s2), mul24(param0.s3, param1.s3),
+                mul24(param0.s4, param1.s4), mul24(param0.s5, param1.s5),
+                mul24(param0.s6, param1.s6), mul24(param0.s7, param1.s7)); }
+
+INLINE_OVERLOADABLE uint16 mul24 (uint16 param0, uint16 param1)
+{return (uint16)(mul24(param0.s0,  param1.s0),  mul24(param0.s1,  param1.s1),
+                 mul24(param0.s2,  param1.s2),  mul24(param0.s3,  param1.s3),
+                 mul24(param0.s4,  param1.s4),  mul24(param0.s5,  param1.s5),
+                 mul24(param0.s6,  param1.s6),  mul24(param0.s7,  param1.s7),
+                 mul24(param0.s8,  param1.s8),  mul24(param0.s9,  param1.s9),
+                 mul24(param0.sa, param1.sa), mul24(param0.sb, param1.sb),
+                 mul24(param0.sc, param1.sc), mul24(param0.sd, param1.sd),
+                 mul24(param0.se, param1.se), mul24(param0.sf, param1.sf)); }
+
+INLINE_OVERLOADABLE int2 mul24 (int2 param0, int2 param1)
+{return (int2)(mul24(param0.s0, param1.s0), mul24(param0.s1, param1.s1)); }
+
+INLINE_OVERLOADABLE int3 mul24 (int3 param0, int3 param1)
+{return (int3)(mul24(param0.s0, param1.s0), mul24(param0.s1, param1.s1),
+               mul24(param0.s2, param1.s2)); }
+
+INLINE_OVERLOADABLE int4 mul24 (int4 param0, int4 param1)
+{return (int4)(mul24(param0.s0, param1.s0), mul24(param0.s1, param1.s1),
+               mul24(param0.s2, param1.s2), mul24(param0.s3, param1.s3)); }
+
+INLINE_OVERLOADABLE int8 mul24 (int8 param0, int8 param1)
+{return (int8)(mul24(param0.s0, param1.s0), mul24(param0.s1, param1.s1),
+               mul24(param0.s2, param1.s2), mul24(param0.s3, param1.s3),
+               mul24(param0.s4, param1.s4), mul24(param0.s5, param1.s5),
+               mul24(param0.s6, param1.s6), mul24(param0.s7, param1.s7)); }
+
+INLINE_OVERLOADABLE int16 mul24 (int16 param0, int16 param1)
+{return (int16)(mul24(param0.s0,  param1.s0),  mul24(param0.s1,  param1.s1),
+                mul24(param0.s2,  param1.s2),  mul24(param0.s3,  param1.s3),
+                mul24(param0.s4,  param1.s4),  mul24(param0.s5,  param1.s5),
+                mul24(param0.s6,  param1.s6),  mul24(param0.s7,  param1.s7),
+                mul24(param0.s8,  param1.s8),  mul24(param0.s9,  param1.s9),
+                mul24(param0.sa, param1.sa), mul24(param0.sb, param1.sb),
+                mul24(param0.sc, param1.sc), mul24(param0.sd, param1.sd),
+                mul24(param0.se, param1.se), mul24(param0.sf, param1.sf)); }
+
+
+//gentype clamp (gentype x, gentype minval, gentype maxval)
+
+INLINE_OVERLOADABLE float2 clamp (float2 param0, float2 param1, float2 param2)
+{return (float2)(clamp(param0.s0, param1.s0, param2.s0), clamp(param0.s1, param1.s1, param2.s1)); }
+
+INLINE_OVERLOADABLE float3 clamp (float3 param0, float3 param1, float3 param2)
+{return (float3)(clamp(param0.s0, param1.s0, param2.s0), clamp(param0.s1, param1.s1, param2.s1),
+                 clamp(param0.s2, param1.s2, param2.s2)); }
+
+INLINE_OVERLOADABLE float4 clamp (float4 param0, float4 param1, float4 param2)
+{return (float4)(clamp(param0.s0, param1.s0, param2.s0), clamp(param0.s1, param1.s1, param2.s1),
+                 clamp(param0.s2, param1.s2, param2.s2), clamp(param0.s3, param1.s3, param2.s3)); }
+
+INLINE_OVERLOADABLE float8 clamp (float8 param0, float8 param1, float8 param2)
+{return (float8)(clamp(param0.s0, param1.s0, param2.s0), clamp(param0.s1, param1.s1, param2.s1),
+                 clamp(param0.s2, param1.s2, param2.s2), clamp(param0.s3, param1.s3, param2.s3),
+                 clamp(param0.s4, param1.s4, param2.s4), clamp(param0.s5, param1.s5, param2.s5),
+                 clamp(param0.s6, param1.s6, param2.s6), clamp(param0.s7, param1.s7, param2.s7)); }
+
+INLINE_OVERLOADABLE float16 clamp (float16 param0, float16 param1, float16 param2)
+{return (float16)(clamp(param0.s0,  param1.s0,  param2.s0),  clamp(param0.s1,  param1.s1,  param2.s1),
+                  clamp(param0.s2,  param1.s2,  param2.s2),  clamp(param0.s3,  param1.s3,  param2.s3),
+                  clamp(param0.s4,  param1.s4,  param2.s4),  clamp(param0.s5,  param1.s5,  param2.s5),
+                  clamp(param0.s6,  param1.s6,  param2.s6),  clamp(param0.s7,  param1.s7,  param2.s7),
+                  clamp(param0.s8,  param1.s8,  param2.s8),  clamp(param0.s9,  param1.s9,  param2.s9),
+                  clamp(param0.sa, param1.sa, param2.sa), clamp(param0.sb, param1.sb, param2.sb),
+                  clamp(param0.sc, param1.sc, param2.sc), clamp(param0.sd, param1.sd, param2.sd),
+                  clamp(param0.se, param1.se, param2.se), clamp(param0.sf, param1.sf, param2.sf)); }
+
+
+//gentypef clamp (gentypef x, float minval, float maxval)
+
+INLINE_OVERLOADABLE float2 clamp (float2 param0, float param1, float param2)
+{return (float2)(clamp(param0.s0, param1, param2), clamp(param0.s1, param1, param2)); }
+
+INLINE_OVERLOADABLE float3 clamp (float3 param0, float param1, float param2)
+{return (float3)(clamp(param0.s0, param1, param2), clamp(param0.s1, param1, param2),
+                 clamp(param0.s2, param1, param2)); }
+
+INLINE_OVERLOADABLE float4 clamp (float4 param0, float param1, float param2)
+{return (float4)(clamp(param0.s0, param1, param2), clamp(param0.s1, param1, param2),
+                 clamp(param0.s2, param1, param2), clamp(param0.s3, param1, param2)); }
+
+INLINE_OVERLOADABLE float8 clamp (float8 param0, float param1, float param2)
+{return (float8)(clamp(param0.s0, param1, param2), clamp(param0.s1, param1, param2),
+                 clamp(param0.s2, param1, param2), clamp(param0.s3, param1, param2),
+                 clamp(param0.s4, param1, param2), clamp(param0.s5, param1, param2),
+                 clamp(param0.s6, param1, param2), clamp(param0.s7, param1, param2)); }
+
+INLINE_OVERLOADABLE float16 clamp (float16 param0, float param1, float param2)
+{return (float16)(clamp(param0.s0,  param1,  param2),  clamp(param0.s1,  param1,  param2),
+                  clamp(param0.s2,  param1,  param2),  clamp(param0.s3,  param1,  param2),
+                  clamp(param0.s4,  param1,  param2),  clamp(param0.s5,  param1,  param2),
+                  clamp(param0.s6,  param1,  param2),  clamp(param0.s7,  param1,  param2),
+                  clamp(param0.s8,  param1,  param2),  clamp(param0.s9,  param1,  param2),
+                  clamp(param0.sa, param1, param2), clamp(param0.sb, param1, param2),
+                  clamp(param0.sc, param1, param2), clamp(param0.sd, param1, param2),
+                  clamp(param0.se, param1, param2), clamp(param0.sf, param1, param2)); }
+
+
+//gentyped clamp (gentyped x, double minval, double maxval)
+
+
+//gentype degrees (gentype radians)
+
+INLINE_OVERLOADABLE float2 degrees (float2 param0)
+{return (float2)(degrees(param0.s0), degrees(param0.s1)); }
+
+INLINE_OVERLOADABLE float3 degrees (float3 param0)
+{return (float3)(degrees(param0.s0), degrees(param0.s1),
+                 degrees(param0.s2)); }
+
+INLINE_OVERLOADABLE float4 degrees (float4 param0)
+{return (float4)(degrees(param0.s0), degrees(param0.s1),
+                 degrees(param0.s2), degrees(param0.s3)); }
+
+INLINE_OVERLOADABLE float8 degrees (float8 param0)
+{return (float8)(degrees(param0.s0), degrees(param0.s1),
+                 degrees(param0.s2), degrees(param0.s3),
+                 degrees(param0.s4), degrees(param0.s5),
+                 degrees(param0.s6), degrees(param0.s7)); }
+
+INLINE_OVERLOADABLE float16 degrees (float16 param0)
+{return (float16)(degrees(param0.s0),  degrees(param0.s1),
+                  degrees(param0.s2),  degrees(param0.s3),
+                  degrees(param0.s4),  degrees(param0.s5),
+                  degrees(param0.s6),  degrees(param0.s7),
+                  degrees(param0.s8),  degrees(param0.s9),
+                  degrees(param0.sa), degrees(param0.sb),
+                  degrees(param0.sc), degrees(param0.sd),
+                  degrees(param0.se), degrees(param0.sf)); }
+
+
+//gentype max (gentype x,  gentype y)
+
+INLINE_OVERLOADABLE float2 max (float2 param0, float2 param1)
+{return (float2)(max(param0.s0, param1.s0), max(param0.s1, param1.s1)); }
+
+INLINE_OVERLOADABLE float3 max (float3 param0, float3 param1)
+{return (float3)(max(param0.s0, param1.s0), max(param0.s1, param1.s1),
+                 max(param0.s2, param1.s2)); }
+
+INLINE_OVERLOADABLE float4 max (float4 param0, float4 param1)
+{return (float4)(max(param0.s0, param1.s0), max(param0.s1, param1.s1),
+                 max(param0.s2, param1.s2), max(param0.s3, param1.s3)); }
+
+INLINE_OVERLOADABLE float8 max (float8 param0, float8 param1)
+{return (float8)(max(param0.s0, param1.s0), max(param0.s1, param1.s1),
+                 max(param0.s2, param1.s2), max(param0.s3, param1.s3),
+                 max(param0.s4, param1.s4), max(param0.s5, param1.s5),
+                 max(param0.s6, param1.s6), max(param0.s7, param1.s7)); }
+
+INLINE_OVERLOADABLE float16 max (float16 param0, float16 param1)
+{return (float16)(max(param0.s0,  param1.s0),  max(param0.s1,  param1.s1),
+                  max(param0.s2,  param1.s2),  max(param0.s3,  param1.s3),
+                  max(param0.s4,  param1.s4),  max(param0.s5,  param1.s5),
+                  max(param0.s6,  param1.s6),  max(param0.s7,  param1.s7),
+                  max(param0.s8,  param1.s8),  max(param0.s9,  param1.s9),
+                  max(param0.sa, param1.sa), max(param0.sb, param1.sb),
+                  max(param0.sc, param1.sc), max(param0.sd, param1.sd),
+                  max(param0.se, param1.se), max(param0.sf, param1.sf)); }
+
+
+//gentypef max (gentypef x, float y)
+
+INLINE_OVERLOADABLE float2 max (float2 param0, float param1)
+{return (float2)(max(param0.s0, param1), max(param0.s1, param1)); }
+
+INLINE_OVERLOADABLE float3 max (float3 param0, float param1)
+{return (float3)(max(param0.s0, param1), max(param0.s1, param1),
+                 max(param0.s2, param1)); }
+
+INLINE_OVERLOADABLE float4 max (float4 param0, float param1)
+{return (float4)(max(param0.s0, param1), max(param0.s1, param1),
+                 max(param0.s2, param1), max(param0.s3, param1)); }
+
+INLINE_OVERLOADABLE float8 max (float8 param0, float param1)
+{return (float8)(max(param0.s0, param1), max(param0.s1, param1),
+                 max(param0.s2, param1), max(param0.s3, param1),
+                 max(param0.s4, param1), max(param0.s5, param1),
+                 max(param0.s6, param1), max(param0.s7, param1)); }
+
+INLINE_OVERLOADABLE float16 max (float16 param0, float param1)
+{return (float16)(max(param0.s0,  param1),  max(param0.s1,  param1),
+                  max(param0.s2,  param1),  max(param0.s3,  param1),
+                  max(param0.s4,  param1),  max(param0.s5,  param1),
+                  max(param0.s6,  param1),  max(param0.s7,  param1),
+                  max(param0.s8,  param1),  max(param0.s9,  param1),
+                  max(param0.sa, param1), max(param0.sb, param1),
+                  max(param0.sc, param1), max(param0.sd, param1),
+                  max(param0.se, param1), max(param0.sf, param1)); }
+
+
+//gentyped max (gentyped x, double y)
+
+
+//gentype min (gentype x,  gentype y)
+
+INLINE_OVERLOADABLE float2 min (float2 param0, float2 param1)
+{return (float2)(min(param0.s0, param1.s0), min(param0.s1, param1.s1)); }
+
+INLINE_OVERLOADABLE float3 min (float3 param0, float3 param1)
+{return (float3)(min(param0.s0, param1.s0), min(param0.s1, param1.s1),
+                 min(param0.s2, param1.s2)); }
+
+INLINE_OVERLOADABLE float4 min (float4 param0, float4 param1)
+{return (float4)(min(param0.s0, param1.s0), min(param0.s1, param1.s1),
+                 min(param0.s2, param1.s2), min(param0.s3, param1.s3)); }
+
+INLINE_OVERLOADABLE float8 min (float8 param0, float8 param1)
+{return (float8)(min(param0.s0, param1.s0), min(param0.s1, param1.s1),
+                 min(param0.s2, param1.s2), min(param0.s3, param1.s3),
+                 min(param0.s4, param1.s4), min(param0.s5, param1.s5),
+                 min(param0.s6, param1.s6), min(param0.s7, param1.s7)); }
+
+INLINE_OVERLOADABLE float16 min (float16 param0, float16 param1)
+{return (float16)(min(param0.s0,  param1.s0),  min(param0.s1,  param1.s1),
+                  min(param0.s2,  param1.s2),  min(param0.s3,  param1.s3),
+                  min(param0.s4,  param1.s4),  min(param0.s5,  param1.s5),
+                  min(param0.s6,  param1.s6),  min(param0.s7,  param1.s7),
+                  min(param0.s8,  param1.s8),  min(param0.s9,  param1.s9),
+                  min(param0.sa, param1.sa), min(param0.sb, param1.sb),
+                  min(param0.sc, param1.sc), min(param0.sd, param1.sd),
+                  min(param0.se, param1.se), min(param0.sf, param1.sf)); }
+
+
+//gentypef min (gentypef x,  float y)
+
+INLINE_OVERLOADABLE float2 min (float2 param0, float param1)
+{return (float2)(min(param0.s0, param1), min(param0.s1, param1)); }
+
+INLINE_OVERLOADABLE float3 min (float3 param0, float param1)
+{return (float3)(min(param0.s0, param1), min(param0.s1, param1),
+                 min(param0.s2, param1)); }
+
+INLINE_OVERLOADABLE float4 min (float4 param0, float param1)
+{return (float4)(min(param0.s0, param1), min(param0.s1, param1),
+                 min(param0.s2, param1), min(param0.s3, param1)); }
+
+INLINE_OVERLOADABLE float8 min (float8 param0, float param1)
+{return (float8)(min(param0.s0, param1), min(param0.s1, param1),
+                 min(param0.s2, param1), min(param0.s3, param1),
+                 min(param0.s4, param1), min(param0.s5, param1),
+                 min(param0.s6, param1), min(param0.s7, param1)); }
+
+INLINE_OVERLOADABLE float16 min (float16 param0, float param1)
+{return (float16)(min(param0.s0,  param1),  min(param0.s1,  param1),
+                  min(param0.s2,  param1),  min(param0.s3,  param1),
+                  min(param0.s4,  param1),  min(param0.s5,  param1),
+                  min(param0.s6,  param1),  min(param0.s7,  param1),
+                  min(param0.s8,  param1),  min(param0.s9,  param1),
+                  min(param0.sa, param1), min(param0.sb, param1),
+                  min(param0.sc, param1), min(param0.sd, param1),
+                  min(param0.se, param1), min(param0.sf, param1)); }
+
+
+//gentyped min (gentyped x,  double y)
+
+
+//gentype mix (gentype x, gentype y, gentype a)
+
+INLINE_OVERLOADABLE float2 mix (float2 param0, float2 param1, float2 param2)
+{return (float2)(mix(param0.s0, param1.s0, param2.s0), mix(param0.s1, param1.s1, param2.s1)); }
+
+INLINE_OVERLOADABLE float3 mix (float3 param0, float3 param1, float3 param2)
+{return (float3)(mix(param0.s0, param1.s0, param2.s0), mix(param0.s1, param1.s1, param2.s1),
+                 mix(param0.s2, param1.s2, param2.s2)); }
+
+INLINE_OVERLOADABLE float4 mix (float4 param0, float4 param1, float4 param2)
+{return (float4)(mix(param0.s0, param1.s0, param2.s0), mix(param0.s1, param1.s1, param2.s1),
+                 mix(param0.s2, param1.s2, param2.s2), mix(param0.s3, param1.s3, param2.s3)); }
+
+INLINE_OVERLOADABLE float8 mix (float8 param0, float8 param1, float8 param2)
+{return (float8)(mix(param0.s0, param1.s0, param2.s0), mix(param0.s1, param1.s1, param2.s1),
+                 mix(param0.s2, param1.s2, param2.s2), mix(param0.s3, param1.s3, param2.s3),
+                 mix(param0.s4, param1.s4, param2.s4), mix(param0.s5, param1.s5, param2.s5),
+                 mix(param0.s6, param1.s6, param2.s6), mix(param0.s7, param1.s7, param2.s7)); }
+
+INLINE_OVERLOADABLE float16 mix (float16 param0, float16 param1, float16 param2)
+{return (float16)(mix(param0.s0,  param1.s0,  param2.s0),  mix(param0.s1,  param1.s1,  param2.s1),
+                  mix(param0.s2,  param1.s2,  param2.s2),  mix(param0.s3,  param1.s3,  param2.s3),
+                  mix(param0.s4,  param1.s4,  param2.s4),  mix(param0.s5,  param1.s5,  param2.s5),
+                  mix(param0.s6,  param1.s6,  param2.s6),  mix(param0.s7,  param1.s7,  param2.s7),
+                  mix(param0.s8,  param1.s8,  param2.s8),  mix(param0.s9,  param1.s9,  param2.s9),
+                  mix(param0.sa, param1.sa, param2.sa), mix(param0.sb, param1.sb, param2.sb),
+                  mix(param0.sc, param1.sc, param2.sc), mix(param0.sd, param1.sd, param2.sd),
+                  mix(param0.se, param1.se, param2.se), mix(param0.sf, param1.sf, param2.sf)); }
+
+
+//gentypef mix (gentypef x, gentypef y, float a)
+
+INLINE_OVERLOADABLE float2 mix (float2 param0, float2 param1, float param2)
+{return (float2)(mix(param0.s0, param1.s0, param2), mix(param0.s1, param1.s1, param2)); }
+
+INLINE_OVERLOADABLE float3 mix (float3 param0, float3 param1, float param2)
+{return (float3)(mix(param0.s0, param1.s0, param2), mix(param0.s1, param1.s1, param2),
+                 mix(param0.s2, param1.s2, param2)); }
+
+INLINE_OVERLOADABLE float4 mix (float4 param0, float4 param1, float param2)
+{return (float4)(mix(param0.s0, param1.s0, param2), mix(param0.s1, param1.s1, param2),
+                 mix(param0.s2, param1.s2, param2), mix(param0.s3, param1.s3, param2)); }
+
+INLINE_OVERLOADABLE float8 mix (float8 param0, float8 param1, float param2)
+{return (float8)(mix(param0.s0, param1.s0, param2), mix(param0.s1, param1.s1, param2),
+                 mix(param0.s2, param1.s2, param2), mix(param0.s3, param1.s3, param2),
+                 mix(param0.s4, param1.s4, param2), mix(param0.s5, param1.s5, param2),
+                 mix(param0.s6, param1.s6, param2), mix(param0.s7, param1.s7, param2)); }
+
+INLINE_OVERLOADABLE float16 mix (float16 param0, float16 param1, float param2)
+{return (float16)(mix(param0.s0,  param1.s0,  param2),  mix(param0.s1,  param1.s1,  param2),
+                  mix(param0.s2,  param1.s2,  param2),  mix(param0.s3,  param1.s3,  param2),
+                  mix(param0.s4,  param1.s4,  param2),  mix(param0.s5,  param1.s5,  param2),
+                  mix(param0.s6,  param1.s6,  param2),  mix(param0.s7,  param1.s7,  param2),
+                  mix(param0.s8,  param1.s8,  param2),  mix(param0.s9,  param1.s9,  param2),
+                  mix(param0.sa, param1.sa, param2), mix(param0.sb, param1.sb, param2),
+                  mix(param0.sc, param1.sc, param2), mix(param0.sd, param1.sd, param2),
+                  mix(param0.se, param1.se, param2), mix(param0.sf, param1.sf, param2)); }
+
+
+//gentyped mix (gentyped x, gentyped y, double a)
+
+
+//gentype radians (gentype degrees)
+
+INLINE_OVERLOADABLE float2 radians (float2 param0)
+{return (float2)(radians(param0.s0), radians(param0.s1)); }
+
+INLINE_OVERLOADABLE float3 radians (float3 param0)
+{return (float3)(radians(param0.s0), radians(param0.s1),
+                 radians(param0.s2)); }
+
+INLINE_OVERLOADABLE float4 radians (float4 param0)
+{return (float4)(radians(param0.s0), radians(param0.s1),
+                 radians(param0.s2), radians(param0.s3)); }
+
+INLINE_OVERLOADABLE float8 radians (float8 param0)
+{return (float8)(radians(param0.s0), radians(param0.s1),
+                 radians(param0.s2), radians(param0.s3),
+                 radians(param0.s4), radians(param0.s5),
+                 radians(param0.s6), radians(param0.s7)); }
+
+INLINE_OVERLOADABLE float16 radians (float16 param0)
+{return (float16)(radians(param0.s0),  radians(param0.s1),
+                  radians(param0.s2),  radians(param0.s3),
+                  radians(param0.s4),  radians(param0.s5),
+                  radians(param0.s6),  radians(param0.s7),
+                  radians(param0.s8),  radians(param0.s9),
+                  radians(param0.sa), radians(param0.sb),
+                  radians(param0.sc), radians(param0.sd),
+                  radians(param0.se), radians(param0.sf)); }
+
+
+//gentype step (gentype edge, gentype x)
+
+INLINE_OVERLOADABLE float2 step (float2 param0, float2 param1)
+{return (float2)(step(param0.s0, param1.s0), step(param0.s1, param1.s1)); }
+
+INLINE_OVERLOADABLE float3 step (float3 param0, float3 param1)
+{return (float3)(step(param0.s0, param1.s0), step(param0.s1, param1.s1),
+                 step(param0.s2, param1.s2)); }
+
+INLINE_OVERLOADABLE float4 step (float4 param0, float4 param1)
+{return (float4)(step(param0.s0, param1.s0), step(param0.s1, param1.s1),
+                 step(param0.s2, param1.s2), step(param0.s3, param1.s3)); }
+
+INLINE_OVERLOADABLE float8 step (float8 param0, float8 param1)
+{return (float8)(step(param0.s0, param1.s0), step(param0.s1, param1.s1),
+                 step(param0.s2, param1.s2), step(param0.s3, param1.s3),
+                 step(param0.s4, param1.s4), step(param0.s5, param1.s5),
+                 step(param0.s6, param1.s6), step(param0.s7, param1.s7)); }
+
+INLINE_OVERLOADABLE float16 step (float16 param0, float16 param1)
+{return (float16)(step(param0.s0,  param1.s0),  step(param0.s1,  param1.s1),
+                  step(param0.s2,  param1.s2),  step(param0.s3,  param1.s3),
+                  step(param0.s4,  param1.s4),  step(param0.s5,  param1.s5),
+                  step(param0.s6,  param1.s6),  step(param0.s7,  param1.s7),
+                  step(param0.s8,  param1.s8),  step(param0.s9,  param1.s9),
+                  step(param0.sa, param1.sa), step(param0.sb, param1.sb),
+                  step(param0.sc, param1.sc), step(param0.sd, param1.sd),
+                  step(param0.se, param1.se), step(param0.sf, param1.sf)); }
+
+
+//gentypef step (float edge, gentypef x)
+
+INLINE_OVERLOADABLE float2 step (float param0, float2 param1)
+{return (float2)(step(param0, param1.s0), step(param0, param1.s1)); }
+
+INLINE_OVERLOADABLE float3 step (float param0, float3 param1)
+{return (float3)(step(param0, param1.s0), step(param0, param1.s1),
+                 step(param0, param1.s2)); }
+
+INLINE_OVERLOADABLE float4 step (float param0, float4 param1)
+{return (float4)(step(param0, param1.s0), step(param0, param1.s1),
+                 step(param0, param1.s2), step(param0, param1.s3)); }
+
+INLINE_OVERLOADABLE float8 step (float param0, float8 param1)
+{return (float8)(step(param0, param1.s0), step(param0, param1.s1),
+                 step(param0, param1.s2), step(param0, param1.s3),
+                 step(param0, param1.s4), step(param0, param1.s5),
+                 step(param0, param1.s6), step(param0, param1.s7)); }
+
+INLINE_OVERLOADABLE float16 step (float param0, float16 param1)
+{return (float16)(step(param0,  param1.s0),  step(param0,  param1.s1),
+                  step(param0,  param1.s2),  step(param0,  param1.s3),
+                  step(param0,  param1.s4),  step(param0,  param1.s5),
+                  step(param0,  param1.s6),  step(param0,  param1.s7),
+                  step(param0,  param1.s8),  step(param0,  param1.s9),
+                  step(param0, param1.sa), step(param0, param1.sb),
+                  step(param0, param1.sc), step(param0, param1.sd),
+                  step(param0, param1.se), step(param0, param1.sf)); }
+
+
+//gentyped step (double edge, gentyped x)
+
+
+//gentype smoothstep (gentype edge0, gentype edge1, gentype x)
+
+INLINE_OVERLOADABLE float2 smoothstep (float2 param0, float2 param1, float2 param2)
+{return (float2)(smoothstep(param0.s0, param1.s0, param2.s0), smoothstep(param0.s1, param1.s1, param2.s1)); }
+
+INLINE_OVERLOADABLE float3 smoothstep (float3 param0, float3 param1, float3 param2)
+{return (float3)(smoothstep(param0.s0, param1.s0, param2.s0), smoothstep(param0.s1, param1.s1, param2.s1),
+                 smoothstep(param0.s2, param1.s2, param2.s2)); }
+
+INLINE_OVERLOADABLE float4 smoothstep (float4 param0, float4 param1, float4 param2)
+{return (float4)(smoothstep(param0.s0, param1.s0, param2.s0), smoothstep(param0.s1, param1.s1, param2.s1),
+                 smoothstep(param0.s2, param1.s2, param2.s2), smoothstep(param0.s3, param1.s3, param2.s3)); }
+
+INLINE_OVERLOADABLE float8 smoothstep (float8 param0, float8 param1, float8 param2)
+{return (float8)(smoothstep(param0.s0, param1.s0, param2.s0), smoothstep(param0.s1, param1.s1, param2.s1),
+                 smoothstep(param0.s2, param1.s2, param2.s2), smoothstep(param0.s3, param1.s3, param2.s3),
+                 smoothstep(param0.s4, param1.s4, param2.s4), smoothstep(param0.s5, param1.s5, param2.s5),
+                 smoothstep(param0.s6, param1.s6, param2.s6), smoothstep(param0.s7, param1.s7, param2.s7)); }
+
+INLINE_OVERLOADABLE float16 smoothstep (float16 param0, float16 param1, float16 param2)
+{return (float16)(smoothstep(param0.s0,  param1.s0,  param2.s0),  smoothstep(param0.s1,  param1.s1,  param2.s1),
+                  smoothstep(param0.s2,  param1.s2,  param2.s2),  smoothstep(param0.s3,  param1.s3,  param2.s3),
+                  smoothstep(param0.s4,  param1.s4,  param2.s4),  smoothstep(param0.s5,  param1.s5,  param2.s5),
+                  smoothstep(param0.s6,  param1.s6,  param2.s6),  smoothstep(param0.s7,  param1.s7,  param2.s7),
+                  smoothstep(param0.s8,  param1.s8,  param2.s8),  smoothstep(param0.s9,  param1.s9,  param2.s9),
+                  smoothstep(param0.sa, param1.sa, param2.sa), smoothstep(param0.sb, param1.sb, param2.sb),
+                  smoothstep(param0.sc, param1.sc, param2.sc), smoothstep(param0.sd, param1.sd, param2.sd),
+                  smoothstep(param0.se, param1.se, param2.se), smoothstep(param0.sf, param1.sf, param2.sf)); }
+
+
+//gentypef smoothstep (float edge0, float edge1, gentypef x)
+
+INLINE_OVERLOADABLE float2 smoothstep (float param0, float param1, float2 param2)
+{return (float2)(smoothstep(param0, param1, param2.s0), smoothstep(param0, param1, param2.s1)); }
+
+INLINE_OVERLOADABLE float3 smoothstep (float param0, float param1, float3 param2)
+{return (float3)(smoothstep(param0, param1, param2.s0), smoothstep(param0, param1, param2.s1),
+                 smoothstep(param0, param1, param2.s2)); }
+
+INLINE_OVERLOADABLE float4 smoothstep (float param0, float param1, float4 param2)
+{return (float4)(smoothstep(param0, param1, param2.s0), smoothstep(param0, param1, param2.s1),
+                 smoothstep(param0, param1, param2.s2), smoothstep(param0, param1, param2.s3)); }
+
+INLINE_OVERLOADABLE float8 smoothstep (float param0, float param1, float8 param2)
+{return (float8)(smoothstep(param0, param1, param2.s0), smoothstep(param0, param1, param2.s1),
+                 smoothstep(param0, param1, param2.s2), smoothstep(param0, param1, param2.s3),
+                 smoothstep(param0, param1, param2.s4), smoothstep(param0, param1, param2.s5),
+                 smoothstep(param0, param1, param2.s6), smoothstep(param0, param1, param2.s7)); }
+
+INLINE_OVERLOADABLE float16 smoothstep (float param0, float param1, float16 param2)
+{return (float16)(smoothstep(param0,  param1,  param2.s0),  smoothstep(param0,  param1,  param2.s1),
+                  smoothstep(param0,  param1,  param2.s2),  smoothstep(param0,  param1,  param2.s3),
+                  smoothstep(param0,  param1,  param2.s4),  smoothstep(param0,  param1,  param2.s5),
+                  smoothstep(param0,  param1,  param2.s6),  smoothstep(param0,  param1,  param2.s7),
+                  smoothstep(param0,  param1,  param2.s8),  smoothstep(param0,  param1,  param2.s9),
+                  smoothstep(param0, param1, param2.sa), smoothstep(param0, param1, param2.sb),
+                  smoothstep(param0, param1, param2.sc), smoothstep(param0, param1, param2.sd),
+                  smoothstep(param0, param1, param2.se), smoothstep(param0, param1, param2.sf)); }
+
+
+//gentyped smoothstep (double edge0, double edge1, gentyped x)
+
+
+//gentype sign (gentype x)
+
+INLINE_OVERLOADABLE float2 sign (float2 param0)
+{return (float2)(sign(param0.s0), sign(param0.s1)); }
+
+INLINE_OVERLOADABLE float3 sign (float3 param0)
+{return (float3)(sign(param0.s0), sign(param0.s1),
+                 sign(param0.s2)); }
+
+INLINE_OVERLOADABLE float4 sign (float4 param0)
+{return (float4)(sign(param0.s0), sign(param0.s1),
+                 sign(param0.s2), sign(param0.s3)); }
+
+INLINE_OVERLOADABLE float8 sign (float8 param0)
+{return (float8)(sign(param0.s0), sign(param0.s1),
+                 sign(param0.s2), sign(param0.s3),
+                 sign(param0.s4), sign(param0.s5),
+                 sign(param0.s6), sign(param0.s7)); }
+
+INLINE_OVERLOADABLE float16 sign (float16 param0)
+{return (float16)(sign(param0.s0),  sign(param0.s1),
+                  sign(param0.s2),  sign(param0.s3),
+                  sign(param0.s4),  sign(param0.s5),
+                  sign(param0.s6),  sign(param0.s7),
+                  sign(param0.s8),  sign(param0.s9),
+                  sign(param0.sa), sign(param0.sb),
+                  sign(param0.sc), sign(param0.sd),
+                  sign(param0.se), sign(param0.sf)); }
+
+
+//intn isequal (floatn x, floatn y)
+
+INLINE_OVERLOADABLE int2 isequal (float2 param0, float2 param1)
+{return (int2)(isequal(param0.s0, param1.s0), isequal(param0.s1, param1.s1)); }
+
+INLINE_OVERLOADABLE int3 isequal (float3 param0, float3 param1)
+{return (int3)(isequal(param0.s0, param1.s0), isequal(param0.s1, param1.s1),
+               isequal(param0.s2, param1.s2)); }
+
+INLINE_OVERLOADABLE int4 isequal (float4 param0, float4 param1)
+{return (int4)(isequal(param0.s0, param1.s0), isequal(param0.s1, param1.s1),
+               isequal(param0.s2, param1.s2), isequal(param0.s3, param1.s3)); }
+
+INLINE_OVERLOADABLE int8 isequal (float8 param0, float8 param1)
+{return (int8)(isequal(param0.s0, param1.s0), isequal(param0.s1, param1.s1),
+               isequal(param0.s2, param1.s2), isequal(param0.s3, param1.s3),
+               isequal(param0.s4, param1.s4), isequal(param0.s5, param1.s5),
+               isequal(param0.s6, param1.s6), isequal(param0.s7, param1.s7)); }
+
+INLINE_OVERLOADABLE int16 isequal (float16 param0, float16 param1)
+{return (int16)(isequal(param0.s0,  param1.s0),  isequal(param0.s1,  param1.s1),
+                isequal(param0.s2,  param1.s2),  isequal(param0.s3,  param1.s3),
+                isequal(param0.s4,  param1.s4),  isequal(param0.s5,  param1.s5),
+                isequal(param0.s6,  param1.s6),  isequal(param0.s7,  param1.s7),
+                isequal(param0.s8,  param1.s8),  isequal(param0.s9,  param1.s9),
+                isequal(param0.sa, param1.sa), isequal(param0.sb, param1.sb),
+                isequal(param0.sc, param1.sc), isequal(param0.sd, param1.sd),
+                isequal(param0.se, param1.se), isequal(param0.sf, param1.sf)); }
+
+
+//longn isequal (doublen x, doublen y)
+
+
+//intn isnotequal (floatn x, floatn y)
+
+INLINE_OVERLOADABLE int2 isnotequal (float2 param0, float2 param1)
+{return (int2)(isnotequal(param0.s0, param1.s0), isnotequal(param0.s1, param1.s1)); }
+
+INLINE_OVERLOADABLE int3 isnotequal (float3 param0, float3 param1)
+{return (int3)(isnotequal(param0.s0, param1.s0), isnotequal(param0.s1, param1.s1),
+               isnotequal(param0.s2, param1.s2)); }
+
+INLINE_OVERLOADABLE int4 isnotequal (float4 param0, float4 param1)
+{return (int4)(isnotequal(param0.s0, param1.s0), isnotequal(param0.s1, param1.s1),
+               isnotequal(param0.s2, param1.s2), isnotequal(param0.s3, param1.s3)); }
+
+INLINE_OVERLOADABLE int8 isnotequal (float8 param0, float8 param1)
+{return (int8)(isnotequal(param0.s0, param1.s0), isnotequal(param0.s1, param1.s1),
+               isnotequal(param0.s2, param1.s2), isnotequal(param0.s3, param1.s3),
+               isnotequal(param0.s4, param1.s4), isnotequal(param0.s5, param1.s5),
+               isnotequal(param0.s6, param1.s6), isnotequal(param0.s7, param1.s7)); }
+
+INLINE_OVERLOADABLE int16 isnotequal (float16 param0, float16 param1)
+{return (int16)(isnotequal(param0.s0,  param1.s0),  isnotequal(param0.s1,  param1.s1),
+                isnotequal(param0.s2,  param1.s2),  isnotequal(param0.s3,  param1.s3),
+                isnotequal(param0.s4,  param1.s4),  isnotequal(param0.s5,  param1.s5),
+                isnotequal(param0.s6,  param1.s6),  isnotequal(param0.s7,  param1.s7),
+                isnotequal(param0.s8,  param1.s8),  isnotequal(param0.s9,  param1.s9),
+                isnotequal(param0.sa, param1.sa), isnotequal(param0.sb, param1.sb),
+                isnotequal(param0.sc, param1.sc), isnotequal(param0.sd, param1.sd),
+                isnotequal(param0.se, param1.se), isnotequal(param0.sf, param1.sf)); }
+
+
+//longn isnotequal (doublen x, doublen y)
+
+
+//intn isgreater (floatn x, floatn y)
+
+INLINE_OVERLOADABLE int2 isgreater (float2 param0, float2 param1)
+{return (int2)(isgreater(param0.s0, param1.s0), isgreater(param0.s1, param1.s1)); }
+
+INLINE_OVERLOADABLE int3 isgreater (float3 param0, float3 param1)
+{return (int3)(isgreater(param0.s0, param1.s0), isgreater(param0.s1, param1.s1),
+               isgreater(param0.s2, param1.s2)); }
+
+INLINE_OVERLOADABLE int4 isgreater (float4 param0, float4 param1)
+{return (int4)(isgreater(param0.s0, param1.s0), isgreater(param0.s1, param1.s1),
+               isgreater(param0.s2, param1.s2), isgreater(param0.s3, param1.s3)); }
+
+INLINE_OVERLOADABLE int8 isgreater (float8 param0, float8 param1)
+{return (int8)(isgreater(param0.s0, param1.s0), isgreater(param0.s1, param1.s1),
+               isgreater(param0.s2, param1.s2), isgreater(param0.s3, param1.s3),
+               isgreater(param0.s4, param1.s4), isgreater(param0.s5, param1.s5),
+               isgreater(param0.s6, param1.s6), isgreater(param0.s7, param1.s7)); }
+
+INLINE_OVERLOADABLE int16 isgreater (float16 param0, float16 param1)
+{return (int16)(isgreater(param0.s0,  param1.s0),  isgreater(param0.s1,  param1.s1),
+                isgreater(param0.s2,  param1.s2),  isgreater(param0.s3,  param1.s3),
+                isgreater(param0.s4,  param1.s4),  isgreater(param0.s5,  param1.s5),
+                isgreater(param0.s6,  param1.s6),  isgreater(param0.s7,  param1.s7),
+                isgreater(param0.s8,  param1.s8),  isgreater(param0.s9,  param1.s9),
+                isgreater(param0.sa, param1.sa), isgreater(param0.sb, param1.sb),
+                isgreater(param0.sc, param1.sc), isgreater(param0.sd, param1.sd),
+                isgreater(param0.se, param1.se), isgreater(param0.sf, param1.sf)); }
+
+
+//longn isgreater (doublen x, doublen y)
+
+
+//intn isgreaterequal (floatn x, floatn y)
+
+INLINE_OVERLOADABLE int2 isgreaterequal (float2 param0, float2 param1)
+{return (int2)(isgreaterequal(param0.s0, param1.s0), isgreaterequal(param0.s1, param1.s1)); }
+
+INLINE_OVERLOADABLE int3 isgreaterequal (float3 param0, float3 param1)
+{return (int3)(isgreaterequal(param0.s0, param1.s0), isgreaterequal(param0.s1, param1.s1),
+               isgreaterequal(param0.s2, param1.s2)); }
+
+INLINE_OVERLOADABLE int4 isgreaterequal (float4 param0, float4 param1)
+{return (int4)(isgreaterequal(param0.s0, param1.s0), isgreaterequal(param0.s1, param1.s1),
+               isgreaterequal(param0.s2, param1.s2), isgreaterequal(param0.s3, param1.s3)); }
+
+INLINE_OVERLOADABLE int8 isgreaterequal (float8 param0, float8 param1)
+{return (int8)(isgreaterequal(param0.s0, param1.s0), isgreaterequal(param0.s1, param1.s1),
+               isgreaterequal(param0.s2, param1.s2), isgreaterequal(param0.s3, param1.s3),
+               isgreaterequal(param0.s4, param1.s4), isgreaterequal(param0.s5, param1.s5),
+               isgreaterequal(param0.s6, param1.s6), isgreaterequal(param0.s7, param1.s7)); }
+
+INLINE_OVERLOADABLE int16 isgreaterequal (float16 param0, float16 param1)
+{return (int16)(isgreaterequal(param0.s0,  param1.s0),  isgreaterequal(param0.s1,  param1.s1),
+                isgreaterequal(param0.s2,  param1.s2),  isgreaterequal(param0.s3,  param1.s3),
+                isgreaterequal(param0.s4,  param1.s4),  isgreaterequal(param0.s5,  param1.s5),
+                isgreaterequal(param0.s6,  param1.s6),  isgreaterequal(param0.s7,  param1.s7),
+                isgreaterequal(param0.s8,  param1.s8),  isgreaterequal(param0.s9,  param1.s9),
+                isgreaterequal(param0.sa, param1.sa), isgreaterequal(param0.sb, param1.sb),
+                isgreaterequal(param0.sc, param1.sc), isgreaterequal(param0.sd, param1.sd),
+                isgreaterequal(param0.se, param1.se), isgreaterequal(param0.sf, param1.sf)); }
+
+
+//longn isgreaterequal (doublen x, doublen y)
+
+
+//intn isless (floatn x, floatn y)
+
+INLINE_OVERLOADABLE int2 isless (float2 param0, float2 param1)
+{return (int2)(isless(param0.s0, param1.s0), isless(param0.s1, param1.s1)); }
+
+INLINE_OVERLOADABLE int3 isless (float3 param0, float3 param1)
+{return (int3)(isless(param0.s0, param1.s0), isless(param0.s1, param1.s1),
+               isless(param0.s2, param1.s2)); }
+
+INLINE_OVERLOADABLE int4 isless (float4 param0, float4 param1)
+{return (int4)(isless(param0.s0, param1.s0), isless(param0.s1, param1.s1),
+               isless(param0.s2, param1.s2), isless(param0.s3, param1.s3)); }
+
+INLINE_OVERLOADABLE int8 isless (float8 param0, float8 param1)
+{return (int8)(isless(param0.s0, param1.s0), isless(param0.s1, param1.s1),
+               isless(param0.s2, param1.s2), isless(param0.s3, param1.s3),
+               isless(param0.s4, param1.s4), isless(param0.s5, param1.s5),
+               isless(param0.s6, param1.s6), isless(param0.s7, param1.s7)); }
+
+INLINE_OVERLOADABLE int16 isless (float16 param0, float16 param1)
+{return (int16)(isless(param0.s0,  param1.s0),  isless(param0.s1,  param1.s1),
+                isless(param0.s2,  param1.s2),  isless(param0.s3,  param1.s3),
+                isless(param0.s4,  param1.s4),  isless(param0.s5,  param1.s5),
+                isless(param0.s6,  param1.s6),  isless(param0.s7,  param1.s7),
+                isless(param0.s8,  param1.s8),  isless(param0.s9,  param1.s9),
+                isless(param0.sa, param1.sa), isless(param0.sb, param1.sb),
+                isless(param0.sc, param1.sc), isless(param0.sd, param1.sd),
+                isless(param0.se, param1.se), isless(param0.sf, param1.sf)); }
+
+
+//longn isless (doublen x, doublen y)
+
+
+//intn islessequal (floatn x, floatn y)
+
+INLINE_OVERLOADABLE int2 islessequal (float2 param0, float2 param1)
+{return (int2)(islessequal(param0.s0, param1.s0), islessequal(param0.s1, param1.s1)); }
+
+INLINE_OVERLOADABLE int3 islessequal (float3 param0, float3 param1)
+{return (int3)(islessequal(param0.s0, param1.s0), islessequal(param0.s1, param1.s1),
+               islessequal(param0.s2, param1.s2)); }
+
+INLINE_OVERLOADABLE int4 islessequal (float4 param0, float4 param1)
+{return (int4)(islessequal(param0.s0, param1.s0), islessequal(param0.s1, param1.s1),
+               islessequal(param0.s2, param1.s2), islessequal(param0.s3, param1.s3)); }
+
+INLINE_OVERLOADABLE int8 islessequal (float8 param0, float8 param1)
+{return (int8)(islessequal(param0.s0, param1.s0), islessequal(param0.s1, param1.s1),
+               islessequal(param0.s2, param1.s2), islessequal(param0.s3, param1.s3),
+               islessequal(param0.s4, param1.s4), islessequal(param0.s5, param1.s5),
+               islessequal(param0.s6, param1.s6), islessequal(param0.s7, param1.s7)); }
+
+INLINE_OVERLOADABLE int16 islessequal (float16 param0, float16 param1)
+{return (int16)(islessequal(param0.s0,  param1.s0),  islessequal(param0.s1,  param1.s1),
+                islessequal(param0.s2,  param1.s2),  islessequal(param0.s3,  param1.s3),
+                islessequal(param0.s4,  param1.s4),  islessequal(param0.s5,  param1.s5),
+                islessequal(param0.s6,  param1.s6),  islessequal(param0.s7,  param1.s7),
+                islessequal(param0.s8,  param1.s8),  islessequal(param0.s9,  param1.s9),
+                islessequal(param0.sa, param1.sa), islessequal(param0.sb, param1.sb),
+                islessequal(param0.sc, param1.sc), islessequal(param0.sd, param1.sd),
+                islessequal(param0.se, param1.se), islessequal(param0.sf, param1.sf)); }
+
+
+//longn islessequal (doublen x, doublen y)
+
+
+//longn islessgreater (doublen x, doublen y)
+
+
+//intn isfinite (floatn
+
+INLINE_OVERLOADABLE int2 isfinite (float2 param0)
+{return (int2)(isfinite(param0.s0), isfinite(param0.s1)); }
+
+INLINE_OVERLOADABLE int3 isfinite (float3 param0)
+{return (int3)(isfinite(param0.s0), isfinite(param0.s1),
+               isfinite(param0.s2)); }
+
+INLINE_OVERLOADABLE int4 isfinite (float4 param0)
+{return (int4)(isfinite(param0.s0), isfinite(param0.s1),
+               isfinite(param0.s2), isfinite(param0.s3)); }
+
+INLINE_OVERLOADABLE int8 isfinite (float8 param0)
+{return (int8)(isfinite(param0.s0), isfinite(param0.s1),
+               isfinite(param0.s2), isfinite(param0.s3),
+               isfinite(param0.s4), isfinite(param0.s5),
+               isfinite(param0.s6), isfinite(param0.s7)); }
+
+INLINE_OVERLOADABLE int16 isfinite (float16 param0)
+{return (int16)(isfinite(param0.s0),  isfinite(param0.s1),
+                isfinite(param0.s2),  isfinite(param0.s3),
+                isfinite(param0.s4),  isfinite(param0.s5),
+                isfinite(param0.s6),  isfinite(param0.s7),
+                isfinite(param0.s8),  isfinite(param0.s9),
+                isfinite(param0.sa), isfinite(param0.sb),
+                isfinite(param0.sc), isfinite(param0.sd),
+                isfinite(param0.se), isfinite(param0.sf)); }
+
+
+//longn isfinite (doublen)
+
+
+//intn isinf (floatn)
+
+INLINE_OVERLOADABLE int2 isinf (float2 param0)
+{return (int2)(isinf(param0.s0), isinf(param0.s1)); }
+
+INLINE_OVERLOADABLE int3 isinf (float3 param0)
+{return (int3)(isinf(param0.s0), isinf(param0.s1),
+               isinf(param0.s2)); }
+
+INLINE_OVERLOADABLE int4 isinf (float4 param0)
+{return (int4)(isinf(param0.s0), isinf(param0.s1),
+               isinf(param0.s2), isinf(param0.s3)); }
+
+INLINE_OVERLOADABLE int8 isinf (float8 param0)
+{return (int8)(isinf(param0.s0), isinf(param0.s1),
+               isinf(param0.s2), isinf(param0.s3),
+               isinf(param0.s4), isinf(param0.s5),
+               isinf(param0.s6), isinf(param0.s7)); }
+
+INLINE_OVERLOADABLE int16 isinf (float16 param0)
+{return (int16)(isinf(param0.s0),  isinf(param0.s1),
+                isinf(param0.s2),  isinf(param0.s3),
+                isinf(param0.s4),  isinf(param0.s5),
+                isinf(param0.s6),  isinf(param0.s7),
+                isinf(param0.s8),  isinf(param0.s9),
+                isinf(param0.sa), isinf(param0.sb),
+                isinf(param0.sc), isinf(param0.sd),
+                isinf(param0.se), isinf(param0.sf)); }
+
+
+//longn isinf (doublen)
+
+
+//intn isnan (floatn)
+
+INLINE_OVERLOADABLE int2 isnan (float2 param0)
+{return (int2)(isnan(param0.s0), isnan(param0.s1)); }
+
+INLINE_OVERLOADABLE int3 isnan (float3 param0)
+{return (int3)(isnan(param0.s0), isnan(param0.s1),
+               isnan(param0.s2)); }
+
+INLINE_OVERLOADABLE int4 isnan (float4 param0)
+{return (int4)(isnan(param0.s0), isnan(param0.s1),
+               isnan(param0.s2), isnan(param0.s3)); }
+
+INLINE_OVERLOADABLE int8 isnan (float8 param0)
+{return (int8)(isnan(param0.s0), isnan(param0.s1),
+               isnan(param0.s2), isnan(param0.s3),
+               isnan(param0.s4), isnan(param0.s5),
+               isnan(param0.s6), isnan(param0.s7)); }
+
+INLINE_OVERLOADABLE int16 isnan (float16 param0)
+{return (int16)(isnan(param0.s0),  isnan(param0.s1),
+                isnan(param0.s2),  isnan(param0.s3),
+                isnan(param0.s4),  isnan(param0.s5),
+                isnan(param0.s6),  isnan(param0.s7),
+                isnan(param0.s8),  isnan(param0.s9),
+                isnan(param0.sa), isnan(param0.sb),
+                isnan(param0.sc), isnan(param0.sd),
+                isnan(param0.se), isnan(param0.sf)); }
+
+
+//longn isnan (doublen)
+
+
+//intn isnormal (floatn)
+
+INLINE_OVERLOADABLE int2 isnormal (float2 param0)
+{return (int2)(isnormal(param0.s0), isnormal(param0.s1)); }
+
+INLINE_OVERLOADABLE int3 isnormal (float3 param0)
+{return (int3)(isnormal(param0.s0), isnormal(param0.s1),
+               isnormal(param0.s2)); }
+
+INLINE_OVERLOADABLE int4 isnormal (float4 param0)
+{return (int4)(isnormal(param0.s0), isnormal(param0.s1),
+               isnormal(param0.s2), isnormal(param0.s3)); }
+
+INLINE_OVERLOADABLE int8 isnormal (float8 param0)
+{return (int8)(isnormal(param0.s0), isnormal(param0.s1),
+               isnormal(param0.s2), isnormal(param0.s3),
+               isnormal(param0.s4), isnormal(param0.s5),
+               isnormal(param0.s6), isnormal(param0.s7)); }
+
+INLINE_OVERLOADABLE int16 isnormal (float16 param0)
+{return (int16)(isnormal(param0.s0),  isnormal(param0.s1),
+                isnormal(param0.s2),  isnormal(param0.s3),
+                isnormal(param0.s4),  isnormal(param0.s5),
+                isnormal(param0.s6),  isnormal(param0.s7),
+                isnormal(param0.s8),  isnormal(param0.s9),
+                isnormal(param0.sa), isnormal(param0.sb),
+                isnormal(param0.sc), isnormal(param0.sd),
+                isnormal(param0.se), isnormal(param0.sf)); }
+
+
+//longn isnormal (doublen)
+
+
+//longn isordered (doublen x, doublen y)
+
+
+//longn isunordered (doublen x, doublen y)
+
+
+//intn signbit (floatn)
+
+INLINE_OVERLOADABLE int2 signbit (float2 param0)
+{return (int2)(signbit(param0.s0), signbit(param0.s1)); }
+
+INLINE_OVERLOADABLE int3 signbit (float3 param0)
+{return (int3)(signbit(param0.s0), signbit(param0.s1),
+               signbit(param0.s2)); }
+
+INLINE_OVERLOADABLE int4 signbit (float4 param0)
+{return (int4)(signbit(param0.s0), signbit(param0.s1),
+               signbit(param0.s2), signbit(param0.s3)); }
+
+INLINE_OVERLOADABLE int8 signbit (float8 param0)
+{return (int8)(signbit(param0.s0), signbit(param0.s1),
+               signbit(param0.s2), signbit(param0.s3),
+               signbit(param0.s4), signbit(param0.s5),
+               signbit(param0.s6), signbit(param0.s7)); }
+
+INLINE_OVERLOADABLE int16 signbit (float16 param0)
+{return (int16)(signbit(param0.s0),  signbit(param0.s1),
+                signbit(param0.s2),  signbit(param0.s3),
+                signbit(param0.s4),  signbit(param0.s5),
+                signbit(param0.s6),  signbit(param0.s7),
+                signbit(param0.s8),  signbit(param0.s9),
+                signbit(param0.sa), signbit(param0.sb),
+                signbit(param0.sc), signbit(param0.sd),
+                signbit(param0.se), signbit(param0.sf)); }
+
+
+//longn signbit (doublen)
+
+
+//int any (igentype x)
+
+
+//int all (igentype x)
+
+
+// ##END_BUILTIN_VECTOR##
+
+#undef INLINE_OVERLOADABLE
 #undef PURE
 #undef CONST
 #undef OVERLOADABLE
 #undef INLINE
 #endif /* __GEN_OCL_STDLIB_H__ */
-
