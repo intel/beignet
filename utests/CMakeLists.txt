@@ -105,6 +105,7 @@ set (utests_sources
   builtin_mad_sat.cpp
   builtin_modf.cpp
   builtin_nextafter.cpp
+  builtin_remquo.cpp
   builtin_sign.cpp
   buildin_work_dim.cpp
   builtin_global_size.cpp
