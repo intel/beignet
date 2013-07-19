@@ -68,9 +68,14 @@ common_gentype = ["common_gentype", gen_vector_type(all_float_type)]
 common_gentypef = ["common_gentypef", gen_vector_type(["float"])]
 common_gentyped = ["common_gentyped", gen_vector_type(["double"])]
 
-relational_gentype = ["relational_gentype", gen_vector_type((all_type))]
+relational_gentype = ["relational_gentype", gen_vector_type(all_type)]
 relational_igentype = ["relational_igentype", gen_vector_type(all_itype)]
 relational_ugentype = ["relational_ugentype", gen_vector_type(all_utype)]
+
+misc_gentypem = ["misc_gentypem", gen_vector_type(all_type, [2, 4, 8, 16])]
+misc_gentypen = ["misc_gentypen", gen_vector_type(all_type, [2, 4, 8, 16])]
+misc_ugentypem = ["misc_ugentypem", gen_vector_type(all_utype, [2, 4, 8, 16])]
+misc_ugentypen = ["misc_ugentypen", gen_vector_type(all_utype, [2, 4, 8, 16])]
 
 all_predefined_type = math_gentype, math_gentypef, math_gentyped,                \
                       half_native_math_gentype, integer_gentype,integer_sgentype,\
@@ -79,7 +84,8 @@ all_predefined_type = math_gentype, math_gentypef, math_gentyped,               
                       fast_integer_gentype, common_gentype, common_gentypef,     \
                       common_gentyped, relational_gentype, relational_igentype,  \
                       relational_ugentype, schar, suchar, sshort, sint, suint,   \
-                      slong, sulong, sfloat, sdouble
+                      slong, sulong, sfloat, sdouble, misc_gentypem,              \
+                      misc_ugentypem, misc_gentypen, misc_ugentypen
 
 # type dictionary contains all the predefined type sets.
 type_dict = {}
