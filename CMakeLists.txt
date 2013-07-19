@@ -139,6 +139,8 @@ ELSE(OCLIcd_FOUND)
   MESSAGE(STATUS "Looking for OCL ICD header file - not found")
 ENDIF(OCLIcd_FOUND)
 
+Find_Package(PythonInterp)
+
 ADD_SUBDIRECTORY(include)
 ADD_SUBDIRECTORY(backend)
 ADD_SUBDIRECTORY(src)
