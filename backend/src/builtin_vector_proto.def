@@ -217,7 +217,7 @@ gentypef smoothstep (float edge0, float edge1, gentypef x)
 gentyped smoothstep (double edge0, double edge1, gentyped x)
 gentype sign (gentype x)
 
-## relational
+##relational
 intn isequal (floatn x, floatn y)
 longn isequal (doublen x, doublen y)
 intn isnotequal (floatn x, floatn y)
@@ -255,3 +255,7 @@ int all (igentype x)
 #gentype bitselect (gentype a, gentype b, gentype c)
 #gentype select (gentype a, gentype b, igentype c)
 #gentype select (gentype a, gentype b, ugentype c)
+
+##misc
+#gentypen shuffle (gentypem x, ugentypen mask)
+#gentypen shuffle2 (gentypem x, gentypem y, ugentypen mask)

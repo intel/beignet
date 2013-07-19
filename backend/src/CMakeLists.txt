@@ -16,12 +16,33 @@ foreach (to_stringify_file ${TO_STRINGIFY_FILES})
     COMMAND echo "\;" >> ${output_file}
     COMMAND echo "}" >> ${output_file}
     COMMAND echo "" >> ${output_file}
-    MAIN_DEPENDENCY ${input_file})
+    DEPENDS ${input_file})
 endforeach (to_stringify_file)
 endmacro (stringify)
 
 set (TO_STRINGIFY_FILES ocl_stdlib ocl_common_defines)
 stringify ("${GBE_SOURCE_DIR}/src/" "${TO_STRINGIFY_FILES}")
+
+set (ocl_vector_spec_file ${GBE_SOURCE_DIR}/src/builtin_vector_proto.def)
+set (ocl_vector_file ${GBE_SOURCE_DIR}/src/ocl_vector.h)
+set (ocl_as_file ${GBE_SOURCE_DIR}/src/ocl_as.h)
+set (ocl_convert_file ${GBE_SOURCE_DIR}/src/ocl_convert.h)
+set (ocl_stdlib_tmpl_file ${GBE_SOURCE_DIR}/src/ocl_stdlib.tmpl.h)
+set (ocl_blob_file ${GBE_SOURCE_DIR}/src/ocl_stdlib.h)
+set (ocl_gen_blob_cmd ${GBE_SOURCE_DIR}/src/update_blob_ocl_header.py)
+set (ocl_gen_vector_cmd ${GBE_SOURCE_DIR}/src/gen_builtin_vector.py)
+
+set_property(DIRECTORY APPEND PROPERTY ADDITIONAL_MAKE_CLEAN_FILES "ocl_vector.h;ocl_stdlib.h")
+
+add_custom_command(
+  OUTPUT ${ocl_vector_file}
+  COMMAND ${ocl_gen_vector_cmd} ${ocl_vector_spec_file} ${ocl_vector_file}
+  DEPENDS ${ocl_gen_vector_cmd} ${ocl_vector_spec_file})
+
+add_custom_command(
+  OUTPUT ${ocl_blob_file}
+  COMMAND ${ocl_gen_blob_cmd} ${ocl_stdlib_tmpl_file} ${ocl_blob_file}
+  DEPENDS ${ocl_gen_blob_cmd} ${ocl_vector_file} ${ocl_as_file} ${ocl_convert_file})
 
 if (GBE_USE_BLOB)
   set (GBE_SRC
