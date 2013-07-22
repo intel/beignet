@@ -4878,6 +4878,9 @@ INLINE_OVERLOADABLE float __gen_ocl_internal_sincos(float x, float *cosval) {
   *cosval = native_cos(x);
   return native_sin(x);
 }
+INLINE_OVERLOADABLE float sincos(float x, global float *cosval) { return __gen_ocl_internal_sincos(x, (float*)cosval); }
+INLINE_OVERLOADABLE float sincos(float x, local float *cosval) { return __gen_ocl_internal_sincos(x, (float*)cosval); }
+INLINE_OVERLOADABLE float sincos(float x, private float *cosval) { return __gen_ocl_internal_sincos(x, (float*)cosval); }
 INLINE_OVERLOADABLE float2 __gen_ocl_internal_sincos(float2 x, float2 *cosval) {
   return (float2)(__gen_ocl_internal_sincos(x.s0, (float *)cosval),
                   __gen_ocl_internal_sincos(x.s1, 1 + (float *)cosval));
@@ -5002,7 +5005,6 @@ INLINE_OVERLOADABLE float __gen_ocl_internal_rint(float x) {
 #define sin native_sin
 #define sinpi __gen_ocl_internal_sinpi
 #define sinh __gen_ocl_internal_sinh
-#define sincos __gen_ocl_internal_sincos
 #define asin __gen_ocl_internal_asin
 #define asinpi __gen_ocl_internal_asinpi
 #define asinh __gen_ocl_internal_asinh
@@ -5174,7 +5176,7 @@ DEF(16)
 #undef DEC8
 #undef DEC16
 
-INLINE_OVERLOADABLE float frexp(float x, int *exp) {
+INLINE_OVERLOADABLE float __gen_ocl_frexp(float x, int *exp) {
   uint u = as_uint(x);
   if ((u & 0x7FFFFFFFu) == 0) {
     *exp = 0;
@@ -5187,7 +5189,9 @@ INLINE_OVERLOADABLE float frexp(float x, int *exp) {
   u = (u & (0x807FFFFFu)) | 0x3F000000;
   return as_float(u);
 }
-
+INLINE_OVERLOADABLE float frexp(float x, global int *exp) { return __gen_ocl_frexp(x, (int *)exp); }
+INLINE_OVERLOADABLE float frexp(float x, local int *exp) { return __gen_ocl_frexp(x, (int *)exp); }
+INLINE_OVERLOADABLE float frexp(float x, private int *exp) { return __gen_ocl_frexp(x, (int *)exp); }
 INLINE_OVERLOADABLE float2 frexp(float2 x, int2 *exp) {
   return (float2)(frexp(x.s0, (int *)exp), frexp(x.s1, 1 + (int *)exp));
 }
@@ -5300,10 +5304,13 @@ INLINE_OVERLOADABLE float mix(float x, float y, float a) { return x + (y-x)*a;}
 INLINE_OVERLOADABLE float __gen_ocl_internal_fdim(float x, float y) {
   return __gen_ocl_internal_fmax(x, y) - y;
 }
-INLINE_OVERLOADABLE float fract(float x, float *p) {
+INLINE_OVERLOADABLE float __gen_ocl_fract(float x, float *p) {
   *p = __gen_ocl_internal_floor(x);
   return __gen_ocl_internal_fmin(x - *p, 0x1.FFFFFep-1F);
 }
+INLINE_OVERLOADABLE float fract(float x, global float *p) { return __gen_ocl_fract(x, (float *)p); }
+INLINE_OVERLOADABLE float fract(float x, local float *p) { return __gen_ocl_fract(x, (float *)p); }
+INLINE_OVERLOADABLE float fract(float x, private float *p) { return __gen_ocl_fract(x, (float *)p); }
 INLINE_OVERLOADABLE float2 fract(float2 x, float2 *p) {
   return (float2)(fract(x.s0, (float *)p),
                   fract(x.s1, 1 + (float *)p));
