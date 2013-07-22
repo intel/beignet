@@ -150,6 +150,9 @@ namespace gbe {
     }
 
     args.push_back("-emit-llvm");
+    // XXX we haven't implement those builtin functions,
+    // so disable it currently.
+    args.push_back("-fno-builtin");
     if(bOpt)  args.push_back("-O3");
 #if LLVM_VERSION_MINOR <= 2
     args.push_back("-triple");
