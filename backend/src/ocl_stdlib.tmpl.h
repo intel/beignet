@@ -1106,77 +1106,68 @@ DECL_UNTYPED_RW_ALL(float)
 #define maxmag __gen_ocl_internal_maxmag
 #define minmag __gen_ocl_internal_minmag
 
+/////////////////////////////////////////////////////////////////////////////
 // Miscellaneous Vector Functions (see 6.11.12 of OCL 1.1 spec)
 /////////////////////////////////////////////////////////////////////////////
 #define DEC2(TYPE, XTYPE) \
   INLINE_OVERLOADABLE TYPE##2 shuffle(XTYPE x, uint2 mask) { \
     TYPE##2 y; \
-    y.s0 = ((TYPE *) &x)[mask.s0 & 1]; \
-    y.s1 = ((TYPE *) &x)[mask.s1 & 1]; \
-    return y; \
-  }
-
-#define DEC3(TYPE, XTYPE) \
-  INLINE_OVERLOADABLE TYPE##3 shuffle(XTYPE x, uint3 mask) { \
-    TYPE##3 y; \
-    y.s0 = ((TYPE *) &x)[mask.s0 & 3]; \
-    y.s1 = ((TYPE *) &x)[mask.s1 & 3]; \
-    y.s2 = ((TYPE *) &x)[mask.s2 & 3]; \
+    y.s0 = ((TYPE *) &x)[mask.s0 & (vec_step(x) - 1)]; \
+    y.s1 = ((TYPE *) &x)[mask.s1 & (vec_step(x) - 1)]; \
     return y; \
   }
 
 #define DEC4(TYPE, XTYPE) \
   INLINE_OVERLOADABLE TYPE##4 shuffle(XTYPE x, uint4 mask) { \
     TYPE##4 y; \
-    y.s0 = ((TYPE *) &x)[mask.s0 & 3]; \
-    y.s1 = ((TYPE *) &x)[mask.s1 & 3]; \
-    y.s2 = ((TYPE *) &x)[mask.s2 & 3]; \
-    y.s3 = ((TYPE *) &x)[mask.s3 & 3]; \
+    y.s0 = ((TYPE *) &x)[mask.s0 & (vec_step(x) - 1)]; \
+    y.s1 = ((TYPE *) &x)[mask.s1 & (vec_step(x) - 1)]; \
+    y.s2 = ((TYPE *) &x)[mask.s2 & (vec_step(x) - 1)]; \
+    y.s3 = ((TYPE *) &x)[mask.s3 & (vec_step(x) - 1)]; \
     return y; \
   }
 
 #define DEC8(TYPE, XTYPE) \
   INLINE_OVERLOADABLE TYPE##8 shuffle(XTYPE x, uint8 mask) { \
     TYPE##8 y; \
-    y.s0 = ((TYPE *) &x)[mask.s0 & 7]; \
-    y.s1 = ((TYPE *) &x)[mask.s1 & 7]; \
-    y.s2 = ((TYPE *) &x)[mask.s2 & 7]; \
-    y.s3 = ((TYPE *) &x)[mask.s3 & 7]; \
-    y.s4 = ((TYPE *) &x)[mask.s4 & 7]; \
-    y.s5 = ((TYPE *) &x)[mask.s5 & 7]; \
-    y.s6 = ((TYPE *) &x)[mask.s6 & 7]; \
-    y.s7 = ((TYPE *) &x)[mask.s7 & 7]; \
+    y.s0 = ((TYPE *) &x)[mask.s0 & (vec_step(x) - 1)]; \
+    y.s1 = ((TYPE *) &x)[mask.s1 & (vec_step(x) - 1)]; \
+    y.s2 = ((TYPE *) &x)[mask.s2 & (vec_step(x) - 1)]; \
+    y.s3 = ((TYPE *) &x)[mask.s3 & (vec_step(x) - 1)]; \
+    y.s4 = ((TYPE *) &x)[mask.s4 & (vec_step(x) - 1)]; \
+    y.s5 = ((TYPE *) &x)[mask.s5 & (vec_step(x) - 1)]; \
+    y.s6 = ((TYPE *) &x)[mask.s6 & (vec_step(x) - 1)]; \
+    y.s7 = ((TYPE *) &x)[mask.s7 & (vec_step(x) - 1)]; \
     return y; \
   }
 
 #define DEC16(TYPE, XTYPE) \
   INLINE_OVERLOADABLE TYPE##16 shuffle(XTYPE x, uint16 mask) { \
     TYPE##16 y; \
-    y.s0 = ((TYPE *) &x)[mask.s0 & 15]; \
-    y.s1 = ((TYPE *) &x)[mask.s1 & 15]; \
-    y.s2 = ((TYPE *) &x)[mask.s2 & 15]; \
-    y.s3 = ((TYPE *) &x)[mask.s3 & 15]; \
-    y.s4 = ((TYPE *) &x)[mask.s4 & 15]; \
-    y.s5 = ((TYPE *) &x)[mask.s5 & 15]; \
-    y.s6 = ((TYPE *) &x)[mask.s6 & 15]; \
-    y.s7 = ((TYPE *) &x)[mask.s7 & 15]; \
-    y.s8 = ((TYPE *) &x)[mask.s8 & 15]; \
-    y.s9 = ((TYPE *) &x)[mask.s9 & 15]; \
-    y.sa = ((TYPE *) &x)[mask.sa & 15]; \
-    y.sb = ((TYPE *) &x)[mask.sb & 15]; \
-    y.sc = ((TYPE *) &x)[mask.sc & 15]; \
-    y.sd = ((TYPE *) &x)[mask.sd & 15]; \
-    y.se = ((TYPE *) &x)[mask.se & 15]; \
-    y.sf = ((TYPE *) &x)[mask.sf & 15]; \
+    y.s0 = ((TYPE *) &x)[mask.s0 & (vec_step(x) - 1)]; \
+    y.s1 = ((TYPE *) &x)[mask.s1 & (vec_step(x) - 1)]; \
+    y.s2 = ((TYPE *) &x)[mask.s2 & (vec_step(x) - 1)]; \
+    y.s3 = ((TYPE *) &x)[mask.s3 & (vec_step(x) - 1)]; \
+    y.s4 = ((TYPE *) &x)[mask.s4 & (vec_step(x) - 1)]; \
+    y.s5 = ((TYPE *) &x)[mask.s5 & (vec_step(x) - 1)]; \
+    y.s6 = ((TYPE *) &x)[mask.s6 & (vec_step(x) - 1)]; \
+    y.s7 = ((TYPE *) &x)[mask.s7 & (vec_step(x) - 1)]; \
+    y.s8 = ((TYPE *) &x)[mask.s8 & (vec_step(x) - 1)]; \
+    y.s9 = ((TYPE *) &x)[mask.s9 & (vec_step(x) - 1)]; \
+    y.sa = ((TYPE *) &x)[mask.sa & (vec_step(x) - 1)]; \
+    y.sb = ((TYPE *) &x)[mask.sb & (vec_step(x) - 1)]; \
+    y.sc = ((TYPE *) &x)[mask.sc & (vec_step(x) - 1)]; \
+    y.sd = ((TYPE *) &x)[mask.sd & (vec_step(x) - 1)]; \
+    y.se = ((TYPE *) &x)[mask.se & (vec_step(x) - 1)]; \
+    y.sf = ((TYPE *) &x)[mask.sf & (vec_step(x) - 1)]; \
     return y; \
   }
 
 #define DEF(TYPE) \
-  DEC2(TYPE, TYPE##2); DEC2(TYPE, TYPE##3); DEC2(TYPE, TYPE##4); DEC2(TYPE, TYPE##8); DEC2(TYPE, TYPE##16) \
-  DEC3(TYPE, TYPE##2); DEC3(TYPE, TYPE##3); DEC3(TYPE, TYPE##4); DEC3(TYPE, TYPE##8); DEC3(TYPE, TYPE##16) \
-  DEC4(TYPE, TYPE##2); DEC4(TYPE, TYPE##3); DEC4(TYPE, TYPE##4); DEC4(TYPE, TYPE##8); DEC4(TYPE, TYPE##16) \
-  DEC8(TYPE, TYPE##2); DEC8(TYPE, TYPE##3); DEC8(TYPE, TYPE##4); DEC8(TYPE, TYPE##8); DEC8(TYPE, TYPE##16) \
-  DEC16(TYPE, TYPE##2); DEC16(TYPE, TYPE##3); DEC16(TYPE, TYPE##4); DEC16(TYPE, TYPE##8); DEC16(TYPE, TYPE##16)
+  DEC2(TYPE, TYPE##2); DEC2(TYPE, TYPE##4); DEC2(TYPE, TYPE##8); DEC2(TYPE, TYPE##16) \
+  DEC4(TYPE, TYPE##2); DEC4(TYPE, TYPE##4); DEC4(TYPE, TYPE##8); DEC4(TYPE, TYPE##16) \
+  DEC8(TYPE, TYPE##2); DEC8(TYPE, TYPE##4); DEC8(TYPE, TYPE##8); DEC8(TYPE, TYPE##16) \
+  DEC16(TYPE, TYPE##2); DEC16(TYPE, TYPE##4); DEC16(TYPE, TYPE##8); DEC16(TYPE, TYPE##16)
 DEF(char)
 DEF(uchar)
 DEF(short)
@@ -1186,11 +1177,9 @@ DEF(uint)
 DEF(float)
 #undef DEF
 #undef DEC2
-#undef DEC3
 #undef DEC4
 #undef DEC8
 #undef DEC16
-/////////////////////////////////////////////////////////////////////////////
 
 /////////////////////////////////////////////////////////////////////////////
 // Synchronization functions
