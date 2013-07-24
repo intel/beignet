@@ -928,7 +928,7 @@ INLINE_OVERLOADABLE float16 fract(float16 x, float16 *p) {
                    fract(x.sf, 15 + (float *)p));
 }
 
-INLINE_OVERLOADABLE float remquo(float x, float y, int *quo) {
+INLINE_OVERLOADABLE float __gen_ocl_remquo(float x, float y, int *quo) {
   uint hx = as_uint(x), ix = hx & 0x7FFFFFFF, hy = as_uint(y), iy = hy & 0x7FFFFFFF;
   if (ix > 0x7F800000 || iy > 0x7F800000 || ix == 0x7F800000 || iy == 0)
     return nan(0u);
@@ -942,25 +942,39 @@ INLINE_OVERLOADABLE float remquo(float x, float y, int *quo) {
   return as_float(hr);
 }
 
-INLINE_OVERLOADABLE float2 remquo(float2 x, float2 y, int2 *i) {
-  return (float2)(remquo(x.s0, y.s0, (int *)i), remquo(x.s1, y.s1, 1 + (int *)i));
+INLINE_OVERLOADABLE float2 __gen_ocl_remquo(float2 x, float2 y, int2 *i) {
+  return (float2)(__gen_ocl_remquo(x.s0, y.s0, (int *)i), __gen_ocl_remquo(x.s1, y.s1, 1 + (int *)i));
 }
 
-INLINE_OVERLOADABLE float3 remquo(float3 x, float3 y, int3 *i) {
-  return (float3)(remquo(x.s0, y.s0, (int *)i), remquo(x.s1, y.s1, 1 + (int *)i), remquo(x.s2, y.s2, 2 + (int *)i));
+INLINE_OVERLOADABLE float3 __gen_ocl_remquo(float3 x, float3 y, int3 *i) {
+  return (float3)(__gen_ocl_remquo(x.s0, y.s0, (int *)i), __gen_ocl_remquo(x.s1, y.s1, 1 + (int *)i), __gen_ocl_remquo(x.s2, y.s2, 2 + (int *)i));
 }
 
-INLINE_OVERLOADABLE float4 remquo(float4 x, float4 y, int4 *i) {
-  return (float4)(remquo(x.s0, y.s0, (int *)i), remquo(x.s1, y.s1, 1 + (int *)i), remquo(x.s2, y.s2, 2 + (int *)i), remquo(x.s3, y.s3, 3 + (int *)i));
+INLINE_OVERLOADABLE float4 __gen_ocl_remquo(float4 x, float4 y, int4 *i) {
+  return (float4)(__gen_ocl_remquo(x.s0, y.s0, (int *)i), __gen_ocl_remquo(x.s1, y.s1, 1 + (int *)i), __gen_ocl_remquo(x.s2, y.s2, 2 + (int *)i), __gen_ocl_remquo(x.s3, y.s3, 3 + (int *)i));
 }
 
-INLINE_OVERLOADABLE float8 remquo(float8 x, float8 y, int8 *i) {
-  return (float8)(remquo(x.s0, y.s0, (int *)i), remquo(x.s1, y.s1, 1 + (int *)i), remquo(x.s2, y.s2, 2 + (int *)i), remquo(x.s3, y.s3, 3 + (int *)i), remquo(x.s4, y.s4, 4 + (int *)i), remquo(x.s5, y.s5, 5 + (int *)i), remquo(x.s6, y.s6, 6 + (int *)i), remquo(x.s7, y.s7, 7 + (int *)i));
+INLINE_OVERLOADABLE float8 __gen_ocl_remquo(float8 x, float8 y, int8 *i) {
+  return (float8)(__gen_ocl_remquo(x.s0, y.s0, (int *)i), __gen_ocl_remquo(x.s1, y.s1, 1 + (int *)i), __gen_ocl_remquo(x.s2, y.s2, 2 + (int *)i), __gen_ocl_remquo(x.s3, y.s3, 3 + (int *)i), __gen_ocl_remquo(x.s4, y.s4, 4 + (int *)i), __gen_ocl_remquo(x.s5, y.s5, 5 + (int *)i), __gen_ocl_remquo(x.s6, y.s6, 6 + (int *)i), __gen_ocl_remquo(x.s7, y.s7, 7 + (int *)i));
 }
 
-INLINE_OVERLOADABLE float16 remquo(float16 x, float16 y, int16 *i) {
-  return (float16)(remquo(x.s0, y.s0, (int *)i), remquo(x.s1, y.s1, 1 + (int *)i), remquo(x.s2, y.s2, 2 + (int *)i), remquo(x.s3, y.s3, 3 + (int *)i), remquo(x.s4, y.s4, 4 + (int *)i), remquo(x.s5, y.s5, 5 + (int *)i), remquo(x.s6, y.s6, 6 + (int *)i), remquo(x.s7, y.s7, 7 + (int *)i), remquo(x.s8, y.s8, 8 + (int *)i), remquo(x.s9, y.s9, 9 + (int *)i), remquo(x.sa, y.sa, 10 + (int *)i), remquo(x.sb, y.sb, 11 + (int *)i), remquo(x.sc, y.sc, 12 + (int *)i), remquo(x.sd, y.sd, 13 + (int *)i), remquo(x.se, y.se, 14 + (int *)i), remquo(x.sf, y.sf, 15 + (int *)i));
+INLINE_OVERLOADABLE float16 __gen_ocl_remquo(float16 x, float16 y, int16 *i) {
+  return (float16)(__gen_ocl_remquo(x.s0, y.s0, (int *)i), __gen_ocl_remquo(x.s1, y.s1, 1 + (int *)i), __gen_ocl_remquo(x.s2, y.s2, 2 + (int *)i), __gen_ocl_remquo(x.s3, y.s3, 3 + (int *)i), __gen_ocl_remquo(x.s4, y.s4, 4 + (int *)i), __gen_ocl_remquo(x.s5, y.s5, 5 + (int *)i), __gen_ocl_remquo(x.s6, y.s6, 6 + (int *)i), __gen_ocl_remquo(x.s7, y.s7, 7 + (int *)i), __gen_ocl_remquo(x.s8, y.s8, 8 + (int *)i), __gen_ocl_remquo(x.s9, y.s9, 9 + (int *)i), __gen_ocl_remquo(x.sa, y.sa, 10 + (int *)i), __gen_ocl_remquo(x.sb, y.sb, 11 + (int *)i), __gen_ocl_remquo(x.sc, y.sc, 12 + (int *)i), __gen_ocl_remquo(x.sd, y.sd, 13 + (int *)i), __gen_ocl_remquo(x.se, y.se, 14 + (int *)i), __gen_ocl_remquo(x.sf, y.sf, 15 + (int *)i));
 }
+
+INLINE_OVERLOADABLE float remquo(float x, float y, global int *quo) { return __gen_ocl_remquo(x, y, (int *)quo); }
+INLINE_OVERLOADABLE float remquo(float x, float y, local int *quo) { return __gen_ocl_remquo(x, y, (int *)quo); }
+INLINE_OVERLOADABLE float remquo(float x, float y, private int *quo) { return __gen_ocl_remquo(x, y, (int *)quo); }
+#define DEF(n) \
+  INLINE_OVERLOADABLE float##n remquo(float##n x, float##n y, global int##n *quo) { return __gen_ocl_remquo(x, y, (int##n *)quo); } \
+  INLINE_OVERLOADABLE float##n remquo(float##n x, float##n y, local int##n *quo) { return __gen_ocl_remquo(x, y, (int##n *)quo); } \
+  INLINE_OVERLOADABLE float##n remquo(float##n x, float##n y, private int##n *quo) { return __gen_ocl_remquo(x, y, (int##n *)quo); }
+DEF(2)
+DEF(3)
+DEF(4)
+DEF(8)
+DEF(16)
+#undef DEF
 
 INLINE_OVERLOADABLE float native_divide(float x, float y) { return x/y; }
 INLINE_OVERLOADABLE float ldexp(float x, int n) {
