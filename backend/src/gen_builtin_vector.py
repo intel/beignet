@@ -256,8 +256,6 @@ class builtinProto():
                 formatStr += ','
                 if (j + 1) % 2 == 0:
                     formatStr += ' '
-                    if vtype[1] > 10 and j < 10:
-                        formatStr += ' '
                 if j % 2 == 0:
                     formatStr = self.append(formatStr, self.indentSpace())
 
@@ -265,8 +263,6 @@ class builtinProto():
             for n in range(0, self.paramCount):
                 if n != 0:
                     formatStr += ', '
-                    if vtype[1] > 10 and j < 10:
-                        formatStr += ' '
 
                 ptype = fixup_type(ptypeSeqs[n], vtypeSeq, i)
                 vtype = fixup_type(vtypeSeq, ptypeSeqs[n], i)
