@@ -815,7 +815,7 @@ INLINE_OVERLOADABLE float nextafter(float x, float y) {
   return as_float(hx);
 }
 
-INLINE_OVERLOADABLE float modf(float x, float *i) {
+INLINE_OVERLOADABLE float __gen_ocl_modf(float x, float *i) {
   uint hx = as_uint(x), ix = hx & 0x7FFFFFFF;
   if (ix > 0x7F800000) {
     *i = nan(0u);
@@ -829,25 +829,39 @@ INLINE_OVERLOADABLE float modf(float x, float *i) {
   return x - *i;
 }
 
-INLINE_OVERLOADABLE float2 modf(float2 x, float2 *i) {
-  return (float2)(modf(x.s0, (float *)i), modf(x.s1, 1 + (float *)i));
+INLINE_OVERLOADABLE float2 __gen_ocl_modf(float2 x, float2 *i) {
+  return (float2)(__gen_ocl_modf(x.s0, (float *)i), __gen_ocl_modf(x.s1, 1 + (float *)i));
 }
 
-INLINE_OVERLOADABLE float3 modf(float3 x, float3 *i) {
-  return (float3)(modf(x.s0, (float *)i), modf(x.s1, 1 + (float *)i), modf(x.s2, 2 + (float *)i));
+INLINE_OVERLOADABLE float3 __gen_ocl_modf(float3 x, float3 *i) {
+  return (float3)(__gen_ocl_modf(x.s0, (float *)i), __gen_ocl_modf(x.s1, 1 + (float *)i), __gen_ocl_modf(x.s2, 2 + (float *)i));
 }
 
-INLINE_OVERLOADABLE float4 modf(float4 x, float4 *i) {
-  return (float4)(modf(x.s0, (float *)i), modf(x.s1, 1 + (float *)i), modf(x.s2, 2 + (float *)i), modf(x.s3, 3 + (float *)i));
+INLINE_OVERLOADABLE float4 __gen_ocl_modf(float4 x, float4 *i) {
+  return (float4)(__gen_ocl_modf(x.s0, (float *)i), __gen_ocl_modf(x.s1, 1 + (float *)i), __gen_ocl_modf(x.s2, 2 + (float *)i), __gen_ocl_modf(x.s3, 3 + (float *)i));
 }
 
-INLINE_OVERLOADABLE float8 modf(float8 x, float8 *i) {
-  return (float8)(modf(x.s0, (float *)i), modf(x.s1, 1 + (float *)i), modf(x.s2, 2 + (float *)i), modf(x.s3, 3 + (float *)i), modf(x.s4, 4 + (float *)i), modf(x.s5, 5 + (float *)i), modf(x.s6, 6 + (float *)i), modf(x.s7, 7 + (float *)i));
+INLINE_OVERLOADABLE float8 __gen_ocl_modf(float8 x, float8 *i) {
+  return (float8)(__gen_ocl_modf(x.s0, (float *)i), __gen_ocl_modf(x.s1, 1 + (float *)i), __gen_ocl_modf(x.s2, 2 + (float *)i), __gen_ocl_modf(x.s3, 3 + (float *)i), __gen_ocl_modf(x.s4, 4 + (float *)i), __gen_ocl_modf(x.s5, 5 + (float *)i), __gen_ocl_modf(x.s6, 6 + (float *)i), __gen_ocl_modf(x.s7, 7 + (float *)i));
 }
 
-INLINE_OVERLOADABLE float16 modf(float16 x, float16 *i) {
-  return (float16)(modf(x.s0, (float *)i), modf(x.s1, 1 + (float *)i), modf(x.s2, 2 + (float *)i), modf(x.s3, 3 + (float *)i), modf(x.s4, 4 + (float *)i), modf(x.s5, 5 + (float *)i), modf(x.s6, 6 + (float *)i), modf(x.s7, 7 + (float *)i), modf(x.s8, 8 + (float *)i), modf(x.s9, 9 + (float *)i), modf(x.sa, 10 + (float *)i), modf(x.sb, 11 + (float *)i), modf(x.sc, 12 + (float *)i), modf(x.sd, 13 + (float *)i), modf(x.se, 14 + (float *)i), modf(x.sf, 15 + (float *)i));
+INLINE_OVERLOADABLE float16 __gen_ocl_modf(float16 x, float16 *i) {
+  return (float16)(__gen_ocl_modf(x.s0, (float *)i), __gen_ocl_modf(x.s1, 1 + (float *)i), __gen_ocl_modf(x.s2, 2 + (float *)i), __gen_ocl_modf(x.s3, 3 + (float *)i), __gen_ocl_modf(x.s4, 4 + (float *)i), __gen_ocl_modf(x.s5, 5 + (float *)i), __gen_ocl_modf(x.s6, 6 + (float *)i), __gen_ocl_modf(x.s7, 7 + (float *)i), __gen_ocl_modf(x.s8, 8 + (float *)i), __gen_ocl_modf(x.s9, 9 + (float *)i), __gen_ocl_modf(x.sa, 10 + (float *)i), __gen_ocl_modf(x.sb, 11 + (float *)i), __gen_ocl_modf(x.sc, 12 + (float *)i), __gen_ocl_modf(x.sd, 13 + (float *)i), __gen_ocl_modf(x.se, 14 + (float *)i), __gen_ocl_modf(x.sf, 15 + (float *)i));
 }
+
+INLINE_OVERLOADABLE float modf(float x, global float *i) { return __gen_ocl_modf(x, (float *)i); }
+INLINE_OVERLOADABLE float modf(float x, local float *i) { return __gen_ocl_modf(x, (float *)i); }
+INLINE_OVERLOADABLE float modf(float x, private float *i) { return __gen_ocl_modf(x, (float *)i); }
+#define DEF(n) \
+  INLINE_OVERLOADABLE float##n modf(float##n x, global float##n *i) { return __gen_ocl_modf(x, (float##n *)i); } \
+  INLINE_OVERLOADABLE float##n modf(float##n x, local float##n *i) { return __gen_ocl_modf(x, (float##n *)i); } \
+  INLINE_OVERLOADABLE float##n modf(float##n x, private float##n *i) { return __gen_ocl_modf(x, (float##n *)i); }
+DEF(2)
+DEF(3)
+DEF(4)
+DEF(8)
+DEF(16)
+#undef DEF
 
 INLINE_OVERLOADABLE float degrees(float radians) { return (180 / M_PI_F) * radians; }
 INLINE_OVERLOADABLE float radians(float degrees) { return (M_PI_F / 180) * degrees; }
