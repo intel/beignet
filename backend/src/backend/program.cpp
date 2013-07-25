@@ -37,6 +37,7 @@
 #include <fstream>
 #include <dlfcn.h>
 #include <sstream>
+#include <unistd.h>
 
 /* Not defined for LLVM 3.0 */
 #if !defined(LLVM_VERSION_MAJOR)
@@ -258,10 +259,8 @@ namespace gbe {
       std::istringstream idirs(dirs);
 
       while (getline(idirs, pchHeaderName, ';')) {
-        FILE *pchFile = fopen(pchHeaderName.c_str(), "r");
-        if (pchFile != NULL) {
+        if(access(pchHeaderName.c_str(), R_OK) == 0) {
           usePCH = true;
-          fclose(pchFile);
           break;
         }
       }
