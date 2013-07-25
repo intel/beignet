@@ -1,5 +1,7 @@
 GBEConfig.h
 libgbe.so
 ocl_common_defines_str.cpp
+ocl_stdlib.h
+ocl_stdlib.h.pch
 ocl_stdlib_str.cpp
 ocl_vector.h
