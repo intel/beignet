@@ -39,6 +39,19 @@ def gen_vector_type(type_set, vector_set = all_vector):
             ret.append((t, i))
     return ret
 
+def set_vector_memspace(vector_type_set, memspace):
+    ret = []
+    if memspace == '':
+        return vector_type_set
+    for t in vector_type_set:
+        ret.append((t[0], t[1], memspace))
+    return ret
+
+# if we have 3 elements in the type tuple, we are a pointer with a memory space type
+# at the third element.
+def isPointer(t):
+    return len(t) == 3
+
 all_itype = "char","short","int","long"
 all_utype = "uchar","ushort","uint","ulong"
 all_int_type = all_itype + all_utype
@@ -98,8 +111,18 @@ def _prefix(prefix, dtype):
         return prefix + '_' + dtype
     return dtype
 
+memspaces = ["__local ", "__private ", "__global "]
+
+def stripMemSpace(t):
+    if t[0:2] == '__':
+        for memspace in memspaces :
+            if t[0:len(memspace)] == memspace:
+                return memspace, t[len(memspace):]
+    return '', t
+
 def check_type(types):
     for t in types:
+        memspace, t = stripMemSpace(t)
         if not t in type_dict:
             print t
             raise "found invalid type."
@@ -167,7 +190,6 @@ def fixup_type(dstType, srcType, n):
     print dstType, srcType
     raise "type mispatch"
 
-
 class builtinProto():
     valueTypeStr = ""
     functionName = ""
@@ -191,7 +213,6 @@ class builtinProto():
 
     def append(self, line, nextInit = ""):
         self.outputStr.append(line);
-        #print line
         return nextInit;
 
     def indentSpace(self):
@@ -203,25 +224,34 @@ class builtinProto():
 
     def init_from_line(self, t):
         self.append('//{}'.format(t))
-        line = filter(None, re.split(',| |\(', t.rstrip('\n)')))
+        line = filter(None, re.split(',| |\(', t.rstrip(')\n')))
         self.paramCount = 0
+        stripped = 0
+        memSpace = ''
         for i, text in enumerate(line):
-            if i == 0:
+            idx = i - stripped
+            if idx == 0:
                 self.valueTypeStr = _prefix(self.prefix, line[i])
                 continue
 
-            if i == 1:
+            if idx == 1:
                 self.functionName = line[i];
                 continue
 
-            if i % 2 == 0:
+            if idx % 2 == 0:
                 if line[i][0] == '(':
                     tmpType = line[i][1:]
                 else:
                     tmpType = line[i]
-
-                self.paramTypeStrs.append(_prefix(self.prefix, tmpType))
-                self.paramCount += 1;
+                if tmpType == '__local' or   \
+                   tmpType == '__private' or \
+                   tmpType == '__global':
+                   memSpace = tmpType + ' '
+                   stripped += 1
+                   continue
+                self.paramTypeStrs.append(memSpace + _prefix(self.prefix, tmpType))
+                memSpace = ''
+                self.paramCount += 1
 
     def gen_proto_str_1(self, vtypeSeq, ptypeSeqs, i):
         for n in range(0, self.paramCount):
@@ -243,10 +273,16 @@ class builtinProto():
             if vtype[1] == 1:
                 return
 
-            if ptype[1] != 1:
-                formatStr += '{}{} param{}'.format(ptype[0], ptype[1], n)
+            if isPointer(ptype):
+                formatStr += ptype[2]
+                pointerStr = '*'
             else:
-                formatStr += '{} param{}'.format(ptype[0], n)
+                pointerStr = ''
+
+            if ptype[1] != 1:
+                formatStr += '{}{} {}param{}'.format(ptype[0], ptype[1], pointerStr, n)
+            else:
+                formatStr += '{} {}param{}'.format(ptype[0], pointerStr, n)
 
         formatStr += ')'
         formatStr = self.append(formatStr, '{{return ({}{})('.format(vtype[0], vtype[1]))
@@ -269,11 +305,15 @@ class builtinProto():
                 if vtype[1] != ptype[1]:
                     if ptype[1] != 1:
                         raise "parameter is not a scalar but has different width with result value."
-
+                    if isPointer(ptype):
+                        formatStr += '&'
                     formatStr += 'param{}'.format(n)
                     continue
 
-                formatStr += 'param{}.s{:x}'.format(n, j)
+                if (isPointer(ptype)):
+                    formatStr += '({} {} *)param{} + {:2d}'.format(ptype[2], ptype[0], n, j)
+                else:
+                    formatStr += 'param{}.s{:x}'.format(n, j)
 
             formatStr += ')'
 
@@ -296,7 +336,8 @@ class builtinProto():
         ptypeSeqs = []
         count = len(vtypeSeq);
         for t in self.paramTypeStrs:
-            ptypeSeqs.append(type_dict[t])
+            memspace,t = stripMemSpace(t)
+            ptypeSeqs.append(set_vector_memspace(type_dict[t], memspace))
             count = max(count, len(type_dict[t]))
 
         for i in range(count):

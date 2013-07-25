@@ -551,44 +551,6 @@ INLINE_OVERLOADABLE float sincos(float x, global float *cosval) { return __gen_o
 INLINE_OVERLOADABLE float sincos(float x, local float *cosval) { return __gen_ocl_internal_sincos(x, (float*)cosval); }
 INLINE_OVERLOADABLE float sincos(float x, private float *cosval) { return __gen_ocl_internal_sincos(x, (float*)cosval); }
 
-INLINE_OVERLOADABLE float2 __gen_ocl_internal_sincos(float2 x, float2 *cosval) {
-  return (float2)(__gen_ocl_internal_sincos(x.s0, (float *)cosval),
-                  __gen_ocl_internal_sincos(x.s1, 1 + (float *)cosval));
-}
-INLINE_OVERLOADABLE float4 __gen_ocl_internal_sincos(float4 x, float4 *cosval) {
-  return (float4)(__gen_ocl_internal_sincos(x.s0, (float *)cosval),
-                  __gen_ocl_internal_sincos(x.s1, 1 + (float *)cosval),
-                  __gen_ocl_internal_sincos(x.s2, 2 + (float *)cosval),
-                  __gen_ocl_internal_sincos(x.s3, 3 + (float *)cosval));
-}
-INLINE_OVERLOADABLE float8 __gen_ocl_internal_sincos(float8 x, float8 *cosval) {
-  return (float8)(__gen_ocl_internal_sincos(x.s0, (float *)cosval),
-                  __gen_ocl_internal_sincos(x.s1, 1 + (float *)cosval),
-                  __gen_ocl_internal_sincos(x.s2, 2 + (float *)cosval),
-                  __gen_ocl_internal_sincos(x.s3, 3 + (float *)cosval),
-                  __gen_ocl_internal_sincos(x.s4, 4 + (float *)cosval),
-                  __gen_ocl_internal_sincos(x.s5, 5 + (float *)cosval),
-                  __gen_ocl_internal_sincos(x.s6, 6 + (float *)cosval),
-                  __gen_ocl_internal_sincos(x.s7, 7 + (float *)cosval));
-}
-INLINE_OVERLOADABLE float16 __gen_ocl_internal_sincos(float16 x, float16 *cosval) {
-  return (float16)(__gen_ocl_internal_sincos(x.s0, (float *)cosval),
-                   __gen_ocl_internal_sincos(x.s1, 1 + (float *)cosval),
-                   __gen_ocl_internal_sincos(x.s2, 2 + (float *)cosval),
-                   __gen_ocl_internal_sincos(x.s3, 3 + (float *)cosval),
-                   __gen_ocl_internal_sincos(x.s4, 4 + (float *)cosval),
-                   __gen_ocl_internal_sincos(x.s5, 5 + (float *)cosval),
-                   __gen_ocl_internal_sincos(x.s6, 6 + (float *)cosval),
-                   __gen_ocl_internal_sincos(x.s7, 7 + (float *)cosval),
-                   __gen_ocl_internal_sincos(x.s8, 8 + (float *)cosval),
-                   __gen_ocl_internal_sincos(x.s9, 9 + (float *)cosval),
-                   __gen_ocl_internal_sincos(x.sa, 10 + (float *)cosval),
-                   __gen_ocl_internal_sincos(x.sb, 11 + (float *)cosval),
-                   __gen_ocl_internal_sincos(x.sc, 12 + (float *)cosval),
-                   __gen_ocl_internal_sincos(x.sd, 13 + (float *)cosval),
-                   __gen_ocl_internal_sincos(x.se, 14 + (float *)cosval),
-                   __gen_ocl_internal_sincos(x.sf, 15 + (float *)cosval));
-}
 INLINE_OVERLOADABLE float __gen_ocl_internal_sinh(float x) {
   return (1 - native_exp(-2 * x)) / (2 * native_exp(-x));
 }
@@ -782,26 +744,6 @@ INLINE_OVERLOADABLE float frexp(float x, global int *exp) { return __gen_ocl_fre
 INLINE_OVERLOADABLE float frexp(float x, local int *exp) { return __gen_ocl_frexp(x, (int *)exp); }
 INLINE_OVERLOADABLE float frexp(float x, private int *exp) { return __gen_ocl_frexp(x, (int *)exp); }
 
-INLINE_OVERLOADABLE float2 frexp(float2 x, int2 *exp) {
-  return (float2)(frexp(x.s0, (int *)exp), frexp(x.s1, 1 + (int *)exp));
-}
-
-INLINE_OVERLOADABLE float3 frexp(float3 x, int3 *exp) {
-  return (float3)(frexp(x.s0, (int *)exp), frexp(x.s1, 1 + (int *)exp), frexp(x.s2, 2 + (int *)exp));
-}
-
-INLINE_OVERLOADABLE float4 frexp(float4 x, int4 *exp) {
-  return (float4)(frexp(x.s0, (int *)exp), frexp(x.s1, 1 + (int *)exp), frexp(x.s2, 2 + (int *)exp), frexp(x.s3, 3 + (int *)exp));
-}
-
-INLINE_OVERLOADABLE float8 frexp(float8 x, int8 *exp) {
-  return (float8)(frexp(x.s0, (int *)exp), frexp(x.s1, 1 + (int *)exp), frexp(x.s2, 2 + (int *)exp), frexp(x.s3, 3 + (int *)exp), frexp(x.s4, 4 + (int *)exp), frexp(x.s5, 5 + (int *)exp), frexp(x.s6, 6 + (int *)exp), frexp(x.s7, 7 + (int *)exp));
-}
-
-INLINE_OVERLOADABLE float16 frexp(float16 x, int16 *exp) {
-  return (float16)(frexp(x.s0, (int *)exp), frexp(x.s1, 1 + (int *)exp), frexp(x.s2, 2 + (int *)exp), frexp(x.s3, 3 + (int *)exp), frexp(x.s4, 4 + (int *)exp), frexp(x.s5, 5 + (int *)exp), frexp(x.s6, 6 + (int *)exp), frexp(x.s7, 7 + (int *)exp), frexp(x.s8, 8 + (int *)exp), frexp(x.s9, 9 + (int *)exp), frexp(x.sa, 10 + (int *)exp), frexp(x.sb, 11 + (int *)exp), frexp(x.sc, 12 + (int *)exp), frexp(x.sd, 13 + (int *)exp), frexp(x.se, 14 + (int *)exp), frexp(x.sf, 15 + (int *)exp));
-}
-
 INLINE_OVERLOADABLE float nextafter(float x, float y) {
   uint hx = as_uint(x), ix = hx & 0x7FFFFFFF;
   uint hy = as_uint(y), iy = hy & 0x7FFFFFFF;
@@ -832,39 +774,9 @@ INLINE_OVERLOADABLE float __gen_ocl_modf(float x, float *i) {
   return x - *i;
 }
 
-INLINE_OVERLOADABLE float2 __gen_ocl_modf(float2 x, float2 *i) {
-  return (float2)(__gen_ocl_modf(x.s0, (float *)i), __gen_ocl_modf(x.s1, 1 + (float *)i));
-}
-
-INLINE_OVERLOADABLE float3 __gen_ocl_modf(float3 x, float3 *i) {
-  return (float3)(__gen_ocl_modf(x.s0, (float *)i), __gen_ocl_modf(x.s1, 1 + (float *)i), __gen_ocl_modf(x.s2, 2 + (float *)i));
-}
-
-INLINE_OVERLOADABLE float4 __gen_ocl_modf(float4 x, float4 *i) {
-  return (float4)(__gen_ocl_modf(x.s0, (float *)i), __gen_ocl_modf(x.s1, 1 + (float *)i), __gen_ocl_modf(x.s2, 2 + (float *)i), __gen_ocl_modf(x.s3, 3 + (float *)i));
-}
-
-INLINE_OVERLOADABLE float8 __gen_ocl_modf(float8 x, float8 *i) {
-  return (float8)(__gen_ocl_modf(x.s0, (float *)i), __gen_ocl_modf(x.s1, 1 + (float *)i), __gen_ocl_modf(x.s2, 2 + (float *)i), __gen_ocl_modf(x.s3, 3 + (float *)i), __gen_ocl_modf(x.s4, 4 + (float *)i), __gen_ocl_modf(x.s5, 5 + (float *)i), __gen_ocl_modf(x.s6, 6 + (float *)i), __gen_ocl_modf(x.s7, 7 + (float *)i));
-}
-
-INLINE_OVERLOADABLE float16 __gen_ocl_modf(float16 x, float16 *i) {
-  return (float16)(__gen_ocl_modf(x.s0, (float *)i), __gen_ocl_modf(x.s1, 1 + (float *)i), __gen_ocl_modf(x.s2, 2 + (float *)i), __gen_ocl_modf(x.s3, 3 + (float *)i), __gen_ocl_modf(x.s4, 4 + (float *)i), __gen_ocl_modf(x.s5, 5 + (float *)i), __gen_ocl_modf(x.s6, 6 + (float *)i), __gen_ocl_modf(x.s7, 7 + (float *)i), __gen_ocl_modf(x.s8, 8 + (float *)i), __gen_ocl_modf(x.s9, 9 + (float *)i), __gen_ocl_modf(x.sa, 10 + (float *)i), __gen_ocl_modf(x.sb, 11 + (float *)i), __gen_ocl_modf(x.sc, 12 + (float *)i), __gen_ocl_modf(x.sd, 13 + (float *)i), __gen_ocl_modf(x.se, 14 + (float *)i), __gen_ocl_modf(x.sf, 15 + (float *)i));
-}
-
 INLINE_OVERLOADABLE float modf(float x, global float *i) { return __gen_ocl_modf(x, (float *)i); }
 INLINE_OVERLOADABLE float modf(float x, local float *i) { return __gen_ocl_modf(x, (float *)i); }
 INLINE_OVERLOADABLE float modf(float x, private float *i) { return __gen_ocl_modf(x, (float *)i); }
-#define DEF(n) \
-  INLINE_OVERLOADABLE float##n modf(float##n x, global float##n *i) { return __gen_ocl_modf(x, (float##n *)i); } \
-  INLINE_OVERLOADABLE float##n modf(float##n x, local float##n *i) { return __gen_ocl_modf(x, (float##n *)i); } \
-  INLINE_OVERLOADABLE float##n modf(float##n x, private float##n *i) { return __gen_ocl_modf(x, (float##n *)i); }
-DEF(2)
-DEF(3)
-DEF(4)
-DEF(8)
-DEF(16)
-#undef DEF
 
 INLINE_OVERLOADABLE float degrees(float radians) { return (180 / M_PI_F) * radians; }
 INLINE_OVERLOADABLE float radians(float degrees) { return (M_PI_F / 180) * degrees; }
@@ -906,45 +818,6 @@ INLINE_OVERLOADABLE float fract(float x, global float *p) { return __gen_ocl_fra
 INLINE_OVERLOADABLE float fract(float x, local float *p) { return __gen_ocl_fract(x, (float *)p); }
 INLINE_OVERLOADABLE float fract(float x, private float *p) { return __gen_ocl_fract(x, (float *)p); }
 
-INLINE_OVERLOADABLE float2 fract(float2 x, float2 *p) {
-  return (float2)(fract(x.s0, (float *)p),
-                  fract(x.s1, 1 + (float *)p));
-}
-INLINE_OVERLOADABLE float4 fract(float4 x, float4 *p) {
-  return (float4)(fract(x.s0, (float *)p),
-                  fract(x.s1, 1 + (float *)p),
-                  fract(x.s2, 2 + (float *)p),
-                  fract(x.s3, 3 + (float *)p));
-}
-INLINE_OVERLOADABLE float8 fract(float8 x, float8 *p) {
-  return (float8)(fract(x.s0, (float *)p),
-                  fract(x.s1, 1 + (float *)p),
-                  fract(x.s2, 2 + (float *)p),
-                  fract(x.s3, 3 + (float *)p),
-                  fract(x.s4, 4 + (float *)p),
-                  fract(x.s5, 5 + (float *)p),
-                  fract(x.s6, 6 + (float *)p),
-                  fract(x.s7, 7 + (float *)p));
-}
-INLINE_OVERLOADABLE float16 fract(float16 x, float16 *p) {
-  return (float16)(fract(x.s0, (float *)p),
-                   fract(x.s1, 1 + (float *)p),
-                   fract(x.s2, 2 + (float *)p),
-                   fract(x.s3, 3 + (float *)p),
-                   fract(x.s4, 4 + (float *)p),
-                   fract(x.s5, 5 + (float *)p),
-                   fract(x.s6, 6 + (float *)p),
-                   fract(x.s7, 7 + (float *)p),
-                   fract(x.s8, 8 + (float *)p),
-                   fract(x.s9, 9 + (float *)p),
-                   fract(x.sa, 10 + (float *)p),
-                   fract(x.sb, 11 + (float *)p),
-                   fract(x.sc, 12 + (float *)p),
-                   fract(x.sd, 13 + (float *)p),
-                   fract(x.se, 14 + (float *)p),
-                   fract(x.sf, 15 + (float *)p));
-}
-
 INLINE_OVERLOADABLE float __gen_ocl_remquo(float x, float y, int *quo) {
   uint hx = as_uint(x), ix = hx & 0x7FFFFFFF, hy = as_uint(y), iy = hy & 0x7FFFFFFF;
   if (ix > 0x7F800000 || iy > 0x7F800000 || ix == 0x7F800000 || iy == 0)
@@ -959,39 +832,9 @@ INLINE_OVERLOADABLE float __gen_ocl_remquo(float x, float y, int *quo) {
   return as_float(hr);
 }
 
-INLINE_OVERLOADABLE float2 __gen_ocl_remquo(float2 x, float2 y, int2 *i) {
-  return (float2)(__gen_ocl_remquo(x.s0, y.s0, (int *)i), __gen_ocl_remquo(x.s1, y.s1, 1 + (int *)i));
-}
-
-INLINE_OVERLOADABLE float3 __gen_ocl_remquo(float3 x, float3 y, int3 *i) {
-  return (float3)(__gen_ocl_remquo(x.s0, y.s0, (int *)i), __gen_ocl_remquo(x.s1, y.s1, 1 + (int *)i), __gen_ocl_remquo(x.s2, y.s2, 2 + (int *)i));
-}
-
-INLINE_OVERLOADABLE float4 __gen_ocl_remquo(float4 x, float4 y, int4 *i) {
-  return (float4)(__gen_ocl_remquo(x.s0, y.s0, (int *)i), __gen_ocl_remquo(x.s1, y.s1, 1 + (int *)i), __gen_ocl_remquo(x.s2, y.s2, 2 + (int *)i), __gen_ocl_remquo(x.s3, y.s3, 3 + (int *)i));
-}
-
-INLINE_OVERLOADABLE float8 __gen_ocl_remquo(float8 x, float8 y, int8 *i) {
-  return (float8)(__gen_ocl_remquo(x.s0, y.s0, (int *)i), __gen_ocl_remquo(x.s1, y.s1, 1 + (int *)i), __gen_ocl_remquo(x.s2, y.s2, 2 + (int *)i), __gen_ocl_remquo(x.s3, y.s3, 3 + (int *)i), __gen_ocl_remquo(x.s4, y.s4, 4 + (int *)i), __gen_ocl_remquo(x.s5, y.s5, 5 + (int *)i), __gen_ocl_remquo(x.s6, y.s6, 6 + (int *)i), __gen_ocl_remquo(x.s7, y.s7, 7 + (int *)i));
-}
-
-INLINE_OVERLOADABLE float16 __gen_ocl_remquo(float16 x, float16 y, int16 *i) {
-  return (float16)(__gen_ocl_remquo(x.s0, y.s0, (int *)i), __gen_ocl_remquo(x.s1, y.s1, 1 + (int *)i), __gen_ocl_remquo(x.s2, y.s2, 2 + (int *)i), __gen_ocl_remquo(x.s3, y.s3, 3 + (int *)i), __gen_ocl_remquo(x.s4, y.s4, 4 + (int *)i), __gen_ocl_remquo(x.s5, y.s5, 5 + (int *)i), __gen_ocl_remquo(x.s6, y.s6, 6 + (int *)i), __gen_ocl_remquo(x.s7, y.s7, 7 + (int *)i), __gen_ocl_remquo(x.s8, y.s8, 8 + (int *)i), __gen_ocl_remquo(x.s9, y.s9, 9 + (int *)i), __gen_ocl_remquo(x.sa, y.sa, 10 + (int *)i), __gen_ocl_remquo(x.sb, y.sb, 11 + (int *)i), __gen_ocl_remquo(x.sc, y.sc, 12 + (int *)i), __gen_ocl_remquo(x.sd, y.sd, 13 + (int *)i), __gen_ocl_remquo(x.se, y.se, 14 + (int *)i), __gen_ocl_remquo(x.sf, y.sf, 15 + (int *)i));
-}
-
 INLINE_OVERLOADABLE float remquo(float x, float y, global int *quo) { return __gen_ocl_remquo(x, y, (int *)quo); }
 INLINE_OVERLOADABLE float remquo(float x, float y, local int *quo) { return __gen_ocl_remquo(x, y, (int *)quo); }
 INLINE_OVERLOADABLE float remquo(float x, float y, private int *quo) { return __gen_ocl_remquo(x, y, (int *)quo); }
-#define DEF(n) \
-  INLINE_OVERLOADABLE float##n remquo(float##n x, float##n y, global int##n *quo) { return __gen_ocl_remquo(x, y, (int##n *)quo); } \
-  INLINE_OVERLOADABLE float##n remquo(float##n x, float##n y, local int##n *quo) { return __gen_ocl_remquo(x, y, (int##n *)quo); } \
-  INLINE_OVERLOADABLE float##n remquo(float##n x, float##n y, private int##n *quo) { return __gen_ocl_remquo(x, y, (int##n *)quo); }
-DEF(2)
-DEF(3)
-DEF(4)
-DEF(8)
-DEF(16)
-#undef DEF
 
 INLINE_OVERLOADABLE float native_divide(float x, float y) { return x/y; }
 INLINE_OVERLOADABLE float ldexp(float x, int n) {
