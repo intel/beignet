@@ -231,7 +231,7 @@ longn isless (doublen x, doublen y)
 intn islessequal (floatn x, floatn y)
 longn islessequal (doublen x, doublen y)
 # XXX not implemented
-#intn islessgreater (floatn x, floatn y)
+intn islessgreater (floatn x, floatn y)
 longn islessgreater (doublen x, doublen y)
 intn isfinite (floatn
 longn isfinite (doublen)
@@ -242,10 +242,10 @@ longn isnan (doublen)
 intn isnormal (floatn)
 longn isnormal (doublen)
 # XXX not implemented
-#intn isordered (floatn x, floatn y)
+intn isordered (floatn x, floatn y)
 longn isordered (doublen x, doublen y)
 # XXX not implemented
-#intn isunordered (floatn x, floatn y)
+intn isunordered (floatn x, floatn y)
 longn isunordered (doublen x, doublen y)
 intn signbit (floatn)
 longn signbit (doublen)
