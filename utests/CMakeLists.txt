@@ -112,6 +112,7 @@ set (utests_sources
   builtin_global_size.cpp
   builtin_local_size.cpp
   builtin_global_id.cpp
+  builtin_local_id.cpp
   runtime_createcontext.cpp
   runtime_null_kernel_arg.cpp
   compiler_double.cpp
