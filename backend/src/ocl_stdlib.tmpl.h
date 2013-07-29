@@ -204,6 +204,8 @@ INLINE_OVERLOADABLE int isfinite(float x) { return __builtin_isfinite(x); }
 INLINE_OVERLOADABLE int isinf(float x) { return __builtin_isinf(x); }
 INLINE_OVERLOADABLE int isnan(float x) { return __builtin_isnan(x); }
 INLINE_OVERLOADABLE int isnormal(float x) { return __builtin_isnormal(x); }
+INLINE_OVERLOADABLE int isordered(float x, float y) { return isequal(x, x) && isequal(y, y); }
+INLINE_OVERLOADABLE int isunordered(float x, float y) { return isnan(x) || isnan(y); }
 INLINE_OVERLOADABLE int signbit(float x) { return __builtin_signbit(x); }
 
 #define DEC1(type) INLINE_OVERLOADABLE int any(type a) { return a<0; }
