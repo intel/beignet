@@ -172,6 +172,7 @@ int INLINE_OVERLOADABLE isgreater(float x, float y) { return x > y; }
 int INLINE_OVERLOADABLE isgreaterequal(float x, float y) { return x >= y; }
 int INLINE_OVERLOADABLE isless(float x, float y) { return x < y; }
 int INLINE_OVERLOADABLE islessequal(float x, float y) { return x <= y; }
+int INLINE_OVERLOADABLE islessgreater(float x, float y) { return (x < y) || (x > y); }
 
 #define SDEF(TYPE)                                                              \
 OVERLOADABLE TYPE ocl_sadd_sat(TYPE x, TYPE y);                          \
