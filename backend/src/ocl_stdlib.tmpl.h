@@ -48,7 +48,7 @@ typedef unsigned int uintptr_t;
 #define __constant __attribute__((address_space(2)))
 #define __local __attribute__((address_space(3)))
 #define global __global
-//#define local __local
+#define local __local
 #define constant __constant
 #define private __private
 #endif
