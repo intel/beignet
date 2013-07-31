@@ -1055,6 +1055,114 @@ DEF(float)
 #undef DEC8
 #undef DEC16
 
+#define DEC2(TYPE, ARGTYPE, TEMPTYPE) \
+  INLINE_OVERLOADABLE TYPE##2 shuffle2(ARGTYPE x, ARGTYPE y, uint2 mask) { \
+    return shuffle((TEMPTYPE)(x, y), mask); \
+  }
+
+#define DEC2X(TYPE) \
+  INLINE_OVERLOADABLE TYPE##2 shuffle2(TYPE##16 x, TYPE##16 y, uint2 mask) { \
+    TYPE##2 z; \
+    z.s0 = mask.s0 < 16 ? ((TYPE *)&x)[mask.s0] : ((TYPE *)&y)[mask.s0 & 15]; \
+    z.s1 = mask.s1 < 16 ? ((TYPE *)&x)[mask.s1] : ((TYPE *)&y)[mask.s1 & 15]; \
+    return z; \
+  }
+
+#define DEC4(TYPE, ARGTYPE, TEMPTYPE) \
+  INLINE_OVERLOADABLE TYPE##4 shuffle2(ARGTYPE x, ARGTYPE y, uint4 mask) { \
+    return shuffle((TEMPTYPE)(x, y), mask); \
+  }
+
+#define DEC4X(TYPE) \
+  INLINE_OVERLOADABLE TYPE##4 shuffle2(TYPE##16 x, TYPE##16 y, uint4 mask) { \
+    TYPE##4 z; \
+    z.s0 = mask.s0 < 16 ? ((TYPE *)&x)[mask.s0] : ((TYPE *)&y)[mask.s0 & 15]; \
+    z.s1 = mask.s1 < 16 ? ((TYPE *)&x)[mask.s1] : ((TYPE *)&y)[mask.s1 & 15]; \
+    z.s2 = mask.s2 < 16 ? ((TYPE *)&x)[mask.s2] : ((TYPE *)&y)[mask.s2 & 15]; \
+    z.s3 = mask.s3 < 16 ? ((TYPE *)&x)[mask.s3] : ((TYPE *)&y)[mask.s3 & 15]; \
+    return z; \
+  }
+
+#define DEC8(TYPE, ARGTYPE, TEMPTYPE) \
+  INLINE_OVERLOADABLE TYPE##8 shuffle2(ARGTYPE x, ARGTYPE y, uint8 mask) { \
+    return shuffle((TEMPTYPE)(x, y), mask); \
+  }
+
+#define DEC8X(TYPE) \
+  INLINE_OVERLOADABLE TYPE##8 shuffle2(TYPE##16 x, TYPE##16 y, uint8 mask) { \
+    TYPE##8 z; \
+    z.s0 = mask.s0 < 16 ? ((TYPE *)&x)[mask.s0] : ((TYPE *)&y)[mask.s0 & 15]; \
+    z.s1 = mask.s1 < 16 ? ((TYPE *)&x)[mask.s1] : ((TYPE *)&y)[mask.s1 & 15]; \
+    z.s2 = mask.s2 < 16 ? ((TYPE *)&x)[mask.s2] : ((TYPE *)&y)[mask.s2 & 15]; \
+    z.s3 = mask.s3 < 16 ? ((TYPE *)&x)[mask.s3] : ((TYPE *)&y)[mask.s3 & 15]; \
+    z.s4 = mask.s4 < 16 ? ((TYPE *)&x)[mask.s4] : ((TYPE *)&y)[mask.s4 & 15]; \
+    z.s5 = mask.s5 < 16 ? ((TYPE *)&x)[mask.s5] : ((TYPE *)&y)[mask.s5 & 15]; \
+    z.s6 = mask.s6 < 16 ? ((TYPE *)&x)[mask.s6] : ((TYPE *)&y)[mask.s6 & 15]; \
+    z.s7 = mask.s7 < 16 ? ((TYPE *)&x)[mask.s7] : ((TYPE *)&y)[mask.s7 & 15]; \
+    return z; \
+  }
+
+#define DEC16(TYPE, ARGTYPE, TEMPTYPE) \
+  INLINE_OVERLOADABLE TYPE##16 shuffle2(ARGTYPE x, ARGTYPE y, uint16 mask) { \
+    return shuffle((TEMPTYPE)(x, y), mask); \
+  }
+
+#define DEC16X(TYPE) \
+  INLINE_OVERLOADABLE TYPE##16 shuffle2(TYPE##16 x, TYPE##16 y, uint16 mask) { \
+    TYPE##16 z; \
+    z.s0 = mask.s0 < 16 ? ((TYPE *)&x)[mask.s0] : ((TYPE *)&y)[mask.s0 & 15]; \
+    z.s1 = mask.s1 < 16 ? ((TYPE *)&x)[mask.s1] : ((TYPE *)&y)[mask.s1 & 15]; \
+    z.s2 = mask.s2 < 16 ? ((TYPE *)&x)[mask.s2] : ((TYPE *)&y)[mask.s2 & 15]; \
+    z.s3 = mask.s3 < 16 ? ((TYPE *)&x)[mask.s3] : ((TYPE *)&y)[mask.s3 & 15]; \
+    z.s4 = mask.s4 < 16 ? ((TYPE *)&x)[mask.s4] : ((TYPE *)&y)[mask.s4 & 15]; \
+    z.s5 = mask.s5 < 16 ? ((TYPE *)&x)[mask.s5] : ((TYPE *)&y)[mask.s5 & 15]; \
+    z.s6 = mask.s6 < 16 ? ((TYPE *)&x)[mask.s6] : ((TYPE *)&y)[mask.s6 & 15]; \
+    z.s7 = mask.s7 < 16 ? ((TYPE *)&x)[mask.s7] : ((TYPE *)&y)[mask.s7 & 15]; \
+    z.s8 = mask.s8 < 16 ? ((TYPE *)&x)[mask.s8] : ((TYPE *)&y)[mask.s8 & 15]; \
+    z.s9 = mask.s9 < 16 ? ((TYPE *)&x)[mask.s9] : ((TYPE *)&y)[mask.s9 & 15]; \
+    z.sa = mask.sa < 16 ? ((TYPE *)&x)[mask.sa] : ((TYPE *)&y)[mask.sa & 15]; \
+    z.sb = mask.sb < 16 ? ((TYPE *)&x)[mask.sb] : ((TYPE *)&y)[mask.sb & 15]; \
+    z.sc = mask.sc < 16 ? ((TYPE *)&x)[mask.sc] : ((TYPE *)&y)[mask.sc & 15]; \
+    z.sd = mask.sd < 16 ? ((TYPE *)&x)[mask.sd] : ((TYPE *)&y)[mask.sd & 15]; \
+    z.se = mask.se < 16 ? ((TYPE *)&x)[mask.se] : ((TYPE *)&y)[mask.se & 15]; \
+    z.sf = mask.sf < 16 ? ((TYPE *)&x)[mask.sf] : ((TYPE *)&y)[mask.sf & 15]; \
+    return z; \
+  }
+
+#define DEF(TYPE) \
+  DEC2(TYPE, TYPE##2, TYPE##4) \
+  DEC2(TYPE, TYPE##4, TYPE##8) \
+  DEC2(TYPE, TYPE##8, TYPE##16) \
+  DEC2X(TYPE) \
+  DEC4(TYPE, TYPE##2, TYPE##4) \
+  DEC4(TYPE, TYPE##4, TYPE##8) \
+  DEC4(TYPE, TYPE##8, TYPE##16) \
+  DEC4X(TYPE) \
+  DEC8(TYPE, TYPE##2, TYPE##4) \
+  DEC8(TYPE, TYPE##4, TYPE##8) \
+  DEC8(TYPE, TYPE##8, TYPE##16) \
+  DEC8X(TYPE) \
+  DEC16(TYPE, TYPE##2, TYPE##4) \
+  DEC16(TYPE, TYPE##4, TYPE##8) \
+  DEC16(TYPE, TYPE##8, TYPE##16) \
+  DEC16X(TYPE)
+
+DEF(char)
+DEF(uchar)
+DEF(short)
+DEF(ushort)
+DEF(int)
+DEF(uint)
+DEF(float)
+#undef DEF
+#undef DEC2
+#undef DEC2X
+#undef DEC4
+#undef DEC4X
+#undef DEC8
+#undef DEC8X
+#undef DEC16
+#undef DEC16X
 /////////////////////////////////////////////////////////////////////////////
 // Synchronization functions
 /////////////////////////////////////////////////////////////////////////////
