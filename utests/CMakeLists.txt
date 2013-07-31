@@ -120,6 +120,7 @@ set (utests_sources
   compiler_double.cpp
   compiler_double_2.cpp
   compiler_double_3.cpp
+  compiler_double_4.cpp
   utest_assert.cpp
   utest.cpp
   utest_file_map.cpp
