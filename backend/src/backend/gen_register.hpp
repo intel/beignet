@@ -553,6 +553,11 @@ namespace gbe
                          GEN_HORIZONTAL_STRIDE_1);
     }
 
+    static INLINE bool isNull(GenRegister reg) {
+      return (reg.file == GEN_ARCHITECTURE_REGISTER_FILE
+              && reg.nr == GEN_ARF_NULL);
+    }
+
     static INLINE GenRegister acc(void) {
       return GenRegister(GEN_ARCHITECTURE_REGISTER_FILE,
                          GEN_ARF_ACCUMULATOR,
@@ -829,6 +834,26 @@ namespace gbe
                          GEN_TYPE_UW,
                          GEN_VERTICAL_STRIDE_16,
                          GEN_WIDTH_8,
+                         GEN_HORIZONTAL_STRIDE_2);
+    }
+
+    static INLINE GenRegister packed_ud(uint32_t nr, uint32_t subnr) {
+      return GenRegister(GEN_GENERAL_REGISTER_FILE,
+                         nr,
+                         subnr,
+                         GEN_TYPE_UD,
+                         GEN_VERTICAL_STRIDE_8,
+                         GEN_WIDTH_4,
+                         GEN_HORIZONTAL_STRIDE_1);
+    }
+
+    static INLINE GenRegister unpacked_ud(uint32_t nr, uint32_t subnr) {
+      return GenRegister(GEN_GENERAL_REGISTER_FILE,
+                         nr,
+                         subnr,
+                         GEN_TYPE_UD,
+                         GEN_VERTICAL_STRIDE_8,
+                         GEN_WIDTH_4,
                          GEN_HORIZONTAL_STRIDE_2);
     }
 

@@ -356,103 +356,69 @@ namespace gbe
     0
   };
 
-  static int dst_type(int exec_width) {
-    if (exec_width == 8)
-      return GEN_TYPE_UD;
-    if (exec_width == 16)
-      return GEN_TYPE_UW;
-    NOT_IMPLEMENTED;
-    return 0;
-  }
-
-  void GenEncoder::READ_FLOAT64(GenRegister dst, GenRegister src, uint32_t bti, uint32_t elemNum) {
-    int w = curr.execWidth;
-    dst = GenRegister::h2(dst);
-    dst.type = GEN_TYPE_UD;
-    src.type = GEN_TYPE_UD;
-    GenRegister r = GenRegister::retype(GenRegister::suboffset(src, w*2), GEN_TYPE_UD);
-    GenRegister imm4 = GenRegister::immud(4);
-    GenInstruction *insn;
-    insn = next(GEN_OPCODE_SEND);
-    setHeader(insn);
-    setDst(insn, GenRegister::uw16grf(r.nr, 0));
-    setSrc0(insn, GenRegister::ud8grf(src.nr, 0));
-    setSrc1(insn, GenRegister::immud(0));
-    setDPUntypedRW(this, insn, bti, untypedRWMask[1], GEN_UNTYPED_READ, curr.execWidth / 8, curr.execWidth / 8);
+  void GenEncoder::READ_FLOAT64(GenRegister dst, GenRegister tmp, GenRegister addr, GenRegister src, uint32_t bti, uint32_t elemNum) {
+    GenRegister dst32 = GenRegister::retype(dst, GEN_TYPE_UD);
+    src = GenRegister::retype(src, GEN_TYPE_UD);
+    addr = GenRegister::retype(addr, GEN_TYPE_UD);
+    tmp = GenRegister::retype(tmp, GEN_TYPE_UD);
+    uint32_t originSimdWidth = curr.execWidth;
+    uint32_t originPredicate = curr.predicate;
+    uint32_t originMask = curr.noMask;
     push();
-    curr.quarterControl = 0;
-    curr.nibControl = 0;
-    MOV(dst, r);
-    if (w == 8)
-      curr.nibControl = 1;
-    else
-      curr.quarterControl = 1;
-    MOV(GenRegister::suboffset(dst, w), GenRegister::suboffset(r, w / 2));
-    pop();
-    ADD(src, src, imm4);
-    insn = next(GEN_OPCODE_SEND);
-    setHeader(insn);
-    setDst(insn, GenRegister::uw16grf(r.nr, 0));
-    setSrc0(insn, GenRegister::ud8grf(src.nr, 0));
-    setSrc1(insn, GenRegister::immud(0));
-    setDPUntypedRW(this, insn, bti, untypedRWMask[1], GEN_UNTYPED_READ, curr.execWidth / 8, curr.execWidth / 8);
-    push();
-    curr.quarterControl = 0;
-    curr.nibControl = 0;
-    MOV(GenRegister::suboffset(dst, 1), r);
-    if (w == 8)
-      curr.nibControl = 1;
-    else
-      curr.quarterControl = 1;
-    MOV(GenRegister::suboffset(dst, w + 1), GenRegister::suboffset(r, w / 2));
+    for ( uint32_t channels = 0, currQuarter = GEN_COMPRESSION_Q1;
+          channels < originSimdWidth; channels += 8, currQuarter++) {
+      curr.predicate = GEN_PREDICATE_NONE;
+      curr.noMask = GEN_MASK_DISABLE;
+      curr.execWidth = 8;
+      /* XXX The following instruction is illegal, but it works as SIMD 1*4 mode
+         which is what we want here. */
+      MOV(GenRegister::h2(addr), GenRegister::suboffset(src, channels));
+      ADD(GenRegister::h2(GenRegister::suboffset(addr, 1)), GenRegister::suboffset(src, channels), GenRegister::immd(4));
+      MOV(GenRegister::h2(GenRegister::suboffset(addr, 8)), GenRegister::suboffset(src, channels + 4));
+      ADD(GenRegister::h2(GenRegister::suboffset(addr, 9)), GenRegister::suboffset(src, channels + 4), GenRegister::immd(4));
+      // Let's use SIMD16 to read all bytes for 8 doubles data at one time.
+      curr.execWidth = 16;
+      this->UNTYPED_READ(tmp, addr, bti, elemNum);
+      if (originSimdWidth == 16)
+        curr.quarterControl = currQuarter;
+      curr.predicate = originPredicate;
+      curr.noMask = originMask;
+      // Back to simd8 for correct predication flag.
+      curr.execWidth = 8;
+      MOV(GenRegister::retype(GenRegister::suboffset(dst32, channels * 2), GEN_TYPE_DF), GenRegister::retype(tmp, GEN_TYPE_DF));
+    }
     pop();
   }
 
-  void GenEncoder::WRITE_FLOAT64(GenRegister msg, uint32_t bti, uint32_t elemNum) {
-    int w = curr.execWidth;
-    GenRegister r = GenRegister::retype(GenRegister::suboffset(msg, w*3), GEN_TYPE_UD);
-    r.type = GEN_TYPE_UD;
-    GenRegister hdr = GenRegister::h2(r);
-    GenRegister src = GenRegister::ud16grf(msg.nr + w / 8, 0);
-    src.hstride = GEN_HORIZONTAL_STRIDE_2;
-    GenRegister data = GenRegister::offset(r, w / 8);
-    GenRegister imm4 = GenRegister::immud(4);
-    MOV(r, GenRegister::ud8grf(msg.nr, 0));
+  void GenEncoder::WRITE_FLOAT64(GenRegister msg, GenRegister data, uint32_t bti, uint32_t elemNum) {
+    GenRegister data32 = GenRegister::retype(data, GEN_TYPE_UD);
+    msg = GenRegister::retype(msg, GEN_TYPE_UD);
+    int originSimdWidth = curr.execWidth;
+    int originPredicate = curr.predicate;
+    int originMask = curr.noMask;
     push();
-    curr.quarterControl = 0;
-    curr.nibControl = 0;
-    MOV(data, src);
-    if (w == 8)
-      curr.nibControl = 1;
-    else
-      curr.quarterControl = 1;
-    MOV(GenRegister::suboffset(data, w / 2), GenRegister::suboffset(src, w));
+    for (uint32_t half = 0; half < 2; half++) {
+      curr.predicate = GEN_PREDICATE_NONE;
+      curr.noMask = GEN_MASK_DISABLE;
+      curr.execWidth = 8;
+      MOV(GenRegister::suboffset(msg, originSimdWidth), GenRegister::unpacked_ud(data32.nr, data32.subnr + half));
+      if (originSimdWidth == 16) {
+        MOV(GenRegister::suboffset(msg, originSimdWidth + 8), GenRegister::unpacked_ud(data32.nr + 2, data32.subnr + half));
+        curr.execWidth = 16;
+      }
+      if (half == 1)
+        ADD(GenRegister::retype(msg, GEN_TYPE_UD), GenRegister::retype(msg, GEN_TYPE_UD), GenRegister::immd(4));
+      curr.predicate = originPredicate;
+      curr.noMask = originMask;
+      this->UNTYPED_WRITE(msg, bti, elemNum);
+    }
+    /* Let's restore the original message(addr) register. */
+    /* XXX could be optimized if we don't allocate the address to the header
+       position of the message. */
+    curr.predicate = GEN_PREDICATE_NONE;
+    curr.noMask = GEN_MASK_DISABLE;
+    ADD(msg, GenRegister::retype(msg, GEN_TYPE_UD), GenRegister::immd(-4));
     pop();
-    GenInstruction *insn;
-    insn = next(GEN_OPCODE_SEND);
-    setHeader(insn);
-    setDst(insn, GenRegister::retype(GenRegister::null(), dst_type(curr.execWidth)));
-    setSrc0(insn, GenRegister::ud8grf(hdr.nr, 0));
-    setSrc1(insn, GenRegister::immud(0));
-    setDPUntypedRW(this, insn, bti, untypedRWMask[1], GEN_UNTYPED_WRITE, curr.execWidth / 4, 0);
-
-    ADD(r, GenRegister::ud8grf(msg.nr, 0), imm4);
-    push();
-    curr.quarterControl = 0;
-    curr.nibControl = 0;
-    MOV(data, GenRegister::suboffset(src, 1));
-    if (w == 8)
-      curr.nibControl = 1;
-    else
-      curr.quarterControl = 1;
-    MOV(GenRegister::suboffset(data, w / 2), GenRegister::suboffset(src, w + 1));
-    pop();
-    insn = next(GEN_OPCODE_SEND);
-    setHeader(insn);
-    setDst(insn, GenRegister::retype(GenRegister::null(), dst_type(curr.execWidth)));
-    setSrc0(insn, GenRegister::ud8grf(hdr.nr, 0));
-    setSrc1(insn, GenRegister::immud(0));
-    setDPUntypedRW(this, insn, bti, untypedRWMask[1], GEN_UNTYPED_WRITE, curr.execWidth / 4, 0);
   }
 
   void GenEncoder::UNTYPED_READ(GenRegister dst, GenRegister src, uint32_t bti, uint32_t elemNum) {
@@ -470,7 +436,7 @@ namespace gbe
       NOT_IMPLEMENTED;
 
     this->setHeader(insn);
-    this->setDst(insn, GenRegister::uw16grf(dst.nr, 0));
+    this->setDst(insn,  GenRegister::uw16grf(dst.nr, 0));
     this->setSrc0(insn, GenRegister::ud8grf(src.nr, 0));
     this->setSrc1(insn, GenRegister::immud(0));
     setDPUntypedRW(this,
@@ -601,25 +567,53 @@ namespace gbe
      return &this->store.back();
   }
 
-  INLINE void alu1(GenEncoder *p, uint32_t opcode, GenRegister dst, GenRegister src) {
-     if (dst.isdf() && src.isdf()) {
+  INLINE void _handleDouble(GenEncoder *p, uint32_t opcode, GenRegister dst,
+                            GenRegister src0, GenRegister src1 = GenRegister::null()) {
        int w = p->curr.execWidth;
        p->push();
-       p->curr.quarterControl = 0;
        p->curr.nibControl = 0;
        GenInstruction *insn = p->next(opcode);
        p->setHeader(insn);
        p->setDst(insn, dst);
-       p->setSrc0(insn, src);
+       p->setSrc0(insn, src0);
+       if (!GenRegister::isNull(src1))
+         p->setSrc1(insn, src1);
        if (w == 8)
          p->curr.nibControl = 1; // second 1/8 mask
-       else // w == 16
-         p->curr.quarterControl = 1; // second 1/4 mask
        insn = p->next(opcode);
        p->setHeader(insn);
        p->setDst(insn, GenRegister::suboffset(dst, w / 2));
-       p->setSrc0(insn, GenRegister::suboffset(src, w / 2));
+       p->setSrc0(insn, GenRegister::suboffset(src0, w / 2));
+       if (!GenRegister::isNull(src1))
+         p->setSrc1(insn, GenRegister::suboffset(src1, w / 2));
        p->pop();
+  }
+
+  // Double register accessing is a little special,
+  // Per Gen spec, then only supported mode is SIMD8 and, it only
+  // handles four doubles each time.
+  // We need to lower down SIMD16 to two SIMD8 and lower down SIMD8
+  // to two SIMD1x4.
+  INLINE void handleDouble(GenEncoder *p, uint32_t opcode, GenRegister dst,
+                           GenRegister src0, GenRegister src1 = GenRegister::null()) {
+      if (p->curr.execWidth == 8)
+        _handleDouble(p, opcode, dst, src0, src1);
+      else if (p->curr.execWidth == 16) {
+        p->push();
+        p->curr.execWidth = 8;
+        p->curr.quarterControl = GEN_COMPRESSION_Q1;
+        _handleDouble(p, opcode, dst, src0, src1);
+        p->curr.quarterControl = GEN_COMPRESSION_Q2;
+        if (!GenRegister::isNull(src1))
+          src1 = GenRegister::offset(src1, 2);
+        _handleDouble(p, opcode, GenRegister::offset(dst, 2), GenRegister::offset(src0, 2), src1);
+        p->pop();
+      }
+  }
+
+  INLINE void alu1(GenEncoder *p, uint32_t opcode, GenRegister dst, GenRegister src) {
+     if (dst.isdf() && src.isdf()) {
+       handleDouble(p, opcode, dst, src);
      } else if (needToSplitAlu1(p, dst, src) == false) {
        GenInstruction *insn = p->next(opcode);
        p->setHeader(insn);
@@ -653,25 +647,7 @@ namespace gbe
                    GenRegister src1)
   {
     if (dst.isdf() && src0.isdf() && src1.isdf()) {
-       int w = p->curr.execWidth;
-       p->push();
-       p->curr.quarterControl = 0;
-       p->curr.nibControl = 0;
-       GenInstruction *insn = p->next(opcode);
-       p->setHeader(insn);
-       p->setDst(insn, dst);
-       p->setSrc0(insn, src0);
-       p->setSrc1(insn, src1);
-       if (w == 8)
-         p->curr.nibControl = 1; // second 1/8 mask
-       else // w == 16
-         p->curr.quarterControl = 1; // second 1/4 mask
-       insn = p->next(opcode);
-       p->setHeader(insn);
-       p->setDst(insn, GenRegister::suboffset(dst, w / 2));
-       p->setSrc0(insn, GenRegister::suboffset(src0, w / 2));
-       p->setSrc1(insn, GenRegister::suboffset(src1, w / 2));
-       p->pop();
+       handleDouble(p, opcode, dst, src0, src1);
     } else if (needToSplitAlu2(p, dst, src0, src1) == false) {
        GenInstruction *insn = p->next(opcode);
        p->setHeader(insn);
@@ -808,7 +784,16 @@ namespace gbe
     r.width = GEN_WIDTH_1;
     r.hstride = GEN_HORIZONTAL_STRIDE_0;
     push();
+    uint32_t width = curr.execWidth;
+    curr.execWidth = 8;
+    curr.predicate = GEN_PREDICATE_NONE;
+    curr.noMask = 1;
+    curr.quarterControl = GEN_COMPRESSION_Q1;
     MOV(dest, r);
+    if (width == 16) {
+      curr.quarterControl = GEN_COMPRESSION_Q2;
+      MOV(GenRegister::offset(dest, 2), r);
+    }
     pop();
   }
 
@@ -839,14 +824,8 @@ namespace gbe
   void GenEncoder::MOV_DF(GenRegister dest, GenRegister src0, GenRegister r) {
     int w = curr.execWidth;
     if (src0.isdf()) {
-      push();
-      curr.execWidth = 16;
-      MOV(dest, src0);
-      if (w == 16) {
-        curr.quarterControl = 1;
-        MOV(GenRegister::QnPhysical(dest, w / 4), GenRegister::QnPhysical(src0, w / 4));
-      }
-      pop();
+      GBE_ASSERT(0); // MOV DF is called from convert instruction,
+                     // We should never convert a df to a df.
     } else {
       GenRegister r0 = GenRegister::h2(r);
       push();

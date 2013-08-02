@@ -474,7 +474,12 @@ namespace gbe
       if (it != vectorMap.end()) {
         const SelectionVector *vector = it->second.first;
         const uint32_t simdWidth = ctx.getSimdWidth();
-        const uint32_t alignment = simdWidth * sizeof(uint32_t);
+
+        const ir::RegisterData regData = ctx.sel->getRegisterData(reg);
+        const ir::RegisterFamily family = regData.family;
+        const uint32_t typeSize = familyVectorSize[family];
+        const uint32_t alignment = simdWidth*typeSize;
+
         const uint32_t size = vector->regNum * alignment;
         uint32_t grfOffset;
         while ((grfOffset = ctx.allocate(size, alignment)) == 0) {
@@ -483,7 +488,8 @@ namespace gbe
         }
         for (uint32_t regID = 0; regID < vector->regNum; ++regID, grfOffset += alignment) {
           const ir::Register reg = vector->reg[regID].reg();
-          GBE_ASSERT(RA.contains(reg) == false);
+          GBE_ASSERT(RA.contains(reg) == false
+                     && ctx.sel->getRegisterData(reg).family == family);
           RA.insert(std::make_pair(reg, grfOffset));
         }
       }

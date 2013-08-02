@@ -2371,8 +2371,8 @@ namespace gbe
     // Scalar is easy. We neednot build register tuples
     if (isScalarType(llvmType) == true) {
       const ir::Type type = getType(ctx, llvmType);
-      if(type == ir::TYPE_DOUBLE) // 64bit-float load(store) don't support SIMD16
-        OCL_SIMD_WIDTH = 8;
+      //if(type == ir::TYPE_DOUBLE) // 64bit-float load(store) don't support SIMD16
+      //  OCL_SIMD_WIDTH = 8;
       const ir::Register values = this->getRegister(llvmValues);
       if (isLoad)
         ctx.LOAD(type, ptr, addrSpace, dwAligned, values);

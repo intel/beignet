@@ -354,12 +354,18 @@ namespace gbe
     p->pop();
   }
 
+  //  For SIMD8, we allocate 2*elemNum temporary registers from dst(0), and
+  //  then follow the real destination registers.
+  //  For SIMD16, we allocate elemNum temporary registers from dst(0).
   void GenContext::emitReadFloat64Instruction(const SelectionInstruction &insn) {
-    const GenRegister dst = ra->genReg(insn.dst(0));
-    const GenRegister src = ra->genReg(insn.src(0));
-    const uint32_t bti = insn.extra.function;
     const uint32_t elemNum = insn.extra.elem;
-    p->READ_FLOAT64(dst, src, bti, elemNum);
+    const uint32_t tmpRegSize = (p->curr.execWidth == 8) ? elemNum * 2 : elemNum;
+    const GenRegister dst = ra->genReg(insn.dst(tmpRegSize));
+    const GenRegister tmp = ra->genReg(insn.dst(0));
+    const GenRegister src = ra->genReg(insn.src(0));
+    const GenRegister tempAddr = ra->genReg(insn.src(1));
+    const uint32_t bti = insn.extra.function;
+    p->READ_FLOAT64(dst, tmp, tempAddr, src, bti, elemNum);
   }
 
   void GenContext::emitUntypedReadInstruction(const SelectionInstruction &insn) {
@@ -370,11 +376,16 @@ namespace gbe
     p->UNTYPED_READ(dst, src, bti, elemNum);
   }
 
+  //  For SIMD8, we allocate 2*elemNum temporary registers from dst(0), and
+  //  then follow the real destination registers.
+  //  For SIMD16, we allocate elemNum temporary registers from dst(0).
   void GenContext::emitWriteFloat64Instruction(const SelectionInstruction &insn) {
     const GenRegister src = ra->genReg(insn.src(0));
-    const uint32_t bti = insn.extra.function;
     const uint32_t elemNum = insn.extra.elem;
-    p->WRITE_FLOAT64(src, bti, elemNum);
+    const uint32_t tmpRegSize = (p->curr.execWidth == 8) ? elemNum * 2 : elemNum;
+    const GenRegister data = ra->genReg(insn.src(tmpRegSize + 1));
+    const uint32_t bti = insn.extra.function;
+    p->WRITE_FLOAT64(src, data, bti, elemNum);
   }
 
   void GenContext::emitUntypedWriteInstruction(const SelectionInstruction &insn) {
