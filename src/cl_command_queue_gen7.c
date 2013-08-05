@@ -180,7 +180,6 @@ cl_bind_stack(cl_gpgpu gpgpu, cl_kernel ker)
   assert(offset >= 0);
   stack_sz *= gbe_kernel_get_simd_width(ker->opaque);
   stack_sz *= device->max_compute_unit;
-  stack_sz *= device->max_thread_per_unit;
   cl_gpgpu_set_stack(gpgpu, offset, stack_sz, cc_llc_l3);
 }
 

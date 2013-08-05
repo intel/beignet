@@ -118,7 +118,7 @@ namespace gbe
     p->push();
       p->curr.execWidth = 1;
       p->curr.predicate = GEN_PREDICATE_NONE;
-      p->SHR(GenRegister::ud1grf(126,0), GenRegister::ud1grf(0,5), GenRegister::immud(10));
+      p->AND(GenRegister::ud1grf(126,0), GenRegister::ud1grf(0,5), GenRegister::immud(0x1ff));
       p->curr.execWidth = this->simdWidth;
       p->SHL(stackptr, stackptr, GenRegister::immud(perLaneShift));
       p->curr.execWidth = 1;
