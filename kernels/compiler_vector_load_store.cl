@@ -1,5 +1,5 @@
 /* test OpenCL 1.1 Vector Data Load/Store Functions (section 6.11.7) */
-
+#pragma OPENCL EXTENSION cl_khr_fp64 : enable
 #define OFFSET2(type)  (type ##2) {(type)1, (type)2}
 #define OFFSET3(type)  (type ##3) {(type)1, (type)2, (type)3}
 #define OFFSET4(type)  (type ##4) {(type)1, (type)2, (type)3, (type)4}
@@ -24,10 +24,10 @@ __kernel void test_##type ##n(__global type *pin, \
   TEST_TYPE(ushort,n)\
   TEST_TYPE(int,n)   \
   TEST_TYPE(uint,n)  \
-  TEST_TYPE(float,n)
+  TEST_TYPE(float,n) \
+  TEST_TYPE(double,n)
 
 #if 0
-  TEST_TYPE(double,n)
   TEST_TYPE(long,n)
   TEST_TYPE(ulong,n)
   TEST_TYPE(half,n)

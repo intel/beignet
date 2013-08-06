@@ -1,4 +1,5 @@
 #include "utest_helper.hpp"
+#include <string.h>
 template<typename T>
 static void compiler_vector_load_store(int elemNum, const char *kernelName)
 {
@@ -9,8 +10,8 @@ static void compiler_vector_load_store(int elemNum, const char *kernelName)
   buf_data[0] = (T*) malloc(sizeof(T) * n);
   for (uint32_t i = 0; i < n; ++i)
     ((T*)buf_data[0])[i] = i;
-  OCL_CREATE_BUFFER(buf[0], CL_MEM_COPY_HOST_PTR, n * sizeof(float), buf_data[0]);
-  OCL_CREATE_BUFFER(buf[1], 0, n * sizeof(float), NULL);
+  OCL_CREATE_BUFFER(buf[0], CL_MEM_COPY_HOST_PTR, n * sizeof(T), buf_data[0]);
+  OCL_CREATE_BUFFER(buf[1], 0, n * sizeof(T), NULL);
   free(buf_data[0]);
   buf_data[0] = NULL;
 
@@ -27,7 +28,10 @@ static void compiler_vector_load_store(int elemNum, const char *kernelName)
   for (uint32_t i = 0; i < n; ++i)
   {
     int shift = ((i % elemNum) + 1);
-    OCL_ASSERT(((T*)buf_data[1])[i] == (T)(((T*)buf_data[0])[i] + shift));
+    if (strstr(kernelName, "double") == NULL)
+      OCL_ASSERT(((T*)buf_data[1])[i] == (T)(((T*)buf_data[0])[i] + shift));
+    else
+      OCL_ASSERT((((T*)buf_data[1])[i] - ((T)((T*)buf_data[0])[i] + shift)) < 1e-5);
   }
   OCL_UNMAP_BUFFER(0);
   OCL_UNMAP_BUFFER(1);
@@ -54,6 +58,6 @@ test_all_vector(uint16_t, ushort)
 test_all_vector(int32_t, int)
 test_all_vector(uint32_t, uint)
 test_all_vector(float, float)
-//test_all_vector(double, double)
+test_all_vector(double, double)
 //test_all_vector(int64_t, long)
 //test_all_vector(uint64_t, ulong)
