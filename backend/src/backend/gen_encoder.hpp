@@ -92,6 +92,7 @@ namespace gbe
     ALU1(MOV)
     ALU1(FBH)
     ALU1(FBL)
+    ALU2(SUBB)
     ALU2(UPSAMPLE_SHORT)
     ALU2(UPSAMPLE_INT)
     ALU1(RNDZ)

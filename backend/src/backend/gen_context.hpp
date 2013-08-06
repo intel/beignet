@@ -27,6 +27,7 @@
 
 #include "backend/context.hpp"
 #include "backend/program.h"
+#include "backend/gen_register.hpp"
 #include "ir/function.hpp"
 #include "ir/liveness.hpp"
 #include "sys/map.hpp"
@@ -73,6 +74,16 @@ namespace gbe
     INLINE const ir::Liveness::LiveOut &getLiveOut(const ir::BasicBlock *bb) const {
       return this->liveness->getLiveOut(bb);
     }
+
+    void loadTopHalf(GenRegister dest, GenRegister src);
+    void storeTopHalf(GenRegister dest, GenRegister src);
+
+    void loadBottomHalf(GenRegister dest, GenRegister src);
+    void storeBottomHalf(GenRegister dest, GenRegister src);
+
+    void addWithCarry(GenRegister dest, GenRegister src0, GenRegister src1);
+    void subWithBorrow(GenRegister dest, GenRegister src0, GenRegister src1);
+
     /*! Final Gen ISA emission helper functions */
     void emitLabelInstruction(const SelectionInstruction &insn);
     void emitUnaryInstruction(const SelectionInstruction &insn);

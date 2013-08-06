@@ -70,6 +70,8 @@ namespace gbe
   INLINE int typeSize(uint32_t type) {
     switch(type) {
       case GEN_TYPE_DF:
+      case GEN_TYPE_UL:
+      case GEN_TYPE_L:
         return 8;
       case GEN_TYPE_UD:
       case GEN_TYPE_D:
@@ -222,10 +224,30 @@ namespace gbe
       return r;
     }
 
+    INLINE bool isint64(void) const {
+      if ((type == GEN_TYPE_UL || type == GEN_TYPE_L) && file == GEN_GENERAL_REGISTER_FILE)
+        return true;
+      return false;
+    }
+
     INLINE bool isimmdf(void) const {
       if (type == GEN_TYPE_DF && file == GEN_IMMEDIATE_VALUE)
         return true;
       return false;
+    }
+
+    INLINE GenRegister top_half(void) const {
+      GenRegister r = bottom_half();
+      r.subnr += 4;
+      return r;
+    }
+
+    INLINE GenRegister bottom_half(void) const {
+      GBE_ASSERT(isint64());
+      GenRegister r = *this;
+      r.type = type == GEN_TYPE_UL ? GEN_TYPE_UD : GEN_TYPE_D;
+      r.hstride = GEN_HORIZONTAL_STRIDE_2;
+      return r;
     }
 
     INLINE bool isdf(void) const {

@@ -157,6 +157,7 @@ enum opcode {
   GEN_OPCODE_FBH = 75,
   GEN_OPCODE_FBL = 76,
   GEN_OPCODE_ADDC = 78,
+  GEN_OPCODE_SUBB = 79,
   GEN_OPCODE_SAD2 = 80,
   GEN_OPCODE_SADA2 = 81,
   GEN_OPCODE_DP4 = 84,
@@ -242,6 +243,8 @@ enum GenMessageTarget {
 #define GEN_TYPE_V   6 /* packed int vector, immediates only, uword dest only */
 #define GEN_TYPE_DF  6
 #define GEN_TYPE_F   7
+#define GEN_TYPE_UL  8
+#define GEN_TYPE_L   9
 
 #define GEN_ARF_NULL                  0x00
 #define GEN_ARF_ADDRESS               0x10

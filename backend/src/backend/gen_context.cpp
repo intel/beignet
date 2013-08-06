@@ -175,12 +175,142 @@ namespace gbe
     }
   }
 
+  void GenContext::loadTopHalf(GenRegister dest, GenRegister src) {
+    int execWidth = p->curr.execWidth;
+    src = src.top_half();
+    p->push();
+    p->curr.predicate = GEN_PREDICATE_NONE;
+    p->curr.execWidth = 8;
+    p->MOV(dest, src);
+    p->MOV(GenRegister::suboffset(dest, 4), GenRegister::suboffset(src, 8));
+    if (execWidth == 16) {
+      p->MOV(GenRegister::suboffset(dest, 8), GenRegister::suboffset(src, 16));
+      p->MOV(GenRegister::suboffset(dest, 12), GenRegister::suboffset(src, 24));
+    }
+    p->pop();
+  }
+
+  void GenContext::storeTopHalf(GenRegister dest, GenRegister src) {
+    int execWidth = p->curr.execWidth;
+    dest = dest.top_half();
+    p->push();
+    p->curr.execWidth = 8;
+    p->MOV(dest, src);
+    p->curr.nibControl = 1;
+    p->MOV(GenRegister::suboffset(dest, 8), GenRegister::suboffset(src, 4));
+    if (execWidth == 16) {
+      p->curr.quarterControl = 1;
+      p->curr.nibControl = 0;
+      p->MOV(GenRegister::suboffset(dest, 16), GenRegister::suboffset(src, 8));
+      p->curr.nibControl = 1;
+      p->MOV(GenRegister::suboffset(dest, 24), GenRegister::suboffset(src, 12));
+    }
+    p->pop();
+  }
+
+  void GenContext::loadBottomHalf(GenRegister dest, GenRegister src) {
+    int execWidth = p->curr.execWidth;
+    src = src.bottom_half();
+    p->push();
+    p->curr.predicate = GEN_PREDICATE_NONE;
+    p->curr.execWidth = 8;
+    p->MOV(dest, src);
+    p->MOV(GenRegister::suboffset(dest, 4), GenRegister::suboffset(src, 8));
+    if (execWidth == 16) {
+      p->MOV(GenRegister::suboffset(dest, 8), GenRegister::suboffset(src, 16));
+      p->MOV(GenRegister::suboffset(dest, 12), GenRegister::suboffset(src, 24));
+    }
+    p->pop();
+  }
+
+  void GenContext::storeBottomHalf(GenRegister dest, GenRegister src) {
+    int execWidth = p->curr.execWidth;
+    dest = dest.bottom_half();
+    p->push();
+    p->curr.execWidth = 8;
+    p->MOV(dest, src);
+    p->curr.nibControl = 1;
+    p->MOV(GenRegister::suboffset(dest, 8), GenRegister::suboffset(src, 4));
+    if (execWidth == 16) {
+      p->curr.quarterControl = 1;
+      p->curr.nibControl = 0;
+      p->MOV(GenRegister::suboffset(dest, 16), GenRegister::suboffset(src, 8));
+      p->curr.nibControl = 1;
+      p->MOV(GenRegister::suboffset(dest, 24), GenRegister::suboffset(src, 12));
+    }
+    p->pop();
+  }
+
+  void GenContext::addWithCarry(GenRegister dest, GenRegister src0, GenRegister src1) {
+    int execWidth = p->curr.execWidth;
+    GenRegister acc0 = GenRegister::retype(GenRegister::acc(), GEN_TYPE_D);
+    p->push();
+    p->curr.predicate = GEN_PREDICATE_NONE;
+    p->curr.execWidth = 8;
+    p->ADDC(dest, src0, src1);
+    p->MOV(src1, acc0);
+    if (execWidth == 16) {
+      p->ADDC(GenRegister::suboffset(dest, 8),
+              GenRegister::suboffset(src0, 8),
+              GenRegister::suboffset(src1, 8));
+      p->MOV(GenRegister::suboffset(src1, 8), acc0);
+    }
+    p->pop();
+  }
+
+  void GenContext::subWithBorrow(GenRegister dest, GenRegister src0, GenRegister src1) {
+    int execWidth = p->curr.execWidth;
+    GenRegister acc0 = GenRegister::retype(GenRegister::acc(), GEN_TYPE_D);
+    p->push();
+    p->curr.predicate = GEN_PREDICATE_NONE;
+    p->curr.execWidth = 8;
+    p->SUBB(dest, src0, src1);
+    p->MOV(src1, acc0);
+    if (execWidth == 16) {
+      p->SUBB(GenRegister::suboffset(dest, 8),
+              GenRegister::suboffset(src0, 8),
+              GenRegister::suboffset(src1, 8));
+      p->MOV(GenRegister::suboffset(src1, 8), acc0);
+    }
+    p->pop();
+  }
+
   void GenContext::emitTernaryInstruction(const SelectionInstruction &insn) {
     const GenRegister dst = ra->genReg(insn.dst(0));
     const GenRegister src0 = ra->genReg(insn.src(0));
     const GenRegister src1 = ra->genReg(insn.src(1));
     const GenRegister src2 = ra->genReg(insn.src(2));
     switch (insn.opcode) {
+      case SEL_OP_I64ADD:
+        {
+          GenRegister x = GenRegister::retype(src2, GEN_TYPE_UD),
+                      y = GenRegister::suboffset(x, p->curr.execWidth);
+          loadBottomHalf(x, src0);
+          loadBottomHalf(y, src1);
+          addWithCarry(x, x, y);
+          storeBottomHalf(dst, x);
+          loadTopHalf(x, src0);
+          p->ADD(x, x, y);
+          loadTopHalf(y, src1);
+          p->ADD(x, x, y);
+          storeTopHalf(dst, x);
+        }
+        break;
+      case SEL_OP_I64SUB:
+        {
+          GenRegister x = GenRegister::retype(src2, GEN_TYPE_UD),
+                      y = GenRegister::suboffset(x, p->curr.execWidth);
+          loadBottomHalf(x, src0);
+          loadBottomHalf(y, src1);
+          subWithBorrow(x, x, y);
+          storeBottomHalf(dst, x);
+          loadTopHalf(x, src0);
+          subWithBorrow(x, x, y);
+          loadTopHalf(y, src1);
+          subWithBorrow(x, x, y);
+          storeTopHalf(dst, x);
+        }
+        break;
       case SEL_OP_MUL_HI:
        {
         int w = p->curr.execWidth;

@@ -83,6 +83,7 @@ static const struct {
   [GEN_OPCODE_AVG] = { .name = "avg", .nsrc = 2, .ndst = 1 },
   [GEN_OPCODE_ADD] = { .name = "add", .nsrc = 2, .ndst = 1 },
   [GEN_OPCODE_ADDC] = { .name = "addc", .nsrc = 2, .ndst = 1 },
+  [GEN_OPCODE_SUBB] = { .name = "subb", .nsrc = 2, .ndst = 1 },
   [GEN_OPCODE_SEL] = { .name = "sel", .nsrc = 2, .ndst = 1 },
   [GEN_OPCODE_AND] = { .name = "and", .nsrc = 2, .ndst = 1 },
   [GEN_OPCODE_OR] = { .name = "or", .nsrc = 2, .ndst = 1 },

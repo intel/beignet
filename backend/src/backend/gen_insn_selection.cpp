@@ -128,6 +128,8 @@ namespace gbe
       case TYPE_U16: return GEN_TYPE_UW;
       case TYPE_S32: return GEN_TYPE_D;
       case TYPE_U32: return GEN_TYPE_UD;
+      case TYPE_S64: return GEN_TYPE_L;
+      case TYPE_U64: return GEN_TYPE_UL;
       case TYPE_FLOAT: return GEN_TYPE_F;
       case TYPE_DOUBLE: return GEN_TYPE_DF;
       default: NOT_SUPPORTED; return GEN_TYPE_F;
@@ -426,6 +428,8 @@ namespace gbe
     ALU2(RSL)
     ALU2(ASR)
     ALU2(ADD)
+    ALU3(I64ADD)
+    ALU3(I64SUB)
     ALU2(MUL)
     ALU1(FRC)
     ALU1(RNDD)
@@ -1193,7 +1197,7 @@ namespace gbe
     using namespace ir;
     const auto &childInsn = cast<LoadImmInstruction>(insn);
     const auto &imm = childInsn.getImmediate();
-    if(imm.type != TYPE_DOUBLE)
+    if(imm.type != TYPE_DOUBLE && imm.type != TYPE_S64 && imm.type != TYPE_U64)
       return true;
     return false;
   }
@@ -1416,7 +1420,13 @@ namespace gbe
 
       // Output the binary instruction
       switch (opcode) {
-        case OP_ADD: sel.ADD(dst, src0, src1); break;
+        case OP_ADD:
+          if (type == Type::TYPE_U64 || type == Type::TYPE_S64) {
+            GenRegister t = sel.selReg(sel.reg(RegisterFamily::FAMILY_QWORD), Type::TYPE_S64);
+            sel.I64ADD(dst, src0, src1, t);
+          } else
+            sel.ADD(dst, src0, src1);
+          break;
         case OP_ADDSAT:
           sel.push();
             sel.curr.saturate = GEN_MATH_SATURATE_SATURATE;
@@ -1426,7 +1436,13 @@ namespace gbe
         case OP_XOR: sel.XOR(dst, src0, src1); break;
         case OP_OR:  sel.OR(dst, src0,  src1); break;
         case OP_AND: sel.AND(dst, src0, src1); break;
-        case OP_SUB: sel.ADD(dst, src0, GenRegister::negate(src1)); break;
+        case OP_SUB:
+          if (type == Type::TYPE_U64 || type == Type::TYPE_S64) {
+            GenRegister t = sel.selReg(sel.reg(RegisterFamily::FAMILY_QWORD), Type::TYPE_S64);
+            sel.I64SUB(dst, src0, src1, t);
+          } else
+            sel.ADD(dst, src0, GenRegister::negate(src1));
+          break;
         case OP_SUBSAT:
           sel.push();
             sel.curr.saturate = GEN_MATH_SATURATE_SATURATE;
