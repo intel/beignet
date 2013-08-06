@@ -167,14 +167,14 @@ namespace gbe
 
   bool SelectionInstruction::isRead(void) const {
     return this->opcode == SEL_OP_UNTYPED_READ ||
-           this->opcode == SEL_OP_READ_FLOAT64 ||
+           this->opcode == SEL_OP_READ64 ||
            this->opcode == SEL_OP_ATOMIC       ||
            this->opcode == SEL_OP_BYTE_GATHER;
   }
 
   bool SelectionInstruction::isWrite(void) const {
     return this->opcode == SEL_OP_UNTYPED_WRITE ||
-           this->opcode == SEL_OP_WRITE_FLOAT64 ||
+           this->opcode == SEL_OP_WRITE64 ||
            this->opcode == SEL_OP_ATOMIC        ||
            this->opcode == SEL_OP_BYTE_SCATTER;
   }
@@ -465,10 +465,10 @@ namespace gbe
     void WAIT(void);
     /*! Atomic instruction */
     void ATOMIC(Reg dst, uint32_t function, uint32_t srcNum, Reg src0, Reg src1, Reg src2, uint32_t bti);
-    /*! Read 64 bits float array */
-    void READ_FLOAT64(Reg addr, Reg tempAddr, const GenRegister *dst, uint32_t elemNum, uint32_t valueNum, uint32_t bti);
-    /*! Write 64 bits float array */
-    void WRITE_FLOAT64(Reg addr, const GenRegister *src, uint32_t elemNum, uint32_t valueNum, uint32_t bti);
+    /*! Read 64 bits float/int array */
+    void READ64(Reg addr, Reg tempAddr, const GenRegister *dst, uint32_t elemNum, uint32_t valueNum, uint32_t bti);
+    /*! Write 64 bits float/int array */
+    void WRITE64(Reg addr, const GenRegister *src, uint32_t elemNum, uint32_t valueNum, uint32_t bti);
     /*! Untyped read (up to 4 elements) */
     void UNTYPED_READ(Reg addr, const GenRegister *dst, uint32_t elemNum, uint32_t bti);
     /*! Untyped write (up to 4 elements) */
@@ -762,14 +762,14 @@ namespace gbe
 
   /* elemNum contains all the temporary register and the
      real destination registers.*/
-  void Selection::Opaque::READ_FLOAT64(Reg addr,
+  void Selection::Opaque::READ64(Reg addr,
                                        Reg tempAddr,
                                        const GenRegister *dst,
                                        uint32_t elemNum,
                                        uint32_t valueNum,
                                        uint32_t bti)
   {
-    SelectionInstruction *insn = this->appendInsn(SEL_OP_READ_FLOAT64, elemNum, 2);
+    SelectionInstruction *insn = this->appendInsn(SEL_OP_READ64, elemNum, 2);
     SelectionVector *srcVector = this->appendVector();
     SelectionVector *dstVector = this->appendVector();
 
@@ -821,13 +821,13 @@ namespace gbe
 
   /* elemNum contains all the temporary register and the
      real data registers.*/
-  void Selection::Opaque::WRITE_FLOAT64(Reg addr,
+  void Selection::Opaque::WRITE64(Reg addr,
                                         const GenRegister *src,
                                         uint32_t elemNum,
                                         uint32_t valueNum,
                                         uint32_t bti)
   {
-    SelectionInstruction *insn = this->appendInsn(SEL_OP_WRITE_FLOAT64, 0, elemNum+1);
+    SelectionInstruction *insn = this->appendInsn(SEL_OP_WRITE64, 0, elemNum+1);
     SelectionVector *vector = this->appendVector();
 
     // Regular instruction to encode
@@ -1840,6 +1840,8 @@ namespace gbe
     using namespace ir;
     switch (type) {
       case TYPE_DOUBLE:
+      case TYPE_S64:
+      case TYPE_U64:
         return GEN_BYTE_SCATTER_QWORD;
       case TYPE_FLOAT:
       case TYPE_U32:
@@ -1872,7 +1874,7 @@ namespace gbe
       sel.UNTYPED_READ(addr, dst.data(), valueNum, bti);
     }
 
-    void emitReadFloat64(Selection::Opaque &sel,
+    void emitRead64(Selection::Opaque &sel,
                          const ir::LoadInstruction &insn,
                          GenRegister addr,
                          uint32_t bti) const
@@ -1890,7 +1892,7 @@ namespace gbe
         dst[dstID] = sel.selReg(sel.reg(FAMILY_DWORD));
       for ( uint32_t valueID = 0; valueID < valueNum; ++dstID, ++valueID)
         dst[dstID] = sel.selReg(insn.getValue(valueID));
-      sel.READ_FLOAT64(addr, sel.selReg(sel.reg(FAMILY_QWORD)), dst, valueNum + tmpRegNum, valueNum, bti);
+      sel.READ64(addr, sel.selReg(sel.reg(FAMILY_QWORD)), dst, valueNum + tmpRegNum, valueNum, bti);
     }
 
     void emitByteGather(Selection::Opaque &sel,
@@ -1945,7 +1947,7 @@ namespace gbe
       if (insn.getAddressSpace() == MEM_CONSTANT)
         this->emitIndirectMove(sel, insn, address);
       else if (insn.isAligned() == true && elemSize == GEN_BYTE_SCATTER_QWORD)
-        this->emitReadFloat64(sel, insn, address, space == MEM_LOCAL ? 0xfe : 0x00);
+        this->emitRead64(sel, insn, address, space == MEM_LOCAL ? 0xfe : 0x00);
       else if (insn.isAligned() == true && elemSize == GEN_BYTE_SCATTER_DWORD)
         this->emitUntypedRead(sel, insn, address, space == MEM_LOCAL ? 0xfe : 0x00);
       else {
@@ -1976,7 +1978,7 @@ namespace gbe
       sel.UNTYPED_WRITE(addr, value.data(), valueNum, bti);
     }
 
-    void emitWriteFloat64(Selection::Opaque &sel,
+    void emitWrite64(Selection::Opaque &sel,
                           const ir::StoreInstruction &insn,
                           uint32_t bti) const
     {
@@ -1996,7 +1998,7 @@ namespace gbe
 
       for (uint32_t valueID = 0; valueID < valueNum; ++srcID, ++valueID)
         src[srcID] = sel.selReg(insn.getValue(valueID));
-      sel.WRITE_FLOAT64(addr, src, valueNum + tmpRegNum, valueNum, bti);
+      sel.WRITE64(addr, src, valueNum + tmpRegNum, valueNum, bti);
     }
 
     void emitByteScatter(Selection::Opaque &sel,
@@ -2029,7 +2031,7 @@ namespace gbe
       const Type type = insn.getValueType();
       const uint32_t elemSize = getByteScatterGatherSize(type);
       if (insn.isAligned() == true && elemSize == GEN_BYTE_SCATTER_QWORD)
-        this->emitWriteFloat64(sel, insn, bti);
+        this->emitWrite64(sel, insn, bti);
       else if (insn.isAligned() == true && elemSize == GEN_BYTE_SCATTER_DWORD)
         this->emitUntypedWrite(sel, insn, bti);
       else {

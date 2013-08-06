@@ -142,10 +142,10 @@ namespace gbe
     void WAIT(void);
     /*! Atomic instructions */
     void ATOMIC(GenRegister dst, uint32_t function, GenRegister src, uint32_t bti, uint32_t srcNum);
-    /*! Read 64-bits float arrays */
-    void READ_FLOAT64(GenRegister dst, GenRegister tmp, GenRegister addr, GenRegister src, uint32_t bti, uint32_t elemNum);
-    /*! Write 64-bits float arrays */
-    void WRITE_FLOAT64(GenRegister src, GenRegister data, uint32_t bti, uint32_t elemNum);
+    /*! Read 64-bits float/int arrays */
+    void READ64(GenRegister dst, GenRegister tmp, GenRegister addr, GenRegister src, uint32_t bti, uint32_t elemNum);
+    /*! Write 64-bits float/int arrays */
+    void WRITE64(GenRegister src, GenRegister data, uint32_t bti, uint32_t elemNum);
     /*! Untyped read (upto 4 channels) */
     void UNTYPED_READ(GenRegister dst, GenRegister src, uint32_t bti, uint32_t elemNum);
     /*! Untyped write (upto 4 channels) */

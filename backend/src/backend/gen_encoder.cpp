@@ -356,7 +356,7 @@ namespace gbe
     0
   };
 
-  void GenEncoder::READ_FLOAT64(GenRegister dst, GenRegister tmp, GenRegister addr, GenRegister src, uint32_t bti, uint32_t elemNum) {
+  void GenEncoder::READ64(GenRegister dst, GenRegister tmp, GenRegister addr, GenRegister src, uint32_t bti, uint32_t elemNum) {
     GenRegister dst32 = GenRegister::retype(dst, GEN_TYPE_UD);
     src = GenRegister::retype(src, GEN_TYPE_UD);
     addr = GenRegister::retype(addr, GEN_TYPE_UD);
@@ -390,7 +390,7 @@ namespace gbe
     pop();
   }
 
-  void GenEncoder::WRITE_FLOAT64(GenRegister msg, GenRegister data, uint32_t bti, uint32_t elemNum) {
+  void GenEncoder::WRITE64(GenRegister msg, GenRegister data, uint32_t bti, uint32_t elemNum) {
     GenRegister data32 = GenRegister::retype(data, GEN_TYPE_UD);
     msg = GenRegister::retype(msg, GEN_TYPE_UD);
     int originSimdWidth = curr.execWidth;
