@@ -562,7 +562,16 @@ INLINE_OVERLOADABLE float __gen_ocl_internal_tanh(float x) {
   return (1 - y) / (1 + y);
 }
 INLINE_OVERLOADABLE float __gen_ocl_internal_asin(float x) {
-  return x + __gen_ocl_pow(x, 3) / 6 + __gen_ocl_pow(x, 5) * 3 / 40 + __gen_ocl_pow(x, 7) * 5 / 112;
+  float sum = x, c = x, m = 1.0;
+  int n = 1;
+  do
+  {
+    c *= (2 * n - 1) * x * x;
+    m *= (2 * n);
+    sum += ( c / m / (2 * n + 1));
+    n++;
+  }while( n < 30);
+  return sum;
 }
 INLINE_OVERLOADABLE float __gen_ocl_internal_asinpi(float x) {
   return __gen_ocl_internal_asin(x) / M_PI_F;
