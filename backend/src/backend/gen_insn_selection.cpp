@@ -415,6 +415,7 @@ namespace gbe
     ALU1(MOV)
     ALU2(MOV_DF)
     ALU2(LOAD_DF_IMM)
+    ALU1(LOAD_INT64_IMM)
     ALU1(RNDZ)
     ALU1(RNDE)
     ALU2(SEL)
@@ -1806,6 +1807,8 @@ namespace gbe
         case TYPE_U8:  sel.MOV(dst, GenRegister::immuw(imm.data.u8)); break;
         case TYPE_S8:  sel.MOV(dst, GenRegister::immw(imm.data.s8)); break;
         case TYPE_DOUBLE: sel.LOAD_DF_IMM(dst, GenRegister::immdf(imm.data.f64), sel.selReg(sel.reg(FAMILY_QWORD))); break;
+        case TYPE_S64: sel.LOAD_INT64_IMM(dst, GenRegister::immint64(imm.data.s64)); break;
+        case TYPE_U64: sel.LOAD_INT64_IMM(dst, GenRegister::immint64(imm.data.u64)); break;
         default: NOT_SUPPORTED;
       }
       sel.pop();

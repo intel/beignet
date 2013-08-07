@@ -125,6 +125,7 @@ namespace gbe
 #undef ALU3
     void MOV_DF(GenRegister dest, GenRegister src0, GenRegister tmp = GenRegister::null());
     void LOAD_DF_IMM(GenRegister dest, GenRegister tmp, double value);
+    void LOAD_INT64_IMM(GenRegister dest, int64_t value);
     /*! Barrier message (to synchronize threads of a workgroup) */
     void BARRIER(GenRegister src);
     /*! Memory fence message (to order loads and stores between threads) */

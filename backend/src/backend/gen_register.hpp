@@ -136,6 +136,28 @@ namespace gbe
     uint32_t predicate:4;
     uint32_t inversePredicate:1;
     uint32_t saturate:1;
+    void chooseNib(int nib) {
+      switch (nib) {
+        case 0:
+          quarterControl = 0;
+          nibControl = 0;
+          break;
+        case 1:
+          quarterControl = 0;
+          nibControl = 1;
+          break;
+        case 2:
+          quarterControl = 1;
+          nibControl = 0;
+          break;
+        case 3:
+          quarterControl = 1;
+          nibControl = 1;
+          break;
+        default:
+          NOT_IMPLEMENTED;
+      }
+    }
   };
 
   /*! This is a book-keeping structure used to encode both virtual and physical
@@ -202,6 +224,7 @@ namespace gbe
       int32_t d;
       uint32_t ud;
       uint16_t reg;
+      int64_t i64;
     } value;
 
     uint32_t nr:8;         //!< Just for some physical registers (acc, null)
@@ -432,6 +455,12 @@ namespace gbe
                          GEN_VERTICAL_STRIDE_0,
                          GEN_WIDTH_1,
                          GEN_HORIZONTAL_STRIDE_0);
+    }
+
+    static INLINE GenRegister immint64(int64_t i) {
+      GenRegister immediate = imm(GEN_TYPE_L);
+      immediate.value.i64 = i;
+      return immediate;
     }
 
     static INLINE GenRegister immdf(double df) {

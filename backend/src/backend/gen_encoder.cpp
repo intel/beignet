@@ -821,6 +821,20 @@ namespace gbe
     MOV(dest, src0);
   }
 
+  void GenEncoder::LOAD_INT64_IMM(GenRegister dest, int64_t value) {
+    GenRegister u0 = GenRegister::immd((int)value), u1 = GenRegister::immd(value >> 32);
+    int execWidth = curr.execWidth;
+    push();
+    curr.execWidth = 8;
+    for(int nib = 0; nib < execWidth/4; nib ++) {
+      curr.chooseNib(nib);
+      MOV(dest.top_half(), u1);
+      MOV(dest.bottom_half(), u0);
+      dest = GenRegister::suboffset(dest, 4);
+    }
+    pop();
+  }
+
   void GenEncoder::MOV_DF(GenRegister dest, GenRegister src0, GenRegister r) {
     int w = curr.execWidth;
     if (src0.isdf()) {
