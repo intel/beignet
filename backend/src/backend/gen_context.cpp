@@ -620,6 +620,37 @@ namespace gbe
     p->pop();
   }
 
+  void GenContext::scratchWrite(const GenRegister header, uint32_t offset, uint32_t reg_num, uint32_t reg_type, uint32_t channel_mode) {
+    p->push();
+    uint32_t simdWidth = p->curr.execWidth;
+    p->curr.predicate = GEN_PREDICATE_NONE;
+    p->curr.noMask = 1;
+
+    p->curr.execWidth = 8;
+    p->MOV(header, GenRegister::ud8grf(0,0));
+    p->pop();
+
+    int size = typeSize(reg_type)*simdWidth;
+    p->push();
+    p->SCRATCH_WRITE(header, offset/32, size, reg_num, channel_mode);
+    p->pop();
+  }
+
+  void GenContext::scratchRead(const GenRegister dst, const GenRegister header, uint32_t offset, uint32_t reg_num, uint32_t reg_type, uint32_t channel_mode) {
+    p->push();
+    uint32_t simdWidth = p->curr.execWidth;
+    p->curr.predicate = GEN_PREDICATE_NONE;
+    p->curr.noMask = 1;
+    p->curr.execWidth = 8;
+    p->MOV(header, GenRegister::ud8grf(0,0));
+    p->pop();
+
+    int size = typeSize(reg_type)*simdWidth;
+    p->push();
+    p->SCRATCH_READ(dst, header, offset/32, size, reg_num, channel_mode);
+    p->pop();
+  }
+
   void GenContext::emitTypedWriteInstruction(const SelectionInstruction &insn) {
     const GenRegister header = GenRegister::retype(ra->genReg(insn.src(0)), GEN_TYPE_UD);
     const GenRegister ucoord = ra->genReg(insn.src(insn.extra.elem));

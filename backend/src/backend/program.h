@@ -198,6 +198,10 @@ extern gbe_kernel_get_curbe_size_cb *gbe_kernel_get_curbe_size;
 typedef int32_t (gbe_kernel_get_stack_size_cb)(gbe_kernel);
 extern gbe_kernel_get_stack_size_cb *gbe_kernel_get_stack_size;
 
+/*! Get the scratch size (zero if no scratch is required) */
+typedef int32_t (gbe_kernel_get_scratch_size_cb)(gbe_kernel);
+extern gbe_kernel_get_scratch_size_cb *gbe_kernel_get_scratch_size;
+
 /*! Get the curbe offset where to put the data. Returns -1 if not required */
 typedef int32_t (gbe_kernel_get_curbe_offset_cb)(gbe_kernel, enum gbe_curbe_type type, uint32_t sub_type);
 extern gbe_kernel_get_curbe_offset_cb *gbe_kernel_get_curbe_offset;

@@ -1150,6 +1150,49 @@ namespace gbe
      this->setSrc0(insn, msg);
      setTypedWriteMessage(this, insn, bti, msg_type, msg_length, header_present);
   }
+  static void setScratchMessage(GenEncoder *p,
+                                   GenInstruction *insn,
+                                   uint32_t offset,
+                                   uint32_t block_size,
+                                   uint32_t channel_mode,
+                                   uint32_t msg_type,
+                                   uint32_t msg_length,
+                                   uint32_t response_length)
+  {
+     const GenMessageTarget sfid = GEN_SFID_DATAPORT_DATA_CACHE;
+     setMessageDescriptor(p, insn, sfid, msg_length, response_length, true);
+     insn->bits3.gen7_scratch_rw.block_size = block_size;
+     insn->bits3.gen7_scratch_rw.msg_type = msg_type;
+     insn->bits3.gen7_scratch_rw.channel_mode = channel_mode;
+     insn->bits3.gen7_scratch_rw.offset = offset;
+     insn->bits3.gen7_scratch_rw.category = 1;
+  }
+
+  void GenEncoder::SCRATCH_WRITE(GenRegister msg, uint32_t offset, uint32_t size, uint32_t src_num, uint32_t channel_mode)
+  {
+     assert(src_num == 1 || src_num ==2);
+     uint32_t block_size = src_num == 1 ? GEN_SCRATCH_BLOCK_SIZE_1 : GEN_SCRATCH_BLOCK_SIZE_2;
+     GenInstruction *insn = this->next(GEN_OPCODE_SEND);
+     this->setHeader(insn);
+     this->setDst(insn, GenRegister::retype(GenRegister::null(), GEN_TYPE_UD));
+     this->setSrc0(insn, msg);
+     this->setSrc1(insn, GenRegister::immud(0));
+     // here src_num means register that will be write out: in terms of 32byte register number
+     setScratchMessage(this, insn, offset, block_size, channel_mode, GEN_SCRATCH_WRITE, src_num+1, 0);
+  }
+
+  void GenEncoder::SCRATCH_READ(GenRegister dst, GenRegister src, uint32_t offset, uint32_t size, uint32_t dst_num, uint32_t channel_mode)
+  {
+     assert(dst_num == 1 || dst_num ==2);
+     uint32_t block_size = dst_num == 1 ? GEN_SCRATCH_BLOCK_SIZE_1 : GEN_SCRATCH_BLOCK_SIZE_2;
+     GenInstruction *insn = this->next(GEN_OPCODE_SEND);
+     this->setHeader(insn);
+     this->setDst(insn, dst);
+     this->setSrc0(insn, src);
+     this->setSrc1(insn, GenRegister::immud(0));
+      // here dst_num is the register that will be write-back: in terms of 32byte register
+     setScratchMessage(this, insn, offset, block_size, channel_mode, GEN_SCRATCH_READ, 1, dst_num);
+  }
 
   void GenEncoder::EOT(uint32_t msg) {
     GenInstruction *insn = this->next(GEN_OPCODE_SEND);

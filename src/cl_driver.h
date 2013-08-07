@@ -135,6 +135,10 @@ extern cl_gpgpu_bind_image_cb *cl_gpgpu_bind_image;
 typedef void (cl_gpgpu_set_stack_cb)(cl_gpgpu, uint32_t offset, uint32_t size, uint32_t cchint);
 extern cl_gpgpu_set_stack_cb *cl_gpgpu_set_stack;
 
+/* Setup scratch */
+typedef void (cl_gpgpu_set_scratch_cb)(cl_gpgpu, uint32_t per_thread_size);
+extern cl_gpgpu_set_scratch_cb *cl_gpgpu_set_scratch;
+
 /* Configure internal state */
 typedef void (cl_gpgpu_state_init_cb)(cl_gpgpu, uint32_t max_threads, uint32_t size_cs_entry);
 extern cl_gpgpu_state_init_cb *cl_gpgpu_state_init;

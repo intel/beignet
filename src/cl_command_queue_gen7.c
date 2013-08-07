@@ -183,6 +183,14 @@ cl_bind_stack(cl_gpgpu gpgpu, cl_kernel ker)
   cl_gpgpu_set_stack(gpgpu, offset, stack_sz, cc_llc_l3);
 }
 
+static void
+cl_setup_scratch(cl_gpgpu gpgpu, cl_kernel ker)
+{
+  int32_t scratch_sz = gbe_kernel_get_scratch_size(ker->opaque);
+
+  cl_gpgpu_set_scratch(gpgpu, scratch_sz);
+}
+
 LOCAL cl_int
 cl_command_queue_ND_range_gen7(cl_command_queue queue,
                                cl_kernel ker,
@@ -231,6 +239,7 @@ cl_command_queue_ND_range_gen7(cl_command_queue queue,
   /* Bind all samplers */
   cl_gpgpu_bind_sampler(queue->gpgpu, ker->samplers, ker->sampler_sz);
 
+  cl_setup_scratch(gpgpu, ker);
   /* Bind a stack if needed */
   cl_bind_stack(gpgpu, ker);
   cl_gpgpu_states_setup(gpgpu, &kernel);

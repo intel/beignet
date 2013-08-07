@@ -373,6 +373,28 @@ static const char *data_port_data_cache_category[] = {
   "scratch",
 };
 
+static const char *data_port_scratch_block_size[] = {
+  "1 register",
+  "2 registers",
+  "Reserve",
+  "4 registers",
+};
+
+static const char *data_port_scratch_invalidate[] = {
+  "no invalidate",
+  "invalidate cache line",
+};
+
+static const char *data_port_scratch_channel_mode[] = {
+  "Oword",
+  "Dword",
+};
+
+static const char *data_port_scratch_msg_type[] = {
+  "Scratch Read",
+  "Scratch Write",
+};
+
 static const char *data_port_data_cache_msg_type[] = {
   [0] = "OWord Block Read",
   [1] = "Unaligned OWord Block Read",
@@ -1155,12 +1177,21 @@ int gen_disasm (FILE *file, const void *opaque_insn)
                 inst->bits3.sampler_gen7.simd_mode);
         break;
       case GEN_SFID_DATAPORT_DATA_CACHE:
-        format (file, " (bti: %d, rgba: %d, %s, %s, %s)",
-                inst->bits3.gen7_untyped_rw.bti,
-                inst->bits3.gen7_untyped_rw.rgba,
-                data_port_data_cache_simd_mode[inst->bits3.gen7_untyped_rw.simd_mode],
-                data_port_data_cache_category[inst->bits3.gen7_untyped_rw.category],
-                data_port_data_cache_msg_type[inst->bits3.gen7_untyped_rw.msg_type]);
+        if(inst->bits3.gen7_untyped_rw.category == 0) {
+          format (file, " (bti: %d, rgba: %d, %s, %s, %s)",
+                  inst->bits3.gen7_untyped_rw.bti,
+                  inst->bits3.gen7_untyped_rw.rgba,
+                  data_port_data_cache_simd_mode[inst->bits3.gen7_untyped_rw.simd_mode],
+                  data_port_data_cache_category[inst->bits3.gen7_untyped_rw.category],
+                  data_port_data_cache_msg_type[inst->bits3.gen7_untyped_rw.msg_type]);
+        } else {
+          format (file, " (addr: %d, blocks: %s, %s, mode: %s, %s)",
+                  inst->bits3.gen7_scratch_rw.offset,
+                  data_port_scratch_block_size[inst->bits3.gen7_scratch_rw.block_size],
+                  data_port_scratch_invalidate[inst->bits3.gen7_scratch_rw.invalidate_after_read],
+                  data_port_scratch_channel_mode[inst->bits3.gen7_scratch_rw.channel_mode],
+                  data_port_scratch_msg_type[inst->bits3.gen7_scratch_rw.msg_type]);
+        }
         break;
       case GEN_SFID_MESSAGE_GATEWAY:
         format (file, " (subfunc: %s, notify: %d, ackreq: %d)",

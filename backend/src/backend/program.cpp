@@ -374,6 +374,12 @@ namespace gbe {
     return kernel->getStackSize();
   }
 
+  static int32_t kernelGetScratchSize(gbe_kernel genKernel) {
+    if (genKernel == NULL) return 0;
+    const gbe::Kernel *kernel = (const gbe::Kernel*) genKernel;
+    return kernel->getScratchSize();
+  }
+
   static int32_t kernelUseSLM(gbe_kernel genKernel) {
     if (genKernel == NULL) return 0;
     const gbe::Kernel *kernel = (const gbe::Kernel*) genKernel;
@@ -443,6 +449,7 @@ GBE_EXPORT_SYMBOL gbe_kernel_get_simd_width_cb *gbe_kernel_get_simd_width = NULL
 GBE_EXPORT_SYMBOL gbe_kernel_get_curbe_offset_cb *gbe_kernel_get_curbe_offset = NULL;
 GBE_EXPORT_SYMBOL gbe_kernel_get_curbe_size_cb *gbe_kernel_get_curbe_size = NULL;
 GBE_EXPORT_SYMBOL gbe_kernel_get_stack_size_cb *gbe_kernel_get_stack_size = NULL;
+GBE_EXPORT_SYMBOL gbe_kernel_get_scratch_size_cb *gbe_kernel_get_scratch_size = NULL;
 GBE_EXPORT_SYMBOL gbe_kernel_set_const_buffer_size_cb *gbe_kernel_set_const_buffer_size = NULL;
 GBE_EXPORT_SYMBOL gbe_kernel_get_required_work_group_size_cb *gbe_kernel_get_required_work_group_size = NULL;
 GBE_EXPORT_SYMBOL gbe_kernel_use_slm_cb *gbe_kernel_use_slm = NULL;
@@ -476,6 +483,7 @@ namespace gbe
       gbe_kernel_get_curbe_offset = gbe::kernelGetCurbeOffset;
       gbe_kernel_get_curbe_size = gbe::kernelGetCurbeSize;
       gbe_kernel_get_stack_size = gbe::kernelGetStackSize;
+      gbe_kernel_get_scratch_size = gbe::kernelGetScratchSize;
       gbe_kernel_set_const_buffer_size = gbe::kernelSetConstBufSize;
       gbe_kernel_get_required_work_group_size = gbe::kernelGetRequiredWorkGroupSize;
       gbe_kernel_use_slm = gbe::kernelUseSLM;

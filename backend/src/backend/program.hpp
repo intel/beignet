@@ -96,6 +96,8 @@ namespace gbe {
     INLINE uint32_t getCurbeSize(void) const { return this->curbeSize; }
     /*! Return the size of the stack (zero if none) */
     INLINE uint32_t getStackSize(void) const { return this->stackSize; }
+    /*! Return the size of the scratch memory needed (zero if none) */
+    INLINE uint32_t getScratchSize(void) const { return this->scratchSize; }
     /*! Get the SIMD width for the kernel */
     INLINE uint32_t getSIMDWidth(void) const { return this->simdWidth; }
     /*! Says if SLM is needed for it */
@@ -135,6 +137,7 @@ namespace gbe {
     uint32_t curbeSize;        //!< Size of the data to push
     uint32_t simdWidth;        //!< SIMD size for the kernel (lane number)
     uint32_t stackSize;        //!< Stack size (may be 0 if unused)
+    uint32_t scratchSize;      //!< Scratch memory size (may be 0 if unused)
     bool useSLM;               //!< SLM requires a special HW config
     Context *ctx;              //!< Save context after compiler to alloc constant buffer curbe
     ir::SamplerSet *samplerSet;//!< Copy from the corresponding function.

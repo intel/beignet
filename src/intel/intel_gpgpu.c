@@ -89,7 +89,9 @@ struct intel_gpgpu
   struct { drm_intel_bo *bo; } curbe_b;
   struct { drm_intel_bo *bo; } sampler_state_b;
   struct { drm_intel_bo *bo; } perf_b;
+  struct { drm_intel_bo *bo; } scratch_b;
 
+  uint32_t per_thread_scratch;
   struct {
     uint32_t num_cs_entries;
     uint32_t size_cs_entry;  /* size of one entry in 512bit elements */
@@ -127,6 +129,9 @@ intel_gpgpu_delete(intel_gpgpu_t *gpgpu)
     drm_intel_bo_unreference(gpgpu->perf_b.bo);
   if (gpgpu->stack_b.bo)
     drm_intel_bo_unreference(gpgpu->stack_b.bo);
+  if (gpgpu->scratch_b.bo)
+    drm_intel_bo_unreference(gpgpu->scratch_b.bo);
+
   intel_batchbuffer_delete(gpgpu->batch);
   cl_free(gpgpu);
 }
@@ -199,18 +204,23 @@ intel_gpgpu_load_vfe_state(intel_gpgpu_t *gpgpu)
   BEGIN_BATCH(gpgpu->batch, 8);
   OUT_BATCH(gpgpu->batch, CMD_MEDIA_STATE_POINTERS | (8-2));
 
-  gen6_vfe_state_inline_t* vfe = (gen6_vfe_state_inline_t*)
-    intel_batchbuffer_alloc_space(gpgpu->batch,0);
-
-  memset(vfe, 0, sizeof(struct gen6_vfe_state_inline));
-  vfe->vfe1.gpgpu_mode = 1;
-  vfe->vfe1.bypass_gateway_ctl = 1;
-  vfe->vfe1.reset_gateway_timer = 1;
-  vfe->vfe1.max_threads = gpgpu->max_threads - 1;
-  vfe->vfe1.urb_entries = 64;
-  vfe->vfe3.curbe_size = 480;
-  vfe->vfe4.scoreboard_mask = 0;
-  intel_batchbuffer_alloc_space(gpgpu->batch, sizeof(gen6_vfe_state_inline_t));
+  if(gpgpu->per_thread_scratch > 0) {
+    OUT_RELOC(gpgpu->batch, gpgpu->scratch_b.bo,
+              I915_GEM_DOMAIN_RENDER,
+              I915_GEM_DOMAIN_RENDER,
+              gpgpu->per_thread_scratch/1024 - 1);
+  }
+  else {
+    OUT_BATCH(gpgpu->batch, 0);
+  }
+  /* max_thread | urb entries | (reset_gateway|bypass_gate_way | gpgpu_mode) */
+  OUT_BATCH(gpgpu->batch, 0 | ((gpgpu->max_threads - 1) << 16) | (64 << 8) | 0xc4);
+  OUT_BATCH(gpgpu->batch, 0);
+  /* curbe_size */
+  OUT_BATCH(gpgpu->batch, 480);
+  OUT_BATCH(gpgpu->batch, 0);
+  OUT_BATCH(gpgpu->batch, 0);
+  OUT_BATCH(gpgpu->batch, 0);
   ADVANCE_BATCH(gpgpu->batch);
 }
 
@@ -537,6 +547,23 @@ intel_gpgpu_bind_buf(intel_gpgpu_t *gpgpu, drm_intel_bo *buf, uint32_t offset, u
 }
 
 static void
+intel_gpgpu_set_scratch(intel_gpgpu_t * gpgpu, uint32_t per_thread_size)
+{
+  drm_intel_bufmgr *bufmgr = gpgpu->drv->bufmgr;
+  drm_intel_bo* old = gpgpu->scratch_b.bo;
+  uint32_t total = per_thread_size * gpgpu->max_threads;
+
+  gpgpu->per_thread_scratch = per_thread_size;
+
+  if(old && old->size < total) {
+    drm_intel_bo_unreference(old);
+    old = NULL;
+  }
+
+  if(!old)
+    gpgpu->scratch_b.bo = drm_intel_bo_alloc(bufmgr, "SCRATCH_BO", total, 4096);
+}
+static void
 intel_gpgpu_set_stack(intel_gpgpu_t *gpgpu, uint32_t offset, uint32_t size, uint32_t cchint)
 {
   drm_intel_bufmgr *bufmgr = gpgpu->drv->bufmgr;
@@ -823,5 +850,6 @@ intel_set_gpgpu_callbacks(void)
   cl_gpgpu_flush = (cl_gpgpu_flush_cb *) intel_gpgpu_flush;
   cl_gpgpu_walker = (cl_gpgpu_walker_cb *) intel_gpgpu_walker;
   cl_gpgpu_bind_sampler = (cl_gpgpu_bind_sampler_cb *) intel_gpgpu_bind_sampler;
+  cl_gpgpu_set_scratch = (cl_gpgpu_set_scratch_cb *) intel_gpgpu_set_scratch;
 }
 

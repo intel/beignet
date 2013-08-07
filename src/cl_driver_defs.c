@@ -50,6 +50,7 @@ LOCAL cl_gpgpu_delete_cb *cl_gpgpu_delete = NULL;
 LOCAL cl_gpgpu_sync_cb *cl_gpgpu_sync = NULL;
 LOCAL cl_gpgpu_bind_buf_cb *cl_gpgpu_bind_buf = NULL;
 LOCAL cl_gpgpu_set_stack_cb *cl_gpgpu_set_stack = NULL;
+LOCAL cl_gpgpu_set_scratch_cb *cl_gpgpu_set_scratch = NULL;
 LOCAL cl_gpgpu_bind_image_cb *cl_gpgpu_bind_image = NULL;
 LOCAL cl_gpgpu_state_init_cb *cl_gpgpu_state_init = NULL;
 LOCAL cl_gpgpu_set_perf_counters_cb *cl_gpgpu_set_perf_counters = NULL;

@@ -319,6 +319,15 @@ enum GenMessageTarget {
 #define GEN_BYTE_SCATTER          12//1100: Byte Scattered Write
 #define GEN_UNTYPED_WRITE         13//1101: Untyped Surface Write
 
+/* Data port data cache scratch messages*/
+#define GEN_SCRATCH_READ                  0
+#define GEN_SCRATCH_WRITE                 1
+#define GEN_SCRATCH_CHANNEL_MODE_OWORD    0
+#define GEN_SCRATCH_CHANNEL_MODE_DWORD    1
+#define GEN_SCRATCH_BLOCK_SIZE_1          0
+#define GEN_SCRATCH_BLOCK_SIZE_2          1
+#define GEN_SCRATCH_BLOCK_SIZE_4          3
+
 /* Data port render cache Message Type*/
 #define GEN_MBLOCK_READ           4  //0100: Media Block Read
 #define GEN_TYPED_READ            5  //0101: Typed Surface Read
@@ -764,6 +773,22 @@ struct GenInstruction
       uint32_t pad2:2;
       uint32_t end_of_thread:1;
     } gen7_byte_rw;
+
+    /*! Data port Scratch Read/ write */
+    struct {
+      uint32_t offset:12;
+      uint32_t block_size:2;
+      uint32_t ignored0:1;
+      uint32_t invalidate_after_read:1;
+      uint32_t channel_mode:1;
+      uint32_t msg_type:1;
+      uint32_t category:1;
+      uint32_t header_present:1;
+      uint32_t response_length:5;
+      uint32_t msg_length:4;
+      uint32_t pad2:2;
+      uint32_t end_of_thread:1;
+    } gen7_scratch_rw;
 
     /*! Data port OBlock read / write */
     struct {

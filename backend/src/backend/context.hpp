@@ -91,6 +91,8 @@ namespace gbe
     /* allocate a new entry for a specific image's information */
     /*! Get (search or allocate if fail to find one) image info curbeOffset.*/
     uint32_t getImageInfoCurbeOffset(ir::ImageInfoKey key, size_t size);
+    /*! allocate size scratch memory and return start address */
+    uint32_t allocateScratchMem(uint32_t size);
   protected:
     /*! Build the instruction stream. Return false if failed */
     virtual bool emitCode(void) = 0;
@@ -126,6 +128,7 @@ namespace gbe
     set<ir::LabelIndex> usedLabels;       //!< Set of all used labels
     JIPMap JIPs;                          //!< Where to jump all labels/branches
     uint32_t simdWidth;                   //!< Number of lanes per HW threads
+    uint32_t scratchOffset;               //!< scratch slot for next scratch memory request
     GBE_CLASS(Context);                   //!< Use custom allocators
   };
 

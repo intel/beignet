@@ -268,6 +268,15 @@ namespace gbe
     }
   }
 
+  static int
+  alignScratchSize(int size){
+    int i = 0;
+
+    for(; i < size; i+=1024)
+      ;
+
+    return i;
+  }
   ///////////////////////////////////////////////////////////////////////////
   // Generic Context (shared by the simulator and the HW context)
   ///////////////////////////////////////////////////////////////////////////
@@ -284,6 +293,7 @@ namespace gbe
       this->simdWidth = nextHighestPowerOf2(OCL_SIMD_WIDTH);
     else
       this->simdWidth = fn.getSimdWidth();
+    this->scratchOffset = 0;
   }
 
   Context::~Context(void) {
@@ -305,6 +315,8 @@ namespace gbe
       GBE_DELETE(this->kernel);
       this->kernel = NULL;
     }
+    if(this->kernel != NULL)
+      this->kernel->scratchSize = alignScratchSize(this->scratchOffset);
     if(this->kernel != NULL)
       this->kernel->ctx = this;
     return this->kernel;
@@ -335,6 +347,12 @@ namespace gbe
 
     kernel->curbeSize = ALIGN(kernel->curbeSize, GEN_REG_SIZE);
     return offset + GEN_REG_SIZE;
+  }
+
+  uint32_t Context::allocateScratchMem(uint32_t size) {
+    uint32_t offset = scratchOffset;
+    scratchOffset += size;
+    return offset;
   }
 
   void Context::buildStack(void) {

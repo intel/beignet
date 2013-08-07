@@ -41,6 +41,7 @@ namespace gbe
   class Selection;            // Performs instruction selection
   class SelectionInstruction; // Pre-RA Gen instruction
   class SelectionReg;         // Pre-RA Gen register
+  class GenRegister;
 
   /*! Context is the helper structure to build the Gen ISA or simulation code
    *  from GenIR
@@ -108,7 +109,8 @@ namespace gbe
     void emitSampleInstruction(const SelectionInstruction &insn);
     void emitTypedWriteInstruction(const SelectionInstruction &insn);
     void emitGetImageInfoInstruction(const SelectionInstruction &insn);
-
+    void scratchWrite(const GenRegister header, uint32_t offset, uint32_t reg_num, uint32_t reg_type, uint32_t channel_mode);
+    void scratchRead(const GenRegister dst, const GenRegister header, uint32_t offset, uint32_t reg_num, uint32_t reg_type, uint32_t channel_mode);
     /*! Implements base class */
     virtual Kernel *allocateKernel(void);
     /*! Store the position of each label instruction in the Gen ISA stream */
