@@ -543,13 +543,13 @@ INLINE_OVERLOADABLE float __gen_ocl_internal_expm1(float x) { return __gen_ocl_p
 INLINE_OVERLOADABLE float __gen_ocl_internal_cbrt(float x) {
   return __gen_ocl_pow(x, 0.3333333333f);
 }
-INLINE_OVERLOADABLE float __gen_ocl_internal_sincos(float x, float *cosval) {
-  *cosval = native_cos(x);
+#define BODY \
+  *cosval = native_cos(x); \
   return native_sin(x);
-}
-INLINE_OVERLOADABLE float sincos(float x, global float *cosval) { return __gen_ocl_internal_sincos(x, (float*)cosval); }
-INLINE_OVERLOADABLE float sincos(float x, local float *cosval) { return __gen_ocl_internal_sincos(x, (float*)cosval); }
-INLINE_OVERLOADABLE float sincos(float x, private float *cosval) { return __gen_ocl_internal_sincos(x, (float*)cosval); }
+INLINE_OVERLOADABLE float sincos(float x, global float *cosval) { BODY; }
+INLINE_OVERLOADABLE float sincos(float x, local float *cosval) { BODY; }
+INLINE_OVERLOADABLE float sincos(float x, private float *cosval) { BODY; }
+#undef BODY
 
 INLINE_OVERLOADABLE float __gen_ocl_internal_sinh(float x) {
   return (1 - native_exp(-2 * x)) / (2 * native_exp(-x));
@@ -735,23 +735,22 @@ DECL_MIN_MAX_CLAMP(unsigned short)
 DECL_MIN_MAX_CLAMP(unsigned char)
 #undef DECL_MIN_MAX_CLAMP
 
-INLINE_OVERLOADABLE float __gen_ocl_frexp(float x, int *exp) {
-  uint u = as_uint(x);
-  if ((u & 0x7FFFFFFFu) == 0) {
-    *exp = 0;
-    return x;
-  }
-  int e = (u >> 23) & 255;
-  if (e == 255)
-    return x;
-  *exp = e - 126;
-  u = (u & (0x807FFFFFu)) | 0x3F000000;
+#define BODY \
+  uint u = as_uint(x); \
+  if ((u & 0x7FFFFFFFu) == 0) { \
+    *exp = 0; \
+    return x; \
+  } \
+  int e = (u >> 23) & 255; \
+  if (e == 255) \
+    return x; \
+  *exp = e - 126; \
+  u = (u & (0x807FFFFFu)) | 0x3F000000; \
   return as_float(u);
-}
-
-INLINE_OVERLOADABLE float frexp(float x, global int *exp) { return __gen_ocl_frexp(x, (int *)exp); }
-INLINE_OVERLOADABLE float frexp(float x, local int *exp) { return __gen_ocl_frexp(x, (int *)exp); }
-INLINE_OVERLOADABLE float frexp(float x, private int *exp) { return __gen_ocl_frexp(x, (int *)exp); }
+INLINE_OVERLOADABLE float frexp(float x, global int *exp) { BODY; }
+INLINE_OVERLOADABLE float frexp(float x, local int *exp) { BODY; }
+INLINE_OVERLOADABLE float frexp(float x, private int *exp) { BODY; }
+#undef BODY
 
 INLINE_OVERLOADABLE float nextafter(float x, float y) {
   uint hx = as_uint(x), ix = hx & 0x7FFFFFFF;
@@ -769,24 +768,22 @@ INLINE_OVERLOADABLE float nextafter(float x, float y) {
   return as_float(hx);
 }
 
-INLINE_OVERLOADABLE float __gen_ocl_modf(float x, float *i) {
-  uint hx = as_uint(x), ix = hx & 0x7FFFFFFF;
-  if (ix > 0x7F800000) {
-    *i = nan(0u);
-    return nan(0u);
-  }
-  if (ix == 0x7F800000) {
-    *i = x;
-    return as_float(hx & 0x80000000u);
-  }
-  *i = __gen_ocl_rndz(x);
+#define BODY \
+  uint hx = as_uint(x), ix = hx & 0x7FFFFFFF; \
+  if (ix > 0x7F800000) { \
+    *i = nan(0u); \
+    return nan(0u); \
+  } \
+  if (ix == 0x7F800000) { \
+    *i = x; \
+    return as_float(hx & 0x80000000u); \
+  } \
+  *i = __gen_ocl_rndz(x); \
   return x - *i;
-}
-
-INLINE_OVERLOADABLE float modf(float x, global float *i) { return __gen_ocl_modf(x, (float *)i); }
-INLINE_OVERLOADABLE float modf(float x, local float *i) { return __gen_ocl_modf(x, (float *)i); }
-INLINE_OVERLOADABLE float modf(float x, private float *i) { return __gen_ocl_modf(x, (float *)i); }
-
+INLINE_OVERLOADABLE float modf(float x, global float *i) { BODY; }
+INLINE_OVERLOADABLE float modf(float x, local float *i) { BODY; }
+INLINE_OVERLOADABLE float modf(float x, private float *i) { BODY; }
+#undef BODY
 INLINE_OVERLOADABLE float degrees(float radians) { return (180 / M_PI_F) * radians; }
 INLINE_OVERLOADABLE float radians(float degrees) { return (M_PI_F / 180) * degrees; }
 
@@ -819,32 +816,30 @@ INLINE_OVERLOADABLE float mix(float x, float y, float a) { return x + (y-x)*a;}
 INLINE_OVERLOADABLE float __gen_ocl_internal_fdim(float x, float y) {
   return __gen_ocl_internal_fmax(x, y) - y;
 }
-INLINE_OVERLOADABLE float __gen_ocl_fract(float x, float *p) {
-  *p = __gen_ocl_internal_floor(x);
+#define BODY \
+  *p = __gen_ocl_internal_floor(x); \
   return __gen_ocl_internal_fmin(x - *p, 0x1.FFFFFep-1F);
-}
-INLINE_OVERLOADABLE float fract(float x, global float *p) { return __gen_ocl_fract(x, (float *)p); }
-INLINE_OVERLOADABLE float fract(float x, local float *p) { return __gen_ocl_fract(x, (float *)p); }
-INLINE_OVERLOADABLE float fract(float x, private float *p) { return __gen_ocl_fract(x, (float *)p); }
+INLINE_OVERLOADABLE float fract(float x, global float *p) { BODY; }
+INLINE_OVERLOADABLE float fract(float x, local float *p) { BODY; }
+INLINE_OVERLOADABLE float fract(float x, private float *p) { BODY; }
+#undef BODY
 
-INLINE_OVERLOADABLE float __gen_ocl_remquo(float x, float y, int *quo) {
-  uint hx = as_uint(x), ix = hx & 0x7FFFFFFF, hy = as_uint(y), iy = hy & 0x7FFFFFFF;
-  if (ix > 0x7F800000 || iy > 0x7F800000 || ix == 0x7F800000 || iy == 0)
-    return nan(0u);
-  float k = x / y;
-  int q =  __gen_ocl_rnde(k);
-  *quo = q >= 0 ? (q & 127) : (q | 0xFFFFFF80u);
-  float r = x - q * y;
-  uint hr = as_uint(r), ir = hr & 0x7FFFFFFF;
-  if (ir == 0)
-    hr = ir | (hx & 0x80000000u);
+#define BODY \
+  uint hx = as_uint(x), ix = hx & 0x7FFFFFFF, hy = as_uint(y), iy = hy & 0x7FFFFFFF; \
+  if (ix > 0x7F800000 || iy > 0x7F800000 || ix == 0x7F800000 || iy == 0) \
+    return nan(0u); \
+  float k = x / y; \
+  int q =  __gen_ocl_rnde(k); \
+  *quo = q >= 0 ? (q & 127) : (q | 0xFFFFFF80u); \
+  float r = x - q * y; \
+  uint hr = as_uint(r), ir = hr & 0x7FFFFFFF; \
+  if (ir == 0) \
+    hr = ir | (hx & 0x80000000u); \
   return as_float(hr);
-}
-
-INLINE_OVERLOADABLE float remquo(float x, float y, global int *quo) { return __gen_ocl_remquo(x, y, (int *)quo); }
-INLINE_OVERLOADABLE float remquo(float x, float y, local int *quo) { return __gen_ocl_remquo(x, y, (int *)quo); }
-INLINE_OVERLOADABLE float remquo(float x, float y, private int *quo) { return __gen_ocl_remquo(x, y, (int *)quo); }
-
+INLINE_OVERLOADABLE float remquo(float x, float y, global int *quo) { BODY; }
+INLINE_OVERLOADABLE float remquo(float x, float y, local int *quo) { BODY; }
+INLINE_OVERLOADABLE float remquo(float x, float y, private int *quo) { BODY; }
+#undef BODY
 INLINE_OVERLOADABLE float native_divide(float x, float y) { return x/y; }
 INLINE_OVERLOADABLE float ldexp(float x, int n) {
   return __gen_ocl_pow(2, n) * x;
