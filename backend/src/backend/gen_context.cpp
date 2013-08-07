@@ -159,6 +159,25 @@ namespace gbe
       case SEL_OP_LOAD_DF_IMM: p->LOAD_DF_IMM(dst, src1, src0.value.df); break;
       case SEL_OP_MOV_DF: p->MOV_DF(dst, src0, src1); break;
       case SEL_OP_SEL:  p->SEL(dst, src0, src1); break;
+      case SEL_OP_SEL_INT64:
+        {
+          GenRegister xdst = GenRegister::retype(dst, GEN_TYPE_UL),
+                      xsrc0 = GenRegister::retype(src0, GEN_TYPE_UL),
+                      xsrc1 = GenRegister::retype(src1, GEN_TYPE_UL);
+          int execWidth = p->curr.execWidth;
+          p->push();
+          p->curr.execWidth = 8;
+          for (int nib = 0; nib < execWidth / 4; nib ++) {
+            p->curr.chooseNib(nib);
+            p->SEL(xdst.bottom_half(), xsrc0.bottom_half(), xsrc1.bottom_half());
+            p->SEL(xdst.top_half(), xsrc0.top_half(), xsrc1.top_half());
+            xdst = GenRegister::suboffset(xdst, 4);
+            xsrc0 = GenRegister::suboffset(xsrc0, 4);
+            xsrc1 = GenRegister::suboffset(xsrc1, 4);
+          }
+          p->pop();
+        }
+        break;
       case SEL_OP_AND:  p->AND(dst, src0, src1); break;
       case SEL_OP_OR:   p->OR (dst, src0, src1);  break;
       case SEL_OP_XOR:  p->XOR(dst, src0, src1); break;

@@ -614,6 +614,18 @@ namespace gbe
   INLINE void alu1(GenEncoder *p, uint32_t opcode, GenRegister dst, GenRegister src) {
      if (dst.isdf() && src.isdf()) {
        handleDouble(p, opcode, dst, src);
+     } else if (dst.isint64() && src.isint64()) { // handle int64
+       int execWidth = p->curr.execWidth;
+       p->push();
+       p->curr.execWidth = 8;
+       for (int nib = 0; nib < execWidth / 4; nib ++) {
+         p->curr.chooseNib(nib);
+         p->MOV(dst.bottom_half(), src.bottom_half());
+         p->MOV(dst.top_half(), src.top_half());
+         dst = GenRegister::suboffset(dst, 4);
+         src = GenRegister::suboffset(src, 4);
+       }
+       p->pop();
      } else if (needToSplitAlu1(p, dst, src) == false) {
        GenInstruction *insn = p->next(opcode);
        p->setHeader(insn);

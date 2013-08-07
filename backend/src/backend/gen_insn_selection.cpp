@@ -421,6 +421,7 @@ namespace gbe
     ALU1(RNDZ)
     ALU1(RNDE)
     ALU2(SEL)
+    ALU2(SEL_INT64)
     ALU1(NOT)
     ALU2(AND)
     ALU2(OR)
@@ -2302,7 +2303,10 @@ namespace gbe
         sel.curr.physicalFlag = 0;
         sel.curr.flagIndex = uint16_t(pred);
         sel.curr.noMask = 0;
-        sel.SEL(tmp, src0, src1);
+        if(type == ir::TYPE_S64 || type == ir::TYPE_U64)
+          sel.SEL_INT64(tmp, src0, src1);
+        else
+          sel.SEL(tmp, src0, src1);
       sel.pop();
 
       // Update the destination register properly now
