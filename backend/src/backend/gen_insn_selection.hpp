@@ -107,6 +107,10 @@ namespace gbe
         /*! offset (0 to 7) */
         uint16_t offset:5;
       };
+      struct {
+        uint16_t scratchOffset;
+        uint16_t scratchMsgHeader;
+      };
     } extra;
     /*! Gen opcode */
     uint8_t opcode;
@@ -197,6 +201,8 @@ namespace gbe
     ir::Register replaceSrc(SelectionInstruction *insn, uint32_t regID);
     /*! Replace a destination to the returned temporary register */
     ir::Register replaceDst(SelectionInstruction *insn, uint32_t regID);
+    /*! spill a register (insert spill/unspill instructions) */
+    void spillReg(ir::Register reg, uint32_t registerPool);
     /*! Create a new selection instruction */
     SelectionInstruction *create(SelectionOpcode, uint32_t dstNum, uint32_t srcNum);
     /*! List of emitted blocks */

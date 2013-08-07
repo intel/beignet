@@ -108,6 +108,8 @@ namespace gbe
     void emitByteScatterInstruction(const SelectionInstruction &insn);
     void emitSampleInstruction(const SelectionInstruction &insn);
     void emitTypedWriteInstruction(const SelectionInstruction &insn);
+    void emitSpillRegInstruction(const SelectionInstruction &insn);
+    void emitUnSpillRegInstruction(const SelectionInstruction &insn);
     void emitGetImageInfoInstruction(const SelectionInstruction &insn);
     void scratchWrite(const GenRegister header, uint32_t offset, uint32_t reg_num, uint32_t reg_type, uint32_t channel_mode);
     void scratchRead(const GenRegister dst, const GenRegister header, uint32_t offset, uint32_t reg_num, uint32_t reg_type, uint32_t channel_mode);

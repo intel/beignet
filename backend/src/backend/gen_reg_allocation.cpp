@@ -31,6 +31,8 @@
 #include <algorithm>
 #include <climits>
 
+#define RESERVED_REG_NUM_FOR_SPILL 6
+
 namespace gbe
 {
   /////////////////////////////////////////////////////////////////////////////
@@ -94,6 +96,10 @@ namespace gbe
     vector<GenRegInterval*> starting;
     /*! Intervals sorting based on ending point positions */
     vector<GenRegInterval*> ending;
+    /*! registers that are spilled */
+    set<ir::Register> spilled;
+    /* reserved registers for register spill/reload */
+    uint32_t reservedReg;
     /*! Current vector to expire */
     uint32_t expiringID;
     /*! Use custom allocator */
@@ -259,6 +265,11 @@ namespace gbe
         continue;
       }
 
+      //ignore register that already spilled
+      if(spilled.contains(reg)) {
+        this->expiringID++;
+        continue;
+      }
       // Ignore booleans that were allocated with flags
       // if (ctx.getRegisterFamily(reg) == ir::FAMILY_BOOL && !grfBooleans.contains(reg)) {
       if (ctx.sel->getRegisterFamily(reg) == ir::FAMILY_BOOL) {
@@ -473,6 +484,9 @@ namespace gbe
       auto it = vectorMap.find(reg);
       if (it != vectorMap.end()) {
         const SelectionVector *vector = it->second.first;
+        // all the reg in the SelectionVector are spilled
+        if(spilled.contains(vector->reg[0].reg()))
+          continue;
         const uint32_t simdWidth = ctx.getSimdWidth();
 
         const ir::RegisterData regData = ctx.sel->getRegisterData(reg);
@@ -481,10 +495,28 @@ namespace gbe
         const uint32_t alignment = simdWidth*typeSize;
 
         const uint32_t size = vector->regNum * alignment;
+
         uint32_t grfOffset;
         while ((grfOffset = ctx.allocate(size, alignment)) == 0) {
           const bool success = this->expireGRF(interval);
-          if (success == false) return false;
+          if (success == false) {
+            // if no spill support, just return false, else simply spill the register
+            if(reservedReg == 0) return false;
+            break;
+          }
+        }
+        if(grfOffset == 0) {
+          // spill all the registers in the SelectionVector
+          // the tricky here is I need to use reservedReg+1 as scratch write payload.
+          // so, i need to write the first register to scratch memory first.
+          // the spillReg() will just append scratch write insn after the def. To spill
+          // the first register, need to call spillReg() last for the vector->reg[0]
+          GBE_ASSERT(vector->regNum < RESERVED_REG_NUM_FOR_SPILL);
+          for(int i = vector->regNum-1; i >= 0; i--) {
+            spilled.insert(vector->reg[i].reg());
+            selection.spillReg(vector->reg[i].reg(), reservedReg);
+          }
+          continue;
         }
         for (uint32_t regID = 0; regID < vector->regNum; ++regID, grfOffset += alignment) {
           const ir::Register reg = vector->reg[regID].reg();
@@ -494,18 +526,25 @@ namespace gbe
         }
       }
       // Case 2: This is a regular scalar register, allocate it alone
-      else if (this->createGenReg(interval) == false)
-        return false;
+      else if (this->createGenReg(interval) == false) {
+        if(reservedReg == 0) return false;
+        spilled.insert(reg);
+        selection.spillReg(reg, reservedReg);
+      }
     }
     return true;
   }
-
   INLINE bool GenRegAllocator::Opaque::allocate(Selection &selection) {
     using namespace ir;
     const Kernel *kernel = ctx.getKernel();
     const Function &fn = ctx.getFunction();
     GBE_ASSERT(fn.getProfile() == PROFILE_OCL);
-
+    if (ctx.getSimdWidth() == 8) {
+      reservedReg = ctx.allocate(RESERVED_REG_NUM_FOR_SPILL * GEN_REG_SIZE, GEN_REG_SIZE);
+      reservedReg /= GEN_REG_SIZE;
+    } else {
+      reservedReg = 0;
+    }
     // Allocate all the vectors first since they need to be contiguous
     this->allocateVector(selection);
     // schedulePreRegAllocation(ctx, selection);
@@ -690,6 +729,10 @@ namespace gbe
         int subreg = offst % 8;
         std::cout << "%" << vReg << " g" << reg << "." << subreg << "D" << std::endl;
     }
+    std::set<ir::Register>::iterator is;
+    std::cout << "## spilled registers:" << std::endl;
+    for(is = spilled.begin(); is != spilled.end(); is++)
+      std::cout << (int)*is << std::endl;
     std::cout << std::endl;
   }
 
@@ -704,6 +747,9 @@ namespace gbe
 
   INLINE GenRegister GenRegAllocator::Opaque::genReg(const GenRegister &reg) {
     if (reg.file == GEN_GENERAL_REGISTER_FILE) {
+      if(reg.physical == 1) {
+        return reg;
+      }
       GBE_ASSERT(RA.contains(reg.reg()) != false);
       const uint32_t grfOffset = RA.find(reg.reg())->second;
       const GenRegister dst = setGenReg(reg, grfOffset);

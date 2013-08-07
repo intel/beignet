@@ -283,19 +283,24 @@ namespace gbe
   uint32_t DependencyTracker::getIndex(GenRegister reg) const {
     // Non GRF physical register
     if (reg.physical) {
-      GBE_ASSERT (reg.file == GEN_ARCHITECTURE_REGISTER_FILE);
-      const uint32_t file = reg.nr & 0xf0;
-      const uint32_t nr = reg.nr & 0x0f;
-      if (file == GEN_ARF_FLAG) {
-        const uint32_t subnr = reg.subnr / sizeof(uint16_t);
-        GBE_ASSERT(nr < MAX_FLAG_REGISTER && (subnr == 0 || subnr == 1));
-        return grfNum + 2*nr + subnr;
-      } else if (file == GEN_ARF_ACCUMULATOR) {
-        GBE_ASSERT(nr < MAX_ACC_REGISTER);
-        return grfNum + MAX_FLAG_REGISTER + nr;
+      //GBE_ASSERT (reg.file == GEN_ARCHITECTURE_REGISTER_FILE);
+      if(reg.file == GEN_ARCHITECTURE_REGISTER_FILE) {
+        const uint32_t file = reg.nr & 0xf0;
+        const uint32_t nr = reg.nr & 0x0f;
+        if (file == GEN_ARF_FLAG) {
+          const uint32_t subnr = reg.subnr / sizeof(uint16_t);
+          GBE_ASSERT(nr < MAX_FLAG_REGISTER && (subnr == 0 || subnr == 1));
+          return grfNum + 2*nr + subnr;
+        } else if (file == GEN_ARF_ACCUMULATOR) {
+          GBE_ASSERT(nr < MAX_ACC_REGISTER);
+          return grfNum + MAX_FLAG_REGISTER + nr;
+        } else {
+          NOT_SUPPORTED;
+          return 0;
+        }
       } else {
-        NOT_SUPPORTED;
-        return 0;
+          const uint32_t simdWidth = scheduler.ctx.getSimdWidth();
+          return simdWidth == 8 ? reg.nr : reg.nr / 2;
       }
     }
     // We directly manipulate physical GRFs here
@@ -344,6 +349,10 @@ namespace gbe
       this->nodes[index] = node;
     }
 
+    if(insn.opcode == SEL_OP_SPILL_REG) {
+      const uint32_t index = this->getIndex(0xff);
+      this->nodes[index] = node;
+    }
     // Consider barriers and wait write to memory
     if (insn.opcode == SEL_OP_BARRIER ||
         insn.opcode == SEL_OP_FENCE ||
@@ -424,6 +433,11 @@ namespace gbe
         const uint32_t index = tracker.getIndex(insn.extra.function);
         tracker.addDependency(node, index);
       }
+      //read-after-write of scratch memory
+      if (insn.opcode == SEL_OP_UNSPILL_REG) {
+        const uint32_t index = tracker.getIndex(0xff);
+        tracker.addDependency(node, index);
+      }
 
       // Consider barriers and wait are reading memory (local and global)
     if (insn.opcode == SEL_OP_BARRIER ||
@@ -452,6 +466,7 @@ namespace gbe
         const uint32_t index = tracker.getIndex(insn.extra.function);
         tracker.addDependency(node, index);
       }
+
 
       // Consider barriers and wait are writing memory (local and global)
     if (insn.opcode == SEL_OP_BARRIER ||

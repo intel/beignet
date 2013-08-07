@@ -315,6 +315,8 @@ namespace gbe
     INLINE ir::Register replaceSrc(SelectionInstruction *insn, uint32_t regID);
     /*! Implement public class */
     INLINE ir::Register replaceDst(SelectionInstruction *insn, uint32_t regID);
+    /*! spill a register (insert spill/unspill instructions) */
+    INLINE void spillReg(ir::Register reg, uint32_t registerPool);
     /*! Implement public class */
     INLINE uint32_t getRegNum(void) const { return file.regNum(); }
     /*! Implements public interface */
@@ -617,6 +619,57 @@ namespace gbe
     return vector;
   }
 
+  void Selection::Opaque::spillReg(ir::Register spilledReg, uint32_t registerPool) {
+    assert(registerPool != 0);
+    const uint32_t simdWidth = ctx.getSimdWidth();
+    const uint32_t dstStart = registerPool + 1;
+    const uint32_t srcStart = registerPool + 1;
+    uint32_t ptr = ctx.allocateScratchMem(typeSize(GEN_TYPE_D)*simdWidth);
+
+    for (auto &block : blockList)
+      for (auto &insn : block.insnList) {
+        const uint32_t srcNum = insn.srcNum, dstNum = insn.dstNum;
+
+        for (uint32_t srcID = 0; srcID < srcNum; ++srcID) {
+          const GenRegister selReg = insn.src(srcID);
+          const ir::Register reg = selReg.reg();
+          if(selReg.file == GEN_GENERAL_REGISTER_FILE && reg == spilledReg) {
+            GBE_ASSERT(srcID < 5);
+            SelectionInstruction *unspill = this->create(SEL_OP_UNSPILL_REG, 1, 0);
+            unspill->state  = GenInstructionState(simdWidth);
+            unspill->dst(0) = GenRegister(GEN_GENERAL_REGISTER_FILE, srcStart+srcID, 0,
+                                          selReg.type, selReg.vstride, selReg.width, selReg.hstride);
+            GenRegister src = insn.src(srcID);
+            // change nr/subnr, keep other register settings
+            src.nr = srcStart+srcID; src.subnr=0; src.physical=1;
+            insn.src(srcID) = src;
+            unspill->extra.scratchOffset = ptr;
+            unspill->extra.scratchMsgHeader = registerPool;
+            insn.prepend(*unspill);
+          }
+        }
+
+        for (uint32_t dstID = 0; dstID < dstNum; ++dstID) {
+          const GenRegister selReg = insn.dst(dstID);
+          const ir::Register reg = selReg.reg();
+          if(selReg.file == GEN_GENERAL_REGISTER_FILE && reg == spilledReg) {
+            GBE_ASSERT(dstID < 5);
+            SelectionInstruction *spill = this->create(SEL_OP_SPILL_REG, 0, 1);
+            spill->state  = GenInstructionState(simdWidth);
+            spill->src(0) =GenRegister(GEN_GENERAL_REGISTER_FILE, dstStart + dstID, 0,
+                                              selReg.type, selReg.vstride, selReg.width, selReg.hstride);
+            GenRegister dst = insn.dst(dstID);
+            // change nr/subnr, keep other register settings
+            dst.physical =1; dst.nr = dstStart+dstID; dst.subnr = 0;
+            insn.dst(dstID)= dst;
+            spill->extra.scratchOffset = ptr;
+            spill->extra.scratchMsgHeader = registerPool;
+            insn.append(*spill);
+          }
+        }
+      }
+  }
+
   ir::Register Selection::Opaque::replaceSrc(SelectionInstruction *insn, uint32_t regID) {
     SelectionBlock *block = insn->parent;
     const uint32_t simdWidth = ctx.getSimdWidth();
@@ -820,7 +873,6 @@ namespace gbe
     dstVector->regNum = elemNum;
     dstVector->isSrc = 0;
     dstVector->reg = &insn->dst(0);
-
     // Source cannot be scalar (yet)
     srcVector->regNum = 1;
     srcVector->isSrc = 1;
@@ -1187,6 +1239,9 @@ namespace gbe
 
   ir::Register Selection::replaceDst(SelectionInstruction *insn, uint32_t regID) {
     return this->opaque->replaceDst(insn, regID);
+  }
+  void Selection::spillReg(ir::Register reg, uint32_t registerPool) {
+    this->opaque->spillReg(reg, registerPool);
   }
 
   SelectionInstruction *Selection::create(SelectionOpcode opcode, uint32_t dstNum, uint32_t srcNum) {
