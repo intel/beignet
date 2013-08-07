@@ -162,6 +162,63 @@ namespace gbe
       case SEL_OP_AND:  p->AND(dst, src0, src1); break;
       case SEL_OP_OR:   p->OR (dst, src0, src1);  break;
       case SEL_OP_XOR:  p->XOR(dst, src0, src1); break;
+      case SEL_OP_I64AND:
+        {
+          GenRegister xdst = GenRegister::retype(dst, GEN_TYPE_UL),
+                      xsrc0 = GenRegister::retype(src0, GEN_TYPE_UL),
+                      xsrc1 = GenRegister::retype(src1, GEN_TYPE_UL);
+          int execWidth = p->curr.execWidth;
+          p->push();
+          p->curr.execWidth = 8;
+          for (int nib = 0; nib < execWidth / 4; nib ++) {
+            p->curr.chooseNib(nib);
+            p->AND(xdst.bottom_half(), xsrc0.bottom_half(), xsrc1.bottom_half());
+            p->AND(xdst.top_half(), xsrc0.top_half(), xsrc1.top_half());
+            xdst = GenRegister::suboffset(xdst, 4),
+            xsrc0 = GenRegister::suboffset(xsrc0, 4),
+            xsrc1 = GenRegister::suboffset(xsrc1, 4);
+          }
+          p->pop();
+        }
+        break;
+      case SEL_OP_I64OR:
+        {
+          GenRegister xdst = GenRegister::retype(dst, GEN_TYPE_UL),
+                      xsrc0 = GenRegister::retype(src0, GEN_TYPE_UL),
+                      xsrc1 = GenRegister::retype(src1, GEN_TYPE_UL);
+          int execWidth = p->curr.execWidth;
+          p->push();
+          p->curr.execWidth = 8;
+          for (int nib = 0; nib < execWidth / 4; nib ++) {
+            p->curr.chooseNib(nib);
+            p->OR(xdst.bottom_half(), xsrc0.bottom_half(), xsrc1.bottom_half());
+            p->OR(xdst.top_half(), xsrc0.top_half(), xsrc1.top_half());
+            xdst = GenRegister::suboffset(xdst, 4),
+            xsrc0 = GenRegister::suboffset(xsrc0, 4),
+            xsrc1 = GenRegister::suboffset(xsrc1, 4);
+          }
+          p->pop();
+        }
+        break;
+      case SEL_OP_I64XOR:
+        {
+          GenRegister xdst = GenRegister::retype(dst, GEN_TYPE_UL),
+                      xsrc0 = GenRegister::retype(src0, GEN_TYPE_UL),
+                      xsrc1 = GenRegister::retype(src1, GEN_TYPE_UL);
+          int execWidth = p->curr.execWidth;
+          p->push();
+          p->curr.execWidth = 8;
+          for (int nib = 0; nib < execWidth / 4; nib ++) {
+            p->curr.chooseNib(nib);
+            p->XOR(xdst.bottom_half(), xsrc0.bottom_half(), xsrc1.bottom_half());
+            p->XOR(xdst.top_half(), xsrc0.top_half(), xsrc1.top_half());
+            xdst = GenRegister::suboffset(xdst, 4),
+            xsrc0 = GenRegister::suboffset(xsrc0, 4),
+            xsrc1 = GenRegister::suboffset(xsrc1, 4);
+          }
+          p->pop();
+        }
+        break;
       case SEL_OP_SHR:  p->SHR(dst, src0, src1); break;
       case SEL_OP_SHL:  p->SHL(dst, src0, src1); break;
       case SEL_OP_RSR:  p->RSR(dst, src0, src1); break;

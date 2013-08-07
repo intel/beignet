@@ -672,6 +672,7 @@ namespace ir {
     static const Type logicalType[] = {TYPE_S8,  TYPE_U8,
                                        TYPE_S16, TYPE_U16,
                                        TYPE_S32, TYPE_U32,
+                                       TYPE_S64, TYPE_U64,
                                        TYPE_BOOL};
     static const uint32_t logicalTypeNum = ARRAY_ELEM_NUM(logicalType);
 

@@ -423,6 +423,9 @@ namespace gbe
     ALU2(AND)
     ALU2(OR)
     ALU2(XOR)
+    ALU2(I64AND)
+    ALU2(I64OR)
+    ALU2(I64XOR)
     ALU2(SHR)
     ALU2(SHL)
     ALU2(RSR)
@@ -1434,9 +1437,24 @@ namespace gbe
             sel.ADD(dst, src0, src1);
           sel.pop();
           break;
-        case OP_XOR: sel.XOR(dst, src0, src1); break;
-        case OP_OR:  sel.OR(dst, src0,  src1); break;
-        case OP_AND: sel.AND(dst, src0, src1); break;
+        case OP_XOR:
+          if (type == Type::TYPE_U64 || type == Type::TYPE_S64)
+            sel.I64XOR(dst, src0, src1);
+          else
+            sel.XOR(dst, src0, src1);
+          break;
+        case OP_OR:
+          if (type == Type::TYPE_U64 || type == Type::TYPE_S64)
+            sel.I64OR(dst, src0, src1);
+          else
+            sel.OR(dst, src0, src1);
+          break;
+        case OP_AND:
+          if (type == Type::TYPE_U64 || type == Type::TYPE_S64)
+            sel.I64AND(dst, src0, src1);
+          else
+            sel.AND(dst, src0, src1);
+          break;
         case OP_SUB:
           if (type == Type::TYPE_U64 || type == Type::TYPE_S64) {
             GenRegister t = sel.selReg(sel.reg(RegisterFamily::FAMILY_QWORD), Type::TYPE_S64);
