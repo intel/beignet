@@ -165,11 +165,15 @@ namespace gbe
       }
       return false;
     }
+    /*! Owns the tracker */
+    SelectionScheduler &scheduler;
     /*! Add a new dependency "node0 depends on node set for register reg" */
-    INLINE void addDependency(ScheduleDAGNode *node0, GenRegister reg) {
+    INLINE  void addDependency(ScheduleDAGNode *node0, GenRegister reg) {
       if (this->ignoreDependency(reg) == false) {
         const uint32_t index = this->getIndex(reg);
         this->addDependency(node0, index);
+        if (reg.isdf() || reg.isint64())
+          this->addDependency(node0, index + 1);
       }
     }
     /*! Add a new dependency "node set for register reg depends on node0" */
@@ -177,6 +181,8 @@ namespace gbe
       if (this->ignoreDependency(reg) == false) {
         const uint32_t index = this->getIndex(reg);
         this->addDependency(index, node0);
+        if (reg.isdf() || reg.isint64())
+          this->addDependency(index + 1, node0);
       }
     }
     /*! Make the node located at insnID a barrier */
@@ -187,8 +193,6 @@ namespace gbe
     static const uint32_t MAX_FLAG_REGISTER = 8u;
     /*! Maximum number of *physical* accumulators registers */
     static const uint32_t MAX_ACC_REGISTER = 1u;
-    /*! Owns the tracker */
-    SelectionScheduler &scheduler;
     /*! Stores the last node that wrote to a register / memory ... */
     vector<ScheduleDAGNode*> nodes;
     /*! Stores the nodes per instruction */
@@ -328,6 +332,8 @@ namespace gbe
       if (this->ignoreDependency(dst) == false) {
         const uint32_t index = this->getIndex(dst);
         this->nodes[index] = node;
+        if (dst.isdf() || dst.isint64())
+          this->nodes[index + 1] = node;
       }
     }
 
