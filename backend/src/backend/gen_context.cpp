@@ -601,10 +601,10 @@ namespace gbe
   void GenContext::emitRead64Instruction(const SelectionInstruction &insn) {
     const uint32_t elemNum = insn.extra.elem;
     const uint32_t tmpRegSize = (p->curr.execWidth == 8) ? elemNum * 2 : elemNum;
-    const GenRegister dst = ra->genReg(insn.dst(tmpRegSize));
-    const GenRegister tmp = ra->genReg(insn.dst(0));
+    const GenRegister tempAddr = ra->genReg(insn.dst(0));
+    const GenRegister dst = ra->genReg(insn.dst(tmpRegSize + 1));
+    const GenRegister tmp = ra->genReg(insn.dst(1));
     const GenRegister src = ra->genReg(insn.src(0));
-    const GenRegister tempAddr = ra->genReg(insn.src(1));
     const uint32_t bti = insn.extra.function;
     p->READ64(dst, tmp, tempAddr, src, bti, elemNum);
   }
@@ -621,11 +621,12 @@ namespace gbe
   //  then follow the real destination registers.
   //  For SIMD16, we allocate elemNum temporary registers from dst(0).
   void GenContext::emitWrite64Instruction(const SelectionInstruction &insn) {
-    const GenRegister src = ra->genReg(insn.src(0));
+    const GenRegister src = ra->genReg(insn.dst(0));
     const uint32_t elemNum = insn.extra.elem;
-    const uint32_t tmpRegSize = (p->curr.execWidth == 8) ? elemNum * 2 : elemNum;
-    const GenRegister data = ra->genReg(insn.src(tmpRegSize + 1));
+    const GenRegister addr = ra->genReg(insn.src(0)); //tmpRegSize + 1));
+    const GenRegister data = ra->genReg(insn.src(1));
     const uint32_t bti = insn.extra.function;
+    p->MOV(src, addr);
     p->WRITE64(src, data, bti, elemNum);
   }
 

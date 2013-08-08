@@ -479,7 +479,7 @@ namespace gbe
     /*! Read 64 bits float/int array */
     void READ64(Reg addr, Reg tempAddr, const GenRegister *dst, uint32_t elemNum, uint32_t valueNum, uint32_t bti);
     /*! Write 64 bits float/int array */
-    void WRITE64(Reg addr, const GenRegister *src, uint32_t elemNum, uint32_t valueNum, uint32_t bti);
+    void WRITE64(Reg addr, const GenRegister *src, uint32_t srcNum, const GenRegister *dst, uint32_t dstNum, uint32_t bti);
     /*! Untyped read (up to 4 elements) */
     void UNTYPED_READ(Reg addr, const GenRegister *dst, uint32_t elemNum, uint32_t bti);
     /*! Untyped write (up to 4 elements) */
@@ -825,28 +825,29 @@ namespace gbe
   /* elemNum contains all the temporary register and the
      real destination registers.*/
   void Selection::Opaque::READ64(Reg addr,
-                                       Reg tempAddr,
-                                       const GenRegister *dst,
-                                       uint32_t elemNum,
-                                       uint32_t valueNum,
-                                       uint32_t bti)
+                                 Reg tempAddr,
+                                 const GenRegister *dst,
+                                 uint32_t elemNum,
+                                 uint32_t valueNum,
+                                 uint32_t bti)
   {
-    SelectionInstruction *insn = this->appendInsn(SEL_OP_READ64, elemNum, 2);
+    SelectionInstruction *insn = this->appendInsn(SEL_OP_READ64, elemNum + 1, 1);
     SelectionVector *srcVector = this->appendVector();
     SelectionVector *dstVector = this->appendVector();
 
+    /* temporary addr register is to be modified, set it to dst registers.*/
+    insn->dst(0) = tempAddr;
     // Regular instruction to encode
     for (uint32_t elemID = 0; elemID < elemNum; ++elemID)
-      insn->dst(elemID) = dst[elemID];
+      insn->dst(elemID + 1) = dst[elemID];
     insn->src(0) = addr;
-    insn->src(1) = tempAddr;
     insn->extra.function = bti;
     insn->extra.elem = valueNum;
 
     // Only the temporary registers need contiguous allocation
     dstVector->regNum = elemNum - valueNum;
     dstVector->isSrc = 0;
-    dstVector->reg = &insn->dst(0);
+    dstVector->reg = &insn->dst(1);
 
     // Source cannot be scalar (yet)
     srcVector->regNum = 1;
@@ -883,24 +884,27 @@ namespace gbe
   /* elemNum contains all the temporary register and the
      real data registers.*/
   void Selection::Opaque::WRITE64(Reg addr,
-                                        const GenRegister *src,
-                                        uint32_t elemNum,
-                                        uint32_t valueNum,
-                                        uint32_t bti)
+                                  const GenRegister *src,
+                                  uint32_t srcNum,
+                                  const GenRegister *dst,
+                                  uint32_t dstNum,
+                                  uint32_t bti)
   {
-    SelectionInstruction *insn = this->appendInsn(SEL_OP_WRITE64, 0, elemNum+1);
+    SelectionInstruction *insn = this->appendInsn(SEL_OP_WRITE64, dstNum, srcNum + 1);
     SelectionVector *vector = this->appendVector();
 
     // Regular instruction to encode
     insn->src(0) = addr;
-    for (uint32_t elemID = 0; elemID < elemNum; ++elemID)
-      insn->src(elemID+1) = src[elemID];
+    for (uint32_t elemID = 0; elemID < srcNum; ++elemID)
+      insn->src(elemID + 1) = src[elemID];
+    for (uint32_t elemID = 0; elemID < dstNum; ++elemID)
+      insn->dst(elemID) = dst[elemID];
     insn->extra.function = bti;
-    insn->extra.elem = valueNum;
+    insn->extra.elem = srcNum;
 
     // Only the addr + temporary registers need to be contiguous.
-    vector->regNum = (elemNum - valueNum) + 1;
-    vector->reg = &insn->src(0);
+    vector->regNum = dstNum;
+    vector->reg = &insn->dst(0);
     vector->isSrc = 1;
   }
 
@@ -2085,13 +2089,16 @@ namespace gbe
       addr = GenRegister::retype(sel.selReg(insn.getSrc(addrID)), GEN_TYPE_F);
       // The first 16 DWORD register space is for temporary usage at encode stage.
       uint32_t tmpRegNum = (sel.ctx.getSimdWidth() == 8) ? valueNum * 2 : valueNum;
-      GenRegister src[valueNum + tmpRegNum];
+      GenRegister src[valueNum];
+      GenRegister dst[tmpRegNum + 1];
+      /* dst 0 is for the temporary address register. */
+      dst[0] = sel.selReg(sel.reg(FAMILY_DWORD));
       for (srcID = 0; srcID < tmpRegNum; ++srcID)
-        src[srcID] = sel.selReg(sel.reg(FAMILY_DWORD));
+        dst[srcID + 1] = sel.selReg(sel.reg(FAMILY_DWORD));
 
-      for (uint32_t valueID = 0; valueID < valueNum; ++srcID, ++valueID)
-        src[srcID] = sel.selReg(insn.getValue(valueID));
-      sel.WRITE64(addr, src, valueNum + tmpRegNum, valueNum, bti);
+      for (uint32_t valueID = 0; valueID < valueNum; ++valueID)
+        src[valueID] = sel.selReg(insn.getValue(valueID));
+      sel.WRITE64(addr, src, valueNum, dst, tmpRegNum + 1, bti);
     }
 
     void emitByteScatter(Selection::Opaque &sel,

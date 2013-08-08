@@ -412,12 +412,6 @@ namespace gbe
       curr.noMask = originMask;
       this->UNTYPED_WRITE(msg, bti, elemNum);
     }
-    /* Let's restore the original message(addr) register. */
-    /* XXX could be optimized if we don't allocate the address to the header
-       position of the message. */
-    curr.predicate = GEN_PREDICATE_NONE;
-    curr.noMask = GEN_MASK_DISABLE;
-    ADD(msg, GenRegister::retype(msg, GEN_TYPE_UD), GenRegister::immd(-4));
     pop();
   }
 
