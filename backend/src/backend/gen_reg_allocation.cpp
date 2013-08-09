@@ -136,6 +136,7 @@ namespace gbe
       const uint32_t offset = GEN_REG_SIZE + curbeOffset + subOffset;
       RA.insert(std::make_pair(reg, offset));
       this->intervals[reg].minID = 0;
+      this->intervals[reg].maxID = 0;
     }
   }
 

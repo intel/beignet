@@ -1670,7 +1670,6 @@ namespace gbe
       sel.push();
         sel.curr.predicate = GEN_PREDICATE_NONE;
         sel.curr.execWidth = simdWidth;
-        sel.curr.physicalFlag = 0;
         sel.SEL_CMP(genCmp, tmp, src0, src1);
       sel.pop();
 
