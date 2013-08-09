@@ -473,6 +473,11 @@ namespace gbe
         tracker.addDependency(node, index);
       }
 
+      // write-after-write in scratch memory
+      if (insn.opcode == SEL_OP_SPILL_REG) {
+        const uint32_t index = tracker.getIndex(0xff);
+        tracker.addDependency(node, index);
+      }
 
       // Consider barriers and wait are writing memory (local and global)
     if (insn.opcode == SEL_OP_BARRIER ||
