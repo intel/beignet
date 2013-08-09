@@ -629,12 +629,15 @@ namespace gbe
 
     for (auto &block : blockList)
       for (auto &insn : block.insnList) {
+        // spill / unspill insn should be skipped when do spilling
+        if(insn.opcode == SEL_OP_SPILL_REG || insn.opcode == SEL_OP_UNSPILL_REG) continue;
+
         const uint32_t srcNum = insn.srcNum, dstNum = insn.dstNum;
 
         for (uint32_t srcID = 0; srcID < srcNum; ++srcID) {
           const GenRegister selReg = insn.src(srcID);
           const ir::Register reg = selReg.reg();
-          if(selReg.file == GEN_GENERAL_REGISTER_FILE && reg == spilledReg) {
+          if(reg == spilledReg && selReg.file == GEN_GENERAL_REGISTER_FILE && selReg.physical == 0) {
             GBE_ASSERT(srcID < 5);
             SelectionInstruction *unspill = this->create(SEL_OP_UNSPILL_REG, 1, 0);
             unspill->state  = GenInstructionState(simdWidth);
@@ -653,7 +656,7 @@ namespace gbe
         for (uint32_t dstID = 0; dstID < dstNum; ++dstID) {
           const GenRegister selReg = insn.dst(dstID);
           const ir::Register reg = selReg.reg();
-          if(selReg.file == GEN_GENERAL_REGISTER_FILE && reg == spilledReg) {
+          if(reg == spilledReg && selReg.file == GEN_GENERAL_REGISTER_FILE && selReg.physical == 0) {
             GBE_ASSERT(dstID < 5);
             SelectionInstruction *spill = this->create(SEL_OP_SPILL_REG, 0, 1);
             spill->state  = GenInstructionState(simdWidth);
