@@ -162,6 +162,31 @@ namespace gbe
       case SEL_OP_MOV_DF:
         p->MOV_DF(dst, src, tmp);
         break;
+      case SEL_OP_CONVI_TO_I64: {
+        GenRegister middle;
+        if (src.type == GEN_TYPE_B || src.type == GEN_TYPE_D) {
+          middle = tmp;
+          middle.type = src.is_signed_int() ? GEN_TYPE_D : GEN_TYPE_UD;
+          p->MOV(middle, src);
+        } else {
+          middle = src;
+        }
+        int execWidth = p->curr.execWidth;
+        p->push();
+        p->curr.execWidth = 8;
+        for (int nib = 0; nib < execWidth / 4; nib ++) {
+          p->curr.chooseNib(nib);
+          p->MOV(dst.bottom_half(), middle);
+          if(middle.is_signed_int())
+            p->ASR(dst.top_half(), middle, GenRegister::immud(31));
+          else
+            p->MOV(dst.top_half(), GenRegister::immd(0));
+          dst = GenRegister::suboffset(dst, 4);
+          middle = GenRegister::suboffset(middle, 4);
+        }
+        p->pop();
+        break;
+      }
       default:
         NOT_IMPLEMENTED;
     }

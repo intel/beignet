@@ -455,6 +455,7 @@ namespace gbe
     ALU2WithTemp(RHADD)
     ALU2(UPSAMPLE_SHORT)
     ALU2(UPSAMPLE_INT)
+    ALU1WithTemp(CONVI_TO_I64)
 #undef ALU1
 #undef ALU1WithTemp
 #undef ALU2
@@ -2257,6 +2258,14 @@ namespace gbe
       } else if (dst.isdf()) {
         ir::Register r = sel.reg(ir::RegisterFamily::FAMILY_QWORD);
         sel.MOV_DF(dst, src, sel.selReg(r));
+      } else if (dst.isint64()) {
+        switch(src.type) {
+          case GEN_TYPE_F:
+          case GEN_TYPE_DF:
+            NOT_IMPLEMENTED;
+          default:
+            sel.CONVI_TO_I64(dst, src, sel.selReg(sel.reg(FAMILY_DWORD)));
+        }
       } else
         sel.MOV(dst, src);
       return true;

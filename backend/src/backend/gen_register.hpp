@@ -273,6 +273,12 @@ namespace gbe
       return r;
     }
 
+    INLINE bool is_signed_int(void) const {
+      if ((type == GEN_TYPE_B || type == GEN_TYPE_W || type == GEN_TYPE_D || type == GEN_TYPE_L) && file == GEN_GENERAL_REGISTER_FILE)
+        return true;
+      return false;
+    }
+
     INLINE bool isdf(void) const {
       if (type == GEN_TYPE_DF && file == GEN_GENERAL_REGISTER_FILE)
         return true;

@@ -125,6 +125,7 @@ set (utests_sources
   compiler_double_4.cpp
   compiler_long.cpp
   compiler_long_2.cpp
+  compiler_long_convert.cpp
   utest_assert.cpp
   utest.cpp
   utest_file_map.cpp
