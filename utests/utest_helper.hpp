@@ -1,4 +1,4 @@
-/* 
+/*
  * Copyright © 2012 Intel Corporation
  *
  * This library is free software; you can redistribute it and/or
@@ -88,7 +88,13 @@ extern EGLSurface  eglSurface;
   } while (0)
 
 #define OCL_CREATE_BUFFER(BUFFER, FLAGS, SIZE, DATA) \
-    OCL_CALL2(clCreateBuffer, BUFFER, ctx, FLAGS, SIZE, DATA)
+        OCL_CALL2(clCreateBuffer, BUFFER, ctx, FLAGS, SIZE, DATA)
+
+#define OCL_CREATE_USER_EVENT(EVENT) \
+    OCL_CALL2(clCreateUserEvent, EVENT, ctx)
+
+#define OCL_SET_USER_EVENT_STATUS(EVENT, STATUS) \
+    OCL_CALL(clSetUserEventStatus, EVENT, STATUS)
 
 #define OCL_CREATE_IMAGE(IMAGE, FLAGS, FORMAT, DESC, DATA) \
     OCL_CALL2(clCreateImage, IMAGE, ctx, FLAGS, FORMAT, DESC, DATA)

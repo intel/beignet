@@ -118,6 +118,7 @@ set (utests_sources
   builtin_acos_asin.cpp
   runtime_createcontext.cpp
   runtime_null_kernel_arg.cpp
+	runtime_event.cpp
   compiler_double.cpp
   compiler_double_2.cpp
   compiler_double_3.cpp
