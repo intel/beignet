@@ -10,6 +10,7 @@ set(OPENCL_SRC
     cl_program.c
     cl_sampler.c
     cl_event.c
+    cl_enqueue.c
     cl_image.c
     cl_mem.c
     cl_platform_id.c
