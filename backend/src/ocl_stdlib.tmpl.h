@@ -123,6 +123,7 @@ typedef size_t __event_t;
 #define FLT_MIN_10_EXP -37
 #define FLT_MIN_EXP -125
 #define FLT_RADIX 2
+#define FLT_ONE 1.0000000000e+00         /* 0x3F800000 */
 #define FLT_MAX 0x1.fffffep127f
 #define FLT_MIN 0x1.0p-126f
 #define FLT_EPSILON 0x1.0p-23f
@@ -561,7 +562,36 @@ INLINE_OVERLOADABLE float __gen_ocl_internal_tanh(float x) {
   float y = native_exp(-2 * x);
   return (1 - y) / (1 + y);
 }
+
+typedef union
+{
+  float value;
+  int word;
+} ieee_float_shape_type;
+
+#ifndef GET_FLOAT_WORD
+#define GET_FLOAT_WORD(i,d)         \
+do {                                \
+  ieee_float_shape_type gf_u;       \
+  gf_u.value = (d);                 \
+  (i) = gf_u.word;                  \
+} while (0)
+#endif
+
 INLINE_OVERLOADABLE float __gen_ocl_internal_asin(float x) {
+  int hx, ix;
+  GET_FLOAT_WORD(hx,x);
+  ix = hx&0x7fffffff;
+  if(ix == 0x3f800000) {
+    return x * M_PI_2_F;  /* asin(|1|)=+-pi/2 with inexact */
+  }
+  if(ix > 0x3f800000) {            /* |x|>= 1 */
+    return (x-x) / (x-x);          /* asin(|x|>1) is NaN */
+  }
+  if(ix < 0x32000000) {            /* if |x| < 2**-27 */
+    if(HUGE_VALF + x > FLT_ONE) return x;   /* return x with inexact if x!=0*/
+  }
+  /* 1 > |x| >= 2**-27 */
   float sum = x, c = x, m = 1.0;
   int n = 1;
   do
