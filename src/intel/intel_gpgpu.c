@@ -478,7 +478,7 @@ intel_gpgpu_map_address_space(intel_gpgpu_t *gpgpu)
   ss1->ss2.width  = ss0->ss2.width  = 127;   /* bits 6:0 of sz */
   ss1->ss2.height = ss0->ss2.height = 16383; /* bits 20:7 of sz */
   ss0->ss3.depth  = 1023; /* bits 30:21 of sz */
-  ss1->ss3.depth  = 510;  /* bits 30:21 of sz */
+  ss1->ss3.depth  = 1023;  /* bits 30:21 of sz */
   ss1->ss5.cache_control = ss0->ss5.cache_control = cc_llc_l3;
   heap->binding_table[0] = offsetof(surface_heap_t, surface);
   heap->binding_table[1] = sizeof(gen7_surface_state_t) + offsetof(surface_heap_t, surface);
