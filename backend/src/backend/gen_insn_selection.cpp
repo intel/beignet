@@ -2088,7 +2088,7 @@ namespace gbe
         dst[dstID] = sel.selReg(sel.reg(FAMILY_DWORD));
       for ( uint32_t valueID = 0; valueID < valueNum; ++dstID, ++valueID)
         dst[dstID] = sel.selReg(insn.getValue(valueID));
-      sel.READ64(addr, sel.selReg(sel.reg(FAMILY_QWORD)), dst, valueNum + tmpRegNum, valueNum, bti);
+      sel.READ64(addr, sel.selReg(sel.reg(FAMILY_QWORD), ir::TYPE_U64), dst, valueNum + tmpRegNum, valueNum, bti);
     }
 
     void emitByteGather(Selection::Opaque &sel,
