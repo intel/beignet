@@ -63,4 +63,9 @@ LOCAL cl_gpgpu_batch_end_cb *cl_gpgpu_batch_end = NULL;
 LOCAL cl_gpgpu_flush_cb *cl_gpgpu_flush = NULL;
 LOCAL cl_gpgpu_walker_cb *cl_gpgpu_walker = NULL;
 LOCAL cl_gpgpu_bind_sampler_cb *cl_gpgpu_bind_sampler = NULL;
+LOCAL cl_gpgpu_event_new_cb *cl_gpgpu_event_new = NULL;
+LOCAL cl_gpgpu_event_update_status_cb *cl_gpgpu_event_update_status = NULL;
+LOCAL cl_gpgpu_event_pending_cb *cl_gpgpu_event_pending = NULL;
+LOCAL cl_gpgpu_event_resume_cb *cl_gpgpu_event_resume = NULL;
+LOCAL cl_gpgpu_event_delete_cb *cl_gpgpu_event_delete = NULL;
 

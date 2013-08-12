@@ -329,7 +329,7 @@ cl_int cl_enqueue_handle(enqueue_data* data)
     case EnqueueUnmapMemObject:
       return cl_enqueue_unmap_mem_object(data);
     case EnqueueNDRangeKernel:
-      //cl_gpgpu_event_resume((cl_gpgpu_event)data->ptr);   //goto default
+      cl_gpgpu_event_resume((cl_gpgpu_event)data->ptr);   //goto default
     default:
       return CL_SUCCESS;
   }

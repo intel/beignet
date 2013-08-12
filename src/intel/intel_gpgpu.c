@@ -1,4 +1,4 @@
-/* 
+/*
  * Copyright © 2012 Intel Corporation
  *
  * This library is free software; you can redistribute it and/or
@@ -57,6 +57,12 @@ typedef struct surface_heap {
   char surface[256][sizeof(gen6_surface_state_t)];
 } surface_heap_t;
 
+typedef struct intel_event {
+  intel_batchbuffer_t *batch;
+  drm_intel_bo* buffer;
+  int status;
+} intel_event_t;
+
 #define MAX_IF_DESC    32
 
 /* We can bind only a limited number of buffers */
@@ -106,8 +112,8 @@ typedef struct intel_gpgpu intel_gpgpu_t;
 static void
 intel_gpgpu_sync(intel_gpgpu_t *gpgpu)
 {
-    if (gpgpu->batch->last_bo)
-	drm_intel_bo_wait_rendering(gpgpu->batch->last_bo);
+  if (gpgpu->batch->last_bo)
+    drm_intel_bo_wait_rendering(gpgpu->batch->last_bo);
 }
 
 static void
@@ -225,7 +231,7 @@ intel_gpgpu_load_vfe_state(intel_gpgpu_t *gpgpu)
 }
 
 static void
-intel_gpgpu_load_constant_buffer(intel_gpgpu_t *gpgpu) 
+intel_gpgpu_load_constant_buffer(intel_gpgpu_t *gpgpu)
 {
   BEGIN_BATCH(gpgpu->batch, 4);
   OUT_BATCH(gpgpu->batch, CMD(2,0,1) | (4 - 2));  /* length-2 */
@@ -243,7 +249,7 @@ intel_gpgpu_load_constant_buffer(intel_gpgpu_t *gpgpu)
 }
 
 static void
-intel_gpgpu_load_idrt(intel_gpgpu_t *gpgpu) 
+intel_gpgpu_load_idrt(intel_gpgpu_t *gpgpu)
 {
   BEGIN_BATCH(gpgpu->batch, 4);
   OUT_BATCH(gpgpu->batch, CMD(2,0,2) | (4 - 2)); /* length-2 */
@@ -256,7 +262,7 @@ intel_gpgpu_load_idrt(intel_gpgpu_t *gpgpu)
 static const uint32_t gpgpu_l3_config_reg1[] = {
   0x00080040, 0x02040040, 0x00800040, 0x01000038,
   0x02000030, 0x01000038, 0x00000038, 0x00000040,
-  0x0A140091, 0x09100091, 0x08900091, 0x08900091 
+  0x0A140091, 0x09100091, 0x08900091, 0x08900091
 };
 
 static const uint32_t gpgpu_l3_config_reg2[] = {
@@ -404,7 +410,7 @@ intel_gpgpu_state_init(intel_gpgpu_t *gpgpu,
   /* surface state */
   if(gpgpu->surface_heap_b.bo)
     dri_bo_unreference(gpgpu->surface_heap_b.bo);
-  bo = dri_bo_alloc(bufmgr, 
+  bo = dri_bo_alloc(bufmgr,
                     "SURFACE_HEAP",
                     sizeof(surface_heap_t),
                     32);
@@ -416,7 +422,7 @@ intel_gpgpu_state_init(intel_gpgpu_t *gpgpu,
   /* Interface descriptor remap table */
   if(gpgpu->idrt_b.bo)
     dri_bo_unreference(gpgpu->idrt_b.bo);
-  bo = dri_bo_alloc(bufmgr, 
+  bo = dri_bo_alloc(bufmgr,
                     "IDRT",
                     MAX_IF_DESC * sizeof(struct gen6_interface_descriptor),
                     32);
@@ -431,7 +437,7 @@ intel_gpgpu_state_init(intel_gpgpu_t *gpgpu,
   /* sampler state */
   if (gpgpu->sampler_state_b.bo)
     dri_bo_unreference(gpgpu->sampler_state_b.bo);
-  bo = dri_bo_alloc(gpgpu->drv->bufmgr, 
+  bo = dri_bo_alloc(gpgpu->drv->bufmgr,
                     "SAMPLER_STATE",
                     GEN_MAX_SAMPLERS * sizeof(gen6_sampler_state_t),
                     32);
@@ -830,6 +836,83 @@ intel_gpgpu_walker(intel_gpgpu_t *gpgpu,
   ADVANCE_BATCH(gpgpu->batch);
 }
 
+static intel_event_t*
+intel_gpgpu_event_new(intel_gpgpu_t *gpgpu)
+{
+  intel_event_t *event = NULL;
+  TRY_ALLOC_NO_ERR (event, CALLOC(intel_event_t));
+
+  event->status = command_queued;
+  event->batch = NULL;
+  event->buffer = gpgpu->batch->buffer;
+  if(event->buffer != NULL)
+    drm_intel_bo_reference(event->buffer);
+
+exit:
+  return event;
+error:
+  cl_free(event);
+  event = NULL;
+  goto exit;
+}
+
+static int
+intel_gpgpu_event_update_status(intel_event_t *event, int wait)
+{
+  if(event->status == command_complete)
+    return event->status;
+
+  if (event->buffer &&
+      event->batch == NULL &&        //have flushed
+      !drm_intel_bo_busy(event->buffer)) {
+    event->status = command_complete;
+    drm_intel_bo_unreference(event->buffer);
+    event->buffer = NULL;
+    return event->status;
+  }
+
+  if(wait == 0)
+    return event->status;
+
+  if (event->buffer) {
+    drm_intel_bo_wait_rendering(event->buffer);
+    event->status = command_complete;
+    drm_intel_bo_unreference(event->buffer);
+    event->buffer = NULL;
+  }
+  return event->status;
+}
+
+static void
+intel_gpgpu_event_pending(intel_gpgpu_t *gpgpu, intel_event_t *event)
+{
+  assert(event->buffer);           //This is gpu enqueue command
+  assert(event->batch == NULL);    //This command haven't pengding.
+  event->batch = intel_batchbuffer_new(gpgpu->drv);
+  assert(event->batch);
+  *event->batch = *gpgpu->batch;
+  if(event->batch->buffer)
+    drm_intel_bo_reference(event->batch->buffer);
+}
+
+static void
+intel_gpgpu_event_resume(intel_event_t *event)
+{
+  assert(event->batch);           //This command have pending.
+  intel_batchbuffer_flush(event->batch);
+  intel_batchbuffer_delete(event->batch);
+  event->batch = NULL;
+}
+
+static void
+intel_gpgpu_event_delete(intel_event_t *event)
+{
+  assert(event->batch == NULL);   //This command must have been flushed.
+  if(event->buffer)
+    drm_intel_bo_unreference(event->buffer);
+  cl_free(event);
+}
+
 LOCAL void
 intel_set_gpgpu_callbacks(void)
 {
@@ -851,5 +934,10 @@ intel_set_gpgpu_callbacks(void)
   cl_gpgpu_walker = (cl_gpgpu_walker_cb *) intel_gpgpu_walker;
   cl_gpgpu_bind_sampler = (cl_gpgpu_bind_sampler_cb *) intel_gpgpu_bind_sampler;
   cl_gpgpu_set_scratch = (cl_gpgpu_set_scratch_cb *) intel_gpgpu_set_scratch;
+  cl_gpgpu_event_new = (cl_gpgpu_event_new_cb *)intel_gpgpu_event_new;
+  cl_gpgpu_event_update_status = (cl_gpgpu_event_update_status_cb *)intel_gpgpu_event_update_status;
+  cl_gpgpu_event_pending = (cl_gpgpu_event_pending_cb *)intel_gpgpu_event_pending;
+  cl_gpgpu_event_resume = (cl_gpgpu_event_resume_cb *)intel_gpgpu_event_resume;
+  cl_gpgpu_event_delete = (cl_gpgpu_event_delete_cb *)intel_gpgpu_event_delete;
 }
 

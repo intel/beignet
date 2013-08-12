@@ -46,6 +46,9 @@ typedef struct _cl_driver *cl_driver;
 /* Encapsulates the gpgpu stream of commands */
 typedef struct _cl_gpgpu *cl_gpgpu;
 
+/* Encapsulates the event  of a command stream */
+typedef struct _cl_gpgpu_event *cl_gpgpu_event;
+
 typedef struct _cl_context_prop *cl_context_prop;
 typedef struct _cl_sampler *cl_sampler;
 
@@ -85,6 +88,13 @@ typedef enum cl_cache_control {
   cc_llc      = 0x2,
   cc_llc_l3   = 0x3
 } cl_cache_control;
+
+typedef enum gpu_command_status {
+  command_queued    = 3,
+  command_submitted = 2,
+  command_running   = 1,
+  command_complete  = 0
+} gpu_command_status;
 
 /* Use this structure to bind kernels in the gpgpu state */
 typedef struct cl_gpgpu_kernel {
@@ -178,6 +188,27 @@ extern cl_gpgpu_batch_end_cb *cl_gpgpu_batch_end;
 /* Flush the command buffer */
 typedef void (cl_gpgpu_flush_cb)(cl_gpgpu);
 extern cl_gpgpu_flush_cb *cl_gpgpu_flush;
+
+/* new a event for a batch buffer */
+typedef cl_gpgpu_event (cl_gpgpu_event_new_cb)(cl_gpgpu);
+extern cl_gpgpu_event_new_cb *cl_gpgpu_event_new;
+
+/* new a event for a batch buffer */
+typedef int (cl_gpgpu_event_update_status_cb)(cl_gpgpu_event, int);
+extern cl_gpgpu_event_update_status_cb *cl_gpgpu_event_update_status;
+
+/* new a event for a batch buffer */
+typedef void (cl_gpgpu_event_pending_cb)(cl_gpgpu, cl_gpgpu_event);
+extern cl_gpgpu_event_pending_cb *cl_gpgpu_event_pending;
+
+/* new a event for a batch buffer */
+typedef void (cl_gpgpu_event_resume_cb)(cl_gpgpu_event);
+extern cl_gpgpu_event_resume_cb *cl_gpgpu_event_resume;
+
+/* new a event for a batch buffer */
+typedef void (cl_gpgpu_event_delete_cb)(cl_gpgpu_event);
+extern cl_gpgpu_event_delete_cb *cl_gpgpu_event_delete;
+
 
 /* Will spawn all threads */
 typedef void (cl_gpgpu_walker_cb)(cl_gpgpu,
