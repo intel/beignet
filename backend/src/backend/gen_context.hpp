@@ -76,6 +76,7 @@ namespace gbe
       return this->liveness->getLiveOut(bb);
     }
 
+    void collectShifter(GenRegister dest, GenRegister src);
     void loadTopHalf(GenRegister dest, GenRegister src);
     void storeTopHalf(GenRegister dest, GenRegister src);
 
@@ -92,6 +93,7 @@ namespace gbe
     void emitBinaryInstruction(const SelectionInstruction &insn);
     void emitBinaryWithTempInstruction(const SelectionInstruction &insn);
     void emitTernaryInstruction(const SelectionInstruction &insn);
+    void emitI64ShiftInstruction(const SelectionInstruction &insn);
     void emitCompareInstruction(const SelectionInstruction &insn);
     void emitJumpInstruction(const SelectionInstruction &insn);
     void emitIndirectMoveInstruction(const SelectionInstruction &insn);

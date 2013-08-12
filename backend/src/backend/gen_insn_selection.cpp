@@ -418,6 +418,8 @@ namespace gbe
   INLINE void OP(Reg dst, Reg src0, Reg src1, Reg temp) { ALU2WithTemp(SEL_OP_##OP, dst, src0, src1, temp); }
 #define ALU3(OP) \
   INLINE void OP(Reg dst, Reg src0, Reg src1, Reg src2) { ALU3(SEL_OP_##OP, dst, src0, src1, src2); }
+#define I64Shift(OP) \
+  INLINE void OP(Reg dst, Reg src0, Reg src1, GenRegister tmp[6]) { I64Shift(SEL_OP_##OP, dst, src0, src1, tmp); }
     ALU1(MOV)
     ALU1WithTemp(MOV_DF)
     ALU1WithTemp(LOAD_DF_IMM)
@@ -456,11 +458,17 @@ namespace gbe
     ALU2(UPSAMPLE_SHORT)
     ALU2(UPSAMPLE_INT)
     ALU1WithTemp(CONVI_TO_I64)
+    I64Shift(I64SHL)
+    I64Shift(I64SHR)
+    I64Shift(I64ASR)
 #undef ALU1
 #undef ALU1WithTemp
 #undef ALU2
 #undef ALU2WithTemp
 #undef ALU3
+#undef I64Shift
+    /*! Shift a 64-bit integer */
+    void I64Shift(SelectionOpcode opcode, Reg dst, Reg src0, Reg src1, GenRegister tmp[6]);
     /*! Encode a barrier instruction */
     void BARRIER(GenRegister src);
     /*! Encode a barrier instruction */
@@ -1031,6 +1039,15 @@ namespace gbe
     insn->src(2) = src2;
   }
 
+  void Selection::Opaque::I64Shift(SelectionOpcode opcode, Reg dst, Reg src0, Reg src1, GenRegister tmp[6]) {
+    SelectionInstruction *insn = this->appendInsn(opcode, 7, 2);
+    insn->dst(0) = dst;
+    insn->src(0) = src0;
+    insn->src(1) = src1;
+    for(int i = 0; i < 6; i ++)
+      insn->dst(i + 1) = tmp[i];
+  }
+
   // Boiler plate to initialize the selection library at c++ pre-main
   static SelectionLibrary *selLib = NULL;
   static void destroySelectionLibrary(void) { GBE_DELETE(selLib); }
@@ -1557,9 +1574,33 @@ namespace gbe
             sel.ADD(dst, src0, GenRegister::negate(src1));
           sel.pop();
           break;
-        case OP_SHL: sel.SHL(dst, src0, src1); break;
-        case OP_SHR: sel.SHR(dst, src0, src1); break;
-        case OP_ASR: sel.ASR(dst, src0, src1); break;
+        case OP_SHL:
+          if (type == TYPE_S64 || type == TYPE_U64) {
+            GenRegister tmp[6];
+            for(int i = 0; i < 6; i ++)
+              tmp[i] = sel.selReg(sel.reg(FAMILY_DWORD));
+            sel.I64SHL(dst, src0, src1, tmp);
+          } else
+            sel.SHL(dst, src0, src1);
+          break;
+        case OP_SHR:
+          if (type == TYPE_S64 || type == TYPE_U64) {
+            GenRegister tmp[6];
+            for(int i = 0; i < 6; i ++)
+              tmp[i] = sel.selReg(sel.reg(FAMILY_DWORD));
+            sel.I64SHR(dst, src0, src1, tmp);
+          } else
+            sel.SHR(dst, src0, src1);
+          break;
+        case OP_ASR:
+          if (type == TYPE_S64 || type == TYPE_U64) {
+            GenRegister tmp[6];
+            for(int i = 0; i < 6; i ++)
+              tmp[i] = sel.selReg(sel.reg(FAMILY_DWORD));
+            sel.I64ASR(dst, src0, src1, tmp);
+          } else
+            sel.ASR(dst, src0, src1);
+          break;
         case OP_MUL_HI: {
             GenRegister temp = GenRegister::retype(sel.selReg(sel.reg(FAMILY_DWORD)), GEN_TYPE_UD);
             sel.MUL_HI(dst, src0, src1, temp);

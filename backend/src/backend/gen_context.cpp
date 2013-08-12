@@ -385,6 +385,119 @@ namespace gbe
     }
   }
 
+  void GenContext::collectShifter(GenRegister dest, GenRegister src) {
+    int execWidth = p->curr.execWidth;
+    p->push();
+    p->curr.predicate = GEN_PREDICATE_NONE;
+    p->curr.execWidth = 8;
+    for (int nib = 0; nib < execWidth / 4; nib ++) {
+      p->AND(dest, src.bottom_half(), GenRegister::immud(63));
+      dest = GenRegister::suboffset(dest, 4);
+      src = GenRegister::suboffset(src, 4);
+    }
+    p->pop();
+  }
+
+  void GenContext::emitI64ShiftInstruction(const SelectionInstruction &insn) {
+    GenRegister dest = ra->genReg(insn.dst(0));
+    GenRegister x = ra->genReg(insn.src(0));
+    GenRegister y = ra->genReg(insn.src(1));
+    GenRegister a = ra->genReg(insn.dst(1));
+    GenRegister b = ra->genReg(insn.dst(2));
+    GenRegister c = ra->genReg(insn.dst(3));
+    GenRegister d = ra->genReg(insn.dst(4));
+    GenRegister e = ra->genReg(insn.dst(5));
+    GenRegister f = ra->genReg(insn.dst(6));
+    a.type = b.type = c.type = d.type = e.type = f.type = GEN_TYPE_UD;
+    GenRegister zero = GenRegister::immud(0);
+    switch(insn.opcode) {
+      case SEL_OP_I64SHL:
+        p->push();
+        p->curr.predicate = GEN_PREDICATE_NONE;
+        collectShifter(a, y);
+        loadBottomHalf(e, x);
+        loadTopHalf(f, x);
+        p->SHR(b, e, GenRegister::negate(a));
+        p->SHL(c, e, a);
+        p->SHL(d, f, a);
+        p->OR(e, d, b);
+        p->MOV(GenRegister::flag(1, 1), GenRegister::immuw(0xFFFF));
+        p->curr.predicate = GEN_PREDICATE_NORMAL;
+        p->curr.physicalFlag = 1, p->curr.flag = 1, p->curr.subFlag = 1;
+        p->CMP(GEN_CONDITIONAL_Z, a, zero);
+        p->SEL(d, d, e);
+        p->curr.predicate = GEN_PREDICATE_NONE;
+        p->AND(a, a, GenRegister::immud(32));
+        p->MOV(GenRegister::flag(1, 1), GenRegister::immuw(0xFFFF));
+        p->curr.predicate = GEN_PREDICATE_NORMAL;
+        p->curr.physicalFlag = 1, p->curr.flag = 1, p->curr.subFlag = 1;
+        p->CMP(GEN_CONDITIONAL_Z, a, zero);
+        p->SEL(d, d, c);
+        p->SEL(c, c, zero);
+        p->pop();
+        storeBottomHalf(dest, c);
+        storeTopHalf(dest, d);
+        break;
+      case SEL_OP_I64SHR:
+        p->push();
+        p->curr.predicate = GEN_PREDICATE_NONE;
+        collectShifter(a, y);
+        loadBottomHalf(e, x);
+        loadTopHalf(f, x);
+        p->SHL(b, f, GenRegister::negate(a));
+        p->SHR(c, f, a);
+        p->SHR(d, e, a);
+        p->OR(e, d, b);
+        p->MOV(GenRegister::flag(1, 1), GenRegister::immuw(0xFFFF));
+        p->curr.predicate = GEN_PREDICATE_NORMAL;
+        p->curr.physicalFlag = 1, p->curr.flag = 1, p->curr.subFlag = 1;
+        p->CMP(GEN_CONDITIONAL_Z, a, zero);
+        p->SEL(d, d, e);
+        p->curr.predicate = GEN_PREDICATE_NONE;
+        p->AND(a, a, GenRegister::immud(32));
+        p->MOV(GenRegister::flag(1, 1), GenRegister::immuw(0xFFFF));
+        p->curr.predicate = GEN_PREDICATE_NORMAL;
+        p->curr.physicalFlag = 1, p->curr.flag = 1, p->curr.subFlag = 1;
+        p->CMP(GEN_CONDITIONAL_Z, a, zero);
+        p->SEL(d, d, c);
+        p->SEL(c, c, zero);
+        p->pop();
+        storeBottomHalf(dest, d);
+        storeTopHalf(dest, c);
+        break;
+      case SEL_OP_I64ASR:
+        f.type = GEN_TYPE_D;
+        p->push();
+        p->curr.predicate = GEN_PREDICATE_NONE;
+        collectShifter(a, y);
+        loadBottomHalf(e, x);
+        loadTopHalf(f, x);
+        p->SHL(b, f, GenRegister::negate(a));
+        p->ASR(c, f, a);
+        p->SHR(d, e, a);
+        p->OR(e, d, b);
+        p->MOV(GenRegister::flag(1, 1), GenRegister::immuw(0xFFFF));
+        p->curr.predicate = GEN_PREDICATE_NORMAL;
+        p->curr.physicalFlag = 1, p->curr.flag = 1, p->curr.subFlag = 1;
+        p->CMP(GEN_CONDITIONAL_Z, a, zero);
+        p->SEL(d, d, e);
+        p->curr.predicate = GEN_PREDICATE_NONE;
+        p->AND(a, a, GenRegister::immud(32));
+        p->MOV(GenRegister::flag(1, 1), GenRegister::immuw(0xFFFF));
+        p->curr.predicate = GEN_PREDICATE_NORMAL;
+        p->curr.physicalFlag = 1, p->curr.flag = 1, p->curr.subFlag = 1;
+        p->CMP(GEN_CONDITIONAL_Z, a, zero);
+        p->SEL(d, d, c);
+        p->SEL(c, c, GenRegister::immd(-1));
+        p->pop();
+        storeBottomHalf(dest, d);
+        storeTopHalf(dest, c);
+        break;
+      default:
+        NOT_IMPLEMENTED;
+    }
+  }
+
   void GenContext::loadTopHalf(GenRegister dest, GenRegister src) {
     int execWidth = p->curr.execWidth;
     src = src.top_half();
