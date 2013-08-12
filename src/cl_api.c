@@ -1,4 +1,4 @@
-/* 
+/*
  * Copyright © 2012 Intel Corporation
  *
  * This library is free software; you can redistribute it and/or
@@ -18,9 +18,11 @@
  */
 
 #include "cl_platform_id.h"
-#include "cl_device_id.h" 
+#include "cl_device_id.h"
 #include "cl_context.h"
 #include "cl_command_queue.h"
+#include "cl_enqueue.h"
+#include "cl_event.h"
 #include "cl_program.h"
 #include "cl_kernel.h"
 #include "cl_mem.h"
@@ -36,6 +38,7 @@
 #include <stdio.h>
 #include <string.h>
 #include <assert.h>
+#include <unistd.h>
 
 #ifndef CL_VERSION_1_2
 #define CL_MAP_WRITE_INVALIDATE_REGION              (1 << 2)
@@ -58,6 +61,23 @@ typedef intptr_t cl_device_partition_property;
 	      *param_value_size_ret = sizeof(TYPE)*ELT; \
 	  return RET; \
 	} while(0)
+
+inline cl_int
+handle_events(cl_command_queue queue, cl_int num, const cl_event *wait_list,
+              cl_event* event, enqueue_data* data, cl_command_type type)
+{
+  cl_int status = cl_event_wait_events(num, wait_list);
+  cl_event e;
+  if(event != NULL || status == CL_ENQUEUE_EXECUTE_DEFER) {
+    e = cl_event_new(queue->ctx, queue, type, event!=NULL);
+    if(event != NULL)
+      *event = e;
+    if(status == CL_ENQUEUE_EXECUTE_DEFER) {
+      cl_event_new_enqueue_callback(e, data, num, wait_list);
+    }
+  }
+  return status;
+}
 
 static cl_int
 cl_check_device_type(cl_device_type device_type)
@@ -987,8 +1007,20 @@ cl_int
 clWaitForEvents(cl_uint          num_events,
                 const cl_event * event_list)
 {
-  NOT_IMPLEMENTED;
-  return 0;
+  cl_int err = CL_SUCCESS;
+  cl_context ctx = NULL;
+
+  if(num_events > 0 && event_list)
+    ctx = event_list[0]->ctx;
+
+  TRY(cl_event_check_waitlist, num_events, event_list, NULL, ctx);
+
+  while(cl_event_wait_events(num_events, event_list) == CL_ENQUEUE_EXECUTE_DEFER) {
+    usleep(8000);       //sleep 8ms to wait other thread
+  }
+
+error:
+  return err;
 }
 
 cl_int
@@ -998,38 +1030,94 @@ clGetEventInfo(cl_event      event,
                void *        param_value,
                size_t *      param_value_size_ret)
 {
-  NOT_IMPLEMENTED;
-  return 0;
+  cl_int err = CL_SUCCESS;
+  CHECK_EVENT(event);
+
+  if (param_name == CL_EVENT_COMMAND_QUEUE) {
+    if(event->queue == NULL) {
+      param_value_size_ret = 0;
+      param_value = NULL;
+      return err;
+    }
+    FILL_GETINFO_RET (cl_command_queue, 1, &event->queue, CL_SUCCESS);
+  } else if (param_name == CL_EVENT_CONTEXT) {
+    FILL_GETINFO_RET (cl_context, 1, &event->ctx, CL_SUCCESS);
+  } else if (param_name == CL_EVENT_COMMAND_TYPE) {
+    FILL_GETINFO_RET (cl_command_type, 1, &event->type, CL_SUCCESS);
+  } else if (param_name == CL_EVENT_COMMAND_EXECUTION_STATUS) {
+    cl_event_update_status(event);
+    FILL_GETINFO_RET (cl_int, 1, &event->status, CL_SUCCESS);
+  } else if (param_name == CL_EVENT_REFERENCE_COUNT) {
+    cl_uint ref = event->ref_n;
+    FILL_GETINFO_RET (cl_int, 1, &ref, CL_SUCCESS);
+  } else {
+    return CL_INVALID_VALUE;
+  }
+
+error:
+  return err;
+
 }
 
 cl_event
 clCreateUserEvent(cl_context context,
                   cl_int *   errcode_ret)
 {
-  NOT_IMPLEMENTED;
-  return NULL;
+  cl_int err = CL_SUCCESS;
+  cl_event event = NULL;
+  CHECK_CONTEXT(context);
+
+  TRY_ALLOC(event, cl_event_new(context, NULL, CL_COMMAND_USER, CL_TRUE));
+
+error:
+  if(errcode_ret)
+    *errcode_ret = err;
+  return event;
 }
 
 cl_int
 clRetainEvent(cl_event  event)
 {
-  NOT_IMPLEMENTED;
-  return 0;
+  cl_int err = CL_SUCCESS;
+
+  CHECK_EVENT(event);
+  cl_event_add_ref(event);
+
+error:
+  return err;
 }
 
 cl_int
 clReleaseEvent(cl_event  event)
 {
-  NOT_IMPLEMENTED;
-  return 0;
+  cl_int err = CL_SUCCESS;
+
+  CHECK_EVENT(event);
+  cl_event_delete(event);
+
+error:
+  return err;
 }
 
 cl_int
 clSetUserEventStatus(cl_event    event,
                      cl_int      execution_status)
 {
-  NOT_IMPLEMENTED;
-  return 0;
+  cl_int err = CL_SUCCESS;
+
+  CHECK_EVENT(event);
+  if(execution_status > CL_COMPLETE) {
+    err = CL_INVALID_VALUE;
+    goto error;
+  }
+  if(event->status != CL_SUBMITTED) {
+    err = CL_INVALID_OPERATION;
+    goto error;
+  }
+
+  cl_event_set_status(event, execution_status);
+error:
+  return err;
 }
 
 cl_int
@@ -1038,8 +1126,20 @@ clSetEventCallback(cl_event     event,
                    void (CL_CALLBACK * pfn_notify) (cl_event, cl_int, void *),
                    void *       user_data)
 {
-  NOT_IMPLEMENTED;
-  return 0;
+  cl_int err = CL_SUCCESS;
+
+  CHECK_EVENT(event);
+  if((pfn_notify == NULL) ||
+    (command_exec_callback_type > CL_SUBMITTED) ||
+    (command_exec_callback_type < CL_COMPLETE)) {
+    err = CL_INVALID_VALUE;
+    goto error;
+  }
+  err = cl_event_set_callback(event, command_exec_callback_type, pfn_notify, user_data);
+
+error:
+  return err;
+
 }
 
 cl_int
@@ -1087,8 +1187,7 @@ clEnqueueReadBuffer(cl_command_queue command_queue,
                     cl_event *       event)
 {
   cl_int err = CL_SUCCESS;
-  void* src_ptr;
-
+  enqueue_data *data, defer_enqueue_data = { 0 };
   CHECK_QUEUE(command_queue);
   CHECK_MEM(buffer);
   if (command_queue->ctx != buffer->ctx) {
@@ -1109,14 +1208,20 @@ clEnqueueReadBuffer(cl_command_queue command_queue,
      goto error;
   }
 
-  if (!(src_ptr = cl_mem_map_auto(buffer))) {
-    err = CL_MAP_FAILURE;
-    goto error;
+  TRY(cl_event_check_waitlist, num_events_in_wait_list, event_wait_list, event, buffer->ctx);
+
+  data = &defer_enqueue_data;
+  data->type    = EnqueueReadBuffer;
+  data->mem_obj = buffer;
+  data->ptr     = ptr;
+  data->offset  = offset;
+  data->size    = size;
+
+  if(handle_events(command_queue, num_events_in_wait_list, event_wait_list,
+                   event, data, CL_COMMAND_READ_BUFFER) == CL_ENQUEUE_EXECUTE_IMM) {
+    err = cl_enqueue_handle(data);
+    if(event) cl_event_set_status(*event, CL_COMPLETE);
   }
-
-  memcpy(ptr, (char*)src_ptr + offset, size);
-
-  err = cl_mem_unmap_auto(buffer);
 
 error:
   return err;
@@ -1154,7 +1259,7 @@ clEnqueueWriteBuffer(cl_command_queue    command_queue,
                      cl_event *          event)
 {
   cl_int err = CL_SUCCESS;
-  void* dst_ptr;
+  enqueue_data *data, no_wait_data = { 0 };
 
   CHECK_QUEUE(command_queue);
   CHECK_MEM(buffer);
@@ -1176,16 +1281,22 @@ clEnqueueWriteBuffer(cl_command_queue    command_queue,
     goto error;
   }
 
-  if (!(dst_ptr = cl_mem_map_auto(buffer))) {
-    err = CL_MAP_FAILURE;
-    goto error;
+  TRY(cl_event_check_waitlist, num_events_in_wait_list, event_wait_list, event, buffer->ctx);
+
+  data = &no_wait_data;
+  data->type      = EnqueueWriteBuffer;
+  data->mem_obj   = buffer;
+  data->const_ptr = ptr;
+  data->offset    = offset;
+  data->size      = size;
+
+  if(handle_events(command_queue, num_events_in_wait_list, event_wait_list,
+                   event, data, CL_COMMAND_READ_BUFFER) == CL_ENQUEUE_EXECUTE_IMM) {
+    err = cl_enqueue_handle(data);
+    if(event) cl_event_set_status(*event, CL_COMPLETE);
   }
 
-  memcpy((char*)dst_ptr + offset, ptr, size);
-
-  err = cl_mem_unmap_auto(buffer);
-
-error:
+ error:
   return err;
 }
 
@@ -1257,7 +1368,7 @@ clEnqueueReadImage(cl_command_queue      command_queue,
                    cl_event *            event)
 {
   cl_int err = CL_SUCCESS;
-  void* src_ptr;
+  enqueue_data *data, no_wait_data = { 0 };
 
   CHECK_QUEUE(command_queue);
   CHECK_IMAGE(image);
@@ -1304,35 +1415,22 @@ clEnqueueReadImage(cl_command_queue      command_queue,
      goto error;
   }
 
-  if (!(src_ptr = cl_mem_map_auto(image))) {
-    err = CL_MAP_FAILURE;
-    goto error;
-  }
+  TRY(cl_event_check_waitlist, num_events_in_wait_list, event_wait_list, event, image->ctx);
 
-  size_t offset = image->bpp*origin[0] + image->row_pitch*origin[1] + image->slice_pitch*origin[2];
-  src_ptr = (char*)src_ptr + offset;
+  data = &no_wait_data;
+  data->type        = EnqueueReadImage;
+  data->mem_obj     = image;
+  data->ptr         = ptr;
+  data->origin[0]   = origin[0];  data->origin[1] = origin[1];  data->origin[2] = origin[2];
+  data->region[0]   = region[0];  data->region[1] = region[1];  data->region[2] = region[2];
+  data->row_pitch   = row_pitch;
+  data->slice_pitch = slice_pitch;
 
-  if (!origin[0] && region[0] == image->w && row_pitch == image->row_pitch &&
-      (region[2] == 1 || (!origin[1] && region[1] == image->h && slice_pitch == image->slice_pitch)))
-  {
-    memcpy(ptr, src_ptr, region[2] == 1 ? row_pitch*region[1] : slice_pitch*region[2]);
+  if(handle_events(command_queue, num_events_in_wait_list, event_wait_list,
+                   event, data, CL_COMMAND_READ_BUFFER) == CL_ENQUEUE_EXECUTE_IMM) {
+    err = cl_enqueue_handle(data);
+    if(event) cl_event_set_status(*event, CL_COMPLETE);
   }
-  else {
-    cl_uint y, z;
-    for (z = 0; z < region[2]; z++) {
-      const char* src = src_ptr;
-      char* dst = ptr;
-      for (y = 0; y < region[1]; y++) {
-	memcpy(dst, src, image->bpp*region[0]);
-	src += image->row_pitch;
-	dst += row_pitch;
-      }
-      src_ptr = (char*)src_ptr + image->slice_pitch;
-      ptr = (char*)ptr + slice_pitch;
-    }
-  }
-
-  err = cl_mem_unmap_auto(image);
 
 error:
   return err;
@@ -1352,7 +1450,7 @@ clEnqueueWriteImage(cl_command_queue     command_queue,
                     cl_event *           event)
 {
   cl_int err = CL_SUCCESS;
-  void* dst_ptr;
+  enqueue_data *data, no_wait_data = { 0 };
 
   CHECK_QUEUE(command_queue);
   CHECK_IMAGE(image);
@@ -1399,35 +1497,22 @@ clEnqueueWriteImage(cl_command_queue     command_queue,
     goto error;
   }
 
-  if (!(dst_ptr = cl_mem_map_auto(image))) {
-    err = CL_MAP_FAILURE;
-    goto error;
-  }
+  TRY(cl_event_check_waitlist, num_events_in_wait_list, event_wait_list, event, image->ctx);
 
-  size_t offset = image->bpp*origin[0] + image->row_pitch*origin[1] + image->slice_pitch*origin[2];
-  dst_ptr = (char*)dst_ptr + offset;
+  data = &no_wait_data;
+  data->type        = EnqueueWriteImage;
+  data->mem_obj     = image;
+  data->const_ptr   = ptr;
+  data->origin[0]   = origin[0];  data->origin[1] = origin[1];  data->origin[2] = origin[2];
+  data->region[0]   = region[0];  data->region[1] = region[1];  data->region[2] = region[2];
+  data->row_pitch   = row_pitch;
+  data->slice_pitch = slice_pitch;
 
-  if (!origin[0] && region[0] == image->w && row_pitch == image->row_pitch &&
-      (region[2] == 1 || (!origin[1] && region[1] == image->h && slice_pitch == image->slice_pitch)))
-  {
-    memcpy(dst_ptr, ptr, region[2] == 1 ? row_pitch*region[1] : slice_pitch*region[2]);
+  if(handle_events(command_queue, num_events_in_wait_list, event_wait_list,
+                   event, data, CL_COMMAND_READ_BUFFER) == CL_ENQUEUE_EXECUTE_IMM) {
+    err = cl_enqueue_handle(data);
+    if(event) cl_event_set_status(*event, CL_COMPLETE);
   }
-  else {
-    cl_uint y, z;
-    for (z = 0; z < region[2]; z++) {
-      const char* src = ptr;
-      char* dst = dst_ptr;
-      for (y = 0; y < region[1]; y++) {
-	memcpy(dst, src, image->bpp*region[0]);
-	src += row_pitch;
-	dst += image->row_pitch;
-      }
-      ptr = (char*)ptr + slice_pitch;
-      dst_ptr = (char*)dst_ptr + image->slice_pitch;
-    }
-  }
-
-  err = cl_mem_unmap_auto(image);
 
 error:
   return err;
@@ -1490,10 +1575,8 @@ clEnqueueMapBuffer(cl_command_queue  command_queue,
                    cl_event *        event,
                    cl_int *          errcode_ret)
 {
-  void *ptr = NULL;
-  void *mem_ptr = NULL;
   cl_int err = CL_SUCCESS;
-  int slot = -1;
+  enqueue_data *data, no_wait_data = { 0 };
 
   CHECK_QUEUE(command_queue);
   CHECK_MEM(buffer);
@@ -1519,73 +1602,25 @@ clEnqueueMapBuffer(cl_command_queue  command_queue,
     goto error;
   }
 
-  if (!(ptr = cl_mem_map_auto(buffer))) {
-    err = CL_MAP_FAILURE;
-    goto error;
+  TRY(cl_event_check_waitlist, num_events_in_wait_list, event_wait_list, event, buffer->ctx);
+
+  data = &no_wait_data;
+  data->type        = EnqueueMapBuffer;
+  data->mem_obj     = buffer;
+  data->offset      = offset;
+  data->size        = size;
+  data->map_flags   = map_flags;
+
+  if(handle_events(command_queue, num_events_in_wait_list, event_wait_list,
+                   event, data, CL_COMMAND_READ_BUFFER) == CL_ENQUEUE_EXECUTE_IMM) {
+    err = cl_enqueue_handle(data);
+    if(event) cl_event_set_status(*event, CL_COMPLETE);
   }
-
-  ptr = (char*)ptr + offset;
-
-  if(buffer->flags & CL_MEM_USE_HOST_PTR) {
-    assert(buffer->host_ptr);
-    memcpy(buffer->host_ptr + offset, ptr, size);
-    mem_ptr = buffer->host_ptr + offset;
-  } else {
-    mem_ptr = ptr;
-  }
-
-  /* Record the mapped address. */
-  if (!buffer->mapped_ptr_sz) {
-    buffer->mapped_ptr_sz = 16;
-    buffer->mapped_ptr = (cl_mapped_ptr *)malloc(
-          sizeof(cl_mapped_ptr) * buffer->mapped_ptr_sz);
-    if (!buffer->mapped_ptr) {
-      cl_mem_unmap_auto (buffer);
-      err = CL_OUT_OF_HOST_MEMORY;
-      ptr = NULL;
-      goto error;
-    }
-
-    memset(buffer->mapped_ptr, 0, buffer->mapped_ptr_sz * sizeof(cl_mapped_ptr));
-    slot = 0;
-  } else {
-    int i = 0;
-    for (; i < buffer->mapped_ptr_sz; i++) {
-      if (buffer->mapped_ptr[i].ptr == NULL) {
-        slot = i;
-        break;
-      }
-    }
-
-    if (i == buffer->mapped_ptr_sz) {
-      cl_mapped_ptr *new_ptr = (cl_mapped_ptr *)malloc(
-          sizeof(cl_mapped_ptr) * buffer->mapped_ptr_sz * 2);
-      if (!new_ptr) {
-        cl_mem_unmap_auto (buffer);
-        err = CL_OUT_OF_HOST_MEMORY;
-        ptr = NULL;
-        goto error;
-      }
-      memset(new_ptr, 0, 2 * buffer->mapped_ptr_sz * sizeof(cl_mapped_ptr));
-      memcpy(new_ptr, buffer->mapped_ptr,
-             buffer->mapped_ptr_sz * sizeof(cl_mapped_ptr));
-      slot = buffer->mapped_ptr_sz;
-      buffer->mapped_ptr_sz *= 2;
-      free(buffer->mapped_ptr);
-      buffer->mapped_ptr = new_ptr;
-    }
-  }
-
-  assert(slot != -1);
-  buffer->mapped_ptr[slot].ptr = mem_ptr;
-  buffer->mapped_ptr[slot].v_ptr = ptr;
-  buffer->mapped_ptr[slot].size = size;
-  buffer->map_ref++;
 
 error:
   if (errcode_ret)
     *errcode_ret = err;
-  return mem_ptr;
+  return data->ptr;
 }
 
 void *
@@ -1602,8 +1637,8 @@ clEnqueueMapImage(cl_command_queue   command_queue,
                   cl_event *         event,
                   cl_int *           errcode_ret)
 {
-  void *ptr = NULL;
   cl_int err = CL_SUCCESS;
+  enqueue_data *data, no_wait_data = { 0 };
 
   CHECK_QUEUE(command_queue);
   CHECK_IMAGE(image);
@@ -1638,18 +1673,27 @@ clEnqueueMapImage(cl_command_queue   command_queue,
     goto error;
   }
 
-  if (!(ptr = cl_mem_map_auto(image))) {
-    err = CL_MAP_FAILURE;
-    goto error;
-  }
+  TRY(cl_event_check_waitlist, num_events_in_wait_list, event_wait_list, event, image->ctx);
 
-  size_t offset = image->bpp*origin[0] + image->row_pitch*origin[1] + image->slice_pitch*origin[2];
-  ptr = (char*)ptr + offset;
+  data = &no_wait_data;
+  data->type        = EnqueueMapImage;
+  data->mem_obj     = image;
+  data->origin[0]   = origin[0];  data->origin[1] = origin[1];  data->origin[2] = origin[2];
+  data->region[0]   = region[0];  data->region[1] = region[1];  data->region[2] = region[2];
+  data->row_pitch   = *image_row_pitch;
+  data->slice_pitch = *image_slice_pitch;
+  data->map_flags   = map_flags;
+
+  if(handle_events(command_queue, num_events_in_wait_list, event_wait_list,
+                   event, data, CL_COMMAND_READ_BUFFER) == CL_ENQUEUE_EXECUTE_IMM) {
+    err = cl_enqueue_handle(data);
+    if(event) cl_event_set_status(*event, CL_COMPLETE);
+  }
 
 error:
   if (errcode_ret)
     *errcode_ret = err;
-  return ptr;
+  return data->ptr; //TODO: map and unmap first
 }
 
 cl_int
@@ -1661,9 +1705,7 @@ clEnqueueUnmapMemObject(cl_command_queue  command_queue,
                         cl_event *        event)
 {
   cl_int err = CL_SUCCESS;
-  int i;
-  size_t mapped_size = 0;
-  void * v_ptr = NULL;
+  enqueue_data *data, no_wait_data = { 0 };
 
   CHECK_QUEUE(command_queue);
   CHECK_MEM(memobj);
@@ -1672,54 +1714,17 @@ clEnqueueUnmapMemObject(cl_command_queue  command_queue,
     goto error;
   }
 
-  assert(memobj->mapped_ptr_sz >= memobj->map_ref);
-  INVALID_VALUE_IF(!mapped_ptr);
-  for (i = 0; i < memobj->mapped_ptr_sz; i++) {
-    if (memobj->mapped_ptr[i].ptr == mapped_ptr) {
-      memobj->mapped_ptr[i].ptr = NULL;
-      mapped_size = memobj->mapped_ptr[i].size;
-      v_ptr = memobj->mapped_ptr[i].v_ptr;
-      memobj->mapped_ptr[i].size = 0;
-      memobj->mapped_ptr[i].v_ptr = NULL;
-      memobj->map_ref--;
-      break;
-    }
-  }
-  /* can not find a mapped address? */
-  INVALID_VALUE_IF(i == memobj->mapped_ptr_sz);
+  TRY(cl_event_check_waitlist, num_events_in_wait_list, event_wait_list, event, memobj->ctx);
 
-  if (memobj->flags & CL_MEM_USE_HOST_PTR) {
-    assert(mapped_ptr >= memobj->host_ptr &&
-      mapped_ptr + mapped_size <= memobj->host_ptr + memobj->size);
-    /* Sync the data. */
-    memcpy(v_ptr, mapped_ptr, mapped_size);
-  } else {
-    assert(v_ptr == mapped_ptr);
-  }
+  data = &no_wait_data;
+  data->type        = EnqueueUnmapMemObject;
+  data->mem_obj     = memobj;
+  data->ptr         = mapped_ptr;
 
-  cl_mem_unmap_auto(memobj);
-
-  /* shrink the mapped slot. */
-  if (memobj->mapped_ptr_sz/2 > memobj->map_ref) {
-    int j = 0;
-    cl_mapped_ptr *new_ptr = (cl_mapped_ptr *)malloc(
-	sizeof(cl_mapped_ptr) * (memobj->mapped_ptr_sz/2));
-    if (!new_ptr) {
-      /* Just do nothing. */
-      goto error;
-    }
-    memset(new_ptr, 0, (memobj->mapped_ptr_sz/2) * sizeof(cl_mapped_ptr));
-
-    for (i = 0; i < memobj->mapped_ptr_sz; i++) {
-      if (memobj->mapped_ptr[i].ptr) {
-        new_ptr[j] = memobj->mapped_ptr[i];
-        j++;
-        assert(j < memobj->mapped_ptr_sz/2);
-      }
-    }
-    memobj->mapped_ptr_sz = memobj->mapped_ptr_sz/2;
-    free(memobj->mapped_ptr);
-    memobj->mapped_ptr = new_ptr;
+  if(handle_events(command_queue, num_events_in_wait_list, event_wait_list,
+                   event, data, CL_COMMAND_READ_BUFFER) == CL_ENQUEUE_EXECUTE_IMM) {
+    err = cl_enqueue_handle(data);
+    if(event) cl_event_set_status(*event, CL_COMPLETE);
   }
 
 error:
@@ -1742,6 +1747,7 @@ clEnqueueNDRangeKernel(cl_command_queue  command_queue,
   size_t fixed_local_sz[] = {1,1,1};
   cl_int err = CL_SUCCESS;
   cl_uint i;
+  enqueue_data *data, no_wait_data = { 0 };
 
   CHECK_QUEUE(command_queue);
   CHECK_KERNEL(kernel);
@@ -1774,8 +1780,8 @@ clEnqueueNDRangeKernel(cl_command_queue  command_queue,
     }
 
   /* Local sizes must be non-null and divide global sizes */
-  if (local_work_size != NULL) 
-    for (i = 0; i < work_dim; ++i) 
+  if (local_work_size != NULL)
+    for (i = 0; i < work_dim; ++i)
       if (UNLIKELY(local_work_size[i] == 0 || global_work_size[i] % local_work_size[i])) {
         err = CL_INVALID_WORK_GROUP_SIZE;
         goto error;
@@ -1789,9 +1795,9 @@ clEnqueueNDRangeKernel(cl_command_queue  command_queue,
   }
 
   /* XXX No event right now */
-  FATAL_IF(num_events_in_wait_list > 0, "Events are not supported");
-  FATAL_IF(event_wait_list != NULL, "Events are not supported");
-  FATAL_IF(event != NULL, "Events are not supported");
+  //FATAL_IF(num_events_in_wait_list > 0, "Events are not supported");
+  //FATAL_IF(event_wait_list != NULL, "Events are not supported");
+  //FATAL_IF(event != NULL, "Events are not supported");
 
   if (local_work_size != NULL)
     for (i = 0; i < work_dim; ++i)
@@ -1810,6 +1816,17 @@ clEnqueueNDRangeKernel(cl_command_queue  command_queue,
                                   fixed_global_off,
                                   fixed_global_sz,
                                   fixed_local_sz);
+  if(err != CL_SUCCESS)
+    goto error;
+
+  data = &no_wait_data;
+  data->type = EnqueueNDRangeKernel;
+  data->queue = command_queue;
+
+  if(handle_events(command_queue, num_events_in_wait_list, event_wait_list,
+                   event, data, CL_COMMAND_READ_BUFFER) == CL_ENQUEUE_EXECUTE_IMM) {
+    err = cl_command_queue_flush(command_queue);
+  }
 
 error:
   return err;
@@ -1855,8 +1872,12 @@ clEnqueueWaitForEvents(cl_command_queue  command_queue,
                        cl_uint           num_events,
                        const cl_event *  event_list)
 {
-  NOT_IMPLEMENTED;
-  return 0;
+  cl_int err = CL_SUCCESS;
+  CHECK_QUEUE(command_queue);
+  err = clWaitForEvents(num_events, event_list);
+
+error:
+  return err;
 }
 
 cl_int
@@ -1864,6 +1885,7 @@ clEnqueueBarrier(cl_command_queue  command_queue)
 {
   NOT_IMPLEMENTED;
   return 0;
+  //return clFinish(command_queue);
 }
 
 #define EXTFUNC(x)                      \

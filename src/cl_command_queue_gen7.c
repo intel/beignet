@@ -266,8 +266,6 @@ cl_command_queue_ND_range_gen7(cl_command_queue queue,
 
   /* Close the batch buffer and submit it */
   cl_gpgpu_batch_end(gpgpu, 0);
-  cl_gpgpu_flush(gpgpu);
-
 error:
   return err;
 }

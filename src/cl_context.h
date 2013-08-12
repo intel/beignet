@@ -62,10 +62,12 @@ struct _cl_context {
   cl_program programs;              /* All programs currently allocated */
   cl_mem buffers;                   /* All memory object currently allocated */
   cl_sampler samplers;              /* All sampler object currently allocated */
+  cl_event   events;                /* All event object currently allocated */
   pthread_mutex_t queue_lock;       /* To allocate and deallocate queues */
   pthread_mutex_t program_lock;     /* To allocate and deallocate programs */
   pthread_mutex_t buffer_lock;      /* To allocate and deallocate buffers */
   pthread_mutex_t sampler_lock;     /* To allocate and deallocate samplers */
+  pthread_mutex_t event_lock;       /* To allocate and deallocate events */
   uint32_t ver;                     /* Gen version */
   struct _cl_context_prop props;
   cl_context_properties * prop_user; /* a copy of user passed context properties when create context */

@@ -1,4 +1,4 @@
-/* 
+/*
  * Copyright © 2012 Intel Corporation
  *
  * This library is free software; you can redistribute it and/or
@@ -146,6 +146,18 @@ do {                                                        \
     goto error;                                             \
   }                                                         \
 } while (0)
+
+#define CHECK_EVENT(EVENT)                                    \
+  do {                                                        \
+    if (UNLIKELY(EVENT == NULL)) {                            \
+      err = CL_INVALID_EVENT;                            \
+      goto error;                                             \
+    }                                                         \
+    if (UNLIKELY(EVENT->magic != CL_MAGIC_EVENT_HEADER)) {    \
+      err = CL_INVALID_EVENT;                                 \
+      goto error;                                             \
+    }                                                         \
+  } while (0)
 
 #define CHECK_SAMPLER(SAMPLER)                              \
 do {                                                        \
