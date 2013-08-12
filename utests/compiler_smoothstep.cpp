@@ -34,7 +34,7 @@ void compiler_smoothstep(void)
   OCL_MAP_BUFFER(2);
   for (int i = 0; i < n; ++i) {
     float a = 0.1f * (rand() & 15) - 0.75f;
-    float b = a + 0.1f * (rand() & 15);
+    float b = a + 0.1f * (rand() & 15) + 0.1f;
     float c = 0.1f * (rand() & 15) - 0.75f;
     src1[i] = ((float*)buf_data[0])[i] = a;
     src2[i] = ((float*)buf_data[1])[i] = b;
