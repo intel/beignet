@@ -413,6 +413,13 @@ error:
 }
 
 LOCAL cl_int
+cl_command_queue_flush(cl_command_queue queue)
+{
+  cl_gpgpu_flush(queue->gpgpu);
+  return CL_SUCCESS;
+}
+
+LOCAL cl_int
 cl_command_queue_finish(cl_command_queue queue)
 {
   cl_gpgpu_sync(queue->gpgpu);

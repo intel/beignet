@@ -65,6 +65,9 @@ extern cl_int cl_command_queue_set_report_buffer(cl_command_queue, cl_mem);
 /* Fulsim will dump this buffer (mostly to check its consistency */
 cl_int cl_command_queue_set_fulsim_buffer(cl_command_queue, cl_mem);
 
+/* Flush for the command queue */
+extern cl_int cl_command_queue_flush(cl_command_queue);
+
 /* Wait for the completion of the command queue */
 extern cl_int cl_command_queue_finish(cl_command_queue);
 
