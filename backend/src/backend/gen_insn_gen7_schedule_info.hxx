@@ -1,7 +1,9 @@
 //                 Family     Latency     SIMD16     SIMD8
 DECL_GEN7_SCHEDULE(Label,           0,         0,        0)
 DECL_GEN7_SCHEDULE(Unary,           20,        4,        2)
+DECL_GEN7_SCHEDULE(UnaryWithTemp,   20,        4,        2)
 DECL_GEN7_SCHEDULE(Binary,          20,        4,        2)
+DECL_GEN7_SCHEDULE(BinaryWithTemp,  20,        4,        2)
 DECL_GEN7_SCHEDULE(Ternary,         20,        4,        2)
 DECL_GEN7_SCHEDULE(Compare,         20,        4,        2)
 DECL_GEN7_SCHEDULE(Jump,            14,        1,        1)

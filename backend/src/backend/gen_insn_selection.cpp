@@ -410,13 +410,17 @@ namespace gbe
 
 #define ALU1(OP) \
   INLINE void OP(Reg dst, Reg src) { ALU1(SEL_OP_##OP, dst, src); }
+#define ALU1WithTemp(OP) \
+  INLINE void OP(Reg dst, Reg src, Reg temp) { ALU1WithTemp(SEL_OP_##OP, dst, src, temp); }
 #define ALU2(OP) \
   INLINE void OP(Reg dst, Reg src0, Reg src1) { ALU2(SEL_OP_##OP, dst, src0, src1); }
+#define ALU2WithTemp(OP) \
+  INLINE void OP(Reg dst, Reg src0, Reg src1, Reg temp) { ALU2WithTemp(SEL_OP_##OP, dst, src0, src1, temp); }
 #define ALU3(OP) \
   INLINE void OP(Reg dst, Reg src0, Reg src1, Reg src2) { ALU3(SEL_OP_##OP, dst, src0, src1, src2); }
     ALU1(MOV)
-    ALU2(MOV_DF)
-    ALU2(LOAD_DF_IMM)
+    ALU1WithTemp(MOV_DF)
+    ALU1WithTemp(LOAD_DF_IMM)
     ALU1(LOAD_INT64_IMM)
     ALU1(RNDZ)
     ALU1(RNDE)
@@ -435,8 +439,8 @@ namespace gbe
     ALU2(RSL)
     ALU2(ASR)
     ALU2(ADD)
-    ALU3(I64ADD)
-    ALU3(I64SUB)
+    ALU2WithTemp(I64ADD)
+    ALU2WithTemp(I64SUB)
     ALU2(MUL)
     ALU1(FRC)
     ALU1(RNDD)
@@ -444,15 +448,17 @@ namespace gbe
     ALU2(MACH)
     ALU1(LZD)
     ALU3(MAD)
-    ALU3(MUL_HI)
+    ALU2WithTemp(MUL_HI)
     ALU1(FBH)
     ALU1(FBL)
-    ALU3(HADD)
-    ALU3(RHADD)
+    ALU2WithTemp(HADD)
+    ALU2WithTemp(RHADD)
     ALU2(UPSAMPLE_SHORT)
     ALU2(UPSAMPLE_INT)
 #undef ALU1
+#undef ALU1WithTemp
 #undef ALU2
+#undef ALU2WithTemp
 #undef ALU3
     /*! Encode a barrier instruction */
     void BARRIER(GenRegister src);
@@ -494,8 +500,12 @@ namespace gbe
     void MATH(Reg dst, uint32_t function, Reg src);
     /*! Encode unary instructions */
     void ALU1(SelectionOpcode opcode, Reg dst, Reg src);
+    /*! Encode unary with temp reg instructions */
+    void ALU1WithTemp(SelectionOpcode opcode, Reg dst, Reg src0, Reg temp);
     /*! Encode binary instructions */
     void ALU2(SelectionOpcode opcode, Reg dst, Reg src0, Reg src1);
+    /*! Encode binary with temp reg instructions */
+    void ALU2WithTemp(SelectionOpcode opcode, Reg dst, Reg src0, Reg src1, Reg temp);
     /*! Encode ternary instructions */
     void ALU3(SelectionOpcode opcode, Reg dst, Reg src0, Reg src1, Reg src2);
     /*! Encode sample instructions */
@@ -990,11 +1000,26 @@ namespace gbe
     insn->src(0) = src;
   }
 
+  void Selection::Opaque::ALU1WithTemp(SelectionOpcode opcode, Reg dst, Reg src, Reg temp) {
+    SelectionInstruction *insn = this->appendInsn(opcode, 2, 1);
+    insn->dst(0) = dst;
+    insn->src(0) = src;
+    insn->dst(1) = temp;
+  }
+
   void Selection::Opaque::ALU2(SelectionOpcode opcode, Reg dst, Reg src0, Reg src1) {
     SelectionInstruction *insn = this->appendInsn(opcode, 1, 2);
     insn->dst(0) = dst;
     insn->src(0) = src0;
     insn->src(1) = src1;
+  }
+
+  void Selection::Opaque::ALU2WithTemp(SelectionOpcode opcode, Reg dst, Reg src0, Reg src1, Reg temp) {
+    SelectionInstruction *insn = this->appendInsn(opcode, 2, 2);
+    insn->dst(0) = dst;
+    insn->src(0) = src0;
+    insn->src(1) = src1;
+    insn->dst(1) = temp;
   }
 
   void Selection::Opaque::ALU3(SelectionOpcode opcode, Reg dst, Reg src0, Reg src1, Reg src2) {

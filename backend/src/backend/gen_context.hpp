@@ -88,7 +88,9 @@ namespace gbe
     /*! Final Gen ISA emission helper functions */
     void emitLabelInstruction(const SelectionInstruction &insn);
     void emitUnaryInstruction(const SelectionInstruction &insn);
+    void emitUnaryWithTempInstruction(const SelectionInstruction &insn);
     void emitBinaryInstruction(const SelectionInstruction &insn);
+    void emitBinaryWithTempInstruction(const SelectionInstruction &insn);
     void emitTernaryInstruction(const SelectionInstruction &insn);
     void emitCompareInstruction(const SelectionInstruction &insn);
     void emitJumpInstruction(const SelectionInstruction &insn);

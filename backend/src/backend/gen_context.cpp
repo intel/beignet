@@ -151,13 +151,121 @@ namespace gbe
     }
   }
 
+  void GenContext::emitUnaryWithTempInstruction(const SelectionInstruction &insn) {
+    GenRegister dst = ra->genReg(insn.dst(0));
+    GenRegister src = ra->genReg(insn.src(0));
+    GenRegister tmp = ra->genReg(insn.dst(1));
+    switch (insn.opcode) {
+      case SEL_OP_LOAD_DF_IMM:
+        p->LOAD_DF_IMM(dst, tmp, src.value.df);
+        break;
+      case SEL_OP_MOV_DF:
+        p->MOV_DF(dst, src, tmp);
+        break;
+      default:
+        NOT_IMPLEMENTED;
+    }
+  }
+
+  void GenContext::emitBinaryWithTempInstruction(const SelectionInstruction &insn) {
+    GenRegister dst = ra->genReg(insn.dst(0));
+    GenRegister src0 = ra->genReg(insn.src(0));
+    GenRegister src1 = ra->genReg(insn.src(1));
+    GenRegister tmp = ra->genReg(insn.dst(1));
+    switch (insn.opcode) {
+      case SEL_OP_I64ADD: {
+        GenRegister x = GenRegister::retype(tmp, GEN_TYPE_UD),
+                    y = GenRegister::suboffset(x, p->curr.execWidth);
+        loadBottomHalf(x, src0);
+        loadBottomHalf(y, src1);
+        addWithCarry(x, x, y);
+        storeBottomHalf(dst, x);
+        loadTopHalf(x, src0);
+        p->ADD(x, x, y);
+        loadTopHalf(y, src1);
+        p->ADD(x, x, y);
+        storeTopHalf(dst, x);
+        break;
+      }
+      case SEL_OP_I64SUB: {
+        GenRegister x = GenRegister::retype(tmp, GEN_TYPE_UD),
+                    y = GenRegister::suboffset(x, p->curr.execWidth);
+        loadBottomHalf(x, src0);
+        loadBottomHalf(y, src1);
+        subWithBorrow(x, x, y);
+        storeBottomHalf(dst, x);
+        loadTopHalf(x, src0);
+        subWithBorrow(x, x, y);
+        loadTopHalf(y, src1);
+        subWithBorrow(x, x, y);
+        storeTopHalf(dst, x);
+        break;
+      }
+      case SEL_OP_MUL_HI: {
+        int w = p->curr.execWidth;
+        p->push();
+        p->curr.execWidth = 8;
+        for (int i = 0; i < w / 8; i ++) {
+          p->push();
+          p->curr.predicate = GEN_PREDICATE_NONE;
+          p->MUL(GenRegister::retype(GenRegister::acc(), GEN_TYPE_UD), src0, src1);
+          p->curr.accWrEnable = 1;
+          p->MACH(tmp, src0, src1);
+          p->pop();
+          p->curr.quarterControl = i;
+          p->MOV(dst, tmp);
+          dst = GenRegister::Qn(dst, 1);
+          src0 = GenRegister::Qn(src0, 1);
+          src1 = GenRegister::Qn(src1, 1);
+        }
+        p->pop();
+        break;
+       }
+     case SEL_OP_HADD: {
+        int w = p->curr.execWidth;
+        p->push();
+        p->curr.execWidth = 8;
+        for (int i = 0; i < w / 8; i ++) {
+          p->curr.quarterControl = i;
+          p->ADDC(dst, src0, src1);
+          p->SHR(dst, dst, GenRegister::immud(1));
+          p->SHL(tmp, GenRegister::retype(GenRegister::acc(), GEN_TYPE_D), GenRegister::immud(31));
+          p->OR(dst, dst, tmp);
+          dst = GenRegister::Qn(dst, 1);
+          src0 = GenRegister::Qn(src0, 1);
+          src1 = GenRegister::Qn(src1, 1);
+        }
+        p->pop();
+        break;
+       }
+      case SEL_OP_RHADD: {
+        int w = p->curr.execWidth;
+        p->push();
+        p->curr.execWidth = 8;
+        for (int i = 0; i < w / 8; i ++) {
+          p->curr.quarterControl = i;
+          p->ADDC(dst, src0, src1);
+          p->ADD(dst, dst, GenRegister::immud(1));
+          p->SHR(dst, dst, GenRegister::immud(1));
+          p->SHL(tmp, GenRegister::retype(GenRegister::acc(), GEN_TYPE_D), GenRegister::immud(31));
+          p->OR(dst, dst, tmp);
+          dst = GenRegister::Qn(dst, 1);
+          src0 = GenRegister::Qn(src0, 1);
+          src1 = GenRegister::Qn(src1, 1);
+        }
+        p->pop();
+        break;
+       }
+      default:
+        NOT_IMPLEMENTED;
+    }
+  }
+
   void GenContext::emitBinaryInstruction(const SelectionInstruction &insn) {
     const GenRegister dst = ra->genReg(insn.dst(0));
     const GenRegister src0 = ra->genReg(insn.src(0));
     const GenRegister src1 = ra->genReg(insn.src(1));
     switch (insn.opcode) {
-      case SEL_OP_LOAD_DF_IMM: p->LOAD_DF_IMM(dst, src1, src0.value.df); break;
-      case SEL_OP_MOV_DF: p->MOV_DF(dst, src0, src1); break;
       case SEL_OP_SEL:  p->SEL(dst, src0, src1); break;
       case SEL_OP_SEL_INT64:
         {
@@ -358,107 +466,7 @@ namespace gbe
     const GenRegister src1 = ra->genReg(insn.src(1));
     const GenRegister src2 = ra->genReg(insn.src(2));
     switch (insn.opcode) {
-      case SEL_OP_I64ADD:
-        {
-          GenRegister x = GenRegister::retype(src2, GEN_TYPE_UD),
-                      y = GenRegister::suboffset(x, p->curr.execWidth);
-          loadBottomHalf(x, src0);
-          loadBottomHalf(y, src1);
-          addWithCarry(x, x, y);
-          storeBottomHalf(dst, x);
-          loadTopHalf(x, src0);
-          p->ADD(x, x, y);
-          loadTopHalf(y, src1);
-          p->ADD(x, x, y);
-          storeTopHalf(dst, x);
-        }
-        break;
-      case SEL_OP_I64SUB:
-        {
-          GenRegister x = GenRegister::retype(src2, GEN_TYPE_UD),
-                      y = GenRegister::suboffset(x, p->curr.execWidth);
-          loadBottomHalf(x, src0);
-          loadBottomHalf(y, src1);
-          subWithBorrow(x, x, y);
-          storeBottomHalf(dst, x);
-          loadTopHalf(x, src0);
-          subWithBorrow(x, x, y);
-          loadTopHalf(y, src1);
-          subWithBorrow(x, x, y);
-          storeTopHalf(dst, x);
-        }
-        break;
-      case SEL_OP_MUL_HI:
-       {
-        int w = p->curr.execWidth;
-        p->push();
-        p->curr.execWidth = 8;
-        p->curr.quarterControl = 0;
-        p->push();
-        p->curr.predicate = GEN_PREDICATE_NONE;
-        p->MUL(GenRegister::retype(GenRegister::acc(), GEN_TYPE_UD), src0, src1);
-        p->curr.accWrEnable = 1;
-        p->MACH(src2, src0, src1);
-        p->curr.accWrEnable = 0;
-        p->pop();
-        p->MOV(dst, src2);
-        if (w == 16) {
-          p->push();
-          p->curr.predicate = GEN_PREDICATE_NONE;
-          p->MUL(GenRegister::retype(GenRegister::acc(), GEN_TYPE_UD), GenRegister::Qn(src0, 1), GenRegister::Qn(src1, 1));
-          p->curr.accWrEnable = 1;
-          p->MACH(src2, GenRegister::Qn(src0, 1), GenRegister::Qn(src1, 1));
-          p->curr.accWrEnable = 0;
-          p->pop();
-          p->curr.quarterControl = 1;
-          p->MOV(GenRegister::Qn(dst, 1), src2);
-        }
-        p->pop();
-        break;
-       }
       case SEL_OP_MAD:  p->MAD(dst, src0, src1, src2); break;
-      case SEL_OP_HADD:
-       {
-        int w = p->curr.execWidth;
-        p->push();
-        p->curr.execWidth = 8;
-        p->curr.quarterControl = 0;
-        p->ADDC(dst, src0, src1);
-        p->SHR(dst, dst, GenRegister::immud(1));
-        p->SHL(src2, GenRegister::retype(GenRegister::acc(), GEN_TYPE_D), GenRegister::immud(31));
-        p->OR(dst, dst, src2);
-        if (w == 16) {
-          p->curr.quarterControl = 1;
-          p->ADDC(GenRegister::Qn(dst, 1), GenRegister::Qn(src0, 1), GenRegister::Qn(src1, 1));
-          p->SHR(GenRegister::Qn(dst, 1), GenRegister::Qn(dst, 1), GenRegister::immud(1));
-          p->SHL(GenRegister::Qn(src2, 1), GenRegister::retype(GenRegister::acc(), GEN_TYPE_D), GenRegister::immud(31));
-          p->OR(GenRegister::Qn(dst, 1), GenRegister::Qn(dst, 1), GenRegister::Qn(src2, 1));
-        }
-        p->pop();
-        break;
-       }
-      case SEL_OP_RHADD:
-       {
-        int w = p->curr.execWidth;
-        p->push();
-        p->curr.execWidth = 8;
-        p->curr.quarterControl = 0;
-        p->ADDC(dst, src0, src1);
-        p->ADD(dst, dst, GenRegister::immud(1));
-        p->SHR(dst, dst, GenRegister::immud(1));
-        p->SHL(src2, GenRegister::retype(GenRegister::acc(), GEN_TYPE_D), GenRegister::immud(31));
-        p->OR(dst, dst, src2);
-        if (w == 16) {
-          p->curr.quarterControl = 1;
-          p->ADDC(GenRegister::Qn(dst, 1), GenRegister::Qn(src0, 1), GenRegister::Qn(src1, 1));
-          p->ADD(GenRegister::Qn(dst, 1), GenRegister::Qn(dst, 1), GenRegister::immud(1));
-          p->SHR(GenRegister::Qn(dst, 1), GenRegister::Qn(dst, 1), GenRegister::immud(1));
-          p->SHL(GenRegister::Qn(src2, 1), GenRegister::retype(GenRegister::acc(), GEN_TYPE_D), GenRegister::immud(31));
-          p->OR(GenRegister::Qn(dst, 1), GenRegister::Qn(dst, 1), GenRegister::Qn(src2, 1));
-        }
-        p->pop();
-        break;
-       }
       default: NOT_IMPLEMENTED;
     }
   }
