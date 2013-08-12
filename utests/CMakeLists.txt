@@ -115,6 +115,7 @@ set (utests_sources
   builtin_global_id.cpp
   builtin_num_groups.cpp
   builtin_local_id.cpp
+  builtin_acos_asin.cpp
   runtime_createcontext.cpp
   runtime_null_kernel_arg.cpp
   compiler_double.cpp
