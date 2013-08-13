@@ -598,6 +598,52 @@ namespace gbe
     p->pop();
   }
 
+  void GenContext::I32FullMult(GenRegister high, GenRegister low, GenRegister src0, GenRegister src1) {
+    GenRegister acc = GenRegister::retype(GenRegister::acc(), GEN_TYPE_UD);
+    int execWidth = p->curr.execWidth;
+    p->push();
+    p->curr.execWidth = 8;
+    for(int i = 0; i < execWidth; i += 8) {
+      p->MUL(acc, src0, src1);
+      p->curr.accWrEnable = 1;
+      p->MACH(high, src0, src1);
+      p->curr.accWrEnable = 0;
+      p->MOV(low, acc);
+      src0 = GenRegister::suboffset(src0, 8);
+      src1 = GenRegister::suboffset(src1, 8);
+      high = GenRegister::suboffset(high, 8);
+      low = GenRegister::suboffset(low, 8);
+    }
+    p->pop();
+  }
+
+  void GenContext::emitI64MULInstruction(const SelectionInstruction &insn) {
+    GenRegister dest = ra->genReg(insn.dst(0));
+    GenRegister x = ra->genReg(insn.src(0));
+    GenRegister y = ra->genReg(insn.src(1));
+    GenRegister a = ra->genReg(insn.dst(1));
+    GenRegister b = ra->genReg(insn.dst(2));
+    GenRegister c = ra->genReg(insn.dst(3));
+    GenRegister d = ra->genReg(insn.dst(4));
+    GenRegister e = ra->genReg(insn.dst(5));
+    GenRegister f = ra->genReg(insn.dst(6));
+    a.type = b.type = c.type = d.type = e.type = f.type = GEN_TYPE_UD;
+    loadTopHalf(a, x);
+    loadBottomHalf(b, x);
+    loadTopHalf(c, y);
+    loadBottomHalf(d, y);
+    p->push();
+    p->curr.predicate = GEN_PREDICATE_NONE;
+    I32FullMult(GenRegister::null(), e, b, c);
+    I32FullMult(GenRegister::null(), f, a, d);
+    p->ADD(e, e, f);
+    I32FullMult(f, a, b, d);
+    p->ADD(e, e, f);
+    p->pop();
+    storeTopHalf(dest, e);
+    storeBottomHalf(dest, a);
+  }
+
   void GenContext::emitTernaryInstruction(const SelectionInstruction &insn) {
     const GenRegister dst = ra->genReg(insn.dst(0));
     const GenRegister src0 = ra->genReg(insn.src(0));
