@@ -861,7 +861,8 @@ namespace ir {
         return false;
       if (UNLIKELY(checkRegisterData(family, dst[0], fn, whyNot) == false))
         return false;
-      CHECK_TYPE(this->type, allButBool);
+      //Support all type IMM, disable check
+      //CHECK_TYPE(this->type, allButBool);
       return true;
     }
 

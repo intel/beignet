@@ -1934,15 +1934,32 @@ namespace gbe
       const Type type = insn.getType();
       const Immediate imm = insn.getImmediate();
       const GenRegister dst = sel.selReg(insn.getDst(0), type);
+      GenRegister flagReg;
 
       sel.push();
       if (sel.isScalarOrBool(insn.getDst(0)) == true) {
         sel.curr.execWidth = 1;
+        if(type == TYPE_BOOL) {
+          if(imm.data.b) {
+            if(sel.curr.predicate == GEN_PREDICATE_NONE)
+              flagReg = GenRegister::immuw(0xffff);
+            else {
+              if(sel.curr.physicalFlag)
+                flagReg = GenRegister::flag(sel.curr.flag, sel.curr.subFlag);
+              else
+                flagReg = sel.selReg(Register(sel.curr.flagIndex), TYPE_U16);
+            }
+          } else
+            flagReg = GenRegister::immuw(0x0);
+        }
         sel.curr.predicate = GEN_PREDICATE_NONE;
         sel.curr.noMask = 1;
       }
 
       switch (type) {
+        case TYPE_BOOL:
+          sel.MOV(dst, flagReg);
+        break;
         case TYPE_U32:
         case TYPE_S32:
         case TYPE_FLOAT:
