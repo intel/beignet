@@ -131,6 +131,7 @@ set (utests_sources
   compiler_long_shr.cpp
   compiler_long_asr.cpp
   compiler_long_mult.cpp
+  compiler_long_cmp.cpp
   utest_assert.cpp
   utest.cpp
   utest_file_map.cpp
