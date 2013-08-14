@@ -305,22 +305,35 @@ void cl_event_set_status(cl_event event, cl_int status)
 
   pthread_mutex_lock(&event->ctx->event_lock);
   if(status >= event->status) {
-   return;
+    pthread_mutex_unlock(&event->ctx->event_lock);
+    return;
+  }
+  if(event->status <= CL_COMPLETE) {
+    event->status = status;    //have done enqueue before or doing in another thread
+    pthread_mutex_unlock(&event->ctx->event_lock);
+    return;
   }
 
   if(status <= CL_COMPLETE) {
     if(event->enqueue_cb) {
+      cl_enqueue_handle(&event->enqueue_cb->data);
+      event->status = status;  //Change the event status after enqueue and befor unlock
+
+      pthread_mutex_unlock(&event->ctx->event_lock);
       for(i=0; i<event->enqueue_cb->num_events; i++)
         cl_event_delete(event->enqueue_cb->wait_list[i]);
+      pthread_mutex_lock(&event->ctx->event_lock);
 
-      cl_enqueue_handle(&event->enqueue_cb->data);
       cl_free(event->enqueue_cb);
       event->enqueue_cb = NULL;
     }
-    cl_event_delete(event);
   }
-  event->status = status;
+  if(event->status >= status)  //maybe changed in other threads
+    event->status = status;
   pthread_mutex_unlock(&event->ctx->event_lock);
+
+  if(event->status <= CL_COMPLETE)
+    cl_event_delete(event);
 
   /* Call user callback */
   user_cb = event->user_cb;
