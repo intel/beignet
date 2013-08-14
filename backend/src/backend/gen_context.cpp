@@ -498,6 +498,83 @@ namespace gbe
     }
   }
 
+  void GenContext::saveFlag(GenRegister dest, int flag, int subFlag) {
+    p->push();
+    p->curr.execWidth = 1;
+    p->MOV(dest, GenRegister::flag(flag, subFlag));
+    p->pop();
+  }
+
+  void GenContext::emitI64CompareInstruction(const SelectionInstruction &insn) {
+    GenRegister src0 = ra->genReg(insn.src(0));
+    GenRegister src1 = ra->genReg(insn.src(1));
+    GenRegister tmp0 = ra->genReg(insn.dst(0));
+    GenRegister tmp1 = ra->genReg(insn.dst(1));
+    GenRegister tmp2 = ra->genReg(insn.dst(2));
+    tmp0.type = (src0.type == GEN_TYPE_L) ? GEN_TYPE_D : GEN_TYPE_UD;
+    tmp1.type = (src1.type == GEN_TYPE_L) ? GEN_TYPE_D : GEN_TYPE_UD;
+    int flag = p->curr.flag, subFlag = p->curr.subFlag;
+    GenRegister f1 = GenRegister::retype(tmp2, GEN_TYPE_UW),
+                f2 = GenRegister::suboffset(f1, 1),
+                f3 = GenRegister::suboffset(f1, 2);
+    p->push();
+    p->curr.predicate = GEN_PREDICATE_NONE;
+    p->curr.flag = 0, p->curr.subFlag = 1;
+    loadTopHalf(tmp0, src0);
+    loadTopHalf(tmp1, src1);
+    switch(insn.extra.function) {
+      case GEN_CONDITIONAL_L:
+      case GEN_CONDITIONAL_LE:
+      case GEN_CONDITIONAL_G:
+      case GEN_CONDITIONAL_GE:
+        {
+          int cmpTopHalf = insn.extra.function;
+          if(insn.extra.function == GEN_CONDITIONAL_LE)
+            cmpTopHalf = GEN_CONDITIONAL_L;
+          if(insn.extra.function == GEN_CONDITIONAL_GE)
+            cmpTopHalf = GEN_CONDITIONAL_G;
+          p->CMP(cmpTopHalf, tmp0, tmp1);
+        }
+        saveFlag(f1, 0, 1);
+        p->CMP(GEN_CONDITIONAL_EQ, tmp0, tmp1);
+        saveFlag(f2, 0, 1);
+        tmp0.type = tmp1.type = GEN_TYPE_UD;
+        loadBottomHalf(tmp0, src0);
+        loadBottomHalf(tmp1, src1);
+        p->CMP(insn.extra.function, tmp0, tmp1);
+        saveFlag(f3, 0, 1);
+        p->AND(f2, f2, f3);
+        p->OR(f1, f1, f2);
+        break;
+      case GEN_CONDITIONAL_EQ:
+        p->CMP(GEN_CONDITIONAL_EQ, tmp0, tmp1);
+        saveFlag(f1, 0, 1);
+        tmp0.type = tmp1.type = GEN_TYPE_UD;
+        loadBottomHalf(tmp0, src0);
+        loadBottomHalf(tmp1, src1);
+        p->CMP(GEN_CONDITIONAL_EQ, tmp0, tmp1);
+        saveFlag(f2, 0, 1);
+        p->AND(f1, f1, f2);
+        break;
+      case GEN_CONDITIONAL_NEQ:
+        p->CMP(GEN_CONDITIONAL_NEQ, tmp0, tmp1);
+        saveFlag(f1, 0, 1);
+        tmp0.type = tmp1.type = GEN_TYPE_UD;
+        loadBottomHalf(tmp0, src0);
+        loadBottomHalf(tmp1, src1);
+        p->CMP(GEN_CONDITIONAL_NEQ, tmp0, tmp1);
+        saveFlag(f2, 0, 1);
+        p->OR(f1, f1, f2);
+        break;
+      default:
+        NOT_IMPLEMENTED;
+    }
+    saveFlag(f2, flag, subFlag);
+    p->AND(f1, f1, f2);
+    p->MOV(GenRegister::flag(flag, subFlag), f1);
+    p->pop();
+  }
+
   void GenContext::loadTopHalf(GenRegister dest, GenRegister src) {
     int execWidth = p->curr.execWidth;
     src = src.top_half();

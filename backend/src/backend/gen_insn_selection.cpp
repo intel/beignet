@@ -469,6 +469,8 @@ namespace gbe
 #undef I64Shift
     /*! Shift a 64-bit integer */
     void I64Shift(SelectionOpcode opcode, Reg dst, Reg src0, Reg src1, GenRegister tmp[6]);
+    /*! Compare 64-bit integer */
+    void I64CMP(uint32_t conditional, Reg src0, Reg src1, GenRegister tmp[3]);
     /*! Encode a barrier instruction */
     void BARRIER(GenRegister src);
     /*! Encode a barrier instruction */
@@ -1048,6 +1050,15 @@ namespace gbe
     insn->src(0) = src0;
     insn->src(1) = src1;
     insn->src(2) = src2;
+  }
+
+  void Selection::Opaque::I64CMP(uint32_t conditional, Reg src0, Reg src1, GenRegister tmp[3]) {
+    SelectionInstruction *insn = this->appendInsn(SEL_OP_I64CMP, 3, 2);
+    insn->src(0) = src0;
+    insn->src(1) = src1;
+    for(int i=0; i<3; i++)
+      insn->dst(i) = tmp[i];
+    insn->extra.function = conditional;
   }
 
   void Selection::Opaque::I64Shift(SelectionOpcode opcode, Reg dst, Reg src0, Reg src1, GenRegister tmp[6]) {
@@ -2293,7 +2304,13 @@ namespace gbe
       sel.push();
         sel.curr.physicalFlag = 0;
         sel.curr.flagIndex = uint16_t(dst);
-        sel.CMP(genCmp, src0, src1);
+        if (type == TYPE_S64 || type == TYPE_U64) {
+          GenRegister tmp[3];
+          for(int i=0; i<3; i++)
+            tmp[i] = sel.selReg(sel.reg(FAMILY_DWORD));
+          sel.I64CMP(genCmp, src0, src1, tmp);
+        } else
+          sel.CMP(genCmp, src0, src1);
       sel.pop();
       return true;
     }
