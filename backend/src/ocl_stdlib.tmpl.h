@@ -367,13 +367,20 @@ INLINE_OVERLOADABLE ushort mad_sat(ushort a, ushort b, ushort c) {
   return x;
 }
 
-/* XXX not implemented. */
 INLINE_OVERLOADABLE int mad_sat(int a, int b, int c) {
-  return 0;
+  long x = (long)a * (long)b + (long)c;
+  if (x > 0x7FFFFFFF)
+    x = 0x7FFFFFFF;
+  else if (x < -0x7FFFFFFF-1)
+    x = -0x7FFFFFFF-1;
+  return (int)x;
 }
 
 INLINE_OVERLOADABLE uint mad_sat(uint a, uint b, uint c) {
-  return 0;
+  ulong x = (ulong)a * (ulong)b + (ulong)c;
+  if (x > 0xFFFFFFFFu)
+    x = 0xFFFFFFFFu;
+  return (uint)x;
 }
 
 INLINE_OVERLOADABLE uchar __rotate_left(uchar x, uchar y) { return (x << y) | (x >> (8 - y)); }
