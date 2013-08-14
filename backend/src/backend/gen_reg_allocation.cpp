@@ -457,7 +457,7 @@ namespace gbe
 
           // Compare instructions update the flags so we must copy it back to
           // the GRF
-          if (insn.opcode == SEL_OP_CMP) {
+          if (insn.opcode == SEL_OP_CMP || insn.opcode == SEL_OP_I64CMP) {
             SelectionInstruction *mov1 = selection.create(SEL_OP_MOV,1,1);
             mov1->state = mov0->state;
             mov1->dst(0) = mov0->src(0);

@@ -338,7 +338,7 @@ namespace gbe
     }
 
     // Track writes in predicates
-    if (insn.opcode == SEL_OP_CMP) {
+    if (insn.opcode == SEL_OP_CMP || insn.opcode == SEL_OP_I64CMP) {
       const uint32_t index = this->getIndex(getFlag(insn));
       this->nodes[index] = node;
     }
@@ -460,7 +460,7 @@ namespace gbe
         tracker.addDependency(node, insn.dst(dstID));
 
       // write-after-write for predicate
-      if (insn.opcode == SEL_OP_CMP)
+      if (insn.opcode == SEL_OP_CMP || insn.opcode == SEL_OP_I64CMP)
         tracker.addDependency(node, getFlag(insn));
 
       // write-after-write for accumulators
