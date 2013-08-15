@@ -23,6 +23,7 @@ static void compiler_load_bool_imm(void)
   int *dst = (int*)buf_data[0];
   for (uint32_t i = 0; i < n * copiesPerWorkItem; i++)
     OCL_ASSERT(dst[i] == copiesPerWorkItem);
+  OCL_UNMAP_BUFFER(0);
 }
 
 MAKE_UTEST_FROM_FUNCTION(compiler_load_bool_imm);
