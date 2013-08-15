@@ -822,11 +822,12 @@ namespace gbe
   }
 
   void GenContext::emitEotInstruction(const SelectionInstruction &insn) {
+    p->MOV(GenRegister::ud8grf(112, 0), GenRegister::ud8grf(0, 0));
     p->push();
       p->curr.predicate = GEN_PREDICATE_NONE;
       p->curr.execWidth = 8;
       p->curr.noMask = 1;
-      p->EOT(0);
+      p->EOT(112);
     p->pop();
   }
 
