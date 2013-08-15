@@ -260,9 +260,7 @@ class builtinProto():
             # XXX FIXME now skip all double vector, as we don't
             # defined those scalar version's prototype.
             if ptype[0].find('double') != -1 or \
-               vtype[0].find('double') != -1 or \
-               ptype[0].find('long') != -1 or \
-               vtype[0].find('long') != -1 :
+               vtype[0].find('double') != -1:
                 return
 
             if (n == 0):

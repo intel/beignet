@@ -311,6 +311,14 @@ INLINE_OVERLOADABLE uint clz(uint x) {
   return __gen_ocl_fbh(x);
 }
 
+INLINE_OVERLOADABLE long clz(long x) {
+  return 0;
+}
+
+INLINE_OVERLOADABLE ulong clz(ulong x) {
+  return 0;
+}
+
 OVERLOADABLE int __gen_ocl_mul_hi(int x, int y);
 OVERLOADABLE uint __gen_ocl_mul_hi(uint x, uint y);
 INLINE_OVERLOADABLE char mul_hi(char x, char y) { return (x * y) >> 8; }
@@ -319,6 +327,12 @@ INLINE_OVERLOADABLE short mul_hi(short x, short y) { return (x * y) >> 16; }
 INLINE_OVERLOADABLE ushort mul_hi(ushort x, ushort y) { return (x * y) >> 16; }
 INLINE_OVERLOADABLE int mul_hi(int x, int y) { return __gen_ocl_mul_hi(x, y); }
 INLINE_OVERLOADABLE uint mul_hi(uint x, uint y) { return __gen_ocl_mul_hi(x, y); }
+INLINE_OVERLOADABLE long mul_hi(long x, long y) {
+  return 0;
+}
+INLINE_OVERLOADABLE ulong mul_hi(ulong x, ulong y) {
+  return 0;
+}
 
 #define DEF(type) INLINE_OVERLOADABLE type mad_hi(type a, type b, type c) { return mul_hi(a, b) + c; }
 DEF(char)
@@ -327,6 +341,8 @@ DEF(short)
 DEF(ushort)
 DEF(int)
 DEF(uint)
+DEF(long)
+DEF(ulong)
 #undef DEF
 
 INLINE_OVERLOADABLE int mul24(int a, int b) { return ((a << 8) >> 8) * ((b << 8) >> 8); }
@@ -383,6 +399,14 @@ INLINE_OVERLOADABLE uint mad_sat(uint a, uint b, uint c) {
   return (uint)x;
 }
 
+INLINE_OVERLOADABLE long mad_sat(long a, long b, long c) {
+  return 0;
+}
+
+INLINE_OVERLOADABLE ulong mad_sat(ulong a, ulong b, ulong c) {
+  return 0;
+}
+
 INLINE_OVERLOADABLE uchar __rotate_left(uchar x, uchar y) { return (x << y) | (x >> (8 - y)); }
 INLINE_OVERLOADABLE char __rotate_left(char x, char y) { return __rotate_left((uchar)x, (uchar)y); }
 INLINE_OVERLOADABLE ushort __rotate_left(ushort x, ushort y) { return (x << y) | (x >> (16 - y)); }
@@ -397,6 +421,12 @@ DEF(ushort, 15)
 DEF(int, 31)
 DEF(uint, 31)
 #undef DEF
+INLINE_OVERLOADABLE long rotate(long x, long y) {
+  return 0;
+}
+INLINE_OVERLOADABLE ulong rotate(ulong x, ulong y) {
+  return 0;
+}
 
 OVERLOADABLE short __gen_ocl_upsample(short hi, short lo);
 OVERLOADABLE int __gen_ocl_upsample(int hi, int lo);
@@ -404,6 +434,12 @@ INLINE_OVERLOADABLE short upsample(char hi, uchar lo) { return __gen_ocl_upsampl
 INLINE_OVERLOADABLE ushort upsample(uchar hi, uchar lo) { return __gen_ocl_upsample((short)hi, (short)lo); }
 INLINE_OVERLOADABLE int upsample(short hi, ushort lo) { return __gen_ocl_upsample((int)hi, (int)lo); }
 INLINE_OVERLOADABLE uint upsample(ushort hi, ushort lo) { return __gen_ocl_upsample((int)hi, (int)lo); }
+INLINE_OVERLOADABLE long upsample(int hi, uint lo) {
+  return 0;
+}
+INLINE_OVERLOADABLE ulong upsample(uint hi, uint lo) {
+  return 0;
+}
 
 PURE CONST uint __gen_ocl_hadd(uint x, uint y);
 PURE CONST uint __gen_ocl_rhadd(uint x, uint y);
@@ -419,6 +455,18 @@ INLINE_OVERLOADABLE int hadd(int x, int y) { return (x < 0 && y > 0) || (x > 0 &
 INLINE_OVERLOADABLE uint hadd(uint x, uint y) { return __gen_ocl_hadd(x, y); }
 INLINE_OVERLOADABLE int rhadd(int x, int y) { return (x < 0 && y > 0) || (x > 0 && y < 0) ? ((x + y + 1) >> 1) : __gen_ocl_rhadd(x, y); }
 INLINE_OVERLOADABLE uint rhadd(uint x, uint y) { return __gen_ocl_rhadd(x, y); }
+INLINE_OVERLOADABLE long hadd(long x, long y) {
+  return 0;
+}
+INLINE_OVERLOADABLE ulong hadd(ulong x, ulong y) {
+  return 0;
+}
+INLINE_OVERLOADABLE long rhadd(long x, long y) {
+  return 0;
+}
+INLINE_OVERLOADABLE ulong rhadd(ulong x, ulong y) {
+  return 0;
+}
 
 int __gen_ocl_abs(int x);
 #define DEC(TYPE) INLINE_OVERLOADABLE u##TYPE abs(TYPE x) { return (u##TYPE) __gen_ocl_abs(x); }
@@ -426,11 +474,13 @@ DEC(int)
 DEC(short)
 DEC(char)
 #undef DEC
+INLINE_OVERLOADABLE ulong abs(long x) { return x < 0 ? -x : x; }
 /* For unsigned types, do nothing. */
 #define DEC(TYPE) INLINE_OVERLOADABLE TYPE abs(TYPE x) { return x; }
 DEC(uint)
 DEC(ushort)
 DEC(uchar)
+DEC(ulong)
 #undef DEC
 
 /* Char and short type abs diff */
@@ -454,6 +504,13 @@ INLINE_OVERLOADABLE uint abs_diff (int x, int y) {
         return abs(x - y);
 
     return (abs(x) + abs(y));
+}
+
+INLINE_OVERLOADABLE ulong abs_diff (long x, long y) {
+  return 0;
+}
+INLINE_OVERLOADABLE ulong abs_diff (ulong x, ulong y) {
+  return 0;
 }
 
 /////////////////////////////////////////////////////////////////////////////
@@ -770,6 +827,8 @@ DECL_MIN_MAX_CLAMP(char)
 DECL_MIN_MAX_CLAMP(uint)
 DECL_MIN_MAX_CLAMP(unsigned short)
 DECL_MIN_MAX_CLAMP(unsigned char)
+DECL_MIN_MAX_CLAMP(long)
+DECL_MIN_MAX_CLAMP(ulong)
 #undef DECL_MIN_MAX_CLAMP
 
 #define BODY \
