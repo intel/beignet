@@ -270,6 +270,7 @@ namespace gbe
       GenRegister r = *this;
       r.type = type == GEN_TYPE_UL ? GEN_TYPE_UD : GEN_TYPE_D;
       r.hstride = GEN_HORIZONTAL_STRIDE_2;
+      r.vstride = GEN_VERTICAL_STRIDE_16;
       return r;
     }
 
