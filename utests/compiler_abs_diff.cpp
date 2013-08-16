@@ -182,24 +182,29 @@ template <typename T, typename U> static void compiler_abs_diff_with_type(void)
     }
 }
 
-#define ABS_TEST_DIFF_TYPE(TYPE, UTYPE) \
-	static void compiler_abs_diff_##TYPE (void) \
+
+#define ABS_TEST_DIFF_TYPE_2(TYPE, CLTYPE, UTYPE) \
+	static void compiler_abs_diff_##CLTYPE (void) \
         { \
-           OCL_CALL (cl_kernel_init, "compiler_abs_diff.cl", "compiler_abs_diff_"#TYPE, SOURCE, NULL);  \
+           OCL_CALL (cl_kernel_init, "compiler_abs_diff.cl", "compiler_abs_diff_"#CLTYPE, SOURCE, NULL);  \
            compiler_abs_diff_with_type<TYPE, UTYPE>(); \
         } \
-	MAKE_UTEST_FROM_FUNCTION(compiler_abs_diff_##TYPE);
+	MAKE_UTEST_FROM_FUNCTION(compiler_abs_diff_##CLTYPE);
+
+#define ABS_TEST_DIFF_TYPE(TYPE, UTYPE) ABS_TEST_DIFF_TYPE_2(TYPE, TYPE, UTYPE)
 
 typedef unsigned char uchar;
 typedef unsigned short ushort;
 typedef unsigned int uint;
+typedef uint64_t ulong;
 ABS_TEST_DIFF_TYPE(int, uint)
+ABS_TEST_DIFF_TYPE_2(int64_t, long, ulong)
 ABS_TEST_DIFF_TYPE(short, ushort)
 ABS_TEST_DIFF_TYPE(char, uchar)
 ABS_TEST_DIFF_TYPE(uint, uint)
+ABS_TEST_DIFF_TYPE(ulong, ulong)
 ABS_TEST_DIFF_TYPE(ushort, ushort)
 ABS_TEST_DIFF_TYPE(uchar, uchar)
-
 
 typedef cl_vec<int, 2> int2;
 typedef cl_vec<int, 3> int3;
@@ -222,6 +227,26 @@ ABS_TEST_DIFF_TYPE(uint4, uint4)
 ABS_TEST_DIFF_TYPE(uint8, uint8)
 ABS_TEST_DIFF_TYPE(uint16, uint16)
 
+typedef cl_vec<int64_t, 2> long2;
+typedef cl_vec<int64_t, 3> long3;
+typedef cl_vec<int64_t, 4> long4;
+typedef cl_vec<int64_t, 8> long8;
+typedef cl_vec<int64_t, 16> long16;
+typedef cl_vec<uint64_t, 2> ulong2;
+typedef cl_vec<uint64_t, 3> ulong3;
+typedef cl_vec<uint64_t, 4> ulong4;
+typedef cl_vec<uint64_t, 8> ulong8;
+typedef cl_vec<uint64_t, 16> ulong16;
+ABS_TEST_DIFF_TYPE(long2, ulong2)
+ABS_TEST_DIFF_TYPE(long3, ulong3)
+ABS_TEST_DIFF_TYPE(long4, ulong4)
+ABS_TEST_DIFF_TYPE(long8, ulong8)
+ABS_TEST_DIFF_TYPE(long16, ulong16)
+ABS_TEST_DIFF_TYPE(ulong2, ulong2)
+ABS_TEST_DIFF_TYPE(ulong3, ulong3)
+ABS_TEST_DIFF_TYPE(ulong4, ulong4)
+ABS_TEST_DIFF_TYPE(ulong8, ulong8)
+ABS_TEST_DIFF_TYPE(ulong16, ulong16)
 
 typedef cl_vec<char, 2> char2;
 typedef cl_vec<char, 3> char3;
