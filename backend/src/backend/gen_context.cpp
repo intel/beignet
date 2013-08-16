@@ -381,6 +381,25 @@ namespace gbe
       case SEL_OP_MACH: p->MACH(dst, src0, src1); break;
       case SEL_OP_UPSAMPLE_SHORT: p->UPSAMPLE_SHORT(dst, src0, src1); break;
       case SEL_OP_UPSAMPLE_INT: p->UPSAMPLE_INT(dst, src0, src1); break;
+      case SEL_OP_UPSAMPLE_LONG:
+        {
+          GenRegister xdst = GenRegister::retype(dst, GEN_TYPE_UL),
+                      xsrc0 = GenRegister::retype(src0, GEN_TYPE_UL),
+                      xsrc1 = GenRegister::retype(src1, GEN_TYPE_UL);
+          int execWidth = p->curr.execWidth;
+          p->push();
+          p->curr.execWidth = 8;
+          for (int nib = 0; nib < execWidth / 4; nib ++) {
+            p->curr.chooseNib(nib);
+            p->MOV(xdst.top_half(), xsrc0.bottom_half());
+            p->MOV(xdst.bottom_half(), xsrc1.bottom_half());
+            xdst = GenRegister::suboffset(xdst, 4);
+            xsrc0 = GenRegister::suboffset(xsrc0, 4);
+            xsrc1 = GenRegister::suboffset(xsrc1, 4);
+          }
+          p->pop();
+        }
+        break;
       default: NOT_IMPLEMENTED;
     }
   }

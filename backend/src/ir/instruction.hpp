@@ -523,6 +523,8 @@ namespace ir {
   Instruction UPSAMPLE_SHORT(Type type, Register dst, Register src0, Register src1);
   /*! upsample_int.type dst src */
   Instruction UPSAMPLE_INT(Type type, Register dst, Register src0, Register src1);
+  /*! upsample_long.type dst src */
+  Instruction UPSAMPLE_LONG(Type type, Register dst, Register src0, Register src1);
   /*! fbh.type dst src */
   Instruction FBH(Type type, Register dst, Register src);
   /*! fbl.type dst src */

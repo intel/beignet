@@ -1827,6 +1827,7 @@ namespace gbe
       case GEN_OCL_MUL_HI_UINT:
       case GEN_OCL_UPSAMPLE_SHORT:
       case GEN_OCL_UPSAMPLE_INT:
+      case GEN_OCL_UPSAMPLE_LONG:
       case GEN_OCL_SADD_SAT_CHAR:
       case GEN_OCL_SADD_SAT_SHORT:
       case GEN_OCL_SADD_SAT_INT:
@@ -2221,6 +2222,14 @@ namespace gbe
             GBE_ASSERT(AI != AE); const ir::Register src1 = this->getRegister(*AI); ++AI;
             const ir::Register dst = this->getRegister(&I);
             ctx.UPSAMPLE_INT(getType(ctx, I.getType()), dst, src0, src1);
+            break;
+          }
+          case GEN_OCL_UPSAMPLE_LONG:
+          {
+            GBE_ASSERT(AI != AE); const ir::Register src0 = this->getRegister(*AI); ++AI;
+            GBE_ASSERT(AI != AE); const ir::Register src1 = this->getRegister(*AI); ++AI;
+            const ir::Register dst = this->getRegister(&I);
+            ctx.UPSAMPLE_LONG(getType(ctx, I.getType()), dst, src0, src1);
             break;
           }
           case GEN_OCL_SADD_SAT_CHAR:

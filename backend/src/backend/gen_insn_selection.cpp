@@ -457,6 +457,7 @@ namespace gbe
     ALU2WithTemp(RHADD)
     ALU2(UPSAMPLE_SHORT)
     ALU2(UPSAMPLE_INT)
+    ALU2(UPSAMPLE_LONG)
     ALU1WithTemp(CONVI_TO_I64)
     I64Shift(I64SHL)
     I64Shift(I64SHR)
@@ -1655,6 +1656,9 @@ namespace gbe
           break;
         case OP_UPSAMPLE_INT:
           sel.UPSAMPLE_INT(dst, src0, src1);
+          break;
+        case OP_UPSAMPLE_LONG:
+          sel.UPSAMPLE_LONG(dst, src0, src1);
           break;
         default: NOT_IMPLEMENTED;
       }

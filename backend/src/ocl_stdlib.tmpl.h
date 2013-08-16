@@ -430,15 +430,16 @@ INLINE_OVERLOADABLE ulong rotate(ulong x, ulong y) {
 
 OVERLOADABLE short __gen_ocl_upsample(short hi, short lo);
 OVERLOADABLE int __gen_ocl_upsample(int hi, int lo);
+OVERLOADABLE long __gen_ocl_upsample(long hi, long lo);
 INLINE_OVERLOADABLE short upsample(char hi, uchar lo) { return __gen_ocl_upsample((short)hi, (short)lo); }
 INLINE_OVERLOADABLE ushort upsample(uchar hi, uchar lo) { return __gen_ocl_upsample((short)hi, (short)lo); }
 INLINE_OVERLOADABLE int upsample(short hi, ushort lo) { return __gen_ocl_upsample((int)hi, (int)lo); }
 INLINE_OVERLOADABLE uint upsample(ushort hi, ushort lo) { return __gen_ocl_upsample((int)hi, (int)lo); }
 INLINE_OVERLOADABLE long upsample(int hi, uint lo) {
-  return 0;
+  return __gen_ocl_upsample((long)hi, (long)lo);
 }
 INLINE_OVERLOADABLE ulong upsample(uint hi, uint lo) {
-  return 0;
+  return __gen_ocl_upsample((long)hi, (long)lo);
 }
 
 PURE CONST uint __gen_ocl_hadd(uint x, uint y);
