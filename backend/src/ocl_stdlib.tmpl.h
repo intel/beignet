@@ -1293,6 +1293,72 @@ INLINE void write_mem_fence(cl_mem_fence_flags flags) {
 }
 
 /////////////////////////////////////////////////////////////////////////////
+// Async Copies and prefetch
+/////////////////////////////////////////////////////////////////////////////
+#define BODY(SRC_STRIDE, DST_STRIDE) \
+  uint size = get_local_size(2) * get_local_size(1) * get_local_size(0); \
+  uint count = num / size;  \
+  uint offset = get_local_id(2) * get_local_size(1) + get_local_id(1);  \
+  offset = offset * get_local_size(0) + get_local_id(0); \
+  for(uint i=0; i<count; i+=1) { \
+    *(dst + offset * DST_STRIDE) = *(src + offset * SRC_STRIDE); \
+    offset += size;                                 \
+  } \
+  if(offset < num) \
+    *(dst + offset * DST_STRIDE) = *(src + offset * SRC_STRIDE); \
+  return 0;
+
+#define DEFN(TYPE) \
+INLINE_OVERLOADABLE event_t async_work_group_copy (local TYPE *dst,  const global TYPE *src, \
+										    size_t num, event_t event) { \
+  BODY(1, 1); \
+} \
+INLINE_OVERLOADABLE event_t async_work_group_copy (global TYPE *dst,  const local TYPE *src, \
+										    size_t num, event_t event) { \
+  BODY(1, 1); \
+} \
+INLINE_OVERLOADABLE event_t async_work_group_strided_copy (local TYPE *dst,  const global TYPE *src, \
+										            size_t num, size_t src_stride, event_t event) { \
+  BODY(src_stride, 1); \
+} \
+INLINE_OVERLOADABLE event_t async_work_group_strided_copy (global TYPE *dst,  const local TYPE *src, \
+										            size_t num, size_t dst_stride, event_t event) { \
+  BODY(1, dst_stride); \
+}
+#define DEF(TYPE) \
+  DEFN(TYPE); DEFN(TYPE##2); DEFN(TYPE##3); DEFN(TYPE##4); DEFN(TYPE##8); DEFN(TYPE##16);
+DEF(char)
+DEF(uchar)
+DEF(short)
+DEF(ushort)
+DEF(int)
+DEF(uint)
+DEF(float)
+#undef BODY
+#undef DEFN
+#undef DEF
+
+INLINE void wait_group_events (int num_events, event_t *event_list) {
+  barrier(CLK_LOCAL_MEM_FENCE | CLK_GLOBAL_MEM_FENCE);
+}
+
+#define DEFN(TYPE) \
+INLINE_OVERLOADABLE void prefetch(const global TYPE *p, size_t num) { }
+#define DEF(TYPE) \
+DEFN(TYPE); DEFN(TYPE##2); DEFN(TYPE##3); DEFN(TYPE##4); DEFN(TYPE##8); DEFN(TYPE##16)
+DEF(char);
+DEF(uchar);
+DEF(short);
+DEF(ushort);
+DEF(int);
+DEF(uint);
+DEF(long);
+DEF(ulong);
+DEF(float);
+#undef DEFN
+#undef DEF
+
+/////////////////////////////////////////////////////////////////////////////
 // Atomic functions
 /////////////////////////////////////////////////////////////////////////////
 OVERLOADABLE uint __gen_ocl_atomic_add(__global uint *p, uint val);
