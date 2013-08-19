@@ -30,8 +30,8 @@ void compiler_long(void)
   src1[7] = -2L,                  src2[7] = -1L;
   src1[8] = 0,                    src2[8] = 0x8000000000000000UL;
   for (int32_t i = 9; i < (int32_t) n; ++i) {
-    src1[i] = ((long)rand() << 32) + rand();
-    src2[i] = ((long)rand() << 32) + rand();
+    src1[i] = ((int64_t)rand() << 32) + rand();
+    src2[i] = ((int64_t)rand() << 32) + rand();
   }
   OCL_MAP_BUFFER(0);
   OCL_MAP_BUFFER(1);
