@@ -1737,6 +1737,9 @@ namespace gbe
       SelectionDAG *cmp = dag.child[0];
       const SelectInstruction &insn = cast<SelectInstruction>(dag.insn);
 
+      if (insn.getType() == TYPE_S64 || insn.getType() == TYPE_U64) // not support
+        return false;
+
       // Not in this block
       if (cmp == NULL) return false;
 
