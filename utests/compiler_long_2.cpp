@@ -21,8 +21,8 @@ void compiler_long_2(void)
 
   // Run random tests
   for (int32_t i = 0; i < (int32_t) n; ++i) {
-    src1[i] = ((long)rand() << 32) + rand();
-    src2[i] = ((long)rand() << 32) + rand();
+    src1[i] = ((int64_t)rand() << 32) + rand();
+    src2[i] = ((int64_t)rand() << 32) + rand();
   }
   src1[4] = 1;
   OCL_MAP_BUFFER(0);
