@@ -1384,7 +1384,9 @@ namespace gbe
   /*! Unary instruction patterns */
   DECL_PATTERN(UnaryInstruction)
   {
-    static ir::Type getType(const ir::Opcode opcode) {
+    static ir::Type getType(const ir::Opcode opcode, const ir::Type insnType) {
+      if (insnType == ir::TYPE_S64 || insnType == ir::TYPE_U64)
+        return insnType;
       if (opcode == ir::OP_FBH || opcode == ir::OP_FBL)
         return ir::TYPE_U32;
       return ir::TYPE_FLOAT;
@@ -1392,8 +1394,9 @@ namespace gbe
 
     INLINE bool emitOne(Selection::Opaque &sel, const ir::UnaryInstruction &insn) const {
       const ir::Opcode opcode = insn.getOpcode();
-      const GenRegister dst = sel.selReg(insn.getDst(0), getType(opcode));
-      const GenRegister src = sel.selReg(insn.getSrc(0), getType(opcode));
+      const ir::Type insnType = insn.getType();
+      const GenRegister dst = sel.selReg(insn.getDst(0), getType(opcode, insnType));
+      const GenRegister src = sel.selReg(insn.getSrc(0), getType(opcode, insnType));
       switch (opcode) {
         case ir::OP_ABS:
           if (insn.getType() == ir::TYPE_S32) {

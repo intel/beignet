@@ -508,7 +508,9 @@ INLINE_OVERLOADABLE uint abs_diff (int x, int y) {
 }
 
 INLINE_OVERLOADABLE ulong abs_diff (long x, long y) {
-  return 0;
+  if ((x >= 0 && y >= 0) || (x <= 0 && y <= 0))
+    return abs(x - y);
+  return abs(x) + abs(y);
 }
 INLINE_OVERLOADABLE ulong abs_diff (ulong x, ulong y) {
   return y > x ? (y - x) : (x - y);
