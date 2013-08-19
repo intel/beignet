@@ -562,8 +562,11 @@ namespace gbe
         loadBottomHalf(tmp1, src1);
         p->CMP(insn.extra.function, tmp0, tmp1);
         saveFlag(f3, 0, 1);
+        p->push();
+        p->curr.execWidth = 1;
         p->AND(f2, f2, f3);
         p->OR(f1, f1, f2);
+        p->pop();
         break;
       case GEN_CONDITIONAL_EQ:
         p->CMP(GEN_CONDITIONAL_EQ, tmp0, tmp1);
@@ -573,7 +576,10 @@ namespace gbe
         loadBottomHalf(tmp1, src1);
         p->CMP(GEN_CONDITIONAL_EQ, tmp0, tmp1);
         saveFlag(f2, 0, 1);
+        p->push();
+        p->curr.execWidth = 1;
         p->AND(f1, f1, f2);
+        p->pop();
         break;
       case GEN_CONDITIONAL_NEQ:
         p->CMP(GEN_CONDITIONAL_NEQ, tmp0, tmp1);
@@ -583,12 +589,16 @@ namespace gbe
         loadBottomHalf(tmp1, src1);
         p->CMP(GEN_CONDITIONAL_NEQ, tmp0, tmp1);
         saveFlag(f2, 0, 1);
+        p->push();
+        p->curr.execWidth = 1;
         p->OR(f1, f1, f2);
+        p->pop();
         break;
       default:
         NOT_IMPLEMENTED;
     }
     saveFlag(f2, flag, subFlag);
+    p->curr.execWidth = 1;
     p->AND(f1, f1, f2);
     p->MOV(GenRegister::flag(flag, subFlag), f1);
     p->pop();

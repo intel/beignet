@@ -511,7 +511,7 @@ INLINE_OVERLOADABLE ulong abs_diff (long x, long y) {
   return 0;
 }
 INLINE_OVERLOADABLE ulong abs_diff (ulong x, ulong y) {
-  return 0;
+  return y > x ? (y - x) : (x - y);
 }
 
 /////////////////////////////////////////////////////////////////////////////
