@@ -343,8 +343,8 @@ cl_ocl_init(void)
     }
   }
 
-#ifdef HAS_EGL
   if (hasGLExt) {
+#ifdef HAS_EGL
     int i = 0;
     props = new cl_context_properties[7];
     props[i++] = CL_CONTEXT_PLATFORM;
@@ -356,8 +356,8 @@ cl_ocl_init(void)
       props[i++] = (cl_context_properties)eglGetCurrentContext();
     }
     props[i++] = 0;
-  }
 #endif
+  }
   /* Now create a context */
   ctx = clCreateContext(props, 1, &device, NULL, NULL, &status);
   if (status != CL_SUCCESS) {
