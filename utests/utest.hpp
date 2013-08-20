@@ -50,6 +50,8 @@ struct UTest
   static void run(const char *name);
   /*! Run all the tests */
   static void runAll(void);
+  /*! List all the tests */
+  static void listAll(void);
 };
 
 /*! Register a new unit test */

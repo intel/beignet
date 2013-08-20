@@ -25,11 +25,17 @@
  */
 #include "utest_helper.hpp"
 #include "utest_exception.hpp"
+#include <string.h>
 #include <iostream>
 
 int main(int argc, char *argv[])
 {
   try {
+    if (argc == 2 && !strcmp(argv[1], "--list")) {
+      UTest::listAll();
+      return 0;
+    }
+
     cl_ocl_init();
     if (argc >= 2)
       for (int i = 1; i < argc; ++i)

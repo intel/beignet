@@ -76,3 +76,11 @@ void UTest::runAll(void) {
   }
 }
 
+void UTest::listAll(void) {
+  if (utestList == NULL) return;
+  for (size_t i = 0; i < utestList->size(); ++i) {
+    const UTest &utest = (*utestList)[i];
+    if (utest.fn == NULL) continue;
+    std::cout << utest.name << std::endl;
+  }
+}
