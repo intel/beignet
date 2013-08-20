@@ -196,13 +196,13 @@ template <typename T, typename U> static void compiler_abs_diff_with_type(void)
 typedef unsigned char uchar;
 typedef unsigned short ushort;
 typedef unsigned int uint;
-typedef uint64_t ulong;
+typedef uint64_t ulong64;
 ABS_TEST_DIFF_TYPE(int, uint)
-ABS_TEST_DIFF_TYPE_2(int64_t, long, ulong)
+ABS_TEST_DIFF_TYPE_2(int64_t, long, ulong64)
 ABS_TEST_DIFF_TYPE(short, ushort)
 ABS_TEST_DIFF_TYPE(char, uchar)
 ABS_TEST_DIFF_TYPE(uint, uint)
-ABS_TEST_DIFF_TYPE(ulong, ulong)
+ABS_TEST_DIFF_TYPE_2(ulong64, ulong, ulong64)
 ABS_TEST_DIFF_TYPE(ushort, ushort)
 ABS_TEST_DIFF_TYPE(uchar, uchar)
 
