@@ -90,7 +90,7 @@ set (utests_sources
   compiler_insn_selection_min.cpp
   compiler_insn_selection_max.cpp
   compiler_insn_selection_masked_min_max.cpp
-	compiler_load_bool_imm.cpp
+  compiler_load_bool_imm.cpp
   compiler_global_memory_barrier.cpp
   compiler_local_memory_two_ptr.cpp
   compiler_local_memory_barrier.cpp
@@ -122,7 +122,7 @@ set (utests_sources
   builtin_acos_asin.cpp
   runtime_createcontext.cpp
   runtime_null_kernel_arg.cpp
-	runtime_event.cpp
+  runtime_event.cpp
   compiler_double.cpp
   compiler_double_2.cpp
   compiler_double_3.cpp
@@ -135,6 +135,7 @@ set (utests_sources
   compiler_long_asr.cpp
   compiler_long_mult.cpp
   compiler_long_cmp.cpp
+  #compiler_bool_cross_basic_block.cpp
   utest_assert.cpp
   utest.cpp
   utest_file_map.cpp
