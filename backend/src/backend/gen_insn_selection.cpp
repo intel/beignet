@@ -2621,6 +2621,9 @@ namespace gbe
           sel.CMP(GEN_CONDITIONAL_G, ip, GenRegister::immuw(nextLabel));
 
           // Branch to the jump target
+          // XXX TODO: For group size not aligned to simdWidth, ALL8/16h may not
+          // work correct, as flag register bits mapped to non-active lanes tend
+          // to be zero.
           if (simdWidth == 8)
             sel.curr.predicate = GEN_PREDICATE_ALIGN1_ALL8H;
           else if (simdWidth == 16)

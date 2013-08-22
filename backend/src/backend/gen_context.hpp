@@ -61,6 +61,7 @@ namespace gbe
     INLINE const ir::Function &getFunction(void) const { return fn; }
     /*! Simd width chosen for the current function */
     INLINE uint32_t getSimdWidth(void) const { return simdWidth; }
+    void clearFlagRegister(void);
     /*! Emit the per-lane stack pointer computation */
     void emitStackPointer(void);
     /*! Emit the instructions */

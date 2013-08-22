@@ -88,6 +88,18 @@ namespace gbe
     }
   }
 
+  void GenContext::clearFlagRegister(void) {
+    // when group size not aligned to simdWidth, flag register need clear to
+    // make prediction(any8/16h) work correctly
+    p->push();
+    p->curr.predicate = GEN_PREDICATE_NONE;
+    p->curr.noMask = 1;
+    p->curr.execWidth = 1;
+    p->MOV(GenRegister::retype(GenRegister::flag(0,0), GEN_TYPE_UD), GenRegister::immud(0x0));
+    p->MOV(GenRegister::retype(GenRegister::flag(1,0), GEN_TYPE_UD), GenRegister::immud(0x0));
+    p->pop();
+  }
+
   void GenContext::emitStackPointer(void) {
     using namespace ir;
 
@@ -1091,6 +1103,7 @@ namespace gbe
     schedulePostRegAllocation(*this, *this->sel);
     if (OCL_OUTPUT_REG_ALLOC)
       ra->outputAllocation();
+    this->clearFlagRegister();
     this->emitStackPointer();
     this->emitInstructionStream();
     this->patchBranches();
