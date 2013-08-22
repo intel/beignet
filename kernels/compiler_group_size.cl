@@ -10,3 +10,20 @@ compiler_group_size(__global unsigned int *dst)
   dst[idz*size_x*size_y + idy*size_x + idx] = idz*size_x*size_y + idy*size_x +idx;
 }
 
+struct xyz{
+  unsigned b:16;
+  unsigned e:16;
+  unsigned o;
+};
+
+__kernel void
+compiler_group_size4(__global struct xyz *src, __global unsigned int *dst, unsigned int num, unsigned int c)
+{
+  uint idx = (uint)get_global_id(0);
+  if(idx>=num)
+    return;
+  struct xyz td = src[idx];
+  for(unsigned x = td.b;x<=td.e;x++)
+    dst[td.o+x] = c;
+}
+
