@@ -257,6 +257,10 @@ extern cl_buffer_unmap_cb *cl_buffer_unmap;
 typedef int (cl_buffer_map_gtt_cb)(cl_buffer);
 extern cl_buffer_map_gtt_cb *cl_buffer_map_gtt;
 
+/* Map a buffer in the GTT domain, non waiting the GPU read or write*/
+typedef int (cl_buffer_map_gtt_unsync_cb)(cl_buffer);
+extern cl_buffer_map_gtt_unsync_cb *cl_buffer_map_gtt_unsync;
+
 /* Unmap a buffer in the GTT domain */
 typedef int (cl_buffer_unmap_gtt_cb)(cl_buffer);
 extern cl_buffer_unmap_gtt_cb *cl_buffer_unmap_gtt;

@@ -175,6 +175,9 @@ extern cl_int cl_mem_unmap(cl_mem);
 /* Directly map a memory object in GTT mode */
 extern void *cl_mem_map_gtt(cl_mem);
 
+/* Directly map a memory object in GTT mode, with out waiting gpu idle */
+extern void *cl_mem_map_gtt_unsync(cl_mem);
+
 /* Unmap a memory object in GTT mode */
 extern cl_int cl_mem_unmap_gtt(cl_mem);
 

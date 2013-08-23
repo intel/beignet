@@ -36,6 +36,7 @@ LOCAL cl_buffer_unreference_cb *cl_buffer_unreference = NULL;
 LOCAL cl_buffer_map_cb *cl_buffer_map = NULL;
 LOCAL cl_buffer_unmap_cb *cl_buffer_unmap = NULL;
 LOCAL cl_buffer_map_gtt_cb *cl_buffer_map_gtt = NULL;
+LOCAL cl_buffer_map_gtt_unsync_cb *cl_buffer_map_gtt_unsync = NULL;
 LOCAL cl_buffer_unmap_gtt_cb *cl_buffer_unmap_gtt = NULL;
 LOCAL cl_buffer_get_virtual_cb *cl_buffer_get_virtual = NULL;
 LOCAL cl_buffer_get_size_cb *cl_buffer_get_size = NULL;

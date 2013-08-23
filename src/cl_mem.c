@@ -560,6 +560,14 @@ cl_mem_map_gtt(cl_mem mem)
   return cl_buffer_get_virtual(mem->bo);
 }
 
+LOCAL void *
+cl_mem_map_gtt_unsync(cl_mem mem)
+{
+  cl_buffer_map_gtt_unsync(mem->bo);
+  assert(cl_buffer_get_virtual(mem->bo));
+  return cl_buffer_get_virtual(mem->bo);
+}
+
 LOCAL cl_int
 cl_mem_unmap_gtt(cl_mem mem)
 {

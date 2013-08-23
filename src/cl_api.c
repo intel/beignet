@@ -1576,6 +1576,9 @@ clEnqueueMapBuffer(cl_command_queue  command_queue,
                    cl_int *          errcode_ret)
 {
   cl_int err = CL_SUCCESS;
+  void *ptr = NULL;
+  void *mem_ptr = NULL;
+  cl_int slot = -1;
   enqueue_data *data, no_wait_data = { 0 };
 
   CHECK_QUEUE(command_queue);
@@ -1602,6 +1605,69 @@ clEnqueueMapBuffer(cl_command_queue  command_queue,
     goto error;
   }
 
+  if (!(ptr = cl_mem_map_gtt_unsync(buffer))) {
+    err = CL_MAP_FAILURE;
+    goto error;
+  }
+
+  ptr = (char*)ptr + offset;
+
+  if(buffer->flags & CL_MEM_USE_HOST_PTR) {
+    assert(buffer->host_ptr);
+    //only calc ptr here, will do memcpy in enqueue
+    mem_ptr = buffer->host_ptr + offset;
+  } else {
+    mem_ptr = ptr;
+  }
+
+  /* Record the mapped address. */
+  if (!buffer->mapped_ptr_sz) {
+    buffer->mapped_ptr_sz = 16;
+    buffer->mapped_ptr = (cl_mapped_ptr *)malloc(
+          sizeof(cl_mapped_ptr) * buffer->mapped_ptr_sz);
+    if (!buffer->mapped_ptr) {
+      cl_mem_unmap_gtt (buffer);
+      err = CL_OUT_OF_HOST_MEMORY;
+      ptr = NULL;
+      goto error;
+    }
+
+    memset(buffer->mapped_ptr, 0, buffer->mapped_ptr_sz * sizeof(cl_mapped_ptr));
+    slot = 0;
+  } else {
+   int i = 0;
+    for (; i < buffer->mapped_ptr_sz; i++) {
+      if (buffer->mapped_ptr[i].ptr == NULL) {
+        slot = i;
+        break;
+      }
+   }
+
+    if (i == buffer->mapped_ptr_sz) {
+      cl_mapped_ptr *new_ptr = (cl_mapped_ptr *)malloc(
+          sizeof(cl_mapped_ptr) * buffer->mapped_ptr_sz * 2);
+      if (!new_ptr) {
+       cl_mem_unmap_gtt (buffer);
+        err = CL_OUT_OF_HOST_MEMORY;
+        ptr = NULL;
+        goto error;
+      }
+      memset(new_ptr, 0, 2 * buffer->mapped_ptr_sz * sizeof(cl_mapped_ptr));
+      memcpy(new_ptr, buffer->mapped_ptr,
+             buffer->mapped_ptr_sz * sizeof(cl_mapped_ptr));
+      slot = buffer->mapped_ptr_sz;
+      buffer->mapped_ptr_sz *= 2;
+      free(buffer->mapped_ptr);
+      buffer->mapped_ptr = new_ptr;
+    }
+  }
+
+  assert(slot != -1);
+  buffer->mapped_ptr[slot].ptr = mem_ptr;
+  buffer->mapped_ptr[slot].v_ptr = ptr;
+  buffer->mapped_ptr[slot].size = size;
+  buffer->map_ref++;
+
   TRY(cl_event_check_waitlist, num_events_in_wait_list, event_wait_list, event, buffer->ctx);
 
   data = &no_wait_data;
@@ -1610,6 +1676,7 @@ clEnqueueMapBuffer(cl_command_queue  command_queue,
   data->offset      = offset;
   data->size        = size;
   data->map_flags   = map_flags;
+  data->ptr         = ptr;
 
   if(handle_events(command_queue, num_events_in_wait_list, event_wait_list,
                    event, data, CL_COMMAND_READ_BUFFER) == CL_ENQUEUE_EXECUTE_IMM) {
@@ -1620,7 +1687,7 @@ clEnqueueMapBuffer(cl_command_queue  command_queue,
 error:
   if (errcode_ret)
     *errcode_ret = err;
-  return data->ptr;
+  return mem_ptr;
 }
 
 void *
@@ -1638,6 +1705,7 @@ clEnqueueMapImage(cl_command_queue   command_queue,
                   cl_int *           errcode_ret)
 {
   cl_int err = CL_SUCCESS;
+  void *ptr  = NULL;
   enqueue_data *data, no_wait_data = { 0 };
 
   CHECK_QUEUE(command_queue);
@@ -1673,6 +1741,14 @@ clEnqueueMapImage(cl_command_queue   command_queue,
     goto error;
   }
 
+  if (!(ptr = cl_mem_map_gtt_unsync(mem))) {
+    err = CL_MAP_FAILURE;
+    goto error;
+  }
+
+  size_t offset = image->bpp*origin[0] + image->row_pitch*origin[1] + image->slice_pitch*origin[2];
+  ptr = (char*)ptr + offset;
+
   TRY(cl_event_check_waitlist, num_events_in_wait_list, event_wait_list, event, mem->ctx);
 
   data = &no_wait_data;
@@ -1683,6 +1759,7 @@ clEnqueueMapImage(cl_command_queue   command_queue,
   data->row_pitch   = *image_row_pitch;
   data->slice_pitch = *image_slice_pitch;
   data->map_flags   = map_flags;
+  data->ptr         = ptr;
 
   if(handle_events(command_queue, num_events_in_wait_list, event_wait_list,
                    event, data, CL_COMMAND_READ_BUFFER) == CL_ENQUEUE_EXECUTE_IMM) {
@@ -1693,7 +1770,7 @@ clEnqueueMapImage(cl_command_queue   command_queue,
 error:
   if (errcode_ret)
     *errcode_ret = err;
-  return data->ptr; //TODO: map and unmap first
+  return ptr; //TODO: map and unmap first
 }
 
 cl_int

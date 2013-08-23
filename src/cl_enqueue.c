@@ -155,97 +155,39 @@ error:
 
 cl_int cl_enqueue_map_buffer(enqueue_data *data)
 {
-
   void *ptr = NULL;
   cl_int err = CL_SUCCESS;
-  void *mem_ptr = NULL;
-  cl_int slot = -1;
   cl_mem buffer = data->mem_obj;
-
-  if (!(ptr = cl_mem_map_auto(buffer))) {
+  //because using unsync map in clEnqueueMapBuffer, so force use map_gtt here
+  if (!(ptr = cl_mem_map_gtt(buffer))) {
     err = CL_MAP_FAILURE;
+    goto error;
   }
 
   ptr = (char*)ptr + data->offset;
+  assert(data->ptr == ptr);
 
   if(buffer->flags & CL_MEM_USE_HOST_PTR) {
     assert(buffer->host_ptr);
     memcpy(buffer->host_ptr + data->offset, ptr, data->size);
-    mem_ptr = buffer->host_ptr + data->offset;
-  } else {
-    mem_ptr = ptr;
   }
-
-  /* Record the mapped address. */
-  if (!buffer->mapped_ptr_sz) {
-    buffer->mapped_ptr_sz = 16;
-    buffer->mapped_ptr = (cl_mapped_ptr *)malloc(
-          sizeof(cl_mapped_ptr) * buffer->mapped_ptr_sz);
-    if (!buffer->mapped_ptr) {
-      cl_mem_unmap_auto (buffer);
-      err = CL_OUT_OF_HOST_MEMORY;
-      ptr = NULL;
-      goto error;
-    }
-
-    memset(buffer->mapped_ptr, 0, buffer->mapped_ptr_sz * sizeof(cl_mapped_ptr));
-    slot = 0;
-  } else {
-   int i = 0;
-    for (; i < buffer->mapped_ptr_sz; i++) {
-      if (buffer->mapped_ptr[i].ptr == NULL) {
-        slot = i;
-        break;
-      }
-   }
-
-    if (i == buffer->mapped_ptr_sz) {
-      cl_mapped_ptr *new_ptr = (cl_mapped_ptr *)malloc(
-          sizeof(cl_mapped_ptr) * buffer->mapped_ptr_sz * 2);
-      if (!new_ptr) {
-       cl_mem_unmap_auto (buffer);
-        err = CL_OUT_OF_HOST_MEMORY;
-        ptr = NULL;
-        goto error;
-      }
-      memset(new_ptr, 0, 2 * buffer->mapped_ptr_sz * sizeof(cl_mapped_ptr));
-      memcpy(new_ptr, buffer->mapped_ptr,
-             buffer->mapped_ptr_sz * sizeof(cl_mapped_ptr));
-      slot = buffer->mapped_ptr_sz;
-      buffer->mapped_ptr_sz *= 2;
-      free(buffer->mapped_ptr);
-      buffer->mapped_ptr = new_ptr;
-    }
-  }
-
-  assert(slot != -1);
-  buffer->mapped_ptr[slot].ptr = mem_ptr;
-  buffer->mapped_ptr[slot].v_ptr = ptr;
-  buffer->mapped_ptr[slot].size = data->size;
-  buffer->map_ref++;
-
-  data->ptr = mem_ptr;
-
+  
 error:
   return err;
 }
 
 cl_int cl_enqueue_map_image(enqueue_data *data)
 {
-  void *ptr = NULL;
   cl_int err = CL_SUCCESS;
-
   cl_mem mem = data->mem_obj;
-  CHECK_IMAGE(mem);
-  const size_t *origin = data->origin;
+  void *ptr = NULL;
 
-  if (!(ptr = cl_mem_map_auto(mem))) {
+  if (!(ptr = cl_mem_map_gtt(mem))) {
     err = CL_MAP_FAILURE;
     goto error;
   }
 
-  size_t offset = image->bpp*origin[0] + image->row_pitch*origin[1] + image->slice_pitch*origin[2];
-  data->ptr = (char*)ptr + offset;
+  assert(data->ptr == (char*)ptr + data->offset);
 
 error:
   return err;
@@ -285,7 +227,7 @@ cl_int cl_enqueue_unmap_mem_object(enqueue_data *data)
     assert(v_ptr == mapped_ptr);
   }
 
-  cl_mem_unmap_auto(memobj);
+  cl_mem_unmap_gtt(memobj);
 
   /* shrink the mapped slot. */
   if (memobj->mapped_ptr_sz/2 > memobj->map_ref) {
