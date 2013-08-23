@@ -33,6 +33,8 @@ void runtime_event(void)
     OCL_ASSERT(status >= CL_SUBMITTED);
   }
 
+  buf_data[0] = clEnqueueMapBuffer(queue, buf[0], CL_TRUE, 0, 0, BUFFERSIZE*sizeof(int), 1, &ev[2], NULL, NULL);
+
   OCL_SET_USER_EVENT_STATUS(ev[0], CL_COMPLETE);
 
   clGetEventInfo(ev[0], CL_EVENT_COMMAND_EXECUTION_STATUS, sizeof(status), &status, NULL);
@@ -45,13 +47,10 @@ void runtime_event(void)
     OCL_ASSERT(status <= CL_COMPLETE);
   }
 
-  // Check results
-  OCL_MAP_BUFFER(0);
-
   for (uint32_t i = 0; i < n; ++i) {
     OCL_ASSERT(((int*)buf_data[0])[i] == (int)value + 0x3);
   }
-  OCL_UNMAP_BUFFER(0);
+  clEnqueueUnmapMemObject(queue, buf[0], buf_data[0], 0, NULL, NULL);
 
   for (cl_uint i = 0; i != sizeof(ev) / sizeof(cl_event); ++i) {
     clReleaseEvent(ev[i]);
