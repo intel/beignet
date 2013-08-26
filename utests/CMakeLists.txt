@@ -114,6 +114,7 @@ set (utests_sources
   builtin_shuffle2.cpp
   builtin_sign.cpp
   builtin_sinpi.cpp
+  builtin_tgamma.cpp
   buildin_work_dim.cpp
   builtin_global_size.cpp
   builtin_local_size.cpp

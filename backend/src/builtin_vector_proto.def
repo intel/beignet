@@ -127,7 +127,7 @@ gentype sqrt (gentype)
 gentype tan (gentype)
 gentype tanh (gentype)
 gentype tanpi (gentype x)
-#gentype tgamma (gentype)
+gentype tgamma (gentype)
 gentype trunc (gentype)
 
 ##half_native_math
