@@ -30,7 +30,8 @@ LOCAL cl_driver_get_device_id_cb *cl_driver_get_device_id = NULL;
 /* Buffer */
 LOCAL cl_buffer_alloc_cb *cl_buffer_alloc = NULL;
 LOCAL cl_buffer_set_tiling_cb *cl_buffer_set_tiling = NULL;
-LOCAL cl_buffer_alloc_from_eglimage_cb *cl_buffer_alloc_from_eglimage = NULL;
+LOCAL cl_buffer_alloc_from_texture_cb *cl_buffer_alloc_from_texture = NULL;
+LOCAL cl_buffer_release_from_texture_cb *cl_buffer_release_from_texture = NULL;
 LOCAL cl_buffer_reference_cb *cl_buffer_reference = NULL;
 LOCAL cl_buffer_unreference_cb *cl_buffer_unreference = NULL;
 LOCAL cl_buffer_map_cb *cl_buffer_map = NULL;
@@ -45,6 +46,13 @@ LOCAL cl_buffer_unpin_cb *cl_buffer_unpin = NULL;
 LOCAL cl_buffer_subdata_cb *cl_buffer_subdata = NULL;
 LOCAL cl_buffer_wait_rendering_cb *cl_buffer_wait_rendering = NULL;
 
+/* cl_khr_gl_sharing */
+LOCAL cl_gl_acquire_texture_cb *cl_gl_acquire_texture = NULL;
+LOCAL cl_gl_release_texture_cb *cl_gl_release_texture = NULL;
+LOCAL cl_gl_acquire_buffer_object_cb *cl_gl_acquire_buffer_object = NULL;
+LOCAL cl_gl_release_buffer_object_cb *cl_gl_release_buffer_object = NULL;
+LOCAL cl_gl_acquire_render_buffer_cb *cl_gl_acquire_render_buffer = NULL;
+LOCAL cl_gl_release_render_buffer_cb *cl_gl_release_render_buffer = NULL;
 /* GPGPU */
 LOCAL cl_gpgpu_new_cb *cl_gpgpu_new = NULL;
 LOCAL cl_gpgpu_delete_cb *cl_gpgpu_delete = NULL;

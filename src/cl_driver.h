@@ -22,7 +22,7 @@
 
 #include <stdint.h>
 #include <stdlib.h>
-
+#include "cl_driver_type.h"
 /* Various limitations we should remove actually */
 #define GEN_MAX_SURFACES 128
 #define GEN_MAX_SAMPLERS 16
@@ -32,28 +32,6 @@
  * Hide behind some call backs the buffer allocation / deallocation ... This
  * will allow us to make the use of a software performance simulator easier and
  * to minimize the code specific for the HW and for the simulator
- **************************************************************************/
-
-/* Encapsulates command buffer / data buffer / kernels */
-typedef struct _cl_buffer *cl_buffer;
-
-/* Encapsulates buffer manager */
-typedef struct _cl_buffer_mgr *cl_buffer_mgr;
-
-/* Encapsulates the driver backend functionalities */
-typedef struct _cl_driver *cl_driver;
-
-/* Encapsulates the gpgpu stream of commands */
-typedef struct _cl_gpgpu *cl_gpgpu;
-
-/* Encapsulates the event  of a command stream */
-typedef struct _cl_gpgpu_event *cl_gpgpu_event;
-
-typedef struct _cl_context_prop *cl_context_prop;
-typedef struct _cl_sampler *cl_sampler;
-
-/**************************************************************************
- * Driver
  **************************************************************************/
 /* Create a new driver */
 typedef cl_driver (cl_driver_new_cb)(cl_context_prop);
@@ -234,14 +212,18 @@ typedef cl_buffer (cl_buffer_set_tiling_cb)(cl_buffer, int tiling, size_t stride
 extern cl_buffer_set_tiling_cb *cl_buffer_set_tiling;
 
 #include "cl_context.h"
+#include "cl_mem.h"
 typedef struct _cl_context *cl_context;
 
-typedef cl_buffer (cl_buffer_alloc_from_eglimage_cb)(cl_context, void*, unsigned int *,
-                                                     int *, int *, int *, int *);
-extern cl_buffer_alloc_from_eglimage_cb *cl_buffer_alloc_from_eglimage;
+typedef cl_buffer (cl_buffer_alloc_from_texture_cb)(cl_context, unsigned int, int, unsigned int,
+                                                    struct _cl_mem_image *gl_image);
+extern cl_buffer_alloc_from_texture_cb *cl_buffer_alloc_from_texture;
+
+typedef void (cl_buffer_release_from_texture_cb)(cl_context, unsigned int, int, unsigned int);
+extern cl_buffer_release_from_texture_cb *cl_buffer_release_from_texture;
 
 /* Unref a buffer and destroy it if no more ref */
-typedef void (cl_buffer_unreference_cb)(cl_buffer);
+typedef int (cl_buffer_unreference_cb)(cl_buffer);
 extern cl_buffer_unreference_cb *cl_buffer_unreference;
 
 /* Add one more ref on a buffer */
@@ -295,6 +277,36 @@ extern cl_buffer_wait_rendering_cb *cl_buffer_wait_rendering;
 /* Get the device id */
 typedef int (cl_driver_get_device_id_cb)(void);
 extern cl_driver_get_device_id_cb *cl_driver_get_device_id;
+
+/**************************************************************************
+ * cl_khr_gl_sharing.
+ **************************************************************************/
+typedef int (cl_gl_acquire_texture_cb)(void *driver, void *ctx, int target,
+                                       int level, int texture, void*user_data);
+extern cl_gl_acquire_texture_cb *cl_gl_acquire_texture;
+
+typedef int (cl_gl_release_texture_cb)(void *driver, void *ctx, int target,
+                                       int level, int texture);
+extern cl_gl_release_texture_cb *cl_gl_release_texture;
+
+typedef int (cl_gl_acquire_buffer_object_cb)(void *driver, void *ctx,
+                                             int bufobj, void* user_data);
+extern cl_gl_acquire_buffer_object_cb *cl_gl_acquire_buffer_object;
+
+typedef int (cl_gl_release_buffer_object_cb)(void *driver, void *ctx, int bufobj);
+extern cl_gl_release_buffer_object_cb *cl_gl_release_buffer_object;
+
+typedef int (cl_gl_acquire_render_buffer_cb)(void *driver, void *ctx,
+                                             int rb, void* user_data);
+extern cl_gl_acquire_render_buffer_cb *cl_gl_acquire_render_buffer;
+
+typedef int (cl_gl_release_render_buffer_cb)(void *driver, void *ctx, int rb);
+extern cl_gl_release_render_buffer_cb *cl_gl_release_render_buffer;
+
+#ifndef DEFAULT_DRIVER_DIR
+/* this is normally defined in Mesa/configs/default with DRI_DRIVER_SEARCH_PATH */
+#define DEFAULT_DRIVER_DIR "/usr/local/lib/dri"
+#endif
 
 #endif /* __CL_DRIVER_H__ */
 

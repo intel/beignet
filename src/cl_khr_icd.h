@@ -14,6 +14,8 @@
  * You should have received a copy of the GNU Lesser General Public
  * License along with this library. If not, see <http://www.gnu.org/licenses/>.
  */
+#ifndef __CL_KHR_ICD_H__
+#define __CL_KHR_ICD_H__
 
 #ifdef HAS_OCLIcd
 
@@ -27,4 +29,6 @@ extern struct _cl_icd_dispatch const cl_khr_icd_dispatch;
 #define SET_ICD(dispatch)
 #define INIT_ICD(member)
 #define DEFINE_ICD(member)
+#endif
+
 #endif

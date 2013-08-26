@@ -45,6 +45,13 @@
  *    Zou Nan hai <nanhai.zou@intel.com>
  *
  */
+
+#if defined(HAS_EGL)
+#include "GL/gl.h"
+#include "EGL/egl.h"
+#include "x11/mesa_egl_extension.h"
+#endif
+
 #include "intel_driver.h"
 #include "intel_gpgpu.h"
 #include "intel_batchbuffer.h"
@@ -65,6 +72,8 @@
 #include "cl_alloc.h"
 #include "cl_context.h"
 #include "cl_driver.h"
+#include "cl_device_id.h"
+#include "cl_platform_id.h"
 
 #define SET_BLOCKED_SIGSET(DRIVER)   do {                     \
   sigset_t bl_mask;                                           \
@@ -169,6 +178,7 @@ static void
 intel_driver_open(intel_driver_t *intel, cl_context_prop props)
 {
   int cardi;
+  char *driver_name;
   if (props != NULL
       && props->gl_type != CL_GL_NOSHARE
       && props->gl_type != CL_GL_GLX_DISPLAY
@@ -182,7 +192,7 @@ intel_driver_open(intel_driver_t *intel, cl_context_prop props)
   if(intel->x11_display) {
     if((intel->dri_ctx = getDRI2State(intel->x11_display,
                                      DefaultScreen(intel->x11_display),
-                                     NULL)))
+                                     &driver_name)))
       intel_driver_init_shared(intel, intel->dri_ctx);
     else
       printf("X server found. dri2 connection failed! \n");
@@ -206,15 +216,9 @@ intel_driver_open(intel_driver_t *intel, cl_context_prop props)
     exit(-1);
   }
 
-#if defined(HAS_GBM) && defined(HAS_EGL)
+#ifdef HAS_EGL
   if (props && props->gl_type == CL_GL_EGL_DISPLAY) {
     assert(props->egl_display);
-    intel->gbm = gbm_create_device(intel->fd);
-    if (intel->gbm == NULL) {
-      printf("GBM device create failed.\n");
-      exit(-1);
-    }
-    cl_gbm_set_image_extension(intel->gbm, (void*)props->egl_display);
   }
 #endif
 }
@@ -222,9 +226,6 @@ intel_driver_open(intel_driver_t *intel, cl_context_prop props)
 static void
 intel_driver_close(intel_driver_t *intel)
 {
-#ifdef HAS_GBM
-  if(intel->gbm) gbm_device_destroy(intel->gbm);
-#endif
   if(intel->dri_ctx) dri_state_release(intel->dri_ctx);
   if(intel->x11_display) XCloseDisplay(intel->x11_display);
   if(intel->fd) close(intel->fd);
@@ -404,11 +405,9 @@ intel_driver_get_ver(struct intel_driver *drv)
 static size_t drm_intel_bo_get_size(drm_intel_bo *bo) { return bo->size; }
 static void* drm_intel_bo_get_virtual(drm_intel_bo *bo) { return bo->virtual; }
 
-#if defined(HAS_EGL) && defined(HAS_GBM)
-#include "gbm.h"
-#include "GL/gl.h"
-#include "EGL/egl.h"
-#include "EGL/eglext.h"
+#if defined(HAS_EGL)
+#include "intel_dri_resource_sharing.h"
+#include "cl_image.h"
 static int get_cl_tiling(uint32_t drm_tiling)
 {
   switch(drm_tiling) {
@@ -421,50 +420,166 @@ static int get_cl_tiling(uint32_t drm_tiling)
   return CL_NO_TILE;
 }
 
-static unsigned int get_gl_format(uint32_t gbm_format)
+static int cl_get_clformat_from_texture(GLint tex_format, cl_image_format * cl_format)
 {
-  switch(gbm_format) {
-  case GBM_FORMAT_ARGB8888: return GL_BGRA;
-  case GBM_FORMAT_ABGR8888: return GL_RGBA;
+  cl_int ret = CL_SUCCESS;
+
+  switch (tex_format) {
+  case GL_RGBA8:
+  case GL_RGBA:
+  case GL_RGBA16:
+  case GL_RGBA8I:
+  case GL_RGBA16I:
+  case GL_RGBA32I:
+  case GL_RGBA8UI:
+  case GL_RGBA16UI:
+  case GL_RGBA32UI:
+  case GL_RGBA16F:
+  case GL_RGBA32F:
+    cl_format->image_channel_order = CL_RGBA;
+    break;
+  case GL_BGRA:
+    cl_format->image_channel_order = CL_BGRA;
+    break;
   default:
-    NOT_IMPLEMENTED;
+    ret = -1;
+    goto error;
   }
-  return 0;
+
+  switch (tex_format) {
+  case GL_RGBA8:
+  case GL_RGBA:
+  case GL_BGRA:
+    cl_format->image_channel_data_type = CL_UNORM_INT8;
+    break;
+  case GL_RGBA16:
+    cl_format->image_channel_data_type = CL_UNORM_INT16;
+    break;
+  case GL_RGBA8I:
+    cl_format->image_channel_data_type = CL_SIGNED_INT8;
+    break;
+  case GL_RGBA16I:
+    cl_format->image_channel_data_type = CL_SIGNED_INT16;
+    break;
+  case GL_RGBA32I:
+    cl_format->image_channel_data_type = CL_SIGNED_INT32;
+    break;
+  case GL_RGBA8UI:
+    cl_format->image_channel_data_type = CL_UNSIGNED_INT8;
+    break;
+  case GL_RGBA16UI:
+    cl_format->image_channel_data_type = CL_UNSIGNED_INT16;
+    break;
+  case GL_RGBA32UI:
+    cl_format->image_channel_data_type = CL_UNSIGNED_INT32;
+    break;
+  case GL_RGBA16F:
+    cl_format->image_channel_data_type = CL_HALF_FLOAT;
+    break;
+  case GL_RGBA32F:
+    cl_format->image_channel_order = CL_FLOAT;
+    break;
+  default:
+    ret = -1;
+    goto error;
+  }
+
+error:
+  return ret;
 }
 
-cl_buffer intel_alloc_buffer_from_eglimage(cl_context ctx,
-                                           void* image,
-                                           unsigned int *gl_format,
-                                           int *w, int *h, int *pitch,
-                                           int *tiling)
+static int
+get_mem_type_from_target(GLenum texture_target, cl_mem_object_type *type)
 {
-  struct gbm_bo *bo;
-  uint32_t gbm_format;
-  drm_intel_bo *intel_bo;
-  int32_t name;
-  uint32_t drm_tiling, swizzle;
-  EGLImageKHR egl_image = (EGLImageKHR)image;
-  intel_driver_t *intel = (intel_driver_t*)ctx->drv;
+  switch(texture_target) {
+  case GL_TEXTURE_1D: *type = CL_MEM_OBJECT_IMAGE1D; break;
+  case GL_TEXTURE_2D: *type = CL_MEM_OBJECT_IMAGE2D; break;
+  case GL_TEXTURE_3D: *type = CL_MEM_OBJECT_IMAGE3D; break;
+  case GL_TEXTURE_1D_ARRAY: *type = CL_MEM_OBJECT_IMAGE1D_ARRAY; break;
+  case GL_TEXTURE_2D_ARRAY: *type = CL_MEM_OBJECT_IMAGE2D_ARRAY; break;
+  default:
+    return -1;
+  }
+  return CL_SUCCESS;
+}
 
-  bo = gbm_bo_import(intel->gbm, GBM_BO_IMPORT_EGL_IMAGE, (void*)egl_image, 0);
+static cl_buffer
+intel_alloc_buffer_from_texture_egl(cl_context ctx, unsigned int target,
+                                    int miplevel, unsigned int texture,
+                                    struct _cl_mem_image *image)
+{
+  cl_buffer bo = (cl_buffer) NULL;
+  struct _intel_dri_share_image_region region;
+  unsigned int bpp, intel_fmt;
+  cl_image_format cl_format;
+  EGLBoolean ret;
+  EGLint attrib_list[] = { EGL_GL_TEXTURE_ID_MESA, texture,
+                           EGL_GL_TEXTURE_LEVEL_MESA, miplevel,
+                           EGL_GL_TEXTURE_TARGET_MESA, target,
+                           EGL_NONE};
+  ret = eglAcquireResourceMESA(EGL_DISP(ctx), EGL_CTX(ctx),
+                               EGL_GL_TEXTURE_MESA,
+                               &attrib_list[0], &region);
+  if (!ret)
+      goto out;
 
-  *w = gbm_bo_get_width(bo);
-  *h = gbm_bo_get_height(bo);
-  *pitch = gbm_bo_get_stride(bo);
-  gbm_format = gbm_bo_get_format(bo);
-  *gl_format = get_gl_format(gbm_format);
-  name = cl_gbm_bo_get_name(bo);
+  bo = (cl_buffer)intel_driver_share_buffer((intel_driver_t *)ctx->drv, region.name);
 
-  intel_bo = intel_driver_share_buffer((intel_driver_t *)ctx->drv, name);
+  if (bo == NULL) {
+    eglReleaseResourceMESA(EGL_DISP(ctx), EGL_CTX(ctx), EGL_GL_TEXTURE_MESA, &attrib_list[0]);
+    goto out;
+  }
+  region.tiling = get_cl_tiling(region.tiling);
+  if (cl_get_clformat_from_texture(region.gl_format, &cl_format) != 0)
+    goto error;
+  intel_fmt = cl_image_get_intel_format(&cl_format);
+  if (intel_fmt == INTEL_UNSUPPORTED_FORMAT)
+    goto error;
+  cl_image_byte_per_pixel(&cl_format, &bpp);
+  cl_mem_object_type image_type;
+  if (get_mem_type_from_target(target, &image_type) != 0)
+    goto error;
 
-  if (drm_intel_bo_get_tiling(intel_bo, &drm_tiling, &swizzle)!= 0)
-    assert(0);
-  *tiling = get_cl_tiling(drm_tiling);
+  cl_mem_image_init(image, region.w, region.h,
+                    image_type, region.depth, cl_format,
+                    intel_fmt, bpp, region.row_pitch,
+                    region.slice_pitch, region.tiling,
+                    region.tile_x, region.tile_y, region.offset);
+out:
+  return bo;
 
-  gbm_bo_destroy(bo);
+error:
+  cl_buffer_unreference(bo);
+  eglReleaseResourceMESA(EGL_DISP(ctx), EGL_CTX(ctx), EGL_GL_TEXTURE_MESA, &attrib_list[0]);
+  return NULL;
+}
 
-  return (cl_buffer)intel_bo;
+static cl_buffer
+intel_alloc_buffer_from_texture(cl_context ctx, unsigned int target,
+                                int miplevel, unsigned int texture,
+                                struct _cl_mem_image *image)
+{
 
+  if (IS_EGL_CONTEXT(ctx))
+    return intel_alloc_buffer_from_texture_egl(ctx, target, miplevel, texture, image);
+
+  return NULL;
+}
+
+static int
+intel_release_buffer_from_texture(cl_context ctx, unsigned int target,
+                                  int miplevel, unsigned int texture)
+{
+  if (IS_EGL_CONTEXT(ctx)) {
+    EGLint attrib_list[] = { EGL_GL_TEXTURE_ID_MESA, texture,
+                           EGL_GL_TEXTURE_LEVEL_MESA, miplevel,
+                           EGL_GL_TEXTURE_TARGET_MESA, target,
+                           EGL_NONE};
+
+    eglReleaseResourceMESA(EGL_DISP(ctx), EGL_CTX(ctx), EGL_GL_TEXTURE_MESA, &attrib_list[0]);
+    return CL_SUCCESS;
+  }
+  return -1;
 }
 #endif
 
@@ -510,8 +625,10 @@ intel_setup_callbacks(void)
   cl_driver_get_device_id = (cl_driver_get_device_id_cb *) intel_get_device_id;
   cl_buffer_alloc = (cl_buffer_alloc_cb *) drm_intel_bo_alloc;
   cl_buffer_set_tiling = (cl_buffer_set_tiling_cb *) intel_buffer_set_tiling;
-#ifdef HAS_EGL
-  cl_buffer_alloc_from_eglimage = (cl_buffer_alloc_from_eglimage_cb *) intel_alloc_buffer_from_eglimage;
+#if defined(HAS_EGL)
+  cl_buffer_alloc_from_texture = (cl_buffer_alloc_from_texture_cb *) intel_alloc_buffer_from_texture;
+  cl_buffer_release_from_texture = (cl_buffer_release_from_texture_cb *) intel_release_buffer_from_texture;
+  intel_set_cl_gl_callbacks();
 #endif
   cl_buffer_reference = (cl_buffer_reference_cb *) drm_intel_bo_reference;
   cl_buffer_unreference = (cl_buffer_unreference_cb *) drm_intel_bo_unreference;
@@ -528,4 +645,3 @@ intel_setup_callbacks(void)
   cl_buffer_wait_rendering = (cl_buffer_wait_rendering_cb *) drm_intel_bo_wait_rendering;
   intel_set_gpgpu_callbacks();
 }
-

@@ -40,26 +40,12 @@ void check_opt1_extension(cl_extensions_t *extensions)
 
 void
 check_gl_extension(cl_extensions_t *extensions) {
-#ifdef HAS_EGL
-static struct cl_gl_ext_deps egl_funcs;
+#if defined(HAS_EGL)
   int id;
-#if defined(EGL_KHR_image) && defined(EGL_KHR_gl_texture_2D_image) && defined(HAS_GBM)
-  egl_funcs.eglCreateImageKHR_func = (PFNEGLCREATEIMAGEKHRPROC) eglGetProcAddress("eglCreateImageKHR");
-  egl_funcs.eglDestroyImageKHR_func = (PFNEGLDESTROYIMAGEKHRPROC) eglGetProcAddress("eglDestroyImageKHR");
-#else
-  egl_funcs.eglCreateImageKHR_func = NULL;
-  egl_funcs.eglDestroyImageKHR_func = NULL;
-#endif
-
-  if (egl_funcs.eglCreateImageKHR_func != NULL
-      && egl_funcs.eglDestroyImageKHR_func != NULL) {
       /* For now, we only support cl_khr_gl_sharing. */
-    for(id = GL_EXT_START_ID; id <= GL_EXT_END_ID; id++)
-      if (id == EXT_ID(khr_gl_sharing)) {
-        extensions->extensions[id].base.ext_enabled = 1;
-        extensions->extensions[id].EXT_STRUCT_NAME(khr_gl_sharing).gl_ext_deps = &egl_funcs;
-      }
-  }
+  for(id = GL_EXT_START_ID; id <= GL_EXT_END_ID; id++)
+    if (id == EXT_ID(khr_gl_sharing))
+      extensions->extensions[id].base.ext_enabled = 1;
 #endif
 }
 

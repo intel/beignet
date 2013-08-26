@@ -54,9 +54,6 @@
 #include <drm.h>
 #include <i915_drm.h>
 #include <intel_bufmgr.h>
-#ifdef HAS_GBM
-#include <gbm.h>
-#endif
 
 #define CMD_MI                                  (0x0 << 29)
 #define CMD_2D                                  (0x2 << 29)
@@ -90,9 +87,6 @@ typedef struct intel_driver
   int master;
   Display *x11_display;
   struct dri_state *dri_ctx;
-#ifdef HAS_GBM
-  struct gbm_device *gbm;
-#endif
 } intel_driver_t;
 
 /* device control */

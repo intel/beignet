@@ -76,29 +76,6 @@ struct EXT_STRUCT_NAME(name) { \
 DECL_BASE_EXTENSIONS
 DECL_OPT1_EXTENSIONS
 DECL_D3D_EXTENSIONS
-#undef DECL_EXT
-
-#define DECL_EXT(name) \
-struct EXT_STRUCT_NAME(name) { \
-  struct cl_extension_base base; \
-  struct cl_gl_ext_deps *gl_ext_deps; \
-};
-
-struct cl_gl_ext_deps {
-#ifdef HAS_EGL
-#ifndef EGL_KHR_image
-#define PFNEGLCREATEIMAGEKHRPROC void*
-#define PFNEGLDESTROYIMAGEKHRPROC void*
-#endif
-  PFNEGLCREATEIMAGEKHRPROC eglCreateImageKHR_func;
-  PFNEGLDESTROYIMAGEKHRPROC eglDestroyImageKHR_func;
-#ifndef EGL_KHR_image
-#undef PFNEGLCREATEIMAGEKHRPROC
-#undef PFNEGLDESTROYIMAGEKHRPROC
-#endif
-#endif
-};
-
 DECL_GL_EXTENSIONS
 #undef DECL_EXT
 
@@ -117,8 +94,6 @@ typedef struct cl_extensions {
 
 struct _cl_platform_id;
 typedef struct _cl_platform_id * cl_platform_id;
-#define CL_EXTENSION_GET_FUNCS(ctx, name, funcs) \
-  ctx->device->platform->internal_extensions->extensions[EXT_ID(name)].EXT_STRUCT_NAME(name).funcs
 
 extern void
 cl_intel_platform_extension_init(cl_platform_id intel_platform);

@@ -37,92 +37,6 @@
 #include "CL/cl_intel.h"
 #include "CL/cl_gl.h"
 
-#ifndef CL_VERSION_1_2
-#define CL_INVALID_IMAGE_DESCRIPTOR -65
-#endif
-
-static int cl_get_clformat_from_texture(GLint tex_format, cl_image_format * cl_format)
-{
-  cl_int ret = CL_SUCCESS;
-
-  switch (tex_format) {
-  case GL_RGBA8:
-  case GL_RGBA:
-  case GL_RGBA16:
-  case GL_RGBA8I:
-  case GL_RGBA16I:
-  case GL_RGBA32I:
-  case GL_RGBA8UI:
-  case GL_RGBA16UI:
-  case GL_RGBA32UI:
-  case GL_RGBA16F:
-  case GL_RGBA32F:
-    cl_format->image_channel_order = CL_RGBA;
-    break;
-  case GL_BGRA:
-    cl_format->image_channel_order = CL_BGRA;
-    break;
-  default:
-    ret = CL_INVALID_IMAGE_DESCRIPTOR;
-    goto error;
-  }
-
-  switch (tex_format) {
-  case GL_RGBA8:
-  case GL_RGBA:
-  case GL_BGRA:
-    cl_format->image_channel_data_type = CL_UNORM_INT8;
-    break;
-  case GL_RGBA16:
-    cl_format->image_channel_data_type = CL_UNORM_INT16;
-    break;
-  case GL_RGBA8I:
-    cl_format->image_channel_data_type = CL_SIGNED_INT8;
-    break;
-  case GL_RGBA16I:
-    cl_format->image_channel_data_type = CL_SIGNED_INT16;
-    break;
-  case GL_RGBA32I:
-    cl_format->image_channel_data_type = CL_SIGNED_INT32;
-    break;
-  case GL_RGBA8UI:
-    cl_format->image_channel_data_type = CL_UNSIGNED_INT8;
-    break;
-  case GL_RGBA16UI:
-    cl_format->image_channel_data_type = CL_UNSIGNED_INT16;
-    break;
-  case GL_RGBA32UI:
-    cl_format->image_channel_data_type = CL_UNSIGNED_INT32;
-    break;
-  case GL_RGBA16F:
-    cl_format->image_channel_data_type = CL_HALF_FLOAT;
-    break;
-  case GL_RGBA32F:
-    cl_format->image_channel_order = CL_FLOAT;
-    break;
-  default:
-    ret = CL_INVALID_IMAGE_DESCRIPTOR;
-    goto error;
-  }
-
-error:
-  return ret;
-}
-
-static cl_mem_object_type
-get_mem_type_from_target(GLenum texture_target, cl_mem_object_type *type)
-{
-  switch(texture_target) {
-  case GL_TEXTURE_1D: *type = CL_MEM_OBJECT_IMAGE1D; break;
-  case GL_TEXTURE_2D: *type = CL_MEM_OBJECT_IMAGE2D; break;
-  case GL_TEXTURE_3D: *type = CL_MEM_OBJECT_IMAGE3D; break;
-  case GL_TEXTURE_1D_ARRAY: *type = CL_MEM_OBJECT_IMAGE1D_ARRAY; break;
-  case GL_TEXTURE_2D_ARRAY: *type = CL_MEM_OBJECT_IMAGE2D_ARRAY; break;
-  default:
-    return -1;
-  }
-  return 0;
-}
 
 LOCAL cl_mem
 cl_mem_new_gl_buffer(cl_context ctx,
@@ -131,28 +45,6 @@ cl_mem_new_gl_buffer(cl_context ctx,
                      cl_int *errcode_ret)
 {
   NOT_IMPLEMENTED;
-}
-
-static EGLImageKHR
-cl_create_textured_egl_image(cl_context ctx,
-                             GLenum texture_target,
-                             GLint miplevel,
-                             GLuint texture)
-{
-  struct cl_gl_ext_deps *egl_funcs;
-  EGLDisplay egl_display;
-  EGLContext egl_context;
-  EGLint egl_attribs[] = { EGL_GL_TEXTURE_LEVEL_KHR, miplevel, EGL_NONE};
-
-  assert(ctx->props.gl_type == CL_GL_EGL_DISPLAY);
-  egl_funcs =  CL_EXTENSION_GET_FUNCS(ctx, khr_gl_sharing, gl_ext_deps);
-  assert(egl_funcs != NULL);
-  egl_display = (EGLDisplay)ctx->props.egl_display;
-  egl_context = (EGLDisplay)ctx->props.gl_context;
-  return egl_funcs->eglCreateImageKHR_func(egl_display, egl_context,
-                                           EGL_GL_TEXTURE_2D_KHR,
-                                           (EGLClientBuffer)(uintptr_t)texture,
-                                           &egl_attribs[0]);
 }
 
 LOCAL cl_mem
@@ -165,52 +57,28 @@ cl_mem_new_gl_texture(cl_context ctx,
 {
   cl_int err = CL_SUCCESS;
   cl_mem mem = NULL;
-  EGLImageKHR egl_image;
-  int w, h, pitch, tiling;
-  unsigned int bpp, intel_fmt;
-  cl_image_format cl_format;
-  unsigned int gl_format;
   /* Check flags consistency */
   if (UNLIKELY(flags & CL_MEM_COPY_HOST_PTR)) {
     err = CL_INVALID_ARG_VALUE;
     goto error;
   }
 
-  mem = cl_mem_allocate(CL_MEM_IMAGE_TYPE, ctx, flags, 0, 0, errcode_ret);
+  mem = cl_mem_allocate(CL_MEM_GL_IMAGE_TYPE, ctx, flags, 0, 0, errcode_ret);
   if (mem == NULL) {
     err = CL_OUT_OF_HOST_MEMORY;
     goto error;
   }
 
-  egl_image = cl_create_textured_egl_image(ctx, texture_target, miplevel, texture);
-  if (egl_image == NULL) {
-    err = CL_INVALID_GL_OBJECT;
-    goto error;
-  }
-  mem->bo = cl_buffer_alloc_from_eglimage(ctx, (void*)egl_image, &gl_format, &w, &h, &pitch, &tiling);
+  mem->bo = cl_buffer_alloc_from_texture(ctx, texture_target, miplevel,
+                                         texture, cl_mem_image(mem));
   if (UNLIKELY(mem->bo == NULL)) {
     err = CL_MEM_OBJECT_ALLOCATION_FAILURE;
     goto error;
   }
-  cl_get_clformat_from_texture(gl_format, &cl_format);
 
-  /* XXX Maybe we'd better to check the hw format in driver? */
-  intel_fmt = cl_image_get_intel_format(&cl_format);
-
-  if (intel_fmt == INTEL_UNSUPPORTED_FORMAT) {
-    err = CL_INVALID_IMAGE_DESCRIPTOR;
-    goto error;
-  }
-  cl_image_byte_per_pixel(&cl_format, &bpp);
-
-  cl_mem_object_type image_type;
-  if (get_mem_type_from_target(texture_target, &image_type) != 0) {
-    err = CL_INVALID_IMAGE_DESCRIPTOR;
-    goto error;
-  }
-
-  cl_mem_image_init(cl_mem_image(mem), w, h, image_type, 1, cl_format, intel_fmt, bpp, pitch, 0, tiling);
-  cl_mem_image(mem)->egl_image = egl_image;
+  cl_mem_gl_image(mem)->target = texture_target;
+  cl_mem_gl_image(mem)->miplevel = miplevel;
+  cl_mem_gl_image(mem)->texture = texture;
 
 exit:
   if (errcode_ret)
@@ -223,10 +91,9 @@ error:
 
 }
 
-LOCAL void cl_mem_gl_delete(struct _cl_mem_image *image)
+LOCAL void cl_mem_gl_delete(struct _cl_mem_gl_image *gl_image)
 {
-  struct cl_gl_ext_deps *egl_funcs;
-  EGLDisplay egl_display = (EGLDisplay)image->base.ctx->props.egl_display;
-  egl_funcs =  CL_EXTENSION_GET_FUNCS(image->base.ctx, khr_gl_sharing, gl_ext_deps);
-  egl_funcs->eglDestroyImageKHR_func(egl_display, image->egl_image);
+  if (gl_image->base.base.bo != NULL)
+    cl_buffer_release_from_texture(gl_image->base.base.ctx, gl_image->target,
+                                   gl_image->miplevel, gl_image->texture);
 }

@@ -42,6 +42,31 @@
       return CL_INVALID_VALUE;              \
     break;
 
+#define CL_MEM_OBJECT_BUFFER                        0x10F0
+#define CL_MEM_OBJECT_IMAGE2D                       0x10F1
+#define CL_MEM_OBJECT_IMAGE3D                       0x10F2
+
+static cl_mem_object_type
+cl_get_mem_object_type(cl_mem mem)
+{
+  switch (mem->type) {
+    case CL_MEM_BUFFER_TYPE: return CL_MEM_OBJECT_BUFFER;
+    case CL_MEM_IMAGE_TYPE:
+    case CL_MEM_GL_IMAGE_TYPE:
+    {
+      struct _cl_mem_image *image = cl_mem_image(mem);
+      if (image->depth == 1)
+        return CL_MEM_OBJECT_IMAGE1D;
+      else if (image->depth == 2)
+        return CL_MEM_OBJECT_IMAGE2D;
+      else if (image->depth == 3)
+        return CL_MEM_OBJECT_IMAGE3D;
+    }
+    default:
+      return CL_MEM_OBJECT_BUFFER;
+  }
+}
+
 LOCAL cl_int
 cl_get_mem_object_info(cl_mem mem,
                 cl_mem_info param_name,
@@ -67,7 +92,7 @@ cl_get_mem_object_info(cl_mem mem,
   switch(param_name)
   {
   case CL_MEM_TYPE:
-    *((cl_mem_object_type *)param_value) = mem->type;
+    *((cl_mem_object_type *)param_value) = cl_get_mem_object_type(mem);
     break;
   case CL_MEM_FLAGS:
     *((cl_mem_flags *)param_value) = mem->flags;
@@ -165,8 +190,6 @@ cl_mem_allocate(enum cl_mem_type type,
 {
   cl_buffer_mgr bufmgr = NULL;
   cl_mem mem = NULL;
-  struct _cl_mem_image *image = NULL;
-  struct _cl_mem_buffer *buffer = NULL;
   cl_int err = CL_SUCCESS;
   size_t alignment = 64;
   cl_ulong max_mem_size;
@@ -187,10 +210,15 @@ cl_mem_allocate(enum cl_mem_type type,
 
   /* Allocate and inialize the structure itself */
   if (type == CL_MEM_IMAGE_TYPE) {
+    struct _cl_mem_image *image = NULL;
     TRY_ALLOC (image, CALLOC(struct _cl_mem_image));
     mem = &image->base;
-  }
-  else {
+  } else if (type == CL_MEM_GL_IMAGE_TYPE ) {
+    struct _cl_mem_gl_image *gl_image = NULL;
+    TRY_ALLOC (gl_image, CALLOC(struct _cl_mem_gl_image));
+    mem = &gl_image->base.base;
+  } else {
+    struct _cl_mem_buffer *buffer = NULL;
     TRY_ALLOC (buffer, CALLOC(struct _cl_mem_buffer));
     mem = &buffer->base;
   }
@@ -281,8 +309,6 @@ cl_mem_new_buffer(cl_context ctx,
   mem = cl_mem_allocate(CL_MEM_BUFFER_TYPE, ctx, flags, sz, CL_FALSE, &err);
   if (mem == NULL || err != CL_SUCCESS)
     goto error;
-
-  mem->type = CL_MEM_OBJECT_BUFFER;
 
   /* Copy the data if required */
   if (flags & CL_MEM_COPY_HOST_PTR || flags & CL_MEM_USE_HOST_PTR)
@@ -440,7 +466,9 @@ _cl_mem_new_image(cl_context ctx,
   slice_pitch = (image_type == CL_MEM_OBJECT_IMAGE1D
                  || image_type == CL_MEM_OBJECT_IMAGE2D) ? 0 : aligned_pitch*aligned_h;
 
-  cl_mem_image_init(cl_mem_image(mem), w, h, image_type, depth, *fmt, intel_fmt, bpp, aligned_pitch, slice_pitch, tiling);
+  cl_mem_image_init(cl_mem_image(mem), w, h, image_type, depth, *fmt,
+                    intel_fmt, bpp, aligned_pitch, slice_pitch, tiling,
+                    0, 0, 0);
 
   /* Copy the data if required */
   if (flags & CL_MEM_COPY_HOST_PTR)
@@ -491,13 +519,13 @@ cl_mem_delete(cl_mem mem)
     return;
   if (atomic_dec(&mem->ref_n) > 1)
     return;
-  if (LIKELY(mem->bo != NULL))
-    cl_buffer_unreference(mem->bo);
 #ifdef HAS_EGL
-  if (UNLIKELY(IS_IMAGE(mem) && cl_mem_image(mem)->egl_image != NULL)) {
-     cl_mem_gl_delete(cl_mem_image(mem));
+  if (UNLIKELY(IS_GL_IMAGE(mem))) {
+     cl_mem_gl_delete(cl_mem_gl_image(mem));
   }
 #endif
+  if (LIKELY(mem->bo != NULL))
+    cl_buffer_unreference(mem->bo);
 
   /* Remove it from the list */
   assert(mem->ctx);

@@ -29,16 +29,14 @@ set(OPENCL_SRC
     x11/dricommon.c 
     x11/va_dri2.c)
 
-if (EGL_FOUND AND GBM_FOUND)
-set (OPENCL_SRC ${OPENCL_SRC} cl_mem_gl.c cl_gl_api.c x11/gbm_dri2_x11_platform.c)
-SET(CMAKE_CXX_FLAGS "-DHAS_EGL ${CMAKE_CXX_FLAGS}")
-SET(CMAKE_C_FLAGS "-DHAS_EGL ${CMAKE_C_FLAGS}")
+if (EGL_FOUND AND MESA_SOURCE_FOUND)
+set (OPENCL_SRC ${OPENCL_SRC} cl_mem_gl.c cl_gl_api.c x11/mesa_egl_extension.c x11/mesa_egl_res_share.c intel/intel_dri_resource_sharing.c)
+SET(CMAKE_CXX_FLAGS "-DHAS_EGL ${CMAKE_CXX_FLAGS} ${MESA_SOURCE_INCLUDES}")
+SET(CMAKE_C_FLAGS "-DHAS_EGL ${CMAKE_C_FLAGS} ${MESA_SOURCE_INCLUDES}")
 SET(OPTIONAL_EGL_LIBRARY "${EGL_LIBRARY}")
-SET(OPTIONAL_GBM_LIBRARY "${GBM_LIBRARY}")
-else(EGL_FOUND AND GBM_FOUND)
+else(EGL_FOUND AND MESA_SOURCE_FOUND)
 SET(OPTIONAL_EGL_LIBRARY "")
-SET(OPTIONAL_GBM_LIBRARY "")
-endif (EGL_FOUND AND GBM_FOUND)
+endif (EGL_FOUND AND MESA_SOURCE_FOUND)
 
 if (OCLIcd_FOUND)
 set (OPENCL_SRC ${OPENCL_SRC} cl_khr_icd.c)
@@ -46,7 +44,7 @@ SET(CMAKE_CXX_FLAGS "-DHAS_OCLIcd ${CMAKE_CXX_FLAGS}")
 SET(CMAKE_C_FLAGS "-DHAS_OCLIcd ${CMAKE_C_FLAGS}")
 endif (OCLIcd_FOUND)
 
-SET(CMAKE_SHARED_LINKER_FLAGS "${CMAKE_SHARED_LINKER_FLAGS} -Wl,-Bsymbolic")
+SET(CMAKE_SHARED_LINKER_FLAGS "${CMAKE_SHARED_LINKER_FLAGS} -Wl,-Bsymbolic,--allow-shlib-undefined")
 
 link_directories (${LLVM_LIBRARY_DIR})
 add_library(cl SHARED ${OPENCL_SRC})
@@ -59,6 +57,5 @@ target_link_libraries(
                       ${DRM_INTEL_LIBRARY}
                       ${DRM_LIBRARY}
                       ${OPENGL_LIBRARIES}
-                      ${OPTIONAL_EGL_LIBRARY}
-                      ${OPTIONAL_GBM_LIBRARY})
+                      ${OPTIONAL_EGL_LIBRARY})
 install (TARGETS cl LIBRARY DESTINATION lib)

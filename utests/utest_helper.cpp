@@ -294,10 +294,10 @@ error:
 #include <cstring>
 #define GET_DEVICE_STR_INFO(LOWER_NAME, NAME) \
     std::string LOWER_NAME ##Str; \
-    OCL_CALL (clGetDeviceInfo, device, NAME, 0, 0, &param_value_size); \
+    OCL_CALL (clGetDeviceInfo, device, CL_DEVICE_##NAME, 0, 0, &param_value_size); \
     { \
       std::vector<char> param_value(param_value_size); \
-      OCL_CALL (clGetDeviceInfo, device, NAME, \
+      OCL_CALL (clGetDeviceInfo, device, CL_DEVICE_##NAME, \
                 param_value_size, param_value.empty() ? NULL : &param_value.front(), \
                 &param_value_size); \
       if (!param_value.empty()) \
@@ -311,7 +311,9 @@ cl_ocl_init(void)
   cl_int status = CL_SUCCESS;
   cl_uint platform_n;
   size_t i;
+#ifdef HAS_EGL
   bool hasGLExt = false;
+#endif
   cl_context_properties *props = NULL;
 
   /* Get the platform number */
@@ -331,20 +333,21 @@ cl_ocl_init(void)
   OCL_CALL (clGetDeviceIDs, platform, CL_DEVICE_TYPE_GPU, 1, &device, NULL);
   {
     size_t param_value_size;
-    GET_DEVICE_STR_INFO(profile, CL_DEVICE_PROFILE);
-    GET_DEVICE_STR_INFO(name, CL_DEVICE_NAME);
-    GET_DEVICE_STR_INFO(vendor, CL_DEVICE_VENDOR);
-    GET_DEVICE_STR_INFO(version, CL_DEVICE_VERSION);
-    GET_DEVICE_STR_INFO(opencl_c_version, CL_DEVICE_OPENCL_C_VERSION);
-    GET_DEVICE_STR_INFO(driver_version, CL_DRIVER_VERSION);
-    GET_DEVICE_STR_INFO(extensions, CL_DEVICE_EXTENSIONS);
+    GET_DEVICE_STR_INFO(profile, PROFILE);
+    GET_DEVICE_STR_INFO(name, NAME);
+    GET_DEVICE_STR_INFO(vendor, VENDOR);
+    GET_DEVICE_STR_INFO(version, VERSION);
+    GET_DEVICE_STR_INFO(extensions, EXTENSIONS);
+    GET_DEVICE_STR_INFO(opencl_c_version, OPENCL_C_VERSION);
+#ifdef HAS_EGL
     if (std::strstr(extensionsStr.c_str(), "cl_khr_gl_sharing")) {
       hasGLExt = true;
     }
+#endif
   }
 
-  if (hasGLExt) {
 #ifdef HAS_EGL
+  if (hasGLExt) {
     int i = 0;
     props = new cl_context_properties[7];
     props[i++] = CL_CONTEXT_PLATFORM;
@@ -356,8 +359,8 @@ cl_ocl_init(void)
       props[i++] = (cl_context_properties)eglGetCurrentContext();
     }
     props[i++] = 0;
-#endif
   }
+#endif
   /* Now create a context */
   ctx = clCreateContext(props, 1, &device, NULL, NULL, &status);
   if (status != CL_SUCCESS) {

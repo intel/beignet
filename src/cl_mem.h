@@ -21,8 +21,9 @@
 #define __CL_MEM_H__
 
 #include "cl_internals.h"
-#include "cl_driver.h"
+#include "cl_driver_type.h"
 #include "CL/cl.h"
+#include "cl_khr_icd.h"
 #include <assert.h>
 
 #ifndef CL_VERSION_1_2
@@ -63,11 +64,13 @@ typedef struct _cl_mem_dstr_cb {
 }cl_mem_dstr_cb;
 
 /* Used for buffers and images */
-#define IS_IMAGE(mem) (mem->type == CL_MEM_IMAGE_TYPE)
 enum cl_mem_type {
   CL_MEM_BUFFER_TYPE,
-  CL_MEM_IMAGE_TYPE
+  CL_MEM_IMAGE_TYPE,
+  CL_MEM_GL_IMAGE_TYPE,
 };
+#define IS_IMAGE(mem) (mem->type >= CL_MEM_IMAGE_TYPE)
+#define IS_GL_IMAGE(mem) (mem->type == CL_MEM_GL_IMAGE_TYPE)
 
 typedef  struct _cl_mem {
   uint64_t magic;           /* To identify it as a memory object */
@@ -97,7 +100,13 @@ struct _cl_mem_image {
   cl_image_tiling_t tiling;       /* only IVB+ supports TILE_[X,Y] (image only) */
   size_t tile_x, tile_y;          /* tile offset, used for mipmap images.  */
   size_t offset;
-  void *egl_image;                /* created from external egl image*/
+};
+
+struct _cl_mem_gl_image {
+  struct _cl_mem_image base;
+  uint32_t target;
+  int      miplevel;
+  uint32_t texture;
 };
 
 inline static void
@@ -106,7 +115,9 @@ cl_mem_image_init(struct _cl_mem_image *image, size_t w, size_t h,
                   size_t depth, cl_image_format fmt,
                   uint32_t intel_fmt, uint32_t bpp,
                   size_t row_pitch, size_t slice_pitch,
-                  cl_image_tiling_t tiling)
+                  cl_image_tiling_t tiling,
+                  size_t tile_x, size_t tile_y,
+                  size_t offset)
 {
   image->w = w;
   image->h = h;
@@ -118,6 +129,8 @@ cl_mem_image_init(struct _cl_mem_image *image, size_t w, size_t h,
   image->row_pitch = row_pitch;
   image->slice_pitch = slice_pitch;
   image->tiling = tiling;
+  image->tile_x = tile_x;
+  image->tile_y = tile_y;
 }
 
 struct _cl_mem_buffer {
@@ -130,6 +143,13 @@ cl_mem_image(cl_mem mem)
 {
   assert(IS_IMAGE(mem));
   return (struct _cl_mem_image *)mem;
+}
+
+inline static struct _cl_mem_gl_image *
+cl_mem_gl_image(cl_mem mem)
+{
+  assert(IS_GL_IMAGE(mem));
+  return (struct _cl_mem_gl_image*)mem;
 }
 
 inline static struct _cl_mem_buffer *
@@ -161,7 +181,7 @@ cl_mem_new_image(cl_context context,
 extern void cl_mem_delete(cl_mem);
 
 /* Destroy egl image. */
-extern void cl_mem_gl_delete(struct _cl_mem_image *);
+extern void cl_mem_gl_delete(struct _cl_mem_gl_image *);
 
 /* Add one more reference to this object */
 extern void cl_mem_add_ref(cl_mem);

@@ -51,6 +51,9 @@ struct _cl_context_prop {
   };
 };
 
+#define IS_EGL_CONTEXT(ctx)  (ctx->props.gl_type == CL_GL_EGL_DISPLAY)
+#define EGL_DISP(ctx)   (EGLDisplay)(ctx->props.egl_display)
+#define EGL_CTX(ctx)    (EGLContext)(ctx->props.gl_context)
 /* Encapsulate the whole device */
 struct _cl_context {
   DEFINE_ICD(dispatch)

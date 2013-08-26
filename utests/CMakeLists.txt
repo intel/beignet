@@ -145,11 +145,11 @@ set (utests_sources
   utest_file_map.cpp
   utest_helper.cpp)
 
-if (EGL_FOUND)
+if (EGL_FOUND AND MESA_SOURCE_FOUND)
 SET(utests_sources ${utests_sources} compiler_fill_gl_image.cpp)
 SET(CMAKE_CXX_FLAGS "-DHAS_EGL ${CMAKE_CXX_FLAGS}")
 SET(CMAKE_C_FLAGS "-DHAS_EGL ${CMAKE_C_FLAGS}")
-endif (EGL_FOUND)
+endif (EGL_FOUND AND MESA_SOURCE_FOUND)
 
 ADD_LIBRARY(utests SHARED ${utests_sources})
 
