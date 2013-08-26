@@ -123,7 +123,6 @@ cl_create_context(const cl_context_properties *  properties,
   cl_int err = CL_SUCCESS;
   cl_uint prop_len = 0;
   /* XXX */
-  FATAL_IF (pfn_notify != NULL || user_data != NULL, "Unsupported call back");
   FATAL_IF (num_devices != 1, "Only one device is supported");
 
   /* Check that we are getting the right platform */
@@ -143,6 +142,10 @@ cl_create_context(const cl_context_properties *  properties,
   ctx->prop_len = prop_len;
   /* Attach the device to the context */
   ctx->device = *devices;
+
+  /* Save the user callback and user data*/
+  ctx->pfn_notify = pfn_notify;
+  ctx->user_data = user_data;
 
 exit:
   if (errcode_ret != NULL)

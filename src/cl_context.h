@@ -1,4 +1,4 @@
-/* 
+/*
  * Copyright © 2012 Intel Corporation
  *
  * This library is free software; you can redistribute it and/or
@@ -44,8 +44,8 @@ struct _cl_context_prop {
   enum _cl_gl_context_type gl_type;
   cl_context_properties gl_context;
   union {
-    cl_context_properties egl_display; 
-    cl_context_properties glx_display; 
+    cl_context_properties egl_display;
+    cl_context_properties glx_display;
     cl_context_properties wgl_hdc;
     cl_context_properties cgl_sharegroup;
   };
@@ -72,6 +72,10 @@ struct _cl_context {
   struct _cl_context_prop props;
   cl_context_properties * prop_user; /* a copy of user passed context properties when create context */
   cl_uint                 prop_len;  /* count of the properties */
+  void (CL_CALLBACK *pfn_notify)(const char *, const void *, size_t, void *);
+                                     /* User's callback when error occur in context */
+  void *user_data;                   /* A pointer to user supplied data */
+
 };
 
 /* Implement OpenCL function */
