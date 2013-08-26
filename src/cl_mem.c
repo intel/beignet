@@ -106,8 +106,8 @@ cl_get_image_info(cl_mem mem,
                   void *param_value,
                   size_t *param_value_size_ret)
 {
-  if(!mem || !mem->is_image)
-    return CL_INVALID_MEM_OBJECT;
+  int err;
+  CHECK_IMAGE(mem);
 
   switch(param_name)
   {
@@ -125,35 +125,39 @@ cl_get_image_info(cl_mem mem,
   switch(param_name)
   {
   case CL_IMAGE_FORMAT:
-    *(cl_image_format *)param_value = mem->fmt;
+    *(cl_image_format *)param_value = image->fmt;
     break;
   case CL_IMAGE_ELEMENT_SIZE:
-    *(size_t *)param_value = mem->bpp;
+    *(size_t *)param_value = image->bpp;
     break;
   case CL_IMAGE_ROW_PITCH:
-    *(size_t *)param_value = mem->row_pitch;
+    *(size_t *)param_value = image->row_pitch;
     break;
   case CL_IMAGE_SLICE_PITCH:
-    *(size_t *)param_value = mem->slice_pitch;
+    *(size_t *)param_value = image->slice_pitch;
     break;
   case CL_IMAGE_WIDTH:
-    *(size_t *)param_value = mem->w;
+    *(size_t *)param_value = image->w;
     break;
   case CL_IMAGE_HEIGHT:
-    *(size_t *)param_value = mem->h;
+    *(size_t *)param_value = image->h;
     break;
   case CL_IMAGE_DEPTH:
-    *(size_t *)param_value = mem->depth;
+    *(size_t *)param_value = image->depth;
     break;
   }
 
   return CL_SUCCESS;
+
+error:
+    return err;
 }
 
 #undef FIELD_SIZE
 
-static cl_mem
-cl_mem_allocate(cl_context ctx,
+LOCAL cl_mem
+cl_mem_allocate(enum cl_mem_type type,
+                cl_context ctx,
                 cl_mem_flags flags,
                 size_t sz,
                 cl_int is_tiled,
@@ -161,6 +165,8 @@ cl_mem_allocate(cl_context ctx,
 {
   cl_buffer_mgr bufmgr = NULL;
   cl_mem mem = NULL;
+  struct _cl_mem_image *image = NULL;
+  struct _cl_mem_buffer *buffer = NULL;
   cl_int err = CL_SUCCESS;
   size_t alignment = 64;
   cl_ulong max_mem_size;
@@ -174,41 +180,51 @@ cl_mem_allocate(cl_context ctx,
                                 NULL)) != CL_SUCCESS) {
     goto error;
   }
-  if (UNLIKELY(sz == 0 || sz > max_mem_size)) {
+  if (UNLIKELY(sz > max_mem_size)) {
     err = CL_INVALID_BUFFER_SIZE;
     goto error;
   }
 
   /* Allocate and inialize the structure itself */
-  TRY_ALLOC (mem, CALLOC(struct _cl_mem));
+  if (type == CL_MEM_IMAGE_TYPE) {
+    TRY_ALLOC (image, CALLOC(struct _cl_mem_image));
+    mem = &image->base;
+  }
+  else {
+    TRY_ALLOC (buffer, CALLOC(struct _cl_mem_buffer));
+    mem = &buffer->base;
+  }
+  mem->type = type;
   SET_ICD(mem->dispatch)
   mem->ref_n = 1;
   mem->magic = CL_MAGIC_MEM_HEADER;
   mem->flags = flags;
 
-  /* Pinning will require stricter alignment rules */
-  if ((flags & CL_MEM_PINNABLE) || is_tiled)
-    alignment = 4096;
+  if (sz != 0) {
+    /* Pinning will require stricter alignment rules */
+    if ((flags & CL_MEM_PINNABLE) || is_tiled)
+      alignment = 4096;
 
-  /* Allocate space in memory */
-  bufmgr = cl_context_get_bufmgr(ctx);
-  assert(bufmgr);
-  mem->bo = cl_buffer_alloc(bufmgr, "CL memory object", sz, alignment);
-  if (UNLIKELY(mem->bo == NULL)) {
-    err = CL_MEM_OBJECT_ALLOCATION_FAILURE;
-    goto error;
+    /* Allocate space in memory */
+    bufmgr = cl_context_get_bufmgr(ctx);
+    assert(bufmgr);
+    mem->bo = cl_buffer_alloc(bufmgr, "CL memory object", sz, alignment);
+    if (UNLIKELY(mem->bo == NULL)) {
+      err = CL_MEM_OBJECT_ALLOCATION_FAILURE;
+      goto error;
+    }
+    mem->size = sz;
   }
-  mem->size = sz;
 
-  /* Append the buffer in the context buffer list */
-  pthread_mutex_lock(&ctx->buffer_lock);
-    mem->next = ctx->buffers;
-    if (ctx->buffers != NULL)
-      ctx->buffers->prev = mem;
-    ctx->buffers = mem;
-  pthread_mutex_unlock(&ctx->buffer_lock);
-  mem->ctx = ctx;
   cl_context_add_ref(ctx);
+  mem->ctx = ctx;
+    /* Append the buffer in the context buffer list */
+  pthread_mutex_lock(&ctx->buffer_lock);
+  mem->next = ctx->buffers;
+  if (ctx->buffers != NULL)
+    ctx->buffers->prev = mem;
+  ctx->buffers = mem;
+  pthread_mutex_unlock(&ctx->buffer_lock);
 
 exit:
   if (errcode)
@@ -222,11 +238,11 @@ error:
 }
 
 LOCAL cl_mem
-cl_mem_new(cl_context ctx,
-           cl_mem_flags flags,
-           size_t sz,
-           void *data,
-           cl_int *errcode_ret)
+cl_mem_new_buffer(cl_context ctx,
+                  cl_mem_flags flags,
+                  size_t sz,
+                  void *data,
+                  cl_int *errcode_ret)
 {
   /* Possible mem type combination:
        CL_MEM_ALLOC_HOST_PTR
@@ -262,7 +278,7 @@ cl_mem_new(cl_context ctx,
   }
 
   /* Create the buffer in video memory */
-  mem = cl_mem_allocate(ctx, flags, sz, CL_FALSE, &err);
+  mem = cl_mem_allocate(CL_MEM_BUFFER_TYPE, ctx, flags, sz, CL_FALSE, &err);
   if (mem == NULL || err != CL_SUCCESS)
     goto error;
 
@@ -286,12 +302,12 @@ error:
 }
 
 static void
-cl_mem_copy_image(cl_mem image,
+cl_mem_copy_image(struct _cl_mem_image *image,
 		  size_t row_pitch,
 		  size_t slice_pitch,
 		  void* host_ptr)
 {
-  char* dst_ptr = cl_mem_map_auto(image);
+  char* dst_ptr = cl_mem_map_auto((cl_mem)image);
 
   if (row_pitch == image->row_pitch &&
       (image->depth == 1 || slice_pitch == image->slice_pitch))
@@ -313,7 +329,7 @@ cl_mem_copy_image(cl_mem image,
     }
   }
 
-  cl_mem_unmap_auto(image);
+  cl_mem_unmap_auto((cl_mem)image);
 }
 
 static const uint32_t tile_sz = 4096; /* 4KB per tile */
@@ -416,27 +432,19 @@ _cl_mem_new_image(cl_context ctx,
   }
 
   sz = aligned_pitch * aligned_h * depth;
-  mem = cl_mem_allocate(ctx, flags, sz, tiling != CL_NO_TILE, &err);
+  mem = cl_mem_allocate(CL_MEM_IMAGE_TYPE, ctx, flags, sz, tiling != CL_NO_TILE, &err);
   if (mem == NULL || err != CL_SUCCESS)
     goto error;
 
-  mem->w = w;
-  mem->h = h;
-  mem->depth = depth;
-  mem->fmt = *fmt;
-  mem->intel_fmt = intel_fmt;
-  mem->bpp = bpp;
-  mem->is_image = 1;
-  mem->row_pitch = aligned_pitch;
-  mem->slice_pitch = image_type == CL_MEM_OBJECT_IMAGE1D || image_type == CL_MEM_OBJECT_IMAGE2D ? 0 : aligned_pitch*aligned_h;
-  mem->tiling = tiling;
-  mem->type = image_type;
-
   cl_buffer_set_tiling(mem->bo, tiling, aligned_pitch);
+  slice_pitch = (image_type == CL_MEM_OBJECT_IMAGE1D
+                 || image_type == CL_MEM_OBJECT_IMAGE2D) ? 0 : aligned_pitch*aligned_h;
+
+  cl_mem_image_init(cl_mem_image(mem), w, h, image_type, depth, *fmt, intel_fmt, bpp, aligned_pitch, slice_pitch, tiling);
 
   /* Copy the data if required */
   if (flags & CL_MEM_COPY_HOST_PTR)
-    cl_mem_copy_image(mem, pitch, slice_pitch, data);
+    cl_mem_copy_image(cl_mem_image(mem), pitch, slice_pitch, data);
 
 exit:
   if (errcode_ret)
@@ -486,8 +494,8 @@ cl_mem_delete(cl_mem mem)
   if (LIKELY(mem->bo != NULL))
     cl_buffer_unreference(mem->bo);
 #ifdef HAS_EGL
-  if (UNLIKELY(mem->egl_image != NULL)) {
-     cl_mem_gl_delete(mem);
+  if (UNLIKELY(IS_IMAGE(mem) && cl_mem_image(mem)->egl_image != NULL)) {
+     cl_mem_gl_delete(cl_mem_image(mem));
   }
 #endif
 
@@ -562,7 +570,7 @@ cl_mem_unmap_gtt(cl_mem mem)
 LOCAL void*
 cl_mem_map_auto(cl_mem mem)
 {
-  if (mem->is_image && mem->tiling != CL_NO_TILE)
+  if (IS_IMAGE(mem) && cl_mem_image(mem)->tiling != CL_NO_TILE)
     return cl_mem_map_gtt(mem);
   else
     return cl_mem_map(mem);
@@ -571,7 +579,7 @@ cl_mem_map_auto(cl_mem mem)
 LOCAL cl_int
 cl_mem_unmap_auto(cl_mem mem)
 {
-  if (mem->is_image && mem->tiling != CL_NO_TILE)
+  if (IS_IMAGE(mem) && cl_mem_image(mem)->tiling != CL_NO_TILE)
     cl_buffer_unmap_gtt(mem->bo);
   else
     cl_buffer_unmap(mem->bo);
@@ -597,4 +605,3 @@ cl_mem_unpin(cl_mem mem)
   cl_buffer_unpin(mem->bo);
   return CL_SUCCESS;
 }
-

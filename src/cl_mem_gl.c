@@ -110,32 +110,34 @@ error:
 }
 
 static cl_mem_object_type
-get_mem_type_from_target(GLenum texture_target)
+get_mem_type_from_target(GLenum texture_target, cl_mem_object_type *type)
 {
   switch(texture_target) {
-  case GL_TEXTURE_1D: return CL_MEM_OBJECT_IMAGE1D;
-  case GL_TEXTURE_2D: return CL_MEM_OBJECT_IMAGE2D;
-  case GL_TEXTURE_3D: return CL_MEM_OBJECT_IMAGE3D;
-  case GL_TEXTURE_1D_ARRAY: return CL_MEM_OBJECT_IMAGE1D_ARRAY;
-  case GL_TEXTURE_2D_ARRAY: return CL_MEM_OBJECT_IMAGE2D_ARRAY;
+  case GL_TEXTURE_1D: *type = CL_MEM_OBJECT_IMAGE1D; break;
+  case GL_TEXTURE_2D: *type = CL_MEM_OBJECT_IMAGE2D; break;
+  case GL_TEXTURE_3D: *type = CL_MEM_OBJECT_IMAGE3D; break;
+  case GL_TEXTURE_1D_ARRAY: *type = CL_MEM_OBJECT_IMAGE1D_ARRAY; break;
+  case GL_TEXTURE_2D_ARRAY: *type = CL_MEM_OBJECT_IMAGE2D_ARRAY; break;
   default:
-    assert(0);
+    return -1;
   }
   return 0;
 }
 
-LOCAL cl_mem cl_mem_new_gl_buffer(cl_context ctx,
-                                  cl_mem_flags flags,
-                                  GLuint buf_obj, 
-                                  cl_int *errcode_ret)
+LOCAL cl_mem
+cl_mem_new_gl_buffer(cl_context ctx,
+                     cl_mem_flags flags,
+                     GLuint buf_obj,
+                     cl_int *errcode_ret)
 {
   NOT_IMPLEMENTED;
 }
 
-EGLImageKHR cl_create_textured_egl_image(cl_context ctx,
-                                         GLenum texture_target,
-                                         GLint miplevel,
-                                         GLuint texture)
+static EGLImageKHR
+cl_create_textured_egl_image(cl_context ctx,
+                             GLenum texture_target,
+                             GLint miplevel,
+                             GLuint texture)
 {
   struct cl_gl_ext_deps *egl_funcs;
   EGLDisplay egl_display;
@@ -153,12 +155,13 @@ EGLImageKHR cl_create_textured_egl_image(cl_context ctx,
                                            &egl_attribs[0]);
 }
 
-LOCAL cl_mem cl_mem_new_gl_texture(cl_context ctx,
-                                   cl_mem_flags flags,
-                                   GLenum texture_target,
-                                   GLint miplevel,
-                                   GLuint texture,
-                                   cl_int *errcode_ret)
+LOCAL cl_mem
+cl_mem_new_gl_texture(cl_context ctx,
+                      cl_mem_flags flags,
+                      GLenum texture_target,
+                      GLint miplevel,
+                      GLuint texture,
+                      cl_int *errcode_ret)
 {
   cl_int err = CL_SUCCESS;
   cl_mem mem = NULL;
@@ -173,17 +176,17 @@ LOCAL cl_mem cl_mem_new_gl_texture(cl_context ctx,
     goto error;
   }
 
-  TRY_ALLOC (mem, CALLOC(struct _cl_mem));
-  mem->ctx = ctx;
-  cl_context_add_ref(ctx);
+  mem = cl_mem_allocate(CL_MEM_IMAGE_TYPE, ctx, flags, 0, 0, errcode_ret);
+  if (mem == NULL) {
+    err = CL_OUT_OF_HOST_MEMORY;
+    goto error;
+  }
 
   egl_image = cl_create_textured_egl_image(ctx, texture_target, miplevel, texture);
-
   if (egl_image == NULL) {
     err = CL_INVALID_GL_OBJECT;
     goto error;
   }
-  mem->egl_image = egl_image;
   mem->bo = cl_buffer_alloc_from_eglimage(ctx, (void*)egl_image, &gl_format, &w, &h, &pitch, &tiling);
   if (UNLIKELY(mem->bo == NULL)) {
     err = CL_MEM_OBJECT_ALLOCATION_FAILURE;
@@ -200,28 +203,14 @@ LOCAL cl_mem cl_mem_new_gl_texture(cl_context ctx,
   }
   cl_image_byte_per_pixel(&cl_format, &bpp);
 
-  mem->type = get_mem_type_from_target(texture_target);
-  mem->w = w;
-  mem->h = h;
-  mem->depth = 1;
-  mem->fmt = cl_format;
-  mem->intel_fmt = intel_fmt;
-  mem->bpp = bpp;
-  mem->is_image = 1;
-  mem->row_pitch = pitch;
-  mem->slice_pitch = 0;
-  mem->tiling = tiling;
-  mem->ref_n = 1;
-  mem->magic = CL_MAGIC_MEM_HEADER;
-  mem->flags = flags;
+  cl_mem_object_type image_type;
+  if (get_mem_type_from_target(texture_target, &image_type) != 0) {
+    err = CL_INVALID_IMAGE_DESCRIPTOR;
+    goto error;
+  }
 
-  /* Append the buffer in the context buffer list */
-  pthread_mutex_lock(&ctx->buffer_lock);
-    mem->next = ctx->buffers;
-    if (ctx->buffers != NULL)
-      ctx->buffers->prev = mem;
-    ctx->buffers = mem;
-  pthread_mutex_unlock(&ctx->buffer_lock);
+  cl_mem_image_init(cl_mem_image(mem), w, h, image_type, 1, cl_format, intel_fmt, bpp, pitch, 0, tiling);
+  cl_mem_image(mem)->egl_image = egl_image;
 
 exit:
   if (errcode_ret)
@@ -234,10 +223,10 @@ error:
 
 }
 
-LOCAL void cl_mem_gl_delete(cl_mem mem)
+LOCAL void cl_mem_gl_delete(struct _cl_mem_image *image)
 {
   struct cl_gl_ext_deps *egl_funcs;
-  EGLDisplay egl_display = (EGLDisplay)mem->ctx->props.egl_display;
-  egl_funcs =  CL_EXTENSION_GET_FUNCS(mem->ctx, khr_gl_sharing, gl_ext_deps);
-  egl_funcs->eglDestroyImageKHR_func(egl_display, mem->egl_image);
+  EGLDisplay egl_display = (EGLDisplay)image->base.ctx->props.egl_display;
+  egl_funcs =  CL_EXTENSION_GET_FUNCS(image->base.ctx, khr_gl_sharing, gl_ext_deps);
+  egl_funcs->eglDestroyImageKHR_func(egl_display, image->egl_image);
 }

@@ -23,6 +23,7 @@
 #include "cl_internals.h"
 #include "cl_driver.h"
 #include "CL/cl.h"
+#include <assert.h>
 
 #ifndef CL_VERSION_1_2
 #define CL_MEM_OBJECT_IMAGE1D                       0x10F4
@@ -62,30 +63,81 @@ typedef struct _cl_mem_dstr_cb {
 }cl_mem_dstr_cb;
 
 /* Used for buffers and images */
-struct _cl_mem {
-  DEFINE_ICD(dispatch)
+#define IS_IMAGE(mem) (mem->type == CL_MEM_IMAGE_TYPE)
+enum cl_mem_type {
+  CL_MEM_BUFFER_TYPE,
+  CL_MEM_IMAGE_TYPE
+};
+
+typedef  struct _cl_mem {
   uint64_t magic;           /* To identify it as a memory object */
+  DEFINE_ICD(dispatch)
+  cl_mem prev, next;        /* We chain the memory buffers together */
+  enum cl_mem_type type;
   volatile int ref_n;       /* This object is reference counted */
   cl_buffer bo;             /* Data in GPU memory */
-  void *egl_image;          /* created from external egl image*/
   size_t size;              /* original request size, not alignment size, used in constant buffer */
-  cl_mem prev, next;        /* We chain the memory buffers together */
   cl_context ctx;           /* Context it belongs to */
   cl_mem_flags flags;       /* Flags specified at the creation time */
-  uint32_t is_image;        /* Indicate if this is an image or not */
-  cl_image_format fmt;      /* only for images */
-  cl_mem_object_type type;  /* only for images 1D/2D...*/
-  size_t w,h,depth;         /* only for images (depth is only for 3D images) */
-  size_t row_pitch,slice_pitch;
-  uint32_t intel_fmt;       /* format to provide in the surface state */
-  uint32_t bpp;             /* number of bytes per pixel */
-  cl_image_tiling_t tiling; /* only IVB+ supports TILE_[X,Y] (image only) */
   void * host_ptr;          /* Pointer of the host mem specified by CL_MEM_ALLOC_HOST_PTR */
   cl_mapped_ptr* mapped_ptr;/* Store the mapped addresses and size by caller. */
   int mapped_ptr_sz;        /* The array size of mapped_ptr. */
   int map_ref;              /* The mapped count. */
   cl_mem_dstr_cb *dstr_cb;  /* The destroy callback. */
+} _cl_mem;
+
+struct _cl_mem_image {
+  _cl_mem base;
+  cl_image_format fmt;            /* only for images */
+  uint32_t intel_fmt;             /* format to provide in the surface state */
+  uint32_t bpp;                   /* number of bytes per pixel */
+  cl_mem_object_type image_type;  /* only for images 1D/2D...*/
+  size_t w, h, depth;             /* only for images (depth is only for 3D images) */
+  size_t row_pitch, slice_pitch;
+  cl_image_tiling_t tiling;       /* only IVB+ supports TILE_[X,Y] (image only) */
+  size_t tile_x, tile_y;          /* tile offset, used for mipmap images.  */
+  size_t offset;
+  void *egl_image;                /* created from external egl image*/
 };
+
+inline static void
+cl_mem_image_init(struct _cl_mem_image *image, size_t w, size_t h,
+                  cl_mem_object_type image_type,
+                  size_t depth, cl_image_format fmt,
+                  uint32_t intel_fmt, uint32_t bpp,
+                  size_t row_pitch, size_t slice_pitch,
+                  cl_image_tiling_t tiling)
+{
+  image->w = w;
+  image->h = h;
+  image->image_type = image_type;
+  image->depth = depth;
+  image->fmt = fmt;
+  image->intel_fmt = intel_fmt;
+  image->bpp = bpp;
+  image->row_pitch = row_pitch;
+  image->slice_pitch = slice_pitch;
+  image->tiling = tiling;
+}
+
+struct _cl_mem_buffer {
+  _cl_mem base;
+  size_t offset;
+};
+
+inline static struct _cl_mem_image *
+cl_mem_image(cl_mem mem)
+{
+  assert(IS_IMAGE(mem));
+  return (struct _cl_mem_image *)mem;
+}
+
+inline static struct _cl_mem_buffer *
+cl_mem_buffer(cl_mem mem)
+{
+  assert(!IS_IMAGE(mem));
+  return (struct _cl_mem_buffer *)mem;
+}
 
 /* Query information about a memory object */
 extern cl_int cl_get_mem_object_info(cl_mem, cl_mem_info, size_t, void *, size_t *);
@@ -94,7 +146,7 @@ extern cl_int cl_get_mem_object_info(cl_mem, cl_mem_info, size_t, void *, size_t
 extern cl_int cl_get_image_info(cl_mem, cl_image_info, size_t, void *, size_t *);
 
 /* Create a new memory object and initialize it with possible user data */
-extern cl_mem cl_mem_new(cl_context, cl_mem_flags, size_t, void*, cl_int*);
+extern cl_mem cl_mem_new_buffer(cl_context, cl_mem_flags, size_t, void*, cl_int*);
 
 /* Idem but this is an image */
 extern cl_mem
@@ -109,7 +161,7 @@ cl_mem_new_image(cl_context context,
 extern void cl_mem_delete(cl_mem);
 
 /* Destroy egl image. */
-extern void cl_mem_gl_delete(cl_mem);
+extern void cl_mem_gl_delete(struct _cl_mem_image *);
 
 /* Add one more reference to this object */
 extern void cl_mem_add_ref(cl_mem);
@@ -135,6 +187,15 @@ extern cl_int cl_mem_unmap_auto(cl_mem);
 /* Pin/unpin the buffer in memory (you must be root) */
 extern cl_int cl_mem_pin(cl_mem);
 extern cl_int cl_mem_unpin(cl_mem);
+
+extern cl_mem
+cl_mem_allocate(enum cl_mem_type type,
+                cl_context ctx,
+                cl_mem_flags flags,
+                size_t sz,
+                cl_int is_tiled,
+                cl_int *errcode);
+
 
 #endif /* __CL_MEM_H__ */
 

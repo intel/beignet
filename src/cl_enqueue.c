@@ -68,11 +68,12 @@ cl_int cl_enqueue_read_image(enqueue_data *data)
   cl_int err = CL_SUCCESS;
   void* src_ptr;
 
-  cl_mem image = data->mem_obj;
+  cl_mem mem = data->mem_obj;
+  CHECK_IMAGE(mem);
   const size_t* origin = data->origin;
   const size_t* region = data->region;
 
-  if (!(src_ptr = cl_mem_map_auto(image))) {
+  if (!(src_ptr = cl_mem_map_auto(mem))) {
     err = CL_MAP_FAILURE;
     goto error;
   }
@@ -100,7 +101,7 @@ cl_int cl_enqueue_read_image(enqueue_data *data)
     }
   }
 
- err = cl_mem_unmap_auto(image);
+ err = cl_mem_unmap_auto(mem);
 
 error:
   return err;
@@ -112,11 +113,12 @@ cl_int cl_enqueue_write_image(enqueue_data *data)
   cl_int err = CL_SUCCESS;
   void* dst_ptr;
 
-  cl_mem image = data->mem_obj;
+  cl_mem mem = data->mem_obj;
+  CHECK_IMAGE(mem);
   const size_t *origin = data->origin;
   const size_t *region = data->region;
 
-  if (!(dst_ptr = cl_mem_map_auto(image))) {
+  if (!(dst_ptr = cl_mem_map_auto(mem))) {
     err = CL_MAP_FAILURE;
     goto error;
   }
@@ -144,7 +146,7 @@ cl_int cl_enqueue_write_image(enqueue_data *data)
     }
   }
 
-  err = cl_mem_unmap_auto(image);
+  err = cl_mem_unmap_auto(mem);
 
 error:
   return err;
@@ -233,10 +235,11 @@ cl_int cl_enqueue_map_image(enqueue_data *data)
   void *ptr = NULL;
   cl_int err = CL_SUCCESS;
 
-  cl_mem image = data->mem_obj;
+  cl_mem mem = data->mem_obj;
+  CHECK_IMAGE(mem);
   const size_t *origin = data->origin;
 
-  if (!(ptr = cl_mem_map_auto(image))) {
+  if (!(ptr = cl_mem_map_auto(mem))) {
     err = CL_MAP_FAILURE;
     goto error;
   }

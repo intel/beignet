@@ -138,14 +138,16 @@ do {                                                        \
   }                                                         \
 } while (0)
 
-#define CHECK_IMAGE(IMAGE)                                  \
-CHECK_MEM(image);                                           \
+#define CHECK_IMAGE(MEM)                                    \
+CHECK_MEM(MEM);                                             \
 do {                                                        \
-  if (UNLIKELY(!IMAGE->is_image)) {                         \
+  if (UNLIKELY(!IS_IMAGE(MEM))) {                           \
     err = CL_INVALID_MEM_OBJECT;                            \
     goto error;                                             \
   }                                                         \
-} while (0)
+} while (0);                                                \
+struct _cl_mem_image *image;                                \
+image = cl_mem_image(MEM);                                  \
 
 #define CHECK_EVENT(EVENT)                                    \
   do {                                                        \

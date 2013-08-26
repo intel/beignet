@@ -408,7 +408,7 @@ clCreateBuffer(cl_context    context,
   cl_int err = CL_SUCCESS;
   CHECK_CONTEXT (context);
 
-  mem = cl_mem_new(context, flags, size, host_ptr, &err);
+  mem = cl_mem_new_buffer(context, flags, size, host_ptr, &err);
 error:
   if (errcode_ret)
     *errcode_ret = err;
@@ -592,13 +592,13 @@ error:
 }
 
 cl_int
-clGetImageInfo(cl_mem         image,
+clGetImageInfo(cl_mem         mem,
                cl_image_info  param_name,
                size_t         param_value_size,
                void *         param_value,
                size_t *       param_value_size_ret)
 {
-  return cl_get_image_info(image,
+  return cl_get_image_info(mem,
                            param_name,
                            param_value_size,
                            param_value,
@@ -1356,7 +1356,7 @@ clEnqueueCopyBufferRect(cl_command_queue     command_queue,
 
 cl_int
 clEnqueueReadImage(cl_command_queue      command_queue,
-                   cl_mem                image,
+                   cl_mem                mem,
                    cl_bool               blocking_read,
                    const size_t *        origin,
                    const size_t *        region,
@@ -1371,8 +1371,8 @@ clEnqueueReadImage(cl_command_queue      command_queue,
   enqueue_data *data, no_wait_data = { 0 };
 
   CHECK_QUEUE(command_queue);
-  CHECK_IMAGE(image);
-  if (command_queue->ctx != image->ctx) {
+  CHECK_IMAGE(mem);
+  if (command_queue->ctx != mem->ctx) {
      err = CL_INVALID_CONTEXT;
      goto error;
   }
@@ -1410,16 +1410,16 @@ clEnqueueReadImage(cl_command_queue      command_queue,
      goto error;
   }
 
-  if (image->flags & (CL_MEM_HOST_WRITE_ONLY | CL_MEM_HOST_NO_ACCESS)) {
+  if (mem->flags & (CL_MEM_HOST_WRITE_ONLY | CL_MEM_HOST_NO_ACCESS)) {
      err = CL_INVALID_OPERATION;
      goto error;
   }
 
-  TRY(cl_event_check_waitlist, num_events_in_wait_list, event_wait_list, event, image->ctx);
+  TRY(cl_event_check_waitlist, num_events_in_wait_list, event_wait_list, event, mem->ctx);
 
   data = &no_wait_data;
   data->type        = EnqueueReadImage;
-  data->mem_obj     = image;
+  data->mem_obj     = mem;
   data->ptr         = ptr;
   data->origin[0]   = origin[0];  data->origin[1] = origin[1];  data->origin[2] = origin[2];
   data->region[0]   = region[0];  data->region[1] = region[1];  data->region[2] = region[2];
@@ -1438,7 +1438,7 @@ error:
 
 cl_int
 clEnqueueWriteImage(cl_command_queue     command_queue,
-                    cl_mem               image,
+                    cl_mem               mem,
                     cl_bool              blocking_write,
                     const size_t *       origin,
                     const size_t *       region,
@@ -1453,8 +1453,8 @@ clEnqueueWriteImage(cl_command_queue     command_queue,
   enqueue_data *data, no_wait_data = { 0 };
 
   CHECK_QUEUE(command_queue);
-  CHECK_IMAGE(image);
-  if (command_queue->ctx != image->ctx) {
+  CHECK_IMAGE(mem);
+  if (command_queue->ctx != mem->ctx) {
     err = CL_INVALID_CONTEXT;
     goto error;
   }
@@ -1492,16 +1492,16 @@ clEnqueueWriteImage(cl_command_queue     command_queue,
     goto error;
   }
 
-  if (image->flags & (CL_MEM_HOST_READ_ONLY | CL_MEM_HOST_NO_ACCESS)) {
+  if (mem->flags & (CL_MEM_HOST_READ_ONLY | CL_MEM_HOST_NO_ACCESS)) {
     err = CL_INVALID_OPERATION;
     goto error;
   }
 
-  TRY(cl_event_check_waitlist, num_events_in_wait_list, event_wait_list, event, image->ctx);
+  TRY(cl_event_check_waitlist, num_events_in_wait_list, event_wait_list, event, mem->ctx);
 
   data = &no_wait_data;
   data->type        = EnqueueWriteImage;
-  data->mem_obj     = image;
+  data->mem_obj     = mem;
   data->const_ptr   = ptr;
   data->origin[0]   = origin[0];  data->origin[1] = origin[1];  data->origin[2] = origin[2];
   data->region[0]   = region[0];  data->region[1] = region[1];  data->region[2] = region[2];
@@ -1625,7 +1625,7 @@ error:
 
 void *
 clEnqueueMapImage(cl_command_queue   command_queue,
-                  cl_mem             image,
+                  cl_mem             mem,
                   cl_bool            blocking_map,
                   cl_map_flags       map_flags,
                   const size_t *     origin,
@@ -1641,8 +1641,8 @@ clEnqueueMapImage(cl_command_queue   command_queue,
   enqueue_data *data, no_wait_data = { 0 };
 
   CHECK_QUEUE(command_queue);
-  CHECK_IMAGE(image);
-  if (command_queue->ctx != image->ctx) {
+  CHECK_IMAGE(mem);
+  if (command_queue->ctx != mem->ctx) {
     err = CL_INVALID_CONTEXT;
     goto error;
   }
@@ -1665,19 +1665,19 @@ clEnqueueMapImage(cl_command_queue   command_queue,
     *image_slice_pitch = image->slice_pitch;
 
   if ((map_flags & CL_MAP_READ &&
-       image->flags & (CL_MEM_HOST_WRITE_ONLY | CL_MEM_HOST_NO_ACCESS)) ||
+       mem->flags & (CL_MEM_HOST_WRITE_ONLY | CL_MEM_HOST_NO_ACCESS)) ||
       (map_flags & (CL_MAP_WRITE | CL_MAP_WRITE_INVALIDATE_REGION) &&
-       image->flags & (CL_MEM_HOST_READ_ONLY | CL_MEM_HOST_NO_ACCESS)))
+       mem->flags & (CL_MEM_HOST_READ_ONLY | CL_MEM_HOST_NO_ACCESS)))
   {
     err = CL_INVALID_OPERATION;
     goto error;
   }
 
-  TRY(cl_event_check_waitlist, num_events_in_wait_list, event_wait_list, event, image->ctx);
+  TRY(cl_event_check_waitlist, num_events_in_wait_list, event_wait_list, event, mem->ctx);
 
   data = &no_wait_data;
   data->type        = EnqueueMapImage;
-  data->mem_obj     = image;
+  data->mem_obj     = mem;
   data->origin[0]   = origin[0];  data->origin[1] = origin[1];  data->origin[2] = origin[2];
   data->region[0]   = region[0];  data->region[1] = region[1];  data->region[2] = region[2];
   data->row_pitch   = *image_row_pitch;

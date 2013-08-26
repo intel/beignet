@@ -133,8 +133,8 @@ cl_kernel_set_arg(cl_kernel k, cl_uint index, size_t sz, const void *value)
       if (UNLIKELY(mem->magic != CL_MAGIC_MEM_HEADER))
         return CL_INVALID_MEM_OBJECT;
 
-      if (UNLIKELY((arg_type == GBE_ARG_IMAGE && !mem->is_image)
-         || (arg_type != GBE_ARG_IMAGE && mem->is_image)))
+      if (UNLIKELY((arg_type == GBE_ARG_IMAGE && !IS_IMAGE(mem))
+         || (arg_type != GBE_ARG_IMAGE && IS_IMAGE(mem))))
           return CL_INVALID_ARG_VALUE;
     }
   }

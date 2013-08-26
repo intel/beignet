@@ -98,7 +98,9 @@ cl_command_queue_add_ref(cl_command_queue queue)
 }
 
 static void
-set_image_info(char *curbe, struct ImageInfo * image_info, cl_mem image)
+set_image_info(char *curbe,
+               struct ImageInfo * image_info,
+               struct _cl_mem_image *image)
 {
   if (image_info->wSlot >= 0)
     *(uint32_t*)(curbe + image_info->wSlot) = image->w;
@@ -118,12 +120,14 @@ cl_command_queue_bind_image(cl_command_queue queue, cl_kernel k)
   uint32_t i;
   for (i = 0; i < k->image_sz; i++) {
     int id = k->images[i].arg_idx;
+    struct _cl_mem_image *image;
     assert(gbe_kernel_get_arg_type(k->opaque, id) == GBE_ARG_IMAGE);
-    set_image_info(k->curbe, &k->images[i], k->args[id].mem);
-    cl_gpgpu_bind_image(queue->gpgpu, k->images[i].idx, k->args[id].mem->bo,
-                        k->args[id].mem->intel_fmt, k->args[id].mem->type,
-                        k->args[id].mem->w, k->args[id].mem->h,
-                        k->args[id].mem->row_pitch, k->args[id].mem->tiling);
+    image = cl_mem_image(k->args[id].mem);
+    set_image_info(k->curbe, &k->images[i], image);
+    cl_gpgpu_bind_image(queue->gpgpu, k->images[i].idx, image->base.bo,
+                        image->intel_fmt, image->image_type,
+                        image->w, image->h,
+                        image->row_pitch, image->tiling);
   }
   return CL_SUCCESS;
 }
