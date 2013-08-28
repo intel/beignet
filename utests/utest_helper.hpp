@@ -50,7 +50,7 @@ extern EGLSurface  eglSurface;
 #define OCL_THROW_ERROR(FN, STATUS) \
   do { \
     char msg[2048]; \
-    sprintf(msg, "error calling %s with error%s \n", #FN, err_msg[-STATUS]); \
+    sprintf(msg, "error calling %s with error %s \n", #FN, err_msg[-STATUS]); \
     OCL_ASSERTM(false, msg); \
   } while (0)
 
