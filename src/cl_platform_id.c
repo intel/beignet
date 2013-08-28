@@ -28,7 +28,7 @@
 
 #define DECL_INFO_STRING(FIELD, STRING) \
     .FIELD = STRING,                    \
-    .JOIN(FIELD,_sz) = sizeof(STRING) + 1,
+    .JOIN(FIELD,_sz) = sizeof(STRING),
 
 static struct _cl_platform_id intel_platform_data = {
   INIT_ICD(dispatch)
