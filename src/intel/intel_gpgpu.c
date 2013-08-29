@@ -608,6 +608,8 @@ intel_gpgpu_build_idrt(intel_gpgpu_t *gpgpu, cl_gpgpu_kernel *kernel)
   ker_bo = (drm_intel_bo *) kernel->bo;
   desc->desc0.kernel_start_pointer = ker_bo->offset >> 6; /* reloc */
   desc->desc1.single_program_flow = 1;
+  desc->desc1.floating_point_mode = 0; /* use IEEE-754 rule */
+  desc->desc5.rounding_mode = 0; /* round to nearest even */
   desc->desc2.sampler_state_pointer = gpgpu->sampler_state_b.bo->offset >> 5;
   desc->desc3.binding_table_entry_count = 0; /* no prefetch */
   desc->desc3.binding_table_pointer = 0;
