@@ -1291,7 +1291,7 @@ clEnqueueWriteBuffer(cl_command_queue    command_queue,
   data->size      = size;
 
   if(handle_events(command_queue, num_events_in_wait_list, event_wait_list,
-                   event, data, CL_COMMAND_READ_BUFFER) == CL_ENQUEUE_EXECUTE_IMM) {
+                   event, data, CL_COMMAND_WRITE_BUFFER) == CL_ENQUEUE_EXECUTE_IMM) {
     err = cl_enqueue_handle(data);
     if(event) cl_event_set_status(*event, CL_COMPLETE);
   }
@@ -1427,7 +1427,7 @@ clEnqueueReadImage(cl_command_queue      command_queue,
   data->slice_pitch = slice_pitch;
 
   if(handle_events(command_queue, num_events_in_wait_list, event_wait_list,
-                   event, data, CL_COMMAND_READ_BUFFER) == CL_ENQUEUE_EXECUTE_IMM) {
+                   event, data, CL_COMMAND_READ_IMAGE) == CL_ENQUEUE_EXECUTE_IMM) {
     err = cl_enqueue_handle(data);
     if(event) cl_event_set_status(*event, CL_COMPLETE);
   }
@@ -1509,7 +1509,7 @@ clEnqueueWriteImage(cl_command_queue     command_queue,
   data->slice_pitch = slice_pitch;
 
   if(handle_events(command_queue, num_events_in_wait_list, event_wait_list,
-                   event, data, CL_COMMAND_READ_BUFFER) == CL_ENQUEUE_EXECUTE_IMM) {
+                   event, data, CL_COMMAND_WRITE_IMAGE) == CL_ENQUEUE_EXECUTE_IMM) {
     err = cl_enqueue_handle(data);
     if(event) cl_event_set_status(*event, CL_COMPLETE);
   }
@@ -1679,7 +1679,7 @@ clEnqueueMapBuffer(cl_command_queue  command_queue,
   data->ptr         = ptr;
 
   if(handle_events(command_queue, num_events_in_wait_list, event_wait_list,
-                   event, data, CL_COMMAND_READ_BUFFER) == CL_ENQUEUE_EXECUTE_IMM) {
+                   event, data, CL_COMMAND_MAP_BUFFER) == CL_ENQUEUE_EXECUTE_IMM) {
     err = cl_enqueue_handle(data);
     if(event) cl_event_set_status(*event, CL_COMPLETE);
   }
@@ -1762,7 +1762,7 @@ clEnqueueMapImage(cl_command_queue   command_queue,
   data->ptr         = ptr;
 
   if(handle_events(command_queue, num_events_in_wait_list, event_wait_list,
-                   event, data, CL_COMMAND_READ_BUFFER) == CL_ENQUEUE_EXECUTE_IMM) {
+                   event, data, CL_COMMAND_MAP_IMAGE) == CL_ENQUEUE_EXECUTE_IMM) {
     err = cl_enqueue_handle(data);
     if(event) cl_event_set_status(*event, CL_COMPLETE);
   }
@@ -1799,7 +1799,7 @@ clEnqueueUnmapMemObject(cl_command_queue  command_queue,
   data->ptr         = mapped_ptr;
 
   if(handle_events(command_queue, num_events_in_wait_list, event_wait_list,
-                   event, data, CL_COMMAND_READ_BUFFER) == CL_ENQUEUE_EXECUTE_IMM) {
+                   event, data, CL_COMMAND_UNMAP_MEM_OBJECT) == CL_ENQUEUE_EXECUTE_IMM) {
     err = cl_enqueue_handle(data);
     if(event) cl_event_set_status(*event, CL_COMPLETE);
   }
@@ -1901,7 +1901,7 @@ clEnqueueNDRangeKernel(cl_command_queue  command_queue,
   data->queue = command_queue;
 
   if(handle_events(command_queue, num_events_in_wait_list, event_wait_list,
-                   event, data, CL_COMMAND_READ_BUFFER) == CL_ENQUEUE_EXECUTE_IMM) {
+                   event, data, CL_COMMAND_NDRANGE_KERNEL) == CL_ENQUEUE_EXECUTE_IMM) {
     err = cl_command_queue_flush(command_queue);
   }
 
