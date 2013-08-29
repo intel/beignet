@@ -104,6 +104,7 @@ set (utests_sources
   compiler_vector_load_store.cpp
   compiler_cl_finish.cpp
   get_cl_info.cpp
+  builtin_atan2.cpp
   builtin_bitselect.cpp
   builtin_frexp.cpp
   builtin_mad_sat.cpp

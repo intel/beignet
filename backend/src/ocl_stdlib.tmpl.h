@@ -1331,7 +1331,13 @@ INLINE_OVERLOADABLE float __gen_ocl_internal_atan(float x) {
     x = 1 / x;
     c = -1;
   }
-  return a + c * (x - __gen_ocl_pow(x, 3) / 3 + __gen_ocl_pow(x, 5) / 5 - __gen_ocl_pow(x, 7) / 7 + __gen_ocl_pow(x, 9) / 9 - __gen_ocl_pow(x, 11) / 11);
+  a += c*x;
+  int i;
+  int sign;
+  for(i=3, sign=-1; i<63; i+=2, sign=-sign) {
+    a += c*sign*__gen_ocl_pow(x,i)/i;
+  }
+  return a;
 }
 INLINE_OVERLOADABLE float __gen_ocl_internal_atanpi(float x) {
   return __gen_ocl_internal_atan(x) / M_PI_F;
@@ -1358,6 +1364,26 @@ INLINE_OVERLOADABLE float __gen_ocl_internal_erfc(float x) {
 // XXX work-around PTX profile
 #define sqrt native_sqrt
 INLINE_OVERLOADABLE float rsqrt(float x) { return native_rsqrt(x); }
+INLINE_OVERLOADABLE float __gen_ocl_internal_atan2(float y, float x) {
+  uint hx = *(uint *)(&x), ix = hx & 0x7FFFFFFF;
+  uint hy = *(uint *)(&y), iy = hy & 0x7FFFFFFF;
+  if (ix > 0x7F800000 || iy > 0x7F800000)
+    return nan(0u);
+  if (ix == 0) {
+    if (y > 0)
+      return M_PI_2_F;
+    if (y < 0)
+      return - M_PI_2_F;
+    return nan(0u);
+  } else {
+    float z = __gen_ocl_internal_atan(y / x);
+    if (x > 0)
+      return z;
+    if (y >= 0)
+      return M_PI_F + z;
+    return - M_PI_F + z;
+  }
+}
 INLINE_OVERLOADABLE float __gen_ocl_internal_fabs(float x)  { return __gen_ocl_fabs(x); }
 INLINE_OVERLOADABLE float __gen_ocl_internal_trunc(float x) { return __gen_ocl_rndz(x); }
 INLINE_OVERLOADABLE float __gen_ocl_internal_round(float x) { return __gen_ocl_rnde(x); }
@@ -1390,6 +1416,7 @@ INLINE_OVERLOADABLE float __gen_ocl_internal_rint(float x) {
 #define tanpi __gen_ocl_internal_tanpi
 #define tanh __gen_ocl_internal_tanh
 #define atan __gen_ocl_internal_atan
+#define atan2 __gen_ocl_internal_atan2
 #define atanpi __gen_ocl_internal_atanpi
 #define atanh __gen_ocl_internal_atanh
 #define pow powr
