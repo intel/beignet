@@ -645,7 +645,8 @@ namespace gbe
 
         // Flag registers can only go to src[0]
         const SelectionOpcode opcode = SelectionOpcode(insn.opcode);
-        if (opcode == SEL_OP_AND || opcode == SEL_OP_OR) {
+        if (opcode == SEL_OP_AND || opcode == SEL_OP_OR || opcode == SEL_OP_XOR
+            || opcode == SEL_OP_I64AND || opcode == SEL_OP_I64OR || opcode == SEL_OP_I64XOR) {
           if (insn.src(1).physical == 0) {
             const ir::Register reg = insn.src(1).reg();
             if (ctx.sel->getRegisterFamily(reg) == ir::FAMILY_BOOL)
