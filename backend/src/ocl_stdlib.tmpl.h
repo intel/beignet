@@ -2078,6 +2078,21 @@ DECL_ATOMIC_OP(cmpxchg)
 #undef DECL_ATOMIC_OP_TYPE
 #undef DECL_ATOMIC_OP_SPACE
 
+// XXX for conformance test
+// The following atom_xxx api is on OpenCL spec 1.0.
+// But the conformance test suite will test them anyway.
+#define atom_add atomic_add
+#define atom_sub atomic_sub
+#define atom_and atomic_and
+#define atom_or atomic_or
+#define atom_xor atomic_xor
+#define atom_xchg atomic_xchg
+#define atom_min atomic_min
+#define atom_max atomic_max
+#define atom_inc atomic_inc
+#define atom_dec atomic_dec
+#define atom_cmpxchg atomic_cmpxchg
+
 /////////////////////////////////////////////////////////////////////////////
 // Force the compilation to SIMD8 or SIMD16
 /////////////////////////////////////////////////////////////////////////////
