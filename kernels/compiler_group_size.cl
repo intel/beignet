@@ -11,9 +11,9 @@ compiler_group_size(__global unsigned int *dst)
 }
 
 struct xyz{
-  unsigned b:16;
-  unsigned e:16;
-  unsigned o;
+  unsigned short b;
+  unsigned short e;
+  unsigned int o;
 };
 
 __kernel void

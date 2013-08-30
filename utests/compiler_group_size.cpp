@@ -2,9 +2,9 @@
 #include <string.h>
 
 struct xyz{
-  unsigned b:16;
-  unsigned e:16;
-  unsigned o;
+  unsigned short b;
+  unsigned short e;
+  unsigned int o;
 };
 
 void compiler_group_size1(void)
