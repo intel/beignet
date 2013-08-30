@@ -50,7 +50,7 @@
 .min_data_type_align_size = sizeof(cl_uint),
 .single_fp_config = 0, /* XXX */
 .global_mem_cache_type = CL_READ_WRITE_CACHE,
-.global_mem_size = 4,
+.global_mem_size = 128 * 1024 * 1024,
 .max_constant_buffer_size = 64 << 10,
 .max_constant_args = 8,
 .error_correction_support = CL_FALSE,
