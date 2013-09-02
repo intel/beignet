@@ -5,9 +5,21 @@
 # For all vector lengths and types, generate conversion functions
 for vector_length in $VECTOR_LENGTHS; do
         if test $vector_length -eq 1; then
-                continue;
-        fi
-        for ftype in $TYPES; do
+          for ftype in $TYPES; do
+            fbasetype=`IFS=:; set -- dummy $ftype; echo $2`
+            for ttype in $TYPES; do
+              tbasetype=`IFS=:; set -- dummy $ttype; echo $2`
+              if test $fbasetype = $tbasetype; then
+                continue
+              fi
+              echo "INLINE OVERLOADABLE $tbasetype convert_$tbasetype($fbasetype v) {"
+              echo "  return ($tbasetype)v;"
+              echo "}"
+              echo
+            done
+          done
+        else
+          for ftype in $TYPES; do
                 fbasetype=`IFS=:; set -- dummy $ftype; echo $2`
                 for ttype in $TYPES; do
                         tbasetype=`IFS=:; set -- dummy $ttype; echo $2`
@@ -48,5 +60,6 @@ for vector_length in $VECTOR_LENGTHS; do
                         echo "}"
                         echo
                 done
-        done
+          done
+        fi
 done
