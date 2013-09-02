@@ -258,6 +258,7 @@ DEC(16);
 
 #define DEF(type) INLINE_OVERLOADABLE type bitselect(type a, type b, type c) { return (a & ~c) | (b & c); }
 DEF(char); DEF(uchar); DEF(short); DEF(ushort); DEF(int); DEF(uint)
+DEF(long); DEF(ulong)
 #undef DEF
 INLINE_OVERLOADABLE float bitselect(float a, float b, float c) {
   return as_float(bitselect(as_int(a), as_int(b), as_int(c)));
