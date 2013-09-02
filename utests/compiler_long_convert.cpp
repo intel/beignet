@@ -3,6 +3,7 @@
 #include <iostream>
 #include "utest_helper.hpp"
 
+// convert shorter integer to 64-bit integer
 void compiler_long_convert(void)
 {
   const size_t n = 16;
@@ -65,3 +66,53 @@ void compiler_long_convert(void)
 }
 
 MAKE_UTEST_FROM_FUNCTION(compiler_long_convert);
+
+// convert 64-bit integer to shorter integer
+void compiler_long_convert_2(void)
+{
+  const size_t n = 16;
+  int64_t src[n];
+
+  // Setup kernel and buffers
+  OCL_CREATE_KERNEL_FROM_FILE("compiler_long_convert", "compiler_long_convert_2");
+  OCL_CREATE_BUFFER(buf[0], 0, n * sizeof(char), NULL);
+  OCL_CREATE_BUFFER(buf[1], 0, n * sizeof(short), NULL);
+  OCL_CREATE_BUFFER(buf[2], 0, n * sizeof(int), NULL);
+  OCL_CREATE_BUFFER(buf[3], 0, n * sizeof(int64_t), NULL);
+  OCL_SET_ARG(0, sizeof(cl_mem), &buf[0]);
+  OCL_SET_ARG(1, sizeof(cl_mem), &buf[1]);
+  OCL_SET_ARG(2, sizeof(cl_mem), &buf[2]);
+  OCL_SET_ARG(3, sizeof(cl_mem), &buf[3]);
+  globals[0] = n;
+  locals[0] = 16;
+
+  // Run random tests
+  for (int32_t i = 0; i < (int32_t) n; ++i) {
+    src[i] = -i;
+  }
+  OCL_MAP_BUFFER(3);
+  memcpy(buf_data[3], src, sizeof(src));
+  OCL_UNMAP_BUFFER(3);
+
+  // Run the kernel on GPU
+  OCL_NDRANGE(1);
+
+  // Compare
+  OCL_MAP_BUFFER(0);
+  OCL_MAP_BUFFER(1);
+  OCL_MAP_BUFFER(2);
+  char *dst1 = ((char *)buf_data[0]);
+  short *dst2 = ((short *)buf_data[1]);
+  int *dst3 = ((int *)buf_data[2]);
+  for (int32_t i = 0; i < (int32_t) n; ++i) {
+    //printf("%x %x %x\n", dst1[i], dst2[i], dst3[i]);
+    OCL_ASSERT(dst1[i] == -i);
+    OCL_ASSERT(dst2[i] == -i);
+    OCL_ASSERT(dst3[i] == -i);
+  }
+  OCL_UNMAP_BUFFER(0);
+  OCL_UNMAP_BUFFER(1);
+  OCL_UNMAP_BUFFER(2);
+}
+
+MAKE_UTEST_FROM_FUNCTION(compiler_long_convert_2);

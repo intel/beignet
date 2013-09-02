@@ -159,6 +159,21 @@ namespace gbe
       case SEL_OP_RNDE: p->RNDE(dst, src); break;
       case SEL_OP_RNDZ: p->RNDZ(dst, src); break;
       case SEL_OP_LOAD_INT64_IMM: p->LOAD_INT64_IMM(dst, src.value.i64); break;
+      case SEL_OP_CONVI64_TO_I:
+       {
+        int execWidth = p->curr.execWidth;
+        GenRegister xsrc = src.bottom_half(), xdst = dst;
+        p->push();
+        p->curr.execWidth = 8;
+        for(int i = 0; i < execWidth/4; i ++) {
+          p->curr.chooseNib(i);
+          p->MOV(xdst, xsrc);
+          xdst = GenRegister::suboffset(xdst, 4);
+          xsrc = GenRegister::suboffset(xsrc, 8);
+        }
+        p->pop();
+        break;
+       }
       default: NOT_IMPLEMENTED;
     }
   }

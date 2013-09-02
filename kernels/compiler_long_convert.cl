@@ -5,3 +5,10 @@ kernel void compiler_long_convert(global char *src1, global short *src2, global 
   dst2[i] = src2[i];
   dst3[i] = src3[i];
 }
+
+kernel void compiler_long_convert_2(global char *dst1, global short *dst2, global int *dst3, global long *src) {
+  int i = get_global_id(0);
+  dst1[i] = src[i];
+  dst2[i] = src[i];
+  dst3[i] = src[i];
+}

@@ -459,6 +459,7 @@ namespace gbe
     ALU2(UPSAMPLE_INT)
     ALU2(UPSAMPLE_LONG)
     ALU1WithTemp(CONVI_TO_I64)
+    ALU1(CONVI64_TO_I)
     I64Shift(I64SHL)
     I64Shift(I64SHR)
     I64Shift(I64ASR)
@@ -2380,7 +2381,7 @@ namespace gbe
       const GenRegister src = sel.selReg(insn.getSrc(0), srcType);
 
       // We need two instructions to make the conversion
-      if (dstFamily != FAMILY_DWORD && dstFamily != FAMILY_QWORD && srcFamily == FAMILY_DWORD) {
+      if (dstFamily != FAMILY_DWORD && dstFamily != FAMILY_QWORD && (srcFamily == FAMILY_DWORD || srcFamily == FAMILY_QWORD)) {
         GenRegister unpacked;
         if (dstFamily == FAMILY_WORD) {
           const uint32_t type = TYPE_U16 ? GEN_TYPE_UW : GEN_TYPE_W;
@@ -2391,8 +2392,16 @@ namespace gbe
           unpacked = GenRegister::unpacked_ub(sel.reg(FAMILY_DWORD));
           unpacked = GenRegister::retype(unpacked, type);
         }
-        sel.MOV(unpacked, src);
+        if(srcFamily == FAMILY_QWORD) {
+          GenRegister tmp = sel.selReg(sel.reg(FAMILY_DWORD));
+          tmp.type = GEN_TYPE_D;
+          sel.CONVI64_TO_I(tmp, src);
+          sel.MOV(unpacked, tmp);
+        } else
+          sel.MOV(unpacked, src);
         sel.MOV(dst, unpacked);
+      } else if ((dstType == ir::TYPE_S32 || dstType == ir::TYPE_U32) && srcFamily == FAMILY_QWORD) {
+        sel.CONVI64_TO_I(dst, src);
       } else if (dst.isdf()) {
         ir::Register r = sel.reg(ir::RegisterFamily::FAMILY_QWORD);
         sel.MOV_DF(dst, src, sel.selReg(r));
