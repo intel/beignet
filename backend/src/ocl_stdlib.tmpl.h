@@ -313,11 +313,27 @@ INLINE_OVERLOADABLE uint clz(uint x) {
 }
 
 INLINE_OVERLOADABLE long clz(long x) {
-  return 0;
+  if (x < 0)
+    return 0;
+  if (x == 0)
+    return 64;
+  union { int i[2]; long x; } u;
+  u.x = x;
+  uint v = clz(u.i[1]);
+  if(v == 32)
+    v += clz(u.i[0]);
+  return v;
 }
 
 INLINE_OVERLOADABLE ulong clz(ulong x) {
-  return 0;
+  if (x == 0)
+    return 64;
+  union { uint i[2]; ulong x; } u;
+  u.x = x;
+  uint v = clz(u.i[1]);
+  if(v == 32)
+    v += clz(u.i[0]);
+  return v;
 }
 
 OVERLOADABLE int __gen_ocl_mul_hi(int x, int y);
