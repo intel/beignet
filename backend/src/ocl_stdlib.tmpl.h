@@ -1779,6 +1779,8 @@ DEF(ushort)
 DEF(int)
 DEF(uint)
 DEF(float)
+DEF(long)
+DEF(ulong)
 #undef DEF
 #undef DEC2
 #undef DEC4
@@ -1884,6 +1886,8 @@ DEF(ushort)
 DEF(int)
 DEF(uint)
 DEF(float)
+DEF(long)
+DEF(ulong)
 #undef DEF
 #undef DEC2
 #undef DEC2X
