@@ -1385,7 +1385,7 @@ namespace gbe
   DECL_PATTERN(UnaryInstruction)
   {
     static ir::Type getType(const ir::Opcode opcode, const ir::Type insnType) {
-      if (insnType == ir::TYPE_S64 || insnType == ir::TYPE_U64)
+      if (insnType == ir::TYPE_S64 || insnType == ir::TYPE_U64 || insnType == ir::TYPE_S8 || insnType == ir::TYPE_U8)
         return insnType;
       if (opcode == ir::OP_FBH || opcode == ir::OP_FBL)
         return ir::TYPE_U32;

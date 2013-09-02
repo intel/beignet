@@ -275,13 +275,13 @@ INLINE_OVERLOADABLE char clz(char x) {
     return 0;
   if (x == 0)
     return 8;
-  return __gen_ocl_fbl(x) - 24;
+  return __gen_ocl_fbh(x) - 24;
 }
 
 INLINE_OVERLOADABLE uchar clz(uchar x) {
   if (x == 0)
     return 8;
-  return __gen_ocl_fbl(x) - 24;
+  return __gen_ocl_fbh(x) - 24;
 }
 
 INLINE_OVERLOADABLE short clz(short x) {
