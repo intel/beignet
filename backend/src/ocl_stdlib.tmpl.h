@@ -1384,24 +1384,29 @@ INLINE_OVERLOADABLE float mad(float a, float b, float c) {
   return a*b+c;
 }
 
-INLINE_OVERLOADABLE uint select(uint src0, uint src1, int cond) {
-  return cond ? src1 : src0;
-}
-INLINE_OVERLOADABLE uint select(uint src0, uint src1, uint cond) {
-  return cond ? src1 : src0;
-}
-INLINE_OVERLOADABLE int select(int src0, int src1, int cond) {
-  return cond ? src1 : src0;
-}
-INLINE_OVERLOADABLE int select(int src0, int src1, uint cond) {
-  return cond ? src1 : src0;
-}
-INLINE_OVERLOADABLE float select(float src0, float src1, int cond) {
-  return cond ? src1 : src0;
-}
-INLINE_OVERLOADABLE float select(float src0, float src1, uint cond) {
-  return cond ? src1 : src0;
-}
+#define DEF(TYPE1, TYPE2) \
+  INLINE_OVERLOADABLE TYPE1 select(TYPE1 src0, TYPE1 src1, TYPE2 cond) { \
+    return cond ? src1 : src0; \
+  }
+DEF(char, char)
+DEF(char, uchar)
+DEF(uchar, char)
+DEF(uchar, uchar)
+DEF(short, short)
+DEF(short, ushort)
+DEF(ushort, short)
+DEF(ushort, ushort)
+DEF(int, int)
+DEF(int, uint)
+DEF(uint, int)
+DEF(uint, uint)
+DEF(long, long)
+DEF(long, ulong)
+DEF(ulong, long)
+DEF(ulong, ulong)
+DEF(float, int)
+DEF(float, uint)
+#undef DEF
 
 // This will be optimized out by LLVM and will output LLVM select instructions
 #define DECL_SELECT4(TYPE4, TYPE, COND_TYPE4, MASK) \
