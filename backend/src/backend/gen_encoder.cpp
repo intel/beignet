@@ -315,7 +315,7 @@ namespace gbe
 
   void GenEncoder::setSrc1(GenInstruction *insn, GenRegister reg) {
      assert(reg.nr < 128);
-     assert(reg.file != GEN_ARCHITECTURE_REGISTER_FILE);
+     assert(reg.file != GEN_ARCHITECTURE_REGISTER_FILE || reg.nr == 0);
 
      insn->bits1.da1.src1_reg_file = reg.file;
      insn->bits1.da1.src1_reg_type = reg.type;
