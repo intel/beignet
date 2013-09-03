@@ -182,9 +182,14 @@ INLINE_OVERLOADABLE TYPE add_sat(TYPE x, TYPE y) { return ocl_sadd_sat(x, y); } 
 INLINE_OVERLOADABLE TYPE sub_sat(TYPE x, TYPE y) { return ocl_ssub_sat(x, y); }
 SDEF(char);
 SDEF(short);
-SDEF(int);
 SDEF(long);
 #undef SDEF
+OVERLOADABLE int ocl_sadd_sat(int x, int y);
+INLINE_OVERLOADABLE int add_sat(int x, int y) { return ocl_sadd_sat(x, y); }
+OVERLOADABLE int ocl_ssub_sat(int x, int y);
+INLINE_OVERLOADABLE int sub_sat(int x, int y) {
+  return (y == 0x80000000u) ? (x & 0x7FFFFFFF) : ocl_ssub_sat(x, y);
+}
 #define UDEF(TYPE)                                                              \
 OVERLOADABLE TYPE ocl_uadd_sat(TYPE x, TYPE y);                          \
 OVERLOADABLE TYPE ocl_usub_sat(TYPE x, TYPE y);                          \
