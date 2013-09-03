@@ -360,6 +360,7 @@ INLINE OVERLOADABLE double convert_double(float v) {
   return (double)v;
 }
 
+INLINE OVERLOADABLE long2 convert_long2(long2 v) { return v; }
 INLINE OVERLOADABLE ulong2 convert_ulong2(long2 v) {
   return (ulong2)((ulong)(v.s0), (ulong)(v.s1));
 }
@@ -400,6 +401,7 @@ INLINE OVERLOADABLE long2 convert_long2(ulong2 v) {
   return (long2)((long)(v.s0), (long)(v.s1));
 }
 
+INLINE OVERLOADABLE ulong2 convert_ulong2(ulong2 v) { return v; }
 INLINE OVERLOADABLE int2 convert_int2(ulong2 v) {
   return (int2)((int)(v.s0), (int)(v.s1));
 }
@@ -440,6 +442,7 @@ INLINE OVERLOADABLE ulong2 convert_ulong2(int2 v) {
   return (ulong2)((ulong)(v.s0), (ulong)(v.s1));
 }
 
+INLINE OVERLOADABLE int2 convert_int2(int2 v) { return v; }
 INLINE OVERLOADABLE uint2 convert_uint2(int2 v) {
   return (uint2)((uint)(v.s0), (uint)(v.s1));
 }
@@ -480,6 +483,7 @@ INLINE OVERLOADABLE int2 convert_int2(uint2 v) {
   return (int2)((int)(v.s0), (int)(v.s1));
 }
 
+INLINE OVERLOADABLE uint2 convert_uint2(uint2 v) { return v; }
 INLINE OVERLOADABLE short2 convert_short2(uint2 v) {
   return (short2)((short)(v.s0), (short)(v.s1));
 }
@@ -520,6 +524,7 @@ INLINE OVERLOADABLE uint2 convert_uint2(short2 v) {
   return (uint2)((uint)(v.s0), (uint)(v.s1));
 }
 
+INLINE OVERLOADABLE short2 convert_short2(short2 v) { return v; }
 INLINE OVERLOADABLE ushort2 convert_ushort2(short2 v) {
   return (ushort2)((ushort)(v.s0), (ushort)(v.s1));
 }
@@ -560,6 +565,7 @@ INLINE OVERLOADABLE short2 convert_short2(ushort2 v) {
   return (short2)((short)(v.s0), (short)(v.s1));
 }
 
+INLINE OVERLOADABLE ushort2 convert_ushort2(ushort2 v) { return v; }
 INLINE OVERLOADABLE char2 convert_char2(ushort2 v) {
   return (char2)((char)(v.s0), (char)(v.s1));
 }
@@ -600,6 +606,7 @@ INLINE OVERLOADABLE ushort2 convert_ushort2(char2 v) {
   return (ushort2)((ushort)(v.s0), (ushort)(v.s1));
 }
 
+INLINE OVERLOADABLE char2 convert_char2(char2 v) { return v; }
 INLINE OVERLOADABLE uchar2 convert_uchar2(char2 v) {
   return (uchar2)((uchar)(v.s0), (uchar)(v.s1));
 }
@@ -640,6 +647,7 @@ INLINE OVERLOADABLE char2 convert_char2(uchar2 v) {
   return (char2)((char)(v.s0), (char)(v.s1));
 }
 
+INLINE OVERLOADABLE uchar2 convert_uchar2(uchar2 v) { return v; }
 INLINE OVERLOADABLE double2 convert_double2(uchar2 v) {
   return (double2)((double)(v.s0), (double)(v.s1));
 }
@@ -680,6 +688,7 @@ INLINE OVERLOADABLE uchar2 convert_uchar2(double2 v) {
   return (uchar2)((uchar)(v.s0), (uchar)(v.s1));
 }
 
+INLINE OVERLOADABLE double2 convert_double2(double2 v) { return v; }
 INLINE OVERLOADABLE float2 convert_float2(double2 v) {
   return (float2)((float)(v.s0), (float)(v.s1));
 }
@@ -720,6 +729,8 @@ INLINE OVERLOADABLE double2 convert_double2(float2 v) {
   return (double2)((double)(v.s0), (double)(v.s1));
 }
 
+INLINE OVERLOADABLE float2 convert_float2(float2 v) { return v; }
+INLINE OVERLOADABLE long3 convert_long3(long3 v) { return v; }
 INLINE OVERLOADABLE ulong3 convert_ulong3(long3 v) {
   return (ulong3)((ulong)(v.s0), (ulong)(v.s1), (ulong)(v.s2));
 }
@@ -760,6 +771,7 @@ INLINE OVERLOADABLE long3 convert_long3(ulong3 v) {
   return (long3)((long)(v.s0), (long)(v.s1), (long)(v.s2));
 }
 
+INLINE OVERLOADABLE ulong3 convert_ulong3(ulong3 v) { return v; }
 INLINE OVERLOADABLE int3 convert_int3(ulong3 v) {
   return (int3)((int)(v.s0), (int)(v.s1), (int)(v.s2));
 }
@@ -800,6 +812,7 @@ INLINE OVERLOADABLE ulong3 convert_ulong3(int3 v) {
   return (ulong3)((ulong)(v.s0), (ulong)(v.s1), (ulong)(v.s2));
 }
 
+INLINE OVERLOADABLE int3 convert_int3(int3 v) { return v; }
 INLINE OVERLOADABLE uint3 convert_uint3(int3 v) {
   return (uint3)((uint)(v.s0), (uint)(v.s1), (uint)(v.s2));
 }
@@ -840,6 +853,7 @@ INLINE OVERLOADABLE int3 convert_int3(uint3 v) {
   return (int3)((int)(v.s0), (int)(v.s1), (int)(v.s2));
 }
 
+INLINE OVERLOADABLE uint3 convert_uint3(uint3 v) { return v; }
 INLINE OVERLOADABLE short3 convert_short3(uint3 v) {
   return (short3)((short)(v.s0), (short)(v.s1), (short)(v.s2));
 }
@@ -880,6 +894,7 @@ INLINE OVERLOADABLE uint3 convert_uint3(short3 v) {
   return (uint3)((uint)(v.s0), (uint)(v.s1), (uint)(v.s2));
 }
 
+INLINE OVERLOADABLE short3 convert_short3(short3 v) { return v; }
 INLINE OVERLOADABLE ushort3 convert_ushort3(short3 v) {
   return (ushort3)((ushort)(v.s0), (ushort)(v.s1), (ushort)(v.s2));
 }
@@ -920,6 +935,7 @@ INLINE OVERLOADABLE short3 convert_short3(ushort3 v) {
   return (short3)((short)(v.s0), (short)(v.s1), (short)(v.s2));
 }
 
+INLINE OVERLOADABLE ushort3 convert_ushort3(ushort3 v) { return v; }
 INLINE OVERLOADABLE char3 convert_char3(ushort3 v) {
   return (char3)((char)(v.s0), (char)(v.s1), (char)(v.s2));
 }
@@ -960,6 +976,7 @@ INLINE OVERLOADABLE ushort3 convert_ushort3(char3 v) {
   return (ushort3)((ushort)(v.s0), (ushort)(v.s1), (ushort)(v.s2));
 }
 
+INLINE OVERLOADABLE char3 convert_char3(char3 v) { return v; }
 INLINE OVERLOADABLE uchar3 convert_uchar3(char3 v) {
   return (uchar3)((uchar)(v.s0), (uchar)(v.s1), (uchar)(v.s2));
 }
@@ -1000,6 +1017,7 @@ INLINE OVERLOADABLE char3 convert_char3(uchar3 v) {
   return (char3)((char)(v.s0), (char)(v.s1), (char)(v.s2));
 }
 
+INLINE OVERLOADABLE uchar3 convert_uchar3(uchar3 v) { return v; }
 INLINE OVERLOADABLE double3 convert_double3(uchar3 v) {
   return (double3)((double)(v.s0), (double)(v.s1), (double)(v.s2));
 }
@@ -1040,6 +1058,7 @@ INLINE OVERLOADABLE uchar3 convert_uchar3(double3 v) {
   return (uchar3)((uchar)(v.s0), (uchar)(v.s1), (uchar)(v.s2));
 }
 
+INLINE OVERLOADABLE double3 convert_double3(double3 v) { return v; }
 INLINE OVERLOADABLE float3 convert_float3(double3 v) {
   return (float3)((float)(v.s0), (float)(v.s1), (float)(v.s2));
 }
@@ -1080,6 +1099,8 @@ INLINE OVERLOADABLE double3 convert_double3(float3 v) {
   return (double3)((double)(v.s0), (double)(v.s1), (double)(v.s2));
 }
 
+INLINE OVERLOADABLE float3 convert_float3(float3 v) { return v; }
+INLINE OVERLOADABLE long4 convert_long4(long4 v) { return v; }
 INLINE OVERLOADABLE ulong4 convert_ulong4(long4 v) {
   return (ulong4)((ulong)(v.s0), (ulong)(v.s1), (ulong)(v.s2), (ulong)(v.s3));
 }
@@ -1120,6 +1141,7 @@ INLINE OVERLOADABLE long4 convert_long4(ulong4 v) {
   return (long4)((long)(v.s0), (long)(v.s1), (long)(v.s2), (long)(v.s3));
 }
 
+INLINE OVERLOADABLE ulong4 convert_ulong4(ulong4 v) { return v; }
 INLINE OVERLOADABLE int4 convert_int4(ulong4 v) {
   return (int4)((int)(v.s0), (int)(v.s1), (int)(v.s2), (int)(v.s3));
 }
@@ -1160,6 +1182,7 @@ INLINE OVERLOADABLE ulong4 convert_ulong4(int4 v) {
   return (ulong4)((ulong)(v.s0), (ulong)(v.s1), (ulong)(v.s2), (ulong)(v.s3));
 }
 
+INLINE OVERLOADABLE int4 convert_int4(int4 v) { return v; }
 INLINE OVERLOADABLE uint4 convert_uint4(int4 v) {
   return (uint4)((uint)(v.s0), (uint)(v.s1), (uint)(v.s2), (uint)(v.s3));
 }
@@ -1200,6 +1223,7 @@ INLINE OVERLOADABLE int4 convert_int4(uint4 v) {
   return (int4)((int)(v.s0), (int)(v.s1), (int)(v.s2), (int)(v.s3));
 }
 
+INLINE OVERLOADABLE uint4 convert_uint4(uint4 v) { return v; }
 INLINE OVERLOADABLE short4 convert_short4(uint4 v) {
   return (short4)((short)(v.s0), (short)(v.s1), (short)(v.s2), (short)(v.s3));
 }
@@ -1240,6 +1264,7 @@ INLINE OVERLOADABLE uint4 convert_uint4(short4 v) {
   return (uint4)((uint)(v.s0), (uint)(v.s1), (uint)(v.s2), (uint)(v.s3));
 }
 
+INLINE OVERLOADABLE short4 convert_short4(short4 v) { return v; }
 INLINE OVERLOADABLE ushort4 convert_ushort4(short4 v) {
   return (ushort4)((ushort)(v.s0), (ushort)(v.s1), (ushort)(v.s2), (ushort)(v.s3));
 }
@@ -1280,6 +1305,7 @@ INLINE OVERLOADABLE short4 convert_short4(ushort4 v) {
   return (short4)((short)(v.s0), (short)(v.s1), (short)(v.s2), (short)(v.s3));
 }
 
+INLINE OVERLOADABLE ushort4 convert_ushort4(ushort4 v) { return v; }
 INLINE OVERLOADABLE char4 convert_char4(ushort4 v) {
   return (char4)((char)(v.s0), (char)(v.s1), (char)(v.s2), (char)(v.s3));
 }
@@ -1320,6 +1346,7 @@ INLINE OVERLOADABLE ushort4 convert_ushort4(char4 v) {
   return (ushort4)((ushort)(v.s0), (ushort)(v.s1), (ushort)(v.s2), (ushort)(v.s3));
 }
 
+INLINE OVERLOADABLE char4 convert_char4(char4 v) { return v; }
 INLINE OVERLOADABLE uchar4 convert_uchar4(char4 v) {
   return (uchar4)((uchar)(v.s0), (uchar)(v.s1), (uchar)(v.s2), (uchar)(v.s3));
 }
@@ -1360,6 +1387,7 @@ INLINE OVERLOADABLE char4 convert_char4(uchar4 v) {
   return (char4)((char)(v.s0), (char)(v.s1), (char)(v.s2), (char)(v.s3));
 }
 
+INLINE OVERLOADABLE uchar4 convert_uchar4(uchar4 v) { return v; }
 INLINE OVERLOADABLE double4 convert_double4(uchar4 v) {
   return (double4)((double)(v.s0), (double)(v.s1), (double)(v.s2), (double)(v.s3));
 }
@@ -1400,6 +1428,7 @@ INLINE OVERLOADABLE uchar4 convert_uchar4(double4 v) {
   return (uchar4)((uchar)(v.s0), (uchar)(v.s1), (uchar)(v.s2), (uchar)(v.s3));
 }
 
+INLINE OVERLOADABLE double4 convert_double4(double4 v) { return v; }
 INLINE OVERLOADABLE float4 convert_float4(double4 v) {
   return (float4)((float)(v.s0), (float)(v.s1), (float)(v.s2), (float)(v.s3));
 }
@@ -1440,6 +1469,8 @@ INLINE OVERLOADABLE double4 convert_double4(float4 v) {
   return (double4)((double)(v.s0), (double)(v.s1), (double)(v.s2), (double)(v.s3));
 }
 
+INLINE OVERLOADABLE float4 convert_float4(float4 v) { return v; }
+INLINE OVERLOADABLE long8 convert_long8(long8 v) { return v; }
 INLINE OVERLOADABLE ulong8 convert_ulong8(long8 v) {
   return (ulong8)((ulong)(v.s0), (ulong)(v.s1), (ulong)(v.s2), (ulong)(v.s3), (ulong)(v.s4), (ulong)(v.s5), (ulong)(v.s6), (ulong)(v.s7));
 }
@@ -1480,6 +1511,7 @@ INLINE OVERLOADABLE long8 convert_long8(ulong8 v) {
   return (long8)((long)(v.s0), (long)(v.s1), (long)(v.s2), (long)(v.s3), (long)(v.s4), (long)(v.s5), (long)(v.s6), (long)(v.s7));
 }
 
+INLINE OVERLOADABLE ulong8 convert_ulong8(ulong8 v) { return v; }
 INLINE OVERLOADABLE int8 convert_int8(ulong8 v) {
   return (int8)((int)(v.s0), (int)(v.s1), (int)(v.s2), (int)(v.s3), (int)(v.s4), (int)(v.s5), (int)(v.s6), (int)(v.s7));
 }
@@ -1520,6 +1552,7 @@ INLINE OVERLOADABLE ulong8 convert_ulong8(int8 v) {
   return (ulong8)((ulong)(v.s0), (ulong)(v.s1), (ulong)(v.s2), (ulong)(v.s3), (ulong)(v.s4), (ulong)(v.s5), (ulong)(v.s6), (ulong)(v.s7));
 }
 
+INLINE OVERLOADABLE int8 convert_int8(int8 v) { return v; }
 INLINE OVERLOADABLE uint8 convert_uint8(int8 v) {
   return (uint8)((uint)(v.s0), (uint)(v.s1), (uint)(v.s2), (uint)(v.s3), (uint)(v.s4), (uint)(v.s5), (uint)(v.s6), (uint)(v.s7));
 }
@@ -1560,6 +1593,7 @@ INLINE OVERLOADABLE int8 convert_int8(uint8 v) {
   return (int8)((int)(v.s0), (int)(v.s1), (int)(v.s2), (int)(v.s3), (int)(v.s4), (int)(v.s5), (int)(v.s6), (int)(v.s7));
 }
 
+INLINE OVERLOADABLE uint8 convert_uint8(uint8 v) { return v; }
 INLINE OVERLOADABLE short8 convert_short8(uint8 v) {
   return (short8)((short)(v.s0), (short)(v.s1), (short)(v.s2), (short)(v.s3), (short)(v.s4), (short)(v.s5), (short)(v.s6), (short)(v.s7));
 }
@@ -1600,6 +1634,7 @@ INLINE OVERLOADABLE uint8 convert_uint8(short8 v) {
   return (uint8)((uint)(v.s0), (uint)(v.s1), (uint)(v.s2), (uint)(v.s3), (uint)(v.s4), (uint)(v.s5), (uint)(v.s6), (uint)(v.s7));
 }
 
+INLINE OVERLOADABLE short8 convert_short8(short8 v) { return v; }
 INLINE OVERLOADABLE ushort8 convert_ushort8(short8 v) {
   return (ushort8)((ushort)(v.s0), (ushort)(v.s1), (ushort)(v.s2), (ushort)(v.s3), (ushort)(v.s4), (ushort)(v.s5), (ushort)(v.s6), (ushort)(v.s7));
 }
@@ -1640,6 +1675,7 @@ INLINE OVERLOADABLE short8 convert_short8(ushort8 v) {
   return (short8)((short)(v.s0), (short)(v.s1), (short)(v.s2), (short)(v.s3), (short)(v.s4), (short)(v.s5), (short)(v.s6), (short)(v.s7));
 }
 
+INLINE OVERLOADABLE ushort8 convert_ushort8(ushort8 v) { return v; }
 INLINE OVERLOADABLE char8 convert_char8(ushort8 v) {
   return (char8)((char)(v.s0), (char)(v.s1), (char)(v.s2), (char)(v.s3), (char)(v.s4), (char)(v.s5), (char)(v.s6), (char)(v.s7));
 }
@@ -1680,6 +1716,7 @@ INLINE OVERLOADABLE ushort8 convert_ushort8(char8 v) {
   return (ushort8)((ushort)(v.s0), (ushort)(v.s1), (ushort)(v.s2), (ushort)(v.s3), (ushort)(v.s4), (ushort)(v.s5), (ushort)(v.s6), (ushort)(v.s7));
 }
 
+INLINE OVERLOADABLE char8 convert_char8(char8 v) { return v; }
 INLINE OVERLOADABLE uchar8 convert_uchar8(char8 v) {
   return (uchar8)((uchar)(v.s0), (uchar)(v.s1), (uchar)(v.s2), (uchar)(v.s3), (uchar)(v.s4), (uchar)(v.s5), (uchar)(v.s6), (uchar)(v.s7));
 }
@@ -1720,6 +1757,7 @@ INLINE OVERLOADABLE char8 convert_char8(uchar8 v) {
   return (char8)((char)(v.s0), (char)(v.s1), (char)(v.s2), (char)(v.s3), (char)(v.s4), (char)(v.s5), (char)(v.s6), (char)(v.s7));
 }
 
+INLINE OVERLOADABLE uchar8 convert_uchar8(uchar8 v) { return v; }
 INLINE OVERLOADABLE double8 convert_double8(uchar8 v) {
   return (double8)((double)(v.s0), (double)(v.s1), (double)(v.s2), (double)(v.s3), (double)(v.s4), (double)(v.s5), (double)(v.s6), (double)(v.s7));
 }
@@ -1760,6 +1798,7 @@ INLINE OVERLOADABLE uchar8 convert_uchar8(double8 v) {
   return (uchar8)((uchar)(v.s0), (uchar)(v.s1), (uchar)(v.s2), (uchar)(v.s3), (uchar)(v.s4), (uchar)(v.s5), (uchar)(v.s6), (uchar)(v.s7));
 }
 
+INLINE OVERLOADABLE double8 convert_double8(double8 v) { return v; }
 INLINE OVERLOADABLE float8 convert_float8(double8 v) {
   return (float8)((float)(v.s0), (float)(v.s1), (float)(v.s2), (float)(v.s3), (float)(v.s4), (float)(v.s5), (float)(v.s6), (float)(v.s7));
 }
@@ -1800,6 +1839,8 @@ INLINE OVERLOADABLE double8 convert_double8(float8 v) {
   return (double8)((double)(v.s0), (double)(v.s1), (double)(v.s2), (double)(v.s3), (double)(v.s4), (double)(v.s5), (double)(v.s6), (double)(v.s7));
 }
 
+INLINE OVERLOADABLE float8 convert_float8(float8 v) { return v; }
+INLINE OVERLOADABLE long16 convert_long16(long16 v) { return v; }
 INLINE OVERLOADABLE ulong16 convert_ulong16(long16 v) {
   return (ulong16)((ulong)(v.s0), (ulong)(v.s1), (ulong)(v.s2), (ulong)(v.s3), (ulong)(v.s4), (ulong)(v.s5), (ulong)(v.s6), (ulong)(v.s7), (ulong)(v.s8), (ulong)(v.s9), (ulong)(v.sA), (ulong)(v.sB), (ulong)(v.sC), (ulong)(v.sD), (ulong)(v.sE), (ulong)(v.sF));
 }
@@ -1840,6 +1881,7 @@ INLINE OVERLOADABLE long16 convert_long16(ulong16 v) {
   return (long16)((long)(v.s0), (long)(v.s1), (long)(v.s2), (long)(v.s3), (long)(v.s4), (long)(v.s5), (long)(v.s6), (long)(v.s7), (long)(v.s8), (long)(v.s9), (long)(v.sA), (long)(v.sB), (long)(v.sC), (long)(v.sD), (long)(v.sE), (long)(v.sF));
 }
 
+INLINE OVERLOADABLE ulong16 convert_ulong16(ulong16 v) { return v; }
 INLINE OVERLOADABLE int16 convert_int16(ulong16 v) {
   return (int16)((int)(v.s0), (int)(v.s1), (int)(v.s2), (int)(v.s3), (int)(v.s4), (int)(v.s5), (int)(v.s6), (int)(v.s7), (int)(v.s8), (int)(v.s9), (int)(v.sA), (int)(v.sB), (int)(v.sC), (int)(v.sD), (int)(v.sE), (int)(v.sF));
 }
@@ -1880,6 +1922,7 @@ INLINE OVERLOADABLE ulong16 convert_ulong16(int16 v) {
   return (ulong16)((ulong)(v.s0), (ulong)(v.s1), (ulong)(v.s2), (ulong)(v.s3), (ulong)(v.s4), (ulong)(v.s5), (ulong)(v.s6), (ulong)(v.s7), (ulong)(v.s8), (ulong)(v.s9), (ulong)(v.sA), (ulong)(v.sB), (ulong)(v.sC), (ulong)(v.sD), (ulong)(v.sE), (ulong)(v.sF));
 }
 
+INLINE OVERLOADABLE int16 convert_int16(int16 v) { return v; }
 INLINE OVERLOADABLE uint16 convert_uint16(int16 v) {
   return (uint16)((uint)(v.s0), (uint)(v.s1), (uint)(v.s2), (uint)(v.s3), (uint)(v.s4), (uint)(v.s5), (uint)(v.s6), (uint)(v.s7), (uint)(v.s8), (uint)(v.s9), (uint)(v.sA), (uint)(v.sB), (uint)(v.sC), (uint)(v.sD), (uint)(v.sE), (uint)(v.sF));
 }
@@ -1920,6 +1963,7 @@ INLINE OVERLOADABLE int16 convert_int16(uint16 v) {
   return (int16)((int)(v.s0), (int)(v.s1), (int)(v.s2), (int)(v.s3), (int)(v.s4), (int)(v.s5), (int)(v.s6), (int)(v.s7), (int)(v.s8), (int)(v.s9), (int)(v.sA), (int)(v.sB), (int)(v.sC), (int)(v.sD), (int)(v.sE), (int)(v.sF));
 }
 
+INLINE OVERLOADABLE uint16 convert_uint16(uint16 v) { return v; }
 INLINE OVERLOADABLE short16 convert_short16(uint16 v) {
   return (short16)((short)(v.s0), (short)(v.s1), (short)(v.s2), (short)(v.s3), (short)(v.s4), (short)(v.s5), (short)(v.s6), (short)(v.s7), (short)(v.s8), (short)(v.s9), (short)(v.sA), (short)(v.sB), (short)(v.sC), (short)(v.sD), (short)(v.sE), (short)(v.sF));
 }
@@ -1960,6 +2004,7 @@ INLINE OVERLOADABLE uint16 convert_uint16(short16 v) {
   return (uint16)((uint)(v.s0), (uint)(v.s1), (uint)(v.s2), (uint)(v.s3), (uint)(v.s4), (uint)(v.s5), (uint)(v.s6), (uint)(v.s7), (uint)(v.s8), (uint)(v.s9), (uint)(v.sA), (uint)(v.sB), (uint)(v.sC), (uint)(v.sD), (uint)(v.sE), (uint)(v.sF));
 }
 
+INLINE OVERLOADABLE short16 convert_short16(short16 v) { return v; }
 INLINE OVERLOADABLE ushort16 convert_ushort16(short16 v) {
   return (ushort16)((ushort)(v.s0), (ushort)(v.s1), (ushort)(v.s2), (ushort)(v.s3), (ushort)(v.s4), (ushort)(v.s5), (ushort)(v.s6), (ushort)(v.s7), (ushort)(v.s8), (ushort)(v.s9), (ushort)(v.sA), (ushort)(v.sB), (ushort)(v.sC), (ushort)(v.sD), (ushort)(v.sE), (ushort)(v.sF));
 }
@@ -2000,6 +2045,7 @@ INLINE OVERLOADABLE short16 convert_short16(ushort16 v) {
   return (short16)((short)(v.s0), (short)(v.s1), (short)(v.s2), (short)(v.s3), (short)(v.s4), (short)(v.s5), (short)(v.s6), (short)(v.s7), (short)(v.s8), (short)(v.s9), (short)(v.sA), (short)(v.sB), (short)(v.sC), (short)(v.sD), (short)(v.sE), (short)(v.sF));
 }
 
+INLINE OVERLOADABLE ushort16 convert_ushort16(ushort16 v) { return v; }
 INLINE OVERLOADABLE char16 convert_char16(ushort16 v) {
   return (char16)((char)(v.s0), (char)(v.s1), (char)(v.s2), (char)(v.s3), (char)(v.s4), (char)(v.s5), (char)(v.s6), (char)(v.s7), (char)(v.s8), (char)(v.s9), (char)(v.sA), (char)(v.sB), (char)(v.sC), (char)(v.sD), (char)(v.sE), (char)(v.sF));
 }
@@ -2040,6 +2086,7 @@ INLINE OVERLOADABLE ushort16 convert_ushort16(char16 v) {
   return (ushort16)((ushort)(v.s0), (ushort)(v.s1), (ushort)(v.s2), (ushort)(v.s3), (ushort)(v.s4), (ushort)(v.s5), (ushort)(v.s6), (ushort)(v.s7), (ushort)(v.s8), (ushort)(v.s9), (ushort)(v.sA), (ushort)(v.sB), (ushort)(v.sC), (ushort)(v.sD), (ushort)(v.sE), (ushort)(v.sF));
 }
 
+INLINE OVERLOADABLE char16 convert_char16(char16 v) { return v; }
 INLINE OVERLOADABLE uchar16 convert_uchar16(char16 v) {
   return (uchar16)((uchar)(v.s0), (uchar)(v.s1), (uchar)(v.s2), (uchar)(v.s3), (uchar)(v.s4), (uchar)(v.s5), (uchar)(v.s6), (uchar)(v.s7), (uchar)(v.s8), (uchar)(v.s9), (uchar)(v.sA), (uchar)(v.sB), (uchar)(v.sC), (uchar)(v.sD), (uchar)(v.sE), (uchar)(v.sF));
 }
@@ -2080,6 +2127,7 @@ INLINE OVERLOADABLE char16 convert_char16(uchar16 v) {
   return (char16)((char)(v.s0), (char)(v.s1), (char)(v.s2), (char)(v.s3), (char)(v.s4), (char)(v.s5), (char)(v.s6), (char)(v.s7), (char)(v.s8), (char)(v.s9), (char)(v.sA), (char)(v.sB), (char)(v.sC), (char)(v.sD), (char)(v.sE), (char)(v.sF));
 }
 
+INLINE OVERLOADABLE uchar16 convert_uchar16(uchar16 v) { return v; }
 INLINE OVERLOADABLE double16 convert_double16(uchar16 v) {
   return (double16)((double)(v.s0), (double)(v.s1), (double)(v.s2), (double)(v.s3), (double)(v.s4), (double)(v.s5), (double)(v.s6), (double)(v.s7), (double)(v.s8), (double)(v.s9), (double)(v.sA), (double)(v.sB), (double)(v.sC), (double)(v.sD), (double)(v.sE), (double)(v.sF));
 }
@@ -2120,6 +2168,7 @@ INLINE OVERLOADABLE uchar16 convert_uchar16(double16 v) {
   return (uchar16)((uchar)(v.s0), (uchar)(v.s1), (uchar)(v.s2), (uchar)(v.s3), (uchar)(v.s4), (uchar)(v.s5), (uchar)(v.s6), (uchar)(v.s7), (uchar)(v.s8), (uchar)(v.s9), (uchar)(v.sA), (uchar)(v.sB), (uchar)(v.sC), (uchar)(v.sD), (uchar)(v.sE), (uchar)(v.sF));
 }
 
+INLINE OVERLOADABLE double16 convert_double16(double16 v) { return v; }
 INLINE OVERLOADABLE float16 convert_float16(double16 v) {
   return (float16)((float)(v.s0), (float)(v.s1), (float)(v.s2), (float)(v.s3), (float)(v.s4), (float)(v.s5), (float)(v.s6), (float)(v.s7), (float)(v.s8), (float)(v.s9), (float)(v.sA), (float)(v.sB), (float)(v.sC), (float)(v.sD), (float)(v.sE), (float)(v.sF));
 }
@@ -2159,3 +2208,5 @@ INLINE OVERLOADABLE uchar16 convert_uchar16(float16 v) {
 INLINE OVERLOADABLE double16 convert_double16(float16 v) {
   return (double16)((double)(v.s0), (double)(v.s1), (double)(v.s2), (double)(v.s3), (double)(v.s4), (double)(v.s5), (double)(v.s6), (double)(v.s7), (double)(v.s8), (double)(v.s9), (double)(v.sA), (double)(v.sB), (double)(v.sC), (double)(v.sD), (double)(v.sE), (double)(v.sF));
 }
+
+INLINE OVERLOADABLE float16 convert_float16(float16 v) { return v; }

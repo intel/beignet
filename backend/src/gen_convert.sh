@@ -24,7 +24,14 @@ for vector_length in $VECTOR_LENGTHS; do
                 for ttype in $TYPES; do
                         tbasetype=`IFS=:; set -- dummy $ttype; echo $2`
                         if test $fbasetype = $tbasetype; then
-                                continue
+                          if test $vector_length -gt 1; then
+                            fvectortype=$fbasetype$vector_length
+                            tvectortype=$tbasetype$vector_length
+                            echo "INLINE OVERLOADABLE $tvectortype convert_$tvectortype($fvectortype v) { return v; }"
+                          else
+                            echo "INLINE OVERLOADABLE $tbasetype convert_$tbasetype($fbasetype v) { return v; }"
+                          fi
+                          continue
                         fi
                         fvectortype=$fbasetype$vector_length
                         tvectortype=$tbasetype$vector_length
