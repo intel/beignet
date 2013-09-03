@@ -107,6 +107,10 @@ void compiler_group_size4(void)
     ((struct xyz*)buf_data[0])[0].o = 0;
     OCL_UNMAP_BUFFER(0);
 
+    OCL_MAP_BUFFER(1);
+    memset(((uint32_t*)buf_data[1]), 0x0, sizeof(uint32_t)*n);
+    OCL_UNMAP_BUFFER(1);
+
     OCL_SET_ARG(0, sizeof(cl_mem), &buf[0]);
     OCL_SET_ARG(1, sizeof(cl_mem), &buf[1]);
     OCL_SET_ARG(2, sizeof(cl_int), &group_size[i]);
@@ -127,7 +131,6 @@ void compiler_group_size4(void)
       }
 
     }
-    memset(((uint32_t*)buf_data[1]), 0x0, sizeof(int)*n);
     OCL_UNMAP_BUFFER(1);
   }
 }
