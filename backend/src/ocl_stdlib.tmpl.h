@@ -430,6 +430,8 @@ INLINE_OVERLOADABLE ushort __rotate_left(ushort x, ushort y) { return (x << y) |
 INLINE_OVERLOADABLE short __rotate_left(short x, short y) { return __rotate_left((ushort)x, (ushort)y); }
 INLINE_OVERLOADABLE uint __rotate_left(uint x, uint y) { return (x << y) | (x >> (32 - y)); }
 INLINE_OVERLOADABLE int __rotate_left(int x, int y) { return __rotate_left((uint)x, (uint)y); }
+INLINE_OVERLOADABLE ulong __rotate_left(ulong x, ulong y) { return (x << y) | (x >> (64 - y)); }
+INLINE_OVERLOADABLE long __rotate_left(long x, long y) { return __rotate_left((ulong)x, (ulong)y); }
 #define DEF(type, m) INLINE_OVERLOADABLE type rotate(type x, type y) { return __rotate_left(x, (type)(y & m)); }
 DEF(char, 7)
 DEF(uchar, 7)
@@ -437,13 +439,9 @@ DEF(short, 15)
 DEF(ushort, 15)
 DEF(int, 31)
 DEF(uint, 31)
+DEF(long, 63)
+DEF(ulong, 63)
 #undef DEF
-INLINE_OVERLOADABLE long rotate(long x, long y) {
-  return 0;
-}
-INLINE_OVERLOADABLE ulong rotate(ulong x, ulong y) {
-  return 0;
-}
 
 OVERLOADABLE short __gen_ocl_upsample(short hi, short lo);
 OVERLOADABLE int __gen_ocl_upsample(int hi, int lo);
