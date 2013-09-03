@@ -1193,6 +1193,11 @@ int gen_disasm (FILE *file, const void *opaque_insn)
                   data_port_scratch_msg_type[inst->bits3.gen7_scratch_rw.msg_type]);
         }
         break;
+      case GEN6_SFID_DATAPORT_CONSTANT_CACHE:
+        format (file, " (bti: %d, %s)",
+                inst->bits3.gen7_dword_rw.bti,
+                data_port_data_cache_msg_type[inst->bits3.gen7_dword_rw.msg_type]);
+        break;
       case GEN_SFID_MESSAGE_GATEWAY:
         format (file, " (subfunc: %s, notify: %d, ackreq: %d)",
             gateway_sub_function[inst->bits3.gen7_msg_gw.subfunc],

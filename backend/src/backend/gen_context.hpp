@@ -114,6 +114,7 @@ namespace gbe
     void emitAtomicInstruction(const SelectionInstruction &insn);
     void emitByteGatherInstruction(const SelectionInstruction &insn);
     void emitByteScatterInstruction(const SelectionInstruction &insn);
+    void emitDWordGatherInstruction(const SelectionInstruction &insn);
     void emitSampleInstruction(const SelectionInstruction &insn);
     void emitTypedWriteInstruction(const SelectionInstruction &insn);
     void emitSpillRegInstruction(const SelectionInstruction &insn);

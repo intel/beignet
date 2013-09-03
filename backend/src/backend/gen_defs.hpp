@@ -343,6 +343,10 @@ enum GenMessageTarget {
 #define GEN_BYTE_SCATTER_DWORD  2
 #define GEN_BYTE_SCATTER_QWORD  3
 
+/* dword scattered rw */
+#define GEN_DWORD_SCATTER_8_DWORDS   2
+#define GEN_DWORD_SCATTER_16_DWORDS  3
+
 #define GEN_SAMPLER_RETURN_FORMAT_FLOAT32     0
 #define GEN_SAMPLER_RETURN_FORMAT_UINT32      2
 #define GEN_SAMPLER_RETURN_FORMAT_SINT32      3
@@ -804,6 +808,21 @@ struct GenInstruction
       uint32_t pad2:2;
       uint32_t end_of_thread:1;
     } gen7_oblock_rw;
+
+    /*! Data port dword scatter / gather */
+    struct {
+      uint32_t bti:8;
+      uint32_t block_size:2;
+      uint32_t ignored0:3;
+      uint32_t invalidate_after_read:1;
+      uint32_t msg_type:4;
+      uint32_t ignored1:1;
+      uint32_t header_present:1;
+      uint32_t response_length:5;
+      uint32_t msg_length:4;
+      uint32_t pad2:2;
+      uint32_t end_of_thread:1;
+    } gen7_dword_rw;
 
     /*! Data port typed read / write messages */
     struct {

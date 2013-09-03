@@ -963,6 +963,13 @@ namespace gbe
     p->BYTE_SCATTER(src, bti, elemSize);
   }
 
+  void GenContext::emitDWordGatherInstruction(const SelectionInstruction &insn) {
+    const GenRegister dst = ra->genReg(insn.dst(0));
+    const GenRegister src = ra->genReg(insn.src(0));
+    const uint32_t bti = insn.extra.function;
+    p->DWORD_GATHER(dst, src, bti);
+  }
+
   void GenContext::emitSampleInstruction(const SelectionInstruction &insn) {
     const GenRegister dst = ra->genReg(insn.dst(0));
     const GenRegister msgPayload = GenRegister::retype(ra->genReg(insn.src(0)), GEN_TYPE_F);

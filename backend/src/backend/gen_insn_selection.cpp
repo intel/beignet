@@ -506,6 +506,8 @@ namespace gbe
     void BYTE_GATHER(Reg dst, Reg addr, uint32_t elemSize, uint32_t bti);
     /*! Byte scatter (for unaligned bytes, shorts and ints) */
     void BYTE_SCATTER(Reg addr, Reg src, uint32_t elemSize, uint32_t bti);
+    /*! DWord scatter (for constant cache read) */
+    void DWORD_GATHER(Reg dst, Reg addr, uint32_t bti);
     /*! Extended math function (2 arguments) */
     void MATH(Reg dst, uint32_t function, Reg src0, Reg src1);
     /*! Extended math function (1 argument) */
@@ -991,6 +993,14 @@ namespace gbe
     vector->regNum = 2;
     vector->isSrc = 1;
     vector->reg = &insn->src(0);
+  }
+
+  void Selection::Opaque::DWORD_GATHER(Reg dst, Reg addr, uint32_t bti) {
+    SelectionInstruction *insn = this->appendInsn(SEL_OP_DWORD_GATHER, 1, 1);
+
+    insn->src(0) = addr;
+    insn->dst(0) = dst;
+    insn->extra.function = bti;
   }
 
   void Selection::Opaque::MATH(Reg dst, uint32_t function, Reg src0, Reg src1) {

@@ -198,7 +198,21 @@ namespace gbe
      insn->bits3.gen7_typed_rw.bti = bti;
      insn->bits3.gen7_typed_rw.msg_type = msg_type;
   }
-
+  static void setDWordScatterMessgae(GenEncoder *p,
+                                     GenInstruction *insn,
+                                     uint32_t bti,
+                                     uint32_t block_size,
+                                     uint32_t msg_type,
+                                     uint32_t msg_length,
+                                     uint32_t response_length)
+  {
+    const GenMessageTarget sfid = GEN6_SFID_DATAPORT_CONSTANT_CACHE;
+    setMessageDescriptor(p, insn, sfid, msg_length, response_length);
+    insn->bits3.gen7_dword_rw.msg_type = msg_type;
+    insn->bits3.gen7_dword_rw.bti = bti;
+    insn->bits3.gen7_dword_rw.block_size = block_size;
+    insn->bits3.gen7_dword_rw.invalidate_after_read = 0;
+  }
   //////////////////////////////////////////////////////////////////////////
   // Gen Emitter encoding class
   //////////////////////////////////////////////////////////////////////////
@@ -517,6 +531,36 @@ namespace gbe
                            GEN_BYTE_SCATTER,
                            msg_length,
                            response_length);
+  }
+
+  void GenEncoder::DWORD_GATHER(GenRegister dst, GenRegister src, uint32_t bti) {
+    GenInstruction *insn = this->next(GEN_OPCODE_SEND);
+    uint32_t msg_length = 0;
+    uint32_t response_length = 0;
+    uint32_t block_size = 0;
+    if (this->curr.execWidth == 8) {
+      msg_length = 1;
+      response_length = 1;
+      block_size = GEN_DWORD_SCATTER_8_DWORDS;
+    } else if (this->curr.execWidth == 16) {
+      msg_length = 2;
+      response_length = 2;
+      block_size = GEN_DWORD_SCATTER_16_DWORDS;
+    } else
+      NOT_IMPLEMENTED;
+
+    this->setHeader(insn);
+    this->setDst(insn, dst);
+    this->setSrc0(insn, src);
+    this->setSrc1(insn, GenRegister::immud(0));
+    setDWordScatterMessgae(this,
+                           insn,
+                           bti,
+                           block_size,
+                           GEN_DWORD_GATHER,
+                           msg_length,
+                           response_length);
+
   }
 
   void GenEncoder::ATOMIC(GenRegister dst, uint32_t function, GenRegister src, uint32_t bti, uint32_t srcNum) {

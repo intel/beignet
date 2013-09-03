@@ -156,6 +156,8 @@ namespace gbe
     void BYTE_GATHER(GenRegister dst, GenRegister src, uint32_t bti, uint32_t elemSize);
     /*! Byte scatter (for unaligned bytes, shorts and ints) */
     void BYTE_SCATTER(GenRegister src, uint32_t bti, uint32_t elemSize);
+    /*! DWord gather (for constant cache read) */
+    void DWORD_GATHER(GenRegister dst, GenRegister src, uint32_t bti);
     /*! for scratch memory read */
     void SCRATCH_READ(GenRegister msg, GenRegister dst, uint32_t offset, uint32_t size, uint32_t dst_num, uint32_t channel_mode);
     /*! for scratch memory write */
