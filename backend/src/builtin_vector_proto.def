@@ -253,8 +253,8 @@ int any (igentype x)
 int all (igentype x)
 # XXX need to revisit select latter
 #gentype bitselect (gentype a, gentype b, gentype c)
-#gentype select (gentype a, gentype b, igentype c)
-#gentype select (gentype a, gentype b, ugentype c)
+gentype select (gentype a, gentype b, igentype c)
+gentype select (gentype a, gentype b, ugentype c)
 
 ##misc
 #gentypen shuffle (gentypem x, ugentypen mask)

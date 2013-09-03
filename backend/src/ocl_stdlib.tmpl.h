@@ -1427,30 +1427,6 @@ DEF(float, int)
 DEF(float, uint)
 #undef DEF
 
-// This will be optimized out by LLVM and will output LLVM select instructions
-#define DECL_SELECT4(TYPE4, TYPE, COND_TYPE4, MASK) \
-INLINE_OVERLOADABLE TYPE4 select(TYPE4 src0, TYPE4 src1, COND_TYPE4 cond) { \
-  TYPE4 dst; \
-  const TYPE x0 = src0.x; /* Fix performance issue with CLANG */ \
-  const TYPE x1 = src1.x; \
-  const TYPE y0 = src0.y; \
-  const TYPE y1 = src1.y; \
-  const TYPE z0 = src0.z; \
-  const TYPE z1 = src1.z; \
-  const TYPE w0 = src0.w; \
-  const TYPE w1 = src1.w; \
-  dst.x = (cond.x & MASK) ? x1 : x0; \
-  dst.y = (cond.y & MASK) ? y1 : y0; \
-  dst.z = (cond.z & MASK) ? z1 : z0; \
-  dst.w = (cond.w & MASK) ? w1 : w0; \
-  return dst; \
-}
-DECL_SELECT4(int4, int, int4, 0x80000000)
-DECL_SELECT4(int4, int, uint4, 0x80000000)
-DECL_SELECT4(float4, float, int4, 0x80000000)
-DECL_SELECT4(float4, float, uint4, 0x80000000)
-#undef DECL_SELECT4
-
 /////////////////////////////////////////////////////////////////////////////
 // Common Functions (see 6.11.4 of OCL 1.1 spec)
 /////////////////////////////////////////////////////////////////////////////
