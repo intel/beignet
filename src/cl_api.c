@@ -1243,8 +1243,74 @@ clEnqueueReadBufferRect(cl_command_queue command_queue,
                         const cl_event * event_wait_list,
                         cl_event *       event)
 {
-  NOT_IMPLEMENTED;
-  return 0;
+  cl_int err = CL_SUCCESS;
+  enqueue_data *data, no_wait_data = { 0 };
+
+  CHECK_QUEUE(command_queue);
+  CHECK_MEM(buffer);
+
+  if (command_queue->ctx != buffer->ctx) {
+    err = CL_INVALID_CONTEXT;
+    goto error;
+  }
+
+  if (blocking_read != CL_TRUE)
+    NOT_IMPLEMENTED;
+
+  if (!ptr || !region || region[0] == 0 || region[1] == 0 || region[2] == 0) {
+    err = CL_INVALID_VALUE;
+    goto error;
+  }
+
+  if(buffer_row_pitch == 0)
+    buffer_row_pitch = region[0];
+  if(buffer_slice_pitch == 0)
+    buffer_slice_pitch = region[1] * buffer_row_pitch;
+
+  if(host_row_pitch == 0)
+    host_row_pitch = region[0];
+  if(host_slice_pitch == 0)
+    host_slice_pitch = region[1] * host_row_pitch;
+
+  if (buffer_row_pitch < region[0] ||
+      host_row_pitch < region[0]) {
+    err = CL_INVALID_VALUE;
+    goto error;
+  }
+
+  if ((buffer_slice_pitch < region[1] * buffer_row_pitch || buffer_slice_pitch % buffer_row_pitch != 0 ) ||
+      (host_slice_pitch < region[1] * host_row_pitch || host_slice_pitch % host_row_pitch != 0 )) {
+    err = CL_INVALID_VALUE;
+    goto error;
+  }
+
+  if ((buffer_origin[2]+region[2])*buffer_slice_pitch + (buffer_origin[1]+region[1])*buffer_row_pitch + buffer_origin[0] + region[0] > buffer->size) {
+    err = CL_INVALID_VALUE;
+    goto error;
+  }
+
+  TRY(cl_event_check_waitlist, num_events_in_wait_list, event_wait_list, event, buffer->ctx);
+
+  data = &no_wait_data;
+  data->type        = EnqueueReadBufferRect;
+  data->mem_obj     = buffer;
+  data->ptr         = ptr;
+  data->origin[0]   = buffer_origin[0]; data->origin[1] = buffer_origin[1]; data->origin[2] = buffer_origin[2];
+  data->host_origin[0]  = host_origin[0]; data->host_origin[1] = host_origin[1]; data->host_origin[2] = host_origin[2];
+  data->region[0]   = region[0];  data->region[1] = region[1];  data->region[2] = region[2];
+  data->row_pitch   = buffer_row_pitch;
+  data->slice_pitch = buffer_slice_pitch;
+  data->host_row_pitch   = host_row_pitch;
+  data->host_slice_pitch = host_slice_pitch;
+
+  if(handle_events(command_queue, num_events_in_wait_list, event_wait_list,
+                   event, data, CL_COMMAND_READ_BUFFER_RECT) == CL_ENQUEUE_EXECUTE_IMM) {
+    err = cl_enqueue_handle(data);
+    if(event) cl_event_set_status(*event, CL_COMPLETE);
+  }
+
+ error:
+  return err;
 }
 
 cl_int

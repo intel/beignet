@@ -45,6 +45,53 @@ error:
   return err;
 }
 
+cl_int cl_enqueue_read_buffer_rect(enqueue_data* data)
+{
+  cl_int err = CL_SUCCESS;
+  void* src_ptr;
+  void* dst_ptr;
+
+  const size_t* origin = data->origin;
+  const size_t* host_origin = data->host_origin;
+  const size_t* region = data->region;
+
+  if (!(src_ptr = cl_mem_map_auto(data->mem_obj))) {
+    err = CL_MAP_FAILURE;
+    goto error;
+  }
+
+   size_t offset = origin[0] + data->row_pitch*origin[1] + data->slice_pitch*origin[2];
+   src_ptr = (char*)src_ptr + offset;
+
+   offset = host_origin[0] + data->host_row_pitch*host_origin[1] + data->host_slice_pitch*host_origin[2];
+   dst_ptr = (char *)data->ptr + offset;
+
+   if (!origin[0] && !host_origin[0] && data->row_pitch == data->host_row_pitch &&
+       (region[2] == 1 || (!origin[1] && !host_origin[1] && data->slice_pitch == data->host_slice_pitch)))
+   {
+     memcpy(dst_ptr, src_ptr, region[2] == 1 ? data->row_pitch*region[1] : data->slice_pitch*region[2]);
+   }
+   else {
+     cl_uint y, z;
+     for (z = 0; z < region[2]; z++) {
+       const char* src = src_ptr;
+       char* dst = dst_ptr;
+       for (y = 0; y < region[1]; y++) {
+         memcpy(dst, src, region[0]);
+         src += data->row_pitch;
+         dst += data->host_row_pitch;
+       }
+       src_ptr = (char*)src_ptr + data->slice_pitch;
+       dst_ptr = (char*)dst_ptr + data->host_slice_pitch;
+     }
+   }
+
+  err = cl_mem_unmap_auto(data->mem_obj);
+
+error:
+  return err;
+}
+
 cl_int cl_enqueue_write_buffer(enqueue_data *data)
 {
   cl_int err = CL_SUCCESS;
@@ -171,7 +218,7 @@ cl_int cl_enqueue_map_buffer(enqueue_data *data)
     assert(buffer->host_ptr);
     memcpy(buffer->host_ptr + data->offset, ptr, data->size);
   }
-  
+
 error:
   return err;
 }
@@ -261,6 +308,8 @@ cl_int cl_enqueue_handle(enqueue_data* data)
   switch(data->type) {
     case EnqueueReadBuffer:
       return cl_enqueue_read_buffer(data);
+    case EnqueueReadBufferRect:
+      return cl_enqueue_read_buffer_rect(data);
     case EnqueueWriteBuffer:
       return cl_enqueue_write_buffer(data);
     case EnqueueReadImage:
