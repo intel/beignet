@@ -1389,6 +1389,8 @@ namespace gbe
         return insnType;
       if (opcode == ir::OP_FBH || opcode == ir::OP_FBL)
         return ir::TYPE_U32;
+      if (insnType == ir::TYPE_S16 || insnType == ir::TYPE_U16)
+        return insnType;
       return ir::TYPE_FLOAT;
     }
 
