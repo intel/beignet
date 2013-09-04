@@ -2022,10 +2022,10 @@ OVERLOADABLE uint __gen_ocl_atomic_umax(__local uint *p, uint val);
 
 #define DECL_ATOMIC_OP_TYPE(NAME, TYPE, PREFIX) \
   DECL_ATOMIC_OP_SPACE(NAME, TYPE, __global, PREFIX) \
-  DECL_ATOMIC_OP_SPACE(NAME, TYPE, __local, PREFIX) \
+  DECL_ATOMIC_OP_SPACE(NAME, TYPE, __local, PREFIX)
 
 #define DECL_ATOMIC_OP(NAME) \
-  DECL_ATOMIC_OP_TYPE(NAME, uint, atomic_)              \
+  DECL_ATOMIC_OP_TYPE(NAME, uint, atomic_)        \
   DECL_ATOMIC_OP_TYPE(NAME, int, atomic_)
 
 DECL_ATOMIC_OP(add)
@@ -2034,11 +2034,19 @@ DECL_ATOMIC_OP(and)
 DECL_ATOMIC_OP(or)
 DECL_ATOMIC_OP(xor)
 DECL_ATOMIC_OP(xchg)
-DECL_ATOMIC_OP_TYPE(xchg, float, atomic_)
 DECL_ATOMIC_OP_TYPE(min, int, atomic_i)
 DECL_ATOMIC_OP_TYPE(max, int, atomic_i)
 DECL_ATOMIC_OP_TYPE(min, uint, atomic_u)
 DECL_ATOMIC_OP_TYPE(max, uint, atomic_u)
+
+#undef DECL_ATOMIC_OP_SPACE
+
+#define DECL_ATOMIC_OP_SPACE(NAME, TYPE, SPACE, PREFIX)                        \
+  INLINE_OVERLOADABLE TYPE atomic_##NAME (volatile SPACE TYPE *p, TYPE val) { \
+    return as_float(__gen_ocl_##PREFIX##NAME((SPACE uint *)p, as_uint(val))); \
+  }
+DECL_ATOMIC_OP_SPACE(xchg, float, __global, atomic_)
+DECL_ATOMIC_OP_SPACE(xchg, float, __local, atomic_)
 
 #undef DECL_ATOMIC_OP
 #undef DECL_ATOMIC_OP_TYPE
