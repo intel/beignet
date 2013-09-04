@@ -318,12 +318,12 @@ INLINE_OVERLOADABLE uint clz(uint x) {
 }
 
 INLINE_OVERLOADABLE long clz(long x) {
-  if (x < 0)
-    return 0;
-  if (x == 0)
-    return 64;
   union { int i[2]; long x; } u;
   u.x = x;
+  if (u.i[1] & 0x80000000u)
+    return 0;
+  if (u.i[1] == 0 && u.i[0] == 0)
+    return 64;
   uint v = clz(u.i[1]);
   if(v == 32)
     v += clz(u.i[0]);
