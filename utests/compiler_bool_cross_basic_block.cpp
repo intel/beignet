@@ -52,5 +52,4 @@ void compiler_bool_cross_basic_block(void){
 
 }
 
-
-MAKE_UTEST_FROM_FUNCTION(compiler_bool_cross_basic_block)
+MAKE_UTEST_FROM_FUNCTION_WITH_ISSUE(compiler_bool_cross_basic_block)
