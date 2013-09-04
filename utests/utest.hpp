@@ -39,19 +39,23 @@ struct UTest
   /*! Empty test */
   UTest(void);
   /*! Build a new unit test and append it to the unit test list */
-  UTest(Function fn, const char *name);
+  UTest(Function fn, const char *name, bool haveIssue = false);
   /*! Function to execute */
   Function fn;
   /*! Name of the test */
   const char *name;
+  /*! Indicate whether current test cases has issue to be fixes */
+  bool haveIssue;
   /*! The tests that are registered */
   static std::vector<UTest> *utestList;
   /*! Run the test with the given name */
   static void run(const char *name);
+  /*! Run all the tests without known issue*/
+  static void runAllNoIssue(void);
   /*! Run all the tests */
   static void runAll(void);
-  /*! List all the tests */
-  static void listAll(void);
+  /*! List all test cases */
+  static void listAllCases(void);
 };
 
 /*! Register a new unit test */
@@ -61,6 +65,12 @@ struct UTest
 #define MAKE_UTEST_FROM_FUNCTION(FN) \
   static void __ANON__##FN##__(void) { UTEST_EXPECT_SUCCESS(FN()); } \
   static const UTest __##FN##__(__ANON__##FN##__, #FN);
+
+/*! Register a test case which has issue to be fixed */
+#define MAKE_UTEST_FROM_FUNCTION_WITH_ISSUE(FN) \
+  static void __ANON__##FN##__(void) { UTEST_EXPECT_SUCCESS(FN()); } \
+  static const UTest __##FN##__(__ANON__##FN##__, #FN, true);
+
 
 /*! No assert is expected */
 #define UTEST_EXPECT_SUCCESS(EXPR) \

@@ -25,26 +25,94 @@
  */
 #include "utest_helper.hpp"
 #include "utest_exception.hpp"
-#include <string.h>
 #include <iostream>
+#include <getopt.h>
+
+static const char *shortopts = "c:lanh";
+struct option longopts[] = {
+{"casename", required_argument, NULL, 'c'},
+{"list", no_argument, NULL, 'l'},
+{"all", no_argument, NULL, 'a'},
+{"allnoissue", no_argument, NULL, 'n'},
+{"help", no_argument, NULL, 'h'},
+{0, 0, 0, 0},
+};
+
+void usage()
+{
+    std::cout << "\
+Usage:\n\
+  ./utest_run <option>\n\
+\n\
+  option:\n\
+    -c <casename>: run sub-case named 'casename'\n\
+    -l           : list all the available case name\n\
+    -a           : run all test cases\n\
+    -n           : run all test cases without known issue (default option)\n\
+    -h           : display this usage\n\
+\
+    "<< std::endl;
+}
 
 int main(int argc, char *argv[])
 {
-  try {
-    if (argc == 2 && !strcmp(argv[1], "--list")) {
-      UTest::listAll();
-      return 0;
-    }
 
-    cl_ocl_init();
-    if (argc >= 2)
-      for (int i = 1; i < argc; ++i)
-        UTest::run(argv[i]);
-    else
-      UTest::runAll();
-    cl_ocl_destroy();
-  } catch (Exception e) {
-      std::cout << "  " << e.what() << "    [SUCCESS]" << std::endl;
+  int c = 0;
+  cl_ocl_init();
+
+  c = getopt_long (argc, argv, shortopts, longopts, NULL);
+
+  if (argc == 1)
+    c = 'n';
+  if (argc == 2 && c < 1 ){
+    c = 'c';
+    optarg = argv[1];
   }
+
+  {
+    switch (c)
+    {
+      case 'c':
+        try {
+          UTest::run(optarg);
+        }
+        catch (Exception e){
+          std::cout << "  " << e.what() << "    [SUCCESS]" << std::endl;
+        }
+
+        break;
+
+      case 'l':
+        UTest::listAllCases();
+        break;
+
+      case 'a':
+        try {
+          UTest::runAll();
+        }
+        catch (Exception e){
+          std::cout << "  " << e.what() << "    [SUCCESS]" << std::endl;
+        }
+
+        break;
+
+      case 'n':
+        try {
+          UTest::runAllNoIssue();
+        }
+        catch (Exception e){
+          std::cout << "  " << e.what() << "    [SUCCESS]" << std::endl;
+        }
+
+        break;
+
+      case 'h':
+      default:
+        usage();
+        exit(1);
+    }
+  } while ((c = getopt_long (argc, argv, shortopts, longopts, NULL)) != -1)
+
+  cl_ocl_destroy();
 }
 

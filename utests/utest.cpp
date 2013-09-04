@@ -32,7 +32,7 @@ using namespace std;
 vector<UTest> *UTest::utestList = NULL;
 void releaseUTestList(void) { delete UTest::utestList; }
 
-UTest::UTest(Function fn, const char *name) : fn(fn), name(name) {
+UTest::UTest(Function fn, const char *name, bool haveIssue) : fn(fn), name(name), haveIssue(haveIssue) {
   if (utestList == NULL) {
     utestList = new vector<UTest>;
     atexit(releaseUTestList);
@@ -40,7 +40,7 @@ UTest::UTest(Function fn, const char *name) : fn(fn), name(name) {
   utestList->push_back(*this);
 }
 
-UTest::UTest(void) : fn(NULL), name(NULL) {}
+UTest::UTest(void) : fn(NULL), name(NULL), haveIssue(false) {}
 
 static bool strequal(const char *s1, const char *s2) {
   if (strcmp(s1, s2) == 0) return true;
@@ -52,7 +52,7 @@ void UTest::run(const char *name) {
   if (utestList == NULL) return;
   for (size_t i = 0; i < utestList->size(); ++i) {
     const UTest &utest = (*utestList)[i];
-    if (utest.name == NULL || utest.fn == NULL) continue;
+    if (utest.name == NULL || utest.fn == NULL || utest.haveIssue) continue;
     if (strequal(utest.name, name)) {
       std::cout << utest.name << ":" << std::endl;
       (utest.fn)();
@@ -76,11 +76,25 @@ void UTest::runAll(void) {
   }
 }
 
-void UTest::listAll(void) {
+void UTest::runAllNoIssue(void) {
   if (utestList == NULL) return;
   for (size_t i = 0; i < utestList->size(); ++i) {
     const UTest &utest = (*utestList)[i];
-    if (utest.fn == NULL) continue;
-    std::cout << utest.name << std::endl;
+    if (utest.fn == NULL || utest.haveIssue) continue;
+    std::cout << utest.name << ":" << std::endl;
+    (utest.fn)();
+    std::cout << std::endl;
+    cl_kernel_destroy();
+    cl_buffer_destroy();
   }
+}
+
+void UTest::listAllCases()
+{
+  if (utestList == NULL) return;
+    for (size_t i = 0; i < utestList->size(); ++i) {
+      const UTest &utest = (*utestList)[i];
+      if (utest.fn == NULL) continue;
+    std::cout << utest.name << std::endl;
+ }
 }
