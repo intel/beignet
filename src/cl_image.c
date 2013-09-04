@@ -104,6 +104,12 @@ cl_image_get_intel_format(const cl_image_format *fmt)
     case CL_A:
     case CL_INTENSITY:
     case CL_LUMINANCE:
+      if ((order == CL_INTENSITY || order == CL_LUMINANCE)
+          && (type != CL_UNORM_INT8 && type != CL_UNORM_INT16
+              && type != CL_SNORM_INT8 && type != CL_SNORM_INT16
+              && type != CL_HALF_FLOAT && type != CL_FLOAT))
+        return INTEL_UNSUPPORTED_FORMAT;
+
       switch (type) {
         case CL_HALF_FLOAT:     return I965_SURFACEFORMAT_R16_FLOAT;
         case CL_FLOAT:          return I965_SURFACEFORMAT_R32_FLOAT;
