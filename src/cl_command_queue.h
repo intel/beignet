@@ -76,8 +76,5 @@ extern cl_int cl_command_queue_bind_surface(cl_command_queue, cl_kernel);
 
 /* Bind all the image surfaces in the GPGPU state */
 extern cl_int cl_command_queue_bind_image(cl_command_queue, cl_kernel);
-
-/*update constant buffer to final curbe */
-extern cl_int cl_command_queue_upload_constant_buffer(cl_kernel k, char * dst);
 #endif /* __CL_COMMAND_QUEUE_H__ */
 

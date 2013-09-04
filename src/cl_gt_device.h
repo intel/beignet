@@ -51,7 +51,7 @@
 .single_fp_config = 0, /* XXX */
 .global_mem_cache_type = CL_READ_WRITE_CACHE,
 .global_mem_size = 128 * 1024 * 1024,
-.max_constant_buffer_size = 64 << 10,
+.max_constant_buffer_size = 512 << 10,
 .max_constant_args = 8,
 .error_correction_support = CL_FALSE,
 .host_unified_memory = CL_FALSE,

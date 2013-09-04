@@ -380,7 +380,7 @@ cl_intel_driver_new(cl_context_prop props)
   /* We use the first 2 slots(0,1) for all the bufs.
    * Notify the gbe this base index, thus gbe can avoid conflicts
    * when it allocates slots for images*/
-  gbe_set_image_base_index(2);
+  gbe_set_image_base_index(3);
 exit:
   return driver;
 error:

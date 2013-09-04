@@ -100,7 +100,7 @@ typedef enum gpu_command_status {
 typedef struct cl_gpgpu_kernel {
   const char *name;        /* kernel name and bo name */
   uint32_t grf_blocks;     /* register blocks kernel wants (in 8 reg blocks) */
-  uint32_t cst_sz;         /* total size of all constants */
+  uint32_t curbe_sz;         /* total size of all curbes */
   cl_buffer bo;            /* kernel code in the proper addr space */
   int32_t barrierID;       /* barrierID for _this_ kernel */
   uint32_t use_slm:1;      /* For gen7 (automatic barrier management) */
@@ -157,9 +157,12 @@ extern cl_gpgpu_state_init_cb *cl_gpgpu_state_init;
 typedef void (cl_gpgpu_set_perf_counters_cb)(cl_gpgpu, cl_buffer perf);
 extern cl_gpgpu_set_perf_counters_cb *cl_gpgpu_set_perf_counters;
 
-/* Fills current constant buffer with data */
-typedef void (cl_gpgpu_upload_constants_cb)(cl_gpgpu, const void* data, uint32_t size);
-extern cl_gpgpu_upload_constants_cb *cl_gpgpu_upload_constants;
+/* Fills current curbe buffer with data */
+typedef void (cl_gpgpu_upload_curbes_cb)(cl_gpgpu, const void* data, uint32_t size);
+extern cl_gpgpu_upload_curbes_cb *cl_gpgpu_upload_curbes;
+
+typedef cl_buffer (cl_gpgpu_alloc_constant_buffer_cb)(cl_gpgpu, uint32_t size);
+extern cl_gpgpu_alloc_constant_buffer_cb *cl_gpgpu_alloc_constant_buffer;
 
 /* Setup all indirect states */
 typedef void (cl_gpgpu_states_setup_cb)(cl_gpgpu, cl_gpgpu_kernel *kernel);

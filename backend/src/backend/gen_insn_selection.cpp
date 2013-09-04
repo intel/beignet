@@ -2103,6 +2103,23 @@ namespace gbe
       sel.UNTYPED_READ(addr, dst.data(), valueNum, bti);
     }
 
+    void emitDWordGather(Selection::Opaque &sel,
+                         const ir::LoadInstruction &insn,
+                         GenRegister addr,
+                         uint32_t bti) const
+    {
+      using namespace ir;
+      const uint32_t valueNum = insn.getValueNum();
+      const uint32_t simdWidth = sel.ctx.getSimdWidth();
+      GBE_ASSERT(valueNum == 1);
+      GenRegister dst = GenRegister::retype(sel.selReg(insn.getValue(0)), GEN_TYPE_F);
+      // get dword based address
+      GenRegister addrDW = GenRegister::udxgrf(simdWidth, sel.reg(FAMILY_DWORD));
+      sel.SHR(addrDW, GenRegister::retype(addr, GEN_TYPE_UD), GenRegister::immud(2));
+
+      sel.DWORD_GATHER(dst, addrDW, bti);
+    }
+
     void emitRead64(Selection::Opaque &sel,
                          const ir::LoadInstruction &insn,
                          GenRegister addr,
@@ -2173,8 +2190,19 @@ namespace gbe
       GBE_ASSERT(sel.ctx.isScalarReg(insn.getValue(0)) == false);
       const Type type = insn.getValueType();
       const uint32_t elemSize = getByteScatterGatherSize(type);
-      if (insn.getAddressSpace() == MEM_CONSTANT)
-        this->emitIndirectMove(sel, insn, address);
+      if (insn.getAddressSpace() == MEM_CONSTANT) {
+        // XXX TODO read 64bit constant through constant cache
+        // Per HW Spec, constant cache messages can read at least DWORD data.
+        // So, byte/short data type, we have to read through data cache.
+        if(insn.isAligned() == true && elemSize == GEN_BYTE_SCATTER_QWORD)
+          this->emitRead64(sel, insn, address, 0x2);
+        else if(insn.isAligned() == true && elemSize == GEN_BYTE_SCATTER_DWORD)
+          this->emitDWordGather(sel, insn, address, 0x2);
+        else {
+          const GenRegister value = sel.selReg(insn.getValue(0));
+          this->emitByteGather(sel, insn, elemSize, address, value, 0x2);
+        }
+      }
       else if (insn.isAligned() == true && elemSize == GEN_BYTE_SCATTER_QWORD)
         this->emitRead64(sel, insn, address, space == MEM_LOCAL ? 0xfe : 0x00);
       else if (insn.isAligned() == true && elemSize == GEN_BYTE_SCATTER_DWORD)

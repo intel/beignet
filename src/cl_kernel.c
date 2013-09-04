@@ -186,16 +186,6 @@ cl_kernel_set_arg(cl_kernel k, cl_uint index, size_t sz, const void *value)
 
   mem = *(cl_mem*) value;
 
-  if(arg_type == GBE_ARG_CONSTANT_PTR) {
-    int32_t cbOffset;
-    cbOffset = gbe_kernel_set_const_buffer_size(k->opaque, index, mem->size);
-    //constant ptr's curbe offset changed, update it
-    if(cbOffset >= 0) {
-      offset = gbe_kernel_get_curbe_offset(k->opaque, GBE_CURBE_KERNEL_ARGUMENT, index);
-      *((uint32_t *)(k->curbe + offset)) = cbOffset;  //cb offset in curbe
-    }
-  }
-
   cl_mem_add_ref(mem);
   if (k->args[index].mem)
     cl_mem_delete(k->args[index].mem);

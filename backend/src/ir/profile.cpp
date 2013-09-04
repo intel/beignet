@@ -40,7 +40,6 @@ namespace ir {
         "stack_pointer",
         "block_ip",
         "barrier_id", "thread_number",
-        "const_curbe_offset",
         "work_dimension",
     };
 
@@ -76,7 +75,6 @@ namespace ir {
       DECL_NEW_REG(FAMILY_WORD, blockip);
       DECL_NEW_REG(FAMILY_DWORD, barrierid);
       DECL_NEW_REG(FAMILY_DWORD, threadn);
-      DECL_NEW_REG(FAMILY_DWORD, constoffst);
       DECL_NEW_REG(FAMILY_DWORD, workdim);
     }
 #undef DECL_NEW_REG

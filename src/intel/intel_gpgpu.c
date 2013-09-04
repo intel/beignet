@@ -79,7 +79,7 @@ struct intel_gpgpu
   intel_batchbuffer_t *batch;
   cl_gpgpu_kernel *ker;
   drm_intel_bo *binded_buf[max_buf_n];  /* all buffers binded for the call */
-  uint32_t binded_offset[max_buf_n];    /* their offsets in the constant buffer */
+  uint32_t binded_offset[max_buf_n];    /* their offsets in the curbe buffer */
   uint32_t binded_n;                    /* number of buffers binded */
 
   unsigned long img_bitmap;              /* image usage bitmap. */
@@ -96,6 +96,7 @@ struct intel_gpgpu
   struct { drm_intel_bo *bo; } sampler_state_b;
   struct { drm_intel_bo *bo; } perf_b;
   struct { drm_intel_bo *bo; } scratch_b;
+  struct { drm_intel_bo *bo; } constant_b;
 
   uint32_t per_thread_scratch;
   struct {
@@ -137,6 +138,9 @@ intel_gpgpu_delete(intel_gpgpu_t *gpgpu)
     drm_intel_bo_unreference(gpgpu->stack_b.bo);
   if (gpgpu->scratch_b.bo)
     drm_intel_bo_unreference(gpgpu->scratch_b.bo);
+
+  if(gpgpu->constant_b.bo)
+    drm_intel_bo_unreference(gpgpu->constant_b.bo);
 
   intel_batchbuffer_delete(gpgpu->batch);
   cl_free(gpgpu);
@@ -231,7 +235,7 @@ intel_gpgpu_load_vfe_state(intel_gpgpu_t *gpgpu)
 }
 
 static void
-intel_gpgpu_load_constant_buffer(intel_gpgpu_t *gpgpu)
+intel_gpgpu_load_curbe_buffer(intel_gpgpu_t *gpgpu)
 {
   BEGIN_BATCH(gpgpu->batch, 4);
   OUT_BATCH(gpgpu->batch, CMD(2,0,1) | (4 - 2));  /* length-2 */
@@ -319,7 +323,7 @@ intel_gpgpu_batch_start(intel_gpgpu_t *gpgpu)
   intel_gpgpu_select_pipeline(gpgpu);
   intel_gpgpu_set_base_address(gpgpu);
   intel_gpgpu_load_vfe_state(gpgpu);
-  intel_gpgpu_load_constant_buffer(gpgpu);
+  intel_gpgpu_load_curbe_buffer(gpgpu);
   intel_gpgpu_load_idrt(gpgpu);
 
   if (gpgpu->perf_b.bo) {
@@ -391,7 +395,7 @@ intel_gpgpu_state_init(intel_gpgpu_t *gpgpu,
   /* Binded buffers */
   gpgpu->binded_n = 0;
   gpgpu->img_bitmap = 0;
-  gpgpu->img_index_base = 2;
+  gpgpu->img_index_base = 3;
   gpgpu->sampler_bitmap = ~((1 << max_sampler_n) - 1);
 
   /* URB */
@@ -399,12 +403,12 @@ intel_gpgpu_state_init(intel_gpgpu_t *gpgpu,
   gpgpu->urb.size_cs_entry = size_cs_entry;
   gpgpu->max_threads = max_threads;
 
-  /* Constant buffer */
+  /* Constant URB  buffer */
   if(gpgpu->curbe_b.bo)
     dri_bo_unreference(gpgpu->curbe_b.bo);
   uint32_t size_cb = gpgpu->urb.num_cs_entries * gpgpu->urb.size_cs_entry * 64;
   size_cb = ALIGN(size_cb, 4096);
-  bo = dri_bo_alloc(gpgpu->drv->bufmgr, "CONSTANT_BUFFER", size_cb, 64);
+  bo = dri_bo_alloc(gpgpu->drv->bufmgr, "CURBE_BUFFER", size_cb, 64);
   assert(bo);
   gpgpu->curbe_b.bo = bo;
 
@@ -467,6 +471,39 @@ intel_gpgpu_set_buf_reloc_gen7(intel_gpgpu_t *gpgpu, int32_t index, dri_bo* obj_
                     offsetof(gen7_surface_state_t, ss1),
                     obj_bo);
 }
+
+static dri_bo*
+intel_gpgpu_alloc_constant_buffer(intel_gpgpu_t *gpgpu, uint32_t size)
+{
+  uint32_t s = size - 1;
+  assert(size != 0);
+
+  surface_heap_t *heap = gpgpu->surface_heap_b.bo->virtual;
+  gen7_surface_state_t *ss2 = (gen7_surface_state_t *) heap->surface[2];
+  memset(ss2, 0, sizeof(gen7_surface_state_t));
+  ss2->ss0.surface_type = I965_SURFACE_BUFFER;
+  ss2->ss0.surface_format = I965_SURFACEFORMAT_RAW;
+  ss2->ss2.width  = s & 0x7f;            /* bits 6:0 of sz */
+  ss2->ss2.height = (s >> 7) & 0x3fff;   /* bits 20:7 of sz */
+  ss2->ss3.depth  = (s >> 21) & 0x3ff;   /* bits 30:21 of sz */
+  ss2->ss5.cache_control = cc_llc_l3;
+  heap->binding_table[2] = offsetof(surface_heap_t, surface) + 2* sizeof(gen7_surface_state_t);
+
+  if(gpgpu->constant_b.bo)
+    dri_bo_unreference(gpgpu->constant_b.bo);
+  gpgpu->constant_b.bo = drm_intel_bo_alloc(gpgpu->drv->bufmgr, "CONSTANT_BUFFER", s, 64);
+  assert(gpgpu->constant_b.bo);
+  ss2->ss1.base_addr = gpgpu->constant_b.bo->offset;
+  dri_bo_emit_reloc(gpgpu->surface_heap_b.bo,
+                      I915_GEM_DOMAIN_RENDER,
+                      I915_GEM_DOMAIN_RENDER,
+                      0,
+                      heap->binding_table[2] +
+                      offsetof(gen7_surface_state_t, ss1),
+                      gpgpu->constant_b.bo);
+  return gpgpu->constant_b.bo;
+}
+
 
 /* Map address space with two 2GB surfaces. One surface for untyped message and
  * one surface for byte scatters / gathers. Actually the HW does not require two
@@ -613,7 +650,7 @@ intel_gpgpu_build_idrt(intel_gpgpu_t *gpgpu, cl_gpgpu_kernel *kernel)
   desc->desc2.sampler_state_pointer = gpgpu->sampler_state_b.bo->offset >> 5;
   desc->desc3.binding_table_entry_count = 0; /* no prefetch */
   desc->desc3.binding_table_pointer = 0;
-  desc->desc4.curbe_read_len = kernel->cst_sz / 32;
+  desc->desc4.curbe_read_len = kernel->curbe_sz / 32;
   desc->desc4.curbe_read_offset = 0;
 
   /* Barriers / SLM are automatically handled on Gen7+ */
@@ -652,7 +689,7 @@ intel_gpgpu_build_idrt(intel_gpgpu_t *gpgpu, cl_gpgpu_kernel *kernel)
 }
 
 static void
-intel_gpgpu_upload_constants(intel_gpgpu_t *gpgpu, const void* data, uint32_t size)
+intel_gpgpu_upload_curbes(intel_gpgpu_t *gpgpu, const void* data, uint32_t size)
 {
   unsigned char *curbe = NULL;
   cl_gpgpu_kernel *k = gpgpu->ker;
@@ -667,9 +704,9 @@ intel_gpgpu_upload_constants(intel_gpgpu_t *gpgpu, const void* data, uint32_t si
   /* Now put all the relocations for our flat address space */
   for (i = 0; i < k->thread_n; ++i)
     for (j = 0; j < gpgpu->binded_n; ++j) {
-      *(uint32_t*)(curbe + gpgpu->binded_offset[j]+i*k->cst_sz) = gpgpu->binded_buf[j]->offset;
+      *(uint32_t*)(curbe + gpgpu->binded_offset[j]+i*k->curbe_sz) = gpgpu->binded_buf[j]->offset;
       drm_intel_bo_emit_reloc(gpgpu->curbe_b.bo,
-                              gpgpu->binded_offset[j]+i*k->cst_sz,
+                              gpgpu->binded_offset[j]+i*k->curbe_sz,
                               gpgpu->binded_buf[j],
                               0,
                               I915_GEM_DOMAIN_RENDER,
@@ -927,7 +964,8 @@ intel_set_gpgpu_callbacks(void)
   cl_gpgpu_set_stack = (cl_gpgpu_set_stack_cb *) intel_gpgpu_set_stack;
   cl_gpgpu_state_init = (cl_gpgpu_state_init_cb *) intel_gpgpu_state_init;
   cl_gpgpu_set_perf_counters = (cl_gpgpu_set_perf_counters_cb *) intel_gpgpu_set_perf_counters;
-  cl_gpgpu_upload_constants = (cl_gpgpu_upload_constants_cb *) intel_gpgpu_upload_constants;
+  cl_gpgpu_upload_curbes = (cl_gpgpu_upload_curbes_cb *) intel_gpgpu_upload_curbes;
+  cl_gpgpu_alloc_constant_buffer  = (cl_gpgpu_alloc_constant_buffer_cb *) intel_gpgpu_alloc_constant_buffer;
   cl_gpgpu_states_setup = (cl_gpgpu_states_setup_cb *) intel_gpgpu_states_setup;
   cl_gpgpu_upload_samplers = (cl_gpgpu_upload_samplers_cb *) intel_gpgpu_upload_samplers;
   cl_gpgpu_batch_reset = (cl_gpgpu_batch_reset_cb *) intel_gpgpu_batch_reset;

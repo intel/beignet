@@ -1243,12 +1243,7 @@ namespace gbe
       ir::Register reg = ctx.reg(ir::RegisterFamily::FAMILY_DWORD);
       ir::Constant &con = unit.getConstantSet().getConstant(j ++);
       con.setReg(reg.value());
-      if(con.getOffset() != 0) {
-        ctx.LOADI(ir::TYPE_S32, reg, ctx.newIntegerImmediate(con.getOffset(), ir::TYPE_S32));
-        ctx.ADD(ir::TYPE_S32, reg, ir::ocl::constoffst, reg);
-      } else {
-        ctx.MOV(ir::TYPE_S32, reg, ir::ocl::constoffst);
-      }
+      ctx.LOADI(ir::TYPE_S32, reg, ctx.newIntegerImmediate(con.getOffset(), ir::TYPE_S32));
     }
 
     // Visit all the instructions and emit the IR registers or the value to
@@ -2407,7 +2402,7 @@ namespace gbe
       const ir::Type type = getType(ctx, elemType);
       const ir::RegisterFamily pointerFamily = ctx.getPointerFamily();
 
-      if (type == ir::TYPE_FLOAT || type == ir::TYPE_U32 || type == ir::TYPE_S32) {
+      if ((type == ir::TYPE_FLOAT || type == ir::TYPE_U32 || type == ir::TYPE_S32) && addrSpace != ir::MEM_CONSTANT) {
         // One message is enough here. Nothing special to do
         if (elemNum <= 4) {
           // Build the tuple data in the vector

@@ -76,7 +76,7 @@ cl_set_varying_payload(const cl_kernel ker,
     block_ips[curr] = 0;
   }
 
-  /* Copy them to the constant buffer */
+  /* Copy them to the curbe buffer */
   curr = 0;
   for (i = 0; i < thread_n; ++i, data += cst_sz) {
     uint32_t *ids0 = (uint32_t *) (data + id_offset[0]);
@@ -93,6 +93,62 @@ cl_set_varying_payload(const cl_kernel ker,
 
 error:
   return err;
+}
+
+static void
+cl_upload_constant_buffer(cl_command_queue queue, cl_kernel ker)
+{
+  /* calculate constant buffer size */
+  int32_t arg;
+  size_t offset;
+  gbe_program prog = ker->program->opaque;
+  const int32_t arg_n = gbe_kernel_get_arg_num(ker->opaque);
+  size_t global_const_size = gbe_program_get_global_constant_size(prog);
+  uint32_t constant_buf_size = 0;
+  for (arg = 0; arg < arg_n; ++arg) {
+    const enum gbe_arg_type type = gbe_kernel_get_arg_type(ker->opaque, arg);
+    if (type == GBE_ARG_CONSTANT_PTR && ker->args[arg].mem) {
+      cl_mem mem = ker->args[arg].mem;
+      constant_buf_size += ALIGN(mem->size, 4);
+    }
+  }
+  if(global_const_size == 0 && constant_buf_size == 0)
+     return;
+
+  cl_buffer bo = cl_gpgpu_alloc_constant_buffer(queue->gpgpu, constant_buf_size + global_const_size + 4);
+  cl_buffer_map(bo, 1);
+  char * cst_addr = cl_buffer_get_virtual(bo);
+  offset = 0;
+  if (global_const_size > 0) {
+    /* Write the global constant arrays */
+    gbe_program_get_global_constant_data(prog, (char*)(cst_addr+offset));
+  }
+  offset += ALIGN(global_const_size, 4);
+
+  if(global_const_size == 0) {
+    /* reserve 4 bytes to get rid of 0 address */
+    offset += 4;
+  }
+
+  /* upload constant buffer argument */
+  int32_t curbe_offset = 0;
+  for (arg = 0; arg < arg_n; ++arg) {
+    const enum gbe_arg_type type = gbe_kernel_get_arg_type(ker->opaque, arg);
+    if (type == GBE_ARG_CONSTANT_PTR && ker->args[arg].mem) {
+      cl_mem mem = ker->args[arg].mem;
+
+      curbe_offset = gbe_kernel_get_curbe_offset(ker->opaque, GBE_CURBE_KERNEL_ARGUMENT, arg);
+      assert(curbe_offset >= 0);
+      *(uint32_t *) (ker->curbe + curbe_offset) = offset;
+
+      cl_buffer_map(mem->bo, 1);
+      void * addr = cl_buffer_get_virtual(mem->bo);
+      memcpy(cst_addr + offset, addr, mem->size);
+      cl_buffer_unmap(mem->bo);
+      offset += ALIGN(mem->size, 4);
+    }
+  }
+  cl_buffer_unmap(bo);
 }
 
 /* Will return the total amount of slm used */
@@ -122,7 +178,6 @@ cl_curbe_fill(cl_kernel ker,
   UPLOAD(GBE_CURBE_GROUP_NUM_Z, global_wk_sz[2]/local_wk_sz[2]);
   UPLOAD(GBE_CURBE_THREAD_NUM, thread_n);
   UPLOAD(GBE_CURBE_WORK_DIM, work_dim);
-  UPLOAD(GBE_CURBE_GLOBAL_CONSTANT_OFFSET, gbe_kernel_get_curbe_offset(ker->opaque, GBE_CURBE_GLOBAL_CONSTANT_DATA, 0) + 32);
 #undef UPLOAD
 
   /* Write identity for the stack pointer. This is required by the stack pointer
@@ -134,14 +189,6 @@ cl_curbe_fill(cl_kernel ker,
     int32_t i;
     for (i = 0; i < (int32_t) simd_sz; ++i) stackptr[i] = i;
   }
-
-  /* Write global constant arrays */
-  if ((offset = gbe_kernel_get_curbe_offset(ker->opaque, GBE_CURBE_GLOBAL_CONSTANT_DATA, 0)) >= 0) {
-    /* Write the global constant arrays */
-    gbe_program prog = ker->program->opaque;
-    gbe_program_get_global_constant_data(prog, ker->curbe + offset);
-  }
-
   /* Handle the various offsets to SLM */
   const int32_t arg_n = gbe_kernel_get_arg_num(ker->opaque);
   int32_t arg, slm_offset = 0;
@@ -220,9 +267,9 @@ cl_command_queue_ND_range_gen7(cl_command_queue queue,
   /* Compute the number of HW threads we need */
   TRY (cl_kernel_work_group_sz, ker, local_wk_sz, 3, &local_sz);
   kernel.thread_n = thread_n = (local_sz + simd_sz - 1) / simd_sz;
-  kernel.cst_sz = cst_sz;
+  kernel.curbe_sz = cst_sz;
 
-  /* Curbe step 1: fill the constant buffer data shared by all threads */
+  /* Curbe step 1: fill the constant urb buffer data shared by all threads */
   if (ker->curbe) {
     kernel.slm_sz = cl_curbe_fill(ker, work_dim, global_wk_off, global_wk_sz, local_wk_sz, thread_n);
     if (kernel.slm_sz > ker->program->ctx->device->local_mem_size)
@@ -242,6 +289,9 @@ cl_command_queue_ND_range_gen7(cl_command_queue queue,
   cl_setup_scratch(gpgpu, ker);
   /* Bind a stack if needed */
   cl_bind_stack(gpgpu, ker);
+
+  cl_upload_constant_buffer(queue, ker);
+
   cl_gpgpu_states_setup(gpgpu, &kernel);
 
   /* Curbe step 2. Give the localID and upload it to video memory */
@@ -250,10 +300,9 @@ cl_command_queue_ND_range_gen7(cl_command_queue queue,
     TRY_ALLOC (final_curbe, (char*) alloca(thread_n * cst_sz));
     for (i = 0; i < thread_n; ++i) {
         memcpy(final_curbe + cst_sz * i, ker->curbe, cst_sz);
-        cl_command_queue_upload_constant_buffer(ker, final_curbe + cst_sz * i);
     }
     TRY (cl_set_varying_payload, ker, final_curbe, local_wk_sz, simd_sz, cst_sz, thread_n);
-    cl_gpgpu_upload_constants(gpgpu, final_curbe, thread_n*cst_sz);
+    cl_gpgpu_upload_curbes(gpgpu, final_curbe, thread_n*cst_sz);
   }
 
   /* Start a new batch buffer */

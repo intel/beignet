@@ -150,24 +150,6 @@ cl_command_queue_bind_surface(cl_command_queue queue, cl_kernel k)
   return CL_SUCCESS;
 }
 
-LOCAL cl_int cl_command_queue_upload_constant_buffer(cl_kernel k,
-                                                       char * dst)
-{
-  int i;
-  for(i = 0; i < k->arg_n; i++) {
-    enum gbe_arg_type arg_type = gbe_kernel_get_arg_type(k->opaque, i);
-
-    if(arg_type == GBE_ARG_CONSTANT_PTR && k->args[i].mem) {
-      uint32_t offset = gbe_kernel_get_curbe_offset(k->opaque, GBE_CURBE_EXTRA_ARGUMENT, i+GBE_CONSTANT_BUFFER);
-      cl_mem mem = k->args[i].mem;
-      cl_buffer_map(mem->bo, 1);
-      void * addr = cl_buffer_get_virtual(mem->bo);
-      memcpy(dst + offset, addr, mem->size);
-      cl_buffer_unmap(mem->bo);
-    }
-  }
-  return CL_SUCCESS;
-}
 
 #if USE_FULSIM
 extern void drm_intel_bufmgr_gem_stop_aubfile(cl_buffer_mgr);

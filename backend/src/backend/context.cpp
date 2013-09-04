@@ -458,15 +458,6 @@ namespace gbe
       }
     });
 #undef INSERT_REG
-    this->newCurbeEntry(GBE_CURBE_GLOBAL_CONSTANT_OFFSET, 0, sizeof(int));
-    specialRegs.insert(ir::ocl::constoffst);
-
-    // Insert serialized global constant arrays if used
-    const ir::ConstantSet& constantSet = unit.getConstantSet();
-    if (constantSet.getConstantNum()) {
-      size_t size = constantSet.getDataSize();
-      this->newCurbeEntry(GBE_CURBE_GLOBAL_CONSTANT_DATA, 0, size);
-    }
 
     // Insert the number of threads
     this->newCurbeEntry(GBE_CURBE_THREAD_NUM, 0, sizeof(uint32_t));
@@ -640,8 +631,7 @@ namespace gbe
         reg == ir::ocl::goffset0  ||
         reg == ir::ocl::goffset1  ||
         reg == ir::ocl::goffset2  ||
-        reg == ir::ocl::workdim   ||
-        reg == ir::ocl::constoffst)
+        reg == ir::ocl::workdim)
       return true;
     return false;
   }
