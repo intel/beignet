@@ -94,6 +94,7 @@ struct intel_gpgpu
   struct { drm_intel_bo *bo; } vfe_state_b;
   struct { drm_intel_bo *bo; } curbe_b;
   struct { drm_intel_bo *bo; } sampler_state_b;
+  struct { drm_intel_bo *bo; } sampler_border_color_state_b;
   struct { drm_intel_bo *bo; } perf_b;
   struct { drm_intel_bo *bo; } scratch_b;
   struct { drm_intel_bo *bo; } constant_b;
@@ -132,6 +133,8 @@ intel_gpgpu_delete(intel_gpgpu_t *gpgpu)
     drm_intel_bo_unreference(gpgpu->curbe_b.bo);
   if (gpgpu->sampler_state_b.bo)
     drm_intel_bo_unreference(gpgpu->sampler_state_b.bo);
+  if (gpgpu->sampler_border_color_state_b.bo)
+    drm_intel_bo_unreference(gpgpu->sampler_border_color_state_b.bo);
   if (gpgpu->perf_b.bo)
     drm_intel_bo_unreference(gpgpu->perf_b.bo);
   if (gpgpu->stack_b.bo)
@@ -201,7 +204,10 @@ intel_gpgpu_set_base_address(intel_gpgpu_t *gpgpu)
   OUT_BATCH(gpgpu->batch, 0x04000000 | BASE_ADDRESS_MODIFY); /* Instruction Access Upper Bound */
 #else
   OUT_BATCH(gpgpu->batch, 0 | BASE_ADDRESS_MODIFY);
-  OUT_BATCH(gpgpu->batch, 0 | BASE_ADDRESS_MODIFY);
+  /* According to mesa i965 driver code, we must set the dynamic state access upper bound
+   * to a valid bound value, otherwise, the border color pointer may be rejected and you
+   * may get incorrect border color. This is a known hardware bug. */
+  OUT_BATCH(gpgpu->batch, 0xfffff000 | BASE_ADDRESS_MODIFY);
   OUT_BATCH(gpgpu->batch, 0 | BASE_ADDRESS_MODIFY);
   OUT_BATCH(gpgpu->batch, 0 | BASE_ADDRESS_MODIFY);
 #endif /* USE_FULSIM */
@@ -288,6 +294,7 @@ intel_gpgpu_pipe_control(intel_gpgpu_t *gpgpu)
   pc->dw0.instruction_pipeline = GEN7_PIPE_CONTROL_3D;
   pc->dw0.instruction_type = GEN7_PIPE_CONTROL_INSTRUCTION_GFX;
   pc->dw1.render_target_cache_flush_enable = 1;
+  pc->dw1.texture_cache_invalidation_enable = 1;
   pc->dw1.cs_stall = 1;
   pc->dw1.dc_flush_enable = 1;
   ADVANCE_BATCH(gpgpu->batch);
@@ -376,6 +383,7 @@ intel_gpgpu_check_binded_buf_address(intel_gpgpu_t *gpgpu)
   for (i = 0; i < gpgpu->binded_n; ++i)
     assert(gpgpu->binded_buf[i]->offset != 0);
 }
+
 static void
 intel_gpgpu_flush(intel_gpgpu_t *gpgpu)
 {
@@ -450,6 +458,18 @@ intel_gpgpu_state_init(intel_gpgpu_t *gpgpu,
   dri_bo_map(bo, 1);
   memset(bo->virtual, 0, sizeof(gen6_sampler_state_t) * GEN_MAX_SAMPLERS);
   gpgpu->sampler_state_b.bo = bo;
+
+  /* sampler border color state */
+  if (gpgpu->sampler_border_color_state_b.bo)
+    dri_bo_unreference(gpgpu->sampler_border_color_state_b.bo);
+  bo = dri_bo_alloc(gpgpu->drv->bufmgr,
+                    "SAMPLER_BORDER_COLOR_STATE",
+                    sizeof(gen7_sampler_border_color_t),
+                    32);
+  assert(bo);
+  dri_bo_map(bo, 1);
+  memset(bo->virtual, 0, sizeof(gen7_sampler_border_color_t));
+  gpgpu->sampler_border_color_state_b.bo = bo;
 
   /* stack */
   if (gpgpu->stack_b.bo)
@@ -681,7 +701,7 @@ intel_gpgpu_build_idrt(intel_gpgpu_t *gpgpu, cl_gpgpu_kernel *kernel)
                     ker_bo);
 
   dri_bo_emit_reloc(bo,
-                    I915_GEM_DOMAIN_INSTRUCTION, 0,
+                    I915_GEM_DOMAIN_SAMPLER, 0,
                     0,
                     offsetof(gen6_interface_descriptor_t, desc2),
                     gpgpu->sampler_state_b.bo);
@@ -731,19 +751,7 @@ int translate_wrap_mode(uint32_t cl_address_mode, int using_nearest)
    case CLK_ADDRESS_REPEAT:
       return GEN_TEXCOORDMODE_WRAP;
    case CLK_ADDRESS_CLAMP:
-      /* GL_CLAMP is the weird mode where coordinates are clamped to
-       * [0.0, 1.0], so linear filtering of coordinates outside of
-       * [0.0, 1.0] give you half edge texel value and half border
-       * color.  The fragment shader will clamp the coordinates, and
-       * we set clamp_border here, which gets the result desired.  We
-       * just use clamp(_to_edge) for nearest, because for nearest
-       * clamping to 1.0 gives border color instead of the desired
-       * edge texels.
-       */
-      if (using_nearest)
-         return GEN_TEXCOORDMODE_CLAMP;
-      else
-         return GEN_TEXCOORDMODE_CLAMP_BORDER;
+      return GEN_TEXCOORDMODE_CLAMP_BORDER;
    case CLK_ADDRESS_CLAMP_TO_EDGE:
       return GEN_TEXCOORDMODE_CLAMP;
    case CLK_ADDRESS_MIRRORED_REPEAT:
@@ -760,7 +768,9 @@ intel_gpgpu_insert_sampler(intel_gpgpu_t *gpgpu, uint32_t index, uint32_t clk_sa
   uint32_t wrap_mode;
   gen7_sampler_state_t *sampler;
 
-  sampler = (gen7_sampler_state_t *)gpgpu->sampler_state_b.bo->virtual + index;
+  sampler = (gen7_sampler_state_t *)(gpgpu->sampler_state_b.bo->virtual)  + index;
+  memset(sampler, 0, sizeof(*sampler));
+  sampler->ss2.default_color_pointer = (gpgpu->sampler_border_color_state_b.bo->offset) >> 5;
   if ((clk_sampler & __CLK_NORMALIZED_MASK) == CLK_NORMALIZED_COORDS_FALSE)
     sampler->ss3.non_normalized_coord = 1;
   else
@@ -781,9 +791,11 @@ intel_gpgpu_insert_sampler(intel_gpgpu_t *gpgpu, uint32_t index, uint32_t clk_sa
   }
 
   wrap_mode = translate_wrap_mode(clk_sampler & __CLK_ADDRESS_MASK, using_nearest);
-  sampler->ss3.r_wrap_mode = wrap_mode;
   sampler->ss3.s_wrap_mode = wrap_mode;
+  /* XXX mesa i965 driver code point out that if the surface is a 1D surface, we may need
+   * to set t_wrap_mode to GEN_TEXCOORDMODE_WRAP. */
   sampler->ss3.t_wrap_mode = wrap_mode;
+  sampler->ss3.r_wrap_mode = wrap_mode;
 
   sampler->ss0.lod_preclamp = 1; /* OpenGL mode */
   sampler->ss0.default_color_mode = 0; /* OpenGL/DX10 mode */
@@ -801,6 +813,14 @@ intel_gpgpu_insert_sampler(intel_gpgpu_t *gpgpu, uint32_t index, uint32_t clk_sa
      sampler->ss3.address_round |= GEN_ADDRESS_ROUNDING_ENABLE_U_MAG |
                                    GEN_ADDRESS_ROUNDING_ENABLE_V_MAG |
                                    GEN_ADDRESS_ROUNDING_ENABLE_R_MAG;
+
+  dri_bo_emit_reloc(gpgpu->sampler_state_b.bo,
+                    I915_GEM_DOMAIN_SAMPLER, 0,
+                    0,
+                    index * sizeof(gen7_sampler_state_t) +
+                    offsetof(gen7_sampler_state_t, ss2),
+                    gpgpu->sampler_border_color_state_b.bo);
+
 }
 
 static void
@@ -820,6 +840,7 @@ intel_gpgpu_states_setup(intel_gpgpu_t *gpgpu, cl_gpgpu_kernel *kernel)
   intel_gpgpu_map_address_space(gpgpu);
   dri_bo_unmap(gpgpu->surface_heap_b.bo);
   dri_bo_unmap(gpgpu->sampler_state_b.bo);
+  dri_bo_unmap(gpgpu->sampler_border_color_state_b.bo);
 }
 
 static void

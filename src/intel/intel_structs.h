@@ -380,6 +380,10 @@ typedef struct gen6_sampler_state
   } ss3;
 } gen6_sampler_state_t;
 
+typedef struct gen7_sampler_border_color {
+    float r,g,b,a;
+} gen7_sampler_border_color_t;
+
 typedef struct gen7_sampler_state
 {
   struct {
