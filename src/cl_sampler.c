@@ -49,7 +49,7 @@ uint32_t cl_to_clk(cl_bool normalized_coords,
   }
   return (clk_address << __CLK_ADDRESS_BASE)
          | (normalized_coords << __CLK_NORMALIZED_BASE)
-         | (clk_filter << __CLK_FILTER_BASE);
+         | (clk_filter);
 }
 
 #define IS_SAMPLER_ARG(v) (v & __CLK_SAMPLER_ARG_KEY_BIT)
