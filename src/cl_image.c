@@ -61,11 +61,11 @@ cl_image_byte_per_pixel(const cl_image_format *fmt, uint32_t *bpp)
   };
 
   switch (order) {
+    case CL_Rx: break;
     case CL_R: break;
     case CL_A: break;
     case CL_RA: *bpp *= 2; break;
     case CL_RG: *bpp *= 2; break;
-    case CL_Rx: *bpp *= 2; break;
     case CL_INTENSITY:
     case CL_LUMINANCE:
       if (type != CL_UNORM_INT8 && type != CL_UNORM_INT16 &&
@@ -101,6 +101,8 @@ cl_image_get_intel_format(const cl_image_format *fmt)
   const uint32_t order = fmt->image_channel_order;
   switch (order) {
     case CL_R:
+#if 0
+    case CL_Rx:
     case CL_A:
     case CL_INTENSITY:
     case CL_LUMINANCE:
@@ -109,12 +111,16 @@ cl_image_get_intel_format(const cl_image_format *fmt)
               && type != CL_SNORM_INT8 && type != CL_SNORM_INT16
               && type != CL_HALF_FLOAT && type != CL_FLOAT))
         return INTEL_UNSUPPORTED_FORMAT;
+#endif
+
+/* XXX it seems we have some acuracy compatible issue with snomr_int8/16,
+ * have to disable those formats currently. */
 
       switch (type) {
         case CL_HALF_FLOAT:     return I965_SURFACEFORMAT_R16_FLOAT;
         case CL_FLOAT:          return I965_SURFACEFORMAT_R32_FLOAT;
-        case CL_SNORM_INT16:    return I965_SURFACEFORMAT_R16_SNORM;
-        case CL_SNORM_INT8:     return I965_SURFACEFORMAT_R8_SNORM;
+//        case CL_SNORM_INT16:    return I965_SURFACEFORMAT_R16_SNORM;
+//        case CL_SNORM_INT8:     return I965_SURFACEFORMAT_R8_SNORM;
         case CL_UNORM_INT8:     return I965_SURFACEFORMAT_R8_UNORM;
         case CL_UNORM_INT16:    return I965_SURFACEFORMAT_R16_UNORM;
         case CL_SIGNED_INT8:    return I965_SURFACEFORMAT_R8_SINT;
@@ -125,9 +131,9 @@ cl_image_get_intel_format(const cl_image_format *fmt)
         case CL_UNSIGNED_INT32: return I965_SURFACEFORMAT_R32_UINT;
         default: return INTEL_UNSUPPORTED_FORMAT;
       };
+#if 0
     case CL_RG:
     case CL_RA:
-    case CL_Rx:
       switch (type) {
         case CL_HALF_FLOAT:     return I965_SURFACEFORMAT_R16G16_FLOAT;
         case CL_FLOAT:          return I965_SURFACEFORMAT_R32G32_FLOAT;
@@ -151,12 +157,13 @@ cl_image_get_intel_format(const cl_image_format *fmt)
         case CL_UNORM_SHORT_555:
         default: return INTEL_UNSUPPORTED_FORMAT;
       };
+#endif
     case CL_RGBA:
       switch (type) {
         case CL_HALF_FLOAT:     return I965_SURFACEFORMAT_R16G16B16A16_FLOAT;
         case CL_FLOAT:          return I965_SURFACEFORMAT_R32G32B32A32_FLOAT;
-        case CL_SNORM_INT16:    return I965_SURFACEFORMAT_R16G16B16A16_SNORM;
-        case CL_SNORM_INT8:     return I965_SURFACEFORMAT_R8G8B8A8_SNORM;
+//        case CL_SNORM_INT16:    return I965_SURFACEFORMAT_R16G16B16A16_SNORM;
+//        case CL_SNORM_INT8:     return I965_SURFACEFORMAT_R8G8B8A8_SNORM;
         case CL_UNORM_INT8:     return I965_SURFACEFORMAT_R8G8B8A8_UNORM;
         case CL_UNORM_INT16:    return I965_SURFACEFORMAT_R16G16B16A16_UNORM;
         case CL_SIGNED_INT8:    return I965_SURFACEFORMAT_R8G8B8A8_SINT;
@@ -201,7 +208,6 @@ cl_image_get_supported_fmt(cl_context ctx,
                            cl_uint *num_image_formats)
 {
   size_t i, j, n = 0;
-  assert(image_formats);
   for (i = 0; i < cl_image_order_n; ++i)
   for (j = 0; j < cl_image_type_n; ++j) {
     const cl_image_format fmt = {
