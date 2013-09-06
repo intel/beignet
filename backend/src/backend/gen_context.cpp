@@ -1101,7 +1101,7 @@ namespace gbe
     /* Prepare message payload. */
     p->MOV(GenRegister::f8grf(nr , 0), ucoord);
     p->MOV(GenRegister::f8grf(nr + (simdWidth/8), 0), vcoord);
-    if (insn.src(8).reg() != 0)
+    if (insn.src(6).reg() != 0)
       p->MOV(GenRegister::f8grf(nr + (simdWidth/4), 0), wcoord);
     p->SAMPLE(dst, msgPayload, false, bti, sampler, simdWidth, -1, 0);
     p->pop();
@@ -1185,7 +1185,7 @@ namespace gbe
         p->curr.quarterControl = GEN_COMPRESSION_Q2;
       QUARTER_MOV0(nr + 1, ucoord);
       QUARTER_MOV0(nr + 2, vcoord);
-      if (insn.src(3 + insn.extra.elem).reg() != 0)
+      if (insn.src(2 + insn.extra.elem).reg() != 0)
         QUARTER_MOV0(nr + 3, wcoord);
       QUARTER_MOV1(nr + 5, R);
       QUARTER_MOV1(nr + 6, G);
