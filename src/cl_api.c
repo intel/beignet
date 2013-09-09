@@ -1918,7 +1918,7 @@ error:
 cl_int
 clEnqueueCopyBufferToImage(cl_command_queue  command_queue,
                            cl_mem            src_buffer,
-                           cl_mem            dst_image,
+                           cl_mem            dst_mem,
                            size_t            src_offset,
                            const size_t *    dst_origin,
                            const size_t *    region,
@@ -1926,8 +1926,49 @@ clEnqueueCopyBufferToImage(cl_command_queue  command_queue,
                            const cl_event *  event_wait_list,
                            cl_event *        event)
 {
-  NOT_IMPLEMENTED;
-  return 0;
+  cl_int err = CL_SUCCESS;
+  enqueue_data *data, no_wait_data = { 0 };
+
+  CHECK_QUEUE(command_queue);
+  CHECK_MEM(src_buffer);
+  CHECK_IMAGE(dst_mem, dst_image);
+  if (command_queue->ctx != src_buffer->ctx ||
+      command_queue->ctx != dst_mem->ctx) {
+    err = CL_INVALID_CONTEXT;
+    goto error;
+  }
+
+  if (src_offset + region[0]*region[1]*region[2]*dst_image->bpp > src_buffer->size) {
+    err = CL_INVALID_VALUE;
+    goto error;
+  }
+
+  if (!dst_origin || !region || dst_origin[0] + region[0] > dst_image->w ||
+      dst_origin[1] + region[1] > dst_image->h || dst_origin[2] + region[2] > dst_image->depth) {
+    err = CL_INVALID_VALUE;
+    goto error;
+  }
+
+  if (dst_image->image_type == CL_MEM_OBJECT_IMAGE2D && (dst_origin[2] != 0 || region[2] != 1)) {
+    err = CL_INVALID_VALUE;
+    goto error;
+  }
+
+  cl_mem_copy_buffer_to_image(command_queue, src_buffer, dst_image, src_offset, dst_origin, region);
+
+  TRY(cl_event_check_waitlist, num_events_in_wait_list, event_wait_list, event, dst_mem->ctx);
+
+  data = &no_wait_data;
+  data->type = EnqueueCopyBufferToImage;
+  data->queue = command_queue;
+
+  if(handle_events(command_queue, num_events_in_wait_list, event_wait_list,
+                   event, data, CL_COMMAND_COPY_BUFFER_TO_IMAGE) == CL_ENQUEUE_EXECUTE_IMM) {
+    err = cl_command_queue_flush(command_queue);
+  }
+
+error:
+  return err;
 }
 
 static cl_int _cl_map_mem(cl_mem mem, void **ptr, void **mem_ptr, size_t offset, size_t size)
