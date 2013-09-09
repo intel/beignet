@@ -79,6 +79,66 @@ handle_events(cl_command_queue queue, cl_int num, const cl_event *wait_list,
   return status;
 }
 
+/* The following code checking overlap is from Appendix of openCL spec 1.1 */
+inline cl_bool check_copy_overlap(const size_t src_offset[3],
+                                  const size_t dst_offset[3],
+                                  const size_t region[3],
+                                  size_t row_pitch, size_t slice_pitch)
+{
+  const size_t src_min[] = {src_offset[0], src_offset[1], src_offset[2]};
+  const size_t src_max[] = {src_offset[0] + region[0],
+                            src_offset[1] + region[1],
+                            src_offset[2] + region[2]};
+  const size_t dst_min[] = {dst_offset[0], dst_offset[1], dst_offset[2]};
+  const size_t dst_max[] = {dst_offset[0] + region[0],
+                            dst_offset[1] + region[1],
+                            dst_offset[2] + region[2]};
+  // Check for overlap
+  cl_bool overlap = CL_TRUE;
+  unsigned i;
+  size_t dst_start = dst_offset[2] * slice_pitch +
+                     dst_offset[1] * row_pitch + dst_offset[0];
+  size_t dst_end = dst_start + (region[2] * slice_pitch +
+                   region[1] * row_pitch + region[0]);
+  size_t src_start = src_offset[2] * slice_pitch +
+                     src_offset[1] * row_pitch + src_offset[0];
+  size_t src_end = src_start + (region[2] * slice_pitch +
+                   region[1] * row_pitch + region[0]);
+
+  for (i=0; i != 3; ++i) {
+    overlap = overlap && (src_min[i] < dst_max[i])
+                      && (src_max[i] > dst_min[i]);
+  }
+
+  if (!overlap) {
+    size_t delta_src_x = (src_offset[0] + region[0] > row_pitch) ?
+                          src_offset[0] + region[0] - row_pitch : 0;
+    size_t delta_dst_x = (dst_offset[0] + region[0] > row_pitch) ?
+                          dst_offset[0] + region[0] - row_pitch : 0;
+    if ( (delta_src_x > 0 && delta_src_x > dst_offset[0]) ||
+         (delta_dst_x > 0 && delta_dst_x > src_offset[0]) ) {
+      if ( (src_start <= dst_start && dst_start < src_end) ||
+           (dst_start <= src_start && src_start < dst_end) )
+        overlap = CL_TRUE;
+    }
+    if (region[2] > 1) {
+      size_t src_height = slice_pitch / row_pitch;
+      size_t dst_height = slice_pitch / row_pitch;
+      size_t delta_src_y = (src_offset[1] + region[1] > src_height) ?
+                            src_offset[1] + region[1] - src_height : 0;
+      size_t delta_dst_y = (dst_offset[1] + region[1] > dst_height) ?
+                            dst_offset[1] + region[1] - dst_height : 0;
+      if ( (delta_src_y > 0 && delta_src_y > dst_offset[1]) ||
+           (delta_dst_y > 0 && delta_dst_y > src_offset[1]) ) {
+        if ( (src_start <= dst_start && dst_start < src_end) ||
+             (dst_start <= src_start && src_start < dst_end) )
+          overlap = CL_TRUE;
+      }
+    }
+  }
+  return overlap;
+}
+
 static cl_int
 cl_check_device_type(cl_device_type device_type)
 {
@@ -1483,8 +1543,79 @@ clEnqueueCopyBufferRect(cl_command_queue     command_queue,
                         const cl_event *     event_wait_list,
                         cl_event *           event)
 {
-  NOT_IMPLEMENTED;
-  return 0;
+  cl_int err = CL_SUCCESS;
+  enqueue_data *data, no_wait_data = { 0 };
+
+  CHECK_QUEUE(command_queue);
+  CHECK_MEM(src_buffer);
+  CHECK_MEM(dst_buffer);
+
+  if ((command_queue->ctx != src_buffer->ctx) ||
+      (command_queue->ctx != dst_buffer->ctx)) {
+    err = CL_INVALID_CONTEXT;
+    goto error;
+  }
+
+  if (!region || region[0] == 0 || region[1] == 0 || region[2] == 0) {
+    err = CL_INVALID_VALUE;
+    goto error;
+  }
+
+  if(src_row_pitch == 0)
+    src_row_pitch = region[0];
+  if(src_slice_pitch == 0)
+    src_slice_pitch = region[1] * src_row_pitch;
+
+  if(dst_row_pitch == 0)
+    dst_row_pitch = region[0];
+  if(dst_slice_pitch == 0)
+    dst_slice_pitch = region[1] * dst_row_pitch;
+
+  if (src_row_pitch < region[0] ||
+      dst_row_pitch < region[0]) {
+    err = CL_INVALID_VALUE;
+    goto error;
+  }
+
+  if ((src_slice_pitch < region[1] * src_row_pitch || src_slice_pitch % src_row_pitch != 0 ) ||
+      (dst_slice_pitch < region[1] * dst_row_pitch || dst_slice_pitch % dst_row_pitch != 0 )) {
+    err = CL_INVALID_VALUE;
+    goto error;
+  }
+
+  if ((src_origin[2]+region[2])*src_slice_pitch + (src_origin[1]+region[1])*src_row_pitch + src_origin[0] + region[0] > src_buffer->size ||
+      (dst_origin[2]+region[2])*dst_slice_pitch + (dst_origin[1]+region[1])*dst_row_pitch + dst_origin[0] + region[0] > dst_buffer->size) {
+    err = CL_INVALID_VALUE;
+    goto error;
+  }
+
+  if (src_buffer == dst_buffer && (src_row_pitch != dst_row_pitch || src_slice_pitch != dst_slice_pitch)) {
+    err = CL_INVALID_VALUE;
+    goto error;
+  }
+
+  if (src_buffer == dst_buffer &&
+      check_copy_overlap(src_origin, dst_origin, region, src_row_pitch, src_slice_pitch)) {
+    err = CL_MEM_COPY_OVERLAP;
+    goto error;
+  }
+
+  cl_mem_copy_buffer_rect(command_queue, src_buffer, dst_buffer, src_origin, dst_origin, region,
+                          src_row_pitch, src_slice_pitch, dst_row_pitch, dst_slice_pitch);
+
+  TRY(cl_event_check_waitlist, num_events_in_wait_list, event_wait_list, event, src_buffer->ctx);
+
+  data = &no_wait_data;
+  data->type = EnqueueCopyBufferRect;
+  data->queue = command_queue;
+
+  if(handle_events(command_queue, num_events_in_wait_list, event_wait_list,
+                   event, data, CL_COMMAND_COPY_BUFFER_RECT) == CL_ENQUEUE_EXECUTE_IMM) {
+    err = cl_command_queue_flush(command_queue);
+  }
+
+error:
+  return err;
 }
 
 cl_int

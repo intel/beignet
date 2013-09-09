@@ -39,6 +39,18 @@ enum _cl_gl_context_type {
   CL_GL_CGL_SHAREGROUP
 };
 
+enum _cl_internal_ker_type {
+  CL_ENQUEUE_COPY_BUFFER = 0,
+  CL_ENQUEUE_COPY_BUFFER_RECT = 1,
+  CL_ENQUEUE_COPY_IMAGE_0 = 2,             //copy image 2d to image 2d
+  CL_ENQUEUE_COPY_IMAGE_1 = 3,             //copy image 2d to image 2d
+  CL_ENQUEUE_COPY_IMAGE_2 = 4,             //copy image 2d to image 2d
+  CL_ENQUEUE_COPY_IMAGE_3 = 5,             //copy image 2d to image 2d
+  CL_ENQUEUE_COPY_IMAGE_TO_BUFFER = 6,
+  CL_ENQUEUE_COPY_BUFFER_TO_IMAGE = 7,
+  CL_INTERNAL_KERNEL_MAX = 8
+};
+
 struct _cl_context_prop {
   cl_context_properties platform_id;
   enum _cl_gl_context_type gl_type;
@@ -71,6 +83,10 @@ struct _cl_context {
   pthread_mutex_t buffer_lock;      /* To allocate and deallocate buffers */
   pthread_mutex_t sampler_lock;     /* To allocate and deallocate samplers */
   pthread_mutex_t event_lock;       /* To allocate and deallocate events */
+  cl_program internal_prgs[CL_INTERNAL_KERNEL_MAX];
+                                    /* All programs internal used, for example clEnqueuexxx api use */
+  cl_kernel  internel_kernels[CL_INTERNAL_KERNEL_MAX];
+                                    /* All kernels  for clenqueuexxx api, for example clEnqueuexxx api use */
   uint32_t ver;                     /* Gen version */
   struct _cl_context_prop props;
   cl_context_properties * prop_user; /* a copy of user passed context properties when create context */

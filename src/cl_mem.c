@@ -25,6 +25,9 @@
 #include "cl_device_id.h"
 #include "cl_driver.h"
 #include "cl_khr_icd.h"
+#include "cl_program.h"
+#include "cl_kernel.h"
+#include "cl_command_queue.h"
 
 #include "CL/cl.h"
 #include "CL/cl_intel.h"
@@ -563,6 +566,89 @@ cl_mem_add_ref(cl_mem mem)
 {
   assert(mem);
   atomic_inc(&mem->ref_n);
+}
+
+#define LOCAL_SZ_0   16
+#define LOCAL_SZ_1   4
+#define LOCAL_SZ_2   4
+
+LOCAL cl_int
+cl_mem_copy_buffer_rect(cl_command_queue queue, cl_mem src_buf, cl_mem dst_buf,
+                       const size_t *src_origin, const size_t *dst_origin, const size_t *region,
+                       size_t src_row_pitch, size_t src_slice_pitch,
+                       size_t dst_row_pitch, size_t dst_slice_pitch) {
+  cl_int ret;
+  cl_kernel ker;
+  size_t global_off[] = {0,0,0};
+  size_t global_sz[] = {1,1,1};
+  size_t local_sz[] = {LOCAL_SZ_2,LOCAL_SZ_1,LOCAL_SZ_0};
+  if(region[1] == 1) local_sz[1] = 1;
+  if(region[2] == 1) local_sz[2] = 1;
+  global_sz[0] = ((region[0] + local_sz[0] - 1) / local_sz[0]) * local_sz[0];
+  global_sz[1] = ((region[1] + local_sz[1] - 1) / local_sz[1]) * local_sz[1];
+  global_sz[2] = ((region[2] + local_sz[2] - 1) / local_sz[2]) * local_sz[2];
+  cl_int index = CL_ENQUEUE_COPY_BUFFER_RECT;
+  cl_int src_offset = src_origin[2]*src_slice_pitch + src_origin[1]*src_row_pitch + src_origin[0];
+  cl_int dst_offset = dst_origin[2]*dst_slice_pitch + dst_origin[1]*dst_row_pitch + dst_origin[0];
+
+  static const char *kernel_str =
+      "kernel void __cl_cpy_buffer_rect ( \n"
+      "       global char* src, global char* dst, \n"
+      "       unsigned int region0, unsigned int region1, unsigned int region2, \n"
+      "       unsigned int src_offset, unsigned int dst_offset, \n"
+      "       unsigned int src_row_pitch, unsigned int src_slice_pitch, \n"
+      "       unsigned int dst_row_pitch, unsigned int dst_slice_pitch) { \n"
+      "  int i = get_global_id(0); \n"
+      "  int j = get_global_id(1); \n"
+      "  int k = get_global_id(2); \n"
+      "  if((i >= region0) || (j>= region1) || (k>=region2)) \n"
+      "    return; \n"
+      "  src_offset += k * src_slice_pitch + j * src_row_pitch + i; \n"
+      "  dst_offset += k * dst_slice_pitch + j * dst_row_pitch + i; \n"
+      "  dst[dst_offset] = src[src_offset]; \n"
+      "}";
+
+
+  /* We use one kernel to copy the data. The kernel is lazily created. */
+  assert(src_buf->ctx == dst_buf->ctx);
+  if (!src_buf->ctx->internal_prgs[index])
+  {
+    size_t length = strlen(kernel_str) + 1;
+    src_buf->ctx->internal_prgs[index] = cl_program_create_from_source(src_buf->ctx, 1, &kernel_str, &length, NULL);
+
+    if (!src_buf->ctx->internal_prgs[index])
+      return CL_OUT_OF_RESOURCES;
+
+    ret = cl_program_build(src_buf->ctx->internal_prgs[index], NULL);
+    if (ret != CL_SUCCESS)
+      return CL_OUT_OF_RESOURCES;
+
+    src_buf->ctx->internal_prgs[index]->is_built = 1;
+
+    src_buf->ctx->internel_kernels[index] = cl_kernel_dup(src_buf->ctx->internal_prgs[index]->ker[0]);
+  }
+
+  /* setup the kernel and run. */
+  ker = src_buf->ctx->internel_kernels[index];
+  if (!ker)
+    return CL_OUT_OF_RESOURCES;
+
+  cl_kernel_set_arg(ker, 0, sizeof(cl_mem), &src_buf);
+  cl_kernel_set_arg(ker, 1, sizeof(cl_mem), &dst_buf);
+  cl_kernel_set_arg(ker, 2, sizeof(cl_int), &region[0]);
+  cl_kernel_set_arg(ker, 3, sizeof(cl_int), &region[1]);
+  cl_kernel_set_arg(ker, 4, sizeof(cl_int), &region[2]);
+  cl_kernel_set_arg(ker, 5, sizeof(cl_int), &src_offset);
+  cl_kernel_set_arg(ker, 6, sizeof(cl_int), &dst_offset);
+  cl_kernel_set_arg(ker, 7, sizeof(cl_int), &src_row_pitch);
+  cl_kernel_set_arg(ker, 8, sizeof(cl_int), &src_slice_pitch);
+  cl_kernel_set_arg(ker, 9, sizeof(cl_int), &dst_row_pitch);
+  cl_kernel_set_arg(ker, 10, sizeof(cl_int), &dst_slice_pitch);
+
+  ret = cl_command_queue_ND_range(queue, ker, 1, global_off, global_sz, local_sz);
+  cl_command_queue_finish(queue);
+
+  return ret;
 }
 
 LOCAL void*
