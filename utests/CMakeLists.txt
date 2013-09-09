@@ -129,6 +129,7 @@ set (utests_sources
   builtin_num_groups.cpp
   builtin_local_id.cpp
   builtin_acos_asin.cpp
+  builtin_pow.cpp
   builtin_convert_sat.cpp
   runtime_createcontext.cpp
   runtime_null_kernel_arg.cpp
