@@ -52,7 +52,7 @@ void UTest::run(const char *name) {
   if (utestList == NULL) return;
   for (size_t i = 0; i < utestList->size(); ++i) {
     const UTest &utest = (*utestList)[i];
-    if (utest.name == NULL || utest.fn == NULL || utest.haveIssue) continue;
+    if (utest.name == NULL || utest.fn == NULL ) continue;
     if (strequal(utest.name, name)) {
       std::cout << utest.name << ":" << std::endl;
       (utest.fn)();
