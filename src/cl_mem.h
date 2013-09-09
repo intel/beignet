@@ -194,6 +194,12 @@ extern cl_int cl_mem_copy_buffer_rect(cl_command_queue, cl_mem, cl_mem,
 /* api clEnqueueCopyImage help function */
 extern cl_int cl_mem_kernel_copy_image(cl_command_queue, struct _cl_mem_image*, struct _cl_mem_image*,
                                       const size_t *, const size_t *, const size_t *);
+
+
+/* api clEnqueueCopyImage help function */
+extern cl_int cl_mem_copy_image_to_buffer(cl_command_queue, struct _cl_mem_image*, cl_mem,
+                                          const size_t *, const size_t, const size_t *);
+
 /* Directly map a memory object */
 extern void *cl_mem_map(cl_mem);
 

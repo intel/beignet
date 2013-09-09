@@ -1870,8 +1870,49 @@ clEnqueueCopyImageToBuffer(cl_command_queue  command_queue,
                            const cl_event *  event_wait_list,
                            cl_event *        event)
 {
-  NOT_IMPLEMENTED;
-  return 0;
+  cl_int err = CL_SUCCESS;
+  enqueue_data *data, no_wait_data = { 0 };
+
+  CHECK_QUEUE(command_queue);
+  CHECK_IMAGE(src_mem, src_image);
+  CHECK_MEM(dst_buffer);
+  if (command_queue->ctx != src_mem->ctx ||
+      command_queue->ctx != dst_buffer->ctx) {
+    err = CL_INVALID_CONTEXT;
+    goto error;
+  }
+
+  if (dst_offset + region[0]*region[1]*region[2]*src_image->bpp > dst_buffer->size) {
+    err = CL_INVALID_VALUE;
+    goto error;
+  }
+
+  if (!src_origin || !region || src_origin[0] + region[0] > src_image->w ||
+      src_origin[1] + region[1] > src_image->h || src_origin[2] + region[2] > src_image->depth) {
+    err = CL_INVALID_VALUE;
+    goto error;
+  }
+
+  if (src_image->image_type == CL_MEM_OBJECT_IMAGE2D && (src_origin[2] != 0 || region[2] != 1)) {
+    err = CL_INVALID_VALUE;
+    goto error;
+  }
+
+  cl_mem_copy_image_to_buffer(command_queue, src_image, dst_buffer, src_origin, dst_offset, region);
+
+  TRY(cl_event_check_waitlist, num_events_in_wait_list, event_wait_list, event, src_mem->ctx);
+
+  data = &no_wait_data;
+  data->type = EnqueueCopyImageToBuffer;
+  data->queue = command_queue;
+
+  if(handle_events(command_queue, num_events_in_wait_list, event_wait_list,
+                   event, data, CL_COMMAND_COPY_IMAGE_TO_BUFFER) == CL_ENQUEUE_EXECUTE_IMM) {
+    err = cl_command_queue_flush(command_queue);
+  }
+
+error:
+  return err;
 }
 
 cl_int

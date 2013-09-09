@@ -400,6 +400,7 @@ cl_int cl_enqueue_handle(enqueue_data* data)
       return cl_enqueue_unmap_mem_object(data);
     case EnqueueCopyBufferRect:
     case EnqueueCopyImage:
+    case EnqueueCopyBufferToImage:
     case EnqueueNDRangeKernel:
       cl_gpgpu_event_resume((cl_gpgpu_event)data->ptr);
       return CL_SUCCESS;

@@ -46,9 +46,11 @@ enum _cl_internal_ker_type {
   CL_ENQUEUE_COPY_IMAGE_1 = 3,             //copy image 3d to image 2d
   CL_ENQUEUE_COPY_IMAGE_2 = 4,             //copy image 2d to image 3d
   CL_ENQUEUE_COPY_IMAGE_3 = 5,             //copy image 3d to image 3d
-  CL_ENQUEUE_COPY_IMAGE_TO_BUFFER = 6,
-  CL_ENQUEUE_COPY_BUFFER_TO_IMAGE = 7,
-  CL_INTERNAL_KERNEL_MAX = 8
+  CL_ENQUEUE_COPY_IMAGE_TO_BUFFER_0 = 6,   //copy image 2d to buffer
+  CL_ENQUEUE_COPY_IMAGE_TO_BUFFER_1 = 7,   //copy image 3d tobuffer
+  CL_ENQUEUE_COPY_BUFFER_TO_IMAGE_0 = 8,   //copy buffer to image 2d
+  CL_ENQUEUE_COPY_BUFFER_TO_IMAGE_1 = 9,   //copy buffer to image 3d
+  CL_INTERNAL_KERNEL_MAX = 10
 };
 
 struct _cl_context_prop {
