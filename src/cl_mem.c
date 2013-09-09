@@ -1,4 +1,4 @@
-/* 
+/*
  * Copyright © 2012 Intel Corporation
  *
  * This library is free software; you can redistribute it and/or
@@ -25,7 +25,6 @@
 #include "cl_device_id.h"
 #include "cl_driver.h"
 #include "cl_khr_icd.h"
-#include "cl_program.h"
 #include "cl_kernel.h"
 #include "cl_command_queue.h"
 
@@ -135,7 +134,7 @@ cl_get_image_info(cl_mem mem,
                   size_t *param_value_size_ret)
 {
   int err;
-  CHECK_IMAGE(mem);
+  CHECK_IMAGE(mem, image);
 
   switch(param_name)
   {
@@ -581,7 +580,7 @@ cl_mem_copy_buffer_rect(cl_command_queue queue, cl_mem src_buf, cl_mem dst_buf,
   cl_kernel ker;
   size_t global_off[] = {0,0,0};
   size_t global_sz[] = {1,1,1};
-  size_t local_sz[] = {LOCAL_SZ_2,LOCAL_SZ_1,LOCAL_SZ_0};
+  size_t local_sz[] = {LOCAL_SZ_0,LOCAL_SZ_1,LOCAL_SZ_1};
   if(region[1] == 1) local_sz[1] = 1;
   if(region[2] == 1) local_sz[2] = 1;
   global_sz[0] = ((region[0] + local_sz[0] - 1) / local_sz[0]) * local_sz[0];
@@ -591,7 +590,7 @@ cl_mem_copy_buffer_rect(cl_command_queue queue, cl_mem src_buf, cl_mem dst_buf,
   cl_int src_offset = src_origin[2]*src_slice_pitch + src_origin[1]*src_row_pitch + src_origin[0];
   cl_int dst_offset = dst_origin[2]*dst_slice_pitch + dst_origin[1]*dst_row_pitch + dst_origin[0];
 
-  static const char *kernel_str =
+  static const char *str_kernel =
       "kernel void __cl_cpy_buffer_rect ( \n"
       "       global char* src, global char* dst, \n"
       "       unsigned int region0, unsigned int region1, unsigned int region2, \n"
@@ -611,25 +610,9 @@ cl_mem_copy_buffer_rect(cl_command_queue queue, cl_mem src_buf, cl_mem dst_buf,
 
   /* We use one kernel to copy the data. The kernel is lazily created. */
   assert(src_buf->ctx == dst_buf->ctx);
-  if (!src_buf->ctx->internal_prgs[index])
-  {
-    size_t length = strlen(kernel_str) + 1;
-    src_buf->ctx->internal_prgs[index] = cl_program_create_from_source(src_buf->ctx, 1, &kernel_str, &length, NULL);
-
-    if (!src_buf->ctx->internal_prgs[index])
-      return CL_OUT_OF_RESOURCES;
-
-    ret = cl_program_build(src_buf->ctx->internal_prgs[index], NULL);
-    if (ret != CL_SUCCESS)
-      return CL_OUT_OF_RESOURCES;
-
-    src_buf->ctx->internal_prgs[index]->is_built = 1;
-
-    src_buf->ctx->internel_kernels[index] = cl_kernel_dup(src_buf->ctx->internal_prgs[index]->ker[0]);
-  }
 
   /* setup the kernel and run. */
-  ker = src_buf->ctx->internel_kernels[index];
+  ker = cl_context_get_static_kernel(queue->ctx, index, str_kernel, NULL);
   if (!ker)
     return CL_OUT_OF_RESOURCES;
 
@@ -644,6 +627,102 @@ cl_mem_copy_buffer_rect(cl_command_queue queue, cl_mem src_buf, cl_mem dst_buf,
   cl_kernel_set_arg(ker, 8, sizeof(cl_int), &src_slice_pitch);
   cl_kernel_set_arg(ker, 9, sizeof(cl_int), &dst_row_pitch);
   cl_kernel_set_arg(ker, 10, sizeof(cl_int), &dst_slice_pitch);
+
+  ret = cl_command_queue_ND_range(queue, ker, 1, global_off, global_sz, local_sz);
+  cl_command_queue_finish(queue);
+
+  return ret;
+}
+
+LOCAL cl_int
+cl_mem_kernel_copy_image(cl_command_queue queue, struct _cl_mem_image* src_image, struct _cl_mem_image* dst_image,
+                         const size_t *src_origin, const size_t *dst_origin, const size_t *region) {
+  cl_int ret;
+  cl_kernel ker;
+  size_t global_off[] = {0,0,0};
+  size_t global_sz[] = {1,1,1};
+  size_t local_sz[] = {LOCAL_SZ_0,LOCAL_SZ_1,LOCAL_SZ_2};
+  cl_int index = CL_ENQUEUE_COPY_IMAGE_0;
+  char option[40] = "";
+
+  if(region[1] == 1) local_sz[1] = 1;
+  if(region[2] == 1) local_sz[2] = 1;
+  global_sz[0] = ((region[0] + local_sz[0] - 1) / local_sz[0]) * local_sz[0];
+  global_sz[1] = ((region[1] + local_sz[1] - 1) / local_sz[1]) * local_sz[1];
+  global_sz[2] = ((region[2] + local_sz[2] - 1) / local_sz[2]) * local_sz[2];
+
+  if(src_image->image_type == CL_MEM_OBJECT_IMAGE3D) {
+    strcat(option, "-D SRC_IMAGE_3D");
+    index += 1;
+  }
+  if(dst_image->image_type == CL_MEM_OBJECT_IMAGE3D) {
+    strcat(option, " -D DST_IMAGE_3D");
+    index += 2;
+  }
+
+  static const char *str_kernel =
+      "#ifdef SRC_IMAGE_3D \n"
+      "  #define SRC_IMAGE_TYPE image3d_t \n"
+      "  #define SRC_COORD_TYPE int3 \n"
+      "#else \n"
+      "  #define SRC_IMAGE_TYPE image2d_t \n"
+      "  #define SRC_COORD_TYPE int2 \n"
+      "#endif \n"
+      "#ifdef DST_IMAGE_3D \n"
+      "  #define DST_IMAGE_TYPE image3d_t \n"
+      "  #define DST_COORD_TYPE int3 \n"
+      "#else \n"
+      "  #define DST_IMAGE_TYPE image2d_t \n"
+      "  #define DST_COORD_TYPE int2 \n"
+      "#endif \n"
+      "kernel void __cl_copy_image ( \n"
+      "       __read_only SRC_IMAGE_TYPE src_image, __write_only DST_IMAGE_TYPE dst_image, \n"
+      "       unsigned int region0, unsigned int region1, unsigned int region2, \n"
+      "       unsigned int src_origin0, unsigned int src_origin1, unsigned int src_origin2, \n"
+      "       unsigned int dst_origin0, unsigned int dst_origin1, unsigned int dst_origin2) { \n"
+      "  int i = get_global_id(0); \n"
+      "  int j = get_global_id(1); \n"
+      "  int k = get_global_id(2); \n"
+      "  int4 color; \n"
+      "  const sampler_t sampler = CLK_NORMALIZED_COORDS_FALSE | CLK_ADDRESS_NONE | CLK_FILTER_NEAREST; \n"
+      "  SRC_COORD_TYPE src_coord; \n"
+      "  DST_COORD_TYPE dst_coord; \n"
+      "  if((i >= region0) || (j>= region1) || (k>=region2)) \n"
+      "    return; \n"
+      "  src_coord.x = src_origin0 + i; \n"
+      "  src_coord.y = src_origin1 + j; \n"
+      "#ifdef SRC_IMAGE_3D \n"
+      "  src_coord.z = src_origin2 + k; \n"
+      "#endif \n"
+      "  dst_coord.x = dst_origin0 + i; \n"
+      "  dst_coord.y = dst_origin1 + j; \n"
+      "#ifdef SRC_IMAGE_3D \n"
+      "  dst_coord.z = dst_origin2 + k; \n"
+      "#endif \n"
+      "  color = read_imagei(src_image, sampler, src_coord); \n"
+      "  write_imagei(dst_image, src_coord, color); \n"
+      "}";
+
+
+  /* We use one kernel to copy the data. The kernel is lazily created. */
+  assert(src_image->base.ctx == dst_image->base.ctx);
+
+  /* setup the kernel and run. */
+  ker = cl_context_get_static_kernel(queue->ctx, index, str_kernel, option);
+  if (!ker)
+    return CL_OUT_OF_RESOURCES;
+
+  cl_kernel_set_arg(ker, 0, sizeof(cl_mem), &src_image);
+  cl_kernel_set_arg(ker, 1, sizeof(cl_mem), &dst_image);
+  cl_kernel_set_arg(ker, 2, sizeof(cl_int), &region[0]);
+  cl_kernel_set_arg(ker, 3, sizeof(cl_int), &region[1]);
+  cl_kernel_set_arg(ker, 4, sizeof(cl_int), &region[2]);
+  cl_kernel_set_arg(ker, 5, sizeof(cl_int), &src_origin[0]);
+  cl_kernel_set_arg(ker, 6, sizeof(cl_int), &src_origin[1]);
+  cl_kernel_set_arg(ker, 7, sizeof(cl_int), &src_origin[2]);
+  cl_kernel_set_arg(ker, 8, sizeof(cl_int), &dst_origin[0]);
+  cl_kernel_set_arg(ker, 9, sizeof(cl_int), &dst_origin[1]);
+  cl_kernel_set_arg(ker, 10, sizeof(cl_int), &dst_origin[2]);
 
   ret = cl_command_queue_ND_range(queue, ker, 1, global_off, global_sz, local_sz);
   cl_command_queue_finish(queue);

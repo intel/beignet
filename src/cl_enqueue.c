@@ -164,7 +164,7 @@ cl_int cl_enqueue_read_image(enqueue_data *data)
   void* src_ptr;
 
   cl_mem mem = data->mem_obj;
-  CHECK_IMAGE(mem);
+  CHECK_IMAGE(mem, image);
   const size_t* origin = data->origin;
   const size_t* region = data->region;
 
@@ -209,7 +209,7 @@ cl_int cl_enqueue_write_image(enqueue_data *data)
   void* dst_ptr;
 
   cl_mem mem = data->mem_obj;
-  CHECK_IMAGE(mem);
+  CHECK_IMAGE(mem, image);
   const size_t *origin = data->origin;
   const size_t *region = data->region;
 
@@ -224,7 +224,7 @@ cl_int cl_enqueue_write_image(enqueue_data *data)
   if (!origin[0] && region[0] == image->w && data->row_pitch == image->row_pitch &&
       (region[2] == 1 || (!origin[1] && region[1] == image->h && data->slice_pitch == image->slice_pitch)))
   {
-    memcpy(dst_ptr, data->ptr, region[2] == 1 ? data->row_pitch*region[1] : data->slice_pitch*region[2]);
+    memcpy(dst_ptr, data->const_ptr, region[2] == 1 ? data->row_pitch*region[1] : data->slice_pitch*region[2]);
   }
   else {
     cl_uint y, z;
@@ -236,7 +236,7 @@ cl_int cl_enqueue_write_image(enqueue_data *data)
         src += data->row_pitch;
         dst += image->row_pitch;
       }
-      data->ptr = (char*)data->ptr + data->slice_pitch;
+      data->const_ptr = (char*)data->const_ptr + data->slice_pitch;
       dst_ptr = (char*)dst_ptr + image->slice_pitch;
     }
   }
@@ -373,6 +373,7 @@ cl_int cl_enqueue_handle(enqueue_data* data)
     case EnqueueUnmapMemObject:
       return cl_enqueue_unmap_mem_object(data);
     case EnqueueCopyBufferRect:
+    case EnqueueCopyImage:
     case EnqueueNDRangeKernel:
       cl_gpgpu_event_resume((cl_gpgpu_event)data->ptr);   //goto default
     default:

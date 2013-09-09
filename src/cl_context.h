@@ -43,9 +43,9 @@ enum _cl_internal_ker_type {
   CL_ENQUEUE_COPY_BUFFER = 0,
   CL_ENQUEUE_COPY_BUFFER_RECT = 1,
   CL_ENQUEUE_COPY_IMAGE_0 = 2,             //copy image 2d to image 2d
-  CL_ENQUEUE_COPY_IMAGE_1 = 3,             //copy image 2d to image 2d
-  CL_ENQUEUE_COPY_IMAGE_2 = 4,             //copy image 2d to image 2d
-  CL_ENQUEUE_COPY_IMAGE_3 = 5,             //copy image 2d to image 2d
+  CL_ENQUEUE_COPY_IMAGE_1 = 3,             //copy image 3d to image 2d
+  CL_ENQUEUE_COPY_IMAGE_2 = 4,             //copy image 2d to image 3d
+  CL_ENQUEUE_COPY_IMAGE_3 = 5,             //copy image 3d to image 3d
   CL_ENQUEUE_COPY_IMAGE_TO_BUFFER = 6,
   CL_ENQUEUE_COPY_BUFFER_TO_IMAGE = 7,
   CL_INTERNAL_KERNEL_MAX = 8
@@ -131,6 +131,9 @@ extern cl_int cl_context_ND_kernel(cl_context,
 
 /* Used for allocation */
 extern cl_buffer_mgr cl_context_get_bufmgr(cl_context ctx);
+
+/* Get the internal used kernel */
+extern cl_kernel cl_context_get_static_kernel(cl_context ctx, cl_int index, const char *str_kernel, const char * str_option);
 
 #endif /* __CL_CONTEXT_H__ */
 

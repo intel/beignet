@@ -26,6 +26,8 @@
 #include "cl_utils.h"
 #include "cl_driver.h"
 #include "cl_khr_icd.h"
+#include "cl_kernel.h"
+#include "cl_program.h"
 
 #include "CL/cl.h"
 #include "CL/cl_gl.h"
@@ -243,3 +245,26 @@ cl_context_get_bufmgr(cl_context ctx)
   return cl_driver_get_bufmgr(ctx->drv);
 }
 
+cl_kernel
+cl_context_get_static_kernel(cl_context ctx, cl_int index, const char * str_kernel, const char * str_option)
+{
+  cl_int ret;
+  if (!ctx->internal_prgs[index])
+  {
+    size_t length = strlen(str_kernel) + 1;
+    ctx->internal_prgs[index] = cl_program_create_from_source(ctx, 1, &str_kernel, &length, NULL);
+
+    if (!ctx->internal_prgs[index])
+      return NULL;
+
+    ret = cl_program_build(ctx->internal_prgs[index], str_option);
+    if (ret != CL_SUCCESS)
+      return NULL;
+
+    ctx->internal_prgs[index]->is_built = 1;
+
+    ctx->internel_kernels[index] = cl_kernel_dup(ctx->internal_prgs[index]->ker[0]);
+  }
+
+  return ctx->internel_kernels[index];
+}

@@ -1635,7 +1635,7 @@ clEnqueueReadImage(cl_command_queue      command_queue,
   enqueue_data *data, no_wait_data = { 0 };
 
   CHECK_QUEUE(command_queue);
-  CHECK_IMAGE(mem);
+  CHECK_IMAGE(mem, image);
   if (command_queue->ctx != mem->ctx) {
      err = CL_INVALID_CONTEXT;
      goto error;
@@ -1717,7 +1717,7 @@ clEnqueueWriteImage(cl_command_queue     command_queue,
   enqueue_data *data, no_wait_data = { 0 };
 
   CHECK_QUEUE(command_queue);
-  CHECK_IMAGE(mem);
+  CHECK_IMAGE(mem, image);
   if (command_queue->ctx != mem->ctx) {
     err = CL_INVALID_CONTEXT;
     goto error;
@@ -1784,8 +1784,8 @@ error:
 
 cl_int
 clEnqueueCopyImage(cl_command_queue      command_queue,
-                   cl_mem                src_image,
-                   cl_mem                dst_image,
+                   cl_mem                src_mem,
+                   cl_mem                dst_mem,
                    const size_t *        src_origin,
                    const size_t *        dst_origin,
                    const size_t *        region,
@@ -1793,8 +1793,69 @@ clEnqueueCopyImage(cl_command_queue      command_queue,
                    const cl_event *      event_wait_list,
                    cl_event *            event)
 {
-  NOT_IMPLEMENTED;
-  return 0;
+  cl_int err = CL_SUCCESS;
+  enqueue_data *data, no_wait_data = { 0 };
+  cl_bool overlap = CL_TRUE;
+  cl_int i = 0;
+
+  CHECK_QUEUE(command_queue);
+  CHECK_IMAGE(src_mem, src_image);
+  CHECK_IMAGE(dst_mem, dst_image);
+  if (command_queue->ctx != src_mem->ctx ||
+      command_queue->ctx != dst_mem->ctx) {
+    err = CL_INVALID_CONTEXT;
+    goto error;
+  }
+
+  if (src_image->fmt.image_channel_order != dst_image->fmt.image_channel_order ||
+      src_image->fmt.image_channel_data_type != dst_image->fmt.image_channel_data_type) {
+    err = CL_IMAGE_FORMAT_MISMATCH;
+    goto error;
+  }
+
+  if (!src_origin || !region || src_origin[0] + region[0] > src_image->w ||
+      src_origin[1] + region[1] > src_image->h || src_origin[2] + region[2] > src_image->depth) {
+    err = CL_INVALID_VALUE;
+    goto error;
+  }
+
+  if (!dst_origin || !region || dst_origin[0] + region[0] > dst_image->w ||
+      dst_origin[1] + region[1] > dst_image->h || dst_origin[2] + region[2] > dst_image->depth) {
+    err = CL_INVALID_VALUE;
+    goto error;
+  }
+
+  if ((src_image->image_type == CL_MEM_OBJECT_IMAGE2D && (src_origin[2] != 0 || region[2] != 1)) ||
+      (dst_image->image_type == CL_MEM_OBJECT_IMAGE2D && (dst_origin[2] != 0 || region[2] != 1))) {
+    err = CL_INVALID_VALUE;
+    goto error;
+  }
+
+  if (src_image == dst_image) {
+    for(i = 0; i < 3; i++)
+      overlap = overlap && (src_origin[i] < dst_origin[i] + region[i])
+                        && (dst_origin[i] < src_origin[i] + region[i]);
+    if(overlap == CL_TRUE) {
+      err = CL_MEM_COPY_OVERLAP;
+      goto error;
+    }
+  }
+
+  cl_mem_kernel_copy_image(command_queue, src_image, dst_image, src_origin, dst_origin, region);
+
+  TRY(cl_event_check_waitlist, num_events_in_wait_list, event_wait_list, event, src_mem->ctx);
+
+  data = &no_wait_data;
+  data->type = EnqueueCopyImage;
+  data->queue = command_queue;
+
+  if(handle_events(command_queue, num_events_in_wait_list, event_wait_list,
+                   event, data, CL_COMMAND_COPY_IMAGE) == CL_ENQUEUE_EXECUTE_IMM) {
+    err = cl_command_queue_flush(command_queue);
+  }
+
+error:
+  return err;
 }
 
 cl_int
@@ -1978,7 +2039,7 @@ clEnqueueMapImage(cl_command_queue   command_queue,
   enqueue_data *data, no_wait_data = { 0 };
 
   CHECK_QUEUE(command_queue);
-  CHECK_IMAGE(mem);
+  CHECK_IMAGE(mem, image);
   if (command_queue->ctx != mem->ctx) {
     err = CL_INVALID_CONTEXT;
     goto error;

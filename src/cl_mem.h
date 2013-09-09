@@ -186,10 +186,14 @@ extern void cl_mem_gl_delete(struct _cl_mem_gl_image *);
 /* Add one more reference to this object */
 extern void cl_mem_add_ref(cl_mem);
 
-/* api clEnqueueCopy buffer rect help function */
+/* api clEnqueueCopyBufferRect help function */
 extern cl_int cl_mem_copy_buffer_rect(cl_command_queue, cl_mem, cl_mem,
                                      const size_t *, const size_t *, const size_t *,
                                      size_t, size_t, size_t, size_t);
+
+/* api clEnqueueCopyImage help function */
+extern cl_int cl_mem_kernel_copy_image(cl_command_queue, struct _cl_mem_image*, struct _cl_mem_image*,
+                                      const size_t *, const size_t *, const size_t *);
 /* Directly map a memory object */
 extern void *cl_mem_map(cl_mem);
 
