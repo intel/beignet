@@ -42,6 +42,15 @@ cl_program_release_sources(cl_program p)
   }
 }
 
+static void
+cl_program_release_binary(cl_program p)
+{
+  if (p->binary) {
+    cl_free(p->binary);
+    p->binary = NULL;
+  }
+}
+
 LOCAL void
 cl_program_delete(cl_program p)
 {
@@ -53,8 +62,9 @@ cl_program_delete(cl_program p)
   /* We are not done with it yet */
   if ((ref = atomic_dec(&p->ref_n)) > 1) return;
 
-  /* Destroy the sources if still allocated */
+  /* Destroy the sources and binary if still allocated */
   cl_program_release_sources(p);
+  cl_program_release_binary(p);
 
   /* Release the build options. */
   if (p->build_opts) {
@@ -149,7 +159,6 @@ cl_program_create_from_binary(cl_context             ctx,
                               cl_int *               binary_status,
                               cl_int *               errcode_ret)
 {
-#if 0
   cl_program program = NULL;
   cl_int err = CL_SUCCESS;
 
@@ -174,7 +183,16 @@ cl_program_create_from_binary(cl_context             ctx,
     goto error;
   }
 
-  // TRY_ALLOC (program, cl_program_new(ctx, (const char *) binaries[0], lengths[0]));
+  program = cl_program_new(ctx);
+
+  // TODO:  Need to check the binary format here to return CL_INVALID_BINARY.
+  TRY_ALLOC(program->binary, cl_calloc(lengths[0], sizeof(char)));
+  memcpy(program->binary, binaries[0], lengths[0]);
+  program->binary_sz = lengths[0];
+  program->source_type = FROM_BINARY;
+
+  if (binary_status)
+    binary_status[0] = CL_SUCCESS;
 
 exit:
   if (errcode_ret)
@@ -184,8 +202,7 @@ error:
   cl_program_delete(program);
   program = NULL;
   goto exit;
-#endif
-  NOT_IMPLEMENTED;
+
   return CL_SUCCESS;
 }
 
@@ -295,6 +312,16 @@ cl_program_build(cl_program p, const char *options)
 
   if (p->source_type == FROM_SOURCE) {
     p->opaque = gbe_program_new_from_source(p->source, 0, options, NULL, NULL);
+    if (UNLIKELY(p->opaque == NULL)) {
+      err = CL_INVALID_PROGRAM;
+      goto error;
+    }
+
+    /* Create all the kernels */
+    TRY (cl_program_load_gen_program, p);
+    p->source_type = FROM_LLVM;
+  } else if (p->source_type == FROM_BINARY) {
+    p->opaque = gbe_program_new_from_binary(p->binary, p->binary_sz);
     if (UNLIKELY(p->opaque == NULL)) {
       err = CL_INVALID_PROGRAM;
       goto error;

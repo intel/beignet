@@ -33,6 +33,7 @@
 #include "llvm/llvm_to_gen.hpp"
 
 #include <cstring>
+#include <sstream>
 #include <memory>
 #include <iostream>
 #include <fstream>
@@ -115,8 +116,19 @@ namespace gbe {
   }
 
   static gbe_program genProgramNewFromBinary(const char *binary, size_t size) {
-    NOT_IMPLEMENTED;
-    return NULL;
+    using namespace gbe;
+    std::string binary_content;
+    binary_content.assign(binary, size);
+    GenProgram *program = GBE_NEW_NO_ARG(GenProgram);
+    std::istringstream ifs(binary_content, std::ostringstream::binary);
+
+    if (!program->deserializeFromBin(ifs)) {
+      delete program;
+      return NULL;
+    }
+
+    //program->printStatus(0, std::cout);
+    return reinterpret_cast<gbe_program>(program);
   }
 
   static gbe_program genProgramNewFromLLVM(const char *fileName,
