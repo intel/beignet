@@ -575,8 +575,8 @@ namespace gbe
           switch(c->getType()->getTypeID()) {
             case Type::TypeID::IntegerTyID: {
               const ConstantInt *ci = dyn_cast<ConstantInt>(c);
-              *(int *)mem = ci->isNegative() ? ci->getSExtValue() : ci->getZExtValue();
-              size = sizeof(int);
+              *(uint64_t *)mem = ci->isNegative() ? ci->getSExtValue() : ci->getZExtValue();
+              size = ci->getBitWidth() / 8;
               break;
             }
             case Type::TypeID::FloatTyID: {
@@ -604,8 +604,6 @@ namespace gbe
         unsigned len = cda->getNumElements();
         uint64_t elementSize = cda->getElementByteSize();
         Type::TypeID typeID = cda->getElementType()->getTypeID();
-        if(typeID == Type::TypeID::IntegerTyID)
-          elementSize = sizeof(unsigned);
         void *mem = malloc(elementSize * len);
         for(unsigned j = 0; j < len; j ++) {
           switch(typeID) {
@@ -623,14 +621,15 @@ namespace gbe
               break;
             case Type::TypeID::IntegerTyID:
              {
-              unsigned u = (unsigned) cda->getElementAsInteger(j);
-              memcpy((unsigned *)mem + j, &u, elementSize);
+              uint64_t u = (uint64_t) cda->getElementAsInteger(j);
+              memcpy((char *)mem + j*elementSize, &u, elementSize);
              }
               break;
             default:
               NOT_IMPLEMENTED;
           }
         }
+
         unit.newConstant((char *)mem, name, elementSize * len, sizeof(unsigned));
         free(mem);
       }
@@ -825,7 +824,7 @@ namespace gbe
         auto offset1 = dyn_cast<ConstantInt>(CE->getOperand(1));
         GBE_ASSERT(offset1->getZExtValue() == 0);
         auto offset2 = dyn_cast<ConstantInt>(CE->getOperand(2));
-        int type_size = pointer->getType()->getTypeID() == Type::TypeID::DoubleTyID ? sizeof(double) : sizeof(int);
+        int type_size = pointer->getType()->getPrimitiveSizeInBits() / 8;
         int type_offset = offset2->getSExtValue() * type_size;
         auto pointer_name = pointer->getName().str();
         ir::Register pointer_reg = ir::Register(unit.getConstantSet().getConstant(pointer_name).getReg());
