@@ -96,6 +96,7 @@ namespace gbe
     void emitBinaryInstruction(const SelectionInstruction &insn);
     void emitBinaryWithTempInstruction(const SelectionInstruction &insn);
     void emitTernaryInstruction(const SelectionInstruction &insn);
+    void emitI64HADDInstruction(const SelectionInstruction &insn);
     void emitI64ShiftInstruction(const SelectionInstruction &insn);
     void emitI64CompareInstruction(const SelectionInstruction &insn);
     void emitCompareInstruction(const SelectionInstruction &insn);

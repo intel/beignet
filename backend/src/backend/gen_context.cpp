@@ -444,6 +444,33 @@ namespace gbe
     p->pop();
   }
 
+  void GenContext::emitI64HADDInstruction(const SelectionInstruction &insn) {
+    GenRegister dest = ra->genReg(insn.dst(0));
+    GenRegister x = ra->genReg(insn.src(0));
+    GenRegister y = ra->genReg(insn.src(1));
+    GenRegister a = ra->genReg(insn.dst(1));
+    GenRegister b = ra->genReg(insn.dst(2));
+    GenRegister c = ra->genReg(insn.dst(3));
+    GenRegister d = ra->genReg(insn.dst(4));
+    a.type = b.type = c.type = d.type = GEN_TYPE_UD;
+    loadBottomHalf(a, x);
+    loadBottomHalf(b, y);
+    loadTopHalf(c, x);
+    loadTopHalf(d, y);
+    addWithCarry(a, a, b);
+    addWithCarry(c, c, b);
+    addWithCarry(c, c, d);
+    p->ADD(b, b, d);
+    p->SHR(a, a, GenRegister::immud(1));
+    p->SHL(d, c, GenRegister::immud(31));
+    p->OR(a, a, d);
+    p->SHR(c, c, GenRegister::immud(1));
+    p->SHL(d, b, GenRegister::immud(31));
+    p->OR(c, c, d);
+    storeBottomHalf(dest, a);
+    storeTopHalf(dest, c);
+  }
+
   void GenContext::emitI64ShiftInstruction(const SelectionInstruction &insn) {
     GenRegister dest = ra->genReg(insn.dst(0));
     GenRegister x = ra->genReg(insn.src(0));

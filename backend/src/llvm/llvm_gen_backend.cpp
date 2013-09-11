@@ -1841,6 +1841,7 @@ namespace gbe
       case GEN_OCL_USUB_SAT_LONG:
       case GEN_OCL_HADD:
       case GEN_OCL_RHADD:
+      case GEN_OCL_I64HADD:
         this->newRegister(&I);
         break;
       default:
@@ -2278,6 +2279,16 @@ namespace gbe
             ctx.HADD(getUnsignedType(ctx, I.getType()), dst, src0, src1);
             break;
           }
+          case GEN_OCL_I64HADD:
+           {
+            GBE_ASSERT(AI != AE);
+            const ir::Register src0 = this->getRegister(*(AI++));
+            GBE_ASSERT(AI != AE);
+            const ir::Register src1 = this->getRegister(*(AI++));
+            const ir::Register dst = this->getRegister(&I);
+            ctx.I64HADD(ir::TYPE_U64, dst, src0, src1);
+            break;
+           }
           case GEN_OCL_RHADD: {
             GBE_ASSERT(AI != AE); const ir::Register src0 = this->getRegister(*AI); ++AI;
             GBE_ASSERT(AI != AE); const ir::Register src1 = this->getRegister(*AI); ++AI;

@@ -462,7 +462,7 @@ INLINE_OVERLOADABLE ulong upsample(uint hi, uint lo) {
   return __gen_ocl_upsample((long)hi, (long)lo);
 }
 
-PURE CONST uint __gen_ocl_hadd(uint x, uint y);
+OVERLOADABLE uint __gen_ocl_hadd(uint x, uint y);
 PURE CONST uint __gen_ocl_rhadd(uint x, uint y);
 #define DEC DEF(char); DEF(uchar); DEF(short); DEF(ushort)
 #define DEF(type) INLINE_OVERLOADABLE type hadd(type x, type y) { return (x + y) >> 1; }
@@ -472,15 +472,22 @@ DEC
 DEC
 #undef DEF
 #undef DEC
-INLINE_OVERLOADABLE int hadd(int x, int y) { return (x < 0 && y > 0) || (x > 0 && y < 0) ? ((x + y) >> 1) : __gen_ocl_hadd(x, y); }
+INLINE_OVERLOADABLE int hadd(int x, int y) {
+  return (x < 0 && y > 0) || (x > 0 && y < 0) ?
+         ((x + y) >> 1) :
+         __gen_ocl_hadd((uint)x, (uint)y);
+}
 INLINE_OVERLOADABLE uint hadd(uint x, uint y) { return __gen_ocl_hadd(x, y); }
 INLINE_OVERLOADABLE int rhadd(int x, int y) { return (x < 0 && y > 0) || (x > 0 && y < 0) ? ((x + y + 1) >> 1) : __gen_ocl_rhadd(x, y); }
 INLINE_OVERLOADABLE uint rhadd(uint x, uint y) { return __gen_ocl_rhadd(x, y); }
+OVERLOADABLE ulong __gen_ocl_hadd(ulong x, ulong y);
 INLINE_OVERLOADABLE long hadd(long x, long y) {
-  return 0;
+  return (x < 0 && y > 0) || (x > 0 && y < 0) ?
+         ((x + y) >> 1) :
+         __gen_ocl_hadd((ulong)x, (ulong)y);
 }
 INLINE_OVERLOADABLE ulong hadd(ulong x, ulong y) {
-  return 0;
+  return __gen_ocl_hadd(x, y);
 }
 INLINE_OVERLOADABLE long rhadd(long x, long y) {
   return 0;
