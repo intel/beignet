@@ -154,6 +154,10 @@ target_link_libraries(
                       ${CMAKE_THREAD_LIBS_INIT}
                       ${CMAKE_DL_LIBS})
 
+link_directories (${LLVM_LIBRARY_DIR})
+ADD_EXECUTABLE(gbe_bin_generater gbe_bin_generater.cpp)
+TARGET_LINK_LIBRARIES(gbe_bin_generater gbe)
+
 install (TARGETS gbe LIBRARY DESTINATION lib)
 install (FILES ${pch_object} DESTINATION lib)
 install (FILES backend/program.h DESTINATION include/gen)
