@@ -473,6 +473,8 @@ namespace gbe
     void CONVI64_TO_F(Reg dst, Reg src, GenRegister tmp[3]);
     /*! (x+y)>>1 without mod. overflow */
     void I64HADD(Reg dst, Reg src0, Reg src1, GenRegister tmp[4]);
+    /*! (x+y+1)>>1 without mod. overflow */
+    void I64RHADD(Reg dst, Reg src0, Reg src1, GenRegister tmp[4]);
     /*! Shift a 64-bit integer */
     void I64Shift(SelectionOpcode opcode, Reg dst, Reg src0, Reg src1, GenRegister tmp[6]);
     /*! Compare 64-bit integer */
@@ -1094,6 +1096,15 @@ namespace gbe
       insn->dst(i + 1) = tmp[i];
   }
 
+  void Selection::Opaque::I64RHADD(Reg dst, Reg src0, Reg src1, GenRegister tmp[4]) {
+    SelectionInstruction *insn = this->appendInsn(SEL_OP_I64RHADD, 5, 2);
+    insn->dst(0) = dst;
+    insn->src(0) = src0;
+    insn->src(1) = src1;
+    for(int i = 0; i < 4; i ++)
+      insn->dst(i + 1) = tmp[i];
+  }
+
   void Selection::Opaque::I64Shift(SelectionOpcode opcode, Reg dst, Reg src0, Reg src1, GenRegister tmp[6]) {
     SelectionInstruction *insn = this->appendInsn(opcode, 7, 2);
     insn->dst(0) = dst;
@@ -1694,6 +1705,14 @@ namespace gbe
           for(int i=0; i<4; i++)
             tmp[i] = sel.selReg(sel.reg(FAMILY_DWORD));
           sel.I64HADD(dst, src0, src1, tmp);
+          break;
+         }
+        case OP_I64RHADD:
+         {
+          GenRegister tmp[4];
+          for(int i=0; i<4; i++)
+            tmp[i] = sel.selReg(sel.reg(FAMILY_DWORD));
+          sel.I64RHADD(dst, src0, src1, tmp);
           break;
          }
         case OP_UPSAMPLE_SHORT:

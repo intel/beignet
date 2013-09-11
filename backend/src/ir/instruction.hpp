@@ -535,6 +535,8 @@ namespace ir {
   Instruction RHADD(Type type, Register dst, Register src0, Register src1);
   /*! i64hadd.type dst src */
   Instruction I64HADD(Type type, Register dst, Register src0, Register src1);
+  /*! i64rhadd.type dst src */
+  Instruction I64RHADD(Type type, Register dst, Register src0, Register src1);
   /*! tan.type dst src */
   Instruction RCP(Type type, Register dst, Register src);
   /*! abs.type dst src */
