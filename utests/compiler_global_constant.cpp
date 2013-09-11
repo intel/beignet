@@ -22,6 +22,7 @@ void compiler_global_constant(void)
   // Check results
   OCL_MAP_BUFFER(0);
   for (uint32_t i = 0; i < n; ++i)
+//    printf("%d result %d reference %d\n", i, ((uint32_t *)buf_data[0])[i], m[i%3] + e + r);
     OCL_ASSERT(((uint32_t *)buf_data[0])[i] == m[i%3] + e + r);
   OCL_UNMAP_BUFFER(0);
 }
