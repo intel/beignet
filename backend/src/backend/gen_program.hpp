@@ -42,8 +42,12 @@ namespace gbe
     virtual ~GenKernel(void);
     /*! Implements base class */
     virtual const char *getCode(void) const;
-    /*! Implements base class */
+    /*! Set the instruction stream (to be implemented) */
+    virtual const void setCode(const char *, size_t size);
+    /*! Implements get the code size */
     virtual size_t getCodeSize(void) const;
+    /*! Implements printStatus*/
+    virtual void printStatus(int indent, std::ostream& outs);
     GenInstruction *insns; //!< Instruction stream
     uint32_t insnNum;      //!< Number of instructions
     GBE_CLASS(GenKernel);  //!< Use custom allocators
@@ -59,6 +63,10 @@ namespace gbe
     virtual ~GenProgram(void);
     /*! Implements base class */
     virtual Kernel *compileKernel(const ir::Unit &unit, const std::string &name);
+    /*! Allocate an empty kernel. */
+    virtual Kernel *allocateKernel(const std::string &name) {
+      return GBE_NEW(GenKernel, name);
+    }
     /*! Use custom allocators */
     GBE_CLASS(GenProgram);
   };

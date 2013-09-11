@@ -40,7 +40,7 @@ namespace ir {
    *  for each individual image. And that individual image could be used
    *  at backend to identify this image's location.
    */
-  class ImageSet
+  class ImageSet : public Serializable
   {
   public:
     /*! Append an image argument. */
@@ -60,6 +60,29 @@ namespace ir {
     ImageSet(const ImageSet& other) : regMap(other.regMap.begin(), other.regMap.end()) { }
     ImageSet() {}
     ~ImageSet();
+
+    static const uint32_t magic_begin = TO_MAGIC('I', 'M', 'A', 'G');
+    static const uint32_t magic_end = TO_MAGIC('G', 'A', 'M', 'I');
+
+    /* format:
+       magic_begin     |
+       regMap_size     |
+       element_1       |
+       ........        |
+       element_n       |
+       indexMap_size   |
+       element_1       |
+       ........        |
+       element_n       |
+       magic_end       |
+       total_size
+    */
+
+    /*! Implements the serialization. */
+    virtual size_t serializeToBin(std::ostream& outs);
+    virtual size_t deserializeFromBin(std::istream& ins);
+    virtual void printStatus(int indent, std::ostream& outs);
+
   private:
     map<Register, struct ImageInfo *> regMap;
     map<uint32_t, struct ImageInfo *> indexMap;

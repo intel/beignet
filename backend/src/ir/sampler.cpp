@@ -74,5 +74,103 @@ namespace ir {
     appendReg(samplerReg, SAMPLER_ID(id), ctx);
   }
 
+
+#define OUT_UPDATE_SZ(elt) SERIALIZE_OUT(elt, outs, ret_size)
+#define IN_UPDATE_SZ(elt) DESERIALIZE_IN(elt, ins, total_size)
+
+  /*! Implements the serialization. */
+  size_t SamplerSet::serializeToBin(std::ostream& outs) {
+    size_t ret_size = 0;
+
+    OUT_UPDATE_SZ(magic_begin);
+
+    OUT_UPDATE_SZ(samplerMap.size());
+    for (auto iter : samplerMap) {
+      OUT_UPDATE_SZ(iter.first);
+      OUT_UPDATE_SZ(iter.second.reg);
+      OUT_UPDATE_SZ(iter.second.slot);
+    }
+
+    OUT_UPDATE_SZ(regMap.size());
+    for (auto iter : regMap) {
+      OUT_UPDATE_SZ(iter.first);
+      OUT_UPDATE_SZ(iter.second.reg);
+      OUT_UPDATE_SZ(iter.second.slot);
+    }
+
+    OUT_UPDATE_SZ(magic_end);
+    OUT_UPDATE_SZ(ret_size);
+
+    return ret_size;
+  }
+
+  size_t SamplerSet::deserializeFromBin(std::istream& ins) {
+    size_t total_size = 0;
+    uint32_t magic;
+    size_t sampler_map_sz = 0;
+
+    IN_UPDATE_SZ(magic);
+    if (magic != magic_begin)
+      return 0;
+
+    IN_UPDATE_SZ(sampler_map_sz);
+    for (size_t i = 0; i < sampler_map_sz; i++) {
+      uint32_t key;
+      ir::SamplerRegSlot reg_slot;
+
+      IN_UPDATE_SZ(key);
+      IN_UPDATE_SZ(reg_slot.reg);
+      IN_UPDATE_SZ(reg_slot.slot);
+      samplerMap.insert(std::make_pair(key, reg_slot));
+    }
+
+    IN_UPDATE_SZ(sampler_map_sz);
+    for (size_t i = 0; i < sampler_map_sz; i++) {
+      ir::Register key;
+      ir::SamplerRegSlot reg_slot;
+
+      IN_UPDATE_SZ(key);
+      IN_UPDATE_SZ(reg_slot.reg);
+      IN_UPDATE_SZ(reg_slot.slot);
+      regMap.insert(std::make_pair(key, reg_slot));
+    }
+
+    IN_UPDATE_SZ(magic);
+    if (magic != magic_end)
+      return 0;
+
+    size_t total_bytes;
+    IN_UPDATE_SZ(total_bytes);
+    if (total_bytes + sizeof(total_size) != total_size)
+      return 0;
+
+    return total_size;
+  }
+
+  void SamplerSet::printStatus(int indent, std::ostream& outs) {
+    using namespace std;
+    string spaces = indent_to_str(indent);
+    string spaces_nl = indent_to_str(indent + 4);
+
+    outs << spaces << "------------ Begin SamplerSet ------------" << "\n";
+
+    outs << spaces_nl << "  SamplerSet Map: [index, sampler_reg, sampler_slot]\n";
+    outs << spaces_nl << "     samplerMap size: " << samplerMap.size() << "\n";
+
+    for (auto iter : samplerMap) {
+      outs << spaces_nl <<  "     [" << iter.first << ", "
+           << iter.second.reg << ", " << iter.second.slot << "]\n";
+    }
+
+    outs << spaces_nl << "  SamplerSet Map: [reg, sampler_reg, sampler_slot]\n";
+    outs << spaces_nl << "     regMap size: " << regMap.size() << "\n";
+    for (auto iter : regMap) {
+      outs << spaces_nl << "     [" << iter.first << ", "
+           << iter.second.reg << ", " << iter.second.slot << "]\n";
+    }
+
+    outs << spaces << "------------- End SamplerSet -------------" << "\n";
+  }
+
 } /* namespace ir */
 } /* namespace gbe */

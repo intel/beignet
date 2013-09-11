@@ -41,7 +41,7 @@ namespace ir {
     uint32_t slot;
   };
 
-  class SamplerSet
+  class SamplerSet : public Serializable
   {
   public:
     /*! Append the specified sampler and return the allocated offset.
@@ -66,6 +66,29 @@ namespace ir {
 
     SamplerSet(const SamplerSet& other) : samplerMap(other.samplerMap.begin(), other.samplerMap.end()) { }
     SamplerSet() {}
+
+    static const uint32_t magic_begin = TO_MAGIC('S', 'A', 'M', 'P');
+    static const uint32_t magic_end = TO_MAGIC('P', 'M', 'A', 'S');
+
+    /* format:
+       magic_begin     |
+       samplerMap_size |
+       element_1       |
+       ........        |
+       element_n       |
+       regMap_size     |
+       element_1       |
+       ........        |
+       element_n       |
+       magic_end       |
+       total_size
+    */
+
+    /*! Implements the serialization. */
+    virtual size_t serializeToBin(std::ostream& outs);
+    virtual size_t deserializeFromBin(std::istream& ins);
+    virtual void printStatus(int indent, std::ostream& outs);
+
   private:
     void appendReg(const Register reg, uint32_t key, Context *ctx);
     map<uint32_t, SamplerRegSlot> samplerMap;

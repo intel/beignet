@@ -37,6 +37,7 @@
 #include <fstream>
 #include <dlfcn.h>
 #include <sstream>
+#include <iostream>
 #include <unistd.h>
 
 /* Not defined for LLVM 3.0 */
@@ -123,6 +124,321 @@ namespace gbe {
     }
     return true;
   }
+
+#define OUT_UPDATE_SZ(elt) SERIALIZE_OUT(elt, outs, ret_size)
+#define IN_UPDATE_SZ(elt) DESERIALIZE_IN(elt, ins, total_size)
+
+  size_t Program::serializeToBin(std::ostream& outs) {
+    size_t ret_size = 0;
+    size_t ker_num = kernels.size();
+    int has_constset = 0;
+
+    OUT_UPDATE_SZ(magic_begin);
+
+    if (constantSet) {
+      has_constset = 1;
+      OUT_UPDATE_SZ(has_constset);
+      size_t sz = constantSet->serializeToBin(outs);
+      if (!sz)
+        return 0;
+
+      ret_size += sz;
+    } else {
+      OUT_UPDATE_SZ(has_constset);
+    }
+
+    OUT_UPDATE_SZ(ker_num);
+    for (auto ker : kernels) {
+      size_t sz = ker.second->serializeToBin(outs);
+      if (!sz)
+        return 0;
+
+      ret_size += sz;
+    }
+
+    OUT_UPDATE_SZ(magic_end);
+
+    OUT_UPDATE_SZ(ret_size);
+    return ret_size;
+  }
+
+  size_t Program::deserializeFromBin(std::istream& ins) {
+    size_t total_size = 0;
+    int has_constset = 0;
+    size_t ker_num;
+    uint32_t magic;
+
+    IN_UPDATE_SZ(magic);
+    if (magic != magic_begin)
+      return 0;
+
+    IN_UPDATE_SZ(has_constset);
+    if(has_constset) {
+      constantSet = new ir::ConstantSet;
+      size_t sz = constantSet->deserializeFromBin(ins);
+
+      if (sz == 0) {
+        return 0;
+      }
+
+      total_size += sz;
+    }
+
+    IN_UPDATE_SZ(ker_num);
+
+    for (size_t i = 0; i < ker_num; i++) {
+      size_t ker_serial_sz;
+      std::string ker_name; // Just a empty name here.
+      Kernel* ker = allocateKernel(ker_name);
+
+      if(!(ker_serial_sz = ker->deserializeFromBin(ins)))
+        return 0;
+
+      kernels.insert(std::make_pair(ker->getName(), ker));
+      total_size += ker_serial_sz;
+    }
+
+    IN_UPDATE_SZ(magic);
+    if (magic != magic_end)
+      return 0;
+
+    size_t total_bytes;
+    IN_UPDATE_SZ(total_bytes);
+    if (total_bytes + sizeof(total_size) != total_size)
+      return 0;
+
+    return total_size;
+  }
+
+  size_t Kernel::serializeToBin(std::ostream& outs) {
+    unsigned int i;
+    size_t ret_size = 0;
+    int has_samplerset = 0;
+    int has_imageset = 0;
+
+    OUT_UPDATE_SZ(magic_begin);
+
+    OUT_UPDATE_SZ(name.size());
+    outs.write(name.c_str(), name.size());
+    ret_size += sizeof(char)*name.size();
+
+    OUT_UPDATE_SZ(argNum);
+    for (i = 0; i < argNum; i++) {
+      KernelArgument& arg = args[i];
+      OUT_UPDATE_SZ(arg.type);
+      OUT_UPDATE_SZ(arg.size);
+      OUT_UPDATE_SZ(arg.bufSize);
+    }
+
+    OUT_UPDATE_SZ(patches.size());
+    for (auto patch : patches) {
+      unsigned int tmp;
+      tmp = patch.type;
+      OUT_UPDATE_SZ(tmp);
+      tmp = patch.subType;
+      OUT_UPDATE_SZ(tmp);
+      tmp = patch.offset;
+      OUT_UPDATE_SZ(tmp);
+    }
+
+    OUT_UPDATE_SZ(curbeSize);
+    OUT_UPDATE_SZ(simdWidth);
+    OUT_UPDATE_SZ(stackSize);
+    OUT_UPDATE_SZ(useSLM);
+
+    /* samplers. */
+    if (samplerSet) {
+      has_samplerset = 1;
+      OUT_UPDATE_SZ(has_samplerset);
+      size_t sz = samplerSet->serializeToBin(outs);
+      if (!sz)
+        return 0;
+
+      ret_size += sz;
+    } else {
+      OUT_UPDATE_SZ(has_samplerset);
+    }
+
+    /* images. */
+    if (imageSet) {
+      has_imageset = 1;
+      OUT_UPDATE_SZ(has_imageset);
+      size_t sz = imageSet->serializeToBin(outs);
+      if (!sz)
+        return 0;
+
+      ret_size += sz;
+    } else {
+      OUT_UPDATE_SZ(has_imageset);
+    }
+
+    /* Code. */
+    const char * code = getCode();
+    OUT_UPDATE_SZ(getCodeSize());
+    outs.write(code, getCodeSize()*sizeof(char));
+    ret_size += getCodeSize()*sizeof(char);
+
+    OUT_UPDATE_SZ(magic_end);
+
+    OUT_UPDATE_SZ(ret_size);
+    return ret_size;
+  }
+
+  size_t Kernel::deserializeFromBin(std::istream& ins) {
+    size_t total_size = 0;
+    int has_samplerset = 0;
+    int has_imageset = 0;
+    size_t code_size = 0;
+    uint32_t magic = 0;
+    size_t patch_num = 0;
+
+    IN_UPDATE_SZ(magic);
+    if (magic != magic_begin)
+      return 0;
+
+    size_t name_len;
+    IN_UPDATE_SZ(name_len);
+    char* c_name = new char[name_len+1];
+    ins.read(c_name, name_len*sizeof(char));
+    total_size += sizeof(char)*name_len;
+    c_name[name_len] = 0;
+    name = c_name;
+    delete[] c_name;
+
+    IN_UPDATE_SZ(argNum);
+    args = GBE_NEW_ARRAY_NO_ARG(KernelArgument, argNum);
+    for (uint32_t i = 0; i < argNum; i++) {
+      KernelArgument& arg = args[i];
+      IN_UPDATE_SZ(arg.type);
+      IN_UPDATE_SZ(arg.size);
+      IN_UPDATE_SZ(arg.bufSize);
+    }
+
+    IN_UPDATE_SZ(patch_num);
+    for (uint32_t i = 0; i < patch_num; i++) {
+      unsigned int tmp;
+      PatchInfo patch;
+      IN_UPDATE_SZ(tmp);
+      patch.type = tmp;
+      IN_UPDATE_SZ(tmp);
+      patch.subType = tmp;
+      IN_UPDATE_SZ(tmp);
+      patch.offset = tmp;
+
+      patches.push_back(patch);
+    }
+
+    IN_UPDATE_SZ(curbeSize);
+    IN_UPDATE_SZ(simdWidth);
+    IN_UPDATE_SZ(stackSize);
+    IN_UPDATE_SZ(useSLM);
+
+    IN_UPDATE_SZ(has_samplerset);
+    if (has_samplerset) {
+      samplerSet = GBE_NEW(ir::SamplerSet);
+      size_t sz = samplerSet->deserializeFromBin(ins);
+      if (sz == 0) {
+        return 0;
+      }
+
+      total_size += sz;
+    }
+
+    IN_UPDATE_SZ(has_imageset);
+    if (has_imageset) {
+      imageSet = GBE_NEW(ir::ImageSet);
+      size_t sz = imageSet->deserializeFromBin(ins);
+      if (sz == 0) {
+        return 0;
+      }
+
+      total_size += sz;
+    }
+
+    IN_UPDATE_SZ(code_size);
+    if (code_size) {
+      char* code = GBE_NEW_ARRAY_NO_ARG(char, code_size);
+      ins.read(code, code_size*sizeof(char));
+      total_size += sizeof(char)*code_size;
+      setCode(code, code_size);
+    }
+
+    IN_UPDATE_SZ(magic);
+    if (magic != magic_end)
+      return 0;
+
+    size_t total_bytes;
+    IN_UPDATE_SZ(total_bytes);
+    if (total_bytes + sizeof(total_size) != total_size)
+      return 0;
+
+    return total_size;
+  }
+
+#undef OUT_UPDATE_SZ
+#undef IN_UPDATE_SZ
+
+  void Program::printStatus(int indent, std::ostream& outs) {
+    using namespace std;
+    string spaces = indent_to_str(indent);
+
+    outs << spaces << "=============== Begin Program ===============" << "\n";
+
+    if (constantSet) {
+      constantSet->printStatus(indent + 4, outs);
+    }
+
+    for (auto ker : kernels) {
+      ker.second->printStatus(indent + 4, outs);
+    }
+
+    outs << spaces << "================ End Program ================" << "\n";
+  }
+
+  void Kernel::printStatus(int indent, std::ostream& outs) {
+    using namespace std;
+    string spaces = indent_to_str(indent);
+    string spaces_nl = indent_to_str(indent + 4);
+    int num;
+
+    outs << spaces << "+++++++++++ Begin Kernel +++++++++++" << "\n";
+    outs << spaces_nl << "Kernel Name: " << name << "\n";
+    outs << spaces_nl << "  curbeSize: " << curbeSize << "\n";
+    outs << spaces_nl << "  simdWidth: " << simdWidth << "\n";
+    outs << spaces_nl << "  stackSize: " << stackSize << "\n";
+    outs << spaces_nl << "  useSLM: " << useSLM << "\n";
+
+    outs << spaces_nl << "  Argument Number is " << argNum << "\n";
+    for (uint32_t i = 0; i < argNum; i++) {
+      KernelArgument& arg = args[i];
+      outs << spaces_nl << "  Arg " << i << ":\n";
+      outs << spaces_nl << "      type value: "<< arg.type << "\n";
+      outs << spaces_nl << "      size: "<< arg.size << "\n";
+      outs << spaces_nl << "      bufSize: "<< arg.bufSize << "\n";
+    }
+
+    outs << spaces_nl << "  Patches Number is " << patches.size() << "\n";
+    num = 0;
+    for (auto patch : patches) {
+      num++;
+      outs << spaces_nl << "  patch " << num << ":\n";
+      outs << spaces_nl << "      type value: "<< patch.type << "\n";
+      outs << spaces_nl << "      subtype value: "<< patch.subType << "\n";
+      outs << spaces_nl << "      offset: "<< patch.offset << "\n";
+    }
+
+    if (samplerSet) {
+      samplerSet->printStatus(indent + 4, outs);
+    }
+
+    if (imageSet) {
+      imageSet->printStatus(indent + 4, outs);
+    }
+
+    outs << spaces << "++++++++++++ End Kernel ++++++++++++" << "\n";
+  }
+
+  /*********************** End of Program class member function *************************/
 
   static void programDelete(gbe_program gbeProgram) {
     gbe::Program *program = (gbe::Program*)(gbeProgram);

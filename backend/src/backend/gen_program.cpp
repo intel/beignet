@@ -27,12 +27,15 @@
 #include "backend/gen_program.hpp"
 #include "backend/gen_context.hpp"
 #include "backend/gen_defs.hpp"
+#include "backend/gen/gen_mesa_disasm.h"
 #include "backend/gen_reg_allocation.hpp"
 #include "ir/unit.hpp"
 #include "llvm/llvm_to_gen.hpp"
 
 #include <cstring>
 #include <memory>
+#include <iostream>
+#include <fstream>
 
 namespace gbe {
 
@@ -41,7 +44,31 @@ namespace gbe {
   {}
   GenKernel::~GenKernel(void) { GBE_SAFE_DELETE_ARRAY(insns); }
   const char *GenKernel::getCode(void) const { return (const char*) insns; }
+  const void GenKernel::setCode(const char * ins, size_t size) {
+    insns = (GenInstruction *)ins;
+    insnNum = size / sizeof(GenInstruction);
+  }
   size_t GenKernel::getCodeSize(void) const { return insnNum * sizeof(GenInstruction); }
+
+  void GenKernel::printStatus(int indent, std::ostream& outs) {
+    Kernel::printStatus(indent, outs);
+
+    FILE *f = fopen("/dev/null", "w");
+    char *buf = new char[4096];
+    setbuffer(f, buf, 4096);
+
+    for (uint32_t i = 0; i < insnNum; i++) {
+      gen_disasm(f, insns+i);
+      outs << buf;
+      fflush(f);
+      setbuffer(f, NULL, 0);
+      setbuffer(f, buf, 4096);
+    }
+
+    setbuffer(f, NULL, 0);
+    delete [] buf;
+    fclose(f);
+  }
 
   GenProgram::GenProgram(void) {}
   GenProgram::~GenProgram(void) {}

@@ -24,6 +24,9 @@
 #include <cstdlib>
 #include <cstdio>
 #include <iostream>
+#include <ostream>
+#include <istream>
+#include <string>
 #include <cassert>
 #include <new>
 
@@ -322,6 +325,45 @@ private:
   INLINE NonCopyable(const NonCopyable&) {}
   INLINE NonCopyable& operator= (const NonCopyable&) {return *this;}
 };
+
+#define TO_MAGIC(A, B, C, D)  (A<<24 | B<<16 | C<<8 | D)
+
+class Serializable
+{
+public:
+  INLINE Serializable(void) = default;
+  INLINE Serializable(const Serializable&) = default;
+  INLINE Serializable& operator= (const Serializable&) = default;
+
+  virtual size_t serializeToBin(std::ostream& outs) = 0;
+  virtual size_t deserializeFromBin(std::istream& ins) = 0;
+
+  /* These two will follow LLVM's ABI. */
+  virtual size_t serializeToLLVM(void) { return 0;/* not implemented now. */}
+  virtual size_t deserializeFromLLVM(void) { return 0;/* not implemented now. */}
+
+  virtual void printStatus(int indent = 0, std::ostream& outs = std::cout) { }
+
+protected:
+  static std::string indent_to_str(int indent) {
+    std::string ind(indent, ' ');
+    return ind;
+  }
+};
+
+/* Help Macro for serialization. */
+#define SERIALIZE_OUT(elt, out, sz)			\
+     do {						\
+	  auto tmp_val = elt;				\
+	  out.write((char *)(&tmp_val), sizeof(elt));	\
+	  sz += sizeof(elt);				\
+     } while(0)
+
+#define DESERIALIZE_IN(elt, in, sz)			\
+     do {						\
+	  in.read((char *)(&(elt)), sizeof(elt));	\
+	  sz += sizeof(elt);				\
+     } while(0)
 
 ////////////////////////////////////////////////////////////////////////////////
 /// Disable some compiler warnings

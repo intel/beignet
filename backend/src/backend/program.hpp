@@ -67,7 +67,7 @@ namespace gbe {
   }
 
   /*! Describe a compiled kernel */
-  class Kernel : public NonCopyable
+  class Kernel : public NonCopyable, public Serializable
   {
   public:
     /*! Create an empty kernel with the given name */
@@ -76,6 +76,8 @@ namespace gbe {
     virtual ~Kernel(void);
     /*! Return the instruction stream (to be implemented) */
     virtual const char *getCode(void) const = 0;
+    /*! Set the instruction stream.*/
+    virtual const void setCode(const char *, size_t size) = 0;
     /*! Return the instruction stream size (to be implemented) */
     virtual size_t getCodeSize(void) const = 0;
     /*! Get the kernel name */
@@ -128,9 +130,37 @@ namespace gbe {
     size_t getImageSize(void) const { return imageSet->getDataSize(); }
     /*! Get defined image value array */
     void getImageData(ImageInfo *images) const { imageSet->getData(images); }
+
+    static const uint32_t magic_begin = TO_MAGIC('K', 'E', 'R', 'N');
+    static const uint32_t magic_end = TO_MAGIC('N', 'R', 'E', 'K');
+
+    /* format:
+       magic_begin       |
+       name_size         |
+       name              |
+       arg_num           |
+       args              |
+       PatchInfo_num     |
+       PatchInfo         |
+       curbeSize         |
+       simdWidth         |
+       stackSize         |
+       useSLM            |
+       samplers          |
+       images            |
+       code_size         |
+       code              |
+       magic_end
+    */
+
+    /*! Implements the serialization. */
+    virtual size_t serializeToBin(std::ostream& outs);
+    virtual size_t deserializeFromBin(std::istream& ins);
+    virtual void printStatus(int indent, std::ostream& outs);
+
   protected:
     friend class Context;      //!< Owns the kernels
-    const std::string name;    //!< Kernel name
+    std::string name;    //!< Kernel name
     KernelArgument *args;      //!< Each argument
     vector<PatchInfo> patches; //!< Indicates how to build the curbe
     uint32_t argNum;           //!< Number of function arguments
@@ -146,7 +176,7 @@ namespace gbe {
   };
 
   /*! Describe a compiled program */
-  class Program : public NonCopyable
+  class Program : public NonCopyable, public Serializable
   {
   public:
     /*! Create an empty program */
@@ -186,9 +216,32 @@ namespace gbe {
     size_t getGlobalConstantSize(void) const { return constantSet->getDataSize(); }
     /*! Get the content of global constant arrays */
     void getGlobalConstantData(char *mem) const { constantSet->getData(mem); }
+
+    static const uint32_t magic_begin = TO_MAGIC('P', 'R', 'O', 'G');
+    static const uint32_t magic_end = TO_MAGIC('G', 'O', 'R', 'P');
+
+    /* format:
+       magic_begin       |
+       constantSet_flag  |
+       constSet_data     |
+       kernel_num        |
+       kernel_1          |
+       ........          |
+       kernel_n          |
+       magic_end         |
+       total_size
+    */
+
+    /*! Implements the serialization. */
+    virtual size_t serializeToBin(std::ostream& outs);
+    virtual size_t deserializeFromBin(std::istream& ins);
+    virtual void printStatus(int indent, std::ostream& outs);
+
   protected:
     /*! Compile a kernel */
     virtual Kernel *compileKernel(const ir::Unit &unit, const std::string &name) = 0;
+    /*! Allocate an empty kernel. */
+    virtual Kernel *allocateKernel(const std::string &name) = 0;
     /*! Kernels sorted by their name */
     hash_map<std::string, Kernel*> kernels;
     /*! Global (constants) outside any kernel */

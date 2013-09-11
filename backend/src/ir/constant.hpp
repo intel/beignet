@@ -52,6 +52,8 @@ namespace ir {
     /*! Nothing happens here */
     INLINE ~Constant(void) {}
     const std::string& getName(void) const { return name; }
+    uint32_t getSize (void) const { return size; }
+    uint32_t getAlignment (void) const { return alignment; }
     uint32_t getOffset(void) const { return offset; }
     uint16_t getReg(void) const { return reg; }
     void setReg(uint16_t reg) { this->reg = reg; }
@@ -67,7 +69,7 @@ namespace ir {
   /*! A constant set is a set of immutable data associated to a compilation
    *  unit
    */
-  class ConstantSet
+  class ConstantSet : public Serializable
   {
   public:
     /*! Append a new constant in the constant set */
@@ -93,7 +95,8 @@ namespace ir {
         mem[i] = data[i];
     }
     ConstantSet() {}
-    ConstantSet(const ConstantSet& other) : data(other.data), constants(other.constants) {}
+    ConstantSet(const ConstantSet& other) : Serializable(other),
+                data(other.data), constants(other.constants) {}
     ConstantSet & operator = (const ConstantSet& other) {
       if (&other != this) {
         data = other.data;
@@ -101,6 +104,27 @@ namespace ir {
       }
       return *this;
     }
+
+    static const uint32_t magic_begin = TO_MAGIC('C', 'N', 'S', 'T');
+    static const uint32_t magic_end = TO_MAGIC('T', 'S', 'N', 'C');
+
+    /* format:
+       magic_begin     |
+       const_data_size |
+       const_data      |
+       constant_1_size |
+       constant_1      |
+       ........        |
+       constant_n_size |
+       constant_n      |
+       magic_end       |
+       total_size
+    */
+
+    /*! Implements the serialization. */
+    virtual size_t serializeToBin(std::ostream& outs);
+    virtual size_t deserializeFromBin(std::istream& ins);
+
   private:
     vector<char> data;         //!< The constant data serialized in one array
     vector<Constant> constants;//!< Each constant description
