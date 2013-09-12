@@ -344,6 +344,8 @@ public:
 
   virtual void printStatus(int indent = 0, std::ostream& outs = std::cout) { }
 
+  virtual ~Serializable(void) { }
+
 protected:
   static std::string indent_to_str(int indent) {
     std::string ind(indent, ' ');
