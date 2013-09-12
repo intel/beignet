@@ -141,10 +141,21 @@ set (utests_sources
   compiler_long_mult.cpp
   compiler_long_cmp.cpp
   compiler_bool_cross_basic_block.cpp
+  load_program_from_bin.cpp
   utest_assert.cpp
   utest.cpp
   utest_file_map.cpp
   utest_helper.cpp)
+
+SET (kernel_bin ${CMAKE_CURRENT_SOURCE_DIR}/../kernels/compiler_ceil)
+ADD_CUSTOM_COMMAND(
+    OUTPUT ${kernel_bin}.bin
+    COMMAND ${CMAKE_CURRENT_BINARY_DIR}/../backend/src/gbe_bin_generater ${kernel_bin}.cl -o${kernel_bin}.bin
+    DEPENDS ${CMAKE_CURRENT_BINARY_DIR}/../backend/src/gbe_bin_generater ${kernel_bin}.cl
+    )
+
+ADD_CUSTOM_TARGET(kernel_bin.bin
+    DEPENDS ${kernel_bin}.bin)
 
 if (EGL_FOUND AND MESA_SOURCE_FOUND)
 SET(utests_sources ${utests_sources} compiler_fill_gl_image.cpp)
@@ -158,7 +169,7 @@ TARGET_LINK_LIBRARIES(utests cl m ${OPENGL_LIBRARIES} ${CMAKE_THREAD_LIBS_INIT})
 
 ADD_EXECUTABLE(utest_run utest_run.cpp)
 TARGET_LINK_LIBRARIES(utest_run utests)
+ADD_DEPENDENCIES (utest_run kernel_bin.bin)
 
 ADD_EXECUTABLE(flat_address_space runtime_flat_address_space.cpp)
 TARGET_LINK_LIBRARIES(flat_address_space utests)
-

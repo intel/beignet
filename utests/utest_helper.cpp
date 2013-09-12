@@ -205,8 +205,8 @@ clpanic(const char *msg, int rval)
   exit(-1);
 }
 
-static char*
-do_kiss_path(const char *file, cl_device_id device)
+char*
+cl_do_kiss_path(const char *file, cl_device_id device)
 {
   cl_int ver;
   const char *sub_path = NULL;
@@ -239,7 +239,7 @@ cl_kernel_init(const char *file_name, const char *kernel_name, int format, const
   cl_int status = CL_SUCCESS;
 
   /* Load the program and build it */
-  ker_path = do_kiss_path(file_name, device);
+  ker_path = cl_do_kiss_path(file_name, device);
   if (format == LLVM)
     program = clCreateProgramWithLLVMIntel(ctx, 1, &device, ker_path, &status);
   else if (format == SOURCE) {
@@ -513,7 +513,7 @@ struct bmphdr {
 int *cl_read_bmp(const char *filename, int *width, int *height)
 {
   struct bmphdr hdr;
-  char *bmppath = do_kiss_path(filename, device);
+  char *bmppath = cl_do_kiss_path(filename, device);
   FILE *fp = fopen(bmppath, "rb");
   assert(fp);
 

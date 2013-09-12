@@ -186,6 +186,9 @@ extern int cl_ocl_init(void);
 extern int cl_kernel_init(const char *file_name,
                 const char *kernel_name, int format, const char * build_opt);
 
+/* Get the file path */
+extern char* cl_do_kiss_path(const char *file, cl_device_id device);
+
 /* init the bunch of global varaibles here */
 extern int cl_test_init(const char *file_name, const char *kernel_name, int format);
 
