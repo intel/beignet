@@ -59,7 +59,7 @@
 .endian_little = CL_TRUE,
 .available = CL_TRUE,
 .compiler_available = CL_FALSE, /* XXX */
-.execution_capabilities = CL_EXEC_KERNEL,
+.execution_capabilities = CL_EXEC_KERNEL | CL_EXEC_NATIVE_KERNEL,
 .queue_properties = CL_QUEUE_PROFILING_ENABLE,
 .platform = NULL, /* == intel_platform (set when requested) */
 /* IEEE 754, XXX does IVB support CL_FP_CORRECTLY_ROUNDED_DIVIDE_SQRT? */

@@ -40,6 +40,7 @@ typedef enum {
   EnqueueMapImage,
   EnqueueUnmapMemObject,
   EnqueueNDRangeKernel,
+  EnqueueNativeKernel,
   EnqueueInvalid
 } enqueue_type;
 
@@ -56,9 +57,10 @@ typedef struct _enqueue_data {
   size_t            slice_pitch;      /* Slice pitch */
   size_t            host_row_pitch;   /* Host row pitch, used in read/write buffer rect */
   size_t            host_slice_pitch; /* Host slice pitch, used in read/write buffer rect */
-  cl_map_flags      map_flags;        /* Map flags */
   const void *      const_ptr;        /* Const ptr for memory read */
-  void *            ptr;              /* ptr for write and return value */
+  void *            ptr;              /* Ptr for write and return value */
+  const cl_mem*     mem_list;         /* mem_list of clEnqueueNativeKernel */
+  void (*user_func)(void *);          /* pointer to a host-callable user function */
 } enqueue_data;
 
 /* Do real enqueue commands */

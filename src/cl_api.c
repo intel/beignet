@@ -1861,7 +1861,7 @@ error:
 
 cl_int
 clEnqueueCopyImageToBuffer(cl_command_queue  command_queue,
-                           cl_mem            src_image,
+                           cl_mem            src_mem,
                            cl_mem            dst_buffer,
                            const size_t *    src_origin,
                            const size_t *    region,
@@ -2005,7 +2005,6 @@ clEnqueueMapBuffer(cl_command_queue  command_queue,
   data->mem_obj     = buffer;
   data->offset      = offset;
   data->size        = size;
-  data->map_flags   = map_flags;
   data->ptr         = ptr;
 
   if(handle_events(command_queue, num_events_in_wait_list, event_wait_list,
@@ -2094,7 +2093,6 @@ clEnqueueMapImage(cl_command_queue   command_queue,
   data->region[0]   = region[0];  data->region[1] = region[1];  data->region[2] = region[2];
   data->row_pitch   = *image_row_pitch;
   data->slice_pitch = *image_slice_pitch;
-  data->map_flags   = map_flags;
   data->ptr         = ptr;
   data->offset      = offset;
 
@@ -2253,8 +2251,11 @@ clEnqueueTask(cl_command_queue   command_queue,
               const cl_event *   event_wait_list,
               cl_event *         event)
 {
-  NOT_IMPLEMENTED;
-  return 0;
+  const size_t global_size[3] = {1, 0, 0};
+  const size_t local_size[3]  = {1, 0, 0};
+
+  return clEnqueueNDRangeKernel(command_queue, kernel, 1, NULL, global_size, local_size,
+                                num_events_in_wait_list, event_wait_list, event);
 }
 
 cl_int
@@ -2269,8 +2270,58 @@ clEnqueueNativeKernel(cl_command_queue   command_queue,
                       const cl_event *   event_wait_list,
                       cl_event *         event)
 {
-  NOT_IMPLEMENTED;
-  return 0;
+  cl_int err = CL_SUCCESS;
+  void *new_args = NULL;
+  enqueue_data *data, no_wait_data = { 0 };
+  cl_int i;
+
+  if(user_func == NULL ||
+    (args == NULL && cb_args > 0) ||
+    (args == NULL && num_mem_objects ==0) ||
+    (args != NULL && cb_args == 0) ||
+    (num_mem_objects > 0 && (mem_list == NULL || args_mem_loc == NULL)) ||
+    (num_mem_objects == 0 && (mem_list != NULL || args_mem_loc != NULL))) {
+    err = CL_INVALID_VALUE;
+    goto error;
+  }
+
+  //Per spec, need copy args
+  if (cb_args)
+  {
+    new_args = malloc(cb_args);
+    if (!new_args)
+    {
+      err = CL_OUT_OF_HOST_MEMORY;
+      goto error;
+    }
+    memcpy(new_args, args, cb_args);
+
+    for (i=0; i<num_mem_objects; ++i)
+    {
+      CHECK_MEM(mem_list[i]);
+      args_mem_loc[i] = new_args + (args_mem_loc[i] - args);  //change to new args
+    }
+  }
+
+  TRY(cl_event_check_waitlist, num_events_in_wait_list, event_wait_list, event, command_queue->ctx);
+
+  data = &no_wait_data;
+  data->type        = EnqueueNativeKernel;
+  data->mem_list    = mem_list;
+  data->ptr         = new_args;
+  data->size        = cb_args;
+  data->offset      = (size_t)num_mem_objects;
+  data->const_ptr   = args_mem_loc;
+  data->user_func   = user_func;
+
+  if(handle_events(command_queue, num_events_in_wait_list, event_wait_list,
+                   event, data, CL_COMMAND_NATIVE_KERNEL) == CL_ENQUEUE_EXECUTE_IMM) {
+    err = cl_enqueue_handle(data);
+    if(event) cl_event_set_status(*event, CL_COMPLETE);
+  }
+
+error:
+  return err;
 }
 
 cl_int

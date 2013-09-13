@@ -66,8 +66,8 @@ cl_int cl_enqueue_read_buffer_rect(enqueue_data* data)
    offset = host_origin[0] + data->host_row_pitch*host_origin[1] + data->host_slice_pitch*host_origin[2];
    dst_ptr = (char *)data->ptr + offset;
 
-   if (!origin[0] && !host_origin[0] && data->row_pitch == data->host_row_pitch &&
-       (region[2] == 1 || (!origin[1] && !host_origin[1] && data->slice_pitch == data->host_slice_pitch)))
+   if (data->row_pitch == region[0] && data->row_pitch == data->host_row_pitch &&
+       (region[2] == 1 || (data->slice_pitch == region[0]*region[1] && data->slice_pitch == data->host_slice_pitch)))
    {
      memcpy(dst_ptr, src_ptr, region[2] == 1 ? data->row_pitch*region[1] : data->slice_pitch*region[2]);
    }
@@ -131,8 +131,8 @@ cl_int cl_enqueue_write_buffer_rect(enqueue_data *data)
   offset = host_origin[0] + data->host_row_pitch*host_origin[1] + data->host_slice_pitch*host_origin[2];
   src_ptr = (char*)data->const_ptr + offset;
 
-  if (!origin[0] && !host_origin[0] && data->row_pitch == data->host_row_pitch &&
-      (region[2] == 1 || (!origin[1] && !host_origin[1] && data->slice_pitch == data->host_slice_pitch)))
+  if (data->row_pitch == region[0] && data->row_pitch == data->host_row_pitch &&
+      (region[2] == 1 || (data->slice_pitch == region[0]*region[1] && data->slice_pitch == data->host_slice_pitch)))
   {
     memcpy(dst_ptr, src_ptr, region[2] == 1 ? data->row_pitch*region[1] : data->slice_pitch*region[2]);
   }
@@ -351,6 +351,32 @@ error:
   return err;
 }
 
+cl_int cl_enqueue_native_kernel(enqueue_data *data)
+{
+  cl_int err = CL_SUCCESS;
+  cl_uint num_mem_objects = (cl_uint)data->offset;
+  const cl_mem *mem_list = data->mem_list;
+  const void **args_mem_loc = (const void **)data->const_ptr;
+  cl_uint i;
+
+  for (i=0; i<num_mem_objects; ++i)
+  {
+      const cl_mem buffer = mem_list[i];
+      CHECK_MEM(buffer);
+
+      *((void **)args_mem_loc[i]) = cl_mem_map_auto(buffer);
+  }
+  data->user_func(data->ptr);
+
+  for (i=0; i<num_mem_objects; ++i)
+  {
+      cl_mem_unmap_auto(mem_list[i]);
+  }
+
+  free(data->ptr);
+error:
+  return err;
+}
 cl_int cl_enqueue_handle(enqueue_data* data)
 {
   switch(data->type) {
@@ -375,7 +401,10 @@ cl_int cl_enqueue_handle(enqueue_data* data)
     case EnqueueCopyBufferRect:
     case EnqueueCopyImage:
     case EnqueueNDRangeKernel:
-      cl_gpgpu_event_resume((cl_gpgpu_event)data->ptr);   //goto default
+      cl_gpgpu_event_resume((cl_gpgpu_event)data->ptr);
+      return CL_SUCCESS;
+    case EnqueueNativeKernel:
+      return cl_enqueue_native_kernel(data);
     default:
       return CL_SUCCESS;
   }
