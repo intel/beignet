@@ -1094,6 +1094,7 @@ namespace gbe
     const GenRegister vcoord = ra->genReg(insn.src(5));
     const GenRegister wcoord = ra->genReg(insn.src(6));
     uint32_t simdWidth = p->curr.execWidth;
+    uint32_t coord_cnt = 2;
     p->push();
     const uint32_t nr = msgPayload.nr;
     // prepare mesg desc and move to a0.0.
@@ -1101,9 +1102,11 @@ namespace gbe
     /* Prepare message payload. */
     p->MOV(GenRegister::f8grf(nr , 0), ucoord);
     p->MOV(GenRegister::f8grf(nr + (simdWidth/8), 0), vcoord);
-    if (insn.src(6).reg() != 0)
+    if (insn.src(6).reg() != 0) {
       p->MOV(GenRegister::f8grf(nr + (simdWidth/4), 0), wcoord);
-    p->SAMPLE(dst, msgPayload, false, bti, sampler, simdWidth, -1, 0);
+      coord_cnt++;
+    }
+    p->SAMPLE(dst, msgPayload, false, bti, sampler, coord_cnt, simdWidth, -1, 0);
     p->pop();
   }
 

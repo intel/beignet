@@ -1168,15 +1168,16 @@ namespace gbe
                           bool header_present,
                           unsigned char bti,
                           unsigned char sampler,
+                          unsigned int coord_cnt,
                           uint32_t simdWidth,
                           uint32_t writemask,
                           uint32_t return_format)
   {
      if (writemask == 0) return;
-     uint32_t msg_type = (simdWidth == 16) ?
+     uint32_t msg_type =  (simdWidth == 16) ?
                             GEN_SAMPLER_MESSAGE_SIMD16_SAMPLE : GEN_SAMPLER_MESSAGE_SIMD8_SAMPLE;
      uint32_t response_length = (4 * (simdWidth / 8));
-     uint32_t msg_length = (2 * (simdWidth / 8));
+     uint32_t msg_length = (coord_cnt * (simdWidth / 8));
      if (header_present)
        msg_length++;
      uint32_t simd_mode = (simdWidth == 16) ?

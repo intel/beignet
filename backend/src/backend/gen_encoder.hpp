@@ -168,6 +168,7 @@ namespace gbe
                 bool header_present,
                 unsigned char bti,
                 unsigned char sampler,
+                unsigned int coord_cnt,
                 unsigned int simdWidth,
                 uint32_t writemask,
                 uint32_t return_format);

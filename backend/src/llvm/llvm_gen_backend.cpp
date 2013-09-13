@@ -2119,11 +2119,7 @@ namespace gbe
             GBE_ASSERT(AI != AE); const ir::Register ucoord = this->getRegister(*AI); ++AI;
             GBE_ASSERT(AI != AE); const ir::Register vcoord = this->getRegister(*AI); ++AI;
             ir::Register wcoord;
-            if (it->second == GEN_OCL_READ_IMAGE10 ||
-                it->second == GEN_OCL_READ_IMAGE11 ||
-                it->second == GEN_OCL_READ_IMAGE12 ||
-                it->second == GEN_OCL_READ_IMAGE13 ||
-                it->second == GEN_OCL_READ_IMAGE14) {
+            if (it->second >= GEN_OCL_READ_IMAGE10 && it->second <= GEN_OCL_READ_IMAGE15) {
               GBE_ASSERT(AI != AE); wcoord = this->getRegister(*AI); ++AI;
             } else
               wcoord = ir::Register(0);
@@ -2192,11 +2188,7 @@ namespace gbe
             GBE_ASSERT(AI != AE); const ir::Register ucoord = this->getRegister(*AI); ++AI;
             GBE_ASSERT(AI != AE); const ir::Register vcoord = this->getRegister(*AI); ++AI;
             ir::Register wcoord;
-            if(it->second == GEN_OCL_WRITE_IMAGE10 ||
-               it->second == GEN_OCL_WRITE_IMAGE11 ||
-               it->second == GEN_OCL_WRITE_IMAGE12 ||
-               it->second == GEN_OCL_WRITE_IMAGE13 ||
-               it->second == GEN_OCL_WRITE_IMAGE14) {
+            if(it->second >= GEN_OCL_WRITE_IMAGE10 && it->second <= GEN_OCL_WRITE_IMAGE15) {
               GBE_ASSERT(AI != AE); wcoord = this->getRegister(*AI); ++AI;
             } else
               wcoord = ir::Register(0);

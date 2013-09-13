@@ -2260,37 +2260,56 @@ int __gen_ocl_get_image_depth(uint surface_id);
 #define GET_IMAGE(cl_image, surface_id) \
     uint surface_id = (uint)cl_image
 
-#define DECL_READ_IMAGE(type, suffix, coord_type) \
-  INLINE_OVERLOADABLE type read_image ##suffix(image2d_t cl_image, sampler_t sampler, coord_type coord) \
+#define DECL_READ_IMAGE(image_type, type, suffix, coord_type) \
+  INLINE_OVERLOADABLE type read_image ##suffix(image_type cl_image, sampler_t sampler, coord_type coord) \
   {\
     GET_IMAGE(cl_image, surface_id);\
-    return __gen_ocl_read_image ##suffix(surface_id, sampler, coord.s0, coord.s1);\
+    return __gen_ocl_read_image ##suffix(EXPEND_READ_COORD(surface_id, sampler, coord));\
   }
 
-#define DECL_READ_IMAGE_NOSAMPLER(type, suffix, coord_type) \
-  INLINE_OVERLOADABLE type read_image ##suffix(image2d_t cl_image, coord_type coord) \
+#define DECL_READ_IMAGE_NOSAMPLER(image_type, type, suffix, coord_type) \
+  INLINE_OVERLOADABLE type read_image ##suffix(image_type cl_image, coord_type coord) \
   {\
     GET_IMAGE(cl_image, surface_id);\
-    return __gen_ocl_read_image ##suffix(surface_id, CLK_NORMALIZED_COORDS_FALSE|CLK_ADDRESS_NONE|CLK_FILTER_NEAREST, coord.s0, coord.s1);\
+    return __gen_ocl_read_image ##suffix(EXPEND_READ_COORD(surface_id, CLK_NORMALIZED_COORDS_FALSE|CLK_ADDRESS_NONE|CLK_FILTER_NEAREST, coord));\
   }
 
-#define DECL_WRITE_IMAGE(type, suffix, coord_type) \
-  INLINE_OVERLOADABLE void write_image ##suffix(image2d_t cl_image, coord_type coord, type color)\
+#define DECL_WRITE_IMAGE(image_type, type, suffix, coord_type) \
+  INLINE_OVERLOADABLE void write_image ##suffix(image_type cl_image, coord_type coord, type color)\
   {\
     GET_IMAGE(cl_image, surface_id);\
-    __gen_ocl_write_image ##suffix(surface_id, coord.s0, coord.s1, color);\
+    __gen_ocl_write_image ##suffix(EXPEND_WRITE_COORD(surface_id, coord, color));\
   }
 
-#define DECL_IMAGE(type, suffix)        \
-  DECL_READ_IMAGE(type, suffix, int2)   \
-  DECL_READ_IMAGE(type, suffix, float2) \
-  DECL_READ_IMAGE_NOSAMPLER(type, suffix, int2) \
-  DECL_WRITE_IMAGE(type, suffix, int2)   \
-  DECL_WRITE_IMAGE(type, suffix, float2)
+#define EXPEND_READ_COORD(id, sampler, coord) id, sampler, coord.s0, coord.s1
+#define EXPEND_WRITE_COORD(id, coord, color) id, coord.s0, coord.s1, color
 
-DECL_IMAGE(int4, i)
-DECL_IMAGE(uint4, ui)
-DECL_IMAGE(float4, f)
+#define DECL_IMAGE(image_type, type, suffix, n)        \
+  DECL_READ_IMAGE(image_type, type, suffix, int ##n)   \
+  DECL_READ_IMAGE(image_type, type, suffix, float ##n) \
+  DECL_READ_IMAGE_NOSAMPLER(image_type, type, suffix, int ##n) \
+  DECL_WRITE_IMAGE(image_type, type, suffix, int ## n)   \
+  DECL_WRITE_IMAGE(image_type, type, suffix, float ## n)
+
+DECL_IMAGE(image2d_t, int4, i, 2)
+DECL_IMAGE(image2d_t, uint4, ui, 2)
+DECL_IMAGE(image2d_t, float4, f, 2)
+
+#undef EXPEND_READ_COORD
+#undef EXPEND_WRITE_COORD
+
+#define EXPEND_READ_COORD(id, sampler, coord) id, sampler, coord.s0, coord.s1, coord.s2
+#define EXPEND_WRITE_COORD(id, coord, color) id, coord.s0, coord.s1, coord.s2, color
+
+DECL_IMAGE(image3d_t, int4, i, 4)
+DECL_IMAGE(image3d_t, uint4, ui, 4)
+DECL_IMAGE(image3d_t, float4, f, 4)
+
+DECL_IMAGE(image3d_t, int4, i, 3)
+DECL_IMAGE(image3d_t, uint4, ui, 3)
+DECL_IMAGE(image3d_t, float4, f, 3)
+#undef EXPEND_READ_COORD
+#undef EXPEND_WRITE_COORD
 
 #undef DECL_IMAGE
 #undef DECL_READ_IMAGE
@@ -2352,40 +2371,6 @@ INLINE_OVERLOADABLE  size_t get_image_array_size(image2d_array_t image)
 INLINE_OVERLOADABLE  size_t get_image_array_size(image1d_array_t image)
   { return __gen_ocl_get_image_array_size(image); }
 #endif
-
-#define DECL_READ_IMAGE(type, suffix, coord_type) \
-  INLINE_OVERLOADABLE type read_image ## suffix(image3d_t cl_image, sampler_t sampler, coord_type coord) \
-  {\
-    GET_IMAGE(cl_image, surface_id);\
-    return __gen_ocl_read_image ## suffix(surface_id, (uint)sampler, coord.s0, coord.s1, coord.s2);\
-  }
-
-#define DECL_READ_IMAGE_NOSAMPLER(type, suffix, coord_type) \
-  INLINE_OVERLOADABLE type read_image ## suffix(image3d_t cl_image, coord_type coord) \
-  {\
-    GET_IMAGE(cl_image, surface_id);\
-    return __gen_ocl_read_image ## suffix(surface_id, CLK_NORMALIZED_COORDS_FALSE|CLK_ADDRESS_NONE|CLK_FILTER_NEAREST, coord.s0, coord.s1, coord.s2);\
-  }
-
-#define DECL_WRITE_IMAGE(type, suffix, coord_type) \
-  INLINE_OVERLOADABLE void write_image ## suffix(image3d_t cl_image, coord_type coord, type color)\
-  {\
-    GET_IMAGE(cl_image, surface_id);\
-    __gen_ocl_write_image ## suffix(surface_id, coord.s0, coord.s1, coord.s2, color);\
-  }
-
-#define DECL_IMAGE(type, suffix)        \
-  DECL_READ_IMAGE(type, suffix, int4)   \
-  DECL_READ_IMAGE(type, suffix, float4) \
-  DECL_READ_IMAGE_NOSAMPLER(type, suffix, int4) \
-  DECL_WRITE_IMAGE(type, suffix, int4)   \
-  DECL_WRITE_IMAGE(type, suffix, float4)
-
-DECL_IMAGE(int4, i)
-DECL_IMAGE(uint4, ui)
-DECL_IMAGE(float4, f)
-
-
 
 #pragma OPENCL EXTENSION cl_khr_fp64 : disable
 
