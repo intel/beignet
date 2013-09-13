@@ -529,6 +529,7 @@ clCreateImage2D(cl_context              context,
   cl_int err = CL_SUCCESS;
   CHECK_CONTEXT (context);
   cl_image_desc image_desc;
+  memset(&image_desc, 0, sizeof(image_desc));
 
   image_desc.image_type = CL_MEM_OBJECT_IMAGE2D;
   image_desc.image_width = image_width;

@@ -127,7 +127,7 @@ cl_command_queue_bind_image(cl_command_queue queue, cl_kernel k)
     set_image_info(k->curbe, &k->images[i], image);
     cl_gpgpu_bind_image(queue->gpgpu, k->images[i].idx, image->base.bo,
                         image->intel_fmt, image->image_type,
-                        image->w, image->h,
+                        image->w, image->h, image->depth,
                         image->row_pitch, image->tiling);
   }
   return CL_SUCCESS;

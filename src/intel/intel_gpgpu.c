@@ -574,6 +574,7 @@ intel_gpgpu_bind_image_gen7(intel_gpgpu_t *gpgpu,
                               cl_mem_object_type type,
                               int32_t w,
                               int32_t h,
+                              int32_t depth,
                               int32_t pitch,
                               int32_t tiling)
 {
@@ -587,6 +588,9 @@ intel_gpgpu_bind_image_gen7(intel_gpgpu_t *gpgpu,
   ss->ss1.base_addr = obj_bo->offset;
   ss->ss2.width = w - 1;
   ss->ss2.height = h - 1;
+  ss->ss3.depth = depth - 1;
+  ss->ss4.not_str_buf.rt_view_extent = depth - 1;
+  ss->ss4.not_str_buf.min_array_element = 0;
   ss->ss3.pitch = pitch - 1;
   ss->ss5.cache_control = cc_llc_l3;
   if (tiling == GPGPU_TILE_X) {
@@ -643,10 +647,11 @@ intel_gpgpu_bind_image(intel_gpgpu_t *gpgpu,
                        cl_mem_object_type type,
                        int32_t w,
                        int32_t h,
+                       int32_t depth,
                        int32_t pitch,
                        cl_gpgpu_tiling tiling)
 {
-  intel_gpgpu_bind_image_gen7(gpgpu, index, (drm_intel_bo*) obj_bo, format, type, w, h, pitch, tiling);
+  intel_gpgpu_bind_image_gen7(gpgpu, index, (drm_intel_bo*) obj_bo, format, type, w, h, depth, pitch, tiling);
   assert(index < GEN_MAX_SURFACES);
 }
 

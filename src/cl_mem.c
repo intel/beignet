@@ -382,7 +382,7 @@ _cl_mem_new_image(cl_context ctx,
   cl_int err = CL_SUCCESS;
   cl_mem mem = NULL;
   uint32_t bpp = 0, intel_fmt = INTEL_UNSUPPORTED_FORMAT;
-  size_t sz = 0, aligned_pitch = 0, aligned_h;
+  size_t sz = 0, aligned_pitch = 0, aligned_slice_pitch = 0, aligned_h;
   cl_image_tiling_t tiling = CL_NO_TILE;
 
   /* Check flags consistency */
@@ -465,11 +465,11 @@ _cl_mem_new_image(cl_context ctx,
     goto error;
 
   cl_buffer_set_tiling(mem->bo, tiling, aligned_pitch);
-  slice_pitch = (image_type == CL_MEM_OBJECT_IMAGE1D
-                 || image_type == CL_MEM_OBJECT_IMAGE2D) ? 0 : aligned_pitch*aligned_h;
+  aligned_slice_pitch = (image_type == CL_MEM_OBJECT_IMAGE1D
+                         || image_type == CL_MEM_OBJECT_IMAGE2D) ? 0 : aligned_pitch * ALIGN(h, 2);
 
   cl_mem_image_init(cl_mem_image(mem), w, h, image_type, depth, *fmt,
-                    intel_fmt, bpp, aligned_pitch, slice_pitch, tiling,
+                    intel_fmt, bpp, aligned_pitch, aligned_slice_pitch, tiling,
                     0, 0, 0);
 
   /* Copy the data if required */

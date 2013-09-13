@@ -114,6 +114,7 @@ typedef void (cl_gpgpu_bind_image_cb)(cl_gpgpu state,
                                       uint32_t type,
                                       int32_t w,
                                       int32_t h,
+                                      int32_t depth,
                                       int pitch,
                                       cl_gpgpu_tiling tiling);
 

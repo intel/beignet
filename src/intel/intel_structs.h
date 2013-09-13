@@ -209,7 +209,17 @@ typedef struct gen7_surface_state
     uint32_t depth:11;
   } ss3;
 
-  uint32_t ss4;
+  union {
+    struct {
+      uint32_t mulsample_pal_idx:3;
+      uint32_t numer_mulsample:3;
+      uint32_t mss_fmt:1;
+      uint32_t rt_view_extent:11;
+      uint32_t min_array_element:11;
+      uint32_t rt_rotate:2;
+      uint32_t pad0:1;
+    } not_str_buf;
+  } ss4;
 
   struct {
     uint32_t mip_count:4;
