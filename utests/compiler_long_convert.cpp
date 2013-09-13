@@ -116,3 +116,43 @@ void compiler_long_convert_2(void)
 }
 
 MAKE_UTEST_FROM_FUNCTION(compiler_long_convert_2);
+
+// convert 64-bit integer to 32-bit float
+void compiler_long_convert_to_float(void)
+{
+  const size_t n = 16;
+  int64_t src[n];
+
+  // Setup kernel and buffers
+  OCL_CREATE_KERNEL_FROM_FILE("compiler_long_convert", "compiler_long_convert_to_float");
+  OCL_CREATE_BUFFER(buf[0], 0, n * sizeof(float), NULL);
+  OCL_CREATE_BUFFER(buf[1], 0, n * sizeof(int64_t), NULL);
+  OCL_SET_ARG(0, sizeof(cl_mem), &buf[0]);
+  OCL_SET_ARG(1, sizeof(cl_mem), &buf[1]);
+  globals[0] = n;
+  locals[0] = 16;
+
+  // Run random tests
+  for (int32_t i = 0; i < (int32_t) n; ++i) {
+    src[i] = -(int64_t)i;
+  }
+  OCL_MAP_BUFFER(1);
+  memcpy(buf_data[1], src, sizeof(src));
+  OCL_UNMAP_BUFFER(1);
+
+  // Run the kernel on GPU
+  OCL_NDRANGE(1);
+
+  // Compare
+  OCL_MAP_BUFFER(0);
+  OCL_MAP_BUFFER(1);
+  float *dst = ((float *)buf_data[0]);
+  for (int32_t i = 0; i < (int32_t) n; ++i) {
+    //printf("%f\n", dst[i]);
+    OCL_ASSERT(dst[i] == src[i]);
+  }
+  OCL_UNMAP_BUFFER(0);
+  OCL_UNMAP_BUFFER(1);
+}
+
+MAKE_UTEST_FROM_FUNCTION(compiler_long_convert_to_float);

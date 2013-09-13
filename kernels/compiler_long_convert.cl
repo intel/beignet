@@ -12,3 +12,8 @@ kernel void compiler_long_convert_2(global char *dst1, global short *dst2, globa
   dst2[i] = src[i];
   dst3[i] = src[i];
 }
+
+kernel void compiler_long_convert_to_float(global float *dst, global long *src) {
+  int i = get_global_id(0);
+  dst[i] = src[i];
+}

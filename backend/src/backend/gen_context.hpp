@@ -88,6 +88,7 @@ namespace gbe
     void subWithBorrow(GenRegister dest, GenRegister src0, GenRegister src1);
     void I32FullMult(GenRegister high, GenRegister low, GenRegister src0, GenRegister src1);
     void saveFlag(GenRegister dest, int flag, int subFlag);
+    void UnsignedI64ToFloat(GenRegister dst, GenRegister high, GenRegister low, GenRegister tmp);
 
     /*! Final Gen ISA emission helper functions */
     void emitLabelInstruction(const SelectionInstruction &insn);
@@ -99,6 +100,7 @@ namespace gbe
     void emitI64HADDInstruction(const SelectionInstruction &insn);
     void emitI64ShiftInstruction(const SelectionInstruction &insn);
     void emitI64CompareInstruction(const SelectionInstruction &insn);
+    void emitI64ToFloatInstruction(const SelectionInstruction &insn);
     void emitCompareInstruction(const SelectionInstruction &insn);
     void emitJumpInstruction(const SelectionInstruction &insn);
     void emitIndirectMoveInstruction(const SelectionInstruction &insn);

@@ -1516,7 +1516,7 @@ namespace gbe
         Type *llvmSrcType = I.getOperand(0)->getType();
         const ir::Type dstType = getType(ctx, llvmDstType);
         ir::Type srcType;
-        if (I.getOpcode() == Instruction::ZExt) {
+        if (I.getOpcode() == Instruction::ZExt || I.getOpcode() == Instruction::UIToFP) {
           srcType = getUnsignedType(ctx, llvmSrcType);
         } else {
           srcType = getType(ctx, llvmSrcType);

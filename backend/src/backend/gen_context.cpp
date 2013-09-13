@@ -578,6 +578,49 @@ namespace gbe
     p->pop();
   }
 
+  void GenContext::UnsignedI64ToFloat(GenRegister dst, GenRegister high, GenRegister low, GenRegister tmp) {
+    p->MOV(dst, high);
+    p->MUL(dst, dst, GenRegister::immf(65536.f * 65536.f));
+    tmp.type = GEN_TYPE_F;
+    p->MOV(tmp, low);
+    p->ADD(dst, dst, tmp);
+  }
+
+  void GenContext::emitI64ToFloatInstruction(const SelectionInstruction &insn) {
+    GenRegister src = ra->genReg(insn.src(0));
+    GenRegister dest = ra->genReg(insn.dst(0));
+    GenRegister high = ra->genReg(insn.dst(1));
+    GenRegister low = ra->genReg(insn.dst(2));
+    GenRegister tmp = ra->genReg(insn.dst(3));
+    loadTopHalf(high, src);
+    loadBottomHalf(low, src);
+    if(!src.is_signed_int()) {
+      UnsignedI64ToFloat(dest, high, low, tmp);
+    } else {
+      p->push();
+      p->curr.predicate = GEN_PREDICATE_NONE;
+      p->curr.physicalFlag = 1;
+      p->curr.flag = 1;
+      p->curr.subFlag = 0;
+      p->CMP(GEN_CONDITIONAL_GE, high, GenRegister::immud(0x80000000));
+      p->curr.predicate = GEN_PREDICATE_NORMAL;
+      p->NOT(high, high);
+      p->NOT(low, low);
+      p->MOV(tmp, GenRegister::immud(1));
+      addWithCarry(low, low, tmp);
+      p->ADD(high, high, tmp);
+      p->pop();
+      UnsignedI64ToFloat(dest, high, low, tmp);
+      p->push();
+      p->curr.physicalFlag = 1;
+      p->curr.flag = 1;
+      p->curr.subFlag = 0;
+      dest.type = GEN_TYPE_UD;
+      p->OR(dest, dest, GenRegister::immud(0x80000000));
+      p->pop();
+    }
+  }
+
   void GenContext::emitI64CompareInstruction(const SelectionInstruction &insn) {
     GenRegister src0 = ra->genReg(insn.src(0));
     GenRegister src1 = ra->genReg(insn.src(1));
@@ -728,11 +771,11 @@ namespace gbe
     int execWidth = p->curr.execWidth;
     GenRegister acc0 = GenRegister::retype(GenRegister::acc(), GEN_TYPE_D);
     p->push();
-    p->curr.predicate = GEN_PREDICATE_NONE;
     p->curr.execWidth = 8;
     p->ADDC(dest, src0, src1);
     p->MOV(src1, acc0);
     if (execWidth == 16) {
+      p->curr.quarterControl = 1;
       p->ADDC(GenRegister::suboffset(dest, 8),
               GenRegister::suboffset(src0, 8),
               GenRegister::suboffset(src1, 8));
