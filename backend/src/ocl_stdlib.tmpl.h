@@ -1759,9 +1759,19 @@ INLINE_OVERLOADABLE void vstore##DIM(TYPE##DIM v, size_t offset, SPACE TYPE *p) 
   *(SPACE TYPE##DIM *) (p + DIM * offset) = v; \
 }
 
+#define DECL_UNTYPED_V3_SPACE(TYPE, SPACE) \
+INLINE_OVERLOADABLE void vstore3(TYPE##3 v, size_t offset, SPACE TYPE *p) {\
+  *(p + 3 * offset) = v.s0; \
+  *(p + 3 * offset + 1) = v.s1; \
+  *(p + 3 * offset + 2) = v.s2; \
+} \
+INLINE_OVERLOADABLE TYPE##3 vload3(size_t offset, const SPACE TYPE *p) { \
+  return *(SPACE TYPE##3 *) (p + 3 * offset); \
+}
+
 #define DECL_UNTYPED_RW_ALL_SPACE(TYPE, SPACE) \
   DECL_UNTYPED_RW_SPACE_N(TYPE, 2, SPACE) \
-  DECL_UNTYPED_RW_SPACE_N(TYPE, 3, SPACE) \
+  DECL_UNTYPED_V3_SPACE(TYPE, SPACE) \
   DECL_UNTYPED_RW_SPACE_N(TYPE, 4, SPACE) \
   DECL_UNTYPED_RW_SPACE_N(TYPE, 8, SPACE) \
   DECL_UNTYPED_RW_SPACE_N(TYPE, 16, SPACE)
