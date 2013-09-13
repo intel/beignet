@@ -97,6 +97,7 @@ struct _cl_mem_image {
   cl_mem_object_type image_type;  /* only for images 1D/2D...*/
   size_t w, h, depth;             /* only for images (depth is only for 3D images) */
   size_t row_pitch, slice_pitch;
+  size_t host_row_pitch, host_slice_pitch;
   cl_image_tiling_t tiling;       /* only IVB+ supports TILE_[X,Y] (image only) */
   size_t tile_x, tile_y;          /* tile offset, used for mipmap images.  */
   size_t offset;
@@ -236,6 +237,11 @@ cl_mem_allocate(enum cl_mem_type type,
                 cl_int is_tiled,
                 cl_int *errcode);
 
+void
+cl_mem_copy_image_region(const size_t *origin, const size_t *region,
+                         void *dst, size_t dst_row_pitch, size_t dst_slice_pitch,
+                         const void *src, size_t src_row_pitch, size_t src_slice_pitch,
+                         const struct _cl_mem_image *image);
 
 #endif /* __CL_MEM_H__ */
 

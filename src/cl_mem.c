@@ -329,6 +329,35 @@ error:
   goto exit;
 }
 
+void
+cl_mem_copy_image_region(const size_t *origin, const size_t *region,
+                         void *dst, size_t dst_row_pitch, size_t dst_slice_pitch,
+                         const void *src, size_t src_row_pitch, size_t src_slice_pitch,
+                         const struct _cl_mem_image *image)
+{
+  size_t offset = image->bpp * origin[0] + dst_row_pitch * origin[1] + dst_slice_pitch * origin[2];
+  dst = (char*)dst + offset;
+  if (!origin[0] && region[0] == image->w && dst_row_pitch == src_row_pitch &&
+      (region[2] == 1 || (!origin[1] && region[1] == image->h && dst_slice_pitch == src_slice_pitch)))
+  {
+    memcpy(dst, src, region[2] == 1 ? src_row_pitch*region[1] : src_slice_pitch*region[2]);
+  }
+  else {
+    cl_uint y, z;
+    for (z = 0; z < region[2]; z++) {
+      const char* src_ptr = src;
+      char* dst_ptr = dst;
+      for (y = 0; y < region[1]; y++) {
+        memcpy(dst_ptr, src_ptr, image->bpp*region[0]);
+        src_ptr += src_row_pitch;
+        dst_ptr += dst_row_pitch;
+      }
+      src = (char*)src + src_slice_pitch;
+      dst = (char*)dst + dst_slice_pitch;
+    }
+  }
+}
+
 static void
 cl_mem_copy_image(struct _cl_mem_image *image,
 		  size_t row_pitch,
@@ -336,27 +365,11 @@ cl_mem_copy_image(struct _cl_mem_image *image,
 		  void* host_ptr)
 {
   char* dst_ptr = cl_mem_map_auto((cl_mem)image);
+  size_t origin[3] = {0, 0, 0};
+  size_t region[3] = {image->w, image->h, image->depth};
 
-  if (row_pitch == image->row_pitch &&
-      (image->depth == 1 || slice_pitch == image->slice_pitch))
-  {
-    memcpy(dst_ptr, host_ptr, image->depth == 1 ? row_pitch*image->h : slice_pitch*image->depth);
-  }
-  else {
-    size_t y, z;
-    for (z = 0; z < image->depth; z++) {
-      const char* src = host_ptr;
-      char* dst = dst_ptr;
-      for (y = 0; y < image->h; y++) {
-	memcpy(dst, src, image->bpp*image->w);
-	src += row_pitch;
-	dst += image->row_pitch;
-      }
-      host_ptr = (char*)host_ptr + slice_pitch;
-      dst_ptr = (char*)dst_ptr + image->slice_pitch;
-    }
-  }
-
+  cl_mem_copy_image_region(origin, region, dst_ptr, image->row_pitch, image->slice_pitch,
+                           host_ptr, row_pitch, slice_pitch, image);
   cl_mem_unmap_auto((cl_mem)image);
 }
 
@@ -386,7 +399,7 @@ _cl_mem_new_image(cl_context ctx,
   cl_image_tiling_t tiling = CL_NO_TILE;
 
   /* Check flags consistency */
-  if (UNLIKELY((flags & CL_MEM_COPY_HOST_PTR) && data == NULL)) {
+  if (UNLIKELY((flags & (CL_MEM_COPY_HOST_PTR | CL_MEM_USE_HOST_PTR)) && data == NULL)) {
     err = CL_INVALID_HOST_PTR;
     goto error;
   }
@@ -473,8 +486,14 @@ _cl_mem_new_image(cl_context ctx,
                     0, 0, 0);
 
   /* Copy the data if required */
-  if (flags & CL_MEM_COPY_HOST_PTR)
+  if (flags & (CL_MEM_COPY_HOST_PTR | CL_MEM_USE_HOST_PTR)) {
     cl_mem_copy_image(cl_mem_image(mem), pitch, slice_pitch, data);
+    if (flags & CL_MEM_USE_HOST_PTR) {
+      mem->host_ptr = data;
+      cl_mem_image(mem)->host_row_pitch = pitch;
+      cl_mem_image(mem)->host_slice_pitch = slice_pitch;
+    }
+  }
 
 exit:
   if (errcode_ret)

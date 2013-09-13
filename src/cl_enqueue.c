@@ -210,37 +210,16 @@ cl_int cl_enqueue_write_image(enqueue_data *data)
 
   cl_mem mem = data->mem_obj;
   CHECK_IMAGE(mem, image);
-  const size_t *origin = data->origin;
-  const size_t *region = data->region;
 
   if (!(dst_ptr = cl_mem_map_auto(mem))) {
     err = CL_MAP_FAILURE;
     goto error;
   }
 
-  size_t offset = image->bpp*origin[0] + image->row_pitch*origin[1] + image->slice_pitch*origin[2];
-  dst_ptr = (char*)dst_ptr + offset;
-
-  if (!origin[0] && region[0] == image->w && data->row_pitch == image->row_pitch &&
-      (region[2] == 1 || (!origin[1] && region[1] == image->h && data->slice_pitch == image->slice_pitch)))
-  {
-    memcpy(dst_ptr, data->const_ptr, region[2] == 1 ? data->row_pitch*region[1] : data->slice_pitch*region[2]);
-  }
-  else {
-    cl_uint y, z;
-    for (z = 0; z < region[2]; z++) {
-      const char* src = data->const_ptr;
-      char* dst = dst_ptr;
-      for (y = 0; y < region[1]; y++) {
-        memcpy(dst, src, image->bpp*region[0]);
-        src += data->row_pitch;
-        dst += image->row_pitch;
-      }
-      data->const_ptr = (char*)data->const_ptr + data->slice_pitch;
-      dst_ptr = (char*)dst_ptr + image->slice_pitch;
-    }
-  }
-
+  cl_mem_copy_image_region(data->origin, data->region, dst_ptr,
+                           image->row_pitch, image->slice_pitch,
+                           data->const_ptr, data->row_pitch,
+                           data->slice_pitch, image);
   err = cl_mem_unmap_auto(mem);
 
 error:
@@ -276,6 +255,7 @@ cl_int cl_enqueue_map_image(enqueue_data *data)
   cl_int err = CL_SUCCESS;
   cl_mem mem = data->mem_obj;
   void *ptr = NULL;
+  CHECK_IMAGE(mem, image);
 
   if (!(ptr = cl_mem_map_gtt(mem))) {
     err = CL_MAP_FAILURE;
@@ -283,6 +263,13 @@ cl_int cl_enqueue_map_image(enqueue_data *data)
   }
 
   assert(data->ptr == (char*)ptr + data->offset);
+
+  if(mem->flags & CL_MEM_USE_HOST_PTR) {
+    assert(mem->host_ptr);
+    cl_mem_copy_image_region(data->origin, data->region,
+                             mem->host_ptr, image->host_row_pitch, image->host_slice_pitch,
+                             data->ptr, data->row_pitch, data->slice_pitch, image);
+  }
 
 error:
   return err;
