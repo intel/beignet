@@ -4,7 +4,7 @@ static void compiler_fill_image_3d_2(void)
 {
   const size_t w = 512;
   const size_t h = 512;
-  const size_t depth = 1;
+  const size_t depth = 5;
   cl_image_format format;
 
   format.image_channel_order = CL_RGBA;
@@ -19,17 +19,19 @@ static void compiler_fill_image_3d_2(void)
   OCL_SET_ARG(0, sizeof(cl_mem), &buf[0]);
   globals[0] = w;
   globals[1] = h;
+  globals[2] = depth;
   locals[0] = 16;
   locals[1] = 16;
-  OCL_NDRANGE(2);
+  locals[2] = 1;
+  OCL_NDRANGE(3);
 
   // Check result
-  OCL_MAP_BUFFER(0);
+  OCL_MAP_BUFFER_GTT(0);
   for (uint32_t k = 0; k < depth; k++)
     for (uint32_t j = 0; j < h; ++j)
       for (uint32_t i = 0; i < w; i++)
         OCL_ASSERT(((uint32_t*)buf_data[0])[k*w*h + j*w + i] == 0x78563412);
-  OCL_UNMAP_BUFFER(0);
+  OCL_UNMAP_BUFFER_GTT(0);
 }
 
 MAKE_UTEST_FROM_FUNCTION(compiler_fill_image_3d_2);

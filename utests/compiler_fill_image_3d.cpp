@@ -4,7 +4,7 @@ static void compiler_fill_image_3d(void)
 {
   const size_t w = 512;
   const size_t h = 512;
-  const size_t depth = 1;
+  const size_t depth = 5;
   uint32_t color = 0x12345678;
   cl_image_format format;
 
@@ -21,9 +21,11 @@ static void compiler_fill_image_3d(void)
   OCL_SET_ARG(1, sizeof(color), &color);
   globals[0] = w;
   globals[1] = h;
+  globals[2] = depth;
   locals[0] = 16;
   locals[1] = 16;
-  OCL_NDRANGE(2);
+  locals[2] = 1;
+  OCL_NDRANGE(3);
 
   // Check result
   OCL_MAP_BUFFER(0);

@@ -9,6 +9,6 @@ test_fill_image_3d(__write_only image3d_t dst, uint color)
   color4.s3  = color & 0xFF;
   coord.x = (int)get_global_id(0);
   coord.y = (int)get_global_id(1);
-  coord.z = 0;
+  coord.z = (int)get_global_id(2);
   write_imagei(dst, coord, color4);
 }
