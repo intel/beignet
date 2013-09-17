@@ -695,11 +695,11 @@ cl_mem_kernel_copy_image(cl_command_queue queue, struct _cl_mem_image* src_image
       "#endif \n"
       "  dst_coord.x = dst_origin0 + i; \n"
       "  dst_coord.y = dst_origin1 + j; \n"
-      "#ifdef SRC_IMAGE_3D \n"
+      "#ifdef DST_IMAGE_3D \n"
       "  dst_coord.z = dst_origin2 + k; \n"
       "#endif \n"
       "  color = read_imagei(src_image, sampler, src_coord); \n"
-      "  write_imagei(dst_image, src_coord, color); \n"
+      "  write_imagei(dst_image, dst_coord, color); \n"
       "}";
 
   /* We use one kernel to copy the data. The kernel is lazily created. */
