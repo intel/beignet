@@ -1095,11 +1095,6 @@ clGetEventInfo(cl_event      event,
   CHECK_EVENT(event);
 
   if (param_name == CL_EVENT_COMMAND_QUEUE) {
-    if(event->queue == NULL) {
-      param_value_size_ret = 0;
-      param_value = NULL;
-      return err;
-    }
     FILL_GETINFO_RET (cl_command_queue, 1, &event->queue, CL_SUCCESS);
   } else if (param_name == CL_EVENT_CONTEXT) {
     FILL_GETINFO_RET (cl_context, 1, &event->ctx, CL_SUCCESS);
@@ -2171,10 +2166,6 @@ clEnqueueMapImage(cl_command_queue   command_queue,
   data = &no_wait_data;
   data->type        = EnqueueMapImage;
   data->mem_obj     = mem;
-  data->origin[0]   = origin[0];  data->origin[1] = origin[1];  data->origin[2] = origin[2];
-  data->region[0]   = region[0];  data->region[1] = region[1];  data->region[2] = region[2];
-  data->row_pitch   = *image_row_pitch;
-  data->slice_pitch = *image_slice_pitch;
   data->ptr         = ptr;
   data->offset      = offset;
 
