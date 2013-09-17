@@ -26,12 +26,12 @@ set_property(DIRECTORY APPEND PROPERTY ADDITIONAL_MAKE_CLEAN_FILES "ocl_vector.h
 
 add_custom_command(
   OUTPUT ${ocl_vector_file}
-  COMMAND ${ocl_gen_vector_cmd} ${ocl_vector_spec_file} ${ocl_vector_file}
+  COMMAND ${PYTHON_EXECUTABLE} ${ocl_gen_vector_cmd} ${ocl_vector_spec_file} ${ocl_vector_file}
   DEPENDS ${ocl_gen_vector_cmd} ${ocl_vector_spec_file})
 
 add_custom_command(
   OUTPUT ${ocl_blob_file}
-  COMMAND ${ocl_gen_blob_cmd} ${ocl_stdlib_tmpl_file} ${ocl_blob_file}
+  COMMAND ${PYTHON_EXECUTABLE} ${ocl_gen_blob_cmd} ${ocl_stdlib_tmpl_file} ${ocl_blob_file}
   DEPENDS ${ocl_gen_blob_cmd} ${ocl_stdlib_tmpl_file} ${ocl_vector_file} ${ocl_as_file} ${ocl_convert_file})
 
 
