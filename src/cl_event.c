@@ -27,6 +27,23 @@
 #include <assert.h>
 #include <stdio.h>
 
+inline cl_bool
+cl_event_is_gpu_command_type(cl_command_type type)
+{
+  switch(type) {
+    case CL_COMMAND_COPY_BUFFER:
+    case CL_COMMAND_COPY_IMAGE:
+    case CL_COMMAND_COPY_IMAGE_TO_BUFFER:
+    case CL_COMMAND_COPY_BUFFER_TO_IMAGE:
+    case CL_COMMAND_COPY_BUFFER_RECT:
+    case CL_COMMAND_TASK:
+    case CL_COMMAND_NDRANGE_KERNEL:
+      return CL_TRUE;
+    default:
+      return CL_FALSE;
+  }
+}
+
 cl_event cl_event_new(cl_context ctx, cl_command_queue queue, cl_command_type type, cl_bool emplict)
 {
   cl_event event = NULL;
@@ -56,7 +73,8 @@ cl_event cl_event_new(cl_context ctx, cl_command_queue queue, cl_command_type ty
   }
   else {
     event->status = CL_QUEUED;
-    event->gpgpu_event = cl_gpgpu_event_new(queue->gpgpu);
+    if(cl_event_is_gpu_command_type(event->type))
+      event->gpgpu_event = cl_gpgpu_event_new(queue->gpgpu);
   }
   cl_event_add_ref(event);       //dec when complete
   event->user_cb = NULL;
@@ -76,6 +94,8 @@ void cl_event_delete(cl_event event)
 {
   if (UNLIKELY(event == NULL))
     return;
+
+  cl_event_update_status(event);
 
   if (atomic_dec(&event->ref_n) > 1)
     return;
@@ -153,7 +173,7 @@ cl_int cl_event_check_waitlist(cl_uint num_events_in_wait_list,
   /* check the event_wait_list and num_events_in_wait_list */
   if((event_wait_list == NULL) &&
      (num_events_in_wait_list > 0))
-    goto exit;
+    goto error;
 
   if ((event_wait_list != NULL) &&
       (num_events_in_wait_list == 0)){
@@ -225,7 +245,9 @@ void cl_event_new_enqueue_callback(cl_event event,
   /* Allocate and inialize the structure itself */
   TRY_ALLOC_NO_ERR (cb, CALLOC(enqueue_callback));
   cb->num_events = num_events_in_wait_list;
-  cb->wait_list = event_wait_list;
+  TRY_ALLOC_NO_ERR (cb->wait_list, CALLOC_ARRAY(cl_event, num_events_in_wait_list));
+  for(i=0; i<num_events_in_wait_list; i++)
+    cb->wait_list[i] = event_wait_list[i];
   cb->event = event;
   cb->next = NULL;
   cb->wait_user_events = NULL;
@@ -274,8 +296,8 @@ void cl_event_new_enqueue_callback(cl_event event,
       }
     }
   }
-  if(data->queue != NULL) {
-    assert(event->gpgpu_event);
+
+  if(data->queue != NULL && event->gpgpu_event != NULL) {
     cl_gpgpu_event_pending(data->queue->gpgpu, event->gpgpu_event);
     data->ptr = (void *)event->gpgpu_event;
   }
@@ -291,6 +313,8 @@ error:
       cb->wait_user_events = cb->wait_user_events->next;
       cl_free(u_ev);
     }
+    if(cb->wait_list)
+      cl_free(cb->wait_list);
     cl_free(cb);
   }
   goto exit;
@@ -317,6 +341,8 @@ void cl_event_set_status(cl_event event, cl_int status)
   if(status <= CL_COMPLETE) {
     if(event->enqueue_cb) {
       cl_enqueue_handle(&event->enqueue_cb->data);
+      if(event->gpgpu_event)
+        cl_gpgpu_event_update_status(event->gpgpu_event, 1);  //now set complet, need refine
       event->status = status;  //Change the event status after enqueue and befor unlock
 
       pthread_mutex_unlock(&event->ctx->event_lock);
@@ -324,6 +350,8 @@ void cl_event_set_status(cl_event event, cl_int status)
         cl_event_delete(event->enqueue_cb->wait_list[i]);
       pthread_mutex_lock(&event->ctx->event_lock);
 
+      if(event->enqueue_cb->wait_list)
+        cl_free(event->enqueue_cb->wait_list);
       cl_free(event->enqueue_cb);
       event->enqueue_cb = NULL;
     }
@@ -385,7 +413,7 @@ void cl_event_set_status(cl_event event, cl_int status)
     /* Call the pending operation */
     evt = cb->event;
     cl_event_set_status(cb->event, CL_COMPLETE);
-    if(cb->event->emplict == CL_FALSE) {
+    if(evt->emplict == CL_FALSE) {
       cl_event_delete(evt);
     }
   }

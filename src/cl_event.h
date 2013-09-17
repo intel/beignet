@@ -39,7 +39,7 @@ typedef struct _enqueue_callback {
   cl_event           event;            /* The event relative this enqueue callback */
   enqueue_data       data;             /* Hold all enqueue callback's infomation */
   cl_uint            num_events;       /* num events in wait list */
-  const cl_event*    wait_list;        /* All event wait list this callback wait on */
+  cl_event*          wait_list;        /* All event wait list this callback wait on */
   user_event*        wait_user_events; /* The head of user event list the callback wait on */
   struct _enqueue_callback*  next;     /* The  next enqueue callback in wait list */
 } enqueue_callback;
