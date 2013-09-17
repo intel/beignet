@@ -19,9 +19,8 @@
 #ifndef __CL_ENQUEUE_H__
 #define __CL_ENQUEUE_H__
 
-#include "cl_mem.h"
-#include "cl_command_queue.h"
 #include "cl_internals.h"
+#include "cl_driver.h"
 #include "CL/cl.h"
 
 typedef enum {
@@ -41,6 +40,7 @@ typedef enum {
   EnqueueUnmapMemObject,
   EnqueueNDRangeKernel,
   EnqueueNativeKernel,
+  EnqueueMarker,
   EnqueueInvalid
 } enqueue_type;
 

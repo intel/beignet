@@ -23,6 +23,7 @@
 #include "cl_alloc.h"
 #include "cl_khr_icd.h"
 #include "cl_kernel.h"
+#include "cl_command_queue.h"
 
 #include <assert.h>
 #include <stdio.h>
@@ -81,6 +82,8 @@ cl_event cl_event_new(cl_context ctx, cl_command_queue queue, cl_command_type ty
   event->enqueue_cb = NULL;
   event->waits_head = NULL;
   event->emplict = emplict;
+  if(queue && event->gpgpu_event)
+    queue->last_event = event;
 
 exit:
   return event;
@@ -99,6 +102,9 @@ void cl_event_delete(cl_event event)
 
   if (atomic_dec(&event->ref_n) > 1)
     return;
+
+  if(event->queue && event->queue->last_event == event)
+    event->queue->last_event = NULL;
 
   /* Call all user's callback if haven't execute */
   user_callback *cb = event->user_cb;
@@ -200,10 +206,11 @@ error:
   goto exit;
 }
 
-cl_int cl_event_wait_events(cl_uint num_events_in_wait_list,
-                          const cl_event *event_wait_list)
+cl_int cl_event_wait_events(cl_uint num_events_in_wait_list, const cl_event *event_wait_list,
+                            cl_command_queue queue)
 {
   cl_int i, j;
+
   /* Check whether wait user events */
   for(i=0; i<num_events_in_wait_list; i++) {
     if(event_wait_list[i]->status <= CL_COMPLETE)
@@ -219,6 +226,10 @@ cl_int cl_event_wait_events(cl_uint num_events_in_wait_list,
     }
   }
 
+  if(queue && queue->barrier_index > 0) {
+    return CL_ENQUEUE_EXECUTE_DEFER;
+  }
+
   /* Non user events or all user event finished, wait all enqueue events finish */
   for(i=0; i<num_events_in_wait_list; i++) {
     if(event_wait_list[i]->status <= CL_COMPLETE)
@@ -227,7 +238,8 @@ cl_int cl_event_wait_events(cl_uint num_events_in_wait_list,
     //enqueue callback haven't finish, in another thread, wait
     if(event_wait_list[i]->enqueue_cb != NULL)
       return CL_ENQUEUE_EXECUTE_DEFER;
-    cl_gpgpu_event_update_status(event_wait_list[i]->gpgpu_event, 1);
+    if(event_wait_list[i]->gpgpu_event)
+      cl_gpgpu_event_update_status(event_wait_list[i]->gpgpu_event, 1);
     cl_event_set_status(event_wait_list[i], CL_COMPLETE);  //Execute user's callback
   }
   return CL_ENQUEUE_EXECUTE_IMM;
@@ -240,6 +252,7 @@ void cl_event_new_enqueue_callback(cl_event event,
 {
   enqueue_callback *cb, *node;
   user_event *user_events, *u_ev;
+  cl_command_queue queue = event->queue;
   cl_int i;
 
   /* Allocate and inialize the structure itself */
@@ -251,6 +264,27 @@ void cl_event_new_enqueue_callback(cl_event event,
   cb->event = event;
   cb->next = NULL;
   cb->wait_user_events = NULL;
+
+  if(queue && queue->barrier_index > 0) {
+    for(i=0; i<queue->barrier_index; i++) {
+      /* Insert the enqueue_callback to user event list */
+      node = queue->wait_events[i]->waits_head;
+      if(node == NULL)
+        queue->wait_events[i]->waits_head = cb;
+      else
+        while((node != cb) && node->next)
+          node = node->next;
+        if(node == cb)   //wait on dup user event
+          continue;
+        node->next = cb;
+
+      /* Insert the user event to enqueue_callback's wait_user_events */
+      TRY_ALLOC_NO_ERR (u_ev, CALLOC(user_event));
+      u_ev->event = queue->wait_events[i];
+      u_ev->next = cb->wait_user_events;
+      cb->wait_user_events = u_ev;
+    }
+  }
 
   /* Find out all user events that events in event_wait_list wait */
   for(i=0; i<num_events_in_wait_list; i++) {
@@ -274,6 +308,7 @@ void cl_event_new_enqueue_callback(cl_event event,
       u_ev->event = event_wait_list[i];
       u_ev->next = cb->wait_user_events;
       cb->wait_user_events = u_ev;
+      cl_command_queue_insert_event(event->queue, event_wait_list[i]);
     } else if(event_wait_list[i]->enqueue_cb != NULL) {
       user_events = event_wait_list[i]->enqueue_cb->wait_user_events;
       while(user_events != NULL) {
@@ -293,10 +328,10 @@ void cl_event_new_enqueue_callback(cl_event event,
         u_ev->next = cb->wait_user_events;
         cb->wait_user_events = u_ev;
         user_events = user_events->next;
+        cl_command_queue_insert_event(event->queue, event_wait_list[i]);
       }
     }
   }
-
   if(data->queue != NULL && event->gpgpu_event != NULL) {
     cl_gpgpu_event_pending(data->queue->gpgpu, event->gpgpu_event);
     data->ptr = (void *)event->gpgpu_event;
@@ -403,8 +438,12 @@ void cl_event_set_status(cl_event event, cl_int status)
       continue;
     }
 
+    //remove user event frome enqueue_cb's ctx
+    cl_command_queue_remove_event(enqueue_cb->event->queue, event);
+
     /* All user events complete, now wait enqueue events */
-    ret = cl_event_wait_events(enqueue_cb->num_events, enqueue_cb->wait_list);
+    ret = cl_event_wait_events(enqueue_cb->num_events, enqueue_cb->wait_list,
+                               enqueue_cb->event->queue);
     assert(ret != CL_ENQUEUE_EXECUTE_DEFER);
 
     cb = enqueue_cb;
@@ -427,4 +466,27 @@ void cl_event_update_status(cl_event event)
   if((event->gpgpu_event) &&
      (cl_gpgpu_event_update_status(event->gpgpu_event, 0) == command_complete))
     cl_event_set_status(event, CL_COMPLETE);
+}
+
+cl_int cl_event_marker(cl_command_queue queue, cl_event* event)
+{
+  enqueue_data data;
+
+  *event = cl_event_new(queue->ctx, queue, CL_COMMAND_MARKER, CL_TRUE);
+  if(event == NULL)
+    return CL_OUT_OF_HOST_MEMORY;
+
+  //if wait_events_num>0, the marker event need wait queue->wait_events
+  if(queue->wait_events_num > 0) {
+    data.type = EnqueueMarker;
+    cl_event_new_enqueue_callback(*event, &data, queue->wait_events_num, queue->wait_events);
+    return CL_SUCCESS;
+  }
+
+  if(queue->last_event && queue->last_event->gpgpu_event) {
+    cl_gpgpu_event_update_status(queue->last_event->gpgpu_event, 1);
+  }
+
+  cl_event_set_status(*event, CL_COMPLETE);
+  return CL_SUCCESS;
 }

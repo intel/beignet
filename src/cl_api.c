@@ -66,7 +66,7 @@ inline cl_int
 handle_events(cl_command_queue queue, cl_int num, const cl_event *wait_list,
               cl_event* event, enqueue_data* data, cl_command_type type)
 {
-  cl_int status = cl_event_wait_events(num, wait_list);
+  cl_int status = cl_event_wait_events(num, wait_list, queue);
   cl_event e;
   if(event != NULL || status == CL_ENQUEUE_EXECUTE_DEFER) {
     e = cl_event_new(queue->ctx, queue, type, event!=NULL);
@@ -1076,7 +1076,7 @@ clWaitForEvents(cl_uint          num_events,
 
   TRY(cl_event_check_waitlist, num_events, event_list, NULL, ctx);
 
-  while(cl_event_wait_events(num_events, event_list) == CL_ENQUEUE_EXECUTE_DEFER) {
+  while(cl_event_wait_events(num_events, event_list, NULL) == CL_ENQUEUE_EXECUTE_DEFER) {
     usleep(8000);       //sleep 8ms to wait other thread
   }
 
@@ -2401,8 +2401,16 @@ cl_int
 clEnqueueMarker(cl_command_queue     command_queue,
                 cl_event *           event)
 {
-  NOT_IMPLEMENTED;
-  return 0;
+  cl_int err = CL_SUCCESS;
+  CHECK_QUEUE(command_queue);
+  if(event == NULL) {
+    err = CL_INVALID_VALUE;
+    goto error;
+  }
+
+  cl_event_marker(command_queue, event);
+error:
+  return err;
 }
 
 cl_int
@@ -2421,9 +2429,12 @@ error:
 cl_int
 clEnqueueBarrier(cl_command_queue  command_queue)
 {
-  NOT_IMPLEMENTED;
-  return 0;
-  //return clFinish(command_queue);
+  cl_int err = CL_SUCCESS;
+  CHECK_QUEUE(command_queue);
+  cl_command_queue_set_barrier(command_queue);
+
+error:
+  return err;
 }
 
 #define EXTFUNC(x)                      \

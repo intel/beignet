@@ -22,9 +22,9 @@
 
 #include <semaphore.h>
 
-#include "cl_enqueue.h"
 #include "cl_internals.h"
 #include "cl_driver.h"
+#include "cl_enqueue.h"
 #include "CL/cl.h"
 
 #define CL_ENQUEUE_EXECUTE_IMM   0
@@ -81,12 +81,14 @@ cl_int cl_event_set_callback(cl_event, cl_int, EVENT_NOTIFY, void *);
 /* Check events wait list for enqueue commonds */
 cl_int cl_event_check_waitlist(cl_uint, const cl_event *, cl_event *, cl_context);
 /* Wait the all events in wait list complete */
-cl_int cl_event_wait_events(cl_uint, const cl_event *);
+cl_int cl_event_wait_events(cl_uint, const cl_event *, cl_command_queue);
 /* New a enqueue suspend task */
 void cl_event_new_enqueue_callback(cl_event, enqueue_data *, cl_uint, const cl_event *);
 /* Set the event status and call all callbacks */
 void cl_event_set_status(cl_event, cl_int);
 /* Check and update event status */
 void cl_event_update_status(cl_event);
+/* Create the marker event */
+cl_int cl_event_marker(cl_command_queue, cl_event*);
 #endif /* __CL_EVENT_H__ */
 

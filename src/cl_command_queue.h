@@ -33,6 +33,11 @@ struct _cl_command_queue {
   uint64_t magic;                      /* To identify it as a command queue */
   volatile int ref_n;                  /* We reference count this object */
   cl_context ctx;                      /* Its parent context */
+  cl_event* wait_events;               /* Point to array of non-complete user events that block this command queue */
+  cl_int    wait_events_num;           /* Number of Non-complete user events */
+  cl_int    wait_events_size;          /* The size of array that wait_events point to */
+  cl_int    barrier_index;             /* Indicate event count in wait_events as barrier events */
+  cl_event  last_event;                /* The last event in the queue, for enqueue mark used */
   cl_command_queue_properties  props;  /* Queue properties */
   cl_command_queue prev, next;         /* We chain the command queues together */
   cl_gpgpu gpgpu;                      /* Setup all GEN commands */
@@ -76,5 +81,15 @@ extern cl_int cl_command_queue_bind_surface(cl_command_queue, cl_kernel);
 
 /* Bind all the image surfaces in the GPGPU state */
 extern cl_int cl_command_queue_bind_image(cl_command_queue, cl_kernel);
+
+/* Insert a user event to command's wait_events */
+extern void cl_command_queue_insert_event(cl_command_queue, cl_event);
+
+/* Remove a user event from command's wait_events */
+extern void cl_command_queue_remove_event(cl_command_queue, cl_event);
+
+/* Set the barrier index */
+extern void cl_command_queue_set_barrier(cl_command_queue);
+
 #endif /* __CL_COMMAND_QUEUE_H__ */
 
