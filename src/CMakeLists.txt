@@ -1,7 +1,8 @@
 include_directories(${CMAKE_CURRENT_SOURCE_DIR}
                     ${DRM_INCLUDE_PATH}
                     ${CMAKE_CURRENT_SOURCE_DIR}/../backend/src/backend/
-                    ${CMAKE_CURRENT_SOURCE_DIR}/../include)
+                    ${CMAKE_CURRENT_SOURCE_DIR}/../include
+                    ${MESA_SOURCE_INCLUDES})
 
 set(OPENCL_SRC
     cl_api.c
@@ -31,8 +32,8 @@ set(OPENCL_SRC
 
 if (EGL_FOUND AND MESA_SOURCE_FOUND)
 set (OPENCL_SRC ${OPENCL_SRC} cl_mem_gl.c cl_gl_api.c x11/mesa_egl_extension.c x11/mesa_egl_res_share.c intel/intel_dri_resource_sharing.c)
-SET(CMAKE_CXX_FLAGS "-DHAS_EGL ${CMAKE_CXX_FLAGS} ${MESA_SOURCE_INCLUDES}")
-SET(CMAKE_C_FLAGS "-DHAS_EGL ${CMAKE_C_FLAGS} ${MESA_SOURCE_INCLUDES}")
+SET(CMAKE_CXX_FLAGS "-DHAS_EGL ${CMAKE_CXX_FLAGS}")
+SET(CMAKE_C_FLAGS "-DHAS_EGL ${CMAKE_C_FLAGS}")
 SET(OPTIONAL_EGL_LIBRARY "${EGL_LIBRARY}")
 else(EGL_FOUND AND MESA_SOURCE_FOUND)
 SET(OPTIONAL_EGL_LIBRARY "")
