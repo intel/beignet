@@ -2480,7 +2480,13 @@ namespace gbe
           // Build the tuple data in the vector
           vector<ir::Register> tupleData; // put registers here
           for (uint32_t elemID = 0; elemID < elemNum; ++elemID) {
-            const ir::Register reg = this->getRegister(llvmValues, elemID);
+            ir::Register reg;
+            if(regTranslator.isUndefConst(llvmValues, elemID)) {
+              Value *v = Constant::getNullValue(elemType);
+              reg = this->getRegister(v);
+            } else
+              reg = this->getRegister(llvmValues, elemID);
+
             tupleData.push_back(reg);
           }
           const ir::Tuple tuple = ctx.arrayTuple(&tupleData[0], elemNum);
@@ -2500,7 +2506,13 @@ namespace gbe
             // Build the tuple data in the vector
             vector<ir::Register> tupleData; // put registers here
             for (uint32_t elemID = 0; elemID < 4; ++elemID) {
-              const ir::Register reg = this->getRegister(llvmValues, 4*msg+elemID);
+              ir::Register reg;
+              if(regTranslator.isUndefConst(llvmValues, elemID)) {
+                Value *v = Constant::getNullValue(elemType);
+                reg = this->getRegister(v);
+              } else
+                reg = this->getRegister(llvmValues, 4*msg+elemID);
+
               tupleData.push_back(reg);
             }
             const ir::Tuple tuple = ctx.arrayTuple(&tupleData[0], 4);
@@ -2535,6 +2547,9 @@ namespace gbe
         }
       } else {
         for (uint32_t elemID = 0; elemID < elemNum; elemID++) {
+          if(regTranslator.isUndefConst(llvmValues, elemID))
+            continue;
+
           const ir::Register reg = this->getRegister(llvmValues, elemID);
           ir::Register addr;
           if (elemID == 0)
