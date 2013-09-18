@@ -536,6 +536,7 @@ cl_mem_new_image(cl_context context,
 LOCAL void
 cl_mem_delete(cl_mem mem)
 {
+  cl_int i;
   if (UNLIKELY(mem == NULL))
     return;
   if (atomic_dec(&mem->ref_n) > 1)
@@ -560,8 +561,17 @@ cl_mem_delete(cl_mem mem)
   pthread_mutex_unlock(&mem->ctx->buffer_lock);
   cl_context_delete(mem->ctx);
 
-  /* Someone still mapped? */
-  assert(!mem->map_ref);
+  /* Someone still mapped, unmap */
+  if(mem->map_ref > 0) {
+    assert(mem->mapped_ptr);
+    for(i=0; i<mem->mapped_ptr_sz; i++) {
+      if(mem->mapped_ptr[i].ptr != NULL) {
+        mem->map_ref--;
+        cl_mem_unmap_gtt(mem);
+      }
+    }
+    assert(mem->map_ref == 0);
+  }
 
   if (mem->mapped_ptr)
     free(mem->mapped_ptr);
