@@ -460,7 +460,8 @@ namespace gbe
     }
 
     virtual bool doInitialization(Module &M);
-
+    /*! helper function for parsing global constant data */
+    void getConstantData(const Constant * c, void* mem, uint32_t& offset) const;
     void collectGlobalConstant(void) const;
 
     bool runOnFunction(Function &F) {
@@ -559,6 +560,99 @@ namespace gbe
   };
 
   char GenWriter::ID = 0;
+  void getSequentialData(const ConstantDataSequential *cda, void *ptr, uint32_t &offset) {
+    StringRef data = cda->getRawDataValues();
+    memcpy((char*)ptr+offset, data.data(), data.size());
+    offset += data.size();
+    return;
+  }
+
+  void GenWriter::getConstantData(const Constant * c, void* mem, uint32_t& offset) const {
+    Type * type = c->getType();
+    Type::TypeID id = type->getTypeID();
+
+    GBE_ASSERT(c);
+    if(isa<UndefValue>(c)) {
+      uint32_t n = c->getNumOperands();
+      Type * opTy = type->getArrayElementType();
+      uint32_t size = opTy->getIntegerBitWidth()/ 8;
+      offset += size*n;
+      return;
+    }
+    switch(id) {
+      case Type::TypeID::StructTyID:
+        {
+          const StructType * strTy = cast<StructType>(c->getType());
+          uint32_t size = 0;
+
+          for(uint32_t op=0; op < strTy->getNumElements(); op++)
+          {
+            Type* elementType = strTy->getElementType(op);
+            uint32_t align = 8 * getAlignmentByte(unit, elementType);
+            uint32_t padding = getPadding(size, align);
+            size += padding;
+            size += getTypeBitSize(unit, elementType);
+
+            offset += padding/8;
+            const Constant* sub = cast<Constant>(c->getOperand(op));
+            GBE_ASSERT(sub);
+            getConstantData(sub, mem, offset);
+          }
+          break;
+        }
+      case Type::TypeID::ArrayTyID:
+        {
+          const ConstantDataSequential *cds = dyn_cast<ConstantDataSequential>(c);
+          if(cds)
+            getSequentialData(cds, mem, offset);
+          else {
+            const ConstantArray *ca = dyn_cast<ConstantArray>(c);
+            const ArrayType *arrTy = ca->getType();
+            Type* elemTy = arrTy->getElementType();
+            uint32_t elemSize = getTypeBitSize(unit, elemTy);
+            uint32_t padding = getPadding(elemSize, 8 * getAlignmentByte(unit, elemTy));
+            padding /= 8;
+            uint32_t ops = c->getNumOperands();
+            for(uint32_t op = 0; op < ops; ++op) {
+              Constant * ca = dyn_cast<Constant>(c->getOperand(op));
+              getConstantData(ca, mem, offset);
+              offset += padding;
+            }
+          }
+          break;
+        }
+      case Type::TypeID::VectorTyID:
+        {
+          const ConstantDataSequential *cds = dyn_cast<ConstantDataSequential>(c);
+          GBE_ASSERT(cds);
+          getSequentialData(cds, mem, offset);
+          break;
+        }
+      case Type::TypeID::IntegerTyID:
+        {
+          const ConstantInt *ci = dyn_cast<ConstantInt>(c);
+          *(uint64_t *)((char*)mem + offset) = ci->isNegative() ? ci->getSExtValue() : ci->getZExtValue();
+          offset += ci->getBitWidth() / 8;
+          break;
+        }
+      case Type::TypeID::FloatTyID:
+        {
+          const ConstantFP *cf = dyn_cast<ConstantFP>(c);
+          *(float *)((char*)mem + offset) = cf->getValueAPF().convertToFloat();
+          offset += sizeof(float);
+          break;
+        }
+      case Type::TypeID::DoubleTyID:
+        {
+          const ConstantFP *cf = dyn_cast<ConstantFP>(c);
+          *(double *)((char*)mem + offset) = cf->getValueAPF().convertToDouble();
+          offset += sizeof(double);
+          break;
+        }
+      default:
+        NOT_IMPLEMENTED;
+    }
+  }
 
   void GenWriter::collectGlobalConstant(void) const {
     const Module::GlobalListType &globalList = TheModule->getGlobalList();
@@ -569,68 +663,13 @@ namespace gbe
       if(addrSpace == ir::AddressSpace::MEM_CONSTANT) {
         GBE_ASSERT(v.hasInitializer());
         const Constant *c = v.getInitializer();
-        if (c->getType()->getTypeID() != Type::ArrayTyID) {
-          void *mem = malloc(sizeof(double));
-          int size = 0;
-          switch(c->getType()->getTypeID()) {
-            case Type::TypeID::IntegerTyID: {
-              const ConstantInt *ci = dyn_cast<ConstantInt>(c);
-              *(uint64_t *)mem = ci->isNegative() ? ci->getSExtValue() : ci->getZExtValue();
-              size = ci->getBitWidth() / 8;
-              break;
-            }
-            case Type::TypeID::FloatTyID: {
-              const ConstantFP *cf = dyn_cast<ConstantFP>(c);
-              *(float *)mem = cf->getValueAPF().convertToFloat();
-              size = sizeof(float);
-              break;
-            }
-            case Type::TypeID::DoubleTyID: {
-              const ConstantFP *cf = dyn_cast<ConstantFP>(c);
-              *(double *)mem = cf->getValueAPF().convertToDouble();
-              size = sizeof(double);
-              break;
-            }
-            default:
-              NOT_IMPLEMENTED;
-          }
-          unit.newConstant((char *)mem, name, size, size);
-          free(mem);
-          continue;
-        }
-        GBE_ASSERT(c->getType()->getTypeID() == Type::ArrayTyID);
-        const ConstantDataArray *cda = dyn_cast<ConstantDataArray>(c);
-        GBE_ASSERT(cda);
-        unsigned len = cda->getNumElements();
-        uint64_t elementSize = cda->getElementByteSize();
-        Type::TypeID typeID = cda->getElementType()->getTypeID();
-        void *mem = malloc(elementSize * len);
-        for(unsigned j = 0; j < len; j ++) {
-          switch(typeID) {
-            case Type::TypeID::FloatTyID:
-             {
-              float f = cda->getElementAsFloat(j);
-              memcpy((float *)mem + j, &f, elementSize);
-             }
-              break;
-            case Type::TypeID::DoubleTyID:
-             {
-              double d = cda->getElementAsDouble(j);
-              memcpy((double *)mem + j, &d, elementSize);
-             }
-              break;
-            case Type::TypeID::IntegerTyID:
-             {
-              uint64_t u = (uint64_t) cda->getElementAsInteger(j);
-              memcpy((char *)mem + j*elementSize, &u, elementSize);
-             }
-              break;
-            default:
-              NOT_IMPLEMENTED;
-          }
-        }
+        Type * type = c->getType();
 
-        unit.newConstant((char *)mem, name, elementSize * len, sizeof(unsigned));
+        uint32_t size = getTypeByteSize(unit, type);
+        void* mem = malloc(size);
+        uint32_t offset = 0;
+        getConstantData(c, mem, offset);
+        unit.newConstant((char *)mem, name, size, sizeof(unsigned));
         free(mem);
       }
     }
@@ -818,18 +857,38 @@ namespace gbe
         return ir::Register(reg);
       }
       if (isa<ConstantExpr>(CPV)) {
+        uint32_t TypeIndex;
+        uint32_t constantOffset = 0;
+        uint32_t offset = 0;
         ConstantExpr *CE = dyn_cast<ConstantExpr>(CPV);
-        GBE_ASSERT(CE->isGEPWithNoNotionalOverIndexing());
-        auto pointer = CE->getOperand(0);
-        auto offset1 = dyn_cast<ConstantInt>(CE->getOperand(1));
-        GBE_ASSERT(offset1->getZExtValue() == 0);
-        auto offset2 = dyn_cast<ConstantInt>(CE->getOperand(2));
-        int type_size = pointer->getType()->getPrimitiveSizeInBits() / 8;
-        int type_offset = offset2->getSExtValue() * type_size;
-        auto pointer_name = pointer->getName().str();
+
+        // currently only GetElementPtr is handled
+        GBE_ASSERT(CE->getOpcode() == Instruction::GetElementPtr);
+        Value *pointer = CE->getOperand(0);
+        CompositeType* CompTy = cast<CompositeType>(pointer->getType());
+        for(uint32_t op=1; op<CE->getNumOperands(); ++op) {
+          ConstantInt* ConstOP = dyn_cast<ConstantInt>(CE->getOperand(op));
+          GBE_ASSERT(ConstOP);
+          TypeIndex = ConstOP->getZExtValue();
+          for(uint32_t ty_i=0; ty_i<TypeIndex; ty_i++)
+          {
+            Type* elementType = CompTy->getTypeAtIndex(ty_i);
+            uint32_t align = getAlignmentByte(unit, elementType);
+            offset += getPadding(offset, align);
+            offset += getTypeByteSize(unit, elementType);
+          }
+
+          const uint32_t align = getAlignmentByte(unit, CompTy->getTypeAtIndex(TypeIndex));
+          offset += getPadding(offset, align);
+
+          constantOffset += offset;
+          CompTy = dyn_cast<CompositeType>(CompTy->getTypeAtIndex(TypeIndex));
+        }
+
+        const std::string &pointer_name = pointer->getName().str();
         ir::Register pointer_reg = ir::Register(unit.getConstantSet().getConstant(pointer_name).getReg());
         ir::Register offset_reg = ctx.reg(ir::RegisterFamily::FAMILY_DWORD);
-        ctx.LOADI(ir::Type::TYPE_S32, offset_reg, ctx.newIntegerImmediate(type_offset, ir::Type::TYPE_S32));
+        ctx.LOADI(ir::Type::TYPE_S32, offset_reg, ctx.newIntegerImmediate(constantOffset, ir::Type::TYPE_S32));
         ir::Register reg = ctx.reg(ir::RegisterFamily::FAMILY_DWORD);
         ctx.ADD(ir::Type::TYPE_S32, reg, pointer_reg, offset_reg);
         return reg;
