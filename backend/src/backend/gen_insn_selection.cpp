@@ -419,7 +419,7 @@ namespace gbe
 #define ALU3(OP) \
   INLINE void OP(Reg dst, Reg src0, Reg src1, Reg src2) { ALU3(SEL_OP_##OP, dst, src0, src1, src2); }
 #define I64Shift(OP) \
-  INLINE void OP(Reg dst, Reg src0, Reg src1, GenRegister tmp[6]) { I64Shift(SEL_OP_##OP, dst, src0, src1, tmp); }
+  INLINE void OP(Reg dst, Reg src0, Reg src1, GenRegister tmp[7]) { I64Shift(SEL_OP_##OP, dst, src0, src1, tmp); }
     ALU1(MOV)
     ALU1WithTemp(MOV_DF)
     ALU1WithTemp(LOAD_DF_IMM)
@@ -470,13 +470,13 @@ namespace gbe
 #undef ALU3
 #undef I64Shift
     /*! Convert 64-bit integer to 32-bit float */
-    void CONVI64_TO_F(Reg dst, Reg src, GenRegister tmp[3]);
+    void CONVI64_TO_F(Reg dst, Reg src, GenRegister tmp[4]);
     /*! (x+y)>>1 without mod. overflow */
     void I64HADD(Reg dst, Reg src0, Reg src1, GenRegister tmp[4]);
     /*! (x+y+1)>>1 without mod. overflow */
     void I64RHADD(Reg dst, Reg src0, Reg src1, GenRegister tmp[4]);
     /*! Shift a 64-bit integer */
-    void I64Shift(SelectionOpcode opcode, Reg dst, Reg src0, Reg src1, GenRegister tmp[6]);
+    void I64Shift(SelectionOpcode opcode, Reg dst, Reg src0, Reg src1, GenRegister tmp[7]);
     /*! Compare 64-bit integer */
     void I64CMP(uint32_t conditional, Reg src0, Reg src1, GenRegister tmp[3]);
     /*! Encode a barrier instruction */
@@ -1079,11 +1079,11 @@ namespace gbe
     insn->extra.function = conditional;
   }
 
-  void Selection::Opaque::CONVI64_TO_F(Reg dst, Reg src, GenRegister tmp[3]) {
-    SelectionInstruction *insn = this->appendInsn(SEL_OP_CONVI64_TO_F, 4, 1);
+  void Selection::Opaque::CONVI64_TO_F(Reg dst, Reg src, GenRegister tmp[4]) {
+    SelectionInstruction *insn = this->appendInsn(SEL_OP_CONVI64_TO_F, 5, 1);
     insn->dst(0) = dst;
     insn->src(0) = src;
-    for(int i = 0; i < 3; i ++)
+    for(int i = 0; i < 4; i ++)
       insn->dst(i + 1) = tmp[i];
   }
 
@@ -1105,12 +1105,12 @@ namespace gbe
       insn->dst(i + 1) = tmp[i];
   }
 
-  void Selection::Opaque::I64Shift(SelectionOpcode opcode, Reg dst, Reg src0, Reg src1, GenRegister tmp[6]) {
-    SelectionInstruction *insn = this->appendInsn(opcode, 7, 2);
+  void Selection::Opaque::I64Shift(SelectionOpcode opcode, Reg dst, Reg src0, Reg src1, GenRegister tmp[7]) {
+    SelectionInstruction *insn = this->appendInsn(opcode, 8, 2);
     insn->dst(0) = dst;
     insn->src(0) = src0;
     insn->src(1) = src1;
-    for(int i = 0; i < 6; i ++)
+    for(int i = 0; i < 7; i ++)
       insn->dst(i + 1) = tmp[i];
   }
 
@@ -1647,27 +1647,30 @@ namespace gbe
           break;
         case OP_SHL:
           if (type == TYPE_S64 || type == TYPE_U64) {
-            GenRegister tmp[6];
+            GenRegister tmp[7];
             for(int i = 0; i < 6; i ++)
               tmp[i] = sel.selReg(sel.reg(FAMILY_DWORD));
+            tmp[6] = sel.selReg(sel.reg(FAMILY_BOOL));
             sel.I64SHL(dst, src0, src1, tmp);
           } else
             sel.SHL(dst, src0, src1);
           break;
         case OP_SHR:
           if (type == TYPE_S64 || type == TYPE_U64) {
-            GenRegister tmp[6];
+            GenRegister tmp[7];
             for(int i = 0; i < 6; i ++)
               tmp[i] = sel.selReg(sel.reg(FAMILY_DWORD));
+            tmp[6] = sel.selReg(sel.reg(FAMILY_BOOL));
             sel.I64SHR(dst, src0, src1, tmp);
           } else
             sel.SHR(dst, src0, src1);
           break;
         case OP_ASR:
           if (type == TYPE_S64 || type == TYPE_U64) {
-            GenRegister tmp[6];
+            GenRegister tmp[7];
             for(int i = 0; i < 6; i ++)
               tmp[i] = sel.selReg(sel.reg(FAMILY_DWORD));
+            tmp[6] = sel.selReg(sel.reg(FAMILY_BOOL));
             sel.I64ASR(dst, src0, src1, tmp);
           } else
             sel.ASR(dst, src0, src1);
@@ -2451,11 +2454,12 @@ namespace gbe
       } else if ((dstType == ir::TYPE_S32 || dstType == ir::TYPE_U32) && srcFamily == FAMILY_QWORD) {
         sel.CONVI64_TO_I(dst, src);
       } else if (dstType == ir::TYPE_FLOAT && srcFamily == FAMILY_QWORD) {
-        GenRegister tmp[3];
+        GenRegister tmp[4];
         for(int i=0; i<3; i++) {
           tmp[i] = sel.selReg(sel.reg(FAMILY_DWORD));
           tmp[i].type = GEN_TYPE_UD;
         }
+        tmp[3] = sel.selReg(sel.reg(FAMILY_BOOL));
         sel.CONVI64_TO_F(dst, src, tmp);
       } else if (dst.isdf()) {
         ir::Register r = sel.reg(ir::RegisterFamily::FAMILY_QWORD);

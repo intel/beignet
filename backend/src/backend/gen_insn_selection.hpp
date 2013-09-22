@@ -115,7 +115,7 @@ namespace gbe
     /*! Gen opcode */
     uint8_t opcode;
     /*! Number of destinations */
-    uint8_t dstNum:3;
+    uint8_t dstNum:4;
     /*! Number of sources */
     uint8_t srcNum:5;
     /*! To store various indices */

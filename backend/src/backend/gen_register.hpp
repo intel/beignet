@@ -158,6 +158,11 @@ namespace gbe
           NOT_IMPLEMENTED;
       }
     }
+    void useFlag(int nr, int subnr) {
+      flag = nr;
+      subFlag = subnr;
+      physicalFlag = 1;
+    }
   };
 
   /*! This is a book-keeping structure used to encode both virtual and physical
@@ -284,6 +289,14 @@ namespace gbe
       if (type == GEN_TYPE_DF && file == GEN_GENERAL_REGISTER_FILE)
         return true;
       return false;
+    }
+
+    INLINE int flag_nr(void) const {
+      return nr & 15;
+    }
+
+    INLINE int flag_subnr(void) const {
+      return subnr / typeSize(type);
     }
 
     static INLINE GenRegister h2(GenRegister reg) {

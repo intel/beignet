@@ -512,6 +512,7 @@ namespace gbe
     GenRegister e = ra->genReg(insn.dst(5));
     GenRegister f = ra->genReg(insn.dst(6));
     a.type = b.type = c.type = d.type = e.type = f.type = GEN_TYPE_UD;
+    GenRegister flagReg = ra->genReg(insn.dst(7));
     GenRegister zero = GenRegister::immud(0);
     switch(insn.opcode) {
       case SEL_OP_I64SHL:
@@ -524,16 +525,16 @@ namespace gbe
         p->SHL(c, e, a);
         p->SHL(d, f, a);
         p->OR(e, d, b);
-        p->MOV(GenRegister::flag(1, 1), GenRegister::immuw(0xFFFF));
+        p->MOV(flagReg, GenRegister::immuw(0xFFFF));
         p->curr.predicate = GEN_PREDICATE_NORMAL;
-        p->curr.physicalFlag = 1, p->curr.flag = 1, p->curr.subFlag = 1;
+        p->curr.useFlag(flagReg.flag_nr(), flagReg.flag_subnr());
         p->CMP(GEN_CONDITIONAL_Z, a, zero);
         p->SEL(d, d, e);
         p->curr.predicate = GEN_PREDICATE_NONE;
         p->AND(a, a, GenRegister::immud(32));
-        p->MOV(GenRegister::flag(1, 1), GenRegister::immuw(0xFFFF));
+        p->MOV(flagReg, GenRegister::immuw(0xFFFF));
         p->curr.predicate = GEN_PREDICATE_NORMAL;
-        p->curr.physicalFlag = 1, p->curr.flag = 1, p->curr.subFlag = 1;
+        p->curr.useFlag(flagReg.flag_nr(), flagReg.flag_subnr());
         p->CMP(GEN_CONDITIONAL_Z, a, zero);
         p->SEL(d, d, c);
         p->SEL(c, c, zero);
@@ -551,16 +552,16 @@ namespace gbe
         p->SHR(c, f, a);
         p->SHR(d, e, a);
         p->OR(e, d, b);
-        p->MOV(GenRegister::flag(1, 1), GenRegister::immuw(0xFFFF));
+        p->MOV(flagReg, GenRegister::immuw(0xFFFF));
         p->curr.predicate = GEN_PREDICATE_NORMAL;
-        p->curr.physicalFlag = 1, p->curr.flag = 1, p->curr.subFlag = 1;
+        p->curr.useFlag(flagReg.flag_nr(), flagReg.flag_subnr());
         p->CMP(GEN_CONDITIONAL_Z, a, zero);
         p->SEL(d, d, e);
         p->curr.predicate = GEN_PREDICATE_NONE;
         p->AND(a, a, GenRegister::immud(32));
-        p->MOV(GenRegister::flag(1, 1), GenRegister::immuw(0xFFFF));
+        p->MOV(flagReg, GenRegister::immuw(0xFFFF));
         p->curr.predicate = GEN_PREDICATE_NORMAL;
-        p->curr.physicalFlag = 1, p->curr.flag = 1, p->curr.subFlag = 1;
+        p->curr.useFlag(flagReg.flag_nr(), flagReg.flag_subnr());
         p->CMP(GEN_CONDITIONAL_Z, a, zero);
         p->SEL(d, d, c);
         p->SEL(c, c, zero);
@@ -579,16 +580,16 @@ namespace gbe
         p->ASR(c, f, a);
         p->SHR(d, e, a);
         p->OR(e, d, b);
-        p->MOV(GenRegister::flag(1, 1), GenRegister::immuw(0xFFFF));
+        p->MOV(flagReg, GenRegister::immuw(0xFFFF));
         p->curr.predicate = GEN_PREDICATE_NORMAL;
-        p->curr.physicalFlag = 1, p->curr.flag = 1, p->curr.subFlag = 1;
+        p->curr.useFlag(flagReg.flag_nr(), flagReg.flag_subnr());
         p->CMP(GEN_CONDITIONAL_Z, a, zero);
         p->SEL(d, d, e);
         p->curr.predicate = GEN_PREDICATE_NONE;
         p->AND(a, a, GenRegister::immud(32));
-        p->MOV(GenRegister::flag(1, 1), GenRegister::immuw(0xFFFF));
+        p->MOV(flagReg, GenRegister::immuw(0xFFFF));
         p->curr.predicate = GEN_PREDICATE_NORMAL;
-        p->curr.physicalFlag = 1, p->curr.flag = 1, p->curr.subFlag = 1;
+        p->curr.useFlag(flagReg.flag_nr(), flagReg.flag_subnr());
         p->CMP(GEN_CONDITIONAL_Z, a, zero);
         p->SEL(d, d, c);
         p->SEL(c, c, GenRegister::immd(-1));
@@ -622,6 +623,7 @@ namespace gbe
     GenRegister high = ra->genReg(insn.dst(1));
     GenRegister low = ra->genReg(insn.dst(2));
     GenRegister tmp = ra->genReg(insn.dst(3));
+    GenRegister flagReg = ra->genReg(insn.dst(4));
     loadTopHalf(high, src);
     loadBottomHalf(low, src);
     if(!src.is_signed_int()) {
@@ -629,9 +631,7 @@ namespace gbe
     } else {
       p->push();
       p->curr.predicate = GEN_PREDICATE_NONE;
-      p->curr.physicalFlag = 1;
-      p->curr.flag = 1;
-      p->curr.subFlag = 0;
+      p->curr.useFlag(flagReg.flag_nr(), flagReg.flag_subnr());
       p->CMP(GEN_CONDITIONAL_GE, high, GenRegister::immud(0x80000000));
       p->curr.predicate = GEN_PREDICATE_NORMAL;
       p->NOT(high, high);
@@ -642,9 +642,7 @@ namespace gbe
       p->pop();
       UnsignedI64ToFloat(dest, high, low, tmp);
       p->push();
-      p->curr.physicalFlag = 1;
-      p->curr.flag = 1;
-      p->curr.subFlag = 0;
+      p->curr.useFlag(flagReg.flag_nr(), flagReg.flag_subnr());
       dest.type = GEN_TYPE_UD;
       p->OR(dest, dest, GenRegister::immud(0x80000000));
       p->pop();
