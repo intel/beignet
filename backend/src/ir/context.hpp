@@ -142,6 +142,7 @@ namespace ir {
       this->NAME(type, dst, index); \
     }
     DECL_THREE_SRC_INSN(SEL);
+    DECL_THREE_SRC_INSN(I64MADSAT);
 #undef DECL_THREE_SRC_INSN
 
     /*! For all unary functions */

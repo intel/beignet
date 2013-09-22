@@ -173,6 +173,30 @@ namespace ir {
       }
     };
 
+    class ALIGNED_INSTRUCTION TernaryInstruction :
+      public BasePolicy,
+      public NDstPolicy<TernaryInstruction, 1>,
+      public TupleSrcPolicy<TernaryInstruction>
+    {
+     public:
+      TernaryInstruction(Opcode opcode,
+                         Type type,
+                         Register dst,
+                         Tuple src) {
+        this->opcode = opcode;
+        this->type = type;
+        this->dst[0] = dst;
+        this->src = src;
+      }
+      Type getType(void) const { return type; }
+      bool wellFormed(const Function &fn, std::string &whyNot) const;
+      INLINE void out(std::ostream &out, const Function &fn) const;
+      Type type;
+      Register dst[1];
+      Tuple src;
+      static const uint32_t srcNum = 3;
+    };
+
     /*! Three sources mean we need a tuple to encode it */
     class ALIGNED_INSTRUCTION SelectInstruction :
       public BasePolicy,
@@ -788,6 +812,25 @@ namespace ir {
       return true;
     }
 
+    INLINE bool TernaryInstruction::wellFormed(const Function &fn, std::string &whyNot) const
+    {
+      const RegisterFamily family = getFamily(this->type);
+      if (UNLIKELY(checkSpecialRegForWrite(dst[0], fn, whyNot) == false))
+        return false;
+      if (UNLIKELY(checkRegisterData(family, dst[0], fn, whyNot) == false))
+        return false;
+      if (UNLIKELY(src + 3u > fn.tupleNum())) {
+        whyNot = "Out-of-bound index for ternary instruction";
+        return false;
+      }
+      for (uint32_t srcID = 0; srcID < 3; ++srcID) {
+        const Register regID = fn.getRegister(src, srcID);
+        if (UNLIKELY(checkRegisterData(family, regID, fn, whyNot) == false))
+          return false;
+      }
+      return true;
+    }
+
     /*! Loads and stores follow the same restrictions */
     template <typename T>
     INLINE bool wellFormedLoadStore(const T &insn, const Function &fn, std::string &whyNot)
@@ -934,6 +977,10 @@ namespace ir {
       ternaryOrSelectOut(*this, out, fn);
     }
 
+    INLINE void TernaryInstruction::out(std::ostream &out, const Function &fn) const {
+      ternaryOrSelectOut(*this, out, fn);
+    }
+
     INLINE void AtomicInstruction::out(std::ostream &out, const Function &fn) const {
       this->outOpcode(out);
       out << "." << addrSpace;
@@ -1076,6 +1123,10 @@ END_INTROSPECTION(AtomicInstruction)
 START_INTROSPECTION(SelectInstruction)
 #include "ir/instruction.hxx"
 END_INTROSPECTION(SelectInstruction)
+
+START_INTROSPECTION(TernaryInstruction)
+#include "ir/instruction.hxx"
+END_INTROSPECTION(TernaryInstruction)
 
 START_INTROSPECTION(BranchInstruction)
 #include "ir/instruction.hxx"
@@ -1259,6 +1310,7 @@ DECL_MEM_FN(UnaryInstruction, Type, getType(void), getType())
 DECL_MEM_FN(BinaryInstruction, Type, getType(void), getType())
 DECL_MEM_FN(BinaryInstruction, bool, commutes(void), commutes())
 DECL_MEM_FN(SelectInstruction, Type, getType(void), getType())
+DECL_MEM_FN(TernaryInstruction, Type, getType(void), getType())
 DECL_MEM_FN(CompareInstruction, Type, getType(void), getType())
 DECL_MEM_FN(ConvertInstruction, Type, getSrcType(void), getSrcType())
 DECL_MEM_FN(ConvertInstruction, Type, getDstType(void), getDstType())
@@ -1357,6 +1409,10 @@ DECL_MEM_FN(GetImageInfoInstruction, uint32_t, getInfoType(void), getInfoType())
   // SEL
   Instruction SEL(Type type, Register dst, Tuple src) {
     return internal::SelectInstruction(type, dst, src).convert();
+  }
+
+  Instruction I64MADSAT(Type type, Register dst, Tuple src) {
+    return internal::TernaryInstruction(OP_I64MADSAT, type, dst, src).convert();
   }
 
   // All compare functions

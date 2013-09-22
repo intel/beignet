@@ -1905,6 +1905,8 @@ namespace gbe
       case GEN_OCL_RHADD:
       case GEN_OCL_I64HADD:
       case GEN_OCL_I64RHADD:
+      case GEN_OCL_I64_MAD_SAT:
+      case GEN_OCL_I64_MAD_SATU:
         this->newRegister(&I);
         break;
       default:
@@ -2343,6 +2345,24 @@ namespace gbe
             ctx.SUBSAT(getUnsignedType(ctx, I.getType()), dst, src0, src1);
             break;
           }
+          case GEN_OCL_I64_MAD_SAT:
+           {
+            GBE_ASSERT(AI != AE); const ir::Register src0 = this->getRegister(*AI); ++AI;
+            GBE_ASSERT(AI != AE); const ir::Register src1 = this->getRegister(*AI); ++AI;
+            GBE_ASSERT(AI != AE); const ir::Register src2 = this->getRegister(*AI); ++AI;
+            const ir::Register dst = this->getRegister(&I);
+            ctx.I64MADSAT(getType(ctx, I.getType()), dst, src0, src1, src2);
+            break;
+           }
+          case GEN_OCL_I64_MAD_SATU:
+           {
+            GBE_ASSERT(AI != AE); const ir::Register src0 = this->getRegister(*AI); ++AI;
+            GBE_ASSERT(AI != AE); const ir::Register src1 = this->getRegister(*AI); ++AI;
+            GBE_ASSERT(AI != AE); const ir::Register src2 = this->getRegister(*AI); ++AI;
+            const ir::Register dst = this->getRegister(&I);
+            ctx.I64MADSAT(getUnsignedType(ctx, I.getType()), dst, src0, src1, src2);
+            break;
+           }
           case GEN_OCL_HADD: {
             GBE_ASSERT(AI != AE); const ir::Register src0 = this->getRegister(*AI); ++AI;
             GBE_ASSERT(AI != AE); const ir::Register src1 = this->getRegister(*AI); ++AI;

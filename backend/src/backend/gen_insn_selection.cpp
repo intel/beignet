@@ -471,6 +471,8 @@ namespace gbe
 #undef I64Shift
     /*! Convert 64-bit integer to 32-bit float */
     void CONVI64_TO_F(Reg dst, Reg src, GenRegister tmp[4]);
+    /*! Saturated 64bit x*y + z */
+    void I64MADSAT(Reg dst, Reg src0, Reg src1, Reg src2, GenRegister tmp[10]);
     /*! High 64bit of x*y */
     void I64_MUL_HI(Reg dst, Reg src0, Reg src1, GenRegister tmp[10]);
     /*! (x+y)>>1 without mod. overflow */
@@ -1086,6 +1088,16 @@ namespace gbe
     insn->dst(0) = dst;
     insn->src(0) = src;
     for(int i = 0; i < 4; i ++)
+      insn->dst(i + 1) = tmp[i];
+  }
+
+  void Selection::Opaque::I64MADSAT(Reg dst, Reg src0, Reg src1, Reg src2, GenRegister tmp[10]) {
+    SelectionInstruction *insn = this->appendInsn(SEL_OP_I64MADSAT, 11, 3);
+    insn->dst(0) = dst;
+    insn->src(0) = src0;
+    insn->src(1) = src1;
+    insn->src(2) = src2;
+    for(int i = 0; i < 10; i ++)
       insn->dst(i + 1) = tmp[i];
   }
 
@@ -2586,6 +2598,36 @@ namespace gbe
     }
   };
 
+  DECL_PATTERN(TernaryInstruction)
+   {
+    INLINE bool emitOne(Selection::Opaque &sel, const ir::TernaryInstruction &insn) const {
+      using namespace ir;
+      const Type type = insn.getType();
+      const GenRegister dst = sel.selReg(insn.getDst(0), type),
+                        src0 = sel.selReg(insn.getSrc(0), type),
+                        src1 = sel.selReg(insn.getSrc(1), type),
+                        src2 = sel.selReg(insn.getSrc(2), type);
+      switch(insn.getOpcode()) {
+        case OP_I64MADSAT:
+         {
+          GenRegister tmp[10];
+          for(int i=0; i<9; i++) {
+            tmp[i] = sel.selReg(sel.reg(FAMILY_DWORD));
+            tmp[i].type = GEN_TYPE_UD;
+          }
+          tmp[9] = sel.selReg(sel.reg(FAMILY_BOOL));
+          sel.I64MADSAT(dst, src0, src1, src2, tmp);
+          break;
+         }
+        default:
+          NOT_IMPLEMENTED;
+      }
+      return true;
+    }
+
+    DECL_CTOR(TernaryInstruction, 1, 1);
+   };
+
   /*! Label instruction pattern */
   DECL_PATTERN(LabelInstruction)
   {
@@ -2876,6 +2918,7 @@ namespace gbe
     this->insert<CompareInstructionPattern>();
     this->insert<ConvertInstructionPattern>();
     this->insert<AtomicInstructionPattern>();
+    this->insert<TernaryInstructionPattern>();
     this->insert<LabelInstructionPattern>();
     this->insert<BranchInstructionPattern>();
     this->insert<Int32x32MulInstructionPattern>();

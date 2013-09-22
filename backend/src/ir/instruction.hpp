@@ -206,6 +206,13 @@ namespace ir {
     static bool isClassOf(const Instruction &insn);
   };
 
+  /*! Ternary instructions are typed. dst and sources share the same type */
+  class TernaryInstruction : public Instruction {
+   public:
+    Type getType(void) const;
+    static bool isClassOf(const Instruction &insn);
+  };
+
   /*! Select instructions writes src0 to dst if cond is true. Otherwise, it
    *  writes src1
    */
@@ -521,6 +528,8 @@ namespace ir {
   Instruction MUL_HI(Type type, Register dst, Register src0, Register src1);
   /*! i64_mul_hi.type dst src */
   Instruction I64_MUL_HI(Type type, Register dst, Register src0, Register src1);
+  /*! i64madsat.type dst src */
+  Instruction I64MADSAT(Type type, Register dst, Tuple src);
   /*! upsample_short.type dst src */
   Instruction UPSAMPLE_SHORT(Type type, Register dst, Register src0, Register src1);
   /*! upsample_int.type dst src */

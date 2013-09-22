@@ -423,12 +423,15 @@ INLINE_OVERLOADABLE uint mad_sat(uint a, uint b, uint c) {
   return (uint)x;
 }
 
+OVERLOADABLE long __gen_ocl_mad_sat(long a, long b, long c);
+OVERLOADABLE ulong __gen_ocl_mad_sat(ulong a, ulong b, ulong c);
+
 INLINE_OVERLOADABLE long mad_sat(long a, long b, long c) {
-  return 0;
+  return __gen_ocl_mad_sat(a, b, c);
 }
 
 INLINE_OVERLOADABLE ulong mad_sat(ulong a, ulong b, ulong c) {
-  return 0;
+  return __gen_ocl_mad_sat(a, b, c);
 }
 
 INLINE_OVERLOADABLE uchar __rotate_left(uchar x, uchar y) { return (x << y) | (x >> (8 - y)); }
