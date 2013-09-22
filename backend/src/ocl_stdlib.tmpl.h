@@ -182,7 +182,6 @@ INLINE_OVERLOADABLE TYPE add_sat(TYPE x, TYPE y) { return ocl_sadd_sat(x, y); } 
 INLINE_OVERLOADABLE TYPE sub_sat(TYPE x, TYPE y) { return ocl_ssub_sat(x, y); }
 SDEF(char);
 SDEF(short);
-SDEF(long);
 #undef SDEF
 OVERLOADABLE int ocl_sadd_sat(int x, int y);
 INLINE_OVERLOADABLE int add_sat(int x, int y) { return ocl_sadd_sat(x, y); }
@@ -190,6 +189,17 @@ OVERLOADABLE int ocl_ssub_sat(int x, int y);
 INLINE_OVERLOADABLE int sub_sat(int x, int y) {
   return (y == 0x80000000u) ? (x & 0x7FFFFFFF) : ocl_ssub_sat(x, y);
 }
+OVERLOADABLE long ocl_sadd_sat(long x, long y);
+INLINE_OVERLOADABLE long add_sat(long x, long y) {
+  union {long l; uint i[2];} ux, uy;
+  ux.l = x;
+  uy.l = y;
+  if((ux.i[1] ^ uy.i[1]) & 0x80000000u)
+    return x + y;
+  return ocl_sadd_sat(x, y);
+}
+OVERLOADABLE long ocl_ssub_sat(long x, long y);
+INLINE_OVERLOADABLE long sub_sat(long x, long y) { return ocl_ssub_sat(x, y); }
 #define UDEF(TYPE)                                                              \
 OVERLOADABLE TYPE ocl_uadd_sat(TYPE x, TYPE y);                          \
 OVERLOADABLE TYPE ocl_usub_sat(TYPE x, TYPE y);                          \
@@ -200,7 +210,6 @@ UDEF(ushort);
 UDEF(uint);
 UDEF(ulong);
 #undef UDEF
-
 
 uchar INLINE_OVERLOADABLE convert_uchar_sat(float x) {
     return add_sat((uchar)x, (uchar)0);
