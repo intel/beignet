@@ -981,6 +981,52 @@ namespace gbe
     storeBottomHalf(dst, b);
   }
 
+  void GenContext::emitI64SATSUBInstruction(const SelectionInstruction &insn) {
+    GenRegister x = ra->genReg(insn.src(0));
+    GenRegister y = ra->genReg(insn.src(1));
+    GenRegister dst = ra->genReg(insn.dst(0));
+    GenRegister a = ra->genReg(insn.dst(1));
+    GenRegister b = ra->genReg(insn.dst(2));
+    GenRegister c = ra->genReg(insn.dst(3));
+    GenRegister d = ra->genReg(insn.dst(4));
+    GenRegister e = ra->genReg(insn.dst(5));
+    GenRegister flagReg = ra->genReg(insn.dst(6));
+    loadTopHalf(a, x);
+    loadBottomHalf(b, x);
+    loadTopHalf(c, y);
+    loadBottomHalf(d, y);
+    if(dst.is_signed_int())
+      p->SHR(e, a, GenRegister::immud(31));
+    subWithBorrow(b, b, d);
+    subWithBorrow(a, a, d);
+    subWithBorrow(a, a, c);
+    p->ADD(c, c, d);
+    p->push();
+    p->curr.predicate = GEN_PREDICATE_NONE;
+    p->curr.useFlag(flagReg.flag_nr(), flagReg.flag_subnr());
+    if(! dst.is_signed_int()) {
+      p->CMP(GEN_CONDITIONAL_NZ, c, GenRegister::immud(0));
+      p->curr.predicate = GEN_PREDICATE_NORMAL;
+      p->MOV(a, GenRegister::immud(0));
+      p->MOV(b, GenRegister::immud(0));
+    } else {
+      p->CMP(GEN_CONDITIONAL_EQ, e, GenRegister::immud(1));
+      p->curr.predicate = GEN_PREDICATE_NORMAL;
+      p->CMP(GEN_CONDITIONAL_L, a, GenRegister::immud(0x80000000u));
+      p->MOV(a, GenRegister::immud(0x80000000u));
+      p->MOV(b, GenRegister::immud(0));
+      p->curr.predicate = GEN_PREDICATE_NONE;
+      p->CMP(GEN_CONDITIONAL_EQ, e, GenRegister::immud(0));
+      p->curr.predicate = GEN_PREDICATE_NORMAL;
+      p->CMP(GEN_CONDITIONAL_GE, a, GenRegister::immud(0x80000000u));
+      p->MOV(a, GenRegister::immud(0x7FFFFFFFu));
+      p->MOV(b, GenRegister::immud(0xFFFFFFFFu));
+    }
+    p->pop();
+    storeTopHalf(dst, a);
+    storeBottomHalf(dst, b);
+  }
+
   void GenContext::loadTopHalf(GenRegister dest, GenRegister src) {
     int execWidth = p->curr.execWidth;
     src = src.top_half();
@@ -1068,11 +1114,11 @@ namespace gbe
     int execWidth = p->curr.execWidth;
     GenRegister acc0 = GenRegister::retype(GenRegister::acc(), GEN_TYPE_D);
     p->push();
-    p->curr.predicate = GEN_PREDICATE_NONE;
     p->curr.execWidth = 8;
     p->SUBB(dest, src0, src1);
     p->MOV(src1, acc0);
     if (execWidth == 16) {
+      p->curr.quarterControl = 1;
       p->SUBB(GenRegister::suboffset(dest, 8),
               GenRegister::suboffset(src0, 8),
               GenRegister::suboffset(src1, 8));

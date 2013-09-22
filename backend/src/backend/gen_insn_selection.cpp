@@ -485,6 +485,8 @@ namespace gbe
     void I64CMP(uint32_t conditional, Reg src0, Reg src1, GenRegister tmp[3]);
     /*! Saturated addition of 64-bit integer */
     void I64SATADD(Reg dst, Reg src0, Reg src1, GenRegister tmp[6]);
+    /*! Saturated subtraction of 64-bit integer */
+    void I64SATSUB(Reg dst, Reg src0, Reg src1, GenRegister tmp[6]);
     /*! Encode a barrier instruction */
     void BARRIER(GenRegister src);
     /*! Encode a barrier instruction */
@@ -1094,6 +1096,15 @@ namespace gbe
       insn->dst(i + 1) = tmp[i];
   }
 
+  void Selection::Opaque::I64SATSUB(Reg dst, Reg src0, Reg src1, GenRegister tmp[6]) {
+    SelectionInstruction *insn = this->appendInsn(SEL_OP_I64SATSUB, 7, 2);
+    insn->dst(0) = dst;
+    insn->src(0) = src0;
+    insn->src(1) = src1;
+    for(int i=0; i<6; i++)
+      insn->dst(i + 1) = tmp[i];
+  }
+
   void Selection::Opaque::CONVI64_TO_F(Reg dst, Reg src, GenRegister tmp[4]) {
     SelectionInstruction *insn = this->appendInsn(SEL_OP_CONVI64_TO_F, 5, 1);
     insn->dst(0) = dst;
@@ -1684,6 +1695,16 @@ namespace gbe
             sel.ADD(dst, src0, GenRegister::negate(src1));
           break;
         case OP_SUBSAT:
+          if (type == Type::TYPE_U64 || type == Type::TYPE_S64) {
+            GenRegister tmp[6];
+            for(int i=0; i<5; i++) {
+              tmp[i] = sel.selReg(sel.reg(FAMILY_DWORD));
+              tmp[i].type = GEN_TYPE_UD;
+            }
+            tmp[5] = sel.selReg(sel.reg(FAMILY_BOOL));
+            sel.I64SATSUB(dst, src0, src1, tmp);
+            break;
+          }
           sel.push();
             sel.curr.saturate = GEN_MATH_SATURATE_SATURATE;
             sel.ADD(dst, src0, GenRegister::negate(src1));
