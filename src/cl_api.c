@@ -2155,13 +2155,22 @@ clEnqueueMapImage(cl_command_queue   command_queue,
   }
 
   size_t offset = image->bpp*origin[0] + image->row_pitch*origin[1] + image->slice_pitch*origin[2];
-  size_t size = image->depth == 1 ? image->row_pitch*image->h : image->slice_pitch*image->depth;
+  size_t size;
+  if(region[2] == 1) {
+    if(region[1] == 1)
+      size = image->bpp * region[0];
+    else
+      size = image->row_pitch * (region[1] - 1) + (image->bpp * (origin[0] + region[0]));
+  } else {
+    size = image->slice_pitch * (region[2] - 1);
+    size += image->row_pitch * (origin[1] + region[1]);
+    size += image->bpp * (origin[0] + region[0]);
+  }
 
   err = _cl_map_mem(mem, &ptr, &mem_ptr, offset, size);
   if (err != CL_SUCCESS)
     goto error;
 
-  ptr = (char*)ptr + offset;
   TRY(cl_event_check_waitlist, num_events_in_wait_list, event_wait_list, event, mem->ctx);
 
   data = &no_wait_data;
