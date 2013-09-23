@@ -63,11 +63,9 @@ cl_mem_new_gl_texture(cl_context ctx,
     goto error;
   }
 
-  mem = cl_mem_allocate(CL_MEM_GL_IMAGE_TYPE, ctx, flags, 0, 0, errcode_ret);
-  if (mem == NULL) {
-    err = CL_OUT_OF_HOST_MEMORY;
+  mem = cl_mem_allocate(CL_MEM_GL_IMAGE_TYPE, ctx, flags, 0, 0, &err);
+  if (mem == NULL || err != CL_SUCCESS)
     goto error;
-  }
 
   mem->bo = cl_buffer_alloc_from_texture(ctx, texture_target, miplevel,
                                          texture, cl_mem_image(mem));
