@@ -326,11 +326,11 @@ intel_driver_unlock_hardware(intel_driver_t *driver)
 }
 
 LOCAL dri_bo*
-intel_driver_share_buffer(intel_driver_t *driver, uint32_t name)
+intel_driver_share_buffer(intel_driver_t *driver, const char *sname, uint32_t name)
 {
   assert(!driver->master);
   dri_bo *bo = intel_bo_gem_create_from_name(driver->bufmgr,
-                                             "rendering buffer",
+                                             sname,
                                              name);
   return bo;
 }
@@ -523,7 +523,7 @@ intel_alloc_buffer_from_texture_egl(cl_context ctx, unsigned int target,
   if (!ret)
       goto out;
 
-  bo = (cl_buffer)intel_driver_share_buffer((intel_driver_t *)ctx->drv, region.name);
+  bo = (cl_buffer)intel_driver_share_buffer((intel_driver_t *)ctx->drv, "rendering buffer", region.name);
 
   if (bo == NULL) {
     eglReleaseResourceMESA(EGL_DISP(ctx), EGL_CTX(ctx), EGL_GL_TEXTURE_MESA, &attrib_list[0]);

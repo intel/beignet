@@ -94,7 +94,7 @@ extern void intel_driver_lock_hardware(intel_driver_t*);
 extern void intel_driver_unlock_hardware(intel_driver_t*);
 
 /* methods working in shared mode */
-extern dri_bo* intel_driver_share_buffer(intel_driver_t*, uint32_t name);
+extern dri_bo* intel_driver_share_buffer(intel_driver_t*, const char *sname, uint32_t name);
 extern uint32_t intel_driver_shared_name(intel_driver_t*, dri_bo*);
 
 /* init driver shared with X using dri state, acquired from X Display */
