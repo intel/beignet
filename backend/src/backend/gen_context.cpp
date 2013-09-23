@@ -1051,7 +1051,7 @@ namespace gbe
     const GenRegister data = ra->genReg(insn.src(1));
     const uint32_t bti = insn.extra.function;
     p->MOV(src, addr);
-    p->WRITE64(src, data, bti, elemNum);
+    p->WRITE64(src, data, bti, elemNum, isScalarReg(data.reg()));
   }
 
   void GenContext::emitUntypedWriteInstruction(const SelectionInstruction &insn) {

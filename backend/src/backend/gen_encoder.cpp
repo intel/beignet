@@ -405,8 +405,9 @@ namespace gbe
     pop();
   }
 
-  void GenEncoder::WRITE64(GenRegister msg, GenRegister data, uint32_t bti, uint32_t elemNum) {
+  void GenEncoder::WRITE64(GenRegister msg, GenRegister data, uint32_t bti, uint32_t elemNum, bool is_scalar) {
     GenRegister data32 = GenRegister::retype(data, GEN_TYPE_UD);
+    GenRegister unpacked;
     msg = GenRegister::retype(msg, GEN_TYPE_UD);
     int originSimdWidth = curr.execWidth;
     int originPredicate = curr.predicate;
@@ -416,9 +417,19 @@ namespace gbe
       curr.predicate = GEN_PREDICATE_NONE;
       curr.noMask = GEN_MASK_DISABLE;
       curr.execWidth = 8;
-      MOV(GenRegister::suboffset(msg, originSimdWidth), GenRegister::unpacked_ud(data32.nr, data32.subnr + half));
+      if (is_scalar) {
+        unpacked = data32;
+        unpacked.subnr += half * 4;
+      } else
+        unpacked = GenRegister::unpacked_ud(data32.nr, data32.subnr + half);
+      MOV(GenRegister::suboffset(msg, originSimdWidth), unpacked);
       if (originSimdWidth == 16) {
-        MOV(GenRegister::suboffset(msg, originSimdWidth + 8), GenRegister::unpacked_ud(data32.nr + 2, data32.subnr + half));
+        if (is_scalar) {
+          unpacked = data32;
+          unpacked.subnr += half * 4;
+        } else
+          unpacked = GenRegister::unpacked_ud(data32.nr + 2, data32.subnr + half);
+        MOV(GenRegister::suboffset(msg, originSimdWidth + 8), unpacked);
         curr.execWidth = 16;
       }
       if (half == 1)

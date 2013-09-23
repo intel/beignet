@@ -147,7 +147,7 @@ namespace gbe
     /*! Read 64-bits float/int arrays */
     void READ64(GenRegister dst, GenRegister tmp, GenRegister addr, GenRegister src, uint32_t bti, uint32_t elemNum);
     /*! Write 64-bits float/int arrays */
-    void WRITE64(GenRegister src, GenRegister data, uint32_t bti, uint32_t elemNum);
+    void WRITE64(GenRegister src, GenRegister data, uint32_t bti, uint32_t elemNum, bool is_scalar);
     /*! Untyped read (upto 4 channels) */
     void UNTYPED_READ(GenRegister dst, GenRegister src, uint32_t bti, uint32_t elemNum);
     /*! Untyped write (upto 4 channels) */
