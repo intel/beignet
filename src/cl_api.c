@@ -2264,16 +2264,9 @@ clEnqueueNDRangeKernel(cl_command_queue  command_queue,
     goto error;
   }
 
-  /* Check offset values. We add a non standard restriction. The offsets must
-   * also be evenly divided by the local sizes
-   */
   if (global_work_offset != NULL)
     for (i = 0; i < work_dim; ++i) {
       if (UNLIKELY(~0LL - global_work_offset[i] > global_work_size[i])) {
-        err = CL_INVALID_GLOBAL_OFFSET;
-        goto error;
-      }
-      if (UNLIKELY(local_work_size != NULL && global_work_offset[i] % local_work_size[i])) {
         err = CL_INVALID_GLOBAL_OFFSET;
         goto error;
       }

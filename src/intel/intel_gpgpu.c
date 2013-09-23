@@ -886,11 +886,11 @@ intel_gpgpu_walker(intel_gpgpu_t *gpgpu,
     OUT_BATCH(gpgpu->batch, (1 << 30) | (thread_n-1)); /* SIMD16 | thread max */
   else
     OUT_BATCH(gpgpu->batch, (0 << 30) | (thread_n-1)); /* SIMD8  | thread max */
-  OUT_BATCH(gpgpu->batch, global_wk_off[0]);
+  OUT_BATCH(gpgpu->batch, 0);
   OUT_BATCH(gpgpu->batch, global_wk_dim[0]);
-  OUT_BATCH(gpgpu->batch, global_wk_off[1]);
+  OUT_BATCH(gpgpu->batch, 0);
   OUT_BATCH(gpgpu->batch, global_wk_dim[1]);
-  OUT_BATCH(gpgpu->batch, global_wk_off[2]);
+  OUT_BATCH(gpgpu->batch, 0);
   OUT_BATCH(gpgpu->batch, global_wk_dim[2]);
   OUT_BATCH(gpgpu->batch, right_mask);
   OUT_BATCH(gpgpu->batch, ~0x0);                     /* we always set height as 1, so set bottom mask as all 1*/

@@ -588,7 +588,7 @@ DECL_PUBLIC_WORK_ITEM_FN(get_num_groups, 1)
 #undef DECL_PUBLIC_WORK_ITEM_FN
 
 INLINE uint get_global_id(uint dim) {
-  return get_local_id(dim) + get_local_size(dim) * get_group_id(dim);
+  return get_local_id(dim) + get_local_size(dim) * get_group_id(dim) + get_global_offset(dim);
 }
 
 /////////////////////////////////////////////////////////////////////////////
