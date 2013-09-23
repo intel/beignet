@@ -132,6 +132,7 @@ cl_mem_image_init(struct _cl_mem_image *image, size_t w, size_t h,
   image->tiling = tiling;
   image->tile_x = tile_x;
   image->tile_y = tile_y;
+  image->offset = offset;
 }
 
 struct _cl_mem_buffer {
