@@ -463,6 +463,14 @@ namespace gbe
     I64FullAdd(e, f, b, d);
   }
 
+  void GenContext::I64Neg(GenRegister high, GenRegister low, GenRegister tmp) {
+    p->NOT(high, high);
+    p->NOT(low, low);
+    p->MOV(tmp, GenRegister::immud(1));
+    addWithCarry(low, low, tmp);
+    p->ADD(high, high, tmp);
+  }
+
   void GenContext::I64ABS(GenRegister sign, GenRegister high, GenRegister low, GenRegister tmp, GenRegister flagReg) {
     p->SHR(sign, high, GenRegister::immud(31));
     p->push();
@@ -470,11 +478,7 @@ namespace gbe
     p->curr.useFlag(flagReg.flag_nr(), flagReg.flag_subnr());
     p->CMP(GEN_CONDITIONAL_NZ, sign, GenRegister::immud(0));
     p->curr.predicate = GEN_PREDICATE_NORMAL;
-    p->NOT(high, high);
-    p->NOT(low, low);
-    p->MOV(tmp, GenRegister::immud(1));
-    addWithCarry(low, low, tmp);
-    p->ADD(high, high, tmp);
+    I64Neg(high, low, tmp);
     p->pop();
   }
 
@@ -1171,6 +1175,145 @@ namespace gbe
     p->pop();
     storeTopHalf(dest, e);
     storeBottomHalf(dest, a);
+  }
+
+  void GenContext::emitI64DIVREMInstruction(const SelectionInstruction &insn) {
+    GenRegister dest = ra->genReg(insn.dst(0));
+    GenRegister x = ra->genReg(insn.src(0));
+    GenRegister y = ra->genReg(insn.src(1));
+    GenRegister a = ra->genReg(insn.dst(1));
+    GenRegister b = ra->genReg(insn.dst(2));
+    GenRegister c = ra->genReg(insn.dst(3));
+    GenRegister d = ra->genReg(insn.dst(4));
+    GenRegister e = ra->genReg(insn.dst(5));
+    GenRegister f = ra->genReg(insn.dst(6));
+    GenRegister g = ra->genReg(insn.dst(7));
+    GenRegister h = ra->genReg(insn.dst(8));
+    GenRegister i = ra->genReg(insn.dst(9));
+    GenRegister j = ra->genReg(insn.dst(10));
+    GenRegister k = ra->genReg(insn.dst(11));
+    GenRegister l = ra->genReg(insn.dst(12));
+    GenRegister m = ra->genReg(insn.dst(13));
+    GenRegister flagReg = ra->genReg(insn.dst(14));
+    GenRegister zero = GenRegister::immud(0),
+                one = GenRegister::immud(1),
+                imm31 = GenRegister::immud(31);
+    // (a,b) <- x
+    loadTopHalf(a, x);
+    loadBottomHalf(b, x);
+    // (c,d) <- y
+    loadTopHalf(c, y);
+    loadBottomHalf(d, y);
+    // k <- sign_of_result
+    if(x.is_signed_int()) {
+      GBE_ASSERT(y.is_signed_int());
+      GBE_ASSERT(dest.is_signed_int());
+      I64ABS(k, a, b, e, flagReg);
+      I64ABS(l, c, d, e, flagReg);
+      if(insn.opcode == SEL_OP_I64DIV)
+        p->XOR(k, k, l);
+    }
+    // (e,f) <- 0
+    p->MOV(e, zero);
+    p->MOV(f, zero);
+    // (g,h) <- 2**63
+    p->MOV(g, GenRegister::immud(0x80000000));
+    p->MOV(h, zero);
+    // (i,j) <- 0
+    p->MOV(i, zero);
+    p->MOV(j, zero);
+    // m <- 0
+    p->MOV(m, zero);
+    {
+      uint32_t loop_start = p->n_instruction();
+      // (c,d,e,f) <- (c,d,e,f) / 2
+      p->SHR(f, f, one);
+      p->SHL(l, e, imm31);
+      p->OR(f, f, l);
+      p->SHR(e, e, one);
+      p->SHL(l, d, imm31);
+      p->OR(e, e, l);
+      p->SHR(d, d, one);
+      p->SHL(l, c, imm31);
+      p->OR(d, d, l);
+      p->SHR(c, c, one);
+      // condition <- (c,d)==0 && (a,b)>=(e,f)
+      p->push();
+      p->curr.predicate = GEN_PREDICATE_NONE;
+      p->MOV(l, zero);
+      p->curr.useFlag(flagReg.flag_nr(), flagReg.flag_subnr());
+      p->CMP(GEN_CONDITIONAL_EQ, a, e);
+      p->curr.predicate = GEN_PREDICATE_NORMAL;
+      p->CMP(GEN_CONDITIONAL_GE, b, f);
+      p->MOV(l, one);
+      p->curr.predicate = GEN_PREDICATE_NONE;
+      p->CMP(GEN_CONDITIONAL_G, a, e);
+      p->curr.predicate = GEN_PREDICATE_NORMAL;
+      p->MOV(l, one);
+      p->curr.predicate = GEN_PREDICATE_NONE;
+      p->CMP(GEN_CONDITIONAL_NEQ, l, zero);
+      p->curr.predicate = GEN_PREDICATE_NORMAL;
+      p->CMP(GEN_CONDITIONAL_EQ, c, zero);
+      p->CMP(GEN_CONDITIONAL_EQ, d, zero);
+      // under condition, (a,b) <- (a,b) - (e,f)
+      p->MOV(l, f);
+      subWithBorrow(b, b, l);
+      subWithBorrow(a, a, l);
+      p->MOV(l, e);
+      subWithBorrow(a, a, l);
+      // under condition, (i,j) <- (i,j) | (g,h)
+      p->OR(i, i, g);
+      p->OR(j, j, h);
+      p->pop();
+      // (g,h) /= 2
+      p->SHR(h, h, one);
+      p->SHL(l, g, imm31);
+      p->OR(h, h, l);
+      p->SHR(g, g, one);
+      // condition: m < 64
+      p->ADD(m, m, one);
+      p->push();
+      p->curr.predicate = GEN_PREDICATE_NONE;
+      p->curr.useFlag(flagReg.flag_nr(), flagReg.flag_subnr());
+      p->CMP(GEN_CONDITIONAL_L, m, GenRegister::immud(64));
+      p->curr.predicate = GEN_PREDICATE_NORMAL;
+      // under condition, jump back to start point
+      if (simdWidth == 8)
+        p->curr.predicate = GEN_PREDICATE_ALIGN1_ANY8H;
+      else if (simdWidth == 16)
+        p->curr.predicate = GEN_PREDICATE_ALIGN1_ANY16H;
+      else
+        NOT_IMPLEMENTED;
+      p->curr.execWidth = 1;
+      p->curr.noMask = 1;
+      int jip = -(int)(p->n_instruction() - loop_start + 1) * 2;
+      p->JMPI(zero);
+      p->patchJMPI(p->n_instruction()-1, jip);
+      p->pop();
+      // end of loop
+    }
+    // adjust sign of result
+    if(x.is_signed_int()) {
+      p->push();
+      p->curr.predicate = GEN_PREDICATE_NONE;
+      p->curr.useFlag(flagReg.flag_nr(), flagReg.flag_subnr());
+      p->CMP(GEN_CONDITIONAL_NEQ, k, zero);
+      p->curr.predicate = GEN_PREDICATE_NORMAL;
+      if(insn.opcode == SEL_OP_I64DIV)
+        I64Neg(i, j, l);
+      else
+        I64Neg(a, b, l);
+      p->pop();
+    }
+    // write dest
+    if(insn.opcode == SEL_OP_I64DIV) {
+      storeTopHalf(dest, i);
+      storeBottomHalf(dest, j);
+    } else {
+      GBE_ASSERT(insn.opcode == SEL_OP_I64REM);
+      storeTopHalf(dest, a);
+      storeBottomHalf(dest, b);
+    }
   }
 
   void GenContext::emitTernaryInstruction(const SelectionInstruction &insn) {

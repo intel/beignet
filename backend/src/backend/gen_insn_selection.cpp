@@ -545,6 +545,10 @@ namespace gbe
     void GET_IMAGE_INFO(uint32_t type, GenRegister *dst, uint32_t dst_num, uint32_t bti);
     /*! Multiply 64-bit integers */
     void I64MUL(Reg dst, Reg src0, Reg src1, GenRegister tmp[6]);
+    /*! 64-bit integer division */
+    void I64DIV(Reg dst, Reg src0, Reg src1, GenRegister tmp[14]);
+    /*! 64-bit integer remainder of division */
+    void I64REM(Reg dst, Reg src0, Reg src1, GenRegister tmp[14]);
     /*! Use custom allocators */
     GBE_CLASS(Opaque);
     friend class SelectionBlock;
@@ -1039,6 +1043,24 @@ namespace gbe
     insn->src(0) = src0;
     insn->src(1) = src1;
     for(int i = 0; i < 6; i++)
+      insn->dst(i + 1) = tmp[i];
+  }
+
+  void Selection::Opaque::I64DIV(Reg dst, Reg src0, Reg src1, GenRegister tmp[14]) {
+    SelectionInstruction *insn = this->appendInsn(SEL_OP_I64DIV, 15, 2);
+    insn->dst(0) = dst;
+    insn->src(0) = src0;
+    insn->src(1) = src1;
+    for(int i = 0; i < 14; i++)
+      insn->dst(i + 1) = tmp[i];
+  }
+
+  void Selection::Opaque::I64REM(Reg dst, Reg src0, Reg src1, GenRegister tmp[14]) {
+    SelectionInstruction *insn = this->appendInsn(SEL_OP_I64REM, 15, 2);
+    insn->dst(0) = dst;
+    insn->src(0) = src0;
+    insn->src(1) = src1;
+    for(int i = 0; i < 14; i++)
       insn->dst(i + 1) = tmp[i];
   }
 
@@ -1577,8 +1599,17 @@ namespace gbe
       } else if(type == TYPE_FLOAT) {
         GBE_ASSERT(op != OP_REM);
         sel.MATH(dst, GEN_MATH_FUNCTION_FDIV, src0, src1);
-      } else {
-        NOT_IMPLEMENTED;
+      } else if (type == TYPE_S64 || type == TYPE_U64) {
+        GenRegister tmp[14];
+        for(int i=0; i<13; i++) {
+          tmp[i] = sel.selReg(sel.reg(FAMILY_DWORD));
+          tmp[i].type = GEN_TYPE_UD;
+        }
+        tmp[13] = sel.selReg(sel.reg(FAMILY_BOOL));
+        if(op == OP_DIV)
+          sel.I64DIV(dst, src0, src1, tmp);
+        else
+          sel.I64REM(dst, src0, src1, tmp);
       }
       markAllChildren(dag);
       return true;

@@ -193,6 +193,7 @@ namespace gbe
     void setSrc0(GenInstruction *insn, GenRegister reg);
     void setSrc1(GenInstruction *insn, GenRegister reg);
     GenInstruction *next(uint32_t opcode);
+    uint32_t n_instruction(void) const { return store.size(); }
     GBE_CLASS(GenEncoder); //!< Use custom allocators
   };
 

@@ -86,6 +86,7 @@ namespace gbe
 
     void addWithCarry(GenRegister dest, GenRegister src0, GenRegister src1);
     void subWithBorrow(GenRegister dest, GenRegister src0, GenRegister src1);
+    void I64Neg(GenRegister high, GenRegister low, GenRegister tmp);
     void I64ABS(GenRegister sign, GenRegister high, GenRegister low, GenRegister tmp, GenRegister flagReg);
     void I64FullAdd(GenRegister high1, GenRegister low1, GenRegister high2, GenRegister low2);
     void I32FullMult(GenRegister high, GenRegister low, GenRegister src0, GenRegister src1);
@@ -132,6 +133,7 @@ namespace gbe
     void emitUnSpillRegInstruction(const SelectionInstruction &insn);
     void emitGetImageInfoInstruction(const SelectionInstruction &insn);
     void emitI64MULInstruction(const SelectionInstruction &insn);
+    void emitI64DIVREMInstruction(const SelectionInstruction &insn);
     void scratchWrite(const GenRegister header, uint32_t offset, uint32_t reg_num, uint32_t reg_type, uint32_t channel_mode);
     void scratchRead(const GenRegister dst, const GenRegister header, uint32_t offset, uint32_t reg_num, uint32_t reg_type, uint32_t channel_mode);
 
