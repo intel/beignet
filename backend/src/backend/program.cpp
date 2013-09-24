@@ -542,7 +542,12 @@ namespace gbe {
     llvm::Module *module = Act->takeModule();
 
     std::string ErrorInfo;
-    llvm::raw_fd_ostream OS(output, ErrorInfo,llvm::raw_fd_ostream::F_Binary);
+#if (LLVM_VERSION_MAJOR == 3) && (LLVM_VERSION_MINOR > 3)
+    auto mode = llvm::sys::fs::F_Binary;
+#else
+    auto mode = llvm::raw_fd_ostream::F_Binary;
+#endif
+    llvm::raw_fd_ostream OS(output, ErrorInfo, mode);
     //still write to temp file for code simply, otherwise need add another function.
     //because gbe_program_new_from_llvm also be used by cl_program_create_from_llvm, can't be removed
     //TODO: Pass module to llvmToGen, if use module, should return Act and use OwningPtr out of this funciton

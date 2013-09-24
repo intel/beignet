@@ -154,9 +154,9 @@
 #define LLVM_VERSION_MINOR 0
 #endif /* !defined(LLVM_VERSION_MINOR) */
 
-#if (LLVM_VERSION_MAJOR != 3) || (LLVM_VERSION_MINOR > 3)
-#error "Only LLVM 3.0 - 3.3 is supported"
-#endif /* (LLVM_VERSION_MAJOR != 3) || (LLVM_VERSION_MINOR > 3) */
+#if (LLVM_VERSION_MAJOR != 3) || (LLVM_VERSION_MINOR > 4)
+#error "Only LLVM 3.0 - 3.4 is supported"
+#endif /* (LLVM_VERSION_MAJOR != 3) || (LLVM_VERSION_MINOR > 4) */
 
 using namespace llvm;
 
