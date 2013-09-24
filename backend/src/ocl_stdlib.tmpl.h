@@ -2316,7 +2316,8 @@ ushort __gen_ocl_get_sampler_info(uint sampler_id);
           FIXUP_FLOAT_COORD(tmpCoord);                                       \
         }                                                                    \
         if (int_clamping_fix) {                                              \
-          if (OUT_OF_BOX(tmpCoord, surface_id)) {                            \
+           if (OUT_OF_BOX(tmpCoord, surface_id,                              \
+                          (samplerValue & CLK_NORMALIZED_COORDS_TRUE))) {    \
             unsigned int border_alpha;                                       \
             int order = __gen_ocl_get_image_channel_order(surface_id);       \
             if (!CLK_HAS_ALPHA(order)) {                                     \
@@ -2330,8 +2331,8 @@ ushort __gen_ocl_get_sampler_info(uint sampler_id);
        }                                                                     \
       }                                                                      \
     }                                                                        \
-    return  __gen_ocl_read_image ##suffix(EXPEND_READ_COORD(surface_id,      \
-                                          sampler, tmpCoord), 0);            \
+    return  __gen_ocl_read_image ##suffix(                                   \
+                        EXPEND_READ_COORD(surface_id, sampler, tmpCoord), 0);\
   }
 
 #define DECL_READ_IMAGE_NOSAMPLER(image_type, type, suffix, coord_type)      \
@@ -2356,10 +2357,12 @@ ushort __gen_ocl_get_sampler_info(uint sampler_id);
 #define EXPEND_READ_COORD(id, sampler, coord) id, sampler, coord.s0, coord.s1
 #define EXPEND_WRITE_COORD(id, coord, color) id, coord.s0, coord.s1, color
 
-#define OUT_OF_BOX(coord, surface)                             \
-  (coord.s0 < 0 || coord.s1 < 0                                \
-   || coord.s0 >= __gen_ocl_get_image_width(surface)           \
-   || coord.s1 >= __gen_ocl_get_image_height(surface))
+#define OUT_OF_BOX(coord, surface, normalized)                   \
+  (coord.s0 < 0 || coord.s1 < 0 ||                               \
+   ((normalized == 0)                                            \
+     && (coord.s0 >= __gen_ocl_get_image_width(surface)          \
+         || coord.s1 >= __gen_ocl_get_image_height(surface)))    \
+   || ((normalized != 0) && (coord.s0 > 0x1p0 || coord.s1 > 0x1p0)))
 
 #define FIXUP_FLOAT_COORD(tmpCoord)                            \
   {                                                            \
@@ -2387,11 +2390,14 @@ DECL_IMAGE(0, image2d_t, float4, f, 2)
 
 #define EXPEND_READ_COORD(id, sampler, coord) id, sampler, coord.s0, coord.s1, coord.s2
 #define EXPEND_WRITE_COORD(id, coord, color) id, coord.s0, coord.s1, coord.s2, color
-#define OUT_OF_BOX(coord, surface)                              \
-  (coord.s0 < 0 || coord.s1 < 0 || coord.s2 < 0                 \
-   || coord.s0 >= __gen_ocl_get_image_width(surface)            \
-   || coord.s1 >= __gen_ocl_get_image_height(surface)           \
-   || coord.s2 >= __gen_ocl_get_image_depth(surface))
+#define OUT_OF_BOX(coord, surface, normalized)                  \
+  (coord.s0 < 0 || coord.s1 < 0 || coord.s2 < 0 ||              \
+   ((normalized == 0)                                           \
+     && (coord.s0 >= __gen_ocl_get_image_width(surface)         \
+         || coord.s1 >= __gen_ocl_get_image_height(surface)     \
+         || coord.s2 >= __gen_ocl_get_image_depth(surface)))    \
+   || ((normalized != 0)                                        \
+        &&(coord.s0 > 1 || coord.s1 > 1 || coord.s2 > 1)))
 
 #define FIXUP_FLOAT_COORD(tmpCoord)                             \
   {                                                             \

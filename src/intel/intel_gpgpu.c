@@ -844,7 +844,7 @@ intel_gpgpu_bind_sampler(intel_gpgpu_t *gpgpu, uint32_t *samplers, size_t sample
      * to repeat.*/
     if ((samplers[index] & __CLK_ADDRESS_MASK) == CLK_ADDRESS_CLAMP) {
       intel_gpgpu_insert_sampler(gpgpu, index + 8,
-                                 (samplers[index] & ~__CLK_ADDRESS_MASK) | CLK_ADDRESS_REPEAT);
+                                 (samplers[index] & ~__CLK_ADDRESS_MASK) | CLK_ADDRESS_CLAMP_TO_EDGE);
     }
 #endif
   }
