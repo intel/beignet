@@ -631,8 +631,10 @@ namespace gbe
       case Type::TypeID::IntegerTyID:
         {
           const ConstantInt *ci = dyn_cast<ConstantInt>(c);
-          *(uint64_t *)((char*)mem + offset) = ci->isNegative() ? ci->getSExtValue() : ci->getZExtValue();
-          offset += ci->getBitWidth() / 8;
+          uint32_t size = ci->getBitWidth() / 8;
+          uint64_t data = ci->isNegative() ? ci->getSExtValue() : ci->getZExtValue();
+          memcpy((char*)mem+offset, &data, size);
+          offset += size;
           break;
         }
       case Type::TypeID::FloatTyID:
