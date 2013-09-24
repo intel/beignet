@@ -383,7 +383,6 @@ namespace gbe {
 
     if (PHINode* phi = dyn_cast<PHINode>(inst)) {
       PHINode* res = PHINode::Create(GetBasicType(inst), phi->getNumIncomingValues());
-      assert(args.size() % 2 == 0 && "Odd number of arguments for a PHI");
 
       // Loop over pairs of operands: [Value*, BasicBlock*]
       for (unsigned int i = 0; i < args.size(); i++) {

@@ -102,6 +102,7 @@ set (utests_sources
   compiler_get_image_info.cpp
   compiler_vect_compare.cpp
   compiler_vector_load_store.cpp
+  compiler_vector_inc.cpp
   compiler_cl_finish.cpp
   get_cl_info.cpp
   builtin_atan2.cpp
