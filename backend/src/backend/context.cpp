@@ -366,7 +366,7 @@ namespace gbe
     this->kernel->stackSize = 1*KB; // XXX compute that in a better way
   }
 
-  void Context::newCurbeEntry(gbe_curbe_type value,
+  uint32_t Context::newCurbeEntry(gbe_curbe_type value,
                               uint32_t subValue,
                               uint32_t size,
                               uint32_t alignment)
@@ -376,6 +376,7 @@ namespace gbe
     GBE_ASSERT(offset >= GEN_REG_SIZE);
     kernel->patches.push_back(PatchInfo(value, subValue, offset - GEN_REG_SIZE));
     kernel->curbeSize = std::max(kernel->curbeSize, offset + size - GEN_REG_SIZE);
+    return offset;
   }
 
   uint32_t Context::getImageInfoCurbeOffset(ir::ImageInfoKey key, size_t size)
@@ -392,12 +393,17 @@ namespace gbe
     return offset;
   }
 
+
+  void Context::insertCurbeReg(ir::Register reg, uint32_t offset) {
+    curbeRegs.insert(std::make_pair(reg, offset));
+  }
+
   void Context::buildPatchList(void) {
     const uint32_t ptrSize = unit.getPointerSize() == ir::POINTER_32_BITS ? 4u : 8u;
     kernel->curbeSize = 0u;
 
     // We insert the block IP mask first
-    this->newCurbeEntry(GBE_CURBE_BLOCK_IP, 0, this->simdWidth*sizeof(uint16_t));
+    this->insertCurbeReg(ir::ocl::blockip, this->newCurbeEntry(GBE_CURBE_BLOCK_IP, 0, this->simdWidth*sizeof(uint16_t)));
 
     // Go over the arguments and find the related patch locations
     const uint32_t argNum = fn.argNum();
@@ -411,28 +417,22 @@ namespace gbe
           arg.type == ir::FunctionArgument::STRUCTURE ||
           arg.type == ir::FunctionArgument::IMAGE ||
           arg.type == ir::FunctionArgument::SAMPLER)
-        this->newCurbeEntry(GBE_CURBE_KERNEL_ARGUMENT, argID, arg.size, ptrSize);
+        this->insertCurbeReg(arg.reg, this->newCurbeEntry(GBE_CURBE_KERNEL_ARGUMENT, argID, arg.size, ptrSize));
     }
 
     // Already inserted registers go here
-    set<ir::Register> specialRegs;
-
     const size_t localIDSize = sizeof(uint32_t) * this->simdWidth;
-    this->newCurbeEntry(GBE_CURBE_LOCAL_ID_X, 0, localIDSize);
-    this->newCurbeEntry(GBE_CURBE_LOCAL_ID_Y, 0, localIDSize);
-    this->newCurbeEntry(GBE_CURBE_LOCAL_ID_Z, 0, localIDSize);
-    this->newCurbeEntry(GBE_CURBE_SAMPLER_INFO, 0, 32);
-    specialRegs.insert(ir::ocl::lid0);
-    specialRegs.insert(ir::ocl::lid1);
-    specialRegs.insert(ir::ocl::lid2);
-    specialRegs.insert(ir::ocl::samplerinfo);
+    insertCurbeReg(ir::ocl::lid0, this->newCurbeEntry(GBE_CURBE_LOCAL_ID_X, 0, localIDSize));
+    insertCurbeReg(ir::ocl::lid1, this->newCurbeEntry(GBE_CURBE_LOCAL_ID_Y, 0, localIDSize));
+    insertCurbeReg(ir::ocl::lid2, this->newCurbeEntry(GBE_CURBE_LOCAL_ID_Z, 0, localIDSize));
+    insertCurbeReg(ir::ocl::samplerinfo, this->newCurbeEntry(GBE_CURBE_SAMPLER_INFO, 0, 32));
 
     // Go over all the instructions and find the special register we need
     // to push
 #define INSERT_REG(SPECIAL_REG, PATCH, WIDTH) \
   if (reg == ir::ocl::SPECIAL_REG) { \
-    if (specialRegs.find(reg) != specialRegs.end()) continue; \
-    this->newCurbeEntry(GBE_CURBE_##PATCH, 0, ptrSize * WIDTH); \
+    if (curbeRegs.find(reg) != curbeRegs.end()) continue; \
+    insertCurbeReg(reg, this->newCurbeEntry(GBE_CURBE_##PATCH, 0, ptrSize * WIDTH)); \
   } else
 
     bool useStackPtr = false;
@@ -441,7 +441,7 @@ namespace gbe
       for (uint32_t srcID = 0; srcID < srcNum; ++srcID) {
         const ir::Register reg = insn.getSrc(srcID);
         if (fn.isSpecialReg(reg) == false) continue;
-        if (specialRegs.contains(reg) == true) continue;
+        if (curbeRegs.find(reg) != curbeRegs.end()) continue;
         if (reg == ir::ocl::stackptr) useStackPtr = true;
         INSERT_REG(lsize0, LOCAL_SIZE_X, 1)
         INSERT_REG(lsize1, LOCAL_SIZE_Y, 1)
@@ -458,17 +458,16 @@ namespace gbe
         INSERT_REG(numgroup2, GROUP_NUM_Z, 1)
         INSERT_REG(stackptr, STACK_POINTER, this->simdWidth)
         do {} while (0);
-        specialRegs.insert(reg);
       }
     });
 #undef INSERT_REG
 
     // Insert the number of threads
-    this->newCurbeEntry(GBE_CURBE_THREAD_NUM, 0, sizeof(uint32_t));
+    insertCurbeReg(ir::ocl::threadn, this->newCurbeEntry(GBE_CURBE_THREAD_NUM, 0, sizeof(uint32_t)));
 
     // Insert the stack buffer if used
     if (useStackPtr)
-      this->newCurbeEntry(GBE_CURBE_EXTRA_ARGUMENT, GBE_STACK_BUFFER, ptrSize);
+      insertCurbeReg(ir::ocl::stackptr, this->newCurbeEntry(GBE_CURBE_EXTRA_ARGUMENT, GBE_STACK_BUFFER, ptrSize));
 
     // After this point the vector is immutable. Sorting it will make
     // research faster

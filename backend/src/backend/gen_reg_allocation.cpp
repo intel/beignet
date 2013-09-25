@@ -65,8 +65,10 @@ namespace gbe
     void allocateFlags(Selection &selection);
     /*! Allocate the GRF registers */
     bool allocateGRFs(Selection &selection);
+    /*! Create gen registers for all preallocated curbe registers. */
+    void allocatePayloadRegs(void);
     /*! Create a Gen register from a register set in the payload */
-    void allocatePayloadReg(gbe_curbe_type, ir::Register, uint32_t subValue = 0, uint32_t subOffset = 0);
+    void allocatePayloadReg(ir::Register, uint32_t offset, uint32_t subOffset = 0);
     /*! Create the intervals for each register */
     /*! Allocate the vectors detected in the instruction selection pass */
     void allocateVector(Selection &selection);
@@ -124,19 +126,37 @@ namespace gbe
   GenRegAllocator::Opaque::Opaque(GenContext &ctx) : ctx(ctx) {}
   GenRegAllocator::Opaque::~Opaque(void) {}
 
-  void GenRegAllocator::Opaque::allocatePayloadReg(gbe_curbe_type value,
-                                                   ir::Register reg,
-                                                   uint32_t subValue,
+  void GenRegAllocator::Opaque::allocatePayloadReg(ir::Register reg,
+                                                   uint32_t offset,
                                                    uint32_t subOffset)
   {
     using namespace ir;
-    const Kernel *kernel = ctx.getKernel();
-    const int32_t curbeOffset = kernel->getCurbeOffset(value, subValue);
-    if (curbeOffset >= 0) {
-      const uint32_t offset = GEN_REG_SIZE + curbeOffset + subOffset;
-      RA.insert(std::make_pair(reg, offset));
-      this->intervals[reg].minID = 0;
-      this->intervals[reg].maxID = 0;
+    assert(offset >= GEN_REG_SIZE);
+    offset += subOffset;
+    RA.insert(std::make_pair(reg, offset));
+    GBE_ASSERT(reg != ocl::blockip || (offset % GEN_REG_SIZE == 0));
+    this->intervals[reg].minID = 0;
+    this->intervals[reg].maxID = 0;
+  }
+
+  INLINE void GenRegAllocator::Opaque::allocatePayloadRegs(void) {
+    using namespace ir;
+    for(auto &it : this->ctx.curbeRegs)
+      allocatePayloadReg(it.first, it.second);
+
+    // Allocate all pushed registers (i.e. structure kernel arguments)
+    const Function &fn = ctx.getFunction();
+    GBE_ASSERT(fn.getProfile() == PROFILE_OCL);
+    const Function::PushMap &pushMap = fn.getPushMap();
+    for (const auto &pushed : pushMap) {
+      const uint32_t argID = pushed.second.argID;
+      const FunctionArgument arg = fn.getArg(argID);
+
+      const uint32_t subOffset = pushed.second.offset;
+      const Register reg = pushed.second.getRegister();
+      auto it = this->ctx.curbeRegs.find(arg.reg);
+      assert(it != ctx.curbeRegs.end());
+      allocatePayloadReg(reg, it->second, subOffset);
     }
   }
 
@@ -535,11 +555,9 @@ namespace gbe
     }
     return true;
   }
+
   INLINE bool GenRegAllocator::Opaque::allocate(Selection &selection) {
     using namespace ir;
-    const Kernel *kernel = ctx.getKernel();
-    const Function &fn = ctx.getFunction();
-    GBE_ASSERT(fn.getProfile() == PROFILE_OCL);
     if (ctx.getSimdWidth() == 8) {
       reservedReg = ctx.allocate(RESERVED_REG_NUM_FOR_SPILL * GEN_REG_SIZE, GEN_REG_SIZE);
       reservedReg /= GEN_REG_SIZE;
@@ -555,25 +573,7 @@ namespace gbe
       this->intervals.push_back(ir::Register(regID));
 
     // Allocate the special registers (only those which are actually used)
-    allocatePayloadReg(GBE_CURBE_LOCAL_ID_X, ocl::lid0);
-    allocatePayloadReg(GBE_CURBE_LOCAL_ID_Y, ocl::lid1);
-    allocatePayloadReg(GBE_CURBE_LOCAL_ID_Z, ocl::lid2);
-    allocatePayloadReg(GBE_CURBE_LOCAL_SIZE_X, ocl::lsize0);
-    allocatePayloadReg(GBE_CURBE_LOCAL_SIZE_Y, ocl::lsize1);
-    allocatePayloadReg(GBE_CURBE_LOCAL_SIZE_Z, ocl::lsize2);
-    allocatePayloadReg(GBE_CURBE_GLOBAL_SIZE_X, ocl::gsize0);
-    allocatePayloadReg(GBE_CURBE_GLOBAL_SIZE_Y, ocl::gsize1);
-    allocatePayloadReg(GBE_CURBE_GLOBAL_SIZE_Z, ocl::gsize2);
-    allocatePayloadReg(GBE_CURBE_GLOBAL_OFFSET_X, ocl::goffset0);
-    allocatePayloadReg(GBE_CURBE_GLOBAL_OFFSET_Y, ocl::goffset1);
-    allocatePayloadReg(GBE_CURBE_GLOBAL_OFFSET_Z, ocl::goffset2);
-    allocatePayloadReg(GBE_CURBE_WORK_DIM, ocl::workdim);
-    allocatePayloadReg(GBE_CURBE_SAMPLER_INFO, ocl::samplerinfo);
-    allocatePayloadReg(GBE_CURBE_GROUP_NUM_X, ocl::numgroup0);
-    allocatePayloadReg(GBE_CURBE_GROUP_NUM_Y, ocl::numgroup1);
-    allocatePayloadReg(GBE_CURBE_GROUP_NUM_Z, ocl::numgroup2);
-    allocatePayloadReg(GBE_CURBE_STACK_POINTER, ocl::stackptr);
-    allocatePayloadReg(GBE_CURBE_THREAD_NUM, ocl::threadn);
+    this->allocatePayloadRegs();
 
     // Group and barrier IDs are always allocated by the hardware in r0
     RA.insert(std::make_pair(ocl::groupid0,  1*sizeof(float))); // r0.1
@@ -582,33 +582,6 @@ namespace gbe
     RA.insert(std::make_pair(ocl::barrierid, 2*sizeof(float))); // r0.2
 
     // block IP used to handle the mask in SW is always allocated
-    const int32_t blockIPOffset = GEN_REG_SIZE + kernel->getCurbeOffset(GBE_CURBE_BLOCK_IP,0);
-    GBE_ASSERT(blockIPOffset >= 0 && blockIPOffset % GEN_REG_SIZE == 0);
-    RA.insert(std::make_pair(ocl::blockip, blockIPOffset));
-    this->intervals[ocl::blockip].minID = 0;
-
-    // Allocate all (non-structure) argument parameters
-    const uint32_t argNum = fn.argNum();
-    for (uint32_t argID = 0; argID < argNum; ++argID) {
-      const FunctionArgument &arg = fn.getArg(argID);
-      GBE_ASSERT(arg.type == FunctionArgument::GLOBAL_POINTER ||
-                 arg.type == FunctionArgument::CONSTANT_POINTER ||
-                 arg.type == FunctionArgument::LOCAL_POINTER ||
-                 arg.type == FunctionArgument::VALUE ||
-                 arg.type == FunctionArgument::STRUCTURE ||
-                 arg.type == FunctionArgument::IMAGE ||
-                 arg.type == FunctionArgument::SAMPLER);
-      allocatePayloadReg(GBE_CURBE_KERNEL_ARGUMENT, arg.reg, argID);
-    }
-
-    // Allocate all pushed registers (i.e. structure kernel arguments)
-    const Function::PushMap &pushMap = fn.getPushMap();
-    for (const auto &pushed : pushMap) {
-      const uint32_t argID = pushed.second.argID;
-      const uint32_t subOffset = pushed.second.offset;
-      const Register reg = pushed.second.getRegister();
-      allocatePayloadReg(GBE_CURBE_KERNEL_ARGUMENT, reg, argID, subOffset);
-    }
 
     // Compute the intervals
     int32_t insnID = 0;

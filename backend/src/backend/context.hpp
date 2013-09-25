@@ -93,6 +93,8 @@ namespace gbe
     uint32_t getImageInfoCurbeOffset(ir::ImageInfoKey key, size_t size);
     /*! allocate size scratch memory and return start address */
     uint32_t allocateScratchMem(uint32_t size);
+    /*! Preallocated curbe register set including special registers. */
+    map<ir::Register, uint32_t> curbeRegs;
   protected:
     /*! Build the instruction stream. Return false if failed */
     virtual bool emitCode(void) = 0;
@@ -115,7 +117,8 @@ namespace gbe
     /*! Insert a new entry with the given size in the Curbe. Return the offset
      *  of the entry
      */
-    void newCurbeEntry(gbe_curbe_type value, uint32_t subValue, uint32_t size, uint32_t alignment = 0);
+    void insertCurbeReg(ir::Register, uint32_t grfOffset);
+    uint32_t newCurbeEntry(gbe_curbe_type value, uint32_t subValue, uint32_t size, uint32_t alignment = 0);
     /*! Provide for each branch and label the label index target */
     typedef map<const ir::Instruction*, ir::LabelIndex> JIPMap;
     const ir::Unit &unit;                 //!< Unit that contains the kernel
