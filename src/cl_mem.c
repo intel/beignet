@@ -672,6 +672,8 @@ cl_mem_kernel_copy_image(cl_command_queue queue, struct _cl_mem_image* src_image
   size_t local_sz[] = {LOCAL_SZ_0,LOCAL_SZ_1,LOCAL_SZ_2};
   cl_int index = CL_ENQUEUE_COPY_IMAGE_0;
   char option[40] = "";
+  uint32_t fixupDataType;
+  uint32_t savedIntelFmt;
 
   if(region[1] == 1) local_sz[1] = 1;
   if(region[2] == 1) local_sz[2] = 1;
@@ -688,6 +690,28 @@ cl_mem_kernel_copy_image(cl_command_queue queue, struct _cl_mem_image* src_image
     index += 2;
   }
 
+  switch (src_image->fmt.image_channel_data_type) {
+    case CL_SNORM_INT8:
+    case CL_UNORM_INT8:  fixupDataType = CL_UNSIGNED_INT8; break;
+    case CL_HALF_FLOAT:
+    case CL_SNORM_INT16:
+    case CL_UNORM_INT16: fixupDataType = CL_UNSIGNED_INT16; break;
+    case CL_FLOAT:       fixupDataType = CL_UNSIGNED_INT32; break;
+    default:
+      fixupDataType = 0;
+  }
+
+  if (fixupDataType) {
+    cl_image_format fmt;
+    if (src_image->fmt.image_channel_order != CL_BGRA)
+      fmt.image_channel_order = src_image->fmt.image_channel_order;
+    else
+      fmt.image_channel_order = CL_RGBA;
+    fmt.image_channel_data_type = fixupDataType;
+    savedIntelFmt = src_image->intel_fmt;
+    src_image->intel_fmt = cl_image_get_intel_format(&fmt);
+    dst_image->intel_fmt = src_image->intel_fmt;
+  }
   static const char *str_kernel =
       "#ifdef SRC_IMAGE_3D \n"
       "  #define SRC_IMAGE_TYPE image3d_t \n"
@@ -736,8 +760,10 @@ cl_mem_kernel_copy_image(cl_command_queue queue, struct _cl_mem_image* src_image
 
   /* setup the kernel and run. */
   ker = cl_context_get_static_kernel(queue->ctx, index, str_kernel, option);
-  if (!ker)
-    return CL_OUT_OF_RESOURCES;
+  if (!ker) {
+    ret = CL_OUT_OF_RESOURCES;
+    goto fail;
+  }
 
   cl_kernel_set_arg(ker, 0, sizeof(cl_mem), &src_image);
   cl_kernel_set_arg(ker, 1, sizeof(cl_mem), &dst_image);
@@ -753,6 +779,11 @@ cl_mem_kernel_copy_image(cl_command_queue queue, struct _cl_mem_image* src_image
 
   ret = cl_command_queue_ND_range(queue, ker, 1, global_off, global_sz, local_sz);
 
+fail:
+  if (fixupDataType) {
+    src_image->intel_fmt = savedIntelFmt;
+    dst_image->intel_fmt = savedIntelFmt;
+  }
   return ret;
 }
 
@@ -828,8 +859,10 @@ cl_mem_copy_image_to_buffer(cl_command_queue queue, struct _cl_mem_image* image,
 
   /* setup the kernel and run. */
   ker = cl_context_get_static_kernel(queue->ctx, index, str_kernel, option);
-  if (!ker)
-    return CL_OUT_OF_RESOURCES;
+  if (!ker) {
+    ret = CL_OUT_OF_RESOURCES;
+    goto fail;
+  }
 
   cl_kernel_set_arg(ker, 0, sizeof(cl_mem), &image);
   cl_kernel_set_arg(ker, 1, sizeof(cl_mem), &buffer);
@@ -842,6 +875,8 @@ cl_mem_copy_image_to_buffer(cl_command_queue queue, struct _cl_mem_image* image,
   cl_kernel_set_arg(ker, 8, sizeof(cl_int), &dst_offset);
 
   ret = cl_command_queue_ND_range(queue, ker, 1, global_off, global_sz, local_sz);
+
+fail:
 
   image->intel_fmt = intel_fmt;
   image->bpp = bpp;
