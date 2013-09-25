@@ -316,8 +316,6 @@ namespace gbe
       this->kernel = NULL;
     }
     if(this->kernel != NULL) {
-      // Align it on 32 bytes properly
-      this->kernel->curbeSize = ALIGN(kernel->curbeSize, GEN_REG_SIZE);
       this->kernel->scratchSize = alignScratchSize(this->scratchOffset);
       this->kernel->ctx = this;
     }
@@ -390,7 +388,7 @@ namespace gbe
     offset = kernel->getCurbeOffset(GBE_CURBE_IMAGE_INFO, key.data);
     GBE_ASSERT(offset >= 0); // XXX do we need to spill it out to bo?
     fn.getImageSet()->appendInfo(key, offset);
-    return offset;
+    return offset + GEN_REG_SIZE;
   }
 
 
@@ -425,7 +423,7 @@ namespace gbe
     insertCurbeReg(ir::ocl::lid0, this->newCurbeEntry(GBE_CURBE_LOCAL_ID_X, 0, localIDSize));
     insertCurbeReg(ir::ocl::lid1, this->newCurbeEntry(GBE_CURBE_LOCAL_ID_Y, 0, localIDSize));
     insertCurbeReg(ir::ocl::lid2, this->newCurbeEntry(GBE_CURBE_LOCAL_ID_Z, 0, localIDSize));
-    insertCurbeReg(ir::ocl::samplerinfo, this->newCurbeEntry(GBE_CURBE_SAMPLER_INFO, 0, 32));
+            insertCurbeReg(ir::ocl::samplerinfo, this->newCurbeEntry(GBE_CURBE_SAMPLER_INFO, 0, 32));
 
     // Go over all the instructions and find the special register we need
     // to push
@@ -436,10 +434,34 @@ namespace gbe
   } else
 
     bool useStackPtr = false;
-    fn.foreachInstruction([&](const ir::Instruction &insn) {
+    fn.foreachInstruction([&](ir::Instruction &insn) {
       const uint32_t srcNum = insn.getSrcNum();
       for (uint32_t srcID = 0; srcID < srcNum; ++srcID) {
         const ir::Register reg = insn.getSrc(srcID);
+        if (insn.getOpcode() == ir::OP_GET_IMAGE_INFO) {
+          if (srcID != 0) continue;
+          const unsigned char bti = fn.getImageSet()->getIdx(insn.getSrc(srcID));
+          const unsigned char type =  ir::cast<ir::GetImageInfoInstruction>(insn).getInfoType();;
+          ir::ImageInfoKey key;
+          key.index = bti;
+          key.type = type;
+          const ir::Register imageInfo(key.data | 0x8000);
+          ir::Register realImageInfo;
+          if (curbeRegs.find(imageInfo) == curbeRegs.end()) {
+            uint32_t offset = this->getImageInfoCurbeOffset(key, 4);
+            realImageInfo = insn.getSrc(1);
+            insertCurbeReg(realImageInfo, offset);
+            insertCurbeReg(imageInfo, (uint32_t)realImageInfo);
+          } else
+            realImageInfo = ir::Register(curbeRegs.find(imageInfo)->second);
+          insn.setSrc(srcID, realImageInfo);
+          continue;
+        } else if (insn.getOpcode() == ir::OP_GET_SAMPLER_INFO) {
+          /* change the src to sampler information register. */
+          if (curbeRegs.find(ir::ocl::samplerinfo) == curbeRegs.end())
+            insertCurbeReg(ir::ocl::samplerinfo, this->newCurbeEntry(GBE_CURBE_SAMPLER_INFO, 0, 32));
+          continue;
+        }
         if (fn.isSpecialReg(reg) == false) continue;
         if (curbeRegs.find(reg) != curbeRegs.end()) continue;
         if (reg == ir::ocl::stackptr) useStackPtr = true;
@@ -457,7 +479,7 @@ namespace gbe
         INSERT_REG(numgroup1, GROUP_NUM_Y, 1)
         INSERT_REG(numgroup2, GROUP_NUM_Z, 1)
         INSERT_REG(stackptr, STACK_POINTER, this->simdWidth)
-        do {} while (0);
+        do {} while(0);
       }
     });
 #undef INSERT_REG

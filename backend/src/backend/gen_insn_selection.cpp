@@ -2820,14 +2820,11 @@ namespace gbe
     INLINE bool emitOne(Selection::Opaque &sel, const ir::GetImageInfoInstruction &insn) const
     {
       using namespace ir;
-      const uint32_t infoType = insn.getInfoType();
-      GenRegister dst[4];
-      uint32_t dstNum = ir::GetImageInfoInstruction::getDstNum4Type(infoType);
-      for (uint32_t valueID = 0; valueID < dstNum; ++valueID)
-        dst[valueID] = sel.selReg(insn.getDst(valueID), TYPE_U32);
-      uint32_t bti = sel.ctx.getFunction().getImageSet()->getIdx
-                       (insn.getSrc(0));
-      sel.GET_IMAGE_INFO(infoType, dst, dstNum, bti);
+      GenRegister dst;
+      dst = sel.selReg(insn.getDst(0), TYPE_U32);
+      GenRegister imageInfoReg = GenRegister::ud1grf(insn.getSrc(0));
+      sel.MOV(dst, imageInfoReg);
+
       return true;
     }
     DECL_CTOR(GetImageInfoInstruction, 1, 1);

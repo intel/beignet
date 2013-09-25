@@ -556,18 +556,20 @@ namespace ir {
 
     class ALIGNED_INSTRUCTION GetImageInfoInstruction :
       public BasePolicy,
-      public NSrcPolicy<GetImageInfoInstruction, 1>,
-      public TupleDstPolicy<GetImageInfoInstruction>
+      public NSrcPolicy<GetImageInfoInstruction, 2>,
+      public NDstPolicy<GetImageInfoInstruction, 1>
     {
     public:
       GetImageInfoInstruction( int type,
-                               Tuple dst,
-                               Register src)
+                               Register dst,
+                               Register src,
+                               Register infoReg)
       {
         this->opcode = OP_GET_IMAGE_INFO;
         this->infoType = type;
-        this->dst = dst;
+        this->dst[0] = dst;
         this->src[0] = src;
+        this->src[1] = infoReg;
       }
 
       INLINE uint32_t getInfoType(void) const { return infoType; }
@@ -580,11 +582,9 @@ namespace ir {
       }
 
       uint8_t infoType;                 //!< Type of the requested information.
-      Register src[1];                  //!< Surface to get info
-      Tuple dst;                        //!< dest register to put the information.
-      static const uint32_t dstNum = 4; //! The maximum dst number. Not the actual number
-                                        // of destination tuple. We use the infoType to determin
-                                        // the actual num.
+      Register src[2];                  //!< Surface to get info
+      Register dst[1];                        //!< dest register to put the information.
+      static const uint32_t dstNum = 1;
     };
 
     class ALIGNED_INSTRUCTION LoadImmInstruction :
@@ -1528,8 +1528,8 @@ DECL_MEM_FN(GetImageInfoInstruction, uint32_t, getInfoType(void), getInfoType())
     return internal::TypedWriteInstruction(src, srcType, coordType).convert();
   }
 
-  Instruction GET_IMAGE_INFO(int infoType, Tuple dst, Register src) {
-    return internal::GetImageInfoInstruction(infoType, dst, src).convert();
+  Instruction GET_IMAGE_INFO(int infoType, Register dst, Register src, Register infoReg) {
+    return internal::GetImageInfoInstruction(infoType, dst, src, infoReg).convert();
   }
 
   Instruction GET_SAMPLER_INFO(Register dst, Register src) {

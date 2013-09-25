@@ -360,8 +360,8 @@ namespace ir {
 
   typedef union {
     struct {
-     uint16_t index; /*! the allocated image index */
-     uint16_t type;  /*! the information type */
+     uint8_t index; /*! the allocated image index */
+     uint8_t  type;  /*! the information type */
     };
     uint32_t data;
   } ImageInfoKey;
@@ -644,7 +644,7 @@ namespace ir {
   /*! sample textures */
   Instruction SAMPLE(Tuple dst, Tuple src, Type dstType, Type srcType);
   /*! get image information , such as width/height/depth/... */
-  Instruction GET_IMAGE_INFO(int infoType, Tuple dst, Register src);
+  Instruction GET_IMAGE_INFO(int infoType, Register dst, Register src, Register infoReg);
   /*! get sampler information  */
   Instruction GET_SAMPLER_INFO(Register dst, Register src);
   /*! label labelIndex */

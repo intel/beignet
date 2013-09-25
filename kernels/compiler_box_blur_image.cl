@@ -10,7 +10,7 @@ __kernel void compiler_box_blur_image(__read_only image2d_t src,
 
   for (offset.y = -1; offset.y <= 1; offset.y++) {
     for (offset.x = -1; offset.x <= 1; offset.x++) {
-      sum += read_imagef(src, sampler, coord + offset);
+      sum +=  read_imagef(src, sampler, coord + offset);
     }
   }
 

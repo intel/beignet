@@ -2097,21 +2097,10 @@ namespace gbe
             GBE_ASSERT(AI != AE); const ir::Register surface_id = this->getRegister(*AI); ++AI;
             uint32_t elemNum;
             (void)getVectorInfo(ctx, I.getType(), &I, elemNum);
-            vector<ir::Register> dstTupleData;
-            ir::Register lastReg;
-            for (uint32_t elemID = 0; elemID < elemNum; ++elemID) {
-              const ir::Register reg = this->getRegister(&I, elemID);
-              dstTupleData.push_back(reg);
-              lastReg = reg;
-            }
-            // A walk around for the gen IR limitation.
-            for (uint32_t elemID = elemNum; elemID < 4; ++ elemID) {
-              dstTupleData.push_back(lastReg);
-            }
-            const ir::Tuple dstTuple = ctx.arrayTuple(&dstTupleData[0], 4);
+            const ir::Register reg = this->getRegister(&I, 0);
             int infoType = it->second - GEN_OCL_GET_IMAGE_WIDTH;
 
-            ctx.GET_IMAGE_INFO(infoType, dstTuple, surface_id);
+            ctx.GET_IMAGE_INFO(infoType, reg, surface_id, ctx.reg(ir::FAMILY_DWORD));
             break;
           }
           case GEN_OCL_GET_SAMPLER_INFO:

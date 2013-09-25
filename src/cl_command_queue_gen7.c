@@ -182,9 +182,11 @@ cl_curbe_fill(cl_kernel ker,
 
   /* Upload sampler information. */
   offset = gbe_kernel_get_curbe_offset(ker->opaque, GBE_CURBE_SAMPLER_INFO, 0);
-  uint32_t i;
-  for(i = 0; i < ker->sampler_sz; i++, offset += 2) {
-    *((uint16_t *) (ker->curbe + offset)) = ker->samplers[i] & 0xFF;
+  if (offset >= 0) {
+    uint32_t i;
+    for(i = 0; i < ker->sampler_sz; i++, offset += 2) {
+      *((uint16_t *) (ker->curbe + offset)) = ker->samplers[i] & 0xFF;
+    }
   }
 
   /* Write identity for the stack pointer. This is required by the stack pointer

@@ -142,7 +142,8 @@ namespace gbe
   INLINE void GenRegAllocator::Opaque::allocatePayloadRegs(void) {
     using namespace ir;
     for(auto &it : this->ctx.curbeRegs)
-      allocatePayloadReg(it.first, it.second);
+      if (it.first.value() < 0x8000)
+        allocatePayloadReg(it.first, it.second);
 
     // Allocate all pushed registers (i.e. structure kernel arguments)
     const Function &fn = ctx.getFunction();
