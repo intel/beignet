@@ -468,7 +468,9 @@ namespace gbe {
       useless.push_back(str);
       args.push_back(str.c_str());
     }
-
+#ifdef GEN7_SAMPLER_CLAMP_BORDER_WORKAROUND
+    args.push_back("-DGEN7_SAMPLER_CLAMP_BORDER_WORKAROUND");
+#endif
     args.push_back("-emit-llvm");
     // XXX we haven't implement those builtin functions,
     // so disable it currently.

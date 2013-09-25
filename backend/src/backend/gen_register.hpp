@@ -235,6 +235,7 @@ namespace gbe
     uint32_t nr:8;         //!< Just for some physical registers (acc, null)
     uint32_t subnr:8;      //!< Idem
     uint32_t physical:1;   //!< 1 if physical, 0 otherwise
+    uint32_t subphysical:1;//!< 1 if subnr is physical, 0 otherwise
     uint32_t type:4;       //!< Gen type
     uint32_t file:2;       //!< Register file
     uint32_t negation:1;   //!< For source

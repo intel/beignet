@@ -68,4 +68,4 @@ static void compiler_copy_image1(void)
   OCL_UNMAP_BUFFER(5);
 }
 
-MAKE_UTEST_FROM_FUNCTION_WITH_ISSUE(compiler_copy_image1);
+MAKE_UTEST_FROM_FUNCTION(compiler_copy_image1);

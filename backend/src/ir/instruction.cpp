@@ -486,7 +486,7 @@ namespace ir {
       INLINE Type getSrcType(void) const { return this->srcType; }
       INLINE Type getDstType(void) const { return this->dstType; }
 
-      static const uint32_t srcNum = 5;
+      static const uint32_t srcNum = 6;
       static const uint32_t dstNum = 4;
     };
 
@@ -526,6 +526,32 @@ namespace ir {
       // bti, u, v, w, 4 data elements
       static const uint32_t srcNum = 8;
       Register dst[0];               //!< No dest register
+    };
+
+    class ALIGNED_INSTRUCTION GetSamplerInfoInstruction :
+      public BasePolicy,
+      public NSrcPolicy<GetSamplerInfoInstruction, 1>,
+      public NDstPolicy<GetSamplerInfoInstruction, 1>
+    {
+    public:
+      GetSamplerInfoInstruction( Register dst,
+                                 Register src)
+      {
+        this->opcode = OP_GET_SAMPLER_INFO;
+        this->dst[0] = dst;
+        this->src[0] = src;
+      }
+
+      INLINE bool wellFormed(const Function &fn, std::string &why) const;
+      INLINE void out(std::ostream &out, const Function &fn) const {
+        this->outOpcode(out);
+        out << " sampler id %" << this->getSrc(fn, 0)
+            << " %" << this->getDst(fn, 0);
+      }
+
+      Register src[1];                  //!< Surface to get info
+      Register dst[1];                  //!< return value
+      static const uint32_t dstNum = 1;
     };
 
     class ALIGNED_INSTRUCTION GetImageInfoInstruction :
@@ -886,6 +912,9 @@ namespace ir {
     { return true; }
     INLINE bool GetImageInfoInstruction::wellFormed(const Function &fn, std::string &why) const
     { return true; }
+    INLINE bool GetSamplerInfoInstruction::wellFormed(const Function &fn, std::string &why) const
+    { return true; }
+
 
     // Ensure that types and register family match
     INLINE bool LoadImmInstruction::wellFormed(const Function &fn, std::string &whyNot) const
@@ -1143,6 +1172,10 @@ END_INTROSPECTION(TypedWriteInstruction)
 START_INTROSPECTION(GetImageInfoInstruction)
 #include "ir/instruction.hxx"
 END_INTROSPECTION(GetImageInfoInstruction)
+
+START_INTROSPECTION(GetSamplerInfoInstruction)
+#include "ir/instruction.hxx"
+END_INTROSPECTION(GetSamplerInfoInstruction)
 
 START_INTROSPECTION(LoadImmInstruction)
 #include "ir/instruction.hxx"
@@ -1497,6 +1530,10 @@ DECL_MEM_FN(GetImageInfoInstruction, uint32_t, getInfoType(void), getInfoType())
 
   Instruction GET_IMAGE_INFO(int infoType, Tuple dst, Register src) {
     return internal::GetImageInfoInstruction(infoType, dst, src).convert();
+  }
+
+  Instruction GET_SAMPLER_INFO(Register dst, Register src) {
+    return internal::GetSamplerInfoInstruction(dst, src).convert();
   }
 
   std::ostream &operator<< (std::ostream &out, const Instruction &insn) {

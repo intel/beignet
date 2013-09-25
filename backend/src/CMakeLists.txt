@@ -3,6 +3,7 @@ set (ocl_vector_file ${GBE_SOURCE_DIR}/src/ocl_vector.h)
 set (ocl_as_file ${GBE_SOURCE_DIR}/src/ocl_as.h)
 set (ocl_convert_file ${GBE_SOURCE_DIR}/src/ocl_convert.h)
 set (ocl_stdlib_tmpl_file ${GBE_SOURCE_DIR}/src/ocl_stdlib.tmpl.h)
+set (ocl_common_header_file ${GBE_SOURCE_DIR}/src/ocl_common_defines.h)
 set (ocl_blob_file ${CMAKE_CURRENT_BINARY_DIR}/ocl_stdlib.h)
 set (ocl_blob_cpp_file ${GBE_SOURCE_DIR}/src/ocl_stdlib_str.cpp)
 set (ocl_gen_blob_cmd ${GBE_SOURCE_DIR}/src/update_blob_ocl_header.py)
@@ -32,7 +33,7 @@ add_custom_command(
 add_custom_command(
   OUTPUT ${ocl_blob_file}
   COMMAND ${PYTHON_EXECUTABLE} ${ocl_gen_blob_cmd} ${ocl_stdlib_tmpl_file} ${ocl_blob_file}
-  DEPENDS ${ocl_gen_blob_cmd} ${ocl_stdlib_tmpl_file} ${ocl_vector_file} ${ocl_as_file} ${ocl_convert_file})
+  DEPENDS ${ocl_gen_blob_cmd} ${ocl_stdlib_tmpl_file} ${ocl_common_header_file} ${ocl_vector_file} ${ocl_as_file} ${ocl_convert_file})
 
 
 set (pch_object ${ocl_blob_file}.pch)
@@ -46,7 +47,7 @@ else (LLVM_VERSION_NODOT VERSION_GREATER 32)
         set (clang_cmd -cc1 -x cl -triple ptx32 -emit-pch)
     endif (LLVM_VERSION_NODOT VERSION_GREATER 31)
 endif (LLVM_VERSION_NODOT VERSION_GREATER 32)
-set (clang_cmd ${clang_cmd} -fno-builtin)
+set (clang_cmd ${clang_cmd} -fno-builtin -DGEN7_SAMPLER_CLAMP_BORDER_WORKAROUND)
 
 add_custom_command(
      OUTPUT ${pch_object}

@@ -540,6 +540,8 @@ namespace gbe
     // Emit unary instructions from gen native function
     void emitAtomicInst(CallInst &I, CallSite &CS, ir::AtomicOps opcode);
 
+    ir::Register appendSampler(CallSite::arg_iterator AI);
+
     // These instructions are not supported at all
     void visitVAArgInst(VAArgInst &I) {NOT_SUPPORTED;}
     void visitSwitchInst(SwitchInst &I) {NOT_SUPPORTED;}
@@ -1809,6 +1811,7 @@ namespace gbe
       case GEN_OCL_GET_IMAGE_CHANNEL_DATA_TYPE:
       case GEN_OCL_GET_IMAGE_CHANNEL_ORDER:
       case GEN_OCL_GET_IMAGE_DEPTH:
+      case GEN_OCL_GET_SAMPLER_INFO:
       case GEN_OCL_ATOMIC_ADD0:
       case GEN_OCL_ATOMIC_ADD1:
       case GEN_OCL_ATOMIC_SUB0:
@@ -1952,6 +1955,25 @@ namespace gbe
     ctx.ATOMIC(opcode, dst, addrSpace, srcTuple);
   }
 
+  /* append a new sampler. should be called before any reference to
+   * a sampler_t value. */
+  ir::Register GenWriter::appendSampler(CallSite::arg_iterator AI) {
+    Constant *CPV = dyn_cast<Constant>(*AI);
+    ir::Register sampler;
+    if (CPV != NULL)
+    {
+      // This is not a kernel argument sampler, we need to append it to sampler set,
+      // and allocate a sampler slot for it.
+      auto x = processConstant<ir::Immediate>(CPV, InsertExtractFunctor(ctx));
+      GBE_ASSERTM(x.type == ir::TYPE_U32 || x.type == ir::TYPE_S32, "Invalid sampler type");
+      sampler = ctx.getFunction().getSamplerSet()->append(x.data.u32, &ctx);
+    } else {
+      sampler = this->getRegister(*AI);
+      ctx.getFunction().getSamplerSet()->append(sampler, &ctx);
+    }
+    return sampler;
+  }
+
   void GenWriter::emitCallInst(CallInst &I) {
     if (Function *F = I.getCalledFunction()) {
       if (F->getIntrinsicID() != 0) {
@@ -2092,6 +2114,14 @@ namespace gbe
             ctx.GET_IMAGE_INFO(infoType, dstTuple, surface_id);
             break;
           }
+          case GEN_OCL_GET_SAMPLER_INFO:
+          {
+            GBE_ASSERT(AI != AE);
+            const ir::Register sampler = this->appendSampler(AI); ++AI;
+            const ir::Register reg = this->getRegister(&I, 0);
+            ctx.GET_SAMPLER_INFO(reg, sampler);
+            break;
+          }
           case GEN_OCL_READ_IMAGE0:
           case GEN_OCL_READ_IMAGE1:
           case GEN_OCL_READ_IMAGE2:
@@ -2107,19 +2137,7 @@ namespace gbe
           {
             GBE_ASSERT(AI != AE); const ir::Register surface_id = this->getRegister(*AI); ++AI;
             GBE_ASSERT(AI != AE);
-            Constant *CPV = dyn_cast<Constant>(*AI);
-            ir::Register sampler;
-            if (CPV != NULL)
-            {
-              // This is not a kernel argument sampler, we need to append it to sampler set,
-              // and allocate a sampler slot for it.
-              auto x = processConstant<ir::Immediate>(CPV, InsertExtractFunctor(ctx));
-              GBE_ASSERTM(x.type == ir::TYPE_U32 || x.type == ir::TYPE_S32, "Invalid sampler type");
-              sampler = ctx.getFunction().getSamplerSet()->append(x.data.u32, &ctx);
-            } else {
-              sampler = this->getRegister(*AI);
-              ctx.getFunction().getSamplerSet()->append(sampler, &ctx);
-            }
+            const ir::Register sampler = this->appendSampler(AI);
             ++AI;
 
             GBE_ASSERT(AI != AE); const ir::Register ucoord = this->getRegister(*AI); ++AI;
@@ -2141,8 +2159,19 @@ namespace gbe
             srcTupleData.push_back(ucoord);
             srcTupleData.push_back(vcoord);
             srcTupleData.push_back(wcoord);
+#ifdef GEN7_SAMPLER_CLAMP_BORDER_WORKAROUND
+            GBE_ASSERT(AI != AE); Constant *CPV = dyn_cast<Constant>(*AI);
+            assert(CPV);
+            auto x = processConstant<ir::Immediate>(CPV, InsertExtractFunctor(ctx));
+            GBE_ASSERTM(x.type == ir::TYPE_U32 || x.type == ir::TYPE_S32, "Invalid sampler type");
+            ir::Register offsetReg(x.data.u32);
+            srcTupleData.push_back(offsetReg);
+#else
+            ir::Register offsetReg(0);
+#endif
+            srcTupleData.push_back(offsetReg);
             const ir::Tuple dstTuple = ctx.arrayTuple(&dstTupleData[0], elemNum);
-            const ir::Tuple srcTuple = ctx.arrayTuple(&srcTupleData[0], 5);
+            const ir::Tuple srcTuple = ctx.arrayTuple(&srcTupleData[0], 6);
 
             ir::Type srcType = ir::TYPE_S32, dstType = ir::TYPE_U32;
 

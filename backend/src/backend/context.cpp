@@ -315,10 +315,12 @@ namespace gbe
       GBE_DELETE(this->kernel);
       this->kernel = NULL;
     }
-    if(this->kernel != NULL)
+    if(this->kernel != NULL) {
+      // Align it on 32 bytes properly
+      this->kernel->curbeSize = ALIGN(kernel->curbeSize, GEN_REG_SIZE);
       this->kernel->scratchSize = alignScratchSize(this->scratchOffset);
-    if(this->kernel != NULL)
       this->kernel->ctx = this;
+    }
     return this->kernel;
   }
 
@@ -419,9 +421,11 @@ namespace gbe
     this->newCurbeEntry(GBE_CURBE_LOCAL_ID_X, 0, localIDSize);
     this->newCurbeEntry(GBE_CURBE_LOCAL_ID_Y, 0, localIDSize);
     this->newCurbeEntry(GBE_CURBE_LOCAL_ID_Z, 0, localIDSize);
+    this->newCurbeEntry(GBE_CURBE_SAMPLER_INFO, 0, 32);
     specialRegs.insert(ir::ocl::lid0);
     specialRegs.insert(ir::ocl::lid1);
     specialRegs.insert(ir::ocl::lid2);
+    specialRegs.insert(ir::ocl::samplerinfo);
 
     // Go over all the instructions and find the special register we need
     // to push
@@ -470,7 +474,6 @@ namespace gbe
     // research faster
     std::sort(kernel->patches.begin(), kernel->patches.end());
 
-    // Align it on 32 bytes properly
     kernel->curbeSize = ALIGN(kernel->curbeSize, GEN_REG_SIZE);
   }
 

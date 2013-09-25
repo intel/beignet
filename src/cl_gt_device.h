@@ -45,7 +45,7 @@
 .image3d_max_width = 8192,
 .image3d_max_height = 8192,
 .image3d_max_depth = 8192,
-.max_samplers = 0,
+.max_samplers = 8,
 .mem_base_addr_align = sizeof(cl_uint) * 8,
 .min_data_type_align_size = sizeof(cl_uint),
 .single_fp_config = 0, /* XXX */

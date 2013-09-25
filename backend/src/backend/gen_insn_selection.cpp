@@ -2755,6 +2755,13 @@ namespace gbe
       using namespace ir;
       GenRegister msgPayloads[4];
       GenRegister dst[insn.getDstNum()], src[insn.getSrcNum() - 2];
+      uint32_t srcNum = insn.getSrcNum();
+      uint32_t samplerOffset = 0;
+      if (srcNum == 6) {
+      /* We have the clamp border workaround. */
+        samplerOffset = insn.getSrc(srcNum - 1).value() * 8;
+        srcNum--;
+      }
 
       for( int i = 0; i < 4; ++i)
         msgPayloads[i] = sel.selReg(sel.reg(FAMILY_DWORD), TYPE_U32);
@@ -2762,15 +2769,15 @@ namespace gbe
       for (uint32_t valueID = 0; valueID < insn.getDstNum(); ++valueID)
         dst[valueID] = sel.selReg(insn.getDst(valueID), insn.getDstType());
 
-      for (uint32_t valueID = 0; valueID < insn.getSrcNum() - 2; ++valueID)
+      for (uint32_t valueID = 0; valueID < srcNum - 2; ++valueID)
         src[valueID] = sel.selReg(insn.getSrc(valueID + 2), insn.getSrcType());
 
       uint32_t bti = sel.ctx.getFunction().getImageSet()->getIdx
                        (insn.getSrc(SampleInstruction::SURFACE_BTI));
       uint32_t sampler = sel.ctx.getFunction().getSamplerSet()->getIdx
-                           (insn.getSrc(SampleInstruction::SAMPLER_BTI));
+                           (insn.getSrc(SampleInstruction::SAMPLER_BTI)) + samplerOffset;
 
-      sel.SAMPLE(dst, insn.getDstNum(), src, insn.getSrcNum() - 2, msgPayloads, 4, bti, sampler);
+      sel.SAMPLE(dst, insn.getDstNum(), src, srcNum - 2, msgPayloads, 4, bti, sampler);
       return true;
     }
     DECL_CTOR(SampleInstruction, 1, 1);
@@ -2793,7 +2800,7 @@ namespace gbe
         msgs[i] = sel.selReg(sel.reg(FAMILY_DWORD), TYPE_U32);
 
       // u, v, w coords should use coord type.
-      for (; valueID < 1 + coordNum; ++valueID)
+      for (; valueID < coordNum; ++valueID)
         src[valueID] = sel.selReg(insn.getSrc(valueID + 1), insn.getCoordType());
 
       for (; (valueID + 1) < insn.getSrcNum(); ++valueID)
@@ -2824,6 +2831,22 @@ namespace gbe
       return true;
     }
     DECL_CTOR(GetImageInfoInstruction, 1, 1);
+  };
+
+  /*! get sampler info instruction pattern. */
+  DECL_PATTERN(GetSamplerInfoInstruction)
+  {
+    INLINE bool emitOne(Selection::Opaque &sel, const ir::GetSamplerInfoInstruction &insn) const
+    {
+      using namespace ir;
+      GenRegister dst, src;
+      dst = sel.selReg(insn.getDst(0), TYPE_U16);
+      src = GenRegister::offset(GenRegister::uw1grf(ocl::samplerinfo), 0, sel.ctx.getFunction().getSamplerSet()->getIdx(insn.getSrc(0)) * 2);
+      src.subphysical = 1;
+      sel.MOV(dst, src);
+      return true;
+    }
+    DECL_CTOR(GetSamplerInfoInstruction, 1, 1);
   };
 
   /*! Branch instruction pattern */
@@ -3000,6 +3023,7 @@ namespace gbe
     this->insert<SelectModifierInstructionPattern>();
     this->insert<SampleInstructionPattern>();
     this->insert<GetImageInfoInstructionPattern>();
+    this->insert<GetSamplerInfoInstructionPattern>();
 
     // Sort all the patterns with the number of instructions they output
     for (uint32_t op = 0; op < ir::OP_INVALID; ++op)

@@ -42,19 +42,19 @@ DECL_LLVM_GEN_FUNCTION(FORCE_SIMD8,  __gen_ocl_force_simd8)
 DECL_LLVM_GEN_FUNCTION(FORCE_SIMD16, __gen_ocl_force_simd16)
 
 // To read_image functions.
-DECL_LLVM_GEN_FUNCTION(READ_IMAGE0, _Z21__gen_ocl_read_imageijjii)
-DECL_LLVM_GEN_FUNCTION(READ_IMAGE1, _Z21__gen_ocl_read_imageijjff)
-DECL_LLVM_GEN_FUNCTION(READ_IMAGE2, _Z22__gen_ocl_read_imageuijjii)
-DECL_LLVM_GEN_FUNCTION(READ_IMAGE3, _Z22__gen_ocl_read_imageuijjff)
-DECL_LLVM_GEN_FUNCTION(READ_IMAGE4, _Z21__gen_ocl_read_imagefjjii)
-DECL_LLVM_GEN_FUNCTION(READ_IMAGE5, _Z21__gen_ocl_read_imagefjjff)
+DECL_LLVM_GEN_FUNCTION(READ_IMAGE0, _Z21__gen_ocl_read_imageijjiij)
+DECL_LLVM_GEN_FUNCTION(READ_IMAGE1, _Z21__gen_ocl_read_imageijjffj)
+DECL_LLVM_GEN_FUNCTION(READ_IMAGE2, _Z22__gen_ocl_read_imageuijjiij)
+DECL_LLVM_GEN_FUNCTION(READ_IMAGE3, _Z22__gen_ocl_read_imageuijjffj)
+DECL_LLVM_GEN_FUNCTION(READ_IMAGE4, _Z21__gen_ocl_read_imagefjjiij)
+DECL_LLVM_GEN_FUNCTION(READ_IMAGE5, _Z21__gen_ocl_read_imagefjjffj)
 
-DECL_LLVM_GEN_FUNCTION(READ_IMAGE10, _Z21__gen_ocl_read_imageijjiii)
-DECL_LLVM_GEN_FUNCTION(READ_IMAGE11, _Z21__gen_ocl_read_imageijjfff)
-DECL_LLVM_GEN_FUNCTION(READ_IMAGE12, _Z22__gen_ocl_read_imageuijjiii)
-DECL_LLVM_GEN_FUNCTION(READ_IMAGE13, _Z22__gen_ocl_read_imageuijjfff)
-DECL_LLVM_GEN_FUNCTION(READ_IMAGE14, _Z21__gen_ocl_read_imagefjjiii)
-DECL_LLVM_GEN_FUNCTION(READ_IMAGE15, _Z21__gen_ocl_read_imagefjjfff)
+DECL_LLVM_GEN_FUNCTION(READ_IMAGE10, _Z21__gen_ocl_read_imageijjiiij)
+DECL_LLVM_GEN_FUNCTION(READ_IMAGE11, _Z21__gen_ocl_read_imageijjfffj)
+DECL_LLVM_GEN_FUNCTION(READ_IMAGE12, _Z22__gen_ocl_read_imageuijjiiij)
+DECL_LLVM_GEN_FUNCTION(READ_IMAGE13, _Z22__gen_ocl_read_imageuijjfffj)
+DECL_LLVM_GEN_FUNCTION(READ_IMAGE14, _Z21__gen_ocl_read_imagefjjiiij)
+DECL_LLVM_GEN_FUNCTION(READ_IMAGE15, _Z21__gen_ocl_read_imagefjjfffj)
 
 // To write_image functions.
 DECL_LLVM_GEN_FUNCTION(WRITE_IMAGE0, _Z22__gen_ocl_write_imageijiiDv4_i)
@@ -143,3 +143,6 @@ DECL_LLVM_GEN_FUNCTION(I64RHADD, _Z15__gen_ocl_rhaddmm)
 DECL_LLVM_GEN_FUNCTION(UPSAMPLE_SHORT, _Z18__gen_ocl_upsampless)
 DECL_LLVM_GEN_FUNCTION(UPSAMPLE_INT, _Z18__gen_ocl_upsampleii)
 DECL_LLVM_GEN_FUNCTION(UPSAMPLE_LONG, _Z18__gen_ocl_upsamplell)
+
+// get sampler info
+DECL_LLVM_GEN_FUNCTION(GET_SAMPLER_INFO, __gen_ocl_get_sampler_info)

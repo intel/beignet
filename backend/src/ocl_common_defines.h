@@ -4,6 +4,7 @@
 //
 // Common defines for Image intrinsics
 // Channel order
+#define CLK_HAS_ALPHA(color) (color == CLK_A || color == CLK_RA || color == CLK_RGBA || color == CLK_BGRA || color == CLK_ARGB)
 enum {
   CLK_R = 0x10B0,
   CLK_A = 0x10B1,
@@ -66,54 +67,52 @@ typedef enum clk_channel_type {
 
 typedef enum clk_sampler_type {
     __CLK_ADDRESS_BASE             = 0,
-    CLK_ADDRESS_NONE               = 0 << __CLK_ADDRESS_BASE,
-    CLK_ADDRESS_CLAMP              = 1 << __CLK_ADDRESS_BASE,
-    CLK_ADDRESS_CLAMP_TO_EDGE      = 2 << __CLK_ADDRESS_BASE,
-    CLK_ADDRESS_REPEAT             = 3 << __CLK_ADDRESS_BASE,
-    CLK_ADDRESS_MIRROR             = 4 << __CLK_ADDRESS_BASE,
+    CLK_ADDRESS_NONE               = (0 << __CLK_ADDRESS_BASE),
+    CLK_ADDRESS_CLAMP              = (1 << __CLK_ADDRESS_BASE),
+    CLK_ADDRESS_CLAMP_TO_EDGE      = (2 << __CLK_ADDRESS_BASE),
+    CLK_ADDRESS_REPEAT             = (3 << __CLK_ADDRESS_BASE),
+    CLK_ADDRESS_MIRROR             = (4 << __CLK_ADDRESS_BASE),
 
 #if (__NV_CL_C_VERSION >= __NV_CL_C_VERSION_1_1)
     CLK_ADDRESS_MIRRORED_REPEAT    = CLK_ADDRESS_MIRROR,
 #endif
-    __CLK_ADDRESS_MASK             = CLK_ADDRESS_NONE | CLK_ADDRESS_CLAMP |
+    __CLK_ADDRESS_MASK             = (CLK_ADDRESS_NONE | CLK_ADDRESS_CLAMP |
                                      CLK_ADDRESS_CLAMP_TO_EDGE |
-                                     CLK_ADDRESS_REPEAT | CLK_ADDRESS_MIRROR,
+                                     CLK_ADDRESS_REPEAT | CLK_ADDRESS_MIRROR),
     __CLK_ADDRESS_BITS             = 3,        // number of bits required to
                                                // represent address info
 
     __CLK_NORMALIZED_BASE          = __CLK_ADDRESS_BITS,
     CLK_NORMALIZED_COORDS_FALSE    = 0,
-    CLK_NORMALIZED_COORDS_TRUE     = 1 << __CLK_NORMALIZED_BASE,
-    __CLK_NORMALIZED_MASK          = CLK_NORMALIZED_COORDS_FALSE |
-                                     CLK_NORMALIZED_COORDS_TRUE,
+    CLK_NORMALIZED_COORDS_TRUE     = (1 << __CLK_NORMALIZED_BASE),
+    __CLK_NORMALIZED_MASK          = (CLK_NORMALIZED_COORDS_FALSE |
+                                      CLK_NORMALIZED_COORDS_TRUE),
     __CLK_NORMALIZED_BITS          = 1,        // number of bits required to
                                                // represent normalization
-
-    __CLK_FILTER_BASE              = __CLK_NORMALIZED_BASE +
-                                     __CLK_NORMALIZED_BITS,
-    CLK_FILTER_NEAREST             = 0 << __CLK_FILTER_BASE,
-    CLK_FILTER_LINEAR              = 1 << __CLK_FILTER_BASE,
-    CLK_FILTER_ANISOTROPIC         = 2 << __CLK_FILTER_BASE,
-    __CLK_FILTER_MASK              = CLK_FILTER_NEAREST | CLK_FILTER_LINEAR |
-                                     CLK_FILTER_ANISOTROPIC,
+    __CLK_FILTER_BASE              = (__CLK_NORMALIZED_BASE +  __CLK_NORMALIZED_BITS),
+    CLK_FILTER_NEAREST             = (0 << __CLK_FILTER_BASE),
+    CLK_FILTER_LINEAR              = (1 << __CLK_FILTER_BASE),
+    CLK_FILTER_ANISOTROPIC         = (2 << __CLK_FILTER_BASE),
+    __CLK_FILTER_MASK              = (CLK_FILTER_NEAREST | CLK_FILTER_LINEAR |
+                                     CLK_FILTER_ANISOTROPIC),
     __CLK_FILTER_BITS              = 2,        // number of bits required to
                                                // represent address info
 
-    __CLK_MIP_BASE                 = __CLK_FILTER_BASE + __CLK_FILTER_BITS,
-    CLK_MIP_NEAREST                = 0 << __CLK_MIP_BASE,
-    CLK_MIP_LINEAR                 = 1 << __CLK_MIP_BASE,
-    CLK_MIP_ANISOTROPIC            = 2 << __CLK_MIP_BASE,
-    __CLK_MIP_MASK                 = CLK_MIP_NEAREST | CLK_MIP_LINEAR |
-                                     CLK_MIP_ANISOTROPIC,
+    __CLK_MIP_BASE                 = (__CLK_FILTER_BASE + __CLK_FILTER_BITS),
+    CLK_MIP_NEAREST                = (0 << __CLK_MIP_BASE),
+    CLK_MIP_LINEAR                 = (1 << __CLK_MIP_BASE),
+    CLK_MIP_ANISOTROPIC            = (2 << __CLK_MIP_BASE),
+    __CLK_MIP_MASK                 = (CLK_MIP_NEAREST | CLK_MIP_LINEAR |
+                                     CLK_MIP_ANISOTROPIC),
     __CLK_MIP_BITS                 = 2,
 
-    __CLK_SAMPLER_BITS             = __CLK_MIP_BASE + __CLK_MIP_BITS,
-    __CLK_SAMPLER_MASK             = __CLK_MIP_MASK | __CLK_FILTER_MASK |
-                                     __CLK_NORMALIZED_MASK | __CLK_ADDRESS_MASK,
+    __CLK_SAMPLER_BITS             = (__CLK_MIP_BASE + __CLK_MIP_BITS),
+    __CLK_SAMPLER_MASK             = (__CLK_MIP_MASK | __CLK_FILTER_MASK |
+                                      __CLK_NORMALIZED_MASK | __CLK_ADDRESS_MASK),
 
-    __CLK_SAMPLER_ARG_BASE         = __CLK_MIP_BASE + __CLK_SAMPLER_BITS,
+    __CLK_SAMPLER_ARG_BASE         = (__CLK_MIP_BASE + __CLK_SAMPLER_BITS),
     __CLK_SAMPLER_ARG_BITS         = 8,
-    __CLK_SAMPLER_ARG_MASK         = ((1 << __CLK_SAMPLER_ARG_BITS) - 1) << __CLK_SAMPLER_ARG_BASE,
+    __CLK_SAMPLER_ARG_MASK         = (((1 << __CLK_SAMPLER_ARG_BITS) - 1) << __CLK_SAMPLER_ARG_BASE),
     __CLK_SAMPLER_ARG_KEY_BIT      = (1 << (__CLK_SAMPLER_ARG_BASE + __CLK_SAMPLER_ARG_BITS)),
     __CLK_SAMPLER_ARG_KEY_BITS     = 1,
 

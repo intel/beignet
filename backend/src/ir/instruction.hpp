@@ -365,6 +365,7 @@ namespace ir {
     };
     uint32_t data;
   } ImageInfoKey;
+
   /*! Get image information */
   class GetImageInfoInstruction : public Instruction {
   public:
@@ -395,6 +396,14 @@ namespace ir {
    }
 
     uint32_t getInfoType() const;
+    /*! Return true if the given instruction is an instance of this class */
+    static bool isClassOf(const Instruction &insn);
+  };
+
+  /*! Get image information */
+  class GetSamplerInfoInstruction : public Instruction {
+  public:
+
     /*! Return true if the given instruction is an instance of this class */
     static bool isClassOf(const Instruction &insn);
   };
@@ -636,6 +645,8 @@ namespace ir {
   Instruction SAMPLE(Tuple dst, Tuple src, Type dstType, Type srcType);
   /*! get image information , such as width/height/depth/... */
   Instruction GET_IMAGE_INFO(int infoType, Tuple dst, Register src);
+  /*! get sampler information  */
+  Instruction GET_SAMPLER_INFO(Register dst, Register src);
   /*! label labelIndex */
   Instruction LABEL(LabelIndex labelIndex);
 

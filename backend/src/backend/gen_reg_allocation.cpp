@@ -568,6 +568,7 @@ namespace gbe
     allocatePayloadReg(GBE_CURBE_GLOBAL_OFFSET_Y, ocl::goffset1);
     allocatePayloadReg(GBE_CURBE_GLOBAL_OFFSET_Z, ocl::goffset2);
     allocatePayloadReg(GBE_CURBE_WORK_DIM, ocl::workdim);
+    allocatePayloadReg(GBE_CURBE_SAMPLER_INFO, ocl::samplerinfo);
     allocatePayloadReg(GBE_CURBE_GROUP_NUM_X, ocl::numgroup0);
     allocatePayloadReg(GBE_CURBE_GROUP_NUM_Y, ocl::numgroup1);
     allocatePayloadReg(GBE_CURBE_GROUP_NUM_Z, ocl::numgroup2);
@@ -753,7 +754,8 @@ namespace gbe
       }
       GBE_ASSERT(RA.contains(reg.reg()) != false);
       const uint32_t grfOffset = RA.find(reg.reg())->second;
-      const GenRegister dst = setGenReg(reg, grfOffset);
+      const uint32_t suboffset = reg.subphysical ? reg.subnr : 0;
+      const GenRegister dst = setGenReg(reg, grfOffset + suboffset);
       if (reg.quarter != 0)
         return GenRegister::Qn(dst, reg.quarter);
       else

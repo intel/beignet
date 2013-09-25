@@ -2255,19 +2255,19 @@ int __gen_ocl_force_simd16(void);
 // Image access functions
 /////////////////////////////////////////////////////////////////////////////
 
-OVERLOADABLE int4 __gen_ocl_read_imagei(uint surface_id, uint sampler, int u, int v);
-OVERLOADABLE int4 __gen_ocl_read_imagei(uint surface_id, uint sampler, float u, float v);
-OVERLOADABLE uint4 __gen_ocl_read_imageui(uint surface_id, uint sampler, int u, int v);
-OVERLOADABLE uint4 __gen_ocl_read_imageui(uint surface_id, uint sampler, float u, float v);
-OVERLOADABLE float4 __gen_ocl_read_imagef(uint surface_id, uint sampler, int u, int v);
-OVERLOADABLE float4 __gen_ocl_read_imagef(uint surface_id, uint sampler, float u, float v);
+OVERLOADABLE int4 __gen_ocl_read_imagei(uint surface_id, uint sampler, int u, int v, uint sampler_offset);
+OVERLOADABLE int4 __gen_ocl_read_imagei(uint surface_id, uint sampler, float u, float v, uint sampler_offset);
+OVERLOADABLE uint4 __gen_ocl_read_imageui(uint surface_id, uint sampler, int u, int v, uint sampler_offset);
+OVERLOADABLE uint4 __gen_ocl_read_imageui(uint surface_id, uint sampler, float u, float v, uint sampler_offset);
+OVERLOADABLE float4 __gen_ocl_read_imagef(uint surface_id, uint sampler, int u, int v, uint sampler_offset);
+OVERLOADABLE float4 __gen_ocl_read_imagef(uint surface_id, uint sampler, float u, float v, uint sampler_offset);
 
-OVERLOADABLE int4 __gen_ocl_read_imagei(uint surface_id, uint sampler, int u, int v, int w);
-OVERLOADABLE int4 __gen_ocl_read_imagei(uint surface_id, uint sampler, float u, float v, float w);
-OVERLOADABLE uint4 __gen_ocl_read_imageui(uint surface_id, uint sampler, int u, int v, int w);
-OVERLOADABLE uint4 __gen_ocl_read_imageui(uint surface_id, uint sampler, float u, float v, float w);
-OVERLOADABLE float4 __gen_ocl_read_imagef(uint surface_id, uint sampler, int u, int v, int w);
-OVERLOADABLE float4 __gen_ocl_read_imagef(uint surface_id, uint sampler, float u, float v, float w);
+OVERLOADABLE int4 __gen_ocl_read_imagei(uint surface_id, uint sampler, int u, int v, int w, uint sampler_offset);
+OVERLOADABLE int4 __gen_ocl_read_imagei(uint surface_id, uint sampler, float u, float v, float w, uint sampler_offset);
+OVERLOADABLE uint4 __gen_ocl_read_imageui(uint surface_id, uint sampler, int u, int v, int w, uint sampler_offset);
+OVERLOADABLE uint4 __gen_ocl_read_imageui(uint surface_id, uint sampler, float u, float v, float w, uint sampler_offset);
+OVERLOADABLE float4 __gen_ocl_read_imagef(uint surface_id, uint sampler, int u, int v, int w, uint sampler_offset);
+OVERLOADABLE float4 __gen_ocl_read_imagef(uint surface_id, uint sampler, float u, float v, float w, uint sampler_offset);
 
 OVERLOADABLE void __gen_ocl_write_imagei(uint surface_id, int u, int v, int4 color);
 OVERLOADABLE void __gen_ocl_write_imagei(uint surface_id, float u, float v, int4 color);
@@ -2287,22 +2287,63 @@ int __gen_ocl_get_image_height(uint surface_id);
 int __gen_ocl_get_image_channel_data_type(uint surface_id);
 int __gen_ocl_get_image_channel_order(uint surface_id);
 int __gen_ocl_get_image_depth(uint surface_id);
+ushort __gen_ocl_get_sampler_info(uint sampler_id);
 
 #define GET_IMAGE(cl_image, surface_id) \
     uint surface_id = (uint)cl_image
 
-#define DECL_READ_IMAGE(image_type, type, suffix, coord_type) \
-  INLINE_OVERLOADABLE type read_image ##suffix(image_type cl_image, sampler_t sampler, coord_type coord) \
-  {\
-    GET_IMAGE(cl_image, surface_id);\
-    return __gen_ocl_read_image ##suffix(EXPEND_READ_COORD(surface_id, sampler, coord));\
+#ifdef GEN7_SAMPLER_CLAMP_BORDER_WORKAROUND
+#define GEN_FIX_1 1
+#else
+#define GEN_FIX_1 0
+#endif
+
+#define DECL_READ_IMAGE(float_coord_rounding_fix, int_clamping_fix,          \
+                        image_type, type, suffix, coord_type)                \
+  INLINE_OVERLOADABLE type read_image ##suffix(image_type cl_image,          \
+                                               sampler_t sampler,            \
+                                               coord_type coord)             \
+  {                                                                          \
+    GET_IMAGE(cl_image, surface_id);                                         \
+    coord_type tmpCoord = coord;                                             \
+    ushort samplerValue;                                                     \
+    if (float_coord_rounding_fix | int_clamping_fix) {                       \
+      samplerValue = __gen_ocl_get_sampler_info(sampler);                    \
+      if (((samplerValue & __CLK_ADDRESS_MASK) == CLK_ADDRESS_CLAMP)         \
+          && ((samplerValue & __CLK_FILTER_MASK) == CLK_FILTER_NEAREST)) {   \
+        if (float_coord_rounding_fix                                         \
+            && ((samplerValue & CLK_NORMALIZED_COORDS_TRUE) == 0)) {         \
+          FIXUP_FLOAT_COORD(tmpCoord);                                       \
+        }                                                                    \
+        if (int_clamping_fix) {                                              \
+          if (OUT_OF_BOX(tmpCoord, surface_id)) {                            \
+            unsigned int border_alpha;                                       \
+            int order = __gen_ocl_get_image_channel_order(surface_id);       \
+            if (!CLK_HAS_ALPHA(order)) {                                     \
+              border_alpha = 1;                                              \
+            } else                                                           \
+              border_alpha = 0;                                              \
+              return (type)(0, 0, 0, border_alpha);                          \
+          } else                                                             \
+            return   __gen_ocl_read_image ##suffix(                          \
+                        EXPEND_READ_COORD(surface_id, sampler, tmpCoord), 1);\
+       }                                                                     \
+      }                                                                      \
+    }                                                                        \
+    return  __gen_ocl_read_image ##suffix(EXPEND_READ_COORD(surface_id,      \
+                                          sampler, tmpCoord), 0);            \
   }
 
-#define DECL_READ_IMAGE_NOSAMPLER(image_type, type, suffix, coord_type) \
-  INLINE_OVERLOADABLE type read_image ##suffix(image_type cl_image, coord_type coord) \
-  {\
-    GET_IMAGE(cl_image, surface_id);\
-    return __gen_ocl_read_image ##suffix(EXPEND_READ_COORD(surface_id, CLK_NORMALIZED_COORDS_FALSE|CLK_ADDRESS_NONE|CLK_FILTER_NEAREST, coord));\
+#define DECL_READ_IMAGE_NOSAMPLER(image_type, type, suffix, coord_type)      \
+  INLINE_OVERLOADABLE type read_image ##suffix(image_type cl_image,          \
+                                               coord_type coord)             \
+  {                                                                          \
+    GET_IMAGE(cl_image, surface_id);                                         \
+    return __gen_ocl_read_image ##suffix(                                    \
+           EXPEND_READ_COORD(surface_id,                                     \
+                             CLK_NORMALIZED_COORDS_FALSE                     \
+                             | CLK_ADDRESS_NONE                              \
+                             | CLK_FILTER_NEAREST, coord), 0);               \
   }
 
 #define DECL_WRITE_IMAGE(image_type, type, suffix, coord_type) \
@@ -2315,37 +2356,70 @@ int __gen_ocl_get_image_depth(uint surface_id);
 #define EXPEND_READ_COORD(id, sampler, coord) id, sampler, coord.s0, coord.s1
 #define EXPEND_WRITE_COORD(id, coord, color) id, coord.s0, coord.s1, color
 
-#define DECL_IMAGE(image_type, type, suffix, n)        \
-  DECL_READ_IMAGE(image_type, type, suffix, int ##n)   \
-  DECL_READ_IMAGE(image_type, type, suffix, float ##n) \
-  DECL_READ_IMAGE_NOSAMPLER(image_type, type, suffix, int ##n) \
-  DECL_WRITE_IMAGE(image_type, type, suffix, int ## n)   \
+#define OUT_OF_BOX(coord, surface)                             \
+  (coord.s0 < 0 || coord.s1 < 0                                \
+   || coord.s0 >= __gen_ocl_get_image_width(surface)           \
+   || coord.s1 >= __gen_ocl_get_image_height(surface))
+
+#define FIXUP_FLOAT_COORD(tmpCoord)                            \
+  {                                                            \
+    if (tmpCoord.s0 < 0 && tmpCoord.s0 > -0x1p-20f)            \
+      tmpCoord.s0 += -0x1p-9;                                  \
+    if (tmpCoord.s1 < 0 && tmpCoord.s1 > -0x1p-20f)            \
+      tmpCoord.s1 += -0x1p-9f;                                 \
+  }
+
+#define DECL_IMAGE(int_clamping_fix, image_type, type, suffix, n)                   \
+  DECL_READ_IMAGE(0, int_clamping_fix, image_type, type, suffix, int ##n)           \
+  DECL_READ_IMAGE(GEN_FIX_1, int_clamping_fix, image_type, type, suffix, float ##n) \
+  DECL_READ_IMAGE_NOSAMPLER(image_type, type, suffix, int ##n)                      \
+  DECL_WRITE_IMAGE(image_type, type, suffix, int ## n)                              \
   DECL_WRITE_IMAGE(image_type, type, suffix, float ## n)
 
-DECL_IMAGE(image2d_t, int4, i, 2)
-DECL_IMAGE(image2d_t, uint4, ui, 2)
-DECL_IMAGE(image2d_t, float4, f, 2)
+DECL_IMAGE(GEN_FIX_1, image2d_t, int4, i, 2)
+DECL_IMAGE(GEN_FIX_1, image2d_t, uint4, ui, 2)
+DECL_IMAGE(0, image2d_t, float4, f, 2)
 
 #undef EXPEND_READ_COORD
 #undef EXPEND_WRITE_COORD
+#undef OUT_OF_BOX
+#undef FIXUP_FLOAT_COORD
 
 #define EXPEND_READ_COORD(id, sampler, coord) id, sampler, coord.s0, coord.s1, coord.s2
 #define EXPEND_WRITE_COORD(id, coord, color) id, coord.s0, coord.s1, coord.s2, color
+#define OUT_OF_BOX(coord, surface)                              \
+  (coord.s0 < 0 || coord.s1 < 0 || coord.s2 < 0                 \
+   || coord.s0 >= __gen_ocl_get_image_width(surface)            \
+   || coord.s1 >= __gen_ocl_get_image_height(surface)           \
+   || coord.s2 >= __gen_ocl_get_image_depth(surface))
 
-DECL_IMAGE(image3d_t, int4, i, 4)
-DECL_IMAGE(image3d_t, uint4, ui, 4)
-DECL_IMAGE(image3d_t, float4, f, 4)
+#define FIXUP_FLOAT_COORD(tmpCoord)                             \
+  {                                                             \
+    if (tmpCoord.s0 < 0 && tmpCoord.s0 > -0x1p-20)              \
+      tmpCoord.s0 += -0x1p-9;                                   \
+    if (tmpCoord.s1 < 0 && tmpCoord.s1 > -0x1p-20)              \
+      tmpCoord.s1 += -0x1p-9;                                   \
+    if (tmpCoord.s2 < 0 && tmpCoord.s2 > -0x1p-20)              \
+      tmpCoord.s2 += -0x1p-9;                                   \
+  } 
 
-DECL_IMAGE(image3d_t, int4, i, 3)
-DECL_IMAGE(image3d_t, uint4, ui, 3)
-DECL_IMAGE(image3d_t, float4, f, 3)
+DECL_IMAGE(GEN_FIX_1, image3d_t, int4, i, 4)
+DECL_IMAGE(GEN_FIX_1, image3d_t, uint4, ui, 4)
+DECL_IMAGE(0, image3d_t, float4, f, 4)
+
+DECL_IMAGE(GEN_FIX_1, image3d_t, int4, i, 3)
+DECL_IMAGE(GEN_FIX_1, image3d_t, uint4, ui, 3)
+DECL_IMAGE(0, image3d_t, float4, f, 3)
 #undef EXPEND_READ_COORD
 #undef EXPEND_WRITE_COORD
+#undef OUT_OF_BOX
+#undef FIXUP_FLOAT_COORD
 
 #undef DECL_IMAGE
 #undef DECL_READ_IMAGE
 #undef DECL_READ_IMAGE_NOSAMPLER
 #undef DECL_WRITE_IMAGE
+#undef GEN_FIX_1
 
 #define DECL_IMAGE_INFO(image_type)    \
   INLINE_OVERLOADABLE  int get_image_width(image_type image) \
