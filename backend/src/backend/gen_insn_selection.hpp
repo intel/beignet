@@ -86,8 +86,8 @@ namespace gbe
     const GenRegister &src(uint32_t srcID) const { return regs[dstNum+srcID]; }
     /*! No more than 17 sources (used by typed writes on simd8 mode.) */
     enum { MAX_SRC_NUM = 17 };
-    /*! No more than 4 destinations (used by samples and untyped reads) */
-    enum { MAX_DST_NUM = 4 };
+    /*! No more than 11 destinations (used by samples and untyped reads) */
+    enum { MAX_DST_NUM = 11 };
     /*! State of the instruction (extra fields neeed for the encoding) */
     GenInstructionState state;
     union {

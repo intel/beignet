@@ -471,6 +471,8 @@ namespace gbe
 #undef I64Shift
     /*! Convert 64-bit integer to 32-bit float */
     void CONVI64_TO_F(Reg dst, Reg src, GenRegister tmp[4]);
+    /*! High 64bit of x*y */
+    void I64_MUL_HI(Reg dst, Reg src0, Reg src1, GenRegister tmp[10]);
     /*! (x+y)>>1 without mod. overflow */
     void I64HADD(Reg dst, Reg src0, Reg src1, GenRegister tmp[4]);
     /*! (x+y+1)>>1 without mod. overflow */
@@ -1087,6 +1089,15 @@ namespace gbe
       insn->dst(i + 1) = tmp[i];
   }
 
+  void Selection::Opaque::I64_MUL_HI(Reg dst, Reg src0, Reg src1, GenRegister tmp[10]) {
+    SelectionInstruction *insn = this->appendInsn(SEL_OP_I64_MUL_HI, 11, 2);
+    insn->dst(0) = dst;
+    insn->src(0) = src0;
+    insn->src(1) = src1;
+    for(int i = 0; i < 10; i ++)
+      insn->dst(i + 1) = tmp[i];
+  }
+
   void Selection::Opaque::I64HADD(Reg dst, Reg src0, Reg src1, GenRegister tmp[4]) {
     SelectionInstruction *insn = this->appendInsn(SEL_OP_I64HADD, 5, 2);
     insn->dst(0) = dst;
@@ -1680,6 +1691,17 @@ namespace gbe
             sel.MUL_HI(dst, src0, src1, temp);
             break;
           }
+        case OP_I64_MUL_HI:
+         {
+          GenRegister temp[10];
+          for(int i=0; i<9; i++) {
+            temp[i] = sel.selReg(sel.reg(FAMILY_DWORD));
+            temp[i].type = GEN_TYPE_UD;
+          }
+          temp[9] = sel.selReg(sel.reg(FAMILY_BOOL));
+          sel.I64_MUL_HI(dst, src0, src1, temp);
+          break;
+         }
         case OP_MUL:
           if (type == TYPE_U32 || type == TYPE_S32) {
             sel.pop();

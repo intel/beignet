@@ -519,6 +519,8 @@ namespace ir {
   Instruction SIN(Type type, Register dst, Register src);
   /*! mul_hi.type dst src */
   Instruction MUL_HI(Type type, Register dst, Register src0, Register src1);
+  /*! i64_mul_hi.type dst src */
+  Instruction I64_MUL_HI(Type type, Register dst, Register src0, Register src1);
   /*! upsample_short.type dst src */
   Instruction UPSAMPLE_SHORT(Type type, Register dst, Register src0, Register src1);
   /*! upsample_int.type dst src */

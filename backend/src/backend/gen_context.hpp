@@ -86,7 +86,10 @@ namespace gbe
 
     void addWithCarry(GenRegister dest, GenRegister src0, GenRegister src1);
     void subWithBorrow(GenRegister dest, GenRegister src0, GenRegister src1);
+    void I64ABS(GenRegister sign, GenRegister high, GenRegister low, GenRegister tmp, GenRegister flagReg);
+    void I64FullAdd(GenRegister high1, GenRegister low1, GenRegister high2, GenRegister low2);
     void I32FullMult(GenRegister high, GenRegister low, GenRegister src0, GenRegister src1);
+    void I64FullMult(GenRegister dst1, GenRegister dst2, GenRegister dst3, GenRegister dst4, GenRegister x_high, GenRegister x_low, GenRegister y_high, GenRegister y_low);
     void saveFlag(GenRegister dest, int flag, int subFlag);
     void UnsignedI64ToFloat(GenRegister dst, GenRegister high, GenRegister low, GenRegister tmp);
 
@@ -97,6 +100,7 @@ namespace gbe
     void emitBinaryInstruction(const SelectionInstruction &insn);
     void emitBinaryWithTempInstruction(const SelectionInstruction &insn);
     void emitTernaryInstruction(const SelectionInstruction &insn);
+    void emitI64MULHIInstruction(const SelectionInstruction &insn);
     void emitI64HADDInstruction(const SelectionInstruction &insn);
     void emitI64RHADDInstruction(const SelectionInstruction &insn);
     void emitI64ShiftInstruction(const SelectionInstruction &insn);

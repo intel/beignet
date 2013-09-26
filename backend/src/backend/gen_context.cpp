@@ -444,6 +444,85 @@ namespace gbe
     p->pop();
   }
 
+  void GenContext::I64FullAdd(GenRegister high1, GenRegister low1, GenRegister high2, GenRegister low2) {
+    addWithCarry(low1, low1, low2);
+    addWithCarry(high1, high1, high2);
+    p->ADD(high1, high1, low2);
+  }
+
+  void GenContext::I64FullMult(GenRegister dst1, GenRegister dst2, GenRegister dst3, GenRegister dst4, GenRegister x_high, GenRegister x_low, GenRegister y_high, GenRegister y_low) {
+    GenRegister &e = dst1, &f = dst2, &g = dst3, &h = dst4,
+                &a = x_high, &b = x_low, &c = y_high, &d = y_low;
+    I32FullMult(e, h, b, d);
+    I32FullMult(f, g, a, d);
+    addWithCarry(g, g, e);
+    addWithCarry(f, f, e);
+    I32FullMult(e, d, b, c);
+    I64FullAdd(f, g, e, d);
+    I32FullMult(b, d, a, c);
+    I64FullAdd(e, f, b, d);
+  }
+
+  void GenContext::I64ABS(GenRegister sign, GenRegister high, GenRegister low, GenRegister tmp, GenRegister flagReg) {
+    p->SHR(sign, high, GenRegister::immud(31));
+    p->push();
+    p->curr.predicate = GEN_PREDICATE_NONE;
+    p->curr.useFlag(flagReg.flag_nr(), flagReg.flag_subnr());
+    p->CMP(GEN_CONDITIONAL_NZ, sign, GenRegister::immud(0));
+    p->curr.predicate = GEN_PREDICATE_NORMAL;
+    p->NOT(high, high);
+    p->NOT(low, low);
+    p->MOV(tmp, GenRegister::immud(1));
+    addWithCarry(low, low, tmp);
+    p->ADD(high, high, tmp);
+    p->pop();
+  }
+
+  void GenContext::emitI64MULHIInstruction(const SelectionInstruction &insn) {
+    GenRegister dest = ra->genReg(insn.dst(0));
+    GenRegister x = ra->genReg(insn.src(0));
+    GenRegister y = ra->genReg(insn.src(1));
+    GenRegister a = ra->genReg(insn.dst(1));
+    GenRegister b = ra->genReg(insn.dst(2));
+    GenRegister c = ra->genReg(insn.dst(3));
+    GenRegister d = ra->genReg(insn.dst(4));
+    GenRegister e = ra->genReg(insn.dst(5));
+    GenRegister f = ra->genReg(insn.dst(6));
+    GenRegister g = ra->genReg(insn.dst(7));
+    GenRegister h = ra->genReg(insn.dst(8));
+    GenRegister i = ra->genReg(insn.dst(9));
+    GenRegister flagReg = ra->genReg(insn.dst(10));
+    loadTopHalf(a, x);
+    loadBottomHalf(b, x);
+    loadTopHalf(c, y);
+    loadBottomHalf(d, y);
+    if(x.type == GEN_TYPE_UL) {
+      I64FullMult(e, f, g, h, a, b, c, d);
+    } else {
+      I64ABS(e, a, b, i, flagReg);
+      I64ABS(f, c, d, i, flagReg);
+      p->XOR(i, e, f);
+      I64FullMult(e, f, g, h, a, b, c, d);
+      p->push();
+      p->curr.predicate = GEN_PREDICATE_NONE;
+      p->curr.useFlag(flagReg.flag_nr(), flagReg.flag_subnr());
+      p->CMP(GEN_CONDITIONAL_NZ, i, GenRegister::immud(0));
+      p->curr.predicate = GEN_PREDICATE_NORMAL;
+      p->NOT(e, e);
+      p->NOT(f, f);
+      p->NOT(g, g);
+      p->NOT(h, h);
+      p->MOV(i, GenRegister::immud(1));
+      addWithCarry(h, h, i);
+      addWithCarry(g, g, i);
+      addWithCarry(f, f, i);
+      p->ADD(e, e, i);
+      p->pop();
+    }
+    storeTopHalf(dest, e);
+    storeBottomHalf(dest, f);
+  }
+
   void GenContext::emitI64HADDInstruction(const SelectionInstruction &insn) {
     GenRegister dest = ra->genReg(insn.dst(0));
     GenRegister x = ra->genReg(insn.src(0));

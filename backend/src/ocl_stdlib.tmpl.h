@@ -343,6 +343,8 @@ INLINE_OVERLOADABLE ulong clz(ulong x) {
 
 OVERLOADABLE int __gen_ocl_mul_hi(int x, int y);
 OVERLOADABLE uint __gen_ocl_mul_hi(uint x, uint y);
+OVERLOADABLE long __gen_ocl_mul_hi(long x, long y);
+OVERLOADABLE ulong __gen_ocl_mul_hi(ulong x, ulong y);
 INLINE_OVERLOADABLE char mul_hi(char x, char y) { return (x * y) >> 8; }
 INLINE_OVERLOADABLE uchar mul_hi(uchar x, uchar y) { return (x * y) >> 8; }
 INLINE_OVERLOADABLE short mul_hi(short x, short y) { return (x * y) >> 16; }
@@ -350,10 +352,10 @@ INLINE_OVERLOADABLE ushort mul_hi(ushort x, ushort y) { return (x * y) >> 16; }
 INLINE_OVERLOADABLE int mul_hi(int x, int y) { return __gen_ocl_mul_hi(x, y); }
 INLINE_OVERLOADABLE uint mul_hi(uint x, uint y) { return __gen_ocl_mul_hi(x, y); }
 INLINE_OVERLOADABLE long mul_hi(long x, long y) {
-  return 0;
+  return __gen_ocl_mul_hi(x, y);
 }
 INLINE_OVERLOADABLE ulong mul_hi(ulong x, ulong y) {
-  return 0;
+  return __gen_ocl_mul_hi(x, y);
 }
 
 #define DEF(type) INLINE_OVERLOADABLE type mad_hi(type a, type b, type c) { return mul_hi(a, b) + c; }
