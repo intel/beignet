@@ -73,8 +73,8 @@ enum cl_mem_type {
 #define IS_GL_IMAGE(mem) (mem->type == CL_MEM_GL_IMAGE_TYPE)
 
 typedef  struct _cl_mem {
-  uint64_t magic;           /* To identify it as a memory object */
   DEFINE_ICD(dispatch)
+  uint64_t magic;           /* To identify it as a memory object */
   cl_mem prev, next;        /* We chain the memory buffers together */
   enum cl_mem_type type;
   volatile int ref_n;       /* This object is reference counted */
