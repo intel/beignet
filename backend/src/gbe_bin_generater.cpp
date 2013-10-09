@@ -33,6 +33,9 @@
 #include <deque>
 #include <vector>
 #include <algorithm>
+#include <stdlib.h>
+#include <stdio.h>
+
 #include "backend/program.h"
 #include "backend/program.hpp"
 
@@ -49,6 +52,7 @@ protected:
     string prog_path;
     string build_opt;
     static string bin_path;
+    static bool str_fmt_out;
     int fd;
     int file_len;
     const char* code;
@@ -100,7 +104,6 @@ public:
         return *this;
     }
 
-
     const char* file_map_open (void) throw (int);
 
     const char* get_code (void) {
@@ -125,6 +128,10 @@ public:
         print_file();
     }
 
+    static void set_str_fmt_out (bool flag) {
+        str_fmt_out = flag;
+    }
+
     static int set_bin_path (const char* path) {
         if (bin_path.size())
             return 0;
@@ -138,14 +145,43 @@ public:
 };
 
 string program_build_instance::bin_path;
+bool program_build_instance::str_fmt_out = false;
 
 void program_build_instance::serialize_program(void) throw(int)
 {
     ofstream ofs;
     ostringstream oss;
+    size_t sz;
     ofs.open(bin_path, ofstream::out | ofstream::app | ofstream::binary);
 
-    size_t sz = gbe_prog->serializeToBin(ofs);
+    if (str_fmt_out) {
+        string array_name = "Unkown_name_array";
+        unsigned long last_slash = bin_path.rfind("/");
+        unsigned long last_dot = bin_path.rfind(".");
+
+        if (last_slash != string::npos &&  last_dot != string::npos)
+            array_name = bin_path.substr(last_slash + 1, last_dot - 1 - last_slash);
+
+        ofs << "char " << array_name << "[] = {" << "\n";
+
+        sz = gbe_prog->serializeToBin(oss);
+
+        for (size_t i = 0; i < sz; i++) {
+            unsigned char c = oss.str().c_str()[i];
+            char asic_str[9];
+            sprintf(asic_str, "%2.2x", c);
+            ofs << "0x";
+            ofs << asic_str << ((i == sz - 1) ? "" : ", ");
+        }
+
+        ofs << "};\n";
+
+	string array_size = array_name + "_size";
+	ofs << "int " << array_size << " = " << sz << ";" << "\n";
+    } else {
+        sz = gbe_prog->serializeToBin(ofs);
+    }
+
     ofs.close();
 
     if (!sz) {
@@ -211,7 +247,7 @@ int main (int argc, const char **argv)
         argv_saved.push_back(string(argv[i]));
     }
 
-    while ( (oc = getopt(argc, (char * const *)argv, "o:p:")) != -1 ) {
+    while ( (oc = getopt(argc, (char * const *)argv, "o:p:s")) != -1 ) {
         switch (oc) {
         case 'p':
         {
@@ -242,6 +278,11 @@ int main (int argc, const char **argv)
                 cout << "Can not specify the bin path more than once." << endl;
                 return 1;
             }
+            used_index[optind-1] = 1;
+            break;
+
+        case 's':
+            program_build_instance::set_str_fmt_out(true);
             used_index[optind-1] = 1;
             break;
 
