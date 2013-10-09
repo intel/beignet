@@ -85,7 +85,7 @@ struct _image2d_t;
 typedef __texture struct _image2d_t* __image2d_t;
 struct _image3d_t;
 typedef __texture struct _image3d_t* __image3d_t;
-typedef uint __sampler_t;
+typedef const uint __sampler_t;
 typedef size_t __event_t;
 #define image2d_t __image2d_t
 #define image3d_t __image3d_t
