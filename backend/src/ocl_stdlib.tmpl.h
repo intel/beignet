@@ -110,6 +110,7 @@ typedef size_t __event_t;
 #define __CL_VERSION_1_0__ 100
 #define __CL_VERSION_1_1__ 110
 #define __ENDIAN_LITTLE__ 1
+#define __IMAGE_SUPPORT__ 1
 #define __kernel_exec(X, TYPE) __kernel __attribute__((work_group_size_hint(X,1,1))) \
                                         __attribute__((vec_type_hint(TYPE)))
 #define kernel_exec(X, TYPE) __kernel_exec(X, TYPE)

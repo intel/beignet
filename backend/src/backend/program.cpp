@@ -449,6 +449,7 @@ namespace gbe {
     // Arguments to pass to the clang frontend
     vector<const char *> args;
     bool bOpt = true;
+    bool bFastMath = false;
 
     vector<std::string> useless; //hold substrings to avoid c_str free
     size_t start = 0, end = 0;
@@ -465,6 +466,7 @@ namespace gbe {
       if(str.size() == 0)
         continue;
       if(str == "-cl-opt-disable") bOpt = false;
+      if(str == "-cl-fast-relaxed-math") bFastMath = true;
       useless.push_back(str);
       args.push_back(str.c_str());
     }
@@ -475,7 +477,10 @@ namespace gbe {
     // XXX we haven't implement those builtin functions,
     // so disable it currently.
     args.push_back("-fno-builtin");
-    if(bOpt)  args.push_back("-O2");
+    if(bOpt)
+      args.push_back("-O3");
+    if(bFastMath)
+      args.push_back("-D __FAST_RELAXED_MATH__=1");
 #if LLVM_VERSION_MINOR <= 2
     args.push_back("-triple");
     args.push_back("nvptx");
