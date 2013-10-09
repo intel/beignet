@@ -1252,9 +1252,6 @@ clEnqueueReadBuffer(cl_command_queue command_queue,
      goto error;
   }
 
-  if (blocking_read != CL_TRUE)
-     NOT_IMPLEMENTED;
-
   if (!ptr || !size || offset + size > buffer->size) {
      err = CL_INVALID_VALUE;
      goto error;
@@ -1310,9 +1307,6 @@ clEnqueueReadBufferRect(cl_command_queue command_queue,
     err = CL_INVALID_CONTEXT;
     goto error;
   }
-
-  if (blocking_read != CL_TRUE)
-    NOT_IMPLEMENTED;
 
   if (!ptr || !region || region[0] == 0 || region[1] == 0 || region[2] == 0) {
     err = CL_INVALID_VALUE;
@@ -1391,9 +1385,6 @@ clEnqueueWriteBuffer(cl_command_queue    command_queue,
     goto error;
   }
 
-  if (blocking_write != CL_TRUE)
-    NOT_IMPLEMENTED;
-
   if (!ptr || !size || offset + size > buffer->size) {
     err = CL_INVALID_VALUE;
     goto error;
@@ -1449,10 +1440,6 @@ clEnqueueWriteBufferRect(cl_command_queue     command_queue,
     err = CL_INVALID_CONTEXT;
     goto error;
   }
-
-  if (blocking_write != CL_TRUE)
-    NOT_IMPLEMENTED;
-
 
   if (!ptr || !region || region[0] == 0 || region[1] == 0 || region[2] == 0) {
     err = CL_INVALID_VALUE;
@@ -1638,9 +1625,6 @@ clEnqueueReadImage(cl_command_queue      command_queue,
      goto error;
   }
 
-  if (blocking_read != CL_TRUE)
-     NOT_IMPLEMENTED;
-
   if (!origin || !region || origin[0] + region[0] > image->w || origin[1] + region[1] > image->h || origin[2] + region[2] > image->depth) {
      err = CL_INVALID_VALUE;
      goto error;
@@ -1719,9 +1703,6 @@ clEnqueueWriteImage(cl_command_queue     command_queue,
     err = CL_INVALID_CONTEXT;
     goto error;
   }
-
-  if (blocking_write != CL_TRUE)
-    NOT_IMPLEMENTED;
 
   if (!origin || !region || origin[0] + region[0] > image->w || origin[1] + region[1] > image->h || origin[2] + region[2] > image->depth) {
     err = CL_INVALID_VALUE;
@@ -2055,9 +2036,6 @@ clEnqueueMapBuffer(cl_command_queue  command_queue,
     goto error;
   }
 
-  if (blocking_map != CL_TRUE)
-    NOT_IMPLEMENTED;
-
   if (!size || offset + size > buffer->size) {
     err = CL_INVALID_VALUE;
     goto error;
@@ -2122,9 +2100,6 @@ clEnqueueMapImage(cl_command_queue   command_queue,
     err = CL_INVALID_CONTEXT;
     goto error;
   }
-
-  if (blocking_map != CL_TRUE)
-    NOT_IMPLEMENTED;
 
   if (!origin || !region || origin[0] + region[0] > image->w || origin[1] + region[1] > image->h || origin[2] + region[2] > image->depth) {
     err = CL_INVALID_VALUE;
