@@ -321,7 +321,9 @@ namespace gbe
     /*! Allocate a new scalar register */
     ir::Register newScalar(Value *value, Value *key = NULL, uint32_t index = 0u)
     {
-      GBE_ASSERT(dyn_cast<Constant>(value) == NULL);
+      // we don't allow normal constant, but GlobalValue is a special case,
+      // it needs a register to store its address
+      GBE_ASSERT(! (isa<Constant>(value) && !isa<GlobalValue>(value)));
       Type *type = value->getType();
       auto typeID = type->getTypeID();
       switch (typeID) {
@@ -477,7 +479,8 @@ namespace gbe
     }
 
     virtual bool doFinalization(Module &M) { return false; }
-
+    /*! handle global variable register allocation (local, constant space) */
+    void allocateGlobalVariableRegister(Function &F);
     /*! Emit the complete function code and declaration */
     void emitFunction(Function &F);
     /*! Handle input and output function parameters */
@@ -488,6 +491,8 @@ namespace gbe
     void emitMovForPHI(BasicBlock *curr, BasicBlock *succ);
     /*! Alocate one or several registers (if vector) for the value */
     INLINE void newRegister(Value *value, Value *key = NULL);
+    /*! get the register for a llvm::Constant */
+    ir::Register getConstantRegister(Constant *c, uint32_t index = 0);
     /*! Return a valid register from an operand (can use LOADI to make one) */
     INLINE ir::Register getRegister(Value *value, uint32_t index = 0);
     /*! Create a new immediate from a constant */
@@ -838,40 +843,46 @@ namespace gbe
     };
   }
 
-  ir::Register GenWriter::getRegister(Value *value, uint32_t elemID) {
-    //the real value may be constant, so get real value before constant check
-    regTranslator.getRealValue(value, elemID);
+  ir::Register GenWriter::getConstantRegister(Constant *c, uint32_t elemID) {
+    GBE_ASSERT(c != NULL);
 
-    if (dyn_cast<ConstantExpr>(value)) {
-      ConstantExpr *ce = dyn_cast<ConstantExpr>(value);
-      if(ce->isCast()) {
-        GBE_ASSERT(ce->getOpcode() == Instruction::PtrToInt);
-        const Value *pointer = ce->getOperand(0);
-        GBE_ASSERT(pointer->hasName());
-        auto name = pointer->getName().str();
-        uint16_t reg = unit.getConstantSet().getConstant(name).getReg();
-        return ir::Register(reg);
-      }
+    if(isa<GlobalValue>(c)) {
+      return regTranslator.getScalar(c, elemID);
     }
-    Constant *CPV = dyn_cast<Constant>(value);
-    if (CPV) {
-      if (isa<GlobalValue>(CPV)) {
-        auto name = CPV->getName().str();
-        uint16_t reg = unit.getConstantSet().getConstant(name).getReg();
-        return ir::Register(reg);
-      }
-      if (isa<ConstantExpr>(CPV)) {
+
+    if(isa<ConstantExpr>(c)) {
+      ConstantExpr * ce = dyn_cast<ConstantExpr>(c);
+
+      if(ce->isCast()) {
+        Value* op = ce->getOperand(0);
+        ir::Register pointer_reg;
+        if(isa<ConstantExpr>(op)) {
+          // try to get the real pointer register, for case like:
+          // store i64 ptrtoint (i8 addrspace(3)* getelementptr inbounds ...
+          // in which ptrtoint and getelementptr are ConstantExpr.
+          pointer_reg = getConstantRegister(dyn_cast<Constant>(op), elemID);
+        } else {
+          pointer_reg = regTranslator.getScalar(op, elemID);
+        }
+        // if ptrToInt request another type other than 32bit, convert as requested
+        ir::Type dstType = getType(ctx, ce->getType());
+        if(ce->getOpcode() == Instruction::PtrToInt && ir::TYPE_S32 != dstType) {
+          ir::Register tmp = ctx.reg(getFamily(dstType));
+          ctx.CVT(dstType, ir::TYPE_S32, tmp, pointer_reg);
+          return tmp;
+        }
+        return pointer_reg;
+      } else {
         uint32_t TypeIndex;
         uint32_t constantOffset = 0;
         uint32_t offset = 0;
-        ConstantExpr *CE = dyn_cast<ConstantExpr>(CPV);
 
         // currently only GetElementPtr is handled
-        GBE_ASSERT(CE->getOpcode() == Instruction::GetElementPtr);
-        Value *pointer = CE->getOperand(0);
+        GBE_ASSERT(ce->getOpcode() == Instruction::GetElementPtr);
+        Value *pointer = ce->getOperand(0);
         CompositeType* CompTy = cast<CompositeType>(pointer->getType());
-        for(uint32_t op=1; op<CE->getNumOperands(); ++op) {
-          ConstantInt* ConstOP = dyn_cast<ConstantInt>(CE->getOperand(op));
+        for(uint32_t op=1; op<ce->getNumOperands(); ++op) {
+          ConstantInt* ConstOP = dyn_cast<ConstantInt>(ce->getOperand(op));
           GBE_ASSERT(ConstOP);
           TypeIndex = ConstOP->getZExtValue();
           for(uint32_t ty_i=0; ty_i<TypeIndex; ty_i++)
@@ -889,21 +900,30 @@ namespace gbe
           CompTy = dyn_cast<CompositeType>(CompTy->getTypeAtIndex(TypeIndex));
         }
 
-        const std::string &pointer_name = pointer->getName().str();
-        ir::Register pointer_reg = ir::Register(unit.getConstantSet().getConstant(pointer_name).getReg());
+        ir::Register pointer_reg;
+        pointer_reg = regTranslator.getScalar(pointer, elemID);
         ir::Register offset_reg = ctx.reg(ir::RegisterFamily::FAMILY_DWORD);
         ctx.LOADI(ir::Type::TYPE_S32, offset_reg, ctx.newIntegerImmediate(constantOffset, ir::Type::TYPE_S32));
         ir::Register reg = ctx.reg(ir::RegisterFamily::FAMILY_DWORD);
         ctx.ADD(ir::Type::TYPE_S32, reg, pointer_reg, offset_reg);
         return reg;
       }
-      const ir::ImmediateIndex immIndex = this->newImmediate(CPV, elemID);
-      const ir::Immediate imm = ctx.getImmediate(immIndex);
-      const ir::Register reg = ctx.reg(getFamily(imm.type));
-      ctx.LOADI(imm.type, reg, immIndex);
-      return reg;
     }
-    else
+
+    const ir::ImmediateIndex immIndex = this->newImmediate(c, elemID);
+    const ir::Immediate imm = ctx.getImmediate(immIndex);
+    const ir::Register reg = ctx.reg(getFamily(imm.type));
+    ctx.LOADI(imm.type, reg, immIndex);
+    return reg;
+  }
+
+  ir::Register GenWriter::getRegister(Value *value, uint32_t elemID) {
+    //the real value may be constant, so get real value before constant check
+    regTranslator.getRealValue(value, elemID);
+    if(isa<Constant>(value)) {
+      Constant *c = dyn_cast<Constant>(value);
+      return getConstantRegister(c, elemID);
+    } else
       return regTranslator.getScalar(value, elemID);
   }
 
@@ -1273,6 +1293,55 @@ namespace gbe
   BVAR(OCL_OPTIMIZE_PHI_MOVES, true);
   BVAR(OCL_OPTIMIZE_LOADI, true);
 
+  void GenWriter::allocateGlobalVariableRegister(Function &F)
+  {
+    // Allocate a address register for each global variable
+    const Module::GlobalListType &globalList = TheModule->getGlobalList();
+    size_t j = 0;
+    for(auto i = globalList.begin(); i != globalList.end(); i ++) {
+      const GlobalVariable &v = *i;
+      if(!v.isConstantUsed()) continue;
+
+      ir::AddressSpace addrSpace = addressSpaceLLVMToGen(v.getType()->getAddressSpace());
+      if(addrSpace == ir::MEM_LOCAL) {
+        ir::Function &f = ctx.getFunction();
+        f.setUseSLM(true);
+        const Constant *c = v.getInitializer();
+        Type *ty = c->getType();
+        uint32_t oldSlm = f.getSLMSize();
+        uint32_t align = 8 * getAlignmentByte(unit, ty);
+        uint32_t padding = getPadding(oldSlm*8, align);
+
+        f.setSLMSize(oldSlm + padding/8 + getTypeByteSize(unit, ty));
+        const Value * parent = cast<Value>(&v);
+        // local variable can only be used in one kernel function. so, don't need to check its all uses.
+        // loop through the Constant to find the instruction that use the global variable
+        do {
+          Value::const_use_iterator it = parent->use_begin();
+          parent = cast<Value>(*it);
+        } while(isa<Constant>(parent));
+
+        const Instruction * insn = cast<Instruction>(parent);
+        const BasicBlock * bb = insn->getParent();
+        const Function * func = bb->getParent();
+        if(func != &F) continue;
+
+        this->newRegister(const_cast<GlobalVariable*>(&v));
+        ir::Register reg = regTranslator.getScalar(const_cast<GlobalVariable*>(&v), 0);
+        ctx.LOADI(ir::TYPE_S32, reg, ctx.newIntegerImmediate(oldSlm + padding/8, ir::TYPE_S32));
+      } else if(addrSpace == ir::MEM_CONSTANT) {
+        GBE_ASSERT(v.hasInitializer());
+        this->newRegister(const_cast<GlobalVariable*>(&v));
+        ir::Register reg = regTranslator.getScalar(const_cast<GlobalVariable*>(&v), 0);
+        ir::Constant &con = unit.getConstantSet().getConstant(j ++);
+        ctx.LOADI(ir::TYPE_S32, reg, ctx.newIntegerImmediate(con.getOffset(), ir::TYPE_S32));
+      } else {
+        GBE_ASSERT(0);
+      }
+    }
+
+  }
+
   void GenWriter::emitFunction(Function &F)
   {
     switch (F.getCallingConv()) {
@@ -1293,21 +1362,7 @@ namespace gbe
     this->labelMap.clear();
     this->emitFunctionPrototype(F);
 
-    // Allocate a virtual register for each global constant array
-    const Module::GlobalListType &globalList = TheModule->getGlobalList();
-    size_t j = 0;
-    for(auto i = globalList.begin(); i != globalList.end(); i ++) {
-      const GlobalVariable &v = *i;
-      unsigned addrSpace = v.getType()->getAddressSpace();
-      if(addrSpace != ir::AddressSpace::MEM_CONSTANT)
-        continue;
-      GBE_ASSERT(v.hasInitializer());
-      ir::Register reg = ctx.reg(ir::RegisterFamily::FAMILY_DWORD);
-      ir::Constant &con = unit.getConstantSet().getConstant(j ++);
-      con.setReg(reg.value());
-      ctx.LOADI(ir::TYPE_S32, reg, ctx.newIntegerImmediate(con.getOffset(), ir::TYPE_S32));
-    }
-
+    this->allocateGlobalVariableRegister(F);
     // Visit all the instructions and emit the IR registers or the value to
     // value mapping when a new register is not needed
     pass = PASS_EMIT_REGISTERS;

@@ -43,7 +43,7 @@ namespace ir {
   ///////////////////////////////////////////////////////////////////////////
 
   Function::Function(const std::string &name, const Unit &unit, Profile profile) :
-    name(name), unit(unit), profile(profile), simdWidth(0), useSLM(false)
+    name(name), unit(unit), profile(profile), simdWidth(0), useSLM(false), slmSize(0)
   {
     initProfile(*this);
     samplerSet = GBE_NEW(SamplerSet);

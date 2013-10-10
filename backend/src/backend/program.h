@@ -218,6 +218,9 @@ extern gbe_kernel_get_required_work_group_size_cb *gbe_kernel_get_required_work_
 /*! Says if SLM is used. Required to reconfigure the L3 complex */
 typedef int32_t (gbe_kernel_use_slm_cb)(gbe_kernel);
 extern gbe_kernel_use_slm_cb *gbe_kernel_use_slm;
+/*! Get slm size needed for kernel local variables */
+typedef int32_t (gbe_kernel_get_slm_size_cb)(gbe_kernel);
+extern gbe_kernel_get_slm_size_cb *gbe_kernel_get_slm_size;
 
 #ifdef __cplusplus
 }

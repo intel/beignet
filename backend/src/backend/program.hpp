@@ -104,6 +104,8 @@ namespace gbe {
     INLINE uint32_t getSIMDWidth(void) const { return this->simdWidth; }
     /*! Says if SLM is needed for it */
     INLINE bool getUseSLM(void) const { return this->useSLM; }
+    /*! get slm size for kernel local variable */
+    INLINE uint32_t getSLMSize(void) const { return this->slmSize; }
     /*! set constant buffer size and return the cb curbe offset */
     int32_t setConstBufSize(uint32_t argID, size_t sz) {
       if(argID >= argNum) return -1;
@@ -169,6 +171,7 @@ namespace gbe {
     uint32_t stackSize;        //!< Stack size (may be 0 if unused)
     uint32_t scratchSize;      //!< Scratch memory size (may be 0 if unused)
     bool useSLM;               //!< SLM requires a special HW config
+    uint32_t slmSize;          //!< slm size for kernel variable
     Context *ctx;              //!< Save context after compiler to alloc constant buffer curbe
     ir::SamplerSet *samplerSet;//!< Copy from the corresponding function.
     ir::ImageSet *imageSet;    //!< Copy from the corresponding function.

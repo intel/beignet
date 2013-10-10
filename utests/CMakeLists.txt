@@ -96,6 +96,7 @@ set (utests_sources
   compiler_local_memory_barrier.cpp
   compiler_local_memory_barrier_wg64.cpp
   compiler_local_memory_barrier_2.cpp
+  compiler_local_slm.cpp
   compiler_movforphi_undef.cpp
   compiler_volatile.cpp
   compiler_copy_image1.cpp

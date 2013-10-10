@@ -301,6 +301,10 @@ namespace ir {
     INLINE bool getUseSLM(void) const { return this->useSLM; }
     /*! Change the SLM config for the function */
     INLINE bool setUseSLM(bool useSLM) { return this->useSLM = useSLM; }
+    /*! get SLM size needed for local variable inside kernel function */
+    INLINE uint32_t getSLMSize(void) const { return this->slmSize; }
+    /*! set slm size needed for local variable inside kernel function */
+    INLINE void setSLMSize(uint32_t size) { this->slmSize = size; }
     /*! Get sampler set in this function */
     SamplerSet* getSamplerSet(void) const {return samplerSet; }
     /*! Get image set in this function */
@@ -320,6 +324,7 @@ namespace ir {
     LocationMap locationMap;        //!< Pushed function arguments (loc->reg)
     uint32_t simdWidth;             //!< 8 or 16 if forced, 0 otherwise
     bool useSLM;                    //!< Is SLM required?
+    uint32_t slmSize;               //!< local variable size inside kernel function
     SamplerSet *samplerSet;          //!< samplers used in this function.
     ImageSet* imageSet;              //!< Image set in this function's arguments..
     GBE_CLASS(Function);            //!< Use custom allocator

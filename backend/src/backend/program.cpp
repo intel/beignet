@@ -75,7 +75,7 @@
 namespace gbe {
 
   Kernel::Kernel(const std::string &name) :
-    name(name), args(NULL), argNum(0), curbeSize(0), stackSize(0), useSLM(false), ctx(NULL), samplerSet(NULL), imageSet(NULL)
+    name(name), args(NULL), argNum(0), curbeSize(0), stackSize(0), useSLM(false), slmSize(0), ctx(NULL), samplerSet(NULL), imageSet(NULL)
   {}
   Kernel::~Kernel(void) {
     if(ctx) GBE_DELETE(ctx);
@@ -714,6 +714,12 @@ namespace gbe {
     return kernel->getUseSLM() ? 1 : 0;
   }
 
+  static int32_t kernelGetSLMSize(gbe_kernel genKernel) {
+    if (genKernel == NULL) return 0;
+    const gbe::Kernel *kernel = (const gbe::Kernel*) genKernel;
+    return kernel->getSLMSize();
+  }
+
   static int32_t kernelSetConstBufSize(gbe_kernel genKernel, uint32_t argID, size_t sz) {
     if (genKernel == NULL) return -1;
     gbe::Kernel *kernel = (gbe::Kernel*) genKernel;
@@ -781,6 +787,7 @@ GBE_EXPORT_SYMBOL gbe_kernel_get_scratch_size_cb *gbe_kernel_get_scratch_size = 
 GBE_EXPORT_SYMBOL gbe_kernel_set_const_buffer_size_cb *gbe_kernel_set_const_buffer_size = NULL;
 GBE_EXPORT_SYMBOL gbe_kernel_get_required_work_group_size_cb *gbe_kernel_get_required_work_group_size = NULL;
 GBE_EXPORT_SYMBOL gbe_kernel_use_slm_cb *gbe_kernel_use_slm = NULL;
+GBE_EXPORT_SYMBOL gbe_kernel_get_slm_size_cb *gbe_kernel_get_slm_size = NULL;
 GBE_EXPORT_SYMBOL gbe_kernel_get_sampler_size_cb *gbe_kernel_get_sampler_size = NULL;
 GBE_EXPORT_SYMBOL gbe_kernel_get_sampler_data_cb *gbe_kernel_get_sampler_data = NULL;
 GBE_EXPORT_SYMBOL gbe_kernel_get_image_size_cb *gbe_kernel_get_image_size = NULL;
@@ -815,6 +822,7 @@ namespace gbe
       gbe_kernel_set_const_buffer_size = gbe::kernelSetConstBufSize;
       gbe_kernel_get_required_work_group_size = gbe::kernelGetRequiredWorkGroupSize;
       gbe_kernel_use_slm = gbe::kernelUseSLM;
+      gbe_kernel_get_slm_size = gbe::kernelGetSLMSize;
       gbe_kernel_get_sampler_size = gbe::kernelGetSamplerSize;
       gbe_kernel_get_sampler_data = gbe::kernelGetSamplerData;
       gbe_kernel_get_image_size = gbe::kernelGetImageSize;

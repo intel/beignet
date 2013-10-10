@@ -632,6 +632,7 @@ namespace gbe
   void Context::handleSLM(void) {
     const bool useSLM = fn.getUseSLM();
     kernel->useSLM = useSLM;
+    kernel->slmSize = fn.getSLMSize();
   }
 
   bool Context::isScalarReg(const ir::Register &reg) const {
