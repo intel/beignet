@@ -245,6 +245,7 @@ namespace gbe {
     OUT_UPDATE_SZ(simdWidth);
     OUT_UPDATE_SZ(stackSize);
     OUT_UPDATE_SZ(useSLM);
+    OUT_UPDATE_SZ(slmSize);
 
     /* samplers. */
     if (samplerSet) {
@@ -332,6 +333,7 @@ namespace gbe {
     IN_UPDATE_SZ(simdWidth);
     IN_UPDATE_SZ(stackSize);
     IN_UPDATE_SZ(useSLM);
+    IN_UPDATE_SZ(slmSize);
 
     IN_UPDATE_SZ(has_samplerset);
     if (has_samplerset) {
@@ -407,6 +409,7 @@ namespace gbe {
     outs << spaces_nl << "  simdWidth: " << simdWidth << "\n";
     outs << spaces_nl << "  stackSize: " << stackSize << "\n";
     outs << spaces_nl << "  useSLM: " << useSLM << "\n";
+    outs << spaces_nl << "  slmSize: " << slmSize << "\n";
 
     outs << spaces_nl << "  Argument Number is " << argNum << "\n";
     for (uint32_t i = 0; i < argNum; i++) {

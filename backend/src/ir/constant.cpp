@@ -61,8 +61,7 @@ namespace ir {
                      + cnst.getName().size()*sizeof(char) //name
                      + sizeof(cnst.getSize())             //size
                      + sizeof(cnst.getAlignment())        //alignment
-                     + sizeof(cnst.getOffset())	          //offset
-                     + sizeof(cnst.getReg());             //reg
+                     + sizeof(cnst.getOffset());	        //offset
       OUT_UPDATE_SZ(bytes);
 
       OUT_UPDATE_SZ(cnst.getName().size());
@@ -71,7 +70,6 @@ namespace ir {
       OUT_UPDATE_SZ(cnst.getSize());
       OUT_UPDATE_SZ(cnst.getAlignment());
       OUT_UPDATE_SZ(cnst.getOffset());
-      OUT_UPDATE_SZ(cnst.getReg());
     }
 
     OUT_UPDATE_SZ(magic_end);
@@ -111,21 +109,18 @@ namespace ir {
       c_name[name_len] = 0;
 
       uint32_t size, align, offset;
-      uint16_t reg;
       IN_UPDATE_SZ(size);
       IN_UPDATE_SZ(align);
       IN_UPDATE_SZ(offset);
-      IN_UPDATE_SZ(reg);
 
       ir::Constant constant(c_name, size, align, offset);
-      constant.setReg(reg);
       constants.push_back(constant);
 
       delete[] c_name;
 
       /* Saint check */
       if (bytes != sizeof(name_len) + sizeof(char)*name_len + sizeof(size)
-              + sizeof(align) + sizeof(offset) + sizeof(reg))
+              + sizeof(align) + sizeof(offset))
         return 0;
     }
 

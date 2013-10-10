@@ -36,17 +36,16 @@ namespace ir {
   public:
     /*! Build a constant description */
     INLINE Constant(const std::string &name, uint32_t size, uint32_t alignment, uint32_t offset) :
-      name(name), size(size), alignment(alignment), offset(offset), reg(0) {}
+      name(name), size(size), alignment(alignment), offset(offset) {}
     /*! Copy constructor */
     INLINE Constant(const Constant &other) :
-      name(other.name), size(other.size), alignment(other.alignment), offset(other.offset), reg(other.reg) {}
+      name(other.name), size(other.size), alignment(other.alignment), offset(other.offset) {}
     /*! Copy operator */
     INLINE Constant& operator= (const Constant &other) {
       this->name = other.name;
       this->size = other.size;
       this->alignment = other.alignment;
       this->offset = other.offset;
-      this->reg = other.reg;
       return *this;
     }
     /*! Nothing happens here */
@@ -55,14 +54,11 @@ namespace ir {
     uint32_t getSize (void) const { return size; }
     uint32_t getAlignment (void) const { return alignment; }
     uint32_t getOffset(void) const { return offset; }
-    uint16_t getReg(void) const { return reg; }
-    void setReg(uint16_t reg) { this->reg = reg; }
   private:
     std::string name; //!< Optional name of the constant
     uint32_t size;      //!< Size of the constant
     uint32_t alignment; //!< Alignment required for each constant
     uint32_t offset;    //!< Offset of the constant in the data segment
-    uint16_t reg; //!< Virtual register number
     GBE_CLASS(Constant);
   };
 
