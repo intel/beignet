@@ -268,3 +268,29 @@ cl_context_get_static_kernel(cl_context ctx, cl_int index, const char * str_kern
 
   return ctx->internel_kernels[index];
 }
+
+cl_kernel
+cl_context_get_static_kernel_form_bin(cl_context ctx, cl_int index,
+                  const char * str_kernel, size_t size, const char * str_option)
+{
+  cl_int ret;
+  cl_int binary_status = CL_SUCCESS;
+  if (!ctx->internal_prgs[index])
+  {
+    ctx->internal_prgs[index] = cl_program_create_from_binary(ctx, 1, &ctx->device,
+      &size, (const unsigned char **)&str_kernel, &binary_status, &ret);
+
+    if (!ctx->internal_prgs[index])
+      return NULL;
+
+    ret = cl_program_build(ctx->internal_prgs[index], str_option);
+    if (ret != CL_SUCCESS)
+      return NULL;
+
+    ctx->internal_prgs[index]->is_built = 1;
+
+    ctx->internel_kernels[index] = cl_kernel_dup(ctx->internal_prgs[index]->ker[0]);
+  }
+
+  return ctx->internel_kernels[index];
+}

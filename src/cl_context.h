@@ -40,17 +40,19 @@ enum _cl_gl_context_type {
 };
 
 enum _cl_internal_ker_type {
-  CL_ENQUEUE_COPY_BUFFER = 0,
-  CL_ENQUEUE_COPY_BUFFER_RECT = 1,
-  CL_ENQUEUE_COPY_IMAGE_0 = 2,             //copy image 2d to image 2d
-  CL_ENQUEUE_COPY_IMAGE_1 = 3,             //copy image 3d to image 2d
-  CL_ENQUEUE_COPY_IMAGE_2 = 4,             //copy image 2d to image 3d
-  CL_ENQUEUE_COPY_IMAGE_3 = 5,             //copy image 3d to image 3d
-  CL_ENQUEUE_COPY_IMAGE_TO_BUFFER_0 = 6,   //copy image 2d to buffer
-  CL_ENQUEUE_COPY_IMAGE_TO_BUFFER_1 = 7,   //copy image 3d tobuffer
-  CL_ENQUEUE_COPY_BUFFER_TO_IMAGE_0 = 8,   //copy buffer to image 2d
-  CL_ENQUEUE_COPY_BUFFER_TO_IMAGE_1 = 9,   //copy buffer to image 3d
-  CL_INTERNAL_KERNEL_MAX = 10
+  CL_ENQUEUE_COPY_BUFFER_ALIGN1 = 0,
+  CL_ENQUEUE_COPY_BUFFER_ALIGN4,
+  CL_ENQUEUE_COPY_BUFFER_ALIGN16,
+  CL_ENQUEUE_COPY_BUFFER_RECT,
+  CL_ENQUEUE_COPY_IMAGE_0,             //copy image 2d to image 2d
+  CL_ENQUEUE_COPY_IMAGE_1,             //copy image 3d to image 2d
+  CL_ENQUEUE_COPY_IMAGE_2,             //copy image 2d to image 3d
+  CL_ENQUEUE_COPY_IMAGE_3,             //copy image 3d to image 3d
+  CL_ENQUEUE_COPY_IMAGE_TO_BUFFER_0,   //copy image 2d to buffer
+  CL_ENQUEUE_COPY_IMAGE_TO_BUFFER_1,   //copy image 3d tobuffer
+  CL_ENQUEUE_COPY_BUFFER_TO_IMAGE_0,   //copy buffer to image 2d
+  CL_ENQUEUE_COPY_BUFFER_TO_IMAGE_1,   //copy buffer to image 3d
+  CL_INTERNAL_KERNEL_MAX
 };
 
 struct _cl_context_prop {
@@ -136,6 +138,10 @@ extern cl_buffer_mgr cl_context_get_bufmgr(cl_context ctx);
 
 /* Get the internal used kernel */
 extern cl_kernel cl_context_get_static_kernel(cl_context ctx, cl_int index, const char *str_kernel, const char * str_option);
+
+/* Get the internal used kernel from binary*/
+extern cl_kernel cl_context_get_static_kernel_form_bin(cl_context ctx, cl_int index,
+                  const char * str_kernel, size_t size, const char * str_option);
 
 #endif /* __CL_CONTEXT_H__ */
 

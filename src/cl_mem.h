@@ -188,6 +188,10 @@ extern void cl_mem_gl_delete(struct _cl_mem_gl_image *);
 /* Add one more reference to this object */
 extern void cl_mem_add_ref(cl_mem);
 
+/* api clEnqueueCopyBuffer help function */
+extern cl_int cl_mem_copy(cl_command_queue queue, cl_mem src_buf, cl_mem dst_buf,
+              size_t src_offset, size_t dst_offset, size_t cb);
+
 /* api clEnqueueCopyBufferRect help function */
 extern cl_int cl_mem_copy_buffer_rect(cl_command_queue, cl_mem, cl_mem,
                                      const size_t *, const size_t *, const size_t *,

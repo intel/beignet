@@ -1526,8 +1526,57 @@ clEnqueueCopyBuffer(cl_command_queue     command_queue,
                     const cl_event *     event_wait_list,
                     cl_event *           event)
 {
-  NOT_IMPLEMENTED;
+  cl_int err = CL_SUCCESS;
+  enqueue_data *data, no_wait_data = { 0 };
+
+  CHECK_QUEUE(command_queue);
+  CHECK_MEM(src_buffer);
+  CHECK_MEM(dst_buffer);
+
+  if (command_queue->ctx != src_buffer->ctx) {
+    err = CL_INVALID_CONTEXT;
+    goto error;
+  }
+
+  if (command_queue->ctx != dst_buffer->ctx) {
+    err = CL_INVALID_CONTEXT;
+    goto error;
+  }
+
+  if (src_offset < 0 || src_offset + cb > src_buffer->size) {
+    err = CL_INVALID_VALUE;
+    goto error;
+  }
+  if (dst_offset < 0 || dst_offset + cb > src_buffer->size) {
+    err = CL_INVALID_VALUE;
+    goto error;
+  }
+
+  /* Check overlap */
+  if (src_buffer == dst_buffer
+         && (src_offset <= dst_offset && dst_offset <= src_offset + cb - 1)
+         && (dst_offset <= src_offset && src_offset <= dst_offset + cb - 1)) {
+    err = CL_MEM_COPY_OVERLAP;
+    goto error;
+  }
+
+  // TODO: Need to check the sub buffer cases.
+  err = cl_mem_copy(command_queue, src_buffer, dst_buffer, src_offset, dst_offset, cb);
+
+  TRY(cl_event_check_waitlist, num_events_in_wait_list, event_wait_list, event, src_buffer->ctx);
+
+  data = &no_wait_data;
+  data->type = EnqueueCopyBuffer;
+  data->queue = command_queue;
+
+  if(handle_events(command_queue, num_events_in_wait_list, event_wait_list,
+                   event, data, CL_COMMAND_COPY_BUFFER) == CL_ENQUEUE_EXECUTE_IMM) {
+    err = cl_command_queue_flush(command_queue);
+  }
   return 0;
+
+error:
+  return err;
 }
 
 cl_int

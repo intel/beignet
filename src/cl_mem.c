@@ -601,6 +601,66 @@ cl_mem_add_ref(cl_mem mem)
 #define LOCAL_SZ_2   4
 
 LOCAL cl_int
+cl_mem_copy(cl_command_queue queue, cl_mem src_buf, cl_mem dst_buf,
+            size_t src_offset, size_t dst_offset, size_t cb)
+{
+  cl_int ret;
+  cl_kernel ker;
+  size_t global_off[] = {0,0,0};
+  size_t global_sz[] = {1,1,1};
+  size_t local_sz[] = {1,1,1};
+
+  /* We use one kernel to copy the data. The kernel is lazily created. */
+  assert(src_buf->ctx == dst_buf->ctx);
+
+  if ((cb % 4) || (src_offset % 4) || (dst_offset % 4)) {
+    extern char cl_internal_copy_buf_align1_str[];
+    extern int cl_internal_copy_buf_align1_str_size;
+
+    ker = cl_context_get_static_kernel_form_bin(queue->ctx, CL_ENQUEUE_COPY_BUFFER_ALIGN1,
+             cl_internal_copy_buf_align1_str, (size_t)cl_internal_copy_buf_align1_str_size, NULL);
+  } else if ((cb % 16) || (src_offset % 16) || (dst_offset % 16)) {
+    extern char cl_internal_copy_buf_align4_str[];
+    extern int cl_internal_copy_buf_align4_str_size;
+
+    ker = cl_context_get_static_kernel_form_bin(queue->ctx, CL_ENQUEUE_COPY_BUFFER_ALIGN4,
+             cl_internal_copy_buf_align4_str, (size_t)cl_internal_copy_buf_align4_str_size, NULL);
+    cb = cb/4;
+    src_offset = src_offset/4;
+    dst_offset = dst_offset/4;
+  } else {
+    extern char cl_internal_copy_buf_align16_str[];
+    extern int cl_internal_copy_buf_align16_str_size;
+
+    ker = cl_context_get_static_kernel_form_bin(queue->ctx, CL_ENQUEUE_COPY_BUFFER_ALIGN16,
+             cl_internal_copy_buf_align16_str, (size_t)cl_internal_copy_buf_align16_str_size, NULL);
+    cb = cb/16;
+    src_offset = src_offset/4;
+    dst_offset = dst_offset/4;
+  }
+
+  if (!ker)
+    return CL_OUT_OF_RESOURCES;
+
+  if (cb < LOCAL_SZ_0) {
+    local_sz[0] = 1;
+  } else {
+    local_sz[0] = LOCAL_SZ_0;
+  }
+  global_sz[0] = ((cb + LOCAL_SZ_0 - 1)/LOCAL_SZ_0)*LOCAL_SZ_0;
+
+  cl_kernel_set_arg(ker, 0, sizeof(cl_mem), &src_buf);
+  cl_kernel_set_arg(ker, 1, sizeof(int), &src_offset);
+  cl_kernel_set_arg(ker, 2, sizeof(cl_mem), &dst_buf);
+  cl_kernel_set_arg(ker, 3, sizeof(int), &dst_offset);
+  cl_kernel_set_arg(ker, 4, sizeof(int), &cb);
+
+  ret = cl_command_queue_ND_range(queue, ker, 1, global_off, global_sz, local_sz);
+
+  return ret;
+}
+
+LOCAL cl_int
 cl_mem_copy_buffer_rect(cl_command_queue queue, cl_mem src_buf, cl_mem dst_buf,
                        const size_t *src_origin, const size_t *dst_origin, const size_t *region,
                        size_t src_row_pitch, size_t src_slice_pitch,
