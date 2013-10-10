@@ -43,4 +43,4 @@ void compiler_vector_inc(void)
   OCL_UNMAP_BUFFER(0);
 }
 
-MAKE_UTEST_FROM_FUNCTION(compiler_vector_inc);
+MAKE_UTEST_FROM_FUNCTION_WITH_ISSUE(compiler_vector_inc);
