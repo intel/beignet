@@ -4,7 +4,25 @@ include_directories(${CMAKE_CURRENT_SOURCE_DIR}
                     ${CMAKE_CURRENT_SOURCE_DIR}/../include
                     ${MESA_SOURCE_INCLUDES})
 
+macro (MakeKernelBinStr KERNEL_PATH KERNEL_FILES)
+foreach (KF ${KERNEL_FILES})
+  set (input_file ${KERNEL_PATH}/${KF}.cl)
+  set (output_file ${KERNEL_PATH}/${KF}_str.c)
+  list (APPEND KERNEL_STR_FILES ${output_file})
+  add_custom_command(
+    OUTPUT ${output_file}
+    COMMAND rm -rf ${output_file}
+    COMMAND ${CMAKE_CURRENT_BINARY_DIR}/../backend/src/gbe_bin_generater -s ${input_file} -o${output_file}
+    DEPENDS ${input_file} ${CMAKE_CURRENT_BINARY_DIR}/../backend/src/gbe_bin_generater)
+endforeach (KF)
+endmacro (MakeKernelBinStr)
+
+set (KERNEL_STR_FILES)
+set (KERNEL_NAMES cl_internal_copy_buf_align1 cl_internal_copy_buf_align4 cl_internal_copy_buf_align16)
+MakeKernelBinStr ("${CMAKE_CURRENT_SOURCE_DIR}/kernels/" "${KERNEL_NAMES}")
+
 set(OPENCL_SRC
+    ${KERNEL_STR_FILES}
     cl_api.c
     cl_alloc.c
     cl_kernel.c
