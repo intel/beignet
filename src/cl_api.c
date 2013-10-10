@@ -981,8 +981,26 @@ clCreateKernelsInProgram(cl_program      program,
                          cl_kernel *     kernels,
                          cl_uint *       num_kernels_ret)
 {
-  NOT_IMPLEMENTED;
-  return 0;
+  cl_int err = CL_SUCCESS;
+
+  CHECK_PROGRAM (program);
+  if (program->is_built == CL_FALSE) {
+    err = CL_INVALID_PROGRAM_EXECUTABLE;
+    goto error;
+  }
+  if (kernels && num_kernels < program->ker_n) {
+    err = CL_INVALID_VALUE;
+    goto error;
+  }
+
+  if(num_kernels_ret)
+    *num_kernels_ret = program->ker_n;
+
+  if(kernels)
+    err = cl_program_create_kernels_in_program(program, kernels);
+
+error:
+  return err;
 }
 
 cl_int

@@ -68,6 +68,9 @@ extern void cl_program_add_ref(cl_program);
 /* Create a kernel for the OCL user */
 extern cl_kernel cl_program_create_kernel(cl_program, const char*, cl_int*);
 
+/* creates kernel objects for all kernel functions in program. */
+extern cl_int cl_program_create_kernels_in_program(cl_program, cl_kernel*);
+
 /* Create a program from OCL source */
 extern cl_program
 cl_program_create_from_source(cl_context ctx,

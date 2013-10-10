@@ -386,3 +386,25 @@ error:
   goto exit;
 }
 
+LOCAL cl_int
+cl_program_create_kernels_in_program(cl_program p, cl_kernel* ker)
+{
+  int i = 0;
+
+  if(ker == NULL)
+    return CL_SUCCESS;
+
+  for (i = 0; i < p->ker_n; ++i) {
+    TRY_ALLOC_NO_ERR(ker[i], cl_kernel_dup(p->ker[i]));
+  }
+  
+  return CL_SUCCESS;
+
+error:
+  do {
+    cl_kernel_delete(ker[i]);
+    ker[i--] = NULL;
+  } while(i > 0);
+
+  return CL_OUT_OF_HOST_MEMORY;
+}
