@@ -252,9 +252,10 @@ namespace ir {
       ConvertInstruction(Type dstType,
                          Type srcType,
                          Register dst,
-                         Register src)
+                         Register src,
+                         bool saturated=false)
       {
-        this->opcode = OP_CVT;
+        this->opcode = saturated ? OP_SAT_CVT : OP_CVT;
         this->dst[0] = dst;
         this->src[0] = src;
         this->dstType = dstType;
@@ -1467,6 +1468,11 @@ DECL_MEM_FN(GetImageInfoInstruction, uint32_t, getInfoType(void), getInfoType())
   // CVT
   Instruction CVT(Type dstType, Type srcType, Register dst, Register src) {
     return internal::ConvertInstruction(dstType, srcType, dst, src).convert();
+  }
+
+  // saturated convert
+  Instruction SAT_CVT(Type dstType, Type srcType, Register dst, Register src) {
+    return internal::ConvertInstruction(dstType, srcType, dst, src, true).convert();
   }
 
   // For all unary functions with given opcode

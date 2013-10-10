@@ -219,9 +219,33 @@ UDEF(uint);
 UDEF(ulong);
 #undef UDEF
 
-uchar INLINE_OVERLOADABLE convert_uchar_sat(float x) {
-    return add_sat((uchar)x, (uchar)0);
-}
+#define DEF(DSTTYPE, SRCTYPE) \
+  OVERLOADABLE DSTTYPE convert_ ## DSTTYPE ## _sat(SRCTYPE x);
+DEF(char, uchar);
+DEF(char, short);
+DEF(char, ushort);
+DEF(char, int);
+DEF(char, uint);
+DEF(char, float);
+DEF(uchar, char);
+DEF(uchar, short);
+DEF(uchar, ushort);
+DEF(uchar, int);
+DEF(uchar, uint);
+DEF(uchar, float);
+DEF(short, ushort);
+DEF(short, int);
+DEF(short, uint);
+DEF(short, float);
+DEF(ushort, short);
+DEF(ushort, int);
+DEF(ushort, uint);
+DEF(ushort, float);
+DEF(int, uint);
+DEF(int, float);
+DEF(uint, int);
+DEF(uint, float);
+#undef DEF
 
 INLINE_OVERLOADABLE int isfinite(float x) { return __builtin_isfinite(x); }
 INLINE_OVERLOADABLE int isinf(float x) { return __builtin_isinf(x); }

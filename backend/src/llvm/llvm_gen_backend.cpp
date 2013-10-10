@@ -1910,6 +1910,30 @@ namespace gbe
       case GEN_OCL_I64RHADD:
       case GEN_OCL_I64_MAD_SAT:
       case GEN_OCL_I64_MAD_SATU:
+      case GEN_OCL_SAT_CONV_U8_TO_I8:
+      case GEN_OCL_SAT_CONV_I16_TO_I8:
+      case GEN_OCL_SAT_CONV_U16_TO_I8:
+      case GEN_OCL_SAT_CONV_I32_TO_I8:
+      case GEN_OCL_SAT_CONV_U32_TO_I8:
+      case GEN_OCL_SAT_CONV_F32_TO_I8:
+      case GEN_OCL_SAT_CONV_I8_TO_U8:
+      case GEN_OCL_SAT_CONV_I16_TO_U8:
+      case GEN_OCL_SAT_CONV_U16_TO_U8:
+      case GEN_OCL_SAT_CONV_I32_TO_U8:
+      case GEN_OCL_SAT_CONV_U32_TO_U8:
+      case GEN_OCL_SAT_CONV_F32_TO_U8:
+      case GEN_OCL_SAT_CONV_U16_TO_I16:
+      case GEN_OCL_SAT_CONV_I32_TO_I16:
+      case GEN_OCL_SAT_CONV_U32_TO_I16:
+      case GEN_OCL_SAT_CONV_F32_TO_I16:
+      case GEN_OCL_SAT_CONV_I16_TO_U16:
+      case GEN_OCL_SAT_CONV_I32_TO_U16:
+      case GEN_OCL_SAT_CONV_U32_TO_U16:
+      case GEN_OCL_SAT_CONV_F32_TO_U16:
+      case GEN_OCL_SAT_CONV_U32_TO_I32:
+      case GEN_OCL_SAT_CONV_F32_TO_I32:
+      case GEN_OCL_SAT_CONV_I32_TO_U32:
+      case GEN_OCL_SAT_CONV_F32_TO_U32:
         this->newRegister(&I);
         break;
       default:
@@ -2415,6 +2439,57 @@ namespace gbe
             ctx.I64RHADD(ir::TYPE_U64, dst, src0, src1);
             break;
            }
+#define DEF(DST_TYPE, SRC_TYPE) \
+  { ctx.SAT_CVT(DST_TYPE, SRC_TYPE, getRegister(&I), getRegister(I.getOperand(0))); break; }
+          case GEN_OCL_SAT_CONV_U8_TO_I8:
+            DEF(ir::TYPE_S8, ir::TYPE_U8);
+          case GEN_OCL_SAT_CONV_I16_TO_I8:
+            DEF(ir::TYPE_S8, ir::TYPE_S16);
+          case GEN_OCL_SAT_CONV_U16_TO_I8:
+            DEF(ir::TYPE_S8, ir::TYPE_U16);
+          case GEN_OCL_SAT_CONV_I32_TO_I8:
+            DEF(ir::TYPE_S8, ir::TYPE_S32);
+          case GEN_OCL_SAT_CONV_U32_TO_I8:
+            DEF(ir::TYPE_S8, ir::TYPE_U32);
+          case GEN_OCL_SAT_CONV_F32_TO_I8:
+            DEF(ir::TYPE_S8, ir::TYPE_FLOAT);
+          case GEN_OCL_SAT_CONV_I8_TO_U8:
+            DEF(ir::TYPE_U8, ir::TYPE_S8);
+          case GEN_OCL_SAT_CONV_I16_TO_U8:
+            DEF(ir::TYPE_U8, ir::TYPE_S16);
+          case GEN_OCL_SAT_CONV_U16_TO_U8:
+            DEF(ir::TYPE_U8, ir::TYPE_U16);
+          case GEN_OCL_SAT_CONV_I32_TO_U8:
+            DEF(ir::TYPE_U8, ir::TYPE_S32);
+          case GEN_OCL_SAT_CONV_U32_TO_U8:
+            DEF(ir::TYPE_U8, ir::TYPE_U32);
+          case GEN_OCL_SAT_CONV_F32_TO_U8:
+            DEF(ir::TYPE_U8, ir::TYPE_FLOAT);
+          case GEN_OCL_SAT_CONV_U16_TO_I16:
+            DEF(ir::TYPE_S16, ir::TYPE_U16);
+          case GEN_OCL_SAT_CONV_I32_TO_I16:
+            DEF(ir::TYPE_S16, ir::TYPE_S32);
+          case GEN_OCL_SAT_CONV_U32_TO_I16:
+            DEF(ir::TYPE_S16, ir::TYPE_U32);
+          case GEN_OCL_SAT_CONV_F32_TO_I16:
+            DEF(ir::TYPE_S16, ir::TYPE_FLOAT);
+          case GEN_OCL_SAT_CONV_I16_TO_U16:
+            DEF(ir::TYPE_U16, ir::TYPE_S16);
+          case GEN_OCL_SAT_CONV_I32_TO_U16:
+            DEF(ir::TYPE_U16, ir::TYPE_S32);
+          case GEN_OCL_SAT_CONV_U32_TO_U16:
+            DEF(ir::TYPE_U16, ir::TYPE_U32);
+          case GEN_OCL_SAT_CONV_F32_TO_U16:
+            DEF(ir::TYPE_U16, ir::TYPE_FLOAT);
+          case GEN_OCL_SAT_CONV_U32_TO_I32:
+            DEF(ir::TYPE_S32, ir::TYPE_U32);
+          case GEN_OCL_SAT_CONV_F32_TO_I32:
+            DEF(ir::TYPE_S32, ir::TYPE_FLOAT);
+          case GEN_OCL_SAT_CONV_I32_TO_U32:
+            DEF(ir::TYPE_U32, ir::TYPE_S32);
+          case GEN_OCL_SAT_CONV_F32_TO_U32:
+            DEF(ir::TYPE_U32, ir::TYPE_FLOAT);
+#undef DEF
           default: break;
         }
       }

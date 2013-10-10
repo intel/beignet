@@ -2538,15 +2538,20 @@ namespace gbe
       const GenRegister dst = sel.selReg(insn.getDst(0), dstType);
       const GenRegister src = sel.selReg(insn.getSrc(0), srcType);
 
+      if(insn.getOpcode() == ir::OP_SAT_CVT) {
+        sel.push();
+        sel.curr.saturate = 1;
+      }
+
       // We need two instructions to make the conversion
       if (dstFamily != FAMILY_DWORD && dstFamily != FAMILY_QWORD && (srcFamily == FAMILY_DWORD || srcFamily == FAMILY_QWORD)) {
         GenRegister unpacked;
         if (dstFamily == FAMILY_WORD) {
-          const uint32_t type = TYPE_U16 ? GEN_TYPE_UW : GEN_TYPE_W;
+          const uint32_t type = dstType == TYPE_U16 ? GEN_TYPE_UW : GEN_TYPE_W;
           unpacked = GenRegister::unpacked_uw(sel.reg(FAMILY_DWORD));
           unpacked = GenRegister::retype(unpacked, type);
         } else {
-          const uint32_t type = TYPE_U8 ? GEN_TYPE_UB : GEN_TYPE_B;
+          const uint32_t type = dstType == TYPE_U8 ? GEN_TYPE_UB : GEN_TYPE_B;
           unpacked = GenRegister::unpacked_ub(sel.reg(FAMILY_DWORD));
           unpacked = GenRegister::retype(unpacked, type);
         }
@@ -2581,6 +2586,10 @@ namespace gbe
         }
       } else
         sel.MOV(dst, src);
+
+      if(insn.getOpcode() == ir::OP_SAT_CVT)
+        sel.pop();
+
       return true;
     }
     DECL_CTOR(ConvertInstruction, 1, 1);

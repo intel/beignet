@@ -623,6 +623,8 @@ namespace ir {
   Instruction GT(Type type, Register dst, Register src0, Register src1);
   /*! cvt.{dstType <- srcType} dst src */
   Instruction CVT(Type dstType, Type srcType, Register dst, Register src);
+  /*! sat_cvt.{dstType <- srcType} dst src */
+  Instruction SAT_CVT(Type dstType, Type srcType, Register dst, Register src);
   /*! atomic dst addr.space {src1 {src2}} */
   Instruction ATOMIC(AtomicOps opcode, Register dst, AddressSpace space, Tuple src);
   /*! bra labelIndex */
