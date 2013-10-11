@@ -86,6 +86,8 @@ namespace gbe
     int16_t allocate(int16_t size, int16_t alignment);
     /*! Deallocate previously allocated memory */
     void deallocate(int16_t offset);
+    /*! Spilt a block into 2 blocks, for some registers allocate together but  deallocate seperate */
+    void splitBlock(int16_t offset, int16_t subOffset);
     /* allocate curbe for constant ptr argument */
     int32_t allocConstBuf(uint32_t argID);
     /* allocate a new entry for a specific image's information */

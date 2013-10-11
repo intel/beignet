@@ -60,6 +60,9 @@ namespace gbe
     /*! Free the given register file piece */
     void deallocate(int16_t offset);
 
+    /*! Spilt a block into 2 blocks */
+    void splitBlock(int16_t offset, int16_t subOffset);
+
   private:
     /*! May need to make that run-time in the future */
     static const int16_t RegisterFileSize = 4*KB;
@@ -268,6 +271,27 @@ namespace gbe
     }
   }
 
+  void RegisterFilePartitioner::splitBlock(int16_t offset, int16_t subOffset) {
+    // Retrieve the size in the allocation map
+    auto it = allocatedBlocks.find(offset);
+    GBE_ASSERT(it != allocatedBlocks.end());
+
+    while(subOffset > it->second) {
+      subOffset -= it->second;
+      offset += it->second;
+      it = allocatedBlocks.find(offset);
+      GBE_ASSERT(it != allocatedBlocks.end());
+    }
+
+    if(subOffset == 0)
+      return;
+    int16_t size = it->second;
+    allocatedBlocks.erase(it);
+    // Track the allocation to retrieve the size later
+    allocatedBlocks.insert(std::make_pair(offset, subOffset));
+    allocatedBlocks.insert(std::make_pair(offset + subOffset, size - subOffset));
+  }
+
   static int
   alignScratchSize(int size){
     int i = 0;
@@ -327,6 +351,10 @@ namespace gbe
   }
 
   void Context::deallocate(int16_t offset) { partitioner->deallocate(offset); }
+
+  void Context::splitBlock(int16_t offset, int16_t subOffset) {
+    partitioner->splitBlock(offset, subOffset);
+  }
 
   int32_t Context::allocConstBuf(uint32_t argID) {
      GBE_ASSERT(kernel->args[argID].type == GBE_ARG_CONSTANT_PTR);

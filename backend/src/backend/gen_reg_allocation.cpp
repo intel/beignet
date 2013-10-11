@@ -149,15 +149,16 @@ namespace gbe
     const Function &fn = ctx.getFunction();
     GBE_ASSERT(fn.getProfile() == PROFILE_OCL);
     const Function::PushMap &pushMap = fn.getPushMap();
-    for (const auto &pushed : pushMap) {
-      const uint32_t argID = pushed.second.argID;
+    for (auto rit = pushMap.rbegin(); rit != pushMap.rend(); ++rit) {
+      const uint32_t argID = rit->second.argID;
       const FunctionArgument arg = fn.getArg(argID);
 
-      const uint32_t subOffset = pushed.second.offset;
-      const Register reg = pushed.second.getRegister();
+      const uint32_t subOffset = rit->second.offset;
+      const Register reg = rit->second.getRegister();
       auto it = this->ctx.curbeRegs.find(arg.reg);
       assert(it != ctx.curbeRegs.end());
       allocatePayloadReg(reg, it->second, subOffset);
+      ctx.splitBlock(it->second, subOffset);
     }
   }
 
