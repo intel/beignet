@@ -158,7 +158,6 @@ intel_gpgpu_new(intel_driver_t *drv)
   state->drv = drv;
   state->batch = intel_batchbuffer_new(state->drv);
   assert(state->batch);
-  intel_batchbuffer_init(state->batch, state->drv);
 
 exit:
   return state;
