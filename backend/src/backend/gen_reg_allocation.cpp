@@ -88,8 +88,6 @@ namespace gbe
     map<ir::Register, VectorLocation> vectorMap;
     /*! All vectors used in the selection */
     vector<SelectionVector*> vectors;
-    /*! All vectors that are already expired */
-    set<SelectionVector*> expired;
     /*! The set of booleans that will go to GRF (cannot be kept into flags) */
     set<ir::Register> grfBooleans;
     /*! All the register intervals */
@@ -310,28 +308,9 @@ namespace gbe
         continue;
       }
       // Case 1 - it does not belong to a vector. Just remove it
-      if (vectorMap.contains(reg) == false) {
         ctx.deallocate(it->second);
         this->expiringID++;
         return true;
-      // Case 2 - check that the vector has not been already removed. If not,
-      // since we equaled the intervals of all registers in the vector, we just
-      // remove the complete vector
-      } else {
-        SelectionVector *vector = vectorMap.find(reg)->second.first;
-        if (expired.contains(vector)) {
-          this->expiringID++;
-          continue;
-        } else {
-          const ir::Register first = vector->reg[0].reg();
-          auto it = RA.find(first);
-          GBE_ASSERT(it != RA.end());
-          ctx.deallocate(it->second);
-          expired.insert(vector);
-          this->expiringID++;
-          return true;
-        }
-      }
     }
 
     // We were not able to expire anything
@@ -541,11 +520,12 @@ namespace gbe
           }
           continue;
         }
-        for (uint32_t regID = 0; regID < vector->regNum; ++regID, grfOffset += alignment) {
+        for (uint32_t regID = 0; regID < vector->regNum; ++regID) {
           const ir::Register reg = vector->reg[regID].reg();
           GBE_ASSERT(RA.contains(reg) == false
                      && ctx.sel->getRegisterData(reg).family == family);
-          RA.insert(std::make_pair(reg, grfOffset));
+          RA.insert(std::make_pair(reg, grfOffset + alignment * regID));
+          ctx.splitBlock(grfOffset, alignment * regID);  //splitBlock will not split if regID == 0
         }
       }
       // Case 2: This is a regular scalar register, allocate it alone
@@ -646,27 +626,6 @@ namespace gbe
       for (auto reg : liveOut) {
         this->intervals[reg].minID = std::min(this->intervals[reg].minID, lastID);
         this->intervals[reg].maxID = std::max(this->intervals[reg].maxID, lastID);
-      }
-    }
-
-    // Extend the liveness of the registers that belong to vectors. Actually,
-    // this is way too brutal, we should instead maintain a list of allocated
-    // intervals to handle vector registers independently while doing the linear
-    // scan (or anything else)
-    for (auto vector : this->vectors) {
-      const uint32_t regNum = vector->regNum;
-      const ir::Register first = vector->reg[0].reg();
-      int32_t minID = this->intervals[first].minID;
-      int32_t maxID = this->intervals[first].maxID;
-      for (uint32_t regID = 1; regID < regNum; ++regID) {
-        const ir::Register reg = vector->reg[regID].reg();
-        minID = std::min(minID, this->intervals[reg].minID);
-        maxID = std::max(maxID, this->intervals[reg].maxID);
-      }
-      for (uint32_t regID = 0; regID < regNum; ++regID) {
-        const ir::Register reg = vector->reg[regID].reg();
-        this->intervals[reg].minID = minID;
-        this->intervals[reg].maxID = maxID;
       }
     }
 
