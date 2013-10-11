@@ -483,7 +483,7 @@ namespace gbe {
     // so disable it currently.
     args.push_back("-fno-builtin");
     if(bOpt)
-      args.push_back("-O3");
+      args.push_back("-O2");
     if(bFastMath)
       args.push_back("-D __FAST_RELAXED_MATH__=1");
 #if LLVM_VERSION_MINOR <= 2
