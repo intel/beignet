@@ -2122,7 +2122,10 @@ DEF(short)
 DEF(ushort)
 DEF(int)
 DEF(uint)
+DEF(long)
+DEF(ulong)
 DEF(float)
+DEF(double)
 #undef BODY
 #undef DEFN
 #undef DEF
