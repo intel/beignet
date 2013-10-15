@@ -2296,7 +2296,7 @@ namespace gbe
       for (dstID = 0; dstID < tmpRegNum ; ++dstID)
         dst[dstID] = sel.selReg(sel.reg(FAMILY_DWORD));
       for ( uint32_t valueID = 0; valueID < valueNum; ++dstID, ++valueID)
-        dst[dstID] = sel.selReg(insn.getValue(valueID));
+        dst[dstID] = sel.selReg(insn.getValue(valueID), ir::TYPE_U64);
       sel.READ64(addr, sel.selReg(sel.reg(FAMILY_QWORD), ir::TYPE_U64), dst, valueNum + tmpRegNum, valueNum, bti);
     }
 
@@ -2416,7 +2416,7 @@ namespace gbe
         dst[srcID + 1] = sel.selReg(sel.reg(FAMILY_DWORD));
 
       for (uint32_t valueID = 0; valueID < valueNum; ++valueID)
-        src[valueID] = sel.selReg(insn.getValue(valueID));
+        src[valueID] = sel.selReg(insn.getValue(valueID), ir::TYPE_U64);
       sel.WRITE64(addr, src, valueNum, dst, tmpRegNum + 1, bti);
     }
 
