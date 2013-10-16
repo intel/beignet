@@ -767,6 +767,10 @@ namespace gbe {
     default: GBE_ASSERTM(false, "Unsupported calling convention");
     }
 
+    // As we inline all function calls, so skip non-kernel functions
+    bool bKernel = isKernelFunction(F);
+    if(!bKernel) return false;
+
     bool changed = false;
     module = F.getParent();
     intTy = IntegerType::get(module->getContext(), 32);

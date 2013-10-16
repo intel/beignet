@@ -105,6 +105,23 @@ using namespace llvm;
 
 namespace gbe
 {
+  bool isKernelFunction(const llvm::Function &F) {
+    const Module *module = F.getParent();
+    const Module::NamedMDListType& globalMD = module->getNamedMDList();
+    bool bKernel = false;
+    for(auto i = globalMD.begin(); i != globalMD.end(); i++) {
+      const NamedMDNode &md = *i;
+      if(strcmp(md.getName().data(), "opencl.kernels") != 0) continue;
+      uint32_t ops = md.getNumOperands();
+      for(uint32_t x = 0; x < ops; x++) {
+        MDNode* node = md.getOperand(x);
+        Value * op = node->getOperand(0);
+        if(op == &F) bKernel = true;
+      }
+    }
+    return bKernel;
+  }
+
   uint32_t getPadding(uint32_t offset, uint32_t align) {
     return (align - (offset % align)) % align; 
   }

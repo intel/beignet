@@ -75,6 +75,9 @@ namespace gbe
   /*! Get the type size in bytes */
   uint32_t getTypeByteSize(const ir::Unit &unit, llvm::Type* Ty);
 
+  /*! whether this is a kernel function */
+  bool isKernelFunction(const llvm::Function &f);
+
   /*! Create a Gen-IR unit */
   llvm::FunctionPass *createGenPass(ir::Unit &unit);
 

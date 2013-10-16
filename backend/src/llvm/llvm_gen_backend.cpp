@@ -472,6 +472,10 @@ namespace gbe
      if (F.hasAvailableExternallyLinkage())
        return false;
 
+      // As we inline all function calls, so skip non-kernel functions
+      bool bKernel = isKernelFunction(F);
+      if(!bKernel) return false;
+
       LI = &getAnalysis<LoopInfo>();
 
       emitFunction(F);
