@@ -473,6 +473,8 @@ namespace gbe {
       useless.push_back(str);
       args.push_back(str.c_str());
     }
+    args.push_back("-mllvm");
+    args.push_back("-inline-threshold=200000");
 #ifdef GEN7_SAMPLER_CLAMP_BORDER_WORKAROUND
     args.push_back("-DGEN7_SAMPLER_CLAMP_BORDER_WORKAROUND");
 #endif
@@ -536,6 +538,18 @@ namespace gbe {
     // Set Language
     clang::LangOptions & lang_opts = Clang.getLangOpts();
     lang_opts.OpenCL = 1;
+
+    //llvm flags need command line parsing to take effect
+    if (!Clang.getFrontendOpts().LLVMArgs.empty()) {
+      unsigned NumArgs = Clang.getFrontendOpts().LLVMArgs.size();
+      const char **Args = new const char*[NumArgs + 2];
+      Args[0] = "clang (LLVM option parsing)";
+      for (unsigned i = 0; i != NumArgs; ++i){
+        Args[i + 1] = Clang.getFrontendOpts().LLVMArgs[i].c_str();
+      }
+      Args[NumArgs + 1] = 0;
+      llvm::cl::ParseCommandLineOptions(NumArgs + 1, Args);
+    }
 
     // Create an action and make the compiler instance carry it out
     llvm::OwningPtr<clang::CodeGenAction> Act(new clang::EmitLLVMOnlyAction());
