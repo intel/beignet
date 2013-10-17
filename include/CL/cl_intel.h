@@ -90,6 +90,17 @@ typedef CL_API_ENTRY cl_program (CL_API_CALL *clCreateProgramWithLLVMIntel_fn)(
                                  const char *            /* file */,
                                  cl_int *                /* errcode_ret */);
 
+/* Create buffer from libva's buffer object */
+extern CL_API_ENTRY cl_mem CL_API_CALL
+clCreateBufferFromLibvaIntel(cl_context      /* context */,
+                             unsigned int    /* bo_name */,
+                             cl_int *        /* errcode_ret */);
+
+typedef CL_API_ENTRY cl_mem (CL_API_CALL *clCreateBufferFromLibvaIntel_fn)(
+                             cl_context     /* context */,
+                             unsigned int   /* bo_name */,
+                             cl_int *       /* errcode_ret */);
+
 #ifdef __cplusplus
 }
 #endif

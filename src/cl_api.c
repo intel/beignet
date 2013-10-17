@@ -2538,6 +2538,7 @@ clGetExtensionFunctionAddress(const char *func_name)
   EXTFUNC(clPinBufferIntel)
   EXTFUNC(clUnpinBufferIntel)
   EXTFUNC(clReportUnfreedIntel)
+  EXTFUNC(clCreateBufferFromLibvaIntel)
   return NULL;
 }
 
@@ -2633,5 +2634,22 @@ clCreateProgramWithLLVMIntel(cl_context              context,
                                      devices,
                                      filename,
                                      errcode_ret);
+}
+
+cl_mem
+clCreateBufferFromLibvaIntel(cl_context  context,
+                             unsigned int bo_name,
+                             cl_int *errorcode_ret)
+{
+  cl_mem mem = NULL;
+  cl_int err = CL_SUCCESS;
+  CHECK_CONTEXT (context);
+
+  mem = cl_mem_new_libva_buffer(context, bo_name, &err);
+
+error:
+  if (errorcode_ret)
+    *errorcode_ret = err;
+  return mem;
 }
 

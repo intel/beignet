@@ -583,6 +583,20 @@ intel_release_buffer_from_texture(cl_context ctx, unsigned int target,
 }
 #endif
 
+cl_buffer intel_share_buffer_from_libva(cl_context ctx,
+                                        unsigned int bo_name,
+                                        size_t *sz)
+{
+  drm_intel_bo *intel_bo;
+
+  intel_bo = intel_driver_share_buffer((intel_driver_t *)ctx->drv, "shared from libva", bo_name);
+
+  if (sz)
+    *sz = intel_bo->size;
+
+  return (cl_buffer)intel_bo;
+}
+
 static int32_t get_intel_tiling(cl_int tiling, uint32_t *intel_tiling)
 {
   switch (tiling) {
@@ -630,6 +644,7 @@ intel_setup_callbacks(void)
   cl_buffer_release_from_texture = (cl_buffer_release_from_texture_cb *) intel_release_buffer_from_texture;
   intel_set_cl_gl_callbacks();
 #endif
+  cl_buffer_get_buffer_from_libva = (cl_buffer_get_buffer_from_libva_cb *) intel_share_buffer_from_libva;
   cl_buffer_reference = (cl_buffer_reference_cb *) drm_intel_bo_reference;
   cl_buffer_unreference = (cl_buffer_unreference_cb *) drm_intel_bo_unreference;
   cl_buffer_map = (cl_buffer_map_cb *) drm_intel_bo_map;

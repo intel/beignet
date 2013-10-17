@@ -1116,3 +1116,29 @@ cl_mem_unpin(cl_mem mem)
   cl_buffer_unpin(mem->bo);
   return CL_SUCCESS;
 }
+
+LOCAL cl_mem cl_mem_new_libva_buffer(cl_context ctx,
+                                     unsigned int bo_name,
+                                     cl_int* errcode)
+{
+  cl_int err = CL_SUCCESS;
+  cl_mem mem = NULL;
+
+  mem = cl_mem_allocate(CL_MEM_BUFFER_TYPE, ctx, 0, 0, CL_FALSE, &err);
+  if (mem == NULL || err != CL_SUCCESS)
+    goto error;
+
+  size_t sz = 0;
+  mem->bo = cl_buffer_get_buffer_from_libva(ctx, bo_name, &sz);
+  mem->size = sz;
+
+exit:
+  if (errcode)
+    *errcode = err;
+  return mem;
+
+error:
+  cl_mem_delete(mem);
+  mem = NULL;
+  goto exit;
+}
