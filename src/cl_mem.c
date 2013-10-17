@@ -1142,3 +1142,58 @@ error:
   mem = NULL;
   goto exit;
 }
+
+LOCAL cl_mem cl_mem_new_libva_image(cl_context ctx,
+                                    unsigned int bo_name, size_t offset,
+                                    size_t width, size_t height,
+                                    cl_image_format fmt,
+                                    size_t row_pitch,
+                                    cl_int *errcode)
+{
+  cl_int err = CL_SUCCESS;
+  cl_mem mem = NULL;
+  struct _cl_mem_image *image = NULL;
+  uint32_t intel_fmt, bpp;
+
+  intel_fmt = cl_image_get_intel_format(&fmt);
+  if (intel_fmt == INTEL_UNSUPPORTED_FORMAT) {
+    err = CL_IMAGE_FORMAT_NOT_SUPPORTED;
+    goto error;
+  }
+
+  cl_image_byte_per_pixel(&fmt, &bpp);
+
+  mem = cl_mem_allocate(CL_MEM_IMAGE_TYPE, ctx, 0, 0, 0, &err);
+  if (mem == NULL || err != CL_SUCCESS) {
+    err = CL_OUT_OF_HOST_MEMORY;
+    goto error;
+  }
+
+  image = cl_mem_image(mem);
+
+  mem->bo = cl_buffer_get_image_from_libva(ctx, bo_name, image);
+
+  image->w = width;
+  image->h = height;
+  image->image_type = CL_MEM_OBJECT_IMAGE2D;
+  image->depth = 2;
+  image->fmt = fmt;
+  image->intel_fmt = intel_fmt;
+  image->bpp = bpp;
+  image->row_pitch = row_pitch;
+  image->slice_pitch = 0;
+  // NOTE: tiling of image is set in cl_buffer_get_image_from_libva().
+  image->tile_x = 0;
+  image->tile_y = 0;
+  image->offset = offset;
+
+exit:
+  if (errcode)
+    *errcode = err;
+  return mem;
+
+error:
+  cl_mem_delete(mem);
+  mem = NULL;
+  goto exit;
+}

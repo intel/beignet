@@ -100,7 +100,7 @@ struct _cl_mem_image {
   size_t host_row_pitch, host_slice_pitch;
   cl_image_tiling_t tiling;       /* only IVB+ supports TILE_[X,Y] (image only) */
   size_t tile_x, tile_y;          /* tile offset, used for mipmap images.  */
-  size_t offset;
+  size_t offset;                  /* offset for dri_bo, used when it's reloc. */
 };
 
 struct _cl_mem_gl_image {
@@ -251,6 +251,13 @@ cl_mem_copy_image_region(const size_t *origin, const size_t *region,
 extern cl_mem cl_mem_new_libva_buffer(cl_context ctx,
                                       unsigned int bo_name,
                                       cl_int *errcode);
+
+extern cl_mem cl_mem_new_libva_image(cl_context ctx,
+                                     unsigned int bo_name, size_t offset,
+                                     size_t width, size_t height,
+                                     cl_image_format fmt,
+                                     size_t row_pitch,
+                                     cl_int *errcode);
 
 #endif /* __CL_MEM_H__ */
 

@@ -515,7 +515,7 @@ intel_gpgpu_state_init(intel_gpgpu_t *gpgpu,
 }
 
 static void
-intel_gpgpu_set_buf_reloc_gen7(intel_gpgpu_t *gpgpu, int32_t index, dri_bo* obj_bo)
+intel_gpgpu_set_buf_reloc_gen7(intel_gpgpu_t *gpgpu, int32_t index, dri_bo* obj_bo, uint32_t obj_bo_offset)
 {
   surface_heap_t *heap = gpgpu->surface_heap_b.bo->virtual;
   heap->binding_table[index] = offsetof(surface_heap_t, surface) +
@@ -523,7 +523,7 @@ intel_gpgpu_set_buf_reloc_gen7(intel_gpgpu_t *gpgpu, int32_t index, dri_bo* obj_
   dri_bo_emit_reloc(gpgpu->surface_heap_b.bo,
                     I915_GEM_DOMAIN_RENDER,
                     I915_GEM_DOMAIN_RENDER,
-                    0,
+                    obj_bo_offset,
                     heap->binding_table[index] +
                     offsetof(gen7_surface_state_t, ss1),
                     obj_bo);
@@ -607,6 +607,7 @@ static void
 intel_gpgpu_bind_image_gen7(intel_gpgpu_t *gpgpu,
                               uint32_t index,
                               dri_bo* obj_bo,
+                              uint32_t obj_bo_offset,
                               uint32_t format,
                               cl_mem_object_type type,
                               int32_t w,
@@ -638,7 +639,7 @@ intel_gpgpu_bind_image_gen7(intel_gpgpu_t *gpgpu,
     ss->ss0.tile_walk = I965_TILEWALK_YMAJOR;
   }
   ss->ss0.render_cache_rw_mode = 1; /* XXX do we need to set it? */
-  intel_gpgpu_set_buf_reloc_gen7(gpgpu, index, obj_bo);
+  intel_gpgpu_set_buf_reloc_gen7(gpgpu, index, obj_bo, obj_bo_offset);
   gpgpu->binded_img[index - gpgpu->img_index_base] = obj_bo;
 }
 
@@ -680,6 +681,7 @@ static void
 intel_gpgpu_bind_image(intel_gpgpu_t *gpgpu,
                        uint32_t index,
                        cl_buffer *obj_bo,
+                       uint32_t obj_bo_offset,
                        uint32_t format,
                        cl_mem_object_type type,
                        int32_t w,
@@ -688,7 +690,7 @@ intel_gpgpu_bind_image(intel_gpgpu_t *gpgpu,
                        int32_t pitch,
                        cl_gpgpu_tiling tiling)
 {
-  intel_gpgpu_bind_image_gen7(gpgpu, index, (drm_intel_bo*) obj_bo, format, type, w, h, depth, pitch, tiling);
+  intel_gpgpu_bind_image_gen7(gpgpu, index, (drm_intel_bo*) obj_bo, obj_bo_offset, format, type, w, h, depth, pitch, tiling);
   assert(index < GEN_MAX_SURFACES);
 }
 

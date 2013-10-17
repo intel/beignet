@@ -2539,6 +2539,7 @@ clGetExtensionFunctionAddress(const char *func_name)
   EXTFUNC(clUnpinBufferIntel)
   EXTFUNC(clReportUnfreedIntel)
   EXTFUNC(clCreateBufferFromLibvaIntel)
+  EXTFUNC(clCreateImageFromLibvaIntel)
   return NULL;
 }
 
@@ -2646,6 +2647,31 @@ clCreateBufferFromLibvaIntel(cl_context  context,
   CHECK_CONTEXT (context);
 
   mem = cl_mem_new_libva_buffer(context, bo_name, &err);
+
+error:
+  if (errorcode_ret)
+    *errorcode_ret = err;
+  return mem;
+}
+
+cl_mem
+clCreateImageFromLibvaIntel(cl_context context,
+                            const cl_libva_image *info,
+                            cl_int *errorcode_ret)
+{
+  cl_mem mem = NULL;
+  cl_int err = CL_SUCCESS;
+  CHECK_CONTEXT (context);
+
+  if (!info) {
+    err = CL_INVALID_VALUE;
+    goto error;
+  }
+
+  mem = cl_mem_new_libva_image(context,
+                               info->bo_name, info->offset, info->width, info->height,
+                               info->fmt, info->row_pitch,
+                               &err);
 
 error:
   if (errorcode_ret)

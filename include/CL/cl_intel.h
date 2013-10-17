@@ -101,6 +101,27 @@ typedef CL_API_ENTRY cl_mem (CL_API_CALL *clCreateBufferFromLibvaIntel_fn)(
                              unsigned int   /* bo_name */,
                              cl_int *       /* errcode_ret */);
 
+/* Create image from libva's buffer object */
+typedef struct _cl_libva_image {
+    unsigned int            bo_name;
+    uint32_t                offset;
+    uint32_t                width;
+    uint32_t                height;
+    cl_image_format         fmt;
+    uint32_t                row_pitch;
+    uint32_t                reserved[8];
+} cl_libva_image;
+
+extern CL_API_ENTRY cl_mem CL_API_CALL
+clCreateImageFromLibvaIntel(cl_context               /* context */,
+                            const cl_libva_image *   /* info */,
+                            cl_int *                 /* errcode_ret */);
+
+typedef CL_API_ENTRY cl_mem (CL_API_CALL *clCreateImageFromLibvaIntel_fn)(
+                             cl_context             /* context */,
+                             const cl_libva_image * /* info */,
+                             cl_int *               /* errcode_ret */);
+
 #ifdef __cplusplus
 }
 #endif

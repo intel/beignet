@@ -110,6 +110,7 @@ extern cl_gpgpu_bind_sampler_cb *cl_gpgpu_bind_sampler;
 typedef void (cl_gpgpu_bind_image_cb)(cl_gpgpu state,
                                       uint32_t id,
                                       cl_buffer obj_bo,
+                                      uint32_t obj_bo_offset,
                                       uint32_t format,
                                       uint32_t type,
                                       int32_t w,
@@ -228,6 +229,9 @@ extern cl_buffer_release_from_texture_cb *cl_buffer_release_from_texture;
 
 typedef cl_buffer (cl_buffer_get_buffer_from_libva_cb)(cl_context ctx, unsigned int bo_name, size_t *sz);
 extern cl_buffer_get_buffer_from_libva_cb *cl_buffer_get_buffer_from_libva;
+
+typedef cl_buffer (cl_buffer_get_image_from_libva_cb)(cl_context ctx, unsigned int bo_name, struct _cl_mem_image *image);
+extern cl_buffer_get_image_from_libva_cb *cl_buffer_get_image_from_libva;
 
 /* Unref a buffer and destroy it if no more ref */
 typedef int (cl_buffer_unreference_cb)(cl_buffer);

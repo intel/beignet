@@ -405,9 +405,6 @@ intel_driver_get_ver(struct intel_driver *drv)
 static size_t drm_intel_bo_get_size(drm_intel_bo *bo) { return bo->size; }
 static void* drm_intel_bo_get_virtual(drm_intel_bo *bo) { return bo->virtual; }
 
-#if defined(HAS_EGL)
-#include "intel_dri_resource_sharing.h"
-#include "cl_image.h"
 static int get_cl_tiling(uint32_t drm_tiling)
 {
   switch(drm_tiling) {
@@ -420,6 +417,9 @@ static int get_cl_tiling(uint32_t drm_tiling)
   return CL_NO_TILE;
 }
 
+#if defined(HAS_EGL)
+#include "intel_dri_resource_sharing.h"
+#include "cl_image.h"
 static int cl_get_clformat_from_texture(GLint tex_format, cl_image_format * cl_format)
 {
   cl_int ret = CL_SUCCESS;
@@ -597,6 +597,21 @@ cl_buffer intel_share_buffer_from_libva(cl_context ctx,
   return (cl_buffer)intel_bo;
 }
 
+cl_buffer intel_share_image_from_libva(cl_context ctx,
+                                       unsigned int bo_name,
+                                       struct _cl_mem_image *image)
+{
+  drm_intel_bo *intel_bo;
+  uint32_t intel_tiling, intel_swizzle_mode;
+
+  intel_bo = intel_driver_share_buffer((intel_driver_t *)ctx->drv, "shared from libva", bo_name);
+
+  drm_intel_bo_get_tiling(intel_bo, &intel_tiling, &intel_swizzle_mode);
+  image->tiling = get_cl_tiling(intel_tiling);
+
+  return (cl_buffer)intel_bo;
+}
+
 static int32_t get_intel_tiling(cl_int tiling, uint32_t *intel_tiling)
 {
   switch (tiling) {
@@ -645,6 +660,7 @@ intel_setup_callbacks(void)
   intel_set_cl_gl_callbacks();
 #endif
   cl_buffer_get_buffer_from_libva = (cl_buffer_get_buffer_from_libva_cb *) intel_share_buffer_from_libva;
+  cl_buffer_get_image_from_libva = (cl_buffer_get_image_from_libva_cb *) intel_share_image_from_libva;
   cl_buffer_reference = (cl_buffer_reference_cb *) drm_intel_bo_reference;
   cl_buffer_unreference = (cl_buffer_unreference_cb *) drm_intel_bo_unreference;
   cl_buffer_map = (cl_buffer_map_cb *) drm_intel_bo_map;

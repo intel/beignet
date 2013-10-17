@@ -125,7 +125,7 @@ cl_command_queue_bind_image(cl_command_queue queue, cl_kernel k)
     assert(gbe_kernel_get_arg_type(k->opaque, id) == GBE_ARG_IMAGE);
     image = cl_mem_image(k->args[id].mem);
     set_image_info(k->curbe, &k->images[i], image);
-    cl_gpgpu_bind_image(queue->gpgpu, k->images[i].idx, image->base.bo,
+    cl_gpgpu_bind_image(queue->gpgpu, k->images[i].idx, image->base.bo, image->offset,
                         image->intel_fmt, image->image_type,
                         image->w, image->h, image->depth,
                         image->row_pitch, image->tiling);
