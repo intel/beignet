@@ -84,7 +84,7 @@ namespace gbe
   /*! Remove the GEP instructions */
   llvm::BasicBlockPass *createRemoveGEPPass(const ir::Unit &unit);
 
-  llvm::FunctionPass* createScalarizePass(ir::Unit &unit);
+  llvm::FunctionPass* createScalarizePass();
 
 } /* namespace gbe */
 

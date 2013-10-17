@@ -305,13 +305,6 @@ namespace gbe
       GBE_ASSERT(valueMap.find(key) == valueMap.end()); // Do not insert twice
       valueMap[key] = value;
     }
-    /*! After scalarize pass, there are some valueMap in unit,
-     *  use this function to copy from unit valueMap */
-    void initValueMap(const map<ir::Unit::ValueIndex, ir::Unit::ValueIndex> &vMap) {
-      for(auto &it : vMap)
-        newValueProxy((Value*)it.second.first, (Value*)it.first.first,
-                      it.second.second, it.first.second);
-    }
     /*! Mostly used for the preallocated registers (lids, gids) */
     void newScalarProxy(ir::Register reg, Value *value, uint32_t index = 0u) {
       const ValueIndex key(value, index);
@@ -1362,7 +1355,6 @@ namespace gbe
 
     ctx.startFunction(F.getName());
     this->regTranslator.clear();
-    this->regTranslator.initValueMap(unit.getValueMap());
     this->labelMap.clear();
     this->emitFunctionPrototype(F);
 
@@ -1685,10 +1677,34 @@ namespace gbe
   /*! Because there are still fake insert/extract instruction for
    *  load/store, so keep empty function here */
   void GenWriter::regAllocateInsertElement(InsertElementInst &I) {}
-  void GenWriter::emitInsertElement(InsertElementInst &I) {}
+  void GenWriter::emitInsertElement(InsertElementInst &I) {
+    const VectorType *type = dyn_cast<VectorType>(I.getType());
+    GBE_ASSERT(type);
+    const int elemNum = type->getNumElements();
+
+    Value *vec = I.getOperand(0);
+    Value *value = I.getOperand(1);
+    const Value *index = I.getOperand(2);
+    const ConstantInt *c = dyn_cast<ConstantInt>(index);
+    int i = c->getValue().getSExtValue();
+
+    for(int j=0; j<elemNum; j++) {
+      if(i == j)
+        regTranslator.newValueProxy(value, &I, 0, i);
+      else
+        regTranslator.newValueProxy(vec, &I, j, j);
+    }
+  }
 
   void GenWriter::regAllocateExtractElement(ExtractElementInst &I) {}
-  void GenWriter::emitExtractElement(ExtractElementInst &I) {}
+  void GenWriter::emitExtractElement(ExtractElementInst &I) {
+    Value *vec = I.getVectorOperand();
+    const Value *index = I.getIndexOperand();
+    const ConstantInt *c = dyn_cast<ConstantInt>(index);
+    GBE_ASSERT(c);
+    int i = c->getValue().getSExtValue();
+    regTranslator.newValueProxy(vec, &I, i, 0);
+  }
 
   void GenWriter::regAllocateShuffleVectorInst(ShuffleVectorInst &I) {}
   void GenWriter::emitShuffleVectorInst(ShuffleVectorInst &I) {}

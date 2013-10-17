@@ -80,7 +80,7 @@ namespace gbe
     // Print the code before further optimizations
     if (OCL_OUTPUT_LLVM_BEFORE_EXTRA_PASS)
       passes.add(createPrintModulePass(&*o));
-    passes.add(createScalarizePass(unit));        // Expand all vector ops
+    passes.add(createScalarizePass());        // Expand all vector ops
     passes.add(createScalarReplAggregatesPass()); // Break up allocas
     passes.add(createRemoveGEPPass(unit));
     passes.add(createConstantPropagationPass());

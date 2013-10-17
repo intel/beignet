@@ -92,7 +92,6 @@
 #include "llvm/Support/raw_ostream.h"
 
 #include "llvm/llvm_gen_backend.hpp"
-#include "ir/unit.hpp"
 #include "sys/map.hpp"
 
 
@@ -126,7 +125,7 @@ namespace gbe {
     // Standard pass stuff
     static char ID;
 
-    Scalarize(ir::Unit& unit) : FunctionPass(ID), unit(unit)
+    Scalarize() : FunctionPass(ID)
     {
       initializeLoopInfoPass(*PassRegistry::getPassRegistry());
       initializeDominatorTreePass(*PassRegistry::getPassRegistry());
@@ -228,7 +227,6 @@ namespace gbe {
 
     Type* intTy;
     Type* floatTy;
-    ir::Unit &unit;
 
     std::vector<Instruction*> deadList;
 
@@ -598,14 +596,11 @@ namespace gbe {
       Value *cv = ConstantInt::get(intTy, i);
       Value *EI = builder->CreateExtractElement(insn, cv);
       vVals.setComponent(i, EI);
-      //unit.fakeInsnMap[EI] = insn;
-      unit.newValueProxy(insn, EI, i, 0);
     }
   }
 
   Value* Scalarize::InsertToVector(Value * insn, Value* vecValue) {
     //VectorValues& vVals = vectorVals[writeValue];
-    //unit.vecValuesMap[call] = vectorVals[writeValue];
 
     //add fake insert instructions to avoid removed
     Value *II = NULL;
@@ -613,14 +608,8 @@ namespace gbe {
       Value *vec = II ? II : UndefValue::get(vecValue->getType());
       Value *cv = ConstantInt::get(intTy, i);
       II = builder->CreateInsertElement(vec, getComponent(i, vecValue), cv);
-      //unit.vecValuesMap[insn].setComponent(i, getComponent(i, writeValue));
-      //unit.newValueProxy(getComponent(i, vecValue), vecValue, 0, i);
-      //unit.fakeInsnMap[II] = insn;
     }
 
-    for (int i = 0; i < GetComponentCount(vecValue); ++i) {
-      unit.newValueProxy(getComponent(i, vecValue), II, 0, i);
-    }
     return II;
   }
 
@@ -776,7 +765,6 @@ namespace gbe {
     intTy = IntegerType::get(module->getContext(), 32);
     floatTy = Type::getFloatTy(module->getContext());
     builder = new IRBuilder<>(module->getContext());
-    unit.clearValueMap();
 
     scalarizeArgs(F);
     typedef ReversePostOrderTraversal<Function*> RPOTType;
@@ -848,9 +836,9 @@ namespace gbe {
   {
       return;
   }
-  FunctionPass* createScalarizePass(ir::Unit &unit)
+  FunctionPass* createScalarizePass()
   {
-      return new Scalarize(unit);
+    return new Scalarize();
   }
   char Scalarize::ID = 0;
 

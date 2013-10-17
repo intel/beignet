@@ -42,7 +42,6 @@ namespace ir {
   {
   public:
     typedef hash_map<std::string, Function*> FunctionSet;
-    typedef std::pair<void*, uint32_t> ValueIndex;
     /*! Create an empty unit */
     Unit(PointerSize pointerSize = POINTER_32_BITS);
     /*! Release everything (*including* the function pointers) */
@@ -73,30 +72,11 @@ namespace ir {
     ConstantSet& getConstantSet(void) { return constantSet; }
     /*! Return the constant set */
     const ConstantSet& getConstantSet(void) const { return constantSet; }
-
-    /*! Some values will not be allocated. For example a vector extract and
-     * a vector insertion when scalarize the vector load/store
-     */
-    void newValueProxy(void *real,
-                       void *fake,
-                       uint32_t realIndex = 0u,
-                       uint32_t fakeIndex = 0u) {
-      const ValueIndex key(fake, fakeIndex);
-      const ValueIndex value(real, realIndex);
-      GBE_ASSERT(valueMap.find(key) == valueMap.end()); // Do not insert twice
-      valueMap[key] = value;
-    }
-
-    void clearValueMap() { valueMap.clear(); }
-
-    /*! Return the value map */
-    const map<ValueIndex, ValueIndex> &getValueMap(void) const { return valueMap; }
   private:
     friend class ContextInterface; //!< Can free modify the unit
     hash_map<std::string, Function*> functions; //!< All the defined functions
     ConstantSet constantSet; //!< All the constants defined in the unit
     PointerSize pointerSize; //!< Size shared by all pointers
-    map<ValueIndex, ValueIndex> valueMap; //!< fake to real value map for vector load/store
     GBE_CLASS(Unit);
   };
 
