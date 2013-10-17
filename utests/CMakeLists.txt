@@ -52,6 +52,7 @@ set (utests_sources
   compiler_if_else.cpp
   compiler_integer_division.cpp
   compiler_integer_remainder.cpp
+	compiler_insert_vector.cpp
   compiler_lower_return0.cpp
   compiler_lower_return1.cpp
   compiler_lower_return2.cpp
