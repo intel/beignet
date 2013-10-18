@@ -282,6 +282,44 @@ INLINE_OVERLOADABLE ulong convert_ulong_sat(long x) {
   return x < 0 ? 0 : x;
 }
 
+#define DEF(DSTTYPE, SRCTYPE) \
+  INLINE_OVERLOADABLE DSTTYPE convert_ ## DSTTYPE ## _sat(SRCTYPE x) { \
+    return x; \
+  }
+DEF(char, char);
+DEF(uchar, uchar);
+DEF(short, char);
+DEF(short, uchar);
+DEF(short, short);
+DEF(ushort, char);
+DEF(ushort, uchar);
+DEF(ushort, ushort);
+DEF(int, char);
+DEF(int, uchar);
+DEF(int, short);
+DEF(int, ushort);
+DEF(int, int);
+DEF(uint, char);
+DEF(uint, uchar);
+DEF(uint, short);
+DEF(uint, ushort);
+DEF(uint, uint);
+DEF(long, char);
+DEF(long, uchar);
+DEF(long, short);
+DEF(long, ushort);
+DEF(long, int);
+DEF(long, uint);
+DEF(long, long);
+DEF(ulong, char);
+DEF(ulong, uchar);
+DEF(ulong, short);
+DEF(ulong, ushort);
+DEF(ulong, int);
+DEF(ulong, uint);
+DEF(ulong, ulong);
+#undef DEF
+
 INLINE_OVERLOADABLE int isfinite(float x) { return __builtin_isfinite(x); }
 INLINE_OVERLOADABLE int isinf(float x) { return __builtin_isinf(x); }
 INLINE_OVERLOADABLE int isnan(float x) {
