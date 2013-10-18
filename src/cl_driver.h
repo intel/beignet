@@ -129,7 +129,7 @@ typedef void (cl_gpgpu_set_scratch_cb)(cl_gpgpu, uint32_t per_thread_size);
 extern cl_gpgpu_set_scratch_cb *cl_gpgpu_set_scratch;
 
 /* Configure internal state */
-typedef void (cl_gpgpu_state_init_cb)(cl_gpgpu, uint32_t max_threads, uint32_t size_cs_entry);
+typedef void (cl_gpgpu_state_init_cb)(cl_gpgpu, uint32_t max_threads, uint32_t size_cs_entry, int profiling);
 extern cl_gpgpu_state_init_cb *cl_gpgpu_state_init;
 
 /* Set the buffer object where to report performance counters */
@@ -191,6 +191,9 @@ extern cl_gpgpu_event_resume_cb *cl_gpgpu_event_resume;
 typedef void (cl_gpgpu_event_delete_cb)(cl_gpgpu_event);
 extern cl_gpgpu_event_delete_cb *cl_gpgpu_event_delete;
 
+/* Get a event time stamp */
+typedef void (cl_gpgpu_event_get_timestamp_cb)(cl_gpgpu_event, int, uint64_t*);
+extern cl_gpgpu_event_get_timestamp_cb *cl_gpgpu_event_get_timestamp;
 
 /* Will spawn all threads */
 typedef void (cl_gpgpu_walker_cb)(cl_gpgpu,

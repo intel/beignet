@@ -62,6 +62,7 @@
 #define CMD_MEDIA_GATEWAY_STATE                 CMD(2, 0, 3)
 #define CMD_MEDIA_STATE_FLUSH                   CMD(2, 0, 4)
 #define CMD_GPGPU_WALKER                        CMD(2, 1, 5)
+#define CMD_PIPE_CONTROL                        CMD(3, 2, 0)
 
 #define CMD_LOAD_REGISTER_IMM                   (0x22 << 23)
 
@@ -300,6 +301,9 @@
 #define GEN7_PIPE_CONTROL_INSTRUCTION_GFX 0x3
 #define GEN7_PIPE_CONTROL_OPCODE_3D_CONTROL 0x2
 #define GEN7_PIPE_CONTROL_SUBOPCODE_3D_CONTROL 0x0
+#define GEN7_PIPE_CONTROL_WRITE_TIMESTAMP        (3 << 14)
+#define GEN7_PIPE_CONTROL_GLOBAL_GTT_WRITE       (1 << 2)
+
 
 #define GEN_MAPFILTER_NEAREST        0x0
 #define GEN_MAPFILTER_LINEAR         0x1

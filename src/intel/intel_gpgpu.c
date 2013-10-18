@@ -60,6 +60,7 @@ typedef struct surface_heap {
 typedef struct intel_event {
   intel_batchbuffer_t *batch;
   drm_intel_bo* buffer;
+  drm_intel_bo* ts_buf;
   int status;
 } intel_event_t;
 
@@ -98,6 +99,7 @@ struct intel_gpgpu
   struct { drm_intel_bo *bo; } perf_b;
   struct { drm_intel_bo *bo; } scratch_b;
   struct { drm_intel_bo *bo; } constant_b;
+  struct { drm_intel_bo *bo; } time_stamp_b;  /* time stamp buffer */
 
   uint32_t per_thread_scratch;
   struct {
@@ -123,6 +125,8 @@ intel_gpgpu_delete(intel_gpgpu_t *gpgpu)
 {
   if (gpgpu == NULL)
     return;
+  if(gpgpu->time_stamp_b.bo)
+    drm_intel_bo_unreference(gpgpu->time_stamp_b.bo);
   if (gpgpu->surface_heap_b.bo)
     drm_intel_bo_unreference(gpgpu->surface_heap_b.bo);
   if (gpgpu->idrt_b.bo)
@@ -280,6 +284,21 @@ static const uint32_t gpgpu_l3_config_reg2[] = {
   0x00204080, 0x00244890, 0x00284490, 0x002444A0
 };
 
+/* Emit PIPE_CONTROLs to write the current GPU timestamp into a buffer. */
+static void
+intel_gpgpu_write_timestamp(intel_gpgpu_t *gpgpu, int idx)
+{
+  BEGIN_BATCH(gpgpu->batch, 5);
+  OUT_BATCH(gpgpu->batch, CMD_PIPE_CONTROL | (5-2));
+  OUT_BATCH(gpgpu->batch, GEN7_PIPE_CONTROL_WRITE_TIMESTAMP);
+  OUT_RELOC(gpgpu->batch, gpgpu->time_stamp_b.bo,
+          I915_GEM_DOMAIN_INSTRUCTION, I915_GEM_DOMAIN_INSTRUCTION,
+          GEN7_PIPE_CONTROL_GLOBAL_GTT_WRITE | idx * sizeof(uint64_t));
+  OUT_BATCH(gpgpu->batch, 0);
+  OUT_BATCH(gpgpu->batch, 0);
+  ADVANCE_BATCH();
+}
+
 static void
 intel_gpgpu_pipe_control(intel_gpgpu_t *gpgpu)
 {
@@ -345,11 +364,19 @@ intel_gpgpu_batch_start(intel_gpgpu_t *gpgpu)
     OUT_BATCH(gpgpu->batch, 0);
     ADVANCE_BATCH(gpgpu->batch);
   }
+
+  /* Insert PIPE_CONTROL for time stamp of start*/
+  if (gpgpu->time_stamp_b.bo)
+    intel_gpgpu_write_timestamp(gpgpu, 0);
 }
 
 static void
 intel_gpgpu_batch_end(intel_gpgpu_t *gpgpu, int32_t flush_mode)
 {
+  /* Insert PIPE_CONTROL for time stamp of end*/
+  if (gpgpu->time_stamp_b.bo)
+    intel_gpgpu_write_timestamp(gpgpu, 1);
+
   /* Insert the performance counter command */
   if (gpgpu->perf_b.bo) {
     BEGIN_BATCH(gpgpu->batch, 3);
@@ -394,7 +421,8 @@ intel_gpgpu_flush(intel_gpgpu_t *gpgpu)
 static void
 intel_gpgpu_state_init(intel_gpgpu_t *gpgpu,
                        uint32_t max_threads,
-                       uint32_t size_cs_entry)
+                       uint32_t size_cs_entry,
+                       int profiling)
 {
   drm_intel_bufmgr *bufmgr = gpgpu->drv->bufmgr;
   drm_intel_bo *bo;
@@ -409,6 +437,16 @@ intel_gpgpu_state_init(intel_gpgpu_t *gpgpu,
   gpgpu->urb.num_cs_entries = 64;
   gpgpu->urb.size_cs_entry = size_cs_entry;
   gpgpu->max_threads = max_threads;
+
+  /* Set the profile buffer*/
+  if(gpgpu->time_stamp_b.bo)
+    dri_bo_unreference(gpgpu->time_stamp_b.bo);
+  gpgpu->time_stamp_b.bo = NULL;
+  if (profiling) {
+    bo = dri_bo_alloc(gpgpu->drv->bufmgr, "timestamp query", 4096, 4096);
+    assert(bo);
+    gpgpu->time_stamp_b.bo = bo;
+  }
 
   /* Constant URB  buffer */
   if(gpgpu->curbe_b.bo)
@@ -926,6 +964,11 @@ intel_gpgpu_event_new(intel_gpgpu_t *gpgpu)
   if(event->buffer != NULL)
     drm_intel_bo_reference(event->buffer);
 
+  if(gpgpu->time_stamp_b.bo) {
+    event->ts_buf = gpgpu->time_stamp_b.bo;
+    drm_intel_bo_reference(event->ts_buf);
+  }
+
 exit:
   return event;
 error:
@@ -988,7 +1031,21 @@ intel_gpgpu_event_delete(intel_event_t *event)
   assert(event->batch == NULL);   //This command must have been flushed.
   if(event->buffer)
     drm_intel_bo_unreference(event->buffer);
+  if(event->ts_buf)
+    drm_intel_bo_unreference(event->ts_buf);
   cl_free(event);
+}
+
+static void
+intel_gpgpu_event_get_timestamp(intel_event_t *event, int index, uint64_t* ret_ts)
+{
+  assert(event->ts_buf != NULL);
+  assert(index == 0 || index == 1);
+  drm_intel_gem_bo_map_gtt(event->ts_buf);
+  uint64_t* ptr = event->ts_buf->virtual;
+
+  *ret_ts = ptr[index] * 80; //convert to nanoseconds
+  drm_intel_gem_bo_unmap_gtt(event->ts_buf);
 }
 
 LOCAL void
@@ -1018,5 +1075,6 @@ intel_set_gpgpu_callbacks(void)
   cl_gpgpu_event_pending = (cl_gpgpu_event_pending_cb *)intel_gpgpu_event_pending;
   cl_gpgpu_event_resume = (cl_gpgpu_event_resume_cb *)intel_gpgpu_event_resume;
   cl_gpgpu_event_delete = (cl_gpgpu_event_delete_cb *)intel_gpgpu_event_delete;
+  cl_gpgpu_event_get_timestamp = (cl_gpgpu_event_get_timestamp_cb *)intel_gpgpu_event_get_timestamp;
 }
 

@@ -90,5 +90,7 @@ void cl_event_set_status(cl_event, cl_int);
 void cl_event_update_status(cl_event);
 /* Create the marker event */
 cl_int cl_event_marker(cl_command_queue, cl_event*);
+/* Do the event profiling */
+cl_int cl_event_profiling(cl_event event, cl_profiling_info param_name, cl_ulong *ret_val);
 #endif /* __CL_EVENT_H__ */
 

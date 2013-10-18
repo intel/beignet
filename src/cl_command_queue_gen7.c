@@ -287,7 +287,10 @@ cl_command_queue_ND_range_gen7(cl_command_queue queue,
   }
 
   /* Setup the kernel */
-  cl_gpgpu_state_init(gpgpu, ctx->device->max_compute_unit, cst_sz / 32);
+  if (queue->props & CL_QUEUE_PROFILING_ENABLE)
+    cl_gpgpu_state_init(gpgpu, ctx->device->max_compute_unit, cst_sz / 32, 1);
+  else
+    cl_gpgpu_state_init(gpgpu, ctx->device->max_compute_unit, cst_sz / 32, 0);
 
   /* Bind user buffers */
   cl_command_queue_bind_surface(queue, ker);

@@ -490,3 +490,25 @@ cl_int cl_event_marker(cl_command_queue queue, cl_event* event)
   cl_event_set_status(*event, CL_COMPLETE);
   return CL_SUCCESS;
 }
+
+cl_int cl_event_profiling(cl_event event, cl_profiling_info param_name, cl_ulong *ret_val)
+{
+  if (!event->gpgpu_event) {
+    /* Some event like read buffer do not need GPU involved, so
+       we just return all the profiling to 0 now. */
+    *ret_val = 0;
+    return CL_SUCCESS;
+  }
+
+  if(param_name == CL_PROFILING_COMMAND_START ||
+     param_name == CL_PROFILING_COMMAND_QUEUED ||
+     param_name == CL_PROFILING_COMMAND_SUBMIT) {
+    cl_gpgpu_event_get_timestamp(event->gpgpu_event, 0, ret_val);
+    return CL_SUCCESS;
+  } else if (param_name == CL_PROFILING_COMMAND_END) {
+    cl_gpgpu_event_get_timestamp(event->gpgpu_event, 1, ret_val);
+    return CL_SUCCESS;
+  } else {
+    return CL_INVALID_VALUE;
+  }
+}
