@@ -3752,3 +3752,7137 @@ INLINE OVERLOADABLE uchar16 convert_uchar16_sat(float16 v) {
   return (uchar16)(convert_uchar_sat(v.s0), convert_uchar_sat(v.s1), convert_uchar_sat(v.s2), convert_uchar_sat(v.s3), convert_uchar_sat(v.s4), convert_uchar_sat(v.s5), convert_uchar_sat(v.s6), convert_uchar_sat(v.s7), convert_uchar_sat(v.s8), convert_uchar_sat(v.s9), convert_uchar_sat(v.sA), convert_uchar_sat(v.sB), convert_uchar_sat(v.sC), convert_uchar_sat(v.sD), convert_uchar_sat(v.sE), convert_uchar_sat(v.sF));
 }
 
+
+float __gen_ocl_rndz(float x);
+float __gen_ocl_rnde(float x);
+float __gen_ocl_rndu(float x);
+float __gen_ocl_rndd(float x);
+
+INLINE_OVERLOADABLE long convert_long_rte(long x)
+{ return x; }
+INLINE_OVERLOADABLE long convert_long_rtz(long x)
+{ return x; }
+INLINE_OVERLOADABLE long convert_long_rtp(long x)
+{ return x; }
+INLINE_OVERLOADABLE long convert_long_rtn(long x)
+{ return x; }
+INLINE_OVERLOADABLE ulong convert_ulong_rte(long x)
+{ return x; }
+INLINE_OVERLOADABLE ulong convert_ulong_rtz(long x)
+{ return x; }
+INLINE_OVERLOADABLE ulong convert_ulong_rtp(long x)
+{ return x; }
+INLINE_OVERLOADABLE ulong convert_ulong_rtn(long x)
+{ return x; }
+INLINE_OVERLOADABLE int convert_int_rte(long x)
+{ return x; }
+INLINE_OVERLOADABLE int convert_int_rtz(long x)
+{ return x; }
+INLINE_OVERLOADABLE int convert_int_rtp(long x)
+{ return x; }
+INLINE_OVERLOADABLE int convert_int_rtn(long x)
+{ return x; }
+INLINE_OVERLOADABLE uint convert_uint_rte(long x)
+{ return x; }
+INLINE_OVERLOADABLE uint convert_uint_rtz(long x)
+{ return x; }
+INLINE_OVERLOADABLE uint convert_uint_rtp(long x)
+{ return x; }
+INLINE_OVERLOADABLE uint convert_uint_rtn(long x)
+{ return x; }
+INLINE_OVERLOADABLE short convert_short_rte(long x)
+{ return x; }
+INLINE_OVERLOADABLE short convert_short_rtz(long x)
+{ return x; }
+INLINE_OVERLOADABLE short convert_short_rtp(long x)
+{ return x; }
+INLINE_OVERLOADABLE short convert_short_rtn(long x)
+{ return x; }
+INLINE_OVERLOADABLE ushort convert_ushort_rte(long x)
+{ return x; }
+INLINE_OVERLOADABLE ushort convert_ushort_rtz(long x)
+{ return x; }
+INLINE_OVERLOADABLE ushort convert_ushort_rtp(long x)
+{ return x; }
+INLINE_OVERLOADABLE ushort convert_ushort_rtn(long x)
+{ return x; }
+INLINE_OVERLOADABLE char convert_char_rte(long x)
+{ return x; }
+INLINE_OVERLOADABLE char convert_char_rtz(long x)
+{ return x; }
+INLINE_OVERLOADABLE char convert_char_rtp(long x)
+{ return x; }
+INLINE_OVERLOADABLE char convert_char_rtn(long x)
+{ return x; }
+INLINE_OVERLOADABLE uchar convert_uchar_rte(long x)
+{ return x; }
+INLINE_OVERLOADABLE uchar convert_uchar_rtz(long x)
+{ return x; }
+INLINE_OVERLOADABLE uchar convert_uchar_rtp(long x)
+{ return x; }
+INLINE_OVERLOADABLE uchar convert_uchar_rtn(long x)
+{ return x; }
+INLINE_OVERLOADABLE float convert_float_rte(long x)
+{ return x; }
+INLINE_OVERLOADABLE float convert_float_rtz(long x)
+{ return x; }
+INLINE_OVERLOADABLE float convert_float_rtp(long x)
+{ return x; }
+INLINE_OVERLOADABLE float convert_float_rtn(long x)
+{ return x; }
+INLINE_OVERLOADABLE long convert_long_rte(ulong x)
+{ return x; }
+INLINE_OVERLOADABLE long convert_long_rtz(ulong x)
+{ return x; }
+INLINE_OVERLOADABLE long convert_long_rtp(ulong x)
+{ return x; }
+INLINE_OVERLOADABLE long convert_long_rtn(ulong x)
+{ return x; }
+INLINE_OVERLOADABLE ulong convert_ulong_rte(ulong x)
+{ return x; }
+INLINE_OVERLOADABLE ulong convert_ulong_rtz(ulong x)
+{ return x; }
+INLINE_OVERLOADABLE ulong convert_ulong_rtp(ulong x)
+{ return x; }
+INLINE_OVERLOADABLE ulong convert_ulong_rtn(ulong x)
+{ return x; }
+INLINE_OVERLOADABLE int convert_int_rte(ulong x)
+{ return x; }
+INLINE_OVERLOADABLE int convert_int_rtz(ulong x)
+{ return x; }
+INLINE_OVERLOADABLE int convert_int_rtp(ulong x)
+{ return x; }
+INLINE_OVERLOADABLE int convert_int_rtn(ulong x)
+{ return x; }
+INLINE_OVERLOADABLE uint convert_uint_rte(ulong x)
+{ return x; }
+INLINE_OVERLOADABLE uint convert_uint_rtz(ulong x)
+{ return x; }
+INLINE_OVERLOADABLE uint convert_uint_rtp(ulong x)
+{ return x; }
+INLINE_OVERLOADABLE uint convert_uint_rtn(ulong x)
+{ return x; }
+INLINE_OVERLOADABLE short convert_short_rte(ulong x)
+{ return x; }
+INLINE_OVERLOADABLE short convert_short_rtz(ulong x)
+{ return x; }
+INLINE_OVERLOADABLE short convert_short_rtp(ulong x)
+{ return x; }
+INLINE_OVERLOADABLE short convert_short_rtn(ulong x)
+{ return x; }
+INLINE_OVERLOADABLE ushort convert_ushort_rte(ulong x)
+{ return x; }
+INLINE_OVERLOADABLE ushort convert_ushort_rtz(ulong x)
+{ return x; }
+INLINE_OVERLOADABLE ushort convert_ushort_rtp(ulong x)
+{ return x; }
+INLINE_OVERLOADABLE ushort convert_ushort_rtn(ulong x)
+{ return x; }
+INLINE_OVERLOADABLE char convert_char_rte(ulong x)
+{ return x; }
+INLINE_OVERLOADABLE char convert_char_rtz(ulong x)
+{ return x; }
+INLINE_OVERLOADABLE char convert_char_rtp(ulong x)
+{ return x; }
+INLINE_OVERLOADABLE char convert_char_rtn(ulong x)
+{ return x; }
+INLINE_OVERLOADABLE uchar convert_uchar_rte(ulong x)
+{ return x; }
+INLINE_OVERLOADABLE uchar convert_uchar_rtz(ulong x)
+{ return x; }
+INLINE_OVERLOADABLE uchar convert_uchar_rtp(ulong x)
+{ return x; }
+INLINE_OVERLOADABLE uchar convert_uchar_rtn(ulong x)
+{ return x; }
+INLINE_OVERLOADABLE float convert_float_rte(ulong x)
+{ return x; }
+INLINE_OVERLOADABLE float convert_float_rtz(ulong x)
+{ return x; }
+INLINE_OVERLOADABLE float convert_float_rtp(ulong x)
+{ return x; }
+INLINE_OVERLOADABLE float convert_float_rtn(ulong x)
+{ return x; }
+INLINE_OVERLOADABLE long convert_long_rte(int x)
+{ return x; }
+INLINE_OVERLOADABLE long convert_long_rtz(int x)
+{ return x; }
+INLINE_OVERLOADABLE long convert_long_rtp(int x)
+{ return x; }
+INLINE_OVERLOADABLE long convert_long_rtn(int x)
+{ return x; }
+INLINE_OVERLOADABLE ulong convert_ulong_rte(int x)
+{ return x; }
+INLINE_OVERLOADABLE ulong convert_ulong_rtz(int x)
+{ return x; }
+INLINE_OVERLOADABLE ulong convert_ulong_rtp(int x)
+{ return x; }
+INLINE_OVERLOADABLE ulong convert_ulong_rtn(int x)
+{ return x; }
+INLINE_OVERLOADABLE int convert_int_rte(int x)
+{ return x; }
+INLINE_OVERLOADABLE int convert_int_rtz(int x)
+{ return x; }
+INLINE_OVERLOADABLE int convert_int_rtp(int x)
+{ return x; }
+INLINE_OVERLOADABLE int convert_int_rtn(int x)
+{ return x; }
+INLINE_OVERLOADABLE uint convert_uint_rte(int x)
+{ return x; }
+INLINE_OVERLOADABLE uint convert_uint_rtz(int x)
+{ return x; }
+INLINE_OVERLOADABLE uint convert_uint_rtp(int x)
+{ return x; }
+INLINE_OVERLOADABLE uint convert_uint_rtn(int x)
+{ return x; }
+INLINE_OVERLOADABLE short convert_short_rte(int x)
+{ return x; }
+INLINE_OVERLOADABLE short convert_short_rtz(int x)
+{ return x; }
+INLINE_OVERLOADABLE short convert_short_rtp(int x)
+{ return x; }
+INLINE_OVERLOADABLE short convert_short_rtn(int x)
+{ return x; }
+INLINE_OVERLOADABLE ushort convert_ushort_rte(int x)
+{ return x; }
+INLINE_OVERLOADABLE ushort convert_ushort_rtz(int x)
+{ return x; }
+INLINE_OVERLOADABLE ushort convert_ushort_rtp(int x)
+{ return x; }
+INLINE_OVERLOADABLE ushort convert_ushort_rtn(int x)
+{ return x; }
+INLINE_OVERLOADABLE char convert_char_rte(int x)
+{ return x; }
+INLINE_OVERLOADABLE char convert_char_rtz(int x)
+{ return x; }
+INLINE_OVERLOADABLE char convert_char_rtp(int x)
+{ return x; }
+INLINE_OVERLOADABLE char convert_char_rtn(int x)
+{ return x; }
+INLINE_OVERLOADABLE uchar convert_uchar_rte(int x)
+{ return x; }
+INLINE_OVERLOADABLE uchar convert_uchar_rtz(int x)
+{ return x; }
+INLINE_OVERLOADABLE uchar convert_uchar_rtp(int x)
+{ return x; }
+INLINE_OVERLOADABLE uchar convert_uchar_rtn(int x)
+{ return x; }
+INLINE_OVERLOADABLE float convert_float_rte(int x)
+{ return x; }
+INLINE_OVERLOADABLE float convert_float_rtz(int x)
+{ return x; }
+INLINE_OVERLOADABLE float convert_float_rtp(int x)
+{ return x; }
+INLINE_OVERLOADABLE float convert_float_rtn(int x)
+{ return x; }
+INLINE_OVERLOADABLE long convert_long_rte(uint x)
+{ return x; }
+INLINE_OVERLOADABLE long convert_long_rtz(uint x)
+{ return x; }
+INLINE_OVERLOADABLE long convert_long_rtp(uint x)
+{ return x; }
+INLINE_OVERLOADABLE long convert_long_rtn(uint x)
+{ return x; }
+INLINE_OVERLOADABLE ulong convert_ulong_rte(uint x)
+{ return x; }
+INLINE_OVERLOADABLE ulong convert_ulong_rtz(uint x)
+{ return x; }
+INLINE_OVERLOADABLE ulong convert_ulong_rtp(uint x)
+{ return x; }
+INLINE_OVERLOADABLE ulong convert_ulong_rtn(uint x)
+{ return x; }
+INLINE_OVERLOADABLE int convert_int_rte(uint x)
+{ return x; }
+INLINE_OVERLOADABLE int convert_int_rtz(uint x)
+{ return x; }
+INLINE_OVERLOADABLE int convert_int_rtp(uint x)
+{ return x; }
+INLINE_OVERLOADABLE int convert_int_rtn(uint x)
+{ return x; }
+INLINE_OVERLOADABLE uint convert_uint_rte(uint x)
+{ return x; }
+INLINE_OVERLOADABLE uint convert_uint_rtz(uint x)
+{ return x; }
+INLINE_OVERLOADABLE uint convert_uint_rtp(uint x)
+{ return x; }
+INLINE_OVERLOADABLE uint convert_uint_rtn(uint x)
+{ return x; }
+INLINE_OVERLOADABLE short convert_short_rte(uint x)
+{ return x; }
+INLINE_OVERLOADABLE short convert_short_rtz(uint x)
+{ return x; }
+INLINE_OVERLOADABLE short convert_short_rtp(uint x)
+{ return x; }
+INLINE_OVERLOADABLE short convert_short_rtn(uint x)
+{ return x; }
+INLINE_OVERLOADABLE ushort convert_ushort_rte(uint x)
+{ return x; }
+INLINE_OVERLOADABLE ushort convert_ushort_rtz(uint x)
+{ return x; }
+INLINE_OVERLOADABLE ushort convert_ushort_rtp(uint x)
+{ return x; }
+INLINE_OVERLOADABLE ushort convert_ushort_rtn(uint x)
+{ return x; }
+INLINE_OVERLOADABLE char convert_char_rte(uint x)
+{ return x; }
+INLINE_OVERLOADABLE char convert_char_rtz(uint x)
+{ return x; }
+INLINE_OVERLOADABLE char convert_char_rtp(uint x)
+{ return x; }
+INLINE_OVERLOADABLE char convert_char_rtn(uint x)
+{ return x; }
+INLINE_OVERLOADABLE uchar convert_uchar_rte(uint x)
+{ return x; }
+INLINE_OVERLOADABLE uchar convert_uchar_rtz(uint x)
+{ return x; }
+INLINE_OVERLOADABLE uchar convert_uchar_rtp(uint x)
+{ return x; }
+INLINE_OVERLOADABLE uchar convert_uchar_rtn(uint x)
+{ return x; }
+INLINE_OVERLOADABLE float convert_float_rte(uint x)
+{ return x; }
+INLINE_OVERLOADABLE float convert_float_rtz(uint x)
+{ return x; }
+INLINE_OVERLOADABLE float convert_float_rtp(uint x)
+{ return x; }
+INLINE_OVERLOADABLE float convert_float_rtn(uint x)
+{ return x; }
+INLINE_OVERLOADABLE long convert_long_rte(short x)
+{ return x; }
+INLINE_OVERLOADABLE long convert_long_rtz(short x)
+{ return x; }
+INLINE_OVERLOADABLE long convert_long_rtp(short x)
+{ return x; }
+INLINE_OVERLOADABLE long convert_long_rtn(short x)
+{ return x; }
+INLINE_OVERLOADABLE ulong convert_ulong_rte(short x)
+{ return x; }
+INLINE_OVERLOADABLE ulong convert_ulong_rtz(short x)
+{ return x; }
+INLINE_OVERLOADABLE ulong convert_ulong_rtp(short x)
+{ return x; }
+INLINE_OVERLOADABLE ulong convert_ulong_rtn(short x)
+{ return x; }
+INLINE_OVERLOADABLE int convert_int_rte(short x)
+{ return x; }
+INLINE_OVERLOADABLE int convert_int_rtz(short x)
+{ return x; }
+INLINE_OVERLOADABLE int convert_int_rtp(short x)
+{ return x; }
+INLINE_OVERLOADABLE int convert_int_rtn(short x)
+{ return x; }
+INLINE_OVERLOADABLE uint convert_uint_rte(short x)
+{ return x; }
+INLINE_OVERLOADABLE uint convert_uint_rtz(short x)
+{ return x; }
+INLINE_OVERLOADABLE uint convert_uint_rtp(short x)
+{ return x; }
+INLINE_OVERLOADABLE uint convert_uint_rtn(short x)
+{ return x; }
+INLINE_OVERLOADABLE short convert_short_rte(short x)
+{ return x; }
+INLINE_OVERLOADABLE short convert_short_rtz(short x)
+{ return x; }
+INLINE_OVERLOADABLE short convert_short_rtp(short x)
+{ return x; }
+INLINE_OVERLOADABLE short convert_short_rtn(short x)
+{ return x; }
+INLINE_OVERLOADABLE ushort convert_ushort_rte(short x)
+{ return x; }
+INLINE_OVERLOADABLE ushort convert_ushort_rtz(short x)
+{ return x; }
+INLINE_OVERLOADABLE ushort convert_ushort_rtp(short x)
+{ return x; }
+INLINE_OVERLOADABLE ushort convert_ushort_rtn(short x)
+{ return x; }
+INLINE_OVERLOADABLE char convert_char_rte(short x)
+{ return x; }
+INLINE_OVERLOADABLE char convert_char_rtz(short x)
+{ return x; }
+INLINE_OVERLOADABLE char convert_char_rtp(short x)
+{ return x; }
+INLINE_OVERLOADABLE char convert_char_rtn(short x)
+{ return x; }
+INLINE_OVERLOADABLE uchar convert_uchar_rte(short x)
+{ return x; }
+INLINE_OVERLOADABLE uchar convert_uchar_rtz(short x)
+{ return x; }
+INLINE_OVERLOADABLE uchar convert_uchar_rtp(short x)
+{ return x; }
+INLINE_OVERLOADABLE uchar convert_uchar_rtn(short x)
+{ return x; }
+INLINE_OVERLOADABLE float convert_float_rte(short x)
+{ return x; }
+INLINE_OVERLOADABLE float convert_float_rtz(short x)
+{ return x; }
+INLINE_OVERLOADABLE float convert_float_rtp(short x)
+{ return x; }
+INLINE_OVERLOADABLE float convert_float_rtn(short x)
+{ return x; }
+INLINE_OVERLOADABLE long convert_long_rte(ushort x)
+{ return x; }
+INLINE_OVERLOADABLE long convert_long_rtz(ushort x)
+{ return x; }
+INLINE_OVERLOADABLE long convert_long_rtp(ushort x)
+{ return x; }
+INLINE_OVERLOADABLE long convert_long_rtn(ushort x)
+{ return x; }
+INLINE_OVERLOADABLE ulong convert_ulong_rte(ushort x)
+{ return x; }
+INLINE_OVERLOADABLE ulong convert_ulong_rtz(ushort x)
+{ return x; }
+INLINE_OVERLOADABLE ulong convert_ulong_rtp(ushort x)
+{ return x; }
+INLINE_OVERLOADABLE ulong convert_ulong_rtn(ushort x)
+{ return x; }
+INLINE_OVERLOADABLE int convert_int_rte(ushort x)
+{ return x; }
+INLINE_OVERLOADABLE int convert_int_rtz(ushort x)
+{ return x; }
+INLINE_OVERLOADABLE int convert_int_rtp(ushort x)
+{ return x; }
+INLINE_OVERLOADABLE int convert_int_rtn(ushort x)
+{ return x; }
+INLINE_OVERLOADABLE uint convert_uint_rte(ushort x)
+{ return x; }
+INLINE_OVERLOADABLE uint convert_uint_rtz(ushort x)
+{ return x; }
+INLINE_OVERLOADABLE uint convert_uint_rtp(ushort x)
+{ return x; }
+INLINE_OVERLOADABLE uint convert_uint_rtn(ushort x)
+{ return x; }
+INLINE_OVERLOADABLE short convert_short_rte(ushort x)
+{ return x; }
+INLINE_OVERLOADABLE short convert_short_rtz(ushort x)
+{ return x; }
+INLINE_OVERLOADABLE short convert_short_rtp(ushort x)
+{ return x; }
+INLINE_OVERLOADABLE short convert_short_rtn(ushort x)
+{ return x; }
+INLINE_OVERLOADABLE ushort convert_ushort_rte(ushort x)
+{ return x; }
+INLINE_OVERLOADABLE ushort convert_ushort_rtz(ushort x)
+{ return x; }
+INLINE_OVERLOADABLE ushort convert_ushort_rtp(ushort x)
+{ return x; }
+INLINE_OVERLOADABLE ushort convert_ushort_rtn(ushort x)
+{ return x; }
+INLINE_OVERLOADABLE char convert_char_rte(ushort x)
+{ return x; }
+INLINE_OVERLOADABLE char convert_char_rtz(ushort x)
+{ return x; }
+INLINE_OVERLOADABLE char convert_char_rtp(ushort x)
+{ return x; }
+INLINE_OVERLOADABLE char convert_char_rtn(ushort x)
+{ return x; }
+INLINE_OVERLOADABLE uchar convert_uchar_rte(ushort x)
+{ return x; }
+INLINE_OVERLOADABLE uchar convert_uchar_rtz(ushort x)
+{ return x; }
+INLINE_OVERLOADABLE uchar convert_uchar_rtp(ushort x)
+{ return x; }
+INLINE_OVERLOADABLE uchar convert_uchar_rtn(ushort x)
+{ return x; }
+INLINE_OVERLOADABLE float convert_float_rte(ushort x)
+{ return x; }
+INLINE_OVERLOADABLE float convert_float_rtz(ushort x)
+{ return x; }
+INLINE_OVERLOADABLE float convert_float_rtp(ushort x)
+{ return x; }
+INLINE_OVERLOADABLE float convert_float_rtn(ushort x)
+{ return x; }
+INLINE_OVERLOADABLE long convert_long_rte(char x)
+{ return x; }
+INLINE_OVERLOADABLE long convert_long_rtz(char x)
+{ return x; }
+INLINE_OVERLOADABLE long convert_long_rtp(char x)
+{ return x; }
+INLINE_OVERLOADABLE long convert_long_rtn(char x)
+{ return x; }
+INLINE_OVERLOADABLE ulong convert_ulong_rte(char x)
+{ return x; }
+INLINE_OVERLOADABLE ulong convert_ulong_rtz(char x)
+{ return x; }
+INLINE_OVERLOADABLE ulong convert_ulong_rtp(char x)
+{ return x; }
+INLINE_OVERLOADABLE ulong convert_ulong_rtn(char x)
+{ return x; }
+INLINE_OVERLOADABLE int convert_int_rte(char x)
+{ return x; }
+INLINE_OVERLOADABLE int convert_int_rtz(char x)
+{ return x; }
+INLINE_OVERLOADABLE int convert_int_rtp(char x)
+{ return x; }
+INLINE_OVERLOADABLE int convert_int_rtn(char x)
+{ return x; }
+INLINE_OVERLOADABLE uint convert_uint_rte(char x)
+{ return x; }
+INLINE_OVERLOADABLE uint convert_uint_rtz(char x)
+{ return x; }
+INLINE_OVERLOADABLE uint convert_uint_rtp(char x)
+{ return x; }
+INLINE_OVERLOADABLE uint convert_uint_rtn(char x)
+{ return x; }
+INLINE_OVERLOADABLE short convert_short_rte(char x)
+{ return x; }
+INLINE_OVERLOADABLE short convert_short_rtz(char x)
+{ return x; }
+INLINE_OVERLOADABLE short convert_short_rtp(char x)
+{ return x; }
+INLINE_OVERLOADABLE short convert_short_rtn(char x)
+{ return x; }
+INLINE_OVERLOADABLE ushort convert_ushort_rte(char x)
+{ return x; }
+INLINE_OVERLOADABLE ushort convert_ushort_rtz(char x)
+{ return x; }
+INLINE_OVERLOADABLE ushort convert_ushort_rtp(char x)
+{ return x; }
+INLINE_OVERLOADABLE ushort convert_ushort_rtn(char x)
+{ return x; }
+INLINE_OVERLOADABLE char convert_char_rte(char x)
+{ return x; }
+INLINE_OVERLOADABLE char convert_char_rtz(char x)
+{ return x; }
+INLINE_OVERLOADABLE char convert_char_rtp(char x)
+{ return x; }
+INLINE_OVERLOADABLE char convert_char_rtn(char x)
+{ return x; }
+INLINE_OVERLOADABLE uchar convert_uchar_rte(char x)
+{ return x; }
+INLINE_OVERLOADABLE uchar convert_uchar_rtz(char x)
+{ return x; }
+INLINE_OVERLOADABLE uchar convert_uchar_rtp(char x)
+{ return x; }
+INLINE_OVERLOADABLE uchar convert_uchar_rtn(char x)
+{ return x; }
+INLINE_OVERLOADABLE float convert_float_rte(char x)
+{ return x; }
+INLINE_OVERLOADABLE float convert_float_rtz(char x)
+{ return x; }
+INLINE_OVERLOADABLE float convert_float_rtp(char x)
+{ return x; }
+INLINE_OVERLOADABLE float convert_float_rtn(char x)
+{ return x; }
+INLINE_OVERLOADABLE long convert_long_rte(uchar x)
+{ return x; }
+INLINE_OVERLOADABLE long convert_long_rtz(uchar x)
+{ return x; }
+INLINE_OVERLOADABLE long convert_long_rtp(uchar x)
+{ return x; }
+INLINE_OVERLOADABLE long convert_long_rtn(uchar x)
+{ return x; }
+INLINE_OVERLOADABLE ulong convert_ulong_rte(uchar x)
+{ return x; }
+INLINE_OVERLOADABLE ulong convert_ulong_rtz(uchar x)
+{ return x; }
+INLINE_OVERLOADABLE ulong convert_ulong_rtp(uchar x)
+{ return x; }
+INLINE_OVERLOADABLE ulong convert_ulong_rtn(uchar x)
+{ return x; }
+INLINE_OVERLOADABLE int convert_int_rte(uchar x)
+{ return x; }
+INLINE_OVERLOADABLE int convert_int_rtz(uchar x)
+{ return x; }
+INLINE_OVERLOADABLE int convert_int_rtp(uchar x)
+{ return x; }
+INLINE_OVERLOADABLE int convert_int_rtn(uchar x)
+{ return x; }
+INLINE_OVERLOADABLE uint convert_uint_rte(uchar x)
+{ return x; }
+INLINE_OVERLOADABLE uint convert_uint_rtz(uchar x)
+{ return x; }
+INLINE_OVERLOADABLE uint convert_uint_rtp(uchar x)
+{ return x; }
+INLINE_OVERLOADABLE uint convert_uint_rtn(uchar x)
+{ return x; }
+INLINE_OVERLOADABLE short convert_short_rte(uchar x)
+{ return x; }
+INLINE_OVERLOADABLE short convert_short_rtz(uchar x)
+{ return x; }
+INLINE_OVERLOADABLE short convert_short_rtp(uchar x)
+{ return x; }
+INLINE_OVERLOADABLE short convert_short_rtn(uchar x)
+{ return x; }
+INLINE_OVERLOADABLE ushort convert_ushort_rte(uchar x)
+{ return x; }
+INLINE_OVERLOADABLE ushort convert_ushort_rtz(uchar x)
+{ return x; }
+INLINE_OVERLOADABLE ushort convert_ushort_rtp(uchar x)
+{ return x; }
+INLINE_OVERLOADABLE ushort convert_ushort_rtn(uchar x)
+{ return x; }
+INLINE_OVERLOADABLE char convert_char_rte(uchar x)
+{ return x; }
+INLINE_OVERLOADABLE char convert_char_rtz(uchar x)
+{ return x; }
+INLINE_OVERLOADABLE char convert_char_rtp(uchar x)
+{ return x; }
+INLINE_OVERLOADABLE char convert_char_rtn(uchar x)
+{ return x; }
+INLINE_OVERLOADABLE uchar convert_uchar_rte(uchar x)
+{ return x; }
+INLINE_OVERLOADABLE uchar convert_uchar_rtz(uchar x)
+{ return x; }
+INLINE_OVERLOADABLE uchar convert_uchar_rtp(uchar x)
+{ return x; }
+INLINE_OVERLOADABLE uchar convert_uchar_rtn(uchar x)
+{ return x; }
+INLINE_OVERLOADABLE float convert_float_rte(uchar x)
+{ return x; }
+INLINE_OVERLOADABLE float convert_float_rtz(uchar x)
+{ return x; }
+INLINE_OVERLOADABLE float convert_float_rtp(uchar x)
+{ return x; }
+INLINE_OVERLOADABLE float convert_float_rtn(uchar x)
+{ return x; }
+INLINE_OVERLOADABLE long convert_long_rte(float x)
+{ return __gen_ocl_rnde(x); }
+INLINE_OVERLOADABLE long convert_long_rtz(float x)
+{ return __gen_ocl_rndz(x); }
+INLINE_OVERLOADABLE long convert_long_rtp(float x)
+{ return __gen_ocl_rndu(x); }
+INLINE_OVERLOADABLE long convert_long_rtn(float x)
+{ return __gen_ocl_rndd(x); }
+INLINE_OVERLOADABLE ulong convert_ulong_rte(float x)
+{ return __gen_ocl_rnde(x); }
+INLINE_OVERLOADABLE ulong convert_ulong_rtz(float x)
+{ return __gen_ocl_rndz(x); }
+INLINE_OVERLOADABLE ulong convert_ulong_rtp(float x)
+{ return __gen_ocl_rndu(x); }
+INLINE_OVERLOADABLE ulong convert_ulong_rtn(float x)
+{ return __gen_ocl_rndd(x); }
+INLINE_OVERLOADABLE int convert_int_rte(float x)
+{ return __gen_ocl_rnde(x); }
+INLINE_OVERLOADABLE int convert_int_rtz(float x)
+{ return __gen_ocl_rndz(x); }
+INLINE_OVERLOADABLE int convert_int_rtp(float x)
+{ return __gen_ocl_rndu(x); }
+INLINE_OVERLOADABLE int convert_int_rtn(float x)
+{ return __gen_ocl_rndd(x); }
+INLINE_OVERLOADABLE uint convert_uint_rte(float x)
+{ return __gen_ocl_rnde(x); }
+INLINE_OVERLOADABLE uint convert_uint_rtz(float x)
+{ return __gen_ocl_rndz(x); }
+INLINE_OVERLOADABLE uint convert_uint_rtp(float x)
+{ return __gen_ocl_rndu(x); }
+INLINE_OVERLOADABLE uint convert_uint_rtn(float x)
+{ return __gen_ocl_rndd(x); }
+INLINE_OVERLOADABLE short convert_short_rte(float x)
+{ return __gen_ocl_rnde(x); }
+INLINE_OVERLOADABLE short convert_short_rtz(float x)
+{ return __gen_ocl_rndz(x); }
+INLINE_OVERLOADABLE short convert_short_rtp(float x)
+{ return __gen_ocl_rndu(x); }
+INLINE_OVERLOADABLE short convert_short_rtn(float x)
+{ return __gen_ocl_rndd(x); }
+INLINE_OVERLOADABLE ushort convert_ushort_rte(float x)
+{ return __gen_ocl_rnde(x); }
+INLINE_OVERLOADABLE ushort convert_ushort_rtz(float x)
+{ return __gen_ocl_rndz(x); }
+INLINE_OVERLOADABLE ushort convert_ushort_rtp(float x)
+{ return __gen_ocl_rndu(x); }
+INLINE_OVERLOADABLE ushort convert_ushort_rtn(float x)
+{ return __gen_ocl_rndd(x); }
+INLINE_OVERLOADABLE char convert_char_rte(float x)
+{ return __gen_ocl_rnde(x); }
+INLINE_OVERLOADABLE char convert_char_rtz(float x)
+{ return __gen_ocl_rndz(x); }
+INLINE_OVERLOADABLE char convert_char_rtp(float x)
+{ return __gen_ocl_rndu(x); }
+INLINE_OVERLOADABLE char convert_char_rtn(float x)
+{ return __gen_ocl_rndd(x); }
+INLINE_OVERLOADABLE uchar convert_uchar_rte(float x)
+{ return __gen_ocl_rnde(x); }
+INLINE_OVERLOADABLE uchar convert_uchar_rtz(float x)
+{ return __gen_ocl_rndz(x); }
+INLINE_OVERLOADABLE uchar convert_uchar_rtp(float x)
+{ return __gen_ocl_rndu(x); }
+INLINE_OVERLOADABLE uchar convert_uchar_rtn(float x)
+{ return __gen_ocl_rndd(x); }
+INLINE_OVERLOADABLE float convert_float_rte(float x)
+{ return x; }
+INLINE_OVERLOADABLE float convert_float_rtz(float x)
+{ return x; }
+INLINE_OVERLOADABLE float convert_float_rtp(float x)
+{ return x; }
+INLINE_OVERLOADABLE float convert_float_rtn(float x)
+{ return x; }
+INLINE OVERLOADABLE long2 convert_long2_rte(long2 v) {
+  return (long2)(convert_long_rte(v.s0), convert_long_rte(v.s1));
+}
+
+INLINE OVERLOADABLE long2 convert_long2_rtz(long2 v) {
+  return (long2)(convert_long_rtz(v.s0), convert_long_rtz(v.s1));
+}
+
+INLINE OVERLOADABLE long2 convert_long2_rtp(long2 v) {
+  return (long2)(convert_long_rtp(v.s0), convert_long_rtp(v.s1));
+}
+
+INLINE OVERLOADABLE long2 convert_long2_rtn(long2 v) {
+  return (long2)(convert_long_rtn(v.s0), convert_long_rtn(v.s1));
+}
+
+INLINE OVERLOADABLE ulong2 convert_ulong2_rte(long2 v) {
+  return (ulong2)(convert_ulong_rte(v.s0), convert_ulong_rte(v.s1));
+}
+
+INLINE OVERLOADABLE ulong2 convert_ulong2_rtz(long2 v) {
+  return (ulong2)(convert_ulong_rtz(v.s0), convert_ulong_rtz(v.s1));
+}
+
+INLINE OVERLOADABLE ulong2 convert_ulong2_rtp(long2 v) {
+  return (ulong2)(convert_ulong_rtp(v.s0), convert_ulong_rtp(v.s1));
+}
+
+INLINE OVERLOADABLE ulong2 convert_ulong2_rtn(long2 v) {
+  return (ulong2)(convert_ulong_rtn(v.s0), convert_ulong_rtn(v.s1));
+}
+
+INLINE OVERLOADABLE int2 convert_int2_rte(long2 v) {
+  return (int2)(convert_int_rte(v.s0), convert_int_rte(v.s1));
+}
+
+INLINE OVERLOADABLE int2 convert_int2_rtz(long2 v) {
+  return (int2)(convert_int_rtz(v.s0), convert_int_rtz(v.s1));
+}
+
+INLINE OVERLOADABLE int2 convert_int2_rtp(long2 v) {
+  return (int2)(convert_int_rtp(v.s0), convert_int_rtp(v.s1));
+}
+
+INLINE OVERLOADABLE int2 convert_int2_rtn(long2 v) {
+  return (int2)(convert_int_rtn(v.s0), convert_int_rtn(v.s1));
+}
+
+INLINE OVERLOADABLE uint2 convert_uint2_rte(long2 v) {
+  return (uint2)(convert_uint_rte(v.s0), convert_uint_rte(v.s1));
+}
+
+INLINE OVERLOADABLE uint2 convert_uint2_rtz(long2 v) {
+  return (uint2)(convert_uint_rtz(v.s0), convert_uint_rtz(v.s1));
+}
+
+INLINE OVERLOADABLE uint2 convert_uint2_rtp(long2 v) {
+  return (uint2)(convert_uint_rtp(v.s0), convert_uint_rtp(v.s1));
+}
+
+INLINE OVERLOADABLE uint2 convert_uint2_rtn(long2 v) {
+  return (uint2)(convert_uint_rtn(v.s0), convert_uint_rtn(v.s1));
+}
+
+INLINE OVERLOADABLE short2 convert_short2_rte(long2 v) {
+  return (short2)(convert_short_rte(v.s0), convert_short_rte(v.s1));
+}
+
+INLINE OVERLOADABLE short2 convert_short2_rtz(long2 v) {
+  return (short2)(convert_short_rtz(v.s0), convert_short_rtz(v.s1));
+}
+
+INLINE OVERLOADABLE short2 convert_short2_rtp(long2 v) {
+  return (short2)(convert_short_rtp(v.s0), convert_short_rtp(v.s1));
+}
+
+INLINE OVERLOADABLE short2 convert_short2_rtn(long2 v) {
+  return (short2)(convert_short_rtn(v.s0), convert_short_rtn(v.s1));
+}
+
+INLINE OVERLOADABLE ushort2 convert_ushort2_rte(long2 v) {
+  return (ushort2)(convert_ushort_rte(v.s0), convert_ushort_rte(v.s1));
+}
+
+INLINE OVERLOADABLE ushort2 convert_ushort2_rtz(long2 v) {
+  return (ushort2)(convert_ushort_rtz(v.s0), convert_ushort_rtz(v.s1));
+}
+
+INLINE OVERLOADABLE ushort2 convert_ushort2_rtp(long2 v) {
+  return (ushort2)(convert_ushort_rtp(v.s0), convert_ushort_rtp(v.s1));
+}
+
+INLINE OVERLOADABLE ushort2 convert_ushort2_rtn(long2 v) {
+  return (ushort2)(convert_ushort_rtn(v.s0), convert_ushort_rtn(v.s1));
+}
+
+INLINE OVERLOADABLE char2 convert_char2_rte(long2 v) {
+  return (char2)(convert_char_rte(v.s0), convert_char_rte(v.s1));
+}
+
+INLINE OVERLOADABLE char2 convert_char2_rtz(long2 v) {
+  return (char2)(convert_char_rtz(v.s0), convert_char_rtz(v.s1));
+}
+
+INLINE OVERLOADABLE char2 convert_char2_rtp(long2 v) {
+  return (char2)(convert_char_rtp(v.s0), convert_char_rtp(v.s1));
+}
+
+INLINE OVERLOADABLE char2 convert_char2_rtn(long2 v) {
+  return (char2)(convert_char_rtn(v.s0), convert_char_rtn(v.s1));
+}
+
+INLINE OVERLOADABLE uchar2 convert_uchar2_rte(long2 v) {
+  return (uchar2)(convert_uchar_rte(v.s0), convert_uchar_rte(v.s1));
+}
+
+INLINE OVERLOADABLE uchar2 convert_uchar2_rtz(long2 v) {
+  return (uchar2)(convert_uchar_rtz(v.s0), convert_uchar_rtz(v.s1));
+}
+
+INLINE OVERLOADABLE uchar2 convert_uchar2_rtp(long2 v) {
+  return (uchar2)(convert_uchar_rtp(v.s0), convert_uchar_rtp(v.s1));
+}
+
+INLINE OVERLOADABLE uchar2 convert_uchar2_rtn(long2 v) {
+  return (uchar2)(convert_uchar_rtn(v.s0), convert_uchar_rtn(v.s1));
+}
+
+INLINE OVERLOADABLE float2 convert_float2_rte(long2 v) {
+  return (float2)(convert_float_rte(v.s0), convert_float_rte(v.s1));
+}
+
+INLINE OVERLOADABLE float2 convert_float2_rtz(long2 v) {
+  return (float2)(convert_float_rtz(v.s0), convert_float_rtz(v.s1));
+}
+
+INLINE OVERLOADABLE float2 convert_float2_rtp(long2 v) {
+  return (float2)(convert_float_rtp(v.s0), convert_float_rtp(v.s1));
+}
+
+INLINE OVERLOADABLE float2 convert_float2_rtn(long2 v) {
+  return (float2)(convert_float_rtn(v.s0), convert_float_rtn(v.s1));
+}
+
+INLINE OVERLOADABLE long2 convert_long2_rte(ulong2 v) {
+  return (long2)(convert_long_rte(v.s0), convert_long_rte(v.s1));
+}
+
+INLINE OVERLOADABLE long2 convert_long2_rtz(ulong2 v) {
+  return (long2)(convert_long_rtz(v.s0), convert_long_rtz(v.s1));
+}
+
+INLINE OVERLOADABLE long2 convert_long2_rtp(ulong2 v) {
+  return (long2)(convert_long_rtp(v.s0), convert_long_rtp(v.s1));
+}
+
+INLINE OVERLOADABLE long2 convert_long2_rtn(ulong2 v) {
+  return (long2)(convert_long_rtn(v.s0), convert_long_rtn(v.s1));
+}
+
+INLINE OVERLOADABLE ulong2 convert_ulong2_rte(ulong2 v) {
+  return (ulong2)(convert_ulong_rte(v.s0), convert_ulong_rte(v.s1));
+}
+
+INLINE OVERLOADABLE ulong2 convert_ulong2_rtz(ulong2 v) {
+  return (ulong2)(convert_ulong_rtz(v.s0), convert_ulong_rtz(v.s1));
+}
+
+INLINE OVERLOADABLE ulong2 convert_ulong2_rtp(ulong2 v) {
+  return (ulong2)(convert_ulong_rtp(v.s0), convert_ulong_rtp(v.s1));
+}
+
+INLINE OVERLOADABLE ulong2 convert_ulong2_rtn(ulong2 v) {
+  return (ulong2)(convert_ulong_rtn(v.s0), convert_ulong_rtn(v.s1));
+}
+
+INLINE OVERLOADABLE int2 convert_int2_rte(ulong2 v) {
+  return (int2)(convert_int_rte(v.s0), convert_int_rte(v.s1));
+}
+
+INLINE OVERLOADABLE int2 convert_int2_rtz(ulong2 v) {
+  return (int2)(convert_int_rtz(v.s0), convert_int_rtz(v.s1));
+}
+
+INLINE OVERLOADABLE int2 convert_int2_rtp(ulong2 v) {
+  return (int2)(convert_int_rtp(v.s0), convert_int_rtp(v.s1));
+}
+
+INLINE OVERLOADABLE int2 convert_int2_rtn(ulong2 v) {
+  return (int2)(convert_int_rtn(v.s0), convert_int_rtn(v.s1));
+}
+
+INLINE OVERLOADABLE uint2 convert_uint2_rte(ulong2 v) {
+  return (uint2)(convert_uint_rte(v.s0), convert_uint_rte(v.s1));
+}
+
+INLINE OVERLOADABLE uint2 convert_uint2_rtz(ulong2 v) {
+  return (uint2)(convert_uint_rtz(v.s0), convert_uint_rtz(v.s1));
+}
+
+INLINE OVERLOADABLE uint2 convert_uint2_rtp(ulong2 v) {
+  return (uint2)(convert_uint_rtp(v.s0), convert_uint_rtp(v.s1));
+}
+
+INLINE OVERLOADABLE uint2 convert_uint2_rtn(ulong2 v) {
+  return (uint2)(convert_uint_rtn(v.s0), convert_uint_rtn(v.s1));
+}
+
+INLINE OVERLOADABLE short2 convert_short2_rte(ulong2 v) {
+  return (short2)(convert_short_rte(v.s0), convert_short_rte(v.s1));
+}
+
+INLINE OVERLOADABLE short2 convert_short2_rtz(ulong2 v) {
+  return (short2)(convert_short_rtz(v.s0), convert_short_rtz(v.s1));
+}
+
+INLINE OVERLOADABLE short2 convert_short2_rtp(ulong2 v) {
+  return (short2)(convert_short_rtp(v.s0), convert_short_rtp(v.s1));
+}
+
+INLINE OVERLOADABLE short2 convert_short2_rtn(ulong2 v) {
+  return (short2)(convert_short_rtn(v.s0), convert_short_rtn(v.s1));
+}
+
+INLINE OVERLOADABLE ushort2 convert_ushort2_rte(ulong2 v) {
+  return (ushort2)(convert_ushort_rte(v.s0), convert_ushort_rte(v.s1));
+}
+
+INLINE OVERLOADABLE ushort2 convert_ushort2_rtz(ulong2 v) {
+  return (ushort2)(convert_ushort_rtz(v.s0), convert_ushort_rtz(v.s1));
+}
+
+INLINE OVERLOADABLE ushort2 convert_ushort2_rtp(ulong2 v) {
+  return (ushort2)(convert_ushort_rtp(v.s0), convert_ushort_rtp(v.s1));
+}
+
+INLINE OVERLOADABLE ushort2 convert_ushort2_rtn(ulong2 v) {
+  return (ushort2)(convert_ushort_rtn(v.s0), convert_ushort_rtn(v.s1));
+}
+
+INLINE OVERLOADABLE char2 convert_char2_rte(ulong2 v) {
+  return (char2)(convert_char_rte(v.s0), convert_char_rte(v.s1));
+}
+
+INLINE OVERLOADABLE char2 convert_char2_rtz(ulong2 v) {
+  return (char2)(convert_char_rtz(v.s0), convert_char_rtz(v.s1));
+}
+
+INLINE OVERLOADABLE char2 convert_char2_rtp(ulong2 v) {
+  return (char2)(convert_char_rtp(v.s0), convert_char_rtp(v.s1));
+}
+
+INLINE OVERLOADABLE char2 convert_char2_rtn(ulong2 v) {
+  return (char2)(convert_char_rtn(v.s0), convert_char_rtn(v.s1));
+}
+
+INLINE OVERLOADABLE uchar2 convert_uchar2_rte(ulong2 v) {
+  return (uchar2)(convert_uchar_rte(v.s0), convert_uchar_rte(v.s1));
+}
+
+INLINE OVERLOADABLE uchar2 convert_uchar2_rtz(ulong2 v) {
+  return (uchar2)(convert_uchar_rtz(v.s0), convert_uchar_rtz(v.s1));
+}
+
+INLINE OVERLOADABLE uchar2 convert_uchar2_rtp(ulong2 v) {
+  return (uchar2)(convert_uchar_rtp(v.s0), convert_uchar_rtp(v.s1));
+}
+
+INLINE OVERLOADABLE uchar2 convert_uchar2_rtn(ulong2 v) {
+  return (uchar2)(convert_uchar_rtn(v.s0), convert_uchar_rtn(v.s1));
+}
+
+INLINE OVERLOADABLE float2 convert_float2_rte(ulong2 v) {
+  return (float2)(convert_float_rte(v.s0), convert_float_rte(v.s1));
+}
+
+INLINE OVERLOADABLE float2 convert_float2_rtz(ulong2 v) {
+  return (float2)(convert_float_rtz(v.s0), convert_float_rtz(v.s1));
+}
+
+INLINE OVERLOADABLE float2 convert_float2_rtp(ulong2 v) {
+  return (float2)(convert_float_rtp(v.s0), convert_float_rtp(v.s1));
+}
+
+INLINE OVERLOADABLE float2 convert_float2_rtn(ulong2 v) {
+  return (float2)(convert_float_rtn(v.s0), convert_float_rtn(v.s1));
+}
+
+INLINE OVERLOADABLE long2 convert_long2_rte(int2 v) {
+  return (long2)(convert_long_rte(v.s0), convert_long_rte(v.s1));
+}
+
+INLINE OVERLOADABLE long2 convert_long2_rtz(int2 v) {
+  return (long2)(convert_long_rtz(v.s0), convert_long_rtz(v.s1));
+}
+
+INLINE OVERLOADABLE long2 convert_long2_rtp(int2 v) {
+  return (long2)(convert_long_rtp(v.s0), convert_long_rtp(v.s1));
+}
+
+INLINE OVERLOADABLE long2 convert_long2_rtn(int2 v) {
+  return (long2)(convert_long_rtn(v.s0), convert_long_rtn(v.s1));
+}
+
+INLINE OVERLOADABLE ulong2 convert_ulong2_rte(int2 v) {
+  return (ulong2)(convert_ulong_rte(v.s0), convert_ulong_rte(v.s1));
+}
+
+INLINE OVERLOADABLE ulong2 convert_ulong2_rtz(int2 v) {
+  return (ulong2)(convert_ulong_rtz(v.s0), convert_ulong_rtz(v.s1));
+}
+
+INLINE OVERLOADABLE ulong2 convert_ulong2_rtp(int2 v) {
+  return (ulong2)(convert_ulong_rtp(v.s0), convert_ulong_rtp(v.s1));
+}
+
+INLINE OVERLOADABLE ulong2 convert_ulong2_rtn(int2 v) {
+  return (ulong2)(convert_ulong_rtn(v.s0), convert_ulong_rtn(v.s1));
+}
+
+INLINE OVERLOADABLE int2 convert_int2_rte(int2 v) {
+  return (int2)(convert_int_rte(v.s0), convert_int_rte(v.s1));
+}
+
+INLINE OVERLOADABLE int2 convert_int2_rtz(int2 v) {
+  return (int2)(convert_int_rtz(v.s0), convert_int_rtz(v.s1));
+}
+
+INLINE OVERLOADABLE int2 convert_int2_rtp(int2 v) {
+  return (int2)(convert_int_rtp(v.s0), convert_int_rtp(v.s1));
+}
+
+INLINE OVERLOADABLE int2 convert_int2_rtn(int2 v) {
+  return (int2)(convert_int_rtn(v.s0), convert_int_rtn(v.s1));
+}
+
+INLINE OVERLOADABLE uint2 convert_uint2_rte(int2 v) {
+  return (uint2)(convert_uint_rte(v.s0), convert_uint_rte(v.s1));
+}
+
+INLINE OVERLOADABLE uint2 convert_uint2_rtz(int2 v) {
+  return (uint2)(convert_uint_rtz(v.s0), convert_uint_rtz(v.s1));
+}
+
+INLINE OVERLOADABLE uint2 convert_uint2_rtp(int2 v) {
+  return (uint2)(convert_uint_rtp(v.s0), convert_uint_rtp(v.s1));
+}
+
+INLINE OVERLOADABLE uint2 convert_uint2_rtn(int2 v) {
+  return (uint2)(convert_uint_rtn(v.s0), convert_uint_rtn(v.s1));
+}
+
+INLINE OVERLOADABLE short2 convert_short2_rte(int2 v) {
+  return (short2)(convert_short_rte(v.s0), convert_short_rte(v.s1));
+}
+
+INLINE OVERLOADABLE short2 convert_short2_rtz(int2 v) {
+  return (short2)(convert_short_rtz(v.s0), convert_short_rtz(v.s1));
+}
+
+INLINE OVERLOADABLE short2 convert_short2_rtp(int2 v) {
+  return (short2)(convert_short_rtp(v.s0), convert_short_rtp(v.s1));
+}
+
+INLINE OVERLOADABLE short2 convert_short2_rtn(int2 v) {
+  return (short2)(convert_short_rtn(v.s0), convert_short_rtn(v.s1));
+}
+
+INLINE OVERLOADABLE ushort2 convert_ushort2_rte(int2 v) {
+  return (ushort2)(convert_ushort_rte(v.s0), convert_ushort_rte(v.s1));
+}
+
+INLINE OVERLOADABLE ushort2 convert_ushort2_rtz(int2 v) {
+  return (ushort2)(convert_ushort_rtz(v.s0), convert_ushort_rtz(v.s1));
+}
+
+INLINE OVERLOADABLE ushort2 convert_ushort2_rtp(int2 v) {
+  return (ushort2)(convert_ushort_rtp(v.s0), convert_ushort_rtp(v.s1));
+}
+
+INLINE OVERLOADABLE ushort2 convert_ushort2_rtn(int2 v) {
+  return (ushort2)(convert_ushort_rtn(v.s0), convert_ushort_rtn(v.s1));
+}
+
+INLINE OVERLOADABLE char2 convert_char2_rte(int2 v) {
+  return (char2)(convert_char_rte(v.s0), convert_char_rte(v.s1));
+}
+
+INLINE OVERLOADABLE char2 convert_char2_rtz(int2 v) {
+  return (char2)(convert_char_rtz(v.s0), convert_char_rtz(v.s1));
+}
+
+INLINE OVERLOADABLE char2 convert_char2_rtp(int2 v) {
+  return (char2)(convert_char_rtp(v.s0), convert_char_rtp(v.s1));
+}
+
+INLINE OVERLOADABLE char2 convert_char2_rtn(int2 v) {
+  return (char2)(convert_char_rtn(v.s0), convert_char_rtn(v.s1));
+}
+
+INLINE OVERLOADABLE uchar2 convert_uchar2_rte(int2 v) {
+  return (uchar2)(convert_uchar_rte(v.s0), convert_uchar_rte(v.s1));
+}
+
+INLINE OVERLOADABLE uchar2 convert_uchar2_rtz(int2 v) {
+  return (uchar2)(convert_uchar_rtz(v.s0), convert_uchar_rtz(v.s1));
+}
+
+INLINE OVERLOADABLE uchar2 convert_uchar2_rtp(int2 v) {
+  return (uchar2)(convert_uchar_rtp(v.s0), convert_uchar_rtp(v.s1));
+}
+
+INLINE OVERLOADABLE uchar2 convert_uchar2_rtn(int2 v) {
+  return (uchar2)(convert_uchar_rtn(v.s0), convert_uchar_rtn(v.s1));
+}
+
+INLINE OVERLOADABLE float2 convert_float2_rte(int2 v) {
+  return (float2)(convert_float_rte(v.s0), convert_float_rte(v.s1));
+}
+
+INLINE OVERLOADABLE float2 convert_float2_rtz(int2 v) {
+  return (float2)(convert_float_rtz(v.s0), convert_float_rtz(v.s1));
+}
+
+INLINE OVERLOADABLE float2 convert_float2_rtp(int2 v) {
+  return (float2)(convert_float_rtp(v.s0), convert_float_rtp(v.s1));
+}
+
+INLINE OVERLOADABLE float2 convert_float2_rtn(int2 v) {
+  return (float2)(convert_float_rtn(v.s0), convert_float_rtn(v.s1));
+}
+
+INLINE OVERLOADABLE long2 convert_long2_rte(uint2 v) {
+  return (long2)(convert_long_rte(v.s0), convert_long_rte(v.s1));
+}
+
+INLINE OVERLOADABLE long2 convert_long2_rtz(uint2 v) {
+  return (long2)(convert_long_rtz(v.s0), convert_long_rtz(v.s1));
+}
+
+INLINE OVERLOADABLE long2 convert_long2_rtp(uint2 v) {
+  return (long2)(convert_long_rtp(v.s0), convert_long_rtp(v.s1));
+}
+
+INLINE OVERLOADABLE long2 convert_long2_rtn(uint2 v) {
+  return (long2)(convert_long_rtn(v.s0), convert_long_rtn(v.s1));
+}
+
+INLINE OVERLOADABLE ulong2 convert_ulong2_rte(uint2 v) {
+  return (ulong2)(convert_ulong_rte(v.s0), convert_ulong_rte(v.s1));
+}
+
+INLINE OVERLOADABLE ulong2 convert_ulong2_rtz(uint2 v) {
+  return (ulong2)(convert_ulong_rtz(v.s0), convert_ulong_rtz(v.s1));
+}
+
+INLINE OVERLOADABLE ulong2 convert_ulong2_rtp(uint2 v) {
+  return (ulong2)(convert_ulong_rtp(v.s0), convert_ulong_rtp(v.s1));
+}
+
+INLINE OVERLOADABLE ulong2 convert_ulong2_rtn(uint2 v) {
+  return (ulong2)(convert_ulong_rtn(v.s0), convert_ulong_rtn(v.s1));
+}
+
+INLINE OVERLOADABLE int2 convert_int2_rte(uint2 v) {
+  return (int2)(convert_int_rte(v.s0), convert_int_rte(v.s1));
+}
+
+INLINE OVERLOADABLE int2 convert_int2_rtz(uint2 v) {
+  return (int2)(convert_int_rtz(v.s0), convert_int_rtz(v.s1));
+}
+
+INLINE OVERLOADABLE int2 convert_int2_rtp(uint2 v) {
+  return (int2)(convert_int_rtp(v.s0), convert_int_rtp(v.s1));
+}
+
+INLINE OVERLOADABLE int2 convert_int2_rtn(uint2 v) {
+  return (int2)(convert_int_rtn(v.s0), convert_int_rtn(v.s1));
+}
+
+INLINE OVERLOADABLE uint2 convert_uint2_rte(uint2 v) {
+  return (uint2)(convert_uint_rte(v.s0), convert_uint_rte(v.s1));
+}
+
+INLINE OVERLOADABLE uint2 convert_uint2_rtz(uint2 v) {
+  return (uint2)(convert_uint_rtz(v.s0), convert_uint_rtz(v.s1));
+}
+
+INLINE OVERLOADABLE uint2 convert_uint2_rtp(uint2 v) {
+  return (uint2)(convert_uint_rtp(v.s0), convert_uint_rtp(v.s1));
+}
+
+INLINE OVERLOADABLE uint2 convert_uint2_rtn(uint2 v) {
+  return (uint2)(convert_uint_rtn(v.s0), convert_uint_rtn(v.s1));
+}
+
+INLINE OVERLOADABLE short2 convert_short2_rte(uint2 v) {
+  return (short2)(convert_short_rte(v.s0), convert_short_rte(v.s1));
+}
+
+INLINE OVERLOADABLE short2 convert_short2_rtz(uint2 v) {
+  return (short2)(convert_short_rtz(v.s0), convert_short_rtz(v.s1));
+}
+
+INLINE OVERLOADABLE short2 convert_short2_rtp(uint2 v) {
+  return (short2)(convert_short_rtp(v.s0), convert_short_rtp(v.s1));
+}
+
+INLINE OVERLOADABLE short2 convert_short2_rtn(uint2 v) {
+  return (short2)(convert_short_rtn(v.s0), convert_short_rtn(v.s1));
+}
+
+INLINE OVERLOADABLE ushort2 convert_ushort2_rte(uint2 v) {
+  return (ushort2)(convert_ushort_rte(v.s0), convert_ushort_rte(v.s1));
+}
+
+INLINE OVERLOADABLE ushort2 convert_ushort2_rtz(uint2 v) {
+  return (ushort2)(convert_ushort_rtz(v.s0), convert_ushort_rtz(v.s1));
+}
+
+INLINE OVERLOADABLE ushort2 convert_ushort2_rtp(uint2 v) {
+  return (ushort2)(convert_ushort_rtp(v.s0), convert_ushort_rtp(v.s1));
+}
+
+INLINE OVERLOADABLE ushort2 convert_ushort2_rtn(uint2 v) {
+  return (ushort2)(convert_ushort_rtn(v.s0), convert_ushort_rtn(v.s1));
+}
+
+INLINE OVERLOADABLE char2 convert_char2_rte(uint2 v) {
+  return (char2)(convert_char_rte(v.s0), convert_char_rte(v.s1));
+}
+
+INLINE OVERLOADABLE char2 convert_char2_rtz(uint2 v) {
+  return (char2)(convert_char_rtz(v.s0), convert_char_rtz(v.s1));
+}
+
+INLINE OVERLOADABLE char2 convert_char2_rtp(uint2 v) {
+  return (char2)(convert_char_rtp(v.s0), convert_char_rtp(v.s1));
+}
+
+INLINE OVERLOADABLE char2 convert_char2_rtn(uint2 v) {
+  return (char2)(convert_char_rtn(v.s0), convert_char_rtn(v.s1));
+}
+
+INLINE OVERLOADABLE uchar2 convert_uchar2_rte(uint2 v) {
+  return (uchar2)(convert_uchar_rte(v.s0), convert_uchar_rte(v.s1));
+}
+
+INLINE OVERLOADABLE uchar2 convert_uchar2_rtz(uint2 v) {
+  return (uchar2)(convert_uchar_rtz(v.s0), convert_uchar_rtz(v.s1));
+}
+
+INLINE OVERLOADABLE uchar2 convert_uchar2_rtp(uint2 v) {
+  return (uchar2)(convert_uchar_rtp(v.s0), convert_uchar_rtp(v.s1));
+}
+
+INLINE OVERLOADABLE uchar2 convert_uchar2_rtn(uint2 v) {
+  return (uchar2)(convert_uchar_rtn(v.s0), convert_uchar_rtn(v.s1));
+}
+
+INLINE OVERLOADABLE float2 convert_float2_rte(uint2 v) {
+  return (float2)(convert_float_rte(v.s0), convert_float_rte(v.s1));
+}
+
+INLINE OVERLOADABLE float2 convert_float2_rtz(uint2 v) {
+  return (float2)(convert_float_rtz(v.s0), convert_float_rtz(v.s1));
+}
+
+INLINE OVERLOADABLE float2 convert_float2_rtp(uint2 v) {
+  return (float2)(convert_float_rtp(v.s0), convert_float_rtp(v.s1));
+}
+
+INLINE OVERLOADABLE float2 convert_float2_rtn(uint2 v) {
+  return (float2)(convert_float_rtn(v.s0), convert_float_rtn(v.s1));
+}
+
+INLINE OVERLOADABLE long2 convert_long2_rte(short2 v) {
+  return (long2)(convert_long_rte(v.s0), convert_long_rte(v.s1));
+}
+
+INLINE OVERLOADABLE long2 convert_long2_rtz(short2 v) {
+  return (long2)(convert_long_rtz(v.s0), convert_long_rtz(v.s1));
+}
+
+INLINE OVERLOADABLE long2 convert_long2_rtp(short2 v) {
+  return (long2)(convert_long_rtp(v.s0), convert_long_rtp(v.s1));
+}
+
+INLINE OVERLOADABLE long2 convert_long2_rtn(short2 v) {
+  return (long2)(convert_long_rtn(v.s0), convert_long_rtn(v.s1));
+}
+
+INLINE OVERLOADABLE ulong2 convert_ulong2_rte(short2 v) {
+  return (ulong2)(convert_ulong_rte(v.s0), convert_ulong_rte(v.s1));
+}
+
+INLINE OVERLOADABLE ulong2 convert_ulong2_rtz(short2 v) {
+  return (ulong2)(convert_ulong_rtz(v.s0), convert_ulong_rtz(v.s1));
+}
+
+INLINE OVERLOADABLE ulong2 convert_ulong2_rtp(short2 v) {
+  return (ulong2)(convert_ulong_rtp(v.s0), convert_ulong_rtp(v.s1));
+}
+
+INLINE OVERLOADABLE ulong2 convert_ulong2_rtn(short2 v) {
+  return (ulong2)(convert_ulong_rtn(v.s0), convert_ulong_rtn(v.s1));
+}
+
+INLINE OVERLOADABLE int2 convert_int2_rte(short2 v) {
+  return (int2)(convert_int_rte(v.s0), convert_int_rte(v.s1));
+}
+
+INLINE OVERLOADABLE int2 convert_int2_rtz(short2 v) {
+  return (int2)(convert_int_rtz(v.s0), convert_int_rtz(v.s1));
+}
+
+INLINE OVERLOADABLE int2 convert_int2_rtp(short2 v) {
+  return (int2)(convert_int_rtp(v.s0), convert_int_rtp(v.s1));
+}
+
+INLINE OVERLOADABLE int2 convert_int2_rtn(short2 v) {
+  return (int2)(convert_int_rtn(v.s0), convert_int_rtn(v.s1));
+}
+
+INLINE OVERLOADABLE uint2 convert_uint2_rte(short2 v) {
+  return (uint2)(convert_uint_rte(v.s0), convert_uint_rte(v.s1));
+}
+
+INLINE OVERLOADABLE uint2 convert_uint2_rtz(short2 v) {
+  return (uint2)(convert_uint_rtz(v.s0), convert_uint_rtz(v.s1));
+}
+
+INLINE OVERLOADABLE uint2 convert_uint2_rtp(short2 v) {
+  return (uint2)(convert_uint_rtp(v.s0), convert_uint_rtp(v.s1));
+}
+
+INLINE OVERLOADABLE uint2 convert_uint2_rtn(short2 v) {
+  return (uint2)(convert_uint_rtn(v.s0), convert_uint_rtn(v.s1));
+}
+
+INLINE OVERLOADABLE short2 convert_short2_rte(short2 v) {
+  return (short2)(convert_short_rte(v.s0), convert_short_rte(v.s1));
+}
+
+INLINE OVERLOADABLE short2 convert_short2_rtz(short2 v) {
+  return (short2)(convert_short_rtz(v.s0), convert_short_rtz(v.s1));
+}
+
+INLINE OVERLOADABLE short2 convert_short2_rtp(short2 v) {
+  return (short2)(convert_short_rtp(v.s0), convert_short_rtp(v.s1));
+}
+
+INLINE OVERLOADABLE short2 convert_short2_rtn(short2 v) {
+  return (short2)(convert_short_rtn(v.s0), convert_short_rtn(v.s1));
+}
+
+INLINE OVERLOADABLE ushort2 convert_ushort2_rte(short2 v) {
+  return (ushort2)(convert_ushort_rte(v.s0), convert_ushort_rte(v.s1));
+}
+
+INLINE OVERLOADABLE ushort2 convert_ushort2_rtz(short2 v) {
+  return (ushort2)(convert_ushort_rtz(v.s0), convert_ushort_rtz(v.s1));
+}
+
+INLINE OVERLOADABLE ushort2 convert_ushort2_rtp(short2 v) {
+  return (ushort2)(convert_ushort_rtp(v.s0), convert_ushort_rtp(v.s1));
+}
+
+INLINE OVERLOADABLE ushort2 convert_ushort2_rtn(short2 v) {
+  return (ushort2)(convert_ushort_rtn(v.s0), convert_ushort_rtn(v.s1));
+}
+
+INLINE OVERLOADABLE char2 convert_char2_rte(short2 v) {
+  return (char2)(convert_char_rte(v.s0), convert_char_rte(v.s1));
+}
+
+INLINE OVERLOADABLE char2 convert_char2_rtz(short2 v) {
+  return (char2)(convert_char_rtz(v.s0), convert_char_rtz(v.s1));
+}
+
+INLINE OVERLOADABLE char2 convert_char2_rtp(short2 v) {
+  return (char2)(convert_char_rtp(v.s0), convert_char_rtp(v.s1));
+}
+
+INLINE OVERLOADABLE char2 convert_char2_rtn(short2 v) {
+  return (char2)(convert_char_rtn(v.s0), convert_char_rtn(v.s1));
+}
+
+INLINE OVERLOADABLE uchar2 convert_uchar2_rte(short2 v) {
+  return (uchar2)(convert_uchar_rte(v.s0), convert_uchar_rte(v.s1));
+}
+
+INLINE OVERLOADABLE uchar2 convert_uchar2_rtz(short2 v) {
+  return (uchar2)(convert_uchar_rtz(v.s0), convert_uchar_rtz(v.s1));
+}
+
+INLINE OVERLOADABLE uchar2 convert_uchar2_rtp(short2 v) {
+  return (uchar2)(convert_uchar_rtp(v.s0), convert_uchar_rtp(v.s1));
+}
+
+INLINE OVERLOADABLE uchar2 convert_uchar2_rtn(short2 v) {
+  return (uchar2)(convert_uchar_rtn(v.s0), convert_uchar_rtn(v.s1));
+}
+
+INLINE OVERLOADABLE float2 convert_float2_rte(short2 v) {
+  return (float2)(convert_float_rte(v.s0), convert_float_rte(v.s1));
+}
+
+INLINE OVERLOADABLE float2 convert_float2_rtz(short2 v) {
+  return (float2)(convert_float_rtz(v.s0), convert_float_rtz(v.s1));
+}
+
+INLINE OVERLOADABLE float2 convert_float2_rtp(short2 v) {
+  return (float2)(convert_float_rtp(v.s0), convert_float_rtp(v.s1));
+}
+
+INLINE OVERLOADABLE float2 convert_float2_rtn(short2 v) {
+  return (float2)(convert_float_rtn(v.s0), convert_float_rtn(v.s1));
+}
+
+INLINE OVERLOADABLE long2 convert_long2_rte(ushort2 v) {
+  return (long2)(convert_long_rte(v.s0), convert_long_rte(v.s1));
+}
+
+INLINE OVERLOADABLE long2 convert_long2_rtz(ushort2 v) {
+  return (long2)(convert_long_rtz(v.s0), convert_long_rtz(v.s1));
+}
+
+INLINE OVERLOADABLE long2 convert_long2_rtp(ushort2 v) {
+  return (long2)(convert_long_rtp(v.s0), convert_long_rtp(v.s1));
+}
+
+INLINE OVERLOADABLE long2 convert_long2_rtn(ushort2 v) {
+  return (long2)(convert_long_rtn(v.s0), convert_long_rtn(v.s1));
+}
+
+INLINE OVERLOADABLE ulong2 convert_ulong2_rte(ushort2 v) {
+  return (ulong2)(convert_ulong_rte(v.s0), convert_ulong_rte(v.s1));
+}
+
+INLINE OVERLOADABLE ulong2 convert_ulong2_rtz(ushort2 v) {
+  return (ulong2)(convert_ulong_rtz(v.s0), convert_ulong_rtz(v.s1));
+}
+
+INLINE OVERLOADABLE ulong2 convert_ulong2_rtp(ushort2 v) {
+  return (ulong2)(convert_ulong_rtp(v.s0), convert_ulong_rtp(v.s1));
+}
+
+INLINE OVERLOADABLE ulong2 convert_ulong2_rtn(ushort2 v) {
+  return (ulong2)(convert_ulong_rtn(v.s0), convert_ulong_rtn(v.s1));
+}
+
+INLINE OVERLOADABLE int2 convert_int2_rte(ushort2 v) {
+  return (int2)(convert_int_rte(v.s0), convert_int_rte(v.s1));
+}
+
+INLINE OVERLOADABLE int2 convert_int2_rtz(ushort2 v) {
+  return (int2)(convert_int_rtz(v.s0), convert_int_rtz(v.s1));
+}
+
+INLINE OVERLOADABLE int2 convert_int2_rtp(ushort2 v) {
+  return (int2)(convert_int_rtp(v.s0), convert_int_rtp(v.s1));
+}
+
+INLINE OVERLOADABLE int2 convert_int2_rtn(ushort2 v) {
+  return (int2)(convert_int_rtn(v.s0), convert_int_rtn(v.s1));
+}
+
+INLINE OVERLOADABLE uint2 convert_uint2_rte(ushort2 v) {
+  return (uint2)(convert_uint_rte(v.s0), convert_uint_rte(v.s1));
+}
+
+INLINE OVERLOADABLE uint2 convert_uint2_rtz(ushort2 v) {
+  return (uint2)(convert_uint_rtz(v.s0), convert_uint_rtz(v.s1));
+}
+
+INLINE OVERLOADABLE uint2 convert_uint2_rtp(ushort2 v) {
+  return (uint2)(convert_uint_rtp(v.s0), convert_uint_rtp(v.s1));
+}
+
+INLINE OVERLOADABLE uint2 convert_uint2_rtn(ushort2 v) {
+  return (uint2)(convert_uint_rtn(v.s0), convert_uint_rtn(v.s1));
+}
+
+INLINE OVERLOADABLE short2 convert_short2_rte(ushort2 v) {
+  return (short2)(convert_short_rte(v.s0), convert_short_rte(v.s1));
+}
+
+INLINE OVERLOADABLE short2 convert_short2_rtz(ushort2 v) {
+  return (short2)(convert_short_rtz(v.s0), convert_short_rtz(v.s1));
+}
+
+INLINE OVERLOADABLE short2 convert_short2_rtp(ushort2 v) {
+  return (short2)(convert_short_rtp(v.s0), convert_short_rtp(v.s1));
+}
+
+INLINE OVERLOADABLE short2 convert_short2_rtn(ushort2 v) {
+  return (short2)(convert_short_rtn(v.s0), convert_short_rtn(v.s1));
+}
+
+INLINE OVERLOADABLE ushort2 convert_ushort2_rte(ushort2 v) {
+  return (ushort2)(convert_ushort_rte(v.s0), convert_ushort_rte(v.s1));
+}
+
+INLINE OVERLOADABLE ushort2 convert_ushort2_rtz(ushort2 v) {
+  return (ushort2)(convert_ushort_rtz(v.s0), convert_ushort_rtz(v.s1));
+}
+
+INLINE OVERLOADABLE ushort2 convert_ushort2_rtp(ushort2 v) {
+  return (ushort2)(convert_ushort_rtp(v.s0), convert_ushort_rtp(v.s1));
+}
+
+INLINE OVERLOADABLE ushort2 convert_ushort2_rtn(ushort2 v) {
+  return (ushort2)(convert_ushort_rtn(v.s0), convert_ushort_rtn(v.s1));
+}
+
+INLINE OVERLOADABLE char2 convert_char2_rte(ushort2 v) {
+  return (char2)(convert_char_rte(v.s0), convert_char_rte(v.s1));
+}
+
+INLINE OVERLOADABLE char2 convert_char2_rtz(ushort2 v) {
+  return (char2)(convert_char_rtz(v.s0), convert_char_rtz(v.s1));
+}
+
+INLINE OVERLOADABLE char2 convert_char2_rtp(ushort2 v) {
+  return (char2)(convert_char_rtp(v.s0), convert_char_rtp(v.s1));
+}
+
+INLINE OVERLOADABLE char2 convert_char2_rtn(ushort2 v) {
+  return (char2)(convert_char_rtn(v.s0), convert_char_rtn(v.s1));
+}
+
+INLINE OVERLOADABLE uchar2 convert_uchar2_rte(ushort2 v) {
+  return (uchar2)(convert_uchar_rte(v.s0), convert_uchar_rte(v.s1));
+}
+
+INLINE OVERLOADABLE uchar2 convert_uchar2_rtz(ushort2 v) {
+  return (uchar2)(convert_uchar_rtz(v.s0), convert_uchar_rtz(v.s1));
+}
+
+INLINE OVERLOADABLE uchar2 convert_uchar2_rtp(ushort2 v) {
+  return (uchar2)(convert_uchar_rtp(v.s0), convert_uchar_rtp(v.s1));
+}
+
+INLINE OVERLOADABLE uchar2 convert_uchar2_rtn(ushort2 v) {
+  return (uchar2)(convert_uchar_rtn(v.s0), convert_uchar_rtn(v.s1));
+}
+
+INLINE OVERLOADABLE float2 convert_float2_rte(ushort2 v) {
+  return (float2)(convert_float_rte(v.s0), convert_float_rte(v.s1));
+}
+
+INLINE OVERLOADABLE float2 convert_float2_rtz(ushort2 v) {
+  return (float2)(convert_float_rtz(v.s0), convert_float_rtz(v.s1));
+}
+
+INLINE OVERLOADABLE float2 convert_float2_rtp(ushort2 v) {
+  return (float2)(convert_float_rtp(v.s0), convert_float_rtp(v.s1));
+}
+
+INLINE OVERLOADABLE float2 convert_float2_rtn(ushort2 v) {
+  return (float2)(convert_float_rtn(v.s0), convert_float_rtn(v.s1));
+}
+
+INLINE OVERLOADABLE long2 convert_long2_rte(char2 v) {
+  return (long2)(convert_long_rte(v.s0), convert_long_rte(v.s1));
+}
+
+INLINE OVERLOADABLE long2 convert_long2_rtz(char2 v) {
+  return (long2)(convert_long_rtz(v.s0), convert_long_rtz(v.s1));
+}
+
+INLINE OVERLOADABLE long2 convert_long2_rtp(char2 v) {
+  return (long2)(convert_long_rtp(v.s0), convert_long_rtp(v.s1));
+}
+
+INLINE OVERLOADABLE long2 convert_long2_rtn(char2 v) {
+  return (long2)(convert_long_rtn(v.s0), convert_long_rtn(v.s1));
+}
+
+INLINE OVERLOADABLE ulong2 convert_ulong2_rte(char2 v) {
+  return (ulong2)(convert_ulong_rte(v.s0), convert_ulong_rte(v.s1));
+}
+
+INLINE OVERLOADABLE ulong2 convert_ulong2_rtz(char2 v) {
+  return (ulong2)(convert_ulong_rtz(v.s0), convert_ulong_rtz(v.s1));
+}
+
+INLINE OVERLOADABLE ulong2 convert_ulong2_rtp(char2 v) {
+  return (ulong2)(convert_ulong_rtp(v.s0), convert_ulong_rtp(v.s1));
+}
+
+INLINE OVERLOADABLE ulong2 convert_ulong2_rtn(char2 v) {
+  return (ulong2)(convert_ulong_rtn(v.s0), convert_ulong_rtn(v.s1));
+}
+
+INLINE OVERLOADABLE int2 convert_int2_rte(char2 v) {
+  return (int2)(convert_int_rte(v.s0), convert_int_rte(v.s1));
+}
+
+INLINE OVERLOADABLE int2 convert_int2_rtz(char2 v) {
+  return (int2)(convert_int_rtz(v.s0), convert_int_rtz(v.s1));
+}
+
+INLINE OVERLOADABLE int2 convert_int2_rtp(char2 v) {
+  return (int2)(convert_int_rtp(v.s0), convert_int_rtp(v.s1));
+}
+
+INLINE OVERLOADABLE int2 convert_int2_rtn(char2 v) {
+  return (int2)(convert_int_rtn(v.s0), convert_int_rtn(v.s1));
+}
+
+INLINE OVERLOADABLE uint2 convert_uint2_rte(char2 v) {
+  return (uint2)(convert_uint_rte(v.s0), convert_uint_rte(v.s1));
+}
+
+INLINE OVERLOADABLE uint2 convert_uint2_rtz(char2 v) {
+  return (uint2)(convert_uint_rtz(v.s0), convert_uint_rtz(v.s1));
+}
+
+INLINE OVERLOADABLE uint2 convert_uint2_rtp(char2 v) {
+  return (uint2)(convert_uint_rtp(v.s0), convert_uint_rtp(v.s1));
+}
+
+INLINE OVERLOADABLE uint2 convert_uint2_rtn(char2 v) {
+  return (uint2)(convert_uint_rtn(v.s0), convert_uint_rtn(v.s1));
+}
+
+INLINE OVERLOADABLE short2 convert_short2_rte(char2 v) {
+  return (short2)(convert_short_rte(v.s0), convert_short_rte(v.s1));
+}
+
+INLINE OVERLOADABLE short2 convert_short2_rtz(char2 v) {
+  return (short2)(convert_short_rtz(v.s0), convert_short_rtz(v.s1));
+}
+
+INLINE OVERLOADABLE short2 convert_short2_rtp(char2 v) {
+  return (short2)(convert_short_rtp(v.s0), convert_short_rtp(v.s1));
+}
+
+INLINE OVERLOADABLE short2 convert_short2_rtn(char2 v) {
+  return (short2)(convert_short_rtn(v.s0), convert_short_rtn(v.s1));
+}
+
+INLINE OVERLOADABLE ushort2 convert_ushort2_rte(char2 v) {
+  return (ushort2)(convert_ushort_rte(v.s0), convert_ushort_rte(v.s1));
+}
+
+INLINE OVERLOADABLE ushort2 convert_ushort2_rtz(char2 v) {
+  return (ushort2)(convert_ushort_rtz(v.s0), convert_ushort_rtz(v.s1));
+}
+
+INLINE OVERLOADABLE ushort2 convert_ushort2_rtp(char2 v) {
+  return (ushort2)(convert_ushort_rtp(v.s0), convert_ushort_rtp(v.s1));
+}
+
+INLINE OVERLOADABLE ushort2 convert_ushort2_rtn(char2 v) {
+  return (ushort2)(convert_ushort_rtn(v.s0), convert_ushort_rtn(v.s1));
+}
+
+INLINE OVERLOADABLE char2 convert_char2_rte(char2 v) {
+  return (char2)(convert_char_rte(v.s0), convert_char_rte(v.s1));
+}
+
+INLINE OVERLOADABLE char2 convert_char2_rtz(char2 v) {
+  return (char2)(convert_char_rtz(v.s0), convert_char_rtz(v.s1));
+}
+
+INLINE OVERLOADABLE char2 convert_char2_rtp(char2 v) {
+  return (char2)(convert_char_rtp(v.s0), convert_char_rtp(v.s1));
+}
+
+INLINE OVERLOADABLE char2 convert_char2_rtn(char2 v) {
+  return (char2)(convert_char_rtn(v.s0), convert_char_rtn(v.s1));
+}
+
+INLINE OVERLOADABLE uchar2 convert_uchar2_rte(char2 v) {
+  return (uchar2)(convert_uchar_rte(v.s0), convert_uchar_rte(v.s1));
+}
+
+INLINE OVERLOADABLE uchar2 convert_uchar2_rtz(char2 v) {
+  return (uchar2)(convert_uchar_rtz(v.s0), convert_uchar_rtz(v.s1));
+}
+
+INLINE OVERLOADABLE uchar2 convert_uchar2_rtp(char2 v) {
+  return (uchar2)(convert_uchar_rtp(v.s0), convert_uchar_rtp(v.s1));
+}
+
+INLINE OVERLOADABLE uchar2 convert_uchar2_rtn(char2 v) {
+  return (uchar2)(convert_uchar_rtn(v.s0), convert_uchar_rtn(v.s1));
+}
+
+INLINE OVERLOADABLE float2 convert_float2_rte(char2 v) {
+  return (float2)(convert_float_rte(v.s0), convert_float_rte(v.s1));
+}
+
+INLINE OVERLOADABLE float2 convert_float2_rtz(char2 v) {
+  return (float2)(convert_float_rtz(v.s0), convert_float_rtz(v.s1));
+}
+
+INLINE OVERLOADABLE float2 convert_float2_rtp(char2 v) {
+  return (float2)(convert_float_rtp(v.s0), convert_float_rtp(v.s1));
+}
+
+INLINE OVERLOADABLE float2 convert_float2_rtn(char2 v) {
+  return (float2)(convert_float_rtn(v.s0), convert_float_rtn(v.s1));
+}
+
+INLINE OVERLOADABLE long2 convert_long2_rte(uchar2 v) {
+  return (long2)(convert_long_rte(v.s0), convert_long_rte(v.s1));
+}
+
+INLINE OVERLOADABLE long2 convert_long2_rtz(uchar2 v) {
+  return (long2)(convert_long_rtz(v.s0), convert_long_rtz(v.s1));
+}
+
+INLINE OVERLOADABLE long2 convert_long2_rtp(uchar2 v) {
+  return (long2)(convert_long_rtp(v.s0), convert_long_rtp(v.s1));
+}
+
+INLINE OVERLOADABLE long2 convert_long2_rtn(uchar2 v) {
+  return (long2)(convert_long_rtn(v.s0), convert_long_rtn(v.s1));
+}
+
+INLINE OVERLOADABLE ulong2 convert_ulong2_rte(uchar2 v) {
+  return (ulong2)(convert_ulong_rte(v.s0), convert_ulong_rte(v.s1));
+}
+
+INLINE OVERLOADABLE ulong2 convert_ulong2_rtz(uchar2 v) {
+  return (ulong2)(convert_ulong_rtz(v.s0), convert_ulong_rtz(v.s1));
+}
+
+INLINE OVERLOADABLE ulong2 convert_ulong2_rtp(uchar2 v) {
+  return (ulong2)(convert_ulong_rtp(v.s0), convert_ulong_rtp(v.s1));
+}
+
+INLINE OVERLOADABLE ulong2 convert_ulong2_rtn(uchar2 v) {
+  return (ulong2)(convert_ulong_rtn(v.s0), convert_ulong_rtn(v.s1));
+}
+
+INLINE OVERLOADABLE int2 convert_int2_rte(uchar2 v) {
+  return (int2)(convert_int_rte(v.s0), convert_int_rte(v.s1));
+}
+
+INLINE OVERLOADABLE int2 convert_int2_rtz(uchar2 v) {
+  return (int2)(convert_int_rtz(v.s0), convert_int_rtz(v.s1));
+}
+
+INLINE OVERLOADABLE int2 convert_int2_rtp(uchar2 v) {
+  return (int2)(convert_int_rtp(v.s0), convert_int_rtp(v.s1));
+}
+
+INLINE OVERLOADABLE int2 convert_int2_rtn(uchar2 v) {
+  return (int2)(convert_int_rtn(v.s0), convert_int_rtn(v.s1));
+}
+
+INLINE OVERLOADABLE uint2 convert_uint2_rte(uchar2 v) {
+  return (uint2)(convert_uint_rte(v.s0), convert_uint_rte(v.s1));
+}
+
+INLINE OVERLOADABLE uint2 convert_uint2_rtz(uchar2 v) {
+  return (uint2)(convert_uint_rtz(v.s0), convert_uint_rtz(v.s1));
+}
+
+INLINE OVERLOADABLE uint2 convert_uint2_rtp(uchar2 v) {
+  return (uint2)(convert_uint_rtp(v.s0), convert_uint_rtp(v.s1));
+}
+
+INLINE OVERLOADABLE uint2 convert_uint2_rtn(uchar2 v) {
+  return (uint2)(convert_uint_rtn(v.s0), convert_uint_rtn(v.s1));
+}
+
+INLINE OVERLOADABLE short2 convert_short2_rte(uchar2 v) {
+  return (short2)(convert_short_rte(v.s0), convert_short_rte(v.s1));
+}
+
+INLINE OVERLOADABLE short2 convert_short2_rtz(uchar2 v) {
+  return (short2)(convert_short_rtz(v.s0), convert_short_rtz(v.s1));
+}
+
+INLINE OVERLOADABLE short2 convert_short2_rtp(uchar2 v) {
+  return (short2)(convert_short_rtp(v.s0), convert_short_rtp(v.s1));
+}
+
+INLINE OVERLOADABLE short2 convert_short2_rtn(uchar2 v) {
+  return (short2)(convert_short_rtn(v.s0), convert_short_rtn(v.s1));
+}
+
+INLINE OVERLOADABLE ushort2 convert_ushort2_rte(uchar2 v) {
+  return (ushort2)(convert_ushort_rte(v.s0), convert_ushort_rte(v.s1));
+}
+
+INLINE OVERLOADABLE ushort2 convert_ushort2_rtz(uchar2 v) {
+  return (ushort2)(convert_ushort_rtz(v.s0), convert_ushort_rtz(v.s1));
+}
+
+INLINE OVERLOADABLE ushort2 convert_ushort2_rtp(uchar2 v) {
+  return (ushort2)(convert_ushort_rtp(v.s0), convert_ushort_rtp(v.s1));
+}
+
+INLINE OVERLOADABLE ushort2 convert_ushort2_rtn(uchar2 v) {
+  return (ushort2)(convert_ushort_rtn(v.s0), convert_ushort_rtn(v.s1));
+}
+
+INLINE OVERLOADABLE char2 convert_char2_rte(uchar2 v) {
+  return (char2)(convert_char_rte(v.s0), convert_char_rte(v.s1));
+}
+
+INLINE OVERLOADABLE char2 convert_char2_rtz(uchar2 v) {
+  return (char2)(convert_char_rtz(v.s0), convert_char_rtz(v.s1));
+}
+
+INLINE OVERLOADABLE char2 convert_char2_rtp(uchar2 v) {
+  return (char2)(convert_char_rtp(v.s0), convert_char_rtp(v.s1));
+}
+
+INLINE OVERLOADABLE char2 convert_char2_rtn(uchar2 v) {
+  return (char2)(convert_char_rtn(v.s0), convert_char_rtn(v.s1));
+}
+
+INLINE OVERLOADABLE uchar2 convert_uchar2_rte(uchar2 v) {
+  return (uchar2)(convert_uchar_rte(v.s0), convert_uchar_rte(v.s1));
+}
+
+INLINE OVERLOADABLE uchar2 convert_uchar2_rtz(uchar2 v) {
+  return (uchar2)(convert_uchar_rtz(v.s0), convert_uchar_rtz(v.s1));
+}
+
+INLINE OVERLOADABLE uchar2 convert_uchar2_rtp(uchar2 v) {
+  return (uchar2)(convert_uchar_rtp(v.s0), convert_uchar_rtp(v.s1));
+}
+
+INLINE OVERLOADABLE uchar2 convert_uchar2_rtn(uchar2 v) {
+  return (uchar2)(convert_uchar_rtn(v.s0), convert_uchar_rtn(v.s1));
+}
+
+INLINE OVERLOADABLE float2 convert_float2_rte(uchar2 v) {
+  return (float2)(convert_float_rte(v.s0), convert_float_rte(v.s1));
+}
+
+INLINE OVERLOADABLE float2 convert_float2_rtz(uchar2 v) {
+  return (float2)(convert_float_rtz(v.s0), convert_float_rtz(v.s1));
+}
+
+INLINE OVERLOADABLE float2 convert_float2_rtp(uchar2 v) {
+  return (float2)(convert_float_rtp(v.s0), convert_float_rtp(v.s1));
+}
+
+INLINE OVERLOADABLE float2 convert_float2_rtn(uchar2 v) {
+  return (float2)(convert_float_rtn(v.s0), convert_float_rtn(v.s1));
+}
+
+INLINE OVERLOADABLE long2 convert_long2_rte(float2 v) {
+  return (long2)(convert_long_rte(v.s0), convert_long_rte(v.s1));
+}
+
+INLINE OVERLOADABLE long2 convert_long2_rtz(float2 v) {
+  return (long2)(convert_long_rtz(v.s0), convert_long_rtz(v.s1));
+}
+
+INLINE OVERLOADABLE long2 convert_long2_rtp(float2 v) {
+  return (long2)(convert_long_rtp(v.s0), convert_long_rtp(v.s1));
+}
+
+INLINE OVERLOADABLE long2 convert_long2_rtn(float2 v) {
+  return (long2)(convert_long_rtn(v.s0), convert_long_rtn(v.s1));
+}
+
+INLINE OVERLOADABLE ulong2 convert_ulong2_rte(float2 v) {
+  return (ulong2)(convert_ulong_rte(v.s0), convert_ulong_rte(v.s1));
+}
+
+INLINE OVERLOADABLE ulong2 convert_ulong2_rtz(float2 v) {
+  return (ulong2)(convert_ulong_rtz(v.s0), convert_ulong_rtz(v.s1));
+}
+
+INLINE OVERLOADABLE ulong2 convert_ulong2_rtp(float2 v) {
+  return (ulong2)(convert_ulong_rtp(v.s0), convert_ulong_rtp(v.s1));
+}
+
+INLINE OVERLOADABLE ulong2 convert_ulong2_rtn(float2 v) {
+  return (ulong2)(convert_ulong_rtn(v.s0), convert_ulong_rtn(v.s1));
+}
+
+INLINE OVERLOADABLE int2 convert_int2_rte(float2 v) {
+  return (int2)(convert_int_rte(v.s0), convert_int_rte(v.s1));
+}
+
+INLINE OVERLOADABLE int2 convert_int2_rtz(float2 v) {
+  return (int2)(convert_int_rtz(v.s0), convert_int_rtz(v.s1));
+}
+
+INLINE OVERLOADABLE int2 convert_int2_rtp(float2 v) {
+  return (int2)(convert_int_rtp(v.s0), convert_int_rtp(v.s1));
+}
+
+INLINE OVERLOADABLE int2 convert_int2_rtn(float2 v) {
+  return (int2)(convert_int_rtn(v.s0), convert_int_rtn(v.s1));
+}
+
+INLINE OVERLOADABLE uint2 convert_uint2_rte(float2 v) {
+  return (uint2)(convert_uint_rte(v.s0), convert_uint_rte(v.s1));
+}
+
+INLINE OVERLOADABLE uint2 convert_uint2_rtz(float2 v) {
+  return (uint2)(convert_uint_rtz(v.s0), convert_uint_rtz(v.s1));
+}
+
+INLINE OVERLOADABLE uint2 convert_uint2_rtp(float2 v) {
+  return (uint2)(convert_uint_rtp(v.s0), convert_uint_rtp(v.s1));
+}
+
+INLINE OVERLOADABLE uint2 convert_uint2_rtn(float2 v) {
+  return (uint2)(convert_uint_rtn(v.s0), convert_uint_rtn(v.s1));
+}
+
+INLINE OVERLOADABLE short2 convert_short2_rte(float2 v) {
+  return (short2)(convert_short_rte(v.s0), convert_short_rte(v.s1));
+}
+
+INLINE OVERLOADABLE short2 convert_short2_rtz(float2 v) {
+  return (short2)(convert_short_rtz(v.s0), convert_short_rtz(v.s1));
+}
+
+INLINE OVERLOADABLE short2 convert_short2_rtp(float2 v) {
+  return (short2)(convert_short_rtp(v.s0), convert_short_rtp(v.s1));
+}
+
+INLINE OVERLOADABLE short2 convert_short2_rtn(float2 v) {
+  return (short2)(convert_short_rtn(v.s0), convert_short_rtn(v.s1));
+}
+
+INLINE OVERLOADABLE ushort2 convert_ushort2_rte(float2 v) {
+  return (ushort2)(convert_ushort_rte(v.s0), convert_ushort_rte(v.s1));
+}
+
+INLINE OVERLOADABLE ushort2 convert_ushort2_rtz(float2 v) {
+  return (ushort2)(convert_ushort_rtz(v.s0), convert_ushort_rtz(v.s1));
+}
+
+INLINE OVERLOADABLE ushort2 convert_ushort2_rtp(float2 v) {
+  return (ushort2)(convert_ushort_rtp(v.s0), convert_ushort_rtp(v.s1));
+}
+
+INLINE OVERLOADABLE ushort2 convert_ushort2_rtn(float2 v) {
+  return (ushort2)(convert_ushort_rtn(v.s0), convert_ushort_rtn(v.s1));
+}
+
+INLINE OVERLOADABLE char2 convert_char2_rte(float2 v) {
+  return (char2)(convert_char_rte(v.s0), convert_char_rte(v.s1));
+}
+
+INLINE OVERLOADABLE char2 convert_char2_rtz(float2 v) {
+  return (char2)(convert_char_rtz(v.s0), convert_char_rtz(v.s1));
+}
+
+INLINE OVERLOADABLE char2 convert_char2_rtp(float2 v) {
+  return (char2)(convert_char_rtp(v.s0), convert_char_rtp(v.s1));
+}
+
+INLINE OVERLOADABLE char2 convert_char2_rtn(float2 v) {
+  return (char2)(convert_char_rtn(v.s0), convert_char_rtn(v.s1));
+}
+
+INLINE OVERLOADABLE uchar2 convert_uchar2_rte(float2 v) {
+  return (uchar2)(convert_uchar_rte(v.s0), convert_uchar_rte(v.s1));
+}
+
+INLINE OVERLOADABLE uchar2 convert_uchar2_rtz(float2 v) {
+  return (uchar2)(convert_uchar_rtz(v.s0), convert_uchar_rtz(v.s1));
+}
+
+INLINE OVERLOADABLE uchar2 convert_uchar2_rtp(float2 v) {
+  return (uchar2)(convert_uchar_rtp(v.s0), convert_uchar_rtp(v.s1));
+}
+
+INLINE OVERLOADABLE uchar2 convert_uchar2_rtn(float2 v) {
+  return (uchar2)(convert_uchar_rtn(v.s0), convert_uchar_rtn(v.s1));
+}
+
+INLINE OVERLOADABLE float2 convert_float2_rte(float2 v) {
+  return (float2)(convert_float_rte(v.s0), convert_float_rte(v.s1));
+}
+
+INLINE OVERLOADABLE float2 convert_float2_rtz(float2 v) {
+  return (float2)(convert_float_rtz(v.s0), convert_float_rtz(v.s1));
+}
+
+INLINE OVERLOADABLE float2 convert_float2_rtp(float2 v) {
+  return (float2)(convert_float_rtp(v.s0), convert_float_rtp(v.s1));
+}
+
+INLINE OVERLOADABLE float2 convert_float2_rtn(float2 v) {
+  return (float2)(convert_float_rtn(v.s0), convert_float_rtn(v.s1));
+}
+
+INLINE OVERLOADABLE long3 convert_long3_rte(long3 v) {
+  return (long3)(convert_long_rte(v.s0), convert_long_rte(v.s1), convert_long_rte(v.s2));
+}
+
+INLINE OVERLOADABLE long3 convert_long3_rtz(long3 v) {
+  return (long3)(convert_long_rtz(v.s0), convert_long_rtz(v.s1), convert_long_rtz(v.s2));
+}
+
+INLINE OVERLOADABLE long3 convert_long3_rtp(long3 v) {
+  return (long3)(convert_long_rtp(v.s0), convert_long_rtp(v.s1), convert_long_rtp(v.s2));
+}
+
+INLINE OVERLOADABLE long3 convert_long3_rtn(long3 v) {
+  return (long3)(convert_long_rtn(v.s0), convert_long_rtn(v.s1), convert_long_rtn(v.s2));
+}
+
+INLINE OVERLOADABLE ulong3 convert_ulong3_rte(long3 v) {
+  return (ulong3)(convert_ulong_rte(v.s0), convert_ulong_rte(v.s1), convert_ulong_rte(v.s2));
+}
+
+INLINE OVERLOADABLE ulong3 convert_ulong3_rtz(long3 v) {
+  return (ulong3)(convert_ulong_rtz(v.s0), convert_ulong_rtz(v.s1), convert_ulong_rtz(v.s2));
+}
+
+INLINE OVERLOADABLE ulong3 convert_ulong3_rtp(long3 v) {
+  return (ulong3)(convert_ulong_rtp(v.s0), convert_ulong_rtp(v.s1), convert_ulong_rtp(v.s2));
+}
+
+INLINE OVERLOADABLE ulong3 convert_ulong3_rtn(long3 v) {
+  return (ulong3)(convert_ulong_rtn(v.s0), convert_ulong_rtn(v.s1), convert_ulong_rtn(v.s2));
+}
+
+INLINE OVERLOADABLE int3 convert_int3_rte(long3 v) {
+  return (int3)(convert_int_rte(v.s0), convert_int_rte(v.s1), convert_int_rte(v.s2));
+}
+
+INLINE OVERLOADABLE int3 convert_int3_rtz(long3 v) {
+  return (int3)(convert_int_rtz(v.s0), convert_int_rtz(v.s1), convert_int_rtz(v.s2));
+}
+
+INLINE OVERLOADABLE int3 convert_int3_rtp(long3 v) {
+  return (int3)(convert_int_rtp(v.s0), convert_int_rtp(v.s1), convert_int_rtp(v.s2));
+}
+
+INLINE OVERLOADABLE int3 convert_int3_rtn(long3 v) {
+  return (int3)(convert_int_rtn(v.s0), convert_int_rtn(v.s1), convert_int_rtn(v.s2));
+}
+
+INLINE OVERLOADABLE uint3 convert_uint3_rte(long3 v) {
+  return (uint3)(convert_uint_rte(v.s0), convert_uint_rte(v.s1), convert_uint_rte(v.s2));
+}
+
+INLINE OVERLOADABLE uint3 convert_uint3_rtz(long3 v) {
+  return (uint3)(convert_uint_rtz(v.s0), convert_uint_rtz(v.s1), convert_uint_rtz(v.s2));
+}
+
+INLINE OVERLOADABLE uint3 convert_uint3_rtp(long3 v) {
+  return (uint3)(convert_uint_rtp(v.s0), convert_uint_rtp(v.s1), convert_uint_rtp(v.s2));
+}
+
+INLINE OVERLOADABLE uint3 convert_uint3_rtn(long3 v) {
+  return (uint3)(convert_uint_rtn(v.s0), convert_uint_rtn(v.s1), convert_uint_rtn(v.s2));
+}
+
+INLINE OVERLOADABLE short3 convert_short3_rte(long3 v) {
+  return (short3)(convert_short_rte(v.s0), convert_short_rte(v.s1), convert_short_rte(v.s2));
+}
+
+INLINE OVERLOADABLE short3 convert_short3_rtz(long3 v) {
+  return (short3)(convert_short_rtz(v.s0), convert_short_rtz(v.s1), convert_short_rtz(v.s2));
+}
+
+INLINE OVERLOADABLE short3 convert_short3_rtp(long3 v) {
+  return (short3)(convert_short_rtp(v.s0), convert_short_rtp(v.s1), convert_short_rtp(v.s2));
+}
+
+INLINE OVERLOADABLE short3 convert_short3_rtn(long3 v) {
+  return (short3)(convert_short_rtn(v.s0), convert_short_rtn(v.s1), convert_short_rtn(v.s2));
+}
+
+INLINE OVERLOADABLE ushort3 convert_ushort3_rte(long3 v) {
+  return (ushort3)(convert_ushort_rte(v.s0), convert_ushort_rte(v.s1), convert_ushort_rte(v.s2));
+}
+
+INLINE OVERLOADABLE ushort3 convert_ushort3_rtz(long3 v) {
+  return (ushort3)(convert_ushort_rtz(v.s0), convert_ushort_rtz(v.s1), convert_ushort_rtz(v.s2));
+}
+
+INLINE OVERLOADABLE ushort3 convert_ushort3_rtp(long3 v) {
+  return (ushort3)(convert_ushort_rtp(v.s0), convert_ushort_rtp(v.s1), convert_ushort_rtp(v.s2));
+}
+
+INLINE OVERLOADABLE ushort3 convert_ushort3_rtn(long3 v) {
+  return (ushort3)(convert_ushort_rtn(v.s0), convert_ushort_rtn(v.s1), convert_ushort_rtn(v.s2));
+}
+
+INLINE OVERLOADABLE char3 convert_char3_rte(long3 v) {
+  return (char3)(convert_char_rte(v.s0), convert_char_rte(v.s1), convert_char_rte(v.s2));
+}
+
+INLINE OVERLOADABLE char3 convert_char3_rtz(long3 v) {
+  return (char3)(convert_char_rtz(v.s0), convert_char_rtz(v.s1), convert_char_rtz(v.s2));
+}
+
+INLINE OVERLOADABLE char3 convert_char3_rtp(long3 v) {
+  return (char3)(convert_char_rtp(v.s0), convert_char_rtp(v.s1), convert_char_rtp(v.s2));
+}
+
+INLINE OVERLOADABLE char3 convert_char3_rtn(long3 v) {
+  return (char3)(convert_char_rtn(v.s0), convert_char_rtn(v.s1), convert_char_rtn(v.s2));
+}
+
+INLINE OVERLOADABLE uchar3 convert_uchar3_rte(long3 v) {
+  return (uchar3)(convert_uchar_rte(v.s0), convert_uchar_rte(v.s1), convert_uchar_rte(v.s2));
+}
+
+INLINE OVERLOADABLE uchar3 convert_uchar3_rtz(long3 v) {
+  return (uchar3)(convert_uchar_rtz(v.s0), convert_uchar_rtz(v.s1), convert_uchar_rtz(v.s2));
+}
+
+INLINE OVERLOADABLE uchar3 convert_uchar3_rtp(long3 v) {
+  return (uchar3)(convert_uchar_rtp(v.s0), convert_uchar_rtp(v.s1), convert_uchar_rtp(v.s2));
+}
+
+INLINE OVERLOADABLE uchar3 convert_uchar3_rtn(long3 v) {
+  return (uchar3)(convert_uchar_rtn(v.s0), convert_uchar_rtn(v.s1), convert_uchar_rtn(v.s2));
+}
+
+INLINE OVERLOADABLE float3 convert_float3_rte(long3 v) {
+  return (float3)(convert_float_rte(v.s0), convert_float_rte(v.s1), convert_float_rte(v.s2));
+}
+
+INLINE OVERLOADABLE float3 convert_float3_rtz(long3 v) {
+  return (float3)(convert_float_rtz(v.s0), convert_float_rtz(v.s1), convert_float_rtz(v.s2));
+}
+
+INLINE OVERLOADABLE float3 convert_float3_rtp(long3 v) {
+  return (float3)(convert_float_rtp(v.s0), convert_float_rtp(v.s1), convert_float_rtp(v.s2));
+}
+
+INLINE OVERLOADABLE float3 convert_float3_rtn(long3 v) {
+  return (float3)(convert_float_rtn(v.s0), convert_float_rtn(v.s1), convert_float_rtn(v.s2));
+}
+
+INLINE OVERLOADABLE long3 convert_long3_rte(ulong3 v) {
+  return (long3)(convert_long_rte(v.s0), convert_long_rte(v.s1), convert_long_rte(v.s2));
+}
+
+INLINE OVERLOADABLE long3 convert_long3_rtz(ulong3 v) {
+  return (long3)(convert_long_rtz(v.s0), convert_long_rtz(v.s1), convert_long_rtz(v.s2));
+}
+
+INLINE OVERLOADABLE long3 convert_long3_rtp(ulong3 v) {
+  return (long3)(convert_long_rtp(v.s0), convert_long_rtp(v.s1), convert_long_rtp(v.s2));
+}
+
+INLINE OVERLOADABLE long3 convert_long3_rtn(ulong3 v) {
+  return (long3)(convert_long_rtn(v.s0), convert_long_rtn(v.s1), convert_long_rtn(v.s2));
+}
+
+INLINE OVERLOADABLE ulong3 convert_ulong3_rte(ulong3 v) {
+  return (ulong3)(convert_ulong_rte(v.s0), convert_ulong_rte(v.s1), convert_ulong_rte(v.s2));
+}
+
+INLINE OVERLOADABLE ulong3 convert_ulong3_rtz(ulong3 v) {
+  return (ulong3)(convert_ulong_rtz(v.s0), convert_ulong_rtz(v.s1), convert_ulong_rtz(v.s2));
+}
+
+INLINE OVERLOADABLE ulong3 convert_ulong3_rtp(ulong3 v) {
+  return (ulong3)(convert_ulong_rtp(v.s0), convert_ulong_rtp(v.s1), convert_ulong_rtp(v.s2));
+}
+
+INLINE OVERLOADABLE ulong3 convert_ulong3_rtn(ulong3 v) {
+  return (ulong3)(convert_ulong_rtn(v.s0), convert_ulong_rtn(v.s1), convert_ulong_rtn(v.s2));
+}
+
+INLINE OVERLOADABLE int3 convert_int3_rte(ulong3 v) {
+  return (int3)(convert_int_rte(v.s0), convert_int_rte(v.s1), convert_int_rte(v.s2));
+}
+
+INLINE OVERLOADABLE int3 convert_int3_rtz(ulong3 v) {
+  return (int3)(convert_int_rtz(v.s0), convert_int_rtz(v.s1), convert_int_rtz(v.s2));
+}
+
+INLINE OVERLOADABLE int3 convert_int3_rtp(ulong3 v) {
+  return (int3)(convert_int_rtp(v.s0), convert_int_rtp(v.s1), convert_int_rtp(v.s2));
+}
+
+INLINE OVERLOADABLE int3 convert_int3_rtn(ulong3 v) {
+  return (int3)(convert_int_rtn(v.s0), convert_int_rtn(v.s1), convert_int_rtn(v.s2));
+}
+
+INLINE OVERLOADABLE uint3 convert_uint3_rte(ulong3 v) {
+  return (uint3)(convert_uint_rte(v.s0), convert_uint_rte(v.s1), convert_uint_rte(v.s2));
+}
+
+INLINE OVERLOADABLE uint3 convert_uint3_rtz(ulong3 v) {
+  return (uint3)(convert_uint_rtz(v.s0), convert_uint_rtz(v.s1), convert_uint_rtz(v.s2));
+}
+
+INLINE OVERLOADABLE uint3 convert_uint3_rtp(ulong3 v) {
+  return (uint3)(convert_uint_rtp(v.s0), convert_uint_rtp(v.s1), convert_uint_rtp(v.s2));
+}
+
+INLINE OVERLOADABLE uint3 convert_uint3_rtn(ulong3 v) {
+  return (uint3)(convert_uint_rtn(v.s0), convert_uint_rtn(v.s1), convert_uint_rtn(v.s2));
+}
+
+INLINE OVERLOADABLE short3 convert_short3_rte(ulong3 v) {
+  return (short3)(convert_short_rte(v.s0), convert_short_rte(v.s1), convert_short_rte(v.s2));
+}
+
+INLINE OVERLOADABLE short3 convert_short3_rtz(ulong3 v) {
+  return (short3)(convert_short_rtz(v.s0), convert_short_rtz(v.s1), convert_short_rtz(v.s2));
+}
+
+INLINE OVERLOADABLE short3 convert_short3_rtp(ulong3 v) {
+  return (short3)(convert_short_rtp(v.s0), convert_short_rtp(v.s1), convert_short_rtp(v.s2));
+}
+
+INLINE OVERLOADABLE short3 convert_short3_rtn(ulong3 v) {
+  return (short3)(convert_short_rtn(v.s0), convert_short_rtn(v.s1), convert_short_rtn(v.s2));
+}
+
+INLINE OVERLOADABLE ushort3 convert_ushort3_rte(ulong3 v) {
+  return (ushort3)(convert_ushort_rte(v.s0), convert_ushort_rte(v.s1), convert_ushort_rte(v.s2));
+}
+
+INLINE OVERLOADABLE ushort3 convert_ushort3_rtz(ulong3 v) {
+  return (ushort3)(convert_ushort_rtz(v.s0), convert_ushort_rtz(v.s1), convert_ushort_rtz(v.s2));
+}
+
+INLINE OVERLOADABLE ushort3 convert_ushort3_rtp(ulong3 v) {
+  return (ushort3)(convert_ushort_rtp(v.s0), convert_ushort_rtp(v.s1), convert_ushort_rtp(v.s2));
+}
+
+INLINE OVERLOADABLE ushort3 convert_ushort3_rtn(ulong3 v) {
+  return (ushort3)(convert_ushort_rtn(v.s0), convert_ushort_rtn(v.s1), convert_ushort_rtn(v.s2));
+}
+
+INLINE OVERLOADABLE char3 convert_char3_rte(ulong3 v) {
+  return (char3)(convert_char_rte(v.s0), convert_char_rte(v.s1), convert_char_rte(v.s2));
+}
+
+INLINE OVERLOADABLE char3 convert_char3_rtz(ulong3 v) {
+  return (char3)(convert_char_rtz(v.s0), convert_char_rtz(v.s1), convert_char_rtz(v.s2));
+}
+
+INLINE OVERLOADABLE char3 convert_char3_rtp(ulong3 v) {
+  return (char3)(convert_char_rtp(v.s0), convert_char_rtp(v.s1), convert_char_rtp(v.s2));
+}
+
+INLINE OVERLOADABLE char3 convert_char3_rtn(ulong3 v) {
+  return (char3)(convert_char_rtn(v.s0), convert_char_rtn(v.s1), convert_char_rtn(v.s2));
+}
+
+INLINE OVERLOADABLE uchar3 convert_uchar3_rte(ulong3 v) {
+  return (uchar3)(convert_uchar_rte(v.s0), convert_uchar_rte(v.s1), convert_uchar_rte(v.s2));
+}
+
+INLINE OVERLOADABLE uchar3 convert_uchar3_rtz(ulong3 v) {
+  return (uchar3)(convert_uchar_rtz(v.s0), convert_uchar_rtz(v.s1), convert_uchar_rtz(v.s2));
+}
+
+INLINE OVERLOADABLE uchar3 convert_uchar3_rtp(ulong3 v) {
+  return (uchar3)(convert_uchar_rtp(v.s0), convert_uchar_rtp(v.s1), convert_uchar_rtp(v.s2));
+}
+
+INLINE OVERLOADABLE uchar3 convert_uchar3_rtn(ulong3 v) {
+  return (uchar3)(convert_uchar_rtn(v.s0), convert_uchar_rtn(v.s1), convert_uchar_rtn(v.s2));
+}
+
+INLINE OVERLOADABLE float3 convert_float3_rte(ulong3 v) {
+  return (float3)(convert_float_rte(v.s0), convert_float_rte(v.s1), convert_float_rte(v.s2));
+}
+
+INLINE OVERLOADABLE float3 convert_float3_rtz(ulong3 v) {
+  return (float3)(convert_float_rtz(v.s0), convert_float_rtz(v.s1), convert_float_rtz(v.s2));
+}
+
+INLINE OVERLOADABLE float3 convert_float3_rtp(ulong3 v) {
+  return (float3)(convert_float_rtp(v.s0), convert_float_rtp(v.s1), convert_float_rtp(v.s2));
+}
+
+INLINE OVERLOADABLE float3 convert_float3_rtn(ulong3 v) {
+  return (float3)(convert_float_rtn(v.s0), convert_float_rtn(v.s1), convert_float_rtn(v.s2));
+}
+
+INLINE OVERLOADABLE long3 convert_long3_rte(int3 v) {
+  return (long3)(convert_long_rte(v.s0), convert_long_rte(v.s1), convert_long_rte(v.s2));
+}
+
+INLINE OVERLOADABLE long3 convert_long3_rtz(int3 v) {
+  return (long3)(convert_long_rtz(v.s0), convert_long_rtz(v.s1), convert_long_rtz(v.s2));
+}
+
+INLINE OVERLOADABLE long3 convert_long3_rtp(int3 v) {
+  return (long3)(convert_long_rtp(v.s0), convert_long_rtp(v.s1), convert_long_rtp(v.s2));
+}
+
+INLINE OVERLOADABLE long3 convert_long3_rtn(int3 v) {
+  return (long3)(convert_long_rtn(v.s0), convert_long_rtn(v.s1), convert_long_rtn(v.s2));
+}
+
+INLINE OVERLOADABLE ulong3 convert_ulong3_rte(int3 v) {
+  return (ulong3)(convert_ulong_rte(v.s0), convert_ulong_rte(v.s1), convert_ulong_rte(v.s2));
+}
+
+INLINE OVERLOADABLE ulong3 convert_ulong3_rtz(int3 v) {
+  return (ulong3)(convert_ulong_rtz(v.s0), convert_ulong_rtz(v.s1), convert_ulong_rtz(v.s2));
+}
+
+INLINE OVERLOADABLE ulong3 convert_ulong3_rtp(int3 v) {
+  return (ulong3)(convert_ulong_rtp(v.s0), convert_ulong_rtp(v.s1), convert_ulong_rtp(v.s2));
+}
+
+INLINE OVERLOADABLE ulong3 convert_ulong3_rtn(int3 v) {
+  return (ulong3)(convert_ulong_rtn(v.s0), convert_ulong_rtn(v.s1), convert_ulong_rtn(v.s2));
+}
+
+INLINE OVERLOADABLE int3 convert_int3_rte(int3 v) {
+  return (int3)(convert_int_rte(v.s0), convert_int_rte(v.s1), convert_int_rte(v.s2));
+}
+
+INLINE OVERLOADABLE int3 convert_int3_rtz(int3 v) {
+  return (int3)(convert_int_rtz(v.s0), convert_int_rtz(v.s1), convert_int_rtz(v.s2));
+}
+
+INLINE OVERLOADABLE int3 convert_int3_rtp(int3 v) {
+  return (int3)(convert_int_rtp(v.s0), convert_int_rtp(v.s1), convert_int_rtp(v.s2));
+}
+
+INLINE OVERLOADABLE int3 convert_int3_rtn(int3 v) {
+  return (int3)(convert_int_rtn(v.s0), convert_int_rtn(v.s1), convert_int_rtn(v.s2));
+}
+
+INLINE OVERLOADABLE uint3 convert_uint3_rte(int3 v) {
+  return (uint3)(convert_uint_rte(v.s0), convert_uint_rte(v.s1), convert_uint_rte(v.s2));
+}
+
+INLINE OVERLOADABLE uint3 convert_uint3_rtz(int3 v) {
+  return (uint3)(convert_uint_rtz(v.s0), convert_uint_rtz(v.s1), convert_uint_rtz(v.s2));
+}
+
+INLINE OVERLOADABLE uint3 convert_uint3_rtp(int3 v) {
+  return (uint3)(convert_uint_rtp(v.s0), convert_uint_rtp(v.s1), convert_uint_rtp(v.s2));
+}
+
+INLINE OVERLOADABLE uint3 convert_uint3_rtn(int3 v) {
+  return (uint3)(convert_uint_rtn(v.s0), convert_uint_rtn(v.s1), convert_uint_rtn(v.s2));
+}
+
+INLINE OVERLOADABLE short3 convert_short3_rte(int3 v) {
+  return (short3)(convert_short_rte(v.s0), convert_short_rte(v.s1), convert_short_rte(v.s2));
+}
+
+INLINE OVERLOADABLE short3 convert_short3_rtz(int3 v) {
+  return (short3)(convert_short_rtz(v.s0), convert_short_rtz(v.s1), convert_short_rtz(v.s2));
+}
+
+INLINE OVERLOADABLE short3 convert_short3_rtp(int3 v) {
+  return (short3)(convert_short_rtp(v.s0), convert_short_rtp(v.s1), convert_short_rtp(v.s2));
+}
+
+INLINE OVERLOADABLE short3 convert_short3_rtn(int3 v) {
+  return (short3)(convert_short_rtn(v.s0), convert_short_rtn(v.s1), convert_short_rtn(v.s2));
+}
+
+INLINE OVERLOADABLE ushort3 convert_ushort3_rte(int3 v) {
+  return (ushort3)(convert_ushort_rte(v.s0), convert_ushort_rte(v.s1), convert_ushort_rte(v.s2));
+}
+
+INLINE OVERLOADABLE ushort3 convert_ushort3_rtz(int3 v) {
+  return (ushort3)(convert_ushort_rtz(v.s0), convert_ushort_rtz(v.s1), convert_ushort_rtz(v.s2));
+}
+
+INLINE OVERLOADABLE ushort3 convert_ushort3_rtp(int3 v) {
+  return (ushort3)(convert_ushort_rtp(v.s0), convert_ushort_rtp(v.s1), convert_ushort_rtp(v.s2));
+}
+
+INLINE OVERLOADABLE ushort3 convert_ushort3_rtn(int3 v) {
+  return (ushort3)(convert_ushort_rtn(v.s0), convert_ushort_rtn(v.s1), convert_ushort_rtn(v.s2));
+}
+
+INLINE OVERLOADABLE char3 convert_char3_rte(int3 v) {
+  return (char3)(convert_char_rte(v.s0), convert_char_rte(v.s1), convert_char_rte(v.s2));
+}
+
+INLINE OVERLOADABLE char3 convert_char3_rtz(int3 v) {
+  return (char3)(convert_char_rtz(v.s0), convert_char_rtz(v.s1), convert_char_rtz(v.s2));
+}
+
+INLINE OVERLOADABLE char3 convert_char3_rtp(int3 v) {
+  return (char3)(convert_char_rtp(v.s0), convert_char_rtp(v.s1), convert_char_rtp(v.s2));
+}
+
+INLINE OVERLOADABLE char3 convert_char3_rtn(int3 v) {
+  return (char3)(convert_char_rtn(v.s0), convert_char_rtn(v.s1), convert_char_rtn(v.s2));
+}
+
+INLINE OVERLOADABLE uchar3 convert_uchar3_rte(int3 v) {
+  return (uchar3)(convert_uchar_rte(v.s0), convert_uchar_rte(v.s1), convert_uchar_rte(v.s2));
+}
+
+INLINE OVERLOADABLE uchar3 convert_uchar3_rtz(int3 v) {
+  return (uchar3)(convert_uchar_rtz(v.s0), convert_uchar_rtz(v.s1), convert_uchar_rtz(v.s2));
+}
+
+INLINE OVERLOADABLE uchar3 convert_uchar3_rtp(int3 v) {
+  return (uchar3)(convert_uchar_rtp(v.s0), convert_uchar_rtp(v.s1), convert_uchar_rtp(v.s2));
+}
+
+INLINE OVERLOADABLE uchar3 convert_uchar3_rtn(int3 v) {
+  return (uchar3)(convert_uchar_rtn(v.s0), convert_uchar_rtn(v.s1), convert_uchar_rtn(v.s2));
+}
+
+INLINE OVERLOADABLE float3 convert_float3_rte(int3 v) {
+  return (float3)(convert_float_rte(v.s0), convert_float_rte(v.s1), convert_float_rte(v.s2));
+}
+
+INLINE OVERLOADABLE float3 convert_float3_rtz(int3 v) {
+  return (float3)(convert_float_rtz(v.s0), convert_float_rtz(v.s1), convert_float_rtz(v.s2));
+}
+
+INLINE OVERLOADABLE float3 convert_float3_rtp(int3 v) {
+  return (float3)(convert_float_rtp(v.s0), convert_float_rtp(v.s1), convert_float_rtp(v.s2));
+}
+
+INLINE OVERLOADABLE float3 convert_float3_rtn(int3 v) {
+  return (float3)(convert_float_rtn(v.s0), convert_float_rtn(v.s1), convert_float_rtn(v.s2));
+}
+
+INLINE OVERLOADABLE long3 convert_long3_rte(uint3 v) {
+  return (long3)(convert_long_rte(v.s0), convert_long_rte(v.s1), convert_long_rte(v.s2));
+}
+
+INLINE OVERLOADABLE long3 convert_long3_rtz(uint3 v) {
+  return (long3)(convert_long_rtz(v.s0), convert_long_rtz(v.s1), convert_long_rtz(v.s2));
+}
+
+INLINE OVERLOADABLE long3 convert_long3_rtp(uint3 v) {
+  return (long3)(convert_long_rtp(v.s0), convert_long_rtp(v.s1), convert_long_rtp(v.s2));
+}
+
+INLINE OVERLOADABLE long3 convert_long3_rtn(uint3 v) {
+  return (long3)(convert_long_rtn(v.s0), convert_long_rtn(v.s1), convert_long_rtn(v.s2));
+}
+
+INLINE OVERLOADABLE ulong3 convert_ulong3_rte(uint3 v) {
+  return (ulong3)(convert_ulong_rte(v.s0), convert_ulong_rte(v.s1), convert_ulong_rte(v.s2));
+}
+
+INLINE OVERLOADABLE ulong3 convert_ulong3_rtz(uint3 v) {
+  return (ulong3)(convert_ulong_rtz(v.s0), convert_ulong_rtz(v.s1), convert_ulong_rtz(v.s2));
+}
+
+INLINE OVERLOADABLE ulong3 convert_ulong3_rtp(uint3 v) {
+  return (ulong3)(convert_ulong_rtp(v.s0), convert_ulong_rtp(v.s1), convert_ulong_rtp(v.s2));
+}
+
+INLINE OVERLOADABLE ulong3 convert_ulong3_rtn(uint3 v) {
+  return (ulong3)(convert_ulong_rtn(v.s0), convert_ulong_rtn(v.s1), convert_ulong_rtn(v.s2));
+}
+
+INLINE OVERLOADABLE int3 convert_int3_rte(uint3 v) {
+  return (int3)(convert_int_rte(v.s0), convert_int_rte(v.s1), convert_int_rte(v.s2));
+}
+
+INLINE OVERLOADABLE int3 convert_int3_rtz(uint3 v) {
+  return (int3)(convert_int_rtz(v.s0), convert_int_rtz(v.s1), convert_int_rtz(v.s2));
+}
+
+INLINE OVERLOADABLE int3 convert_int3_rtp(uint3 v) {
+  return (int3)(convert_int_rtp(v.s0), convert_int_rtp(v.s1), convert_int_rtp(v.s2));
+}
+
+INLINE OVERLOADABLE int3 convert_int3_rtn(uint3 v) {
+  return (int3)(convert_int_rtn(v.s0), convert_int_rtn(v.s1), convert_int_rtn(v.s2));
+}
+
+INLINE OVERLOADABLE uint3 convert_uint3_rte(uint3 v) {
+  return (uint3)(convert_uint_rte(v.s0), convert_uint_rte(v.s1), convert_uint_rte(v.s2));
+}
+
+INLINE OVERLOADABLE uint3 convert_uint3_rtz(uint3 v) {
+  return (uint3)(convert_uint_rtz(v.s0), convert_uint_rtz(v.s1), convert_uint_rtz(v.s2));
+}
+
+INLINE OVERLOADABLE uint3 convert_uint3_rtp(uint3 v) {
+  return (uint3)(convert_uint_rtp(v.s0), convert_uint_rtp(v.s1), convert_uint_rtp(v.s2));
+}
+
+INLINE OVERLOADABLE uint3 convert_uint3_rtn(uint3 v) {
+  return (uint3)(convert_uint_rtn(v.s0), convert_uint_rtn(v.s1), convert_uint_rtn(v.s2));
+}
+
+INLINE OVERLOADABLE short3 convert_short3_rte(uint3 v) {
+  return (short3)(convert_short_rte(v.s0), convert_short_rte(v.s1), convert_short_rte(v.s2));
+}
+
+INLINE OVERLOADABLE short3 convert_short3_rtz(uint3 v) {
+  return (short3)(convert_short_rtz(v.s0), convert_short_rtz(v.s1), convert_short_rtz(v.s2));
+}
+
+INLINE OVERLOADABLE short3 convert_short3_rtp(uint3 v) {
+  return (short3)(convert_short_rtp(v.s0), convert_short_rtp(v.s1), convert_short_rtp(v.s2));
+}
+
+INLINE OVERLOADABLE short3 convert_short3_rtn(uint3 v) {
+  return (short3)(convert_short_rtn(v.s0), convert_short_rtn(v.s1), convert_short_rtn(v.s2));
+}
+
+INLINE OVERLOADABLE ushort3 convert_ushort3_rte(uint3 v) {
+  return (ushort3)(convert_ushort_rte(v.s0), convert_ushort_rte(v.s1), convert_ushort_rte(v.s2));
+}
+
+INLINE OVERLOADABLE ushort3 convert_ushort3_rtz(uint3 v) {
+  return (ushort3)(convert_ushort_rtz(v.s0), convert_ushort_rtz(v.s1), convert_ushort_rtz(v.s2));
+}
+
+INLINE OVERLOADABLE ushort3 convert_ushort3_rtp(uint3 v) {
+  return (ushort3)(convert_ushort_rtp(v.s0), convert_ushort_rtp(v.s1), convert_ushort_rtp(v.s2));
+}
+
+INLINE OVERLOADABLE ushort3 convert_ushort3_rtn(uint3 v) {
+  return (ushort3)(convert_ushort_rtn(v.s0), convert_ushort_rtn(v.s1), convert_ushort_rtn(v.s2));
+}
+
+INLINE OVERLOADABLE char3 convert_char3_rte(uint3 v) {
+  return (char3)(convert_char_rte(v.s0), convert_char_rte(v.s1), convert_char_rte(v.s2));
+}
+
+INLINE OVERLOADABLE char3 convert_char3_rtz(uint3 v) {
+  return (char3)(convert_char_rtz(v.s0), convert_char_rtz(v.s1), convert_char_rtz(v.s2));
+}
+
+INLINE OVERLOADABLE char3 convert_char3_rtp(uint3 v) {
+  return (char3)(convert_char_rtp(v.s0), convert_char_rtp(v.s1), convert_char_rtp(v.s2));
+}
+
+INLINE OVERLOADABLE char3 convert_char3_rtn(uint3 v) {
+  return (char3)(convert_char_rtn(v.s0), convert_char_rtn(v.s1), convert_char_rtn(v.s2));
+}
+
+INLINE OVERLOADABLE uchar3 convert_uchar3_rte(uint3 v) {
+  return (uchar3)(convert_uchar_rte(v.s0), convert_uchar_rte(v.s1), convert_uchar_rte(v.s2));
+}
+
+INLINE OVERLOADABLE uchar3 convert_uchar3_rtz(uint3 v) {
+  return (uchar3)(convert_uchar_rtz(v.s0), convert_uchar_rtz(v.s1), convert_uchar_rtz(v.s2));
+}
+
+INLINE OVERLOADABLE uchar3 convert_uchar3_rtp(uint3 v) {
+  return (uchar3)(convert_uchar_rtp(v.s0), convert_uchar_rtp(v.s1), convert_uchar_rtp(v.s2));
+}
+
+INLINE OVERLOADABLE uchar3 convert_uchar3_rtn(uint3 v) {
+  return (uchar3)(convert_uchar_rtn(v.s0), convert_uchar_rtn(v.s1), convert_uchar_rtn(v.s2));
+}
+
+INLINE OVERLOADABLE float3 convert_float3_rte(uint3 v) {
+  return (float3)(convert_float_rte(v.s0), convert_float_rte(v.s1), convert_float_rte(v.s2));
+}
+
+INLINE OVERLOADABLE float3 convert_float3_rtz(uint3 v) {
+  return (float3)(convert_float_rtz(v.s0), convert_float_rtz(v.s1), convert_float_rtz(v.s2));
+}
+
+INLINE OVERLOADABLE float3 convert_float3_rtp(uint3 v) {
+  return (float3)(convert_float_rtp(v.s0), convert_float_rtp(v.s1), convert_float_rtp(v.s2));
+}
+
+INLINE OVERLOADABLE float3 convert_float3_rtn(uint3 v) {
+  return (float3)(convert_float_rtn(v.s0), convert_float_rtn(v.s1), convert_float_rtn(v.s2));
+}
+
+INLINE OVERLOADABLE long3 convert_long3_rte(short3 v) {
+  return (long3)(convert_long_rte(v.s0), convert_long_rte(v.s1), convert_long_rte(v.s2));
+}
+
+INLINE OVERLOADABLE long3 convert_long3_rtz(short3 v) {
+  return (long3)(convert_long_rtz(v.s0), convert_long_rtz(v.s1), convert_long_rtz(v.s2));
+}
+
+INLINE OVERLOADABLE long3 convert_long3_rtp(short3 v) {
+  return (long3)(convert_long_rtp(v.s0), convert_long_rtp(v.s1), convert_long_rtp(v.s2));
+}
+
+INLINE OVERLOADABLE long3 convert_long3_rtn(short3 v) {
+  return (long3)(convert_long_rtn(v.s0), convert_long_rtn(v.s1), convert_long_rtn(v.s2));
+}
+
+INLINE OVERLOADABLE ulong3 convert_ulong3_rte(short3 v) {
+  return (ulong3)(convert_ulong_rte(v.s0), convert_ulong_rte(v.s1), convert_ulong_rte(v.s2));
+}
+
+INLINE OVERLOADABLE ulong3 convert_ulong3_rtz(short3 v) {
+  return (ulong3)(convert_ulong_rtz(v.s0), convert_ulong_rtz(v.s1), convert_ulong_rtz(v.s2));
+}
+
+INLINE OVERLOADABLE ulong3 convert_ulong3_rtp(short3 v) {
+  return (ulong3)(convert_ulong_rtp(v.s0), convert_ulong_rtp(v.s1), convert_ulong_rtp(v.s2));
+}
+
+INLINE OVERLOADABLE ulong3 convert_ulong3_rtn(short3 v) {
+  return (ulong3)(convert_ulong_rtn(v.s0), convert_ulong_rtn(v.s1), convert_ulong_rtn(v.s2));
+}
+
+INLINE OVERLOADABLE int3 convert_int3_rte(short3 v) {
+  return (int3)(convert_int_rte(v.s0), convert_int_rte(v.s1), convert_int_rte(v.s2));
+}
+
+INLINE OVERLOADABLE int3 convert_int3_rtz(short3 v) {
+  return (int3)(convert_int_rtz(v.s0), convert_int_rtz(v.s1), convert_int_rtz(v.s2));
+}
+
+INLINE OVERLOADABLE int3 convert_int3_rtp(short3 v) {
+  return (int3)(convert_int_rtp(v.s0), convert_int_rtp(v.s1), convert_int_rtp(v.s2));
+}
+
+INLINE OVERLOADABLE int3 convert_int3_rtn(short3 v) {
+  return (int3)(convert_int_rtn(v.s0), convert_int_rtn(v.s1), convert_int_rtn(v.s2));
+}
+
+INLINE OVERLOADABLE uint3 convert_uint3_rte(short3 v) {
+  return (uint3)(convert_uint_rte(v.s0), convert_uint_rte(v.s1), convert_uint_rte(v.s2));
+}
+
+INLINE OVERLOADABLE uint3 convert_uint3_rtz(short3 v) {
+  return (uint3)(convert_uint_rtz(v.s0), convert_uint_rtz(v.s1), convert_uint_rtz(v.s2));
+}
+
+INLINE OVERLOADABLE uint3 convert_uint3_rtp(short3 v) {
+  return (uint3)(convert_uint_rtp(v.s0), convert_uint_rtp(v.s1), convert_uint_rtp(v.s2));
+}
+
+INLINE OVERLOADABLE uint3 convert_uint3_rtn(short3 v) {
+  return (uint3)(convert_uint_rtn(v.s0), convert_uint_rtn(v.s1), convert_uint_rtn(v.s2));
+}
+
+INLINE OVERLOADABLE short3 convert_short3_rte(short3 v) {
+  return (short3)(convert_short_rte(v.s0), convert_short_rte(v.s1), convert_short_rte(v.s2));
+}
+
+INLINE OVERLOADABLE short3 convert_short3_rtz(short3 v) {
+  return (short3)(convert_short_rtz(v.s0), convert_short_rtz(v.s1), convert_short_rtz(v.s2));
+}
+
+INLINE OVERLOADABLE short3 convert_short3_rtp(short3 v) {
+  return (short3)(convert_short_rtp(v.s0), convert_short_rtp(v.s1), convert_short_rtp(v.s2));
+}
+
+INLINE OVERLOADABLE short3 convert_short3_rtn(short3 v) {
+  return (short3)(convert_short_rtn(v.s0), convert_short_rtn(v.s1), convert_short_rtn(v.s2));
+}
+
+INLINE OVERLOADABLE ushort3 convert_ushort3_rte(short3 v) {
+  return (ushort3)(convert_ushort_rte(v.s0), convert_ushort_rte(v.s1), convert_ushort_rte(v.s2));
+}
+
+INLINE OVERLOADABLE ushort3 convert_ushort3_rtz(short3 v) {
+  return (ushort3)(convert_ushort_rtz(v.s0), convert_ushort_rtz(v.s1), convert_ushort_rtz(v.s2));
+}
+
+INLINE OVERLOADABLE ushort3 convert_ushort3_rtp(short3 v) {
+  return (ushort3)(convert_ushort_rtp(v.s0), convert_ushort_rtp(v.s1), convert_ushort_rtp(v.s2));
+}
+
+INLINE OVERLOADABLE ushort3 convert_ushort3_rtn(short3 v) {
+  return (ushort3)(convert_ushort_rtn(v.s0), convert_ushort_rtn(v.s1), convert_ushort_rtn(v.s2));
+}
+
+INLINE OVERLOADABLE char3 convert_char3_rte(short3 v) {
+  return (char3)(convert_char_rte(v.s0), convert_char_rte(v.s1), convert_char_rte(v.s2));
+}
+
+INLINE OVERLOADABLE char3 convert_char3_rtz(short3 v) {
+  return (char3)(convert_char_rtz(v.s0), convert_char_rtz(v.s1), convert_char_rtz(v.s2));
+}
+
+INLINE OVERLOADABLE char3 convert_char3_rtp(short3 v) {
+  return (char3)(convert_char_rtp(v.s0), convert_char_rtp(v.s1), convert_char_rtp(v.s2));
+}
+
+INLINE OVERLOADABLE char3 convert_char3_rtn(short3 v) {
+  return (char3)(convert_char_rtn(v.s0), convert_char_rtn(v.s1), convert_char_rtn(v.s2));
+}
+
+INLINE OVERLOADABLE uchar3 convert_uchar3_rte(short3 v) {
+  return (uchar3)(convert_uchar_rte(v.s0), convert_uchar_rte(v.s1), convert_uchar_rte(v.s2));
+}
+
+INLINE OVERLOADABLE uchar3 convert_uchar3_rtz(short3 v) {
+  return (uchar3)(convert_uchar_rtz(v.s0), convert_uchar_rtz(v.s1), convert_uchar_rtz(v.s2));
+}
+
+INLINE OVERLOADABLE uchar3 convert_uchar3_rtp(short3 v) {
+  return (uchar3)(convert_uchar_rtp(v.s0), convert_uchar_rtp(v.s1), convert_uchar_rtp(v.s2));
+}
+
+INLINE OVERLOADABLE uchar3 convert_uchar3_rtn(short3 v) {
+  return (uchar3)(convert_uchar_rtn(v.s0), convert_uchar_rtn(v.s1), convert_uchar_rtn(v.s2));
+}
+
+INLINE OVERLOADABLE float3 convert_float3_rte(short3 v) {
+  return (float3)(convert_float_rte(v.s0), convert_float_rte(v.s1), convert_float_rte(v.s2));
+}
+
+INLINE OVERLOADABLE float3 convert_float3_rtz(short3 v) {
+  return (float3)(convert_float_rtz(v.s0), convert_float_rtz(v.s1), convert_float_rtz(v.s2));
+}
+
+INLINE OVERLOADABLE float3 convert_float3_rtp(short3 v) {
+  return (float3)(convert_float_rtp(v.s0), convert_float_rtp(v.s1), convert_float_rtp(v.s2));
+}
+
+INLINE OVERLOADABLE float3 convert_float3_rtn(short3 v) {
+  return (float3)(convert_float_rtn(v.s0), convert_float_rtn(v.s1), convert_float_rtn(v.s2));
+}
+
+INLINE OVERLOADABLE long3 convert_long3_rte(ushort3 v) {
+  return (long3)(convert_long_rte(v.s0), convert_long_rte(v.s1), convert_long_rte(v.s2));
+}
+
+INLINE OVERLOADABLE long3 convert_long3_rtz(ushort3 v) {
+  return (long3)(convert_long_rtz(v.s0), convert_long_rtz(v.s1), convert_long_rtz(v.s2));
+}
+
+INLINE OVERLOADABLE long3 convert_long3_rtp(ushort3 v) {
+  return (long3)(convert_long_rtp(v.s0), convert_long_rtp(v.s1), convert_long_rtp(v.s2));
+}
+
+INLINE OVERLOADABLE long3 convert_long3_rtn(ushort3 v) {
+  return (long3)(convert_long_rtn(v.s0), convert_long_rtn(v.s1), convert_long_rtn(v.s2));
+}
+
+INLINE OVERLOADABLE ulong3 convert_ulong3_rte(ushort3 v) {
+  return (ulong3)(convert_ulong_rte(v.s0), convert_ulong_rte(v.s1), convert_ulong_rte(v.s2));
+}
+
+INLINE OVERLOADABLE ulong3 convert_ulong3_rtz(ushort3 v) {
+  return (ulong3)(convert_ulong_rtz(v.s0), convert_ulong_rtz(v.s1), convert_ulong_rtz(v.s2));
+}
+
+INLINE OVERLOADABLE ulong3 convert_ulong3_rtp(ushort3 v) {
+  return (ulong3)(convert_ulong_rtp(v.s0), convert_ulong_rtp(v.s1), convert_ulong_rtp(v.s2));
+}
+
+INLINE OVERLOADABLE ulong3 convert_ulong3_rtn(ushort3 v) {
+  return (ulong3)(convert_ulong_rtn(v.s0), convert_ulong_rtn(v.s1), convert_ulong_rtn(v.s2));
+}
+
+INLINE OVERLOADABLE int3 convert_int3_rte(ushort3 v) {
+  return (int3)(convert_int_rte(v.s0), convert_int_rte(v.s1), convert_int_rte(v.s2));
+}
+
+INLINE OVERLOADABLE int3 convert_int3_rtz(ushort3 v) {
+  return (int3)(convert_int_rtz(v.s0), convert_int_rtz(v.s1), convert_int_rtz(v.s2));
+}
+
+INLINE OVERLOADABLE int3 convert_int3_rtp(ushort3 v) {
+  return (int3)(convert_int_rtp(v.s0), convert_int_rtp(v.s1), convert_int_rtp(v.s2));
+}
+
+INLINE OVERLOADABLE int3 convert_int3_rtn(ushort3 v) {
+  return (int3)(convert_int_rtn(v.s0), convert_int_rtn(v.s1), convert_int_rtn(v.s2));
+}
+
+INLINE OVERLOADABLE uint3 convert_uint3_rte(ushort3 v) {
+  return (uint3)(convert_uint_rte(v.s0), convert_uint_rte(v.s1), convert_uint_rte(v.s2));
+}
+
+INLINE OVERLOADABLE uint3 convert_uint3_rtz(ushort3 v) {
+  return (uint3)(convert_uint_rtz(v.s0), convert_uint_rtz(v.s1), convert_uint_rtz(v.s2));
+}
+
+INLINE OVERLOADABLE uint3 convert_uint3_rtp(ushort3 v) {
+  return (uint3)(convert_uint_rtp(v.s0), convert_uint_rtp(v.s1), convert_uint_rtp(v.s2));
+}
+
+INLINE OVERLOADABLE uint3 convert_uint3_rtn(ushort3 v) {
+  return (uint3)(convert_uint_rtn(v.s0), convert_uint_rtn(v.s1), convert_uint_rtn(v.s2));
+}
+
+INLINE OVERLOADABLE short3 convert_short3_rte(ushort3 v) {
+  return (short3)(convert_short_rte(v.s0), convert_short_rte(v.s1), convert_short_rte(v.s2));
+}
+
+INLINE OVERLOADABLE short3 convert_short3_rtz(ushort3 v) {
+  return (short3)(convert_short_rtz(v.s0), convert_short_rtz(v.s1), convert_short_rtz(v.s2));
+}
+
+INLINE OVERLOADABLE short3 convert_short3_rtp(ushort3 v) {
+  return (short3)(convert_short_rtp(v.s0), convert_short_rtp(v.s1), convert_short_rtp(v.s2));
+}
+
+INLINE OVERLOADABLE short3 convert_short3_rtn(ushort3 v) {
+  return (short3)(convert_short_rtn(v.s0), convert_short_rtn(v.s1), convert_short_rtn(v.s2));
+}
+
+INLINE OVERLOADABLE ushort3 convert_ushort3_rte(ushort3 v) {
+  return (ushort3)(convert_ushort_rte(v.s0), convert_ushort_rte(v.s1), convert_ushort_rte(v.s2));
+}
+
+INLINE OVERLOADABLE ushort3 convert_ushort3_rtz(ushort3 v) {
+  return (ushort3)(convert_ushort_rtz(v.s0), convert_ushort_rtz(v.s1), convert_ushort_rtz(v.s2));
+}
+
+INLINE OVERLOADABLE ushort3 convert_ushort3_rtp(ushort3 v) {
+  return (ushort3)(convert_ushort_rtp(v.s0), convert_ushort_rtp(v.s1), convert_ushort_rtp(v.s2));
+}
+
+INLINE OVERLOADABLE ushort3 convert_ushort3_rtn(ushort3 v) {
+  return (ushort3)(convert_ushort_rtn(v.s0), convert_ushort_rtn(v.s1), convert_ushort_rtn(v.s2));
+}
+
+INLINE OVERLOADABLE char3 convert_char3_rte(ushort3 v) {
+  return (char3)(convert_char_rte(v.s0), convert_char_rte(v.s1), convert_char_rte(v.s2));
+}
+
+INLINE OVERLOADABLE char3 convert_char3_rtz(ushort3 v) {
+  return (char3)(convert_char_rtz(v.s0), convert_char_rtz(v.s1), convert_char_rtz(v.s2));
+}
+
+INLINE OVERLOADABLE char3 convert_char3_rtp(ushort3 v) {
+  return (char3)(convert_char_rtp(v.s0), convert_char_rtp(v.s1), convert_char_rtp(v.s2));
+}
+
+INLINE OVERLOADABLE char3 convert_char3_rtn(ushort3 v) {
+  return (char3)(convert_char_rtn(v.s0), convert_char_rtn(v.s1), convert_char_rtn(v.s2));
+}
+
+INLINE OVERLOADABLE uchar3 convert_uchar3_rte(ushort3 v) {
+  return (uchar3)(convert_uchar_rte(v.s0), convert_uchar_rte(v.s1), convert_uchar_rte(v.s2));
+}
+
+INLINE OVERLOADABLE uchar3 convert_uchar3_rtz(ushort3 v) {
+  return (uchar3)(convert_uchar_rtz(v.s0), convert_uchar_rtz(v.s1), convert_uchar_rtz(v.s2));
+}
+
+INLINE OVERLOADABLE uchar3 convert_uchar3_rtp(ushort3 v) {
+  return (uchar3)(convert_uchar_rtp(v.s0), convert_uchar_rtp(v.s1), convert_uchar_rtp(v.s2));
+}
+
+INLINE OVERLOADABLE uchar3 convert_uchar3_rtn(ushort3 v) {
+  return (uchar3)(convert_uchar_rtn(v.s0), convert_uchar_rtn(v.s1), convert_uchar_rtn(v.s2));
+}
+
+INLINE OVERLOADABLE float3 convert_float3_rte(ushort3 v) {
+  return (float3)(convert_float_rte(v.s0), convert_float_rte(v.s1), convert_float_rte(v.s2));
+}
+
+INLINE OVERLOADABLE float3 convert_float3_rtz(ushort3 v) {
+  return (float3)(convert_float_rtz(v.s0), convert_float_rtz(v.s1), convert_float_rtz(v.s2));
+}
+
+INLINE OVERLOADABLE float3 convert_float3_rtp(ushort3 v) {
+  return (float3)(convert_float_rtp(v.s0), convert_float_rtp(v.s1), convert_float_rtp(v.s2));
+}
+
+INLINE OVERLOADABLE float3 convert_float3_rtn(ushort3 v) {
+  return (float3)(convert_float_rtn(v.s0), convert_float_rtn(v.s1), convert_float_rtn(v.s2));
+}
+
+INLINE OVERLOADABLE long3 convert_long3_rte(char3 v) {
+  return (long3)(convert_long_rte(v.s0), convert_long_rte(v.s1), convert_long_rte(v.s2));
+}
+
+INLINE OVERLOADABLE long3 convert_long3_rtz(char3 v) {
+  return (long3)(convert_long_rtz(v.s0), convert_long_rtz(v.s1), convert_long_rtz(v.s2));
+}
+
+INLINE OVERLOADABLE long3 convert_long3_rtp(char3 v) {
+  return (long3)(convert_long_rtp(v.s0), convert_long_rtp(v.s1), convert_long_rtp(v.s2));
+}
+
+INLINE OVERLOADABLE long3 convert_long3_rtn(char3 v) {
+  return (long3)(convert_long_rtn(v.s0), convert_long_rtn(v.s1), convert_long_rtn(v.s2));
+}
+
+INLINE OVERLOADABLE ulong3 convert_ulong3_rte(char3 v) {
+  return (ulong3)(convert_ulong_rte(v.s0), convert_ulong_rte(v.s1), convert_ulong_rte(v.s2));
+}
+
+INLINE OVERLOADABLE ulong3 convert_ulong3_rtz(char3 v) {
+  return (ulong3)(convert_ulong_rtz(v.s0), convert_ulong_rtz(v.s1), convert_ulong_rtz(v.s2));
+}
+
+INLINE OVERLOADABLE ulong3 convert_ulong3_rtp(char3 v) {
+  return (ulong3)(convert_ulong_rtp(v.s0), convert_ulong_rtp(v.s1), convert_ulong_rtp(v.s2));
+}
+
+INLINE OVERLOADABLE ulong3 convert_ulong3_rtn(char3 v) {
+  return (ulong3)(convert_ulong_rtn(v.s0), convert_ulong_rtn(v.s1), convert_ulong_rtn(v.s2));
+}
+
+INLINE OVERLOADABLE int3 convert_int3_rte(char3 v) {
+  return (int3)(convert_int_rte(v.s0), convert_int_rte(v.s1), convert_int_rte(v.s2));
+}
+
+INLINE OVERLOADABLE int3 convert_int3_rtz(char3 v) {
+  return (int3)(convert_int_rtz(v.s0), convert_int_rtz(v.s1), convert_int_rtz(v.s2));
+}
+
+INLINE OVERLOADABLE int3 convert_int3_rtp(char3 v) {
+  return (int3)(convert_int_rtp(v.s0), convert_int_rtp(v.s1), convert_int_rtp(v.s2));
+}
+
+INLINE OVERLOADABLE int3 convert_int3_rtn(char3 v) {
+  return (int3)(convert_int_rtn(v.s0), convert_int_rtn(v.s1), convert_int_rtn(v.s2));
+}
+
+INLINE OVERLOADABLE uint3 convert_uint3_rte(char3 v) {
+  return (uint3)(convert_uint_rte(v.s0), convert_uint_rte(v.s1), convert_uint_rte(v.s2));
+}
+
+INLINE OVERLOADABLE uint3 convert_uint3_rtz(char3 v) {
+  return (uint3)(convert_uint_rtz(v.s0), convert_uint_rtz(v.s1), convert_uint_rtz(v.s2));
+}
+
+INLINE OVERLOADABLE uint3 convert_uint3_rtp(char3 v) {
+  return (uint3)(convert_uint_rtp(v.s0), convert_uint_rtp(v.s1), convert_uint_rtp(v.s2));
+}
+
+INLINE OVERLOADABLE uint3 convert_uint3_rtn(char3 v) {
+  return (uint3)(convert_uint_rtn(v.s0), convert_uint_rtn(v.s1), convert_uint_rtn(v.s2));
+}
+
+INLINE OVERLOADABLE short3 convert_short3_rte(char3 v) {
+  return (short3)(convert_short_rte(v.s0), convert_short_rte(v.s1), convert_short_rte(v.s2));
+}
+
+INLINE OVERLOADABLE short3 convert_short3_rtz(char3 v) {
+  return (short3)(convert_short_rtz(v.s0), convert_short_rtz(v.s1), convert_short_rtz(v.s2));
+}
+
+INLINE OVERLOADABLE short3 convert_short3_rtp(char3 v) {
+  return (short3)(convert_short_rtp(v.s0), convert_short_rtp(v.s1), convert_short_rtp(v.s2));
+}
+
+INLINE OVERLOADABLE short3 convert_short3_rtn(char3 v) {
+  return (short3)(convert_short_rtn(v.s0), convert_short_rtn(v.s1), convert_short_rtn(v.s2));
+}
+
+INLINE OVERLOADABLE ushort3 convert_ushort3_rte(char3 v) {
+  return (ushort3)(convert_ushort_rte(v.s0), convert_ushort_rte(v.s1), convert_ushort_rte(v.s2));
+}
+
+INLINE OVERLOADABLE ushort3 convert_ushort3_rtz(char3 v) {
+  return (ushort3)(convert_ushort_rtz(v.s0), convert_ushort_rtz(v.s1), convert_ushort_rtz(v.s2));
+}
+
+INLINE OVERLOADABLE ushort3 convert_ushort3_rtp(char3 v) {
+  return (ushort3)(convert_ushort_rtp(v.s0), convert_ushort_rtp(v.s1), convert_ushort_rtp(v.s2));
+}
+
+INLINE OVERLOADABLE ushort3 convert_ushort3_rtn(char3 v) {
+  return (ushort3)(convert_ushort_rtn(v.s0), convert_ushort_rtn(v.s1), convert_ushort_rtn(v.s2));
+}
+
+INLINE OVERLOADABLE char3 convert_char3_rte(char3 v) {
+  return (char3)(convert_char_rte(v.s0), convert_char_rte(v.s1), convert_char_rte(v.s2));
+}
+
+INLINE OVERLOADABLE char3 convert_char3_rtz(char3 v) {
+  return (char3)(convert_char_rtz(v.s0), convert_char_rtz(v.s1), convert_char_rtz(v.s2));
+}
+
+INLINE OVERLOADABLE char3 convert_char3_rtp(char3 v) {
+  return (char3)(convert_char_rtp(v.s0), convert_char_rtp(v.s1), convert_char_rtp(v.s2));
+}
+
+INLINE OVERLOADABLE char3 convert_char3_rtn(char3 v) {
+  return (char3)(convert_char_rtn(v.s0), convert_char_rtn(v.s1), convert_char_rtn(v.s2));
+}
+
+INLINE OVERLOADABLE uchar3 convert_uchar3_rte(char3 v) {
+  return (uchar3)(convert_uchar_rte(v.s0), convert_uchar_rte(v.s1), convert_uchar_rte(v.s2));
+}
+
+INLINE OVERLOADABLE uchar3 convert_uchar3_rtz(char3 v) {
+  return (uchar3)(convert_uchar_rtz(v.s0), convert_uchar_rtz(v.s1), convert_uchar_rtz(v.s2));
+}
+
+INLINE OVERLOADABLE uchar3 convert_uchar3_rtp(char3 v) {
+  return (uchar3)(convert_uchar_rtp(v.s0), convert_uchar_rtp(v.s1), convert_uchar_rtp(v.s2));
+}
+
+INLINE OVERLOADABLE uchar3 convert_uchar3_rtn(char3 v) {
+  return (uchar3)(convert_uchar_rtn(v.s0), convert_uchar_rtn(v.s1), convert_uchar_rtn(v.s2));
+}
+
+INLINE OVERLOADABLE float3 convert_float3_rte(char3 v) {
+  return (float3)(convert_float_rte(v.s0), convert_float_rte(v.s1), convert_float_rte(v.s2));
+}
+
+INLINE OVERLOADABLE float3 convert_float3_rtz(char3 v) {
+  return (float3)(convert_float_rtz(v.s0), convert_float_rtz(v.s1), convert_float_rtz(v.s2));
+}
+
+INLINE OVERLOADABLE float3 convert_float3_rtp(char3 v) {
+  return (float3)(convert_float_rtp(v.s0), convert_float_rtp(v.s1), convert_float_rtp(v.s2));
+}
+
+INLINE OVERLOADABLE float3 convert_float3_rtn(char3 v) {
+  return (float3)(convert_float_rtn(v.s0), convert_float_rtn(v.s1), convert_float_rtn(v.s2));
+}
+
+INLINE OVERLOADABLE long3 convert_long3_rte(uchar3 v) {
+  return (long3)(convert_long_rte(v.s0), convert_long_rte(v.s1), convert_long_rte(v.s2));
+}
+
+INLINE OVERLOADABLE long3 convert_long3_rtz(uchar3 v) {
+  return (long3)(convert_long_rtz(v.s0), convert_long_rtz(v.s1), convert_long_rtz(v.s2));
+}
+
+INLINE OVERLOADABLE long3 convert_long3_rtp(uchar3 v) {
+  return (long3)(convert_long_rtp(v.s0), convert_long_rtp(v.s1), convert_long_rtp(v.s2));
+}
+
+INLINE OVERLOADABLE long3 convert_long3_rtn(uchar3 v) {
+  return (long3)(convert_long_rtn(v.s0), convert_long_rtn(v.s1), convert_long_rtn(v.s2));
+}
+
+INLINE OVERLOADABLE ulong3 convert_ulong3_rte(uchar3 v) {
+  return (ulong3)(convert_ulong_rte(v.s0), convert_ulong_rte(v.s1), convert_ulong_rte(v.s2));
+}
+
+INLINE OVERLOADABLE ulong3 convert_ulong3_rtz(uchar3 v) {
+  return (ulong3)(convert_ulong_rtz(v.s0), convert_ulong_rtz(v.s1), convert_ulong_rtz(v.s2));
+}
+
+INLINE OVERLOADABLE ulong3 convert_ulong3_rtp(uchar3 v) {
+  return (ulong3)(convert_ulong_rtp(v.s0), convert_ulong_rtp(v.s1), convert_ulong_rtp(v.s2));
+}
+
+INLINE OVERLOADABLE ulong3 convert_ulong3_rtn(uchar3 v) {
+  return (ulong3)(convert_ulong_rtn(v.s0), convert_ulong_rtn(v.s1), convert_ulong_rtn(v.s2));
+}
+
+INLINE OVERLOADABLE int3 convert_int3_rte(uchar3 v) {
+  return (int3)(convert_int_rte(v.s0), convert_int_rte(v.s1), convert_int_rte(v.s2));
+}
+
+INLINE OVERLOADABLE int3 convert_int3_rtz(uchar3 v) {
+  return (int3)(convert_int_rtz(v.s0), convert_int_rtz(v.s1), convert_int_rtz(v.s2));
+}
+
+INLINE OVERLOADABLE int3 convert_int3_rtp(uchar3 v) {
+  return (int3)(convert_int_rtp(v.s0), convert_int_rtp(v.s1), convert_int_rtp(v.s2));
+}
+
+INLINE OVERLOADABLE int3 convert_int3_rtn(uchar3 v) {
+  return (int3)(convert_int_rtn(v.s0), convert_int_rtn(v.s1), convert_int_rtn(v.s2));
+}
+
+INLINE OVERLOADABLE uint3 convert_uint3_rte(uchar3 v) {
+  return (uint3)(convert_uint_rte(v.s0), convert_uint_rte(v.s1), convert_uint_rte(v.s2));
+}
+
+INLINE OVERLOADABLE uint3 convert_uint3_rtz(uchar3 v) {
+  return (uint3)(convert_uint_rtz(v.s0), convert_uint_rtz(v.s1), convert_uint_rtz(v.s2));
+}
+
+INLINE OVERLOADABLE uint3 convert_uint3_rtp(uchar3 v) {
+  return (uint3)(convert_uint_rtp(v.s0), convert_uint_rtp(v.s1), convert_uint_rtp(v.s2));
+}
+
+INLINE OVERLOADABLE uint3 convert_uint3_rtn(uchar3 v) {
+  return (uint3)(convert_uint_rtn(v.s0), convert_uint_rtn(v.s1), convert_uint_rtn(v.s2));
+}
+
+INLINE OVERLOADABLE short3 convert_short3_rte(uchar3 v) {
+  return (short3)(convert_short_rte(v.s0), convert_short_rte(v.s1), convert_short_rte(v.s2));
+}
+
+INLINE OVERLOADABLE short3 convert_short3_rtz(uchar3 v) {
+  return (short3)(convert_short_rtz(v.s0), convert_short_rtz(v.s1), convert_short_rtz(v.s2));
+}
+
+INLINE OVERLOADABLE short3 convert_short3_rtp(uchar3 v) {
+  return (short3)(convert_short_rtp(v.s0), convert_short_rtp(v.s1), convert_short_rtp(v.s2));
+}
+
+INLINE OVERLOADABLE short3 convert_short3_rtn(uchar3 v) {
+  return (short3)(convert_short_rtn(v.s0), convert_short_rtn(v.s1), convert_short_rtn(v.s2));
+}
+
+INLINE OVERLOADABLE ushort3 convert_ushort3_rte(uchar3 v) {
+  return (ushort3)(convert_ushort_rte(v.s0), convert_ushort_rte(v.s1), convert_ushort_rte(v.s2));
+}
+
+INLINE OVERLOADABLE ushort3 convert_ushort3_rtz(uchar3 v) {
+  return (ushort3)(convert_ushort_rtz(v.s0), convert_ushort_rtz(v.s1), convert_ushort_rtz(v.s2));
+}
+
+INLINE OVERLOADABLE ushort3 convert_ushort3_rtp(uchar3 v) {
+  return (ushort3)(convert_ushort_rtp(v.s0), convert_ushort_rtp(v.s1), convert_ushort_rtp(v.s2));
+}
+
+INLINE OVERLOADABLE ushort3 convert_ushort3_rtn(uchar3 v) {
+  return (ushort3)(convert_ushort_rtn(v.s0), convert_ushort_rtn(v.s1), convert_ushort_rtn(v.s2));
+}
+
+INLINE OVERLOADABLE char3 convert_char3_rte(uchar3 v) {
+  return (char3)(convert_char_rte(v.s0), convert_char_rte(v.s1), convert_char_rte(v.s2));
+}
+
+INLINE OVERLOADABLE char3 convert_char3_rtz(uchar3 v) {
+  return (char3)(convert_char_rtz(v.s0), convert_char_rtz(v.s1), convert_char_rtz(v.s2));
+}
+
+INLINE OVERLOADABLE char3 convert_char3_rtp(uchar3 v) {
+  return (char3)(convert_char_rtp(v.s0), convert_char_rtp(v.s1), convert_char_rtp(v.s2));
+}
+
+INLINE OVERLOADABLE char3 convert_char3_rtn(uchar3 v) {
+  return (char3)(convert_char_rtn(v.s0), convert_char_rtn(v.s1), convert_char_rtn(v.s2));
+}
+
+INLINE OVERLOADABLE uchar3 convert_uchar3_rte(uchar3 v) {
+  return (uchar3)(convert_uchar_rte(v.s0), convert_uchar_rte(v.s1), convert_uchar_rte(v.s2));
+}
+
+INLINE OVERLOADABLE uchar3 convert_uchar3_rtz(uchar3 v) {
+  return (uchar3)(convert_uchar_rtz(v.s0), convert_uchar_rtz(v.s1), convert_uchar_rtz(v.s2));
+}
+
+INLINE OVERLOADABLE uchar3 convert_uchar3_rtp(uchar3 v) {
+  return (uchar3)(convert_uchar_rtp(v.s0), convert_uchar_rtp(v.s1), convert_uchar_rtp(v.s2));
+}
+
+INLINE OVERLOADABLE uchar3 convert_uchar3_rtn(uchar3 v) {
+  return (uchar3)(convert_uchar_rtn(v.s0), convert_uchar_rtn(v.s1), convert_uchar_rtn(v.s2));
+}
+
+INLINE OVERLOADABLE float3 convert_float3_rte(uchar3 v) {
+  return (float3)(convert_float_rte(v.s0), convert_float_rte(v.s1), convert_float_rte(v.s2));
+}
+
+INLINE OVERLOADABLE float3 convert_float3_rtz(uchar3 v) {
+  return (float3)(convert_float_rtz(v.s0), convert_float_rtz(v.s1), convert_float_rtz(v.s2));
+}
+
+INLINE OVERLOADABLE float3 convert_float3_rtp(uchar3 v) {
+  return (float3)(convert_float_rtp(v.s0), convert_float_rtp(v.s1), convert_float_rtp(v.s2));
+}
+
+INLINE OVERLOADABLE float3 convert_float3_rtn(uchar3 v) {
+  return (float3)(convert_float_rtn(v.s0), convert_float_rtn(v.s1), convert_float_rtn(v.s2));
+}
+
+INLINE OVERLOADABLE long3 convert_long3_rte(float3 v) {
+  return (long3)(convert_long_rte(v.s0), convert_long_rte(v.s1), convert_long_rte(v.s2));
+}
+
+INLINE OVERLOADABLE long3 convert_long3_rtz(float3 v) {
+  return (long3)(convert_long_rtz(v.s0), convert_long_rtz(v.s1), convert_long_rtz(v.s2));
+}
+
+INLINE OVERLOADABLE long3 convert_long3_rtp(float3 v) {
+  return (long3)(convert_long_rtp(v.s0), convert_long_rtp(v.s1), convert_long_rtp(v.s2));
+}
+
+INLINE OVERLOADABLE long3 convert_long3_rtn(float3 v) {
+  return (long3)(convert_long_rtn(v.s0), convert_long_rtn(v.s1), convert_long_rtn(v.s2));
+}
+
+INLINE OVERLOADABLE ulong3 convert_ulong3_rte(float3 v) {
+  return (ulong3)(convert_ulong_rte(v.s0), convert_ulong_rte(v.s1), convert_ulong_rte(v.s2));
+}
+
+INLINE OVERLOADABLE ulong3 convert_ulong3_rtz(float3 v) {
+  return (ulong3)(convert_ulong_rtz(v.s0), convert_ulong_rtz(v.s1), convert_ulong_rtz(v.s2));
+}
+
+INLINE OVERLOADABLE ulong3 convert_ulong3_rtp(float3 v) {
+  return (ulong3)(convert_ulong_rtp(v.s0), convert_ulong_rtp(v.s1), convert_ulong_rtp(v.s2));
+}
+
+INLINE OVERLOADABLE ulong3 convert_ulong3_rtn(float3 v) {
+  return (ulong3)(convert_ulong_rtn(v.s0), convert_ulong_rtn(v.s1), convert_ulong_rtn(v.s2));
+}
+
+INLINE OVERLOADABLE int3 convert_int3_rte(float3 v) {
+  return (int3)(convert_int_rte(v.s0), convert_int_rte(v.s1), convert_int_rte(v.s2));
+}
+
+INLINE OVERLOADABLE int3 convert_int3_rtz(float3 v) {
+  return (int3)(convert_int_rtz(v.s0), convert_int_rtz(v.s1), convert_int_rtz(v.s2));
+}
+
+INLINE OVERLOADABLE int3 convert_int3_rtp(float3 v) {
+  return (int3)(convert_int_rtp(v.s0), convert_int_rtp(v.s1), convert_int_rtp(v.s2));
+}
+
+INLINE OVERLOADABLE int3 convert_int3_rtn(float3 v) {
+  return (int3)(convert_int_rtn(v.s0), convert_int_rtn(v.s1), convert_int_rtn(v.s2));
+}
+
+INLINE OVERLOADABLE uint3 convert_uint3_rte(float3 v) {
+  return (uint3)(convert_uint_rte(v.s0), convert_uint_rte(v.s1), convert_uint_rte(v.s2));
+}
+
+INLINE OVERLOADABLE uint3 convert_uint3_rtz(float3 v) {
+  return (uint3)(convert_uint_rtz(v.s0), convert_uint_rtz(v.s1), convert_uint_rtz(v.s2));
+}
+
+INLINE OVERLOADABLE uint3 convert_uint3_rtp(float3 v) {
+  return (uint3)(convert_uint_rtp(v.s0), convert_uint_rtp(v.s1), convert_uint_rtp(v.s2));
+}
+
+INLINE OVERLOADABLE uint3 convert_uint3_rtn(float3 v) {
+  return (uint3)(convert_uint_rtn(v.s0), convert_uint_rtn(v.s1), convert_uint_rtn(v.s2));
+}
+
+INLINE OVERLOADABLE short3 convert_short3_rte(float3 v) {
+  return (short3)(convert_short_rte(v.s0), convert_short_rte(v.s1), convert_short_rte(v.s2));
+}
+
+INLINE OVERLOADABLE short3 convert_short3_rtz(float3 v) {
+  return (short3)(convert_short_rtz(v.s0), convert_short_rtz(v.s1), convert_short_rtz(v.s2));
+}
+
+INLINE OVERLOADABLE short3 convert_short3_rtp(float3 v) {
+  return (short3)(convert_short_rtp(v.s0), convert_short_rtp(v.s1), convert_short_rtp(v.s2));
+}
+
+INLINE OVERLOADABLE short3 convert_short3_rtn(float3 v) {
+  return (short3)(convert_short_rtn(v.s0), convert_short_rtn(v.s1), convert_short_rtn(v.s2));
+}
+
+INLINE OVERLOADABLE ushort3 convert_ushort3_rte(float3 v) {
+  return (ushort3)(convert_ushort_rte(v.s0), convert_ushort_rte(v.s1), convert_ushort_rte(v.s2));
+}
+
+INLINE OVERLOADABLE ushort3 convert_ushort3_rtz(float3 v) {
+  return (ushort3)(convert_ushort_rtz(v.s0), convert_ushort_rtz(v.s1), convert_ushort_rtz(v.s2));
+}
+
+INLINE OVERLOADABLE ushort3 convert_ushort3_rtp(float3 v) {
+  return (ushort3)(convert_ushort_rtp(v.s0), convert_ushort_rtp(v.s1), convert_ushort_rtp(v.s2));
+}
+
+INLINE OVERLOADABLE ushort3 convert_ushort3_rtn(float3 v) {
+  return (ushort3)(convert_ushort_rtn(v.s0), convert_ushort_rtn(v.s1), convert_ushort_rtn(v.s2));
+}
+
+INLINE OVERLOADABLE char3 convert_char3_rte(float3 v) {
+  return (char3)(convert_char_rte(v.s0), convert_char_rte(v.s1), convert_char_rte(v.s2));
+}
+
+INLINE OVERLOADABLE char3 convert_char3_rtz(float3 v) {
+  return (char3)(convert_char_rtz(v.s0), convert_char_rtz(v.s1), convert_char_rtz(v.s2));
+}
+
+INLINE OVERLOADABLE char3 convert_char3_rtp(float3 v) {
+  return (char3)(convert_char_rtp(v.s0), convert_char_rtp(v.s1), convert_char_rtp(v.s2));
+}
+
+INLINE OVERLOADABLE char3 convert_char3_rtn(float3 v) {
+  return (char3)(convert_char_rtn(v.s0), convert_char_rtn(v.s1), convert_char_rtn(v.s2));
+}
+
+INLINE OVERLOADABLE uchar3 convert_uchar3_rte(float3 v) {
+  return (uchar3)(convert_uchar_rte(v.s0), convert_uchar_rte(v.s1), convert_uchar_rte(v.s2));
+}
+
+INLINE OVERLOADABLE uchar3 convert_uchar3_rtz(float3 v) {
+  return (uchar3)(convert_uchar_rtz(v.s0), convert_uchar_rtz(v.s1), convert_uchar_rtz(v.s2));
+}
+
+INLINE OVERLOADABLE uchar3 convert_uchar3_rtp(float3 v) {
+  return (uchar3)(convert_uchar_rtp(v.s0), convert_uchar_rtp(v.s1), convert_uchar_rtp(v.s2));
+}
+
+INLINE OVERLOADABLE uchar3 convert_uchar3_rtn(float3 v) {
+  return (uchar3)(convert_uchar_rtn(v.s0), convert_uchar_rtn(v.s1), convert_uchar_rtn(v.s2));
+}
+
+INLINE OVERLOADABLE float3 convert_float3_rte(float3 v) {
+  return (float3)(convert_float_rte(v.s0), convert_float_rte(v.s1), convert_float_rte(v.s2));
+}
+
+INLINE OVERLOADABLE float3 convert_float3_rtz(float3 v) {
+  return (float3)(convert_float_rtz(v.s0), convert_float_rtz(v.s1), convert_float_rtz(v.s2));
+}
+
+INLINE OVERLOADABLE float3 convert_float3_rtp(float3 v) {
+  return (float3)(convert_float_rtp(v.s0), convert_float_rtp(v.s1), convert_float_rtp(v.s2));
+}
+
+INLINE OVERLOADABLE float3 convert_float3_rtn(float3 v) {
+  return (float3)(convert_float_rtn(v.s0), convert_float_rtn(v.s1), convert_float_rtn(v.s2));
+}
+
+INLINE OVERLOADABLE long4 convert_long4_rte(long4 v) {
+  return (long4)(convert_long_rte(v.s0), convert_long_rte(v.s1), convert_long_rte(v.s2), convert_long_rte(v.s3));
+}
+
+INLINE OVERLOADABLE long4 convert_long4_rtz(long4 v) {
+  return (long4)(convert_long_rtz(v.s0), convert_long_rtz(v.s1), convert_long_rtz(v.s2), convert_long_rtz(v.s3));
+}
+
+INLINE OVERLOADABLE long4 convert_long4_rtp(long4 v) {
+  return (long4)(convert_long_rtp(v.s0), convert_long_rtp(v.s1), convert_long_rtp(v.s2), convert_long_rtp(v.s3));
+}
+
+INLINE OVERLOADABLE long4 convert_long4_rtn(long4 v) {
+  return (long4)(convert_long_rtn(v.s0), convert_long_rtn(v.s1), convert_long_rtn(v.s2), convert_long_rtn(v.s3));
+}
+
+INLINE OVERLOADABLE ulong4 convert_ulong4_rte(long4 v) {
+  return (ulong4)(convert_ulong_rte(v.s0), convert_ulong_rte(v.s1), convert_ulong_rte(v.s2), convert_ulong_rte(v.s3));
+}
+
+INLINE OVERLOADABLE ulong4 convert_ulong4_rtz(long4 v) {
+  return (ulong4)(convert_ulong_rtz(v.s0), convert_ulong_rtz(v.s1), convert_ulong_rtz(v.s2), convert_ulong_rtz(v.s3));
+}
+
+INLINE OVERLOADABLE ulong4 convert_ulong4_rtp(long4 v) {
+  return (ulong4)(convert_ulong_rtp(v.s0), convert_ulong_rtp(v.s1), convert_ulong_rtp(v.s2), convert_ulong_rtp(v.s3));
+}
+
+INLINE OVERLOADABLE ulong4 convert_ulong4_rtn(long4 v) {
+  return (ulong4)(convert_ulong_rtn(v.s0), convert_ulong_rtn(v.s1), convert_ulong_rtn(v.s2), convert_ulong_rtn(v.s3));
+}
+
+INLINE OVERLOADABLE int4 convert_int4_rte(long4 v) {
+  return (int4)(convert_int_rte(v.s0), convert_int_rte(v.s1), convert_int_rte(v.s2), convert_int_rte(v.s3));
+}
+
+INLINE OVERLOADABLE int4 convert_int4_rtz(long4 v) {
+  return (int4)(convert_int_rtz(v.s0), convert_int_rtz(v.s1), convert_int_rtz(v.s2), convert_int_rtz(v.s3));
+}
+
+INLINE OVERLOADABLE int4 convert_int4_rtp(long4 v) {
+  return (int4)(convert_int_rtp(v.s0), convert_int_rtp(v.s1), convert_int_rtp(v.s2), convert_int_rtp(v.s3));
+}
+
+INLINE OVERLOADABLE int4 convert_int4_rtn(long4 v) {
+  return (int4)(convert_int_rtn(v.s0), convert_int_rtn(v.s1), convert_int_rtn(v.s2), convert_int_rtn(v.s3));
+}
+
+INLINE OVERLOADABLE uint4 convert_uint4_rte(long4 v) {
+  return (uint4)(convert_uint_rte(v.s0), convert_uint_rte(v.s1), convert_uint_rte(v.s2), convert_uint_rte(v.s3));
+}
+
+INLINE OVERLOADABLE uint4 convert_uint4_rtz(long4 v) {
+  return (uint4)(convert_uint_rtz(v.s0), convert_uint_rtz(v.s1), convert_uint_rtz(v.s2), convert_uint_rtz(v.s3));
+}
+
+INLINE OVERLOADABLE uint4 convert_uint4_rtp(long4 v) {
+  return (uint4)(convert_uint_rtp(v.s0), convert_uint_rtp(v.s1), convert_uint_rtp(v.s2), convert_uint_rtp(v.s3));
+}
+
+INLINE OVERLOADABLE uint4 convert_uint4_rtn(long4 v) {
+  return (uint4)(convert_uint_rtn(v.s0), convert_uint_rtn(v.s1), convert_uint_rtn(v.s2), convert_uint_rtn(v.s3));
+}
+
+INLINE OVERLOADABLE short4 convert_short4_rte(long4 v) {
+  return (short4)(convert_short_rte(v.s0), convert_short_rte(v.s1), convert_short_rte(v.s2), convert_short_rte(v.s3));
+}
+
+INLINE OVERLOADABLE short4 convert_short4_rtz(long4 v) {
+  return (short4)(convert_short_rtz(v.s0), convert_short_rtz(v.s1), convert_short_rtz(v.s2), convert_short_rtz(v.s3));
+}
+
+INLINE OVERLOADABLE short4 convert_short4_rtp(long4 v) {
+  return (short4)(convert_short_rtp(v.s0), convert_short_rtp(v.s1), convert_short_rtp(v.s2), convert_short_rtp(v.s3));
+}
+
+INLINE OVERLOADABLE short4 convert_short4_rtn(long4 v) {
+  return (short4)(convert_short_rtn(v.s0), convert_short_rtn(v.s1), convert_short_rtn(v.s2), convert_short_rtn(v.s3));
+}
+
+INLINE OVERLOADABLE ushort4 convert_ushort4_rte(long4 v) {
+  return (ushort4)(convert_ushort_rte(v.s0), convert_ushort_rte(v.s1), convert_ushort_rte(v.s2), convert_ushort_rte(v.s3));
+}
+
+INLINE OVERLOADABLE ushort4 convert_ushort4_rtz(long4 v) {
+  return (ushort4)(convert_ushort_rtz(v.s0), convert_ushort_rtz(v.s1), convert_ushort_rtz(v.s2), convert_ushort_rtz(v.s3));
+}
+
+INLINE OVERLOADABLE ushort4 convert_ushort4_rtp(long4 v) {
+  return (ushort4)(convert_ushort_rtp(v.s0), convert_ushort_rtp(v.s1), convert_ushort_rtp(v.s2), convert_ushort_rtp(v.s3));
+}
+
+INLINE OVERLOADABLE ushort4 convert_ushort4_rtn(long4 v) {
+  return (ushort4)(convert_ushort_rtn(v.s0), convert_ushort_rtn(v.s1), convert_ushort_rtn(v.s2), convert_ushort_rtn(v.s3));
+}
+
+INLINE OVERLOADABLE char4 convert_char4_rte(long4 v) {
+  return (char4)(convert_char_rte(v.s0), convert_char_rte(v.s1), convert_char_rte(v.s2), convert_char_rte(v.s3));
+}
+
+INLINE OVERLOADABLE char4 convert_char4_rtz(long4 v) {
+  return (char4)(convert_char_rtz(v.s0), convert_char_rtz(v.s1), convert_char_rtz(v.s2), convert_char_rtz(v.s3));
+}
+
+INLINE OVERLOADABLE char4 convert_char4_rtp(long4 v) {
+  return (char4)(convert_char_rtp(v.s0), convert_char_rtp(v.s1), convert_char_rtp(v.s2), convert_char_rtp(v.s3));
+}
+
+INLINE OVERLOADABLE char4 convert_char4_rtn(long4 v) {
+  return (char4)(convert_char_rtn(v.s0), convert_char_rtn(v.s1), convert_char_rtn(v.s2), convert_char_rtn(v.s3));
+}
+
+INLINE OVERLOADABLE uchar4 convert_uchar4_rte(long4 v) {
+  return (uchar4)(convert_uchar_rte(v.s0), convert_uchar_rte(v.s1), convert_uchar_rte(v.s2), convert_uchar_rte(v.s3));
+}
+
+INLINE OVERLOADABLE uchar4 convert_uchar4_rtz(long4 v) {
+  return (uchar4)(convert_uchar_rtz(v.s0), convert_uchar_rtz(v.s1), convert_uchar_rtz(v.s2), convert_uchar_rtz(v.s3));
+}
+
+INLINE OVERLOADABLE uchar4 convert_uchar4_rtp(long4 v) {
+  return (uchar4)(convert_uchar_rtp(v.s0), convert_uchar_rtp(v.s1), convert_uchar_rtp(v.s2), convert_uchar_rtp(v.s3));
+}
+
+INLINE OVERLOADABLE uchar4 convert_uchar4_rtn(long4 v) {
+  return (uchar4)(convert_uchar_rtn(v.s0), convert_uchar_rtn(v.s1), convert_uchar_rtn(v.s2), convert_uchar_rtn(v.s3));
+}
+
+INLINE OVERLOADABLE float4 convert_float4_rte(long4 v) {
+  return (float4)(convert_float_rte(v.s0), convert_float_rte(v.s1), convert_float_rte(v.s2), convert_float_rte(v.s3));
+}
+
+INLINE OVERLOADABLE float4 convert_float4_rtz(long4 v) {
+  return (float4)(convert_float_rtz(v.s0), convert_float_rtz(v.s1), convert_float_rtz(v.s2), convert_float_rtz(v.s3));
+}
+
+INLINE OVERLOADABLE float4 convert_float4_rtp(long4 v) {
+  return (float4)(convert_float_rtp(v.s0), convert_float_rtp(v.s1), convert_float_rtp(v.s2), convert_float_rtp(v.s3));
+}
+
+INLINE OVERLOADABLE float4 convert_float4_rtn(long4 v) {
+  return (float4)(convert_float_rtn(v.s0), convert_float_rtn(v.s1), convert_float_rtn(v.s2), convert_float_rtn(v.s3));
+}
+
+INLINE OVERLOADABLE long4 convert_long4_rte(ulong4 v) {
+  return (long4)(convert_long_rte(v.s0), convert_long_rte(v.s1), convert_long_rte(v.s2), convert_long_rte(v.s3));
+}
+
+INLINE OVERLOADABLE long4 convert_long4_rtz(ulong4 v) {
+  return (long4)(convert_long_rtz(v.s0), convert_long_rtz(v.s1), convert_long_rtz(v.s2), convert_long_rtz(v.s3));
+}
+
+INLINE OVERLOADABLE long4 convert_long4_rtp(ulong4 v) {
+  return (long4)(convert_long_rtp(v.s0), convert_long_rtp(v.s1), convert_long_rtp(v.s2), convert_long_rtp(v.s3));
+}
+
+INLINE OVERLOADABLE long4 convert_long4_rtn(ulong4 v) {
+  return (long4)(convert_long_rtn(v.s0), convert_long_rtn(v.s1), convert_long_rtn(v.s2), convert_long_rtn(v.s3));
+}
+
+INLINE OVERLOADABLE ulong4 convert_ulong4_rte(ulong4 v) {
+  return (ulong4)(convert_ulong_rte(v.s0), convert_ulong_rte(v.s1), convert_ulong_rte(v.s2), convert_ulong_rte(v.s3));
+}
+
+INLINE OVERLOADABLE ulong4 convert_ulong4_rtz(ulong4 v) {
+  return (ulong4)(convert_ulong_rtz(v.s0), convert_ulong_rtz(v.s1), convert_ulong_rtz(v.s2), convert_ulong_rtz(v.s3));
+}
+
+INLINE OVERLOADABLE ulong4 convert_ulong4_rtp(ulong4 v) {
+  return (ulong4)(convert_ulong_rtp(v.s0), convert_ulong_rtp(v.s1), convert_ulong_rtp(v.s2), convert_ulong_rtp(v.s3));
+}
+
+INLINE OVERLOADABLE ulong4 convert_ulong4_rtn(ulong4 v) {
+  return (ulong4)(convert_ulong_rtn(v.s0), convert_ulong_rtn(v.s1), convert_ulong_rtn(v.s2), convert_ulong_rtn(v.s3));
+}
+
+INLINE OVERLOADABLE int4 convert_int4_rte(ulong4 v) {
+  return (int4)(convert_int_rte(v.s0), convert_int_rte(v.s1), convert_int_rte(v.s2), convert_int_rte(v.s3));
+}
+
+INLINE OVERLOADABLE int4 convert_int4_rtz(ulong4 v) {
+  return (int4)(convert_int_rtz(v.s0), convert_int_rtz(v.s1), convert_int_rtz(v.s2), convert_int_rtz(v.s3));
+}
+
+INLINE OVERLOADABLE int4 convert_int4_rtp(ulong4 v) {
+  return (int4)(convert_int_rtp(v.s0), convert_int_rtp(v.s1), convert_int_rtp(v.s2), convert_int_rtp(v.s3));
+}
+
+INLINE OVERLOADABLE int4 convert_int4_rtn(ulong4 v) {
+  return (int4)(convert_int_rtn(v.s0), convert_int_rtn(v.s1), convert_int_rtn(v.s2), convert_int_rtn(v.s3));
+}
+
+INLINE OVERLOADABLE uint4 convert_uint4_rte(ulong4 v) {
+  return (uint4)(convert_uint_rte(v.s0), convert_uint_rte(v.s1), convert_uint_rte(v.s2), convert_uint_rte(v.s3));
+}
+
+INLINE OVERLOADABLE uint4 convert_uint4_rtz(ulong4 v) {
+  return (uint4)(convert_uint_rtz(v.s0), convert_uint_rtz(v.s1), convert_uint_rtz(v.s2), convert_uint_rtz(v.s3));
+}
+
+INLINE OVERLOADABLE uint4 convert_uint4_rtp(ulong4 v) {
+  return (uint4)(convert_uint_rtp(v.s0), convert_uint_rtp(v.s1), convert_uint_rtp(v.s2), convert_uint_rtp(v.s3));
+}
+
+INLINE OVERLOADABLE uint4 convert_uint4_rtn(ulong4 v) {
+  return (uint4)(convert_uint_rtn(v.s0), convert_uint_rtn(v.s1), convert_uint_rtn(v.s2), convert_uint_rtn(v.s3));
+}
+
+INLINE OVERLOADABLE short4 convert_short4_rte(ulong4 v) {
+  return (short4)(convert_short_rte(v.s0), convert_short_rte(v.s1), convert_short_rte(v.s2), convert_short_rte(v.s3));
+}
+
+INLINE OVERLOADABLE short4 convert_short4_rtz(ulong4 v) {
+  return (short4)(convert_short_rtz(v.s0), convert_short_rtz(v.s1), convert_short_rtz(v.s2), convert_short_rtz(v.s3));
+}
+
+INLINE OVERLOADABLE short4 convert_short4_rtp(ulong4 v) {
+  return (short4)(convert_short_rtp(v.s0), convert_short_rtp(v.s1), convert_short_rtp(v.s2), convert_short_rtp(v.s3));
+}
+
+INLINE OVERLOADABLE short4 convert_short4_rtn(ulong4 v) {
+  return (short4)(convert_short_rtn(v.s0), convert_short_rtn(v.s1), convert_short_rtn(v.s2), convert_short_rtn(v.s3));
+}
+
+INLINE OVERLOADABLE ushort4 convert_ushort4_rte(ulong4 v) {
+  return (ushort4)(convert_ushort_rte(v.s0), convert_ushort_rte(v.s1), convert_ushort_rte(v.s2), convert_ushort_rte(v.s3));
+}
+
+INLINE OVERLOADABLE ushort4 convert_ushort4_rtz(ulong4 v) {
+  return (ushort4)(convert_ushort_rtz(v.s0), convert_ushort_rtz(v.s1), convert_ushort_rtz(v.s2), convert_ushort_rtz(v.s3));
+}
+
+INLINE OVERLOADABLE ushort4 convert_ushort4_rtp(ulong4 v) {
+  return (ushort4)(convert_ushort_rtp(v.s0), convert_ushort_rtp(v.s1), convert_ushort_rtp(v.s2), convert_ushort_rtp(v.s3));
+}
+
+INLINE OVERLOADABLE ushort4 convert_ushort4_rtn(ulong4 v) {
+  return (ushort4)(convert_ushort_rtn(v.s0), convert_ushort_rtn(v.s1), convert_ushort_rtn(v.s2), convert_ushort_rtn(v.s3));
+}
+
+INLINE OVERLOADABLE char4 convert_char4_rte(ulong4 v) {
+  return (char4)(convert_char_rte(v.s0), convert_char_rte(v.s1), convert_char_rte(v.s2), convert_char_rte(v.s3));
+}
+
+INLINE OVERLOADABLE char4 convert_char4_rtz(ulong4 v) {
+  return (char4)(convert_char_rtz(v.s0), convert_char_rtz(v.s1), convert_char_rtz(v.s2), convert_char_rtz(v.s3));
+}
+
+INLINE OVERLOADABLE char4 convert_char4_rtp(ulong4 v) {
+  return (char4)(convert_char_rtp(v.s0), convert_char_rtp(v.s1), convert_char_rtp(v.s2), convert_char_rtp(v.s3));
+}
+
+INLINE OVERLOADABLE char4 convert_char4_rtn(ulong4 v) {
+  return (char4)(convert_char_rtn(v.s0), convert_char_rtn(v.s1), convert_char_rtn(v.s2), convert_char_rtn(v.s3));
+}
+
+INLINE OVERLOADABLE uchar4 convert_uchar4_rte(ulong4 v) {
+  return (uchar4)(convert_uchar_rte(v.s0), convert_uchar_rte(v.s1), convert_uchar_rte(v.s2), convert_uchar_rte(v.s3));
+}
+
+INLINE OVERLOADABLE uchar4 convert_uchar4_rtz(ulong4 v) {
+  return (uchar4)(convert_uchar_rtz(v.s0), convert_uchar_rtz(v.s1), convert_uchar_rtz(v.s2), convert_uchar_rtz(v.s3));
+}
+
+INLINE OVERLOADABLE uchar4 convert_uchar4_rtp(ulong4 v) {
+  return (uchar4)(convert_uchar_rtp(v.s0), convert_uchar_rtp(v.s1), convert_uchar_rtp(v.s2), convert_uchar_rtp(v.s3));
+}
+
+INLINE OVERLOADABLE uchar4 convert_uchar4_rtn(ulong4 v) {
+  return (uchar4)(convert_uchar_rtn(v.s0), convert_uchar_rtn(v.s1), convert_uchar_rtn(v.s2), convert_uchar_rtn(v.s3));
+}
+
+INLINE OVERLOADABLE float4 convert_float4_rte(ulong4 v) {
+  return (float4)(convert_float_rte(v.s0), convert_float_rte(v.s1), convert_float_rte(v.s2), convert_float_rte(v.s3));
+}
+
+INLINE OVERLOADABLE float4 convert_float4_rtz(ulong4 v) {
+  return (float4)(convert_float_rtz(v.s0), convert_float_rtz(v.s1), convert_float_rtz(v.s2), convert_float_rtz(v.s3));
+}
+
+INLINE OVERLOADABLE float4 convert_float4_rtp(ulong4 v) {
+  return (float4)(convert_float_rtp(v.s0), convert_float_rtp(v.s1), convert_float_rtp(v.s2), convert_float_rtp(v.s3));
+}
+
+INLINE OVERLOADABLE float4 convert_float4_rtn(ulong4 v) {
+  return (float4)(convert_float_rtn(v.s0), convert_float_rtn(v.s1), convert_float_rtn(v.s2), convert_float_rtn(v.s3));
+}
+
+INLINE OVERLOADABLE long4 convert_long4_rte(int4 v) {
+  return (long4)(convert_long_rte(v.s0), convert_long_rte(v.s1), convert_long_rte(v.s2), convert_long_rte(v.s3));
+}
+
+INLINE OVERLOADABLE long4 convert_long4_rtz(int4 v) {
+  return (long4)(convert_long_rtz(v.s0), convert_long_rtz(v.s1), convert_long_rtz(v.s2), convert_long_rtz(v.s3));
+}
+
+INLINE OVERLOADABLE long4 convert_long4_rtp(int4 v) {
+  return (long4)(convert_long_rtp(v.s0), convert_long_rtp(v.s1), convert_long_rtp(v.s2), convert_long_rtp(v.s3));
+}
+
+INLINE OVERLOADABLE long4 convert_long4_rtn(int4 v) {
+  return (long4)(convert_long_rtn(v.s0), convert_long_rtn(v.s1), convert_long_rtn(v.s2), convert_long_rtn(v.s3));
+}
+
+INLINE OVERLOADABLE ulong4 convert_ulong4_rte(int4 v) {
+  return (ulong4)(convert_ulong_rte(v.s0), convert_ulong_rte(v.s1), convert_ulong_rte(v.s2), convert_ulong_rte(v.s3));
+}
+
+INLINE OVERLOADABLE ulong4 convert_ulong4_rtz(int4 v) {
+  return (ulong4)(convert_ulong_rtz(v.s0), convert_ulong_rtz(v.s1), convert_ulong_rtz(v.s2), convert_ulong_rtz(v.s3));
+}
+
+INLINE OVERLOADABLE ulong4 convert_ulong4_rtp(int4 v) {
+  return (ulong4)(convert_ulong_rtp(v.s0), convert_ulong_rtp(v.s1), convert_ulong_rtp(v.s2), convert_ulong_rtp(v.s3));
+}
+
+INLINE OVERLOADABLE ulong4 convert_ulong4_rtn(int4 v) {
+  return (ulong4)(convert_ulong_rtn(v.s0), convert_ulong_rtn(v.s1), convert_ulong_rtn(v.s2), convert_ulong_rtn(v.s3));
+}
+
+INLINE OVERLOADABLE int4 convert_int4_rte(int4 v) {
+  return (int4)(convert_int_rte(v.s0), convert_int_rte(v.s1), convert_int_rte(v.s2), convert_int_rte(v.s3));
+}
+
+INLINE OVERLOADABLE int4 convert_int4_rtz(int4 v) {
+  return (int4)(convert_int_rtz(v.s0), convert_int_rtz(v.s1), convert_int_rtz(v.s2), convert_int_rtz(v.s3));
+}
+
+INLINE OVERLOADABLE int4 convert_int4_rtp(int4 v) {
+  return (int4)(convert_int_rtp(v.s0), convert_int_rtp(v.s1), convert_int_rtp(v.s2), convert_int_rtp(v.s3));
+}
+
+INLINE OVERLOADABLE int4 convert_int4_rtn(int4 v) {
+  return (int4)(convert_int_rtn(v.s0), convert_int_rtn(v.s1), convert_int_rtn(v.s2), convert_int_rtn(v.s3));
+}
+
+INLINE OVERLOADABLE uint4 convert_uint4_rte(int4 v) {
+  return (uint4)(convert_uint_rte(v.s0), convert_uint_rte(v.s1), convert_uint_rte(v.s2), convert_uint_rte(v.s3));
+}
+
+INLINE OVERLOADABLE uint4 convert_uint4_rtz(int4 v) {
+  return (uint4)(convert_uint_rtz(v.s0), convert_uint_rtz(v.s1), convert_uint_rtz(v.s2), convert_uint_rtz(v.s3));
+}
+
+INLINE OVERLOADABLE uint4 convert_uint4_rtp(int4 v) {
+  return (uint4)(convert_uint_rtp(v.s0), convert_uint_rtp(v.s1), convert_uint_rtp(v.s2), convert_uint_rtp(v.s3));
+}
+
+INLINE OVERLOADABLE uint4 convert_uint4_rtn(int4 v) {
+  return (uint4)(convert_uint_rtn(v.s0), convert_uint_rtn(v.s1), convert_uint_rtn(v.s2), convert_uint_rtn(v.s3));
+}
+
+INLINE OVERLOADABLE short4 convert_short4_rte(int4 v) {
+  return (short4)(convert_short_rte(v.s0), convert_short_rte(v.s1), convert_short_rte(v.s2), convert_short_rte(v.s3));
+}
+
+INLINE OVERLOADABLE short4 convert_short4_rtz(int4 v) {
+  return (short4)(convert_short_rtz(v.s0), convert_short_rtz(v.s1), convert_short_rtz(v.s2), convert_short_rtz(v.s3));
+}
+
+INLINE OVERLOADABLE short4 convert_short4_rtp(int4 v) {
+  return (short4)(convert_short_rtp(v.s0), convert_short_rtp(v.s1), convert_short_rtp(v.s2), convert_short_rtp(v.s3));
+}
+
+INLINE OVERLOADABLE short4 convert_short4_rtn(int4 v) {
+  return (short4)(convert_short_rtn(v.s0), convert_short_rtn(v.s1), convert_short_rtn(v.s2), convert_short_rtn(v.s3));
+}
+
+INLINE OVERLOADABLE ushort4 convert_ushort4_rte(int4 v) {
+  return (ushort4)(convert_ushort_rte(v.s0), convert_ushort_rte(v.s1), convert_ushort_rte(v.s2), convert_ushort_rte(v.s3));
+}
+
+INLINE OVERLOADABLE ushort4 convert_ushort4_rtz(int4 v) {
+  return (ushort4)(convert_ushort_rtz(v.s0), convert_ushort_rtz(v.s1), convert_ushort_rtz(v.s2), convert_ushort_rtz(v.s3));
+}
+
+INLINE OVERLOADABLE ushort4 convert_ushort4_rtp(int4 v) {
+  return (ushort4)(convert_ushort_rtp(v.s0), convert_ushort_rtp(v.s1), convert_ushort_rtp(v.s2), convert_ushort_rtp(v.s3));
+}
+
+INLINE OVERLOADABLE ushort4 convert_ushort4_rtn(int4 v) {
+  return (ushort4)(convert_ushort_rtn(v.s0), convert_ushort_rtn(v.s1), convert_ushort_rtn(v.s2), convert_ushort_rtn(v.s3));
+}
+
+INLINE OVERLOADABLE char4 convert_char4_rte(int4 v) {
+  return (char4)(convert_char_rte(v.s0), convert_char_rte(v.s1), convert_char_rte(v.s2), convert_char_rte(v.s3));
+}
+
+INLINE OVERLOADABLE char4 convert_char4_rtz(int4 v) {
+  return (char4)(convert_char_rtz(v.s0), convert_char_rtz(v.s1), convert_char_rtz(v.s2), convert_char_rtz(v.s3));
+}
+
+INLINE OVERLOADABLE char4 convert_char4_rtp(int4 v) {
+  return (char4)(convert_char_rtp(v.s0), convert_char_rtp(v.s1), convert_char_rtp(v.s2), convert_char_rtp(v.s3));
+}
+
+INLINE OVERLOADABLE char4 convert_char4_rtn(int4 v) {
+  return (char4)(convert_char_rtn(v.s0), convert_char_rtn(v.s1), convert_char_rtn(v.s2), convert_char_rtn(v.s3));
+}
+
+INLINE OVERLOADABLE uchar4 convert_uchar4_rte(int4 v) {
+  return (uchar4)(convert_uchar_rte(v.s0), convert_uchar_rte(v.s1), convert_uchar_rte(v.s2), convert_uchar_rte(v.s3));
+}
+
+INLINE OVERLOADABLE uchar4 convert_uchar4_rtz(int4 v) {
+  return (uchar4)(convert_uchar_rtz(v.s0), convert_uchar_rtz(v.s1), convert_uchar_rtz(v.s2), convert_uchar_rtz(v.s3));
+}
+
+INLINE OVERLOADABLE uchar4 convert_uchar4_rtp(int4 v) {
+  return (uchar4)(convert_uchar_rtp(v.s0), convert_uchar_rtp(v.s1), convert_uchar_rtp(v.s2), convert_uchar_rtp(v.s3));
+}
+
+INLINE OVERLOADABLE uchar4 convert_uchar4_rtn(int4 v) {
+  return (uchar4)(convert_uchar_rtn(v.s0), convert_uchar_rtn(v.s1), convert_uchar_rtn(v.s2), convert_uchar_rtn(v.s3));
+}
+
+INLINE OVERLOADABLE float4 convert_float4_rte(int4 v) {
+  return (float4)(convert_float_rte(v.s0), convert_float_rte(v.s1), convert_float_rte(v.s2), convert_float_rte(v.s3));
+}
+
+INLINE OVERLOADABLE float4 convert_float4_rtz(int4 v) {
+  return (float4)(convert_float_rtz(v.s0), convert_float_rtz(v.s1), convert_float_rtz(v.s2), convert_float_rtz(v.s3));
+}
+
+INLINE OVERLOADABLE float4 convert_float4_rtp(int4 v) {
+  return (float4)(convert_float_rtp(v.s0), convert_float_rtp(v.s1), convert_float_rtp(v.s2), convert_float_rtp(v.s3));
+}
+
+INLINE OVERLOADABLE float4 convert_float4_rtn(int4 v) {
+  return (float4)(convert_float_rtn(v.s0), convert_float_rtn(v.s1), convert_float_rtn(v.s2), convert_float_rtn(v.s3));
+}
+
+INLINE OVERLOADABLE long4 convert_long4_rte(uint4 v) {
+  return (long4)(convert_long_rte(v.s0), convert_long_rte(v.s1), convert_long_rte(v.s2), convert_long_rte(v.s3));
+}
+
+INLINE OVERLOADABLE long4 convert_long4_rtz(uint4 v) {
+  return (long4)(convert_long_rtz(v.s0), convert_long_rtz(v.s1), convert_long_rtz(v.s2), convert_long_rtz(v.s3));
+}
+
+INLINE OVERLOADABLE long4 convert_long4_rtp(uint4 v) {
+  return (long4)(convert_long_rtp(v.s0), convert_long_rtp(v.s1), convert_long_rtp(v.s2), convert_long_rtp(v.s3));
+}
+
+INLINE OVERLOADABLE long4 convert_long4_rtn(uint4 v) {
+  return (long4)(convert_long_rtn(v.s0), convert_long_rtn(v.s1), convert_long_rtn(v.s2), convert_long_rtn(v.s3));
+}
+
+INLINE OVERLOADABLE ulong4 convert_ulong4_rte(uint4 v) {
+  return (ulong4)(convert_ulong_rte(v.s0), convert_ulong_rte(v.s1), convert_ulong_rte(v.s2), convert_ulong_rte(v.s3));
+}
+
+INLINE OVERLOADABLE ulong4 convert_ulong4_rtz(uint4 v) {
+  return (ulong4)(convert_ulong_rtz(v.s0), convert_ulong_rtz(v.s1), convert_ulong_rtz(v.s2), convert_ulong_rtz(v.s3));
+}
+
+INLINE OVERLOADABLE ulong4 convert_ulong4_rtp(uint4 v) {
+  return (ulong4)(convert_ulong_rtp(v.s0), convert_ulong_rtp(v.s1), convert_ulong_rtp(v.s2), convert_ulong_rtp(v.s3));
+}
+
+INLINE OVERLOADABLE ulong4 convert_ulong4_rtn(uint4 v) {
+  return (ulong4)(convert_ulong_rtn(v.s0), convert_ulong_rtn(v.s1), convert_ulong_rtn(v.s2), convert_ulong_rtn(v.s3));
+}
+
+INLINE OVERLOADABLE int4 convert_int4_rte(uint4 v) {
+  return (int4)(convert_int_rte(v.s0), convert_int_rte(v.s1), convert_int_rte(v.s2), convert_int_rte(v.s3));
+}
+
+INLINE OVERLOADABLE int4 convert_int4_rtz(uint4 v) {
+  return (int4)(convert_int_rtz(v.s0), convert_int_rtz(v.s1), convert_int_rtz(v.s2), convert_int_rtz(v.s3));
+}
+
+INLINE OVERLOADABLE int4 convert_int4_rtp(uint4 v) {
+  return (int4)(convert_int_rtp(v.s0), convert_int_rtp(v.s1), convert_int_rtp(v.s2), convert_int_rtp(v.s3));
+}
+
+INLINE OVERLOADABLE int4 convert_int4_rtn(uint4 v) {
+  return (int4)(convert_int_rtn(v.s0), convert_int_rtn(v.s1), convert_int_rtn(v.s2), convert_int_rtn(v.s3));
+}
+
+INLINE OVERLOADABLE uint4 convert_uint4_rte(uint4 v) {
+  return (uint4)(convert_uint_rte(v.s0), convert_uint_rte(v.s1), convert_uint_rte(v.s2), convert_uint_rte(v.s3));
+}
+
+INLINE OVERLOADABLE uint4 convert_uint4_rtz(uint4 v) {
+  return (uint4)(convert_uint_rtz(v.s0), convert_uint_rtz(v.s1), convert_uint_rtz(v.s2), convert_uint_rtz(v.s3));
+}
+
+INLINE OVERLOADABLE uint4 convert_uint4_rtp(uint4 v) {
+  return (uint4)(convert_uint_rtp(v.s0), convert_uint_rtp(v.s1), convert_uint_rtp(v.s2), convert_uint_rtp(v.s3));
+}
+
+INLINE OVERLOADABLE uint4 convert_uint4_rtn(uint4 v) {
+  return (uint4)(convert_uint_rtn(v.s0), convert_uint_rtn(v.s1), convert_uint_rtn(v.s2), convert_uint_rtn(v.s3));
+}
+
+INLINE OVERLOADABLE short4 convert_short4_rte(uint4 v) {
+  return (short4)(convert_short_rte(v.s0), convert_short_rte(v.s1), convert_short_rte(v.s2), convert_short_rte(v.s3));
+}
+
+INLINE OVERLOADABLE short4 convert_short4_rtz(uint4 v) {
+  return (short4)(convert_short_rtz(v.s0), convert_short_rtz(v.s1), convert_short_rtz(v.s2), convert_short_rtz(v.s3));
+}
+
+INLINE OVERLOADABLE short4 convert_short4_rtp(uint4 v) {
+  return (short4)(convert_short_rtp(v.s0), convert_short_rtp(v.s1), convert_short_rtp(v.s2), convert_short_rtp(v.s3));
+}
+
+INLINE OVERLOADABLE short4 convert_short4_rtn(uint4 v) {
+  return (short4)(convert_short_rtn(v.s0), convert_short_rtn(v.s1), convert_short_rtn(v.s2), convert_short_rtn(v.s3));
+}
+
+INLINE OVERLOADABLE ushort4 convert_ushort4_rte(uint4 v) {
+  return (ushort4)(convert_ushort_rte(v.s0), convert_ushort_rte(v.s1), convert_ushort_rte(v.s2), convert_ushort_rte(v.s3));
+}
+
+INLINE OVERLOADABLE ushort4 convert_ushort4_rtz(uint4 v) {
+  return (ushort4)(convert_ushort_rtz(v.s0), convert_ushort_rtz(v.s1), convert_ushort_rtz(v.s2), convert_ushort_rtz(v.s3));
+}
+
+INLINE OVERLOADABLE ushort4 convert_ushort4_rtp(uint4 v) {
+  return (ushort4)(convert_ushort_rtp(v.s0), convert_ushort_rtp(v.s1), convert_ushort_rtp(v.s2), convert_ushort_rtp(v.s3));
+}
+
+INLINE OVERLOADABLE ushort4 convert_ushort4_rtn(uint4 v) {
+  return (ushort4)(convert_ushort_rtn(v.s0), convert_ushort_rtn(v.s1), convert_ushort_rtn(v.s2), convert_ushort_rtn(v.s3));
+}
+
+INLINE OVERLOADABLE char4 convert_char4_rte(uint4 v) {
+  return (char4)(convert_char_rte(v.s0), convert_char_rte(v.s1), convert_char_rte(v.s2), convert_char_rte(v.s3));
+}
+
+INLINE OVERLOADABLE char4 convert_char4_rtz(uint4 v) {
+  return (char4)(convert_char_rtz(v.s0), convert_char_rtz(v.s1), convert_char_rtz(v.s2), convert_char_rtz(v.s3));
+}
+
+INLINE OVERLOADABLE char4 convert_char4_rtp(uint4 v) {
+  return (char4)(convert_char_rtp(v.s0), convert_char_rtp(v.s1), convert_char_rtp(v.s2), convert_char_rtp(v.s3));
+}
+
+INLINE OVERLOADABLE char4 convert_char4_rtn(uint4 v) {
+  return (char4)(convert_char_rtn(v.s0), convert_char_rtn(v.s1), convert_char_rtn(v.s2), convert_char_rtn(v.s3));
+}
+
+INLINE OVERLOADABLE uchar4 convert_uchar4_rte(uint4 v) {
+  return (uchar4)(convert_uchar_rte(v.s0), convert_uchar_rte(v.s1), convert_uchar_rte(v.s2), convert_uchar_rte(v.s3));
+}
+
+INLINE OVERLOADABLE uchar4 convert_uchar4_rtz(uint4 v) {
+  return (uchar4)(convert_uchar_rtz(v.s0), convert_uchar_rtz(v.s1), convert_uchar_rtz(v.s2), convert_uchar_rtz(v.s3));
+}
+
+INLINE OVERLOADABLE uchar4 convert_uchar4_rtp(uint4 v) {
+  return (uchar4)(convert_uchar_rtp(v.s0), convert_uchar_rtp(v.s1), convert_uchar_rtp(v.s2), convert_uchar_rtp(v.s3));
+}
+
+INLINE OVERLOADABLE uchar4 convert_uchar4_rtn(uint4 v) {
+  return (uchar4)(convert_uchar_rtn(v.s0), convert_uchar_rtn(v.s1), convert_uchar_rtn(v.s2), convert_uchar_rtn(v.s3));
+}
+
+INLINE OVERLOADABLE float4 convert_float4_rte(uint4 v) {
+  return (float4)(convert_float_rte(v.s0), convert_float_rte(v.s1), convert_float_rte(v.s2), convert_float_rte(v.s3));
+}
+
+INLINE OVERLOADABLE float4 convert_float4_rtz(uint4 v) {
+  return (float4)(convert_float_rtz(v.s0), convert_float_rtz(v.s1), convert_float_rtz(v.s2), convert_float_rtz(v.s3));
+}
+
+INLINE OVERLOADABLE float4 convert_float4_rtp(uint4 v) {
+  return (float4)(convert_float_rtp(v.s0), convert_float_rtp(v.s1), convert_float_rtp(v.s2), convert_float_rtp(v.s3));
+}
+
+INLINE OVERLOADABLE float4 convert_float4_rtn(uint4 v) {
+  return (float4)(convert_float_rtn(v.s0), convert_float_rtn(v.s1), convert_float_rtn(v.s2), convert_float_rtn(v.s3));
+}
+
+INLINE OVERLOADABLE long4 convert_long4_rte(short4 v) {
+  return (long4)(convert_long_rte(v.s0), convert_long_rte(v.s1), convert_long_rte(v.s2), convert_long_rte(v.s3));
+}
+
+INLINE OVERLOADABLE long4 convert_long4_rtz(short4 v) {
+  return (long4)(convert_long_rtz(v.s0), convert_long_rtz(v.s1), convert_long_rtz(v.s2), convert_long_rtz(v.s3));
+}
+
+INLINE OVERLOADABLE long4 convert_long4_rtp(short4 v) {
+  return (long4)(convert_long_rtp(v.s0), convert_long_rtp(v.s1), convert_long_rtp(v.s2), convert_long_rtp(v.s3));
+}
+
+INLINE OVERLOADABLE long4 convert_long4_rtn(short4 v) {
+  return (long4)(convert_long_rtn(v.s0), convert_long_rtn(v.s1), convert_long_rtn(v.s2), convert_long_rtn(v.s3));
+}
+
+INLINE OVERLOADABLE ulong4 convert_ulong4_rte(short4 v) {
+  return (ulong4)(convert_ulong_rte(v.s0), convert_ulong_rte(v.s1), convert_ulong_rte(v.s2), convert_ulong_rte(v.s3));
+}
+
+INLINE OVERLOADABLE ulong4 convert_ulong4_rtz(short4 v) {
+  return (ulong4)(convert_ulong_rtz(v.s0), convert_ulong_rtz(v.s1), convert_ulong_rtz(v.s2), convert_ulong_rtz(v.s3));
+}
+
+INLINE OVERLOADABLE ulong4 convert_ulong4_rtp(short4 v) {
+  return (ulong4)(convert_ulong_rtp(v.s0), convert_ulong_rtp(v.s1), convert_ulong_rtp(v.s2), convert_ulong_rtp(v.s3));
+}
+
+INLINE OVERLOADABLE ulong4 convert_ulong4_rtn(short4 v) {
+  return (ulong4)(convert_ulong_rtn(v.s0), convert_ulong_rtn(v.s1), convert_ulong_rtn(v.s2), convert_ulong_rtn(v.s3));
+}
+
+INLINE OVERLOADABLE int4 convert_int4_rte(short4 v) {
+  return (int4)(convert_int_rte(v.s0), convert_int_rte(v.s1), convert_int_rte(v.s2), convert_int_rte(v.s3));
+}
+
+INLINE OVERLOADABLE int4 convert_int4_rtz(short4 v) {
+  return (int4)(convert_int_rtz(v.s0), convert_int_rtz(v.s1), convert_int_rtz(v.s2), convert_int_rtz(v.s3));
+}
+
+INLINE OVERLOADABLE int4 convert_int4_rtp(short4 v) {
+  return (int4)(convert_int_rtp(v.s0), convert_int_rtp(v.s1), convert_int_rtp(v.s2), convert_int_rtp(v.s3));
+}
+
+INLINE OVERLOADABLE int4 convert_int4_rtn(short4 v) {
+  return (int4)(convert_int_rtn(v.s0), convert_int_rtn(v.s1), convert_int_rtn(v.s2), convert_int_rtn(v.s3));
+}
+
+INLINE OVERLOADABLE uint4 convert_uint4_rte(short4 v) {
+  return (uint4)(convert_uint_rte(v.s0), convert_uint_rte(v.s1), convert_uint_rte(v.s2), convert_uint_rte(v.s3));
+}
+
+INLINE OVERLOADABLE uint4 convert_uint4_rtz(short4 v) {
+  return (uint4)(convert_uint_rtz(v.s0), convert_uint_rtz(v.s1), convert_uint_rtz(v.s2), convert_uint_rtz(v.s3));
+}
+
+INLINE OVERLOADABLE uint4 convert_uint4_rtp(short4 v) {
+  return (uint4)(convert_uint_rtp(v.s0), convert_uint_rtp(v.s1), convert_uint_rtp(v.s2), convert_uint_rtp(v.s3));
+}
+
+INLINE OVERLOADABLE uint4 convert_uint4_rtn(short4 v) {
+  return (uint4)(convert_uint_rtn(v.s0), convert_uint_rtn(v.s1), convert_uint_rtn(v.s2), convert_uint_rtn(v.s3));
+}
+
+INLINE OVERLOADABLE short4 convert_short4_rte(short4 v) {
+  return (short4)(convert_short_rte(v.s0), convert_short_rte(v.s1), convert_short_rte(v.s2), convert_short_rte(v.s3));
+}
+
+INLINE OVERLOADABLE short4 convert_short4_rtz(short4 v) {
+  return (short4)(convert_short_rtz(v.s0), convert_short_rtz(v.s1), convert_short_rtz(v.s2), convert_short_rtz(v.s3));
+}
+
+INLINE OVERLOADABLE short4 convert_short4_rtp(short4 v) {
+  return (short4)(convert_short_rtp(v.s0), convert_short_rtp(v.s1), convert_short_rtp(v.s2), convert_short_rtp(v.s3));
+}
+
+INLINE OVERLOADABLE short4 convert_short4_rtn(short4 v) {
+  return (short4)(convert_short_rtn(v.s0), convert_short_rtn(v.s1), convert_short_rtn(v.s2), convert_short_rtn(v.s3));
+}
+
+INLINE OVERLOADABLE ushort4 convert_ushort4_rte(short4 v) {
+  return (ushort4)(convert_ushort_rte(v.s0), convert_ushort_rte(v.s1), convert_ushort_rte(v.s2), convert_ushort_rte(v.s3));
+}
+
+INLINE OVERLOADABLE ushort4 convert_ushort4_rtz(short4 v) {
+  return (ushort4)(convert_ushort_rtz(v.s0), convert_ushort_rtz(v.s1), convert_ushort_rtz(v.s2), convert_ushort_rtz(v.s3));
+}
+
+INLINE OVERLOADABLE ushort4 convert_ushort4_rtp(short4 v) {
+  return (ushort4)(convert_ushort_rtp(v.s0), convert_ushort_rtp(v.s1), convert_ushort_rtp(v.s2), convert_ushort_rtp(v.s3));
+}
+
+INLINE OVERLOADABLE ushort4 convert_ushort4_rtn(short4 v) {
+  return (ushort4)(convert_ushort_rtn(v.s0), convert_ushort_rtn(v.s1), convert_ushort_rtn(v.s2), convert_ushort_rtn(v.s3));
+}
+
+INLINE OVERLOADABLE char4 convert_char4_rte(short4 v) {
+  return (char4)(convert_char_rte(v.s0), convert_char_rte(v.s1), convert_char_rte(v.s2), convert_char_rte(v.s3));
+}
+
+INLINE OVERLOADABLE char4 convert_char4_rtz(short4 v) {
+  return (char4)(convert_char_rtz(v.s0), convert_char_rtz(v.s1), convert_char_rtz(v.s2), convert_char_rtz(v.s3));
+}
+
+INLINE OVERLOADABLE char4 convert_char4_rtp(short4 v) {
+  return (char4)(convert_char_rtp(v.s0), convert_char_rtp(v.s1), convert_char_rtp(v.s2), convert_char_rtp(v.s3));
+}
+
+INLINE OVERLOADABLE char4 convert_char4_rtn(short4 v) {
+  return (char4)(convert_char_rtn(v.s0), convert_char_rtn(v.s1), convert_char_rtn(v.s2), convert_char_rtn(v.s3));
+}
+
+INLINE OVERLOADABLE uchar4 convert_uchar4_rte(short4 v) {
+  return (uchar4)(convert_uchar_rte(v.s0), convert_uchar_rte(v.s1), convert_uchar_rte(v.s2), convert_uchar_rte(v.s3));
+}
+
+INLINE OVERLOADABLE uchar4 convert_uchar4_rtz(short4 v) {
+  return (uchar4)(convert_uchar_rtz(v.s0), convert_uchar_rtz(v.s1), convert_uchar_rtz(v.s2), convert_uchar_rtz(v.s3));
+}
+
+INLINE OVERLOADABLE uchar4 convert_uchar4_rtp(short4 v) {
+  return (uchar4)(convert_uchar_rtp(v.s0), convert_uchar_rtp(v.s1), convert_uchar_rtp(v.s2), convert_uchar_rtp(v.s3));
+}
+
+INLINE OVERLOADABLE uchar4 convert_uchar4_rtn(short4 v) {
+  return (uchar4)(convert_uchar_rtn(v.s0), convert_uchar_rtn(v.s1), convert_uchar_rtn(v.s2), convert_uchar_rtn(v.s3));
+}
+
+INLINE OVERLOADABLE float4 convert_float4_rte(short4 v) {
+  return (float4)(convert_float_rte(v.s0), convert_float_rte(v.s1), convert_float_rte(v.s2), convert_float_rte(v.s3));
+}
+
+INLINE OVERLOADABLE float4 convert_float4_rtz(short4 v) {
+  return (float4)(convert_float_rtz(v.s0), convert_float_rtz(v.s1), convert_float_rtz(v.s2), convert_float_rtz(v.s3));
+}
+
+INLINE OVERLOADABLE float4 convert_float4_rtp(short4 v) {
+  return (float4)(convert_float_rtp(v.s0), convert_float_rtp(v.s1), convert_float_rtp(v.s2), convert_float_rtp(v.s3));
+}
+
+INLINE OVERLOADABLE float4 convert_float4_rtn(short4 v) {
+  return (float4)(convert_float_rtn(v.s0), convert_float_rtn(v.s1), convert_float_rtn(v.s2), convert_float_rtn(v.s3));
+}
+
+INLINE OVERLOADABLE long4 convert_long4_rte(ushort4 v) {
+  return (long4)(convert_long_rte(v.s0), convert_long_rte(v.s1), convert_long_rte(v.s2), convert_long_rte(v.s3));
+}
+
+INLINE OVERLOADABLE long4 convert_long4_rtz(ushort4 v) {
+  return (long4)(convert_long_rtz(v.s0), convert_long_rtz(v.s1), convert_long_rtz(v.s2), convert_long_rtz(v.s3));
+}
+
+INLINE OVERLOADABLE long4 convert_long4_rtp(ushort4 v) {
+  return (long4)(convert_long_rtp(v.s0), convert_long_rtp(v.s1), convert_long_rtp(v.s2), convert_long_rtp(v.s3));
+}
+
+INLINE OVERLOADABLE long4 convert_long4_rtn(ushort4 v) {
+  return (long4)(convert_long_rtn(v.s0), convert_long_rtn(v.s1), convert_long_rtn(v.s2), convert_long_rtn(v.s3));
+}
+
+INLINE OVERLOADABLE ulong4 convert_ulong4_rte(ushort4 v) {
+  return (ulong4)(convert_ulong_rte(v.s0), convert_ulong_rte(v.s1), convert_ulong_rte(v.s2), convert_ulong_rte(v.s3));
+}
+
+INLINE OVERLOADABLE ulong4 convert_ulong4_rtz(ushort4 v) {
+  return (ulong4)(convert_ulong_rtz(v.s0), convert_ulong_rtz(v.s1), convert_ulong_rtz(v.s2), convert_ulong_rtz(v.s3));
+}
+
+INLINE OVERLOADABLE ulong4 convert_ulong4_rtp(ushort4 v) {
+  return (ulong4)(convert_ulong_rtp(v.s0), convert_ulong_rtp(v.s1), convert_ulong_rtp(v.s2), convert_ulong_rtp(v.s3));
+}
+
+INLINE OVERLOADABLE ulong4 convert_ulong4_rtn(ushort4 v) {
+  return (ulong4)(convert_ulong_rtn(v.s0), convert_ulong_rtn(v.s1), convert_ulong_rtn(v.s2), convert_ulong_rtn(v.s3));
+}
+
+INLINE OVERLOADABLE int4 convert_int4_rte(ushort4 v) {
+  return (int4)(convert_int_rte(v.s0), convert_int_rte(v.s1), convert_int_rte(v.s2), convert_int_rte(v.s3));
+}
+
+INLINE OVERLOADABLE int4 convert_int4_rtz(ushort4 v) {
+  return (int4)(convert_int_rtz(v.s0), convert_int_rtz(v.s1), convert_int_rtz(v.s2), convert_int_rtz(v.s3));
+}
+
+INLINE OVERLOADABLE int4 convert_int4_rtp(ushort4 v) {
+  return (int4)(convert_int_rtp(v.s0), convert_int_rtp(v.s1), convert_int_rtp(v.s2), convert_int_rtp(v.s3));
+}
+
+INLINE OVERLOADABLE int4 convert_int4_rtn(ushort4 v) {
+  return (int4)(convert_int_rtn(v.s0), convert_int_rtn(v.s1), convert_int_rtn(v.s2), convert_int_rtn(v.s3));
+}
+
+INLINE OVERLOADABLE uint4 convert_uint4_rte(ushort4 v) {
+  return (uint4)(convert_uint_rte(v.s0), convert_uint_rte(v.s1), convert_uint_rte(v.s2), convert_uint_rte(v.s3));
+}
+
+INLINE OVERLOADABLE uint4 convert_uint4_rtz(ushort4 v) {
+  return (uint4)(convert_uint_rtz(v.s0), convert_uint_rtz(v.s1), convert_uint_rtz(v.s2), convert_uint_rtz(v.s3));
+}
+
+INLINE OVERLOADABLE uint4 convert_uint4_rtp(ushort4 v) {
+  return (uint4)(convert_uint_rtp(v.s0), convert_uint_rtp(v.s1), convert_uint_rtp(v.s2), convert_uint_rtp(v.s3));
+}
+
+INLINE OVERLOADABLE uint4 convert_uint4_rtn(ushort4 v) {
+  return (uint4)(convert_uint_rtn(v.s0), convert_uint_rtn(v.s1), convert_uint_rtn(v.s2), convert_uint_rtn(v.s3));
+}
+
+INLINE OVERLOADABLE short4 convert_short4_rte(ushort4 v) {
+  return (short4)(convert_short_rte(v.s0), convert_short_rte(v.s1), convert_short_rte(v.s2), convert_short_rte(v.s3));
+}
+
+INLINE OVERLOADABLE short4 convert_short4_rtz(ushort4 v) {
+  return (short4)(convert_short_rtz(v.s0), convert_short_rtz(v.s1), convert_short_rtz(v.s2), convert_short_rtz(v.s3));
+}
+
+INLINE OVERLOADABLE short4 convert_short4_rtp(ushort4 v) {
+  return (short4)(convert_short_rtp(v.s0), convert_short_rtp(v.s1), convert_short_rtp(v.s2), convert_short_rtp(v.s3));
+}
+
+INLINE OVERLOADABLE short4 convert_short4_rtn(ushort4 v) {
+  return (short4)(convert_short_rtn(v.s0), convert_short_rtn(v.s1), convert_short_rtn(v.s2), convert_short_rtn(v.s3));
+}
+
+INLINE OVERLOADABLE ushort4 convert_ushort4_rte(ushort4 v) {
+  return (ushort4)(convert_ushort_rte(v.s0), convert_ushort_rte(v.s1), convert_ushort_rte(v.s2), convert_ushort_rte(v.s3));
+}
+
+INLINE OVERLOADABLE ushort4 convert_ushort4_rtz(ushort4 v) {
+  return (ushort4)(convert_ushort_rtz(v.s0), convert_ushort_rtz(v.s1), convert_ushort_rtz(v.s2), convert_ushort_rtz(v.s3));
+}
+
+INLINE OVERLOADABLE ushort4 convert_ushort4_rtp(ushort4 v) {
+  return (ushort4)(convert_ushort_rtp(v.s0), convert_ushort_rtp(v.s1), convert_ushort_rtp(v.s2), convert_ushort_rtp(v.s3));
+}
+
+INLINE OVERLOADABLE ushort4 convert_ushort4_rtn(ushort4 v) {
+  return (ushort4)(convert_ushort_rtn(v.s0), convert_ushort_rtn(v.s1), convert_ushort_rtn(v.s2), convert_ushort_rtn(v.s3));
+}
+
+INLINE OVERLOADABLE char4 convert_char4_rte(ushort4 v) {
+  return (char4)(convert_char_rte(v.s0), convert_char_rte(v.s1), convert_char_rte(v.s2), convert_char_rte(v.s3));
+}
+
+INLINE OVERLOADABLE char4 convert_char4_rtz(ushort4 v) {
+  return (char4)(convert_char_rtz(v.s0), convert_char_rtz(v.s1), convert_char_rtz(v.s2), convert_char_rtz(v.s3));
+}
+
+INLINE OVERLOADABLE char4 convert_char4_rtp(ushort4 v) {
+  return (char4)(convert_char_rtp(v.s0), convert_char_rtp(v.s1), convert_char_rtp(v.s2), convert_char_rtp(v.s3));
+}
+
+INLINE OVERLOADABLE char4 convert_char4_rtn(ushort4 v) {
+  return (char4)(convert_char_rtn(v.s0), convert_char_rtn(v.s1), convert_char_rtn(v.s2), convert_char_rtn(v.s3));
+}
+
+INLINE OVERLOADABLE uchar4 convert_uchar4_rte(ushort4 v) {
+  return (uchar4)(convert_uchar_rte(v.s0), convert_uchar_rte(v.s1), convert_uchar_rte(v.s2), convert_uchar_rte(v.s3));
+}
+
+INLINE OVERLOADABLE uchar4 convert_uchar4_rtz(ushort4 v) {
+  return (uchar4)(convert_uchar_rtz(v.s0), convert_uchar_rtz(v.s1), convert_uchar_rtz(v.s2), convert_uchar_rtz(v.s3));
+}
+
+INLINE OVERLOADABLE uchar4 convert_uchar4_rtp(ushort4 v) {
+  return (uchar4)(convert_uchar_rtp(v.s0), convert_uchar_rtp(v.s1), convert_uchar_rtp(v.s2), convert_uchar_rtp(v.s3));
+}
+
+INLINE OVERLOADABLE uchar4 convert_uchar4_rtn(ushort4 v) {
+  return (uchar4)(convert_uchar_rtn(v.s0), convert_uchar_rtn(v.s1), convert_uchar_rtn(v.s2), convert_uchar_rtn(v.s3));
+}
+
+INLINE OVERLOADABLE float4 convert_float4_rte(ushort4 v) {
+  return (float4)(convert_float_rte(v.s0), convert_float_rte(v.s1), convert_float_rte(v.s2), convert_float_rte(v.s3));
+}
+
+INLINE OVERLOADABLE float4 convert_float4_rtz(ushort4 v) {
+  return (float4)(convert_float_rtz(v.s0), convert_float_rtz(v.s1), convert_float_rtz(v.s2), convert_float_rtz(v.s3));
+}
+
+INLINE OVERLOADABLE float4 convert_float4_rtp(ushort4 v) {
+  return (float4)(convert_float_rtp(v.s0), convert_float_rtp(v.s1), convert_float_rtp(v.s2), convert_float_rtp(v.s3));
+}
+
+INLINE OVERLOADABLE float4 convert_float4_rtn(ushort4 v) {
+  return (float4)(convert_float_rtn(v.s0), convert_float_rtn(v.s1), convert_float_rtn(v.s2), convert_float_rtn(v.s3));
+}
+
+INLINE OVERLOADABLE long4 convert_long4_rte(char4 v) {
+  return (long4)(convert_long_rte(v.s0), convert_long_rte(v.s1), convert_long_rte(v.s2), convert_long_rte(v.s3));
+}
+
+INLINE OVERLOADABLE long4 convert_long4_rtz(char4 v) {
+  return (long4)(convert_long_rtz(v.s0), convert_long_rtz(v.s1), convert_long_rtz(v.s2), convert_long_rtz(v.s3));
+}
+
+INLINE OVERLOADABLE long4 convert_long4_rtp(char4 v) {
+  return (long4)(convert_long_rtp(v.s0), convert_long_rtp(v.s1), convert_long_rtp(v.s2), convert_long_rtp(v.s3));
+}
+
+INLINE OVERLOADABLE long4 convert_long4_rtn(char4 v) {
+  return (long4)(convert_long_rtn(v.s0), convert_long_rtn(v.s1), convert_long_rtn(v.s2), convert_long_rtn(v.s3));
+}
+
+INLINE OVERLOADABLE ulong4 convert_ulong4_rte(char4 v) {
+  return (ulong4)(convert_ulong_rte(v.s0), convert_ulong_rte(v.s1), convert_ulong_rte(v.s2), convert_ulong_rte(v.s3));
+}
+
+INLINE OVERLOADABLE ulong4 convert_ulong4_rtz(char4 v) {
+  return (ulong4)(convert_ulong_rtz(v.s0), convert_ulong_rtz(v.s1), convert_ulong_rtz(v.s2), convert_ulong_rtz(v.s3));
+}
+
+INLINE OVERLOADABLE ulong4 convert_ulong4_rtp(char4 v) {
+  return (ulong4)(convert_ulong_rtp(v.s0), convert_ulong_rtp(v.s1), convert_ulong_rtp(v.s2), convert_ulong_rtp(v.s3));
+}
+
+INLINE OVERLOADABLE ulong4 convert_ulong4_rtn(char4 v) {
+  return (ulong4)(convert_ulong_rtn(v.s0), convert_ulong_rtn(v.s1), convert_ulong_rtn(v.s2), convert_ulong_rtn(v.s3));
+}
+
+INLINE OVERLOADABLE int4 convert_int4_rte(char4 v) {
+  return (int4)(convert_int_rte(v.s0), convert_int_rte(v.s1), convert_int_rte(v.s2), convert_int_rte(v.s3));
+}
+
+INLINE OVERLOADABLE int4 convert_int4_rtz(char4 v) {
+  return (int4)(convert_int_rtz(v.s0), convert_int_rtz(v.s1), convert_int_rtz(v.s2), convert_int_rtz(v.s3));
+}
+
+INLINE OVERLOADABLE int4 convert_int4_rtp(char4 v) {
+  return (int4)(convert_int_rtp(v.s0), convert_int_rtp(v.s1), convert_int_rtp(v.s2), convert_int_rtp(v.s3));
+}
+
+INLINE OVERLOADABLE int4 convert_int4_rtn(char4 v) {
+  return (int4)(convert_int_rtn(v.s0), convert_int_rtn(v.s1), convert_int_rtn(v.s2), convert_int_rtn(v.s3));
+}
+
+INLINE OVERLOADABLE uint4 convert_uint4_rte(char4 v) {
+  return (uint4)(convert_uint_rte(v.s0), convert_uint_rte(v.s1), convert_uint_rte(v.s2), convert_uint_rte(v.s3));
+}
+
+INLINE OVERLOADABLE uint4 convert_uint4_rtz(char4 v) {
+  return (uint4)(convert_uint_rtz(v.s0), convert_uint_rtz(v.s1), convert_uint_rtz(v.s2), convert_uint_rtz(v.s3));
+}
+
+INLINE OVERLOADABLE uint4 convert_uint4_rtp(char4 v) {
+  return (uint4)(convert_uint_rtp(v.s0), convert_uint_rtp(v.s1), convert_uint_rtp(v.s2), convert_uint_rtp(v.s3));
+}
+
+INLINE OVERLOADABLE uint4 convert_uint4_rtn(char4 v) {
+  return (uint4)(convert_uint_rtn(v.s0), convert_uint_rtn(v.s1), convert_uint_rtn(v.s2), convert_uint_rtn(v.s3));
+}
+
+INLINE OVERLOADABLE short4 convert_short4_rte(char4 v) {
+  return (short4)(convert_short_rte(v.s0), convert_short_rte(v.s1), convert_short_rte(v.s2), convert_short_rte(v.s3));
+}
+
+INLINE OVERLOADABLE short4 convert_short4_rtz(char4 v) {
+  return (short4)(convert_short_rtz(v.s0), convert_short_rtz(v.s1), convert_short_rtz(v.s2), convert_short_rtz(v.s3));
+}
+
+INLINE OVERLOADABLE short4 convert_short4_rtp(char4 v) {
+  return (short4)(convert_short_rtp(v.s0), convert_short_rtp(v.s1), convert_short_rtp(v.s2), convert_short_rtp(v.s3));
+}
+
+INLINE OVERLOADABLE short4 convert_short4_rtn(char4 v) {
+  return (short4)(convert_short_rtn(v.s0), convert_short_rtn(v.s1), convert_short_rtn(v.s2), convert_short_rtn(v.s3));
+}
+
+INLINE OVERLOADABLE ushort4 convert_ushort4_rte(char4 v) {
+  return (ushort4)(convert_ushort_rte(v.s0), convert_ushort_rte(v.s1), convert_ushort_rte(v.s2), convert_ushort_rte(v.s3));
+}
+
+INLINE OVERLOADABLE ushort4 convert_ushort4_rtz(char4 v) {
+  return (ushort4)(convert_ushort_rtz(v.s0), convert_ushort_rtz(v.s1), convert_ushort_rtz(v.s2), convert_ushort_rtz(v.s3));
+}
+
+INLINE OVERLOADABLE ushort4 convert_ushort4_rtp(char4 v) {
+  return (ushort4)(convert_ushort_rtp(v.s0), convert_ushort_rtp(v.s1), convert_ushort_rtp(v.s2), convert_ushort_rtp(v.s3));
+}
+
+INLINE OVERLOADABLE ushort4 convert_ushort4_rtn(char4 v) {
+  return (ushort4)(convert_ushort_rtn(v.s0), convert_ushort_rtn(v.s1), convert_ushort_rtn(v.s2), convert_ushort_rtn(v.s3));
+}
+
+INLINE OVERLOADABLE char4 convert_char4_rte(char4 v) {
+  return (char4)(convert_char_rte(v.s0), convert_char_rte(v.s1), convert_char_rte(v.s2), convert_char_rte(v.s3));
+}
+
+INLINE OVERLOADABLE char4 convert_char4_rtz(char4 v) {
+  return (char4)(convert_char_rtz(v.s0), convert_char_rtz(v.s1), convert_char_rtz(v.s2), convert_char_rtz(v.s3));
+}
+
+INLINE OVERLOADABLE char4 convert_char4_rtp(char4 v) {
+  return (char4)(convert_char_rtp(v.s0), convert_char_rtp(v.s1), convert_char_rtp(v.s2), convert_char_rtp(v.s3));
+}
+
+INLINE OVERLOADABLE char4 convert_char4_rtn(char4 v) {
+  return (char4)(convert_char_rtn(v.s0), convert_char_rtn(v.s1), convert_char_rtn(v.s2), convert_char_rtn(v.s3));
+}
+
+INLINE OVERLOADABLE uchar4 convert_uchar4_rte(char4 v) {
+  return (uchar4)(convert_uchar_rte(v.s0), convert_uchar_rte(v.s1), convert_uchar_rte(v.s2), convert_uchar_rte(v.s3));
+}
+
+INLINE OVERLOADABLE uchar4 convert_uchar4_rtz(char4 v) {
+  return (uchar4)(convert_uchar_rtz(v.s0), convert_uchar_rtz(v.s1), convert_uchar_rtz(v.s2), convert_uchar_rtz(v.s3));
+}
+
+INLINE OVERLOADABLE uchar4 convert_uchar4_rtp(char4 v) {
+  return (uchar4)(convert_uchar_rtp(v.s0), convert_uchar_rtp(v.s1), convert_uchar_rtp(v.s2), convert_uchar_rtp(v.s3));
+}
+
+INLINE OVERLOADABLE uchar4 convert_uchar4_rtn(char4 v) {
+  return (uchar4)(convert_uchar_rtn(v.s0), convert_uchar_rtn(v.s1), convert_uchar_rtn(v.s2), convert_uchar_rtn(v.s3));
+}
+
+INLINE OVERLOADABLE float4 convert_float4_rte(char4 v) {
+  return (float4)(convert_float_rte(v.s0), convert_float_rte(v.s1), convert_float_rte(v.s2), convert_float_rte(v.s3));
+}
+
+INLINE OVERLOADABLE float4 convert_float4_rtz(char4 v) {
+  return (float4)(convert_float_rtz(v.s0), convert_float_rtz(v.s1), convert_float_rtz(v.s2), convert_float_rtz(v.s3));
+}
+
+INLINE OVERLOADABLE float4 convert_float4_rtp(char4 v) {
+  return (float4)(convert_float_rtp(v.s0), convert_float_rtp(v.s1), convert_float_rtp(v.s2), convert_float_rtp(v.s3));
+}
+
+INLINE OVERLOADABLE float4 convert_float4_rtn(char4 v) {
+  return (float4)(convert_float_rtn(v.s0), convert_float_rtn(v.s1), convert_float_rtn(v.s2), convert_float_rtn(v.s3));
+}
+
+INLINE OVERLOADABLE long4 convert_long4_rte(uchar4 v) {
+  return (long4)(convert_long_rte(v.s0), convert_long_rte(v.s1), convert_long_rte(v.s2), convert_long_rte(v.s3));
+}
+
+INLINE OVERLOADABLE long4 convert_long4_rtz(uchar4 v) {
+  return (long4)(convert_long_rtz(v.s0), convert_long_rtz(v.s1), convert_long_rtz(v.s2), convert_long_rtz(v.s3));
+}
+
+INLINE OVERLOADABLE long4 convert_long4_rtp(uchar4 v) {
+  return (long4)(convert_long_rtp(v.s0), convert_long_rtp(v.s1), convert_long_rtp(v.s2), convert_long_rtp(v.s3));
+}
+
+INLINE OVERLOADABLE long4 convert_long4_rtn(uchar4 v) {
+  return (long4)(convert_long_rtn(v.s0), convert_long_rtn(v.s1), convert_long_rtn(v.s2), convert_long_rtn(v.s3));
+}
+
+INLINE OVERLOADABLE ulong4 convert_ulong4_rte(uchar4 v) {
+  return (ulong4)(convert_ulong_rte(v.s0), convert_ulong_rte(v.s1), convert_ulong_rte(v.s2), convert_ulong_rte(v.s3));
+}
+
+INLINE OVERLOADABLE ulong4 convert_ulong4_rtz(uchar4 v) {
+  return (ulong4)(convert_ulong_rtz(v.s0), convert_ulong_rtz(v.s1), convert_ulong_rtz(v.s2), convert_ulong_rtz(v.s3));
+}
+
+INLINE OVERLOADABLE ulong4 convert_ulong4_rtp(uchar4 v) {
+  return (ulong4)(convert_ulong_rtp(v.s0), convert_ulong_rtp(v.s1), convert_ulong_rtp(v.s2), convert_ulong_rtp(v.s3));
+}
+
+INLINE OVERLOADABLE ulong4 convert_ulong4_rtn(uchar4 v) {
+  return (ulong4)(convert_ulong_rtn(v.s0), convert_ulong_rtn(v.s1), convert_ulong_rtn(v.s2), convert_ulong_rtn(v.s3));
+}
+
+INLINE OVERLOADABLE int4 convert_int4_rte(uchar4 v) {
+  return (int4)(convert_int_rte(v.s0), convert_int_rte(v.s1), convert_int_rte(v.s2), convert_int_rte(v.s3));
+}
+
+INLINE OVERLOADABLE int4 convert_int4_rtz(uchar4 v) {
+  return (int4)(convert_int_rtz(v.s0), convert_int_rtz(v.s1), convert_int_rtz(v.s2), convert_int_rtz(v.s3));
+}
+
+INLINE OVERLOADABLE int4 convert_int4_rtp(uchar4 v) {
+  return (int4)(convert_int_rtp(v.s0), convert_int_rtp(v.s1), convert_int_rtp(v.s2), convert_int_rtp(v.s3));
+}
+
+INLINE OVERLOADABLE int4 convert_int4_rtn(uchar4 v) {
+  return (int4)(convert_int_rtn(v.s0), convert_int_rtn(v.s1), convert_int_rtn(v.s2), convert_int_rtn(v.s3));
+}
+
+INLINE OVERLOADABLE uint4 convert_uint4_rte(uchar4 v) {
+  return (uint4)(convert_uint_rte(v.s0), convert_uint_rte(v.s1), convert_uint_rte(v.s2), convert_uint_rte(v.s3));
+}
+
+INLINE OVERLOADABLE uint4 convert_uint4_rtz(uchar4 v) {
+  return (uint4)(convert_uint_rtz(v.s0), convert_uint_rtz(v.s1), convert_uint_rtz(v.s2), convert_uint_rtz(v.s3));
+}
+
+INLINE OVERLOADABLE uint4 convert_uint4_rtp(uchar4 v) {
+  return (uint4)(convert_uint_rtp(v.s0), convert_uint_rtp(v.s1), convert_uint_rtp(v.s2), convert_uint_rtp(v.s3));
+}
+
+INLINE OVERLOADABLE uint4 convert_uint4_rtn(uchar4 v) {
+  return (uint4)(convert_uint_rtn(v.s0), convert_uint_rtn(v.s1), convert_uint_rtn(v.s2), convert_uint_rtn(v.s3));
+}
+
+INLINE OVERLOADABLE short4 convert_short4_rte(uchar4 v) {
+  return (short4)(convert_short_rte(v.s0), convert_short_rte(v.s1), convert_short_rte(v.s2), convert_short_rte(v.s3));
+}
+
+INLINE OVERLOADABLE short4 convert_short4_rtz(uchar4 v) {
+  return (short4)(convert_short_rtz(v.s0), convert_short_rtz(v.s1), convert_short_rtz(v.s2), convert_short_rtz(v.s3));
+}
+
+INLINE OVERLOADABLE short4 convert_short4_rtp(uchar4 v) {
+  return (short4)(convert_short_rtp(v.s0), convert_short_rtp(v.s1), convert_short_rtp(v.s2), convert_short_rtp(v.s3));
+}
+
+INLINE OVERLOADABLE short4 convert_short4_rtn(uchar4 v) {
+  return (short4)(convert_short_rtn(v.s0), convert_short_rtn(v.s1), convert_short_rtn(v.s2), convert_short_rtn(v.s3));
+}
+
+INLINE OVERLOADABLE ushort4 convert_ushort4_rte(uchar4 v) {
+  return (ushort4)(convert_ushort_rte(v.s0), convert_ushort_rte(v.s1), convert_ushort_rte(v.s2), convert_ushort_rte(v.s3));
+}
+
+INLINE OVERLOADABLE ushort4 convert_ushort4_rtz(uchar4 v) {
+  return (ushort4)(convert_ushort_rtz(v.s0), convert_ushort_rtz(v.s1), convert_ushort_rtz(v.s2), convert_ushort_rtz(v.s3));
+}
+
+INLINE OVERLOADABLE ushort4 convert_ushort4_rtp(uchar4 v) {
+  return (ushort4)(convert_ushort_rtp(v.s0), convert_ushort_rtp(v.s1), convert_ushort_rtp(v.s2), convert_ushort_rtp(v.s3));
+}
+
+INLINE OVERLOADABLE ushort4 convert_ushort4_rtn(uchar4 v) {
+  return (ushort4)(convert_ushort_rtn(v.s0), convert_ushort_rtn(v.s1), convert_ushort_rtn(v.s2), convert_ushort_rtn(v.s3));
+}
+
+INLINE OVERLOADABLE char4 convert_char4_rte(uchar4 v) {
+  return (char4)(convert_char_rte(v.s0), convert_char_rte(v.s1), convert_char_rte(v.s2), convert_char_rte(v.s3));
+}
+
+INLINE OVERLOADABLE char4 convert_char4_rtz(uchar4 v) {
+  return (char4)(convert_char_rtz(v.s0), convert_char_rtz(v.s1), convert_char_rtz(v.s2), convert_char_rtz(v.s3));
+}
+
+INLINE OVERLOADABLE char4 convert_char4_rtp(uchar4 v) {
+  return (char4)(convert_char_rtp(v.s0), convert_char_rtp(v.s1), convert_char_rtp(v.s2), convert_char_rtp(v.s3));
+}
+
+INLINE OVERLOADABLE char4 convert_char4_rtn(uchar4 v) {
+  return (char4)(convert_char_rtn(v.s0), convert_char_rtn(v.s1), convert_char_rtn(v.s2), convert_char_rtn(v.s3));
+}
+
+INLINE OVERLOADABLE uchar4 convert_uchar4_rte(uchar4 v) {
+  return (uchar4)(convert_uchar_rte(v.s0), convert_uchar_rte(v.s1), convert_uchar_rte(v.s2), convert_uchar_rte(v.s3));
+}
+
+INLINE OVERLOADABLE uchar4 convert_uchar4_rtz(uchar4 v) {
+  return (uchar4)(convert_uchar_rtz(v.s0), convert_uchar_rtz(v.s1), convert_uchar_rtz(v.s2), convert_uchar_rtz(v.s3));
+}
+
+INLINE OVERLOADABLE uchar4 convert_uchar4_rtp(uchar4 v) {
+  return (uchar4)(convert_uchar_rtp(v.s0), convert_uchar_rtp(v.s1), convert_uchar_rtp(v.s2), convert_uchar_rtp(v.s3));
+}
+
+INLINE OVERLOADABLE uchar4 convert_uchar4_rtn(uchar4 v) {
+  return (uchar4)(convert_uchar_rtn(v.s0), convert_uchar_rtn(v.s1), convert_uchar_rtn(v.s2), convert_uchar_rtn(v.s3));
+}
+
+INLINE OVERLOADABLE float4 convert_float4_rte(uchar4 v) {
+  return (float4)(convert_float_rte(v.s0), convert_float_rte(v.s1), convert_float_rte(v.s2), convert_float_rte(v.s3));
+}
+
+INLINE OVERLOADABLE float4 convert_float4_rtz(uchar4 v) {
+  return (float4)(convert_float_rtz(v.s0), convert_float_rtz(v.s1), convert_float_rtz(v.s2), convert_float_rtz(v.s3));
+}
+
+INLINE OVERLOADABLE float4 convert_float4_rtp(uchar4 v) {
+  return (float4)(convert_float_rtp(v.s0), convert_float_rtp(v.s1), convert_float_rtp(v.s2), convert_float_rtp(v.s3));
+}
+
+INLINE OVERLOADABLE float4 convert_float4_rtn(uchar4 v) {
+  return (float4)(convert_float_rtn(v.s0), convert_float_rtn(v.s1), convert_float_rtn(v.s2), convert_float_rtn(v.s3));
+}
+
+INLINE OVERLOADABLE long4 convert_long4_rte(float4 v) {
+  return (long4)(convert_long_rte(v.s0), convert_long_rte(v.s1), convert_long_rte(v.s2), convert_long_rte(v.s3));
+}
+
+INLINE OVERLOADABLE long4 convert_long4_rtz(float4 v) {
+  return (long4)(convert_long_rtz(v.s0), convert_long_rtz(v.s1), convert_long_rtz(v.s2), convert_long_rtz(v.s3));
+}
+
+INLINE OVERLOADABLE long4 convert_long4_rtp(float4 v) {
+  return (long4)(convert_long_rtp(v.s0), convert_long_rtp(v.s1), convert_long_rtp(v.s2), convert_long_rtp(v.s3));
+}
+
+INLINE OVERLOADABLE long4 convert_long4_rtn(float4 v) {
+  return (long4)(convert_long_rtn(v.s0), convert_long_rtn(v.s1), convert_long_rtn(v.s2), convert_long_rtn(v.s3));
+}
+
+INLINE OVERLOADABLE ulong4 convert_ulong4_rte(float4 v) {
+  return (ulong4)(convert_ulong_rte(v.s0), convert_ulong_rte(v.s1), convert_ulong_rte(v.s2), convert_ulong_rte(v.s3));
+}
+
+INLINE OVERLOADABLE ulong4 convert_ulong4_rtz(float4 v) {
+  return (ulong4)(convert_ulong_rtz(v.s0), convert_ulong_rtz(v.s1), convert_ulong_rtz(v.s2), convert_ulong_rtz(v.s3));
+}
+
+INLINE OVERLOADABLE ulong4 convert_ulong4_rtp(float4 v) {
+  return (ulong4)(convert_ulong_rtp(v.s0), convert_ulong_rtp(v.s1), convert_ulong_rtp(v.s2), convert_ulong_rtp(v.s3));
+}
+
+INLINE OVERLOADABLE ulong4 convert_ulong4_rtn(float4 v) {
+  return (ulong4)(convert_ulong_rtn(v.s0), convert_ulong_rtn(v.s1), convert_ulong_rtn(v.s2), convert_ulong_rtn(v.s3));
+}
+
+INLINE OVERLOADABLE int4 convert_int4_rte(float4 v) {
+  return (int4)(convert_int_rte(v.s0), convert_int_rte(v.s1), convert_int_rte(v.s2), convert_int_rte(v.s3));
+}
+
+INLINE OVERLOADABLE int4 convert_int4_rtz(float4 v) {
+  return (int4)(convert_int_rtz(v.s0), convert_int_rtz(v.s1), convert_int_rtz(v.s2), convert_int_rtz(v.s3));
+}
+
+INLINE OVERLOADABLE int4 convert_int4_rtp(float4 v) {
+  return (int4)(convert_int_rtp(v.s0), convert_int_rtp(v.s1), convert_int_rtp(v.s2), convert_int_rtp(v.s3));
+}
+
+INLINE OVERLOADABLE int4 convert_int4_rtn(float4 v) {
+  return (int4)(convert_int_rtn(v.s0), convert_int_rtn(v.s1), convert_int_rtn(v.s2), convert_int_rtn(v.s3));
+}
+
+INLINE OVERLOADABLE uint4 convert_uint4_rte(float4 v) {
+  return (uint4)(convert_uint_rte(v.s0), convert_uint_rte(v.s1), convert_uint_rte(v.s2), convert_uint_rte(v.s3));
+}
+
+INLINE OVERLOADABLE uint4 convert_uint4_rtz(float4 v) {
+  return (uint4)(convert_uint_rtz(v.s0), convert_uint_rtz(v.s1), convert_uint_rtz(v.s2), convert_uint_rtz(v.s3));
+}
+
+INLINE OVERLOADABLE uint4 convert_uint4_rtp(float4 v) {
+  return (uint4)(convert_uint_rtp(v.s0), convert_uint_rtp(v.s1), convert_uint_rtp(v.s2), convert_uint_rtp(v.s3));
+}
+
+INLINE OVERLOADABLE uint4 convert_uint4_rtn(float4 v) {
+  return (uint4)(convert_uint_rtn(v.s0), convert_uint_rtn(v.s1), convert_uint_rtn(v.s2), convert_uint_rtn(v.s3));
+}
+
+INLINE OVERLOADABLE short4 convert_short4_rte(float4 v) {
+  return (short4)(convert_short_rte(v.s0), convert_short_rte(v.s1), convert_short_rte(v.s2), convert_short_rte(v.s3));
+}
+
+INLINE OVERLOADABLE short4 convert_short4_rtz(float4 v) {
+  return (short4)(convert_short_rtz(v.s0), convert_short_rtz(v.s1), convert_short_rtz(v.s2), convert_short_rtz(v.s3));
+}
+
+INLINE OVERLOADABLE short4 convert_short4_rtp(float4 v) {
+  return (short4)(convert_short_rtp(v.s0), convert_short_rtp(v.s1), convert_short_rtp(v.s2), convert_short_rtp(v.s3));
+}
+
+INLINE OVERLOADABLE short4 convert_short4_rtn(float4 v) {
+  return (short4)(convert_short_rtn(v.s0), convert_short_rtn(v.s1), convert_short_rtn(v.s2), convert_short_rtn(v.s3));
+}
+
+INLINE OVERLOADABLE ushort4 convert_ushort4_rte(float4 v) {
+  return (ushort4)(convert_ushort_rte(v.s0), convert_ushort_rte(v.s1), convert_ushort_rte(v.s2), convert_ushort_rte(v.s3));
+}
+
+INLINE OVERLOADABLE ushort4 convert_ushort4_rtz(float4 v) {
+  return (ushort4)(convert_ushort_rtz(v.s0), convert_ushort_rtz(v.s1), convert_ushort_rtz(v.s2), convert_ushort_rtz(v.s3));
+}
+
+INLINE OVERLOADABLE ushort4 convert_ushort4_rtp(float4 v) {
+  return (ushort4)(convert_ushort_rtp(v.s0), convert_ushort_rtp(v.s1), convert_ushort_rtp(v.s2), convert_ushort_rtp(v.s3));
+}
+
+INLINE OVERLOADABLE ushort4 convert_ushort4_rtn(float4 v) {
+  return (ushort4)(convert_ushort_rtn(v.s0), convert_ushort_rtn(v.s1), convert_ushort_rtn(v.s2), convert_ushort_rtn(v.s3));
+}
+
+INLINE OVERLOADABLE char4 convert_char4_rte(float4 v) {
+  return (char4)(convert_char_rte(v.s0), convert_char_rte(v.s1), convert_char_rte(v.s2), convert_char_rte(v.s3));
+}
+
+INLINE OVERLOADABLE char4 convert_char4_rtz(float4 v) {
+  return (char4)(convert_char_rtz(v.s0), convert_char_rtz(v.s1), convert_char_rtz(v.s2), convert_char_rtz(v.s3));
+}
+
+INLINE OVERLOADABLE char4 convert_char4_rtp(float4 v) {
+  return (char4)(convert_char_rtp(v.s0), convert_char_rtp(v.s1), convert_char_rtp(v.s2), convert_char_rtp(v.s3));
+}
+
+INLINE OVERLOADABLE char4 convert_char4_rtn(float4 v) {
+  return (char4)(convert_char_rtn(v.s0), convert_char_rtn(v.s1), convert_char_rtn(v.s2), convert_char_rtn(v.s3));
+}
+
+INLINE OVERLOADABLE uchar4 convert_uchar4_rte(float4 v) {
+  return (uchar4)(convert_uchar_rte(v.s0), convert_uchar_rte(v.s1), convert_uchar_rte(v.s2), convert_uchar_rte(v.s3));
+}
+
+INLINE OVERLOADABLE uchar4 convert_uchar4_rtz(float4 v) {
+  return (uchar4)(convert_uchar_rtz(v.s0), convert_uchar_rtz(v.s1), convert_uchar_rtz(v.s2), convert_uchar_rtz(v.s3));
+}
+
+INLINE OVERLOADABLE uchar4 convert_uchar4_rtp(float4 v) {
+  return (uchar4)(convert_uchar_rtp(v.s0), convert_uchar_rtp(v.s1), convert_uchar_rtp(v.s2), convert_uchar_rtp(v.s3));
+}
+
+INLINE OVERLOADABLE uchar4 convert_uchar4_rtn(float4 v) {
+  return (uchar4)(convert_uchar_rtn(v.s0), convert_uchar_rtn(v.s1), convert_uchar_rtn(v.s2), convert_uchar_rtn(v.s3));
+}
+
+INLINE OVERLOADABLE float4 convert_float4_rte(float4 v) {
+  return (float4)(convert_float_rte(v.s0), convert_float_rte(v.s1), convert_float_rte(v.s2), convert_float_rte(v.s3));
+}
+
+INLINE OVERLOADABLE float4 convert_float4_rtz(float4 v) {
+  return (float4)(convert_float_rtz(v.s0), convert_float_rtz(v.s1), convert_float_rtz(v.s2), convert_float_rtz(v.s3));
+}
+
+INLINE OVERLOADABLE float4 convert_float4_rtp(float4 v) {
+  return (float4)(convert_float_rtp(v.s0), convert_float_rtp(v.s1), convert_float_rtp(v.s2), convert_float_rtp(v.s3));
+}
+
+INLINE OVERLOADABLE float4 convert_float4_rtn(float4 v) {
+  return (float4)(convert_float_rtn(v.s0), convert_float_rtn(v.s1), convert_float_rtn(v.s2), convert_float_rtn(v.s3));
+}
+
+INLINE OVERLOADABLE long8 convert_long8_rte(long8 v) {
+  return (long8)(convert_long_rte(v.s0), convert_long_rte(v.s1), convert_long_rte(v.s2), convert_long_rte(v.s3), convert_long_rte(v.s4), convert_long_rte(v.s5), convert_long_rte(v.s6), convert_long_rte(v.s7));
+}
+
+INLINE OVERLOADABLE long8 convert_long8_rtz(long8 v) {
+  return (long8)(convert_long_rtz(v.s0), convert_long_rtz(v.s1), convert_long_rtz(v.s2), convert_long_rtz(v.s3), convert_long_rtz(v.s4), convert_long_rtz(v.s5), convert_long_rtz(v.s6), convert_long_rtz(v.s7));
+}
+
+INLINE OVERLOADABLE long8 convert_long8_rtp(long8 v) {
+  return (long8)(convert_long_rtp(v.s0), convert_long_rtp(v.s1), convert_long_rtp(v.s2), convert_long_rtp(v.s3), convert_long_rtp(v.s4), convert_long_rtp(v.s5), convert_long_rtp(v.s6), convert_long_rtp(v.s7));
+}
+
+INLINE OVERLOADABLE long8 convert_long8_rtn(long8 v) {
+  return (long8)(convert_long_rtn(v.s0), convert_long_rtn(v.s1), convert_long_rtn(v.s2), convert_long_rtn(v.s3), convert_long_rtn(v.s4), convert_long_rtn(v.s5), convert_long_rtn(v.s6), convert_long_rtn(v.s7));
+}
+
+INLINE OVERLOADABLE ulong8 convert_ulong8_rte(long8 v) {
+  return (ulong8)(convert_ulong_rte(v.s0), convert_ulong_rte(v.s1), convert_ulong_rte(v.s2), convert_ulong_rte(v.s3), convert_ulong_rte(v.s4), convert_ulong_rte(v.s5), convert_ulong_rte(v.s6), convert_ulong_rte(v.s7));
+}
+
+INLINE OVERLOADABLE ulong8 convert_ulong8_rtz(long8 v) {
+  return (ulong8)(convert_ulong_rtz(v.s0), convert_ulong_rtz(v.s1), convert_ulong_rtz(v.s2), convert_ulong_rtz(v.s3), convert_ulong_rtz(v.s4), convert_ulong_rtz(v.s5), convert_ulong_rtz(v.s6), convert_ulong_rtz(v.s7));
+}
+
+INLINE OVERLOADABLE ulong8 convert_ulong8_rtp(long8 v) {
+  return (ulong8)(convert_ulong_rtp(v.s0), convert_ulong_rtp(v.s1), convert_ulong_rtp(v.s2), convert_ulong_rtp(v.s3), convert_ulong_rtp(v.s4), convert_ulong_rtp(v.s5), convert_ulong_rtp(v.s6), convert_ulong_rtp(v.s7));
+}
+
+INLINE OVERLOADABLE ulong8 convert_ulong8_rtn(long8 v) {
+  return (ulong8)(convert_ulong_rtn(v.s0), convert_ulong_rtn(v.s1), convert_ulong_rtn(v.s2), convert_ulong_rtn(v.s3), convert_ulong_rtn(v.s4), convert_ulong_rtn(v.s5), convert_ulong_rtn(v.s6), convert_ulong_rtn(v.s7));
+}
+
+INLINE OVERLOADABLE int8 convert_int8_rte(long8 v) {
+  return (int8)(convert_int_rte(v.s0), convert_int_rte(v.s1), convert_int_rte(v.s2), convert_int_rte(v.s3), convert_int_rte(v.s4), convert_int_rte(v.s5), convert_int_rte(v.s6), convert_int_rte(v.s7));
+}
+
+INLINE OVERLOADABLE int8 convert_int8_rtz(long8 v) {
+  return (int8)(convert_int_rtz(v.s0), convert_int_rtz(v.s1), convert_int_rtz(v.s2), convert_int_rtz(v.s3), convert_int_rtz(v.s4), convert_int_rtz(v.s5), convert_int_rtz(v.s6), convert_int_rtz(v.s7));
+}
+
+INLINE OVERLOADABLE int8 convert_int8_rtp(long8 v) {
+  return (int8)(convert_int_rtp(v.s0), convert_int_rtp(v.s1), convert_int_rtp(v.s2), convert_int_rtp(v.s3), convert_int_rtp(v.s4), convert_int_rtp(v.s5), convert_int_rtp(v.s6), convert_int_rtp(v.s7));
+}
+
+INLINE OVERLOADABLE int8 convert_int8_rtn(long8 v) {
+  return (int8)(convert_int_rtn(v.s0), convert_int_rtn(v.s1), convert_int_rtn(v.s2), convert_int_rtn(v.s3), convert_int_rtn(v.s4), convert_int_rtn(v.s5), convert_int_rtn(v.s6), convert_int_rtn(v.s7));
+}
+
+INLINE OVERLOADABLE uint8 convert_uint8_rte(long8 v) {
+  return (uint8)(convert_uint_rte(v.s0), convert_uint_rte(v.s1), convert_uint_rte(v.s2), convert_uint_rte(v.s3), convert_uint_rte(v.s4), convert_uint_rte(v.s5), convert_uint_rte(v.s6), convert_uint_rte(v.s7));
+}
+
+INLINE OVERLOADABLE uint8 convert_uint8_rtz(long8 v) {
+  return (uint8)(convert_uint_rtz(v.s0), convert_uint_rtz(v.s1), convert_uint_rtz(v.s2), convert_uint_rtz(v.s3), convert_uint_rtz(v.s4), convert_uint_rtz(v.s5), convert_uint_rtz(v.s6), convert_uint_rtz(v.s7));
+}
+
+INLINE OVERLOADABLE uint8 convert_uint8_rtp(long8 v) {
+  return (uint8)(convert_uint_rtp(v.s0), convert_uint_rtp(v.s1), convert_uint_rtp(v.s2), convert_uint_rtp(v.s3), convert_uint_rtp(v.s4), convert_uint_rtp(v.s5), convert_uint_rtp(v.s6), convert_uint_rtp(v.s7));
+}
+
+INLINE OVERLOADABLE uint8 convert_uint8_rtn(long8 v) {
+  return (uint8)(convert_uint_rtn(v.s0), convert_uint_rtn(v.s1), convert_uint_rtn(v.s2), convert_uint_rtn(v.s3), convert_uint_rtn(v.s4), convert_uint_rtn(v.s5), convert_uint_rtn(v.s6), convert_uint_rtn(v.s7));
+}
+
+INLINE OVERLOADABLE short8 convert_short8_rte(long8 v) {
+  return (short8)(convert_short_rte(v.s0), convert_short_rte(v.s1), convert_short_rte(v.s2), convert_short_rte(v.s3), convert_short_rte(v.s4), convert_short_rte(v.s5), convert_short_rte(v.s6), convert_short_rte(v.s7));
+}
+
+INLINE OVERLOADABLE short8 convert_short8_rtz(long8 v) {
+  return (short8)(convert_short_rtz(v.s0), convert_short_rtz(v.s1), convert_short_rtz(v.s2), convert_short_rtz(v.s3), convert_short_rtz(v.s4), convert_short_rtz(v.s5), convert_short_rtz(v.s6), convert_short_rtz(v.s7));
+}
+
+INLINE OVERLOADABLE short8 convert_short8_rtp(long8 v) {
+  return (short8)(convert_short_rtp(v.s0), convert_short_rtp(v.s1), convert_short_rtp(v.s2), convert_short_rtp(v.s3), convert_short_rtp(v.s4), convert_short_rtp(v.s5), convert_short_rtp(v.s6), convert_short_rtp(v.s7));
+}
+
+INLINE OVERLOADABLE short8 convert_short8_rtn(long8 v) {
+  return (short8)(convert_short_rtn(v.s0), convert_short_rtn(v.s1), convert_short_rtn(v.s2), convert_short_rtn(v.s3), convert_short_rtn(v.s4), convert_short_rtn(v.s5), convert_short_rtn(v.s6), convert_short_rtn(v.s7));
+}
+
+INLINE OVERLOADABLE ushort8 convert_ushort8_rte(long8 v) {
+  return (ushort8)(convert_ushort_rte(v.s0), convert_ushort_rte(v.s1), convert_ushort_rte(v.s2), convert_ushort_rte(v.s3), convert_ushort_rte(v.s4), convert_ushort_rte(v.s5), convert_ushort_rte(v.s6), convert_ushort_rte(v.s7));
+}
+
+INLINE OVERLOADABLE ushort8 convert_ushort8_rtz(long8 v) {
+  return (ushort8)(convert_ushort_rtz(v.s0), convert_ushort_rtz(v.s1), convert_ushort_rtz(v.s2), convert_ushort_rtz(v.s3), convert_ushort_rtz(v.s4), convert_ushort_rtz(v.s5), convert_ushort_rtz(v.s6), convert_ushort_rtz(v.s7));
+}
+
+INLINE OVERLOADABLE ushort8 convert_ushort8_rtp(long8 v) {
+  return (ushort8)(convert_ushort_rtp(v.s0), convert_ushort_rtp(v.s1), convert_ushort_rtp(v.s2), convert_ushort_rtp(v.s3), convert_ushort_rtp(v.s4), convert_ushort_rtp(v.s5), convert_ushort_rtp(v.s6), convert_ushort_rtp(v.s7));
+}
+
+INLINE OVERLOADABLE ushort8 convert_ushort8_rtn(long8 v) {
+  return (ushort8)(convert_ushort_rtn(v.s0), convert_ushort_rtn(v.s1), convert_ushort_rtn(v.s2), convert_ushort_rtn(v.s3), convert_ushort_rtn(v.s4), convert_ushort_rtn(v.s5), convert_ushort_rtn(v.s6), convert_ushort_rtn(v.s7));
+}
+
+INLINE OVERLOADABLE char8 convert_char8_rte(long8 v) {
+  return (char8)(convert_char_rte(v.s0), convert_char_rte(v.s1), convert_char_rte(v.s2), convert_char_rte(v.s3), convert_char_rte(v.s4), convert_char_rte(v.s5), convert_char_rte(v.s6), convert_char_rte(v.s7));
+}
+
+INLINE OVERLOADABLE char8 convert_char8_rtz(long8 v) {
+  return (char8)(convert_char_rtz(v.s0), convert_char_rtz(v.s1), convert_char_rtz(v.s2), convert_char_rtz(v.s3), convert_char_rtz(v.s4), convert_char_rtz(v.s5), convert_char_rtz(v.s6), convert_char_rtz(v.s7));
+}
+
+INLINE OVERLOADABLE char8 convert_char8_rtp(long8 v) {
+  return (char8)(convert_char_rtp(v.s0), convert_char_rtp(v.s1), convert_char_rtp(v.s2), convert_char_rtp(v.s3), convert_char_rtp(v.s4), convert_char_rtp(v.s5), convert_char_rtp(v.s6), convert_char_rtp(v.s7));
+}
+
+INLINE OVERLOADABLE char8 convert_char8_rtn(long8 v) {
+  return (char8)(convert_char_rtn(v.s0), convert_char_rtn(v.s1), convert_char_rtn(v.s2), convert_char_rtn(v.s3), convert_char_rtn(v.s4), convert_char_rtn(v.s5), convert_char_rtn(v.s6), convert_char_rtn(v.s7));
+}
+
+INLINE OVERLOADABLE uchar8 convert_uchar8_rte(long8 v) {
+  return (uchar8)(convert_uchar_rte(v.s0), convert_uchar_rte(v.s1), convert_uchar_rte(v.s2), convert_uchar_rte(v.s3), convert_uchar_rte(v.s4), convert_uchar_rte(v.s5), convert_uchar_rte(v.s6), convert_uchar_rte(v.s7));
+}
+
+INLINE OVERLOADABLE uchar8 convert_uchar8_rtz(long8 v) {
+  return (uchar8)(convert_uchar_rtz(v.s0), convert_uchar_rtz(v.s1), convert_uchar_rtz(v.s2), convert_uchar_rtz(v.s3), convert_uchar_rtz(v.s4), convert_uchar_rtz(v.s5), convert_uchar_rtz(v.s6), convert_uchar_rtz(v.s7));
+}
+
+INLINE OVERLOADABLE uchar8 convert_uchar8_rtp(long8 v) {
+  return (uchar8)(convert_uchar_rtp(v.s0), convert_uchar_rtp(v.s1), convert_uchar_rtp(v.s2), convert_uchar_rtp(v.s3), convert_uchar_rtp(v.s4), convert_uchar_rtp(v.s5), convert_uchar_rtp(v.s6), convert_uchar_rtp(v.s7));
+}
+
+INLINE OVERLOADABLE uchar8 convert_uchar8_rtn(long8 v) {
+  return (uchar8)(convert_uchar_rtn(v.s0), convert_uchar_rtn(v.s1), convert_uchar_rtn(v.s2), convert_uchar_rtn(v.s3), convert_uchar_rtn(v.s4), convert_uchar_rtn(v.s5), convert_uchar_rtn(v.s6), convert_uchar_rtn(v.s7));
+}
+
+INLINE OVERLOADABLE float8 convert_float8_rte(long8 v) {
+  return (float8)(convert_float_rte(v.s0), convert_float_rte(v.s1), convert_float_rte(v.s2), convert_float_rte(v.s3), convert_float_rte(v.s4), convert_float_rte(v.s5), convert_float_rte(v.s6), convert_float_rte(v.s7));
+}
+
+INLINE OVERLOADABLE float8 convert_float8_rtz(long8 v) {
+  return (float8)(convert_float_rtz(v.s0), convert_float_rtz(v.s1), convert_float_rtz(v.s2), convert_float_rtz(v.s3), convert_float_rtz(v.s4), convert_float_rtz(v.s5), convert_float_rtz(v.s6), convert_float_rtz(v.s7));
+}
+
+INLINE OVERLOADABLE float8 convert_float8_rtp(long8 v) {
+  return (float8)(convert_float_rtp(v.s0), convert_float_rtp(v.s1), convert_float_rtp(v.s2), convert_float_rtp(v.s3), convert_float_rtp(v.s4), convert_float_rtp(v.s5), convert_float_rtp(v.s6), convert_float_rtp(v.s7));
+}
+
+INLINE OVERLOADABLE float8 convert_float8_rtn(long8 v) {
+  return (float8)(convert_float_rtn(v.s0), convert_float_rtn(v.s1), convert_float_rtn(v.s2), convert_float_rtn(v.s3), convert_float_rtn(v.s4), convert_float_rtn(v.s5), convert_float_rtn(v.s6), convert_float_rtn(v.s7));
+}
+
+INLINE OVERLOADABLE long8 convert_long8_rte(ulong8 v) {
+  return (long8)(convert_long_rte(v.s0), convert_long_rte(v.s1), convert_long_rte(v.s2), convert_long_rte(v.s3), convert_long_rte(v.s4), convert_long_rte(v.s5), convert_long_rte(v.s6), convert_long_rte(v.s7));
+}
+
+INLINE OVERLOADABLE long8 convert_long8_rtz(ulong8 v) {
+  return (long8)(convert_long_rtz(v.s0), convert_long_rtz(v.s1), convert_long_rtz(v.s2), convert_long_rtz(v.s3), convert_long_rtz(v.s4), convert_long_rtz(v.s5), convert_long_rtz(v.s6), convert_long_rtz(v.s7));
+}
+
+INLINE OVERLOADABLE long8 convert_long8_rtp(ulong8 v) {
+  return (long8)(convert_long_rtp(v.s0), convert_long_rtp(v.s1), convert_long_rtp(v.s2), convert_long_rtp(v.s3), convert_long_rtp(v.s4), convert_long_rtp(v.s5), convert_long_rtp(v.s6), convert_long_rtp(v.s7));
+}
+
+INLINE OVERLOADABLE long8 convert_long8_rtn(ulong8 v) {
+  return (long8)(convert_long_rtn(v.s0), convert_long_rtn(v.s1), convert_long_rtn(v.s2), convert_long_rtn(v.s3), convert_long_rtn(v.s4), convert_long_rtn(v.s5), convert_long_rtn(v.s6), convert_long_rtn(v.s7));
+}
+
+INLINE OVERLOADABLE ulong8 convert_ulong8_rte(ulong8 v) {
+  return (ulong8)(convert_ulong_rte(v.s0), convert_ulong_rte(v.s1), convert_ulong_rte(v.s2), convert_ulong_rte(v.s3), convert_ulong_rte(v.s4), convert_ulong_rte(v.s5), convert_ulong_rte(v.s6), convert_ulong_rte(v.s7));
+}
+
+INLINE OVERLOADABLE ulong8 convert_ulong8_rtz(ulong8 v) {
+  return (ulong8)(convert_ulong_rtz(v.s0), convert_ulong_rtz(v.s1), convert_ulong_rtz(v.s2), convert_ulong_rtz(v.s3), convert_ulong_rtz(v.s4), convert_ulong_rtz(v.s5), convert_ulong_rtz(v.s6), convert_ulong_rtz(v.s7));
+}
+
+INLINE OVERLOADABLE ulong8 convert_ulong8_rtp(ulong8 v) {
+  return (ulong8)(convert_ulong_rtp(v.s0), convert_ulong_rtp(v.s1), convert_ulong_rtp(v.s2), convert_ulong_rtp(v.s3), convert_ulong_rtp(v.s4), convert_ulong_rtp(v.s5), convert_ulong_rtp(v.s6), convert_ulong_rtp(v.s7));
+}
+
+INLINE OVERLOADABLE ulong8 convert_ulong8_rtn(ulong8 v) {
+  return (ulong8)(convert_ulong_rtn(v.s0), convert_ulong_rtn(v.s1), convert_ulong_rtn(v.s2), convert_ulong_rtn(v.s3), convert_ulong_rtn(v.s4), convert_ulong_rtn(v.s5), convert_ulong_rtn(v.s6), convert_ulong_rtn(v.s7));
+}
+
+INLINE OVERLOADABLE int8 convert_int8_rte(ulong8 v) {
+  return (int8)(convert_int_rte(v.s0), convert_int_rte(v.s1), convert_int_rte(v.s2), convert_int_rte(v.s3), convert_int_rte(v.s4), convert_int_rte(v.s5), convert_int_rte(v.s6), convert_int_rte(v.s7));
+}
+
+INLINE OVERLOADABLE int8 convert_int8_rtz(ulong8 v) {
+  return (int8)(convert_int_rtz(v.s0), convert_int_rtz(v.s1), convert_int_rtz(v.s2), convert_int_rtz(v.s3), convert_int_rtz(v.s4), convert_int_rtz(v.s5), convert_int_rtz(v.s6), convert_int_rtz(v.s7));
+}
+
+INLINE OVERLOADABLE int8 convert_int8_rtp(ulong8 v) {
+  return (int8)(convert_int_rtp(v.s0), convert_int_rtp(v.s1), convert_int_rtp(v.s2), convert_int_rtp(v.s3), convert_int_rtp(v.s4), convert_int_rtp(v.s5), convert_int_rtp(v.s6), convert_int_rtp(v.s7));
+}
+
+INLINE OVERLOADABLE int8 convert_int8_rtn(ulong8 v) {
+  return (int8)(convert_int_rtn(v.s0), convert_int_rtn(v.s1), convert_int_rtn(v.s2), convert_int_rtn(v.s3), convert_int_rtn(v.s4), convert_int_rtn(v.s5), convert_int_rtn(v.s6), convert_int_rtn(v.s7));
+}
+
+INLINE OVERLOADABLE uint8 convert_uint8_rte(ulong8 v) {
+  return (uint8)(convert_uint_rte(v.s0), convert_uint_rte(v.s1), convert_uint_rte(v.s2), convert_uint_rte(v.s3), convert_uint_rte(v.s4), convert_uint_rte(v.s5), convert_uint_rte(v.s6), convert_uint_rte(v.s7));
+}
+
+INLINE OVERLOADABLE uint8 convert_uint8_rtz(ulong8 v) {
+  return (uint8)(convert_uint_rtz(v.s0), convert_uint_rtz(v.s1), convert_uint_rtz(v.s2), convert_uint_rtz(v.s3), convert_uint_rtz(v.s4), convert_uint_rtz(v.s5), convert_uint_rtz(v.s6), convert_uint_rtz(v.s7));
+}
+
+INLINE OVERLOADABLE uint8 convert_uint8_rtp(ulong8 v) {
+  return (uint8)(convert_uint_rtp(v.s0), convert_uint_rtp(v.s1), convert_uint_rtp(v.s2), convert_uint_rtp(v.s3), convert_uint_rtp(v.s4), convert_uint_rtp(v.s5), convert_uint_rtp(v.s6), convert_uint_rtp(v.s7));
+}
+
+INLINE OVERLOADABLE uint8 convert_uint8_rtn(ulong8 v) {
+  return (uint8)(convert_uint_rtn(v.s0), convert_uint_rtn(v.s1), convert_uint_rtn(v.s2), convert_uint_rtn(v.s3), convert_uint_rtn(v.s4), convert_uint_rtn(v.s5), convert_uint_rtn(v.s6), convert_uint_rtn(v.s7));
+}
+
+INLINE OVERLOADABLE short8 convert_short8_rte(ulong8 v) {
+  return (short8)(convert_short_rte(v.s0), convert_short_rte(v.s1), convert_short_rte(v.s2), convert_short_rte(v.s3), convert_short_rte(v.s4), convert_short_rte(v.s5), convert_short_rte(v.s6), convert_short_rte(v.s7));
+}
+
+INLINE OVERLOADABLE short8 convert_short8_rtz(ulong8 v) {
+  return (short8)(convert_short_rtz(v.s0), convert_short_rtz(v.s1), convert_short_rtz(v.s2), convert_short_rtz(v.s3), convert_short_rtz(v.s4), convert_short_rtz(v.s5), convert_short_rtz(v.s6), convert_short_rtz(v.s7));
+}
+
+INLINE OVERLOADABLE short8 convert_short8_rtp(ulong8 v) {
+  return (short8)(convert_short_rtp(v.s0), convert_short_rtp(v.s1), convert_short_rtp(v.s2), convert_short_rtp(v.s3), convert_short_rtp(v.s4), convert_short_rtp(v.s5), convert_short_rtp(v.s6), convert_short_rtp(v.s7));
+}
+
+INLINE OVERLOADABLE short8 convert_short8_rtn(ulong8 v) {
+  return (short8)(convert_short_rtn(v.s0), convert_short_rtn(v.s1), convert_short_rtn(v.s2), convert_short_rtn(v.s3), convert_short_rtn(v.s4), convert_short_rtn(v.s5), convert_short_rtn(v.s6), convert_short_rtn(v.s7));
+}
+
+INLINE OVERLOADABLE ushort8 convert_ushort8_rte(ulong8 v) {
+  return (ushort8)(convert_ushort_rte(v.s0), convert_ushort_rte(v.s1), convert_ushort_rte(v.s2), convert_ushort_rte(v.s3), convert_ushort_rte(v.s4), convert_ushort_rte(v.s5), convert_ushort_rte(v.s6), convert_ushort_rte(v.s7));
+}
+
+INLINE OVERLOADABLE ushort8 convert_ushort8_rtz(ulong8 v) {
+  return (ushort8)(convert_ushort_rtz(v.s0), convert_ushort_rtz(v.s1), convert_ushort_rtz(v.s2), convert_ushort_rtz(v.s3), convert_ushort_rtz(v.s4), convert_ushort_rtz(v.s5), convert_ushort_rtz(v.s6), convert_ushort_rtz(v.s7));
+}
+
+INLINE OVERLOADABLE ushort8 convert_ushort8_rtp(ulong8 v) {
+  return (ushort8)(convert_ushort_rtp(v.s0), convert_ushort_rtp(v.s1), convert_ushort_rtp(v.s2), convert_ushort_rtp(v.s3), convert_ushort_rtp(v.s4), convert_ushort_rtp(v.s5), convert_ushort_rtp(v.s6), convert_ushort_rtp(v.s7));
+}
+
+INLINE OVERLOADABLE ushort8 convert_ushort8_rtn(ulong8 v) {
+  return (ushort8)(convert_ushort_rtn(v.s0), convert_ushort_rtn(v.s1), convert_ushort_rtn(v.s2), convert_ushort_rtn(v.s3), convert_ushort_rtn(v.s4), convert_ushort_rtn(v.s5), convert_ushort_rtn(v.s6), convert_ushort_rtn(v.s7));
+}
+
+INLINE OVERLOADABLE char8 convert_char8_rte(ulong8 v) {
+  return (char8)(convert_char_rte(v.s0), convert_char_rte(v.s1), convert_char_rte(v.s2), convert_char_rte(v.s3), convert_char_rte(v.s4), convert_char_rte(v.s5), convert_char_rte(v.s6), convert_char_rte(v.s7));
+}
+
+INLINE OVERLOADABLE char8 convert_char8_rtz(ulong8 v) {
+  return (char8)(convert_char_rtz(v.s0), convert_char_rtz(v.s1), convert_char_rtz(v.s2), convert_char_rtz(v.s3), convert_char_rtz(v.s4), convert_char_rtz(v.s5), convert_char_rtz(v.s6), convert_char_rtz(v.s7));
+}
+
+INLINE OVERLOADABLE char8 convert_char8_rtp(ulong8 v) {
+  return (char8)(convert_char_rtp(v.s0), convert_char_rtp(v.s1), convert_char_rtp(v.s2), convert_char_rtp(v.s3), convert_char_rtp(v.s4), convert_char_rtp(v.s5), convert_char_rtp(v.s6), convert_char_rtp(v.s7));
+}
+
+INLINE OVERLOADABLE char8 convert_char8_rtn(ulong8 v) {
+  return (char8)(convert_char_rtn(v.s0), convert_char_rtn(v.s1), convert_char_rtn(v.s2), convert_char_rtn(v.s3), convert_char_rtn(v.s4), convert_char_rtn(v.s5), convert_char_rtn(v.s6), convert_char_rtn(v.s7));
+}
+
+INLINE OVERLOADABLE uchar8 convert_uchar8_rte(ulong8 v) {
+  return (uchar8)(convert_uchar_rte(v.s0), convert_uchar_rte(v.s1), convert_uchar_rte(v.s2), convert_uchar_rte(v.s3), convert_uchar_rte(v.s4), convert_uchar_rte(v.s5), convert_uchar_rte(v.s6), convert_uchar_rte(v.s7));
+}
+
+INLINE OVERLOADABLE uchar8 convert_uchar8_rtz(ulong8 v) {
+  return (uchar8)(convert_uchar_rtz(v.s0), convert_uchar_rtz(v.s1), convert_uchar_rtz(v.s2), convert_uchar_rtz(v.s3), convert_uchar_rtz(v.s4), convert_uchar_rtz(v.s5), convert_uchar_rtz(v.s6), convert_uchar_rtz(v.s7));
+}
+
+INLINE OVERLOADABLE uchar8 convert_uchar8_rtp(ulong8 v) {
+  return (uchar8)(convert_uchar_rtp(v.s0), convert_uchar_rtp(v.s1), convert_uchar_rtp(v.s2), convert_uchar_rtp(v.s3), convert_uchar_rtp(v.s4), convert_uchar_rtp(v.s5), convert_uchar_rtp(v.s6), convert_uchar_rtp(v.s7));
+}
+
+INLINE OVERLOADABLE uchar8 convert_uchar8_rtn(ulong8 v) {
+  return (uchar8)(convert_uchar_rtn(v.s0), convert_uchar_rtn(v.s1), convert_uchar_rtn(v.s2), convert_uchar_rtn(v.s3), convert_uchar_rtn(v.s4), convert_uchar_rtn(v.s5), convert_uchar_rtn(v.s6), convert_uchar_rtn(v.s7));
+}
+
+INLINE OVERLOADABLE float8 convert_float8_rte(ulong8 v) {
+  return (float8)(convert_float_rte(v.s0), convert_float_rte(v.s1), convert_float_rte(v.s2), convert_float_rte(v.s3), convert_float_rte(v.s4), convert_float_rte(v.s5), convert_float_rte(v.s6), convert_float_rte(v.s7));
+}
+
+INLINE OVERLOADABLE float8 convert_float8_rtz(ulong8 v) {
+  return (float8)(convert_float_rtz(v.s0), convert_float_rtz(v.s1), convert_float_rtz(v.s2), convert_float_rtz(v.s3), convert_float_rtz(v.s4), convert_float_rtz(v.s5), convert_float_rtz(v.s6), convert_float_rtz(v.s7));
+}
+
+INLINE OVERLOADABLE float8 convert_float8_rtp(ulong8 v) {
+  return (float8)(convert_float_rtp(v.s0), convert_float_rtp(v.s1), convert_float_rtp(v.s2), convert_float_rtp(v.s3), convert_float_rtp(v.s4), convert_float_rtp(v.s5), convert_float_rtp(v.s6), convert_float_rtp(v.s7));
+}
+
+INLINE OVERLOADABLE float8 convert_float8_rtn(ulong8 v) {
+  return (float8)(convert_float_rtn(v.s0), convert_float_rtn(v.s1), convert_float_rtn(v.s2), convert_float_rtn(v.s3), convert_float_rtn(v.s4), convert_float_rtn(v.s5), convert_float_rtn(v.s6), convert_float_rtn(v.s7));
+}
+
+INLINE OVERLOADABLE long8 convert_long8_rte(int8 v) {
+  return (long8)(convert_long_rte(v.s0), convert_long_rte(v.s1), convert_long_rte(v.s2), convert_long_rte(v.s3), convert_long_rte(v.s4), convert_long_rte(v.s5), convert_long_rte(v.s6), convert_long_rte(v.s7));
+}
+
+INLINE OVERLOADABLE long8 convert_long8_rtz(int8 v) {
+  return (long8)(convert_long_rtz(v.s0), convert_long_rtz(v.s1), convert_long_rtz(v.s2), convert_long_rtz(v.s3), convert_long_rtz(v.s4), convert_long_rtz(v.s5), convert_long_rtz(v.s6), convert_long_rtz(v.s7));
+}
+
+INLINE OVERLOADABLE long8 convert_long8_rtp(int8 v) {
+  return (long8)(convert_long_rtp(v.s0), convert_long_rtp(v.s1), convert_long_rtp(v.s2), convert_long_rtp(v.s3), convert_long_rtp(v.s4), convert_long_rtp(v.s5), convert_long_rtp(v.s6), convert_long_rtp(v.s7));
+}
+
+INLINE OVERLOADABLE long8 convert_long8_rtn(int8 v) {
+  return (long8)(convert_long_rtn(v.s0), convert_long_rtn(v.s1), convert_long_rtn(v.s2), convert_long_rtn(v.s3), convert_long_rtn(v.s4), convert_long_rtn(v.s5), convert_long_rtn(v.s6), convert_long_rtn(v.s7));
+}
+
+INLINE OVERLOADABLE ulong8 convert_ulong8_rte(int8 v) {
+  return (ulong8)(convert_ulong_rte(v.s0), convert_ulong_rte(v.s1), convert_ulong_rte(v.s2), convert_ulong_rte(v.s3), convert_ulong_rte(v.s4), convert_ulong_rte(v.s5), convert_ulong_rte(v.s6), convert_ulong_rte(v.s7));
+}
+
+INLINE OVERLOADABLE ulong8 convert_ulong8_rtz(int8 v) {
+  return (ulong8)(convert_ulong_rtz(v.s0), convert_ulong_rtz(v.s1), convert_ulong_rtz(v.s2), convert_ulong_rtz(v.s3), convert_ulong_rtz(v.s4), convert_ulong_rtz(v.s5), convert_ulong_rtz(v.s6), convert_ulong_rtz(v.s7));
+}
+
+INLINE OVERLOADABLE ulong8 convert_ulong8_rtp(int8 v) {
+  return (ulong8)(convert_ulong_rtp(v.s0), convert_ulong_rtp(v.s1), convert_ulong_rtp(v.s2), convert_ulong_rtp(v.s3), convert_ulong_rtp(v.s4), convert_ulong_rtp(v.s5), convert_ulong_rtp(v.s6), convert_ulong_rtp(v.s7));
+}
+
+INLINE OVERLOADABLE ulong8 convert_ulong8_rtn(int8 v) {
+  return (ulong8)(convert_ulong_rtn(v.s0), convert_ulong_rtn(v.s1), convert_ulong_rtn(v.s2), convert_ulong_rtn(v.s3), convert_ulong_rtn(v.s4), convert_ulong_rtn(v.s5), convert_ulong_rtn(v.s6), convert_ulong_rtn(v.s7));
+}
+
+INLINE OVERLOADABLE int8 convert_int8_rte(int8 v) {
+  return (int8)(convert_int_rte(v.s0), convert_int_rte(v.s1), convert_int_rte(v.s2), convert_int_rte(v.s3), convert_int_rte(v.s4), convert_int_rte(v.s5), convert_int_rte(v.s6), convert_int_rte(v.s7));
+}
+
+INLINE OVERLOADABLE int8 convert_int8_rtz(int8 v) {
+  return (int8)(convert_int_rtz(v.s0), convert_int_rtz(v.s1), convert_int_rtz(v.s2), convert_int_rtz(v.s3), convert_int_rtz(v.s4), convert_int_rtz(v.s5), convert_int_rtz(v.s6), convert_int_rtz(v.s7));
+}
+
+INLINE OVERLOADABLE int8 convert_int8_rtp(int8 v) {
+  return (int8)(convert_int_rtp(v.s0), convert_int_rtp(v.s1), convert_int_rtp(v.s2), convert_int_rtp(v.s3), convert_int_rtp(v.s4), convert_int_rtp(v.s5), convert_int_rtp(v.s6), convert_int_rtp(v.s7));
+}
+
+INLINE OVERLOADABLE int8 convert_int8_rtn(int8 v) {
+  return (int8)(convert_int_rtn(v.s0), convert_int_rtn(v.s1), convert_int_rtn(v.s2), convert_int_rtn(v.s3), convert_int_rtn(v.s4), convert_int_rtn(v.s5), convert_int_rtn(v.s6), convert_int_rtn(v.s7));
+}
+
+INLINE OVERLOADABLE uint8 convert_uint8_rte(int8 v) {
+  return (uint8)(convert_uint_rte(v.s0), convert_uint_rte(v.s1), convert_uint_rte(v.s2), convert_uint_rte(v.s3), convert_uint_rte(v.s4), convert_uint_rte(v.s5), convert_uint_rte(v.s6), convert_uint_rte(v.s7));
+}
+
+INLINE OVERLOADABLE uint8 convert_uint8_rtz(int8 v) {
+  return (uint8)(convert_uint_rtz(v.s0), convert_uint_rtz(v.s1), convert_uint_rtz(v.s2), convert_uint_rtz(v.s3), convert_uint_rtz(v.s4), convert_uint_rtz(v.s5), convert_uint_rtz(v.s6), convert_uint_rtz(v.s7));
+}
+
+INLINE OVERLOADABLE uint8 convert_uint8_rtp(int8 v) {
+  return (uint8)(convert_uint_rtp(v.s0), convert_uint_rtp(v.s1), convert_uint_rtp(v.s2), convert_uint_rtp(v.s3), convert_uint_rtp(v.s4), convert_uint_rtp(v.s5), convert_uint_rtp(v.s6), convert_uint_rtp(v.s7));
+}
+
+INLINE OVERLOADABLE uint8 convert_uint8_rtn(int8 v) {
+  return (uint8)(convert_uint_rtn(v.s0), convert_uint_rtn(v.s1), convert_uint_rtn(v.s2), convert_uint_rtn(v.s3), convert_uint_rtn(v.s4), convert_uint_rtn(v.s5), convert_uint_rtn(v.s6), convert_uint_rtn(v.s7));
+}
+
+INLINE OVERLOADABLE short8 convert_short8_rte(int8 v) {
+  return (short8)(convert_short_rte(v.s0), convert_short_rte(v.s1), convert_short_rte(v.s2), convert_short_rte(v.s3), convert_short_rte(v.s4), convert_short_rte(v.s5), convert_short_rte(v.s6), convert_short_rte(v.s7));
+}
+
+INLINE OVERLOADABLE short8 convert_short8_rtz(int8 v) {
+  return (short8)(convert_short_rtz(v.s0), convert_short_rtz(v.s1), convert_short_rtz(v.s2), convert_short_rtz(v.s3), convert_short_rtz(v.s4), convert_short_rtz(v.s5), convert_short_rtz(v.s6), convert_short_rtz(v.s7));
+}
+
+INLINE OVERLOADABLE short8 convert_short8_rtp(int8 v) {
+  return (short8)(convert_short_rtp(v.s0), convert_short_rtp(v.s1), convert_short_rtp(v.s2), convert_short_rtp(v.s3), convert_short_rtp(v.s4), convert_short_rtp(v.s5), convert_short_rtp(v.s6), convert_short_rtp(v.s7));
+}
+
+INLINE OVERLOADABLE short8 convert_short8_rtn(int8 v) {
+  return (short8)(convert_short_rtn(v.s0), convert_short_rtn(v.s1), convert_short_rtn(v.s2), convert_short_rtn(v.s3), convert_short_rtn(v.s4), convert_short_rtn(v.s5), convert_short_rtn(v.s6), convert_short_rtn(v.s7));
+}
+
+INLINE OVERLOADABLE ushort8 convert_ushort8_rte(int8 v) {
+  return (ushort8)(convert_ushort_rte(v.s0), convert_ushort_rte(v.s1), convert_ushort_rte(v.s2), convert_ushort_rte(v.s3), convert_ushort_rte(v.s4), convert_ushort_rte(v.s5), convert_ushort_rte(v.s6), convert_ushort_rte(v.s7));
+}
+
+INLINE OVERLOADABLE ushort8 convert_ushort8_rtz(int8 v) {
+  return (ushort8)(convert_ushort_rtz(v.s0), convert_ushort_rtz(v.s1), convert_ushort_rtz(v.s2), convert_ushort_rtz(v.s3), convert_ushort_rtz(v.s4), convert_ushort_rtz(v.s5), convert_ushort_rtz(v.s6), convert_ushort_rtz(v.s7));
+}
+
+INLINE OVERLOADABLE ushort8 convert_ushort8_rtp(int8 v) {
+  return (ushort8)(convert_ushort_rtp(v.s0), convert_ushort_rtp(v.s1), convert_ushort_rtp(v.s2), convert_ushort_rtp(v.s3), convert_ushort_rtp(v.s4), convert_ushort_rtp(v.s5), convert_ushort_rtp(v.s6), convert_ushort_rtp(v.s7));
+}
+
+INLINE OVERLOADABLE ushort8 convert_ushort8_rtn(int8 v) {
+  return (ushort8)(convert_ushort_rtn(v.s0), convert_ushort_rtn(v.s1), convert_ushort_rtn(v.s2), convert_ushort_rtn(v.s3), convert_ushort_rtn(v.s4), convert_ushort_rtn(v.s5), convert_ushort_rtn(v.s6), convert_ushort_rtn(v.s7));
+}
+
+INLINE OVERLOADABLE char8 convert_char8_rte(int8 v) {
+  return (char8)(convert_char_rte(v.s0), convert_char_rte(v.s1), convert_char_rte(v.s2), convert_char_rte(v.s3), convert_char_rte(v.s4), convert_char_rte(v.s5), convert_char_rte(v.s6), convert_char_rte(v.s7));
+}
+
+INLINE OVERLOADABLE char8 convert_char8_rtz(int8 v) {
+  return (char8)(convert_char_rtz(v.s0), convert_char_rtz(v.s1), convert_char_rtz(v.s2), convert_char_rtz(v.s3), convert_char_rtz(v.s4), convert_char_rtz(v.s5), convert_char_rtz(v.s6), convert_char_rtz(v.s7));
+}
+
+INLINE OVERLOADABLE char8 convert_char8_rtp(int8 v) {
+  return (char8)(convert_char_rtp(v.s0), convert_char_rtp(v.s1), convert_char_rtp(v.s2), convert_char_rtp(v.s3), convert_char_rtp(v.s4), convert_char_rtp(v.s5), convert_char_rtp(v.s6), convert_char_rtp(v.s7));
+}
+
+INLINE OVERLOADABLE char8 convert_char8_rtn(int8 v) {
+  return (char8)(convert_char_rtn(v.s0), convert_char_rtn(v.s1), convert_char_rtn(v.s2), convert_char_rtn(v.s3), convert_char_rtn(v.s4), convert_char_rtn(v.s5), convert_char_rtn(v.s6), convert_char_rtn(v.s7));
+}
+
+INLINE OVERLOADABLE uchar8 convert_uchar8_rte(int8 v) {
+  return (uchar8)(convert_uchar_rte(v.s0), convert_uchar_rte(v.s1), convert_uchar_rte(v.s2), convert_uchar_rte(v.s3), convert_uchar_rte(v.s4), convert_uchar_rte(v.s5), convert_uchar_rte(v.s6), convert_uchar_rte(v.s7));
+}
+
+INLINE OVERLOADABLE uchar8 convert_uchar8_rtz(int8 v) {
+  return (uchar8)(convert_uchar_rtz(v.s0), convert_uchar_rtz(v.s1), convert_uchar_rtz(v.s2), convert_uchar_rtz(v.s3), convert_uchar_rtz(v.s4), convert_uchar_rtz(v.s5), convert_uchar_rtz(v.s6), convert_uchar_rtz(v.s7));
+}
+
+INLINE OVERLOADABLE uchar8 convert_uchar8_rtp(int8 v) {
+  return (uchar8)(convert_uchar_rtp(v.s0), convert_uchar_rtp(v.s1), convert_uchar_rtp(v.s2), convert_uchar_rtp(v.s3), convert_uchar_rtp(v.s4), convert_uchar_rtp(v.s5), convert_uchar_rtp(v.s6), convert_uchar_rtp(v.s7));
+}
+
+INLINE OVERLOADABLE uchar8 convert_uchar8_rtn(int8 v) {
+  return (uchar8)(convert_uchar_rtn(v.s0), convert_uchar_rtn(v.s1), convert_uchar_rtn(v.s2), convert_uchar_rtn(v.s3), convert_uchar_rtn(v.s4), convert_uchar_rtn(v.s5), convert_uchar_rtn(v.s6), convert_uchar_rtn(v.s7));
+}
+
+INLINE OVERLOADABLE float8 convert_float8_rte(int8 v) {
+  return (float8)(convert_float_rte(v.s0), convert_float_rte(v.s1), convert_float_rte(v.s2), convert_float_rte(v.s3), convert_float_rte(v.s4), convert_float_rte(v.s5), convert_float_rte(v.s6), convert_float_rte(v.s7));
+}
+
+INLINE OVERLOADABLE float8 convert_float8_rtz(int8 v) {
+  return (float8)(convert_float_rtz(v.s0), convert_float_rtz(v.s1), convert_float_rtz(v.s2), convert_float_rtz(v.s3), convert_float_rtz(v.s4), convert_float_rtz(v.s5), convert_float_rtz(v.s6), convert_float_rtz(v.s7));
+}
+
+INLINE OVERLOADABLE float8 convert_float8_rtp(int8 v) {
+  return (float8)(convert_float_rtp(v.s0), convert_float_rtp(v.s1), convert_float_rtp(v.s2), convert_float_rtp(v.s3), convert_float_rtp(v.s4), convert_float_rtp(v.s5), convert_float_rtp(v.s6), convert_float_rtp(v.s7));
+}
+
+INLINE OVERLOADABLE float8 convert_float8_rtn(int8 v) {
+  return (float8)(convert_float_rtn(v.s0), convert_float_rtn(v.s1), convert_float_rtn(v.s2), convert_float_rtn(v.s3), convert_float_rtn(v.s4), convert_float_rtn(v.s5), convert_float_rtn(v.s6), convert_float_rtn(v.s7));
+}
+
+INLINE OVERLOADABLE long8 convert_long8_rte(uint8 v) {
+  return (long8)(convert_long_rte(v.s0), convert_long_rte(v.s1), convert_long_rte(v.s2), convert_long_rte(v.s3), convert_long_rte(v.s4), convert_long_rte(v.s5), convert_long_rte(v.s6), convert_long_rte(v.s7));
+}
+
+INLINE OVERLOADABLE long8 convert_long8_rtz(uint8 v) {
+  return (long8)(convert_long_rtz(v.s0), convert_long_rtz(v.s1), convert_long_rtz(v.s2), convert_long_rtz(v.s3), convert_long_rtz(v.s4), convert_long_rtz(v.s5), convert_long_rtz(v.s6), convert_long_rtz(v.s7));
+}
+
+INLINE OVERLOADABLE long8 convert_long8_rtp(uint8 v) {
+  return (long8)(convert_long_rtp(v.s0), convert_long_rtp(v.s1), convert_long_rtp(v.s2), convert_long_rtp(v.s3), convert_long_rtp(v.s4), convert_long_rtp(v.s5), convert_long_rtp(v.s6), convert_long_rtp(v.s7));
+}
+
+INLINE OVERLOADABLE long8 convert_long8_rtn(uint8 v) {
+  return (long8)(convert_long_rtn(v.s0), convert_long_rtn(v.s1), convert_long_rtn(v.s2), convert_long_rtn(v.s3), convert_long_rtn(v.s4), convert_long_rtn(v.s5), convert_long_rtn(v.s6), convert_long_rtn(v.s7));
+}
+
+INLINE OVERLOADABLE ulong8 convert_ulong8_rte(uint8 v) {
+  return (ulong8)(convert_ulong_rte(v.s0), convert_ulong_rte(v.s1), convert_ulong_rte(v.s2), convert_ulong_rte(v.s3), convert_ulong_rte(v.s4), convert_ulong_rte(v.s5), convert_ulong_rte(v.s6), convert_ulong_rte(v.s7));
+}
+
+INLINE OVERLOADABLE ulong8 convert_ulong8_rtz(uint8 v) {
+  return (ulong8)(convert_ulong_rtz(v.s0), convert_ulong_rtz(v.s1), convert_ulong_rtz(v.s2), convert_ulong_rtz(v.s3), convert_ulong_rtz(v.s4), convert_ulong_rtz(v.s5), convert_ulong_rtz(v.s6), convert_ulong_rtz(v.s7));
+}
+
+INLINE OVERLOADABLE ulong8 convert_ulong8_rtp(uint8 v) {
+  return (ulong8)(convert_ulong_rtp(v.s0), convert_ulong_rtp(v.s1), convert_ulong_rtp(v.s2), convert_ulong_rtp(v.s3), convert_ulong_rtp(v.s4), convert_ulong_rtp(v.s5), convert_ulong_rtp(v.s6), convert_ulong_rtp(v.s7));
+}
+
+INLINE OVERLOADABLE ulong8 convert_ulong8_rtn(uint8 v) {
+  return (ulong8)(convert_ulong_rtn(v.s0), convert_ulong_rtn(v.s1), convert_ulong_rtn(v.s2), convert_ulong_rtn(v.s3), convert_ulong_rtn(v.s4), convert_ulong_rtn(v.s5), convert_ulong_rtn(v.s6), convert_ulong_rtn(v.s7));
+}
+
+INLINE OVERLOADABLE int8 convert_int8_rte(uint8 v) {
+  return (int8)(convert_int_rte(v.s0), convert_int_rte(v.s1), convert_int_rte(v.s2), convert_int_rte(v.s3), convert_int_rte(v.s4), convert_int_rte(v.s5), convert_int_rte(v.s6), convert_int_rte(v.s7));
+}
+
+INLINE OVERLOADABLE int8 convert_int8_rtz(uint8 v) {
+  return (int8)(convert_int_rtz(v.s0), convert_int_rtz(v.s1), convert_int_rtz(v.s2), convert_int_rtz(v.s3), convert_int_rtz(v.s4), convert_int_rtz(v.s5), convert_int_rtz(v.s6), convert_int_rtz(v.s7));
+}
+
+INLINE OVERLOADABLE int8 convert_int8_rtp(uint8 v) {
+  return (int8)(convert_int_rtp(v.s0), convert_int_rtp(v.s1), convert_int_rtp(v.s2), convert_int_rtp(v.s3), convert_int_rtp(v.s4), convert_int_rtp(v.s5), convert_int_rtp(v.s6), convert_int_rtp(v.s7));
+}
+
+INLINE OVERLOADABLE int8 convert_int8_rtn(uint8 v) {
+  return (int8)(convert_int_rtn(v.s0), convert_int_rtn(v.s1), convert_int_rtn(v.s2), convert_int_rtn(v.s3), convert_int_rtn(v.s4), convert_int_rtn(v.s5), convert_int_rtn(v.s6), convert_int_rtn(v.s7));
+}
+
+INLINE OVERLOADABLE uint8 convert_uint8_rte(uint8 v) {
+  return (uint8)(convert_uint_rte(v.s0), convert_uint_rte(v.s1), convert_uint_rte(v.s2), convert_uint_rte(v.s3), convert_uint_rte(v.s4), convert_uint_rte(v.s5), convert_uint_rte(v.s6), convert_uint_rte(v.s7));
+}
+
+INLINE OVERLOADABLE uint8 convert_uint8_rtz(uint8 v) {
+  return (uint8)(convert_uint_rtz(v.s0), convert_uint_rtz(v.s1), convert_uint_rtz(v.s2), convert_uint_rtz(v.s3), convert_uint_rtz(v.s4), convert_uint_rtz(v.s5), convert_uint_rtz(v.s6), convert_uint_rtz(v.s7));
+}
+
+INLINE OVERLOADABLE uint8 convert_uint8_rtp(uint8 v) {
+  return (uint8)(convert_uint_rtp(v.s0), convert_uint_rtp(v.s1), convert_uint_rtp(v.s2), convert_uint_rtp(v.s3), convert_uint_rtp(v.s4), convert_uint_rtp(v.s5), convert_uint_rtp(v.s6), convert_uint_rtp(v.s7));
+}
+
+INLINE OVERLOADABLE uint8 convert_uint8_rtn(uint8 v) {
+  return (uint8)(convert_uint_rtn(v.s0), convert_uint_rtn(v.s1), convert_uint_rtn(v.s2), convert_uint_rtn(v.s3), convert_uint_rtn(v.s4), convert_uint_rtn(v.s5), convert_uint_rtn(v.s6), convert_uint_rtn(v.s7));
+}
+
+INLINE OVERLOADABLE short8 convert_short8_rte(uint8 v) {
+  return (short8)(convert_short_rte(v.s0), convert_short_rte(v.s1), convert_short_rte(v.s2), convert_short_rte(v.s3), convert_short_rte(v.s4), convert_short_rte(v.s5), convert_short_rte(v.s6), convert_short_rte(v.s7));
+}
+
+INLINE OVERLOADABLE short8 convert_short8_rtz(uint8 v) {
+  return (short8)(convert_short_rtz(v.s0), convert_short_rtz(v.s1), convert_short_rtz(v.s2), convert_short_rtz(v.s3), convert_short_rtz(v.s4), convert_short_rtz(v.s5), convert_short_rtz(v.s6), convert_short_rtz(v.s7));
+}
+
+INLINE OVERLOADABLE short8 convert_short8_rtp(uint8 v) {
+  return (short8)(convert_short_rtp(v.s0), convert_short_rtp(v.s1), convert_short_rtp(v.s2), convert_short_rtp(v.s3), convert_short_rtp(v.s4), convert_short_rtp(v.s5), convert_short_rtp(v.s6), convert_short_rtp(v.s7));
+}
+
+INLINE OVERLOADABLE short8 convert_short8_rtn(uint8 v) {
+  return (short8)(convert_short_rtn(v.s0), convert_short_rtn(v.s1), convert_short_rtn(v.s2), convert_short_rtn(v.s3), convert_short_rtn(v.s4), convert_short_rtn(v.s5), convert_short_rtn(v.s6), convert_short_rtn(v.s7));
+}
+
+INLINE OVERLOADABLE ushort8 convert_ushort8_rte(uint8 v) {
+  return (ushort8)(convert_ushort_rte(v.s0), convert_ushort_rte(v.s1), convert_ushort_rte(v.s2), convert_ushort_rte(v.s3), convert_ushort_rte(v.s4), convert_ushort_rte(v.s5), convert_ushort_rte(v.s6), convert_ushort_rte(v.s7));
+}
+
+INLINE OVERLOADABLE ushort8 convert_ushort8_rtz(uint8 v) {
+  return (ushort8)(convert_ushort_rtz(v.s0), convert_ushort_rtz(v.s1), convert_ushort_rtz(v.s2), convert_ushort_rtz(v.s3), convert_ushort_rtz(v.s4), convert_ushort_rtz(v.s5), convert_ushort_rtz(v.s6), convert_ushort_rtz(v.s7));
+}
+
+INLINE OVERLOADABLE ushort8 convert_ushort8_rtp(uint8 v) {
+  return (ushort8)(convert_ushort_rtp(v.s0), convert_ushort_rtp(v.s1), convert_ushort_rtp(v.s2), convert_ushort_rtp(v.s3), convert_ushort_rtp(v.s4), convert_ushort_rtp(v.s5), convert_ushort_rtp(v.s6), convert_ushort_rtp(v.s7));
+}
+
+INLINE OVERLOADABLE ushort8 convert_ushort8_rtn(uint8 v) {
+  return (ushort8)(convert_ushort_rtn(v.s0), convert_ushort_rtn(v.s1), convert_ushort_rtn(v.s2), convert_ushort_rtn(v.s3), convert_ushort_rtn(v.s4), convert_ushort_rtn(v.s5), convert_ushort_rtn(v.s6), convert_ushort_rtn(v.s7));
+}
+
+INLINE OVERLOADABLE char8 convert_char8_rte(uint8 v) {
+  return (char8)(convert_char_rte(v.s0), convert_char_rte(v.s1), convert_char_rte(v.s2), convert_char_rte(v.s3), convert_char_rte(v.s4), convert_char_rte(v.s5), convert_char_rte(v.s6), convert_char_rte(v.s7));
+}
+
+INLINE OVERLOADABLE char8 convert_char8_rtz(uint8 v) {
+  return (char8)(convert_char_rtz(v.s0), convert_char_rtz(v.s1), convert_char_rtz(v.s2), convert_char_rtz(v.s3), convert_char_rtz(v.s4), convert_char_rtz(v.s5), convert_char_rtz(v.s6), convert_char_rtz(v.s7));
+}
+
+INLINE OVERLOADABLE char8 convert_char8_rtp(uint8 v) {
+  return (char8)(convert_char_rtp(v.s0), convert_char_rtp(v.s1), convert_char_rtp(v.s2), convert_char_rtp(v.s3), convert_char_rtp(v.s4), convert_char_rtp(v.s5), convert_char_rtp(v.s6), convert_char_rtp(v.s7));
+}
+
+INLINE OVERLOADABLE char8 convert_char8_rtn(uint8 v) {
+  return (char8)(convert_char_rtn(v.s0), convert_char_rtn(v.s1), convert_char_rtn(v.s2), convert_char_rtn(v.s3), convert_char_rtn(v.s4), convert_char_rtn(v.s5), convert_char_rtn(v.s6), convert_char_rtn(v.s7));
+}
+
+INLINE OVERLOADABLE uchar8 convert_uchar8_rte(uint8 v) {
+  return (uchar8)(convert_uchar_rte(v.s0), convert_uchar_rte(v.s1), convert_uchar_rte(v.s2), convert_uchar_rte(v.s3), convert_uchar_rte(v.s4), convert_uchar_rte(v.s5), convert_uchar_rte(v.s6), convert_uchar_rte(v.s7));
+}
+
+INLINE OVERLOADABLE uchar8 convert_uchar8_rtz(uint8 v) {
+  return (uchar8)(convert_uchar_rtz(v.s0), convert_uchar_rtz(v.s1), convert_uchar_rtz(v.s2), convert_uchar_rtz(v.s3), convert_uchar_rtz(v.s4), convert_uchar_rtz(v.s5), convert_uchar_rtz(v.s6), convert_uchar_rtz(v.s7));
+}
+
+INLINE OVERLOADABLE uchar8 convert_uchar8_rtp(uint8 v) {
+  return (uchar8)(convert_uchar_rtp(v.s0), convert_uchar_rtp(v.s1), convert_uchar_rtp(v.s2), convert_uchar_rtp(v.s3), convert_uchar_rtp(v.s4), convert_uchar_rtp(v.s5), convert_uchar_rtp(v.s6), convert_uchar_rtp(v.s7));
+}
+
+INLINE OVERLOADABLE uchar8 convert_uchar8_rtn(uint8 v) {
+  return (uchar8)(convert_uchar_rtn(v.s0), convert_uchar_rtn(v.s1), convert_uchar_rtn(v.s2), convert_uchar_rtn(v.s3), convert_uchar_rtn(v.s4), convert_uchar_rtn(v.s5), convert_uchar_rtn(v.s6), convert_uchar_rtn(v.s7));
+}
+
+INLINE OVERLOADABLE float8 convert_float8_rte(uint8 v) {
+  return (float8)(convert_float_rte(v.s0), convert_float_rte(v.s1), convert_float_rte(v.s2), convert_float_rte(v.s3), convert_float_rte(v.s4), convert_float_rte(v.s5), convert_float_rte(v.s6), convert_float_rte(v.s7));
+}
+
+INLINE OVERLOADABLE float8 convert_float8_rtz(uint8 v) {
+  return (float8)(convert_float_rtz(v.s0), convert_float_rtz(v.s1), convert_float_rtz(v.s2), convert_float_rtz(v.s3), convert_float_rtz(v.s4), convert_float_rtz(v.s5), convert_float_rtz(v.s6), convert_float_rtz(v.s7));
+}
+
+INLINE OVERLOADABLE float8 convert_float8_rtp(uint8 v) {
+  return (float8)(convert_float_rtp(v.s0), convert_float_rtp(v.s1), convert_float_rtp(v.s2), convert_float_rtp(v.s3), convert_float_rtp(v.s4), convert_float_rtp(v.s5), convert_float_rtp(v.s6), convert_float_rtp(v.s7));
+}
+
+INLINE OVERLOADABLE float8 convert_float8_rtn(uint8 v) {
+  return (float8)(convert_float_rtn(v.s0), convert_float_rtn(v.s1), convert_float_rtn(v.s2), convert_float_rtn(v.s3), convert_float_rtn(v.s4), convert_float_rtn(v.s5), convert_float_rtn(v.s6), convert_float_rtn(v.s7));
+}
+
+INLINE OVERLOADABLE long8 convert_long8_rte(short8 v) {
+  return (long8)(convert_long_rte(v.s0), convert_long_rte(v.s1), convert_long_rte(v.s2), convert_long_rte(v.s3), convert_long_rte(v.s4), convert_long_rte(v.s5), convert_long_rte(v.s6), convert_long_rte(v.s7));
+}
+
+INLINE OVERLOADABLE long8 convert_long8_rtz(short8 v) {
+  return (long8)(convert_long_rtz(v.s0), convert_long_rtz(v.s1), convert_long_rtz(v.s2), convert_long_rtz(v.s3), convert_long_rtz(v.s4), convert_long_rtz(v.s5), convert_long_rtz(v.s6), convert_long_rtz(v.s7));
+}
+
+INLINE OVERLOADABLE long8 convert_long8_rtp(short8 v) {
+  return (long8)(convert_long_rtp(v.s0), convert_long_rtp(v.s1), convert_long_rtp(v.s2), convert_long_rtp(v.s3), convert_long_rtp(v.s4), convert_long_rtp(v.s5), convert_long_rtp(v.s6), convert_long_rtp(v.s7));
+}
+
+INLINE OVERLOADABLE long8 convert_long8_rtn(short8 v) {
+  return (long8)(convert_long_rtn(v.s0), convert_long_rtn(v.s1), convert_long_rtn(v.s2), convert_long_rtn(v.s3), convert_long_rtn(v.s4), convert_long_rtn(v.s5), convert_long_rtn(v.s6), convert_long_rtn(v.s7));
+}
+
+INLINE OVERLOADABLE ulong8 convert_ulong8_rte(short8 v) {
+  return (ulong8)(convert_ulong_rte(v.s0), convert_ulong_rte(v.s1), convert_ulong_rte(v.s2), convert_ulong_rte(v.s3), convert_ulong_rte(v.s4), convert_ulong_rte(v.s5), convert_ulong_rte(v.s6), convert_ulong_rte(v.s7));
+}
+
+INLINE OVERLOADABLE ulong8 convert_ulong8_rtz(short8 v) {
+  return (ulong8)(convert_ulong_rtz(v.s0), convert_ulong_rtz(v.s1), convert_ulong_rtz(v.s2), convert_ulong_rtz(v.s3), convert_ulong_rtz(v.s4), convert_ulong_rtz(v.s5), convert_ulong_rtz(v.s6), convert_ulong_rtz(v.s7));
+}
+
+INLINE OVERLOADABLE ulong8 convert_ulong8_rtp(short8 v) {
+  return (ulong8)(convert_ulong_rtp(v.s0), convert_ulong_rtp(v.s1), convert_ulong_rtp(v.s2), convert_ulong_rtp(v.s3), convert_ulong_rtp(v.s4), convert_ulong_rtp(v.s5), convert_ulong_rtp(v.s6), convert_ulong_rtp(v.s7));
+}
+
+INLINE OVERLOADABLE ulong8 convert_ulong8_rtn(short8 v) {
+  return (ulong8)(convert_ulong_rtn(v.s0), convert_ulong_rtn(v.s1), convert_ulong_rtn(v.s2), convert_ulong_rtn(v.s3), convert_ulong_rtn(v.s4), convert_ulong_rtn(v.s5), convert_ulong_rtn(v.s6), convert_ulong_rtn(v.s7));
+}
+
+INLINE OVERLOADABLE int8 convert_int8_rte(short8 v) {
+  return (int8)(convert_int_rte(v.s0), convert_int_rte(v.s1), convert_int_rte(v.s2), convert_int_rte(v.s3), convert_int_rte(v.s4), convert_int_rte(v.s5), convert_int_rte(v.s6), convert_int_rte(v.s7));
+}
+
+INLINE OVERLOADABLE int8 convert_int8_rtz(short8 v) {
+  return (int8)(convert_int_rtz(v.s0), convert_int_rtz(v.s1), convert_int_rtz(v.s2), convert_int_rtz(v.s3), convert_int_rtz(v.s4), convert_int_rtz(v.s5), convert_int_rtz(v.s6), convert_int_rtz(v.s7));
+}
+
+INLINE OVERLOADABLE int8 convert_int8_rtp(short8 v) {
+  return (int8)(convert_int_rtp(v.s0), convert_int_rtp(v.s1), convert_int_rtp(v.s2), convert_int_rtp(v.s3), convert_int_rtp(v.s4), convert_int_rtp(v.s5), convert_int_rtp(v.s6), convert_int_rtp(v.s7));
+}
+
+INLINE OVERLOADABLE int8 convert_int8_rtn(short8 v) {
+  return (int8)(convert_int_rtn(v.s0), convert_int_rtn(v.s1), convert_int_rtn(v.s2), convert_int_rtn(v.s3), convert_int_rtn(v.s4), convert_int_rtn(v.s5), convert_int_rtn(v.s6), convert_int_rtn(v.s7));
+}
+
+INLINE OVERLOADABLE uint8 convert_uint8_rte(short8 v) {
+  return (uint8)(convert_uint_rte(v.s0), convert_uint_rte(v.s1), convert_uint_rte(v.s2), convert_uint_rte(v.s3), convert_uint_rte(v.s4), convert_uint_rte(v.s5), convert_uint_rte(v.s6), convert_uint_rte(v.s7));
+}
+
+INLINE OVERLOADABLE uint8 convert_uint8_rtz(short8 v) {
+  return (uint8)(convert_uint_rtz(v.s0), convert_uint_rtz(v.s1), convert_uint_rtz(v.s2), convert_uint_rtz(v.s3), convert_uint_rtz(v.s4), convert_uint_rtz(v.s5), convert_uint_rtz(v.s6), convert_uint_rtz(v.s7));
+}
+
+INLINE OVERLOADABLE uint8 convert_uint8_rtp(short8 v) {
+  return (uint8)(convert_uint_rtp(v.s0), convert_uint_rtp(v.s1), convert_uint_rtp(v.s2), convert_uint_rtp(v.s3), convert_uint_rtp(v.s4), convert_uint_rtp(v.s5), convert_uint_rtp(v.s6), convert_uint_rtp(v.s7));
+}
+
+INLINE OVERLOADABLE uint8 convert_uint8_rtn(short8 v) {
+  return (uint8)(convert_uint_rtn(v.s0), convert_uint_rtn(v.s1), convert_uint_rtn(v.s2), convert_uint_rtn(v.s3), convert_uint_rtn(v.s4), convert_uint_rtn(v.s5), convert_uint_rtn(v.s6), convert_uint_rtn(v.s7));
+}
+
+INLINE OVERLOADABLE short8 convert_short8_rte(short8 v) {
+  return (short8)(convert_short_rte(v.s0), convert_short_rte(v.s1), convert_short_rte(v.s2), convert_short_rte(v.s3), convert_short_rte(v.s4), convert_short_rte(v.s5), convert_short_rte(v.s6), convert_short_rte(v.s7));
+}
+
+INLINE OVERLOADABLE short8 convert_short8_rtz(short8 v) {
+  return (short8)(convert_short_rtz(v.s0), convert_short_rtz(v.s1), convert_short_rtz(v.s2), convert_short_rtz(v.s3), convert_short_rtz(v.s4), convert_short_rtz(v.s5), convert_short_rtz(v.s6), convert_short_rtz(v.s7));
+}
+
+INLINE OVERLOADABLE short8 convert_short8_rtp(short8 v) {
+  return (short8)(convert_short_rtp(v.s0), convert_short_rtp(v.s1), convert_short_rtp(v.s2), convert_short_rtp(v.s3), convert_short_rtp(v.s4), convert_short_rtp(v.s5), convert_short_rtp(v.s6), convert_short_rtp(v.s7));
+}
+
+INLINE OVERLOADABLE short8 convert_short8_rtn(short8 v) {
+  return (short8)(convert_short_rtn(v.s0), convert_short_rtn(v.s1), convert_short_rtn(v.s2), convert_short_rtn(v.s3), convert_short_rtn(v.s4), convert_short_rtn(v.s5), convert_short_rtn(v.s6), convert_short_rtn(v.s7));
+}
+
+INLINE OVERLOADABLE ushort8 convert_ushort8_rte(short8 v) {
+  return (ushort8)(convert_ushort_rte(v.s0), convert_ushort_rte(v.s1), convert_ushort_rte(v.s2), convert_ushort_rte(v.s3), convert_ushort_rte(v.s4), convert_ushort_rte(v.s5), convert_ushort_rte(v.s6), convert_ushort_rte(v.s7));
+}
+
+INLINE OVERLOADABLE ushort8 convert_ushort8_rtz(short8 v) {
+  return (ushort8)(convert_ushort_rtz(v.s0), convert_ushort_rtz(v.s1), convert_ushort_rtz(v.s2), convert_ushort_rtz(v.s3), convert_ushort_rtz(v.s4), convert_ushort_rtz(v.s5), convert_ushort_rtz(v.s6), convert_ushort_rtz(v.s7));
+}
+
+INLINE OVERLOADABLE ushort8 convert_ushort8_rtp(short8 v) {
+  return (ushort8)(convert_ushort_rtp(v.s0), convert_ushort_rtp(v.s1), convert_ushort_rtp(v.s2), convert_ushort_rtp(v.s3), convert_ushort_rtp(v.s4), convert_ushort_rtp(v.s5), convert_ushort_rtp(v.s6), convert_ushort_rtp(v.s7));
+}
+
+INLINE OVERLOADABLE ushort8 convert_ushort8_rtn(short8 v) {
+  return (ushort8)(convert_ushort_rtn(v.s0), convert_ushort_rtn(v.s1), convert_ushort_rtn(v.s2), convert_ushort_rtn(v.s3), convert_ushort_rtn(v.s4), convert_ushort_rtn(v.s5), convert_ushort_rtn(v.s6), convert_ushort_rtn(v.s7));
+}
+
+INLINE OVERLOADABLE char8 convert_char8_rte(short8 v) {
+  return (char8)(convert_char_rte(v.s0), convert_char_rte(v.s1), convert_char_rte(v.s2), convert_char_rte(v.s3), convert_char_rte(v.s4), convert_char_rte(v.s5), convert_char_rte(v.s6), convert_char_rte(v.s7));
+}
+
+INLINE OVERLOADABLE char8 convert_char8_rtz(short8 v) {
+  return (char8)(convert_char_rtz(v.s0), convert_char_rtz(v.s1), convert_char_rtz(v.s2), convert_char_rtz(v.s3), convert_char_rtz(v.s4), convert_char_rtz(v.s5), convert_char_rtz(v.s6), convert_char_rtz(v.s7));
+}
+
+INLINE OVERLOADABLE char8 convert_char8_rtp(short8 v) {
+  return (char8)(convert_char_rtp(v.s0), convert_char_rtp(v.s1), convert_char_rtp(v.s2), convert_char_rtp(v.s3), convert_char_rtp(v.s4), convert_char_rtp(v.s5), convert_char_rtp(v.s6), convert_char_rtp(v.s7));
+}
+
+INLINE OVERLOADABLE char8 convert_char8_rtn(short8 v) {
+  return (char8)(convert_char_rtn(v.s0), convert_char_rtn(v.s1), convert_char_rtn(v.s2), convert_char_rtn(v.s3), convert_char_rtn(v.s4), convert_char_rtn(v.s5), convert_char_rtn(v.s6), convert_char_rtn(v.s7));
+}
+
+INLINE OVERLOADABLE uchar8 convert_uchar8_rte(short8 v) {
+  return (uchar8)(convert_uchar_rte(v.s0), convert_uchar_rte(v.s1), convert_uchar_rte(v.s2), convert_uchar_rte(v.s3), convert_uchar_rte(v.s4), convert_uchar_rte(v.s5), convert_uchar_rte(v.s6), convert_uchar_rte(v.s7));
+}
+
+INLINE OVERLOADABLE uchar8 convert_uchar8_rtz(short8 v) {
+  return (uchar8)(convert_uchar_rtz(v.s0), convert_uchar_rtz(v.s1), convert_uchar_rtz(v.s2), convert_uchar_rtz(v.s3), convert_uchar_rtz(v.s4), convert_uchar_rtz(v.s5), convert_uchar_rtz(v.s6), convert_uchar_rtz(v.s7));
+}
+
+INLINE OVERLOADABLE uchar8 convert_uchar8_rtp(short8 v) {
+  return (uchar8)(convert_uchar_rtp(v.s0), convert_uchar_rtp(v.s1), convert_uchar_rtp(v.s2), convert_uchar_rtp(v.s3), convert_uchar_rtp(v.s4), convert_uchar_rtp(v.s5), convert_uchar_rtp(v.s6), convert_uchar_rtp(v.s7));
+}
+
+INLINE OVERLOADABLE uchar8 convert_uchar8_rtn(short8 v) {
+  return (uchar8)(convert_uchar_rtn(v.s0), convert_uchar_rtn(v.s1), convert_uchar_rtn(v.s2), convert_uchar_rtn(v.s3), convert_uchar_rtn(v.s4), convert_uchar_rtn(v.s5), convert_uchar_rtn(v.s6), convert_uchar_rtn(v.s7));
+}
+
+INLINE OVERLOADABLE float8 convert_float8_rte(short8 v) {
+  return (float8)(convert_float_rte(v.s0), convert_float_rte(v.s1), convert_float_rte(v.s2), convert_float_rte(v.s3), convert_float_rte(v.s4), convert_float_rte(v.s5), convert_float_rte(v.s6), convert_float_rte(v.s7));
+}
+
+INLINE OVERLOADABLE float8 convert_float8_rtz(short8 v) {
+  return (float8)(convert_float_rtz(v.s0), convert_float_rtz(v.s1), convert_float_rtz(v.s2), convert_float_rtz(v.s3), convert_float_rtz(v.s4), convert_float_rtz(v.s5), convert_float_rtz(v.s6), convert_float_rtz(v.s7));
+}
+
+INLINE OVERLOADABLE float8 convert_float8_rtp(short8 v) {
+  return (float8)(convert_float_rtp(v.s0), convert_float_rtp(v.s1), convert_float_rtp(v.s2), convert_float_rtp(v.s3), convert_float_rtp(v.s4), convert_float_rtp(v.s5), convert_float_rtp(v.s6), convert_float_rtp(v.s7));
+}
+
+INLINE OVERLOADABLE float8 convert_float8_rtn(short8 v) {
+  return (float8)(convert_float_rtn(v.s0), convert_float_rtn(v.s1), convert_float_rtn(v.s2), convert_float_rtn(v.s3), convert_float_rtn(v.s4), convert_float_rtn(v.s5), convert_float_rtn(v.s6), convert_float_rtn(v.s7));
+}
+
+INLINE OVERLOADABLE long8 convert_long8_rte(ushort8 v) {
+  return (long8)(convert_long_rte(v.s0), convert_long_rte(v.s1), convert_long_rte(v.s2), convert_long_rte(v.s3), convert_long_rte(v.s4), convert_long_rte(v.s5), convert_long_rte(v.s6), convert_long_rte(v.s7));
+}
+
+INLINE OVERLOADABLE long8 convert_long8_rtz(ushort8 v) {
+  return (long8)(convert_long_rtz(v.s0), convert_long_rtz(v.s1), convert_long_rtz(v.s2), convert_long_rtz(v.s3), convert_long_rtz(v.s4), convert_long_rtz(v.s5), convert_long_rtz(v.s6), convert_long_rtz(v.s7));
+}
+
+INLINE OVERLOADABLE long8 convert_long8_rtp(ushort8 v) {
+  return (long8)(convert_long_rtp(v.s0), convert_long_rtp(v.s1), convert_long_rtp(v.s2), convert_long_rtp(v.s3), convert_long_rtp(v.s4), convert_long_rtp(v.s5), convert_long_rtp(v.s6), convert_long_rtp(v.s7));
+}
+
+INLINE OVERLOADABLE long8 convert_long8_rtn(ushort8 v) {
+  return (long8)(convert_long_rtn(v.s0), convert_long_rtn(v.s1), convert_long_rtn(v.s2), convert_long_rtn(v.s3), convert_long_rtn(v.s4), convert_long_rtn(v.s5), convert_long_rtn(v.s6), convert_long_rtn(v.s7));
+}
+
+INLINE OVERLOADABLE ulong8 convert_ulong8_rte(ushort8 v) {
+  return (ulong8)(convert_ulong_rte(v.s0), convert_ulong_rte(v.s1), convert_ulong_rte(v.s2), convert_ulong_rte(v.s3), convert_ulong_rte(v.s4), convert_ulong_rte(v.s5), convert_ulong_rte(v.s6), convert_ulong_rte(v.s7));
+}
+
+INLINE OVERLOADABLE ulong8 convert_ulong8_rtz(ushort8 v) {
+  return (ulong8)(convert_ulong_rtz(v.s0), convert_ulong_rtz(v.s1), convert_ulong_rtz(v.s2), convert_ulong_rtz(v.s3), convert_ulong_rtz(v.s4), convert_ulong_rtz(v.s5), convert_ulong_rtz(v.s6), convert_ulong_rtz(v.s7));
+}
+
+INLINE OVERLOADABLE ulong8 convert_ulong8_rtp(ushort8 v) {
+  return (ulong8)(convert_ulong_rtp(v.s0), convert_ulong_rtp(v.s1), convert_ulong_rtp(v.s2), convert_ulong_rtp(v.s3), convert_ulong_rtp(v.s4), convert_ulong_rtp(v.s5), convert_ulong_rtp(v.s6), convert_ulong_rtp(v.s7));
+}
+
+INLINE OVERLOADABLE ulong8 convert_ulong8_rtn(ushort8 v) {
+  return (ulong8)(convert_ulong_rtn(v.s0), convert_ulong_rtn(v.s1), convert_ulong_rtn(v.s2), convert_ulong_rtn(v.s3), convert_ulong_rtn(v.s4), convert_ulong_rtn(v.s5), convert_ulong_rtn(v.s6), convert_ulong_rtn(v.s7));
+}
+
+INLINE OVERLOADABLE int8 convert_int8_rte(ushort8 v) {
+  return (int8)(convert_int_rte(v.s0), convert_int_rte(v.s1), convert_int_rte(v.s2), convert_int_rte(v.s3), convert_int_rte(v.s4), convert_int_rte(v.s5), convert_int_rte(v.s6), convert_int_rte(v.s7));
+}
+
+INLINE OVERLOADABLE int8 convert_int8_rtz(ushort8 v) {
+  return (int8)(convert_int_rtz(v.s0), convert_int_rtz(v.s1), convert_int_rtz(v.s2), convert_int_rtz(v.s3), convert_int_rtz(v.s4), convert_int_rtz(v.s5), convert_int_rtz(v.s6), convert_int_rtz(v.s7));
+}
+
+INLINE OVERLOADABLE int8 convert_int8_rtp(ushort8 v) {
+  return (int8)(convert_int_rtp(v.s0), convert_int_rtp(v.s1), convert_int_rtp(v.s2), convert_int_rtp(v.s3), convert_int_rtp(v.s4), convert_int_rtp(v.s5), convert_int_rtp(v.s6), convert_int_rtp(v.s7));
+}
+
+INLINE OVERLOADABLE int8 convert_int8_rtn(ushort8 v) {
+  return (int8)(convert_int_rtn(v.s0), convert_int_rtn(v.s1), convert_int_rtn(v.s2), convert_int_rtn(v.s3), convert_int_rtn(v.s4), convert_int_rtn(v.s5), convert_int_rtn(v.s6), convert_int_rtn(v.s7));
+}
+
+INLINE OVERLOADABLE uint8 convert_uint8_rte(ushort8 v) {
+  return (uint8)(convert_uint_rte(v.s0), convert_uint_rte(v.s1), convert_uint_rte(v.s2), convert_uint_rte(v.s3), convert_uint_rte(v.s4), convert_uint_rte(v.s5), convert_uint_rte(v.s6), convert_uint_rte(v.s7));
+}
+
+INLINE OVERLOADABLE uint8 convert_uint8_rtz(ushort8 v) {
+  return (uint8)(convert_uint_rtz(v.s0), convert_uint_rtz(v.s1), convert_uint_rtz(v.s2), convert_uint_rtz(v.s3), convert_uint_rtz(v.s4), convert_uint_rtz(v.s5), convert_uint_rtz(v.s6), convert_uint_rtz(v.s7));
+}
+
+INLINE OVERLOADABLE uint8 convert_uint8_rtp(ushort8 v) {
+  return (uint8)(convert_uint_rtp(v.s0), convert_uint_rtp(v.s1), convert_uint_rtp(v.s2), convert_uint_rtp(v.s3), convert_uint_rtp(v.s4), convert_uint_rtp(v.s5), convert_uint_rtp(v.s6), convert_uint_rtp(v.s7));
+}
+
+INLINE OVERLOADABLE uint8 convert_uint8_rtn(ushort8 v) {
+  return (uint8)(convert_uint_rtn(v.s0), convert_uint_rtn(v.s1), convert_uint_rtn(v.s2), convert_uint_rtn(v.s3), convert_uint_rtn(v.s4), convert_uint_rtn(v.s5), convert_uint_rtn(v.s6), convert_uint_rtn(v.s7));
+}
+
+INLINE OVERLOADABLE short8 convert_short8_rte(ushort8 v) {
+  return (short8)(convert_short_rte(v.s0), convert_short_rte(v.s1), convert_short_rte(v.s2), convert_short_rte(v.s3), convert_short_rte(v.s4), convert_short_rte(v.s5), convert_short_rte(v.s6), convert_short_rte(v.s7));
+}
+
+INLINE OVERLOADABLE short8 convert_short8_rtz(ushort8 v) {
+  return (short8)(convert_short_rtz(v.s0), convert_short_rtz(v.s1), convert_short_rtz(v.s2), convert_short_rtz(v.s3), convert_short_rtz(v.s4), convert_short_rtz(v.s5), convert_short_rtz(v.s6), convert_short_rtz(v.s7));
+}
+
+INLINE OVERLOADABLE short8 convert_short8_rtp(ushort8 v) {
+  return (short8)(convert_short_rtp(v.s0), convert_short_rtp(v.s1), convert_short_rtp(v.s2), convert_short_rtp(v.s3), convert_short_rtp(v.s4), convert_short_rtp(v.s5), convert_short_rtp(v.s6), convert_short_rtp(v.s7));
+}
+
+INLINE OVERLOADABLE short8 convert_short8_rtn(ushort8 v) {
+  return (short8)(convert_short_rtn(v.s0), convert_short_rtn(v.s1), convert_short_rtn(v.s2), convert_short_rtn(v.s3), convert_short_rtn(v.s4), convert_short_rtn(v.s5), convert_short_rtn(v.s6), convert_short_rtn(v.s7));
+}
+
+INLINE OVERLOADABLE ushort8 convert_ushort8_rte(ushort8 v) {
+  return (ushort8)(convert_ushort_rte(v.s0), convert_ushort_rte(v.s1), convert_ushort_rte(v.s2), convert_ushort_rte(v.s3), convert_ushort_rte(v.s4), convert_ushort_rte(v.s5), convert_ushort_rte(v.s6), convert_ushort_rte(v.s7));
+}
+
+INLINE OVERLOADABLE ushort8 convert_ushort8_rtz(ushort8 v) {
+  return (ushort8)(convert_ushort_rtz(v.s0), convert_ushort_rtz(v.s1), convert_ushort_rtz(v.s2), convert_ushort_rtz(v.s3), convert_ushort_rtz(v.s4), convert_ushort_rtz(v.s5), convert_ushort_rtz(v.s6), convert_ushort_rtz(v.s7));
+}
+
+INLINE OVERLOADABLE ushort8 convert_ushort8_rtp(ushort8 v) {
+  return (ushort8)(convert_ushort_rtp(v.s0), convert_ushort_rtp(v.s1), convert_ushort_rtp(v.s2), convert_ushort_rtp(v.s3), convert_ushort_rtp(v.s4), convert_ushort_rtp(v.s5), convert_ushort_rtp(v.s6), convert_ushort_rtp(v.s7));
+}
+
+INLINE OVERLOADABLE ushort8 convert_ushort8_rtn(ushort8 v) {
+  return (ushort8)(convert_ushort_rtn(v.s0), convert_ushort_rtn(v.s1), convert_ushort_rtn(v.s2), convert_ushort_rtn(v.s3), convert_ushort_rtn(v.s4), convert_ushort_rtn(v.s5), convert_ushort_rtn(v.s6), convert_ushort_rtn(v.s7));
+}
+
+INLINE OVERLOADABLE char8 convert_char8_rte(ushort8 v) {
+  return (char8)(convert_char_rte(v.s0), convert_char_rte(v.s1), convert_char_rte(v.s2), convert_char_rte(v.s3), convert_char_rte(v.s4), convert_char_rte(v.s5), convert_char_rte(v.s6), convert_char_rte(v.s7));
+}
+
+INLINE OVERLOADABLE char8 convert_char8_rtz(ushort8 v) {
+  return (char8)(convert_char_rtz(v.s0), convert_char_rtz(v.s1), convert_char_rtz(v.s2), convert_char_rtz(v.s3), convert_char_rtz(v.s4), convert_char_rtz(v.s5), convert_char_rtz(v.s6), convert_char_rtz(v.s7));
+}
+
+INLINE OVERLOADABLE char8 convert_char8_rtp(ushort8 v) {
+  return (char8)(convert_char_rtp(v.s0), convert_char_rtp(v.s1), convert_char_rtp(v.s2), convert_char_rtp(v.s3), convert_char_rtp(v.s4), convert_char_rtp(v.s5), convert_char_rtp(v.s6), convert_char_rtp(v.s7));
+}
+
+INLINE OVERLOADABLE char8 convert_char8_rtn(ushort8 v) {
+  return (char8)(convert_char_rtn(v.s0), convert_char_rtn(v.s1), convert_char_rtn(v.s2), convert_char_rtn(v.s3), convert_char_rtn(v.s4), convert_char_rtn(v.s5), convert_char_rtn(v.s6), convert_char_rtn(v.s7));
+}
+
+INLINE OVERLOADABLE uchar8 convert_uchar8_rte(ushort8 v) {
+  return (uchar8)(convert_uchar_rte(v.s0), convert_uchar_rte(v.s1), convert_uchar_rte(v.s2), convert_uchar_rte(v.s3), convert_uchar_rte(v.s4), convert_uchar_rte(v.s5), convert_uchar_rte(v.s6), convert_uchar_rte(v.s7));
+}
+
+INLINE OVERLOADABLE uchar8 convert_uchar8_rtz(ushort8 v) {
+  return (uchar8)(convert_uchar_rtz(v.s0), convert_uchar_rtz(v.s1), convert_uchar_rtz(v.s2), convert_uchar_rtz(v.s3), convert_uchar_rtz(v.s4), convert_uchar_rtz(v.s5), convert_uchar_rtz(v.s6), convert_uchar_rtz(v.s7));
+}
+
+INLINE OVERLOADABLE uchar8 convert_uchar8_rtp(ushort8 v) {
+  return (uchar8)(convert_uchar_rtp(v.s0), convert_uchar_rtp(v.s1), convert_uchar_rtp(v.s2), convert_uchar_rtp(v.s3), convert_uchar_rtp(v.s4), convert_uchar_rtp(v.s5), convert_uchar_rtp(v.s6), convert_uchar_rtp(v.s7));
+}
+
+INLINE OVERLOADABLE uchar8 convert_uchar8_rtn(ushort8 v) {
+  return (uchar8)(convert_uchar_rtn(v.s0), convert_uchar_rtn(v.s1), convert_uchar_rtn(v.s2), convert_uchar_rtn(v.s3), convert_uchar_rtn(v.s4), convert_uchar_rtn(v.s5), convert_uchar_rtn(v.s6), convert_uchar_rtn(v.s7));
+}
+
+INLINE OVERLOADABLE float8 convert_float8_rte(ushort8 v) {
+  return (float8)(convert_float_rte(v.s0), convert_float_rte(v.s1), convert_float_rte(v.s2), convert_float_rte(v.s3), convert_float_rte(v.s4), convert_float_rte(v.s5), convert_float_rte(v.s6), convert_float_rte(v.s7));
+}
+
+INLINE OVERLOADABLE float8 convert_float8_rtz(ushort8 v) {
+  return (float8)(convert_float_rtz(v.s0), convert_float_rtz(v.s1), convert_float_rtz(v.s2), convert_float_rtz(v.s3), convert_float_rtz(v.s4), convert_float_rtz(v.s5), convert_float_rtz(v.s6), convert_float_rtz(v.s7));
+}
+
+INLINE OVERLOADABLE float8 convert_float8_rtp(ushort8 v) {
+  return (float8)(convert_float_rtp(v.s0), convert_float_rtp(v.s1), convert_float_rtp(v.s2), convert_float_rtp(v.s3), convert_float_rtp(v.s4), convert_float_rtp(v.s5), convert_float_rtp(v.s6), convert_float_rtp(v.s7));
+}
+
+INLINE OVERLOADABLE float8 convert_float8_rtn(ushort8 v) {
+  return (float8)(convert_float_rtn(v.s0), convert_float_rtn(v.s1), convert_float_rtn(v.s2), convert_float_rtn(v.s3), convert_float_rtn(v.s4), convert_float_rtn(v.s5), convert_float_rtn(v.s6), convert_float_rtn(v.s7));
+}
+
+INLINE OVERLOADABLE long8 convert_long8_rte(char8 v) {
+  return (long8)(convert_long_rte(v.s0), convert_long_rte(v.s1), convert_long_rte(v.s2), convert_long_rte(v.s3), convert_long_rte(v.s4), convert_long_rte(v.s5), convert_long_rte(v.s6), convert_long_rte(v.s7));
+}
+
+INLINE OVERLOADABLE long8 convert_long8_rtz(char8 v) {
+  return (long8)(convert_long_rtz(v.s0), convert_long_rtz(v.s1), convert_long_rtz(v.s2), convert_long_rtz(v.s3), convert_long_rtz(v.s4), convert_long_rtz(v.s5), convert_long_rtz(v.s6), convert_long_rtz(v.s7));
+}
+
+INLINE OVERLOADABLE long8 convert_long8_rtp(char8 v) {
+  return (long8)(convert_long_rtp(v.s0), convert_long_rtp(v.s1), convert_long_rtp(v.s2), convert_long_rtp(v.s3), convert_long_rtp(v.s4), convert_long_rtp(v.s5), convert_long_rtp(v.s6), convert_long_rtp(v.s7));
+}
+
+INLINE OVERLOADABLE long8 convert_long8_rtn(char8 v) {
+  return (long8)(convert_long_rtn(v.s0), convert_long_rtn(v.s1), convert_long_rtn(v.s2), convert_long_rtn(v.s3), convert_long_rtn(v.s4), convert_long_rtn(v.s5), convert_long_rtn(v.s6), convert_long_rtn(v.s7));
+}
+
+INLINE OVERLOADABLE ulong8 convert_ulong8_rte(char8 v) {
+  return (ulong8)(convert_ulong_rte(v.s0), convert_ulong_rte(v.s1), convert_ulong_rte(v.s2), convert_ulong_rte(v.s3), convert_ulong_rte(v.s4), convert_ulong_rte(v.s5), convert_ulong_rte(v.s6), convert_ulong_rte(v.s7));
+}
+
+INLINE OVERLOADABLE ulong8 convert_ulong8_rtz(char8 v) {
+  return (ulong8)(convert_ulong_rtz(v.s0), convert_ulong_rtz(v.s1), convert_ulong_rtz(v.s2), convert_ulong_rtz(v.s3), convert_ulong_rtz(v.s4), convert_ulong_rtz(v.s5), convert_ulong_rtz(v.s6), convert_ulong_rtz(v.s7));
+}
+
+INLINE OVERLOADABLE ulong8 convert_ulong8_rtp(char8 v) {
+  return (ulong8)(convert_ulong_rtp(v.s0), convert_ulong_rtp(v.s1), convert_ulong_rtp(v.s2), convert_ulong_rtp(v.s3), convert_ulong_rtp(v.s4), convert_ulong_rtp(v.s5), convert_ulong_rtp(v.s6), convert_ulong_rtp(v.s7));
+}
+
+INLINE OVERLOADABLE ulong8 convert_ulong8_rtn(char8 v) {
+  return (ulong8)(convert_ulong_rtn(v.s0), convert_ulong_rtn(v.s1), convert_ulong_rtn(v.s2), convert_ulong_rtn(v.s3), convert_ulong_rtn(v.s4), convert_ulong_rtn(v.s5), convert_ulong_rtn(v.s6), convert_ulong_rtn(v.s7));
+}
+
+INLINE OVERLOADABLE int8 convert_int8_rte(char8 v) {
+  return (int8)(convert_int_rte(v.s0), convert_int_rte(v.s1), convert_int_rte(v.s2), convert_int_rte(v.s3), convert_int_rte(v.s4), convert_int_rte(v.s5), convert_int_rte(v.s6), convert_int_rte(v.s7));
+}
+
+INLINE OVERLOADABLE int8 convert_int8_rtz(char8 v) {
+  return (int8)(convert_int_rtz(v.s0), convert_int_rtz(v.s1), convert_int_rtz(v.s2), convert_int_rtz(v.s3), convert_int_rtz(v.s4), convert_int_rtz(v.s5), convert_int_rtz(v.s6), convert_int_rtz(v.s7));
+}
+
+INLINE OVERLOADABLE int8 convert_int8_rtp(char8 v) {
+  return (int8)(convert_int_rtp(v.s0), convert_int_rtp(v.s1), convert_int_rtp(v.s2), convert_int_rtp(v.s3), convert_int_rtp(v.s4), convert_int_rtp(v.s5), convert_int_rtp(v.s6), convert_int_rtp(v.s7));
+}
+
+INLINE OVERLOADABLE int8 convert_int8_rtn(char8 v) {
+  return (int8)(convert_int_rtn(v.s0), convert_int_rtn(v.s1), convert_int_rtn(v.s2), convert_int_rtn(v.s3), convert_int_rtn(v.s4), convert_int_rtn(v.s5), convert_int_rtn(v.s6), convert_int_rtn(v.s7));
+}
+
+INLINE OVERLOADABLE uint8 convert_uint8_rte(char8 v) {
+  return (uint8)(convert_uint_rte(v.s0), convert_uint_rte(v.s1), convert_uint_rte(v.s2), convert_uint_rte(v.s3), convert_uint_rte(v.s4), convert_uint_rte(v.s5), convert_uint_rte(v.s6), convert_uint_rte(v.s7));
+}
+
+INLINE OVERLOADABLE uint8 convert_uint8_rtz(char8 v) {
+  return (uint8)(convert_uint_rtz(v.s0), convert_uint_rtz(v.s1), convert_uint_rtz(v.s2), convert_uint_rtz(v.s3), convert_uint_rtz(v.s4), convert_uint_rtz(v.s5), convert_uint_rtz(v.s6), convert_uint_rtz(v.s7));
+}
+
+INLINE OVERLOADABLE uint8 convert_uint8_rtp(char8 v) {
+  return (uint8)(convert_uint_rtp(v.s0), convert_uint_rtp(v.s1), convert_uint_rtp(v.s2), convert_uint_rtp(v.s3), convert_uint_rtp(v.s4), convert_uint_rtp(v.s5), convert_uint_rtp(v.s6), convert_uint_rtp(v.s7));
+}
+
+INLINE OVERLOADABLE uint8 convert_uint8_rtn(char8 v) {
+  return (uint8)(convert_uint_rtn(v.s0), convert_uint_rtn(v.s1), convert_uint_rtn(v.s2), convert_uint_rtn(v.s3), convert_uint_rtn(v.s4), convert_uint_rtn(v.s5), convert_uint_rtn(v.s6), convert_uint_rtn(v.s7));
+}
+
+INLINE OVERLOADABLE short8 convert_short8_rte(char8 v) {
+  return (short8)(convert_short_rte(v.s0), convert_short_rte(v.s1), convert_short_rte(v.s2), convert_short_rte(v.s3), convert_short_rte(v.s4), convert_short_rte(v.s5), convert_short_rte(v.s6), convert_short_rte(v.s7));
+}
+
+INLINE OVERLOADABLE short8 convert_short8_rtz(char8 v) {
+  return (short8)(convert_short_rtz(v.s0), convert_short_rtz(v.s1), convert_short_rtz(v.s2), convert_short_rtz(v.s3), convert_short_rtz(v.s4), convert_short_rtz(v.s5), convert_short_rtz(v.s6), convert_short_rtz(v.s7));
+}
+
+INLINE OVERLOADABLE short8 convert_short8_rtp(char8 v) {
+  return (short8)(convert_short_rtp(v.s0), convert_short_rtp(v.s1), convert_short_rtp(v.s2), convert_short_rtp(v.s3), convert_short_rtp(v.s4), convert_short_rtp(v.s5), convert_short_rtp(v.s6), convert_short_rtp(v.s7));
+}
+
+INLINE OVERLOADABLE short8 convert_short8_rtn(char8 v) {
+  return (short8)(convert_short_rtn(v.s0), convert_short_rtn(v.s1), convert_short_rtn(v.s2), convert_short_rtn(v.s3), convert_short_rtn(v.s4), convert_short_rtn(v.s5), convert_short_rtn(v.s6), convert_short_rtn(v.s7));
+}
+
+INLINE OVERLOADABLE ushort8 convert_ushort8_rte(char8 v) {
+  return (ushort8)(convert_ushort_rte(v.s0), convert_ushort_rte(v.s1), convert_ushort_rte(v.s2), convert_ushort_rte(v.s3), convert_ushort_rte(v.s4), convert_ushort_rte(v.s5), convert_ushort_rte(v.s6), convert_ushort_rte(v.s7));
+}
+
+INLINE OVERLOADABLE ushort8 convert_ushort8_rtz(char8 v) {
+  return (ushort8)(convert_ushort_rtz(v.s0), convert_ushort_rtz(v.s1), convert_ushort_rtz(v.s2), convert_ushort_rtz(v.s3), convert_ushort_rtz(v.s4), convert_ushort_rtz(v.s5), convert_ushort_rtz(v.s6), convert_ushort_rtz(v.s7));
+}
+
+INLINE OVERLOADABLE ushort8 convert_ushort8_rtp(char8 v) {
+  return (ushort8)(convert_ushort_rtp(v.s0), convert_ushort_rtp(v.s1), convert_ushort_rtp(v.s2), convert_ushort_rtp(v.s3), convert_ushort_rtp(v.s4), convert_ushort_rtp(v.s5), convert_ushort_rtp(v.s6), convert_ushort_rtp(v.s7));
+}
+
+INLINE OVERLOADABLE ushort8 convert_ushort8_rtn(char8 v) {
+  return (ushort8)(convert_ushort_rtn(v.s0), convert_ushort_rtn(v.s1), convert_ushort_rtn(v.s2), convert_ushort_rtn(v.s3), convert_ushort_rtn(v.s4), convert_ushort_rtn(v.s5), convert_ushort_rtn(v.s6), convert_ushort_rtn(v.s7));
+}
+
+INLINE OVERLOADABLE char8 convert_char8_rte(char8 v) {
+  return (char8)(convert_char_rte(v.s0), convert_char_rte(v.s1), convert_char_rte(v.s2), convert_char_rte(v.s3), convert_char_rte(v.s4), convert_char_rte(v.s5), convert_char_rte(v.s6), convert_char_rte(v.s7));
+}
+
+INLINE OVERLOADABLE char8 convert_char8_rtz(char8 v) {
+  return (char8)(convert_char_rtz(v.s0), convert_char_rtz(v.s1), convert_char_rtz(v.s2), convert_char_rtz(v.s3), convert_char_rtz(v.s4), convert_char_rtz(v.s5), convert_char_rtz(v.s6), convert_char_rtz(v.s7));
+}
+
+INLINE OVERLOADABLE char8 convert_char8_rtp(char8 v) {
+  return (char8)(convert_char_rtp(v.s0), convert_char_rtp(v.s1), convert_char_rtp(v.s2), convert_char_rtp(v.s3), convert_char_rtp(v.s4), convert_char_rtp(v.s5), convert_char_rtp(v.s6), convert_char_rtp(v.s7));
+}
+
+INLINE OVERLOADABLE char8 convert_char8_rtn(char8 v) {
+  return (char8)(convert_char_rtn(v.s0), convert_char_rtn(v.s1), convert_char_rtn(v.s2), convert_char_rtn(v.s3), convert_char_rtn(v.s4), convert_char_rtn(v.s5), convert_char_rtn(v.s6), convert_char_rtn(v.s7));
+}
+
+INLINE OVERLOADABLE uchar8 convert_uchar8_rte(char8 v) {
+  return (uchar8)(convert_uchar_rte(v.s0), convert_uchar_rte(v.s1), convert_uchar_rte(v.s2), convert_uchar_rte(v.s3), convert_uchar_rte(v.s4), convert_uchar_rte(v.s5), convert_uchar_rte(v.s6), convert_uchar_rte(v.s7));
+}
+
+INLINE OVERLOADABLE uchar8 convert_uchar8_rtz(char8 v) {
+  return (uchar8)(convert_uchar_rtz(v.s0), convert_uchar_rtz(v.s1), convert_uchar_rtz(v.s2), convert_uchar_rtz(v.s3), convert_uchar_rtz(v.s4), convert_uchar_rtz(v.s5), convert_uchar_rtz(v.s6), convert_uchar_rtz(v.s7));
+}
+
+INLINE OVERLOADABLE uchar8 convert_uchar8_rtp(char8 v) {
+  return (uchar8)(convert_uchar_rtp(v.s0), convert_uchar_rtp(v.s1), convert_uchar_rtp(v.s2), convert_uchar_rtp(v.s3), convert_uchar_rtp(v.s4), convert_uchar_rtp(v.s5), convert_uchar_rtp(v.s6), convert_uchar_rtp(v.s7));
+}
+
+INLINE OVERLOADABLE uchar8 convert_uchar8_rtn(char8 v) {
+  return (uchar8)(convert_uchar_rtn(v.s0), convert_uchar_rtn(v.s1), convert_uchar_rtn(v.s2), convert_uchar_rtn(v.s3), convert_uchar_rtn(v.s4), convert_uchar_rtn(v.s5), convert_uchar_rtn(v.s6), convert_uchar_rtn(v.s7));
+}
+
+INLINE OVERLOADABLE float8 convert_float8_rte(char8 v) {
+  return (float8)(convert_float_rte(v.s0), convert_float_rte(v.s1), convert_float_rte(v.s2), convert_float_rte(v.s3), convert_float_rte(v.s4), convert_float_rte(v.s5), convert_float_rte(v.s6), convert_float_rte(v.s7));
+}
+
+INLINE OVERLOADABLE float8 convert_float8_rtz(char8 v) {
+  return (float8)(convert_float_rtz(v.s0), convert_float_rtz(v.s1), convert_float_rtz(v.s2), convert_float_rtz(v.s3), convert_float_rtz(v.s4), convert_float_rtz(v.s5), convert_float_rtz(v.s6), convert_float_rtz(v.s7));
+}
+
+INLINE OVERLOADABLE float8 convert_float8_rtp(char8 v) {
+  return (float8)(convert_float_rtp(v.s0), convert_float_rtp(v.s1), convert_float_rtp(v.s2), convert_float_rtp(v.s3), convert_float_rtp(v.s4), convert_float_rtp(v.s5), convert_float_rtp(v.s6), convert_float_rtp(v.s7));
+}
+
+INLINE OVERLOADABLE float8 convert_float8_rtn(char8 v) {
+  return (float8)(convert_float_rtn(v.s0), convert_float_rtn(v.s1), convert_float_rtn(v.s2), convert_float_rtn(v.s3), convert_float_rtn(v.s4), convert_float_rtn(v.s5), convert_float_rtn(v.s6), convert_float_rtn(v.s7));
+}
+
+INLINE OVERLOADABLE long8 convert_long8_rte(uchar8 v) {
+  return (long8)(convert_long_rte(v.s0), convert_long_rte(v.s1), convert_long_rte(v.s2), convert_long_rte(v.s3), convert_long_rte(v.s4), convert_long_rte(v.s5), convert_long_rte(v.s6), convert_long_rte(v.s7));
+}
+
+INLINE OVERLOADABLE long8 convert_long8_rtz(uchar8 v) {
+  return (long8)(convert_long_rtz(v.s0), convert_long_rtz(v.s1), convert_long_rtz(v.s2), convert_long_rtz(v.s3), convert_long_rtz(v.s4), convert_long_rtz(v.s5), convert_long_rtz(v.s6), convert_long_rtz(v.s7));
+}
+
+INLINE OVERLOADABLE long8 convert_long8_rtp(uchar8 v) {
+  return (long8)(convert_long_rtp(v.s0), convert_long_rtp(v.s1), convert_long_rtp(v.s2), convert_long_rtp(v.s3), convert_long_rtp(v.s4), convert_long_rtp(v.s5), convert_long_rtp(v.s6), convert_long_rtp(v.s7));
+}
+
+INLINE OVERLOADABLE long8 convert_long8_rtn(uchar8 v) {
+  return (long8)(convert_long_rtn(v.s0), convert_long_rtn(v.s1), convert_long_rtn(v.s2), convert_long_rtn(v.s3), convert_long_rtn(v.s4), convert_long_rtn(v.s5), convert_long_rtn(v.s6), convert_long_rtn(v.s7));
+}
+
+INLINE OVERLOADABLE ulong8 convert_ulong8_rte(uchar8 v) {
+  return (ulong8)(convert_ulong_rte(v.s0), convert_ulong_rte(v.s1), convert_ulong_rte(v.s2), convert_ulong_rte(v.s3), convert_ulong_rte(v.s4), convert_ulong_rte(v.s5), convert_ulong_rte(v.s6), convert_ulong_rte(v.s7));
+}
+
+INLINE OVERLOADABLE ulong8 convert_ulong8_rtz(uchar8 v) {
+  return (ulong8)(convert_ulong_rtz(v.s0), convert_ulong_rtz(v.s1), convert_ulong_rtz(v.s2), convert_ulong_rtz(v.s3), convert_ulong_rtz(v.s4), convert_ulong_rtz(v.s5), convert_ulong_rtz(v.s6), convert_ulong_rtz(v.s7));
+}
+
+INLINE OVERLOADABLE ulong8 convert_ulong8_rtp(uchar8 v) {
+  return (ulong8)(convert_ulong_rtp(v.s0), convert_ulong_rtp(v.s1), convert_ulong_rtp(v.s2), convert_ulong_rtp(v.s3), convert_ulong_rtp(v.s4), convert_ulong_rtp(v.s5), convert_ulong_rtp(v.s6), convert_ulong_rtp(v.s7));
+}
+
+INLINE OVERLOADABLE ulong8 convert_ulong8_rtn(uchar8 v) {
+  return (ulong8)(convert_ulong_rtn(v.s0), convert_ulong_rtn(v.s1), convert_ulong_rtn(v.s2), convert_ulong_rtn(v.s3), convert_ulong_rtn(v.s4), convert_ulong_rtn(v.s5), convert_ulong_rtn(v.s6), convert_ulong_rtn(v.s7));
+}
+
+INLINE OVERLOADABLE int8 convert_int8_rte(uchar8 v) {
+  return (int8)(convert_int_rte(v.s0), convert_int_rte(v.s1), convert_int_rte(v.s2), convert_int_rte(v.s3), convert_int_rte(v.s4), convert_int_rte(v.s5), convert_int_rte(v.s6), convert_int_rte(v.s7));
+}
+
+INLINE OVERLOADABLE int8 convert_int8_rtz(uchar8 v) {
+  return (int8)(convert_int_rtz(v.s0), convert_int_rtz(v.s1), convert_int_rtz(v.s2), convert_int_rtz(v.s3), convert_int_rtz(v.s4), convert_int_rtz(v.s5), convert_int_rtz(v.s6), convert_int_rtz(v.s7));
+}
+
+INLINE OVERLOADABLE int8 convert_int8_rtp(uchar8 v) {
+  return (int8)(convert_int_rtp(v.s0), convert_int_rtp(v.s1), convert_int_rtp(v.s2), convert_int_rtp(v.s3), convert_int_rtp(v.s4), convert_int_rtp(v.s5), convert_int_rtp(v.s6), convert_int_rtp(v.s7));
+}
+
+INLINE OVERLOADABLE int8 convert_int8_rtn(uchar8 v) {
+  return (int8)(convert_int_rtn(v.s0), convert_int_rtn(v.s1), convert_int_rtn(v.s2), convert_int_rtn(v.s3), convert_int_rtn(v.s4), convert_int_rtn(v.s5), convert_int_rtn(v.s6), convert_int_rtn(v.s7));
+}
+
+INLINE OVERLOADABLE uint8 convert_uint8_rte(uchar8 v) {
+  return (uint8)(convert_uint_rte(v.s0), convert_uint_rte(v.s1), convert_uint_rte(v.s2), convert_uint_rte(v.s3), convert_uint_rte(v.s4), convert_uint_rte(v.s5), convert_uint_rte(v.s6), convert_uint_rte(v.s7));
+}
+
+INLINE OVERLOADABLE uint8 convert_uint8_rtz(uchar8 v) {
+  return (uint8)(convert_uint_rtz(v.s0), convert_uint_rtz(v.s1), convert_uint_rtz(v.s2), convert_uint_rtz(v.s3), convert_uint_rtz(v.s4), convert_uint_rtz(v.s5), convert_uint_rtz(v.s6), convert_uint_rtz(v.s7));
+}
+
+INLINE OVERLOADABLE uint8 convert_uint8_rtp(uchar8 v) {
+  return (uint8)(convert_uint_rtp(v.s0), convert_uint_rtp(v.s1), convert_uint_rtp(v.s2), convert_uint_rtp(v.s3), convert_uint_rtp(v.s4), convert_uint_rtp(v.s5), convert_uint_rtp(v.s6), convert_uint_rtp(v.s7));
+}
+
+INLINE OVERLOADABLE uint8 convert_uint8_rtn(uchar8 v) {
+  return (uint8)(convert_uint_rtn(v.s0), convert_uint_rtn(v.s1), convert_uint_rtn(v.s2), convert_uint_rtn(v.s3), convert_uint_rtn(v.s4), convert_uint_rtn(v.s5), convert_uint_rtn(v.s6), convert_uint_rtn(v.s7));
+}
+
+INLINE OVERLOADABLE short8 convert_short8_rte(uchar8 v) {
+  return (short8)(convert_short_rte(v.s0), convert_short_rte(v.s1), convert_short_rte(v.s2), convert_short_rte(v.s3), convert_short_rte(v.s4), convert_short_rte(v.s5), convert_short_rte(v.s6), convert_short_rte(v.s7));
+}
+
+INLINE OVERLOADABLE short8 convert_short8_rtz(uchar8 v) {
+  return (short8)(convert_short_rtz(v.s0), convert_short_rtz(v.s1), convert_short_rtz(v.s2), convert_short_rtz(v.s3), convert_short_rtz(v.s4), convert_short_rtz(v.s5), convert_short_rtz(v.s6), convert_short_rtz(v.s7));
+}
+
+INLINE OVERLOADABLE short8 convert_short8_rtp(uchar8 v) {
+  return (short8)(convert_short_rtp(v.s0), convert_short_rtp(v.s1), convert_short_rtp(v.s2), convert_short_rtp(v.s3), convert_short_rtp(v.s4), convert_short_rtp(v.s5), convert_short_rtp(v.s6), convert_short_rtp(v.s7));
+}
+
+INLINE OVERLOADABLE short8 convert_short8_rtn(uchar8 v) {
+  return (short8)(convert_short_rtn(v.s0), convert_short_rtn(v.s1), convert_short_rtn(v.s2), convert_short_rtn(v.s3), convert_short_rtn(v.s4), convert_short_rtn(v.s5), convert_short_rtn(v.s6), convert_short_rtn(v.s7));
+}
+
+INLINE OVERLOADABLE ushort8 convert_ushort8_rte(uchar8 v) {
+  return (ushort8)(convert_ushort_rte(v.s0), convert_ushort_rte(v.s1), convert_ushort_rte(v.s2), convert_ushort_rte(v.s3), convert_ushort_rte(v.s4), convert_ushort_rte(v.s5), convert_ushort_rte(v.s6), convert_ushort_rte(v.s7));
+}
+
+INLINE OVERLOADABLE ushort8 convert_ushort8_rtz(uchar8 v) {
+  return (ushort8)(convert_ushort_rtz(v.s0), convert_ushort_rtz(v.s1), convert_ushort_rtz(v.s2), convert_ushort_rtz(v.s3), convert_ushort_rtz(v.s4), convert_ushort_rtz(v.s5), convert_ushort_rtz(v.s6), convert_ushort_rtz(v.s7));
+}
+
+INLINE OVERLOADABLE ushort8 convert_ushort8_rtp(uchar8 v) {
+  return (ushort8)(convert_ushort_rtp(v.s0), convert_ushort_rtp(v.s1), convert_ushort_rtp(v.s2), convert_ushort_rtp(v.s3), convert_ushort_rtp(v.s4), convert_ushort_rtp(v.s5), convert_ushort_rtp(v.s6), convert_ushort_rtp(v.s7));
+}
+
+INLINE OVERLOADABLE ushort8 convert_ushort8_rtn(uchar8 v) {
+  return (ushort8)(convert_ushort_rtn(v.s0), convert_ushort_rtn(v.s1), convert_ushort_rtn(v.s2), convert_ushort_rtn(v.s3), convert_ushort_rtn(v.s4), convert_ushort_rtn(v.s5), convert_ushort_rtn(v.s6), convert_ushort_rtn(v.s7));
+}
+
+INLINE OVERLOADABLE char8 convert_char8_rte(uchar8 v) {
+  return (char8)(convert_char_rte(v.s0), convert_char_rte(v.s1), convert_char_rte(v.s2), convert_char_rte(v.s3), convert_char_rte(v.s4), convert_char_rte(v.s5), convert_char_rte(v.s6), convert_char_rte(v.s7));
+}
+
+INLINE OVERLOADABLE char8 convert_char8_rtz(uchar8 v) {
+  return (char8)(convert_char_rtz(v.s0), convert_char_rtz(v.s1), convert_char_rtz(v.s2), convert_char_rtz(v.s3), convert_char_rtz(v.s4), convert_char_rtz(v.s5), convert_char_rtz(v.s6), convert_char_rtz(v.s7));
+}
+
+INLINE OVERLOADABLE char8 convert_char8_rtp(uchar8 v) {
+  return (char8)(convert_char_rtp(v.s0), convert_char_rtp(v.s1), convert_char_rtp(v.s2), convert_char_rtp(v.s3), convert_char_rtp(v.s4), convert_char_rtp(v.s5), convert_char_rtp(v.s6), convert_char_rtp(v.s7));
+}
+
+INLINE OVERLOADABLE char8 convert_char8_rtn(uchar8 v) {
+  return (char8)(convert_char_rtn(v.s0), convert_char_rtn(v.s1), convert_char_rtn(v.s2), convert_char_rtn(v.s3), convert_char_rtn(v.s4), convert_char_rtn(v.s5), convert_char_rtn(v.s6), convert_char_rtn(v.s7));
+}
+
+INLINE OVERLOADABLE uchar8 convert_uchar8_rte(uchar8 v) {
+  return (uchar8)(convert_uchar_rte(v.s0), convert_uchar_rte(v.s1), convert_uchar_rte(v.s2), convert_uchar_rte(v.s3), convert_uchar_rte(v.s4), convert_uchar_rte(v.s5), convert_uchar_rte(v.s6), convert_uchar_rte(v.s7));
+}
+
+INLINE OVERLOADABLE uchar8 convert_uchar8_rtz(uchar8 v) {
+  return (uchar8)(convert_uchar_rtz(v.s0), convert_uchar_rtz(v.s1), convert_uchar_rtz(v.s2), convert_uchar_rtz(v.s3), convert_uchar_rtz(v.s4), convert_uchar_rtz(v.s5), convert_uchar_rtz(v.s6), convert_uchar_rtz(v.s7));
+}
+
+INLINE OVERLOADABLE uchar8 convert_uchar8_rtp(uchar8 v) {
+  return (uchar8)(convert_uchar_rtp(v.s0), convert_uchar_rtp(v.s1), convert_uchar_rtp(v.s2), convert_uchar_rtp(v.s3), convert_uchar_rtp(v.s4), convert_uchar_rtp(v.s5), convert_uchar_rtp(v.s6), convert_uchar_rtp(v.s7));
+}
+
+INLINE OVERLOADABLE uchar8 convert_uchar8_rtn(uchar8 v) {
+  return (uchar8)(convert_uchar_rtn(v.s0), convert_uchar_rtn(v.s1), convert_uchar_rtn(v.s2), convert_uchar_rtn(v.s3), convert_uchar_rtn(v.s4), convert_uchar_rtn(v.s5), convert_uchar_rtn(v.s6), convert_uchar_rtn(v.s7));
+}
+
+INLINE OVERLOADABLE float8 convert_float8_rte(uchar8 v) {
+  return (float8)(convert_float_rte(v.s0), convert_float_rte(v.s1), convert_float_rte(v.s2), convert_float_rte(v.s3), convert_float_rte(v.s4), convert_float_rte(v.s5), convert_float_rte(v.s6), convert_float_rte(v.s7));
+}
+
+INLINE OVERLOADABLE float8 convert_float8_rtz(uchar8 v) {
+  return (float8)(convert_float_rtz(v.s0), convert_float_rtz(v.s1), convert_float_rtz(v.s2), convert_float_rtz(v.s3), convert_float_rtz(v.s4), convert_float_rtz(v.s5), convert_float_rtz(v.s6), convert_float_rtz(v.s7));
+}
+
+INLINE OVERLOADABLE float8 convert_float8_rtp(uchar8 v) {
+  return (float8)(convert_float_rtp(v.s0), convert_float_rtp(v.s1), convert_float_rtp(v.s2), convert_float_rtp(v.s3), convert_float_rtp(v.s4), convert_float_rtp(v.s5), convert_float_rtp(v.s6), convert_float_rtp(v.s7));
+}
+
+INLINE OVERLOADABLE float8 convert_float8_rtn(uchar8 v) {
+  return (float8)(convert_float_rtn(v.s0), convert_float_rtn(v.s1), convert_float_rtn(v.s2), convert_float_rtn(v.s3), convert_float_rtn(v.s4), convert_float_rtn(v.s5), convert_float_rtn(v.s6), convert_float_rtn(v.s7));
+}
+
+INLINE OVERLOADABLE long8 convert_long8_rte(float8 v) {
+  return (long8)(convert_long_rte(v.s0), convert_long_rte(v.s1), convert_long_rte(v.s2), convert_long_rte(v.s3), convert_long_rte(v.s4), convert_long_rte(v.s5), convert_long_rte(v.s6), convert_long_rte(v.s7));
+}
+
+INLINE OVERLOADABLE long8 convert_long8_rtz(float8 v) {
+  return (long8)(convert_long_rtz(v.s0), convert_long_rtz(v.s1), convert_long_rtz(v.s2), convert_long_rtz(v.s3), convert_long_rtz(v.s4), convert_long_rtz(v.s5), convert_long_rtz(v.s6), convert_long_rtz(v.s7));
+}
+
+INLINE OVERLOADABLE long8 convert_long8_rtp(float8 v) {
+  return (long8)(convert_long_rtp(v.s0), convert_long_rtp(v.s1), convert_long_rtp(v.s2), convert_long_rtp(v.s3), convert_long_rtp(v.s4), convert_long_rtp(v.s5), convert_long_rtp(v.s6), convert_long_rtp(v.s7));
+}
+
+INLINE OVERLOADABLE long8 convert_long8_rtn(float8 v) {
+  return (long8)(convert_long_rtn(v.s0), convert_long_rtn(v.s1), convert_long_rtn(v.s2), convert_long_rtn(v.s3), convert_long_rtn(v.s4), convert_long_rtn(v.s5), convert_long_rtn(v.s6), convert_long_rtn(v.s7));
+}
+
+INLINE OVERLOADABLE ulong8 convert_ulong8_rte(float8 v) {
+  return (ulong8)(convert_ulong_rte(v.s0), convert_ulong_rte(v.s1), convert_ulong_rte(v.s2), convert_ulong_rte(v.s3), convert_ulong_rte(v.s4), convert_ulong_rte(v.s5), convert_ulong_rte(v.s6), convert_ulong_rte(v.s7));
+}
+
+INLINE OVERLOADABLE ulong8 convert_ulong8_rtz(float8 v) {
+  return (ulong8)(convert_ulong_rtz(v.s0), convert_ulong_rtz(v.s1), convert_ulong_rtz(v.s2), convert_ulong_rtz(v.s3), convert_ulong_rtz(v.s4), convert_ulong_rtz(v.s5), convert_ulong_rtz(v.s6), convert_ulong_rtz(v.s7));
+}
+
+INLINE OVERLOADABLE ulong8 convert_ulong8_rtp(float8 v) {
+  return (ulong8)(convert_ulong_rtp(v.s0), convert_ulong_rtp(v.s1), convert_ulong_rtp(v.s2), convert_ulong_rtp(v.s3), convert_ulong_rtp(v.s4), convert_ulong_rtp(v.s5), convert_ulong_rtp(v.s6), convert_ulong_rtp(v.s7));
+}
+
+INLINE OVERLOADABLE ulong8 convert_ulong8_rtn(float8 v) {
+  return (ulong8)(convert_ulong_rtn(v.s0), convert_ulong_rtn(v.s1), convert_ulong_rtn(v.s2), convert_ulong_rtn(v.s3), convert_ulong_rtn(v.s4), convert_ulong_rtn(v.s5), convert_ulong_rtn(v.s6), convert_ulong_rtn(v.s7));
+}
+
+INLINE OVERLOADABLE int8 convert_int8_rte(float8 v) {
+  return (int8)(convert_int_rte(v.s0), convert_int_rte(v.s1), convert_int_rte(v.s2), convert_int_rte(v.s3), convert_int_rte(v.s4), convert_int_rte(v.s5), convert_int_rte(v.s6), convert_int_rte(v.s7));
+}
+
+INLINE OVERLOADABLE int8 convert_int8_rtz(float8 v) {
+  return (int8)(convert_int_rtz(v.s0), convert_int_rtz(v.s1), convert_int_rtz(v.s2), convert_int_rtz(v.s3), convert_int_rtz(v.s4), convert_int_rtz(v.s5), convert_int_rtz(v.s6), convert_int_rtz(v.s7));
+}
+
+INLINE OVERLOADABLE int8 convert_int8_rtp(float8 v) {
+  return (int8)(convert_int_rtp(v.s0), convert_int_rtp(v.s1), convert_int_rtp(v.s2), convert_int_rtp(v.s3), convert_int_rtp(v.s4), convert_int_rtp(v.s5), convert_int_rtp(v.s6), convert_int_rtp(v.s7));
+}
+
+INLINE OVERLOADABLE int8 convert_int8_rtn(float8 v) {
+  return (int8)(convert_int_rtn(v.s0), convert_int_rtn(v.s1), convert_int_rtn(v.s2), convert_int_rtn(v.s3), convert_int_rtn(v.s4), convert_int_rtn(v.s5), convert_int_rtn(v.s6), convert_int_rtn(v.s7));
+}
+
+INLINE OVERLOADABLE uint8 convert_uint8_rte(float8 v) {
+  return (uint8)(convert_uint_rte(v.s0), convert_uint_rte(v.s1), convert_uint_rte(v.s2), convert_uint_rte(v.s3), convert_uint_rte(v.s4), convert_uint_rte(v.s5), convert_uint_rte(v.s6), convert_uint_rte(v.s7));
+}
+
+INLINE OVERLOADABLE uint8 convert_uint8_rtz(float8 v) {
+  return (uint8)(convert_uint_rtz(v.s0), convert_uint_rtz(v.s1), convert_uint_rtz(v.s2), convert_uint_rtz(v.s3), convert_uint_rtz(v.s4), convert_uint_rtz(v.s5), convert_uint_rtz(v.s6), convert_uint_rtz(v.s7));
+}
+
+INLINE OVERLOADABLE uint8 convert_uint8_rtp(float8 v) {
+  return (uint8)(convert_uint_rtp(v.s0), convert_uint_rtp(v.s1), convert_uint_rtp(v.s2), convert_uint_rtp(v.s3), convert_uint_rtp(v.s4), convert_uint_rtp(v.s5), convert_uint_rtp(v.s6), convert_uint_rtp(v.s7));
+}
+
+INLINE OVERLOADABLE uint8 convert_uint8_rtn(float8 v) {
+  return (uint8)(convert_uint_rtn(v.s0), convert_uint_rtn(v.s1), convert_uint_rtn(v.s2), convert_uint_rtn(v.s3), convert_uint_rtn(v.s4), convert_uint_rtn(v.s5), convert_uint_rtn(v.s6), convert_uint_rtn(v.s7));
+}
+
+INLINE OVERLOADABLE short8 convert_short8_rte(float8 v) {
+  return (short8)(convert_short_rte(v.s0), convert_short_rte(v.s1), convert_short_rte(v.s2), convert_short_rte(v.s3), convert_short_rte(v.s4), convert_short_rte(v.s5), convert_short_rte(v.s6), convert_short_rte(v.s7));
+}
+
+INLINE OVERLOADABLE short8 convert_short8_rtz(float8 v) {
+  return (short8)(convert_short_rtz(v.s0), convert_short_rtz(v.s1), convert_short_rtz(v.s2), convert_short_rtz(v.s3), convert_short_rtz(v.s4), convert_short_rtz(v.s5), convert_short_rtz(v.s6), convert_short_rtz(v.s7));
+}
+
+INLINE OVERLOADABLE short8 convert_short8_rtp(float8 v) {
+  return (short8)(convert_short_rtp(v.s0), convert_short_rtp(v.s1), convert_short_rtp(v.s2), convert_short_rtp(v.s3), convert_short_rtp(v.s4), convert_short_rtp(v.s5), convert_short_rtp(v.s6), convert_short_rtp(v.s7));
+}
+
+INLINE OVERLOADABLE short8 convert_short8_rtn(float8 v) {
+  return (short8)(convert_short_rtn(v.s0), convert_short_rtn(v.s1), convert_short_rtn(v.s2), convert_short_rtn(v.s3), convert_short_rtn(v.s4), convert_short_rtn(v.s5), convert_short_rtn(v.s6), convert_short_rtn(v.s7));
+}
+
+INLINE OVERLOADABLE ushort8 convert_ushort8_rte(float8 v) {
+  return (ushort8)(convert_ushort_rte(v.s0), convert_ushort_rte(v.s1), convert_ushort_rte(v.s2), convert_ushort_rte(v.s3), convert_ushort_rte(v.s4), convert_ushort_rte(v.s5), convert_ushort_rte(v.s6), convert_ushort_rte(v.s7));
+}
+
+INLINE OVERLOADABLE ushort8 convert_ushort8_rtz(float8 v) {
+  return (ushort8)(convert_ushort_rtz(v.s0), convert_ushort_rtz(v.s1), convert_ushort_rtz(v.s2), convert_ushort_rtz(v.s3), convert_ushort_rtz(v.s4), convert_ushort_rtz(v.s5), convert_ushort_rtz(v.s6), convert_ushort_rtz(v.s7));
+}
+
+INLINE OVERLOADABLE ushort8 convert_ushort8_rtp(float8 v) {
+  return (ushort8)(convert_ushort_rtp(v.s0), convert_ushort_rtp(v.s1), convert_ushort_rtp(v.s2), convert_ushort_rtp(v.s3), convert_ushort_rtp(v.s4), convert_ushort_rtp(v.s5), convert_ushort_rtp(v.s6), convert_ushort_rtp(v.s7));
+}
+
+INLINE OVERLOADABLE ushort8 convert_ushort8_rtn(float8 v) {
+  return (ushort8)(convert_ushort_rtn(v.s0), convert_ushort_rtn(v.s1), convert_ushort_rtn(v.s2), convert_ushort_rtn(v.s3), convert_ushort_rtn(v.s4), convert_ushort_rtn(v.s5), convert_ushort_rtn(v.s6), convert_ushort_rtn(v.s7));
+}
+
+INLINE OVERLOADABLE char8 convert_char8_rte(float8 v) {
+  return (char8)(convert_char_rte(v.s0), convert_char_rte(v.s1), convert_char_rte(v.s2), convert_char_rte(v.s3), convert_char_rte(v.s4), convert_char_rte(v.s5), convert_char_rte(v.s6), convert_char_rte(v.s7));
+}
+
+INLINE OVERLOADABLE char8 convert_char8_rtz(float8 v) {
+  return (char8)(convert_char_rtz(v.s0), convert_char_rtz(v.s1), convert_char_rtz(v.s2), convert_char_rtz(v.s3), convert_char_rtz(v.s4), convert_char_rtz(v.s5), convert_char_rtz(v.s6), convert_char_rtz(v.s7));
+}
+
+INLINE OVERLOADABLE char8 convert_char8_rtp(float8 v) {
+  return (char8)(convert_char_rtp(v.s0), convert_char_rtp(v.s1), convert_char_rtp(v.s2), convert_char_rtp(v.s3), convert_char_rtp(v.s4), convert_char_rtp(v.s5), convert_char_rtp(v.s6), convert_char_rtp(v.s7));
+}
+
+INLINE OVERLOADABLE char8 convert_char8_rtn(float8 v) {
+  return (char8)(convert_char_rtn(v.s0), convert_char_rtn(v.s1), convert_char_rtn(v.s2), convert_char_rtn(v.s3), convert_char_rtn(v.s4), convert_char_rtn(v.s5), convert_char_rtn(v.s6), convert_char_rtn(v.s7));
+}
+
+INLINE OVERLOADABLE uchar8 convert_uchar8_rte(float8 v) {
+  return (uchar8)(convert_uchar_rte(v.s0), convert_uchar_rte(v.s1), convert_uchar_rte(v.s2), convert_uchar_rte(v.s3), convert_uchar_rte(v.s4), convert_uchar_rte(v.s5), convert_uchar_rte(v.s6), convert_uchar_rte(v.s7));
+}
+
+INLINE OVERLOADABLE uchar8 convert_uchar8_rtz(float8 v) {
+  return (uchar8)(convert_uchar_rtz(v.s0), convert_uchar_rtz(v.s1), convert_uchar_rtz(v.s2), convert_uchar_rtz(v.s3), convert_uchar_rtz(v.s4), convert_uchar_rtz(v.s5), convert_uchar_rtz(v.s6), convert_uchar_rtz(v.s7));
+}
+
+INLINE OVERLOADABLE uchar8 convert_uchar8_rtp(float8 v) {
+  return (uchar8)(convert_uchar_rtp(v.s0), convert_uchar_rtp(v.s1), convert_uchar_rtp(v.s2), convert_uchar_rtp(v.s3), convert_uchar_rtp(v.s4), convert_uchar_rtp(v.s5), convert_uchar_rtp(v.s6), convert_uchar_rtp(v.s7));
+}
+
+INLINE OVERLOADABLE uchar8 convert_uchar8_rtn(float8 v) {
+  return (uchar8)(convert_uchar_rtn(v.s0), convert_uchar_rtn(v.s1), convert_uchar_rtn(v.s2), convert_uchar_rtn(v.s3), convert_uchar_rtn(v.s4), convert_uchar_rtn(v.s5), convert_uchar_rtn(v.s6), convert_uchar_rtn(v.s7));
+}
+
+INLINE OVERLOADABLE float8 convert_float8_rte(float8 v) {
+  return (float8)(convert_float_rte(v.s0), convert_float_rte(v.s1), convert_float_rte(v.s2), convert_float_rte(v.s3), convert_float_rte(v.s4), convert_float_rte(v.s5), convert_float_rte(v.s6), convert_float_rte(v.s7));
+}
+
+INLINE OVERLOADABLE float8 convert_float8_rtz(float8 v) {
+  return (float8)(convert_float_rtz(v.s0), convert_float_rtz(v.s1), convert_float_rtz(v.s2), convert_float_rtz(v.s3), convert_float_rtz(v.s4), convert_float_rtz(v.s5), convert_float_rtz(v.s6), convert_float_rtz(v.s7));
+}
+
+INLINE OVERLOADABLE float8 convert_float8_rtp(float8 v) {
+  return (float8)(convert_float_rtp(v.s0), convert_float_rtp(v.s1), convert_float_rtp(v.s2), convert_float_rtp(v.s3), convert_float_rtp(v.s4), convert_float_rtp(v.s5), convert_float_rtp(v.s6), convert_float_rtp(v.s7));
+}
+
+INLINE OVERLOADABLE float8 convert_float8_rtn(float8 v) {
+  return (float8)(convert_float_rtn(v.s0), convert_float_rtn(v.s1), convert_float_rtn(v.s2), convert_float_rtn(v.s3), convert_float_rtn(v.s4), convert_float_rtn(v.s5), convert_float_rtn(v.s6), convert_float_rtn(v.s7));
+}
+
+INLINE OVERLOADABLE long16 convert_long16_rte(long16 v) {
+  return (long16)(convert_long_rte(v.s0), convert_long_rte(v.s1), convert_long_rte(v.s2), convert_long_rte(v.s3), convert_long_rte(v.s4), convert_long_rte(v.s5), convert_long_rte(v.s6), convert_long_rte(v.s7), convert_long_rte(v.s8), convert_long_rte(v.s9), convert_long_rte(v.sA), convert_long_rte(v.sB), convert_long_rte(v.sC), convert_long_rte(v.sD), convert_long_rte(v.sE), convert_long_rte(v.sF));
+}
+
+INLINE OVERLOADABLE long16 convert_long16_rtz(long16 v) {
+  return (long16)(convert_long_rtz(v.s0), convert_long_rtz(v.s1), convert_long_rtz(v.s2), convert_long_rtz(v.s3), convert_long_rtz(v.s4), convert_long_rtz(v.s5), convert_long_rtz(v.s6), convert_long_rtz(v.s7), convert_long_rtz(v.s8), convert_long_rtz(v.s9), convert_long_rtz(v.sA), convert_long_rtz(v.sB), convert_long_rtz(v.sC), convert_long_rtz(v.sD), convert_long_rtz(v.sE), convert_long_rtz(v.sF));
+}
+
+INLINE OVERLOADABLE long16 convert_long16_rtp(long16 v) {
+  return (long16)(convert_long_rtp(v.s0), convert_long_rtp(v.s1), convert_long_rtp(v.s2), convert_long_rtp(v.s3), convert_long_rtp(v.s4), convert_long_rtp(v.s5), convert_long_rtp(v.s6), convert_long_rtp(v.s7), convert_long_rtp(v.s8), convert_long_rtp(v.s9), convert_long_rtp(v.sA), convert_long_rtp(v.sB), convert_long_rtp(v.sC), convert_long_rtp(v.sD), convert_long_rtp(v.sE), convert_long_rtp(v.sF));
+}
+
+INLINE OVERLOADABLE long16 convert_long16_rtn(long16 v) {
+  return (long16)(convert_long_rtn(v.s0), convert_long_rtn(v.s1), convert_long_rtn(v.s2), convert_long_rtn(v.s3), convert_long_rtn(v.s4), convert_long_rtn(v.s5), convert_long_rtn(v.s6), convert_long_rtn(v.s7), convert_long_rtn(v.s8), convert_long_rtn(v.s9), convert_long_rtn(v.sA), convert_long_rtn(v.sB), convert_long_rtn(v.sC), convert_long_rtn(v.sD), convert_long_rtn(v.sE), convert_long_rtn(v.sF));
+}
+
+INLINE OVERLOADABLE ulong16 convert_ulong16_rte(long16 v) {
+  return (ulong16)(convert_ulong_rte(v.s0), convert_ulong_rte(v.s1), convert_ulong_rte(v.s2), convert_ulong_rte(v.s3), convert_ulong_rte(v.s4), convert_ulong_rte(v.s5), convert_ulong_rte(v.s6), convert_ulong_rte(v.s7), convert_ulong_rte(v.s8), convert_ulong_rte(v.s9), convert_ulong_rte(v.sA), convert_ulong_rte(v.sB), convert_ulong_rte(v.sC), convert_ulong_rte(v.sD), convert_ulong_rte(v.sE), convert_ulong_rte(v.sF));
+}
+
+INLINE OVERLOADABLE ulong16 convert_ulong16_rtz(long16 v) {
+  return (ulong16)(convert_ulong_rtz(v.s0), convert_ulong_rtz(v.s1), convert_ulong_rtz(v.s2), convert_ulong_rtz(v.s3), convert_ulong_rtz(v.s4), convert_ulong_rtz(v.s5), convert_ulong_rtz(v.s6), convert_ulong_rtz(v.s7), convert_ulong_rtz(v.s8), convert_ulong_rtz(v.s9), convert_ulong_rtz(v.sA), convert_ulong_rtz(v.sB), convert_ulong_rtz(v.sC), convert_ulong_rtz(v.sD), convert_ulong_rtz(v.sE), convert_ulong_rtz(v.sF));
+}
+
+INLINE OVERLOADABLE ulong16 convert_ulong16_rtp(long16 v) {
+  return (ulong16)(convert_ulong_rtp(v.s0), convert_ulong_rtp(v.s1), convert_ulong_rtp(v.s2), convert_ulong_rtp(v.s3), convert_ulong_rtp(v.s4), convert_ulong_rtp(v.s5), convert_ulong_rtp(v.s6), convert_ulong_rtp(v.s7), convert_ulong_rtp(v.s8), convert_ulong_rtp(v.s9), convert_ulong_rtp(v.sA), convert_ulong_rtp(v.sB), convert_ulong_rtp(v.sC), convert_ulong_rtp(v.sD), convert_ulong_rtp(v.sE), convert_ulong_rtp(v.sF));
+}
+
+INLINE OVERLOADABLE ulong16 convert_ulong16_rtn(long16 v) {
+  return (ulong16)(convert_ulong_rtn(v.s0), convert_ulong_rtn(v.s1), convert_ulong_rtn(v.s2), convert_ulong_rtn(v.s3), convert_ulong_rtn(v.s4), convert_ulong_rtn(v.s5), convert_ulong_rtn(v.s6), convert_ulong_rtn(v.s7), convert_ulong_rtn(v.s8), convert_ulong_rtn(v.s9), convert_ulong_rtn(v.sA), convert_ulong_rtn(v.sB), convert_ulong_rtn(v.sC), convert_ulong_rtn(v.sD), convert_ulong_rtn(v.sE), convert_ulong_rtn(v.sF));
+}
+
+INLINE OVERLOADABLE int16 convert_int16_rte(long16 v) {
+  return (int16)(convert_int_rte(v.s0), convert_int_rte(v.s1), convert_int_rte(v.s2), convert_int_rte(v.s3), convert_int_rte(v.s4), convert_int_rte(v.s5), convert_int_rte(v.s6), convert_int_rte(v.s7), convert_int_rte(v.s8), convert_int_rte(v.s9), convert_int_rte(v.sA), convert_int_rte(v.sB), convert_int_rte(v.sC), convert_int_rte(v.sD), convert_int_rte(v.sE), convert_int_rte(v.sF));
+}
+
+INLINE OVERLOADABLE int16 convert_int16_rtz(long16 v) {
+  return (int16)(convert_int_rtz(v.s0), convert_int_rtz(v.s1), convert_int_rtz(v.s2), convert_int_rtz(v.s3), convert_int_rtz(v.s4), convert_int_rtz(v.s5), convert_int_rtz(v.s6), convert_int_rtz(v.s7), convert_int_rtz(v.s8), convert_int_rtz(v.s9), convert_int_rtz(v.sA), convert_int_rtz(v.sB), convert_int_rtz(v.sC), convert_int_rtz(v.sD), convert_int_rtz(v.sE), convert_int_rtz(v.sF));
+}
+
+INLINE OVERLOADABLE int16 convert_int16_rtp(long16 v) {
+  return (int16)(convert_int_rtp(v.s0), convert_int_rtp(v.s1), convert_int_rtp(v.s2), convert_int_rtp(v.s3), convert_int_rtp(v.s4), convert_int_rtp(v.s5), convert_int_rtp(v.s6), convert_int_rtp(v.s7), convert_int_rtp(v.s8), convert_int_rtp(v.s9), convert_int_rtp(v.sA), convert_int_rtp(v.sB), convert_int_rtp(v.sC), convert_int_rtp(v.sD), convert_int_rtp(v.sE), convert_int_rtp(v.sF));
+}
+
+INLINE OVERLOADABLE int16 convert_int16_rtn(long16 v) {
+  return (int16)(convert_int_rtn(v.s0), convert_int_rtn(v.s1), convert_int_rtn(v.s2), convert_int_rtn(v.s3), convert_int_rtn(v.s4), convert_int_rtn(v.s5), convert_int_rtn(v.s6), convert_int_rtn(v.s7), convert_int_rtn(v.s8), convert_int_rtn(v.s9), convert_int_rtn(v.sA), convert_int_rtn(v.sB), convert_int_rtn(v.sC), convert_int_rtn(v.sD), convert_int_rtn(v.sE), convert_int_rtn(v.sF));
+}
+
+INLINE OVERLOADABLE uint16 convert_uint16_rte(long16 v) {
+  return (uint16)(convert_uint_rte(v.s0), convert_uint_rte(v.s1), convert_uint_rte(v.s2), convert_uint_rte(v.s3), convert_uint_rte(v.s4), convert_uint_rte(v.s5), convert_uint_rte(v.s6), convert_uint_rte(v.s7), convert_uint_rte(v.s8), convert_uint_rte(v.s9), convert_uint_rte(v.sA), convert_uint_rte(v.sB), convert_uint_rte(v.sC), convert_uint_rte(v.sD), convert_uint_rte(v.sE), convert_uint_rte(v.sF));
+}
+
+INLINE OVERLOADABLE uint16 convert_uint16_rtz(long16 v) {
+  return (uint16)(convert_uint_rtz(v.s0), convert_uint_rtz(v.s1), convert_uint_rtz(v.s2), convert_uint_rtz(v.s3), convert_uint_rtz(v.s4), convert_uint_rtz(v.s5), convert_uint_rtz(v.s6), convert_uint_rtz(v.s7), convert_uint_rtz(v.s8), convert_uint_rtz(v.s9), convert_uint_rtz(v.sA), convert_uint_rtz(v.sB), convert_uint_rtz(v.sC), convert_uint_rtz(v.sD), convert_uint_rtz(v.sE), convert_uint_rtz(v.sF));
+}
+
+INLINE OVERLOADABLE uint16 convert_uint16_rtp(long16 v) {
+  return (uint16)(convert_uint_rtp(v.s0), convert_uint_rtp(v.s1), convert_uint_rtp(v.s2), convert_uint_rtp(v.s3), convert_uint_rtp(v.s4), convert_uint_rtp(v.s5), convert_uint_rtp(v.s6), convert_uint_rtp(v.s7), convert_uint_rtp(v.s8), convert_uint_rtp(v.s9), convert_uint_rtp(v.sA), convert_uint_rtp(v.sB), convert_uint_rtp(v.sC), convert_uint_rtp(v.sD), convert_uint_rtp(v.sE), convert_uint_rtp(v.sF));
+}
+
+INLINE OVERLOADABLE uint16 convert_uint16_rtn(long16 v) {
+  return (uint16)(convert_uint_rtn(v.s0), convert_uint_rtn(v.s1), convert_uint_rtn(v.s2), convert_uint_rtn(v.s3), convert_uint_rtn(v.s4), convert_uint_rtn(v.s5), convert_uint_rtn(v.s6), convert_uint_rtn(v.s7), convert_uint_rtn(v.s8), convert_uint_rtn(v.s9), convert_uint_rtn(v.sA), convert_uint_rtn(v.sB), convert_uint_rtn(v.sC), convert_uint_rtn(v.sD), convert_uint_rtn(v.sE), convert_uint_rtn(v.sF));
+}
+
+INLINE OVERLOADABLE short16 convert_short16_rte(long16 v) {
+  return (short16)(convert_short_rte(v.s0), convert_short_rte(v.s1), convert_short_rte(v.s2), convert_short_rte(v.s3), convert_short_rte(v.s4), convert_short_rte(v.s5), convert_short_rte(v.s6), convert_short_rte(v.s7), convert_short_rte(v.s8), convert_short_rte(v.s9), convert_short_rte(v.sA), convert_short_rte(v.sB), convert_short_rte(v.sC), convert_short_rte(v.sD), convert_short_rte(v.sE), convert_short_rte(v.sF));
+}
+
+INLINE OVERLOADABLE short16 convert_short16_rtz(long16 v) {
+  return (short16)(convert_short_rtz(v.s0), convert_short_rtz(v.s1), convert_short_rtz(v.s2), convert_short_rtz(v.s3), convert_short_rtz(v.s4), convert_short_rtz(v.s5), convert_short_rtz(v.s6), convert_short_rtz(v.s7), convert_short_rtz(v.s8), convert_short_rtz(v.s9), convert_short_rtz(v.sA), convert_short_rtz(v.sB), convert_short_rtz(v.sC), convert_short_rtz(v.sD), convert_short_rtz(v.sE), convert_short_rtz(v.sF));
+}
+
+INLINE OVERLOADABLE short16 convert_short16_rtp(long16 v) {
+  return (short16)(convert_short_rtp(v.s0), convert_short_rtp(v.s1), convert_short_rtp(v.s2), convert_short_rtp(v.s3), convert_short_rtp(v.s4), convert_short_rtp(v.s5), convert_short_rtp(v.s6), convert_short_rtp(v.s7), convert_short_rtp(v.s8), convert_short_rtp(v.s9), convert_short_rtp(v.sA), convert_short_rtp(v.sB), convert_short_rtp(v.sC), convert_short_rtp(v.sD), convert_short_rtp(v.sE), convert_short_rtp(v.sF));
+}
+
+INLINE OVERLOADABLE short16 convert_short16_rtn(long16 v) {
+  return (short16)(convert_short_rtn(v.s0), convert_short_rtn(v.s1), convert_short_rtn(v.s2), convert_short_rtn(v.s3), convert_short_rtn(v.s4), convert_short_rtn(v.s5), convert_short_rtn(v.s6), convert_short_rtn(v.s7), convert_short_rtn(v.s8), convert_short_rtn(v.s9), convert_short_rtn(v.sA), convert_short_rtn(v.sB), convert_short_rtn(v.sC), convert_short_rtn(v.sD), convert_short_rtn(v.sE), convert_short_rtn(v.sF));
+}
+
+INLINE OVERLOADABLE ushort16 convert_ushort16_rte(long16 v) {
+  return (ushort16)(convert_ushort_rte(v.s0), convert_ushort_rte(v.s1), convert_ushort_rte(v.s2), convert_ushort_rte(v.s3), convert_ushort_rte(v.s4), convert_ushort_rte(v.s5), convert_ushort_rte(v.s6), convert_ushort_rte(v.s7), convert_ushort_rte(v.s8), convert_ushort_rte(v.s9), convert_ushort_rte(v.sA), convert_ushort_rte(v.sB), convert_ushort_rte(v.sC), convert_ushort_rte(v.sD), convert_ushort_rte(v.sE), convert_ushort_rte(v.sF));
+}
+
+INLINE OVERLOADABLE ushort16 convert_ushort16_rtz(long16 v) {
+  return (ushort16)(convert_ushort_rtz(v.s0), convert_ushort_rtz(v.s1), convert_ushort_rtz(v.s2), convert_ushort_rtz(v.s3), convert_ushort_rtz(v.s4), convert_ushort_rtz(v.s5), convert_ushort_rtz(v.s6), convert_ushort_rtz(v.s7), convert_ushort_rtz(v.s8), convert_ushort_rtz(v.s9), convert_ushort_rtz(v.sA), convert_ushort_rtz(v.sB), convert_ushort_rtz(v.sC), convert_ushort_rtz(v.sD), convert_ushort_rtz(v.sE), convert_ushort_rtz(v.sF));
+}
+
+INLINE OVERLOADABLE ushort16 convert_ushort16_rtp(long16 v) {
+  return (ushort16)(convert_ushort_rtp(v.s0), convert_ushort_rtp(v.s1), convert_ushort_rtp(v.s2), convert_ushort_rtp(v.s3), convert_ushort_rtp(v.s4), convert_ushort_rtp(v.s5), convert_ushort_rtp(v.s6), convert_ushort_rtp(v.s7), convert_ushort_rtp(v.s8), convert_ushort_rtp(v.s9), convert_ushort_rtp(v.sA), convert_ushort_rtp(v.sB), convert_ushort_rtp(v.sC), convert_ushort_rtp(v.sD), convert_ushort_rtp(v.sE), convert_ushort_rtp(v.sF));
+}
+
+INLINE OVERLOADABLE ushort16 convert_ushort16_rtn(long16 v) {
+  return (ushort16)(convert_ushort_rtn(v.s0), convert_ushort_rtn(v.s1), convert_ushort_rtn(v.s2), convert_ushort_rtn(v.s3), convert_ushort_rtn(v.s4), convert_ushort_rtn(v.s5), convert_ushort_rtn(v.s6), convert_ushort_rtn(v.s7), convert_ushort_rtn(v.s8), convert_ushort_rtn(v.s9), convert_ushort_rtn(v.sA), convert_ushort_rtn(v.sB), convert_ushort_rtn(v.sC), convert_ushort_rtn(v.sD), convert_ushort_rtn(v.sE), convert_ushort_rtn(v.sF));
+}
+
+INLINE OVERLOADABLE char16 convert_char16_rte(long16 v) {
+  return (char16)(convert_char_rte(v.s0), convert_char_rte(v.s1), convert_char_rte(v.s2), convert_char_rte(v.s3), convert_char_rte(v.s4), convert_char_rte(v.s5), convert_char_rte(v.s6), convert_char_rte(v.s7), convert_char_rte(v.s8), convert_char_rte(v.s9), convert_char_rte(v.sA), convert_char_rte(v.sB), convert_char_rte(v.sC), convert_char_rte(v.sD), convert_char_rte(v.sE), convert_char_rte(v.sF));
+}
+
+INLINE OVERLOADABLE char16 convert_char16_rtz(long16 v) {
+  return (char16)(convert_char_rtz(v.s0), convert_char_rtz(v.s1), convert_char_rtz(v.s2), convert_char_rtz(v.s3), convert_char_rtz(v.s4), convert_char_rtz(v.s5), convert_char_rtz(v.s6), convert_char_rtz(v.s7), convert_char_rtz(v.s8), convert_char_rtz(v.s9), convert_char_rtz(v.sA), convert_char_rtz(v.sB), convert_char_rtz(v.sC), convert_char_rtz(v.sD), convert_char_rtz(v.sE), convert_char_rtz(v.sF));
+}
+
+INLINE OVERLOADABLE char16 convert_char16_rtp(long16 v) {
+  return (char16)(convert_char_rtp(v.s0), convert_char_rtp(v.s1), convert_char_rtp(v.s2), convert_char_rtp(v.s3), convert_char_rtp(v.s4), convert_char_rtp(v.s5), convert_char_rtp(v.s6), convert_char_rtp(v.s7), convert_char_rtp(v.s8), convert_char_rtp(v.s9), convert_char_rtp(v.sA), convert_char_rtp(v.sB), convert_char_rtp(v.sC), convert_char_rtp(v.sD), convert_char_rtp(v.sE), convert_char_rtp(v.sF));
+}
+
+INLINE OVERLOADABLE char16 convert_char16_rtn(long16 v) {
+  return (char16)(convert_char_rtn(v.s0), convert_char_rtn(v.s1), convert_char_rtn(v.s2), convert_char_rtn(v.s3), convert_char_rtn(v.s4), convert_char_rtn(v.s5), convert_char_rtn(v.s6), convert_char_rtn(v.s7), convert_char_rtn(v.s8), convert_char_rtn(v.s9), convert_char_rtn(v.sA), convert_char_rtn(v.sB), convert_char_rtn(v.sC), convert_char_rtn(v.sD), convert_char_rtn(v.sE), convert_char_rtn(v.sF));
+}
+
+INLINE OVERLOADABLE uchar16 convert_uchar16_rte(long16 v) {
+  return (uchar16)(convert_uchar_rte(v.s0), convert_uchar_rte(v.s1), convert_uchar_rte(v.s2), convert_uchar_rte(v.s3), convert_uchar_rte(v.s4), convert_uchar_rte(v.s5), convert_uchar_rte(v.s6), convert_uchar_rte(v.s7), convert_uchar_rte(v.s8), convert_uchar_rte(v.s9), convert_uchar_rte(v.sA), convert_uchar_rte(v.sB), convert_uchar_rte(v.sC), convert_uchar_rte(v.sD), convert_uchar_rte(v.sE), convert_uchar_rte(v.sF));
+}
+
+INLINE OVERLOADABLE uchar16 convert_uchar16_rtz(long16 v) {
+  return (uchar16)(convert_uchar_rtz(v.s0), convert_uchar_rtz(v.s1), convert_uchar_rtz(v.s2), convert_uchar_rtz(v.s3), convert_uchar_rtz(v.s4), convert_uchar_rtz(v.s5), convert_uchar_rtz(v.s6), convert_uchar_rtz(v.s7), convert_uchar_rtz(v.s8), convert_uchar_rtz(v.s9), convert_uchar_rtz(v.sA), convert_uchar_rtz(v.sB), convert_uchar_rtz(v.sC), convert_uchar_rtz(v.sD), convert_uchar_rtz(v.sE), convert_uchar_rtz(v.sF));
+}
+
+INLINE OVERLOADABLE uchar16 convert_uchar16_rtp(long16 v) {
+  return (uchar16)(convert_uchar_rtp(v.s0), convert_uchar_rtp(v.s1), convert_uchar_rtp(v.s2), convert_uchar_rtp(v.s3), convert_uchar_rtp(v.s4), convert_uchar_rtp(v.s5), convert_uchar_rtp(v.s6), convert_uchar_rtp(v.s7), convert_uchar_rtp(v.s8), convert_uchar_rtp(v.s9), convert_uchar_rtp(v.sA), convert_uchar_rtp(v.sB), convert_uchar_rtp(v.sC), convert_uchar_rtp(v.sD), convert_uchar_rtp(v.sE), convert_uchar_rtp(v.sF));
+}
+
+INLINE OVERLOADABLE uchar16 convert_uchar16_rtn(long16 v) {
+  return (uchar16)(convert_uchar_rtn(v.s0), convert_uchar_rtn(v.s1), convert_uchar_rtn(v.s2), convert_uchar_rtn(v.s3), convert_uchar_rtn(v.s4), convert_uchar_rtn(v.s5), convert_uchar_rtn(v.s6), convert_uchar_rtn(v.s7), convert_uchar_rtn(v.s8), convert_uchar_rtn(v.s9), convert_uchar_rtn(v.sA), convert_uchar_rtn(v.sB), convert_uchar_rtn(v.sC), convert_uchar_rtn(v.sD), convert_uchar_rtn(v.sE), convert_uchar_rtn(v.sF));
+}
+
+INLINE OVERLOADABLE float16 convert_float16_rte(long16 v) {
+  return (float16)(convert_float_rte(v.s0), convert_float_rte(v.s1), convert_float_rte(v.s2), convert_float_rte(v.s3), convert_float_rte(v.s4), convert_float_rte(v.s5), convert_float_rte(v.s6), convert_float_rte(v.s7), convert_float_rte(v.s8), convert_float_rte(v.s9), convert_float_rte(v.sA), convert_float_rte(v.sB), convert_float_rte(v.sC), convert_float_rte(v.sD), convert_float_rte(v.sE), convert_float_rte(v.sF));
+}
+
+INLINE OVERLOADABLE float16 convert_float16_rtz(long16 v) {
+  return (float16)(convert_float_rtz(v.s0), convert_float_rtz(v.s1), convert_float_rtz(v.s2), convert_float_rtz(v.s3), convert_float_rtz(v.s4), convert_float_rtz(v.s5), convert_float_rtz(v.s6), convert_float_rtz(v.s7), convert_float_rtz(v.s8), convert_float_rtz(v.s9), convert_float_rtz(v.sA), convert_float_rtz(v.sB), convert_float_rtz(v.sC), convert_float_rtz(v.sD), convert_float_rtz(v.sE), convert_float_rtz(v.sF));
+}
+
+INLINE OVERLOADABLE float16 convert_float16_rtp(long16 v) {
+  return (float16)(convert_float_rtp(v.s0), convert_float_rtp(v.s1), convert_float_rtp(v.s2), convert_float_rtp(v.s3), convert_float_rtp(v.s4), convert_float_rtp(v.s5), convert_float_rtp(v.s6), convert_float_rtp(v.s7), convert_float_rtp(v.s8), convert_float_rtp(v.s9), convert_float_rtp(v.sA), convert_float_rtp(v.sB), convert_float_rtp(v.sC), convert_float_rtp(v.sD), convert_float_rtp(v.sE), convert_float_rtp(v.sF));
+}
+
+INLINE OVERLOADABLE float16 convert_float16_rtn(long16 v) {
+  return (float16)(convert_float_rtn(v.s0), convert_float_rtn(v.s1), convert_float_rtn(v.s2), convert_float_rtn(v.s3), convert_float_rtn(v.s4), convert_float_rtn(v.s5), convert_float_rtn(v.s6), convert_float_rtn(v.s7), convert_float_rtn(v.s8), convert_float_rtn(v.s9), convert_float_rtn(v.sA), convert_float_rtn(v.sB), convert_float_rtn(v.sC), convert_float_rtn(v.sD), convert_float_rtn(v.sE), convert_float_rtn(v.sF));
+}
+
+INLINE OVERLOADABLE long16 convert_long16_rte(ulong16 v) {
+  return (long16)(convert_long_rte(v.s0), convert_long_rte(v.s1), convert_long_rte(v.s2), convert_long_rte(v.s3), convert_long_rte(v.s4), convert_long_rte(v.s5), convert_long_rte(v.s6), convert_long_rte(v.s7), convert_long_rte(v.s8), convert_long_rte(v.s9), convert_long_rte(v.sA), convert_long_rte(v.sB), convert_long_rte(v.sC), convert_long_rte(v.sD), convert_long_rte(v.sE), convert_long_rte(v.sF));
+}
+
+INLINE OVERLOADABLE long16 convert_long16_rtz(ulong16 v) {
+  return (long16)(convert_long_rtz(v.s0), convert_long_rtz(v.s1), convert_long_rtz(v.s2), convert_long_rtz(v.s3), convert_long_rtz(v.s4), convert_long_rtz(v.s5), convert_long_rtz(v.s6), convert_long_rtz(v.s7), convert_long_rtz(v.s8), convert_long_rtz(v.s9), convert_long_rtz(v.sA), convert_long_rtz(v.sB), convert_long_rtz(v.sC), convert_long_rtz(v.sD), convert_long_rtz(v.sE), convert_long_rtz(v.sF));
+}
+
+INLINE OVERLOADABLE long16 convert_long16_rtp(ulong16 v) {
+  return (long16)(convert_long_rtp(v.s0), convert_long_rtp(v.s1), convert_long_rtp(v.s2), convert_long_rtp(v.s3), convert_long_rtp(v.s4), convert_long_rtp(v.s5), convert_long_rtp(v.s6), convert_long_rtp(v.s7), convert_long_rtp(v.s8), convert_long_rtp(v.s9), convert_long_rtp(v.sA), convert_long_rtp(v.sB), convert_long_rtp(v.sC), convert_long_rtp(v.sD), convert_long_rtp(v.sE), convert_long_rtp(v.sF));
+}
+
+INLINE OVERLOADABLE long16 convert_long16_rtn(ulong16 v) {
+  return (long16)(convert_long_rtn(v.s0), convert_long_rtn(v.s1), convert_long_rtn(v.s2), convert_long_rtn(v.s3), convert_long_rtn(v.s4), convert_long_rtn(v.s5), convert_long_rtn(v.s6), convert_long_rtn(v.s7), convert_long_rtn(v.s8), convert_long_rtn(v.s9), convert_long_rtn(v.sA), convert_long_rtn(v.sB), convert_long_rtn(v.sC), convert_long_rtn(v.sD), convert_long_rtn(v.sE), convert_long_rtn(v.sF));
+}
+
+INLINE OVERLOADABLE ulong16 convert_ulong16_rte(ulong16 v) {
+  return (ulong16)(convert_ulong_rte(v.s0), convert_ulong_rte(v.s1), convert_ulong_rte(v.s2), convert_ulong_rte(v.s3), convert_ulong_rte(v.s4), convert_ulong_rte(v.s5), convert_ulong_rte(v.s6), convert_ulong_rte(v.s7), convert_ulong_rte(v.s8), convert_ulong_rte(v.s9), convert_ulong_rte(v.sA), convert_ulong_rte(v.sB), convert_ulong_rte(v.sC), convert_ulong_rte(v.sD), convert_ulong_rte(v.sE), convert_ulong_rte(v.sF));
+}
+
+INLINE OVERLOADABLE ulong16 convert_ulong16_rtz(ulong16 v) {
+  return (ulong16)(convert_ulong_rtz(v.s0), convert_ulong_rtz(v.s1), convert_ulong_rtz(v.s2), convert_ulong_rtz(v.s3), convert_ulong_rtz(v.s4), convert_ulong_rtz(v.s5), convert_ulong_rtz(v.s6), convert_ulong_rtz(v.s7), convert_ulong_rtz(v.s8), convert_ulong_rtz(v.s9), convert_ulong_rtz(v.sA), convert_ulong_rtz(v.sB), convert_ulong_rtz(v.sC), convert_ulong_rtz(v.sD), convert_ulong_rtz(v.sE), convert_ulong_rtz(v.sF));
+}
+
+INLINE OVERLOADABLE ulong16 convert_ulong16_rtp(ulong16 v) {
+  return (ulong16)(convert_ulong_rtp(v.s0), convert_ulong_rtp(v.s1), convert_ulong_rtp(v.s2), convert_ulong_rtp(v.s3), convert_ulong_rtp(v.s4), convert_ulong_rtp(v.s5), convert_ulong_rtp(v.s6), convert_ulong_rtp(v.s7), convert_ulong_rtp(v.s8), convert_ulong_rtp(v.s9), convert_ulong_rtp(v.sA), convert_ulong_rtp(v.sB), convert_ulong_rtp(v.sC), convert_ulong_rtp(v.sD), convert_ulong_rtp(v.sE), convert_ulong_rtp(v.sF));
+}
+
+INLINE OVERLOADABLE ulong16 convert_ulong16_rtn(ulong16 v) {
+  return (ulong16)(convert_ulong_rtn(v.s0), convert_ulong_rtn(v.s1), convert_ulong_rtn(v.s2), convert_ulong_rtn(v.s3), convert_ulong_rtn(v.s4), convert_ulong_rtn(v.s5), convert_ulong_rtn(v.s6), convert_ulong_rtn(v.s7), convert_ulong_rtn(v.s8), convert_ulong_rtn(v.s9), convert_ulong_rtn(v.sA), convert_ulong_rtn(v.sB), convert_ulong_rtn(v.sC), convert_ulong_rtn(v.sD), convert_ulong_rtn(v.sE), convert_ulong_rtn(v.sF));
+}
+
+INLINE OVERLOADABLE int16 convert_int16_rte(ulong16 v) {
+  return (int16)(convert_int_rte(v.s0), convert_int_rte(v.s1), convert_int_rte(v.s2), convert_int_rte(v.s3), convert_int_rte(v.s4), convert_int_rte(v.s5), convert_int_rte(v.s6), convert_int_rte(v.s7), convert_int_rte(v.s8), convert_int_rte(v.s9), convert_int_rte(v.sA), convert_int_rte(v.sB), convert_int_rte(v.sC), convert_int_rte(v.sD), convert_int_rte(v.sE), convert_int_rte(v.sF));
+}
+
+INLINE OVERLOADABLE int16 convert_int16_rtz(ulong16 v) {
+  return (int16)(convert_int_rtz(v.s0), convert_int_rtz(v.s1), convert_int_rtz(v.s2), convert_int_rtz(v.s3), convert_int_rtz(v.s4), convert_int_rtz(v.s5), convert_int_rtz(v.s6), convert_int_rtz(v.s7), convert_int_rtz(v.s8), convert_int_rtz(v.s9), convert_int_rtz(v.sA), convert_int_rtz(v.sB), convert_int_rtz(v.sC), convert_int_rtz(v.sD), convert_int_rtz(v.sE), convert_int_rtz(v.sF));
+}
+
+INLINE OVERLOADABLE int16 convert_int16_rtp(ulong16 v) {
+  return (int16)(convert_int_rtp(v.s0), convert_int_rtp(v.s1), convert_int_rtp(v.s2), convert_int_rtp(v.s3), convert_int_rtp(v.s4), convert_int_rtp(v.s5), convert_int_rtp(v.s6), convert_int_rtp(v.s7), convert_int_rtp(v.s8), convert_int_rtp(v.s9), convert_int_rtp(v.sA), convert_int_rtp(v.sB), convert_int_rtp(v.sC), convert_int_rtp(v.sD), convert_int_rtp(v.sE), convert_int_rtp(v.sF));
+}
+
+INLINE OVERLOADABLE int16 convert_int16_rtn(ulong16 v) {
+  return (int16)(convert_int_rtn(v.s0), convert_int_rtn(v.s1), convert_int_rtn(v.s2), convert_int_rtn(v.s3), convert_int_rtn(v.s4), convert_int_rtn(v.s5), convert_int_rtn(v.s6), convert_int_rtn(v.s7), convert_int_rtn(v.s8), convert_int_rtn(v.s9), convert_int_rtn(v.sA), convert_int_rtn(v.sB), convert_int_rtn(v.sC), convert_int_rtn(v.sD), convert_int_rtn(v.sE), convert_int_rtn(v.sF));
+}
+
+INLINE OVERLOADABLE uint16 convert_uint16_rte(ulong16 v) {
+  return (uint16)(convert_uint_rte(v.s0), convert_uint_rte(v.s1), convert_uint_rte(v.s2), convert_uint_rte(v.s3), convert_uint_rte(v.s4), convert_uint_rte(v.s5), convert_uint_rte(v.s6), convert_uint_rte(v.s7), convert_uint_rte(v.s8), convert_uint_rte(v.s9), convert_uint_rte(v.sA), convert_uint_rte(v.sB), convert_uint_rte(v.sC), convert_uint_rte(v.sD), convert_uint_rte(v.sE), convert_uint_rte(v.sF));
+}
+
+INLINE OVERLOADABLE uint16 convert_uint16_rtz(ulong16 v) {
+  return (uint16)(convert_uint_rtz(v.s0), convert_uint_rtz(v.s1), convert_uint_rtz(v.s2), convert_uint_rtz(v.s3), convert_uint_rtz(v.s4), convert_uint_rtz(v.s5), convert_uint_rtz(v.s6), convert_uint_rtz(v.s7), convert_uint_rtz(v.s8), convert_uint_rtz(v.s9), convert_uint_rtz(v.sA), convert_uint_rtz(v.sB), convert_uint_rtz(v.sC), convert_uint_rtz(v.sD), convert_uint_rtz(v.sE), convert_uint_rtz(v.sF));
+}
+
+INLINE OVERLOADABLE uint16 convert_uint16_rtp(ulong16 v) {
+  return (uint16)(convert_uint_rtp(v.s0), convert_uint_rtp(v.s1), convert_uint_rtp(v.s2), convert_uint_rtp(v.s3), convert_uint_rtp(v.s4), convert_uint_rtp(v.s5), convert_uint_rtp(v.s6), convert_uint_rtp(v.s7), convert_uint_rtp(v.s8), convert_uint_rtp(v.s9), convert_uint_rtp(v.sA), convert_uint_rtp(v.sB), convert_uint_rtp(v.sC), convert_uint_rtp(v.sD), convert_uint_rtp(v.sE), convert_uint_rtp(v.sF));
+}
+
+INLINE OVERLOADABLE uint16 convert_uint16_rtn(ulong16 v) {
+  return (uint16)(convert_uint_rtn(v.s0), convert_uint_rtn(v.s1), convert_uint_rtn(v.s2), convert_uint_rtn(v.s3), convert_uint_rtn(v.s4), convert_uint_rtn(v.s5), convert_uint_rtn(v.s6), convert_uint_rtn(v.s7), convert_uint_rtn(v.s8), convert_uint_rtn(v.s9), convert_uint_rtn(v.sA), convert_uint_rtn(v.sB), convert_uint_rtn(v.sC), convert_uint_rtn(v.sD), convert_uint_rtn(v.sE), convert_uint_rtn(v.sF));
+}
+
+INLINE OVERLOADABLE short16 convert_short16_rte(ulong16 v) {
+  return (short16)(convert_short_rte(v.s0), convert_short_rte(v.s1), convert_short_rte(v.s2), convert_short_rte(v.s3), convert_short_rte(v.s4), convert_short_rte(v.s5), convert_short_rte(v.s6), convert_short_rte(v.s7), convert_short_rte(v.s8), convert_short_rte(v.s9), convert_short_rte(v.sA), convert_short_rte(v.sB), convert_short_rte(v.sC), convert_short_rte(v.sD), convert_short_rte(v.sE), convert_short_rte(v.sF));
+}
+
+INLINE OVERLOADABLE short16 convert_short16_rtz(ulong16 v) {
+  return (short16)(convert_short_rtz(v.s0), convert_short_rtz(v.s1), convert_short_rtz(v.s2), convert_short_rtz(v.s3), convert_short_rtz(v.s4), convert_short_rtz(v.s5), convert_short_rtz(v.s6), convert_short_rtz(v.s7), convert_short_rtz(v.s8), convert_short_rtz(v.s9), convert_short_rtz(v.sA), convert_short_rtz(v.sB), convert_short_rtz(v.sC), convert_short_rtz(v.sD), convert_short_rtz(v.sE), convert_short_rtz(v.sF));
+}
+
+INLINE OVERLOADABLE short16 convert_short16_rtp(ulong16 v) {
+  return (short16)(convert_short_rtp(v.s0), convert_short_rtp(v.s1), convert_short_rtp(v.s2), convert_short_rtp(v.s3), convert_short_rtp(v.s4), convert_short_rtp(v.s5), convert_short_rtp(v.s6), convert_short_rtp(v.s7), convert_short_rtp(v.s8), convert_short_rtp(v.s9), convert_short_rtp(v.sA), convert_short_rtp(v.sB), convert_short_rtp(v.sC), convert_short_rtp(v.sD), convert_short_rtp(v.sE), convert_short_rtp(v.sF));
+}
+
+INLINE OVERLOADABLE short16 convert_short16_rtn(ulong16 v) {
+  return (short16)(convert_short_rtn(v.s0), convert_short_rtn(v.s1), convert_short_rtn(v.s2), convert_short_rtn(v.s3), convert_short_rtn(v.s4), convert_short_rtn(v.s5), convert_short_rtn(v.s6), convert_short_rtn(v.s7), convert_short_rtn(v.s8), convert_short_rtn(v.s9), convert_short_rtn(v.sA), convert_short_rtn(v.sB), convert_short_rtn(v.sC), convert_short_rtn(v.sD), convert_short_rtn(v.sE), convert_short_rtn(v.sF));
+}
+
+INLINE OVERLOADABLE ushort16 convert_ushort16_rte(ulong16 v) {
+  return (ushort16)(convert_ushort_rte(v.s0), convert_ushort_rte(v.s1), convert_ushort_rte(v.s2), convert_ushort_rte(v.s3), convert_ushort_rte(v.s4), convert_ushort_rte(v.s5), convert_ushort_rte(v.s6), convert_ushort_rte(v.s7), convert_ushort_rte(v.s8), convert_ushort_rte(v.s9), convert_ushort_rte(v.sA), convert_ushort_rte(v.sB), convert_ushort_rte(v.sC), convert_ushort_rte(v.sD), convert_ushort_rte(v.sE), convert_ushort_rte(v.sF));
+}
+
+INLINE OVERLOADABLE ushort16 convert_ushort16_rtz(ulong16 v) {
+  return (ushort16)(convert_ushort_rtz(v.s0), convert_ushort_rtz(v.s1), convert_ushort_rtz(v.s2), convert_ushort_rtz(v.s3), convert_ushort_rtz(v.s4), convert_ushort_rtz(v.s5), convert_ushort_rtz(v.s6), convert_ushort_rtz(v.s7), convert_ushort_rtz(v.s8), convert_ushort_rtz(v.s9), convert_ushort_rtz(v.sA), convert_ushort_rtz(v.sB), convert_ushort_rtz(v.sC), convert_ushort_rtz(v.sD), convert_ushort_rtz(v.sE), convert_ushort_rtz(v.sF));
+}
+
+INLINE OVERLOADABLE ushort16 convert_ushort16_rtp(ulong16 v) {
+  return (ushort16)(convert_ushort_rtp(v.s0), convert_ushort_rtp(v.s1), convert_ushort_rtp(v.s2), convert_ushort_rtp(v.s3), convert_ushort_rtp(v.s4), convert_ushort_rtp(v.s5), convert_ushort_rtp(v.s6), convert_ushort_rtp(v.s7), convert_ushort_rtp(v.s8), convert_ushort_rtp(v.s9), convert_ushort_rtp(v.sA), convert_ushort_rtp(v.sB), convert_ushort_rtp(v.sC), convert_ushort_rtp(v.sD), convert_ushort_rtp(v.sE), convert_ushort_rtp(v.sF));
+}
+
+INLINE OVERLOADABLE ushort16 convert_ushort16_rtn(ulong16 v) {
+  return (ushort16)(convert_ushort_rtn(v.s0), convert_ushort_rtn(v.s1), convert_ushort_rtn(v.s2), convert_ushort_rtn(v.s3), convert_ushort_rtn(v.s4), convert_ushort_rtn(v.s5), convert_ushort_rtn(v.s6), convert_ushort_rtn(v.s7), convert_ushort_rtn(v.s8), convert_ushort_rtn(v.s9), convert_ushort_rtn(v.sA), convert_ushort_rtn(v.sB), convert_ushort_rtn(v.sC), convert_ushort_rtn(v.sD), convert_ushort_rtn(v.sE), convert_ushort_rtn(v.sF));
+}
+
+INLINE OVERLOADABLE char16 convert_char16_rte(ulong16 v) {
+  return (char16)(convert_char_rte(v.s0), convert_char_rte(v.s1), convert_char_rte(v.s2), convert_char_rte(v.s3), convert_char_rte(v.s4), convert_char_rte(v.s5), convert_char_rte(v.s6), convert_char_rte(v.s7), convert_char_rte(v.s8), convert_char_rte(v.s9), convert_char_rte(v.sA), convert_char_rte(v.sB), convert_char_rte(v.sC), convert_char_rte(v.sD), convert_char_rte(v.sE), convert_char_rte(v.sF));
+}
+
+INLINE OVERLOADABLE char16 convert_char16_rtz(ulong16 v) {
+  return (char16)(convert_char_rtz(v.s0), convert_char_rtz(v.s1), convert_char_rtz(v.s2), convert_char_rtz(v.s3), convert_char_rtz(v.s4), convert_char_rtz(v.s5), convert_char_rtz(v.s6), convert_char_rtz(v.s7), convert_char_rtz(v.s8), convert_char_rtz(v.s9), convert_char_rtz(v.sA), convert_char_rtz(v.sB), convert_char_rtz(v.sC), convert_char_rtz(v.sD), convert_char_rtz(v.sE), convert_char_rtz(v.sF));
+}
+
+INLINE OVERLOADABLE char16 convert_char16_rtp(ulong16 v) {
+  return (char16)(convert_char_rtp(v.s0), convert_char_rtp(v.s1), convert_char_rtp(v.s2), convert_char_rtp(v.s3), convert_char_rtp(v.s4), convert_char_rtp(v.s5), convert_char_rtp(v.s6), convert_char_rtp(v.s7), convert_char_rtp(v.s8), convert_char_rtp(v.s9), convert_char_rtp(v.sA), convert_char_rtp(v.sB), convert_char_rtp(v.sC), convert_char_rtp(v.sD), convert_char_rtp(v.sE), convert_char_rtp(v.sF));
+}
+
+INLINE OVERLOADABLE char16 convert_char16_rtn(ulong16 v) {
+  return (char16)(convert_char_rtn(v.s0), convert_char_rtn(v.s1), convert_char_rtn(v.s2), convert_char_rtn(v.s3), convert_char_rtn(v.s4), convert_char_rtn(v.s5), convert_char_rtn(v.s6), convert_char_rtn(v.s7), convert_char_rtn(v.s8), convert_char_rtn(v.s9), convert_char_rtn(v.sA), convert_char_rtn(v.sB), convert_char_rtn(v.sC), convert_char_rtn(v.sD), convert_char_rtn(v.sE), convert_char_rtn(v.sF));
+}
+
+INLINE OVERLOADABLE uchar16 convert_uchar16_rte(ulong16 v) {
+  return (uchar16)(convert_uchar_rte(v.s0), convert_uchar_rte(v.s1), convert_uchar_rte(v.s2), convert_uchar_rte(v.s3), convert_uchar_rte(v.s4), convert_uchar_rte(v.s5), convert_uchar_rte(v.s6), convert_uchar_rte(v.s7), convert_uchar_rte(v.s8), convert_uchar_rte(v.s9), convert_uchar_rte(v.sA), convert_uchar_rte(v.sB), convert_uchar_rte(v.sC), convert_uchar_rte(v.sD), convert_uchar_rte(v.sE), convert_uchar_rte(v.sF));
+}
+
+INLINE OVERLOADABLE uchar16 convert_uchar16_rtz(ulong16 v) {
+  return (uchar16)(convert_uchar_rtz(v.s0), convert_uchar_rtz(v.s1), convert_uchar_rtz(v.s2), convert_uchar_rtz(v.s3), convert_uchar_rtz(v.s4), convert_uchar_rtz(v.s5), convert_uchar_rtz(v.s6), convert_uchar_rtz(v.s7), convert_uchar_rtz(v.s8), convert_uchar_rtz(v.s9), convert_uchar_rtz(v.sA), convert_uchar_rtz(v.sB), convert_uchar_rtz(v.sC), convert_uchar_rtz(v.sD), convert_uchar_rtz(v.sE), convert_uchar_rtz(v.sF));
+}
+
+INLINE OVERLOADABLE uchar16 convert_uchar16_rtp(ulong16 v) {
+  return (uchar16)(convert_uchar_rtp(v.s0), convert_uchar_rtp(v.s1), convert_uchar_rtp(v.s2), convert_uchar_rtp(v.s3), convert_uchar_rtp(v.s4), convert_uchar_rtp(v.s5), convert_uchar_rtp(v.s6), convert_uchar_rtp(v.s7), convert_uchar_rtp(v.s8), convert_uchar_rtp(v.s9), convert_uchar_rtp(v.sA), convert_uchar_rtp(v.sB), convert_uchar_rtp(v.sC), convert_uchar_rtp(v.sD), convert_uchar_rtp(v.sE), convert_uchar_rtp(v.sF));
+}
+
+INLINE OVERLOADABLE uchar16 convert_uchar16_rtn(ulong16 v) {
+  return (uchar16)(convert_uchar_rtn(v.s0), convert_uchar_rtn(v.s1), convert_uchar_rtn(v.s2), convert_uchar_rtn(v.s3), convert_uchar_rtn(v.s4), convert_uchar_rtn(v.s5), convert_uchar_rtn(v.s6), convert_uchar_rtn(v.s7), convert_uchar_rtn(v.s8), convert_uchar_rtn(v.s9), convert_uchar_rtn(v.sA), convert_uchar_rtn(v.sB), convert_uchar_rtn(v.sC), convert_uchar_rtn(v.sD), convert_uchar_rtn(v.sE), convert_uchar_rtn(v.sF));
+}
+
+INLINE OVERLOADABLE float16 convert_float16_rte(ulong16 v) {
+  return (float16)(convert_float_rte(v.s0), convert_float_rte(v.s1), convert_float_rte(v.s2), convert_float_rte(v.s3), convert_float_rte(v.s4), convert_float_rte(v.s5), convert_float_rte(v.s6), convert_float_rte(v.s7), convert_float_rte(v.s8), convert_float_rte(v.s9), convert_float_rte(v.sA), convert_float_rte(v.sB), convert_float_rte(v.sC), convert_float_rte(v.sD), convert_float_rte(v.sE), convert_float_rte(v.sF));
+}
+
+INLINE OVERLOADABLE float16 convert_float16_rtz(ulong16 v) {
+  return (float16)(convert_float_rtz(v.s0), convert_float_rtz(v.s1), convert_float_rtz(v.s2), convert_float_rtz(v.s3), convert_float_rtz(v.s4), convert_float_rtz(v.s5), convert_float_rtz(v.s6), convert_float_rtz(v.s7), convert_float_rtz(v.s8), convert_float_rtz(v.s9), convert_float_rtz(v.sA), convert_float_rtz(v.sB), convert_float_rtz(v.sC), convert_float_rtz(v.sD), convert_float_rtz(v.sE), convert_float_rtz(v.sF));
+}
+
+INLINE OVERLOADABLE float16 convert_float16_rtp(ulong16 v) {
+  return (float16)(convert_float_rtp(v.s0), convert_float_rtp(v.s1), convert_float_rtp(v.s2), convert_float_rtp(v.s3), convert_float_rtp(v.s4), convert_float_rtp(v.s5), convert_float_rtp(v.s6), convert_float_rtp(v.s7), convert_float_rtp(v.s8), convert_float_rtp(v.s9), convert_float_rtp(v.sA), convert_float_rtp(v.sB), convert_float_rtp(v.sC), convert_float_rtp(v.sD), convert_float_rtp(v.sE), convert_float_rtp(v.sF));
+}
+
+INLINE OVERLOADABLE float16 convert_float16_rtn(ulong16 v) {
+  return (float16)(convert_float_rtn(v.s0), convert_float_rtn(v.s1), convert_float_rtn(v.s2), convert_float_rtn(v.s3), convert_float_rtn(v.s4), convert_float_rtn(v.s5), convert_float_rtn(v.s6), convert_float_rtn(v.s7), convert_float_rtn(v.s8), convert_float_rtn(v.s9), convert_float_rtn(v.sA), convert_float_rtn(v.sB), convert_float_rtn(v.sC), convert_float_rtn(v.sD), convert_float_rtn(v.sE), convert_float_rtn(v.sF));
+}
+
+INLINE OVERLOADABLE long16 convert_long16_rte(int16 v) {
+  return (long16)(convert_long_rte(v.s0), convert_long_rte(v.s1), convert_long_rte(v.s2), convert_long_rte(v.s3), convert_long_rte(v.s4), convert_long_rte(v.s5), convert_long_rte(v.s6), convert_long_rte(v.s7), convert_long_rte(v.s8), convert_long_rte(v.s9), convert_long_rte(v.sA), convert_long_rte(v.sB), convert_long_rte(v.sC), convert_long_rte(v.sD), convert_long_rte(v.sE), convert_long_rte(v.sF));
+}
+
+INLINE OVERLOADABLE long16 convert_long16_rtz(int16 v) {
+  return (long16)(convert_long_rtz(v.s0), convert_long_rtz(v.s1), convert_long_rtz(v.s2), convert_long_rtz(v.s3), convert_long_rtz(v.s4), convert_long_rtz(v.s5), convert_long_rtz(v.s6), convert_long_rtz(v.s7), convert_long_rtz(v.s8), convert_long_rtz(v.s9), convert_long_rtz(v.sA), convert_long_rtz(v.sB), convert_long_rtz(v.sC), convert_long_rtz(v.sD), convert_long_rtz(v.sE), convert_long_rtz(v.sF));
+}
+
+INLINE OVERLOADABLE long16 convert_long16_rtp(int16 v) {
+  return (long16)(convert_long_rtp(v.s0), convert_long_rtp(v.s1), convert_long_rtp(v.s2), convert_long_rtp(v.s3), convert_long_rtp(v.s4), convert_long_rtp(v.s5), convert_long_rtp(v.s6), convert_long_rtp(v.s7), convert_long_rtp(v.s8), convert_long_rtp(v.s9), convert_long_rtp(v.sA), convert_long_rtp(v.sB), convert_long_rtp(v.sC), convert_long_rtp(v.sD), convert_long_rtp(v.sE), convert_long_rtp(v.sF));
+}
+
+INLINE OVERLOADABLE long16 convert_long16_rtn(int16 v) {
+  return (long16)(convert_long_rtn(v.s0), convert_long_rtn(v.s1), convert_long_rtn(v.s2), convert_long_rtn(v.s3), convert_long_rtn(v.s4), convert_long_rtn(v.s5), convert_long_rtn(v.s6), convert_long_rtn(v.s7), convert_long_rtn(v.s8), convert_long_rtn(v.s9), convert_long_rtn(v.sA), convert_long_rtn(v.sB), convert_long_rtn(v.sC), convert_long_rtn(v.sD), convert_long_rtn(v.sE), convert_long_rtn(v.sF));
+}
+
+INLINE OVERLOADABLE ulong16 convert_ulong16_rte(int16 v) {
+  return (ulong16)(convert_ulong_rte(v.s0), convert_ulong_rte(v.s1), convert_ulong_rte(v.s2), convert_ulong_rte(v.s3), convert_ulong_rte(v.s4), convert_ulong_rte(v.s5), convert_ulong_rte(v.s6), convert_ulong_rte(v.s7), convert_ulong_rte(v.s8), convert_ulong_rte(v.s9), convert_ulong_rte(v.sA), convert_ulong_rte(v.sB), convert_ulong_rte(v.sC), convert_ulong_rte(v.sD), convert_ulong_rte(v.sE), convert_ulong_rte(v.sF));
+}
+
+INLINE OVERLOADABLE ulong16 convert_ulong16_rtz(int16 v) {
+  return (ulong16)(convert_ulong_rtz(v.s0), convert_ulong_rtz(v.s1), convert_ulong_rtz(v.s2), convert_ulong_rtz(v.s3), convert_ulong_rtz(v.s4), convert_ulong_rtz(v.s5), convert_ulong_rtz(v.s6), convert_ulong_rtz(v.s7), convert_ulong_rtz(v.s8), convert_ulong_rtz(v.s9), convert_ulong_rtz(v.sA), convert_ulong_rtz(v.sB), convert_ulong_rtz(v.sC), convert_ulong_rtz(v.sD), convert_ulong_rtz(v.sE), convert_ulong_rtz(v.sF));
+}
+
+INLINE OVERLOADABLE ulong16 convert_ulong16_rtp(int16 v) {
+  return (ulong16)(convert_ulong_rtp(v.s0), convert_ulong_rtp(v.s1), convert_ulong_rtp(v.s2), convert_ulong_rtp(v.s3), convert_ulong_rtp(v.s4), convert_ulong_rtp(v.s5), convert_ulong_rtp(v.s6), convert_ulong_rtp(v.s7), convert_ulong_rtp(v.s8), convert_ulong_rtp(v.s9), convert_ulong_rtp(v.sA), convert_ulong_rtp(v.sB), convert_ulong_rtp(v.sC), convert_ulong_rtp(v.sD), convert_ulong_rtp(v.sE), convert_ulong_rtp(v.sF));
+}
+
+INLINE OVERLOADABLE ulong16 convert_ulong16_rtn(int16 v) {
+  return (ulong16)(convert_ulong_rtn(v.s0), convert_ulong_rtn(v.s1), convert_ulong_rtn(v.s2), convert_ulong_rtn(v.s3), convert_ulong_rtn(v.s4), convert_ulong_rtn(v.s5), convert_ulong_rtn(v.s6), convert_ulong_rtn(v.s7), convert_ulong_rtn(v.s8), convert_ulong_rtn(v.s9), convert_ulong_rtn(v.sA), convert_ulong_rtn(v.sB), convert_ulong_rtn(v.sC), convert_ulong_rtn(v.sD), convert_ulong_rtn(v.sE), convert_ulong_rtn(v.sF));
+}
+
+INLINE OVERLOADABLE int16 convert_int16_rte(int16 v) {
+  return (int16)(convert_int_rte(v.s0), convert_int_rte(v.s1), convert_int_rte(v.s2), convert_int_rte(v.s3), convert_int_rte(v.s4), convert_int_rte(v.s5), convert_int_rte(v.s6), convert_int_rte(v.s7), convert_int_rte(v.s8), convert_int_rte(v.s9), convert_int_rte(v.sA), convert_int_rte(v.sB), convert_int_rte(v.sC), convert_int_rte(v.sD), convert_int_rte(v.sE), convert_int_rte(v.sF));
+}
+
+INLINE OVERLOADABLE int16 convert_int16_rtz(int16 v) {
+  return (int16)(convert_int_rtz(v.s0), convert_int_rtz(v.s1), convert_int_rtz(v.s2), convert_int_rtz(v.s3), convert_int_rtz(v.s4), convert_int_rtz(v.s5), convert_int_rtz(v.s6), convert_int_rtz(v.s7), convert_int_rtz(v.s8), convert_int_rtz(v.s9), convert_int_rtz(v.sA), convert_int_rtz(v.sB), convert_int_rtz(v.sC), convert_int_rtz(v.sD), convert_int_rtz(v.sE), convert_int_rtz(v.sF));
+}
+
+INLINE OVERLOADABLE int16 convert_int16_rtp(int16 v) {
+  return (int16)(convert_int_rtp(v.s0), convert_int_rtp(v.s1), convert_int_rtp(v.s2), convert_int_rtp(v.s3), convert_int_rtp(v.s4), convert_int_rtp(v.s5), convert_int_rtp(v.s6), convert_int_rtp(v.s7), convert_int_rtp(v.s8), convert_int_rtp(v.s9), convert_int_rtp(v.sA), convert_int_rtp(v.sB), convert_int_rtp(v.sC), convert_int_rtp(v.sD), convert_int_rtp(v.sE), convert_int_rtp(v.sF));
+}
+
+INLINE OVERLOADABLE int16 convert_int16_rtn(int16 v) {
+  return (int16)(convert_int_rtn(v.s0), convert_int_rtn(v.s1), convert_int_rtn(v.s2), convert_int_rtn(v.s3), convert_int_rtn(v.s4), convert_int_rtn(v.s5), convert_int_rtn(v.s6), convert_int_rtn(v.s7), convert_int_rtn(v.s8), convert_int_rtn(v.s9), convert_int_rtn(v.sA), convert_int_rtn(v.sB), convert_int_rtn(v.sC), convert_int_rtn(v.sD), convert_int_rtn(v.sE), convert_int_rtn(v.sF));
+}
+
+INLINE OVERLOADABLE uint16 convert_uint16_rte(int16 v) {
+  return (uint16)(convert_uint_rte(v.s0), convert_uint_rte(v.s1), convert_uint_rte(v.s2), convert_uint_rte(v.s3), convert_uint_rte(v.s4), convert_uint_rte(v.s5), convert_uint_rte(v.s6), convert_uint_rte(v.s7), convert_uint_rte(v.s8), convert_uint_rte(v.s9), convert_uint_rte(v.sA), convert_uint_rte(v.sB), convert_uint_rte(v.sC), convert_uint_rte(v.sD), convert_uint_rte(v.sE), convert_uint_rte(v.sF));
+}
+
+INLINE OVERLOADABLE uint16 convert_uint16_rtz(int16 v) {
+  return (uint16)(convert_uint_rtz(v.s0), convert_uint_rtz(v.s1), convert_uint_rtz(v.s2), convert_uint_rtz(v.s3), convert_uint_rtz(v.s4), convert_uint_rtz(v.s5), convert_uint_rtz(v.s6), convert_uint_rtz(v.s7), convert_uint_rtz(v.s8), convert_uint_rtz(v.s9), convert_uint_rtz(v.sA), convert_uint_rtz(v.sB), convert_uint_rtz(v.sC), convert_uint_rtz(v.sD), convert_uint_rtz(v.sE), convert_uint_rtz(v.sF));
+}
+
+INLINE OVERLOADABLE uint16 convert_uint16_rtp(int16 v) {
+  return (uint16)(convert_uint_rtp(v.s0), convert_uint_rtp(v.s1), convert_uint_rtp(v.s2), convert_uint_rtp(v.s3), convert_uint_rtp(v.s4), convert_uint_rtp(v.s5), convert_uint_rtp(v.s6), convert_uint_rtp(v.s7), convert_uint_rtp(v.s8), convert_uint_rtp(v.s9), convert_uint_rtp(v.sA), convert_uint_rtp(v.sB), convert_uint_rtp(v.sC), convert_uint_rtp(v.sD), convert_uint_rtp(v.sE), convert_uint_rtp(v.sF));
+}
+
+INLINE OVERLOADABLE uint16 convert_uint16_rtn(int16 v) {
+  return (uint16)(convert_uint_rtn(v.s0), convert_uint_rtn(v.s1), convert_uint_rtn(v.s2), convert_uint_rtn(v.s3), convert_uint_rtn(v.s4), convert_uint_rtn(v.s5), convert_uint_rtn(v.s6), convert_uint_rtn(v.s7), convert_uint_rtn(v.s8), convert_uint_rtn(v.s9), convert_uint_rtn(v.sA), convert_uint_rtn(v.sB), convert_uint_rtn(v.sC), convert_uint_rtn(v.sD), convert_uint_rtn(v.sE), convert_uint_rtn(v.sF));
+}
+
+INLINE OVERLOADABLE short16 convert_short16_rte(int16 v) {
+  return (short16)(convert_short_rte(v.s0), convert_short_rte(v.s1), convert_short_rte(v.s2), convert_short_rte(v.s3), convert_short_rte(v.s4), convert_short_rte(v.s5), convert_short_rte(v.s6), convert_short_rte(v.s7), convert_short_rte(v.s8), convert_short_rte(v.s9), convert_short_rte(v.sA), convert_short_rte(v.sB), convert_short_rte(v.sC), convert_short_rte(v.sD), convert_short_rte(v.sE), convert_short_rte(v.sF));
+}
+
+INLINE OVERLOADABLE short16 convert_short16_rtz(int16 v) {
+  return (short16)(convert_short_rtz(v.s0), convert_short_rtz(v.s1), convert_short_rtz(v.s2), convert_short_rtz(v.s3), convert_short_rtz(v.s4), convert_short_rtz(v.s5), convert_short_rtz(v.s6), convert_short_rtz(v.s7), convert_short_rtz(v.s8), convert_short_rtz(v.s9), convert_short_rtz(v.sA), convert_short_rtz(v.sB), convert_short_rtz(v.sC), convert_short_rtz(v.sD), convert_short_rtz(v.sE), convert_short_rtz(v.sF));
+}
+
+INLINE OVERLOADABLE short16 convert_short16_rtp(int16 v) {
+  return (short16)(convert_short_rtp(v.s0), convert_short_rtp(v.s1), convert_short_rtp(v.s2), convert_short_rtp(v.s3), convert_short_rtp(v.s4), convert_short_rtp(v.s5), convert_short_rtp(v.s6), convert_short_rtp(v.s7), convert_short_rtp(v.s8), convert_short_rtp(v.s9), convert_short_rtp(v.sA), convert_short_rtp(v.sB), convert_short_rtp(v.sC), convert_short_rtp(v.sD), convert_short_rtp(v.sE), convert_short_rtp(v.sF));
+}
+
+INLINE OVERLOADABLE short16 convert_short16_rtn(int16 v) {
+  return (short16)(convert_short_rtn(v.s0), convert_short_rtn(v.s1), convert_short_rtn(v.s2), convert_short_rtn(v.s3), convert_short_rtn(v.s4), convert_short_rtn(v.s5), convert_short_rtn(v.s6), convert_short_rtn(v.s7), convert_short_rtn(v.s8), convert_short_rtn(v.s9), convert_short_rtn(v.sA), convert_short_rtn(v.sB), convert_short_rtn(v.sC), convert_short_rtn(v.sD), convert_short_rtn(v.sE), convert_short_rtn(v.sF));
+}
+
+INLINE OVERLOADABLE ushort16 convert_ushort16_rte(int16 v) {
+  return (ushort16)(convert_ushort_rte(v.s0), convert_ushort_rte(v.s1), convert_ushort_rte(v.s2), convert_ushort_rte(v.s3), convert_ushort_rte(v.s4), convert_ushort_rte(v.s5), convert_ushort_rte(v.s6), convert_ushort_rte(v.s7), convert_ushort_rte(v.s8), convert_ushort_rte(v.s9), convert_ushort_rte(v.sA), convert_ushort_rte(v.sB), convert_ushort_rte(v.sC), convert_ushort_rte(v.sD), convert_ushort_rte(v.sE), convert_ushort_rte(v.sF));
+}
+
+INLINE OVERLOADABLE ushort16 convert_ushort16_rtz(int16 v) {
+  return (ushort16)(convert_ushort_rtz(v.s0), convert_ushort_rtz(v.s1), convert_ushort_rtz(v.s2), convert_ushort_rtz(v.s3), convert_ushort_rtz(v.s4), convert_ushort_rtz(v.s5), convert_ushort_rtz(v.s6), convert_ushort_rtz(v.s7), convert_ushort_rtz(v.s8), convert_ushort_rtz(v.s9), convert_ushort_rtz(v.sA), convert_ushort_rtz(v.sB), convert_ushort_rtz(v.sC), convert_ushort_rtz(v.sD), convert_ushort_rtz(v.sE), convert_ushort_rtz(v.sF));
+}
+
+INLINE OVERLOADABLE ushort16 convert_ushort16_rtp(int16 v) {
+  return (ushort16)(convert_ushort_rtp(v.s0), convert_ushort_rtp(v.s1), convert_ushort_rtp(v.s2), convert_ushort_rtp(v.s3), convert_ushort_rtp(v.s4), convert_ushort_rtp(v.s5), convert_ushort_rtp(v.s6), convert_ushort_rtp(v.s7), convert_ushort_rtp(v.s8), convert_ushort_rtp(v.s9), convert_ushort_rtp(v.sA), convert_ushort_rtp(v.sB), convert_ushort_rtp(v.sC), convert_ushort_rtp(v.sD), convert_ushort_rtp(v.sE), convert_ushort_rtp(v.sF));
+}
+
+INLINE OVERLOADABLE ushort16 convert_ushort16_rtn(int16 v) {
+  return (ushort16)(convert_ushort_rtn(v.s0), convert_ushort_rtn(v.s1), convert_ushort_rtn(v.s2), convert_ushort_rtn(v.s3), convert_ushort_rtn(v.s4), convert_ushort_rtn(v.s5), convert_ushort_rtn(v.s6), convert_ushort_rtn(v.s7), convert_ushort_rtn(v.s8), convert_ushort_rtn(v.s9), convert_ushort_rtn(v.sA), convert_ushort_rtn(v.sB), convert_ushort_rtn(v.sC), convert_ushort_rtn(v.sD), convert_ushort_rtn(v.sE), convert_ushort_rtn(v.sF));
+}
+
+INLINE OVERLOADABLE char16 convert_char16_rte(int16 v) {
+  return (char16)(convert_char_rte(v.s0), convert_char_rte(v.s1), convert_char_rte(v.s2), convert_char_rte(v.s3), convert_char_rte(v.s4), convert_char_rte(v.s5), convert_char_rte(v.s6), convert_char_rte(v.s7), convert_char_rte(v.s8), convert_char_rte(v.s9), convert_char_rte(v.sA), convert_char_rte(v.sB), convert_char_rte(v.sC), convert_char_rte(v.sD), convert_char_rte(v.sE), convert_char_rte(v.sF));
+}
+
+INLINE OVERLOADABLE char16 convert_char16_rtz(int16 v) {
+  return (char16)(convert_char_rtz(v.s0), convert_char_rtz(v.s1), convert_char_rtz(v.s2), convert_char_rtz(v.s3), convert_char_rtz(v.s4), convert_char_rtz(v.s5), convert_char_rtz(v.s6), convert_char_rtz(v.s7), convert_char_rtz(v.s8), convert_char_rtz(v.s9), convert_char_rtz(v.sA), convert_char_rtz(v.sB), convert_char_rtz(v.sC), convert_char_rtz(v.sD), convert_char_rtz(v.sE), convert_char_rtz(v.sF));
+}
+
+INLINE OVERLOADABLE char16 convert_char16_rtp(int16 v) {
+  return (char16)(convert_char_rtp(v.s0), convert_char_rtp(v.s1), convert_char_rtp(v.s2), convert_char_rtp(v.s3), convert_char_rtp(v.s4), convert_char_rtp(v.s5), convert_char_rtp(v.s6), convert_char_rtp(v.s7), convert_char_rtp(v.s8), convert_char_rtp(v.s9), convert_char_rtp(v.sA), convert_char_rtp(v.sB), convert_char_rtp(v.sC), convert_char_rtp(v.sD), convert_char_rtp(v.sE), convert_char_rtp(v.sF));
+}
+
+INLINE OVERLOADABLE char16 convert_char16_rtn(int16 v) {
+  return (char16)(convert_char_rtn(v.s0), convert_char_rtn(v.s1), convert_char_rtn(v.s2), convert_char_rtn(v.s3), convert_char_rtn(v.s4), convert_char_rtn(v.s5), convert_char_rtn(v.s6), convert_char_rtn(v.s7), convert_char_rtn(v.s8), convert_char_rtn(v.s9), convert_char_rtn(v.sA), convert_char_rtn(v.sB), convert_char_rtn(v.sC), convert_char_rtn(v.sD), convert_char_rtn(v.sE), convert_char_rtn(v.sF));
+}
+
+INLINE OVERLOADABLE uchar16 convert_uchar16_rte(int16 v) {
+  return (uchar16)(convert_uchar_rte(v.s0), convert_uchar_rte(v.s1), convert_uchar_rte(v.s2), convert_uchar_rte(v.s3), convert_uchar_rte(v.s4), convert_uchar_rte(v.s5), convert_uchar_rte(v.s6), convert_uchar_rte(v.s7), convert_uchar_rte(v.s8), convert_uchar_rte(v.s9), convert_uchar_rte(v.sA), convert_uchar_rte(v.sB), convert_uchar_rte(v.sC), convert_uchar_rte(v.sD), convert_uchar_rte(v.sE), convert_uchar_rte(v.sF));
+}
+
+INLINE OVERLOADABLE uchar16 convert_uchar16_rtz(int16 v) {
+  return (uchar16)(convert_uchar_rtz(v.s0), convert_uchar_rtz(v.s1), convert_uchar_rtz(v.s2), convert_uchar_rtz(v.s3), convert_uchar_rtz(v.s4), convert_uchar_rtz(v.s5), convert_uchar_rtz(v.s6), convert_uchar_rtz(v.s7), convert_uchar_rtz(v.s8), convert_uchar_rtz(v.s9), convert_uchar_rtz(v.sA), convert_uchar_rtz(v.sB), convert_uchar_rtz(v.sC), convert_uchar_rtz(v.sD), convert_uchar_rtz(v.sE), convert_uchar_rtz(v.sF));
+}
+
+INLINE OVERLOADABLE uchar16 convert_uchar16_rtp(int16 v) {
+  return (uchar16)(convert_uchar_rtp(v.s0), convert_uchar_rtp(v.s1), convert_uchar_rtp(v.s2), convert_uchar_rtp(v.s3), convert_uchar_rtp(v.s4), convert_uchar_rtp(v.s5), convert_uchar_rtp(v.s6), convert_uchar_rtp(v.s7), convert_uchar_rtp(v.s8), convert_uchar_rtp(v.s9), convert_uchar_rtp(v.sA), convert_uchar_rtp(v.sB), convert_uchar_rtp(v.sC), convert_uchar_rtp(v.sD), convert_uchar_rtp(v.sE), convert_uchar_rtp(v.sF));
+}
+
+INLINE OVERLOADABLE uchar16 convert_uchar16_rtn(int16 v) {
+  return (uchar16)(convert_uchar_rtn(v.s0), convert_uchar_rtn(v.s1), convert_uchar_rtn(v.s2), convert_uchar_rtn(v.s3), convert_uchar_rtn(v.s4), convert_uchar_rtn(v.s5), convert_uchar_rtn(v.s6), convert_uchar_rtn(v.s7), convert_uchar_rtn(v.s8), convert_uchar_rtn(v.s9), convert_uchar_rtn(v.sA), convert_uchar_rtn(v.sB), convert_uchar_rtn(v.sC), convert_uchar_rtn(v.sD), convert_uchar_rtn(v.sE), convert_uchar_rtn(v.sF));
+}
+
+INLINE OVERLOADABLE float16 convert_float16_rte(int16 v) {
+  return (float16)(convert_float_rte(v.s0), convert_float_rte(v.s1), convert_float_rte(v.s2), convert_float_rte(v.s3), convert_float_rte(v.s4), convert_float_rte(v.s5), convert_float_rte(v.s6), convert_float_rte(v.s7), convert_float_rte(v.s8), convert_float_rte(v.s9), convert_float_rte(v.sA), convert_float_rte(v.sB), convert_float_rte(v.sC), convert_float_rte(v.sD), convert_float_rte(v.sE), convert_float_rte(v.sF));
+}
+
+INLINE OVERLOADABLE float16 convert_float16_rtz(int16 v) {
+  return (float16)(convert_float_rtz(v.s0), convert_float_rtz(v.s1), convert_float_rtz(v.s2), convert_float_rtz(v.s3), convert_float_rtz(v.s4), convert_float_rtz(v.s5), convert_float_rtz(v.s6), convert_float_rtz(v.s7), convert_float_rtz(v.s8), convert_float_rtz(v.s9), convert_float_rtz(v.sA), convert_float_rtz(v.sB), convert_float_rtz(v.sC), convert_float_rtz(v.sD), convert_float_rtz(v.sE), convert_float_rtz(v.sF));
+}
+
+INLINE OVERLOADABLE float16 convert_float16_rtp(int16 v) {
+  return (float16)(convert_float_rtp(v.s0), convert_float_rtp(v.s1), convert_float_rtp(v.s2), convert_float_rtp(v.s3), convert_float_rtp(v.s4), convert_float_rtp(v.s5), convert_float_rtp(v.s6), convert_float_rtp(v.s7), convert_float_rtp(v.s8), convert_float_rtp(v.s9), convert_float_rtp(v.sA), convert_float_rtp(v.sB), convert_float_rtp(v.sC), convert_float_rtp(v.sD), convert_float_rtp(v.sE), convert_float_rtp(v.sF));
+}
+
+INLINE OVERLOADABLE float16 convert_float16_rtn(int16 v) {
+  return (float16)(convert_float_rtn(v.s0), convert_float_rtn(v.s1), convert_float_rtn(v.s2), convert_float_rtn(v.s3), convert_float_rtn(v.s4), convert_float_rtn(v.s5), convert_float_rtn(v.s6), convert_float_rtn(v.s7), convert_float_rtn(v.s8), convert_float_rtn(v.s9), convert_float_rtn(v.sA), convert_float_rtn(v.sB), convert_float_rtn(v.sC), convert_float_rtn(v.sD), convert_float_rtn(v.sE), convert_float_rtn(v.sF));
+}
+
+INLINE OVERLOADABLE long16 convert_long16_rte(uint16 v) {
+  return (long16)(convert_long_rte(v.s0), convert_long_rte(v.s1), convert_long_rte(v.s2), convert_long_rte(v.s3), convert_long_rte(v.s4), convert_long_rte(v.s5), convert_long_rte(v.s6), convert_long_rte(v.s7), convert_long_rte(v.s8), convert_long_rte(v.s9), convert_long_rte(v.sA), convert_long_rte(v.sB), convert_long_rte(v.sC), convert_long_rte(v.sD), convert_long_rte(v.sE), convert_long_rte(v.sF));
+}
+
+INLINE OVERLOADABLE long16 convert_long16_rtz(uint16 v) {
+  return (long16)(convert_long_rtz(v.s0), convert_long_rtz(v.s1), convert_long_rtz(v.s2), convert_long_rtz(v.s3), convert_long_rtz(v.s4), convert_long_rtz(v.s5), convert_long_rtz(v.s6), convert_long_rtz(v.s7), convert_long_rtz(v.s8), convert_long_rtz(v.s9), convert_long_rtz(v.sA), convert_long_rtz(v.sB), convert_long_rtz(v.sC), convert_long_rtz(v.sD), convert_long_rtz(v.sE), convert_long_rtz(v.sF));
+}
+
+INLINE OVERLOADABLE long16 convert_long16_rtp(uint16 v) {
+  return (long16)(convert_long_rtp(v.s0), convert_long_rtp(v.s1), convert_long_rtp(v.s2), convert_long_rtp(v.s3), convert_long_rtp(v.s4), convert_long_rtp(v.s5), convert_long_rtp(v.s6), convert_long_rtp(v.s7), convert_long_rtp(v.s8), convert_long_rtp(v.s9), convert_long_rtp(v.sA), convert_long_rtp(v.sB), convert_long_rtp(v.sC), convert_long_rtp(v.sD), convert_long_rtp(v.sE), convert_long_rtp(v.sF));
+}
+
+INLINE OVERLOADABLE long16 convert_long16_rtn(uint16 v) {
+  return (long16)(convert_long_rtn(v.s0), convert_long_rtn(v.s1), convert_long_rtn(v.s2), convert_long_rtn(v.s3), convert_long_rtn(v.s4), convert_long_rtn(v.s5), convert_long_rtn(v.s6), convert_long_rtn(v.s7), convert_long_rtn(v.s8), convert_long_rtn(v.s9), convert_long_rtn(v.sA), convert_long_rtn(v.sB), convert_long_rtn(v.sC), convert_long_rtn(v.sD), convert_long_rtn(v.sE), convert_long_rtn(v.sF));
+}
+
+INLINE OVERLOADABLE ulong16 convert_ulong16_rte(uint16 v) {
+  return (ulong16)(convert_ulong_rte(v.s0), convert_ulong_rte(v.s1), convert_ulong_rte(v.s2), convert_ulong_rte(v.s3), convert_ulong_rte(v.s4), convert_ulong_rte(v.s5), convert_ulong_rte(v.s6), convert_ulong_rte(v.s7), convert_ulong_rte(v.s8), convert_ulong_rte(v.s9), convert_ulong_rte(v.sA), convert_ulong_rte(v.sB), convert_ulong_rte(v.sC), convert_ulong_rte(v.sD), convert_ulong_rte(v.sE), convert_ulong_rte(v.sF));
+}
+
+INLINE OVERLOADABLE ulong16 convert_ulong16_rtz(uint16 v) {
+  return (ulong16)(convert_ulong_rtz(v.s0), convert_ulong_rtz(v.s1), convert_ulong_rtz(v.s2), convert_ulong_rtz(v.s3), convert_ulong_rtz(v.s4), convert_ulong_rtz(v.s5), convert_ulong_rtz(v.s6), convert_ulong_rtz(v.s7), convert_ulong_rtz(v.s8), convert_ulong_rtz(v.s9), convert_ulong_rtz(v.sA), convert_ulong_rtz(v.sB), convert_ulong_rtz(v.sC), convert_ulong_rtz(v.sD), convert_ulong_rtz(v.sE), convert_ulong_rtz(v.sF));
+}
+
+INLINE OVERLOADABLE ulong16 convert_ulong16_rtp(uint16 v) {
+  return (ulong16)(convert_ulong_rtp(v.s0), convert_ulong_rtp(v.s1), convert_ulong_rtp(v.s2), convert_ulong_rtp(v.s3), convert_ulong_rtp(v.s4), convert_ulong_rtp(v.s5), convert_ulong_rtp(v.s6), convert_ulong_rtp(v.s7), convert_ulong_rtp(v.s8), convert_ulong_rtp(v.s9), convert_ulong_rtp(v.sA), convert_ulong_rtp(v.sB), convert_ulong_rtp(v.sC), convert_ulong_rtp(v.sD), convert_ulong_rtp(v.sE), convert_ulong_rtp(v.sF));
+}
+
+INLINE OVERLOADABLE ulong16 convert_ulong16_rtn(uint16 v) {
+  return (ulong16)(convert_ulong_rtn(v.s0), convert_ulong_rtn(v.s1), convert_ulong_rtn(v.s2), convert_ulong_rtn(v.s3), convert_ulong_rtn(v.s4), convert_ulong_rtn(v.s5), convert_ulong_rtn(v.s6), convert_ulong_rtn(v.s7), convert_ulong_rtn(v.s8), convert_ulong_rtn(v.s9), convert_ulong_rtn(v.sA), convert_ulong_rtn(v.sB), convert_ulong_rtn(v.sC), convert_ulong_rtn(v.sD), convert_ulong_rtn(v.sE), convert_ulong_rtn(v.sF));
+}
+
+INLINE OVERLOADABLE int16 convert_int16_rte(uint16 v) {
+  return (int16)(convert_int_rte(v.s0), convert_int_rte(v.s1), convert_int_rte(v.s2), convert_int_rte(v.s3), convert_int_rte(v.s4), convert_int_rte(v.s5), convert_int_rte(v.s6), convert_int_rte(v.s7), convert_int_rte(v.s8), convert_int_rte(v.s9), convert_int_rte(v.sA), convert_int_rte(v.sB), convert_int_rte(v.sC), convert_int_rte(v.sD), convert_int_rte(v.sE), convert_int_rte(v.sF));
+}
+
+INLINE OVERLOADABLE int16 convert_int16_rtz(uint16 v) {
+  return (int16)(convert_int_rtz(v.s0), convert_int_rtz(v.s1), convert_int_rtz(v.s2), convert_int_rtz(v.s3), convert_int_rtz(v.s4), convert_int_rtz(v.s5), convert_int_rtz(v.s6), convert_int_rtz(v.s7), convert_int_rtz(v.s8), convert_int_rtz(v.s9), convert_int_rtz(v.sA), convert_int_rtz(v.sB), convert_int_rtz(v.sC), convert_int_rtz(v.sD), convert_int_rtz(v.sE), convert_int_rtz(v.sF));
+}
+
+INLINE OVERLOADABLE int16 convert_int16_rtp(uint16 v) {
+  return (int16)(convert_int_rtp(v.s0), convert_int_rtp(v.s1), convert_int_rtp(v.s2), convert_int_rtp(v.s3), convert_int_rtp(v.s4), convert_int_rtp(v.s5), convert_int_rtp(v.s6), convert_int_rtp(v.s7), convert_int_rtp(v.s8), convert_int_rtp(v.s9), convert_int_rtp(v.sA), convert_int_rtp(v.sB), convert_int_rtp(v.sC), convert_int_rtp(v.sD), convert_int_rtp(v.sE), convert_int_rtp(v.sF));
+}
+
+INLINE OVERLOADABLE int16 convert_int16_rtn(uint16 v) {
+  return (int16)(convert_int_rtn(v.s0), convert_int_rtn(v.s1), convert_int_rtn(v.s2), convert_int_rtn(v.s3), convert_int_rtn(v.s4), convert_int_rtn(v.s5), convert_int_rtn(v.s6), convert_int_rtn(v.s7), convert_int_rtn(v.s8), convert_int_rtn(v.s9), convert_int_rtn(v.sA), convert_int_rtn(v.sB), convert_int_rtn(v.sC), convert_int_rtn(v.sD), convert_int_rtn(v.sE), convert_int_rtn(v.sF));
+}
+
+INLINE OVERLOADABLE uint16 convert_uint16_rte(uint16 v) {
+  return (uint16)(convert_uint_rte(v.s0), convert_uint_rte(v.s1), convert_uint_rte(v.s2), convert_uint_rte(v.s3), convert_uint_rte(v.s4), convert_uint_rte(v.s5), convert_uint_rte(v.s6), convert_uint_rte(v.s7), convert_uint_rte(v.s8), convert_uint_rte(v.s9), convert_uint_rte(v.sA), convert_uint_rte(v.sB), convert_uint_rte(v.sC), convert_uint_rte(v.sD), convert_uint_rte(v.sE), convert_uint_rte(v.sF));
+}
+
+INLINE OVERLOADABLE uint16 convert_uint16_rtz(uint16 v) {
+  return (uint16)(convert_uint_rtz(v.s0), convert_uint_rtz(v.s1), convert_uint_rtz(v.s2), convert_uint_rtz(v.s3), convert_uint_rtz(v.s4), convert_uint_rtz(v.s5), convert_uint_rtz(v.s6), convert_uint_rtz(v.s7), convert_uint_rtz(v.s8), convert_uint_rtz(v.s9), convert_uint_rtz(v.sA), convert_uint_rtz(v.sB), convert_uint_rtz(v.sC), convert_uint_rtz(v.sD), convert_uint_rtz(v.sE), convert_uint_rtz(v.sF));
+}
+
+INLINE OVERLOADABLE uint16 convert_uint16_rtp(uint16 v) {
+  return (uint16)(convert_uint_rtp(v.s0), convert_uint_rtp(v.s1), convert_uint_rtp(v.s2), convert_uint_rtp(v.s3), convert_uint_rtp(v.s4), convert_uint_rtp(v.s5), convert_uint_rtp(v.s6), convert_uint_rtp(v.s7), convert_uint_rtp(v.s8), convert_uint_rtp(v.s9), convert_uint_rtp(v.sA), convert_uint_rtp(v.sB), convert_uint_rtp(v.sC), convert_uint_rtp(v.sD), convert_uint_rtp(v.sE), convert_uint_rtp(v.sF));
+}
+
+INLINE OVERLOADABLE uint16 convert_uint16_rtn(uint16 v) {
+  return (uint16)(convert_uint_rtn(v.s0), convert_uint_rtn(v.s1), convert_uint_rtn(v.s2), convert_uint_rtn(v.s3), convert_uint_rtn(v.s4), convert_uint_rtn(v.s5), convert_uint_rtn(v.s6), convert_uint_rtn(v.s7), convert_uint_rtn(v.s8), convert_uint_rtn(v.s9), convert_uint_rtn(v.sA), convert_uint_rtn(v.sB), convert_uint_rtn(v.sC), convert_uint_rtn(v.sD), convert_uint_rtn(v.sE), convert_uint_rtn(v.sF));
+}
+
+INLINE OVERLOADABLE short16 convert_short16_rte(uint16 v) {
+  return (short16)(convert_short_rte(v.s0), convert_short_rte(v.s1), convert_short_rte(v.s2), convert_short_rte(v.s3), convert_short_rte(v.s4), convert_short_rte(v.s5), convert_short_rte(v.s6), convert_short_rte(v.s7), convert_short_rte(v.s8), convert_short_rte(v.s9), convert_short_rte(v.sA), convert_short_rte(v.sB), convert_short_rte(v.sC), convert_short_rte(v.sD), convert_short_rte(v.sE), convert_short_rte(v.sF));
+}
+
+INLINE OVERLOADABLE short16 convert_short16_rtz(uint16 v) {
+  return (short16)(convert_short_rtz(v.s0), convert_short_rtz(v.s1), convert_short_rtz(v.s2), convert_short_rtz(v.s3), convert_short_rtz(v.s4), convert_short_rtz(v.s5), convert_short_rtz(v.s6), convert_short_rtz(v.s7), convert_short_rtz(v.s8), convert_short_rtz(v.s9), convert_short_rtz(v.sA), convert_short_rtz(v.sB), convert_short_rtz(v.sC), convert_short_rtz(v.sD), convert_short_rtz(v.sE), convert_short_rtz(v.sF));
+}
+
+INLINE OVERLOADABLE short16 convert_short16_rtp(uint16 v) {
+  return (short16)(convert_short_rtp(v.s0), convert_short_rtp(v.s1), convert_short_rtp(v.s2), convert_short_rtp(v.s3), convert_short_rtp(v.s4), convert_short_rtp(v.s5), convert_short_rtp(v.s6), convert_short_rtp(v.s7), convert_short_rtp(v.s8), convert_short_rtp(v.s9), convert_short_rtp(v.sA), convert_short_rtp(v.sB), convert_short_rtp(v.sC), convert_short_rtp(v.sD), convert_short_rtp(v.sE), convert_short_rtp(v.sF));
+}
+
+INLINE OVERLOADABLE short16 convert_short16_rtn(uint16 v) {
+  return (short16)(convert_short_rtn(v.s0), convert_short_rtn(v.s1), convert_short_rtn(v.s2), convert_short_rtn(v.s3), convert_short_rtn(v.s4), convert_short_rtn(v.s5), convert_short_rtn(v.s6), convert_short_rtn(v.s7), convert_short_rtn(v.s8), convert_short_rtn(v.s9), convert_short_rtn(v.sA), convert_short_rtn(v.sB), convert_short_rtn(v.sC), convert_short_rtn(v.sD), convert_short_rtn(v.sE), convert_short_rtn(v.sF));
+}
+
+INLINE OVERLOADABLE ushort16 convert_ushort16_rte(uint16 v) {
+  return (ushort16)(convert_ushort_rte(v.s0), convert_ushort_rte(v.s1), convert_ushort_rte(v.s2), convert_ushort_rte(v.s3), convert_ushort_rte(v.s4), convert_ushort_rte(v.s5), convert_ushort_rte(v.s6), convert_ushort_rte(v.s7), convert_ushort_rte(v.s8), convert_ushort_rte(v.s9), convert_ushort_rte(v.sA), convert_ushort_rte(v.sB), convert_ushort_rte(v.sC), convert_ushort_rte(v.sD), convert_ushort_rte(v.sE), convert_ushort_rte(v.sF));
+}
+
+INLINE OVERLOADABLE ushort16 convert_ushort16_rtz(uint16 v) {
+  return (ushort16)(convert_ushort_rtz(v.s0), convert_ushort_rtz(v.s1), convert_ushort_rtz(v.s2), convert_ushort_rtz(v.s3), convert_ushort_rtz(v.s4), convert_ushort_rtz(v.s5), convert_ushort_rtz(v.s6), convert_ushort_rtz(v.s7), convert_ushort_rtz(v.s8), convert_ushort_rtz(v.s9), convert_ushort_rtz(v.sA), convert_ushort_rtz(v.sB), convert_ushort_rtz(v.sC), convert_ushort_rtz(v.sD), convert_ushort_rtz(v.sE), convert_ushort_rtz(v.sF));
+}
+
+INLINE OVERLOADABLE ushort16 convert_ushort16_rtp(uint16 v) {
+  return (ushort16)(convert_ushort_rtp(v.s0), convert_ushort_rtp(v.s1), convert_ushort_rtp(v.s2), convert_ushort_rtp(v.s3), convert_ushort_rtp(v.s4), convert_ushort_rtp(v.s5), convert_ushort_rtp(v.s6), convert_ushort_rtp(v.s7), convert_ushort_rtp(v.s8), convert_ushort_rtp(v.s9), convert_ushort_rtp(v.sA), convert_ushort_rtp(v.sB), convert_ushort_rtp(v.sC), convert_ushort_rtp(v.sD), convert_ushort_rtp(v.sE), convert_ushort_rtp(v.sF));
+}
+
+INLINE OVERLOADABLE ushort16 convert_ushort16_rtn(uint16 v) {
+  return (ushort16)(convert_ushort_rtn(v.s0), convert_ushort_rtn(v.s1), convert_ushort_rtn(v.s2), convert_ushort_rtn(v.s3), convert_ushort_rtn(v.s4), convert_ushort_rtn(v.s5), convert_ushort_rtn(v.s6), convert_ushort_rtn(v.s7), convert_ushort_rtn(v.s8), convert_ushort_rtn(v.s9), convert_ushort_rtn(v.sA), convert_ushort_rtn(v.sB), convert_ushort_rtn(v.sC), convert_ushort_rtn(v.sD), convert_ushort_rtn(v.sE), convert_ushort_rtn(v.sF));
+}
+
+INLINE OVERLOADABLE char16 convert_char16_rte(uint16 v) {
+  return (char16)(convert_char_rte(v.s0), convert_char_rte(v.s1), convert_char_rte(v.s2), convert_char_rte(v.s3), convert_char_rte(v.s4), convert_char_rte(v.s5), convert_char_rte(v.s6), convert_char_rte(v.s7), convert_char_rte(v.s8), convert_char_rte(v.s9), convert_char_rte(v.sA), convert_char_rte(v.sB), convert_char_rte(v.sC), convert_char_rte(v.sD), convert_char_rte(v.sE), convert_char_rte(v.sF));
+}
+
+INLINE OVERLOADABLE char16 convert_char16_rtz(uint16 v) {
+  return (char16)(convert_char_rtz(v.s0), convert_char_rtz(v.s1), convert_char_rtz(v.s2), convert_char_rtz(v.s3), convert_char_rtz(v.s4), convert_char_rtz(v.s5), convert_char_rtz(v.s6), convert_char_rtz(v.s7), convert_char_rtz(v.s8), convert_char_rtz(v.s9), convert_char_rtz(v.sA), convert_char_rtz(v.sB), convert_char_rtz(v.sC), convert_char_rtz(v.sD), convert_char_rtz(v.sE), convert_char_rtz(v.sF));
+}
+
+INLINE OVERLOADABLE char16 convert_char16_rtp(uint16 v) {
+  return (char16)(convert_char_rtp(v.s0), convert_char_rtp(v.s1), convert_char_rtp(v.s2), convert_char_rtp(v.s3), convert_char_rtp(v.s4), convert_char_rtp(v.s5), convert_char_rtp(v.s6), convert_char_rtp(v.s7), convert_char_rtp(v.s8), convert_char_rtp(v.s9), convert_char_rtp(v.sA), convert_char_rtp(v.sB), convert_char_rtp(v.sC), convert_char_rtp(v.sD), convert_char_rtp(v.sE), convert_char_rtp(v.sF));
+}
+
+INLINE OVERLOADABLE char16 convert_char16_rtn(uint16 v) {
+  return (char16)(convert_char_rtn(v.s0), convert_char_rtn(v.s1), convert_char_rtn(v.s2), convert_char_rtn(v.s3), convert_char_rtn(v.s4), convert_char_rtn(v.s5), convert_char_rtn(v.s6), convert_char_rtn(v.s7), convert_char_rtn(v.s8), convert_char_rtn(v.s9), convert_char_rtn(v.sA), convert_char_rtn(v.sB), convert_char_rtn(v.sC), convert_char_rtn(v.sD), convert_char_rtn(v.sE), convert_char_rtn(v.sF));
+}
+
+INLINE OVERLOADABLE uchar16 convert_uchar16_rte(uint16 v) {
+  return (uchar16)(convert_uchar_rte(v.s0), convert_uchar_rte(v.s1), convert_uchar_rte(v.s2), convert_uchar_rte(v.s3), convert_uchar_rte(v.s4), convert_uchar_rte(v.s5), convert_uchar_rte(v.s6), convert_uchar_rte(v.s7), convert_uchar_rte(v.s8), convert_uchar_rte(v.s9), convert_uchar_rte(v.sA), convert_uchar_rte(v.sB), convert_uchar_rte(v.sC), convert_uchar_rte(v.sD), convert_uchar_rte(v.sE), convert_uchar_rte(v.sF));
+}
+
+INLINE OVERLOADABLE uchar16 convert_uchar16_rtz(uint16 v) {
+  return (uchar16)(convert_uchar_rtz(v.s0), convert_uchar_rtz(v.s1), convert_uchar_rtz(v.s2), convert_uchar_rtz(v.s3), convert_uchar_rtz(v.s4), convert_uchar_rtz(v.s5), convert_uchar_rtz(v.s6), convert_uchar_rtz(v.s7), convert_uchar_rtz(v.s8), convert_uchar_rtz(v.s9), convert_uchar_rtz(v.sA), convert_uchar_rtz(v.sB), convert_uchar_rtz(v.sC), convert_uchar_rtz(v.sD), convert_uchar_rtz(v.sE), convert_uchar_rtz(v.sF));
+}
+
+INLINE OVERLOADABLE uchar16 convert_uchar16_rtp(uint16 v) {
+  return (uchar16)(convert_uchar_rtp(v.s0), convert_uchar_rtp(v.s1), convert_uchar_rtp(v.s2), convert_uchar_rtp(v.s3), convert_uchar_rtp(v.s4), convert_uchar_rtp(v.s5), convert_uchar_rtp(v.s6), convert_uchar_rtp(v.s7), convert_uchar_rtp(v.s8), convert_uchar_rtp(v.s9), convert_uchar_rtp(v.sA), convert_uchar_rtp(v.sB), convert_uchar_rtp(v.sC), convert_uchar_rtp(v.sD), convert_uchar_rtp(v.sE), convert_uchar_rtp(v.sF));
+}
+
+INLINE OVERLOADABLE uchar16 convert_uchar16_rtn(uint16 v) {
+  return (uchar16)(convert_uchar_rtn(v.s0), convert_uchar_rtn(v.s1), convert_uchar_rtn(v.s2), convert_uchar_rtn(v.s3), convert_uchar_rtn(v.s4), convert_uchar_rtn(v.s5), convert_uchar_rtn(v.s6), convert_uchar_rtn(v.s7), convert_uchar_rtn(v.s8), convert_uchar_rtn(v.s9), convert_uchar_rtn(v.sA), convert_uchar_rtn(v.sB), convert_uchar_rtn(v.sC), convert_uchar_rtn(v.sD), convert_uchar_rtn(v.sE), convert_uchar_rtn(v.sF));
+}
+
+INLINE OVERLOADABLE float16 convert_float16_rte(uint16 v) {
+  return (float16)(convert_float_rte(v.s0), convert_float_rte(v.s1), convert_float_rte(v.s2), convert_float_rte(v.s3), convert_float_rte(v.s4), convert_float_rte(v.s5), convert_float_rte(v.s6), convert_float_rte(v.s7), convert_float_rte(v.s8), convert_float_rte(v.s9), convert_float_rte(v.sA), convert_float_rte(v.sB), convert_float_rte(v.sC), convert_float_rte(v.sD), convert_float_rte(v.sE), convert_float_rte(v.sF));
+}
+
+INLINE OVERLOADABLE float16 convert_float16_rtz(uint16 v) {
+  return (float16)(convert_float_rtz(v.s0), convert_float_rtz(v.s1), convert_float_rtz(v.s2), convert_float_rtz(v.s3), convert_float_rtz(v.s4), convert_float_rtz(v.s5), convert_float_rtz(v.s6), convert_float_rtz(v.s7), convert_float_rtz(v.s8), convert_float_rtz(v.s9), convert_float_rtz(v.sA), convert_float_rtz(v.sB), convert_float_rtz(v.sC), convert_float_rtz(v.sD), convert_float_rtz(v.sE), convert_float_rtz(v.sF));
+}
+
+INLINE OVERLOADABLE float16 convert_float16_rtp(uint16 v) {
+  return (float16)(convert_float_rtp(v.s0), convert_float_rtp(v.s1), convert_float_rtp(v.s2), convert_float_rtp(v.s3), convert_float_rtp(v.s4), convert_float_rtp(v.s5), convert_float_rtp(v.s6), convert_float_rtp(v.s7), convert_float_rtp(v.s8), convert_float_rtp(v.s9), convert_float_rtp(v.sA), convert_float_rtp(v.sB), convert_float_rtp(v.sC), convert_float_rtp(v.sD), convert_float_rtp(v.sE), convert_float_rtp(v.sF));
+}
+
+INLINE OVERLOADABLE float16 convert_float16_rtn(uint16 v) {
+  return (float16)(convert_float_rtn(v.s0), convert_float_rtn(v.s1), convert_float_rtn(v.s2), convert_float_rtn(v.s3), convert_float_rtn(v.s4), convert_float_rtn(v.s5), convert_float_rtn(v.s6), convert_float_rtn(v.s7), convert_float_rtn(v.s8), convert_float_rtn(v.s9), convert_float_rtn(v.sA), convert_float_rtn(v.sB), convert_float_rtn(v.sC), convert_float_rtn(v.sD), convert_float_rtn(v.sE), convert_float_rtn(v.sF));
+}
+
+INLINE OVERLOADABLE long16 convert_long16_rte(short16 v) {
+  return (long16)(convert_long_rte(v.s0), convert_long_rte(v.s1), convert_long_rte(v.s2), convert_long_rte(v.s3), convert_long_rte(v.s4), convert_long_rte(v.s5), convert_long_rte(v.s6), convert_long_rte(v.s7), convert_long_rte(v.s8), convert_long_rte(v.s9), convert_long_rte(v.sA), convert_long_rte(v.sB), convert_long_rte(v.sC), convert_long_rte(v.sD), convert_long_rte(v.sE), convert_long_rte(v.sF));
+}
+
+INLINE OVERLOADABLE long16 convert_long16_rtz(short16 v) {
+  return (long16)(convert_long_rtz(v.s0), convert_long_rtz(v.s1), convert_long_rtz(v.s2), convert_long_rtz(v.s3), convert_long_rtz(v.s4), convert_long_rtz(v.s5), convert_long_rtz(v.s6), convert_long_rtz(v.s7), convert_long_rtz(v.s8), convert_long_rtz(v.s9), convert_long_rtz(v.sA), convert_long_rtz(v.sB), convert_long_rtz(v.sC), convert_long_rtz(v.sD), convert_long_rtz(v.sE), convert_long_rtz(v.sF));
+}
+
+INLINE OVERLOADABLE long16 convert_long16_rtp(short16 v) {
+  return (long16)(convert_long_rtp(v.s0), convert_long_rtp(v.s1), convert_long_rtp(v.s2), convert_long_rtp(v.s3), convert_long_rtp(v.s4), convert_long_rtp(v.s5), convert_long_rtp(v.s6), convert_long_rtp(v.s7), convert_long_rtp(v.s8), convert_long_rtp(v.s9), convert_long_rtp(v.sA), convert_long_rtp(v.sB), convert_long_rtp(v.sC), convert_long_rtp(v.sD), convert_long_rtp(v.sE), convert_long_rtp(v.sF));
+}
+
+INLINE OVERLOADABLE long16 convert_long16_rtn(short16 v) {
+  return (long16)(convert_long_rtn(v.s0), convert_long_rtn(v.s1), convert_long_rtn(v.s2), convert_long_rtn(v.s3), convert_long_rtn(v.s4), convert_long_rtn(v.s5), convert_long_rtn(v.s6), convert_long_rtn(v.s7), convert_long_rtn(v.s8), convert_long_rtn(v.s9), convert_long_rtn(v.sA), convert_long_rtn(v.sB), convert_long_rtn(v.sC), convert_long_rtn(v.sD), convert_long_rtn(v.sE), convert_long_rtn(v.sF));
+}
+
+INLINE OVERLOADABLE ulong16 convert_ulong16_rte(short16 v) {
+  return (ulong16)(convert_ulong_rte(v.s0), convert_ulong_rte(v.s1), convert_ulong_rte(v.s2), convert_ulong_rte(v.s3), convert_ulong_rte(v.s4), convert_ulong_rte(v.s5), convert_ulong_rte(v.s6), convert_ulong_rte(v.s7), convert_ulong_rte(v.s8), convert_ulong_rte(v.s9), convert_ulong_rte(v.sA), convert_ulong_rte(v.sB), convert_ulong_rte(v.sC), convert_ulong_rte(v.sD), convert_ulong_rte(v.sE), convert_ulong_rte(v.sF));
+}
+
+INLINE OVERLOADABLE ulong16 convert_ulong16_rtz(short16 v) {
+  return (ulong16)(convert_ulong_rtz(v.s0), convert_ulong_rtz(v.s1), convert_ulong_rtz(v.s2), convert_ulong_rtz(v.s3), convert_ulong_rtz(v.s4), convert_ulong_rtz(v.s5), convert_ulong_rtz(v.s6), convert_ulong_rtz(v.s7), convert_ulong_rtz(v.s8), convert_ulong_rtz(v.s9), convert_ulong_rtz(v.sA), convert_ulong_rtz(v.sB), convert_ulong_rtz(v.sC), convert_ulong_rtz(v.sD), convert_ulong_rtz(v.sE), convert_ulong_rtz(v.sF));
+}
+
+INLINE OVERLOADABLE ulong16 convert_ulong16_rtp(short16 v) {
+  return (ulong16)(convert_ulong_rtp(v.s0), convert_ulong_rtp(v.s1), convert_ulong_rtp(v.s2), convert_ulong_rtp(v.s3), convert_ulong_rtp(v.s4), convert_ulong_rtp(v.s5), convert_ulong_rtp(v.s6), convert_ulong_rtp(v.s7), convert_ulong_rtp(v.s8), convert_ulong_rtp(v.s9), convert_ulong_rtp(v.sA), convert_ulong_rtp(v.sB), convert_ulong_rtp(v.sC), convert_ulong_rtp(v.sD), convert_ulong_rtp(v.sE), convert_ulong_rtp(v.sF));
+}
+
+INLINE OVERLOADABLE ulong16 convert_ulong16_rtn(short16 v) {
+  return (ulong16)(convert_ulong_rtn(v.s0), convert_ulong_rtn(v.s1), convert_ulong_rtn(v.s2), convert_ulong_rtn(v.s3), convert_ulong_rtn(v.s4), convert_ulong_rtn(v.s5), convert_ulong_rtn(v.s6), convert_ulong_rtn(v.s7), convert_ulong_rtn(v.s8), convert_ulong_rtn(v.s9), convert_ulong_rtn(v.sA), convert_ulong_rtn(v.sB), convert_ulong_rtn(v.sC), convert_ulong_rtn(v.sD), convert_ulong_rtn(v.sE), convert_ulong_rtn(v.sF));
+}
+
+INLINE OVERLOADABLE int16 convert_int16_rte(short16 v) {
+  return (int16)(convert_int_rte(v.s0), convert_int_rte(v.s1), convert_int_rte(v.s2), convert_int_rte(v.s3), convert_int_rte(v.s4), convert_int_rte(v.s5), convert_int_rte(v.s6), convert_int_rte(v.s7), convert_int_rte(v.s8), convert_int_rte(v.s9), convert_int_rte(v.sA), convert_int_rte(v.sB), convert_int_rte(v.sC), convert_int_rte(v.sD), convert_int_rte(v.sE), convert_int_rte(v.sF));
+}
+
+INLINE OVERLOADABLE int16 convert_int16_rtz(short16 v) {
+  return (int16)(convert_int_rtz(v.s0), convert_int_rtz(v.s1), convert_int_rtz(v.s2), convert_int_rtz(v.s3), convert_int_rtz(v.s4), convert_int_rtz(v.s5), convert_int_rtz(v.s6), convert_int_rtz(v.s7), convert_int_rtz(v.s8), convert_int_rtz(v.s9), convert_int_rtz(v.sA), convert_int_rtz(v.sB), convert_int_rtz(v.sC), convert_int_rtz(v.sD), convert_int_rtz(v.sE), convert_int_rtz(v.sF));
+}
+
+INLINE OVERLOADABLE int16 convert_int16_rtp(short16 v) {
+  return (int16)(convert_int_rtp(v.s0), convert_int_rtp(v.s1), convert_int_rtp(v.s2), convert_int_rtp(v.s3), convert_int_rtp(v.s4), convert_int_rtp(v.s5), convert_int_rtp(v.s6), convert_int_rtp(v.s7), convert_int_rtp(v.s8), convert_int_rtp(v.s9), convert_int_rtp(v.sA), convert_int_rtp(v.sB), convert_int_rtp(v.sC), convert_int_rtp(v.sD), convert_int_rtp(v.sE), convert_int_rtp(v.sF));
+}
+
+INLINE OVERLOADABLE int16 convert_int16_rtn(short16 v) {
+  return (int16)(convert_int_rtn(v.s0), convert_int_rtn(v.s1), convert_int_rtn(v.s2), convert_int_rtn(v.s3), convert_int_rtn(v.s4), convert_int_rtn(v.s5), convert_int_rtn(v.s6), convert_int_rtn(v.s7), convert_int_rtn(v.s8), convert_int_rtn(v.s9), convert_int_rtn(v.sA), convert_int_rtn(v.sB), convert_int_rtn(v.sC), convert_int_rtn(v.sD), convert_int_rtn(v.sE), convert_int_rtn(v.sF));
+}
+
+INLINE OVERLOADABLE uint16 convert_uint16_rte(short16 v) {
+  return (uint16)(convert_uint_rte(v.s0), convert_uint_rte(v.s1), convert_uint_rte(v.s2), convert_uint_rte(v.s3), convert_uint_rte(v.s4), convert_uint_rte(v.s5), convert_uint_rte(v.s6), convert_uint_rte(v.s7), convert_uint_rte(v.s8), convert_uint_rte(v.s9), convert_uint_rte(v.sA), convert_uint_rte(v.sB), convert_uint_rte(v.sC), convert_uint_rte(v.sD), convert_uint_rte(v.sE), convert_uint_rte(v.sF));
+}
+
+INLINE OVERLOADABLE uint16 convert_uint16_rtz(short16 v) {
+  return (uint16)(convert_uint_rtz(v.s0), convert_uint_rtz(v.s1), convert_uint_rtz(v.s2), convert_uint_rtz(v.s3), convert_uint_rtz(v.s4), convert_uint_rtz(v.s5), convert_uint_rtz(v.s6), convert_uint_rtz(v.s7), convert_uint_rtz(v.s8), convert_uint_rtz(v.s9), convert_uint_rtz(v.sA), convert_uint_rtz(v.sB), convert_uint_rtz(v.sC), convert_uint_rtz(v.sD), convert_uint_rtz(v.sE), convert_uint_rtz(v.sF));
+}
+
+INLINE OVERLOADABLE uint16 convert_uint16_rtp(short16 v) {
+  return (uint16)(convert_uint_rtp(v.s0), convert_uint_rtp(v.s1), convert_uint_rtp(v.s2), convert_uint_rtp(v.s3), convert_uint_rtp(v.s4), convert_uint_rtp(v.s5), convert_uint_rtp(v.s6), convert_uint_rtp(v.s7), convert_uint_rtp(v.s8), convert_uint_rtp(v.s9), convert_uint_rtp(v.sA), convert_uint_rtp(v.sB), convert_uint_rtp(v.sC), convert_uint_rtp(v.sD), convert_uint_rtp(v.sE), convert_uint_rtp(v.sF));
+}
+
+INLINE OVERLOADABLE uint16 convert_uint16_rtn(short16 v) {
+  return (uint16)(convert_uint_rtn(v.s0), convert_uint_rtn(v.s1), convert_uint_rtn(v.s2), convert_uint_rtn(v.s3), convert_uint_rtn(v.s4), convert_uint_rtn(v.s5), convert_uint_rtn(v.s6), convert_uint_rtn(v.s7), convert_uint_rtn(v.s8), convert_uint_rtn(v.s9), convert_uint_rtn(v.sA), convert_uint_rtn(v.sB), convert_uint_rtn(v.sC), convert_uint_rtn(v.sD), convert_uint_rtn(v.sE), convert_uint_rtn(v.sF));
+}
+
+INLINE OVERLOADABLE short16 convert_short16_rte(short16 v) {
+  return (short16)(convert_short_rte(v.s0), convert_short_rte(v.s1), convert_short_rte(v.s2), convert_short_rte(v.s3), convert_short_rte(v.s4), convert_short_rte(v.s5), convert_short_rte(v.s6), convert_short_rte(v.s7), convert_short_rte(v.s8), convert_short_rte(v.s9), convert_short_rte(v.sA), convert_short_rte(v.sB), convert_short_rte(v.sC), convert_short_rte(v.sD), convert_short_rte(v.sE), convert_short_rte(v.sF));
+}
+
+INLINE OVERLOADABLE short16 convert_short16_rtz(short16 v) {
+  return (short16)(convert_short_rtz(v.s0), convert_short_rtz(v.s1), convert_short_rtz(v.s2), convert_short_rtz(v.s3), convert_short_rtz(v.s4), convert_short_rtz(v.s5), convert_short_rtz(v.s6), convert_short_rtz(v.s7), convert_short_rtz(v.s8), convert_short_rtz(v.s9), convert_short_rtz(v.sA), convert_short_rtz(v.sB), convert_short_rtz(v.sC), convert_short_rtz(v.sD), convert_short_rtz(v.sE), convert_short_rtz(v.sF));
+}
+
+INLINE OVERLOADABLE short16 convert_short16_rtp(short16 v) {
+  return (short16)(convert_short_rtp(v.s0), convert_short_rtp(v.s1), convert_short_rtp(v.s2), convert_short_rtp(v.s3), convert_short_rtp(v.s4), convert_short_rtp(v.s5), convert_short_rtp(v.s6), convert_short_rtp(v.s7), convert_short_rtp(v.s8), convert_short_rtp(v.s9), convert_short_rtp(v.sA), convert_short_rtp(v.sB), convert_short_rtp(v.sC), convert_short_rtp(v.sD), convert_short_rtp(v.sE), convert_short_rtp(v.sF));
+}
+
+INLINE OVERLOADABLE short16 convert_short16_rtn(short16 v) {
+  return (short16)(convert_short_rtn(v.s0), convert_short_rtn(v.s1), convert_short_rtn(v.s2), convert_short_rtn(v.s3), convert_short_rtn(v.s4), convert_short_rtn(v.s5), convert_short_rtn(v.s6), convert_short_rtn(v.s7), convert_short_rtn(v.s8), convert_short_rtn(v.s9), convert_short_rtn(v.sA), convert_short_rtn(v.sB), convert_short_rtn(v.sC), convert_short_rtn(v.sD), convert_short_rtn(v.sE), convert_short_rtn(v.sF));
+}
+
+INLINE OVERLOADABLE ushort16 convert_ushort16_rte(short16 v) {
+  return (ushort16)(convert_ushort_rte(v.s0), convert_ushort_rte(v.s1), convert_ushort_rte(v.s2), convert_ushort_rte(v.s3), convert_ushort_rte(v.s4), convert_ushort_rte(v.s5), convert_ushort_rte(v.s6), convert_ushort_rte(v.s7), convert_ushort_rte(v.s8), convert_ushort_rte(v.s9), convert_ushort_rte(v.sA), convert_ushort_rte(v.sB), convert_ushort_rte(v.sC), convert_ushort_rte(v.sD), convert_ushort_rte(v.sE), convert_ushort_rte(v.sF));
+}
+
+INLINE OVERLOADABLE ushort16 convert_ushort16_rtz(short16 v) {
+  return (ushort16)(convert_ushort_rtz(v.s0), convert_ushort_rtz(v.s1), convert_ushort_rtz(v.s2), convert_ushort_rtz(v.s3), convert_ushort_rtz(v.s4), convert_ushort_rtz(v.s5), convert_ushort_rtz(v.s6), convert_ushort_rtz(v.s7), convert_ushort_rtz(v.s8), convert_ushort_rtz(v.s9), convert_ushort_rtz(v.sA), convert_ushort_rtz(v.sB), convert_ushort_rtz(v.sC), convert_ushort_rtz(v.sD), convert_ushort_rtz(v.sE), convert_ushort_rtz(v.sF));
+}
+
+INLINE OVERLOADABLE ushort16 convert_ushort16_rtp(short16 v) {
+  return (ushort16)(convert_ushort_rtp(v.s0), convert_ushort_rtp(v.s1), convert_ushort_rtp(v.s2), convert_ushort_rtp(v.s3), convert_ushort_rtp(v.s4), convert_ushort_rtp(v.s5), convert_ushort_rtp(v.s6), convert_ushort_rtp(v.s7), convert_ushort_rtp(v.s8), convert_ushort_rtp(v.s9), convert_ushort_rtp(v.sA), convert_ushort_rtp(v.sB), convert_ushort_rtp(v.sC), convert_ushort_rtp(v.sD), convert_ushort_rtp(v.sE), convert_ushort_rtp(v.sF));
+}
+
+INLINE OVERLOADABLE ushort16 convert_ushort16_rtn(short16 v) {
+  return (ushort16)(convert_ushort_rtn(v.s0), convert_ushort_rtn(v.s1), convert_ushort_rtn(v.s2), convert_ushort_rtn(v.s3), convert_ushort_rtn(v.s4), convert_ushort_rtn(v.s5), convert_ushort_rtn(v.s6), convert_ushort_rtn(v.s7), convert_ushort_rtn(v.s8), convert_ushort_rtn(v.s9), convert_ushort_rtn(v.sA), convert_ushort_rtn(v.sB), convert_ushort_rtn(v.sC), convert_ushort_rtn(v.sD), convert_ushort_rtn(v.sE), convert_ushort_rtn(v.sF));
+}
+
+INLINE OVERLOADABLE char16 convert_char16_rte(short16 v) {
+  return (char16)(convert_char_rte(v.s0), convert_char_rte(v.s1), convert_char_rte(v.s2), convert_char_rte(v.s3), convert_char_rte(v.s4), convert_char_rte(v.s5), convert_char_rte(v.s6), convert_char_rte(v.s7), convert_char_rte(v.s8), convert_char_rte(v.s9), convert_char_rte(v.sA), convert_char_rte(v.sB), convert_char_rte(v.sC), convert_char_rte(v.sD), convert_char_rte(v.sE), convert_char_rte(v.sF));
+}
+
+INLINE OVERLOADABLE char16 convert_char16_rtz(short16 v) {
+  return (char16)(convert_char_rtz(v.s0), convert_char_rtz(v.s1), convert_char_rtz(v.s2), convert_char_rtz(v.s3), convert_char_rtz(v.s4), convert_char_rtz(v.s5), convert_char_rtz(v.s6), convert_char_rtz(v.s7), convert_char_rtz(v.s8), convert_char_rtz(v.s9), convert_char_rtz(v.sA), convert_char_rtz(v.sB), convert_char_rtz(v.sC), convert_char_rtz(v.sD), convert_char_rtz(v.sE), convert_char_rtz(v.sF));
+}
+
+INLINE OVERLOADABLE char16 convert_char16_rtp(short16 v) {
+  return (char16)(convert_char_rtp(v.s0), convert_char_rtp(v.s1), convert_char_rtp(v.s2), convert_char_rtp(v.s3), convert_char_rtp(v.s4), convert_char_rtp(v.s5), convert_char_rtp(v.s6), convert_char_rtp(v.s7), convert_char_rtp(v.s8), convert_char_rtp(v.s9), convert_char_rtp(v.sA), convert_char_rtp(v.sB), convert_char_rtp(v.sC), convert_char_rtp(v.sD), convert_char_rtp(v.sE), convert_char_rtp(v.sF));
+}
+
+INLINE OVERLOADABLE char16 convert_char16_rtn(short16 v) {
+  return (char16)(convert_char_rtn(v.s0), convert_char_rtn(v.s1), convert_char_rtn(v.s2), convert_char_rtn(v.s3), convert_char_rtn(v.s4), convert_char_rtn(v.s5), convert_char_rtn(v.s6), convert_char_rtn(v.s7), convert_char_rtn(v.s8), convert_char_rtn(v.s9), convert_char_rtn(v.sA), convert_char_rtn(v.sB), convert_char_rtn(v.sC), convert_char_rtn(v.sD), convert_char_rtn(v.sE), convert_char_rtn(v.sF));
+}
+
+INLINE OVERLOADABLE uchar16 convert_uchar16_rte(short16 v) {
+  return (uchar16)(convert_uchar_rte(v.s0), convert_uchar_rte(v.s1), convert_uchar_rte(v.s2), convert_uchar_rte(v.s3), convert_uchar_rte(v.s4), convert_uchar_rte(v.s5), convert_uchar_rte(v.s6), convert_uchar_rte(v.s7), convert_uchar_rte(v.s8), convert_uchar_rte(v.s9), convert_uchar_rte(v.sA), convert_uchar_rte(v.sB), convert_uchar_rte(v.sC), convert_uchar_rte(v.sD), convert_uchar_rte(v.sE), convert_uchar_rte(v.sF));
+}
+
+INLINE OVERLOADABLE uchar16 convert_uchar16_rtz(short16 v) {
+  return (uchar16)(convert_uchar_rtz(v.s0), convert_uchar_rtz(v.s1), convert_uchar_rtz(v.s2), convert_uchar_rtz(v.s3), convert_uchar_rtz(v.s4), convert_uchar_rtz(v.s5), convert_uchar_rtz(v.s6), convert_uchar_rtz(v.s7), convert_uchar_rtz(v.s8), convert_uchar_rtz(v.s9), convert_uchar_rtz(v.sA), convert_uchar_rtz(v.sB), convert_uchar_rtz(v.sC), convert_uchar_rtz(v.sD), convert_uchar_rtz(v.sE), convert_uchar_rtz(v.sF));
+}
+
+INLINE OVERLOADABLE uchar16 convert_uchar16_rtp(short16 v) {
+  return (uchar16)(convert_uchar_rtp(v.s0), convert_uchar_rtp(v.s1), convert_uchar_rtp(v.s2), convert_uchar_rtp(v.s3), convert_uchar_rtp(v.s4), convert_uchar_rtp(v.s5), convert_uchar_rtp(v.s6), convert_uchar_rtp(v.s7), convert_uchar_rtp(v.s8), convert_uchar_rtp(v.s9), convert_uchar_rtp(v.sA), convert_uchar_rtp(v.sB), convert_uchar_rtp(v.sC), convert_uchar_rtp(v.sD), convert_uchar_rtp(v.sE), convert_uchar_rtp(v.sF));
+}
+
+INLINE OVERLOADABLE uchar16 convert_uchar16_rtn(short16 v) {
+  return (uchar16)(convert_uchar_rtn(v.s0), convert_uchar_rtn(v.s1), convert_uchar_rtn(v.s2), convert_uchar_rtn(v.s3), convert_uchar_rtn(v.s4), convert_uchar_rtn(v.s5), convert_uchar_rtn(v.s6), convert_uchar_rtn(v.s7), convert_uchar_rtn(v.s8), convert_uchar_rtn(v.s9), convert_uchar_rtn(v.sA), convert_uchar_rtn(v.sB), convert_uchar_rtn(v.sC), convert_uchar_rtn(v.sD), convert_uchar_rtn(v.sE), convert_uchar_rtn(v.sF));
+}
+
+INLINE OVERLOADABLE float16 convert_float16_rte(short16 v) {
+  return (float16)(convert_float_rte(v.s0), convert_float_rte(v.s1), convert_float_rte(v.s2), convert_float_rte(v.s3), convert_float_rte(v.s4), convert_float_rte(v.s5), convert_float_rte(v.s6), convert_float_rte(v.s7), convert_float_rte(v.s8), convert_float_rte(v.s9), convert_float_rte(v.sA), convert_float_rte(v.sB), convert_float_rte(v.sC), convert_float_rte(v.sD), convert_float_rte(v.sE), convert_float_rte(v.sF));
+}
+
+INLINE OVERLOADABLE float16 convert_float16_rtz(short16 v) {
+  return (float16)(convert_float_rtz(v.s0), convert_float_rtz(v.s1), convert_float_rtz(v.s2), convert_float_rtz(v.s3), convert_float_rtz(v.s4), convert_float_rtz(v.s5), convert_float_rtz(v.s6), convert_float_rtz(v.s7), convert_float_rtz(v.s8), convert_float_rtz(v.s9), convert_float_rtz(v.sA), convert_float_rtz(v.sB), convert_float_rtz(v.sC), convert_float_rtz(v.sD), convert_float_rtz(v.sE), convert_float_rtz(v.sF));
+}
+
+INLINE OVERLOADABLE float16 convert_float16_rtp(short16 v) {
+  return (float16)(convert_float_rtp(v.s0), convert_float_rtp(v.s1), convert_float_rtp(v.s2), convert_float_rtp(v.s3), convert_float_rtp(v.s4), convert_float_rtp(v.s5), convert_float_rtp(v.s6), convert_float_rtp(v.s7), convert_float_rtp(v.s8), convert_float_rtp(v.s9), convert_float_rtp(v.sA), convert_float_rtp(v.sB), convert_float_rtp(v.sC), convert_float_rtp(v.sD), convert_float_rtp(v.sE), convert_float_rtp(v.sF));
+}
+
+INLINE OVERLOADABLE float16 convert_float16_rtn(short16 v) {
+  return (float16)(convert_float_rtn(v.s0), convert_float_rtn(v.s1), convert_float_rtn(v.s2), convert_float_rtn(v.s3), convert_float_rtn(v.s4), convert_float_rtn(v.s5), convert_float_rtn(v.s6), convert_float_rtn(v.s7), convert_float_rtn(v.s8), convert_float_rtn(v.s9), convert_float_rtn(v.sA), convert_float_rtn(v.sB), convert_float_rtn(v.sC), convert_float_rtn(v.sD), convert_float_rtn(v.sE), convert_float_rtn(v.sF));
+}
+
+INLINE OVERLOADABLE long16 convert_long16_rte(ushort16 v) {
+  return (long16)(convert_long_rte(v.s0), convert_long_rte(v.s1), convert_long_rte(v.s2), convert_long_rte(v.s3), convert_long_rte(v.s4), convert_long_rte(v.s5), convert_long_rte(v.s6), convert_long_rte(v.s7), convert_long_rte(v.s8), convert_long_rte(v.s9), convert_long_rte(v.sA), convert_long_rte(v.sB), convert_long_rte(v.sC), convert_long_rte(v.sD), convert_long_rte(v.sE), convert_long_rte(v.sF));
+}
+
+INLINE OVERLOADABLE long16 convert_long16_rtz(ushort16 v) {
+  return (long16)(convert_long_rtz(v.s0), convert_long_rtz(v.s1), convert_long_rtz(v.s2), convert_long_rtz(v.s3), convert_long_rtz(v.s4), convert_long_rtz(v.s5), convert_long_rtz(v.s6), convert_long_rtz(v.s7), convert_long_rtz(v.s8), convert_long_rtz(v.s9), convert_long_rtz(v.sA), convert_long_rtz(v.sB), convert_long_rtz(v.sC), convert_long_rtz(v.sD), convert_long_rtz(v.sE), convert_long_rtz(v.sF));
+}
+
+INLINE OVERLOADABLE long16 convert_long16_rtp(ushort16 v) {
+  return (long16)(convert_long_rtp(v.s0), convert_long_rtp(v.s1), convert_long_rtp(v.s2), convert_long_rtp(v.s3), convert_long_rtp(v.s4), convert_long_rtp(v.s5), convert_long_rtp(v.s6), convert_long_rtp(v.s7), convert_long_rtp(v.s8), convert_long_rtp(v.s9), convert_long_rtp(v.sA), convert_long_rtp(v.sB), convert_long_rtp(v.sC), convert_long_rtp(v.sD), convert_long_rtp(v.sE), convert_long_rtp(v.sF));
+}
+
+INLINE OVERLOADABLE long16 convert_long16_rtn(ushort16 v) {
+  return (long16)(convert_long_rtn(v.s0), convert_long_rtn(v.s1), convert_long_rtn(v.s2), convert_long_rtn(v.s3), convert_long_rtn(v.s4), convert_long_rtn(v.s5), convert_long_rtn(v.s6), convert_long_rtn(v.s7), convert_long_rtn(v.s8), convert_long_rtn(v.s9), convert_long_rtn(v.sA), convert_long_rtn(v.sB), convert_long_rtn(v.sC), convert_long_rtn(v.sD), convert_long_rtn(v.sE), convert_long_rtn(v.sF));
+}
+
+INLINE OVERLOADABLE ulong16 convert_ulong16_rte(ushort16 v) {
+  return (ulong16)(convert_ulong_rte(v.s0), convert_ulong_rte(v.s1), convert_ulong_rte(v.s2), convert_ulong_rte(v.s3), convert_ulong_rte(v.s4), convert_ulong_rte(v.s5), convert_ulong_rte(v.s6), convert_ulong_rte(v.s7), convert_ulong_rte(v.s8), convert_ulong_rte(v.s9), convert_ulong_rte(v.sA), convert_ulong_rte(v.sB), convert_ulong_rte(v.sC), convert_ulong_rte(v.sD), convert_ulong_rte(v.sE), convert_ulong_rte(v.sF));
+}
+
+INLINE OVERLOADABLE ulong16 convert_ulong16_rtz(ushort16 v) {
+  return (ulong16)(convert_ulong_rtz(v.s0), convert_ulong_rtz(v.s1), convert_ulong_rtz(v.s2), convert_ulong_rtz(v.s3), convert_ulong_rtz(v.s4), convert_ulong_rtz(v.s5), convert_ulong_rtz(v.s6), convert_ulong_rtz(v.s7), convert_ulong_rtz(v.s8), convert_ulong_rtz(v.s9), convert_ulong_rtz(v.sA), convert_ulong_rtz(v.sB), convert_ulong_rtz(v.sC), convert_ulong_rtz(v.sD), convert_ulong_rtz(v.sE), convert_ulong_rtz(v.sF));
+}
+
+INLINE OVERLOADABLE ulong16 convert_ulong16_rtp(ushort16 v) {
+  return (ulong16)(convert_ulong_rtp(v.s0), convert_ulong_rtp(v.s1), convert_ulong_rtp(v.s2), convert_ulong_rtp(v.s3), convert_ulong_rtp(v.s4), convert_ulong_rtp(v.s5), convert_ulong_rtp(v.s6), convert_ulong_rtp(v.s7), convert_ulong_rtp(v.s8), convert_ulong_rtp(v.s9), convert_ulong_rtp(v.sA), convert_ulong_rtp(v.sB), convert_ulong_rtp(v.sC), convert_ulong_rtp(v.sD), convert_ulong_rtp(v.sE), convert_ulong_rtp(v.sF));
+}
+
+INLINE OVERLOADABLE ulong16 convert_ulong16_rtn(ushort16 v) {
+  return (ulong16)(convert_ulong_rtn(v.s0), convert_ulong_rtn(v.s1), convert_ulong_rtn(v.s2), convert_ulong_rtn(v.s3), convert_ulong_rtn(v.s4), convert_ulong_rtn(v.s5), convert_ulong_rtn(v.s6), convert_ulong_rtn(v.s7), convert_ulong_rtn(v.s8), convert_ulong_rtn(v.s9), convert_ulong_rtn(v.sA), convert_ulong_rtn(v.sB), convert_ulong_rtn(v.sC), convert_ulong_rtn(v.sD), convert_ulong_rtn(v.sE), convert_ulong_rtn(v.sF));
+}
+
+INLINE OVERLOADABLE int16 convert_int16_rte(ushort16 v) {
+  return (int16)(convert_int_rte(v.s0), convert_int_rte(v.s1), convert_int_rte(v.s2), convert_int_rte(v.s3), convert_int_rte(v.s4), convert_int_rte(v.s5), convert_int_rte(v.s6), convert_int_rte(v.s7), convert_int_rte(v.s8), convert_int_rte(v.s9), convert_int_rte(v.sA), convert_int_rte(v.sB), convert_int_rte(v.sC), convert_int_rte(v.sD), convert_int_rte(v.sE), convert_int_rte(v.sF));
+}
+
+INLINE OVERLOADABLE int16 convert_int16_rtz(ushort16 v) {
+  return (int16)(convert_int_rtz(v.s0), convert_int_rtz(v.s1), convert_int_rtz(v.s2), convert_int_rtz(v.s3), convert_int_rtz(v.s4), convert_int_rtz(v.s5), convert_int_rtz(v.s6), convert_int_rtz(v.s7), convert_int_rtz(v.s8), convert_int_rtz(v.s9), convert_int_rtz(v.sA), convert_int_rtz(v.sB), convert_int_rtz(v.sC), convert_int_rtz(v.sD), convert_int_rtz(v.sE), convert_int_rtz(v.sF));
+}
+
+INLINE OVERLOADABLE int16 convert_int16_rtp(ushort16 v) {
+  return (int16)(convert_int_rtp(v.s0), convert_int_rtp(v.s1), convert_int_rtp(v.s2), convert_int_rtp(v.s3), convert_int_rtp(v.s4), convert_int_rtp(v.s5), convert_int_rtp(v.s6), convert_int_rtp(v.s7), convert_int_rtp(v.s8), convert_int_rtp(v.s9), convert_int_rtp(v.sA), convert_int_rtp(v.sB), convert_int_rtp(v.sC), convert_int_rtp(v.sD), convert_int_rtp(v.sE), convert_int_rtp(v.sF));
+}
+
+INLINE OVERLOADABLE int16 convert_int16_rtn(ushort16 v) {
+  return (int16)(convert_int_rtn(v.s0), convert_int_rtn(v.s1), convert_int_rtn(v.s2), convert_int_rtn(v.s3), convert_int_rtn(v.s4), convert_int_rtn(v.s5), convert_int_rtn(v.s6), convert_int_rtn(v.s7), convert_int_rtn(v.s8), convert_int_rtn(v.s9), convert_int_rtn(v.sA), convert_int_rtn(v.sB), convert_int_rtn(v.sC), convert_int_rtn(v.sD), convert_int_rtn(v.sE), convert_int_rtn(v.sF));
+}
+
+INLINE OVERLOADABLE uint16 convert_uint16_rte(ushort16 v) {
+  return (uint16)(convert_uint_rte(v.s0), convert_uint_rte(v.s1), convert_uint_rte(v.s2), convert_uint_rte(v.s3), convert_uint_rte(v.s4), convert_uint_rte(v.s5), convert_uint_rte(v.s6), convert_uint_rte(v.s7), convert_uint_rte(v.s8), convert_uint_rte(v.s9), convert_uint_rte(v.sA), convert_uint_rte(v.sB), convert_uint_rte(v.sC), convert_uint_rte(v.sD), convert_uint_rte(v.sE), convert_uint_rte(v.sF));
+}
+
+INLINE OVERLOADABLE uint16 convert_uint16_rtz(ushort16 v) {
+  return (uint16)(convert_uint_rtz(v.s0), convert_uint_rtz(v.s1), convert_uint_rtz(v.s2), convert_uint_rtz(v.s3), convert_uint_rtz(v.s4), convert_uint_rtz(v.s5), convert_uint_rtz(v.s6), convert_uint_rtz(v.s7), convert_uint_rtz(v.s8), convert_uint_rtz(v.s9), convert_uint_rtz(v.sA), convert_uint_rtz(v.sB), convert_uint_rtz(v.sC), convert_uint_rtz(v.sD), convert_uint_rtz(v.sE), convert_uint_rtz(v.sF));
+}
+
+INLINE OVERLOADABLE uint16 convert_uint16_rtp(ushort16 v) {
+  return (uint16)(convert_uint_rtp(v.s0), convert_uint_rtp(v.s1), convert_uint_rtp(v.s2), convert_uint_rtp(v.s3), convert_uint_rtp(v.s4), convert_uint_rtp(v.s5), convert_uint_rtp(v.s6), convert_uint_rtp(v.s7), convert_uint_rtp(v.s8), convert_uint_rtp(v.s9), convert_uint_rtp(v.sA), convert_uint_rtp(v.sB), convert_uint_rtp(v.sC), convert_uint_rtp(v.sD), convert_uint_rtp(v.sE), convert_uint_rtp(v.sF));
+}
+
+INLINE OVERLOADABLE uint16 convert_uint16_rtn(ushort16 v) {
+  return (uint16)(convert_uint_rtn(v.s0), convert_uint_rtn(v.s1), convert_uint_rtn(v.s2), convert_uint_rtn(v.s3), convert_uint_rtn(v.s4), convert_uint_rtn(v.s5), convert_uint_rtn(v.s6), convert_uint_rtn(v.s7), convert_uint_rtn(v.s8), convert_uint_rtn(v.s9), convert_uint_rtn(v.sA), convert_uint_rtn(v.sB), convert_uint_rtn(v.sC), convert_uint_rtn(v.sD), convert_uint_rtn(v.sE), convert_uint_rtn(v.sF));
+}
+
+INLINE OVERLOADABLE short16 convert_short16_rte(ushort16 v) {
+  return (short16)(convert_short_rte(v.s0), convert_short_rte(v.s1), convert_short_rte(v.s2), convert_short_rte(v.s3), convert_short_rte(v.s4), convert_short_rte(v.s5), convert_short_rte(v.s6), convert_short_rte(v.s7), convert_short_rte(v.s8), convert_short_rte(v.s9), convert_short_rte(v.sA), convert_short_rte(v.sB), convert_short_rte(v.sC), convert_short_rte(v.sD), convert_short_rte(v.sE), convert_short_rte(v.sF));
+}
+
+INLINE OVERLOADABLE short16 convert_short16_rtz(ushort16 v) {
+  return (short16)(convert_short_rtz(v.s0), convert_short_rtz(v.s1), convert_short_rtz(v.s2), convert_short_rtz(v.s3), convert_short_rtz(v.s4), convert_short_rtz(v.s5), convert_short_rtz(v.s6), convert_short_rtz(v.s7), convert_short_rtz(v.s8), convert_short_rtz(v.s9), convert_short_rtz(v.sA), convert_short_rtz(v.sB), convert_short_rtz(v.sC), convert_short_rtz(v.sD), convert_short_rtz(v.sE), convert_short_rtz(v.sF));
+}
+
+INLINE OVERLOADABLE short16 convert_short16_rtp(ushort16 v) {
+  return (short16)(convert_short_rtp(v.s0), convert_short_rtp(v.s1), convert_short_rtp(v.s2), convert_short_rtp(v.s3), convert_short_rtp(v.s4), convert_short_rtp(v.s5), convert_short_rtp(v.s6), convert_short_rtp(v.s7), convert_short_rtp(v.s8), convert_short_rtp(v.s9), convert_short_rtp(v.sA), convert_short_rtp(v.sB), convert_short_rtp(v.sC), convert_short_rtp(v.sD), convert_short_rtp(v.sE), convert_short_rtp(v.sF));
+}
+
+INLINE OVERLOADABLE short16 convert_short16_rtn(ushort16 v) {
+  return (short16)(convert_short_rtn(v.s0), convert_short_rtn(v.s1), convert_short_rtn(v.s2), convert_short_rtn(v.s3), convert_short_rtn(v.s4), convert_short_rtn(v.s5), convert_short_rtn(v.s6), convert_short_rtn(v.s7), convert_short_rtn(v.s8), convert_short_rtn(v.s9), convert_short_rtn(v.sA), convert_short_rtn(v.sB), convert_short_rtn(v.sC), convert_short_rtn(v.sD), convert_short_rtn(v.sE), convert_short_rtn(v.sF));
+}
+
+INLINE OVERLOADABLE ushort16 convert_ushort16_rte(ushort16 v) {
+  return (ushort16)(convert_ushort_rte(v.s0), convert_ushort_rte(v.s1), convert_ushort_rte(v.s2), convert_ushort_rte(v.s3), convert_ushort_rte(v.s4), convert_ushort_rte(v.s5), convert_ushort_rte(v.s6), convert_ushort_rte(v.s7), convert_ushort_rte(v.s8), convert_ushort_rte(v.s9), convert_ushort_rte(v.sA), convert_ushort_rte(v.sB), convert_ushort_rte(v.sC), convert_ushort_rte(v.sD), convert_ushort_rte(v.sE), convert_ushort_rte(v.sF));
+}
+
+INLINE OVERLOADABLE ushort16 convert_ushort16_rtz(ushort16 v) {
+  return (ushort16)(convert_ushort_rtz(v.s0), convert_ushort_rtz(v.s1), convert_ushort_rtz(v.s2), convert_ushort_rtz(v.s3), convert_ushort_rtz(v.s4), convert_ushort_rtz(v.s5), convert_ushort_rtz(v.s6), convert_ushort_rtz(v.s7), convert_ushort_rtz(v.s8), convert_ushort_rtz(v.s9), convert_ushort_rtz(v.sA), convert_ushort_rtz(v.sB), convert_ushort_rtz(v.sC), convert_ushort_rtz(v.sD), convert_ushort_rtz(v.sE), convert_ushort_rtz(v.sF));
+}
+
+INLINE OVERLOADABLE ushort16 convert_ushort16_rtp(ushort16 v) {
+  return (ushort16)(convert_ushort_rtp(v.s0), convert_ushort_rtp(v.s1), convert_ushort_rtp(v.s2), convert_ushort_rtp(v.s3), convert_ushort_rtp(v.s4), convert_ushort_rtp(v.s5), convert_ushort_rtp(v.s6), convert_ushort_rtp(v.s7), convert_ushort_rtp(v.s8), convert_ushort_rtp(v.s9), convert_ushort_rtp(v.sA), convert_ushort_rtp(v.sB), convert_ushort_rtp(v.sC), convert_ushort_rtp(v.sD), convert_ushort_rtp(v.sE), convert_ushort_rtp(v.sF));
+}
+
+INLINE OVERLOADABLE ushort16 convert_ushort16_rtn(ushort16 v) {
+  return (ushort16)(convert_ushort_rtn(v.s0), convert_ushort_rtn(v.s1), convert_ushort_rtn(v.s2), convert_ushort_rtn(v.s3), convert_ushort_rtn(v.s4), convert_ushort_rtn(v.s5), convert_ushort_rtn(v.s6), convert_ushort_rtn(v.s7), convert_ushort_rtn(v.s8), convert_ushort_rtn(v.s9), convert_ushort_rtn(v.sA), convert_ushort_rtn(v.sB), convert_ushort_rtn(v.sC), convert_ushort_rtn(v.sD), convert_ushort_rtn(v.sE), convert_ushort_rtn(v.sF));
+}
+
+INLINE OVERLOADABLE char16 convert_char16_rte(ushort16 v) {
+  return (char16)(convert_char_rte(v.s0), convert_char_rte(v.s1), convert_char_rte(v.s2), convert_char_rte(v.s3), convert_char_rte(v.s4), convert_char_rte(v.s5), convert_char_rte(v.s6), convert_char_rte(v.s7), convert_char_rte(v.s8), convert_char_rte(v.s9), convert_char_rte(v.sA), convert_char_rte(v.sB), convert_char_rte(v.sC), convert_char_rte(v.sD), convert_char_rte(v.sE), convert_char_rte(v.sF));
+}
+
+INLINE OVERLOADABLE char16 convert_char16_rtz(ushort16 v) {
+  return (char16)(convert_char_rtz(v.s0), convert_char_rtz(v.s1), convert_char_rtz(v.s2), convert_char_rtz(v.s3), convert_char_rtz(v.s4), convert_char_rtz(v.s5), convert_char_rtz(v.s6), convert_char_rtz(v.s7), convert_char_rtz(v.s8), convert_char_rtz(v.s9), convert_char_rtz(v.sA), convert_char_rtz(v.sB), convert_char_rtz(v.sC), convert_char_rtz(v.sD), convert_char_rtz(v.sE), convert_char_rtz(v.sF));
+}
+
+INLINE OVERLOADABLE char16 convert_char16_rtp(ushort16 v) {
+  return (char16)(convert_char_rtp(v.s0), convert_char_rtp(v.s1), convert_char_rtp(v.s2), convert_char_rtp(v.s3), convert_char_rtp(v.s4), convert_char_rtp(v.s5), convert_char_rtp(v.s6), convert_char_rtp(v.s7), convert_char_rtp(v.s8), convert_char_rtp(v.s9), convert_char_rtp(v.sA), convert_char_rtp(v.sB), convert_char_rtp(v.sC), convert_char_rtp(v.sD), convert_char_rtp(v.sE), convert_char_rtp(v.sF));
+}
+
+INLINE OVERLOADABLE char16 convert_char16_rtn(ushort16 v) {
+  return (char16)(convert_char_rtn(v.s0), convert_char_rtn(v.s1), convert_char_rtn(v.s2), convert_char_rtn(v.s3), convert_char_rtn(v.s4), convert_char_rtn(v.s5), convert_char_rtn(v.s6), convert_char_rtn(v.s7), convert_char_rtn(v.s8), convert_char_rtn(v.s9), convert_char_rtn(v.sA), convert_char_rtn(v.sB), convert_char_rtn(v.sC), convert_char_rtn(v.sD), convert_char_rtn(v.sE), convert_char_rtn(v.sF));
+}
+
+INLINE OVERLOADABLE uchar16 convert_uchar16_rte(ushort16 v) {
+  return (uchar16)(convert_uchar_rte(v.s0), convert_uchar_rte(v.s1), convert_uchar_rte(v.s2), convert_uchar_rte(v.s3), convert_uchar_rte(v.s4), convert_uchar_rte(v.s5), convert_uchar_rte(v.s6), convert_uchar_rte(v.s7), convert_uchar_rte(v.s8), convert_uchar_rte(v.s9), convert_uchar_rte(v.sA), convert_uchar_rte(v.sB), convert_uchar_rte(v.sC), convert_uchar_rte(v.sD), convert_uchar_rte(v.sE), convert_uchar_rte(v.sF));
+}
+
+INLINE OVERLOADABLE uchar16 convert_uchar16_rtz(ushort16 v) {
+  return (uchar16)(convert_uchar_rtz(v.s0), convert_uchar_rtz(v.s1), convert_uchar_rtz(v.s2), convert_uchar_rtz(v.s3), convert_uchar_rtz(v.s4), convert_uchar_rtz(v.s5), convert_uchar_rtz(v.s6), convert_uchar_rtz(v.s7), convert_uchar_rtz(v.s8), convert_uchar_rtz(v.s9), convert_uchar_rtz(v.sA), convert_uchar_rtz(v.sB), convert_uchar_rtz(v.sC), convert_uchar_rtz(v.sD), convert_uchar_rtz(v.sE), convert_uchar_rtz(v.sF));
+}
+
+INLINE OVERLOADABLE uchar16 convert_uchar16_rtp(ushort16 v) {
+  return (uchar16)(convert_uchar_rtp(v.s0), convert_uchar_rtp(v.s1), convert_uchar_rtp(v.s2), convert_uchar_rtp(v.s3), convert_uchar_rtp(v.s4), convert_uchar_rtp(v.s5), convert_uchar_rtp(v.s6), convert_uchar_rtp(v.s7), convert_uchar_rtp(v.s8), convert_uchar_rtp(v.s9), convert_uchar_rtp(v.sA), convert_uchar_rtp(v.sB), convert_uchar_rtp(v.sC), convert_uchar_rtp(v.sD), convert_uchar_rtp(v.sE), convert_uchar_rtp(v.sF));
+}
+
+INLINE OVERLOADABLE uchar16 convert_uchar16_rtn(ushort16 v) {
+  return (uchar16)(convert_uchar_rtn(v.s0), convert_uchar_rtn(v.s1), convert_uchar_rtn(v.s2), convert_uchar_rtn(v.s3), convert_uchar_rtn(v.s4), convert_uchar_rtn(v.s5), convert_uchar_rtn(v.s6), convert_uchar_rtn(v.s7), convert_uchar_rtn(v.s8), convert_uchar_rtn(v.s9), convert_uchar_rtn(v.sA), convert_uchar_rtn(v.sB), convert_uchar_rtn(v.sC), convert_uchar_rtn(v.sD), convert_uchar_rtn(v.sE), convert_uchar_rtn(v.sF));
+}
+
+INLINE OVERLOADABLE float16 convert_float16_rte(ushort16 v) {
+  return (float16)(convert_float_rte(v.s0), convert_float_rte(v.s1), convert_float_rte(v.s2), convert_float_rte(v.s3), convert_float_rte(v.s4), convert_float_rte(v.s5), convert_float_rte(v.s6), convert_float_rte(v.s7), convert_float_rte(v.s8), convert_float_rte(v.s9), convert_float_rte(v.sA), convert_float_rte(v.sB), convert_float_rte(v.sC), convert_float_rte(v.sD), convert_float_rte(v.sE), convert_float_rte(v.sF));
+}
+
+INLINE OVERLOADABLE float16 convert_float16_rtz(ushort16 v) {
+  return (float16)(convert_float_rtz(v.s0), convert_float_rtz(v.s1), convert_float_rtz(v.s2), convert_float_rtz(v.s3), convert_float_rtz(v.s4), convert_float_rtz(v.s5), convert_float_rtz(v.s6), convert_float_rtz(v.s7), convert_float_rtz(v.s8), convert_float_rtz(v.s9), convert_float_rtz(v.sA), convert_float_rtz(v.sB), convert_float_rtz(v.sC), convert_float_rtz(v.sD), convert_float_rtz(v.sE), convert_float_rtz(v.sF));
+}
+
+INLINE OVERLOADABLE float16 convert_float16_rtp(ushort16 v) {
+  return (float16)(convert_float_rtp(v.s0), convert_float_rtp(v.s1), convert_float_rtp(v.s2), convert_float_rtp(v.s3), convert_float_rtp(v.s4), convert_float_rtp(v.s5), convert_float_rtp(v.s6), convert_float_rtp(v.s7), convert_float_rtp(v.s8), convert_float_rtp(v.s9), convert_float_rtp(v.sA), convert_float_rtp(v.sB), convert_float_rtp(v.sC), convert_float_rtp(v.sD), convert_float_rtp(v.sE), convert_float_rtp(v.sF));
+}
+
+INLINE OVERLOADABLE float16 convert_float16_rtn(ushort16 v) {
+  return (float16)(convert_float_rtn(v.s0), convert_float_rtn(v.s1), convert_float_rtn(v.s2), convert_float_rtn(v.s3), convert_float_rtn(v.s4), convert_float_rtn(v.s5), convert_float_rtn(v.s6), convert_float_rtn(v.s7), convert_float_rtn(v.s8), convert_float_rtn(v.s9), convert_float_rtn(v.sA), convert_float_rtn(v.sB), convert_float_rtn(v.sC), convert_float_rtn(v.sD), convert_float_rtn(v.sE), convert_float_rtn(v.sF));
+}
+
+INLINE OVERLOADABLE long16 convert_long16_rte(char16 v) {
+  return (long16)(convert_long_rte(v.s0), convert_long_rte(v.s1), convert_long_rte(v.s2), convert_long_rte(v.s3), convert_long_rte(v.s4), convert_long_rte(v.s5), convert_long_rte(v.s6), convert_long_rte(v.s7), convert_long_rte(v.s8), convert_long_rte(v.s9), convert_long_rte(v.sA), convert_long_rte(v.sB), convert_long_rte(v.sC), convert_long_rte(v.sD), convert_long_rte(v.sE), convert_long_rte(v.sF));
+}
+
+INLINE OVERLOADABLE long16 convert_long16_rtz(char16 v) {
+  return (long16)(convert_long_rtz(v.s0), convert_long_rtz(v.s1), convert_long_rtz(v.s2), convert_long_rtz(v.s3), convert_long_rtz(v.s4), convert_long_rtz(v.s5), convert_long_rtz(v.s6), convert_long_rtz(v.s7), convert_long_rtz(v.s8), convert_long_rtz(v.s9), convert_long_rtz(v.sA), convert_long_rtz(v.sB), convert_long_rtz(v.sC), convert_long_rtz(v.sD), convert_long_rtz(v.sE), convert_long_rtz(v.sF));
+}
+
+INLINE OVERLOADABLE long16 convert_long16_rtp(char16 v) {
+  return (long16)(convert_long_rtp(v.s0), convert_long_rtp(v.s1), convert_long_rtp(v.s2), convert_long_rtp(v.s3), convert_long_rtp(v.s4), convert_long_rtp(v.s5), convert_long_rtp(v.s6), convert_long_rtp(v.s7), convert_long_rtp(v.s8), convert_long_rtp(v.s9), convert_long_rtp(v.sA), convert_long_rtp(v.sB), convert_long_rtp(v.sC), convert_long_rtp(v.sD), convert_long_rtp(v.sE), convert_long_rtp(v.sF));
+}
+
+INLINE OVERLOADABLE long16 convert_long16_rtn(char16 v) {
+  return (long16)(convert_long_rtn(v.s0), convert_long_rtn(v.s1), convert_long_rtn(v.s2), convert_long_rtn(v.s3), convert_long_rtn(v.s4), convert_long_rtn(v.s5), convert_long_rtn(v.s6), convert_long_rtn(v.s7), convert_long_rtn(v.s8), convert_long_rtn(v.s9), convert_long_rtn(v.sA), convert_long_rtn(v.sB), convert_long_rtn(v.sC), convert_long_rtn(v.sD), convert_long_rtn(v.sE), convert_long_rtn(v.sF));
+}
+
+INLINE OVERLOADABLE ulong16 convert_ulong16_rte(char16 v) {
+  return (ulong16)(convert_ulong_rte(v.s0), convert_ulong_rte(v.s1), convert_ulong_rte(v.s2), convert_ulong_rte(v.s3), convert_ulong_rte(v.s4), convert_ulong_rte(v.s5), convert_ulong_rte(v.s6), convert_ulong_rte(v.s7), convert_ulong_rte(v.s8), convert_ulong_rte(v.s9), convert_ulong_rte(v.sA), convert_ulong_rte(v.sB), convert_ulong_rte(v.sC), convert_ulong_rte(v.sD), convert_ulong_rte(v.sE), convert_ulong_rte(v.sF));
+}
+
+INLINE OVERLOADABLE ulong16 convert_ulong16_rtz(char16 v) {
+  return (ulong16)(convert_ulong_rtz(v.s0), convert_ulong_rtz(v.s1), convert_ulong_rtz(v.s2), convert_ulong_rtz(v.s3), convert_ulong_rtz(v.s4), convert_ulong_rtz(v.s5), convert_ulong_rtz(v.s6), convert_ulong_rtz(v.s7), convert_ulong_rtz(v.s8), convert_ulong_rtz(v.s9), convert_ulong_rtz(v.sA), convert_ulong_rtz(v.sB), convert_ulong_rtz(v.sC), convert_ulong_rtz(v.sD), convert_ulong_rtz(v.sE), convert_ulong_rtz(v.sF));
+}
+
+INLINE OVERLOADABLE ulong16 convert_ulong16_rtp(char16 v) {
+  return (ulong16)(convert_ulong_rtp(v.s0), convert_ulong_rtp(v.s1), convert_ulong_rtp(v.s2), convert_ulong_rtp(v.s3), convert_ulong_rtp(v.s4), convert_ulong_rtp(v.s5), convert_ulong_rtp(v.s6), convert_ulong_rtp(v.s7), convert_ulong_rtp(v.s8), convert_ulong_rtp(v.s9), convert_ulong_rtp(v.sA), convert_ulong_rtp(v.sB), convert_ulong_rtp(v.sC), convert_ulong_rtp(v.sD), convert_ulong_rtp(v.sE), convert_ulong_rtp(v.sF));
+}
+
+INLINE OVERLOADABLE ulong16 convert_ulong16_rtn(char16 v) {
+  return (ulong16)(convert_ulong_rtn(v.s0), convert_ulong_rtn(v.s1), convert_ulong_rtn(v.s2), convert_ulong_rtn(v.s3), convert_ulong_rtn(v.s4), convert_ulong_rtn(v.s5), convert_ulong_rtn(v.s6), convert_ulong_rtn(v.s7), convert_ulong_rtn(v.s8), convert_ulong_rtn(v.s9), convert_ulong_rtn(v.sA), convert_ulong_rtn(v.sB), convert_ulong_rtn(v.sC), convert_ulong_rtn(v.sD), convert_ulong_rtn(v.sE), convert_ulong_rtn(v.sF));
+}
+
+INLINE OVERLOADABLE int16 convert_int16_rte(char16 v) {
+  return (int16)(convert_int_rte(v.s0), convert_int_rte(v.s1), convert_int_rte(v.s2), convert_int_rte(v.s3), convert_int_rte(v.s4), convert_int_rte(v.s5), convert_int_rte(v.s6), convert_int_rte(v.s7), convert_int_rte(v.s8), convert_int_rte(v.s9), convert_int_rte(v.sA), convert_int_rte(v.sB), convert_int_rte(v.sC), convert_int_rte(v.sD), convert_int_rte(v.sE), convert_int_rte(v.sF));
+}
+
+INLINE OVERLOADABLE int16 convert_int16_rtz(char16 v) {
+  return (int16)(convert_int_rtz(v.s0), convert_int_rtz(v.s1), convert_int_rtz(v.s2), convert_int_rtz(v.s3), convert_int_rtz(v.s4), convert_int_rtz(v.s5), convert_int_rtz(v.s6), convert_int_rtz(v.s7), convert_int_rtz(v.s8), convert_int_rtz(v.s9), convert_int_rtz(v.sA), convert_int_rtz(v.sB), convert_int_rtz(v.sC), convert_int_rtz(v.sD), convert_int_rtz(v.sE), convert_int_rtz(v.sF));
+}
+
+INLINE OVERLOADABLE int16 convert_int16_rtp(char16 v) {
+  return (int16)(convert_int_rtp(v.s0), convert_int_rtp(v.s1), convert_int_rtp(v.s2), convert_int_rtp(v.s3), convert_int_rtp(v.s4), convert_int_rtp(v.s5), convert_int_rtp(v.s6), convert_int_rtp(v.s7), convert_int_rtp(v.s8), convert_int_rtp(v.s9), convert_int_rtp(v.sA), convert_int_rtp(v.sB), convert_int_rtp(v.sC), convert_int_rtp(v.sD), convert_int_rtp(v.sE), convert_int_rtp(v.sF));
+}
+
+INLINE OVERLOADABLE int16 convert_int16_rtn(char16 v) {
+  return (int16)(convert_int_rtn(v.s0), convert_int_rtn(v.s1), convert_int_rtn(v.s2), convert_int_rtn(v.s3), convert_int_rtn(v.s4), convert_int_rtn(v.s5), convert_int_rtn(v.s6), convert_int_rtn(v.s7), convert_int_rtn(v.s8), convert_int_rtn(v.s9), convert_int_rtn(v.sA), convert_int_rtn(v.sB), convert_int_rtn(v.sC), convert_int_rtn(v.sD), convert_int_rtn(v.sE), convert_int_rtn(v.sF));
+}
+
+INLINE OVERLOADABLE uint16 convert_uint16_rte(char16 v) {
+  return (uint16)(convert_uint_rte(v.s0), convert_uint_rte(v.s1), convert_uint_rte(v.s2), convert_uint_rte(v.s3), convert_uint_rte(v.s4), convert_uint_rte(v.s5), convert_uint_rte(v.s6), convert_uint_rte(v.s7), convert_uint_rte(v.s8), convert_uint_rte(v.s9), convert_uint_rte(v.sA), convert_uint_rte(v.sB), convert_uint_rte(v.sC), convert_uint_rte(v.sD), convert_uint_rte(v.sE), convert_uint_rte(v.sF));
+}
+
+INLINE OVERLOADABLE uint16 convert_uint16_rtz(char16 v) {
+  return (uint16)(convert_uint_rtz(v.s0), convert_uint_rtz(v.s1), convert_uint_rtz(v.s2), convert_uint_rtz(v.s3), convert_uint_rtz(v.s4), convert_uint_rtz(v.s5), convert_uint_rtz(v.s6), convert_uint_rtz(v.s7), convert_uint_rtz(v.s8), convert_uint_rtz(v.s9), convert_uint_rtz(v.sA), convert_uint_rtz(v.sB), convert_uint_rtz(v.sC), convert_uint_rtz(v.sD), convert_uint_rtz(v.sE), convert_uint_rtz(v.sF));
+}
+
+INLINE OVERLOADABLE uint16 convert_uint16_rtp(char16 v) {
+  return (uint16)(convert_uint_rtp(v.s0), convert_uint_rtp(v.s1), convert_uint_rtp(v.s2), convert_uint_rtp(v.s3), convert_uint_rtp(v.s4), convert_uint_rtp(v.s5), convert_uint_rtp(v.s6), convert_uint_rtp(v.s7), convert_uint_rtp(v.s8), convert_uint_rtp(v.s9), convert_uint_rtp(v.sA), convert_uint_rtp(v.sB), convert_uint_rtp(v.sC), convert_uint_rtp(v.sD), convert_uint_rtp(v.sE), convert_uint_rtp(v.sF));
+}
+
+INLINE OVERLOADABLE uint16 convert_uint16_rtn(char16 v) {
+  return (uint16)(convert_uint_rtn(v.s0), convert_uint_rtn(v.s1), convert_uint_rtn(v.s2), convert_uint_rtn(v.s3), convert_uint_rtn(v.s4), convert_uint_rtn(v.s5), convert_uint_rtn(v.s6), convert_uint_rtn(v.s7), convert_uint_rtn(v.s8), convert_uint_rtn(v.s9), convert_uint_rtn(v.sA), convert_uint_rtn(v.sB), convert_uint_rtn(v.sC), convert_uint_rtn(v.sD), convert_uint_rtn(v.sE), convert_uint_rtn(v.sF));
+}
+
+INLINE OVERLOADABLE short16 convert_short16_rte(char16 v) {
+  return (short16)(convert_short_rte(v.s0), convert_short_rte(v.s1), convert_short_rte(v.s2), convert_short_rte(v.s3), convert_short_rte(v.s4), convert_short_rte(v.s5), convert_short_rte(v.s6), convert_short_rte(v.s7), convert_short_rte(v.s8), convert_short_rte(v.s9), convert_short_rte(v.sA), convert_short_rte(v.sB), convert_short_rte(v.sC), convert_short_rte(v.sD), convert_short_rte(v.sE), convert_short_rte(v.sF));
+}
+
+INLINE OVERLOADABLE short16 convert_short16_rtz(char16 v) {
+  return (short16)(convert_short_rtz(v.s0), convert_short_rtz(v.s1), convert_short_rtz(v.s2), convert_short_rtz(v.s3), convert_short_rtz(v.s4), convert_short_rtz(v.s5), convert_short_rtz(v.s6), convert_short_rtz(v.s7), convert_short_rtz(v.s8), convert_short_rtz(v.s9), convert_short_rtz(v.sA), convert_short_rtz(v.sB), convert_short_rtz(v.sC), convert_short_rtz(v.sD), convert_short_rtz(v.sE), convert_short_rtz(v.sF));
+}
+
+INLINE OVERLOADABLE short16 convert_short16_rtp(char16 v) {
+  return (short16)(convert_short_rtp(v.s0), convert_short_rtp(v.s1), convert_short_rtp(v.s2), convert_short_rtp(v.s3), convert_short_rtp(v.s4), convert_short_rtp(v.s5), convert_short_rtp(v.s6), convert_short_rtp(v.s7), convert_short_rtp(v.s8), convert_short_rtp(v.s9), convert_short_rtp(v.sA), convert_short_rtp(v.sB), convert_short_rtp(v.sC), convert_short_rtp(v.sD), convert_short_rtp(v.sE), convert_short_rtp(v.sF));
+}
+
+INLINE OVERLOADABLE short16 convert_short16_rtn(char16 v) {
+  return (short16)(convert_short_rtn(v.s0), convert_short_rtn(v.s1), convert_short_rtn(v.s2), convert_short_rtn(v.s3), convert_short_rtn(v.s4), convert_short_rtn(v.s5), convert_short_rtn(v.s6), convert_short_rtn(v.s7), convert_short_rtn(v.s8), convert_short_rtn(v.s9), convert_short_rtn(v.sA), convert_short_rtn(v.sB), convert_short_rtn(v.sC), convert_short_rtn(v.sD), convert_short_rtn(v.sE), convert_short_rtn(v.sF));
+}
+
+INLINE OVERLOADABLE ushort16 convert_ushort16_rte(char16 v) {
+  return (ushort16)(convert_ushort_rte(v.s0), convert_ushort_rte(v.s1), convert_ushort_rte(v.s2), convert_ushort_rte(v.s3), convert_ushort_rte(v.s4), convert_ushort_rte(v.s5), convert_ushort_rte(v.s6), convert_ushort_rte(v.s7), convert_ushort_rte(v.s8), convert_ushort_rte(v.s9), convert_ushort_rte(v.sA), convert_ushort_rte(v.sB), convert_ushort_rte(v.sC), convert_ushort_rte(v.sD), convert_ushort_rte(v.sE), convert_ushort_rte(v.sF));
+}
+
+INLINE OVERLOADABLE ushort16 convert_ushort16_rtz(char16 v) {
+  return (ushort16)(convert_ushort_rtz(v.s0), convert_ushort_rtz(v.s1), convert_ushort_rtz(v.s2), convert_ushort_rtz(v.s3), convert_ushort_rtz(v.s4), convert_ushort_rtz(v.s5), convert_ushort_rtz(v.s6), convert_ushort_rtz(v.s7), convert_ushort_rtz(v.s8), convert_ushort_rtz(v.s9), convert_ushort_rtz(v.sA), convert_ushort_rtz(v.sB), convert_ushort_rtz(v.sC), convert_ushort_rtz(v.sD), convert_ushort_rtz(v.sE), convert_ushort_rtz(v.sF));
+}
+
+INLINE OVERLOADABLE ushort16 convert_ushort16_rtp(char16 v) {
+  return (ushort16)(convert_ushort_rtp(v.s0), convert_ushort_rtp(v.s1), convert_ushort_rtp(v.s2), convert_ushort_rtp(v.s3), convert_ushort_rtp(v.s4), convert_ushort_rtp(v.s5), convert_ushort_rtp(v.s6), convert_ushort_rtp(v.s7), convert_ushort_rtp(v.s8), convert_ushort_rtp(v.s9), convert_ushort_rtp(v.sA), convert_ushort_rtp(v.sB), convert_ushort_rtp(v.sC), convert_ushort_rtp(v.sD), convert_ushort_rtp(v.sE), convert_ushort_rtp(v.sF));
+}
+
+INLINE OVERLOADABLE ushort16 convert_ushort16_rtn(char16 v) {
+  return (ushort16)(convert_ushort_rtn(v.s0), convert_ushort_rtn(v.s1), convert_ushort_rtn(v.s2), convert_ushort_rtn(v.s3), convert_ushort_rtn(v.s4), convert_ushort_rtn(v.s5), convert_ushort_rtn(v.s6), convert_ushort_rtn(v.s7), convert_ushort_rtn(v.s8), convert_ushort_rtn(v.s9), convert_ushort_rtn(v.sA), convert_ushort_rtn(v.sB), convert_ushort_rtn(v.sC), convert_ushort_rtn(v.sD), convert_ushort_rtn(v.sE), convert_ushort_rtn(v.sF));
+}
+
+INLINE OVERLOADABLE char16 convert_char16_rte(char16 v) {
+  return (char16)(convert_char_rte(v.s0), convert_char_rte(v.s1), convert_char_rte(v.s2), convert_char_rte(v.s3), convert_char_rte(v.s4), convert_char_rte(v.s5), convert_char_rte(v.s6), convert_char_rte(v.s7), convert_char_rte(v.s8), convert_char_rte(v.s9), convert_char_rte(v.sA), convert_char_rte(v.sB), convert_char_rte(v.sC), convert_char_rte(v.sD), convert_char_rte(v.sE), convert_char_rte(v.sF));
+}
+
+INLINE OVERLOADABLE char16 convert_char16_rtz(char16 v) {
+  return (char16)(convert_char_rtz(v.s0), convert_char_rtz(v.s1), convert_char_rtz(v.s2), convert_char_rtz(v.s3), convert_char_rtz(v.s4), convert_char_rtz(v.s5), convert_char_rtz(v.s6), convert_char_rtz(v.s7), convert_char_rtz(v.s8), convert_char_rtz(v.s9), convert_char_rtz(v.sA), convert_char_rtz(v.sB), convert_char_rtz(v.sC), convert_char_rtz(v.sD), convert_char_rtz(v.sE), convert_char_rtz(v.sF));
+}
+
+INLINE OVERLOADABLE char16 convert_char16_rtp(char16 v) {
+  return (char16)(convert_char_rtp(v.s0), convert_char_rtp(v.s1), convert_char_rtp(v.s2), convert_char_rtp(v.s3), convert_char_rtp(v.s4), convert_char_rtp(v.s5), convert_char_rtp(v.s6), convert_char_rtp(v.s7), convert_char_rtp(v.s8), convert_char_rtp(v.s9), convert_char_rtp(v.sA), convert_char_rtp(v.sB), convert_char_rtp(v.sC), convert_char_rtp(v.sD), convert_char_rtp(v.sE), convert_char_rtp(v.sF));
+}
+
+INLINE OVERLOADABLE char16 convert_char16_rtn(char16 v) {
+  return (char16)(convert_char_rtn(v.s0), convert_char_rtn(v.s1), convert_char_rtn(v.s2), convert_char_rtn(v.s3), convert_char_rtn(v.s4), convert_char_rtn(v.s5), convert_char_rtn(v.s6), convert_char_rtn(v.s7), convert_char_rtn(v.s8), convert_char_rtn(v.s9), convert_char_rtn(v.sA), convert_char_rtn(v.sB), convert_char_rtn(v.sC), convert_char_rtn(v.sD), convert_char_rtn(v.sE), convert_char_rtn(v.sF));
+}
+
+INLINE OVERLOADABLE uchar16 convert_uchar16_rte(char16 v) {
+  return (uchar16)(convert_uchar_rte(v.s0), convert_uchar_rte(v.s1), convert_uchar_rte(v.s2), convert_uchar_rte(v.s3), convert_uchar_rte(v.s4), convert_uchar_rte(v.s5), convert_uchar_rte(v.s6), convert_uchar_rte(v.s7), convert_uchar_rte(v.s8), convert_uchar_rte(v.s9), convert_uchar_rte(v.sA), convert_uchar_rte(v.sB), convert_uchar_rte(v.sC), convert_uchar_rte(v.sD), convert_uchar_rte(v.sE), convert_uchar_rte(v.sF));
+}
+
+INLINE OVERLOADABLE uchar16 convert_uchar16_rtz(char16 v) {
+  return (uchar16)(convert_uchar_rtz(v.s0), convert_uchar_rtz(v.s1), convert_uchar_rtz(v.s2), convert_uchar_rtz(v.s3), convert_uchar_rtz(v.s4), convert_uchar_rtz(v.s5), convert_uchar_rtz(v.s6), convert_uchar_rtz(v.s7), convert_uchar_rtz(v.s8), convert_uchar_rtz(v.s9), convert_uchar_rtz(v.sA), convert_uchar_rtz(v.sB), convert_uchar_rtz(v.sC), convert_uchar_rtz(v.sD), convert_uchar_rtz(v.sE), convert_uchar_rtz(v.sF));
+}
+
+INLINE OVERLOADABLE uchar16 convert_uchar16_rtp(char16 v) {
+  return (uchar16)(convert_uchar_rtp(v.s0), convert_uchar_rtp(v.s1), convert_uchar_rtp(v.s2), convert_uchar_rtp(v.s3), convert_uchar_rtp(v.s4), convert_uchar_rtp(v.s5), convert_uchar_rtp(v.s6), convert_uchar_rtp(v.s7), convert_uchar_rtp(v.s8), convert_uchar_rtp(v.s9), convert_uchar_rtp(v.sA), convert_uchar_rtp(v.sB), convert_uchar_rtp(v.sC), convert_uchar_rtp(v.sD), convert_uchar_rtp(v.sE), convert_uchar_rtp(v.sF));
+}
+
+INLINE OVERLOADABLE uchar16 convert_uchar16_rtn(char16 v) {
+  return (uchar16)(convert_uchar_rtn(v.s0), convert_uchar_rtn(v.s1), convert_uchar_rtn(v.s2), convert_uchar_rtn(v.s3), convert_uchar_rtn(v.s4), convert_uchar_rtn(v.s5), convert_uchar_rtn(v.s6), convert_uchar_rtn(v.s7), convert_uchar_rtn(v.s8), convert_uchar_rtn(v.s9), convert_uchar_rtn(v.sA), convert_uchar_rtn(v.sB), convert_uchar_rtn(v.sC), convert_uchar_rtn(v.sD), convert_uchar_rtn(v.sE), convert_uchar_rtn(v.sF));
+}
+
+INLINE OVERLOADABLE float16 convert_float16_rte(char16 v) {
+  return (float16)(convert_float_rte(v.s0), convert_float_rte(v.s1), convert_float_rte(v.s2), convert_float_rte(v.s3), convert_float_rte(v.s4), convert_float_rte(v.s5), convert_float_rte(v.s6), convert_float_rte(v.s7), convert_float_rte(v.s8), convert_float_rte(v.s9), convert_float_rte(v.sA), convert_float_rte(v.sB), convert_float_rte(v.sC), convert_float_rte(v.sD), convert_float_rte(v.sE), convert_float_rte(v.sF));
+}
+
+INLINE OVERLOADABLE float16 convert_float16_rtz(char16 v) {
+  return (float16)(convert_float_rtz(v.s0), convert_float_rtz(v.s1), convert_float_rtz(v.s2), convert_float_rtz(v.s3), convert_float_rtz(v.s4), convert_float_rtz(v.s5), convert_float_rtz(v.s6), convert_float_rtz(v.s7), convert_float_rtz(v.s8), convert_float_rtz(v.s9), convert_float_rtz(v.sA), convert_float_rtz(v.sB), convert_float_rtz(v.sC), convert_float_rtz(v.sD), convert_float_rtz(v.sE), convert_float_rtz(v.sF));
+}
+
+INLINE OVERLOADABLE float16 convert_float16_rtp(char16 v) {
+  return (float16)(convert_float_rtp(v.s0), convert_float_rtp(v.s1), convert_float_rtp(v.s2), convert_float_rtp(v.s3), convert_float_rtp(v.s4), convert_float_rtp(v.s5), convert_float_rtp(v.s6), convert_float_rtp(v.s7), convert_float_rtp(v.s8), convert_float_rtp(v.s9), convert_float_rtp(v.sA), convert_float_rtp(v.sB), convert_float_rtp(v.sC), convert_float_rtp(v.sD), convert_float_rtp(v.sE), convert_float_rtp(v.sF));
+}
+
+INLINE OVERLOADABLE float16 convert_float16_rtn(char16 v) {
+  return (float16)(convert_float_rtn(v.s0), convert_float_rtn(v.s1), convert_float_rtn(v.s2), convert_float_rtn(v.s3), convert_float_rtn(v.s4), convert_float_rtn(v.s5), convert_float_rtn(v.s6), convert_float_rtn(v.s7), convert_float_rtn(v.s8), convert_float_rtn(v.s9), convert_float_rtn(v.sA), convert_float_rtn(v.sB), convert_float_rtn(v.sC), convert_float_rtn(v.sD), convert_float_rtn(v.sE), convert_float_rtn(v.sF));
+}
+
+INLINE OVERLOADABLE long16 convert_long16_rte(uchar16 v) {
+  return (long16)(convert_long_rte(v.s0), convert_long_rte(v.s1), convert_long_rte(v.s2), convert_long_rte(v.s3), convert_long_rte(v.s4), convert_long_rte(v.s5), convert_long_rte(v.s6), convert_long_rte(v.s7), convert_long_rte(v.s8), convert_long_rte(v.s9), convert_long_rte(v.sA), convert_long_rte(v.sB), convert_long_rte(v.sC), convert_long_rte(v.sD), convert_long_rte(v.sE), convert_long_rte(v.sF));
+}
+
+INLINE OVERLOADABLE long16 convert_long16_rtz(uchar16 v) {
+  return (long16)(convert_long_rtz(v.s0), convert_long_rtz(v.s1), convert_long_rtz(v.s2), convert_long_rtz(v.s3), convert_long_rtz(v.s4), convert_long_rtz(v.s5), convert_long_rtz(v.s6), convert_long_rtz(v.s7), convert_long_rtz(v.s8), convert_long_rtz(v.s9), convert_long_rtz(v.sA), convert_long_rtz(v.sB), convert_long_rtz(v.sC), convert_long_rtz(v.sD), convert_long_rtz(v.sE), convert_long_rtz(v.sF));
+}
+
+INLINE OVERLOADABLE long16 convert_long16_rtp(uchar16 v) {
+  return (long16)(convert_long_rtp(v.s0), convert_long_rtp(v.s1), convert_long_rtp(v.s2), convert_long_rtp(v.s3), convert_long_rtp(v.s4), convert_long_rtp(v.s5), convert_long_rtp(v.s6), convert_long_rtp(v.s7), convert_long_rtp(v.s8), convert_long_rtp(v.s9), convert_long_rtp(v.sA), convert_long_rtp(v.sB), convert_long_rtp(v.sC), convert_long_rtp(v.sD), convert_long_rtp(v.sE), convert_long_rtp(v.sF));
+}
+
+INLINE OVERLOADABLE long16 convert_long16_rtn(uchar16 v) {
+  return (long16)(convert_long_rtn(v.s0), convert_long_rtn(v.s1), convert_long_rtn(v.s2), convert_long_rtn(v.s3), convert_long_rtn(v.s4), convert_long_rtn(v.s5), convert_long_rtn(v.s6), convert_long_rtn(v.s7), convert_long_rtn(v.s8), convert_long_rtn(v.s9), convert_long_rtn(v.sA), convert_long_rtn(v.sB), convert_long_rtn(v.sC), convert_long_rtn(v.sD), convert_long_rtn(v.sE), convert_long_rtn(v.sF));
+}
+
+INLINE OVERLOADABLE ulong16 convert_ulong16_rte(uchar16 v) {
+  return (ulong16)(convert_ulong_rte(v.s0), convert_ulong_rte(v.s1), convert_ulong_rte(v.s2), convert_ulong_rte(v.s3), convert_ulong_rte(v.s4), convert_ulong_rte(v.s5), convert_ulong_rte(v.s6), convert_ulong_rte(v.s7), convert_ulong_rte(v.s8), convert_ulong_rte(v.s9), convert_ulong_rte(v.sA), convert_ulong_rte(v.sB), convert_ulong_rte(v.sC), convert_ulong_rte(v.sD), convert_ulong_rte(v.sE), convert_ulong_rte(v.sF));
+}
+
+INLINE OVERLOADABLE ulong16 convert_ulong16_rtz(uchar16 v) {
+  return (ulong16)(convert_ulong_rtz(v.s0), convert_ulong_rtz(v.s1), convert_ulong_rtz(v.s2), convert_ulong_rtz(v.s3), convert_ulong_rtz(v.s4), convert_ulong_rtz(v.s5), convert_ulong_rtz(v.s6), convert_ulong_rtz(v.s7), convert_ulong_rtz(v.s8), convert_ulong_rtz(v.s9), convert_ulong_rtz(v.sA), convert_ulong_rtz(v.sB), convert_ulong_rtz(v.sC), convert_ulong_rtz(v.sD), convert_ulong_rtz(v.sE), convert_ulong_rtz(v.sF));
+}
+
+INLINE OVERLOADABLE ulong16 convert_ulong16_rtp(uchar16 v) {
+  return (ulong16)(convert_ulong_rtp(v.s0), convert_ulong_rtp(v.s1), convert_ulong_rtp(v.s2), convert_ulong_rtp(v.s3), convert_ulong_rtp(v.s4), convert_ulong_rtp(v.s5), convert_ulong_rtp(v.s6), convert_ulong_rtp(v.s7), convert_ulong_rtp(v.s8), convert_ulong_rtp(v.s9), convert_ulong_rtp(v.sA), convert_ulong_rtp(v.sB), convert_ulong_rtp(v.sC), convert_ulong_rtp(v.sD), convert_ulong_rtp(v.sE), convert_ulong_rtp(v.sF));
+}
+
+INLINE OVERLOADABLE ulong16 convert_ulong16_rtn(uchar16 v) {
+  return (ulong16)(convert_ulong_rtn(v.s0), convert_ulong_rtn(v.s1), convert_ulong_rtn(v.s2), convert_ulong_rtn(v.s3), convert_ulong_rtn(v.s4), convert_ulong_rtn(v.s5), convert_ulong_rtn(v.s6), convert_ulong_rtn(v.s7), convert_ulong_rtn(v.s8), convert_ulong_rtn(v.s9), convert_ulong_rtn(v.sA), convert_ulong_rtn(v.sB), convert_ulong_rtn(v.sC), convert_ulong_rtn(v.sD), convert_ulong_rtn(v.sE), convert_ulong_rtn(v.sF));
+}
+
+INLINE OVERLOADABLE int16 convert_int16_rte(uchar16 v) {
+  return (int16)(convert_int_rte(v.s0), convert_int_rte(v.s1), convert_int_rte(v.s2), convert_int_rte(v.s3), convert_int_rte(v.s4), convert_int_rte(v.s5), convert_int_rte(v.s6), convert_int_rte(v.s7), convert_int_rte(v.s8), convert_int_rte(v.s9), convert_int_rte(v.sA), convert_int_rte(v.sB), convert_int_rte(v.sC), convert_int_rte(v.sD), convert_int_rte(v.sE), convert_int_rte(v.sF));
+}
+
+INLINE OVERLOADABLE int16 convert_int16_rtz(uchar16 v) {
+  return (int16)(convert_int_rtz(v.s0), convert_int_rtz(v.s1), convert_int_rtz(v.s2), convert_int_rtz(v.s3), convert_int_rtz(v.s4), convert_int_rtz(v.s5), convert_int_rtz(v.s6), convert_int_rtz(v.s7), convert_int_rtz(v.s8), convert_int_rtz(v.s9), convert_int_rtz(v.sA), convert_int_rtz(v.sB), convert_int_rtz(v.sC), convert_int_rtz(v.sD), convert_int_rtz(v.sE), convert_int_rtz(v.sF));
+}
+
+INLINE OVERLOADABLE int16 convert_int16_rtp(uchar16 v) {
+  return (int16)(convert_int_rtp(v.s0), convert_int_rtp(v.s1), convert_int_rtp(v.s2), convert_int_rtp(v.s3), convert_int_rtp(v.s4), convert_int_rtp(v.s5), convert_int_rtp(v.s6), convert_int_rtp(v.s7), convert_int_rtp(v.s8), convert_int_rtp(v.s9), convert_int_rtp(v.sA), convert_int_rtp(v.sB), convert_int_rtp(v.sC), convert_int_rtp(v.sD), convert_int_rtp(v.sE), convert_int_rtp(v.sF));
+}
+
+INLINE OVERLOADABLE int16 convert_int16_rtn(uchar16 v) {
+  return (int16)(convert_int_rtn(v.s0), convert_int_rtn(v.s1), convert_int_rtn(v.s2), convert_int_rtn(v.s3), convert_int_rtn(v.s4), convert_int_rtn(v.s5), convert_int_rtn(v.s6), convert_int_rtn(v.s7), convert_int_rtn(v.s8), convert_int_rtn(v.s9), convert_int_rtn(v.sA), convert_int_rtn(v.sB), convert_int_rtn(v.sC), convert_int_rtn(v.sD), convert_int_rtn(v.sE), convert_int_rtn(v.sF));
+}
+
+INLINE OVERLOADABLE uint16 convert_uint16_rte(uchar16 v) {
+  return (uint16)(convert_uint_rte(v.s0), convert_uint_rte(v.s1), convert_uint_rte(v.s2), convert_uint_rte(v.s3), convert_uint_rte(v.s4), convert_uint_rte(v.s5), convert_uint_rte(v.s6), convert_uint_rte(v.s7), convert_uint_rte(v.s8), convert_uint_rte(v.s9), convert_uint_rte(v.sA), convert_uint_rte(v.sB), convert_uint_rte(v.sC), convert_uint_rte(v.sD), convert_uint_rte(v.sE), convert_uint_rte(v.sF));
+}
+
+INLINE OVERLOADABLE uint16 convert_uint16_rtz(uchar16 v) {
+  return (uint16)(convert_uint_rtz(v.s0), convert_uint_rtz(v.s1), convert_uint_rtz(v.s2), convert_uint_rtz(v.s3), convert_uint_rtz(v.s4), convert_uint_rtz(v.s5), convert_uint_rtz(v.s6), convert_uint_rtz(v.s7), convert_uint_rtz(v.s8), convert_uint_rtz(v.s9), convert_uint_rtz(v.sA), convert_uint_rtz(v.sB), convert_uint_rtz(v.sC), convert_uint_rtz(v.sD), convert_uint_rtz(v.sE), convert_uint_rtz(v.sF));
+}
+
+INLINE OVERLOADABLE uint16 convert_uint16_rtp(uchar16 v) {
+  return (uint16)(convert_uint_rtp(v.s0), convert_uint_rtp(v.s1), convert_uint_rtp(v.s2), convert_uint_rtp(v.s3), convert_uint_rtp(v.s4), convert_uint_rtp(v.s5), convert_uint_rtp(v.s6), convert_uint_rtp(v.s7), convert_uint_rtp(v.s8), convert_uint_rtp(v.s9), convert_uint_rtp(v.sA), convert_uint_rtp(v.sB), convert_uint_rtp(v.sC), convert_uint_rtp(v.sD), convert_uint_rtp(v.sE), convert_uint_rtp(v.sF));
+}
+
+INLINE OVERLOADABLE uint16 convert_uint16_rtn(uchar16 v) {
+  return (uint16)(convert_uint_rtn(v.s0), convert_uint_rtn(v.s1), convert_uint_rtn(v.s2), convert_uint_rtn(v.s3), convert_uint_rtn(v.s4), convert_uint_rtn(v.s5), convert_uint_rtn(v.s6), convert_uint_rtn(v.s7), convert_uint_rtn(v.s8), convert_uint_rtn(v.s9), convert_uint_rtn(v.sA), convert_uint_rtn(v.sB), convert_uint_rtn(v.sC), convert_uint_rtn(v.sD), convert_uint_rtn(v.sE), convert_uint_rtn(v.sF));
+}
+
+INLINE OVERLOADABLE short16 convert_short16_rte(uchar16 v) {
+  return (short16)(convert_short_rte(v.s0), convert_short_rte(v.s1), convert_short_rte(v.s2), convert_short_rte(v.s3), convert_short_rte(v.s4), convert_short_rte(v.s5), convert_short_rte(v.s6), convert_short_rte(v.s7), convert_short_rte(v.s8), convert_short_rte(v.s9), convert_short_rte(v.sA), convert_short_rte(v.sB), convert_short_rte(v.sC), convert_short_rte(v.sD), convert_short_rte(v.sE), convert_short_rte(v.sF));
+}
+
+INLINE OVERLOADABLE short16 convert_short16_rtz(uchar16 v) {
+  return (short16)(convert_short_rtz(v.s0), convert_short_rtz(v.s1), convert_short_rtz(v.s2), convert_short_rtz(v.s3), convert_short_rtz(v.s4), convert_short_rtz(v.s5), convert_short_rtz(v.s6), convert_short_rtz(v.s7), convert_short_rtz(v.s8), convert_short_rtz(v.s9), convert_short_rtz(v.sA), convert_short_rtz(v.sB), convert_short_rtz(v.sC), convert_short_rtz(v.sD), convert_short_rtz(v.sE), convert_short_rtz(v.sF));
+}
+
+INLINE OVERLOADABLE short16 convert_short16_rtp(uchar16 v) {
+  return (short16)(convert_short_rtp(v.s0), convert_short_rtp(v.s1), convert_short_rtp(v.s2), convert_short_rtp(v.s3), convert_short_rtp(v.s4), convert_short_rtp(v.s5), convert_short_rtp(v.s6), convert_short_rtp(v.s7), convert_short_rtp(v.s8), convert_short_rtp(v.s9), convert_short_rtp(v.sA), convert_short_rtp(v.sB), convert_short_rtp(v.sC), convert_short_rtp(v.sD), convert_short_rtp(v.sE), convert_short_rtp(v.sF));
+}
+
+INLINE OVERLOADABLE short16 convert_short16_rtn(uchar16 v) {
+  return (short16)(convert_short_rtn(v.s0), convert_short_rtn(v.s1), convert_short_rtn(v.s2), convert_short_rtn(v.s3), convert_short_rtn(v.s4), convert_short_rtn(v.s5), convert_short_rtn(v.s6), convert_short_rtn(v.s7), convert_short_rtn(v.s8), convert_short_rtn(v.s9), convert_short_rtn(v.sA), convert_short_rtn(v.sB), convert_short_rtn(v.sC), convert_short_rtn(v.sD), convert_short_rtn(v.sE), convert_short_rtn(v.sF));
+}
+
+INLINE OVERLOADABLE ushort16 convert_ushort16_rte(uchar16 v) {
+  return (ushort16)(convert_ushort_rte(v.s0), convert_ushort_rte(v.s1), convert_ushort_rte(v.s2), convert_ushort_rte(v.s3), convert_ushort_rte(v.s4), convert_ushort_rte(v.s5), convert_ushort_rte(v.s6), convert_ushort_rte(v.s7), convert_ushort_rte(v.s8), convert_ushort_rte(v.s9), convert_ushort_rte(v.sA), convert_ushort_rte(v.sB), convert_ushort_rte(v.sC), convert_ushort_rte(v.sD), convert_ushort_rte(v.sE), convert_ushort_rte(v.sF));
+}
+
+INLINE OVERLOADABLE ushort16 convert_ushort16_rtz(uchar16 v) {
+  return (ushort16)(convert_ushort_rtz(v.s0), convert_ushort_rtz(v.s1), convert_ushort_rtz(v.s2), convert_ushort_rtz(v.s3), convert_ushort_rtz(v.s4), convert_ushort_rtz(v.s5), convert_ushort_rtz(v.s6), convert_ushort_rtz(v.s7), convert_ushort_rtz(v.s8), convert_ushort_rtz(v.s9), convert_ushort_rtz(v.sA), convert_ushort_rtz(v.sB), convert_ushort_rtz(v.sC), convert_ushort_rtz(v.sD), convert_ushort_rtz(v.sE), convert_ushort_rtz(v.sF));
+}
+
+INLINE OVERLOADABLE ushort16 convert_ushort16_rtp(uchar16 v) {
+  return (ushort16)(convert_ushort_rtp(v.s0), convert_ushort_rtp(v.s1), convert_ushort_rtp(v.s2), convert_ushort_rtp(v.s3), convert_ushort_rtp(v.s4), convert_ushort_rtp(v.s5), convert_ushort_rtp(v.s6), convert_ushort_rtp(v.s7), convert_ushort_rtp(v.s8), convert_ushort_rtp(v.s9), convert_ushort_rtp(v.sA), convert_ushort_rtp(v.sB), convert_ushort_rtp(v.sC), convert_ushort_rtp(v.sD), convert_ushort_rtp(v.sE), convert_ushort_rtp(v.sF));
+}
+
+INLINE OVERLOADABLE ushort16 convert_ushort16_rtn(uchar16 v) {
+  return (ushort16)(convert_ushort_rtn(v.s0), convert_ushort_rtn(v.s1), convert_ushort_rtn(v.s2), convert_ushort_rtn(v.s3), convert_ushort_rtn(v.s4), convert_ushort_rtn(v.s5), convert_ushort_rtn(v.s6), convert_ushort_rtn(v.s7), convert_ushort_rtn(v.s8), convert_ushort_rtn(v.s9), convert_ushort_rtn(v.sA), convert_ushort_rtn(v.sB), convert_ushort_rtn(v.sC), convert_ushort_rtn(v.sD), convert_ushort_rtn(v.sE), convert_ushort_rtn(v.sF));
+}
+
+INLINE OVERLOADABLE char16 convert_char16_rte(uchar16 v) {
+  return (char16)(convert_char_rte(v.s0), convert_char_rte(v.s1), convert_char_rte(v.s2), convert_char_rte(v.s3), convert_char_rte(v.s4), convert_char_rte(v.s5), convert_char_rte(v.s6), convert_char_rte(v.s7), convert_char_rte(v.s8), convert_char_rte(v.s9), convert_char_rte(v.sA), convert_char_rte(v.sB), convert_char_rte(v.sC), convert_char_rte(v.sD), convert_char_rte(v.sE), convert_char_rte(v.sF));
+}
+
+INLINE OVERLOADABLE char16 convert_char16_rtz(uchar16 v) {
+  return (char16)(convert_char_rtz(v.s0), convert_char_rtz(v.s1), convert_char_rtz(v.s2), convert_char_rtz(v.s3), convert_char_rtz(v.s4), convert_char_rtz(v.s5), convert_char_rtz(v.s6), convert_char_rtz(v.s7), convert_char_rtz(v.s8), convert_char_rtz(v.s9), convert_char_rtz(v.sA), convert_char_rtz(v.sB), convert_char_rtz(v.sC), convert_char_rtz(v.sD), convert_char_rtz(v.sE), convert_char_rtz(v.sF));
+}
+
+INLINE OVERLOADABLE char16 convert_char16_rtp(uchar16 v) {
+  return (char16)(convert_char_rtp(v.s0), convert_char_rtp(v.s1), convert_char_rtp(v.s2), convert_char_rtp(v.s3), convert_char_rtp(v.s4), convert_char_rtp(v.s5), convert_char_rtp(v.s6), convert_char_rtp(v.s7), convert_char_rtp(v.s8), convert_char_rtp(v.s9), convert_char_rtp(v.sA), convert_char_rtp(v.sB), convert_char_rtp(v.sC), convert_char_rtp(v.sD), convert_char_rtp(v.sE), convert_char_rtp(v.sF));
+}
+
+INLINE OVERLOADABLE char16 convert_char16_rtn(uchar16 v) {
+  return (char16)(convert_char_rtn(v.s0), convert_char_rtn(v.s1), convert_char_rtn(v.s2), convert_char_rtn(v.s3), convert_char_rtn(v.s4), convert_char_rtn(v.s5), convert_char_rtn(v.s6), convert_char_rtn(v.s7), convert_char_rtn(v.s8), convert_char_rtn(v.s9), convert_char_rtn(v.sA), convert_char_rtn(v.sB), convert_char_rtn(v.sC), convert_char_rtn(v.sD), convert_char_rtn(v.sE), convert_char_rtn(v.sF));
+}
+
+INLINE OVERLOADABLE uchar16 convert_uchar16_rte(uchar16 v) {
+  return (uchar16)(convert_uchar_rte(v.s0), convert_uchar_rte(v.s1), convert_uchar_rte(v.s2), convert_uchar_rte(v.s3), convert_uchar_rte(v.s4), convert_uchar_rte(v.s5), convert_uchar_rte(v.s6), convert_uchar_rte(v.s7), convert_uchar_rte(v.s8), convert_uchar_rte(v.s9), convert_uchar_rte(v.sA), convert_uchar_rte(v.sB), convert_uchar_rte(v.sC), convert_uchar_rte(v.sD), convert_uchar_rte(v.sE), convert_uchar_rte(v.sF));
+}
+
+INLINE OVERLOADABLE uchar16 convert_uchar16_rtz(uchar16 v) {
+  return (uchar16)(convert_uchar_rtz(v.s0), convert_uchar_rtz(v.s1), convert_uchar_rtz(v.s2), convert_uchar_rtz(v.s3), convert_uchar_rtz(v.s4), convert_uchar_rtz(v.s5), convert_uchar_rtz(v.s6), convert_uchar_rtz(v.s7), convert_uchar_rtz(v.s8), convert_uchar_rtz(v.s9), convert_uchar_rtz(v.sA), convert_uchar_rtz(v.sB), convert_uchar_rtz(v.sC), convert_uchar_rtz(v.sD), convert_uchar_rtz(v.sE), convert_uchar_rtz(v.sF));
+}
+
+INLINE OVERLOADABLE uchar16 convert_uchar16_rtp(uchar16 v) {
+  return (uchar16)(convert_uchar_rtp(v.s0), convert_uchar_rtp(v.s1), convert_uchar_rtp(v.s2), convert_uchar_rtp(v.s3), convert_uchar_rtp(v.s4), convert_uchar_rtp(v.s5), convert_uchar_rtp(v.s6), convert_uchar_rtp(v.s7), convert_uchar_rtp(v.s8), convert_uchar_rtp(v.s9), convert_uchar_rtp(v.sA), convert_uchar_rtp(v.sB), convert_uchar_rtp(v.sC), convert_uchar_rtp(v.sD), convert_uchar_rtp(v.sE), convert_uchar_rtp(v.sF));
+}
+
+INLINE OVERLOADABLE uchar16 convert_uchar16_rtn(uchar16 v) {
+  return (uchar16)(convert_uchar_rtn(v.s0), convert_uchar_rtn(v.s1), convert_uchar_rtn(v.s2), convert_uchar_rtn(v.s3), convert_uchar_rtn(v.s4), convert_uchar_rtn(v.s5), convert_uchar_rtn(v.s6), convert_uchar_rtn(v.s7), convert_uchar_rtn(v.s8), convert_uchar_rtn(v.s9), convert_uchar_rtn(v.sA), convert_uchar_rtn(v.sB), convert_uchar_rtn(v.sC), convert_uchar_rtn(v.sD), convert_uchar_rtn(v.sE), convert_uchar_rtn(v.sF));
+}
+
+INLINE OVERLOADABLE float16 convert_float16_rte(uchar16 v) {
+  return (float16)(convert_float_rte(v.s0), convert_float_rte(v.s1), convert_float_rte(v.s2), convert_float_rte(v.s3), convert_float_rte(v.s4), convert_float_rte(v.s5), convert_float_rte(v.s6), convert_float_rte(v.s7), convert_float_rte(v.s8), convert_float_rte(v.s9), convert_float_rte(v.sA), convert_float_rte(v.sB), convert_float_rte(v.sC), convert_float_rte(v.sD), convert_float_rte(v.sE), convert_float_rte(v.sF));
+}
+
+INLINE OVERLOADABLE float16 convert_float16_rtz(uchar16 v) {
+  return (float16)(convert_float_rtz(v.s0), convert_float_rtz(v.s1), convert_float_rtz(v.s2), convert_float_rtz(v.s3), convert_float_rtz(v.s4), convert_float_rtz(v.s5), convert_float_rtz(v.s6), convert_float_rtz(v.s7), convert_float_rtz(v.s8), convert_float_rtz(v.s9), convert_float_rtz(v.sA), convert_float_rtz(v.sB), convert_float_rtz(v.sC), convert_float_rtz(v.sD), convert_float_rtz(v.sE), convert_float_rtz(v.sF));
+}
+
+INLINE OVERLOADABLE float16 convert_float16_rtp(uchar16 v) {
+  return (float16)(convert_float_rtp(v.s0), convert_float_rtp(v.s1), convert_float_rtp(v.s2), convert_float_rtp(v.s3), convert_float_rtp(v.s4), convert_float_rtp(v.s5), convert_float_rtp(v.s6), convert_float_rtp(v.s7), convert_float_rtp(v.s8), convert_float_rtp(v.s9), convert_float_rtp(v.sA), convert_float_rtp(v.sB), convert_float_rtp(v.sC), convert_float_rtp(v.sD), convert_float_rtp(v.sE), convert_float_rtp(v.sF));
+}
+
+INLINE OVERLOADABLE float16 convert_float16_rtn(uchar16 v) {
+  return (float16)(convert_float_rtn(v.s0), convert_float_rtn(v.s1), convert_float_rtn(v.s2), convert_float_rtn(v.s3), convert_float_rtn(v.s4), convert_float_rtn(v.s5), convert_float_rtn(v.s6), convert_float_rtn(v.s7), convert_float_rtn(v.s8), convert_float_rtn(v.s9), convert_float_rtn(v.sA), convert_float_rtn(v.sB), convert_float_rtn(v.sC), convert_float_rtn(v.sD), convert_float_rtn(v.sE), convert_float_rtn(v.sF));
+}
+
+INLINE OVERLOADABLE long16 convert_long16_rte(float16 v) {
+  return (long16)(convert_long_rte(v.s0), convert_long_rte(v.s1), convert_long_rte(v.s2), convert_long_rte(v.s3), convert_long_rte(v.s4), convert_long_rte(v.s5), convert_long_rte(v.s6), convert_long_rte(v.s7), convert_long_rte(v.s8), convert_long_rte(v.s9), convert_long_rte(v.sA), convert_long_rte(v.sB), convert_long_rte(v.sC), convert_long_rte(v.sD), convert_long_rte(v.sE), convert_long_rte(v.sF));
+}
+
+INLINE OVERLOADABLE long16 convert_long16_rtz(float16 v) {
+  return (long16)(convert_long_rtz(v.s0), convert_long_rtz(v.s1), convert_long_rtz(v.s2), convert_long_rtz(v.s3), convert_long_rtz(v.s4), convert_long_rtz(v.s5), convert_long_rtz(v.s6), convert_long_rtz(v.s7), convert_long_rtz(v.s8), convert_long_rtz(v.s9), convert_long_rtz(v.sA), convert_long_rtz(v.sB), convert_long_rtz(v.sC), convert_long_rtz(v.sD), convert_long_rtz(v.sE), convert_long_rtz(v.sF));
+}
+
+INLINE OVERLOADABLE long16 convert_long16_rtp(float16 v) {
+  return (long16)(convert_long_rtp(v.s0), convert_long_rtp(v.s1), convert_long_rtp(v.s2), convert_long_rtp(v.s3), convert_long_rtp(v.s4), convert_long_rtp(v.s5), convert_long_rtp(v.s6), convert_long_rtp(v.s7), convert_long_rtp(v.s8), convert_long_rtp(v.s9), convert_long_rtp(v.sA), convert_long_rtp(v.sB), convert_long_rtp(v.sC), convert_long_rtp(v.sD), convert_long_rtp(v.sE), convert_long_rtp(v.sF));
+}
+
+INLINE OVERLOADABLE long16 convert_long16_rtn(float16 v) {
+  return (long16)(convert_long_rtn(v.s0), convert_long_rtn(v.s1), convert_long_rtn(v.s2), convert_long_rtn(v.s3), convert_long_rtn(v.s4), convert_long_rtn(v.s5), convert_long_rtn(v.s6), convert_long_rtn(v.s7), convert_long_rtn(v.s8), convert_long_rtn(v.s9), convert_long_rtn(v.sA), convert_long_rtn(v.sB), convert_long_rtn(v.sC), convert_long_rtn(v.sD), convert_long_rtn(v.sE), convert_long_rtn(v.sF));
+}
+
+INLINE OVERLOADABLE ulong16 convert_ulong16_rte(float16 v) {
+  return (ulong16)(convert_ulong_rte(v.s0), convert_ulong_rte(v.s1), convert_ulong_rte(v.s2), convert_ulong_rte(v.s3), convert_ulong_rte(v.s4), convert_ulong_rte(v.s5), convert_ulong_rte(v.s6), convert_ulong_rte(v.s7), convert_ulong_rte(v.s8), convert_ulong_rte(v.s9), convert_ulong_rte(v.sA), convert_ulong_rte(v.sB), convert_ulong_rte(v.sC), convert_ulong_rte(v.sD), convert_ulong_rte(v.sE), convert_ulong_rte(v.sF));
+}
+
+INLINE OVERLOADABLE ulong16 convert_ulong16_rtz(float16 v) {
+  return (ulong16)(convert_ulong_rtz(v.s0), convert_ulong_rtz(v.s1), convert_ulong_rtz(v.s2), convert_ulong_rtz(v.s3), convert_ulong_rtz(v.s4), convert_ulong_rtz(v.s5), convert_ulong_rtz(v.s6), convert_ulong_rtz(v.s7), convert_ulong_rtz(v.s8), convert_ulong_rtz(v.s9), convert_ulong_rtz(v.sA), convert_ulong_rtz(v.sB), convert_ulong_rtz(v.sC), convert_ulong_rtz(v.sD), convert_ulong_rtz(v.sE), convert_ulong_rtz(v.sF));
+}
+
+INLINE OVERLOADABLE ulong16 convert_ulong16_rtp(float16 v) {
+  return (ulong16)(convert_ulong_rtp(v.s0), convert_ulong_rtp(v.s1), convert_ulong_rtp(v.s2), convert_ulong_rtp(v.s3), convert_ulong_rtp(v.s4), convert_ulong_rtp(v.s5), convert_ulong_rtp(v.s6), convert_ulong_rtp(v.s7), convert_ulong_rtp(v.s8), convert_ulong_rtp(v.s9), convert_ulong_rtp(v.sA), convert_ulong_rtp(v.sB), convert_ulong_rtp(v.sC), convert_ulong_rtp(v.sD), convert_ulong_rtp(v.sE), convert_ulong_rtp(v.sF));
+}
+
+INLINE OVERLOADABLE ulong16 convert_ulong16_rtn(float16 v) {
+  return (ulong16)(convert_ulong_rtn(v.s0), convert_ulong_rtn(v.s1), convert_ulong_rtn(v.s2), convert_ulong_rtn(v.s3), convert_ulong_rtn(v.s4), convert_ulong_rtn(v.s5), convert_ulong_rtn(v.s6), convert_ulong_rtn(v.s7), convert_ulong_rtn(v.s8), convert_ulong_rtn(v.s9), convert_ulong_rtn(v.sA), convert_ulong_rtn(v.sB), convert_ulong_rtn(v.sC), convert_ulong_rtn(v.sD), convert_ulong_rtn(v.sE), convert_ulong_rtn(v.sF));
+}
+
+INLINE OVERLOADABLE int16 convert_int16_rte(float16 v) {
+  return (int16)(convert_int_rte(v.s0), convert_int_rte(v.s1), convert_int_rte(v.s2), convert_int_rte(v.s3), convert_int_rte(v.s4), convert_int_rte(v.s5), convert_int_rte(v.s6), convert_int_rte(v.s7), convert_int_rte(v.s8), convert_int_rte(v.s9), convert_int_rte(v.sA), convert_int_rte(v.sB), convert_int_rte(v.sC), convert_int_rte(v.sD), convert_int_rte(v.sE), convert_int_rte(v.sF));
+}
+
+INLINE OVERLOADABLE int16 convert_int16_rtz(float16 v) {
+  return (int16)(convert_int_rtz(v.s0), convert_int_rtz(v.s1), convert_int_rtz(v.s2), convert_int_rtz(v.s3), convert_int_rtz(v.s4), convert_int_rtz(v.s5), convert_int_rtz(v.s6), convert_int_rtz(v.s7), convert_int_rtz(v.s8), convert_int_rtz(v.s9), convert_int_rtz(v.sA), convert_int_rtz(v.sB), convert_int_rtz(v.sC), convert_int_rtz(v.sD), convert_int_rtz(v.sE), convert_int_rtz(v.sF));
+}
+
+INLINE OVERLOADABLE int16 convert_int16_rtp(float16 v) {
+  return (int16)(convert_int_rtp(v.s0), convert_int_rtp(v.s1), convert_int_rtp(v.s2), convert_int_rtp(v.s3), convert_int_rtp(v.s4), convert_int_rtp(v.s5), convert_int_rtp(v.s6), convert_int_rtp(v.s7), convert_int_rtp(v.s8), convert_int_rtp(v.s9), convert_int_rtp(v.sA), convert_int_rtp(v.sB), convert_int_rtp(v.sC), convert_int_rtp(v.sD), convert_int_rtp(v.sE), convert_int_rtp(v.sF));
+}
+
+INLINE OVERLOADABLE int16 convert_int16_rtn(float16 v) {
+  return (int16)(convert_int_rtn(v.s0), convert_int_rtn(v.s1), convert_int_rtn(v.s2), convert_int_rtn(v.s3), convert_int_rtn(v.s4), convert_int_rtn(v.s5), convert_int_rtn(v.s6), convert_int_rtn(v.s7), convert_int_rtn(v.s8), convert_int_rtn(v.s9), convert_int_rtn(v.sA), convert_int_rtn(v.sB), convert_int_rtn(v.sC), convert_int_rtn(v.sD), convert_int_rtn(v.sE), convert_int_rtn(v.sF));
+}
+
+INLINE OVERLOADABLE uint16 convert_uint16_rte(float16 v) {
+  return (uint16)(convert_uint_rte(v.s0), convert_uint_rte(v.s1), convert_uint_rte(v.s2), convert_uint_rte(v.s3), convert_uint_rte(v.s4), convert_uint_rte(v.s5), convert_uint_rte(v.s6), convert_uint_rte(v.s7), convert_uint_rte(v.s8), convert_uint_rte(v.s9), convert_uint_rte(v.sA), convert_uint_rte(v.sB), convert_uint_rte(v.sC), convert_uint_rte(v.sD), convert_uint_rte(v.sE), convert_uint_rte(v.sF));
+}
+
+INLINE OVERLOADABLE uint16 convert_uint16_rtz(float16 v) {
+  return (uint16)(convert_uint_rtz(v.s0), convert_uint_rtz(v.s1), convert_uint_rtz(v.s2), convert_uint_rtz(v.s3), convert_uint_rtz(v.s4), convert_uint_rtz(v.s5), convert_uint_rtz(v.s6), convert_uint_rtz(v.s7), convert_uint_rtz(v.s8), convert_uint_rtz(v.s9), convert_uint_rtz(v.sA), convert_uint_rtz(v.sB), convert_uint_rtz(v.sC), convert_uint_rtz(v.sD), convert_uint_rtz(v.sE), convert_uint_rtz(v.sF));
+}
+
+INLINE OVERLOADABLE uint16 convert_uint16_rtp(float16 v) {
+  return (uint16)(convert_uint_rtp(v.s0), convert_uint_rtp(v.s1), convert_uint_rtp(v.s2), convert_uint_rtp(v.s3), convert_uint_rtp(v.s4), convert_uint_rtp(v.s5), convert_uint_rtp(v.s6), convert_uint_rtp(v.s7), convert_uint_rtp(v.s8), convert_uint_rtp(v.s9), convert_uint_rtp(v.sA), convert_uint_rtp(v.sB), convert_uint_rtp(v.sC), convert_uint_rtp(v.sD), convert_uint_rtp(v.sE), convert_uint_rtp(v.sF));
+}
+
+INLINE OVERLOADABLE uint16 convert_uint16_rtn(float16 v) {
+  return (uint16)(convert_uint_rtn(v.s0), convert_uint_rtn(v.s1), convert_uint_rtn(v.s2), convert_uint_rtn(v.s3), convert_uint_rtn(v.s4), convert_uint_rtn(v.s5), convert_uint_rtn(v.s6), convert_uint_rtn(v.s7), convert_uint_rtn(v.s8), convert_uint_rtn(v.s9), convert_uint_rtn(v.sA), convert_uint_rtn(v.sB), convert_uint_rtn(v.sC), convert_uint_rtn(v.sD), convert_uint_rtn(v.sE), convert_uint_rtn(v.sF));
+}
+
+INLINE OVERLOADABLE short16 convert_short16_rte(float16 v) {
+  return (short16)(convert_short_rte(v.s0), convert_short_rte(v.s1), convert_short_rte(v.s2), convert_short_rte(v.s3), convert_short_rte(v.s4), convert_short_rte(v.s5), convert_short_rte(v.s6), convert_short_rte(v.s7), convert_short_rte(v.s8), convert_short_rte(v.s9), convert_short_rte(v.sA), convert_short_rte(v.sB), convert_short_rte(v.sC), convert_short_rte(v.sD), convert_short_rte(v.sE), convert_short_rte(v.sF));
+}
+
+INLINE OVERLOADABLE short16 convert_short16_rtz(float16 v) {
+  return (short16)(convert_short_rtz(v.s0), convert_short_rtz(v.s1), convert_short_rtz(v.s2), convert_short_rtz(v.s3), convert_short_rtz(v.s4), convert_short_rtz(v.s5), convert_short_rtz(v.s6), convert_short_rtz(v.s7), convert_short_rtz(v.s8), convert_short_rtz(v.s9), convert_short_rtz(v.sA), convert_short_rtz(v.sB), convert_short_rtz(v.sC), convert_short_rtz(v.sD), convert_short_rtz(v.sE), convert_short_rtz(v.sF));
+}
+
+INLINE OVERLOADABLE short16 convert_short16_rtp(float16 v) {
+  return (short16)(convert_short_rtp(v.s0), convert_short_rtp(v.s1), convert_short_rtp(v.s2), convert_short_rtp(v.s3), convert_short_rtp(v.s4), convert_short_rtp(v.s5), convert_short_rtp(v.s6), convert_short_rtp(v.s7), convert_short_rtp(v.s8), convert_short_rtp(v.s9), convert_short_rtp(v.sA), convert_short_rtp(v.sB), convert_short_rtp(v.sC), convert_short_rtp(v.sD), convert_short_rtp(v.sE), convert_short_rtp(v.sF));
+}
+
+INLINE OVERLOADABLE short16 convert_short16_rtn(float16 v) {
+  return (short16)(convert_short_rtn(v.s0), convert_short_rtn(v.s1), convert_short_rtn(v.s2), convert_short_rtn(v.s3), convert_short_rtn(v.s4), convert_short_rtn(v.s5), convert_short_rtn(v.s6), convert_short_rtn(v.s7), convert_short_rtn(v.s8), convert_short_rtn(v.s9), convert_short_rtn(v.sA), convert_short_rtn(v.sB), convert_short_rtn(v.sC), convert_short_rtn(v.sD), convert_short_rtn(v.sE), convert_short_rtn(v.sF));
+}
+
+INLINE OVERLOADABLE ushort16 convert_ushort16_rte(float16 v) {
+  return (ushort16)(convert_ushort_rte(v.s0), convert_ushort_rte(v.s1), convert_ushort_rte(v.s2), convert_ushort_rte(v.s3), convert_ushort_rte(v.s4), convert_ushort_rte(v.s5), convert_ushort_rte(v.s6), convert_ushort_rte(v.s7), convert_ushort_rte(v.s8), convert_ushort_rte(v.s9), convert_ushort_rte(v.sA), convert_ushort_rte(v.sB), convert_ushort_rte(v.sC), convert_ushort_rte(v.sD), convert_ushort_rte(v.sE), convert_ushort_rte(v.sF));
+}
+
+INLINE OVERLOADABLE ushort16 convert_ushort16_rtz(float16 v) {
+  return (ushort16)(convert_ushort_rtz(v.s0), convert_ushort_rtz(v.s1), convert_ushort_rtz(v.s2), convert_ushort_rtz(v.s3), convert_ushort_rtz(v.s4), convert_ushort_rtz(v.s5), convert_ushort_rtz(v.s6), convert_ushort_rtz(v.s7), convert_ushort_rtz(v.s8), convert_ushort_rtz(v.s9), convert_ushort_rtz(v.sA), convert_ushort_rtz(v.sB), convert_ushort_rtz(v.sC), convert_ushort_rtz(v.sD), convert_ushort_rtz(v.sE), convert_ushort_rtz(v.sF));
+}
+
+INLINE OVERLOADABLE ushort16 convert_ushort16_rtp(float16 v) {
+  return (ushort16)(convert_ushort_rtp(v.s0), convert_ushort_rtp(v.s1), convert_ushort_rtp(v.s2), convert_ushort_rtp(v.s3), convert_ushort_rtp(v.s4), convert_ushort_rtp(v.s5), convert_ushort_rtp(v.s6), convert_ushort_rtp(v.s7), convert_ushort_rtp(v.s8), convert_ushort_rtp(v.s9), convert_ushort_rtp(v.sA), convert_ushort_rtp(v.sB), convert_ushort_rtp(v.sC), convert_ushort_rtp(v.sD), convert_ushort_rtp(v.sE), convert_ushort_rtp(v.sF));
+}
+
+INLINE OVERLOADABLE ushort16 convert_ushort16_rtn(float16 v) {
+  return (ushort16)(convert_ushort_rtn(v.s0), convert_ushort_rtn(v.s1), convert_ushort_rtn(v.s2), convert_ushort_rtn(v.s3), convert_ushort_rtn(v.s4), convert_ushort_rtn(v.s5), convert_ushort_rtn(v.s6), convert_ushort_rtn(v.s7), convert_ushort_rtn(v.s8), convert_ushort_rtn(v.s9), convert_ushort_rtn(v.sA), convert_ushort_rtn(v.sB), convert_ushort_rtn(v.sC), convert_ushort_rtn(v.sD), convert_ushort_rtn(v.sE), convert_ushort_rtn(v.sF));
+}
+
+INLINE OVERLOADABLE char16 convert_char16_rte(float16 v) {
+  return (char16)(convert_char_rte(v.s0), convert_char_rte(v.s1), convert_char_rte(v.s2), convert_char_rte(v.s3), convert_char_rte(v.s4), convert_char_rte(v.s5), convert_char_rte(v.s6), convert_char_rte(v.s7), convert_char_rte(v.s8), convert_char_rte(v.s9), convert_char_rte(v.sA), convert_char_rte(v.sB), convert_char_rte(v.sC), convert_char_rte(v.sD), convert_char_rte(v.sE), convert_char_rte(v.sF));
+}
+
+INLINE OVERLOADABLE char16 convert_char16_rtz(float16 v) {
+  return (char16)(convert_char_rtz(v.s0), convert_char_rtz(v.s1), convert_char_rtz(v.s2), convert_char_rtz(v.s3), convert_char_rtz(v.s4), convert_char_rtz(v.s5), convert_char_rtz(v.s6), convert_char_rtz(v.s7), convert_char_rtz(v.s8), convert_char_rtz(v.s9), convert_char_rtz(v.sA), convert_char_rtz(v.sB), convert_char_rtz(v.sC), convert_char_rtz(v.sD), convert_char_rtz(v.sE), convert_char_rtz(v.sF));
+}
+
+INLINE OVERLOADABLE char16 convert_char16_rtp(float16 v) {
+  return (char16)(convert_char_rtp(v.s0), convert_char_rtp(v.s1), convert_char_rtp(v.s2), convert_char_rtp(v.s3), convert_char_rtp(v.s4), convert_char_rtp(v.s5), convert_char_rtp(v.s6), convert_char_rtp(v.s7), convert_char_rtp(v.s8), convert_char_rtp(v.s9), convert_char_rtp(v.sA), convert_char_rtp(v.sB), convert_char_rtp(v.sC), convert_char_rtp(v.sD), convert_char_rtp(v.sE), convert_char_rtp(v.sF));
+}
+
+INLINE OVERLOADABLE char16 convert_char16_rtn(float16 v) {
+  return (char16)(convert_char_rtn(v.s0), convert_char_rtn(v.s1), convert_char_rtn(v.s2), convert_char_rtn(v.s3), convert_char_rtn(v.s4), convert_char_rtn(v.s5), convert_char_rtn(v.s6), convert_char_rtn(v.s7), convert_char_rtn(v.s8), convert_char_rtn(v.s9), convert_char_rtn(v.sA), convert_char_rtn(v.sB), convert_char_rtn(v.sC), convert_char_rtn(v.sD), convert_char_rtn(v.sE), convert_char_rtn(v.sF));
+}
+
+INLINE OVERLOADABLE uchar16 convert_uchar16_rte(float16 v) {
+  return (uchar16)(convert_uchar_rte(v.s0), convert_uchar_rte(v.s1), convert_uchar_rte(v.s2), convert_uchar_rte(v.s3), convert_uchar_rte(v.s4), convert_uchar_rte(v.s5), convert_uchar_rte(v.s6), convert_uchar_rte(v.s7), convert_uchar_rte(v.s8), convert_uchar_rte(v.s9), convert_uchar_rte(v.sA), convert_uchar_rte(v.sB), convert_uchar_rte(v.sC), convert_uchar_rte(v.sD), convert_uchar_rte(v.sE), convert_uchar_rte(v.sF));
+}
+
+INLINE OVERLOADABLE uchar16 convert_uchar16_rtz(float16 v) {
+  return (uchar16)(convert_uchar_rtz(v.s0), convert_uchar_rtz(v.s1), convert_uchar_rtz(v.s2), convert_uchar_rtz(v.s3), convert_uchar_rtz(v.s4), convert_uchar_rtz(v.s5), convert_uchar_rtz(v.s6), convert_uchar_rtz(v.s7), convert_uchar_rtz(v.s8), convert_uchar_rtz(v.s9), convert_uchar_rtz(v.sA), convert_uchar_rtz(v.sB), convert_uchar_rtz(v.sC), convert_uchar_rtz(v.sD), convert_uchar_rtz(v.sE), convert_uchar_rtz(v.sF));
+}
+
+INLINE OVERLOADABLE uchar16 convert_uchar16_rtp(float16 v) {
+  return (uchar16)(convert_uchar_rtp(v.s0), convert_uchar_rtp(v.s1), convert_uchar_rtp(v.s2), convert_uchar_rtp(v.s3), convert_uchar_rtp(v.s4), convert_uchar_rtp(v.s5), convert_uchar_rtp(v.s6), convert_uchar_rtp(v.s7), convert_uchar_rtp(v.s8), convert_uchar_rtp(v.s9), convert_uchar_rtp(v.sA), convert_uchar_rtp(v.sB), convert_uchar_rtp(v.sC), convert_uchar_rtp(v.sD), convert_uchar_rtp(v.sE), convert_uchar_rtp(v.sF));
+}
+
+INLINE OVERLOADABLE uchar16 convert_uchar16_rtn(float16 v) {
+  return (uchar16)(convert_uchar_rtn(v.s0), convert_uchar_rtn(v.s1), convert_uchar_rtn(v.s2), convert_uchar_rtn(v.s3), convert_uchar_rtn(v.s4), convert_uchar_rtn(v.s5), convert_uchar_rtn(v.s6), convert_uchar_rtn(v.s7), convert_uchar_rtn(v.s8), convert_uchar_rtn(v.s9), convert_uchar_rtn(v.sA), convert_uchar_rtn(v.sB), convert_uchar_rtn(v.sC), convert_uchar_rtn(v.sD), convert_uchar_rtn(v.sE), convert_uchar_rtn(v.sF));
+}
+
+INLINE OVERLOADABLE float16 convert_float16_rte(float16 v) {
+  return (float16)(convert_float_rte(v.s0), convert_float_rte(v.s1), convert_float_rte(v.s2), convert_float_rte(v.s3), convert_float_rte(v.s4), convert_float_rte(v.s5), convert_float_rte(v.s6), convert_float_rte(v.s7), convert_float_rte(v.s8), convert_float_rte(v.s9), convert_float_rte(v.sA), convert_float_rte(v.sB), convert_float_rte(v.sC), convert_float_rte(v.sD), convert_float_rte(v.sE), convert_float_rte(v.sF));
+}
+
+INLINE OVERLOADABLE float16 convert_float16_rtz(float16 v) {
+  return (float16)(convert_float_rtz(v.s0), convert_float_rtz(v.s1), convert_float_rtz(v.s2), convert_float_rtz(v.s3), convert_float_rtz(v.s4), convert_float_rtz(v.s5), convert_float_rtz(v.s6), convert_float_rtz(v.s7), convert_float_rtz(v.s8), convert_float_rtz(v.s9), convert_float_rtz(v.sA), convert_float_rtz(v.sB), convert_float_rtz(v.sC), convert_float_rtz(v.sD), convert_float_rtz(v.sE), convert_float_rtz(v.sF));
+}
+
+INLINE OVERLOADABLE float16 convert_float16_rtp(float16 v) {
+  return (float16)(convert_float_rtp(v.s0), convert_float_rtp(v.s1), convert_float_rtp(v.s2), convert_float_rtp(v.s3), convert_float_rtp(v.s4), convert_float_rtp(v.s5), convert_float_rtp(v.s6), convert_float_rtp(v.s7), convert_float_rtp(v.s8), convert_float_rtp(v.s9), convert_float_rtp(v.sA), convert_float_rtp(v.sB), convert_float_rtp(v.sC), convert_float_rtp(v.sD), convert_float_rtp(v.sE), convert_float_rtp(v.sF));
+}
+
+INLINE OVERLOADABLE float16 convert_float16_rtn(float16 v) {
+  return (float16)(convert_float_rtn(v.s0), convert_float_rtn(v.s1), convert_float_rtn(v.s2), convert_float_rtn(v.s3), convert_float_rtn(v.s4), convert_float_rtn(v.s5), convert_float_rtn(v.s6), convert_float_rtn(v.s7), convert_float_rtn(v.s8), convert_float_rtn(v.s9), convert_float_rtn(v.sA), convert_float_rtn(v.sB), convert_float_rtn(v.sC), convert_float_rtn(v.sD), convert_float_rtn(v.sE), convert_float_rtn(v.sF));
+}
+

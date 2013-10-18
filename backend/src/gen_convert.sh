@@ -224,3 +224,93 @@ for vector_length in $VECTOR_LENGTHS; do
     done
   done
 done
+
+echo '
+float __gen_ocl_rndz(float x);
+float __gen_ocl_rnde(float x);
+float __gen_ocl_rndu(float x);
+float __gen_ocl_rndd(float x);
+'
+
+# convert_DSTTYPE_ROUNDING function
+for vector_length in $VECTOR_LENGTHS; do
+  for ftype in $TYPES; do
+    fbasetype=`IFS=:; set -- dummy $ftype; echo $2`
+    if test $fbasetype = "double"; then continue; fi
+
+    for ttype in $TYPES; do
+      tbasetype=`IFS=:; set -- dummy $ttype; echo $2`
+      if test $tbasetype = "double"; then continue; fi
+
+      if test $vector_length -eq 1; then
+        echo "INLINE_OVERLOADABLE $tbasetype convert_${tbasetype}_rte($fbasetype x)"
+        if test $fbasetype = "float" -a $tbasetype != "float"; then
+          echo "{ return __gen_ocl_rnde(x); }"
+        else
+          echo "{ return x; }"
+        fi
+
+        echo "INLINE_OVERLOADABLE $tbasetype convert_${tbasetype}_rtz($fbasetype x)"
+        if test $fbasetype = "float" -a $tbasetype != "float"; then
+          echo "{ return __gen_ocl_rndz(x); }"
+        else
+          echo "{ return x; }"
+        fi
+
+        echo "INLINE_OVERLOADABLE $tbasetype convert_${tbasetype}_rtp($fbasetype x)"
+        if test $fbasetype = "float" -a $tbasetype != "float"; then
+          echo "{ return __gen_ocl_rndu(x); }"
+        else
+          echo "{ return x; }"
+        fi
+
+        echo "INLINE_OVERLOADABLE $tbasetype convert_${tbasetype}_rtn($fbasetype x)"
+        if test $fbasetype = "float" -a $tbasetype != "float"; then
+          echo "{ return __gen_ocl_rndd(x); }"
+        else
+          echo "{ return x; }"
+        fi
+
+        continue
+      fi
+
+      for rounding in $ROUNDING_MODES; do
+        fvectortype=$fbasetype$vector_length
+        tvectortype=$tbasetype$vector_length
+        conv="convert_${tbasetype}_${rounding}"
+
+        construct="$conv(v.s0)"
+        if test $vector_length -gt 1; then
+          construct="$construct, $conv(v.s1)"
+        fi
+        if test $vector_length -gt 2; then
+          construct="$construct, $conv(v.s2)"
+        fi
+        if test $vector_length -gt 3; then
+          construct="$construct, $conv(v.s3)"
+        fi
+        if test $vector_length -gt 4; then
+          construct="$construct, $conv(v.s4)"
+          construct="$construct, $conv(v.s5)"
+          construct="$construct, $conv(v.s6)"
+          construct="$construct, $conv(v.s7)"
+        fi
+        if test $vector_length -gt 8; then
+          construct="$construct, $conv(v.s8)"
+          construct="$construct, $conv(v.s9)"
+          construct="$construct, $conv(v.sA)"
+          construct="$construct, $conv(v.sB)"
+          construct="$construct, $conv(v.sC)"
+          construct="$construct, $conv(v.sD)"
+          construct="$construct, $conv(v.sE)"
+          construct="$construct, $conv(v.sF)"
+        fi
+
+        echo "INLINE OVERLOADABLE $tvectortype convert_${tvectortype}_${rounding}($fvectortype v) {"
+        echo "  return ($tvectortype)($construct);"
+        echo "}"
+        echo
+      done
+    done
+  done
+done
