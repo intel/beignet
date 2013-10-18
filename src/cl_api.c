@@ -398,7 +398,7 @@ clCreateCommandQueue(cl_context                   context,
   INVALID_DEVICE_IF (device != context->device);
   INVALID_VALUE_IF (properties & ~(CL_QUEUE_OUT_OF_ORDER_EXEC_MODE_ENABLE | CL_QUEUE_PROFILING_ENABLE));
 
-  if(properties) {
+  if(properties & CL_QUEUE_OUT_OF_ORDER_EXEC_MODE_ENABLE) {/*not supported now.*/
     err = CL_INVALID_QUEUE_PROPERTIES;
     goto error;
   }
@@ -1224,8 +1224,37 @@ clGetEventProfilingInfo(cl_event             event,
                         void *               param_value,
                         size_t *             param_value_size_ret)
 {
-  NOT_IMPLEMENTED;
-  return 0;
+  cl_int err = CL_SUCCESS;
+  cl_ulong ret_val;
+
+  CHECK_EVENT(event);
+
+  if (!(event->queue->props & CL_QUEUE_PROFILING_ENABLE) ||
+          event->type == CL_COMMAND_USER ||
+          event->status != CL_COMPLETE) {
+    err = CL_PROFILING_INFO_NOT_AVAILABLE;
+    goto error;
+  }
+
+  if ((param_name != CL_PROFILING_COMMAND_QUEUED &&
+          param_name != CL_PROFILING_COMMAND_SUBMIT &&
+          param_name != CL_PROFILING_COMMAND_START &&
+          param_name != CL_PROFILING_COMMAND_END) ||
+          (param_value && param_value_size < sizeof(cl_ulong))) {
+    err = CL_INVALID_VALUE;
+    goto error;
+  }
+
+  err = cl_event_profiling(event, param_name, &ret_val);
+
+  if (err == CL_SUCCESS) {
+    if (param_value)
+      *(cl_ulong*)param_value = ret_val;
+    if (param_value_size_ret)
+      *param_value_size_ret = sizeof(cl_ulong);
+  }
+error:
+  return err;
 }
 
 cl_int
