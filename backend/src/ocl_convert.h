@@ -2210,3 +2210,1545 @@ INLINE OVERLOADABLE double16 convert_double16(float16 v) {
 }
 
 INLINE OVERLOADABLE float16 convert_float16(float16 v) { return v; }
+
+#define DEF(DSTTYPE, SRCTYPE) \
+  OVERLOADABLE DSTTYPE convert_ ## DSTTYPE ## _sat(SRCTYPE x);
+DEF(char, uchar);
+DEF(char, short);
+DEF(char, ushort);
+DEF(char, int);
+DEF(char, uint);
+DEF(char, float);
+DEF(uchar, char);
+DEF(uchar, short);
+DEF(uchar, ushort);
+DEF(uchar, int);
+DEF(uchar, uint);
+DEF(uchar, float);
+DEF(short, ushort);
+DEF(short, int);
+DEF(short, uint);
+DEF(short, float);
+DEF(ushort, short);
+DEF(ushort, int);
+DEF(ushort, uint);
+DEF(ushort, float);
+DEF(int, uint);
+DEF(int, float);
+DEF(uint, int);
+DEF(uint, float);
+#undef DEF
+
+#define DEF(DSTTYPE, SRCTYPE, MIN, MAX) \
+  INLINE_OVERLOADABLE DSTTYPE convert_ ## DSTTYPE ## _sat(SRCTYPE x) { \
+    return x > MAX ? (DSTTYPE)MAX : x < MIN ? (DSTTYPE)MIN : x; \
+  }
+DEF(char, long, -128, 127);
+DEF(uchar, long, 0, 255);
+DEF(short, long, -32768, 32767);
+DEF(ushort, long, 0, 65535);
+DEF(int, long, -0x7fffffff-1, 0x7fffffff);
+DEF(uint, long, 0, 0xffffffffu);
+DEF(long, float, -9.223372036854776e+18f, 9.223372036854776e+18f);
+DEF(ulong, float, 0, 1.8446744073709552e+19f);
+#undef DEF
+
+#define DEF(DSTTYPE, SRCTYPE, MAX) \
+  INLINE_OVERLOADABLE DSTTYPE convert_ ## DSTTYPE ## _sat(SRCTYPE x) { \
+    return x > MAX ? (DSTTYPE)MAX : x; \
+  }
+DEF(char, ulong, 127);
+DEF(uchar, ulong, 255);
+DEF(short, ulong, 32767);
+DEF(ushort, ulong, 65535);
+DEF(int, ulong, 0x7fffffff);
+DEF(uint, ulong, 0xffffffffu);
+#undef DEF
+
+INLINE_OVERLOADABLE long convert_long_sat(ulong x) {
+  ulong MAX = 0x7ffffffffffffffful;
+  return x > MAX ? MAX : x;
+}
+
+INLINE_OVERLOADABLE ulong convert_ulong_sat(long x) {
+  return x < 0 ? 0 : x;
+}
+
+#define DEF(DSTTYPE, SRCTYPE) \
+  INLINE_OVERLOADABLE DSTTYPE convert_ ## DSTTYPE ## _sat(SRCTYPE x) { \
+    return x; \
+  }
+DEF(char, char);
+DEF(uchar, uchar);
+DEF(short, char);
+DEF(short, uchar);
+DEF(short, short);
+DEF(ushort, char);
+DEF(ushort, uchar);
+DEF(ushort, ushort);
+DEF(int, char);
+DEF(int, uchar);
+DEF(int, short);
+DEF(int, ushort);
+DEF(int, int);
+DEF(uint, char);
+DEF(uint, uchar);
+DEF(uint, short);
+DEF(uint, ushort);
+DEF(uint, uint);
+DEF(long, char);
+DEF(long, uchar);
+DEF(long, short);
+DEF(long, ushort);
+DEF(long, int);
+DEF(long, uint);
+DEF(long, long);
+DEF(ulong, char);
+DEF(ulong, uchar);
+DEF(ulong, short);
+DEF(ulong, ushort);
+DEF(ulong, int);
+DEF(ulong, uint);
+DEF(ulong, ulong);
+#undef DEF
+
+INLINE OVERLOADABLE long2 convert_long2_sat(long2 v) {
+  return (long2)(convert_long_sat(v.s0), convert_long_sat(v.s1));
+}
+
+INLINE OVERLOADABLE ulong2 convert_ulong2_sat(long2 v) {
+  return (ulong2)(convert_ulong_sat(v.s0), convert_ulong_sat(v.s1));
+}
+
+INLINE OVERLOADABLE int2 convert_int2_sat(long2 v) {
+  return (int2)(convert_int_sat(v.s0), convert_int_sat(v.s1));
+}
+
+INLINE OVERLOADABLE uint2 convert_uint2_sat(long2 v) {
+  return (uint2)(convert_uint_sat(v.s0), convert_uint_sat(v.s1));
+}
+
+INLINE OVERLOADABLE short2 convert_short2_sat(long2 v) {
+  return (short2)(convert_short_sat(v.s0), convert_short_sat(v.s1));
+}
+
+INLINE OVERLOADABLE ushort2 convert_ushort2_sat(long2 v) {
+  return (ushort2)(convert_ushort_sat(v.s0), convert_ushort_sat(v.s1));
+}
+
+INLINE OVERLOADABLE char2 convert_char2_sat(long2 v) {
+  return (char2)(convert_char_sat(v.s0), convert_char_sat(v.s1));
+}
+
+INLINE OVERLOADABLE uchar2 convert_uchar2_sat(long2 v) {
+  return (uchar2)(convert_uchar_sat(v.s0), convert_uchar_sat(v.s1));
+}
+
+INLINE OVERLOADABLE long2 convert_long2_sat(ulong2 v) {
+  return (long2)(convert_long_sat(v.s0), convert_long_sat(v.s1));
+}
+
+INLINE OVERLOADABLE ulong2 convert_ulong2_sat(ulong2 v) {
+  return (ulong2)(convert_ulong_sat(v.s0), convert_ulong_sat(v.s1));
+}
+
+INLINE OVERLOADABLE int2 convert_int2_sat(ulong2 v) {
+  return (int2)(convert_int_sat(v.s0), convert_int_sat(v.s1));
+}
+
+INLINE OVERLOADABLE uint2 convert_uint2_sat(ulong2 v) {
+  return (uint2)(convert_uint_sat(v.s0), convert_uint_sat(v.s1));
+}
+
+INLINE OVERLOADABLE short2 convert_short2_sat(ulong2 v) {
+  return (short2)(convert_short_sat(v.s0), convert_short_sat(v.s1));
+}
+
+INLINE OVERLOADABLE ushort2 convert_ushort2_sat(ulong2 v) {
+  return (ushort2)(convert_ushort_sat(v.s0), convert_ushort_sat(v.s1));
+}
+
+INLINE OVERLOADABLE char2 convert_char2_sat(ulong2 v) {
+  return (char2)(convert_char_sat(v.s0), convert_char_sat(v.s1));
+}
+
+INLINE OVERLOADABLE uchar2 convert_uchar2_sat(ulong2 v) {
+  return (uchar2)(convert_uchar_sat(v.s0), convert_uchar_sat(v.s1));
+}
+
+INLINE OVERLOADABLE long2 convert_long2_sat(int2 v) {
+  return (long2)(convert_long_sat(v.s0), convert_long_sat(v.s1));
+}
+
+INLINE OVERLOADABLE ulong2 convert_ulong2_sat(int2 v) {
+  return (ulong2)(convert_ulong_sat(v.s0), convert_ulong_sat(v.s1));
+}
+
+INLINE OVERLOADABLE int2 convert_int2_sat(int2 v) {
+  return (int2)(convert_int_sat(v.s0), convert_int_sat(v.s1));
+}
+
+INLINE OVERLOADABLE uint2 convert_uint2_sat(int2 v) {
+  return (uint2)(convert_uint_sat(v.s0), convert_uint_sat(v.s1));
+}
+
+INLINE OVERLOADABLE short2 convert_short2_sat(int2 v) {
+  return (short2)(convert_short_sat(v.s0), convert_short_sat(v.s1));
+}
+
+INLINE OVERLOADABLE ushort2 convert_ushort2_sat(int2 v) {
+  return (ushort2)(convert_ushort_sat(v.s0), convert_ushort_sat(v.s1));
+}
+
+INLINE OVERLOADABLE char2 convert_char2_sat(int2 v) {
+  return (char2)(convert_char_sat(v.s0), convert_char_sat(v.s1));
+}
+
+INLINE OVERLOADABLE uchar2 convert_uchar2_sat(int2 v) {
+  return (uchar2)(convert_uchar_sat(v.s0), convert_uchar_sat(v.s1));
+}
+
+INLINE OVERLOADABLE long2 convert_long2_sat(uint2 v) {
+  return (long2)(convert_long_sat(v.s0), convert_long_sat(v.s1));
+}
+
+INLINE OVERLOADABLE ulong2 convert_ulong2_sat(uint2 v) {
+  return (ulong2)(convert_ulong_sat(v.s0), convert_ulong_sat(v.s1));
+}
+
+INLINE OVERLOADABLE int2 convert_int2_sat(uint2 v) {
+  return (int2)(convert_int_sat(v.s0), convert_int_sat(v.s1));
+}
+
+INLINE OVERLOADABLE uint2 convert_uint2_sat(uint2 v) {
+  return (uint2)(convert_uint_sat(v.s0), convert_uint_sat(v.s1));
+}
+
+INLINE OVERLOADABLE short2 convert_short2_sat(uint2 v) {
+  return (short2)(convert_short_sat(v.s0), convert_short_sat(v.s1));
+}
+
+INLINE OVERLOADABLE ushort2 convert_ushort2_sat(uint2 v) {
+  return (ushort2)(convert_ushort_sat(v.s0), convert_ushort_sat(v.s1));
+}
+
+INLINE OVERLOADABLE char2 convert_char2_sat(uint2 v) {
+  return (char2)(convert_char_sat(v.s0), convert_char_sat(v.s1));
+}
+
+INLINE OVERLOADABLE uchar2 convert_uchar2_sat(uint2 v) {
+  return (uchar2)(convert_uchar_sat(v.s0), convert_uchar_sat(v.s1));
+}
+
+INLINE OVERLOADABLE long2 convert_long2_sat(short2 v) {
+  return (long2)(convert_long_sat(v.s0), convert_long_sat(v.s1));
+}
+
+INLINE OVERLOADABLE ulong2 convert_ulong2_sat(short2 v) {
+  return (ulong2)(convert_ulong_sat(v.s0), convert_ulong_sat(v.s1));
+}
+
+INLINE OVERLOADABLE int2 convert_int2_sat(short2 v) {
+  return (int2)(convert_int_sat(v.s0), convert_int_sat(v.s1));
+}
+
+INLINE OVERLOADABLE uint2 convert_uint2_sat(short2 v) {
+  return (uint2)(convert_uint_sat(v.s0), convert_uint_sat(v.s1));
+}
+
+INLINE OVERLOADABLE short2 convert_short2_sat(short2 v) {
+  return (short2)(convert_short_sat(v.s0), convert_short_sat(v.s1));
+}
+
+INLINE OVERLOADABLE ushort2 convert_ushort2_sat(short2 v) {
+  return (ushort2)(convert_ushort_sat(v.s0), convert_ushort_sat(v.s1));
+}
+
+INLINE OVERLOADABLE char2 convert_char2_sat(short2 v) {
+  return (char2)(convert_char_sat(v.s0), convert_char_sat(v.s1));
+}
+
+INLINE OVERLOADABLE uchar2 convert_uchar2_sat(short2 v) {
+  return (uchar2)(convert_uchar_sat(v.s0), convert_uchar_sat(v.s1));
+}
+
+INLINE OVERLOADABLE long2 convert_long2_sat(ushort2 v) {
+  return (long2)(convert_long_sat(v.s0), convert_long_sat(v.s1));
+}
+
+INLINE OVERLOADABLE ulong2 convert_ulong2_sat(ushort2 v) {
+  return (ulong2)(convert_ulong_sat(v.s0), convert_ulong_sat(v.s1));
+}
+
+INLINE OVERLOADABLE int2 convert_int2_sat(ushort2 v) {
+  return (int2)(convert_int_sat(v.s0), convert_int_sat(v.s1));
+}
+
+INLINE OVERLOADABLE uint2 convert_uint2_sat(ushort2 v) {
+  return (uint2)(convert_uint_sat(v.s0), convert_uint_sat(v.s1));
+}
+
+INLINE OVERLOADABLE short2 convert_short2_sat(ushort2 v) {
+  return (short2)(convert_short_sat(v.s0), convert_short_sat(v.s1));
+}
+
+INLINE OVERLOADABLE ushort2 convert_ushort2_sat(ushort2 v) {
+  return (ushort2)(convert_ushort_sat(v.s0), convert_ushort_sat(v.s1));
+}
+
+INLINE OVERLOADABLE char2 convert_char2_sat(ushort2 v) {
+  return (char2)(convert_char_sat(v.s0), convert_char_sat(v.s1));
+}
+
+INLINE OVERLOADABLE uchar2 convert_uchar2_sat(ushort2 v) {
+  return (uchar2)(convert_uchar_sat(v.s0), convert_uchar_sat(v.s1));
+}
+
+INLINE OVERLOADABLE long2 convert_long2_sat(char2 v) {
+  return (long2)(convert_long_sat(v.s0), convert_long_sat(v.s1));
+}
+
+INLINE OVERLOADABLE ulong2 convert_ulong2_sat(char2 v) {
+  return (ulong2)(convert_ulong_sat(v.s0), convert_ulong_sat(v.s1));
+}
+
+INLINE OVERLOADABLE int2 convert_int2_sat(char2 v) {
+  return (int2)(convert_int_sat(v.s0), convert_int_sat(v.s1));
+}
+
+INLINE OVERLOADABLE uint2 convert_uint2_sat(char2 v) {
+  return (uint2)(convert_uint_sat(v.s0), convert_uint_sat(v.s1));
+}
+
+INLINE OVERLOADABLE short2 convert_short2_sat(char2 v) {
+  return (short2)(convert_short_sat(v.s0), convert_short_sat(v.s1));
+}
+
+INLINE OVERLOADABLE ushort2 convert_ushort2_sat(char2 v) {
+  return (ushort2)(convert_ushort_sat(v.s0), convert_ushort_sat(v.s1));
+}
+
+INLINE OVERLOADABLE char2 convert_char2_sat(char2 v) {
+  return (char2)(convert_char_sat(v.s0), convert_char_sat(v.s1));
+}
+
+INLINE OVERLOADABLE uchar2 convert_uchar2_sat(char2 v) {
+  return (uchar2)(convert_uchar_sat(v.s0), convert_uchar_sat(v.s1));
+}
+
+INLINE OVERLOADABLE long2 convert_long2_sat(uchar2 v) {
+  return (long2)(convert_long_sat(v.s0), convert_long_sat(v.s1));
+}
+
+INLINE OVERLOADABLE ulong2 convert_ulong2_sat(uchar2 v) {
+  return (ulong2)(convert_ulong_sat(v.s0), convert_ulong_sat(v.s1));
+}
+
+INLINE OVERLOADABLE int2 convert_int2_sat(uchar2 v) {
+  return (int2)(convert_int_sat(v.s0), convert_int_sat(v.s1));
+}
+
+INLINE OVERLOADABLE uint2 convert_uint2_sat(uchar2 v) {
+  return (uint2)(convert_uint_sat(v.s0), convert_uint_sat(v.s1));
+}
+
+INLINE OVERLOADABLE short2 convert_short2_sat(uchar2 v) {
+  return (short2)(convert_short_sat(v.s0), convert_short_sat(v.s1));
+}
+
+INLINE OVERLOADABLE ushort2 convert_ushort2_sat(uchar2 v) {
+  return (ushort2)(convert_ushort_sat(v.s0), convert_ushort_sat(v.s1));
+}
+
+INLINE OVERLOADABLE char2 convert_char2_sat(uchar2 v) {
+  return (char2)(convert_char_sat(v.s0), convert_char_sat(v.s1));
+}
+
+INLINE OVERLOADABLE uchar2 convert_uchar2_sat(uchar2 v) {
+  return (uchar2)(convert_uchar_sat(v.s0), convert_uchar_sat(v.s1));
+}
+
+INLINE OVERLOADABLE long2 convert_long2_sat(float2 v) {
+  return (long2)(convert_long_sat(v.s0), convert_long_sat(v.s1));
+}
+
+INLINE OVERLOADABLE ulong2 convert_ulong2_sat(float2 v) {
+  return (ulong2)(convert_ulong_sat(v.s0), convert_ulong_sat(v.s1));
+}
+
+INLINE OVERLOADABLE int2 convert_int2_sat(float2 v) {
+  return (int2)(convert_int_sat(v.s0), convert_int_sat(v.s1));
+}
+
+INLINE OVERLOADABLE uint2 convert_uint2_sat(float2 v) {
+  return (uint2)(convert_uint_sat(v.s0), convert_uint_sat(v.s1));
+}
+
+INLINE OVERLOADABLE short2 convert_short2_sat(float2 v) {
+  return (short2)(convert_short_sat(v.s0), convert_short_sat(v.s1));
+}
+
+INLINE OVERLOADABLE ushort2 convert_ushort2_sat(float2 v) {
+  return (ushort2)(convert_ushort_sat(v.s0), convert_ushort_sat(v.s1));
+}
+
+INLINE OVERLOADABLE char2 convert_char2_sat(float2 v) {
+  return (char2)(convert_char_sat(v.s0), convert_char_sat(v.s1));
+}
+
+INLINE OVERLOADABLE uchar2 convert_uchar2_sat(float2 v) {
+  return (uchar2)(convert_uchar_sat(v.s0), convert_uchar_sat(v.s1));
+}
+
+INLINE OVERLOADABLE long3 convert_long3_sat(long3 v) {
+  return (long3)(convert_long_sat(v.s0), convert_long_sat(v.s1), convert_long_sat(v.s2));
+}
+
+INLINE OVERLOADABLE ulong3 convert_ulong3_sat(long3 v) {
+  return (ulong3)(convert_ulong_sat(v.s0), convert_ulong_sat(v.s1), convert_ulong_sat(v.s2));
+}
+
+INLINE OVERLOADABLE int3 convert_int3_sat(long3 v) {
+  return (int3)(convert_int_sat(v.s0), convert_int_sat(v.s1), convert_int_sat(v.s2));
+}
+
+INLINE OVERLOADABLE uint3 convert_uint3_sat(long3 v) {
+  return (uint3)(convert_uint_sat(v.s0), convert_uint_sat(v.s1), convert_uint_sat(v.s2));
+}
+
+INLINE OVERLOADABLE short3 convert_short3_sat(long3 v) {
+  return (short3)(convert_short_sat(v.s0), convert_short_sat(v.s1), convert_short_sat(v.s2));
+}
+
+INLINE OVERLOADABLE ushort3 convert_ushort3_sat(long3 v) {
+  return (ushort3)(convert_ushort_sat(v.s0), convert_ushort_sat(v.s1), convert_ushort_sat(v.s2));
+}
+
+INLINE OVERLOADABLE char3 convert_char3_sat(long3 v) {
+  return (char3)(convert_char_sat(v.s0), convert_char_sat(v.s1), convert_char_sat(v.s2));
+}
+
+INLINE OVERLOADABLE uchar3 convert_uchar3_sat(long3 v) {
+  return (uchar3)(convert_uchar_sat(v.s0), convert_uchar_sat(v.s1), convert_uchar_sat(v.s2));
+}
+
+INLINE OVERLOADABLE long3 convert_long3_sat(ulong3 v) {
+  return (long3)(convert_long_sat(v.s0), convert_long_sat(v.s1), convert_long_sat(v.s2));
+}
+
+INLINE OVERLOADABLE ulong3 convert_ulong3_sat(ulong3 v) {
+  return (ulong3)(convert_ulong_sat(v.s0), convert_ulong_sat(v.s1), convert_ulong_sat(v.s2));
+}
+
+INLINE OVERLOADABLE int3 convert_int3_sat(ulong3 v) {
+  return (int3)(convert_int_sat(v.s0), convert_int_sat(v.s1), convert_int_sat(v.s2));
+}
+
+INLINE OVERLOADABLE uint3 convert_uint3_sat(ulong3 v) {
+  return (uint3)(convert_uint_sat(v.s0), convert_uint_sat(v.s1), convert_uint_sat(v.s2));
+}
+
+INLINE OVERLOADABLE short3 convert_short3_sat(ulong3 v) {
+  return (short3)(convert_short_sat(v.s0), convert_short_sat(v.s1), convert_short_sat(v.s2));
+}
+
+INLINE OVERLOADABLE ushort3 convert_ushort3_sat(ulong3 v) {
+  return (ushort3)(convert_ushort_sat(v.s0), convert_ushort_sat(v.s1), convert_ushort_sat(v.s2));
+}
+
+INLINE OVERLOADABLE char3 convert_char3_sat(ulong3 v) {
+  return (char3)(convert_char_sat(v.s0), convert_char_sat(v.s1), convert_char_sat(v.s2));
+}
+
+INLINE OVERLOADABLE uchar3 convert_uchar3_sat(ulong3 v) {
+  return (uchar3)(convert_uchar_sat(v.s0), convert_uchar_sat(v.s1), convert_uchar_sat(v.s2));
+}
+
+INLINE OVERLOADABLE long3 convert_long3_sat(int3 v) {
+  return (long3)(convert_long_sat(v.s0), convert_long_sat(v.s1), convert_long_sat(v.s2));
+}
+
+INLINE OVERLOADABLE ulong3 convert_ulong3_sat(int3 v) {
+  return (ulong3)(convert_ulong_sat(v.s0), convert_ulong_sat(v.s1), convert_ulong_sat(v.s2));
+}
+
+INLINE OVERLOADABLE int3 convert_int3_sat(int3 v) {
+  return (int3)(convert_int_sat(v.s0), convert_int_sat(v.s1), convert_int_sat(v.s2));
+}
+
+INLINE OVERLOADABLE uint3 convert_uint3_sat(int3 v) {
+  return (uint3)(convert_uint_sat(v.s0), convert_uint_sat(v.s1), convert_uint_sat(v.s2));
+}
+
+INLINE OVERLOADABLE short3 convert_short3_sat(int3 v) {
+  return (short3)(convert_short_sat(v.s0), convert_short_sat(v.s1), convert_short_sat(v.s2));
+}
+
+INLINE OVERLOADABLE ushort3 convert_ushort3_sat(int3 v) {
+  return (ushort3)(convert_ushort_sat(v.s0), convert_ushort_sat(v.s1), convert_ushort_sat(v.s2));
+}
+
+INLINE OVERLOADABLE char3 convert_char3_sat(int3 v) {
+  return (char3)(convert_char_sat(v.s0), convert_char_sat(v.s1), convert_char_sat(v.s2));
+}
+
+INLINE OVERLOADABLE uchar3 convert_uchar3_sat(int3 v) {
+  return (uchar3)(convert_uchar_sat(v.s0), convert_uchar_sat(v.s1), convert_uchar_sat(v.s2));
+}
+
+INLINE OVERLOADABLE long3 convert_long3_sat(uint3 v) {
+  return (long3)(convert_long_sat(v.s0), convert_long_sat(v.s1), convert_long_sat(v.s2));
+}
+
+INLINE OVERLOADABLE ulong3 convert_ulong3_sat(uint3 v) {
+  return (ulong3)(convert_ulong_sat(v.s0), convert_ulong_sat(v.s1), convert_ulong_sat(v.s2));
+}
+
+INLINE OVERLOADABLE int3 convert_int3_sat(uint3 v) {
+  return (int3)(convert_int_sat(v.s0), convert_int_sat(v.s1), convert_int_sat(v.s2));
+}
+
+INLINE OVERLOADABLE uint3 convert_uint3_sat(uint3 v) {
+  return (uint3)(convert_uint_sat(v.s0), convert_uint_sat(v.s1), convert_uint_sat(v.s2));
+}
+
+INLINE OVERLOADABLE short3 convert_short3_sat(uint3 v) {
+  return (short3)(convert_short_sat(v.s0), convert_short_sat(v.s1), convert_short_sat(v.s2));
+}
+
+INLINE OVERLOADABLE ushort3 convert_ushort3_sat(uint3 v) {
+  return (ushort3)(convert_ushort_sat(v.s0), convert_ushort_sat(v.s1), convert_ushort_sat(v.s2));
+}
+
+INLINE OVERLOADABLE char3 convert_char3_sat(uint3 v) {
+  return (char3)(convert_char_sat(v.s0), convert_char_sat(v.s1), convert_char_sat(v.s2));
+}
+
+INLINE OVERLOADABLE uchar3 convert_uchar3_sat(uint3 v) {
+  return (uchar3)(convert_uchar_sat(v.s0), convert_uchar_sat(v.s1), convert_uchar_sat(v.s2));
+}
+
+INLINE OVERLOADABLE long3 convert_long3_sat(short3 v) {
+  return (long3)(convert_long_sat(v.s0), convert_long_sat(v.s1), convert_long_sat(v.s2));
+}
+
+INLINE OVERLOADABLE ulong3 convert_ulong3_sat(short3 v) {
+  return (ulong3)(convert_ulong_sat(v.s0), convert_ulong_sat(v.s1), convert_ulong_sat(v.s2));
+}
+
+INLINE OVERLOADABLE int3 convert_int3_sat(short3 v) {
+  return (int3)(convert_int_sat(v.s0), convert_int_sat(v.s1), convert_int_sat(v.s2));
+}
+
+INLINE OVERLOADABLE uint3 convert_uint3_sat(short3 v) {
+  return (uint3)(convert_uint_sat(v.s0), convert_uint_sat(v.s1), convert_uint_sat(v.s2));
+}
+
+INLINE OVERLOADABLE short3 convert_short3_sat(short3 v) {
+  return (short3)(convert_short_sat(v.s0), convert_short_sat(v.s1), convert_short_sat(v.s2));
+}
+
+INLINE OVERLOADABLE ushort3 convert_ushort3_sat(short3 v) {
+  return (ushort3)(convert_ushort_sat(v.s0), convert_ushort_sat(v.s1), convert_ushort_sat(v.s2));
+}
+
+INLINE OVERLOADABLE char3 convert_char3_sat(short3 v) {
+  return (char3)(convert_char_sat(v.s0), convert_char_sat(v.s1), convert_char_sat(v.s2));
+}
+
+INLINE OVERLOADABLE uchar3 convert_uchar3_sat(short3 v) {
+  return (uchar3)(convert_uchar_sat(v.s0), convert_uchar_sat(v.s1), convert_uchar_sat(v.s2));
+}
+
+INLINE OVERLOADABLE long3 convert_long3_sat(ushort3 v) {
+  return (long3)(convert_long_sat(v.s0), convert_long_sat(v.s1), convert_long_sat(v.s2));
+}
+
+INLINE OVERLOADABLE ulong3 convert_ulong3_sat(ushort3 v) {
+  return (ulong3)(convert_ulong_sat(v.s0), convert_ulong_sat(v.s1), convert_ulong_sat(v.s2));
+}
+
+INLINE OVERLOADABLE int3 convert_int3_sat(ushort3 v) {
+  return (int3)(convert_int_sat(v.s0), convert_int_sat(v.s1), convert_int_sat(v.s2));
+}
+
+INLINE OVERLOADABLE uint3 convert_uint3_sat(ushort3 v) {
+  return (uint3)(convert_uint_sat(v.s0), convert_uint_sat(v.s1), convert_uint_sat(v.s2));
+}
+
+INLINE OVERLOADABLE short3 convert_short3_sat(ushort3 v) {
+  return (short3)(convert_short_sat(v.s0), convert_short_sat(v.s1), convert_short_sat(v.s2));
+}
+
+INLINE OVERLOADABLE ushort3 convert_ushort3_sat(ushort3 v) {
+  return (ushort3)(convert_ushort_sat(v.s0), convert_ushort_sat(v.s1), convert_ushort_sat(v.s2));
+}
+
+INLINE OVERLOADABLE char3 convert_char3_sat(ushort3 v) {
+  return (char3)(convert_char_sat(v.s0), convert_char_sat(v.s1), convert_char_sat(v.s2));
+}
+
+INLINE OVERLOADABLE uchar3 convert_uchar3_sat(ushort3 v) {
+  return (uchar3)(convert_uchar_sat(v.s0), convert_uchar_sat(v.s1), convert_uchar_sat(v.s2));
+}
+
+INLINE OVERLOADABLE long3 convert_long3_sat(char3 v) {
+  return (long3)(convert_long_sat(v.s0), convert_long_sat(v.s1), convert_long_sat(v.s2));
+}
+
+INLINE OVERLOADABLE ulong3 convert_ulong3_sat(char3 v) {
+  return (ulong3)(convert_ulong_sat(v.s0), convert_ulong_sat(v.s1), convert_ulong_sat(v.s2));
+}
+
+INLINE OVERLOADABLE int3 convert_int3_sat(char3 v) {
+  return (int3)(convert_int_sat(v.s0), convert_int_sat(v.s1), convert_int_sat(v.s2));
+}
+
+INLINE OVERLOADABLE uint3 convert_uint3_sat(char3 v) {
+  return (uint3)(convert_uint_sat(v.s0), convert_uint_sat(v.s1), convert_uint_sat(v.s2));
+}
+
+INLINE OVERLOADABLE short3 convert_short3_sat(char3 v) {
+  return (short3)(convert_short_sat(v.s0), convert_short_sat(v.s1), convert_short_sat(v.s2));
+}
+
+INLINE OVERLOADABLE ushort3 convert_ushort3_sat(char3 v) {
+  return (ushort3)(convert_ushort_sat(v.s0), convert_ushort_sat(v.s1), convert_ushort_sat(v.s2));
+}
+
+INLINE OVERLOADABLE char3 convert_char3_sat(char3 v) {
+  return (char3)(convert_char_sat(v.s0), convert_char_sat(v.s1), convert_char_sat(v.s2));
+}
+
+INLINE OVERLOADABLE uchar3 convert_uchar3_sat(char3 v) {
+  return (uchar3)(convert_uchar_sat(v.s0), convert_uchar_sat(v.s1), convert_uchar_sat(v.s2));
+}
+
+INLINE OVERLOADABLE long3 convert_long3_sat(uchar3 v) {
+  return (long3)(convert_long_sat(v.s0), convert_long_sat(v.s1), convert_long_sat(v.s2));
+}
+
+INLINE OVERLOADABLE ulong3 convert_ulong3_sat(uchar3 v) {
+  return (ulong3)(convert_ulong_sat(v.s0), convert_ulong_sat(v.s1), convert_ulong_sat(v.s2));
+}
+
+INLINE OVERLOADABLE int3 convert_int3_sat(uchar3 v) {
+  return (int3)(convert_int_sat(v.s0), convert_int_sat(v.s1), convert_int_sat(v.s2));
+}
+
+INLINE OVERLOADABLE uint3 convert_uint3_sat(uchar3 v) {
+  return (uint3)(convert_uint_sat(v.s0), convert_uint_sat(v.s1), convert_uint_sat(v.s2));
+}
+
+INLINE OVERLOADABLE short3 convert_short3_sat(uchar3 v) {
+  return (short3)(convert_short_sat(v.s0), convert_short_sat(v.s1), convert_short_sat(v.s2));
+}
+
+INLINE OVERLOADABLE ushort3 convert_ushort3_sat(uchar3 v) {
+  return (ushort3)(convert_ushort_sat(v.s0), convert_ushort_sat(v.s1), convert_ushort_sat(v.s2));
+}
+
+INLINE OVERLOADABLE char3 convert_char3_sat(uchar3 v) {
+  return (char3)(convert_char_sat(v.s0), convert_char_sat(v.s1), convert_char_sat(v.s2));
+}
+
+INLINE OVERLOADABLE uchar3 convert_uchar3_sat(uchar3 v) {
+  return (uchar3)(convert_uchar_sat(v.s0), convert_uchar_sat(v.s1), convert_uchar_sat(v.s2));
+}
+
+INLINE OVERLOADABLE long3 convert_long3_sat(float3 v) {
+  return (long3)(convert_long_sat(v.s0), convert_long_sat(v.s1), convert_long_sat(v.s2));
+}
+
+INLINE OVERLOADABLE ulong3 convert_ulong3_sat(float3 v) {
+  return (ulong3)(convert_ulong_sat(v.s0), convert_ulong_sat(v.s1), convert_ulong_sat(v.s2));
+}
+
+INLINE OVERLOADABLE int3 convert_int3_sat(float3 v) {
+  return (int3)(convert_int_sat(v.s0), convert_int_sat(v.s1), convert_int_sat(v.s2));
+}
+
+INLINE OVERLOADABLE uint3 convert_uint3_sat(float3 v) {
+  return (uint3)(convert_uint_sat(v.s0), convert_uint_sat(v.s1), convert_uint_sat(v.s2));
+}
+
+INLINE OVERLOADABLE short3 convert_short3_sat(float3 v) {
+  return (short3)(convert_short_sat(v.s0), convert_short_sat(v.s1), convert_short_sat(v.s2));
+}
+
+INLINE OVERLOADABLE ushort3 convert_ushort3_sat(float3 v) {
+  return (ushort3)(convert_ushort_sat(v.s0), convert_ushort_sat(v.s1), convert_ushort_sat(v.s2));
+}
+
+INLINE OVERLOADABLE char3 convert_char3_sat(float3 v) {
+  return (char3)(convert_char_sat(v.s0), convert_char_sat(v.s1), convert_char_sat(v.s2));
+}
+
+INLINE OVERLOADABLE uchar3 convert_uchar3_sat(float3 v) {
+  return (uchar3)(convert_uchar_sat(v.s0), convert_uchar_sat(v.s1), convert_uchar_sat(v.s2));
+}
+
+INLINE OVERLOADABLE long4 convert_long4_sat(long4 v) {
+  return (long4)(convert_long_sat(v.s0), convert_long_sat(v.s1), convert_long_sat(v.s2), convert_long_sat(v.s3));
+}
+
+INLINE OVERLOADABLE ulong4 convert_ulong4_sat(long4 v) {
+  return (ulong4)(convert_ulong_sat(v.s0), convert_ulong_sat(v.s1), convert_ulong_sat(v.s2), convert_ulong_sat(v.s3));
+}
+
+INLINE OVERLOADABLE int4 convert_int4_sat(long4 v) {
+  return (int4)(convert_int_sat(v.s0), convert_int_sat(v.s1), convert_int_sat(v.s2), convert_int_sat(v.s3));
+}
+
+INLINE OVERLOADABLE uint4 convert_uint4_sat(long4 v) {
+  return (uint4)(convert_uint_sat(v.s0), convert_uint_sat(v.s1), convert_uint_sat(v.s2), convert_uint_sat(v.s3));
+}
+
+INLINE OVERLOADABLE short4 convert_short4_sat(long4 v) {
+  return (short4)(convert_short_sat(v.s0), convert_short_sat(v.s1), convert_short_sat(v.s2), convert_short_sat(v.s3));
+}
+
+INLINE OVERLOADABLE ushort4 convert_ushort4_sat(long4 v) {
+  return (ushort4)(convert_ushort_sat(v.s0), convert_ushort_sat(v.s1), convert_ushort_sat(v.s2), convert_ushort_sat(v.s3));
+}
+
+INLINE OVERLOADABLE char4 convert_char4_sat(long4 v) {
+  return (char4)(convert_char_sat(v.s0), convert_char_sat(v.s1), convert_char_sat(v.s2), convert_char_sat(v.s3));
+}
+
+INLINE OVERLOADABLE uchar4 convert_uchar4_sat(long4 v) {
+  return (uchar4)(convert_uchar_sat(v.s0), convert_uchar_sat(v.s1), convert_uchar_sat(v.s2), convert_uchar_sat(v.s3));
+}
+
+INLINE OVERLOADABLE long4 convert_long4_sat(ulong4 v) {
+  return (long4)(convert_long_sat(v.s0), convert_long_sat(v.s1), convert_long_sat(v.s2), convert_long_sat(v.s3));
+}
+
+INLINE OVERLOADABLE ulong4 convert_ulong4_sat(ulong4 v) {
+  return (ulong4)(convert_ulong_sat(v.s0), convert_ulong_sat(v.s1), convert_ulong_sat(v.s2), convert_ulong_sat(v.s3));
+}
+
+INLINE OVERLOADABLE int4 convert_int4_sat(ulong4 v) {
+  return (int4)(convert_int_sat(v.s0), convert_int_sat(v.s1), convert_int_sat(v.s2), convert_int_sat(v.s3));
+}
+
+INLINE OVERLOADABLE uint4 convert_uint4_sat(ulong4 v) {
+  return (uint4)(convert_uint_sat(v.s0), convert_uint_sat(v.s1), convert_uint_sat(v.s2), convert_uint_sat(v.s3));
+}
+
+INLINE OVERLOADABLE short4 convert_short4_sat(ulong4 v) {
+  return (short4)(convert_short_sat(v.s0), convert_short_sat(v.s1), convert_short_sat(v.s2), convert_short_sat(v.s3));
+}
+
+INLINE OVERLOADABLE ushort4 convert_ushort4_sat(ulong4 v) {
+  return (ushort4)(convert_ushort_sat(v.s0), convert_ushort_sat(v.s1), convert_ushort_sat(v.s2), convert_ushort_sat(v.s3));
+}
+
+INLINE OVERLOADABLE char4 convert_char4_sat(ulong4 v) {
+  return (char4)(convert_char_sat(v.s0), convert_char_sat(v.s1), convert_char_sat(v.s2), convert_char_sat(v.s3));
+}
+
+INLINE OVERLOADABLE uchar4 convert_uchar4_sat(ulong4 v) {
+  return (uchar4)(convert_uchar_sat(v.s0), convert_uchar_sat(v.s1), convert_uchar_sat(v.s2), convert_uchar_sat(v.s3));
+}
+
+INLINE OVERLOADABLE long4 convert_long4_sat(int4 v) {
+  return (long4)(convert_long_sat(v.s0), convert_long_sat(v.s1), convert_long_sat(v.s2), convert_long_sat(v.s3));
+}
+
+INLINE OVERLOADABLE ulong4 convert_ulong4_sat(int4 v) {
+  return (ulong4)(convert_ulong_sat(v.s0), convert_ulong_sat(v.s1), convert_ulong_sat(v.s2), convert_ulong_sat(v.s3));
+}
+
+INLINE OVERLOADABLE int4 convert_int4_sat(int4 v) {
+  return (int4)(convert_int_sat(v.s0), convert_int_sat(v.s1), convert_int_sat(v.s2), convert_int_sat(v.s3));
+}
+
+INLINE OVERLOADABLE uint4 convert_uint4_sat(int4 v) {
+  return (uint4)(convert_uint_sat(v.s0), convert_uint_sat(v.s1), convert_uint_sat(v.s2), convert_uint_sat(v.s3));
+}
+
+INLINE OVERLOADABLE short4 convert_short4_sat(int4 v) {
+  return (short4)(convert_short_sat(v.s0), convert_short_sat(v.s1), convert_short_sat(v.s2), convert_short_sat(v.s3));
+}
+
+INLINE OVERLOADABLE ushort4 convert_ushort4_sat(int4 v) {
+  return (ushort4)(convert_ushort_sat(v.s0), convert_ushort_sat(v.s1), convert_ushort_sat(v.s2), convert_ushort_sat(v.s3));
+}
+
+INLINE OVERLOADABLE char4 convert_char4_sat(int4 v) {
+  return (char4)(convert_char_sat(v.s0), convert_char_sat(v.s1), convert_char_sat(v.s2), convert_char_sat(v.s3));
+}
+
+INLINE OVERLOADABLE uchar4 convert_uchar4_sat(int4 v) {
+  return (uchar4)(convert_uchar_sat(v.s0), convert_uchar_sat(v.s1), convert_uchar_sat(v.s2), convert_uchar_sat(v.s3));
+}
+
+INLINE OVERLOADABLE long4 convert_long4_sat(uint4 v) {
+  return (long4)(convert_long_sat(v.s0), convert_long_sat(v.s1), convert_long_sat(v.s2), convert_long_sat(v.s3));
+}
+
+INLINE OVERLOADABLE ulong4 convert_ulong4_sat(uint4 v) {
+  return (ulong4)(convert_ulong_sat(v.s0), convert_ulong_sat(v.s1), convert_ulong_sat(v.s2), convert_ulong_sat(v.s3));
+}
+
+INLINE OVERLOADABLE int4 convert_int4_sat(uint4 v) {
+  return (int4)(convert_int_sat(v.s0), convert_int_sat(v.s1), convert_int_sat(v.s2), convert_int_sat(v.s3));
+}
+
+INLINE OVERLOADABLE uint4 convert_uint4_sat(uint4 v) {
+  return (uint4)(convert_uint_sat(v.s0), convert_uint_sat(v.s1), convert_uint_sat(v.s2), convert_uint_sat(v.s3));
+}
+
+INLINE OVERLOADABLE short4 convert_short4_sat(uint4 v) {
+  return (short4)(convert_short_sat(v.s0), convert_short_sat(v.s1), convert_short_sat(v.s2), convert_short_sat(v.s3));
+}
+
+INLINE OVERLOADABLE ushort4 convert_ushort4_sat(uint4 v) {
+  return (ushort4)(convert_ushort_sat(v.s0), convert_ushort_sat(v.s1), convert_ushort_sat(v.s2), convert_ushort_sat(v.s3));
+}
+
+INLINE OVERLOADABLE char4 convert_char4_sat(uint4 v) {
+  return (char4)(convert_char_sat(v.s0), convert_char_sat(v.s1), convert_char_sat(v.s2), convert_char_sat(v.s3));
+}
+
+INLINE OVERLOADABLE uchar4 convert_uchar4_sat(uint4 v) {
+  return (uchar4)(convert_uchar_sat(v.s0), convert_uchar_sat(v.s1), convert_uchar_sat(v.s2), convert_uchar_sat(v.s3));
+}
+
+INLINE OVERLOADABLE long4 convert_long4_sat(short4 v) {
+  return (long4)(convert_long_sat(v.s0), convert_long_sat(v.s1), convert_long_sat(v.s2), convert_long_sat(v.s3));
+}
+
+INLINE OVERLOADABLE ulong4 convert_ulong4_sat(short4 v) {
+  return (ulong4)(convert_ulong_sat(v.s0), convert_ulong_sat(v.s1), convert_ulong_sat(v.s2), convert_ulong_sat(v.s3));
+}
+
+INLINE OVERLOADABLE int4 convert_int4_sat(short4 v) {
+  return (int4)(convert_int_sat(v.s0), convert_int_sat(v.s1), convert_int_sat(v.s2), convert_int_sat(v.s3));
+}
+
+INLINE OVERLOADABLE uint4 convert_uint4_sat(short4 v) {
+  return (uint4)(convert_uint_sat(v.s0), convert_uint_sat(v.s1), convert_uint_sat(v.s2), convert_uint_sat(v.s3));
+}
+
+INLINE OVERLOADABLE short4 convert_short4_sat(short4 v) {
+  return (short4)(convert_short_sat(v.s0), convert_short_sat(v.s1), convert_short_sat(v.s2), convert_short_sat(v.s3));
+}
+
+INLINE OVERLOADABLE ushort4 convert_ushort4_sat(short4 v) {
+  return (ushort4)(convert_ushort_sat(v.s0), convert_ushort_sat(v.s1), convert_ushort_sat(v.s2), convert_ushort_sat(v.s3));
+}
+
+INLINE OVERLOADABLE char4 convert_char4_sat(short4 v) {
+  return (char4)(convert_char_sat(v.s0), convert_char_sat(v.s1), convert_char_sat(v.s2), convert_char_sat(v.s3));
+}
+
+INLINE OVERLOADABLE uchar4 convert_uchar4_sat(short4 v) {
+  return (uchar4)(convert_uchar_sat(v.s0), convert_uchar_sat(v.s1), convert_uchar_sat(v.s2), convert_uchar_sat(v.s3));
+}
+
+INLINE OVERLOADABLE long4 convert_long4_sat(ushort4 v) {
+  return (long4)(convert_long_sat(v.s0), convert_long_sat(v.s1), convert_long_sat(v.s2), convert_long_sat(v.s3));
+}
+
+INLINE OVERLOADABLE ulong4 convert_ulong4_sat(ushort4 v) {
+  return (ulong4)(convert_ulong_sat(v.s0), convert_ulong_sat(v.s1), convert_ulong_sat(v.s2), convert_ulong_sat(v.s3));
+}
+
+INLINE OVERLOADABLE int4 convert_int4_sat(ushort4 v) {
+  return (int4)(convert_int_sat(v.s0), convert_int_sat(v.s1), convert_int_sat(v.s2), convert_int_sat(v.s3));
+}
+
+INLINE OVERLOADABLE uint4 convert_uint4_sat(ushort4 v) {
+  return (uint4)(convert_uint_sat(v.s0), convert_uint_sat(v.s1), convert_uint_sat(v.s2), convert_uint_sat(v.s3));
+}
+
+INLINE OVERLOADABLE short4 convert_short4_sat(ushort4 v) {
+  return (short4)(convert_short_sat(v.s0), convert_short_sat(v.s1), convert_short_sat(v.s2), convert_short_sat(v.s3));
+}
+
+INLINE OVERLOADABLE ushort4 convert_ushort4_sat(ushort4 v) {
+  return (ushort4)(convert_ushort_sat(v.s0), convert_ushort_sat(v.s1), convert_ushort_sat(v.s2), convert_ushort_sat(v.s3));
+}
+
+INLINE OVERLOADABLE char4 convert_char4_sat(ushort4 v) {
+  return (char4)(convert_char_sat(v.s0), convert_char_sat(v.s1), convert_char_sat(v.s2), convert_char_sat(v.s3));
+}
+
+INLINE OVERLOADABLE uchar4 convert_uchar4_sat(ushort4 v) {
+  return (uchar4)(convert_uchar_sat(v.s0), convert_uchar_sat(v.s1), convert_uchar_sat(v.s2), convert_uchar_sat(v.s3));
+}
+
+INLINE OVERLOADABLE long4 convert_long4_sat(char4 v) {
+  return (long4)(convert_long_sat(v.s0), convert_long_sat(v.s1), convert_long_sat(v.s2), convert_long_sat(v.s3));
+}
+
+INLINE OVERLOADABLE ulong4 convert_ulong4_sat(char4 v) {
+  return (ulong4)(convert_ulong_sat(v.s0), convert_ulong_sat(v.s1), convert_ulong_sat(v.s2), convert_ulong_sat(v.s3));
+}
+
+INLINE OVERLOADABLE int4 convert_int4_sat(char4 v) {
+  return (int4)(convert_int_sat(v.s0), convert_int_sat(v.s1), convert_int_sat(v.s2), convert_int_sat(v.s3));
+}
+
+INLINE OVERLOADABLE uint4 convert_uint4_sat(char4 v) {
+  return (uint4)(convert_uint_sat(v.s0), convert_uint_sat(v.s1), convert_uint_sat(v.s2), convert_uint_sat(v.s3));
+}
+
+INLINE OVERLOADABLE short4 convert_short4_sat(char4 v) {
+  return (short4)(convert_short_sat(v.s0), convert_short_sat(v.s1), convert_short_sat(v.s2), convert_short_sat(v.s3));
+}
+
+INLINE OVERLOADABLE ushort4 convert_ushort4_sat(char4 v) {
+  return (ushort4)(convert_ushort_sat(v.s0), convert_ushort_sat(v.s1), convert_ushort_sat(v.s2), convert_ushort_sat(v.s3));
+}
+
+INLINE OVERLOADABLE char4 convert_char4_sat(char4 v) {
+  return (char4)(convert_char_sat(v.s0), convert_char_sat(v.s1), convert_char_sat(v.s2), convert_char_sat(v.s3));
+}
+
+INLINE OVERLOADABLE uchar4 convert_uchar4_sat(char4 v) {
+  return (uchar4)(convert_uchar_sat(v.s0), convert_uchar_sat(v.s1), convert_uchar_sat(v.s2), convert_uchar_sat(v.s3));
+}
+
+INLINE OVERLOADABLE long4 convert_long4_sat(uchar4 v) {
+  return (long4)(convert_long_sat(v.s0), convert_long_sat(v.s1), convert_long_sat(v.s2), convert_long_sat(v.s3));
+}
+
+INLINE OVERLOADABLE ulong4 convert_ulong4_sat(uchar4 v) {
+  return (ulong4)(convert_ulong_sat(v.s0), convert_ulong_sat(v.s1), convert_ulong_sat(v.s2), convert_ulong_sat(v.s3));
+}
+
+INLINE OVERLOADABLE int4 convert_int4_sat(uchar4 v) {
+  return (int4)(convert_int_sat(v.s0), convert_int_sat(v.s1), convert_int_sat(v.s2), convert_int_sat(v.s3));
+}
+
+INLINE OVERLOADABLE uint4 convert_uint4_sat(uchar4 v) {
+  return (uint4)(convert_uint_sat(v.s0), convert_uint_sat(v.s1), convert_uint_sat(v.s2), convert_uint_sat(v.s3));
+}
+
+INLINE OVERLOADABLE short4 convert_short4_sat(uchar4 v) {
+  return (short4)(convert_short_sat(v.s0), convert_short_sat(v.s1), convert_short_sat(v.s2), convert_short_sat(v.s3));
+}
+
+INLINE OVERLOADABLE ushort4 convert_ushort4_sat(uchar4 v) {
+  return (ushort4)(convert_ushort_sat(v.s0), convert_ushort_sat(v.s1), convert_ushort_sat(v.s2), convert_ushort_sat(v.s3));
+}
+
+INLINE OVERLOADABLE char4 convert_char4_sat(uchar4 v) {
+  return (char4)(convert_char_sat(v.s0), convert_char_sat(v.s1), convert_char_sat(v.s2), convert_char_sat(v.s3));
+}
+
+INLINE OVERLOADABLE uchar4 convert_uchar4_sat(uchar4 v) {
+  return (uchar4)(convert_uchar_sat(v.s0), convert_uchar_sat(v.s1), convert_uchar_sat(v.s2), convert_uchar_sat(v.s3));
+}
+
+INLINE OVERLOADABLE long4 convert_long4_sat(float4 v) {
+  return (long4)(convert_long_sat(v.s0), convert_long_sat(v.s1), convert_long_sat(v.s2), convert_long_sat(v.s3));
+}
+
+INLINE OVERLOADABLE ulong4 convert_ulong4_sat(float4 v) {
+  return (ulong4)(convert_ulong_sat(v.s0), convert_ulong_sat(v.s1), convert_ulong_sat(v.s2), convert_ulong_sat(v.s3));
+}
+
+INLINE OVERLOADABLE int4 convert_int4_sat(float4 v) {
+  return (int4)(convert_int_sat(v.s0), convert_int_sat(v.s1), convert_int_sat(v.s2), convert_int_sat(v.s3));
+}
+
+INLINE OVERLOADABLE uint4 convert_uint4_sat(float4 v) {
+  return (uint4)(convert_uint_sat(v.s0), convert_uint_sat(v.s1), convert_uint_sat(v.s2), convert_uint_sat(v.s3));
+}
+
+INLINE OVERLOADABLE short4 convert_short4_sat(float4 v) {
+  return (short4)(convert_short_sat(v.s0), convert_short_sat(v.s1), convert_short_sat(v.s2), convert_short_sat(v.s3));
+}
+
+INLINE OVERLOADABLE ushort4 convert_ushort4_sat(float4 v) {
+  return (ushort4)(convert_ushort_sat(v.s0), convert_ushort_sat(v.s1), convert_ushort_sat(v.s2), convert_ushort_sat(v.s3));
+}
+
+INLINE OVERLOADABLE char4 convert_char4_sat(float4 v) {
+  return (char4)(convert_char_sat(v.s0), convert_char_sat(v.s1), convert_char_sat(v.s2), convert_char_sat(v.s3));
+}
+
+INLINE OVERLOADABLE uchar4 convert_uchar4_sat(float4 v) {
+  return (uchar4)(convert_uchar_sat(v.s0), convert_uchar_sat(v.s1), convert_uchar_sat(v.s2), convert_uchar_sat(v.s3));
+}
+
+INLINE OVERLOADABLE long8 convert_long8_sat(long8 v) {
+  return (long8)(convert_long_sat(v.s0), convert_long_sat(v.s1), convert_long_sat(v.s2), convert_long_sat(v.s3), convert_long_sat(v.s4), convert_long_sat(v.s5), convert_long_sat(v.s6), convert_long_sat(v.s7));
+}
+
+INLINE OVERLOADABLE ulong8 convert_ulong8_sat(long8 v) {
+  return (ulong8)(convert_ulong_sat(v.s0), convert_ulong_sat(v.s1), convert_ulong_sat(v.s2), convert_ulong_sat(v.s3), convert_ulong_sat(v.s4), convert_ulong_sat(v.s5), convert_ulong_sat(v.s6), convert_ulong_sat(v.s7));
+}
+
+INLINE OVERLOADABLE int8 convert_int8_sat(long8 v) {
+  return (int8)(convert_int_sat(v.s0), convert_int_sat(v.s1), convert_int_sat(v.s2), convert_int_sat(v.s3), convert_int_sat(v.s4), convert_int_sat(v.s5), convert_int_sat(v.s6), convert_int_sat(v.s7));
+}
+
+INLINE OVERLOADABLE uint8 convert_uint8_sat(long8 v) {
+  return (uint8)(convert_uint_sat(v.s0), convert_uint_sat(v.s1), convert_uint_sat(v.s2), convert_uint_sat(v.s3), convert_uint_sat(v.s4), convert_uint_sat(v.s5), convert_uint_sat(v.s6), convert_uint_sat(v.s7));
+}
+
+INLINE OVERLOADABLE short8 convert_short8_sat(long8 v) {
+  return (short8)(convert_short_sat(v.s0), convert_short_sat(v.s1), convert_short_sat(v.s2), convert_short_sat(v.s3), convert_short_sat(v.s4), convert_short_sat(v.s5), convert_short_sat(v.s6), convert_short_sat(v.s7));
+}
+
+INLINE OVERLOADABLE ushort8 convert_ushort8_sat(long8 v) {
+  return (ushort8)(convert_ushort_sat(v.s0), convert_ushort_sat(v.s1), convert_ushort_sat(v.s2), convert_ushort_sat(v.s3), convert_ushort_sat(v.s4), convert_ushort_sat(v.s5), convert_ushort_sat(v.s6), convert_ushort_sat(v.s7));
+}
+
+INLINE OVERLOADABLE char8 convert_char8_sat(long8 v) {
+  return (char8)(convert_char_sat(v.s0), convert_char_sat(v.s1), convert_char_sat(v.s2), convert_char_sat(v.s3), convert_char_sat(v.s4), convert_char_sat(v.s5), convert_char_sat(v.s6), convert_char_sat(v.s7));
+}
+
+INLINE OVERLOADABLE uchar8 convert_uchar8_sat(long8 v) {
+  return (uchar8)(convert_uchar_sat(v.s0), convert_uchar_sat(v.s1), convert_uchar_sat(v.s2), convert_uchar_sat(v.s3), convert_uchar_sat(v.s4), convert_uchar_sat(v.s5), convert_uchar_sat(v.s6), convert_uchar_sat(v.s7));
+}
+
+INLINE OVERLOADABLE long8 convert_long8_sat(ulong8 v) {
+  return (long8)(convert_long_sat(v.s0), convert_long_sat(v.s1), convert_long_sat(v.s2), convert_long_sat(v.s3), convert_long_sat(v.s4), convert_long_sat(v.s5), convert_long_sat(v.s6), convert_long_sat(v.s7));
+}
+
+INLINE OVERLOADABLE ulong8 convert_ulong8_sat(ulong8 v) {
+  return (ulong8)(convert_ulong_sat(v.s0), convert_ulong_sat(v.s1), convert_ulong_sat(v.s2), convert_ulong_sat(v.s3), convert_ulong_sat(v.s4), convert_ulong_sat(v.s5), convert_ulong_sat(v.s6), convert_ulong_sat(v.s7));
+}
+
+INLINE OVERLOADABLE int8 convert_int8_sat(ulong8 v) {
+  return (int8)(convert_int_sat(v.s0), convert_int_sat(v.s1), convert_int_sat(v.s2), convert_int_sat(v.s3), convert_int_sat(v.s4), convert_int_sat(v.s5), convert_int_sat(v.s6), convert_int_sat(v.s7));
+}
+
+INLINE OVERLOADABLE uint8 convert_uint8_sat(ulong8 v) {
+  return (uint8)(convert_uint_sat(v.s0), convert_uint_sat(v.s1), convert_uint_sat(v.s2), convert_uint_sat(v.s3), convert_uint_sat(v.s4), convert_uint_sat(v.s5), convert_uint_sat(v.s6), convert_uint_sat(v.s7));
+}
+
+INLINE OVERLOADABLE short8 convert_short8_sat(ulong8 v) {
+  return (short8)(convert_short_sat(v.s0), convert_short_sat(v.s1), convert_short_sat(v.s2), convert_short_sat(v.s3), convert_short_sat(v.s4), convert_short_sat(v.s5), convert_short_sat(v.s6), convert_short_sat(v.s7));
+}
+
+INLINE OVERLOADABLE ushort8 convert_ushort8_sat(ulong8 v) {
+  return (ushort8)(convert_ushort_sat(v.s0), convert_ushort_sat(v.s1), convert_ushort_sat(v.s2), convert_ushort_sat(v.s3), convert_ushort_sat(v.s4), convert_ushort_sat(v.s5), convert_ushort_sat(v.s6), convert_ushort_sat(v.s7));
+}
+
+INLINE OVERLOADABLE char8 convert_char8_sat(ulong8 v) {
+  return (char8)(convert_char_sat(v.s0), convert_char_sat(v.s1), convert_char_sat(v.s2), convert_char_sat(v.s3), convert_char_sat(v.s4), convert_char_sat(v.s5), convert_char_sat(v.s6), convert_char_sat(v.s7));
+}
+
+INLINE OVERLOADABLE uchar8 convert_uchar8_sat(ulong8 v) {
+  return (uchar8)(convert_uchar_sat(v.s0), convert_uchar_sat(v.s1), convert_uchar_sat(v.s2), convert_uchar_sat(v.s3), convert_uchar_sat(v.s4), convert_uchar_sat(v.s5), convert_uchar_sat(v.s6), convert_uchar_sat(v.s7));
+}
+
+INLINE OVERLOADABLE long8 convert_long8_sat(int8 v) {
+  return (long8)(convert_long_sat(v.s0), convert_long_sat(v.s1), convert_long_sat(v.s2), convert_long_sat(v.s3), convert_long_sat(v.s4), convert_long_sat(v.s5), convert_long_sat(v.s6), convert_long_sat(v.s7));
+}
+
+INLINE OVERLOADABLE ulong8 convert_ulong8_sat(int8 v) {
+  return (ulong8)(convert_ulong_sat(v.s0), convert_ulong_sat(v.s1), convert_ulong_sat(v.s2), convert_ulong_sat(v.s3), convert_ulong_sat(v.s4), convert_ulong_sat(v.s5), convert_ulong_sat(v.s6), convert_ulong_sat(v.s7));
+}
+
+INLINE OVERLOADABLE int8 convert_int8_sat(int8 v) {
+  return (int8)(convert_int_sat(v.s0), convert_int_sat(v.s1), convert_int_sat(v.s2), convert_int_sat(v.s3), convert_int_sat(v.s4), convert_int_sat(v.s5), convert_int_sat(v.s6), convert_int_sat(v.s7));
+}
+
+INLINE OVERLOADABLE uint8 convert_uint8_sat(int8 v) {
+  return (uint8)(convert_uint_sat(v.s0), convert_uint_sat(v.s1), convert_uint_sat(v.s2), convert_uint_sat(v.s3), convert_uint_sat(v.s4), convert_uint_sat(v.s5), convert_uint_sat(v.s6), convert_uint_sat(v.s7));
+}
+
+INLINE OVERLOADABLE short8 convert_short8_sat(int8 v) {
+  return (short8)(convert_short_sat(v.s0), convert_short_sat(v.s1), convert_short_sat(v.s2), convert_short_sat(v.s3), convert_short_sat(v.s4), convert_short_sat(v.s5), convert_short_sat(v.s6), convert_short_sat(v.s7));
+}
+
+INLINE OVERLOADABLE ushort8 convert_ushort8_sat(int8 v) {
+  return (ushort8)(convert_ushort_sat(v.s0), convert_ushort_sat(v.s1), convert_ushort_sat(v.s2), convert_ushort_sat(v.s3), convert_ushort_sat(v.s4), convert_ushort_sat(v.s5), convert_ushort_sat(v.s6), convert_ushort_sat(v.s7));
+}
+
+INLINE OVERLOADABLE char8 convert_char8_sat(int8 v) {
+  return (char8)(convert_char_sat(v.s0), convert_char_sat(v.s1), convert_char_sat(v.s2), convert_char_sat(v.s3), convert_char_sat(v.s4), convert_char_sat(v.s5), convert_char_sat(v.s6), convert_char_sat(v.s7));
+}
+
+INLINE OVERLOADABLE uchar8 convert_uchar8_sat(int8 v) {
+  return (uchar8)(convert_uchar_sat(v.s0), convert_uchar_sat(v.s1), convert_uchar_sat(v.s2), convert_uchar_sat(v.s3), convert_uchar_sat(v.s4), convert_uchar_sat(v.s5), convert_uchar_sat(v.s6), convert_uchar_sat(v.s7));
+}
+
+INLINE OVERLOADABLE long8 convert_long8_sat(uint8 v) {
+  return (long8)(convert_long_sat(v.s0), convert_long_sat(v.s1), convert_long_sat(v.s2), convert_long_sat(v.s3), convert_long_sat(v.s4), convert_long_sat(v.s5), convert_long_sat(v.s6), convert_long_sat(v.s7));
+}
+
+INLINE OVERLOADABLE ulong8 convert_ulong8_sat(uint8 v) {
+  return (ulong8)(convert_ulong_sat(v.s0), convert_ulong_sat(v.s1), convert_ulong_sat(v.s2), convert_ulong_sat(v.s3), convert_ulong_sat(v.s4), convert_ulong_sat(v.s5), convert_ulong_sat(v.s6), convert_ulong_sat(v.s7));
+}
+
+INLINE OVERLOADABLE int8 convert_int8_sat(uint8 v) {
+  return (int8)(convert_int_sat(v.s0), convert_int_sat(v.s1), convert_int_sat(v.s2), convert_int_sat(v.s3), convert_int_sat(v.s4), convert_int_sat(v.s5), convert_int_sat(v.s6), convert_int_sat(v.s7));
+}
+
+INLINE OVERLOADABLE uint8 convert_uint8_sat(uint8 v) {
+  return (uint8)(convert_uint_sat(v.s0), convert_uint_sat(v.s1), convert_uint_sat(v.s2), convert_uint_sat(v.s3), convert_uint_sat(v.s4), convert_uint_sat(v.s5), convert_uint_sat(v.s6), convert_uint_sat(v.s7));
+}
+
+INLINE OVERLOADABLE short8 convert_short8_sat(uint8 v) {
+  return (short8)(convert_short_sat(v.s0), convert_short_sat(v.s1), convert_short_sat(v.s2), convert_short_sat(v.s3), convert_short_sat(v.s4), convert_short_sat(v.s5), convert_short_sat(v.s6), convert_short_sat(v.s7));
+}
+
+INLINE OVERLOADABLE ushort8 convert_ushort8_sat(uint8 v) {
+  return (ushort8)(convert_ushort_sat(v.s0), convert_ushort_sat(v.s1), convert_ushort_sat(v.s2), convert_ushort_sat(v.s3), convert_ushort_sat(v.s4), convert_ushort_sat(v.s5), convert_ushort_sat(v.s6), convert_ushort_sat(v.s7));
+}
+
+INLINE OVERLOADABLE char8 convert_char8_sat(uint8 v) {
+  return (char8)(convert_char_sat(v.s0), convert_char_sat(v.s1), convert_char_sat(v.s2), convert_char_sat(v.s3), convert_char_sat(v.s4), convert_char_sat(v.s5), convert_char_sat(v.s6), convert_char_sat(v.s7));
+}
+
+INLINE OVERLOADABLE uchar8 convert_uchar8_sat(uint8 v) {
+  return (uchar8)(convert_uchar_sat(v.s0), convert_uchar_sat(v.s1), convert_uchar_sat(v.s2), convert_uchar_sat(v.s3), convert_uchar_sat(v.s4), convert_uchar_sat(v.s5), convert_uchar_sat(v.s6), convert_uchar_sat(v.s7));
+}
+
+INLINE OVERLOADABLE long8 convert_long8_sat(short8 v) {
+  return (long8)(convert_long_sat(v.s0), convert_long_sat(v.s1), convert_long_sat(v.s2), convert_long_sat(v.s3), convert_long_sat(v.s4), convert_long_sat(v.s5), convert_long_sat(v.s6), convert_long_sat(v.s7));
+}
+
+INLINE OVERLOADABLE ulong8 convert_ulong8_sat(short8 v) {
+  return (ulong8)(convert_ulong_sat(v.s0), convert_ulong_sat(v.s1), convert_ulong_sat(v.s2), convert_ulong_sat(v.s3), convert_ulong_sat(v.s4), convert_ulong_sat(v.s5), convert_ulong_sat(v.s6), convert_ulong_sat(v.s7));
+}
+
+INLINE OVERLOADABLE int8 convert_int8_sat(short8 v) {
+  return (int8)(convert_int_sat(v.s0), convert_int_sat(v.s1), convert_int_sat(v.s2), convert_int_sat(v.s3), convert_int_sat(v.s4), convert_int_sat(v.s5), convert_int_sat(v.s6), convert_int_sat(v.s7));
+}
+
+INLINE OVERLOADABLE uint8 convert_uint8_sat(short8 v) {
+  return (uint8)(convert_uint_sat(v.s0), convert_uint_sat(v.s1), convert_uint_sat(v.s2), convert_uint_sat(v.s3), convert_uint_sat(v.s4), convert_uint_sat(v.s5), convert_uint_sat(v.s6), convert_uint_sat(v.s7));
+}
+
+INLINE OVERLOADABLE short8 convert_short8_sat(short8 v) {
+  return (short8)(convert_short_sat(v.s0), convert_short_sat(v.s1), convert_short_sat(v.s2), convert_short_sat(v.s3), convert_short_sat(v.s4), convert_short_sat(v.s5), convert_short_sat(v.s6), convert_short_sat(v.s7));
+}
+
+INLINE OVERLOADABLE ushort8 convert_ushort8_sat(short8 v) {
+  return (ushort8)(convert_ushort_sat(v.s0), convert_ushort_sat(v.s1), convert_ushort_sat(v.s2), convert_ushort_sat(v.s3), convert_ushort_sat(v.s4), convert_ushort_sat(v.s5), convert_ushort_sat(v.s6), convert_ushort_sat(v.s7));
+}
+
+INLINE OVERLOADABLE char8 convert_char8_sat(short8 v) {
+  return (char8)(convert_char_sat(v.s0), convert_char_sat(v.s1), convert_char_sat(v.s2), convert_char_sat(v.s3), convert_char_sat(v.s4), convert_char_sat(v.s5), convert_char_sat(v.s6), convert_char_sat(v.s7));
+}
+
+INLINE OVERLOADABLE uchar8 convert_uchar8_sat(short8 v) {
+  return (uchar8)(convert_uchar_sat(v.s0), convert_uchar_sat(v.s1), convert_uchar_sat(v.s2), convert_uchar_sat(v.s3), convert_uchar_sat(v.s4), convert_uchar_sat(v.s5), convert_uchar_sat(v.s6), convert_uchar_sat(v.s7));
+}
+
+INLINE OVERLOADABLE long8 convert_long8_sat(ushort8 v) {
+  return (long8)(convert_long_sat(v.s0), convert_long_sat(v.s1), convert_long_sat(v.s2), convert_long_sat(v.s3), convert_long_sat(v.s4), convert_long_sat(v.s5), convert_long_sat(v.s6), convert_long_sat(v.s7));
+}
+
+INLINE OVERLOADABLE ulong8 convert_ulong8_sat(ushort8 v) {
+  return (ulong8)(convert_ulong_sat(v.s0), convert_ulong_sat(v.s1), convert_ulong_sat(v.s2), convert_ulong_sat(v.s3), convert_ulong_sat(v.s4), convert_ulong_sat(v.s5), convert_ulong_sat(v.s6), convert_ulong_sat(v.s7));
+}
+
+INLINE OVERLOADABLE int8 convert_int8_sat(ushort8 v) {
+  return (int8)(convert_int_sat(v.s0), convert_int_sat(v.s1), convert_int_sat(v.s2), convert_int_sat(v.s3), convert_int_sat(v.s4), convert_int_sat(v.s5), convert_int_sat(v.s6), convert_int_sat(v.s7));
+}
+
+INLINE OVERLOADABLE uint8 convert_uint8_sat(ushort8 v) {
+  return (uint8)(convert_uint_sat(v.s0), convert_uint_sat(v.s1), convert_uint_sat(v.s2), convert_uint_sat(v.s3), convert_uint_sat(v.s4), convert_uint_sat(v.s5), convert_uint_sat(v.s6), convert_uint_sat(v.s7));
+}
+
+INLINE OVERLOADABLE short8 convert_short8_sat(ushort8 v) {
+  return (short8)(convert_short_sat(v.s0), convert_short_sat(v.s1), convert_short_sat(v.s2), convert_short_sat(v.s3), convert_short_sat(v.s4), convert_short_sat(v.s5), convert_short_sat(v.s6), convert_short_sat(v.s7));
+}
+
+INLINE OVERLOADABLE ushort8 convert_ushort8_sat(ushort8 v) {
+  return (ushort8)(convert_ushort_sat(v.s0), convert_ushort_sat(v.s1), convert_ushort_sat(v.s2), convert_ushort_sat(v.s3), convert_ushort_sat(v.s4), convert_ushort_sat(v.s5), convert_ushort_sat(v.s6), convert_ushort_sat(v.s7));
+}
+
+INLINE OVERLOADABLE char8 convert_char8_sat(ushort8 v) {
+  return (char8)(convert_char_sat(v.s0), convert_char_sat(v.s1), convert_char_sat(v.s2), convert_char_sat(v.s3), convert_char_sat(v.s4), convert_char_sat(v.s5), convert_char_sat(v.s6), convert_char_sat(v.s7));
+}
+
+INLINE OVERLOADABLE uchar8 convert_uchar8_sat(ushort8 v) {
+  return (uchar8)(convert_uchar_sat(v.s0), convert_uchar_sat(v.s1), convert_uchar_sat(v.s2), convert_uchar_sat(v.s3), convert_uchar_sat(v.s4), convert_uchar_sat(v.s5), convert_uchar_sat(v.s6), convert_uchar_sat(v.s7));
+}
+
+INLINE OVERLOADABLE long8 convert_long8_sat(char8 v) {
+  return (long8)(convert_long_sat(v.s0), convert_long_sat(v.s1), convert_long_sat(v.s2), convert_long_sat(v.s3), convert_long_sat(v.s4), convert_long_sat(v.s5), convert_long_sat(v.s6), convert_long_sat(v.s7));
+}
+
+INLINE OVERLOADABLE ulong8 convert_ulong8_sat(char8 v) {
+  return (ulong8)(convert_ulong_sat(v.s0), convert_ulong_sat(v.s1), convert_ulong_sat(v.s2), convert_ulong_sat(v.s3), convert_ulong_sat(v.s4), convert_ulong_sat(v.s5), convert_ulong_sat(v.s6), convert_ulong_sat(v.s7));
+}
+
+INLINE OVERLOADABLE int8 convert_int8_sat(char8 v) {
+  return (int8)(convert_int_sat(v.s0), convert_int_sat(v.s1), convert_int_sat(v.s2), convert_int_sat(v.s3), convert_int_sat(v.s4), convert_int_sat(v.s5), convert_int_sat(v.s6), convert_int_sat(v.s7));
+}
+
+INLINE OVERLOADABLE uint8 convert_uint8_sat(char8 v) {
+  return (uint8)(convert_uint_sat(v.s0), convert_uint_sat(v.s1), convert_uint_sat(v.s2), convert_uint_sat(v.s3), convert_uint_sat(v.s4), convert_uint_sat(v.s5), convert_uint_sat(v.s6), convert_uint_sat(v.s7));
+}
+
+INLINE OVERLOADABLE short8 convert_short8_sat(char8 v) {
+  return (short8)(convert_short_sat(v.s0), convert_short_sat(v.s1), convert_short_sat(v.s2), convert_short_sat(v.s3), convert_short_sat(v.s4), convert_short_sat(v.s5), convert_short_sat(v.s6), convert_short_sat(v.s7));
+}
+
+INLINE OVERLOADABLE ushort8 convert_ushort8_sat(char8 v) {
+  return (ushort8)(convert_ushort_sat(v.s0), convert_ushort_sat(v.s1), convert_ushort_sat(v.s2), convert_ushort_sat(v.s3), convert_ushort_sat(v.s4), convert_ushort_sat(v.s5), convert_ushort_sat(v.s6), convert_ushort_sat(v.s7));
+}
+
+INLINE OVERLOADABLE char8 convert_char8_sat(char8 v) {
+  return (char8)(convert_char_sat(v.s0), convert_char_sat(v.s1), convert_char_sat(v.s2), convert_char_sat(v.s3), convert_char_sat(v.s4), convert_char_sat(v.s5), convert_char_sat(v.s6), convert_char_sat(v.s7));
+}
+
+INLINE OVERLOADABLE uchar8 convert_uchar8_sat(char8 v) {
+  return (uchar8)(convert_uchar_sat(v.s0), convert_uchar_sat(v.s1), convert_uchar_sat(v.s2), convert_uchar_sat(v.s3), convert_uchar_sat(v.s4), convert_uchar_sat(v.s5), convert_uchar_sat(v.s6), convert_uchar_sat(v.s7));
+}
+
+INLINE OVERLOADABLE long8 convert_long8_sat(uchar8 v) {
+  return (long8)(convert_long_sat(v.s0), convert_long_sat(v.s1), convert_long_sat(v.s2), convert_long_sat(v.s3), convert_long_sat(v.s4), convert_long_sat(v.s5), convert_long_sat(v.s6), convert_long_sat(v.s7));
+}
+
+INLINE OVERLOADABLE ulong8 convert_ulong8_sat(uchar8 v) {
+  return (ulong8)(convert_ulong_sat(v.s0), convert_ulong_sat(v.s1), convert_ulong_sat(v.s2), convert_ulong_sat(v.s3), convert_ulong_sat(v.s4), convert_ulong_sat(v.s5), convert_ulong_sat(v.s6), convert_ulong_sat(v.s7));
+}
+
+INLINE OVERLOADABLE int8 convert_int8_sat(uchar8 v) {
+  return (int8)(convert_int_sat(v.s0), convert_int_sat(v.s1), convert_int_sat(v.s2), convert_int_sat(v.s3), convert_int_sat(v.s4), convert_int_sat(v.s5), convert_int_sat(v.s6), convert_int_sat(v.s7));
+}
+
+INLINE OVERLOADABLE uint8 convert_uint8_sat(uchar8 v) {
+  return (uint8)(convert_uint_sat(v.s0), convert_uint_sat(v.s1), convert_uint_sat(v.s2), convert_uint_sat(v.s3), convert_uint_sat(v.s4), convert_uint_sat(v.s5), convert_uint_sat(v.s6), convert_uint_sat(v.s7));
+}
+
+INLINE OVERLOADABLE short8 convert_short8_sat(uchar8 v) {
+  return (short8)(convert_short_sat(v.s0), convert_short_sat(v.s1), convert_short_sat(v.s2), convert_short_sat(v.s3), convert_short_sat(v.s4), convert_short_sat(v.s5), convert_short_sat(v.s6), convert_short_sat(v.s7));
+}
+
+INLINE OVERLOADABLE ushort8 convert_ushort8_sat(uchar8 v) {
+  return (ushort8)(convert_ushort_sat(v.s0), convert_ushort_sat(v.s1), convert_ushort_sat(v.s2), convert_ushort_sat(v.s3), convert_ushort_sat(v.s4), convert_ushort_sat(v.s5), convert_ushort_sat(v.s6), convert_ushort_sat(v.s7));
+}
+
+INLINE OVERLOADABLE char8 convert_char8_sat(uchar8 v) {
+  return (char8)(convert_char_sat(v.s0), convert_char_sat(v.s1), convert_char_sat(v.s2), convert_char_sat(v.s3), convert_char_sat(v.s4), convert_char_sat(v.s5), convert_char_sat(v.s6), convert_char_sat(v.s7));
+}
+
+INLINE OVERLOADABLE uchar8 convert_uchar8_sat(uchar8 v) {
+  return (uchar8)(convert_uchar_sat(v.s0), convert_uchar_sat(v.s1), convert_uchar_sat(v.s2), convert_uchar_sat(v.s3), convert_uchar_sat(v.s4), convert_uchar_sat(v.s5), convert_uchar_sat(v.s6), convert_uchar_sat(v.s7));
+}
+
+INLINE OVERLOADABLE long8 convert_long8_sat(float8 v) {
+  return (long8)(convert_long_sat(v.s0), convert_long_sat(v.s1), convert_long_sat(v.s2), convert_long_sat(v.s3), convert_long_sat(v.s4), convert_long_sat(v.s5), convert_long_sat(v.s6), convert_long_sat(v.s7));
+}
+
+INLINE OVERLOADABLE ulong8 convert_ulong8_sat(float8 v) {
+  return (ulong8)(convert_ulong_sat(v.s0), convert_ulong_sat(v.s1), convert_ulong_sat(v.s2), convert_ulong_sat(v.s3), convert_ulong_sat(v.s4), convert_ulong_sat(v.s5), convert_ulong_sat(v.s6), convert_ulong_sat(v.s7));
+}
+
+INLINE OVERLOADABLE int8 convert_int8_sat(float8 v) {
+  return (int8)(convert_int_sat(v.s0), convert_int_sat(v.s1), convert_int_sat(v.s2), convert_int_sat(v.s3), convert_int_sat(v.s4), convert_int_sat(v.s5), convert_int_sat(v.s6), convert_int_sat(v.s7));
+}
+
+INLINE OVERLOADABLE uint8 convert_uint8_sat(float8 v) {
+  return (uint8)(convert_uint_sat(v.s0), convert_uint_sat(v.s1), convert_uint_sat(v.s2), convert_uint_sat(v.s3), convert_uint_sat(v.s4), convert_uint_sat(v.s5), convert_uint_sat(v.s6), convert_uint_sat(v.s7));
+}
+
+INLINE OVERLOADABLE short8 convert_short8_sat(float8 v) {
+  return (short8)(convert_short_sat(v.s0), convert_short_sat(v.s1), convert_short_sat(v.s2), convert_short_sat(v.s3), convert_short_sat(v.s4), convert_short_sat(v.s5), convert_short_sat(v.s6), convert_short_sat(v.s7));
+}
+
+INLINE OVERLOADABLE ushort8 convert_ushort8_sat(float8 v) {
+  return (ushort8)(convert_ushort_sat(v.s0), convert_ushort_sat(v.s1), convert_ushort_sat(v.s2), convert_ushort_sat(v.s3), convert_ushort_sat(v.s4), convert_ushort_sat(v.s5), convert_ushort_sat(v.s6), convert_ushort_sat(v.s7));
+}
+
+INLINE OVERLOADABLE char8 convert_char8_sat(float8 v) {
+  return (char8)(convert_char_sat(v.s0), convert_char_sat(v.s1), convert_char_sat(v.s2), convert_char_sat(v.s3), convert_char_sat(v.s4), convert_char_sat(v.s5), convert_char_sat(v.s6), convert_char_sat(v.s7));
+}
+
+INLINE OVERLOADABLE uchar8 convert_uchar8_sat(float8 v) {
+  return (uchar8)(convert_uchar_sat(v.s0), convert_uchar_sat(v.s1), convert_uchar_sat(v.s2), convert_uchar_sat(v.s3), convert_uchar_sat(v.s4), convert_uchar_sat(v.s5), convert_uchar_sat(v.s6), convert_uchar_sat(v.s7));
+}
+
+INLINE OVERLOADABLE long16 convert_long16_sat(long16 v) {
+  return (long16)(convert_long_sat(v.s0), convert_long_sat(v.s1), convert_long_sat(v.s2), convert_long_sat(v.s3), convert_long_sat(v.s4), convert_long_sat(v.s5), convert_long_sat(v.s6), convert_long_sat(v.s7), convert_long_sat(v.s8), convert_long_sat(v.s9), convert_long_sat(v.sA), convert_long_sat(v.sB), convert_long_sat(v.sC), convert_long_sat(v.sD), convert_long_sat(v.sE), convert_long_sat(v.sF));
+}
+
+INLINE OVERLOADABLE ulong16 convert_ulong16_sat(long16 v) {
+  return (ulong16)(convert_ulong_sat(v.s0), convert_ulong_sat(v.s1), convert_ulong_sat(v.s2), convert_ulong_sat(v.s3), convert_ulong_sat(v.s4), convert_ulong_sat(v.s5), convert_ulong_sat(v.s6), convert_ulong_sat(v.s7), convert_ulong_sat(v.s8), convert_ulong_sat(v.s9), convert_ulong_sat(v.sA), convert_ulong_sat(v.sB), convert_ulong_sat(v.sC), convert_ulong_sat(v.sD), convert_ulong_sat(v.sE), convert_ulong_sat(v.sF));
+}
+
+INLINE OVERLOADABLE int16 convert_int16_sat(long16 v) {
+  return (int16)(convert_int_sat(v.s0), convert_int_sat(v.s1), convert_int_sat(v.s2), convert_int_sat(v.s3), convert_int_sat(v.s4), convert_int_sat(v.s5), convert_int_sat(v.s6), convert_int_sat(v.s7), convert_int_sat(v.s8), convert_int_sat(v.s9), convert_int_sat(v.sA), convert_int_sat(v.sB), convert_int_sat(v.sC), convert_int_sat(v.sD), convert_int_sat(v.sE), convert_int_sat(v.sF));
+}
+
+INLINE OVERLOADABLE uint16 convert_uint16_sat(long16 v) {
+  return (uint16)(convert_uint_sat(v.s0), convert_uint_sat(v.s1), convert_uint_sat(v.s2), convert_uint_sat(v.s3), convert_uint_sat(v.s4), convert_uint_sat(v.s5), convert_uint_sat(v.s6), convert_uint_sat(v.s7), convert_uint_sat(v.s8), convert_uint_sat(v.s9), convert_uint_sat(v.sA), convert_uint_sat(v.sB), convert_uint_sat(v.sC), convert_uint_sat(v.sD), convert_uint_sat(v.sE), convert_uint_sat(v.sF));
+}
+
+INLINE OVERLOADABLE short16 convert_short16_sat(long16 v) {
+  return (short16)(convert_short_sat(v.s0), convert_short_sat(v.s1), convert_short_sat(v.s2), convert_short_sat(v.s3), convert_short_sat(v.s4), convert_short_sat(v.s5), convert_short_sat(v.s6), convert_short_sat(v.s7), convert_short_sat(v.s8), convert_short_sat(v.s9), convert_short_sat(v.sA), convert_short_sat(v.sB), convert_short_sat(v.sC), convert_short_sat(v.sD), convert_short_sat(v.sE), convert_short_sat(v.sF));
+}
+
+INLINE OVERLOADABLE ushort16 convert_ushort16_sat(long16 v) {
+  return (ushort16)(convert_ushort_sat(v.s0), convert_ushort_sat(v.s1), convert_ushort_sat(v.s2), convert_ushort_sat(v.s3), convert_ushort_sat(v.s4), convert_ushort_sat(v.s5), convert_ushort_sat(v.s6), convert_ushort_sat(v.s7), convert_ushort_sat(v.s8), convert_ushort_sat(v.s9), convert_ushort_sat(v.sA), convert_ushort_sat(v.sB), convert_ushort_sat(v.sC), convert_ushort_sat(v.sD), convert_ushort_sat(v.sE), convert_ushort_sat(v.sF));
+}
+
+INLINE OVERLOADABLE char16 convert_char16_sat(long16 v) {
+  return (char16)(convert_char_sat(v.s0), convert_char_sat(v.s1), convert_char_sat(v.s2), convert_char_sat(v.s3), convert_char_sat(v.s4), convert_char_sat(v.s5), convert_char_sat(v.s6), convert_char_sat(v.s7), convert_char_sat(v.s8), convert_char_sat(v.s9), convert_char_sat(v.sA), convert_char_sat(v.sB), convert_char_sat(v.sC), convert_char_sat(v.sD), convert_char_sat(v.sE), convert_char_sat(v.sF));
+}
+
+INLINE OVERLOADABLE uchar16 convert_uchar16_sat(long16 v) {
+  return (uchar16)(convert_uchar_sat(v.s0), convert_uchar_sat(v.s1), convert_uchar_sat(v.s2), convert_uchar_sat(v.s3), convert_uchar_sat(v.s4), convert_uchar_sat(v.s5), convert_uchar_sat(v.s6), convert_uchar_sat(v.s7), convert_uchar_sat(v.s8), convert_uchar_sat(v.s9), convert_uchar_sat(v.sA), convert_uchar_sat(v.sB), convert_uchar_sat(v.sC), convert_uchar_sat(v.sD), convert_uchar_sat(v.sE), convert_uchar_sat(v.sF));
+}
+
+INLINE OVERLOADABLE long16 convert_long16_sat(ulong16 v) {
+  return (long16)(convert_long_sat(v.s0), convert_long_sat(v.s1), convert_long_sat(v.s2), convert_long_sat(v.s3), convert_long_sat(v.s4), convert_long_sat(v.s5), convert_long_sat(v.s6), convert_long_sat(v.s7), convert_long_sat(v.s8), convert_long_sat(v.s9), convert_long_sat(v.sA), convert_long_sat(v.sB), convert_long_sat(v.sC), convert_long_sat(v.sD), convert_long_sat(v.sE), convert_long_sat(v.sF));
+}
+
+INLINE OVERLOADABLE ulong16 convert_ulong16_sat(ulong16 v) {
+  return (ulong16)(convert_ulong_sat(v.s0), convert_ulong_sat(v.s1), convert_ulong_sat(v.s2), convert_ulong_sat(v.s3), convert_ulong_sat(v.s4), convert_ulong_sat(v.s5), convert_ulong_sat(v.s6), convert_ulong_sat(v.s7), convert_ulong_sat(v.s8), convert_ulong_sat(v.s9), convert_ulong_sat(v.sA), convert_ulong_sat(v.sB), convert_ulong_sat(v.sC), convert_ulong_sat(v.sD), convert_ulong_sat(v.sE), convert_ulong_sat(v.sF));
+}
+
+INLINE OVERLOADABLE int16 convert_int16_sat(ulong16 v) {
+  return (int16)(convert_int_sat(v.s0), convert_int_sat(v.s1), convert_int_sat(v.s2), convert_int_sat(v.s3), convert_int_sat(v.s4), convert_int_sat(v.s5), convert_int_sat(v.s6), convert_int_sat(v.s7), convert_int_sat(v.s8), convert_int_sat(v.s9), convert_int_sat(v.sA), convert_int_sat(v.sB), convert_int_sat(v.sC), convert_int_sat(v.sD), convert_int_sat(v.sE), convert_int_sat(v.sF));
+}
+
+INLINE OVERLOADABLE uint16 convert_uint16_sat(ulong16 v) {
+  return (uint16)(convert_uint_sat(v.s0), convert_uint_sat(v.s1), convert_uint_sat(v.s2), convert_uint_sat(v.s3), convert_uint_sat(v.s4), convert_uint_sat(v.s5), convert_uint_sat(v.s6), convert_uint_sat(v.s7), convert_uint_sat(v.s8), convert_uint_sat(v.s9), convert_uint_sat(v.sA), convert_uint_sat(v.sB), convert_uint_sat(v.sC), convert_uint_sat(v.sD), convert_uint_sat(v.sE), convert_uint_sat(v.sF));
+}
+
+INLINE OVERLOADABLE short16 convert_short16_sat(ulong16 v) {
+  return (short16)(convert_short_sat(v.s0), convert_short_sat(v.s1), convert_short_sat(v.s2), convert_short_sat(v.s3), convert_short_sat(v.s4), convert_short_sat(v.s5), convert_short_sat(v.s6), convert_short_sat(v.s7), convert_short_sat(v.s8), convert_short_sat(v.s9), convert_short_sat(v.sA), convert_short_sat(v.sB), convert_short_sat(v.sC), convert_short_sat(v.sD), convert_short_sat(v.sE), convert_short_sat(v.sF));
+}
+
+INLINE OVERLOADABLE ushort16 convert_ushort16_sat(ulong16 v) {
+  return (ushort16)(convert_ushort_sat(v.s0), convert_ushort_sat(v.s1), convert_ushort_sat(v.s2), convert_ushort_sat(v.s3), convert_ushort_sat(v.s4), convert_ushort_sat(v.s5), convert_ushort_sat(v.s6), convert_ushort_sat(v.s7), convert_ushort_sat(v.s8), convert_ushort_sat(v.s9), convert_ushort_sat(v.sA), convert_ushort_sat(v.sB), convert_ushort_sat(v.sC), convert_ushort_sat(v.sD), convert_ushort_sat(v.sE), convert_ushort_sat(v.sF));
+}
+
+INLINE OVERLOADABLE char16 convert_char16_sat(ulong16 v) {
+  return (char16)(convert_char_sat(v.s0), convert_char_sat(v.s1), convert_char_sat(v.s2), convert_char_sat(v.s3), convert_char_sat(v.s4), convert_char_sat(v.s5), convert_char_sat(v.s6), convert_char_sat(v.s7), convert_char_sat(v.s8), convert_char_sat(v.s9), convert_char_sat(v.sA), convert_char_sat(v.sB), convert_char_sat(v.sC), convert_char_sat(v.sD), convert_char_sat(v.sE), convert_char_sat(v.sF));
+}
+
+INLINE OVERLOADABLE uchar16 convert_uchar16_sat(ulong16 v) {
+  return (uchar16)(convert_uchar_sat(v.s0), convert_uchar_sat(v.s1), convert_uchar_sat(v.s2), convert_uchar_sat(v.s3), convert_uchar_sat(v.s4), convert_uchar_sat(v.s5), convert_uchar_sat(v.s6), convert_uchar_sat(v.s7), convert_uchar_sat(v.s8), convert_uchar_sat(v.s9), convert_uchar_sat(v.sA), convert_uchar_sat(v.sB), convert_uchar_sat(v.sC), convert_uchar_sat(v.sD), convert_uchar_sat(v.sE), convert_uchar_sat(v.sF));
+}
+
+INLINE OVERLOADABLE long16 convert_long16_sat(int16 v) {
+  return (long16)(convert_long_sat(v.s0), convert_long_sat(v.s1), convert_long_sat(v.s2), convert_long_sat(v.s3), convert_long_sat(v.s4), convert_long_sat(v.s5), convert_long_sat(v.s6), convert_long_sat(v.s7), convert_long_sat(v.s8), convert_long_sat(v.s9), convert_long_sat(v.sA), convert_long_sat(v.sB), convert_long_sat(v.sC), convert_long_sat(v.sD), convert_long_sat(v.sE), convert_long_sat(v.sF));
+}
+
+INLINE OVERLOADABLE ulong16 convert_ulong16_sat(int16 v) {
+  return (ulong16)(convert_ulong_sat(v.s0), convert_ulong_sat(v.s1), convert_ulong_sat(v.s2), convert_ulong_sat(v.s3), convert_ulong_sat(v.s4), convert_ulong_sat(v.s5), convert_ulong_sat(v.s6), convert_ulong_sat(v.s7), convert_ulong_sat(v.s8), convert_ulong_sat(v.s9), convert_ulong_sat(v.sA), convert_ulong_sat(v.sB), convert_ulong_sat(v.sC), convert_ulong_sat(v.sD), convert_ulong_sat(v.sE), convert_ulong_sat(v.sF));
+}
+
+INLINE OVERLOADABLE int16 convert_int16_sat(int16 v) {
+  return (int16)(convert_int_sat(v.s0), convert_int_sat(v.s1), convert_int_sat(v.s2), convert_int_sat(v.s3), convert_int_sat(v.s4), convert_int_sat(v.s5), convert_int_sat(v.s6), convert_int_sat(v.s7), convert_int_sat(v.s8), convert_int_sat(v.s9), convert_int_sat(v.sA), convert_int_sat(v.sB), convert_int_sat(v.sC), convert_int_sat(v.sD), convert_int_sat(v.sE), convert_int_sat(v.sF));
+}
+
+INLINE OVERLOADABLE uint16 convert_uint16_sat(int16 v) {
+  return (uint16)(convert_uint_sat(v.s0), convert_uint_sat(v.s1), convert_uint_sat(v.s2), convert_uint_sat(v.s3), convert_uint_sat(v.s4), convert_uint_sat(v.s5), convert_uint_sat(v.s6), convert_uint_sat(v.s7), convert_uint_sat(v.s8), convert_uint_sat(v.s9), convert_uint_sat(v.sA), convert_uint_sat(v.sB), convert_uint_sat(v.sC), convert_uint_sat(v.sD), convert_uint_sat(v.sE), convert_uint_sat(v.sF));
+}
+
+INLINE OVERLOADABLE short16 convert_short16_sat(int16 v) {
+  return (short16)(convert_short_sat(v.s0), convert_short_sat(v.s1), convert_short_sat(v.s2), convert_short_sat(v.s3), convert_short_sat(v.s4), convert_short_sat(v.s5), convert_short_sat(v.s6), convert_short_sat(v.s7), convert_short_sat(v.s8), convert_short_sat(v.s9), convert_short_sat(v.sA), convert_short_sat(v.sB), convert_short_sat(v.sC), convert_short_sat(v.sD), convert_short_sat(v.sE), convert_short_sat(v.sF));
+}
+
+INLINE OVERLOADABLE ushort16 convert_ushort16_sat(int16 v) {
+  return (ushort16)(convert_ushort_sat(v.s0), convert_ushort_sat(v.s1), convert_ushort_sat(v.s2), convert_ushort_sat(v.s3), convert_ushort_sat(v.s4), convert_ushort_sat(v.s5), convert_ushort_sat(v.s6), convert_ushort_sat(v.s7), convert_ushort_sat(v.s8), convert_ushort_sat(v.s9), convert_ushort_sat(v.sA), convert_ushort_sat(v.sB), convert_ushort_sat(v.sC), convert_ushort_sat(v.sD), convert_ushort_sat(v.sE), convert_ushort_sat(v.sF));
+}
+
+INLINE OVERLOADABLE char16 convert_char16_sat(int16 v) {
+  return (char16)(convert_char_sat(v.s0), convert_char_sat(v.s1), convert_char_sat(v.s2), convert_char_sat(v.s3), convert_char_sat(v.s4), convert_char_sat(v.s5), convert_char_sat(v.s6), convert_char_sat(v.s7), convert_char_sat(v.s8), convert_char_sat(v.s9), convert_char_sat(v.sA), convert_char_sat(v.sB), convert_char_sat(v.sC), convert_char_sat(v.sD), convert_char_sat(v.sE), convert_char_sat(v.sF));
+}
+
+INLINE OVERLOADABLE uchar16 convert_uchar16_sat(int16 v) {
+  return (uchar16)(convert_uchar_sat(v.s0), convert_uchar_sat(v.s1), convert_uchar_sat(v.s2), convert_uchar_sat(v.s3), convert_uchar_sat(v.s4), convert_uchar_sat(v.s5), convert_uchar_sat(v.s6), convert_uchar_sat(v.s7), convert_uchar_sat(v.s8), convert_uchar_sat(v.s9), convert_uchar_sat(v.sA), convert_uchar_sat(v.sB), convert_uchar_sat(v.sC), convert_uchar_sat(v.sD), convert_uchar_sat(v.sE), convert_uchar_sat(v.sF));
+}
+
+INLINE OVERLOADABLE long16 convert_long16_sat(uint16 v) {
+  return (long16)(convert_long_sat(v.s0), convert_long_sat(v.s1), convert_long_sat(v.s2), convert_long_sat(v.s3), convert_long_sat(v.s4), convert_long_sat(v.s5), convert_long_sat(v.s6), convert_long_sat(v.s7), convert_long_sat(v.s8), convert_long_sat(v.s9), convert_long_sat(v.sA), convert_long_sat(v.sB), convert_long_sat(v.sC), convert_long_sat(v.sD), convert_long_sat(v.sE), convert_long_sat(v.sF));
+}
+
+INLINE OVERLOADABLE ulong16 convert_ulong16_sat(uint16 v) {
+  return (ulong16)(convert_ulong_sat(v.s0), convert_ulong_sat(v.s1), convert_ulong_sat(v.s2), convert_ulong_sat(v.s3), convert_ulong_sat(v.s4), convert_ulong_sat(v.s5), convert_ulong_sat(v.s6), convert_ulong_sat(v.s7), convert_ulong_sat(v.s8), convert_ulong_sat(v.s9), convert_ulong_sat(v.sA), convert_ulong_sat(v.sB), convert_ulong_sat(v.sC), convert_ulong_sat(v.sD), convert_ulong_sat(v.sE), convert_ulong_sat(v.sF));
+}
+
+INLINE OVERLOADABLE int16 convert_int16_sat(uint16 v) {
+  return (int16)(convert_int_sat(v.s0), convert_int_sat(v.s1), convert_int_sat(v.s2), convert_int_sat(v.s3), convert_int_sat(v.s4), convert_int_sat(v.s5), convert_int_sat(v.s6), convert_int_sat(v.s7), convert_int_sat(v.s8), convert_int_sat(v.s9), convert_int_sat(v.sA), convert_int_sat(v.sB), convert_int_sat(v.sC), convert_int_sat(v.sD), convert_int_sat(v.sE), convert_int_sat(v.sF));
+}
+
+INLINE OVERLOADABLE uint16 convert_uint16_sat(uint16 v) {
+  return (uint16)(convert_uint_sat(v.s0), convert_uint_sat(v.s1), convert_uint_sat(v.s2), convert_uint_sat(v.s3), convert_uint_sat(v.s4), convert_uint_sat(v.s5), convert_uint_sat(v.s6), convert_uint_sat(v.s7), convert_uint_sat(v.s8), convert_uint_sat(v.s9), convert_uint_sat(v.sA), convert_uint_sat(v.sB), convert_uint_sat(v.sC), convert_uint_sat(v.sD), convert_uint_sat(v.sE), convert_uint_sat(v.sF));
+}
+
+INLINE OVERLOADABLE short16 convert_short16_sat(uint16 v) {
+  return (short16)(convert_short_sat(v.s0), convert_short_sat(v.s1), convert_short_sat(v.s2), convert_short_sat(v.s3), convert_short_sat(v.s4), convert_short_sat(v.s5), convert_short_sat(v.s6), convert_short_sat(v.s7), convert_short_sat(v.s8), convert_short_sat(v.s9), convert_short_sat(v.sA), convert_short_sat(v.sB), convert_short_sat(v.sC), convert_short_sat(v.sD), convert_short_sat(v.sE), convert_short_sat(v.sF));
+}
+
+INLINE OVERLOADABLE ushort16 convert_ushort16_sat(uint16 v) {
+  return (ushort16)(convert_ushort_sat(v.s0), convert_ushort_sat(v.s1), convert_ushort_sat(v.s2), convert_ushort_sat(v.s3), convert_ushort_sat(v.s4), convert_ushort_sat(v.s5), convert_ushort_sat(v.s6), convert_ushort_sat(v.s7), convert_ushort_sat(v.s8), convert_ushort_sat(v.s9), convert_ushort_sat(v.sA), convert_ushort_sat(v.sB), convert_ushort_sat(v.sC), convert_ushort_sat(v.sD), convert_ushort_sat(v.sE), convert_ushort_sat(v.sF));
+}
+
+INLINE OVERLOADABLE char16 convert_char16_sat(uint16 v) {
+  return (char16)(convert_char_sat(v.s0), convert_char_sat(v.s1), convert_char_sat(v.s2), convert_char_sat(v.s3), convert_char_sat(v.s4), convert_char_sat(v.s5), convert_char_sat(v.s6), convert_char_sat(v.s7), convert_char_sat(v.s8), convert_char_sat(v.s9), convert_char_sat(v.sA), convert_char_sat(v.sB), convert_char_sat(v.sC), convert_char_sat(v.sD), convert_char_sat(v.sE), convert_char_sat(v.sF));
+}
+
+INLINE OVERLOADABLE uchar16 convert_uchar16_sat(uint16 v) {
+  return (uchar16)(convert_uchar_sat(v.s0), convert_uchar_sat(v.s1), convert_uchar_sat(v.s2), convert_uchar_sat(v.s3), convert_uchar_sat(v.s4), convert_uchar_sat(v.s5), convert_uchar_sat(v.s6), convert_uchar_sat(v.s7), convert_uchar_sat(v.s8), convert_uchar_sat(v.s9), convert_uchar_sat(v.sA), convert_uchar_sat(v.sB), convert_uchar_sat(v.sC), convert_uchar_sat(v.sD), convert_uchar_sat(v.sE), convert_uchar_sat(v.sF));
+}
+
+INLINE OVERLOADABLE long16 convert_long16_sat(short16 v) {
+  return (long16)(convert_long_sat(v.s0), convert_long_sat(v.s1), convert_long_sat(v.s2), convert_long_sat(v.s3), convert_long_sat(v.s4), convert_long_sat(v.s5), convert_long_sat(v.s6), convert_long_sat(v.s7), convert_long_sat(v.s8), convert_long_sat(v.s9), convert_long_sat(v.sA), convert_long_sat(v.sB), convert_long_sat(v.sC), convert_long_sat(v.sD), convert_long_sat(v.sE), convert_long_sat(v.sF));
+}
+
+INLINE OVERLOADABLE ulong16 convert_ulong16_sat(short16 v) {
+  return (ulong16)(convert_ulong_sat(v.s0), convert_ulong_sat(v.s1), convert_ulong_sat(v.s2), convert_ulong_sat(v.s3), convert_ulong_sat(v.s4), convert_ulong_sat(v.s5), convert_ulong_sat(v.s6), convert_ulong_sat(v.s7), convert_ulong_sat(v.s8), convert_ulong_sat(v.s9), convert_ulong_sat(v.sA), convert_ulong_sat(v.sB), convert_ulong_sat(v.sC), convert_ulong_sat(v.sD), convert_ulong_sat(v.sE), convert_ulong_sat(v.sF));
+}
+
+INLINE OVERLOADABLE int16 convert_int16_sat(short16 v) {
+  return (int16)(convert_int_sat(v.s0), convert_int_sat(v.s1), convert_int_sat(v.s2), convert_int_sat(v.s3), convert_int_sat(v.s4), convert_int_sat(v.s5), convert_int_sat(v.s6), convert_int_sat(v.s7), convert_int_sat(v.s8), convert_int_sat(v.s9), convert_int_sat(v.sA), convert_int_sat(v.sB), convert_int_sat(v.sC), convert_int_sat(v.sD), convert_int_sat(v.sE), convert_int_sat(v.sF));
+}
+
+INLINE OVERLOADABLE uint16 convert_uint16_sat(short16 v) {
+  return (uint16)(convert_uint_sat(v.s0), convert_uint_sat(v.s1), convert_uint_sat(v.s2), convert_uint_sat(v.s3), convert_uint_sat(v.s4), convert_uint_sat(v.s5), convert_uint_sat(v.s6), convert_uint_sat(v.s7), convert_uint_sat(v.s8), convert_uint_sat(v.s9), convert_uint_sat(v.sA), convert_uint_sat(v.sB), convert_uint_sat(v.sC), convert_uint_sat(v.sD), convert_uint_sat(v.sE), convert_uint_sat(v.sF));
+}
+
+INLINE OVERLOADABLE short16 convert_short16_sat(short16 v) {
+  return (short16)(convert_short_sat(v.s0), convert_short_sat(v.s1), convert_short_sat(v.s2), convert_short_sat(v.s3), convert_short_sat(v.s4), convert_short_sat(v.s5), convert_short_sat(v.s6), convert_short_sat(v.s7), convert_short_sat(v.s8), convert_short_sat(v.s9), convert_short_sat(v.sA), convert_short_sat(v.sB), convert_short_sat(v.sC), convert_short_sat(v.sD), convert_short_sat(v.sE), convert_short_sat(v.sF));
+}
+
+INLINE OVERLOADABLE ushort16 convert_ushort16_sat(short16 v) {
+  return (ushort16)(convert_ushort_sat(v.s0), convert_ushort_sat(v.s1), convert_ushort_sat(v.s2), convert_ushort_sat(v.s3), convert_ushort_sat(v.s4), convert_ushort_sat(v.s5), convert_ushort_sat(v.s6), convert_ushort_sat(v.s7), convert_ushort_sat(v.s8), convert_ushort_sat(v.s9), convert_ushort_sat(v.sA), convert_ushort_sat(v.sB), convert_ushort_sat(v.sC), convert_ushort_sat(v.sD), convert_ushort_sat(v.sE), convert_ushort_sat(v.sF));
+}
+
+INLINE OVERLOADABLE char16 convert_char16_sat(short16 v) {
+  return (char16)(convert_char_sat(v.s0), convert_char_sat(v.s1), convert_char_sat(v.s2), convert_char_sat(v.s3), convert_char_sat(v.s4), convert_char_sat(v.s5), convert_char_sat(v.s6), convert_char_sat(v.s7), convert_char_sat(v.s8), convert_char_sat(v.s9), convert_char_sat(v.sA), convert_char_sat(v.sB), convert_char_sat(v.sC), convert_char_sat(v.sD), convert_char_sat(v.sE), convert_char_sat(v.sF));
+}
+
+INLINE OVERLOADABLE uchar16 convert_uchar16_sat(short16 v) {
+  return (uchar16)(convert_uchar_sat(v.s0), convert_uchar_sat(v.s1), convert_uchar_sat(v.s2), convert_uchar_sat(v.s3), convert_uchar_sat(v.s4), convert_uchar_sat(v.s5), convert_uchar_sat(v.s6), convert_uchar_sat(v.s7), convert_uchar_sat(v.s8), convert_uchar_sat(v.s9), convert_uchar_sat(v.sA), convert_uchar_sat(v.sB), convert_uchar_sat(v.sC), convert_uchar_sat(v.sD), convert_uchar_sat(v.sE), convert_uchar_sat(v.sF));
+}
+
+INLINE OVERLOADABLE long16 convert_long16_sat(ushort16 v) {
+  return (long16)(convert_long_sat(v.s0), convert_long_sat(v.s1), convert_long_sat(v.s2), convert_long_sat(v.s3), convert_long_sat(v.s4), convert_long_sat(v.s5), convert_long_sat(v.s6), convert_long_sat(v.s7), convert_long_sat(v.s8), convert_long_sat(v.s9), convert_long_sat(v.sA), convert_long_sat(v.sB), convert_long_sat(v.sC), convert_long_sat(v.sD), convert_long_sat(v.sE), convert_long_sat(v.sF));
+}
+
+INLINE OVERLOADABLE ulong16 convert_ulong16_sat(ushort16 v) {
+  return (ulong16)(convert_ulong_sat(v.s0), convert_ulong_sat(v.s1), convert_ulong_sat(v.s2), convert_ulong_sat(v.s3), convert_ulong_sat(v.s4), convert_ulong_sat(v.s5), convert_ulong_sat(v.s6), convert_ulong_sat(v.s7), convert_ulong_sat(v.s8), convert_ulong_sat(v.s9), convert_ulong_sat(v.sA), convert_ulong_sat(v.sB), convert_ulong_sat(v.sC), convert_ulong_sat(v.sD), convert_ulong_sat(v.sE), convert_ulong_sat(v.sF));
+}
+
+INLINE OVERLOADABLE int16 convert_int16_sat(ushort16 v) {
+  return (int16)(convert_int_sat(v.s0), convert_int_sat(v.s1), convert_int_sat(v.s2), convert_int_sat(v.s3), convert_int_sat(v.s4), convert_int_sat(v.s5), convert_int_sat(v.s6), convert_int_sat(v.s7), convert_int_sat(v.s8), convert_int_sat(v.s9), convert_int_sat(v.sA), convert_int_sat(v.sB), convert_int_sat(v.sC), convert_int_sat(v.sD), convert_int_sat(v.sE), convert_int_sat(v.sF));
+}
+
+INLINE OVERLOADABLE uint16 convert_uint16_sat(ushort16 v) {
+  return (uint16)(convert_uint_sat(v.s0), convert_uint_sat(v.s1), convert_uint_sat(v.s2), convert_uint_sat(v.s3), convert_uint_sat(v.s4), convert_uint_sat(v.s5), convert_uint_sat(v.s6), convert_uint_sat(v.s7), convert_uint_sat(v.s8), convert_uint_sat(v.s9), convert_uint_sat(v.sA), convert_uint_sat(v.sB), convert_uint_sat(v.sC), convert_uint_sat(v.sD), convert_uint_sat(v.sE), convert_uint_sat(v.sF));
+}
+
+INLINE OVERLOADABLE short16 convert_short16_sat(ushort16 v) {
+  return (short16)(convert_short_sat(v.s0), convert_short_sat(v.s1), convert_short_sat(v.s2), convert_short_sat(v.s3), convert_short_sat(v.s4), convert_short_sat(v.s5), convert_short_sat(v.s6), convert_short_sat(v.s7), convert_short_sat(v.s8), convert_short_sat(v.s9), convert_short_sat(v.sA), convert_short_sat(v.sB), convert_short_sat(v.sC), convert_short_sat(v.sD), convert_short_sat(v.sE), convert_short_sat(v.sF));
+}
+
+INLINE OVERLOADABLE ushort16 convert_ushort16_sat(ushort16 v) {
+  return (ushort16)(convert_ushort_sat(v.s0), convert_ushort_sat(v.s1), convert_ushort_sat(v.s2), convert_ushort_sat(v.s3), convert_ushort_sat(v.s4), convert_ushort_sat(v.s5), convert_ushort_sat(v.s6), convert_ushort_sat(v.s7), convert_ushort_sat(v.s8), convert_ushort_sat(v.s9), convert_ushort_sat(v.sA), convert_ushort_sat(v.sB), convert_ushort_sat(v.sC), convert_ushort_sat(v.sD), convert_ushort_sat(v.sE), convert_ushort_sat(v.sF));
+}
+
+INLINE OVERLOADABLE char16 convert_char16_sat(ushort16 v) {
+  return (char16)(convert_char_sat(v.s0), convert_char_sat(v.s1), convert_char_sat(v.s2), convert_char_sat(v.s3), convert_char_sat(v.s4), convert_char_sat(v.s5), convert_char_sat(v.s6), convert_char_sat(v.s7), convert_char_sat(v.s8), convert_char_sat(v.s9), convert_char_sat(v.sA), convert_char_sat(v.sB), convert_char_sat(v.sC), convert_char_sat(v.sD), convert_char_sat(v.sE), convert_char_sat(v.sF));
+}
+
+INLINE OVERLOADABLE uchar16 convert_uchar16_sat(ushort16 v) {
+  return (uchar16)(convert_uchar_sat(v.s0), convert_uchar_sat(v.s1), convert_uchar_sat(v.s2), convert_uchar_sat(v.s3), convert_uchar_sat(v.s4), convert_uchar_sat(v.s5), convert_uchar_sat(v.s6), convert_uchar_sat(v.s7), convert_uchar_sat(v.s8), convert_uchar_sat(v.s9), convert_uchar_sat(v.sA), convert_uchar_sat(v.sB), convert_uchar_sat(v.sC), convert_uchar_sat(v.sD), convert_uchar_sat(v.sE), convert_uchar_sat(v.sF));
+}
+
+INLINE OVERLOADABLE long16 convert_long16_sat(char16 v) {
+  return (long16)(convert_long_sat(v.s0), convert_long_sat(v.s1), convert_long_sat(v.s2), convert_long_sat(v.s3), convert_long_sat(v.s4), convert_long_sat(v.s5), convert_long_sat(v.s6), convert_long_sat(v.s7), convert_long_sat(v.s8), convert_long_sat(v.s9), convert_long_sat(v.sA), convert_long_sat(v.sB), convert_long_sat(v.sC), convert_long_sat(v.sD), convert_long_sat(v.sE), convert_long_sat(v.sF));
+}
+
+INLINE OVERLOADABLE ulong16 convert_ulong16_sat(char16 v) {
+  return (ulong16)(convert_ulong_sat(v.s0), convert_ulong_sat(v.s1), convert_ulong_sat(v.s2), convert_ulong_sat(v.s3), convert_ulong_sat(v.s4), convert_ulong_sat(v.s5), convert_ulong_sat(v.s6), convert_ulong_sat(v.s7), convert_ulong_sat(v.s8), convert_ulong_sat(v.s9), convert_ulong_sat(v.sA), convert_ulong_sat(v.sB), convert_ulong_sat(v.sC), convert_ulong_sat(v.sD), convert_ulong_sat(v.sE), convert_ulong_sat(v.sF));
+}
+
+INLINE OVERLOADABLE int16 convert_int16_sat(char16 v) {
+  return (int16)(convert_int_sat(v.s0), convert_int_sat(v.s1), convert_int_sat(v.s2), convert_int_sat(v.s3), convert_int_sat(v.s4), convert_int_sat(v.s5), convert_int_sat(v.s6), convert_int_sat(v.s7), convert_int_sat(v.s8), convert_int_sat(v.s9), convert_int_sat(v.sA), convert_int_sat(v.sB), convert_int_sat(v.sC), convert_int_sat(v.sD), convert_int_sat(v.sE), convert_int_sat(v.sF));
+}
+
+INLINE OVERLOADABLE uint16 convert_uint16_sat(char16 v) {
+  return (uint16)(convert_uint_sat(v.s0), convert_uint_sat(v.s1), convert_uint_sat(v.s2), convert_uint_sat(v.s3), convert_uint_sat(v.s4), convert_uint_sat(v.s5), convert_uint_sat(v.s6), convert_uint_sat(v.s7), convert_uint_sat(v.s8), convert_uint_sat(v.s9), convert_uint_sat(v.sA), convert_uint_sat(v.sB), convert_uint_sat(v.sC), convert_uint_sat(v.sD), convert_uint_sat(v.sE), convert_uint_sat(v.sF));
+}
+
+INLINE OVERLOADABLE short16 convert_short16_sat(char16 v) {
+  return (short16)(convert_short_sat(v.s0), convert_short_sat(v.s1), convert_short_sat(v.s2), convert_short_sat(v.s3), convert_short_sat(v.s4), convert_short_sat(v.s5), convert_short_sat(v.s6), convert_short_sat(v.s7), convert_short_sat(v.s8), convert_short_sat(v.s9), convert_short_sat(v.sA), convert_short_sat(v.sB), convert_short_sat(v.sC), convert_short_sat(v.sD), convert_short_sat(v.sE), convert_short_sat(v.sF));
+}
+
+INLINE OVERLOADABLE ushort16 convert_ushort16_sat(char16 v) {
+  return (ushort16)(convert_ushort_sat(v.s0), convert_ushort_sat(v.s1), convert_ushort_sat(v.s2), convert_ushort_sat(v.s3), convert_ushort_sat(v.s4), convert_ushort_sat(v.s5), convert_ushort_sat(v.s6), convert_ushort_sat(v.s7), convert_ushort_sat(v.s8), convert_ushort_sat(v.s9), convert_ushort_sat(v.sA), convert_ushort_sat(v.sB), convert_ushort_sat(v.sC), convert_ushort_sat(v.sD), convert_ushort_sat(v.sE), convert_ushort_sat(v.sF));
+}
+
+INLINE OVERLOADABLE char16 convert_char16_sat(char16 v) {
+  return (char16)(convert_char_sat(v.s0), convert_char_sat(v.s1), convert_char_sat(v.s2), convert_char_sat(v.s3), convert_char_sat(v.s4), convert_char_sat(v.s5), convert_char_sat(v.s6), convert_char_sat(v.s7), convert_char_sat(v.s8), convert_char_sat(v.s9), convert_char_sat(v.sA), convert_char_sat(v.sB), convert_char_sat(v.sC), convert_char_sat(v.sD), convert_char_sat(v.sE), convert_char_sat(v.sF));
+}
+
+INLINE OVERLOADABLE uchar16 convert_uchar16_sat(char16 v) {
+  return (uchar16)(convert_uchar_sat(v.s0), convert_uchar_sat(v.s1), convert_uchar_sat(v.s2), convert_uchar_sat(v.s3), convert_uchar_sat(v.s4), convert_uchar_sat(v.s5), convert_uchar_sat(v.s6), convert_uchar_sat(v.s7), convert_uchar_sat(v.s8), convert_uchar_sat(v.s9), convert_uchar_sat(v.sA), convert_uchar_sat(v.sB), convert_uchar_sat(v.sC), convert_uchar_sat(v.sD), convert_uchar_sat(v.sE), convert_uchar_sat(v.sF));
+}
+
+INLINE OVERLOADABLE long16 convert_long16_sat(uchar16 v) {
+  return (long16)(convert_long_sat(v.s0), convert_long_sat(v.s1), convert_long_sat(v.s2), convert_long_sat(v.s3), convert_long_sat(v.s4), convert_long_sat(v.s5), convert_long_sat(v.s6), convert_long_sat(v.s7), convert_long_sat(v.s8), convert_long_sat(v.s9), convert_long_sat(v.sA), convert_long_sat(v.sB), convert_long_sat(v.sC), convert_long_sat(v.sD), convert_long_sat(v.sE), convert_long_sat(v.sF));
+}
+
+INLINE OVERLOADABLE ulong16 convert_ulong16_sat(uchar16 v) {
+  return (ulong16)(convert_ulong_sat(v.s0), convert_ulong_sat(v.s1), convert_ulong_sat(v.s2), convert_ulong_sat(v.s3), convert_ulong_sat(v.s4), convert_ulong_sat(v.s5), convert_ulong_sat(v.s6), convert_ulong_sat(v.s7), convert_ulong_sat(v.s8), convert_ulong_sat(v.s9), convert_ulong_sat(v.sA), convert_ulong_sat(v.sB), convert_ulong_sat(v.sC), convert_ulong_sat(v.sD), convert_ulong_sat(v.sE), convert_ulong_sat(v.sF));
+}
+
+INLINE OVERLOADABLE int16 convert_int16_sat(uchar16 v) {
+  return (int16)(convert_int_sat(v.s0), convert_int_sat(v.s1), convert_int_sat(v.s2), convert_int_sat(v.s3), convert_int_sat(v.s4), convert_int_sat(v.s5), convert_int_sat(v.s6), convert_int_sat(v.s7), convert_int_sat(v.s8), convert_int_sat(v.s9), convert_int_sat(v.sA), convert_int_sat(v.sB), convert_int_sat(v.sC), convert_int_sat(v.sD), convert_int_sat(v.sE), convert_int_sat(v.sF));
+}
+
+INLINE OVERLOADABLE uint16 convert_uint16_sat(uchar16 v) {
+  return (uint16)(convert_uint_sat(v.s0), convert_uint_sat(v.s1), convert_uint_sat(v.s2), convert_uint_sat(v.s3), convert_uint_sat(v.s4), convert_uint_sat(v.s5), convert_uint_sat(v.s6), convert_uint_sat(v.s7), convert_uint_sat(v.s8), convert_uint_sat(v.s9), convert_uint_sat(v.sA), convert_uint_sat(v.sB), convert_uint_sat(v.sC), convert_uint_sat(v.sD), convert_uint_sat(v.sE), convert_uint_sat(v.sF));
+}
+
+INLINE OVERLOADABLE short16 convert_short16_sat(uchar16 v) {
+  return (short16)(convert_short_sat(v.s0), convert_short_sat(v.s1), convert_short_sat(v.s2), convert_short_sat(v.s3), convert_short_sat(v.s4), convert_short_sat(v.s5), convert_short_sat(v.s6), convert_short_sat(v.s7), convert_short_sat(v.s8), convert_short_sat(v.s9), convert_short_sat(v.sA), convert_short_sat(v.sB), convert_short_sat(v.sC), convert_short_sat(v.sD), convert_short_sat(v.sE), convert_short_sat(v.sF));
+}
+
+INLINE OVERLOADABLE ushort16 convert_ushort16_sat(uchar16 v) {
+  return (ushort16)(convert_ushort_sat(v.s0), convert_ushort_sat(v.s1), convert_ushort_sat(v.s2), convert_ushort_sat(v.s3), convert_ushort_sat(v.s4), convert_ushort_sat(v.s5), convert_ushort_sat(v.s6), convert_ushort_sat(v.s7), convert_ushort_sat(v.s8), convert_ushort_sat(v.s9), convert_ushort_sat(v.sA), convert_ushort_sat(v.sB), convert_ushort_sat(v.sC), convert_ushort_sat(v.sD), convert_ushort_sat(v.sE), convert_ushort_sat(v.sF));
+}
+
+INLINE OVERLOADABLE char16 convert_char16_sat(uchar16 v) {
+  return (char16)(convert_char_sat(v.s0), convert_char_sat(v.s1), convert_char_sat(v.s2), convert_char_sat(v.s3), convert_char_sat(v.s4), convert_char_sat(v.s5), convert_char_sat(v.s6), convert_char_sat(v.s7), convert_char_sat(v.s8), convert_char_sat(v.s9), convert_char_sat(v.sA), convert_char_sat(v.sB), convert_char_sat(v.sC), convert_char_sat(v.sD), convert_char_sat(v.sE), convert_char_sat(v.sF));
+}
+
+INLINE OVERLOADABLE uchar16 convert_uchar16_sat(uchar16 v) {
+  return (uchar16)(convert_uchar_sat(v.s0), convert_uchar_sat(v.s1), convert_uchar_sat(v.s2), convert_uchar_sat(v.s3), convert_uchar_sat(v.s4), convert_uchar_sat(v.s5), convert_uchar_sat(v.s6), convert_uchar_sat(v.s7), convert_uchar_sat(v.s8), convert_uchar_sat(v.s9), convert_uchar_sat(v.sA), convert_uchar_sat(v.sB), convert_uchar_sat(v.sC), convert_uchar_sat(v.sD), convert_uchar_sat(v.sE), convert_uchar_sat(v.sF));
+}
+
+INLINE OVERLOADABLE long16 convert_long16_sat(float16 v) {
+  return (long16)(convert_long_sat(v.s0), convert_long_sat(v.s1), convert_long_sat(v.s2), convert_long_sat(v.s3), convert_long_sat(v.s4), convert_long_sat(v.s5), convert_long_sat(v.s6), convert_long_sat(v.s7), convert_long_sat(v.s8), convert_long_sat(v.s9), convert_long_sat(v.sA), convert_long_sat(v.sB), convert_long_sat(v.sC), convert_long_sat(v.sD), convert_long_sat(v.sE), convert_long_sat(v.sF));
+}
+
+INLINE OVERLOADABLE ulong16 convert_ulong16_sat(float16 v) {
+  return (ulong16)(convert_ulong_sat(v.s0), convert_ulong_sat(v.s1), convert_ulong_sat(v.s2), convert_ulong_sat(v.s3), convert_ulong_sat(v.s4), convert_ulong_sat(v.s5), convert_ulong_sat(v.s6), convert_ulong_sat(v.s7), convert_ulong_sat(v.s8), convert_ulong_sat(v.s9), convert_ulong_sat(v.sA), convert_ulong_sat(v.sB), convert_ulong_sat(v.sC), convert_ulong_sat(v.sD), convert_ulong_sat(v.sE), convert_ulong_sat(v.sF));
+}
+
+INLINE OVERLOADABLE int16 convert_int16_sat(float16 v) {
+  return (int16)(convert_int_sat(v.s0), convert_int_sat(v.s1), convert_int_sat(v.s2), convert_int_sat(v.s3), convert_int_sat(v.s4), convert_int_sat(v.s5), convert_int_sat(v.s6), convert_int_sat(v.s7), convert_int_sat(v.s8), convert_int_sat(v.s9), convert_int_sat(v.sA), convert_int_sat(v.sB), convert_int_sat(v.sC), convert_int_sat(v.sD), convert_int_sat(v.sE), convert_int_sat(v.sF));
+}
+
+INLINE OVERLOADABLE uint16 convert_uint16_sat(float16 v) {
+  return (uint16)(convert_uint_sat(v.s0), convert_uint_sat(v.s1), convert_uint_sat(v.s2), convert_uint_sat(v.s3), convert_uint_sat(v.s4), convert_uint_sat(v.s5), convert_uint_sat(v.s6), convert_uint_sat(v.s7), convert_uint_sat(v.s8), convert_uint_sat(v.s9), convert_uint_sat(v.sA), convert_uint_sat(v.sB), convert_uint_sat(v.sC), convert_uint_sat(v.sD), convert_uint_sat(v.sE), convert_uint_sat(v.sF));
+}
+
+INLINE OVERLOADABLE short16 convert_short16_sat(float16 v) {
+  return (short16)(convert_short_sat(v.s0), convert_short_sat(v.s1), convert_short_sat(v.s2), convert_short_sat(v.s3), convert_short_sat(v.s4), convert_short_sat(v.s5), convert_short_sat(v.s6), convert_short_sat(v.s7), convert_short_sat(v.s8), convert_short_sat(v.s9), convert_short_sat(v.sA), convert_short_sat(v.sB), convert_short_sat(v.sC), convert_short_sat(v.sD), convert_short_sat(v.sE), convert_short_sat(v.sF));
+}
+
+INLINE OVERLOADABLE ushort16 convert_ushort16_sat(float16 v) {
+  return (ushort16)(convert_ushort_sat(v.s0), convert_ushort_sat(v.s1), convert_ushort_sat(v.s2), convert_ushort_sat(v.s3), convert_ushort_sat(v.s4), convert_ushort_sat(v.s5), convert_ushort_sat(v.s6), convert_ushort_sat(v.s7), convert_ushort_sat(v.s8), convert_ushort_sat(v.s9), convert_ushort_sat(v.sA), convert_ushort_sat(v.sB), convert_ushort_sat(v.sC), convert_ushort_sat(v.sD), convert_ushort_sat(v.sE), convert_ushort_sat(v.sF));
+}
+
+INLINE OVERLOADABLE char16 convert_char16_sat(float16 v) {
+  return (char16)(convert_char_sat(v.s0), convert_char_sat(v.s1), convert_char_sat(v.s2), convert_char_sat(v.s3), convert_char_sat(v.s4), convert_char_sat(v.s5), convert_char_sat(v.s6), convert_char_sat(v.s7), convert_char_sat(v.s8), convert_char_sat(v.s9), convert_char_sat(v.sA), convert_char_sat(v.sB), convert_char_sat(v.sC), convert_char_sat(v.sD), convert_char_sat(v.sE), convert_char_sat(v.sF));
+}
+
+INLINE OVERLOADABLE uchar16 convert_uchar16_sat(float16 v) {
+  return (uchar16)(convert_uchar_sat(v.s0), convert_uchar_sat(v.s1), convert_uchar_sat(v.s2), convert_uchar_sat(v.s3), convert_uchar_sat(v.s4), convert_uchar_sat(v.s5), convert_uchar_sat(v.s6), convert_uchar_sat(v.s7), convert_uchar_sat(v.s8), convert_uchar_sat(v.s9), convert_uchar_sat(v.sA), convert_uchar_sat(v.sB), convert_uchar_sat(v.sC), convert_uchar_sat(v.sD), convert_uchar_sat(v.sE), convert_uchar_sat(v.sF));
+}
+

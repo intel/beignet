@@ -70,3 +70,157 @@ for vector_length in $VECTOR_LENGTHS; do
           done
         fi
 done
+
+echo '
+#define DEF(DSTTYPE, SRCTYPE) \
+  OVERLOADABLE DSTTYPE convert_ ## DSTTYPE ## _sat(SRCTYPE x);
+DEF(char, uchar);
+DEF(char, short);
+DEF(char, ushort);
+DEF(char, int);
+DEF(char, uint);
+DEF(char, float);
+DEF(uchar, char);
+DEF(uchar, short);
+DEF(uchar, ushort);
+DEF(uchar, int);
+DEF(uchar, uint);
+DEF(uchar, float);
+DEF(short, ushort);
+DEF(short, int);
+DEF(short, uint);
+DEF(short, float);
+DEF(ushort, short);
+DEF(ushort, int);
+DEF(ushort, uint);
+DEF(ushort, float);
+DEF(int, uint);
+DEF(int, float);
+DEF(uint, int);
+DEF(uint, float);
+#undef DEF
+
+#define DEF(DSTTYPE, SRCTYPE, MIN, MAX) \
+  INLINE_OVERLOADABLE DSTTYPE convert_ ## DSTTYPE ## _sat(SRCTYPE x) { \
+    return x > MAX ? (DSTTYPE)MAX : x < MIN ? (DSTTYPE)MIN : x; \
+  }
+DEF(char, long, -128, 127);
+DEF(uchar, long, 0, 255);
+DEF(short, long, -32768, 32767);
+DEF(ushort, long, 0, 65535);
+DEF(int, long, -0x7fffffff-1, 0x7fffffff);
+DEF(uint, long, 0, 0xffffffffu);
+DEF(long, float, -9.223372036854776e+18f, 9.223372036854776e+18f);
+DEF(ulong, float, 0, 1.8446744073709552e+19f);
+#undef DEF
+
+#define DEF(DSTTYPE, SRCTYPE, MAX) \
+  INLINE_OVERLOADABLE DSTTYPE convert_ ## DSTTYPE ## _sat(SRCTYPE x) { \
+    return x > MAX ? (DSTTYPE)MAX : x; \
+  }
+DEF(char, ulong, 127);
+DEF(uchar, ulong, 255);
+DEF(short, ulong, 32767);
+DEF(ushort, ulong, 65535);
+DEF(int, ulong, 0x7fffffff);
+DEF(uint, ulong, 0xffffffffu);
+#undef DEF
+
+INLINE_OVERLOADABLE long convert_long_sat(ulong x) {
+  ulong MAX = 0x7ffffffffffffffful;
+  return x > MAX ? MAX : x;
+}
+
+INLINE_OVERLOADABLE ulong convert_ulong_sat(long x) {
+  return x < 0 ? 0 : x;
+}
+
+#define DEF(DSTTYPE, SRCTYPE) \
+  INLINE_OVERLOADABLE DSTTYPE convert_ ## DSTTYPE ## _sat(SRCTYPE x) { \
+    return x; \
+  }
+DEF(char, char);
+DEF(uchar, uchar);
+DEF(short, char);
+DEF(short, uchar);
+DEF(short, short);
+DEF(ushort, char);
+DEF(ushort, uchar);
+DEF(ushort, ushort);
+DEF(int, char);
+DEF(int, uchar);
+DEF(int, short);
+DEF(int, ushort);
+DEF(int, int);
+DEF(uint, char);
+DEF(uint, uchar);
+DEF(uint, short);
+DEF(uint, ushort);
+DEF(uint, uint);
+DEF(long, char);
+DEF(long, uchar);
+DEF(long, short);
+DEF(long, ushort);
+DEF(long, int);
+DEF(long, uint);
+DEF(long, long);
+DEF(ulong, char);
+DEF(ulong, uchar);
+DEF(ulong, short);
+DEF(ulong, ushort);
+DEF(ulong, int);
+DEF(ulong, uint);
+DEF(ulong, ulong);
+#undef DEF
+'
+
+# vector convert_DSTTYPE_sat function
+for vector_length in $VECTOR_LENGTHS; do
+  if test $vector_length -eq 1; then continue; fi
+
+  for ftype in $TYPES; do
+    fbasetype=`IFS=:; set -- dummy $ftype; echo $2`
+    if test $fbasetype = "double"; then continue; fi
+
+    for ttype in $TYPES; do
+      tbasetype=`IFS=:; set -- dummy $ttype; echo $2`
+      if test $tbasetype = "double" -o $tbasetype = "float"; then continue; fi
+
+      fvectortype=$fbasetype$vector_length
+      tvectortype=$tbasetype$vector_length
+      conv="convert_${tbasetype}_sat"
+
+      construct="$conv(v.s0)"
+      if test $vector_length -gt 1; then
+        construct="$construct, $conv(v.s1)"
+      fi
+      if test $vector_length -gt 2; then
+        construct="$construct, $conv(v.s2)"
+      fi
+      if test $vector_length -gt 3; then
+        construct="$construct, $conv(v.s3)"
+      fi
+      if test $vector_length -gt 4; then
+        construct="$construct, $conv(v.s4)"
+        construct="$construct, $conv(v.s5)"
+        construct="$construct, $conv(v.s6)"
+        construct="$construct, $conv(v.s7)"
+      fi
+      if test $vector_length -gt 8; then
+        construct="$construct, $conv(v.s8)"
+        construct="$construct, $conv(v.s9)"
+        construct="$construct, $conv(v.sA)"
+        construct="$construct, $conv(v.sB)"
+        construct="$construct, $conv(v.sC)"
+        construct="$construct, $conv(v.sD)"
+        construct="$construct, $conv(v.sE)"
+        construct="$construct, $conv(v.sF)"
+      fi
+
+      echo "INLINE OVERLOADABLE $tvectortype convert_${tvectortype}_sat($fvectortype v) {"
+      echo "  return ($tvectortype)($construct);"
+      echo "}"
+      echo
+    done
+  done
+done
