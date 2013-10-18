@@ -459,6 +459,7 @@ namespace gbe
     ALU2(UPSAMPLE_INT)
     ALU2(UPSAMPLE_LONG)
     ALU1WithTemp(CONVI_TO_I64)
+    ALU1WithTemp(CONVF_TO_I64)
     ALU1(CONVI64_TO_I)
     I64Shift(I64SHL)
     I64Shift(I64SHR)
@@ -2579,6 +2580,8 @@ namespace gbe
       } else if (dst.isint64()) {
         switch(src.type) {
           case GEN_TYPE_F:
+            sel.CONVF_TO_I64(dst, src, sel.selReg(sel.reg(FAMILY_DWORD)));
+            break;
           case GEN_TYPE_DF:
             NOT_IMPLEMENTED;
           default:

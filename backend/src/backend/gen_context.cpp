@@ -189,6 +189,20 @@ namespace gbe
       case SEL_OP_MOV_DF:
         p->MOV_DF(dst, src, tmp);
         break;
+      case SEL_OP_CONVF_TO_I64:
+       {
+        tmp.type = GEN_TYPE_F;
+        GenRegister d = GenRegister::retype(tmp, GEN_TYPE_D);
+        float c = (1.f / 65536.f) * (1.f / 65536.f);
+        p->MUL(tmp, src, GenRegister::immf(c));
+        p->RNDZ(tmp, tmp);
+        p->MOV(d, tmp);
+        storeTopHalf(dst, d);
+        d.type = GEN_TYPE_UD;
+        p->MOV(d, GenRegister::abs(src));
+        storeBottomHalf(dst, d);
+        break;
+       }
       case SEL_OP_CONVI_TO_I64: {
         GenRegister middle;
         if (src.type == GEN_TYPE_B || src.type == GEN_TYPE_D) {

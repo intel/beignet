@@ -247,6 +247,41 @@ DEF(uint, int);
 DEF(uint, float);
 #undef DEF
 
+#define DEF(DSTTYPE, SRCTYPE, MIN, MAX) \
+  INLINE_OVERLOADABLE DSTTYPE convert_ ## DSTTYPE ## _sat(SRCTYPE x) { \
+    return x > MAX ? (DSTTYPE)MAX : x < MIN ? (DSTTYPE)MIN : x; \
+  }
+DEF(char, long, -128, 127);
+DEF(uchar, long, 0, 255);
+DEF(short, long, -32768, 32767);
+DEF(ushort, long, 0, 65535);
+DEF(int, long, -0x7fffffff-1, 0x7fffffff);
+DEF(uint, long, 0, 0xffffffffu);
+DEF(long, float, -9.223372036854776e+18f, 9.223372036854776e+18f);
+DEF(ulong, float, 0, 1.8446744073709552e+19f);
+#undef DEF
+
+#define DEF(DSTTYPE, SRCTYPE, MAX) \
+  INLINE_OVERLOADABLE DSTTYPE convert_ ## DSTTYPE ## _sat(SRCTYPE x) { \
+    return x > MAX ? (DSTTYPE)MAX : x; \
+  }
+DEF(char, ulong, 127);
+DEF(uchar, ulong, 255);
+DEF(short, ulong, 32767);
+DEF(ushort, ulong, 65535);
+DEF(int, ulong, 0x7fffffff);
+DEF(uint, ulong, 0xffffffffu);
+#undef DEF
+
+INLINE_OVERLOADABLE long convert_long_sat(ulong x) {
+  ulong MAX = 0x7ffffffffffffffful;
+  return x > MAX ? MAX : x;
+}
+
+INLINE_OVERLOADABLE ulong convert_ulong_sat(long x) {
+  return x < 0 ? 0 : x;
+}
+
 INLINE_OVERLOADABLE int isfinite(float x) { return __builtin_isfinite(x); }
 INLINE_OVERLOADABLE int isinf(float x) { return __builtin_isinf(x); }
 INLINE_OVERLOADABLE int isnan(float x) {
