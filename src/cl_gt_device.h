@@ -44,7 +44,7 @@
 .image2d_max_height = 8192,
 .image3d_max_width = 8192,
 .image3d_max_height = 8192,
-.image3d_max_depth = 8192,
+.image3d_max_depth = 2048,
 .max_samplers = 8,
 .mem_base_addr_align = sizeof(cl_uint) * 8,
 .min_data_type_align_size = sizeof(cl_uint),
