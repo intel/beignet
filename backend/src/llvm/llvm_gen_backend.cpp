@@ -577,12 +577,16 @@ namespace gbe
 
     GBE_ASSERT(c);
     if(isa<UndefValue>(c)) {
-      uint32_t n = c->getNumOperands();
-      Type * opTy = type->getArrayElementType();
-      uint32_t size = opTy->getIntegerBitWidth()/ 8;
-      offset += size*n;
+      uint32_t size = getTypeByteSize(unit, type);
+      offset += size;
+      return;
+    } else if(isa<ConstantAggregateZero>(c)) {
+      uint32_t size = getTypeByteSize(unit, type);
+      memset((char*)mem+offset, 0, size);
+      offset += size;
       return;
     }
+
     switch(id) {
       case Type::TypeID::StructTyID:
         {
