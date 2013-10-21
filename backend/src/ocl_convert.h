@@ -10886,3 +10886,6339 @@ INLINE OVERLOADABLE float16 convert_float16_rtn(float16 v) {
   return (float16)(convert_float_rtn(v.s0), convert_float_rtn(v.s1), convert_float_rtn(v.s2), convert_float_rtn(v.s3), convert_float_rtn(v.s4), convert_float_rtn(v.s5), convert_float_rtn(v.s6), convert_float_rtn(v.s7), convert_float_rtn(v.s8), convert_float_rtn(v.s9), convert_float_rtn(v.sA), convert_float_rtn(v.sB), convert_float_rtn(v.sC), convert_float_rtn(v.sD), convert_float_rtn(v.sE), convert_float_rtn(v.sF));
 }
 
+INLINE_OVERLOADABLE long convert_long_sat_rte(long x)
+{ return convert_long_sat(x); }
+INLINE_OVERLOADABLE long convert_long_sat_rtz(long x)
+{ return convert_long_sat(x); }
+INLINE_OVERLOADABLE long convert_long_sat_rtp(long x)
+{ return convert_long_sat(x); }
+INLINE_OVERLOADABLE long convert_long_sat_rtn(long x)
+{ return convert_long_sat(x); }
+INLINE_OVERLOADABLE ulong convert_ulong_sat_rte(long x)
+{ return convert_ulong_sat(x); }
+INLINE_OVERLOADABLE ulong convert_ulong_sat_rtz(long x)
+{ return convert_ulong_sat(x); }
+INLINE_OVERLOADABLE ulong convert_ulong_sat_rtp(long x)
+{ return convert_ulong_sat(x); }
+INLINE_OVERLOADABLE ulong convert_ulong_sat_rtn(long x)
+{ return convert_ulong_sat(x); }
+INLINE_OVERLOADABLE int convert_int_sat_rte(long x)
+{ return convert_int_sat(x); }
+INLINE_OVERLOADABLE int convert_int_sat_rtz(long x)
+{ return convert_int_sat(x); }
+INLINE_OVERLOADABLE int convert_int_sat_rtp(long x)
+{ return convert_int_sat(x); }
+INLINE_OVERLOADABLE int convert_int_sat_rtn(long x)
+{ return convert_int_sat(x); }
+INLINE_OVERLOADABLE uint convert_uint_sat_rte(long x)
+{ return convert_uint_sat(x); }
+INLINE_OVERLOADABLE uint convert_uint_sat_rtz(long x)
+{ return convert_uint_sat(x); }
+INLINE_OVERLOADABLE uint convert_uint_sat_rtp(long x)
+{ return convert_uint_sat(x); }
+INLINE_OVERLOADABLE uint convert_uint_sat_rtn(long x)
+{ return convert_uint_sat(x); }
+INLINE_OVERLOADABLE short convert_short_sat_rte(long x)
+{ return convert_short_sat(x); }
+INLINE_OVERLOADABLE short convert_short_sat_rtz(long x)
+{ return convert_short_sat(x); }
+INLINE_OVERLOADABLE short convert_short_sat_rtp(long x)
+{ return convert_short_sat(x); }
+INLINE_OVERLOADABLE short convert_short_sat_rtn(long x)
+{ return convert_short_sat(x); }
+INLINE_OVERLOADABLE ushort convert_ushort_sat_rte(long x)
+{ return convert_ushort_sat(x); }
+INLINE_OVERLOADABLE ushort convert_ushort_sat_rtz(long x)
+{ return convert_ushort_sat(x); }
+INLINE_OVERLOADABLE ushort convert_ushort_sat_rtp(long x)
+{ return convert_ushort_sat(x); }
+INLINE_OVERLOADABLE ushort convert_ushort_sat_rtn(long x)
+{ return convert_ushort_sat(x); }
+INLINE_OVERLOADABLE char convert_char_sat_rte(long x)
+{ return convert_char_sat(x); }
+INLINE_OVERLOADABLE char convert_char_sat_rtz(long x)
+{ return convert_char_sat(x); }
+INLINE_OVERLOADABLE char convert_char_sat_rtp(long x)
+{ return convert_char_sat(x); }
+INLINE_OVERLOADABLE char convert_char_sat_rtn(long x)
+{ return convert_char_sat(x); }
+INLINE_OVERLOADABLE uchar convert_uchar_sat_rte(long x)
+{ return convert_uchar_sat(x); }
+INLINE_OVERLOADABLE uchar convert_uchar_sat_rtz(long x)
+{ return convert_uchar_sat(x); }
+INLINE_OVERLOADABLE uchar convert_uchar_sat_rtp(long x)
+{ return convert_uchar_sat(x); }
+INLINE_OVERLOADABLE uchar convert_uchar_sat_rtn(long x)
+{ return convert_uchar_sat(x); }
+INLINE_OVERLOADABLE long convert_long_sat_rte(ulong x)
+{ return convert_long_sat(x); }
+INLINE_OVERLOADABLE long convert_long_sat_rtz(ulong x)
+{ return convert_long_sat(x); }
+INLINE_OVERLOADABLE long convert_long_sat_rtp(ulong x)
+{ return convert_long_sat(x); }
+INLINE_OVERLOADABLE long convert_long_sat_rtn(ulong x)
+{ return convert_long_sat(x); }
+INLINE_OVERLOADABLE ulong convert_ulong_sat_rte(ulong x)
+{ return convert_ulong_sat(x); }
+INLINE_OVERLOADABLE ulong convert_ulong_sat_rtz(ulong x)
+{ return convert_ulong_sat(x); }
+INLINE_OVERLOADABLE ulong convert_ulong_sat_rtp(ulong x)
+{ return convert_ulong_sat(x); }
+INLINE_OVERLOADABLE ulong convert_ulong_sat_rtn(ulong x)
+{ return convert_ulong_sat(x); }
+INLINE_OVERLOADABLE int convert_int_sat_rte(ulong x)
+{ return convert_int_sat(x); }
+INLINE_OVERLOADABLE int convert_int_sat_rtz(ulong x)
+{ return convert_int_sat(x); }
+INLINE_OVERLOADABLE int convert_int_sat_rtp(ulong x)
+{ return convert_int_sat(x); }
+INLINE_OVERLOADABLE int convert_int_sat_rtn(ulong x)
+{ return convert_int_sat(x); }
+INLINE_OVERLOADABLE uint convert_uint_sat_rte(ulong x)
+{ return convert_uint_sat(x); }
+INLINE_OVERLOADABLE uint convert_uint_sat_rtz(ulong x)
+{ return convert_uint_sat(x); }
+INLINE_OVERLOADABLE uint convert_uint_sat_rtp(ulong x)
+{ return convert_uint_sat(x); }
+INLINE_OVERLOADABLE uint convert_uint_sat_rtn(ulong x)
+{ return convert_uint_sat(x); }
+INLINE_OVERLOADABLE short convert_short_sat_rte(ulong x)
+{ return convert_short_sat(x); }
+INLINE_OVERLOADABLE short convert_short_sat_rtz(ulong x)
+{ return convert_short_sat(x); }
+INLINE_OVERLOADABLE short convert_short_sat_rtp(ulong x)
+{ return convert_short_sat(x); }
+INLINE_OVERLOADABLE short convert_short_sat_rtn(ulong x)
+{ return convert_short_sat(x); }
+INLINE_OVERLOADABLE ushort convert_ushort_sat_rte(ulong x)
+{ return convert_ushort_sat(x); }
+INLINE_OVERLOADABLE ushort convert_ushort_sat_rtz(ulong x)
+{ return convert_ushort_sat(x); }
+INLINE_OVERLOADABLE ushort convert_ushort_sat_rtp(ulong x)
+{ return convert_ushort_sat(x); }
+INLINE_OVERLOADABLE ushort convert_ushort_sat_rtn(ulong x)
+{ return convert_ushort_sat(x); }
+INLINE_OVERLOADABLE char convert_char_sat_rte(ulong x)
+{ return convert_char_sat(x); }
+INLINE_OVERLOADABLE char convert_char_sat_rtz(ulong x)
+{ return convert_char_sat(x); }
+INLINE_OVERLOADABLE char convert_char_sat_rtp(ulong x)
+{ return convert_char_sat(x); }
+INLINE_OVERLOADABLE char convert_char_sat_rtn(ulong x)
+{ return convert_char_sat(x); }
+INLINE_OVERLOADABLE uchar convert_uchar_sat_rte(ulong x)
+{ return convert_uchar_sat(x); }
+INLINE_OVERLOADABLE uchar convert_uchar_sat_rtz(ulong x)
+{ return convert_uchar_sat(x); }
+INLINE_OVERLOADABLE uchar convert_uchar_sat_rtp(ulong x)
+{ return convert_uchar_sat(x); }
+INLINE_OVERLOADABLE uchar convert_uchar_sat_rtn(ulong x)
+{ return convert_uchar_sat(x); }
+INLINE_OVERLOADABLE long convert_long_sat_rte(int x)
+{ return convert_long_sat(x); }
+INLINE_OVERLOADABLE long convert_long_sat_rtz(int x)
+{ return convert_long_sat(x); }
+INLINE_OVERLOADABLE long convert_long_sat_rtp(int x)
+{ return convert_long_sat(x); }
+INLINE_OVERLOADABLE long convert_long_sat_rtn(int x)
+{ return convert_long_sat(x); }
+INLINE_OVERLOADABLE ulong convert_ulong_sat_rte(int x)
+{ return convert_ulong_sat(x); }
+INLINE_OVERLOADABLE ulong convert_ulong_sat_rtz(int x)
+{ return convert_ulong_sat(x); }
+INLINE_OVERLOADABLE ulong convert_ulong_sat_rtp(int x)
+{ return convert_ulong_sat(x); }
+INLINE_OVERLOADABLE ulong convert_ulong_sat_rtn(int x)
+{ return convert_ulong_sat(x); }
+INLINE_OVERLOADABLE int convert_int_sat_rte(int x)
+{ return convert_int_sat(x); }
+INLINE_OVERLOADABLE int convert_int_sat_rtz(int x)
+{ return convert_int_sat(x); }
+INLINE_OVERLOADABLE int convert_int_sat_rtp(int x)
+{ return convert_int_sat(x); }
+INLINE_OVERLOADABLE int convert_int_sat_rtn(int x)
+{ return convert_int_sat(x); }
+INLINE_OVERLOADABLE uint convert_uint_sat_rte(int x)
+{ return convert_uint_sat(x); }
+INLINE_OVERLOADABLE uint convert_uint_sat_rtz(int x)
+{ return convert_uint_sat(x); }
+INLINE_OVERLOADABLE uint convert_uint_sat_rtp(int x)
+{ return convert_uint_sat(x); }
+INLINE_OVERLOADABLE uint convert_uint_sat_rtn(int x)
+{ return convert_uint_sat(x); }
+INLINE_OVERLOADABLE short convert_short_sat_rte(int x)
+{ return convert_short_sat(x); }
+INLINE_OVERLOADABLE short convert_short_sat_rtz(int x)
+{ return convert_short_sat(x); }
+INLINE_OVERLOADABLE short convert_short_sat_rtp(int x)
+{ return convert_short_sat(x); }
+INLINE_OVERLOADABLE short convert_short_sat_rtn(int x)
+{ return convert_short_sat(x); }
+INLINE_OVERLOADABLE ushort convert_ushort_sat_rte(int x)
+{ return convert_ushort_sat(x); }
+INLINE_OVERLOADABLE ushort convert_ushort_sat_rtz(int x)
+{ return convert_ushort_sat(x); }
+INLINE_OVERLOADABLE ushort convert_ushort_sat_rtp(int x)
+{ return convert_ushort_sat(x); }
+INLINE_OVERLOADABLE ushort convert_ushort_sat_rtn(int x)
+{ return convert_ushort_sat(x); }
+INLINE_OVERLOADABLE char convert_char_sat_rte(int x)
+{ return convert_char_sat(x); }
+INLINE_OVERLOADABLE char convert_char_sat_rtz(int x)
+{ return convert_char_sat(x); }
+INLINE_OVERLOADABLE char convert_char_sat_rtp(int x)
+{ return convert_char_sat(x); }
+INLINE_OVERLOADABLE char convert_char_sat_rtn(int x)
+{ return convert_char_sat(x); }
+INLINE_OVERLOADABLE uchar convert_uchar_sat_rte(int x)
+{ return convert_uchar_sat(x); }
+INLINE_OVERLOADABLE uchar convert_uchar_sat_rtz(int x)
+{ return convert_uchar_sat(x); }
+INLINE_OVERLOADABLE uchar convert_uchar_sat_rtp(int x)
+{ return convert_uchar_sat(x); }
+INLINE_OVERLOADABLE uchar convert_uchar_sat_rtn(int x)
+{ return convert_uchar_sat(x); }
+INLINE_OVERLOADABLE long convert_long_sat_rte(uint x)
+{ return convert_long_sat(x); }
+INLINE_OVERLOADABLE long convert_long_sat_rtz(uint x)
+{ return convert_long_sat(x); }
+INLINE_OVERLOADABLE long convert_long_sat_rtp(uint x)
+{ return convert_long_sat(x); }
+INLINE_OVERLOADABLE long convert_long_sat_rtn(uint x)
+{ return convert_long_sat(x); }
+INLINE_OVERLOADABLE ulong convert_ulong_sat_rte(uint x)
+{ return convert_ulong_sat(x); }
+INLINE_OVERLOADABLE ulong convert_ulong_sat_rtz(uint x)
+{ return convert_ulong_sat(x); }
+INLINE_OVERLOADABLE ulong convert_ulong_sat_rtp(uint x)
+{ return convert_ulong_sat(x); }
+INLINE_OVERLOADABLE ulong convert_ulong_sat_rtn(uint x)
+{ return convert_ulong_sat(x); }
+INLINE_OVERLOADABLE int convert_int_sat_rte(uint x)
+{ return convert_int_sat(x); }
+INLINE_OVERLOADABLE int convert_int_sat_rtz(uint x)
+{ return convert_int_sat(x); }
+INLINE_OVERLOADABLE int convert_int_sat_rtp(uint x)
+{ return convert_int_sat(x); }
+INLINE_OVERLOADABLE int convert_int_sat_rtn(uint x)
+{ return convert_int_sat(x); }
+INLINE_OVERLOADABLE uint convert_uint_sat_rte(uint x)
+{ return convert_uint_sat(x); }
+INLINE_OVERLOADABLE uint convert_uint_sat_rtz(uint x)
+{ return convert_uint_sat(x); }
+INLINE_OVERLOADABLE uint convert_uint_sat_rtp(uint x)
+{ return convert_uint_sat(x); }
+INLINE_OVERLOADABLE uint convert_uint_sat_rtn(uint x)
+{ return convert_uint_sat(x); }
+INLINE_OVERLOADABLE short convert_short_sat_rte(uint x)
+{ return convert_short_sat(x); }
+INLINE_OVERLOADABLE short convert_short_sat_rtz(uint x)
+{ return convert_short_sat(x); }
+INLINE_OVERLOADABLE short convert_short_sat_rtp(uint x)
+{ return convert_short_sat(x); }
+INLINE_OVERLOADABLE short convert_short_sat_rtn(uint x)
+{ return convert_short_sat(x); }
+INLINE_OVERLOADABLE ushort convert_ushort_sat_rte(uint x)
+{ return convert_ushort_sat(x); }
+INLINE_OVERLOADABLE ushort convert_ushort_sat_rtz(uint x)
+{ return convert_ushort_sat(x); }
+INLINE_OVERLOADABLE ushort convert_ushort_sat_rtp(uint x)
+{ return convert_ushort_sat(x); }
+INLINE_OVERLOADABLE ushort convert_ushort_sat_rtn(uint x)
+{ return convert_ushort_sat(x); }
+INLINE_OVERLOADABLE char convert_char_sat_rte(uint x)
+{ return convert_char_sat(x); }
+INLINE_OVERLOADABLE char convert_char_sat_rtz(uint x)
+{ return convert_char_sat(x); }
+INLINE_OVERLOADABLE char convert_char_sat_rtp(uint x)
+{ return convert_char_sat(x); }
+INLINE_OVERLOADABLE char convert_char_sat_rtn(uint x)
+{ return convert_char_sat(x); }
+INLINE_OVERLOADABLE uchar convert_uchar_sat_rte(uint x)
+{ return convert_uchar_sat(x); }
+INLINE_OVERLOADABLE uchar convert_uchar_sat_rtz(uint x)
+{ return convert_uchar_sat(x); }
+INLINE_OVERLOADABLE uchar convert_uchar_sat_rtp(uint x)
+{ return convert_uchar_sat(x); }
+INLINE_OVERLOADABLE uchar convert_uchar_sat_rtn(uint x)
+{ return convert_uchar_sat(x); }
+INLINE_OVERLOADABLE long convert_long_sat_rte(short x)
+{ return convert_long_sat(x); }
+INLINE_OVERLOADABLE long convert_long_sat_rtz(short x)
+{ return convert_long_sat(x); }
+INLINE_OVERLOADABLE long convert_long_sat_rtp(short x)
+{ return convert_long_sat(x); }
+INLINE_OVERLOADABLE long convert_long_sat_rtn(short x)
+{ return convert_long_sat(x); }
+INLINE_OVERLOADABLE ulong convert_ulong_sat_rte(short x)
+{ return convert_ulong_sat(x); }
+INLINE_OVERLOADABLE ulong convert_ulong_sat_rtz(short x)
+{ return convert_ulong_sat(x); }
+INLINE_OVERLOADABLE ulong convert_ulong_sat_rtp(short x)
+{ return convert_ulong_sat(x); }
+INLINE_OVERLOADABLE ulong convert_ulong_sat_rtn(short x)
+{ return convert_ulong_sat(x); }
+INLINE_OVERLOADABLE int convert_int_sat_rte(short x)
+{ return convert_int_sat(x); }
+INLINE_OVERLOADABLE int convert_int_sat_rtz(short x)
+{ return convert_int_sat(x); }
+INLINE_OVERLOADABLE int convert_int_sat_rtp(short x)
+{ return convert_int_sat(x); }
+INLINE_OVERLOADABLE int convert_int_sat_rtn(short x)
+{ return convert_int_sat(x); }
+INLINE_OVERLOADABLE uint convert_uint_sat_rte(short x)
+{ return convert_uint_sat(x); }
+INLINE_OVERLOADABLE uint convert_uint_sat_rtz(short x)
+{ return convert_uint_sat(x); }
+INLINE_OVERLOADABLE uint convert_uint_sat_rtp(short x)
+{ return convert_uint_sat(x); }
+INLINE_OVERLOADABLE uint convert_uint_sat_rtn(short x)
+{ return convert_uint_sat(x); }
+INLINE_OVERLOADABLE short convert_short_sat_rte(short x)
+{ return convert_short_sat(x); }
+INLINE_OVERLOADABLE short convert_short_sat_rtz(short x)
+{ return convert_short_sat(x); }
+INLINE_OVERLOADABLE short convert_short_sat_rtp(short x)
+{ return convert_short_sat(x); }
+INLINE_OVERLOADABLE short convert_short_sat_rtn(short x)
+{ return convert_short_sat(x); }
+INLINE_OVERLOADABLE ushort convert_ushort_sat_rte(short x)
+{ return convert_ushort_sat(x); }
+INLINE_OVERLOADABLE ushort convert_ushort_sat_rtz(short x)
+{ return convert_ushort_sat(x); }
+INLINE_OVERLOADABLE ushort convert_ushort_sat_rtp(short x)
+{ return convert_ushort_sat(x); }
+INLINE_OVERLOADABLE ushort convert_ushort_sat_rtn(short x)
+{ return convert_ushort_sat(x); }
+INLINE_OVERLOADABLE char convert_char_sat_rte(short x)
+{ return convert_char_sat(x); }
+INLINE_OVERLOADABLE char convert_char_sat_rtz(short x)
+{ return convert_char_sat(x); }
+INLINE_OVERLOADABLE char convert_char_sat_rtp(short x)
+{ return convert_char_sat(x); }
+INLINE_OVERLOADABLE char convert_char_sat_rtn(short x)
+{ return convert_char_sat(x); }
+INLINE_OVERLOADABLE uchar convert_uchar_sat_rte(short x)
+{ return convert_uchar_sat(x); }
+INLINE_OVERLOADABLE uchar convert_uchar_sat_rtz(short x)
+{ return convert_uchar_sat(x); }
+INLINE_OVERLOADABLE uchar convert_uchar_sat_rtp(short x)
+{ return convert_uchar_sat(x); }
+INLINE_OVERLOADABLE uchar convert_uchar_sat_rtn(short x)
+{ return convert_uchar_sat(x); }
+INLINE_OVERLOADABLE long convert_long_sat_rte(ushort x)
+{ return convert_long_sat(x); }
+INLINE_OVERLOADABLE long convert_long_sat_rtz(ushort x)
+{ return convert_long_sat(x); }
+INLINE_OVERLOADABLE long convert_long_sat_rtp(ushort x)
+{ return convert_long_sat(x); }
+INLINE_OVERLOADABLE long convert_long_sat_rtn(ushort x)
+{ return convert_long_sat(x); }
+INLINE_OVERLOADABLE ulong convert_ulong_sat_rte(ushort x)
+{ return convert_ulong_sat(x); }
+INLINE_OVERLOADABLE ulong convert_ulong_sat_rtz(ushort x)
+{ return convert_ulong_sat(x); }
+INLINE_OVERLOADABLE ulong convert_ulong_sat_rtp(ushort x)
+{ return convert_ulong_sat(x); }
+INLINE_OVERLOADABLE ulong convert_ulong_sat_rtn(ushort x)
+{ return convert_ulong_sat(x); }
+INLINE_OVERLOADABLE int convert_int_sat_rte(ushort x)
+{ return convert_int_sat(x); }
+INLINE_OVERLOADABLE int convert_int_sat_rtz(ushort x)
+{ return convert_int_sat(x); }
+INLINE_OVERLOADABLE int convert_int_sat_rtp(ushort x)
+{ return convert_int_sat(x); }
+INLINE_OVERLOADABLE int convert_int_sat_rtn(ushort x)
+{ return convert_int_sat(x); }
+INLINE_OVERLOADABLE uint convert_uint_sat_rte(ushort x)
+{ return convert_uint_sat(x); }
+INLINE_OVERLOADABLE uint convert_uint_sat_rtz(ushort x)
+{ return convert_uint_sat(x); }
+INLINE_OVERLOADABLE uint convert_uint_sat_rtp(ushort x)
+{ return convert_uint_sat(x); }
+INLINE_OVERLOADABLE uint convert_uint_sat_rtn(ushort x)
+{ return convert_uint_sat(x); }
+INLINE_OVERLOADABLE short convert_short_sat_rte(ushort x)
+{ return convert_short_sat(x); }
+INLINE_OVERLOADABLE short convert_short_sat_rtz(ushort x)
+{ return convert_short_sat(x); }
+INLINE_OVERLOADABLE short convert_short_sat_rtp(ushort x)
+{ return convert_short_sat(x); }
+INLINE_OVERLOADABLE short convert_short_sat_rtn(ushort x)
+{ return convert_short_sat(x); }
+INLINE_OVERLOADABLE ushort convert_ushort_sat_rte(ushort x)
+{ return convert_ushort_sat(x); }
+INLINE_OVERLOADABLE ushort convert_ushort_sat_rtz(ushort x)
+{ return convert_ushort_sat(x); }
+INLINE_OVERLOADABLE ushort convert_ushort_sat_rtp(ushort x)
+{ return convert_ushort_sat(x); }
+INLINE_OVERLOADABLE ushort convert_ushort_sat_rtn(ushort x)
+{ return convert_ushort_sat(x); }
+INLINE_OVERLOADABLE char convert_char_sat_rte(ushort x)
+{ return convert_char_sat(x); }
+INLINE_OVERLOADABLE char convert_char_sat_rtz(ushort x)
+{ return convert_char_sat(x); }
+INLINE_OVERLOADABLE char convert_char_sat_rtp(ushort x)
+{ return convert_char_sat(x); }
+INLINE_OVERLOADABLE char convert_char_sat_rtn(ushort x)
+{ return convert_char_sat(x); }
+INLINE_OVERLOADABLE uchar convert_uchar_sat_rte(ushort x)
+{ return convert_uchar_sat(x); }
+INLINE_OVERLOADABLE uchar convert_uchar_sat_rtz(ushort x)
+{ return convert_uchar_sat(x); }
+INLINE_OVERLOADABLE uchar convert_uchar_sat_rtp(ushort x)
+{ return convert_uchar_sat(x); }
+INLINE_OVERLOADABLE uchar convert_uchar_sat_rtn(ushort x)
+{ return convert_uchar_sat(x); }
+INLINE_OVERLOADABLE long convert_long_sat_rte(char x)
+{ return convert_long_sat(x); }
+INLINE_OVERLOADABLE long convert_long_sat_rtz(char x)
+{ return convert_long_sat(x); }
+INLINE_OVERLOADABLE long convert_long_sat_rtp(char x)
+{ return convert_long_sat(x); }
+INLINE_OVERLOADABLE long convert_long_sat_rtn(char x)
+{ return convert_long_sat(x); }
+INLINE_OVERLOADABLE ulong convert_ulong_sat_rte(char x)
+{ return convert_ulong_sat(x); }
+INLINE_OVERLOADABLE ulong convert_ulong_sat_rtz(char x)
+{ return convert_ulong_sat(x); }
+INLINE_OVERLOADABLE ulong convert_ulong_sat_rtp(char x)
+{ return convert_ulong_sat(x); }
+INLINE_OVERLOADABLE ulong convert_ulong_sat_rtn(char x)
+{ return convert_ulong_sat(x); }
+INLINE_OVERLOADABLE int convert_int_sat_rte(char x)
+{ return convert_int_sat(x); }
+INLINE_OVERLOADABLE int convert_int_sat_rtz(char x)
+{ return convert_int_sat(x); }
+INLINE_OVERLOADABLE int convert_int_sat_rtp(char x)
+{ return convert_int_sat(x); }
+INLINE_OVERLOADABLE int convert_int_sat_rtn(char x)
+{ return convert_int_sat(x); }
+INLINE_OVERLOADABLE uint convert_uint_sat_rte(char x)
+{ return convert_uint_sat(x); }
+INLINE_OVERLOADABLE uint convert_uint_sat_rtz(char x)
+{ return convert_uint_sat(x); }
+INLINE_OVERLOADABLE uint convert_uint_sat_rtp(char x)
+{ return convert_uint_sat(x); }
+INLINE_OVERLOADABLE uint convert_uint_sat_rtn(char x)
+{ return convert_uint_sat(x); }
+INLINE_OVERLOADABLE short convert_short_sat_rte(char x)
+{ return convert_short_sat(x); }
+INLINE_OVERLOADABLE short convert_short_sat_rtz(char x)
+{ return convert_short_sat(x); }
+INLINE_OVERLOADABLE short convert_short_sat_rtp(char x)
+{ return convert_short_sat(x); }
+INLINE_OVERLOADABLE short convert_short_sat_rtn(char x)
+{ return convert_short_sat(x); }
+INLINE_OVERLOADABLE ushort convert_ushort_sat_rte(char x)
+{ return convert_ushort_sat(x); }
+INLINE_OVERLOADABLE ushort convert_ushort_sat_rtz(char x)
+{ return convert_ushort_sat(x); }
+INLINE_OVERLOADABLE ushort convert_ushort_sat_rtp(char x)
+{ return convert_ushort_sat(x); }
+INLINE_OVERLOADABLE ushort convert_ushort_sat_rtn(char x)
+{ return convert_ushort_sat(x); }
+INLINE_OVERLOADABLE char convert_char_sat_rte(char x)
+{ return convert_char_sat(x); }
+INLINE_OVERLOADABLE char convert_char_sat_rtz(char x)
+{ return convert_char_sat(x); }
+INLINE_OVERLOADABLE char convert_char_sat_rtp(char x)
+{ return convert_char_sat(x); }
+INLINE_OVERLOADABLE char convert_char_sat_rtn(char x)
+{ return convert_char_sat(x); }
+INLINE_OVERLOADABLE uchar convert_uchar_sat_rte(char x)
+{ return convert_uchar_sat(x); }
+INLINE_OVERLOADABLE uchar convert_uchar_sat_rtz(char x)
+{ return convert_uchar_sat(x); }
+INLINE_OVERLOADABLE uchar convert_uchar_sat_rtp(char x)
+{ return convert_uchar_sat(x); }
+INLINE_OVERLOADABLE uchar convert_uchar_sat_rtn(char x)
+{ return convert_uchar_sat(x); }
+INLINE_OVERLOADABLE long convert_long_sat_rte(uchar x)
+{ return convert_long_sat(x); }
+INLINE_OVERLOADABLE long convert_long_sat_rtz(uchar x)
+{ return convert_long_sat(x); }
+INLINE_OVERLOADABLE long convert_long_sat_rtp(uchar x)
+{ return convert_long_sat(x); }
+INLINE_OVERLOADABLE long convert_long_sat_rtn(uchar x)
+{ return convert_long_sat(x); }
+INLINE_OVERLOADABLE ulong convert_ulong_sat_rte(uchar x)
+{ return convert_ulong_sat(x); }
+INLINE_OVERLOADABLE ulong convert_ulong_sat_rtz(uchar x)
+{ return convert_ulong_sat(x); }
+INLINE_OVERLOADABLE ulong convert_ulong_sat_rtp(uchar x)
+{ return convert_ulong_sat(x); }
+INLINE_OVERLOADABLE ulong convert_ulong_sat_rtn(uchar x)
+{ return convert_ulong_sat(x); }
+INLINE_OVERLOADABLE int convert_int_sat_rte(uchar x)
+{ return convert_int_sat(x); }
+INLINE_OVERLOADABLE int convert_int_sat_rtz(uchar x)
+{ return convert_int_sat(x); }
+INLINE_OVERLOADABLE int convert_int_sat_rtp(uchar x)
+{ return convert_int_sat(x); }
+INLINE_OVERLOADABLE int convert_int_sat_rtn(uchar x)
+{ return convert_int_sat(x); }
+INLINE_OVERLOADABLE uint convert_uint_sat_rte(uchar x)
+{ return convert_uint_sat(x); }
+INLINE_OVERLOADABLE uint convert_uint_sat_rtz(uchar x)
+{ return convert_uint_sat(x); }
+INLINE_OVERLOADABLE uint convert_uint_sat_rtp(uchar x)
+{ return convert_uint_sat(x); }
+INLINE_OVERLOADABLE uint convert_uint_sat_rtn(uchar x)
+{ return convert_uint_sat(x); }
+INLINE_OVERLOADABLE short convert_short_sat_rte(uchar x)
+{ return convert_short_sat(x); }
+INLINE_OVERLOADABLE short convert_short_sat_rtz(uchar x)
+{ return convert_short_sat(x); }
+INLINE_OVERLOADABLE short convert_short_sat_rtp(uchar x)
+{ return convert_short_sat(x); }
+INLINE_OVERLOADABLE short convert_short_sat_rtn(uchar x)
+{ return convert_short_sat(x); }
+INLINE_OVERLOADABLE ushort convert_ushort_sat_rte(uchar x)
+{ return convert_ushort_sat(x); }
+INLINE_OVERLOADABLE ushort convert_ushort_sat_rtz(uchar x)
+{ return convert_ushort_sat(x); }
+INLINE_OVERLOADABLE ushort convert_ushort_sat_rtp(uchar x)
+{ return convert_ushort_sat(x); }
+INLINE_OVERLOADABLE ushort convert_ushort_sat_rtn(uchar x)
+{ return convert_ushort_sat(x); }
+INLINE_OVERLOADABLE char convert_char_sat_rte(uchar x)
+{ return convert_char_sat(x); }
+INLINE_OVERLOADABLE char convert_char_sat_rtz(uchar x)
+{ return convert_char_sat(x); }
+INLINE_OVERLOADABLE char convert_char_sat_rtp(uchar x)
+{ return convert_char_sat(x); }
+INLINE_OVERLOADABLE char convert_char_sat_rtn(uchar x)
+{ return convert_char_sat(x); }
+INLINE_OVERLOADABLE uchar convert_uchar_sat_rte(uchar x)
+{ return convert_uchar_sat(x); }
+INLINE_OVERLOADABLE uchar convert_uchar_sat_rtz(uchar x)
+{ return convert_uchar_sat(x); }
+INLINE_OVERLOADABLE uchar convert_uchar_sat_rtp(uchar x)
+{ return convert_uchar_sat(x); }
+INLINE_OVERLOADABLE uchar convert_uchar_sat_rtn(uchar x)
+{ return convert_uchar_sat(x); }
+INLINE_OVERLOADABLE long convert_long_sat_rte(float x)
+{ return convert_long_sat(__gen_ocl_rnde(x)); }
+INLINE_OVERLOADABLE long convert_long_sat_rtz(float x)
+{ return convert_long_sat(__gen_ocl_rndz(x)); }
+INLINE_OVERLOADABLE long convert_long_sat_rtp(float x)
+{ return convert_long_sat(__gen_ocl_rndu(x)); }
+INLINE_OVERLOADABLE long convert_long_sat_rtn(float x)
+{ return convert_long_sat(__gen_ocl_rndd(x)); }
+INLINE_OVERLOADABLE ulong convert_ulong_sat_rte(float x)
+{ return convert_ulong_sat(__gen_ocl_rnde(x)); }
+INLINE_OVERLOADABLE ulong convert_ulong_sat_rtz(float x)
+{ return convert_ulong_sat(__gen_ocl_rndz(x)); }
+INLINE_OVERLOADABLE ulong convert_ulong_sat_rtp(float x)
+{ return convert_ulong_sat(__gen_ocl_rndu(x)); }
+INLINE_OVERLOADABLE ulong convert_ulong_sat_rtn(float x)
+{ return convert_ulong_sat(__gen_ocl_rndd(x)); }
+INLINE_OVERLOADABLE int convert_int_sat_rte(float x)
+{ return convert_int_sat(__gen_ocl_rnde(x)); }
+INLINE_OVERLOADABLE int convert_int_sat_rtz(float x)
+{ return convert_int_sat(__gen_ocl_rndz(x)); }
+INLINE_OVERLOADABLE int convert_int_sat_rtp(float x)
+{ return convert_int_sat(__gen_ocl_rndu(x)); }
+INLINE_OVERLOADABLE int convert_int_sat_rtn(float x)
+{ return convert_int_sat(__gen_ocl_rndd(x)); }
+INLINE_OVERLOADABLE uint convert_uint_sat_rte(float x)
+{ return convert_uint_sat(__gen_ocl_rnde(x)); }
+INLINE_OVERLOADABLE uint convert_uint_sat_rtz(float x)
+{ return convert_uint_sat(__gen_ocl_rndz(x)); }
+INLINE_OVERLOADABLE uint convert_uint_sat_rtp(float x)
+{ return convert_uint_sat(__gen_ocl_rndu(x)); }
+INLINE_OVERLOADABLE uint convert_uint_sat_rtn(float x)
+{ return convert_uint_sat(__gen_ocl_rndd(x)); }
+INLINE_OVERLOADABLE short convert_short_sat_rte(float x)
+{ return convert_short_sat(__gen_ocl_rnde(x)); }
+INLINE_OVERLOADABLE short convert_short_sat_rtz(float x)
+{ return convert_short_sat(__gen_ocl_rndz(x)); }
+INLINE_OVERLOADABLE short convert_short_sat_rtp(float x)
+{ return convert_short_sat(__gen_ocl_rndu(x)); }
+INLINE_OVERLOADABLE short convert_short_sat_rtn(float x)
+{ return convert_short_sat(__gen_ocl_rndd(x)); }
+INLINE_OVERLOADABLE ushort convert_ushort_sat_rte(float x)
+{ return convert_ushort_sat(__gen_ocl_rnde(x)); }
+INLINE_OVERLOADABLE ushort convert_ushort_sat_rtz(float x)
+{ return convert_ushort_sat(__gen_ocl_rndz(x)); }
+INLINE_OVERLOADABLE ushort convert_ushort_sat_rtp(float x)
+{ return convert_ushort_sat(__gen_ocl_rndu(x)); }
+INLINE_OVERLOADABLE ushort convert_ushort_sat_rtn(float x)
+{ return convert_ushort_sat(__gen_ocl_rndd(x)); }
+INLINE_OVERLOADABLE char convert_char_sat_rte(float x)
+{ return convert_char_sat(__gen_ocl_rnde(x)); }
+INLINE_OVERLOADABLE char convert_char_sat_rtz(float x)
+{ return convert_char_sat(__gen_ocl_rndz(x)); }
+INLINE_OVERLOADABLE char convert_char_sat_rtp(float x)
+{ return convert_char_sat(__gen_ocl_rndu(x)); }
+INLINE_OVERLOADABLE char convert_char_sat_rtn(float x)
+{ return convert_char_sat(__gen_ocl_rndd(x)); }
+INLINE_OVERLOADABLE uchar convert_uchar_sat_rte(float x)
+{ return convert_uchar_sat(__gen_ocl_rnde(x)); }
+INLINE_OVERLOADABLE uchar convert_uchar_sat_rtz(float x)
+{ return convert_uchar_sat(__gen_ocl_rndz(x)); }
+INLINE_OVERLOADABLE uchar convert_uchar_sat_rtp(float x)
+{ return convert_uchar_sat(__gen_ocl_rndu(x)); }
+INLINE_OVERLOADABLE uchar convert_uchar_sat_rtn(float x)
+{ return convert_uchar_sat(__gen_ocl_rndd(x)); }
+INLINE OVERLOADABLE long2 convert_long2_sat_rte(long2 v) {
+  return (long2)(convert_long_sat_rte(v.s0), convert_long_sat_rte(v.s1));
+}
+
+INLINE OVERLOADABLE long2 convert_long2_sat_rtz(long2 v) {
+  return (long2)(convert_long_sat_rtz(v.s0), convert_long_sat_rtz(v.s1));
+}
+
+INLINE OVERLOADABLE long2 convert_long2_sat_rtp(long2 v) {
+  return (long2)(convert_long_sat_rtp(v.s0), convert_long_sat_rtp(v.s1));
+}
+
+INLINE OVERLOADABLE long2 convert_long2_sat_rtn(long2 v) {
+  return (long2)(convert_long_sat_rtn(v.s0), convert_long_sat_rtn(v.s1));
+}
+
+INLINE OVERLOADABLE ulong2 convert_ulong2_sat_rte(long2 v) {
+  return (ulong2)(convert_ulong_sat_rte(v.s0), convert_ulong_sat_rte(v.s1));
+}
+
+INLINE OVERLOADABLE ulong2 convert_ulong2_sat_rtz(long2 v) {
+  return (ulong2)(convert_ulong_sat_rtz(v.s0), convert_ulong_sat_rtz(v.s1));
+}
+
+INLINE OVERLOADABLE ulong2 convert_ulong2_sat_rtp(long2 v) {
+  return (ulong2)(convert_ulong_sat_rtp(v.s0), convert_ulong_sat_rtp(v.s1));
+}
+
+INLINE OVERLOADABLE ulong2 convert_ulong2_sat_rtn(long2 v) {
+  return (ulong2)(convert_ulong_sat_rtn(v.s0), convert_ulong_sat_rtn(v.s1));
+}
+
+INLINE OVERLOADABLE int2 convert_int2_sat_rte(long2 v) {
+  return (int2)(convert_int_sat_rte(v.s0), convert_int_sat_rte(v.s1));
+}
+
+INLINE OVERLOADABLE int2 convert_int2_sat_rtz(long2 v) {
+  return (int2)(convert_int_sat_rtz(v.s0), convert_int_sat_rtz(v.s1));
+}
+
+INLINE OVERLOADABLE int2 convert_int2_sat_rtp(long2 v) {
+  return (int2)(convert_int_sat_rtp(v.s0), convert_int_sat_rtp(v.s1));
+}
+
+INLINE OVERLOADABLE int2 convert_int2_sat_rtn(long2 v) {
+  return (int2)(convert_int_sat_rtn(v.s0), convert_int_sat_rtn(v.s1));
+}
+
+INLINE OVERLOADABLE uint2 convert_uint2_sat_rte(long2 v) {
+  return (uint2)(convert_uint_sat_rte(v.s0), convert_uint_sat_rte(v.s1));
+}
+
+INLINE OVERLOADABLE uint2 convert_uint2_sat_rtz(long2 v) {
+  return (uint2)(convert_uint_sat_rtz(v.s0), convert_uint_sat_rtz(v.s1));
+}
+
+INLINE OVERLOADABLE uint2 convert_uint2_sat_rtp(long2 v) {
+  return (uint2)(convert_uint_sat_rtp(v.s0), convert_uint_sat_rtp(v.s1));
+}
+
+INLINE OVERLOADABLE uint2 convert_uint2_sat_rtn(long2 v) {
+  return (uint2)(convert_uint_sat_rtn(v.s0), convert_uint_sat_rtn(v.s1));
+}
+
+INLINE OVERLOADABLE short2 convert_short2_sat_rte(long2 v) {
+  return (short2)(convert_short_sat_rte(v.s0), convert_short_sat_rte(v.s1));
+}
+
+INLINE OVERLOADABLE short2 convert_short2_sat_rtz(long2 v) {
+  return (short2)(convert_short_sat_rtz(v.s0), convert_short_sat_rtz(v.s1));
+}
+
+INLINE OVERLOADABLE short2 convert_short2_sat_rtp(long2 v) {
+  return (short2)(convert_short_sat_rtp(v.s0), convert_short_sat_rtp(v.s1));
+}
+
+INLINE OVERLOADABLE short2 convert_short2_sat_rtn(long2 v) {
+  return (short2)(convert_short_sat_rtn(v.s0), convert_short_sat_rtn(v.s1));
+}
+
+INLINE OVERLOADABLE ushort2 convert_ushort2_sat_rte(long2 v) {
+  return (ushort2)(convert_ushort_sat_rte(v.s0), convert_ushort_sat_rte(v.s1));
+}
+
+INLINE OVERLOADABLE ushort2 convert_ushort2_sat_rtz(long2 v) {
+  return (ushort2)(convert_ushort_sat_rtz(v.s0), convert_ushort_sat_rtz(v.s1));
+}
+
+INLINE OVERLOADABLE ushort2 convert_ushort2_sat_rtp(long2 v) {
+  return (ushort2)(convert_ushort_sat_rtp(v.s0), convert_ushort_sat_rtp(v.s1));
+}
+
+INLINE OVERLOADABLE ushort2 convert_ushort2_sat_rtn(long2 v) {
+  return (ushort2)(convert_ushort_sat_rtn(v.s0), convert_ushort_sat_rtn(v.s1));
+}
+
+INLINE OVERLOADABLE char2 convert_char2_sat_rte(long2 v) {
+  return (char2)(convert_char_sat_rte(v.s0), convert_char_sat_rte(v.s1));
+}
+
+INLINE OVERLOADABLE char2 convert_char2_sat_rtz(long2 v) {
+  return (char2)(convert_char_sat_rtz(v.s0), convert_char_sat_rtz(v.s1));
+}
+
+INLINE OVERLOADABLE char2 convert_char2_sat_rtp(long2 v) {
+  return (char2)(convert_char_sat_rtp(v.s0), convert_char_sat_rtp(v.s1));
+}
+
+INLINE OVERLOADABLE char2 convert_char2_sat_rtn(long2 v) {
+  return (char2)(convert_char_sat_rtn(v.s0), convert_char_sat_rtn(v.s1));
+}
+
+INLINE OVERLOADABLE uchar2 convert_uchar2_sat_rte(long2 v) {
+  return (uchar2)(convert_uchar_sat_rte(v.s0), convert_uchar_sat_rte(v.s1));
+}
+
+INLINE OVERLOADABLE uchar2 convert_uchar2_sat_rtz(long2 v) {
+  return (uchar2)(convert_uchar_sat_rtz(v.s0), convert_uchar_sat_rtz(v.s1));
+}
+
+INLINE OVERLOADABLE uchar2 convert_uchar2_sat_rtp(long2 v) {
+  return (uchar2)(convert_uchar_sat_rtp(v.s0), convert_uchar_sat_rtp(v.s1));
+}
+
+INLINE OVERLOADABLE uchar2 convert_uchar2_sat_rtn(long2 v) {
+  return (uchar2)(convert_uchar_sat_rtn(v.s0), convert_uchar_sat_rtn(v.s1));
+}
+
+INLINE OVERLOADABLE long2 convert_long2_sat_rte(ulong2 v) {
+  return (long2)(convert_long_sat_rte(v.s0), convert_long_sat_rte(v.s1));
+}
+
+INLINE OVERLOADABLE long2 convert_long2_sat_rtz(ulong2 v) {
+  return (long2)(convert_long_sat_rtz(v.s0), convert_long_sat_rtz(v.s1));
+}
+
+INLINE OVERLOADABLE long2 convert_long2_sat_rtp(ulong2 v) {
+  return (long2)(convert_long_sat_rtp(v.s0), convert_long_sat_rtp(v.s1));
+}
+
+INLINE OVERLOADABLE long2 convert_long2_sat_rtn(ulong2 v) {
+  return (long2)(convert_long_sat_rtn(v.s0), convert_long_sat_rtn(v.s1));
+}
+
+INLINE OVERLOADABLE ulong2 convert_ulong2_sat_rte(ulong2 v) {
+  return (ulong2)(convert_ulong_sat_rte(v.s0), convert_ulong_sat_rte(v.s1));
+}
+
+INLINE OVERLOADABLE ulong2 convert_ulong2_sat_rtz(ulong2 v) {
+  return (ulong2)(convert_ulong_sat_rtz(v.s0), convert_ulong_sat_rtz(v.s1));
+}
+
+INLINE OVERLOADABLE ulong2 convert_ulong2_sat_rtp(ulong2 v) {
+  return (ulong2)(convert_ulong_sat_rtp(v.s0), convert_ulong_sat_rtp(v.s1));
+}
+
+INLINE OVERLOADABLE ulong2 convert_ulong2_sat_rtn(ulong2 v) {
+  return (ulong2)(convert_ulong_sat_rtn(v.s0), convert_ulong_sat_rtn(v.s1));
+}
+
+INLINE OVERLOADABLE int2 convert_int2_sat_rte(ulong2 v) {
+  return (int2)(convert_int_sat_rte(v.s0), convert_int_sat_rte(v.s1));
+}
+
+INLINE OVERLOADABLE int2 convert_int2_sat_rtz(ulong2 v) {
+  return (int2)(convert_int_sat_rtz(v.s0), convert_int_sat_rtz(v.s1));
+}
+
+INLINE OVERLOADABLE int2 convert_int2_sat_rtp(ulong2 v) {
+  return (int2)(convert_int_sat_rtp(v.s0), convert_int_sat_rtp(v.s1));
+}
+
+INLINE OVERLOADABLE int2 convert_int2_sat_rtn(ulong2 v) {
+  return (int2)(convert_int_sat_rtn(v.s0), convert_int_sat_rtn(v.s1));
+}
+
+INLINE OVERLOADABLE uint2 convert_uint2_sat_rte(ulong2 v) {
+  return (uint2)(convert_uint_sat_rte(v.s0), convert_uint_sat_rte(v.s1));
+}
+
+INLINE OVERLOADABLE uint2 convert_uint2_sat_rtz(ulong2 v) {
+  return (uint2)(convert_uint_sat_rtz(v.s0), convert_uint_sat_rtz(v.s1));
+}
+
+INLINE OVERLOADABLE uint2 convert_uint2_sat_rtp(ulong2 v) {
+  return (uint2)(convert_uint_sat_rtp(v.s0), convert_uint_sat_rtp(v.s1));
+}
+
+INLINE OVERLOADABLE uint2 convert_uint2_sat_rtn(ulong2 v) {
+  return (uint2)(convert_uint_sat_rtn(v.s0), convert_uint_sat_rtn(v.s1));
+}
+
+INLINE OVERLOADABLE short2 convert_short2_sat_rte(ulong2 v) {
+  return (short2)(convert_short_sat_rte(v.s0), convert_short_sat_rte(v.s1));
+}
+
+INLINE OVERLOADABLE short2 convert_short2_sat_rtz(ulong2 v) {
+  return (short2)(convert_short_sat_rtz(v.s0), convert_short_sat_rtz(v.s1));
+}
+
+INLINE OVERLOADABLE short2 convert_short2_sat_rtp(ulong2 v) {
+  return (short2)(convert_short_sat_rtp(v.s0), convert_short_sat_rtp(v.s1));
+}
+
+INLINE OVERLOADABLE short2 convert_short2_sat_rtn(ulong2 v) {
+  return (short2)(convert_short_sat_rtn(v.s0), convert_short_sat_rtn(v.s1));
+}
+
+INLINE OVERLOADABLE ushort2 convert_ushort2_sat_rte(ulong2 v) {
+  return (ushort2)(convert_ushort_sat_rte(v.s0), convert_ushort_sat_rte(v.s1));
+}
+
+INLINE OVERLOADABLE ushort2 convert_ushort2_sat_rtz(ulong2 v) {
+  return (ushort2)(convert_ushort_sat_rtz(v.s0), convert_ushort_sat_rtz(v.s1));
+}
+
+INLINE OVERLOADABLE ushort2 convert_ushort2_sat_rtp(ulong2 v) {
+  return (ushort2)(convert_ushort_sat_rtp(v.s0), convert_ushort_sat_rtp(v.s1));
+}
+
+INLINE OVERLOADABLE ushort2 convert_ushort2_sat_rtn(ulong2 v) {
+  return (ushort2)(convert_ushort_sat_rtn(v.s0), convert_ushort_sat_rtn(v.s1));
+}
+
+INLINE OVERLOADABLE char2 convert_char2_sat_rte(ulong2 v) {
+  return (char2)(convert_char_sat_rte(v.s0), convert_char_sat_rte(v.s1));
+}
+
+INLINE OVERLOADABLE char2 convert_char2_sat_rtz(ulong2 v) {
+  return (char2)(convert_char_sat_rtz(v.s0), convert_char_sat_rtz(v.s1));
+}
+
+INLINE OVERLOADABLE char2 convert_char2_sat_rtp(ulong2 v) {
+  return (char2)(convert_char_sat_rtp(v.s0), convert_char_sat_rtp(v.s1));
+}
+
+INLINE OVERLOADABLE char2 convert_char2_sat_rtn(ulong2 v) {
+  return (char2)(convert_char_sat_rtn(v.s0), convert_char_sat_rtn(v.s1));
+}
+
+INLINE OVERLOADABLE uchar2 convert_uchar2_sat_rte(ulong2 v) {
+  return (uchar2)(convert_uchar_sat_rte(v.s0), convert_uchar_sat_rte(v.s1));
+}
+
+INLINE OVERLOADABLE uchar2 convert_uchar2_sat_rtz(ulong2 v) {
+  return (uchar2)(convert_uchar_sat_rtz(v.s0), convert_uchar_sat_rtz(v.s1));
+}
+
+INLINE OVERLOADABLE uchar2 convert_uchar2_sat_rtp(ulong2 v) {
+  return (uchar2)(convert_uchar_sat_rtp(v.s0), convert_uchar_sat_rtp(v.s1));
+}
+
+INLINE OVERLOADABLE uchar2 convert_uchar2_sat_rtn(ulong2 v) {
+  return (uchar2)(convert_uchar_sat_rtn(v.s0), convert_uchar_sat_rtn(v.s1));
+}
+
+INLINE OVERLOADABLE long2 convert_long2_sat_rte(int2 v) {
+  return (long2)(convert_long_sat_rte(v.s0), convert_long_sat_rte(v.s1));
+}
+
+INLINE OVERLOADABLE long2 convert_long2_sat_rtz(int2 v) {
+  return (long2)(convert_long_sat_rtz(v.s0), convert_long_sat_rtz(v.s1));
+}
+
+INLINE OVERLOADABLE long2 convert_long2_sat_rtp(int2 v) {
+  return (long2)(convert_long_sat_rtp(v.s0), convert_long_sat_rtp(v.s1));
+}
+
+INLINE OVERLOADABLE long2 convert_long2_sat_rtn(int2 v) {
+  return (long2)(convert_long_sat_rtn(v.s0), convert_long_sat_rtn(v.s1));
+}
+
+INLINE OVERLOADABLE ulong2 convert_ulong2_sat_rte(int2 v) {
+  return (ulong2)(convert_ulong_sat_rte(v.s0), convert_ulong_sat_rte(v.s1));
+}
+
+INLINE OVERLOADABLE ulong2 convert_ulong2_sat_rtz(int2 v) {
+  return (ulong2)(convert_ulong_sat_rtz(v.s0), convert_ulong_sat_rtz(v.s1));
+}
+
+INLINE OVERLOADABLE ulong2 convert_ulong2_sat_rtp(int2 v) {
+  return (ulong2)(convert_ulong_sat_rtp(v.s0), convert_ulong_sat_rtp(v.s1));
+}
+
+INLINE OVERLOADABLE ulong2 convert_ulong2_sat_rtn(int2 v) {
+  return (ulong2)(convert_ulong_sat_rtn(v.s0), convert_ulong_sat_rtn(v.s1));
+}
+
+INLINE OVERLOADABLE int2 convert_int2_sat_rte(int2 v) {
+  return (int2)(convert_int_sat_rte(v.s0), convert_int_sat_rte(v.s1));
+}
+
+INLINE OVERLOADABLE int2 convert_int2_sat_rtz(int2 v) {
+  return (int2)(convert_int_sat_rtz(v.s0), convert_int_sat_rtz(v.s1));
+}
+
+INLINE OVERLOADABLE int2 convert_int2_sat_rtp(int2 v) {
+  return (int2)(convert_int_sat_rtp(v.s0), convert_int_sat_rtp(v.s1));
+}
+
+INLINE OVERLOADABLE int2 convert_int2_sat_rtn(int2 v) {
+  return (int2)(convert_int_sat_rtn(v.s0), convert_int_sat_rtn(v.s1));
+}
+
+INLINE OVERLOADABLE uint2 convert_uint2_sat_rte(int2 v) {
+  return (uint2)(convert_uint_sat_rte(v.s0), convert_uint_sat_rte(v.s1));
+}
+
+INLINE OVERLOADABLE uint2 convert_uint2_sat_rtz(int2 v) {
+  return (uint2)(convert_uint_sat_rtz(v.s0), convert_uint_sat_rtz(v.s1));
+}
+
+INLINE OVERLOADABLE uint2 convert_uint2_sat_rtp(int2 v) {
+  return (uint2)(convert_uint_sat_rtp(v.s0), convert_uint_sat_rtp(v.s1));
+}
+
+INLINE OVERLOADABLE uint2 convert_uint2_sat_rtn(int2 v) {
+  return (uint2)(convert_uint_sat_rtn(v.s0), convert_uint_sat_rtn(v.s1));
+}
+
+INLINE OVERLOADABLE short2 convert_short2_sat_rte(int2 v) {
+  return (short2)(convert_short_sat_rte(v.s0), convert_short_sat_rte(v.s1));
+}
+
+INLINE OVERLOADABLE short2 convert_short2_sat_rtz(int2 v) {
+  return (short2)(convert_short_sat_rtz(v.s0), convert_short_sat_rtz(v.s1));
+}
+
+INLINE OVERLOADABLE short2 convert_short2_sat_rtp(int2 v) {
+  return (short2)(convert_short_sat_rtp(v.s0), convert_short_sat_rtp(v.s1));
+}
+
+INLINE OVERLOADABLE short2 convert_short2_sat_rtn(int2 v) {
+  return (short2)(convert_short_sat_rtn(v.s0), convert_short_sat_rtn(v.s1));
+}
+
+INLINE OVERLOADABLE ushort2 convert_ushort2_sat_rte(int2 v) {
+  return (ushort2)(convert_ushort_sat_rte(v.s0), convert_ushort_sat_rte(v.s1));
+}
+
+INLINE OVERLOADABLE ushort2 convert_ushort2_sat_rtz(int2 v) {
+  return (ushort2)(convert_ushort_sat_rtz(v.s0), convert_ushort_sat_rtz(v.s1));
+}
+
+INLINE OVERLOADABLE ushort2 convert_ushort2_sat_rtp(int2 v) {
+  return (ushort2)(convert_ushort_sat_rtp(v.s0), convert_ushort_sat_rtp(v.s1));
+}
+
+INLINE OVERLOADABLE ushort2 convert_ushort2_sat_rtn(int2 v) {
+  return (ushort2)(convert_ushort_sat_rtn(v.s0), convert_ushort_sat_rtn(v.s1));
+}
+
+INLINE OVERLOADABLE char2 convert_char2_sat_rte(int2 v) {
+  return (char2)(convert_char_sat_rte(v.s0), convert_char_sat_rte(v.s1));
+}
+
+INLINE OVERLOADABLE char2 convert_char2_sat_rtz(int2 v) {
+  return (char2)(convert_char_sat_rtz(v.s0), convert_char_sat_rtz(v.s1));
+}
+
+INLINE OVERLOADABLE char2 convert_char2_sat_rtp(int2 v) {
+  return (char2)(convert_char_sat_rtp(v.s0), convert_char_sat_rtp(v.s1));
+}
+
+INLINE OVERLOADABLE char2 convert_char2_sat_rtn(int2 v) {
+  return (char2)(convert_char_sat_rtn(v.s0), convert_char_sat_rtn(v.s1));
+}
+
+INLINE OVERLOADABLE uchar2 convert_uchar2_sat_rte(int2 v) {
+  return (uchar2)(convert_uchar_sat_rte(v.s0), convert_uchar_sat_rte(v.s1));
+}
+
+INLINE OVERLOADABLE uchar2 convert_uchar2_sat_rtz(int2 v) {
+  return (uchar2)(convert_uchar_sat_rtz(v.s0), convert_uchar_sat_rtz(v.s1));
+}
+
+INLINE OVERLOADABLE uchar2 convert_uchar2_sat_rtp(int2 v) {
+  return (uchar2)(convert_uchar_sat_rtp(v.s0), convert_uchar_sat_rtp(v.s1));
+}
+
+INLINE OVERLOADABLE uchar2 convert_uchar2_sat_rtn(int2 v) {
+  return (uchar2)(convert_uchar_sat_rtn(v.s0), convert_uchar_sat_rtn(v.s1));
+}
+
+INLINE OVERLOADABLE long2 convert_long2_sat_rte(uint2 v) {
+  return (long2)(convert_long_sat_rte(v.s0), convert_long_sat_rte(v.s1));
+}
+
+INLINE OVERLOADABLE long2 convert_long2_sat_rtz(uint2 v) {
+  return (long2)(convert_long_sat_rtz(v.s0), convert_long_sat_rtz(v.s1));
+}
+
+INLINE OVERLOADABLE long2 convert_long2_sat_rtp(uint2 v) {
+  return (long2)(convert_long_sat_rtp(v.s0), convert_long_sat_rtp(v.s1));
+}
+
+INLINE OVERLOADABLE long2 convert_long2_sat_rtn(uint2 v) {
+  return (long2)(convert_long_sat_rtn(v.s0), convert_long_sat_rtn(v.s1));
+}
+
+INLINE OVERLOADABLE ulong2 convert_ulong2_sat_rte(uint2 v) {
+  return (ulong2)(convert_ulong_sat_rte(v.s0), convert_ulong_sat_rte(v.s1));
+}
+
+INLINE OVERLOADABLE ulong2 convert_ulong2_sat_rtz(uint2 v) {
+  return (ulong2)(convert_ulong_sat_rtz(v.s0), convert_ulong_sat_rtz(v.s1));
+}
+
+INLINE OVERLOADABLE ulong2 convert_ulong2_sat_rtp(uint2 v) {
+  return (ulong2)(convert_ulong_sat_rtp(v.s0), convert_ulong_sat_rtp(v.s1));
+}
+
+INLINE OVERLOADABLE ulong2 convert_ulong2_sat_rtn(uint2 v) {
+  return (ulong2)(convert_ulong_sat_rtn(v.s0), convert_ulong_sat_rtn(v.s1));
+}
+
+INLINE OVERLOADABLE int2 convert_int2_sat_rte(uint2 v) {
+  return (int2)(convert_int_sat_rte(v.s0), convert_int_sat_rte(v.s1));
+}
+
+INLINE OVERLOADABLE int2 convert_int2_sat_rtz(uint2 v) {
+  return (int2)(convert_int_sat_rtz(v.s0), convert_int_sat_rtz(v.s1));
+}
+
+INLINE OVERLOADABLE int2 convert_int2_sat_rtp(uint2 v) {
+  return (int2)(convert_int_sat_rtp(v.s0), convert_int_sat_rtp(v.s1));
+}
+
+INLINE OVERLOADABLE int2 convert_int2_sat_rtn(uint2 v) {
+  return (int2)(convert_int_sat_rtn(v.s0), convert_int_sat_rtn(v.s1));
+}
+
+INLINE OVERLOADABLE uint2 convert_uint2_sat_rte(uint2 v) {
+  return (uint2)(convert_uint_sat_rte(v.s0), convert_uint_sat_rte(v.s1));
+}
+
+INLINE OVERLOADABLE uint2 convert_uint2_sat_rtz(uint2 v) {
+  return (uint2)(convert_uint_sat_rtz(v.s0), convert_uint_sat_rtz(v.s1));
+}
+
+INLINE OVERLOADABLE uint2 convert_uint2_sat_rtp(uint2 v) {
+  return (uint2)(convert_uint_sat_rtp(v.s0), convert_uint_sat_rtp(v.s1));
+}
+
+INLINE OVERLOADABLE uint2 convert_uint2_sat_rtn(uint2 v) {
+  return (uint2)(convert_uint_sat_rtn(v.s0), convert_uint_sat_rtn(v.s1));
+}
+
+INLINE OVERLOADABLE short2 convert_short2_sat_rte(uint2 v) {
+  return (short2)(convert_short_sat_rte(v.s0), convert_short_sat_rte(v.s1));
+}
+
+INLINE OVERLOADABLE short2 convert_short2_sat_rtz(uint2 v) {
+  return (short2)(convert_short_sat_rtz(v.s0), convert_short_sat_rtz(v.s1));
+}
+
+INLINE OVERLOADABLE short2 convert_short2_sat_rtp(uint2 v) {
+  return (short2)(convert_short_sat_rtp(v.s0), convert_short_sat_rtp(v.s1));
+}
+
+INLINE OVERLOADABLE short2 convert_short2_sat_rtn(uint2 v) {
+  return (short2)(convert_short_sat_rtn(v.s0), convert_short_sat_rtn(v.s1));
+}
+
+INLINE OVERLOADABLE ushort2 convert_ushort2_sat_rte(uint2 v) {
+  return (ushort2)(convert_ushort_sat_rte(v.s0), convert_ushort_sat_rte(v.s1));
+}
+
+INLINE OVERLOADABLE ushort2 convert_ushort2_sat_rtz(uint2 v) {
+  return (ushort2)(convert_ushort_sat_rtz(v.s0), convert_ushort_sat_rtz(v.s1));
+}
+
+INLINE OVERLOADABLE ushort2 convert_ushort2_sat_rtp(uint2 v) {
+  return (ushort2)(convert_ushort_sat_rtp(v.s0), convert_ushort_sat_rtp(v.s1));
+}
+
+INLINE OVERLOADABLE ushort2 convert_ushort2_sat_rtn(uint2 v) {
+  return (ushort2)(convert_ushort_sat_rtn(v.s0), convert_ushort_sat_rtn(v.s1));
+}
+
+INLINE OVERLOADABLE char2 convert_char2_sat_rte(uint2 v) {
+  return (char2)(convert_char_sat_rte(v.s0), convert_char_sat_rte(v.s1));
+}
+
+INLINE OVERLOADABLE char2 convert_char2_sat_rtz(uint2 v) {
+  return (char2)(convert_char_sat_rtz(v.s0), convert_char_sat_rtz(v.s1));
+}
+
+INLINE OVERLOADABLE char2 convert_char2_sat_rtp(uint2 v) {
+  return (char2)(convert_char_sat_rtp(v.s0), convert_char_sat_rtp(v.s1));
+}
+
+INLINE OVERLOADABLE char2 convert_char2_sat_rtn(uint2 v) {
+  return (char2)(convert_char_sat_rtn(v.s0), convert_char_sat_rtn(v.s1));
+}
+
+INLINE OVERLOADABLE uchar2 convert_uchar2_sat_rte(uint2 v) {
+  return (uchar2)(convert_uchar_sat_rte(v.s0), convert_uchar_sat_rte(v.s1));
+}
+
+INLINE OVERLOADABLE uchar2 convert_uchar2_sat_rtz(uint2 v) {
+  return (uchar2)(convert_uchar_sat_rtz(v.s0), convert_uchar_sat_rtz(v.s1));
+}
+
+INLINE OVERLOADABLE uchar2 convert_uchar2_sat_rtp(uint2 v) {
+  return (uchar2)(convert_uchar_sat_rtp(v.s0), convert_uchar_sat_rtp(v.s1));
+}
+
+INLINE OVERLOADABLE uchar2 convert_uchar2_sat_rtn(uint2 v) {
+  return (uchar2)(convert_uchar_sat_rtn(v.s0), convert_uchar_sat_rtn(v.s1));
+}
+
+INLINE OVERLOADABLE long2 convert_long2_sat_rte(short2 v) {
+  return (long2)(convert_long_sat_rte(v.s0), convert_long_sat_rte(v.s1));
+}
+
+INLINE OVERLOADABLE long2 convert_long2_sat_rtz(short2 v) {
+  return (long2)(convert_long_sat_rtz(v.s0), convert_long_sat_rtz(v.s1));
+}
+
+INLINE OVERLOADABLE long2 convert_long2_sat_rtp(short2 v) {
+  return (long2)(convert_long_sat_rtp(v.s0), convert_long_sat_rtp(v.s1));
+}
+
+INLINE OVERLOADABLE long2 convert_long2_sat_rtn(short2 v) {
+  return (long2)(convert_long_sat_rtn(v.s0), convert_long_sat_rtn(v.s1));
+}
+
+INLINE OVERLOADABLE ulong2 convert_ulong2_sat_rte(short2 v) {
+  return (ulong2)(convert_ulong_sat_rte(v.s0), convert_ulong_sat_rte(v.s1));
+}
+
+INLINE OVERLOADABLE ulong2 convert_ulong2_sat_rtz(short2 v) {
+  return (ulong2)(convert_ulong_sat_rtz(v.s0), convert_ulong_sat_rtz(v.s1));
+}
+
+INLINE OVERLOADABLE ulong2 convert_ulong2_sat_rtp(short2 v) {
+  return (ulong2)(convert_ulong_sat_rtp(v.s0), convert_ulong_sat_rtp(v.s1));
+}
+
+INLINE OVERLOADABLE ulong2 convert_ulong2_sat_rtn(short2 v) {
+  return (ulong2)(convert_ulong_sat_rtn(v.s0), convert_ulong_sat_rtn(v.s1));
+}
+
+INLINE OVERLOADABLE int2 convert_int2_sat_rte(short2 v) {
+  return (int2)(convert_int_sat_rte(v.s0), convert_int_sat_rte(v.s1));
+}
+
+INLINE OVERLOADABLE int2 convert_int2_sat_rtz(short2 v) {
+  return (int2)(convert_int_sat_rtz(v.s0), convert_int_sat_rtz(v.s1));
+}
+
+INLINE OVERLOADABLE int2 convert_int2_sat_rtp(short2 v) {
+  return (int2)(convert_int_sat_rtp(v.s0), convert_int_sat_rtp(v.s1));
+}
+
+INLINE OVERLOADABLE int2 convert_int2_sat_rtn(short2 v) {
+  return (int2)(convert_int_sat_rtn(v.s0), convert_int_sat_rtn(v.s1));
+}
+
+INLINE OVERLOADABLE uint2 convert_uint2_sat_rte(short2 v) {
+  return (uint2)(convert_uint_sat_rte(v.s0), convert_uint_sat_rte(v.s1));
+}
+
+INLINE OVERLOADABLE uint2 convert_uint2_sat_rtz(short2 v) {
+  return (uint2)(convert_uint_sat_rtz(v.s0), convert_uint_sat_rtz(v.s1));
+}
+
+INLINE OVERLOADABLE uint2 convert_uint2_sat_rtp(short2 v) {
+  return (uint2)(convert_uint_sat_rtp(v.s0), convert_uint_sat_rtp(v.s1));
+}
+
+INLINE OVERLOADABLE uint2 convert_uint2_sat_rtn(short2 v) {
+  return (uint2)(convert_uint_sat_rtn(v.s0), convert_uint_sat_rtn(v.s1));
+}
+
+INLINE OVERLOADABLE short2 convert_short2_sat_rte(short2 v) {
+  return (short2)(convert_short_sat_rte(v.s0), convert_short_sat_rte(v.s1));
+}
+
+INLINE OVERLOADABLE short2 convert_short2_sat_rtz(short2 v) {
+  return (short2)(convert_short_sat_rtz(v.s0), convert_short_sat_rtz(v.s1));
+}
+
+INLINE OVERLOADABLE short2 convert_short2_sat_rtp(short2 v) {
+  return (short2)(convert_short_sat_rtp(v.s0), convert_short_sat_rtp(v.s1));
+}
+
+INLINE OVERLOADABLE short2 convert_short2_sat_rtn(short2 v) {
+  return (short2)(convert_short_sat_rtn(v.s0), convert_short_sat_rtn(v.s1));
+}
+
+INLINE OVERLOADABLE ushort2 convert_ushort2_sat_rte(short2 v) {
+  return (ushort2)(convert_ushort_sat_rte(v.s0), convert_ushort_sat_rte(v.s1));
+}
+
+INLINE OVERLOADABLE ushort2 convert_ushort2_sat_rtz(short2 v) {
+  return (ushort2)(convert_ushort_sat_rtz(v.s0), convert_ushort_sat_rtz(v.s1));
+}
+
+INLINE OVERLOADABLE ushort2 convert_ushort2_sat_rtp(short2 v) {
+  return (ushort2)(convert_ushort_sat_rtp(v.s0), convert_ushort_sat_rtp(v.s1));
+}
+
+INLINE OVERLOADABLE ushort2 convert_ushort2_sat_rtn(short2 v) {
+  return (ushort2)(convert_ushort_sat_rtn(v.s0), convert_ushort_sat_rtn(v.s1));
+}
+
+INLINE OVERLOADABLE char2 convert_char2_sat_rte(short2 v) {
+  return (char2)(convert_char_sat_rte(v.s0), convert_char_sat_rte(v.s1));
+}
+
+INLINE OVERLOADABLE char2 convert_char2_sat_rtz(short2 v) {
+  return (char2)(convert_char_sat_rtz(v.s0), convert_char_sat_rtz(v.s1));
+}
+
+INLINE OVERLOADABLE char2 convert_char2_sat_rtp(short2 v) {
+  return (char2)(convert_char_sat_rtp(v.s0), convert_char_sat_rtp(v.s1));
+}
+
+INLINE OVERLOADABLE char2 convert_char2_sat_rtn(short2 v) {
+  return (char2)(convert_char_sat_rtn(v.s0), convert_char_sat_rtn(v.s1));
+}
+
+INLINE OVERLOADABLE uchar2 convert_uchar2_sat_rte(short2 v) {
+  return (uchar2)(convert_uchar_sat_rte(v.s0), convert_uchar_sat_rte(v.s1));
+}
+
+INLINE OVERLOADABLE uchar2 convert_uchar2_sat_rtz(short2 v) {
+  return (uchar2)(convert_uchar_sat_rtz(v.s0), convert_uchar_sat_rtz(v.s1));
+}
+
+INLINE OVERLOADABLE uchar2 convert_uchar2_sat_rtp(short2 v) {
+  return (uchar2)(convert_uchar_sat_rtp(v.s0), convert_uchar_sat_rtp(v.s1));
+}
+
+INLINE OVERLOADABLE uchar2 convert_uchar2_sat_rtn(short2 v) {
+  return (uchar2)(convert_uchar_sat_rtn(v.s0), convert_uchar_sat_rtn(v.s1));
+}
+
+INLINE OVERLOADABLE long2 convert_long2_sat_rte(ushort2 v) {
+  return (long2)(convert_long_sat_rte(v.s0), convert_long_sat_rte(v.s1));
+}
+
+INLINE OVERLOADABLE long2 convert_long2_sat_rtz(ushort2 v) {
+  return (long2)(convert_long_sat_rtz(v.s0), convert_long_sat_rtz(v.s1));
+}
+
+INLINE OVERLOADABLE long2 convert_long2_sat_rtp(ushort2 v) {
+  return (long2)(convert_long_sat_rtp(v.s0), convert_long_sat_rtp(v.s1));
+}
+
+INLINE OVERLOADABLE long2 convert_long2_sat_rtn(ushort2 v) {
+  return (long2)(convert_long_sat_rtn(v.s0), convert_long_sat_rtn(v.s1));
+}
+
+INLINE OVERLOADABLE ulong2 convert_ulong2_sat_rte(ushort2 v) {
+  return (ulong2)(convert_ulong_sat_rte(v.s0), convert_ulong_sat_rte(v.s1));
+}
+
+INLINE OVERLOADABLE ulong2 convert_ulong2_sat_rtz(ushort2 v) {
+  return (ulong2)(convert_ulong_sat_rtz(v.s0), convert_ulong_sat_rtz(v.s1));
+}
+
+INLINE OVERLOADABLE ulong2 convert_ulong2_sat_rtp(ushort2 v) {
+  return (ulong2)(convert_ulong_sat_rtp(v.s0), convert_ulong_sat_rtp(v.s1));
+}
+
+INLINE OVERLOADABLE ulong2 convert_ulong2_sat_rtn(ushort2 v) {
+  return (ulong2)(convert_ulong_sat_rtn(v.s0), convert_ulong_sat_rtn(v.s1));
+}
+
+INLINE OVERLOADABLE int2 convert_int2_sat_rte(ushort2 v) {
+  return (int2)(convert_int_sat_rte(v.s0), convert_int_sat_rte(v.s1));
+}
+
+INLINE OVERLOADABLE int2 convert_int2_sat_rtz(ushort2 v) {
+  return (int2)(convert_int_sat_rtz(v.s0), convert_int_sat_rtz(v.s1));
+}
+
+INLINE OVERLOADABLE int2 convert_int2_sat_rtp(ushort2 v) {
+  return (int2)(convert_int_sat_rtp(v.s0), convert_int_sat_rtp(v.s1));
+}
+
+INLINE OVERLOADABLE int2 convert_int2_sat_rtn(ushort2 v) {
+  return (int2)(convert_int_sat_rtn(v.s0), convert_int_sat_rtn(v.s1));
+}
+
+INLINE OVERLOADABLE uint2 convert_uint2_sat_rte(ushort2 v) {
+  return (uint2)(convert_uint_sat_rte(v.s0), convert_uint_sat_rte(v.s1));
+}
+
+INLINE OVERLOADABLE uint2 convert_uint2_sat_rtz(ushort2 v) {
+  return (uint2)(convert_uint_sat_rtz(v.s0), convert_uint_sat_rtz(v.s1));
+}
+
+INLINE OVERLOADABLE uint2 convert_uint2_sat_rtp(ushort2 v) {
+  return (uint2)(convert_uint_sat_rtp(v.s0), convert_uint_sat_rtp(v.s1));
+}
+
+INLINE OVERLOADABLE uint2 convert_uint2_sat_rtn(ushort2 v) {
+  return (uint2)(convert_uint_sat_rtn(v.s0), convert_uint_sat_rtn(v.s1));
+}
+
+INLINE OVERLOADABLE short2 convert_short2_sat_rte(ushort2 v) {
+  return (short2)(convert_short_sat_rte(v.s0), convert_short_sat_rte(v.s1));
+}
+
+INLINE OVERLOADABLE short2 convert_short2_sat_rtz(ushort2 v) {
+  return (short2)(convert_short_sat_rtz(v.s0), convert_short_sat_rtz(v.s1));
+}
+
+INLINE OVERLOADABLE short2 convert_short2_sat_rtp(ushort2 v) {
+  return (short2)(convert_short_sat_rtp(v.s0), convert_short_sat_rtp(v.s1));
+}
+
+INLINE OVERLOADABLE short2 convert_short2_sat_rtn(ushort2 v) {
+  return (short2)(convert_short_sat_rtn(v.s0), convert_short_sat_rtn(v.s1));
+}
+
+INLINE OVERLOADABLE ushort2 convert_ushort2_sat_rte(ushort2 v) {
+  return (ushort2)(convert_ushort_sat_rte(v.s0), convert_ushort_sat_rte(v.s1));
+}
+
+INLINE OVERLOADABLE ushort2 convert_ushort2_sat_rtz(ushort2 v) {
+  return (ushort2)(convert_ushort_sat_rtz(v.s0), convert_ushort_sat_rtz(v.s1));
+}
+
+INLINE OVERLOADABLE ushort2 convert_ushort2_sat_rtp(ushort2 v) {
+  return (ushort2)(convert_ushort_sat_rtp(v.s0), convert_ushort_sat_rtp(v.s1));
+}
+
+INLINE OVERLOADABLE ushort2 convert_ushort2_sat_rtn(ushort2 v) {
+  return (ushort2)(convert_ushort_sat_rtn(v.s0), convert_ushort_sat_rtn(v.s1));
+}
+
+INLINE OVERLOADABLE char2 convert_char2_sat_rte(ushort2 v) {
+  return (char2)(convert_char_sat_rte(v.s0), convert_char_sat_rte(v.s1));
+}
+
+INLINE OVERLOADABLE char2 convert_char2_sat_rtz(ushort2 v) {
+  return (char2)(convert_char_sat_rtz(v.s0), convert_char_sat_rtz(v.s1));
+}
+
+INLINE OVERLOADABLE char2 convert_char2_sat_rtp(ushort2 v) {
+  return (char2)(convert_char_sat_rtp(v.s0), convert_char_sat_rtp(v.s1));
+}
+
+INLINE OVERLOADABLE char2 convert_char2_sat_rtn(ushort2 v) {
+  return (char2)(convert_char_sat_rtn(v.s0), convert_char_sat_rtn(v.s1));
+}
+
+INLINE OVERLOADABLE uchar2 convert_uchar2_sat_rte(ushort2 v) {
+  return (uchar2)(convert_uchar_sat_rte(v.s0), convert_uchar_sat_rte(v.s1));
+}
+
+INLINE OVERLOADABLE uchar2 convert_uchar2_sat_rtz(ushort2 v) {
+  return (uchar2)(convert_uchar_sat_rtz(v.s0), convert_uchar_sat_rtz(v.s1));
+}
+
+INLINE OVERLOADABLE uchar2 convert_uchar2_sat_rtp(ushort2 v) {
+  return (uchar2)(convert_uchar_sat_rtp(v.s0), convert_uchar_sat_rtp(v.s1));
+}
+
+INLINE OVERLOADABLE uchar2 convert_uchar2_sat_rtn(ushort2 v) {
+  return (uchar2)(convert_uchar_sat_rtn(v.s0), convert_uchar_sat_rtn(v.s1));
+}
+
+INLINE OVERLOADABLE long2 convert_long2_sat_rte(char2 v) {
+  return (long2)(convert_long_sat_rte(v.s0), convert_long_sat_rte(v.s1));
+}
+
+INLINE OVERLOADABLE long2 convert_long2_sat_rtz(char2 v) {
+  return (long2)(convert_long_sat_rtz(v.s0), convert_long_sat_rtz(v.s1));
+}
+
+INLINE OVERLOADABLE long2 convert_long2_sat_rtp(char2 v) {
+  return (long2)(convert_long_sat_rtp(v.s0), convert_long_sat_rtp(v.s1));
+}
+
+INLINE OVERLOADABLE long2 convert_long2_sat_rtn(char2 v) {
+  return (long2)(convert_long_sat_rtn(v.s0), convert_long_sat_rtn(v.s1));
+}
+
+INLINE OVERLOADABLE ulong2 convert_ulong2_sat_rte(char2 v) {
+  return (ulong2)(convert_ulong_sat_rte(v.s0), convert_ulong_sat_rte(v.s1));
+}
+
+INLINE OVERLOADABLE ulong2 convert_ulong2_sat_rtz(char2 v) {
+  return (ulong2)(convert_ulong_sat_rtz(v.s0), convert_ulong_sat_rtz(v.s1));
+}
+
+INLINE OVERLOADABLE ulong2 convert_ulong2_sat_rtp(char2 v) {
+  return (ulong2)(convert_ulong_sat_rtp(v.s0), convert_ulong_sat_rtp(v.s1));
+}
+
+INLINE OVERLOADABLE ulong2 convert_ulong2_sat_rtn(char2 v) {
+  return (ulong2)(convert_ulong_sat_rtn(v.s0), convert_ulong_sat_rtn(v.s1));
+}
+
+INLINE OVERLOADABLE int2 convert_int2_sat_rte(char2 v) {
+  return (int2)(convert_int_sat_rte(v.s0), convert_int_sat_rte(v.s1));
+}
+
+INLINE OVERLOADABLE int2 convert_int2_sat_rtz(char2 v) {
+  return (int2)(convert_int_sat_rtz(v.s0), convert_int_sat_rtz(v.s1));
+}
+
+INLINE OVERLOADABLE int2 convert_int2_sat_rtp(char2 v) {
+  return (int2)(convert_int_sat_rtp(v.s0), convert_int_sat_rtp(v.s1));
+}
+
+INLINE OVERLOADABLE int2 convert_int2_sat_rtn(char2 v) {
+  return (int2)(convert_int_sat_rtn(v.s0), convert_int_sat_rtn(v.s1));
+}
+
+INLINE OVERLOADABLE uint2 convert_uint2_sat_rte(char2 v) {
+  return (uint2)(convert_uint_sat_rte(v.s0), convert_uint_sat_rte(v.s1));
+}
+
+INLINE OVERLOADABLE uint2 convert_uint2_sat_rtz(char2 v) {
+  return (uint2)(convert_uint_sat_rtz(v.s0), convert_uint_sat_rtz(v.s1));
+}
+
+INLINE OVERLOADABLE uint2 convert_uint2_sat_rtp(char2 v) {
+  return (uint2)(convert_uint_sat_rtp(v.s0), convert_uint_sat_rtp(v.s1));
+}
+
+INLINE OVERLOADABLE uint2 convert_uint2_sat_rtn(char2 v) {
+  return (uint2)(convert_uint_sat_rtn(v.s0), convert_uint_sat_rtn(v.s1));
+}
+
+INLINE OVERLOADABLE short2 convert_short2_sat_rte(char2 v) {
+  return (short2)(convert_short_sat_rte(v.s0), convert_short_sat_rte(v.s1));
+}
+
+INLINE OVERLOADABLE short2 convert_short2_sat_rtz(char2 v) {
+  return (short2)(convert_short_sat_rtz(v.s0), convert_short_sat_rtz(v.s1));
+}
+
+INLINE OVERLOADABLE short2 convert_short2_sat_rtp(char2 v) {
+  return (short2)(convert_short_sat_rtp(v.s0), convert_short_sat_rtp(v.s1));
+}
+
+INLINE OVERLOADABLE short2 convert_short2_sat_rtn(char2 v) {
+  return (short2)(convert_short_sat_rtn(v.s0), convert_short_sat_rtn(v.s1));
+}
+
+INLINE OVERLOADABLE ushort2 convert_ushort2_sat_rte(char2 v) {
+  return (ushort2)(convert_ushort_sat_rte(v.s0), convert_ushort_sat_rte(v.s1));
+}
+
+INLINE OVERLOADABLE ushort2 convert_ushort2_sat_rtz(char2 v) {
+  return (ushort2)(convert_ushort_sat_rtz(v.s0), convert_ushort_sat_rtz(v.s1));
+}
+
+INLINE OVERLOADABLE ushort2 convert_ushort2_sat_rtp(char2 v) {
+  return (ushort2)(convert_ushort_sat_rtp(v.s0), convert_ushort_sat_rtp(v.s1));
+}
+
+INLINE OVERLOADABLE ushort2 convert_ushort2_sat_rtn(char2 v) {
+  return (ushort2)(convert_ushort_sat_rtn(v.s0), convert_ushort_sat_rtn(v.s1));
+}
+
+INLINE OVERLOADABLE char2 convert_char2_sat_rte(char2 v) {
+  return (char2)(convert_char_sat_rte(v.s0), convert_char_sat_rte(v.s1));
+}
+
+INLINE OVERLOADABLE char2 convert_char2_sat_rtz(char2 v) {
+  return (char2)(convert_char_sat_rtz(v.s0), convert_char_sat_rtz(v.s1));
+}
+
+INLINE OVERLOADABLE char2 convert_char2_sat_rtp(char2 v) {
+  return (char2)(convert_char_sat_rtp(v.s0), convert_char_sat_rtp(v.s1));
+}
+
+INLINE OVERLOADABLE char2 convert_char2_sat_rtn(char2 v) {
+  return (char2)(convert_char_sat_rtn(v.s0), convert_char_sat_rtn(v.s1));
+}
+
+INLINE OVERLOADABLE uchar2 convert_uchar2_sat_rte(char2 v) {
+  return (uchar2)(convert_uchar_sat_rte(v.s0), convert_uchar_sat_rte(v.s1));
+}
+
+INLINE OVERLOADABLE uchar2 convert_uchar2_sat_rtz(char2 v) {
+  return (uchar2)(convert_uchar_sat_rtz(v.s0), convert_uchar_sat_rtz(v.s1));
+}
+
+INLINE OVERLOADABLE uchar2 convert_uchar2_sat_rtp(char2 v) {
+  return (uchar2)(convert_uchar_sat_rtp(v.s0), convert_uchar_sat_rtp(v.s1));
+}
+
+INLINE OVERLOADABLE uchar2 convert_uchar2_sat_rtn(char2 v) {
+  return (uchar2)(convert_uchar_sat_rtn(v.s0), convert_uchar_sat_rtn(v.s1));
+}
+
+INLINE OVERLOADABLE long2 convert_long2_sat_rte(uchar2 v) {
+  return (long2)(convert_long_sat_rte(v.s0), convert_long_sat_rte(v.s1));
+}
+
+INLINE OVERLOADABLE long2 convert_long2_sat_rtz(uchar2 v) {
+  return (long2)(convert_long_sat_rtz(v.s0), convert_long_sat_rtz(v.s1));
+}
+
+INLINE OVERLOADABLE long2 convert_long2_sat_rtp(uchar2 v) {
+  return (long2)(convert_long_sat_rtp(v.s0), convert_long_sat_rtp(v.s1));
+}
+
+INLINE OVERLOADABLE long2 convert_long2_sat_rtn(uchar2 v) {
+  return (long2)(convert_long_sat_rtn(v.s0), convert_long_sat_rtn(v.s1));
+}
+
+INLINE OVERLOADABLE ulong2 convert_ulong2_sat_rte(uchar2 v) {
+  return (ulong2)(convert_ulong_sat_rte(v.s0), convert_ulong_sat_rte(v.s1));
+}
+
+INLINE OVERLOADABLE ulong2 convert_ulong2_sat_rtz(uchar2 v) {
+  return (ulong2)(convert_ulong_sat_rtz(v.s0), convert_ulong_sat_rtz(v.s1));
+}
+
+INLINE OVERLOADABLE ulong2 convert_ulong2_sat_rtp(uchar2 v) {
+  return (ulong2)(convert_ulong_sat_rtp(v.s0), convert_ulong_sat_rtp(v.s1));
+}
+
+INLINE OVERLOADABLE ulong2 convert_ulong2_sat_rtn(uchar2 v) {
+  return (ulong2)(convert_ulong_sat_rtn(v.s0), convert_ulong_sat_rtn(v.s1));
+}
+
+INLINE OVERLOADABLE int2 convert_int2_sat_rte(uchar2 v) {
+  return (int2)(convert_int_sat_rte(v.s0), convert_int_sat_rte(v.s1));
+}
+
+INLINE OVERLOADABLE int2 convert_int2_sat_rtz(uchar2 v) {
+  return (int2)(convert_int_sat_rtz(v.s0), convert_int_sat_rtz(v.s1));
+}
+
+INLINE OVERLOADABLE int2 convert_int2_sat_rtp(uchar2 v) {
+  return (int2)(convert_int_sat_rtp(v.s0), convert_int_sat_rtp(v.s1));
+}
+
+INLINE OVERLOADABLE int2 convert_int2_sat_rtn(uchar2 v) {
+  return (int2)(convert_int_sat_rtn(v.s0), convert_int_sat_rtn(v.s1));
+}
+
+INLINE OVERLOADABLE uint2 convert_uint2_sat_rte(uchar2 v) {
+  return (uint2)(convert_uint_sat_rte(v.s0), convert_uint_sat_rte(v.s1));
+}
+
+INLINE OVERLOADABLE uint2 convert_uint2_sat_rtz(uchar2 v) {
+  return (uint2)(convert_uint_sat_rtz(v.s0), convert_uint_sat_rtz(v.s1));
+}
+
+INLINE OVERLOADABLE uint2 convert_uint2_sat_rtp(uchar2 v) {
+  return (uint2)(convert_uint_sat_rtp(v.s0), convert_uint_sat_rtp(v.s1));
+}
+
+INLINE OVERLOADABLE uint2 convert_uint2_sat_rtn(uchar2 v) {
+  return (uint2)(convert_uint_sat_rtn(v.s0), convert_uint_sat_rtn(v.s1));
+}
+
+INLINE OVERLOADABLE short2 convert_short2_sat_rte(uchar2 v) {
+  return (short2)(convert_short_sat_rte(v.s0), convert_short_sat_rte(v.s1));
+}
+
+INLINE OVERLOADABLE short2 convert_short2_sat_rtz(uchar2 v) {
+  return (short2)(convert_short_sat_rtz(v.s0), convert_short_sat_rtz(v.s1));
+}
+
+INLINE OVERLOADABLE short2 convert_short2_sat_rtp(uchar2 v) {
+  return (short2)(convert_short_sat_rtp(v.s0), convert_short_sat_rtp(v.s1));
+}
+
+INLINE OVERLOADABLE short2 convert_short2_sat_rtn(uchar2 v) {
+  return (short2)(convert_short_sat_rtn(v.s0), convert_short_sat_rtn(v.s1));
+}
+
+INLINE OVERLOADABLE ushort2 convert_ushort2_sat_rte(uchar2 v) {
+  return (ushort2)(convert_ushort_sat_rte(v.s0), convert_ushort_sat_rte(v.s1));
+}
+
+INLINE OVERLOADABLE ushort2 convert_ushort2_sat_rtz(uchar2 v) {
+  return (ushort2)(convert_ushort_sat_rtz(v.s0), convert_ushort_sat_rtz(v.s1));
+}
+
+INLINE OVERLOADABLE ushort2 convert_ushort2_sat_rtp(uchar2 v) {
+  return (ushort2)(convert_ushort_sat_rtp(v.s0), convert_ushort_sat_rtp(v.s1));
+}
+
+INLINE OVERLOADABLE ushort2 convert_ushort2_sat_rtn(uchar2 v) {
+  return (ushort2)(convert_ushort_sat_rtn(v.s0), convert_ushort_sat_rtn(v.s1));
+}
+
+INLINE OVERLOADABLE char2 convert_char2_sat_rte(uchar2 v) {
+  return (char2)(convert_char_sat_rte(v.s0), convert_char_sat_rte(v.s1));
+}
+
+INLINE OVERLOADABLE char2 convert_char2_sat_rtz(uchar2 v) {
+  return (char2)(convert_char_sat_rtz(v.s0), convert_char_sat_rtz(v.s1));
+}
+
+INLINE OVERLOADABLE char2 convert_char2_sat_rtp(uchar2 v) {
+  return (char2)(convert_char_sat_rtp(v.s0), convert_char_sat_rtp(v.s1));
+}
+
+INLINE OVERLOADABLE char2 convert_char2_sat_rtn(uchar2 v) {
+  return (char2)(convert_char_sat_rtn(v.s0), convert_char_sat_rtn(v.s1));
+}
+
+INLINE OVERLOADABLE uchar2 convert_uchar2_sat_rte(uchar2 v) {
+  return (uchar2)(convert_uchar_sat_rte(v.s0), convert_uchar_sat_rte(v.s1));
+}
+
+INLINE OVERLOADABLE uchar2 convert_uchar2_sat_rtz(uchar2 v) {
+  return (uchar2)(convert_uchar_sat_rtz(v.s0), convert_uchar_sat_rtz(v.s1));
+}
+
+INLINE OVERLOADABLE uchar2 convert_uchar2_sat_rtp(uchar2 v) {
+  return (uchar2)(convert_uchar_sat_rtp(v.s0), convert_uchar_sat_rtp(v.s1));
+}
+
+INLINE OVERLOADABLE uchar2 convert_uchar2_sat_rtn(uchar2 v) {
+  return (uchar2)(convert_uchar_sat_rtn(v.s0), convert_uchar_sat_rtn(v.s1));
+}
+
+INLINE OVERLOADABLE long2 convert_long2_sat_rte(float2 v) {
+  return (long2)(convert_long_sat_rte(v.s0), convert_long_sat_rte(v.s1));
+}
+
+INLINE OVERLOADABLE long2 convert_long2_sat_rtz(float2 v) {
+  return (long2)(convert_long_sat_rtz(v.s0), convert_long_sat_rtz(v.s1));
+}
+
+INLINE OVERLOADABLE long2 convert_long2_sat_rtp(float2 v) {
+  return (long2)(convert_long_sat_rtp(v.s0), convert_long_sat_rtp(v.s1));
+}
+
+INLINE OVERLOADABLE long2 convert_long2_sat_rtn(float2 v) {
+  return (long2)(convert_long_sat_rtn(v.s0), convert_long_sat_rtn(v.s1));
+}
+
+INLINE OVERLOADABLE ulong2 convert_ulong2_sat_rte(float2 v) {
+  return (ulong2)(convert_ulong_sat_rte(v.s0), convert_ulong_sat_rte(v.s1));
+}
+
+INLINE OVERLOADABLE ulong2 convert_ulong2_sat_rtz(float2 v) {
+  return (ulong2)(convert_ulong_sat_rtz(v.s0), convert_ulong_sat_rtz(v.s1));
+}
+
+INLINE OVERLOADABLE ulong2 convert_ulong2_sat_rtp(float2 v) {
+  return (ulong2)(convert_ulong_sat_rtp(v.s0), convert_ulong_sat_rtp(v.s1));
+}
+
+INLINE OVERLOADABLE ulong2 convert_ulong2_sat_rtn(float2 v) {
+  return (ulong2)(convert_ulong_sat_rtn(v.s0), convert_ulong_sat_rtn(v.s1));
+}
+
+INLINE OVERLOADABLE int2 convert_int2_sat_rte(float2 v) {
+  return (int2)(convert_int_sat_rte(v.s0), convert_int_sat_rte(v.s1));
+}
+
+INLINE OVERLOADABLE int2 convert_int2_sat_rtz(float2 v) {
+  return (int2)(convert_int_sat_rtz(v.s0), convert_int_sat_rtz(v.s1));
+}
+
+INLINE OVERLOADABLE int2 convert_int2_sat_rtp(float2 v) {
+  return (int2)(convert_int_sat_rtp(v.s0), convert_int_sat_rtp(v.s1));
+}
+
+INLINE OVERLOADABLE int2 convert_int2_sat_rtn(float2 v) {
+  return (int2)(convert_int_sat_rtn(v.s0), convert_int_sat_rtn(v.s1));
+}
+
+INLINE OVERLOADABLE uint2 convert_uint2_sat_rte(float2 v) {
+  return (uint2)(convert_uint_sat_rte(v.s0), convert_uint_sat_rte(v.s1));
+}
+
+INLINE OVERLOADABLE uint2 convert_uint2_sat_rtz(float2 v) {
+  return (uint2)(convert_uint_sat_rtz(v.s0), convert_uint_sat_rtz(v.s1));
+}
+
+INLINE OVERLOADABLE uint2 convert_uint2_sat_rtp(float2 v) {
+  return (uint2)(convert_uint_sat_rtp(v.s0), convert_uint_sat_rtp(v.s1));
+}
+
+INLINE OVERLOADABLE uint2 convert_uint2_sat_rtn(float2 v) {
+  return (uint2)(convert_uint_sat_rtn(v.s0), convert_uint_sat_rtn(v.s1));
+}
+
+INLINE OVERLOADABLE short2 convert_short2_sat_rte(float2 v) {
+  return (short2)(convert_short_sat_rte(v.s0), convert_short_sat_rte(v.s1));
+}
+
+INLINE OVERLOADABLE short2 convert_short2_sat_rtz(float2 v) {
+  return (short2)(convert_short_sat_rtz(v.s0), convert_short_sat_rtz(v.s1));
+}
+
+INLINE OVERLOADABLE short2 convert_short2_sat_rtp(float2 v) {
+  return (short2)(convert_short_sat_rtp(v.s0), convert_short_sat_rtp(v.s1));
+}
+
+INLINE OVERLOADABLE short2 convert_short2_sat_rtn(float2 v) {
+  return (short2)(convert_short_sat_rtn(v.s0), convert_short_sat_rtn(v.s1));
+}
+
+INLINE OVERLOADABLE ushort2 convert_ushort2_sat_rte(float2 v) {
+  return (ushort2)(convert_ushort_sat_rte(v.s0), convert_ushort_sat_rte(v.s1));
+}
+
+INLINE OVERLOADABLE ushort2 convert_ushort2_sat_rtz(float2 v) {
+  return (ushort2)(convert_ushort_sat_rtz(v.s0), convert_ushort_sat_rtz(v.s1));
+}
+
+INLINE OVERLOADABLE ushort2 convert_ushort2_sat_rtp(float2 v) {
+  return (ushort2)(convert_ushort_sat_rtp(v.s0), convert_ushort_sat_rtp(v.s1));
+}
+
+INLINE OVERLOADABLE ushort2 convert_ushort2_sat_rtn(float2 v) {
+  return (ushort2)(convert_ushort_sat_rtn(v.s0), convert_ushort_sat_rtn(v.s1));
+}
+
+INLINE OVERLOADABLE char2 convert_char2_sat_rte(float2 v) {
+  return (char2)(convert_char_sat_rte(v.s0), convert_char_sat_rte(v.s1));
+}
+
+INLINE OVERLOADABLE char2 convert_char2_sat_rtz(float2 v) {
+  return (char2)(convert_char_sat_rtz(v.s0), convert_char_sat_rtz(v.s1));
+}
+
+INLINE OVERLOADABLE char2 convert_char2_sat_rtp(float2 v) {
+  return (char2)(convert_char_sat_rtp(v.s0), convert_char_sat_rtp(v.s1));
+}
+
+INLINE OVERLOADABLE char2 convert_char2_sat_rtn(float2 v) {
+  return (char2)(convert_char_sat_rtn(v.s0), convert_char_sat_rtn(v.s1));
+}
+
+INLINE OVERLOADABLE uchar2 convert_uchar2_sat_rte(float2 v) {
+  return (uchar2)(convert_uchar_sat_rte(v.s0), convert_uchar_sat_rte(v.s1));
+}
+
+INLINE OVERLOADABLE uchar2 convert_uchar2_sat_rtz(float2 v) {
+  return (uchar2)(convert_uchar_sat_rtz(v.s0), convert_uchar_sat_rtz(v.s1));
+}
+
+INLINE OVERLOADABLE uchar2 convert_uchar2_sat_rtp(float2 v) {
+  return (uchar2)(convert_uchar_sat_rtp(v.s0), convert_uchar_sat_rtp(v.s1));
+}
+
+INLINE OVERLOADABLE uchar2 convert_uchar2_sat_rtn(float2 v) {
+  return (uchar2)(convert_uchar_sat_rtn(v.s0), convert_uchar_sat_rtn(v.s1));
+}
+
+INLINE OVERLOADABLE long3 convert_long3_sat_rte(long3 v) {
+  return (long3)(convert_long_sat_rte(v.s0), convert_long_sat_rte(v.s1), convert_long_sat_rte(v.s2));
+}
+
+INLINE OVERLOADABLE long3 convert_long3_sat_rtz(long3 v) {
+  return (long3)(convert_long_sat_rtz(v.s0), convert_long_sat_rtz(v.s1), convert_long_sat_rtz(v.s2));
+}
+
+INLINE OVERLOADABLE long3 convert_long3_sat_rtp(long3 v) {
+  return (long3)(convert_long_sat_rtp(v.s0), convert_long_sat_rtp(v.s1), convert_long_sat_rtp(v.s2));
+}
+
+INLINE OVERLOADABLE long3 convert_long3_sat_rtn(long3 v) {
+  return (long3)(convert_long_sat_rtn(v.s0), convert_long_sat_rtn(v.s1), convert_long_sat_rtn(v.s2));
+}
+
+INLINE OVERLOADABLE ulong3 convert_ulong3_sat_rte(long3 v) {
+  return (ulong3)(convert_ulong_sat_rte(v.s0), convert_ulong_sat_rte(v.s1), convert_ulong_sat_rte(v.s2));
+}
+
+INLINE OVERLOADABLE ulong3 convert_ulong3_sat_rtz(long3 v) {
+  return (ulong3)(convert_ulong_sat_rtz(v.s0), convert_ulong_sat_rtz(v.s1), convert_ulong_sat_rtz(v.s2));
+}
+
+INLINE OVERLOADABLE ulong3 convert_ulong3_sat_rtp(long3 v) {
+  return (ulong3)(convert_ulong_sat_rtp(v.s0), convert_ulong_sat_rtp(v.s1), convert_ulong_sat_rtp(v.s2));
+}
+
+INLINE OVERLOADABLE ulong3 convert_ulong3_sat_rtn(long3 v) {
+  return (ulong3)(convert_ulong_sat_rtn(v.s0), convert_ulong_sat_rtn(v.s1), convert_ulong_sat_rtn(v.s2));
+}
+
+INLINE OVERLOADABLE int3 convert_int3_sat_rte(long3 v) {
+  return (int3)(convert_int_sat_rte(v.s0), convert_int_sat_rte(v.s1), convert_int_sat_rte(v.s2));
+}
+
+INLINE OVERLOADABLE int3 convert_int3_sat_rtz(long3 v) {
+  return (int3)(convert_int_sat_rtz(v.s0), convert_int_sat_rtz(v.s1), convert_int_sat_rtz(v.s2));
+}
+
+INLINE OVERLOADABLE int3 convert_int3_sat_rtp(long3 v) {
+  return (int3)(convert_int_sat_rtp(v.s0), convert_int_sat_rtp(v.s1), convert_int_sat_rtp(v.s2));
+}
+
+INLINE OVERLOADABLE int3 convert_int3_sat_rtn(long3 v) {
+  return (int3)(convert_int_sat_rtn(v.s0), convert_int_sat_rtn(v.s1), convert_int_sat_rtn(v.s2));
+}
+
+INLINE OVERLOADABLE uint3 convert_uint3_sat_rte(long3 v) {
+  return (uint3)(convert_uint_sat_rte(v.s0), convert_uint_sat_rte(v.s1), convert_uint_sat_rte(v.s2));
+}
+
+INLINE OVERLOADABLE uint3 convert_uint3_sat_rtz(long3 v) {
+  return (uint3)(convert_uint_sat_rtz(v.s0), convert_uint_sat_rtz(v.s1), convert_uint_sat_rtz(v.s2));
+}
+
+INLINE OVERLOADABLE uint3 convert_uint3_sat_rtp(long3 v) {
+  return (uint3)(convert_uint_sat_rtp(v.s0), convert_uint_sat_rtp(v.s1), convert_uint_sat_rtp(v.s2));
+}
+
+INLINE OVERLOADABLE uint3 convert_uint3_sat_rtn(long3 v) {
+  return (uint3)(convert_uint_sat_rtn(v.s0), convert_uint_sat_rtn(v.s1), convert_uint_sat_rtn(v.s2));
+}
+
+INLINE OVERLOADABLE short3 convert_short3_sat_rte(long3 v) {
+  return (short3)(convert_short_sat_rte(v.s0), convert_short_sat_rte(v.s1), convert_short_sat_rte(v.s2));
+}
+
+INLINE OVERLOADABLE short3 convert_short3_sat_rtz(long3 v) {
+  return (short3)(convert_short_sat_rtz(v.s0), convert_short_sat_rtz(v.s1), convert_short_sat_rtz(v.s2));
+}
+
+INLINE OVERLOADABLE short3 convert_short3_sat_rtp(long3 v) {
+  return (short3)(convert_short_sat_rtp(v.s0), convert_short_sat_rtp(v.s1), convert_short_sat_rtp(v.s2));
+}
+
+INLINE OVERLOADABLE short3 convert_short3_sat_rtn(long3 v) {
+  return (short3)(convert_short_sat_rtn(v.s0), convert_short_sat_rtn(v.s1), convert_short_sat_rtn(v.s2));
+}
+
+INLINE OVERLOADABLE ushort3 convert_ushort3_sat_rte(long3 v) {
+  return (ushort3)(convert_ushort_sat_rte(v.s0), convert_ushort_sat_rte(v.s1), convert_ushort_sat_rte(v.s2));
+}
+
+INLINE OVERLOADABLE ushort3 convert_ushort3_sat_rtz(long3 v) {
+  return (ushort3)(convert_ushort_sat_rtz(v.s0), convert_ushort_sat_rtz(v.s1), convert_ushort_sat_rtz(v.s2));
+}
+
+INLINE OVERLOADABLE ushort3 convert_ushort3_sat_rtp(long3 v) {
+  return (ushort3)(convert_ushort_sat_rtp(v.s0), convert_ushort_sat_rtp(v.s1), convert_ushort_sat_rtp(v.s2));
+}
+
+INLINE OVERLOADABLE ushort3 convert_ushort3_sat_rtn(long3 v) {
+  return (ushort3)(convert_ushort_sat_rtn(v.s0), convert_ushort_sat_rtn(v.s1), convert_ushort_sat_rtn(v.s2));
+}
+
+INLINE OVERLOADABLE char3 convert_char3_sat_rte(long3 v) {
+  return (char3)(convert_char_sat_rte(v.s0), convert_char_sat_rte(v.s1), convert_char_sat_rte(v.s2));
+}
+
+INLINE OVERLOADABLE char3 convert_char3_sat_rtz(long3 v) {
+  return (char3)(convert_char_sat_rtz(v.s0), convert_char_sat_rtz(v.s1), convert_char_sat_rtz(v.s2));
+}
+
+INLINE OVERLOADABLE char3 convert_char3_sat_rtp(long3 v) {
+  return (char3)(convert_char_sat_rtp(v.s0), convert_char_sat_rtp(v.s1), convert_char_sat_rtp(v.s2));
+}
+
+INLINE OVERLOADABLE char3 convert_char3_sat_rtn(long3 v) {
+  return (char3)(convert_char_sat_rtn(v.s0), convert_char_sat_rtn(v.s1), convert_char_sat_rtn(v.s2));
+}
+
+INLINE OVERLOADABLE uchar3 convert_uchar3_sat_rte(long3 v) {
+  return (uchar3)(convert_uchar_sat_rte(v.s0), convert_uchar_sat_rte(v.s1), convert_uchar_sat_rte(v.s2));
+}
+
+INLINE OVERLOADABLE uchar3 convert_uchar3_sat_rtz(long3 v) {
+  return (uchar3)(convert_uchar_sat_rtz(v.s0), convert_uchar_sat_rtz(v.s1), convert_uchar_sat_rtz(v.s2));
+}
+
+INLINE OVERLOADABLE uchar3 convert_uchar3_sat_rtp(long3 v) {
+  return (uchar3)(convert_uchar_sat_rtp(v.s0), convert_uchar_sat_rtp(v.s1), convert_uchar_sat_rtp(v.s2));
+}
+
+INLINE OVERLOADABLE uchar3 convert_uchar3_sat_rtn(long3 v) {
+  return (uchar3)(convert_uchar_sat_rtn(v.s0), convert_uchar_sat_rtn(v.s1), convert_uchar_sat_rtn(v.s2));
+}
+
+INLINE OVERLOADABLE long3 convert_long3_sat_rte(ulong3 v) {
+  return (long3)(convert_long_sat_rte(v.s0), convert_long_sat_rte(v.s1), convert_long_sat_rte(v.s2));
+}
+
+INLINE OVERLOADABLE long3 convert_long3_sat_rtz(ulong3 v) {
+  return (long3)(convert_long_sat_rtz(v.s0), convert_long_sat_rtz(v.s1), convert_long_sat_rtz(v.s2));
+}
+
+INLINE OVERLOADABLE long3 convert_long3_sat_rtp(ulong3 v) {
+  return (long3)(convert_long_sat_rtp(v.s0), convert_long_sat_rtp(v.s1), convert_long_sat_rtp(v.s2));
+}
+
+INLINE OVERLOADABLE long3 convert_long3_sat_rtn(ulong3 v) {
+  return (long3)(convert_long_sat_rtn(v.s0), convert_long_sat_rtn(v.s1), convert_long_sat_rtn(v.s2));
+}
+
+INLINE OVERLOADABLE ulong3 convert_ulong3_sat_rte(ulong3 v) {
+  return (ulong3)(convert_ulong_sat_rte(v.s0), convert_ulong_sat_rte(v.s1), convert_ulong_sat_rte(v.s2));
+}
+
+INLINE OVERLOADABLE ulong3 convert_ulong3_sat_rtz(ulong3 v) {
+  return (ulong3)(convert_ulong_sat_rtz(v.s0), convert_ulong_sat_rtz(v.s1), convert_ulong_sat_rtz(v.s2));
+}
+
+INLINE OVERLOADABLE ulong3 convert_ulong3_sat_rtp(ulong3 v) {
+  return (ulong3)(convert_ulong_sat_rtp(v.s0), convert_ulong_sat_rtp(v.s1), convert_ulong_sat_rtp(v.s2));
+}
+
+INLINE OVERLOADABLE ulong3 convert_ulong3_sat_rtn(ulong3 v) {
+  return (ulong3)(convert_ulong_sat_rtn(v.s0), convert_ulong_sat_rtn(v.s1), convert_ulong_sat_rtn(v.s2));
+}
+
+INLINE OVERLOADABLE int3 convert_int3_sat_rte(ulong3 v) {
+  return (int3)(convert_int_sat_rte(v.s0), convert_int_sat_rte(v.s1), convert_int_sat_rte(v.s2));
+}
+
+INLINE OVERLOADABLE int3 convert_int3_sat_rtz(ulong3 v) {
+  return (int3)(convert_int_sat_rtz(v.s0), convert_int_sat_rtz(v.s1), convert_int_sat_rtz(v.s2));
+}
+
+INLINE OVERLOADABLE int3 convert_int3_sat_rtp(ulong3 v) {
+  return (int3)(convert_int_sat_rtp(v.s0), convert_int_sat_rtp(v.s1), convert_int_sat_rtp(v.s2));
+}
+
+INLINE OVERLOADABLE int3 convert_int3_sat_rtn(ulong3 v) {
+  return (int3)(convert_int_sat_rtn(v.s0), convert_int_sat_rtn(v.s1), convert_int_sat_rtn(v.s2));
+}
+
+INLINE OVERLOADABLE uint3 convert_uint3_sat_rte(ulong3 v) {
+  return (uint3)(convert_uint_sat_rte(v.s0), convert_uint_sat_rte(v.s1), convert_uint_sat_rte(v.s2));
+}
+
+INLINE OVERLOADABLE uint3 convert_uint3_sat_rtz(ulong3 v) {
+  return (uint3)(convert_uint_sat_rtz(v.s0), convert_uint_sat_rtz(v.s1), convert_uint_sat_rtz(v.s2));
+}
+
+INLINE OVERLOADABLE uint3 convert_uint3_sat_rtp(ulong3 v) {
+  return (uint3)(convert_uint_sat_rtp(v.s0), convert_uint_sat_rtp(v.s1), convert_uint_sat_rtp(v.s2));
+}
+
+INLINE OVERLOADABLE uint3 convert_uint3_sat_rtn(ulong3 v) {
+  return (uint3)(convert_uint_sat_rtn(v.s0), convert_uint_sat_rtn(v.s1), convert_uint_sat_rtn(v.s2));
+}
+
+INLINE OVERLOADABLE short3 convert_short3_sat_rte(ulong3 v) {
+  return (short3)(convert_short_sat_rte(v.s0), convert_short_sat_rte(v.s1), convert_short_sat_rte(v.s2));
+}
+
+INLINE OVERLOADABLE short3 convert_short3_sat_rtz(ulong3 v) {
+  return (short3)(convert_short_sat_rtz(v.s0), convert_short_sat_rtz(v.s1), convert_short_sat_rtz(v.s2));
+}
+
+INLINE OVERLOADABLE short3 convert_short3_sat_rtp(ulong3 v) {
+  return (short3)(convert_short_sat_rtp(v.s0), convert_short_sat_rtp(v.s1), convert_short_sat_rtp(v.s2));
+}
+
+INLINE OVERLOADABLE short3 convert_short3_sat_rtn(ulong3 v) {
+  return (short3)(convert_short_sat_rtn(v.s0), convert_short_sat_rtn(v.s1), convert_short_sat_rtn(v.s2));
+}
+
+INLINE OVERLOADABLE ushort3 convert_ushort3_sat_rte(ulong3 v) {
+  return (ushort3)(convert_ushort_sat_rte(v.s0), convert_ushort_sat_rte(v.s1), convert_ushort_sat_rte(v.s2));
+}
+
+INLINE OVERLOADABLE ushort3 convert_ushort3_sat_rtz(ulong3 v) {
+  return (ushort3)(convert_ushort_sat_rtz(v.s0), convert_ushort_sat_rtz(v.s1), convert_ushort_sat_rtz(v.s2));
+}
+
+INLINE OVERLOADABLE ushort3 convert_ushort3_sat_rtp(ulong3 v) {
+  return (ushort3)(convert_ushort_sat_rtp(v.s0), convert_ushort_sat_rtp(v.s1), convert_ushort_sat_rtp(v.s2));
+}
+
+INLINE OVERLOADABLE ushort3 convert_ushort3_sat_rtn(ulong3 v) {
+  return (ushort3)(convert_ushort_sat_rtn(v.s0), convert_ushort_sat_rtn(v.s1), convert_ushort_sat_rtn(v.s2));
+}
+
+INLINE OVERLOADABLE char3 convert_char3_sat_rte(ulong3 v) {
+  return (char3)(convert_char_sat_rte(v.s0), convert_char_sat_rte(v.s1), convert_char_sat_rte(v.s2));
+}
+
+INLINE OVERLOADABLE char3 convert_char3_sat_rtz(ulong3 v) {
+  return (char3)(convert_char_sat_rtz(v.s0), convert_char_sat_rtz(v.s1), convert_char_sat_rtz(v.s2));
+}
+
+INLINE OVERLOADABLE char3 convert_char3_sat_rtp(ulong3 v) {
+  return (char3)(convert_char_sat_rtp(v.s0), convert_char_sat_rtp(v.s1), convert_char_sat_rtp(v.s2));
+}
+
+INLINE OVERLOADABLE char3 convert_char3_sat_rtn(ulong3 v) {
+  return (char3)(convert_char_sat_rtn(v.s0), convert_char_sat_rtn(v.s1), convert_char_sat_rtn(v.s2));
+}
+
+INLINE OVERLOADABLE uchar3 convert_uchar3_sat_rte(ulong3 v) {
+  return (uchar3)(convert_uchar_sat_rte(v.s0), convert_uchar_sat_rte(v.s1), convert_uchar_sat_rte(v.s2));
+}
+
+INLINE OVERLOADABLE uchar3 convert_uchar3_sat_rtz(ulong3 v) {
+  return (uchar3)(convert_uchar_sat_rtz(v.s0), convert_uchar_sat_rtz(v.s1), convert_uchar_sat_rtz(v.s2));
+}
+
+INLINE OVERLOADABLE uchar3 convert_uchar3_sat_rtp(ulong3 v) {
+  return (uchar3)(convert_uchar_sat_rtp(v.s0), convert_uchar_sat_rtp(v.s1), convert_uchar_sat_rtp(v.s2));
+}
+
+INLINE OVERLOADABLE uchar3 convert_uchar3_sat_rtn(ulong3 v) {
+  return (uchar3)(convert_uchar_sat_rtn(v.s0), convert_uchar_sat_rtn(v.s1), convert_uchar_sat_rtn(v.s2));
+}
+
+INLINE OVERLOADABLE long3 convert_long3_sat_rte(int3 v) {
+  return (long3)(convert_long_sat_rte(v.s0), convert_long_sat_rte(v.s1), convert_long_sat_rte(v.s2));
+}
+
+INLINE OVERLOADABLE long3 convert_long3_sat_rtz(int3 v) {
+  return (long3)(convert_long_sat_rtz(v.s0), convert_long_sat_rtz(v.s1), convert_long_sat_rtz(v.s2));
+}
+
+INLINE OVERLOADABLE long3 convert_long3_sat_rtp(int3 v) {
+  return (long3)(convert_long_sat_rtp(v.s0), convert_long_sat_rtp(v.s1), convert_long_sat_rtp(v.s2));
+}
+
+INLINE OVERLOADABLE long3 convert_long3_sat_rtn(int3 v) {
+  return (long3)(convert_long_sat_rtn(v.s0), convert_long_sat_rtn(v.s1), convert_long_sat_rtn(v.s2));
+}
+
+INLINE OVERLOADABLE ulong3 convert_ulong3_sat_rte(int3 v) {
+  return (ulong3)(convert_ulong_sat_rte(v.s0), convert_ulong_sat_rte(v.s1), convert_ulong_sat_rte(v.s2));
+}
+
+INLINE OVERLOADABLE ulong3 convert_ulong3_sat_rtz(int3 v) {
+  return (ulong3)(convert_ulong_sat_rtz(v.s0), convert_ulong_sat_rtz(v.s1), convert_ulong_sat_rtz(v.s2));
+}
+
+INLINE OVERLOADABLE ulong3 convert_ulong3_sat_rtp(int3 v) {
+  return (ulong3)(convert_ulong_sat_rtp(v.s0), convert_ulong_sat_rtp(v.s1), convert_ulong_sat_rtp(v.s2));
+}
+
+INLINE OVERLOADABLE ulong3 convert_ulong3_sat_rtn(int3 v) {
+  return (ulong3)(convert_ulong_sat_rtn(v.s0), convert_ulong_sat_rtn(v.s1), convert_ulong_sat_rtn(v.s2));
+}
+
+INLINE OVERLOADABLE int3 convert_int3_sat_rte(int3 v) {
+  return (int3)(convert_int_sat_rte(v.s0), convert_int_sat_rte(v.s1), convert_int_sat_rte(v.s2));
+}
+
+INLINE OVERLOADABLE int3 convert_int3_sat_rtz(int3 v) {
+  return (int3)(convert_int_sat_rtz(v.s0), convert_int_sat_rtz(v.s1), convert_int_sat_rtz(v.s2));
+}
+
+INLINE OVERLOADABLE int3 convert_int3_sat_rtp(int3 v) {
+  return (int3)(convert_int_sat_rtp(v.s0), convert_int_sat_rtp(v.s1), convert_int_sat_rtp(v.s2));
+}
+
+INLINE OVERLOADABLE int3 convert_int3_sat_rtn(int3 v) {
+  return (int3)(convert_int_sat_rtn(v.s0), convert_int_sat_rtn(v.s1), convert_int_sat_rtn(v.s2));
+}
+
+INLINE OVERLOADABLE uint3 convert_uint3_sat_rte(int3 v) {
+  return (uint3)(convert_uint_sat_rte(v.s0), convert_uint_sat_rte(v.s1), convert_uint_sat_rte(v.s2));
+}
+
+INLINE OVERLOADABLE uint3 convert_uint3_sat_rtz(int3 v) {
+  return (uint3)(convert_uint_sat_rtz(v.s0), convert_uint_sat_rtz(v.s1), convert_uint_sat_rtz(v.s2));
+}
+
+INLINE OVERLOADABLE uint3 convert_uint3_sat_rtp(int3 v) {
+  return (uint3)(convert_uint_sat_rtp(v.s0), convert_uint_sat_rtp(v.s1), convert_uint_sat_rtp(v.s2));
+}
+
+INLINE OVERLOADABLE uint3 convert_uint3_sat_rtn(int3 v) {
+  return (uint3)(convert_uint_sat_rtn(v.s0), convert_uint_sat_rtn(v.s1), convert_uint_sat_rtn(v.s2));
+}
+
+INLINE OVERLOADABLE short3 convert_short3_sat_rte(int3 v) {
+  return (short3)(convert_short_sat_rte(v.s0), convert_short_sat_rte(v.s1), convert_short_sat_rte(v.s2));
+}
+
+INLINE OVERLOADABLE short3 convert_short3_sat_rtz(int3 v) {
+  return (short3)(convert_short_sat_rtz(v.s0), convert_short_sat_rtz(v.s1), convert_short_sat_rtz(v.s2));
+}
+
+INLINE OVERLOADABLE short3 convert_short3_sat_rtp(int3 v) {
+  return (short3)(convert_short_sat_rtp(v.s0), convert_short_sat_rtp(v.s1), convert_short_sat_rtp(v.s2));
+}
+
+INLINE OVERLOADABLE short3 convert_short3_sat_rtn(int3 v) {
+  return (short3)(convert_short_sat_rtn(v.s0), convert_short_sat_rtn(v.s1), convert_short_sat_rtn(v.s2));
+}
+
+INLINE OVERLOADABLE ushort3 convert_ushort3_sat_rte(int3 v) {
+  return (ushort3)(convert_ushort_sat_rte(v.s0), convert_ushort_sat_rte(v.s1), convert_ushort_sat_rte(v.s2));
+}
+
+INLINE OVERLOADABLE ushort3 convert_ushort3_sat_rtz(int3 v) {
+  return (ushort3)(convert_ushort_sat_rtz(v.s0), convert_ushort_sat_rtz(v.s1), convert_ushort_sat_rtz(v.s2));
+}
+
+INLINE OVERLOADABLE ushort3 convert_ushort3_sat_rtp(int3 v) {
+  return (ushort3)(convert_ushort_sat_rtp(v.s0), convert_ushort_sat_rtp(v.s1), convert_ushort_sat_rtp(v.s2));
+}
+
+INLINE OVERLOADABLE ushort3 convert_ushort3_sat_rtn(int3 v) {
+  return (ushort3)(convert_ushort_sat_rtn(v.s0), convert_ushort_sat_rtn(v.s1), convert_ushort_sat_rtn(v.s2));
+}
+
+INLINE OVERLOADABLE char3 convert_char3_sat_rte(int3 v) {
+  return (char3)(convert_char_sat_rte(v.s0), convert_char_sat_rte(v.s1), convert_char_sat_rte(v.s2));
+}
+
+INLINE OVERLOADABLE char3 convert_char3_sat_rtz(int3 v) {
+  return (char3)(convert_char_sat_rtz(v.s0), convert_char_sat_rtz(v.s1), convert_char_sat_rtz(v.s2));
+}
+
+INLINE OVERLOADABLE char3 convert_char3_sat_rtp(int3 v) {
+  return (char3)(convert_char_sat_rtp(v.s0), convert_char_sat_rtp(v.s1), convert_char_sat_rtp(v.s2));
+}
+
+INLINE OVERLOADABLE char3 convert_char3_sat_rtn(int3 v) {
+  return (char3)(convert_char_sat_rtn(v.s0), convert_char_sat_rtn(v.s1), convert_char_sat_rtn(v.s2));
+}
+
+INLINE OVERLOADABLE uchar3 convert_uchar3_sat_rte(int3 v) {
+  return (uchar3)(convert_uchar_sat_rte(v.s0), convert_uchar_sat_rte(v.s1), convert_uchar_sat_rte(v.s2));
+}
+
+INLINE OVERLOADABLE uchar3 convert_uchar3_sat_rtz(int3 v) {
+  return (uchar3)(convert_uchar_sat_rtz(v.s0), convert_uchar_sat_rtz(v.s1), convert_uchar_sat_rtz(v.s2));
+}
+
+INLINE OVERLOADABLE uchar3 convert_uchar3_sat_rtp(int3 v) {
+  return (uchar3)(convert_uchar_sat_rtp(v.s0), convert_uchar_sat_rtp(v.s1), convert_uchar_sat_rtp(v.s2));
+}
+
+INLINE OVERLOADABLE uchar3 convert_uchar3_sat_rtn(int3 v) {
+  return (uchar3)(convert_uchar_sat_rtn(v.s0), convert_uchar_sat_rtn(v.s1), convert_uchar_sat_rtn(v.s2));
+}
+
+INLINE OVERLOADABLE long3 convert_long3_sat_rte(uint3 v) {
+  return (long3)(convert_long_sat_rte(v.s0), convert_long_sat_rte(v.s1), convert_long_sat_rte(v.s2));
+}
+
+INLINE OVERLOADABLE long3 convert_long3_sat_rtz(uint3 v) {
+  return (long3)(convert_long_sat_rtz(v.s0), convert_long_sat_rtz(v.s1), convert_long_sat_rtz(v.s2));
+}
+
+INLINE OVERLOADABLE long3 convert_long3_sat_rtp(uint3 v) {
+  return (long3)(convert_long_sat_rtp(v.s0), convert_long_sat_rtp(v.s1), convert_long_sat_rtp(v.s2));
+}
+
+INLINE OVERLOADABLE long3 convert_long3_sat_rtn(uint3 v) {
+  return (long3)(convert_long_sat_rtn(v.s0), convert_long_sat_rtn(v.s1), convert_long_sat_rtn(v.s2));
+}
+
+INLINE OVERLOADABLE ulong3 convert_ulong3_sat_rte(uint3 v) {
+  return (ulong3)(convert_ulong_sat_rte(v.s0), convert_ulong_sat_rte(v.s1), convert_ulong_sat_rte(v.s2));
+}
+
+INLINE OVERLOADABLE ulong3 convert_ulong3_sat_rtz(uint3 v) {
+  return (ulong3)(convert_ulong_sat_rtz(v.s0), convert_ulong_sat_rtz(v.s1), convert_ulong_sat_rtz(v.s2));
+}
+
+INLINE OVERLOADABLE ulong3 convert_ulong3_sat_rtp(uint3 v) {
+  return (ulong3)(convert_ulong_sat_rtp(v.s0), convert_ulong_sat_rtp(v.s1), convert_ulong_sat_rtp(v.s2));
+}
+
+INLINE OVERLOADABLE ulong3 convert_ulong3_sat_rtn(uint3 v) {
+  return (ulong3)(convert_ulong_sat_rtn(v.s0), convert_ulong_sat_rtn(v.s1), convert_ulong_sat_rtn(v.s2));
+}
+
+INLINE OVERLOADABLE int3 convert_int3_sat_rte(uint3 v) {
+  return (int3)(convert_int_sat_rte(v.s0), convert_int_sat_rte(v.s1), convert_int_sat_rte(v.s2));
+}
+
+INLINE OVERLOADABLE int3 convert_int3_sat_rtz(uint3 v) {
+  return (int3)(convert_int_sat_rtz(v.s0), convert_int_sat_rtz(v.s1), convert_int_sat_rtz(v.s2));
+}
+
+INLINE OVERLOADABLE int3 convert_int3_sat_rtp(uint3 v) {
+  return (int3)(convert_int_sat_rtp(v.s0), convert_int_sat_rtp(v.s1), convert_int_sat_rtp(v.s2));
+}
+
+INLINE OVERLOADABLE int3 convert_int3_sat_rtn(uint3 v) {
+  return (int3)(convert_int_sat_rtn(v.s0), convert_int_sat_rtn(v.s1), convert_int_sat_rtn(v.s2));
+}
+
+INLINE OVERLOADABLE uint3 convert_uint3_sat_rte(uint3 v) {
+  return (uint3)(convert_uint_sat_rte(v.s0), convert_uint_sat_rte(v.s1), convert_uint_sat_rte(v.s2));
+}
+
+INLINE OVERLOADABLE uint3 convert_uint3_sat_rtz(uint3 v) {
+  return (uint3)(convert_uint_sat_rtz(v.s0), convert_uint_sat_rtz(v.s1), convert_uint_sat_rtz(v.s2));
+}
+
+INLINE OVERLOADABLE uint3 convert_uint3_sat_rtp(uint3 v) {
+  return (uint3)(convert_uint_sat_rtp(v.s0), convert_uint_sat_rtp(v.s1), convert_uint_sat_rtp(v.s2));
+}
+
+INLINE OVERLOADABLE uint3 convert_uint3_sat_rtn(uint3 v) {
+  return (uint3)(convert_uint_sat_rtn(v.s0), convert_uint_sat_rtn(v.s1), convert_uint_sat_rtn(v.s2));
+}
+
+INLINE OVERLOADABLE short3 convert_short3_sat_rte(uint3 v) {
+  return (short3)(convert_short_sat_rte(v.s0), convert_short_sat_rte(v.s1), convert_short_sat_rte(v.s2));
+}
+
+INLINE OVERLOADABLE short3 convert_short3_sat_rtz(uint3 v) {
+  return (short3)(convert_short_sat_rtz(v.s0), convert_short_sat_rtz(v.s1), convert_short_sat_rtz(v.s2));
+}
+
+INLINE OVERLOADABLE short3 convert_short3_sat_rtp(uint3 v) {
+  return (short3)(convert_short_sat_rtp(v.s0), convert_short_sat_rtp(v.s1), convert_short_sat_rtp(v.s2));
+}
+
+INLINE OVERLOADABLE short3 convert_short3_sat_rtn(uint3 v) {
+  return (short3)(convert_short_sat_rtn(v.s0), convert_short_sat_rtn(v.s1), convert_short_sat_rtn(v.s2));
+}
+
+INLINE OVERLOADABLE ushort3 convert_ushort3_sat_rte(uint3 v) {
+  return (ushort3)(convert_ushort_sat_rte(v.s0), convert_ushort_sat_rte(v.s1), convert_ushort_sat_rte(v.s2));
+}
+
+INLINE OVERLOADABLE ushort3 convert_ushort3_sat_rtz(uint3 v) {
+  return (ushort3)(convert_ushort_sat_rtz(v.s0), convert_ushort_sat_rtz(v.s1), convert_ushort_sat_rtz(v.s2));
+}
+
+INLINE OVERLOADABLE ushort3 convert_ushort3_sat_rtp(uint3 v) {
+  return (ushort3)(convert_ushort_sat_rtp(v.s0), convert_ushort_sat_rtp(v.s1), convert_ushort_sat_rtp(v.s2));
+}
+
+INLINE OVERLOADABLE ushort3 convert_ushort3_sat_rtn(uint3 v) {
+  return (ushort3)(convert_ushort_sat_rtn(v.s0), convert_ushort_sat_rtn(v.s1), convert_ushort_sat_rtn(v.s2));
+}
+
+INLINE OVERLOADABLE char3 convert_char3_sat_rte(uint3 v) {
+  return (char3)(convert_char_sat_rte(v.s0), convert_char_sat_rte(v.s1), convert_char_sat_rte(v.s2));
+}
+
+INLINE OVERLOADABLE char3 convert_char3_sat_rtz(uint3 v) {
+  return (char3)(convert_char_sat_rtz(v.s0), convert_char_sat_rtz(v.s1), convert_char_sat_rtz(v.s2));
+}
+
+INLINE OVERLOADABLE char3 convert_char3_sat_rtp(uint3 v) {
+  return (char3)(convert_char_sat_rtp(v.s0), convert_char_sat_rtp(v.s1), convert_char_sat_rtp(v.s2));
+}
+
+INLINE OVERLOADABLE char3 convert_char3_sat_rtn(uint3 v) {
+  return (char3)(convert_char_sat_rtn(v.s0), convert_char_sat_rtn(v.s1), convert_char_sat_rtn(v.s2));
+}
+
+INLINE OVERLOADABLE uchar3 convert_uchar3_sat_rte(uint3 v) {
+  return (uchar3)(convert_uchar_sat_rte(v.s0), convert_uchar_sat_rte(v.s1), convert_uchar_sat_rte(v.s2));
+}
+
+INLINE OVERLOADABLE uchar3 convert_uchar3_sat_rtz(uint3 v) {
+  return (uchar3)(convert_uchar_sat_rtz(v.s0), convert_uchar_sat_rtz(v.s1), convert_uchar_sat_rtz(v.s2));
+}
+
+INLINE OVERLOADABLE uchar3 convert_uchar3_sat_rtp(uint3 v) {
+  return (uchar3)(convert_uchar_sat_rtp(v.s0), convert_uchar_sat_rtp(v.s1), convert_uchar_sat_rtp(v.s2));
+}
+
+INLINE OVERLOADABLE uchar3 convert_uchar3_sat_rtn(uint3 v) {
+  return (uchar3)(convert_uchar_sat_rtn(v.s0), convert_uchar_sat_rtn(v.s1), convert_uchar_sat_rtn(v.s2));
+}
+
+INLINE OVERLOADABLE long3 convert_long3_sat_rte(short3 v) {
+  return (long3)(convert_long_sat_rte(v.s0), convert_long_sat_rte(v.s1), convert_long_sat_rte(v.s2));
+}
+
+INLINE OVERLOADABLE long3 convert_long3_sat_rtz(short3 v) {
+  return (long3)(convert_long_sat_rtz(v.s0), convert_long_sat_rtz(v.s1), convert_long_sat_rtz(v.s2));
+}
+
+INLINE OVERLOADABLE long3 convert_long3_sat_rtp(short3 v) {
+  return (long3)(convert_long_sat_rtp(v.s0), convert_long_sat_rtp(v.s1), convert_long_sat_rtp(v.s2));
+}
+
+INLINE OVERLOADABLE long3 convert_long3_sat_rtn(short3 v) {
+  return (long3)(convert_long_sat_rtn(v.s0), convert_long_sat_rtn(v.s1), convert_long_sat_rtn(v.s2));
+}
+
+INLINE OVERLOADABLE ulong3 convert_ulong3_sat_rte(short3 v) {
+  return (ulong3)(convert_ulong_sat_rte(v.s0), convert_ulong_sat_rte(v.s1), convert_ulong_sat_rte(v.s2));
+}
+
+INLINE OVERLOADABLE ulong3 convert_ulong3_sat_rtz(short3 v) {
+  return (ulong3)(convert_ulong_sat_rtz(v.s0), convert_ulong_sat_rtz(v.s1), convert_ulong_sat_rtz(v.s2));
+}
+
+INLINE OVERLOADABLE ulong3 convert_ulong3_sat_rtp(short3 v) {
+  return (ulong3)(convert_ulong_sat_rtp(v.s0), convert_ulong_sat_rtp(v.s1), convert_ulong_sat_rtp(v.s2));
+}
+
+INLINE OVERLOADABLE ulong3 convert_ulong3_sat_rtn(short3 v) {
+  return (ulong3)(convert_ulong_sat_rtn(v.s0), convert_ulong_sat_rtn(v.s1), convert_ulong_sat_rtn(v.s2));
+}
+
+INLINE OVERLOADABLE int3 convert_int3_sat_rte(short3 v) {
+  return (int3)(convert_int_sat_rte(v.s0), convert_int_sat_rte(v.s1), convert_int_sat_rte(v.s2));
+}
+
+INLINE OVERLOADABLE int3 convert_int3_sat_rtz(short3 v) {
+  return (int3)(convert_int_sat_rtz(v.s0), convert_int_sat_rtz(v.s1), convert_int_sat_rtz(v.s2));
+}
+
+INLINE OVERLOADABLE int3 convert_int3_sat_rtp(short3 v) {
+  return (int3)(convert_int_sat_rtp(v.s0), convert_int_sat_rtp(v.s1), convert_int_sat_rtp(v.s2));
+}
+
+INLINE OVERLOADABLE int3 convert_int3_sat_rtn(short3 v) {
+  return (int3)(convert_int_sat_rtn(v.s0), convert_int_sat_rtn(v.s1), convert_int_sat_rtn(v.s2));
+}
+
+INLINE OVERLOADABLE uint3 convert_uint3_sat_rte(short3 v) {
+  return (uint3)(convert_uint_sat_rte(v.s0), convert_uint_sat_rte(v.s1), convert_uint_sat_rte(v.s2));
+}
+
+INLINE OVERLOADABLE uint3 convert_uint3_sat_rtz(short3 v) {
+  return (uint3)(convert_uint_sat_rtz(v.s0), convert_uint_sat_rtz(v.s1), convert_uint_sat_rtz(v.s2));
+}
+
+INLINE OVERLOADABLE uint3 convert_uint3_sat_rtp(short3 v) {
+  return (uint3)(convert_uint_sat_rtp(v.s0), convert_uint_sat_rtp(v.s1), convert_uint_sat_rtp(v.s2));
+}
+
+INLINE OVERLOADABLE uint3 convert_uint3_sat_rtn(short3 v) {
+  return (uint3)(convert_uint_sat_rtn(v.s0), convert_uint_sat_rtn(v.s1), convert_uint_sat_rtn(v.s2));
+}
+
+INLINE OVERLOADABLE short3 convert_short3_sat_rte(short3 v) {
+  return (short3)(convert_short_sat_rte(v.s0), convert_short_sat_rte(v.s1), convert_short_sat_rte(v.s2));
+}
+
+INLINE OVERLOADABLE short3 convert_short3_sat_rtz(short3 v) {
+  return (short3)(convert_short_sat_rtz(v.s0), convert_short_sat_rtz(v.s1), convert_short_sat_rtz(v.s2));
+}
+
+INLINE OVERLOADABLE short3 convert_short3_sat_rtp(short3 v) {
+  return (short3)(convert_short_sat_rtp(v.s0), convert_short_sat_rtp(v.s1), convert_short_sat_rtp(v.s2));
+}
+
+INLINE OVERLOADABLE short3 convert_short3_sat_rtn(short3 v) {
+  return (short3)(convert_short_sat_rtn(v.s0), convert_short_sat_rtn(v.s1), convert_short_sat_rtn(v.s2));
+}
+
+INLINE OVERLOADABLE ushort3 convert_ushort3_sat_rte(short3 v) {
+  return (ushort3)(convert_ushort_sat_rte(v.s0), convert_ushort_sat_rte(v.s1), convert_ushort_sat_rte(v.s2));
+}
+
+INLINE OVERLOADABLE ushort3 convert_ushort3_sat_rtz(short3 v) {
+  return (ushort3)(convert_ushort_sat_rtz(v.s0), convert_ushort_sat_rtz(v.s1), convert_ushort_sat_rtz(v.s2));
+}
+
+INLINE OVERLOADABLE ushort3 convert_ushort3_sat_rtp(short3 v) {
+  return (ushort3)(convert_ushort_sat_rtp(v.s0), convert_ushort_sat_rtp(v.s1), convert_ushort_sat_rtp(v.s2));
+}
+
+INLINE OVERLOADABLE ushort3 convert_ushort3_sat_rtn(short3 v) {
+  return (ushort3)(convert_ushort_sat_rtn(v.s0), convert_ushort_sat_rtn(v.s1), convert_ushort_sat_rtn(v.s2));
+}
+
+INLINE OVERLOADABLE char3 convert_char3_sat_rte(short3 v) {
+  return (char3)(convert_char_sat_rte(v.s0), convert_char_sat_rte(v.s1), convert_char_sat_rte(v.s2));
+}
+
+INLINE OVERLOADABLE char3 convert_char3_sat_rtz(short3 v) {
+  return (char3)(convert_char_sat_rtz(v.s0), convert_char_sat_rtz(v.s1), convert_char_sat_rtz(v.s2));
+}
+
+INLINE OVERLOADABLE char3 convert_char3_sat_rtp(short3 v) {
+  return (char3)(convert_char_sat_rtp(v.s0), convert_char_sat_rtp(v.s1), convert_char_sat_rtp(v.s2));
+}
+
+INLINE OVERLOADABLE char3 convert_char3_sat_rtn(short3 v) {
+  return (char3)(convert_char_sat_rtn(v.s0), convert_char_sat_rtn(v.s1), convert_char_sat_rtn(v.s2));
+}
+
+INLINE OVERLOADABLE uchar3 convert_uchar3_sat_rte(short3 v) {
+  return (uchar3)(convert_uchar_sat_rte(v.s0), convert_uchar_sat_rte(v.s1), convert_uchar_sat_rte(v.s2));
+}
+
+INLINE OVERLOADABLE uchar3 convert_uchar3_sat_rtz(short3 v) {
+  return (uchar3)(convert_uchar_sat_rtz(v.s0), convert_uchar_sat_rtz(v.s1), convert_uchar_sat_rtz(v.s2));
+}
+
+INLINE OVERLOADABLE uchar3 convert_uchar3_sat_rtp(short3 v) {
+  return (uchar3)(convert_uchar_sat_rtp(v.s0), convert_uchar_sat_rtp(v.s1), convert_uchar_sat_rtp(v.s2));
+}
+
+INLINE OVERLOADABLE uchar3 convert_uchar3_sat_rtn(short3 v) {
+  return (uchar3)(convert_uchar_sat_rtn(v.s0), convert_uchar_sat_rtn(v.s1), convert_uchar_sat_rtn(v.s2));
+}
+
+INLINE OVERLOADABLE long3 convert_long3_sat_rte(ushort3 v) {
+  return (long3)(convert_long_sat_rte(v.s0), convert_long_sat_rte(v.s1), convert_long_sat_rte(v.s2));
+}
+
+INLINE OVERLOADABLE long3 convert_long3_sat_rtz(ushort3 v) {
+  return (long3)(convert_long_sat_rtz(v.s0), convert_long_sat_rtz(v.s1), convert_long_sat_rtz(v.s2));
+}
+
+INLINE OVERLOADABLE long3 convert_long3_sat_rtp(ushort3 v) {
+  return (long3)(convert_long_sat_rtp(v.s0), convert_long_sat_rtp(v.s1), convert_long_sat_rtp(v.s2));
+}
+
+INLINE OVERLOADABLE long3 convert_long3_sat_rtn(ushort3 v) {
+  return (long3)(convert_long_sat_rtn(v.s0), convert_long_sat_rtn(v.s1), convert_long_sat_rtn(v.s2));
+}
+
+INLINE OVERLOADABLE ulong3 convert_ulong3_sat_rte(ushort3 v) {
+  return (ulong3)(convert_ulong_sat_rte(v.s0), convert_ulong_sat_rte(v.s1), convert_ulong_sat_rte(v.s2));
+}
+
+INLINE OVERLOADABLE ulong3 convert_ulong3_sat_rtz(ushort3 v) {
+  return (ulong3)(convert_ulong_sat_rtz(v.s0), convert_ulong_sat_rtz(v.s1), convert_ulong_sat_rtz(v.s2));
+}
+
+INLINE OVERLOADABLE ulong3 convert_ulong3_sat_rtp(ushort3 v) {
+  return (ulong3)(convert_ulong_sat_rtp(v.s0), convert_ulong_sat_rtp(v.s1), convert_ulong_sat_rtp(v.s2));
+}
+
+INLINE OVERLOADABLE ulong3 convert_ulong3_sat_rtn(ushort3 v) {
+  return (ulong3)(convert_ulong_sat_rtn(v.s0), convert_ulong_sat_rtn(v.s1), convert_ulong_sat_rtn(v.s2));
+}
+
+INLINE OVERLOADABLE int3 convert_int3_sat_rte(ushort3 v) {
+  return (int3)(convert_int_sat_rte(v.s0), convert_int_sat_rte(v.s1), convert_int_sat_rte(v.s2));
+}
+
+INLINE OVERLOADABLE int3 convert_int3_sat_rtz(ushort3 v) {
+  return (int3)(convert_int_sat_rtz(v.s0), convert_int_sat_rtz(v.s1), convert_int_sat_rtz(v.s2));
+}
+
+INLINE OVERLOADABLE int3 convert_int3_sat_rtp(ushort3 v) {
+  return (int3)(convert_int_sat_rtp(v.s0), convert_int_sat_rtp(v.s1), convert_int_sat_rtp(v.s2));
+}
+
+INLINE OVERLOADABLE int3 convert_int3_sat_rtn(ushort3 v) {
+  return (int3)(convert_int_sat_rtn(v.s0), convert_int_sat_rtn(v.s1), convert_int_sat_rtn(v.s2));
+}
+
+INLINE OVERLOADABLE uint3 convert_uint3_sat_rte(ushort3 v) {
+  return (uint3)(convert_uint_sat_rte(v.s0), convert_uint_sat_rte(v.s1), convert_uint_sat_rte(v.s2));
+}
+
+INLINE OVERLOADABLE uint3 convert_uint3_sat_rtz(ushort3 v) {
+  return (uint3)(convert_uint_sat_rtz(v.s0), convert_uint_sat_rtz(v.s1), convert_uint_sat_rtz(v.s2));
+}
+
+INLINE OVERLOADABLE uint3 convert_uint3_sat_rtp(ushort3 v) {
+  return (uint3)(convert_uint_sat_rtp(v.s0), convert_uint_sat_rtp(v.s1), convert_uint_sat_rtp(v.s2));
+}
+
+INLINE OVERLOADABLE uint3 convert_uint3_sat_rtn(ushort3 v) {
+  return (uint3)(convert_uint_sat_rtn(v.s0), convert_uint_sat_rtn(v.s1), convert_uint_sat_rtn(v.s2));
+}
+
+INLINE OVERLOADABLE short3 convert_short3_sat_rte(ushort3 v) {
+  return (short3)(convert_short_sat_rte(v.s0), convert_short_sat_rte(v.s1), convert_short_sat_rte(v.s2));
+}
+
+INLINE OVERLOADABLE short3 convert_short3_sat_rtz(ushort3 v) {
+  return (short3)(convert_short_sat_rtz(v.s0), convert_short_sat_rtz(v.s1), convert_short_sat_rtz(v.s2));
+}
+
+INLINE OVERLOADABLE short3 convert_short3_sat_rtp(ushort3 v) {
+  return (short3)(convert_short_sat_rtp(v.s0), convert_short_sat_rtp(v.s1), convert_short_sat_rtp(v.s2));
+}
+
+INLINE OVERLOADABLE short3 convert_short3_sat_rtn(ushort3 v) {
+  return (short3)(convert_short_sat_rtn(v.s0), convert_short_sat_rtn(v.s1), convert_short_sat_rtn(v.s2));
+}
+
+INLINE OVERLOADABLE ushort3 convert_ushort3_sat_rte(ushort3 v) {
+  return (ushort3)(convert_ushort_sat_rte(v.s0), convert_ushort_sat_rte(v.s1), convert_ushort_sat_rte(v.s2));
+}
+
+INLINE OVERLOADABLE ushort3 convert_ushort3_sat_rtz(ushort3 v) {
+  return (ushort3)(convert_ushort_sat_rtz(v.s0), convert_ushort_sat_rtz(v.s1), convert_ushort_sat_rtz(v.s2));
+}
+
+INLINE OVERLOADABLE ushort3 convert_ushort3_sat_rtp(ushort3 v) {
+  return (ushort3)(convert_ushort_sat_rtp(v.s0), convert_ushort_sat_rtp(v.s1), convert_ushort_sat_rtp(v.s2));
+}
+
+INLINE OVERLOADABLE ushort3 convert_ushort3_sat_rtn(ushort3 v) {
+  return (ushort3)(convert_ushort_sat_rtn(v.s0), convert_ushort_sat_rtn(v.s1), convert_ushort_sat_rtn(v.s2));
+}
+
+INLINE OVERLOADABLE char3 convert_char3_sat_rte(ushort3 v) {
+  return (char3)(convert_char_sat_rte(v.s0), convert_char_sat_rte(v.s1), convert_char_sat_rte(v.s2));
+}
+
+INLINE OVERLOADABLE char3 convert_char3_sat_rtz(ushort3 v) {
+  return (char3)(convert_char_sat_rtz(v.s0), convert_char_sat_rtz(v.s1), convert_char_sat_rtz(v.s2));
+}
+
+INLINE OVERLOADABLE char3 convert_char3_sat_rtp(ushort3 v) {
+  return (char3)(convert_char_sat_rtp(v.s0), convert_char_sat_rtp(v.s1), convert_char_sat_rtp(v.s2));
+}
+
+INLINE OVERLOADABLE char3 convert_char3_sat_rtn(ushort3 v) {
+  return (char3)(convert_char_sat_rtn(v.s0), convert_char_sat_rtn(v.s1), convert_char_sat_rtn(v.s2));
+}
+
+INLINE OVERLOADABLE uchar3 convert_uchar3_sat_rte(ushort3 v) {
+  return (uchar3)(convert_uchar_sat_rte(v.s0), convert_uchar_sat_rte(v.s1), convert_uchar_sat_rte(v.s2));
+}
+
+INLINE OVERLOADABLE uchar3 convert_uchar3_sat_rtz(ushort3 v) {
+  return (uchar3)(convert_uchar_sat_rtz(v.s0), convert_uchar_sat_rtz(v.s1), convert_uchar_sat_rtz(v.s2));
+}
+
+INLINE OVERLOADABLE uchar3 convert_uchar3_sat_rtp(ushort3 v) {
+  return (uchar3)(convert_uchar_sat_rtp(v.s0), convert_uchar_sat_rtp(v.s1), convert_uchar_sat_rtp(v.s2));
+}
+
+INLINE OVERLOADABLE uchar3 convert_uchar3_sat_rtn(ushort3 v) {
+  return (uchar3)(convert_uchar_sat_rtn(v.s0), convert_uchar_sat_rtn(v.s1), convert_uchar_sat_rtn(v.s2));
+}
+
+INLINE OVERLOADABLE long3 convert_long3_sat_rte(char3 v) {
+  return (long3)(convert_long_sat_rte(v.s0), convert_long_sat_rte(v.s1), convert_long_sat_rte(v.s2));
+}
+
+INLINE OVERLOADABLE long3 convert_long3_sat_rtz(char3 v) {
+  return (long3)(convert_long_sat_rtz(v.s0), convert_long_sat_rtz(v.s1), convert_long_sat_rtz(v.s2));
+}
+
+INLINE OVERLOADABLE long3 convert_long3_sat_rtp(char3 v) {
+  return (long3)(convert_long_sat_rtp(v.s0), convert_long_sat_rtp(v.s1), convert_long_sat_rtp(v.s2));
+}
+
+INLINE OVERLOADABLE long3 convert_long3_sat_rtn(char3 v) {
+  return (long3)(convert_long_sat_rtn(v.s0), convert_long_sat_rtn(v.s1), convert_long_sat_rtn(v.s2));
+}
+
+INLINE OVERLOADABLE ulong3 convert_ulong3_sat_rte(char3 v) {
+  return (ulong3)(convert_ulong_sat_rte(v.s0), convert_ulong_sat_rte(v.s1), convert_ulong_sat_rte(v.s2));
+}
+
+INLINE OVERLOADABLE ulong3 convert_ulong3_sat_rtz(char3 v) {
+  return (ulong3)(convert_ulong_sat_rtz(v.s0), convert_ulong_sat_rtz(v.s1), convert_ulong_sat_rtz(v.s2));
+}
+
+INLINE OVERLOADABLE ulong3 convert_ulong3_sat_rtp(char3 v) {
+  return (ulong3)(convert_ulong_sat_rtp(v.s0), convert_ulong_sat_rtp(v.s1), convert_ulong_sat_rtp(v.s2));
+}
+
+INLINE OVERLOADABLE ulong3 convert_ulong3_sat_rtn(char3 v) {
+  return (ulong3)(convert_ulong_sat_rtn(v.s0), convert_ulong_sat_rtn(v.s1), convert_ulong_sat_rtn(v.s2));
+}
+
+INLINE OVERLOADABLE int3 convert_int3_sat_rte(char3 v) {
+  return (int3)(convert_int_sat_rte(v.s0), convert_int_sat_rte(v.s1), convert_int_sat_rte(v.s2));
+}
+
+INLINE OVERLOADABLE int3 convert_int3_sat_rtz(char3 v) {
+  return (int3)(convert_int_sat_rtz(v.s0), convert_int_sat_rtz(v.s1), convert_int_sat_rtz(v.s2));
+}
+
+INLINE OVERLOADABLE int3 convert_int3_sat_rtp(char3 v) {
+  return (int3)(convert_int_sat_rtp(v.s0), convert_int_sat_rtp(v.s1), convert_int_sat_rtp(v.s2));
+}
+
+INLINE OVERLOADABLE int3 convert_int3_sat_rtn(char3 v) {
+  return (int3)(convert_int_sat_rtn(v.s0), convert_int_sat_rtn(v.s1), convert_int_sat_rtn(v.s2));
+}
+
+INLINE OVERLOADABLE uint3 convert_uint3_sat_rte(char3 v) {
+  return (uint3)(convert_uint_sat_rte(v.s0), convert_uint_sat_rte(v.s1), convert_uint_sat_rte(v.s2));
+}
+
+INLINE OVERLOADABLE uint3 convert_uint3_sat_rtz(char3 v) {
+  return (uint3)(convert_uint_sat_rtz(v.s0), convert_uint_sat_rtz(v.s1), convert_uint_sat_rtz(v.s2));
+}
+
+INLINE OVERLOADABLE uint3 convert_uint3_sat_rtp(char3 v) {
+  return (uint3)(convert_uint_sat_rtp(v.s0), convert_uint_sat_rtp(v.s1), convert_uint_sat_rtp(v.s2));
+}
+
+INLINE OVERLOADABLE uint3 convert_uint3_sat_rtn(char3 v) {
+  return (uint3)(convert_uint_sat_rtn(v.s0), convert_uint_sat_rtn(v.s1), convert_uint_sat_rtn(v.s2));
+}
+
+INLINE OVERLOADABLE short3 convert_short3_sat_rte(char3 v) {
+  return (short3)(convert_short_sat_rte(v.s0), convert_short_sat_rte(v.s1), convert_short_sat_rte(v.s2));
+}
+
+INLINE OVERLOADABLE short3 convert_short3_sat_rtz(char3 v) {
+  return (short3)(convert_short_sat_rtz(v.s0), convert_short_sat_rtz(v.s1), convert_short_sat_rtz(v.s2));
+}
+
+INLINE OVERLOADABLE short3 convert_short3_sat_rtp(char3 v) {
+  return (short3)(convert_short_sat_rtp(v.s0), convert_short_sat_rtp(v.s1), convert_short_sat_rtp(v.s2));
+}
+
+INLINE OVERLOADABLE short3 convert_short3_sat_rtn(char3 v) {
+  return (short3)(convert_short_sat_rtn(v.s0), convert_short_sat_rtn(v.s1), convert_short_sat_rtn(v.s2));
+}
+
+INLINE OVERLOADABLE ushort3 convert_ushort3_sat_rte(char3 v) {
+  return (ushort3)(convert_ushort_sat_rte(v.s0), convert_ushort_sat_rte(v.s1), convert_ushort_sat_rte(v.s2));
+}
+
+INLINE OVERLOADABLE ushort3 convert_ushort3_sat_rtz(char3 v) {
+  return (ushort3)(convert_ushort_sat_rtz(v.s0), convert_ushort_sat_rtz(v.s1), convert_ushort_sat_rtz(v.s2));
+}
+
+INLINE OVERLOADABLE ushort3 convert_ushort3_sat_rtp(char3 v) {
+  return (ushort3)(convert_ushort_sat_rtp(v.s0), convert_ushort_sat_rtp(v.s1), convert_ushort_sat_rtp(v.s2));
+}
+
+INLINE OVERLOADABLE ushort3 convert_ushort3_sat_rtn(char3 v) {
+  return (ushort3)(convert_ushort_sat_rtn(v.s0), convert_ushort_sat_rtn(v.s1), convert_ushort_sat_rtn(v.s2));
+}
+
+INLINE OVERLOADABLE char3 convert_char3_sat_rte(char3 v) {
+  return (char3)(convert_char_sat_rte(v.s0), convert_char_sat_rte(v.s1), convert_char_sat_rte(v.s2));
+}
+
+INLINE OVERLOADABLE char3 convert_char3_sat_rtz(char3 v) {
+  return (char3)(convert_char_sat_rtz(v.s0), convert_char_sat_rtz(v.s1), convert_char_sat_rtz(v.s2));
+}
+
+INLINE OVERLOADABLE char3 convert_char3_sat_rtp(char3 v) {
+  return (char3)(convert_char_sat_rtp(v.s0), convert_char_sat_rtp(v.s1), convert_char_sat_rtp(v.s2));
+}
+
+INLINE OVERLOADABLE char3 convert_char3_sat_rtn(char3 v) {
+  return (char3)(convert_char_sat_rtn(v.s0), convert_char_sat_rtn(v.s1), convert_char_sat_rtn(v.s2));
+}
+
+INLINE OVERLOADABLE uchar3 convert_uchar3_sat_rte(char3 v) {
+  return (uchar3)(convert_uchar_sat_rte(v.s0), convert_uchar_sat_rte(v.s1), convert_uchar_sat_rte(v.s2));
+}
+
+INLINE OVERLOADABLE uchar3 convert_uchar3_sat_rtz(char3 v) {
+  return (uchar3)(convert_uchar_sat_rtz(v.s0), convert_uchar_sat_rtz(v.s1), convert_uchar_sat_rtz(v.s2));
+}
+
+INLINE OVERLOADABLE uchar3 convert_uchar3_sat_rtp(char3 v) {
+  return (uchar3)(convert_uchar_sat_rtp(v.s0), convert_uchar_sat_rtp(v.s1), convert_uchar_sat_rtp(v.s2));
+}
+
+INLINE OVERLOADABLE uchar3 convert_uchar3_sat_rtn(char3 v) {
+  return (uchar3)(convert_uchar_sat_rtn(v.s0), convert_uchar_sat_rtn(v.s1), convert_uchar_sat_rtn(v.s2));
+}
+
+INLINE OVERLOADABLE long3 convert_long3_sat_rte(uchar3 v) {
+  return (long3)(convert_long_sat_rte(v.s0), convert_long_sat_rte(v.s1), convert_long_sat_rte(v.s2));
+}
+
+INLINE OVERLOADABLE long3 convert_long3_sat_rtz(uchar3 v) {
+  return (long3)(convert_long_sat_rtz(v.s0), convert_long_sat_rtz(v.s1), convert_long_sat_rtz(v.s2));
+}
+
+INLINE OVERLOADABLE long3 convert_long3_sat_rtp(uchar3 v) {
+  return (long3)(convert_long_sat_rtp(v.s0), convert_long_sat_rtp(v.s1), convert_long_sat_rtp(v.s2));
+}
+
+INLINE OVERLOADABLE long3 convert_long3_sat_rtn(uchar3 v) {
+  return (long3)(convert_long_sat_rtn(v.s0), convert_long_sat_rtn(v.s1), convert_long_sat_rtn(v.s2));
+}
+
+INLINE OVERLOADABLE ulong3 convert_ulong3_sat_rte(uchar3 v) {
+  return (ulong3)(convert_ulong_sat_rte(v.s0), convert_ulong_sat_rte(v.s1), convert_ulong_sat_rte(v.s2));
+}
+
+INLINE OVERLOADABLE ulong3 convert_ulong3_sat_rtz(uchar3 v) {
+  return (ulong3)(convert_ulong_sat_rtz(v.s0), convert_ulong_sat_rtz(v.s1), convert_ulong_sat_rtz(v.s2));
+}
+
+INLINE OVERLOADABLE ulong3 convert_ulong3_sat_rtp(uchar3 v) {
+  return (ulong3)(convert_ulong_sat_rtp(v.s0), convert_ulong_sat_rtp(v.s1), convert_ulong_sat_rtp(v.s2));
+}
+
+INLINE OVERLOADABLE ulong3 convert_ulong3_sat_rtn(uchar3 v) {
+  return (ulong3)(convert_ulong_sat_rtn(v.s0), convert_ulong_sat_rtn(v.s1), convert_ulong_sat_rtn(v.s2));
+}
+
+INLINE OVERLOADABLE int3 convert_int3_sat_rte(uchar3 v) {
+  return (int3)(convert_int_sat_rte(v.s0), convert_int_sat_rte(v.s1), convert_int_sat_rte(v.s2));
+}
+
+INLINE OVERLOADABLE int3 convert_int3_sat_rtz(uchar3 v) {
+  return (int3)(convert_int_sat_rtz(v.s0), convert_int_sat_rtz(v.s1), convert_int_sat_rtz(v.s2));
+}
+
+INLINE OVERLOADABLE int3 convert_int3_sat_rtp(uchar3 v) {
+  return (int3)(convert_int_sat_rtp(v.s0), convert_int_sat_rtp(v.s1), convert_int_sat_rtp(v.s2));
+}
+
+INLINE OVERLOADABLE int3 convert_int3_sat_rtn(uchar3 v) {
+  return (int3)(convert_int_sat_rtn(v.s0), convert_int_sat_rtn(v.s1), convert_int_sat_rtn(v.s2));
+}
+
+INLINE OVERLOADABLE uint3 convert_uint3_sat_rte(uchar3 v) {
+  return (uint3)(convert_uint_sat_rte(v.s0), convert_uint_sat_rte(v.s1), convert_uint_sat_rte(v.s2));
+}
+
+INLINE OVERLOADABLE uint3 convert_uint3_sat_rtz(uchar3 v) {
+  return (uint3)(convert_uint_sat_rtz(v.s0), convert_uint_sat_rtz(v.s1), convert_uint_sat_rtz(v.s2));
+}
+
+INLINE OVERLOADABLE uint3 convert_uint3_sat_rtp(uchar3 v) {
+  return (uint3)(convert_uint_sat_rtp(v.s0), convert_uint_sat_rtp(v.s1), convert_uint_sat_rtp(v.s2));
+}
+
+INLINE OVERLOADABLE uint3 convert_uint3_sat_rtn(uchar3 v) {
+  return (uint3)(convert_uint_sat_rtn(v.s0), convert_uint_sat_rtn(v.s1), convert_uint_sat_rtn(v.s2));
+}
+
+INLINE OVERLOADABLE short3 convert_short3_sat_rte(uchar3 v) {
+  return (short3)(convert_short_sat_rte(v.s0), convert_short_sat_rte(v.s1), convert_short_sat_rte(v.s2));
+}
+
+INLINE OVERLOADABLE short3 convert_short3_sat_rtz(uchar3 v) {
+  return (short3)(convert_short_sat_rtz(v.s0), convert_short_sat_rtz(v.s1), convert_short_sat_rtz(v.s2));
+}
+
+INLINE OVERLOADABLE short3 convert_short3_sat_rtp(uchar3 v) {
+  return (short3)(convert_short_sat_rtp(v.s0), convert_short_sat_rtp(v.s1), convert_short_sat_rtp(v.s2));
+}
+
+INLINE OVERLOADABLE short3 convert_short3_sat_rtn(uchar3 v) {
+  return (short3)(convert_short_sat_rtn(v.s0), convert_short_sat_rtn(v.s1), convert_short_sat_rtn(v.s2));
+}
+
+INLINE OVERLOADABLE ushort3 convert_ushort3_sat_rte(uchar3 v) {
+  return (ushort3)(convert_ushort_sat_rte(v.s0), convert_ushort_sat_rte(v.s1), convert_ushort_sat_rte(v.s2));
+}
+
+INLINE OVERLOADABLE ushort3 convert_ushort3_sat_rtz(uchar3 v) {
+  return (ushort3)(convert_ushort_sat_rtz(v.s0), convert_ushort_sat_rtz(v.s1), convert_ushort_sat_rtz(v.s2));
+}
+
+INLINE OVERLOADABLE ushort3 convert_ushort3_sat_rtp(uchar3 v) {
+  return (ushort3)(convert_ushort_sat_rtp(v.s0), convert_ushort_sat_rtp(v.s1), convert_ushort_sat_rtp(v.s2));
+}
+
+INLINE OVERLOADABLE ushort3 convert_ushort3_sat_rtn(uchar3 v) {
+  return (ushort3)(convert_ushort_sat_rtn(v.s0), convert_ushort_sat_rtn(v.s1), convert_ushort_sat_rtn(v.s2));
+}
+
+INLINE OVERLOADABLE char3 convert_char3_sat_rte(uchar3 v) {
+  return (char3)(convert_char_sat_rte(v.s0), convert_char_sat_rte(v.s1), convert_char_sat_rte(v.s2));
+}
+
+INLINE OVERLOADABLE char3 convert_char3_sat_rtz(uchar3 v) {
+  return (char3)(convert_char_sat_rtz(v.s0), convert_char_sat_rtz(v.s1), convert_char_sat_rtz(v.s2));
+}
+
+INLINE OVERLOADABLE char3 convert_char3_sat_rtp(uchar3 v) {
+  return (char3)(convert_char_sat_rtp(v.s0), convert_char_sat_rtp(v.s1), convert_char_sat_rtp(v.s2));
+}
+
+INLINE OVERLOADABLE char3 convert_char3_sat_rtn(uchar3 v) {
+  return (char3)(convert_char_sat_rtn(v.s0), convert_char_sat_rtn(v.s1), convert_char_sat_rtn(v.s2));
+}
+
+INLINE OVERLOADABLE uchar3 convert_uchar3_sat_rte(uchar3 v) {
+  return (uchar3)(convert_uchar_sat_rte(v.s0), convert_uchar_sat_rte(v.s1), convert_uchar_sat_rte(v.s2));
+}
+
+INLINE OVERLOADABLE uchar3 convert_uchar3_sat_rtz(uchar3 v) {
+  return (uchar3)(convert_uchar_sat_rtz(v.s0), convert_uchar_sat_rtz(v.s1), convert_uchar_sat_rtz(v.s2));
+}
+
+INLINE OVERLOADABLE uchar3 convert_uchar3_sat_rtp(uchar3 v) {
+  return (uchar3)(convert_uchar_sat_rtp(v.s0), convert_uchar_sat_rtp(v.s1), convert_uchar_sat_rtp(v.s2));
+}
+
+INLINE OVERLOADABLE uchar3 convert_uchar3_sat_rtn(uchar3 v) {
+  return (uchar3)(convert_uchar_sat_rtn(v.s0), convert_uchar_sat_rtn(v.s1), convert_uchar_sat_rtn(v.s2));
+}
+
+INLINE OVERLOADABLE long3 convert_long3_sat_rte(float3 v) {
+  return (long3)(convert_long_sat_rte(v.s0), convert_long_sat_rte(v.s1), convert_long_sat_rte(v.s2));
+}
+
+INLINE OVERLOADABLE long3 convert_long3_sat_rtz(float3 v) {
+  return (long3)(convert_long_sat_rtz(v.s0), convert_long_sat_rtz(v.s1), convert_long_sat_rtz(v.s2));
+}
+
+INLINE OVERLOADABLE long3 convert_long3_sat_rtp(float3 v) {
+  return (long3)(convert_long_sat_rtp(v.s0), convert_long_sat_rtp(v.s1), convert_long_sat_rtp(v.s2));
+}
+
+INLINE OVERLOADABLE long3 convert_long3_sat_rtn(float3 v) {
+  return (long3)(convert_long_sat_rtn(v.s0), convert_long_sat_rtn(v.s1), convert_long_sat_rtn(v.s2));
+}
+
+INLINE OVERLOADABLE ulong3 convert_ulong3_sat_rte(float3 v) {
+  return (ulong3)(convert_ulong_sat_rte(v.s0), convert_ulong_sat_rte(v.s1), convert_ulong_sat_rte(v.s2));
+}
+
+INLINE OVERLOADABLE ulong3 convert_ulong3_sat_rtz(float3 v) {
+  return (ulong3)(convert_ulong_sat_rtz(v.s0), convert_ulong_sat_rtz(v.s1), convert_ulong_sat_rtz(v.s2));
+}
+
+INLINE OVERLOADABLE ulong3 convert_ulong3_sat_rtp(float3 v) {
+  return (ulong3)(convert_ulong_sat_rtp(v.s0), convert_ulong_sat_rtp(v.s1), convert_ulong_sat_rtp(v.s2));
+}
+
+INLINE OVERLOADABLE ulong3 convert_ulong3_sat_rtn(float3 v) {
+  return (ulong3)(convert_ulong_sat_rtn(v.s0), convert_ulong_sat_rtn(v.s1), convert_ulong_sat_rtn(v.s2));
+}
+
+INLINE OVERLOADABLE int3 convert_int3_sat_rte(float3 v) {
+  return (int3)(convert_int_sat_rte(v.s0), convert_int_sat_rte(v.s1), convert_int_sat_rte(v.s2));
+}
+
+INLINE OVERLOADABLE int3 convert_int3_sat_rtz(float3 v) {
+  return (int3)(convert_int_sat_rtz(v.s0), convert_int_sat_rtz(v.s1), convert_int_sat_rtz(v.s2));
+}
+
+INLINE OVERLOADABLE int3 convert_int3_sat_rtp(float3 v) {
+  return (int3)(convert_int_sat_rtp(v.s0), convert_int_sat_rtp(v.s1), convert_int_sat_rtp(v.s2));
+}
+
+INLINE OVERLOADABLE int3 convert_int3_sat_rtn(float3 v) {
+  return (int3)(convert_int_sat_rtn(v.s0), convert_int_sat_rtn(v.s1), convert_int_sat_rtn(v.s2));
+}
+
+INLINE OVERLOADABLE uint3 convert_uint3_sat_rte(float3 v) {
+  return (uint3)(convert_uint_sat_rte(v.s0), convert_uint_sat_rte(v.s1), convert_uint_sat_rte(v.s2));
+}
+
+INLINE OVERLOADABLE uint3 convert_uint3_sat_rtz(float3 v) {
+  return (uint3)(convert_uint_sat_rtz(v.s0), convert_uint_sat_rtz(v.s1), convert_uint_sat_rtz(v.s2));
+}
+
+INLINE OVERLOADABLE uint3 convert_uint3_sat_rtp(float3 v) {
+  return (uint3)(convert_uint_sat_rtp(v.s0), convert_uint_sat_rtp(v.s1), convert_uint_sat_rtp(v.s2));
+}
+
+INLINE OVERLOADABLE uint3 convert_uint3_sat_rtn(float3 v) {
+  return (uint3)(convert_uint_sat_rtn(v.s0), convert_uint_sat_rtn(v.s1), convert_uint_sat_rtn(v.s2));
+}
+
+INLINE OVERLOADABLE short3 convert_short3_sat_rte(float3 v) {
+  return (short3)(convert_short_sat_rte(v.s0), convert_short_sat_rte(v.s1), convert_short_sat_rte(v.s2));
+}
+
+INLINE OVERLOADABLE short3 convert_short3_sat_rtz(float3 v) {
+  return (short3)(convert_short_sat_rtz(v.s0), convert_short_sat_rtz(v.s1), convert_short_sat_rtz(v.s2));
+}
+
+INLINE OVERLOADABLE short3 convert_short3_sat_rtp(float3 v) {
+  return (short3)(convert_short_sat_rtp(v.s0), convert_short_sat_rtp(v.s1), convert_short_sat_rtp(v.s2));
+}
+
+INLINE OVERLOADABLE short3 convert_short3_sat_rtn(float3 v) {
+  return (short3)(convert_short_sat_rtn(v.s0), convert_short_sat_rtn(v.s1), convert_short_sat_rtn(v.s2));
+}
+
+INLINE OVERLOADABLE ushort3 convert_ushort3_sat_rte(float3 v) {
+  return (ushort3)(convert_ushort_sat_rte(v.s0), convert_ushort_sat_rte(v.s1), convert_ushort_sat_rte(v.s2));
+}
+
+INLINE OVERLOADABLE ushort3 convert_ushort3_sat_rtz(float3 v) {
+  return (ushort3)(convert_ushort_sat_rtz(v.s0), convert_ushort_sat_rtz(v.s1), convert_ushort_sat_rtz(v.s2));
+}
+
+INLINE OVERLOADABLE ushort3 convert_ushort3_sat_rtp(float3 v) {
+  return (ushort3)(convert_ushort_sat_rtp(v.s0), convert_ushort_sat_rtp(v.s1), convert_ushort_sat_rtp(v.s2));
+}
+
+INLINE OVERLOADABLE ushort3 convert_ushort3_sat_rtn(float3 v) {
+  return (ushort3)(convert_ushort_sat_rtn(v.s0), convert_ushort_sat_rtn(v.s1), convert_ushort_sat_rtn(v.s2));
+}
+
+INLINE OVERLOADABLE char3 convert_char3_sat_rte(float3 v) {
+  return (char3)(convert_char_sat_rte(v.s0), convert_char_sat_rte(v.s1), convert_char_sat_rte(v.s2));
+}
+
+INLINE OVERLOADABLE char3 convert_char3_sat_rtz(float3 v) {
+  return (char3)(convert_char_sat_rtz(v.s0), convert_char_sat_rtz(v.s1), convert_char_sat_rtz(v.s2));
+}
+
+INLINE OVERLOADABLE char3 convert_char3_sat_rtp(float3 v) {
+  return (char3)(convert_char_sat_rtp(v.s0), convert_char_sat_rtp(v.s1), convert_char_sat_rtp(v.s2));
+}
+
+INLINE OVERLOADABLE char3 convert_char3_sat_rtn(float3 v) {
+  return (char3)(convert_char_sat_rtn(v.s0), convert_char_sat_rtn(v.s1), convert_char_sat_rtn(v.s2));
+}
+
+INLINE OVERLOADABLE uchar3 convert_uchar3_sat_rte(float3 v) {
+  return (uchar3)(convert_uchar_sat_rte(v.s0), convert_uchar_sat_rte(v.s1), convert_uchar_sat_rte(v.s2));
+}
+
+INLINE OVERLOADABLE uchar3 convert_uchar3_sat_rtz(float3 v) {
+  return (uchar3)(convert_uchar_sat_rtz(v.s0), convert_uchar_sat_rtz(v.s1), convert_uchar_sat_rtz(v.s2));
+}
+
+INLINE OVERLOADABLE uchar3 convert_uchar3_sat_rtp(float3 v) {
+  return (uchar3)(convert_uchar_sat_rtp(v.s0), convert_uchar_sat_rtp(v.s1), convert_uchar_sat_rtp(v.s2));
+}
+
+INLINE OVERLOADABLE uchar3 convert_uchar3_sat_rtn(float3 v) {
+  return (uchar3)(convert_uchar_sat_rtn(v.s0), convert_uchar_sat_rtn(v.s1), convert_uchar_sat_rtn(v.s2));
+}
+
+INLINE OVERLOADABLE long4 convert_long4_sat_rte(long4 v) {
+  return (long4)(convert_long_sat_rte(v.s0), convert_long_sat_rte(v.s1), convert_long_sat_rte(v.s2), convert_long_sat_rte(v.s3));
+}
+
+INLINE OVERLOADABLE long4 convert_long4_sat_rtz(long4 v) {
+  return (long4)(convert_long_sat_rtz(v.s0), convert_long_sat_rtz(v.s1), convert_long_sat_rtz(v.s2), convert_long_sat_rtz(v.s3));
+}
+
+INLINE OVERLOADABLE long4 convert_long4_sat_rtp(long4 v) {
+  return (long4)(convert_long_sat_rtp(v.s0), convert_long_sat_rtp(v.s1), convert_long_sat_rtp(v.s2), convert_long_sat_rtp(v.s3));
+}
+
+INLINE OVERLOADABLE long4 convert_long4_sat_rtn(long4 v) {
+  return (long4)(convert_long_sat_rtn(v.s0), convert_long_sat_rtn(v.s1), convert_long_sat_rtn(v.s2), convert_long_sat_rtn(v.s3));
+}
+
+INLINE OVERLOADABLE ulong4 convert_ulong4_sat_rte(long4 v) {
+  return (ulong4)(convert_ulong_sat_rte(v.s0), convert_ulong_sat_rte(v.s1), convert_ulong_sat_rte(v.s2), convert_ulong_sat_rte(v.s3));
+}
+
+INLINE OVERLOADABLE ulong4 convert_ulong4_sat_rtz(long4 v) {
+  return (ulong4)(convert_ulong_sat_rtz(v.s0), convert_ulong_sat_rtz(v.s1), convert_ulong_sat_rtz(v.s2), convert_ulong_sat_rtz(v.s3));
+}
+
+INLINE OVERLOADABLE ulong4 convert_ulong4_sat_rtp(long4 v) {
+  return (ulong4)(convert_ulong_sat_rtp(v.s0), convert_ulong_sat_rtp(v.s1), convert_ulong_sat_rtp(v.s2), convert_ulong_sat_rtp(v.s3));
+}
+
+INLINE OVERLOADABLE ulong4 convert_ulong4_sat_rtn(long4 v) {
+  return (ulong4)(convert_ulong_sat_rtn(v.s0), convert_ulong_sat_rtn(v.s1), convert_ulong_sat_rtn(v.s2), convert_ulong_sat_rtn(v.s3));
+}
+
+INLINE OVERLOADABLE int4 convert_int4_sat_rte(long4 v) {
+  return (int4)(convert_int_sat_rte(v.s0), convert_int_sat_rte(v.s1), convert_int_sat_rte(v.s2), convert_int_sat_rte(v.s3));
+}
+
+INLINE OVERLOADABLE int4 convert_int4_sat_rtz(long4 v) {
+  return (int4)(convert_int_sat_rtz(v.s0), convert_int_sat_rtz(v.s1), convert_int_sat_rtz(v.s2), convert_int_sat_rtz(v.s3));
+}
+
+INLINE OVERLOADABLE int4 convert_int4_sat_rtp(long4 v) {
+  return (int4)(convert_int_sat_rtp(v.s0), convert_int_sat_rtp(v.s1), convert_int_sat_rtp(v.s2), convert_int_sat_rtp(v.s3));
+}
+
+INLINE OVERLOADABLE int4 convert_int4_sat_rtn(long4 v) {
+  return (int4)(convert_int_sat_rtn(v.s0), convert_int_sat_rtn(v.s1), convert_int_sat_rtn(v.s2), convert_int_sat_rtn(v.s3));
+}
+
+INLINE OVERLOADABLE uint4 convert_uint4_sat_rte(long4 v) {
+  return (uint4)(convert_uint_sat_rte(v.s0), convert_uint_sat_rte(v.s1), convert_uint_sat_rte(v.s2), convert_uint_sat_rte(v.s3));
+}
+
+INLINE OVERLOADABLE uint4 convert_uint4_sat_rtz(long4 v) {
+  return (uint4)(convert_uint_sat_rtz(v.s0), convert_uint_sat_rtz(v.s1), convert_uint_sat_rtz(v.s2), convert_uint_sat_rtz(v.s3));
+}
+
+INLINE OVERLOADABLE uint4 convert_uint4_sat_rtp(long4 v) {
+  return (uint4)(convert_uint_sat_rtp(v.s0), convert_uint_sat_rtp(v.s1), convert_uint_sat_rtp(v.s2), convert_uint_sat_rtp(v.s3));
+}
+
+INLINE OVERLOADABLE uint4 convert_uint4_sat_rtn(long4 v) {
+  return (uint4)(convert_uint_sat_rtn(v.s0), convert_uint_sat_rtn(v.s1), convert_uint_sat_rtn(v.s2), convert_uint_sat_rtn(v.s3));
+}
+
+INLINE OVERLOADABLE short4 convert_short4_sat_rte(long4 v) {
+  return (short4)(convert_short_sat_rte(v.s0), convert_short_sat_rte(v.s1), convert_short_sat_rte(v.s2), convert_short_sat_rte(v.s3));
+}
+
+INLINE OVERLOADABLE short4 convert_short4_sat_rtz(long4 v) {
+  return (short4)(convert_short_sat_rtz(v.s0), convert_short_sat_rtz(v.s1), convert_short_sat_rtz(v.s2), convert_short_sat_rtz(v.s3));
+}
+
+INLINE OVERLOADABLE short4 convert_short4_sat_rtp(long4 v) {
+  return (short4)(convert_short_sat_rtp(v.s0), convert_short_sat_rtp(v.s1), convert_short_sat_rtp(v.s2), convert_short_sat_rtp(v.s3));
+}
+
+INLINE OVERLOADABLE short4 convert_short4_sat_rtn(long4 v) {
+  return (short4)(convert_short_sat_rtn(v.s0), convert_short_sat_rtn(v.s1), convert_short_sat_rtn(v.s2), convert_short_sat_rtn(v.s3));
+}
+
+INLINE OVERLOADABLE ushort4 convert_ushort4_sat_rte(long4 v) {
+  return (ushort4)(convert_ushort_sat_rte(v.s0), convert_ushort_sat_rte(v.s1), convert_ushort_sat_rte(v.s2), convert_ushort_sat_rte(v.s3));
+}
+
+INLINE OVERLOADABLE ushort4 convert_ushort4_sat_rtz(long4 v) {
+  return (ushort4)(convert_ushort_sat_rtz(v.s0), convert_ushort_sat_rtz(v.s1), convert_ushort_sat_rtz(v.s2), convert_ushort_sat_rtz(v.s3));
+}
+
+INLINE OVERLOADABLE ushort4 convert_ushort4_sat_rtp(long4 v) {
+  return (ushort4)(convert_ushort_sat_rtp(v.s0), convert_ushort_sat_rtp(v.s1), convert_ushort_sat_rtp(v.s2), convert_ushort_sat_rtp(v.s3));
+}
+
+INLINE OVERLOADABLE ushort4 convert_ushort4_sat_rtn(long4 v) {
+  return (ushort4)(convert_ushort_sat_rtn(v.s0), convert_ushort_sat_rtn(v.s1), convert_ushort_sat_rtn(v.s2), convert_ushort_sat_rtn(v.s3));
+}
+
+INLINE OVERLOADABLE char4 convert_char4_sat_rte(long4 v) {
+  return (char4)(convert_char_sat_rte(v.s0), convert_char_sat_rte(v.s1), convert_char_sat_rte(v.s2), convert_char_sat_rte(v.s3));
+}
+
+INLINE OVERLOADABLE char4 convert_char4_sat_rtz(long4 v) {
+  return (char4)(convert_char_sat_rtz(v.s0), convert_char_sat_rtz(v.s1), convert_char_sat_rtz(v.s2), convert_char_sat_rtz(v.s3));
+}
+
+INLINE OVERLOADABLE char4 convert_char4_sat_rtp(long4 v) {
+  return (char4)(convert_char_sat_rtp(v.s0), convert_char_sat_rtp(v.s1), convert_char_sat_rtp(v.s2), convert_char_sat_rtp(v.s3));
+}
+
+INLINE OVERLOADABLE char4 convert_char4_sat_rtn(long4 v) {
+  return (char4)(convert_char_sat_rtn(v.s0), convert_char_sat_rtn(v.s1), convert_char_sat_rtn(v.s2), convert_char_sat_rtn(v.s3));
+}
+
+INLINE OVERLOADABLE uchar4 convert_uchar4_sat_rte(long4 v) {
+  return (uchar4)(convert_uchar_sat_rte(v.s0), convert_uchar_sat_rte(v.s1), convert_uchar_sat_rte(v.s2), convert_uchar_sat_rte(v.s3));
+}
+
+INLINE OVERLOADABLE uchar4 convert_uchar4_sat_rtz(long4 v) {
+  return (uchar4)(convert_uchar_sat_rtz(v.s0), convert_uchar_sat_rtz(v.s1), convert_uchar_sat_rtz(v.s2), convert_uchar_sat_rtz(v.s3));
+}
+
+INLINE OVERLOADABLE uchar4 convert_uchar4_sat_rtp(long4 v) {
+  return (uchar4)(convert_uchar_sat_rtp(v.s0), convert_uchar_sat_rtp(v.s1), convert_uchar_sat_rtp(v.s2), convert_uchar_sat_rtp(v.s3));
+}
+
+INLINE OVERLOADABLE uchar4 convert_uchar4_sat_rtn(long4 v) {
+  return (uchar4)(convert_uchar_sat_rtn(v.s0), convert_uchar_sat_rtn(v.s1), convert_uchar_sat_rtn(v.s2), convert_uchar_sat_rtn(v.s3));
+}
+
+INLINE OVERLOADABLE long4 convert_long4_sat_rte(ulong4 v) {
+  return (long4)(convert_long_sat_rte(v.s0), convert_long_sat_rte(v.s1), convert_long_sat_rte(v.s2), convert_long_sat_rte(v.s3));
+}
+
+INLINE OVERLOADABLE long4 convert_long4_sat_rtz(ulong4 v) {
+  return (long4)(convert_long_sat_rtz(v.s0), convert_long_sat_rtz(v.s1), convert_long_sat_rtz(v.s2), convert_long_sat_rtz(v.s3));
+}
+
+INLINE OVERLOADABLE long4 convert_long4_sat_rtp(ulong4 v) {
+  return (long4)(convert_long_sat_rtp(v.s0), convert_long_sat_rtp(v.s1), convert_long_sat_rtp(v.s2), convert_long_sat_rtp(v.s3));
+}
+
+INLINE OVERLOADABLE long4 convert_long4_sat_rtn(ulong4 v) {
+  return (long4)(convert_long_sat_rtn(v.s0), convert_long_sat_rtn(v.s1), convert_long_sat_rtn(v.s2), convert_long_sat_rtn(v.s3));
+}
+
+INLINE OVERLOADABLE ulong4 convert_ulong4_sat_rte(ulong4 v) {
+  return (ulong4)(convert_ulong_sat_rte(v.s0), convert_ulong_sat_rte(v.s1), convert_ulong_sat_rte(v.s2), convert_ulong_sat_rte(v.s3));
+}
+
+INLINE OVERLOADABLE ulong4 convert_ulong4_sat_rtz(ulong4 v) {
+  return (ulong4)(convert_ulong_sat_rtz(v.s0), convert_ulong_sat_rtz(v.s1), convert_ulong_sat_rtz(v.s2), convert_ulong_sat_rtz(v.s3));
+}
+
+INLINE OVERLOADABLE ulong4 convert_ulong4_sat_rtp(ulong4 v) {
+  return (ulong4)(convert_ulong_sat_rtp(v.s0), convert_ulong_sat_rtp(v.s1), convert_ulong_sat_rtp(v.s2), convert_ulong_sat_rtp(v.s3));
+}
+
+INLINE OVERLOADABLE ulong4 convert_ulong4_sat_rtn(ulong4 v) {
+  return (ulong4)(convert_ulong_sat_rtn(v.s0), convert_ulong_sat_rtn(v.s1), convert_ulong_sat_rtn(v.s2), convert_ulong_sat_rtn(v.s3));
+}
+
+INLINE OVERLOADABLE int4 convert_int4_sat_rte(ulong4 v) {
+  return (int4)(convert_int_sat_rte(v.s0), convert_int_sat_rte(v.s1), convert_int_sat_rte(v.s2), convert_int_sat_rte(v.s3));
+}
+
+INLINE OVERLOADABLE int4 convert_int4_sat_rtz(ulong4 v) {
+  return (int4)(convert_int_sat_rtz(v.s0), convert_int_sat_rtz(v.s1), convert_int_sat_rtz(v.s2), convert_int_sat_rtz(v.s3));
+}
+
+INLINE OVERLOADABLE int4 convert_int4_sat_rtp(ulong4 v) {
+  return (int4)(convert_int_sat_rtp(v.s0), convert_int_sat_rtp(v.s1), convert_int_sat_rtp(v.s2), convert_int_sat_rtp(v.s3));
+}
+
+INLINE OVERLOADABLE int4 convert_int4_sat_rtn(ulong4 v) {
+  return (int4)(convert_int_sat_rtn(v.s0), convert_int_sat_rtn(v.s1), convert_int_sat_rtn(v.s2), convert_int_sat_rtn(v.s3));
+}
+
+INLINE OVERLOADABLE uint4 convert_uint4_sat_rte(ulong4 v) {
+  return (uint4)(convert_uint_sat_rte(v.s0), convert_uint_sat_rte(v.s1), convert_uint_sat_rte(v.s2), convert_uint_sat_rte(v.s3));
+}
+
+INLINE OVERLOADABLE uint4 convert_uint4_sat_rtz(ulong4 v) {
+  return (uint4)(convert_uint_sat_rtz(v.s0), convert_uint_sat_rtz(v.s1), convert_uint_sat_rtz(v.s2), convert_uint_sat_rtz(v.s3));
+}
+
+INLINE OVERLOADABLE uint4 convert_uint4_sat_rtp(ulong4 v) {
+  return (uint4)(convert_uint_sat_rtp(v.s0), convert_uint_sat_rtp(v.s1), convert_uint_sat_rtp(v.s2), convert_uint_sat_rtp(v.s3));
+}
+
+INLINE OVERLOADABLE uint4 convert_uint4_sat_rtn(ulong4 v) {
+  return (uint4)(convert_uint_sat_rtn(v.s0), convert_uint_sat_rtn(v.s1), convert_uint_sat_rtn(v.s2), convert_uint_sat_rtn(v.s3));
+}
+
+INLINE OVERLOADABLE short4 convert_short4_sat_rte(ulong4 v) {
+  return (short4)(convert_short_sat_rte(v.s0), convert_short_sat_rte(v.s1), convert_short_sat_rte(v.s2), convert_short_sat_rte(v.s3));
+}
+
+INLINE OVERLOADABLE short4 convert_short4_sat_rtz(ulong4 v) {
+  return (short4)(convert_short_sat_rtz(v.s0), convert_short_sat_rtz(v.s1), convert_short_sat_rtz(v.s2), convert_short_sat_rtz(v.s3));
+}
+
+INLINE OVERLOADABLE short4 convert_short4_sat_rtp(ulong4 v) {
+  return (short4)(convert_short_sat_rtp(v.s0), convert_short_sat_rtp(v.s1), convert_short_sat_rtp(v.s2), convert_short_sat_rtp(v.s3));
+}
+
+INLINE OVERLOADABLE short4 convert_short4_sat_rtn(ulong4 v) {
+  return (short4)(convert_short_sat_rtn(v.s0), convert_short_sat_rtn(v.s1), convert_short_sat_rtn(v.s2), convert_short_sat_rtn(v.s3));
+}
+
+INLINE OVERLOADABLE ushort4 convert_ushort4_sat_rte(ulong4 v) {
+  return (ushort4)(convert_ushort_sat_rte(v.s0), convert_ushort_sat_rte(v.s1), convert_ushort_sat_rte(v.s2), convert_ushort_sat_rte(v.s3));
+}
+
+INLINE OVERLOADABLE ushort4 convert_ushort4_sat_rtz(ulong4 v) {
+  return (ushort4)(convert_ushort_sat_rtz(v.s0), convert_ushort_sat_rtz(v.s1), convert_ushort_sat_rtz(v.s2), convert_ushort_sat_rtz(v.s3));
+}
+
+INLINE OVERLOADABLE ushort4 convert_ushort4_sat_rtp(ulong4 v) {
+  return (ushort4)(convert_ushort_sat_rtp(v.s0), convert_ushort_sat_rtp(v.s1), convert_ushort_sat_rtp(v.s2), convert_ushort_sat_rtp(v.s3));
+}
+
+INLINE OVERLOADABLE ushort4 convert_ushort4_sat_rtn(ulong4 v) {
+  return (ushort4)(convert_ushort_sat_rtn(v.s0), convert_ushort_sat_rtn(v.s1), convert_ushort_sat_rtn(v.s2), convert_ushort_sat_rtn(v.s3));
+}
+
+INLINE OVERLOADABLE char4 convert_char4_sat_rte(ulong4 v) {
+  return (char4)(convert_char_sat_rte(v.s0), convert_char_sat_rte(v.s1), convert_char_sat_rte(v.s2), convert_char_sat_rte(v.s3));
+}
+
+INLINE OVERLOADABLE char4 convert_char4_sat_rtz(ulong4 v) {
+  return (char4)(convert_char_sat_rtz(v.s0), convert_char_sat_rtz(v.s1), convert_char_sat_rtz(v.s2), convert_char_sat_rtz(v.s3));
+}
+
+INLINE OVERLOADABLE char4 convert_char4_sat_rtp(ulong4 v) {
+  return (char4)(convert_char_sat_rtp(v.s0), convert_char_sat_rtp(v.s1), convert_char_sat_rtp(v.s2), convert_char_sat_rtp(v.s3));
+}
+
+INLINE OVERLOADABLE char4 convert_char4_sat_rtn(ulong4 v) {
+  return (char4)(convert_char_sat_rtn(v.s0), convert_char_sat_rtn(v.s1), convert_char_sat_rtn(v.s2), convert_char_sat_rtn(v.s3));
+}
+
+INLINE OVERLOADABLE uchar4 convert_uchar4_sat_rte(ulong4 v) {
+  return (uchar4)(convert_uchar_sat_rte(v.s0), convert_uchar_sat_rte(v.s1), convert_uchar_sat_rte(v.s2), convert_uchar_sat_rte(v.s3));
+}
+
+INLINE OVERLOADABLE uchar4 convert_uchar4_sat_rtz(ulong4 v) {
+  return (uchar4)(convert_uchar_sat_rtz(v.s0), convert_uchar_sat_rtz(v.s1), convert_uchar_sat_rtz(v.s2), convert_uchar_sat_rtz(v.s3));
+}
+
+INLINE OVERLOADABLE uchar4 convert_uchar4_sat_rtp(ulong4 v) {
+  return (uchar4)(convert_uchar_sat_rtp(v.s0), convert_uchar_sat_rtp(v.s1), convert_uchar_sat_rtp(v.s2), convert_uchar_sat_rtp(v.s3));
+}
+
+INLINE OVERLOADABLE uchar4 convert_uchar4_sat_rtn(ulong4 v) {
+  return (uchar4)(convert_uchar_sat_rtn(v.s0), convert_uchar_sat_rtn(v.s1), convert_uchar_sat_rtn(v.s2), convert_uchar_sat_rtn(v.s3));
+}
+
+INLINE OVERLOADABLE long4 convert_long4_sat_rte(int4 v) {
+  return (long4)(convert_long_sat_rte(v.s0), convert_long_sat_rte(v.s1), convert_long_sat_rte(v.s2), convert_long_sat_rte(v.s3));
+}
+
+INLINE OVERLOADABLE long4 convert_long4_sat_rtz(int4 v) {
+  return (long4)(convert_long_sat_rtz(v.s0), convert_long_sat_rtz(v.s1), convert_long_sat_rtz(v.s2), convert_long_sat_rtz(v.s3));
+}
+
+INLINE OVERLOADABLE long4 convert_long4_sat_rtp(int4 v) {
+  return (long4)(convert_long_sat_rtp(v.s0), convert_long_sat_rtp(v.s1), convert_long_sat_rtp(v.s2), convert_long_sat_rtp(v.s3));
+}
+
+INLINE OVERLOADABLE long4 convert_long4_sat_rtn(int4 v) {
+  return (long4)(convert_long_sat_rtn(v.s0), convert_long_sat_rtn(v.s1), convert_long_sat_rtn(v.s2), convert_long_sat_rtn(v.s3));
+}
+
+INLINE OVERLOADABLE ulong4 convert_ulong4_sat_rte(int4 v) {
+  return (ulong4)(convert_ulong_sat_rte(v.s0), convert_ulong_sat_rte(v.s1), convert_ulong_sat_rte(v.s2), convert_ulong_sat_rte(v.s3));
+}
+
+INLINE OVERLOADABLE ulong4 convert_ulong4_sat_rtz(int4 v) {
+  return (ulong4)(convert_ulong_sat_rtz(v.s0), convert_ulong_sat_rtz(v.s1), convert_ulong_sat_rtz(v.s2), convert_ulong_sat_rtz(v.s3));
+}
+
+INLINE OVERLOADABLE ulong4 convert_ulong4_sat_rtp(int4 v) {
+  return (ulong4)(convert_ulong_sat_rtp(v.s0), convert_ulong_sat_rtp(v.s1), convert_ulong_sat_rtp(v.s2), convert_ulong_sat_rtp(v.s3));
+}
+
+INLINE OVERLOADABLE ulong4 convert_ulong4_sat_rtn(int4 v) {
+  return (ulong4)(convert_ulong_sat_rtn(v.s0), convert_ulong_sat_rtn(v.s1), convert_ulong_sat_rtn(v.s2), convert_ulong_sat_rtn(v.s3));
+}
+
+INLINE OVERLOADABLE int4 convert_int4_sat_rte(int4 v) {
+  return (int4)(convert_int_sat_rte(v.s0), convert_int_sat_rte(v.s1), convert_int_sat_rte(v.s2), convert_int_sat_rte(v.s3));
+}
+
+INLINE OVERLOADABLE int4 convert_int4_sat_rtz(int4 v) {
+  return (int4)(convert_int_sat_rtz(v.s0), convert_int_sat_rtz(v.s1), convert_int_sat_rtz(v.s2), convert_int_sat_rtz(v.s3));
+}
+
+INLINE OVERLOADABLE int4 convert_int4_sat_rtp(int4 v) {
+  return (int4)(convert_int_sat_rtp(v.s0), convert_int_sat_rtp(v.s1), convert_int_sat_rtp(v.s2), convert_int_sat_rtp(v.s3));
+}
+
+INLINE OVERLOADABLE int4 convert_int4_sat_rtn(int4 v) {
+  return (int4)(convert_int_sat_rtn(v.s0), convert_int_sat_rtn(v.s1), convert_int_sat_rtn(v.s2), convert_int_sat_rtn(v.s3));
+}
+
+INLINE OVERLOADABLE uint4 convert_uint4_sat_rte(int4 v) {
+  return (uint4)(convert_uint_sat_rte(v.s0), convert_uint_sat_rte(v.s1), convert_uint_sat_rte(v.s2), convert_uint_sat_rte(v.s3));
+}
+
+INLINE OVERLOADABLE uint4 convert_uint4_sat_rtz(int4 v) {
+  return (uint4)(convert_uint_sat_rtz(v.s0), convert_uint_sat_rtz(v.s1), convert_uint_sat_rtz(v.s2), convert_uint_sat_rtz(v.s3));
+}
+
+INLINE OVERLOADABLE uint4 convert_uint4_sat_rtp(int4 v) {
+  return (uint4)(convert_uint_sat_rtp(v.s0), convert_uint_sat_rtp(v.s1), convert_uint_sat_rtp(v.s2), convert_uint_sat_rtp(v.s3));
+}
+
+INLINE OVERLOADABLE uint4 convert_uint4_sat_rtn(int4 v) {
+  return (uint4)(convert_uint_sat_rtn(v.s0), convert_uint_sat_rtn(v.s1), convert_uint_sat_rtn(v.s2), convert_uint_sat_rtn(v.s3));
+}
+
+INLINE OVERLOADABLE short4 convert_short4_sat_rte(int4 v) {
+  return (short4)(convert_short_sat_rte(v.s0), convert_short_sat_rte(v.s1), convert_short_sat_rte(v.s2), convert_short_sat_rte(v.s3));
+}
+
+INLINE OVERLOADABLE short4 convert_short4_sat_rtz(int4 v) {
+  return (short4)(convert_short_sat_rtz(v.s0), convert_short_sat_rtz(v.s1), convert_short_sat_rtz(v.s2), convert_short_sat_rtz(v.s3));
+}
+
+INLINE OVERLOADABLE short4 convert_short4_sat_rtp(int4 v) {
+  return (short4)(convert_short_sat_rtp(v.s0), convert_short_sat_rtp(v.s1), convert_short_sat_rtp(v.s2), convert_short_sat_rtp(v.s3));
+}
+
+INLINE OVERLOADABLE short4 convert_short4_sat_rtn(int4 v) {
+  return (short4)(convert_short_sat_rtn(v.s0), convert_short_sat_rtn(v.s1), convert_short_sat_rtn(v.s2), convert_short_sat_rtn(v.s3));
+}
+
+INLINE OVERLOADABLE ushort4 convert_ushort4_sat_rte(int4 v) {
+  return (ushort4)(convert_ushort_sat_rte(v.s0), convert_ushort_sat_rte(v.s1), convert_ushort_sat_rte(v.s2), convert_ushort_sat_rte(v.s3));
+}
+
+INLINE OVERLOADABLE ushort4 convert_ushort4_sat_rtz(int4 v) {
+  return (ushort4)(convert_ushort_sat_rtz(v.s0), convert_ushort_sat_rtz(v.s1), convert_ushort_sat_rtz(v.s2), convert_ushort_sat_rtz(v.s3));
+}
+
+INLINE OVERLOADABLE ushort4 convert_ushort4_sat_rtp(int4 v) {
+  return (ushort4)(convert_ushort_sat_rtp(v.s0), convert_ushort_sat_rtp(v.s1), convert_ushort_sat_rtp(v.s2), convert_ushort_sat_rtp(v.s3));
+}
+
+INLINE OVERLOADABLE ushort4 convert_ushort4_sat_rtn(int4 v) {
+  return (ushort4)(convert_ushort_sat_rtn(v.s0), convert_ushort_sat_rtn(v.s1), convert_ushort_sat_rtn(v.s2), convert_ushort_sat_rtn(v.s3));
+}
+
+INLINE OVERLOADABLE char4 convert_char4_sat_rte(int4 v) {
+  return (char4)(convert_char_sat_rte(v.s0), convert_char_sat_rte(v.s1), convert_char_sat_rte(v.s2), convert_char_sat_rte(v.s3));
+}
+
+INLINE OVERLOADABLE char4 convert_char4_sat_rtz(int4 v) {
+  return (char4)(convert_char_sat_rtz(v.s0), convert_char_sat_rtz(v.s1), convert_char_sat_rtz(v.s2), convert_char_sat_rtz(v.s3));
+}
+
+INLINE OVERLOADABLE char4 convert_char4_sat_rtp(int4 v) {
+  return (char4)(convert_char_sat_rtp(v.s0), convert_char_sat_rtp(v.s1), convert_char_sat_rtp(v.s2), convert_char_sat_rtp(v.s3));
+}
+
+INLINE OVERLOADABLE char4 convert_char4_sat_rtn(int4 v) {
+  return (char4)(convert_char_sat_rtn(v.s0), convert_char_sat_rtn(v.s1), convert_char_sat_rtn(v.s2), convert_char_sat_rtn(v.s3));
+}
+
+INLINE OVERLOADABLE uchar4 convert_uchar4_sat_rte(int4 v) {
+  return (uchar4)(convert_uchar_sat_rte(v.s0), convert_uchar_sat_rte(v.s1), convert_uchar_sat_rte(v.s2), convert_uchar_sat_rte(v.s3));
+}
+
+INLINE OVERLOADABLE uchar4 convert_uchar4_sat_rtz(int4 v) {
+  return (uchar4)(convert_uchar_sat_rtz(v.s0), convert_uchar_sat_rtz(v.s1), convert_uchar_sat_rtz(v.s2), convert_uchar_sat_rtz(v.s3));
+}
+
+INLINE OVERLOADABLE uchar4 convert_uchar4_sat_rtp(int4 v) {
+  return (uchar4)(convert_uchar_sat_rtp(v.s0), convert_uchar_sat_rtp(v.s1), convert_uchar_sat_rtp(v.s2), convert_uchar_sat_rtp(v.s3));
+}
+
+INLINE OVERLOADABLE uchar4 convert_uchar4_sat_rtn(int4 v) {
+  return (uchar4)(convert_uchar_sat_rtn(v.s0), convert_uchar_sat_rtn(v.s1), convert_uchar_sat_rtn(v.s2), convert_uchar_sat_rtn(v.s3));
+}
+
+INLINE OVERLOADABLE long4 convert_long4_sat_rte(uint4 v) {
+  return (long4)(convert_long_sat_rte(v.s0), convert_long_sat_rte(v.s1), convert_long_sat_rte(v.s2), convert_long_sat_rte(v.s3));
+}
+
+INLINE OVERLOADABLE long4 convert_long4_sat_rtz(uint4 v) {
+  return (long4)(convert_long_sat_rtz(v.s0), convert_long_sat_rtz(v.s1), convert_long_sat_rtz(v.s2), convert_long_sat_rtz(v.s3));
+}
+
+INLINE OVERLOADABLE long4 convert_long4_sat_rtp(uint4 v) {
+  return (long4)(convert_long_sat_rtp(v.s0), convert_long_sat_rtp(v.s1), convert_long_sat_rtp(v.s2), convert_long_sat_rtp(v.s3));
+}
+
+INLINE OVERLOADABLE long4 convert_long4_sat_rtn(uint4 v) {
+  return (long4)(convert_long_sat_rtn(v.s0), convert_long_sat_rtn(v.s1), convert_long_sat_rtn(v.s2), convert_long_sat_rtn(v.s3));
+}
+
+INLINE OVERLOADABLE ulong4 convert_ulong4_sat_rte(uint4 v) {
+  return (ulong4)(convert_ulong_sat_rte(v.s0), convert_ulong_sat_rte(v.s1), convert_ulong_sat_rte(v.s2), convert_ulong_sat_rte(v.s3));
+}
+
+INLINE OVERLOADABLE ulong4 convert_ulong4_sat_rtz(uint4 v) {
+  return (ulong4)(convert_ulong_sat_rtz(v.s0), convert_ulong_sat_rtz(v.s1), convert_ulong_sat_rtz(v.s2), convert_ulong_sat_rtz(v.s3));
+}
+
+INLINE OVERLOADABLE ulong4 convert_ulong4_sat_rtp(uint4 v) {
+  return (ulong4)(convert_ulong_sat_rtp(v.s0), convert_ulong_sat_rtp(v.s1), convert_ulong_sat_rtp(v.s2), convert_ulong_sat_rtp(v.s3));
+}
+
+INLINE OVERLOADABLE ulong4 convert_ulong4_sat_rtn(uint4 v) {
+  return (ulong4)(convert_ulong_sat_rtn(v.s0), convert_ulong_sat_rtn(v.s1), convert_ulong_sat_rtn(v.s2), convert_ulong_sat_rtn(v.s3));
+}
+
+INLINE OVERLOADABLE int4 convert_int4_sat_rte(uint4 v) {
+  return (int4)(convert_int_sat_rte(v.s0), convert_int_sat_rte(v.s1), convert_int_sat_rte(v.s2), convert_int_sat_rte(v.s3));
+}
+
+INLINE OVERLOADABLE int4 convert_int4_sat_rtz(uint4 v) {
+  return (int4)(convert_int_sat_rtz(v.s0), convert_int_sat_rtz(v.s1), convert_int_sat_rtz(v.s2), convert_int_sat_rtz(v.s3));
+}
+
+INLINE OVERLOADABLE int4 convert_int4_sat_rtp(uint4 v) {
+  return (int4)(convert_int_sat_rtp(v.s0), convert_int_sat_rtp(v.s1), convert_int_sat_rtp(v.s2), convert_int_sat_rtp(v.s3));
+}
+
+INLINE OVERLOADABLE int4 convert_int4_sat_rtn(uint4 v) {
+  return (int4)(convert_int_sat_rtn(v.s0), convert_int_sat_rtn(v.s1), convert_int_sat_rtn(v.s2), convert_int_sat_rtn(v.s3));
+}
+
+INLINE OVERLOADABLE uint4 convert_uint4_sat_rte(uint4 v) {
+  return (uint4)(convert_uint_sat_rte(v.s0), convert_uint_sat_rte(v.s1), convert_uint_sat_rte(v.s2), convert_uint_sat_rte(v.s3));
+}
+
+INLINE OVERLOADABLE uint4 convert_uint4_sat_rtz(uint4 v) {
+  return (uint4)(convert_uint_sat_rtz(v.s0), convert_uint_sat_rtz(v.s1), convert_uint_sat_rtz(v.s2), convert_uint_sat_rtz(v.s3));
+}
+
+INLINE OVERLOADABLE uint4 convert_uint4_sat_rtp(uint4 v) {
+  return (uint4)(convert_uint_sat_rtp(v.s0), convert_uint_sat_rtp(v.s1), convert_uint_sat_rtp(v.s2), convert_uint_sat_rtp(v.s3));
+}
+
+INLINE OVERLOADABLE uint4 convert_uint4_sat_rtn(uint4 v) {
+  return (uint4)(convert_uint_sat_rtn(v.s0), convert_uint_sat_rtn(v.s1), convert_uint_sat_rtn(v.s2), convert_uint_sat_rtn(v.s3));
+}
+
+INLINE OVERLOADABLE short4 convert_short4_sat_rte(uint4 v) {
+  return (short4)(convert_short_sat_rte(v.s0), convert_short_sat_rte(v.s1), convert_short_sat_rte(v.s2), convert_short_sat_rte(v.s3));
+}
+
+INLINE OVERLOADABLE short4 convert_short4_sat_rtz(uint4 v) {
+  return (short4)(convert_short_sat_rtz(v.s0), convert_short_sat_rtz(v.s1), convert_short_sat_rtz(v.s2), convert_short_sat_rtz(v.s3));
+}
+
+INLINE OVERLOADABLE short4 convert_short4_sat_rtp(uint4 v) {
+  return (short4)(convert_short_sat_rtp(v.s0), convert_short_sat_rtp(v.s1), convert_short_sat_rtp(v.s2), convert_short_sat_rtp(v.s3));
+}
+
+INLINE OVERLOADABLE short4 convert_short4_sat_rtn(uint4 v) {
+  return (short4)(convert_short_sat_rtn(v.s0), convert_short_sat_rtn(v.s1), convert_short_sat_rtn(v.s2), convert_short_sat_rtn(v.s3));
+}
+
+INLINE OVERLOADABLE ushort4 convert_ushort4_sat_rte(uint4 v) {
+  return (ushort4)(convert_ushort_sat_rte(v.s0), convert_ushort_sat_rte(v.s1), convert_ushort_sat_rte(v.s2), convert_ushort_sat_rte(v.s3));
+}
+
+INLINE OVERLOADABLE ushort4 convert_ushort4_sat_rtz(uint4 v) {
+  return (ushort4)(convert_ushort_sat_rtz(v.s0), convert_ushort_sat_rtz(v.s1), convert_ushort_sat_rtz(v.s2), convert_ushort_sat_rtz(v.s3));
+}
+
+INLINE OVERLOADABLE ushort4 convert_ushort4_sat_rtp(uint4 v) {
+  return (ushort4)(convert_ushort_sat_rtp(v.s0), convert_ushort_sat_rtp(v.s1), convert_ushort_sat_rtp(v.s2), convert_ushort_sat_rtp(v.s3));
+}
+
+INLINE OVERLOADABLE ushort4 convert_ushort4_sat_rtn(uint4 v) {
+  return (ushort4)(convert_ushort_sat_rtn(v.s0), convert_ushort_sat_rtn(v.s1), convert_ushort_sat_rtn(v.s2), convert_ushort_sat_rtn(v.s3));
+}
+
+INLINE OVERLOADABLE char4 convert_char4_sat_rte(uint4 v) {
+  return (char4)(convert_char_sat_rte(v.s0), convert_char_sat_rte(v.s1), convert_char_sat_rte(v.s2), convert_char_sat_rte(v.s3));
+}
+
+INLINE OVERLOADABLE char4 convert_char4_sat_rtz(uint4 v) {
+  return (char4)(convert_char_sat_rtz(v.s0), convert_char_sat_rtz(v.s1), convert_char_sat_rtz(v.s2), convert_char_sat_rtz(v.s3));
+}
+
+INLINE OVERLOADABLE char4 convert_char4_sat_rtp(uint4 v) {
+  return (char4)(convert_char_sat_rtp(v.s0), convert_char_sat_rtp(v.s1), convert_char_sat_rtp(v.s2), convert_char_sat_rtp(v.s3));
+}
+
+INLINE OVERLOADABLE char4 convert_char4_sat_rtn(uint4 v) {
+  return (char4)(convert_char_sat_rtn(v.s0), convert_char_sat_rtn(v.s1), convert_char_sat_rtn(v.s2), convert_char_sat_rtn(v.s3));
+}
+
+INLINE OVERLOADABLE uchar4 convert_uchar4_sat_rte(uint4 v) {
+  return (uchar4)(convert_uchar_sat_rte(v.s0), convert_uchar_sat_rte(v.s1), convert_uchar_sat_rte(v.s2), convert_uchar_sat_rte(v.s3));
+}
+
+INLINE OVERLOADABLE uchar4 convert_uchar4_sat_rtz(uint4 v) {
+  return (uchar4)(convert_uchar_sat_rtz(v.s0), convert_uchar_sat_rtz(v.s1), convert_uchar_sat_rtz(v.s2), convert_uchar_sat_rtz(v.s3));
+}
+
+INLINE OVERLOADABLE uchar4 convert_uchar4_sat_rtp(uint4 v) {
+  return (uchar4)(convert_uchar_sat_rtp(v.s0), convert_uchar_sat_rtp(v.s1), convert_uchar_sat_rtp(v.s2), convert_uchar_sat_rtp(v.s3));
+}
+
+INLINE OVERLOADABLE uchar4 convert_uchar4_sat_rtn(uint4 v) {
+  return (uchar4)(convert_uchar_sat_rtn(v.s0), convert_uchar_sat_rtn(v.s1), convert_uchar_sat_rtn(v.s2), convert_uchar_sat_rtn(v.s3));
+}
+
+INLINE OVERLOADABLE long4 convert_long4_sat_rte(short4 v) {
+  return (long4)(convert_long_sat_rte(v.s0), convert_long_sat_rte(v.s1), convert_long_sat_rte(v.s2), convert_long_sat_rte(v.s3));
+}
+
+INLINE OVERLOADABLE long4 convert_long4_sat_rtz(short4 v) {
+  return (long4)(convert_long_sat_rtz(v.s0), convert_long_sat_rtz(v.s1), convert_long_sat_rtz(v.s2), convert_long_sat_rtz(v.s3));
+}
+
+INLINE OVERLOADABLE long4 convert_long4_sat_rtp(short4 v) {
+  return (long4)(convert_long_sat_rtp(v.s0), convert_long_sat_rtp(v.s1), convert_long_sat_rtp(v.s2), convert_long_sat_rtp(v.s3));
+}
+
+INLINE OVERLOADABLE long4 convert_long4_sat_rtn(short4 v) {
+  return (long4)(convert_long_sat_rtn(v.s0), convert_long_sat_rtn(v.s1), convert_long_sat_rtn(v.s2), convert_long_sat_rtn(v.s3));
+}
+
+INLINE OVERLOADABLE ulong4 convert_ulong4_sat_rte(short4 v) {
+  return (ulong4)(convert_ulong_sat_rte(v.s0), convert_ulong_sat_rte(v.s1), convert_ulong_sat_rte(v.s2), convert_ulong_sat_rte(v.s3));
+}
+
+INLINE OVERLOADABLE ulong4 convert_ulong4_sat_rtz(short4 v) {
+  return (ulong4)(convert_ulong_sat_rtz(v.s0), convert_ulong_sat_rtz(v.s1), convert_ulong_sat_rtz(v.s2), convert_ulong_sat_rtz(v.s3));
+}
+
+INLINE OVERLOADABLE ulong4 convert_ulong4_sat_rtp(short4 v) {
+  return (ulong4)(convert_ulong_sat_rtp(v.s0), convert_ulong_sat_rtp(v.s1), convert_ulong_sat_rtp(v.s2), convert_ulong_sat_rtp(v.s3));
+}
+
+INLINE OVERLOADABLE ulong4 convert_ulong4_sat_rtn(short4 v) {
+  return (ulong4)(convert_ulong_sat_rtn(v.s0), convert_ulong_sat_rtn(v.s1), convert_ulong_sat_rtn(v.s2), convert_ulong_sat_rtn(v.s3));
+}
+
+INLINE OVERLOADABLE int4 convert_int4_sat_rte(short4 v) {
+  return (int4)(convert_int_sat_rte(v.s0), convert_int_sat_rte(v.s1), convert_int_sat_rte(v.s2), convert_int_sat_rte(v.s3));
+}
+
+INLINE OVERLOADABLE int4 convert_int4_sat_rtz(short4 v) {
+  return (int4)(convert_int_sat_rtz(v.s0), convert_int_sat_rtz(v.s1), convert_int_sat_rtz(v.s2), convert_int_sat_rtz(v.s3));
+}
+
+INLINE OVERLOADABLE int4 convert_int4_sat_rtp(short4 v) {
+  return (int4)(convert_int_sat_rtp(v.s0), convert_int_sat_rtp(v.s1), convert_int_sat_rtp(v.s2), convert_int_sat_rtp(v.s3));
+}
+
+INLINE OVERLOADABLE int4 convert_int4_sat_rtn(short4 v) {
+  return (int4)(convert_int_sat_rtn(v.s0), convert_int_sat_rtn(v.s1), convert_int_sat_rtn(v.s2), convert_int_sat_rtn(v.s3));
+}
+
+INLINE OVERLOADABLE uint4 convert_uint4_sat_rte(short4 v) {
+  return (uint4)(convert_uint_sat_rte(v.s0), convert_uint_sat_rte(v.s1), convert_uint_sat_rte(v.s2), convert_uint_sat_rte(v.s3));
+}
+
+INLINE OVERLOADABLE uint4 convert_uint4_sat_rtz(short4 v) {
+  return (uint4)(convert_uint_sat_rtz(v.s0), convert_uint_sat_rtz(v.s1), convert_uint_sat_rtz(v.s2), convert_uint_sat_rtz(v.s3));
+}
+
+INLINE OVERLOADABLE uint4 convert_uint4_sat_rtp(short4 v) {
+  return (uint4)(convert_uint_sat_rtp(v.s0), convert_uint_sat_rtp(v.s1), convert_uint_sat_rtp(v.s2), convert_uint_sat_rtp(v.s3));
+}
+
+INLINE OVERLOADABLE uint4 convert_uint4_sat_rtn(short4 v) {
+  return (uint4)(convert_uint_sat_rtn(v.s0), convert_uint_sat_rtn(v.s1), convert_uint_sat_rtn(v.s2), convert_uint_sat_rtn(v.s3));
+}
+
+INLINE OVERLOADABLE short4 convert_short4_sat_rte(short4 v) {
+  return (short4)(convert_short_sat_rte(v.s0), convert_short_sat_rte(v.s1), convert_short_sat_rte(v.s2), convert_short_sat_rte(v.s3));
+}
+
+INLINE OVERLOADABLE short4 convert_short4_sat_rtz(short4 v) {
+  return (short4)(convert_short_sat_rtz(v.s0), convert_short_sat_rtz(v.s1), convert_short_sat_rtz(v.s2), convert_short_sat_rtz(v.s3));
+}
+
+INLINE OVERLOADABLE short4 convert_short4_sat_rtp(short4 v) {
+  return (short4)(convert_short_sat_rtp(v.s0), convert_short_sat_rtp(v.s1), convert_short_sat_rtp(v.s2), convert_short_sat_rtp(v.s3));
+}
+
+INLINE OVERLOADABLE short4 convert_short4_sat_rtn(short4 v) {
+  return (short4)(convert_short_sat_rtn(v.s0), convert_short_sat_rtn(v.s1), convert_short_sat_rtn(v.s2), convert_short_sat_rtn(v.s3));
+}
+
+INLINE OVERLOADABLE ushort4 convert_ushort4_sat_rte(short4 v) {
+  return (ushort4)(convert_ushort_sat_rte(v.s0), convert_ushort_sat_rte(v.s1), convert_ushort_sat_rte(v.s2), convert_ushort_sat_rte(v.s3));
+}
+
+INLINE OVERLOADABLE ushort4 convert_ushort4_sat_rtz(short4 v) {
+  return (ushort4)(convert_ushort_sat_rtz(v.s0), convert_ushort_sat_rtz(v.s1), convert_ushort_sat_rtz(v.s2), convert_ushort_sat_rtz(v.s3));
+}
+
+INLINE OVERLOADABLE ushort4 convert_ushort4_sat_rtp(short4 v) {
+  return (ushort4)(convert_ushort_sat_rtp(v.s0), convert_ushort_sat_rtp(v.s1), convert_ushort_sat_rtp(v.s2), convert_ushort_sat_rtp(v.s3));
+}
+
+INLINE OVERLOADABLE ushort4 convert_ushort4_sat_rtn(short4 v) {
+  return (ushort4)(convert_ushort_sat_rtn(v.s0), convert_ushort_sat_rtn(v.s1), convert_ushort_sat_rtn(v.s2), convert_ushort_sat_rtn(v.s3));
+}
+
+INLINE OVERLOADABLE char4 convert_char4_sat_rte(short4 v) {
+  return (char4)(convert_char_sat_rte(v.s0), convert_char_sat_rte(v.s1), convert_char_sat_rte(v.s2), convert_char_sat_rte(v.s3));
+}
+
+INLINE OVERLOADABLE char4 convert_char4_sat_rtz(short4 v) {
+  return (char4)(convert_char_sat_rtz(v.s0), convert_char_sat_rtz(v.s1), convert_char_sat_rtz(v.s2), convert_char_sat_rtz(v.s3));
+}
+
+INLINE OVERLOADABLE char4 convert_char4_sat_rtp(short4 v) {
+  return (char4)(convert_char_sat_rtp(v.s0), convert_char_sat_rtp(v.s1), convert_char_sat_rtp(v.s2), convert_char_sat_rtp(v.s3));
+}
+
+INLINE OVERLOADABLE char4 convert_char4_sat_rtn(short4 v) {
+  return (char4)(convert_char_sat_rtn(v.s0), convert_char_sat_rtn(v.s1), convert_char_sat_rtn(v.s2), convert_char_sat_rtn(v.s3));
+}
+
+INLINE OVERLOADABLE uchar4 convert_uchar4_sat_rte(short4 v) {
+  return (uchar4)(convert_uchar_sat_rte(v.s0), convert_uchar_sat_rte(v.s1), convert_uchar_sat_rte(v.s2), convert_uchar_sat_rte(v.s3));
+}
+
+INLINE OVERLOADABLE uchar4 convert_uchar4_sat_rtz(short4 v) {
+  return (uchar4)(convert_uchar_sat_rtz(v.s0), convert_uchar_sat_rtz(v.s1), convert_uchar_sat_rtz(v.s2), convert_uchar_sat_rtz(v.s3));
+}
+
+INLINE OVERLOADABLE uchar4 convert_uchar4_sat_rtp(short4 v) {
+  return (uchar4)(convert_uchar_sat_rtp(v.s0), convert_uchar_sat_rtp(v.s1), convert_uchar_sat_rtp(v.s2), convert_uchar_sat_rtp(v.s3));
+}
+
+INLINE OVERLOADABLE uchar4 convert_uchar4_sat_rtn(short4 v) {
+  return (uchar4)(convert_uchar_sat_rtn(v.s0), convert_uchar_sat_rtn(v.s1), convert_uchar_sat_rtn(v.s2), convert_uchar_sat_rtn(v.s3));
+}
+
+INLINE OVERLOADABLE long4 convert_long4_sat_rte(ushort4 v) {
+  return (long4)(convert_long_sat_rte(v.s0), convert_long_sat_rte(v.s1), convert_long_sat_rte(v.s2), convert_long_sat_rte(v.s3));
+}
+
+INLINE OVERLOADABLE long4 convert_long4_sat_rtz(ushort4 v) {
+  return (long4)(convert_long_sat_rtz(v.s0), convert_long_sat_rtz(v.s1), convert_long_sat_rtz(v.s2), convert_long_sat_rtz(v.s3));
+}
+
+INLINE OVERLOADABLE long4 convert_long4_sat_rtp(ushort4 v) {
+  return (long4)(convert_long_sat_rtp(v.s0), convert_long_sat_rtp(v.s1), convert_long_sat_rtp(v.s2), convert_long_sat_rtp(v.s3));
+}
+
+INLINE OVERLOADABLE long4 convert_long4_sat_rtn(ushort4 v) {
+  return (long4)(convert_long_sat_rtn(v.s0), convert_long_sat_rtn(v.s1), convert_long_sat_rtn(v.s2), convert_long_sat_rtn(v.s3));
+}
+
+INLINE OVERLOADABLE ulong4 convert_ulong4_sat_rte(ushort4 v) {
+  return (ulong4)(convert_ulong_sat_rte(v.s0), convert_ulong_sat_rte(v.s1), convert_ulong_sat_rte(v.s2), convert_ulong_sat_rte(v.s3));
+}
+
+INLINE OVERLOADABLE ulong4 convert_ulong4_sat_rtz(ushort4 v) {
+  return (ulong4)(convert_ulong_sat_rtz(v.s0), convert_ulong_sat_rtz(v.s1), convert_ulong_sat_rtz(v.s2), convert_ulong_sat_rtz(v.s3));
+}
+
+INLINE OVERLOADABLE ulong4 convert_ulong4_sat_rtp(ushort4 v) {
+  return (ulong4)(convert_ulong_sat_rtp(v.s0), convert_ulong_sat_rtp(v.s1), convert_ulong_sat_rtp(v.s2), convert_ulong_sat_rtp(v.s3));
+}
+
+INLINE OVERLOADABLE ulong4 convert_ulong4_sat_rtn(ushort4 v) {
+  return (ulong4)(convert_ulong_sat_rtn(v.s0), convert_ulong_sat_rtn(v.s1), convert_ulong_sat_rtn(v.s2), convert_ulong_sat_rtn(v.s3));
+}
+
+INLINE OVERLOADABLE int4 convert_int4_sat_rte(ushort4 v) {
+  return (int4)(convert_int_sat_rte(v.s0), convert_int_sat_rte(v.s1), convert_int_sat_rte(v.s2), convert_int_sat_rte(v.s3));
+}
+
+INLINE OVERLOADABLE int4 convert_int4_sat_rtz(ushort4 v) {
+  return (int4)(convert_int_sat_rtz(v.s0), convert_int_sat_rtz(v.s1), convert_int_sat_rtz(v.s2), convert_int_sat_rtz(v.s3));
+}
+
+INLINE OVERLOADABLE int4 convert_int4_sat_rtp(ushort4 v) {
+  return (int4)(convert_int_sat_rtp(v.s0), convert_int_sat_rtp(v.s1), convert_int_sat_rtp(v.s2), convert_int_sat_rtp(v.s3));
+}
+
+INLINE OVERLOADABLE int4 convert_int4_sat_rtn(ushort4 v) {
+  return (int4)(convert_int_sat_rtn(v.s0), convert_int_sat_rtn(v.s1), convert_int_sat_rtn(v.s2), convert_int_sat_rtn(v.s3));
+}
+
+INLINE OVERLOADABLE uint4 convert_uint4_sat_rte(ushort4 v) {
+  return (uint4)(convert_uint_sat_rte(v.s0), convert_uint_sat_rte(v.s1), convert_uint_sat_rte(v.s2), convert_uint_sat_rte(v.s3));
+}
+
+INLINE OVERLOADABLE uint4 convert_uint4_sat_rtz(ushort4 v) {
+  return (uint4)(convert_uint_sat_rtz(v.s0), convert_uint_sat_rtz(v.s1), convert_uint_sat_rtz(v.s2), convert_uint_sat_rtz(v.s3));
+}
+
+INLINE OVERLOADABLE uint4 convert_uint4_sat_rtp(ushort4 v) {
+  return (uint4)(convert_uint_sat_rtp(v.s0), convert_uint_sat_rtp(v.s1), convert_uint_sat_rtp(v.s2), convert_uint_sat_rtp(v.s3));
+}
+
+INLINE OVERLOADABLE uint4 convert_uint4_sat_rtn(ushort4 v) {
+  return (uint4)(convert_uint_sat_rtn(v.s0), convert_uint_sat_rtn(v.s1), convert_uint_sat_rtn(v.s2), convert_uint_sat_rtn(v.s3));
+}
+
+INLINE OVERLOADABLE short4 convert_short4_sat_rte(ushort4 v) {
+  return (short4)(convert_short_sat_rte(v.s0), convert_short_sat_rte(v.s1), convert_short_sat_rte(v.s2), convert_short_sat_rte(v.s3));
+}
+
+INLINE OVERLOADABLE short4 convert_short4_sat_rtz(ushort4 v) {
+  return (short4)(convert_short_sat_rtz(v.s0), convert_short_sat_rtz(v.s1), convert_short_sat_rtz(v.s2), convert_short_sat_rtz(v.s3));
+}
+
+INLINE OVERLOADABLE short4 convert_short4_sat_rtp(ushort4 v) {
+  return (short4)(convert_short_sat_rtp(v.s0), convert_short_sat_rtp(v.s1), convert_short_sat_rtp(v.s2), convert_short_sat_rtp(v.s3));
+}
+
+INLINE OVERLOADABLE short4 convert_short4_sat_rtn(ushort4 v) {
+  return (short4)(convert_short_sat_rtn(v.s0), convert_short_sat_rtn(v.s1), convert_short_sat_rtn(v.s2), convert_short_sat_rtn(v.s3));
+}
+
+INLINE OVERLOADABLE ushort4 convert_ushort4_sat_rte(ushort4 v) {
+  return (ushort4)(convert_ushort_sat_rte(v.s0), convert_ushort_sat_rte(v.s1), convert_ushort_sat_rte(v.s2), convert_ushort_sat_rte(v.s3));
+}
+
+INLINE OVERLOADABLE ushort4 convert_ushort4_sat_rtz(ushort4 v) {
+  return (ushort4)(convert_ushort_sat_rtz(v.s0), convert_ushort_sat_rtz(v.s1), convert_ushort_sat_rtz(v.s2), convert_ushort_sat_rtz(v.s3));
+}
+
+INLINE OVERLOADABLE ushort4 convert_ushort4_sat_rtp(ushort4 v) {
+  return (ushort4)(convert_ushort_sat_rtp(v.s0), convert_ushort_sat_rtp(v.s1), convert_ushort_sat_rtp(v.s2), convert_ushort_sat_rtp(v.s3));
+}
+
+INLINE OVERLOADABLE ushort4 convert_ushort4_sat_rtn(ushort4 v) {
+  return (ushort4)(convert_ushort_sat_rtn(v.s0), convert_ushort_sat_rtn(v.s1), convert_ushort_sat_rtn(v.s2), convert_ushort_sat_rtn(v.s3));
+}
+
+INLINE OVERLOADABLE char4 convert_char4_sat_rte(ushort4 v) {
+  return (char4)(convert_char_sat_rte(v.s0), convert_char_sat_rte(v.s1), convert_char_sat_rte(v.s2), convert_char_sat_rte(v.s3));
+}
+
+INLINE OVERLOADABLE char4 convert_char4_sat_rtz(ushort4 v) {
+  return (char4)(convert_char_sat_rtz(v.s0), convert_char_sat_rtz(v.s1), convert_char_sat_rtz(v.s2), convert_char_sat_rtz(v.s3));
+}
+
+INLINE OVERLOADABLE char4 convert_char4_sat_rtp(ushort4 v) {
+  return (char4)(convert_char_sat_rtp(v.s0), convert_char_sat_rtp(v.s1), convert_char_sat_rtp(v.s2), convert_char_sat_rtp(v.s3));
+}
+
+INLINE OVERLOADABLE char4 convert_char4_sat_rtn(ushort4 v) {
+  return (char4)(convert_char_sat_rtn(v.s0), convert_char_sat_rtn(v.s1), convert_char_sat_rtn(v.s2), convert_char_sat_rtn(v.s3));
+}
+
+INLINE OVERLOADABLE uchar4 convert_uchar4_sat_rte(ushort4 v) {
+  return (uchar4)(convert_uchar_sat_rte(v.s0), convert_uchar_sat_rte(v.s1), convert_uchar_sat_rte(v.s2), convert_uchar_sat_rte(v.s3));
+}
+
+INLINE OVERLOADABLE uchar4 convert_uchar4_sat_rtz(ushort4 v) {
+  return (uchar4)(convert_uchar_sat_rtz(v.s0), convert_uchar_sat_rtz(v.s1), convert_uchar_sat_rtz(v.s2), convert_uchar_sat_rtz(v.s3));
+}
+
+INLINE OVERLOADABLE uchar4 convert_uchar4_sat_rtp(ushort4 v) {
+  return (uchar4)(convert_uchar_sat_rtp(v.s0), convert_uchar_sat_rtp(v.s1), convert_uchar_sat_rtp(v.s2), convert_uchar_sat_rtp(v.s3));
+}
+
+INLINE OVERLOADABLE uchar4 convert_uchar4_sat_rtn(ushort4 v) {
+  return (uchar4)(convert_uchar_sat_rtn(v.s0), convert_uchar_sat_rtn(v.s1), convert_uchar_sat_rtn(v.s2), convert_uchar_sat_rtn(v.s3));
+}
+
+INLINE OVERLOADABLE long4 convert_long4_sat_rte(char4 v) {
+  return (long4)(convert_long_sat_rte(v.s0), convert_long_sat_rte(v.s1), convert_long_sat_rte(v.s2), convert_long_sat_rte(v.s3));
+}
+
+INLINE OVERLOADABLE long4 convert_long4_sat_rtz(char4 v) {
+  return (long4)(convert_long_sat_rtz(v.s0), convert_long_sat_rtz(v.s1), convert_long_sat_rtz(v.s2), convert_long_sat_rtz(v.s3));
+}
+
+INLINE OVERLOADABLE long4 convert_long4_sat_rtp(char4 v) {
+  return (long4)(convert_long_sat_rtp(v.s0), convert_long_sat_rtp(v.s1), convert_long_sat_rtp(v.s2), convert_long_sat_rtp(v.s3));
+}
+
+INLINE OVERLOADABLE long4 convert_long4_sat_rtn(char4 v) {
+  return (long4)(convert_long_sat_rtn(v.s0), convert_long_sat_rtn(v.s1), convert_long_sat_rtn(v.s2), convert_long_sat_rtn(v.s3));
+}
+
+INLINE OVERLOADABLE ulong4 convert_ulong4_sat_rte(char4 v) {
+  return (ulong4)(convert_ulong_sat_rte(v.s0), convert_ulong_sat_rte(v.s1), convert_ulong_sat_rte(v.s2), convert_ulong_sat_rte(v.s3));
+}
+
+INLINE OVERLOADABLE ulong4 convert_ulong4_sat_rtz(char4 v) {
+  return (ulong4)(convert_ulong_sat_rtz(v.s0), convert_ulong_sat_rtz(v.s1), convert_ulong_sat_rtz(v.s2), convert_ulong_sat_rtz(v.s3));
+}
+
+INLINE OVERLOADABLE ulong4 convert_ulong4_sat_rtp(char4 v) {
+  return (ulong4)(convert_ulong_sat_rtp(v.s0), convert_ulong_sat_rtp(v.s1), convert_ulong_sat_rtp(v.s2), convert_ulong_sat_rtp(v.s3));
+}
+
+INLINE OVERLOADABLE ulong4 convert_ulong4_sat_rtn(char4 v) {
+  return (ulong4)(convert_ulong_sat_rtn(v.s0), convert_ulong_sat_rtn(v.s1), convert_ulong_sat_rtn(v.s2), convert_ulong_sat_rtn(v.s3));
+}
+
+INLINE OVERLOADABLE int4 convert_int4_sat_rte(char4 v) {
+  return (int4)(convert_int_sat_rte(v.s0), convert_int_sat_rte(v.s1), convert_int_sat_rte(v.s2), convert_int_sat_rte(v.s3));
+}
+
+INLINE OVERLOADABLE int4 convert_int4_sat_rtz(char4 v) {
+  return (int4)(convert_int_sat_rtz(v.s0), convert_int_sat_rtz(v.s1), convert_int_sat_rtz(v.s2), convert_int_sat_rtz(v.s3));
+}
+
+INLINE OVERLOADABLE int4 convert_int4_sat_rtp(char4 v) {
+  return (int4)(convert_int_sat_rtp(v.s0), convert_int_sat_rtp(v.s1), convert_int_sat_rtp(v.s2), convert_int_sat_rtp(v.s3));
+}
+
+INLINE OVERLOADABLE int4 convert_int4_sat_rtn(char4 v) {
+  return (int4)(convert_int_sat_rtn(v.s0), convert_int_sat_rtn(v.s1), convert_int_sat_rtn(v.s2), convert_int_sat_rtn(v.s3));
+}
+
+INLINE OVERLOADABLE uint4 convert_uint4_sat_rte(char4 v) {
+  return (uint4)(convert_uint_sat_rte(v.s0), convert_uint_sat_rte(v.s1), convert_uint_sat_rte(v.s2), convert_uint_sat_rte(v.s3));
+}
+
+INLINE OVERLOADABLE uint4 convert_uint4_sat_rtz(char4 v) {
+  return (uint4)(convert_uint_sat_rtz(v.s0), convert_uint_sat_rtz(v.s1), convert_uint_sat_rtz(v.s2), convert_uint_sat_rtz(v.s3));
+}
+
+INLINE OVERLOADABLE uint4 convert_uint4_sat_rtp(char4 v) {
+  return (uint4)(convert_uint_sat_rtp(v.s0), convert_uint_sat_rtp(v.s1), convert_uint_sat_rtp(v.s2), convert_uint_sat_rtp(v.s3));
+}
+
+INLINE OVERLOADABLE uint4 convert_uint4_sat_rtn(char4 v) {
+  return (uint4)(convert_uint_sat_rtn(v.s0), convert_uint_sat_rtn(v.s1), convert_uint_sat_rtn(v.s2), convert_uint_sat_rtn(v.s3));
+}
+
+INLINE OVERLOADABLE short4 convert_short4_sat_rte(char4 v) {
+  return (short4)(convert_short_sat_rte(v.s0), convert_short_sat_rte(v.s1), convert_short_sat_rte(v.s2), convert_short_sat_rte(v.s3));
+}
+
+INLINE OVERLOADABLE short4 convert_short4_sat_rtz(char4 v) {
+  return (short4)(convert_short_sat_rtz(v.s0), convert_short_sat_rtz(v.s1), convert_short_sat_rtz(v.s2), convert_short_sat_rtz(v.s3));
+}
+
+INLINE OVERLOADABLE short4 convert_short4_sat_rtp(char4 v) {
+  return (short4)(convert_short_sat_rtp(v.s0), convert_short_sat_rtp(v.s1), convert_short_sat_rtp(v.s2), convert_short_sat_rtp(v.s3));
+}
+
+INLINE OVERLOADABLE short4 convert_short4_sat_rtn(char4 v) {
+  return (short4)(convert_short_sat_rtn(v.s0), convert_short_sat_rtn(v.s1), convert_short_sat_rtn(v.s2), convert_short_sat_rtn(v.s3));
+}
+
+INLINE OVERLOADABLE ushort4 convert_ushort4_sat_rte(char4 v) {
+  return (ushort4)(convert_ushort_sat_rte(v.s0), convert_ushort_sat_rte(v.s1), convert_ushort_sat_rte(v.s2), convert_ushort_sat_rte(v.s3));
+}
+
+INLINE OVERLOADABLE ushort4 convert_ushort4_sat_rtz(char4 v) {
+  return (ushort4)(convert_ushort_sat_rtz(v.s0), convert_ushort_sat_rtz(v.s1), convert_ushort_sat_rtz(v.s2), convert_ushort_sat_rtz(v.s3));
+}
+
+INLINE OVERLOADABLE ushort4 convert_ushort4_sat_rtp(char4 v) {
+  return (ushort4)(convert_ushort_sat_rtp(v.s0), convert_ushort_sat_rtp(v.s1), convert_ushort_sat_rtp(v.s2), convert_ushort_sat_rtp(v.s3));
+}
+
+INLINE OVERLOADABLE ushort4 convert_ushort4_sat_rtn(char4 v) {
+  return (ushort4)(convert_ushort_sat_rtn(v.s0), convert_ushort_sat_rtn(v.s1), convert_ushort_sat_rtn(v.s2), convert_ushort_sat_rtn(v.s3));
+}
+
+INLINE OVERLOADABLE char4 convert_char4_sat_rte(char4 v) {
+  return (char4)(convert_char_sat_rte(v.s0), convert_char_sat_rte(v.s1), convert_char_sat_rte(v.s2), convert_char_sat_rte(v.s3));
+}
+
+INLINE OVERLOADABLE char4 convert_char4_sat_rtz(char4 v) {
+  return (char4)(convert_char_sat_rtz(v.s0), convert_char_sat_rtz(v.s1), convert_char_sat_rtz(v.s2), convert_char_sat_rtz(v.s3));
+}
+
+INLINE OVERLOADABLE char4 convert_char4_sat_rtp(char4 v) {
+  return (char4)(convert_char_sat_rtp(v.s0), convert_char_sat_rtp(v.s1), convert_char_sat_rtp(v.s2), convert_char_sat_rtp(v.s3));
+}
+
+INLINE OVERLOADABLE char4 convert_char4_sat_rtn(char4 v) {
+  return (char4)(convert_char_sat_rtn(v.s0), convert_char_sat_rtn(v.s1), convert_char_sat_rtn(v.s2), convert_char_sat_rtn(v.s3));
+}
+
+INLINE OVERLOADABLE uchar4 convert_uchar4_sat_rte(char4 v) {
+  return (uchar4)(convert_uchar_sat_rte(v.s0), convert_uchar_sat_rte(v.s1), convert_uchar_sat_rte(v.s2), convert_uchar_sat_rte(v.s3));
+}
+
+INLINE OVERLOADABLE uchar4 convert_uchar4_sat_rtz(char4 v) {
+  return (uchar4)(convert_uchar_sat_rtz(v.s0), convert_uchar_sat_rtz(v.s1), convert_uchar_sat_rtz(v.s2), convert_uchar_sat_rtz(v.s3));
+}
+
+INLINE OVERLOADABLE uchar4 convert_uchar4_sat_rtp(char4 v) {
+  return (uchar4)(convert_uchar_sat_rtp(v.s0), convert_uchar_sat_rtp(v.s1), convert_uchar_sat_rtp(v.s2), convert_uchar_sat_rtp(v.s3));
+}
+
+INLINE OVERLOADABLE uchar4 convert_uchar4_sat_rtn(char4 v) {
+  return (uchar4)(convert_uchar_sat_rtn(v.s0), convert_uchar_sat_rtn(v.s1), convert_uchar_sat_rtn(v.s2), convert_uchar_sat_rtn(v.s3));
+}
+
+INLINE OVERLOADABLE long4 convert_long4_sat_rte(uchar4 v) {
+  return (long4)(convert_long_sat_rte(v.s0), convert_long_sat_rte(v.s1), convert_long_sat_rte(v.s2), convert_long_sat_rte(v.s3));
+}
+
+INLINE OVERLOADABLE long4 convert_long4_sat_rtz(uchar4 v) {
+  return (long4)(convert_long_sat_rtz(v.s0), convert_long_sat_rtz(v.s1), convert_long_sat_rtz(v.s2), convert_long_sat_rtz(v.s3));
+}
+
+INLINE OVERLOADABLE long4 convert_long4_sat_rtp(uchar4 v) {
+  return (long4)(convert_long_sat_rtp(v.s0), convert_long_sat_rtp(v.s1), convert_long_sat_rtp(v.s2), convert_long_sat_rtp(v.s3));
+}
+
+INLINE OVERLOADABLE long4 convert_long4_sat_rtn(uchar4 v) {
+  return (long4)(convert_long_sat_rtn(v.s0), convert_long_sat_rtn(v.s1), convert_long_sat_rtn(v.s2), convert_long_sat_rtn(v.s3));
+}
+
+INLINE OVERLOADABLE ulong4 convert_ulong4_sat_rte(uchar4 v) {
+  return (ulong4)(convert_ulong_sat_rte(v.s0), convert_ulong_sat_rte(v.s1), convert_ulong_sat_rte(v.s2), convert_ulong_sat_rte(v.s3));
+}
+
+INLINE OVERLOADABLE ulong4 convert_ulong4_sat_rtz(uchar4 v) {
+  return (ulong4)(convert_ulong_sat_rtz(v.s0), convert_ulong_sat_rtz(v.s1), convert_ulong_sat_rtz(v.s2), convert_ulong_sat_rtz(v.s3));
+}
+
+INLINE OVERLOADABLE ulong4 convert_ulong4_sat_rtp(uchar4 v) {
+  return (ulong4)(convert_ulong_sat_rtp(v.s0), convert_ulong_sat_rtp(v.s1), convert_ulong_sat_rtp(v.s2), convert_ulong_sat_rtp(v.s3));
+}
+
+INLINE OVERLOADABLE ulong4 convert_ulong4_sat_rtn(uchar4 v) {
+  return (ulong4)(convert_ulong_sat_rtn(v.s0), convert_ulong_sat_rtn(v.s1), convert_ulong_sat_rtn(v.s2), convert_ulong_sat_rtn(v.s3));
+}
+
+INLINE OVERLOADABLE int4 convert_int4_sat_rte(uchar4 v) {
+  return (int4)(convert_int_sat_rte(v.s0), convert_int_sat_rte(v.s1), convert_int_sat_rte(v.s2), convert_int_sat_rte(v.s3));
+}
+
+INLINE OVERLOADABLE int4 convert_int4_sat_rtz(uchar4 v) {
+  return (int4)(convert_int_sat_rtz(v.s0), convert_int_sat_rtz(v.s1), convert_int_sat_rtz(v.s2), convert_int_sat_rtz(v.s3));
+}
+
+INLINE OVERLOADABLE int4 convert_int4_sat_rtp(uchar4 v) {
+  return (int4)(convert_int_sat_rtp(v.s0), convert_int_sat_rtp(v.s1), convert_int_sat_rtp(v.s2), convert_int_sat_rtp(v.s3));
+}
+
+INLINE OVERLOADABLE int4 convert_int4_sat_rtn(uchar4 v) {
+  return (int4)(convert_int_sat_rtn(v.s0), convert_int_sat_rtn(v.s1), convert_int_sat_rtn(v.s2), convert_int_sat_rtn(v.s3));
+}
+
+INLINE OVERLOADABLE uint4 convert_uint4_sat_rte(uchar4 v) {
+  return (uint4)(convert_uint_sat_rte(v.s0), convert_uint_sat_rte(v.s1), convert_uint_sat_rte(v.s2), convert_uint_sat_rte(v.s3));
+}
+
+INLINE OVERLOADABLE uint4 convert_uint4_sat_rtz(uchar4 v) {
+  return (uint4)(convert_uint_sat_rtz(v.s0), convert_uint_sat_rtz(v.s1), convert_uint_sat_rtz(v.s2), convert_uint_sat_rtz(v.s3));
+}
+
+INLINE OVERLOADABLE uint4 convert_uint4_sat_rtp(uchar4 v) {
+  return (uint4)(convert_uint_sat_rtp(v.s0), convert_uint_sat_rtp(v.s1), convert_uint_sat_rtp(v.s2), convert_uint_sat_rtp(v.s3));
+}
+
+INLINE OVERLOADABLE uint4 convert_uint4_sat_rtn(uchar4 v) {
+  return (uint4)(convert_uint_sat_rtn(v.s0), convert_uint_sat_rtn(v.s1), convert_uint_sat_rtn(v.s2), convert_uint_sat_rtn(v.s3));
+}
+
+INLINE OVERLOADABLE short4 convert_short4_sat_rte(uchar4 v) {
+  return (short4)(convert_short_sat_rte(v.s0), convert_short_sat_rte(v.s1), convert_short_sat_rte(v.s2), convert_short_sat_rte(v.s3));
+}
+
+INLINE OVERLOADABLE short4 convert_short4_sat_rtz(uchar4 v) {
+  return (short4)(convert_short_sat_rtz(v.s0), convert_short_sat_rtz(v.s1), convert_short_sat_rtz(v.s2), convert_short_sat_rtz(v.s3));
+}
+
+INLINE OVERLOADABLE short4 convert_short4_sat_rtp(uchar4 v) {
+  return (short4)(convert_short_sat_rtp(v.s0), convert_short_sat_rtp(v.s1), convert_short_sat_rtp(v.s2), convert_short_sat_rtp(v.s3));
+}
+
+INLINE OVERLOADABLE short4 convert_short4_sat_rtn(uchar4 v) {
+  return (short4)(convert_short_sat_rtn(v.s0), convert_short_sat_rtn(v.s1), convert_short_sat_rtn(v.s2), convert_short_sat_rtn(v.s3));
+}
+
+INLINE OVERLOADABLE ushort4 convert_ushort4_sat_rte(uchar4 v) {
+  return (ushort4)(convert_ushort_sat_rte(v.s0), convert_ushort_sat_rte(v.s1), convert_ushort_sat_rte(v.s2), convert_ushort_sat_rte(v.s3));
+}
+
+INLINE OVERLOADABLE ushort4 convert_ushort4_sat_rtz(uchar4 v) {
+  return (ushort4)(convert_ushort_sat_rtz(v.s0), convert_ushort_sat_rtz(v.s1), convert_ushort_sat_rtz(v.s2), convert_ushort_sat_rtz(v.s3));
+}
+
+INLINE OVERLOADABLE ushort4 convert_ushort4_sat_rtp(uchar4 v) {
+  return (ushort4)(convert_ushort_sat_rtp(v.s0), convert_ushort_sat_rtp(v.s1), convert_ushort_sat_rtp(v.s2), convert_ushort_sat_rtp(v.s3));
+}
+
+INLINE OVERLOADABLE ushort4 convert_ushort4_sat_rtn(uchar4 v) {
+  return (ushort4)(convert_ushort_sat_rtn(v.s0), convert_ushort_sat_rtn(v.s1), convert_ushort_sat_rtn(v.s2), convert_ushort_sat_rtn(v.s3));
+}
+
+INLINE OVERLOADABLE char4 convert_char4_sat_rte(uchar4 v) {
+  return (char4)(convert_char_sat_rte(v.s0), convert_char_sat_rte(v.s1), convert_char_sat_rte(v.s2), convert_char_sat_rte(v.s3));
+}
+
+INLINE OVERLOADABLE char4 convert_char4_sat_rtz(uchar4 v) {
+  return (char4)(convert_char_sat_rtz(v.s0), convert_char_sat_rtz(v.s1), convert_char_sat_rtz(v.s2), convert_char_sat_rtz(v.s3));
+}
+
+INLINE OVERLOADABLE char4 convert_char4_sat_rtp(uchar4 v) {
+  return (char4)(convert_char_sat_rtp(v.s0), convert_char_sat_rtp(v.s1), convert_char_sat_rtp(v.s2), convert_char_sat_rtp(v.s3));
+}
+
+INLINE OVERLOADABLE char4 convert_char4_sat_rtn(uchar4 v) {
+  return (char4)(convert_char_sat_rtn(v.s0), convert_char_sat_rtn(v.s1), convert_char_sat_rtn(v.s2), convert_char_sat_rtn(v.s3));
+}
+
+INLINE OVERLOADABLE uchar4 convert_uchar4_sat_rte(uchar4 v) {
+  return (uchar4)(convert_uchar_sat_rte(v.s0), convert_uchar_sat_rte(v.s1), convert_uchar_sat_rte(v.s2), convert_uchar_sat_rte(v.s3));
+}
+
+INLINE OVERLOADABLE uchar4 convert_uchar4_sat_rtz(uchar4 v) {
+  return (uchar4)(convert_uchar_sat_rtz(v.s0), convert_uchar_sat_rtz(v.s1), convert_uchar_sat_rtz(v.s2), convert_uchar_sat_rtz(v.s3));
+}
+
+INLINE OVERLOADABLE uchar4 convert_uchar4_sat_rtp(uchar4 v) {
+  return (uchar4)(convert_uchar_sat_rtp(v.s0), convert_uchar_sat_rtp(v.s1), convert_uchar_sat_rtp(v.s2), convert_uchar_sat_rtp(v.s3));
+}
+
+INLINE OVERLOADABLE uchar4 convert_uchar4_sat_rtn(uchar4 v) {
+  return (uchar4)(convert_uchar_sat_rtn(v.s0), convert_uchar_sat_rtn(v.s1), convert_uchar_sat_rtn(v.s2), convert_uchar_sat_rtn(v.s3));
+}
+
+INLINE OVERLOADABLE long4 convert_long4_sat_rte(float4 v) {
+  return (long4)(convert_long_sat_rte(v.s0), convert_long_sat_rte(v.s1), convert_long_sat_rte(v.s2), convert_long_sat_rte(v.s3));
+}
+
+INLINE OVERLOADABLE long4 convert_long4_sat_rtz(float4 v) {
+  return (long4)(convert_long_sat_rtz(v.s0), convert_long_sat_rtz(v.s1), convert_long_sat_rtz(v.s2), convert_long_sat_rtz(v.s3));
+}
+
+INLINE OVERLOADABLE long4 convert_long4_sat_rtp(float4 v) {
+  return (long4)(convert_long_sat_rtp(v.s0), convert_long_sat_rtp(v.s1), convert_long_sat_rtp(v.s2), convert_long_sat_rtp(v.s3));
+}
+
+INLINE OVERLOADABLE long4 convert_long4_sat_rtn(float4 v) {
+  return (long4)(convert_long_sat_rtn(v.s0), convert_long_sat_rtn(v.s1), convert_long_sat_rtn(v.s2), convert_long_sat_rtn(v.s3));
+}
+
+INLINE OVERLOADABLE ulong4 convert_ulong4_sat_rte(float4 v) {
+  return (ulong4)(convert_ulong_sat_rte(v.s0), convert_ulong_sat_rte(v.s1), convert_ulong_sat_rte(v.s2), convert_ulong_sat_rte(v.s3));
+}
+
+INLINE OVERLOADABLE ulong4 convert_ulong4_sat_rtz(float4 v) {
+  return (ulong4)(convert_ulong_sat_rtz(v.s0), convert_ulong_sat_rtz(v.s1), convert_ulong_sat_rtz(v.s2), convert_ulong_sat_rtz(v.s3));
+}
+
+INLINE OVERLOADABLE ulong4 convert_ulong4_sat_rtp(float4 v) {
+  return (ulong4)(convert_ulong_sat_rtp(v.s0), convert_ulong_sat_rtp(v.s1), convert_ulong_sat_rtp(v.s2), convert_ulong_sat_rtp(v.s3));
+}
+
+INLINE OVERLOADABLE ulong4 convert_ulong4_sat_rtn(float4 v) {
+  return (ulong4)(convert_ulong_sat_rtn(v.s0), convert_ulong_sat_rtn(v.s1), convert_ulong_sat_rtn(v.s2), convert_ulong_sat_rtn(v.s3));
+}
+
+INLINE OVERLOADABLE int4 convert_int4_sat_rte(float4 v) {
+  return (int4)(convert_int_sat_rte(v.s0), convert_int_sat_rte(v.s1), convert_int_sat_rte(v.s2), convert_int_sat_rte(v.s3));
+}
+
+INLINE OVERLOADABLE int4 convert_int4_sat_rtz(float4 v) {
+  return (int4)(convert_int_sat_rtz(v.s0), convert_int_sat_rtz(v.s1), convert_int_sat_rtz(v.s2), convert_int_sat_rtz(v.s3));
+}
+
+INLINE OVERLOADABLE int4 convert_int4_sat_rtp(float4 v) {
+  return (int4)(convert_int_sat_rtp(v.s0), convert_int_sat_rtp(v.s1), convert_int_sat_rtp(v.s2), convert_int_sat_rtp(v.s3));
+}
+
+INLINE OVERLOADABLE int4 convert_int4_sat_rtn(float4 v) {
+  return (int4)(convert_int_sat_rtn(v.s0), convert_int_sat_rtn(v.s1), convert_int_sat_rtn(v.s2), convert_int_sat_rtn(v.s3));
+}
+
+INLINE OVERLOADABLE uint4 convert_uint4_sat_rte(float4 v) {
+  return (uint4)(convert_uint_sat_rte(v.s0), convert_uint_sat_rte(v.s1), convert_uint_sat_rte(v.s2), convert_uint_sat_rte(v.s3));
+}
+
+INLINE OVERLOADABLE uint4 convert_uint4_sat_rtz(float4 v) {
+  return (uint4)(convert_uint_sat_rtz(v.s0), convert_uint_sat_rtz(v.s1), convert_uint_sat_rtz(v.s2), convert_uint_sat_rtz(v.s3));
+}
+
+INLINE OVERLOADABLE uint4 convert_uint4_sat_rtp(float4 v) {
+  return (uint4)(convert_uint_sat_rtp(v.s0), convert_uint_sat_rtp(v.s1), convert_uint_sat_rtp(v.s2), convert_uint_sat_rtp(v.s3));
+}
+
+INLINE OVERLOADABLE uint4 convert_uint4_sat_rtn(float4 v) {
+  return (uint4)(convert_uint_sat_rtn(v.s0), convert_uint_sat_rtn(v.s1), convert_uint_sat_rtn(v.s2), convert_uint_sat_rtn(v.s3));
+}
+
+INLINE OVERLOADABLE short4 convert_short4_sat_rte(float4 v) {
+  return (short4)(convert_short_sat_rte(v.s0), convert_short_sat_rte(v.s1), convert_short_sat_rte(v.s2), convert_short_sat_rte(v.s3));
+}
+
+INLINE OVERLOADABLE short4 convert_short4_sat_rtz(float4 v) {
+  return (short4)(convert_short_sat_rtz(v.s0), convert_short_sat_rtz(v.s1), convert_short_sat_rtz(v.s2), convert_short_sat_rtz(v.s3));
+}
+
+INLINE OVERLOADABLE short4 convert_short4_sat_rtp(float4 v) {
+  return (short4)(convert_short_sat_rtp(v.s0), convert_short_sat_rtp(v.s1), convert_short_sat_rtp(v.s2), convert_short_sat_rtp(v.s3));
+}
+
+INLINE OVERLOADABLE short4 convert_short4_sat_rtn(float4 v) {
+  return (short4)(convert_short_sat_rtn(v.s0), convert_short_sat_rtn(v.s1), convert_short_sat_rtn(v.s2), convert_short_sat_rtn(v.s3));
+}
+
+INLINE OVERLOADABLE ushort4 convert_ushort4_sat_rte(float4 v) {
+  return (ushort4)(convert_ushort_sat_rte(v.s0), convert_ushort_sat_rte(v.s1), convert_ushort_sat_rte(v.s2), convert_ushort_sat_rte(v.s3));
+}
+
+INLINE OVERLOADABLE ushort4 convert_ushort4_sat_rtz(float4 v) {
+  return (ushort4)(convert_ushort_sat_rtz(v.s0), convert_ushort_sat_rtz(v.s1), convert_ushort_sat_rtz(v.s2), convert_ushort_sat_rtz(v.s3));
+}
+
+INLINE OVERLOADABLE ushort4 convert_ushort4_sat_rtp(float4 v) {
+  return (ushort4)(convert_ushort_sat_rtp(v.s0), convert_ushort_sat_rtp(v.s1), convert_ushort_sat_rtp(v.s2), convert_ushort_sat_rtp(v.s3));
+}
+
+INLINE OVERLOADABLE ushort4 convert_ushort4_sat_rtn(float4 v) {
+  return (ushort4)(convert_ushort_sat_rtn(v.s0), convert_ushort_sat_rtn(v.s1), convert_ushort_sat_rtn(v.s2), convert_ushort_sat_rtn(v.s3));
+}
+
+INLINE OVERLOADABLE char4 convert_char4_sat_rte(float4 v) {
+  return (char4)(convert_char_sat_rte(v.s0), convert_char_sat_rte(v.s1), convert_char_sat_rte(v.s2), convert_char_sat_rte(v.s3));
+}
+
+INLINE OVERLOADABLE char4 convert_char4_sat_rtz(float4 v) {
+  return (char4)(convert_char_sat_rtz(v.s0), convert_char_sat_rtz(v.s1), convert_char_sat_rtz(v.s2), convert_char_sat_rtz(v.s3));
+}
+
+INLINE OVERLOADABLE char4 convert_char4_sat_rtp(float4 v) {
+  return (char4)(convert_char_sat_rtp(v.s0), convert_char_sat_rtp(v.s1), convert_char_sat_rtp(v.s2), convert_char_sat_rtp(v.s3));
+}
+
+INLINE OVERLOADABLE char4 convert_char4_sat_rtn(float4 v) {
+  return (char4)(convert_char_sat_rtn(v.s0), convert_char_sat_rtn(v.s1), convert_char_sat_rtn(v.s2), convert_char_sat_rtn(v.s3));
+}
+
+INLINE OVERLOADABLE uchar4 convert_uchar4_sat_rte(float4 v) {
+  return (uchar4)(convert_uchar_sat_rte(v.s0), convert_uchar_sat_rte(v.s1), convert_uchar_sat_rte(v.s2), convert_uchar_sat_rte(v.s3));
+}
+
+INLINE OVERLOADABLE uchar4 convert_uchar4_sat_rtz(float4 v) {
+  return (uchar4)(convert_uchar_sat_rtz(v.s0), convert_uchar_sat_rtz(v.s1), convert_uchar_sat_rtz(v.s2), convert_uchar_sat_rtz(v.s3));
+}
+
+INLINE OVERLOADABLE uchar4 convert_uchar4_sat_rtp(float4 v) {
+  return (uchar4)(convert_uchar_sat_rtp(v.s0), convert_uchar_sat_rtp(v.s1), convert_uchar_sat_rtp(v.s2), convert_uchar_sat_rtp(v.s3));
+}
+
+INLINE OVERLOADABLE uchar4 convert_uchar4_sat_rtn(float4 v) {
+  return (uchar4)(convert_uchar_sat_rtn(v.s0), convert_uchar_sat_rtn(v.s1), convert_uchar_sat_rtn(v.s2), convert_uchar_sat_rtn(v.s3));
+}
+
+INLINE OVERLOADABLE long8 convert_long8_sat_rte(long8 v) {
+  return (long8)(convert_long_sat_rte(v.s0), convert_long_sat_rte(v.s1), convert_long_sat_rte(v.s2), convert_long_sat_rte(v.s3), convert_long_sat_rte(v.s4), convert_long_sat_rte(v.s5), convert_long_sat_rte(v.s6), convert_long_sat_rte(v.s7));
+}
+
+INLINE OVERLOADABLE long8 convert_long8_sat_rtz(long8 v) {
+  return (long8)(convert_long_sat_rtz(v.s0), convert_long_sat_rtz(v.s1), convert_long_sat_rtz(v.s2), convert_long_sat_rtz(v.s3), convert_long_sat_rtz(v.s4), convert_long_sat_rtz(v.s5), convert_long_sat_rtz(v.s6), convert_long_sat_rtz(v.s7));
+}
+
+INLINE OVERLOADABLE long8 convert_long8_sat_rtp(long8 v) {
+  return (long8)(convert_long_sat_rtp(v.s0), convert_long_sat_rtp(v.s1), convert_long_sat_rtp(v.s2), convert_long_sat_rtp(v.s3), convert_long_sat_rtp(v.s4), convert_long_sat_rtp(v.s5), convert_long_sat_rtp(v.s6), convert_long_sat_rtp(v.s7));
+}
+
+INLINE OVERLOADABLE long8 convert_long8_sat_rtn(long8 v) {
+  return (long8)(convert_long_sat_rtn(v.s0), convert_long_sat_rtn(v.s1), convert_long_sat_rtn(v.s2), convert_long_sat_rtn(v.s3), convert_long_sat_rtn(v.s4), convert_long_sat_rtn(v.s5), convert_long_sat_rtn(v.s6), convert_long_sat_rtn(v.s7));
+}
+
+INLINE OVERLOADABLE ulong8 convert_ulong8_sat_rte(long8 v) {
+  return (ulong8)(convert_ulong_sat_rte(v.s0), convert_ulong_sat_rte(v.s1), convert_ulong_sat_rte(v.s2), convert_ulong_sat_rte(v.s3), convert_ulong_sat_rte(v.s4), convert_ulong_sat_rte(v.s5), convert_ulong_sat_rte(v.s6), convert_ulong_sat_rte(v.s7));
+}
+
+INLINE OVERLOADABLE ulong8 convert_ulong8_sat_rtz(long8 v) {
+  return (ulong8)(convert_ulong_sat_rtz(v.s0), convert_ulong_sat_rtz(v.s1), convert_ulong_sat_rtz(v.s2), convert_ulong_sat_rtz(v.s3), convert_ulong_sat_rtz(v.s4), convert_ulong_sat_rtz(v.s5), convert_ulong_sat_rtz(v.s6), convert_ulong_sat_rtz(v.s7));
+}
+
+INLINE OVERLOADABLE ulong8 convert_ulong8_sat_rtp(long8 v) {
+  return (ulong8)(convert_ulong_sat_rtp(v.s0), convert_ulong_sat_rtp(v.s1), convert_ulong_sat_rtp(v.s2), convert_ulong_sat_rtp(v.s3), convert_ulong_sat_rtp(v.s4), convert_ulong_sat_rtp(v.s5), convert_ulong_sat_rtp(v.s6), convert_ulong_sat_rtp(v.s7));
+}
+
+INLINE OVERLOADABLE ulong8 convert_ulong8_sat_rtn(long8 v) {
+  return (ulong8)(convert_ulong_sat_rtn(v.s0), convert_ulong_sat_rtn(v.s1), convert_ulong_sat_rtn(v.s2), convert_ulong_sat_rtn(v.s3), convert_ulong_sat_rtn(v.s4), convert_ulong_sat_rtn(v.s5), convert_ulong_sat_rtn(v.s6), convert_ulong_sat_rtn(v.s7));
+}
+
+INLINE OVERLOADABLE int8 convert_int8_sat_rte(long8 v) {
+  return (int8)(convert_int_sat_rte(v.s0), convert_int_sat_rte(v.s1), convert_int_sat_rte(v.s2), convert_int_sat_rte(v.s3), convert_int_sat_rte(v.s4), convert_int_sat_rte(v.s5), convert_int_sat_rte(v.s6), convert_int_sat_rte(v.s7));
+}
+
+INLINE OVERLOADABLE int8 convert_int8_sat_rtz(long8 v) {
+  return (int8)(convert_int_sat_rtz(v.s0), convert_int_sat_rtz(v.s1), convert_int_sat_rtz(v.s2), convert_int_sat_rtz(v.s3), convert_int_sat_rtz(v.s4), convert_int_sat_rtz(v.s5), convert_int_sat_rtz(v.s6), convert_int_sat_rtz(v.s7));
+}
+
+INLINE OVERLOADABLE int8 convert_int8_sat_rtp(long8 v) {
+  return (int8)(convert_int_sat_rtp(v.s0), convert_int_sat_rtp(v.s1), convert_int_sat_rtp(v.s2), convert_int_sat_rtp(v.s3), convert_int_sat_rtp(v.s4), convert_int_sat_rtp(v.s5), convert_int_sat_rtp(v.s6), convert_int_sat_rtp(v.s7));
+}
+
+INLINE OVERLOADABLE int8 convert_int8_sat_rtn(long8 v) {
+  return (int8)(convert_int_sat_rtn(v.s0), convert_int_sat_rtn(v.s1), convert_int_sat_rtn(v.s2), convert_int_sat_rtn(v.s3), convert_int_sat_rtn(v.s4), convert_int_sat_rtn(v.s5), convert_int_sat_rtn(v.s6), convert_int_sat_rtn(v.s7));
+}
+
+INLINE OVERLOADABLE uint8 convert_uint8_sat_rte(long8 v) {
+  return (uint8)(convert_uint_sat_rte(v.s0), convert_uint_sat_rte(v.s1), convert_uint_sat_rte(v.s2), convert_uint_sat_rte(v.s3), convert_uint_sat_rte(v.s4), convert_uint_sat_rte(v.s5), convert_uint_sat_rte(v.s6), convert_uint_sat_rte(v.s7));
+}
+
+INLINE OVERLOADABLE uint8 convert_uint8_sat_rtz(long8 v) {
+  return (uint8)(convert_uint_sat_rtz(v.s0), convert_uint_sat_rtz(v.s1), convert_uint_sat_rtz(v.s2), convert_uint_sat_rtz(v.s3), convert_uint_sat_rtz(v.s4), convert_uint_sat_rtz(v.s5), convert_uint_sat_rtz(v.s6), convert_uint_sat_rtz(v.s7));
+}
+
+INLINE OVERLOADABLE uint8 convert_uint8_sat_rtp(long8 v) {
+  return (uint8)(convert_uint_sat_rtp(v.s0), convert_uint_sat_rtp(v.s1), convert_uint_sat_rtp(v.s2), convert_uint_sat_rtp(v.s3), convert_uint_sat_rtp(v.s4), convert_uint_sat_rtp(v.s5), convert_uint_sat_rtp(v.s6), convert_uint_sat_rtp(v.s7));
+}
+
+INLINE OVERLOADABLE uint8 convert_uint8_sat_rtn(long8 v) {
+  return (uint8)(convert_uint_sat_rtn(v.s0), convert_uint_sat_rtn(v.s1), convert_uint_sat_rtn(v.s2), convert_uint_sat_rtn(v.s3), convert_uint_sat_rtn(v.s4), convert_uint_sat_rtn(v.s5), convert_uint_sat_rtn(v.s6), convert_uint_sat_rtn(v.s7));
+}
+
+INLINE OVERLOADABLE short8 convert_short8_sat_rte(long8 v) {
+  return (short8)(convert_short_sat_rte(v.s0), convert_short_sat_rte(v.s1), convert_short_sat_rte(v.s2), convert_short_sat_rte(v.s3), convert_short_sat_rte(v.s4), convert_short_sat_rte(v.s5), convert_short_sat_rte(v.s6), convert_short_sat_rte(v.s7));
+}
+
+INLINE OVERLOADABLE short8 convert_short8_sat_rtz(long8 v) {
+  return (short8)(convert_short_sat_rtz(v.s0), convert_short_sat_rtz(v.s1), convert_short_sat_rtz(v.s2), convert_short_sat_rtz(v.s3), convert_short_sat_rtz(v.s4), convert_short_sat_rtz(v.s5), convert_short_sat_rtz(v.s6), convert_short_sat_rtz(v.s7));
+}
+
+INLINE OVERLOADABLE short8 convert_short8_sat_rtp(long8 v) {
+  return (short8)(convert_short_sat_rtp(v.s0), convert_short_sat_rtp(v.s1), convert_short_sat_rtp(v.s2), convert_short_sat_rtp(v.s3), convert_short_sat_rtp(v.s4), convert_short_sat_rtp(v.s5), convert_short_sat_rtp(v.s6), convert_short_sat_rtp(v.s7));
+}
+
+INLINE OVERLOADABLE short8 convert_short8_sat_rtn(long8 v) {
+  return (short8)(convert_short_sat_rtn(v.s0), convert_short_sat_rtn(v.s1), convert_short_sat_rtn(v.s2), convert_short_sat_rtn(v.s3), convert_short_sat_rtn(v.s4), convert_short_sat_rtn(v.s5), convert_short_sat_rtn(v.s6), convert_short_sat_rtn(v.s7));
+}
+
+INLINE OVERLOADABLE ushort8 convert_ushort8_sat_rte(long8 v) {
+  return (ushort8)(convert_ushort_sat_rte(v.s0), convert_ushort_sat_rte(v.s1), convert_ushort_sat_rte(v.s2), convert_ushort_sat_rte(v.s3), convert_ushort_sat_rte(v.s4), convert_ushort_sat_rte(v.s5), convert_ushort_sat_rte(v.s6), convert_ushort_sat_rte(v.s7));
+}
+
+INLINE OVERLOADABLE ushort8 convert_ushort8_sat_rtz(long8 v) {
+  return (ushort8)(convert_ushort_sat_rtz(v.s0), convert_ushort_sat_rtz(v.s1), convert_ushort_sat_rtz(v.s2), convert_ushort_sat_rtz(v.s3), convert_ushort_sat_rtz(v.s4), convert_ushort_sat_rtz(v.s5), convert_ushort_sat_rtz(v.s6), convert_ushort_sat_rtz(v.s7));
+}
+
+INLINE OVERLOADABLE ushort8 convert_ushort8_sat_rtp(long8 v) {
+  return (ushort8)(convert_ushort_sat_rtp(v.s0), convert_ushort_sat_rtp(v.s1), convert_ushort_sat_rtp(v.s2), convert_ushort_sat_rtp(v.s3), convert_ushort_sat_rtp(v.s4), convert_ushort_sat_rtp(v.s5), convert_ushort_sat_rtp(v.s6), convert_ushort_sat_rtp(v.s7));
+}
+
+INLINE OVERLOADABLE ushort8 convert_ushort8_sat_rtn(long8 v) {
+  return (ushort8)(convert_ushort_sat_rtn(v.s0), convert_ushort_sat_rtn(v.s1), convert_ushort_sat_rtn(v.s2), convert_ushort_sat_rtn(v.s3), convert_ushort_sat_rtn(v.s4), convert_ushort_sat_rtn(v.s5), convert_ushort_sat_rtn(v.s6), convert_ushort_sat_rtn(v.s7));
+}
+
+INLINE OVERLOADABLE char8 convert_char8_sat_rte(long8 v) {
+  return (char8)(convert_char_sat_rte(v.s0), convert_char_sat_rte(v.s1), convert_char_sat_rte(v.s2), convert_char_sat_rte(v.s3), convert_char_sat_rte(v.s4), convert_char_sat_rte(v.s5), convert_char_sat_rte(v.s6), convert_char_sat_rte(v.s7));
+}
+
+INLINE OVERLOADABLE char8 convert_char8_sat_rtz(long8 v) {
+  return (char8)(convert_char_sat_rtz(v.s0), convert_char_sat_rtz(v.s1), convert_char_sat_rtz(v.s2), convert_char_sat_rtz(v.s3), convert_char_sat_rtz(v.s4), convert_char_sat_rtz(v.s5), convert_char_sat_rtz(v.s6), convert_char_sat_rtz(v.s7));
+}
+
+INLINE OVERLOADABLE char8 convert_char8_sat_rtp(long8 v) {
+  return (char8)(convert_char_sat_rtp(v.s0), convert_char_sat_rtp(v.s1), convert_char_sat_rtp(v.s2), convert_char_sat_rtp(v.s3), convert_char_sat_rtp(v.s4), convert_char_sat_rtp(v.s5), convert_char_sat_rtp(v.s6), convert_char_sat_rtp(v.s7));
+}
+
+INLINE OVERLOADABLE char8 convert_char8_sat_rtn(long8 v) {
+  return (char8)(convert_char_sat_rtn(v.s0), convert_char_sat_rtn(v.s1), convert_char_sat_rtn(v.s2), convert_char_sat_rtn(v.s3), convert_char_sat_rtn(v.s4), convert_char_sat_rtn(v.s5), convert_char_sat_rtn(v.s6), convert_char_sat_rtn(v.s7));
+}
+
+INLINE OVERLOADABLE uchar8 convert_uchar8_sat_rte(long8 v) {
+  return (uchar8)(convert_uchar_sat_rte(v.s0), convert_uchar_sat_rte(v.s1), convert_uchar_sat_rte(v.s2), convert_uchar_sat_rte(v.s3), convert_uchar_sat_rte(v.s4), convert_uchar_sat_rte(v.s5), convert_uchar_sat_rte(v.s6), convert_uchar_sat_rte(v.s7));
+}
+
+INLINE OVERLOADABLE uchar8 convert_uchar8_sat_rtz(long8 v) {
+  return (uchar8)(convert_uchar_sat_rtz(v.s0), convert_uchar_sat_rtz(v.s1), convert_uchar_sat_rtz(v.s2), convert_uchar_sat_rtz(v.s3), convert_uchar_sat_rtz(v.s4), convert_uchar_sat_rtz(v.s5), convert_uchar_sat_rtz(v.s6), convert_uchar_sat_rtz(v.s7));
+}
+
+INLINE OVERLOADABLE uchar8 convert_uchar8_sat_rtp(long8 v) {
+  return (uchar8)(convert_uchar_sat_rtp(v.s0), convert_uchar_sat_rtp(v.s1), convert_uchar_sat_rtp(v.s2), convert_uchar_sat_rtp(v.s3), convert_uchar_sat_rtp(v.s4), convert_uchar_sat_rtp(v.s5), convert_uchar_sat_rtp(v.s6), convert_uchar_sat_rtp(v.s7));
+}
+
+INLINE OVERLOADABLE uchar8 convert_uchar8_sat_rtn(long8 v) {
+  return (uchar8)(convert_uchar_sat_rtn(v.s0), convert_uchar_sat_rtn(v.s1), convert_uchar_sat_rtn(v.s2), convert_uchar_sat_rtn(v.s3), convert_uchar_sat_rtn(v.s4), convert_uchar_sat_rtn(v.s5), convert_uchar_sat_rtn(v.s6), convert_uchar_sat_rtn(v.s7));
+}
+
+INLINE OVERLOADABLE long8 convert_long8_sat_rte(ulong8 v) {
+  return (long8)(convert_long_sat_rte(v.s0), convert_long_sat_rte(v.s1), convert_long_sat_rte(v.s2), convert_long_sat_rte(v.s3), convert_long_sat_rte(v.s4), convert_long_sat_rte(v.s5), convert_long_sat_rte(v.s6), convert_long_sat_rte(v.s7));
+}
+
+INLINE OVERLOADABLE long8 convert_long8_sat_rtz(ulong8 v) {
+  return (long8)(convert_long_sat_rtz(v.s0), convert_long_sat_rtz(v.s1), convert_long_sat_rtz(v.s2), convert_long_sat_rtz(v.s3), convert_long_sat_rtz(v.s4), convert_long_sat_rtz(v.s5), convert_long_sat_rtz(v.s6), convert_long_sat_rtz(v.s7));
+}
+
+INLINE OVERLOADABLE long8 convert_long8_sat_rtp(ulong8 v) {
+  return (long8)(convert_long_sat_rtp(v.s0), convert_long_sat_rtp(v.s1), convert_long_sat_rtp(v.s2), convert_long_sat_rtp(v.s3), convert_long_sat_rtp(v.s4), convert_long_sat_rtp(v.s5), convert_long_sat_rtp(v.s6), convert_long_sat_rtp(v.s7));
+}
+
+INLINE OVERLOADABLE long8 convert_long8_sat_rtn(ulong8 v) {
+  return (long8)(convert_long_sat_rtn(v.s0), convert_long_sat_rtn(v.s1), convert_long_sat_rtn(v.s2), convert_long_sat_rtn(v.s3), convert_long_sat_rtn(v.s4), convert_long_sat_rtn(v.s5), convert_long_sat_rtn(v.s6), convert_long_sat_rtn(v.s7));
+}
+
+INLINE OVERLOADABLE ulong8 convert_ulong8_sat_rte(ulong8 v) {
+  return (ulong8)(convert_ulong_sat_rte(v.s0), convert_ulong_sat_rte(v.s1), convert_ulong_sat_rte(v.s2), convert_ulong_sat_rte(v.s3), convert_ulong_sat_rte(v.s4), convert_ulong_sat_rte(v.s5), convert_ulong_sat_rte(v.s6), convert_ulong_sat_rte(v.s7));
+}
+
+INLINE OVERLOADABLE ulong8 convert_ulong8_sat_rtz(ulong8 v) {
+  return (ulong8)(convert_ulong_sat_rtz(v.s0), convert_ulong_sat_rtz(v.s1), convert_ulong_sat_rtz(v.s2), convert_ulong_sat_rtz(v.s3), convert_ulong_sat_rtz(v.s4), convert_ulong_sat_rtz(v.s5), convert_ulong_sat_rtz(v.s6), convert_ulong_sat_rtz(v.s7));
+}
+
+INLINE OVERLOADABLE ulong8 convert_ulong8_sat_rtp(ulong8 v) {
+  return (ulong8)(convert_ulong_sat_rtp(v.s0), convert_ulong_sat_rtp(v.s1), convert_ulong_sat_rtp(v.s2), convert_ulong_sat_rtp(v.s3), convert_ulong_sat_rtp(v.s4), convert_ulong_sat_rtp(v.s5), convert_ulong_sat_rtp(v.s6), convert_ulong_sat_rtp(v.s7));
+}
+
+INLINE OVERLOADABLE ulong8 convert_ulong8_sat_rtn(ulong8 v) {
+  return (ulong8)(convert_ulong_sat_rtn(v.s0), convert_ulong_sat_rtn(v.s1), convert_ulong_sat_rtn(v.s2), convert_ulong_sat_rtn(v.s3), convert_ulong_sat_rtn(v.s4), convert_ulong_sat_rtn(v.s5), convert_ulong_sat_rtn(v.s6), convert_ulong_sat_rtn(v.s7));
+}
+
+INLINE OVERLOADABLE int8 convert_int8_sat_rte(ulong8 v) {
+  return (int8)(convert_int_sat_rte(v.s0), convert_int_sat_rte(v.s1), convert_int_sat_rte(v.s2), convert_int_sat_rte(v.s3), convert_int_sat_rte(v.s4), convert_int_sat_rte(v.s5), convert_int_sat_rte(v.s6), convert_int_sat_rte(v.s7));
+}
+
+INLINE OVERLOADABLE int8 convert_int8_sat_rtz(ulong8 v) {
+  return (int8)(convert_int_sat_rtz(v.s0), convert_int_sat_rtz(v.s1), convert_int_sat_rtz(v.s2), convert_int_sat_rtz(v.s3), convert_int_sat_rtz(v.s4), convert_int_sat_rtz(v.s5), convert_int_sat_rtz(v.s6), convert_int_sat_rtz(v.s7));
+}
+
+INLINE OVERLOADABLE int8 convert_int8_sat_rtp(ulong8 v) {
+  return (int8)(convert_int_sat_rtp(v.s0), convert_int_sat_rtp(v.s1), convert_int_sat_rtp(v.s2), convert_int_sat_rtp(v.s3), convert_int_sat_rtp(v.s4), convert_int_sat_rtp(v.s5), convert_int_sat_rtp(v.s6), convert_int_sat_rtp(v.s7));
+}
+
+INLINE OVERLOADABLE int8 convert_int8_sat_rtn(ulong8 v) {
+  return (int8)(convert_int_sat_rtn(v.s0), convert_int_sat_rtn(v.s1), convert_int_sat_rtn(v.s2), convert_int_sat_rtn(v.s3), convert_int_sat_rtn(v.s4), convert_int_sat_rtn(v.s5), convert_int_sat_rtn(v.s6), convert_int_sat_rtn(v.s7));
+}
+
+INLINE OVERLOADABLE uint8 convert_uint8_sat_rte(ulong8 v) {
+  return (uint8)(convert_uint_sat_rte(v.s0), convert_uint_sat_rte(v.s1), convert_uint_sat_rte(v.s2), convert_uint_sat_rte(v.s3), convert_uint_sat_rte(v.s4), convert_uint_sat_rte(v.s5), convert_uint_sat_rte(v.s6), convert_uint_sat_rte(v.s7));
+}
+
+INLINE OVERLOADABLE uint8 convert_uint8_sat_rtz(ulong8 v) {
+  return (uint8)(convert_uint_sat_rtz(v.s0), convert_uint_sat_rtz(v.s1), convert_uint_sat_rtz(v.s2), convert_uint_sat_rtz(v.s3), convert_uint_sat_rtz(v.s4), convert_uint_sat_rtz(v.s5), convert_uint_sat_rtz(v.s6), convert_uint_sat_rtz(v.s7));
+}
+
+INLINE OVERLOADABLE uint8 convert_uint8_sat_rtp(ulong8 v) {
+  return (uint8)(convert_uint_sat_rtp(v.s0), convert_uint_sat_rtp(v.s1), convert_uint_sat_rtp(v.s2), convert_uint_sat_rtp(v.s3), convert_uint_sat_rtp(v.s4), convert_uint_sat_rtp(v.s5), convert_uint_sat_rtp(v.s6), convert_uint_sat_rtp(v.s7));
+}
+
+INLINE OVERLOADABLE uint8 convert_uint8_sat_rtn(ulong8 v) {
+  return (uint8)(convert_uint_sat_rtn(v.s0), convert_uint_sat_rtn(v.s1), convert_uint_sat_rtn(v.s2), convert_uint_sat_rtn(v.s3), convert_uint_sat_rtn(v.s4), convert_uint_sat_rtn(v.s5), convert_uint_sat_rtn(v.s6), convert_uint_sat_rtn(v.s7));
+}
+
+INLINE OVERLOADABLE short8 convert_short8_sat_rte(ulong8 v) {
+  return (short8)(convert_short_sat_rte(v.s0), convert_short_sat_rte(v.s1), convert_short_sat_rte(v.s2), convert_short_sat_rte(v.s3), convert_short_sat_rte(v.s4), convert_short_sat_rte(v.s5), convert_short_sat_rte(v.s6), convert_short_sat_rte(v.s7));
+}
+
+INLINE OVERLOADABLE short8 convert_short8_sat_rtz(ulong8 v) {
+  return (short8)(convert_short_sat_rtz(v.s0), convert_short_sat_rtz(v.s1), convert_short_sat_rtz(v.s2), convert_short_sat_rtz(v.s3), convert_short_sat_rtz(v.s4), convert_short_sat_rtz(v.s5), convert_short_sat_rtz(v.s6), convert_short_sat_rtz(v.s7));
+}
+
+INLINE OVERLOADABLE short8 convert_short8_sat_rtp(ulong8 v) {
+  return (short8)(convert_short_sat_rtp(v.s0), convert_short_sat_rtp(v.s1), convert_short_sat_rtp(v.s2), convert_short_sat_rtp(v.s3), convert_short_sat_rtp(v.s4), convert_short_sat_rtp(v.s5), convert_short_sat_rtp(v.s6), convert_short_sat_rtp(v.s7));
+}
+
+INLINE OVERLOADABLE short8 convert_short8_sat_rtn(ulong8 v) {
+  return (short8)(convert_short_sat_rtn(v.s0), convert_short_sat_rtn(v.s1), convert_short_sat_rtn(v.s2), convert_short_sat_rtn(v.s3), convert_short_sat_rtn(v.s4), convert_short_sat_rtn(v.s5), convert_short_sat_rtn(v.s6), convert_short_sat_rtn(v.s7));
+}
+
+INLINE OVERLOADABLE ushort8 convert_ushort8_sat_rte(ulong8 v) {
+  return (ushort8)(convert_ushort_sat_rte(v.s0), convert_ushort_sat_rte(v.s1), convert_ushort_sat_rte(v.s2), convert_ushort_sat_rte(v.s3), convert_ushort_sat_rte(v.s4), convert_ushort_sat_rte(v.s5), convert_ushort_sat_rte(v.s6), convert_ushort_sat_rte(v.s7));
+}
+
+INLINE OVERLOADABLE ushort8 convert_ushort8_sat_rtz(ulong8 v) {
+  return (ushort8)(convert_ushort_sat_rtz(v.s0), convert_ushort_sat_rtz(v.s1), convert_ushort_sat_rtz(v.s2), convert_ushort_sat_rtz(v.s3), convert_ushort_sat_rtz(v.s4), convert_ushort_sat_rtz(v.s5), convert_ushort_sat_rtz(v.s6), convert_ushort_sat_rtz(v.s7));
+}
+
+INLINE OVERLOADABLE ushort8 convert_ushort8_sat_rtp(ulong8 v) {
+  return (ushort8)(convert_ushort_sat_rtp(v.s0), convert_ushort_sat_rtp(v.s1), convert_ushort_sat_rtp(v.s2), convert_ushort_sat_rtp(v.s3), convert_ushort_sat_rtp(v.s4), convert_ushort_sat_rtp(v.s5), convert_ushort_sat_rtp(v.s6), convert_ushort_sat_rtp(v.s7));
+}
+
+INLINE OVERLOADABLE ushort8 convert_ushort8_sat_rtn(ulong8 v) {
+  return (ushort8)(convert_ushort_sat_rtn(v.s0), convert_ushort_sat_rtn(v.s1), convert_ushort_sat_rtn(v.s2), convert_ushort_sat_rtn(v.s3), convert_ushort_sat_rtn(v.s4), convert_ushort_sat_rtn(v.s5), convert_ushort_sat_rtn(v.s6), convert_ushort_sat_rtn(v.s7));
+}
+
+INLINE OVERLOADABLE char8 convert_char8_sat_rte(ulong8 v) {
+  return (char8)(convert_char_sat_rte(v.s0), convert_char_sat_rte(v.s1), convert_char_sat_rte(v.s2), convert_char_sat_rte(v.s3), convert_char_sat_rte(v.s4), convert_char_sat_rte(v.s5), convert_char_sat_rte(v.s6), convert_char_sat_rte(v.s7));
+}
+
+INLINE OVERLOADABLE char8 convert_char8_sat_rtz(ulong8 v) {
+  return (char8)(convert_char_sat_rtz(v.s0), convert_char_sat_rtz(v.s1), convert_char_sat_rtz(v.s2), convert_char_sat_rtz(v.s3), convert_char_sat_rtz(v.s4), convert_char_sat_rtz(v.s5), convert_char_sat_rtz(v.s6), convert_char_sat_rtz(v.s7));
+}
+
+INLINE OVERLOADABLE char8 convert_char8_sat_rtp(ulong8 v) {
+  return (char8)(convert_char_sat_rtp(v.s0), convert_char_sat_rtp(v.s1), convert_char_sat_rtp(v.s2), convert_char_sat_rtp(v.s3), convert_char_sat_rtp(v.s4), convert_char_sat_rtp(v.s5), convert_char_sat_rtp(v.s6), convert_char_sat_rtp(v.s7));
+}
+
+INLINE OVERLOADABLE char8 convert_char8_sat_rtn(ulong8 v) {
+  return (char8)(convert_char_sat_rtn(v.s0), convert_char_sat_rtn(v.s1), convert_char_sat_rtn(v.s2), convert_char_sat_rtn(v.s3), convert_char_sat_rtn(v.s4), convert_char_sat_rtn(v.s5), convert_char_sat_rtn(v.s6), convert_char_sat_rtn(v.s7));
+}
+
+INLINE OVERLOADABLE uchar8 convert_uchar8_sat_rte(ulong8 v) {
+  return (uchar8)(convert_uchar_sat_rte(v.s0), convert_uchar_sat_rte(v.s1), convert_uchar_sat_rte(v.s2), convert_uchar_sat_rte(v.s3), convert_uchar_sat_rte(v.s4), convert_uchar_sat_rte(v.s5), convert_uchar_sat_rte(v.s6), convert_uchar_sat_rte(v.s7));
+}
+
+INLINE OVERLOADABLE uchar8 convert_uchar8_sat_rtz(ulong8 v) {
+  return (uchar8)(convert_uchar_sat_rtz(v.s0), convert_uchar_sat_rtz(v.s1), convert_uchar_sat_rtz(v.s2), convert_uchar_sat_rtz(v.s3), convert_uchar_sat_rtz(v.s4), convert_uchar_sat_rtz(v.s5), convert_uchar_sat_rtz(v.s6), convert_uchar_sat_rtz(v.s7));
+}
+
+INLINE OVERLOADABLE uchar8 convert_uchar8_sat_rtp(ulong8 v) {
+  return (uchar8)(convert_uchar_sat_rtp(v.s0), convert_uchar_sat_rtp(v.s1), convert_uchar_sat_rtp(v.s2), convert_uchar_sat_rtp(v.s3), convert_uchar_sat_rtp(v.s4), convert_uchar_sat_rtp(v.s5), convert_uchar_sat_rtp(v.s6), convert_uchar_sat_rtp(v.s7));
+}
+
+INLINE OVERLOADABLE uchar8 convert_uchar8_sat_rtn(ulong8 v) {
+  return (uchar8)(convert_uchar_sat_rtn(v.s0), convert_uchar_sat_rtn(v.s1), convert_uchar_sat_rtn(v.s2), convert_uchar_sat_rtn(v.s3), convert_uchar_sat_rtn(v.s4), convert_uchar_sat_rtn(v.s5), convert_uchar_sat_rtn(v.s6), convert_uchar_sat_rtn(v.s7));
+}
+
+INLINE OVERLOADABLE long8 convert_long8_sat_rte(int8 v) {
+  return (long8)(convert_long_sat_rte(v.s0), convert_long_sat_rte(v.s1), convert_long_sat_rte(v.s2), convert_long_sat_rte(v.s3), convert_long_sat_rte(v.s4), convert_long_sat_rte(v.s5), convert_long_sat_rte(v.s6), convert_long_sat_rte(v.s7));
+}
+
+INLINE OVERLOADABLE long8 convert_long8_sat_rtz(int8 v) {
+  return (long8)(convert_long_sat_rtz(v.s0), convert_long_sat_rtz(v.s1), convert_long_sat_rtz(v.s2), convert_long_sat_rtz(v.s3), convert_long_sat_rtz(v.s4), convert_long_sat_rtz(v.s5), convert_long_sat_rtz(v.s6), convert_long_sat_rtz(v.s7));
+}
+
+INLINE OVERLOADABLE long8 convert_long8_sat_rtp(int8 v) {
+  return (long8)(convert_long_sat_rtp(v.s0), convert_long_sat_rtp(v.s1), convert_long_sat_rtp(v.s2), convert_long_sat_rtp(v.s3), convert_long_sat_rtp(v.s4), convert_long_sat_rtp(v.s5), convert_long_sat_rtp(v.s6), convert_long_sat_rtp(v.s7));
+}
+
+INLINE OVERLOADABLE long8 convert_long8_sat_rtn(int8 v) {
+  return (long8)(convert_long_sat_rtn(v.s0), convert_long_sat_rtn(v.s1), convert_long_sat_rtn(v.s2), convert_long_sat_rtn(v.s3), convert_long_sat_rtn(v.s4), convert_long_sat_rtn(v.s5), convert_long_sat_rtn(v.s6), convert_long_sat_rtn(v.s7));
+}
+
+INLINE OVERLOADABLE ulong8 convert_ulong8_sat_rte(int8 v) {
+  return (ulong8)(convert_ulong_sat_rte(v.s0), convert_ulong_sat_rte(v.s1), convert_ulong_sat_rte(v.s2), convert_ulong_sat_rte(v.s3), convert_ulong_sat_rte(v.s4), convert_ulong_sat_rte(v.s5), convert_ulong_sat_rte(v.s6), convert_ulong_sat_rte(v.s7));
+}
+
+INLINE OVERLOADABLE ulong8 convert_ulong8_sat_rtz(int8 v) {
+  return (ulong8)(convert_ulong_sat_rtz(v.s0), convert_ulong_sat_rtz(v.s1), convert_ulong_sat_rtz(v.s2), convert_ulong_sat_rtz(v.s3), convert_ulong_sat_rtz(v.s4), convert_ulong_sat_rtz(v.s5), convert_ulong_sat_rtz(v.s6), convert_ulong_sat_rtz(v.s7));
+}
+
+INLINE OVERLOADABLE ulong8 convert_ulong8_sat_rtp(int8 v) {
+  return (ulong8)(convert_ulong_sat_rtp(v.s0), convert_ulong_sat_rtp(v.s1), convert_ulong_sat_rtp(v.s2), convert_ulong_sat_rtp(v.s3), convert_ulong_sat_rtp(v.s4), convert_ulong_sat_rtp(v.s5), convert_ulong_sat_rtp(v.s6), convert_ulong_sat_rtp(v.s7));
+}
+
+INLINE OVERLOADABLE ulong8 convert_ulong8_sat_rtn(int8 v) {
+  return (ulong8)(convert_ulong_sat_rtn(v.s0), convert_ulong_sat_rtn(v.s1), convert_ulong_sat_rtn(v.s2), convert_ulong_sat_rtn(v.s3), convert_ulong_sat_rtn(v.s4), convert_ulong_sat_rtn(v.s5), convert_ulong_sat_rtn(v.s6), convert_ulong_sat_rtn(v.s7));
+}
+
+INLINE OVERLOADABLE int8 convert_int8_sat_rte(int8 v) {
+  return (int8)(convert_int_sat_rte(v.s0), convert_int_sat_rte(v.s1), convert_int_sat_rte(v.s2), convert_int_sat_rte(v.s3), convert_int_sat_rte(v.s4), convert_int_sat_rte(v.s5), convert_int_sat_rte(v.s6), convert_int_sat_rte(v.s7));
+}
+
+INLINE OVERLOADABLE int8 convert_int8_sat_rtz(int8 v) {
+  return (int8)(convert_int_sat_rtz(v.s0), convert_int_sat_rtz(v.s1), convert_int_sat_rtz(v.s2), convert_int_sat_rtz(v.s3), convert_int_sat_rtz(v.s4), convert_int_sat_rtz(v.s5), convert_int_sat_rtz(v.s6), convert_int_sat_rtz(v.s7));
+}
+
+INLINE OVERLOADABLE int8 convert_int8_sat_rtp(int8 v) {
+  return (int8)(convert_int_sat_rtp(v.s0), convert_int_sat_rtp(v.s1), convert_int_sat_rtp(v.s2), convert_int_sat_rtp(v.s3), convert_int_sat_rtp(v.s4), convert_int_sat_rtp(v.s5), convert_int_sat_rtp(v.s6), convert_int_sat_rtp(v.s7));
+}
+
+INLINE OVERLOADABLE int8 convert_int8_sat_rtn(int8 v) {
+  return (int8)(convert_int_sat_rtn(v.s0), convert_int_sat_rtn(v.s1), convert_int_sat_rtn(v.s2), convert_int_sat_rtn(v.s3), convert_int_sat_rtn(v.s4), convert_int_sat_rtn(v.s5), convert_int_sat_rtn(v.s6), convert_int_sat_rtn(v.s7));
+}
+
+INLINE OVERLOADABLE uint8 convert_uint8_sat_rte(int8 v) {
+  return (uint8)(convert_uint_sat_rte(v.s0), convert_uint_sat_rte(v.s1), convert_uint_sat_rte(v.s2), convert_uint_sat_rte(v.s3), convert_uint_sat_rte(v.s4), convert_uint_sat_rte(v.s5), convert_uint_sat_rte(v.s6), convert_uint_sat_rte(v.s7));
+}
+
+INLINE OVERLOADABLE uint8 convert_uint8_sat_rtz(int8 v) {
+  return (uint8)(convert_uint_sat_rtz(v.s0), convert_uint_sat_rtz(v.s1), convert_uint_sat_rtz(v.s2), convert_uint_sat_rtz(v.s3), convert_uint_sat_rtz(v.s4), convert_uint_sat_rtz(v.s5), convert_uint_sat_rtz(v.s6), convert_uint_sat_rtz(v.s7));
+}
+
+INLINE OVERLOADABLE uint8 convert_uint8_sat_rtp(int8 v) {
+  return (uint8)(convert_uint_sat_rtp(v.s0), convert_uint_sat_rtp(v.s1), convert_uint_sat_rtp(v.s2), convert_uint_sat_rtp(v.s3), convert_uint_sat_rtp(v.s4), convert_uint_sat_rtp(v.s5), convert_uint_sat_rtp(v.s6), convert_uint_sat_rtp(v.s7));
+}
+
+INLINE OVERLOADABLE uint8 convert_uint8_sat_rtn(int8 v) {
+  return (uint8)(convert_uint_sat_rtn(v.s0), convert_uint_sat_rtn(v.s1), convert_uint_sat_rtn(v.s2), convert_uint_sat_rtn(v.s3), convert_uint_sat_rtn(v.s4), convert_uint_sat_rtn(v.s5), convert_uint_sat_rtn(v.s6), convert_uint_sat_rtn(v.s7));
+}
+
+INLINE OVERLOADABLE short8 convert_short8_sat_rte(int8 v) {
+  return (short8)(convert_short_sat_rte(v.s0), convert_short_sat_rte(v.s1), convert_short_sat_rte(v.s2), convert_short_sat_rte(v.s3), convert_short_sat_rte(v.s4), convert_short_sat_rte(v.s5), convert_short_sat_rte(v.s6), convert_short_sat_rte(v.s7));
+}
+
+INLINE OVERLOADABLE short8 convert_short8_sat_rtz(int8 v) {
+  return (short8)(convert_short_sat_rtz(v.s0), convert_short_sat_rtz(v.s1), convert_short_sat_rtz(v.s2), convert_short_sat_rtz(v.s3), convert_short_sat_rtz(v.s4), convert_short_sat_rtz(v.s5), convert_short_sat_rtz(v.s6), convert_short_sat_rtz(v.s7));
+}
+
+INLINE OVERLOADABLE short8 convert_short8_sat_rtp(int8 v) {
+  return (short8)(convert_short_sat_rtp(v.s0), convert_short_sat_rtp(v.s1), convert_short_sat_rtp(v.s2), convert_short_sat_rtp(v.s3), convert_short_sat_rtp(v.s4), convert_short_sat_rtp(v.s5), convert_short_sat_rtp(v.s6), convert_short_sat_rtp(v.s7));
+}
+
+INLINE OVERLOADABLE short8 convert_short8_sat_rtn(int8 v) {
+  return (short8)(convert_short_sat_rtn(v.s0), convert_short_sat_rtn(v.s1), convert_short_sat_rtn(v.s2), convert_short_sat_rtn(v.s3), convert_short_sat_rtn(v.s4), convert_short_sat_rtn(v.s5), convert_short_sat_rtn(v.s6), convert_short_sat_rtn(v.s7));
+}
+
+INLINE OVERLOADABLE ushort8 convert_ushort8_sat_rte(int8 v) {
+  return (ushort8)(convert_ushort_sat_rte(v.s0), convert_ushort_sat_rte(v.s1), convert_ushort_sat_rte(v.s2), convert_ushort_sat_rte(v.s3), convert_ushort_sat_rte(v.s4), convert_ushort_sat_rte(v.s5), convert_ushort_sat_rte(v.s6), convert_ushort_sat_rte(v.s7));
+}
+
+INLINE OVERLOADABLE ushort8 convert_ushort8_sat_rtz(int8 v) {
+  return (ushort8)(convert_ushort_sat_rtz(v.s0), convert_ushort_sat_rtz(v.s1), convert_ushort_sat_rtz(v.s2), convert_ushort_sat_rtz(v.s3), convert_ushort_sat_rtz(v.s4), convert_ushort_sat_rtz(v.s5), convert_ushort_sat_rtz(v.s6), convert_ushort_sat_rtz(v.s7));
+}
+
+INLINE OVERLOADABLE ushort8 convert_ushort8_sat_rtp(int8 v) {
+  return (ushort8)(convert_ushort_sat_rtp(v.s0), convert_ushort_sat_rtp(v.s1), convert_ushort_sat_rtp(v.s2), convert_ushort_sat_rtp(v.s3), convert_ushort_sat_rtp(v.s4), convert_ushort_sat_rtp(v.s5), convert_ushort_sat_rtp(v.s6), convert_ushort_sat_rtp(v.s7));
+}
+
+INLINE OVERLOADABLE ushort8 convert_ushort8_sat_rtn(int8 v) {
+  return (ushort8)(convert_ushort_sat_rtn(v.s0), convert_ushort_sat_rtn(v.s1), convert_ushort_sat_rtn(v.s2), convert_ushort_sat_rtn(v.s3), convert_ushort_sat_rtn(v.s4), convert_ushort_sat_rtn(v.s5), convert_ushort_sat_rtn(v.s6), convert_ushort_sat_rtn(v.s7));
+}
+
+INLINE OVERLOADABLE char8 convert_char8_sat_rte(int8 v) {
+  return (char8)(convert_char_sat_rte(v.s0), convert_char_sat_rte(v.s1), convert_char_sat_rte(v.s2), convert_char_sat_rte(v.s3), convert_char_sat_rte(v.s4), convert_char_sat_rte(v.s5), convert_char_sat_rte(v.s6), convert_char_sat_rte(v.s7));
+}
+
+INLINE OVERLOADABLE char8 convert_char8_sat_rtz(int8 v) {
+  return (char8)(convert_char_sat_rtz(v.s0), convert_char_sat_rtz(v.s1), convert_char_sat_rtz(v.s2), convert_char_sat_rtz(v.s3), convert_char_sat_rtz(v.s4), convert_char_sat_rtz(v.s5), convert_char_sat_rtz(v.s6), convert_char_sat_rtz(v.s7));
+}
+
+INLINE OVERLOADABLE char8 convert_char8_sat_rtp(int8 v) {
+  return (char8)(convert_char_sat_rtp(v.s0), convert_char_sat_rtp(v.s1), convert_char_sat_rtp(v.s2), convert_char_sat_rtp(v.s3), convert_char_sat_rtp(v.s4), convert_char_sat_rtp(v.s5), convert_char_sat_rtp(v.s6), convert_char_sat_rtp(v.s7));
+}
+
+INLINE OVERLOADABLE char8 convert_char8_sat_rtn(int8 v) {
+  return (char8)(convert_char_sat_rtn(v.s0), convert_char_sat_rtn(v.s1), convert_char_sat_rtn(v.s2), convert_char_sat_rtn(v.s3), convert_char_sat_rtn(v.s4), convert_char_sat_rtn(v.s5), convert_char_sat_rtn(v.s6), convert_char_sat_rtn(v.s7));
+}
+
+INLINE OVERLOADABLE uchar8 convert_uchar8_sat_rte(int8 v) {
+  return (uchar8)(convert_uchar_sat_rte(v.s0), convert_uchar_sat_rte(v.s1), convert_uchar_sat_rte(v.s2), convert_uchar_sat_rte(v.s3), convert_uchar_sat_rte(v.s4), convert_uchar_sat_rte(v.s5), convert_uchar_sat_rte(v.s6), convert_uchar_sat_rte(v.s7));
+}
+
+INLINE OVERLOADABLE uchar8 convert_uchar8_sat_rtz(int8 v) {
+  return (uchar8)(convert_uchar_sat_rtz(v.s0), convert_uchar_sat_rtz(v.s1), convert_uchar_sat_rtz(v.s2), convert_uchar_sat_rtz(v.s3), convert_uchar_sat_rtz(v.s4), convert_uchar_sat_rtz(v.s5), convert_uchar_sat_rtz(v.s6), convert_uchar_sat_rtz(v.s7));
+}
+
+INLINE OVERLOADABLE uchar8 convert_uchar8_sat_rtp(int8 v) {
+  return (uchar8)(convert_uchar_sat_rtp(v.s0), convert_uchar_sat_rtp(v.s1), convert_uchar_sat_rtp(v.s2), convert_uchar_sat_rtp(v.s3), convert_uchar_sat_rtp(v.s4), convert_uchar_sat_rtp(v.s5), convert_uchar_sat_rtp(v.s6), convert_uchar_sat_rtp(v.s7));
+}
+
+INLINE OVERLOADABLE uchar8 convert_uchar8_sat_rtn(int8 v) {
+  return (uchar8)(convert_uchar_sat_rtn(v.s0), convert_uchar_sat_rtn(v.s1), convert_uchar_sat_rtn(v.s2), convert_uchar_sat_rtn(v.s3), convert_uchar_sat_rtn(v.s4), convert_uchar_sat_rtn(v.s5), convert_uchar_sat_rtn(v.s6), convert_uchar_sat_rtn(v.s7));
+}
+
+INLINE OVERLOADABLE long8 convert_long8_sat_rte(uint8 v) {
+  return (long8)(convert_long_sat_rte(v.s0), convert_long_sat_rte(v.s1), convert_long_sat_rte(v.s2), convert_long_sat_rte(v.s3), convert_long_sat_rte(v.s4), convert_long_sat_rte(v.s5), convert_long_sat_rte(v.s6), convert_long_sat_rte(v.s7));
+}
+
+INLINE OVERLOADABLE long8 convert_long8_sat_rtz(uint8 v) {
+  return (long8)(convert_long_sat_rtz(v.s0), convert_long_sat_rtz(v.s1), convert_long_sat_rtz(v.s2), convert_long_sat_rtz(v.s3), convert_long_sat_rtz(v.s4), convert_long_sat_rtz(v.s5), convert_long_sat_rtz(v.s6), convert_long_sat_rtz(v.s7));
+}
+
+INLINE OVERLOADABLE long8 convert_long8_sat_rtp(uint8 v) {
+  return (long8)(convert_long_sat_rtp(v.s0), convert_long_sat_rtp(v.s1), convert_long_sat_rtp(v.s2), convert_long_sat_rtp(v.s3), convert_long_sat_rtp(v.s4), convert_long_sat_rtp(v.s5), convert_long_sat_rtp(v.s6), convert_long_sat_rtp(v.s7));
+}
+
+INLINE OVERLOADABLE long8 convert_long8_sat_rtn(uint8 v) {
+  return (long8)(convert_long_sat_rtn(v.s0), convert_long_sat_rtn(v.s1), convert_long_sat_rtn(v.s2), convert_long_sat_rtn(v.s3), convert_long_sat_rtn(v.s4), convert_long_sat_rtn(v.s5), convert_long_sat_rtn(v.s6), convert_long_sat_rtn(v.s7));
+}
+
+INLINE OVERLOADABLE ulong8 convert_ulong8_sat_rte(uint8 v) {
+  return (ulong8)(convert_ulong_sat_rte(v.s0), convert_ulong_sat_rte(v.s1), convert_ulong_sat_rte(v.s2), convert_ulong_sat_rte(v.s3), convert_ulong_sat_rte(v.s4), convert_ulong_sat_rte(v.s5), convert_ulong_sat_rte(v.s6), convert_ulong_sat_rte(v.s7));
+}
+
+INLINE OVERLOADABLE ulong8 convert_ulong8_sat_rtz(uint8 v) {
+  return (ulong8)(convert_ulong_sat_rtz(v.s0), convert_ulong_sat_rtz(v.s1), convert_ulong_sat_rtz(v.s2), convert_ulong_sat_rtz(v.s3), convert_ulong_sat_rtz(v.s4), convert_ulong_sat_rtz(v.s5), convert_ulong_sat_rtz(v.s6), convert_ulong_sat_rtz(v.s7));
+}
+
+INLINE OVERLOADABLE ulong8 convert_ulong8_sat_rtp(uint8 v) {
+  return (ulong8)(convert_ulong_sat_rtp(v.s0), convert_ulong_sat_rtp(v.s1), convert_ulong_sat_rtp(v.s2), convert_ulong_sat_rtp(v.s3), convert_ulong_sat_rtp(v.s4), convert_ulong_sat_rtp(v.s5), convert_ulong_sat_rtp(v.s6), convert_ulong_sat_rtp(v.s7));
+}
+
+INLINE OVERLOADABLE ulong8 convert_ulong8_sat_rtn(uint8 v) {
+  return (ulong8)(convert_ulong_sat_rtn(v.s0), convert_ulong_sat_rtn(v.s1), convert_ulong_sat_rtn(v.s2), convert_ulong_sat_rtn(v.s3), convert_ulong_sat_rtn(v.s4), convert_ulong_sat_rtn(v.s5), convert_ulong_sat_rtn(v.s6), convert_ulong_sat_rtn(v.s7));
+}
+
+INLINE OVERLOADABLE int8 convert_int8_sat_rte(uint8 v) {
+  return (int8)(convert_int_sat_rte(v.s0), convert_int_sat_rte(v.s1), convert_int_sat_rte(v.s2), convert_int_sat_rte(v.s3), convert_int_sat_rte(v.s4), convert_int_sat_rte(v.s5), convert_int_sat_rte(v.s6), convert_int_sat_rte(v.s7));
+}
+
+INLINE OVERLOADABLE int8 convert_int8_sat_rtz(uint8 v) {
+  return (int8)(convert_int_sat_rtz(v.s0), convert_int_sat_rtz(v.s1), convert_int_sat_rtz(v.s2), convert_int_sat_rtz(v.s3), convert_int_sat_rtz(v.s4), convert_int_sat_rtz(v.s5), convert_int_sat_rtz(v.s6), convert_int_sat_rtz(v.s7));
+}
+
+INLINE OVERLOADABLE int8 convert_int8_sat_rtp(uint8 v) {
+  return (int8)(convert_int_sat_rtp(v.s0), convert_int_sat_rtp(v.s1), convert_int_sat_rtp(v.s2), convert_int_sat_rtp(v.s3), convert_int_sat_rtp(v.s4), convert_int_sat_rtp(v.s5), convert_int_sat_rtp(v.s6), convert_int_sat_rtp(v.s7));
+}
+
+INLINE OVERLOADABLE int8 convert_int8_sat_rtn(uint8 v) {
+  return (int8)(convert_int_sat_rtn(v.s0), convert_int_sat_rtn(v.s1), convert_int_sat_rtn(v.s2), convert_int_sat_rtn(v.s3), convert_int_sat_rtn(v.s4), convert_int_sat_rtn(v.s5), convert_int_sat_rtn(v.s6), convert_int_sat_rtn(v.s7));
+}
+
+INLINE OVERLOADABLE uint8 convert_uint8_sat_rte(uint8 v) {
+  return (uint8)(convert_uint_sat_rte(v.s0), convert_uint_sat_rte(v.s1), convert_uint_sat_rte(v.s2), convert_uint_sat_rte(v.s3), convert_uint_sat_rte(v.s4), convert_uint_sat_rte(v.s5), convert_uint_sat_rte(v.s6), convert_uint_sat_rte(v.s7));
+}
+
+INLINE OVERLOADABLE uint8 convert_uint8_sat_rtz(uint8 v) {
+  return (uint8)(convert_uint_sat_rtz(v.s0), convert_uint_sat_rtz(v.s1), convert_uint_sat_rtz(v.s2), convert_uint_sat_rtz(v.s3), convert_uint_sat_rtz(v.s4), convert_uint_sat_rtz(v.s5), convert_uint_sat_rtz(v.s6), convert_uint_sat_rtz(v.s7));
+}
+
+INLINE OVERLOADABLE uint8 convert_uint8_sat_rtp(uint8 v) {
+  return (uint8)(convert_uint_sat_rtp(v.s0), convert_uint_sat_rtp(v.s1), convert_uint_sat_rtp(v.s2), convert_uint_sat_rtp(v.s3), convert_uint_sat_rtp(v.s4), convert_uint_sat_rtp(v.s5), convert_uint_sat_rtp(v.s6), convert_uint_sat_rtp(v.s7));
+}
+
+INLINE OVERLOADABLE uint8 convert_uint8_sat_rtn(uint8 v) {
+  return (uint8)(convert_uint_sat_rtn(v.s0), convert_uint_sat_rtn(v.s1), convert_uint_sat_rtn(v.s2), convert_uint_sat_rtn(v.s3), convert_uint_sat_rtn(v.s4), convert_uint_sat_rtn(v.s5), convert_uint_sat_rtn(v.s6), convert_uint_sat_rtn(v.s7));
+}
+
+INLINE OVERLOADABLE short8 convert_short8_sat_rte(uint8 v) {
+  return (short8)(convert_short_sat_rte(v.s0), convert_short_sat_rte(v.s1), convert_short_sat_rte(v.s2), convert_short_sat_rte(v.s3), convert_short_sat_rte(v.s4), convert_short_sat_rte(v.s5), convert_short_sat_rte(v.s6), convert_short_sat_rte(v.s7));
+}
+
+INLINE OVERLOADABLE short8 convert_short8_sat_rtz(uint8 v) {
+  return (short8)(convert_short_sat_rtz(v.s0), convert_short_sat_rtz(v.s1), convert_short_sat_rtz(v.s2), convert_short_sat_rtz(v.s3), convert_short_sat_rtz(v.s4), convert_short_sat_rtz(v.s5), convert_short_sat_rtz(v.s6), convert_short_sat_rtz(v.s7));
+}
+
+INLINE OVERLOADABLE short8 convert_short8_sat_rtp(uint8 v) {
+  return (short8)(convert_short_sat_rtp(v.s0), convert_short_sat_rtp(v.s1), convert_short_sat_rtp(v.s2), convert_short_sat_rtp(v.s3), convert_short_sat_rtp(v.s4), convert_short_sat_rtp(v.s5), convert_short_sat_rtp(v.s6), convert_short_sat_rtp(v.s7));
+}
+
+INLINE OVERLOADABLE short8 convert_short8_sat_rtn(uint8 v) {
+  return (short8)(convert_short_sat_rtn(v.s0), convert_short_sat_rtn(v.s1), convert_short_sat_rtn(v.s2), convert_short_sat_rtn(v.s3), convert_short_sat_rtn(v.s4), convert_short_sat_rtn(v.s5), convert_short_sat_rtn(v.s6), convert_short_sat_rtn(v.s7));
+}
+
+INLINE OVERLOADABLE ushort8 convert_ushort8_sat_rte(uint8 v) {
+  return (ushort8)(convert_ushort_sat_rte(v.s0), convert_ushort_sat_rte(v.s1), convert_ushort_sat_rte(v.s2), convert_ushort_sat_rte(v.s3), convert_ushort_sat_rte(v.s4), convert_ushort_sat_rte(v.s5), convert_ushort_sat_rte(v.s6), convert_ushort_sat_rte(v.s7));
+}
+
+INLINE OVERLOADABLE ushort8 convert_ushort8_sat_rtz(uint8 v) {
+  return (ushort8)(convert_ushort_sat_rtz(v.s0), convert_ushort_sat_rtz(v.s1), convert_ushort_sat_rtz(v.s2), convert_ushort_sat_rtz(v.s3), convert_ushort_sat_rtz(v.s4), convert_ushort_sat_rtz(v.s5), convert_ushort_sat_rtz(v.s6), convert_ushort_sat_rtz(v.s7));
+}
+
+INLINE OVERLOADABLE ushort8 convert_ushort8_sat_rtp(uint8 v) {
+  return (ushort8)(convert_ushort_sat_rtp(v.s0), convert_ushort_sat_rtp(v.s1), convert_ushort_sat_rtp(v.s2), convert_ushort_sat_rtp(v.s3), convert_ushort_sat_rtp(v.s4), convert_ushort_sat_rtp(v.s5), convert_ushort_sat_rtp(v.s6), convert_ushort_sat_rtp(v.s7));
+}
+
+INLINE OVERLOADABLE ushort8 convert_ushort8_sat_rtn(uint8 v) {
+  return (ushort8)(convert_ushort_sat_rtn(v.s0), convert_ushort_sat_rtn(v.s1), convert_ushort_sat_rtn(v.s2), convert_ushort_sat_rtn(v.s3), convert_ushort_sat_rtn(v.s4), convert_ushort_sat_rtn(v.s5), convert_ushort_sat_rtn(v.s6), convert_ushort_sat_rtn(v.s7));
+}
+
+INLINE OVERLOADABLE char8 convert_char8_sat_rte(uint8 v) {
+  return (char8)(convert_char_sat_rte(v.s0), convert_char_sat_rte(v.s1), convert_char_sat_rte(v.s2), convert_char_sat_rte(v.s3), convert_char_sat_rte(v.s4), convert_char_sat_rte(v.s5), convert_char_sat_rte(v.s6), convert_char_sat_rte(v.s7));
+}
+
+INLINE OVERLOADABLE char8 convert_char8_sat_rtz(uint8 v) {
+  return (char8)(convert_char_sat_rtz(v.s0), convert_char_sat_rtz(v.s1), convert_char_sat_rtz(v.s2), convert_char_sat_rtz(v.s3), convert_char_sat_rtz(v.s4), convert_char_sat_rtz(v.s5), convert_char_sat_rtz(v.s6), convert_char_sat_rtz(v.s7));
+}
+
+INLINE OVERLOADABLE char8 convert_char8_sat_rtp(uint8 v) {
+  return (char8)(convert_char_sat_rtp(v.s0), convert_char_sat_rtp(v.s1), convert_char_sat_rtp(v.s2), convert_char_sat_rtp(v.s3), convert_char_sat_rtp(v.s4), convert_char_sat_rtp(v.s5), convert_char_sat_rtp(v.s6), convert_char_sat_rtp(v.s7));
+}
+
+INLINE OVERLOADABLE char8 convert_char8_sat_rtn(uint8 v) {
+  return (char8)(convert_char_sat_rtn(v.s0), convert_char_sat_rtn(v.s1), convert_char_sat_rtn(v.s2), convert_char_sat_rtn(v.s3), convert_char_sat_rtn(v.s4), convert_char_sat_rtn(v.s5), convert_char_sat_rtn(v.s6), convert_char_sat_rtn(v.s7));
+}
+
+INLINE OVERLOADABLE uchar8 convert_uchar8_sat_rte(uint8 v) {
+  return (uchar8)(convert_uchar_sat_rte(v.s0), convert_uchar_sat_rte(v.s1), convert_uchar_sat_rte(v.s2), convert_uchar_sat_rte(v.s3), convert_uchar_sat_rte(v.s4), convert_uchar_sat_rte(v.s5), convert_uchar_sat_rte(v.s6), convert_uchar_sat_rte(v.s7));
+}
+
+INLINE OVERLOADABLE uchar8 convert_uchar8_sat_rtz(uint8 v) {
+  return (uchar8)(convert_uchar_sat_rtz(v.s0), convert_uchar_sat_rtz(v.s1), convert_uchar_sat_rtz(v.s2), convert_uchar_sat_rtz(v.s3), convert_uchar_sat_rtz(v.s4), convert_uchar_sat_rtz(v.s5), convert_uchar_sat_rtz(v.s6), convert_uchar_sat_rtz(v.s7));
+}
+
+INLINE OVERLOADABLE uchar8 convert_uchar8_sat_rtp(uint8 v) {
+  return (uchar8)(convert_uchar_sat_rtp(v.s0), convert_uchar_sat_rtp(v.s1), convert_uchar_sat_rtp(v.s2), convert_uchar_sat_rtp(v.s3), convert_uchar_sat_rtp(v.s4), convert_uchar_sat_rtp(v.s5), convert_uchar_sat_rtp(v.s6), convert_uchar_sat_rtp(v.s7));
+}
+
+INLINE OVERLOADABLE uchar8 convert_uchar8_sat_rtn(uint8 v) {
+  return (uchar8)(convert_uchar_sat_rtn(v.s0), convert_uchar_sat_rtn(v.s1), convert_uchar_sat_rtn(v.s2), convert_uchar_sat_rtn(v.s3), convert_uchar_sat_rtn(v.s4), convert_uchar_sat_rtn(v.s5), convert_uchar_sat_rtn(v.s6), convert_uchar_sat_rtn(v.s7));
+}
+
+INLINE OVERLOADABLE long8 convert_long8_sat_rte(short8 v) {
+  return (long8)(convert_long_sat_rte(v.s0), convert_long_sat_rte(v.s1), convert_long_sat_rte(v.s2), convert_long_sat_rte(v.s3), convert_long_sat_rte(v.s4), convert_long_sat_rte(v.s5), convert_long_sat_rte(v.s6), convert_long_sat_rte(v.s7));
+}
+
+INLINE OVERLOADABLE long8 convert_long8_sat_rtz(short8 v) {
+  return (long8)(convert_long_sat_rtz(v.s0), convert_long_sat_rtz(v.s1), convert_long_sat_rtz(v.s2), convert_long_sat_rtz(v.s3), convert_long_sat_rtz(v.s4), convert_long_sat_rtz(v.s5), convert_long_sat_rtz(v.s6), convert_long_sat_rtz(v.s7));
+}
+
+INLINE OVERLOADABLE long8 convert_long8_sat_rtp(short8 v) {
+  return (long8)(convert_long_sat_rtp(v.s0), convert_long_sat_rtp(v.s1), convert_long_sat_rtp(v.s2), convert_long_sat_rtp(v.s3), convert_long_sat_rtp(v.s4), convert_long_sat_rtp(v.s5), convert_long_sat_rtp(v.s6), convert_long_sat_rtp(v.s7));
+}
+
+INLINE OVERLOADABLE long8 convert_long8_sat_rtn(short8 v) {
+  return (long8)(convert_long_sat_rtn(v.s0), convert_long_sat_rtn(v.s1), convert_long_sat_rtn(v.s2), convert_long_sat_rtn(v.s3), convert_long_sat_rtn(v.s4), convert_long_sat_rtn(v.s5), convert_long_sat_rtn(v.s6), convert_long_sat_rtn(v.s7));
+}
+
+INLINE OVERLOADABLE ulong8 convert_ulong8_sat_rte(short8 v) {
+  return (ulong8)(convert_ulong_sat_rte(v.s0), convert_ulong_sat_rte(v.s1), convert_ulong_sat_rte(v.s2), convert_ulong_sat_rte(v.s3), convert_ulong_sat_rte(v.s4), convert_ulong_sat_rte(v.s5), convert_ulong_sat_rte(v.s6), convert_ulong_sat_rte(v.s7));
+}
+
+INLINE OVERLOADABLE ulong8 convert_ulong8_sat_rtz(short8 v) {
+  return (ulong8)(convert_ulong_sat_rtz(v.s0), convert_ulong_sat_rtz(v.s1), convert_ulong_sat_rtz(v.s2), convert_ulong_sat_rtz(v.s3), convert_ulong_sat_rtz(v.s4), convert_ulong_sat_rtz(v.s5), convert_ulong_sat_rtz(v.s6), convert_ulong_sat_rtz(v.s7));
+}
+
+INLINE OVERLOADABLE ulong8 convert_ulong8_sat_rtp(short8 v) {
+  return (ulong8)(convert_ulong_sat_rtp(v.s0), convert_ulong_sat_rtp(v.s1), convert_ulong_sat_rtp(v.s2), convert_ulong_sat_rtp(v.s3), convert_ulong_sat_rtp(v.s4), convert_ulong_sat_rtp(v.s5), convert_ulong_sat_rtp(v.s6), convert_ulong_sat_rtp(v.s7));
+}
+
+INLINE OVERLOADABLE ulong8 convert_ulong8_sat_rtn(short8 v) {
+  return (ulong8)(convert_ulong_sat_rtn(v.s0), convert_ulong_sat_rtn(v.s1), convert_ulong_sat_rtn(v.s2), convert_ulong_sat_rtn(v.s3), convert_ulong_sat_rtn(v.s4), convert_ulong_sat_rtn(v.s5), convert_ulong_sat_rtn(v.s6), convert_ulong_sat_rtn(v.s7));
+}
+
+INLINE OVERLOADABLE int8 convert_int8_sat_rte(short8 v) {
+  return (int8)(convert_int_sat_rte(v.s0), convert_int_sat_rte(v.s1), convert_int_sat_rte(v.s2), convert_int_sat_rte(v.s3), convert_int_sat_rte(v.s4), convert_int_sat_rte(v.s5), convert_int_sat_rte(v.s6), convert_int_sat_rte(v.s7));
+}
+
+INLINE OVERLOADABLE int8 convert_int8_sat_rtz(short8 v) {
+  return (int8)(convert_int_sat_rtz(v.s0), convert_int_sat_rtz(v.s1), convert_int_sat_rtz(v.s2), convert_int_sat_rtz(v.s3), convert_int_sat_rtz(v.s4), convert_int_sat_rtz(v.s5), convert_int_sat_rtz(v.s6), convert_int_sat_rtz(v.s7));
+}
+
+INLINE OVERLOADABLE int8 convert_int8_sat_rtp(short8 v) {
+  return (int8)(convert_int_sat_rtp(v.s0), convert_int_sat_rtp(v.s1), convert_int_sat_rtp(v.s2), convert_int_sat_rtp(v.s3), convert_int_sat_rtp(v.s4), convert_int_sat_rtp(v.s5), convert_int_sat_rtp(v.s6), convert_int_sat_rtp(v.s7));
+}
+
+INLINE OVERLOADABLE int8 convert_int8_sat_rtn(short8 v) {
+  return (int8)(convert_int_sat_rtn(v.s0), convert_int_sat_rtn(v.s1), convert_int_sat_rtn(v.s2), convert_int_sat_rtn(v.s3), convert_int_sat_rtn(v.s4), convert_int_sat_rtn(v.s5), convert_int_sat_rtn(v.s6), convert_int_sat_rtn(v.s7));
+}
+
+INLINE OVERLOADABLE uint8 convert_uint8_sat_rte(short8 v) {
+  return (uint8)(convert_uint_sat_rte(v.s0), convert_uint_sat_rte(v.s1), convert_uint_sat_rte(v.s2), convert_uint_sat_rte(v.s3), convert_uint_sat_rte(v.s4), convert_uint_sat_rte(v.s5), convert_uint_sat_rte(v.s6), convert_uint_sat_rte(v.s7));
+}
+
+INLINE OVERLOADABLE uint8 convert_uint8_sat_rtz(short8 v) {
+  return (uint8)(convert_uint_sat_rtz(v.s0), convert_uint_sat_rtz(v.s1), convert_uint_sat_rtz(v.s2), convert_uint_sat_rtz(v.s3), convert_uint_sat_rtz(v.s4), convert_uint_sat_rtz(v.s5), convert_uint_sat_rtz(v.s6), convert_uint_sat_rtz(v.s7));
+}
+
+INLINE OVERLOADABLE uint8 convert_uint8_sat_rtp(short8 v) {
+  return (uint8)(convert_uint_sat_rtp(v.s0), convert_uint_sat_rtp(v.s1), convert_uint_sat_rtp(v.s2), convert_uint_sat_rtp(v.s3), convert_uint_sat_rtp(v.s4), convert_uint_sat_rtp(v.s5), convert_uint_sat_rtp(v.s6), convert_uint_sat_rtp(v.s7));
+}
+
+INLINE OVERLOADABLE uint8 convert_uint8_sat_rtn(short8 v) {
+  return (uint8)(convert_uint_sat_rtn(v.s0), convert_uint_sat_rtn(v.s1), convert_uint_sat_rtn(v.s2), convert_uint_sat_rtn(v.s3), convert_uint_sat_rtn(v.s4), convert_uint_sat_rtn(v.s5), convert_uint_sat_rtn(v.s6), convert_uint_sat_rtn(v.s7));
+}
+
+INLINE OVERLOADABLE short8 convert_short8_sat_rte(short8 v) {
+  return (short8)(convert_short_sat_rte(v.s0), convert_short_sat_rte(v.s1), convert_short_sat_rte(v.s2), convert_short_sat_rte(v.s3), convert_short_sat_rte(v.s4), convert_short_sat_rte(v.s5), convert_short_sat_rte(v.s6), convert_short_sat_rte(v.s7));
+}
+
+INLINE OVERLOADABLE short8 convert_short8_sat_rtz(short8 v) {
+  return (short8)(convert_short_sat_rtz(v.s0), convert_short_sat_rtz(v.s1), convert_short_sat_rtz(v.s2), convert_short_sat_rtz(v.s3), convert_short_sat_rtz(v.s4), convert_short_sat_rtz(v.s5), convert_short_sat_rtz(v.s6), convert_short_sat_rtz(v.s7));
+}
+
+INLINE OVERLOADABLE short8 convert_short8_sat_rtp(short8 v) {
+  return (short8)(convert_short_sat_rtp(v.s0), convert_short_sat_rtp(v.s1), convert_short_sat_rtp(v.s2), convert_short_sat_rtp(v.s3), convert_short_sat_rtp(v.s4), convert_short_sat_rtp(v.s5), convert_short_sat_rtp(v.s6), convert_short_sat_rtp(v.s7));
+}
+
+INLINE OVERLOADABLE short8 convert_short8_sat_rtn(short8 v) {
+  return (short8)(convert_short_sat_rtn(v.s0), convert_short_sat_rtn(v.s1), convert_short_sat_rtn(v.s2), convert_short_sat_rtn(v.s3), convert_short_sat_rtn(v.s4), convert_short_sat_rtn(v.s5), convert_short_sat_rtn(v.s6), convert_short_sat_rtn(v.s7));
+}
+
+INLINE OVERLOADABLE ushort8 convert_ushort8_sat_rte(short8 v) {
+  return (ushort8)(convert_ushort_sat_rte(v.s0), convert_ushort_sat_rte(v.s1), convert_ushort_sat_rte(v.s2), convert_ushort_sat_rte(v.s3), convert_ushort_sat_rte(v.s4), convert_ushort_sat_rte(v.s5), convert_ushort_sat_rte(v.s6), convert_ushort_sat_rte(v.s7));
+}
+
+INLINE OVERLOADABLE ushort8 convert_ushort8_sat_rtz(short8 v) {
+  return (ushort8)(convert_ushort_sat_rtz(v.s0), convert_ushort_sat_rtz(v.s1), convert_ushort_sat_rtz(v.s2), convert_ushort_sat_rtz(v.s3), convert_ushort_sat_rtz(v.s4), convert_ushort_sat_rtz(v.s5), convert_ushort_sat_rtz(v.s6), convert_ushort_sat_rtz(v.s7));
+}
+
+INLINE OVERLOADABLE ushort8 convert_ushort8_sat_rtp(short8 v) {
+  return (ushort8)(convert_ushort_sat_rtp(v.s0), convert_ushort_sat_rtp(v.s1), convert_ushort_sat_rtp(v.s2), convert_ushort_sat_rtp(v.s3), convert_ushort_sat_rtp(v.s4), convert_ushort_sat_rtp(v.s5), convert_ushort_sat_rtp(v.s6), convert_ushort_sat_rtp(v.s7));
+}
+
+INLINE OVERLOADABLE ushort8 convert_ushort8_sat_rtn(short8 v) {
+  return (ushort8)(convert_ushort_sat_rtn(v.s0), convert_ushort_sat_rtn(v.s1), convert_ushort_sat_rtn(v.s2), convert_ushort_sat_rtn(v.s3), convert_ushort_sat_rtn(v.s4), convert_ushort_sat_rtn(v.s5), convert_ushort_sat_rtn(v.s6), convert_ushort_sat_rtn(v.s7));
+}
+
+INLINE OVERLOADABLE char8 convert_char8_sat_rte(short8 v) {
+  return (char8)(convert_char_sat_rte(v.s0), convert_char_sat_rte(v.s1), convert_char_sat_rte(v.s2), convert_char_sat_rte(v.s3), convert_char_sat_rte(v.s4), convert_char_sat_rte(v.s5), convert_char_sat_rte(v.s6), convert_char_sat_rte(v.s7));
+}
+
+INLINE OVERLOADABLE char8 convert_char8_sat_rtz(short8 v) {
+  return (char8)(convert_char_sat_rtz(v.s0), convert_char_sat_rtz(v.s1), convert_char_sat_rtz(v.s2), convert_char_sat_rtz(v.s3), convert_char_sat_rtz(v.s4), convert_char_sat_rtz(v.s5), convert_char_sat_rtz(v.s6), convert_char_sat_rtz(v.s7));
+}
+
+INLINE OVERLOADABLE char8 convert_char8_sat_rtp(short8 v) {
+  return (char8)(convert_char_sat_rtp(v.s0), convert_char_sat_rtp(v.s1), convert_char_sat_rtp(v.s2), convert_char_sat_rtp(v.s3), convert_char_sat_rtp(v.s4), convert_char_sat_rtp(v.s5), convert_char_sat_rtp(v.s6), convert_char_sat_rtp(v.s7));
+}
+
+INLINE OVERLOADABLE char8 convert_char8_sat_rtn(short8 v) {
+  return (char8)(convert_char_sat_rtn(v.s0), convert_char_sat_rtn(v.s1), convert_char_sat_rtn(v.s2), convert_char_sat_rtn(v.s3), convert_char_sat_rtn(v.s4), convert_char_sat_rtn(v.s5), convert_char_sat_rtn(v.s6), convert_char_sat_rtn(v.s7));
+}
+
+INLINE OVERLOADABLE uchar8 convert_uchar8_sat_rte(short8 v) {
+  return (uchar8)(convert_uchar_sat_rte(v.s0), convert_uchar_sat_rte(v.s1), convert_uchar_sat_rte(v.s2), convert_uchar_sat_rte(v.s3), convert_uchar_sat_rte(v.s4), convert_uchar_sat_rte(v.s5), convert_uchar_sat_rte(v.s6), convert_uchar_sat_rte(v.s7));
+}
+
+INLINE OVERLOADABLE uchar8 convert_uchar8_sat_rtz(short8 v) {
+  return (uchar8)(convert_uchar_sat_rtz(v.s0), convert_uchar_sat_rtz(v.s1), convert_uchar_sat_rtz(v.s2), convert_uchar_sat_rtz(v.s3), convert_uchar_sat_rtz(v.s4), convert_uchar_sat_rtz(v.s5), convert_uchar_sat_rtz(v.s6), convert_uchar_sat_rtz(v.s7));
+}
+
+INLINE OVERLOADABLE uchar8 convert_uchar8_sat_rtp(short8 v) {
+  return (uchar8)(convert_uchar_sat_rtp(v.s0), convert_uchar_sat_rtp(v.s1), convert_uchar_sat_rtp(v.s2), convert_uchar_sat_rtp(v.s3), convert_uchar_sat_rtp(v.s4), convert_uchar_sat_rtp(v.s5), convert_uchar_sat_rtp(v.s6), convert_uchar_sat_rtp(v.s7));
+}
+
+INLINE OVERLOADABLE uchar8 convert_uchar8_sat_rtn(short8 v) {
+  return (uchar8)(convert_uchar_sat_rtn(v.s0), convert_uchar_sat_rtn(v.s1), convert_uchar_sat_rtn(v.s2), convert_uchar_sat_rtn(v.s3), convert_uchar_sat_rtn(v.s4), convert_uchar_sat_rtn(v.s5), convert_uchar_sat_rtn(v.s6), convert_uchar_sat_rtn(v.s7));
+}
+
+INLINE OVERLOADABLE long8 convert_long8_sat_rte(ushort8 v) {
+  return (long8)(convert_long_sat_rte(v.s0), convert_long_sat_rte(v.s1), convert_long_sat_rte(v.s2), convert_long_sat_rte(v.s3), convert_long_sat_rte(v.s4), convert_long_sat_rte(v.s5), convert_long_sat_rte(v.s6), convert_long_sat_rte(v.s7));
+}
+
+INLINE OVERLOADABLE long8 convert_long8_sat_rtz(ushort8 v) {
+  return (long8)(convert_long_sat_rtz(v.s0), convert_long_sat_rtz(v.s1), convert_long_sat_rtz(v.s2), convert_long_sat_rtz(v.s3), convert_long_sat_rtz(v.s4), convert_long_sat_rtz(v.s5), convert_long_sat_rtz(v.s6), convert_long_sat_rtz(v.s7));
+}
+
+INLINE OVERLOADABLE long8 convert_long8_sat_rtp(ushort8 v) {
+  return (long8)(convert_long_sat_rtp(v.s0), convert_long_sat_rtp(v.s1), convert_long_sat_rtp(v.s2), convert_long_sat_rtp(v.s3), convert_long_sat_rtp(v.s4), convert_long_sat_rtp(v.s5), convert_long_sat_rtp(v.s6), convert_long_sat_rtp(v.s7));
+}
+
+INLINE OVERLOADABLE long8 convert_long8_sat_rtn(ushort8 v) {
+  return (long8)(convert_long_sat_rtn(v.s0), convert_long_sat_rtn(v.s1), convert_long_sat_rtn(v.s2), convert_long_sat_rtn(v.s3), convert_long_sat_rtn(v.s4), convert_long_sat_rtn(v.s5), convert_long_sat_rtn(v.s6), convert_long_sat_rtn(v.s7));
+}
+
+INLINE OVERLOADABLE ulong8 convert_ulong8_sat_rte(ushort8 v) {
+  return (ulong8)(convert_ulong_sat_rte(v.s0), convert_ulong_sat_rte(v.s1), convert_ulong_sat_rte(v.s2), convert_ulong_sat_rte(v.s3), convert_ulong_sat_rte(v.s4), convert_ulong_sat_rte(v.s5), convert_ulong_sat_rte(v.s6), convert_ulong_sat_rte(v.s7));
+}
+
+INLINE OVERLOADABLE ulong8 convert_ulong8_sat_rtz(ushort8 v) {
+  return (ulong8)(convert_ulong_sat_rtz(v.s0), convert_ulong_sat_rtz(v.s1), convert_ulong_sat_rtz(v.s2), convert_ulong_sat_rtz(v.s3), convert_ulong_sat_rtz(v.s4), convert_ulong_sat_rtz(v.s5), convert_ulong_sat_rtz(v.s6), convert_ulong_sat_rtz(v.s7));
+}
+
+INLINE OVERLOADABLE ulong8 convert_ulong8_sat_rtp(ushort8 v) {
+  return (ulong8)(convert_ulong_sat_rtp(v.s0), convert_ulong_sat_rtp(v.s1), convert_ulong_sat_rtp(v.s2), convert_ulong_sat_rtp(v.s3), convert_ulong_sat_rtp(v.s4), convert_ulong_sat_rtp(v.s5), convert_ulong_sat_rtp(v.s6), convert_ulong_sat_rtp(v.s7));
+}
+
+INLINE OVERLOADABLE ulong8 convert_ulong8_sat_rtn(ushort8 v) {
+  return (ulong8)(convert_ulong_sat_rtn(v.s0), convert_ulong_sat_rtn(v.s1), convert_ulong_sat_rtn(v.s2), convert_ulong_sat_rtn(v.s3), convert_ulong_sat_rtn(v.s4), convert_ulong_sat_rtn(v.s5), convert_ulong_sat_rtn(v.s6), convert_ulong_sat_rtn(v.s7));
+}
+
+INLINE OVERLOADABLE int8 convert_int8_sat_rte(ushort8 v) {
+  return (int8)(convert_int_sat_rte(v.s0), convert_int_sat_rte(v.s1), convert_int_sat_rte(v.s2), convert_int_sat_rte(v.s3), convert_int_sat_rte(v.s4), convert_int_sat_rte(v.s5), convert_int_sat_rte(v.s6), convert_int_sat_rte(v.s7));
+}
+
+INLINE OVERLOADABLE int8 convert_int8_sat_rtz(ushort8 v) {
+  return (int8)(convert_int_sat_rtz(v.s0), convert_int_sat_rtz(v.s1), convert_int_sat_rtz(v.s2), convert_int_sat_rtz(v.s3), convert_int_sat_rtz(v.s4), convert_int_sat_rtz(v.s5), convert_int_sat_rtz(v.s6), convert_int_sat_rtz(v.s7));
+}
+
+INLINE OVERLOADABLE int8 convert_int8_sat_rtp(ushort8 v) {
+  return (int8)(convert_int_sat_rtp(v.s0), convert_int_sat_rtp(v.s1), convert_int_sat_rtp(v.s2), convert_int_sat_rtp(v.s3), convert_int_sat_rtp(v.s4), convert_int_sat_rtp(v.s5), convert_int_sat_rtp(v.s6), convert_int_sat_rtp(v.s7));
+}
+
+INLINE OVERLOADABLE int8 convert_int8_sat_rtn(ushort8 v) {
+  return (int8)(convert_int_sat_rtn(v.s0), convert_int_sat_rtn(v.s1), convert_int_sat_rtn(v.s2), convert_int_sat_rtn(v.s3), convert_int_sat_rtn(v.s4), convert_int_sat_rtn(v.s5), convert_int_sat_rtn(v.s6), convert_int_sat_rtn(v.s7));
+}
+
+INLINE OVERLOADABLE uint8 convert_uint8_sat_rte(ushort8 v) {
+  return (uint8)(convert_uint_sat_rte(v.s0), convert_uint_sat_rte(v.s1), convert_uint_sat_rte(v.s2), convert_uint_sat_rte(v.s3), convert_uint_sat_rte(v.s4), convert_uint_sat_rte(v.s5), convert_uint_sat_rte(v.s6), convert_uint_sat_rte(v.s7));
+}
+
+INLINE OVERLOADABLE uint8 convert_uint8_sat_rtz(ushort8 v) {
+  return (uint8)(convert_uint_sat_rtz(v.s0), convert_uint_sat_rtz(v.s1), convert_uint_sat_rtz(v.s2), convert_uint_sat_rtz(v.s3), convert_uint_sat_rtz(v.s4), convert_uint_sat_rtz(v.s5), convert_uint_sat_rtz(v.s6), convert_uint_sat_rtz(v.s7));
+}
+
+INLINE OVERLOADABLE uint8 convert_uint8_sat_rtp(ushort8 v) {
+  return (uint8)(convert_uint_sat_rtp(v.s0), convert_uint_sat_rtp(v.s1), convert_uint_sat_rtp(v.s2), convert_uint_sat_rtp(v.s3), convert_uint_sat_rtp(v.s4), convert_uint_sat_rtp(v.s5), convert_uint_sat_rtp(v.s6), convert_uint_sat_rtp(v.s7));
+}
+
+INLINE OVERLOADABLE uint8 convert_uint8_sat_rtn(ushort8 v) {
+  return (uint8)(convert_uint_sat_rtn(v.s0), convert_uint_sat_rtn(v.s1), convert_uint_sat_rtn(v.s2), convert_uint_sat_rtn(v.s3), convert_uint_sat_rtn(v.s4), convert_uint_sat_rtn(v.s5), convert_uint_sat_rtn(v.s6), convert_uint_sat_rtn(v.s7));
+}
+
+INLINE OVERLOADABLE short8 convert_short8_sat_rte(ushort8 v) {
+  return (short8)(convert_short_sat_rte(v.s0), convert_short_sat_rte(v.s1), convert_short_sat_rte(v.s2), convert_short_sat_rte(v.s3), convert_short_sat_rte(v.s4), convert_short_sat_rte(v.s5), convert_short_sat_rte(v.s6), convert_short_sat_rte(v.s7));
+}
+
+INLINE OVERLOADABLE short8 convert_short8_sat_rtz(ushort8 v) {
+  return (short8)(convert_short_sat_rtz(v.s0), convert_short_sat_rtz(v.s1), convert_short_sat_rtz(v.s2), convert_short_sat_rtz(v.s3), convert_short_sat_rtz(v.s4), convert_short_sat_rtz(v.s5), convert_short_sat_rtz(v.s6), convert_short_sat_rtz(v.s7));
+}
+
+INLINE OVERLOADABLE short8 convert_short8_sat_rtp(ushort8 v) {
+  return (short8)(convert_short_sat_rtp(v.s0), convert_short_sat_rtp(v.s1), convert_short_sat_rtp(v.s2), convert_short_sat_rtp(v.s3), convert_short_sat_rtp(v.s4), convert_short_sat_rtp(v.s5), convert_short_sat_rtp(v.s6), convert_short_sat_rtp(v.s7));
+}
+
+INLINE OVERLOADABLE short8 convert_short8_sat_rtn(ushort8 v) {
+  return (short8)(convert_short_sat_rtn(v.s0), convert_short_sat_rtn(v.s1), convert_short_sat_rtn(v.s2), convert_short_sat_rtn(v.s3), convert_short_sat_rtn(v.s4), convert_short_sat_rtn(v.s5), convert_short_sat_rtn(v.s6), convert_short_sat_rtn(v.s7));
+}
+
+INLINE OVERLOADABLE ushort8 convert_ushort8_sat_rte(ushort8 v) {
+  return (ushort8)(convert_ushort_sat_rte(v.s0), convert_ushort_sat_rte(v.s1), convert_ushort_sat_rte(v.s2), convert_ushort_sat_rte(v.s3), convert_ushort_sat_rte(v.s4), convert_ushort_sat_rte(v.s5), convert_ushort_sat_rte(v.s6), convert_ushort_sat_rte(v.s7));
+}
+
+INLINE OVERLOADABLE ushort8 convert_ushort8_sat_rtz(ushort8 v) {
+  return (ushort8)(convert_ushort_sat_rtz(v.s0), convert_ushort_sat_rtz(v.s1), convert_ushort_sat_rtz(v.s2), convert_ushort_sat_rtz(v.s3), convert_ushort_sat_rtz(v.s4), convert_ushort_sat_rtz(v.s5), convert_ushort_sat_rtz(v.s6), convert_ushort_sat_rtz(v.s7));
+}
+
+INLINE OVERLOADABLE ushort8 convert_ushort8_sat_rtp(ushort8 v) {
+  return (ushort8)(convert_ushort_sat_rtp(v.s0), convert_ushort_sat_rtp(v.s1), convert_ushort_sat_rtp(v.s2), convert_ushort_sat_rtp(v.s3), convert_ushort_sat_rtp(v.s4), convert_ushort_sat_rtp(v.s5), convert_ushort_sat_rtp(v.s6), convert_ushort_sat_rtp(v.s7));
+}
+
+INLINE OVERLOADABLE ushort8 convert_ushort8_sat_rtn(ushort8 v) {
+  return (ushort8)(convert_ushort_sat_rtn(v.s0), convert_ushort_sat_rtn(v.s1), convert_ushort_sat_rtn(v.s2), convert_ushort_sat_rtn(v.s3), convert_ushort_sat_rtn(v.s4), convert_ushort_sat_rtn(v.s5), convert_ushort_sat_rtn(v.s6), convert_ushort_sat_rtn(v.s7));
+}
+
+INLINE OVERLOADABLE char8 convert_char8_sat_rte(ushort8 v) {
+  return (char8)(convert_char_sat_rte(v.s0), convert_char_sat_rte(v.s1), convert_char_sat_rte(v.s2), convert_char_sat_rte(v.s3), convert_char_sat_rte(v.s4), convert_char_sat_rte(v.s5), convert_char_sat_rte(v.s6), convert_char_sat_rte(v.s7));
+}
+
+INLINE OVERLOADABLE char8 convert_char8_sat_rtz(ushort8 v) {
+  return (char8)(convert_char_sat_rtz(v.s0), convert_char_sat_rtz(v.s1), convert_char_sat_rtz(v.s2), convert_char_sat_rtz(v.s3), convert_char_sat_rtz(v.s4), convert_char_sat_rtz(v.s5), convert_char_sat_rtz(v.s6), convert_char_sat_rtz(v.s7));
+}
+
+INLINE OVERLOADABLE char8 convert_char8_sat_rtp(ushort8 v) {
+  return (char8)(convert_char_sat_rtp(v.s0), convert_char_sat_rtp(v.s1), convert_char_sat_rtp(v.s2), convert_char_sat_rtp(v.s3), convert_char_sat_rtp(v.s4), convert_char_sat_rtp(v.s5), convert_char_sat_rtp(v.s6), convert_char_sat_rtp(v.s7));
+}
+
+INLINE OVERLOADABLE char8 convert_char8_sat_rtn(ushort8 v) {
+  return (char8)(convert_char_sat_rtn(v.s0), convert_char_sat_rtn(v.s1), convert_char_sat_rtn(v.s2), convert_char_sat_rtn(v.s3), convert_char_sat_rtn(v.s4), convert_char_sat_rtn(v.s5), convert_char_sat_rtn(v.s6), convert_char_sat_rtn(v.s7));
+}
+
+INLINE OVERLOADABLE uchar8 convert_uchar8_sat_rte(ushort8 v) {
+  return (uchar8)(convert_uchar_sat_rte(v.s0), convert_uchar_sat_rte(v.s1), convert_uchar_sat_rte(v.s2), convert_uchar_sat_rte(v.s3), convert_uchar_sat_rte(v.s4), convert_uchar_sat_rte(v.s5), convert_uchar_sat_rte(v.s6), convert_uchar_sat_rte(v.s7));
+}
+
+INLINE OVERLOADABLE uchar8 convert_uchar8_sat_rtz(ushort8 v) {
+  return (uchar8)(convert_uchar_sat_rtz(v.s0), convert_uchar_sat_rtz(v.s1), convert_uchar_sat_rtz(v.s2), convert_uchar_sat_rtz(v.s3), convert_uchar_sat_rtz(v.s4), convert_uchar_sat_rtz(v.s5), convert_uchar_sat_rtz(v.s6), convert_uchar_sat_rtz(v.s7));
+}
+
+INLINE OVERLOADABLE uchar8 convert_uchar8_sat_rtp(ushort8 v) {
+  return (uchar8)(convert_uchar_sat_rtp(v.s0), convert_uchar_sat_rtp(v.s1), convert_uchar_sat_rtp(v.s2), convert_uchar_sat_rtp(v.s3), convert_uchar_sat_rtp(v.s4), convert_uchar_sat_rtp(v.s5), convert_uchar_sat_rtp(v.s6), convert_uchar_sat_rtp(v.s7));
+}
+
+INLINE OVERLOADABLE uchar8 convert_uchar8_sat_rtn(ushort8 v) {
+  return (uchar8)(convert_uchar_sat_rtn(v.s0), convert_uchar_sat_rtn(v.s1), convert_uchar_sat_rtn(v.s2), convert_uchar_sat_rtn(v.s3), convert_uchar_sat_rtn(v.s4), convert_uchar_sat_rtn(v.s5), convert_uchar_sat_rtn(v.s6), convert_uchar_sat_rtn(v.s7));
+}
+
+INLINE OVERLOADABLE long8 convert_long8_sat_rte(char8 v) {
+  return (long8)(convert_long_sat_rte(v.s0), convert_long_sat_rte(v.s1), convert_long_sat_rte(v.s2), convert_long_sat_rte(v.s3), convert_long_sat_rte(v.s4), convert_long_sat_rte(v.s5), convert_long_sat_rte(v.s6), convert_long_sat_rte(v.s7));
+}
+
+INLINE OVERLOADABLE long8 convert_long8_sat_rtz(char8 v) {
+  return (long8)(convert_long_sat_rtz(v.s0), convert_long_sat_rtz(v.s1), convert_long_sat_rtz(v.s2), convert_long_sat_rtz(v.s3), convert_long_sat_rtz(v.s4), convert_long_sat_rtz(v.s5), convert_long_sat_rtz(v.s6), convert_long_sat_rtz(v.s7));
+}
+
+INLINE OVERLOADABLE long8 convert_long8_sat_rtp(char8 v) {
+  return (long8)(convert_long_sat_rtp(v.s0), convert_long_sat_rtp(v.s1), convert_long_sat_rtp(v.s2), convert_long_sat_rtp(v.s3), convert_long_sat_rtp(v.s4), convert_long_sat_rtp(v.s5), convert_long_sat_rtp(v.s6), convert_long_sat_rtp(v.s7));
+}
+
+INLINE OVERLOADABLE long8 convert_long8_sat_rtn(char8 v) {
+  return (long8)(convert_long_sat_rtn(v.s0), convert_long_sat_rtn(v.s1), convert_long_sat_rtn(v.s2), convert_long_sat_rtn(v.s3), convert_long_sat_rtn(v.s4), convert_long_sat_rtn(v.s5), convert_long_sat_rtn(v.s6), convert_long_sat_rtn(v.s7));
+}
+
+INLINE OVERLOADABLE ulong8 convert_ulong8_sat_rte(char8 v) {
+  return (ulong8)(convert_ulong_sat_rte(v.s0), convert_ulong_sat_rte(v.s1), convert_ulong_sat_rte(v.s2), convert_ulong_sat_rte(v.s3), convert_ulong_sat_rte(v.s4), convert_ulong_sat_rte(v.s5), convert_ulong_sat_rte(v.s6), convert_ulong_sat_rte(v.s7));
+}
+
+INLINE OVERLOADABLE ulong8 convert_ulong8_sat_rtz(char8 v) {
+  return (ulong8)(convert_ulong_sat_rtz(v.s0), convert_ulong_sat_rtz(v.s1), convert_ulong_sat_rtz(v.s2), convert_ulong_sat_rtz(v.s3), convert_ulong_sat_rtz(v.s4), convert_ulong_sat_rtz(v.s5), convert_ulong_sat_rtz(v.s6), convert_ulong_sat_rtz(v.s7));
+}
+
+INLINE OVERLOADABLE ulong8 convert_ulong8_sat_rtp(char8 v) {
+  return (ulong8)(convert_ulong_sat_rtp(v.s0), convert_ulong_sat_rtp(v.s1), convert_ulong_sat_rtp(v.s2), convert_ulong_sat_rtp(v.s3), convert_ulong_sat_rtp(v.s4), convert_ulong_sat_rtp(v.s5), convert_ulong_sat_rtp(v.s6), convert_ulong_sat_rtp(v.s7));
+}
+
+INLINE OVERLOADABLE ulong8 convert_ulong8_sat_rtn(char8 v) {
+  return (ulong8)(convert_ulong_sat_rtn(v.s0), convert_ulong_sat_rtn(v.s1), convert_ulong_sat_rtn(v.s2), convert_ulong_sat_rtn(v.s3), convert_ulong_sat_rtn(v.s4), convert_ulong_sat_rtn(v.s5), convert_ulong_sat_rtn(v.s6), convert_ulong_sat_rtn(v.s7));
+}
+
+INLINE OVERLOADABLE int8 convert_int8_sat_rte(char8 v) {
+  return (int8)(convert_int_sat_rte(v.s0), convert_int_sat_rte(v.s1), convert_int_sat_rte(v.s2), convert_int_sat_rte(v.s3), convert_int_sat_rte(v.s4), convert_int_sat_rte(v.s5), convert_int_sat_rte(v.s6), convert_int_sat_rte(v.s7));
+}
+
+INLINE OVERLOADABLE int8 convert_int8_sat_rtz(char8 v) {
+  return (int8)(convert_int_sat_rtz(v.s0), convert_int_sat_rtz(v.s1), convert_int_sat_rtz(v.s2), convert_int_sat_rtz(v.s3), convert_int_sat_rtz(v.s4), convert_int_sat_rtz(v.s5), convert_int_sat_rtz(v.s6), convert_int_sat_rtz(v.s7));
+}
+
+INLINE OVERLOADABLE int8 convert_int8_sat_rtp(char8 v) {
+  return (int8)(convert_int_sat_rtp(v.s0), convert_int_sat_rtp(v.s1), convert_int_sat_rtp(v.s2), convert_int_sat_rtp(v.s3), convert_int_sat_rtp(v.s4), convert_int_sat_rtp(v.s5), convert_int_sat_rtp(v.s6), convert_int_sat_rtp(v.s7));
+}
+
+INLINE OVERLOADABLE int8 convert_int8_sat_rtn(char8 v) {
+  return (int8)(convert_int_sat_rtn(v.s0), convert_int_sat_rtn(v.s1), convert_int_sat_rtn(v.s2), convert_int_sat_rtn(v.s3), convert_int_sat_rtn(v.s4), convert_int_sat_rtn(v.s5), convert_int_sat_rtn(v.s6), convert_int_sat_rtn(v.s7));
+}
+
+INLINE OVERLOADABLE uint8 convert_uint8_sat_rte(char8 v) {
+  return (uint8)(convert_uint_sat_rte(v.s0), convert_uint_sat_rte(v.s1), convert_uint_sat_rte(v.s2), convert_uint_sat_rte(v.s3), convert_uint_sat_rte(v.s4), convert_uint_sat_rte(v.s5), convert_uint_sat_rte(v.s6), convert_uint_sat_rte(v.s7));
+}
+
+INLINE OVERLOADABLE uint8 convert_uint8_sat_rtz(char8 v) {
+  return (uint8)(convert_uint_sat_rtz(v.s0), convert_uint_sat_rtz(v.s1), convert_uint_sat_rtz(v.s2), convert_uint_sat_rtz(v.s3), convert_uint_sat_rtz(v.s4), convert_uint_sat_rtz(v.s5), convert_uint_sat_rtz(v.s6), convert_uint_sat_rtz(v.s7));
+}
+
+INLINE OVERLOADABLE uint8 convert_uint8_sat_rtp(char8 v) {
+  return (uint8)(convert_uint_sat_rtp(v.s0), convert_uint_sat_rtp(v.s1), convert_uint_sat_rtp(v.s2), convert_uint_sat_rtp(v.s3), convert_uint_sat_rtp(v.s4), convert_uint_sat_rtp(v.s5), convert_uint_sat_rtp(v.s6), convert_uint_sat_rtp(v.s7));
+}
+
+INLINE OVERLOADABLE uint8 convert_uint8_sat_rtn(char8 v) {
+  return (uint8)(convert_uint_sat_rtn(v.s0), convert_uint_sat_rtn(v.s1), convert_uint_sat_rtn(v.s2), convert_uint_sat_rtn(v.s3), convert_uint_sat_rtn(v.s4), convert_uint_sat_rtn(v.s5), convert_uint_sat_rtn(v.s6), convert_uint_sat_rtn(v.s7));
+}
+
+INLINE OVERLOADABLE short8 convert_short8_sat_rte(char8 v) {
+  return (short8)(convert_short_sat_rte(v.s0), convert_short_sat_rte(v.s1), convert_short_sat_rte(v.s2), convert_short_sat_rte(v.s3), convert_short_sat_rte(v.s4), convert_short_sat_rte(v.s5), convert_short_sat_rte(v.s6), convert_short_sat_rte(v.s7));
+}
+
+INLINE OVERLOADABLE short8 convert_short8_sat_rtz(char8 v) {
+  return (short8)(convert_short_sat_rtz(v.s0), convert_short_sat_rtz(v.s1), convert_short_sat_rtz(v.s2), convert_short_sat_rtz(v.s3), convert_short_sat_rtz(v.s4), convert_short_sat_rtz(v.s5), convert_short_sat_rtz(v.s6), convert_short_sat_rtz(v.s7));
+}
+
+INLINE OVERLOADABLE short8 convert_short8_sat_rtp(char8 v) {
+  return (short8)(convert_short_sat_rtp(v.s0), convert_short_sat_rtp(v.s1), convert_short_sat_rtp(v.s2), convert_short_sat_rtp(v.s3), convert_short_sat_rtp(v.s4), convert_short_sat_rtp(v.s5), convert_short_sat_rtp(v.s6), convert_short_sat_rtp(v.s7));
+}
+
+INLINE OVERLOADABLE short8 convert_short8_sat_rtn(char8 v) {
+  return (short8)(convert_short_sat_rtn(v.s0), convert_short_sat_rtn(v.s1), convert_short_sat_rtn(v.s2), convert_short_sat_rtn(v.s3), convert_short_sat_rtn(v.s4), convert_short_sat_rtn(v.s5), convert_short_sat_rtn(v.s6), convert_short_sat_rtn(v.s7));
+}
+
+INLINE OVERLOADABLE ushort8 convert_ushort8_sat_rte(char8 v) {
+  return (ushort8)(convert_ushort_sat_rte(v.s0), convert_ushort_sat_rte(v.s1), convert_ushort_sat_rte(v.s2), convert_ushort_sat_rte(v.s3), convert_ushort_sat_rte(v.s4), convert_ushort_sat_rte(v.s5), convert_ushort_sat_rte(v.s6), convert_ushort_sat_rte(v.s7));
+}
+
+INLINE OVERLOADABLE ushort8 convert_ushort8_sat_rtz(char8 v) {
+  return (ushort8)(convert_ushort_sat_rtz(v.s0), convert_ushort_sat_rtz(v.s1), convert_ushort_sat_rtz(v.s2), convert_ushort_sat_rtz(v.s3), convert_ushort_sat_rtz(v.s4), convert_ushort_sat_rtz(v.s5), convert_ushort_sat_rtz(v.s6), convert_ushort_sat_rtz(v.s7));
+}
+
+INLINE OVERLOADABLE ushort8 convert_ushort8_sat_rtp(char8 v) {
+  return (ushort8)(convert_ushort_sat_rtp(v.s0), convert_ushort_sat_rtp(v.s1), convert_ushort_sat_rtp(v.s2), convert_ushort_sat_rtp(v.s3), convert_ushort_sat_rtp(v.s4), convert_ushort_sat_rtp(v.s5), convert_ushort_sat_rtp(v.s6), convert_ushort_sat_rtp(v.s7));
+}
+
+INLINE OVERLOADABLE ushort8 convert_ushort8_sat_rtn(char8 v) {
+  return (ushort8)(convert_ushort_sat_rtn(v.s0), convert_ushort_sat_rtn(v.s1), convert_ushort_sat_rtn(v.s2), convert_ushort_sat_rtn(v.s3), convert_ushort_sat_rtn(v.s4), convert_ushort_sat_rtn(v.s5), convert_ushort_sat_rtn(v.s6), convert_ushort_sat_rtn(v.s7));
+}
+
+INLINE OVERLOADABLE char8 convert_char8_sat_rte(char8 v) {
+  return (char8)(convert_char_sat_rte(v.s0), convert_char_sat_rte(v.s1), convert_char_sat_rte(v.s2), convert_char_sat_rte(v.s3), convert_char_sat_rte(v.s4), convert_char_sat_rte(v.s5), convert_char_sat_rte(v.s6), convert_char_sat_rte(v.s7));
+}
+
+INLINE OVERLOADABLE char8 convert_char8_sat_rtz(char8 v) {
+  return (char8)(convert_char_sat_rtz(v.s0), convert_char_sat_rtz(v.s1), convert_char_sat_rtz(v.s2), convert_char_sat_rtz(v.s3), convert_char_sat_rtz(v.s4), convert_char_sat_rtz(v.s5), convert_char_sat_rtz(v.s6), convert_char_sat_rtz(v.s7));
+}
+
+INLINE OVERLOADABLE char8 convert_char8_sat_rtp(char8 v) {
+  return (char8)(convert_char_sat_rtp(v.s0), convert_char_sat_rtp(v.s1), convert_char_sat_rtp(v.s2), convert_char_sat_rtp(v.s3), convert_char_sat_rtp(v.s4), convert_char_sat_rtp(v.s5), convert_char_sat_rtp(v.s6), convert_char_sat_rtp(v.s7));
+}
+
+INLINE OVERLOADABLE char8 convert_char8_sat_rtn(char8 v) {
+  return (char8)(convert_char_sat_rtn(v.s0), convert_char_sat_rtn(v.s1), convert_char_sat_rtn(v.s2), convert_char_sat_rtn(v.s3), convert_char_sat_rtn(v.s4), convert_char_sat_rtn(v.s5), convert_char_sat_rtn(v.s6), convert_char_sat_rtn(v.s7));
+}
+
+INLINE OVERLOADABLE uchar8 convert_uchar8_sat_rte(char8 v) {
+  return (uchar8)(convert_uchar_sat_rte(v.s0), convert_uchar_sat_rte(v.s1), convert_uchar_sat_rte(v.s2), convert_uchar_sat_rte(v.s3), convert_uchar_sat_rte(v.s4), convert_uchar_sat_rte(v.s5), convert_uchar_sat_rte(v.s6), convert_uchar_sat_rte(v.s7));
+}
+
+INLINE OVERLOADABLE uchar8 convert_uchar8_sat_rtz(char8 v) {
+  return (uchar8)(convert_uchar_sat_rtz(v.s0), convert_uchar_sat_rtz(v.s1), convert_uchar_sat_rtz(v.s2), convert_uchar_sat_rtz(v.s3), convert_uchar_sat_rtz(v.s4), convert_uchar_sat_rtz(v.s5), convert_uchar_sat_rtz(v.s6), convert_uchar_sat_rtz(v.s7));
+}
+
+INLINE OVERLOADABLE uchar8 convert_uchar8_sat_rtp(char8 v) {
+  return (uchar8)(convert_uchar_sat_rtp(v.s0), convert_uchar_sat_rtp(v.s1), convert_uchar_sat_rtp(v.s2), convert_uchar_sat_rtp(v.s3), convert_uchar_sat_rtp(v.s4), convert_uchar_sat_rtp(v.s5), convert_uchar_sat_rtp(v.s6), convert_uchar_sat_rtp(v.s7));
+}
+
+INLINE OVERLOADABLE uchar8 convert_uchar8_sat_rtn(char8 v) {
+  return (uchar8)(convert_uchar_sat_rtn(v.s0), convert_uchar_sat_rtn(v.s1), convert_uchar_sat_rtn(v.s2), convert_uchar_sat_rtn(v.s3), convert_uchar_sat_rtn(v.s4), convert_uchar_sat_rtn(v.s5), convert_uchar_sat_rtn(v.s6), convert_uchar_sat_rtn(v.s7));
+}
+
+INLINE OVERLOADABLE long8 convert_long8_sat_rte(uchar8 v) {
+  return (long8)(convert_long_sat_rte(v.s0), convert_long_sat_rte(v.s1), convert_long_sat_rte(v.s2), convert_long_sat_rte(v.s3), convert_long_sat_rte(v.s4), convert_long_sat_rte(v.s5), convert_long_sat_rte(v.s6), convert_long_sat_rte(v.s7));
+}
+
+INLINE OVERLOADABLE long8 convert_long8_sat_rtz(uchar8 v) {
+  return (long8)(convert_long_sat_rtz(v.s0), convert_long_sat_rtz(v.s1), convert_long_sat_rtz(v.s2), convert_long_sat_rtz(v.s3), convert_long_sat_rtz(v.s4), convert_long_sat_rtz(v.s5), convert_long_sat_rtz(v.s6), convert_long_sat_rtz(v.s7));
+}
+
+INLINE OVERLOADABLE long8 convert_long8_sat_rtp(uchar8 v) {
+  return (long8)(convert_long_sat_rtp(v.s0), convert_long_sat_rtp(v.s1), convert_long_sat_rtp(v.s2), convert_long_sat_rtp(v.s3), convert_long_sat_rtp(v.s4), convert_long_sat_rtp(v.s5), convert_long_sat_rtp(v.s6), convert_long_sat_rtp(v.s7));
+}
+
+INLINE OVERLOADABLE long8 convert_long8_sat_rtn(uchar8 v) {
+  return (long8)(convert_long_sat_rtn(v.s0), convert_long_sat_rtn(v.s1), convert_long_sat_rtn(v.s2), convert_long_sat_rtn(v.s3), convert_long_sat_rtn(v.s4), convert_long_sat_rtn(v.s5), convert_long_sat_rtn(v.s6), convert_long_sat_rtn(v.s7));
+}
+
+INLINE OVERLOADABLE ulong8 convert_ulong8_sat_rte(uchar8 v) {
+  return (ulong8)(convert_ulong_sat_rte(v.s0), convert_ulong_sat_rte(v.s1), convert_ulong_sat_rte(v.s2), convert_ulong_sat_rte(v.s3), convert_ulong_sat_rte(v.s4), convert_ulong_sat_rte(v.s5), convert_ulong_sat_rte(v.s6), convert_ulong_sat_rte(v.s7));
+}
+
+INLINE OVERLOADABLE ulong8 convert_ulong8_sat_rtz(uchar8 v) {
+  return (ulong8)(convert_ulong_sat_rtz(v.s0), convert_ulong_sat_rtz(v.s1), convert_ulong_sat_rtz(v.s2), convert_ulong_sat_rtz(v.s3), convert_ulong_sat_rtz(v.s4), convert_ulong_sat_rtz(v.s5), convert_ulong_sat_rtz(v.s6), convert_ulong_sat_rtz(v.s7));
+}
+
+INLINE OVERLOADABLE ulong8 convert_ulong8_sat_rtp(uchar8 v) {
+  return (ulong8)(convert_ulong_sat_rtp(v.s0), convert_ulong_sat_rtp(v.s1), convert_ulong_sat_rtp(v.s2), convert_ulong_sat_rtp(v.s3), convert_ulong_sat_rtp(v.s4), convert_ulong_sat_rtp(v.s5), convert_ulong_sat_rtp(v.s6), convert_ulong_sat_rtp(v.s7));
+}
+
+INLINE OVERLOADABLE ulong8 convert_ulong8_sat_rtn(uchar8 v) {
+  return (ulong8)(convert_ulong_sat_rtn(v.s0), convert_ulong_sat_rtn(v.s1), convert_ulong_sat_rtn(v.s2), convert_ulong_sat_rtn(v.s3), convert_ulong_sat_rtn(v.s4), convert_ulong_sat_rtn(v.s5), convert_ulong_sat_rtn(v.s6), convert_ulong_sat_rtn(v.s7));
+}
+
+INLINE OVERLOADABLE int8 convert_int8_sat_rte(uchar8 v) {
+  return (int8)(convert_int_sat_rte(v.s0), convert_int_sat_rte(v.s1), convert_int_sat_rte(v.s2), convert_int_sat_rte(v.s3), convert_int_sat_rte(v.s4), convert_int_sat_rte(v.s5), convert_int_sat_rte(v.s6), convert_int_sat_rte(v.s7));
+}
+
+INLINE OVERLOADABLE int8 convert_int8_sat_rtz(uchar8 v) {
+  return (int8)(convert_int_sat_rtz(v.s0), convert_int_sat_rtz(v.s1), convert_int_sat_rtz(v.s2), convert_int_sat_rtz(v.s3), convert_int_sat_rtz(v.s4), convert_int_sat_rtz(v.s5), convert_int_sat_rtz(v.s6), convert_int_sat_rtz(v.s7));
+}
+
+INLINE OVERLOADABLE int8 convert_int8_sat_rtp(uchar8 v) {
+  return (int8)(convert_int_sat_rtp(v.s0), convert_int_sat_rtp(v.s1), convert_int_sat_rtp(v.s2), convert_int_sat_rtp(v.s3), convert_int_sat_rtp(v.s4), convert_int_sat_rtp(v.s5), convert_int_sat_rtp(v.s6), convert_int_sat_rtp(v.s7));
+}
+
+INLINE OVERLOADABLE int8 convert_int8_sat_rtn(uchar8 v) {
+  return (int8)(convert_int_sat_rtn(v.s0), convert_int_sat_rtn(v.s1), convert_int_sat_rtn(v.s2), convert_int_sat_rtn(v.s3), convert_int_sat_rtn(v.s4), convert_int_sat_rtn(v.s5), convert_int_sat_rtn(v.s6), convert_int_sat_rtn(v.s7));
+}
+
+INLINE OVERLOADABLE uint8 convert_uint8_sat_rte(uchar8 v) {
+  return (uint8)(convert_uint_sat_rte(v.s0), convert_uint_sat_rte(v.s1), convert_uint_sat_rte(v.s2), convert_uint_sat_rte(v.s3), convert_uint_sat_rte(v.s4), convert_uint_sat_rte(v.s5), convert_uint_sat_rte(v.s6), convert_uint_sat_rte(v.s7));
+}
+
+INLINE OVERLOADABLE uint8 convert_uint8_sat_rtz(uchar8 v) {
+  return (uint8)(convert_uint_sat_rtz(v.s0), convert_uint_sat_rtz(v.s1), convert_uint_sat_rtz(v.s2), convert_uint_sat_rtz(v.s3), convert_uint_sat_rtz(v.s4), convert_uint_sat_rtz(v.s5), convert_uint_sat_rtz(v.s6), convert_uint_sat_rtz(v.s7));
+}
+
+INLINE OVERLOADABLE uint8 convert_uint8_sat_rtp(uchar8 v) {
+  return (uint8)(convert_uint_sat_rtp(v.s0), convert_uint_sat_rtp(v.s1), convert_uint_sat_rtp(v.s2), convert_uint_sat_rtp(v.s3), convert_uint_sat_rtp(v.s4), convert_uint_sat_rtp(v.s5), convert_uint_sat_rtp(v.s6), convert_uint_sat_rtp(v.s7));
+}
+
+INLINE OVERLOADABLE uint8 convert_uint8_sat_rtn(uchar8 v) {
+  return (uint8)(convert_uint_sat_rtn(v.s0), convert_uint_sat_rtn(v.s1), convert_uint_sat_rtn(v.s2), convert_uint_sat_rtn(v.s3), convert_uint_sat_rtn(v.s4), convert_uint_sat_rtn(v.s5), convert_uint_sat_rtn(v.s6), convert_uint_sat_rtn(v.s7));
+}
+
+INLINE OVERLOADABLE short8 convert_short8_sat_rte(uchar8 v) {
+  return (short8)(convert_short_sat_rte(v.s0), convert_short_sat_rte(v.s1), convert_short_sat_rte(v.s2), convert_short_sat_rte(v.s3), convert_short_sat_rte(v.s4), convert_short_sat_rte(v.s5), convert_short_sat_rte(v.s6), convert_short_sat_rte(v.s7));
+}
+
+INLINE OVERLOADABLE short8 convert_short8_sat_rtz(uchar8 v) {
+  return (short8)(convert_short_sat_rtz(v.s0), convert_short_sat_rtz(v.s1), convert_short_sat_rtz(v.s2), convert_short_sat_rtz(v.s3), convert_short_sat_rtz(v.s4), convert_short_sat_rtz(v.s5), convert_short_sat_rtz(v.s6), convert_short_sat_rtz(v.s7));
+}
+
+INLINE OVERLOADABLE short8 convert_short8_sat_rtp(uchar8 v) {
+  return (short8)(convert_short_sat_rtp(v.s0), convert_short_sat_rtp(v.s1), convert_short_sat_rtp(v.s2), convert_short_sat_rtp(v.s3), convert_short_sat_rtp(v.s4), convert_short_sat_rtp(v.s5), convert_short_sat_rtp(v.s6), convert_short_sat_rtp(v.s7));
+}
+
+INLINE OVERLOADABLE short8 convert_short8_sat_rtn(uchar8 v) {
+  return (short8)(convert_short_sat_rtn(v.s0), convert_short_sat_rtn(v.s1), convert_short_sat_rtn(v.s2), convert_short_sat_rtn(v.s3), convert_short_sat_rtn(v.s4), convert_short_sat_rtn(v.s5), convert_short_sat_rtn(v.s6), convert_short_sat_rtn(v.s7));
+}
+
+INLINE OVERLOADABLE ushort8 convert_ushort8_sat_rte(uchar8 v) {
+  return (ushort8)(convert_ushort_sat_rte(v.s0), convert_ushort_sat_rte(v.s1), convert_ushort_sat_rte(v.s2), convert_ushort_sat_rte(v.s3), convert_ushort_sat_rte(v.s4), convert_ushort_sat_rte(v.s5), convert_ushort_sat_rte(v.s6), convert_ushort_sat_rte(v.s7));
+}
+
+INLINE OVERLOADABLE ushort8 convert_ushort8_sat_rtz(uchar8 v) {
+  return (ushort8)(convert_ushort_sat_rtz(v.s0), convert_ushort_sat_rtz(v.s1), convert_ushort_sat_rtz(v.s2), convert_ushort_sat_rtz(v.s3), convert_ushort_sat_rtz(v.s4), convert_ushort_sat_rtz(v.s5), convert_ushort_sat_rtz(v.s6), convert_ushort_sat_rtz(v.s7));
+}
+
+INLINE OVERLOADABLE ushort8 convert_ushort8_sat_rtp(uchar8 v) {
+  return (ushort8)(convert_ushort_sat_rtp(v.s0), convert_ushort_sat_rtp(v.s1), convert_ushort_sat_rtp(v.s2), convert_ushort_sat_rtp(v.s3), convert_ushort_sat_rtp(v.s4), convert_ushort_sat_rtp(v.s5), convert_ushort_sat_rtp(v.s6), convert_ushort_sat_rtp(v.s7));
+}
+
+INLINE OVERLOADABLE ushort8 convert_ushort8_sat_rtn(uchar8 v) {
+  return (ushort8)(convert_ushort_sat_rtn(v.s0), convert_ushort_sat_rtn(v.s1), convert_ushort_sat_rtn(v.s2), convert_ushort_sat_rtn(v.s3), convert_ushort_sat_rtn(v.s4), convert_ushort_sat_rtn(v.s5), convert_ushort_sat_rtn(v.s6), convert_ushort_sat_rtn(v.s7));
+}
+
+INLINE OVERLOADABLE char8 convert_char8_sat_rte(uchar8 v) {
+  return (char8)(convert_char_sat_rte(v.s0), convert_char_sat_rte(v.s1), convert_char_sat_rte(v.s2), convert_char_sat_rte(v.s3), convert_char_sat_rte(v.s4), convert_char_sat_rte(v.s5), convert_char_sat_rte(v.s6), convert_char_sat_rte(v.s7));
+}
+
+INLINE OVERLOADABLE char8 convert_char8_sat_rtz(uchar8 v) {
+  return (char8)(convert_char_sat_rtz(v.s0), convert_char_sat_rtz(v.s1), convert_char_sat_rtz(v.s2), convert_char_sat_rtz(v.s3), convert_char_sat_rtz(v.s4), convert_char_sat_rtz(v.s5), convert_char_sat_rtz(v.s6), convert_char_sat_rtz(v.s7));
+}
+
+INLINE OVERLOADABLE char8 convert_char8_sat_rtp(uchar8 v) {
+  return (char8)(convert_char_sat_rtp(v.s0), convert_char_sat_rtp(v.s1), convert_char_sat_rtp(v.s2), convert_char_sat_rtp(v.s3), convert_char_sat_rtp(v.s4), convert_char_sat_rtp(v.s5), convert_char_sat_rtp(v.s6), convert_char_sat_rtp(v.s7));
+}
+
+INLINE OVERLOADABLE char8 convert_char8_sat_rtn(uchar8 v) {
+  return (char8)(convert_char_sat_rtn(v.s0), convert_char_sat_rtn(v.s1), convert_char_sat_rtn(v.s2), convert_char_sat_rtn(v.s3), convert_char_sat_rtn(v.s4), convert_char_sat_rtn(v.s5), convert_char_sat_rtn(v.s6), convert_char_sat_rtn(v.s7));
+}
+
+INLINE OVERLOADABLE uchar8 convert_uchar8_sat_rte(uchar8 v) {
+  return (uchar8)(convert_uchar_sat_rte(v.s0), convert_uchar_sat_rte(v.s1), convert_uchar_sat_rte(v.s2), convert_uchar_sat_rte(v.s3), convert_uchar_sat_rte(v.s4), convert_uchar_sat_rte(v.s5), convert_uchar_sat_rte(v.s6), convert_uchar_sat_rte(v.s7));
+}
+
+INLINE OVERLOADABLE uchar8 convert_uchar8_sat_rtz(uchar8 v) {
+  return (uchar8)(convert_uchar_sat_rtz(v.s0), convert_uchar_sat_rtz(v.s1), convert_uchar_sat_rtz(v.s2), convert_uchar_sat_rtz(v.s3), convert_uchar_sat_rtz(v.s4), convert_uchar_sat_rtz(v.s5), convert_uchar_sat_rtz(v.s6), convert_uchar_sat_rtz(v.s7));
+}
+
+INLINE OVERLOADABLE uchar8 convert_uchar8_sat_rtp(uchar8 v) {
+  return (uchar8)(convert_uchar_sat_rtp(v.s0), convert_uchar_sat_rtp(v.s1), convert_uchar_sat_rtp(v.s2), convert_uchar_sat_rtp(v.s3), convert_uchar_sat_rtp(v.s4), convert_uchar_sat_rtp(v.s5), convert_uchar_sat_rtp(v.s6), convert_uchar_sat_rtp(v.s7));
+}
+
+INLINE OVERLOADABLE uchar8 convert_uchar8_sat_rtn(uchar8 v) {
+  return (uchar8)(convert_uchar_sat_rtn(v.s0), convert_uchar_sat_rtn(v.s1), convert_uchar_sat_rtn(v.s2), convert_uchar_sat_rtn(v.s3), convert_uchar_sat_rtn(v.s4), convert_uchar_sat_rtn(v.s5), convert_uchar_sat_rtn(v.s6), convert_uchar_sat_rtn(v.s7));
+}
+
+INLINE OVERLOADABLE long8 convert_long8_sat_rte(float8 v) {
+  return (long8)(convert_long_sat_rte(v.s0), convert_long_sat_rte(v.s1), convert_long_sat_rte(v.s2), convert_long_sat_rte(v.s3), convert_long_sat_rte(v.s4), convert_long_sat_rte(v.s5), convert_long_sat_rte(v.s6), convert_long_sat_rte(v.s7));
+}
+
+INLINE OVERLOADABLE long8 convert_long8_sat_rtz(float8 v) {
+  return (long8)(convert_long_sat_rtz(v.s0), convert_long_sat_rtz(v.s1), convert_long_sat_rtz(v.s2), convert_long_sat_rtz(v.s3), convert_long_sat_rtz(v.s4), convert_long_sat_rtz(v.s5), convert_long_sat_rtz(v.s6), convert_long_sat_rtz(v.s7));
+}
+
+INLINE OVERLOADABLE long8 convert_long8_sat_rtp(float8 v) {
+  return (long8)(convert_long_sat_rtp(v.s0), convert_long_sat_rtp(v.s1), convert_long_sat_rtp(v.s2), convert_long_sat_rtp(v.s3), convert_long_sat_rtp(v.s4), convert_long_sat_rtp(v.s5), convert_long_sat_rtp(v.s6), convert_long_sat_rtp(v.s7));
+}
+
+INLINE OVERLOADABLE long8 convert_long8_sat_rtn(float8 v) {
+  return (long8)(convert_long_sat_rtn(v.s0), convert_long_sat_rtn(v.s1), convert_long_sat_rtn(v.s2), convert_long_sat_rtn(v.s3), convert_long_sat_rtn(v.s4), convert_long_sat_rtn(v.s5), convert_long_sat_rtn(v.s6), convert_long_sat_rtn(v.s7));
+}
+
+INLINE OVERLOADABLE ulong8 convert_ulong8_sat_rte(float8 v) {
+  return (ulong8)(convert_ulong_sat_rte(v.s0), convert_ulong_sat_rte(v.s1), convert_ulong_sat_rte(v.s2), convert_ulong_sat_rte(v.s3), convert_ulong_sat_rte(v.s4), convert_ulong_sat_rte(v.s5), convert_ulong_sat_rte(v.s6), convert_ulong_sat_rte(v.s7));
+}
+
+INLINE OVERLOADABLE ulong8 convert_ulong8_sat_rtz(float8 v) {
+  return (ulong8)(convert_ulong_sat_rtz(v.s0), convert_ulong_sat_rtz(v.s1), convert_ulong_sat_rtz(v.s2), convert_ulong_sat_rtz(v.s3), convert_ulong_sat_rtz(v.s4), convert_ulong_sat_rtz(v.s5), convert_ulong_sat_rtz(v.s6), convert_ulong_sat_rtz(v.s7));
+}
+
+INLINE OVERLOADABLE ulong8 convert_ulong8_sat_rtp(float8 v) {
+  return (ulong8)(convert_ulong_sat_rtp(v.s0), convert_ulong_sat_rtp(v.s1), convert_ulong_sat_rtp(v.s2), convert_ulong_sat_rtp(v.s3), convert_ulong_sat_rtp(v.s4), convert_ulong_sat_rtp(v.s5), convert_ulong_sat_rtp(v.s6), convert_ulong_sat_rtp(v.s7));
+}
+
+INLINE OVERLOADABLE ulong8 convert_ulong8_sat_rtn(float8 v) {
+  return (ulong8)(convert_ulong_sat_rtn(v.s0), convert_ulong_sat_rtn(v.s1), convert_ulong_sat_rtn(v.s2), convert_ulong_sat_rtn(v.s3), convert_ulong_sat_rtn(v.s4), convert_ulong_sat_rtn(v.s5), convert_ulong_sat_rtn(v.s6), convert_ulong_sat_rtn(v.s7));
+}
+
+INLINE OVERLOADABLE int8 convert_int8_sat_rte(float8 v) {
+  return (int8)(convert_int_sat_rte(v.s0), convert_int_sat_rte(v.s1), convert_int_sat_rte(v.s2), convert_int_sat_rte(v.s3), convert_int_sat_rte(v.s4), convert_int_sat_rte(v.s5), convert_int_sat_rte(v.s6), convert_int_sat_rte(v.s7));
+}
+
+INLINE OVERLOADABLE int8 convert_int8_sat_rtz(float8 v) {
+  return (int8)(convert_int_sat_rtz(v.s0), convert_int_sat_rtz(v.s1), convert_int_sat_rtz(v.s2), convert_int_sat_rtz(v.s3), convert_int_sat_rtz(v.s4), convert_int_sat_rtz(v.s5), convert_int_sat_rtz(v.s6), convert_int_sat_rtz(v.s7));
+}
+
+INLINE OVERLOADABLE int8 convert_int8_sat_rtp(float8 v) {
+  return (int8)(convert_int_sat_rtp(v.s0), convert_int_sat_rtp(v.s1), convert_int_sat_rtp(v.s2), convert_int_sat_rtp(v.s3), convert_int_sat_rtp(v.s4), convert_int_sat_rtp(v.s5), convert_int_sat_rtp(v.s6), convert_int_sat_rtp(v.s7));
+}
+
+INLINE OVERLOADABLE int8 convert_int8_sat_rtn(float8 v) {
+  return (int8)(convert_int_sat_rtn(v.s0), convert_int_sat_rtn(v.s1), convert_int_sat_rtn(v.s2), convert_int_sat_rtn(v.s3), convert_int_sat_rtn(v.s4), convert_int_sat_rtn(v.s5), convert_int_sat_rtn(v.s6), convert_int_sat_rtn(v.s7));
+}
+
+INLINE OVERLOADABLE uint8 convert_uint8_sat_rte(float8 v) {
+  return (uint8)(convert_uint_sat_rte(v.s0), convert_uint_sat_rte(v.s1), convert_uint_sat_rte(v.s2), convert_uint_sat_rte(v.s3), convert_uint_sat_rte(v.s4), convert_uint_sat_rte(v.s5), convert_uint_sat_rte(v.s6), convert_uint_sat_rte(v.s7));
+}
+
+INLINE OVERLOADABLE uint8 convert_uint8_sat_rtz(float8 v) {
+  return (uint8)(convert_uint_sat_rtz(v.s0), convert_uint_sat_rtz(v.s1), convert_uint_sat_rtz(v.s2), convert_uint_sat_rtz(v.s3), convert_uint_sat_rtz(v.s4), convert_uint_sat_rtz(v.s5), convert_uint_sat_rtz(v.s6), convert_uint_sat_rtz(v.s7));
+}
+
+INLINE OVERLOADABLE uint8 convert_uint8_sat_rtp(float8 v) {
+  return (uint8)(convert_uint_sat_rtp(v.s0), convert_uint_sat_rtp(v.s1), convert_uint_sat_rtp(v.s2), convert_uint_sat_rtp(v.s3), convert_uint_sat_rtp(v.s4), convert_uint_sat_rtp(v.s5), convert_uint_sat_rtp(v.s6), convert_uint_sat_rtp(v.s7));
+}
+
+INLINE OVERLOADABLE uint8 convert_uint8_sat_rtn(float8 v) {
+  return (uint8)(convert_uint_sat_rtn(v.s0), convert_uint_sat_rtn(v.s1), convert_uint_sat_rtn(v.s2), convert_uint_sat_rtn(v.s3), convert_uint_sat_rtn(v.s4), convert_uint_sat_rtn(v.s5), convert_uint_sat_rtn(v.s6), convert_uint_sat_rtn(v.s7));
+}
+
+INLINE OVERLOADABLE short8 convert_short8_sat_rte(float8 v) {
+  return (short8)(convert_short_sat_rte(v.s0), convert_short_sat_rte(v.s1), convert_short_sat_rte(v.s2), convert_short_sat_rte(v.s3), convert_short_sat_rte(v.s4), convert_short_sat_rte(v.s5), convert_short_sat_rte(v.s6), convert_short_sat_rte(v.s7));
+}
+
+INLINE OVERLOADABLE short8 convert_short8_sat_rtz(float8 v) {
+  return (short8)(convert_short_sat_rtz(v.s0), convert_short_sat_rtz(v.s1), convert_short_sat_rtz(v.s2), convert_short_sat_rtz(v.s3), convert_short_sat_rtz(v.s4), convert_short_sat_rtz(v.s5), convert_short_sat_rtz(v.s6), convert_short_sat_rtz(v.s7));
+}
+
+INLINE OVERLOADABLE short8 convert_short8_sat_rtp(float8 v) {
+  return (short8)(convert_short_sat_rtp(v.s0), convert_short_sat_rtp(v.s1), convert_short_sat_rtp(v.s2), convert_short_sat_rtp(v.s3), convert_short_sat_rtp(v.s4), convert_short_sat_rtp(v.s5), convert_short_sat_rtp(v.s6), convert_short_sat_rtp(v.s7));
+}
+
+INLINE OVERLOADABLE short8 convert_short8_sat_rtn(float8 v) {
+  return (short8)(convert_short_sat_rtn(v.s0), convert_short_sat_rtn(v.s1), convert_short_sat_rtn(v.s2), convert_short_sat_rtn(v.s3), convert_short_sat_rtn(v.s4), convert_short_sat_rtn(v.s5), convert_short_sat_rtn(v.s6), convert_short_sat_rtn(v.s7));
+}
+
+INLINE OVERLOADABLE ushort8 convert_ushort8_sat_rte(float8 v) {
+  return (ushort8)(convert_ushort_sat_rte(v.s0), convert_ushort_sat_rte(v.s1), convert_ushort_sat_rte(v.s2), convert_ushort_sat_rte(v.s3), convert_ushort_sat_rte(v.s4), convert_ushort_sat_rte(v.s5), convert_ushort_sat_rte(v.s6), convert_ushort_sat_rte(v.s7));
+}
+
+INLINE OVERLOADABLE ushort8 convert_ushort8_sat_rtz(float8 v) {
+  return (ushort8)(convert_ushort_sat_rtz(v.s0), convert_ushort_sat_rtz(v.s1), convert_ushort_sat_rtz(v.s2), convert_ushort_sat_rtz(v.s3), convert_ushort_sat_rtz(v.s4), convert_ushort_sat_rtz(v.s5), convert_ushort_sat_rtz(v.s6), convert_ushort_sat_rtz(v.s7));
+}
+
+INLINE OVERLOADABLE ushort8 convert_ushort8_sat_rtp(float8 v) {
+  return (ushort8)(convert_ushort_sat_rtp(v.s0), convert_ushort_sat_rtp(v.s1), convert_ushort_sat_rtp(v.s2), convert_ushort_sat_rtp(v.s3), convert_ushort_sat_rtp(v.s4), convert_ushort_sat_rtp(v.s5), convert_ushort_sat_rtp(v.s6), convert_ushort_sat_rtp(v.s7));
+}
+
+INLINE OVERLOADABLE ushort8 convert_ushort8_sat_rtn(float8 v) {
+  return (ushort8)(convert_ushort_sat_rtn(v.s0), convert_ushort_sat_rtn(v.s1), convert_ushort_sat_rtn(v.s2), convert_ushort_sat_rtn(v.s3), convert_ushort_sat_rtn(v.s4), convert_ushort_sat_rtn(v.s5), convert_ushort_sat_rtn(v.s6), convert_ushort_sat_rtn(v.s7));
+}
+
+INLINE OVERLOADABLE char8 convert_char8_sat_rte(float8 v) {
+  return (char8)(convert_char_sat_rte(v.s0), convert_char_sat_rte(v.s1), convert_char_sat_rte(v.s2), convert_char_sat_rte(v.s3), convert_char_sat_rte(v.s4), convert_char_sat_rte(v.s5), convert_char_sat_rte(v.s6), convert_char_sat_rte(v.s7));
+}
+
+INLINE OVERLOADABLE char8 convert_char8_sat_rtz(float8 v) {
+  return (char8)(convert_char_sat_rtz(v.s0), convert_char_sat_rtz(v.s1), convert_char_sat_rtz(v.s2), convert_char_sat_rtz(v.s3), convert_char_sat_rtz(v.s4), convert_char_sat_rtz(v.s5), convert_char_sat_rtz(v.s6), convert_char_sat_rtz(v.s7));
+}
+
+INLINE OVERLOADABLE char8 convert_char8_sat_rtp(float8 v) {
+  return (char8)(convert_char_sat_rtp(v.s0), convert_char_sat_rtp(v.s1), convert_char_sat_rtp(v.s2), convert_char_sat_rtp(v.s3), convert_char_sat_rtp(v.s4), convert_char_sat_rtp(v.s5), convert_char_sat_rtp(v.s6), convert_char_sat_rtp(v.s7));
+}
+
+INLINE OVERLOADABLE char8 convert_char8_sat_rtn(float8 v) {
+  return (char8)(convert_char_sat_rtn(v.s0), convert_char_sat_rtn(v.s1), convert_char_sat_rtn(v.s2), convert_char_sat_rtn(v.s3), convert_char_sat_rtn(v.s4), convert_char_sat_rtn(v.s5), convert_char_sat_rtn(v.s6), convert_char_sat_rtn(v.s7));
+}
+
+INLINE OVERLOADABLE uchar8 convert_uchar8_sat_rte(float8 v) {
+  return (uchar8)(convert_uchar_sat_rte(v.s0), convert_uchar_sat_rte(v.s1), convert_uchar_sat_rte(v.s2), convert_uchar_sat_rte(v.s3), convert_uchar_sat_rte(v.s4), convert_uchar_sat_rte(v.s5), convert_uchar_sat_rte(v.s6), convert_uchar_sat_rte(v.s7));
+}
+
+INLINE OVERLOADABLE uchar8 convert_uchar8_sat_rtz(float8 v) {
+  return (uchar8)(convert_uchar_sat_rtz(v.s0), convert_uchar_sat_rtz(v.s1), convert_uchar_sat_rtz(v.s2), convert_uchar_sat_rtz(v.s3), convert_uchar_sat_rtz(v.s4), convert_uchar_sat_rtz(v.s5), convert_uchar_sat_rtz(v.s6), convert_uchar_sat_rtz(v.s7));
+}
+
+INLINE OVERLOADABLE uchar8 convert_uchar8_sat_rtp(float8 v) {
+  return (uchar8)(convert_uchar_sat_rtp(v.s0), convert_uchar_sat_rtp(v.s1), convert_uchar_sat_rtp(v.s2), convert_uchar_sat_rtp(v.s3), convert_uchar_sat_rtp(v.s4), convert_uchar_sat_rtp(v.s5), convert_uchar_sat_rtp(v.s6), convert_uchar_sat_rtp(v.s7));
+}
+
+INLINE OVERLOADABLE uchar8 convert_uchar8_sat_rtn(float8 v) {
+  return (uchar8)(convert_uchar_sat_rtn(v.s0), convert_uchar_sat_rtn(v.s1), convert_uchar_sat_rtn(v.s2), convert_uchar_sat_rtn(v.s3), convert_uchar_sat_rtn(v.s4), convert_uchar_sat_rtn(v.s5), convert_uchar_sat_rtn(v.s6), convert_uchar_sat_rtn(v.s7));
+}
+
+INLINE OVERLOADABLE long16 convert_long16_sat_rte(long16 v) {
+  return (long16)(convert_long_sat_rte(v.s0), convert_long_sat_rte(v.s1), convert_long_sat_rte(v.s2), convert_long_sat_rte(v.s3), convert_long_sat_rte(v.s4), convert_long_sat_rte(v.s5), convert_long_sat_rte(v.s6), convert_long_sat_rte(v.s7), convert_long_sat_rte(v.s8), convert_long_sat_rte(v.s9), convert_long_sat_rte(v.sA), convert_long_sat_rte(v.sB), convert_long_sat_rte(v.sC), convert_long_sat_rte(v.sD), convert_long_sat_rte(v.sE), convert_long_sat_rte(v.sF));
+}
+
+INLINE OVERLOADABLE long16 convert_long16_sat_rtz(long16 v) {
+  return (long16)(convert_long_sat_rtz(v.s0), convert_long_sat_rtz(v.s1), convert_long_sat_rtz(v.s2), convert_long_sat_rtz(v.s3), convert_long_sat_rtz(v.s4), convert_long_sat_rtz(v.s5), convert_long_sat_rtz(v.s6), convert_long_sat_rtz(v.s7), convert_long_sat_rtz(v.s8), convert_long_sat_rtz(v.s9), convert_long_sat_rtz(v.sA), convert_long_sat_rtz(v.sB), convert_long_sat_rtz(v.sC), convert_long_sat_rtz(v.sD), convert_long_sat_rtz(v.sE), convert_long_sat_rtz(v.sF));
+}
+
+INLINE OVERLOADABLE long16 convert_long16_sat_rtp(long16 v) {
+  return (long16)(convert_long_sat_rtp(v.s0), convert_long_sat_rtp(v.s1), convert_long_sat_rtp(v.s2), convert_long_sat_rtp(v.s3), convert_long_sat_rtp(v.s4), convert_long_sat_rtp(v.s5), convert_long_sat_rtp(v.s6), convert_long_sat_rtp(v.s7), convert_long_sat_rtp(v.s8), convert_long_sat_rtp(v.s9), convert_long_sat_rtp(v.sA), convert_long_sat_rtp(v.sB), convert_long_sat_rtp(v.sC), convert_long_sat_rtp(v.sD), convert_long_sat_rtp(v.sE), convert_long_sat_rtp(v.sF));
+}
+
+INLINE OVERLOADABLE long16 convert_long16_sat_rtn(long16 v) {
+  return (long16)(convert_long_sat_rtn(v.s0), convert_long_sat_rtn(v.s1), convert_long_sat_rtn(v.s2), convert_long_sat_rtn(v.s3), convert_long_sat_rtn(v.s4), convert_long_sat_rtn(v.s5), convert_long_sat_rtn(v.s6), convert_long_sat_rtn(v.s7), convert_long_sat_rtn(v.s8), convert_long_sat_rtn(v.s9), convert_long_sat_rtn(v.sA), convert_long_sat_rtn(v.sB), convert_long_sat_rtn(v.sC), convert_long_sat_rtn(v.sD), convert_long_sat_rtn(v.sE), convert_long_sat_rtn(v.sF));
+}
+
+INLINE OVERLOADABLE ulong16 convert_ulong16_sat_rte(long16 v) {
+  return (ulong16)(convert_ulong_sat_rte(v.s0), convert_ulong_sat_rte(v.s1), convert_ulong_sat_rte(v.s2), convert_ulong_sat_rte(v.s3), convert_ulong_sat_rte(v.s4), convert_ulong_sat_rte(v.s5), convert_ulong_sat_rte(v.s6), convert_ulong_sat_rte(v.s7), convert_ulong_sat_rte(v.s8), convert_ulong_sat_rte(v.s9), convert_ulong_sat_rte(v.sA), convert_ulong_sat_rte(v.sB), convert_ulong_sat_rte(v.sC), convert_ulong_sat_rte(v.sD), convert_ulong_sat_rte(v.sE), convert_ulong_sat_rte(v.sF));
+}
+
+INLINE OVERLOADABLE ulong16 convert_ulong16_sat_rtz(long16 v) {
+  return (ulong16)(convert_ulong_sat_rtz(v.s0), convert_ulong_sat_rtz(v.s1), convert_ulong_sat_rtz(v.s2), convert_ulong_sat_rtz(v.s3), convert_ulong_sat_rtz(v.s4), convert_ulong_sat_rtz(v.s5), convert_ulong_sat_rtz(v.s6), convert_ulong_sat_rtz(v.s7), convert_ulong_sat_rtz(v.s8), convert_ulong_sat_rtz(v.s9), convert_ulong_sat_rtz(v.sA), convert_ulong_sat_rtz(v.sB), convert_ulong_sat_rtz(v.sC), convert_ulong_sat_rtz(v.sD), convert_ulong_sat_rtz(v.sE), convert_ulong_sat_rtz(v.sF));
+}
+
+INLINE OVERLOADABLE ulong16 convert_ulong16_sat_rtp(long16 v) {
+  return (ulong16)(convert_ulong_sat_rtp(v.s0), convert_ulong_sat_rtp(v.s1), convert_ulong_sat_rtp(v.s2), convert_ulong_sat_rtp(v.s3), convert_ulong_sat_rtp(v.s4), convert_ulong_sat_rtp(v.s5), convert_ulong_sat_rtp(v.s6), convert_ulong_sat_rtp(v.s7), convert_ulong_sat_rtp(v.s8), convert_ulong_sat_rtp(v.s9), convert_ulong_sat_rtp(v.sA), convert_ulong_sat_rtp(v.sB), convert_ulong_sat_rtp(v.sC), convert_ulong_sat_rtp(v.sD), convert_ulong_sat_rtp(v.sE), convert_ulong_sat_rtp(v.sF));
+}
+
+INLINE OVERLOADABLE ulong16 convert_ulong16_sat_rtn(long16 v) {
+  return (ulong16)(convert_ulong_sat_rtn(v.s0), convert_ulong_sat_rtn(v.s1), convert_ulong_sat_rtn(v.s2), convert_ulong_sat_rtn(v.s3), convert_ulong_sat_rtn(v.s4), convert_ulong_sat_rtn(v.s5), convert_ulong_sat_rtn(v.s6), convert_ulong_sat_rtn(v.s7), convert_ulong_sat_rtn(v.s8), convert_ulong_sat_rtn(v.s9), convert_ulong_sat_rtn(v.sA), convert_ulong_sat_rtn(v.sB), convert_ulong_sat_rtn(v.sC), convert_ulong_sat_rtn(v.sD), convert_ulong_sat_rtn(v.sE), convert_ulong_sat_rtn(v.sF));
+}
+
+INLINE OVERLOADABLE int16 convert_int16_sat_rte(long16 v) {
+  return (int16)(convert_int_sat_rte(v.s0), convert_int_sat_rte(v.s1), convert_int_sat_rte(v.s2), convert_int_sat_rte(v.s3), convert_int_sat_rte(v.s4), convert_int_sat_rte(v.s5), convert_int_sat_rte(v.s6), convert_int_sat_rte(v.s7), convert_int_sat_rte(v.s8), convert_int_sat_rte(v.s9), convert_int_sat_rte(v.sA), convert_int_sat_rte(v.sB), convert_int_sat_rte(v.sC), convert_int_sat_rte(v.sD), convert_int_sat_rte(v.sE), convert_int_sat_rte(v.sF));
+}
+
+INLINE OVERLOADABLE int16 convert_int16_sat_rtz(long16 v) {
+  return (int16)(convert_int_sat_rtz(v.s0), convert_int_sat_rtz(v.s1), convert_int_sat_rtz(v.s2), convert_int_sat_rtz(v.s3), convert_int_sat_rtz(v.s4), convert_int_sat_rtz(v.s5), convert_int_sat_rtz(v.s6), convert_int_sat_rtz(v.s7), convert_int_sat_rtz(v.s8), convert_int_sat_rtz(v.s9), convert_int_sat_rtz(v.sA), convert_int_sat_rtz(v.sB), convert_int_sat_rtz(v.sC), convert_int_sat_rtz(v.sD), convert_int_sat_rtz(v.sE), convert_int_sat_rtz(v.sF));
+}
+
+INLINE OVERLOADABLE int16 convert_int16_sat_rtp(long16 v) {
+  return (int16)(convert_int_sat_rtp(v.s0), convert_int_sat_rtp(v.s1), convert_int_sat_rtp(v.s2), convert_int_sat_rtp(v.s3), convert_int_sat_rtp(v.s4), convert_int_sat_rtp(v.s5), convert_int_sat_rtp(v.s6), convert_int_sat_rtp(v.s7), convert_int_sat_rtp(v.s8), convert_int_sat_rtp(v.s9), convert_int_sat_rtp(v.sA), convert_int_sat_rtp(v.sB), convert_int_sat_rtp(v.sC), convert_int_sat_rtp(v.sD), convert_int_sat_rtp(v.sE), convert_int_sat_rtp(v.sF));
+}
+
+INLINE OVERLOADABLE int16 convert_int16_sat_rtn(long16 v) {
+  return (int16)(convert_int_sat_rtn(v.s0), convert_int_sat_rtn(v.s1), convert_int_sat_rtn(v.s2), convert_int_sat_rtn(v.s3), convert_int_sat_rtn(v.s4), convert_int_sat_rtn(v.s5), convert_int_sat_rtn(v.s6), convert_int_sat_rtn(v.s7), convert_int_sat_rtn(v.s8), convert_int_sat_rtn(v.s9), convert_int_sat_rtn(v.sA), convert_int_sat_rtn(v.sB), convert_int_sat_rtn(v.sC), convert_int_sat_rtn(v.sD), convert_int_sat_rtn(v.sE), convert_int_sat_rtn(v.sF));
+}
+
+INLINE OVERLOADABLE uint16 convert_uint16_sat_rte(long16 v) {
+  return (uint16)(convert_uint_sat_rte(v.s0), convert_uint_sat_rte(v.s1), convert_uint_sat_rte(v.s2), convert_uint_sat_rte(v.s3), convert_uint_sat_rte(v.s4), convert_uint_sat_rte(v.s5), convert_uint_sat_rte(v.s6), convert_uint_sat_rte(v.s7), convert_uint_sat_rte(v.s8), convert_uint_sat_rte(v.s9), convert_uint_sat_rte(v.sA), convert_uint_sat_rte(v.sB), convert_uint_sat_rte(v.sC), convert_uint_sat_rte(v.sD), convert_uint_sat_rte(v.sE), convert_uint_sat_rte(v.sF));
+}
+
+INLINE OVERLOADABLE uint16 convert_uint16_sat_rtz(long16 v) {
+  return (uint16)(convert_uint_sat_rtz(v.s0), convert_uint_sat_rtz(v.s1), convert_uint_sat_rtz(v.s2), convert_uint_sat_rtz(v.s3), convert_uint_sat_rtz(v.s4), convert_uint_sat_rtz(v.s5), convert_uint_sat_rtz(v.s6), convert_uint_sat_rtz(v.s7), convert_uint_sat_rtz(v.s8), convert_uint_sat_rtz(v.s9), convert_uint_sat_rtz(v.sA), convert_uint_sat_rtz(v.sB), convert_uint_sat_rtz(v.sC), convert_uint_sat_rtz(v.sD), convert_uint_sat_rtz(v.sE), convert_uint_sat_rtz(v.sF));
+}
+
+INLINE OVERLOADABLE uint16 convert_uint16_sat_rtp(long16 v) {
+  return (uint16)(convert_uint_sat_rtp(v.s0), convert_uint_sat_rtp(v.s1), convert_uint_sat_rtp(v.s2), convert_uint_sat_rtp(v.s3), convert_uint_sat_rtp(v.s4), convert_uint_sat_rtp(v.s5), convert_uint_sat_rtp(v.s6), convert_uint_sat_rtp(v.s7), convert_uint_sat_rtp(v.s8), convert_uint_sat_rtp(v.s9), convert_uint_sat_rtp(v.sA), convert_uint_sat_rtp(v.sB), convert_uint_sat_rtp(v.sC), convert_uint_sat_rtp(v.sD), convert_uint_sat_rtp(v.sE), convert_uint_sat_rtp(v.sF));
+}
+
+INLINE OVERLOADABLE uint16 convert_uint16_sat_rtn(long16 v) {
+  return (uint16)(convert_uint_sat_rtn(v.s0), convert_uint_sat_rtn(v.s1), convert_uint_sat_rtn(v.s2), convert_uint_sat_rtn(v.s3), convert_uint_sat_rtn(v.s4), convert_uint_sat_rtn(v.s5), convert_uint_sat_rtn(v.s6), convert_uint_sat_rtn(v.s7), convert_uint_sat_rtn(v.s8), convert_uint_sat_rtn(v.s9), convert_uint_sat_rtn(v.sA), convert_uint_sat_rtn(v.sB), convert_uint_sat_rtn(v.sC), convert_uint_sat_rtn(v.sD), convert_uint_sat_rtn(v.sE), convert_uint_sat_rtn(v.sF));
+}
+
+INLINE OVERLOADABLE short16 convert_short16_sat_rte(long16 v) {
+  return (short16)(convert_short_sat_rte(v.s0), convert_short_sat_rte(v.s1), convert_short_sat_rte(v.s2), convert_short_sat_rte(v.s3), convert_short_sat_rte(v.s4), convert_short_sat_rte(v.s5), convert_short_sat_rte(v.s6), convert_short_sat_rte(v.s7), convert_short_sat_rte(v.s8), convert_short_sat_rte(v.s9), convert_short_sat_rte(v.sA), convert_short_sat_rte(v.sB), convert_short_sat_rte(v.sC), convert_short_sat_rte(v.sD), convert_short_sat_rte(v.sE), convert_short_sat_rte(v.sF));
+}
+
+INLINE OVERLOADABLE short16 convert_short16_sat_rtz(long16 v) {
+  return (short16)(convert_short_sat_rtz(v.s0), convert_short_sat_rtz(v.s1), convert_short_sat_rtz(v.s2), convert_short_sat_rtz(v.s3), convert_short_sat_rtz(v.s4), convert_short_sat_rtz(v.s5), convert_short_sat_rtz(v.s6), convert_short_sat_rtz(v.s7), convert_short_sat_rtz(v.s8), convert_short_sat_rtz(v.s9), convert_short_sat_rtz(v.sA), convert_short_sat_rtz(v.sB), convert_short_sat_rtz(v.sC), convert_short_sat_rtz(v.sD), convert_short_sat_rtz(v.sE), convert_short_sat_rtz(v.sF));
+}
+
+INLINE OVERLOADABLE short16 convert_short16_sat_rtp(long16 v) {
+  return (short16)(convert_short_sat_rtp(v.s0), convert_short_sat_rtp(v.s1), convert_short_sat_rtp(v.s2), convert_short_sat_rtp(v.s3), convert_short_sat_rtp(v.s4), convert_short_sat_rtp(v.s5), convert_short_sat_rtp(v.s6), convert_short_sat_rtp(v.s7), convert_short_sat_rtp(v.s8), convert_short_sat_rtp(v.s9), convert_short_sat_rtp(v.sA), convert_short_sat_rtp(v.sB), convert_short_sat_rtp(v.sC), convert_short_sat_rtp(v.sD), convert_short_sat_rtp(v.sE), convert_short_sat_rtp(v.sF));
+}
+
+INLINE OVERLOADABLE short16 convert_short16_sat_rtn(long16 v) {
+  return (short16)(convert_short_sat_rtn(v.s0), convert_short_sat_rtn(v.s1), convert_short_sat_rtn(v.s2), convert_short_sat_rtn(v.s3), convert_short_sat_rtn(v.s4), convert_short_sat_rtn(v.s5), convert_short_sat_rtn(v.s6), convert_short_sat_rtn(v.s7), convert_short_sat_rtn(v.s8), convert_short_sat_rtn(v.s9), convert_short_sat_rtn(v.sA), convert_short_sat_rtn(v.sB), convert_short_sat_rtn(v.sC), convert_short_sat_rtn(v.sD), convert_short_sat_rtn(v.sE), convert_short_sat_rtn(v.sF));
+}
+
+INLINE OVERLOADABLE ushort16 convert_ushort16_sat_rte(long16 v) {
+  return (ushort16)(convert_ushort_sat_rte(v.s0), convert_ushort_sat_rte(v.s1), convert_ushort_sat_rte(v.s2), convert_ushort_sat_rte(v.s3), convert_ushort_sat_rte(v.s4), convert_ushort_sat_rte(v.s5), convert_ushort_sat_rte(v.s6), convert_ushort_sat_rte(v.s7), convert_ushort_sat_rte(v.s8), convert_ushort_sat_rte(v.s9), convert_ushort_sat_rte(v.sA), convert_ushort_sat_rte(v.sB), convert_ushort_sat_rte(v.sC), convert_ushort_sat_rte(v.sD), convert_ushort_sat_rte(v.sE), convert_ushort_sat_rte(v.sF));
+}
+
+INLINE OVERLOADABLE ushort16 convert_ushort16_sat_rtz(long16 v) {
+  return (ushort16)(convert_ushort_sat_rtz(v.s0), convert_ushort_sat_rtz(v.s1), convert_ushort_sat_rtz(v.s2), convert_ushort_sat_rtz(v.s3), convert_ushort_sat_rtz(v.s4), convert_ushort_sat_rtz(v.s5), convert_ushort_sat_rtz(v.s6), convert_ushort_sat_rtz(v.s7), convert_ushort_sat_rtz(v.s8), convert_ushort_sat_rtz(v.s9), convert_ushort_sat_rtz(v.sA), convert_ushort_sat_rtz(v.sB), convert_ushort_sat_rtz(v.sC), convert_ushort_sat_rtz(v.sD), convert_ushort_sat_rtz(v.sE), convert_ushort_sat_rtz(v.sF));
+}
+
+INLINE OVERLOADABLE ushort16 convert_ushort16_sat_rtp(long16 v) {
+  return (ushort16)(convert_ushort_sat_rtp(v.s0), convert_ushort_sat_rtp(v.s1), convert_ushort_sat_rtp(v.s2), convert_ushort_sat_rtp(v.s3), convert_ushort_sat_rtp(v.s4), convert_ushort_sat_rtp(v.s5), convert_ushort_sat_rtp(v.s6), convert_ushort_sat_rtp(v.s7), convert_ushort_sat_rtp(v.s8), convert_ushort_sat_rtp(v.s9), convert_ushort_sat_rtp(v.sA), convert_ushort_sat_rtp(v.sB), convert_ushort_sat_rtp(v.sC), convert_ushort_sat_rtp(v.sD), convert_ushort_sat_rtp(v.sE), convert_ushort_sat_rtp(v.sF));
+}
+
+INLINE OVERLOADABLE ushort16 convert_ushort16_sat_rtn(long16 v) {
+  return (ushort16)(convert_ushort_sat_rtn(v.s0), convert_ushort_sat_rtn(v.s1), convert_ushort_sat_rtn(v.s2), convert_ushort_sat_rtn(v.s3), convert_ushort_sat_rtn(v.s4), convert_ushort_sat_rtn(v.s5), convert_ushort_sat_rtn(v.s6), convert_ushort_sat_rtn(v.s7), convert_ushort_sat_rtn(v.s8), convert_ushort_sat_rtn(v.s9), convert_ushort_sat_rtn(v.sA), convert_ushort_sat_rtn(v.sB), convert_ushort_sat_rtn(v.sC), convert_ushort_sat_rtn(v.sD), convert_ushort_sat_rtn(v.sE), convert_ushort_sat_rtn(v.sF));
+}
+
+INLINE OVERLOADABLE char16 convert_char16_sat_rte(long16 v) {
+  return (char16)(convert_char_sat_rte(v.s0), convert_char_sat_rte(v.s1), convert_char_sat_rte(v.s2), convert_char_sat_rte(v.s3), convert_char_sat_rte(v.s4), convert_char_sat_rte(v.s5), convert_char_sat_rte(v.s6), convert_char_sat_rte(v.s7), convert_char_sat_rte(v.s8), convert_char_sat_rte(v.s9), convert_char_sat_rte(v.sA), convert_char_sat_rte(v.sB), convert_char_sat_rte(v.sC), convert_char_sat_rte(v.sD), convert_char_sat_rte(v.sE), convert_char_sat_rte(v.sF));
+}
+
+INLINE OVERLOADABLE char16 convert_char16_sat_rtz(long16 v) {
+  return (char16)(convert_char_sat_rtz(v.s0), convert_char_sat_rtz(v.s1), convert_char_sat_rtz(v.s2), convert_char_sat_rtz(v.s3), convert_char_sat_rtz(v.s4), convert_char_sat_rtz(v.s5), convert_char_sat_rtz(v.s6), convert_char_sat_rtz(v.s7), convert_char_sat_rtz(v.s8), convert_char_sat_rtz(v.s9), convert_char_sat_rtz(v.sA), convert_char_sat_rtz(v.sB), convert_char_sat_rtz(v.sC), convert_char_sat_rtz(v.sD), convert_char_sat_rtz(v.sE), convert_char_sat_rtz(v.sF));
+}
+
+INLINE OVERLOADABLE char16 convert_char16_sat_rtp(long16 v) {
+  return (char16)(convert_char_sat_rtp(v.s0), convert_char_sat_rtp(v.s1), convert_char_sat_rtp(v.s2), convert_char_sat_rtp(v.s3), convert_char_sat_rtp(v.s4), convert_char_sat_rtp(v.s5), convert_char_sat_rtp(v.s6), convert_char_sat_rtp(v.s7), convert_char_sat_rtp(v.s8), convert_char_sat_rtp(v.s9), convert_char_sat_rtp(v.sA), convert_char_sat_rtp(v.sB), convert_char_sat_rtp(v.sC), convert_char_sat_rtp(v.sD), convert_char_sat_rtp(v.sE), convert_char_sat_rtp(v.sF));
+}
+
+INLINE OVERLOADABLE char16 convert_char16_sat_rtn(long16 v) {
+  return (char16)(convert_char_sat_rtn(v.s0), convert_char_sat_rtn(v.s1), convert_char_sat_rtn(v.s2), convert_char_sat_rtn(v.s3), convert_char_sat_rtn(v.s4), convert_char_sat_rtn(v.s5), convert_char_sat_rtn(v.s6), convert_char_sat_rtn(v.s7), convert_char_sat_rtn(v.s8), convert_char_sat_rtn(v.s9), convert_char_sat_rtn(v.sA), convert_char_sat_rtn(v.sB), convert_char_sat_rtn(v.sC), convert_char_sat_rtn(v.sD), convert_char_sat_rtn(v.sE), convert_char_sat_rtn(v.sF));
+}
+
+INLINE OVERLOADABLE uchar16 convert_uchar16_sat_rte(long16 v) {
+  return (uchar16)(convert_uchar_sat_rte(v.s0), convert_uchar_sat_rte(v.s1), convert_uchar_sat_rte(v.s2), convert_uchar_sat_rte(v.s3), convert_uchar_sat_rte(v.s4), convert_uchar_sat_rte(v.s5), convert_uchar_sat_rte(v.s6), convert_uchar_sat_rte(v.s7), convert_uchar_sat_rte(v.s8), convert_uchar_sat_rte(v.s9), convert_uchar_sat_rte(v.sA), convert_uchar_sat_rte(v.sB), convert_uchar_sat_rte(v.sC), convert_uchar_sat_rte(v.sD), convert_uchar_sat_rte(v.sE), convert_uchar_sat_rte(v.sF));
+}
+
+INLINE OVERLOADABLE uchar16 convert_uchar16_sat_rtz(long16 v) {
+  return (uchar16)(convert_uchar_sat_rtz(v.s0), convert_uchar_sat_rtz(v.s1), convert_uchar_sat_rtz(v.s2), convert_uchar_sat_rtz(v.s3), convert_uchar_sat_rtz(v.s4), convert_uchar_sat_rtz(v.s5), convert_uchar_sat_rtz(v.s6), convert_uchar_sat_rtz(v.s7), convert_uchar_sat_rtz(v.s8), convert_uchar_sat_rtz(v.s9), convert_uchar_sat_rtz(v.sA), convert_uchar_sat_rtz(v.sB), convert_uchar_sat_rtz(v.sC), convert_uchar_sat_rtz(v.sD), convert_uchar_sat_rtz(v.sE), convert_uchar_sat_rtz(v.sF));
+}
+
+INLINE OVERLOADABLE uchar16 convert_uchar16_sat_rtp(long16 v) {
+  return (uchar16)(convert_uchar_sat_rtp(v.s0), convert_uchar_sat_rtp(v.s1), convert_uchar_sat_rtp(v.s2), convert_uchar_sat_rtp(v.s3), convert_uchar_sat_rtp(v.s4), convert_uchar_sat_rtp(v.s5), convert_uchar_sat_rtp(v.s6), convert_uchar_sat_rtp(v.s7), convert_uchar_sat_rtp(v.s8), convert_uchar_sat_rtp(v.s9), convert_uchar_sat_rtp(v.sA), convert_uchar_sat_rtp(v.sB), convert_uchar_sat_rtp(v.sC), convert_uchar_sat_rtp(v.sD), convert_uchar_sat_rtp(v.sE), convert_uchar_sat_rtp(v.sF));
+}
+
+INLINE OVERLOADABLE uchar16 convert_uchar16_sat_rtn(long16 v) {
+  return (uchar16)(convert_uchar_sat_rtn(v.s0), convert_uchar_sat_rtn(v.s1), convert_uchar_sat_rtn(v.s2), convert_uchar_sat_rtn(v.s3), convert_uchar_sat_rtn(v.s4), convert_uchar_sat_rtn(v.s5), convert_uchar_sat_rtn(v.s6), convert_uchar_sat_rtn(v.s7), convert_uchar_sat_rtn(v.s8), convert_uchar_sat_rtn(v.s9), convert_uchar_sat_rtn(v.sA), convert_uchar_sat_rtn(v.sB), convert_uchar_sat_rtn(v.sC), convert_uchar_sat_rtn(v.sD), convert_uchar_sat_rtn(v.sE), convert_uchar_sat_rtn(v.sF));
+}
+
+INLINE OVERLOADABLE long16 convert_long16_sat_rte(ulong16 v) {
+  return (long16)(convert_long_sat_rte(v.s0), convert_long_sat_rte(v.s1), convert_long_sat_rte(v.s2), convert_long_sat_rte(v.s3), convert_long_sat_rte(v.s4), convert_long_sat_rte(v.s5), convert_long_sat_rte(v.s6), convert_long_sat_rte(v.s7), convert_long_sat_rte(v.s8), convert_long_sat_rte(v.s9), convert_long_sat_rte(v.sA), convert_long_sat_rte(v.sB), convert_long_sat_rte(v.sC), convert_long_sat_rte(v.sD), convert_long_sat_rte(v.sE), convert_long_sat_rte(v.sF));
+}
+
+INLINE OVERLOADABLE long16 convert_long16_sat_rtz(ulong16 v) {
+  return (long16)(convert_long_sat_rtz(v.s0), convert_long_sat_rtz(v.s1), convert_long_sat_rtz(v.s2), convert_long_sat_rtz(v.s3), convert_long_sat_rtz(v.s4), convert_long_sat_rtz(v.s5), convert_long_sat_rtz(v.s6), convert_long_sat_rtz(v.s7), convert_long_sat_rtz(v.s8), convert_long_sat_rtz(v.s9), convert_long_sat_rtz(v.sA), convert_long_sat_rtz(v.sB), convert_long_sat_rtz(v.sC), convert_long_sat_rtz(v.sD), convert_long_sat_rtz(v.sE), convert_long_sat_rtz(v.sF));
+}
+
+INLINE OVERLOADABLE long16 convert_long16_sat_rtp(ulong16 v) {
+  return (long16)(convert_long_sat_rtp(v.s0), convert_long_sat_rtp(v.s1), convert_long_sat_rtp(v.s2), convert_long_sat_rtp(v.s3), convert_long_sat_rtp(v.s4), convert_long_sat_rtp(v.s5), convert_long_sat_rtp(v.s6), convert_long_sat_rtp(v.s7), convert_long_sat_rtp(v.s8), convert_long_sat_rtp(v.s9), convert_long_sat_rtp(v.sA), convert_long_sat_rtp(v.sB), convert_long_sat_rtp(v.sC), convert_long_sat_rtp(v.sD), convert_long_sat_rtp(v.sE), convert_long_sat_rtp(v.sF));
+}
+
+INLINE OVERLOADABLE long16 convert_long16_sat_rtn(ulong16 v) {
+  return (long16)(convert_long_sat_rtn(v.s0), convert_long_sat_rtn(v.s1), convert_long_sat_rtn(v.s2), convert_long_sat_rtn(v.s3), convert_long_sat_rtn(v.s4), convert_long_sat_rtn(v.s5), convert_long_sat_rtn(v.s6), convert_long_sat_rtn(v.s7), convert_long_sat_rtn(v.s8), convert_long_sat_rtn(v.s9), convert_long_sat_rtn(v.sA), convert_long_sat_rtn(v.sB), convert_long_sat_rtn(v.sC), convert_long_sat_rtn(v.sD), convert_long_sat_rtn(v.sE), convert_long_sat_rtn(v.sF));
+}
+
+INLINE OVERLOADABLE ulong16 convert_ulong16_sat_rte(ulong16 v) {
+  return (ulong16)(convert_ulong_sat_rte(v.s0), convert_ulong_sat_rte(v.s1), convert_ulong_sat_rte(v.s2), convert_ulong_sat_rte(v.s3), convert_ulong_sat_rte(v.s4), convert_ulong_sat_rte(v.s5), convert_ulong_sat_rte(v.s6), convert_ulong_sat_rte(v.s7), convert_ulong_sat_rte(v.s8), convert_ulong_sat_rte(v.s9), convert_ulong_sat_rte(v.sA), convert_ulong_sat_rte(v.sB), convert_ulong_sat_rte(v.sC), convert_ulong_sat_rte(v.sD), convert_ulong_sat_rte(v.sE), convert_ulong_sat_rte(v.sF));
+}
+
+INLINE OVERLOADABLE ulong16 convert_ulong16_sat_rtz(ulong16 v) {
+  return (ulong16)(convert_ulong_sat_rtz(v.s0), convert_ulong_sat_rtz(v.s1), convert_ulong_sat_rtz(v.s2), convert_ulong_sat_rtz(v.s3), convert_ulong_sat_rtz(v.s4), convert_ulong_sat_rtz(v.s5), convert_ulong_sat_rtz(v.s6), convert_ulong_sat_rtz(v.s7), convert_ulong_sat_rtz(v.s8), convert_ulong_sat_rtz(v.s9), convert_ulong_sat_rtz(v.sA), convert_ulong_sat_rtz(v.sB), convert_ulong_sat_rtz(v.sC), convert_ulong_sat_rtz(v.sD), convert_ulong_sat_rtz(v.sE), convert_ulong_sat_rtz(v.sF));
+}
+
+INLINE OVERLOADABLE ulong16 convert_ulong16_sat_rtp(ulong16 v) {
+  return (ulong16)(convert_ulong_sat_rtp(v.s0), convert_ulong_sat_rtp(v.s1), convert_ulong_sat_rtp(v.s2), convert_ulong_sat_rtp(v.s3), convert_ulong_sat_rtp(v.s4), convert_ulong_sat_rtp(v.s5), convert_ulong_sat_rtp(v.s6), convert_ulong_sat_rtp(v.s7), convert_ulong_sat_rtp(v.s8), convert_ulong_sat_rtp(v.s9), convert_ulong_sat_rtp(v.sA), convert_ulong_sat_rtp(v.sB), convert_ulong_sat_rtp(v.sC), convert_ulong_sat_rtp(v.sD), convert_ulong_sat_rtp(v.sE), convert_ulong_sat_rtp(v.sF));
+}
+
+INLINE OVERLOADABLE ulong16 convert_ulong16_sat_rtn(ulong16 v) {
+  return (ulong16)(convert_ulong_sat_rtn(v.s0), convert_ulong_sat_rtn(v.s1), convert_ulong_sat_rtn(v.s2), convert_ulong_sat_rtn(v.s3), convert_ulong_sat_rtn(v.s4), convert_ulong_sat_rtn(v.s5), convert_ulong_sat_rtn(v.s6), convert_ulong_sat_rtn(v.s7), convert_ulong_sat_rtn(v.s8), convert_ulong_sat_rtn(v.s9), convert_ulong_sat_rtn(v.sA), convert_ulong_sat_rtn(v.sB), convert_ulong_sat_rtn(v.sC), convert_ulong_sat_rtn(v.sD), convert_ulong_sat_rtn(v.sE), convert_ulong_sat_rtn(v.sF));
+}
+
+INLINE OVERLOADABLE int16 convert_int16_sat_rte(ulong16 v) {
+  return (int16)(convert_int_sat_rte(v.s0), convert_int_sat_rte(v.s1), convert_int_sat_rte(v.s2), convert_int_sat_rte(v.s3), convert_int_sat_rte(v.s4), convert_int_sat_rte(v.s5), convert_int_sat_rte(v.s6), convert_int_sat_rte(v.s7), convert_int_sat_rte(v.s8), convert_int_sat_rte(v.s9), convert_int_sat_rte(v.sA), convert_int_sat_rte(v.sB), convert_int_sat_rte(v.sC), convert_int_sat_rte(v.sD), convert_int_sat_rte(v.sE), convert_int_sat_rte(v.sF));
+}
+
+INLINE OVERLOADABLE int16 convert_int16_sat_rtz(ulong16 v) {
+  return (int16)(convert_int_sat_rtz(v.s0), convert_int_sat_rtz(v.s1), convert_int_sat_rtz(v.s2), convert_int_sat_rtz(v.s3), convert_int_sat_rtz(v.s4), convert_int_sat_rtz(v.s5), convert_int_sat_rtz(v.s6), convert_int_sat_rtz(v.s7), convert_int_sat_rtz(v.s8), convert_int_sat_rtz(v.s9), convert_int_sat_rtz(v.sA), convert_int_sat_rtz(v.sB), convert_int_sat_rtz(v.sC), convert_int_sat_rtz(v.sD), convert_int_sat_rtz(v.sE), convert_int_sat_rtz(v.sF));
+}
+
+INLINE OVERLOADABLE int16 convert_int16_sat_rtp(ulong16 v) {
+  return (int16)(convert_int_sat_rtp(v.s0), convert_int_sat_rtp(v.s1), convert_int_sat_rtp(v.s2), convert_int_sat_rtp(v.s3), convert_int_sat_rtp(v.s4), convert_int_sat_rtp(v.s5), convert_int_sat_rtp(v.s6), convert_int_sat_rtp(v.s7), convert_int_sat_rtp(v.s8), convert_int_sat_rtp(v.s9), convert_int_sat_rtp(v.sA), convert_int_sat_rtp(v.sB), convert_int_sat_rtp(v.sC), convert_int_sat_rtp(v.sD), convert_int_sat_rtp(v.sE), convert_int_sat_rtp(v.sF));
+}
+
+INLINE OVERLOADABLE int16 convert_int16_sat_rtn(ulong16 v) {
+  return (int16)(convert_int_sat_rtn(v.s0), convert_int_sat_rtn(v.s1), convert_int_sat_rtn(v.s2), convert_int_sat_rtn(v.s3), convert_int_sat_rtn(v.s4), convert_int_sat_rtn(v.s5), convert_int_sat_rtn(v.s6), convert_int_sat_rtn(v.s7), convert_int_sat_rtn(v.s8), convert_int_sat_rtn(v.s9), convert_int_sat_rtn(v.sA), convert_int_sat_rtn(v.sB), convert_int_sat_rtn(v.sC), convert_int_sat_rtn(v.sD), convert_int_sat_rtn(v.sE), convert_int_sat_rtn(v.sF));
+}
+
+INLINE OVERLOADABLE uint16 convert_uint16_sat_rte(ulong16 v) {
+  return (uint16)(convert_uint_sat_rte(v.s0), convert_uint_sat_rte(v.s1), convert_uint_sat_rte(v.s2), convert_uint_sat_rte(v.s3), convert_uint_sat_rte(v.s4), convert_uint_sat_rte(v.s5), convert_uint_sat_rte(v.s6), convert_uint_sat_rte(v.s7), convert_uint_sat_rte(v.s8), convert_uint_sat_rte(v.s9), convert_uint_sat_rte(v.sA), convert_uint_sat_rte(v.sB), convert_uint_sat_rte(v.sC), convert_uint_sat_rte(v.sD), convert_uint_sat_rte(v.sE), convert_uint_sat_rte(v.sF));
+}
+
+INLINE OVERLOADABLE uint16 convert_uint16_sat_rtz(ulong16 v) {
+  return (uint16)(convert_uint_sat_rtz(v.s0), convert_uint_sat_rtz(v.s1), convert_uint_sat_rtz(v.s2), convert_uint_sat_rtz(v.s3), convert_uint_sat_rtz(v.s4), convert_uint_sat_rtz(v.s5), convert_uint_sat_rtz(v.s6), convert_uint_sat_rtz(v.s7), convert_uint_sat_rtz(v.s8), convert_uint_sat_rtz(v.s9), convert_uint_sat_rtz(v.sA), convert_uint_sat_rtz(v.sB), convert_uint_sat_rtz(v.sC), convert_uint_sat_rtz(v.sD), convert_uint_sat_rtz(v.sE), convert_uint_sat_rtz(v.sF));
+}
+
+INLINE OVERLOADABLE uint16 convert_uint16_sat_rtp(ulong16 v) {
+  return (uint16)(convert_uint_sat_rtp(v.s0), convert_uint_sat_rtp(v.s1), convert_uint_sat_rtp(v.s2), convert_uint_sat_rtp(v.s3), convert_uint_sat_rtp(v.s4), convert_uint_sat_rtp(v.s5), convert_uint_sat_rtp(v.s6), convert_uint_sat_rtp(v.s7), convert_uint_sat_rtp(v.s8), convert_uint_sat_rtp(v.s9), convert_uint_sat_rtp(v.sA), convert_uint_sat_rtp(v.sB), convert_uint_sat_rtp(v.sC), convert_uint_sat_rtp(v.sD), convert_uint_sat_rtp(v.sE), convert_uint_sat_rtp(v.sF));
+}
+
+INLINE OVERLOADABLE uint16 convert_uint16_sat_rtn(ulong16 v) {
+  return (uint16)(convert_uint_sat_rtn(v.s0), convert_uint_sat_rtn(v.s1), convert_uint_sat_rtn(v.s2), convert_uint_sat_rtn(v.s3), convert_uint_sat_rtn(v.s4), convert_uint_sat_rtn(v.s5), convert_uint_sat_rtn(v.s6), convert_uint_sat_rtn(v.s7), convert_uint_sat_rtn(v.s8), convert_uint_sat_rtn(v.s9), convert_uint_sat_rtn(v.sA), convert_uint_sat_rtn(v.sB), convert_uint_sat_rtn(v.sC), convert_uint_sat_rtn(v.sD), convert_uint_sat_rtn(v.sE), convert_uint_sat_rtn(v.sF));
+}
+
+INLINE OVERLOADABLE short16 convert_short16_sat_rte(ulong16 v) {
+  return (short16)(convert_short_sat_rte(v.s0), convert_short_sat_rte(v.s1), convert_short_sat_rte(v.s2), convert_short_sat_rte(v.s3), convert_short_sat_rte(v.s4), convert_short_sat_rte(v.s5), convert_short_sat_rte(v.s6), convert_short_sat_rte(v.s7), convert_short_sat_rte(v.s8), convert_short_sat_rte(v.s9), convert_short_sat_rte(v.sA), convert_short_sat_rte(v.sB), convert_short_sat_rte(v.sC), convert_short_sat_rte(v.sD), convert_short_sat_rte(v.sE), convert_short_sat_rte(v.sF));
+}
+
+INLINE OVERLOADABLE short16 convert_short16_sat_rtz(ulong16 v) {
+  return (short16)(convert_short_sat_rtz(v.s0), convert_short_sat_rtz(v.s1), convert_short_sat_rtz(v.s2), convert_short_sat_rtz(v.s3), convert_short_sat_rtz(v.s4), convert_short_sat_rtz(v.s5), convert_short_sat_rtz(v.s6), convert_short_sat_rtz(v.s7), convert_short_sat_rtz(v.s8), convert_short_sat_rtz(v.s9), convert_short_sat_rtz(v.sA), convert_short_sat_rtz(v.sB), convert_short_sat_rtz(v.sC), convert_short_sat_rtz(v.sD), convert_short_sat_rtz(v.sE), convert_short_sat_rtz(v.sF));
+}
+
+INLINE OVERLOADABLE short16 convert_short16_sat_rtp(ulong16 v) {
+  return (short16)(convert_short_sat_rtp(v.s0), convert_short_sat_rtp(v.s1), convert_short_sat_rtp(v.s2), convert_short_sat_rtp(v.s3), convert_short_sat_rtp(v.s4), convert_short_sat_rtp(v.s5), convert_short_sat_rtp(v.s6), convert_short_sat_rtp(v.s7), convert_short_sat_rtp(v.s8), convert_short_sat_rtp(v.s9), convert_short_sat_rtp(v.sA), convert_short_sat_rtp(v.sB), convert_short_sat_rtp(v.sC), convert_short_sat_rtp(v.sD), convert_short_sat_rtp(v.sE), convert_short_sat_rtp(v.sF));
+}
+
+INLINE OVERLOADABLE short16 convert_short16_sat_rtn(ulong16 v) {
+  return (short16)(convert_short_sat_rtn(v.s0), convert_short_sat_rtn(v.s1), convert_short_sat_rtn(v.s2), convert_short_sat_rtn(v.s3), convert_short_sat_rtn(v.s4), convert_short_sat_rtn(v.s5), convert_short_sat_rtn(v.s6), convert_short_sat_rtn(v.s7), convert_short_sat_rtn(v.s8), convert_short_sat_rtn(v.s9), convert_short_sat_rtn(v.sA), convert_short_sat_rtn(v.sB), convert_short_sat_rtn(v.sC), convert_short_sat_rtn(v.sD), convert_short_sat_rtn(v.sE), convert_short_sat_rtn(v.sF));
+}
+
+INLINE OVERLOADABLE ushort16 convert_ushort16_sat_rte(ulong16 v) {
+  return (ushort16)(convert_ushort_sat_rte(v.s0), convert_ushort_sat_rte(v.s1), convert_ushort_sat_rte(v.s2), convert_ushort_sat_rte(v.s3), convert_ushort_sat_rte(v.s4), convert_ushort_sat_rte(v.s5), convert_ushort_sat_rte(v.s6), convert_ushort_sat_rte(v.s7), convert_ushort_sat_rte(v.s8), convert_ushort_sat_rte(v.s9), convert_ushort_sat_rte(v.sA), convert_ushort_sat_rte(v.sB), convert_ushort_sat_rte(v.sC), convert_ushort_sat_rte(v.sD), convert_ushort_sat_rte(v.sE), convert_ushort_sat_rte(v.sF));
+}
+
+INLINE OVERLOADABLE ushort16 convert_ushort16_sat_rtz(ulong16 v) {
+  return (ushort16)(convert_ushort_sat_rtz(v.s0), convert_ushort_sat_rtz(v.s1), convert_ushort_sat_rtz(v.s2), convert_ushort_sat_rtz(v.s3), convert_ushort_sat_rtz(v.s4), convert_ushort_sat_rtz(v.s5), convert_ushort_sat_rtz(v.s6), convert_ushort_sat_rtz(v.s7), convert_ushort_sat_rtz(v.s8), convert_ushort_sat_rtz(v.s9), convert_ushort_sat_rtz(v.sA), convert_ushort_sat_rtz(v.sB), convert_ushort_sat_rtz(v.sC), convert_ushort_sat_rtz(v.sD), convert_ushort_sat_rtz(v.sE), convert_ushort_sat_rtz(v.sF));
+}
+
+INLINE OVERLOADABLE ushort16 convert_ushort16_sat_rtp(ulong16 v) {
+  return (ushort16)(convert_ushort_sat_rtp(v.s0), convert_ushort_sat_rtp(v.s1), convert_ushort_sat_rtp(v.s2), convert_ushort_sat_rtp(v.s3), convert_ushort_sat_rtp(v.s4), convert_ushort_sat_rtp(v.s5), convert_ushort_sat_rtp(v.s6), convert_ushort_sat_rtp(v.s7), convert_ushort_sat_rtp(v.s8), convert_ushort_sat_rtp(v.s9), convert_ushort_sat_rtp(v.sA), convert_ushort_sat_rtp(v.sB), convert_ushort_sat_rtp(v.sC), convert_ushort_sat_rtp(v.sD), convert_ushort_sat_rtp(v.sE), convert_ushort_sat_rtp(v.sF));
+}
+
+INLINE OVERLOADABLE ushort16 convert_ushort16_sat_rtn(ulong16 v) {
+  return (ushort16)(convert_ushort_sat_rtn(v.s0), convert_ushort_sat_rtn(v.s1), convert_ushort_sat_rtn(v.s2), convert_ushort_sat_rtn(v.s3), convert_ushort_sat_rtn(v.s4), convert_ushort_sat_rtn(v.s5), convert_ushort_sat_rtn(v.s6), convert_ushort_sat_rtn(v.s7), convert_ushort_sat_rtn(v.s8), convert_ushort_sat_rtn(v.s9), convert_ushort_sat_rtn(v.sA), convert_ushort_sat_rtn(v.sB), convert_ushort_sat_rtn(v.sC), convert_ushort_sat_rtn(v.sD), convert_ushort_sat_rtn(v.sE), convert_ushort_sat_rtn(v.sF));
+}
+
+INLINE OVERLOADABLE char16 convert_char16_sat_rte(ulong16 v) {
+  return (char16)(convert_char_sat_rte(v.s0), convert_char_sat_rte(v.s1), convert_char_sat_rte(v.s2), convert_char_sat_rte(v.s3), convert_char_sat_rte(v.s4), convert_char_sat_rte(v.s5), convert_char_sat_rte(v.s6), convert_char_sat_rte(v.s7), convert_char_sat_rte(v.s8), convert_char_sat_rte(v.s9), convert_char_sat_rte(v.sA), convert_char_sat_rte(v.sB), convert_char_sat_rte(v.sC), convert_char_sat_rte(v.sD), convert_char_sat_rte(v.sE), convert_char_sat_rte(v.sF));
+}
+
+INLINE OVERLOADABLE char16 convert_char16_sat_rtz(ulong16 v) {
+  return (char16)(convert_char_sat_rtz(v.s0), convert_char_sat_rtz(v.s1), convert_char_sat_rtz(v.s2), convert_char_sat_rtz(v.s3), convert_char_sat_rtz(v.s4), convert_char_sat_rtz(v.s5), convert_char_sat_rtz(v.s6), convert_char_sat_rtz(v.s7), convert_char_sat_rtz(v.s8), convert_char_sat_rtz(v.s9), convert_char_sat_rtz(v.sA), convert_char_sat_rtz(v.sB), convert_char_sat_rtz(v.sC), convert_char_sat_rtz(v.sD), convert_char_sat_rtz(v.sE), convert_char_sat_rtz(v.sF));
+}
+
+INLINE OVERLOADABLE char16 convert_char16_sat_rtp(ulong16 v) {
+  return (char16)(convert_char_sat_rtp(v.s0), convert_char_sat_rtp(v.s1), convert_char_sat_rtp(v.s2), convert_char_sat_rtp(v.s3), convert_char_sat_rtp(v.s4), convert_char_sat_rtp(v.s5), convert_char_sat_rtp(v.s6), convert_char_sat_rtp(v.s7), convert_char_sat_rtp(v.s8), convert_char_sat_rtp(v.s9), convert_char_sat_rtp(v.sA), convert_char_sat_rtp(v.sB), convert_char_sat_rtp(v.sC), convert_char_sat_rtp(v.sD), convert_char_sat_rtp(v.sE), convert_char_sat_rtp(v.sF));
+}
+
+INLINE OVERLOADABLE char16 convert_char16_sat_rtn(ulong16 v) {
+  return (char16)(convert_char_sat_rtn(v.s0), convert_char_sat_rtn(v.s1), convert_char_sat_rtn(v.s2), convert_char_sat_rtn(v.s3), convert_char_sat_rtn(v.s4), convert_char_sat_rtn(v.s5), convert_char_sat_rtn(v.s6), convert_char_sat_rtn(v.s7), convert_char_sat_rtn(v.s8), convert_char_sat_rtn(v.s9), convert_char_sat_rtn(v.sA), convert_char_sat_rtn(v.sB), convert_char_sat_rtn(v.sC), convert_char_sat_rtn(v.sD), convert_char_sat_rtn(v.sE), convert_char_sat_rtn(v.sF));
+}
+
+INLINE OVERLOADABLE uchar16 convert_uchar16_sat_rte(ulong16 v) {
+  return (uchar16)(convert_uchar_sat_rte(v.s0), convert_uchar_sat_rte(v.s1), convert_uchar_sat_rte(v.s2), convert_uchar_sat_rte(v.s3), convert_uchar_sat_rte(v.s4), convert_uchar_sat_rte(v.s5), convert_uchar_sat_rte(v.s6), convert_uchar_sat_rte(v.s7), convert_uchar_sat_rte(v.s8), convert_uchar_sat_rte(v.s9), convert_uchar_sat_rte(v.sA), convert_uchar_sat_rte(v.sB), convert_uchar_sat_rte(v.sC), convert_uchar_sat_rte(v.sD), convert_uchar_sat_rte(v.sE), convert_uchar_sat_rte(v.sF));
+}
+
+INLINE OVERLOADABLE uchar16 convert_uchar16_sat_rtz(ulong16 v) {
+  return (uchar16)(convert_uchar_sat_rtz(v.s0), convert_uchar_sat_rtz(v.s1), convert_uchar_sat_rtz(v.s2), convert_uchar_sat_rtz(v.s3), convert_uchar_sat_rtz(v.s4), convert_uchar_sat_rtz(v.s5), convert_uchar_sat_rtz(v.s6), convert_uchar_sat_rtz(v.s7), convert_uchar_sat_rtz(v.s8), convert_uchar_sat_rtz(v.s9), convert_uchar_sat_rtz(v.sA), convert_uchar_sat_rtz(v.sB), convert_uchar_sat_rtz(v.sC), convert_uchar_sat_rtz(v.sD), convert_uchar_sat_rtz(v.sE), convert_uchar_sat_rtz(v.sF));
+}
+
+INLINE OVERLOADABLE uchar16 convert_uchar16_sat_rtp(ulong16 v) {
+  return (uchar16)(convert_uchar_sat_rtp(v.s0), convert_uchar_sat_rtp(v.s1), convert_uchar_sat_rtp(v.s2), convert_uchar_sat_rtp(v.s3), convert_uchar_sat_rtp(v.s4), convert_uchar_sat_rtp(v.s5), convert_uchar_sat_rtp(v.s6), convert_uchar_sat_rtp(v.s7), convert_uchar_sat_rtp(v.s8), convert_uchar_sat_rtp(v.s9), convert_uchar_sat_rtp(v.sA), convert_uchar_sat_rtp(v.sB), convert_uchar_sat_rtp(v.sC), convert_uchar_sat_rtp(v.sD), convert_uchar_sat_rtp(v.sE), convert_uchar_sat_rtp(v.sF));
+}
+
+INLINE OVERLOADABLE uchar16 convert_uchar16_sat_rtn(ulong16 v) {
+  return (uchar16)(convert_uchar_sat_rtn(v.s0), convert_uchar_sat_rtn(v.s1), convert_uchar_sat_rtn(v.s2), convert_uchar_sat_rtn(v.s3), convert_uchar_sat_rtn(v.s4), convert_uchar_sat_rtn(v.s5), convert_uchar_sat_rtn(v.s6), convert_uchar_sat_rtn(v.s7), convert_uchar_sat_rtn(v.s8), convert_uchar_sat_rtn(v.s9), convert_uchar_sat_rtn(v.sA), convert_uchar_sat_rtn(v.sB), convert_uchar_sat_rtn(v.sC), convert_uchar_sat_rtn(v.sD), convert_uchar_sat_rtn(v.sE), convert_uchar_sat_rtn(v.sF));
+}
+
+INLINE OVERLOADABLE long16 convert_long16_sat_rte(int16 v) {
+  return (long16)(convert_long_sat_rte(v.s0), convert_long_sat_rte(v.s1), convert_long_sat_rte(v.s2), convert_long_sat_rte(v.s3), convert_long_sat_rte(v.s4), convert_long_sat_rte(v.s5), convert_long_sat_rte(v.s6), convert_long_sat_rte(v.s7), convert_long_sat_rte(v.s8), convert_long_sat_rte(v.s9), convert_long_sat_rte(v.sA), convert_long_sat_rte(v.sB), convert_long_sat_rte(v.sC), convert_long_sat_rte(v.sD), convert_long_sat_rte(v.sE), convert_long_sat_rte(v.sF));
+}
+
+INLINE OVERLOADABLE long16 convert_long16_sat_rtz(int16 v) {
+  return (long16)(convert_long_sat_rtz(v.s0), convert_long_sat_rtz(v.s1), convert_long_sat_rtz(v.s2), convert_long_sat_rtz(v.s3), convert_long_sat_rtz(v.s4), convert_long_sat_rtz(v.s5), convert_long_sat_rtz(v.s6), convert_long_sat_rtz(v.s7), convert_long_sat_rtz(v.s8), convert_long_sat_rtz(v.s9), convert_long_sat_rtz(v.sA), convert_long_sat_rtz(v.sB), convert_long_sat_rtz(v.sC), convert_long_sat_rtz(v.sD), convert_long_sat_rtz(v.sE), convert_long_sat_rtz(v.sF));
+}
+
+INLINE OVERLOADABLE long16 convert_long16_sat_rtp(int16 v) {
+  return (long16)(convert_long_sat_rtp(v.s0), convert_long_sat_rtp(v.s1), convert_long_sat_rtp(v.s2), convert_long_sat_rtp(v.s3), convert_long_sat_rtp(v.s4), convert_long_sat_rtp(v.s5), convert_long_sat_rtp(v.s6), convert_long_sat_rtp(v.s7), convert_long_sat_rtp(v.s8), convert_long_sat_rtp(v.s9), convert_long_sat_rtp(v.sA), convert_long_sat_rtp(v.sB), convert_long_sat_rtp(v.sC), convert_long_sat_rtp(v.sD), convert_long_sat_rtp(v.sE), convert_long_sat_rtp(v.sF));
+}
+
+INLINE OVERLOADABLE long16 convert_long16_sat_rtn(int16 v) {
+  return (long16)(convert_long_sat_rtn(v.s0), convert_long_sat_rtn(v.s1), convert_long_sat_rtn(v.s2), convert_long_sat_rtn(v.s3), convert_long_sat_rtn(v.s4), convert_long_sat_rtn(v.s5), convert_long_sat_rtn(v.s6), convert_long_sat_rtn(v.s7), convert_long_sat_rtn(v.s8), convert_long_sat_rtn(v.s9), convert_long_sat_rtn(v.sA), convert_long_sat_rtn(v.sB), convert_long_sat_rtn(v.sC), convert_long_sat_rtn(v.sD), convert_long_sat_rtn(v.sE), convert_long_sat_rtn(v.sF));
+}
+
+INLINE OVERLOADABLE ulong16 convert_ulong16_sat_rte(int16 v) {
+  return (ulong16)(convert_ulong_sat_rte(v.s0), convert_ulong_sat_rte(v.s1), convert_ulong_sat_rte(v.s2), convert_ulong_sat_rte(v.s3), convert_ulong_sat_rte(v.s4), convert_ulong_sat_rte(v.s5), convert_ulong_sat_rte(v.s6), convert_ulong_sat_rte(v.s7), convert_ulong_sat_rte(v.s8), convert_ulong_sat_rte(v.s9), convert_ulong_sat_rte(v.sA), convert_ulong_sat_rte(v.sB), convert_ulong_sat_rte(v.sC), convert_ulong_sat_rte(v.sD), convert_ulong_sat_rte(v.sE), convert_ulong_sat_rte(v.sF));
+}
+
+INLINE OVERLOADABLE ulong16 convert_ulong16_sat_rtz(int16 v) {
+  return (ulong16)(convert_ulong_sat_rtz(v.s0), convert_ulong_sat_rtz(v.s1), convert_ulong_sat_rtz(v.s2), convert_ulong_sat_rtz(v.s3), convert_ulong_sat_rtz(v.s4), convert_ulong_sat_rtz(v.s5), convert_ulong_sat_rtz(v.s6), convert_ulong_sat_rtz(v.s7), convert_ulong_sat_rtz(v.s8), convert_ulong_sat_rtz(v.s9), convert_ulong_sat_rtz(v.sA), convert_ulong_sat_rtz(v.sB), convert_ulong_sat_rtz(v.sC), convert_ulong_sat_rtz(v.sD), convert_ulong_sat_rtz(v.sE), convert_ulong_sat_rtz(v.sF));
+}
+
+INLINE OVERLOADABLE ulong16 convert_ulong16_sat_rtp(int16 v) {
+  return (ulong16)(convert_ulong_sat_rtp(v.s0), convert_ulong_sat_rtp(v.s1), convert_ulong_sat_rtp(v.s2), convert_ulong_sat_rtp(v.s3), convert_ulong_sat_rtp(v.s4), convert_ulong_sat_rtp(v.s5), convert_ulong_sat_rtp(v.s6), convert_ulong_sat_rtp(v.s7), convert_ulong_sat_rtp(v.s8), convert_ulong_sat_rtp(v.s9), convert_ulong_sat_rtp(v.sA), convert_ulong_sat_rtp(v.sB), convert_ulong_sat_rtp(v.sC), convert_ulong_sat_rtp(v.sD), convert_ulong_sat_rtp(v.sE), convert_ulong_sat_rtp(v.sF));
+}
+
+INLINE OVERLOADABLE ulong16 convert_ulong16_sat_rtn(int16 v) {
+  return (ulong16)(convert_ulong_sat_rtn(v.s0), convert_ulong_sat_rtn(v.s1), convert_ulong_sat_rtn(v.s2), convert_ulong_sat_rtn(v.s3), convert_ulong_sat_rtn(v.s4), convert_ulong_sat_rtn(v.s5), convert_ulong_sat_rtn(v.s6), convert_ulong_sat_rtn(v.s7), convert_ulong_sat_rtn(v.s8), convert_ulong_sat_rtn(v.s9), convert_ulong_sat_rtn(v.sA), convert_ulong_sat_rtn(v.sB), convert_ulong_sat_rtn(v.sC), convert_ulong_sat_rtn(v.sD), convert_ulong_sat_rtn(v.sE), convert_ulong_sat_rtn(v.sF));
+}
+
+INLINE OVERLOADABLE int16 convert_int16_sat_rte(int16 v) {
+  return (int16)(convert_int_sat_rte(v.s0), convert_int_sat_rte(v.s1), convert_int_sat_rte(v.s2), convert_int_sat_rte(v.s3), convert_int_sat_rte(v.s4), convert_int_sat_rte(v.s5), convert_int_sat_rte(v.s6), convert_int_sat_rte(v.s7), convert_int_sat_rte(v.s8), convert_int_sat_rte(v.s9), convert_int_sat_rte(v.sA), convert_int_sat_rte(v.sB), convert_int_sat_rte(v.sC), convert_int_sat_rte(v.sD), convert_int_sat_rte(v.sE), convert_int_sat_rte(v.sF));
+}
+
+INLINE OVERLOADABLE int16 convert_int16_sat_rtz(int16 v) {
+  return (int16)(convert_int_sat_rtz(v.s0), convert_int_sat_rtz(v.s1), convert_int_sat_rtz(v.s2), convert_int_sat_rtz(v.s3), convert_int_sat_rtz(v.s4), convert_int_sat_rtz(v.s5), convert_int_sat_rtz(v.s6), convert_int_sat_rtz(v.s7), convert_int_sat_rtz(v.s8), convert_int_sat_rtz(v.s9), convert_int_sat_rtz(v.sA), convert_int_sat_rtz(v.sB), convert_int_sat_rtz(v.sC), convert_int_sat_rtz(v.sD), convert_int_sat_rtz(v.sE), convert_int_sat_rtz(v.sF));
+}
+
+INLINE OVERLOADABLE int16 convert_int16_sat_rtp(int16 v) {
+  return (int16)(convert_int_sat_rtp(v.s0), convert_int_sat_rtp(v.s1), convert_int_sat_rtp(v.s2), convert_int_sat_rtp(v.s3), convert_int_sat_rtp(v.s4), convert_int_sat_rtp(v.s5), convert_int_sat_rtp(v.s6), convert_int_sat_rtp(v.s7), convert_int_sat_rtp(v.s8), convert_int_sat_rtp(v.s9), convert_int_sat_rtp(v.sA), convert_int_sat_rtp(v.sB), convert_int_sat_rtp(v.sC), convert_int_sat_rtp(v.sD), convert_int_sat_rtp(v.sE), convert_int_sat_rtp(v.sF));
+}
+
+INLINE OVERLOADABLE int16 convert_int16_sat_rtn(int16 v) {
+  return (int16)(convert_int_sat_rtn(v.s0), convert_int_sat_rtn(v.s1), convert_int_sat_rtn(v.s2), convert_int_sat_rtn(v.s3), convert_int_sat_rtn(v.s4), convert_int_sat_rtn(v.s5), convert_int_sat_rtn(v.s6), convert_int_sat_rtn(v.s7), convert_int_sat_rtn(v.s8), convert_int_sat_rtn(v.s9), convert_int_sat_rtn(v.sA), convert_int_sat_rtn(v.sB), convert_int_sat_rtn(v.sC), convert_int_sat_rtn(v.sD), convert_int_sat_rtn(v.sE), convert_int_sat_rtn(v.sF));
+}
+
+INLINE OVERLOADABLE uint16 convert_uint16_sat_rte(int16 v) {
+  return (uint16)(convert_uint_sat_rte(v.s0), convert_uint_sat_rte(v.s1), convert_uint_sat_rte(v.s2), convert_uint_sat_rte(v.s3), convert_uint_sat_rte(v.s4), convert_uint_sat_rte(v.s5), convert_uint_sat_rte(v.s6), convert_uint_sat_rte(v.s7), convert_uint_sat_rte(v.s8), convert_uint_sat_rte(v.s9), convert_uint_sat_rte(v.sA), convert_uint_sat_rte(v.sB), convert_uint_sat_rte(v.sC), convert_uint_sat_rte(v.sD), convert_uint_sat_rte(v.sE), convert_uint_sat_rte(v.sF));
+}
+
+INLINE OVERLOADABLE uint16 convert_uint16_sat_rtz(int16 v) {
+  return (uint16)(convert_uint_sat_rtz(v.s0), convert_uint_sat_rtz(v.s1), convert_uint_sat_rtz(v.s2), convert_uint_sat_rtz(v.s3), convert_uint_sat_rtz(v.s4), convert_uint_sat_rtz(v.s5), convert_uint_sat_rtz(v.s6), convert_uint_sat_rtz(v.s7), convert_uint_sat_rtz(v.s8), convert_uint_sat_rtz(v.s9), convert_uint_sat_rtz(v.sA), convert_uint_sat_rtz(v.sB), convert_uint_sat_rtz(v.sC), convert_uint_sat_rtz(v.sD), convert_uint_sat_rtz(v.sE), convert_uint_sat_rtz(v.sF));
+}
+
+INLINE OVERLOADABLE uint16 convert_uint16_sat_rtp(int16 v) {
+  return (uint16)(convert_uint_sat_rtp(v.s0), convert_uint_sat_rtp(v.s1), convert_uint_sat_rtp(v.s2), convert_uint_sat_rtp(v.s3), convert_uint_sat_rtp(v.s4), convert_uint_sat_rtp(v.s5), convert_uint_sat_rtp(v.s6), convert_uint_sat_rtp(v.s7), convert_uint_sat_rtp(v.s8), convert_uint_sat_rtp(v.s9), convert_uint_sat_rtp(v.sA), convert_uint_sat_rtp(v.sB), convert_uint_sat_rtp(v.sC), convert_uint_sat_rtp(v.sD), convert_uint_sat_rtp(v.sE), convert_uint_sat_rtp(v.sF));
+}
+
+INLINE OVERLOADABLE uint16 convert_uint16_sat_rtn(int16 v) {
+  return (uint16)(convert_uint_sat_rtn(v.s0), convert_uint_sat_rtn(v.s1), convert_uint_sat_rtn(v.s2), convert_uint_sat_rtn(v.s3), convert_uint_sat_rtn(v.s4), convert_uint_sat_rtn(v.s5), convert_uint_sat_rtn(v.s6), convert_uint_sat_rtn(v.s7), convert_uint_sat_rtn(v.s8), convert_uint_sat_rtn(v.s9), convert_uint_sat_rtn(v.sA), convert_uint_sat_rtn(v.sB), convert_uint_sat_rtn(v.sC), convert_uint_sat_rtn(v.sD), convert_uint_sat_rtn(v.sE), convert_uint_sat_rtn(v.sF));
+}
+
+INLINE OVERLOADABLE short16 convert_short16_sat_rte(int16 v) {
+  return (short16)(convert_short_sat_rte(v.s0), convert_short_sat_rte(v.s1), convert_short_sat_rte(v.s2), convert_short_sat_rte(v.s3), convert_short_sat_rte(v.s4), convert_short_sat_rte(v.s5), convert_short_sat_rte(v.s6), convert_short_sat_rte(v.s7), convert_short_sat_rte(v.s8), convert_short_sat_rte(v.s9), convert_short_sat_rte(v.sA), convert_short_sat_rte(v.sB), convert_short_sat_rte(v.sC), convert_short_sat_rte(v.sD), convert_short_sat_rte(v.sE), convert_short_sat_rte(v.sF));
+}
+
+INLINE OVERLOADABLE short16 convert_short16_sat_rtz(int16 v) {
+  return (short16)(convert_short_sat_rtz(v.s0), convert_short_sat_rtz(v.s1), convert_short_sat_rtz(v.s2), convert_short_sat_rtz(v.s3), convert_short_sat_rtz(v.s4), convert_short_sat_rtz(v.s5), convert_short_sat_rtz(v.s6), convert_short_sat_rtz(v.s7), convert_short_sat_rtz(v.s8), convert_short_sat_rtz(v.s9), convert_short_sat_rtz(v.sA), convert_short_sat_rtz(v.sB), convert_short_sat_rtz(v.sC), convert_short_sat_rtz(v.sD), convert_short_sat_rtz(v.sE), convert_short_sat_rtz(v.sF));
+}
+
+INLINE OVERLOADABLE short16 convert_short16_sat_rtp(int16 v) {
+  return (short16)(convert_short_sat_rtp(v.s0), convert_short_sat_rtp(v.s1), convert_short_sat_rtp(v.s2), convert_short_sat_rtp(v.s3), convert_short_sat_rtp(v.s4), convert_short_sat_rtp(v.s5), convert_short_sat_rtp(v.s6), convert_short_sat_rtp(v.s7), convert_short_sat_rtp(v.s8), convert_short_sat_rtp(v.s9), convert_short_sat_rtp(v.sA), convert_short_sat_rtp(v.sB), convert_short_sat_rtp(v.sC), convert_short_sat_rtp(v.sD), convert_short_sat_rtp(v.sE), convert_short_sat_rtp(v.sF));
+}
+
+INLINE OVERLOADABLE short16 convert_short16_sat_rtn(int16 v) {
+  return (short16)(convert_short_sat_rtn(v.s0), convert_short_sat_rtn(v.s1), convert_short_sat_rtn(v.s2), convert_short_sat_rtn(v.s3), convert_short_sat_rtn(v.s4), convert_short_sat_rtn(v.s5), convert_short_sat_rtn(v.s6), convert_short_sat_rtn(v.s7), convert_short_sat_rtn(v.s8), convert_short_sat_rtn(v.s9), convert_short_sat_rtn(v.sA), convert_short_sat_rtn(v.sB), convert_short_sat_rtn(v.sC), convert_short_sat_rtn(v.sD), convert_short_sat_rtn(v.sE), convert_short_sat_rtn(v.sF));
+}
+
+INLINE OVERLOADABLE ushort16 convert_ushort16_sat_rte(int16 v) {
+  return (ushort16)(convert_ushort_sat_rte(v.s0), convert_ushort_sat_rte(v.s1), convert_ushort_sat_rte(v.s2), convert_ushort_sat_rte(v.s3), convert_ushort_sat_rte(v.s4), convert_ushort_sat_rte(v.s5), convert_ushort_sat_rte(v.s6), convert_ushort_sat_rte(v.s7), convert_ushort_sat_rte(v.s8), convert_ushort_sat_rte(v.s9), convert_ushort_sat_rte(v.sA), convert_ushort_sat_rte(v.sB), convert_ushort_sat_rte(v.sC), convert_ushort_sat_rte(v.sD), convert_ushort_sat_rte(v.sE), convert_ushort_sat_rte(v.sF));
+}
+
+INLINE OVERLOADABLE ushort16 convert_ushort16_sat_rtz(int16 v) {
+  return (ushort16)(convert_ushort_sat_rtz(v.s0), convert_ushort_sat_rtz(v.s1), convert_ushort_sat_rtz(v.s2), convert_ushort_sat_rtz(v.s3), convert_ushort_sat_rtz(v.s4), convert_ushort_sat_rtz(v.s5), convert_ushort_sat_rtz(v.s6), convert_ushort_sat_rtz(v.s7), convert_ushort_sat_rtz(v.s8), convert_ushort_sat_rtz(v.s9), convert_ushort_sat_rtz(v.sA), convert_ushort_sat_rtz(v.sB), convert_ushort_sat_rtz(v.sC), convert_ushort_sat_rtz(v.sD), convert_ushort_sat_rtz(v.sE), convert_ushort_sat_rtz(v.sF));
+}
+
+INLINE OVERLOADABLE ushort16 convert_ushort16_sat_rtp(int16 v) {
+  return (ushort16)(convert_ushort_sat_rtp(v.s0), convert_ushort_sat_rtp(v.s1), convert_ushort_sat_rtp(v.s2), convert_ushort_sat_rtp(v.s3), convert_ushort_sat_rtp(v.s4), convert_ushort_sat_rtp(v.s5), convert_ushort_sat_rtp(v.s6), convert_ushort_sat_rtp(v.s7), convert_ushort_sat_rtp(v.s8), convert_ushort_sat_rtp(v.s9), convert_ushort_sat_rtp(v.sA), convert_ushort_sat_rtp(v.sB), convert_ushort_sat_rtp(v.sC), convert_ushort_sat_rtp(v.sD), convert_ushort_sat_rtp(v.sE), convert_ushort_sat_rtp(v.sF));
+}
+
+INLINE OVERLOADABLE ushort16 convert_ushort16_sat_rtn(int16 v) {
+  return (ushort16)(convert_ushort_sat_rtn(v.s0), convert_ushort_sat_rtn(v.s1), convert_ushort_sat_rtn(v.s2), convert_ushort_sat_rtn(v.s3), convert_ushort_sat_rtn(v.s4), convert_ushort_sat_rtn(v.s5), convert_ushort_sat_rtn(v.s6), convert_ushort_sat_rtn(v.s7), convert_ushort_sat_rtn(v.s8), convert_ushort_sat_rtn(v.s9), convert_ushort_sat_rtn(v.sA), convert_ushort_sat_rtn(v.sB), convert_ushort_sat_rtn(v.sC), convert_ushort_sat_rtn(v.sD), convert_ushort_sat_rtn(v.sE), convert_ushort_sat_rtn(v.sF));
+}
+
+INLINE OVERLOADABLE char16 convert_char16_sat_rte(int16 v) {
+  return (char16)(convert_char_sat_rte(v.s0), convert_char_sat_rte(v.s1), convert_char_sat_rte(v.s2), convert_char_sat_rte(v.s3), convert_char_sat_rte(v.s4), convert_char_sat_rte(v.s5), convert_char_sat_rte(v.s6), convert_char_sat_rte(v.s7), convert_char_sat_rte(v.s8), convert_char_sat_rte(v.s9), convert_char_sat_rte(v.sA), convert_char_sat_rte(v.sB), convert_char_sat_rte(v.sC), convert_char_sat_rte(v.sD), convert_char_sat_rte(v.sE), convert_char_sat_rte(v.sF));
+}
+
+INLINE OVERLOADABLE char16 convert_char16_sat_rtz(int16 v) {
+  return (char16)(convert_char_sat_rtz(v.s0), convert_char_sat_rtz(v.s1), convert_char_sat_rtz(v.s2), convert_char_sat_rtz(v.s3), convert_char_sat_rtz(v.s4), convert_char_sat_rtz(v.s5), convert_char_sat_rtz(v.s6), convert_char_sat_rtz(v.s7), convert_char_sat_rtz(v.s8), convert_char_sat_rtz(v.s9), convert_char_sat_rtz(v.sA), convert_char_sat_rtz(v.sB), convert_char_sat_rtz(v.sC), convert_char_sat_rtz(v.sD), convert_char_sat_rtz(v.sE), convert_char_sat_rtz(v.sF));
+}
+
+INLINE OVERLOADABLE char16 convert_char16_sat_rtp(int16 v) {
+  return (char16)(convert_char_sat_rtp(v.s0), convert_char_sat_rtp(v.s1), convert_char_sat_rtp(v.s2), convert_char_sat_rtp(v.s3), convert_char_sat_rtp(v.s4), convert_char_sat_rtp(v.s5), convert_char_sat_rtp(v.s6), convert_char_sat_rtp(v.s7), convert_char_sat_rtp(v.s8), convert_char_sat_rtp(v.s9), convert_char_sat_rtp(v.sA), convert_char_sat_rtp(v.sB), convert_char_sat_rtp(v.sC), convert_char_sat_rtp(v.sD), convert_char_sat_rtp(v.sE), convert_char_sat_rtp(v.sF));
+}
+
+INLINE OVERLOADABLE char16 convert_char16_sat_rtn(int16 v) {
+  return (char16)(convert_char_sat_rtn(v.s0), convert_char_sat_rtn(v.s1), convert_char_sat_rtn(v.s2), convert_char_sat_rtn(v.s3), convert_char_sat_rtn(v.s4), convert_char_sat_rtn(v.s5), convert_char_sat_rtn(v.s6), convert_char_sat_rtn(v.s7), convert_char_sat_rtn(v.s8), convert_char_sat_rtn(v.s9), convert_char_sat_rtn(v.sA), convert_char_sat_rtn(v.sB), convert_char_sat_rtn(v.sC), convert_char_sat_rtn(v.sD), convert_char_sat_rtn(v.sE), convert_char_sat_rtn(v.sF));
+}
+
+INLINE OVERLOADABLE uchar16 convert_uchar16_sat_rte(int16 v) {
+  return (uchar16)(convert_uchar_sat_rte(v.s0), convert_uchar_sat_rte(v.s1), convert_uchar_sat_rte(v.s2), convert_uchar_sat_rte(v.s3), convert_uchar_sat_rte(v.s4), convert_uchar_sat_rte(v.s5), convert_uchar_sat_rte(v.s6), convert_uchar_sat_rte(v.s7), convert_uchar_sat_rte(v.s8), convert_uchar_sat_rte(v.s9), convert_uchar_sat_rte(v.sA), convert_uchar_sat_rte(v.sB), convert_uchar_sat_rte(v.sC), convert_uchar_sat_rte(v.sD), convert_uchar_sat_rte(v.sE), convert_uchar_sat_rte(v.sF));
+}
+
+INLINE OVERLOADABLE uchar16 convert_uchar16_sat_rtz(int16 v) {
+  return (uchar16)(convert_uchar_sat_rtz(v.s0), convert_uchar_sat_rtz(v.s1), convert_uchar_sat_rtz(v.s2), convert_uchar_sat_rtz(v.s3), convert_uchar_sat_rtz(v.s4), convert_uchar_sat_rtz(v.s5), convert_uchar_sat_rtz(v.s6), convert_uchar_sat_rtz(v.s7), convert_uchar_sat_rtz(v.s8), convert_uchar_sat_rtz(v.s9), convert_uchar_sat_rtz(v.sA), convert_uchar_sat_rtz(v.sB), convert_uchar_sat_rtz(v.sC), convert_uchar_sat_rtz(v.sD), convert_uchar_sat_rtz(v.sE), convert_uchar_sat_rtz(v.sF));
+}
+
+INLINE OVERLOADABLE uchar16 convert_uchar16_sat_rtp(int16 v) {
+  return (uchar16)(convert_uchar_sat_rtp(v.s0), convert_uchar_sat_rtp(v.s1), convert_uchar_sat_rtp(v.s2), convert_uchar_sat_rtp(v.s3), convert_uchar_sat_rtp(v.s4), convert_uchar_sat_rtp(v.s5), convert_uchar_sat_rtp(v.s6), convert_uchar_sat_rtp(v.s7), convert_uchar_sat_rtp(v.s8), convert_uchar_sat_rtp(v.s9), convert_uchar_sat_rtp(v.sA), convert_uchar_sat_rtp(v.sB), convert_uchar_sat_rtp(v.sC), convert_uchar_sat_rtp(v.sD), convert_uchar_sat_rtp(v.sE), convert_uchar_sat_rtp(v.sF));
+}
+
+INLINE OVERLOADABLE uchar16 convert_uchar16_sat_rtn(int16 v) {
+  return (uchar16)(convert_uchar_sat_rtn(v.s0), convert_uchar_sat_rtn(v.s1), convert_uchar_sat_rtn(v.s2), convert_uchar_sat_rtn(v.s3), convert_uchar_sat_rtn(v.s4), convert_uchar_sat_rtn(v.s5), convert_uchar_sat_rtn(v.s6), convert_uchar_sat_rtn(v.s7), convert_uchar_sat_rtn(v.s8), convert_uchar_sat_rtn(v.s9), convert_uchar_sat_rtn(v.sA), convert_uchar_sat_rtn(v.sB), convert_uchar_sat_rtn(v.sC), convert_uchar_sat_rtn(v.sD), convert_uchar_sat_rtn(v.sE), convert_uchar_sat_rtn(v.sF));
+}
+
+INLINE OVERLOADABLE long16 convert_long16_sat_rte(uint16 v) {
+  return (long16)(convert_long_sat_rte(v.s0), convert_long_sat_rte(v.s1), convert_long_sat_rte(v.s2), convert_long_sat_rte(v.s3), convert_long_sat_rte(v.s4), convert_long_sat_rte(v.s5), convert_long_sat_rte(v.s6), convert_long_sat_rte(v.s7), convert_long_sat_rte(v.s8), convert_long_sat_rte(v.s9), convert_long_sat_rte(v.sA), convert_long_sat_rte(v.sB), convert_long_sat_rte(v.sC), convert_long_sat_rte(v.sD), convert_long_sat_rte(v.sE), convert_long_sat_rte(v.sF));
+}
+
+INLINE OVERLOADABLE long16 convert_long16_sat_rtz(uint16 v) {
+  return (long16)(convert_long_sat_rtz(v.s0), convert_long_sat_rtz(v.s1), convert_long_sat_rtz(v.s2), convert_long_sat_rtz(v.s3), convert_long_sat_rtz(v.s4), convert_long_sat_rtz(v.s5), convert_long_sat_rtz(v.s6), convert_long_sat_rtz(v.s7), convert_long_sat_rtz(v.s8), convert_long_sat_rtz(v.s9), convert_long_sat_rtz(v.sA), convert_long_sat_rtz(v.sB), convert_long_sat_rtz(v.sC), convert_long_sat_rtz(v.sD), convert_long_sat_rtz(v.sE), convert_long_sat_rtz(v.sF));
+}
+
+INLINE OVERLOADABLE long16 convert_long16_sat_rtp(uint16 v) {
+  return (long16)(convert_long_sat_rtp(v.s0), convert_long_sat_rtp(v.s1), convert_long_sat_rtp(v.s2), convert_long_sat_rtp(v.s3), convert_long_sat_rtp(v.s4), convert_long_sat_rtp(v.s5), convert_long_sat_rtp(v.s6), convert_long_sat_rtp(v.s7), convert_long_sat_rtp(v.s8), convert_long_sat_rtp(v.s9), convert_long_sat_rtp(v.sA), convert_long_sat_rtp(v.sB), convert_long_sat_rtp(v.sC), convert_long_sat_rtp(v.sD), convert_long_sat_rtp(v.sE), convert_long_sat_rtp(v.sF));
+}
+
+INLINE OVERLOADABLE long16 convert_long16_sat_rtn(uint16 v) {
+  return (long16)(convert_long_sat_rtn(v.s0), convert_long_sat_rtn(v.s1), convert_long_sat_rtn(v.s2), convert_long_sat_rtn(v.s3), convert_long_sat_rtn(v.s4), convert_long_sat_rtn(v.s5), convert_long_sat_rtn(v.s6), convert_long_sat_rtn(v.s7), convert_long_sat_rtn(v.s8), convert_long_sat_rtn(v.s9), convert_long_sat_rtn(v.sA), convert_long_sat_rtn(v.sB), convert_long_sat_rtn(v.sC), convert_long_sat_rtn(v.sD), convert_long_sat_rtn(v.sE), convert_long_sat_rtn(v.sF));
+}
+
+INLINE OVERLOADABLE ulong16 convert_ulong16_sat_rte(uint16 v) {
+  return (ulong16)(convert_ulong_sat_rte(v.s0), convert_ulong_sat_rte(v.s1), convert_ulong_sat_rte(v.s2), convert_ulong_sat_rte(v.s3), convert_ulong_sat_rte(v.s4), convert_ulong_sat_rte(v.s5), convert_ulong_sat_rte(v.s6), convert_ulong_sat_rte(v.s7), convert_ulong_sat_rte(v.s8), convert_ulong_sat_rte(v.s9), convert_ulong_sat_rte(v.sA), convert_ulong_sat_rte(v.sB), convert_ulong_sat_rte(v.sC), convert_ulong_sat_rte(v.sD), convert_ulong_sat_rte(v.sE), convert_ulong_sat_rte(v.sF));
+}
+
+INLINE OVERLOADABLE ulong16 convert_ulong16_sat_rtz(uint16 v) {
+  return (ulong16)(convert_ulong_sat_rtz(v.s0), convert_ulong_sat_rtz(v.s1), convert_ulong_sat_rtz(v.s2), convert_ulong_sat_rtz(v.s3), convert_ulong_sat_rtz(v.s4), convert_ulong_sat_rtz(v.s5), convert_ulong_sat_rtz(v.s6), convert_ulong_sat_rtz(v.s7), convert_ulong_sat_rtz(v.s8), convert_ulong_sat_rtz(v.s9), convert_ulong_sat_rtz(v.sA), convert_ulong_sat_rtz(v.sB), convert_ulong_sat_rtz(v.sC), convert_ulong_sat_rtz(v.sD), convert_ulong_sat_rtz(v.sE), convert_ulong_sat_rtz(v.sF));
+}
+
+INLINE OVERLOADABLE ulong16 convert_ulong16_sat_rtp(uint16 v) {
+  return (ulong16)(convert_ulong_sat_rtp(v.s0), convert_ulong_sat_rtp(v.s1), convert_ulong_sat_rtp(v.s2), convert_ulong_sat_rtp(v.s3), convert_ulong_sat_rtp(v.s4), convert_ulong_sat_rtp(v.s5), convert_ulong_sat_rtp(v.s6), convert_ulong_sat_rtp(v.s7), convert_ulong_sat_rtp(v.s8), convert_ulong_sat_rtp(v.s9), convert_ulong_sat_rtp(v.sA), convert_ulong_sat_rtp(v.sB), convert_ulong_sat_rtp(v.sC), convert_ulong_sat_rtp(v.sD), convert_ulong_sat_rtp(v.sE), convert_ulong_sat_rtp(v.sF));
+}
+
+INLINE OVERLOADABLE ulong16 convert_ulong16_sat_rtn(uint16 v) {
+  return (ulong16)(convert_ulong_sat_rtn(v.s0), convert_ulong_sat_rtn(v.s1), convert_ulong_sat_rtn(v.s2), convert_ulong_sat_rtn(v.s3), convert_ulong_sat_rtn(v.s4), convert_ulong_sat_rtn(v.s5), convert_ulong_sat_rtn(v.s6), convert_ulong_sat_rtn(v.s7), convert_ulong_sat_rtn(v.s8), convert_ulong_sat_rtn(v.s9), convert_ulong_sat_rtn(v.sA), convert_ulong_sat_rtn(v.sB), convert_ulong_sat_rtn(v.sC), convert_ulong_sat_rtn(v.sD), convert_ulong_sat_rtn(v.sE), convert_ulong_sat_rtn(v.sF));
+}
+
+INLINE OVERLOADABLE int16 convert_int16_sat_rte(uint16 v) {
+  return (int16)(convert_int_sat_rte(v.s0), convert_int_sat_rte(v.s1), convert_int_sat_rte(v.s2), convert_int_sat_rte(v.s3), convert_int_sat_rte(v.s4), convert_int_sat_rte(v.s5), convert_int_sat_rte(v.s6), convert_int_sat_rte(v.s7), convert_int_sat_rte(v.s8), convert_int_sat_rte(v.s9), convert_int_sat_rte(v.sA), convert_int_sat_rte(v.sB), convert_int_sat_rte(v.sC), convert_int_sat_rte(v.sD), convert_int_sat_rte(v.sE), convert_int_sat_rte(v.sF));
+}
+
+INLINE OVERLOADABLE int16 convert_int16_sat_rtz(uint16 v) {
+  return (int16)(convert_int_sat_rtz(v.s0), convert_int_sat_rtz(v.s1), convert_int_sat_rtz(v.s2), convert_int_sat_rtz(v.s3), convert_int_sat_rtz(v.s4), convert_int_sat_rtz(v.s5), convert_int_sat_rtz(v.s6), convert_int_sat_rtz(v.s7), convert_int_sat_rtz(v.s8), convert_int_sat_rtz(v.s9), convert_int_sat_rtz(v.sA), convert_int_sat_rtz(v.sB), convert_int_sat_rtz(v.sC), convert_int_sat_rtz(v.sD), convert_int_sat_rtz(v.sE), convert_int_sat_rtz(v.sF));
+}
+
+INLINE OVERLOADABLE int16 convert_int16_sat_rtp(uint16 v) {
+  return (int16)(convert_int_sat_rtp(v.s0), convert_int_sat_rtp(v.s1), convert_int_sat_rtp(v.s2), convert_int_sat_rtp(v.s3), convert_int_sat_rtp(v.s4), convert_int_sat_rtp(v.s5), convert_int_sat_rtp(v.s6), convert_int_sat_rtp(v.s7), convert_int_sat_rtp(v.s8), convert_int_sat_rtp(v.s9), convert_int_sat_rtp(v.sA), convert_int_sat_rtp(v.sB), convert_int_sat_rtp(v.sC), convert_int_sat_rtp(v.sD), convert_int_sat_rtp(v.sE), convert_int_sat_rtp(v.sF));
+}
+
+INLINE OVERLOADABLE int16 convert_int16_sat_rtn(uint16 v) {
+  return (int16)(convert_int_sat_rtn(v.s0), convert_int_sat_rtn(v.s1), convert_int_sat_rtn(v.s2), convert_int_sat_rtn(v.s3), convert_int_sat_rtn(v.s4), convert_int_sat_rtn(v.s5), convert_int_sat_rtn(v.s6), convert_int_sat_rtn(v.s7), convert_int_sat_rtn(v.s8), convert_int_sat_rtn(v.s9), convert_int_sat_rtn(v.sA), convert_int_sat_rtn(v.sB), convert_int_sat_rtn(v.sC), convert_int_sat_rtn(v.sD), convert_int_sat_rtn(v.sE), convert_int_sat_rtn(v.sF));
+}
+
+INLINE OVERLOADABLE uint16 convert_uint16_sat_rte(uint16 v) {
+  return (uint16)(convert_uint_sat_rte(v.s0), convert_uint_sat_rte(v.s1), convert_uint_sat_rte(v.s2), convert_uint_sat_rte(v.s3), convert_uint_sat_rte(v.s4), convert_uint_sat_rte(v.s5), convert_uint_sat_rte(v.s6), convert_uint_sat_rte(v.s7), convert_uint_sat_rte(v.s8), convert_uint_sat_rte(v.s9), convert_uint_sat_rte(v.sA), convert_uint_sat_rte(v.sB), convert_uint_sat_rte(v.sC), convert_uint_sat_rte(v.sD), convert_uint_sat_rte(v.sE), convert_uint_sat_rte(v.sF));
+}
+
+INLINE OVERLOADABLE uint16 convert_uint16_sat_rtz(uint16 v) {
+  return (uint16)(convert_uint_sat_rtz(v.s0), convert_uint_sat_rtz(v.s1), convert_uint_sat_rtz(v.s2), convert_uint_sat_rtz(v.s3), convert_uint_sat_rtz(v.s4), convert_uint_sat_rtz(v.s5), convert_uint_sat_rtz(v.s6), convert_uint_sat_rtz(v.s7), convert_uint_sat_rtz(v.s8), convert_uint_sat_rtz(v.s9), convert_uint_sat_rtz(v.sA), convert_uint_sat_rtz(v.sB), convert_uint_sat_rtz(v.sC), convert_uint_sat_rtz(v.sD), convert_uint_sat_rtz(v.sE), convert_uint_sat_rtz(v.sF));
+}
+
+INLINE OVERLOADABLE uint16 convert_uint16_sat_rtp(uint16 v) {
+  return (uint16)(convert_uint_sat_rtp(v.s0), convert_uint_sat_rtp(v.s1), convert_uint_sat_rtp(v.s2), convert_uint_sat_rtp(v.s3), convert_uint_sat_rtp(v.s4), convert_uint_sat_rtp(v.s5), convert_uint_sat_rtp(v.s6), convert_uint_sat_rtp(v.s7), convert_uint_sat_rtp(v.s8), convert_uint_sat_rtp(v.s9), convert_uint_sat_rtp(v.sA), convert_uint_sat_rtp(v.sB), convert_uint_sat_rtp(v.sC), convert_uint_sat_rtp(v.sD), convert_uint_sat_rtp(v.sE), convert_uint_sat_rtp(v.sF));
+}
+
+INLINE OVERLOADABLE uint16 convert_uint16_sat_rtn(uint16 v) {
+  return (uint16)(convert_uint_sat_rtn(v.s0), convert_uint_sat_rtn(v.s1), convert_uint_sat_rtn(v.s2), convert_uint_sat_rtn(v.s3), convert_uint_sat_rtn(v.s4), convert_uint_sat_rtn(v.s5), convert_uint_sat_rtn(v.s6), convert_uint_sat_rtn(v.s7), convert_uint_sat_rtn(v.s8), convert_uint_sat_rtn(v.s9), convert_uint_sat_rtn(v.sA), convert_uint_sat_rtn(v.sB), convert_uint_sat_rtn(v.sC), convert_uint_sat_rtn(v.sD), convert_uint_sat_rtn(v.sE), convert_uint_sat_rtn(v.sF));
+}
+
+INLINE OVERLOADABLE short16 convert_short16_sat_rte(uint16 v) {
+  return (short16)(convert_short_sat_rte(v.s0), convert_short_sat_rte(v.s1), convert_short_sat_rte(v.s2), convert_short_sat_rte(v.s3), convert_short_sat_rte(v.s4), convert_short_sat_rte(v.s5), convert_short_sat_rte(v.s6), convert_short_sat_rte(v.s7), convert_short_sat_rte(v.s8), convert_short_sat_rte(v.s9), convert_short_sat_rte(v.sA), convert_short_sat_rte(v.sB), convert_short_sat_rte(v.sC), convert_short_sat_rte(v.sD), convert_short_sat_rte(v.sE), convert_short_sat_rte(v.sF));
+}
+
+INLINE OVERLOADABLE short16 convert_short16_sat_rtz(uint16 v) {
+  return (short16)(convert_short_sat_rtz(v.s0), convert_short_sat_rtz(v.s1), convert_short_sat_rtz(v.s2), convert_short_sat_rtz(v.s3), convert_short_sat_rtz(v.s4), convert_short_sat_rtz(v.s5), convert_short_sat_rtz(v.s6), convert_short_sat_rtz(v.s7), convert_short_sat_rtz(v.s8), convert_short_sat_rtz(v.s9), convert_short_sat_rtz(v.sA), convert_short_sat_rtz(v.sB), convert_short_sat_rtz(v.sC), convert_short_sat_rtz(v.sD), convert_short_sat_rtz(v.sE), convert_short_sat_rtz(v.sF));
+}
+
+INLINE OVERLOADABLE short16 convert_short16_sat_rtp(uint16 v) {
+  return (short16)(convert_short_sat_rtp(v.s0), convert_short_sat_rtp(v.s1), convert_short_sat_rtp(v.s2), convert_short_sat_rtp(v.s3), convert_short_sat_rtp(v.s4), convert_short_sat_rtp(v.s5), convert_short_sat_rtp(v.s6), convert_short_sat_rtp(v.s7), convert_short_sat_rtp(v.s8), convert_short_sat_rtp(v.s9), convert_short_sat_rtp(v.sA), convert_short_sat_rtp(v.sB), convert_short_sat_rtp(v.sC), convert_short_sat_rtp(v.sD), convert_short_sat_rtp(v.sE), convert_short_sat_rtp(v.sF));
+}
+
+INLINE OVERLOADABLE short16 convert_short16_sat_rtn(uint16 v) {
+  return (short16)(convert_short_sat_rtn(v.s0), convert_short_sat_rtn(v.s1), convert_short_sat_rtn(v.s2), convert_short_sat_rtn(v.s3), convert_short_sat_rtn(v.s4), convert_short_sat_rtn(v.s5), convert_short_sat_rtn(v.s6), convert_short_sat_rtn(v.s7), convert_short_sat_rtn(v.s8), convert_short_sat_rtn(v.s9), convert_short_sat_rtn(v.sA), convert_short_sat_rtn(v.sB), convert_short_sat_rtn(v.sC), convert_short_sat_rtn(v.sD), convert_short_sat_rtn(v.sE), convert_short_sat_rtn(v.sF));
+}
+
+INLINE OVERLOADABLE ushort16 convert_ushort16_sat_rte(uint16 v) {
+  return (ushort16)(convert_ushort_sat_rte(v.s0), convert_ushort_sat_rte(v.s1), convert_ushort_sat_rte(v.s2), convert_ushort_sat_rte(v.s3), convert_ushort_sat_rte(v.s4), convert_ushort_sat_rte(v.s5), convert_ushort_sat_rte(v.s6), convert_ushort_sat_rte(v.s7), convert_ushort_sat_rte(v.s8), convert_ushort_sat_rte(v.s9), convert_ushort_sat_rte(v.sA), convert_ushort_sat_rte(v.sB), convert_ushort_sat_rte(v.sC), convert_ushort_sat_rte(v.sD), convert_ushort_sat_rte(v.sE), convert_ushort_sat_rte(v.sF));
+}
+
+INLINE OVERLOADABLE ushort16 convert_ushort16_sat_rtz(uint16 v) {
+  return (ushort16)(convert_ushort_sat_rtz(v.s0), convert_ushort_sat_rtz(v.s1), convert_ushort_sat_rtz(v.s2), convert_ushort_sat_rtz(v.s3), convert_ushort_sat_rtz(v.s4), convert_ushort_sat_rtz(v.s5), convert_ushort_sat_rtz(v.s6), convert_ushort_sat_rtz(v.s7), convert_ushort_sat_rtz(v.s8), convert_ushort_sat_rtz(v.s9), convert_ushort_sat_rtz(v.sA), convert_ushort_sat_rtz(v.sB), convert_ushort_sat_rtz(v.sC), convert_ushort_sat_rtz(v.sD), convert_ushort_sat_rtz(v.sE), convert_ushort_sat_rtz(v.sF));
+}
+
+INLINE OVERLOADABLE ushort16 convert_ushort16_sat_rtp(uint16 v) {
+  return (ushort16)(convert_ushort_sat_rtp(v.s0), convert_ushort_sat_rtp(v.s1), convert_ushort_sat_rtp(v.s2), convert_ushort_sat_rtp(v.s3), convert_ushort_sat_rtp(v.s4), convert_ushort_sat_rtp(v.s5), convert_ushort_sat_rtp(v.s6), convert_ushort_sat_rtp(v.s7), convert_ushort_sat_rtp(v.s8), convert_ushort_sat_rtp(v.s9), convert_ushort_sat_rtp(v.sA), convert_ushort_sat_rtp(v.sB), convert_ushort_sat_rtp(v.sC), convert_ushort_sat_rtp(v.sD), convert_ushort_sat_rtp(v.sE), convert_ushort_sat_rtp(v.sF));
+}
+
+INLINE OVERLOADABLE ushort16 convert_ushort16_sat_rtn(uint16 v) {
+  return (ushort16)(convert_ushort_sat_rtn(v.s0), convert_ushort_sat_rtn(v.s1), convert_ushort_sat_rtn(v.s2), convert_ushort_sat_rtn(v.s3), convert_ushort_sat_rtn(v.s4), convert_ushort_sat_rtn(v.s5), convert_ushort_sat_rtn(v.s6), convert_ushort_sat_rtn(v.s7), convert_ushort_sat_rtn(v.s8), convert_ushort_sat_rtn(v.s9), convert_ushort_sat_rtn(v.sA), convert_ushort_sat_rtn(v.sB), convert_ushort_sat_rtn(v.sC), convert_ushort_sat_rtn(v.sD), convert_ushort_sat_rtn(v.sE), convert_ushort_sat_rtn(v.sF));
+}
+
+INLINE OVERLOADABLE char16 convert_char16_sat_rte(uint16 v) {
+  return (char16)(convert_char_sat_rte(v.s0), convert_char_sat_rte(v.s1), convert_char_sat_rte(v.s2), convert_char_sat_rte(v.s3), convert_char_sat_rte(v.s4), convert_char_sat_rte(v.s5), convert_char_sat_rte(v.s6), convert_char_sat_rte(v.s7), convert_char_sat_rte(v.s8), convert_char_sat_rte(v.s9), convert_char_sat_rte(v.sA), convert_char_sat_rte(v.sB), convert_char_sat_rte(v.sC), convert_char_sat_rte(v.sD), convert_char_sat_rte(v.sE), convert_char_sat_rte(v.sF));
+}
+
+INLINE OVERLOADABLE char16 convert_char16_sat_rtz(uint16 v) {
+  return (char16)(convert_char_sat_rtz(v.s0), convert_char_sat_rtz(v.s1), convert_char_sat_rtz(v.s2), convert_char_sat_rtz(v.s3), convert_char_sat_rtz(v.s4), convert_char_sat_rtz(v.s5), convert_char_sat_rtz(v.s6), convert_char_sat_rtz(v.s7), convert_char_sat_rtz(v.s8), convert_char_sat_rtz(v.s9), convert_char_sat_rtz(v.sA), convert_char_sat_rtz(v.sB), convert_char_sat_rtz(v.sC), convert_char_sat_rtz(v.sD), convert_char_sat_rtz(v.sE), convert_char_sat_rtz(v.sF));
+}
+
+INLINE OVERLOADABLE char16 convert_char16_sat_rtp(uint16 v) {
+  return (char16)(convert_char_sat_rtp(v.s0), convert_char_sat_rtp(v.s1), convert_char_sat_rtp(v.s2), convert_char_sat_rtp(v.s3), convert_char_sat_rtp(v.s4), convert_char_sat_rtp(v.s5), convert_char_sat_rtp(v.s6), convert_char_sat_rtp(v.s7), convert_char_sat_rtp(v.s8), convert_char_sat_rtp(v.s9), convert_char_sat_rtp(v.sA), convert_char_sat_rtp(v.sB), convert_char_sat_rtp(v.sC), convert_char_sat_rtp(v.sD), convert_char_sat_rtp(v.sE), convert_char_sat_rtp(v.sF));
+}
+
+INLINE OVERLOADABLE char16 convert_char16_sat_rtn(uint16 v) {
+  return (char16)(convert_char_sat_rtn(v.s0), convert_char_sat_rtn(v.s1), convert_char_sat_rtn(v.s2), convert_char_sat_rtn(v.s3), convert_char_sat_rtn(v.s4), convert_char_sat_rtn(v.s5), convert_char_sat_rtn(v.s6), convert_char_sat_rtn(v.s7), convert_char_sat_rtn(v.s8), convert_char_sat_rtn(v.s9), convert_char_sat_rtn(v.sA), convert_char_sat_rtn(v.sB), convert_char_sat_rtn(v.sC), convert_char_sat_rtn(v.sD), convert_char_sat_rtn(v.sE), convert_char_sat_rtn(v.sF));
+}
+
+INLINE OVERLOADABLE uchar16 convert_uchar16_sat_rte(uint16 v) {
+  return (uchar16)(convert_uchar_sat_rte(v.s0), convert_uchar_sat_rte(v.s1), convert_uchar_sat_rte(v.s2), convert_uchar_sat_rte(v.s3), convert_uchar_sat_rte(v.s4), convert_uchar_sat_rte(v.s5), convert_uchar_sat_rte(v.s6), convert_uchar_sat_rte(v.s7), convert_uchar_sat_rte(v.s8), convert_uchar_sat_rte(v.s9), convert_uchar_sat_rte(v.sA), convert_uchar_sat_rte(v.sB), convert_uchar_sat_rte(v.sC), convert_uchar_sat_rte(v.sD), convert_uchar_sat_rte(v.sE), convert_uchar_sat_rte(v.sF));
+}
+
+INLINE OVERLOADABLE uchar16 convert_uchar16_sat_rtz(uint16 v) {
+  return (uchar16)(convert_uchar_sat_rtz(v.s0), convert_uchar_sat_rtz(v.s1), convert_uchar_sat_rtz(v.s2), convert_uchar_sat_rtz(v.s3), convert_uchar_sat_rtz(v.s4), convert_uchar_sat_rtz(v.s5), convert_uchar_sat_rtz(v.s6), convert_uchar_sat_rtz(v.s7), convert_uchar_sat_rtz(v.s8), convert_uchar_sat_rtz(v.s9), convert_uchar_sat_rtz(v.sA), convert_uchar_sat_rtz(v.sB), convert_uchar_sat_rtz(v.sC), convert_uchar_sat_rtz(v.sD), convert_uchar_sat_rtz(v.sE), convert_uchar_sat_rtz(v.sF));
+}
+
+INLINE OVERLOADABLE uchar16 convert_uchar16_sat_rtp(uint16 v) {
+  return (uchar16)(convert_uchar_sat_rtp(v.s0), convert_uchar_sat_rtp(v.s1), convert_uchar_sat_rtp(v.s2), convert_uchar_sat_rtp(v.s3), convert_uchar_sat_rtp(v.s4), convert_uchar_sat_rtp(v.s5), convert_uchar_sat_rtp(v.s6), convert_uchar_sat_rtp(v.s7), convert_uchar_sat_rtp(v.s8), convert_uchar_sat_rtp(v.s9), convert_uchar_sat_rtp(v.sA), convert_uchar_sat_rtp(v.sB), convert_uchar_sat_rtp(v.sC), convert_uchar_sat_rtp(v.sD), convert_uchar_sat_rtp(v.sE), convert_uchar_sat_rtp(v.sF));
+}
+
+INLINE OVERLOADABLE uchar16 convert_uchar16_sat_rtn(uint16 v) {
+  return (uchar16)(convert_uchar_sat_rtn(v.s0), convert_uchar_sat_rtn(v.s1), convert_uchar_sat_rtn(v.s2), convert_uchar_sat_rtn(v.s3), convert_uchar_sat_rtn(v.s4), convert_uchar_sat_rtn(v.s5), convert_uchar_sat_rtn(v.s6), convert_uchar_sat_rtn(v.s7), convert_uchar_sat_rtn(v.s8), convert_uchar_sat_rtn(v.s9), convert_uchar_sat_rtn(v.sA), convert_uchar_sat_rtn(v.sB), convert_uchar_sat_rtn(v.sC), convert_uchar_sat_rtn(v.sD), convert_uchar_sat_rtn(v.sE), convert_uchar_sat_rtn(v.sF));
+}
+
+INLINE OVERLOADABLE long16 convert_long16_sat_rte(short16 v) {
+  return (long16)(convert_long_sat_rte(v.s0), convert_long_sat_rte(v.s1), convert_long_sat_rte(v.s2), convert_long_sat_rte(v.s3), convert_long_sat_rte(v.s4), convert_long_sat_rte(v.s5), convert_long_sat_rte(v.s6), convert_long_sat_rte(v.s7), convert_long_sat_rte(v.s8), convert_long_sat_rte(v.s9), convert_long_sat_rte(v.sA), convert_long_sat_rte(v.sB), convert_long_sat_rte(v.sC), convert_long_sat_rte(v.sD), convert_long_sat_rte(v.sE), convert_long_sat_rte(v.sF));
+}
+
+INLINE OVERLOADABLE long16 convert_long16_sat_rtz(short16 v) {
+  return (long16)(convert_long_sat_rtz(v.s0), convert_long_sat_rtz(v.s1), convert_long_sat_rtz(v.s2), convert_long_sat_rtz(v.s3), convert_long_sat_rtz(v.s4), convert_long_sat_rtz(v.s5), convert_long_sat_rtz(v.s6), convert_long_sat_rtz(v.s7), convert_long_sat_rtz(v.s8), convert_long_sat_rtz(v.s9), convert_long_sat_rtz(v.sA), convert_long_sat_rtz(v.sB), convert_long_sat_rtz(v.sC), convert_long_sat_rtz(v.sD), convert_long_sat_rtz(v.sE), convert_long_sat_rtz(v.sF));
+}
+
+INLINE OVERLOADABLE long16 convert_long16_sat_rtp(short16 v) {
+  return (long16)(convert_long_sat_rtp(v.s0), convert_long_sat_rtp(v.s1), convert_long_sat_rtp(v.s2), convert_long_sat_rtp(v.s3), convert_long_sat_rtp(v.s4), convert_long_sat_rtp(v.s5), convert_long_sat_rtp(v.s6), convert_long_sat_rtp(v.s7), convert_long_sat_rtp(v.s8), convert_long_sat_rtp(v.s9), convert_long_sat_rtp(v.sA), convert_long_sat_rtp(v.sB), convert_long_sat_rtp(v.sC), convert_long_sat_rtp(v.sD), convert_long_sat_rtp(v.sE), convert_long_sat_rtp(v.sF));
+}
+
+INLINE OVERLOADABLE long16 convert_long16_sat_rtn(short16 v) {
+  return (long16)(convert_long_sat_rtn(v.s0), convert_long_sat_rtn(v.s1), convert_long_sat_rtn(v.s2), convert_long_sat_rtn(v.s3), convert_long_sat_rtn(v.s4), convert_long_sat_rtn(v.s5), convert_long_sat_rtn(v.s6), convert_long_sat_rtn(v.s7), convert_long_sat_rtn(v.s8), convert_long_sat_rtn(v.s9), convert_long_sat_rtn(v.sA), convert_long_sat_rtn(v.sB), convert_long_sat_rtn(v.sC), convert_long_sat_rtn(v.sD), convert_long_sat_rtn(v.sE), convert_long_sat_rtn(v.sF));
+}
+
+INLINE OVERLOADABLE ulong16 convert_ulong16_sat_rte(short16 v) {
+  return (ulong16)(convert_ulong_sat_rte(v.s0), convert_ulong_sat_rte(v.s1), convert_ulong_sat_rte(v.s2), convert_ulong_sat_rte(v.s3), convert_ulong_sat_rte(v.s4), convert_ulong_sat_rte(v.s5), convert_ulong_sat_rte(v.s6), convert_ulong_sat_rte(v.s7), convert_ulong_sat_rte(v.s8), convert_ulong_sat_rte(v.s9), convert_ulong_sat_rte(v.sA), convert_ulong_sat_rte(v.sB), convert_ulong_sat_rte(v.sC), convert_ulong_sat_rte(v.sD), convert_ulong_sat_rte(v.sE), convert_ulong_sat_rte(v.sF));
+}
+
+INLINE OVERLOADABLE ulong16 convert_ulong16_sat_rtz(short16 v) {
+  return (ulong16)(convert_ulong_sat_rtz(v.s0), convert_ulong_sat_rtz(v.s1), convert_ulong_sat_rtz(v.s2), convert_ulong_sat_rtz(v.s3), convert_ulong_sat_rtz(v.s4), convert_ulong_sat_rtz(v.s5), convert_ulong_sat_rtz(v.s6), convert_ulong_sat_rtz(v.s7), convert_ulong_sat_rtz(v.s8), convert_ulong_sat_rtz(v.s9), convert_ulong_sat_rtz(v.sA), convert_ulong_sat_rtz(v.sB), convert_ulong_sat_rtz(v.sC), convert_ulong_sat_rtz(v.sD), convert_ulong_sat_rtz(v.sE), convert_ulong_sat_rtz(v.sF));
+}
+
+INLINE OVERLOADABLE ulong16 convert_ulong16_sat_rtp(short16 v) {
+  return (ulong16)(convert_ulong_sat_rtp(v.s0), convert_ulong_sat_rtp(v.s1), convert_ulong_sat_rtp(v.s2), convert_ulong_sat_rtp(v.s3), convert_ulong_sat_rtp(v.s4), convert_ulong_sat_rtp(v.s5), convert_ulong_sat_rtp(v.s6), convert_ulong_sat_rtp(v.s7), convert_ulong_sat_rtp(v.s8), convert_ulong_sat_rtp(v.s9), convert_ulong_sat_rtp(v.sA), convert_ulong_sat_rtp(v.sB), convert_ulong_sat_rtp(v.sC), convert_ulong_sat_rtp(v.sD), convert_ulong_sat_rtp(v.sE), convert_ulong_sat_rtp(v.sF));
+}
+
+INLINE OVERLOADABLE ulong16 convert_ulong16_sat_rtn(short16 v) {
+  return (ulong16)(convert_ulong_sat_rtn(v.s0), convert_ulong_sat_rtn(v.s1), convert_ulong_sat_rtn(v.s2), convert_ulong_sat_rtn(v.s3), convert_ulong_sat_rtn(v.s4), convert_ulong_sat_rtn(v.s5), convert_ulong_sat_rtn(v.s6), convert_ulong_sat_rtn(v.s7), convert_ulong_sat_rtn(v.s8), convert_ulong_sat_rtn(v.s9), convert_ulong_sat_rtn(v.sA), convert_ulong_sat_rtn(v.sB), convert_ulong_sat_rtn(v.sC), convert_ulong_sat_rtn(v.sD), convert_ulong_sat_rtn(v.sE), convert_ulong_sat_rtn(v.sF));
+}
+
+INLINE OVERLOADABLE int16 convert_int16_sat_rte(short16 v) {
+  return (int16)(convert_int_sat_rte(v.s0), convert_int_sat_rte(v.s1), convert_int_sat_rte(v.s2), convert_int_sat_rte(v.s3), convert_int_sat_rte(v.s4), convert_int_sat_rte(v.s5), convert_int_sat_rte(v.s6), convert_int_sat_rte(v.s7), convert_int_sat_rte(v.s8), convert_int_sat_rte(v.s9), convert_int_sat_rte(v.sA), convert_int_sat_rte(v.sB), convert_int_sat_rte(v.sC), convert_int_sat_rte(v.sD), convert_int_sat_rte(v.sE), convert_int_sat_rte(v.sF));
+}
+
+INLINE OVERLOADABLE int16 convert_int16_sat_rtz(short16 v) {
+  return (int16)(convert_int_sat_rtz(v.s0), convert_int_sat_rtz(v.s1), convert_int_sat_rtz(v.s2), convert_int_sat_rtz(v.s3), convert_int_sat_rtz(v.s4), convert_int_sat_rtz(v.s5), convert_int_sat_rtz(v.s6), convert_int_sat_rtz(v.s7), convert_int_sat_rtz(v.s8), convert_int_sat_rtz(v.s9), convert_int_sat_rtz(v.sA), convert_int_sat_rtz(v.sB), convert_int_sat_rtz(v.sC), convert_int_sat_rtz(v.sD), convert_int_sat_rtz(v.sE), convert_int_sat_rtz(v.sF));
+}
+
+INLINE OVERLOADABLE int16 convert_int16_sat_rtp(short16 v) {
+  return (int16)(convert_int_sat_rtp(v.s0), convert_int_sat_rtp(v.s1), convert_int_sat_rtp(v.s2), convert_int_sat_rtp(v.s3), convert_int_sat_rtp(v.s4), convert_int_sat_rtp(v.s5), convert_int_sat_rtp(v.s6), convert_int_sat_rtp(v.s7), convert_int_sat_rtp(v.s8), convert_int_sat_rtp(v.s9), convert_int_sat_rtp(v.sA), convert_int_sat_rtp(v.sB), convert_int_sat_rtp(v.sC), convert_int_sat_rtp(v.sD), convert_int_sat_rtp(v.sE), convert_int_sat_rtp(v.sF));
+}
+
+INLINE OVERLOADABLE int16 convert_int16_sat_rtn(short16 v) {
+  return (int16)(convert_int_sat_rtn(v.s0), convert_int_sat_rtn(v.s1), convert_int_sat_rtn(v.s2), convert_int_sat_rtn(v.s3), convert_int_sat_rtn(v.s4), convert_int_sat_rtn(v.s5), convert_int_sat_rtn(v.s6), convert_int_sat_rtn(v.s7), convert_int_sat_rtn(v.s8), convert_int_sat_rtn(v.s9), convert_int_sat_rtn(v.sA), convert_int_sat_rtn(v.sB), convert_int_sat_rtn(v.sC), convert_int_sat_rtn(v.sD), convert_int_sat_rtn(v.sE), convert_int_sat_rtn(v.sF));
+}
+
+INLINE OVERLOADABLE uint16 convert_uint16_sat_rte(short16 v) {
+  return (uint16)(convert_uint_sat_rte(v.s0), convert_uint_sat_rte(v.s1), convert_uint_sat_rte(v.s2), convert_uint_sat_rte(v.s3), convert_uint_sat_rte(v.s4), convert_uint_sat_rte(v.s5), convert_uint_sat_rte(v.s6), convert_uint_sat_rte(v.s7), convert_uint_sat_rte(v.s8), convert_uint_sat_rte(v.s9), convert_uint_sat_rte(v.sA), convert_uint_sat_rte(v.sB), convert_uint_sat_rte(v.sC), convert_uint_sat_rte(v.sD), convert_uint_sat_rte(v.sE), convert_uint_sat_rte(v.sF));
+}
+
+INLINE OVERLOADABLE uint16 convert_uint16_sat_rtz(short16 v) {
+  return (uint16)(convert_uint_sat_rtz(v.s0), convert_uint_sat_rtz(v.s1), convert_uint_sat_rtz(v.s2), convert_uint_sat_rtz(v.s3), convert_uint_sat_rtz(v.s4), convert_uint_sat_rtz(v.s5), convert_uint_sat_rtz(v.s6), convert_uint_sat_rtz(v.s7), convert_uint_sat_rtz(v.s8), convert_uint_sat_rtz(v.s9), convert_uint_sat_rtz(v.sA), convert_uint_sat_rtz(v.sB), convert_uint_sat_rtz(v.sC), convert_uint_sat_rtz(v.sD), convert_uint_sat_rtz(v.sE), convert_uint_sat_rtz(v.sF));
+}
+
+INLINE OVERLOADABLE uint16 convert_uint16_sat_rtp(short16 v) {
+  return (uint16)(convert_uint_sat_rtp(v.s0), convert_uint_sat_rtp(v.s1), convert_uint_sat_rtp(v.s2), convert_uint_sat_rtp(v.s3), convert_uint_sat_rtp(v.s4), convert_uint_sat_rtp(v.s5), convert_uint_sat_rtp(v.s6), convert_uint_sat_rtp(v.s7), convert_uint_sat_rtp(v.s8), convert_uint_sat_rtp(v.s9), convert_uint_sat_rtp(v.sA), convert_uint_sat_rtp(v.sB), convert_uint_sat_rtp(v.sC), convert_uint_sat_rtp(v.sD), convert_uint_sat_rtp(v.sE), convert_uint_sat_rtp(v.sF));
+}
+
+INLINE OVERLOADABLE uint16 convert_uint16_sat_rtn(short16 v) {
+  return (uint16)(convert_uint_sat_rtn(v.s0), convert_uint_sat_rtn(v.s1), convert_uint_sat_rtn(v.s2), convert_uint_sat_rtn(v.s3), convert_uint_sat_rtn(v.s4), convert_uint_sat_rtn(v.s5), convert_uint_sat_rtn(v.s6), convert_uint_sat_rtn(v.s7), convert_uint_sat_rtn(v.s8), convert_uint_sat_rtn(v.s9), convert_uint_sat_rtn(v.sA), convert_uint_sat_rtn(v.sB), convert_uint_sat_rtn(v.sC), convert_uint_sat_rtn(v.sD), convert_uint_sat_rtn(v.sE), convert_uint_sat_rtn(v.sF));
+}
+
+INLINE OVERLOADABLE short16 convert_short16_sat_rte(short16 v) {
+  return (short16)(convert_short_sat_rte(v.s0), convert_short_sat_rte(v.s1), convert_short_sat_rte(v.s2), convert_short_sat_rte(v.s3), convert_short_sat_rte(v.s4), convert_short_sat_rte(v.s5), convert_short_sat_rte(v.s6), convert_short_sat_rte(v.s7), convert_short_sat_rte(v.s8), convert_short_sat_rte(v.s9), convert_short_sat_rte(v.sA), convert_short_sat_rte(v.sB), convert_short_sat_rte(v.sC), convert_short_sat_rte(v.sD), convert_short_sat_rte(v.sE), convert_short_sat_rte(v.sF));
+}
+
+INLINE OVERLOADABLE short16 convert_short16_sat_rtz(short16 v) {
+  return (short16)(convert_short_sat_rtz(v.s0), convert_short_sat_rtz(v.s1), convert_short_sat_rtz(v.s2), convert_short_sat_rtz(v.s3), convert_short_sat_rtz(v.s4), convert_short_sat_rtz(v.s5), convert_short_sat_rtz(v.s6), convert_short_sat_rtz(v.s7), convert_short_sat_rtz(v.s8), convert_short_sat_rtz(v.s9), convert_short_sat_rtz(v.sA), convert_short_sat_rtz(v.sB), convert_short_sat_rtz(v.sC), convert_short_sat_rtz(v.sD), convert_short_sat_rtz(v.sE), convert_short_sat_rtz(v.sF));
+}
+
+INLINE OVERLOADABLE short16 convert_short16_sat_rtp(short16 v) {
+  return (short16)(convert_short_sat_rtp(v.s0), convert_short_sat_rtp(v.s1), convert_short_sat_rtp(v.s2), convert_short_sat_rtp(v.s3), convert_short_sat_rtp(v.s4), convert_short_sat_rtp(v.s5), convert_short_sat_rtp(v.s6), convert_short_sat_rtp(v.s7), convert_short_sat_rtp(v.s8), convert_short_sat_rtp(v.s9), convert_short_sat_rtp(v.sA), convert_short_sat_rtp(v.sB), convert_short_sat_rtp(v.sC), convert_short_sat_rtp(v.sD), convert_short_sat_rtp(v.sE), convert_short_sat_rtp(v.sF));
+}
+
+INLINE OVERLOADABLE short16 convert_short16_sat_rtn(short16 v) {
+  return (short16)(convert_short_sat_rtn(v.s0), convert_short_sat_rtn(v.s1), convert_short_sat_rtn(v.s2), convert_short_sat_rtn(v.s3), convert_short_sat_rtn(v.s4), convert_short_sat_rtn(v.s5), convert_short_sat_rtn(v.s6), convert_short_sat_rtn(v.s7), convert_short_sat_rtn(v.s8), convert_short_sat_rtn(v.s9), convert_short_sat_rtn(v.sA), convert_short_sat_rtn(v.sB), convert_short_sat_rtn(v.sC), convert_short_sat_rtn(v.sD), convert_short_sat_rtn(v.sE), convert_short_sat_rtn(v.sF));
+}
+
+INLINE OVERLOADABLE ushort16 convert_ushort16_sat_rte(short16 v) {
+  return (ushort16)(convert_ushort_sat_rte(v.s0), convert_ushort_sat_rte(v.s1), convert_ushort_sat_rte(v.s2), convert_ushort_sat_rte(v.s3), convert_ushort_sat_rte(v.s4), convert_ushort_sat_rte(v.s5), convert_ushort_sat_rte(v.s6), convert_ushort_sat_rte(v.s7), convert_ushort_sat_rte(v.s8), convert_ushort_sat_rte(v.s9), convert_ushort_sat_rte(v.sA), convert_ushort_sat_rte(v.sB), convert_ushort_sat_rte(v.sC), convert_ushort_sat_rte(v.sD), convert_ushort_sat_rte(v.sE), convert_ushort_sat_rte(v.sF));
+}
+
+INLINE OVERLOADABLE ushort16 convert_ushort16_sat_rtz(short16 v) {
+  return (ushort16)(convert_ushort_sat_rtz(v.s0), convert_ushort_sat_rtz(v.s1), convert_ushort_sat_rtz(v.s2), convert_ushort_sat_rtz(v.s3), convert_ushort_sat_rtz(v.s4), convert_ushort_sat_rtz(v.s5), convert_ushort_sat_rtz(v.s6), convert_ushort_sat_rtz(v.s7), convert_ushort_sat_rtz(v.s8), convert_ushort_sat_rtz(v.s9), convert_ushort_sat_rtz(v.sA), convert_ushort_sat_rtz(v.sB), convert_ushort_sat_rtz(v.sC), convert_ushort_sat_rtz(v.sD), convert_ushort_sat_rtz(v.sE), convert_ushort_sat_rtz(v.sF));
+}
+
+INLINE OVERLOADABLE ushort16 convert_ushort16_sat_rtp(short16 v) {
+  return (ushort16)(convert_ushort_sat_rtp(v.s0), convert_ushort_sat_rtp(v.s1), convert_ushort_sat_rtp(v.s2), convert_ushort_sat_rtp(v.s3), convert_ushort_sat_rtp(v.s4), convert_ushort_sat_rtp(v.s5), convert_ushort_sat_rtp(v.s6), convert_ushort_sat_rtp(v.s7), convert_ushort_sat_rtp(v.s8), convert_ushort_sat_rtp(v.s9), convert_ushort_sat_rtp(v.sA), convert_ushort_sat_rtp(v.sB), convert_ushort_sat_rtp(v.sC), convert_ushort_sat_rtp(v.sD), convert_ushort_sat_rtp(v.sE), convert_ushort_sat_rtp(v.sF));
+}
+
+INLINE OVERLOADABLE ushort16 convert_ushort16_sat_rtn(short16 v) {
+  return (ushort16)(convert_ushort_sat_rtn(v.s0), convert_ushort_sat_rtn(v.s1), convert_ushort_sat_rtn(v.s2), convert_ushort_sat_rtn(v.s3), convert_ushort_sat_rtn(v.s4), convert_ushort_sat_rtn(v.s5), convert_ushort_sat_rtn(v.s6), convert_ushort_sat_rtn(v.s7), convert_ushort_sat_rtn(v.s8), convert_ushort_sat_rtn(v.s9), convert_ushort_sat_rtn(v.sA), convert_ushort_sat_rtn(v.sB), convert_ushort_sat_rtn(v.sC), convert_ushort_sat_rtn(v.sD), convert_ushort_sat_rtn(v.sE), convert_ushort_sat_rtn(v.sF));
+}
+
+INLINE OVERLOADABLE char16 convert_char16_sat_rte(short16 v) {
+  return (char16)(convert_char_sat_rte(v.s0), convert_char_sat_rte(v.s1), convert_char_sat_rte(v.s2), convert_char_sat_rte(v.s3), convert_char_sat_rte(v.s4), convert_char_sat_rte(v.s5), convert_char_sat_rte(v.s6), convert_char_sat_rte(v.s7), convert_char_sat_rte(v.s8), convert_char_sat_rte(v.s9), convert_char_sat_rte(v.sA), convert_char_sat_rte(v.sB), convert_char_sat_rte(v.sC), convert_char_sat_rte(v.sD), convert_char_sat_rte(v.sE), convert_char_sat_rte(v.sF));
+}
+
+INLINE OVERLOADABLE char16 convert_char16_sat_rtz(short16 v) {
+  return (char16)(convert_char_sat_rtz(v.s0), convert_char_sat_rtz(v.s1), convert_char_sat_rtz(v.s2), convert_char_sat_rtz(v.s3), convert_char_sat_rtz(v.s4), convert_char_sat_rtz(v.s5), convert_char_sat_rtz(v.s6), convert_char_sat_rtz(v.s7), convert_char_sat_rtz(v.s8), convert_char_sat_rtz(v.s9), convert_char_sat_rtz(v.sA), convert_char_sat_rtz(v.sB), convert_char_sat_rtz(v.sC), convert_char_sat_rtz(v.sD), convert_char_sat_rtz(v.sE), convert_char_sat_rtz(v.sF));
+}
+
+INLINE OVERLOADABLE char16 convert_char16_sat_rtp(short16 v) {
+  return (char16)(convert_char_sat_rtp(v.s0), convert_char_sat_rtp(v.s1), convert_char_sat_rtp(v.s2), convert_char_sat_rtp(v.s3), convert_char_sat_rtp(v.s4), convert_char_sat_rtp(v.s5), convert_char_sat_rtp(v.s6), convert_char_sat_rtp(v.s7), convert_char_sat_rtp(v.s8), convert_char_sat_rtp(v.s9), convert_char_sat_rtp(v.sA), convert_char_sat_rtp(v.sB), convert_char_sat_rtp(v.sC), convert_char_sat_rtp(v.sD), convert_char_sat_rtp(v.sE), convert_char_sat_rtp(v.sF));
+}
+
+INLINE OVERLOADABLE char16 convert_char16_sat_rtn(short16 v) {
+  return (char16)(convert_char_sat_rtn(v.s0), convert_char_sat_rtn(v.s1), convert_char_sat_rtn(v.s2), convert_char_sat_rtn(v.s3), convert_char_sat_rtn(v.s4), convert_char_sat_rtn(v.s5), convert_char_sat_rtn(v.s6), convert_char_sat_rtn(v.s7), convert_char_sat_rtn(v.s8), convert_char_sat_rtn(v.s9), convert_char_sat_rtn(v.sA), convert_char_sat_rtn(v.sB), convert_char_sat_rtn(v.sC), convert_char_sat_rtn(v.sD), convert_char_sat_rtn(v.sE), convert_char_sat_rtn(v.sF));
+}
+
+INLINE OVERLOADABLE uchar16 convert_uchar16_sat_rte(short16 v) {
+  return (uchar16)(convert_uchar_sat_rte(v.s0), convert_uchar_sat_rte(v.s1), convert_uchar_sat_rte(v.s2), convert_uchar_sat_rte(v.s3), convert_uchar_sat_rte(v.s4), convert_uchar_sat_rte(v.s5), convert_uchar_sat_rte(v.s6), convert_uchar_sat_rte(v.s7), convert_uchar_sat_rte(v.s8), convert_uchar_sat_rte(v.s9), convert_uchar_sat_rte(v.sA), convert_uchar_sat_rte(v.sB), convert_uchar_sat_rte(v.sC), convert_uchar_sat_rte(v.sD), convert_uchar_sat_rte(v.sE), convert_uchar_sat_rte(v.sF));
+}
+
+INLINE OVERLOADABLE uchar16 convert_uchar16_sat_rtz(short16 v) {
+  return (uchar16)(convert_uchar_sat_rtz(v.s0), convert_uchar_sat_rtz(v.s1), convert_uchar_sat_rtz(v.s2), convert_uchar_sat_rtz(v.s3), convert_uchar_sat_rtz(v.s4), convert_uchar_sat_rtz(v.s5), convert_uchar_sat_rtz(v.s6), convert_uchar_sat_rtz(v.s7), convert_uchar_sat_rtz(v.s8), convert_uchar_sat_rtz(v.s9), convert_uchar_sat_rtz(v.sA), convert_uchar_sat_rtz(v.sB), convert_uchar_sat_rtz(v.sC), convert_uchar_sat_rtz(v.sD), convert_uchar_sat_rtz(v.sE), convert_uchar_sat_rtz(v.sF));
+}
+
+INLINE OVERLOADABLE uchar16 convert_uchar16_sat_rtp(short16 v) {
+  return (uchar16)(convert_uchar_sat_rtp(v.s0), convert_uchar_sat_rtp(v.s1), convert_uchar_sat_rtp(v.s2), convert_uchar_sat_rtp(v.s3), convert_uchar_sat_rtp(v.s4), convert_uchar_sat_rtp(v.s5), convert_uchar_sat_rtp(v.s6), convert_uchar_sat_rtp(v.s7), convert_uchar_sat_rtp(v.s8), convert_uchar_sat_rtp(v.s9), convert_uchar_sat_rtp(v.sA), convert_uchar_sat_rtp(v.sB), convert_uchar_sat_rtp(v.sC), convert_uchar_sat_rtp(v.sD), convert_uchar_sat_rtp(v.sE), convert_uchar_sat_rtp(v.sF));
+}
+
+INLINE OVERLOADABLE uchar16 convert_uchar16_sat_rtn(short16 v) {
+  return (uchar16)(convert_uchar_sat_rtn(v.s0), convert_uchar_sat_rtn(v.s1), convert_uchar_sat_rtn(v.s2), convert_uchar_sat_rtn(v.s3), convert_uchar_sat_rtn(v.s4), convert_uchar_sat_rtn(v.s5), convert_uchar_sat_rtn(v.s6), convert_uchar_sat_rtn(v.s7), convert_uchar_sat_rtn(v.s8), convert_uchar_sat_rtn(v.s9), convert_uchar_sat_rtn(v.sA), convert_uchar_sat_rtn(v.sB), convert_uchar_sat_rtn(v.sC), convert_uchar_sat_rtn(v.sD), convert_uchar_sat_rtn(v.sE), convert_uchar_sat_rtn(v.sF));
+}
+
+INLINE OVERLOADABLE long16 convert_long16_sat_rte(ushort16 v) {
+  return (long16)(convert_long_sat_rte(v.s0), convert_long_sat_rte(v.s1), convert_long_sat_rte(v.s2), convert_long_sat_rte(v.s3), convert_long_sat_rte(v.s4), convert_long_sat_rte(v.s5), convert_long_sat_rte(v.s6), convert_long_sat_rte(v.s7), convert_long_sat_rte(v.s8), convert_long_sat_rte(v.s9), convert_long_sat_rte(v.sA), convert_long_sat_rte(v.sB), convert_long_sat_rte(v.sC), convert_long_sat_rte(v.sD), convert_long_sat_rte(v.sE), convert_long_sat_rte(v.sF));
+}
+
+INLINE OVERLOADABLE long16 convert_long16_sat_rtz(ushort16 v) {
+  return (long16)(convert_long_sat_rtz(v.s0), convert_long_sat_rtz(v.s1), convert_long_sat_rtz(v.s2), convert_long_sat_rtz(v.s3), convert_long_sat_rtz(v.s4), convert_long_sat_rtz(v.s5), convert_long_sat_rtz(v.s6), convert_long_sat_rtz(v.s7), convert_long_sat_rtz(v.s8), convert_long_sat_rtz(v.s9), convert_long_sat_rtz(v.sA), convert_long_sat_rtz(v.sB), convert_long_sat_rtz(v.sC), convert_long_sat_rtz(v.sD), convert_long_sat_rtz(v.sE), convert_long_sat_rtz(v.sF));
+}
+
+INLINE OVERLOADABLE long16 convert_long16_sat_rtp(ushort16 v) {
+  return (long16)(convert_long_sat_rtp(v.s0), convert_long_sat_rtp(v.s1), convert_long_sat_rtp(v.s2), convert_long_sat_rtp(v.s3), convert_long_sat_rtp(v.s4), convert_long_sat_rtp(v.s5), convert_long_sat_rtp(v.s6), convert_long_sat_rtp(v.s7), convert_long_sat_rtp(v.s8), convert_long_sat_rtp(v.s9), convert_long_sat_rtp(v.sA), convert_long_sat_rtp(v.sB), convert_long_sat_rtp(v.sC), convert_long_sat_rtp(v.sD), convert_long_sat_rtp(v.sE), convert_long_sat_rtp(v.sF));
+}
+
+INLINE OVERLOADABLE long16 convert_long16_sat_rtn(ushort16 v) {
+  return (long16)(convert_long_sat_rtn(v.s0), convert_long_sat_rtn(v.s1), convert_long_sat_rtn(v.s2), convert_long_sat_rtn(v.s3), convert_long_sat_rtn(v.s4), convert_long_sat_rtn(v.s5), convert_long_sat_rtn(v.s6), convert_long_sat_rtn(v.s7), convert_long_sat_rtn(v.s8), convert_long_sat_rtn(v.s9), convert_long_sat_rtn(v.sA), convert_long_sat_rtn(v.sB), convert_long_sat_rtn(v.sC), convert_long_sat_rtn(v.sD), convert_long_sat_rtn(v.sE), convert_long_sat_rtn(v.sF));
+}
+
+INLINE OVERLOADABLE ulong16 convert_ulong16_sat_rte(ushort16 v) {
+  return (ulong16)(convert_ulong_sat_rte(v.s0), convert_ulong_sat_rte(v.s1), convert_ulong_sat_rte(v.s2), convert_ulong_sat_rte(v.s3), convert_ulong_sat_rte(v.s4), convert_ulong_sat_rte(v.s5), convert_ulong_sat_rte(v.s6), convert_ulong_sat_rte(v.s7), convert_ulong_sat_rte(v.s8), convert_ulong_sat_rte(v.s9), convert_ulong_sat_rte(v.sA), convert_ulong_sat_rte(v.sB), convert_ulong_sat_rte(v.sC), convert_ulong_sat_rte(v.sD), convert_ulong_sat_rte(v.sE), convert_ulong_sat_rte(v.sF));
+}
+
+INLINE OVERLOADABLE ulong16 convert_ulong16_sat_rtz(ushort16 v) {
+  return (ulong16)(convert_ulong_sat_rtz(v.s0), convert_ulong_sat_rtz(v.s1), convert_ulong_sat_rtz(v.s2), convert_ulong_sat_rtz(v.s3), convert_ulong_sat_rtz(v.s4), convert_ulong_sat_rtz(v.s5), convert_ulong_sat_rtz(v.s6), convert_ulong_sat_rtz(v.s7), convert_ulong_sat_rtz(v.s8), convert_ulong_sat_rtz(v.s9), convert_ulong_sat_rtz(v.sA), convert_ulong_sat_rtz(v.sB), convert_ulong_sat_rtz(v.sC), convert_ulong_sat_rtz(v.sD), convert_ulong_sat_rtz(v.sE), convert_ulong_sat_rtz(v.sF));
+}
+
+INLINE OVERLOADABLE ulong16 convert_ulong16_sat_rtp(ushort16 v) {
+  return (ulong16)(convert_ulong_sat_rtp(v.s0), convert_ulong_sat_rtp(v.s1), convert_ulong_sat_rtp(v.s2), convert_ulong_sat_rtp(v.s3), convert_ulong_sat_rtp(v.s4), convert_ulong_sat_rtp(v.s5), convert_ulong_sat_rtp(v.s6), convert_ulong_sat_rtp(v.s7), convert_ulong_sat_rtp(v.s8), convert_ulong_sat_rtp(v.s9), convert_ulong_sat_rtp(v.sA), convert_ulong_sat_rtp(v.sB), convert_ulong_sat_rtp(v.sC), convert_ulong_sat_rtp(v.sD), convert_ulong_sat_rtp(v.sE), convert_ulong_sat_rtp(v.sF));
+}
+
+INLINE OVERLOADABLE ulong16 convert_ulong16_sat_rtn(ushort16 v) {
+  return (ulong16)(convert_ulong_sat_rtn(v.s0), convert_ulong_sat_rtn(v.s1), convert_ulong_sat_rtn(v.s2), convert_ulong_sat_rtn(v.s3), convert_ulong_sat_rtn(v.s4), convert_ulong_sat_rtn(v.s5), convert_ulong_sat_rtn(v.s6), convert_ulong_sat_rtn(v.s7), convert_ulong_sat_rtn(v.s8), convert_ulong_sat_rtn(v.s9), convert_ulong_sat_rtn(v.sA), convert_ulong_sat_rtn(v.sB), convert_ulong_sat_rtn(v.sC), convert_ulong_sat_rtn(v.sD), convert_ulong_sat_rtn(v.sE), convert_ulong_sat_rtn(v.sF));
+}
+
+INLINE OVERLOADABLE int16 convert_int16_sat_rte(ushort16 v) {
+  return (int16)(convert_int_sat_rte(v.s0), convert_int_sat_rte(v.s1), convert_int_sat_rte(v.s2), convert_int_sat_rte(v.s3), convert_int_sat_rte(v.s4), convert_int_sat_rte(v.s5), convert_int_sat_rte(v.s6), convert_int_sat_rte(v.s7), convert_int_sat_rte(v.s8), convert_int_sat_rte(v.s9), convert_int_sat_rte(v.sA), convert_int_sat_rte(v.sB), convert_int_sat_rte(v.sC), convert_int_sat_rte(v.sD), convert_int_sat_rte(v.sE), convert_int_sat_rte(v.sF));
+}
+
+INLINE OVERLOADABLE int16 convert_int16_sat_rtz(ushort16 v) {
+  return (int16)(convert_int_sat_rtz(v.s0), convert_int_sat_rtz(v.s1), convert_int_sat_rtz(v.s2), convert_int_sat_rtz(v.s3), convert_int_sat_rtz(v.s4), convert_int_sat_rtz(v.s5), convert_int_sat_rtz(v.s6), convert_int_sat_rtz(v.s7), convert_int_sat_rtz(v.s8), convert_int_sat_rtz(v.s9), convert_int_sat_rtz(v.sA), convert_int_sat_rtz(v.sB), convert_int_sat_rtz(v.sC), convert_int_sat_rtz(v.sD), convert_int_sat_rtz(v.sE), convert_int_sat_rtz(v.sF));
+}
+
+INLINE OVERLOADABLE int16 convert_int16_sat_rtp(ushort16 v) {
+  return (int16)(convert_int_sat_rtp(v.s0), convert_int_sat_rtp(v.s1), convert_int_sat_rtp(v.s2), convert_int_sat_rtp(v.s3), convert_int_sat_rtp(v.s4), convert_int_sat_rtp(v.s5), convert_int_sat_rtp(v.s6), convert_int_sat_rtp(v.s7), convert_int_sat_rtp(v.s8), convert_int_sat_rtp(v.s9), convert_int_sat_rtp(v.sA), convert_int_sat_rtp(v.sB), convert_int_sat_rtp(v.sC), convert_int_sat_rtp(v.sD), convert_int_sat_rtp(v.sE), convert_int_sat_rtp(v.sF));
+}
+
+INLINE OVERLOADABLE int16 convert_int16_sat_rtn(ushort16 v) {
+  return (int16)(convert_int_sat_rtn(v.s0), convert_int_sat_rtn(v.s1), convert_int_sat_rtn(v.s2), convert_int_sat_rtn(v.s3), convert_int_sat_rtn(v.s4), convert_int_sat_rtn(v.s5), convert_int_sat_rtn(v.s6), convert_int_sat_rtn(v.s7), convert_int_sat_rtn(v.s8), convert_int_sat_rtn(v.s9), convert_int_sat_rtn(v.sA), convert_int_sat_rtn(v.sB), convert_int_sat_rtn(v.sC), convert_int_sat_rtn(v.sD), convert_int_sat_rtn(v.sE), convert_int_sat_rtn(v.sF));
+}
+
+INLINE OVERLOADABLE uint16 convert_uint16_sat_rte(ushort16 v) {
+  return (uint16)(convert_uint_sat_rte(v.s0), convert_uint_sat_rte(v.s1), convert_uint_sat_rte(v.s2), convert_uint_sat_rte(v.s3), convert_uint_sat_rte(v.s4), convert_uint_sat_rte(v.s5), convert_uint_sat_rte(v.s6), convert_uint_sat_rte(v.s7), convert_uint_sat_rte(v.s8), convert_uint_sat_rte(v.s9), convert_uint_sat_rte(v.sA), convert_uint_sat_rte(v.sB), convert_uint_sat_rte(v.sC), convert_uint_sat_rte(v.sD), convert_uint_sat_rte(v.sE), convert_uint_sat_rte(v.sF));
+}
+
+INLINE OVERLOADABLE uint16 convert_uint16_sat_rtz(ushort16 v) {
+  return (uint16)(convert_uint_sat_rtz(v.s0), convert_uint_sat_rtz(v.s1), convert_uint_sat_rtz(v.s2), convert_uint_sat_rtz(v.s3), convert_uint_sat_rtz(v.s4), convert_uint_sat_rtz(v.s5), convert_uint_sat_rtz(v.s6), convert_uint_sat_rtz(v.s7), convert_uint_sat_rtz(v.s8), convert_uint_sat_rtz(v.s9), convert_uint_sat_rtz(v.sA), convert_uint_sat_rtz(v.sB), convert_uint_sat_rtz(v.sC), convert_uint_sat_rtz(v.sD), convert_uint_sat_rtz(v.sE), convert_uint_sat_rtz(v.sF));
+}
+
+INLINE OVERLOADABLE uint16 convert_uint16_sat_rtp(ushort16 v) {
+  return (uint16)(convert_uint_sat_rtp(v.s0), convert_uint_sat_rtp(v.s1), convert_uint_sat_rtp(v.s2), convert_uint_sat_rtp(v.s3), convert_uint_sat_rtp(v.s4), convert_uint_sat_rtp(v.s5), convert_uint_sat_rtp(v.s6), convert_uint_sat_rtp(v.s7), convert_uint_sat_rtp(v.s8), convert_uint_sat_rtp(v.s9), convert_uint_sat_rtp(v.sA), convert_uint_sat_rtp(v.sB), convert_uint_sat_rtp(v.sC), convert_uint_sat_rtp(v.sD), convert_uint_sat_rtp(v.sE), convert_uint_sat_rtp(v.sF));
+}
+
+INLINE OVERLOADABLE uint16 convert_uint16_sat_rtn(ushort16 v) {
+  return (uint16)(convert_uint_sat_rtn(v.s0), convert_uint_sat_rtn(v.s1), convert_uint_sat_rtn(v.s2), convert_uint_sat_rtn(v.s3), convert_uint_sat_rtn(v.s4), convert_uint_sat_rtn(v.s5), convert_uint_sat_rtn(v.s6), convert_uint_sat_rtn(v.s7), convert_uint_sat_rtn(v.s8), convert_uint_sat_rtn(v.s9), convert_uint_sat_rtn(v.sA), convert_uint_sat_rtn(v.sB), convert_uint_sat_rtn(v.sC), convert_uint_sat_rtn(v.sD), convert_uint_sat_rtn(v.sE), convert_uint_sat_rtn(v.sF));
+}
+
+INLINE OVERLOADABLE short16 convert_short16_sat_rte(ushort16 v) {
+  return (short16)(convert_short_sat_rte(v.s0), convert_short_sat_rte(v.s1), convert_short_sat_rte(v.s2), convert_short_sat_rte(v.s3), convert_short_sat_rte(v.s4), convert_short_sat_rte(v.s5), convert_short_sat_rte(v.s6), convert_short_sat_rte(v.s7), convert_short_sat_rte(v.s8), convert_short_sat_rte(v.s9), convert_short_sat_rte(v.sA), convert_short_sat_rte(v.sB), convert_short_sat_rte(v.sC), convert_short_sat_rte(v.sD), convert_short_sat_rte(v.sE), convert_short_sat_rte(v.sF));
+}
+
+INLINE OVERLOADABLE short16 convert_short16_sat_rtz(ushort16 v) {
+  return (short16)(convert_short_sat_rtz(v.s0), convert_short_sat_rtz(v.s1), convert_short_sat_rtz(v.s2), convert_short_sat_rtz(v.s3), convert_short_sat_rtz(v.s4), convert_short_sat_rtz(v.s5), convert_short_sat_rtz(v.s6), convert_short_sat_rtz(v.s7), convert_short_sat_rtz(v.s8), convert_short_sat_rtz(v.s9), convert_short_sat_rtz(v.sA), convert_short_sat_rtz(v.sB), convert_short_sat_rtz(v.sC), convert_short_sat_rtz(v.sD), convert_short_sat_rtz(v.sE), convert_short_sat_rtz(v.sF));
+}
+
+INLINE OVERLOADABLE short16 convert_short16_sat_rtp(ushort16 v) {
+  return (short16)(convert_short_sat_rtp(v.s0), convert_short_sat_rtp(v.s1), convert_short_sat_rtp(v.s2), convert_short_sat_rtp(v.s3), convert_short_sat_rtp(v.s4), convert_short_sat_rtp(v.s5), convert_short_sat_rtp(v.s6), convert_short_sat_rtp(v.s7), convert_short_sat_rtp(v.s8), convert_short_sat_rtp(v.s9), convert_short_sat_rtp(v.sA), convert_short_sat_rtp(v.sB), convert_short_sat_rtp(v.sC), convert_short_sat_rtp(v.sD), convert_short_sat_rtp(v.sE), convert_short_sat_rtp(v.sF));
+}
+
+INLINE OVERLOADABLE short16 convert_short16_sat_rtn(ushort16 v) {
+  return (short16)(convert_short_sat_rtn(v.s0), convert_short_sat_rtn(v.s1), convert_short_sat_rtn(v.s2), convert_short_sat_rtn(v.s3), convert_short_sat_rtn(v.s4), convert_short_sat_rtn(v.s5), convert_short_sat_rtn(v.s6), convert_short_sat_rtn(v.s7), convert_short_sat_rtn(v.s8), convert_short_sat_rtn(v.s9), convert_short_sat_rtn(v.sA), convert_short_sat_rtn(v.sB), convert_short_sat_rtn(v.sC), convert_short_sat_rtn(v.sD), convert_short_sat_rtn(v.sE), convert_short_sat_rtn(v.sF));
+}
+
+INLINE OVERLOADABLE ushort16 convert_ushort16_sat_rte(ushort16 v) {
+  return (ushort16)(convert_ushort_sat_rte(v.s0), convert_ushort_sat_rte(v.s1), convert_ushort_sat_rte(v.s2), convert_ushort_sat_rte(v.s3), convert_ushort_sat_rte(v.s4), convert_ushort_sat_rte(v.s5), convert_ushort_sat_rte(v.s6), convert_ushort_sat_rte(v.s7), convert_ushort_sat_rte(v.s8), convert_ushort_sat_rte(v.s9), convert_ushort_sat_rte(v.sA), convert_ushort_sat_rte(v.sB), convert_ushort_sat_rte(v.sC), convert_ushort_sat_rte(v.sD), convert_ushort_sat_rte(v.sE), convert_ushort_sat_rte(v.sF));
+}
+
+INLINE OVERLOADABLE ushort16 convert_ushort16_sat_rtz(ushort16 v) {
+  return (ushort16)(convert_ushort_sat_rtz(v.s0), convert_ushort_sat_rtz(v.s1), convert_ushort_sat_rtz(v.s2), convert_ushort_sat_rtz(v.s3), convert_ushort_sat_rtz(v.s4), convert_ushort_sat_rtz(v.s5), convert_ushort_sat_rtz(v.s6), convert_ushort_sat_rtz(v.s7), convert_ushort_sat_rtz(v.s8), convert_ushort_sat_rtz(v.s9), convert_ushort_sat_rtz(v.sA), convert_ushort_sat_rtz(v.sB), convert_ushort_sat_rtz(v.sC), convert_ushort_sat_rtz(v.sD), convert_ushort_sat_rtz(v.sE), convert_ushort_sat_rtz(v.sF));
+}
+
+INLINE OVERLOADABLE ushort16 convert_ushort16_sat_rtp(ushort16 v) {
+  return (ushort16)(convert_ushort_sat_rtp(v.s0), convert_ushort_sat_rtp(v.s1), convert_ushort_sat_rtp(v.s2), convert_ushort_sat_rtp(v.s3), convert_ushort_sat_rtp(v.s4), convert_ushort_sat_rtp(v.s5), convert_ushort_sat_rtp(v.s6), convert_ushort_sat_rtp(v.s7), convert_ushort_sat_rtp(v.s8), convert_ushort_sat_rtp(v.s9), convert_ushort_sat_rtp(v.sA), convert_ushort_sat_rtp(v.sB), convert_ushort_sat_rtp(v.sC), convert_ushort_sat_rtp(v.sD), convert_ushort_sat_rtp(v.sE), convert_ushort_sat_rtp(v.sF));
+}
+
+INLINE OVERLOADABLE ushort16 convert_ushort16_sat_rtn(ushort16 v) {
+  return (ushort16)(convert_ushort_sat_rtn(v.s0), convert_ushort_sat_rtn(v.s1), convert_ushort_sat_rtn(v.s2), convert_ushort_sat_rtn(v.s3), convert_ushort_sat_rtn(v.s4), convert_ushort_sat_rtn(v.s5), convert_ushort_sat_rtn(v.s6), convert_ushort_sat_rtn(v.s7), convert_ushort_sat_rtn(v.s8), convert_ushort_sat_rtn(v.s9), convert_ushort_sat_rtn(v.sA), convert_ushort_sat_rtn(v.sB), convert_ushort_sat_rtn(v.sC), convert_ushort_sat_rtn(v.sD), convert_ushort_sat_rtn(v.sE), convert_ushort_sat_rtn(v.sF));
+}
+
+INLINE OVERLOADABLE char16 convert_char16_sat_rte(ushort16 v) {
+  return (char16)(convert_char_sat_rte(v.s0), convert_char_sat_rte(v.s1), convert_char_sat_rte(v.s2), convert_char_sat_rte(v.s3), convert_char_sat_rte(v.s4), convert_char_sat_rte(v.s5), convert_char_sat_rte(v.s6), convert_char_sat_rte(v.s7), convert_char_sat_rte(v.s8), convert_char_sat_rte(v.s9), convert_char_sat_rte(v.sA), convert_char_sat_rte(v.sB), convert_char_sat_rte(v.sC), convert_char_sat_rte(v.sD), convert_char_sat_rte(v.sE), convert_char_sat_rte(v.sF));
+}
+
+INLINE OVERLOADABLE char16 convert_char16_sat_rtz(ushort16 v) {
+  return (char16)(convert_char_sat_rtz(v.s0), convert_char_sat_rtz(v.s1), convert_char_sat_rtz(v.s2), convert_char_sat_rtz(v.s3), convert_char_sat_rtz(v.s4), convert_char_sat_rtz(v.s5), convert_char_sat_rtz(v.s6), convert_char_sat_rtz(v.s7), convert_char_sat_rtz(v.s8), convert_char_sat_rtz(v.s9), convert_char_sat_rtz(v.sA), convert_char_sat_rtz(v.sB), convert_char_sat_rtz(v.sC), convert_char_sat_rtz(v.sD), convert_char_sat_rtz(v.sE), convert_char_sat_rtz(v.sF));
+}
+
+INLINE OVERLOADABLE char16 convert_char16_sat_rtp(ushort16 v) {
+  return (char16)(convert_char_sat_rtp(v.s0), convert_char_sat_rtp(v.s1), convert_char_sat_rtp(v.s2), convert_char_sat_rtp(v.s3), convert_char_sat_rtp(v.s4), convert_char_sat_rtp(v.s5), convert_char_sat_rtp(v.s6), convert_char_sat_rtp(v.s7), convert_char_sat_rtp(v.s8), convert_char_sat_rtp(v.s9), convert_char_sat_rtp(v.sA), convert_char_sat_rtp(v.sB), convert_char_sat_rtp(v.sC), convert_char_sat_rtp(v.sD), convert_char_sat_rtp(v.sE), convert_char_sat_rtp(v.sF));
+}
+
+INLINE OVERLOADABLE char16 convert_char16_sat_rtn(ushort16 v) {
+  return (char16)(convert_char_sat_rtn(v.s0), convert_char_sat_rtn(v.s1), convert_char_sat_rtn(v.s2), convert_char_sat_rtn(v.s3), convert_char_sat_rtn(v.s4), convert_char_sat_rtn(v.s5), convert_char_sat_rtn(v.s6), convert_char_sat_rtn(v.s7), convert_char_sat_rtn(v.s8), convert_char_sat_rtn(v.s9), convert_char_sat_rtn(v.sA), convert_char_sat_rtn(v.sB), convert_char_sat_rtn(v.sC), convert_char_sat_rtn(v.sD), convert_char_sat_rtn(v.sE), convert_char_sat_rtn(v.sF));
+}
+
+INLINE OVERLOADABLE uchar16 convert_uchar16_sat_rte(ushort16 v) {
+  return (uchar16)(convert_uchar_sat_rte(v.s0), convert_uchar_sat_rte(v.s1), convert_uchar_sat_rte(v.s2), convert_uchar_sat_rte(v.s3), convert_uchar_sat_rte(v.s4), convert_uchar_sat_rte(v.s5), convert_uchar_sat_rte(v.s6), convert_uchar_sat_rte(v.s7), convert_uchar_sat_rte(v.s8), convert_uchar_sat_rte(v.s9), convert_uchar_sat_rte(v.sA), convert_uchar_sat_rte(v.sB), convert_uchar_sat_rte(v.sC), convert_uchar_sat_rte(v.sD), convert_uchar_sat_rte(v.sE), convert_uchar_sat_rte(v.sF));
+}
+
+INLINE OVERLOADABLE uchar16 convert_uchar16_sat_rtz(ushort16 v) {
+  return (uchar16)(convert_uchar_sat_rtz(v.s0), convert_uchar_sat_rtz(v.s1), convert_uchar_sat_rtz(v.s2), convert_uchar_sat_rtz(v.s3), convert_uchar_sat_rtz(v.s4), convert_uchar_sat_rtz(v.s5), convert_uchar_sat_rtz(v.s6), convert_uchar_sat_rtz(v.s7), convert_uchar_sat_rtz(v.s8), convert_uchar_sat_rtz(v.s9), convert_uchar_sat_rtz(v.sA), convert_uchar_sat_rtz(v.sB), convert_uchar_sat_rtz(v.sC), convert_uchar_sat_rtz(v.sD), convert_uchar_sat_rtz(v.sE), convert_uchar_sat_rtz(v.sF));
+}
+
+INLINE OVERLOADABLE uchar16 convert_uchar16_sat_rtp(ushort16 v) {
+  return (uchar16)(convert_uchar_sat_rtp(v.s0), convert_uchar_sat_rtp(v.s1), convert_uchar_sat_rtp(v.s2), convert_uchar_sat_rtp(v.s3), convert_uchar_sat_rtp(v.s4), convert_uchar_sat_rtp(v.s5), convert_uchar_sat_rtp(v.s6), convert_uchar_sat_rtp(v.s7), convert_uchar_sat_rtp(v.s8), convert_uchar_sat_rtp(v.s9), convert_uchar_sat_rtp(v.sA), convert_uchar_sat_rtp(v.sB), convert_uchar_sat_rtp(v.sC), convert_uchar_sat_rtp(v.sD), convert_uchar_sat_rtp(v.sE), convert_uchar_sat_rtp(v.sF));
+}
+
+INLINE OVERLOADABLE uchar16 convert_uchar16_sat_rtn(ushort16 v) {
+  return (uchar16)(convert_uchar_sat_rtn(v.s0), convert_uchar_sat_rtn(v.s1), convert_uchar_sat_rtn(v.s2), convert_uchar_sat_rtn(v.s3), convert_uchar_sat_rtn(v.s4), convert_uchar_sat_rtn(v.s5), convert_uchar_sat_rtn(v.s6), convert_uchar_sat_rtn(v.s7), convert_uchar_sat_rtn(v.s8), convert_uchar_sat_rtn(v.s9), convert_uchar_sat_rtn(v.sA), convert_uchar_sat_rtn(v.sB), convert_uchar_sat_rtn(v.sC), convert_uchar_sat_rtn(v.sD), convert_uchar_sat_rtn(v.sE), convert_uchar_sat_rtn(v.sF));
+}
+
+INLINE OVERLOADABLE long16 convert_long16_sat_rte(char16 v) {
+  return (long16)(convert_long_sat_rte(v.s0), convert_long_sat_rte(v.s1), convert_long_sat_rte(v.s2), convert_long_sat_rte(v.s3), convert_long_sat_rte(v.s4), convert_long_sat_rte(v.s5), convert_long_sat_rte(v.s6), convert_long_sat_rte(v.s7), convert_long_sat_rte(v.s8), convert_long_sat_rte(v.s9), convert_long_sat_rte(v.sA), convert_long_sat_rte(v.sB), convert_long_sat_rte(v.sC), convert_long_sat_rte(v.sD), convert_long_sat_rte(v.sE), convert_long_sat_rte(v.sF));
+}
+
+INLINE OVERLOADABLE long16 convert_long16_sat_rtz(char16 v) {
+  return (long16)(convert_long_sat_rtz(v.s0), convert_long_sat_rtz(v.s1), convert_long_sat_rtz(v.s2), convert_long_sat_rtz(v.s3), convert_long_sat_rtz(v.s4), convert_long_sat_rtz(v.s5), convert_long_sat_rtz(v.s6), convert_long_sat_rtz(v.s7), convert_long_sat_rtz(v.s8), convert_long_sat_rtz(v.s9), convert_long_sat_rtz(v.sA), convert_long_sat_rtz(v.sB), convert_long_sat_rtz(v.sC), convert_long_sat_rtz(v.sD), convert_long_sat_rtz(v.sE), convert_long_sat_rtz(v.sF));
+}
+
+INLINE OVERLOADABLE long16 convert_long16_sat_rtp(char16 v) {
+  return (long16)(convert_long_sat_rtp(v.s0), convert_long_sat_rtp(v.s1), convert_long_sat_rtp(v.s2), convert_long_sat_rtp(v.s3), convert_long_sat_rtp(v.s4), convert_long_sat_rtp(v.s5), convert_long_sat_rtp(v.s6), convert_long_sat_rtp(v.s7), convert_long_sat_rtp(v.s8), convert_long_sat_rtp(v.s9), convert_long_sat_rtp(v.sA), convert_long_sat_rtp(v.sB), convert_long_sat_rtp(v.sC), convert_long_sat_rtp(v.sD), convert_long_sat_rtp(v.sE), convert_long_sat_rtp(v.sF));
+}
+
+INLINE OVERLOADABLE long16 convert_long16_sat_rtn(char16 v) {
+  return (long16)(convert_long_sat_rtn(v.s0), convert_long_sat_rtn(v.s1), convert_long_sat_rtn(v.s2), convert_long_sat_rtn(v.s3), convert_long_sat_rtn(v.s4), convert_long_sat_rtn(v.s5), convert_long_sat_rtn(v.s6), convert_long_sat_rtn(v.s7), convert_long_sat_rtn(v.s8), convert_long_sat_rtn(v.s9), convert_long_sat_rtn(v.sA), convert_long_sat_rtn(v.sB), convert_long_sat_rtn(v.sC), convert_long_sat_rtn(v.sD), convert_long_sat_rtn(v.sE), convert_long_sat_rtn(v.sF));
+}
+
+INLINE OVERLOADABLE ulong16 convert_ulong16_sat_rte(char16 v) {
+  return (ulong16)(convert_ulong_sat_rte(v.s0), convert_ulong_sat_rte(v.s1), convert_ulong_sat_rte(v.s2), convert_ulong_sat_rte(v.s3), convert_ulong_sat_rte(v.s4), convert_ulong_sat_rte(v.s5), convert_ulong_sat_rte(v.s6), convert_ulong_sat_rte(v.s7), convert_ulong_sat_rte(v.s8), convert_ulong_sat_rte(v.s9), convert_ulong_sat_rte(v.sA), convert_ulong_sat_rte(v.sB), convert_ulong_sat_rte(v.sC), convert_ulong_sat_rte(v.sD), convert_ulong_sat_rte(v.sE), convert_ulong_sat_rte(v.sF));
+}
+
+INLINE OVERLOADABLE ulong16 convert_ulong16_sat_rtz(char16 v) {
+  return (ulong16)(convert_ulong_sat_rtz(v.s0), convert_ulong_sat_rtz(v.s1), convert_ulong_sat_rtz(v.s2), convert_ulong_sat_rtz(v.s3), convert_ulong_sat_rtz(v.s4), convert_ulong_sat_rtz(v.s5), convert_ulong_sat_rtz(v.s6), convert_ulong_sat_rtz(v.s7), convert_ulong_sat_rtz(v.s8), convert_ulong_sat_rtz(v.s9), convert_ulong_sat_rtz(v.sA), convert_ulong_sat_rtz(v.sB), convert_ulong_sat_rtz(v.sC), convert_ulong_sat_rtz(v.sD), convert_ulong_sat_rtz(v.sE), convert_ulong_sat_rtz(v.sF));
+}
+
+INLINE OVERLOADABLE ulong16 convert_ulong16_sat_rtp(char16 v) {
+  return (ulong16)(convert_ulong_sat_rtp(v.s0), convert_ulong_sat_rtp(v.s1), convert_ulong_sat_rtp(v.s2), convert_ulong_sat_rtp(v.s3), convert_ulong_sat_rtp(v.s4), convert_ulong_sat_rtp(v.s5), convert_ulong_sat_rtp(v.s6), convert_ulong_sat_rtp(v.s7), convert_ulong_sat_rtp(v.s8), convert_ulong_sat_rtp(v.s9), convert_ulong_sat_rtp(v.sA), convert_ulong_sat_rtp(v.sB), convert_ulong_sat_rtp(v.sC), convert_ulong_sat_rtp(v.sD), convert_ulong_sat_rtp(v.sE), convert_ulong_sat_rtp(v.sF));
+}
+
+INLINE OVERLOADABLE ulong16 convert_ulong16_sat_rtn(char16 v) {
+  return (ulong16)(convert_ulong_sat_rtn(v.s0), convert_ulong_sat_rtn(v.s1), convert_ulong_sat_rtn(v.s2), convert_ulong_sat_rtn(v.s3), convert_ulong_sat_rtn(v.s4), convert_ulong_sat_rtn(v.s5), convert_ulong_sat_rtn(v.s6), convert_ulong_sat_rtn(v.s7), convert_ulong_sat_rtn(v.s8), convert_ulong_sat_rtn(v.s9), convert_ulong_sat_rtn(v.sA), convert_ulong_sat_rtn(v.sB), convert_ulong_sat_rtn(v.sC), convert_ulong_sat_rtn(v.sD), convert_ulong_sat_rtn(v.sE), convert_ulong_sat_rtn(v.sF));
+}
+
+INLINE OVERLOADABLE int16 convert_int16_sat_rte(char16 v) {
+  return (int16)(convert_int_sat_rte(v.s0), convert_int_sat_rte(v.s1), convert_int_sat_rte(v.s2), convert_int_sat_rte(v.s3), convert_int_sat_rte(v.s4), convert_int_sat_rte(v.s5), convert_int_sat_rte(v.s6), convert_int_sat_rte(v.s7), convert_int_sat_rte(v.s8), convert_int_sat_rte(v.s9), convert_int_sat_rte(v.sA), convert_int_sat_rte(v.sB), convert_int_sat_rte(v.sC), convert_int_sat_rte(v.sD), convert_int_sat_rte(v.sE), convert_int_sat_rte(v.sF));
+}
+
+INLINE OVERLOADABLE int16 convert_int16_sat_rtz(char16 v) {
+  return (int16)(convert_int_sat_rtz(v.s0), convert_int_sat_rtz(v.s1), convert_int_sat_rtz(v.s2), convert_int_sat_rtz(v.s3), convert_int_sat_rtz(v.s4), convert_int_sat_rtz(v.s5), convert_int_sat_rtz(v.s6), convert_int_sat_rtz(v.s7), convert_int_sat_rtz(v.s8), convert_int_sat_rtz(v.s9), convert_int_sat_rtz(v.sA), convert_int_sat_rtz(v.sB), convert_int_sat_rtz(v.sC), convert_int_sat_rtz(v.sD), convert_int_sat_rtz(v.sE), convert_int_sat_rtz(v.sF));
+}
+
+INLINE OVERLOADABLE int16 convert_int16_sat_rtp(char16 v) {
+  return (int16)(convert_int_sat_rtp(v.s0), convert_int_sat_rtp(v.s1), convert_int_sat_rtp(v.s2), convert_int_sat_rtp(v.s3), convert_int_sat_rtp(v.s4), convert_int_sat_rtp(v.s5), convert_int_sat_rtp(v.s6), convert_int_sat_rtp(v.s7), convert_int_sat_rtp(v.s8), convert_int_sat_rtp(v.s9), convert_int_sat_rtp(v.sA), convert_int_sat_rtp(v.sB), convert_int_sat_rtp(v.sC), convert_int_sat_rtp(v.sD), convert_int_sat_rtp(v.sE), convert_int_sat_rtp(v.sF));
+}
+
+INLINE OVERLOADABLE int16 convert_int16_sat_rtn(char16 v) {
+  return (int16)(convert_int_sat_rtn(v.s0), convert_int_sat_rtn(v.s1), convert_int_sat_rtn(v.s2), convert_int_sat_rtn(v.s3), convert_int_sat_rtn(v.s4), convert_int_sat_rtn(v.s5), convert_int_sat_rtn(v.s6), convert_int_sat_rtn(v.s7), convert_int_sat_rtn(v.s8), convert_int_sat_rtn(v.s9), convert_int_sat_rtn(v.sA), convert_int_sat_rtn(v.sB), convert_int_sat_rtn(v.sC), convert_int_sat_rtn(v.sD), convert_int_sat_rtn(v.sE), convert_int_sat_rtn(v.sF));
+}
+
+INLINE OVERLOADABLE uint16 convert_uint16_sat_rte(char16 v) {
+  return (uint16)(convert_uint_sat_rte(v.s0), convert_uint_sat_rte(v.s1), convert_uint_sat_rte(v.s2), convert_uint_sat_rte(v.s3), convert_uint_sat_rte(v.s4), convert_uint_sat_rte(v.s5), convert_uint_sat_rte(v.s6), convert_uint_sat_rte(v.s7), convert_uint_sat_rte(v.s8), convert_uint_sat_rte(v.s9), convert_uint_sat_rte(v.sA), convert_uint_sat_rte(v.sB), convert_uint_sat_rte(v.sC), convert_uint_sat_rte(v.sD), convert_uint_sat_rte(v.sE), convert_uint_sat_rte(v.sF));
+}
+
+INLINE OVERLOADABLE uint16 convert_uint16_sat_rtz(char16 v) {
+  return (uint16)(convert_uint_sat_rtz(v.s0), convert_uint_sat_rtz(v.s1), convert_uint_sat_rtz(v.s2), convert_uint_sat_rtz(v.s3), convert_uint_sat_rtz(v.s4), convert_uint_sat_rtz(v.s5), convert_uint_sat_rtz(v.s6), convert_uint_sat_rtz(v.s7), convert_uint_sat_rtz(v.s8), convert_uint_sat_rtz(v.s9), convert_uint_sat_rtz(v.sA), convert_uint_sat_rtz(v.sB), convert_uint_sat_rtz(v.sC), convert_uint_sat_rtz(v.sD), convert_uint_sat_rtz(v.sE), convert_uint_sat_rtz(v.sF));
+}
+
+INLINE OVERLOADABLE uint16 convert_uint16_sat_rtp(char16 v) {
+  return (uint16)(convert_uint_sat_rtp(v.s0), convert_uint_sat_rtp(v.s1), convert_uint_sat_rtp(v.s2), convert_uint_sat_rtp(v.s3), convert_uint_sat_rtp(v.s4), convert_uint_sat_rtp(v.s5), convert_uint_sat_rtp(v.s6), convert_uint_sat_rtp(v.s7), convert_uint_sat_rtp(v.s8), convert_uint_sat_rtp(v.s9), convert_uint_sat_rtp(v.sA), convert_uint_sat_rtp(v.sB), convert_uint_sat_rtp(v.sC), convert_uint_sat_rtp(v.sD), convert_uint_sat_rtp(v.sE), convert_uint_sat_rtp(v.sF));
+}
+
+INLINE OVERLOADABLE uint16 convert_uint16_sat_rtn(char16 v) {
+  return (uint16)(convert_uint_sat_rtn(v.s0), convert_uint_sat_rtn(v.s1), convert_uint_sat_rtn(v.s2), convert_uint_sat_rtn(v.s3), convert_uint_sat_rtn(v.s4), convert_uint_sat_rtn(v.s5), convert_uint_sat_rtn(v.s6), convert_uint_sat_rtn(v.s7), convert_uint_sat_rtn(v.s8), convert_uint_sat_rtn(v.s9), convert_uint_sat_rtn(v.sA), convert_uint_sat_rtn(v.sB), convert_uint_sat_rtn(v.sC), convert_uint_sat_rtn(v.sD), convert_uint_sat_rtn(v.sE), convert_uint_sat_rtn(v.sF));
+}
+
+INLINE OVERLOADABLE short16 convert_short16_sat_rte(char16 v) {
+  return (short16)(convert_short_sat_rte(v.s0), convert_short_sat_rte(v.s1), convert_short_sat_rte(v.s2), convert_short_sat_rte(v.s3), convert_short_sat_rte(v.s4), convert_short_sat_rte(v.s5), convert_short_sat_rte(v.s6), convert_short_sat_rte(v.s7), convert_short_sat_rte(v.s8), convert_short_sat_rte(v.s9), convert_short_sat_rte(v.sA), convert_short_sat_rte(v.sB), convert_short_sat_rte(v.sC), convert_short_sat_rte(v.sD), convert_short_sat_rte(v.sE), convert_short_sat_rte(v.sF));
+}
+
+INLINE OVERLOADABLE short16 convert_short16_sat_rtz(char16 v) {
+  return (short16)(convert_short_sat_rtz(v.s0), convert_short_sat_rtz(v.s1), convert_short_sat_rtz(v.s2), convert_short_sat_rtz(v.s3), convert_short_sat_rtz(v.s4), convert_short_sat_rtz(v.s5), convert_short_sat_rtz(v.s6), convert_short_sat_rtz(v.s7), convert_short_sat_rtz(v.s8), convert_short_sat_rtz(v.s9), convert_short_sat_rtz(v.sA), convert_short_sat_rtz(v.sB), convert_short_sat_rtz(v.sC), convert_short_sat_rtz(v.sD), convert_short_sat_rtz(v.sE), convert_short_sat_rtz(v.sF));
+}
+
+INLINE OVERLOADABLE short16 convert_short16_sat_rtp(char16 v) {
+  return (short16)(convert_short_sat_rtp(v.s0), convert_short_sat_rtp(v.s1), convert_short_sat_rtp(v.s2), convert_short_sat_rtp(v.s3), convert_short_sat_rtp(v.s4), convert_short_sat_rtp(v.s5), convert_short_sat_rtp(v.s6), convert_short_sat_rtp(v.s7), convert_short_sat_rtp(v.s8), convert_short_sat_rtp(v.s9), convert_short_sat_rtp(v.sA), convert_short_sat_rtp(v.sB), convert_short_sat_rtp(v.sC), convert_short_sat_rtp(v.sD), convert_short_sat_rtp(v.sE), convert_short_sat_rtp(v.sF));
+}
+
+INLINE OVERLOADABLE short16 convert_short16_sat_rtn(char16 v) {
+  return (short16)(convert_short_sat_rtn(v.s0), convert_short_sat_rtn(v.s1), convert_short_sat_rtn(v.s2), convert_short_sat_rtn(v.s3), convert_short_sat_rtn(v.s4), convert_short_sat_rtn(v.s5), convert_short_sat_rtn(v.s6), convert_short_sat_rtn(v.s7), convert_short_sat_rtn(v.s8), convert_short_sat_rtn(v.s9), convert_short_sat_rtn(v.sA), convert_short_sat_rtn(v.sB), convert_short_sat_rtn(v.sC), convert_short_sat_rtn(v.sD), convert_short_sat_rtn(v.sE), convert_short_sat_rtn(v.sF));
+}
+
+INLINE OVERLOADABLE ushort16 convert_ushort16_sat_rte(char16 v) {
+  return (ushort16)(convert_ushort_sat_rte(v.s0), convert_ushort_sat_rte(v.s1), convert_ushort_sat_rte(v.s2), convert_ushort_sat_rte(v.s3), convert_ushort_sat_rte(v.s4), convert_ushort_sat_rte(v.s5), convert_ushort_sat_rte(v.s6), convert_ushort_sat_rte(v.s7), convert_ushort_sat_rte(v.s8), convert_ushort_sat_rte(v.s9), convert_ushort_sat_rte(v.sA), convert_ushort_sat_rte(v.sB), convert_ushort_sat_rte(v.sC), convert_ushort_sat_rte(v.sD), convert_ushort_sat_rte(v.sE), convert_ushort_sat_rte(v.sF));
+}
+
+INLINE OVERLOADABLE ushort16 convert_ushort16_sat_rtz(char16 v) {
+  return (ushort16)(convert_ushort_sat_rtz(v.s0), convert_ushort_sat_rtz(v.s1), convert_ushort_sat_rtz(v.s2), convert_ushort_sat_rtz(v.s3), convert_ushort_sat_rtz(v.s4), convert_ushort_sat_rtz(v.s5), convert_ushort_sat_rtz(v.s6), convert_ushort_sat_rtz(v.s7), convert_ushort_sat_rtz(v.s8), convert_ushort_sat_rtz(v.s9), convert_ushort_sat_rtz(v.sA), convert_ushort_sat_rtz(v.sB), convert_ushort_sat_rtz(v.sC), convert_ushort_sat_rtz(v.sD), convert_ushort_sat_rtz(v.sE), convert_ushort_sat_rtz(v.sF));
+}
+
+INLINE OVERLOADABLE ushort16 convert_ushort16_sat_rtp(char16 v) {
+  return (ushort16)(convert_ushort_sat_rtp(v.s0), convert_ushort_sat_rtp(v.s1), convert_ushort_sat_rtp(v.s2), convert_ushort_sat_rtp(v.s3), convert_ushort_sat_rtp(v.s4), convert_ushort_sat_rtp(v.s5), convert_ushort_sat_rtp(v.s6), convert_ushort_sat_rtp(v.s7), convert_ushort_sat_rtp(v.s8), convert_ushort_sat_rtp(v.s9), convert_ushort_sat_rtp(v.sA), convert_ushort_sat_rtp(v.sB), convert_ushort_sat_rtp(v.sC), convert_ushort_sat_rtp(v.sD), convert_ushort_sat_rtp(v.sE), convert_ushort_sat_rtp(v.sF));
+}
+
+INLINE OVERLOADABLE ushort16 convert_ushort16_sat_rtn(char16 v) {
+  return (ushort16)(convert_ushort_sat_rtn(v.s0), convert_ushort_sat_rtn(v.s1), convert_ushort_sat_rtn(v.s2), convert_ushort_sat_rtn(v.s3), convert_ushort_sat_rtn(v.s4), convert_ushort_sat_rtn(v.s5), convert_ushort_sat_rtn(v.s6), convert_ushort_sat_rtn(v.s7), convert_ushort_sat_rtn(v.s8), convert_ushort_sat_rtn(v.s9), convert_ushort_sat_rtn(v.sA), convert_ushort_sat_rtn(v.sB), convert_ushort_sat_rtn(v.sC), convert_ushort_sat_rtn(v.sD), convert_ushort_sat_rtn(v.sE), convert_ushort_sat_rtn(v.sF));
+}
+
+INLINE OVERLOADABLE char16 convert_char16_sat_rte(char16 v) {
+  return (char16)(convert_char_sat_rte(v.s0), convert_char_sat_rte(v.s1), convert_char_sat_rte(v.s2), convert_char_sat_rte(v.s3), convert_char_sat_rte(v.s4), convert_char_sat_rte(v.s5), convert_char_sat_rte(v.s6), convert_char_sat_rte(v.s7), convert_char_sat_rte(v.s8), convert_char_sat_rte(v.s9), convert_char_sat_rte(v.sA), convert_char_sat_rte(v.sB), convert_char_sat_rte(v.sC), convert_char_sat_rte(v.sD), convert_char_sat_rte(v.sE), convert_char_sat_rte(v.sF));
+}
+
+INLINE OVERLOADABLE char16 convert_char16_sat_rtz(char16 v) {
+  return (char16)(convert_char_sat_rtz(v.s0), convert_char_sat_rtz(v.s1), convert_char_sat_rtz(v.s2), convert_char_sat_rtz(v.s3), convert_char_sat_rtz(v.s4), convert_char_sat_rtz(v.s5), convert_char_sat_rtz(v.s6), convert_char_sat_rtz(v.s7), convert_char_sat_rtz(v.s8), convert_char_sat_rtz(v.s9), convert_char_sat_rtz(v.sA), convert_char_sat_rtz(v.sB), convert_char_sat_rtz(v.sC), convert_char_sat_rtz(v.sD), convert_char_sat_rtz(v.sE), convert_char_sat_rtz(v.sF));
+}
+
+INLINE OVERLOADABLE char16 convert_char16_sat_rtp(char16 v) {
+  return (char16)(convert_char_sat_rtp(v.s0), convert_char_sat_rtp(v.s1), convert_char_sat_rtp(v.s2), convert_char_sat_rtp(v.s3), convert_char_sat_rtp(v.s4), convert_char_sat_rtp(v.s5), convert_char_sat_rtp(v.s6), convert_char_sat_rtp(v.s7), convert_char_sat_rtp(v.s8), convert_char_sat_rtp(v.s9), convert_char_sat_rtp(v.sA), convert_char_sat_rtp(v.sB), convert_char_sat_rtp(v.sC), convert_char_sat_rtp(v.sD), convert_char_sat_rtp(v.sE), convert_char_sat_rtp(v.sF));
+}
+
+INLINE OVERLOADABLE char16 convert_char16_sat_rtn(char16 v) {
+  return (char16)(convert_char_sat_rtn(v.s0), convert_char_sat_rtn(v.s1), convert_char_sat_rtn(v.s2), convert_char_sat_rtn(v.s3), convert_char_sat_rtn(v.s4), convert_char_sat_rtn(v.s5), convert_char_sat_rtn(v.s6), convert_char_sat_rtn(v.s7), convert_char_sat_rtn(v.s8), convert_char_sat_rtn(v.s9), convert_char_sat_rtn(v.sA), convert_char_sat_rtn(v.sB), convert_char_sat_rtn(v.sC), convert_char_sat_rtn(v.sD), convert_char_sat_rtn(v.sE), convert_char_sat_rtn(v.sF));
+}
+
+INLINE OVERLOADABLE uchar16 convert_uchar16_sat_rte(char16 v) {
+  return (uchar16)(convert_uchar_sat_rte(v.s0), convert_uchar_sat_rte(v.s1), convert_uchar_sat_rte(v.s2), convert_uchar_sat_rte(v.s3), convert_uchar_sat_rte(v.s4), convert_uchar_sat_rte(v.s5), convert_uchar_sat_rte(v.s6), convert_uchar_sat_rte(v.s7), convert_uchar_sat_rte(v.s8), convert_uchar_sat_rte(v.s9), convert_uchar_sat_rte(v.sA), convert_uchar_sat_rte(v.sB), convert_uchar_sat_rte(v.sC), convert_uchar_sat_rte(v.sD), convert_uchar_sat_rte(v.sE), convert_uchar_sat_rte(v.sF));
+}
+
+INLINE OVERLOADABLE uchar16 convert_uchar16_sat_rtz(char16 v) {
+  return (uchar16)(convert_uchar_sat_rtz(v.s0), convert_uchar_sat_rtz(v.s1), convert_uchar_sat_rtz(v.s2), convert_uchar_sat_rtz(v.s3), convert_uchar_sat_rtz(v.s4), convert_uchar_sat_rtz(v.s5), convert_uchar_sat_rtz(v.s6), convert_uchar_sat_rtz(v.s7), convert_uchar_sat_rtz(v.s8), convert_uchar_sat_rtz(v.s9), convert_uchar_sat_rtz(v.sA), convert_uchar_sat_rtz(v.sB), convert_uchar_sat_rtz(v.sC), convert_uchar_sat_rtz(v.sD), convert_uchar_sat_rtz(v.sE), convert_uchar_sat_rtz(v.sF));
+}
+
+INLINE OVERLOADABLE uchar16 convert_uchar16_sat_rtp(char16 v) {
+  return (uchar16)(convert_uchar_sat_rtp(v.s0), convert_uchar_sat_rtp(v.s1), convert_uchar_sat_rtp(v.s2), convert_uchar_sat_rtp(v.s3), convert_uchar_sat_rtp(v.s4), convert_uchar_sat_rtp(v.s5), convert_uchar_sat_rtp(v.s6), convert_uchar_sat_rtp(v.s7), convert_uchar_sat_rtp(v.s8), convert_uchar_sat_rtp(v.s9), convert_uchar_sat_rtp(v.sA), convert_uchar_sat_rtp(v.sB), convert_uchar_sat_rtp(v.sC), convert_uchar_sat_rtp(v.sD), convert_uchar_sat_rtp(v.sE), convert_uchar_sat_rtp(v.sF));
+}
+
+INLINE OVERLOADABLE uchar16 convert_uchar16_sat_rtn(char16 v) {
+  return (uchar16)(convert_uchar_sat_rtn(v.s0), convert_uchar_sat_rtn(v.s1), convert_uchar_sat_rtn(v.s2), convert_uchar_sat_rtn(v.s3), convert_uchar_sat_rtn(v.s4), convert_uchar_sat_rtn(v.s5), convert_uchar_sat_rtn(v.s6), convert_uchar_sat_rtn(v.s7), convert_uchar_sat_rtn(v.s8), convert_uchar_sat_rtn(v.s9), convert_uchar_sat_rtn(v.sA), convert_uchar_sat_rtn(v.sB), convert_uchar_sat_rtn(v.sC), convert_uchar_sat_rtn(v.sD), convert_uchar_sat_rtn(v.sE), convert_uchar_sat_rtn(v.sF));
+}
+
+INLINE OVERLOADABLE long16 convert_long16_sat_rte(uchar16 v) {
+  return (long16)(convert_long_sat_rte(v.s0), convert_long_sat_rte(v.s1), convert_long_sat_rte(v.s2), convert_long_sat_rte(v.s3), convert_long_sat_rte(v.s4), convert_long_sat_rte(v.s5), convert_long_sat_rte(v.s6), convert_long_sat_rte(v.s7), convert_long_sat_rte(v.s8), convert_long_sat_rte(v.s9), convert_long_sat_rte(v.sA), convert_long_sat_rte(v.sB), convert_long_sat_rte(v.sC), convert_long_sat_rte(v.sD), convert_long_sat_rte(v.sE), convert_long_sat_rte(v.sF));
+}
+
+INLINE OVERLOADABLE long16 convert_long16_sat_rtz(uchar16 v) {
+  return (long16)(convert_long_sat_rtz(v.s0), convert_long_sat_rtz(v.s1), convert_long_sat_rtz(v.s2), convert_long_sat_rtz(v.s3), convert_long_sat_rtz(v.s4), convert_long_sat_rtz(v.s5), convert_long_sat_rtz(v.s6), convert_long_sat_rtz(v.s7), convert_long_sat_rtz(v.s8), convert_long_sat_rtz(v.s9), convert_long_sat_rtz(v.sA), convert_long_sat_rtz(v.sB), convert_long_sat_rtz(v.sC), convert_long_sat_rtz(v.sD), convert_long_sat_rtz(v.sE), convert_long_sat_rtz(v.sF));
+}
+
+INLINE OVERLOADABLE long16 convert_long16_sat_rtp(uchar16 v) {
+  return (long16)(convert_long_sat_rtp(v.s0), convert_long_sat_rtp(v.s1), convert_long_sat_rtp(v.s2), convert_long_sat_rtp(v.s3), convert_long_sat_rtp(v.s4), convert_long_sat_rtp(v.s5), convert_long_sat_rtp(v.s6), convert_long_sat_rtp(v.s7), convert_long_sat_rtp(v.s8), convert_long_sat_rtp(v.s9), convert_long_sat_rtp(v.sA), convert_long_sat_rtp(v.sB), convert_long_sat_rtp(v.sC), convert_long_sat_rtp(v.sD), convert_long_sat_rtp(v.sE), convert_long_sat_rtp(v.sF));
+}
+
+INLINE OVERLOADABLE long16 convert_long16_sat_rtn(uchar16 v) {
+  return (long16)(convert_long_sat_rtn(v.s0), convert_long_sat_rtn(v.s1), convert_long_sat_rtn(v.s2), convert_long_sat_rtn(v.s3), convert_long_sat_rtn(v.s4), convert_long_sat_rtn(v.s5), convert_long_sat_rtn(v.s6), convert_long_sat_rtn(v.s7), convert_long_sat_rtn(v.s8), convert_long_sat_rtn(v.s9), convert_long_sat_rtn(v.sA), convert_long_sat_rtn(v.sB), convert_long_sat_rtn(v.sC), convert_long_sat_rtn(v.sD), convert_long_sat_rtn(v.sE), convert_long_sat_rtn(v.sF));
+}
+
+INLINE OVERLOADABLE ulong16 convert_ulong16_sat_rte(uchar16 v) {
+  return (ulong16)(convert_ulong_sat_rte(v.s0), convert_ulong_sat_rte(v.s1), convert_ulong_sat_rte(v.s2), convert_ulong_sat_rte(v.s3), convert_ulong_sat_rte(v.s4), convert_ulong_sat_rte(v.s5), convert_ulong_sat_rte(v.s6), convert_ulong_sat_rte(v.s7), convert_ulong_sat_rte(v.s8), convert_ulong_sat_rte(v.s9), convert_ulong_sat_rte(v.sA), convert_ulong_sat_rte(v.sB), convert_ulong_sat_rte(v.sC), convert_ulong_sat_rte(v.sD), convert_ulong_sat_rte(v.sE), convert_ulong_sat_rte(v.sF));
+}
+
+INLINE OVERLOADABLE ulong16 convert_ulong16_sat_rtz(uchar16 v) {
+  return (ulong16)(convert_ulong_sat_rtz(v.s0), convert_ulong_sat_rtz(v.s1), convert_ulong_sat_rtz(v.s2), convert_ulong_sat_rtz(v.s3), convert_ulong_sat_rtz(v.s4), convert_ulong_sat_rtz(v.s5), convert_ulong_sat_rtz(v.s6), convert_ulong_sat_rtz(v.s7), convert_ulong_sat_rtz(v.s8), convert_ulong_sat_rtz(v.s9), convert_ulong_sat_rtz(v.sA), convert_ulong_sat_rtz(v.sB), convert_ulong_sat_rtz(v.sC), convert_ulong_sat_rtz(v.sD), convert_ulong_sat_rtz(v.sE), convert_ulong_sat_rtz(v.sF));
+}
+
+INLINE OVERLOADABLE ulong16 convert_ulong16_sat_rtp(uchar16 v) {
+  return (ulong16)(convert_ulong_sat_rtp(v.s0), convert_ulong_sat_rtp(v.s1), convert_ulong_sat_rtp(v.s2), convert_ulong_sat_rtp(v.s3), convert_ulong_sat_rtp(v.s4), convert_ulong_sat_rtp(v.s5), convert_ulong_sat_rtp(v.s6), convert_ulong_sat_rtp(v.s7), convert_ulong_sat_rtp(v.s8), convert_ulong_sat_rtp(v.s9), convert_ulong_sat_rtp(v.sA), convert_ulong_sat_rtp(v.sB), convert_ulong_sat_rtp(v.sC), convert_ulong_sat_rtp(v.sD), convert_ulong_sat_rtp(v.sE), convert_ulong_sat_rtp(v.sF));
+}
+
+INLINE OVERLOADABLE ulong16 convert_ulong16_sat_rtn(uchar16 v) {
+  return (ulong16)(convert_ulong_sat_rtn(v.s0), convert_ulong_sat_rtn(v.s1), convert_ulong_sat_rtn(v.s2), convert_ulong_sat_rtn(v.s3), convert_ulong_sat_rtn(v.s4), convert_ulong_sat_rtn(v.s5), convert_ulong_sat_rtn(v.s6), convert_ulong_sat_rtn(v.s7), convert_ulong_sat_rtn(v.s8), convert_ulong_sat_rtn(v.s9), convert_ulong_sat_rtn(v.sA), convert_ulong_sat_rtn(v.sB), convert_ulong_sat_rtn(v.sC), convert_ulong_sat_rtn(v.sD), convert_ulong_sat_rtn(v.sE), convert_ulong_sat_rtn(v.sF));
+}
+
+INLINE OVERLOADABLE int16 convert_int16_sat_rte(uchar16 v) {
+  return (int16)(convert_int_sat_rte(v.s0), convert_int_sat_rte(v.s1), convert_int_sat_rte(v.s2), convert_int_sat_rte(v.s3), convert_int_sat_rte(v.s4), convert_int_sat_rte(v.s5), convert_int_sat_rte(v.s6), convert_int_sat_rte(v.s7), convert_int_sat_rte(v.s8), convert_int_sat_rte(v.s9), convert_int_sat_rte(v.sA), convert_int_sat_rte(v.sB), convert_int_sat_rte(v.sC), convert_int_sat_rte(v.sD), convert_int_sat_rte(v.sE), convert_int_sat_rte(v.sF));
+}
+
+INLINE OVERLOADABLE int16 convert_int16_sat_rtz(uchar16 v) {
+  return (int16)(convert_int_sat_rtz(v.s0), convert_int_sat_rtz(v.s1), convert_int_sat_rtz(v.s2), convert_int_sat_rtz(v.s3), convert_int_sat_rtz(v.s4), convert_int_sat_rtz(v.s5), convert_int_sat_rtz(v.s6), convert_int_sat_rtz(v.s7), convert_int_sat_rtz(v.s8), convert_int_sat_rtz(v.s9), convert_int_sat_rtz(v.sA), convert_int_sat_rtz(v.sB), convert_int_sat_rtz(v.sC), convert_int_sat_rtz(v.sD), convert_int_sat_rtz(v.sE), convert_int_sat_rtz(v.sF));
+}
+
+INLINE OVERLOADABLE int16 convert_int16_sat_rtp(uchar16 v) {
+  return (int16)(convert_int_sat_rtp(v.s0), convert_int_sat_rtp(v.s1), convert_int_sat_rtp(v.s2), convert_int_sat_rtp(v.s3), convert_int_sat_rtp(v.s4), convert_int_sat_rtp(v.s5), convert_int_sat_rtp(v.s6), convert_int_sat_rtp(v.s7), convert_int_sat_rtp(v.s8), convert_int_sat_rtp(v.s9), convert_int_sat_rtp(v.sA), convert_int_sat_rtp(v.sB), convert_int_sat_rtp(v.sC), convert_int_sat_rtp(v.sD), convert_int_sat_rtp(v.sE), convert_int_sat_rtp(v.sF));
+}
+
+INLINE OVERLOADABLE int16 convert_int16_sat_rtn(uchar16 v) {
+  return (int16)(convert_int_sat_rtn(v.s0), convert_int_sat_rtn(v.s1), convert_int_sat_rtn(v.s2), convert_int_sat_rtn(v.s3), convert_int_sat_rtn(v.s4), convert_int_sat_rtn(v.s5), convert_int_sat_rtn(v.s6), convert_int_sat_rtn(v.s7), convert_int_sat_rtn(v.s8), convert_int_sat_rtn(v.s9), convert_int_sat_rtn(v.sA), convert_int_sat_rtn(v.sB), convert_int_sat_rtn(v.sC), convert_int_sat_rtn(v.sD), convert_int_sat_rtn(v.sE), convert_int_sat_rtn(v.sF));
+}
+
+INLINE OVERLOADABLE uint16 convert_uint16_sat_rte(uchar16 v) {
+  return (uint16)(convert_uint_sat_rte(v.s0), convert_uint_sat_rte(v.s1), convert_uint_sat_rte(v.s2), convert_uint_sat_rte(v.s3), convert_uint_sat_rte(v.s4), convert_uint_sat_rte(v.s5), convert_uint_sat_rte(v.s6), convert_uint_sat_rte(v.s7), convert_uint_sat_rte(v.s8), convert_uint_sat_rte(v.s9), convert_uint_sat_rte(v.sA), convert_uint_sat_rte(v.sB), convert_uint_sat_rte(v.sC), convert_uint_sat_rte(v.sD), convert_uint_sat_rte(v.sE), convert_uint_sat_rte(v.sF));
+}
+
+INLINE OVERLOADABLE uint16 convert_uint16_sat_rtz(uchar16 v) {
+  return (uint16)(convert_uint_sat_rtz(v.s0), convert_uint_sat_rtz(v.s1), convert_uint_sat_rtz(v.s2), convert_uint_sat_rtz(v.s3), convert_uint_sat_rtz(v.s4), convert_uint_sat_rtz(v.s5), convert_uint_sat_rtz(v.s6), convert_uint_sat_rtz(v.s7), convert_uint_sat_rtz(v.s8), convert_uint_sat_rtz(v.s9), convert_uint_sat_rtz(v.sA), convert_uint_sat_rtz(v.sB), convert_uint_sat_rtz(v.sC), convert_uint_sat_rtz(v.sD), convert_uint_sat_rtz(v.sE), convert_uint_sat_rtz(v.sF));
+}
+
+INLINE OVERLOADABLE uint16 convert_uint16_sat_rtp(uchar16 v) {
+  return (uint16)(convert_uint_sat_rtp(v.s0), convert_uint_sat_rtp(v.s1), convert_uint_sat_rtp(v.s2), convert_uint_sat_rtp(v.s3), convert_uint_sat_rtp(v.s4), convert_uint_sat_rtp(v.s5), convert_uint_sat_rtp(v.s6), convert_uint_sat_rtp(v.s7), convert_uint_sat_rtp(v.s8), convert_uint_sat_rtp(v.s9), convert_uint_sat_rtp(v.sA), convert_uint_sat_rtp(v.sB), convert_uint_sat_rtp(v.sC), convert_uint_sat_rtp(v.sD), convert_uint_sat_rtp(v.sE), convert_uint_sat_rtp(v.sF));
+}
+
+INLINE OVERLOADABLE uint16 convert_uint16_sat_rtn(uchar16 v) {
+  return (uint16)(convert_uint_sat_rtn(v.s0), convert_uint_sat_rtn(v.s1), convert_uint_sat_rtn(v.s2), convert_uint_sat_rtn(v.s3), convert_uint_sat_rtn(v.s4), convert_uint_sat_rtn(v.s5), convert_uint_sat_rtn(v.s6), convert_uint_sat_rtn(v.s7), convert_uint_sat_rtn(v.s8), convert_uint_sat_rtn(v.s9), convert_uint_sat_rtn(v.sA), convert_uint_sat_rtn(v.sB), convert_uint_sat_rtn(v.sC), convert_uint_sat_rtn(v.sD), convert_uint_sat_rtn(v.sE), convert_uint_sat_rtn(v.sF));
+}
+
+INLINE OVERLOADABLE short16 convert_short16_sat_rte(uchar16 v) {
+  return (short16)(convert_short_sat_rte(v.s0), convert_short_sat_rte(v.s1), convert_short_sat_rte(v.s2), convert_short_sat_rte(v.s3), convert_short_sat_rte(v.s4), convert_short_sat_rte(v.s5), convert_short_sat_rte(v.s6), convert_short_sat_rte(v.s7), convert_short_sat_rte(v.s8), convert_short_sat_rte(v.s9), convert_short_sat_rte(v.sA), convert_short_sat_rte(v.sB), convert_short_sat_rte(v.sC), convert_short_sat_rte(v.sD), convert_short_sat_rte(v.sE), convert_short_sat_rte(v.sF));
+}
+
+INLINE OVERLOADABLE short16 convert_short16_sat_rtz(uchar16 v) {
+  return (short16)(convert_short_sat_rtz(v.s0), convert_short_sat_rtz(v.s1), convert_short_sat_rtz(v.s2), convert_short_sat_rtz(v.s3), convert_short_sat_rtz(v.s4), convert_short_sat_rtz(v.s5), convert_short_sat_rtz(v.s6), convert_short_sat_rtz(v.s7), convert_short_sat_rtz(v.s8), convert_short_sat_rtz(v.s9), convert_short_sat_rtz(v.sA), convert_short_sat_rtz(v.sB), convert_short_sat_rtz(v.sC), convert_short_sat_rtz(v.sD), convert_short_sat_rtz(v.sE), convert_short_sat_rtz(v.sF));
+}
+
+INLINE OVERLOADABLE short16 convert_short16_sat_rtp(uchar16 v) {
+  return (short16)(convert_short_sat_rtp(v.s0), convert_short_sat_rtp(v.s1), convert_short_sat_rtp(v.s2), convert_short_sat_rtp(v.s3), convert_short_sat_rtp(v.s4), convert_short_sat_rtp(v.s5), convert_short_sat_rtp(v.s6), convert_short_sat_rtp(v.s7), convert_short_sat_rtp(v.s8), convert_short_sat_rtp(v.s9), convert_short_sat_rtp(v.sA), convert_short_sat_rtp(v.sB), convert_short_sat_rtp(v.sC), convert_short_sat_rtp(v.sD), convert_short_sat_rtp(v.sE), convert_short_sat_rtp(v.sF));
+}
+
+INLINE OVERLOADABLE short16 convert_short16_sat_rtn(uchar16 v) {
+  return (short16)(convert_short_sat_rtn(v.s0), convert_short_sat_rtn(v.s1), convert_short_sat_rtn(v.s2), convert_short_sat_rtn(v.s3), convert_short_sat_rtn(v.s4), convert_short_sat_rtn(v.s5), convert_short_sat_rtn(v.s6), convert_short_sat_rtn(v.s7), convert_short_sat_rtn(v.s8), convert_short_sat_rtn(v.s9), convert_short_sat_rtn(v.sA), convert_short_sat_rtn(v.sB), convert_short_sat_rtn(v.sC), convert_short_sat_rtn(v.sD), convert_short_sat_rtn(v.sE), convert_short_sat_rtn(v.sF));
+}
+
+INLINE OVERLOADABLE ushort16 convert_ushort16_sat_rte(uchar16 v) {
+  return (ushort16)(convert_ushort_sat_rte(v.s0), convert_ushort_sat_rte(v.s1), convert_ushort_sat_rte(v.s2), convert_ushort_sat_rte(v.s3), convert_ushort_sat_rte(v.s4), convert_ushort_sat_rte(v.s5), convert_ushort_sat_rte(v.s6), convert_ushort_sat_rte(v.s7), convert_ushort_sat_rte(v.s8), convert_ushort_sat_rte(v.s9), convert_ushort_sat_rte(v.sA), convert_ushort_sat_rte(v.sB), convert_ushort_sat_rte(v.sC), convert_ushort_sat_rte(v.sD), convert_ushort_sat_rte(v.sE), convert_ushort_sat_rte(v.sF));
+}
+
+INLINE OVERLOADABLE ushort16 convert_ushort16_sat_rtz(uchar16 v) {
+  return (ushort16)(convert_ushort_sat_rtz(v.s0), convert_ushort_sat_rtz(v.s1), convert_ushort_sat_rtz(v.s2), convert_ushort_sat_rtz(v.s3), convert_ushort_sat_rtz(v.s4), convert_ushort_sat_rtz(v.s5), convert_ushort_sat_rtz(v.s6), convert_ushort_sat_rtz(v.s7), convert_ushort_sat_rtz(v.s8), convert_ushort_sat_rtz(v.s9), convert_ushort_sat_rtz(v.sA), convert_ushort_sat_rtz(v.sB), convert_ushort_sat_rtz(v.sC), convert_ushort_sat_rtz(v.sD), convert_ushort_sat_rtz(v.sE), convert_ushort_sat_rtz(v.sF));
+}
+
+INLINE OVERLOADABLE ushort16 convert_ushort16_sat_rtp(uchar16 v) {
+  return (ushort16)(convert_ushort_sat_rtp(v.s0), convert_ushort_sat_rtp(v.s1), convert_ushort_sat_rtp(v.s2), convert_ushort_sat_rtp(v.s3), convert_ushort_sat_rtp(v.s4), convert_ushort_sat_rtp(v.s5), convert_ushort_sat_rtp(v.s6), convert_ushort_sat_rtp(v.s7), convert_ushort_sat_rtp(v.s8), convert_ushort_sat_rtp(v.s9), convert_ushort_sat_rtp(v.sA), convert_ushort_sat_rtp(v.sB), convert_ushort_sat_rtp(v.sC), convert_ushort_sat_rtp(v.sD), convert_ushort_sat_rtp(v.sE), convert_ushort_sat_rtp(v.sF));
+}
+
+INLINE OVERLOADABLE ushort16 convert_ushort16_sat_rtn(uchar16 v) {
+  return (ushort16)(convert_ushort_sat_rtn(v.s0), convert_ushort_sat_rtn(v.s1), convert_ushort_sat_rtn(v.s2), convert_ushort_sat_rtn(v.s3), convert_ushort_sat_rtn(v.s4), convert_ushort_sat_rtn(v.s5), convert_ushort_sat_rtn(v.s6), convert_ushort_sat_rtn(v.s7), convert_ushort_sat_rtn(v.s8), convert_ushort_sat_rtn(v.s9), convert_ushort_sat_rtn(v.sA), convert_ushort_sat_rtn(v.sB), convert_ushort_sat_rtn(v.sC), convert_ushort_sat_rtn(v.sD), convert_ushort_sat_rtn(v.sE), convert_ushort_sat_rtn(v.sF));
+}
+
+INLINE OVERLOADABLE char16 convert_char16_sat_rte(uchar16 v) {
+  return (char16)(convert_char_sat_rte(v.s0), convert_char_sat_rte(v.s1), convert_char_sat_rte(v.s2), convert_char_sat_rte(v.s3), convert_char_sat_rte(v.s4), convert_char_sat_rte(v.s5), convert_char_sat_rte(v.s6), convert_char_sat_rte(v.s7), convert_char_sat_rte(v.s8), convert_char_sat_rte(v.s9), convert_char_sat_rte(v.sA), convert_char_sat_rte(v.sB), convert_char_sat_rte(v.sC), convert_char_sat_rte(v.sD), convert_char_sat_rte(v.sE), convert_char_sat_rte(v.sF));
+}
+
+INLINE OVERLOADABLE char16 convert_char16_sat_rtz(uchar16 v) {
+  return (char16)(convert_char_sat_rtz(v.s0), convert_char_sat_rtz(v.s1), convert_char_sat_rtz(v.s2), convert_char_sat_rtz(v.s3), convert_char_sat_rtz(v.s4), convert_char_sat_rtz(v.s5), convert_char_sat_rtz(v.s6), convert_char_sat_rtz(v.s7), convert_char_sat_rtz(v.s8), convert_char_sat_rtz(v.s9), convert_char_sat_rtz(v.sA), convert_char_sat_rtz(v.sB), convert_char_sat_rtz(v.sC), convert_char_sat_rtz(v.sD), convert_char_sat_rtz(v.sE), convert_char_sat_rtz(v.sF));
+}
+
+INLINE OVERLOADABLE char16 convert_char16_sat_rtp(uchar16 v) {
+  return (char16)(convert_char_sat_rtp(v.s0), convert_char_sat_rtp(v.s1), convert_char_sat_rtp(v.s2), convert_char_sat_rtp(v.s3), convert_char_sat_rtp(v.s4), convert_char_sat_rtp(v.s5), convert_char_sat_rtp(v.s6), convert_char_sat_rtp(v.s7), convert_char_sat_rtp(v.s8), convert_char_sat_rtp(v.s9), convert_char_sat_rtp(v.sA), convert_char_sat_rtp(v.sB), convert_char_sat_rtp(v.sC), convert_char_sat_rtp(v.sD), convert_char_sat_rtp(v.sE), convert_char_sat_rtp(v.sF));
+}
+
+INLINE OVERLOADABLE char16 convert_char16_sat_rtn(uchar16 v) {
+  return (char16)(convert_char_sat_rtn(v.s0), convert_char_sat_rtn(v.s1), convert_char_sat_rtn(v.s2), convert_char_sat_rtn(v.s3), convert_char_sat_rtn(v.s4), convert_char_sat_rtn(v.s5), convert_char_sat_rtn(v.s6), convert_char_sat_rtn(v.s7), convert_char_sat_rtn(v.s8), convert_char_sat_rtn(v.s9), convert_char_sat_rtn(v.sA), convert_char_sat_rtn(v.sB), convert_char_sat_rtn(v.sC), convert_char_sat_rtn(v.sD), convert_char_sat_rtn(v.sE), convert_char_sat_rtn(v.sF));
+}
+
+INLINE OVERLOADABLE uchar16 convert_uchar16_sat_rte(uchar16 v) {
+  return (uchar16)(convert_uchar_sat_rte(v.s0), convert_uchar_sat_rte(v.s1), convert_uchar_sat_rte(v.s2), convert_uchar_sat_rte(v.s3), convert_uchar_sat_rte(v.s4), convert_uchar_sat_rte(v.s5), convert_uchar_sat_rte(v.s6), convert_uchar_sat_rte(v.s7), convert_uchar_sat_rte(v.s8), convert_uchar_sat_rte(v.s9), convert_uchar_sat_rte(v.sA), convert_uchar_sat_rte(v.sB), convert_uchar_sat_rte(v.sC), convert_uchar_sat_rte(v.sD), convert_uchar_sat_rte(v.sE), convert_uchar_sat_rte(v.sF));
+}
+
+INLINE OVERLOADABLE uchar16 convert_uchar16_sat_rtz(uchar16 v) {
+  return (uchar16)(convert_uchar_sat_rtz(v.s0), convert_uchar_sat_rtz(v.s1), convert_uchar_sat_rtz(v.s2), convert_uchar_sat_rtz(v.s3), convert_uchar_sat_rtz(v.s4), convert_uchar_sat_rtz(v.s5), convert_uchar_sat_rtz(v.s6), convert_uchar_sat_rtz(v.s7), convert_uchar_sat_rtz(v.s8), convert_uchar_sat_rtz(v.s9), convert_uchar_sat_rtz(v.sA), convert_uchar_sat_rtz(v.sB), convert_uchar_sat_rtz(v.sC), convert_uchar_sat_rtz(v.sD), convert_uchar_sat_rtz(v.sE), convert_uchar_sat_rtz(v.sF));
+}
+
+INLINE OVERLOADABLE uchar16 convert_uchar16_sat_rtp(uchar16 v) {
+  return (uchar16)(convert_uchar_sat_rtp(v.s0), convert_uchar_sat_rtp(v.s1), convert_uchar_sat_rtp(v.s2), convert_uchar_sat_rtp(v.s3), convert_uchar_sat_rtp(v.s4), convert_uchar_sat_rtp(v.s5), convert_uchar_sat_rtp(v.s6), convert_uchar_sat_rtp(v.s7), convert_uchar_sat_rtp(v.s8), convert_uchar_sat_rtp(v.s9), convert_uchar_sat_rtp(v.sA), convert_uchar_sat_rtp(v.sB), convert_uchar_sat_rtp(v.sC), convert_uchar_sat_rtp(v.sD), convert_uchar_sat_rtp(v.sE), convert_uchar_sat_rtp(v.sF));
+}
+
+INLINE OVERLOADABLE uchar16 convert_uchar16_sat_rtn(uchar16 v) {
+  return (uchar16)(convert_uchar_sat_rtn(v.s0), convert_uchar_sat_rtn(v.s1), convert_uchar_sat_rtn(v.s2), convert_uchar_sat_rtn(v.s3), convert_uchar_sat_rtn(v.s4), convert_uchar_sat_rtn(v.s5), convert_uchar_sat_rtn(v.s6), convert_uchar_sat_rtn(v.s7), convert_uchar_sat_rtn(v.s8), convert_uchar_sat_rtn(v.s9), convert_uchar_sat_rtn(v.sA), convert_uchar_sat_rtn(v.sB), convert_uchar_sat_rtn(v.sC), convert_uchar_sat_rtn(v.sD), convert_uchar_sat_rtn(v.sE), convert_uchar_sat_rtn(v.sF));
+}
+
+INLINE OVERLOADABLE long16 convert_long16_sat_rte(float16 v) {
+  return (long16)(convert_long_sat_rte(v.s0), convert_long_sat_rte(v.s1), convert_long_sat_rte(v.s2), convert_long_sat_rte(v.s3), convert_long_sat_rte(v.s4), convert_long_sat_rte(v.s5), convert_long_sat_rte(v.s6), convert_long_sat_rte(v.s7), convert_long_sat_rte(v.s8), convert_long_sat_rte(v.s9), convert_long_sat_rte(v.sA), convert_long_sat_rte(v.sB), convert_long_sat_rte(v.sC), convert_long_sat_rte(v.sD), convert_long_sat_rte(v.sE), convert_long_sat_rte(v.sF));
+}
+
+INLINE OVERLOADABLE long16 convert_long16_sat_rtz(float16 v) {
+  return (long16)(convert_long_sat_rtz(v.s0), convert_long_sat_rtz(v.s1), convert_long_sat_rtz(v.s2), convert_long_sat_rtz(v.s3), convert_long_sat_rtz(v.s4), convert_long_sat_rtz(v.s5), convert_long_sat_rtz(v.s6), convert_long_sat_rtz(v.s7), convert_long_sat_rtz(v.s8), convert_long_sat_rtz(v.s9), convert_long_sat_rtz(v.sA), convert_long_sat_rtz(v.sB), convert_long_sat_rtz(v.sC), convert_long_sat_rtz(v.sD), convert_long_sat_rtz(v.sE), convert_long_sat_rtz(v.sF));
+}
+
+INLINE OVERLOADABLE long16 convert_long16_sat_rtp(float16 v) {
+  return (long16)(convert_long_sat_rtp(v.s0), convert_long_sat_rtp(v.s1), convert_long_sat_rtp(v.s2), convert_long_sat_rtp(v.s3), convert_long_sat_rtp(v.s4), convert_long_sat_rtp(v.s5), convert_long_sat_rtp(v.s6), convert_long_sat_rtp(v.s7), convert_long_sat_rtp(v.s8), convert_long_sat_rtp(v.s9), convert_long_sat_rtp(v.sA), convert_long_sat_rtp(v.sB), convert_long_sat_rtp(v.sC), convert_long_sat_rtp(v.sD), convert_long_sat_rtp(v.sE), convert_long_sat_rtp(v.sF));
+}
+
+INLINE OVERLOADABLE long16 convert_long16_sat_rtn(float16 v) {
+  return (long16)(convert_long_sat_rtn(v.s0), convert_long_sat_rtn(v.s1), convert_long_sat_rtn(v.s2), convert_long_sat_rtn(v.s3), convert_long_sat_rtn(v.s4), convert_long_sat_rtn(v.s5), convert_long_sat_rtn(v.s6), convert_long_sat_rtn(v.s7), convert_long_sat_rtn(v.s8), convert_long_sat_rtn(v.s9), convert_long_sat_rtn(v.sA), convert_long_sat_rtn(v.sB), convert_long_sat_rtn(v.sC), convert_long_sat_rtn(v.sD), convert_long_sat_rtn(v.sE), convert_long_sat_rtn(v.sF));
+}
+
+INLINE OVERLOADABLE ulong16 convert_ulong16_sat_rte(float16 v) {
+  return (ulong16)(convert_ulong_sat_rte(v.s0), convert_ulong_sat_rte(v.s1), convert_ulong_sat_rte(v.s2), convert_ulong_sat_rte(v.s3), convert_ulong_sat_rte(v.s4), convert_ulong_sat_rte(v.s5), convert_ulong_sat_rte(v.s6), convert_ulong_sat_rte(v.s7), convert_ulong_sat_rte(v.s8), convert_ulong_sat_rte(v.s9), convert_ulong_sat_rte(v.sA), convert_ulong_sat_rte(v.sB), convert_ulong_sat_rte(v.sC), convert_ulong_sat_rte(v.sD), convert_ulong_sat_rte(v.sE), convert_ulong_sat_rte(v.sF));
+}
+
+INLINE OVERLOADABLE ulong16 convert_ulong16_sat_rtz(float16 v) {
+  return (ulong16)(convert_ulong_sat_rtz(v.s0), convert_ulong_sat_rtz(v.s1), convert_ulong_sat_rtz(v.s2), convert_ulong_sat_rtz(v.s3), convert_ulong_sat_rtz(v.s4), convert_ulong_sat_rtz(v.s5), convert_ulong_sat_rtz(v.s6), convert_ulong_sat_rtz(v.s7), convert_ulong_sat_rtz(v.s8), convert_ulong_sat_rtz(v.s9), convert_ulong_sat_rtz(v.sA), convert_ulong_sat_rtz(v.sB), convert_ulong_sat_rtz(v.sC), convert_ulong_sat_rtz(v.sD), convert_ulong_sat_rtz(v.sE), convert_ulong_sat_rtz(v.sF));
+}
+
+INLINE OVERLOADABLE ulong16 convert_ulong16_sat_rtp(float16 v) {
+  return (ulong16)(convert_ulong_sat_rtp(v.s0), convert_ulong_sat_rtp(v.s1), convert_ulong_sat_rtp(v.s2), convert_ulong_sat_rtp(v.s3), convert_ulong_sat_rtp(v.s4), convert_ulong_sat_rtp(v.s5), convert_ulong_sat_rtp(v.s6), convert_ulong_sat_rtp(v.s7), convert_ulong_sat_rtp(v.s8), convert_ulong_sat_rtp(v.s9), convert_ulong_sat_rtp(v.sA), convert_ulong_sat_rtp(v.sB), convert_ulong_sat_rtp(v.sC), convert_ulong_sat_rtp(v.sD), convert_ulong_sat_rtp(v.sE), convert_ulong_sat_rtp(v.sF));
+}
+
+INLINE OVERLOADABLE ulong16 convert_ulong16_sat_rtn(float16 v) {
+  return (ulong16)(convert_ulong_sat_rtn(v.s0), convert_ulong_sat_rtn(v.s1), convert_ulong_sat_rtn(v.s2), convert_ulong_sat_rtn(v.s3), convert_ulong_sat_rtn(v.s4), convert_ulong_sat_rtn(v.s5), convert_ulong_sat_rtn(v.s6), convert_ulong_sat_rtn(v.s7), convert_ulong_sat_rtn(v.s8), convert_ulong_sat_rtn(v.s9), convert_ulong_sat_rtn(v.sA), convert_ulong_sat_rtn(v.sB), convert_ulong_sat_rtn(v.sC), convert_ulong_sat_rtn(v.sD), convert_ulong_sat_rtn(v.sE), convert_ulong_sat_rtn(v.sF));
+}
+
+INLINE OVERLOADABLE int16 convert_int16_sat_rte(float16 v) {
+  return (int16)(convert_int_sat_rte(v.s0), convert_int_sat_rte(v.s1), convert_int_sat_rte(v.s2), convert_int_sat_rte(v.s3), convert_int_sat_rte(v.s4), convert_int_sat_rte(v.s5), convert_int_sat_rte(v.s6), convert_int_sat_rte(v.s7), convert_int_sat_rte(v.s8), convert_int_sat_rte(v.s9), convert_int_sat_rte(v.sA), convert_int_sat_rte(v.sB), convert_int_sat_rte(v.sC), convert_int_sat_rte(v.sD), convert_int_sat_rte(v.sE), convert_int_sat_rte(v.sF));
+}
+
+INLINE OVERLOADABLE int16 convert_int16_sat_rtz(float16 v) {
+  return (int16)(convert_int_sat_rtz(v.s0), convert_int_sat_rtz(v.s1), convert_int_sat_rtz(v.s2), convert_int_sat_rtz(v.s3), convert_int_sat_rtz(v.s4), convert_int_sat_rtz(v.s5), convert_int_sat_rtz(v.s6), convert_int_sat_rtz(v.s7), convert_int_sat_rtz(v.s8), convert_int_sat_rtz(v.s9), convert_int_sat_rtz(v.sA), convert_int_sat_rtz(v.sB), convert_int_sat_rtz(v.sC), convert_int_sat_rtz(v.sD), convert_int_sat_rtz(v.sE), convert_int_sat_rtz(v.sF));
+}
+
+INLINE OVERLOADABLE int16 convert_int16_sat_rtp(float16 v) {
+  return (int16)(convert_int_sat_rtp(v.s0), convert_int_sat_rtp(v.s1), convert_int_sat_rtp(v.s2), convert_int_sat_rtp(v.s3), convert_int_sat_rtp(v.s4), convert_int_sat_rtp(v.s5), convert_int_sat_rtp(v.s6), convert_int_sat_rtp(v.s7), convert_int_sat_rtp(v.s8), convert_int_sat_rtp(v.s9), convert_int_sat_rtp(v.sA), convert_int_sat_rtp(v.sB), convert_int_sat_rtp(v.sC), convert_int_sat_rtp(v.sD), convert_int_sat_rtp(v.sE), convert_int_sat_rtp(v.sF));
+}
+
+INLINE OVERLOADABLE int16 convert_int16_sat_rtn(float16 v) {
+  return (int16)(convert_int_sat_rtn(v.s0), convert_int_sat_rtn(v.s1), convert_int_sat_rtn(v.s2), convert_int_sat_rtn(v.s3), convert_int_sat_rtn(v.s4), convert_int_sat_rtn(v.s5), convert_int_sat_rtn(v.s6), convert_int_sat_rtn(v.s7), convert_int_sat_rtn(v.s8), convert_int_sat_rtn(v.s9), convert_int_sat_rtn(v.sA), convert_int_sat_rtn(v.sB), convert_int_sat_rtn(v.sC), convert_int_sat_rtn(v.sD), convert_int_sat_rtn(v.sE), convert_int_sat_rtn(v.sF));
+}
+
+INLINE OVERLOADABLE uint16 convert_uint16_sat_rte(float16 v) {
+  return (uint16)(convert_uint_sat_rte(v.s0), convert_uint_sat_rte(v.s1), convert_uint_sat_rte(v.s2), convert_uint_sat_rte(v.s3), convert_uint_sat_rte(v.s4), convert_uint_sat_rte(v.s5), convert_uint_sat_rte(v.s6), convert_uint_sat_rte(v.s7), convert_uint_sat_rte(v.s8), convert_uint_sat_rte(v.s9), convert_uint_sat_rte(v.sA), convert_uint_sat_rte(v.sB), convert_uint_sat_rte(v.sC), convert_uint_sat_rte(v.sD), convert_uint_sat_rte(v.sE), convert_uint_sat_rte(v.sF));
+}
+
+INLINE OVERLOADABLE uint16 convert_uint16_sat_rtz(float16 v) {
+  return (uint16)(convert_uint_sat_rtz(v.s0), convert_uint_sat_rtz(v.s1), convert_uint_sat_rtz(v.s2), convert_uint_sat_rtz(v.s3), convert_uint_sat_rtz(v.s4), convert_uint_sat_rtz(v.s5), convert_uint_sat_rtz(v.s6), convert_uint_sat_rtz(v.s7), convert_uint_sat_rtz(v.s8), convert_uint_sat_rtz(v.s9), convert_uint_sat_rtz(v.sA), convert_uint_sat_rtz(v.sB), convert_uint_sat_rtz(v.sC), convert_uint_sat_rtz(v.sD), convert_uint_sat_rtz(v.sE), convert_uint_sat_rtz(v.sF));
+}
+
+INLINE OVERLOADABLE uint16 convert_uint16_sat_rtp(float16 v) {
+  return (uint16)(convert_uint_sat_rtp(v.s0), convert_uint_sat_rtp(v.s1), convert_uint_sat_rtp(v.s2), convert_uint_sat_rtp(v.s3), convert_uint_sat_rtp(v.s4), convert_uint_sat_rtp(v.s5), convert_uint_sat_rtp(v.s6), convert_uint_sat_rtp(v.s7), convert_uint_sat_rtp(v.s8), convert_uint_sat_rtp(v.s9), convert_uint_sat_rtp(v.sA), convert_uint_sat_rtp(v.sB), convert_uint_sat_rtp(v.sC), convert_uint_sat_rtp(v.sD), convert_uint_sat_rtp(v.sE), convert_uint_sat_rtp(v.sF));
+}
+
+INLINE OVERLOADABLE uint16 convert_uint16_sat_rtn(float16 v) {
+  return (uint16)(convert_uint_sat_rtn(v.s0), convert_uint_sat_rtn(v.s1), convert_uint_sat_rtn(v.s2), convert_uint_sat_rtn(v.s3), convert_uint_sat_rtn(v.s4), convert_uint_sat_rtn(v.s5), convert_uint_sat_rtn(v.s6), convert_uint_sat_rtn(v.s7), convert_uint_sat_rtn(v.s8), convert_uint_sat_rtn(v.s9), convert_uint_sat_rtn(v.sA), convert_uint_sat_rtn(v.sB), convert_uint_sat_rtn(v.sC), convert_uint_sat_rtn(v.sD), convert_uint_sat_rtn(v.sE), convert_uint_sat_rtn(v.sF));
+}
+
+INLINE OVERLOADABLE short16 convert_short16_sat_rte(float16 v) {
+  return (short16)(convert_short_sat_rte(v.s0), convert_short_sat_rte(v.s1), convert_short_sat_rte(v.s2), convert_short_sat_rte(v.s3), convert_short_sat_rte(v.s4), convert_short_sat_rte(v.s5), convert_short_sat_rte(v.s6), convert_short_sat_rte(v.s7), convert_short_sat_rte(v.s8), convert_short_sat_rte(v.s9), convert_short_sat_rte(v.sA), convert_short_sat_rte(v.sB), convert_short_sat_rte(v.sC), convert_short_sat_rte(v.sD), convert_short_sat_rte(v.sE), convert_short_sat_rte(v.sF));
+}
+
+INLINE OVERLOADABLE short16 convert_short16_sat_rtz(float16 v) {
+  return (short16)(convert_short_sat_rtz(v.s0), convert_short_sat_rtz(v.s1), convert_short_sat_rtz(v.s2), convert_short_sat_rtz(v.s3), convert_short_sat_rtz(v.s4), convert_short_sat_rtz(v.s5), convert_short_sat_rtz(v.s6), convert_short_sat_rtz(v.s7), convert_short_sat_rtz(v.s8), convert_short_sat_rtz(v.s9), convert_short_sat_rtz(v.sA), convert_short_sat_rtz(v.sB), convert_short_sat_rtz(v.sC), convert_short_sat_rtz(v.sD), convert_short_sat_rtz(v.sE), convert_short_sat_rtz(v.sF));
+}
+
+INLINE OVERLOADABLE short16 convert_short16_sat_rtp(float16 v) {
+  return (short16)(convert_short_sat_rtp(v.s0), convert_short_sat_rtp(v.s1), convert_short_sat_rtp(v.s2), convert_short_sat_rtp(v.s3), convert_short_sat_rtp(v.s4), convert_short_sat_rtp(v.s5), convert_short_sat_rtp(v.s6), convert_short_sat_rtp(v.s7), convert_short_sat_rtp(v.s8), convert_short_sat_rtp(v.s9), convert_short_sat_rtp(v.sA), convert_short_sat_rtp(v.sB), convert_short_sat_rtp(v.sC), convert_short_sat_rtp(v.sD), convert_short_sat_rtp(v.sE), convert_short_sat_rtp(v.sF));
+}
+
+INLINE OVERLOADABLE short16 convert_short16_sat_rtn(float16 v) {
+  return (short16)(convert_short_sat_rtn(v.s0), convert_short_sat_rtn(v.s1), convert_short_sat_rtn(v.s2), convert_short_sat_rtn(v.s3), convert_short_sat_rtn(v.s4), convert_short_sat_rtn(v.s5), convert_short_sat_rtn(v.s6), convert_short_sat_rtn(v.s7), convert_short_sat_rtn(v.s8), convert_short_sat_rtn(v.s9), convert_short_sat_rtn(v.sA), convert_short_sat_rtn(v.sB), convert_short_sat_rtn(v.sC), convert_short_sat_rtn(v.sD), convert_short_sat_rtn(v.sE), convert_short_sat_rtn(v.sF));
+}
+
+INLINE OVERLOADABLE ushort16 convert_ushort16_sat_rte(float16 v) {
+  return (ushort16)(convert_ushort_sat_rte(v.s0), convert_ushort_sat_rte(v.s1), convert_ushort_sat_rte(v.s2), convert_ushort_sat_rte(v.s3), convert_ushort_sat_rte(v.s4), convert_ushort_sat_rte(v.s5), convert_ushort_sat_rte(v.s6), convert_ushort_sat_rte(v.s7), convert_ushort_sat_rte(v.s8), convert_ushort_sat_rte(v.s9), convert_ushort_sat_rte(v.sA), convert_ushort_sat_rte(v.sB), convert_ushort_sat_rte(v.sC), convert_ushort_sat_rte(v.sD), convert_ushort_sat_rte(v.sE), convert_ushort_sat_rte(v.sF));
+}
+
+INLINE OVERLOADABLE ushort16 convert_ushort16_sat_rtz(float16 v) {
+  return (ushort16)(convert_ushort_sat_rtz(v.s0), convert_ushort_sat_rtz(v.s1), convert_ushort_sat_rtz(v.s2), convert_ushort_sat_rtz(v.s3), convert_ushort_sat_rtz(v.s4), convert_ushort_sat_rtz(v.s5), convert_ushort_sat_rtz(v.s6), convert_ushort_sat_rtz(v.s7), convert_ushort_sat_rtz(v.s8), convert_ushort_sat_rtz(v.s9), convert_ushort_sat_rtz(v.sA), convert_ushort_sat_rtz(v.sB), convert_ushort_sat_rtz(v.sC), convert_ushort_sat_rtz(v.sD), convert_ushort_sat_rtz(v.sE), convert_ushort_sat_rtz(v.sF));
+}
+
+INLINE OVERLOADABLE ushort16 convert_ushort16_sat_rtp(float16 v) {
+  return (ushort16)(convert_ushort_sat_rtp(v.s0), convert_ushort_sat_rtp(v.s1), convert_ushort_sat_rtp(v.s2), convert_ushort_sat_rtp(v.s3), convert_ushort_sat_rtp(v.s4), convert_ushort_sat_rtp(v.s5), convert_ushort_sat_rtp(v.s6), convert_ushort_sat_rtp(v.s7), convert_ushort_sat_rtp(v.s8), convert_ushort_sat_rtp(v.s9), convert_ushort_sat_rtp(v.sA), convert_ushort_sat_rtp(v.sB), convert_ushort_sat_rtp(v.sC), convert_ushort_sat_rtp(v.sD), convert_ushort_sat_rtp(v.sE), convert_ushort_sat_rtp(v.sF));
+}
+
+INLINE OVERLOADABLE ushort16 convert_ushort16_sat_rtn(float16 v) {
+  return (ushort16)(convert_ushort_sat_rtn(v.s0), convert_ushort_sat_rtn(v.s1), convert_ushort_sat_rtn(v.s2), convert_ushort_sat_rtn(v.s3), convert_ushort_sat_rtn(v.s4), convert_ushort_sat_rtn(v.s5), convert_ushort_sat_rtn(v.s6), convert_ushort_sat_rtn(v.s7), convert_ushort_sat_rtn(v.s8), convert_ushort_sat_rtn(v.s9), convert_ushort_sat_rtn(v.sA), convert_ushort_sat_rtn(v.sB), convert_ushort_sat_rtn(v.sC), convert_ushort_sat_rtn(v.sD), convert_ushort_sat_rtn(v.sE), convert_ushort_sat_rtn(v.sF));
+}
+
+INLINE OVERLOADABLE char16 convert_char16_sat_rte(float16 v) {
+  return (char16)(convert_char_sat_rte(v.s0), convert_char_sat_rte(v.s1), convert_char_sat_rte(v.s2), convert_char_sat_rte(v.s3), convert_char_sat_rte(v.s4), convert_char_sat_rte(v.s5), convert_char_sat_rte(v.s6), convert_char_sat_rte(v.s7), convert_char_sat_rte(v.s8), convert_char_sat_rte(v.s9), convert_char_sat_rte(v.sA), convert_char_sat_rte(v.sB), convert_char_sat_rte(v.sC), convert_char_sat_rte(v.sD), convert_char_sat_rte(v.sE), convert_char_sat_rte(v.sF));
+}
+
+INLINE OVERLOADABLE char16 convert_char16_sat_rtz(float16 v) {
+  return (char16)(convert_char_sat_rtz(v.s0), convert_char_sat_rtz(v.s1), convert_char_sat_rtz(v.s2), convert_char_sat_rtz(v.s3), convert_char_sat_rtz(v.s4), convert_char_sat_rtz(v.s5), convert_char_sat_rtz(v.s6), convert_char_sat_rtz(v.s7), convert_char_sat_rtz(v.s8), convert_char_sat_rtz(v.s9), convert_char_sat_rtz(v.sA), convert_char_sat_rtz(v.sB), convert_char_sat_rtz(v.sC), convert_char_sat_rtz(v.sD), convert_char_sat_rtz(v.sE), convert_char_sat_rtz(v.sF));
+}
+
+INLINE OVERLOADABLE char16 convert_char16_sat_rtp(float16 v) {
+  return (char16)(convert_char_sat_rtp(v.s0), convert_char_sat_rtp(v.s1), convert_char_sat_rtp(v.s2), convert_char_sat_rtp(v.s3), convert_char_sat_rtp(v.s4), convert_char_sat_rtp(v.s5), convert_char_sat_rtp(v.s6), convert_char_sat_rtp(v.s7), convert_char_sat_rtp(v.s8), convert_char_sat_rtp(v.s9), convert_char_sat_rtp(v.sA), convert_char_sat_rtp(v.sB), convert_char_sat_rtp(v.sC), convert_char_sat_rtp(v.sD), convert_char_sat_rtp(v.sE), convert_char_sat_rtp(v.sF));
+}
+
+INLINE OVERLOADABLE char16 convert_char16_sat_rtn(float16 v) {
+  return (char16)(convert_char_sat_rtn(v.s0), convert_char_sat_rtn(v.s1), convert_char_sat_rtn(v.s2), convert_char_sat_rtn(v.s3), convert_char_sat_rtn(v.s4), convert_char_sat_rtn(v.s5), convert_char_sat_rtn(v.s6), convert_char_sat_rtn(v.s7), convert_char_sat_rtn(v.s8), convert_char_sat_rtn(v.s9), convert_char_sat_rtn(v.sA), convert_char_sat_rtn(v.sB), convert_char_sat_rtn(v.sC), convert_char_sat_rtn(v.sD), convert_char_sat_rtn(v.sE), convert_char_sat_rtn(v.sF));
+}
+
+INLINE OVERLOADABLE uchar16 convert_uchar16_sat_rte(float16 v) {
+  return (uchar16)(convert_uchar_sat_rte(v.s0), convert_uchar_sat_rte(v.s1), convert_uchar_sat_rte(v.s2), convert_uchar_sat_rte(v.s3), convert_uchar_sat_rte(v.s4), convert_uchar_sat_rte(v.s5), convert_uchar_sat_rte(v.s6), convert_uchar_sat_rte(v.s7), convert_uchar_sat_rte(v.s8), convert_uchar_sat_rte(v.s9), convert_uchar_sat_rte(v.sA), convert_uchar_sat_rte(v.sB), convert_uchar_sat_rte(v.sC), convert_uchar_sat_rte(v.sD), convert_uchar_sat_rte(v.sE), convert_uchar_sat_rte(v.sF));
+}
+
+INLINE OVERLOADABLE uchar16 convert_uchar16_sat_rtz(float16 v) {
+  return (uchar16)(convert_uchar_sat_rtz(v.s0), convert_uchar_sat_rtz(v.s1), convert_uchar_sat_rtz(v.s2), convert_uchar_sat_rtz(v.s3), convert_uchar_sat_rtz(v.s4), convert_uchar_sat_rtz(v.s5), convert_uchar_sat_rtz(v.s6), convert_uchar_sat_rtz(v.s7), convert_uchar_sat_rtz(v.s8), convert_uchar_sat_rtz(v.s9), convert_uchar_sat_rtz(v.sA), convert_uchar_sat_rtz(v.sB), convert_uchar_sat_rtz(v.sC), convert_uchar_sat_rtz(v.sD), convert_uchar_sat_rtz(v.sE), convert_uchar_sat_rtz(v.sF));
+}
+
+INLINE OVERLOADABLE uchar16 convert_uchar16_sat_rtp(float16 v) {
+  return (uchar16)(convert_uchar_sat_rtp(v.s0), convert_uchar_sat_rtp(v.s1), convert_uchar_sat_rtp(v.s2), convert_uchar_sat_rtp(v.s3), convert_uchar_sat_rtp(v.s4), convert_uchar_sat_rtp(v.s5), convert_uchar_sat_rtp(v.s6), convert_uchar_sat_rtp(v.s7), convert_uchar_sat_rtp(v.s8), convert_uchar_sat_rtp(v.s9), convert_uchar_sat_rtp(v.sA), convert_uchar_sat_rtp(v.sB), convert_uchar_sat_rtp(v.sC), convert_uchar_sat_rtp(v.sD), convert_uchar_sat_rtp(v.sE), convert_uchar_sat_rtp(v.sF));
+}
+
+INLINE OVERLOADABLE uchar16 convert_uchar16_sat_rtn(float16 v) {
+  return (uchar16)(convert_uchar_sat_rtn(v.s0), convert_uchar_sat_rtn(v.s1), convert_uchar_sat_rtn(v.s2), convert_uchar_sat_rtn(v.s3), convert_uchar_sat_rtn(v.s4), convert_uchar_sat_rtn(v.s5), convert_uchar_sat_rtn(v.s6), convert_uchar_sat_rtn(v.s7), convert_uchar_sat_rtn(v.s8), convert_uchar_sat_rtn(v.s9), convert_uchar_sat_rtn(v.sA), convert_uchar_sat_rtn(v.sB), convert_uchar_sat_rtn(v.sC), convert_uchar_sat_rtn(v.sD), convert_uchar_sat_rtn(v.sE), convert_uchar_sat_rtn(v.sF));
+}
+
