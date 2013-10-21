@@ -854,8 +854,7 @@ error:
 cl_int
 clUnloadCompiler(void)
 {
-  NOT_IMPLEMENTED;
-  return 0;
+  return CL_SUCCESS;
 }
 
 cl_int
