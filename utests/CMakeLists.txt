@@ -41,6 +41,7 @@ set (utests_sources
   compiler_fill_image_3d_2.cpp
   compiler_function_argument0.cpp
   compiler_function_argument1.cpp
+  compiler_function_argument2.cpp
   compiler_function_argument.cpp
   compiler_function_constant0.cpp
   compiler_function_constant1.cpp
