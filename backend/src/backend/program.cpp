@@ -557,7 +557,10 @@ namespace gbe {
 
     // Create an action and make the compiler instance carry it out
     llvm::OwningPtr<clang::CodeGenAction> Act(new clang::EmitLLVMOnlyAction());
-    if (!Clang.ExecuteAction(*Act))
+    sem_wait(&llvm_semaphore);
+    auto retVal = Clang.ExecuteAction(*Act);
+    sem_post(&llvm_semaphore);
+    if (!retVal)
       return;
 
     llvm::Module *module = Act->takeModule();
@@ -851,6 +854,7 @@ namespace gbe
       gbe_get_image_base_index = gbe::getImageBaseIndex;
       gbe_set_image_base_index = gbe::setImageBaseIndex;
       genSetupCallBacks();
+      genSetupLLVMSemaphore();
     }
   };
 

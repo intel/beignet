@@ -160,3 +160,9 @@ void genSetupCallBacks(void)
   gbe_program_new_from_llvm = gbe::genProgramNewFromLLVM;
 }
 
+sem_t llvm_semaphore;
+
+void genSetupLLVMSemaphore(void)
+{
+  sem_init(&llvm_semaphore, 0, 1);
+}
