@@ -602,8 +602,8 @@ namespace gbe
     }
   }
 
-  BVAR(OCL_POST_ALLOC_INSN_SCHEDULE, true);
-  BVAR(OCL_PRE_ALLOC_INSN_SCHEDULE, true);
+  BVAR(OCL_POST_ALLOC_INSN_SCHEDULE, false);
+  BVAR(OCL_PRE_ALLOC_INSN_SCHEDULE, false);
 
   void schedulePostRegAllocation(GenContext &ctx, Selection &selection) {
     if (OCL_POST_ALLOC_INSN_SCHEDULE) {
