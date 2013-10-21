@@ -130,9 +130,19 @@ typedef size_t __event_t;
 #define FLT_EPSILON 0x1.0p-23f
 
 #define MAXFLOAT     3.40282347e38F
-#define HUGE_VALF    (__builtin_huge_valf())
-#define INFINITY     (__builtin_inff())
-#define NAN          (__builtin_nanf(""))
+INLINE_OVERLOADABLE float __ocl_inff(void) {
+  union { uint u; float f; } u;
+  u.u = 0x7F800000;
+  return u.f;
+}
+INLINE_OVERLOADABLE float __ocl_nanf(void) {
+  union { uint u; float f; } u;
+  u.u = 0x7F800001;
+  return u.f;
+}
+#define HUGE_VALF    (__ocl_inff())
+#define INFINITY     (__ocl_inff())
+#define NAN          (__ocl_nanf())
 #define M_E_F        2.718281828459045F
 #define M_LOG2E_F    1.4426950408889634F
 #define M_LOG10E_F   0.43429448190325176F
@@ -219,17 +229,34 @@ UDEF(uint);
 UDEF(ulong);
 #undef UDEF
 
-INLINE_OVERLOADABLE int isfinite(float x) { return __builtin_isfinite(x); }
-INLINE_OVERLOADABLE int isinf(float x) { return __builtin_isinf(x); }
+INLINE_OVERLOADABLE int isfinite(float x) {
+  union { uint u; float f; } u;
+  u.f = x;
+  return (u.u & 0x7FFFFFFF) < 0x7F800000;
+}
+INLINE_OVERLOADABLE int isinf(float x) {
+  union { uint u; float f; } u;
+  u.f = x;
+  return (u.u & 0x7FFFFFFF) == 0x7F800000;
+}
 INLINE_OVERLOADABLE int isnan(float x) {
   union { uint u; float f; } u;
   u.f = x;
   return (u.u & 0x7FFFFFFF) > 0x7F800000;
 }
-INLINE_OVERLOADABLE int isnormal(float x) { return __builtin_isnormal(x); }
+INLINE_OVERLOADABLE int isnormal(float x) {
+  union { uint u; float f; } u;
+  u.f = x;
+  u.u &= 0x7FFFFFFF;
+  return (u.u < 0x7F800000) && (u.u >= 1);
+}
 INLINE_OVERLOADABLE int isordered(float x, float y) { return isequal(x, x) && isequal(y, y); }
 INLINE_OVERLOADABLE int isunordered(float x, float y) { return isnan(x) || isnan(y); }
-INLINE_OVERLOADABLE int signbit(float x) { return __builtin_signbit(x); }
+INLINE_OVERLOADABLE int signbit(float x) {
+  union { uint u; float f; } u;
+  u.f = x;
+  return u.u >> 31;
+}
 
 #define DEC1(type) INLINE_OVERLOADABLE int any(type a) { return a<0; }
 #define DEC2(type) INLINE_OVERLOADABLE int any(type a) { return a.s0<0 || a.s1<0; }
