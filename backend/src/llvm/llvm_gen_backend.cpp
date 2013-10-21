@@ -275,6 +275,17 @@ namespace gbe
     return ir::MEM_GLOBAL;
   }
 
+  static Constant *extractConstantElem(Constant *CPV, uint32_t index) {
+    ConstantVector *CV = dyn_cast<ConstantVector>(CPV);
+    GBE_ASSERT(CV != NULL);
+#if GBE_DEBUG
+    const uint32_t elemNum = CV->getNumOperands();
+    GBE_ASSERTM(index < elemNum, "Out-of-bound constant vector access");
+#endif /* GBE_DEBUG */
+    CPV = cast<Constant>(CV->getOperand(index));
+    return CPV;
+  }
+
   /*! Handle the LLVM IR Value to Gen IR register translation. This has 2 roles:
    *  - Split the LLVM vector into several scalar values
    *  - Handle the transparent copies (bitcast or use of intrincics functions
@@ -386,6 +397,8 @@ namespace gbe
       getRealValue(value, index);
 
       Constant *CPV = dyn_cast<Constant>(value);
+      if(CPV && dyn_cast<ConstantVector>(CPV))
+        CPV = extractConstantElem(CPV, index);
       return (CPV && (isa<UndefValue>(CPV)));
     }
   private:
@@ -694,17 +707,6 @@ namespace gbe
     return false;
   }
 
-  static Constant *extractConstantElem(Constant *CPV, uint32_t index) {
-    ConstantVector *CV = dyn_cast<ConstantVector>(CPV);
-    GBE_ASSERT(CV != NULL);
-#if GBE_DEBUG
-    const uint32_t elemNum = CV->getNumOperands();
-    GBE_ASSERTM(index < elemNum, "Out-of-bound constant vector access");
-#endif /* GBE_DEBUG */
-    CPV = cast<Constant>(CV->getOperand(index));
-    return CPV;
-  }
-
   template <typename U, typename T>
   static U processConstant(Constant *CPV, T doIt, uint32_t index = 0u)
   {
@@ -745,7 +747,34 @@ namespace gbe
 #endif /* LLVM_VERSION_MINOR > 0 */
 
     if (dyn_cast<ConstantAggregateZero>(CPV)) {
-      return doIt(uint32_t(0)); // XXX Handle type
+      Type* Ty = CPV->getType();
+      if(Ty->isVectorTy())
+        Ty = (cast<VectorType>(Ty))->getElementType();
+      if (Ty == Type::getInt1Ty(CPV->getContext())) {
+        const bool b = 0;
+        return doIt(b);
+      } else if (Ty == Type::getInt8Ty(CPV->getContext())) {
+        const uint8_t u8 = 0;
+        return doIt(u8);
+      } else if (Ty == Type::getInt16Ty(CPV->getContext())) {
+        const uint16_t u16 = 0;
+        return doIt(u16);
+      } else if (Ty == Type::getInt32Ty(CPV->getContext())) {
+        const uint32_t u32 = 0;
+        return doIt(u32);
+      } else if (Ty == Type::getInt64Ty(CPV->getContext())) {
+        const uint64_t u64 = 0;
+        return doIt(u64);
+      } else if (Ty == Type::getFloatTy(CPV->getContext())) {
+        const float f32 = 0;
+        return doIt(f32);
+      } else if (Ty == Type::getDoubleTy(CPV->getContext())) {
+        const float f64 = 0;
+        return doIt(f64);
+      } else {
+        GBE_ASSERTM(false, "Unsupporte aggregate zero type.");
+        return doIt(uint32_t(0));
+      }
     } else {
       if (dyn_cast<ConstantVector>(CPV))
         CPV = extractConstantElem(CPV, index);
