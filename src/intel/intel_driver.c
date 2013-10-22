@@ -56,6 +56,7 @@
 #include "intel_gpgpu.h"
 #include "intel_batchbuffer.h"
 #include "intel_bufmgr.h"
+#include <X11/Xlibint.h>
 #include "x11/dricommon.h"
 #include "cl_mem.h"
 
@@ -192,8 +193,10 @@ intel_driver_open(intel_driver_t *intel, cl_context_prop props)
   if(intel->x11_display) {
     if((intel->dri_ctx = getDRI2State(intel->x11_display,
                                      DefaultScreen(intel->x11_display),
-                                     &driver_name)))
+                                     &driver_name))) {
       intel_driver_init_shared(intel, intel->dri_ctx);
+      Xfree(driver_name);
+    }
     else
       printf("X server found. dri2 connection failed! \n");
   } else {

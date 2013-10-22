@@ -552,6 +552,7 @@ namespace gbe {
       }
       Args[NumArgs + 1] = 0;
       llvm::cl::ParseCommandLineOptions(NumArgs + 1, Args);
+      delete [] Args;
     }
 
     // Create an action and make the compiler instance carry it out
