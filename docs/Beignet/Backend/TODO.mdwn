@@ -31,8 +31,6 @@ many things must be implemented:
 - From LLVM 3.3, we use SPIR IR. We need to use the compiler defined type to
   represent sampler_t/image2d_t/image1d_t/....
 
-- Adding support for long (int64).
-
 Gen IR
 ------
 
@@ -56,17 +54,12 @@ The code is defined in `src/ir`. Main things to do are:
   This will obviously impact both instruction selection and the register
   allocation.
 
-- Adding support for long (int64).
-
 Backend
 -------
 
 The code is defined in `src/backend`. Main things to do are:
 
-- Int64 support?
-
-- Implementing register spilling (see the [[compiler backend
-  description|compiler_backend]] for more details)
+- Optimize register spilling (see the [[compiler backend description|compiler_backend]] for more details)
 
 - Implementing proper instruction selection. A "simple" tree matching algorithm
   should provide good results for Gen

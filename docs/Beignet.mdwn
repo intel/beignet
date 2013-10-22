@@ -101,13 +101,8 @@ do:
   as clCreateFromGLBuffer,clCreateFromGLRenderbuffer,clGetGLObjectInfo... Currently,
   the working APIs are clCreateFromGLTexture,clCreateFromGLTexture2D.
 
-- Support for events.
-
 - Check that NDRangeKernels can be pushed into _different_ queues from several
   threads.
-
-- Support for nonblocking mode Enqueue\*Buffer. Now we only use the map extension to
-  implement those Enqueue\*Buffer functions.
 
 - No state tracking at all. One batch buffer is created at each "draw call"
   (i.e. for each NDRangeKernels). This is really inefficient since some
