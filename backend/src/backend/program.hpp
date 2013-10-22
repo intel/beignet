@@ -147,7 +147,9 @@ namespace gbe {
        curbeSize         |
        simdWidth         |
        stackSize         |
+       scratchSize       |
        useSLM            |
+       slmSize           |
        samplers          |
        images            |
        code_size         |

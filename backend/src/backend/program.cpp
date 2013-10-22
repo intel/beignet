@@ -244,6 +244,7 @@ namespace gbe {
     OUT_UPDATE_SZ(curbeSize);
     OUT_UPDATE_SZ(simdWidth);
     OUT_UPDATE_SZ(stackSize);
+    OUT_UPDATE_SZ(scratchSize);
     OUT_UPDATE_SZ(useSLM);
     OUT_UPDATE_SZ(slmSize);
 
@@ -332,6 +333,7 @@ namespace gbe {
     IN_UPDATE_SZ(curbeSize);
     IN_UPDATE_SZ(simdWidth);
     IN_UPDATE_SZ(stackSize);
+    IN_UPDATE_SZ(scratchSize);
     IN_UPDATE_SZ(useSLM);
     IN_UPDATE_SZ(slmSize);
 
@@ -408,6 +410,7 @@ namespace gbe {
     outs << spaces_nl << "  curbeSize: " << curbeSize << "\n";
     outs << spaces_nl << "  simdWidth: " << simdWidth << "\n";
     outs << spaces_nl << "  stackSize: " << stackSize << "\n";
+    outs << spaces_nl << "  scratchSize: " << scratchSize << "\n";
     outs << spaces_nl << "  useSLM: " << useSLM << "\n";
     outs << spaces_nl << "  slmSize: " << slmSize << "\n";
 
