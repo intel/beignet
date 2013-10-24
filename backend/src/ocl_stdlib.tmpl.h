@@ -1739,24 +1739,20 @@ INLINE_OVERLOADABLE float dot(float p0, float p1) {
   return p0 * p1;
 }
 INLINE_OVERLOADABLE float dot(float2 p0, float2 p1) {
-  return mad(p0.x,p1.x,p0.y*p1.y);
+  return p0.x * p1.x + p0.y * p1.y;
 }
 INLINE_OVERLOADABLE float dot(float3 p0, float3 p1) {
-  return mad(p0.x,p1.x,mad(p0.z,p1.z,p0.y*p1.y));
+  return p0.x * p1.x + p0.y * p1.y + p0.z * p1.z;
 }
 INLINE_OVERLOADABLE float dot(float4 p0, float4 p1) {
-  return mad(p0.x,p1.x,mad(p0.w,p1.w,mad(p0.z,p1.z,p0.y*p1.y)));
+  return p0.x * p1.x + p0.y * p1.y + p0.z * p1.z + p0.w * p1.w;
 }
 
 INLINE_OVERLOADABLE float dot(float8 p0, float8 p1) {
-  return mad(p0.x,p1.x,mad(p0.s7,p1.s7, mad(p0.s6,p1.s6,mad(p0.s5,p1.s5,
-         mad(p0.s4,p1.s4,mad(p0.w,p1.w, mad(p0.z,p1.z,p0.y*p1.y)))))));
+  return p0.s0 * p1.s0 + p0.s1 * p1.s1 + p0.s2 * p1.s2 + p0.s3 * p1.s3 + p0.s4 * p1.s4 + p0.s5 * p1.s5 + p0.s6 * p1.s6 + p0.s7 * p1.s7;
 }
 INLINE_OVERLOADABLE float dot(float16 p0, float16 p1) {
-  return mad(p0.sc,p1.sc,mad(p0.sd,p1.sd,mad(p0.se,p1.se,mad(p0.sf,p1.sf,
-         mad(p0.s8,p1.s8,mad(p0.s9,p1.s9,mad(p0.sa,p1.sa,mad(p0.sb,p1.sb,
-         mad(p0.x,p1.x,mad(p0.s7,p1.s7, mad(p0.s6,p1.s6,mad(p0.s5,p1.s5,
-         mad(p0.s4,p1.s4,mad(p0.w,p1.w, mad(p0.z,p1.z,p0.y*p1.y)))))))))))))));
+  return p0.s0 * p1.s0 + p0.s1 * p1.s1 + p0.s2 * p1.s2 + p0.s3 * p1.s3 + p0.s4 * p1.s4 + p0.s5 * p1.s5 + p0.s6 * p1.s6 + p0.s7 * p1.s7 + p0.s8 * p1.s8 + p0.s9 * p1.s9 + p0.sa * p1.sa + p0.sb * p1.sb + p0.sc * p1.sc + p0.sd * p1.sd + p0.se * p1.se + p0.sf * p1.sf;
 }
 
 INLINE_OVERLOADABLE float length(float x) { return __gen_ocl_fabs(x); }
