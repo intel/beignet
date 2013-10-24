@@ -1727,6 +1727,9 @@ INLINE_OVERLOADABLE float rootn(float x, int n) {
 /////////////////////////////////////////////////////////////////////////////
 // Geometric functions (see 6.11.5 of OCL 1.1 spec)
 /////////////////////////////////////////////////////////////////////////////
+INLINE_OVERLOADABLE float dot(float p0, float p1) {
+  return p0 * p1;
+}
 INLINE_OVERLOADABLE float dot(float2 p0, float2 p1) {
   return mad(p0.x,p1.x,p0.y*p1.y);
 }
