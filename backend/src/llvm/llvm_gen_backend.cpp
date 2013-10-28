@@ -1660,7 +1660,11 @@ namespace gbe
         // Get the element type for a vector
         Type *llvmDstType = I.getType();
         Type *llvmSrcType = I.getOperand(0)->getType();
-        const ir::Type dstType = getType(ctx, llvmDstType);
+        ir::Type dstType;
+        if (I.getOpcode() == Instruction::FPToUI)
+          dstType = getUnsignedType(ctx, llvmDstType);
+        else
+          dstType = getType(ctx, llvmDstType);
         ir::Type srcType;
         if (I.getOpcode() == Instruction::ZExt || I.getOpcode() == Instruction::UIToFP) {
           srcType = getUnsignedType(ctx, llvmSrcType);
