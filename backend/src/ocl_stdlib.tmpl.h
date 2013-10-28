@@ -1747,51 +1747,31 @@ INLINE_OVERLOADABLE float dot(float3 p0, float3 p1) {
 INLINE_OVERLOADABLE float dot(float4 p0, float4 p1) {
   return p0.x * p1.x + p0.y * p1.y + p0.z * p1.z + p0.w * p1.w;
 }
-
-INLINE_OVERLOADABLE float dot(float8 p0, float8 p1) {
-  return p0.s0 * p1.s0 + p0.s1 * p1.s1 + p0.s2 * p1.s2 + p0.s3 * p1.s3 + p0.s4 * p1.s4 + p0.s5 * p1.s5 + p0.s6 * p1.s6 + p0.s7 * p1.s7;
-}
-INLINE_OVERLOADABLE float dot(float16 p0, float16 p1) {
-  return p0.s0 * p1.s0 + p0.s1 * p1.s1 + p0.s2 * p1.s2 + p0.s3 * p1.s3 + p0.s4 * p1.s4 + p0.s5 * p1.s5 + p0.s6 * p1.s6 + p0.s7 * p1.s7 + p0.s8 * p1.s8 + p0.s9 * p1.s9 + p0.sa * p1.sa + p0.sb * p1.sb + p0.sc * p1.sc + p0.sd * p1.sd + p0.se * p1.se + p0.sf * p1.sf;
-}
-
 INLINE_OVERLOADABLE float length(float x) { return __gen_ocl_fabs(x); }
 INLINE_OVERLOADABLE float length(float2 x) { return sqrt(dot(x,x)); }
 INLINE_OVERLOADABLE float length(float3 x) { return sqrt(dot(x,x)); }
 INLINE_OVERLOADABLE float length(float4 x) { return sqrt(dot(x,x)); }
-INLINE_OVERLOADABLE float length(float8 x) { return sqrt(dot(x,x)); }
-INLINE_OVERLOADABLE float length(float16 x) { return sqrt(dot(x,x)); }
 INLINE_OVERLOADABLE float distance(float x, float y) { return length(x-y); }
 INLINE_OVERLOADABLE float distance(float2 x, float2 y) { return length(x-y); }
 INLINE_OVERLOADABLE float distance(float3 x, float3 y) { return length(x-y); }
 INLINE_OVERLOADABLE float distance(float4 x, float4 y) { return length(x-y); }
-INLINE_OVERLOADABLE float distance(float8 x, float8 y) { return length(x-y); }
-INLINE_OVERLOADABLE float distance(float16 x, float16 y) { return length(x-y); }
 INLINE_OVERLOADABLE float normalize(float x) { return 1.f; }
 INLINE_OVERLOADABLE float2 normalize(float2 x) { return x * rsqrt(dot(x, x)); }
 INLINE_OVERLOADABLE float3 normalize(float3 x) { return x * rsqrt(dot(x, x)); }
 INLINE_OVERLOADABLE float4 normalize(float4 x) { return x * rsqrt(dot(x, x)); }
-INLINE_OVERLOADABLE float8 normalize(float8 x) { return x * rsqrt(dot(x, x)); }
-INLINE_OVERLOADABLE float16 normalize(float16 x) { return x * rsqrt(dot(x, x)); }
 
 INLINE_OVERLOADABLE float fast_length(float x) { return __gen_ocl_fabs(x); }
 INLINE_OVERLOADABLE float fast_length(float2 x) { return sqrt(dot(x,x)); }
 INLINE_OVERLOADABLE float fast_length(float3 x) { return sqrt(dot(x,x)); }
 INLINE_OVERLOADABLE float fast_length(float4 x) { return sqrt(dot(x,x)); }
-INLINE_OVERLOADABLE float fast_length(float8 x) { return sqrt(dot(x,x)); }
-INLINE_OVERLOADABLE float fast_length(float16 x) { return sqrt(dot(x,x)); }
 INLINE_OVERLOADABLE float fast_distance(float x, float y) { return length(x-y); }
 INLINE_OVERLOADABLE float fast_distance(float2 x, float2 y) { return length(x-y); }
 INLINE_OVERLOADABLE float fast_distance(float3 x, float3 y) { return length(x-y); }
 INLINE_OVERLOADABLE float fast_distance(float4 x, float4 y) { return length(x-y); }
-INLINE_OVERLOADABLE float fast_distance(float8 x, float8 y) { return length(x-y); }
-INLINE_OVERLOADABLE float fast_distance(float16 x, float16 y) { return length(x-y); }
 INLINE_OVERLOADABLE float fast_normalize(float x) { return 1.f; }
 INLINE_OVERLOADABLE float2 fast_normalize(float2 x) { return x * rsqrt(dot(x, x)); }
 INLINE_OVERLOADABLE float3 fast_normalize(float3 x) { return x * rsqrt(dot(x, x)); }
 INLINE_OVERLOADABLE float4 fast_normalize(float4 x) { return x * rsqrt(dot(x, x)); }
-INLINE_OVERLOADABLE float8 fast_normalize(float8 x) { return x * rsqrt(dot(x, x)); }
-INLINE_OVERLOADABLE float16 fast_normalize(float16 x) { return x * rsqrt(dot(x, x)); }
 
 INLINE_OVERLOADABLE float3 cross(float3 v0, float3 v1) {
    return v0.yzx*v1.zxy-v0.zxy*v1.yzx;
