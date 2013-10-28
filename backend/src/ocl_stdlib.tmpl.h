@@ -1748,9 +1748,28 @@ INLINE_OVERLOADABLE float dot(float4 p0, float4 p1) {
   return p0.x * p1.x + p0.y * p1.y + p0.z * p1.z + p0.w * p1.w;
 }
 INLINE_OVERLOADABLE float length(float x) { return __gen_ocl_fabs(x); }
-INLINE_OVERLOADABLE float length(float2 x) { return sqrt(dot(x,x)); }
-INLINE_OVERLOADABLE float length(float3 x) { return sqrt(dot(x,x)); }
-INLINE_OVERLOADABLE float length(float4 x) { return sqrt(dot(x,x)); }
+#define BODY \
+  if(m == 0) \
+    return 0; \
+  if(isinf(m)) \
+    return INFINITY; \
+  if(m < 1) \
+    m = 1; \
+  x /= m; \
+  return m * sqrt(dot(x,x));
+INLINE_OVERLOADABLE float length(float2 x) {
+  float m = max(__gen_ocl_fabs(x.s0), __gen_ocl_fabs(x.s1));
+  BODY;
+}
+INLINE_OVERLOADABLE float length(float3 x) {
+  float m = max(__gen_ocl_fabs(x.s0), max(__gen_ocl_fabs(x.s1), __gen_ocl_fabs(x.s2)));
+  BODY;
+}
+INLINE_OVERLOADABLE float length(float4 x) {
+  float m = max(__gen_ocl_fabs(x.s0), max(__gen_ocl_fabs(x.s1), max(__gen_ocl_fabs(x.s2), __gen_ocl_fabs(x.s3))));
+  BODY;
+}
+#undef BODY
 INLINE_OVERLOADABLE float distance(float x, float y) { return length(x-y); }
 INLINE_OVERLOADABLE float distance(float2 x, float2 y) { return length(x-y); }
 INLINE_OVERLOADABLE float distance(float3 x, float3 y) { return length(x-y); }
