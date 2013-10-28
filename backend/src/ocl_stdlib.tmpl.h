@@ -1787,7 +1787,7 @@ INLINE_OVERLOADABLE float fast_distance(float x, float y) { return length(x-y); 
 INLINE_OVERLOADABLE float fast_distance(float2 x, float2 y) { return length(x-y); }
 INLINE_OVERLOADABLE float fast_distance(float3 x, float3 y) { return length(x-y); }
 INLINE_OVERLOADABLE float fast_distance(float4 x, float4 y) { return length(x-y); }
-INLINE_OVERLOADABLE float fast_normalize(float x) { return 1.f; }
+INLINE_OVERLOADABLE float fast_normalize(float x) { return x > 0 ? 1.f : (x < 0 ? -1.f : 0.f); }
 INLINE_OVERLOADABLE float2 fast_normalize(float2 x) { return x * rsqrt(dot(x, x)); }
 INLINE_OVERLOADABLE float3 fast_normalize(float3 x) { return x * rsqrt(dot(x, x)); }
 INLINE_OVERLOADABLE float4 fast_normalize(float4 x) { return x * rsqrt(dot(x, x)); }
