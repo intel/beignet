@@ -114,6 +114,14 @@ typedef size_t __event_t;
 #define __kernel_exec(X, TYPE) __kernel __attribute__((work_group_size_hint(X,1,1))) \
                                         __attribute__((vec_type_hint(TYPE)))
 #define kernel_exec(X, TYPE) __kernel_exec(X, TYPE)
+#define cl_khr_global_int32_base_atomics
+#define cl_khr_global_int32_extended_atomics
+#define cl_khr_local_int32_base_atomics
+#define cl_khr_local_int32_extended_atomics
+#define cl_khr_byte_addressable_store
+#define cl_khr_icd
+#define cl_khr_gl_sharing
+
 /////////////////////////////////////////////////////////////////////////////
 // OpenCL floating-point macros and pragmas
 /////////////////////////////////////////////////////////////////////////////
