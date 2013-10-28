@@ -326,7 +326,7 @@ cl_program_build(cl_program p, const char *options)
   if (p->source_type == FROM_SOURCE) {
     p->opaque = gbe_program_new_from_source(p->source, 0, options, NULL, NULL);
     if (UNLIKELY(p->opaque == NULL)) {
-      err = CL_INVALID_PROGRAM;
+      err = CL_BUILD_PROGRAM_FAILURE;
       goto error;
     }
 
@@ -336,7 +336,7 @@ cl_program_build(cl_program p, const char *options)
   } else if (p->source_type == FROM_BINARY) {
     p->opaque = gbe_program_new_from_binary(p->binary, p->binary_sz);
     if (UNLIKELY(p->opaque == NULL)) {
-      err = CL_INVALID_PROGRAM;
+      err = CL_BUILD_PROGRAM_FAILURE;
       goto error;
     }
 
@@ -359,8 +359,8 @@ cl_program_build(cl_program p, const char *options)
     copyed += sz;
   }
 
-  p->is_built = 1;
 error:
+  p->is_built = 1;
   return err;
 }
 

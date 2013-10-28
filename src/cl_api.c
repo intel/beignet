@@ -961,7 +961,7 @@ clCreateKernel(cl_program   program,
   cl_int err = CL_SUCCESS;
 
   CHECK_PROGRAM (program);
-  if (program->is_built == CL_FALSE) {
+  if (program->ker_n <= 0) {
     err = CL_INVALID_PROGRAM_EXECUTABLE;
     goto error;
   }
@@ -983,7 +983,7 @@ clCreateKernelsInProgram(cl_program      program,
   cl_int err = CL_SUCCESS;
 
   CHECK_PROGRAM (program);
-  if (program->is_built == CL_FALSE) {
+  if (program->ker_n <= 0) {
     err = CL_INVALID_PROGRAM_EXECUTABLE;
     goto error;
   }
