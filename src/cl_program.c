@@ -1,4 +1,4 @@
-/* 
+/*
  * Copyright © 2012 Intel Corporation
  *
  * This library is free software; you can redistribute it and/or
@@ -301,13 +301,26 @@ cl_program_build(cl_program p, const char *options)
   int copyed = 0;
 
   if (options) {
-    if(p->build_opts) {
-      cl_free(p->build_opts);
-      p->build_opts = NULL;
-    }
+    if(p->build_opts && strcmp(options, p->build_opts) != 0) {
+      p->source_type = p->source ? FROM_SOURCE : p->binary ? FROM_BINARY : FROM_LLVM;
 
-    TRY_ALLOC (p->build_opts, cl_calloc(strlen(options) + 1, sizeof(char)));
-    memcpy(p->build_opts, options, strlen(options));
+      if(p->build_opts) {
+        cl_free(p->build_opts);
+        p->build_opts = NULL;
+      }
+    } else if(p->build_opts == NULL) {
+      p->source_type = p->source ? FROM_SOURCE : p->binary ? FROM_BINARY : FROM_LLVM;
+
+      TRY_ALLOC (p->build_opts, cl_calloc(strlen(options) + 1, sizeof(char)));
+      memcpy(p->build_opts, options, strlen(options));
+    }
+  }
+
+  if (options == NULL && p->build_opts) {
+    p->source_type = p->source ? FROM_SOURCE : p->binary ? FROM_BINARY : FROM_LLVM;
+
+    cl_free(p->build_opts);
+    p->build_opts = NULL;
   }
 
   if (p->source_type == FROM_SOURCE) {
@@ -397,7 +410,7 @@ cl_program_create_kernels_in_program(cl_program p, cl_kernel* ker)
   for (i = 0; i < p->ker_n; ++i) {
     TRY_ALLOC_NO_ERR(ker[i], cl_kernel_dup(p->ker[i]));
   }
-  
+
   return CL_SUCCESS;
 
 error:
