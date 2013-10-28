@@ -6,6 +6,9 @@
 for type in $TYPES; do
         size=`IFS=:; set -- dummy $type; echo $3`
         for vector_length in $VECTOR_LENGTHS; do
+                if test $vector_length -eq 3; then
+                      continue;
+                fi
                 union_sizes="$union_sizes `expr $vector_length \* $size`"
         done
 done
@@ -21,7 +24,12 @@ for union_size in $union_sizes; do
                 basetype=`IFS=:; set -- dummy $type; echo $2`
                 basesize=`IFS=:; set -- dummy $type; echo $3`
                 for vector_length in $VECTOR_LENGTHS; do
-                        vector_size_in_union="`expr $vector_length \* $basesize`"
+                        if test $vector_length -eq 3; then
+                                vector_size_length="4"
+                        else
+                                vector_size_length=$vector_length;
+                        fi
+                        vector_size_in_union="`expr $vector_size_length \* $basesize`"
                         if test $union_size -ne $vector_size_in_union; then
                                 continue
                         fi
@@ -43,7 +51,12 @@ for union_size in $union_sizes; do
                 fbasetype=`IFS=:; set -- dummy $ftype; echo $2`
                 fbasesize=`IFS=:; set -- dummy $ftype; echo $3`
                 for fvector_length in $VECTOR_LENGTHS; do
-                        fvector_size_in_union="`expr $fvector_length \* $fbasesize`"
+                        if test $fvector_length -eq 3; then
+                                fvector_size_length="4"
+                        else
+                                fvector_size_length=$fvector_length;
+                        fi
+                        fvector_size_in_union="`expr $fvector_size_length \* $fbasesize`"
                         if test $union_size -ne $fvector_size_in_union; then
                                 continue
                         fi
@@ -59,7 +72,12 @@ for union_size in $union_sizes; do
                                         continue
                                 fi
                                 for tvector_length in $VECTOR_LENGTHS; do
-                                        tvector_size_in_union="`expr $tvector_length \* $tbasesize`"
+                                        if test $tvector_length -eq 3; then
+                                               tvector_size_length="4"
+                                        else
+                                               tvector_size_length=$tvector_length;
+                                        fi
+                                        tvector_size_in_union="`expr $tvector_size_length \* $tbasesize`"
                                         if test $union_size -ne $tvector_size_in_union; then
                                                 continue
                                         fi

@@ -96,29 +96,14 @@ INLINE OVERLOADABLE char2 as_char2(uchar2 v) {
   return u._char2;
 }
 
-union _type_cast_3_b {
-  char3 _char3;
-  uchar3 _uchar3;
-};
-
-INLINE OVERLOADABLE uchar3 as_uchar3(char3 v) {
-  union _type_cast_3_b u;
-  u._char3 = v;
-  return u._uchar3;
-}
-
-INLINE OVERLOADABLE char3 as_char3(uchar3 v) {
-  union _type_cast_3_b u;
-  u._uchar3 = v;
-  return u._char3;
-}
-
 union _type_cast_4_b {
   int _int;
   uint _uint;
   short2 _short2;
   ushort2 _ushort2;
+  char3 _char3;
   char4 _char4;
+  uchar3 _uchar3;
   uchar4 _uchar4;
   float _float;
 };
@@ -141,10 +126,22 @@ INLINE OVERLOADABLE ushort2 as_ushort2(int v) {
   return u._ushort2;
 }
 
+INLINE OVERLOADABLE char3 as_char3(int v) {
+  union _type_cast_4_b u;
+  u._int = v;
+  return u._char3;
+}
+
 INLINE OVERLOADABLE char4 as_char4(int v) {
   union _type_cast_4_b u;
   u._int = v;
   return u._char4;
+}
+
+INLINE OVERLOADABLE uchar3 as_uchar3(int v) {
+  union _type_cast_4_b u;
+  u._int = v;
+  return u._uchar3;
 }
 
 INLINE OVERLOADABLE uchar4 as_uchar4(int v) {
@@ -177,10 +174,22 @@ INLINE OVERLOADABLE ushort2 as_ushort2(uint v) {
   return u._ushort2;
 }
 
+INLINE OVERLOADABLE char3 as_char3(uint v) {
+  union _type_cast_4_b u;
+  u._uint = v;
+  return u._char3;
+}
+
 INLINE OVERLOADABLE char4 as_char4(uint v) {
   union _type_cast_4_b u;
   u._uint = v;
   return u._char4;
+}
+
+INLINE OVERLOADABLE uchar3 as_uchar3(uint v) {
+  union _type_cast_4_b u;
+  u._uint = v;
+  return u._uchar3;
 }
 
 INLINE OVERLOADABLE uchar4 as_uchar4(uint v) {
@@ -213,10 +222,22 @@ INLINE OVERLOADABLE ushort2 as_ushort2(short2 v) {
   return u._ushort2;
 }
 
+INLINE OVERLOADABLE char3 as_char3(short2 v) {
+  union _type_cast_4_b u;
+  u._short2 = v;
+  return u._char3;
+}
+
 INLINE OVERLOADABLE char4 as_char4(short2 v) {
   union _type_cast_4_b u;
   u._short2 = v;
   return u._char4;
+}
+
+INLINE OVERLOADABLE uchar3 as_uchar3(short2 v) {
+  union _type_cast_4_b u;
+  u._short2 = v;
+  return u._uchar3;
 }
 
 INLINE OVERLOADABLE uchar4 as_uchar4(short2 v) {
@@ -249,10 +270,22 @@ INLINE OVERLOADABLE short2 as_short2(ushort2 v) {
   return u._short2;
 }
 
+INLINE OVERLOADABLE char3 as_char3(ushort2 v) {
+  union _type_cast_4_b u;
+  u._ushort2 = v;
+  return u._char3;
+}
+
 INLINE OVERLOADABLE char4 as_char4(ushort2 v) {
   union _type_cast_4_b u;
   u._ushort2 = v;
   return u._char4;
+}
+
+INLINE OVERLOADABLE uchar3 as_uchar3(ushort2 v) {
+  union _type_cast_4_b u;
+  u._ushort2 = v;
+  return u._uchar3;
 }
 
 INLINE OVERLOADABLE uchar4 as_uchar4(ushort2 v) {
@@ -264,6 +297,48 @@ INLINE OVERLOADABLE uchar4 as_uchar4(ushort2 v) {
 INLINE OVERLOADABLE float as_float(ushort2 v) {
   union _type_cast_4_b u;
   u._ushort2 = v;
+  return u._float;
+}
+
+INLINE OVERLOADABLE int as_int(char3 v) {
+  union _type_cast_4_b u;
+  u._char3 = v;
+  return u._int;
+}
+
+INLINE OVERLOADABLE uint as_uint(char3 v) {
+  union _type_cast_4_b u;
+  u._char3 = v;
+  return u._uint;
+}
+
+INLINE OVERLOADABLE short2 as_short2(char3 v) {
+  union _type_cast_4_b u;
+  u._char3 = v;
+  return u._short2;
+}
+
+INLINE OVERLOADABLE ushort2 as_ushort2(char3 v) {
+  union _type_cast_4_b u;
+  u._char3 = v;
+  return u._ushort2;
+}
+
+INLINE OVERLOADABLE uchar3 as_uchar3(char3 v) {
+  union _type_cast_4_b u;
+  u._char3 = v;
+  return u._uchar3;
+}
+
+INLINE OVERLOADABLE uchar4 as_uchar4(char3 v) {
+  union _type_cast_4_b u;
+  u._char3 = v;
+  return u._uchar4;
+}
+
+INLINE OVERLOADABLE float as_float(char3 v) {
+  union _type_cast_4_b u;
+  u._char3 = v;
   return u._float;
 }
 
@@ -291,6 +366,12 @@ INLINE OVERLOADABLE ushort2 as_ushort2(char4 v) {
   return u._ushort2;
 }
 
+INLINE OVERLOADABLE uchar3 as_uchar3(char4 v) {
+  union _type_cast_4_b u;
+  u._char4 = v;
+  return u._uchar3;
+}
+
 INLINE OVERLOADABLE uchar4 as_uchar4(char4 v) {
   union _type_cast_4_b u;
   u._char4 = v;
@@ -300,6 +381,48 @@ INLINE OVERLOADABLE uchar4 as_uchar4(char4 v) {
 INLINE OVERLOADABLE float as_float(char4 v) {
   union _type_cast_4_b u;
   u._char4 = v;
+  return u._float;
+}
+
+INLINE OVERLOADABLE int as_int(uchar3 v) {
+  union _type_cast_4_b u;
+  u._uchar3 = v;
+  return u._int;
+}
+
+INLINE OVERLOADABLE uint as_uint(uchar3 v) {
+  union _type_cast_4_b u;
+  u._uchar3 = v;
+  return u._uint;
+}
+
+INLINE OVERLOADABLE short2 as_short2(uchar3 v) {
+  union _type_cast_4_b u;
+  u._uchar3 = v;
+  return u._short2;
+}
+
+INLINE OVERLOADABLE ushort2 as_ushort2(uchar3 v) {
+  union _type_cast_4_b u;
+  u._uchar3 = v;
+  return u._ushort2;
+}
+
+INLINE OVERLOADABLE char3 as_char3(uchar3 v) {
+  union _type_cast_4_b u;
+  u._uchar3 = v;
+  return u._char3;
+}
+
+INLINE OVERLOADABLE char4 as_char4(uchar3 v) {
+  union _type_cast_4_b u;
+  u._uchar3 = v;
+  return u._char4;
+}
+
+INLINE OVERLOADABLE float as_float(uchar3 v) {
+  union _type_cast_4_b u;
+  u._uchar3 = v;
   return u._float;
 }
 
@@ -325,6 +448,12 @@ INLINE OVERLOADABLE ushort2 as_ushort2(uchar4 v) {
   union _type_cast_4_b u;
   u._uchar4 = v;
   return u._ushort2;
+}
+
+INLINE OVERLOADABLE char3 as_char3(uchar4 v) {
+  union _type_cast_4_b u;
+  u._uchar4 = v;
+  return u._char3;
 }
 
 INLINE OVERLOADABLE char4 as_char4(uchar4 v) {
@@ -363,10 +492,22 @@ INLINE OVERLOADABLE ushort2 as_ushort2(float v) {
   return u._ushort2;
 }
 
+INLINE OVERLOADABLE char3 as_char3(float v) {
+  union _type_cast_4_b u;
+  u._float = v;
+  return u._char3;
+}
+
 INLINE OVERLOADABLE char4 as_char4(float v) {
   union _type_cast_4_b u;
   u._float = v;
   return u._char4;
+}
+
+INLINE OVERLOADABLE uchar3 as_uchar3(float v) {
+  union _type_cast_4_b u;
+  u._float = v;
+  return u._uchar3;
 }
 
 INLINE OVERLOADABLE uchar4 as_uchar4(float v) {
@@ -375,29 +516,14 @@ INLINE OVERLOADABLE uchar4 as_uchar4(float v) {
   return u._uchar4;
 }
 
-union _type_cast_6_b {
-  short3 _short3;
-  ushort3 _ushort3;
-};
-
-INLINE OVERLOADABLE ushort3 as_ushort3(short3 v) {
-  union _type_cast_6_b u;
-  u._short3 = v;
-  return u._ushort3;
-}
-
-INLINE OVERLOADABLE short3 as_short3(ushort3 v) {
-  union _type_cast_6_b u;
-  u._ushort3 = v;
-  return u._short3;
-}
-
 union _type_cast_8_b {
   long _long;
   ulong _ulong;
   int2 _int2;
   uint2 _uint2;
+  short3 _short3;
   short4 _short4;
+  ushort3 _ushort3;
   ushort4 _ushort4;
   char8 _char8;
   uchar8 _uchar8;
@@ -423,10 +549,22 @@ INLINE OVERLOADABLE uint2 as_uint2(long v) {
   return u._uint2;
 }
 
+INLINE OVERLOADABLE short3 as_short3(long v) {
+  union _type_cast_8_b u;
+  u._long = v;
+  return u._short3;
+}
+
 INLINE OVERLOADABLE short4 as_short4(long v) {
   union _type_cast_8_b u;
   u._long = v;
   return u._short4;
+}
+
+INLINE OVERLOADABLE ushort3 as_ushort3(long v) {
+  union _type_cast_8_b u;
+  u._long = v;
+  return u._ushort3;
 }
 
 INLINE OVERLOADABLE ushort4 as_ushort4(long v) {
@@ -477,10 +615,22 @@ INLINE OVERLOADABLE uint2 as_uint2(ulong v) {
   return u._uint2;
 }
 
+INLINE OVERLOADABLE short3 as_short3(ulong v) {
+  union _type_cast_8_b u;
+  u._ulong = v;
+  return u._short3;
+}
+
 INLINE OVERLOADABLE short4 as_short4(ulong v) {
   union _type_cast_8_b u;
   u._ulong = v;
   return u._short4;
+}
+
+INLINE OVERLOADABLE ushort3 as_ushort3(ulong v) {
+  union _type_cast_8_b u;
+  u._ulong = v;
+  return u._ushort3;
 }
 
 INLINE OVERLOADABLE ushort4 as_ushort4(ulong v) {
@@ -531,10 +681,22 @@ INLINE OVERLOADABLE uint2 as_uint2(int2 v) {
   return u._uint2;
 }
 
+INLINE OVERLOADABLE short3 as_short3(int2 v) {
+  union _type_cast_8_b u;
+  u._int2 = v;
+  return u._short3;
+}
+
 INLINE OVERLOADABLE short4 as_short4(int2 v) {
   union _type_cast_8_b u;
   u._int2 = v;
   return u._short4;
+}
+
+INLINE OVERLOADABLE ushort3 as_ushort3(int2 v) {
+  union _type_cast_8_b u;
+  u._int2 = v;
+  return u._ushort3;
 }
 
 INLINE OVERLOADABLE ushort4 as_ushort4(int2 v) {
@@ -585,10 +747,22 @@ INLINE OVERLOADABLE int2 as_int2(uint2 v) {
   return u._int2;
 }
 
+INLINE OVERLOADABLE short3 as_short3(uint2 v) {
+  union _type_cast_8_b u;
+  u._uint2 = v;
+  return u._short3;
+}
+
 INLINE OVERLOADABLE short4 as_short4(uint2 v) {
   union _type_cast_8_b u;
   u._uint2 = v;
   return u._short4;
+}
+
+INLINE OVERLOADABLE ushort3 as_ushort3(uint2 v) {
+  union _type_cast_8_b u;
+  u._uint2 = v;
+  return u._ushort3;
 }
 
 INLINE OVERLOADABLE ushort4 as_ushort4(uint2 v) {
@@ -621,6 +795,66 @@ INLINE OVERLOADABLE float2 as_float2(uint2 v) {
   return u._float2;
 }
 
+INLINE OVERLOADABLE long as_long(short3 v) {
+  union _type_cast_8_b u;
+  u._short3 = v;
+  return u._long;
+}
+
+INLINE OVERLOADABLE ulong as_ulong(short3 v) {
+  union _type_cast_8_b u;
+  u._short3 = v;
+  return u._ulong;
+}
+
+INLINE OVERLOADABLE int2 as_int2(short3 v) {
+  union _type_cast_8_b u;
+  u._short3 = v;
+  return u._int2;
+}
+
+INLINE OVERLOADABLE uint2 as_uint2(short3 v) {
+  union _type_cast_8_b u;
+  u._short3 = v;
+  return u._uint2;
+}
+
+INLINE OVERLOADABLE ushort3 as_ushort3(short3 v) {
+  union _type_cast_8_b u;
+  u._short3 = v;
+  return u._ushort3;
+}
+
+INLINE OVERLOADABLE ushort4 as_ushort4(short3 v) {
+  union _type_cast_8_b u;
+  u._short3 = v;
+  return u._ushort4;
+}
+
+INLINE OVERLOADABLE char8 as_char8(short3 v) {
+  union _type_cast_8_b u;
+  u._short3 = v;
+  return u._char8;
+}
+
+INLINE OVERLOADABLE uchar8 as_uchar8(short3 v) {
+  union _type_cast_8_b u;
+  u._short3 = v;
+  return u._uchar8;
+}
+
+INLINE OVERLOADABLE double as_double(short3 v) {
+  union _type_cast_8_b u;
+  u._short3 = v;
+  return u._double;
+}
+
+INLINE OVERLOADABLE float2 as_float2(short3 v) {
+  union _type_cast_8_b u;
+  u._short3 = v;
+  return u._float2;
+}
+
 INLINE OVERLOADABLE long as_long(short4 v) {
   union _type_cast_8_b u;
   u._short4 = v;
@@ -643,6 +877,12 @@ INLINE OVERLOADABLE uint2 as_uint2(short4 v) {
   union _type_cast_8_b u;
   u._short4 = v;
   return u._uint2;
+}
+
+INLINE OVERLOADABLE ushort3 as_ushort3(short4 v) {
+  union _type_cast_8_b u;
+  u._short4 = v;
+  return u._ushort3;
 }
 
 INLINE OVERLOADABLE ushort4 as_ushort4(short4 v) {
@@ -675,6 +915,66 @@ INLINE OVERLOADABLE float2 as_float2(short4 v) {
   return u._float2;
 }
 
+INLINE OVERLOADABLE long as_long(ushort3 v) {
+  union _type_cast_8_b u;
+  u._ushort3 = v;
+  return u._long;
+}
+
+INLINE OVERLOADABLE ulong as_ulong(ushort3 v) {
+  union _type_cast_8_b u;
+  u._ushort3 = v;
+  return u._ulong;
+}
+
+INLINE OVERLOADABLE int2 as_int2(ushort3 v) {
+  union _type_cast_8_b u;
+  u._ushort3 = v;
+  return u._int2;
+}
+
+INLINE OVERLOADABLE uint2 as_uint2(ushort3 v) {
+  union _type_cast_8_b u;
+  u._ushort3 = v;
+  return u._uint2;
+}
+
+INLINE OVERLOADABLE short3 as_short3(ushort3 v) {
+  union _type_cast_8_b u;
+  u._ushort3 = v;
+  return u._short3;
+}
+
+INLINE OVERLOADABLE short4 as_short4(ushort3 v) {
+  union _type_cast_8_b u;
+  u._ushort3 = v;
+  return u._short4;
+}
+
+INLINE OVERLOADABLE char8 as_char8(ushort3 v) {
+  union _type_cast_8_b u;
+  u._ushort3 = v;
+  return u._char8;
+}
+
+INLINE OVERLOADABLE uchar8 as_uchar8(ushort3 v) {
+  union _type_cast_8_b u;
+  u._ushort3 = v;
+  return u._uchar8;
+}
+
+INLINE OVERLOADABLE double as_double(ushort3 v) {
+  union _type_cast_8_b u;
+  u._ushort3 = v;
+  return u._double;
+}
+
+INLINE OVERLOADABLE float2 as_float2(ushort3 v) {
+  union _type_cast_8_b u;
+  u._ushort3 = v;
+  return u._float2;
+}
+
 INLINE OVERLOADABLE long as_long(ushort4 v) {
   union _type_cast_8_b u;
   u._ushort4 = v;
@@ -697,6 +997,12 @@ INLINE OVERLOADABLE uint2 as_uint2(ushort4 v) {
   union _type_cast_8_b u;
   u._ushort4 = v;
   return u._uint2;
+}
+
+INLINE OVERLOADABLE short3 as_short3(ushort4 v) {
+  union _type_cast_8_b u;
+  u._ushort4 = v;
+  return u._short3;
 }
 
 INLINE OVERLOADABLE short4 as_short4(ushort4 v) {
@@ -753,10 +1059,22 @@ INLINE OVERLOADABLE uint2 as_uint2(char8 v) {
   return u._uint2;
 }
 
+INLINE OVERLOADABLE short3 as_short3(char8 v) {
+  union _type_cast_8_b u;
+  u._char8 = v;
+  return u._short3;
+}
+
 INLINE OVERLOADABLE short4 as_short4(char8 v) {
   union _type_cast_8_b u;
   u._char8 = v;
   return u._short4;
+}
+
+INLINE OVERLOADABLE ushort3 as_ushort3(char8 v) {
+  union _type_cast_8_b u;
+  u._char8 = v;
+  return u._ushort3;
 }
 
 INLINE OVERLOADABLE ushort4 as_ushort4(char8 v) {
@@ -807,10 +1125,22 @@ INLINE OVERLOADABLE uint2 as_uint2(uchar8 v) {
   return u._uint2;
 }
 
+INLINE OVERLOADABLE short3 as_short3(uchar8 v) {
+  union _type_cast_8_b u;
+  u._uchar8 = v;
+  return u._short3;
+}
+
 INLINE OVERLOADABLE short4 as_short4(uchar8 v) {
   union _type_cast_8_b u;
   u._uchar8 = v;
   return u._short4;
+}
+
+INLINE OVERLOADABLE ushort3 as_ushort3(uchar8 v) {
+  union _type_cast_8_b u;
+  u._uchar8 = v;
+  return u._ushort3;
 }
 
 INLINE OVERLOADABLE ushort4 as_ushort4(uchar8 v) {
@@ -861,10 +1191,22 @@ INLINE OVERLOADABLE uint2 as_uint2(double v) {
   return u._uint2;
 }
 
+INLINE OVERLOADABLE short3 as_short3(double v) {
+  union _type_cast_8_b u;
+  u._double = v;
+  return u._short3;
+}
+
 INLINE OVERLOADABLE short4 as_short4(double v) {
   union _type_cast_8_b u;
   u._double = v;
   return u._short4;
+}
+
+INLINE OVERLOADABLE ushort3 as_ushort3(double v) {
+  union _type_cast_8_b u;
+  u._double = v;
+  return u._ushort3;
 }
 
 INLINE OVERLOADABLE ushort4 as_ushort4(double v) {
@@ -915,10 +1257,22 @@ INLINE OVERLOADABLE uint2 as_uint2(float2 v) {
   return u._uint2;
 }
 
+INLINE OVERLOADABLE short3 as_short3(float2 v) {
+  union _type_cast_8_b u;
+  u._float2 = v;
+  return u._short3;
+}
+
 INLINE OVERLOADABLE short4 as_short4(float2 v) {
   union _type_cast_8_b u;
   u._float2 = v;
   return u._short4;
+}
+
+INLINE OVERLOADABLE ushort3 as_ushort3(float2 v) {
+  union _type_cast_8_b u;
+  u._float2 = v;
+  return u._ushort3;
 }
 
 INLINE OVERLOADABLE ushort4 as_ushort4(float2 v) {
@@ -945,58 +1299,19 @@ INLINE OVERLOADABLE double as_double(float2 v) {
   return u._double;
 }
 
-union _type_cast_12_b {
-  int3 _int3;
-  uint3 _uint3;
-  float3 _float3;
-};
-
-INLINE OVERLOADABLE uint3 as_uint3(int3 v) {
-  union _type_cast_12_b u;
-  u._int3 = v;
-  return u._uint3;
-}
-
-INLINE OVERLOADABLE float3 as_float3(int3 v) {
-  union _type_cast_12_b u;
-  u._int3 = v;
-  return u._float3;
-}
-
-INLINE OVERLOADABLE int3 as_int3(uint3 v) {
-  union _type_cast_12_b u;
-  u._uint3 = v;
-  return u._int3;
-}
-
-INLINE OVERLOADABLE float3 as_float3(uint3 v) {
-  union _type_cast_12_b u;
-  u._uint3 = v;
-  return u._float3;
-}
-
-INLINE OVERLOADABLE int3 as_int3(float3 v) {
-  union _type_cast_12_b u;
-  u._float3 = v;
-  return u._int3;
-}
-
-INLINE OVERLOADABLE uint3 as_uint3(float3 v) {
-  union _type_cast_12_b u;
-  u._float3 = v;
-  return u._uint3;
-}
-
 union _type_cast_16_b {
   long2 _long2;
   ulong2 _ulong2;
+  int3 _int3;
   int4 _int4;
+  uint3 _uint3;
   uint4 _uint4;
   short8 _short8;
   ushort8 _ushort8;
   char16 _char16;
   uchar16 _uchar16;
   double2 _double2;
+  float3 _float3;
   float4 _float4;
 };
 
@@ -1006,10 +1321,22 @@ INLINE OVERLOADABLE ulong2 as_ulong2(long2 v) {
   return u._ulong2;
 }
 
+INLINE OVERLOADABLE int3 as_int3(long2 v) {
+  union _type_cast_16_b u;
+  u._long2 = v;
+  return u._int3;
+}
+
 INLINE OVERLOADABLE int4 as_int4(long2 v) {
   union _type_cast_16_b u;
   u._long2 = v;
   return u._int4;
+}
+
+INLINE OVERLOADABLE uint3 as_uint3(long2 v) {
+  union _type_cast_16_b u;
+  u._long2 = v;
+  return u._uint3;
 }
 
 INLINE OVERLOADABLE uint4 as_uint4(long2 v) {
@@ -1048,6 +1375,12 @@ INLINE OVERLOADABLE double2 as_double2(long2 v) {
   return u._double2;
 }
 
+INLINE OVERLOADABLE float3 as_float3(long2 v) {
+  union _type_cast_16_b u;
+  u._long2 = v;
+  return u._float3;
+}
+
 INLINE OVERLOADABLE float4 as_float4(long2 v) {
   union _type_cast_16_b u;
   u._long2 = v;
@@ -1060,10 +1393,22 @@ INLINE OVERLOADABLE long2 as_long2(ulong2 v) {
   return u._long2;
 }
 
+INLINE OVERLOADABLE int3 as_int3(ulong2 v) {
+  union _type_cast_16_b u;
+  u._ulong2 = v;
+  return u._int3;
+}
+
 INLINE OVERLOADABLE int4 as_int4(ulong2 v) {
   union _type_cast_16_b u;
   u._ulong2 = v;
   return u._int4;
+}
+
+INLINE OVERLOADABLE uint3 as_uint3(ulong2 v) {
+  union _type_cast_16_b u;
+  u._ulong2 = v;
+  return u._uint3;
 }
 
 INLINE OVERLOADABLE uint4 as_uint4(ulong2 v) {
@@ -1102,9 +1447,81 @@ INLINE OVERLOADABLE double2 as_double2(ulong2 v) {
   return u._double2;
 }
 
+INLINE OVERLOADABLE float3 as_float3(ulong2 v) {
+  union _type_cast_16_b u;
+  u._ulong2 = v;
+  return u._float3;
+}
+
 INLINE OVERLOADABLE float4 as_float4(ulong2 v) {
   union _type_cast_16_b u;
   u._ulong2 = v;
+  return u._float4;
+}
+
+INLINE OVERLOADABLE long2 as_long2(int3 v) {
+  union _type_cast_16_b u;
+  u._int3 = v;
+  return u._long2;
+}
+
+INLINE OVERLOADABLE ulong2 as_ulong2(int3 v) {
+  union _type_cast_16_b u;
+  u._int3 = v;
+  return u._ulong2;
+}
+
+INLINE OVERLOADABLE uint3 as_uint3(int3 v) {
+  union _type_cast_16_b u;
+  u._int3 = v;
+  return u._uint3;
+}
+
+INLINE OVERLOADABLE uint4 as_uint4(int3 v) {
+  union _type_cast_16_b u;
+  u._int3 = v;
+  return u._uint4;
+}
+
+INLINE OVERLOADABLE short8 as_short8(int3 v) {
+  union _type_cast_16_b u;
+  u._int3 = v;
+  return u._short8;
+}
+
+INLINE OVERLOADABLE ushort8 as_ushort8(int3 v) {
+  union _type_cast_16_b u;
+  u._int3 = v;
+  return u._ushort8;
+}
+
+INLINE OVERLOADABLE char16 as_char16(int3 v) {
+  union _type_cast_16_b u;
+  u._int3 = v;
+  return u._char16;
+}
+
+INLINE OVERLOADABLE uchar16 as_uchar16(int3 v) {
+  union _type_cast_16_b u;
+  u._int3 = v;
+  return u._uchar16;
+}
+
+INLINE OVERLOADABLE double2 as_double2(int3 v) {
+  union _type_cast_16_b u;
+  u._int3 = v;
+  return u._double2;
+}
+
+INLINE OVERLOADABLE float3 as_float3(int3 v) {
+  union _type_cast_16_b u;
+  u._int3 = v;
+  return u._float3;
+}
+
+INLINE OVERLOADABLE float4 as_float4(int3 v) {
+  union _type_cast_16_b u;
+  u._int3 = v;
   return u._float4;
 }
 
@@ -1118,6 +1535,12 @@ INLINE OVERLOADABLE ulong2 as_ulong2(int4 v) {
   union _type_cast_16_b u;
   u._int4 = v;
   return u._ulong2;
+}
+
+INLINE OVERLOADABLE uint3 as_uint3(int4 v) {
+  union _type_cast_16_b u;
+  u._int4 = v;
+  return u._uint3;
 }
 
 INLINE OVERLOADABLE uint4 as_uint4(int4 v) {
@@ -1156,9 +1579,81 @@ INLINE OVERLOADABLE double2 as_double2(int4 v) {
   return u._double2;
 }
 
+INLINE OVERLOADABLE float3 as_float3(int4 v) {
+  union _type_cast_16_b u;
+  u._int4 = v;
+  return u._float3;
+}
+
 INLINE OVERLOADABLE float4 as_float4(int4 v) {
   union _type_cast_16_b u;
   u._int4 = v;
+  return u._float4;
+}
+
+INLINE OVERLOADABLE long2 as_long2(uint3 v) {
+  union _type_cast_16_b u;
+  u._uint3 = v;
+  return u._long2;
+}
+
+INLINE OVERLOADABLE ulong2 as_ulong2(uint3 v) {
+  union _type_cast_16_b u;
+  u._uint3 = v;
+  return u._ulong2;
+}
+
+INLINE OVERLOADABLE int3 as_int3(uint3 v) {
+  union _type_cast_16_b u;
+  u._uint3 = v;
+  return u._int3;
+}
+
+INLINE OVERLOADABLE int4 as_int4(uint3 v) {
+  union _type_cast_16_b u;
+  u._uint3 = v;
+  return u._int4;
+}
+
+INLINE OVERLOADABLE short8 as_short8(uint3 v) {
+  union _type_cast_16_b u;
+  u._uint3 = v;
+  return u._short8;
+}
+
+INLINE OVERLOADABLE ushort8 as_ushort8(uint3 v) {
+  union _type_cast_16_b u;
+  u._uint3 = v;
+  return u._ushort8;
+}
+
+INLINE OVERLOADABLE char16 as_char16(uint3 v) {
+  union _type_cast_16_b u;
+  u._uint3 = v;
+  return u._char16;
+}
+
+INLINE OVERLOADABLE uchar16 as_uchar16(uint3 v) {
+  union _type_cast_16_b u;
+  u._uint3 = v;
+  return u._uchar16;
+}
+
+INLINE OVERLOADABLE double2 as_double2(uint3 v) {
+  union _type_cast_16_b u;
+  u._uint3 = v;
+  return u._double2;
+}
+
+INLINE OVERLOADABLE float3 as_float3(uint3 v) {
+  union _type_cast_16_b u;
+  u._uint3 = v;
+  return u._float3;
+}
+
+INLINE OVERLOADABLE float4 as_float4(uint3 v) {
+  union _type_cast_16_b u;
+  u._uint3 = v;
   return u._float4;
 }
 
@@ -1172,6 +1667,12 @@ INLINE OVERLOADABLE ulong2 as_ulong2(uint4 v) {
   union _type_cast_16_b u;
   u._uint4 = v;
   return u._ulong2;
+}
+
+INLINE OVERLOADABLE int3 as_int3(uint4 v) {
+  union _type_cast_16_b u;
+  u._uint4 = v;
+  return u._int3;
 }
 
 INLINE OVERLOADABLE int4 as_int4(uint4 v) {
@@ -1210,6 +1711,12 @@ INLINE OVERLOADABLE double2 as_double2(uint4 v) {
   return u._double2;
 }
 
+INLINE OVERLOADABLE float3 as_float3(uint4 v) {
+  union _type_cast_16_b u;
+  u._uint4 = v;
+  return u._float3;
+}
+
 INLINE OVERLOADABLE float4 as_float4(uint4 v) {
   union _type_cast_16_b u;
   u._uint4 = v;
@@ -1228,10 +1735,22 @@ INLINE OVERLOADABLE ulong2 as_ulong2(short8 v) {
   return u._ulong2;
 }
 
+INLINE OVERLOADABLE int3 as_int3(short8 v) {
+  union _type_cast_16_b u;
+  u._short8 = v;
+  return u._int3;
+}
+
 INLINE OVERLOADABLE int4 as_int4(short8 v) {
   union _type_cast_16_b u;
   u._short8 = v;
   return u._int4;
+}
+
+INLINE OVERLOADABLE uint3 as_uint3(short8 v) {
+  union _type_cast_16_b u;
+  u._short8 = v;
+  return u._uint3;
 }
 
 INLINE OVERLOADABLE uint4 as_uint4(short8 v) {
@@ -1264,6 +1783,12 @@ INLINE OVERLOADABLE double2 as_double2(short8 v) {
   return u._double2;
 }
 
+INLINE OVERLOADABLE float3 as_float3(short8 v) {
+  union _type_cast_16_b u;
+  u._short8 = v;
+  return u._float3;
+}
+
 INLINE OVERLOADABLE float4 as_float4(short8 v) {
   union _type_cast_16_b u;
   u._short8 = v;
@@ -1282,10 +1807,22 @@ INLINE OVERLOADABLE ulong2 as_ulong2(ushort8 v) {
   return u._ulong2;
 }
 
+INLINE OVERLOADABLE int3 as_int3(ushort8 v) {
+  union _type_cast_16_b u;
+  u._ushort8 = v;
+  return u._int3;
+}
+
 INLINE OVERLOADABLE int4 as_int4(ushort8 v) {
   union _type_cast_16_b u;
   u._ushort8 = v;
   return u._int4;
+}
+
+INLINE OVERLOADABLE uint3 as_uint3(ushort8 v) {
+  union _type_cast_16_b u;
+  u._ushort8 = v;
+  return u._uint3;
 }
 
 INLINE OVERLOADABLE uint4 as_uint4(ushort8 v) {
@@ -1318,6 +1855,12 @@ INLINE OVERLOADABLE double2 as_double2(ushort8 v) {
   return u._double2;
 }
 
+INLINE OVERLOADABLE float3 as_float3(ushort8 v) {
+  union _type_cast_16_b u;
+  u._ushort8 = v;
+  return u._float3;
+}
+
 INLINE OVERLOADABLE float4 as_float4(ushort8 v) {
   union _type_cast_16_b u;
   u._ushort8 = v;
@@ -1336,10 +1879,22 @@ INLINE OVERLOADABLE ulong2 as_ulong2(char16 v) {
   return u._ulong2;
 }
 
+INLINE OVERLOADABLE int3 as_int3(char16 v) {
+  union _type_cast_16_b u;
+  u._char16 = v;
+  return u._int3;
+}
+
 INLINE OVERLOADABLE int4 as_int4(char16 v) {
   union _type_cast_16_b u;
   u._char16 = v;
   return u._int4;
+}
+
+INLINE OVERLOADABLE uint3 as_uint3(char16 v) {
+  union _type_cast_16_b u;
+  u._char16 = v;
+  return u._uint3;
 }
 
 INLINE OVERLOADABLE uint4 as_uint4(char16 v) {
@@ -1372,6 +1927,12 @@ INLINE OVERLOADABLE double2 as_double2(char16 v) {
   return u._double2;
 }
 
+INLINE OVERLOADABLE float3 as_float3(char16 v) {
+  union _type_cast_16_b u;
+  u._char16 = v;
+  return u._float3;
+}
+
 INLINE OVERLOADABLE float4 as_float4(char16 v) {
   union _type_cast_16_b u;
   u._char16 = v;
@@ -1390,10 +1951,22 @@ INLINE OVERLOADABLE ulong2 as_ulong2(uchar16 v) {
   return u._ulong2;
 }
 
+INLINE OVERLOADABLE int3 as_int3(uchar16 v) {
+  union _type_cast_16_b u;
+  u._uchar16 = v;
+  return u._int3;
+}
+
 INLINE OVERLOADABLE int4 as_int4(uchar16 v) {
   union _type_cast_16_b u;
   u._uchar16 = v;
   return u._int4;
+}
+
+INLINE OVERLOADABLE uint3 as_uint3(uchar16 v) {
+  union _type_cast_16_b u;
+  u._uchar16 = v;
+  return u._uint3;
 }
 
 INLINE OVERLOADABLE uint4 as_uint4(uchar16 v) {
@@ -1426,6 +1999,12 @@ INLINE OVERLOADABLE double2 as_double2(uchar16 v) {
   return u._double2;
 }
 
+INLINE OVERLOADABLE float3 as_float3(uchar16 v) {
+  union _type_cast_16_b u;
+  u._uchar16 = v;
+  return u._float3;
+}
+
 INLINE OVERLOADABLE float4 as_float4(uchar16 v) {
   union _type_cast_16_b u;
   u._uchar16 = v;
@@ -1444,10 +2023,22 @@ INLINE OVERLOADABLE ulong2 as_ulong2(double2 v) {
   return u._ulong2;
 }
 
+INLINE OVERLOADABLE int3 as_int3(double2 v) {
+  union _type_cast_16_b u;
+  u._double2 = v;
+  return u._int3;
+}
+
 INLINE OVERLOADABLE int4 as_int4(double2 v) {
   union _type_cast_16_b u;
   u._double2 = v;
   return u._int4;
+}
+
+INLINE OVERLOADABLE uint3 as_uint3(double2 v) {
+  union _type_cast_16_b u;
+  u._double2 = v;
+  return u._uint3;
 }
 
 INLINE OVERLOADABLE uint4 as_uint4(double2 v) {
@@ -1480,10 +2071,82 @@ INLINE OVERLOADABLE uchar16 as_uchar16(double2 v) {
   return u._uchar16;
 }
 
+INLINE OVERLOADABLE float3 as_float3(double2 v) {
+  union _type_cast_16_b u;
+  u._double2 = v;
+  return u._float3;
+}
+
 INLINE OVERLOADABLE float4 as_float4(double2 v) {
   union _type_cast_16_b u;
   u._double2 = v;
   return u._float4;
+}
+
+INLINE OVERLOADABLE long2 as_long2(float3 v) {
+  union _type_cast_16_b u;
+  u._float3 = v;
+  return u._long2;
+}
+
+INLINE OVERLOADABLE ulong2 as_ulong2(float3 v) {
+  union _type_cast_16_b u;
+  u._float3 = v;
+  return u._ulong2;
+}
+
+INLINE OVERLOADABLE int3 as_int3(float3 v) {
+  union _type_cast_16_b u;
+  u._float3 = v;
+  return u._int3;
+}
+
+INLINE OVERLOADABLE int4 as_int4(float3 v) {
+  union _type_cast_16_b u;
+  u._float3 = v;
+  return u._int4;
+}
+
+INLINE OVERLOADABLE uint3 as_uint3(float3 v) {
+  union _type_cast_16_b u;
+  u._float3 = v;
+  return u._uint3;
+}
+
+INLINE OVERLOADABLE uint4 as_uint4(float3 v) {
+  union _type_cast_16_b u;
+  u._float3 = v;
+  return u._uint4;
+}
+
+INLINE OVERLOADABLE short8 as_short8(float3 v) {
+  union _type_cast_16_b u;
+  u._float3 = v;
+  return u._short8;
+}
+
+INLINE OVERLOADABLE ushort8 as_ushort8(float3 v) {
+  union _type_cast_16_b u;
+  u._float3 = v;
+  return u._ushort8;
+}
+
+INLINE OVERLOADABLE char16 as_char16(float3 v) {
+  union _type_cast_16_b u;
+  u._float3 = v;
+  return u._char16;
+}
+
+INLINE OVERLOADABLE uchar16 as_uchar16(float3 v) {
+  union _type_cast_16_b u;
+  u._float3 = v;
+  return u._uchar16;
+}
+
+INLINE OVERLOADABLE double2 as_double2(float3 v) {
+  union _type_cast_16_b u;
+  u._float3 = v;
+  return u._double2;
 }
 
 INLINE OVERLOADABLE long2 as_long2(float4 v) {
@@ -1498,10 +2161,22 @@ INLINE OVERLOADABLE ulong2 as_ulong2(float4 v) {
   return u._ulong2;
 }
 
+INLINE OVERLOADABLE int3 as_int3(float4 v) {
+  union _type_cast_16_b u;
+  u._float4 = v;
+  return u._int3;
+}
+
 INLINE OVERLOADABLE int4 as_int4(float4 v) {
   union _type_cast_16_b u;
   u._float4 = v;
   return u._int4;
+}
+
+INLINE OVERLOADABLE uint3 as_uint3(float4 v) {
+  union _type_cast_16_b u;
+  u._float4 = v;
+  return u._uint3;
 }
 
 INLINE OVERLOADABLE uint4 as_uint4(float4 v) {
@@ -1540,58 +2215,79 @@ INLINE OVERLOADABLE double2 as_double2(float4 v) {
   return u._double2;
 }
 
-union _type_cast_24_b {
-  long3 _long3;
-  ulong3 _ulong3;
-  double3 _double3;
-};
-
-INLINE OVERLOADABLE ulong3 as_ulong3(long3 v) {
-  union _type_cast_24_b u;
-  u._long3 = v;
-  return u._ulong3;
-}
-
-INLINE OVERLOADABLE double3 as_double3(long3 v) {
-  union _type_cast_24_b u;
-  u._long3 = v;
-  return u._double3;
-}
-
-INLINE OVERLOADABLE long3 as_long3(ulong3 v) {
-  union _type_cast_24_b u;
-  u._ulong3 = v;
-  return u._long3;
-}
-
-INLINE OVERLOADABLE double3 as_double3(ulong3 v) {
-  union _type_cast_24_b u;
-  u._ulong3 = v;
-  return u._double3;
-}
-
-INLINE OVERLOADABLE long3 as_long3(double3 v) {
-  union _type_cast_24_b u;
-  u._double3 = v;
-  return u._long3;
-}
-
-INLINE OVERLOADABLE ulong3 as_ulong3(double3 v) {
-  union _type_cast_24_b u;
-  u._double3 = v;
-  return u._ulong3;
-}
-
 union _type_cast_32_b {
+  long3 _long3;
   long4 _long4;
+  ulong3 _ulong3;
   ulong4 _ulong4;
   int8 _int8;
   uint8 _uint8;
   short16 _short16;
   ushort16 _ushort16;
+  double3 _double3;
   double4 _double4;
   float8 _float8;
 };
+
+INLINE OVERLOADABLE ulong3 as_ulong3(long3 v) {
+  union _type_cast_32_b u;
+  u._long3 = v;
+  return u._ulong3;
+}
+
+INLINE OVERLOADABLE ulong4 as_ulong4(long3 v) {
+  union _type_cast_32_b u;
+  u._long3 = v;
+  return u._ulong4;
+}
+
+INLINE OVERLOADABLE int8 as_int8(long3 v) {
+  union _type_cast_32_b u;
+  u._long3 = v;
+  return u._int8;
+}
+
+INLINE OVERLOADABLE uint8 as_uint8(long3 v) {
+  union _type_cast_32_b u;
+  u._long3 = v;
+  return u._uint8;
+}
+
+INLINE OVERLOADABLE short16 as_short16(long3 v) {
+  union _type_cast_32_b u;
+  u._long3 = v;
+  return u._short16;
+}
+
+INLINE OVERLOADABLE ushort16 as_ushort16(long3 v) {
+  union _type_cast_32_b u;
+  u._long3 = v;
+  return u._ushort16;
+}
+
+INLINE OVERLOADABLE double3 as_double3(long3 v) {
+  union _type_cast_32_b u;
+  u._long3 = v;
+  return u._double3;
+}
+
+INLINE OVERLOADABLE double4 as_double4(long3 v) {
+  union _type_cast_32_b u;
+  u._long3 = v;
+  return u._double4;
+}
+
+INLINE OVERLOADABLE float8 as_float8(long3 v) {
+  union _type_cast_32_b u;
+  u._long3 = v;
+  return u._float8;
+}
+
+INLINE OVERLOADABLE ulong3 as_ulong3(long4 v) {
+  union _type_cast_32_b u;
+  u._long4 = v;
+  return u._ulong3;
+}
 
 INLINE OVERLOADABLE ulong4 as_ulong4(long4 v) {
   union _type_cast_32_b u;
@@ -1623,6 +2319,12 @@ INLINE OVERLOADABLE ushort16 as_ushort16(long4 v) {
   return u._ushort16;
 }
 
+INLINE OVERLOADABLE double3 as_double3(long4 v) {
+  union _type_cast_32_b u;
+  u._long4 = v;
+  return u._double3;
+}
+
 INLINE OVERLOADABLE double4 as_double4(long4 v) {
   union _type_cast_32_b u;
   u._long4 = v;
@@ -1633,6 +2335,66 @@ INLINE OVERLOADABLE float8 as_float8(long4 v) {
   union _type_cast_32_b u;
   u._long4 = v;
   return u._float8;
+}
+
+INLINE OVERLOADABLE long3 as_long3(ulong3 v) {
+  union _type_cast_32_b u;
+  u._ulong3 = v;
+  return u._long3;
+}
+
+INLINE OVERLOADABLE long4 as_long4(ulong3 v) {
+  union _type_cast_32_b u;
+  u._ulong3 = v;
+  return u._long4;
+}
+
+INLINE OVERLOADABLE int8 as_int8(ulong3 v) {
+  union _type_cast_32_b u;
+  u._ulong3 = v;
+  return u._int8;
+}
+
+INLINE OVERLOADABLE uint8 as_uint8(ulong3 v) {
+  union _type_cast_32_b u;
+  u._ulong3 = v;
+  return u._uint8;
+}
+
+INLINE OVERLOADABLE short16 as_short16(ulong3 v) {
+  union _type_cast_32_b u;
+  u._ulong3 = v;
+  return u._short16;
+}
+
+INLINE OVERLOADABLE ushort16 as_ushort16(ulong3 v) {
+  union _type_cast_32_b u;
+  u._ulong3 = v;
+  return u._ushort16;
+}
+
+INLINE OVERLOADABLE double3 as_double3(ulong3 v) {
+  union _type_cast_32_b u;
+  u._ulong3 = v;
+  return u._double3;
+}
+
+INLINE OVERLOADABLE double4 as_double4(ulong3 v) {
+  union _type_cast_32_b u;
+  u._ulong3 = v;
+  return u._double4;
+}
+
+INLINE OVERLOADABLE float8 as_float8(ulong3 v) {
+  union _type_cast_32_b u;
+  u._ulong3 = v;
+  return u._float8;
+}
+
+INLINE OVERLOADABLE long3 as_long3(ulong4 v) {
+  union _type_cast_32_b u;
+  u._ulong4 = v;
+  return u._long3;
 }
 
 INLINE OVERLOADABLE long4 as_long4(ulong4 v) {
@@ -1665,6 +2427,12 @@ INLINE OVERLOADABLE ushort16 as_ushort16(ulong4 v) {
   return u._ushort16;
 }
 
+INLINE OVERLOADABLE double3 as_double3(ulong4 v) {
+  union _type_cast_32_b u;
+  u._ulong4 = v;
+  return u._double3;
+}
+
 INLINE OVERLOADABLE double4 as_double4(ulong4 v) {
   union _type_cast_32_b u;
   u._ulong4 = v;
@@ -1677,10 +2445,22 @@ INLINE OVERLOADABLE float8 as_float8(ulong4 v) {
   return u._float8;
 }
 
+INLINE OVERLOADABLE long3 as_long3(int8 v) {
+  union _type_cast_32_b u;
+  u._int8 = v;
+  return u._long3;
+}
+
 INLINE OVERLOADABLE long4 as_long4(int8 v) {
   union _type_cast_32_b u;
   u._int8 = v;
   return u._long4;
+}
+
+INLINE OVERLOADABLE ulong3 as_ulong3(int8 v) {
+  union _type_cast_32_b u;
+  u._int8 = v;
+  return u._ulong3;
 }
 
 INLINE OVERLOADABLE ulong4 as_ulong4(int8 v) {
@@ -1707,6 +2487,12 @@ INLINE OVERLOADABLE ushort16 as_ushort16(int8 v) {
   return u._ushort16;
 }
 
+INLINE OVERLOADABLE double3 as_double3(int8 v) {
+  union _type_cast_32_b u;
+  u._int8 = v;
+  return u._double3;
+}
+
 INLINE OVERLOADABLE double4 as_double4(int8 v) {
   union _type_cast_32_b u;
   u._int8 = v;
@@ -1719,10 +2505,22 @@ INLINE OVERLOADABLE float8 as_float8(int8 v) {
   return u._float8;
 }
 
+INLINE OVERLOADABLE long3 as_long3(uint8 v) {
+  union _type_cast_32_b u;
+  u._uint8 = v;
+  return u._long3;
+}
+
 INLINE OVERLOADABLE long4 as_long4(uint8 v) {
   union _type_cast_32_b u;
   u._uint8 = v;
   return u._long4;
+}
+
+INLINE OVERLOADABLE ulong3 as_ulong3(uint8 v) {
+  union _type_cast_32_b u;
+  u._uint8 = v;
+  return u._ulong3;
 }
 
 INLINE OVERLOADABLE ulong4 as_ulong4(uint8 v) {
@@ -1749,6 +2547,12 @@ INLINE OVERLOADABLE ushort16 as_ushort16(uint8 v) {
   return u._ushort16;
 }
 
+INLINE OVERLOADABLE double3 as_double3(uint8 v) {
+  union _type_cast_32_b u;
+  u._uint8 = v;
+  return u._double3;
+}
+
 INLINE OVERLOADABLE double4 as_double4(uint8 v) {
   union _type_cast_32_b u;
   u._uint8 = v;
@@ -1761,10 +2565,22 @@ INLINE OVERLOADABLE float8 as_float8(uint8 v) {
   return u._float8;
 }
 
+INLINE OVERLOADABLE long3 as_long3(short16 v) {
+  union _type_cast_32_b u;
+  u._short16 = v;
+  return u._long3;
+}
+
 INLINE OVERLOADABLE long4 as_long4(short16 v) {
   union _type_cast_32_b u;
   u._short16 = v;
   return u._long4;
+}
+
+INLINE OVERLOADABLE ulong3 as_ulong3(short16 v) {
+  union _type_cast_32_b u;
+  u._short16 = v;
+  return u._ulong3;
 }
 
 INLINE OVERLOADABLE ulong4 as_ulong4(short16 v) {
@@ -1791,6 +2607,12 @@ INLINE OVERLOADABLE ushort16 as_ushort16(short16 v) {
   return u._ushort16;
 }
 
+INLINE OVERLOADABLE double3 as_double3(short16 v) {
+  union _type_cast_32_b u;
+  u._short16 = v;
+  return u._double3;
+}
+
 INLINE OVERLOADABLE double4 as_double4(short16 v) {
   union _type_cast_32_b u;
   u._short16 = v;
@@ -1803,10 +2625,22 @@ INLINE OVERLOADABLE float8 as_float8(short16 v) {
   return u._float8;
 }
 
+INLINE OVERLOADABLE long3 as_long3(ushort16 v) {
+  union _type_cast_32_b u;
+  u._ushort16 = v;
+  return u._long3;
+}
+
 INLINE OVERLOADABLE long4 as_long4(ushort16 v) {
   union _type_cast_32_b u;
   u._ushort16 = v;
   return u._long4;
+}
+
+INLINE OVERLOADABLE ulong3 as_ulong3(ushort16 v) {
+  union _type_cast_32_b u;
+  u._ushort16 = v;
+  return u._ulong3;
 }
 
 INLINE OVERLOADABLE ulong4 as_ulong4(ushort16 v) {
@@ -1833,6 +2667,12 @@ INLINE OVERLOADABLE short16 as_short16(ushort16 v) {
   return u._short16;
 }
 
+INLINE OVERLOADABLE double3 as_double3(ushort16 v) {
+  union _type_cast_32_b u;
+  u._ushort16 = v;
+  return u._double3;
+}
+
 INLINE OVERLOADABLE double4 as_double4(ushort16 v) {
   union _type_cast_32_b u;
   u._ushort16 = v;
@@ -1845,10 +2685,76 @@ INLINE OVERLOADABLE float8 as_float8(ushort16 v) {
   return u._float8;
 }
 
+INLINE OVERLOADABLE long3 as_long3(double3 v) {
+  union _type_cast_32_b u;
+  u._double3 = v;
+  return u._long3;
+}
+
+INLINE OVERLOADABLE long4 as_long4(double3 v) {
+  union _type_cast_32_b u;
+  u._double3 = v;
+  return u._long4;
+}
+
+INLINE OVERLOADABLE ulong3 as_ulong3(double3 v) {
+  union _type_cast_32_b u;
+  u._double3 = v;
+  return u._ulong3;
+}
+
+INLINE OVERLOADABLE ulong4 as_ulong4(double3 v) {
+  union _type_cast_32_b u;
+  u._double3 = v;
+  return u._ulong4;
+}
+
+INLINE OVERLOADABLE int8 as_int8(double3 v) {
+  union _type_cast_32_b u;
+  u._double3 = v;
+  return u._int8;
+}
+
+INLINE OVERLOADABLE uint8 as_uint8(double3 v) {
+  union _type_cast_32_b u;
+  u._double3 = v;
+  return u._uint8;
+}
+
+INLINE OVERLOADABLE short16 as_short16(double3 v) {
+  union _type_cast_32_b u;
+  u._double3 = v;
+  return u._short16;
+}
+
+INLINE OVERLOADABLE ushort16 as_ushort16(double3 v) {
+  union _type_cast_32_b u;
+  u._double3 = v;
+  return u._ushort16;
+}
+
+INLINE OVERLOADABLE float8 as_float8(double3 v) {
+  union _type_cast_32_b u;
+  u._double3 = v;
+  return u._float8;
+}
+
+INLINE OVERLOADABLE long3 as_long3(double4 v) {
+  union _type_cast_32_b u;
+  u._double4 = v;
+  return u._long3;
+}
+
 INLINE OVERLOADABLE long4 as_long4(double4 v) {
   union _type_cast_32_b u;
   u._double4 = v;
   return u._long4;
+}
+
+INLINE OVERLOADABLE ulong3 as_ulong3(double4 v) {
+  union _type_cast_32_b u;
+  u._double4 = v;
+  return u._ulong3;
 }
 
 INLINE OVERLOADABLE ulong4 as_ulong4(double4 v) {
@@ -1887,10 +2793,22 @@ INLINE OVERLOADABLE float8 as_float8(double4 v) {
   return u._float8;
 }
 
+INLINE OVERLOADABLE long3 as_long3(float8 v) {
+  union _type_cast_32_b u;
+  u._float8 = v;
+  return u._long3;
+}
+
 INLINE OVERLOADABLE long4 as_long4(float8 v) {
   union _type_cast_32_b u;
   u._float8 = v;
   return u._long4;
+}
+
+INLINE OVERLOADABLE ulong3 as_ulong3(float8 v) {
+  union _type_cast_32_b u;
+  u._float8 = v;
+  return u._ulong3;
 }
 
 INLINE OVERLOADABLE ulong4 as_ulong4(float8 v) {
@@ -1921,6 +2839,12 @@ INLINE OVERLOADABLE ushort16 as_ushort16(float8 v) {
   union _type_cast_32_b u;
   u._float8 = v;
   return u._ushort16;
+}
+
+INLINE OVERLOADABLE double3 as_double3(float8 v) {
+  union _type_cast_32_b u;
+  u._float8 = v;
+  return u._double3;
 }
 
 INLINE OVERLOADABLE double4 as_double4(float8 v) {
@@ -2159,3 +3083,4 @@ INLINE OVERLOADABLE ulong16 as_ulong16(double16 v) {
   u._double16 = v;
   return u._ulong16;
 }
+
