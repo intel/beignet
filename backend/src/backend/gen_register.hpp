@@ -185,6 +185,7 @@ namespace gbe
       this->type = type;
       this->file = file;
       this->physical = 0;
+      this->subphysical = 0;
       this->value.reg = reg;
       this->negation = 0;
       this->absolute = 0;
@@ -209,6 +210,7 @@ namespace gbe
       this->file = file;
       this->nr = nr;
       this->physical = 1;
+      this->subphysical = 1;
       this->subnr = subnr * typeSize(type);
       this->negation = 0;
       this->absolute = 0;
