@@ -63,7 +63,7 @@
 .queue_properties = CL_QUEUE_PROFILING_ENABLE,
 .platform = NULL, /* == intel_platform (set when requested) */
 /* IEEE 754, XXX does IVB support CL_FP_CORRECTLY_ROUNDED_DIVIDE_SQRT? */
-.single_fp_config = CL_FP_DENORM | CL_FP_INF_NAN | CL_FP_ROUND_TO_NEAREST , /* IEEE 754. */
+.single_fp_config = CL_FP_INF_NAN | CL_FP_ROUND_TO_NEAREST , /* IEEE 754. */
 
 #define DECL_INFO_STRING(FIELD, STRING) \
     .FIELD = STRING,                    \
