@@ -82,6 +82,12 @@ namespace ir {
       }
       return ImmediateIndex(0);
     }
+    INLINE ImmediateIndex newFloatImmediate(float x) {
+      return this->newImmediate(x);
+    }
+    INLINE ImmediateIndex newDoubleImmediate(double x) {
+      return this->newImmediate(x);
+    }
 
     /*! Set an immediate value */
     template <typename T> INLINE void setImmediate(ImmediateIndex index, T value) {

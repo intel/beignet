@@ -740,7 +740,7 @@ namespace gbe
         const float f32 = seq->getElementAsFloat(index);
         return doIt(f32);
       } else if (Ty == Type::getDoubleTy(CPV->getContext())) {
-        const float f64 = seq->getElementAsDouble(index);
+        const double f64 = seq->getElementAsDouble(index);
         return doIt(f64);
       }
     } else
@@ -769,7 +769,7 @@ namespace gbe
         const float f32 = 0;
         return doIt(f32);
       } else if (Ty == Type::getDoubleTy(CPV->getContext())) {
-        const float f64 = 0;
+        const double f64 = 0;
         return doIt(f64);
       } else {
         GBE_ASSERTM(false, "Unsupporte aggregate zero type.");
@@ -878,6 +878,22 @@ namespace gbe
 
     if(isa<GlobalValue>(c)) {
       return regTranslator.getScalar(c, elemID);
+    }
+    if(isa<UndefValue>(c)) {
+      Type* llvmType = c->getType();
+      ir::Type dstType = getType(ctx, llvmType);
+      ir::Register reg = ctx.reg(getFamily(dstType));
+
+      ir::ImmediateIndex immIndex;
+      if(llvmType->isIntegerTy())
+        immIndex = ctx.newIntegerImmediate(0, dstType);
+      else if(llvmType->isFloatTy()) {
+        immIndex = ctx.newFloatImmediate((float)0.0);
+      } else {
+        immIndex = ctx.newDoubleImmediate((double)0.0);
+      }
+      ctx.LOADI(dstType, reg, immIndex);
+      return reg;
     }
 
     if(isa<ConstantExpr>(c)) {
