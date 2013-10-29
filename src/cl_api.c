@@ -1228,8 +1228,8 @@ clGetEventProfilingInfo(cl_event             event,
 
   CHECK_EVENT(event);
 
-  if (!(event->queue->props & CL_QUEUE_PROFILING_ENABLE) ||
-          event->type == CL_COMMAND_USER ||
+  if (event->type == CL_COMMAND_USER ||
+      !(event->queue->props & CL_QUEUE_PROFILING_ENABLE) ||
           event->status != CL_COMPLETE) {
     err = CL_PROFILING_INFO_NOT_AVAILABLE;
     goto error;
