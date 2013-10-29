@@ -229,7 +229,6 @@ intn isless (floatn x, floatn y)
 longn isless (doublen x, doublen y)
 intn islessequal (floatn x, floatn y)
 longn islessequal (doublen x, doublen y)
-# XXX not implemented
 intn islessgreater (floatn x, floatn y)
 longn islessgreater (doublen x, doublen y)
 intn isfinite (floatn
@@ -240,18 +239,15 @@ intn isnan (floatn)
 longn isnan (doublen)
 intn isnormal (floatn)
 longn isnormal (doublen)
-# XXX not implemented
 intn isordered (floatn x, floatn y)
 longn isordered (doublen x, doublen y)
-# XXX not implemented
 intn isunordered (floatn x, floatn y)
 longn isunordered (doublen x, doublen y)
 intn signbit (floatn)
 longn signbit (doublen)
 int any (igentype x)
 int all (igentype x)
-# XXX need to revisit select latter
-#gentype bitselect (gentype a, gentype b, gentype c)
+gentype bitselect (gentype a, gentype b, gentype c)
 gentype select (gentype a, gentype b, igentype c)
 gentype select (gentype a, gentype b, ugentype c)
 
