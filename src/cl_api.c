@@ -2336,7 +2336,7 @@ clEnqueueNDRangeKernel(cl_command_queue  command_queue,
 
   if (global_work_offset != NULL)
     for (i = 0; i < work_dim; ++i) {
-      if (UNLIKELY(~0LL - global_work_offset[i] > global_work_size[i])) {
+      if (UNLIKELY(global_work_offset[i] + global_work_size[i] > (size_t)-1)) {
         err = CL_INVALID_GLOBAL_OFFSET;
         goto error;
       }
