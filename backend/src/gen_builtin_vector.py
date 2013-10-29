@@ -293,6 +293,8 @@ class builtinProto():
                 if j % 2 == 0:
                     formatStr = self.append(formatStr, self.indentSpace())
 
+            if self.prefix == 'relational' and self.functionName != 'bitselect' and self.functionName != 'select':
+                formatStr += '-'
             formatStr += '{}('.format(self.functionName)
             for n in range(0, self.paramCount):
                 if n != 0:
