@@ -1774,10 +1774,33 @@ INLINE_OVERLOADABLE float distance(float x, float y) { return length(x-y); }
 INLINE_OVERLOADABLE float distance(float2 x, float2 y) { return length(x-y); }
 INLINE_OVERLOADABLE float distance(float3 x, float3 y) { return length(x-y); }
 INLINE_OVERLOADABLE float distance(float4 x, float4 y) { return length(x-y); }
-INLINE_OVERLOADABLE float normalize(float x) { return 1.f; }
-INLINE_OVERLOADABLE float2 normalize(float2 x) { return x * rsqrt(dot(x, x)); }
-INLINE_OVERLOADABLE float3 normalize(float3 x) { return x * rsqrt(dot(x, x)); }
-INLINE_OVERLOADABLE float4 normalize(float4 x) { return x * rsqrt(dot(x, x)); }
+INLINE_OVERLOADABLE float normalize(float x) {
+  union { float f; unsigned u; } u;
+  u.f = x;
+  if(u.u == 0)
+    return 0.f;
+  if(isnan(x))
+    return NAN;
+  return u.u < 0x7fffffff ? 1.f : -1.f;
+}
+INLINE_OVERLOADABLE float2 normalize(float2 x) {
+  float m = length(x);
+  if(m == 0)
+    return 0;
+  return x / m;
+}
+INLINE_OVERLOADABLE float3 normalize(float3 x) {
+  float m = length(x);
+  if(m == 0)
+    return 0;
+  return x / m;
+}
+INLINE_OVERLOADABLE float4 normalize(float4 x) {
+  float m = length(x);
+  if(m == 0)
+    return 0;
+  return x / m;
+}
 
 INLINE_OVERLOADABLE float fast_length(float x) { return __gen_ocl_fabs(x); }
 INLINE_OVERLOADABLE float fast_length(float2 x) { return sqrt(dot(x,x)); }
