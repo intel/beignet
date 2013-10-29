@@ -301,18 +301,15 @@ cl_program_build(cl_program p, const char *options)
   int copyed = 0;
 
   if (options) {
-    if(p->build_opts && strcmp(options, p->build_opts) != 0) {
-      p->source_type = p->source ? FROM_SOURCE : p->binary ? FROM_BINARY : FROM_LLVM;
-
+    if(p->build_opts == NULL || strcmp(options, p->build_opts) != 0) {
       if(p->build_opts) {
         cl_free(p->build_opts);
         p->build_opts = NULL;
       }
-    } else if(p->build_opts == NULL) {
-      p->source_type = p->source ? FROM_SOURCE : p->binary ? FROM_BINARY : FROM_LLVM;
-
       TRY_ALLOC (p->build_opts, cl_calloc(strlen(options) + 1, sizeof(char)));
       memcpy(p->build_opts, options, strlen(options));
+
+      p->source_type = p->source ? FROM_SOURCE : p->binary ? FROM_BINARY : FROM_LLVM;
     }
   }
 
