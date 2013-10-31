@@ -69,7 +69,7 @@ int main(int argc, char *argv[])
     optarg = argv[1];
   }
 
-  {
+  do {
     switch (c)
     {
       case 'c':
@@ -111,7 +111,7 @@ int main(int argc, char *argv[])
         usage();
         exit(1);
     }
-  } while ((c = getopt_long (argc, argv, shortopts, longopts, NULL)) != -1)
+  } while ((c = getopt_long (argc, argv, shortopts, longopts, NULL)) != -1);
 
   cl_ocl_destroy();
 }
