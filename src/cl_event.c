@@ -124,12 +124,15 @@ void cl_event_delete(cl_event event)
   /* Remove it from the list */
   assert(event->ctx);
   pthread_mutex_lock(&event->ctx->event_lock);
-    if (event->prev)
-      event->prev->next = event->next;
-    if (event->next)
-      event->next->prev = event->prev;
-    if (event->prev == NULL && event->next == NULL)
-      event->ctx->events = NULL;
+
+  if (event->prev)
+    event->prev->next = event->next;
+  if (event->next)
+    event->next->prev = event->prev;
+  /* if this is the head, update head pointer ctx->events */
+  if (event->ctx->events == event)
+    event->ctx->events = event->next;
+
   pthread_mutex_unlock(&event->ctx->event_lock);
   cl_context_delete(event->ctx);
 
