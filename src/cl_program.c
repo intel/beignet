@@ -79,8 +79,8 @@ cl_program_delete(cl_program p)
       p->prev->next = p->next;
     if (p->next)
       p->next->prev = p->prev;
-    if (p->prev == NULL && p->next == NULL)
-      p->ctx->programs = NULL;
+    if (p->ctx->programs == p)
+      p->ctx->programs = p->next;
   pthread_mutex_unlock(&p->ctx->program_lock);
 
   cl_free(p->bin);               /* Free the blob */

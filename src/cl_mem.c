@@ -556,8 +556,8 @@ cl_mem_delete(cl_mem mem)
       mem->prev->next = mem->next;
     if (mem->next)
       mem->next->prev = mem->prev;
-    if (mem->prev == NULL && mem->next == NULL)
-      mem->ctx->buffers = NULL;
+    if (mem->ctx->buffers == mem)
+      mem->ctx->buffers = mem->next;
   pthread_mutex_unlock(&mem->ctx->buffer_lock);
   cl_context_delete(mem->ctx);
 

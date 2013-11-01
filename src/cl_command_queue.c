@@ -77,8 +77,8 @@ cl_command_queue_delete(cl_command_queue queue)
       queue->prev->next = queue->next;
     if (queue->next)
       queue->next->prev = queue->prev;
-    if (queue->next == NULL && queue->prev == NULL)
-      queue->ctx->queues = NULL;
+    if (queue->ctx->queues == queue)
+      queue->ctx->queues = queue->next;
   pthread_mutex_unlock(&queue->ctx->queue_lock);
   if (queue->fulsim_out != NULL) {
     cl_mem_delete(queue->fulsim_out);

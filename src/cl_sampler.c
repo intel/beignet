@@ -125,8 +125,8 @@ cl_sampler_delete(cl_sampler sampler)
       sampler->prev->next = sampler->next;
     if (sampler->next)
       sampler->next->prev = sampler->prev;
-    if (sampler->prev == NULL && sampler->next == NULL)
-      sampler->ctx->samplers = NULL;
+    if (sampler->ctx->samplers == sampler)
+      sampler->ctx->samplers = sampler->next;
   pthread_mutex_unlock(&sampler->ctx->sampler_lock);
   cl_context_delete(sampler->ctx);
 
