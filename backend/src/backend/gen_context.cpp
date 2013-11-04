@@ -811,12 +811,13 @@ namespace gbe
         p->SEL(d, d, e);
         p->curr.predicate = GEN_PREDICATE_NONE;
         p->AND(a, a, GenRegister::immud(32));
+        p->ASR(f, f, GenRegister::immd(31));
         p->MOV(flagReg, GenRegister::immuw(0xFFFF));
         p->curr.predicate = GEN_PREDICATE_NORMAL;
         p->curr.useFlag(flagReg.flag_nr(), flagReg.flag_subnr());
         p->CMP(GEN_CONDITIONAL_Z, a, zero);
         p->SEL(d, d, c);
-        p->SEL(c, c, GenRegister::immd(-1));
+        p->SEL(c, c, f);
         p->pop();
         storeBottomHalf(dest, d);
         storeTopHalf(dest, c);
