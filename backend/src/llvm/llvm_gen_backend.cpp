@@ -1694,7 +1694,7 @@ namespace gbe
           const ir::ImmediateIndex zero = ctx.newIntegerImmediate(0, dstType);
           ir::ImmediateIndex one;
           if (I.getOpcode() == Instruction::SExt
-              && (dstType == ir::TYPE_S8 || dstType == ir::TYPE_S16 || dstType == ir::TYPE_S32))
+              && (dstType == ir::TYPE_S8 || dstType == ir::TYPE_S16 || dstType == ir::TYPE_S32 || dstType == ir::TYPE_S64))
             one = ctx.newIntegerImmediate(-1, dstType);
           else
             one = ctx.newIntegerImmediate(1, dstType);
