@@ -15,7 +15,7 @@ typedef float4 vec4;
 
 // fmod is not like glsl mod!
 inline __attribute__((always_inline, overloadable))
-float glsl_mod(float x,float y) { return x-y*floor(x/y); }
+float glsl_mod(float x,float y) { return mad( -y, floor(x/y), x); }
 inline __attribute__((always_inline, overloadable))
 float2 glsl_mod(float2 a,float2 b) { return (float2)(glsl_mod(a.x,b.x), glsl_mod(a.y,b.y)); }
 inline __attribute__((always_inline, overloadable))
