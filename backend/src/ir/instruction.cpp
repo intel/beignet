@@ -1449,6 +1449,9 @@ DECL_MEM_FN(GetImageInfoInstruction, uint32_t, getInfoType(void), getInfoType())
     return internal::TernaryInstruction(OP_I64MADSAT, type, dst, src).convert();
   }
 
+  Instruction MAD(Type type, Register dst, Tuple src) {
+    return internal::TernaryInstruction(OP_MAD, type, dst, src).convert();
+  }
   // All compare functions
 #define DECL_EMIT_FUNCTION(NAME) \
   Instruction NAME(Type type, Register dst,  Register src0, Register src1) { \

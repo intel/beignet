@@ -2704,6 +2704,11 @@ namespace gbe
           sel.I64MADSAT(dst, src0, src1, src2, tmp);
           break;
          }
+        case OP_MAD:
+         {
+          sel.MAD(dst, src2, src0, src1);
+          break;
+         }
         default:
           NOT_IMPLEMENTED;
       }

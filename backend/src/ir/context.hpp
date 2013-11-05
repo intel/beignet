@@ -149,6 +149,7 @@ namespace ir {
     }
     DECL_THREE_SRC_INSN(SEL);
     DECL_THREE_SRC_INSN(I64MADSAT);
+    DECL_THREE_SRC_INSN(MAD);
 #undef DECL_THREE_SRC_INSN
 
     /*! For all unary functions */

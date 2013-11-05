@@ -1558,8 +1558,9 @@ INLINE_OVERLOADABLE float __gen_ocl_internal_rint(float x) {
 #define erf __gen_ocl_internal_erf
 #define erfc __gen_ocl_internal_erfc
 
+PURE CONST float __gen_ocl_mad(float a, float b, float c);
 INLINE_OVERLOADABLE float mad(float a, float b, float c) {
-  return a*b+c;
+  return __gen_ocl_mad(a, b, c);
 }
 
 #define DEF(TYPE1, TYPE2) \
