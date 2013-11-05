@@ -233,8 +233,14 @@ namespace ir {
         const PushLocation argLocation(*fn, loadAddImm.argID, offset);
         if (inserted.contains(argLocation))
           continue;
+        Register pushed;
         const Register reg = load->getValue(valueID);
-        const Register pushed = fn->newRegister(family);
+        if (offset != 0) {
+            pushed = fn->newRegister(family);
+            this->appendPushedConstant(pushed, argLocation);
+        } else {
+            pushed = fn->getArg(loadAddImm.argID).reg;
+        }
 
         // TODO the MOV instruction can be most of the time avoided if the
         // register is never written. We must however support the register
@@ -243,7 +249,6 @@ namespace ir {
         const Instruction mov = ir::MOV(type, reg, pushed);
         mov.replace(load);
         dead.insert(load);
-        this->appendPushedConstant(pushed, argLocation);
       }
     }
 
