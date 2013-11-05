@@ -41,6 +41,7 @@
 #include <sstream>
 #include <iostream>
 #include <unistd.h>
+#include <mutex>
 
 /* Not defined for LLVM 3.0 */
 #if !defined(LLVM_VERSION_MAJOR)
@@ -643,7 +644,10 @@ namespace gbe {
     remove(clName.c_str());
 
     // Now build the program from llvm
+    static std::mutex gbe_mutex;
+    gbe_mutex.lock();
     gbe_program p = gbe_program_new_from_llvm(llName.c_str(), stringSize, err, errSize);
+    gbe_mutex.unlock();
     remove(llName.c_str());
     return p;
   }
