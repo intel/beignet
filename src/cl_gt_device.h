@@ -67,7 +67,7 @@
 
 #define DECL_INFO_STRING(FIELD, STRING) \
     .FIELD = STRING,                    \
-    .JOIN(FIELD,_sz) = sizeof(STRING) + 1,
+    .JOIN(FIELD,_sz) = sizeof(STRING),
 DECL_INFO_STRING(name, "Intel HD Graphics Family")
 DECL_INFO_STRING(vendor, "Intel")
 DECL_INFO_STRING(version, LIBCL_VERSION_STRING)
