@@ -239,6 +239,8 @@ cl_kernel_init(const char *file_name, const char *kernel_name, int format, const
   cl_int status = CL_SUCCESS;
 
   /* Load the program and build it */
+  if (program)
+    clReleaseProgram(program);
   ker_path = cl_do_kiss_path(file_name, device);
   if (format == LLVM)
     program = clCreateProgramWithLLVMIntel(ctx, 1, &device, ker_path, &status);
