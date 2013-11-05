@@ -1303,7 +1303,28 @@ INLINE_OVERLOADABLE float native_log10(float x) {
 }
 INLINE_OVERLOADABLE float log1p(float x) { return native_log(x + 1); }
 INLINE_OVERLOADABLE float logb(float x) { return __gen_ocl_rndd(native_log2(x)); }
-INLINE_OVERLOADABLE int ilogb(float x) { return __gen_ocl_rndd(native_log2(x)); }
+#define FP_ILOGB0 (-0x7FFFFFFF-1)
+#define FP_ILOGBNAN FP_ILOGB0
+INLINE_OVERLOADABLE int ilogb(float x) {
+  union { int i; float f; } u;
+  if (isnan(x))
+    return FP_ILOGBNAN;
+  if (isinf(x))
+    return 0x7FFFFFFF;
+  u.f = x;
+  u.i &= 0x7fffffff;
+  if (u.i == 0)
+    return FP_ILOGB0;
+  if (u.i >= 0x800000)
+    return (u.i >> 23) - 127;
+  int r = -126;
+  int a = u.i & 0x7FFFFF;
+  while(a < 0x800000) {
+    a <<= 1;
+    r --;
+  }
+  return r;
+}
 INLINE_OVERLOADABLE float nan(uint code) {
   return NAN;
 }
