@@ -1616,17 +1616,28 @@ DECL_MIN_MAX_CLAMP(ulong)
 #undef DECL_MIN_MAX_CLAMP
 
 #define BODY \
-  uint u = as_uint(x); \
-  if ((u & 0x7FFFFFFFu) == 0) { \
+  if (isnan(x) || isinf(x)) { \
     *exp = 0; \
     return x; \
   } \
-  int e = (u >> 23) & 255; \
-  if (e == 255) \
+  uint u = as_uint(x); \
+  uint a = u & 0x7FFFFFFFu; \
+  if (a == 0) { \
+    *exp = 0; \
     return x; \
-  *exp = e - 126; \
-  u = (u & (0x807FFFFFu)) | 0x3F000000; \
-  return as_float(u);
+  } \
+  if (a >= 0x800000) { \
+    *exp = (a >> 23) - 126; \
+    return as_float((u & (0x807FFFFFu)) | 0x3F000000); \
+  } \
+  int e = -126; \
+  while (a < 0x400000) { \
+    e --; \
+    a <<= 1; \
+  } \
+  a <<= 1; \
+  *exp = e; \
+  return as_float((a & (0x807FFFFFu)) | (u & 0x80000000u) | 0x3F000000);
 INLINE_OVERLOADABLE float frexp(float x, global int *exp) { BODY; }
 INLINE_OVERLOADABLE float frexp(float x, local int *exp) { BODY; }
 INLINE_OVERLOADABLE float frexp(float x, private int *exp) { BODY; }
