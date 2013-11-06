@@ -735,8 +735,25 @@ clGetSamplerInfo(cl_sampler       sampler,
                  void *           param_value,
                  size_t *         param_value_size_ret)
 {
-  NOT_IMPLEMENTED;
-  return 0;
+  cl_int err = CL_SUCCESS;
+  CHECK_SAMPLER (sampler);
+
+  if (param_name == CL_SAMPLER_REFERENCE_COUNT) {
+    FILL_GETINFO_RET (cl_uint, 1, (cl_uint*)&sampler->ref_n, CL_SUCCESS);
+  } else if (param_name == CL_SAMPLER_CONTEXT) {
+    FILL_GETINFO_RET (cl_context, 1, &sampler->ctx, CL_SUCCESS);
+  } else if (param_name == CL_SAMPLER_NORMALIZED_COORDS) {
+    FILL_GETINFO_RET (cl_bool, 1, &sampler->normalized_coords, CL_SUCCESS);
+  } else if (param_name == CL_SAMPLER_ADDRESSING_MODE) {
+    FILL_GETINFO_RET (cl_addressing_mode, 1, &sampler->address, CL_SUCCESS);
+  } else if (param_name == CL_SAMPLER_FILTER_MODE ) {
+    FILL_GETINFO_RET (cl_filter_mode, 1, &sampler->filter, CL_SUCCESS);
+  } else{
+    return CL_INVALID_VALUE;
+  }
+
+error:
+  return err;
 }
 
 cl_program
