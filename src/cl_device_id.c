@@ -288,7 +288,7 @@ cl_get_kernel_workgroup_info(cl_device_id device,
 
   switch (param_name) {
     DECL_FIELD(WORK_GROUP_SIZE, wg_sz)
-      DECL_FIELD(COMPILE_WORK_GROUP_SIZE, compile_wg_sz)
+    DECL_FIELD(COMPILE_WORK_GROUP_SIZE, compile_wg_sz)
     default: return CL_INVALID_VALUE;
   };
 }

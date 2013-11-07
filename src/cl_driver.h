@@ -24,7 +24,7 @@
 #include <stdlib.h>
 #include "cl_driver_type.h"
 /* Various limitations we should remove actually */
-#define GEN_MAX_SURFACES 128
+#define GEN_MAX_SURFACES 256
 #define GEN_MAX_SAMPLERS 16
 
 /**************************************************************************

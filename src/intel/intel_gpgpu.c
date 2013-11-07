@@ -69,7 +69,7 @@ typedef struct intel_event {
 /* We can bind only a limited number of buffers */
 enum { max_buf_n = 128 };
 
-enum { max_img_n = 32 };
+enum { max_img_n = 128};
 
 enum {max_sampler_n = 16 };
 
@@ -872,7 +872,7 @@ intel_gpgpu_bind_sampler(intel_gpgpu_t *gpgpu, uint32_t *samplers, size_t sample
 {
   int index;
 #ifdef GEN7_SAMPLER_CLAMP_BORDER_WORKAROUND
-  assert(sampler_sz <= GEN_MAX_SAMPLERS/2);
+  //assert(sampler_sz <= GEN_MAX_SAMPLERS/2);
 #else
   assert(sampler_sz <= GEN_MAX_SAMPLERS);
 #endif

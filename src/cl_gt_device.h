@@ -46,8 +46,8 @@
 .image3d_max_height = 8192,
 .image3d_max_depth = 2048,
 .max_samplers = 16,
-.mem_base_addr_align = sizeof(cl_uint) * 8,
-.min_data_type_align_size = sizeof(cl_uint),
+.mem_base_addr_align = sizeof(cl_long) * 16 * 8,
+.min_data_type_align_size = sizeof(cl_long) * 16,
 .single_fp_config = 0, /* XXX */
 .global_mem_cache_type = CL_READ_WRITE_CACHE,
 .global_mem_size = 128 * 1024 * 1024,
