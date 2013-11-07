@@ -275,9 +275,8 @@ namespace gbe
 
     INLINE GenRegister bottom_half(void) const {
       GBE_ASSERT(isint64());
-      GenRegister r = *this;
+      GenRegister r = h2(*this);
       r.type = type == GEN_TYPE_UL ? GEN_TYPE_UD : GEN_TYPE_D;
-      r.hstride = GEN_HORIZONTAL_STRIDE_2;
       r.vstride = GEN_VERTICAL_STRIDE_16;
       return r;
     }
@@ -304,7 +303,8 @@ namespace gbe
 
     static INLINE GenRegister h2(GenRegister reg) {
       GenRegister r = reg;
-      r.hstride = GEN_HORIZONTAL_STRIDE_2;
+      if(r.hstride != GEN_HORIZONTAL_STRIDE_0)
+        r.hstride = GEN_HORIZONTAL_STRIDE_2;
       return r;
     }
 

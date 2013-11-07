@@ -8,6 +8,7 @@ void compiler_long(void)
   const size_t n = 16;
   int64_t src1[n], src2[n];
 
+  int64_t zero = 0;
   // Setup kernel and buffers
   OCL_CREATE_KERNEL("compiler_long");
   OCL_CREATE_BUFFER(buf[0], 0, n * sizeof(int64_t), NULL);
@@ -16,6 +17,7 @@ void compiler_long(void)
   OCL_SET_ARG(0, sizeof(cl_mem), &buf[0]);
   OCL_SET_ARG(1, sizeof(cl_mem), &buf[1]);
   OCL_SET_ARG(2, sizeof(cl_mem), &buf[2]);
+  OCL_SET_ARG(3, sizeof(cl_long), &zero);
   globals[0] = n;
   locals[0] = 16;
 
