@@ -80,6 +80,7 @@ struct intel_gpgpu
   intel_batchbuffer_t *batch;
   cl_gpgpu_kernel *ker;
   drm_intel_bo *binded_buf[max_buf_n];  /* all buffers binded for the call */
+  uint32_t target_buf_offset[max_buf_n];/* internal offset for buffers binded for the call */
   uint32_t binded_offset[max_buf_n];    /* their offsets in the curbe buffer */
   uint32_t binded_n;                    /* number of buffers binded */
 
@@ -644,10 +645,12 @@ intel_gpgpu_bind_image_gen7(intel_gpgpu_t *gpgpu,
 }
 
 static void
-intel_gpgpu_bind_buf(intel_gpgpu_t *gpgpu, drm_intel_bo *buf, uint32_t offset, uint32_t cchint)
+intel_gpgpu_bind_buf(intel_gpgpu_t *gpgpu, drm_intel_bo *buf, uint32_t offset,
+                     uint32_t internal_offset, uint32_t cchint)
 {
   assert(gpgpu->binded_n < max_buf_n);
   gpgpu->binded_buf[gpgpu->binded_n] = buf;
+  gpgpu->target_buf_offset[gpgpu->binded_n] = internal_offset;
   gpgpu->binded_offset[gpgpu->binded_n] = offset;
   gpgpu->binded_n++;
 }
@@ -674,7 +677,7 @@ intel_gpgpu_set_stack(intel_gpgpu_t *gpgpu, uint32_t offset, uint32_t size, uint
 {
   drm_intel_bufmgr *bufmgr = gpgpu->drv->bufmgr;
   gpgpu->stack_b.bo = drm_intel_bo_alloc(bufmgr, "STACK", size, 64);
-  intel_gpgpu_bind_buf(gpgpu, gpgpu->stack_b.bo, offset, cchint);
+  intel_gpgpu_bind_buf(gpgpu, gpgpu->stack_b.bo, offset, 0, cchint);
 }
 
 static void
@@ -768,11 +771,11 @@ intel_gpgpu_upload_curbes(intel_gpgpu_t *gpgpu, const void* data, uint32_t size)
   /* Now put all the relocations for our flat address space */
   for (i = 0; i < k->thread_n; ++i)
     for (j = 0; j < gpgpu->binded_n; ++j) {
-      *(uint32_t*)(curbe + gpgpu->binded_offset[j]+i*k->curbe_sz) = gpgpu->binded_buf[j]->offset;
+      *(uint32_t*)(curbe + gpgpu->binded_offset[j]+i*k->curbe_sz) = gpgpu->binded_buf[j]->offset + gpgpu->target_buf_offset[j];
       drm_intel_bo_emit_reloc(gpgpu->curbe_b.bo,
                               gpgpu->binded_offset[j]+i*k->curbe_sz,
                               gpgpu->binded_buf[j],
-                              0,
+                              gpgpu->target_buf_offset[j],
                               I915_GEM_DOMAIN_RENDER,
                               I915_GEM_DOMAIN_RENDER);
     }
