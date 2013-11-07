@@ -132,6 +132,7 @@ set (utests_sources
   builtin_pow.cpp
   builtin_exp.cpp
   builtin_convert_sat.cpp
+  sub_buffer.cpp
   runtime_createcontext.cpp
   runtime_null_kernel_arg.cpp
   runtime_event.cpp
