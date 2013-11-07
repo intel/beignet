@@ -1712,7 +1712,14 @@ INLINE_OVERLOADABLE float __gen_ocl_internal_fdim(float x, float y) {
   return __gen_ocl_internal_fmax(x, y) - y;
 }
 #define BODY \
+  if (isnan(x)) { \
+    *p = x; \
+    return x; \
+  } \
   *p = __gen_ocl_internal_floor(x); \
+  if (isinf(x)) { \
+    return x > 0 ? +0. : -0.; \
+  } \
   return __gen_ocl_internal_fmin(x - *p, 0x1.FFFFFep-1F);
 INLINE_OVERLOADABLE float fract(float x, global float *p) { BODY; }
 INLINE_OVERLOADABLE float fract(float x, local float *p) { BODY; }
