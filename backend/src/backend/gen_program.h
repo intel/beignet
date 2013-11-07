@@ -33,8 +33,6 @@
 
 /*! This will make the compiler output Gen ISA code */
 extern void genSetupCallBacks(void);
-extern sem_t llvm_semaphore;
-extern void genSetupLLVMSemaphore(void);
 
 #endif /* __GBE_GEN_PROGRAM_H__ */
 

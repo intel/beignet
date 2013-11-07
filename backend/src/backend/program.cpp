@@ -32,6 +32,8 @@
 #include "ir/unit.hpp"
 #include "llvm/llvm_to_gen.hpp"
 #include "llvm/Config/config.h"
+#include "llvm/Support/Threading.h"
+#include "llvm/Support/ManagedStatic.h"
 #include <cstring>
 #include <algorithm>
 #include <fstream>
@@ -557,9 +559,7 @@ namespace gbe {
 
     // Create an action and make the compiler instance carry it out
     llvm::OwningPtr<clang::CodeGenAction> Act(new clang::EmitLLVMOnlyAction());
-    sem_wait(&llvm_semaphore);
     auto retVal = Clang.ExecuteAction(*Act);
-    sem_post(&llvm_semaphore);
     if (!retVal)
       return;
 
@@ -854,7 +854,14 @@ namespace gbe
       gbe_get_image_base_index = gbe::getImageBaseIndex;
       gbe_set_image_base_index = gbe::setImageBaseIndex;
       genSetupCallBacks();
-      genSetupLLVMSemaphore();
+      llvm::llvm_start_multithreaded();
+    }
+
+    ~CallBackInitializer() {
+      llvm::llvm_stop_multithreaded();
+#if (LLVM_VERSION_MAJOR == 3) && (LLVM_VERSION_MINOR > 3)
+      llvm::llvm_shutdown();
+#endif
     }
   };
 
