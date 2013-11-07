@@ -548,8 +548,18 @@ void get_mem_info(void)
 {
     map<cl_mem_info, void *> maps;
     int expect_ref;
+    cl_mem sub_buf;
+    cl_int error;
 
-    OCL_CREATE_BUFFER(buf[0], 0, 64, NULL);
+    OCL_CREATE_BUFFER(buf[1], 0, 4096, NULL);
+
+    cl_buffer_region region;
+    region.origin = 1024;
+    region.size = 2048;
+    sub_buf = clCreateSubBuffer(buf[1], 0, CL_BUFFER_CREATE_TYPE_REGION, &region, &error );
+    buf[0] = sub_buf;
+    OCL_ASSERT(error == CL_SUCCESS);
+
     void * map_ptr = clEnqueueMapBuffer(queue, buf[0], 1, CL_MAP_READ, 0, 64, 0, NULL, NULL, NULL);
 
     expect_ref = CL_MEM_OBJECT_BUFFER;
@@ -558,7 +568,7 @@ void get_mem_info(void)
     expect_ref = 0;
     maps.insert(make_pair(CL_MEM_FLAGS,
                           (void *)(new Info_Result<cl_mem_flags>(expect_ref))));
-    expect_ref = 64;
+    expect_ref = 2048;
     maps.insert(make_pair(CL_MEM_SIZE,
                           (void *)(new Info_Result<size_t>(((size_t)expect_ref)))));
     expect_ref = 0;
@@ -572,6 +582,11 @@ void get_mem_info(void)
                           (void *)(new Info_Result<cl_uint>(((cl_uint)expect_ref)))));
     maps.insert(make_pair(CL_MEM_CONTEXT,
                           (void *)(new Info_Result<cl_context>(((cl_context)ctx)))));
+    maps.insert(make_pair(CL_MEM_ASSOCIATED_MEMOBJECT,
+                          (void *)(new Info_Result<cl_mem>(((cl_mem)buf[1])))));
+    expect_ref = 1024;
+    maps.insert(make_pair(CL_MEM_OFFSET,
+                          (void *)(new Info_Result<size_t>(((size_t)expect_ref)))));
 
     std::for_each(maps.begin(), maps.end(), [](pair<cl_mem_info, void *> x) {
         switch (x.first) {
@@ -595,6 +610,12 @@ void get_mem_info(void)
             break;
         case CL_MEM_CONTEXT:
             CALL_GETMEMINFO_AND_RET(cl_context);
+            break;
+        case CL_MEM_ASSOCIATED_MEMOBJECT:
+            CALL_GETMEMINFO_AND_RET(cl_mem);
+            break;
+        case CL_MEM_OFFSET:
+            CALL_GETMEMINFO_AND_RET(size_t);
             break;
 
         default:

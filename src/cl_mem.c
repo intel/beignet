@@ -116,12 +116,21 @@ cl_get_mem_object_info(cl_mem mem,
   case CL_MEM_CONTEXT:
     *((cl_context *)param_value) = mem->ctx;
     break;
-  // TODO: Need to implement sub buffer first.
   case CL_MEM_ASSOCIATED_MEMOBJECT:
-    NOT_IMPLEMENTED;
+    if(mem->type != CL_MEM_SUBBUFFER_TYPE) {
+      *((cl_mem *)param_value) = NULL;
+    } else {
+      struct _cl_mem_buffer* buf = (struct _cl_mem_buffer*)mem;
+      *((cl_mem *)param_value) = (cl_mem)(buf->parent);
+    }
     break;
   case CL_MEM_OFFSET:
-    NOT_IMPLEMENTED;
+    if(mem->type != CL_MEM_SUBBUFFER_TYPE) {
+      *((size_t *)param_value) = 0;
+    } else {
+      struct _cl_mem_buffer* buf = (struct _cl_mem_buffer*)mem;
+      *((size_t *)param_value) = buf->sub_offset;
+    }
     break;
   }
 
