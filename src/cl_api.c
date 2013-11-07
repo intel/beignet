@@ -907,6 +907,8 @@ clGetProgramInfo(cl_program       program,
   } else if (param_name == CL_PROGRAM_BINARY_SIZES) {
     FILL_GETINFO_RET (size_t, 1, (&program->bin_sz), CL_SUCCESS);
   } else if (param_name == CL_PROGRAM_BINARIES) {
+    if (param_value_size_ret)
+      *param_value_size_ret = sizeof(void*);
     if (!param_value)
       return CL_SUCCESS;
 
