@@ -24,6 +24,7 @@
 #include "cl_device_id.h"
 #include "cl_mem.h"
 #include "cl_utils.h"
+#include "cl_thread.h"
 #include "cl_alloc.h"
 #include "cl_driver.h"
 #include "cl_khr_icd.h"
@@ -43,7 +44,9 @@ cl_command_queue_new(cl_context ctx)
   queue->magic = CL_MAGIC_QUEUE_HEADER;
   queue->ref_n = 1;
   queue->ctx = ctx;
-  TRY_ALLOC_NO_ERR (queue->gpgpu, cl_gpgpu_new(ctx->drv));
+  if ((queue->thread_data = cl_thread_data_create()) == NULL) {
+    goto error;
+  }
 
   /* Append the command queue in the list */
   pthread_mutex_lock(&ctx->queue_lock);
@@ -84,9 +87,11 @@ cl_command_queue_delete(cl_command_queue queue)
     cl_mem_delete(queue->fulsim_out);
     queue->fulsim_out = NULL;
   }
+
+  cl_thread_data_destroy(queue->thread_data);
+  queue->thread_data = NULL;
   cl_mem_delete(queue->perf);
   cl_context_delete(queue->ctx);
-  cl_gpgpu_delete(queue->gpgpu);
   cl_free(queue->wait_events);
   queue->magic = CL_MAGIC_DEAD_HEADER; /* For safety */
   cl_free(queue);
@@ -119,13 +124,15 @@ LOCAL cl_int
 cl_command_queue_bind_image(cl_command_queue queue, cl_kernel k)
 {
   uint32_t i;
+  GET_QUEUE_THREAD_GPGPU(queue);
+
   for (i = 0; i < k->image_sz; i++) {
     int id = k->images[i].arg_idx;
     struct _cl_mem_image *image;
     assert(gbe_kernel_get_arg_type(k->opaque, id) == GBE_ARG_IMAGE);
     image = cl_mem_image(k->args[id].mem);
     set_image_info(k->curbe, &k->images[i], image);
-    cl_gpgpu_bind_image(queue->gpgpu, k->images[i].idx, image->base.bo, image->offset,
+    cl_gpgpu_bind_image(gpgpu, k->images[i].idx, image->base.bo, image->offset,
                         image->intel_fmt, image->image_type,
                         image->w, image->h, image->depth,
                         image->row_pitch, image->tiling);
@@ -136,6 +143,8 @@ cl_command_queue_bind_image(cl_command_queue queue, cl_kernel k)
 LOCAL cl_int
 cl_command_queue_bind_surface(cl_command_queue queue, cl_kernel k)
 {
+  GET_QUEUE_THREAD_GPGPU(queue);
+
   /* Bind all user buffers (given by clSetKernelArg) */
   uint32_t i;
   enum gbe_arg_type arg_type; /* kind of argument */
@@ -147,9 +156,9 @@ cl_command_queue_bind_surface(cl_command_queue queue, cl_kernel k)
     offset = gbe_kernel_get_curbe_offset(k->opaque, GBE_CURBE_KERNEL_ARGUMENT, i);
     if (k->args[i].mem->type == CL_MEM_SUBBUFFER_TYPE) {
       struct _cl_mem_buffer* buffer = (struct _cl_mem_buffer*)k->args[i].mem;
-      cl_gpgpu_bind_buf(queue->gpgpu, k->args[i].mem->bo, offset, buffer->sub_offset, cc_llc_l3);
+      cl_gpgpu_bind_buf(gpgpu, k->args[i].mem->bo, offset, buffer->sub_offset, cc_llc_l3);
     } else {
-      cl_gpgpu_bind_buf(queue->gpgpu, k->args[i].mem->bo, offset, 0, cc_llc_l3);
+      cl_gpgpu_bind_buf(gpgpu, k->args[i].mem->bo, offset, 0, cc_llc_l3);
     }
   }
 
@@ -407,14 +416,18 @@ error:
 LOCAL cl_int
 cl_command_queue_flush(cl_command_queue queue)
 {
-  cl_gpgpu_flush(queue->gpgpu);
+  GET_QUEUE_THREAD_GPGPU(queue);
+
+  cl_gpgpu_flush(gpgpu);
   return CL_SUCCESS;
 }
 
 LOCAL cl_int
 cl_command_queue_finish(cl_command_queue queue)
 {
-  cl_gpgpu_sync(queue->gpgpu);
+  GET_QUEUE_THREAD_GPGPU(queue);
+
+  cl_gpgpu_sync(gpgpu);
   return CL_SUCCESS;
 }
 

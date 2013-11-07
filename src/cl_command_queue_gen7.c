@@ -99,6 +99,7 @@ static void
 cl_upload_constant_buffer(cl_command_queue queue, cl_kernel ker)
 {
   /* calculate constant buffer size */
+  GET_QUEUE_THREAD_GPGPU(queue);
   int32_t arg;
   size_t offset;
   gbe_program prog = ker->program->opaque;
@@ -115,7 +116,7 @@ cl_upload_constant_buffer(cl_command_queue queue, cl_kernel ker)
   if(global_const_size == 0 && constant_buf_size == 0)
      return;
 
-  cl_buffer bo = cl_gpgpu_alloc_constant_buffer(queue->gpgpu, constant_buf_size + global_const_size + 4);
+  cl_buffer bo = cl_gpgpu_alloc_constant_buffer(gpgpu, constant_buf_size + global_const_size + 4);
   cl_buffer_map(bo, 1);
   char * cst_addr = cl_buffer_get_virtual(bo);
   offset = 0;
@@ -256,8 +257,8 @@ cl_command_queue_ND_range_gen7(cl_command_queue queue,
                                const size_t *global_wk_sz,
                                const size_t *local_wk_sz)
 {
+  GET_QUEUE_THREAD_GPGPU(queue);
   cl_context ctx = queue->ctx;
-  cl_gpgpu gpgpu = queue->gpgpu;
   char *final_curbe = NULL;  /* Includes them and one sub-buffer per group */
   cl_gpgpu_kernel kernel;
   const uint32_t simd_sz = cl_kernel_get_simd_width(ker);
@@ -297,7 +298,7 @@ cl_command_queue_ND_range_gen7(cl_command_queue queue,
   /* Bind user images */
   cl_command_queue_bind_image(queue, ker);
   /* Bind all samplers */
-  cl_gpgpu_bind_sampler(queue->gpgpu, ker->samplers, ker->sampler_sz);
+  cl_gpgpu_bind_sampler(gpgpu, ker->samplers, ker->sampler_sz);
 
   cl_setup_scratch(gpgpu, ker);
   /* Bind a stack if needed */

@@ -48,6 +48,7 @@ cl_event_is_gpu_command_type(cl_command_type type)
 cl_event cl_event_new(cl_context ctx, cl_command_queue queue, cl_command_type type, cl_bool emplict)
 {
   cl_event event = NULL;
+  GET_QUEUE_THREAD_GPGPU(queue);
 
   /* Allocate and inialize the structure itself */
   TRY_ALLOC_NO_ERR (event, CALLOC(struct _cl_event));
@@ -75,7 +76,7 @@ cl_event cl_event_new(cl_context ctx, cl_command_queue queue, cl_command_type ty
   else {
     event->status = CL_QUEUED;
     if(cl_event_is_gpu_command_type(event->type))
-      event->gpgpu_event = cl_gpgpu_event_new(queue->gpgpu);
+      event->gpgpu_event = cl_gpgpu_event_new(gpgpu);
   }
   cl_event_add_ref(event);       //dec when complete
   event->user_cb = NULL;
@@ -257,6 +258,7 @@ void cl_event_new_enqueue_callback(cl_event event,
   user_event *user_events, *u_ev;
   cl_command_queue queue = event->queue;
   cl_int i;
+  GET_QUEUE_THREAD_GPGPU(data->queue);
 
   /* Allocate and inialize the structure itself */
   TRY_ALLOC_NO_ERR (cb, CALLOC(enqueue_callback));
@@ -336,7 +338,7 @@ void cl_event_new_enqueue_callback(cl_event event,
     }
   }
   if(data->queue != NULL && event->gpgpu_event != NULL) {
-    cl_gpgpu_event_pending(data->queue->gpgpu, event->gpgpu_event);
+    cl_gpgpu_event_pending(gpgpu, event->gpgpu_event);
     data->ptr = (void *)event->gpgpu_event;
   }
   cb->data = *data;

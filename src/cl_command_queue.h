@@ -22,6 +22,7 @@
 
 #include "cl_internals.h"
 #include "cl_driver.h"
+#include "cl_thread.h"
 #include "CL/cl.h"
 #include <stdint.h>
 
@@ -40,10 +41,16 @@ struct _cl_command_queue {
   cl_event  last_event;                /* The last event in the queue, for enqueue mark used */
   cl_command_queue_properties  props;  /* Queue properties */
   cl_command_queue prev, next;         /* We chain the command queues together */
-  cl_gpgpu gpgpu;                      /* Setup all GEN commands */
+  void *thread_data;                   /* Used to store thread context data */
   cl_mem perf;                         /* Where to put the perf counters */
   cl_mem fulsim_out;                   /* Fulsim will output this buffer */
 };
+
+/* The macro to get the thread specified gpgpu struct. */
+#define GET_QUEUE_THREAD_GPGPU(queue) \
+	cl_gpgpu gpgpu = queue ? cl_get_thread_gpgpu(queue) : NULL;  \
+	if (queue) \
+	  assert(gpgpu);
 
 /* Allocate and initialize a new command queue. Also insert it in the list of
  * command queue in the associated context
