@@ -2248,8 +2248,6 @@ namespace gbe
           case GEN_OCL_GET_IMAGE_CHANNEL_ORDER:
           {
             GBE_ASSERT(AI != AE); const ir::Register surface_id = this->getRegister(*AI); ++AI;
-            uint32_t elemNum;
-            (void)getVectorInfo(ctx, I.getType(), &I, elemNum);
             const ir::Register reg = this->getRegister(&I, 0);
             int infoType = it->second - GEN_OCL_GET_IMAGE_WIDTH;
 

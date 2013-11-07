@@ -451,7 +451,6 @@ namespace gbe
     insertCurbeReg(ir::ocl::lid0, this->newCurbeEntry(GBE_CURBE_LOCAL_ID_X, 0, localIDSize));
     insertCurbeReg(ir::ocl::lid1, this->newCurbeEntry(GBE_CURBE_LOCAL_ID_Y, 0, localIDSize));
     insertCurbeReg(ir::ocl::lid2, this->newCurbeEntry(GBE_CURBE_LOCAL_ID_Z, 0, localIDSize));
-            insertCurbeReg(ir::ocl::samplerinfo, this->newCurbeEntry(GBE_CURBE_SAMPLER_INFO, 0, 32));
 
     // Go over all the instructions and find the special register we need
     // to push
@@ -480,9 +479,10 @@ namespace gbe
             realImageInfo = insn.getSrc(1);
             insertCurbeReg(realImageInfo, offset);
             insertCurbeReg(imageInfo, (uint32_t)realImageInfo);
-          } else
+          } else {
             realImageInfo = ir::Register(curbeRegs.find(imageInfo)->second);
-          insn.setSrc(srcID, realImageInfo);
+            insn.setSrc(1, realImageInfo);
+          }
           continue;
         } else if (insn.getOpcode() == ir::OP_GET_SAMPLER_INFO) {
           /* change the src to sampler information register. */

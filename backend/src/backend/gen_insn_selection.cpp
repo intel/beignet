@@ -2842,7 +2842,7 @@ namespace gbe
       using namespace ir;
       GenRegister dst;
       dst = sel.selReg(insn.getDst(0), TYPE_U32);
-      GenRegister imageInfoReg = GenRegister::ud1grf(insn.getSrc(0));
+      GenRegister imageInfoReg = GenRegister::ud1grf(insn.getSrc(1));
       sel.MOV(dst, imageInfoReg);
 
       return true;
