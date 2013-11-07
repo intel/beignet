@@ -104,6 +104,7 @@ cl_context_properties_process(const cl_context_properties *prop,
     prop += 2;
     *prop_len += 2;
   }
+  (*prop_len)++;
 exit:
 error:
   return err;
