@@ -66,6 +66,7 @@ typedef struct _cl_mem_dstr_cb {
 /* Used for buffers and images */
 enum cl_mem_type {
   CL_MEM_BUFFER_TYPE,
+  CL_MEM_SUBBUFFER_TYPE,
   CL_MEM_IMAGE_TYPE,
   CL_MEM_GL_IMAGE_TYPE,
 };
@@ -137,7 +138,11 @@ cl_mem_image_init(struct _cl_mem_image *image, size_t w, size_t h,
 
 struct _cl_mem_buffer {
   _cl_mem base;
-  size_t offset;
+  struct _cl_mem_buffer* subs;         /* Sub buf objects. */
+  size_t sub_offset;                   /* The sub start offset. */
+  struct _cl_mem_buffer* sub_prev, *sub_next;/* We chain the sub memory buffers together */
+  pthread_mutex_t sub_lock;            /* Sub buffers list lock*/
+  struct _cl_mem_buffer* parent;       /* Point to the parent buffer if is sub-buffer */
 };
 
 inline static struct _cl_mem_image *
@@ -169,6 +174,9 @@ extern cl_int cl_get_image_info(cl_mem, cl_image_info, size_t, void *, size_t *)
 
 /* Create a new memory object and initialize it with possible user data */
 extern cl_mem cl_mem_new_buffer(cl_context, cl_mem_flags, size_t, void*, cl_int*);
+
+/* Create a new sub memory object */
+extern cl_mem cl_mem_new_sub_buffer(cl_mem, cl_mem_flags, cl_buffer_create_type, const void *, cl_int *);
 
 /* Idem but this is an image */
 extern cl_mem

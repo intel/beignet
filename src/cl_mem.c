@@ -52,7 +52,9 @@ static cl_mem_object_type
 cl_get_mem_object_type(cl_mem mem)
 {
   switch (mem->type) {
-    case CL_MEM_BUFFER_TYPE: return CL_MEM_OBJECT_BUFFER;
+    case CL_MEM_BUFFER_TYPE:
+    case CL_MEM_SUBBUFFER_TYPE:
+      return CL_MEM_OBJECT_BUFFER;
     case CL_MEM_IMAGE_TYPE:
     case CL_MEM_GL_IMAGE_TYPE:
     {
@@ -329,6 +331,102 @@ error:
   goto exit;
 }
 
+LOCAL cl_mem
+cl_mem_new_sub_buffer(cl_mem buffer,
+                      cl_mem_flags flags,
+                      cl_buffer_create_type create_type,
+                      const void *create_info,
+                      cl_int *errcode_ret)
+{
+  cl_int err = CL_SUCCESS;
+  cl_mem mem = NULL;
+  struct _cl_mem_buffer *sub_buf = NULL;
+
+  if (buffer->type != CL_MEM_BUFFER_TYPE) {
+    err = CL_INVALID_MEM_OBJECT;
+    goto error;
+  }
+
+  if (flags && (((buffer->flags & CL_MEM_WRITE_ONLY) && (flags & (CL_MEM_READ_WRITE|CL_MEM_READ_ONLY)))
+          || ((buffer->flags & CL_MEM_READ_ONLY) && (flags & (CL_MEM_READ_WRITE|CL_MEM_WRITE_ONLY)))
+          || (flags & (CL_MEM_USE_HOST_PTR | CL_MEM_ALLOC_HOST_PTR | CL_MEM_COPY_HOST_PTR)))) {
+    err = CL_INVALID_VALUE;
+    goto error;
+  }
+
+  if (create_type != CL_BUFFER_CREATE_TYPE_REGION) {
+    err = CL_INVALID_VALUE;
+    goto error;
+  }
+
+  if (!create_info) {
+    err = CL_INVALID_VALUE;
+    goto error;
+  }
+
+  cl_buffer_region *info = (cl_buffer_region *)create_info;
+
+  if (!info->size) {
+    err = CL_INVALID_BUFFER_SIZE;
+    goto error;
+  }
+
+  if (info->origin > buffer->size || info->origin + info->size > buffer->size) {
+    err = CL_INVALID_VALUE;
+    goto error;
+  }
+
+  if (info->origin & (buffer->ctx->device->mem_base_addr_align - 1)) {
+    err = CL_MISALIGNED_SUB_BUFFER_OFFSET;
+    goto error;
+  }
+
+  /* Now create the sub buffer and link it to the buffer. */
+  TRY_ALLOC (sub_buf, CALLOC(struct _cl_mem_buffer));
+  mem = &sub_buf->base;
+  mem->type = CL_MEM_SUBBUFFER_TYPE;
+  SET_ICD(mem->dispatch)
+  mem->ref_n = 1;
+  mem->magic = CL_MAGIC_MEM_HEADER;
+  mem->flags = flags;
+  sub_buf->parent = (struct _cl_mem_buffer*)buffer;
+
+  cl_mem_add_ref(buffer);
+  /* Append the buffer in the parent buffer list */
+  pthread_mutex_lock(&((struct _cl_mem_buffer*)buffer)->sub_lock);
+  sub_buf->sub_next = ((struct _cl_mem_buffer*)buffer)->subs;
+  if (((struct _cl_mem_buffer*)buffer)->subs != NULL)
+    ((struct _cl_mem_buffer*)buffer)->subs->sub_prev = sub_buf;
+  ((struct _cl_mem_buffer*)buffer)->subs = sub_buf;
+  pthread_mutex_unlock(&((struct _cl_mem_buffer*)buffer)->sub_lock);
+
+  mem->bo = buffer->bo;
+  mem->size = info->size;
+  sub_buf->sub_offset = info->origin;
+  if (buffer->flags & CL_MEM_USE_HOST_PTR || buffer->flags & CL_MEM_COPY_HOST_PTR) {
+    mem->host_ptr = buffer->host_ptr;
+  }
+
+  cl_context_add_ref(buffer->ctx);
+  mem->ctx = buffer->ctx;
+  /* Append the buffer in the context buffer list */
+  pthread_mutex_lock(&buffer->ctx->buffer_lock);
+  mem->next = buffer->ctx->buffers;
+  if (buffer->ctx->buffers != NULL)
+    buffer->ctx->buffers->prev = mem;
+  buffer->ctx->buffers = mem;
+  pthread_mutex_unlock(&buffer->ctx->buffer_lock);
+
+exit:
+  if (errcode_ret)
+    *errcode_ret = err;
+  return mem;
+error:
+  cl_mem_delete(mem);
+  mem = NULL;
+  goto exit;
+}
+
 void
 cl_mem_copy_image_region(const size_t *origin, const size_t *region,
                          void *dst, size_t dst_row_pitch, size_t dst_slice_pitch,
@@ -546,8 +644,6 @@ cl_mem_delete(cl_mem mem)
      cl_mem_gl_delete(cl_mem_gl_image(mem));
   }
 #endif
-  if (LIKELY(mem->bo != NULL))
-    cl_buffer_unreference(mem->bo);
 
   /* Remove it from the list */
   assert(mem->ctx);
@@ -584,6 +680,24 @@ cl_mem_delete(cl_mem mem)
       mem->dstr_cb = cb->next;
       free(cb);
     }
+  }
+
+  /* Iff we are sub, do nothing for bo release. */
+  if (mem->type == CL_MEM_SUBBUFFER_TYPE) {
+    struct _cl_mem_buffer* buffer = (struct _cl_mem_buffer*)mem;
+    /* Remove it from the parent's list */
+    assert(buffer->parent);
+    pthread_mutex_lock(&buffer->parent->sub_lock);
+    if (buffer->sub_prev)
+      buffer->sub_prev->sub_next = buffer->sub_next;
+    if (buffer->sub_next)
+      buffer->sub_next->sub_prev = buffer->sub_prev;
+    if (buffer->parent->subs == buffer)
+      buffer->parent->subs = buffer->sub_next;
+    pthread_mutex_unlock(&buffer->parent->sub_lock);
+    cl_mem_delete((cl_mem )(buffer->parent));
+  } else if (LIKELY(mem->bo != NULL)) {
+    cl_buffer_unreference(mem->bo);
   }
 
   cl_free(mem);

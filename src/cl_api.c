@@ -482,13 +482,17 @@ clCreateSubBuffer(cl_mem                buffer,
                   const void *          buffer_create_info,
                   cl_int *              errcode_ret)
 {
-#if 0
+  cl_mem mem = NULL;
   cl_int err = CL_SUCCESS;
-  CHECK_MEM (buffer);
-  NOT_IMPLEMENTED;
+
+  CHECK_MEM(buffer);
+
+  mem = cl_mem_new_sub_buffer(buffer, flags, buffer_create_type,
+                       buffer_create_info, &err);
 error:
-#endif
-  return NULL;
+  if (errcode_ret)
+    *errcode_ret = err;
+  return mem;
 }
 
 cl_mem
@@ -1594,7 +1598,7 @@ clEnqueueCopyBuffer(cl_command_queue     command_queue,
     err = CL_INVALID_VALUE;
     goto error;
   }
-  if (dst_offset < 0 || dst_offset + cb > src_buffer->size) {
+  if (dst_offset < 0 || dst_offset + cb > dst_buffer->size) {
     err = CL_INVALID_VALUE;
     goto error;
   }
@@ -1607,7 +1611,22 @@ clEnqueueCopyBuffer(cl_command_queue     command_queue,
     goto error;
   }
 
-  // TODO: Need to check the sub buffer cases.
+  /* Check sub overlap */
+  if (src_buffer->type == CL_MEM_SUBBUFFER_TYPE && dst_buffer->type == CL_MEM_SUBBUFFER_TYPE ) {
+    struct _cl_mem_buffer* src_b = (struct _cl_mem_buffer*)src_buffer;
+    struct _cl_mem_buffer* dst_b = (struct _cl_mem_buffer*)dst_buffer;
+    size_t src_sub_offset = src_b->sub_offset;
+    size_t dst_sub_offset = dst_b->sub_offset;
+
+    if ((src_offset + src_sub_offset <= dst_offset + dst_sub_offset
+          && dst_offset + dst_sub_offset <= src_offset + src_sub_offset + cb - 1)
+     && (dst_offset + dst_sub_offset <= src_offset + src_sub_offset
+          && src_offset + src_sub_offset <= dst_offset + dst_sub_offset + cb - 1)) {
+      err = CL_MEM_COPY_OVERLAP;
+      goto error;
+    }
+  }
+
   err = cl_mem_copy(command_queue, src_buffer, dst_buffer, src_offset, dst_offset, cb);
 
   TRY(cl_event_check_waitlist, num_events_in_wait_list, event_wait_list, event, src_buffer->ctx);
@@ -2066,15 +2085,22 @@ static cl_int _cl_map_mem(cl_mem mem, void **ptr, void **mem_ptr, size_t offset,
 {
   cl_int slot = -1;
   int err = CL_SUCCESS;
+  size_t sub_offset = 0;
+
+  if(mem->type == CL_MEM_SUBBUFFER_TYPE) {
+    struct _cl_mem_buffer* buffer = (struct _cl_mem_buffer*)mem;
+    sub_offset = buffer->sub_offset;
+  }
+
   if (!(*ptr = cl_mem_map_gtt_unsync(mem))) {
     err = CL_MAP_FAILURE;
     goto error;
   }
-  *ptr = (char*)(*ptr) + offset;
+  *ptr = (char*)(*ptr) + offset + sub_offset;
   if(mem->flags & CL_MEM_USE_HOST_PTR) {
     assert(mem->host_ptr);
     //only calc ptr here, will do memcpy in enqueue
-    *mem_ptr = mem->host_ptr + offset;
+    *mem_ptr = mem->host_ptr + offset + sub_offset;
   } else {
     *mem_ptr = *ptr;
   }

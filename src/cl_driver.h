@@ -99,7 +99,7 @@ typedef cl_gpgpu (cl_gpgpu_sync_cb)(cl_gpgpu);
 extern cl_gpgpu_sync_cb *cl_gpgpu_sync;
 
 /* Bind a regular unformatted buffer */
-typedef void (cl_gpgpu_bind_buf_cb)(cl_gpgpu, cl_buffer, uint32_t offset, uint32_t cchint);
+typedef void (cl_gpgpu_bind_buf_cb)(cl_gpgpu, cl_buffer, uint32_t offset, uint32_t internal_offset, uint32_t cchint);
 extern cl_gpgpu_bind_buf_cb *cl_gpgpu_bind_buf;
 
 /* bind samplers defined in both kernel and kernel args. */
