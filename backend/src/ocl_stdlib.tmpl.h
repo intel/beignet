@@ -1423,7 +1423,11 @@ INLINE_OVERLOADABLE float __gen_ocl_internal_atanh(float x) {
   return 0.5f * native_sqrt((1 + x) / (1 - x));
 }
 INLINE_OVERLOADABLE float __gen_ocl_internal_copysign(float x, float y) {
-  return x * y < 0 ? -x : x;
+  union { unsigned u; float f; } ux, uy;
+  ux.f = x;
+  uy.f = y;
+  ux.u = (ux.u & 0x7fffffff) | (uy.u & 0x80000000u);
+  return ux.f;
 }
 INLINE_OVERLOADABLE float __gen_ocl_internal_erf(float x) {
   return M_2_SQRTPI_F * (x - __gen_ocl_pow(x, 3) / 3 + __gen_ocl_pow(x, 5) / 10 - __gen_ocl_pow(x, 7) / 42 + __gen_ocl_pow(x, 9) / 216);
