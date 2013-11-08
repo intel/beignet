@@ -47,6 +47,7 @@ namespace gbe {
   struct KernelArgument {
     gbe_arg_type type; //!< Pointer, structure, image, regular value?
     uint32_t size;     //!< Size of the argument
+    uint32_t align;    //!< addr alignment of the argument
     uint32_t bufSize;  //!< Contant buffer size
   };
 
@@ -87,6 +88,9 @@ namespace gbe {
     /*! Return the size of the given argument */
     INLINE uint32_t getArgSize(uint32_t argID) const {
       return argID >= argNum ? 0u : args[argID].size;
+    }
+    INLINE uint32_t getArgAlign(uint32_t argID) const {
+      return argID >= argNum ? 0u : args[argID].align;
     }
     /*! Return the type of the given argument */
     INLINE gbe_arg_type getArgType(uint32_t argID) const {

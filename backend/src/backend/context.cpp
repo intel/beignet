@@ -534,6 +534,8 @@ namespace gbe
       kernel->args = NULL;
     for (uint32_t argID = 0; argID < kernel->argNum; ++argID) {
       const auto &arg = fn.getArg(argID);
+
+      kernel->args[argID].align = arg.align;
       switch (arg.type) {
         case ir::FunctionArgument::VALUE:
         case ir::FunctionArgument::STRUCTURE:

@@ -185,6 +185,10 @@ extern gbe_kernel_get_arg_size_cb *gbe_kernel_get_arg_size;
 typedef enum gbe_arg_type (gbe_kernel_get_arg_type_cb)(gbe_kernel, uint32_t argID);
 extern gbe_kernel_get_arg_type_cb *gbe_kernel_get_arg_type;
 
+/*! Get the align of the given argument */
+typedef uint32_t (gbe_kernel_get_arg_align_cb)(gbe_kernel, uint32_t argID);
+extern gbe_kernel_get_arg_align_cb *gbe_kernel_get_arg_align;
+
 /*! Get the simd width for the kernel */
 typedef uint32_t (gbe_kernel_get_simd_width_cb)(gbe_kernel);
 extern gbe_kernel_get_simd_width_cb *gbe_kernel_get_simd_width;

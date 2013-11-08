@@ -692,7 +692,8 @@ namespace gbe
         void* mem = malloc(size);
         uint32_t offset = 0;
         getConstantData(c, mem, offset);
-        unit.newConstant((char *)mem, name, size, sizeof(unsigned));
+        uint32_t alignment = getAlignmentByte(unit, type);
+        unit.newConstant((char *)mem, name, size, alignment);
         free(mem);
       }
     }
@@ -1079,7 +1080,7 @@ namespace gbe
           const uint32_t elemSize = getTypeByteSize(unit, elemType);
           const uint32_t elemNum = vectorType->getNumElements();
           //vector's elemType always scalar type
-          ctx.input(argName, ir::FunctionArgument::VALUE, reg, elemNum*elemSize);
+          ctx.input(argName, ir::FunctionArgument::VALUE, reg, elemNum*elemSize, getAlignmentByte(unit, type));
 
           ir::Function& fn = ctx.getFunction();
           for(uint32_t i=1; i < elemNum; i++) {
@@ -1094,37 +1095,38 @@ namespace gbe
                     "vector type in the function argument is not supported yet");
         const ir::Register reg = regTranslator.newScalar(I);
         if (type->isPointerTy() == false)
-          ctx.input(argName, ir::FunctionArgument::VALUE, reg, getTypeByteSize(unit, type));
+          ctx.input(argName, ir::FunctionArgument::VALUE, reg, getTypeByteSize(unit, type), getAlignmentByte(unit, type));
         else {
           PointerType *pointerType = dyn_cast<PointerType>(type);
+          Type *pointed = pointerType->getElementType();
           // By value structure
 #if LLVM_VERSION_MINOR <= 1
           if (PAL.paramHasAttr(argID+1, Attribute::ByVal)) {
 #else
           if (I->hasByValAttr()) {
 #endif /* LLVM_VERSION_MINOR <= 1 */
-            Type *pointed = pointerType->getElementType();
             const size_t structSize = getTypeByteSize(unit, pointed);
-            ctx.input(argName, ir::FunctionArgument::STRUCTURE, reg, structSize);
+            ctx.input(argName, ir::FunctionArgument::STRUCTURE, reg, structSize, getAlignmentByte(unit, type));
           }
           // Regular user provided pointer (global, local or constant)
           else {
             const uint32_t addr = pointerType->getAddressSpace();
             const ir::AddressSpace addrSpace = addressSpaceLLVMToGen(addr);
             const uint32_t ptrSize = getTypeByteSize(unit, type);
+            const uint32_t align = getAlignmentByte(unit, pointed);
               switch (addrSpace) {
               case ir::MEM_GLOBAL:
-                ctx.input(argName, ir::FunctionArgument::GLOBAL_POINTER, reg, ptrSize);
+                ctx.input(argName, ir::FunctionArgument::GLOBAL_POINTER, reg, ptrSize, align);
               break;
               case ir::MEM_LOCAL:
-                ctx.input(argName, ir::FunctionArgument::LOCAL_POINTER, reg, ptrSize);
+                ctx.input(argName, ir::FunctionArgument::LOCAL_POINTER, reg, ptrSize, align);
                 ctx.getFunction().setUseSLM(true);
               break;
               case ir::MEM_CONSTANT:
-                ctx.input(argName, ir::FunctionArgument::CONSTANT_POINTER, reg, ptrSize);
+                ctx.input(argName, ir::FunctionArgument::CONSTANT_POINTER, reg, ptrSize, align);
               break;
               case ir::IMAGE:
-                ctx.input(argName, ir::FunctionArgument::IMAGE, reg, ptrSize);
+                ctx.input(argName, ir::FunctionArgument::IMAGE, reg, ptrSize, align);
                 ctx.getFunction().getImageSet()->append(reg, &ctx);
               break;
               default: GBE_ASSERT(addrSpace != ir::MEM_PRIVATE);

@@ -98,37 +98,47 @@ error:
 static void
 cl_upload_constant_buffer(cl_command_queue queue, cl_kernel ker)
 {
-  /* calculate constant buffer size */
+  /* calculate constant buffer size
+   * we need raw_size & aligned_size
+   */
   GET_QUEUE_THREAD_GPGPU(queue);
   int32_t arg;
-  size_t offset;
+  size_t offset = 0;
+  uint32_t raw_size = 0, aligned_size =0;
   gbe_program prog = ker->program->opaque;
   const int32_t arg_n = gbe_kernel_get_arg_num(ker->opaque);
   size_t global_const_size = gbe_program_get_global_constant_size(prog);
-  uint32_t constant_buf_size = 0;
+  aligned_size = raw_size = global_const_size;
+  /* Reserve 8 bytes to get rid of 0 address */
+  if(global_const_size == 0) aligned_size = 8;
+
   for (arg = 0; arg < arg_n; ++arg) {
     const enum gbe_arg_type type = gbe_kernel_get_arg_type(ker->opaque, arg);
     if (type == GBE_ARG_CONSTANT_PTR && ker->args[arg].mem) {
+      uint32_t alignment = gbe_kernel_get_arg_align(ker->opaque, arg);
+      assert(alignment != 0);
       cl_mem mem = ker->args[arg].mem;
-      constant_buf_size += ALIGN(mem->size, 4);
+      raw_size += mem->size;
+      aligned_size = ALIGN(aligned_size, alignment);
+      aligned_size += mem->size;
     }
   }
-  if(global_const_size == 0 && constant_buf_size == 0)
+  if(raw_size == 0)
      return;
 
-  cl_buffer bo = cl_gpgpu_alloc_constant_buffer(gpgpu, constant_buf_size + global_const_size + 4);
+  cl_buffer bo = cl_gpgpu_alloc_constant_buffer(gpgpu, aligned_size);
   cl_buffer_map(bo, 1);
   char * cst_addr = cl_buffer_get_virtual(bo);
-  offset = 0;
-  if (global_const_size > 0) {
-    /* Write the global constant arrays */
-    gbe_program_get_global_constant_data(prog, (char*)(cst_addr+offset));
-  }
-  offset += ALIGN(global_const_size, 4);
 
+  /* upload the global constant data */
+  if (global_const_size > 0) {
+    gbe_program_get_global_constant_data(prog, (char*)(cst_addr+offset));
+    offset += global_const_size;
+  }
+
+  /* reserve 8 bytes to get rid of 0 address */
   if(global_const_size == 0) {
-    /* reserve 4 bytes to get rid of 0 address */
-    offset += 4;
+    offset = 8;
   }
 
   /* upload constant buffer argument */
@@ -137,7 +147,8 @@ cl_upload_constant_buffer(cl_command_queue queue, cl_kernel ker)
     const enum gbe_arg_type type = gbe_kernel_get_arg_type(ker->opaque, arg);
     if (type == GBE_ARG_CONSTANT_PTR && ker->args[arg].mem) {
       cl_mem mem = ker->args[arg].mem;
-
+      uint32_t alignment = gbe_kernel_get_arg_align(ker->opaque, arg);
+      offset = ALIGN(offset, alignment);
       curbe_offset = gbe_kernel_get_curbe_offset(ker->opaque, GBE_CURBE_KERNEL_ARGUMENT, arg);
       assert(curbe_offset >= 0);
       *(uint32_t *) (ker->curbe + curbe_offset) = offset;
@@ -146,7 +157,7 @@ cl_upload_constant_buffer(cl_command_queue queue, cl_kernel ker)
       void * addr = cl_buffer_get_virtual(mem->bo);
       memcpy(cst_addr + offset, addr, mem->size);
       cl_buffer_unmap(mem->bo);
-      offset += ALIGN(mem->size, 4);
+      offset += mem->size;
     }
   }
   cl_buffer_unmap(bo);
@@ -201,12 +212,14 @@ cl_curbe_fill(cl_kernel ker,
   }
   /* Handle the various offsets to SLM */
   const int32_t arg_n = gbe_kernel_get_arg_num(ker->opaque);
-  /* align so that we kernel argument get good alignment */
-  int32_t arg, slm_offset = ALIGN(gbe_kernel_get_slm_size(ker->opaque), 32);
+  int32_t arg, slm_offset = gbe_kernel_get_slm_size(ker->opaque);
   for (arg = 0; arg < arg_n; ++arg) {
     const enum gbe_arg_type type = gbe_kernel_get_arg_type(ker->opaque, arg);
     if (type != GBE_ARG_LOCAL_PTR)
       continue;
+    uint32_t align = gbe_kernel_get_arg_align(ker->opaque, arg);
+    assert(align != 0);
+    slm_offset = ALIGN(slm_offset, align);
     offset = gbe_kernel_get_curbe_offset(ker->opaque, GBE_CURBE_KERNEL_ARGUMENT, arg);
     assert(offset >= 0);
     uint32_t *slmptr = (uint32_t *) (ker->curbe + offset);

@@ -229,6 +229,7 @@ namespace gbe {
       KernelArgument& arg = args[i];
       OUT_UPDATE_SZ(arg.type);
       OUT_UPDATE_SZ(arg.size);
+      OUT_UPDATE_SZ(arg.align);
       OUT_UPDATE_SZ(arg.bufSize);
     }
 
@@ -315,6 +316,7 @@ namespace gbe {
       KernelArgument& arg = args[i];
       IN_UPDATE_SZ(arg.type);
       IN_UPDATE_SZ(arg.size);
+      IN_UPDATE_SZ(arg.align);
       IN_UPDATE_SZ(arg.bufSize);
     }
 
@@ -422,6 +424,7 @@ namespace gbe {
       outs << spaces_nl << "  Arg " << i << ":\n";
       outs << spaces_nl << "      type value: "<< arg.type << "\n";
       outs << spaces_nl << "      size: "<< arg.size << "\n";
+      outs << spaces_nl << "      align: "<< arg.align << "\n";
       outs << spaces_nl << "      bufSize: "<< arg.bufSize << "\n";
     }
 
@@ -696,6 +699,11 @@ namespace gbe {
     return kernel->getArgSize(argID);
   }
 
+  static uint32_t kernelGetArgAlign(gbe_kernel genKernel, uint32_t argID) {
+    if (genKernel == NULL) return 0u;
+    const gbe::Kernel *kernel = (const gbe::Kernel*) genKernel;
+    return kernel->getArgAlign(argID);
+  }
   static gbe_arg_type kernelGetArgType(gbe_kernel genKernel, uint32_t argID) {
     if (genKernel == NULL) return GBE_ARG_INVALID;
     const gbe::Kernel *kernel = (const gbe::Kernel*) genKernel;
@@ -803,6 +811,7 @@ GBE_EXPORT_SYMBOL gbe_kernel_get_code_size_cb *gbe_kernel_get_code_size = NULL;
 GBE_EXPORT_SYMBOL gbe_kernel_get_arg_num_cb *gbe_kernel_get_arg_num = NULL;
 GBE_EXPORT_SYMBOL gbe_kernel_get_arg_size_cb *gbe_kernel_get_arg_size = NULL;
 GBE_EXPORT_SYMBOL gbe_kernel_get_arg_type_cb *gbe_kernel_get_arg_type = NULL;
+GBE_EXPORT_SYMBOL gbe_kernel_get_arg_align_cb *gbe_kernel_get_arg_align = NULL;
 GBE_EXPORT_SYMBOL gbe_kernel_get_simd_width_cb *gbe_kernel_get_simd_width = NULL;
 GBE_EXPORT_SYMBOL gbe_kernel_get_curbe_offset_cb *gbe_kernel_get_curbe_offset = NULL;
 GBE_EXPORT_SYMBOL gbe_kernel_get_curbe_size_cb *gbe_kernel_get_curbe_size = NULL;
@@ -838,6 +847,7 @@ namespace gbe
       gbe_kernel_get_arg_num = gbe::kernelGetArgNum;
       gbe_kernel_get_arg_size = gbe::kernelGetArgSize;
       gbe_kernel_get_arg_type = gbe::kernelGetArgType;
+      gbe_kernel_get_arg_align = gbe::kernelGetArgAlign;
       gbe_kernel_get_simd_width = gbe::kernelGetSIMDWidth;
       gbe_kernel_get_curbe_offset = gbe::kernelGetCurbeOffset;
       gbe_kernel_get_curbe_size = gbe::kernelGetCurbeSize;

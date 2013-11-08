@@ -105,10 +105,10 @@ namespace ir {
     return index;
   }
 
-  void Context::input(const std::string &name, FunctionArgument::Type type, Register reg, uint32_t elementSize) {
+  void Context::input(const std::string &name, FunctionArgument::Type type, Register reg, uint32_t elementSize, uint32_t align) {
     GBE_ASSERTM(fn != NULL, "No function currently defined");
     GBE_ASSERTM(reg < fn->file.regNum(), "Out-of-bound register");
-    FunctionArgument *arg = GBE_NEW(FunctionArgument, type, reg, elementSize, name);
+    FunctionArgument *arg = GBE_NEW(FunctionArgument, type, reg, elementSize, name, align);
     fn->args.push_back(arg);
   }
 
