@@ -131,6 +131,22 @@ namespace gbe {
     return reinterpret_cast<gbe_program>(program);
   }
 
+  static size_t genProgramSerializeToBinary(gbe_program program, char **binary) {
+    using namespace gbe;
+    size_t sz;
+    std::ostringstream oss;
+    GenProgram *prog = (GenProgram*)program;
+
+    if ((sz = prog->serializeToBin(oss)) == 0) {
+      *binary = 0;
+      return 0;
+    }
+
+    *binary = (char *)malloc(sizeof(char) * sz);
+    memcpy(*binary, oss.str().c_str(), sz*sizeof(char));
+    return sz;
+  }
+
   static gbe_program genProgramNewFromLLVM(const char *fileName,
                                            size_t stringSize,
                                            char *err,
@@ -157,5 +173,6 @@ namespace gbe {
 void genSetupCallBacks(void)
 {
   gbe_program_new_from_binary = gbe::genProgramNewFromBinary;
+  gbe_program_serialize_to_binary = gbe::genProgramSerializeToBinary;
   gbe_program_new_from_llvm = gbe::genProgramNewFromLLVM;
 }

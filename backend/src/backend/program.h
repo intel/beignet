@@ -122,6 +122,10 @@ extern gbe_program_new_from_source_cb *gbe_program_new_from_source;
 typedef gbe_program (gbe_program_new_from_binary_cb)(const char *binary, size_t size);
 extern gbe_program_new_from_binary_cb *gbe_program_new_from_binary;
 
+/*! Serialize a program to a bin */
+typedef size_t (gbe_program_serialize_to_binary_cb)(gbe_program program, char **binary);
+extern gbe_program_serialize_to_binary_cb *gbe_program_serialize_to_binary;
+
 /*! Create a new program from the given LLVM file */
 typedef gbe_program (gbe_program_new_from_llvm_cb)(const char *fileName,
                                                    size_t string_size,

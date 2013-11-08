@@ -909,7 +909,14 @@ clGetProgramInfo(cl_program       program,
     FILL_GETINFO_RET (char, (strlen(program->source) + 1),
                    program->source, CL_SUCCESS);
   } else if (param_name == CL_PROGRAM_BINARY_SIZES) {
-    FILL_GETINFO_RET (size_t, 1, (&program->bin_sz), CL_SUCCESS);
+    if (program->binary == NULL) {
+      program->binary_sz = gbe_program_serialize_to_binary(program->opaque, &program->binary);
+    }
+
+    if (program->binary == NULL || program->binary_sz == 0) {
+      return CL_OUT_OF_RESOURCES;
+    }
+    FILL_GETINFO_RET (size_t, 1, (&program->binary_sz), CL_SUCCESS);
   } else if (param_name == CL_PROGRAM_BINARIES) {
     if (param_value_size_ret)
       *param_value_size_ret = sizeof(void*);
@@ -918,12 +925,15 @@ clGetProgramInfo(cl_program       program,
 
     /* param_value points to an array of n
        pointers allocated by the caller */
-    if (program->bin_sz > 0) {
-      memcpy(*((void **)param_value), program->bin, program->bin_sz);
-    } else {
-      memcpy(*((void **)param_value), ret_str, 1);
+    if (program->binary == NULL) {
+      program->binary_sz = gbe_program_serialize_to_binary(program->opaque, &program->binary);
     }
 
+    if (program->binary == NULL || program->binary_sz == 0) {
+      return CL_OUT_OF_RESOURCES;
+    }
+
+    memcpy(*((void **)param_value), program->binary, program->binary_sz);
     return CL_SUCCESS;
   } else {
     return CL_INVALID_VALUE;
