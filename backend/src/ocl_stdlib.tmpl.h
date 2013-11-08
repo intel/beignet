@@ -256,7 +256,7 @@ INLINE_OVERLOADABLE int isnormal(float x) {
   union { uint u; float f; } u;
   u.f = x;
   u.u &= 0x7FFFFFFF;
-  return (u.u < 0x7F800000) && (u.u >= 1);
+  return (u.u < 0x7F800000) && (u.u >= 0x800000);
 }
 INLINE_OVERLOADABLE int isordered(float x, float y) { return isequal(x, x) && isequal(y, y); }
 INLINE_OVERLOADABLE int isunordered(float x, float y) { return isnan(x) || isnan(y); }
