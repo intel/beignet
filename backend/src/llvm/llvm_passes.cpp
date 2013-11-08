@@ -128,8 +128,6 @@ namespace gbe
 
   uint32_t getAlignmentByte(const ir::Unit &unit, Type* Ty)
   {
-    const uint32_t MAX_ALIGN = 8; //maximum size is 8 for doubles
-
     switch (Ty->getTypeID()) {
       case Type::VoidTyID: NOT_SUPPORTED;
       case Type::VectorTyID:
@@ -153,8 +151,6 @@ namespace gbe
         for(uint32_t subtype = 0; subtype < StrTy->getNumElements(); subtype++)
         {
           maxa = std::max(getAlignmentByte(unit, StrTy->getElementType(subtype)), maxa);
-          if(maxa==MAX_ALIGN)
-            return maxa;
         }
         return maxa;
       }
