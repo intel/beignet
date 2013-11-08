@@ -1608,7 +1608,6 @@ INLINE_OVERLOADABLE TYPE min(TYPE a, TYPE b) { \
 INLINE_OVERLOADABLE TYPE clamp(TYPE v, TYPE l, TYPE u) { \
   return max(min(v, u), l); \
 }
-DECL_MIN_MAX_CLAMP(float)
 DECL_MIN_MAX_CLAMP(int)
 DECL_MIN_MAX_CLAMP(short)
 DECL_MIN_MAX_CLAMP(char)
@@ -1618,6 +1617,19 @@ DECL_MIN_MAX_CLAMP(unsigned char)
 DECL_MIN_MAX_CLAMP(long)
 DECL_MIN_MAX_CLAMP(ulong)
 #undef DECL_MIN_MAX_CLAMP
+INLINE_OVERLOADABLE float max(float a, float b) {
+  if(isnan(b))
+    return a;
+  return a > b ? a : b;
+}
+INLINE_OVERLOADABLE float min(float a, float b) {
+  if(isnan(b))
+    return a;
+  return a < b ? a : b;
+}
+INLINE_OVERLOADABLE float clamp(float v, float l, float u) {
+  return max(min(v, u), l);
+}
 
 #define BODY \
   if (isnan(x) || isinf(x)) { \
