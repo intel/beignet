@@ -2674,7 +2674,24 @@ namespace gbe
     const ir::Register stack = ir::ocl::stackptr;
     const ir::Register reg = ctx.reg(pointerFamily);
     const ir::Immediate imm = ctx.getImmediate(immIndex);
+    uint32_t align = getAlignmentByte(unit, elemType);
+    // below code assume align is power of 2
+    GBE_ASSERT(align && (align & (align-1)) == 0);
 
+    // align the stack pointer according to data alignment
+    if(align > 1) {
+      // (ptr + (align-1)) & ~(align-1)
+      ir::ImmediateIndex immAlign;
+      immAlign = ctx.newIntegerImmediate(align-1, ir::TYPE_U32);
+      ir::Register alignReg = ctx.reg(ctx.getPointerFamily());
+      ctx.LOADI(ir::TYPE_S32, alignReg, immAlign);
+      ctx.ADD(ir::TYPE_U32, stack, stack, alignReg);
+
+      alignReg = ctx.reg(ctx.getPointerFamily());
+      immAlign = ctx.newIntegerImmediate(~(align-1), ir::TYPE_U32);
+      ctx.LOADI(ir::TYPE_S32, alignReg, immAlign);
+      ctx.AND(ir::TYPE_U32, stack, stack, alignReg);
+    }
     // Set the destination register properly
     ctx.MOV(imm.type, dst, stack);
 
