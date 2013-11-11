@@ -213,6 +213,7 @@ cl_curbe_fill(cl_kernel ker,
   /* Handle the various offsets to SLM */
   const int32_t arg_n = gbe_kernel_get_arg_num(ker->opaque);
   int32_t arg, slm_offset = gbe_kernel_get_slm_size(ker->opaque);
+  ker->local_mem_sz = 0;
   for (arg = 0; arg < arg_n; ++arg) {
     const enum gbe_arg_type type = gbe_kernel_get_arg_type(ker->opaque, arg);
     if (type != GBE_ARG_LOCAL_PTR)
@@ -225,8 +226,8 @@ cl_curbe_fill(cl_kernel ker,
     uint32_t *slmptr = (uint32_t *) (ker->curbe + offset);
     *slmptr = slm_offset;
     slm_offset += ker->args[arg].local_sz;
+    ker->local_mem_sz += ker->args[arg].local_sz;
   }
-
   return slm_offset;
 }
 

@@ -273,8 +273,10 @@ cl_device_get_version(cl_device_id device, cl_int *ver)
              sizeof(((cl_device_id)NULL)->FIELD));                  \
         return CL_SUCCESS;
 
+#include "cl_kernel.h"
 LOCAL cl_int
-cl_get_kernel_workgroup_info(cl_device_id device,
+cl_get_kernel_workgroup_info(cl_kernel kernel,
+                             cl_device_id device,
                              cl_kernel_work_group_info param_name,
                              size_t param_value_size,
                              void* param_value,
@@ -289,6 +291,14 @@ cl_get_kernel_workgroup_info(cl_device_id device,
   switch (param_name) {
     DECL_FIELD(WORK_GROUP_SIZE, wg_sz)
     DECL_FIELD(COMPILE_WORK_GROUP_SIZE, compile_wg_sz)
+    DECL_FIELD(PREFERRED_WORK_GROUP_SIZE_MULTIPLE, preferred_wg_sz_mul)
+    case CL_KERNEL_LOCAL_MEM_SIZE:
+      if (param_value_size < sizeof(cl_ulong))
+        return CL_INVALID_VALUE;
+      if (param_value_size_ret != NULL)
+        *param_value_size_ret = sizeof(cl_ulong);
+      *(cl_ulong*)param_value = gbe_kernel_get_slm_size(kernel->opaque) + kernel->local_mem_sz;
+      return CL_SUCCESS;
     default: return CL_INVALID_VALUE;
   };
 }

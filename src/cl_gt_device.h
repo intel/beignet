@@ -35,6 +35,7 @@
 .native_vector_width_float = 16,
 .native_vector_width_double = 16,
 .native_vector_width_half = 16,
+.preferred_wg_sz_mul = 16,
 .address_bits = 32,
 .max_mem_alloc_size = 128 * 1024 * 1024,
 .image_support = CL_TRUE,

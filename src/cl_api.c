@@ -1108,7 +1108,8 @@ clGetKernelWorkGroupInfo(cl_kernel                   kernel,
                          void *                      param_value,
                          size_t *                    param_value_size_ret)
 {
-  return cl_get_kernel_workgroup_info(device,
+  return cl_get_kernel_workgroup_info(kernel,
+                                      device,
                                       param_name,
                                       param_value_size,
                                       param_value,
