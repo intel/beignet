@@ -478,6 +478,8 @@ namespace gbe {
         continue;
       if(str == "-cl-opt-disable") bOpt = false;
       if(str == "-cl-fast-relaxed-math") bFastMath = true;
+      if(str == "-cl-denorms-are-zero")
+        continue;
       useless.push_back(str);
       args.push_back(str.c_str());
     }
