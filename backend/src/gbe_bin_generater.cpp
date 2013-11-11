@@ -152,7 +152,7 @@ void program_build_instance::serialize_program(void) throw(int)
     ofstream ofs;
     ostringstream oss;
     size_t sz;
-    ofs.open(bin_path, ofstream::out | ofstream::app | ofstream::binary);
+    ofs.open(bin_path, ofstream::out | ofstream::trunc | ofstream::binary);
 
     if (str_fmt_out) {
         string array_name = "Unkown_name_array";
