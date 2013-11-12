@@ -141,6 +141,7 @@ namespace gbe
       case Type::IntegerTyID:
       case Type::FloatTyID:
       case Type::DoubleTyID:
+      case Type::HalfTyID:
         return getTypeBitSize(unit, Ty)/8;
       case Type::ArrayTyID:
         return getAlignmentByte(unit, cast<ArrayType>(Ty)->getElementType());
@@ -165,6 +166,7 @@ namespace gbe
       case Type::VoidTyID:    NOT_SUPPORTED;
       case Type::PointerTyID: return unit.getPointerSize();
       case Type::IntegerTyID: return cast<IntegerType>(Ty)->getBitWidth();
+      case Type::HalfTyID:    return 16;
       case Type::FloatTyID:   return 32;
       case Type::DoubleTyID:  return 64;
       case Type::VectorTyID:
