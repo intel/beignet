@@ -1660,18 +1660,34 @@ INLINE_OVERLOADABLE float frexp(float x, private int *exp) { BODY; }
 #undef BODY
 
 INLINE_OVERLOADABLE float nextafter(float x, float y) {
-  uint hx = as_uint(x), ix = hx & 0x7FFFFFFF;
-  uint hy = as_uint(y), iy = hy & 0x7FFFFFFF;
-  if (ix > 0x7F800000 || iy > 0x7F800000)
-    return nan(0u);
-  if (hx == hy)
-    return x;
-  if (ix == 0)
-    return as_float((hy & 0x80000000u) | 1);
-  if (((0 == (hx & 0x80000000u)) && y > x) || ((hx & 0x80000000u) && y < x))
-    hx ++;
-  else
-    hx --;
+  int hx, hy, ix, iy;
+  hx = as_int(x);
+  hy = as_int(y);
+  ix = hx & 0x7fffffff;
+  iy = hy & 0x7fffffff;
+  if(ix>0x7f800000 || iy>0x7f800000)
+    return x+y;
+  if(hx == hy)
+    return y;
+  if(ix == 0) {
+    if(iy == 0)
+      return y;
+    else
+      return as_float((hy&0x80000000) | 1);
+  }
+  if(hx >= 0) {
+    if(hx > hy) {
+      hx -= 1;
+    } else {
+      hx += 1;
+    }
+  } else {
+    if(hy >= 0 || hx > hy){
+      hx -= 1;
+    } else {
+      hx += 1;
+    }
+  }
   return as_float(hx);
 }
 
