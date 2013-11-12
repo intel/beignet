@@ -42,7 +42,6 @@ static struct _cl_device_id intel_ivb_gt2_device = {
   .max_work_group_size = 1024,
   .max_clock_frequency = 1000,
   .wg_sz = 1024,
-  .compile_wg_sz = {0},	
 #include "cl_gen7_device.h"
 };
 
@@ -54,7 +53,6 @@ static struct _cl_device_id intel_ivb_gt1_device = {
   .max_work_group_size = 512,
   .max_clock_frequency = 1000,
   .wg_sz = 512,
-  .compile_wg_sz = {0},	
 #include "cl_gen7_device.h"
 };
 
@@ -67,7 +65,6 @@ static struct _cl_device_id intel_hsw_device = {
   .max_work_group_size = 512,
   .max_clock_frequency = 1000,
   .wg_sz = 512,
-  .compile_wg_sz = {0},	
 #include "cl_gen75_device.h"
 };
 
@@ -290,7 +287,6 @@ cl_get_kernel_workgroup_info(cl_kernel kernel,
 
   switch (param_name) {
     DECL_FIELD(WORK_GROUP_SIZE, wg_sz)
-    DECL_FIELD(COMPILE_WORK_GROUP_SIZE, compile_wg_sz)
     DECL_FIELD(PREFERRED_WORK_GROUP_SIZE_MULTIPLE, preferred_wg_sz_mul)
     case CL_KERNEL_LOCAL_MEM_SIZE:
       if (param_value_size < sizeof(cl_ulong))
@@ -299,6 +295,14 @@ cl_get_kernel_workgroup_info(cl_kernel kernel,
         *param_value_size_ret = sizeof(cl_ulong);
       *(cl_ulong*)param_value = gbe_kernel_get_slm_size(kernel->opaque) + kernel->local_mem_sz;
       return CL_SUCCESS;
+    case CL_KERNEL_COMPILE_WORK_GROUP_SIZE:
+      if (param_value_size < sizeof(kernel->compile_wg_sz))
+        return CL_INVALID_VALUE;
+      if (param_value_size_ret != NULL)
+        *param_value_size_ret = sizeof(kernel->compile_wg_sz);
+      memcpy(param_value, kernel->compile_wg_sz, sizeof(kernel->compile_wg_sz));
+      return CL_SUCCESS;
+
     default: return CL_INVALID_VALUE;
   };
 }

@@ -95,7 +95,6 @@ struct _cl_device_id {
   size_t built_in_kernels_sz;
   /* Kernel specific info that we're assigning statically */
   size_t wg_sz;
-  size_t compile_wg_sz[3];
   size_t preferred_wg_sz_mul;
 };
 

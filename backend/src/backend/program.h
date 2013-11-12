@@ -149,6 +149,10 @@ extern gbe_kernel_get_sampler_size_cb *gbe_kernel_get_sampler_size;
 typedef void (gbe_kernel_get_sampler_data_cb)(gbe_kernel gbeKernel, uint32_t *samplers);
 extern gbe_kernel_get_sampler_data_cb *gbe_kernel_get_sampler_data;
 
+/*! Get the content of defined samplers */
+typedef void (gbe_kernel_get_compile_wg_size_cb)(gbe_kernel gbeKernel, size_t wg_sz[3]);
+extern gbe_kernel_get_compile_wg_size_cb *gbe_kernel_get_compile_wg_size;
+
 /*! Destroy and deallocate the given program */
 typedef void (gbe_program_delete_cb)(gbe_program);
 extern gbe_program_delete_cb *gbe_program_delete;

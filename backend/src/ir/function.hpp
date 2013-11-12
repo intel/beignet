@@ -310,6 +310,10 @@ namespace ir {
     SamplerSet* getSamplerSet(void) const {return samplerSet; }
     /*! Get image set in this function */
     ImageSet* getImageSet(void) const {return imageSet; }
+    /*! Set required work group size. */
+    void setCompileWorkGroupSize(size_t x, size_t y, size_t z) { compileWgSize[0] = x; compileWgSize[1] = y; compileWgSize[2] = z; }
+    /*! Get required work group size. */
+    const size_t *getCompileWorkGroupSize(void) const {return compileWgSize;}
   private:
     friend class Context;           //!< Can freely modify a function
     std::string name;               //!< Function name
@@ -326,8 +330,10 @@ namespace ir {
     uint32_t simdWidth;             //!< 8 or 16 if forced, 0 otherwise
     bool useSLM;                    //!< Is SLM required?
     uint32_t slmSize;               //!< local variable size inside kernel function
-    SamplerSet *samplerSet;          //!< samplers used in this function.
-    ImageSet* imageSet;              //!< Image set in this function's arguments..
+    SamplerSet *samplerSet;         //!< samplers used in this function.
+    ImageSet* imageSet;             //!< Image set in this function's arguments..
+    size_t compileWgSize[3];        //!< required work group size specified by
+                                    //   __attribute__((reqd_work_group_size(X, Y, Z))).
     GBE_CLASS(Function);            //!< Use custom allocator
   };
 

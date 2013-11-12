@@ -122,6 +122,7 @@ namespace gbe {
       Kernel *kernel = this->compileKernel(unit, name);
       kernel->setSamplerSet(pair.second->getSamplerSet());
       kernel->setImageSet(pair.second->getImageSet());
+      kernel->setCompileWorkGroupSize(pair.second->getCompileWorkGroupSize());
       kernels.insert(std::make_pair(name, kernel));
     }
     return true;
@@ -250,7 +251,9 @@ namespace gbe {
     OUT_UPDATE_SZ(scratchSize);
     OUT_UPDATE_SZ(useSLM);
     OUT_UPDATE_SZ(slmSize);
-
+    OUT_UPDATE_SZ(compileWgSize[0]);
+    OUT_UPDATE_SZ(compileWgSize[1]);
+    OUT_UPDATE_SZ(compileWgSize[2]);
     /* samplers. */
     if (samplerSet) {
       has_samplerset = 1;
@@ -340,6 +343,9 @@ namespace gbe {
     IN_UPDATE_SZ(scratchSize);
     IN_UPDATE_SZ(useSLM);
     IN_UPDATE_SZ(slmSize);
+    IN_UPDATE_SZ(compileWgSize[0]);
+    IN_UPDATE_SZ(compileWgSize[1]);
+    IN_UPDATE_SZ(compileWgSize[2]);
 
     IN_UPDATE_SZ(has_samplerset);
     if (has_samplerset) {
@@ -417,6 +423,7 @@ namespace gbe {
     outs << spaces_nl << "  scratchSize: " << scratchSize << "\n";
     outs << spaces_nl << "  useSLM: " << useSLM << "\n";
     outs << spaces_nl << "  slmSize: " << slmSize << "\n";
+    outs << spaces_nl << "  compileWgSize: " << compileWgSize[0] << compileWgSize[1] << compileWgSize[2] << "\n";
 
     outs << spaces_nl << "  Argument Number is " << argNum << "\n";
     for (uint32_t i = 0; i < argNum; i++) {
@@ -772,6 +779,12 @@ namespace gbe {
     kernel->getSamplerData(samplers);
   }
 
+  static void kernelGetCompileWorkGroupSize(gbe_kernel gbeKernel, size_t wg_size[3]) {
+    if (gbeKernel == NULL) return;
+    const gbe::Kernel *kernel = (const gbe::Kernel*) gbeKernel;
+    kernel->getCompileWorkGroupSize(wg_size);
+  }
+
   static size_t kernelGetImageSize(gbe_kernel gbeKernel) {
     if (gbeKernel == NULL) return 0;
     const gbe::Kernel *kernel = (const gbe::Kernel*) gbeKernel;
@@ -826,6 +839,7 @@ GBE_EXPORT_SYMBOL gbe_kernel_use_slm_cb *gbe_kernel_use_slm = NULL;
 GBE_EXPORT_SYMBOL gbe_kernel_get_slm_size_cb *gbe_kernel_get_slm_size = NULL;
 GBE_EXPORT_SYMBOL gbe_kernel_get_sampler_size_cb *gbe_kernel_get_sampler_size = NULL;
 GBE_EXPORT_SYMBOL gbe_kernel_get_sampler_data_cb *gbe_kernel_get_sampler_data = NULL;
+GBE_EXPORT_SYMBOL gbe_kernel_get_compile_wg_size_cb *gbe_kernel_get_compile_wg_size = NULL;
 GBE_EXPORT_SYMBOL gbe_kernel_get_image_size_cb *gbe_kernel_get_image_size = NULL;
 GBE_EXPORT_SYMBOL gbe_kernel_get_image_data_cb *gbe_kernel_get_image_data = NULL;
 GBE_EXPORT_SYMBOL gbe_set_image_base_index_cb *gbe_set_image_base_index = NULL;
@@ -862,6 +876,7 @@ namespace gbe
       gbe_kernel_get_slm_size = gbe::kernelGetSLMSize;
       gbe_kernel_get_sampler_size = gbe::kernelGetSamplerSize;
       gbe_kernel_get_sampler_data = gbe::kernelGetSamplerData;
+      gbe_kernel_get_compile_wg_size = gbe::kernelGetCompileWorkGroupSize;
       gbe_kernel_get_image_size = gbe::kernelGetImageSize;
       gbe_kernel_get_image_data = gbe::kernelGetImageData;
       gbe_get_image_base_index = gbe::getImageBaseIndex;

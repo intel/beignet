@@ -57,6 +57,8 @@ struct _cl_kernel {
   struct ImageInfo *images;   /* images defined in kernel args */
   size_t image_sz;            /* image count in kernel args */
   cl_ulong local_mem_sz;      /* local memory size specified in kernel args. */
+  size_t compile_wg_sz[3];    /* Required workgroup size by __attribute__((reqd_work_gro
+                                 up_size(X, Y, Z))) qualifier.*/
   cl_argument *args;          /* To track argument setting */
   uint32_t arg_n:31;          /* Number of arguments */
   uint32_t ref_its_program:1; /* True only for the user kernel (created by clCreateKernel) */

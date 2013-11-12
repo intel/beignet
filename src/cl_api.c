@@ -2413,6 +2413,7 @@ clEnqueueNDRangeKernel(cl_command_queue  command_queue,
     goto error;
   }
 
+
   /* XXX No event right now */
   //FATAL_IF(num_events_in_wait_list > 0, "Events are not supported");
   //FATAL_IF(event_wait_list != NULL, "Events are not supported");
@@ -2427,6 +2428,16 @@ clEnqueueNDRangeKernel(cl_command_queue  command_queue,
   if (global_work_offset != NULL)
     for (i = 0; i < work_dim; ++i)
       fixed_global_off[i] = global_work_offset[i];
+
+  if (kernel->compile_wg_sz[0] || kernel->compile_wg_sz[1] || kernel->compile_wg_sz[2]) {
+    if (fixed_local_sz[0] != kernel->compile_wg_sz[0]
+        || fixed_local_sz[1] != kernel->compile_wg_sz[1]
+        || fixed_local_sz[2] != kernel->compile_wg_sz[2])
+    {
+        err = CL_INVALID_WORK_GROUP_SIZE;
+        goto error;
+    }
+  }
 
   /* Do device specific checks are enqueue the kernel */
   err = cl_command_queue_ND_range(command_queue,

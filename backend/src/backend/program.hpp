@@ -132,6 +132,18 @@ namespace gbe {
     void setImageSet(ir::ImageSet * from) {
       imageSet = from;
     }
+    /*! Set compile work group size */
+    void setCompileWorkGroupSize(const size_t wg_sz[3]) {
+       compileWgSize[0] = wg_sz[0];
+       compileWgSize[1] = wg_sz[1];
+       compileWgSize[2] = wg_sz[2];
+    }
+    /*! Get compile work group size */
+    void getCompileWorkGroupSize (size_t wg_sz[3]) const {
+       wg_sz[0] = compileWgSize[0];
+       wg_sz[1] = compileWgSize[1];
+       wg_sz[2] = compileWgSize[2];
+    }
     /*! Get defined image size */
     size_t getImageSize(void) const { return imageSet->getDataSize(); }
     /*! Get defined image value array */
@@ -181,6 +193,7 @@ namespace gbe {
     Context *ctx;              //!< Save context after compiler to alloc constant buffer curbe
     ir::SamplerSet *samplerSet;//!< Copy from the corresponding function.
     ir::ImageSet *imageSet;    //!< Copy from the corresponding function.
+    size_t compileWgSize[3];   //!< required work group size by kernel attribute.
     GBE_CLASS(Kernel);         //!< Use custom allocators
   };
 

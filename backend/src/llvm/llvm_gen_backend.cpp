@@ -1056,6 +1056,33 @@ namespace gbe
   {
     GBE_ASSERTM(F.hasStructRetAttr() == false,
                 "Returned value for kernel functions is forbidden");
+
+    // Loop over the kernel metadatas to set the required work group size.
+    NamedMDNode *clKernelMetaDatas = TheModule->getNamedMetadata("opencl.kernels");
+    size_t reqd_wg_sz[3] = {0, 0, 0};
+    for(uint i = 0; i < clKernelMetaDatas->getNumOperands(); i++)
+    {
+      MDNode *node = clKernelMetaDatas->getOperand(i);
+      if (node->getOperand(0) != &F) continue;
+      for(uint j = 0; j < node->getNumOperands() - 1; j++)
+      {
+        MDNode *attrNode = dyn_cast_or_null<MDNode>(node->getOperand(1 + j));
+        if (attrNode == NULL) break;
+        MDString *attrName = dyn_cast_or_null<MDString>(attrNode->getOperand(0));
+        if (attrName && attrName->getString() == "reqd_work_group_size") {
+          GBE_ASSERT(attrNode->getNumOperands() == 4);
+          ConstantInt *x = dyn_cast<ConstantInt>(attrNode->getOperand(1));
+          ConstantInt *y = dyn_cast<ConstantInt>(attrNode->getOperand(2));
+          ConstantInt *z = dyn_cast<ConstantInt>(attrNode->getOperand(3));
+          GBE_ASSERT(x && y && z);
+          reqd_wg_sz[0] = x->getZExtValue();
+          reqd_wg_sz[1] = y->getZExtValue();
+          reqd_wg_sz[2] = z->getZExtValue();
+          break;
+        }
+      }
+    }
+    ctx.getFunction().setCompileWorkGroupSize(reqd_wg_sz[0], reqd_wg_sz[1], reqd_wg_sz[2]);
     // Loop over the arguments and output registers for them
     if (!F.arg_empty()) {
       uint32_t argID = 0;

@@ -230,6 +230,7 @@ cl_kernel_setup(cl_kernel k, gbe_kernel opaque)
   assert(k->sampler_sz <= GEN_MAX_SAMPLERS);
   if (k->sampler_sz > 0)
     gbe_kernel_get_sampler_data(k->opaque, k->samplers);
+  gbe_kernel_get_compile_wg_size(k->opaque, k->compile_wg_sz);
   /* Get image data & size */
   k->image_sz = gbe_kernel_get_image_size(k->opaque);
   assert(k->sampler_sz <= GEN_MAX_SURFACES);
@@ -263,6 +264,7 @@ cl_kernel_dup(cl_kernel from)
   to->curbe_sz = from->curbe_sz;
   to->sampler_sz = from->sampler_sz;
   to->image_sz = from->image_sz;
+  memcpy(to->compile_wg_sz, from->compile_wg_sz, sizeof(from->compile_wg_sz));
   if (to->sampler_sz)
     memcpy(to->samplers, from->samplers, to->sampler_sz * sizeof(uint32_t));
   if (to->image_sz) {
