@@ -1776,7 +1776,46 @@ INLINE_OVERLOADABLE float remquo(float x, float y, private int *quo) { BODY; }
 #undef BODY
 INLINE_OVERLOADABLE float native_divide(float x, float y) { return x/y; }
 INLINE_OVERLOADABLE float ldexp(float x, int n) {
-  return __gen_ocl_pow(2, n) * x;
+  union { float f; unsigned u; } u;
+  u.f = x;
+  unsigned s = u.u & 0x80000000u, v = u.u & 0x7fffffff, d = 0;
+  if(v >= 0x7f800000)
+    return x;
+  if(v == 0)
+    return x;
+  int e = v >> 23;
+  v &= 0x7fffff;
+  if(e >= 1)
+    v |= 0x800000;
+  else {
+    v <<= 1;
+    while(v < 0x800000) {
+      v <<= 1;
+      e --;
+    }
+  }
+  e = add_sat(e, n);
+  if(e >= 255) {
+    u.u = s | 0x7f800000;
+    return u.f;
+  }
+  if(e > 0) {
+    u.u = s | (e << 23) | (v & 0x7fffff);
+    return u.f;
+  }
+  if(e <= -23) {
+    u.u = s;
+    return u.f;
+  }
+  while(e <= 0) {
+    d = (d >> 1) | (v << 31);
+    v >>= 1;
+    e ++;
+  }
+  if(d > 0x80000000u)
+    v ++;
+  u.u = s | v;
+  return u.f;
 }
 INLINE_OVERLOADABLE float pown(float x, int n) {
   if (x == 0 && n == 0)
