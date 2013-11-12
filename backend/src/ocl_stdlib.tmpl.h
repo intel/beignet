@@ -1872,6 +1872,11 @@ INLINE_OVERLOADABLE void vstore##DIM(TYPE##DIM v, size_t offset, SPACE TYPE *p) 
   *(SPACE TYPE##DIM *) (p + DIM * offset) = v; \
 }
 
+#define DECL_UNTYPED_RD_SPACE_N(TYPE, DIM, SPACE) \
+INLINE_OVERLOADABLE TYPE##DIM vload##DIM(size_t offset, const SPACE TYPE *p) { \
+  return *(SPACE TYPE##DIM *) (p + DIM * offset); \
+}
+
 #define DECL_UNTYPED_V3_SPACE(TYPE, SPACE) \
 INLINE_OVERLOADABLE void vstore3(TYPE##3 v, size_t offset, SPACE TYPE *p) {\
   *(p + 3 * offset) = v.s0; \
@@ -1882,6 +1887,12 @@ INLINE_OVERLOADABLE TYPE##3 vload3(size_t offset, const SPACE TYPE *p) { \
   return *(SPACE TYPE##3 *) (p + 3 * offset); \
 }
 
+#define DECL_UNTYPED_RDV3_SPACE(TYPE, SPACE) \
+INLINE_OVERLOADABLE TYPE##3 vload3(size_t offset, const SPACE TYPE *p) { \
+  return *(SPACE TYPE##3 *) (p + 3 * offset); \
+}
+
+
 #define DECL_UNTYPED_RW_ALL_SPACE(TYPE, SPACE) \
   DECL_UNTYPED_RW_SPACE_N(TYPE, 2, SPACE) \
   DECL_UNTYPED_V3_SPACE(TYPE, SPACE) \
@@ -1889,10 +1900,17 @@ INLINE_OVERLOADABLE TYPE##3 vload3(size_t offset, const SPACE TYPE *p) { \
   DECL_UNTYPED_RW_SPACE_N(TYPE, 8, SPACE) \
   DECL_UNTYPED_RW_SPACE_N(TYPE, 16, SPACE)
 
+#define DECL_UNTYPED_RD_ALL_SPACE(TYPE, SPACE) \
+  DECL_UNTYPED_RD_SPACE_N(TYPE, 2, SPACE) \
+  DECL_UNTYPED_RDV3_SPACE(TYPE, SPACE) \
+  DECL_UNTYPED_RD_SPACE_N(TYPE, 4, SPACE) \
+  DECL_UNTYPED_RD_SPACE_N(TYPE, 8, SPACE) \
+  DECL_UNTYPED_RD_SPACE_N(TYPE, 16, SPACE)
+
 #define DECL_UNTYPED_RW_ALL(TYPE) \
   DECL_UNTYPED_RW_ALL_SPACE(TYPE, __global) \
   DECL_UNTYPED_RW_ALL_SPACE(TYPE, __local) \
-  DECL_UNTYPED_RW_ALL_SPACE(TYPE, __constant) \
+  DECL_UNTYPED_RD_ALL_SPACE(TYPE, __constant) \
   DECL_UNTYPED_RW_ALL_SPACE(TYPE, __private)
 
 DECL_UNTYPED_RW_ALL(char)
