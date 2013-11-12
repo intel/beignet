@@ -681,6 +681,7 @@ namespace gbe
     const Module::GlobalListType &globalList = TheModule->getGlobalList();
     for(auto i = globalList.begin(); i != globalList.end(); i ++) {
       const GlobalVariable &v = *i;
+      if(!v.isConstantUsed()) continue;
       const char *name = v.getName().data();
       unsigned addrSpace = v.getType()->getAddressSpace();
       if(addrSpace == ir::AddressSpace::MEM_CONSTANT) {
@@ -1409,6 +1410,7 @@ namespace gbe
         this->newRegister(const_cast<GlobalVariable*>(&v));
         ir::Register reg = regTranslator.getScalar(const_cast<GlobalVariable*>(&v), 0);
         ir::Constant &con = unit.getConstantSet().getConstant(j ++);
+        GBE_ASSERT(con.getName() == v.getName());
         ctx.LOADI(ir::TYPE_S32, reg, ctx.newIntegerImmediate(con.getOffset(), ir::TYPE_S32));
       } else {
         GBE_ASSERT(0);

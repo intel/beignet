@@ -1,5 +1,5 @@
 constant int m[3] = {71,72,73};
-constant int n = 1;
+const constant int n = 1;
 constant int o[3] = {3, 2, 1};
 
 constant int4 a= {1, 2, 3, 4};
