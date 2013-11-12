@@ -1721,7 +1721,11 @@ INLINE_OVERLOADABLE float __gen_ocl_internal_minmag(float x, float y) {
 }
 INLINE_OVERLOADABLE float mix(float x, float y, float a) { return x + (y-x)*a;}
 INLINE_OVERLOADABLE float __gen_ocl_internal_fdim(float x, float y) {
-  return __gen_ocl_internal_fmax(x, y) - y;
+  if(isnan(x))
+    return x;
+  if(isnan(y))
+    return y;
+  return x > y ? (x - y) : +0.f;
 }
 #define BODY \
   if (isnan(x)) { \
