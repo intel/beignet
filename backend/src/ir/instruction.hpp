@@ -176,8 +176,8 @@ namespace ir {
     template <typename T> INLINE bool isMemberOf(void) const {
       return T::isClassOf(*this);
     }
-    static const uint32_t MAX_SRC_NUM = 8;
-    static const uint32_t MAX_DST_NUM = 8;
+    static const uint32_t MAX_SRC_NUM = 16;
+    static const uint32_t MAX_DST_NUM = 16;
   protected:
     BasicBlock *parent;      //!< The basic block containing the instruction
     GBE_CLASS(Instruction);  //!< Use internal allocators
@@ -237,6 +237,17 @@ namespace ir {
   public:
     /*! Get the type of the source registers */
     Type getType(void) const;
+    /*! Return true if the given instruction is an instance of this class */
+    static bool isClassOf(const Instruction &insn);
+  };
+
+  /*! BitCast instruction converts from one type to another */
+  class BitCastInstruction : public Instruction {
+  public:
+    /*! Get the type of the source */
+    Type getSrcType(void) const;
+    /*! Get the type of the destination */
+    Type getDstType(void) const;
     /*! Return true if the given instruction is an instance of this class */
     static bool isClassOf(const Instruction &insn);
   };
@@ -623,6 +634,8 @@ namespace ir {
   Instruction GE(Type type, Register dst, Register src0, Register src1);
   /*! ge.type dst src0 src1 */
   Instruction GT(Type type, Register dst, Register src0, Register src1);
+  /*! BITCAST.{dstType <- srcType} dst src */
+  Instruction BITCAST(Type dstType, Type srcType, Tuple dst, Tuple src, uint8_t dstNum, uint8_t srcNum);
   /*! cvt.{dstType <- srcType} dst src */
   Instruction CVT(Type dstType, Type srcType, Register dst, Register src);
   /*! sat_cvt.{dstType <- srcType} dst src */

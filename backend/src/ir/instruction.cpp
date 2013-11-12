@@ -243,6 +243,40 @@ namespace ir {
       INLINE bool wellFormed(const Function &fn, std::string &whyNot) const;
     };
 
+    class ALIGNED_INSTRUCTION BitCastInstruction :
+      public BasePolicy,
+      public TupleSrcPolicy<BitCastInstruction>,
+      public TupleDstPolicy<BitCastInstruction>
+    {
+    public:
+      BitCastInstruction(Type dstType,
+                         Type srcType,
+                         Tuple dst,
+                         Tuple src,
+                         uint8_t dstNum,
+                         uint8_t srcNum)
+      {
+        this->opcode = OP_BITCAST;
+        this->dst = dst;
+        this->src = src;
+        this->dstFamily = getFamily(dstType);
+        this->srcFamily = getFamily(srcType);
+        GBE_ASSERT(srcNum <= 16 && dstNum <= 16);
+        this->dstNum = dstNum;
+        this->srcNum = srcNum;
+      }
+      INLINE Type getSrcType(void) const { return getType((RegisterFamily)srcFamily); }
+      INLINE Type getDstType(void) const { return getType((RegisterFamily)dstFamily); }
+      INLINE bool wellFormed(const Function &fn, std::string &whyNot) const;
+      INLINE void out(std::ostream &out, const Function &fn) const;
+      uint8_t dstFamily:4; //!< family to cast to
+      uint8_t srcFamily:4; //!< family to cast from
+      Tuple dst;
+      Tuple src;
+      uint8_t dstNum;     //!<Dst Number
+      uint8_t srcNum;     //!<Src Number
+    };
+
     class ALIGNED_INSTRUCTION ConvertInstruction :
       public BasePolicy,
       public NDstPolicy<ConvertInstruction, 1>,
@@ -809,6 +843,35 @@ namespace ir {
       return true;
     }
 
+    // The bit sizes of src and the dst must be identical, and don't support bool now, bool need double check.
+    INLINE bool BitCastInstruction::wellFormed(const Function &fn, std::string &whyNot) const
+    {
+      for (uint32_t dstID = 0; dstID < dstNum; ++dstID) {
+        if (UNLIKELY(checkSpecialRegForWrite(getDst(fn, dstID), fn, whyNot) == false))
+          return false;
+        if (UNLIKELY(checkRegisterData((RegisterFamily)dstFamily, getDst(fn, dstID), fn, whyNot) == false))
+          return false;
+      }
+      for (uint32_t srcID = 0; srcID < srcNum; ++srcID) {
+        if (UNLIKELY(checkRegisterData((RegisterFamily)srcFamily, getSrc(fn, srcID), fn, whyNot) == false))
+          return false;
+      }
+
+      CHECK_TYPE(getType((RegisterFamily)dstFamily), allButBool);
+      CHECK_TYPE(getType((RegisterFamily)srcFamily), allButBool);
+
+      uint32_t dstBytes = 0, srcBtyes = 0;
+      dstBytes = dstNum * getFamilySize((RegisterFamily)dstFamily);
+      srcBtyes = srcNum * getFamilySize((RegisterFamily)srcFamily);
+
+      if(dstBytes != srcBtyes){
+        whyNot = " The bit sizes of src and the dst is not identical.";
+        return false;
+      }
+
+      return true;
+    }
+
     // We can convert anything to anything, but types and families must match
     INLINE bool ConvertInstruction::wellFormed(const Function &fn, std::string &whyNot) const
     {
@@ -1020,6 +1083,22 @@ namespace ir {
         out << " %" << this->getSrc(fn, i);
     }
 
+
+    INLINE void BitCastInstruction::out(std::ostream &out, const Function &fn) const {
+      this->outOpcode(out);
+      out << "." << this->getDstType()
+          << "." << this->getSrcType();
+      out << " {";
+      for (uint32_t i = 0; i < dstNum; ++i)
+        out << "%" << this->getDst(fn, i) << (i != (dstNum-1u) ? " " : "");
+      out << "}";
+      out << " {";
+      for (uint32_t i = 0; i < srcNum; ++i)
+        out << "%" << this->getSrc(fn, i) << (i != (srcNum-1u) ? " " : "");
+      out << "}";
+    }
+
+
     INLINE void ConvertInstruction::out(std::ostream &out, const Function &fn) const {
       this->outOpcode(out);
       out << "." << this->getDstType()
@@ -1141,6 +1220,10 @@ END_INTROSPECTION(BinaryInstruction)
 START_INTROSPECTION(CompareInstruction)
 #include "ir/instruction.hxx"
 END_INTROSPECTION(CompareInstruction)
+
+START_INTROSPECTION(BitCastInstruction)
+#include "ir/instruction.hxx"
+END_INTROSPECTION(BitCastInstruction)
 
 START_INTROSPECTION(ConvertInstruction)
 #include "ir/instruction.hxx"
@@ -1346,6 +1429,8 @@ DECL_MEM_FN(BinaryInstruction, bool, commutes(void), commutes())
 DECL_MEM_FN(SelectInstruction, Type, getType(void), getType())
 DECL_MEM_FN(TernaryInstruction, Type, getType(void), getType())
 DECL_MEM_FN(CompareInstruction, Type, getType(void), getType())
+DECL_MEM_FN(BitCastInstruction, Type, getSrcType(void), getSrcType())
+DECL_MEM_FN(BitCastInstruction, Type, getDstType(void), getDstType())
 DECL_MEM_FN(ConvertInstruction, Type, getSrcType(void), getSrcType())
 DECL_MEM_FN(ConvertInstruction, Type, getDstType(void), getDstType())
 DECL_MEM_FN(AtomicInstruction, AddressSpace, getAddressSpace(void), getAddressSpace())
@@ -1467,6 +1552,11 @@ DECL_MEM_FN(GetImageInfoInstruction, uint32_t, getInfoType(void), getInfoType())
   DECL_EMIT_FUNCTION(GT)
 
 #undef DECL_EMIT_FUNCTION
+
+  // BITCAST
+  Instruction BITCAST(Type dstType, Type srcType, Tuple dst, Tuple src, uint8_t dstNum, uint8_t srcNum) {
+    return internal::BitCastInstruction(dstType, srcType, dst, src, dstNum, srcNum).convert();
+  }
 
   // CVT
   Instruction CVT(Type dstType, Type srcType, Register dst, Register src) {

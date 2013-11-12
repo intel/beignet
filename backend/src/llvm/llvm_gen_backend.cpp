@@ -1655,7 +1655,13 @@ namespace gbe
       // Bitcast just forward registers
       case Instruction::BitCast:
       {
-        regTranslator.newValueProxy(srcValue, dstValue);
+        Type *srcType = srcValue->getType();
+        Type *dstType = dstValue->getType();
+
+        if(srcType->isVectorTy() || dstType->isVectorTy())
+          this->newRegister(dstValue);
+        else
+          regTranslator.newValueProxy(srcValue, dstValue);
       }
       break;
       // Various conversion operations -> just allocate registers for them
@@ -1691,7 +1697,36 @@ namespace gbe
         }
       }
       break;
-      case Instruction::BitCast: break; // nothing to emit here
+      case Instruction::BitCast:
+      {
+        Value *srcValue = I.getOperand(0);
+        Value *dstValue = &I;
+        uint32_t srcElemNum = 0, dstElemNum = 0 ;
+        ir::Type srcType = getVectorInfo(ctx, srcValue->getType(), srcValue, srcElemNum);
+        ir::Type dstType = getVectorInfo(ctx, dstValue->getType(), dstValue, dstElemNum);
+        if(srcElemNum > 1 || dstElemNum > 1) {
+          // Build the tuple data in the vector
+          vector<ir::Register> srcTupleData;
+          vector<ir::Register> dstTupleData;
+          uint32_t elemID = 0;
+          for (elemID = 0; elemID < srcElemNum; ++elemID) {
+            ir::Register reg;
+            reg = this->getRegister(srcValue, elemID);
+            srcTupleData.push_back(reg);
+          }
+          for (elemID = 0; elemID < dstElemNum; ++elemID) {
+            ir::Register reg;
+            reg = this->getRegister(dstValue, elemID);
+            dstTupleData.push_back(reg);
+          }
+
+          const ir::Tuple srcTuple = ctx.arrayTuple(&srcTupleData[0], srcElemNum);
+          const ir::Tuple dstTuple = ctx.arrayTuple(&dstTupleData[0], dstElemNum);
+
+          ctx.BITCAST(dstType, srcType, dstTuple, srcTuple, dstElemNum, srcElemNum);
+        }
+      }
+      break; // nothing to emit here
       case Instruction::FPToUI:
       case Instruction::FPToSI:
       case Instruction::SIToFP:

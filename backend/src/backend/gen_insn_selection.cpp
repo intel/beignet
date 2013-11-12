@@ -2529,6 +2529,82 @@ namespace gbe
     }
   };
 
+  /*! Bit cast instruction pattern */
+  DECL_PATTERN(BitCastInstruction)
+  {
+    INLINE bool emitOne(Selection::Opaque &sel, const ir::BitCastInstruction &insn) const
+    {
+      using namespace ir;
+      const Type dstType = insn.getDstType();
+      const Type srcType = insn.getSrcType();
+      const uint32_t dstNum = insn.getDstNum();
+      const uint32_t srcNum = insn.getSrcNum();
+      int index = 0, multiple, narrowNum;
+      bool narrowDst;
+      Type narrowType;
+
+      if(dstNum > srcNum) {
+        multiple = dstNum / srcNum;
+        narrowType = dstType;
+        narrowNum = dstNum;
+        narrowDst = 1;
+      } else {
+        multiple = srcNum / dstNum;
+        narrowType = srcType;
+        narrowNum = srcNum;
+        narrowDst = 0;
+      }
+
+      for(int i = 0; i < narrowNum; i++, index++) {
+        GenRegister narrowReg, wideReg;
+        if(narrowDst) {
+          narrowReg = sel.selReg(insn.getDst(i), narrowType);
+          wideReg = sel.selReg(insn.getSrc(index/multiple), narrowType);  //retype to narrow type
+        } else {
+          wideReg = sel.selReg(insn.getDst(index/multiple), narrowType);
+          narrowReg = sel.selReg(insn.getSrc(i), narrowType);  //retype to narrow type
+        }
+        if(wideReg.hstride != GEN_VERTICAL_STRIDE_0) {
+          if(multiple == 2) {
+            wideReg = GenRegister::unpacked_uw(wideReg.reg());
+            wideReg = GenRegister::retype(wideReg, getGenType(narrowType));
+          } else if(multiple == 4) {
+            wideReg = GenRegister::unpacked_ub(wideReg.reg());
+            wideReg = GenRegister::retype(wideReg, getGenType(narrowType));
+          } else if(multiple == 8) {  //need to specail handle long to char
+            GBE_ASSERT(multiple == 8);
+          }
+        }
+        if(index % multiple) {
+          wideReg = GenRegister::offset(wideReg, 0, (index % multiple) * typeSize(wideReg.type));
+          wideReg.subphysical = 1;
+        }
+        GenRegister xdst = narrowDst ? narrowReg : wideReg;
+        GenRegister xsrc = narrowDst ? wideReg : narrowReg;
+
+        if((srcType == TYPE_S64 || srcType == TYPE_U64 || srcType == TYPE_DOUBLE) ||
+           (dstType == TYPE_S64 || dstType == TYPE_U64 || dstType == TYPE_DOUBLE)) {
+          const int simdWidth = sel.curr.execWidth;
+          sel.push();
+            sel.curr.execWidth = 8;
+            xdst.subphysical = 1;
+            xsrc.subphysical = 1;
+            for(int i = 0; i < simdWidth/4; i ++) {
+              sel.curr.chooseNib(i);
+              sel.MOV(xdst, xsrc);
+              xdst = GenRegister::offset(xdst, 0, 4 * typeSize(getGenType(dstType)));
+              xsrc = GenRegister::offset(xsrc, 0, 4 * typeSize(getGenType(srcType)));
+            }
+          sel.pop();
+        } else
+          sel.MOV(xdst, xsrc);
+      }
+
+      return true;
+    }
+    DECL_CTOR(BitCastInstruction, 1, 1);
+  };
+
   /*! Convert instruction pattern */
   DECL_PATTERN(ConvertInstruction)
   {
@@ -3029,6 +3105,7 @@ namespace gbe
     this->insert<StoreInstructionPattern>();
     this->insert<SelectInstructionPattern>();
     this->insert<CompareInstructionPattern>();
+    this->insert<BitCastInstructionPattern>();
     this->insert<ConvertInstructionPattern>();
     this->insert<AtomicInstructionPattern>();
     this->insert<TernaryInstructionPattern>();

@@ -143,6 +143,7 @@ namespace gbe {
     // Take an instruction that produces a vector, and scalarize it
     bool scalarize(Instruction*);
     bool scalarizePerComponent(Instruction*);
+    bool scalarizeBitCast(BitCastInst *);
     bool scalarizeFuncCall(CallInst *);
     bool scalarizeLoad(LoadInst*);
     bool scalarizeStore(StoreInst*);
@@ -491,6 +492,10 @@ namespace gbe {
     if (IsPerComponentOp(inst))
       return scalarizePerComponent(inst);
 
+    //not Per Component bitcast, for example <2 * i8> -> i16, handle it in backend
+    if (BitCastInst* bt = dyn_cast<BitCastInst>(inst))
+      return scalarizeBitCast(bt);
+
     if (LoadInst* ld = dyn_cast<LoadInst>(inst))
       return scalarizeLoad(ld);
 
@@ -667,6 +672,15 @@ namespace gbe {
         }
       }
     }
+    return false;
+  }
+
+  bool Scalarize::scalarizeBitCast(BitCastInst* bt)
+  {
+    if(bt->getOperand(0)->getType()->isVectorTy())
+      bt->setOperand(0, InsertToVector(bt, bt->getOperand(0)));
+    if(bt->getType()->isVectorTy())
+      extractFromVector(bt);
     return false;
   }
 
