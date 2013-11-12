@@ -1933,16 +1933,16 @@ DECL_UNTYPED_RW_ALL(double)
 /////////////////////////////////////////////////////////////////////////////
 // Miscellaneous Vector Functions (see 6.11.12 of OCL 1.1 spec)
 /////////////////////////////////////////////////////////////////////////////
-#define DEC2(TYPE, XTYPE) \
-  INLINE_OVERLOADABLE TYPE##2 shuffle(XTYPE x, uint2 mask) { \
+#define DEC2(TYPE, XTYPE, MASKTYPE) \
+  INLINE_OVERLOADABLE TYPE##2 shuffle(XTYPE x, MASKTYPE##2 mask) { \
     TYPE##2 y; \
     y.s0 = ((TYPE *) &x)[mask.s0 & (vec_step(x) - 1)]; \
     y.s1 = ((TYPE *) &x)[mask.s1 & (vec_step(x) - 1)]; \
     return y; \
   }
 
-#define DEC4(TYPE, XTYPE) \
-  INLINE_OVERLOADABLE TYPE##4 shuffle(XTYPE x, uint4 mask) { \
+#define DEC4(TYPE, XTYPE, MASKTYPE) \
+  INLINE_OVERLOADABLE TYPE##4 shuffle(XTYPE x, MASKTYPE##4 mask) { \
     TYPE##4 y; \
     y.s0 = ((TYPE *) &x)[mask.s0 & (vec_step(x) - 1)]; \
     y.s1 = ((TYPE *) &x)[mask.s1 & (vec_step(x) - 1)]; \
@@ -1951,8 +1951,8 @@ DECL_UNTYPED_RW_ALL(double)
     return y; \
   }
 
-#define DEC8(TYPE, XTYPE) \
-  INLINE_OVERLOADABLE TYPE##8 shuffle(XTYPE x, uint8 mask) { \
+#define DEC8(TYPE, XTYPE, MASKTYPE) \
+  INLINE_OVERLOADABLE TYPE##8 shuffle(XTYPE x, MASKTYPE##8 mask) { \
     TYPE##8 y; \
     y.s0 = ((TYPE *) &x)[mask.s0 & (vec_step(x) - 1)]; \
     y.s1 = ((TYPE *) &x)[mask.s1 & (vec_step(x) - 1)]; \
@@ -1965,8 +1965,8 @@ DECL_UNTYPED_RW_ALL(double)
     return y; \
   }
 
-#define DEC16(TYPE, XTYPE) \
-  INLINE_OVERLOADABLE TYPE##16 shuffle(XTYPE x, uint16 mask) { \
+#define DEC16(TYPE, XTYPE, MASKTYPE) \
+  INLINE_OVERLOADABLE TYPE##16 shuffle(XTYPE x, MASKTYPE##16 mask) { \
     TYPE##16 y; \
     y.s0 = ((TYPE *) &x)[mask.s0 & (vec_step(x) - 1)]; \
     y.s1 = ((TYPE *) &x)[mask.s1 & (vec_step(x) - 1)]; \
@@ -1987,11 +1987,18 @@ DECL_UNTYPED_RW_ALL(double)
     return y; \
   }
 
+#define DEFMASK(TYPE, MASKTYPE) \
+  DEC2(TYPE, TYPE##2, MASKTYPE); DEC2(TYPE, TYPE##4, MASKTYPE); DEC2(TYPE, TYPE##8, MASKTYPE); DEC2(TYPE, TYPE##16, MASKTYPE) \
+  DEC4(TYPE, TYPE##2, MASKTYPE); DEC4(TYPE, TYPE##4, MASKTYPE); DEC4(TYPE, TYPE##8, MASKTYPE); DEC4(TYPE, TYPE##16, MASKTYPE) \
+  DEC8(TYPE, TYPE##2, MASKTYPE); DEC8(TYPE, TYPE##4, MASKTYPE); DEC8(TYPE, TYPE##8, MASKTYPE); DEC8(TYPE, TYPE##16, MASKTYPE) \
+  DEC16(TYPE, TYPE##2, MASKTYPE); DEC16(TYPE, TYPE##4, MASKTYPE); DEC16(TYPE, TYPE##8, MASKTYPE); DEC16(TYPE, TYPE##16, MASKTYPE)
+
 #define DEF(TYPE) \
-  DEC2(TYPE, TYPE##2); DEC2(TYPE, TYPE##4); DEC2(TYPE, TYPE##8); DEC2(TYPE, TYPE##16) \
-  DEC4(TYPE, TYPE##2); DEC4(TYPE, TYPE##4); DEC4(TYPE, TYPE##8); DEC4(TYPE, TYPE##16) \
-  DEC8(TYPE, TYPE##2); DEC8(TYPE, TYPE##4); DEC8(TYPE, TYPE##8); DEC8(TYPE, TYPE##16) \
-  DEC16(TYPE, TYPE##2); DEC16(TYPE, TYPE##4); DEC16(TYPE, TYPE##8); DEC16(TYPE, TYPE##16)
+  DEFMASK(TYPE, uchar) \
+  DEFMASK(TYPE, ushort) \
+  DEFMASK(TYPE, uint) \
+  DEFMASK(TYPE, ulong)
+
 DEF(char)
 DEF(uchar)
 DEF(short)
@@ -2002,31 +2009,32 @@ DEF(float)
 DEF(long)
 DEF(ulong)
 #undef DEF
+#undef DEFMASK
 #undef DEC2
 #undef DEC4
 #undef DEC8
 #undef DEC16
 
-#define DEC2(TYPE, ARGTYPE, TEMPTYPE) \
-  INLINE_OVERLOADABLE TYPE##2 shuffle2(ARGTYPE x, ARGTYPE y, uint2 mask) { \
+#define DEC2(TYPE, ARGTYPE, TEMPTYPE, MASKTYPE) \
+  INLINE_OVERLOADABLE TYPE##2 shuffle2(ARGTYPE x, ARGTYPE y, MASKTYPE##2 mask) { \
     return shuffle((TEMPTYPE)(x, y), mask); \
   }
 
-#define DEC2X(TYPE) \
-  INLINE_OVERLOADABLE TYPE##2 shuffle2(TYPE##16 x, TYPE##16 y, uint2 mask) { \
+#define DEC2X(TYPE, MASKTYPE) \
+  INLINE_OVERLOADABLE TYPE##2 shuffle2(TYPE##16 x, TYPE##16 y, MASKTYPE##2 mask) { \
     TYPE##2 z; \
     z.s0 = mask.s0 < 16 ? ((TYPE *)&x)[mask.s0] : ((TYPE *)&y)[mask.s0 & 15]; \
     z.s1 = mask.s1 < 16 ? ((TYPE *)&x)[mask.s1] : ((TYPE *)&y)[mask.s1 & 15]; \
     return z; \
   }
 
-#define DEC4(TYPE, ARGTYPE, TEMPTYPE) \
-  INLINE_OVERLOADABLE TYPE##4 shuffle2(ARGTYPE x, ARGTYPE y, uint4 mask) { \
+#define DEC4(TYPE, ARGTYPE, TEMPTYPE, MASKTYPE) \
+  INLINE_OVERLOADABLE TYPE##4 shuffle2(ARGTYPE x, ARGTYPE y, MASKTYPE##4 mask) { \
     return shuffle((TEMPTYPE)(x, y), mask); \
   }
 
-#define DEC4X(TYPE) \
-  INLINE_OVERLOADABLE TYPE##4 shuffle2(TYPE##16 x, TYPE##16 y, uint4 mask) { \
+#define DEC4X(TYPE, MASKTYPE) \
+  INLINE_OVERLOADABLE TYPE##4 shuffle2(TYPE##16 x, TYPE##16 y, MASKTYPE##4 mask) { \
     TYPE##4 z; \
     z.s0 = mask.s0 < 16 ? ((TYPE *)&x)[mask.s0] : ((TYPE *)&y)[mask.s0 & 15]; \
     z.s1 = mask.s1 < 16 ? ((TYPE *)&x)[mask.s1] : ((TYPE *)&y)[mask.s1 & 15]; \
@@ -2035,13 +2043,13 @@ DEF(ulong)
     return z; \
   }
 
-#define DEC8(TYPE, ARGTYPE, TEMPTYPE) \
-  INLINE_OVERLOADABLE TYPE##8 shuffle2(ARGTYPE x, ARGTYPE y, uint8 mask) { \
+#define DEC8(TYPE, ARGTYPE, TEMPTYPE, MASKTYPE) \
+  INLINE_OVERLOADABLE TYPE##8 shuffle2(ARGTYPE x, ARGTYPE y, MASKTYPE##8 mask) { \
     return shuffle((TEMPTYPE)(x, y), mask); \
   }
 
-#define DEC8X(TYPE) \
-  INLINE_OVERLOADABLE TYPE##8 shuffle2(TYPE##16 x, TYPE##16 y, uint8 mask) { \
+#define DEC8X(TYPE, MASKTYPE) \
+  INLINE_OVERLOADABLE TYPE##8 shuffle2(TYPE##16 x, TYPE##16 y, MASKTYPE##8 mask) { \
     TYPE##8 z; \
     z.s0 = mask.s0 < 16 ? ((TYPE *)&x)[mask.s0] : ((TYPE *)&y)[mask.s0 & 15]; \
     z.s1 = mask.s1 < 16 ? ((TYPE *)&x)[mask.s1] : ((TYPE *)&y)[mask.s1 & 15]; \
@@ -2054,13 +2062,13 @@ DEF(ulong)
     return z; \
   }
 
-#define DEC16(TYPE, ARGTYPE, TEMPTYPE) \
-  INLINE_OVERLOADABLE TYPE##16 shuffle2(ARGTYPE x, ARGTYPE y, uint16 mask) { \
+#define DEC16(TYPE, ARGTYPE, TEMPTYPE, MASKTYPE) \
+  INLINE_OVERLOADABLE TYPE##16 shuffle2(ARGTYPE x, ARGTYPE y, MASKTYPE##16 mask) { \
     return shuffle((TEMPTYPE)(x, y), mask); \
   }
 
-#define DEC16X(TYPE) \
-  INLINE_OVERLOADABLE TYPE##16 shuffle2(TYPE##16 x, TYPE##16 y, uint16 mask) { \
+#define DEC16X(TYPE, MASKTYPE) \
+  INLINE_OVERLOADABLE TYPE##16 shuffle2(TYPE##16 x, TYPE##16 y, MASKTYPE##16 mask) { \
     TYPE##16 z; \
     z.s0 = mask.s0 < 16 ? ((TYPE *)&x)[mask.s0] : ((TYPE *)&y)[mask.s0 & 15]; \
     z.s1 = mask.s1 < 16 ? ((TYPE *)&x)[mask.s1] : ((TYPE *)&y)[mask.s1 & 15]; \
@@ -2081,23 +2089,29 @@ DEF(ulong)
     return z; \
   }
 
+#define DEFMASK(TYPE, MASKTYPE) \
+  DEC2(TYPE, TYPE##2, TYPE##4, MASKTYPE) \
+  DEC2(TYPE, TYPE##4, TYPE##8, MASKTYPE) \
+  DEC2(TYPE, TYPE##8, TYPE##16, MASKTYPE) \
+  DEC2X(TYPE, MASKTYPE) \
+  DEC4(TYPE, TYPE##2, TYPE##4, MASKTYPE) \
+  DEC4(TYPE, TYPE##4, TYPE##8, MASKTYPE) \
+  DEC4(TYPE, TYPE##8, TYPE##16, MASKTYPE) \
+  DEC4X(TYPE, MASKTYPE) \
+  DEC8(TYPE, TYPE##2, TYPE##4, MASKTYPE) \
+  DEC8(TYPE, TYPE##4, TYPE##8, MASKTYPE) \
+  DEC8(TYPE, TYPE##8, TYPE##16, MASKTYPE) \
+  DEC8X(TYPE, MASKTYPE) \
+  DEC16(TYPE, TYPE##2, TYPE##4, MASKTYPE) \
+  DEC16(TYPE, TYPE##4, TYPE##8, MASKTYPE) \
+  DEC16(TYPE, TYPE##8, TYPE##16, MASKTYPE) \
+  DEC16X(TYPE, MASKTYPE)
+
 #define DEF(TYPE) \
-  DEC2(TYPE, TYPE##2, TYPE##4) \
-  DEC2(TYPE, TYPE##4, TYPE##8) \
-  DEC2(TYPE, TYPE##8, TYPE##16) \
-  DEC2X(TYPE) \
-  DEC4(TYPE, TYPE##2, TYPE##4) \
-  DEC4(TYPE, TYPE##4, TYPE##8) \
-  DEC4(TYPE, TYPE##8, TYPE##16) \
-  DEC4X(TYPE) \
-  DEC8(TYPE, TYPE##2, TYPE##4) \
-  DEC8(TYPE, TYPE##4, TYPE##8) \
-  DEC8(TYPE, TYPE##8, TYPE##16) \
-  DEC8X(TYPE) \
-  DEC16(TYPE, TYPE##2, TYPE##4) \
-  DEC16(TYPE, TYPE##4, TYPE##8) \
-  DEC16(TYPE, TYPE##8, TYPE##16) \
-  DEC16X(TYPE)
+  DEFMASK(TYPE, uchar) \
+  DEFMASK(TYPE, ushort) \
+  DEFMASK(TYPE, uint) \
+  DEFMASK(TYPE, ulong)
 
 DEF(char)
 DEF(uchar)
@@ -2109,6 +2123,7 @@ DEF(float)
 DEF(long)
 DEF(ulong)
 #undef DEF
+#undef DEFMASK
 #undef DEC2
 #undef DEC2X
 #undef DEC4
