@@ -1542,7 +1542,12 @@ INLINE_OVERLOADABLE float __gen_ocl_internal_atan2pi(float y, float x) {
 }
 INLINE_OVERLOADABLE float __gen_ocl_internal_fabs(float x)  { return __gen_ocl_fabs(x); }
 INLINE_OVERLOADABLE float __gen_ocl_internal_trunc(float x) { return __gen_ocl_rndz(x); }
-INLINE_OVERLOADABLE float __gen_ocl_internal_round(float x) { return __gen_ocl_rnde(x); }
+INLINE_OVERLOADABLE float __gen_ocl_internal_round(float x) {
+  float y = __gen_ocl_rndz(x);
+  if (__gen_ocl_fabs(x - y) >= 0.5f)
+    y += __gen_ocl_internal_copysign(1.f, x);
+  return y;
+}
 INLINE_OVERLOADABLE float __gen_ocl_internal_floor(float x) { return __gen_ocl_rndd(x); }
 INLINE_OVERLOADABLE float __gen_ocl_internal_ceil(float x)  { return __gen_ocl_rndu(x); }
 INLINE_OVERLOADABLE float __gen_ocl_internal_log(float x)   { return native_log(x); }
