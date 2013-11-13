@@ -1553,7 +1553,7 @@ INLINE_OVERLOADABLE float powr(float x, float y) { return __gen_ocl_pow(x,y); }
 INLINE_OVERLOADABLE float fmod(float x, float y) { return x-y*__gen_ocl_rndz(x/y); }
 INLINE_OVERLOADABLE float remainder(float x, float y) { return x-y*__gen_ocl_rnde(x/y); }
 INLINE_OVERLOADABLE float __gen_ocl_internal_rint(float x) {
-  return 2 * __gen_ocl_internal_round(x / 2);
+  return __gen_ocl_rnde(x);
 }
 // TODO use llvm intrinsics definitions
 #define cos native_cos
