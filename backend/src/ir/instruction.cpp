@@ -784,6 +784,8 @@ namespace ir {
         default:
           CHECK_TYPE(this->type, allButBool);
           break;
+        case OP_MOV:
+          break;
         case OP_POW:
         case OP_COS:
         case OP_SIN:

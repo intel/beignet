@@ -1026,8 +1026,6 @@ namespace gbe
       Value *IV = PN->getIncomingValueForBlock(curr);
       if (!isa<UndefValue>(IV)) {
         Type *llvmType = PN->getType();
-        GBE_ASSERTM(llvmType != Type::getInt1Ty(llvmType->getContext()),
-          "TODO Boolean values cannot escape their definition basic block");
         const ir::Type type = getType(ctx, llvmType);
 
         // Emit the MOV required by the PHI function. We do it simple and do not

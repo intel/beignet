@@ -1458,6 +1458,7 @@ namespace gbe
       case TYPE_U8:  return GenRegister::immuw(imm.data.u8);
       case TYPE_S8:  return GenRegister::immw(imm.data.s8);
       case TYPE_DOUBLE: return GenRegister::immdf(imm.data.f64);
+      case TYPE_BOOL: return GenRegister::immuw(-imm.data.b);  //return 0xffff when true
       default: NOT_SUPPORTED; return GenRegister::immuw(0);
     }
   }
@@ -1502,6 +1503,8 @@ namespace gbe
         return ir::TYPE_U32;
       if (insnType == ir::TYPE_S16 || insnType == ir::TYPE_U16)
         return insnType;
+      if (insnType == ir::TYPE_BOOL)
+        return ir::TYPE_U16;
       return ir::TYPE_FLOAT;
     }
 
@@ -1522,7 +1525,25 @@ namespace gbe
           }
           break;
         case ir::OP_MOV:
-          if (dst.isdf()) {
+          if(insn.getType() == ir::TYPE_BOOL) {
+            GenRegister flagReg;
+            uint32_t predicate = sel.curr.predicate;
+            sel.push();
+              sel.curr.execWidth = 1;
+              sel.curr.predicate = GEN_PREDICATE_NONE;
+              sel.curr.noMask = 1;
+              if(predicate == GEN_PREDICATE_NONE)
+                sel.MOV(dst, src);
+              else {
+                if(sel.curr.physicalFlag)
+                  flagReg = GenRegister::flag(sel.curr.flag, sel.curr.subFlag);
+                else
+                  flagReg = sel.selReg(ir::Register(sel.curr.flagIndex), ir::TYPE_U16);
+
+                sel.AND(dst, flagReg, src);
+              }
+            sel.pop();
+          } else if (dst.isdf()) {
             ir::Register r = sel.reg(ir::RegisterFamily::FAMILY_QWORD);
             sel.MOV_DF(dst, src, sel.selReg(r));
           } else
