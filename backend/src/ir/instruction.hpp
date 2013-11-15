@@ -634,6 +634,8 @@ namespace ir {
   Instruction GE(Type type, Register dst, Register src0, Register src1);
   /*! ge.type dst src0 src1 */
   Instruction GT(Type type, Register dst, Register src0, Register src1);
+  /*! ord.type dst src0 src1 */
+  Instruction ORD(Type type, Register dst, Register src0, Register src1);
   /*! BITCAST.{dstType <- srcType} dst src */
   Instruction BITCAST(Type dstType, Type srcType, Tuple dst, Tuple src, uint8_t dstNum, uint8_t srcNum);
   /*! cvt.{dstType <- srcType} dst src */

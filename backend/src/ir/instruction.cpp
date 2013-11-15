@@ -1552,6 +1552,7 @@ DECL_MEM_FN(GetImageInfoInstruction, uint32_t, getInfoType(void), getInfoType())
   DECL_EMIT_FUNCTION(LT)
   DECL_EMIT_FUNCTION(GE)
   DECL_EMIT_FUNCTION(GT)
+  DECL_EMIT_FUNCTION(ORD)
 
 #undef DECL_EMIT_FUNCTION
 

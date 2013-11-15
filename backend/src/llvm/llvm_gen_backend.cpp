@@ -1625,6 +1625,7 @@ namespace gbe
       case ICmpInst::FCMP_ULT: ctx.LT(type, dst, src0, src1); break;
       case ICmpInst::FCMP_OGT:
       case ICmpInst::FCMP_UGT: ctx.GT(type, dst, src0, src1); break;
+      case ICmpInst::FCMP_ORD: ctx.ORD(type, dst, src0, src0); break;
       default: NOT_SUPPORTED;
     }
   }

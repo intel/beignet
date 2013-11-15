@@ -1955,6 +1955,7 @@ namespace gbe
       // OK, we merge the instructions
       const ir::CompareInstruction &cmpInsn = cast<CompareInstruction>(cmp->insn);
       const ir::Opcode opcode = cmpInsn.getOpcode();
+      if(opcode == OP_ORD) return false;
       const uint32_t genCmp = getGenCompare(opcode);
 
       // Like for regular selects, we need a temporary since we cannot predicate
@@ -2504,7 +2505,6 @@ namespace gbe
       const ir::CompareInstruction &insn = cast<CompareInstruction>(dag.insn);
       const Opcode opcode = insn.getOpcode();
       const Type type = insn.getType();
-      const uint32_t genCmp = getGenCompare(opcode);
       const Register dst = insn.getDst(0);
 
       // Limit the compare to the active lanes. Use the same compare as for f0.0
@@ -2542,9 +2542,12 @@ namespace gbe
           GenRegister tmp[3];
           for(int i=0; i<3; i++)
             tmp[i] = sel.selReg(sel.reg(FAMILY_DWORD));
-          sel.I64CMP(genCmp, src0, src1, tmp);
+          sel.I64CMP(getGenCompare(opcode), src0, src1, tmp);
+        } else if(opcode == OP_ORD) {
+          sel.CMP(GEN_CONDITIONAL_EQ, src0, src0);
+          sel.CMP(GEN_CONDITIONAL_EQ, src1, src1);
         } else
-          sel.CMP(genCmp, src0, src1);
+          sel.CMP(getGenCompare(opcode), src0, src1);
       sel.pop();
       return true;
     }
