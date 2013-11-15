@@ -2528,6 +2528,8 @@ namespace gbe
         const auto &childInsn = cast<LoadImmInstruction>(dag1->insn);
         src0 = sel.selReg(insn.getSrc(0), type);
         src1 = getRegisterFromImmediate(childInsn.getImmediate());
+        if(src1.type != src0.type)
+          src1 = GenRegister::retype(src1, src0.type);
         if (dag0) dag0->isRoot = 1;
       } else {
         src0 = sel.selReg(insn.getSrc(0), type);
