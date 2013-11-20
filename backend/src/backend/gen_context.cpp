@@ -1207,8 +1207,8 @@ namespace gbe
     loadBottomHalf(d, y);
     p->push();
     p->curr.predicate = GEN_PREDICATE_NONE;
-    I32FullMult(GenRegister::null(), e, b, c);
-    I32FullMult(GenRegister::null(), f, a, d);
+    I32FullMult(GenRegister::retype(GenRegister::null(), GEN_TYPE_D), e, b, c);
+    I32FullMult(GenRegister::retype(GenRegister::null(), GEN_TYPE_D), f, a, d);
     p->ADD(e, e, f);
     I32FullMult(f, a, b, d);
     p->ADD(e, e, f);
