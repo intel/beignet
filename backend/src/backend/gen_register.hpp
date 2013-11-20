@@ -277,7 +277,8 @@ namespace gbe
       GBE_ASSERT(isint64());
       GenRegister r = h2(*this);
       r.type = type == GEN_TYPE_UL ? GEN_TYPE_UD : GEN_TYPE_D;
-      r.vstride = GEN_VERTICAL_STRIDE_16;
+      if(r.vstride != GEN_VERTICAL_STRIDE_0)
+       r.vstride = GEN_VERTICAL_STRIDE_16;
       return r;
     }
 
