@@ -290,10 +290,30 @@ cl_mem_new_buffer(cl_context ctx,
   cl_int err = CL_SUCCESS;
   cl_mem mem = NULL;
 
+  if (UNLIKELY(sz == 0)) {
+    err = CL_INVALID_BUFFER_SIZE;
+    goto error;
+  }
+
+  if (UNLIKELY(((flags & CL_MEM_READ_WRITE)
+                  && (flags & (CL_MEM_READ_ONLY | CL_MEM_WRITE_ONLY)))
+		      || ((flags & CL_MEM_READ_ONLY) && (flags & (CL_MEM_WRITE_ONLY)))
+              || ((flags & CL_MEM_ALLOC_HOST_PTR) && (flags & CL_MEM_USE_HOST_PTR))
+              || ((flags & CL_MEM_COPY_HOST_PTR) && (flags & CL_MEM_USE_HOST_PTR))
+              || ((flags & (~(CL_MEM_READ_WRITE | CL_MEM_WRITE_ONLY | CL_MEM_READ_ONLY
+                        | CL_MEM_ALLOC_HOST_PTR | CL_MEM_COPY_HOST_PTR
+                        | CL_MEM_USE_HOST_PTR))) != 0))) {
+    err = CL_INVALID_VALUE;
+    goto error;
+  }
+
   /* This flag is valid only if host_ptr is not NULL */
-  if (UNLIKELY((flags & CL_MEM_COPY_HOST_PTR ||
-                flags & CL_MEM_USE_HOST_PTR) &&
-                data == NULL)) {
+  if (UNLIKELY((((flags & CL_MEM_COPY_HOST_PTR) ||
+                (flags & CL_MEM_USE_HOST_PTR)) &&
+                data == NULL))
+               || (!(flags & (CL_MEM_COPY_HOST_PTR
+                            |CL_MEM_USE_HOST_PTR))
+                    && (data != NULL))) {
     err = CL_INVALID_HOST_PTR;
     goto error;
   }
