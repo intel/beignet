@@ -908,10 +908,12 @@ namespace gbe
     tmp0.type = (src0.type == GEN_TYPE_L) ? GEN_TYPE_D : GEN_TYPE_UD;
     tmp1.type = (src1.type == GEN_TYPE_L) ? GEN_TYPE_D : GEN_TYPE_UD;
     int flag = p->curr.flag, subFlag = p->curr.subFlag;
-    GenRegister f1 = GenRegister::retype(tmp2, GEN_TYPE_UW),
-                f2 = GenRegister::suboffset(f1, 1),
-                f3 = GenRegister::suboffset(f1, 2),
-                f4 = GenRegister::suboffset(f1, 3);
+    GenRegister f1 = GenRegister::retype(tmp2, GEN_TYPE_UW);
+                f1.width = GEN_WIDTH_1;
+    GenRegister f2 = GenRegister::suboffset(f1, 1);
+    GenRegister f3 = GenRegister::suboffset(f1, 2);
+    GenRegister f4 = GenRegister::suboffset(f1, 3);
+
     p->push();
     p->curr.predicate = GEN_PREDICATE_NONE;
     saveFlag(f4, flag, subFlag);
