@@ -259,16 +259,18 @@ cl_device_get_version(cl_device_id device, cl_int *ver)
 }
 #undef DECL_FIELD
 
-#define DECL_FIELD(CASE,FIELD)                                      \
-  case JOIN(CL_KERNEL_,CASE):                                       \
-      if (param_value_size < sizeof(((cl_device_id)NULL)->FIELD))   \
-        return CL_INVALID_VALUE;                                    \
-      if (param_value_size_ret != NULL)                             \
-        *param_value_size_ret = sizeof(((cl_device_id)NULL)->FIELD);\
-      memcpy(param_value,                                           \
-             &device->FIELD,                                        \
-             sizeof(((cl_device_id)NULL)->FIELD));                  \
+#define _DECL_FIELD(FIELD)                                 \
+      if (param_value && param_value_size < sizeof(FIELD)) \
+        return CL_INVALID_VALUE;                           \
+      if (param_value_size_ret != NULL)                    \
+        *param_value_size_ret = sizeof(FIELD);             \
+      if (param_value)                                     \
+        memcpy(param_value, &FIELD, sizeof(FIELD));        \
         return CL_SUCCESS;
+
+#define DECL_FIELD(CASE,FIELD)                             \
+  case JOIN(CL_KERNEL_,CASE):                              \
+  _DECL_FIELD(FIELD)
 
 #include "cl_kernel.h"
 LOCAL cl_int
@@ -279,31 +281,27 @@ cl_get_kernel_workgroup_info(cl_kernel kernel,
                              void* param_value,
                              size_t* param_value_size_ret)
 {
+  int err = CL_SUCCESS;
   if (UNLIKELY(device != &intel_ivb_gt1_device &&
                device != &intel_ivb_gt2_device))
     return CL_INVALID_DEVICE;
-  if (UNLIKELY(param_value == NULL))
-    return CL_INVALID_VALUE;
 
+  CHECK_KERNEL(kernel);
   switch (param_name) {
-    DECL_FIELD(WORK_GROUP_SIZE, wg_sz)
-    DECL_FIELD(PREFERRED_WORK_GROUP_SIZE_MULTIPLE, preferred_wg_sz_mul)
+    DECL_FIELD(WORK_GROUP_SIZE, device->wg_sz)
+    DECL_FIELD(PREFERRED_WORK_GROUP_SIZE_MULTIPLE, device->preferred_wg_sz_mul)
     case CL_KERNEL_LOCAL_MEM_SIZE:
-      if (param_value_size < sizeof(cl_ulong))
-        return CL_INVALID_VALUE;
-      if (param_value_size_ret != NULL)
-        *param_value_size_ret = sizeof(cl_ulong);
-      *(cl_ulong*)param_value = gbe_kernel_get_slm_size(kernel->opaque) + kernel->local_mem_sz;
-      return CL_SUCCESS;
-    case CL_KERNEL_COMPILE_WORK_GROUP_SIZE:
-      if (param_value_size < sizeof(kernel->compile_wg_sz))
-        return CL_INVALID_VALUE;
-      if (param_value_size_ret != NULL)
-        *param_value_size_ret = sizeof(kernel->compile_wg_sz);
-      memcpy(param_value, kernel->compile_wg_sz, sizeof(kernel->compile_wg_sz));
-      return CL_SUCCESS;
-
-    default: return CL_INVALID_VALUE;
+      {
+        size_t local_mem_sz =  gbe_kernel_get_slm_size(kernel->opaque) + kernel->local_mem_sz;
+        _DECL_FIELD(local_mem_sz)
+      }
+    DECL_FIELD(COMPILE_WORK_GROUP_SIZE, kernel->compile_wg_sz)
+    DECL_FIELD(PRIVATE_MEM_SIZE, kernel->stack_size)
+    default:
+      return CL_INVALID_VALUE;
   };
+
+error:
+  return err;
 }
 

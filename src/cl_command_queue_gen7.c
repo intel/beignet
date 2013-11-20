@@ -236,7 +236,7 @@ cl_bind_stack(cl_gpgpu gpgpu, cl_kernel ker)
 {
   cl_context ctx = ker->program->ctx;
   cl_device_id device = ctx->device;
-  const int32_t per_lane_stack_sz = gbe_kernel_get_stack_size(ker->opaque);
+  const int32_t per_lane_stack_sz = ker->stack_size;
   const int32_t value = GBE_CURBE_EXTRA_ARGUMENT;
   const int32_t sub_value = GBE_STACK_BUFFER;
   const int32_t offset = gbe_kernel_get_curbe_offset(ker->opaque, value, sub_value);
