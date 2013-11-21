@@ -59,7 +59,7 @@
 .profiling_timer_resolution = 80, /* ns */
 .endian_little = CL_TRUE,
 .available = CL_TRUE,
-.compiler_available = CL_FALSE, /* XXX */
+.compiler_available = CL_TRUE,
 .execution_capabilities = CL_EXEC_KERNEL | CL_EXEC_NATIVE_KERNEL,
 .queue_properties = CL_QUEUE_PROFILING_ENABLE,
 .platform = NULL, /* == intel_platform (set when requested) */

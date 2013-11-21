@@ -44,7 +44,6 @@ cl_kernel_delete(cl_kernel k)
   if (atomic_dec(&k->ref_n) > 1) return;
   /* Release one reference on all bos we own */
   if (k->bo)       cl_buffer_unreference(k->bo);
-  if (k->const_bo) cl_buffer_unreference(k->const_bo);
   /* This will be true for kernels created by clCreateKernel */
   if (k->ref_its_program) cl_program_delete(k->program);
   /* Release the curbe if allocated */
@@ -256,7 +255,6 @@ cl_kernel_dup(cl_kernel from)
   TRY_ALLOC_NO_ERR (to, CALLOC(struct _cl_kernel));
   SET_ICD(to->dispatch)
   to->bo = from->bo;
-  to->const_bo = from->const_bo;
   to->opaque = from->opaque;
   to->ref_n = 1;
   to->magic = CL_MAGIC_KERNEL_HEADER;
@@ -279,7 +277,6 @@ cl_kernel_dup(cl_kernel from)
 
   /* Retain the bos */
   if (from->bo)       cl_buffer_reference(from->bo);
-  if (from->const_bo) cl_buffer_reference(from->const_bo);
 
   /* We retain the program destruction since this kernel (user allocated)
    * depends on the program for some of its pointers

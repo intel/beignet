@@ -47,7 +47,6 @@ struct _cl_kernel {
   uint64_t magic;             /* To identify it as a kernel */
   volatile int ref_n;         /* We reference count this object */
   cl_buffer bo;               /* The code itself */
-  cl_buffer const_bo;         /* Buffer for all __constants values in the OCL program */
   cl_program program;         /* Owns this structure (and pointers) */
   gbe_kernel opaque;          /* (Opaque) compiler structure for the OCL kernel */
   char *curbe;                /* One curbe per kernel */

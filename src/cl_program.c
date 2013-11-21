@@ -300,6 +300,9 @@ cl_program_build(cl_program p, const char *options)
   int i = 0;
   int copyed = 0;
 
+  if (p->ref_n > 1)
+    return CL_INVALID_OPERATION;
+
   if (options) {
     if(p->build_opts == NULL || strcmp(options, p->build_opts) != 0) {
       if(p->build_opts) {
