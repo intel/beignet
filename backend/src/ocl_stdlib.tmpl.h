@@ -1977,7 +1977,6 @@ INLINE_OVERLOADABLE TYPE##3 vload3(size_t offset, const SPACE TYPE *p) { \
   return *(SPACE TYPE##3 *) (p + 3 * offset); \
 }
 
-
 #define DECL_UNTYPED_RW_ALL_SPACE(TYPE, SPACE) \
   DECL_UNTYPED_RW_SPACE_N(TYPE, 2, SPACE) \
   DECL_UNTYPED_V3_SPACE(TYPE, SPACE) \
@@ -2011,7 +2010,149 @@ DECL_UNTYPED_RW_ALL(double)
 
 #undef DECL_UNTYPED_RW_ALL
 #undef DECL_UNTYPED_RW_ALL_SPACE
+#undef DECL_UNTYPED_RD_ALL_SPACE
 #undef DECL_UNTYPED_RW_SPACE_N
+#undef DECL_UNTYPED_RD_SPACE_N
+#undef DECL_UNTYPED_V3_SPACE
+#undef DECL_UNTYPED_RDV3_SPACE
+
+PURE CONST float __gen_ocl_f16to32(short h);
+PURE CONST short __gen_ocl_f32to16(float f);
+
+INLINE_OVERLOADABLE short f32to16_rtp(float f) {
+  short s = __gen_ocl_f32to16(f);
+  float con = __gen_ocl_f16to32(s);
+  //if(isinf(con)) return s;
+  if (f > con)
+    return s - signbit(f) * 2 + 1;
+  else
+    return s;
+}
+
+INLINE_OVERLOADABLE short f32to16_rtn(float f) {
+  short s = __gen_ocl_f32to16(f);
+  float con = __gen_ocl_f16to32(s);
+  //if(isinf(con)) return s;
+  if (con > f)
+    return s + signbit(f) * 2 - 1;
+  else
+    return s;
+}
+
+INLINE_OVERLOADABLE short f32to16_rtz(float f) {
+  short s = __gen_ocl_f32to16(f);
+  float con = __gen_ocl_f16to32(s);
+  //if(isinf(con)) return s;
+  if (((con > f) && !signbit(f)) ||
+      ((con < f) && signbit(f)))
+    return s - 1;
+  else
+    return s;
+}
+
+#define DECL_HALF_LD_SPACE(SPACE) \
+INLINE_OVERLOADABLE float vload_half(size_t offset, const SPACE half *p) { \
+  return __gen_ocl_f16to32(*(SPACE short *)(p + offset)); \
+} \
+INLINE_OVERLOADABLE float2 vload_half2(size_t offset, const SPACE half *p) { \
+  return (float2)(vload_half(offset*2, p), \
+                  vload_half(offset*2 + 1, p)); \
+} \
+INLINE_OVERLOADABLE float3 vload_half3(size_t offset, const SPACE half *p) { \
+  return (float3)(vload_half(offset*3, p), \
+                  vload_half(offset*3 + 1, p), \
+                  vload_half(offset*3 + 2, p)); \
+} \
+INLINE_OVERLOADABLE float3 vloada_half3(size_t offset, const SPACE half *p) { \
+  return (float3)(vload_half(offset*4, p), \
+                  vload_half(offset*4 + 1, p), \
+                  vload_half(offset*4 + 2, p)); \
+} \
+INLINE_OVERLOADABLE float4 vload_half4(size_t offset, const SPACE half *p) { \
+  return (float4)(vload_half2(offset*2, p), \
+                  vload_half2(offset*2 + 1, p)); \
+} \
+INLINE_OVERLOADABLE float8 vload_half8(size_t offset, const SPACE half *p) { \
+  return (float8)(vload_half4(offset*2, p), \
+                  vload_half4(offset*2 + 1, p)); \
+} \
+INLINE_OVERLOADABLE float16 vload_half16(size_t offset, const SPACE half *p) { \
+  return (float16)(vload_half8(offset*2, p), \
+                   vload_half8(offset*2 + 1, p)); \
+}
+
+#define DECL_HALF_ST_SPACE_ROUND(SPACE, ROUND, FUNC) \
+INLINE_OVERLOADABLE void vstore_half##ROUND(float data, size_t offset, SPACE half *p) { \
+  *(SPACE short *)(p + offset) = FUNC(data); \
+} \
+INLINE_OVERLOADABLE void vstorea_half##ROUND(float data, size_t offset, SPACE half *p) { \
+  vstore_half##ROUND(data, offset, p); \
+} \
+INLINE_OVERLOADABLE void vstore_half2##ROUND(float2 data, size_t offset, SPACE half *p) { \
+  vstore_half##ROUND(data.lo, offset*2, p); \
+  vstore_half##ROUND(data.hi, offset*2 + 1, p); \
+} \
+INLINE_OVERLOADABLE void vstorea_half2##ROUND(float2 data, size_t offset, SPACE half *p) { \
+  vstore_half2##ROUND(data, offset, p); \
+} \
+INLINE_OVERLOADABLE void vstore_half3##ROUND(float3 data, size_t offset, SPACE half *p) { \
+  vstore_half##ROUND(data.s0, offset*3, p); \
+  vstore_half##ROUND(data.s1, offset*3 + 1, p); \
+  vstore_half##ROUND(data.s2, offset*3 + 2, p); \
+} \
+INLINE_OVERLOADABLE void vstorea_half3##ROUND(float3 data, size_t offset, SPACE half *p) { \
+  vstore_half##ROUND(data.s0, offset*4, p); \
+  vstore_half##ROUND(data.s1, offset*4 + 1, p); \
+  vstore_half##ROUND(data.s2, offset*4 + 2, p); \
+} \
+INLINE_OVERLOADABLE void vstore_half4##ROUND(float4 data, size_t offset, SPACE half *p) { \
+  vstore_half2##ROUND(data.lo, offset*2, p); \
+  vstore_half2##ROUND(data.hi, offset*2 + 1, p); \
+} \
+INLINE_OVERLOADABLE void vstorea_half4##ROUND(float4 data, size_t offset, SPACE half *p) { \
+  vstore_half4##ROUND(data, offset, p); \
+} \
+INLINE_OVERLOADABLE void vstore_half8##ROUND(float8 data, size_t offset, SPACE half *p) { \
+  vstore_half4##ROUND(data.lo, offset*2, p); \
+  vstore_half4##ROUND(data.hi, offset*2 + 1, p); \
+} \
+INLINE_OVERLOADABLE void vstorea_half8##ROUND(float8 data, size_t offset, SPACE half *p) { \
+  vstore_half8##ROUND(data, offset, p); \
+} \
+INLINE_OVERLOADABLE void vstore_half16##ROUND(float16 data, size_t offset, SPACE half *p) { \
+  vstore_half8##ROUND(data.lo, offset*2, p); \
+  vstore_half8##ROUND(data.hi, offset*2 + 1, p); \
+} \
+INLINE_OVERLOADABLE void vstorea_half16##ROUND(float16 data, size_t offset, SPACE half *p) { \
+  vstore_half16##ROUND(data, offset, p); \
+}
+
+#define DECL_HALF_ST_SPACE(SPACE) \
+  DECL_HALF_ST_SPACE_ROUND(SPACE,  , __gen_ocl_f32to16) \
+  DECL_HALF_ST_SPACE_ROUND(SPACE, _rte, __gen_ocl_f32to16) \
+  DECL_HALF_ST_SPACE_ROUND(SPACE, _rtz, f32to16_rtz) \
+  DECL_HALF_ST_SPACE_ROUND(SPACE, _rtp, f32to16_rtp) \
+  DECL_HALF_ST_SPACE_ROUND(SPACE, _rtn, f32to16_rtn) \
+
+DECL_HALF_LD_SPACE(__global)
+DECL_HALF_LD_SPACE(__local)
+DECL_HALF_LD_SPACE(__constant)
+DECL_HALF_LD_SPACE(__private)
+
+DECL_HALF_ST_SPACE(__global)
+DECL_HALF_ST_SPACE(__local)
+DECL_HALF_ST_SPACE(__private)
+
+//#undef DECL_UNTYPED_RW_ALL_SPACE
+#undef DECL_HALF_LD_SPACE
+#undef DECL_HALF_ST_SPACE
+#undef DECL_HALF_ST_SPACE_ROUND
+
+#define vloada_half vload_half
+#define vloada_half2 vload_half2
+#define vloada_half4 vload_half4
+#define vloada_half8 vload_half8
+#define vloada_half16 vload_half16
 
 // XXX workaround ptx profile
 #define fabs __gen_ocl_internal_fabs
@@ -2620,7 +2761,7 @@ DECL_IMAGE(0, image2d_t, float4, f, 2)
       tmpCoord.s1 += -0x1p-9;                                   \
     if (tmpCoord.s2 < 0 && tmpCoord.s2 > -0x1p-20)              \
       tmpCoord.s2 += -0x1p-9;                                   \
-  } 
+  }
 
 DECL_IMAGE(GEN_FIX_1, image3d_t, int4, i, 4)
 DECL_IMAGE(GEN_FIX_1, image3d_t, uint4, ui, 4)
