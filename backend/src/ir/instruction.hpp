@@ -642,6 +642,10 @@ namespace ir {
   Instruction CVT(Type dstType, Type srcType, Register dst, Register src);
   /*! sat_cvt.{dstType <- srcType} dst src */
   Instruction SAT_CVT(Type dstType, Type srcType, Register dst, Register src);
+  /*! F16TO32.{dstType <- srcType} dst src */
+  Instruction F16TO32(Type dstType, Type srcType, Register dst, Register src);
+  /*! F32TO16.{dstType <- srcType} dst src */
+  Instruction F32TO16(Type dstType, Type srcType, Register dst, Register src);
   /*! atomic dst addr.space {src1 {src2}} */
   Instruction ATOMIC(AtomicOps opcode, Register dst, AddressSpace space, Tuple src);
   /*! bra labelIndex */

@@ -940,6 +940,8 @@ namespace gbe
   ALU1(RNDU)
   ALU1(FBH)
   ALU1(FBL)
+  ALU1(F16TO32)
+  ALU1(F32TO16)
   ALU2(SEL)
   ALU1(NOT)
   ALU2(AND)

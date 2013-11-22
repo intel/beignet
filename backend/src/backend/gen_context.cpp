@@ -158,6 +158,8 @@ namespace gbe
       case SEL_OP_RNDU: p->RNDU(dst, src); break;
       case SEL_OP_RNDE: p->RNDE(dst, src); break;
       case SEL_OP_RNDZ: p->RNDZ(dst, src); break;
+      case SEL_OP_F16TO32: p->F16TO32(dst, src); break;
+      case SEL_OP_F32TO16: p->F32TO16(dst, src); break;
       case SEL_OP_LOAD_INT64_IMM: p->LOAD_INT64_IMM(dst, src.value.i64); break;
       case SEL_OP_CONVI64_TO_I:
        {

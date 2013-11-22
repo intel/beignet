@@ -283,13 +283,13 @@ namespace ir {
       public NSrcPolicy<ConvertInstruction, 1>
     {
     public:
-      ConvertInstruction(Type dstType,
+      ConvertInstruction(Opcode opcode,
+                         Type dstType,
                          Type srcType,
                          Register dst,
-                         Register src,
-                         bool saturated=false)
+                         Register src)
       {
-        this->opcode = saturated ? OP_SAT_CVT : OP_CVT;
+        this->opcode = opcode;
         this->dst[0] = dst;
         this->src[0] = src;
         this->dstType = dstType;
@@ -1563,12 +1563,22 @@ DECL_MEM_FN(GetImageInfoInstruction, uint32_t, getInfoType(void), getInfoType())
 
   // CVT
   Instruction CVT(Type dstType, Type srcType, Register dst, Register src) {
-    return internal::ConvertInstruction(dstType, srcType, dst, src).convert();
+    return internal::ConvertInstruction(OP_CVT, dstType, srcType, dst, src).convert();
   }
 
   // saturated convert
   Instruction SAT_CVT(Type dstType, Type srcType, Register dst, Register src) {
-    return internal::ConvertInstruction(dstType, srcType, dst, src, true).convert();
+    return internal::ConvertInstruction(OP_SAT_CVT, dstType, srcType, dst, src).convert();
+  }
+
+  // CVT
+  Instruction F16TO32(Type dstType, Type srcType, Register dst, Register src) {
+    return internal::ConvertInstruction(OP_F16TO32, dstType, srcType, dst, src).convert();
+  }
+
+  // saturated convert
+  Instruction F32TO16(Type dstType, Type srcType, Register dst, Register src) {
+    return internal::ConvertInstruction(OP_F32TO16, dstType, srcType, dst, src).convert();
   }
 
   // For all unary functions with given opcode

@@ -65,6 +65,8 @@ static const struct {
   [GEN_OPCODE_LZD] = { .name = "lzd", .nsrc = 1, .ndst = 1 },
   [GEN_OPCODE_FBH] = { .name = "fbh", .nsrc = 1, .ndst = 1 },
   [GEN_OPCODE_FBL] = { .name = "fbl", .nsrc = 1, .ndst = 1 },
+  [GEN_OPCODE_F16TO32] = { .name = "f16to32", .nsrc = 1, .ndst = 1 },
+  [GEN_OPCODE_F32TO16] = { .name = "f32to16", .nsrc = 1, .ndst = 1 },
 
   [GEN_OPCODE_MUL] = { .name = "mul", .nsrc = 2, .ndst = 1 },
   [GEN_OPCODE_MAC] = { .name = "mac", .nsrc = 2, .ndst = 1 },

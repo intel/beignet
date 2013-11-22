@@ -426,6 +426,8 @@ namespace gbe
     ALU1(LOAD_INT64_IMM)
     ALU1(RNDZ)
     ALU1(RNDE)
+    ALU1(F16TO32)
+    ALU1(F32TO16)
     ALU2(SEL)
     ALU2(SEL_INT64)
     ALU1(NOT)
@@ -2643,14 +2645,22 @@ namespace gbe
       const RegisterFamily srcFamily = getFamily(srcType);
       const GenRegister dst = sel.selReg(insn.getDst(0), dstType);
       const GenRegister src = sel.selReg(insn.getSrc(0), srcType);
+      const Opcode opcode = insn.getOpcode();
 
-      if(insn.getOpcode() == ir::OP_SAT_CVT) {
+      if(opcode == ir::OP_SAT_CVT) {
         sel.push();
         sel.curr.saturate = 1;
       }
 
       // We need two instructions to make the conversion
-      if (dstFamily != FAMILY_DWORD && dstFamily != FAMILY_QWORD && (srcFamily == FAMILY_DWORD || srcFamily == FAMILY_QWORD)) {
+      if (opcode == OP_F16TO32) {
+        sel.F16TO32(dst, src);
+      } else if (opcode == OP_F32TO16) {
+        GenRegister unpacked;
+        unpacked = GenRegister::unpacked_uw(sel.reg(FAMILY_DWORD));
+        sel.F32TO16(unpacked, src);
+        sel.MOV(dst, unpacked);
+      } else if (dstFamily != FAMILY_DWORD && dstFamily != FAMILY_QWORD && (srcFamily == FAMILY_DWORD || srcFamily == FAMILY_QWORD)) {
         GenRegister unpacked;
         if (dstFamily == FAMILY_WORD) {
           const uint32_t type = dstType == TYPE_U16 ? GEN_TYPE_UW : GEN_TYPE_W;
@@ -2695,7 +2705,7 @@ namespace gbe
       } else
         sel.MOV(dst, src);
 
-      if(insn.getOpcode() == ir::OP_SAT_CVT)
+      if(opcode == ir::OP_SAT_CVT)
         sel.pop();
 
       return true;

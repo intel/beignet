@@ -2128,6 +2128,8 @@ namespace gbe
       case GEN_OCL_SAT_CONV_F32_TO_I32:
       case GEN_OCL_SAT_CONV_I32_TO_U32:
       case GEN_OCL_SAT_CONV_F32_TO_U32:
+      case GEN_OCL_CONV_F16_TO_F32:
+      case GEN_OCL_CONV_F32_TO_F16:
         this->newRegister(&I);
         break;
       default:
@@ -2689,6 +2691,12 @@ namespace gbe
             DEF(ir::TYPE_U32, ir::TYPE_S32);
           case GEN_OCL_SAT_CONV_F32_TO_U32:
             DEF(ir::TYPE_U32, ir::TYPE_FLOAT);
+          case GEN_OCL_CONV_F16_TO_F32:
+            ctx.F16TO32(ir::TYPE_FLOAT, ir::TYPE_U16, getRegister(&I), getRegister(I.getOperand(0)));
+            break;
+          case GEN_OCL_CONV_F32_TO_F16:
+            ctx.F32TO16(ir::TYPE_U16, ir::TYPE_FLOAT, getRegister(&I), getRegister(I.getOperand(0)));
+            break;
 #undef DEF
           default: break;
         }
