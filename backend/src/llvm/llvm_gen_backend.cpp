@@ -2185,7 +2185,7 @@ namespace gbe
       // This is not a kernel argument sampler, we need to append it to sampler set,
       // and allocate a sampler slot for it.
       auto x = processConstant<ir::Immediate>(CPV, InsertExtractFunctor(ctx));
-      GBE_ASSERTM(x.type == ir::TYPE_U32 || x.type == ir::TYPE_S32, "Invalid sampler type");
+      GBE_ASSERTM(x.type == ir::TYPE_U16 || x.type == ir::TYPE_S16, "Invalid sampler type");
       sampler = ctx.getFunction().getSamplerSet()->append(x.data.u32, &ctx);
     } else {
       sampler = this->getRegister(*AI);

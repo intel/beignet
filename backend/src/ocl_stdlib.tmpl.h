@@ -85,7 +85,7 @@ struct _image2d_t;
 typedef __texture struct _image2d_t* __image2d_t;
 struct _image3d_t;
 typedef __texture struct _image3d_t* __image3d_t;
-typedef const uint __sampler_t;
+typedef const ushort __sampler_t;
 typedef size_t __event_t;
 #define image2d_t __image2d_t
 #define image3d_t __image3d_t
@@ -2609,19 +2609,19 @@ int __gen_ocl_force_simd16(void);
 // Image access functions
 /////////////////////////////////////////////////////////////////////////////
 
-OVERLOADABLE int4 __gen_ocl_read_imagei(uint surface_id, uint sampler, int u, int v, uint sampler_offset);
-OVERLOADABLE int4 __gen_ocl_read_imagei(uint surface_id, uint sampler, float u, float v, uint sampler_offset);
-OVERLOADABLE uint4 __gen_ocl_read_imageui(uint surface_id, uint sampler, int u, int v, uint sampler_offset);
-OVERLOADABLE uint4 __gen_ocl_read_imageui(uint surface_id, uint sampler, float u, float v, uint sampler_offset);
-OVERLOADABLE float4 __gen_ocl_read_imagef(uint surface_id, uint sampler, int u, int v, uint sampler_offset);
-OVERLOADABLE float4 __gen_ocl_read_imagef(uint surface_id, uint sampler, float u, float v, uint sampler_offset);
+OVERLOADABLE int4 __gen_ocl_read_imagei(uint surface_id, sampler_t sampler, int u, int v, uint sampler_offset);
+OVERLOADABLE int4 __gen_ocl_read_imagei(uint surface_id, sampler_t sampler, float u, float v, uint sampler_offset);
+OVERLOADABLE uint4 __gen_ocl_read_imageui(uint surface_id, sampler_t sampler, int u, int v, uint sampler_offset);
+OVERLOADABLE uint4 __gen_ocl_read_imageui(uint surface_id, sampler_t sampler, float u, float v, uint sampler_offset);
+OVERLOADABLE float4 __gen_ocl_read_imagef(uint surface_id, sampler_t sampler, int u, int v, uint sampler_offset);
+OVERLOADABLE float4 __gen_ocl_read_imagef(uint surface_id, sampler_t sampler, float u, float v, uint sampler_offset);
 
-OVERLOADABLE int4 __gen_ocl_read_imagei(uint surface_id, uint sampler, int u, int v, int w, uint sampler_offset);
-OVERLOADABLE int4 __gen_ocl_read_imagei(uint surface_id, uint sampler, float u, float v, float w, uint sampler_offset);
-OVERLOADABLE uint4 __gen_ocl_read_imageui(uint surface_id, uint sampler, int u, int v, int w, uint sampler_offset);
-OVERLOADABLE uint4 __gen_ocl_read_imageui(uint surface_id, uint sampler, float u, float v, float w, uint sampler_offset);
-OVERLOADABLE float4 __gen_ocl_read_imagef(uint surface_id, uint sampler, int u, int v, int w, uint sampler_offset);
-OVERLOADABLE float4 __gen_ocl_read_imagef(uint surface_id, uint sampler, float u, float v, float w, uint sampler_offset);
+OVERLOADABLE int4 __gen_ocl_read_imagei(uint surface_id, sampler_t sampler, int u, int v, int w, uint sampler_offset);
+OVERLOADABLE int4 __gen_ocl_read_imagei(uint surface_id, sampler_t sampler, float u, float v, float w, uint sampler_offset);
+OVERLOADABLE uint4 __gen_ocl_read_imageui(uint surface_id, sampler_t sampler, int u, int v, int w, uint sampler_offset);
+OVERLOADABLE uint4 __gen_ocl_read_imageui(uint surface_id, sampler_t sampler, float u, float v, float w, uint sampler_offset);
+OVERLOADABLE float4 __gen_ocl_read_imagef(uint surface_id, sampler_t sampler, int u, int v, int w, uint sampler_offset);
+OVERLOADABLE float4 __gen_ocl_read_imagef(uint surface_id, sampler_t sampler, float u, float v, float w, uint sampler_offset);
 
 OVERLOADABLE void __gen_ocl_write_imagei(uint surface_id, int u, int v, int4 color);
 OVERLOADABLE void __gen_ocl_write_imagei(uint surface_id, float u, float v, int4 color);
@@ -2641,7 +2641,7 @@ int __gen_ocl_get_image_height(uint surface_id);
 int __gen_ocl_get_image_channel_data_type(uint surface_id);
 int __gen_ocl_get_image_channel_order(uint surface_id);
 int __gen_ocl_get_image_depth(uint surface_id);
-ushort __gen_ocl_get_sampler_info(uint sampler_id);
+ushort __gen_ocl_get_sampler_info(sampler_t sampler);
 
 #define GET_IMAGE(cl_image, surface_id) \
     uint surface_id = (uint)cl_image

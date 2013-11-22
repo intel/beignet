@@ -67,7 +67,7 @@ int cl_set_sampler_arg_slot(cl_kernel k, int index, cl_sampler sampler)
      }
     }
   }
-  assert(0);
+  return -1;
 }
 
 LOCAL cl_sampler

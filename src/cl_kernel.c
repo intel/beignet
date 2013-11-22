@@ -105,8 +105,14 @@ cl_kernel_set_arg(cl_kernel k, cl_uint index, size_t sz, const void *value)
   arg_type = gbe_kernel_get_arg_type(k->opaque, index);
   arg_sz = gbe_kernel_get_arg_size(k->opaque, index);
 
-  if (UNLIKELY(arg_type != GBE_ARG_LOCAL_PTR && arg_sz != sz))
-    return CL_INVALID_ARG_SIZE;
+  if (UNLIKELY(arg_type != GBE_ARG_LOCAL_PTR && arg_sz != sz)) {
+    if (arg_sz == 2 && arg_type == GBE_ARG_VALUE && sz == sizeof(cl_sampler)) {
+      /* FIXME, this is a workaround for the case when a kernel arg
+         defined a sampler_t but doesn't use it.*/
+      arg_type = GBE_ARG_SAMPLER;
+    } else
+      return CL_INVALID_ARG_SIZE;
+  }
 
   if(UNLIKELY(arg_type == GBE_ARG_LOCAL_PTR && sz == 0))
     return CL_INVALID_ARG_SIZE;
