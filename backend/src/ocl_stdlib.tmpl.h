@@ -248,9 +248,7 @@ INLINE_OVERLOADABLE int isinf(float x) {
   return (u.u & 0x7FFFFFFF) == 0x7F800000;
 }
 INLINE_OVERLOADABLE int isnan(float x) {
-  union { uint u; float f; } u;
-  u.f = x;
-  return (u.u & 0x7FFFFFFF) > 0x7F800000;
+  return x != x;
 }
 INLINE_OVERLOADABLE int isnormal(float x) {
   union { uint u; float f; } u;
