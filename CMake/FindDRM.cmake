@@ -7,7 +7,11 @@
 # DRM_LIBRARY
 # 
 
-FIND_PATH(DRM_INCLUDE_PATH drm.h
+FIND_PATH(DRM_INCLUDE_PATH
+  NAMES
+  drm.h
+  PATHS
+  ${CMAKE_INCLUDE_PATH}/include/libdrm/
   ~/include/libdrm/
   /usr/include/libdrm/
   /usr/local/include/libdrm/
@@ -17,6 +21,7 @@ FIND_PATH(DRM_INCLUDE_PATH drm.h
 FIND_LIBRARY(DRM_LIBRARY
   NAMES DRM drm
   PATHS
+  ${CMAKE_LIBRARY_PATH}/lib/
   ~/lib/
   /usr/lib64
   /usr/lib

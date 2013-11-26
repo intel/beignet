@@ -6,7 +6,11 @@
 # DRM_INTEL_INCLUDE_PATH
 # 
 
-FIND_PATH(DRM_INTEL_INCLUDE_PATH intel_bufmgr.h
+FIND_PATH(DRM_INTEL_INCLUDE_PATH
+  NAMES
+  intel_bufmgr.h
+  PATHS
+  ${CMAKE_INCLUDE_PATH}/include/libdrm/
   ~/include/libdrm/
   /usr/include/libdrm/
   /usr/local/include/libdrm/
@@ -17,6 +21,7 @@ FIND_PATH(DRM_INTEL_INCLUDE_PATH intel_bufmgr.h
 FIND_LIBRARY(DRM_INTEL_LIBRARY
   NAMES DRM_INTEL drm_intel
   PATHS
+  ${CMAKE_LIBRARY_PATH}/lib/
   ~/lib/
   /usr/lib64
   /usr/lib
