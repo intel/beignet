@@ -54,6 +54,9 @@ struct _cl_program {
   uint32_t source_type:2; /* Built from binary, source or LLVM */
   uint32_t is_built:1;    /* Did we call clBuildProgram on it? */
   char *build_opts;       /* The build options for this program */
+  size_t build_log_max_sz; /*build log maximum size in byte.*/
+  char *build_log;         /* The build log for this program. */
+  size_t build_log_sz;    /* The actual build log size.*/
 };
 
 /* Create a empty program */

@@ -464,7 +464,8 @@ namespace gbe {
     GBE_SAFE_DELETE(program);
   }
 
-  static void buildModuleFromSource(const char* input, const char* output, std::string options) {
+  static bool buildModuleFromSource(const char* input, const char* output, std::string options,
+                                    size_t stringSize, char *err, size_t *errSize) {
     // Arguments to pass to the clang frontend
     vector<const char *> args;
     bool bOpt = true;
@@ -516,24 +517,26 @@ namespace gbe {
     args.push_back(input);
 
     // The compiler invocation needs a DiagnosticsEngine so it can report problems
+    std::string ErrorString;
+    llvm::raw_string_ostream ErrorInfo(ErrorString);
+    llvm::IntrusiveRefCntPtr<clang::DiagnosticOptions> DiagOpts = new clang::DiagnosticOptions();
+    DiagOpts->ShowCarets = false;
 #if LLVM_VERSION_MINOR <= 1
     args.push_back("-triple");
     args.push_back("ptx32");
 
     clang::TextDiagnosticPrinter *DiagClient =
-                             new clang::TextDiagnosticPrinter(llvm::errs(), clang::DiagnosticOptions());
+                             new clang::TextDiagnosticPrinter(ErrorInfo, *DiagOpts)
     llvm::IntrusiveRefCntPtr<clang::DiagnosticIDs> DiagID(new clang::DiagnosticIDs());
     clang::DiagnosticsEngine Diags(DiagID, DiagClient);
 #else
     args.push_back("-ffp-contract=off");
 
-    llvm::IntrusiveRefCntPtr<clang::DiagnosticOptions> DiagOpts = new clang::DiagnosticOptions();
     clang::TextDiagnosticPrinter *DiagClient =
-                             new clang::TextDiagnosticPrinter(llvm::errs(), &*DiagOpts);
+                             new clang::TextDiagnosticPrinter(ErrorInfo, &*DiagOpts);
     llvm::IntrusiveRefCntPtr<clang::DiagnosticIDs> DiagID(new clang::DiagnosticIDs());
     clang::DiagnosticsEngine Diags(DiagID, &*DiagOpts, DiagClient);
 #endif /* LLVM_VERSION_MINOR <= 1 */
-
     // Create the compiler invocation
     llvm::OwningPtr<clang::CompilerInvocation> CI(new clang::CompilerInvocation);
     clang::CompilerInvocation::CreateFromArgs(*CI,
@@ -548,10 +551,12 @@ namespace gbe {
 #if LLVM_VERSION_MINOR <= 2
     Clang.createDiagnostics(args.size(), &args[0]);
 #else
-    Clang.createDiagnostics();
+    Clang.createDiagnostics(DiagClient, false);
 #endif /* LLVM_VERSION_MINOR <= 2 */
+
+    Clang.getDiagnosticOpts().ShowCarets = false;
     if (!Clang.hasDiagnostics())
-      return;
+      return false;
 
     // Set Language
     clang::LangOptions & lang_opts = Clang.getLangOpts();
@@ -573,23 +578,42 @@ namespace gbe {
     // Create an action and make the compiler instance carry it out
     llvm::OwningPtr<clang::CodeGenAction> Act(new clang::EmitLLVMOnlyAction());
     auto retVal = Clang.ExecuteAction(*Act);
+
+    if (err != NULL) {
+      GBE_ASSERT(errSize != NULL);
+      *errSize = ErrorString.copy(err, stringSize - 1, 0);
+      ErrorString.clear();
+    } else {
+      // flush the error messages to the errs() if there is no
+      // error string buffer.
+      llvm::errs() << ErrorString;
+    }
     if (!retVal)
-      return;
+      return false;
 
     llvm::Module *module = Act->takeModule();
 
-    std::string ErrorInfo;
 #if (LLVM_VERSION_MAJOR == 3) && (LLVM_VERSION_MINOR > 3)
     auto mode = llvm::sys::fs::F_Binary;
 #else
     auto mode = llvm::raw_fd_ostream::F_Binary;
 #endif
-    llvm::raw_fd_ostream OS(output, ErrorInfo, mode);
+    llvm::raw_fd_ostream OS(output, ErrorString, mode);
     //still write to temp file for code simply, otherwise need add another function.
     //because gbe_program_new_from_llvm also be used by cl_program_create_from_llvm, can't be removed
     //TODO: Pass module to llvmToGen, if use module, should return Act and use OwningPtr out of this funciton
     llvm::WriteBitcodeToFile(module, OS);
+    if (err != NULL && *errSize < stringSize - 1 && ErrorString.size() > 0) {
+      size_t errLen;
+      errLen = ErrorString.copy(err + *errSize, stringSize - *errSize - 1, 0);
+      *errSize += errLen;
+    } else if (err == NULL) {
+      // flush the error messages to the errs() if there is no
+      // error string buffer.
+      llvm::errs() << ErrorString;
+    }
     OS.close();
+    return true;
   }
 
   extern std::string ocl_stdlib_str;
@@ -640,15 +664,28 @@ namespace gbe {
     fwrite(source, strlen(source), 1, clFile);
     fclose(clFile);
 
-    buildModuleFromSource(clName.c_str(), llName.c_str(), clOpt.c_str());
-    remove(clName.c_str());
-
+    gbe_program p;
+    if (buildModuleFromSource(clName.c_str(), llName.c_str(), clOpt.c_str(),
+                              stringSize, err, errSize)) {
     // Now build the program from llvm
-    static std::mutex gbe_mutex;
-    gbe_mutex.lock();
-    gbe_program p = gbe_program_new_from_llvm(llName.c_str(), stringSize, err, errSize);
-    gbe_mutex.unlock();
-    remove(llName.c_str());
+      static std::mutex gbe_mutex;
+      gbe_mutex.lock();
+      size_t clangErrSize = 0;
+      if (err != NULL) {
+        GBE_ASSERT(errSize != NULL);
+        stringSize -= *errSize;
+        err += *errSize;
+        clangErrSize = *errSize;
+      }
+      p = gbe_program_new_from_llvm(llName.c_str(), stringSize,
+                                    err, errSize);
+      if (err != NULL)
+        *errSize += clangErrSize;
+      gbe_mutex.unlock();
+      remove(llName.c_str());
+    } else
+      p = NULL;
+    remove(clName.c_str());
     return p;
   }
 

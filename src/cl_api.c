@@ -975,8 +975,9 @@ clGetProgramBuildInfo(cl_program             program,
 
     FILL_GETINFO_RET (char, (strlen(ret_str)+1), ret_str, CL_SUCCESS);
   } else if (param_name == CL_PROGRAM_BUILD_LOG) {
-    // TODO: need to add logs in backend when compiling.
-    FILL_GETINFO_RET (char, (strlen(ret_str)+1), ret_str, CL_SUCCESS);
+    FILL_GETINFO_RET (char, program->build_log_sz + 1, program->build_log, CL_SUCCESS);
+    if (param_value_size_ret)
+      *param_value_size_ret = program->build_log_sz + 1;
   } else {
     return CL_INVALID_VALUE;
   }

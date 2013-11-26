@@ -109,7 +109,9 @@ cl_program_new(cl_context ctx)
   p->ref_n = 1;
   p->magic = CL_MAGIC_PROGRAM_HEADER;
   p->ctx = ctx;
-
+  p->build_log = calloc(200, sizeof(char));
+  if (p->build_log)
+    p->build_log_max_sz = 200;
   /* The queue also belongs to its context */
   cl_context_add_ref(ctx);
 
@@ -223,7 +225,7 @@ cl_program_create_from_llvm(cl_context ctx,
   INVALID_VALUE_IF (file_name == NULL);
 
   program = cl_program_new(ctx);
-  program->opaque = gbe_program_new_from_llvm(file_name, 0, NULL, NULL);
+  program->opaque = gbe_program_new_from_llvm(file_name, program->build_log_max_sz, program->build_log, &program->build_log_sz);
   if (UNLIKELY(program->opaque == NULL)) {
     err = CL_INVALID_PROGRAM;
     goto error;
@@ -324,9 +326,12 @@ cl_program_build(cl_program p, const char *options)
   }
 
   if (p->source_type == FROM_SOURCE) {
-    p->opaque = gbe_program_new_from_source(p->source, 0, options, NULL, NULL);
+    p->opaque = gbe_program_new_from_source(p->source, p->build_log_max_sz, options, p->build_log, &p->build_log_sz);
     if (UNLIKELY(p->opaque == NULL)) {
-      err = CL_BUILD_PROGRAM_FAILURE;
+      if (p->build_log_sz > 0 && strstr(p->build_log, "error: error reading 'options'"))
+        err = CL_INVALID_BUILD_OPTIONS;
+      else
+        err = CL_BUILD_PROGRAM_FAILURE;
       goto error;
     }
 
