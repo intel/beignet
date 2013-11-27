@@ -65,7 +65,7 @@ SET(CMAKE_C_FLAGS "-Wall -mfpmath=sse -msse2 -Wcast-align -msse2 -msse3 -mssse3 
 
 # Front end stuff we need
 #INCLUDE(CMake/FindLLVM.cmake)
-Find_Package(LLVM 3.1)
+Find_Package(LLVM 3.3)
 
 # XLib
 Find_Package(X11)
