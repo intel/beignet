@@ -59,12 +59,7 @@ cl_get_mem_object_type(cl_mem mem)
     case CL_MEM_GL_IMAGE_TYPE:
     {
       struct _cl_mem_image *image = cl_mem_image(mem);
-      if (image->depth == 1)
-        return CL_MEM_OBJECT_IMAGE1D;
-      else if (image->depth == 2)
-        return CL_MEM_OBJECT_IMAGE2D;
-      else if (image->depth == 3)
-        return CL_MEM_OBJECT_IMAGE3D;
+      return image->image_type;
     }
     default:
       return CL_MEM_OBJECT_BUFFER;
@@ -209,8 +204,9 @@ cl_mem_allocate(enum cl_mem_type type,
 
   assert(ctx);
 
+  /* Due to alignment, the image size may exceed alloc max size, check global mem instead */
   if ((err = cl_get_device_info(ctx->device,
-                                CL_DEVICE_MAX_MEM_ALLOC_SIZE,
+                                CL_DEVICE_GLOBAL_MEM_SIZE,
                                 sizeof(max_mem_size),
                                 &max_mem_size,
                                 NULL)) != CL_SUCCESS) {
