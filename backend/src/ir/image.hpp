@@ -47,6 +47,8 @@ namespace ir {
     void append(Register imageReg, Context *ctx);
     /*! Append an image info slot. */
     void appendInfo(ImageInfoKey key, uint32_t offset);
+    /*! clear image info. */
+    void clearInfo();
     /*! Get the image's index(actual location). */
     const uint32_t getIdx(const Register imageReg) const;
     size_t getDataSize(void) { return regMap.size(); }

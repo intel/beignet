@@ -108,6 +108,7 @@ namespace gbe {
         break;
       }
       GBE_DELETE(ctx);
+      fn->getImageSet()->clearInfo();
     }
 
     // XXX spill must be implemented

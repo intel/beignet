@@ -64,6 +64,19 @@ namespace ir {
     setInfoOffset4Type(imageInfo, key.type, offset);
   }
 
+  void ImageSet::clearInfo()
+  {
+    struct ImageInfo *imageInfo;
+    for(auto &it : indexMap) {
+      imageInfo = it.second;
+      imageInfo->wSlot = -1;
+      imageInfo->hSlot = -1;
+      imageInfo->depthSlot = -1;
+      imageInfo->dataTypeSlot = -1;
+      imageInfo->channelOrderSlot = -1;
+    }
+  }
+
   void ImageSet::append(Register imageReg, Context *ctx)
   {
     ir::FunctionArgument *arg =  ctx->getFunction().getArg(imageReg);

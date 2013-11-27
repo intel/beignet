@@ -409,7 +409,7 @@ namespace gbe
   {
     int32_t offset = fn.getImageSet()->getInfoOffset(key);
     if (offset >= 0)
-      return offset;
+      return offset + GEN_REG_SIZE;
     newCurbeEntry(GBE_CURBE_IMAGE_INFO, key.data, size, 4);
     std::sort(kernel->patches.begin(), kernel->patches.end());
 
