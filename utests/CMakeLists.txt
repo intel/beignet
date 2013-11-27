@@ -3,7 +3,6 @@ INCLUDE_DIRECTORIES(${CMAKE_CURRENT_SOURCE_DIR}
 
 link_directories (${LLVM_LIBRARY_DIR})
 set (utests_sources
-  cl_create_kernel.cpp
   utest_error.c
   compiler_basic_arithmetic.cpp
   compiler_displacement_map_element.cpp
