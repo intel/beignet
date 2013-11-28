@@ -464,6 +464,7 @@ namespace gbe {
     GBE_SAFE_DELETE(program);
   }
 
+  BVAR(OCL_OUTPUT_BUILD_LOG, false);
   static bool buildModuleFromSource(const char* input, const char* output, std::string options,
                                     size_t stringSize, char *err, size_t *errSize) {
     // Arguments to pass to the clang frontend
@@ -473,12 +474,14 @@ namespace gbe {
 
     vector<std::string> useless; //hold substrings to avoid c_str free
     size_t start = 0, end = 0;
-    /* clang unsupport options:
+    /* FIXME
+       clang unsupport options:
        -cl-denorms-are-zero, -cl-strict-aliasing
        -cl-no-signed-zeros, -cl-fp32-correctly-rounded-divide-sqrt
        all support options, refer to clang/include/clang/Driver/Options.inc
-       Maybe can filter these options to avoid warning
     */
+    const std::string unsupportedOptions("-cl-denorms-are-zero, -cl-strict-aliasing,"
+                                         "-cl-no-signed-zeros, -cl-fp32-correctly-rounded-divide-sqrt");
     while (end != std::string::npos) {
       end = options.find(' ', start);
       std::string str = options.substr(start, end - start);
@@ -487,7 +490,7 @@ namespace gbe {
         continue;
       if(str == "-cl-opt-disable") bOpt = false;
       if(str == "-cl-fast-relaxed-math") bFastMath = true;
-      if(str == "-cl-denorms-are-zero")
+      if(unsupportedOptions.find(str) != std::string::npos)
         continue;
       useless.push_back(str);
       args.push_back(str.c_str());
@@ -586,12 +589,14 @@ namespace gbe {
     if (err != NULL) {
       GBE_ASSERT(errSize != NULL);
       *errSize = ErrorString.copy(err, stringSize - 1, 0);
-      ErrorString.clear();
-    } else {
+    }
+
+    if (err == NULL || OCL_OUTPUT_BUILD_LOG) {
       // flush the error messages to the errs() if there is no
       // error string buffer.
       llvm::errs() << ErrorString;
     }
+    ErrorString.clear();
     if (!retVal)
       return false;
 
@@ -611,7 +616,9 @@ namespace gbe {
       size_t errLen;
       errLen = ErrorString.copy(err + *errSize, stringSize - *errSize - 1, 0);
       *errSize += errLen;
-    } else if (err == NULL) {
+    }
+
+    if (err == NULL || OCL_OUTPUT_BUILD_LOG) {
       // flush the error messages to the errs() if there is no
       // error string buffer.
       llvm::errs() << ErrorString;
