@@ -2529,9 +2529,10 @@ namespace gbe
       if (OCL_OPTIMIZE_IMMEDIATE && dag1 != NULL && dag1->insn.getOpcode() == OP_LOADI && canGetRegisterFromImmediate(dag1->insn)) {
         const auto &childInsn = cast<LoadImmInstruction>(dag1->insn);
         src0 = sel.selReg(insn.getSrc(0), type);
-        src1 = getRegisterFromImmediate(childInsn.getImmediate());
-        if(src1.type != src0.type)
-          src1 = GenRegister::retype(src1, src0.type);
+        Immediate imm = childInsn.getImmediate();
+        if(imm.type != type)
+          imm.type = type;
+        src1 = getRegisterFromImmediate(imm);
         if (dag0) dag0->isRoot = 1;
       } else {
         src0 = sel.selReg(insn.getSrc(0), type);
