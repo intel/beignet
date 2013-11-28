@@ -498,11 +498,15 @@ namespace gbe {
     args.push_back("-DGEN7_SAMPLER_CLAMP_BORDER_WORKAROUND");
 #endif
     args.push_back("-emit-llvm");
-    // XXX we haven't implement those builtin functions,
+    // FIXME we haven't implement those builtin functions,
     // so disable it currently.
     args.push_back("-fno-builtin");
+    // FIXME as we don't support function call currently, we may encounter
+    // build problem with -O0 as we rely on always inline all functions option. 
     if(bOpt)
       args.push_back("-O2");
+    else
+      args.push_back("-O1");
     if(bFastMath)
       args.push_back("-D __FAST_RELAXED_MATH__=1");
 #if LLVM_VERSION_MINOR <= 2
