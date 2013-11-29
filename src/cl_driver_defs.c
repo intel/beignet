@@ -80,5 +80,6 @@ LOCAL cl_gpgpu_event_update_status_cb *cl_gpgpu_event_update_status = NULL;
 LOCAL cl_gpgpu_event_pending_cb *cl_gpgpu_event_pending = NULL;
 LOCAL cl_gpgpu_event_resume_cb *cl_gpgpu_event_resume = NULL;
 LOCAL cl_gpgpu_event_delete_cb *cl_gpgpu_event_delete = NULL;
-LOCAL cl_gpgpu_event_get_timestamp_cb *cl_gpgpu_event_get_timestamp = NULL;
+LOCAL cl_gpgpu_event_get_exec_timestamp_cb *cl_gpgpu_event_get_exec_timestamp = NULL;
+LOCAL cl_gpgpu_event_get_gpu_cur_timestamp_cb *cl_gpgpu_event_get_gpu_cur_timestamp = NULL;
 

@@ -193,8 +193,12 @@ typedef void (cl_gpgpu_event_delete_cb)(cl_gpgpu_event);
 extern cl_gpgpu_event_delete_cb *cl_gpgpu_event_delete;
 
 /* Get a event time stamp */
-typedef void (cl_gpgpu_event_get_timestamp_cb)(cl_gpgpu_event, int, uint64_t*);
-extern cl_gpgpu_event_get_timestamp_cb *cl_gpgpu_event_get_timestamp;
+typedef void (cl_gpgpu_event_get_exec_timestamp_cb)(cl_gpgpu_event, int, uint64_t*);
+extern cl_gpgpu_event_get_exec_timestamp_cb *cl_gpgpu_event_get_exec_timestamp;
+
+/* Get current GPU time stamp */
+typedef void (cl_gpgpu_event_get_gpu_cur_timestamp_cb)(cl_gpgpu, uint64_t*);
+extern cl_gpgpu_event_get_gpu_cur_timestamp_cb *cl_gpgpu_event_get_gpu_cur_timestamp;
 
 /* Will spawn all threads */
 typedef void (cl_gpgpu_walker_cb)(cl_gpgpu,

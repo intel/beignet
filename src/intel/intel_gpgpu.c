@@ -51,6 +51,8 @@
 #define MO_RETAIN_BIT         (1 << 28)
 #define SAMPLER_STATE_SIZE    (16)
 
+#define TIMESTAMP_ADDR        0x2358
+
 /* Stores both binding tables and surface states */
 typedef struct surface_heap {
   uint32_t binding_table[256];
@@ -1041,15 +1043,42 @@ intel_gpgpu_event_delete(intel_event_t *event)
   cl_free(event);
 }
 
+/* We want to get the current time of GPU. */
 static void
-intel_gpgpu_event_get_timestamp(intel_event_t *event, int index, uint64_t* ret_ts)
+intel_gpgpu_event_get_gpu_cur_timestamp(intel_gpgpu_t* gpgpu, uint64_t* ret_ts)
 {
+  uint64_t result = 0;
+  drm_intel_bufmgr *bufmgr = gpgpu->drv->bufmgr;
+
+  drm_intel_reg_read(bufmgr, TIMESTAMP_ADDR, &result);
+  result = result & 0xFFFFFFFFF0000000;
+  result = result >> 28;
+  result *= 80;
+
+  *ret_ts = result;
+  return;
+}
+
+/* Get the GPU execute time. */
+static void
+intel_gpgpu_event_get_exec_timestamp(intel_event_t *event,
+                                int index, uint64_t* ret_ts)
+{
+  uint64_t result = 0;
+
   assert(event->ts_buf != NULL);
   assert(index == 0 || index == 1);
   drm_intel_gem_bo_map_gtt(event->ts_buf);
   uint64_t* ptr = event->ts_buf->virtual;
+  result = ptr[index];
 
-  *ret_ts = ptr[index] * 80; //convert to nanoseconds
+  /* According to BSpec, the timestamp counter should be 36 bits,
+     but comparing to the timestamp counter from IO control reading,
+     we find the first 4 bits seems to be fake. In order to keep the
+     timestamp counter conformable, we just skip the first 4 bits. */
+  result = ((result & 0x0FFFFFFFF) << 4) * 80; //convert to nanoseconds
+  *ret_ts = result;
+
   drm_intel_gem_bo_unmap_gtt(event->ts_buf);
 }
 
@@ -1080,6 +1109,7 @@ intel_set_gpgpu_callbacks(void)
   cl_gpgpu_event_pending = (cl_gpgpu_event_pending_cb *)intel_gpgpu_event_pending;
   cl_gpgpu_event_resume = (cl_gpgpu_event_resume_cb *)intel_gpgpu_event_resume;
   cl_gpgpu_event_delete = (cl_gpgpu_event_delete_cb *)intel_gpgpu_event_delete;
-  cl_gpgpu_event_get_timestamp = (cl_gpgpu_event_get_timestamp_cb *)intel_gpgpu_event_get_timestamp;
+  cl_gpgpu_event_get_exec_timestamp = (cl_gpgpu_event_get_exec_timestamp_cb *)intel_gpgpu_event_get_exec_timestamp;
+  cl_gpgpu_event_get_gpu_cur_timestamp = (cl_gpgpu_event_get_gpu_cur_timestamp_cb *)intel_gpgpu_event_get_gpu_cur_timestamp;
 }
 

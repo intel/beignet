@@ -380,7 +380,7 @@ void cl_event_set_status(cl_event event, cl_int status)
 
   if(status <= CL_COMPLETE) {
     if(event->enqueue_cb) {
-      cl_enqueue_handle(&event->enqueue_cb->data);
+      cl_enqueue_handle(event, &event->enqueue_cb->data);
       if(event->gpgpu_event)
         cl_gpgpu_event_update_status(event->gpgpu_event, 1);  //now set complet, need refine
       event->status = status;  //Change the event status after enqueue and befor unlock
@@ -496,22 +496,29 @@ cl_int cl_event_marker(cl_command_queue queue, cl_event* event)
   return CL_SUCCESS;
 }
 
-cl_int cl_event_profiling(cl_event event, cl_profiling_info param_name, cl_ulong *ret_val)
+cl_int cl_event_get_timestamp(cl_event event, cl_profiling_info param_name)
 {
+  cl_ulong ret_val = 0;
+  GET_QUEUE_THREAD_GPGPU(event->queue);
+
   if (!event->gpgpu_event) {
-    /* Some event like read buffer do not need GPU involved, so
-       we just return all the profiling to 0 now. */
-    *ret_val = 0;
+    cl_gpgpu_event_get_gpu_cur_timestamp(gpgpu, &ret_val);
+    event->timestamp[param_name - CL_PROFILING_COMMAND_QUEUED] = ret_val;
     return CL_SUCCESS;
   }
 
-  if(param_name == CL_PROFILING_COMMAND_START ||
-     param_name == CL_PROFILING_COMMAND_QUEUED ||
-     param_name == CL_PROFILING_COMMAND_SUBMIT) {
-    cl_gpgpu_event_get_timestamp(event->gpgpu_event, 0, ret_val);
+  if(param_name == CL_PROFILING_COMMAND_SUBMIT ||
+         param_name == CL_PROFILING_COMMAND_QUEUED) {
+    cl_gpgpu_event_get_gpu_cur_timestamp(gpgpu, &ret_val);
+    event->timestamp[param_name - CL_PROFILING_COMMAND_QUEUED] = ret_val;
+    return CL_SUCCESS;
+  } else if(param_name == CL_PROFILING_COMMAND_START) {
+    cl_gpgpu_event_get_exec_timestamp(event->gpgpu_event, 0, &ret_val);
+    event->timestamp[param_name - CL_PROFILING_COMMAND_QUEUED] = ret_val;
     return CL_SUCCESS;
   } else if (param_name == CL_PROFILING_COMMAND_END) {
-    cl_gpgpu_event_get_timestamp(event->gpgpu_event, 1, ret_val);
+    cl_gpgpu_event_get_exec_timestamp(event->gpgpu_event, 1, &ret_val);
+    event->timestamp[param_name - CL_PROFILING_COMMAND_QUEUED] = ret_val;
     return CL_SUCCESS;
   } else {
     return CL_INVALID_VALUE;

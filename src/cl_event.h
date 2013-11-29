@@ -68,6 +68,7 @@ struct _cl_event {
   enqueue_callback*  enqueue_cb;  /* This event's enqueue */
   enqueue_callback*  waits_head;  /* The head of enqueues list wait on this event */
   cl_bool            emplict;     /* Identify this event whether created by api emplict*/
+  cl_ulong           timestamp[4];/* The time stamps for profiling. */
 };
 
 /* Create a new event object */
@@ -91,6 +92,6 @@ void cl_event_update_status(cl_event);
 /* Create the marker event */
 cl_int cl_event_marker(cl_command_queue, cl_event*);
 /* Do the event profiling */
-cl_int cl_event_profiling(cl_event event, cl_profiling_info param_name, cl_ulong *ret_val);
+cl_int cl_event_get_timestamp(cl_event event, cl_profiling_info param_name);
 #endif /* __CL_EVENT_H__ */
 

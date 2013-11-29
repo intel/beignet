@@ -64,5 +64,5 @@ typedef struct _enqueue_data {
 } enqueue_data;
 
 /* Do real enqueue commands */
-cl_int cl_enqueue_handle(enqueue_data* data);
+cl_int cl_enqueue_handle(cl_event event, enqueue_data* data);
 #endif /* __CL_ENQUEUE_H__ */

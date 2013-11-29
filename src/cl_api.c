@@ -70,6 +70,13 @@ handle_events(cl_command_queue queue, cl_int num, const cl_event *wait_list,
   cl_event e;
   if(event != NULL || status == CL_ENQUEUE_EXECUTE_DEFER) {
     e = cl_event_new(queue->ctx, queue, type, event!=NULL);
+
+    /* if need profiling, add the submit timestamp here. */
+    if (e->type != CL_COMMAND_USER &&
+	    e->queue->props & CL_QUEUE_PROFILING_ENABLE) {
+	cl_event_get_timestamp(e, CL_PROFILING_COMMAND_QUEUED);
+    }
+
     if(event != NULL)
       *event = e;
     if(status == CL_ENQUEUE_EXECUTE_DEFER) {
@@ -1270,16 +1277,25 @@ clGetEventProfilingInfo(cl_event             event,
     goto error;
   }
 
-  if ((param_name != CL_PROFILING_COMMAND_QUEUED &&
-          param_name != CL_PROFILING_COMMAND_SUBMIT &&
-          param_name != CL_PROFILING_COMMAND_START &&
-          param_name != CL_PROFILING_COMMAND_END) ||
-          (param_value && param_value_size < sizeof(cl_ulong))) {
+  if (param_value && param_value_size < sizeof(cl_ulong)) {
     err = CL_INVALID_VALUE;
     goto error;
   }
 
-  err = cl_event_profiling(event, param_name, &ret_val);
+  if (param_name == CL_PROFILING_COMMAND_QUEUED) {
+    ret_val = event->timestamp[0];
+  } else if (param_name == CL_PROFILING_COMMAND_SUBMIT) {
+    ret_val = event->timestamp[1];
+  } else if (param_name == CL_PROFILING_COMMAND_START) {
+    err = cl_event_get_timestamp(event, CL_PROFILING_COMMAND_START);
+    ret_val = event->timestamp[2];
+  } else if (param_name == CL_PROFILING_COMMAND_END) {
+    err = cl_event_get_timestamp(event, CL_PROFILING_COMMAND_END);
+    ret_val = event->timestamp[3];
+  } else {
+    err = CL_INVALID_VALUE;
+    goto error;
+  }
 
   if (err == CL_SUCCESS) {
     if (param_value)
@@ -1354,7 +1370,7 @@ clEnqueueReadBuffer(cl_command_queue command_queue,
 
   if(handle_events(command_queue, num_events_in_wait_list, event_wait_list,
                    event, data, CL_COMMAND_READ_BUFFER) == CL_ENQUEUE_EXECUTE_IMM) {
-    err = cl_enqueue_handle(data);
+    err = cl_enqueue_handle(event ? *event : NULL, data);
     if(event) cl_event_set_status(*event, CL_COMPLETE);
   }
 
@@ -1437,7 +1453,7 @@ clEnqueueReadBufferRect(cl_command_queue command_queue,
 
   if(handle_events(command_queue, num_events_in_wait_list, event_wait_list,
                    event, data, CL_COMMAND_READ_BUFFER_RECT) == CL_ENQUEUE_EXECUTE_IMM) {
-    err = cl_enqueue_handle(data);
+    err = cl_enqueue_handle(event ? *event : NULL, data);
     if(event) cl_event_set_status(*event, CL_COMPLETE);
   }
 
@@ -1487,7 +1503,7 @@ clEnqueueWriteBuffer(cl_command_queue    command_queue,
 
   if(handle_events(command_queue, num_events_in_wait_list, event_wait_list,
                    event, data, CL_COMMAND_WRITE_BUFFER) == CL_ENQUEUE_EXECUTE_IMM) {
-    err = cl_enqueue_handle(data);
+    err = cl_enqueue_handle(event ? *event : NULL, data);
     if(event) cl_event_set_status(*event, CL_COMPLETE);
   }
 
@@ -1570,7 +1586,7 @@ clEnqueueWriteBufferRect(cl_command_queue     command_queue,
 
   if(handle_events(command_queue, num_events_in_wait_list, event_wait_list,
                    event, data, CL_COMMAND_WRITE_BUFFER_RECT) == CL_ENQUEUE_EXECUTE_IMM) {
-    err = cl_enqueue_handle(data);
+    err = cl_enqueue_handle(event ? *event : NULL, data);
     if(event) cl_event_set_status(*event, CL_COMPLETE);
   }
 
@@ -1649,6 +1665,11 @@ clEnqueueCopyBuffer(cl_command_queue     command_queue,
 
   if(handle_events(command_queue, num_events_in_wait_list, event_wait_list,
                    event, data, CL_COMMAND_COPY_BUFFER) == CL_ENQUEUE_EXECUTE_IMM) {
+    if (event && (*event)->type != CL_COMMAND_USER
+            && (*event)->queue->props & CL_QUEUE_PROFILING_ENABLE) {
+      cl_event_get_timestamp(*event, CL_PROFILING_COMMAND_SUBMIT);
+    }
+
     err = cl_command_queue_flush(command_queue);
   }
   return 0;
@@ -1740,6 +1761,11 @@ clEnqueueCopyBufferRect(cl_command_queue     command_queue,
 
   if(handle_events(command_queue, num_events_in_wait_list, event_wait_list,
                    event, data, CL_COMMAND_COPY_BUFFER_RECT) == CL_ENQUEUE_EXECUTE_IMM) {
+    if (event && (*event)->type != CL_COMMAND_USER
+            && (*event)->queue->props & CL_QUEUE_PROFILING_ENABLE) {
+      cl_event_get_timestamp(*event, CL_PROFILING_COMMAND_SUBMIT);
+    }
+
     err = cl_command_queue_flush(command_queue);
   }
 
@@ -1818,7 +1844,7 @@ clEnqueueReadImage(cl_command_queue      command_queue,
 
   if(handle_events(command_queue, num_events_in_wait_list, event_wait_list,
                    event, data, CL_COMMAND_READ_IMAGE) == CL_ENQUEUE_EXECUTE_IMM) {
-    err = cl_enqueue_handle(data);
+    err = cl_enqueue_handle(event ? *event : NULL, data);
     if(event) cl_event_set_status(*event, CL_COMPLETE);
   }
 
@@ -1897,7 +1923,7 @@ clEnqueueWriteImage(cl_command_queue     command_queue,
 
   if(handle_events(command_queue, num_events_in_wait_list, event_wait_list,
                    event, data, CL_COMMAND_WRITE_IMAGE) == CL_ENQUEUE_EXECUTE_IMM) {
-    err = cl_enqueue_handle(data);
+    err = cl_enqueue_handle(event ? *event : NULL, data);
     if(event) cl_event_set_status(*event, CL_COMPLETE);
   }
 
@@ -1974,6 +2000,11 @@ clEnqueueCopyImage(cl_command_queue      command_queue,
 
   if(handle_events(command_queue, num_events_in_wait_list, event_wait_list,
                    event, data, CL_COMMAND_COPY_IMAGE) == CL_ENQUEUE_EXECUTE_IMM) {
+    if (event && (*event)->type != CL_COMMAND_USER
+            && (*event)->queue->props & CL_QUEUE_PROFILING_ENABLE) {
+      cl_event_get_timestamp(*event, CL_PROFILING_COMMAND_SUBMIT);
+    }
+
     err = cl_command_queue_flush(command_queue);
   }
 
@@ -2030,6 +2061,11 @@ clEnqueueCopyImageToBuffer(cl_command_queue  command_queue,
 
   if(handle_events(command_queue, num_events_in_wait_list, event_wait_list,
                    event, data, CL_COMMAND_COPY_IMAGE_TO_BUFFER) == CL_ENQUEUE_EXECUTE_IMM) {
+    if (event && (*event)->type != CL_COMMAND_USER
+            && (*event)->queue->props & CL_QUEUE_PROFILING_ENABLE) {
+      cl_event_get_timestamp(*event, CL_PROFILING_COMMAND_SUBMIT);
+    }
+
     err = cl_command_queue_flush(command_queue);
   }
 
@@ -2086,6 +2122,11 @@ clEnqueueCopyBufferToImage(cl_command_queue  command_queue,
 
   if(handle_events(command_queue, num_events_in_wait_list, event_wait_list,
                    event, data, CL_COMMAND_COPY_BUFFER_TO_IMAGE) == CL_ENQUEUE_EXECUTE_IMM) {
+    if (event && (*event)->type != CL_COMMAND_USER
+            && (*event)->queue->props & CL_QUEUE_PROFILING_ENABLE) {
+      cl_event_get_timestamp(*event, CL_PROFILING_COMMAND_SUBMIT);
+    }
+
     err = cl_command_queue_flush(command_queue);
   }
 
@@ -2217,7 +2258,7 @@ clEnqueueMapBuffer(cl_command_queue  command_queue,
 
   if(handle_events(command_queue, num_events_in_wait_list, event_wait_list,
                    event, data, CL_COMMAND_MAP_BUFFER) == CL_ENQUEUE_EXECUTE_IMM) {
-    err = cl_enqueue_handle(data);
+    err = cl_enqueue_handle(event ? *event : NULL, data);
     if(event) cl_event_set_status(*event, CL_COMPLETE);
   }
 
@@ -2313,7 +2354,7 @@ clEnqueueMapImage(cl_command_queue   command_queue,
 
   if(handle_events(command_queue, num_events_in_wait_list, event_wait_list,
                    event, data, CL_COMMAND_MAP_IMAGE) == CL_ENQUEUE_EXECUTE_IMM) {
-    err = cl_enqueue_handle(data);
+    err = cl_enqueue_handle(event ? *event : NULL, data);
     if(event) cl_event_set_status(*event, CL_COMPLETE);
   }
 
@@ -2350,7 +2391,7 @@ clEnqueueUnmapMemObject(cl_command_queue  command_queue,
 
   if(handle_events(command_queue, num_events_in_wait_list, event_wait_list,
                    event, data, CL_COMMAND_UNMAP_MEM_OBJECT) == CL_ENQUEUE_EXECUTE_IMM) {
-    err = cl_enqueue_handle(data);
+    err = cl_enqueue_handle(event ? *event : NULL, data);
     if(event) cl_event_set_status(*event, CL_COMPLETE);
   }
 
@@ -2456,6 +2497,11 @@ clEnqueueNDRangeKernel(cl_command_queue  command_queue,
 
   if(handle_events(command_queue, num_events_in_wait_list, event_wait_list,
                    event, data, CL_COMMAND_NDRANGE_KERNEL) == CL_ENQUEUE_EXECUTE_IMM) {
+    if (event && (*event)->type != CL_COMMAND_USER
+            && (*event)->queue->props & CL_QUEUE_PROFILING_ENABLE) {
+      cl_event_get_timestamp(*event, CL_PROFILING_COMMAND_SUBMIT);
+    }
+
     err = cl_command_queue_flush(command_queue);
   }
 
@@ -2535,7 +2581,7 @@ clEnqueueNativeKernel(cl_command_queue   command_queue,
 
   if(handle_events(command_queue, num_events_in_wait_list, event_wait_list,
                    event, data, CL_COMMAND_NATIVE_KERNEL) == CL_ENQUEUE_EXECUTE_IMM) {
-    err = cl_enqueue_handle(data);
+    err = cl_enqueue_handle(event ? *event : NULL, data);
     if(event) cl_event_set_status(*event, CL_COMPLETE);
   }
 

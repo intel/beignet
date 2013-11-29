@@ -16,16 +16,18 @@
  *
  * Author: Rong Yang <rong.r.yang@intel.com>
  */
-
-#include "cl_enqueue.h"
-#include "cl_image.h"
-#include "cl_driver.h"
-#include "cl_utils.h"
-
 #include <stdio.h>
 #include <string.h>
 #include <assert.h>
 #include <pthread.h>
+
+#include "cl_enqueue.h"
+#include "cl_image.h"
+#include "cl_driver.h"
+#include "cl_event.h"
+#include "cl_command_queue.h"
+#include "cl_utils.h"
+
 
 cl_int cl_enqueue_read_buffer(enqueue_data* data)
 {
@@ -376,8 +378,15 @@ cl_int cl_enqueue_native_kernel(enqueue_data *data)
 error:
   return err;
 }
-cl_int cl_enqueue_handle(enqueue_data* data)
+
+cl_int cl_enqueue_handle(cl_event event, enqueue_data* data)
 {
+  /* if need profiling, add the submit timestamp here. */
+  if (event && event->type != CL_COMMAND_USER
+           && event->queue->props & CL_QUEUE_PROFILING_ENABLE) {
+    cl_event_get_timestamp(event, CL_PROFILING_COMMAND_SUBMIT);
+  }
+
   switch(data->type) {
     case EnqueueReadBuffer:
       return cl_enqueue_read_buffer(data);
