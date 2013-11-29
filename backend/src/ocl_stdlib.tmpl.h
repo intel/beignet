@@ -1360,51 +1360,68 @@ INLINE_OVERLOADABLE float __gen_ocl_internal_tanh(float x) {
   return (1 - y) / (1 + y);
 }
 
-typedef union
-{
-  float value;
-  int word;
-} ieee_float_shape_type;
+INLINE float __gen_ocl_asin_util(float x) {
+/*
+ * ====================================================
+ * Copyright (C) 1993 by Sun Microsystems, Inc. All rights reserved.
+ *
+ * Developed at SunSoft, a Sun Microsystems, Inc. business.
+ * Permission to use, copy, modify, and distribute this
+ * software is freely granted, provided that this notice
+ * is preserved.
+ * ====================================================
+ */
+  float
+  pS0 =  1.66666666666666657415e-01,
+  pS1 = -3.25565818622400915405e-01,
+  pS2 =  2.01212532134862925881e-01,
+  pS3 = -4.00555345006794114027e-02,
+  pS4 =  7.91534994289814532176e-04,
+  pS5 =  3.47933107596021167570e-05,
+  qS1 = -2.40339491173441421878e+00,
+  qS2 =  2.02094576023350569471e+00,
+  qS3 = -6.88283971605453293030e-01,
+  qS4 =  7.70381505559019352791e-02;
 
-#ifndef GET_FLOAT_WORD
-#define GET_FLOAT_WORD(i,d)         \
-do {                                \
-  ieee_float_shape_type gf_u;       \
-  gf_u.value = (d);                 \
-  (i) = gf_u.word;                  \
-} while (0)
-#endif
+  float t = x*x;
+  float p = t*(pS0+t*(pS1+t*(pS2+t*(pS3+t*(pS4+t*pS5)))));
+  float q = 1.0+t*(qS1+t*(qS2+t*(qS3+t*qS4)));
+  float w = p / q;
+  return x + x*w;
+}
 
 INLINE_OVERLOADABLE float __gen_ocl_internal_asin(float x) {
-  int hx, ix;
-  GET_FLOAT_WORD(hx,x);
-  ix = hx&0x7fffffff;
+  uint ix;
+  union { uint i; float f; } u;
+  u.f = x;
+  ix = u.i & 0x7fffffff;
   if(ix == 0x3f800000) {
     return x * M_PI_2_F;  /* asin(|1|)=+-pi/2 with inexact */
   }
   if(ix > 0x3f800000) {            /* |x|>= 1 */
-    return (x-x) / (x-x);          /* asin(|x|>1) is NaN */
+    return  NAN;          /* asin(|x|>1) is NaN */
   }
+
   if(ix < 0x32000000) {            /* if |x| < 2**-27 */
     if(HUGE_VALF + x > FLT_ONE) return x;   /* return x with inexact if x!=0*/
   }
-  /* 1 > |x| >= 2**-27 */
-  float sum = x, c = x, m = 1.0;
-  int n = 1;
-  do
-  {
-    c *= (2 * n - 1) * x * x;
-    m *= (2 * n);
-    sum += ( c / m / (2 * n + 1));
-    n++;
-  }while( n < 30);
-  return sum;
+
+  if(x < -0.5) {
+    return 2 * __gen_ocl_asin_util(native_sqrt((1+x) / 2)) - M_PI_2_F;
+  } else if(x > 0.5) {
+    return M_PI_2_F - 2 * __gen_ocl_asin_util(native_sqrt((1-x) / 2));
+  } else {
+    return __gen_ocl_asin_util(x);
+  }
 }
 INLINE_OVERLOADABLE float __gen_ocl_internal_asinpi(float x) {
   return __gen_ocl_internal_asin(x) / M_PI_F;
 }
 INLINE_OVERLOADABLE float __gen_ocl_internal_acos(float x) {
-  return M_PI_2_F - __gen_ocl_internal_asin(x);
+  if(x > 0.5)
+    return 2 * __gen_ocl_asin_util(native_sqrt((1-x)/2));
+  else
+    return M_PI_2_F - __gen_ocl_internal_asin(x);
 }
 INLINE_OVERLOADABLE float __gen_ocl_internal_acospi(float x) {
   return __gen_ocl_internal_acos(x) / M_PI_F;
