@@ -2414,7 +2414,7 @@ clEnqueueNDRangeKernel(cl_command_queue  command_queue,
   size_t fixed_global_sz[] = {1,1,1};
   size_t fixed_local_sz[] = {1,1,1};
   cl_int err = CL_SUCCESS;
-  cl_uint i;
+  cl_uint i, j;
   enqueue_data *data, no_wait_data = { 0 };
 
   CHECK_QUEUE(command_queue);
@@ -2461,9 +2461,16 @@ clEnqueueNDRangeKernel(cl_command_queue  command_queue,
   //FATAL_IF(event_wait_list != NULL, "Events are not supported");
   //FATAL_IF(event != NULL, "Events are not supported");
 
-  if (local_work_size != NULL)
+  if (local_work_size != NULL) {
     for (i = 0; i < work_dim; ++i)
       fixed_local_sz[i] = local_work_size[i];
+  } else {
+    for (i = 0; i< work_dim; i++)
+      for (j = 64; j > 1; j--) {   //check from 64?
+        if (global_work_size[i] % j == 0) //global_work_size always non null
+          fixed_local_sz[i] = j;
+      }
+  }
   if (global_work_size != NULL)
     for (i = 0; i < work_dim; ++i)
       fixed_global_sz[i] = global_work_size[i];
