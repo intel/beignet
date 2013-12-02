@@ -128,9 +128,18 @@ INLINE_OVERLOADABLE long convert_long_sat(ulong x) {
   return x > MAX ? MAX : x;
 }
 
-INLINE_OVERLOADABLE ulong convert_ulong_sat(long x) {
-  return x < 0 ? 0 : x;
-}
+#define DEF(DSTTYPE, SRCTYPE) \
+  INLINE_OVERLOADABLE DSTTYPE convert_ ## DSTTYPE ## _sat(SRCTYPE x) { \
+    return x < 0 ? 0 : x; \
+  }
+DEF(ushort, char);
+DEF(uint, char);
+DEF(uint, short);
+DEF(ulong, char);
+DEF(ulong, short);
+DEF(ulong, int);
+DEF(ulong, long);
+#undef DEF
 
 #define DEF(DSTTYPE, SRCTYPE) \
   INLINE_OVERLOADABLE DSTTYPE convert_ ## DSTTYPE ## _sat(SRCTYPE x) { \
@@ -141,7 +150,6 @@ DEF(uchar, uchar);
 DEF(short, char);
 DEF(short, uchar);
 DEF(short, short);
-DEF(ushort, char);
 DEF(ushort, uchar);
 DEF(ushort, ushort);
 DEF(int, char);
@@ -149,9 +157,7 @@ DEF(int, uchar);
 DEF(int, short);
 DEF(int, ushort);
 DEF(int, int);
-DEF(uint, char);
 DEF(uint, uchar);
-DEF(uint, short);
 DEF(uint, ushort);
 DEF(uint, uint);
 DEF(long, char);
@@ -161,11 +167,8 @@ DEF(long, ushort);
 DEF(long, int);
 DEF(long, uint);
 DEF(long, long);
-DEF(ulong, char);
 DEF(ulong, uchar);
-DEF(ulong, short);
 DEF(ulong, ushort);
-DEF(ulong, int);
 DEF(ulong, uint);
 DEF(ulong, ulong);
 #undef DEF
