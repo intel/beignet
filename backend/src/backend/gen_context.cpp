@@ -191,20 +191,6 @@ namespace gbe
       case SEL_OP_MOV_DF:
         p->MOV_DF(dst, src, tmp);
         break;
-      case SEL_OP_CONVF_TO_I64:
-       {
-        tmp.type = GEN_TYPE_F;
-        GenRegister d = GenRegister::retype(tmp, GEN_TYPE_D);
-        float c = (1.f / 65536.f) * (1.f / 65536.f);
-        p->MUL(tmp, src, GenRegister::immf(c));
-        p->RNDZ(tmp, tmp);
-        p->MOV(d, tmp);
-        storeTopHalf(dst, d);
-        d.type = GEN_TYPE_UD;
-        p->MOV(d, GenRegister::abs(src));
-        storeBottomHalf(dst, d);
-        break;
-       }
       case SEL_OP_CONVI_TO_I64: {
         GenRegister middle;
         if (src.type == GEN_TYPE_B || src.type == GEN_TYPE_D) {
@@ -874,6 +860,43 @@ namespace gbe
       p->OR(dest, dest, GenRegister::immud(0x80000000));
       p->pop();
     }
+  }
+
+
+  void GenContext::emitFloatToI64Instruction(const SelectionInstruction &insn) {
+    GenRegister src = ra->genReg(insn.src(0));
+    GenRegister dst = ra->genReg(insn.dst(0));
+    GenRegister high = ra->genReg(insn.dst(1));
+    GenRegister tmp = ra->genReg(insn.dst(2));
+    GenRegister flag0 = ra->genReg(insn.dst(3));
+
+    if(dst.is_signed_int())
+      high = GenRegister::retype(high, GEN_TYPE_D);
+    GenRegister low = GenRegister::retype(tmp, GEN_TYPE_UD);
+    float c = (1.f / 65536.f) * (1.f / 65536.f);
+    p->MUL(tmp, src, GenRegister::immf(c));
+    p->RNDZ(tmp, tmp);
+    p->MOV(high, tmp);
+    c = 65536.f * 65536.f;
+    p->MOV(tmp, high);  //result may not equal to tmp
+    //mov float to int/uint is sat, so must sub high*0xffffffff
+    p->MUL(tmp, tmp, GenRegister::immf(c));
+    p->ADD(tmp, src, GenRegister::negate(tmp));
+    p->MOV(low, GenRegister::abs(tmp));
+    if(dst.is_signed_int()) {
+      p->push();
+      p->curr.predicate = GEN_PREDICATE_NONE;
+      p->curr.useFlag(flag0.flag_nr(), flag0.flag_subnr());
+      p->CMP(GEN_CONDITIONAL_L, src, GenRegister::immf(0x0));
+      p->curr.predicate = GEN_PREDICATE_NORMAL;
+      p->CMP(GEN_CONDITIONAL_NEQ, low, GenRegister::immud(0x0));
+      p->ADD(high, high, GenRegister::immd(-1));
+      p->NOT(low, low);
+      p->ADD(low, low, GenRegister::immud(1));
+      p->pop();
+    }
+    storeTopHalf(dst, high);
+    storeBottomHalf(dst, low);
   }
 
   void GenContext::emitI64CompareInstruction(const SelectionInstruction &insn) {

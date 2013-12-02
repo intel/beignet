@@ -110,6 +110,7 @@ namespace gbe
     void emitI64SATADDInstruction(const SelectionInstruction &insn);
     void emitI64SATSUBInstruction(const SelectionInstruction &insn);
     void emitI64ToFloatInstruction(const SelectionInstruction &insn);
+    void emitFloatToI64Instruction(const SelectionInstruction &insn);
     void emitCompareInstruction(const SelectionInstruction &insn);
     void emitJumpInstruction(const SelectionInstruction &insn);
     void emitIndirectMoveInstruction(const SelectionInstruction &insn);

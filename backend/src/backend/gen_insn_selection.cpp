@@ -474,6 +474,8 @@ namespace gbe
 #undef I64Shift
     /*! Convert 64-bit integer to 32-bit float */
     void CONVI64_TO_F(Reg dst, Reg src, GenRegister tmp[4]);
+    /*! Convert 64-bit integer to 32-bit float */
+    void CONVF_TO_I64(Reg dst, Reg src, GenRegister tmp[3]);
     /*! Saturated 64bit x*y + z */
     void I64MADSAT(Reg dst, Reg src0, Reg src1, Reg src2, GenRegister tmp[10]);
     /*! High 64bit of x*y */
@@ -1135,6 +1137,14 @@ namespace gbe
     insn->dst(0) = dst;
     insn->src(0) = src;
     for(int i = 0; i < 4; i ++)
+      insn->dst(i + 1) = tmp[i];
+  }
+
+  void Selection::Opaque::CONVF_TO_I64(Reg dst, Reg src, GenRegister tmp[3]) {
+    SelectionInstruction *insn = this->appendInsn(SEL_OP_CONVF_TO_I64, 4, 1);
+    insn->dst(0) = dst;
+    insn->src(0) = src;
+    for(int i = 0; i < 3; i ++)
       insn->dst(i + 1) = tmp[i];
   }
 
@@ -2700,8 +2710,14 @@ namespace gbe
       } else if (dst.isint64()) {
         switch(src.type) {
           case GEN_TYPE_F:
-            sel.CONVF_TO_I64(dst, src, sel.selReg(sel.reg(FAMILY_DWORD)));
+          {
+            GenRegister tmp[3];
+            tmp[0] = sel.selReg(sel.reg(FAMILY_DWORD), TYPE_U32);
+            tmp[1] = sel.selReg(sel.reg(FAMILY_DWORD), TYPE_FLOAT);
+            tmp[2] = sel.selReg(sel.reg(FAMILY_BOOL), TYPE_BOOL);
+            sel.CONVF_TO_I64(dst, src, tmp);
             break;
+          }
           case GEN_TYPE_DF:
             NOT_IMPLEMENTED;
           default:
