@@ -1606,26 +1606,54 @@ namespace gbe
     // Get the element type and the number of elements
     Type *operandType = I.getOperand(0)->getType();
     const ir::Type type = getType(ctx, operandType);
+    const ir::Type insnType = getType(ctx, I.getType());
 
     // Emit the instructions in a row
     const ir::Register dst = this->getRegister(&I);
     const ir::Register src0 = this->getRegister(I.getOperand(0));
     const ir::Register src1 = this->getRegister(I.getOperand(1));
+    const ir::Register tmp = ctx.reg(getFamily(ctx, I.getType()));
+    Value *cv = ConstantInt::get(I.getType(), 1);
 
     switch (I.getPredicate()) {
-      case ICmpInst::FCMP_OEQ:
-      case ICmpInst::FCMP_UEQ: ctx.EQ(type, dst, src0, src1); break;
-      case ICmpInst::FCMP_ONE:
-      case ICmpInst::FCMP_UNE: ctx.NE(type, dst, src0, src1); break;
-      case ICmpInst::FCMP_OLE:
-      case ICmpInst::FCMP_ULE: ctx.LE(type, dst, src0, src1); break;
-      case ICmpInst::FCMP_OGE:
-      case ICmpInst::FCMP_UGE: ctx.GE(type, dst, src0, src1); break;
-      case ICmpInst::FCMP_OLT:
-      case ICmpInst::FCMP_ULT: ctx.LT(type, dst, src0, src1); break;
-      case ICmpInst::FCMP_OGT:
-      case ICmpInst::FCMP_UGT: ctx.GT(type, dst, src0, src1); break;
-      case ICmpInst::FCMP_ORD: ctx.ORD(type, dst, src0, src0); break;
+      case ICmpInst::FCMP_OEQ: ctx.EQ(type, dst, src0, src1); break;
+      case ICmpInst::FCMP_ONE: ctx.NE(type, dst, src0, src1); break;
+      case ICmpInst::FCMP_OLE: ctx.LE(type, dst, src0, src1); break;
+      case ICmpInst::FCMP_OGE: ctx.GE(type, dst, src0, src1); break;
+      case ICmpInst::FCMP_OLT: ctx.LT(type, dst, src0, src1); break;
+      case ICmpInst::FCMP_OGT: ctx.GT(type, dst, src0, src1); break;
+      case ICmpInst::FCMP_ORD: ctx.ORD(type, dst, src0, src1); break;
+      case ICmpInst::FCMP_UNO:
+        ctx.ORD(type, tmp, src0, src1);
+        ctx.XOR(insnType, dst, tmp, getRegister(cv));  //TODO: Use NOT directly
+        break;
+      case ICmpInst::FCMP_UEQ:
+        ctx.NE(type, tmp, src0, src1);
+        ctx.XOR(insnType, dst, tmp, getRegister(cv));
+        break;
+      case ICmpInst::FCMP_UGT:
+        ctx.LE(type, tmp, src0, src1);
+        ctx.XOR(insnType, dst, tmp, getRegister(cv));
+        break;
+      case ICmpInst::FCMP_UGE:
+        ctx.LT(type, tmp, src0, src1);
+        ctx.XOR(insnType, dst, tmp, getRegister(cv));
+        break;
+      case ICmpInst::FCMP_ULT:
+        ctx.GE(type, tmp, src0, src1);
+        ctx.XOR(insnType, dst, tmp, getRegister(cv));
+        break;
+      case ICmpInst::FCMP_ULE:
+        ctx.GT(type, tmp, src0, src1);
+        ctx.XOR(insnType, dst, tmp, getRegister(cv));
+        break;
+      case ICmpInst::FCMP_UNE:
+        ctx.EQ(type, tmp, src0, src1);
+        ctx.XOR(insnType, dst, tmp, getRegister(cv));
+        break;
+      case ICmpInst::FCMP_TRUE:
+        ctx.MOV(insnType, dst, getRegister(cv));
+        break;
       default: NOT_SUPPORTED;
     }
   }

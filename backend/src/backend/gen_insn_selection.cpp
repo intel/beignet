@@ -1679,14 +1679,17 @@ namespace gbe
       SelectionDAG *dag1 = dag.child[1];
 
       // Right source can always be an immediate
-      if (OCL_OPTIMIZE_IMMEDIATE && dag1 != NULL && dag1->insn.getOpcode() == OP_LOADI && canGetRegisterFromImmediate(dag1->insn)) {
+      //logica ops of bool shouldn't use 0xffff, may use flag reg, so can't optimize
+      if (OCL_OPTIMIZE_IMMEDIATE && dag1 != NULL && dag1->insn.getOpcode() == OP_LOADI &&
+          canGetRegisterFromImmediate(dag1->insn) && type != TYPE_BOOL) {
         const auto &childInsn = cast<LoadImmInstruction>(dag1->insn);
         src0 = sel.selReg(insn.getSrc(0), type);
         src1 = getRegisterFromImmediate(childInsn.getImmediate());
         if (dag0) dag0->isRoot = 1;
       }
       // Left source cannot be immediate but it is OK if we can commute
-      else if (OCL_OPTIMIZE_IMMEDIATE && dag0 != NULL && insn.commutes() && dag0->insn.getOpcode() == OP_LOADI && canGetRegisterFromImmediate(dag0->insn)) {
+      else if (OCL_OPTIMIZE_IMMEDIATE && dag0 != NULL && insn.commutes() && dag0->insn.getOpcode() == OP_LOADI &&
+               canGetRegisterFromImmediate(dag0->insn) && type != TYPE_BOOL) {
         const auto &childInsn = cast<LoadImmInstruction>(dag0->insn);
         src0 = sel.selReg(insn.getSrc(1), type);
         src1 = getRegisterFromImmediate(childInsn.getImmediate());
@@ -2526,7 +2529,8 @@ namespace gbe
       SelectionDAG *dag1 = dag.child[1];
 
       // Right source can always be an immediate
-      if (OCL_OPTIMIZE_IMMEDIATE && dag1 != NULL && dag1->insn.getOpcode() == OP_LOADI && canGetRegisterFromImmediate(dag1->insn)) {
+      if (OCL_OPTIMIZE_IMMEDIATE && dag1 != NULL && dag1->insn.getOpcode() == OP_LOADI &&
+          canGetRegisterFromImmediate(dag1->insn) && opcode != OP_ORD) {
         const auto &childInsn = cast<LoadImmInstruction>(dag1->insn);
         src0 = sel.selReg(insn.getSrc(0), type);
         Immediate imm = childInsn.getImmediate();
