@@ -1432,7 +1432,9 @@ clEnqueueReadBufferRect(cl_command_queue command_queue,
     goto error;
   }
 
-  if ((buffer_origin[2]+region[2])*buffer_slice_pitch + (buffer_origin[1]+region[1])*buffer_row_pitch + buffer_origin[0] + region[0] > buffer->size) {
+  if ((buffer_origin[2] + region[2] - 1) * buffer_slice_pitch
+         + (buffer_origin[1] + region[1] - 1) * buffer_row_pitch
+         + buffer_origin[0] + region[0] > buffer->size) {
     err = CL_INVALID_VALUE;
     goto error;
   }
@@ -1565,7 +1567,9 @@ clEnqueueWriteBufferRect(cl_command_queue     command_queue,
     goto error;
   }
 
-  if ((buffer_origin[2]+region[2])*buffer_slice_pitch + (buffer_origin[1]+region[1])*buffer_row_pitch + buffer_origin[0] + region[0] > buffer->size) {
+  if ((buffer_origin[2] + region[2] - 1) * buffer_slice_pitch
+         + (buffer_origin[1] + region[1] - 1) * buffer_row_pitch
+         + buffer_origin[0] + region[0] > buffer->size) {
     err = CL_INVALID_VALUE;
     goto error;
   }
@@ -1733,8 +1737,12 @@ clEnqueueCopyBufferRect(cl_command_queue     command_queue,
     goto error;
   }
 
-  if ((src_origin[2]+region[2])*src_slice_pitch + (src_origin[1]+region[1])*src_row_pitch + src_origin[0] + region[0] > src_buffer->size ||
-      (dst_origin[2]+region[2])*dst_slice_pitch + (dst_origin[1]+region[1])*dst_row_pitch + dst_origin[0] + region[0] > dst_buffer->size) {
+  if ((src_origin[2] + region[2] - 1) * src_slice_pitch
+        + (src_origin[1] + region[1] - 1) * src_row_pitch
+        + src_origin[0] + region[0] > src_buffer->size
+      ||(dst_origin[2] + region[2] - 1) * dst_slice_pitch
+          + (dst_origin[1] + region[1] - 1) * dst_row_pitch
+          + dst_origin[0] + region[0] > dst_buffer->size) {
     err = CL_INVALID_VALUE;
     goto error;
   }
