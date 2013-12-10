@@ -784,6 +784,83 @@ INLINE_OVERLOADABLE float __gen_ocl_internal_log10(float x) {
   return  z+y*log10_2hi;
 }
 
+INLINE_OVERLOADABLE float __gen_ocl_internal_log2(float x) {
+/*
+ *  Conversion to float by Ian Lance Taylor, Cygnus Support, ian@cygnus.com
+ *  adapted for log2 by Ulrich Drepper <drepper@cygnus.com>
+ * ====================================================
+ * Copyright (C) 1993 by Sun Microsystems, Inc. All rights reserved.
+ *
+ * Developed at SunPro, a Sun Microsystems, Inc. business.
+ * Permission to use, copy, modify, and distribute this
+ * software is freely granted, provided that this notice
+ * is preserved.
+ * ====================================================
+ */
+  const float zero   =  0.0,
+  ln2 = 0.69314718055994530942,
+  two25 =    3.355443200e+07, /** 0x4c000000 */
+  Lg1 = 6.6666668653e-01, /** 3F2AAAAB */
+  Lg2 = 4.0000000596e-01, /** 3ECCCCCD */
+  Lg3 = 2.8571429849e-01, /** 3E924925 */
+  Lg4 = 2.2222198546e-01, /** 3E638E29 */
+  Lg5 = 1.8183572590e-01, /** 3E3A3325 */
+  Lg6 = 1.5313838422e-01, /** 3E1CD04F */
+  Lg7 = 1.4798198640e-01; /** 3E178897 */
+
+  float hfsq,f,s,z,R,w,t1,t2,dk;
+  int k,ix,i,j;
+
+  union {float f; int i; }u;//GET_FLOAT_WORD(ix,x);
+  u.f = x; ix = u.i;
+
+  k=0;
+  if (ix < 0x00800000) {           /** x < 2**-126  */
+      if ((ix&0x7fffffff)==0)
+      return -two25/(x-x);        /** log(+-0)=-inf */
+
+      if (ix<0) return (x-x)/(x-x);    /** log(-#) = NaN */
+      return -INFINITY;
+      k -= 25; x *= two25; /** subnormal number, scale up x */
+      u.f = x; ix = u.i; //GET_FLOAT_WORD(ix,x);
+  }
+
+  if (ix >= 0x7f800000) return x+x;
+
+  k += (ix>>23)-127;
+  ix &= 0x007fffff;
+  i = (ix+(0x95f64<<3))&0x800000;
+
+  u.i = ix|(i^0x3f800000); x = u.f;//SET_FLOAT_WORD(x,ix|(i^0x3f800000));    /** normalize x or x/2 */
+  k += (i>>23);
+  dk = (float)k;
+  f = x-(float)1.0;
+
+  if((0x007fffff&(15+ix))<16) {    /** |f| < 2**-20 */
+      if(f==zero) return dk;
+
+      R = f*f*((float)0.5-(float)0.33333333333333333*f);
+      return dk-(R-f)/ln2;
+  }
+
+  s = f/((float)2.0+f);
+  z = s*s;
+  i = ix-(0x6147a<<3);
+  w = z*z;
+  j = (0x6b851<<3)-ix;
+  t1= w*(Lg2+w*(Lg4+w*Lg6));
+  t2= z*(Lg1+w*(Lg3+w*(Lg5+w*Lg7)));
+  i |= j;
+  R = t2+t1;
+
+  if(i>0) {
+      hfsq=(float)0.5*f*f;
+      return dk-((hfsq-(s*(hfsq+R)))-f)/ln2;
+  } else {
+      return dk-((s*(f-R))-f)/ln2;
+  }
+}
+
 INLINE_OVERLOADABLE float hypot(float x, float y) { return __gen_ocl_sqrt(x*x + y*y); }
 INLINE_OVERLOADABLE float native_cos(float x) { return __gen_ocl_cos(x); }
 INLINE_OVERLOADABLE float __gen_ocl_internal_cospi(float x) {
@@ -1774,7 +1851,6 @@ INLINE_OVERLOADABLE float __gen_ocl_internal_round(float x) {
 }
 INLINE_OVERLOADABLE float __gen_ocl_internal_floor(float x) { return __gen_ocl_rndd(x); }
 INLINE_OVERLOADABLE float __gen_ocl_internal_ceil(float x)  { return __gen_ocl_rndu(x); }
-INLINE_OVERLOADABLE float __gen_ocl_internal_log2(float x)  { return native_log2(x); }
 INLINE_OVERLOADABLE float __gen_ocl_internal_exp(float x)   { return native_exp(x); }
 INLINE_OVERLOADABLE float powr(float x, float y) { return __gen_ocl_pow(x,y); }
 INLINE_OVERLOADABLE float fmod(float x, float y) { return x-y*__gen_ocl_rndz(x/y); }
