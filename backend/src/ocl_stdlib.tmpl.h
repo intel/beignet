@@ -741,6 +741,49 @@ INLINE_OVERLOADABLE float __gen_ocl_internal_log(float x) {
   }
 }
 
+INLINE_OVERLOADABLE float __gen_ocl_internal_log10(float x) {
+/*
+ *  Conversion to float by Ian Lance Taylor, Cygnus Support, ian@cygnus.com
+ * ====================================================
+ * Copyright (C) 1993 by Sun Microsystems, Inc. All rights reserved.
+ *
+ * Developed at SunPro, a Sun Microsystems, Inc. business.
+ * Permission to use, copy, modify, and distribute this
+ * software is freely granted, provided that this notice
+ * is preserved.
+ * ====================================================
+ */
+  union {float f; unsigned i; }u;
+  const float
+  zero       = 0.0,
+  two25      =  3.3554432000e+07, /* 0x4c000000 */
+  ivln10     =  4.3429449201e-01, /* 0x3ede5bd9 */
+  log10_2hi  =  3.0102920532e-01, /* 0x3e9a2080 */
+  log10_2lo  =  7.9034151668e-07; /* 0x355427db */
+
+  float y,z;
+  int i,k,hx;
+
+  u.f = x; hx = u.i;
+  k=0;
+  if (hx < 0x00800000) {                  /* x < 2**-126  */
+    if ((hx&0x7fffffff)==0)
+      return -two25/zero;             /* log(+-0)=-inf */
+    if (hx<0) return NAN;        /* log(-#) = NaN */
+    return -INFINITY;      /* Gen does not support subnormal now */
+    //k -= 25; x *= two25; /* subnormal number, scale up x */
+    //u.f = x; hx = u.i;
+  }
+  if (hx >= 0x7f800000) return x+x;
+  k += (hx>>23)-127;
+  i  = ((unsigned)k&0x80000000)>>31;
+  hx = (hx&0x007fffff)|((0x7f-i)<<23);
+  y  = (float)(k+i);
+  u.i = hx; x = u.f;
+  z  = y*log10_2lo + ivln10*__gen_ocl_internal_log(x);
+  return  z+y*log10_2hi;
+}
+
 INLINE_OVERLOADABLE float hypot(float x, float y) { return __gen_ocl_sqrt(x*x + y*y); }
 INLINE_OVERLOADABLE float native_cos(float x) { return __gen_ocl_cos(x); }
 INLINE_OVERLOADABLE float __gen_ocl_internal_cospi(float x) {
@@ -1732,7 +1775,6 @@ INLINE_OVERLOADABLE float __gen_ocl_internal_round(float x) {
 INLINE_OVERLOADABLE float __gen_ocl_internal_floor(float x) { return __gen_ocl_rndd(x); }
 INLINE_OVERLOADABLE float __gen_ocl_internal_ceil(float x)  { return __gen_ocl_rndu(x); }
 INLINE_OVERLOADABLE float __gen_ocl_internal_log2(float x)  { return native_log2(x); }
-INLINE_OVERLOADABLE float __gen_ocl_internal_log10(float x) { return native_log10(x); }
 INLINE_OVERLOADABLE float __gen_ocl_internal_exp(float x)   { return native_exp(x); }
 INLINE_OVERLOADABLE float powr(float x, float y) { return __gen_ocl_pow(x,y); }
 INLINE_OVERLOADABLE float fmod(float x, float y) { return x-y*__gen_ocl_rndz(x/y); }
