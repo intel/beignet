@@ -61,52 +61,56 @@ std::cout <<"kernel name: " << kernel_name << std::endl;
   buf_data[0] = buf_data[1] = NULL;
 }
 
-#define DECL_TEST_SUB(type, alias) \
+#define DECL_TEST_SUB(type, alias, keep_program) \
 static void compiler_sub_ ##alias(void)\
 {\
   test_exec<type, TEST_OP_SUB>("compiler_sub_" # alias);\
 }\
-MAKE_UTEST_FROM_FUNCTION(compiler_sub_ ## alias)
+MAKE_UTEST_FROM_FUNCTION_KEEP_PROGRAM(compiler_sub_ ## alias, keep_program)
 
-#define DECL_TEST_ADD(type, alias) \
+#define DECL_TEST_ADD(type, alias, keep_program) \
 static void compiler_add_ ##alias(void)\
 {\
   test_exec<type, TEST_OP_ADD>("compiler_add_" # alias);\
 }\
-MAKE_UTEST_FROM_FUNCTION(compiler_add_ ## alias)
+MAKE_UTEST_FROM_FUNCTION_KEEP_PROGRAM(compiler_add_ ## alias, keep_program)
 
-#define DECL_TEST_MUL(type, alias) \
+#define DECL_TEST_MUL(type, alias, keep_program) \
 static void compiler_mul_ ##alias(void)\
 {\
   test_exec<type, TEST_OP_MUL>("compiler_mul_" # alias);\
 }\
-MAKE_UTEST_FROM_FUNCTION(compiler_mul_ ## alias)
+MAKE_UTEST_FROM_FUNCTION_KEEP_PROGRAM(compiler_mul_ ## alias, keep_program)
 
-#define DECL_TEST_DIV(type, alias) \
+#define DECL_TEST_DIV(type, alias, keep_program) \
 static void compiler_div_ ##alias(void)\
 {\
   test_exec<type, TEST_OP_DIV>("compiler_div_" # alias);\
 }\
-MAKE_UTEST_FROM_FUNCTION(compiler_div_ ## alias)
+MAKE_UTEST_FROM_FUNCTION_KEEP_PROGRAM(compiler_div_ ## alias, keep_program)
 
-#define DECL_TEST_REM(type, alias) \
+#define DECL_TEST_REM(type, alias, keep_program) \
 static void compiler_rem_ ##alias(void)\
 {\
   test_exec<type, TEST_OP_REM>("compiler_rem_" # alias);\
 }\
-MAKE_UTEST_FROM_FUNCTION(compiler_rem_ ## alias)
+MAKE_UTEST_FROM_FUNCTION_KEEP_PROGRAM(compiler_rem_ ## alias, keep_program)
 
-#define DECL_TEST_FOR_ALL_TYPE(op)\
-DECL_TEST_##op(int8_t, char) \
-DECL_TEST_##op(uint8_t, uchar) \
-DECL_TEST_##op(int16_t, short) \
-DECL_TEST_##op(uint16_t, ushort) \
-DECL_TEST_##op(int32_t, int) \
-DECL_TEST_##op(uint32_t, uint)
+#define _DECL_TEST_FOR_ALL_TYPE(op, keep_program) \
+DECL_TEST_##op(int8_t, char, true) \
+DECL_TEST_##op(uint8_t, uchar, true) \
+DECL_TEST_##op(int16_t, short, true) \
+DECL_TEST_##op(uint16_t, ushort, true) \
+DECL_TEST_##op(int32_t, int, true) \
+DECL_TEST_##op(uint32_t, uint, keep_program)
+
+#define DECL_TEST_FOR_ALL_TYPE(op) _DECL_TEST_FOR_ALL_TYPE(op, true)
+
+#define DECL_TEST_FOR_ALL_TYPE_END(op) _DECL_TEST_FOR_ALL_TYPE(op, false)
 
 DECL_TEST_FOR_ALL_TYPE(SUB)
 DECL_TEST_FOR_ALL_TYPE(ADD)
 DECL_TEST_FOR_ALL_TYPE(MUL)
 DECL_TEST_FOR_ALL_TYPE(DIV)
-DECL_TEST_FOR_ALL_TYPE(REM)
+DECL_TEST_FOR_ALL_TYPE_END(REM)
 #undef DECL_TEST_FOR_ALL_TYPE

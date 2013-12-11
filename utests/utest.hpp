@@ -39,13 +39,15 @@ struct UTest
   /*! Empty test */
   UTest(void);
   /*! Build a new unit test and append it to the unit test list */
-  UTest(Function fn, const char *name, bool haveIssue = false);
+  UTest(Function fn, const char *name, bool haveIssue = false, bool needDestroyProgram = true);
   /*! Function to execute */
   Function fn;
   /*! Name of the test */
   const char *name;
   /*! Indicate whether current test cases has issue to be fixes */
   bool haveIssue;
+  /*! Indicate whether destroy kernels/program. */
+  bool needDestroyProgram;
   /*! The tests that are registered */
   static std::vector<UTest> *utestList;
   /*! Run the test with the given name */
@@ -60,6 +62,11 @@ struct UTest
 
 /*! Register a new unit test */
 #define UTEST_REGISTER(FN) static const UTest __##FN##__(FN, #FN);
+
+#define MAKE_UTEST_FROM_FUNCTION_KEEP_PROGRAM(FN, KEEP_PROGRAM) \
+  static void __ANON__##FN##__(void) { UTEST_EXPECT_SUCCESS(FN()); } \
+  static const UTest __##FN##__(__ANON__##FN##__, #FN, false, !(KEEP_PROGRAM));
+
 
 /*! Turn a function into a unit test */
 #define MAKE_UTEST_FROM_FUNCTION(FN) \

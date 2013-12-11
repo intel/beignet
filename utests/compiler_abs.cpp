@@ -166,13 +166,16 @@ template <typename T, typename U> static void compiler_abs_with_type(void)
     }
 }
 
-#define ABS_TEST_TYPE(TYPE, UTYPE) \
+#define ABS_TEST_TYPE_1(TYPE, UTYPE, KEEP_PROGRAM) \
 	static void compiler_abs_##TYPE (void) \
         { \
            OCL_CALL (cl_kernel_init, "compiler_abs.cl", "compiler_abs_"#TYPE, SOURCE, NULL);  \
            compiler_abs_with_type<TYPE, UTYPE>(); \
         } \
-	MAKE_UTEST_FROM_FUNCTION(compiler_abs_##TYPE);
+	MAKE_UTEST_FROM_FUNCTION_KEEP_PROGRAM(compiler_abs_##TYPE, KEEP_PROGRAM);
+
+#define ABS_TEST_TYPE(TYPE, UTYPE) ABS_TEST_TYPE_1(TYPE, UTYPE, true)
+#define ABS_TEST_TYPE_END(TYPE, UTYPE) ABS_TEST_TYPE_1(TYPE, UTYPE, false)
 
 typedef unsigned char uchar;
 typedef unsigned short ushort;
@@ -248,4 +251,4 @@ ABS_TEST_TYPE(ushort2, ushort2)
 ABS_TEST_TYPE(ushort3, ushort3)
 ABS_TEST_TYPE(ushort4, ushort4)
 ABS_TEST_TYPE(ushort8, ushort8)
-ABS_TEST_TYPE(ushort16, ushort16)
+ABS_TEST_TYPE_END(ushort16, ushort16)

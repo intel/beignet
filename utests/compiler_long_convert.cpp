@@ -65,7 +65,7 @@ void compiler_long_convert(void)
   OCL_UNMAP_BUFFER(5);
 }
 
-MAKE_UTEST_FROM_FUNCTION(compiler_long_convert);
+MAKE_UTEST_FROM_FUNCTION_KEEP_PROGRAM(compiler_long_convert, true);
 
 // convert 64-bit integer to shorter integer
 void compiler_long_convert_2(void)
@@ -115,7 +115,7 @@ void compiler_long_convert_2(void)
   OCL_UNMAP_BUFFER(2);
 }
 
-MAKE_UTEST_FROM_FUNCTION(compiler_long_convert_2);
+MAKE_UTEST_FROM_FUNCTION_KEEP_PROGRAM(compiler_long_convert_2, true);
 
 // convert 64-bit integer to 32-bit float
 void compiler_long_convert_to_float(void)

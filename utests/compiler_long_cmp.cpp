@@ -47,6 +47,7 @@ void compiler_long_cmp(void)
     OCL_ASSERT(x == dest[i]);
   }
   OCL_UNMAP_BUFFER(2);
+  OCL_DESTROY_KERNEL_KEEP_PROGRAM(true);
 
   OCL_CREATE_KERNEL_FROM_FILE("compiler_long_cmp", "compiler_long_cmp_le");
   OCL_SET_ARG(0, sizeof(cl_mem), &buf[0]);
@@ -60,6 +61,7 @@ void compiler_long_cmp(void)
     OCL_ASSERT(x == dest[i]);
   }
   OCL_UNMAP_BUFFER(2);
+  OCL_DESTROY_KERNEL_KEEP_PROGRAM(true);
 
   OCL_CREATE_KERNEL_FROM_FILE("compiler_long_cmp", "compiler_long_cmp_g");
   OCL_SET_ARG(0, sizeof(cl_mem), &buf[0]);
@@ -73,6 +75,7 @@ void compiler_long_cmp(void)
     OCL_ASSERT(x == dest[i]);
   }
   OCL_UNMAP_BUFFER(2);
+  OCL_DESTROY_KERNEL_KEEP_PROGRAM(true);
 
   OCL_CREATE_KERNEL_FROM_FILE("compiler_long_cmp", "compiler_long_cmp_ge");
   OCL_SET_ARG(0, sizeof(cl_mem), &buf[0]);
@@ -86,6 +89,7 @@ void compiler_long_cmp(void)
     OCL_ASSERT(x == dest[i]);
   }
   OCL_UNMAP_BUFFER(2);
+  OCL_DESTROY_KERNEL_KEEP_PROGRAM(true);
 
   OCL_CREATE_KERNEL_FROM_FILE("compiler_long_cmp", "compiler_long_cmp_eq");
   OCL_SET_ARG(0, sizeof(cl_mem), &buf[0]);
@@ -99,6 +103,7 @@ void compiler_long_cmp(void)
     OCL_ASSERT(x == dest[i]);
   }
   OCL_UNMAP_BUFFER(2);
+  OCL_DESTROY_KERNEL_KEEP_PROGRAM(true);
 
   OCL_CREATE_KERNEL_FROM_FILE("compiler_long_cmp", "compiler_long_cmp_neq");
   OCL_SET_ARG(0, sizeof(cl_mem), &buf[0]);

@@ -237,30 +237,32 @@ cl_kernel_init(const char *file_name, const char *kernel_name, int format, const
   cl_file_map_t *fm = NULL;
   char *ker_path = NULL;
   cl_int status = CL_SUCCESS;
+  static const char *prevFileName = NULL;
 
   /* Load the program and build it */
-  if (program)
-    clReleaseProgram(program);
-  ker_path = cl_do_kiss_path(file_name, device);
-  if (format == LLVM)
-    program = clCreateProgramWithLLVMIntel(ctx, 1, &device, ker_path, &status);
-  else if (format == SOURCE) {
-    cl_file_map_t *fm = cl_file_map_new();
-    FATAL_IF (cl_file_map_open(fm, ker_path) != CL_FILE_MAP_SUCCESS,
-              "Failed to open file \"%s\" with kernel \"%s\". Did you properly set OCL_KERNEL_PATH variable?",
-              file_name, kernel_name);
-    const char *src = cl_file_map_begin(fm);
-    const size_t sz = cl_file_map_size(fm);
-    program = clCreateProgramWithSource(ctx, 1, &src, &sz, &status);
-    cl_file_map_delete(fm);
-  } else
-    FATAL("Not able to create program from binary");
+  if (!program || (program && (!prevFileName || strcmp(prevFileName, file_name)))) {
+    if (program) clReleaseProgram(program);
+    ker_path = cl_do_kiss_path(file_name, device);
+    if (format == LLVM)
+      program = clCreateProgramWithLLVMIntel(ctx, 1, &device, ker_path, &status);
+    else if (format == SOURCE) {
+      cl_file_map_t *fm = cl_file_map_new();
+      FATAL_IF (cl_file_map_open(fm, ker_path) != CL_FILE_MAP_SUCCESS,
+                "Failed to open file \"%s\" with kernel \"%s\". Did you properly set OCL_KERNEL_PATH variable?",
+                file_name, kernel_name);
+      const char *src = cl_file_map_begin(fm);
+      const size_t sz = cl_file_map_size(fm);
+      program = clCreateProgramWithSource(ctx, 1, &src, &sz, &status);
+      cl_file_map_delete(fm);
+    } else
+      FATAL("Not able to create program from binary");
 
-  if (status != CL_SUCCESS) {
-    fprintf(stderr, "error calling clCreateProgramWithBinary\n");
-    goto error;
+    if (status != CL_SUCCESS) {
+      fprintf(stderr, "error calling clCreateProgramWithBinary\n");
+      goto error;
+    }
+    prevFileName = file_name;
   }
-
   /* OCL requires to build the program even if it is created from a binary */
   OCL_CALL (clBuildProgram, program, 1, &device, build_opt, NULL, NULL);
 
@@ -278,6 +280,7 @@ exit:
   cl_file_map_delete(fm);
   return status;
 error:
+  prevFileName = NULL;
   goto exit;
 }
 
@@ -413,12 +416,16 @@ error:
 }
 
 void
-cl_kernel_destroy(void)
+cl_kernel_destroy(bool needDestroyProgram)
 {
-  if (kernel) clReleaseKernel(kernel);
-  if (program) clReleaseProgram(program);
-  kernel = NULL;
-  program = NULL;
+  if (kernel) {
+    clReleaseKernel(kernel);
+    kernel = NULL;
+  }
+  if (needDestroyProgram && program) {
+    clReleaseProgram(program);
+    program = NULL;
+  }
 }
 
 void

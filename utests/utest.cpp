@@ -32,7 +32,8 @@ using namespace std;
 vector<UTest> *UTest::utestList = NULL;
 void releaseUTestList(void) { delete UTest::utestList; }
 
-UTest::UTest(Function fn, const char *name, bool haveIssue) : fn(fn), name(name), haveIssue(haveIssue) {
+UTest::UTest(Function fn, const char *name, bool haveIssue, bool needDestroyProgram)
+       : fn(fn), name(name), haveIssue(haveIssue), needDestroyProgram(needDestroyProgram) {
   if (utestList == NULL) {
     utestList = new vector<UTest>;
     atexit(releaseUTestList);
@@ -57,7 +58,7 @@ void UTest::run(const char *name) {
       std::cout << utest.name << ":" << std::endl;
       (utest.fn)();
       std::cout << std::endl;
-      cl_kernel_destroy();
+      cl_kernel_destroy(true);
       cl_buffer_destroy();
     }
   }
@@ -71,7 +72,7 @@ void UTest::runAll(void) {
     std::cout << utest.name << ":" << std::endl;
     (utest.fn)();
     std::cout << std::endl;
-    cl_kernel_destroy();
+    cl_kernel_destroy(utest.needDestroyProgram);
     cl_buffer_destroy();
   }
 }
@@ -84,7 +85,7 @@ void UTest::runAllNoIssue(void) {
     std::cout << utest.name << ":" << std::endl;
     (utest.fn)();
     std::cout << std::endl;
-    cl_kernel_destroy();
+    cl_kernel_destroy(utest.needDestroyProgram);
     cl_buffer_destroy();
   }
 }

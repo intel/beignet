@@ -134,8 +134,8 @@ void compiler_group_size4(void)
     OCL_UNMAP_BUFFER(1);
   }
 }
-MAKE_UTEST_FROM_FUNCTION(compiler_group_size1);
-MAKE_UTEST_FROM_FUNCTION(compiler_group_size2);
-MAKE_UTEST_FROM_FUNCTION(compiler_group_size3);
+MAKE_UTEST_FROM_FUNCTION_KEEP_PROGRAM(compiler_group_size1, true);
+MAKE_UTEST_FROM_FUNCTION_KEEP_PROGRAM(compiler_group_size2, true);
+MAKE_UTEST_FROM_FUNCTION_KEEP_PROGRAM(compiler_group_size3, true);
 MAKE_UTEST_FROM_FUNCTION(compiler_group_size4);
 

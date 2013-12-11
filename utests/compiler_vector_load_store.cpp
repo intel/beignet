@@ -37,27 +37,27 @@ static void compiler_vector_load_store(int elemNum, const char *kernelName)
   OCL_UNMAP_BUFFER(1);
 }
 
-#define compiler_vector_load_store(type, n, kernel_type) \
+#define compiler_vector_load_store(type, n, kernel_type, keep_program) \
 static void compiler_vector_ ##kernel_type ##n ##_load_store(void)\
 {\
   compiler_vector_load_store<type>(n, "test_" #kernel_type #n);\
 }\
-MAKE_UTEST_FROM_FUNCTION(compiler_vector_ ## kernel_type ##n ##_load_store);
+MAKE_UTEST_FROM_FUNCTION_KEEP_PROGRAM(compiler_vector_ ## kernel_type ##n ##_load_store, keep_program);
 
-#define test_all_vector(type, kernel_type) \
-  compiler_vector_load_store(type, 2, kernel_type) \
-  compiler_vector_load_store(type, 3, kernel_type) \
-  compiler_vector_load_store(type, 4, kernel_type) \
-  compiler_vector_load_store(type, 8, kernel_type) \
-  compiler_vector_load_store(type, 16, kernel_type)
+#define test_all_vector(type, kernel_type, keep_program) \
+  compiler_vector_load_store(type, 2, kernel_type, true) \
+  compiler_vector_load_store(type, 3, kernel_type, true) \
+  compiler_vector_load_store(type, 4, kernel_type, true) \
+  compiler_vector_load_store(type, 8, kernel_type, true) \
+  compiler_vector_load_store(type, 16, kernel_type, keep_program)
 
-test_all_vector(int8_t, char)
-test_all_vector(uint8_t, uchar)
-test_all_vector(int16_t, short)
-test_all_vector(uint16_t, ushort)
-test_all_vector(int32_t, int)
-test_all_vector(uint32_t, uint)
-test_all_vector(float, float)
-test_all_vector(double, double)
-test_all_vector(int64_t, long)
-test_all_vector(uint64_t, ulong)
+test_all_vector(int8_t, char, true)
+test_all_vector(uint8_t, uchar, true)
+test_all_vector(int16_t, short, true)
+test_all_vector(uint16_t, ushort, true)
+test_all_vector(int32_t, int, true)
+test_all_vector(uint32_t, uint, true)
+test_all_vector(float, float, true)
+test_all_vector(double, double, true)
+test_all_vector(int64_t, long, true)
+test_all_vector(uint64_t, ulong, false)

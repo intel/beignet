@@ -183,26 +183,29 @@ template <typename T, typename U> static void compiler_abs_diff_with_type(void)
 }
 
 
-#define ABS_TEST_DIFF_TYPE_2(TYPE, CLTYPE, UTYPE) \
+#define ABS_TEST_DIFF_TYPE_2(TYPE, CLTYPE, UTYPE, KEEP_PROGRAM) \
 	static void compiler_abs_diff_##CLTYPE (void) \
         { \
            OCL_CALL (cl_kernel_init, "compiler_abs_diff.cl", "compiler_abs_diff_"#CLTYPE, SOURCE, NULL);  \
            compiler_abs_diff_with_type<TYPE, UTYPE>(); \
         } \
-	MAKE_UTEST_FROM_FUNCTION(compiler_abs_diff_##CLTYPE);
+	MAKE_UTEST_FROM_FUNCTION_KEEP_PROGRAM(compiler_abs_diff_##CLTYPE, KEEP_PROGRAM);
 
-#define ABS_TEST_DIFF_TYPE(TYPE, UTYPE) ABS_TEST_DIFF_TYPE_2(TYPE, TYPE, UTYPE)
+#define ABS_TEST_DIFF_TYPE(TYPE, UTYPE) ABS_TEST_DIFF_TYPE_2(TYPE, TYPE, UTYPE, true)
+
+#define ABS_TEST_DIFF_TYPE_END(TYPE, UTYPE) ABS_TEST_DIFF_TYPE_2(TYPE, TYPE, UTYPE, false)
+
 
 typedef unsigned char uchar;
 typedef unsigned short ushort;
 typedef unsigned int uint;
 typedef uint64_t ulong64;
 ABS_TEST_DIFF_TYPE(int, uint)
-ABS_TEST_DIFF_TYPE_2(int64_t, long, ulong64)
+ABS_TEST_DIFF_TYPE_2(int64_t, long, ulong64, true)
 ABS_TEST_DIFF_TYPE(short, ushort)
 ABS_TEST_DIFF_TYPE(char, uchar)
 ABS_TEST_DIFF_TYPE(uint, uint)
-ABS_TEST_DIFF_TYPE_2(ulong64, ulong, ulong64)
+ABS_TEST_DIFF_TYPE_2(ulong64, ulong, ulong64, true)
 ABS_TEST_DIFF_TYPE(ushort, ushort)
 ABS_TEST_DIFF_TYPE(uchar, uchar)
 
@@ -289,4 +292,4 @@ ABS_TEST_DIFF_TYPE(ushort2, ushort2)
 ABS_TEST_DIFF_TYPE(ushort3, ushort3)
 ABS_TEST_DIFF_TYPE(ushort4, ushort4)
 ABS_TEST_DIFF_TYPE(ushort8, ushort8)
-ABS_TEST_DIFF_TYPE(ushort16, ushort16)
+ABS_TEST_DIFF_TYPE_END(ushort16, ushort16)

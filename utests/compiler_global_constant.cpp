@@ -98,7 +98,7 @@ void compiler_global_constant3(void)
   OCL_UNMAP_BUFFER(0);
 }
 
-MAKE_UTEST_FROM_FUNCTION(compiler_global_constant);
-MAKE_UTEST_FROM_FUNCTION(compiler_global_constant1);
-MAKE_UTEST_FROM_FUNCTION(compiler_global_constant2);
+MAKE_UTEST_FROM_FUNCTION_KEEP_PROGRAM(compiler_global_constant, true);
+MAKE_UTEST_FROM_FUNCTION_KEEP_PROGRAM(compiler_global_constant1, true);
+MAKE_UTEST_FROM_FUNCTION_KEEP_PROGRAM(compiler_global_constant2, true);
 MAKE_UTEST_FROM_FUNCTION(compiler_global_constant3);

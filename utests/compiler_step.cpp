@@ -322,17 +322,21 @@ template <typename T> static void compiler_stepf_with_type(void)
     }
 }
 
-#define STEPF_TEST_TYPE(TYPE) \
+#define _STEPF_TEST_TYPE(TYPE, keep_program) \
 	static void compiler_stepf_##TYPE (void) \
         { \
            OCL_CALL (cl_kernel_init, "compiler_step.cl", "compiler_stepf_"#TYPE, SOURCE, NULL);  \
            compiler_stepf_with_type<TYPE>(); \
         } \
-	MAKE_UTEST_FROM_FUNCTION(compiler_stepf_##TYPE);
+	MAKE_UTEST_FROM_FUNCTION_KEEP_PROGRAM(compiler_stepf_##TYPE, keep_program);
+
+#define STEPF_TEST_TYPE(TYPE) _STEPF_TEST_TYPE(TYPE, true)
+#define STEPF_TEST_TYPE_END(TYPE) _STEPF_TEST_TYPE(TYPE, false)
+
 
 STEPF_TEST_TYPE(float)
 STEPF_TEST_TYPE(float2)
 STEPF_TEST_TYPE(float3)
 STEPF_TEST_TYPE(float4)
 STEPF_TEST_TYPE(float8)
-STEPF_TEST_TYPE(float16)
+STEPF_TEST_TYPE_END(float16)

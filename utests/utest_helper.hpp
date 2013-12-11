@@ -65,6 +65,11 @@ extern EGLSurface  eglSurface;
     OCL_CALL (cl_kernel_init, NAME".cl", NAME, SOURCE, NULL); \
   } while (0)
 
+#define OCL_DESTROY_KERNEL_KEEP_PROGRAM(KEEP_PROGRAM) \
+  do { \
+    cl_kernel_destroy(!(KEEP_PROGRAM)); \
+  } while(0)
+
 #define OCL_CREATE_KERNEL_FROM_FILE(FILE_NAME, KERNEL_NAME) \
   do { \
     OCL_CALL(cl_kernel_init, FILE_NAME".cl", KERNEL_NAME, SOURCE, NULL); \
@@ -199,7 +204,7 @@ extern void cl_buffer_destroy(void);
 extern void cl_ocl_destroy(void);
 
 /* Release kernel and program */
-extern void cl_kernel_destroy(void);
+extern void cl_kernel_destroy(bool needDestroyProgram = true);
 
 /* Release everything allocated in cl_test_init */
 extern void cl_test_destroy(void);
