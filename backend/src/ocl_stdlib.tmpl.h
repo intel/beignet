@@ -1586,7 +1586,20 @@ INLINE_OVERLOADABLE float log1p(float x) {
      return k*ln2_hi-((hfsq-(s*(hfsq+R)+(k*ln2_lo+c)))-f);
 
 }
-INLINE_OVERLOADABLE float logb(float x) { return __gen_ocl_rndd(native_log2(x)); }
+INLINE_OVERLOADABLE float logb(float x) {
+union {float f; unsigned i;} u;
+  u.f = x;
+  int e =  ((u.i & 0x7f800000) >> 23);
+  if(e == 0) {
+    /* sub normal or +/-0 */
+    return -INFINITY;
+  } else if(e == 0xff) {
+    /* inf & nan */
+    return x*x;
+  } else {
+    return (float)(e-127);
+  }
+}
 #define FP_ILOGB0 (-0x7FFFFFFF-1)
 #define FP_ILOGBNAN FP_ILOGB0
 INLINE_OVERLOADABLE int ilogb(float x) {
