@@ -569,6 +569,9 @@ namespace gbe {
     clang::LangOptions & lang_opts = Clang.getLangOpts();
     lang_opts.OpenCL = 1;
 
+    clang::PreprocessorOptions prep_opt = Clang.getPreprocessorOpts();
+    prep_opt.DisablePCHValidation = 1;
+
     //llvm flags need command line parsing to take effect
     if (!Clang.getFrontendOpts().LLVMArgs.empty()) {
       unsigned NumArgs = Clang.getFrontendOpts().LLVMArgs.size();
@@ -645,32 +648,91 @@ namespace gbe {
     FILE *clFile = fopen(clName.c_str(), "w");
     FATAL_IF(clFile == NULL, "Failed to open temporary file");
 
-    bool usePCH = false;
+    bool usePCH = true;
+    bool findPCH = false;
 
-    if(options)
-      clOpt += options;
+    /* Because our header file is so big, we want to avoid recompile the header from
+       scratch. We use the PCH support of Clang to save the huge compiling time.
+       We just use the most general build opt to build the PCH header file, so if
+       user pass new build options here, the PCH can not pass the Clang's compitable
+       validating. Clang will do three kinds of compatible check: Language Option,
+       Target Option and Preprocessing Option. Other kinds of options such as the
+       CodeGen options will not affect the AST result, so no need to check.
 
-    if (options || !OCL_USE_PCH) {
-      /* Some building option may cause the prebuild pch header file
-         not compatible with the XXX.cl source. We need rebuild all here.*/
-      usePCH = false;
-    } else {
-      std::string dirs = PCH_OBJECT_DIR;
-      std::istringstream idirs(dirs);
+       According to OpenCL 1.1's spec, the CL build options:
+       -D name=definition
+       If the definition is not used in our header, it is compitable
 
-      while (getline(idirs, pchHeaderName, ';')) {
-        if(access(pchHeaderName.c_str(), R_OK) == 0) {
-          usePCH = true;
+       -cl-single-precision-constant
+       -cl-denorms-are-zero
+       -cl-std=
+       Language options, really affect.
+
+       -cl-opt-disable
+       -cl-mad-enable
+       -cl-no-signed-zeros
+       -cl-unsafe-math-optimizations
+       -cl-finite-math-only
+       -cl-fast-relaxed-math
+       CodeGen options, not affect
+
+       -Werror
+       -w
+       Our header should not block the compiling because of warning.
+
+       So we just disable the PCH validation of Clang and do the judgement by ourself. */
+
+    if(options) {
+      char *p;
+      const char * incompatible_opts[] = {
+          "-cl-single-precision-constant",
+//        "-cl-denorms-are-zero",
+          "-cl-std=",
+      };
+      const char * incompatible_defs[] = {
+          "GET_FLOAT_WORD",
+          "__NV_CL_C_VERSION",
+          "GEN7_SAMPLER_CLAMP_BORDER_WORKAROUND"
+      };
+
+      for (unsigned int i = 0; i < sizeof(incompatible_opts)/sizeof(char *); i++ ) {
+        p = strstr(const_cast<char *>(options), incompatible_opts[i]);
+        if (p) {
+          usePCH = false;
           break;
         }
       }
+
+      if (usePCH) {
+        for (unsigned int i = 0; i < sizeof(incompatible_defs)/sizeof(char *); i++ ) {
+          p = strstr(const_cast<char *>(options), incompatible_defs[i]);
+          if (p) {
+            usePCH = false;
+            break;
+          }
+        }
+      }
+
+      clOpt += options;
     }
-    if (usePCH) {
+
+    std::string dirs = PCH_OBJECT_DIR;
+    std::istringstream idirs(dirs);
+
+    while (getline(idirs, pchHeaderName, ';')) {
+      if(access(pchHeaderName.c_str(), R_OK) == 0) {
+        findPCH = true;
+        break;
+      }
+    }
+
+    if (usePCH && findPCH) {
       clOpt += " -include-pch ";
       clOpt += pchHeaderName;
       clOpt += " ";
     } else
       fwrite(ocl_stdlib_str.c_str(), strlen(ocl_stdlib_str.c_str()), 1, clFile);
+
     // Write the source to the cl file
     fwrite(source, strlen(source), 1, clFile);
     fclose(clFile);
