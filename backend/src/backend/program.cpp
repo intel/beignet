@@ -587,6 +587,21 @@ namespace gbe {
 
     // Create an action and make the compiler instance carry it out
     llvm::OwningPtr<clang::CodeGenAction> Act(new clang::EmitLLVMOnlyAction());
+
+    std::string dirs = PCM_LIB_DIR, pcmLib;
+    std::istringstream idirs(dirs);
+    bool findPcm = false;
+
+    while (getline(idirs, pcmLib, ';')) {
+      if(access(pcmLib.c_str(), R_OK) == 0) {
+        findPcm = true;
+        break;
+      }
+    }
+
+    GBE_ASSERT(findPcm && "Could not find pre compiled module library.\n");
+
+    Clang.getCodeGenOpts().LinkBitcodeFile = pcmLib;
     auto retVal = Clang.ExecuteAction(*Act);
 
     if (err != NULL) {
@@ -755,6 +770,8 @@ namespace gbe {
       if (err != NULL)
         *errSize += clangErrSize;
       gbe_mutex.unlock();
+      if (OCL_OUTPUT_BUILD_LOG && options)
+        llvm::errs() << options;
       remove(llName.c_str());
     } else
       p = NULL;

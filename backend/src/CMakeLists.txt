@@ -59,6 +59,26 @@ add_custom_command(
 add_custom_target(pch_object
                   DEPENDS ${pch_object})
 
+macro(ll_add_library ll_lib ll_sources)
+  foreach (ll ${${ll_sources}})
+  add_custom_command(
+       OUTPUT  ${ll}.bc
+       COMMAND rm -f ${ll}.bc
+       COMMAND llvm-as -o ${ll}.bc ${GBE_SOURCE_DIR}/src/${ll}
+       DEPENDS ${ll}
+       )
+  set (ll_objects ${ll_objects} ${ll}.bc)
+  endforeach (ll ${ll_sources})
+  add_custom_command(
+       OUTPUT ${ll_lib}
+       COMMAND llvm-link -o ${ll_lib} ${ll_objects}
+       DEPENDS ${ll_objects}
+       )
+  add_custom_target(${ll_lib}
+                    DEPENDS ${CMAKE_CURRENT_BINARY_DIR}/${ll_lib})
+  message(${ll_lib}, ${ll_objects})
+endmacro(ll_add_library)
+
 if (GBE_USE_BLOB)
   set (GBE_SRC
        blob.cpp
@@ -144,7 +164,12 @@ link_directories (${LLVM_LIBRARY_DIRS})
 include_directories(${LLVM_INCLUDE_DIRS})
 add_library (gbe SHARED ${GBE_SRC})
 
-ADD_DEPENDENCIES (gbe pch_object)
+# for pre compiled module library.
+set (pcm_lib "beignet.bc")
+set (pcm_sources ocl_barrier.ll)
+ll_add_library (${pcm_lib} pcm_sources)
+
+ADD_DEPENDENCIES (gbe pch_object ${pcm_lib})
 target_link_libraries(
                       gbe
                       ${DRM_INTEL_LIBRARY}
@@ -161,9 +186,11 @@ TARGET_LINK_LIBRARIES(gbe_bin_generater gbe)
 
 install (TARGETS gbe LIBRARY DESTINATION lib)
 install (FILES ${pch_object} DESTINATION lib)
+install (FILES ${CMAKE_CURRENT_BINARY_DIR}/${pcm_lib} DESTINATION lib)
 install (FILES backend/program.h DESTINATION include/gen)
 
 set (PCH_OBJECT_DIR "${pch_object};${CMAKE_INSTALL_PREFIX}/lib/ocl_stdlib.h.pch")
+set (PCM_LIB_DIR "${CMAKE_CURRENT_BINARY_DIR}/${pcm_lib};${CMAKE_INSTALL_PREFIX}/lib/${pcm_lib}")
 configure_file (
   "GBEConfig.h.in"
   "GBEConfig.h"

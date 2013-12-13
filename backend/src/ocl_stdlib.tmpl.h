@@ -2685,14 +2685,7 @@ void __gen_ocl_barrier_global(void);
 void __gen_ocl_barrier_local_and_global(void);
 
 typedef uint cl_mem_fence_flags;
-INLINE void barrier(cl_mem_fence_flags flags) {
-  if (flags == (CLK_LOCAL_MEM_FENCE | CLK_GLOBAL_MEM_FENCE))
-    __gen_ocl_barrier_local_and_global();
-  else if (flags == CLK_LOCAL_MEM_FENCE)
-    __gen_ocl_barrier_local();
-  else if (flags == CLK_GLOBAL_MEM_FENCE)
-    __gen_ocl_barrier_global();
-}
+void barrier(cl_mem_fence_flags flags);
 
 INLINE void mem_fence(cl_mem_fence_flags flags) {
 }
