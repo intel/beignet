@@ -1387,15 +1387,19 @@ namespace gbe
         uint32_t padding = getPadding(oldSlm*8, align);
 
         f.setSLMSize(oldSlm + padding/8 + getTypeByteSize(unit, ty));
-        const Value * parent = cast<Value>(&v);
+        const Value * val = cast<Value>(&v);
         // local variable can only be used in one kernel function. so, don't need to check its all uses.
         // loop through the Constant to find the instruction that use the global variable
-        do {
-          Value::const_use_iterator it = parent->use_begin();
-          parent = cast<Value>(*it);
-        } while(isa<Constant>(parent));
-
-        const Instruction * insn = cast<Instruction>(parent);
+        // FIXME need to find a more grace way to find the function which use this local data.
+        const Instruction * insn = NULL;
+        for( Value::const_use_iterator it = val->use_begin(), prev = val->use_begin();
+             it != prev->use_end() && insn == NULL;
+             prev = it, it = it->use_begin() )
+          for( Value::const_use_iterator innerIt = it;
+               innerIt != val->use_end() && insn == NULL;
+               innerIt++)
+            insn = dyn_cast<Instruction>(*innerIt);
+        GBE_ASSERT(insn && "Can't find a valid reference instruction for local variable.");
         const BasicBlock * bb = insn->getParent();
         const Function * func = bb->getParent();
         if(func != &F) continue;
