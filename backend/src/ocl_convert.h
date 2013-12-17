@@ -3800,6 +3800,154 @@ float __gen_ocl_rndz(float x);
 float __gen_ocl_rnde(float x);
 float __gen_ocl_rndu(float x);
 float __gen_ocl_rndd(float x);
+INLINE_OVERLOADABLE float __convert_float_rtz(long x)
+{
+  union {
+    uint u;
+    float f;
+  } u;
+  u.f = x;
+  long l = u.f;
+  if((l > x && x > 0) || x >= 0x7fffffc000000000 ||
+     (l < x && x < 0)) {
+      u.u -= 1;
+  }
+  return u.f;
+}
+INLINE_OVERLOADABLE float __convert_float_rtp(long x)
+{
+  union {
+    uint u;
+    float f;
+  } u;
+  u.f = x;
+  long l = u.f;  //can not use u.f < x
+  if(l < x && x < 0x7fffffc000000000) {
+    if(x > 0)
+      u.u = u.u + 1;
+    else
+      u.u = u.u - 1;
+  }
+  return u.f;
+}
+INLINE_OVERLOADABLE float __convert_float_rtn(long x)
+{
+  union {
+    uint u;
+    float f;
+  } u;
+  u.f = x;
+  long l = u.f;  //avoid overflow
+  if(l > x || x >= 0x7fffffc000000000) {
+    if(x > 0)
+      u.u = u.u - 1;
+    else
+      u.u = u.u + 1;
+  }
+  return u.f;
+}
+INLINE_OVERLOADABLE float __convert_float_rtz(ulong x)
+{
+  union {
+    uint u;
+    float f;
+  } u;
+  u.f = x;
+  ulong l = u.f;
+  if(l > x  || x >= 0xffffff8000000000)
+      u.u -= 1;
+  return u.f;
+}
+INLINE_OVERLOADABLE float __convert_float_rtp(ulong x)
+{
+  union {
+    uint u;
+    float f;
+  } u;
+  u.f = x;
+  ulong l = u.f;  //can not use u.f < x
+  if(l < x && x < 0xffffff8000000000)
+    u.u = u.u + 1;
+  return u.f;
+}
+INLINE_OVERLOADABLE float __convert_float_rtn(ulong x)
+{
+  return __convert_float_rtz(x);
+}
+INLINE_OVERLOADABLE float __convert_float_rtz(int x)
+{
+  union {
+    uint u;
+    float f;
+  } u;
+  u.f = x;
+  long i = u.f;
+  if((i > x && x > 0) ||
+     (i < x && x < 0)) {
+      u.u -= 1;
+  }
+  return u.f;
+}
+INLINE_OVERLOADABLE float __convert_float_rtp(int x)
+{
+  union {
+    uint u;
+    float f;
+  } u;
+  u.f = x;
+  int i = u.f;
+  if(i < x) {
+    if(x > 0)
+      u.u += 1;
+    else
+      u.u -= 1;
+  }
+  return u.f;
+}
+INLINE_OVERLOADABLE float __convert_float_rtn(int x)
+{
+  union {
+    uint u;
+    float f;
+  } u;
+  u.f = x;
+  long i = u.f;  //avoid overflow
+  if(i > x) {
+    if(x > 0)
+      u.u = u.u - 1;
+    else
+      u.u = u.u + 1;
+  }
+  return u.f;
+}
+INLINE_OVERLOADABLE long __convert_float_rtz(uint x)
+{
+  union {
+    uint u;
+    float f;
+  } u;
+  u.f = x;
+  ulong i = u.f;
+  if(i > x)
+    u.u -= 1;
+  return u.f;
+}
+INLINE_OVERLOADABLE long __convert_float_rtp(uint x)
+{
+  union {
+    uint u;
+    float f;
+  } u;
+  u.f = x;
+  uint i = u.f;
+  if(i < x)
+    u.u += 1;
+  return u.f;
+}
+INLINE_OVERLOADABLE float __convert_float_rtn(uint x)
+{
+  return __convert_float_rtz(x);
+}
 
 INLINE_OVERLOADABLE long convert_long_rte(long x)
 { return x; }
@@ -3868,11 +4016,11 @@ INLINE_OVERLOADABLE uchar convert_uchar_rtn(long x)
 INLINE_OVERLOADABLE float convert_float_rte(long x)
 { return x; }
 INLINE_OVERLOADABLE float convert_float_rtz(long x)
-{ return x; }
+{ return __convert_float_rtz(x); }
 INLINE_OVERLOADABLE float convert_float_rtp(long x)
-{ return x; }
+{ return __convert_float_rtp(x); }
 INLINE_OVERLOADABLE float convert_float_rtn(long x)
-{ return x; }
+{ return __convert_float_rtn(x); }
 INLINE_OVERLOADABLE long convert_long_rte(ulong x)
 { return x; }
 INLINE_OVERLOADABLE long convert_long_rtz(ulong x)
@@ -3940,11 +4088,11 @@ INLINE_OVERLOADABLE uchar convert_uchar_rtn(ulong x)
 INLINE_OVERLOADABLE float convert_float_rte(ulong x)
 { return x; }
 INLINE_OVERLOADABLE float convert_float_rtz(ulong x)
-{ return x; }
+{ return __convert_float_rtz(x); }
 INLINE_OVERLOADABLE float convert_float_rtp(ulong x)
-{ return x; }
+{ return __convert_float_rtp(x); }
 INLINE_OVERLOADABLE float convert_float_rtn(ulong x)
-{ return x; }
+{ return __convert_float_rtn(x); }
 INLINE_OVERLOADABLE long convert_long_rte(int x)
 { return x; }
 INLINE_OVERLOADABLE long convert_long_rtz(int x)
@@ -4012,11 +4160,11 @@ INLINE_OVERLOADABLE uchar convert_uchar_rtn(int x)
 INLINE_OVERLOADABLE float convert_float_rte(int x)
 { return x; }
 INLINE_OVERLOADABLE float convert_float_rtz(int x)
-{ return x; }
+{ return __convert_float_rtz(x); }
 INLINE_OVERLOADABLE float convert_float_rtp(int x)
-{ return x; }
+{ return __convert_float_rtp(x); }
 INLINE_OVERLOADABLE float convert_float_rtn(int x)
-{ return x; }
+{ return __convert_float_rtn(x); }
 INLINE_OVERLOADABLE long convert_long_rte(uint x)
 { return x; }
 INLINE_OVERLOADABLE long convert_long_rtz(uint x)
@@ -4084,11 +4232,11 @@ INLINE_OVERLOADABLE uchar convert_uchar_rtn(uint x)
 INLINE_OVERLOADABLE float convert_float_rte(uint x)
 { return x; }
 INLINE_OVERLOADABLE float convert_float_rtz(uint x)
-{ return x; }
+{ return __convert_float_rtz(x); }
 INLINE_OVERLOADABLE float convert_float_rtp(uint x)
-{ return x; }
+{ return __convert_float_rtp(x); }
 INLINE_OVERLOADABLE float convert_float_rtn(uint x)
-{ return x; }
+{ return __convert_float_rtn(x); }
 INLINE_OVERLOADABLE long convert_long_rte(short x)
 { return x; }
 INLINE_OVERLOADABLE long convert_long_rtz(short x)
