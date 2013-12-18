@@ -1775,9 +1775,6 @@ INLINE_OVERLOADABLE float __gen_ocl_internal_atanpi(float x) {
 INLINE_OVERLOADABLE float __gen_ocl_internal_asinh(float x) {
   return native_log(x + native_sqrt(x * x + 1));
 }
-INLINE_OVERLOADABLE float __gen_ocl_internal_acosh(float x) {
-  return native_log(x + native_sqrt(x + 1) * native_sqrt(x - 1));
-}
 INLINE_OVERLOADABLE float __gen_ocl_internal_atanh(float x) {
   return 0.5f * native_sqrt((1 + x) / (1 - x));
 }
@@ -2147,6 +2144,30 @@ INLINE_OVERLOADABLE float __gen_ocl_internal_expm1(float x) {
     }
   }
   return y;
+}
+INLINE_OVERLOADABLE float __gen_ocl_internal_acosh(float x) {
+  //return native_log(x + native_sqrt(x + 1) * native_sqrt(x - 1));
+  float one	= 1.0,
+  ln2	= 6.9314718246e-01;/* 0x3f317218 */
+  float t;
+  int hx;
+  GEN_OCL_GET_FLOAT_WORD(hx,x);
+  if(hx<0x3f800000) {	/* x < 1 */
+    return (x-x)/(x-x);
+  } else if(hx >=0x4d800000) {	/* x > 2**28 */
+    if(hx >=0x7f800000) {/* x is inf of NaN */
+      return x+x;
+    } else
+      return __gen_ocl_internal_log(x)+ln2;/* acosh(huge)=log(2x) */
+  } else if (hx==0x3f800000) {
+    return 0.0;			/* acosh(1) = 0 */
+  } else if (hx > 0x40000000) {	/* 2**28 > x > 2 */
+    t=x*x;
+    return __gen_ocl_internal_log((float)2.0*x-one/(x+__gen_ocl_sqrt(t-one)));			
+  } else {			/* 1<x<2 */
+    t = x-one;
+    return log1p(t+__gen_ocl_sqrt((float)2.0*t+t*t));
+  }
 }
 
 // TODO use llvm intrinsics definitions
