@@ -1890,7 +1890,6 @@ INLINE_OVERLOADABLE float __gen_ocl_internal_round(float x) {
 INLINE_OVERLOADABLE float __gen_ocl_internal_floor(float x) { return __gen_ocl_rndd(x); }
 INLINE_OVERLOADABLE float __gen_ocl_internal_ceil(float x)  { return __gen_ocl_rndu(x); }
 INLINE_OVERLOADABLE float powr(float x, float y) { return __gen_ocl_pow(x,y); }
-INLINE_OVERLOADABLE float fmod(float x, float y) { return x-y*__gen_ocl_rndz(x/y); }
 INLINE_OVERLOADABLE float remainder(float x, float y) { return x-y*__gen_ocl_rnde(x/y); }
 INLINE_OVERLOADABLE float __gen_ocl_internal_rint(float x) {
   return __gen_ocl_rnde(x);
@@ -1969,6 +1968,81 @@ INLINE_OVERLOADABLE float __gen_ocl_internal_exp(float x) {
     return y*twom100;
   }
 }
+INLINE_OVERLOADABLE float __gen_ocl_internal_fmod (float x, float y) {
+  //return x-y*__gen_ocl_rndz(x/y);
+  float one = 1.0;
+  float Zero[2];
+  int n,hx,hy,hz,ix,iy,sx,i;
+  Zero[0] = 0.0;
+  Zero[1] = -0.0;
+  GEN_OCL_GET_FLOAT_WORD(hx,x);
+  GEN_OCL_GET_FLOAT_WORD(hy,y);
+  sx = hx&0x80000000;		/* sign of x */
+  hx ^=sx;		/* |x| */
+  hy &= 0x7fffffff;	/* |y| */
+  /* purge off exception values */
+  if(hy==0||(hx>=0x7f800000)||		/* y=0,or x not finite */
+  (hy>0x7f800000))			/* or y is NaN */
+    return (x*y)/(x*y);
+  if(hx<hy) return x;			/* |x|<|y| return x */
+  if(hx==hy)
+    return Zero[(unsigned)sx>>31];	/* |x|=|y| return x*0*/
+
+  /* determine ix = ilogb(x) */
+  if(hx<0x00800000) {	/* subnormal x */
+    for (ix = -126,i=(hx<<8); i>0; i<<=1) ix -=1;
+  } else ix = (hx>>23)-127;
+
+  /* determine iy = ilogb(y) */
+  if(hy<0x00800000) {	/* subnormal y */
+    for (iy = -126,i=(hy<<8); i>=0; i<<=1) iy -=1;
+  } else iy = (hy>>23)-127;
+
+  /* set up {hx,lx}, {hy,ly} and align y to x */
+  if(ix >= -126)
+    hx = 0x00800000|(0x007fffff&hx);
+  else {		/* subnormal x, shift x to normal */
+    n = -126-ix;
+    hx = hx<<n;
+  }
+  if(iy >= -126)
+    hy = 0x00800000|(0x007fffff&hy);
+  else {		/* subnormal y, shift y to normal */
+    n = -126-iy;
+    hy = hy<<n;
+  }
+  /* fix point fmod */
+  n = ix - iy;
+  while(n--) {
+    hz=hx-hy;
+    if(hz<0){hx = hx+hx;}
+    else {
+      if(hz==0)		/* return sign(x)*0 */
+        return Zero[(unsigned)sx>>31];
+      hx = hz+hz;
+    }
+  }
+  hz=hx-hy;
+  if(hz>=0) {hx=hz;}
+
+    /* convert back to floating value and restore the sign */
+  if(hx==0)			/* return sign(x)*0 */
+    return Zero[(unsigned)sx>>31];
+  while(hx<0x00800000) {		/* normalize x */
+    hx = hx+hx;
+    iy -= 1;
+  }
+  if(iy>= -126) {		/* normalize output */
+    hx = ((hx-0x00800000)|((iy+127)<<23));
+	GEN_OCL_SET_FLOAT_WORD(x,hx|sx);
+   } else {		/* subnormal output */
+     n = -126 - iy;
+     hx >>= n;
+     GEN_OCL_SET_FLOAT_WORD(x,hx|sx);
+     x *= one;		/* create necessary signal */
+  }
+  return x;		/* exact output */
+}
 
 // TODO use llvm intrinsics definitions
 #define cos native_cos
@@ -1997,7 +2071,7 @@ INLINE_OVERLOADABLE float __gen_ocl_internal_exp(float x) {
 #define copysign __gen_ocl_internal_copysign
 #define erf __gen_ocl_internal_erf
 #define erfc __gen_ocl_internal_erfc
-
+#define fmod __gen_ocl_internal_fmod
 PURE CONST float __gen_ocl_mad(float a, float b, float c);
 INLINE_OVERLOADABLE float mad(float a, float b, float c) {
   return __gen_ocl_mad(a, b, c);
