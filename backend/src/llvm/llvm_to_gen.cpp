@@ -83,11 +83,11 @@ namespace gbe
     passes.add(createScalarReplAggregatesPass()); // Break up allocas
     passes.add(createRemoveGEPPass(unit));
     passes.add(createConstantPropagationPass());
-    passes.add(createDeadInstEliminationPass());  // Remove simplified instructions
     passes.add(createLowerSwitchPass());
     passes.add(createPromoteMemoryToRegisterPass());
     passes.add(createGVNPass());                  // Remove redundancies
     passes.add(createScalarizePass());        // Expand all vector ops
+    passes.add(createDeadInstEliminationPass());  // Remove simplified instructions
     passes.add(createGenPass(unit));
 
     // Print the code extra optimization passes

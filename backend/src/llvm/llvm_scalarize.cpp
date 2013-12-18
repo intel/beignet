@@ -222,6 +222,12 @@ namespace gbe {
       return GetComponentCount(value->getType());
     }
 
+    /* set to insert new instructions after the specified instruction.*/
+    void setAppendPoint(Instruction *insn)  {
+      BasicBlock::iterator next(insn);
+      builder->SetInsertPoint(++next);
+    }
+
     DenseMap<Value*, VectorValues> vectorVals;
     Module* module;
     IRBuilder<>* builder;
@@ -649,6 +655,7 @@ namespace gbe {
           case GEN_OCL_GET_IMAGE_WIDTH:
           case GEN_OCL_GET_IMAGE_HEIGHT:
           {
+            setAppendPoint(call);
             extractFromVector(call);
             break;
           }
@@ -686,6 +693,7 @@ namespace gbe {
 
   bool Scalarize::scalarizeLoad(LoadInst* ld)
   {
+    setAppendPoint(ld);
     extractFromVector(ld);
     return false;
   }
