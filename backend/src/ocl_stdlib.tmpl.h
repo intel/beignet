@@ -1672,10 +1672,6 @@ INLINE_OVERLOADABLE float sincos(float x, local float *cosval) { BODY; }
 INLINE_OVERLOADABLE float sincos(float x, private float *cosval) { BODY; }
 #undef BODY
 
-INLINE_OVERLOADABLE float __gen_ocl_internal_cosh(float x) {
-  return (1 + native_exp(-2 * x)) / (2 * native_exp(-x));
-}
-
 INLINE float __gen_ocl_asin_util(float x) {
 /*
  * ====================================================
@@ -2250,6 +2246,43 @@ INLINE_OVERLOADABLE float __gen_ocl_internal_tanh(float x) {
     z = one - tiny;		/* raised inexact flag */
   }
   return (jx>=0)? z: -z;
+}
+
+INLINE_OVERLOADABLE float __gen_ocl_internal_cosh(float x) {
+  //return (1 + native_exp(-2 * x)) / (2 * native_exp(-x));
+  float halF = 0.5,
+  huge = 1.0e+30,
+  tiny = 1.0e-30,
+  one = 1.0;
+  float t,w;
+  int ix;
+  GEN_OCL_GET_FLOAT_WORD(ix,x);
+  ix &= 0x7fffffff;
+  /* |x| in [0,22] */
+  if (ix < 0x41b00000) {
+    /* |x| in [0,0.5*ln2], return 1+expm1(|x|)^2/(2*exp(|x|)) */
+    if(ix<0x3eb17218) {
+      t = __gen_ocl_internal_expm1(__gen_ocl_fabs(x));
+      w = one+t;
+      if (ix<0x24000000) return w;	/* cosh(tiny) = 1 */
+      return one+(t*t)/(w+w);
+    }
+    /* |x| in [0.5*ln2,22], return (exp(|x|)+1/exp(|x|)/2; */
+    t = __gen_ocl_internal_exp(__gen_ocl_fabs(x));
+    return halF*t+halF/t;
+  }
+  /* |x| in [22, log(maxdouble)] return half*exp(|x|) */
+  if (ix < 0x42b17180)  return halF*__gen_ocl_internal_exp(__gen_ocl_fabs(x));
+  /* |x| in [log(maxdouble), overflowthresold] */
+  if (ix<=0x42b2d4fc) {
+    w = __gen_ocl_internal_exp(halF*__gen_ocl_fabs(x));
+    t = halF*w;
+    return t*w;
+  }
+  /* x is INF or NaN */
+  if(ix>=0x7f800000) return x*x;
+  /* |x| > overflowthresold, cosh(x) overflow */
+  return huge*huge;
 }
 
 
