@@ -1675,10 +1675,6 @@ INLINE_OVERLOADABLE float sincos(float x, private float *cosval) { BODY; }
 INLINE_OVERLOADABLE float __gen_ocl_internal_cosh(float x) {
   return (1 + native_exp(-2 * x)) / (2 * native_exp(-x));
 }
-INLINE_OVERLOADABLE float __gen_ocl_internal_tanh(float x) {
-  float y = native_exp(-2 * x);
-  return (1 - y) / (1 + y);
-}
 
 INLINE float __gen_ocl_asin_util(float x) {
 /*
@@ -2221,6 +2217,41 @@ INLINE_OVERLOADABLE float __gen_ocl_internal_sinh(float x){
   /* |x| > overflowthresold, sinh(x) overflow */
   return x*shuge;
 }
+
+INLINE_OVERLOADABLE float __gen_ocl_internal_tanh(float x) {
+  //float y = native_exp(-2 * x);
+  //return (1 - y) / (1 + y);
+  float one=1.0, two=2.0, tiny = 1.0e-30;
+  float t,z;
+  int jx,ix;
+  GEN_OCL_GET_FLOAT_WORD(jx,x);
+  ix = jx&0x7fffffff;
+  /* x is INF or NaN */
+  if(ix>=0x7f800000) {
+    if (jx>=0)
+      return one/x+one; /* tanh(+-inf)=+-1 */
+    else
+      return one/x-one; /* tanh(NaN) = NaN */
+  }
+
+  if (ix < 0x41b00000) { /* |x|<22 */
+    if (ix == 0)
+      return x;		/* x == +-0 */
+    if (ix<0x24000000) 	/* |x|<2**-55 */
+      return x*(one+x);    	/* tanh(small) = small */
+    if (ix>=0x3f800000) {	/* |x|>=1  */
+      t = __gen_ocl_internal_expm1(two*__gen_ocl_internal_fabs(x));
+      z = one - two/(t+two);
+    } else {
+      t = __gen_ocl_internal_expm1(-two*__gen_ocl_internal_fabs(x));
+      z= -t/(t+two);
+    }
+  } else { /* |x| > 22, return +-1 */
+    z = one - tiny;		/* raised inexact flag */
+  }
+  return (jx>=0)? z: -z;
+}
+
 
 // TODO use llvm intrinsics definitions
 #define cos native_cos
