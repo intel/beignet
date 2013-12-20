@@ -1672,9 +1672,6 @@ INLINE_OVERLOADABLE float sincos(float x, local float *cosval) { BODY; }
 INLINE_OVERLOADABLE float sincos(float x, private float *cosval) { BODY; }
 #undef BODY
 
-INLINE_OVERLOADABLE float __gen_ocl_internal_sinh(float x) {
-  return (1 - native_exp(-2 * x)) / (2 * native_exp(-x));
-}
 INLINE_OVERLOADABLE float __gen_ocl_internal_cosh(float x) {
   return (1 + native_exp(-2 * x)) / (2 * native_exp(-x));
 }
@@ -2193,6 +2190,37 @@ INLINE_OVERLOADABLE float __gen_ocl_internal_asinh(float x){
   return __gen_ocl_internal_copysign(w, x);
 }
 
+INLINE_OVERLOADABLE float __gen_ocl_internal_sinh(float x){
+  //return (1 - native_exp(-2 * x)) / (2 * native_exp(-x));
+  float one = 1.0,
+  shuge = 1.0e37;
+  float t,w,h;
+  int ix,jx;
+  GEN_OCL_GET_FLOAT_WORD(jx,x);
+  ix = jx&0x7fffffff;
+  /* x is INF or NaN */
+  if(ix>=0x7f800000) return x+x;
+  h = 0.5;
+  if (jx<0) h = -h;
+  /* |x| in [0,22], return sign(x)*0.5*(E+E/(E+1))) */
+  if (ix < 0x41b00000) {		/* |x|<22 */
+    if (ix<0x31800000)	/* |x|<2**-28 */
+      if(shuge+x>one) return x;/* sinh(tiny) = tiny with inexact */
+    t = __gen_ocl_internal_expm1(__gen_ocl_internal_fabs(x));
+    if(ix<0x3f800000) return h*((float)2.0*t-t*t/(t+one));
+      return h*(t+t/(t+one));
+  }
+  /* |x| in [22, log(maxdouble)] return 0.5*exp(|x|) */
+  if (ix < 0x42b17180)  return h*__gen_ocl_internal_exp(__gen_ocl_internal_fabs(x));
+  /* |x| in [log(maxdouble), overflowthresold] */
+  if (ix<=0x42b2d4fc) {
+    w = __gen_ocl_internal_exp((float)0.5*__gen_ocl_internal_fabs(x));
+    t = h*w;
+    return t*w;
+  }
+  /* |x| > overflowthresold, sinh(x) overflow */
+  return x*shuge;
+}
 
 // TODO use llvm intrinsics definitions
 #define cos native_cos
