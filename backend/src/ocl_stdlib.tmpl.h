@@ -1772,9 +1772,6 @@ INLINE_OVERLOADABLE float __gen_ocl_internal_atan(float x) {
 INLINE_OVERLOADABLE float __gen_ocl_internal_atanpi(float x) {
   return __gen_ocl_internal_atan(x) / M_PI_F;
 }
-INLINE_OVERLOADABLE float __gen_ocl_internal_asinh(float x) {
-  return native_log(x + native_sqrt(x * x + 1));
-}
 INLINE_OVERLOADABLE float __gen_ocl_internal_atanh(float x) {
   return 0.5f * native_sqrt((1 + x) / (1 - x));
 }
@@ -2169,6 +2166,33 @@ INLINE_OVERLOADABLE float __gen_ocl_internal_acosh(float x) {
     return log1p(t+__gen_ocl_sqrt((float)2.0*t+t*t));
   }
 }
+INLINE_OVERLOADABLE float __gen_ocl_internal_asinh(float x){
+  //return native_log(x + native_sqrt(x * x + 1));
+  float one =  1.0000000000e+00, /* 0x3F800000 */
+  ln2 =  6.9314718246e-01, /* 0x3f317218 */
+  huge=  1.0000000000e+30;
+  float w;
+  int hx,ix;
+  GEN_OCL_GET_FLOAT_WORD(hx,x);
+  ix = hx&0x7fffffff;
+  if(ix< 0x38000000) {	/* |x|<2**-14 */
+    if(huge+x>one) return x;	/* return x inexact except 0 */
+  }
+  if(ix>0x47000000) {/* |x| > 2**14 */
+    if(ix>=0x7f800000) return x+x;/* x is inf or NaN */
+    w = __gen_ocl_internal_log(__gen_ocl_internal_fabs(x))+ln2;
+  } else {
+    float xa = __gen_ocl_internal_fabs(x);
+    if (ix>0x40000000) {/* 2**14 > |x| > 2.0 */
+      w = __gen_ocl_internal_log(2.0f*xa+one/(__gen_ocl_sqrt(xa*xa+one)+xa));
+    } else {		/* 2.0 > |x| > 2**-14 */
+      float t = xa*xa;
+      w =log1p(xa+t/(one+__gen_ocl_sqrt(one+t)));
+    }
+  }
+  return __gen_ocl_internal_copysign(w, x);
+}
+
 
 // TODO use llvm intrinsics definitions
 #define cos native_cos
