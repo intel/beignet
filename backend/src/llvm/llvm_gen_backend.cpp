@@ -1846,14 +1846,16 @@ namespace gbe
     }
   }
 
-  void GenWriter::regAllocateExtractElement(ExtractElementInst &I) {}
-  void GenWriter::emitExtractElement(ExtractElementInst &I) {
+  void GenWriter::regAllocateExtractElement(ExtractElementInst &I) {
     Value *vec = I.getVectorOperand();
     const Value *index = I.getIndexOperand();
     const ConstantInt *c = dyn_cast<ConstantInt>(index);
     GBE_ASSERT(c);
     int i = c->getValue().getSExtValue();
     regTranslator.newValueProxy(vec, &I, i, 0);
+  }
+
+  void GenWriter::emitExtractElement(ExtractElementInst &I) {
   }
 
   void GenWriter::regAllocateShuffleVectorInst(ShuffleVectorInst &I) {}
