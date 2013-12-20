@@ -569,6 +569,7 @@ namespace gbe
     int32_t insnID = 0;
     for (auto &block : *selection.blockList) {
       int32_t lastID = insnID;
+      int32_t firstID = insnID;
       // Update the intervals of each used register. Note that we do not
       // register allocate R0, so we skip all sub-registers in r0
       for (auto &insn : block.insnList) {
@@ -619,14 +620,17 @@ namespace gbe
         insnID++;
       }
 
+      // All registers alive at the begining of the block must update their intervals.
+      const ir::BasicBlock *bb = block.bb;
+      const ir::Liveness::UEVar &liveIn = ctx.getLiveIn(bb);
+      for (auto reg : liveIn)
+          this->intervals[reg].minID = std::min(this->intervals[reg].minID, firstID);
+
       // All registers alive at the end of the block must have their intervals
       // updated as well
-      const ir::BasicBlock *bb = block.bb;
       const ir::Liveness::LiveOut &liveOut = ctx.getLiveOut(bb);
-      for (auto reg : liveOut) {
-        this->intervals[reg].minID = std::min(this->intervals[reg].minID, lastID);
+      for (auto reg : liveOut)
         this->intervals[reg].maxID = std::max(this->intervals[reg].maxID, lastID);
-      }
     }
 
     // Sort both intervals in starting point and ending point increasing orders

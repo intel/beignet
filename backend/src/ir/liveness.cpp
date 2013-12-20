@@ -29,9 +29,20 @@ namespace ir {
 
   Liveness::Liveness(Function &fn) : fn(fn) {
     // Initialize UEVar and VarKill for each block
-    fn.foreachBlock([this](const BasicBlock &bb) { this->initBlock(bb); });
-    // Now with iterative analysis, we compute liveout sets
-    this->computeLiveOut();
+    fn.foreachBlock([this](const BasicBlock &bb) {
+      this->initBlock(bb);
+      // If the bb has ret instruction, add it to the work list set.
+      const Instruction *lastInsn = bb.getLastInstruction();
+      const ir::Opcode op = lastInsn->getOpcode();
+      if (op == OP_RET) {
+        struct BlockInfo * info = liveness[&bb];
+        workList.push_back(info);
+        info->liveOut.insert(ocl::retVal);
+      }
+    });
+    // Now with iterative analysis, we compute liveout and livein sets
+    this->computeLiveInOut();
+
   }
 
   Liveness::~Liveness(void) {
@@ -65,30 +76,42 @@ namespace ir {
     }
   }
 
-  void Liveness::computeLiveOut(void) {
-    // First insert the UEVar from the successors
-    foreach<DF_SUCC>([](BlockInfo &info, const BlockInfo &succ) {
-      const UEVar &ueVarSet = succ.upwardUsed;
-      // Iterate over all the registers in the UEVar of our successor
-      for (auto ueVar : ueVarSet) info.liveOut.insert(ueVar);
-    });
-    // Now iterate on liveOut
-    bool changed = true;
-    while (changed) {
-      changed = false;
-      foreach<DF_SUCC>([&changed](BlockInfo &info, const BlockInfo &succ) {
-        const UEVar &killSet = succ.varKill;
-        const LiveOut &liveOut = succ.liveOut;
-        // Iterate over all the registers in the UEVar of our successor
-        for (auto living : liveOut) {
-          if (killSet.contains(living)) continue;
-          if (info.liveOut.contains(living)) continue;
-          info.liveOut.insert(living);
-          changed = true;
+// Use simple backward data flow analysis to solve the liveness problem.
+  void Liveness::computeLiveInOut(void) {
+    do {
+      struct BlockInfo *currInfo = workList.pop_front();
+      for (auto currOutVar : currInfo->liveOut)
+        if (!currInfo->varKill.contains(currOutVar))
+          currInfo->upwardUsed.insert(currOutVar);
+      bool isChanged = false;
+      for (auto prev : currInfo->bb.getPredecessorSet()) {
+        BlockInfo *prevInfo = liveness[prev];
+        for (auto currInVar : currInfo->upwardUsed) {
+          auto changed = prevInfo->liveOut.insert(currInVar);
+          if (changed.second) isChanged = true;
         }
-      });
-    }
-  }
+        if (isChanged ) workList.push_back(prevInfo);
+      }
+    } while (!workList.empty());
+
+#if 0
+    fn.foreachBlock([this](const BasicBlock &bb){
+      printf("label %d:\n", bb.getLabelIndex());
+      BlockInfo *info = liveness[&bb];
+      auto &outVarSet = info->liveOut;
+      auto &inVarSet = info->upwardUsed;
+      printf("\tout Lives: ");
+      for (auto outVar : outVarSet) {
+        printf("%d ", outVar);
+      }
+      printf("\n\tin Lives: ");
+      for (auto inVar : inVarSet) {
+        printf("%d ", inVar);
+      }
+      printf("\n");
+    });
+#endif
+   }
 
   /*! To pretty print the livfeness info */
   static const uint32_t prettyInsnStrSize = 48;

@@ -78,6 +78,10 @@ namespace gbe
     INLINE const ir::Liveness::LiveOut &getLiveOut(const ir::BasicBlock *bb) const {
       return this->liveness->getLiveOut(bb);
     }
+    /*! Get the LiveIn information for the given block */
+    INLINE const ir::Liveness::UEVar &getLiveIn(const ir::BasicBlock *bb) const {
+      return this->liveness->getLiveIn(bb);
+    }
 
     void collectShifter(GenRegister dest, GenRegister src);
     void loadTopHalf(GenRegister dest, GenRegister src);

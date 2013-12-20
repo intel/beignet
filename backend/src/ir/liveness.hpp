@@ -24,6 +24,7 @@
 #ifndef __GBE_IR_LIVENESS_HPP__
 #define __GBE_IR_LIVENESS_HPP__
 
+#include <list>
 #include "sys/map.hpp"
 #include "sys/set.hpp"
 #include "ir/register.hpp"
@@ -57,7 +58,7 @@ namespace ir {
     typedef set<Register> VarKill;
     /*! Per-block info */
     struct BlockInfo : public NonCopyable {
-      BlockInfo(const BasicBlock &bb) : bb(bb) {}
+      BlockInfo(const BasicBlock &bb) : bb(bb), inWorkList(false) {}
       const BasicBlock &bb;
       INLINE bool inUpwardUsed(Register reg) const {
         return upwardUsed.contains(reg);
@@ -71,6 +72,7 @@ namespace ir {
       UEVar upwardUsed;
       LiveOut liveOut;
       VarKill varKill;
+      bool inWorkList;
     };
     /*! Gives for each block the variables alive at entry / exit */
     typedef map<const BasicBlock*, BlockInfo*> Info;
@@ -87,6 +89,12 @@ namespace ir {
       const BlockInfo &info = this->getBlockInfo(bb);
       return info.liveOut;
     }
+    /*! Get the set of registers alive at the beginning of the block */
+    const UEVar &getLiveIn(const BasicBlock *bb) const {
+      const BlockInfo &info = this->getBlockInfo(bb);
+      return info.upwardUsed;
+    }
+
     /*! Return the function the liveness was computed on */
     INLINE const Function &getFunction(void) const { return fn; }
     /*! Actually do something for each successor / predecessor of *all* blocks */
@@ -119,9 +127,34 @@ namespace ir {
     /*! Initialize UEVar and VarKill per instruction */
     void initInstruction(BlockInfo &info, const Instruction &insn);
     /*! Now really compute LiveOut based on UEVar and VarKill */
-    void computeLiveOut(void);
+    void computeLiveInOut(void);
+    /*! Set of work list block which has exit(return) instruction */
+    typedef std::list <struct BlockInfo*> BlockInfoList;
+
+    /*! helper structure to maintain the liveness work list.
+        don't add the block if it is already in the list. */
+    struct LivenessWorkList : BlockInfoList {
+
+      void push_back(struct BlockInfo *info) {
+        if (info->inWorkList)
+          return;
+        info->inWorkList = true;
+        BlockInfoList::push_back(info);
+      }
+
+      struct BlockInfo * pop_front() {
+        struct BlockInfo *biFront = front();
+        BlockInfoList::pop_front();
+        if (biFront)
+          biFront->inWorkList = false;
+        return biFront;
+      }
+
+    } workList;
+
     /*! Use custom allocators */
     GBE_CLASS(Liveness);
+
   };
 
   /*! Output a nice ASCII reprensation of the liveness */
