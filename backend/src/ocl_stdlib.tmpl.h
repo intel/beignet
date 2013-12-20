@@ -1872,7 +1872,6 @@ INLINE_OVERLOADABLE float __gen_ocl_internal_round(float x) {
 INLINE_OVERLOADABLE float __gen_ocl_internal_floor(float x) { return __gen_ocl_rndd(x); }
 INLINE_OVERLOADABLE float __gen_ocl_internal_ceil(float x)  { return __gen_ocl_rndu(x); }
 INLINE_OVERLOADABLE float powr(float x, float y) { return __gen_ocl_pow(x,y); }
-INLINE_OVERLOADABLE float remainder(float x, float y) { return x-y*__gen_ocl_rnde(x/y); }
 INLINE_OVERLOADABLE float __gen_ocl_internal_rint(float x) {
   return __gen_ocl_rnde(x);
 }
@@ -2285,6 +2284,43 @@ INLINE_OVERLOADABLE float __gen_ocl_internal_cosh(float x) {
   return huge*huge;
 }
 
+INLINE_OVERLOADABLE float __gen_ocl_internal_remainder(float x, float p){
+  //return x-y*__gen_ocl_rnde(x/y);
+  float zero = 0.0;
+  int hx,hp;
+  unsigned sx;
+  float p_half;
+  GEN_OCL_GET_FLOAT_WORD(hx,x);
+  GEN_OCL_GET_FLOAT_WORD(hp,p);
+  sx = hx&0x80000000;
+  hp &= 0x7fffffff;
+  hx &= 0x7fffffff;
+  /* purge off exception values */
+  if(hp==0) return (x*p)/(x*p);	        /* p = 0 */
+  if((hx>=0x7f800000)||               /* x not finite */
+    ((hp>0x7f800000)))	               /* p is NaN */
+    return (x*p)/(x*p);
+  if (hp<=0x7effffff) x = __gen_ocl_internal_fmod(x,p+p); /* now x < 2p */
+  if ((hx-hp)==0) return zero*x;
+  x = __gen_ocl_fabs(x);
+  p = __gen_ocl_fabs(p);
+  if (hp<0x01000000) {
+    if(x+x>p) {
+      x-=p;
+      if(x+x>=p) x -= p;
+    }
+  } else {
+    p_half = (float)0.5*p;
+    if(x>p_half) {
+      x-=p;
+      if(x>=p_half) x -= p;
+    }
+  }
+  GEN_OCL_GET_FLOAT_WORD(hx,x);
+  GEN_OCL_SET_FLOAT_WORD(x,hx^sx);
+  return x;
+}
+
 
 // TODO use llvm intrinsics definitions
 #define cos native_cos
@@ -2314,6 +2350,7 @@ INLINE_OVERLOADABLE float __gen_ocl_internal_cosh(float x) {
 #define erf __gen_ocl_internal_erf
 #define erfc __gen_ocl_internal_erfc
 #define fmod __gen_ocl_internal_fmod
+#define remainder __gen_ocl_internal_remainder
 PURE CONST float __gen_ocl_mad(float a, float b, float c);
 INLINE_OVERLOADABLE float mad(float a, float b, float c) {
   return __gen_ocl_mad(a, b, c);
