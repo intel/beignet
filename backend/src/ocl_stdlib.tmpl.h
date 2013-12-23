@@ -1806,9 +1806,6 @@ INLINE_OVERLOADABLE float __gen_ocl_internal_atan(float x) {
 INLINE_OVERLOADABLE float __gen_ocl_internal_atanpi(float x) {
   return __gen_ocl_internal_atan(x) / M_PI_F;
 }
-INLINE_OVERLOADABLE float __gen_ocl_internal_atanh(float x) {
-  return 0.5f * native_sqrt((1 + x) / (1 - x));
-}
 INLINE_OVERLOADABLE float __gen_ocl_internal_erf(float x) {
   return M_2_SQRTPI_F * (x - __gen_ocl_pow(x, 3) / 3 + __gen_ocl_pow(x, 5) / 10 - __gen_ocl_pow(x, 7) / 42 + __gen_ocl_pow(x, 9) / 216);
 }
@@ -2363,6 +2360,23 @@ INLINE_OVERLOADABLE float __gen_ocl_internal_ldexp(float x, int n) {
   if(!__ocl_finitef(x)||x==(float)0.0) return x;
   x = __gen_ocl_scalbnf(x,n);
   return x;
+}
+
+INLINE_OVERLOADABLE float __gen_ocl_internal_atanh(float x) {
+  //return 0.5f * native_sqrt((1 + x) / (1 - x));
+  float xa = __gen_ocl_fabs (x);
+  float t;
+  if (isless (xa, 0.5f)){
+    if (xa < 0x1.0p-28f) return x;
+    t = xa + xa;
+    t = 0.5f * log1p (t + t * xa / (1.0f - xa));
+  } else if (isless (xa, 1.0f)){
+    t = 0.5f * log1p ((xa + xa) / (1.0f - xa));
+  } else{
+    if (isgreater (xa, 1.0f)) return (x - x) / (x - x);
+    return x / 0.0f;
+  }
+  return __gen_ocl_internal_copysign(t, x);
 }
 
 // TODO use llvm intrinsics definitions
