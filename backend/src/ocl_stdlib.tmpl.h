@@ -173,6 +173,12 @@ do {                                  \
 } while (0)
 #endif
 
+INLINE_OVERLOADABLE int __ocl_finitef (float x){
+  unsigned ix;
+  GEN_OCL_GET_FLOAT_WORD (ix, x);
+  return (ix & 0x7fffffff) < 0x7f800000;
+}
+
 #define HUGE_VALF    (__ocl_inff())
 #define INFINITY     (__ocl_inff())
 #define NAN          (__ocl_nanf())
@@ -1664,6 +1670,14 @@ INLINE_OVERLOADABLE float native_exp10(float x) { return __gen_ocl_pow(10, x); }
 INLINE_OVERLOADABLE float __gen_ocl_internal_cbrt(float x) {
   return __gen_ocl_pow(x, 0.3333333333f);
 }
+INLINE_OVERLOADABLE float __gen_ocl_internal_copysign(float x, float y) {
+  union { unsigned u; float f; } ux, uy;
+  ux.f = x;
+  uy.f = y;
+  ux.u = (ux.u & 0x7fffffff) | (uy.u & 0x80000000u);
+  return ux.f;
+}
+
 #define BODY \
   *cosval = native_cos(x); \
   return native_sin(x);
@@ -1700,6 +1714,37 @@ INLINE float __gen_ocl_asin_util(float x) {
   float q = 1.0+t*(qS1+t*(qS2+t*(qS3+t*qS4)));
   float w = p / q;
   return x + x*w;
+}
+float __gen_ocl_scalbnf (float x, int n){
+  float two25 = 3.355443200e+07,	/* 0x4c000000 */
+  twom25 = 2.9802322388e-08,	        /* 0x33000000 */
+  huge = 1.0e+30,
+  tiny = 1.0e-30;
+  int k,ix;
+  GEN_OCL_GET_FLOAT_WORD(ix,x);
+  k = (ix&0x7f800000)>>23; /* extract exponent */
+  if (k==0) {	/* 0 or subnormal x */
+    if ((ix&0x7fffffff)==0) return x; /* +-0 */
+    x *= two25;
+    GEN_OCL_GET_FLOAT_WORD(ix,x);
+    k = ((ix&0x7f800000)>>23) - 25;
+  }
+  if (k==0xff) return x+x;	/* NaN or Inf */
+  if (n< -50000)
+    return tiny*__gen_ocl_internal_copysign(tiny,x);	/*underflow*/
+  if (n> 50000 || k+n > 0xfe)
+    return huge*__gen_ocl_internal_copysign(huge,x); /* overflow  */
+  /* Now k and n are bounded we know that k = k+n does not overflow. */
+  k = k+n;
+  if (k > 0) { /* normal result */
+    GEN_OCL_SET_FLOAT_WORD(x,(ix&0x807fffff)|(k<<23));
+    return x;
+  }
+  if (k <= -25)
+    return tiny*__gen_ocl_internal_copysign(tiny,x);	/*underflow*/
+  k += 25;				/* subnormal result */
+  GEN_OCL_SET_FLOAT_WORD(x,(ix&0x807fffff)|(k<<23));
+  return x*twom25;
 }
 
 INLINE_OVERLOADABLE float __gen_ocl_internal_asin(float x) {
@@ -1763,13 +1808,6 @@ INLINE_OVERLOADABLE float __gen_ocl_internal_atanpi(float x) {
 }
 INLINE_OVERLOADABLE float __gen_ocl_internal_atanh(float x) {
   return 0.5f * native_sqrt((1 + x) / (1 - x));
-}
-INLINE_OVERLOADABLE float __gen_ocl_internal_copysign(float x, float y) {
-  union { unsigned u; float f; } ux, uy;
-  ux.f = x;
-  uy.f = y;
-  ux.u = (ux.u & 0x7fffffff) | (uy.u & 0x80000000u);
-  return ux.f;
 }
 INLINE_OVERLOADABLE float __gen_ocl_internal_erf(float x) {
   return M_2_SQRTPI_F * (x - __gen_ocl_pow(x, 3) / 3 + __gen_ocl_pow(x, 5) / 10 - __gen_ocl_pow(x, 7) / 42 + __gen_ocl_pow(x, 9) / 216);
@@ -2321,6 +2359,11 @@ INLINE_OVERLOADABLE float __gen_ocl_internal_remainder(float x, float p){
   return x;
 }
 
+INLINE_OVERLOADABLE float __gen_ocl_internal_ldexp(float x, int n) {
+  if(!__ocl_finitef(x)||x==(float)0.0) return x;
+  x = __gen_ocl_scalbnf(x,n);
+  return x;
+}
 
 // TODO use llvm intrinsics definitions
 #define cos native_cos
@@ -2351,6 +2394,7 @@ INLINE_OVERLOADABLE float __gen_ocl_internal_remainder(float x, float p){
 #define erfc __gen_ocl_internal_erfc
 #define fmod __gen_ocl_internal_fmod
 #define remainder __gen_ocl_internal_remainder
+#define ldexp __gen_ocl_internal_ldexp
 PURE CONST float __gen_ocl_mad(float a, float b, float c);
 INLINE_OVERLOADABLE float mad(float a, float b, float c) {
   return __gen_ocl_mad(a, b, c);
@@ -2564,48 +2608,6 @@ INLINE_OVERLOADABLE float remquo(float x, float y, local int *quo) { BODY; }
 INLINE_OVERLOADABLE float remquo(float x, float y, private int *quo) { BODY; }
 #undef BODY
 INLINE_OVERLOADABLE float native_divide(float x, float y) { return x/y; }
-INLINE_OVERLOADABLE float ldexp(float x, int n) {
-  union { float f; unsigned u; } u;
-  u.f = x;
-  unsigned s = u.u & 0x80000000u, v = u.u & 0x7fffffff, d = 0;
-  if(v >= 0x7f800000)
-    return x;
-  if(v == 0)
-    return x;
-  int e = v >> 23;
-  v &= 0x7fffff;
-  if(e >= 1)
-    v |= 0x800000;
-  else {
-    v <<= 1;
-    while(v < 0x800000) {
-      v <<= 1;
-      e --;
-    }
-  }
-  e = add_sat(e, n);
-  if(e >= 255) {
-    u.u = s | 0x7f800000;
-    return u.f;
-  }
-  if(e > 0) {
-    u.u = s | (e << 23) | (v & 0x7fffff);
-    return u.f;
-  }
-  if(e <= -23) {
-    u.u = s;
-    return u.f;
-  }
-  while(e <= 0) {
-    d = (d >> 1) | (v << 31);
-    v >>= 1;
-    e ++;
-  }
-  if(d > 0x80000000u)
-    v ++;
-  u.u = s | v;
-  return u.f;
-}
 INLINE_OVERLOADABLE float pown(float x, int n) {
   if (x == 0 && n == 0)
     return 1;
