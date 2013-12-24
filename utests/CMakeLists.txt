@@ -1,9 +1,18 @@
 INCLUDE_DIRECTORIES(${CMAKE_CURRENT_SOURCE_DIR}
                     ${CMAKE_CURRENT_SOURCE_DIR}/../include)
 
+EXEC_PROGRAM(mkdir ${CMAKE_CURRENT_SOURCE_DIR} ARGS generated -p)
+##### Math Function Part:
+EXEC_PROGRAM(python ${CMAKE_CURRENT_SOURCE_DIR} ARGS utest_math_gen.py OUTPUT_VARIABLE GEN_MATH_STRING)
+string(REGEX REPLACE " " ";" ADDMATHFUNC ${GEN_MATH_STRING})
+string(REGEX REPLACE " " "\n" NAMEMATHLIST ${GEN_MATH_STRING})
+MESSAGE(STATUS "Generated Builtin Math Functions:\n" ${NAMEMATHLIST})
+set_directory_properties(PROPERTIES ADDITIONAL_MAKE_CLEAN_FILES generated/)
+
 link_directories (${LLVM_LIBRARY_DIR})
 set (utests_sources
   utest_error.c
+  ${ADDMATHFUNC}
   compiler_basic_arithmetic.cpp
   compiler_displacement_map_element.cpp
   compiler_shader_toy.cpp
