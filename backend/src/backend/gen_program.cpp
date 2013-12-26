@@ -151,13 +151,14 @@ namespace gbe {
   static gbe_program genProgramNewFromLLVM(const char *fileName,
                                            size_t stringSize,
                                            char *err,
-                                           size_t *errSize)
+                                           size_t *errSize,
+                                           int optLevel)
   {
     using namespace gbe;
     GenProgram *program = GBE_NEW_NO_ARG(GenProgram);
     std::string error;
     // Try to compile the program
-    if (program->buildFromLLVMFile(fileName, error) == false) {
+    if (program->buildFromLLVMFile(fileName, error, optLevel) == false) {
       if (err != NULL && errSize != NULL && stringSize > 0u) {
         const size_t msgSize = std::min(error.size(), stringSize-1u);
         std::memcpy(err, error.c_str(), msgSize);

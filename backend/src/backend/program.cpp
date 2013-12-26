@@ -102,9 +102,9 @@ namespace gbe {
 
   BVAR(OCL_OUTPUT_GEN_IR, false);
 
-  bool Program::buildFromLLVMFile(const char *fileName, std::string &error) {
+  bool Program::buildFromLLVMFile(const char *fileName, std::string &error, int optLevel) {
     ir::Unit unit;
-    if (llvmToGen(unit, fileName) == false) {
+    if (llvmToGen(unit, fileName, optLevel) == false) {
       error = std::string(fileName) + " not found";
       return false;
     }
@@ -469,7 +469,6 @@ namespace gbe {
                                     size_t stringSize, char *err, size_t *errSize) {
     // Arguments to pass to the clang frontend
     vector<const char *> args;
-    bool bOpt = true;
     bool bFastMath = false;
 
     vector<std::string> useless; //hold substrings to avoid c_str free
@@ -480,7 +479,8 @@ namespace gbe {
        -cl-no-signed-zeros, -cl-fp32-correctly-rounded-divide-sqrt
        all support options, refer to clang/include/clang/Driver/Options.inc
     */
-    const std::string unsupportedOptions("-cl-denorms-are-zero, -cl-strict-aliasing,"
+    //Handle -cl-opt-disable in llvmToGen, skip here
+    const std::string unsupportedOptions("-cl-denorms-are-zero, -cl-strict-aliasing, -cl-opt-disable,"
                                          "-cl-no-signed-zeros, -cl-fp32-correctly-rounded-divide-sqrt");
     while (end != std::string::npos) {
       end = options.find(' ', start);
@@ -488,7 +488,6 @@ namespace gbe {
       start = end + 1;
       if(str.size() == 0)
         continue;
-      if(str == "-cl-opt-disable") bOpt = false;
       if(str == "-cl-fast-relaxed-math") bFastMath = true;
       if(unsupportedOptions.find(str) != std::string::npos)
         continue;
@@ -504,12 +503,7 @@ namespace gbe {
     // FIXME we haven't implement those builtin functions,
     // so disable it currently.
     args.push_back("-fno-builtin");
-    // FIXME as we don't support function call currently, we may encounter
-    // build problem with -O0 as we rely on always inline all functions option. 
-    if(bOpt)
-      args.push_back("-O2");
-    else
-      args.push_back("-O1");
+    args.push_back("-disable-llvm-optzns");
     if(bFastMath)
       args.push_back("-D __FAST_RELAXED_MATH__=1");
 #if LLVM_VERSION_MINOR <= 2
@@ -659,6 +653,7 @@ namespace gbe {
     const std::string llName = std::string(tmpnam_r(llStr)) + ".ll"; /* unsafe! */
     std::string pchHeaderName;
     std::string clOpt;
+    int optLevel = 1;
 
     FILE *clFile = fopen(clName.c_str(), "w");
     FATAL_IF(clFile == NULL, "Failed to open temporary file");
@@ -728,6 +723,10 @@ namespace gbe {
         }
       }
 
+      p = strstr(const_cast<char *>(options), "-cl-opt-disable");
+      if (p)
+        optLevel = 0;
+
       clOpt += options;
     }
 
@@ -766,7 +765,7 @@ namespace gbe {
         clangErrSize = *errSize;
       }
       p = gbe_program_new_from_llvm(llName.c_str(), stringSize,
-                                    err, errSize);
+                                    err, errSize, optLevel);
       if (err != NULL)
         *errSize += clangErrSize;
       gbe_mutex.unlock();

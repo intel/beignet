@@ -132,7 +132,8 @@ extern gbe_program_serialize_to_binary_cb *gbe_program_serialize_to_binary;
 typedef gbe_program (gbe_program_new_from_llvm_cb)(const char *fileName,
                                                    size_t string_size,
                                                    char *err,
-                                                   size_t *err_size);
+                                                   size_t *err_size,
+                                                   int optLevel);
 extern gbe_program_new_from_llvm_cb *gbe_program_new_from_llvm;
 
 /*! Get the size of global constants */

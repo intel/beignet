@@ -30,8 +30,9 @@ namespace gbe {
     class Unit;
   } /* namespace ir */
 
-  /*! Convert the LLVM IR code to a GEN IR code */
-  bool llvmToGen(ir::Unit &unit, const char *fileName);
+  /*! Convert the LLVM IR code to a GEN IR code,
+		  optLevel 0 equal to clang -O1 and 1 equal to clang -O2*/
+  bool llvmToGen(ir::Unit &unit, const char *fileName, int optLevel);
 
 } /* namespace gbe */
 

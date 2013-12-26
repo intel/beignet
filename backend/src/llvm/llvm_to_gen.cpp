@@ -1,4 +1,4 @@
-/* 
+/*
  * Copyright © 2012 Intel Corporation
  *
  * This library is free software; you can redistribute it and/or
@@ -26,12 +26,19 @@
 #if LLVM_VERSION_MINOR <= 2
 #include "llvm/LLVMContext.h"
 #include "llvm/Module.h"
+#include "llvm/DataLayout.h"
 #else
 #include "llvm/IR/LLVMContext.h"
 #include "llvm/IR/Module.h"
+#include "llvm/IR/DataLayout.h"
 #endif  /* LLVM_VERSION_MINOR <= 2 */
 #include "llvm/PassManager.h"
 #include "llvm/Pass.h"
+#include "llvm/Analysis/Verifier.h"
+#include "llvm/Analysis/Passes.h"
+#include "llvm/Transforms/IPO.h"
+#include "llvm/Target/TargetLibraryInfo.h"
+#include "llvm/ADT/Triple.h"
 #if LLVM_VERSION_MINOR <= 2
 #include "llvm/Support/IRReader.h"
 #else
@@ -56,11 +63,92 @@ namespace gbe
 {
   BVAR(OCL_OUTPUT_LLVM, false);
   BVAR(OCL_OUTPUT_LLVM_BEFORE_EXTRA_PASS, false);
+  using namespace llvm;
 
-  bool llvmToGen(ir::Unit &unit, const char *fileName)
+  void runFuntionPass(Module &mod, TargetLibraryInfo *libraryInfo)
   {
-    using namespace llvm;
+    FunctionPassManager FPM(&mod);
+    FPM.add(new DataLayout(&mod));
+    FPM.add(createVerifierPass());
+    FPM.add(new TargetLibraryInfo(*libraryInfo));
+    FPM.add(createTypeBasedAliasAnalysisPass());
+    FPM.add(createBasicAliasAnalysisPass());
+    FPM.add(createCFGSimplificationPass());
+    FPM.add(createSROAPass());
+    FPM.add(createEarlyCSEPass());
+    FPM.add(createLowerExpectIntrinsicPass());
 
+    FPM.doInitialization();
+    for (Module::iterator I = mod.begin(),
+           E = mod.end(); I != E; ++I)
+      if (!I->isDeclaration())
+        FPM.run(*I);
+    FPM.doFinalization();
+  }
+
+  void runModulePass(Module &mod, TargetLibraryInfo *libraryInfo, int optLevel)
+  {
+    llvm::PassManager MPM;
+
+    MPM.add(new DataLayout(&mod));
+    MPM.add(new TargetLibraryInfo(*libraryInfo));
+    MPM.add(createTypeBasedAliasAnalysisPass());
+    MPM.add(createBasicAliasAnalysisPass());
+    MPM.add(createGlobalOptimizerPass());     // Optimize out global vars
+
+    MPM.add(createIPSCCPPass());              // IP SCCP
+    MPM.add(createDeadArgEliminationPass());  // Dead argument elimination
+
+    MPM.add(createInstructionCombiningPass());// Clean up after IPCP & DAE
+    MPM.add(createCFGSimplificationPass());   // Clean up after IPCP & DAE
+    MPM.add(createPruneEHPass());             // Remove dead EH info
+    MPM.add(createFunctionInliningPass(200000));
+    MPM.add(createFunctionAttrsPass());       // Set readonly/readnone attrs
+
+    //MPM.add(createScalarReplAggregatesPass(64, true, -1, -1, 64))
+    //MPM.add(createSROAPass(/*RequiresDomTree*/ false));
+    MPM.add(createEarlyCSEPass());              // Catch trivial redundancies
+    MPM.add(createJumpThreadingPass());         // Thread jumps.
+    MPM.add(createCorrelatedValuePropagationPass()); // Propagate conditionals
+    MPM.add(createCFGSimplificationPass());     // Merge & remove BBs
+    MPM.add(createInstructionCombiningPass());  // Combine silly seq's
+
+    MPM.add(createTailCallEliminationPass());   // Eliminate tail calls
+    MPM.add(createCFGSimplificationPass());     // Merge & remove BBs
+    MPM.add(createReassociatePass());           // Reassociate expressions
+    MPM.add(createLoopRotatePass());            // Rotate Loop
+    MPM.add(createLICMPass());                  // Hoist loop invariants
+    MPM.add(createLoopUnswitchPass(true));
+    MPM.add(createInstructionCombiningPass());
+    MPM.add(createIndVarSimplifyPass());        // Canonicalize indvars
+    MPM.add(createLoopIdiomPass());             // Recognize idioms like memset.
+    MPM.add(createLoopDeletionPass());          // Delete dead loops
+    MPM.add(createLoopUnrollPass());          // Unroll small loops
+    if(optLevel > 0)
+      MPM.add(createGVNPass(true));                 // Remove redundancies
+    MPM.add(createMemCpyOptPass());             // Remove memcpy / form memset
+    MPM.add(createSCCPPass());                  // Constant prop with SCCP
+
+    // Run instcombine after redundancy elimination to exploit opportunities
+    // opened up by them.
+    MPM.add(createInstructionCombiningPass());
+    MPM.add(createJumpThreadingPass());         // Thread jumps
+    MPM.add(createCorrelatedValuePropagationPass());
+    MPM.add(createDeadStoreEliminationPass());  // Delete dead stores
+    MPM.add(createAggressiveDCEPass());         // Delete dead instructions
+    MPM.add(createCFGSimplificationPass()); // Merge & remove BBs
+    MPM.add(createInstructionCombiningPass());  // Clean up after everything.
+    MPM.add(createStripDeadPrototypesPass()); // Get rid of dead prototypes
+    if(optLevel > 0) {
+      MPM.add(createGlobalDCEPass());         // Remove dead fns and globals.
+      MPM.add(createConstantMergePass());     // Merge dup global constants
+    }
+
+    MPM.run(mod);
+  }
+
+  bool llvmToGen(ir::Unit &unit, const char *fileName, int optLevel)
+  {
     // Get the global LLVM context
     llvm::LLVMContext& c = llvm::getGlobalContext();
     std::string errInfo;
@@ -74,6 +162,13 @@ namespace gbe
     M.reset(ParseIRFile(fileName, Err, c));
     if (M.get() == 0) return false;
     Module &mod = *M.get();
+
+    Triple TargetTriple(mod.getTargetTriple());
+    TargetLibraryInfo *libraryInfo = new TargetLibraryInfo(TargetTriple);
+    libraryInfo->disableAllFunctions();
+
+    runFuntionPass(mod, libraryInfo);
+    runModulePass(mod, libraryInfo, optLevel);
 
     llvm::PassManager passes;
 
@@ -98,4 +193,3 @@ namespace gbe
     return true;
   }
 } /* namespace gbe */
-
