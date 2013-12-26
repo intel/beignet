@@ -238,6 +238,7 @@ namespace ir {
         if (offset != 0) {
             pushed = fn->newRegister(family);
             this->appendPushedConstant(pushed, argLocation);
+            inserted.insert(argLocation);
         } else {
             pushed = fn->getArg(loadAddImm.argID).reg;
         }
