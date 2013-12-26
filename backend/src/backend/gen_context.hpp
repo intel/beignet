@@ -92,7 +92,7 @@ namespace gbe
     void I32FullMult(GenRegister high, GenRegister low, GenRegister src0, GenRegister src1);
     void I64FullMult(GenRegister dst1, GenRegister dst2, GenRegister dst3, GenRegister dst4, GenRegister x_high, GenRegister x_low, GenRegister y_high, GenRegister y_low);
     void saveFlag(GenRegister dest, int flag, int subFlag);
-    void UnsignedI64ToFloat(GenRegister dst, GenRegister high, GenRegister low, GenRegister tmp);
+    void UnsignedI64ToFloat(GenRegister dst, GenRegister high, GenRegister low, GenRegister exp, GenRegister mantissa, GenRegister tmp, GenRegister flag);
 
     /*! Final Gen ISA emission helper functions */
     void emitLabelInstruction(const SelectionInstruction &insn);

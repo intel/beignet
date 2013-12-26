@@ -473,7 +473,7 @@ namespace gbe
 #undef ALU3
 #undef I64Shift
     /*! Convert 64-bit integer to 32-bit float */
-    void CONVI64_TO_F(Reg dst, Reg src, GenRegister tmp[4]);
+    void CONVI64_TO_F(Reg dst, Reg src, GenRegister tmp[7]);
     /*! Convert 64-bit integer to 32-bit float */
     void CONVF_TO_I64(Reg dst, Reg src, GenRegister tmp[3]);
     /*! Saturated 64bit x*y + z */
@@ -1132,11 +1132,11 @@ namespace gbe
       insn->dst(i + 1) = tmp[i];
   }
 
-  void Selection::Opaque::CONVI64_TO_F(Reg dst, Reg src, GenRegister tmp[4]) {
-    SelectionInstruction *insn = this->appendInsn(SEL_OP_CONVI64_TO_F, 5, 1);
+  void Selection::Opaque::CONVI64_TO_F(Reg dst, Reg src, GenRegister tmp[7]) {
+    SelectionInstruction *insn = this->appendInsn(SEL_OP_CONVI64_TO_F, 8, 1);
     insn->dst(0) = dst;
     insn->src(0) = src;
-    for(int i = 0; i < 4; i ++)
+    for(int i = 0; i < 7; i ++)
       insn->dst(i + 1) = tmp[i];
   }
 
@@ -2697,12 +2697,12 @@ namespace gbe
       } else if ((dstType == ir::TYPE_S32 || dstType == ir::TYPE_U32) && srcFamily == FAMILY_QWORD) {
         sel.CONVI64_TO_I(dst, src);
       } else if (dstType == ir::TYPE_FLOAT && srcFamily == FAMILY_QWORD) {
-        GenRegister tmp[4];
-        for(int i=0; i<3; i++) {
-          tmp[i] = sel.selReg(sel.reg(FAMILY_DWORD));
-          tmp[i].type = GEN_TYPE_UD;
+        GenRegister tmp[7];
+        for(int i=0; i<5; i++) {
+          tmp[i] = sel.selReg(sel.reg(FAMILY_DWORD), TYPE_U32);
         }
-        tmp[3] = sel.selReg(sel.reg(FAMILY_BOOL));
+        tmp[5] = sel.selReg(sel.reg(FAMILY_BOOL), TYPE_BOOL);
+        tmp[6] = sel.selReg(sel.reg(FAMILY_BOOL), TYPE_BOOL);
         sel.CONVI64_TO_F(dst, src, tmp);
       } else if (dst.isdf()) {
         ir::Register r = sel.reg(ir::RegisterFamily::FAMILY_QWORD);

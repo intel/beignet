@@ -822,12 +822,95 @@ namespace gbe
     p->pop();
   }
 
-  void GenContext::UnsignedI64ToFloat(GenRegister dst, GenRegister high, GenRegister low, GenRegister tmp) {
-    p->MOV(dst, high);
-    p->MUL(dst, dst, GenRegister::immf(65536.f * 65536.f));
-    tmp.type = GEN_TYPE_F;
-    p->MOV(tmp, low);
-    p->ADD(dst, dst, tmp);
+  void GenContext::UnsignedI64ToFloat(GenRegister dst, GenRegister high, GenRegister low, GenRegister exp,
+                                            GenRegister mantissa, GenRegister tmp, GenRegister flag) {
+    uint32_t jip0, jip1;
+    GenRegister dst_ud = GenRegister::retype(dst, GEN_TYPE_UD);
+    p->FBH(exp, high);
+    p->ADD(exp, GenRegister::negate(exp), GenRegister::immud(31));  //exp = 32 when high == 0
+    p->push();
+      p->curr.useFlag(flag.flag_nr(), flag.flag_subnr());
+      p->curr.predicate = GEN_PREDICATE_NONE;
+      p->CMP(GEN_CONDITIONAL_EQ, exp, GenRegister::immud(32));   //high == 0
+      p->curr.predicate = GEN_PREDICATE_NORMAL;
+      p->MOV(dst, low);
+      p->push();
+        if (simdWidth == 8)
+          p->curr.predicate = GEN_PREDICATE_ALIGN1_ALL8H;
+        else if (simdWidth == 16)
+          p->curr.predicate = GEN_PREDICATE_ALIGN1_ALL16H;
+        else
+          NOT_IMPLEMENTED;
+        p->curr.execWidth = 1;
+        p->curr.noMask = 1;
+        p->JMPI(GenRegister::immud(0));
+        jip0 = p->n_instruction() - 1;
+      p->pop();
+
+      p->curr.predicate = GEN_PREDICATE_NONE;
+      p->CMP(GEN_CONDITIONAL_G, exp, GenRegister::immud(23));
+      p->curr.predicate = GEN_PREDICATE_NORMAL;
+      p->CMP(GEN_CONDITIONAL_L, exp, GenRegister::immud(32));  //exp>23 && high!=0
+      p->ADD(tmp, exp, GenRegister::immud(-23));
+      p->SHR(mantissa, high, tmp);
+      p->AND(mantissa, mantissa, GenRegister::immud(0x7fffff));
+      p->SHR(dst_ud, low, tmp);   //dst is temp regitster here
+      p->ADD(tmp, GenRegister::negate(tmp), GenRegister::immud(32));
+      p->SHL(high, high, tmp);
+      p->OR(high, high, dst_ud);
+      p->SHL(low, low, tmp);
+      p->push();
+        if (simdWidth == 8)
+          p->curr.predicate = GEN_PREDICATE_ALIGN1_ALL8H;
+        else if (simdWidth == 16)
+          p->curr.predicate = GEN_PREDICATE_ALIGN1_ALL16H;
+        else
+          NOT_IMPLEMENTED;
+        p->curr.execWidth = 1;
+        p->curr.noMask = 1;
+        p->JMPI(GenRegister::immud(0));
+        jip1 = p->n_instruction() - 1;
+      p->pop();
+
+      p->curr.predicate = GEN_PREDICATE_NONE;
+      p->CMP(GEN_CONDITIONAL_EQ, exp, GenRegister::immud(23));
+      p->curr.predicate = GEN_PREDICATE_NORMAL;
+      p->MOV(dst_ud, GenRegister::immud(0));   //exp==9, SHR == 0
+
+      p->curr.predicate = GEN_PREDICATE_NONE;
+      p->CMP(GEN_CONDITIONAL_L, exp, GenRegister::immud(23));
+      p->curr.predicate = GEN_PREDICATE_NORMAL;
+      p->ADD(tmp, exp, GenRegister::immud(9));
+      p->SHR(dst_ud, low, tmp);   //dst is temp regitster here
+
+      p->curr.predicate = GEN_PREDICATE_NONE;
+      p->CMP(GEN_CONDITIONAL_LE, exp, GenRegister::immud(23));
+      p->curr.predicate = GEN_PREDICATE_NORMAL;
+      p->ADD(tmp, GenRegister::negate(exp), GenRegister::immud(23));
+      p->SHL(mantissa, high, tmp);
+      p->OR(mantissa, mantissa, dst_ud);
+      p->AND(mantissa, mantissa, GenRegister::immud(0x7fffff));
+      p->SHL(high, low, tmp);
+      p->MOV(low, GenRegister::immud(0));
+
+      p->patchJMPI(jip1, (p->n_instruction() - (jip1 + 1)) * 2);
+      p->curr.predicate = GEN_PREDICATE_NONE;
+      p->CMP(GEN_CONDITIONAL_LE, exp, GenRegister::immud(31));  //update dst where high != 0
+      p->curr.predicate = GEN_PREDICATE_NORMAL;
+      p->ADD(exp, exp, GenRegister::immud(159));
+      p->SHL(exp, exp, GenRegister::immud(23));
+      p->OR(dst_ud, exp, mantissa);
+
+      p->CMP(GEN_CONDITIONAL_GE, high, GenRegister::immud(0x80000000));
+      p->ADD(dst_ud, dst_ud, GenRegister::immud(1));
+
+      p->CMP(GEN_CONDITIONAL_EQ, high, GenRegister::immud(0x80000000));
+      p->CMP(GEN_CONDITIONAL_EQ, low, GenRegister::immud(0x0));
+      p->AND(dst_ud, dst_ud, GenRegister::immud(0xfffffffe));
+      p->patchJMPI(jip0, (p->n_instruction() - (jip0 + 1)) * 2);
+
+    p->pop();
+
   }
 
   void GenContext::emitI64ToFloatInstruction(const SelectionInstruction &insn) {
@@ -835,16 +918,19 @@ namespace gbe
     GenRegister dest = ra->genReg(insn.dst(0));
     GenRegister high = ra->genReg(insn.dst(1));
     GenRegister low = ra->genReg(insn.dst(2));
-    GenRegister tmp = ra->genReg(insn.dst(3));
-    GenRegister flagReg = ra->genReg(insn.dst(4));
+    GenRegister exp = ra->genReg(insn.dst(3));
+    GenRegister mantissa = ra->genReg(insn.dst(4));
+    GenRegister tmp = ra->genReg(insn.dst(5));
+    GenRegister f0 = ra->genReg(insn.dst(6));
+    GenRegister f1 = ra->genReg(insn.dst(7));
     loadTopHalf(high, src);
     loadBottomHalf(low, src);
     if(!src.is_signed_int()) {
-      UnsignedI64ToFloat(dest, high, low, tmp);
+      UnsignedI64ToFloat(dest, high, low, exp, mantissa, tmp, f0);
     } else {
       p->push();
       p->curr.predicate = GEN_PREDICATE_NONE;
-      p->curr.useFlag(flagReg.flag_nr(), flagReg.flag_subnr());
+      p->curr.useFlag(f1.flag_nr(), f1.flag_subnr());
       p->CMP(GEN_CONDITIONAL_GE, high, GenRegister::immud(0x80000000));
       p->curr.predicate = GEN_PREDICATE_NORMAL;
       p->NOT(high, high);
@@ -853,9 +939,9 @@ namespace gbe
       addWithCarry(low, low, tmp);
       p->ADD(high, high, tmp);
       p->pop();
-      UnsignedI64ToFloat(dest, high, low, tmp);
+      UnsignedI64ToFloat(dest, high, low, exp, mantissa, tmp, f0);
       p->push();
-      p->curr.useFlag(flagReg.flag_nr(), flagReg.flag_subnr());
+      p->curr.useFlag(f1.flag_nr(), f1.flag_subnr());
       dest.type = GEN_TYPE_UD;
       p->OR(dest, dest, GenRegister::immud(0x80000000));
       p->pop();
