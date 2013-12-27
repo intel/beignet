@@ -2698,10 +2698,9 @@ namespace gbe
         sel.CONVI64_TO_I(dst, src);
       } else if (dstType == ir::TYPE_FLOAT && srcFamily == FAMILY_QWORD) {
         GenRegister tmp[7];
-        for(int i=0; i<5; i++) {
+        for(int i=0; i<6; i++) {
           tmp[i] = sel.selReg(sel.reg(FAMILY_DWORD), TYPE_U32);
         }
-        tmp[5] = sel.selReg(sel.reg(FAMILY_BOOL), TYPE_BOOL);
         tmp[6] = sel.selReg(sel.reg(FAMILY_BOOL), TYPE_BOOL);
         sel.CONVI64_TO_F(dst, src, tmp);
       } else if (dst.isdf()) {

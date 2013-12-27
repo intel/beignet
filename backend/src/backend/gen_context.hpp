@@ -62,6 +62,8 @@ namespace gbe
     /*! Simd width chosen for the current function */
     INLINE uint32_t getSimdWidth(void) const { return simdWidth; }
     void clearFlagRegister(void);
+    /*! check the flag reg, if is grf, use f0.1 instead */
+    GenRegister checkFlagRegister(GenRegister flagReg);
     /*! Emit the per-lane stack pointer computation */
     void emitStackPointer(void);
     /*! Emit the instructions */

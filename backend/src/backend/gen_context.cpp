@@ -100,6 +100,27 @@ namespace gbe
     p->pop();
   }
 
+  //Each emit function should only using one flag reg, otherwise, should handle the case both use f0.1
+  GenRegister GenContext::checkFlagRegister(GenRegister flagReg) {
+    uint32_t nr=0, subnr=0;
+    if(flagReg.file == GEN_ARCHITECTURE_REGISTER_FILE) {
+      assert(flagReg.nr >= GEN_ARF_FLAG && flagReg.nr < GEN_ARF_MASK);
+      return flagReg;
+    }
+
+    //flagReg is grf register, use f0.1, so f0.1 shouldn't be in use.
+    //Only check curr in the GenInstructionState stack, it seems enough now.
+    //Should check other GenInstructionState in the stack if needed in future.
+    if(p->curr.predicate == GEN_PREDICATE_NORMAL) {
+      nr = p->curr.flag;
+      subnr = p->curr.subFlag;
+      //TODO: Add mov to save/restore if f0.1 is in use
+      assert(!(nr == 0 && subnr == 2));
+    }
+
+    return GenRegister::flag(0, 1);
+  }
+
   void GenContext::emitStackPointer(void) {
     using namespace ir;
 
@@ -497,7 +518,7 @@ namespace gbe
     GenRegister g = ra->genReg(insn.dst(7));
     GenRegister h = ra->genReg(insn.dst(8));
     GenRegister i = ra->genReg(insn.dst(9));
-    GenRegister flagReg = ra->genReg(insn.dst(10));
+    GenRegister flagReg = checkFlagRegister(ra->genReg(insn.dst(10)));
     loadTopHalf(a, x);
     loadBottomHalf(b, x);
     loadTopHalf(c, y);
@@ -543,7 +564,7 @@ namespace gbe
     GenRegister g = ra->genReg(insn.dst(7));
     GenRegister h = ra->genReg(insn.dst(8));
     GenRegister i = ra->genReg(insn.dst(9));
-    GenRegister flagReg = ra->genReg(insn.dst(10));
+    GenRegister flagReg = checkFlagRegister(ra->genReg(insn.dst(10)));
     GenRegister zero = GenRegister::immud(0), one = GenRegister::immud(1);
     loadTopHalf(a, x);
     loadBottomHalf(b, x);
@@ -724,7 +745,7 @@ namespace gbe
     GenRegister e = ra->genReg(insn.dst(5));
     GenRegister f = ra->genReg(insn.dst(6));
     a.type = b.type = c.type = d.type = e.type = f.type = GEN_TYPE_UD;
-    GenRegister flagReg = ra->genReg(insn.dst(7));
+    GenRegister flagReg = checkFlagRegister(ra->genReg(insn.dst(7)));
     GenRegister zero = GenRegister::immud(0);
     switch(insn.opcode) {
       case SEL_OP_I64SHL:
@@ -921,17 +942,18 @@ namespace gbe
     GenRegister exp = ra->genReg(insn.dst(3));
     GenRegister mantissa = ra->genReg(insn.dst(4));
     GenRegister tmp = ra->genReg(insn.dst(5));
-    GenRegister f0 = ra->genReg(insn.dst(6));
-    GenRegister f1 = ra->genReg(insn.dst(7));
+    GenRegister tmp_high = ra->genReg(insn.dst(6));
+    GenRegister f0 = checkFlagRegister(ra->genReg(insn.dst(7)));
     loadTopHalf(high, src);
     loadBottomHalf(low, src);
     if(!src.is_signed_int()) {
       UnsignedI64ToFloat(dest, high, low, exp, mantissa, tmp, f0);
     } else {
+      p->MOV(tmp_high, high);
       p->push();
       p->curr.predicate = GEN_PREDICATE_NONE;
-      p->curr.useFlag(f1.flag_nr(), f1.flag_subnr());
-      p->CMP(GEN_CONDITIONAL_GE, high, GenRegister::immud(0x80000000));
+      p->curr.useFlag(f0.flag_nr(), f0.flag_subnr());
+      p->CMP(GEN_CONDITIONAL_GE, tmp_high, GenRegister::immud(0x80000000));
       p->curr.predicate = GEN_PREDICATE_NORMAL;
       p->NOT(high, high);
       p->NOT(low, low);
@@ -941,7 +963,10 @@ namespace gbe
       p->pop();
       UnsignedI64ToFloat(dest, high, low, exp, mantissa, tmp, f0);
       p->push();
-      p->curr.useFlag(f1.flag_nr(), f1.flag_subnr());
+      p->curr.predicate = GEN_PREDICATE_NONE;
+      p->curr.useFlag(f0.flag_nr(), f0.flag_subnr());
+      p->CMP(GEN_CONDITIONAL_GE, tmp_high, GenRegister::immud(0x80000000));
+      p->curr.predicate = GEN_PREDICATE_NORMAL;
       dest.type = GEN_TYPE_UD;
       p->OR(dest, dest, GenRegister::immud(0x80000000));
       p->pop();
@@ -954,7 +979,7 @@ namespace gbe
     GenRegister dst = ra->genReg(insn.dst(0));
     GenRegister high = ra->genReg(insn.dst(1));
     GenRegister tmp = ra->genReg(insn.dst(2));
-    GenRegister flag0 = ra->genReg(insn.dst(3));
+    GenRegister flag0 = checkFlagRegister(ra->genReg(insn.dst(3)));
 
     if(dst.is_signed_int())
       high = GenRegister::retype(high, GEN_TYPE_D);
@@ -1076,7 +1101,7 @@ namespace gbe
     GenRegister c = ra->genReg(insn.dst(3));
     GenRegister d = ra->genReg(insn.dst(4));
     GenRegister e = ra->genReg(insn.dst(5));
-    GenRegister flagReg = ra->genReg(insn.dst(6));
+    GenRegister flagReg = checkFlagRegister(ra->genReg(insn.dst(6)));
     loadTopHalf(a, x);
     loadBottomHalf(b, x);
     loadTopHalf(c, y);
@@ -1122,7 +1147,7 @@ namespace gbe
     GenRegister c = ra->genReg(insn.dst(3));
     GenRegister d = ra->genReg(insn.dst(4));
     GenRegister e = ra->genReg(insn.dst(5));
-    GenRegister flagReg = ra->genReg(insn.dst(6));
+    GenRegister flagReg = checkFlagRegister(ra->genReg(insn.dst(6)));
     loadTopHalf(a, x);
     loadBottomHalf(b, x);
     loadTopHalf(c, y);
@@ -1322,7 +1347,7 @@ namespace gbe
     GenRegister k = ra->genReg(insn.dst(11));
     GenRegister l = ra->genReg(insn.dst(12));
     GenRegister m = ra->genReg(insn.dst(13));
-    GenRegister flagReg = ra->genReg(insn.dst(14));
+    GenRegister flagReg = checkFlagRegister(ra->genReg(insn.dst(14)));
     GenRegister zero = GenRegister::immud(0),
                 one = GenRegister::immud(1),
                 imm31 = GenRegister::immud(31);

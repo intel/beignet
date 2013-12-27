@@ -295,6 +295,8 @@ namespace gbe
     }
 
     INLINE int flag_nr(void) const {
+      assert(file == GEN_ARCHITECTURE_REGISTER_FILE);
+      assert(nr >= GEN_ARF_FLAG && nr < GEN_ARF_FLAG + 2);
       return nr & 15;
     }
 
