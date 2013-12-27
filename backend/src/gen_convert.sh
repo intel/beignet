@@ -350,7 +350,7 @@ INLINE_OVERLOADABLE float __convert_float_rtn(int x)
   }
   return u.f;
 }
-INLINE_OVERLOADABLE long __convert_float_rtz(uint x)
+INLINE_OVERLOADABLE float __convert_float_rtz(uint x)
 {
   union {
     uint u;
@@ -362,7 +362,7 @@ INLINE_OVERLOADABLE long __convert_float_rtz(uint x)
     u.u -= 1;
   return u.f;
 }
-INLINE_OVERLOADABLE long __convert_float_rtp(uint x)
+INLINE_OVERLOADABLE float __convert_float_rtp(uint x)
 {
   union {
     uint u;
