@@ -74,28 +74,49 @@ cl_get_gt_device(void)
   cl_device_id ret = NULL;
   const int device_id = cl_driver_get_device_id();
 
+#define DECL_INFO_STRING(STRUCT, FIELD, STRING) \
+    STRUCT.FIELD = STRING; \
+    STRUCT.JOIN(FIELD,_sz) = sizeof(STRING);
+
   /* XXX we pick IVB for HSW now */
-  if (device_id == PCI_CHIP_HASWELL_M   ||
-      device_id == PCI_CHIP_HASWELL_L   ||
-      device_id == PCI_CHIP_HASWELL_M0  ||
-      device_id == PCI_CHIP_HASWELL_D0) {
-    intel_hsw_device.vendor_id = device_id;
-    intel_hsw_device.platform = intel_platform;
-    ret = &intel_hsw_device;
+  switch (device_id) {
+    case PCI_CHIP_HASWELL_M:
+      DECL_INFO_STRING(intel_hsw_device, name, "Intel(R) HD Graphics Haswell M");
+    case PCI_CHIP_HASWELL_L:
+      DECL_INFO_STRING(intel_hsw_device, name, "Intel(R) HD Graphics Haswell L");
+    case PCI_CHIP_HASWELL_M0:
+      DECL_INFO_STRING(intel_hsw_device, name, "Intel(R) HD Graphics Haswell M0");
+    case PCI_CHIP_HASWELL_D0:
+      DECL_INFO_STRING(intel_hsw_device, name, "Intel(R) HD Graphics Haswell D0");
+      intel_hsw_device.vendor_id = device_id;
+      intel_hsw_device.platform = intel_platform;
+      ret = &intel_hsw_device;
+      break;
+
+    case PCI_CHIP_IVYBRIDGE_GT1:
+      DECL_INFO_STRING(intel_ivb_gt1_device, name, "Intel(R) HD Graphics IvyBridge GT1");
+    case PCI_CHIP_IVYBRIDGE_M_GT1:
+      DECL_INFO_STRING(intel_ivb_gt1_device, name, "Intel(R) HD Graphics IvyBridge M GT1");
+    case PCI_CHIP_IVYBRIDGE_S_GT1:
+      DECL_INFO_STRING(intel_ivb_gt1_device, name, "Intel(R) HD Graphics IvyBridge S GT1");
+      intel_ivb_gt1_device.vendor_id = device_id;
+      intel_ivb_gt1_device.platform = intel_platform;
+      ret = &intel_ivb_gt1_device;
+      break;
+
+    case PCI_CHIP_IVYBRIDGE_GT2:
+      DECL_INFO_STRING(intel_ivb_gt2_device, name, "Intel(R) HD Graphics IvyBridge GT2");
+    case PCI_CHIP_IVYBRIDGE_M_GT2:
+      DECL_INFO_STRING(intel_ivb_gt2_device, name, "Intel(R) HD Graphics IvyBridge M GT2");
+      intel_ivb_gt2_device.vendor_id = device_id;
+      intel_ivb_gt2_device.platform = intel_platform;
+      ret = &intel_ivb_gt2_device;
+      break;
+    default:
+      printf("cl_get_gt_device(): error, unknown device\n");
+      exit(1);
   }
-  else if (device_id == PCI_CHIP_IVYBRIDGE_GT1   ||
-           device_id == PCI_CHIP_IVYBRIDGE_M_GT1 ||
-           device_id == PCI_CHIP_IVYBRIDGE_S_GT1) {
-    intel_ivb_gt1_device.vendor_id = device_id;
-    intel_ivb_gt1_device.platform = intel_platform;
-    ret = &intel_ivb_gt1_device;
-  }
-  else if (device_id == PCI_CHIP_IVYBRIDGE_GT2   ||
-           device_id == PCI_CHIP_IVYBRIDGE_M_GT2) {
-    intel_ivb_gt2_device.vendor_id = device_id;
-    intel_ivb_gt2_device.platform = intel_platform;
-    ret = &intel_ivb_gt2_device;
-  }
+
   return ret;
 }
 
