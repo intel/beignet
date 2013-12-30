@@ -2881,6 +2881,14 @@ namespace gbe
       if (sel.ctx.hasJIP(&insn)) {
         const LabelIndex jip = sel.ctx.getLabelIndex(&insn);
         sel.push();
+
+          sel.curr.noMask = 1;
+          sel.curr.execWidth = 1;
+          sel.curr.predicate = GEN_PREDICATE_NONE;
+          GenRegister emaskReg = GenRegister::uw1grf(ocl::emask);
+          GenRegister flagReg = GenRegister::flag(0, 0);
+          sel.AND(flagReg, flagReg, emaskReg);
+
           if (simdWidth == 8)
             sel.curr.predicate = GEN_PREDICATE_ALIGN1_ANY8H;
           else if (simdWidth == 16)
@@ -2888,10 +2896,8 @@ namespace gbe
           else
             NOT_IMPLEMENTED;
           sel.curr.inversePredicate = 1;
-          sel.curr.execWidth = 1;
           sel.curr.flag = 0;
           sel.curr.subFlag = 0;
-          sel.curr.noMask = 1;
           sel.JMPI(GenRegister::immd(0), jip);
         sel.pop();
       }
@@ -3031,6 +3037,9 @@ namespace gbe
         // It is slightly more complicated than for backward jump. We check that
         // all PcIPs are greater than the next block IP to be sure that we can
         // jump
+        // We set all the inactive channel to 1 as the GEN_PREDICATE_ALIGN1_ALL8/16
+        // will check those bits as well.
+
         sel.push();
           sel.curr.physicalFlag = 0;
           sel.curr.flagIndex = uint16_t(pred);
@@ -3041,14 +3050,19 @@ namespace gbe
           // XXX TODO: For group size not aligned to simdWidth, ALL8/16h may not
           // work correct, as flag register bits mapped to non-active lanes tend
           // to be zero.
+
+          sel.curr.execWidth = 1;
+          sel.curr.noMask = 1;
+          GenRegister notEmaskReg = GenRegister::uw1grf(ocl::notemask);
+          sel.OR(sel.selReg(pred, TYPE_U16), sel.selReg(pred, TYPE_U16), notEmaskReg);
+
           if (simdWidth == 8)
             sel.curr.predicate = GEN_PREDICATE_ALIGN1_ALL8H;
           else if (simdWidth == 16)
             sel.curr.predicate = GEN_PREDICATE_ALIGN1_ALL16H;
           else
             NOT_SUPPORTED;
-          sel.curr.execWidth = 1;
-          sel.curr.noMask = 1;
+
           sel.JMPI(GenRegister::immd(0), jip);
         sel.pop();
 
@@ -3083,6 +3097,7 @@ namespace gbe
       if (insn.isPredicated() == true) {
         const Register pred = insn.getPredicateIndex();
 
+
         // Update the PcIPs for all the branches. Just put the IPs of the next
         // block. Next instruction will properly reupdate the IPs of the lanes
         // that actually take the branch
@@ -3095,6 +3110,14 @@ namespace gbe
           sel.curr.flagIndex = uint16_t(pred);
           sel.MOV(ip, GenRegister::immuw(uint16_t(dst)));
 
+        // We clear all the inactive channel to 0 as the GEN_PREDICATE_ALIGN1_ALL8/16
+        // will check those bits as well.
+          sel.curr.predicate = GEN_PREDICATE_NONE;
+          sel.curr.execWidth = 1;
+          sel.curr.noMask = 1;
+          GenRegister emaskReg = GenRegister::uw1grf(ocl::emask);
+          sel.AND(sel.selReg(pred, TYPE_U16), sel.selReg(pred, TYPE_U16), emaskReg);
+
           // Branch to the jump target
           if (simdWidth == 8)
             sel.curr.predicate = GEN_PREDICATE_ALIGN1_ANY8H;
@@ -3102,8 +3125,6 @@ namespace gbe
             sel.curr.predicate = GEN_PREDICATE_ALIGN1_ANY16H;
           else
             NOT_SUPPORTED;
-          sel.curr.execWidth = 1;
-          sel.curr.noMask = 1;
           sel.JMPI(GenRegister::immd(0), jip);
         sel.pop();
 

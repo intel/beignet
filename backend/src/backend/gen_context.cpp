@@ -91,12 +91,24 @@ namespace gbe
   void GenContext::clearFlagRegister(void) {
     // when group size not aligned to simdWidth, flag register need clear to
     // make prediction(any8/16h) work correctly
+    const GenRegister emaskReg = ra->genReg(GenRegister::uw1grf(ir::ocl::emask));
+    const GenRegister notEmaskReg = ra->genReg(GenRegister::uw1grf(ir::ocl::notemask));
+    uint32_t execWidth = p->curr.execWidth;
     p->push();
     p->curr.predicate = GEN_PREDICATE_NONE;
     p->curr.noMask = 1;
+    /* clear all the bit in f0.0. */
     p->curr.execWidth = 1;
-    p->MOV(GenRegister::retype(GenRegister::flag(0,0), GEN_TYPE_UD), GenRegister::immud(0x0));
-    p->MOV(GenRegister::retype(GenRegister::flag(1,0), GEN_TYPE_UD), GenRegister::immud(0x0));
+    p->MOV(GenRegister::retype(GenRegister::flag(0, 0), GEN_TYPE_UW), GenRegister::immud(0x0000));
+    p->curr.noMask = 0;
+    p->curr.useFlag(0, 0);
+    p->curr.execWidth = execWidth;
+    /* set all the active lane to 1. Inactive lane remains 0. */
+    p->CMP(GEN_CONDITIONAL_EQ, GenRegister::ud16grf(126, 0), GenRegister::ud16grf(126, 0));
+    p->curr.noMask = 1;
+    p->curr.execWidth = 1;
+    p->MOV(emaskReg, GenRegister::retype(GenRegister::flag(0, 0), GEN_TYPE_UW));
+    p->XOR(notEmaskReg, emaskReg, GenRegister::immud(0xFFFF));
     p->pop();
   }
 

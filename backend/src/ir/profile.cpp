@@ -40,7 +40,7 @@ namespace ir {
         "stack_pointer",
         "block_ip",
         "barrier_id", "thread_number",
-        "work_dimension", "sampler_info", "retVal"
+        "work_dimension", "sampler_info", "emask", "notemask", "retVal"
     };
 
 #if GBE_DEBUG
@@ -77,6 +77,8 @@ namespace ir {
       DECL_NEW_REG(FAMILY_DWORD, threadn);
       DECL_NEW_REG(FAMILY_DWORD, workdim);
       DECL_NEW_REG(FAMILY_WORD, samplerinfo);
+      DECL_NEW_REG(FAMILY_WORD, emask);
+      DECL_NEW_REG(FAMILY_WORD, notemask);
       DECL_NEW_REG(FAMILY_WORD, retVal);
     }
 #undef DECL_NEW_REG

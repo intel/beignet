@@ -430,6 +430,8 @@ namespace gbe
 
     // We insert the block IP mask first
     this->insertCurbeReg(ir::ocl::blockip, this->newCurbeEntry(GBE_CURBE_BLOCK_IP, 0, this->simdWidth*sizeof(uint16_t)));
+    this->insertCurbeReg(ir::ocl::emask, this->newCurbeEntry(GBE_CURBE_EMASK, 0,  sizeof(uint32_t)));
+    this->insertCurbeReg(ir::ocl::notemask, this->newCurbeEntry(GBE_CURBE_NOT_EMASK, 0, sizeof(uint32_t)));
 
     // Go over the arguments and find the related patch locations
     const uint32_t argNum = fn.argNum();
@@ -511,9 +513,6 @@ namespace gbe
       }
     });
 #undef INSERT_REG
-
-    // Insert the number of threads
-    insertCurbeReg(ir::ocl::threadn, this->newCurbeEntry(GBE_CURBE_THREAD_NUM, 0, sizeof(uint32_t)));
 
     // Insert the stack buffer if used
     if (useStackPtr)
@@ -686,7 +685,9 @@ namespace gbe
         reg == ir::ocl::goffset0  ||
         reg == ir::ocl::goffset1  ||
         reg == ir::ocl::goffset2  ||
-        reg == ir::ocl::workdim)
+        reg == ir::ocl::workdim   ||
+        reg == ir::ocl::emask     ||
+        reg == ir::ocl::notemask)
       return true;
     return false;
   }

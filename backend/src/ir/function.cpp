@@ -227,7 +227,7 @@ namespace ir {
         GBE_ASSERT(target != NULL);
         target->predecessors.insert(&bb);
         bb.successors.insert(target);
-        if (insn.isPredicated() == true) jumpToNext = &bb;
+        if ( insn.isPredicated() == true) jumpToNext = &bb;
       }
     });
   }

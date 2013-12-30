@@ -65,8 +65,10 @@ namespace ir {
     static const Register threadn = Register(21);  // number of threads
     static const Register workdim = Register(22);  // work dimention.
     static const Register samplerinfo = Register(23); // store sampler info.
-    static const Register retVal = Register(24);   // helper register to do data flow analysis.
-    static const uint32_t regNum = 25;             // number of special registers
+    static const Register emask = Register(24);    // store the emask bits for the branching fix.
+    static const Register notemask = Register(25); // store the !emask bits for the branching fix.
+    static const Register retVal = Register(26);   // helper register to do data flow analysis.
+    static const uint32_t regNum = 27;             // number of special registers
     extern const char *specialRegMean[];           // special register name.
   } /* namespace ocl */
 

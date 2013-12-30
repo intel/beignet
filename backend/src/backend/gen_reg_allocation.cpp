@@ -634,6 +634,13 @@ namespace gbe
         this->intervals[reg].maxID = std::max(this->intervals[reg].maxID, lastID);
     }
 
+    this->intervals[ocl::emask].minID = 0;
+    this->intervals[ocl::emask].maxID = INT_MAX;
+    this->intervals[ocl::notemask].minID = 0;
+    this->intervals[ocl::notemask].maxID = INT_MAX;
+    this->intervals[ocl::retVal].minID = INT_MAX;
+    this->intervals[ocl::retVal].maxID = -INT_MAX;
+
     // Sort both intervals in starting point and ending point increasing orders
     const uint32_t regNum = ctx.sel->getRegNum();
     this->starting.resize(regNum);
