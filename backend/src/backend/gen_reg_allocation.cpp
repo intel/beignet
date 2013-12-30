@@ -276,6 +276,7 @@ namespace gbe
   }
 
   bool GenRegAllocator::Opaque::expireGRF(const GenRegInterval &limit) {
+    bool ret = false;
     while (this->expiringID != ending.size()) {
       const GenRegInterval *toExpire = this->ending[this->expiringID];
       const ir::Register reg = toExpire->reg;
@@ -299,7 +300,7 @@ namespace gbe
       }
 
       if (toExpire->maxID >= limit.minID)
-        return false;
+        break;
       auto it = RA.find(reg);
       GBE_ASSERT(it != RA.end());
       // offset less than 32 means it is not managed by our reg allocator.
@@ -310,11 +311,11 @@ namespace gbe
       // Case 1 - it does not belong to a vector. Just remove it
         ctx.deallocate(it->second);
         this->expiringID++;
-        return true;
+        ret = true;
     }
 
     // We were not able to expire anything
-    return false;
+    return ret;
   }
 
   void GenRegAllocator::Opaque::allocateFlags(Selection &selection) {
