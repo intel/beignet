@@ -493,7 +493,7 @@ namespace gbe
     /*! Saturated subtraction of 64-bit integer */
     void I64SATSUB(Reg dst, Reg src0, Reg src1, GenRegister tmp[6]);
     /*! Encode a barrier instruction */
-    void BARRIER(GenRegister src);
+    void BARRIER(GenRegister src, GenRegister fence, uint32_t barrierType);
     /*! Encode a barrier instruction */
     void FENCE(GenRegister dst);
     /*! Encode a label instruction */
@@ -818,9 +818,11 @@ namespace gbe
     insn->index = uint16_t(index);
   }
 
-  void Selection::Opaque::BARRIER(GenRegister src) {
-    SelectionInstruction *insn = this->appendInsn(SEL_OP_BARRIER, 0, 1);
+  void Selection::Opaque::BARRIER(GenRegister src, GenRegister fence, uint32_t barrierType) {
+    SelectionInstruction *insn = this->appendInsn(SEL_OP_BARRIER, 1, 1);
     insn->src(0) = src;
+    insn->dst(0) = fence;
+    insn->extra.barrierType = barrierType;
   }
 
   void Selection::Opaque::FENCE(GenRegister dst) {
@@ -2235,29 +2237,25 @@ namespace gbe
     {
       using namespace ir;
       const ir::Register reg = sel.reg(FAMILY_DWORD);
-
+      const GenRegister barrierMask = sel.selReg(ocl::barriermask, TYPE_BOOL);
+      const GenRegister tempFlag = sel.selReg(sel.reg(FAMILY_BOOL), TYPE_BOOL);
+      const GenRegister flagReg = GenRegister::flag(0, 0);
       const uint32_t params = insn.getParameters();
-      if(params == syncGlobalBarrier) {
-        const ir::Register fenceDst = sel.reg(FAMILY_DWORD);
-        sel.FENCE(sel.selReg(fenceDst, ir::TYPE_U32));
-      }
 
       sel.push();
         sel.curr.predicate = GEN_PREDICATE_NONE;
-
-        // As only the payload.2 is used and all the other regions are ignored
-        // SIMD8 mode here is safe.
-        sel.curr.execWidth = 8;
-        sel.curr.physicalFlag = 0;
         sel.curr.noMask = 1;
-        // Copy barrier id from r0.
-        sel.AND(GenRegister::ud8grf(reg), GenRegister::ud1grf(ir::ocl::barrierid), GenRegister::immud(0x0f000000));
-
-        // A barrier is OK to start the thread synchronization *and* SLM fence
-        sel.BARRIER(GenRegister::f8grf(reg));
-        // Now we wait for the other threads
         sel.curr.execWidth = 1;
-        sel.WAIT();
+        sel.OR(barrierMask, flagReg, barrierMask);
+        sel.MOV(tempFlag, barrierMask);
+      sel.pop();
+
+      // A barrier is OK to start the thread synchronization *and* SLM fence
+      sel.push();
+      //sel.curr.predicate = GEN_PREDICATE_NONE;
+      sel.curr.flagIndex = (uint16_t)tempFlag.value.reg;
+      sel.curr.physicalFlag = 0;
+      sel.BARRIER(GenRegister::ud8grf(reg), sel.selReg(sel.reg(FAMILY_DWORD)), params);
       sel.pop();
       return true;
     }
@@ -3110,7 +3108,7 @@ namespace gbe
           sel.curr.flagIndex = uint16_t(pred);
           sel.MOV(ip, GenRegister::immuw(uint16_t(dst)));
 
-        // We clear all the inactive channel to 0 as the GEN_PREDICATE_ALIGN1_ALL8/16
+        // We clear all the inactive channel to 0 as the GEN_PREDICATE_ALIGN1_ANY8/16
         // will check those bits as well.
           sel.curr.predicate = GEN_PREDICATE_NONE;
           sel.curr.execWidth = 1;

@@ -67,8 +67,9 @@ namespace ir {
     static const Register samplerinfo = Register(23); // store sampler info.
     static const Register emask = Register(24);    // store the emask bits for the branching fix.
     static const Register notemask = Register(25); // store the !emask bits for the branching fix.
-    static const Register retVal = Register(26);   // helper register to do data flow analysis.
-    static const uint32_t regNum = 27;             // number of special registers
+    static const Register barriermask = Register(26); // software mask for barrier.
+    static const Register retVal = Register(27);   // helper register to do data flow analysis.
+    static const uint32_t regNum = 28;             // number of special registers
     extern const char *specialRegMean[];           // special register name.
   } /* namespace ocl */
 

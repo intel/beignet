@@ -111,6 +111,7 @@ namespace gbe
         uint16_t scratchOffset;
         uint16_t scratchMsgHeader;
       };
+      uint32_t barrierType;
     } extra;
     /*! Gen opcode */
     uint8_t opcode;

@@ -100,6 +100,7 @@ namespace gbe
     /* clear all the bit in f0.0. */
     p->curr.execWidth = 1;
     p->MOV(GenRegister::retype(GenRegister::flag(0, 0), GEN_TYPE_UW), GenRegister::immud(0x0000));
+    /* clear the barrier mask bits to all zero0*/
     p->curr.noMask = 0;
     p->curr.useFlag(0, 0);
     p->curr.execWidth = execWidth;
@@ -109,6 +110,7 @@ namespace gbe
     p->curr.execWidth = 1;
     p->MOV(emaskReg, GenRegister::retype(GenRegister::flag(0, 0), GEN_TYPE_UW));
     p->XOR(notEmaskReg, emaskReg, GenRegister::immud(0xFFFF));
+    p->MOV(ra->genReg(GenRegister::uw1grf(ir::ocl::barriermask)), notEmaskReg);
     p->pop();
   }
 
@@ -1502,7 +1504,63 @@ namespace gbe
 
   void GenContext::emitBarrierInstruction(const SelectionInstruction &insn) {
     const GenRegister src = ra->genReg(insn.src(0));
+    const GenRegister fenceDst = ra->genReg(insn.dst(0));
+    uint32_t barrierType = insn.extra.barrierType;
+    const GenRegister barrierId = ra->genReg(GenRegister::ud1grf(ir::ocl::barrierid));
+    GenRegister blockIP;
+    uint32_t exeWidth = p->curr.execWidth;
+    ir::LabelIndex label = insn.parent->bb->getNextBlock()->getLabelIndex();
+
+    if (exeWidth == 16)
+      blockIP = ra->genReg(GenRegister::uw16grf(ir::ocl::blockip));
+    else if (exeWidth == 8)
+      blockIP = ra->genReg(GenRegister::uw8grf(ir::ocl::blockip));
+
+    p->push();
+    /* Set block IP to 0xFFFF and clear the flag0's all bits. to skip all the instructions
+       after the barrier, If there is any lane still remains zero. */
+    p->MOV(blockIP, GenRegister::immuw(0xFFFF));
+    p->curr.noMask = 1;
+    p->curr.execWidth = 1;
+    this->branchPos2.push_back(std::make_pair(label, p->n_instruction()));
+    if (exeWidth == 16)
+      p->curr.predicate = GEN_PREDICATE_ALIGN1_ALL16H;
+    else if (exeWidth == 8)
+      p->curr.predicate = GEN_PREDICATE_ALIGN1_ALL8H;
+    else
+      NOT_IMPLEMENTED;
+    p->curr.inversePredicate = 1;
+    // If not all channel is set to 1, the barrier is still waiting for other lanes to complete,
+    // jump to next basic block.
+    p->JMPI(GenRegister::immud(0));
+    p->curr.predicate = GEN_PREDICATE_NONE;
+    p->MOV(GenRegister::flag(0, 0), ra->genReg(GenRegister::uw1grf(ir::ocl::emask)));
+    p->pop();
+
+    p->push();
+    p->curr.useFlag(0, 0);
+    /* Restore the blockIP to current label. */
+    p->MOV(blockIP, GenRegister::immuw(insn.parent->bb->getLabelIndex()));
+    if (barrierType == ir::syncGlobalBarrier) {
+      p->FENCE(fenceDst);
+      p->MOV(fenceDst, fenceDst);
+    }
+    p->curr.predicate = GEN_PREDICATE_NONE;
+    // As only the payload.2 is used and all the other regions are ignored
+    // SIMD8 mode here is safe.
+    p->curr.execWidth = 8;
+    p->curr.physicalFlag = 0;
+    p->curr.noMask = 1;
+    // Copy barrier id from r0.
+    p->AND(src, barrierId, GenRegister::immud(0x0f000000));
+    // A barrier is OK to start the thread synchronization *and* SLM fence
     p->BARRIER(src);
+    // Now we wait for the other threads
+    p->curr.execWidth = 1;
+    p->WAIT();
+    // we executed the barrier then restore the barrier soft mask to initial value.
+    p->MOV(ra->genReg(GenRegister::uw1grf(ir::ocl::barriermask)), ra->genReg(GenRegister::uw1grf(ir::ocl::notemask)));
+    p->pop();
   }
 
   void GenContext::emitFenceInstruction(const SelectionInstruction &insn) {

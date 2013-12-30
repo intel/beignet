@@ -385,9 +385,10 @@ namespace gbe
             grfBooleans.insert(spill.reg);
             spill = interval;
           }
-          // We will a grf for the current register
-          else
+          // We will use a grf for the current register
+          else {
             grfBooleans.insert(reg);
+          }
         }
         else
           allocatedFlags.insert(std::make_pair(reg, freeFlags[--freeNum]));
@@ -638,6 +639,8 @@ namespace gbe
     this->intervals[ocl::emask].maxID = INT_MAX;
     this->intervals[ocl::notemask].minID = 0;
     this->intervals[ocl::notemask].maxID = INT_MAX;
+//    this->intervals[ocl::barriermask].minID = 0;
+//    this->intervals[ocl::barriermask].maxID = INT_MAX;
     this->intervals[ocl::retVal].minID = INT_MAX;
     this->intervals[ocl::retVal].maxID = -INT_MAX;
 

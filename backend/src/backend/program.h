@@ -79,6 +79,7 @@ enum gbe_curbe_type {
   GBE_CURBE_THREAD_NUM,
   GBE_CURBE_EMASK,
   GBE_CURBE_NOT_EMASK,
+  GBE_CURBE_BARRIER_MASK,
 };
 
 /*! Extra arguments use the negative range of sub-values */
