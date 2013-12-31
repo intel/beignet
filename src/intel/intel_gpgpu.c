@@ -117,10 +117,24 @@ typedef struct intel_gpgpu intel_gpgpu_t;
 
 
 static void
-intel_gpgpu_sync(intel_gpgpu_t *gpgpu)
+intel_gpgpu_sync(void *buf)
+{
+  if (buf)
+    drm_intel_bo_wait_rendering((drm_intel_bo *)buf);
+}
+
+static void *intel_gpgpu_ref_batch_buf(intel_gpgpu_t *gpgpu)
 {
   if (gpgpu->batch->last_bo)
-    drm_intel_bo_wait_rendering(gpgpu->batch->last_bo);
+    drm_intel_bo_reference(gpgpu->batch->last_bo);
+
+  return gpgpu->batch->last_bo;
+}
+
+static void intel_gpgpu_unref_batch_buf(void *buf)
+{
+  if (buf)
+    drm_intel_bo_unreference((drm_intel_bo *)buf);
 }
 
 static void
@@ -1111,5 +1125,7 @@ intel_set_gpgpu_callbacks(void)
   cl_gpgpu_event_delete = (cl_gpgpu_event_delete_cb *)intel_gpgpu_event_delete;
   cl_gpgpu_event_get_exec_timestamp = (cl_gpgpu_event_get_exec_timestamp_cb *)intel_gpgpu_event_get_exec_timestamp;
   cl_gpgpu_event_get_gpu_cur_timestamp = (cl_gpgpu_event_get_gpu_cur_timestamp_cb *)intel_gpgpu_event_get_gpu_cur_timestamp;
+  cl_gpgpu_ref_batch_buf = (cl_gpgpu_ref_batch_buf_cb *)intel_gpgpu_ref_batch_buf;
+  cl_gpgpu_unref_batch_buf = (cl_gpgpu_unref_batch_buf_cb *)intel_gpgpu_unref_batch_buf;
 }
 

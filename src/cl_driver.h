@@ -95,7 +95,7 @@ typedef void (cl_gpgpu_delete_cb)(cl_gpgpu);
 extern cl_gpgpu_delete_cb *cl_gpgpu_delete;
 
 /* Synchonize GPU with CPU */
-typedef cl_gpgpu (cl_gpgpu_sync_cb)(cl_gpgpu);
+typedef void (cl_gpgpu_sync_cb)(void*);
 extern cl_gpgpu_sync_cb *cl_gpgpu_sync;
 
 /* Bind a regular unformatted buffer */
@@ -199,6 +199,14 @@ extern cl_gpgpu_event_get_exec_timestamp_cb *cl_gpgpu_event_get_exec_timestamp;
 /* Get current GPU time stamp */
 typedef void (cl_gpgpu_event_get_gpu_cur_timestamp_cb)(cl_gpgpu, uint64_t*);
 extern cl_gpgpu_event_get_gpu_cur_timestamp_cb *cl_gpgpu_event_get_gpu_cur_timestamp;
+
+/* Get current batch buffer handle */
+typedef void* (cl_gpgpu_ref_batch_buf_cb)(cl_gpgpu);
+extern cl_gpgpu_ref_batch_buf_cb *cl_gpgpu_ref_batch_buf;
+
+/* Get release batch buffer handle */
+typedef void (cl_gpgpu_unref_batch_buf_cb)(void*);
+extern cl_gpgpu_unref_batch_buf_cb *cl_gpgpu_unref_batch_buf;
 
 /* Will spawn all threads */
 typedef void (cl_gpgpu_walker_cb)(cl_gpgpu,

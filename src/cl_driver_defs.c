@@ -82,4 +82,6 @@ LOCAL cl_gpgpu_event_resume_cb *cl_gpgpu_event_resume = NULL;
 LOCAL cl_gpgpu_event_delete_cb *cl_gpgpu_event_delete = NULL;
 LOCAL cl_gpgpu_event_get_exec_timestamp_cb *cl_gpgpu_event_get_exec_timestamp = NULL;
 LOCAL cl_gpgpu_event_get_gpu_cur_timestamp_cb *cl_gpgpu_event_get_gpu_cur_timestamp = NULL;
+LOCAL cl_gpgpu_ref_batch_buf_cb *cl_gpgpu_ref_batch_buf = NULL;
+LOCAL cl_gpgpu_unref_batch_buf_cb *cl_gpgpu_unref_batch_buf = NULL;
 

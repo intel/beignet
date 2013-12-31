@@ -419,15 +419,15 @@ cl_command_queue_flush(cl_command_queue queue)
   GET_QUEUE_THREAD_GPGPU(queue);
 
   cl_gpgpu_flush(gpgpu);
+
+  cl_invalid_thread_gpgpu(queue);
   return CL_SUCCESS;
 }
 
 LOCAL cl_int
 cl_command_queue_finish(cl_command_queue queue)
 {
-  GET_QUEUE_THREAD_GPGPU(queue);
-
-  cl_gpgpu_sync(gpgpu);
+  cl_gpgpu_sync(cl_get_thread_batch_buf());
   return CL_SUCCESS;
 }
 

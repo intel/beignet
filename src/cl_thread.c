@@ -20,30 +20,75 @@
 #include "cl_alloc.h"
 #include "cl_utils.h"
 
+static __thread void* thread_batch_buf = NULL;
+
+typedef struct _cl_thread_spec_data {
+  cl_gpgpu gpgpu ;
+  int valid;
+}cl_thread_spec_data;
+
+void cl_set_thread_batch_buf(void* buf) {
+  if (thread_batch_buf) {
+    cl_gpgpu_unref_batch_buf(thread_batch_buf);
+  }
+  thread_batch_buf = buf;
+}
+
+void* cl_get_thread_batch_buf(void) {
+  return thread_batch_buf;
+}
+
 cl_gpgpu cl_get_thread_gpgpu(cl_command_queue queue)
 {
   pthread_key_t* key = queue->thread_data;
-  cl_gpgpu gpgpu = pthread_getspecific(*key);
+  cl_thread_spec_data* thread_spec_data = pthread_getspecific(*key);
 
-  if (!gpgpu) {
-    TRY_ALLOC_NO_ERR (gpgpu, cl_gpgpu_new(queue->ctx->drv));
+  if (!thread_spec_data) {
+    TRY_ALLOC_NO_ERR(thread_spec_data, CALLOC(struct _cl_thread_spec_data));
+    if (pthread_setspecific(*key, thread_spec_data)) {
+      cl_free(thread_spec_data);
+      return NULL;
+    }
   }
 
-  if (pthread_setspecific(*key, gpgpu)) {
-    cl_gpgpu_delete(gpgpu);
-    goto error;
+  if (!thread_spec_data->valid) {
+    TRY_ALLOC_NO_ERR(thread_spec_data->gpgpu, cl_gpgpu_new(queue->ctx->drv));
+    thread_spec_data->valid = 1;
   }
 
-exit:
-  return gpgpu;
 error:
-  pthread_setspecific(*key, NULL);
-  goto exit;
+  return thread_spec_data->gpgpu;
+}
+
+void cl_invalid_thread_gpgpu(cl_command_queue queue)
+{
+  pthread_key_t* key = queue->thread_data;
+  cl_thread_spec_data* thread_spec_data = pthread_getspecific(*key);
+
+  if (!thread_spec_data) {
+    return;
+  }
+
+  if (!thread_spec_data->valid) {
+    return;
+  }
+
+  assert(thread_spec_data->gpgpu);
+  cl_gpgpu_delete(thread_spec_data->gpgpu);
+  thread_spec_data->valid = 0;
 }
 
 static void thread_data_destructor(void *data) {
-  cl_gpgpu gpgpu = (cl_gpgpu)data;
-  cl_gpgpu_delete(gpgpu);
+  cl_thread_spec_data* thread_spec_data = (cl_thread_spec_data *)data;
+
+  if (thread_batch_buf) {
+    cl_gpgpu_unref_batch_buf(thread_batch_buf);
+    thread_batch_buf = NULL;
+  }
+
+  if (thread_spec_data->valid)
+    cl_gpgpu_delete(thread_spec_data->gpgpu);
+  cl_free(thread_spec_data);
 }
 
 /* Create the thread specific data. */
@@ -67,6 +112,16 @@ void* cl_thread_data_create(void)
 void cl_thread_data_destroy(void * data)
 {
   pthread_key_t *thread_specific_key = (pthread_key_t *)data;
+
+  /* First release self spec data. */
+  cl_thread_spec_data* thread_spec_data =
+         pthread_getspecific(*thread_specific_key);
+  if (thread_spec_data && thread_spec_data->valid) {
+    cl_gpgpu_delete(thread_spec_data->gpgpu);
+    if (thread_spec_data)
+      cl_free(thread_spec_data);
+  }
+
   pthread_key_delete(*thread_specific_key);
   cl_free(thread_specific_key);
 }

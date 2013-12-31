@@ -31,4 +31,14 @@ void cl_thread_data_destroy(void * data);
 
 /* Used to get the gpgpu struct of each thread. */
 cl_gpgpu cl_get_thread_gpgpu(cl_command_queue queue);
+
+/* Used to release the gpgpu struct of each thread. */
+void cl_invalid_thread_gpgpu(cl_command_queue queue);
+
+/* Used to set the batch buffer of each thread. */
+void cl_set_thread_batch_buf(void* buf);
+
+/* Used to get the batch buffer of each thread. */
+void* cl_get_thread_batch_buf(void);
+
 #endif /* __CL_THREAD_H__ */
