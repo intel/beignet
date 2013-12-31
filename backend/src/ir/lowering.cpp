@@ -1,4 +1,4 @@
-/* 
+/*
  * Copyright © 2012 Intel Corporation
  *
  * This library is free software; you can redistribute it and/or
@@ -205,7 +205,7 @@ namespace ir {
         break; \
       } \
     } \
-    if (isDead) { \
+    if (isDead && !dead.contains(WHICH)) { \
       dead.insert(WHICH); \
       WHICH->remove(); \
     } \
@@ -231,16 +231,18 @@ namespace ir {
         const uint32_t size = getFamilySize(family);
         const uint32_t offset = loadAddImm.offset + valueID * size;
         const PushLocation argLocation(*fn, loadAddImm.argID, offset);
-        if (inserted.contains(argLocation))
-          continue;
         Register pushed;
         const Register reg = load->getValue(valueID);
         if (offset != 0) {
+          if(inserted.contains(argLocation)) {
+            pushed = argLocation.getRegister();
+          } else {
             pushed = fn->newRegister(family);
             this->appendPushedConstant(pushed, argLocation);
             inserted.insert(argLocation);
+          }
         } else {
-            pushed = fn->getArg(loadAddImm.argID).reg;
+          pushed = fn->getArg(loadAddImm.argID).reg;
         }
 
         // TODO the MOV instruction can be most of the time avoided if the
@@ -253,7 +255,6 @@ namespace ir {
       }
     }
 
-    // Remove all unused adds and load immediates
     REMOVE_INSN(add)
     REMOVE_INSN(loadImm)
   }
