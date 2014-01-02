@@ -1,18 +1,20 @@
 INCLUDE_DIRECTORIES(${CMAKE_CURRENT_SOURCE_DIR}
                     ${CMAKE_CURRENT_SOURCE_DIR}/../include)
 
-EXEC_PROGRAM(mkdir ${CMAKE_CURRENT_SOURCE_DIR} ARGS generated -p)
 ##### Math Function Part:
+EXEC_PROGRAM(mkdir ${CMAKE_CURRENT_SOURCE_DIR} ARGS generated -p)
 EXEC_PROGRAM(python ${CMAKE_CURRENT_SOURCE_DIR} ARGS utest_math_gen.py OUTPUT_VARIABLE GEN_MATH_STRING)
 string(REGEX REPLACE " " ";" ADDMATHFUNC ${GEN_MATH_STRING})
 string(REGEX REPLACE " " "\n" NAMEMATHLIST ${GEN_MATH_STRING})
 MESSAGE(STATUS "Generated Builtin Math Functions:\n" ${NAMEMATHLIST})
-set_directory_properties(PROPERTIES ADDITIONAL_MAKE_CLEAN_FILES generated/)
+
+string(REGEX REPLACE "generated/([^\ ]*)\\.cpp" "${CMAKE_CURRENT_SOURCE_DIR}/../kernels/\\1.cl" KERNEL_MATH_LIST ${GEN_MATH_STRING})
+string(REGEX REPLACE " " ";" KERNEL_MATH_LIST ${KERNEL_MATH_LIST})
+set_directory_properties(PROPERTIES ADDITIONAL_MAKE_CLEAN_FILES "generated;${KERNEL_MATH_LIST}")
 
 link_directories (${LLVM_LIBRARY_DIR})
 set (utests_sources
   utest_error.c
-  ${ADDMATHFUNC}
   compiler_basic_arithmetic.cpp
   compiler_displacement_map_element.cpp
   compiler_shader_toy.cpp
@@ -175,19 +177,30 @@ ADD_CUSTOM_COMMAND(
 ADD_CUSTOM_TARGET(kernel_bin.bin
     DEPENDS ${kernel_bin}.bin)
 
+add_custom_command(OUTPUT ${CMAKE_CURRENT_SOURCE_DIR}/generated
+    COMMAND mkdir ${CMAKE_CURRENT_SOURCE_DIR}/generated -p
+    COMMAND python ${CMAKE_CURRENT_SOURCE_DIR}/utest_math_gen.py > /dev/null 2>&1
+    WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
+    )
+add_custom_target(utest_generator
+    DEPENDS generated
+    WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
+    )
+
 if (EGL_FOUND AND MESA_SOURCE_FOUND)
 SET(utests_sources ${utests_sources} compiler_fill_gl_image.cpp)
 SET(CMAKE_CXX_FLAGS "-DHAS_EGL ${CMAKE_CXX_FLAGS}")
 SET(CMAKE_C_FLAGS "-DHAS_EGL ${CMAKE_C_FLAGS}")
 endif (EGL_FOUND AND MESA_SOURCE_FOUND)
 
-ADD_LIBRARY(utests SHARED ${utests_sources})
+ADD_LIBRARY(utests SHARED ${ADDMATHFUNC} ${utests_sources})
 
 TARGET_LINK_LIBRARIES(utests cl m ${OPENGL_LIBRARIES} ${CMAKE_THREAD_LIBS_INIT})
 
 ADD_EXECUTABLE(utest_run utest_run.cpp)
 TARGET_LINK_LIBRARIES(utest_run utests)
 ADD_DEPENDENCIES (utest_run kernel_bin.bin)
+ADD_DEPENDENCIES (utests utest_generator)
 
 ADD_EXECUTABLE(flat_address_space runtime_flat_address_space.cpp)
 TARGET_LINK_LIBRARIES(flat_address_space utests)
