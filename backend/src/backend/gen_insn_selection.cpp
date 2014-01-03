@@ -3031,12 +3031,22 @@ namespace gbe
 
     // Get active pred.
     const ir::Register getActivePred(Selection::Opaque &sel,
+                       const ir::BranchInstruction &insn,
                        const ir::Register pred) const
     {
         using namespace ir;
         GenRegister flagReg;
-        Register activePred = sel.reg(FAMILY_BOOL);
+        Register activePred;
+        const ir::BasicBlock *insnBlock = insn.getParent();
+        const ir::Liveness &liveness = sel.ctx.getLiveness();
+        const ir::Liveness::UEVar &livein = liveness.getLiveIn(insnBlock);
+       
+        /* If the pred is not in the livein set, then this pred should be defined
+           in this block and we don't need to validate it. */ 
+        if (!livein.contains(pred))
+          return pred;
 
+        activePred = sel.reg(FAMILY_BOOL);
         sel.push();
           sel.curr.predicate = GEN_PREDICATE_NONE;
           sel.curr.execWidth = 1;
@@ -3067,7 +3077,7 @@ namespace gbe
 
       if (insn.isPredicated() == true) {
         const Register pred = insn.getPredicateIndex();
-        const Register activePred = getActivePred(sel, pred);
+        const Register activePred = getActivePred(sel, insn, pred);
 
         // Update the PcIPs
         sel.push();
@@ -3140,7 +3150,7 @@ namespace gbe
 
       if (insn.isPredicated() == true) {
         const Register pred = insn.getPredicateIndex();
-        const Register activePred = getActivePred(sel, pred);
+        const Register activePred = getActivePred(sel, insn, pred);
 
         // Update the PcIPs for all the branches. Just put the IPs of the next
         // block. Next instruction will properly reupdate the IPs of the lanes
