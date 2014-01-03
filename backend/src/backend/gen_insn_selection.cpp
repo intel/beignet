@@ -2519,20 +2519,32 @@ namespace gbe
       const Opcode opcode = insn.getOpcode();
       const Type type = insn.getType();
       const Register dst = insn.getDst(0);
-      const Register tmpDst = sel.reg(FAMILY_BOOL);
+      Register tmpDst;
+
+      const ir::BasicBlock *insnBlock = insn.getParent();
+      const ir::Liveness &liveness = sel.ctx.getLiveness();
+      const ir::Liveness::UEVar &livein = liveness.getLiveIn(insnBlock);
+      if (!livein.contains(dst))
+        tmpDst = dst;
+      else
+        tmpDst = sel.reg(FAMILY_BOOL);
 
       // Limit the compare to the active lanes. Use the same compare as for f0.0
       sel.push();
         const LabelIndex label = insn.getParent()->getLabelIndex();
         const GenRegister blockip = sel.selReg(ocl::blockip, TYPE_U16);
         const GenRegister labelReg = GenRegister::immuw(label);
+
         sel.curr.predicate = GEN_PREDICATE_NONE;
         sel.curr.physicalFlag = 0;
         sel.curr.flagIndex = uint16_t(tmpDst);
-        sel.CMP(GEN_CONDITIONAL_G, blockip, labelReg);
-        sel.curr.execWidth = 1;
-        sel.AND(sel.selReg(dst, TYPE_BOOL), sel.selReg(dst, TYPE_BOOL), sel.selReg(tmpDst, TYPE_BOOL));
-        sel.XOR(sel.selReg(tmpDst, TYPE_BOOL), sel.selReg(tmpDst, TYPE_BOOL), GenRegister::immuw(0xFFFF));
+        if (tmpDst != dst) {
+          sel.CMP(GEN_CONDITIONAL_G, blockip, labelReg);
+          sel.curr.execWidth = 1;
+          sel.AND(sel.selReg(dst, TYPE_BOOL), sel.selReg(dst, TYPE_BOOL), sel.selReg(tmpDst, TYPE_BOOL));
+          sel.XOR(sel.selReg(tmpDst, TYPE_BOOL), sel.selReg(tmpDst, TYPE_BOOL), GenRegister::immuw(0xFFFF));
+        } else
+          sel.CMP(GEN_CONDITIONAL_LE, blockip, labelReg);
       sel.pop();
 
       // Look for immediate values for the right source
@@ -2570,11 +2582,13 @@ namespace gbe
         } else
           sel.CMP(getGenCompare(opcode), src0, src1);
       sel.pop();
-      sel.push();
-        sel.curr.predicate = GEN_PREDICATE_NONE;
-        sel.curr.execWidth = 1;
-        sel.OR(sel.selReg(dst, TYPE_U16), sel.selReg(dst, TYPE_U16), sel.selReg(tmpDst, TYPE_U16));
-      sel.pop();
+      if (tmpDst != dst) {
+        sel.push();
+          sel.curr.predicate = GEN_PREDICATE_NONE;
+          sel.curr.execWidth = 1;
+          sel.OR(sel.selReg(dst, TYPE_U16), sel.selReg(dst, TYPE_U16), sel.selReg(tmpDst, TYPE_U16));
+        sel.pop();
+      }
       return true;
     }
   };
