@@ -99,7 +99,7 @@ namespace gbe
     p->curr.noMask = 1;
     /* clear all the bit in f0.0. */
     p->curr.execWidth = 1;
-    p->MOV(GenRegister::retype(GenRegister::flag(0, 0), GEN_TYPE_UW), GenRegister::immud(0x0000));
+    p->MOV(GenRegister::retype(GenRegister::flag(0, 0), GEN_TYPE_UW), GenRegister::immuw(0x0000));
     /* clear the barrier mask bits to all zero0*/
     p->curr.noMask = 0;
     p->curr.useFlag(0, 0);
@@ -109,7 +109,7 @@ namespace gbe
     p->curr.noMask = 1;
     p->curr.execWidth = 1;
     p->MOV(emaskReg, GenRegister::retype(GenRegister::flag(0, 0), GEN_TYPE_UW));
-    p->XOR(notEmaskReg, emaskReg, GenRegister::immud(0xFFFF));
+    p->XOR(notEmaskReg, emaskReg, GenRegister::immuw(0xFFFF));
     p->MOV(ra->genReg(GenRegister::uw1grf(ir::ocl::barriermask)), notEmaskReg);
     p->pop();
   }

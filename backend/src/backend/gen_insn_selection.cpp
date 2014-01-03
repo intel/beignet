@@ -2519,6 +2519,7 @@ namespace gbe
       const Opcode opcode = insn.getOpcode();
       const Type type = insn.getType();
       const Register dst = insn.getDst(0);
+      const Register tmpDst = sel.reg(FAMILY_BOOL);
 
       // Limit the compare to the active lanes. Use the same compare as for f0.0
       sel.push();
@@ -2527,8 +2528,11 @@ namespace gbe
         const GenRegister labelReg = GenRegister::immuw(label);
         sel.curr.predicate = GEN_PREDICATE_NONE;
         sel.curr.physicalFlag = 0;
-        sel.curr.flagIndex = uint16_t(dst);
-        sel.CMP(GEN_CONDITIONAL_LE, blockip, labelReg);
+        sel.curr.flagIndex = uint16_t(tmpDst);
+        sel.CMP(GEN_CONDITIONAL_G, blockip, labelReg);
+        sel.curr.execWidth = 1;
+        sel.AND(sel.selReg(dst, TYPE_BOOL), sel.selReg(dst, TYPE_BOOL), sel.selReg(tmpDst, TYPE_BOOL));
+        sel.XOR(sel.selReg(tmpDst, TYPE_BOOL), sel.selReg(tmpDst, TYPE_BOOL), GenRegister::immuw(0xFFFF));
       sel.pop();
 
       // Look for immediate values for the right source
@@ -2554,7 +2558,7 @@ namespace gbe
 
       sel.push();
         sel.curr.physicalFlag = 0;
-        sel.curr.flagIndex = uint16_t(dst);
+        sel.curr.flagIndex = uint16_t(tmpDst);
         if (type == TYPE_S64 || type == TYPE_U64) {
           GenRegister tmp[3];
           for(int i=0; i<3; i++)
@@ -2565,6 +2569,11 @@ namespace gbe
           sel.CMP(GEN_CONDITIONAL_EQ, src1, src1);
         } else
           sel.CMP(getGenCompare(opcode), src0, src1);
+      sel.pop();
+      sel.push();
+        sel.curr.predicate = GEN_PREDICATE_NONE;
+        sel.curr.execWidth = 1;
+        sel.OR(sel.selReg(dst, TYPE_U16), sel.selReg(dst, TYPE_U16), sel.selReg(tmpDst, TYPE_U16));
       sel.pop();
       return true;
     }
@@ -3005,6 +3014,28 @@ namespace gbe
   /*! Branch instruction pattern */
   DECL_PATTERN(BranchInstruction)
   {
+
+    // Get active pred.
+    const ir::Register getActivePred(Selection::Opaque &sel,
+                       const ir::Register pred) const
+    {
+        using namespace ir;
+        GenRegister flagReg;
+        Register activePred = sel.reg(FAMILY_BOOL);
+
+        sel.push();
+          sel.curr.predicate = GEN_PREDICATE_NONE;
+          sel.curr.execWidth = 1;
+          sel.curr.noMask = 1;
+          if(sel.curr.physicalFlag)
+             flagReg = GenRegister::flag(sel.curr.flag, sel.curr.subFlag);
+          else
+             flagReg = sel.selReg(ir::Register(sel.curr.flagIndex), ir::TYPE_U16);
+          sel.AND(sel.selReg(activePred, TYPE_U16), flagReg, sel.selReg(pred, TYPE_U16));
+        sel.pop();
+        return activePred;
+    }
+
     void emitForwardBranch(Selection::Opaque &sel,
                            const ir::BranchInstruction &insn,
                            ir::LabelIndex dst,
@@ -3022,11 +3053,12 @@ namespace gbe
 
       if (insn.isPredicated() == true) {
         const Register pred = insn.getPredicateIndex();
+        const Register activePred = getActivePred(sel, pred);
 
         // Update the PcIPs
         sel.push();
           sel.curr.physicalFlag = 0;
-          sel.curr.flagIndex = uint16_t(pred);
+          sel.curr.flagIndex = uint16_t(activePred);
           sel.MOV(ip, GenRegister::immuw(uint16_t(dst)));
         sel.pop();
 
@@ -3040,7 +3072,7 @@ namespace gbe
 
         sel.push();
           sel.curr.physicalFlag = 0;
-          sel.curr.flagIndex = uint16_t(pred);
+          sel.curr.flagIndex = uint16_t(activePred);
           sel.curr.predicate = GEN_PREDICATE_NONE;
           sel.CMP(GEN_CONDITIONAL_G, ip, GenRegister::immuw(nextLabel));
 
@@ -3052,7 +3084,7 @@ namespace gbe
           sel.curr.execWidth = 1;
           sel.curr.noMask = 1;
           GenRegister notEmaskReg = GenRegister::uw1grf(ocl::notemask);
-          sel.OR(sel.selReg(pred, TYPE_U16), sel.selReg(pred, TYPE_U16), notEmaskReg);
+          sel.OR(sel.selReg(activePred, TYPE_U16), sel.selReg(activePred, TYPE_U16), notEmaskReg);
 
           if (simdWidth == 8)
             sel.curr.predicate = GEN_PREDICATE_ALIGN1_ALL8H;
@@ -3094,7 +3126,7 @@ namespace gbe
 
       if (insn.isPredicated() == true) {
         const Register pred = insn.getPredicateIndex();
-
+        const Register activePred = getActivePred(sel, pred);
 
         // Update the PcIPs for all the branches. Just put the IPs of the next
         // block. Next instruction will properly reupdate the IPs of the lanes
@@ -3105,7 +3137,7 @@ namespace gbe
         sel.push();
           // Re-update the PcIPs for the branches that takes the backward jump
           sel.curr.physicalFlag = 0;
-          sel.curr.flagIndex = uint16_t(pred);
+          sel.curr.flagIndex = uint16_t(activePred);
           sel.MOV(ip, GenRegister::immuw(uint16_t(dst)));
 
         // We clear all the inactive channel to 0 as the GEN_PREDICATE_ALIGN1_ANY8/16
@@ -3114,7 +3146,7 @@ namespace gbe
           sel.curr.execWidth = 1;
           sel.curr.noMask = 1;
           GenRegister emaskReg = GenRegister::uw1grf(ocl::emask);
-          sel.AND(sel.selReg(pred, TYPE_U16), sel.selReg(pred, TYPE_U16), emaskReg);
+          sel.AND(sel.selReg(activePred, TYPE_U16), sel.selReg(activePred, TYPE_U16), emaskReg);
 
           // Branch to the jump target
           if (simdWidth == 8)
