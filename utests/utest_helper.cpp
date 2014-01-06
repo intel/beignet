@@ -664,14 +664,15 @@ typedef union
 
 const float cl_FLT_ULP(float float_number)
 {
-  SF floatBin, ulpBin;
+  SF floatBin, ulpBin, ulpBinBase;
   floatBin.f = float_number;
 
-  ulpBin.spliter.sign = floatBin.spliter.sign;
-  ulpBin.spliter.exponent = floatBin.spliter.exponent;
+  ulpBin.spliter.sign     = ulpBinBase.spliter.sign     = 0;
+  ulpBin.spliter.exponent = ulpBinBase.spliter.exponent = floatBin.spliter.exponent;
   ulpBin.spliter.mantissa = 0x1;
+  ulpBinBase.spliter.mantissa = 0x0;
   
-  return ulpBin.f;
+  return ulpBin.f - ulpBinBase.f;
 }
 
 const int cl_INT_ULP(int int_number)
