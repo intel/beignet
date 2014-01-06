@@ -203,6 +203,7 @@ cl_context_delete(cl_context ctx)
   assert(ctx->buffers == NULL);
   assert(ctx->drv);
   cl_free(ctx->prop_user);
+  cl_set_thread_batch_buf(NULL);
   cl_driver_delete(ctx->drv);
   ctx->magic = CL_MAGIC_DEAD_HEADER; /* For safety */
   cl_free(ctx);
