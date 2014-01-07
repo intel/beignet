@@ -933,16 +933,26 @@ namespace gbe
           ConstantInt* ConstOP = dyn_cast<ConstantInt>(ce->getOperand(op));
           GBE_ASSERT(ConstOP);
           TypeIndex = ConstOP->getZExtValue();
-          for(uint32_t ty_i=0; ty_i<TypeIndex; ty_i++)
-          {
-            Type* elementType = CompTy->getTypeAtIndex(ty_i);
-            uint32_t align = getAlignmentByte(unit, elementType);
-            offset += getPadding(offset, align);
-            offset += getTypeByteSize(unit, elementType);
-          }
+          if (op == 1) {
+            if (TypeIndex != 0) {
+              Type *elementType = (cast<PointerType>(pointer->getType()))->getElementType();
+              uint32_t elementSize = getTypeByteSize(unit, elementType);
+              uint32_t align = getAlignmentByte(unit, elementType);
+              elementSize += getPadding(elementSize, align);
+              offset += elementSize * TypeIndex;
+            }
+          } else {
+            for(uint32_t ty_i=0; ty_i<TypeIndex; ty_i++)
+            {
+              Type* elementType = CompTy->getTypeAtIndex(ty_i);
+              uint32_t align = getAlignmentByte(unit, elementType);
+              offset += getPadding(offset, align);
+              offset += getTypeByteSize(unit, elementType);
+            }
 
-          const uint32_t align = getAlignmentByte(unit, CompTy->getTypeAtIndex(TypeIndex));
-          offset += getPadding(offset, align);
+            const uint32_t align = getAlignmentByte(unit, CompTy->getTypeAtIndex(TypeIndex));
+            offset += getPadding(offset, align);
+          }
 
           constantOffset += offset;
           CompTy = dyn_cast<CompositeType>(CompTy->getTypeAtIndex(TypeIndex));

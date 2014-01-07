@@ -274,17 +274,27 @@ namespace gbe
       {
         uint32_t offset = 0;
         TypeIndex = ConstOP->getZExtValue();
-        for(uint32_t ty_i=0; ty_i<TypeIndex; ty_i++)
-        {
-          Type* elementType = CompTy->getTypeAtIndex(ty_i);
-          uint32_t align = getAlignmentByte(unit, elementType);
-          offset += getPadding(offset, align);
-          offset += getTypeByteSize(unit, elementType);
-        }
+        if (op == 1) {
+          if (TypeIndex != 0) {
+            Type *elementType = (cast<PointerType>(parentPointer->getType()))->getElementType();
+            uint32_t elementSize = getTypeByteSize(unit, elementType);
+            uint32_t align = getAlignmentByte(unit, elementType);
+            elementSize += getPadding(elementSize, align);
+            offset += elementSize * TypeIndex;
+          }
+        } else {
+          for(uint32_t ty_i=0; ty_i<TypeIndex; ty_i++)
+          {
+            Type* elementType = CompTy->getTypeAtIndex(ty_i);
+            uint32_t align = getAlignmentByte(unit, elementType);
+            offset += getPadding(offset, align);
+            offset += getTypeByteSize(unit, elementType);
+          }
 
-        //add getPaddingding for accessed type
-        const uint32_t align = getAlignmentByte(unit, CompTy->getTypeAtIndex(TypeIndex));
-        offset += getPadding(offset, align);
+          //add getPaddingding for accessed type
+          const uint32_t align = getAlignmentByte(unit, CompTy->getTypeAtIndex(TypeIndex));
+          offset += getPadding(offset, align);
+        }
 
         constantOffset += offset;
       }
