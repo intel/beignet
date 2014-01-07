@@ -923,13 +923,13 @@ namespace gbe
       } else {
         uint32_t TypeIndex;
         uint32_t constantOffset = 0;
-        uint32_t offset = 0;
 
         // currently only GetElementPtr is handled
         GBE_ASSERT(ce->getOpcode() == Instruction::GetElementPtr);
         Value *pointer = ce->getOperand(0);
         CompositeType* CompTy = cast<CompositeType>(pointer->getType());
         for(uint32_t op=1; op<ce->getNumOperands(); ++op) {
+          uint32_t offset = 0;
           ConstantInt* ConstOP = dyn_cast<ConstantInt>(ce->getOperand(op));
           GBE_ASSERT(ConstOP);
           TypeIndex = ConstOP->getZExtValue();
