@@ -200,22 +200,8 @@ cl_mem_allocate(enum cl_mem_type type,
   cl_mem mem = NULL;
   cl_int err = CL_SUCCESS;
   size_t alignment = 64;
-  cl_ulong max_mem_size;
 
   assert(ctx);
-
-  /* Due to alignment, the image size may exceed alloc max size, check global mem instead */
-  if ((err = cl_get_device_info(ctx->device,
-                                CL_DEVICE_GLOBAL_MEM_SIZE,
-                                sizeof(max_mem_size),
-                                &max_mem_size,
-                                NULL)) != CL_SUCCESS) {
-    goto error;
-  }
-  if (UNLIKELY(sz > max_mem_size)) {
-    err = CL_INVALID_BUFFER_SIZE;
-    goto error;
-  }
 
   /* Allocate and inialize the structure itself */
   if (type == CL_MEM_IMAGE_TYPE) {
@@ -289,6 +275,7 @@ cl_mem_new_buffer(cl_context ctx,
 
   cl_int err = CL_SUCCESS;
   cl_mem mem = NULL;
+  cl_ulong max_mem_size;
 
   if (UNLIKELY(sz == 0)) {
     err = CL_INVALID_BUFFER_SIZE;
@@ -331,6 +318,19 @@ cl_mem_new_buffer(cl_context ctx,
   if (UNLIKELY(flags & CL_MEM_COPY_HOST_PTR &&
                flags & CL_MEM_USE_HOST_PTR)) {
     err = CL_INVALID_HOST_PTR;
+    goto error;
+  }
+
+  if ((err = cl_get_device_info(ctx->device,
+                                CL_DEVICE_MAX_MEM_ALLOC_SIZE,
+                                sizeof(max_mem_size),
+                                &max_mem_size,
+                                NULL)) != CL_SUCCESS) {
+    goto error;
+  }
+
+  if (UNLIKELY(sz > max_mem_size)) {
+    err = CL_INVALID_BUFFER_SIZE;
     goto error;
   }
 
@@ -596,6 +596,7 @@ _cl_mem_new_image(cl_context ctx,
   }
 
   sz = aligned_pitch * aligned_h * depth;
+
   mem = cl_mem_allocate(CL_MEM_IMAGE_TYPE, ctx, flags, sz, tiling != CL_NO_TILE, &err);
   if (mem == NULL || err != CL_SUCCESS)
     goto error;
