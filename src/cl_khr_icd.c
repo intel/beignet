@@ -14,7 +14,14 @@
  * You should have received a copy of the GNU Lesser General Public
  * License along with this library. If not, see <http://www.gnu.org/licenses/>.
  */
-
+#include <CL/cl.h>
+#ifndef CL_VERSION_1_2
+#include <cl_mem.h>
+typedef cl_uint             cl_kernel_arg_info;
+typedef cl_bitfield         cl_mem_migration_flags;
+#define cl_device_partition_property cl_device_partition_property_ext
+#define CL_API_SUFFIX__VERSION_1_2
+#endif
 #include <ocl_icd.h>
 
 #include "cl_platform_id.h"
