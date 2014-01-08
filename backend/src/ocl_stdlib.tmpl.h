@@ -1717,7 +1717,7 @@ INLINE float __gen_ocl_asin_util(float x) {
   float w = p / q;
   return x + x*w;
 }
-float __gen_ocl_scalbnf (float x, int n){
+INLINE float __gen_ocl_scalbnf (float x, int n){
   float two25 = 3.355443200e+07,	/* 0x4c000000 */
   twom25 = 2.9802322388e-08,	        /* 0x33000000 */
   huge = 1.0e+30,
