@@ -18,6 +18,7 @@ configure_file (
   "src/OCLConfig.h"
 )
 
+
 INCLUDE_DIRECTORIES(${CMAKE_CURRENT_BINARY_DIR} ${CMAKE_CURRENT_SOURCE_DIR})
 
 SET(CMAKE_VERBOSE_MAKEFILE "false")
@@ -111,14 +112,6 @@ ELSE(XFIXES_FOUND)
   MESSAGE(STATUS "Looking for Xfixes - not found")
 ENDIF(XFIXES_FOUND)
 
-# Gen-backend (compiler)
-Find_Package(GBE)
-IF(GBE_FOUND)
-  MESSAGE(STATUS "Looking for Gen-Backend - found")
-ELSE(GBE_FOUND)
-  MESSAGE(STATUS "Looking for Gen-Backend - not found")
-ENDIF(GBE_FOUND)
-
 Find_Package(EGL)
 IF(EGL_FOUND)
   MESSAGE(STATUS "Looking for EGL - found")
@@ -135,6 +128,11 @@ ENDIF(MESA_SOURCE_FOUND)
 Find_Package(OCLIcd)
 IF(OCLIcd_FOUND)
   MESSAGE(STATUS "Looking for OCL ICD header file - found")
+  configure_file (
+    "intel-beignet.icd.in"
+    "intel-beignet.icd"
+  )
+  install (FILES ${CMAKE_CURRENT_BINARY_DIR}/intel-beignet.icd DESTINATION /etc/OpenCL/vendors)
 ELSE(OCLIcd_FOUND)
   MESSAGE(STATUS "Looking for OCL ICD header file - not found")
 ENDIF(OCLIcd_FOUND)
@@ -145,4 +143,3 @@ ADD_SUBDIRECTORY(include)
 ADD_SUBDIRECTORY(backend)
 ADD_SUBDIRECTORY(src)
 ADD_SUBDIRECTORY(utests)
-

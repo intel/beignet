@@ -76,7 +76,6 @@ macro(ll_add_library ll_lib ll_sources)
        )
   add_custom_target(${ll_lib}
                     DEPENDS ${CMAKE_CURRENT_BINARY_DIR}/${ll_lib})
-  message(${ll_lib}, ${ll_objects})
 endmacro(ll_add_library)
 
 if (GBE_USE_BLOB)
@@ -162,7 +161,7 @@ endif (GBE_USE_BLOB)
 include_directories (.)
 link_directories (${LLVM_LIBRARY_DIRS})
 include_directories(${LLVM_INCLUDE_DIRS})
-add_library (gbe SHARED ${GBE_SRC})
+add_library (gbe STATIC ${GBE_SRC})
 
 # for pre compiled module library.
 set (pcm_lib "beignet.bc")
@@ -184,13 +183,13 @@ link_directories (${LLVM_LIBRARY_DIR})
 ADD_EXECUTABLE(gbe_bin_generater gbe_bin_generater.cpp)
 TARGET_LINK_LIBRARIES(gbe_bin_generater gbe)
 
-install (TARGETS gbe LIBRARY DESTINATION lib)
-install (FILES ${pch_object} DESTINATION lib)
-install (FILES ${CMAKE_CURRENT_BINARY_DIR}/${pcm_lib} DESTINATION lib)
-install (FILES backend/program.h DESTINATION include/gen)
+#install (TARGETS gbe LIBRARY DESTINATION lib)
+#install (FILES backend/program.h DESTINATION include/gen)
+install (FILES ${pch_object} DESTINATION lib/beignet)
+install (FILES ${CMAKE_CURRENT_BINARY_DIR}/${pcm_lib} DESTINATION lib/beignet)
 
-set (PCH_OBJECT_DIR "${pch_object};${CMAKE_INSTALL_PREFIX}/lib/ocl_stdlib.h.pch")
-set (PCM_LIB_DIR "${CMAKE_CURRENT_BINARY_DIR}/${pcm_lib};${CMAKE_INSTALL_PREFIX}/lib/${pcm_lib}")
+set (PCH_OBJECT_DIR "${pch_object};${CMAKE_INSTALL_PREFIX}/lib/beignet/ocl_stdlib.h.pch")
+set (PCM_LIB_DIR "${CMAKE_CURRENT_BINARY_DIR}/${pcm_lib};${CMAKE_INSTALL_PREFIX}/lib/beignet/${pcm_lib}")
 configure_file (
   "GBEConfig.h.in"
   "GBEConfig.h"
