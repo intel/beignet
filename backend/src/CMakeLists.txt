@@ -195,9 +195,13 @@ TARGET_LINK_LIBRARIES(gbe_bin_generater gbe)
 install (FILES ${ocl_blob_file} DESTINATION lib/beignet)
 install (FILES ${pch_object} DESTINATION lib/beignet)
 install (FILES ${CMAKE_CURRENT_BINARY_DIR}/${pcm_lib} DESTINATION lib/beignet)
+# When build beignet itself, we need to export the local precompiled header file and precompiled module
+# file to libcl and utests.
+set (LOCAL_PCH_OBJECT_DIR "${local_pch_object}:${beignet_install_path}/ocl_stdlib.h.pch" PARENT_SCOPE)
+set (LOCAL_PCM_OBJECT_DIR "${CMAKE_CURRENT_BINARY_DIR}/${pcm_lib}:${beignet_install_path}/${pcm_lib}" PARENT_SCOPE)
 
-set (PCH_OBJECT_DIR "${local_pch_object};${beignet_install_path}/ocl_stdlib.h.pch")
-set (PCM_LIB_DIR "${CMAKE_CURRENT_BINARY_DIR}/${pcm_lib};${beignet_install_path}/${pcm_lib}")
+set (PCH_OBJECT_DIR "${beignet_install_path}/ocl_stdlib.h.pch")
+set (PCM_OBJECT_DIR "${beignet_install_path}/${pcm_lib}")
 configure_file (
   "GBEConfig.h.in"
   "GBEConfig.h"

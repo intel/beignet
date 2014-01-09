@@ -70,8 +70,10 @@ this code also produces various tests to ensure the compiler and the run-time
 consistency. This small test framework uses a simple c++ registration system to
 register all the unit tests.
 
-You need to set the variable `OCL_KERNEL_PATH` to locate the OCL kernels. They
-are with the run-time in `./kernels`.
+You need to call setenv.sh in the utests/ directory to set some environment variables
+firstly as below:
+
+`> . setenv.sh`
 
 Then in `utests/`:
 
@@ -82,6 +84,20 @@ will run all the unit tests one after the others
 `> ./utest_run some_unit_test0 some_unit_test1`
 
 will only run `some_unit_test0` and `some_unit_test1` tests
+
+How to install
+--------------
+
+Simply invoke:
+`> make install`
+
+It installs libcl.so and the precompiled header/module files and the ocl_stdlib.h file
+into install_prefix/beignet/ direcotry. If the system support ICD, it also installs the
+intel-beignet.icd to /etc/OpenCL/vendors/.
+
+To make beignet support ICD, you need to have the following two packages installed:
+ocl-icd-dev, ocl-icd-libopencl1 (package name for the ubuntu.)
+before your build beignet.
 
 Supported Hardware
 ------------------
