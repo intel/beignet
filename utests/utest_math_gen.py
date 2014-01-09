@@ -208,18 +208,6 @@ static float cospi(float x){
   floor_output_type = ['float','float2','float4','float8','float16']
   floorUtests = func('floor','floor',[floor_input_type],floor_output_type,[floor_input_values],'0 * FLT_ULP')
   
-  ##### gentype fma(gentype a, gentype b, gentype c)
-  fma_base_values = base_input_values
-  fma_input_values1 = []
-  fma_input_values2 = []
-  fma_input_values3 = []
-  fma_input_values1,fma_input_values2,fma_input_values3=gene3ValuesLoop(fma_input_values1,fma_input_values2,fma_input_values3,fma_base_values)
-  fma_input_type1 = ['float','float2','float4','float8','float16']
-  fma_input_type2 = ['float','float2','float4','float8','float16']
-  fma_input_type3 = ['float','float2','float4','float8','float16']
-  fma_output_type = ['float','float2','float4','float8','float16']
-  fmaUtests = func('fma','fma',[fma_input_type1,fma_input_type2,fma_input_type3],fma_output_type,[fma_input_values1,fma_input_values2,fma_input_values3],'0 * FLT_ULP')
-  
   ##### gentype fmax(gentype x, gentype y)
   fmax_base_values = base_input_values
   fmax_input_values1 = []
