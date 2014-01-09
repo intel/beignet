@@ -41,8 +41,6 @@ UTest::UTest(Function fn, const char *name, bool haveIssue, bool needDestroyProg
   utestList->push_back(*this);
 }
 
-UTest::UTest(void) : fn(NULL), name(NULL), haveIssue(false) {}
-
 static bool strequal(const char *s1, const char *s2) {
   if (strcmp(s1, s2) == 0) return true;
   return false;
