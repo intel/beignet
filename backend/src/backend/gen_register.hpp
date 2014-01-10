@@ -270,6 +270,8 @@ namespace gbe
     INLINE GenRegister top_half(void) const {
       GenRegister r = bottom_half();
       r.subnr += 4;
+      r.nr += r.subnr / 32;
+      r.subnr %= 32;
       return r;
     }
 
