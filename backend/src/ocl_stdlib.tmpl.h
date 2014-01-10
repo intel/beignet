@@ -1361,6 +1361,121 @@ INLINE_OVERLOADABLE  float cos(float x) {
   }
 }
 
+INLINE float __kernel_tanf(float x, float y, int iy)
+{
+  /* copied from fdlibm */
+        float z,r,v,w,s;
+        int ix,hx;
+        const float
+        one   =  1.0000000000e+00, /* 0x3f800000 */
+        pio4  =  7.8539812565e-01, /* 0x3f490fda */
+        pio4lo=  3.7748947079e-08; /* 0x33222168 */
+        float T[13];// =  {
+         T[0] = 3.3333334327e-01; /* 0x3eaaaaab */
+         T[1] = 1.3333334029e-01; /* 0x3e088889 */
+         T[2] = 5.3968254477e-02; /* 0x3d5d0dd1 */
+         T[3] = 2.1869488060e-02; /* 0x3cb327a4 */
+         T[4] = 8.8632395491e-03; /* 0x3c11371f */
+         T[5] = 3.5920790397e-03; /* 0x3b6b6916 */
+         T[6] = 1.4562094584e-03; /* 0x3abede48 */
+         T[7] = 5.8804126456e-04; /* 0x3a1a26c8 */
+         T[8] = 2.4646313977e-04; /* 0x398137b9 */
+         T[9] = 7.8179444245e-05; /* 0x38a3f445 */
+         T[10] = 7.1407252108e-05; /* 0x3895c07a */
+         T[11] = -1.8558637748e-05; /* 0xb79bae5f */
+         T[12] = 2.5907305826e-05; /* 0x37d95384 */
+
+
+        GEN_OCL_GET_FLOAT_WORD(hx,x);
+        ix = hx&0x7fffffff;     /* high word of |x| */
+        if(ix<0x31800000)                       /* x < 2**-28 */
+            {if((int)x==0) {                    /* generate inexact */
+                if((ix|(iy+1))==0) return one/__gen_ocl_fabs(x);
+                else return (iy==1)? x: -one/x;
+            }
+            }
+        if(ix>=0x3f2ca140) {                    /* |x|>=0.6744 */
+            if(hx<0) {x = -x; y = -y;}
+
+
+            z = pio4-x;
+            w = pio4lo-y;
+            x = z+w; y = 0.0;
+        }
+        z       =  x*x;
+        w       =  z*z;
+    /* Break x^5*(T[1]+x^2*T[2]+...) into
+     *    x^5(T[1]+x^4*T[3]+...+x^20*T[11]) +
+     *    x^5(x^2*(T[2]+x^4*T[4]+...+x^22*[T12]))
+     */
+        r = T[1]+w*(T[3]+w*(T[5]+w*(T[7]+w*(T[9]+w*T[11]))));
+        v = z*(T[2]+w*(T[4]+w*(T[6]+w*(T[8]+w*(T[10]+w*T[12])))));
+        s = z*x;
+        r = y + z*(s*(r+v)+y);
+        r += T[0]*s;
+        w = x+r;
+        if(ix>=0x3f2ca140) {
+            v = (float)iy;
+            return (float)(1-((hx>>30)&2))*(v-(float)2.0*(x-(w*w/(w+v)-r)));
+        }
+        if(iy==1) return w;
+        else {          /* if allow error up to 2 ulp
+                           simply return -1.0/(x+r) here */
+     /*  compute -1.0/(x+r) accurately */
+            float a,t;
+            int i;
+            z  = w;
+            GEN_OCL_GET_FLOAT_WORD(i,z);
+            GEN_OCL_SET_FLOAT_WORD(z,i&0xfffff000);
+            v  = r-(z - x);     /* z+v = r+x */
+            t = a  = -(float)1.0/w;     /* a = -1.0/w */
+            GEN_OCL_GET_FLOAT_WORD(i,t);
+            GEN_OCL_SET_FLOAT_WORD(t,i&0xfffff000);
+            s  = (float)1.0+t*z;
+            return t+a*(s+t*v);
+        }
+}
+
+INLINE_OVERLOADABLE float tan(float x)
+{
+  /* copied from fdlibm */
+        const float pio2_hi = 0x1.92p-0, pio2_mid = 0x1.fb4p-12, pio2_low = 0x1.4442d2p-24;
+        const float pio4  =  7.8539812565e-01;
+        float y[2],z=0.0;
+        int n, ix;
+
+        GEN_OCL_GET_FLOAT_WORD(ix,x);
+
+    /* |x| ~< pi/4 */
+        ix &= 0x7fffffff;
+        if(ix <= 0x3f490fda) return __kernel_tanf(x,z,1);
+
+    /* tan(Inf or NaN) is NaN */
+        else if (ix>=0x7f800000) return x-x;            /* NaN */
+
+    /* argument reduction needed */
+      else {
+        n = __ieee754_rem_pio2f(x,y);
+
+        x = y[0];
+        float m = y[1];
+        int iy = 1-((n&1)<<1);
+        GEN_OCL_GET_FLOAT_WORD(ix,x);
+        float sign = 1.0f;
+        if(ix < 0) {
+          x = -x; m = -m;
+          sign = -1.0f;
+        }
+
+        if(x > pio4) {/* reduce x to less than pi/4 through (pi/2-x) */
+          float t = __kernel_tanf(pio2_hi-x+pio2_mid+pio2_low, -m, 1);
+          if(iy == -1) return sign*(-t); else return sign*1/t;
+        } else
+            return __kernel_tanf(y[0],y[1],1-((n&1)<<1)); /*   1 -- n even
+                                                              -1 -- n odd */
+      }
+}
+
 INLINE_OVERLOADABLE float hypot(float x, float y) { return __gen_ocl_sqrt(x*x + y*y); }
 INLINE_OVERLOADABLE float native_cos(float x) { return __gen_ocl_cos(x); }
 INLINE_OVERLOADABLE float __gen_ocl_internal_cospi(float x) {
@@ -2820,7 +2935,6 @@ INLINE_OVERLOADABLE float __gen_ocl_internal_atanh(float x) {
 #define asin __gen_ocl_internal_asin
 #define asinpi __gen_ocl_internal_asinpi
 #define asinh __gen_ocl_internal_asinh
-#define tan native_tan
 #define tanpi __gen_ocl_internal_tanpi
 #define tanh __gen_ocl_internal_tanh
 #define atan __gen_ocl_internal_atan
