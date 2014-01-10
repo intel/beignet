@@ -2252,7 +2252,58 @@ INLINE_OVERLOADABLE float native_exp(float x) { return __gen_ocl_pow(M_E_F, x); 
 INLINE_OVERLOADABLE float native_exp2(float x) { return __gen_ocl_pow(2, x); }
 INLINE_OVERLOADABLE float native_exp10(float x) { return __gen_ocl_pow(10, x); }
 INLINE_OVERLOADABLE float __gen_ocl_internal_cbrt(float x) {
-  return __gen_ocl_pow(x, 0.3333333333f);
+  /* copied from fdlibm */
+  const unsigned
+  B1 = 709958130, /* B1 = (84+2/3-0.03306235651)*2**23 */
+  B2 = 642849266; /* B2 = (76+2/3-0.03306235651)*2**23 */
+
+  const float
+  C =  5.4285717010e-01, /* 19/35     = 0x3f0af8b0 */
+  D = -7.0530611277e-01, /* -864/1225 = 0xbf348ef1 */
+  E =  1.4142856598e+00, /* 99/70     = 0x3fb50750 */
+  F =  1.6071428061e+00, /* 45/28     = 0x3fcdb6db */
+  G =  3.5714286566e-01; /* 5/14      = 0x3eb6db6e */
+
+  float r,s,t, w;
+  int hx;
+  uint sign;
+  uint high;
+
+  GEN_OCL_GET_FLOAT_WORD(hx,x);
+  sign=hx&0x80000000;     /* sign= sign(x) */
+  hx  ^=sign;
+  if(hx>=0x7f800000) return(x+x); /* cbrt(NaN,INF) is itself */
+  if(hx==0)
+      return(x);    /* cbrt(0) is itself */
+
+  GEN_OCL_SET_FLOAT_WORD(x,hx); /* x <- |x| */
+    /* rough cbrt to 5 bits */
+  if(hx<0x00800000)     /* subnormal number */
+    {
+    //SET_FLOAT_WORD(t,0x4b800000); /* set t= 2**24 */
+     //t*=x; GET_FLOAT_WORD(high,t); SET_FLOAT_WORD(t,high/3+B2);
+      t = (sign = 0) ? 0.0f : -0.0f;
+      return t;
+    }
+  else
+    GEN_OCL_SET_FLOAT_WORD(t,hx/3+B1);
+
+
+    /* new cbrt to 23 bits */
+  r=t*t/x;
+  s=C+r*t;
+  t*=G+F/(s+E+D/s);
+    /* one step newton iteration to 53 bits with error less than 0.667 ulps */
+  s=t*t;    /* t*t is exact */
+  r=x/s;
+  w=t+t;
+  r=(r-t)/(w+r);  /* r-s is exact */
+  t=t+t*r;
+
+    /* retore the sign bit */
+  GEN_OCL_GET_FLOAT_WORD(high,t);
+  GEN_OCL_SET_FLOAT_WORD(t,high|sign);
+  return(t);
 }
 
 #define BODY \
