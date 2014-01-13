@@ -1476,7 +1476,6 @@ INLINE_OVERLOADABLE float tan(float x)
       }
 }
 
-INLINE_OVERLOADABLE float hypot(float x, float y) { return __gen_ocl_sqrt(x*x + y*y); }
 INLINE_OVERLOADABLE float native_cos(float x) { return __gen_ocl_cos(x); }
 INLINE_OVERLOADABLE float __gen_ocl_internal_cospi(float x) {
   return __gen_ocl_cos(x * M_PI_F);
@@ -3346,6 +3345,31 @@ INLINE_OVERLOADABLE float __gen_ocl_internal_fdim(float x, float y) {
     return y;
   return x > y ? (x - y) : +0.f;
 }
+INLINE_OVERLOADABLE float hypot(float x, float y) {
+  //return __gen_ocl_sqrt(x*x + y*y);
+  float a,b,an,bn,cn;
+  int e;
+  if (isfinite (x) && isfinite (y)){      /* Determine absolute values.  */
+  x = __gen_ocl_fabs (x);
+  y = __gen_ocl_fabs (y);
+  /* Find the bigger and the smaller one.  */
+  a = max(x,y);
+  b = min(x,y);
+  /* Now 0 <= b <= a.  */
+  /* Write a = an * 2^e, b = bn * 2^e with 0 <= bn <= an < 1.  */
+  an = frexp (a, &e);
+  bn = ldexp (b, - e);
+  /* Through the normalization, no unneeded overflow or underflow will occur here.  */
+  cn = __gen_ocl_sqrt (an * an + bn * bn);
+  return ldexp (cn, e);
+  }else{
+    if (isinf (x) || isinf (y))  /* x or y is infinite.  Return +Infinity.  */    
+      return INFINITY;
+    else        /* x or y is NaN.  Return NaN.  */
+      return x + y;
+  }
+}
+
 #define BODY \
   if (isnan(x)) { \
     *p = x; \
