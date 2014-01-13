@@ -3087,6 +3087,57 @@ INLINE_OVERLOADABLE float __gen_ocl_internal_atanh(float x) {
   return __gen_ocl_internal_copysign(t, x);
 }
 
+INLINE_OVERLOADABLE float __gen_ocl_internal_exp10(float x){
+  float px, qx,ans;
+  short n;
+  int i;
+  float*p;
+  float MAXL10 = 38.230809449325611792;
+  float LOG210 = 3.32192809488736234787e0;
+  float LG102A = 3.00781250000000000000E-1;
+  float LG102B = 2.48745663981195213739E-4;
+  float P[6];
+  P[0] = 2.063216740311022E-001;
+  P[1] = 5.420251702225484E-001;
+  P[2] = 1.171292686296281E+000;
+  P[3] = 2.034649854009453E+000;
+  P[4] = 2.650948748208892E+000;
+  P[5] = 2.302585167056758E+000;
+  if( isinf(x))
+    return INFINITY;
+
+  if( x < -MAXL10 )return 0.0;
+  /* The following is necessary because range reduction blows up: */
+  if( x == 0 )return 1.0;
+
+  /* Express 10**x = 10**g 2**n
+    *	 = 10**g 10**( n log10(2) )
+    *	 = 10**( g + n log10(2) )
+    */
+  px = x * LOG210;
+  qx = __gen_ocl_internal_floor( px + 0.5 );
+  n = qx;
+  x -= qx * LG102A;
+  x -= qx * LG102B;
+
+  /* rational approximation for exponential
+    * of the fractional part:
+    * 10**x - 1  =  2x P(x**2)/( Q(x**2) - P(x**2) )
+    */
+  p = P;
+  ans = *p++;
+  i = 5;
+  do{
+    ans = ans * x  +  *p++;
+  }
+  while( --i );
+  px = 1.0 + x * ans;
+
+  /* multiply by power of 2 */
+  x = __gen_ocl_internal_ldexp( px, n );
+  return x;
+}
+
 // TODO use llvm intrinsics definitions
 #define cospi __gen_ocl_internal_cospi
 #define cosh __gen_ocl_internal_cosh
@@ -3649,7 +3700,7 @@ DECL_HALF_ST_SPACE(__private)
 #define log10 __gen_ocl_internal_log10
 #define exp __gen_ocl_internal_exp
 #define exp2 native_exp2
-#define exp10 native_exp10
+#define exp10 __gen_ocl_internal_exp10
 #define expm1 __gen_ocl_internal_expm1
 #define fmin __gen_ocl_internal_fmin
 #define fmax __gen_ocl_internal_fmax
