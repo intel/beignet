@@ -3,7 +3,7 @@ Beignet
 
 Beignet is an open source implementaion of the OpenCL specification - a generic
 compute oriented API. This code base contains the code to run OpenCL programs on
-Intel GPUs which bsically defines and implements the OpenCL host functions
+Intel GPUs which basically defines and implements the OpenCL host functions
 required to initialize the device, create the command queues, the kernels and
 the programs and run them on the GPU. The code base also contains the compiler
 part of the stack which is included in `backend/`. For more specific information
