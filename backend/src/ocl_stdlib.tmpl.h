@@ -3386,18 +3386,85 @@ INLINE_OVERLOADABLE float fract(float x, private float *p) { BODY; }
 #undef BODY
 
 #define BODY \
-  uint hx = as_uint(x), ix = hx & 0x7FFFFFFF, hy = as_uint(y), iy = hy & 0x7FFFFFFF; \
-  if (ix > 0x7F800000 || iy > 0x7F800000 || ix == 0x7F800000 || iy == 0) \
-    return nan(0u); \
-  float k = x / y; \
-  int q =  __gen_ocl_rnde(k); \
-  *quo = q >= 0 ? (q & 127) : (q | 0xFFFFFF80u); \
-  float r = x - q * y; \
-  uint hr = as_uint(r), ir = hr & 0x7FFFFFFF; \
-  if (ir == 0) \
-    hr = ir | (hx & 0x80000000u); \
-  return as_float(hr);
-INLINE_OVERLOADABLE float remquo(float x, float y, global int *quo) { BODY; }
+  float Zero[2]; \
+  int n,hx,hy,hz,ix,iy,sx,i,sy; \
+  uint q,sxy; \
+  Zero[0] = 0.0;Zero[1] = -0.0; \
+  GEN_OCL_GET_FLOAT_WORD(hx,x);GEN_OCL_GET_FLOAT_WORD(hy,y); \
+  sxy = (hx ^ hy) & 0x80000000;sx = hx&0x80000000;sy = hy&0x80000000; \
+  hx ^=sx; hy &= 0x7fffffff; \
+  if (hx < 0x00800000)hx = 0;if (hy < 0x00800000)hy = 0; \
+  if(hy==0||hx>=0x7f800000||hy>0x7f800000){ \
+    *quo = 0;return NAN; \
+  } \
+  if( hy == 0x7F800000 || hx == 0 ) { \
+    *quo = 0;return x; \
+  } \
+  if( hx == hy ) { \
+    *quo = (x == y) ? 1 : -1; \
+    return sx ? -0.0 : 0.0; \
+  } \
+  if(hx<hy) { \
+    q = 0; \
+    goto fixup; \
+  } else if(hx==hy) { \
+    *quo = (sxy ? -1 : 1); \
+    return Zero[(uint)sx>>31]; \
+  } \
+  ix = (hx>>23)-127; \
+  iy = (hy>>23)-127; \
+  hx = 0x00800000|(0x007fffff&hx); \
+  hy = 0x00800000|(0x007fffff&hy); \
+  n = ix - iy; \
+  q = 0; \
+  while(n--) { \
+    hz=hx-hy; \
+    if(hz<0) hx = hx << 1; \
+    else {hx = hz << 1; q++;} \
+    q <<= 1; \
+  } \
+  hz=hx-hy; \
+  if(hz>=0) {hx=hz;q++;} \
+  if(hx==0) { \
+    q &= 0x0000007f; \
+    *quo = (sxy ? -q : q); \
+    return Zero[(uint)sx>>31]; \
+  } \
+  while(hx<0x00800000) { \
+    hx <<= 1;iy -= 1; \
+  } \
+  if(iy>= -126) { \
+    hx = ((hx-0x00800000)|((iy+127)<<23)); \
+  } else {\
+    n = -126 - iy; \
+    hx >>= n; \
+  } \
+fixup: \
+  GEN_OCL_SET_FLOAT_WORD(x,hx); \
+  if(hx<0x00800000){ \
+    GEN_OCL_GET_FLOAT_WORD(hy,y); \
+    hy &= 0x7fffffff; \
+    if(hx+hx > hy ||(hx+hx==hy && (q & 1)))q++; \
+    x = 0; \
+  }else{ \
+    y = __gen_ocl_fabs(y); \
+    if (y < 0x1p-125f) { \
+      if (x+x>y || (x+x==y && (q & 1))) { \
+        q++;x-=y; \
+      } \
+    }else if (x>0.5f*y || (x==0.5f*y && (q & 1))) { \
+      q++;x-=y; \
+    } \
+    GEN_OCL_GET_FLOAT_WORD(hx,x);GEN_OCL_SET_FLOAT_WORD(x,hx^sx); \
+  } \
+  int sign = sx==sy?0:1; \
+  q &= 0x0000007f; \
+  *quo = (sign ? -q : q); \
+  return x;
+
+INLINE_OVERLOADABLE float remquo(float x, float y, global int *quo) {
+	BODY;
+}
 INLINE_OVERLOADABLE float remquo(float x, float y, local int *quo) { BODY; }
 INLINE_OVERLOADABLE float remquo(float x, float y, private int *quo) { BODY; }
 #undef BODY
