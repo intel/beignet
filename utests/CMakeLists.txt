@@ -12,11 +12,6 @@ string(REGEX REPLACE "generated/([^\ ]*)\\.cpp" "${CMAKE_CURRENT_SOURCE_DIR}/../
 string(REGEX REPLACE " " ";" KERNEL_MATH_LIST ${KERNEL_MATH_LIST})
 set_directory_properties(PROPERTIES ADDITIONAL_MAKE_CLEAN_FILES "generated;${KERNEL_MATH_LIST}")
 
-configure_file (
-  "setenv.sh.in"
-  "setenv.sh"
-  )
-
 link_directories (${LLVM_LIBRARY_DIR})
 set (utests_sources
   utest_error.c
@@ -175,7 +170,7 @@ set (utests_sources
 SET (kernel_bin ${CMAKE_CURRENT_SOURCE_DIR}/../kernels/compiler_ceil)
 ADD_CUSTOM_COMMAND(
     OUTPUT ${kernel_bin}.bin
-    COMMAND ${GBE_BIN_GENERATER} ${kernel_bin}.cl -o${kernel_bin}.bin
+    COMMAND ${CMAKE_CURRENT_BINARY_DIR}/../backend/src/gbe_bin_generater ${kernel_bin}.cl -o${kernel_bin}.bin
     DEPENDS ${CMAKE_CURRENT_BINARY_DIR}/../backend/src/gbe_bin_generater ${kernel_bin}.cl
     )
 
@@ -194,8 +189,8 @@ add_custom_target(utest_generator
 
 if (EGL_FOUND AND MESA_SOURCE_FOUND)
 SET(utests_sources ${utests_sources} compiler_fill_gl_image.cpp)
-SET(CMAKE_CXX_FLAGS "-DHAS_EGL ${CMAKE_CXX_FLAGS} ${DEF_OCL_PCH_PCM_PATH}")
-SET(CMAKE_C_FLAGS "-DHAS_EGL ${CMAKE_C_FLAGS} ${DEF_OCL_PCH_PCM_PATH}")
+SET(CMAKE_CXX_FLAGS "-DHAS_EGL ${CMAKE_CXX_FLAGS}")
+SET(CMAKE_C_FLAGS "-DHAS_EGL ${CMAKE_C_FLAGS}")
 endif (EGL_FOUND AND MESA_SOURCE_FOUND)
 
 ADD_LIBRARY(utests SHARED ${ADDMATHFUNC} ${utests_sources})

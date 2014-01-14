@@ -465,9 +465,6 @@ namespace gbe {
   }
 
   BVAR(OCL_OUTPUT_BUILD_LOG, false);
-  SVAR(OCL_PCH_PATH, PCH_OBJECT_DIR);
-  SVAR(OCL_PCM_PATH, PCM_OBJECT_DIR);
-
   static bool buildModuleFromSource(const char* input, const char* output, std::string options,
                                     size_t stringSize, char *err, size_t *errSize) {
     // Arguments to pass to the clang frontend
@@ -585,13 +582,12 @@ namespace gbe {
     // Create an action and make the compiler instance carry it out
     llvm::OwningPtr<clang::CodeGenAction> Act(new clang::EmitLLVMOnlyAction());
 
-    std::string dirs = OCL_PCM_PATH;
-    std::string pcmFileName;
+    std::string dirs = PCM_LIB_DIR, pcmLib;
     std::istringstream idirs(dirs);
     bool findPcm = false;
 
-    while (getline(idirs, pcmFileName, ':')) {
-      if(access(pcmFileName.c_str(), R_OK) == 0) {
+    while (getline(idirs, pcmLib, ';')) {
+      if(access(pcmLib.c_str(), R_OK) == 0) {
         findPcm = true;
         break;
       }
@@ -599,7 +595,7 @@ namespace gbe {
 
     GBE_ASSERT(findPcm && "Could not find pre compiled module library.\n");
 
-    Clang.getCodeGenOpts().LinkBitcodeFile = pcmFileName;
+    Clang.getCodeGenOpts().LinkBitcodeFile = pcmLib;
     auto retVal = Clang.ExecuteAction(*Act);
 
     if (err != NULL) {
@@ -655,6 +651,7 @@ namespace gbe {
     char clStr[L_tmpnam+1], llStr[L_tmpnam+1];
     const std::string clName = std::string(tmpnam_r(clStr)) + ".cl"; /* unsafe! */
     const std::string llName = std::string(tmpnam_r(llStr)) + ".ll"; /* unsafe! */
+    std::string pchHeaderName;
     std::string clOpt;
     int optLevel = 1;
 
@@ -733,12 +730,11 @@ namespace gbe {
       clOpt += options;
     }
 
-    std::string dirs = OCL_PCH_PATH;
+    std::string dirs = PCH_OBJECT_DIR;
     std::istringstream idirs(dirs);
-    std::string pchFileName;
 
-    while (getline(idirs, pchFileName, ':')) {
-      if(access(pchFileName.c_str(), R_OK) == 0) {
+    while (getline(idirs, pchHeaderName, ';')) {
+      if(access(pchHeaderName.c_str(), R_OK) == 0) {
         findPCH = true;
         break;
       }
@@ -746,7 +742,7 @@ namespace gbe {
 
     if (usePCH && findPCH) {
       clOpt += " -include-pch ";
-      clOpt += pchFileName;
+      clOpt += pchHeaderName;
       clOpt += " ";
     } else
       fwrite(ocl_stdlib_str.c_str(), strlen(ocl_stdlib_str.c_str()), 1, clFile);

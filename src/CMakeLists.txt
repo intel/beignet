@@ -4,6 +4,7 @@ include_directories(${CMAKE_CURRENT_SOURCE_DIR}
                     ${CMAKE_CURRENT_SOURCE_DIR}/../backend/src/backend/
                     ${CMAKE_CURRENT_SOURCE_DIR}/../include
                     ${MESA_SOURCE_INCLUDES})
+
 macro (MakeKernelBinStr KERNEL_PATH KERNEL_FILES)
 foreach (KF ${KERNEL_FILES})
   set (input_file ${KERNEL_PATH}/${KF}.cl)
@@ -12,7 +13,7 @@ foreach (KF ${KERNEL_FILES})
   add_custom_command(
     OUTPUT ${output_file}
     COMMAND rm -rf ${output_file}
-    COMMAND ${GBE_BIN_GENERATER} -s ${input_file} -o${output_file}
+    COMMAND ${CMAKE_CURRENT_BINARY_DIR}/../backend/src/gbe_bin_generater -s ${input_file} -o${output_file}
     DEPENDS ${input_file} ${CMAKE_CURRENT_BINARY_DIR}/../backend/src/gbe_bin_generater)
 endforeach (KF)
 endmacro (MakeKernelBinStr)
@@ -78,4 +79,4 @@ target_link_libraries(
                       ${DRM_LIBRARY}
                       ${OPENGL_LIBRARIES}
                       ${OPTIONAL_EGL_LIBRARY})
-install (TARGETS cl LIBRARY DESTINATION lib/beignet)
+install (TARGETS cl LIBRARY DESTINATION lib)

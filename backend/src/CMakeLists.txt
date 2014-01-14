@@ -1,13 +1,10 @@
-set (beignet_install_path ${CMAKE_INSTALL_PREFIX}/lib/beignet/)
-
-
 set (ocl_vector_spec_file ${GBE_SOURCE_DIR}/src/builtin_vector_proto.def)
 set (ocl_vector_file ${GBE_SOURCE_DIR}/src/ocl_vector.h)
 set (ocl_as_file ${GBE_SOURCE_DIR}/src/ocl_as.h)
 set (ocl_convert_file ${GBE_SOURCE_DIR}/src/ocl_convert.h)
 set (ocl_stdlib_tmpl_file ${GBE_SOURCE_DIR}/src/ocl_stdlib.tmpl.h)
 set (ocl_common_header_file ${GBE_SOURCE_DIR}/src/ocl_common_defines.h)
-set (ocl_blob_file ${CMAKE_CURRENT_BINARY_DIR}/${beignet_install_path}/ocl_stdlib.h)
+set (ocl_blob_file ${CMAKE_CURRENT_BINARY_DIR}/ocl_stdlib.h)
 set (ocl_blob_cpp_file ${GBE_SOURCE_DIR}/src/ocl_stdlib_str.cpp)
 set (ocl_gen_blob_cmd ${GBE_SOURCE_DIR}/src/update_blob_ocl_header.py)
 set (ocl_gen_vector_cmd ${GBE_SOURCE_DIR}/src/gen_builtin_vector.py)
@@ -26,31 +23,28 @@ add_custom_command(
     COMMAND echo "" >> ${ocl_blob_cpp_file}
     DEPENDS ${ocl_blob_file})
 
-set_property(DIRECTORY APPEND PROPERTY ADDITIONAL_MAKE_CLEAN_FILES "ocl_vector.h;${ocl_blob_file}")
+set_property(DIRECTORY APPEND PROPERTY ADDITIONAL_MAKE_CLEAN_FILES "ocl_vector.h;ocl_stdlib.h")
 
 add_custom_command(
   OUTPUT ${ocl_vector_file}
   COMMAND ${PYTHON_EXECUTABLE} ${ocl_gen_vector_cmd} ${ocl_vector_spec_file} ${ocl_vector_file}
-  DEPENDS ${ocl_gen_vector_cmd} ${ocl_vector_spec_file}
-  )
+  DEPENDS ${ocl_gen_vector_cmd} ${ocl_vector_spec_file})
 
 add_custom_command(
   OUTPUT ${ocl_blob_file}
-  COMMAND mkdir -p ${CMAKE_CURRENT_BINARY_DIR}/${beignet_install_path}
   COMMAND ${PYTHON_EXECUTABLE} ${ocl_gen_blob_cmd} ${ocl_stdlib_tmpl_file} ${ocl_blob_file}
-  DEPENDS ${ocl_gen_blob_cmd} ${ocl_stdlib_tmpl_file} ${ocl_common_header_file} ${ocl_vector_file} ${ocl_as_file} ${ocl_convert_file}
-  )
+  DEPENDS ${ocl_gen_blob_cmd} ${ocl_stdlib_tmpl_file} ${ocl_common_header_file} ${ocl_vector_file} ${ocl_as_file} ${ocl_convert_file})
+
 
 set (pch_object ${ocl_blob_file}.pch)
-set (local_pch_object ${ocl_blob_file}.local.pch)
 # generate pch object
 if (LLVM_VERSION_NODOT VERSION_GREATER 32)
-    set (clang_cmd -cc1 -x cl -triple spir -ffp-contract=off)
+    set (clang_cmd -cc1 -x cl -triple spir -ffp-contract=off -emit-pch)
 else (LLVM_VERSION_NODOT VERSION_GREATER 32)
     if (LLVM_VERSION_NODOT VERSION_GREATER 31)
-        set (clang_cmd -cc1 -x cl -triple nvptx -ffp-contract=off)
+        set (clang_cmd -cc1 -x cl -triple nvptx -ffp-contract=off -emit-pch)
     else (LLVM_VERSION_NODOT VERSION_GREATER 31)
-        set (clang_cmd -cc1 -x cl -triple ptx32)
+        set (clang_cmd -cc1 -x cl -triple ptx32 -emit-pch)
     endif (LLVM_VERSION_NODOT VERSION_GREATER 31)
 endif (LLVM_VERSION_NODOT VERSION_GREATER 32)
 set (clang_cmd ${clang_cmd} -fno-builtin -DGEN7_SAMPLER_CLAMP_BORDER_WORKAROUND)
@@ -58,8 +52,7 @@ set (clang_cmd ${clang_cmd} -fno-builtin -DGEN7_SAMPLER_CLAMP_BORDER_WORKAROUND)
 add_custom_command(
      OUTPUT ${pch_object}
      COMMAND rm -f ${pch_object}
-     COMMAND clang ${clang_cmd} --relocatable-pch -emit-pch -isysroot ${CMAKE_CURRENT_BINARY_DIR} ${ocl_blob_file} -o ${pch_object}
-     COMMAND clang ${clang_cmd} -emit-pch ${ocl_blob_file} -o ${local_pch_object}
+     COMMAND clang ${clang_cmd} ${ocl_blob_file} -o ${pch_object}
      DEPENDS ${ocl_blob_file}
      )
 
@@ -83,6 +76,7 @@ macro(ll_add_library ll_lib ll_sources)
        )
   add_custom_target(${ll_lib}
                     DEPENDS ${CMAKE_CURRENT_BINARY_DIR}/${ll_lib})
+  message(${ll_lib}, ${ll_objects})
 endmacro(ll_add_library)
 
 if (GBE_USE_BLOB)
@@ -91,7 +85,7 @@ if (GBE_USE_BLOB)
        backend/gen/gen_mesa_disasm.c)
 else (GBE_USE_BLOB)
   set (GBE_SRC
-    ${ocl_blob_file}
+    ocl_stdlib.h
     ocl_stdlib_str.cpp  # this file is auto-generated.
     sys/vector.hpp
     sys/hash_map.hpp
@@ -168,7 +162,7 @@ endif (GBE_USE_BLOB)
 include_directories (.)
 link_directories (${LLVM_LIBRARY_DIRS})
 include_directories(${LLVM_INCLUDE_DIRS})
-add_library (gbe STATIC ${GBE_SRC})
+add_library (gbe SHARED ${GBE_SRC})
 
 # for pre compiled module library.
 set (pcm_lib "beignet.bc")
@@ -190,18 +184,13 @@ link_directories (${LLVM_LIBRARY_DIR})
 ADD_EXECUTABLE(gbe_bin_generater gbe_bin_generater.cpp)
 TARGET_LINK_LIBRARIES(gbe_bin_generater gbe)
 
-#install (TARGETS gbe LIBRARY DESTINATION lib)
-#install (FILES backend/program.h DESTINATION include/gen)
-install (FILES ${ocl_blob_file} DESTINATION lib/beignet)
-install (FILES ${pch_object} DESTINATION lib/beignet)
-install (FILES ${CMAKE_CURRENT_BINARY_DIR}/${pcm_lib} DESTINATION lib/beignet)
-# When build beignet itself, we need to export the local precompiled header file and precompiled module
-# file to libcl and utests.
-set (LOCAL_PCH_OBJECT_DIR "${local_pch_object}:${beignet_install_path}/ocl_stdlib.h.pch" PARENT_SCOPE)
-set (LOCAL_PCM_OBJECT_DIR "${CMAKE_CURRENT_BINARY_DIR}/${pcm_lib}:${beignet_install_path}/${pcm_lib}" PARENT_SCOPE)
+install (TARGETS gbe LIBRARY DESTINATION lib)
+install (FILES ${pch_object} DESTINATION lib)
+install (FILES ${CMAKE_CURRENT_BINARY_DIR}/${pcm_lib} DESTINATION lib)
+install (FILES backend/program.h DESTINATION include/gen)
 
-set (PCH_OBJECT_DIR "${beignet_install_path}/ocl_stdlib.h.pch")
-set (PCM_OBJECT_DIR "${beignet_install_path}/${pcm_lib}")
+set (PCH_OBJECT_DIR "${pch_object};${CMAKE_INSTALL_PREFIX}/lib/ocl_stdlib.h.pch")
+set (PCM_LIB_DIR "${CMAKE_CURRENT_BINARY_DIR}/${pcm_lib};${CMAKE_INSTALL_PREFIX}/lib/${pcm_lib}")
 configure_file (
   "GBEConfig.h.in"
   "GBEConfig.h"

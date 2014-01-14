@@ -91,15 +91,9 @@ elseif (COMPILER STREQUAL "ICC")
   set (CCMAKE_CXX_FLAGS_MINSIZEREL "-Os -DGBE_DEBUG=0")
   set (CMAKE_EXE_LINKER_FLAGS "")
 endif ()
-
 include_directories (${CMAKE_CURRENT_BINARY_DIR})
 ##############################################################
 # Project source code
 ##############################################################
 add_subdirectory (src)
-set(LOCAL_PCH_OBJECT_DIR ${LOCAL_PCH_OBJECT_DIR} PARENT_SCOPE)
-set(LOCAL_PCM_OBJECT_DIR ${LOCAL_PCM_OBJECT_DIR} PARENT_SCOPE)
-set (GBE_BIN_GENERATER
-     OCL_PCM_PATH=${LOCAL_PCM_OBJECT_DIR} OCL_PCH_PATH=${LOCAL_PCH_OBJECT_DIR} ${CMAKE_CURRENT_BINARY_DIR}/src/gbe_bin_generater
-     PARENT_SCOPE)
 
