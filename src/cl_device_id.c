@@ -76,40 +76,108 @@ cl_get_gt_device(void)
   cl_set_thread_batch_buf(NULL);
   const int device_id = cl_driver_get_device_id();
 
-#define DECL_INFO_STRING(STRUCT, FIELD, STRING) \
+#define DECL_INFO_STRING(BREAK, STRUCT, FIELD, STRING) \
     STRUCT.FIELD = STRING; \
-    STRUCT.JOIN(FIELD,_sz) = sizeof(STRING);
+    STRUCT.JOIN(FIELD,_sz) = sizeof(STRING); \
+    goto BREAK;
 
-  /* XXX we pick IVB for HSW now */
   switch (device_id) {
-    case PCI_CHIP_HASWELL_M:
-      DECL_INFO_STRING(intel_hsw_device, name, "Intel(R) HD Graphics Haswell M");
-    case PCI_CHIP_HASWELL_L:
-      DECL_INFO_STRING(intel_hsw_device, name, "Intel(R) HD Graphics Haswell L");
-    case PCI_CHIP_HASWELL_M0:
-      DECL_INFO_STRING(intel_hsw_device, name, "Intel(R) HD Graphics Haswell M0");
-    case PCI_CHIP_HASWELL_D0:
-      DECL_INFO_STRING(intel_hsw_device, name, "Intel(R) HD Graphics Haswell D0");
+    case PCI_CHIP_HASWELL_D1:
+      DECL_INFO_STRING(has_break, intel_hsw_device, name, "Intel(R) HD Graphics Haswell M");
+    case PCI_CHIP_HASWELL_D2:
+      DECL_INFO_STRING(has_break, intel_hsw_device, name, "Intel(R) HD Graphics Haswell M");
+    case PCI_CHIP_HASWELL_D3:
+      DECL_INFO_STRING(has_break, intel_hsw_device, name, "Intel(R) HD Graphics Haswell M");
+    case PCI_CHIP_HASWELL_S1:
+      DECL_INFO_STRING(has_break, intel_hsw_device, name, "Intel(R) HD Graphics Haswell M");
+    case PCI_CHIP_HASWELL_S2:
+      DECL_INFO_STRING(has_break, intel_hsw_device, name, "Intel(R) HD Graphics Haswell M");
+    case PCI_CHIP_HASWELL_S3:
+      DECL_INFO_STRING(has_break, intel_hsw_device, name, "Intel(R) HD Graphics Haswell M");
+    case PCI_CHIP_HASWELL_M1:
+      DECL_INFO_STRING(has_break, intel_hsw_device, name, "Intel(R) HD Graphics Haswell M");
+    case PCI_CHIP_HASWELL_M2:
+      DECL_INFO_STRING(has_break, intel_hsw_device, name, "Intel(R) HD Graphics Haswell M");
+    case PCI_CHIP_HASWELL_M3:
+      DECL_INFO_STRING(has_break, intel_hsw_device, name, "Intel(R) HD Graphics Haswell M");
+    case PCI_CHIP_HASWELL_SDV_D1:
+      DECL_INFO_STRING(has_break, intel_hsw_device, name, "Intel(R) HD Graphics Haswell M");
+    case PCI_CHIP_HASWELL_SDV_D2:
+      DECL_INFO_STRING(has_break, intel_hsw_device, name, "Intel(R) HD Graphics Haswell M");
+    case PCI_CHIP_HASWELL_SDV_D3:
+      DECL_INFO_STRING(has_break, intel_hsw_device, name, "Intel(R) HD Graphics Haswell M");
+    case PCI_CHIP_HASWELL_SDV_S1:
+      DECL_INFO_STRING(has_break, intel_hsw_device, name, "Intel(R) HD Graphics Haswell M");
+    case PCI_CHIP_HASWELL_SDV_S2:
+      DECL_INFO_STRING(has_break, intel_hsw_device, name, "Intel(R) HD Graphics Haswell M");
+    case PCI_CHIP_HASWELL_SDV_S3:
+      DECL_INFO_STRING(has_break, intel_hsw_device, name, "Intel(R) HD Graphics Haswell M");
+    case PCI_CHIP_HASWELL_SDV_M1:
+      DECL_INFO_STRING(has_break, intel_hsw_device, name, "Intel(R) HD Graphics Haswell M");
+    case PCI_CHIP_HASWELL_SDV_M2:
+      DECL_INFO_STRING(has_break, intel_hsw_device, name, "Intel(R) HD Graphics Haswell M");
+    case PCI_CHIP_HASWELL_SDV_M3:
+      DECL_INFO_STRING(has_break, intel_hsw_device, name, "Intel(R) HD Graphics Haswell M");
+    case PCI_CHIP_HASWELL_ULT_D1:
+      DECL_INFO_STRING(has_break, intel_hsw_device, name, "Intel(R) HD Graphics Haswell M");
+    case PCI_CHIP_HASWELL_ULT_D2:
+      DECL_INFO_STRING(has_break, intel_hsw_device, name, "Intel(R) HD Graphics Haswell M");
+    case PCI_CHIP_HASWELL_ULT_D3:
+      DECL_INFO_STRING(has_break, intel_hsw_device, name, "Intel(R) HD Graphics Haswell M");
+    case PCI_CHIP_HASWELL_ULT_S1:
+      DECL_INFO_STRING(has_break, intel_hsw_device, name, "Intel(R) HD Graphics Haswell M");
+    case PCI_CHIP_HASWELL_ULT_S2:
+      DECL_INFO_STRING(has_break, intel_hsw_device, name, "Intel(R) HD Graphics Haswell M");
+    case PCI_CHIP_HASWELL_ULT_S3:
+      DECL_INFO_STRING(has_break, intel_hsw_device, name, "Intel(R) HD Graphics Haswell M");
+    case PCI_CHIP_HASWELL_ULT_M1:
+      DECL_INFO_STRING(has_break, intel_hsw_device, name, "Intel(R) HD Graphics Haswell M");
+    case PCI_CHIP_HASWELL_ULT_M2:
+      DECL_INFO_STRING(has_break, intel_hsw_device, name, "Intel(R) HD Graphics Haswell M");
+    case PCI_CHIP_HASWELL_ULT_M3:
+      DECL_INFO_STRING(has_break, intel_hsw_device, name, "Intel(R) HD Graphics Haswell M");
+	/* CRW */
+    case PCI_CHIP_HASWELL_CRW_D1:
+      DECL_INFO_STRING(has_break, intel_hsw_device, name, "Intel(R) HD Graphics Haswell M");
+    case PCI_CHIP_HASWELL_CRW_D2:
+      DECL_INFO_STRING(has_break, intel_hsw_device, name, "Intel(R) HD Graphics Haswell M");
+    case PCI_CHIP_HASWELL_CRW_D3:
+      DECL_INFO_STRING(has_break, intel_hsw_device, name, "Intel(R) HD Graphics Haswell M");
+    case PCI_CHIP_HASWELL_CRW_S1:
+      DECL_INFO_STRING(has_break, intel_hsw_device, name, "Intel(R) HD Graphics Haswell M");
+    case PCI_CHIP_HASWELL_CRW_S2:
+      DECL_INFO_STRING(has_break, intel_hsw_device, name, "Intel(R) HD Graphics Haswell M");
+    case PCI_CHIP_HASWELL_CRW_S3:
+      DECL_INFO_STRING(has_break, intel_hsw_device, name, "Intel(R) HD Graphics Haswell M");
+    case PCI_CHIP_HASWELL_CRW_M1:
+      DECL_INFO_STRING(has_break, intel_hsw_device, name, "Intel(R) HD Graphics Haswell M");
+    case PCI_CHIP_HASWELL_CRW_M2:
+      DECL_INFO_STRING(has_break, intel_hsw_device, name, "Intel(R) HD Graphics Haswell M");
+    case PCI_CHIP_HASWELL_CRW_M3:
+      DECL_INFO_STRING(has_break, intel_hsw_device, name, "Intel(R) HD Graphics Haswell M");
+has_break:
       intel_hsw_device.vendor_id = device_id;
       intel_hsw_device.platform = intel_platform;
       ret = &intel_hsw_device;
       break;
 
     case PCI_CHIP_IVYBRIDGE_GT1:
-      DECL_INFO_STRING(intel_ivb_gt1_device, name, "Intel(R) HD Graphics IvyBridge GT1");
+      DECL_INFO_STRING(ivb_gt1_break, intel_ivb_gt1_device, name, "Intel(R) HD Graphics IvyBridge GT1");
     case PCI_CHIP_IVYBRIDGE_M_GT1:
-      DECL_INFO_STRING(intel_ivb_gt1_device, name, "Intel(R) HD Graphics IvyBridge M GT1");
+      DECL_INFO_STRING(ivb_gt1_break, intel_ivb_gt1_device, name, "Intel(R) HD Graphics IvyBridge M GT1");
     case PCI_CHIP_IVYBRIDGE_S_GT1:
-      DECL_INFO_STRING(intel_ivb_gt1_device, name, "Intel(R) HD Graphics IvyBridge S GT1");
+      DECL_INFO_STRING(ivb_gt1_break, intel_ivb_gt1_device, name, "Intel(R) HD Graphics IvyBridge S GT1");
+ivb_gt1_break:
       intel_ivb_gt1_device.vendor_id = device_id;
       intel_ivb_gt1_device.platform = intel_platform;
       ret = &intel_ivb_gt1_device;
       break;
 
     case PCI_CHIP_IVYBRIDGE_GT2:
-      DECL_INFO_STRING(intel_ivb_gt2_device, name, "Intel(R) HD Graphics IvyBridge GT2");
+      DECL_INFO_STRING(ivb_gt2_break, intel_ivb_gt2_device, name, "Intel(R) HD Graphics IvyBridge GT2");
     case PCI_CHIP_IVYBRIDGE_M_GT2:
-      DECL_INFO_STRING(intel_ivb_gt2_device, name, "Intel(R) HD Graphics IvyBridge M GT2");
+      DECL_INFO_STRING(ivb_gt2_break, intel_ivb_gt2_device, name, "Intel(R) HD Graphics IvyBridge M GT2");
+ivb_gt2_break:
       intel_ivb_gt2_device.vendor_id = device_id;
       intel_ivb_gt2_device.platform = intel_platform;
       ret = &intel_ivb_gt2_device;
