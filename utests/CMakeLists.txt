@@ -10,6 +10,7 @@ MESSAGE(STATUS "Generated Builtin Math Functions:\n" ${NAMEMATHLIST})
 
 string(REGEX REPLACE "generated/([^\ ]*)\\.cpp" "${CMAKE_CURRENT_SOURCE_DIR}/../kernels/\\1.cl" KERNEL_MATH_LIST ${GEN_MATH_STRING})
 string(REGEX REPLACE " " ";" KERNEL_MATH_LIST ${KERNEL_MATH_LIST})
+string(REGEX REPLACE "generated/([^\ ]*)\\.cpp" "\\1.cl" KERNEL_GITIGNORE_LIST ${GEN_MATH_STRING})
 set_directory_properties(PROPERTIES ADDITIONAL_MAKE_CLEAN_FILES "generated;${KERNEL_MATH_LIST}")
 
 configure_file (
@@ -185,6 +186,7 @@ ADD_CUSTOM_TARGET(kernel_bin.bin
 add_custom_command(OUTPUT ${CMAKE_CURRENT_SOURCE_DIR}/generated
     COMMAND mkdir ${CMAKE_CURRENT_SOURCE_DIR}/generated -p
     COMMAND python ${CMAKE_CURRENT_SOURCE_DIR}/utest_math_gen.py > /dev/null 2>&1
+    COMMAND echo ${KERNEL_GITIGNORE_LIST} |sed 's/ /\\n/g' > ${CMAKE_CURRENT_SOURCE_DIR}/../kernels/.gitignore
     WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
     )
 add_custom_target(utest_generator

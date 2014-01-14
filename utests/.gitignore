@@ -11,3 +11,5 @@ compiler_ribbon.bmp
 flat_address_space
 libutests.so
 utest_run
+generated
+utest_generator.pyc
