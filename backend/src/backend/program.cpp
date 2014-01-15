@@ -661,7 +661,7 @@ namespace gbe {
     FILE *clFile = fopen(clName.c_str(), "w");
     FATAL_IF(clFile == NULL, "Failed to open temporary file");
 
-    bool usePCH = true;
+    bool usePCH = OCL_USE_PCH;
     bool findPCH = false;
 
     /* Because our header file is so big, we want to avoid recompile the header from
