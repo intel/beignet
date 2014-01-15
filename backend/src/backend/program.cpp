@@ -566,7 +566,7 @@ namespace gbe {
     clang::LangOptions & lang_opts = Clang.getLangOpts();
     lang_opts.OpenCL = 1;
 
-    clang::PreprocessorOptions prep_opt = Clang.getPreprocessorOpts();
+    clang::PreprocessorOptions& prep_opt = Clang.getPreprocessorOpts();
     prep_opt.DisablePCHValidation = 1;
 
     //llvm flags need command line parsing to take effect
@@ -697,9 +697,14 @@ namespace gbe {
 
     if(options) {
       char *p;
+      /* FIXME: Though we can disable the pch valid check, and load pch successfully,
+         but these language opts and pre-defined macro will still generate the diag msg
+         to the diag engine of the Clang and cause the Clang to report error.
+         We filter them all here to avoid these. */
       const char * incompatible_opts[] = {
           "-cl-single-precision-constant",
 //        "-cl-denorms-are-zero",
+          "-cl-fast-relaxed-math",
           "-cl-std=",
       };
       const char * incompatible_defs[] = {
