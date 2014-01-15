@@ -66,4 +66,6 @@ struct sfloat8 f, __global struct sfloat8 *result)
   result[5].f = 12.0f;
   result[5].g = 12.0f;
   result[5].h = f.a + f.h;
+
+  result[6] = result[0];
 }
