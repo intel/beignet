@@ -363,10 +363,12 @@ namespace ir {
      SURFACE_BTI = 0,
      SAMPLER_BTI = 1
     };
-    /*! Return true if the given instruction is an instance of this class */
-    static bool isClassOf(const Instruction &insn);
+
+    const uint8_t getSamplerIndex(void) const;
     Type getSrcType(void) const;
     Type getDstType(void) const;
+    /*! Return true if the given instruction is an instance of this class */
+    static bool isClassOf(const Instruction &insn);
   };
 
   typedef union {
@@ -415,6 +417,7 @@ namespace ir {
   class GetSamplerInfoInstruction : public Instruction {
   public:
 
+    const uint8_t getSamplerIndex(void) const;
     /*! Return true if the given instruction is an instance of this class */
     static bool isClassOf(const Instruction &insn);
   };
@@ -665,11 +668,11 @@ namespace ir {
   /*! typed write */
   Instruction TYPED_WRITE(Tuple src, Type srcType, Type coordType);
   /*! sample textures */
-  Instruction SAMPLE(Tuple dst, Tuple src, Type dstType, Type srcType);
+  Instruction SAMPLE(Tuple dst, Tuple src, bool dstIsFloat, bool srcIsFloat, uint8_t sampler);
   /*! get image information , such as width/height/depth/... */
   Instruction GET_IMAGE_INFO(int infoType, Register dst, Register src, Register infoReg);
   /*! get sampler information  */
-  Instruction GET_SAMPLER_INFO(Register dst, Register src, Register samplerInfo);
+  Instruction GET_SAMPLER_INFO(Register dst, Register samplerInfo, uint8_t index);
   /*! label labelIndex */
   Instruction LABEL(LabelIndex labelIndex);
 

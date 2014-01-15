@@ -555,7 +555,7 @@ namespace gbe
     // Emit unary instructions from gen native function
     void emitAtomicInst(CallInst &I, CallSite &CS, ir::AtomicOps opcode);
 
-    ir::Register appendSampler(CallSite::arg_iterator AI);
+    uint8_t appendSampler(CallSite::arg_iterator AI);
 
     // These instructions are not supported at all
     void visitVAArgInst(VAArgInst &I) {NOT_SUPPORTED;}
@@ -2221,21 +2221,22 @@ namespace gbe
 
   /* append a new sampler. should be called before any reference to
    * a sampler_t value. */
-  ir::Register GenWriter::appendSampler(CallSite::arg_iterator AI) {
+  uint8_t GenWriter::appendSampler(CallSite::arg_iterator AI) {
     Constant *CPV = dyn_cast<Constant>(*AI);
-    ir::Register sampler;
+    uint8_t index;
     if (CPV != NULL)
     {
       // This is not a kernel argument sampler, we need to append it to sampler set,
       // and allocate a sampler slot for it.
       auto x = processConstant<ir::Immediate>(CPV, InsertExtractFunctor(ctx));
       GBE_ASSERTM(x.type == ir::TYPE_U16 || x.type == ir::TYPE_S16, "Invalid sampler type");
-      sampler = ctx.getFunction().getSamplerSet()->append(x.data.u32, &ctx);
+
+      index = ctx.getFunction().getSamplerSet()->append(x.data.u32, &ctx);
     } else {
-      sampler = this->getRegister(*AI);
-      ctx.getFunction().getSamplerSet()->append(sampler, &ctx);
+      const ir::Register samplerReg = this->getRegister(*AI);
+      index = ctx.getFunction().getSamplerSet()->append(samplerReg, &ctx);
     }
-    return sampler;
+    return index;
   }
 
   void GenWriter::emitCallInst(CallInst &I) {
@@ -2368,9 +2369,9 @@ namespace gbe
           case GEN_OCL_GET_SAMPLER_INFO:
           {
             GBE_ASSERT(AI != AE);
-            const ir::Register sampler = this->appendSampler(AI); ++AI;
+            const uint8_t index = this->appendSampler(AI); ++AI;
             const ir::Register reg = this->getRegister(&I, 0);
-            ctx.GET_SAMPLER_INFO(reg, sampler, ir::ocl::samplerinfo);
+            ctx.GET_SAMPLER_INFO(reg, ir::ocl::samplerinfo, index);
             break;
           }
           case GEN_OCL_READ_IMAGE0:
@@ -2388,7 +2389,7 @@ namespace gbe
           {
             GBE_ASSERT(AI != AE); const ir::Register surface_id = this->getRegister(*AI); ++AI;
             GBE_ASSERT(AI != AE);
-            const ir::Register sampler = this->appendSampler(AI);
+            const uint8_t sampler = this->appendSampler(AI);
             ++AI;
 
             GBE_ASSERT(AI != AE); const ir::Register ucoord = this->getRegister(*AI); ++AI;
@@ -2406,7 +2407,6 @@ namespace gbe
               dstTupleData.push_back(reg);
             }
             srcTupleData.push_back(surface_id);
-            srcTupleData.push_back(sampler);
             srcTupleData.push_back(ucoord);
             srcTupleData.push_back(vcoord);
             srcTupleData.push_back(wcoord);
@@ -2422,7 +2422,7 @@ namespace gbe
 #endif
             srcTupleData.push_back(offsetReg);
             const ir::Tuple dstTuple = ctx.arrayTuple(&dstTupleData[0], elemNum);
-            const ir::Tuple srcTuple = ctx.arrayTuple(&srcTupleData[0], 6);
+            const ir::Tuple srcTuple = ctx.arrayTuple(&srcTupleData[0], 5);
 
             ir::Type srcType = ir::TYPE_S32, dstType = ir::TYPE_U32;
 
@@ -2454,7 +2454,7 @@ namespace gbe
                 GBE_ASSERT(0); // never been here.
             }
 
-            ctx.SAMPLE(dstTuple, srcTuple, dstType, srcType);
+            ctx.SAMPLE(dstTuple, srcTuple, dstType == ir::TYPE_FLOAT, srcType == ir::TYPE_FLOAT, sampler);
             break;
           }
           case GEN_OCL_WRITE_IMAGE0:

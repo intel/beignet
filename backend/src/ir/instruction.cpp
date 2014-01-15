@@ -491,12 +491,13 @@ namespace ir {
       public TupleDstPolicy<SampleInstruction>
     {
     public:
-      SampleInstruction(Tuple dstTuple, Tuple srcTuple, Type dstType, Type srcType) {
+      SampleInstruction(Tuple dstTuple, Tuple srcTuple, bool dstIsFloat, bool srcIsFloat, uint8_t sampler) {
         this->opcode = OP_SAMPLE;
         this->dst = dstTuple;
         this->src = srcTuple;
-        this->dstType = dstType;
-        this->srcType = srcType;
+        this->dstIsFloat = dstIsFloat;
+        this->srcIsFloat = srcIsFloat;
+        this->samplerIdx = sampler;
       }
       INLINE bool wellFormed(const Function &fn, std::string &why) const;
       INLINE void out(std::ostream &out, const Function &fn) const {
@@ -504,24 +505,27 @@ namespace ir {
         out << "." << this->getDstType()
             << "." << this->getSrcType()
             << " surface id %" << this->getSrc(fn, 0)
-            << " sampler %" << this->getSrc(fn, 1)
-            << " coord u %" << this->getSrc(fn, 2)
-            << " coord v %" << this->getSrc(fn, 3)
-            << " coord w %" << this->getSrc(fn, 4)
+            << " coord u %" << this->getSrc(fn, 1)
+            << " coord v %" << this->getSrc(fn, 2)
+            << " coord w %" << this->getSrc(fn, 3)
             << " %" << this->getDst(fn, 0)
             << " %" << this->getDst(fn, 1)
             << " %" << this->getDst(fn, 2)
-            << " %" << this->getDst(fn, 3);
+            << " %" << this->getDst(fn, 3)
+            << " sampler idx " << (int)this->samplerIdx;
       }
       Tuple src;
       Tuple dst;
-      Type srcType;
-      Type dstType;
 
-      INLINE Type getSrcType(void) const { return this->srcType; }
-      INLINE Type getDstType(void) const { return this->dstType; }
+      INLINE Type getSrcType(void) const { return this->srcIsFloat ? TYPE_FLOAT : TYPE_S32; }
+      INLINE Type getDstType(void) const { return this->dstIsFloat ? TYPE_FLOAT : TYPE_U32; }
+      INLINE const uint8_t getSamplerIndex(void) const { return this->samplerIdx; }
 
-      static const uint32_t srcNum = 6;
+      uint16_t srcIsFloat:1;
+      uint16_t dstIsFloat:1;
+      uint16_t samplerIdx:4;
+      uint16_t imageIdx:8;  // not used yet.
+      static const uint32_t srcNum = 5;
       static const uint32_t dstNum = 4;
     };
 
@@ -565,29 +569,34 @@ namespace ir {
 
     class ALIGNED_INSTRUCTION GetSamplerInfoInstruction :
       public BasePolicy,
-      public NSrcPolicy<GetSamplerInfoInstruction, 2>,
+      public NSrcPolicy<GetSamplerInfoInstruction, 1>,
       public NDstPolicy<GetSamplerInfoInstruction, 1>
     {
     public:
       GetSamplerInfoInstruction( Register dst,
-                                 Register src,
-                                 Register samplerInfo)
+                                 Register samplerInfo,
+                                 uint8_t samplerIdx)
       {
         this->opcode = OP_GET_SAMPLER_INFO;
         this->dst[0] = dst;
-        this->src[0] = src;
-        this->src[1] = samplerInfo;
+        this->src[0] = samplerInfo;
+        this->samplerIdx = samplerIdx;
       }
 
       INLINE bool wellFormed(const Function &fn, std::string &why) const;
       INLINE void out(std::ostream &out, const Function &fn) const {
         this->outOpcode(out);
         out  << " %" << this->getDst(fn, 0)
-             << " sampler id %" << this->getSrc(fn, 0);
+             << " %" << this->getSrc(fn, 0)
+             << " sampler idx " << (int)this->samplerIdx;
+      }
+      INLINE const uint8_t getSamplerIndex() const {
+        return this->samplerIdx;
       }
 
-      Register src[2];                  //!< Surface to get info
+      Register src[1];                  //!< sampler to get info
       Register dst[1];                  //!< return value
+      uint8_t samplerIdx;               //!< sampler slot index.
       static const uint32_t dstNum = 1;
     };
 
@@ -1455,9 +1464,11 @@ DECL_MEM_FN(BranchInstruction, LabelIndex, getLabelIndex(void), getLabelIndex())
 DECL_MEM_FN(SyncInstruction, uint32_t, getParameters(void), getParameters())
 DECL_MEM_FN(SampleInstruction, Type, getSrcType(void), getSrcType())
 DECL_MEM_FN(SampleInstruction, Type, getDstType(void), getDstType())
+DECL_MEM_FN(SampleInstruction, const uint8_t, getSamplerIndex(void), getSamplerIndex())
 DECL_MEM_FN(TypedWriteInstruction, Type, getSrcType(void), getSrcType())
 DECL_MEM_FN(TypedWriteInstruction, Type, getCoordType(void), getCoordType())
 DECL_MEM_FN(GetImageInfoInstruction, uint32_t, getInfoType(void), getInfoType())
+DECL_MEM_FN(GetSamplerInfoInstruction, const uint8_t, getSamplerIndex(void), getSamplerIndex())
 
 #undef DECL_MEM_FN
 
@@ -1635,8 +1646,8 @@ DECL_MEM_FN(GetImageInfoInstruction, uint32_t, getInfoType(void), getInfoType())
   }
 
   // SAMPLE
-  Instruction SAMPLE(Tuple dst, Tuple src, Type dstType, Type srcType) {
-    return internal::SampleInstruction(dst, src, dstType, srcType).convert();
+  Instruction SAMPLE(Tuple dst, Tuple src, bool dstIsFloat, bool srcIsFloat, uint8_t sampler) {
+    return internal::SampleInstruction(dst, src, dstIsFloat, srcIsFloat, sampler).convert();
   }
 
   Instruction TYPED_WRITE(Tuple src, Type srcType, Type coordType) {
@@ -1647,8 +1658,8 @@ DECL_MEM_FN(GetImageInfoInstruction, uint32_t, getInfoType(void), getInfoType())
     return internal::GetImageInfoInstruction(infoType, dst, src, infoReg).convert();
   }
 
-  Instruction GET_SAMPLER_INFO(Register dst, Register src, Register samplerInfo) {
-    return internal::GetSamplerInfoInstruction(dst, src, samplerInfo).convert();
+  Instruction GET_SAMPLER_INFO(Register dst, Register samplerInfo, uint8_t samplerIdx) {
+    return internal::GetSamplerInfoInstruction(dst, samplerInfo, samplerIdx).convert();
   }
 
   std::ostream &operator<< (std::ostream &out, const Instruction &insn) {

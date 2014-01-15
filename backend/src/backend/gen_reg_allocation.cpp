@@ -30,6 +30,8 @@
 #include "sys/exception.hpp"
 #include <algorithm>
 #include <climits>
+#include <iostream>
+#include <iomanip>
 
 #define RESERVED_REG_NUM_FOR_SPILL 6
 
@@ -639,8 +641,6 @@ namespace gbe
     this->intervals[ocl::emask].maxID = INT_MAX;
     this->intervals[ocl::notemask].minID = 0;
     this->intervals[ocl::notemask].maxID = INT_MAX;
-//    this->intervals[ocl::barriermask].minID = 0;
-//    this->intervals[ocl::barriermask].maxID = INT_MAX;
     this->intervals[ocl::retVal].minID = INT_MAX;
     this->intervals[ocl::retVal].maxID = -INT_MAX;
 
@@ -672,13 +672,28 @@ namespace gbe
   }
 
   INLINE void GenRegAllocator::Opaque::outputAllocation(void) {
-    std::cout << "## register allocation ##" << std::endl;
+    using namespace std;
+    cout << "## register allocation ##" << endl;
     for(auto &i : RA) {
-        int vReg = (int)i.first;
-        int offst = (int)i.second / sizeof(float);
-        int reg = offst / 8;
-        int subreg = offst % 8;
-        std::cout << "%" << vReg << " g" << reg << "." << subreg << "D" << std::endl;
+        ir::Register vReg = (ir::Register)i.first;
+        int offst = (int)i.second;// / sizeof(float);
+        ir::RegisterData regData = ctx.sel->getRegisterData(vReg);
+        int reg = offst / 32;
+        int subreg = offst % 32;
+        ir::RegisterFamily family = regData.family;
+        int registerSize;
+        if (family == ir::FAMILY_BOOL)
+          registerSize = 2;
+        else {
+          registerSize = ir::getFamilySize(regData.family);
+          if (!ctx.isScalarReg(vReg))
+            registerSize *= ctx.getSimdWidth();
+        }
+        cout << "%" << setw(-8) << vReg << "\tg" << setw(-3) << reg << "." << setw(-2) << subreg << "B"
+             <<  "\t" << setw(3) << registerSize
+             << "\t[" << setw(8) << this->intervals[(uint)vReg].minID
+             << " -> " << setw(8) << this->intervals[(uint)vReg].maxID
+             << "]" << endl;
     }
     std::set<ir::Register>::iterator is;
     std::cout << "## spilled registers:" << std::endl;

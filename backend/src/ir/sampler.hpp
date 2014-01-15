@@ -47,11 +47,9 @@ namespace ir {
     /*! Append the specified sampler and return the allocated offset.
      *  If the speficied sampler is exist, only return the previous offset and
      *  don't append it again. Return -1, if failed.*/
-    Register append(uint32_t clkSamplerValue, Context *ctx);
+    uint8_t append(uint32_t clkSamplerValue, Context *ctx);
     /*! Append a sampler defined in kernel args. */
-    void append(Register samplerArg, Context *ctx);
-    /*! Get the sampler idx (actual location) */
-    const uint32_t getIdx(const Register reg) const;
+    uint8_t append(Register samplerArg, Context *ctx);
     size_t getDataSize(void) { return samplerMap.size(); }
     size_t getDataSize(void) const { return samplerMap.size(); }
     void getData(uint32_t *samplers) const {
@@ -60,7 +58,6 @@ namespace ir {
     }
 
     void operator = (const SamplerSet& other) {
-      regMap.insert(other.regMap.begin(), other.regMap.end());
       samplerMap.insert(other.samplerMap.begin(), other.samplerMap.end());
     }
 
@@ -90,9 +87,8 @@ namespace ir {
     virtual void printStatus(int indent, std::ostream& outs);
 
   private:
-    void appendReg(const Register reg, uint32_t key, Context *ctx);
+    uint8_t appendReg(uint32_t key, Context *ctx);
     map<uint32_t, SamplerRegSlot> samplerMap;
-    map<Register, SamplerRegSlot> regMap;
     GBE_CLASS(SamplerSet);
   };
 } /* namespace ir */

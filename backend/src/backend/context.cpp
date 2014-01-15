@@ -489,9 +489,9 @@ namespace gbe
           continue;
         } else if (insn.getOpcode() == ir::OP_GET_SAMPLER_INFO) {
           /* change the src to sampler information register. */
-          GBE_ASSERT(insn.getSrc(1) == ir::ocl::samplerinfo);
-          if (curbeRegs.find(insn.getSrc(1)) == curbeRegs.end())
-            insertCurbeReg(insn.getSrc(1), this->newCurbeEntry(GBE_CURBE_SAMPLER_INFO, 0, 32));
+          GBE_ASSERT(insn.getSrc(0) == ir::ocl::samplerinfo);
+          if (curbeRegs.find(insn.getSrc(0)) == curbeRegs.end())
+            insertCurbeReg(insn.getSrc(0), this->newCurbeEntry(GBE_CURBE_SAMPLER_INFO, 0, 32));
           continue;
         }
         if (fn.isSpecialReg(reg) == false) continue;

@@ -2933,10 +2933,10 @@ namespace gbe
     {
       using namespace ir;
       GenRegister msgPayloads[4];
-      GenRegister dst[insn.getDstNum()], src[insn.getSrcNum() - 2];
+      GenRegister dst[insn.getDstNum()], src[insn.getSrcNum() - 1];
       uint32_t srcNum = insn.getSrcNum();
       uint32_t samplerOffset = 0;
-      if (srcNum == 6) {
+      if (srcNum == 5) {
       /* We have the clamp border workaround. */
         samplerOffset = insn.getSrc(srcNum - 1).value() * 8;
         srcNum--;
@@ -2948,15 +2948,14 @@ namespace gbe
       for (uint32_t valueID = 0; valueID < insn.getDstNum(); ++valueID)
         dst[valueID] = sel.selReg(insn.getDst(valueID), insn.getDstType());
 
-      for (uint32_t valueID = 0; valueID < srcNum - 2; ++valueID)
-        src[valueID] = sel.selReg(insn.getSrc(valueID + 2), insn.getSrcType());
+      for (uint32_t valueID = 0; valueID < srcNum - 1; ++valueID)
+        src[valueID] = sel.selReg(insn.getSrc(valueID + 1), insn.getSrcType());
 
       uint32_t bti = sel.ctx.getFunction().getImageSet()->getIdx
-                       (insn.getSrc(SampleInstruction::SURFACE_BTI));
-      uint32_t sampler = sel.ctx.getFunction().getSamplerSet()->getIdx
-                           (insn.getSrc(SampleInstruction::SAMPLER_BTI)) + samplerOffset;
+                       (insn.getSrc(0));
+      uint32_t sampler = insn.getSamplerIndex() + samplerOffset;
 
-      sel.SAMPLE(dst, insn.getDstNum(), src, srcNum - 2, msgPayloads, 4, bti, sampler);
+      sel.SAMPLE(dst, insn.getDstNum(), src, srcNum - 1, msgPayloads, 4, bti, sampler);
       return true;
     }
     DECL_CTOR(SampleInstruction, 1, 1);
@@ -3017,7 +3016,7 @@ namespace gbe
       using namespace ir;
       GenRegister dst, src;
       dst = sel.selReg(insn.getDst(0), TYPE_U16);
-      src = GenRegister::offset(GenRegister::uw1grf(insn.getSrc(1)), 0, sel.ctx.getFunction().getSamplerSet()->getIdx(insn.getSrc(0)) * 2);
+      src = GenRegister::offset(GenRegister::uw1grf(insn.getSrc(0)), 0, insn.getSamplerIndex() * 2);
       src.subphysical = 1;
       sel.MOV(dst, src);
       return true;
