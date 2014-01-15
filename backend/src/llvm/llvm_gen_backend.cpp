@@ -2370,7 +2370,7 @@ namespace gbe
             GBE_ASSERT(AI != AE);
             const ir::Register sampler = this->appendSampler(AI); ++AI;
             const ir::Register reg = this->getRegister(&I, 0);
-            ctx.GET_SAMPLER_INFO(reg, sampler);
+            ctx.GET_SAMPLER_INFO(reg, sampler, ir::ocl::samplerinfo);
             break;
           }
           case GEN_OCL_READ_IMAGE0:

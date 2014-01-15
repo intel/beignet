@@ -565,26 +565,28 @@ namespace ir {
 
     class ALIGNED_INSTRUCTION GetSamplerInfoInstruction :
       public BasePolicy,
-      public NSrcPolicy<GetSamplerInfoInstruction, 1>,
+      public NSrcPolicy<GetSamplerInfoInstruction, 2>,
       public NDstPolicy<GetSamplerInfoInstruction, 1>
     {
     public:
       GetSamplerInfoInstruction( Register dst,
-                                 Register src)
+                                 Register src,
+                                 Register samplerInfo)
       {
         this->opcode = OP_GET_SAMPLER_INFO;
         this->dst[0] = dst;
         this->src[0] = src;
+        this->src[1] = samplerInfo;
       }
 
       INLINE bool wellFormed(const Function &fn, std::string &why) const;
       INLINE void out(std::ostream &out, const Function &fn) const {
         this->outOpcode(out);
-        out << " sampler id %" << this->getSrc(fn, 0)
-            << " %" << this->getDst(fn, 0);
+        out  << " %" << this->getDst(fn, 0)
+             << " sampler id %" << this->getSrc(fn, 0);
       }
 
-      Register src[1];                  //!< Surface to get info
+      Register src[2];                  //!< Surface to get info
       Register dst[1];                  //!< return value
       static const uint32_t dstNum = 1;
     };
@@ -612,8 +614,9 @@ namespace ir {
       INLINE void out(std::ostream &out, const Function &fn) const {
         this->outOpcode(out);
         out << "." << this->getInfoType()
+            << " %" << this->getDst(fn, 0)
             << " surface id %" << this->getSrc(fn, 0)
-            << " %" << this->getDst(fn, 0);
+            << " info reg %" << this->getSrc(fn, 1);
       }
 
       uint8_t infoType;                 //!< Type of the requested information.
@@ -1644,8 +1647,8 @@ DECL_MEM_FN(GetImageInfoInstruction, uint32_t, getInfoType(void), getInfoType())
     return internal::GetImageInfoInstruction(infoType, dst, src, infoReg).convert();
   }
 
-  Instruction GET_SAMPLER_INFO(Register dst, Register src) {
-    return internal::GetSamplerInfoInstruction(dst, src).convert();
+  Instruction GET_SAMPLER_INFO(Register dst, Register src, Register samplerInfo) {
+    return internal::GetSamplerInfoInstruction(dst, src, samplerInfo).convert();
   }
 
   std::ostream &operator<< (std::ostream &out, const Instruction &insn) {

@@ -669,7 +669,7 @@ namespace ir {
   /*! get image information , such as width/height/depth/... */
   Instruction GET_IMAGE_INFO(int infoType, Register dst, Register src, Register infoReg);
   /*! get sampler information  */
-  Instruction GET_SAMPLER_INFO(Register dst, Register src);
+  Instruction GET_SAMPLER_INFO(Register dst, Register src, Register samplerInfo);
   /*! label labelIndex */
   Instruction LABEL(LabelIndex labelIndex);
 

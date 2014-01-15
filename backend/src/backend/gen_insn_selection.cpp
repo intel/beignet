@@ -3017,7 +3017,7 @@ namespace gbe
       using namespace ir;
       GenRegister dst, src;
       dst = sel.selReg(insn.getDst(0), TYPE_U16);
-      src = GenRegister::offset(GenRegister::uw1grf(ocl::samplerinfo), 0, sel.ctx.getFunction().getSamplerSet()->getIdx(insn.getSrc(0)) * 2);
+      src = GenRegister::offset(GenRegister::uw1grf(insn.getSrc(1)), 0, sel.ctx.getFunction().getSamplerSet()->getIdx(insn.getSrc(0)) * 2);
       src.subphysical = 1;
       sel.MOV(dst, src);
       return true;
