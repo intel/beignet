@@ -232,7 +232,7 @@ namespace gbe
     }
 
     virtual const char *getPassName() const {
-      return "PTX backend: insert special ptx instructions";
+      return "SPIR backend: insert special spir instructions";
     }
 
     bool simplifyGEPInstructions(GetElementPtrInst* GEPInst);

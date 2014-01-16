@@ -84,7 +84,11 @@ namespace gbe
   /*! Remove the GEP instructions */
   llvm::BasicBlockPass *createRemoveGEPPass(const ir::Unit &unit);
 
+  /*! Scalarize all vector op instructions */
   llvm::FunctionPass* createScalarizePass();
+
+  /*! Convert the Intrinsic call to gen function */
+  llvm::BasicBlockPass *createIntrinsicLoweringPass();
 
 } /* namespace gbe */
 

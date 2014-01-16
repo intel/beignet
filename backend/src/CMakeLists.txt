@@ -143,6 +143,7 @@ else (GBE_USE_BLOB)
     llvm/llvm_gen_backend.cpp
     llvm/llvm_passes.cpp
     llvm/llvm_scalarize.cpp
+    llvm/llvm_intrinsic_lowering.cpp
     llvm/llvm_to_gen.cpp
     llvm/llvm_gen_backend.hpp
     llvm/llvm_gen_ocl_function.hxx
@@ -172,7 +173,7 @@ add_library (gbe STATIC ${GBE_SRC})
 
 # for pre compiled module library.
 set (pcm_lib "beignet.bc")
-set (pcm_sources ocl_barrier.ll)
+set (pcm_sources ocl_barrier.ll ocl_memset.ll ocl_memcpy.ll)
 ll_add_library (${pcm_lib} pcm_sources)
 
 ADD_DEPENDENCIES (gbe pch_object ${pcm_lib})
