@@ -1390,17 +1390,6 @@ namespace gbe
     msgVector->reg = &insn->src(0);
   }
 
-  void Selection::Opaque::GET_IMAGE_INFO(uint32_t infoType, GenRegister *dst,
-                                    uint32_t dstNum, uint32_t bti) {
-    SelectionInstruction *insn = this->appendInsn(SEL_OP_GET_IMAGE_INFO, dstNum, 0);
-
-    for(uint32_t i = 0; i < dstNum; ++i)
-      insn->dst(i) = dst[i];
-
-    insn->extra.function = bti;
-    insn->extra.elem = infoType;
-  }
-
   Selection::~Selection(void) { GBE_DELETE(this->opaque); }
 
   void Selection::select(void) {
@@ -2933,10 +2922,10 @@ namespace gbe
     {
       using namespace ir;
       GenRegister msgPayloads[4];
-      GenRegister dst[insn.getDstNum()], src[insn.getSrcNum() - 1];
+      GenRegister dst[insn.getDstNum()], src[insn.getSrcNum()];
       uint32_t srcNum = insn.getSrcNum();
       uint32_t samplerOffset = 0;
-      if (srcNum == 5) {
+      if (srcNum == 4) {
       /* We have the clamp border workaround. */
         samplerOffset = insn.getSrc(srcNum - 1).value() * 8;
         srcNum--;
@@ -2948,14 +2937,13 @@ namespace gbe
       for (uint32_t valueID = 0; valueID < insn.getDstNum(); ++valueID)
         dst[valueID] = sel.selReg(insn.getDst(valueID), insn.getDstType());
 
-      for (uint32_t valueID = 0; valueID < srcNum - 1; ++valueID)
-        src[valueID] = sel.selReg(insn.getSrc(valueID + 1), insn.getSrcType());
+      for (uint32_t valueID = 0; valueID < srcNum; ++valueID)
+        src[valueID] = sel.selReg(insn.getSrc(valueID), insn.getSrcType());
 
-      uint32_t bti = sel.ctx.getFunction().getImageSet()->getIdx
-                       (insn.getSrc(0));
+      uint32_t bti = insn.getImageIndex();
       uint32_t sampler = insn.getSamplerIndex() + samplerOffset;
 
-      sel.SAMPLE(dst, insn.getDstNum(), src, srcNum - 1, msgPayloads, 4, bti, sampler);
+      sel.SAMPLE(dst, insn.getDstNum(), src, srcNum, msgPayloads, 4, bti, sampler);
       return true;
     }
     DECL_CTOR(SampleInstruction, 1, 1);
@@ -2968,25 +2956,24 @@ namespace gbe
     {
       using namespace ir;
       const uint32_t simdWidth = sel.ctx.getSimdWidth();
-      uint32_t valueID = 0;
+      uint32_t valueID;
       GenRegister msgs[9]; // (header + U + V + R + LOD + 4)
       GenRegister src[insn.getSrcNum()];
       uint32_t msgNum = (8 / (simdWidth / 8)) + 1;
-      uint32_t coordNum = (insn.getSrcNum() == 7) ? 2 : 3;
+      uint32_t coordNum = (insn.getSrcNum() == 6) ? 2 : 3;
 
       for(uint32_t i = 0; i < msgNum; i++)
         msgs[i] = sel.selReg(sel.reg(FAMILY_DWORD), TYPE_U32);
 
       // u, v, w coords should use coord type.
-      for (; valueID < coordNum; ++valueID)
-        src[valueID] = sel.selReg(insn.getSrc(valueID + 1), insn.getCoordType());
+      for (valueID = 0; valueID < coordNum; ++valueID)
+        src[valueID] = sel.selReg(insn.getSrc(valueID), insn.getCoordType());
 
-      for (; (valueID + 1) < insn.getSrcNum(); ++valueID)
-        src[valueID] = sel.selReg(insn.getSrc(valueID + 1), insn.getSrcType());
+      for (; valueID < insn.getSrcNum(); ++valueID)
+        src[valueID] = sel.selReg(insn.getSrc(valueID), insn.getSrcType());
 
-      uint32_t bti = sel.ctx.getFunction().getImageSet()->getIdx
-                       (insn.getSrc(TypedWriteInstruction::SURFACE_BTI));
-      sel.TYPED_WRITE(src, insn.getSrcNum() - 1, msgs, msgNum, bti);
+      uint32_t bti = insn.getImageIndex();
+      sel.TYPED_WRITE(src, insn.getSrcNum(), msgs, msgNum, bti);
       return true;
     }
     DECL_CTOR(TypedWriteInstruction, 1, 1);
@@ -3000,7 +2987,7 @@ namespace gbe
       using namespace ir;
       GenRegister dst;
       dst = sel.selReg(insn.getDst(0), TYPE_U32);
-      GenRegister imageInfoReg = GenRegister::ud1grf(insn.getSrc(1));
+      GenRegister imageInfoReg = GenRegister::ud1grf(insn.getSrc(0));
       sel.MOV(dst, imageInfoReg);
 
       return true;

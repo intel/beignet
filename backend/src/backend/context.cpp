@@ -470,7 +470,7 @@ namespace gbe
         const ir::Register reg = insn.getSrc(srcID);
         if (insn.getOpcode() == ir::OP_GET_IMAGE_INFO) {
           if (srcID != 0) continue;
-          const unsigned char bti = fn.getImageSet()->getIdx(insn.getSrc(srcID));
+          const unsigned char bti = ir::cast<ir::GetImageInfoInstruction>(insn).getImageIndex();
           const unsigned char type =  ir::cast<ir::GetImageInfoInstruction>(insn).getInfoType();;
           ir::ImageInfoKey key;
           key.index = bti;
@@ -479,12 +479,12 @@ namespace gbe
           ir::Register realImageInfo;
           if (curbeRegs.find(imageInfo) == curbeRegs.end()) {
             uint32_t offset = this->getImageInfoCurbeOffset(key, 4);
-            realImageInfo = insn.getSrc(1);
+            realImageInfo = insn.getSrc(0);
             insertCurbeReg(realImageInfo, offset);
             insertCurbeReg(imageInfo, (uint32_t)realImageInfo);
           } else {
             realImageInfo = ir::Register(curbeRegs.find(imageInfo)->second);
-            insn.setSrc(1, realImageInfo);
+            insn.setSrc(0, realImageInfo);
           }
           continue;
         } else if (insn.getOpcode() == ir::OP_GET_SAMPLER_INFO) {

@@ -491,23 +491,24 @@ namespace ir {
       public TupleDstPolicy<SampleInstruction>
     {
     public:
-      SampleInstruction(Tuple dstTuple, Tuple srcTuple, bool dstIsFloat, bool srcIsFloat, uint8_t sampler) {
+      SampleInstruction(uint8_t imageIdx, Tuple dstTuple, Tuple srcTuple, bool dstIsFloat, bool srcIsFloat, uint8_t sampler) {
         this->opcode = OP_SAMPLE;
         this->dst = dstTuple;
         this->src = srcTuple;
         this->dstIsFloat = dstIsFloat;
         this->srcIsFloat = srcIsFloat;
         this->samplerIdx = sampler;
+        this->imageIdx = imageIdx;
       }
       INLINE bool wellFormed(const Function &fn, std::string &why) const;
       INLINE void out(std::ostream &out, const Function &fn) const {
         this->outOpcode(out);
         out << "." << this->getDstType()
             << "." << this->getSrcType()
-            << " surface id %" << this->getSrc(fn, 0)
-            << " coord u %" << this->getSrc(fn, 1)
-            << " coord v %" << this->getSrc(fn, 2)
-            << " coord w %" << this->getSrc(fn, 3)
+            << " surface id " << this->getImageIndex()
+            << " coord u %" << this->getSrc(fn, 0)
+            << " coord v %" << this->getSrc(fn, 1)
+            << " coord w %" << this->getSrc(fn, 2)
             << " %" << this->getDst(fn, 0)
             << " %" << this->getDst(fn, 1)
             << " %" << this->getDst(fn, 2)
@@ -517,6 +518,7 @@ namespace ir {
       Tuple src;
       Tuple dst;
 
+      INLINE const uint8_t getImageIndex(void) const { return this->imageIdx; }
       INLINE Type getSrcType(void) const { return this->srcIsFloat ? TYPE_FLOAT : TYPE_S32; }
       INLINE Type getDstType(void) const { return this->dstIsFloat ? TYPE_FLOAT : TYPE_U32; }
       INLINE const uint8_t getSamplerIndex(void) const { return this->samplerIdx; }
@@ -524,8 +526,8 @@ namespace ir {
       uint16_t srcIsFloat:1;
       uint16_t dstIsFloat:1;
       uint16_t samplerIdx:4;
-      uint16_t imageIdx:8;  // not used yet.
-      static const uint32_t srcNum = 5;
+      uint16_t imageIdx:8;
+      static const uint32_t srcNum = 4;
       static const uint32_t dstNum = 4;
     };
 
@@ -536,34 +538,37 @@ namespace ir {
     {
     public:
 
-      INLINE TypedWriteInstruction(Tuple srcTuple, Type srcType, Type coordType) {
+      INLINE TypedWriteInstruction(uint8_t imageIdx, Tuple srcTuple, Type srcType, Type coordType) {
         this->opcode = OP_TYPED_WRITE;
         this->src = srcTuple;
         this->coordType = coordType;
         this->srcType = srcType;
+        this->imageIdx = imageIdx;
       }
       INLINE bool wellFormed(const Function &fn, std::string &why) const;
       INLINE void out(std::ostream &out, const Function &fn) const {
         this->outOpcode(out);
         out << "." << this->getSrcType()
-            << " surface id %" << this->getSrc(fn, 0)
-            << " coord u %" << this->getSrc(fn, 1)
-            << " coord v %" << this->getSrc(fn, 2)
-            << " coord w %" << this->getSrc(fn, 3)
+            << " surface id " << this->getImageIndex()
+            << " coord u %" << this->getSrc(fn, 0)
+            << " coord v %" << this->getSrc(fn, 1)
+            << " coord w %" << this->getSrc(fn, 2)
+            << " %" << this->getSrc(fn, 3)
             << " %" << this->getSrc(fn, 4)
             << " %" << this->getSrc(fn, 5)
-            << " %" << this->getSrc(fn, 6)
-            << " %" << this->getSrc(fn, 7);
+            << " %" << this->getSrc(fn, 6);
       }
 
       Tuple src;
-      Type srcType;
-      Type coordType;
+      uint8_t srcType;
+      uint8_t coordType;
+      uint8_t imageIdx;
 
-      INLINE Type getSrcType(void) const { return this->srcType; }
-      INLINE Type getCoordType(void) const { return this->coordType; }
+      INLINE const uint8_t getImageIndex(void) const { return this->imageIdx; }
+      INLINE Type getSrcType(void) const { return (Type)this->srcType; }
+      INLINE Type getCoordType(void) const { return (Type)this->coordType; }
       // bti, u, v, w, 4 data elements
-      static const uint32_t srcNum = 8;
+      static const uint32_t srcNum = 7;
       Register dst[0];               //!< No dest register
     };
 
@@ -602,20 +607,20 @@ namespace ir {
 
     class ALIGNED_INSTRUCTION GetImageInfoInstruction :
       public BasePolicy,
-      public NSrcPolicy<GetImageInfoInstruction, 2>,
+      public NSrcPolicy<GetImageInfoInstruction, 1>,
       public NDstPolicy<GetImageInfoInstruction, 1>
     {
     public:
       GetImageInfoInstruction( int type,
                                Register dst,
-                               Register src,
+                               uint8_t imageIdx,
                                Register infoReg)
       {
         this->opcode = OP_GET_IMAGE_INFO;
         this->infoType = type;
         this->dst[0] = dst;
-        this->src[0] = src;
-        this->src[1] = infoReg;
+        this->src[0] = infoReg;
+        this->imageIdx = imageIdx;
       }
 
       INLINE uint32_t getInfoType(void) const { return infoType; }
@@ -624,13 +629,16 @@ namespace ir {
         this->outOpcode(out);
         out << "." << this->getInfoType()
             << " %" << this->getDst(fn, 0)
-            << " surface id %" << this->getSrc(fn, 0)
-            << " info reg %" << this->getSrc(fn, 1);
+            << " surface id " << this->getImageIndex()
+            << " info reg %" << this->getSrc(fn, 0);
       }
 
+      INLINE const uint8_t getImageIndex(void) const { return imageIdx; }
+
       uint8_t infoType;                 //!< Type of the requested information.
-      Register src[2];                  //!< Surface to get info
-      Register dst[1];                        //!< dest register to put the information.
+      uint8_t imageIdx;                //!< surface index.
+      Register src[1];                  //!< surface info register.
+      Register dst[1];                  //!< dest register to put the information.
       static const uint32_t dstNum = 1;
     };
 
@@ -1465,9 +1473,12 @@ DECL_MEM_FN(SyncInstruction, uint32_t, getParameters(void), getParameters())
 DECL_MEM_FN(SampleInstruction, Type, getSrcType(void), getSrcType())
 DECL_MEM_FN(SampleInstruction, Type, getDstType(void), getDstType())
 DECL_MEM_FN(SampleInstruction, const uint8_t, getSamplerIndex(void), getSamplerIndex())
+DECL_MEM_FN(SampleInstruction, const uint8_t, getImageIndex(void), getImageIndex())
 DECL_MEM_FN(TypedWriteInstruction, Type, getSrcType(void), getSrcType())
 DECL_MEM_FN(TypedWriteInstruction, Type, getCoordType(void), getCoordType())
+DECL_MEM_FN(TypedWriteInstruction, const uint8_t, getImageIndex(void), getImageIndex())
 DECL_MEM_FN(GetImageInfoInstruction, uint32_t, getInfoType(void), getInfoType())
+DECL_MEM_FN(GetImageInfoInstruction, const uint8_t, getImageIndex(void), getImageIndex())
 DECL_MEM_FN(GetSamplerInfoInstruction, const uint8_t, getSamplerIndex(void), getSamplerIndex())
 
 #undef DECL_MEM_FN
@@ -1646,16 +1657,16 @@ DECL_MEM_FN(GetSamplerInfoInstruction, const uint8_t, getSamplerIndex(void), get
   }
 
   // SAMPLE
-  Instruction SAMPLE(Tuple dst, Tuple src, bool dstIsFloat, bool srcIsFloat, uint8_t sampler) {
-    return internal::SampleInstruction(dst, src, dstIsFloat, srcIsFloat, sampler).convert();
+  Instruction SAMPLE(uint8_t imageIndex, Tuple dst, Tuple src, bool dstIsFloat, bool srcIsFloat, uint8_t sampler) {
+    return internal::SampleInstruction(imageIndex, dst, src, dstIsFloat, srcIsFloat, sampler).convert();
   }
 
-  Instruction TYPED_WRITE(Tuple src, Type srcType, Type coordType) {
-    return internal::TypedWriteInstruction(src, srcType, coordType).convert();
+  Instruction TYPED_WRITE(uint8_t imageIndex, Tuple src, Type srcType, Type coordType) {
+    return internal::TypedWriteInstruction(imageIndex, src, srcType, coordType).convert();
   }
 
-  Instruction GET_IMAGE_INFO(int infoType, Register dst, Register src, Register infoReg) {
-    return internal::GetImageInfoInstruction(infoType, dst, src, infoReg).convert();
+  Instruction GET_IMAGE_INFO(int infoType, Register dst, uint8_t imageIndex, Register infoReg) {
+    return internal::GetImageInfoInstruction(infoType, dst, imageIndex, infoReg).convert();
   }
 
   Instruction GET_SAMPLER_INFO(Register dst, Register samplerInfo, uint8_t samplerIdx) {

@@ -352,6 +352,7 @@ namespace ir {
     };
     /*! Return true if the given instruction is an instance of this class */
     static bool isClassOf(const Instruction &insn);
+    const uint8_t getImageIndex() const;
     Type getSrcType(void) const;
     Type getCoordType(void) const;
   };
@@ -364,6 +365,7 @@ namespace ir {
      SAMPLER_BTI = 1
     };
 
+    const uint8_t getImageIndex() const;
     const uint8_t getSamplerIndex(void) const;
     Type getSrcType(void) const;
     Type getDstType(void) const;
@@ -408,6 +410,7 @@ namespace ir {
      return 0;
    }
 
+    const uint8_t getImageIndex() const;
     uint32_t getInfoType() const;
     /*! Return true if the given instruction is an instance of this class */
     static bool isClassOf(const Instruction &insn);
@@ -666,11 +669,11 @@ namespace ir {
   /*! sync.params... (see Sync instruction) */
   Instruction SYNC(uint32_t parameters);
   /*! typed write */
-  Instruction TYPED_WRITE(Tuple src, Type srcType, Type coordType);
+  Instruction TYPED_WRITE(uint8_t imageIndex, Tuple src, Type srcType, Type coordType);
   /*! sample textures */
-  Instruction SAMPLE(Tuple dst, Tuple src, bool dstIsFloat, bool srcIsFloat, uint8_t sampler);
+  Instruction SAMPLE(uint8_t imageIndex, Tuple dst, Tuple src, bool dstIsFloat, bool srcIsFloat, uint8_t sampler);
   /*! get image information , such as width/height/depth/... */
-  Instruction GET_IMAGE_INFO(int infoType, Register dst, Register src, Register infoReg);
+  Instruction GET_IMAGE_INFO(int infoType, Register dst, uint8_t imageIndex, Register infoReg);
   /*! get sampler information  */
   Instruction GET_SAMPLER_INFO(Register dst, Register samplerInfo, uint8_t index);
   /*! label labelIndex */

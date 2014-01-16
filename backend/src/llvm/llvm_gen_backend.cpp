@@ -2359,11 +2359,12 @@ namespace gbe
           case GEN_OCL_GET_IMAGE_CHANNEL_DATA_TYPE:
           case GEN_OCL_GET_IMAGE_CHANNEL_ORDER:
           {
-            GBE_ASSERT(AI != AE); const ir::Register surface_id = this->getRegister(*AI); ++AI;
+            GBE_ASSERT(AI != AE); const ir::Register surfaceReg = this->getRegister(*AI); ++AI;
             const ir::Register reg = this->getRegister(&I, 0);
             int infoType = it->second - GEN_OCL_GET_IMAGE_WIDTH;
 
-            ctx.GET_IMAGE_INFO(infoType, reg, surface_id, ctx.reg(ir::FAMILY_DWORD));
+            const uint8_t surfaceID = ctx.getFunction().getImageSet()->getIdx(surfaceReg);
+            ctx.GET_IMAGE_INFO(infoType, reg, surfaceID, ctx.reg(ir::FAMILY_DWORD));
             break;
           }
           case GEN_OCL_GET_SAMPLER_INFO:
@@ -2387,7 +2388,8 @@ namespace gbe
           case GEN_OCL_READ_IMAGE14:
           case GEN_OCL_READ_IMAGE15:
           {
-            GBE_ASSERT(AI != AE); const ir::Register surface_id = this->getRegister(*AI); ++AI;
+            GBE_ASSERT(AI != AE); const ir::Register surfaceReg = this->getRegister(*AI); ++AI;
+            const uint8_t surfaceID = ctx.getFunction().getImageSet()->getIdx(surfaceReg);
             GBE_ASSERT(AI != AE);
             const uint8_t sampler = this->appendSampler(AI);
             ++AI;
@@ -2406,7 +2408,6 @@ namespace gbe
               const ir::Register reg = this->getRegister(&I, elemID);
               dstTupleData.push_back(reg);
             }
-            srcTupleData.push_back(surface_id);
             srcTupleData.push_back(ucoord);
             srcTupleData.push_back(vcoord);
             srcTupleData.push_back(wcoord);
@@ -2422,7 +2423,7 @@ namespace gbe
 #endif
             srcTupleData.push_back(offsetReg);
             const ir::Tuple dstTuple = ctx.arrayTuple(&dstTupleData[0], elemNum);
-            const ir::Tuple srcTuple = ctx.arrayTuple(&srcTupleData[0], 5);
+            const ir::Tuple srcTuple = ctx.arrayTuple(&srcTupleData[0], 4);
 
             ir::Type srcType = ir::TYPE_S32, dstType = ir::TYPE_U32;
 
@@ -2454,7 +2455,7 @@ namespace gbe
                 GBE_ASSERT(0); // never been here.
             }
 
-            ctx.SAMPLE(dstTuple, srcTuple, dstType == ir::TYPE_FLOAT, srcType == ir::TYPE_FLOAT, sampler);
+            ctx.SAMPLE(surfaceID, dstTuple, srcTuple, dstType == ir::TYPE_FLOAT, srcType == ir::TYPE_FLOAT, sampler);
             break;
           }
           case GEN_OCL_WRITE_IMAGE0:
@@ -2470,7 +2471,8 @@ namespace gbe
           case GEN_OCL_WRITE_IMAGE14:
           case GEN_OCL_WRITE_IMAGE15:
           {
-            GBE_ASSERT(AI != AE); const ir::Register surface_id = this->getRegister(*AI); ++AI;
+            GBE_ASSERT(AI != AE); const ir::Register surfaceReg = this->getRegister(*AI); ++AI;
+            const uint8_t surfaceID = ctx.getFunction().getImageSet()->getIdx(surfaceReg);
             GBE_ASSERT(AI != AE); const ir::Register ucoord = this->getRegister(*AI); ++AI;
             GBE_ASSERT(AI != AE); const ir::Register vcoord = this->getRegister(*AI); ++AI;
             ir::Register wcoord;
@@ -2481,7 +2483,6 @@ namespace gbe
             GBE_ASSERT(AI != AE);
             vector<ir::Register> srcTupleData;
 
-            srcTupleData.push_back(surface_id);
             srcTupleData.push_back(ucoord);
             srcTupleData.push_back(vcoord);
             srcTupleData.push_back(wcoord);
@@ -2491,7 +2492,7 @@ namespace gbe
               const ir::Register reg = this->getRegister(*AI, elemID);
               srcTupleData.push_back(reg);
             }
-            const ir::Tuple srcTuple = ctx.arrayTuple(&srcTupleData[0], 8);
+            const ir::Tuple srcTuple = ctx.arrayTuple(&srcTupleData[0], 7);
 
             ir::Type srcType = ir::TYPE_U32, coordType = ir::TYPE_U32;
 
@@ -2522,7 +2523,7 @@ namespace gbe
                 GBE_ASSERT(0); // never been here.
             }
 
-            ctx.TYPED_WRITE(srcTuple, srcType, coordType);
+            ctx.TYPED_WRITE(surfaceID, srcTuple, srcType, coordType);
             break;
           }
           case GEN_OCL_MUL_HI_INT:
