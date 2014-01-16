@@ -2362,9 +2362,10 @@ namespace gbe
             GBE_ASSERT(AI != AE); const ir::Register surfaceReg = this->getRegister(*AI); ++AI;
             const ir::Register reg = this->getRegister(&I, 0);
             int infoType = it->second - GEN_OCL_GET_IMAGE_WIDTH;
-
             const uint8_t surfaceID = ctx.getFunction().getImageSet()->getIdx(surfaceReg);
-            ctx.GET_IMAGE_INFO(infoType, reg, surfaceID, ctx.reg(ir::FAMILY_DWORD));
+            ir::ImageInfoKey key(surfaceID, infoType);
+            const ir::Register infoReg = ctx.getFunction().getImageSet()->appendInfo(key, &ctx);
+            ctx.GET_IMAGE_INFO(infoType, reg, surfaceID, infoReg);
             break;
           }
           case GEN_OCL_GET_SAMPLER_INFO:

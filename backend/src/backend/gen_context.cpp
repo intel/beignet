@@ -1862,23 +1862,6 @@ namespace gbe
     p->pop();
   }
 
-  void GenContext::emitGetImageInfoInstruction(const SelectionInstruction &insn) {
-    const unsigned char bti = insn.extra.function;
-    const unsigned char type = insn.extra.elem;
-    const uint32_t dstNum = ir::GetImageInfoInstruction::getDstNum4Type(type);
-    ir::ImageInfoKey key;
-    key.index = bti;
-    key.type = type;
-
-    uint32_t offset = this->getImageInfoCurbeOffset(key, dstNum * 4) + GEN_REG_SIZE;
-    for(uint32_t i = 0; i < dstNum; i++) {
-      const uint32_t nr = offset / GEN_REG_SIZE;
-      const uint32_t subnr = (offset % GEN_REG_SIZE) / sizeof(uint32_t);
-      p->MOV(ra->genReg(insn.dst(i)), GenRegister::ud1grf(nr, subnr));
-      offset += 32;
-    }
-  }
-
   BVAR(OCL_OUTPUT_REG_ALLOC, false);
   BVAR(OCL_OUTPUT_ASM, false);
   bool GenContext::emitCode(void) {

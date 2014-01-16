@@ -64,6 +64,16 @@ namespace ir {
     setInfoOffset4Type(imageInfo, key.type, offset);
   }
 
+  Register ImageSet::appendInfo(ImageInfoKey key, Context *ctx)
+  {
+    auto it = infoRegMap.find(key.data);
+    if (it != infoRegMap.end())
+      return it->second;
+    Register reg = ctx->reg(FAMILY_DWORD);
+    infoRegMap.insert(std::make_pair(key.data, reg));
+    return reg;
+  }
+
   void ImageSet::clearInfo()
   {
     struct ImageInfo *imageInfo;

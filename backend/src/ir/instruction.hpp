@@ -373,7 +373,8 @@ namespace ir {
     static bool isClassOf(const Instruction &insn);
   };
 
-  typedef union {
+  typedef union _ImageInfoKey{
+    _ImageInfoKey(uint8_t i, uint8_t t) : index(i), type(t) {};
     struct {
      uint8_t index; /*! the allocated image index */
      uint8_t  type;  /*! the information type */

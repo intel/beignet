@@ -47,6 +47,8 @@ namespace ir {
     void append(Register imageReg, Context *ctx);
     /*! Append an image info slot. */
     void appendInfo(ImageInfoKey key, uint32_t offset);
+    /*! Append an image info register. */
+    Register appendInfo(ImageInfoKey, Context *ctx);
     /*! clear image info. */
     void clearInfo();
     /*! Get the image's index(actual location). */
@@ -88,6 +90,7 @@ namespace ir {
   private:
     map<Register, struct ImageInfo *> regMap;
     map<uint32_t, struct ImageInfo *> indexMap;
+    map<uint32_t, Register> infoRegMap;
     GBE_CLASS(ImageSet);
   };
 } /* namespace ir */

@@ -472,19 +472,11 @@ namespace gbe
           if (srcID != 0) continue;
           const unsigned char bti = ir::cast<ir::GetImageInfoInstruction>(insn).getImageIndex();
           const unsigned char type =  ir::cast<ir::GetImageInfoInstruction>(insn).getInfoType();;
-          ir::ImageInfoKey key;
-          key.index = bti;
-          key.type = type;
-          const ir::Register imageInfo(key.data | 0x8000);
-          ir::Register realImageInfo;
+          ir::ImageInfoKey key(bti, type);
+          const ir::Register imageInfo = insn.getSrc(0);
           if (curbeRegs.find(imageInfo) == curbeRegs.end()) {
             uint32_t offset = this->getImageInfoCurbeOffset(key, 4);
-            realImageInfo = insn.getSrc(0);
-            insertCurbeReg(realImageInfo, offset);
-            insertCurbeReg(imageInfo, (uint32_t)realImageInfo);
-          } else {
-            realImageInfo = ir::Register(curbeRegs.find(imageInfo)->second);
-            insn.setSrc(0, realImageInfo);
+            insertCurbeReg(imageInfo, offset);
           }
           continue;
         } else if (insn.getOpcode() == ir::OP_GET_SAMPLER_INFO) {
