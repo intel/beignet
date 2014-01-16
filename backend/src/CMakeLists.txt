@@ -1,4 +1,4 @@
-set (beignet_install_path ${CMAKE_INSTALL_PREFIX}/lib/beignet/)
+set (beignet_install_path ${LIB_INSTALL_DIR}/beignet/)
 
 
 set (ocl_vector_spec_file ${GBE_SOURCE_DIR}/src/builtin_vector_proto.def)
@@ -193,9 +193,9 @@ TARGET_LINK_LIBRARIES(gbe_bin_generater gbe)
 
 #install (TARGETS gbe LIBRARY DESTINATION lib)
 #install (FILES backend/program.h DESTINATION include/gen)
-install (FILES ${ocl_blob_file} DESTINATION lib/beignet)
-install (FILES ${pch_object} DESTINATION lib/beignet)
-install (FILES ${CMAKE_CURRENT_BINARY_DIR}/${pcm_lib} DESTINATION lib/beignet)
+install (FILES ${ocl_blob_file} DESTINATION ${LIB_INSTALL_DIR}/beignet)
+install (FILES ${pch_object} DESTINATION ${LIB_INSTALL_DIR}/beignet)
+install (FILES ${CMAKE_CURRENT_BINARY_DIR}/${pcm_lib} DESTINATION ${LIB_INSTALL_DIR}/beignet)
 # When build beignet itself, we need to export the local precompiled header file and precompiled module
 # file to libcl and utests.
 set (LOCAL_PCH_OBJECT_DIR "${local_pch_object}:${beignet_install_path}/ocl_stdlib.h.pch" PARENT_SCOPE)

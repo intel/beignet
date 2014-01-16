@@ -78,4 +78,4 @@ target_link_libraries(
                       ${DRM_LIBRARY}
                       ${OPENGL_LIBRARIES}
                       ${OPTIONAL_EGL_LIBRARY})
-install (TARGETS cl LIBRARY DESTINATION lib/beignet)
+install (TARGETS cl LIBRARY DESTINATION ${LIB_INSTALL_DIR}/beignet)
