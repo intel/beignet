@@ -2924,12 +2924,6 @@ namespace gbe
       GenRegister msgPayloads[4];
       GenRegister dst[insn.getDstNum()], src[insn.getSrcNum()];
       uint32_t srcNum = insn.getSrcNum();
-      uint32_t samplerOffset = 0;
-      if (srcNum == 4) {
-      /* We have the clamp border workaround. */
-        samplerOffset = insn.getSrc(srcNum - 1).value() * 8;
-        srcNum--;
-      }
 
       for( int i = 0; i < 4; ++i)
         msgPayloads[i] = sel.selReg(sel.reg(FAMILY_DWORD), TYPE_U32);
@@ -2941,7 +2935,8 @@ namespace gbe
         src[valueID] = sel.selReg(insn.getSrc(valueID), insn.getSrcType());
 
       uint32_t bti = insn.getImageIndex();
-      uint32_t sampler = insn.getSamplerIndex() + samplerOffset;
+      /* We have the clamp border workaround. */
+      uint32_t sampler = insn.getSamplerIndex() + insn.getSamplerOffset() * 8;
 
       sel.SAMPLE(dst, insn.getDstNum(), src, srcNum, msgPayloads, 4, bti, sampler);
       return true;

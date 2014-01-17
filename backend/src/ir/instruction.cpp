@@ -491,7 +491,7 @@ namespace ir {
       public TupleDstPolicy<SampleInstruction>
     {
     public:
-      SampleInstruction(uint8_t imageIdx, Tuple dstTuple, Tuple srcTuple, bool dstIsFloat, bool srcIsFloat, uint8_t sampler) {
+      SampleInstruction(uint8_t imageIdx, Tuple dstTuple, Tuple srcTuple, bool dstIsFloat, bool srcIsFloat, uint8_t sampler, uint8_t samplerOffset) {
         this->opcode = OP_SAMPLE;
         this->dst = dstTuple;
         this->src = srcTuple;
@@ -499,6 +499,7 @@ namespace ir {
         this->srcIsFloat = srcIsFloat;
         this->samplerIdx = sampler;
         this->imageIdx = imageIdx;
+        this->samplerOffset = samplerOffset;
       }
       INLINE bool wellFormed(const Function &fn, std::string &why) const;
       INLINE void out(std::ostream &out, const Function &fn) const {
@@ -522,11 +523,12 @@ namespace ir {
       INLINE Type getSrcType(void) const { return this->srcIsFloat ? TYPE_FLOAT : TYPE_S32; }
       INLINE Type getDstType(void) const { return this->dstIsFloat ? TYPE_FLOAT : TYPE_U32; }
       INLINE const uint8_t getSamplerIndex(void) const { return this->samplerIdx; }
-
-      uint16_t srcIsFloat:1;
-      uint16_t dstIsFloat:1;
-      uint16_t samplerIdx:4;
-      uint16_t imageIdx:8;
+      INLINE const uint8_t getSamplerOffset(void) const { return this->samplerOffset; }
+      uint8_t srcIsFloat:1;
+      uint8_t dstIsFloat:1;
+      uint8_t samplerIdx:4;
+      uint8_t samplerOffset:2;
+      uint8_t imageIdx;
       static const uint32_t srcNum = 4;
       static const uint32_t dstNum = 4;
     };
@@ -1473,6 +1475,7 @@ DECL_MEM_FN(SyncInstruction, uint32_t, getParameters(void), getParameters())
 DECL_MEM_FN(SampleInstruction, Type, getSrcType(void), getSrcType())
 DECL_MEM_FN(SampleInstruction, Type, getDstType(void), getDstType())
 DECL_MEM_FN(SampleInstruction, const uint8_t, getSamplerIndex(void), getSamplerIndex())
+DECL_MEM_FN(SampleInstruction, const uint8_t, getSamplerOffset(void), getSamplerOffset())
 DECL_MEM_FN(SampleInstruction, const uint8_t, getImageIndex(void), getImageIndex())
 DECL_MEM_FN(TypedWriteInstruction, Type, getSrcType(void), getSrcType())
 DECL_MEM_FN(TypedWriteInstruction, Type, getCoordType(void), getCoordType())
@@ -1657,8 +1660,8 @@ DECL_MEM_FN(GetSamplerInfoInstruction, const uint8_t, getSamplerIndex(void), get
   }
 
   // SAMPLE
-  Instruction SAMPLE(uint8_t imageIndex, Tuple dst, Tuple src, bool dstIsFloat, bool srcIsFloat, uint8_t sampler) {
-    return internal::SampleInstruction(imageIndex, dst, src, dstIsFloat, srcIsFloat, sampler).convert();
+  Instruction SAMPLE(uint8_t imageIndex, Tuple dst, Tuple src, bool dstIsFloat, bool srcIsFloat, uint8_t sampler, uint8_t samplerOffset) {
+    return internal::SampleInstruction(imageIndex, dst, src, dstIsFloat, srcIsFloat, sampler, samplerOffset).convert();
   }
 
   Instruction TYPED_WRITE(uint8_t imageIndex, Tuple src, Type srcType, Type coordType) {

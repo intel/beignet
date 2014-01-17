@@ -2412,19 +2412,16 @@ namespace gbe
             srcTupleData.push_back(ucoord);
             srcTupleData.push_back(vcoord);
             srcTupleData.push_back(wcoord);
+            uint8_t samplerOffset = 0;
 #ifdef GEN7_SAMPLER_CLAMP_BORDER_WORKAROUND
             GBE_ASSERT(AI != AE); Constant *CPV = dyn_cast<Constant>(*AI);
             assert(CPV);
             auto x = processConstant<ir::Immediate>(CPV, InsertExtractFunctor(ctx));
             GBE_ASSERTM(x.type == ir::TYPE_U32 || x.type == ir::TYPE_S32, "Invalid sampler type");
-            ir::Register offsetReg(x.data.u32);
-            srcTupleData.push_back(offsetReg);
-#else
-            ir::Register offsetReg(0);
+            samplerOffset = x.data.u32;
 #endif
-            srcTupleData.push_back(offsetReg);
             const ir::Tuple dstTuple = ctx.arrayTuple(&dstTupleData[0], elemNum);
-            const ir::Tuple srcTuple = ctx.arrayTuple(&srcTupleData[0], 4);
+            const ir::Tuple srcTuple = ctx.arrayTuple(&srcTupleData[0], 3);
 
             ir::Type srcType = ir::TYPE_S32, dstType = ir::TYPE_U32;
 
@@ -2456,7 +2453,8 @@ namespace gbe
                 GBE_ASSERT(0); // never been here.
             }
 
-            ctx.SAMPLE(surfaceID, dstTuple, srcTuple, dstType == ir::TYPE_FLOAT, srcType == ir::TYPE_FLOAT, sampler);
+            ctx.SAMPLE(surfaceID, dstTuple, srcTuple, dstType == ir::TYPE_FLOAT,
+                       srcType == ir::TYPE_FLOAT, sampler, samplerOffset);
             break;
           }
           case GEN_OCL_WRITE_IMAGE0:
