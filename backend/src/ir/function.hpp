@@ -314,6 +314,10 @@ namespace ir {
     void setCompileWorkGroupSize(size_t x, size_t y, size_t z) { compileWgSize[0] = x; compileWgSize[1] = y; compileWgSize[2] = z; }
     /*! Get required work group size. */
     const size_t *getCompileWorkGroupSize(void) const {return compileWgSize;}
+    /*! Get stack size. */
+    INLINE const uint32_t getStackSize(void) const { return this->stackSize; }
+    /*! Push stack size. */
+    INLINE void pushStackSize(uint32_t step) { this->stackSize += step; }
   private:
     friend class Context;           //!< Can freely modify a function
     std::string name;               //!< Function name
@@ -330,6 +334,7 @@ namespace ir {
     uint32_t simdWidth;             //!< 8 or 16 if forced, 0 otherwise
     bool useSLM;                    //!< Is SLM required?
     uint32_t slmSize;               //!< local variable size inside kernel function
+    uint32_t stackSize;             //!< stack size for private memory.
     SamplerSet *samplerSet;         //!< samplers used in this function.
     ImageSet* imageSet;             //!< Image set in this function's arguments..
     size_t compileWgSize[3];        //!< required work group size specified by

@@ -2757,32 +2757,23 @@ namespace gbe
     Value *src = I.getOperand(0);
     Type *elemType = I.getType()->getElementType();
     ir::ImmediateIndex immIndex;
-    bool needMultiply = true;
+    uint32_t elementSize = getTypeByteSize(unit, elemType);
 
     // Be aware, we manipulate pointers
     if (ctx.getPointerSize() == ir::POINTER_32_BITS)
-      immIndex = ctx.newImmediate(uint32_t(getTypeByteSize(unit, elemType)));
+      immIndex = ctx.newImmediate(uint32_t(elementSize));
     else
-      immIndex = ctx.newImmediate(uint64_t(getTypeByteSize(unit, elemType)));
+      immIndex = ctx.newImmediate(uint64_t(elementSize));
 
     // OK, we try to see if we know compile time the size we need to allocate
-    if (I.isArrayAllocation() == false) // one element allocated only
-      needMultiply = false;
-    else {
+    if (I.isArrayAllocation() == true) {
       Constant *CPV = dyn_cast<Constant>(src);
-      if (CPV) {
-        const uint64_t elemNum = processConstant<uint64_t>(CPV, U64CPVExtractFunctor(ctx));
-        ir::Immediate imm = ctx.getImmediate(immIndex);
-        imm.data.u64 = ALIGN(imm.data.u64 * elemNum, 4);
-        ctx.setImmediate(immIndex, imm);
-        needMultiply = false;
-      } else {
-        // Brutal but cheap way to get arrays aligned on 4 bytes: we just align
-        // the element on 4 bytes!
-        ir::Immediate imm = ctx.getImmediate(immIndex);
-        imm.data.u64 = ALIGN(imm.data.u64, 4);
-        ctx.setImmediate(immIndex, imm);
-      }
+      GBE_ASSERT(CPV);
+      const uint64_t elemNum = processConstant<uint64_t>(CPV, U64CPVExtractFunctor(ctx));
+      ir::Immediate imm = ctx.getImmediate(immIndex);
+      imm.data.u64 = ALIGN(imm.data.u64 * elemNum, 4);
+      elementSize *= elemNum;
+      ctx.setImmediate(immIndex, imm);
     }
 
     // Now emit the stream of instructions to get the allocated pointer
@@ -2797,32 +2788,22 @@ namespace gbe
 
     // align the stack pointer according to data alignment
     if(align > 1) {
-      // (ptr + (align-1)) & ~(align-1)
-      ir::ImmediateIndex immAlign;
-      immAlign = ctx.newIntegerImmediate(align-1, ir::TYPE_U32);
-      ir::Register alignReg = ctx.reg(ctx.getPointerFamily());
-      ctx.LOADI(ir::TYPE_S32, alignReg, immAlign);
-      ctx.ADD(ir::TYPE_U32, stack, stack, alignReg);
-
-      alignReg = ctx.reg(ctx.getPointerFamily());
-      immAlign = ctx.newIntegerImmediate(~(align-1), ir::TYPE_U32);
-      ctx.LOADI(ir::TYPE_S32, alignReg, immAlign);
-      ctx.AND(ir::TYPE_U32, stack, stack, alignReg);
+      uint32_t prevStackPtr = ctx.getFunction().getStackSize();
+      uint32_t step = ((prevStackPtr + (align - 1)) & ~(align - 1)) - prevStackPtr;
+      if (step != 0) {
+        ir::ImmediateIndex stepImm = ctx.newIntegerImmediate(step, ir::TYPE_U32);
+        ir::Register stepReg = ctx.reg(ctx.getPointerFamily());
+        ctx.LOADI(ir::TYPE_S32, stepReg, stepImm);
+        ctx.ADD(ir::TYPE_U32, stack, stack, stepReg);
+        ctx.getFunction().pushStackSize(step);
+      }
     }
     // Set the destination register properly
     ctx.MOV(imm.type, dst, stack);
 
-    // Easy case, we just increment the stack pointer
-    if (needMultiply == false) {
-      ctx.LOADI(imm.type, reg, immIndex);
-      ctx.ADD(imm.type, stack, stack, reg);
-    }
-    // Harder case (variable length array) that requires a multiply
-    else {
-      ctx.LOADI(imm.type, reg, immIndex);
-      ctx.MUL(imm.type, reg, this->getRegister(src), reg);
-      ctx.ADD(imm.type, stack, stack, reg);
-    }
+    ctx.LOADI(imm.type, reg, immIndex);
+    ctx.ADD(imm.type, stack, stack, reg);
+    ctx.getFunction().pushStackSize(elementSize);
   }
 
   static INLINE Value *getLoadOrStoreValue(LoadInst &I) {

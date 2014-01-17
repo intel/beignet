@@ -389,7 +389,12 @@ namespace gbe
       return;
     // Be sure that the stack pointer is set
     GBE_ASSERT(this->kernel->getCurbeOffset(GBE_CURBE_STACK_POINTER, 0) >= 0);
-    this->kernel->stackSize = 1*KB; // XXX compute that in a better way
+    uint32_t stackSize = 1*KB;
+    while (stackSize < fn.getStackSize()) {
+      stackSize <<= 1;
+      GBE_ASSERT(stackSize <= 64*KB);
+    }
+    this->kernel->stackSize = stackSize;
   }
 
   uint32_t Context::newCurbeEntry(gbe_curbe_type value,
