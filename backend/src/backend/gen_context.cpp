@@ -1750,11 +1750,10 @@ namespace gbe
   void GenContext::emitSampleInstruction(const SelectionInstruction &insn) {
     const GenRegister dst = ra->genReg(insn.dst(0));
     const GenRegister msgPayload = GenRegister::retype(ra->genReg(insn.src(0)), GEN_TYPE_F);
-    const unsigned char bti = insn.extra.function;
-    const unsigned char sampler = insn.extra.elem;
+    const unsigned char bti = insn.extra.rdbti;
+    const unsigned char sampler = insn.extra.sampler;
     const GenRegister ucoord = ra->genReg(insn.src(4));
     const GenRegister vcoord = ra->genReg(insn.src(5));
-    const GenRegister wcoord = ra->genReg(insn.src(6));
     uint32_t simdWidth = p->curr.execWidth;
     uint32_t coord_cnt = 2;
     p->push();
@@ -1764,8 +1763,8 @@ namespace gbe
     /* Prepare message payload. */
     p->MOV(GenRegister::f8grf(nr , 0), ucoord);
     p->MOV(GenRegister::f8grf(nr + (simdWidth/8), 0), vcoord);
-    if (insn.src(6).reg() != 0) {
-      p->MOV(GenRegister::f8grf(nr + (simdWidth/4), 0), wcoord);
+    if (insn.extra.is3DRead) {
+      p->MOV(GenRegister::f8grf(nr + (simdWidth/4), 0), ra->genReg(insn.src(6)));
       coord_cnt++;
     }
     p->SAMPLE(dst, msgPayload, false, bti, sampler, coord_cnt, simdWidth, -1, 0);
@@ -1805,14 +1804,13 @@ namespace gbe
 
   void GenContext::emitTypedWriteInstruction(const SelectionInstruction &insn) {
     const GenRegister header = GenRegister::retype(ra->genReg(insn.src(0)), GEN_TYPE_UD);
-    const GenRegister ucoord = ra->genReg(insn.src(insn.extra.elem));
-    const GenRegister vcoord = ra->genReg(insn.src(1 + insn.extra.elem));
-    const GenRegister wcoord = ra->genReg(insn.src(2 + insn.extra.elem));
-    const GenRegister R = ra->genReg(insn.src(3 + insn.extra.elem));
-    const GenRegister G = ra->genReg(insn.src(4 + insn.extra.elem));
-    const GenRegister B = ra->genReg(insn.src(5 + insn.extra.elem));
-    const GenRegister A = ra->genReg(insn.src(6 + insn.extra.elem));
-    const unsigned char bti = insn.extra.function;
+    const GenRegister ucoord = ra->genReg(insn.src(insn.extra.msglen));
+    const GenRegister vcoord = ra->genReg(insn.src(1 + insn.extra.msglen));
+    const GenRegister R = ra->genReg(insn.src(3 + insn.extra.msglen));
+    const GenRegister G = ra->genReg(insn.src(4 + insn.extra.msglen));
+    const GenRegister B = ra->genReg(insn.src(5 + insn.extra.msglen));
+    const GenRegister A = ra->genReg(insn.src(6 + insn.extra.msglen));
+    const unsigned char bti = insn.extra.bti;
 
     p->push();
     uint32_t simdWidth = p->curr.execWidth;
@@ -1850,8 +1848,8 @@ namespace gbe
         p->curr.quarterControl = GEN_COMPRESSION_Q2;
       QUARTER_MOV0(nr + 1, ucoord);
       QUARTER_MOV0(nr + 2, vcoord);
-      if (insn.src(2 + insn.extra.elem).reg() != 0)
-        QUARTER_MOV0(nr + 3, wcoord);
+      if (insn.extra.is3DWrite)
+        QUARTER_MOV0(nr + 3, ra->genReg(insn.src(2 + insn.extra.msglen)));
       QUARTER_MOV1(nr + 5, R);
       QUARTER_MOV1(nr + 6, G);
       QUARTER_MOV1(nr + 7, B);

@@ -111,6 +111,16 @@ namespace gbe
         uint16_t scratchOffset;
         uint16_t scratchMsgHeader;
       };
+      struct {
+        uint16_t bti:8;
+        uint16_t msglen:5;
+        uint16_t is3DWrite:1;
+      };
+      struct {
+        uint16_t rdbti:8;
+        uint16_t sampler:5;
+        uint16_t is3DRead:1;
+      };
       uint32_t barrierType;
     } extra;
     /*! Gen opcode */

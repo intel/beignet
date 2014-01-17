@@ -543,9 +543,9 @@ namespace gbe
     /*! Encode ternary instructions */
     void ALU3(SelectionOpcode opcode, Reg dst, Reg src0, Reg src1, Reg src2);
     /*! Encode sample instructions */
-    void SAMPLE(GenRegister *dst, uint32_t dstNum, GenRegister *src, uint32_t srcNum, GenRegister *msgPayloads, uint32_t msgNum, uint32_t bti, uint32_t sampler);
+    void SAMPLE(GenRegister *dst, uint32_t dstNum, GenRegister *src, uint32_t srcNum, GenRegister *msgPayloads, uint32_t msgNum, uint32_t bti, uint32_t sampler, bool is3D);
     /*! Encode typed write instructions */
-    void TYPED_WRITE(GenRegister *src, uint32_t srcNum, GenRegister *msgs, uint32_t msgNum, uint32_t bti);
+    void TYPED_WRITE(GenRegister *src, uint32_t srcNum, GenRegister *msgs, uint32_t msgNum, uint32_t bti, bool is3D);
     /*! Get image information */
     void GET_IMAGE_INFO(uint32_t type, GenRegister *dst, uint32_t dst_num, uint32_t bti);
     /*! Multiply 64-bit integers */
@@ -1333,7 +1333,7 @@ namespace gbe
   void Selection::Opaque::SAMPLE(GenRegister *dst, uint32_t dstNum,
                                  GenRegister *src, uint32_t srcNum,
                                  GenRegister *msgPayloads, uint32_t msgNum,
-                                 uint32_t bti, uint32_t sampler) {
+                                 uint32_t bti, uint32_t sampler, bool is3D) {
     SelectionInstruction *insn = this->appendInsn(SEL_OP_SAMPLE, dstNum, msgNum + srcNum);
     SelectionVector *dstVector = this->appendVector();
     SelectionVector *msgVector = this->appendVector();
@@ -1356,8 +1356,9 @@ namespace gbe
     msgVector->isSrc = 1;
     msgVector->reg = &insn->src(0);
 
-    insn->extra.function = bti;
-    insn->extra.elem = sampler;
+    insn->extra.rdbti = bti;
+    insn->extra.sampler = sampler;
+    insn->extra.is3DRead = is3D;
   }
 
   ///////////////////////////////////////////////////////////////////////////
@@ -1371,7 +1372,7 @@ namespace gbe
 
   void Selection::Opaque::TYPED_WRITE(GenRegister *src, uint32_t srcNum,
                                       GenRegister *msgs, uint32_t msgNum,
-                                      uint32_t bti) {
+                                      uint32_t bti, bool is3D) {
     uint32_t elemID = 0;
     uint32_t i;
     SelectionInstruction *insn = this->appendInsn(SEL_OP_TYPED_WRITE, 0, msgNum + srcNum);
@@ -1382,8 +1383,9 @@ namespace gbe
     for (i = 0; i < srcNum; ++i, ++elemID)
       insn->src(elemID) = src[i];
 
-    insn->extra.function = bti;
-    insn->extra.elem = msgNum;
+    insn->extra.bti = bti;
+    insn->extra.msglen = msgNum;
+    insn->extra.is3DWrite = is3D;
     // Sends require contiguous allocation
     msgVector->regNum = msgNum;
     msgVector->isSrc = 1;
@@ -2938,7 +2940,7 @@ namespace gbe
       /* We have the clamp border workaround. */
       uint32_t sampler = insn.getSamplerIndex() + insn.getSamplerOffset() * 8;
 
-      sel.SAMPLE(dst, insn.getDstNum(), src, srcNum, msgPayloads, 4, bti, sampler);
+      sel.SAMPLE(dst, insn.getDstNum(), src, srcNum, msgPayloads, 4, bti, sampler, insn.is3D());
       return true;
     }
     DECL_CTOR(SampleInstruction, 1, 1);
@@ -2955,7 +2957,7 @@ namespace gbe
       GenRegister msgs[9]; // (header + U + V + R + LOD + 4)
       GenRegister src[insn.getSrcNum()];
       uint32_t msgNum = (8 / (simdWidth / 8)) + 1;
-      uint32_t coordNum = (insn.getSrcNum() == 6) ? 2 : 3;
+      uint32_t coordNum = 3;
 
       for(uint32_t i = 0; i < msgNum; i++)
         msgs[i] = sel.selReg(sel.reg(FAMILY_DWORD), TYPE_U32);
@@ -2968,7 +2970,7 @@ namespace gbe
         src[valueID] = sel.selReg(insn.getSrc(valueID), insn.getSrcType());
 
       uint32_t bti = insn.getImageIndex();
-      sel.TYPED_WRITE(src, insn.getSrcNum(), msgs, msgNum, bti);
+      sel.TYPED_WRITE(src, insn.getSrcNum(), msgs, msgNum, bti, insn.is3D());
       return true;
     }
     DECL_CTOR(TypedWriteInstruction, 1, 1);

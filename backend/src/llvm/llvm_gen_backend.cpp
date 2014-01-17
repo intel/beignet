@@ -2398,10 +2398,12 @@ namespace gbe
             GBE_ASSERT(AI != AE); const ir::Register ucoord = this->getRegister(*AI); ++AI;
             GBE_ASSERT(AI != AE); const ir::Register vcoord = this->getRegister(*AI); ++AI;
             ir::Register wcoord;
+            bool is3D = false;
             if (it->second >= GEN_OCL_READ_IMAGE10 && it->second <= GEN_OCL_READ_IMAGE15) {
               GBE_ASSERT(AI != AE); wcoord = this->getRegister(*AI); ++AI;
+              is3D = true;
             } else
-              wcoord = ir::Register(0);
+              wcoord = ucoord; // not used, just a padding.
 
             vector<ir::Register> dstTupleData, srcTupleData;
             const uint32_t elemNum = 4;
@@ -2454,7 +2456,7 @@ namespace gbe
             }
 
             ctx.SAMPLE(surfaceID, dstTuple, srcTuple, dstType == ir::TYPE_FLOAT,
-                       srcType == ir::TYPE_FLOAT, sampler, samplerOffset);
+                       srcType == ir::TYPE_FLOAT, sampler, samplerOffset, is3D);
             break;
           }
           case GEN_OCL_WRITE_IMAGE0:
@@ -2475,10 +2477,12 @@ namespace gbe
             GBE_ASSERT(AI != AE); const ir::Register ucoord = this->getRegister(*AI); ++AI;
             GBE_ASSERT(AI != AE); const ir::Register vcoord = this->getRegister(*AI); ++AI;
             ir::Register wcoord;
+            bool is3D = false;
             if(it->second >= GEN_OCL_WRITE_IMAGE10 && it->second <= GEN_OCL_WRITE_IMAGE15) {
               GBE_ASSERT(AI != AE); wcoord = this->getRegister(*AI); ++AI;
+              is3D = true;
             } else
-              wcoord = ir::Register(0);
+              wcoord = ucoord; // not used, just padding.
             GBE_ASSERT(AI != AE);
             vector<ir::Register> srcTupleData;
 
@@ -2522,7 +2526,7 @@ namespace gbe
                 GBE_ASSERT(0); // never been here.
             }
 
-            ctx.TYPED_WRITE(surfaceID, srcTuple, srcType, coordType);
+            ctx.TYPED_WRITE(surfaceID, srcTuple, srcType, coordType, is3D);
             break;
           }
           case GEN_OCL_MUL_HI_INT:

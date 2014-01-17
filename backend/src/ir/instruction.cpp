@@ -491,7 +491,7 @@ namespace ir {
       public TupleDstPolicy<SampleInstruction>
     {
     public:
-      SampleInstruction(uint8_t imageIdx, Tuple dstTuple, Tuple srcTuple, bool dstIsFloat, bool srcIsFloat, uint8_t sampler, uint8_t samplerOffset) {
+      SampleInstruction(uint8_t imageIdx, Tuple dstTuple, Tuple srcTuple, bool dstIsFloat, bool srcIsFloat, uint8_t sampler, uint8_t samplerOffset, bool is3D) {
         this->opcode = OP_SAMPLE;
         this->dst = dstTuple;
         this->src = srcTuple;
@@ -500,6 +500,7 @@ namespace ir {
         this->samplerIdx = sampler;
         this->imageIdx = imageIdx;
         this->samplerOffset = samplerOffset;
+        this->is3DRead = is3D;
       }
       INLINE bool wellFormed(const Function &fn, std::string &why) const;
       INLINE void out(std::ostream &out, const Function &fn) const {
@@ -524,10 +525,12 @@ namespace ir {
       INLINE Type getDstType(void) const { return this->dstIsFloat ? TYPE_FLOAT : TYPE_U32; }
       INLINE const uint8_t getSamplerIndex(void) const { return this->samplerIdx; }
       INLINE const uint8_t getSamplerOffset(void) const { return this->samplerOffset; }
+      INLINE const bool is3D(void) const { return !!this->is3DRead; }
       uint8_t srcIsFloat:1;
       uint8_t dstIsFloat:1;
       uint8_t samplerIdx:4;
-      uint8_t samplerOffset:2;
+      uint8_t samplerOffset:1;
+      uint8_t is3DRead:1;
       uint8_t imageIdx;
       static const uint32_t srcNum = 4;
       static const uint32_t dstNum = 4;
@@ -540,12 +543,13 @@ namespace ir {
     {
     public:
 
-      INLINE TypedWriteInstruction(uint8_t imageIdx, Tuple srcTuple, Type srcType, Type coordType) {
+      INLINE TypedWriteInstruction(uint8_t imageIdx, Tuple srcTuple, Type srcType, Type coordType, bool is3D) {
         this->opcode = OP_TYPED_WRITE;
         this->src = srcTuple;
         this->coordType = coordType;
         this->srcType = srcType;
         this->imageIdx = imageIdx;
+        this->is3DWrite = is3D;
       }
       INLINE bool wellFormed(const Function &fn, std::string &why) const;
       INLINE void out(std::ostream &out, const Function &fn) const {
@@ -565,6 +569,9 @@ namespace ir {
       uint8_t srcType;
       uint8_t coordType;
       uint8_t imageIdx;
+      uint8_t is3DWrite;
+
+      INLINE const bool is3D(void) const { return !!this->is3DWrite; }
 
       INLINE const uint8_t getImageIndex(void) const { return this->imageIdx; }
       INLINE Type getSrcType(void) const { return (Type)this->srcType; }
@@ -1475,11 +1482,13 @@ DECL_MEM_FN(SyncInstruction, uint32_t, getParameters(void), getParameters())
 DECL_MEM_FN(SampleInstruction, Type, getSrcType(void), getSrcType())
 DECL_MEM_FN(SampleInstruction, Type, getDstType(void), getDstType())
 DECL_MEM_FN(SampleInstruction, const uint8_t, getSamplerIndex(void), getSamplerIndex())
+DECL_MEM_FN(SampleInstruction, const bool, is3D(void), is3D())
 DECL_MEM_FN(SampleInstruction, const uint8_t, getSamplerOffset(void), getSamplerOffset())
 DECL_MEM_FN(SampleInstruction, const uint8_t, getImageIndex(void), getImageIndex())
 DECL_MEM_FN(TypedWriteInstruction, Type, getSrcType(void), getSrcType())
 DECL_MEM_FN(TypedWriteInstruction, Type, getCoordType(void), getCoordType())
 DECL_MEM_FN(TypedWriteInstruction, const uint8_t, getImageIndex(void), getImageIndex())
+DECL_MEM_FN(TypedWriteInstruction, const bool, is3D(void), is3D())
 DECL_MEM_FN(GetImageInfoInstruction, uint32_t, getInfoType(void), getInfoType())
 DECL_MEM_FN(GetImageInfoInstruction, const uint8_t, getImageIndex(void), getImageIndex())
 DECL_MEM_FN(GetSamplerInfoInstruction, const uint8_t, getSamplerIndex(void), getSamplerIndex())
@@ -1660,12 +1669,12 @@ DECL_MEM_FN(GetSamplerInfoInstruction, const uint8_t, getSamplerIndex(void), get
   }
 
   // SAMPLE
-  Instruction SAMPLE(uint8_t imageIndex, Tuple dst, Tuple src, bool dstIsFloat, bool srcIsFloat, uint8_t sampler, uint8_t samplerOffset) {
-    return internal::SampleInstruction(imageIndex, dst, src, dstIsFloat, srcIsFloat, sampler, samplerOffset).convert();
+  Instruction SAMPLE(uint8_t imageIndex, Tuple dst, Tuple src, bool dstIsFloat, bool srcIsFloat, uint8_t sampler, uint8_t samplerOffset, bool is3D) {
+    return internal::SampleInstruction(imageIndex, dst, src, dstIsFloat, srcIsFloat, sampler, samplerOffset, is3D).convert();
   }
 
-  Instruction TYPED_WRITE(uint8_t imageIndex, Tuple src, Type srcType, Type coordType) {
-    return internal::TypedWriteInstruction(imageIndex, src, srcType, coordType).convert();
+  Instruction TYPED_WRITE(uint8_t imageIndex, Tuple src, Type srcType, Type coordType, bool is3D) {
+    return internal::TypedWriteInstruction(imageIndex, src, srcType, coordType, is3D).convert();
   }
 
   Instruction GET_IMAGE_INFO(int infoType, Register dst, uint8_t imageIndex, Register infoReg) {

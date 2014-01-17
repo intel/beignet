@@ -347,10 +347,8 @@ namespace ir {
   /*! Store data in an texture */
   class TypedWriteInstruction : public Instruction {
   public:
-    enum {
-     SURFACE_BTI = 0
-    };
     /*! Return true if the given instruction is an instance of this class */
+    const bool is3D() const;
     static bool isClassOf(const Instruction &insn);
     const uint8_t getImageIndex() const;
     Type getSrcType(void) const;
@@ -360,11 +358,7 @@ namespace ir {
   /*! Load texels from a texture */
   class SampleInstruction : public Instruction {
   public:
-    enum {
-     SURFACE_BTI = 0,
-     SAMPLER_BTI = 1
-    };
-
+    const bool is3D() const;
     const uint8_t getImageIndex() const;
     const uint8_t getSamplerIndex(void) const;
     const uint8_t getSamplerOffset(void) const;
@@ -386,9 +380,6 @@ namespace ir {
   /*! Get image information */
   class GetImageInfoInstruction : public Instruction {
   public:
-    enum {
-     SURFACE_BTI = 0
-    };
     enum {
      WIDTH = 0,
      HEIGHT = 1,
@@ -671,9 +662,9 @@ namespace ir {
   /*! sync.params... (see Sync instruction) */
   Instruction SYNC(uint32_t parameters);
   /*! typed write */
-  Instruction TYPED_WRITE(uint8_t imageIndex, Tuple src, Type srcType, Type coordType);
+  Instruction TYPED_WRITE(uint8_t imageIndex, Tuple src, Type srcType, Type coordType, bool is3D);
   /*! sample textures */
-  Instruction SAMPLE(uint8_t imageIndex, Tuple dst, Tuple src, bool dstIsFloat, bool srcIsFloat, uint8_t sampler, uint8_t samplerOffset);
+  Instruction SAMPLE(uint8_t imageIndex, Tuple dst, Tuple src, bool dstIsFloat, bool srcIsFloat, uint8_t sampler, uint8_t samplerOffset, bool is3D);
   /*! get image information , such as width/height/depth/... */
   Instruction GET_IMAGE_INFO(int infoType, Register dst, uint8_t imageIndex, Register infoReg);
   /*! get sampler information  */
