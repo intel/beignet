@@ -9,8 +9,43 @@ the programs and run them on the GPU. The code base also contains the compiler
 part of the stack which is included in `backend/`. For more specific information
 about the compiler, please refer to `backend/README.md`
 
-How to build
+Prerequisite
 ------------
+
+The project depends on the following external libaries:
+
+- Several X components (XLib, Xfixes, Xext)
+- libdrm libraries (libdrm and libdrm\_intel)
+- Various LLVM components
+- The compiler backend itself (libgbe)
+- Mesa git master version built with gbm enabled to support extension cl\_khr\_gl\_sharing.
+
+Note that the compiler depends on LLVM (Low-Level Virtual Machine project).
+Right now, the code has been compiled with LLVM 3.3/3.4. It will not compile
+with any thing older.
+
+[http://llvm.org/releases/](http://llvm.org/releases/)
+
+LLVM 3.3 and 3.4 are supported. Till now, the recommended LLVM version is 3.3.
+There are some severe OpenCL related regression in current clang 3.4 version.
+
+Also note that the code was compiled on GCC 4.6 and GCC 4.7. Since the code uses
+really recent C++11 features, you may expect problems with older compilers. Last
+time I tried, the code breaks ICC 12 and Clang with internal compiler errors
+while compiling anonymous nested lambda functions.
+
+And if you want to work with the standard ICD libOpenCL.so, then you need
+two more packages (the following package name is for Ubuntu):
+- ocl-icd-dev
+- ocl-icd-libopencl1
+
+If you don't want to enable ICD, or your system doesn't have ICD OpenCL support,
+you can still link to the beignet OpenCL library. You can find the beignet/libcl.so
+in your system's library installation directories.
+
+
+How to build and install
+------------------------
 
 The project uses CMake with three profiles:
 
@@ -26,41 +61,28 @@ Basically, from the root directory of the project
 
 `> cmake ../ # to configure`
 
-Choose whatever you want for the build.
-
-Then press 'c' to configure and 'g' to generate the code.
+CMake will check the dependencies and will complain if it does not find them.
 
 `> make`
 
-The project depends on several external libraries:
-
-- Several X components (XLib, Xfixes, Xext)
-- libdrm libraries (libdrm and libdrm\_intel)
-- Various LLVM components
-- The compiler backend itself (libgbe)
-- Mesa git master version built with gbm enabled to support extension cl\_khr\_gl\_sharing.
-
-CMake will check the dependencies and will complain if it does not find them.
-
-The cmake will also build the backend project. Please refer to:
+The cmake will build the backend firstly. Please refer to:
 [[OpenCL Gen Backend|Beignet/Backend]] to get more dependencies.
 
 Once built, the run-time produces a shared object libcl.so which basically
 directly implements the OpenCL API. A set of tests are also produced. They may
 be found in `utests/`.
 
-Note that the compiler depends on LLVM (Low-Level Virtual Machine project).
-Right now, the code has been compiled with LLVM 3.1/3.2. It will not compile
-with any thing older.
+Simply invoke:
+`> make install`
 
-[http://llvm.org/releases/](http://llvm.org/releases/)
+It installs the following three files to the beignet/ directory relatively to
+your library installation directory.
+- libcl.so
+- ocl_stdlib.h, ocl_stdlib.h.pch
+- beignet.bc
 
-LLVM 3.3 and 3.4 are supported.
-
-Also note that the code was compiled on GCC 4.6 and GCC 4.7. Since the code uses
-really recent C++11 features, you may expect problems with older compilers. Last
-time I tried, the code breaks ICC 12 and Clang with internal compiler errors
-while compiling anonymous nested lambda functions.
+It installs the OCL icd vendor files to /etc/OpenCL/vendors, if the system support ICD.
+- intel-beignet.icd
 
 How to run
 ----------
@@ -85,44 +107,33 @@ will run all the unit tests one after the others
 
 will only run `some_unit_test0` and `some_unit_test1` tests
 
-How to install
---------------
-
-Simply invoke:
-`> make install`
-
-It installs libcl.so and the precompiled header/module files and the ocl_stdlib.h file
-into install_prefix/beignet/ direcotry. If the system support ICD, it also installs the
-intel-beignet.icd to /etc/OpenCL/vendors/.
-
-To make beignet support ICD, you need to have the following two packages installed:
-ocl-icd-dev, ocl-icd-libopencl1 (package name for the ubuntu.)
-before your build beignet.
-
 Supported Hardware
 ------------------
 
-The code was tested on IVB GT2 with ubuntu and fedora core distribution.
-Currently Only IVB is supported right now. Actually, the code was only run on IVB GT2. You
-may expect some issues with IVB GT1.
+The code was tested on IVB GT2 with ubuntu and fedora core distribution. The recommended
+kernel version is equal or newer than 3.11. Currently Only IVB is supported right now.
+Actually, the code was run on IVB GT2/GT1, and both system are well supported now.
 
 TODO
 ----
 
-The run-time is far from being complete. Most of the pieces have been put
-together to test and develop the OpenCL compiler. A partial list of things to
-do:
+Interns of the OpenCL 1.1 spec, beignet is quite complete now. We can pass almost
+all the piglit OpenCL test cases now. And the pass rate for the OpenCV test suite
+is also good. There are still some remains work items listed as below, most of them
+are extension support and performance related.
 
 - Complete cl\_khr\_gl\_sharing support. We lack of some APIs implementation such
   as clCreateFromGLBuffer,clCreateFromGLRenderbuffer,clGetGLObjectInfo... Currently,
-  the working APIs are clCreateFromGLTexture,clCreateFromGLTexture2D.
+  the working APIs are clCreateFromGLTexture,clCreateFromGLTexture2D. This work
+  highly depends on mesa support. It seems that mesa would not provide such type
+  of extensions, we may have to hack with mesa source code to support this extension.
 
 - Check that NDRangeKernels can be pushed into _different_ queues from several
   threads.
 
 - No state tracking at all. One batch buffer is created at each "draw call"
   (i.e. for each NDRangeKernels). This is really inefficient since some
-  expensive pipe controls are issued for each batch buffer
+  expensive pipe controls are issued for each batch buffer.
 
 - Valgrind reports some leaks in libdrm. It sounds like a false positive but it
   has to be checked. Idem for LLVM. There is one leak here to check.
@@ -133,7 +144,10 @@ does not comply with the standard or it is just missing)
 
 Project repository
 ------------------
-Right now, we host our project on fdo at: git://anongit.freedesktop.org/beignet.
+Right now, we host our project on fdo at:
+[http://cgit.freedesktop.org/beignet/](http://cgit.freedesktop.org/beignet/).
+And the intel 01.org:
+[https://01.org/beignet](https://01.org/beignet)
 
 The team
 --------

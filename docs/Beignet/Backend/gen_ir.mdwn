@@ -63,12 +63,12 @@ Very limited IR
 ---------------
 
 The other major question, in particular when you look similar stacks like NVidia
-PTX, is:
+SPIR, is:
 
 do we need to encode in the IR register modifiers (abs, negate...) and immediate
 registers (like in add.f x y 1.0)?
 
-Contrary to other IRs (PTX and even LLVM that both supports immediates), we also
+Contrary to other IRs (SPIR and even LLVM that both supports immediates), we also
 chose to have a very simply IR, much simpler than the final ISA, and to merge
 back what we need at the instruction selection pass. Since we need instruction
 selection, let us keep the IR simple.
@@ -123,8 +123,8 @@ LLVM backends
 
 Since we will need to do some significant work anyway, this leads us to choose a
 more hard-coded path with a in-house IR. Note that will not prevent us from
-implementing later a LLVM backend "by the book" as Nvidia does today with PTX
-(using a LLVM backend to do the LLVM IR -> PTX conversion)
+implementing later a LLVM backend "by the book" as Nvidia does today with SPIR
+(using a LLVM backend to do the LLVM IR -> SPIR conversion)
 
 
 SSA or no SSA
@@ -158,7 +158,7 @@ The IR is organized as follows:
 
 - Functions (defined in `src/ir/function.*pp`). They are basically the counter
   part of LLVM functions or OpenCL kernels. Note that function arguments are a
-  problem. We actually use the PTX ABI. Everything smaller than the machine word
+  problem. We actually use the SPIR ABI. Everything smaller than the machine word
   size (i.e. 32 bits for Gen) is passed by value with a register. Everything
   else which is bigger than is passed by pointer with a ByVal attribute.
   Note that requires some special treatment in the IR (see below) to make the
@@ -174,7 +174,7 @@ Function arguments and pushed constants
 ---------------------------------------
 
 Gen can push values into the register file i.e. some registers are preset when
-the kernel starts to run. As detailed previously, the PTX ABI is convenient
+the kernel starts to run. As detailed previously, the SPIR ABI is convenient
 since every argument is either one register or one pointer to load from or to
 store to.
 

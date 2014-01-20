@@ -83,22 +83,25 @@ file is very flexible i.e. it can (almost) be freely partitioned. To handle this
 peculiarity, we simply implemented a free list based generic memory allocator as
 done with `RegisterFilePartitioner` in `src/backend/context.cpp`.
 
+We provide two directions of memory allocation. From tail to head direction is
+used for normal register, and from head to tail is for the curbe payload register
+allocation.
+
 We then simply implemented a linear scan allocator (see
-`gen_reg_allocation.cpp`). The spilling is not implemented and is still a work
-in progress. The thing is that spilling must be specifically handled with Gen.
-Indeed:
-
-1. Bad point. Spilling is expensive and require to assemble messages for it
-
-2. Good point. Gen is able to spill up to 256 _contiguous_ bytes in one message.
-This must be used for high performance spilling and this may require to reorder
-properly registers to spill.
+`gen_reg_allocation.cpp`). The spilling is implemented in the same file. The
+heuristics we used is the register's end point. It always try to spill the
+register with largest liveness end point if possible. Although Gen support to
+spill 4 SIMD8 register at once, we only support one currently. Need to optimize
+it latter, at least for the vectors' spilling. Maybe a new pass in the backend
+to find opportunity to gatter more spilled register into one contiguous area
+is also worth to do. We also can consider the spill register's interval to
+do smarter scratch memory allocation to reduce scratch memory requirement.
 
 Instruction scheduling
 ----------------------
 
-Intra-basic block instruction scheduling is relatively simple. It is not
-implemented yet.
+Intra-basic block instruction scheduling is relatively simple. It is implemented
+but has known bug, we need further effort to fix it.
 
 Instruction encoding
 --------------------
@@ -108,3 +111,8 @@ This is mostly done in `src/backend/gen_context.cpp` and
 straightforward. We just forward the selection code using the physically
 allocated registers. There is nothing special here. Just boilerplate.
 
+There are plenty of huge macro instructions in the `gen_context.cpp` currently.
+Most of them are for the long/double support on a Gen platform which doesn't support
+long/double in the hardware level. We may need to clean up and move those non-hardware
+related functions into upper layer. Too many huge instruction which will totally
+make the register spilling and dead code elimination harder and inefficient.

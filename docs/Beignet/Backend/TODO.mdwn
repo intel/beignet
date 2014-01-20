@@ -1,14 +1,15 @@
 TODO
 ====
 
-The compiler is far from complete. Even if the skeleton is now done and should
-be solid, There are a _lot_ of things to do from trivial to complex.
+The compiler is quite complete now in terms of functionality. It could pass
+almos all of the piglit OCL test cases and the pass rate for the OpenCV test
+suite is also quite good now. But there are plenty of things to do for the
+final performance tuning.
 
 OpenCL standard library
 -----------------------
 
-Today we define the OpenCL API in header file `src/ocl_stdlib.h`. This file is
-from being complete.
+Today we define the OpenCL API in header file `src/ocl_stdlib.h`.
 
 By the way, one question remains: do we want to implement
 the high-precision functions as _inline_ functions or as external functions to
@@ -19,11 +20,9 @@ do both actually.
 LLVM front-end
 --------------
 
-The code is defined in `src/llvm`.  We used the PTX ABI and the OpenCL profile
+The code is defined in `src/llvm`.  We used the SPIR and the OpenCL profile
 to compile the code. Therefore, a good part of the job is already done. However,
 many things must be implemented:
-
-- Lowering down of various intrinsics like `llvm.memcpy`
 
 - Better resolving of the PHI functions. Today, we always generate MOV
   instructions at the end of each basic block . They can be easily optimized.
@@ -31,10 +30,25 @@ many things must be implemented:
 - From LLVM 3.3, we use SPIR IR. We need to use the compiler defined type to
   represent sampler_t/image2d_t/image1d_t/....
 
+- Considering to use libclc in our project and avoid to use the PCH which is not
+  compatible for different clang versions. And may contribute what we have done in
+  the ocl_stdlib.h to libclc if possible.
+
+- Optimize math functions. If the native math instructions don't compy with the
+  OCL spec, we use pure software style to implement those math instructions which
+  is extremely slow, for example. The cos and sin for HD4000 platform are very slow.
+  For some applications which may not need such a high accurate results. We may
+  provide a mechanism to use native_xxx functions instead of the extremely slow
+  version.
+
 Gen IR
 ------
 
 The code is defined in `src/ir`. Main things to do are:
+
+- Implement those llvm.memset/llvm.memcpy more efficiently. Currently, we lower
+  them as normal memcpy at llvm module level and not considering the intrinsics
+  all have a constant data length.
 
 - Finishing the handling of function arguments (see the [[IR
   description|gen_ir]] for more details)
@@ -54,6 +68,11 @@ The code is defined in `src/ir`. Main things to do are:
   This will obviously impact both instruction selection and the register
   allocation.
 
+- Implement fast path for small local variables. When the kernel only defines
+  a small local array/variable, there will be a good chance to allocate the local
+  array/variable in register space rather than system memory. This will reduce a
+  lot of memory load/stroe from the system memory.
+
 Backend
 -------
 
@@ -64,7 +83,14 @@ The code is defined in `src/backend`. Main things to do are:
 - Implementing proper instruction selection. A "simple" tree matching algorithm
   should provide good results for Gen
 
-- Improving the instruction scheduling pass
+- Improving the instruction scheduling pass. The current scheduling code has some bugs,
+  we disable it by default currently. We need to fix them in the future.
+
+- Some instructions are introduced in the last code generation stage. We need to
+  introduce a pass after that to eliminate dead instruction or duplicate MOVs and
+  some instructions with zero operands.
+
+- leverage the structured if/endif for branching processing ?
 
 General plumbing
 ----------------
