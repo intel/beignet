@@ -225,6 +225,8 @@ namespace ir {
     for (const auto &loadAddImm : seq) {
       LoadInstruction *load = cast<LoadInstruction>(loadAddImm.load);
       const uint32_t valueNum = load->getValueNum();
+      bool replaced = false;
+      Instruction *ins_after = load; // the instruction to insert after.
       for (uint32_t valueID = 0; valueID < valueNum; ++valueID) {
         const Type type = load->getValueType();
         const RegisterFamily family = getFamily(type);
@@ -249,12 +251,16 @@ namespace ir {
         // register is never written. We must however support the register
         // replacement in the instruction interface to be able to patch all the
         // instruction that uses "reg"
-        const Instruction mov = ir::MOV(type, reg, pushed);
-        mov.replace(load);
-        dead.insert(load);
+        Instruction mov = ir::MOV(type, reg, pushed);
+        mov.insert(ins_after, &ins_after);
+        replaced = true;
       }
+
+      if (replaced)
+        dead.insert(load);
     }
 
+    REMOVE_INSN(load)
     REMOVE_INSN(add)
     REMOVE_INSN(loadImm)
   }

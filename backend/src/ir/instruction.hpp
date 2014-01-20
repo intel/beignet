@@ -170,6 +170,8 @@ namespace ir {
     void replace(Instruction *other) const;
     /*! Remove the instruction from the instruction stream */
     void remove(void);
+    /* Insert the instruction after the previous one. */
+    void insert(Instruction *prev, Instruction ** new_ins = NULL);
     /*! Indicates if the instruction belongs to instruction type T. Typically, T
      *  can be BinaryInstruction, UnaryInstruction, LoadInstruction and so on
      */

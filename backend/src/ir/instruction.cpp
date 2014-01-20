@@ -1442,6 +1442,15 @@ END_FUNCTION(Instruction, Register)
     fn.deleteInstruction(this);
   }
 
+  void Instruction::insert(Instruction *prev, Instruction ** new_ins) {
+    Function &fn = prev->getFunction();
+    Instruction *insn = fn.newInstruction(*this);
+    insn->parent = prev->parent;
+    append(insn, prev);
+    if (new_ins)
+      *new_ins = insn;
+  }
+
   bool Instruction::hasSideEffect(void) const {
     return opcode == OP_STORE ||
            opcode == OP_TYPED_WRITE ||
