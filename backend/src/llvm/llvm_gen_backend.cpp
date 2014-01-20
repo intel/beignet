@@ -2035,6 +2035,7 @@ namespace gbe
       case GEN_OCL_SQR:
       case GEN_OCL_RSQ:
       case GEN_OCL_LOG:
+      case GEN_OCL_EXP:
       case GEN_OCL_POW:
       case GEN_OCL_RCP:
       case GEN_OCL_ABS:
@@ -2314,6 +2315,7 @@ namespace gbe
           case GEN_OCL_COS: this->emitUnaryCallInst(I,CS,ir::OP_COS); break;
           case GEN_OCL_SIN: this->emitUnaryCallInst(I,CS,ir::OP_SIN); break;
           case GEN_OCL_LOG: this->emitUnaryCallInst(I,CS,ir::OP_LOG); break;
+          case GEN_OCL_EXP: this->emitUnaryCallInst(I,CS,ir::OP_EXP); break;
           case GEN_OCL_SQR: this->emitUnaryCallInst(I,CS,ir::OP_SQR); break;
           case GEN_OCL_RSQ: this->emitUnaryCallInst(I,CS,ir::OP_RSQ); break;
           case GEN_OCL_RCP: this->emitUnaryCallInst(I,CS,ir::OP_RCP); break;

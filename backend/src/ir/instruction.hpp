@@ -577,6 +577,8 @@ namespace ir {
   Instruction ABS(Type type, Register dst, Register src);
   /*! log.type dst src */
   Instruction LOG(Type type, Register dst, Register src);
+  /*! exp.type dst src */
+  Instruction EXP(Type type, Register dst, Register src);
   /*! sqr.type dst src */
   Instruction SQR(Type type, Register dst, Register src);
   /*! rsq.type dst src */

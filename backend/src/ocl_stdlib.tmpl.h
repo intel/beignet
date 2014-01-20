@@ -688,6 +688,7 @@ PURE CONST float __gen_ocl_cos(float x);
 PURE CONST float __gen_ocl_sqrt(float x);
 PURE CONST float __gen_ocl_rsqrt(float x);
 PURE CONST float __gen_ocl_log(float x);
+PURE CONST float __gen_ocl_exp(float x);
 PURE CONST float __gen_ocl_pow(float x, float y);
 PURE CONST float __gen_ocl_rcp(float x);
 PURE CONST float __gen_ocl_rndz(float x);
@@ -2247,7 +2248,7 @@ INLINE_OVERLOADABLE float native_tan(float x) {
 INLINE_OVERLOADABLE float __gen_ocl_internal_tanpi(float x) {
   return native_tan(x * M_PI_F);
 }
-INLINE_OVERLOADABLE float native_exp(float x) { return __gen_ocl_pow(M_E_F, x); }
+INLINE_OVERLOADABLE float native_exp(float x) { return __gen_ocl_exp(x); }
 INLINE_OVERLOADABLE float native_exp2(float x) { return __gen_ocl_pow(2, x); }
 INLINE_OVERLOADABLE float native_exp10(float x) { return __gen_ocl_pow(10, x); }
 INLINE_OVERLOADABLE float __gen_ocl_internal_cbrt(float x) {
@@ -2619,7 +2620,12 @@ INLINE_OVERLOADABLE float __gen_ocl_internal_rint(float x) {
 }
 
 INLINE_OVERLOADABLE float __gen_ocl_internal_exp(float x) {
-  //return native_exp(x);
+  //use native instruction when it has enough precision
+  if (x > 128 || x < -128)
+  {
+    return native_exp(x);
+  }
+
   float o_threshold = 8.8721679688e+01,  /* 0x42b17180 */
   u_threshold = -1.0397208405e+02,  /* 0xc2cff1b5 */
   twom100 = 7.8886090522e-31, 	 /* 2**-100=0x0d800000 */

@@ -1563,6 +1563,7 @@ namespace gbe
         case ir::OP_COS: sel.MATH(dst, GEN_MATH_FUNCTION_COS, src); break;
         case ir::OP_SIN: sel.MATH(dst, GEN_MATH_FUNCTION_SIN, src); break;
         case ir::OP_LOG: sel.MATH(dst, GEN_MATH_FUNCTION_LOG, src); break;
+        case ir::OP_EXP: sel.MATH(dst, GEN_MATH_FUNCTION_EXP, src); break;
         case ir::OP_SQR: sel.MATH(dst, GEN_MATH_FUNCTION_SQRT, src); break;
         case ir::OP_RSQ: sel.MATH(dst, GEN_MATH_FUNCTION_RSQ, src); break;
         case ir::OP_RCP: sel.MATH(dst, GEN_MATH_FUNCTION_INV, src); break;
