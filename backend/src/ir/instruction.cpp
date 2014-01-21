@@ -507,7 +507,7 @@ namespace ir {
         this->outOpcode(out);
         out << "." << this->getDstType()
             << "." << this->getSrcType()
-            << " surface id " << this->getImageIndex()
+            << " surface id " << (int)this->getImageIndex()
             << " coord u %" << this->getSrc(fn, 0)
             << " coord v %" << this->getSrc(fn, 1)
             << " coord w %" << this->getSrc(fn, 2)
@@ -515,7 +515,7 @@ namespace ir {
             << " %" << this->getDst(fn, 1)
             << " %" << this->getDst(fn, 2)
             << " %" << this->getDst(fn, 3)
-            << " sampler idx " << (int)this->samplerIdx;
+            << " sampler idx " << (int)this->getSamplerIndex();
       }
       Tuple src;
       Tuple dst;
@@ -555,7 +555,7 @@ namespace ir {
       INLINE void out(std::ostream &out, const Function &fn) const {
         this->outOpcode(out);
         out << "." << this->getSrcType()
-            << " surface id " << this->getImageIndex()
+            << " surface id " << (int)this->getImageIndex()
             << " coord u %" << this->getSrc(fn, 0)
             << " coord v %" << this->getSrc(fn, 1)
             << " coord w %" << this->getSrc(fn, 2)
@@ -638,7 +638,7 @@ namespace ir {
         this->outOpcode(out);
         out << "." << this->getInfoType()
             << " %" << this->getDst(fn, 0)
-            << " surface id " << this->getImageIndex()
+            << " surface id " << (int)this->getImageIndex()
             << " info reg %" << this->getSrc(fn, 0);
       }
 
