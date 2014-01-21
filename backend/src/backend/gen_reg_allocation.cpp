@@ -484,6 +484,9 @@ namespace gbe
       if (RA.contains(reg))
         continue; // already allocated
 
+      if (ctx.sel->getRegisterFamily(reg) == ir::FAMILY_BOOL && !grfBooleans.contains(reg))
+        continue;
+
       // Case 1: the register belongs to a vector, allocate all the registers in
       // one piece
       auto it = vectorMap.find(reg);
