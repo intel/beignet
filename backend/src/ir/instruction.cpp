@@ -532,7 +532,7 @@ namespace ir {
       uint8_t samplerOffset:1;
       uint8_t is3DRead:1;
       uint8_t imageIdx;
-      static const uint32_t srcNum = 4;
+      static const uint32_t srcNum = 3;
       static const uint32_t dstNum = 4;
     };
 
