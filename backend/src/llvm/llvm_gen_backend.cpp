@@ -1355,7 +1355,7 @@ namespace gbe
         // substitutions (if any)
         else {
           const uint32_t srcNum = insn.getSrcNum();
-          const uint32_t dstNum = insn.getSrcNum();
+          const uint32_t dstNum = insn.getDstNum();
           for (uint32_t srcID = 0; srcID < srcNum; ++srcID) {
             const ir::Register src = insn.getSrc(srcID);
             auto it = immTranslate.find(src);
@@ -1363,7 +1363,7 @@ namespace gbe
               insn.setSrc(srcID, it->second);
           }
           for (uint32_t dstID = 0; dstID < dstNum; ++dstID) {
-            const ir::Register dst = insn.getSrc(dstID);
+            const ir::Register dst = insn.getDst(dstID);
             auto it = immTranslate.find(dst);
             if (it != immTranslate.end())
               insn.setDst(dstID, it->second);
