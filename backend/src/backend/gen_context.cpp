@@ -33,6 +33,8 @@
 #include "ir/function.hpp"
 #include "sys/cvar.hpp"
 #include <cstring>
+#include <iostream>
+#include <iomanip>
 
 namespace gbe
 {
@@ -1878,9 +1880,20 @@ namespace gbe
     genKernel->insnNum = p->store.size();
     genKernel->insns = GBE_NEW_ARRAY_NO_ARG(GenInstruction, genKernel->insnNum);
     std::memcpy(genKernel->insns, &p->store[0], genKernel->insnNum * sizeof(GenInstruction));
-    if (OCL_OUTPUT_ASM)
-      for (uint32_t insnID = 0; insnID < genKernel->insnNum; ++insnID)
+    if (OCL_OUTPUT_ASM) {
+      std::cout << genKernel->getName() << "'s disassemble begin:" << std::endl;
+      ir::LabelIndex curLabel = (ir::LabelIndex)0;
+      std::cout << "  L0:" << std::endl;
+      for (uint32_t insnID = 0; insnID < genKernel->insnNum; ++insnID) {
+        if (labelPos.find((ir::LabelIndex)(curLabel + 1))->second == insnID) {
+          std::cout << "  L" << curLabel + 1 << ":" << std::endl;
+          curLabel = (ir::LabelIndex)(curLabel + 1);
+        }
+        std::cout << "    (" << std::setw(8) << insnID * 2 << ")  ";
         gen_disasm(stdout, &p->store[insnID]);
+      }
+      std::cout << genKernel->getName() << "'s disassemble end." << std::endl;
+    }
     return true;
   }
 

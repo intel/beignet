@@ -691,9 +691,11 @@ namespace gbe
           if (!ctx.isScalarReg(vReg))
             registerSize *= ctx.getSimdWidth();
         }
-        cout << "%" << setw(-8) << vReg << "\tg" << setw(-3) << reg << "." << setw(-2) << subreg << "B"
-             <<  "\t" << setw(3) << registerSize
-             << "\t[" << setw(8) << this->intervals[(uint)vReg].minID
+        cout << "%" << setiosflags(ios::left) << setw(8) << vReg << "g"
+             << setiosflags(ios::left) << setw(3) << reg << "."
+             << setiosflags(ios::left) << setw(2) << subreg
+             <<  "  " << setw(3) << registerSize << "B"
+             << "  [" << setw(8) << this->intervals[(uint)vReg].minID
              << " -> " << setw(8) << this->intervals[(uint)vReg].maxID
              << "]" << endl;
     }
