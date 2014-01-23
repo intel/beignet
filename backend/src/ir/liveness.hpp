@@ -58,7 +58,7 @@ namespace ir {
     typedef set<Register> VarKill;
     /*! Per-block info */
     struct BlockInfo : public NonCopyable {
-      BlockInfo(const BasicBlock &bb) : bb(bb), inWorkList(false) {}
+      BlockInfo(const BasicBlock &bb) : bb(bb) {}
       const BasicBlock &bb;
       INLINE bool inUpwardUsed(Register reg) const {
         return upwardUsed.contains(reg);
@@ -69,10 +69,11 @@ namespace ir {
       INLINE bool inVarKill(Register reg) const {
         return varKill.contains(reg);
       }
+      UEVar extraLiveIn;
+      LiveOut extraLiveOut;
       UEVar upwardUsed;
       LiveOut liveOut;
       VarKill varKill;
-      bool inWorkList;
     };
     /*! Gives for each block the variables alive at entry / exit */
     typedef map<const BasicBlock*, BlockInfo*> Info;
@@ -93,6 +94,17 @@ namespace ir {
     const UEVar &getLiveIn(const BasicBlock *bb) const {
       const BlockInfo &info = this->getBlockInfo(bb);
       return info.upwardUsed;
+    }
+
+    /*! Get the set of extra registers alive at the end of the block */
+    const LiveOut &getExtraLiveOut(const BasicBlock *bb) const {
+      const BlockInfo &info = this->getBlockInfo(bb);
+      return info.extraLiveOut;
+    }
+    /*! Get the set of extra registers alive at the beginning of the block */
+    const UEVar &getExtraLiveIn(const BasicBlock *bb) const {
+      const BlockInfo &info = this->getBlockInfo(bb);
+      return info.extraLiveIn;
     }
 
     /*! Return the function the liveness was computed on */
@@ -128,29 +140,10 @@ namespace ir {
     void initInstruction(BlockInfo &info, const Instruction &insn);
     /*! Now really compute LiveOut based on UEVar and VarKill */
     void computeLiveInOut(void);
+    void computeExtraLiveInOut(void);
     /*! Set of work list block which has exit(return) instruction */
-    typedef std::list <struct BlockInfo*> BlockInfoList;
-
-    /*! helper structure to maintain the liveness work list.
-        don't add the block if it is already in the list. */
-    struct LivenessWorkList : BlockInfoList {
-
-      void push_back(struct BlockInfo *info) {
-        if (info->inWorkList)
-          return;
-        info->inWorkList = true;
-        BlockInfoList::push_back(info);
-      }
-
-      struct BlockInfo * pop_front() {
-        struct BlockInfo *biFront = front();
-        BlockInfoList::pop_front();
-        if (biFront)
-          biFront->inWorkList = false;
-        return biFront;
-      }
-
-    } workList;
+    typedef set <struct BlockInfo*> WorkSet;
+    WorkSet workSet, extraWorkSet;
 
     /*! Use custom allocators */
     GBE_CLASS(Liveness);

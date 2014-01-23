@@ -628,14 +628,17 @@ namespace gbe
 
       // All registers alive at the begining of the block must update their intervals.
       const ir::BasicBlock *bb = block.bb;
-      const ir::Liveness::UEVar &liveIn = ctx.getLiveIn(bb);
-      for (auto reg : liveIn)
+      for (auto reg : ctx.getLiveIn(bb))
           this->intervals[reg].minID = std::min(this->intervals[reg].minID, firstID);
 
+      for (auto reg : ctx.getExtraLiveIn(bb))
+          this->intervals[reg].minID = std::min(this->intervals[reg].minID, firstID);
       // All registers alive at the end of the block must have their intervals
       // updated as well
-      const ir::Liveness::LiveOut &liveOut = ctx.getLiveOut(bb);
-      for (auto reg : liveOut)
+      for (auto reg : ctx.getLiveOut(bb))
+        this->intervals[reg].maxID = std::max(this->intervals[reg].maxID, lastID);
+
+      for (auto reg : ctx.getExtraLiveOut(bb))
         this->intervals[reg].maxID = std::max(this->intervals[reg].maxID, lastID);
     }
 

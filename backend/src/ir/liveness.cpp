@@ -34,15 +34,24 @@ namespace ir {
       // If the bb has ret instruction, add it to the work list set.
       const Instruction *lastInsn = bb.getLastInstruction();
       const ir::Opcode op = lastInsn->getOpcode();
+      struct BlockInfo * info = liveness[&bb];
       if (op == OP_RET) {
-        struct BlockInfo * info = liveness[&bb];
-        workList.push_back(info);
+        workSet.insert(info);
         info->liveOut.insert(ocl::retVal);
+      } else if (op == OP_BRA) {
+        // If this is a backward jump, put it to the extra work list.
+        if (((BranchInstruction*)lastInsn)->getLabelIndex() < bb.getLabelIndex())
+          extraWorkSet.insert(info);
       }
     });
     // Now with iterative analysis, we compute liveout and livein sets
     this->computeLiveInOut();
-
+    for (auto it : extraWorkSet) {
+      for (auto reg : it->liveOut) {
+        it->extraLiveIn.insert(reg);
+      }
+    }
+    this->computeExtraLiveInOut();
   }
 
   Liveness::~Liveness(void) {
@@ -78,8 +87,9 @@ namespace ir {
 
 // Use simple backward data flow analysis to solve the liveness problem.
   void Liveness::computeLiveInOut(void) {
-    do {
-      struct BlockInfo *currInfo = workList.pop_front();
+    while(!workSet.empty()) {
+      auto currInfo = *workSet.begin();
+      workSet.erase(currInfo);
       for (auto currOutVar : currInfo->liveOut)
         if (!currInfo->varKill.contains(currOutVar))
           currInfo->upwardUsed.insert(currOutVar);
@@ -90,28 +100,119 @@ namespace ir {
           auto changed = prevInfo->liveOut.insert(currInVar);
           if (changed.second) isChanged = true;
         }
-        if (isChanged ) workList.push_back(prevInfo);
+        if (isChanged )
+          workSet.insert(prevInfo);
       }
-    } while (!workList.empty());
-
+    };
 #if 0
     fn.foreachBlock([this](const BasicBlock &bb){
       printf("label %d:\n", bb.getLabelIndex());
       BlockInfo *info = liveness[&bb];
       auto &outVarSet = info->liveOut;
       auto &inVarSet = info->upwardUsed;
-      printf("\tout Lives: ");
-      for (auto outVar : outVarSet) {
-        printf("%d ", outVar);
-      }
+      auto &extraInVarSet = info->extraLiveIn;
+      auto &extraOutVarSet = info->extraLiveOut;
       printf("\n\tin Lives: ");
       for (auto inVar : inVarSet) {
         printf("%d ", inVar);
       }
       printf("\n");
+      printf("\tout Lives: ");
+      for (auto outVar : outVarSet) {
+        printf("%d ", outVar);
+      }
+      printf("\n");
+
     });
 #endif
    }
+
+/*
+  Consider the following scenario, %100's normal liveness will start from Ln-1's
+  position. In normal analysis, the Ln-1 is not Ln's predecessor, thus the liveness
+  of %100 will be passed to Ln and then will not be passed to L0.
+
+  But considering we are running on a multilane with predication's vector machine.
+  The unconditional BR in Ln-1 may be removed and it will enter Ln with a subset of
+  the revert set of Ln-1's predication. For example when running Ln-1, the active lane
+  is 0-7, then at Ln the active lane is 8-15. Then at the end of Ln, a subset of 8-15
+  will jump to L0. If a register %10 is allocated the same GRF as %100, given the fact
+  that their normal liveness doesn't overlapped, the a subset of 8-15 lanes will be
+  modified. If the %10 and %100 are the same vector data type, then we are fine. But if
+  %100 is a float vector, and the %10 is a bool or short vector, then we hit a bug here.
+
+L0:
+  ...
+  %10 = 5
+  ...
+Ln-1:
+  %100 = 2
+  BR Ln+1
+
+Ln:
+  ...
+  BR(%xxx) L0
+
+Ln+1:
+  %101 = %100 + 2;
+  ...
+
+  The solution to fix this issue is to build another liveness data. We will start with
+  those BBs with backward jump. Then pass all the liveOut register as extra liveIn
+  of current BB and then forward this extra liveIn to all the blocks. This is very similar
+  to the normal liveness analysis just with reverse direction.
+*/
+  void Liveness::computeExtraLiveInOut(void) {
+    while(!extraWorkSet.empty()) {
+      struct BlockInfo *currInfo = *extraWorkSet.begin();
+      extraWorkSet.erase(currInfo);
+      for (auto currInVar : currInfo->extraLiveIn)
+        currInfo->extraLiveOut.insert(currInVar);
+      bool isChanged = false;
+      for (auto succ : currInfo->bb.getSuccessorSet()) {
+        BlockInfo *succInfo = liveness[succ];
+        for (auto currOutVar : currInfo->extraLiveOut) {
+          bool changed = false;
+          if (!succInfo->upwardUsed.contains(currOutVar)) {
+            auto it  = succInfo->extraLiveIn.insert(currOutVar);
+            changed = it.second;
+          }
+          if (changed) isChanged = true;
+        }
+        if (isChanged)
+          extraWorkSet.insert(succInfo);}
+    };
+#if 0
+    fn.foreachBlock([this](const BasicBlock &bb){
+      printf("label %d:\n", bb.getLabelIndex());
+      BlockInfo *info = liveness[&bb];
+      auto &outVarSet = info->liveOut;
+      auto &inVarSet = info->upwardUsed;
+      auto &extraInVarSet = info->extraLiveIn;
+      auto &extraOutVarSet = info->extraLiveOut;
+      printf("\n\tin Lives: ");
+      for (auto inVar : inVarSet) {
+        printf("%d ", inVar);
+      }
+      printf("\n\textra in Lives: ");
+      for (auto inVar : extraInVarSet) {
+        printf("%d ", inVar);
+      }
+      printf("\n");
+      printf("\tout Lives: ");
+      for (auto outVar : outVarSet) {
+        printf("%d ", outVar);
+      }
+      printf("\n\textra out Lives: ");
+      for (auto outVar : extraOutVarSet) {
+        printf("%d ", outVar);
+      }
+      printf("\n");
+
+    });
+#endif
+   }
+
 
   /*! To pretty print the livfeness info */
   static const uint32_t prettyInsnStrSize = 48;
