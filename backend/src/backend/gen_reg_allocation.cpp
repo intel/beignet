@@ -294,8 +294,7 @@ namespace gbe
         continue;
       }
       // Ignore booleans that were allocated with flags
-      // if (ctx.getRegisterFamily(reg) == ir::FAMILY_BOOL && !grfBooleans.contains(reg)) {
-      if (ctx.sel->getRegisterFamily(reg) == ir::FAMILY_BOOL) {
+      if (ctx.sel->getRegisterFamily(reg) == ir::FAMILY_BOOL && !grfBooleans.contains(reg)) {
         this->expiringID++;
         continue;
       }
