@@ -58,6 +58,20 @@ namespace gbe
     GenRegister genReg(const GenRegister &reg);
     /*! Output the register allocation */
     void outputAllocation(void);
+    INLINE void getRegAttrib(ir::Register reg, uint32_t &regSize, ir::RegisterFamily *regFamily = NULL) const {
+      // Note that byte vector registers use two bytes per byte (and can be
+      // interleaved)
+      static const size_t familyVectorSize[] = {2,2,2,4,8};
+      static const size_t familyScalarSize[] = {2,1,2,4,8};
+      using namespace ir;
+      const bool isScalar = ctx.sel->isScalarOrBool(reg);
+      const RegisterData regData = ctx.sel->getRegisterData(reg);
+      const RegisterFamily family = regData.family;
+      const uint32_t typeSize = isScalar ? familyScalarSize[family] : familyVectorSize[family];
+      regSize = isScalar ? typeSize : ctx.getSimdWidth() * typeSize;
+      if (regFamily != NULL)
+        *regFamily = family;
+    }
   private:
     /*! Expire one GRF interval. Return true if one was successfully expired */
     bool expireGRF(const GenRegInterval &limit);
@@ -108,10 +122,6 @@ namespace gbe
     GBE_CLASS(Opaque);
   };
 
-  // Note that byte vector registers use two bytes per byte (and can be
-  // interleaved)
-  static const size_t familyVectorSize[] = {2,2,2,4,8};
-  static const size_t familyScalarSize[] = {2,1,2,4,8};
 
   /*! Interval as used in linear scan allocator. Basically, stores the first and
    *  the last instruction where the register is alive
@@ -164,15 +174,11 @@ namespace gbe
   bool GenRegAllocator::Opaque::createGenReg(const GenRegInterval &interval) {
     using namespace ir;
     const ir::Register reg = interval.reg;
-    const uint32_t simdWidth = ctx.getSimdWidth();
     if (RA.contains(reg) == true)
       return true; // already allocated
     GBE_ASSERT(ctx.isScalarReg(reg) == false);
-    const bool isScalar = ctx.sel->isScalarOrBool(reg);
-    const RegisterData regData = ctx.sel->getRegisterData(reg);
-    const RegisterFamily family = regData.family;
-    const uint32_t typeSize = isScalar ? familyScalarSize[family] : familyVectorSize[family];
-    const uint32_t regSize = isScalar ? typeSize : simdWidth*typeSize;
+    uint32_t regSize;
+    getRegAttrib(reg, regSize);
     uint32_t grfOffset;
     while ((grfOffset = ctx.allocate(regSize, regSize)) == 0) {
       const bool success = this->expireGRF(interval);
@@ -494,13 +500,10 @@ namespace gbe
         // all the reg in the SelectionVector are spilled
         if(spilled.contains(vector->reg[0].reg()))
           continue;
-        const uint32_t simdWidth = ctx.getSimdWidth();
 
-        const ir::RegisterData regData = ctx.sel->getRegisterData(reg);
-        const ir::RegisterFamily family = regData.family;
-        const uint32_t typeSize = familyVectorSize[family];
-        const uint32_t alignment = simdWidth*typeSize;
-
+        uint32_t alignment;
+        ir::RegisterFamily family;
+        getRegAttrib(reg, alignment, &family);
         const uint32_t size = vector->regNum * alignment;
 
         uint32_t grfOffset;
@@ -680,32 +683,34 @@ namespace gbe
     cout << "## register allocation ##" << endl;
     for(auto &i : RA) {
         ir::Register vReg = (ir::Register)i.first;
+        ir::RegisterFamily family;
+        uint32_t regSize;
+        getRegAttrib(vReg, regSize, &family);
         int offst = (int)i.second;// / sizeof(float);
-        ir::RegisterData regData = ctx.sel->getRegisterData(vReg);
         int reg = offst / 32;
-        int subreg = offst % 32;
-        ir::RegisterFamily family = regData.family;
-        int registerSize;
-        if (family == ir::FAMILY_BOOL)
-          registerSize = 2;
-        else {
-          registerSize = ir::getFamilySize(regData.family);
-          if (!ctx.isScalarReg(vReg))
-            registerSize *= ctx.getSimdWidth();
-        }
+        int subreg = (offst % 32) / regSize;
         cout << "%" << setiosflags(ios::left) << setw(8) << vReg << "g"
              << setiosflags(ios::left) << setw(3) << reg << "."
-             << setiosflags(ios::left) << setw(2) << subreg
-             <<  "  " << setw(3) << registerSize << "B"
-             << "  [" << setw(8) << this->intervals[(uint)vReg].minID
+             << setiosflags(ios::left) << setw(3) << subreg << ir::getFamilyName(family)
+             << "  " << setw(-3) << regSize  << "B\t"
+             << "[  " << setw(8) << this->intervals[(uint)vReg].minID
              << " -> " << setw(8) << this->intervals[(uint)vReg].maxID
              << "]" << endl;
     }
-    std::set<ir::Register>::iterator is;
-    std::cout << "## spilled registers:" << std::endl;
-    for(is = spilled.begin(); is != spilled.end(); is++)
-      std::cout << (int)*is << std::endl;
-    std::cout << std::endl;
+    cout << "## spilled registers:" << endl;
+    for(auto is = spilled.begin(); is != spilled.end(); is++) {
+      ir::Register vReg = (ir::Register)*is;
+      ir::RegisterFamily family;
+      uint32_t regSize;
+      getRegAttrib(vReg, regSize, &family);
+      cout << "%" << setiosflags(ios::left) << setw(8) << vReg
+           << "  " << ir::getFamilyName(family)
+           <<  "  " << setw(-3) << regSize << "B\t"
+           << "[  " << setw(8) << this->intervals[(uint)vReg].minID
+           << " -> " << setw(8) << this->intervals[(uint)vReg].maxID
+           << "]" << endl;
+    }
+    cout << endl;
   }
 
   INLINE GenRegister setGenReg(const GenRegister &src, uint32_t grfOffset) {

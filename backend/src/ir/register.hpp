@@ -47,6 +47,11 @@ namespace ir {
     FAMILY_QWORD = 4
   };
 
+  INLINE char getFamilyName(RegisterFamily family) {
+    static char registerFamilyName[] = {'b', 'B', 'W', 'D', 'Q'};
+    return registerFamilyName[family];
+  }
+
   INLINE uint32_t getFamilySize(RegisterFamily family) {
     switch (family) {
       case FAMILY_BYTE: return 1;
