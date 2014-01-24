@@ -43,6 +43,20 @@ namespace gbe
 
   /*! Provides the location of a register in a vector */
   typedef std::pair<SelectionVector*, uint32_t> VectorLocation;
+  /*! Interval as used in linear scan allocator. Basically, stores the first and
+   *  the last instruction where the register is alive
+   */
+  struct GenRegInterval {
+    INLINE GenRegInterval(ir::Register reg) :
+      reg(reg), minID(INT_MAX), maxID(-INT_MAX) {}
+    ir::Register reg;     //!< (virtual) register of the interval
+    int32_t minID, maxID; //!< Starting and ending points
+  };
+
+  struct spillCmp {
+    bool operator() (const GenRegInterval& lhs, const GenRegInterval& rhs) const
+    { return lhs.maxID > rhs.maxID; }
+  };
 
   /*! Implements the register allocation */
   class GenRegAllocator::Opaque
@@ -72,6 +86,8 @@ namespace gbe
       if (regFamily != NULL)
         *regFamily = family;
     }
+  INLINE void insertNewReg(ir::Register reg, uint32_t grfOffset, bool isVector = false);
+  INLINE bool expireReg(ir::Register reg);
   private:
     /*! Expire one GRF interval. Return true if one was successfully expired */
     bool expireGRF(const GenRegInterval &limit);
@@ -100,6 +116,8 @@ namespace gbe
     GenContext &ctx;
     /*! Map virtual registers to offset in the (physical) register file */
     map<ir::Register, uint32_t> RA;
+    /*! Map offset to virtual registers. */
+    map<uint32_t, ir::Register> offsetReg;
     /*! Provides the position of each register in a vector */
     map<ir::Register, VectorLocation> vectorMap;
     /*! All vectors used in the selection */
@@ -114,6 +132,8 @@ namespace gbe
     vector<GenRegInterval*> ending;
     /*! registers that are spilled */
     set<ir::Register> spilled;
+    /*! register which could be spilled.*/
+    set<GenRegInterval, spillCmp> spillCandidate;
     /* reserved registers for register spill/reload */
     uint32_t reservedReg;
     /*! Current vector to expire */
@@ -122,16 +142,6 @@ namespace gbe
     GBE_CLASS(Opaque);
   };
 
-
-  /*! Interval as used in linear scan allocator. Basically, stores the first and
-   *  the last instruction where the register is alive
-   */
-  struct GenRegInterval {
-    INLINE GenRegInterval(ir::Register reg) :
-      reg(reg), minID(INT_MAX), maxID(-INT_MAX) {}
-    ir::Register reg;     //!< (virtual) register of the interval
-    int32_t minID, maxID; //!< Starting and ending points
-  };
 
   GenRegAllocator::Opaque::Opaque(GenContext &ctx) : ctx(ctx) {}
   GenRegAllocator::Opaque::~Opaque(void) {}
@@ -185,7 +195,7 @@ namespace gbe
       if (UNLIKELY(success == false)) return false;
     }
     GBE_ASSERTM(grfOffset != 0, "Unable to register allocate");
-    RA.insert(std::make_pair(reg, grfOffset));
+    insertNewReg(reg, grfOffset);
     return true;
   }
 
@@ -307,17 +317,10 @@ namespace gbe
 
       if (toExpire->maxID >= limit.minID)
         break;
-      auto it = RA.find(reg);
-      GBE_ASSERT(it != RA.end());
-      // offset less than 32 means it is not managed by our reg allocator.
-      if (it->second < 32) {
-        this->expiringID++;
-        continue;
-      }
-      // Case 1 - it does not belong to a vector. Just remove it
-        ctx.deallocate(it->second);
-        this->expiringID++;
+
+      if (expireReg(reg))
         ret = true;
+      this->expiringID++;
     }
 
     // We were not able to expire anything
@@ -532,7 +535,7 @@ namespace gbe
           const ir::Register reg = vector->reg[regID].reg();
           GBE_ASSERT(RA.contains(reg) == false
                      && ctx.sel->getRegisterData(reg).family == family);
-          RA.insert(std::make_pair(reg, grfOffset + alignment * regID));
+          insertNewReg(reg, grfOffset + alignment * regID, true);
           ctx.splitBlock(grfOffset, alignment * regID);  //splitBlock will not split if regID == 0
         }
       }
@@ -544,6 +547,43 @@ namespace gbe
       }
     }
     return true;
+  }
+
+  INLINE bool GenRegAllocator::Opaque::expireReg(ir::Register reg)
+  {
+    auto it = RA.find(reg);
+    GBE_ASSERT(it != RA.end());
+    // offset less than 32 means it is not managed by our reg allocator.
+    if (it->second < 32)
+      return false;
+
+    ctx.deallocate(it->second);
+    if (reservedReg != 0) {
+      /* offset --> reg map should keep updated. */
+      offsetReg.erase(it->second);
+
+      if (spillCandidate.find(reg) != spillCandidate.end())
+        spillCandidate.erase(intervals[reg]);
+    }
+    return true;
+  }
+
+  // insert a new register with allocated offset,
+  // put it to the RA map and the spill map if it could be spilled.
+  INLINE void GenRegAllocator::Opaque::insertNewReg(ir::Register reg, uint32_t grfOffset, bool isVector)
+  {
+     RA.insert(std::make_pair(reg, grfOffset));
+
+     if (reservedReg != 0) {
+       offsetReg.insert(std::make_pair(grfOffset, reg));
+
+       uint32_t regSize;
+       ir::RegisterFamily family;
+       getRegAttrib(reg, regSize, &family);
+
+       if (regSize == GEN_REG_SIZE && family == ir::FAMILY_DWORD && !isVector)
+         spillCandidate.insert(intervals[reg]);
+     }
   }
 
   INLINE bool GenRegAllocator::Opaque::allocate(Selection &selection) {
