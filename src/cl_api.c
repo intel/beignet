@@ -2472,13 +2472,20 @@ clEnqueueNDRangeKernel(cl_command_queue  command_queue,
   if (local_work_size != NULL) {
     for (i = 0; i < work_dim; ++i)
       fixed_local_sz[i] = local_work_size[i];
-  } /*else {
-    for (i = 0; i< work_dim; i++)
-      for (j = 64; j > 1; j--) {   //check from 64?
-        if (global_work_size[i] % j == 0) //global_work_size always non null
+  } else {
+    uint j, maxDimSize = 64 /* from 64? */, maxGroupSize = 256; //MAX_WORK_GROUP_SIZE may too large
+    for (i = 0; i< work_dim; i++) {
+      for (j = maxDimSize; j > 1; j--) {
+        if (global_work_size[i] % j == 0 && j <= maxGroupSize) {
           fixed_local_sz[i] = j;
+          maxGroupSize = maxGroupSize /j;
+          maxDimSize = maxGroupSize > maxDimSize ? maxDimSize : maxGroupSize;
+          break;  //choose next work_dim
+        }
       }
-  } */
+    }
+  }
+
   if (global_work_size != NULL)
     for (i = 0; i < work_dim; ++i)
       fixed_global_sz[i] = global_work_size[i];
