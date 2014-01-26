@@ -316,7 +316,7 @@ namespace gbe
     /*! Implement public class */
     INLINE ir::Register replaceDst(SelectionInstruction *insn, uint32_t regID);
     /*! spill a register (insert spill/unspill instructions) */
-    INLINE void spillReg(ir::Register reg, uint32_t registerPool);
+    INLINE bool spillRegs(const SpilledRegs &spilledRegs, uint32_t registerPool);
     /*! Implement public class */
     INLINE uint32_t getRegNum(void) const { return file.regNum(); }
     /*! Implements public interface */
@@ -670,58 +670,136 @@ namespace gbe
     return vector;
   }
 
-  void Selection::Opaque::spillReg(ir::Register spilledReg, uint32_t registerPool) {
-    assert(registerPool != 0);
-    const uint32_t simdWidth = ctx.getSimdWidth();
+  // FIXME, there is a risk need to be fixed here.
+  // as the instruction we spill here is the gen ir level not the final
+  // single instruction. If it will be translated to multiple instructions
+  // at gen_context stage, and as the destination registers and source registers
+  // may be spilled to the same register based on current implementation,
+  // then the source register may be modified within the final instruction and
+  // may lead to incorrect result.
+  bool Selection::Opaque::spillRegs(const SpilledRegs &spilledRegs,
+                                    uint32_t registerPool) {
+    GBE_ASSERT(registerPool != 0);
     const uint32_t dstStart = registerPool + 1;
     const uint32_t srcStart = registerPool + 1;
-    uint32_t ptr = ctx.allocateScratchMem(typeSize(GEN_TYPE_D)*simdWidth);
 
     for (auto &block : blockList)
       for (auto &insn : block.insnList) {
         // spill / unspill insn should be skipped when do spilling
-        if(insn.opcode == SEL_OP_SPILL_REG || insn.opcode == SEL_OP_UNSPILL_REG) continue;
+        if(insn.opcode == SEL_OP_SPILL_REG
+           || insn.opcode == SEL_OP_UNSPILL_REG)
+          continue;
 
         const uint32_t srcNum = insn.srcNum, dstNum = insn.dstNum;
-
+        struct RegSlot {
+          RegSlot(ir::Register _reg, uint8_t _srcID,
+                  bool _isTmp, uint32_t _addr)
+                 : reg(_reg), srcID(_srcID), isTmpReg(_isTmp), addr(_addr)
+          {};
+          ir::Register reg;
+          union {
+            uint8_t srcID;
+            uint8_t dstID;
+          };
+          bool isTmpReg;
+          int32_t addr;
+        };
+        vector <struct RegSlot> regSet;
         for (uint32_t srcID = 0; srcID < srcNum; ++srcID) {
           const GenRegister selReg = insn.src(srcID);
           const ir::Register reg = selReg.reg();
-          if(reg == spilledReg && selReg.file == GEN_GENERAL_REGISTER_FILE && selReg.physical == 0) {
-            GBE_ASSERT(srcID < 5);
+          auto it = spilledRegs.find(reg);
+          if(it != spilledRegs.end()
+             && selReg.file == GEN_GENERAL_REGISTER_FILE
+             && selReg.physical == 0) {
+            struct RegSlot regSlot(reg, srcID,
+                                   it->second.isTmpReg,
+                                   it->second.addr);
+            regSet.push_back(regSlot);
+          }
+        }
+
+        if (regSet.size() > 5)
+          return false;
+
+        while(!regSet.empty()) {
+          uint32_t scratchID = regSet.size() - 1;
+          struct RegSlot regSlot = regSet.back();
+          regSet.pop_back();
+          const GenRegister selReg = insn.src(regSlot.srcID);
+          if (!regSlot.isTmpReg) {
+          /* For temporary registers, we don't need to unspill. */
             SelectionInstruction *unspill = this->create(SEL_OP_UNSPILL_REG, 1, 0);
-            unspill->state  = GenInstructionState(simdWidth);
-            unspill->dst(0) = GenRegister(GEN_GENERAL_REGISTER_FILE, srcStart+srcID, 0,
-                                          selReg.type, selReg.vstride, selReg.width, selReg.hstride);
-            GenRegister src = insn.src(srcID);
-            // change nr/subnr, keep other register settings
-            src.nr = srcStart+srcID; src.subnr=0; src.physical=1;
-            insn.src(srcID) = src;
-            unspill->extra.scratchOffset = ptr;
+            unspill->state  = GenInstructionState(ctx.getSimdWidth());
+            unspill->dst(0) = GenRegister(GEN_GENERAL_REGISTER_FILE,
+                                          srcStart + scratchID, 0,
+                                          selReg.type, selReg.vstride,
+                                          selReg.width, selReg.hstride);
+            unspill->extra.scratchOffset = regSlot.addr;
             unspill->extra.scratchMsgHeader = registerPool;
             insn.prepend(*unspill);
           }
-        }
+
+          GenRegister src = insn.src(regSlot.srcID);
+          // change nr/subnr, keep other register settings
+          src.nr = srcStart + scratchID; src.subnr = 0; src.physical = 1;
+          insn.src(regSlot.srcID) = src;
+        };
+
+        /*
+          To save one register, registerPool + 1 was used by both
+          the src0 as source and other operands as payload. To avoid
+          side effect, we use a stack model to push all operands
+          register, and spill the 0th dest at last. As all the spill
+          will be append to the current instruction. Then the last spill
+          instruction will be the first instruction after current
+          instruction. Thus the registerPool + 1 still contain valid
+          data.
+         */
 
         for (uint32_t dstID = 0; dstID < dstNum; ++dstID) {
           const GenRegister selReg = insn.dst(dstID);
           const ir::Register reg = selReg.reg();
-          if(reg == spilledReg && selReg.file == GEN_GENERAL_REGISTER_FILE && selReg.physical == 0) {
-            GBE_ASSERT(dstID < 5);
+          auto it = spilledRegs.find(reg);
+          if(it != spilledRegs.end()
+             && selReg.file == GEN_GENERAL_REGISTER_FILE
+             && selReg.physical == 0) {
+            struct RegSlot regSlot(reg, dstID,
+                                   it->second.isTmpReg,
+                                   it->second.addr);
+            regSet.push_back(regSlot);
+          }
+        }
+
+        if (regSet.size() > 5)
+          return false;
+
+        while(!regSet.empty()) {
+          uint32_t scratchID = regSet.size() - 1;
+          struct RegSlot regSlot = regSet.back();
+          regSet.pop_back();
+          const GenRegister selReg = insn.dst(regSlot.dstID);
+          if(!regSlot.isTmpReg) {
+            /* For temporary registers, we don't need to unspill. */
             SelectionInstruction *spill = this->create(SEL_OP_SPILL_REG, 0, 1);
-            spill->state  = GenInstructionState(simdWidth);
-            spill->src(0) =GenRegister(GEN_GENERAL_REGISTER_FILE, dstStart + dstID, 0,
-                                              selReg.type, selReg.vstride, selReg.width, selReg.hstride);
-            GenRegister dst = insn.dst(dstID);
-            // change nr/subnr, keep other register settings
-            dst.physical =1; dst.nr = dstStart+dstID; dst.subnr = 0;
-            insn.dst(dstID)= dst;
-            spill->extra.scratchOffset = ptr;
+            spill->state  = GenInstructionState(ctx.getSimdWidth());
+            spill->src(0) = GenRegister(GEN_GENERAL_REGISTER_FILE,
+                                        dstStart + scratchID, 0,
+                                        selReg.type, selReg.vstride,
+                                        selReg.width, selReg.hstride);
+            spill->extra.scratchOffset = regSlot.addr;
             spill->extra.scratchMsgHeader = registerPool;
             insn.append(*spill);
           }
+
+          GenRegister dst = insn.dst(regSlot.dstID);
+          // change nr/subnr, keep other register settings
+          dst.physical =1; dst.nr = dstStart + scratchID; dst.subnr = 0;
+          insn.dst(regSlot.dstID)= dst;
+          scratchID++;
         }
       }
+    return true;
   }
 
   ir::Register Selection::Opaque::replaceSrc(SelectionInstruction *insn, uint32_t regID) {
@@ -1430,8 +1508,8 @@ namespace gbe
   ir::Register Selection::replaceDst(SelectionInstruction *insn, uint32_t regID) {
     return this->opaque->replaceDst(insn, regID);
   }
-  void Selection::spillReg(ir::Register reg, uint32_t registerPool) {
-    this->opaque->spillReg(reg, registerPool);
+  bool Selection::spillRegs(const SpilledRegs &spilledRegs, uint32_t registerPool) {
+    return this->opaque->spillRegs(spilledRegs, registerPool);
   }
 
   SelectionInstruction *Selection::create(SelectionOpcode opcode, uint32_t dstNum, uint32_t srcNum) {

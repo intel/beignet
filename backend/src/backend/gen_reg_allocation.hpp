@@ -35,6 +35,13 @@ namespace gbe
   struct GenRegInterval; // Liveness interval for each register
   class GenContext;     // Gen specific context
 
+  typedef struct SpillRegTag {
+    bool isTmpReg;
+    int32_t addr;
+  } SpillRegTag;
+
+  typedef map<ir::Register, SpillRegTag> SpilledRegs;
+
   /*! Register allocate (i.e. virtual to physical register mapping) */
   class GenRegAllocator
   {

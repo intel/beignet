@@ -1662,8 +1662,9 @@ namespace gbe
     GenRegister payload = src;
     payload.nr = header + 1;
     payload.subnr = 0;
-
-    p->MOV(payload, src);
+    GBE_ASSERT(src.subnr == 0);
+    if (payload.nr != src.nr)
+      p->MOV(payload, src);
     uint32_t regType = insn.src(0).type;
     uint32_t size = typeSize(regType);
     assert(size <= 4);

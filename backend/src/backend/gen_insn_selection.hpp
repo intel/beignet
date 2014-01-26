@@ -30,6 +30,7 @@
 #include "backend/gen_register.hpp"
 #include "backend/gen_encoder.hpp"
 #include "backend/gen_context.hpp"
+#include "backend/gen_reg_allocation.hpp"
 #include "sys/vector.hpp"
 #include "sys/intrusive_list.hpp"
 
@@ -185,7 +186,6 @@ namespace gbe
 
   /*! Owns the selection engine */
   class GenContext;
-
   /*! Selection engine produces the pre-ISA instruction blocks */
   class Selection
   {
@@ -213,7 +213,7 @@ namespace gbe
     /*! Replace a destination to the returned temporary register */
     ir::Register replaceDst(SelectionInstruction *insn, uint32_t regID);
     /*! spill a register (insert spill/unspill instructions) */
-    void spillReg(ir::Register reg, uint32_t registerPool);
+    bool spillRegs(const SpilledRegs &spilledRegs, uint32_t registerPool);
     /*! Create a new selection instruction */
     SelectionInstruction *create(SelectionOpcode, uint32_t dstNum, uint32_t srcNum);
     /*! List of emitted blocks */
