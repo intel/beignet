@@ -88,7 +88,7 @@ cl_file_map_open(cl_file_map_t *fm, const char *name)
 
   /* Open the file */
   fm->fd = open(name, O_RDONLY);
-  if(fm->fd <= 0) {
+  if(fm->fd < 0) {
     err = CL_FILE_MAP_FILE_NOT_FOUND;
     goto error;
   }
