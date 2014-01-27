@@ -880,8 +880,8 @@ namespace gbe
           NOT_IMPLEMENTED;
         p->curr.execWidth = 1;
         p->curr.noMask = 1;
+        jip0 = p->n_instruction();
         p->JMPI(GenRegister::immud(0));
-        jip0 = p->n_instruction() - 1;
       p->pop();
 
       p->curr.predicate = GEN_PREDICATE_NONE;
@@ -905,8 +905,8 @@ namespace gbe
           NOT_IMPLEMENTED;
         p->curr.execWidth = 1;
         p->curr.noMask = 1;
+        jip1 = p->n_instruction();
         p->JMPI(GenRegister::immud(0));
-        jip1 = p->n_instruction() - 1;
       p->pop();
 
       p->curr.predicate = GEN_PREDICATE_NONE;
@@ -1457,7 +1457,7 @@ namespace gbe
       p->curr.noMask = 1;
       int jip = -(int)(p->n_instruction() - loop_start + 1) * 2;
       p->JMPI(zero);
-      p->patchJMPI(p->n_instruction()-1, jip);
+      p->patchJMPI(p->n_instruction()-2, jip);
       p->pop();
       // end of loop
     }

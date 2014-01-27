@@ -1050,13 +1050,42 @@ namespace gbe
 
   void GenEncoder::JMPI(GenRegister src) {
     alu2(this, GEN_OPCODE_JMPI, GenRegister::ip(), GenRegister::ip(), src);
+    NOP();
   }
 
   void GenEncoder::patchJMPI(uint32_t insnID, int32_t jumpDistance) {
     GenInstruction &insn = this->store[insnID];
-    assert(insnID < this->store.size());
-    assert(insn.header.opcode == GEN_OPCODE_JMPI);
-    this->setSrc1(&insn, GenRegister::immd(jumpDistance));
+    GBE_ASSERT(insnID < this->store.size());
+    GBE_ASSERT(insn.header.opcode == GEN_OPCODE_JMPI);
+    if ( jumpDistance > -32769 && jumpDistance < 32768 ) {
+        this->setSrc1(&insn, GenRegister::immd(jumpDistance));
+    } else if ( insn.header.predicate_control == GEN_PREDICATE_NONE ) {
+      // For the conditional jump distance out of S15 range, we need to use an
+      // inverted jmp followed by a add ip, ip, distance to implement.
+      // A little hacky as we need to change the nop instruction to add
+      // instruction manually.
+      // If this is a unconditional jump, we just need to add the IP directly.
+      // FIXME there is an optimization method which we can insert a
+      // ADD instruction on demand. But that will need some extra analysis
+      // for all the branching instruction. And need to adjust the distance
+      // for those branch instruction's start point and end point contains
+      // this instruction.
+      insn.header.opcode = GEN_OPCODE_ADD;
+      this->setDst(&insn, GenRegister::ip());
+      this->setSrc0(&insn, GenRegister::ip());
+      this->setSrc1(&insn, GenRegister::immd((jumpDistance + 2) * 8));
+    } else {
+      insn.header.predicate_inverse ^= 1;
+      this->setSrc1(&insn, GenRegister::immd(2));
+      GenInstruction &insn2 = this->store[insnID+1];
+      GBE_ASSERT(insn2.header.opcode == GEN_OPCODE_NOP);
+      GBE_ASSERT(insnID < this->store.size());
+      insn2.header.predicate_control = GEN_PREDICATE_NONE;
+      insn2.header.opcode = GEN_OPCODE_ADD;
+      this->setDst(&insn2, GenRegister::ip());
+      this->setSrc0(&insn2, GenRegister::ip());
+      this->setSrc1(&insn2, GenRegister::immd(jumpDistance * 8));
+    }
   }
 
   void GenEncoder::CMP(uint32_t conditional, GenRegister src0, GenRegister src1) {
