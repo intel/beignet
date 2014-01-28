@@ -208,7 +208,7 @@ namespace gbe
           p->curr.chooseNib(i);
           p->MOV(xdst, xsrc);
           xdst = GenRegister::suboffset(xdst, 4);
-          xsrc = GenRegister::suboffset(xsrc, 8);
+          xsrc = GenRegister::suboffset(xsrc, 4);
         }
         p->pop();
         break;
@@ -1207,10 +1207,10 @@ namespace gbe
     p->curr.predicate = GEN_PREDICATE_NONE;
     p->curr.execWidth = 8;
     p->MOV(dest, src);
-    p->MOV(GenRegister::suboffset(dest, 4), GenRegister::suboffset(src, 8));
+    p->MOV(GenRegister::suboffset(dest, 4), GenRegister::suboffset(src, 4));
     if (execWidth == 16) {
-      p->MOV(GenRegister::suboffset(dest, 8), GenRegister::suboffset(src, 16));
-      p->MOV(GenRegister::suboffset(dest, 12), GenRegister::suboffset(src, 24));
+      p->MOV(GenRegister::suboffset(dest, 8), GenRegister::suboffset(src, 8));
+      p->MOV(GenRegister::suboffset(dest, 12), GenRegister::suboffset(src, 12));
     }
     p->pop();
   }
@@ -1222,13 +1222,13 @@ namespace gbe
     p->curr.execWidth = 8;
     p->MOV(dest, src);
     p->curr.nibControl = 1;
-    p->MOV(GenRegister::suboffset(dest, 8), GenRegister::suboffset(src, 4));
+    p->MOV(GenRegister::suboffset(dest, 4), GenRegister::suboffset(src, 4));
     if (execWidth == 16) {
       p->curr.quarterControl = 1;
       p->curr.nibControl = 0;
-      p->MOV(GenRegister::suboffset(dest, 16), GenRegister::suboffset(src, 8));
+      p->MOV(GenRegister::suboffset(dest, 8), GenRegister::suboffset(src, 8));
       p->curr.nibControl = 1;
-      p->MOV(GenRegister::suboffset(dest, 24), GenRegister::suboffset(src, 12));
+      p->MOV(GenRegister::suboffset(dest, 12), GenRegister::suboffset(src, 12));
     }
     p->pop();
   }
@@ -1240,10 +1240,10 @@ namespace gbe
     p->curr.predicate = GEN_PREDICATE_NONE;
     p->curr.execWidth = 8;
     p->MOV(dest, src);
-    p->MOV(GenRegister::suboffset(dest, 4), GenRegister::suboffset(src, 8));
+    p->MOV(GenRegister::suboffset(dest, 4), GenRegister::suboffset(src, 4));
     if (execWidth == 16) {
-      p->MOV(GenRegister::suboffset(dest, 8), GenRegister::suboffset(src, 16));
-      p->MOV(GenRegister::suboffset(dest, 12), GenRegister::suboffset(src, 24));
+      p->MOV(GenRegister::suboffset(dest, 8), GenRegister::suboffset(src, 8));
+      p->MOV(GenRegister::suboffset(dest, 12), GenRegister::suboffset(src, 12));
     }
     p->pop();
   }
@@ -1255,13 +1255,13 @@ namespace gbe
     p->curr.execWidth = 8;
     p->MOV(dest, src);
     p->curr.nibControl = 1;
-    p->MOV(GenRegister::suboffset(dest, 8), GenRegister::suboffset(src, 4));
+    p->MOV(GenRegister::suboffset(dest, 4), GenRegister::suboffset(src, 4));
     if (execWidth == 16) {
       p->curr.quarterControl = 1;
       p->curr.nibControl = 0;
-      p->MOV(GenRegister::suboffset(dest, 16), GenRegister::suboffset(src, 8));
+      p->MOV(GenRegister::suboffset(dest, 8), GenRegister::suboffset(src, 8));
       p->curr.nibControl = 1;
-      p->MOV(GenRegister::suboffset(dest, 24), GenRegister::suboffset(src, 12));
+      p->MOV(GenRegister::suboffset(dest, 12), GenRegister::suboffset(src, 12));
     }
     p->pop();
   }

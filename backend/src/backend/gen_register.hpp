@@ -763,7 +763,7 @@ namespace gbe
 
     static INLINE GenRegister suboffset(GenRegister reg, uint32_t delta) {
       if (reg.hstride != GEN_HORIZONTAL_STRIDE_0) {
-        reg.subnr += delta * typeSize(reg.type);
+        reg.subnr += delta * typeSize(reg.type) * hstride_size(reg);
         reg.nr += reg.subnr / 32;
         reg.subnr %= 32;
       }

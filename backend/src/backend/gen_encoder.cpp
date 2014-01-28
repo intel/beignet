@@ -908,7 +908,7 @@ namespace gbe
       curr.execWidth = 8;
       curr.predicate = GEN_PREDICATE_NONE;
       MOV(r0, src0);
-      MOV(GenRegister::suboffset(r0, 8), GenRegister::suboffset(src0, 4));
+      MOV(GenRegister::suboffset(r0, 4), GenRegister::suboffset(src0, 4));
       curr.predicate = GEN_PREDICATE_NORMAL;
       curr.quarterControl = 0;
       curr.nibControl = 0;
@@ -921,7 +921,7 @@ namespace gbe
         curr.execWidth = 8;
         curr.predicate = GEN_PREDICATE_NONE;
         MOV(r0, GenRegister::suboffset(src0, 8));
-        MOV(GenRegister::suboffset(r0, 8), GenRegister::suboffset(src0, 12));
+        MOV(GenRegister::suboffset(r0, 4), GenRegister::suboffset(src0, 12));
         curr.predicate = GEN_PREDICATE_NORMAL;
         curr.quarterControl = 1;
         curr.nibControl = 0;
