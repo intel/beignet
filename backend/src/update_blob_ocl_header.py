@@ -21,8 +21,8 @@ import sys
 import os
 
 if len(sys.argv) != 3:
-    print "Invalid argument {}".format(sys.argv)
-    print "use {} tmpl_file_name output_file_name".format(sys.argv[0])
+    print "Invalid argument {0}".format(sys.argv)
+    print "use {0} tmpl_file_name output_file_name".format(sys.argv[0])
     raise
 
 def safeUnlink(filename):
@@ -46,7 +46,7 @@ for tline in tmplFile:
     if matched_header == "":
         blob.write(tline)
         for header in header_segments:
-            if tline.strip() == '// ##BEGIN_{}##'.format(header.upper()) :
+            if tline.strip() == '// ##BEGIN_{0}##'.format(header.upper()) :
                 hFile = open(path + '/ocl_' + header + '.h', 'r')
                 lineNr = 0
                 for hline in hFile:
@@ -56,7 +56,7 @@ for tline in tmplFile:
                 hFile.close()
                 matched_header = header
     else:
-        if tline.strip() == '// ##END_{}##'.format(matched_header.upper()) :
+        if tline.strip() == '// ##END_{0}##'.format(matched_header.upper()) :
             blob.write(tline)
             matched_header = "";
 
