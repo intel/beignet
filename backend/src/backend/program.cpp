@@ -652,13 +652,17 @@ namespace gbe {
                                           char *err,
                                           size_t *errSize)
   {
-    char clStr[L_tmpnam+1], llStr[L_tmpnam+1];
-    const std::string clName = std::string(tmpnam_r(clStr)) + ".cl"; /* unsafe! */
-    const std::string llName = std::string(tmpnam_r(llStr)) + ".ll"; /* unsafe! */
+    char clStr[] = "/tmp/XXXXXX.cl";
+    char llStr[] = "/tmp/XXXXXX.ll";
+    int clFd = mkstemps(clStr, 3);
+    int llFd = mkstemps(llStr, 3);
+    close(llFd);
+    const std::string clName = std::string(clStr);
+    const std::string llName = std::string(llStr);
     std::string clOpt;
     int optLevel = 1;
 
-    FILE *clFile = fopen(clName.c_str(), "w");
+    FILE *clFile = fdopen(clFd, "w");
     FATAL_IF(clFile == NULL, "Failed to open temporary file");
 
     bool usePCH = OCL_USE_PCH;
