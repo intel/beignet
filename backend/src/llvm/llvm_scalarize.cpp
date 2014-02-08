@@ -66,7 +66,7 @@
 #include "llvm/Config/config.h"
 #include "llvm/ADT/DenseMap.h"
 #include "llvm/ADT/PostOrderIterator.h"
-#if LLVM_VERSION_MINOR <= 2
+#if LLVM_VERSION_MAJOR == 3 && LLVM_VERSION_MINOR <= 2
 #include "llvm/Function.h"
 #include "llvm/InstrTypes.h"
 #include "llvm/Instructions.h"
@@ -80,7 +80,7 @@
 #include "llvm/IR/Module.h"
 #endif  /* LLVM_VERSION_MINOR <= 2 */
 #include "llvm/Pass.h"
-#if LLVM_VERSION_MINOR <= 1
+#if LLVM_VERSION_MAJOR == 3 && LLVM_VERSION_MINOR <= 1
 #include "llvm/Support/IRBuilder.h"
 #elif LLVM_VERSION_MINOR == 2
 #include "llvm/IRBuilder.h"
@@ -93,7 +93,6 @@
 
 #include "llvm/llvm_gen_backend.hpp"
 #include "sys/map.hpp"
-
 
 using namespace llvm;
 
@@ -128,7 +127,11 @@ namespace gbe {
     Scalarize() : FunctionPass(ID)
     {
       initializeLoopInfoPass(*PassRegistry::getPassRegistry());
+#if LLVM_VERSION_MAJOR == 3 && LLVM_VERSION_MINOR >= 5
+      initializeDominatorTreeWrapperPassPass(*PassRegistry::getPassRegistry());
+#else
       initializeDominatorTreePass(*PassRegistry::getPassRegistry());
+#endif
     }
 
     virtual bool runOnFunction(Function&);
@@ -767,7 +770,7 @@ namespace gbe {
   bool Scalarize::runOnFunction(Function& F)
   {
     switch (F.getCallingConv()) {
-#if LLVM_VERSION_MINOR <= 2
+#if LLVM_VERSION_MAJOR == 3 && LLVM_VERSION_MINOR <= 2
     case CallingConv::PTX_Device:
       return false;
     case CallingConv::PTX_Kernel:

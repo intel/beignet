@@ -23,7 +23,7 @@
  */
 
 #include "llvm/Config/config.h"
-#if LLVM_VERSION_MINOR <= 2
+#if LLVM_VERSION_MAJOR == 3 && LLVM_VERSION_MINOR <= 2
 #include "llvm/LLVMContext.h"
 #include "llvm/Module.h"
 #include "llvm/DataLayout.h"
@@ -39,7 +39,7 @@
 #include "llvm/Transforms/IPO.h"
 #include "llvm/Target/TargetLibraryInfo.h"
 #include "llvm/ADT/Triple.h"
-#if LLVM_VERSION_MINOR <= 2
+#if LLVM_VERSION_MAJOR == 3 && LLVM_VERSION_MINOR <= 2
 #include "llvm/Support/IRReader.h"
 #else
 #include "llvm/IRReader/IRReader.h"
@@ -48,6 +48,11 @@
 #include "llvm/Support/raw_ostream.h"
 #include "llvm/Transforms/Scalar.h"
 #include "llvm/Assembly/PrintModulePass.h"
+
+#if LLVM_VERSION_MAJOR == 3 && LLVM_VERSION_MINOR >=5
+#include "llvm/IR/IRPrintingPasses.h"
+#include "llvm/IR/Verifier.h"
+#endif
 
 #include "llvm/llvm_gen_backend.hpp"
 #include "llvm/llvm_to_gen.hpp"
@@ -69,7 +74,11 @@ namespace gbe
   {
     FunctionPassManager FPM(&mod);
     FPM.add(new DataLayout(&mod));
+#if LLVM_VERSION_MAJOR == 3 && LLVM_VERSION_MINOR >=5
+    FPM.add(createVerifierPass(true));
+#else
     FPM.add(createVerifierPass());
+#endif
     FPM.add(new TargetLibraryInfo(*libraryInfo));
     FPM.add(createTypeBasedAliasAnalysisPass());
     FPM.add(createBasicAliasAnalysisPass());
@@ -174,7 +183,11 @@ namespace gbe
 
     // Print the code before further optimizations
     if (OCL_OUTPUT_LLVM_BEFORE_EXTRA_PASS)
+#if LLVM_VERSION_MAJOR == 3 && LLVM_VERSION_MINOR >= 5
+      passes.add(createPrintModulePass(*o));
+#else
       passes.add(createPrintModulePass(&*o));
+#endif
     passes.add(createIntrinsicLoweringPass());
     passes.add(createFunctionInliningPass(200000));
     passes.add(createScalarReplAggregatesPass()); // Break up allocas
@@ -189,7 +202,11 @@ namespace gbe
 
     // Print the code extra optimization passes
     if (OCL_OUTPUT_LLVM)
+#if LLVM_VERSION_MAJOR == 3 && LLVM_VERSION_MINOR >= 5
+      passes.add(createPrintModulePass(*o));
+#else
       passes.add(createPrintModulePass(&*o));
+#endif
     passes.run(mod);
 
     return true;
