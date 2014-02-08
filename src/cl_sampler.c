@@ -30,8 +30,8 @@ uint32_t cl_to_clk(cl_bool normalized_coords,
                    cl_addressing_mode address,
                    cl_filter_mode filter)
 {
-  int clk_address;
-  int clk_filter;
+  int clk_address = CLK_ADDRESS_NONE;
+  int clk_filter = CLK_FILTER_NEAREST;
   switch (address) {
   case CL_ADDRESS_NONE: clk_address = CLK_ADDRESS_NONE; break;
   case CL_ADDRESS_CLAMP: clk_address = CLK_ADDRESS_CLAMP; break;

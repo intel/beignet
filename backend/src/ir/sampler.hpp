@@ -36,11 +36,6 @@ namespace ir {
    */
   class Context;
 
-  struct SamplerRegSlot {
-    Register reg;
-    uint32_t slot;
-  };
-
   class SamplerSet : public Serializable
   {
   public:
@@ -54,7 +49,7 @@ namespace ir {
     size_t getDataSize(void) const { return samplerMap.size(); }
     void getData(uint32_t *samplers) const {
       for(auto &it : samplerMap)
-        samplers[it.second.slot] = it.first;
+        samplers[it.second] = it.first;
     }
 
     void operator = (const SamplerSet& other) {
@@ -88,7 +83,7 @@ namespace ir {
 
   private:
     uint8_t appendReg(uint32_t key, Context *ctx);
-    map<uint32_t, SamplerRegSlot> samplerMap;
+    map<uint32_t, uint32_t> samplerMap;
     GBE_CLASS(SamplerSet);
   };
 } /* namespace ir */

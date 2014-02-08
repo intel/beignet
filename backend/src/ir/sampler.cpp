@@ -28,17 +28,16 @@ namespace gbe {
 namespace ir {
 
   uint8_t SamplerSet::appendReg(uint32_t key, Context *ctx) {
-    struct SamplerRegSlot samplerSlot;
-    samplerSlot.slot = samplerMap.size();
+    uint8_t samplerSlot = samplerMap.size();
     samplerMap.insert(std::make_pair(key, samplerSlot));
-    return samplerSlot.slot;
+    return samplerSlot;
   }
 
   uint8_t SamplerSet::append(uint32_t samplerValue, Context *ctx)
   {
     auto it = samplerMap.find(samplerValue);
     if (it != samplerMap.end())
-        return it->second.slot;
+        return it->second;
     // This register is just used as a key.
     return appendReg(samplerValue, ctx);
   }
@@ -58,7 +57,7 @@ namespace ir {
 
     auto it = samplerMap.find(SAMPLER_ID(id));
     if (it != samplerMap.end()) {
-      return it->second.slot;
+      return it->second;
     }
     return appendReg(SAMPLER_ID(id), ctx);
   }
@@ -75,8 +74,7 @@ namespace ir {
     OUT_UPDATE_SZ(samplerMap.size());
     for (auto iter : samplerMap) {
       OUT_UPDATE_SZ(iter.first);
-      OUT_UPDATE_SZ(iter.second.reg);
-      OUT_UPDATE_SZ(iter.second.slot);
+      OUT_UPDATE_SZ(iter.second);
     }
 
     OUT_UPDATE_SZ(magic_end);
@@ -97,12 +95,11 @@ namespace ir {
     IN_UPDATE_SZ(sampler_map_sz);
     for (size_t i = 0; i < sampler_map_sz; i++) {
       uint32_t key;
-      ir::SamplerRegSlot reg_slot;
+      uint32_t slot;
 
       IN_UPDATE_SZ(key);
-      IN_UPDATE_SZ(reg_slot.reg);
-      IN_UPDATE_SZ(reg_slot.slot);
-      samplerMap.insert(std::make_pair(key, reg_slot));
+      IN_UPDATE_SZ(slot);
+      samplerMap.insert(std::make_pair(key, slot));
     }
 
     IN_UPDATE_SZ(magic);
@@ -129,7 +126,7 @@ namespace ir {
 
     for (auto iter : samplerMap) {
       outs << spaces_nl <<  "     [" << iter.first << ", "
-           << iter.second.reg << ", " << iter.second.slot << "]\n";
+           << iter.second << "]\n";
     }
 
     outs << spaces << "------------- End SamplerSet -------------" << "\n";
