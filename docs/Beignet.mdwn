@@ -26,8 +26,14 @@ with any thing older.
 
 [http://llvm.org/releases/](http://llvm.org/releases/)
 
-LLVM 3.3 and 3.4 are supported. Till now, the recommended LLVM version is 3.3.
-There are some severe OpenCL related regression in current clang 3.4 version.
+LLVM 3.3 , 3.4 and 3.5 are supported. Till now, the recommended LLVM version is 3.3.
+There are some severe OpenCL related regression in current clang 3.4/3.5 version.
+
+If you want to try Clang/LLVM 3.4, you need to disable terminfo:
+--disable-terminfo. It's a llvm 3.4 bug.
+
+If you want to try Clang/LLVM 3.5, you need to build the clang/llvm with cxx11 enabled:
+--enable-cxx11.
 
 Also note that the code was compiled on GCC 4.6 and GCC 4.7. Since the code uses
 really recent C++11 features, you may expect problems with older compilers. Last
@@ -78,7 +84,7 @@ Simply invoke:
 It installs the following three files to the beignet/ directory relatively to
 your library installation directory.
 - libcl.so
-- ocl_stdlib.h, ocl_stdlib.h.pch
+- ocl\_stdlib.h, ocl\_stdlib.h.pch
 - beignet.bc
 
 It installs the OCL icd vendor files to /etc/OpenCL/vendors, if the system support ICD.
