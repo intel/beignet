@@ -105,7 +105,13 @@
 #include "llvm/Analysis/ValueTracking.h"
 #include "llvm/CodeGen/Passes.h"
 #include "llvm/CodeGen/IntrinsicLowering.h"
+
+#if LLVM_VERSION_MAJOR == 3 && LLVM_VERSION_MINOR >=5
+#include "llvm/IR/Mangler.h"
+#else
 #include "llvm/Target/Mangler.h"
+#endif
+
 #include "llvm/Transforms/Scalar.h"
 #include "llvm/MC/MCAsmInfo.h"
 #include "llvm/MC/MCContext.h"

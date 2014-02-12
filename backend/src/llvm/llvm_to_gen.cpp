@@ -34,7 +34,6 @@
 #endif  /* LLVM_VERSION_MINOR <= 2 */
 #include "llvm/PassManager.h"
 #include "llvm/Pass.h"
-#include "llvm/Analysis/Verifier.h"
 #include "llvm/Analysis/Passes.h"
 #include "llvm/Transforms/IPO.h"
 #include "llvm/Target/TargetLibraryInfo.h"
@@ -47,11 +46,13 @@
 #endif  /* LLVM_VERSION_MINOR <= 2 */
 #include "llvm/Support/raw_ostream.h"
 #include "llvm/Transforms/Scalar.h"
-#include "llvm/Assembly/PrintModulePass.h"
 
 #if LLVM_VERSION_MAJOR == 3 && LLVM_VERSION_MINOR >=5
 #include "llvm/IR/IRPrintingPasses.h"
 #include "llvm/IR/Verifier.h"
+#else
+#include "llvm/Analysis/Verifier.h"
+#include "llvm/Assembly/PrintModulePass.h"
 #endif
 
 #include "llvm/llvm_gen_backend.hpp"
