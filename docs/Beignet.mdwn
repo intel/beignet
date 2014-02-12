@@ -1,7 +1,7 @@
 Beignet
 =======
 
-Beignet is an open source implementaion of the OpenCL specification - a generic
+Beignet is an open source implementation of the OpenCL specification - a generic
 compute oriented API. This code base contains the code to run OpenCL programs on
 Intel GPUs which basically defines and implements the OpenCL host functions
 required to initialize the device, create the command queues, the kernels and
@@ -20,34 +20,56 @@ The project depends on the following external libaries:
 - The compiler backend itself (libgbe)
 - Mesa git master version built with gbm enabled to support extension cl\_khr\_gl\_sharing.
 
-Note that the compiler depends on LLVM (Low-Level Virtual Machine project).
-Right now, the code has been compiled with LLVM 3.3/3.4. It will not compile
-with any thing older.
-
-[http://llvm.org/releases/](http://llvm.org/releases/)
-
-LLVM 3.3 , 3.4 and 3.5 are supported. Till now, the recommended LLVM version is 3.3.
-There are some severe OpenCL related regression in current clang 3.4/3.5 version.
-
-If you want to try Clang/LLVM 3.4, you need to disable terminfo:
---disable-terminfo. It's a llvm 3.4 bug.
-
-If you want to try Clang/LLVM 3.5, you need to build the clang/llvm with cxx11 enabled:
---enable-cxx11.
-
-Also note that the code was compiled on GCC 4.6 and GCC 4.7. Since the code uses
-really recent C++11 features, you may expect problems with older compilers. Last
-time I tried, the code breaks ICC 12 and Clang with internal compiler errors
-while compiling anonymous nested lambda functions.
-
 And if you want to work with the standard ICD libOpenCL.so, then you need
 two more packages (the following package name is for Ubuntu):
+
 - ocl-icd-dev
 - ocl-icd-libopencl1
 
 If you don't want to enable ICD, or your system doesn't have ICD OpenCL support,
 you can still link to the beignet OpenCL library. You can find the beignet/libcl.so
 in your system's library installation directories.
+
+Note that the compiler depends on LLVM (Low-Level Virtual Machine project).
+Right now, the code has been compiled with LLVM 3.3/3.4. It will not compile
+with anything older.
+
+[http://llvm.org/releases/](http://llvm.org/releases/)
+
+LLVM 3.3 , 3.4 and 3.5 are supported. Till now, the recommended LLVM version is 3.3.
+There are some severe OpenCL related regression in current clang 3.4/3.5 version.
+
+**Note about LLVM 3.4**
+
+* If you want to try Clang/LLVM 3.4, you need to disable terminfo:
+--disable-terminfo. It's a llvm 3.4 bug.
+
+**Note about LLVM 3.5**
+
+* If you want to try Clang/LLVM 3.5, you need to build the clang/llvm with cxx11 enabled:
+--enable-cxx11.
+
+**Note about OpenCV support**
+
+* We only fully tested the OpenCV 2.4 branch with beignet. And the pass rate is about 99%
+  for beignet 0.8.0. The preferred LLVM/Clang version is 3.3. One OpenCV patch is needed
+  to work with LLVM/clang, the patch is already submitted to the OpenCV upstream 2.4 repo
+  and is waiting for review: [pull request](https://github.com/Itseez/opencv/pull/2318).
+  Before it is merged, you need to apply that patch manually to OpenCV 2.4 branch.
+* As some OpenCL kerne (in OpenCV 2.4 OCL test suite) runs more than 10 seconds, it may
+  be reset by the kernel as the kernel has a GPU hangcheck mechanism. You can disable the
+  hangcheck by invoke the following command on Ubuntu system:
+
+  `# echo -n 0 > /sys/module/i915/parameters/enable_hangcheck`
+
+  But this command is a little bit dangerous, as if your kernel hang, then the gpu will hang
+  forever.
+* For the OpenCV 3.0 branch, the pass rate may a little bit lower than the 2.4 branch.
+
+Also note that the code was compiled on GCC 4.6, GCC 4.7 and GCC 4.8. Since the code uses
+really recent C++11 features, you may expect problems with older compilers. Last
+time I tried, the code breaks ICC 12 and Clang with internal compiler errors
+while compiling anonymous nested lambda functions.
 
 
 How to build and install
@@ -128,6 +150,14 @@ all the piglit OpenCL test cases now. And the pass rate for the OpenCV test suit
 is also good. There are still some remains work items listed as below, most of them
 are extension support and performance related.
 
+- Performance tuning. Till now, the focus of beignet project is to implement all
+  the mandatory functions/features specified by the OpenCL spec. There are plenty
+  of things need to do for performance tuning. For example, the extreme slow software
+  based sin/cos/... math functions due to the native math instruction lack of necessary
+  precision. And all the code is inlined which will increase the icache miss rate
+  significantly. And many other things which are specified partially in
+  [[here|Beignet/Backend/TODO]]. We will focus on performance tuning after the version 0.8.
+
 - Complete cl\_khr\_gl\_sharing support. We lack of some APIs implementation such
   as clCreateFromGLBuffer,clCreateFromGLRenderbuffer,clGetGLObjectInfo... Currently,
   the working APIs are clCreateFromGLTexture,clCreateFromGLTexture2D. This work
@@ -157,8 +187,8 @@ And the intel 01.org:
 
 The team
 --------
-This project was created by Ben Segovia when he was working for Intel. Now we
-have a team in China OTC graphics department continue to work on this project.
+Beignet project was created by Ben Segovia. Since 2013, Now we have a team in
+Intel China OTC graphics team continue to work on this project.
 The official contact for this project is: Zou Nanhai (<nanhai.zou@intel.com>).
 
 How to contribute
