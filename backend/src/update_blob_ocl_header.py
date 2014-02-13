@@ -36,7 +36,7 @@ blobFileName = sys.argv[2]
 blobTempName = sys.argv[2] + '.tmp'
 safeUnlink(blobFileName)
 tmplFile = open(sys.argv[1], 'r')
-blob = open(sys.argv[2] + '.tmp', 'w')
+blob = open(blobTempName, 'w')
 path = os.path.dirname(sys.argv[1])
 if path == '':
     path = '.'
