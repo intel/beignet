@@ -188,6 +188,10 @@ target_link_libraries(
                       ${CMAKE_THREAD_LIBS_INIT}
                       ${CMAKE_DL_LIBS})
 
+if (LLVM_VERSION_NODOT VERSION_EQUAL 34)
+  target_link_libraries(gbe tinfo)
+endif(LLVM_VERSION_NODOT VERSION_EQUAL 34)
+
 link_directories (${LLVM_LIBRARY_DIR})
 ADD_EXECUTABLE(gbe_bin_generater gbe_bin_generater.cpp)
 TARGET_LINK_LIBRARIES(gbe_bin_generater gbe)
