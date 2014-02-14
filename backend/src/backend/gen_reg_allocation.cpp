@@ -33,7 +33,6 @@
 #include <iostream>
 #include <iomanip>
 
-#define RESERVED_REG_NUM_FOR_SPILL 6
 
 namespace gbe
 {
@@ -234,7 +233,7 @@ namespace gbe
     uint32_t grfOffset = allocateReg(interval, regSize, regSize);
     if (grfOffset == 0) {
       /* this register is going to be spilled. */
-      GBE_ASSERT(!(reservedReg && family != ir::FAMILY_DWORD));
+      GBE_ASSERT(!(reservedReg && family != ir::FAMILY_DWORD && family != ir::FAMILY_QWORD));
       return false;
     }
     insertNewReg(reg, grfOffset);
@@ -617,7 +616,8 @@ namespace gbe
        ir::RegisterFamily family;
        getRegAttrib(reg, regSize, &family);
 
-       if (regSize == GEN_REG_SIZE && family == ir::FAMILY_DWORD /*&& !isVector*/) {
+       if ((regSize == GEN_REG_SIZE && family == ir::FAMILY_DWORD)
+          || (regSize == 2*GEN_REG_SIZE && family == ir::FAMILY_QWORD)) {
          GBE_ASSERT(offsetReg.find(grfOffset) == offsetReg.end());
          offsetReg.insert(std::make_pair(grfOffset, reg));
          spillCandidate.insert(intervals[reg]);
@@ -639,7 +639,8 @@ namespace gbe
     if (!spillTag.isTmpReg) {
       // FIXME, we can optimize scratch allocation according to
       // the interval information.
-      spillTag.addr = ctx.allocateScratchMem(typeSize(GEN_TYPE_D)
+      ir::RegisterFamily family = ctx.sel->getRegisterFamily(interval.reg);
+      spillTag.addr = ctx.allocateScratchMem(getFamilySize(family)
                                              * ctx.getSimdWidth());
     } else
       spillTag.addr = -1;
@@ -682,6 +683,7 @@ namespace gbe
       auto vectorIt = vectorMap.find(reg);
       bool isVector = vectorIt != vectorMap.end();
       bool needRestart = false;
+      ir::RegisterFamily family = ctx.sel->getRegisterFamily(reg);
       if (isVector
           && (vectorCanSpill(vectorIt->second.first))) {
         const SelectionVector *vector = vectorIt->second.first;
@@ -690,11 +692,12 @@ namespace gbe
                      == spilledRegs.end());
           spillSet.insert(vector->reg[id].reg());
           reg = vector->reg[id].reg();
-          size -= GEN_REG_SIZE;
+          family = ctx.sel->getRegisterFamily(reg);
+          size -= family == ir::FAMILY_QWORD ? 2*GEN_REG_SIZE : GEN_REG_SIZE;
         }
       } else if (!isVector) {
         spillSet.insert(reg);
-        size -= GEN_REG_SIZE;
+        size -= family == ir::FAMILY_QWORD ? 2*GEN_REG_SIZE : GEN_REG_SIZE;
       } else
         needRestart = true; // is a vector which could not be spilled.
 
@@ -702,7 +705,8 @@ namespace gbe
         break;
       if (!needRestart) {
         uint32_t offset = RA.find(reg)->second;
-        auto nextRegIt = offsetReg.find(offset + GEN_REG_SIZE);
+        uint32_t nextOffset = (family == ir::FAMILY_QWORD) ? (offset + 2*GEN_REG_SIZE) : (offset + GEN_REG_SIZE);
+        auto nextRegIt = offsetReg.find(nextOffset);
         if (nextRegIt != offsetReg.end())
           reg = nextRegIt->second;
         else

@@ -259,7 +259,8 @@ static void
 cl_setup_scratch(cl_gpgpu gpgpu, cl_kernel ker)
 {
   int32_t scratch_sz = gbe_kernel_get_scratch_size(ker->opaque);
-
+  /* Per HW Spec, it only allows 12KB scratch memory per HW thread now */
+  assert(scratch_sz <= 12*1024);
   cl_gpgpu_set_scratch(gpgpu, scratch_sz);
 }
 

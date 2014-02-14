@@ -670,18 +670,9 @@ namespace gbe
     return vector;
   }
 
-  // FIXME, there is a risk need to be fixed here.
-  // as the instruction we spill here is the gen ir level not the final
-  // single instruction. If it will be translated to multiple instructions
-  // at gen_context stage, and as the destination registers and source registers
-  // may be spilled to the same register based on current implementation,
-  // then the source register may be modified within the final instruction and
-  // may lead to incorrect result.
   bool Selection::Opaque::spillRegs(const SpilledRegs &spilledRegs,
                                     uint32_t registerPool) {
     GBE_ASSERT(registerPool != 0);
-    const uint32_t dstStart = registerPool + 1;
-    const uint32_t srcStart = registerPool + 1;
 
     for (auto &block : blockList)
       for (auto &insn : block.insnList) {
@@ -693,17 +684,19 @@ namespace gbe
         const uint32_t srcNum = insn.srcNum, dstNum = insn.dstNum;
         struct RegSlot {
           RegSlot(ir::Register _reg, uint8_t _srcID,
-                  bool _isTmp, uint32_t _addr)
-                 : reg(_reg), srcID(_srcID), isTmpReg(_isTmp), addr(_addr)
+                   uint8_t _poolOffset, bool _isTmp, uint32_t _addr)
+                 : reg(_reg), srcID(_srcID), poolOffset(_poolOffset), isTmpReg(_isTmp), addr(_addr)
           {};
           ir::Register reg;
           union {
             uint8_t srcID;
             uint8_t dstID;
           };
+          uint8_t poolOffset;
           bool isTmpReg;
           int32_t addr;
         };
+        uint8_t poolOffset = 1; // keep one for scratch message header
         vector <struct RegSlot> regSet;
         for (uint32_t srcID = 0; srcID < srcNum; ++srcID) {
           const GenRegister selReg = insn.src(srcID);
@@ -712,18 +705,27 @@ namespace gbe
           if(it != spilledRegs.end()
              && selReg.file == GEN_GENERAL_REGISTER_FILE
              && selReg.physical == 0) {
-            struct RegSlot regSlot(reg, srcID,
+            ir::RegisterFamily family = getRegisterFamily(reg);
+            if(family == ir::FAMILY_QWORD && poolOffset == 1) {
+              poolOffset += 1; // qword register fill could not share the scratch read message payload register
+            }
+            struct RegSlot regSlot(reg, srcID, poolOffset,
                                    it->second.isTmpReg,
                                    it->second.addr);
+            if(family == ir::FAMILY_QWORD) {
+              poolOffset += 2;
+            } else {
+              poolOffset += 1;
+            }
             regSet.push_back(regSlot);
           }
         }
 
-        if (regSet.size() > 5)
+        if (poolOffset > RESERVED_REG_NUM_FOR_SPILL) {
+          std::cerr << "Instruction (#" << (uint32_t)insn.opcode << ") src too large pooloffset " << (uint32_t)poolOffset << std::endl;
           return false;
-
+        }
         while(!regSet.empty()) {
-          uint32_t scratchID = regSet.size() - 1;
           struct RegSlot regSlot = regSet.back();
           regSet.pop_back();
           const GenRegister selReg = insn.src(regSlot.srcID);
@@ -732,7 +734,7 @@ namespace gbe
             SelectionInstruction *unspill = this->create(SEL_OP_UNSPILL_REG, 1, 0);
             unspill->state  = GenInstructionState(ctx.getSimdWidth());
             unspill->dst(0) = GenRegister(GEN_GENERAL_REGISTER_FILE,
-                                          srcStart + scratchID, 0,
+                                          registerPool + regSlot.poolOffset, 0,
                                           selReg.type, selReg.vstride,
                                           selReg.width, selReg.hstride);
             unspill->extra.scratchOffset = regSlot.addr;
@@ -742,7 +744,7 @@ namespace gbe
 
           GenRegister src = insn.src(regSlot.srcID);
           // change nr/subnr, keep other register settings
-          src.nr = srcStart + scratchID; src.subnr = 0; src.physical = 1;
+          src.nr = registerPool + regSlot.poolOffset; src.subnr = 0; src.physical = 1;
           insn.src(regSlot.srcID) = src;
         };
 
@@ -756,7 +758,6 @@ namespace gbe
           instruction. Thus the registerPool + 1 still contain valid
           data.
          */
-
         for (uint32_t dstID = 0; dstID < dstNum; ++dstID) {
           const GenRegister selReg = insn.dst(dstID);
           const ir::Register reg = selReg.reg();
@@ -764,18 +765,24 @@ namespace gbe
           if(it != spilledRegs.end()
              && selReg.file == GEN_GENERAL_REGISTER_FILE
              && selReg.physical == 0) {
-            struct RegSlot regSlot(reg, dstID,
+            ir::RegisterFamily family = getRegisterFamily(reg);
+            if(family == ir::FAMILY_QWORD && poolOffset == 1) {
+              poolOffset += 1; // qword register spill could not share the scratch write message payload register
+            }
+            struct RegSlot regSlot(reg, dstID, poolOffset,
                                    it->second.isTmpReg,
                                    it->second.addr);
+            if(family == ir::FAMILY_QWORD) poolOffset +=2;
+            else poolOffset += 1;
             regSet.push_back(regSlot);
           }
         }
 
-        if (regSet.size() > 5)
+        if (poolOffset > RESERVED_REG_NUM_FOR_SPILL){
+          std::cerr << "Instruction (#" << (uint32_t)insn.opcode << ") dst too large pooloffset " << (uint32_t)poolOffset << std::endl;
           return false;
-
+        }
         while(!regSet.empty()) {
-          uint32_t scratchID = regSet.size() - 1;
           struct RegSlot regSlot = regSet.back();
           regSet.pop_back();
           const GenRegister selReg = insn.dst(regSlot.dstID);
@@ -784,7 +791,7 @@ namespace gbe
             SelectionInstruction *spill = this->create(SEL_OP_SPILL_REG, 0, 1);
             spill->state  = GenInstructionState(ctx.getSimdWidth());
             spill->src(0) = GenRegister(GEN_GENERAL_REGISTER_FILE,
-                                        dstStart + scratchID, 0,
+                                        registerPool + regSlot.poolOffset, 0,
                                         selReg.type, selReg.vstride,
                                         selReg.width, selReg.hstride);
             spill->extra.scratchOffset = regSlot.addr;
@@ -794,9 +801,8 @@ namespace gbe
 
           GenRegister dst = insn.dst(regSlot.dstID);
           // change nr/subnr, keep other register settings
-          dst.physical =1; dst.nr = dstStart + scratchID; dst.subnr = 0;
+          dst.physical =1; dst.nr = registerPool + regSlot.poolOffset; dst.subnr = 0;
           insn.dst(regSlot.dstID)= dst;
-          scratchID++;
         }
       }
     return true;

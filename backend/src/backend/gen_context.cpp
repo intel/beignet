@@ -1662,14 +1662,28 @@ namespace gbe
     GenRegister payload = src;
     payload.nr = header + 1;
     payload.subnr = 0;
+
     GBE_ASSERT(src.subnr == 0);
-    if (payload.nr != src.nr)
-      p->MOV(payload, src);
     uint32_t regType = insn.src(0).type;
     uint32_t size = typeSize(regType);
-    assert(size <= 4);
-    uint32_t regNum = (stride(src.hstride)*size*simdWidth) > 32 ? 2 : 1;
-    this->scratchWrite(msg, scratchOffset, regNum, regType, GEN_SCRATCH_CHANNEL_MODE_DWORD);
+    uint32_t regSize = stride(src.hstride)*size;
+
+    GBE_ASSERT(regSize == 4 || regSize == 8);
+    if(regSize == 4) {
+      if (payload.nr != src.nr)
+        p->MOV(payload, src);
+      uint32_t regNum = (regSize*simdWidth) > 32 ? 2 : 1;
+      this->scratchWrite(msg, scratchOffset, regNum, GEN_TYPE_UD, GEN_SCRATCH_CHANNEL_MODE_DWORD);
+    }
+    else { //size == 8
+      payload.type = GEN_TYPE_UD;
+      GBE_ASSERT(payload.hstride == GEN_HORIZONTAL_STRIDE_1);
+      loadBottomHalf(payload, src);
+      uint32_t regNum = (regSize/2*simdWidth) > 32 ? 2 : 1;
+      this->scratchWrite(msg, scratchOffset, regNum, GEN_TYPE_UD, GEN_SCRATCH_CHANNEL_MODE_DWORD);
+      loadTopHalf(payload, src);
+      this->scratchWrite(msg, scratchOffset + 4*simdWidth, regNum, GEN_TYPE_UD, GEN_SCRATCH_CHANNEL_MODE_DWORD);
+    }
     p->pop();
   }
 
@@ -1680,10 +1694,25 @@ namespace gbe
     uint32_t simdWidth = p->curr.execWidth;
     const uint32_t header = insn.extra.scratchMsgHeader;
     uint32_t size = typeSize(regType);
-    assert(size <= 4);
-    uint32_t regNum = (stride(dst.hstride)*size*simdWidth) > 32 ? 2 : 1;
+    uint32_t regSize = stride(dst.hstride)*size;
+
     const GenRegister msg = GenRegister::ud8grf(header, 0);
-    this->scratchRead(GenRegister::retype(dst, GEN_TYPE_UD), msg, scratchOffset, regNum, regType, GEN_SCRATCH_CHANNEL_MODE_DWORD);
+    GenRegister payload = msg;
+    payload.nr = header + 1;
+
+    p->push();
+    assert(regSize == 4 || regSize == 8);
+    if(regSize == 4) {
+      uint32_t regNum = (regSize*simdWidth) > 32 ? 2 : 1;
+      this->scratchRead(GenRegister::ud8grf(dst.nr, dst.subnr), msg, scratchOffset, regNum, GEN_TYPE_UD, GEN_SCRATCH_CHANNEL_MODE_DWORD);
+    } else {
+      uint32_t regNum = (regSize/2*simdWidth) > 32 ? 2 : 1;
+      this->scratchRead(payload, msg, scratchOffset, regNum, GEN_TYPE_UD, GEN_SCRATCH_CHANNEL_MODE_DWORD);
+      storeBottomHalf(dst, payload);
+      this->scratchRead(payload, msg, scratchOffset + 4*simdWidth, regNum, GEN_TYPE_UD, GEN_SCRATCH_CHANNEL_MODE_DWORD);
+      storeTopHalf(dst, payload);
+    }
+    p->pop();
   }
 
   //  For SIMD8, we allocate 2*elemNum temporary registers from dst(0), and
