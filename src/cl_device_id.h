@@ -68,6 +68,7 @@ struct _cl_device_id {
   cl_uint  max_constant_args;
   cl_device_local_mem_type local_mem_type;
   cl_ulong local_mem_size;
+  cl_ulong scratch_mem_size;
   cl_bool  error_correction_support;
   cl_bool  host_unified_memory;
   size_t   profiling_timer_resolution;

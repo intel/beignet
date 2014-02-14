@@ -24,6 +24,7 @@
 .global_mem_cache_size = 8 << 10, /* XXX */
 .local_mem_type = CL_GLOBAL,
 .local_mem_size = 64 << 10,
+.scratch_mem_size = 2 << 20,
 
 #include "cl_gt_device.h"
 

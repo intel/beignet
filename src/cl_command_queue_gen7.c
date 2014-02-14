@@ -255,15 +255,6 @@ cl_bind_stack(cl_gpgpu gpgpu, cl_kernel ker)
   cl_gpgpu_set_stack(gpgpu, offset, stack_sz, cc_llc_l3);
 }
 
-static void
-cl_setup_scratch(cl_gpgpu gpgpu, cl_kernel ker)
-{
-  int32_t scratch_sz = gbe_kernel_get_scratch_size(ker->opaque);
-  /* Per HW Spec, it only allows 12KB scratch memory per HW thread now */
-  assert(scratch_sz <= 12*1024);
-  cl_gpgpu_set_scratch(gpgpu, scratch_sz);
-}
-
 LOCAL cl_int
 cl_command_queue_ND_range_gen7(cl_command_queue queue,
                                cl_kernel ker,
@@ -279,6 +270,7 @@ cl_command_queue_ND_range_gen7(cl_command_queue queue,
   const uint32_t simd_sz = cl_kernel_get_simd_width(ker);
   size_t i, batch_sz = 0u, local_sz = 0u;
   size_t cst_sz = ker->curbe_sz= gbe_kernel_get_curbe_size(ker->opaque);
+  int32_t scratch_sz = gbe_kernel_get_scratch_size(ker->opaque);
   size_t thread_n = 0u;
   cl_int err = CL_SUCCESS;
 
@@ -295,11 +287,17 @@ cl_command_queue_ND_range_gen7(cl_command_queue queue,
   kernel.thread_n = thread_n = (local_sz + simd_sz - 1) / simd_sz;
   kernel.curbe_sz = cst_sz;
 
+  if (scratch_sz > ker->program->ctx->device->scratch_mem_size) {
+    fprintf(stderr, "Beignet: Out of scratch memory %d.\n", scratch_sz);
+    return CL_OUT_OF_RESOURCES;
+  }
   /* Curbe step 1: fill the constant urb buffer data shared by all threads */
   if (ker->curbe) {
     kernel.slm_sz = cl_curbe_fill(ker, work_dim, global_wk_off, global_wk_sz, local_wk_sz, thread_n);
-    if (kernel.slm_sz > ker->program->ctx->device->local_mem_size)
+    if (kernel.slm_sz > ker->program->ctx->device->local_mem_size) {
+      fprintf(stderr, "Beignet: Out of shared local memory %d.\n", kernel.slm_sz);
       return CL_OUT_OF_RESOURCES;
+    }
   }
 
   /* Setup the kernel */
@@ -315,7 +313,8 @@ cl_command_queue_ND_range_gen7(cl_command_queue queue,
   /* Bind all samplers */
   cl_gpgpu_bind_sampler(gpgpu, ker->samplers, ker->sampler_sz);
 
-  cl_setup_scratch(gpgpu, ker);
+  cl_gpgpu_set_scratch(gpgpu, scratch_sz);
+
   /* Bind a stack if needed */
   cl_bind_stack(gpgpu, ker);
 
