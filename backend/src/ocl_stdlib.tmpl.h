@@ -1479,65 +1479,63 @@ INLINE_OVERLOADABLE float tan(float x)
 
 INLINE_OVERLOADABLE float native_cos(float x) { return __gen_ocl_cos(x); }
 INLINE_OVERLOADABLE float __gen_ocl_internal_cospi(float x) {
-  return __gen_ocl_cos(x * M_PI_F);
+  int ix;
+  if(isinf(x) || isnan(x)) { return NAN; }
+  if(x < 0.0f) { x = -x; }
+  GEN_OCL_GET_FLOAT_WORD(ix, x);
+  if(x> 0x1.0p24) return 1.0f;
+  float m = __gen_ocl_internal_floor(x);
+  ix = (int)m;
+  m = x-m;
+  if((ix&0x1) != 0) m+=1.0f;
+    ix = __gen_ocl_internal_floor(m*4.0f);
+
+  switch(ix) {
+   case 0:
+    return __kernel_cosf(m*M_PI_F, 0.0f);
+   case 1:
+   case 2:
+    return __kernel_sinf((0.5f-m)*M_PI_F, 0.0f, 0);
+   case 3:
+   case 4:
+    return -__kernel_cosf((m-1.0f)*M_PI_F, 0.0f);
+   case 5:
+   case 6:
+    return __kernel_sinf((m-1.5f)*M_PI_F, 0.0f, 0);
+   default:
+    return __kernel_cosf((2.0f-m)*M_PI_F, 0.0f);
+   }
 }
 INLINE_OVERLOADABLE float native_sin(float x) { return __gen_ocl_sin(x); }
 INLINE_OVERLOADABLE float __gen_ocl_internal_sinpi(float x) {
-/*
- * ====================================================
- * Copyright (C) 1993 by Sun Microsystems, Inc. All rights reserved.
- *
- * Developed at SunPro, a Sun Microsystems, Inc. business.
- * Permission to use, copy, modify, and distribute this
- * software is freely granted, provided that this notice
- * is preserved.
- * ====================================================
- */
-  float y, z;
-  int n, ix;
-  ix = *(int *) (&x) & 0x7fffffff;
-  if (ix < 0x3e800000)
-    return __gen_ocl_sin(M_PI_F * x);
-  y = -x;
-  z = __gen_ocl_rndd(y);
-  if (z != y) {
-    y *= 0.5f;
-    y = 2.f * (y - __gen_ocl_rndd(y));
-    n = y * 4.f;
-  } else {
-    if (ix >= 0x4b800000) {
-      y = 0;
-      n = 0;
-    } else {
-      if (ix < 0x4b000000)
-        z = y + 8.3886080000e+06f;
-      int n = *(int *) (&z);
-      n &= 1;
-      y = n;
-      n <<= 2;
-    }
-  }
-  switch (n) {
-  case 0:
-    y = __gen_ocl_sin(M_PI_F * y);
-    break;
-  case 1:
-  case 2:
-    y = __gen_ocl_cos(M_PI_F * (0.5f - y));
-    break;
-  case 3:
-  case 4:
-    y = __gen_ocl_sin(M_PI_F * (1.f - y));
-    break;
-  case 5:
-  case 6:
-    y = -__gen_ocl_cos(M_PI_F * (y - 1.5f));
-    break;
-  default:
-    y = __gen_ocl_sin(M_PI_F * (y - 2.f));
-    break;
-  }
-  return -y;
+  float sign = 1.0f;
+  int ix;
+  if(isinf(x)) return NAN;
+  if(x < 0.0f) { x = -x; sign = -1.0f; }
+  GEN_OCL_GET_FLOAT_WORD(ix, x);
+  if(x> 0x1.0p24) return 0.0f;
+  float m = __gen_ocl_internal_floor(x);
+  ix = (int)m;
+  m = x-m;
+  if((ix&0x1) != 0) m+=1.0f;
+    ix = __gen_ocl_internal_floor(m*4.0f);
+
+  switch(ix) {
+   case 0:
+    return sign*__kernel_sinf(m*M_PI_F, 0.0f, 0);
+   case 1:
+   case 2:
+    return sign*__kernel_cosf((m-0.5f)*M_PI_F, 0.0f);
+   case 3:
+   case 4:
+    return -sign*__kernel_sinf((m-1.0f)*M_PI_F, 0.0f, 0);
+   case 5:
+   case 6:
+    return -sign*__kernel_cosf((m-1.5f)*M_PI_F, 0.0f);
+   default:
+    return -sign*__kernel_sinf((2.0f-m)*M_PI_F, 0.0f, 0);
+   }
+
 }
 INLINE_OVERLOADABLE float native_sqrt(float x) { return __gen_ocl_sqrt(x); }
 INLINE_OVERLOADABLE float native_rsqrt(float x) { return __gen_ocl_rsqrt(x); }
