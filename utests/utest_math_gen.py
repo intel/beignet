@@ -150,17 +150,17 @@ static float cospi(float x){
 } '''
   cospiUtests = func('cospi','cospi',[cospi_input_type],cospi_output_type,[cospi_input_values],'2 * FLT_ULP',cospi_cpu_func)
   
-  ##### gentype erf(gentype)
-  erf_input_values = base_input_values
-  erf_input_type = ['float','float2','float4','float8','float16']
-  erf_output_type = ['float','float2','float4','float8','float16']
-  erfUtests = func('erf','erf',[erf_input_type],erf_output_type,[erf_input_values],'16 * FLT_ULP')
-  
-  ##### gentype erfc(gentype)
-  erfc_input_values = base_input_values
-  erfc_input_type = ['float','float2','float4','float8','float16']
-  erfc_output_type = ['float','float2','float4','float8','float16']
-  erfcUtests = func('erfc','erfc',[erfc_input_type],erfc_output_type,[erfc_input_values],'16 * FLT_ULP')
+#  ##### gentype erf(gentype)
+#  erf_input_values = base_input_values
+#  erf_input_type = ['float','float2','float4','float8','float16']
+#  erf_output_type = ['float','float2','float4','float8','float16']
+#  erfUtests = func('erf','erf',[erf_input_type],erf_output_type,[erf_input_values],'16 * FLT_ULP')
+
+#  ##### gentype erfc(gentype)
+#  erfc_input_values = base_input_values
+#  erfc_input_type = ['float','float2','float4','float8','float16']
+#  erfc_output_type = ['float','float2','float4','float8','float16']
+#  erfcUtests = func('erfc','erfc',[erfc_input_type],erfc_output_type,[erfc_input_values],'16 * FLT_ULP')
   
   ##### gentype exp(gentype x)
   exp_input_values = base_input_values
@@ -502,12 +502,6 @@ static float tanpi(float x){
   return tan(M_PI*x);
 } '''
   tanpiUtests = func('tanpi','tanpi',[tanpi_input_type],tanpi_output_type,[tanpi_input_values],'4 * FLT_ULP',tanpi_cpu_func)
-  
-  ##### gentype tgamma(gentype)
-  tgamma_input_values = base_input_values
-  tgamma_input_type = ['float','float2','float4','float8','float16']
-  tgamma_output_type = ['float','float2','float4','float8','float16']
-  tgammaUtests = func('tgamma','tgamma',[tgamma_input_type],tgamma_output_type,[tgamma_input_values],'16 * FLT_ULP')
   
   ##### gentype trunc(gentype)
   trunc_input_values = base_input_values
