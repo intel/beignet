@@ -189,7 +189,13 @@ target_link_libraries(
                       ${CMAKE_DL_LIBS})
 
 if (LLVM_VERSION_NODOT VERSION_EQUAL 34)
-  target_link_libraries(gbe tinfo)
+  find_library(TERMINFO NAMES tinfo ncurses)
+  if (${TERMINFO} STREQUAL TERMINFO-NOTFOUND)
+    message(FATAL_ERROR "no libtinfo or libncurses is found in system")
+  else (${TERMINFO} STREQUAL TERMINFO-NOTFOUND)
+    target_link_libraries(gbe ${TERMINFO})
+    message(STATUS "use ${TERMINFO} as terminal control library")
+  endif (${TERMINFO} STREQUAL TERMINFO-NOTFOUND)
 endif(LLVM_VERSION_NODOT VERSION_EQUAL 34)
 
 link_directories (${LLVM_LIBRARY_DIR})
