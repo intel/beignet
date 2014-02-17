@@ -4460,6 +4460,14 @@ INLINE_OVERLOADABLE  size_t get_image_array_size(image1d_array_t image)
   { return __gen_ocl_get_image_array_size(image); }
 #endif
 
+INLINE_OVERLOADABLE float __gen_ocl_internal_fastpath_sin(float x) {
+    return native_sin(x);
+}
+
+INLINE_OVERLOADABLE float __gen_ocl_internal_fastpath_cos(float x) {
+    return native_cos(x);
+}
+
 #pragma OPENCL EXTENSION cl_khr_fp64 : disable
 
 #undef DECL_IMAGE

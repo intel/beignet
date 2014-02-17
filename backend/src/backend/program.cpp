@@ -459,12 +459,20 @@ namespace gbe {
 
   /*********************** End of Program class member function *************************/
 
+#define REDEF_MATH_FUNC(x) "#ifdef "#x"\n#undef "#x"\n#endif\n#define "#x" __gen_ocl_internal_fastpath_"#x"\n"
+  std::string ocl_mathfunc_fastpath_str =
+    REDEF_MATH_FUNC(sin)
+    REDEF_MATH_FUNC(cos)
+    "\n"
+  ;
+
   static void programDelete(gbe_program gbeProgram) {
     gbe::Program *program = (gbe::Program*)(gbeProgram);
     GBE_SAFE_DELETE(program);
   }
 
   BVAR(OCL_OUTPUT_BUILD_LOG, false);
+  BVAR(OCL_STRICT_CONFORMANCE, true);
   SVAR(OCL_PCH_PATH, PCH_OBJECT_DIR);
   SVAR(OCL_PCM_PATH, PCM_OBJECT_DIR);
 
@@ -759,6 +767,10 @@ namespace gbe {
       clOpt += " ";
     } else
       fwrite(ocl_stdlib_str.c_str(), strlen(ocl_stdlib_str.c_str()), 1, clFile);
+
+    if (!OCL_STRICT_CONFORMANCE) {
+        fwrite(ocl_mathfunc_fastpath_str.c_str(), strlen(ocl_mathfunc_fastpath_str.c_str()), 1, clFile);
+    }
 
     // Write the source to the cl file
     fwrite(source, strlen(source), 1, clFile);

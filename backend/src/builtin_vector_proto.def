@@ -129,6 +129,10 @@ gentype tanpi (gentype x)
 gentype tgamma (gentype)
 gentype trunc (gentype)
 
+##math function fast path
+gentype __gen_ocl_internal_fastpath_sin (gentype)
+gentype __gen_ocl_internal_fastpath_cos (gentype)
+
 ##half_native_math
 #gentype half_cos (gentype x)
 #gentype half_divide (gentype x, gentype y)
