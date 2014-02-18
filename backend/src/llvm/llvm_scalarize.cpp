@@ -643,18 +643,12 @@ namespace gbe {
 
         switch (it->second) {
           default: break;
-          case GEN_OCL_READ_IMAGE0:
-          case GEN_OCL_READ_IMAGE1:
-          case GEN_OCL_READ_IMAGE2:
-          case GEN_OCL_READ_IMAGE3:
-          case GEN_OCL_READ_IMAGE4:
-          case GEN_OCL_READ_IMAGE5:
-          case GEN_OCL_READ_IMAGE10:
-          case GEN_OCL_READ_IMAGE11:
-          case GEN_OCL_READ_IMAGE12:
-          case GEN_OCL_READ_IMAGE13:
-          case GEN_OCL_READ_IMAGE14:
-          case GEN_OCL_READ_IMAGE15:
+          case GEN_OCL_READ_IMAGE_I:
+          case GEN_OCL_READ_IMAGE_UI:
+          case GEN_OCL_READ_IMAGE_F:
+          case GEN_OCL_READ_IMAGE_I_3D:
+          case GEN_OCL_READ_IMAGE_UI_3D:
+          case GEN_OCL_READ_IMAGE_F_3D:
           case GEN_OCL_GET_IMAGE_WIDTH:
           case GEN_OCL_GET_IMAGE_HEIGHT:
           {
@@ -662,19 +656,13 @@ namespace gbe {
             extractFromVector(call);
             break;
           }
-          case GEN_OCL_WRITE_IMAGE10:
-          case GEN_OCL_WRITE_IMAGE11:
-          case GEN_OCL_WRITE_IMAGE12:
-          case GEN_OCL_WRITE_IMAGE13:
-          case GEN_OCL_WRITE_IMAGE14:
-          case GEN_OCL_WRITE_IMAGE15:
+          case GEN_OCL_WRITE_IMAGE_I_3D:
+          case GEN_OCL_WRITE_IMAGE_UI_3D:
+          case GEN_OCL_WRITE_IMAGE_F_3D:
             CI++;
-          case GEN_OCL_WRITE_IMAGE0:
-          case GEN_OCL_WRITE_IMAGE1:
-          case GEN_OCL_WRITE_IMAGE2:
-          case GEN_OCL_WRITE_IMAGE3:
-          case GEN_OCL_WRITE_IMAGE4:
-          case GEN_OCL_WRITE_IMAGE5:
+          case GEN_OCL_WRITE_IMAGE_I:
+          case GEN_OCL_WRITE_IMAGE_UI:
+          case GEN_OCL_WRITE_IMAGE_F:
           {
             *CI = InsertToVector(call, *CI);
             break;

@@ -4487,33 +4487,21 @@ int __gen_ocl_force_simd16(void);
 // Image access functions
 /////////////////////////////////////////////////////////////////////////////
 
-//OVERLOADABLE int4 __gen_ocl_read_imagei(uint surface_id, sampler_t sampler, int u, int v, uint sampler_offset);
 OVERLOADABLE int4 __gen_ocl_read_imagei(uint surface_id, sampler_t sampler, float u, float v, uint sampler_offset);
-//OVERLOADABLE uint4 __gen_ocl_read_imageui(uint surface_id, sampler_t sampler, int u, int v, uint sampler_offset);
 OVERLOADABLE uint4 __gen_ocl_read_imageui(uint surface_id, sampler_t sampler, float u, float v, uint sampler_offset);
-//OVERLOADABLE float4 __gen_ocl_read_imagef(uint surface_id, sampler_t sampler, int u, int v, uint sampler_offset);
 OVERLOADABLE float4 __gen_ocl_read_imagef(uint surface_id, sampler_t sampler, float u, float v, uint sampler_offset);
 
-//OVERLOADABLE int4 __gen_ocl_read_imagei(uint surface_id, sampler_t sampler, int u, int v, int w, uint sampler_offset);
 OVERLOADABLE int4 __gen_ocl_read_imagei(uint surface_id, sampler_t sampler, float u, float v, float w, uint sampler_offset);
-//OVERLOADABLE uint4 __gen_ocl_read_imageui(uint surface_id, sampler_t sampler, int u, int v, int w, uint sampler_offset);
 OVERLOADABLE uint4 __gen_ocl_read_imageui(uint surface_id, sampler_t sampler, float u, float v, float w, uint sampler_offset);
-//OVERLOADABLE float4 __gen_ocl_read_imagef(uint surface_id, sampler_t sampler, int u, int v, int w, uint sampler_offset);
 OVERLOADABLE float4 __gen_ocl_read_imagef(uint surface_id, sampler_t sampler, float u, float v, float w, uint sampler_offset);
 
 OVERLOADABLE void __gen_ocl_write_imagei(uint surface_id, int u, int v, int4 color);
-//OVERLOADABLE void __gen_ocl_write_imagei(uint surface_id, float u, float v, int4 color);
 OVERLOADABLE void __gen_ocl_write_imageui(uint surface_id, int u, int v, uint4 color);
-//OVERLOADABLE void __gen_ocl_write_imageui(uint surface_id, float u, float v, uint4 color);
 OVERLOADABLE void __gen_ocl_write_imagef(uint surface_id, int u, int v, float4 color);
-//OVERLOADABLE void __gen_ocl_write_imagef(uint surface_id, float u, float v, float4 color);
 
 OVERLOADABLE void __gen_ocl_write_imagei(uint surface_id, int u, int v, int w, int4 color);
-//OVERLOADABLE void __gen_ocl_write_imagei(uint surface_id, float u, float v, float w, int4 color);
 OVERLOADABLE void __gen_ocl_write_imageui(uint surface_id, int u, int v, int w, uint4 color);
-//OVERLOADABLE void __gen_ocl_write_imageui(uint surface_id, float u, float v, float w, uint4 color);
 OVERLOADABLE void __gen_ocl_write_imagef(uint surface_id, int u, int v, int w, float4 color);
-//OVERLOADABLE void __gen_ocl_write_imagef(uint surface_id, float u, float v, float w, float4 color);
 int __gen_ocl_get_image_width(uint surface_id);
 int __gen_ocl_get_image_height(uint surface_id);
 int __gen_ocl_get_image_channel_data_type(uint surface_id);

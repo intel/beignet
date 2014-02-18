@@ -2093,31 +2093,19 @@ namespace gbe
       case GEN_OCL_LGBARRIER:
         ctx.getFunction().setUseSLM(true);
         break;
-      case GEN_OCL_WRITE_IMAGE0:
-      case GEN_OCL_WRITE_IMAGE1:
-      case GEN_OCL_WRITE_IMAGE2:
-      case GEN_OCL_WRITE_IMAGE3:
-      case GEN_OCL_WRITE_IMAGE4:
-      case GEN_OCL_WRITE_IMAGE5:
-      case GEN_OCL_WRITE_IMAGE10:
-      case GEN_OCL_WRITE_IMAGE11:
-      case GEN_OCL_WRITE_IMAGE12:
-      case GEN_OCL_WRITE_IMAGE13:
-      case GEN_OCL_WRITE_IMAGE14:
-      case GEN_OCL_WRITE_IMAGE15:
+      case GEN_OCL_WRITE_IMAGE_I:
+      case GEN_OCL_WRITE_IMAGE_UI:
+      case GEN_OCL_WRITE_IMAGE_F:
+      case GEN_OCL_WRITE_IMAGE_I_3D:
+      case GEN_OCL_WRITE_IMAGE_UI_3D:
+      case GEN_OCL_WRITE_IMAGE_F_3D:
         break;
-      case GEN_OCL_READ_IMAGE0:
-      case GEN_OCL_READ_IMAGE1:
-      case GEN_OCL_READ_IMAGE2:
-      case GEN_OCL_READ_IMAGE3:
-      case GEN_OCL_READ_IMAGE4:
-      case GEN_OCL_READ_IMAGE5:
-      case GEN_OCL_READ_IMAGE10:
-      case GEN_OCL_READ_IMAGE11:
-      case GEN_OCL_READ_IMAGE12:
-      case GEN_OCL_READ_IMAGE13:
-      case GEN_OCL_READ_IMAGE14:
-      case GEN_OCL_READ_IMAGE15:
+      case GEN_OCL_READ_IMAGE_I:
+      case GEN_OCL_READ_IMAGE_UI:
+      case GEN_OCL_READ_IMAGE_F:
+      case GEN_OCL_READ_IMAGE_I_3D:
+      case GEN_OCL_READ_IMAGE_UI_3D:
+      case GEN_OCL_READ_IMAGE_F_3D:
       {
         // dst is a 4 elements vector. We allocate all 4 registers here.
         uint32_t elemNum;
@@ -2385,18 +2373,12 @@ namespace gbe
             ctx.GET_SAMPLER_INFO(reg, ir::ocl::samplerinfo, index);
             break;
           }
-          case GEN_OCL_READ_IMAGE0:
-          case GEN_OCL_READ_IMAGE1:
-          case GEN_OCL_READ_IMAGE2:
-          case GEN_OCL_READ_IMAGE3:
-          case GEN_OCL_READ_IMAGE4:
-          case GEN_OCL_READ_IMAGE5:
-          case GEN_OCL_READ_IMAGE10:
-          case GEN_OCL_READ_IMAGE11:
-          case GEN_OCL_READ_IMAGE12:
-          case GEN_OCL_READ_IMAGE13:
-          case GEN_OCL_READ_IMAGE14:
-          case GEN_OCL_READ_IMAGE15:
+          case GEN_OCL_READ_IMAGE_I:
+          case GEN_OCL_READ_IMAGE_UI:
+          case GEN_OCL_READ_IMAGE_F:
+          case GEN_OCL_READ_IMAGE_I_3D:
+          case GEN_OCL_READ_IMAGE_UI_3D:
+          case GEN_OCL_READ_IMAGE_F_3D:
           {
             GBE_ASSERT(AI != AE); const ir::Register surfaceReg = this->getRegister(*AI); ++AI;
             const uint8_t surfaceID = ctx.getFunction().getImageSet()->getIdx(surfaceReg);
@@ -2408,7 +2390,7 @@ namespace gbe
             GBE_ASSERT(AI != AE); const ir::Register vcoord = this->getRegister(*AI); ++AI;
             ir::Register wcoord;
             bool is3D = false;
-            if (it->second >= GEN_OCL_READ_IMAGE10 && it->second <= GEN_OCL_READ_IMAGE15) {
+            if (it->second >= GEN_OCL_READ_IMAGE_I_3D) {
               GBE_ASSERT(AI != AE); wcoord = this->getRegister(*AI); ++AI;
               is3D = true;
             } else
@@ -2434,52 +2416,33 @@ namespace gbe
             const ir::Tuple dstTuple = ctx.arrayTuple(&dstTupleData[0], elemNum);
             const ir::Tuple srcTuple = ctx.arrayTuple(&srcTupleData[0], 3);
 
-            ir::Type srcType = ir::TYPE_S32, dstType = ir::TYPE_U32;
+            ir::Type dstType = ir::TYPE_U32;
 
             switch(it->second) {
-              case GEN_OCL_READ_IMAGE0:
-              case GEN_OCL_READ_IMAGE2:
-              case GEN_OCL_READ_IMAGE10:
-              case GEN_OCL_READ_IMAGE12:
+              case GEN_OCL_READ_IMAGE_I:
+              case GEN_OCL_READ_IMAGE_UI:
+              case GEN_OCL_READ_IMAGE_I_3D:
+              case GEN_OCL_READ_IMAGE_UI_3D:
                 dstType = ir::TYPE_U32;
-                srcType = ir::TYPE_S32;
                 break;
-              case GEN_OCL_READ_IMAGE1:
-              case GEN_OCL_READ_IMAGE3:
-              case GEN_OCL_READ_IMAGE11:
-              case GEN_OCL_READ_IMAGE13:
-                dstType = ir::TYPE_U32;
-                srcType = ir::TYPE_FLOAT;
-                break;
-              case GEN_OCL_READ_IMAGE4:
-              case GEN_OCL_READ_IMAGE14:
+              case GEN_OCL_READ_IMAGE_F:
+              case GEN_OCL_READ_IMAGE_F_3D:
                 dstType = ir::TYPE_FLOAT;
-                srcType = ir::TYPE_S32;
-                break;
-              case GEN_OCL_READ_IMAGE5:
-              case GEN_OCL_READ_IMAGE15:
-                srcType = dstType = ir::TYPE_FLOAT;
                 break;
               default:
                 GBE_ASSERT(0); // never been here.
             }
 
             ctx.SAMPLE(surfaceID, dstTuple, srcTuple, dstType == ir::TYPE_FLOAT,
-                       srcType == ir::TYPE_FLOAT, sampler, samplerOffset, is3D);
+                       true, sampler, samplerOffset, is3D);
             break;
           }
-          case GEN_OCL_WRITE_IMAGE0:
-          case GEN_OCL_WRITE_IMAGE1:
-          case GEN_OCL_WRITE_IMAGE2:
-          case GEN_OCL_WRITE_IMAGE3:
-          case GEN_OCL_WRITE_IMAGE4:
-          case GEN_OCL_WRITE_IMAGE5:
-          case GEN_OCL_WRITE_IMAGE10:
-          case GEN_OCL_WRITE_IMAGE11:
-          case GEN_OCL_WRITE_IMAGE12:
-          case GEN_OCL_WRITE_IMAGE13:
-          case GEN_OCL_WRITE_IMAGE14:
-          case GEN_OCL_WRITE_IMAGE15:
+          case GEN_OCL_WRITE_IMAGE_I:
+          case GEN_OCL_WRITE_IMAGE_UI:
+          case GEN_OCL_WRITE_IMAGE_F:
+          case GEN_OCL_WRITE_IMAGE_I_3D:
+          case GEN_OCL_WRITE_IMAGE_UI_3D:
+          case GEN_OCL_WRITE_IMAGE_F_3D:
           {
             GBE_ASSERT(AI != AE); const ir::Register surfaceReg = this->getRegister(*AI); ++AI;
             const uint8_t surfaceID = ctx.getFunction().getImageSet()->getIdx(surfaceReg);
@@ -2487,7 +2450,7 @@ namespace gbe
             GBE_ASSERT(AI != AE); const ir::Register vcoord = this->getRegister(*AI); ++AI;
             ir::Register wcoord;
             bool is3D = false;
-            if(it->second >= GEN_OCL_WRITE_IMAGE10 && it->second <= GEN_OCL_WRITE_IMAGE15) {
+            if(it->second >= GEN_OCL_WRITE_IMAGE_I_3D) {
               GBE_ASSERT(AI != AE); wcoord = this->getRegister(*AI); ++AI;
               is3D = true;
             } else
@@ -2506,36 +2469,24 @@ namespace gbe
             }
             const ir::Tuple srcTuple = ctx.arrayTuple(&srcTupleData[0], 7);
 
-            ir::Type srcType = ir::TYPE_U32, coordType = ir::TYPE_U32;
+            ir::Type srcType = ir::TYPE_U32;
 
             switch(it->second) {
-              case GEN_OCL_WRITE_IMAGE0:
-              case GEN_OCL_WRITE_IMAGE2:
-              case GEN_OCL_WRITE_IMAGE10:
-              case GEN_OCL_WRITE_IMAGE12:
-                srcType = coordType = ir::TYPE_U32;
-                break;
-              case GEN_OCL_WRITE_IMAGE1:
-              case GEN_OCL_WRITE_IMAGE3:
-              case GEN_OCL_WRITE_IMAGE11:
-              case GEN_OCL_WRITE_IMAGE13:
-                coordType = ir::TYPE_FLOAT;
+              case GEN_OCL_WRITE_IMAGE_I:
+              case GEN_OCL_WRITE_IMAGE_UI:
+              case GEN_OCL_WRITE_IMAGE_I_3D:
+              case GEN_OCL_WRITE_IMAGE_UI_3D:
                 srcType = ir::TYPE_U32;
                 break;
-              case GEN_OCL_WRITE_IMAGE4:
-              case GEN_OCL_WRITE_IMAGE14:
+              case GEN_OCL_WRITE_IMAGE_F:
+              case GEN_OCL_WRITE_IMAGE_F_3D:
                 srcType = ir::TYPE_FLOAT;
-                coordType = ir::TYPE_U32;
-                break;
-              case GEN_OCL_WRITE_IMAGE5:
-              case GEN_OCL_WRITE_IMAGE15:
-                srcType = coordType = ir::TYPE_FLOAT;
                 break;
               default:
                 GBE_ASSERT(0); // never been here.
             }
 
-            ctx.TYPED_WRITE(surfaceID, srcTuple, srcType, coordType, is3D);
+            ctx.TYPED_WRITE(surfaceID, srcTuple, srcType, ir::TYPE_U32, is3D);
             break;
           }
           case GEN_OCL_MUL_HI_INT:
