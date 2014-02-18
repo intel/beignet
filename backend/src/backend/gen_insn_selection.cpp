@@ -647,6 +647,7 @@ namespace gbe
                                                       uint32_t dstNum,
                                                       uint32_t srcNum)
   {
+    GBE_ASSERT(dstNum <= SelectionInstruction::MAX_DST_NUM && srcNum <= SelectionInstruction::MAX_SRC_NUM);
     GBE_ASSERT(this->block != NULL);
     SelectionInstruction *insn = this->create(opcode, dstNum, srcNum);
     if (this->bwdCodeGeneration)
