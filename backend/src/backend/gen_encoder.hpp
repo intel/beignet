@@ -167,10 +167,10 @@ namespace gbe
     /*! Send instruction for the sampler */
     void SAMPLE(GenRegister dest,
                 GenRegister msg,
+                unsigned int msg_len,
                 bool header_present,
                 unsigned char bti,
                 unsigned char sampler,
-                unsigned int coord_cnt,
                 unsigned int simdWidth,
                 uint32_t writemask,
                 uint32_t return_format);

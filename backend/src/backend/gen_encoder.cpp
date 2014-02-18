@@ -1207,10 +1207,10 @@ namespace gbe
 
   void GenEncoder::SAMPLE(GenRegister dest,
                           GenRegister msg,
+                          unsigned int msg_len,
                           bool header_present,
                           unsigned char bti,
                           unsigned char sampler,
-                          unsigned int coord_cnt,
                           uint32_t simdWidth,
                           uint32_t writemask,
                           uint32_t return_format)
@@ -1219,7 +1219,7 @@ namespace gbe
      uint32_t msg_type =  (simdWidth == 16) ?
                             GEN_SAMPLER_MESSAGE_SIMD16_SAMPLE : GEN_SAMPLER_MESSAGE_SIMD8_SAMPLE;
      uint32_t response_length = (4 * (simdWidth / 8));
-     uint32_t msg_length = (coord_cnt * (simdWidth / 8));
+     uint32_t msg_length = (msg_len * (simdWidth / 8));
      if (header_present)
        msg_length++;
      uint32_t simd_mode = (simdWidth == 16) ?

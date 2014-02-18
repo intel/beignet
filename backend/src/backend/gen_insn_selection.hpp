@@ -120,7 +120,7 @@ namespace gbe
       struct {
         uint16_t rdbti:8;
         uint16_t sampler:5;
-        uint16_t is3DRead:1;
+        uint16_t rdmsglen:3;
       };
       uint32_t barrierType;
     } extra;

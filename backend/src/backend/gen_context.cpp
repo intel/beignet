@@ -1788,23 +1788,11 @@ namespace gbe
     const GenRegister msgPayload = GenRegister::retype(ra->genReg(insn.src(0)), GEN_TYPE_F);
     const unsigned char bti = insn.extra.rdbti;
     const unsigned char sampler = insn.extra.sampler;
-    const GenRegister ucoord = ra->genReg(insn.src(4));
-    const GenRegister vcoord = ra->genReg(insn.src(5));
+    const unsigned int msgLen = insn.extra.rdmsglen;
     uint32_t simdWidth = p->curr.execWidth;
-    uint32_t coord_cnt = 2;
-    p->push();
-    const uint32_t nr = msgPayload.nr;
-    // prepare mesg desc and move to a0.0.
-    // desc = bti | (sampler << 8) | (0 << 12) | (2 << 16) | (0 << 18) | (0 << 19) | (4 << 20) | (1 << 25) | (0 < 29) | (0 << 31)
-    /* Prepare message payload. */
-    p->MOV(GenRegister::f8grf(nr , 0), ucoord);
-    p->MOV(GenRegister::f8grf(nr + (simdWidth/8), 0), vcoord);
-    if (insn.extra.is3DRead) {
-      p->MOV(GenRegister::f8grf(nr + (simdWidth/4), 0), ra->genReg(insn.src(6)));
-      coord_cnt++;
-    }
-    p->SAMPLE(dst, msgPayload, false, bti, sampler, coord_cnt, simdWidth, -1, 0);
-    p->pop();
+    //p->push();
+    p->SAMPLE(dst, msgPayload, msgLen, false, bti, sampler, simdWidth, -1, 0);
+    //p->pop();
   }
 
   void GenContext::scratchWrite(const GenRegister header, uint32_t offset, uint32_t reg_num, uint32_t reg_type, uint32_t channel_mode) {

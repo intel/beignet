@@ -543,7 +543,7 @@ namespace gbe
     /*! Encode ternary instructions */
     void ALU3(SelectionOpcode opcode, Reg dst, Reg src0, Reg src1, Reg src2);
     /*! Encode sample instructions */
-    void SAMPLE(GenRegister *dst, uint32_t dstNum, GenRegister *src, uint32_t srcNum, GenRegister *msgPayloads, uint32_t msgNum, uint32_t bti, uint32_t sampler, bool is3D);
+    void SAMPLE(GenRegister *dst, uint32_t dstNum, GenRegister *msgPayloads, uint32_t msgNum, uint32_t bti, uint32_t sampler, bool is3D);
     /*! Encode typed write instructions */
     void TYPED_WRITE(GenRegister *src, uint32_t srcNum, GenRegister *msgs, uint32_t msgNum, uint32_t bti, bool is3D);
     /*! Get image information */
@@ -1415,10 +1415,9 @@ namespace gbe
    }
 
   void Selection::Opaque::SAMPLE(GenRegister *dst, uint32_t dstNum,
-                                 GenRegister *src, uint32_t srcNum,
                                  GenRegister *msgPayloads, uint32_t msgNum,
                                  uint32_t bti, uint32_t sampler, bool is3D) {
-    SelectionInstruction *insn = this->appendInsn(SEL_OP_SAMPLE, dstNum, msgNum + srcNum);
+    SelectionInstruction *insn = this->appendInsn(SEL_OP_SAMPLE, dstNum, msgNum);
     SelectionVector *dstVector = this->appendVector();
     SelectionVector *msgVector = this->appendVector();
 
@@ -1427,8 +1426,6 @@ namespace gbe
       insn->dst(elemID) = dst[elemID];
     for (uint32_t elemID = 0; elemID < msgNum; ++elemID)
       insn->src(elemID) = msgPayloads[elemID];
-    for (uint32_t elemID = 0; elemID < srcNum; ++elemID)
-      insn->src(msgNum + elemID) = src[elemID];
 
     // Sends require contiguous allocation
     dstVector->regNum = dstNum;
@@ -1442,7 +1439,7 @@ namespace gbe
 
     insn->extra.rdbti = bti;
     insn->extra.sampler = sampler;
-    insn->extra.is3DRead = is3D;
+    insn->extra.rdmsglen = msgNum;
   }
 
   ///////////////////////////////////////////////////////////////////////////
@@ -3009,23 +3006,24 @@ namespace gbe
     {
       using namespace ir;
       GenRegister msgPayloads[4];
-      GenRegister dst[insn.getDstNum()], src[insn.getSrcNum()];
+      GenRegister dst[insn.getDstNum()];
       uint32_t srcNum = insn.getSrcNum();
+      uint32_t valueID = 0;
 
-      for( int i = 0; i < 4; ++i)
-        msgPayloads[i] = sel.selReg(sel.reg(FAMILY_DWORD), TYPE_U32);
-
-      for (uint32_t valueID = 0; valueID < insn.getDstNum(); ++valueID)
+      for (valueID = 0; valueID < insn.getDstNum(); ++valueID)
         dst[valueID] = sel.selReg(insn.getDst(valueID), insn.getDstType());
 
-      for (uint32_t valueID = 0; valueID < srcNum; ++valueID)
-        src[valueID] = sel.selReg(insn.getSrc(valueID), insn.getSrcType());
+      if (!insn.is3D())
+        srcNum--;
+      /* U, V, [W] */
+      for (valueID = 0; valueID < srcNum; ++valueID)
+        msgPayloads[valueID] = sel.selReg(insn.getSrc(valueID), insn.getSrcType());
 
       uint32_t bti = insn.getImageIndex();
       /* We have the clamp border workaround. */
       uint32_t sampler = insn.getSamplerIndex() + insn.getSamplerOffset() * 8;
 
-      sel.SAMPLE(dst, insn.getDstNum(), src, srcNum, msgPayloads, 4, bti, sampler, insn.is3D());
+      sel.SAMPLE(dst, insn.getDstNum(), msgPayloads, srcNum, bti, sampler, insn.is3D());
       return true;
     }
     DECL_CTOR(SampleInstruction, 1, 1);
