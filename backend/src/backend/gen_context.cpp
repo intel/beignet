@@ -1790,9 +1790,7 @@ namespace gbe
     const unsigned char sampler = insn.extra.sampler;
     const unsigned int msgLen = insn.extra.rdmsglen;
     uint32_t simdWidth = p->curr.execWidth;
-    //p->push();
     p->SAMPLE(dst, msgPayload, msgLen, false, bti, sampler, simdWidth, -1, 0);
-    //p->pop();
   }
 
   void GenContext::scratchWrite(const GenRegister header, uint32_t offset, uint32_t reg_num, uint32_t reg_type, uint32_t channel_mode) {
@@ -1828,60 +1826,8 @@ namespace gbe
 
   void GenContext::emitTypedWriteInstruction(const SelectionInstruction &insn) {
     const GenRegister header = GenRegister::retype(ra->genReg(insn.src(0)), GEN_TYPE_UD);
-    const GenRegister ucoord = ra->genReg(insn.src(insn.extra.msglen));
-    const GenRegister vcoord = ra->genReg(insn.src(1 + insn.extra.msglen));
-    const GenRegister R = ra->genReg(insn.src(3 + insn.extra.msglen));
-    const GenRegister G = ra->genReg(insn.src(4 + insn.extra.msglen));
-    const GenRegister B = ra->genReg(insn.src(5 + insn.extra.msglen));
-    const GenRegister A = ra->genReg(insn.src(6 + insn.extra.msglen));
-    const unsigned char bti = insn.extra.bti;
-
-    p->push();
-    uint32_t simdWidth = p->curr.execWidth;
-    const uint32_t nr = header.nr;
-    p->curr.predicate = GEN_PREDICATE_NONE;
-    p->curr.noMask = 1;
-    p->MOV(header, GenRegister::immud(0x0));
-    p->curr.execWidth = 1;
-
-    // prepare mesg desc and move to a0.0.
-    // desc = bti | (msg_type << 14) | (header_present << 19))
-    // prepare header, we need to enable all the 8 planes.
-    p->MOV(GenRegister::ud8grf(nr, 7), GenRegister::immud(0xffff));
-    p->curr.execWidth = 8;
-    // Typed write only support SIMD8.
-    // Prepare message payload U + V + R(ignored) + LOD(0) + RGBA.
-    // Currently, we don't support non-zero lod, so we clear all lod to
-    // zero for both quarters thus save one instruction here.
-    // Thus we must put this instruction in noMask and no predication state.
-    p->MOV(GenRegister::ud8grf(nr + 4, 0), GenRegister::immud(0)); //LOD
-    p->pop();
-    p->push();
-    p->curr.execWidth = 8;
-    // TYPED WRITE send instruction only support SIMD8, if we are SIMD16, we
-    // need to call it twice.
-    uint32_t quarterNum = (simdWidth == 8) ? 1 : 2;
-
-    for( uint32_t quarter = 0; quarter < quarterNum; quarter++)
-    {
-#define QUARTER_MOV0(dst_nr, src) p->MOV(GenRegister::ud8grf(dst_nr, 0), \
-                                        GenRegister::retype(GenRegister::QnPhysical(src, quarter), src.type))
-#define QUARTER_MOV1(dst_nr, src) p->MOV(GenRegister::retype(GenRegister::ud8grf(dst_nr, 0), src.type), \
-                                        GenRegister::retype(GenRegister::QnPhysical(src,quarter), src.type))
-      if (quarter == 1)
-        p->curr.quarterControl = GEN_COMPRESSION_Q2;
-      QUARTER_MOV0(nr + 1, ucoord);
-      QUARTER_MOV0(nr + 2, vcoord);
-      if (insn.extra.is3DWrite)
-        QUARTER_MOV0(nr + 3, ra->genReg(insn.src(2 + insn.extra.msglen)));
-      QUARTER_MOV1(nr + 5, R);
-      QUARTER_MOV1(nr + 6, G);
-      QUARTER_MOV1(nr + 7, B);
-      QUARTER_MOV1(nr + 8, A);
-#undef QUARTER_MOV
-      p->TYPED_WRITE(header, true, bti);
-    }
-    p->pop();
+    const uint32_t bti = insn.extra.bti;
+    p->TYPED_WRITE(header, true, bti);
   }
 
   BVAR(OCL_OUTPUT_REG_ALLOC, false);

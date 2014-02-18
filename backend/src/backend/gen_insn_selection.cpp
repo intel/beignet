@@ -545,7 +545,7 @@ namespace gbe
     /*! Encode sample instructions */
     void SAMPLE(GenRegister *dst, uint32_t dstNum, GenRegister *msgPayloads, uint32_t msgNum, uint32_t bti, uint32_t sampler, bool is3D);
     /*! Encode typed write instructions */
-    void TYPED_WRITE(GenRegister *src, uint32_t srcNum, GenRegister *msgs, uint32_t msgNum, uint32_t bti, bool is3D);
+    void TYPED_WRITE(GenRegister *msgs, uint32_t msgNum, uint32_t bti, bool is3D);
     /*! Get image information */
     void GET_IMAGE_INFO(uint32_t type, GenRegister *dst, uint32_t dst_num, uint32_t bti);
     /*! Multiply 64-bit integers */
@@ -1451,18 +1451,15 @@ namespace gbe
     this->opaque = GBE_NEW(Selection::Opaque, ctx);
   }
 
-  void Selection::Opaque::TYPED_WRITE(GenRegister *src, uint32_t srcNum,
-                                      GenRegister *msgs, uint32_t msgNum,
+  void Selection::Opaque::TYPED_WRITE(GenRegister *msgs, uint32_t msgNum,
                                       uint32_t bti, bool is3D) {
     uint32_t elemID = 0;
     uint32_t i;
-    SelectionInstruction *insn = this->appendInsn(SEL_OP_TYPED_WRITE, 0, msgNum + srcNum);
+    SelectionInstruction *insn = this->appendInsn(SEL_OP_TYPED_WRITE, 0, msgNum);
     SelectionVector *msgVector = this->appendVector();;
 
     for( i = 0; i < msgNum; ++i, ++elemID)
       insn->src(elemID) = msgs[i];
-    for (i = 0; i < srcNum; ++i, ++elemID)
-      insn->src(elemID) = src[i];
 
     insn->extra.bti = bti;
     insn->extra.msglen = msgNum;
@@ -3036,24 +3033,77 @@ namespace gbe
     {
       using namespace ir;
       const uint32_t simdWidth = sel.ctx.getSimdWidth();
-      uint32_t valueID;
       GenRegister msgs[9]; // (header + U + V + R + LOD + 4)
-      GenRegister src[insn.getSrcNum()];
-      uint32_t msgNum = (8 / (simdWidth / 8)) + 1;
-      uint32_t coordNum = 3;
+      const uint32_t msgNum = (8 / (simdWidth / 8)) + 1;
+      const uint32_t coordNum = 3;
 
-      for(uint32_t i = 0; i < msgNum; i++)
-        msgs[i] = sel.selReg(sel.reg(FAMILY_DWORD), TYPE_U32);
+      if (simdWidth == 16) {
+        for(uint32_t i = 0; i < msgNum; i++)
+          msgs[i] = sel.selReg(sel.reg(FAMILY_DWORD), TYPE_U32);
+      } else {
+        uint32_t valueID = 0;
+        msgs[0] = sel.selReg(sel.reg(FAMILY_DWORD), TYPE_U32);
+        for(uint32_t msgID = 1; msgID < 1 + coordNum; msgID++, valueID++)
+          msgs[msgID] = sel.selReg(insn.getSrc(msgID - 1), insn.getCoordType());
+        // fake w.
+        if (!insn.is3D())
+          msgs[3] = sel.selReg(sel.reg(FAMILY_DWORD), TYPE_U32);
+        // LOD.
+        msgs[4] = sel.selReg(sel.reg(FAMILY_DWORD), TYPE_U32);
+        for(uint32_t msgID = 5; valueID < insn.getSrcNum(); msgID++, valueID++)
+          msgs[msgID] = sel.selReg(insn.getSrc(valueID), insn.getSrcType());
+      }
 
-      // u, v, w coords should use coord type.
-      for (valueID = 0; valueID < coordNum; ++valueID)
-        src[valueID] = sel.selReg(insn.getSrc(valueID), insn.getCoordType());
+      sel.push();
+      sel.curr.predicate = GEN_PREDICATE_NONE;
+      sel.curr.noMask = 1;
+      sel.MOV(msgs[0], GenRegister::immud(0));
+      sel.curr.execWidth = 1;
 
-      for (; valueID < insn.getSrcNum(); ++valueID)
-        src[valueID] = sel.selReg(insn.getSrc(valueID), insn.getSrcType());
+      GenRegister channelEn = GenRegister::offset(msgs[0], 0, 7*4);
+      channelEn.subphysical = 1;
+      // Enable all channels.
+      sel.MOV(channelEn, GenRegister::immud(0xffff));
+      sel.curr.execWidth = 8;
+      // Set zero LOD.
+      if (simdWidth == 8)
+        sel.MOV(msgs[4], GenRegister::immud(0));
+      else
+        sel.MOV(GenRegister::Qn(msgs[2], 0), GenRegister::immud(0));
+      sel.pop();
 
       uint32_t bti = insn.getImageIndex();
-      sel.TYPED_WRITE(src, insn.getSrcNum(), msgs, msgNum, bti, insn.is3D());
+      if (simdWidth == 8)
+        sel.TYPED_WRITE(msgs, msgNum, bti, insn.is3D());
+      else {
+        sel.push();
+        sel.curr.execWidth = 8;
+        for( uint32_t quarter = 0; quarter < 2; quarter++)
+        {
+          #define QUARTER_MOV0(msgs, msgid, src) \
+                    sel.MOV(GenRegister::Qn(GenRegister::retype(msgs[msgid/2], GEN_TYPE_UD), msgid % 2), \
+                            GenRegister::Qn(src, quarter))
+
+          #define QUARTER_MOV1(msgs, msgid, src) \
+                  sel.MOV(GenRegister::Qn(GenRegister::retype(msgs[msgid/2], src.type), msgid % 2), \
+                          GenRegister::Qn(src, quarter))
+          sel.curr.quarterControl = (quarter == 0) ? GEN_COMPRESSION_Q1 : GEN_COMPRESSION_Q2;
+          // Set U,V,W
+          QUARTER_MOV0(msgs, 1, sel.selReg(insn.getSrc(0), insn.getCoordType()));
+          QUARTER_MOV0(msgs, 2, sel.selReg(insn.getSrc(1), insn.getCoordType()));
+          if (insn.is3D())
+            QUARTER_MOV0(msgs, 3, sel.selReg(insn.getSrc(2), insn.getCoordType()));
+          // Set R, G, B, A
+          QUARTER_MOV1(msgs, 5, sel.selReg(insn.getSrc(3), insn.getSrcType()));
+          QUARTER_MOV1(msgs, 6, sel.selReg(insn.getSrc(4), insn.getSrcType()));
+          QUARTER_MOV1(msgs, 7, sel.selReg(insn.getSrc(5), insn.getSrcType()));
+          QUARTER_MOV1(msgs, 8, sel.selReg(insn.getSrc(6), insn.getSrcType()));
+          sel.TYPED_WRITE(msgs, msgNum, bti, insn.is3D());
+          #undef QUARTER_MOV0
+          #undef QUARTER_MOV1
+        }
+        sel.pop();
+      }
       return true;
     }
     DECL_CTOR(TypedWriteInstruction, 1, 1);
