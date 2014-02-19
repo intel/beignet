@@ -975,11 +975,11 @@ namespace gbe
     SelectionVector *srcVector = this->appendVector();
     SelectionVector *dstVector = this->appendVector();
 
-    /* temporary addr register is to be modified, set it to dst registers.*/
-    insn->dst(0) = tempAddr;
     // Regular instruction to encode
     for (uint32_t elemID = 0; elemID < elemNum; ++elemID)
-      insn->dst(elemID + 1) = dst[elemID];
+      insn->dst(elemID) = dst[elemID];
+    /* temporary addr register is to be modified, set it to dst registers.*/
+    insn->dst(elemNum) = tempAddr;
     insn->src(0) = addr;
     insn->extra.function = bti;
     insn->extra.elem = valueNum;
@@ -987,7 +987,7 @@ namespace gbe
     // Only the temporary registers need contiguous allocation
     dstVector->regNum = elemNum - valueNum;
     dstVector->isSrc = 0;
-    dstVector->reg = &insn->dst(1);
+    dstVector->reg = &insn->dst(0);
 
     // Source cannot be scalar (yet)
     srcVector->regNum = 1;

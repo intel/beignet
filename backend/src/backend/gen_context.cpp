@@ -1725,9 +1725,9 @@ namespace gbe
   void GenContext::emitRead64Instruction(const SelectionInstruction &insn) {
     const uint32_t elemNum = insn.extra.elem;
     const uint32_t tmpRegSize = (p->curr.execWidth == 8) ? elemNum * 2 : elemNum;
-    const GenRegister tempAddr = ra->genReg(insn.dst(0));
-    const GenRegister dst = ra->genReg(insn.dst(tmpRegSize + 1));
-    const GenRegister tmp = ra->genReg(insn.dst(1));
+    const GenRegister tempAddr = ra->genReg(insn.dst(tmpRegSize + 1));
+    const GenRegister dst = ra->genReg(insn.dst(tmpRegSize));
+    const GenRegister tmp = ra->genReg(insn.dst(0));
     const GenRegister src = ra->genReg(insn.src(0));
     const uint32_t bti = insn.extra.function;
     p->READ64(dst, tmp, tempAddr, src, bti, elemNum);
