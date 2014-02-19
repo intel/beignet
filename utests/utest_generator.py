@@ -298,7 +298,10 @@ static void %s_%s(void)
 
     #funcdiff = "    diff = fabs((gpu_data[index]-cpu_data[index])"
     #funcdiff += (self.retType(index) == "int") and ');' or '/(cpu_data[index]>1?cpu_data[index]:1));'
+    valuejudge = "    if (std::fpclassify(gpu_data[index]) == FP_SUBNORMAL){ gpu_data[index] = 0; }\n"
+    valuejudge += "    if (std::fpclassify(cpu_data[index]) == FP_SUBNORMAL){ cpu_data[index] = 0; }\n"
     funcdiff = "    diff = fabs((gpu_data[index]-cpu_data[index]));"
+    funcline += [ valuejudge ]
     funcline += [ funcdiff ]
     funcline += [ funcsprintfa + funcsprintfb ]
 
