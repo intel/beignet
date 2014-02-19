@@ -132,6 +132,8 @@ namespace gbe
     uint8_t srcNum:4;
     /*! To store various indices */
     uint16_t index;
+    /*! instruction ID used for vector allocation. */
+    uint32_t ID;
     /*! Variable sized. Destinations and sources go here */
     GenRegister regs[0];
   private:

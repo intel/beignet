@@ -292,6 +292,10 @@ namespace gbe
           tmp = selection.replaceDst(vector->insn, regID);
         const VectorLocation location = std::make_pair(vector, regID);
         this->vectorMap.insert(std::make_pair(tmp, location));
+        intervals.push_back(tmp);
+        intervals[tmp].minID = vector->insn->ID;
+        intervals[tmp].maxID = vector->insn->ID;
+        //printf("tmp reg %d minID %d \n", tmp.value(), vector->insn->ID);
       }
     }
   }
@@ -535,6 +539,7 @@ namespace gbe
 
       // Case 1: the register belongs to a vector, allocate all the registers in
       // one piece
+      //printf("prepare to allocate reg %d \n", reg.value());
       auto it = vectorMap.find(reg);
       if (it != vectorMap.end()) {
         const SelectionVector *vector = it->second.first;
@@ -542,6 +547,7 @@ namespace gbe
         if(spilledRegs.find(vector->reg[0].reg())
            != spilledRegs.end())
           continue;
+        //printf("vector %p \n", vector);
 
         uint32_t alignment;
         ir::RegisterFamily family;
@@ -559,6 +565,7 @@ namespace gbe
         }
         for (uint32_t regID = 0; regID < vector->regNum; ++regID) {
           const ir::Register reg = vector->reg[regID].reg();
+          //printf("allocate regID %d reg %d RA.contains? %d family %d  regFamily %d\n", regID, reg.value(), RA.contains(reg), family, ctx.sel->getRegisterData(reg).family);
           GBE_ASSERT(RA.contains(reg) == false
                      && ctx.sel->getRegisterData(reg).family == family);
           insertNewReg(reg, grfOffset + alignment * regID, true);
@@ -749,8 +756,6 @@ namespace gbe
     } else {
       reservedReg = 0;
     }
-    // Allocate all the vectors first since they need to be contiguous
-    this->allocateVector(selection);
     // schedulePreRegAllocation(ctx, selection);
 
     // Now start the linear scan allocation
@@ -777,6 +782,7 @@ namespace gbe
       // register allocate R0, so we skip all sub-registers in r0
       for (auto &insn : block.insnList) {
         const uint32_t srcNum = insn.srcNum, dstNum = insn.dstNum;
+        insn.ID  = insnID;
         for (uint32_t srcID = 0; srcID < srcNum; ++srcID) {
           const GenRegister &selReg = insn.src(srcID);
           const ir::Register reg = selReg.reg();
@@ -845,6 +851,9 @@ namespace gbe
     this->intervals[ocl::notemask].maxID = INT_MAX;
     this->intervals[ocl::retVal].minID = INT_MAX;
     this->intervals[ocl::retVal].maxID = -INT_MAX;
+
+    // Allocate all the vectors first since they need to be contiguous
+    this->allocateVector(selection);
 
     // Sort both intervals in starting point and ending point increasing orders
     const uint32_t regNum = ctx.sel->getRegNum();
