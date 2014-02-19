@@ -6,7 +6,7 @@ FLT_MIN_NEGA='-0x1.fffffep127f'
 FLT_MIN_POSI='0x1.0p-126f'
 FLT_MAX_NEGA='-0x1.0p-126f'
 
-paraTypeList={'float':'%.20f','int':'%d','double':'%lf','uint':'%d','string':'%s'}
+paraTypeList={'float':'%e','int':'%d','double':'%lf','uint':'%d','string':'%s'}
 
 
 def ulpUnit(ulpSize):
