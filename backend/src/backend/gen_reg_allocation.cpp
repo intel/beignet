@@ -53,19 +53,16 @@ namespace gbe
   };
 
   typedef struct GenRegIntervalKey {
-    GenRegIntervalKey(uint16_t reg, uint16_t maxID) {
-      if (maxID == INT_MAX)
-        maxID = 0xFFFF;
-      GBE_ASSERT(reg <= 0xFFFF && maxID <= 0xFFFF);
-      key = (maxID << 16) | reg;
+    GenRegIntervalKey(uint16_t reg, int32_t maxID) {
+      key = ((uint64_t)maxID << 16) | reg;
     }
     const ir::Register getReg() const {
       return (ir::Register)(key & 0xFFFF);
     }
-    const uint16_t getMaxID() const {
+    const int32_t getMaxID() const {
       return key >> 16;
     }
-    uint32_t key;
+    uint64_t key;
   } GenRegIntervalKey;
 
   struct spillCmp {
