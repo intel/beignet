@@ -417,8 +417,8 @@ static float powr(float x, int y){
   rintUtests = func('rint','rint',[rint_input_type],rint_output_type,[rint_input_values],'0 * FLT_ULP')
   
   ##### floatn rootn(floatn x, intn y)
-  rootn_input_values1 = [FLT_MAX_POSI,FLT_MIN_NEGA,FLT_MIN_POSI,FLT_MAX_NEGA,80, -80, 3.14, -3.14, -0.5, 0.5, 1, -1, 0.0,6,-6,1500.24,-1500.24,2,3,4]
-  rootn_input_values2 = [-1,-2,-3,2,3,6,7,8,9,2,11,12,13,14,15,16,2,2,2,2]
+  rootn_input_values1 = [0.0, 0.0012,  0.5, 1, 3.14, 12345]
+  rootn_input_values2 = [-1, 1, -20, 20, -123, 456]
   rootn_input_type1 = ['float','float2','float4','float8','float16']
   rootn_input_type2 = ['int','int2','int4','int8','int16']
   rootn_output_type = ['float','float2','float4','float8','float16']
