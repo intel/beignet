@@ -4701,12 +4701,153 @@ INLINE_OVERLOADABLE  size_t get_image_array_size(image1d_array_t image)
   { return __gen_ocl_get_image_array_size(image); }
 #endif
 
-INLINE_OVERLOADABLE float __gen_ocl_internal_fastpath_sin(float x) {
+INLINE_OVERLOADABLE float __gen_ocl_internal_fastpath_acosh (float x)
+{
+    return native_log(x + native_sqrt(x + 1) * native_sqrt(x - 1));
+}
+
+INLINE_OVERLOADABLE float __gen_ocl_internal_fastpath_asinh (float x)
+{
+    return native_log(x + native_sqrt(x * x + 1));
+}
+
+INLINE_OVERLOADABLE float __gen_ocl_internal_fastpath_atanh (float x)
+{
+    return 0.5f * native_sqrt((1 + x) / (1 - x));
+}
+
+INLINE_OVERLOADABLE float __gen_ocl_internal_fastpath_cbrt (float x)
+{
+    return __gen_ocl_pow(x, 0.3333333333f);
+}
+
+INLINE_OVERLOADABLE float __gen_ocl_internal_fastpath_cos (float x)
+{
+    return native_cos(x);
+}
+
+INLINE_OVERLOADABLE float __gen_ocl_internal_fastpath_cosh (float x)
+{
+    return (1 + native_exp(-2 * x)) / (2 * native_exp(-x));
+}
+
+INLINE_OVERLOADABLE float __gen_ocl_internal_fastpath_cospi (float x)
+{
+    return __gen_ocl_cos(x * M_PI_F);
+}
+
+INLINE_OVERLOADABLE float __gen_ocl_internal_fastpath_exp (float x)
+{
+    return native_exp(x);
+}
+
+INLINE_OVERLOADABLE float __gen_ocl_internal_fastpath_exp10 (float x)
+{
+    return native_exp10(x);
+}
+
+INLINE_OVERLOADABLE float __gen_ocl_internal_fastpath_expm1 (float x)
+{
+    return __gen_ocl_pow(M_E_F, x) - 1;
+}
+
+INLINE_OVERLOADABLE float __gen_ocl_internal_fastpath_fmod (float x, float y)
+{
+    return x-y*__gen_ocl_rndz(x/y);
+}
+
+INLINE_OVERLOADABLE float __gen_ocl_internal_fastpath_hypot (float x, float y)
+{
+    return __gen_ocl_sqrt(x*x + y*y);
+}
+
+INLINE_OVERLOADABLE int __gen_ocl_internal_fastpath_ilogb (float x)
+{
+    return __gen_ocl_rndd(native_log2(x));
+}
+
+INLINE_OVERLOADABLE float __gen_ocl_internal_fastpath_ldexp (float x, int n)
+{
+    return __gen_ocl_pow(2, n) * x;
+}
+
+INLINE_OVERLOADABLE float __gen_ocl_internal_fastpath_log (float x)
+{
+    return native_log(x);
+}
+
+INLINE_OVERLOADABLE float __gen_ocl_internal_fastpath_log2 (float x)
+{
+    return native_log2(x);
+}
+
+INLINE_OVERLOADABLE float __gen_ocl_internal_fastpath_log10 (float x)
+{
+    return native_log10(x);
+}
+
+INLINE_OVERLOADABLE float __gen_ocl_internal_fastpath_log1p (float x)
+{
+    return native_log(x + 1);
+}
+
+INLINE_OVERLOADABLE float __gen_ocl_internal_fastpath_logb (float x)
+{
+    return __gen_ocl_rndd(native_log2(x));
+}
+
+INLINE_OVERLOADABLE float __gen_ocl_internal_fastpath_remainder (float x, float y)
+{
+    return x-y*__gen_ocl_rnde(x/y);
+}
+
+INLINE_OVERLOADABLE float __gen_ocl_internal_fastpath_rootn(float x, int n)
+{
+    return __gen_ocl_pow(x, 1.f / n);
+}
+
+INLINE_OVERLOADABLE float __gen_ocl_internal_fastpath_sin (float x)
+{
     return native_sin(x);
 }
 
-INLINE_OVERLOADABLE float __gen_ocl_internal_fastpath_cos(float x) {
-    return native_cos(x);
+INLINE_OVERLOADABLE float __gen_ocl_internal_fastpath_sincos (float x, __global float *cosval)
+{
+    *cosval = native_cos(x);
+    return native_sin(x);
+}
+
+INLINE_OVERLOADABLE float __gen_ocl_internal_fastpath_sincos (float x, __local float *cosval)
+{
+    *cosval = native_cos(x);
+    return native_sin(x);
+}
+
+INLINE_OVERLOADABLE float __gen_ocl_internal_fastpath_sincos (float x, __private float *cosval)
+{
+    *cosval = native_cos(x);
+    return native_sin(x);
+}
+
+INLINE_OVERLOADABLE float __gen_ocl_internal_fastpath_sinh (float x)
+{
+    return (1 - native_exp(-2 * x)) / (2 * native_exp(-x));
+}
+
+INLINE_OVERLOADABLE float __gen_ocl_internal_fastpath_sinpi (float x)
+{
+    return __gen_ocl_sin(x * M_PI_F);
+}
+
+INLINE_OVERLOADABLE float __gen_ocl_internal_fastpath_tan (float x)
+{
+    return native_tan(x);
+}
+
+INLINE_OVERLOADABLE float __gen_ocl_internal_fastpath_tanh (float x)
+{
+    float y = native_exp(-2 * x);
+    return (1 - y) / (1 + y);
 }
 
 #pragma OPENCL EXTENSION cl_khr_fp64 : disable

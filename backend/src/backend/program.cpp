@@ -461,8 +461,33 @@ namespace gbe {
 
 #define REDEF_MATH_FUNC(x) "#ifdef "#x"\n#undef "#x"\n#endif\n#define "#x" __gen_ocl_internal_fastpath_"#x"\n"
   std::string ocl_mathfunc_fastpath_str =
-    REDEF_MATH_FUNC(sin)
+    REDEF_MATH_FUNC(acosh)
+    REDEF_MATH_FUNC(asinh)
+    REDEF_MATH_FUNC(atanh)
+    REDEF_MATH_FUNC(cbrt)
     REDEF_MATH_FUNC(cos)
+    REDEF_MATH_FUNC(cosh)
+    REDEF_MATH_FUNC(cospi)
+    REDEF_MATH_FUNC(exp)
+    REDEF_MATH_FUNC(exp10)
+    REDEF_MATH_FUNC(expm1)
+    REDEF_MATH_FUNC(fmod)
+    REDEF_MATH_FUNC(hypot)
+    REDEF_MATH_FUNC(ilogb)
+    REDEF_MATH_FUNC(ldexp)
+    REDEF_MATH_FUNC(log)
+    REDEF_MATH_FUNC(log2)
+    REDEF_MATH_FUNC(log10)
+    REDEF_MATH_FUNC(log1p)
+    REDEF_MATH_FUNC(logb)
+    REDEF_MATH_FUNC(remainder)
+    REDEF_MATH_FUNC(rootn)
+    REDEF_MATH_FUNC(sin)
+    REDEF_MATH_FUNC(sincos)
+    REDEF_MATH_FUNC(sinh)
+    REDEF_MATH_FUNC(sinpi)
+    REDEF_MATH_FUNC(tan)
+    REDEF_MATH_FUNC(tanh)
     "\n"
   ;
 
