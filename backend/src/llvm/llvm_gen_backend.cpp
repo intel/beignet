@@ -1394,15 +1394,6 @@ namespace gbe
 
       ir::AddressSpace addrSpace = addressSpaceLLVMToGen(v.getType()->getAddressSpace());
       if(addrSpace == ir::MEM_LOCAL) {
-        ir::Function &f = ctx.getFunction();
-        f.setUseSLM(true);
-        const Constant *c = v.getInitializer();
-        Type *ty = c->getType();
-        uint32_t oldSlm = f.getSLMSize();
-        uint32_t align = 8 * getAlignmentByte(unit, ty);
-        uint32_t padding = getPadding(oldSlm*8, align);
-
-        f.setSLMSize(oldSlm + padding/8 + getTypeByteSize(unit, ty));
         const Value * val = cast<Value>(&v);
         // local variable can only be used in one kernel function. so, don't need to check its all uses.
         // loop through the Constant to find the instruction that use the global variable
@@ -1419,6 +1410,16 @@ namespace gbe
         const BasicBlock * bb = insn->getParent();
         const Function * func = bb->getParent();
         if(func != &F) continue;
+
+        ir::Function &f = ctx.getFunction();
+        f.setUseSLM(true);
+        const Constant *c = v.getInitializer();
+        Type *ty = c->getType();
+        uint32_t oldSlm = f.getSLMSize();
+        uint32_t align = 8 * getAlignmentByte(unit, ty);
+        uint32_t padding = getPadding(oldSlm*8, align);
+
+        f.setSLMSize(oldSlm + padding/8 + getTypeByteSize(unit, ty));
 
         this->newRegister(const_cast<GlobalVariable*>(&v));
         ir::Register reg = regTranslator.getScalar(const_cast<GlobalVariable*>(&v), 0);
