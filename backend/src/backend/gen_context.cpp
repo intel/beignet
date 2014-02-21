@@ -1364,6 +1364,7 @@ namespace gbe
     GenRegister l = ra->genReg(insn.dst(12));
     GenRegister m = ra->genReg(insn.dst(13));
     GenRegister flagReg = checkFlagRegister(ra->genReg(insn.dst(14)));
+    GenRegister emaskReg = ra->genReg(GenRegister::uw1grf(ir::ocl::emask));
     GenRegister zero = GenRegister::immud(0),
                 one = GenRegister::immud(1),
                 imm31 = GenRegister::immud(31);
@@ -1445,6 +1446,11 @@ namespace gbe
       p->curr.predicate = GEN_PREDICATE_NONE;
       p->curr.useFlag(flagReg.flag_nr(), flagReg.flag_subnr());
       p->CMP(GEN_CONDITIONAL_L, m, GenRegister::immud(64));
+
+      p->curr.execWidth = 1;
+      p->curr.noMask = 1;
+      p->AND(flagReg, flagReg, emaskReg);
+
       p->curr.predicate = GEN_PREDICATE_NORMAL;
       // under condition, jump back to start point
       if (simdWidth == 8)
@@ -1453,8 +1459,6 @@ namespace gbe
         p->curr.predicate = GEN_PREDICATE_ALIGN1_ANY16H;
       else
         NOT_IMPLEMENTED;
-      p->curr.execWidth = 1;
-      p->curr.noMask = 1;
       int jip = -(int)(p->n_instruction() - loop_start + 1) * 2;
       p->JMPI(zero);
       p->patchJMPI(p->n_instruction()-2, jip);
