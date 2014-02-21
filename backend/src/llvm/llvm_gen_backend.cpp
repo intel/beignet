@@ -2056,7 +2056,6 @@ namespace gbe
       case GEN_OCL_GET_IMAGE_CHANNEL_DATA_TYPE:
       case GEN_OCL_GET_IMAGE_CHANNEL_ORDER:
       case GEN_OCL_GET_IMAGE_DEPTH:
-      case GEN_OCL_GET_SAMPLER_INFO:
       case GEN_OCL_ATOMIC_ADD0:
       case GEN_OCL_ATOMIC_ADD1:
       case GEN_OCL_ATOMIC_SUB0:
@@ -2363,14 +2362,6 @@ namespace gbe
             ir::ImageInfoKey key(surfaceID, infoType);
             const ir::Register infoReg = ctx.getFunction().getImageSet()->appendInfo(key, &ctx);
             ctx.GET_IMAGE_INFO(infoType, reg, surfaceID, infoReg);
-            break;
-          }
-          case GEN_OCL_GET_SAMPLER_INFO:
-          {
-            GBE_ASSERT(AI != AE);
-            const uint8_t index = this->appendSampler(AI); ++AI;
-            const ir::Register reg = this->getRegister(&I, 0);
-            ctx.GET_SAMPLER_INFO(reg, ir::ocl::samplerinfo, index);
             break;
           }
           case GEN_OCL_READ_IMAGE_I:

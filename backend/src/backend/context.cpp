@@ -30,7 +30,6 @@
 #include "ir/liveness.hpp"
 #include "ir/value.hpp"
 #include "ir/image.hpp"
-#include "ir/sampler.hpp"
 #include "sys/cvar.hpp"
 #include <algorithm>
 
@@ -435,9 +434,9 @@ namespace gbe
 
     // We insert the block IP mask first
     this->insertCurbeReg(ir::ocl::blockip, this->newCurbeEntry(GBE_CURBE_BLOCK_IP, 0, this->simdWidth*sizeof(uint16_t)));
-    this->insertCurbeReg(ir::ocl::emask, this->newCurbeEntry(GBE_CURBE_EMASK, 0,  sizeof(uint32_t)));
-    this->insertCurbeReg(ir::ocl::notemask, this->newCurbeEntry(GBE_CURBE_NOT_EMASK, 0, sizeof(uint32_t)));
-    this->insertCurbeReg(ir::ocl::barriermask, this->newCurbeEntry(GBE_CURBE_BARRIER_MASK, 0, sizeof(uint32_t)));
+    this->insertCurbeReg(ir::ocl::emask, this->newCurbeEntry(GBE_CURBE_EMASK, 0,  sizeof(uint16_t)));
+    this->insertCurbeReg(ir::ocl::notemask, this->newCurbeEntry(GBE_CURBE_NOT_EMASK, 0, sizeof(uint16_t)));
+    this->insertCurbeReg(ir::ocl::barriermask, this->newCurbeEntry(GBE_CURBE_BARRIER_MASK, 0, sizeof(uint16_t)));
 
     // Go over the arguments and find the related patch locations
     const uint32_t argNum = fn.argNum();
@@ -483,12 +482,6 @@ namespace gbe
             uint32_t offset = this->getImageInfoCurbeOffset(key, 4);
             insertCurbeReg(imageInfo, offset);
           }
-          continue;
-        } else if (insn.getOpcode() == ir::OP_GET_SAMPLER_INFO) {
-          /* change the src to sampler information register. */
-          GBE_ASSERT(insn.getSrc(0) == ir::ocl::samplerinfo);
-          if (curbeRegs.find(insn.getSrc(0)) == curbeRegs.end())
-            insertCurbeReg(insn.getSrc(0), this->newCurbeEntry(GBE_CURBE_SAMPLER_INFO, 0, 32));
           continue;
         }
         if (fn.isSpecialReg(reg) == false) continue;

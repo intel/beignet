@@ -4507,7 +4507,6 @@ int __gen_ocl_get_image_height(uint surface_id);
 int __gen_ocl_get_image_channel_data_type(uint surface_id);
 int __gen_ocl_get_image_channel_order(uint surface_id);
 int __gen_ocl_get_image_depth(uint surface_id);
-ushort __gen_ocl_get_sampler_info(sampler_t sampler);
 
 #define GET_IMAGE(cl_image, surface_id) \
     uint surface_id = (uint)cl_image

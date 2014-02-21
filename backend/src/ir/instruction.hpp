@@ -411,15 +411,6 @@ namespace ir {
     static bool isClassOf(const Instruction &insn);
   };
 
-  /*! Get image information */
-  class GetSamplerInfoInstruction : public Instruction {
-  public:
-
-    const uint8_t getSamplerIndex(void) const;
-    /*! Return true if the given instruction is an instance of this class */
-    static bool isClassOf(const Instruction &insn);
-  };
-
   /*! Branch instruction is the unified way to branch (with or without
    *  predicate)
    */
@@ -671,8 +662,6 @@ namespace ir {
   Instruction SAMPLE(uint8_t imageIndex, Tuple dst, Tuple src, bool dstIsFloat, bool srcIsFloat, uint8_t sampler, uint8_t samplerOffset, bool is3D);
   /*! get image information , such as width/height/depth/... */
   Instruction GET_IMAGE_INFO(int infoType, Register dst, uint8_t imageIndex, Register infoReg);
-  /*! get sampler information  */
-  Instruction GET_SAMPLER_INFO(Register dst, Register samplerInfo, uint8_t index);
   /*! label labelIndex */
   Instruction LABEL(LabelIndex labelIndex);
 

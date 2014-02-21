@@ -3126,22 +3126,6 @@ namespace gbe
     DECL_CTOR(GetImageInfoInstruction, 1, 1);
   };
 
-  /*! get sampler info instruction pattern. */
-  DECL_PATTERN(GetSamplerInfoInstruction)
-  {
-    INLINE bool emitOne(Selection::Opaque &sel, const ir::GetSamplerInfoInstruction &insn) const
-    {
-      using namespace ir;
-      GenRegister dst, src;
-      dst = sel.selReg(insn.getDst(0), TYPE_U16);
-      src = GenRegister::offset(GenRegister::uw1grf(insn.getSrc(0)), 0, insn.getSamplerIndex() * 2);
-      src.subphysical = 1;
-      sel.MOV(dst, src);
-      return true;
-    }
-    DECL_CTOR(GetSamplerInfoInstruction, 1, 1);
-  };
-
   /*! Branch instruction pattern */
   DECL_PATTERN(BranchInstruction)
   {
@@ -3365,7 +3349,6 @@ namespace gbe
     this->insert<SelectModifierInstructionPattern>();
     this->insert<SampleInstructionPattern>();
     this->insert<GetImageInfoInstructionPattern>();
-    this->insert<GetSamplerInfoInstructionPattern>();
 
     // Sort all the patterns with the number of instructions they output
     for (uint32_t op = 0; op < ir::OP_INVALID; ++op)

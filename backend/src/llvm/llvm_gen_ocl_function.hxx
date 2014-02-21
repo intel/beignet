@@ -134,9 +134,6 @@ DECL_LLVM_GEN_FUNCTION(UPSAMPLE_SHORT, _Z18__gen_ocl_upsampless)
 DECL_LLVM_GEN_FUNCTION(UPSAMPLE_INT, _Z18__gen_ocl_upsampleii)
 DECL_LLVM_GEN_FUNCTION(UPSAMPLE_LONG, _Z18__gen_ocl_upsamplell)
 
-// get sampler info
-DECL_LLVM_GEN_FUNCTION(GET_SAMPLER_INFO, __gen_ocl_get_sampler_info)
-
 // saturate convert
 DECL_LLVM_GEN_FUNCTION(SAT_CONV_U8_TO_I8,  _Z16convert_char_sath)
 DECL_LLVM_GEN_FUNCTION(SAT_CONV_I16_TO_I8, _Z16convert_char_sats)
