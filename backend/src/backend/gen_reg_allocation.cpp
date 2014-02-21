@@ -271,9 +271,12 @@ namespace gbe
       // case 1: the register is not already in a vector, so it can stay in this
       // vector. Note that local IDs are *non-scalar* special registers but will
       // require a MOV anyway since pre-allocated in the CURBE
+      // If an element has very long interval, we don't want to put it into a
+      // vector as it will add more pressure to the register allocation.
       if (it == vectorMap.end() &&
           ctx.sel->isScalarOrBool(reg) == false &&
-          ctx.isSpecialReg(reg) == false)
+          ctx.isSpecialReg(reg) == false &&
+          (intervals[reg].maxID - intervals[reg].minID) < 2048)
       {
         const VectorLocation location = std::make_pair(vector, regID);
         this->vectorMap.insert(std::make_pair(reg, location));
