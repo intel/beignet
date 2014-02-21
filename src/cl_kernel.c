@@ -172,6 +172,9 @@ cl_kernel_set_arg(cl_kernel k, cl_uint index, size_t sz, const void *value)
     k->args[index].mem = NULL;
     k->args[index].sampler = sampler;
     cl_set_sampler_arg_slot(k, index, sampler);
+    offset = gbe_kernel_get_curbe_offset(k->opaque, GBE_CURBE_KERNEL_ARGUMENT, index);
+    assert(offset + 2 <= k->curbe_sz);
+    memcpy(k->curbe + offset, &sampler->clkSamplerValue, 2);
     return CL_SUCCESS;
   }
 

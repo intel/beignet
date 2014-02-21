@@ -4521,23 +4521,21 @@ ushort __gen_ocl_get_sampler_info(sampler_t sampler);
 #define DECL_READ_IMAGE(float_coord_rounding_fix, int_clamping_fix,          \
                         image_type, type, suffix, coord_type)                \
   INLINE_OVERLOADABLE type read_image ##suffix(image_type cl_image,          \
-                                               sampler_t sampler,            \
+                                               const sampler_t sampler,      \
                                                coord_type coord)             \
   {                                                                          \
     GET_IMAGE(cl_image, surface_id);                                         \
     coord_type tmpCoord = coord;                                             \
-    ushort samplerValue;                                                     \
     if (float_coord_rounding_fix | int_clamping_fix) {                       \
-      samplerValue = __gen_ocl_get_sampler_info(sampler);                    \
-      if (((samplerValue & __CLK_ADDRESS_MASK) == CLK_ADDRESS_CLAMP)         \
-          && ((samplerValue & __CLK_FILTER_MASK) == CLK_FILTER_NEAREST)) {   \
+      if (((sampler & __CLK_ADDRESS_MASK) == CLK_ADDRESS_CLAMP)         \
+          && ((sampler & __CLK_FILTER_MASK) == CLK_FILTER_NEAREST)) {   \
         if (float_coord_rounding_fix                                         \
-            && ((samplerValue & CLK_NORMALIZED_COORDS_TRUE) == 0)) {         \
+            && ((sampler & CLK_NORMALIZED_COORDS_TRUE) == 0)) {         \
           FIXUP_FLOAT_COORD(tmpCoord);                                       \
         }                                                                    \
         if (int_clamping_fix) {                                              \
            if (OUT_OF_BOX(tmpCoord, surface_id,                              \
-                          (samplerValue & CLK_NORMALIZED_COORDS_TRUE))) {    \
+                          (sampler & CLK_NORMALIZED_COORDS_TRUE))) {    \
             unsigned int border_alpha;                                       \
             int order = __gen_ocl_get_image_channel_order(surface_id);       \
             if (!CLK_HAS_ALPHA(order)) {                                     \
@@ -4554,6 +4552,7 @@ ushort __gen_ocl_get_sampler_info(sampler_t sampler);
     return  __gen_ocl_read_image ##suffix(                                   \
                         EXPEND_READ_COORD(surface_id, sampler, tmpCoord), 0);\
   }
+
 
 #define DECL_READ_IMAGE_NOSAMPLER(image_type, type, suffix, coord_type)      \
   INLINE_OVERLOADABLE type read_image ##suffix(image_type cl_image,          \
