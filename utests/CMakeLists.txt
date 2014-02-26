@@ -167,6 +167,7 @@ set (utests_sources
   compiler_function_argument3.cpp
   compiler_bool_cross_basic_block.cpp
   compiler_private_data_overflow.cpp
+  compiler_getelementptr_bitcast.cpp
   load_program_from_bin.cpp
   enqueue_copy_buf.cpp
   utest_assert.cpp

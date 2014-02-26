@@ -965,7 +965,11 @@ namespace gbe
         }
 
         ir::Register pointer_reg;
-        pointer_reg = regTranslator.getScalar(pointer, elemID);
+        if(isa<ConstantExpr>(pointer))
+          pointer_reg = getConstantRegister(dyn_cast<Constant>(pointer), elemID);
+        else
+          pointer_reg = regTranslator.getScalar(pointer, elemID);
+
         ir::Register offset_reg = ctx.reg(ir::RegisterFamily::FAMILY_DWORD);
         ctx.LOADI(ir::Type::TYPE_S32, offset_reg, ctx.newIntegerImmediate(constantOffset, ir::Type::TYPE_S32));
         ir::Register reg = ctx.reg(ir::RegisterFamily::FAMILY_DWORD);
