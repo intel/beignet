@@ -558,6 +558,7 @@ namespace gbe {
     llvm::raw_string_ostream ErrorInfo(ErrorString);
     llvm::IntrusiveRefCntPtr<clang::DiagnosticOptions> DiagOpts = new clang::DiagnosticOptions();
     DiagOpts->ShowCarets = false;
+    DiagOpts->ShowPresumedLoc = true;
 #if LLVM_VERSION_MINOR <= 1
     args.push_back("-triple");
     args.push_back("ptx32");
@@ -796,6 +797,10 @@ namespace gbe {
     if (!OCL_STRICT_CONFORMANCE) {
         fwrite(ocl_mathfunc_fastpath_str.c_str(), strlen(ocl_mathfunc_fastpath_str.c_str()), 1, clFile);
     }
+
+    // reset the file number in case we have inserted something into the kernel
+    std::string resetFileNum = "#line 1\n";
+    fwrite(resetFileNum.c_str(), strlen(resetFileNum.c_str()), 1, clFile);
 
     // Write the source to the cl file
     fwrite(source, strlen(source), 1, clFile);
