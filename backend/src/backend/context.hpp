@@ -41,7 +41,8 @@ namespace ir {
 namespace gbe
 {
   class Kernel;                 // context creates Kernel
-  class RegisterFilePartitioner; // Partition register file for reg allocation
+  class RegisterAllocator;      // allocator for physical register allocation
+  class ScratchAllocator;       // allocator for scratch memory allocation
 
   /*! Context is the helper structure to build the Gen ISA or simulation code
    *  from GenIR
@@ -94,7 +95,9 @@ namespace gbe
     /*! Get (search or allocate if fail to find one) image info curbeOffset.*/
     uint32_t getImageInfoCurbeOffset(ir::ImageInfoKey key, size_t size);
     /*! allocate size scratch memory and return start address */
-    uint32_t allocateScratchMem(uint32_t size);
+    int32_t allocateScratchMem(uint32_t size);
+    /*! deallocate scratch memory at offset */
+    void deallocateScratchMem(int32_t offset);
     /*! Preallocated curbe register set including special registers. */
     map<ir::Register, uint32_t> curbeRegs;
   protected:
@@ -129,11 +132,11 @@ namespace gbe
     Kernel *kernel;                       //!< Kernel we are building
     ir::Liveness *liveness;               //!< Liveness info for the variables
     ir::FunctionDAG *dag;                 //!< Graph of values on the function
-    RegisterFilePartitioner *partitioner; //!< Handle register file partionning
+    RegisterAllocator *registerAllocator; //!< physical register allocation
+    ScratchAllocator *scratchAllocator;   //!< scratch memory allocator
     set<ir::LabelIndex> usedLabels;       //!< Set of all used labels
     JIPMap JIPs;                          //!< Where to jump all labels/branches
     uint32_t simdWidth;                   //!< Number of lanes per HW threads
-    uint32_t scratchOffset;               //!< scratch slot for next scratch memory request
     GBE_CLASS(Context);                   //!< Use custom allocators
   };
 

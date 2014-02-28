@@ -35,24 +35,13 @@
 
 namespace gbe
 {
-  /*! Structure that keeps track of allocation in the register file. This is
-   *  actually needed by Context (and not only by GenContext) because both
-   *  simulator and hardware have to deal with constant pushing which uses the
-   *  register file
-   *
-   *  Since Gen is pretty flexible, we just maintain a free list for the
-   *  register file (as a classical allocator) and coalesce blocks when required
-   */
-  class RegisterFilePartitioner
+  class SimpleAllocator
   {
   public:
-    RegisterFilePartitioner(void);
-    ~RegisterFilePartitioner(void);
+    SimpleAllocator(int16_t startOffset, int16_t size, bool _assertFail);
+    ~SimpleAllocator(void);
 
-    /*! Allocate some memory in the register file. Return 0 if out-of-memory. By
-     *  the way, zero is not a valid offset since r0 is always preallocated by
-     *  the hardware. Note that we always use the left most block when
-     *  allocating, so it makes sense for constant pushing
+    /*! Allocate some memory from the pool.
      */
     int16_t allocate(int16_t size, int16_t alignment, bool bFwd=false);
 
@@ -62,10 +51,7 @@ namespace gbe
     /*! Spilt a block into 2 blocks */
     void splitBlock(int16_t offset, int16_t subOffset);
 
-  private:
-    /*! May need to make that run-time in the future */
-    static const int16_t RegisterFileSize = 4*KB;
-
+  protected:
     /*! Double chained list of free spaces */
     struct Block {
       Block(int16_t offset, int16_t size) :
@@ -79,6 +65,10 @@ namespace gbe
      *  If the colascing was done, the left block is deleted
      */
     void coalesce(Block *left, Block *right);
+    /*! the maximum offset */
+    int16_t maxOffset;
+    /*! whether trigger an assertion on allocation failure */
+    bool assertFail;
     /*! Head and tail of the free list */
     Block *head;
     Block *tail;
@@ -87,17 +77,46 @@ namespace gbe
     /*! Track allocated memory blocks <offset, size> */
     map<int16_t, int16_t> allocatedBlocks;
     /*! Use custom allocators */
-    GBE_CLASS(RegisterFilePartitioner);
+    GBE_CLASS(SimpleAllocator);
   };
 
-  RegisterFilePartitioner::RegisterFilePartitioner(void) {
-    // r0 is always set by the HW and used at the end by EOT
-    const int16_t offset = GEN_REG_SIZE;
-    const int16_t size = RegisterFileSize  - offset;
-    tail = head = this->newBlock(offset, size);
+  /*! Structure that keeps track of allocation in the register file. This is
+   *  actually needed by Context (and not only by GenContext) because both
+   *  simulator and hardware have to deal with constant pushing which uses the
+   *  register file
+   *
+   *  Since Gen is pretty flexible, we just reuse the Simpleallocator
+   */
+
+  class RegisterAllocator: public SimpleAllocator {
+  public:
+    RegisterAllocator(int16_t offset, int16_t size): SimpleAllocator(offset, size, false) {}
+
+    GBE_CLASS(RegisterAllocator);
+  };
+
+  /*!
+   * an allocator for scratch memory allocation. Scratch memory are used for register spilling.
+   * You can query how much scratch memory needed through getMaxScatchMemUsed().
+   */
+
+  class ScratchAllocator: public SimpleAllocator {
+  public:
+    ScratchAllocator(int16_t size): SimpleAllocator(0, size, true) {}
+    int16_t getMaxScatchMemUsed() { return maxOffset; }
+
+    GBE_CLASS(ScratchAllocator);
+  };
+
+  SimpleAllocator::SimpleAllocator(int16_t startOffset,
+                                   int16_t size,
+                                   bool _assertFail)
+                                  : maxOffset(0),
+                                  assertFail(_assertFail){
+    tail = head = this->newBlock(startOffset, size);
   }
 
-  RegisterFilePartitioner::~RegisterFilePartitioner(void) {
+  SimpleAllocator::~SimpleAllocator(void) {
     while (this->head) {
       Block *next = this->head->next;
       this->deleteBlock(this->head);
@@ -105,7 +124,7 @@ namespace gbe
     }
   }
 
-  int16_t RegisterFilePartitioner::allocate(int16_t size, int16_t alignment, bool bFwd)
+  int16_t SimpleAllocator::allocate(int16_t size, int16_t alignment, bool bFwd)
   {
     // Make it simple and just use the first block we find
     Block *list = bFwd ? head : tail;
@@ -205,13 +224,16 @@ namespace gbe
 
       // Track the allocation to retrieve the size later
       allocatedBlocks.insert(std::make_pair(aligned, size));
+      // update max offset
+      if(aligned + size > maxOffset) maxOffset = aligned + size;
       // We have a valid offset now
       return aligned;
     }
+    GBE_ASSERT( !assertFail );
     return 0;
   }
 
-  void RegisterFilePartitioner::deallocate(int16_t offset)
+  void SimpleAllocator::deallocate(int16_t offset)
   {
     // Retrieve the size in the allocation map
     auto it = allocatedBlocks.find(offset);
@@ -254,7 +276,7 @@ namespace gbe
     allocatedBlocks.erase(it);
   }
 
-  void RegisterFilePartitioner::coalesce(Block *left, Block *right) {
+  void SimpleAllocator::coalesce(Block *left, Block *right) {
     if (left == NULL || right == NULL) return;
     GBE_ASSERT(left->offset < right->offset);
     GBE_ASSERT(left->next == right);
@@ -270,7 +292,7 @@ namespace gbe
     }
   }
 
-  void RegisterFilePartitioner::splitBlock(int16_t offset, int16_t subOffset) {
+  void SimpleAllocator::splitBlock(int16_t offset, int16_t subOffset) {
     // Retrieve the size in the allocation map
     auto it = allocatedBlocks.find(offset);
     GBE_ASSERT(it != allocatedBlocks.end());
@@ -300,6 +322,7 @@ namespace gbe
 
     return i;
   }
+
   ///////////////////////////////////////////////////////////////////////////
   // Generic Context (shared by the simulator and the HW context)
   ///////////////////////////////////////////////////////////////////////////
@@ -311,16 +334,18 @@ namespace gbe
     GBE_ASSERT(unit.getPointerSize() == ir::POINTER_32_BITS);
     this->liveness = GBE_NEW(ir::Liveness, const_cast<ir::Function&>(fn));
     this->dag = GBE_NEW(ir::FunctionDAG, *this->liveness);
-    this->partitioner = GBE_NEW_NO_ARG(RegisterFilePartitioner);
+    // r0 (GEN_REG_SIZE) is always set by the HW and used at the end by EOT
+    this->registerAllocator = GBE_NEW(RegisterAllocator, GEN_REG_SIZE, 4*KB - GEN_REG_SIZE);
+    this->scratchAllocator = GBE_NEW(ScratchAllocator, 12*KB);
     if (fn.getSimdWidth() == 0 || OCL_SIMD_WIDTH != 15)
       this->simdWidth = nextHighestPowerOf2(OCL_SIMD_WIDTH);
     else
       this->simdWidth = fn.getSimdWidth();
-    this->scratchOffset = 0;
   }
 
   Context::~Context(void) {
-    GBE_SAFE_DELETE(this->partitioner);
+    GBE_SAFE_DELETE(this->registerAllocator);
+    GBE_SAFE_DELETE(this->scratchAllocator);
     GBE_SAFE_DELETE(this->dag);
     GBE_SAFE_DELETE(this->liveness);
   }
@@ -339,20 +364,20 @@ namespace gbe
       this->kernel = NULL;
     }
     if(this->kernel != NULL) {
-      this->kernel->scratchSize = alignScratchSize(this->scratchOffset);
+      this->kernel->scratchSize = alignScratchSize(scratchAllocator->getMaxScatchMemUsed());
       this->kernel->ctx = this;
     }
     return this->kernel;
   }
 
   int16_t Context::allocate(int16_t size, int16_t alignment) {
-    return partitioner->allocate(size, alignment);
+    return registerAllocator->allocate(size, alignment);
   }
 
-  void Context::deallocate(int16_t offset) { partitioner->deallocate(offset); }
+  void Context::deallocate(int16_t offset) { registerAllocator->deallocate(offset); }
 
   void Context::splitBlock(int16_t offset, int16_t subOffset) {
-    partitioner->splitBlock(offset, subOffset);
+    registerAllocator->splitBlock(offset, subOffset);
   }
 
   int32_t Context::allocConstBuf(uint32_t argID) {
@@ -376,10 +401,15 @@ namespace gbe
     return offset + GEN_REG_SIZE;
   }
 
-  uint32_t Context::allocateScratchMem(uint32_t size) {
-    uint32_t offset = scratchOffset;
-    scratchOffset += size;
-    return offset;
+  // FIXME TODO as we optimize scratch memory usage using the register interval.
+  // we need to add some dependency in post_reg_alloc scheduler, to keep scratch
+  // memory that are reused still keep the order
+
+  int32_t Context::allocateScratchMem(uint32_t size) {
+    return scratchAllocator->allocate(size, 32, true);
+  }
+  void Context::deallocateScratchMem(int32_t offset) {
+    scratchAllocator->deallocate(offset);
   }
 
   void Context::buildStack(void) {
@@ -402,7 +432,7 @@ namespace gbe
                               uint32_t alignment)
   {
     alignment = alignment == 0 ? size : alignment;
-    const uint32_t offset = partitioner->allocate(size, alignment, 1);
+    const uint32_t offset = registerAllocator->allocate(size, alignment, 1);
     GBE_ASSERT(offset >= GEN_REG_SIZE);
     kernel->patches.push_back(PatchInfo(value, subValue, offset - GEN_REG_SIZE));
     kernel->curbeSize = std::max(kernel->curbeSize, offset + size - GEN_REG_SIZE);

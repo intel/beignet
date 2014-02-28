@@ -174,7 +174,7 @@ namespace gbe
     INLINE bool spillReg(GenRegInterval interval, bool isAllocated = false);
     INLINE bool spillReg(ir::Register reg, bool isAllocated = false);
     INLINE bool vectorCanSpill(SelectionVector *vector);
-
+    INLINE void allocateScratchForSpilled();
     /*! Use custom allocator */
     GBE_CLASS(Opaque);
   };
@@ -583,6 +583,8 @@ namespace gbe
     }
     if (!spilledRegs.empty()) {
       GBE_ASSERT(reservedReg != 0);
+      allocateScratchForSpilled();
+
       bool success = selection.spillRegs(spilledRegs, reservedReg);
       if (!success) {
         std::cerr << "Fail to spill registers." << std::endl;
@@ -590,6 +592,43 @@ namespace gbe
       }
     }
     return true;
+  }
+
+  INLINE void GenRegAllocator::Opaque::allocateScratchForSpilled()
+  {
+    const uint32_t regNum = spilledRegs.size();
+    this->starting.resize(regNum);
+    this->ending.resize(regNum);
+    uint32_t regID = 0;
+    for(auto it = spilledRegs.begin(); it != spilledRegs.end(); ++it) {
+      this->starting[regID] = this->ending[regID] = &intervals[it->first];
+      regID++;
+    }
+    std::sort(this->starting.begin(), this->starting.end(), cmp<true>);
+    std::sort(this->ending.begin(), this->ending.end(), cmp<false>);
+    int toExpire = 0;
+    for(uint32_t i = 0; i < regNum; i++) {
+      const GenRegInterval * cur = starting[i];
+      const GenRegInterval * exp = ending[toExpire];
+      if(exp->maxID < cur->minID) {
+        auto it = spilledRegs.find(exp->reg);
+        GBE_ASSERT(it != spilledRegs.end());
+        if(it->second.addr != -1) {
+          ctx.deallocateScratchMem(it->second.addr);
+        }
+        toExpire++;
+      }
+      auto it = spilledRegs.find(cur->reg);
+      GBE_ASSERT(it != spilledRegs.end());
+      if(cur->minID == cur->maxID) {
+        it->second.addr = -1;
+        continue;
+      }
+
+      ir::RegisterFamily family = ctx.sel->getRegisterFamily(cur->reg);
+      it->second.addr = ctx.allocateScratchMem(getFamilySize(family)
+                                             * ctx.getSimdWidth());
+      }
   }
 
   INLINE bool GenRegAllocator::Opaque::expireReg(ir::Register reg)
@@ -643,14 +682,8 @@ namespace gbe
       return false;
     SpillRegTag spillTag;
     spillTag.isTmpReg = interval.maxID == interval.minID;
-    if (!spillTag.isTmpReg) {
-      // FIXME, we can optimize scratch allocation according to
-      // the interval information.
-      ir::RegisterFamily family = ctx.sel->getRegisterFamily(interval.reg);
-      spillTag.addr = ctx.allocateScratchMem(getFamilySize(family)
-                                             * ctx.getSimdWidth());
-    } else
-      spillTag.addr = -1;
+    spillTag.addr = -1;
+
     if (isAllocated) {
       // If this register is allocated, we need to expire it and erase it
       // from the RA map.
