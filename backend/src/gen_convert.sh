@@ -99,7 +99,7 @@ DEF(uint, float);
 
 #define DEF(DSTTYPE, SRCTYPE, MIN, MAX) \
   INLINE_OVERLOADABLE DSTTYPE convert_ ## DSTTYPE ## _sat(SRCTYPE x) { \
-    return x > MAX ? (DSTTYPE)MAX : x < MIN ? (DSTTYPE)MIN : x; \
+    return x >= MAX ? (DSTTYPE)MAX : x <= MIN ? (DSTTYPE)MIN : x; \
   }
 DEF(char, long, -128, 127);
 DEF(uchar, long, 0, 255);
@@ -113,7 +113,7 @@ DEF(ulong, float, 0, 1.8446744073709552e+19f);
 
 #define DEF(DSTTYPE, SRCTYPE, MAX) \
   INLINE_OVERLOADABLE DSTTYPE convert_ ## DSTTYPE ## _sat(SRCTYPE x) { \
-    return x > MAX ? (DSTTYPE)MAX : x; \
+    return x >= MAX ? (DSTTYPE)MAX : x; \
   }
 DEF(char, ulong, 127);
 DEF(uchar, ulong, 255);
@@ -125,12 +125,12 @@ DEF(uint, ulong, 0xffffffffu);
 
 INLINE_OVERLOADABLE long convert_long_sat(ulong x) {
   ulong MAX = 0x7ffffffffffffffful;
-  return x > MAX ? MAX : x;
+  return x >= MAX ? MAX : x;
 }
 
 #define DEF(DSTTYPE, SRCTYPE) \
   INLINE_OVERLOADABLE DSTTYPE convert_ ## DSTTYPE ## _sat(SRCTYPE x) { \
-    return x < 0 ? 0 : x; \
+    return x <= 0 ? 0 : x; \
   }
 DEF(ushort, char);
 DEF(uint, char);
