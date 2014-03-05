@@ -648,20 +648,6 @@ int cl_check_image(const int *img, int w, int h, const char *bmp)
   return (float(discrepancy) / float(n) > max_error_ratio) ? 0 : 1;
 }
 
-typedef struct
-{
-  unsigned int mantissa:23;
-  unsigned int exponent:8;
-  unsigned int sign:1;
-} FLOAT;
-
-typedef union
-{
-  float f;
-  unsigned int i;
-  FLOAT spliter;
-} SF;
-
 const float cl_FLT_ULP(float float_number)
 {
   SF floatBin, ulpBin, ulpBinBase;

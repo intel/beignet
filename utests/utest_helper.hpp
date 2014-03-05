@@ -184,6 +184,21 @@ enum {
   BIN = 2
 };
 
+/* The SF is float type spliter*/
+typedef struct
+{
+  unsigned int mantissa:23;
+  unsigned int exponent:8;
+  unsigned int sign:1;
+} FLOAT;
+
+typedef union
+{
+  float f;
+  unsigned int i;
+  FLOAT spliter;
+} SF;
+
 /* Init OpenCL */
 extern int cl_ocl_init(void);
 
