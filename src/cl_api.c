@@ -2675,6 +2675,7 @@ clGetExtensionFunctionAddress(const char *func_name)
   EXTFUNC(clReportUnfreedIntel)
   EXTFUNC(clCreateBufferFromLibvaIntel)
   EXTFUNC(clCreateImageFromLibvaIntel)
+  EXTFUNC(clGetMemObjectFdIntel)
   return NULL;
 }
 
@@ -2814,3 +2815,17 @@ error:
   return mem;
 }
 
+extern CL_API_ENTRY cl_int CL_API_CALL
+clGetMemObjectFdIntel(cl_context context,
+                      cl_mem memobj,
+                      int* fd)
+{
+  cl_int err = CL_SUCCESS;
+  CHECK_CONTEXT (context);
+  CHECK_MEM (memobj);
+
+  err = cl_mem_get_fd(memobj, fd);
+
+error:
+  return err;
+}

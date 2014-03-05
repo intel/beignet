@@ -1337,3 +1337,13 @@ error:
   mem = NULL;
   goto exit;
 }
+
+LOCAL cl_int
+cl_mem_get_fd(cl_mem mem,
+              int* fd)
+{
+  cl_int err = CL_SUCCESS;
+  if(cl_buffer_get_fd(mem->bo, fd))
+	err = CL_INVALID_OPERATION;
+  return err;
+}

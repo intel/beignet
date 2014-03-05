@@ -122,6 +122,17 @@ typedef CL_API_ENTRY cl_mem (CL_API_CALL *clCreateImageFromLibvaIntel_fn)(
                              const cl_libva_image * /* info */,
                              cl_int *               /* errcode_ret */);
 
+/* Create buffer from libva's buffer object */
+extern CL_API_ENTRY cl_int CL_API_CALL
+clGetMemObjectFdIntel(cl_context   /* context */,
+                      cl_mem       /* Memory Obejct */,
+                      int*         /* returned fd */);
+
+typedef CL_API_ENTRY cl_int (CL_API_CALL *clGetMemObjectFdIntel_fn)(
+                             cl_context   /* context */,
+                             cl_mem       /* Memory Obejct */,
+                             int*         /* returned fd */);
+
 #ifdef __cplusplus
 }
 #endif

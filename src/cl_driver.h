@@ -297,6 +297,9 @@ extern cl_buffer_subdata_cb *cl_buffer_subdata;
 typedef int (cl_buffer_wait_rendering_cb) (cl_buffer);
 extern cl_buffer_wait_rendering_cb *cl_buffer_wait_rendering;
 
+typedef int (cl_buffer_get_fd_cb)(cl_buffer, int *fd);
+extern cl_buffer_get_fd_cb *cl_buffer_get_fd;
+
 /* Get the device id */
 typedef int (cl_driver_get_device_id_cb)(void);
 extern cl_driver_get_device_id_cb *cl_driver_get_device_id;
