@@ -93,16 +93,19 @@ struct intel_gpgpu
   unsigned long sampler_bitmap;          /* sampler usage bitmap. */
 
   struct { drm_intel_bo *bo; } stack_b;
-  struct { drm_intel_bo *bo; } idrt_b;
-  struct { drm_intel_bo *bo; } surface_heap_b;
-  struct { drm_intel_bo *bo; } vfe_state_b;
-  struct { drm_intel_bo *bo; } curbe_b;
-  struct { drm_intel_bo *bo; } sampler_state_b;
-  struct { drm_intel_bo *bo; } sampler_border_color_state_b;
   struct { drm_intel_bo *bo; } perf_b;
   struct { drm_intel_bo *bo; } scratch_b;
   struct { drm_intel_bo *bo; } constant_b;
   struct { drm_intel_bo *bo; } time_stamp_b;  /* time stamp buffer */
+
+  struct { drm_intel_bo *bo; } aux_buf;
+  struct {
+    uint32_t surface_heap_offset;
+    uint32_t curbe_offset;
+    uint32_t idrt_offset;
+    uint32_t sampler_state_offset;
+    uint32_t sampler_border_color_state_offset;
+  } aux_offset;
 
   uint32_t per_thread_scratch;
   struct {
@@ -144,18 +147,8 @@ intel_gpgpu_delete(intel_gpgpu_t *gpgpu)
     return;
   if(gpgpu->time_stamp_b.bo)
     drm_intel_bo_unreference(gpgpu->time_stamp_b.bo);
-  if (gpgpu->surface_heap_b.bo)
-    drm_intel_bo_unreference(gpgpu->surface_heap_b.bo);
-  if (gpgpu->idrt_b.bo)
-    drm_intel_bo_unreference(gpgpu->idrt_b.bo);
-  if (gpgpu->vfe_state_b.bo)
-    drm_intel_bo_unreference(gpgpu->vfe_state_b.bo);
-  if (gpgpu->curbe_b.bo)
-    drm_intel_bo_unreference(gpgpu->curbe_b.bo);
-  if (gpgpu->sampler_state_b.bo)
-    drm_intel_bo_unreference(gpgpu->sampler_state_b.bo);
-  if (gpgpu->sampler_border_color_state_b.bo)
-    drm_intel_bo_unreference(gpgpu->sampler_border_color_state_b.bo);
+  if (gpgpu->aux_buf.bo)
+    drm_intel_bo_unreference(gpgpu->aux_buf.bo);
   if (gpgpu->perf_b.bo)
     drm_intel_bo_unreference(gpgpu->perf_b.bo);
   if (gpgpu->stack_b.bo)
@@ -209,10 +202,11 @@ intel_gpgpu_set_base_address(intel_gpgpu_t *gpgpu)
    * binding table pointer at 11 bits. So, we cannot use pointers directly while
    * using the surface heap
    */
-  OUT_RELOC(gpgpu->batch, gpgpu->surface_heap_b.bo,
+  assert(gpgpu->aux_offset.surface_heap_offset % 4096 == 0);
+  OUT_RELOC(gpgpu->batch, gpgpu->aux_buf.bo,
             I915_GEM_DOMAIN_INSTRUCTION,
             I915_GEM_DOMAIN_INSTRUCTION,
-            0 | (def_cc << 8) | (def_cc << 4) | (0 << 3)| BASE_ADDRESS_MODIFY);
+            gpgpu->aux_offset.surface_heap_offset + (0 | (def_cc << 8) | (def_cc << 4) | (0 << 3)| BASE_ADDRESS_MODIFY));
   OUT_BATCH(gpgpu->batch, 0 | (def_cc << 8) | BASE_ADDRESS_MODIFY); /* Dynamic State Base Addr */
   OUT_BATCH(gpgpu->batch, 0 | (def_cc << 8) | BASE_ADDRESS_MODIFY); /* Indirect Obj Base Addr */
   OUT_BATCH(gpgpu->batch, 0 | (def_cc << 8) | BASE_ADDRESS_MODIFY); /* Instruction Base Addr  */
@@ -274,7 +268,7 @@ intel_gpgpu_load_curbe_buffer(intel_gpgpu_t *gpgpu)
 #else
   OUT_BATCH(gpgpu->batch, 5120);
 #endif
-  OUT_RELOC(gpgpu->batch, gpgpu->curbe_b.bo, I915_GEM_DOMAIN_INSTRUCTION, 0, 0);
+  OUT_RELOC(gpgpu->batch, gpgpu->aux_buf.bo, I915_GEM_DOMAIN_INSTRUCTION, 0, gpgpu->aux_offset.curbe_offset);
   ADVANCE_BATCH(gpgpu->batch);
 }
 
@@ -285,7 +279,7 @@ intel_gpgpu_load_idrt(intel_gpgpu_t *gpgpu)
   OUT_BATCH(gpgpu->batch, CMD(2,0,2) | (4 - 2)); /* length-2 */
   OUT_BATCH(gpgpu->batch, 0);                    /* mbz */
   OUT_BATCH(gpgpu->batch, 1 << 5);
-  OUT_RELOC(gpgpu->batch, gpgpu->idrt_b.bo, I915_GEM_DOMAIN_INSTRUCTION, 0, 0);
+  OUT_RELOC(gpgpu->batch, gpgpu->aux_buf.bo, I915_GEM_DOMAIN_INSTRUCTION, 0, gpgpu->aux_offset.idrt_offset);
   ADVANCE_BATCH(gpgpu->batch);
 }
 
@@ -441,7 +435,6 @@ intel_gpgpu_state_init(intel_gpgpu_t *gpgpu,
                        uint32_t size_cs_entry,
                        int profiling)
 {
-  drm_intel_bufmgr *bufmgr = gpgpu->drv->bufmgr;
   drm_intel_bo *bo;
 
   /* Binded buffers */
@@ -465,82 +458,59 @@ intel_gpgpu_state_init(intel_gpgpu_t *gpgpu,
     gpgpu->time_stamp_b.bo = bo;
   }
 
-  /* Constant URB  buffer */
-  if(gpgpu->curbe_b.bo)
-    dri_bo_unreference(gpgpu->curbe_b.bo);
-  uint32_t size_cb = gpgpu->urb.num_cs_entries * gpgpu->urb.size_cs_entry * 64;
-  size_cb = ALIGN(size_cb, 4096);
-  bo = dri_bo_alloc(gpgpu->drv->bufmgr, "CURBE_BUFFER", size_cb, 64);
-  assert(bo);
-  gpgpu->curbe_b.bo = bo;
-
-  /* surface state */
-  if(gpgpu->surface_heap_b.bo)
-    dri_bo_unreference(gpgpu->surface_heap_b.bo);
-  bo = dri_bo_alloc(bufmgr,
-                    "SURFACE_HEAP",
-                    sizeof(surface_heap_t),
-                    32);
-  assert(bo);
-  dri_bo_map(bo, 1);
-  memset(bo->virtual, 0, sizeof(surface_heap_t));
-  gpgpu->surface_heap_b.bo = bo;
-
-  /* Interface descriptor remap table */
-  if(gpgpu->idrt_b.bo)
-    dri_bo_unreference(gpgpu->idrt_b.bo);
-  bo = dri_bo_alloc(bufmgr,
-                    "IDRT",
-                    MAX_IF_DESC * sizeof(struct gen6_interface_descriptor),
-                    32);
-  assert(bo);
-  gpgpu->idrt_b.bo = bo;
-
-  /* vfe state */
-  if(gpgpu->vfe_state_b.bo)
-    dri_bo_unreference(gpgpu->vfe_state_b.bo);
-  gpgpu->vfe_state_b.bo = NULL;
-
-  /* sampler state */
-  if (gpgpu->sampler_state_b.bo)
-    dri_bo_unreference(gpgpu->sampler_state_b.bo);
-  bo = dri_bo_alloc(gpgpu->drv->bufmgr,
-                    "SAMPLER_STATE",
-                    GEN_MAX_SAMPLERS * sizeof(gen6_sampler_state_t),
-                    32);
-  assert(bo);
-  dri_bo_map(bo, 1);
-  memset(bo->virtual, 0, sizeof(gen6_sampler_state_t) * GEN_MAX_SAMPLERS);
-  gpgpu->sampler_state_b.bo = bo;
-
-  /* sampler border color state */
-  if (gpgpu->sampler_border_color_state_b.bo)
-    dri_bo_unreference(gpgpu->sampler_border_color_state_b.bo);
-  bo = dri_bo_alloc(gpgpu->drv->bufmgr,
-                    "SAMPLER_BORDER_COLOR_STATE",
-                    sizeof(gen7_sampler_border_color_t),
-                    32);
-  assert(bo);
-  dri_bo_map(bo, 1);
-  memset(bo->virtual, 0, sizeof(gen7_sampler_border_color_t));
-  gpgpu->sampler_border_color_state_b.bo = bo;
-
   /* stack */
   if (gpgpu->stack_b.bo)
     dri_bo_unreference(gpgpu->stack_b.bo);
   gpgpu->stack_b.bo = NULL;
+
+  /* Set the auxiliary buffer*/
+  uint32_t size_aux = 0;
+  if(gpgpu->aux_buf.bo)
+    dri_bo_unreference(gpgpu->aux_buf.bo);
+
+  //surface heap must be 4096 bytes aligned because state base address use 20bit for the address
+  size_aux = ALIGN(size_aux, 4096);
+  gpgpu->aux_offset.surface_heap_offset = size_aux;
+  size_aux += sizeof(surface_heap_t);
+
+  //curbe must be 32 bytes aligned
+  size_aux = ALIGN(size_aux, 32);
+  gpgpu->aux_offset.curbe_offset = size_aux;
+  size_aux += gpgpu->urb.num_cs_entries * gpgpu->urb.size_cs_entry * 64;
+
+  //idrt must be 32 bytes aligned
+  size_aux = ALIGN(size_aux, 32);
+  gpgpu->aux_offset.idrt_offset = size_aux;
+  size_aux += MAX_IF_DESC * sizeof(struct gen6_interface_descriptor);
+
+  //sampler state must be 32 bytes aligned
+  size_aux = ALIGN(size_aux, 32);
+  gpgpu->aux_offset.sampler_state_offset = size_aux;
+  size_aux += GEN_MAX_SAMPLERS * sizeof(gen6_sampler_state_t);
+
+  //sampler border color state must be 32 bytes aligned
+  size_aux = ALIGN(size_aux, 32);
+  gpgpu->aux_offset.sampler_border_color_state_offset = size_aux;
+  size_aux += GEN_MAX_SAMPLERS * sizeof(gen7_sampler_border_color_t);
+
+  bo = dri_bo_alloc(gpgpu->drv->bufmgr, "AUX_BUFFER", size_aux, 0);
+  assert(bo);
+  dri_bo_map(bo, 1);
+  memset(bo->virtual, 0, size_aux);
+  gpgpu->aux_buf.bo = bo;
 }
 
 static void
 intel_gpgpu_set_buf_reloc_gen7(intel_gpgpu_t *gpgpu, int32_t index, dri_bo* obj_bo, uint32_t obj_bo_offset)
 {
-  surface_heap_t *heap = gpgpu->surface_heap_b.bo->virtual;
+  surface_heap_t *heap = gpgpu->aux_buf.bo->virtual + gpgpu->aux_offset.surface_heap_offset;
   heap->binding_table[index] = offsetof(surface_heap_t, surface) +
                                index * sizeof(gen7_surface_state_t);
-  dri_bo_emit_reloc(gpgpu->surface_heap_b.bo,
+  dri_bo_emit_reloc(gpgpu->aux_buf.bo,
                     I915_GEM_DOMAIN_RENDER,
                     I915_GEM_DOMAIN_RENDER,
                     obj_bo_offset,
+                    gpgpu->aux_offset.surface_heap_offset +
                     heap->binding_table[index] +
                     offsetof(gen7_surface_state_t, ss1),
                     obj_bo);
@@ -552,7 +522,7 @@ intel_gpgpu_alloc_constant_buffer(intel_gpgpu_t *gpgpu, uint32_t size)
   uint32_t s = size - 1;
   assert(size != 0);
 
-  surface_heap_t *heap = gpgpu->surface_heap_b.bo->virtual;
+  surface_heap_t *heap = gpgpu->aux_buf.bo->virtual + gpgpu->aux_offset.surface_heap_offset;
   gen7_surface_state_t *ss2 = (gen7_surface_state_t *) heap->surface[2];
   memset(ss2, 0, sizeof(gen7_surface_state_t));
   ss2->ss0.surface_type = I965_SURFACE_BUFFER;
@@ -568,10 +538,11 @@ intel_gpgpu_alloc_constant_buffer(intel_gpgpu_t *gpgpu, uint32_t size)
   gpgpu->constant_b.bo = drm_intel_bo_alloc(gpgpu->drv->bufmgr, "CONSTANT_BUFFER", s, 64);
   assert(gpgpu->constant_b.bo);
   ss2->ss1.base_addr = gpgpu->constant_b.bo->offset;
-  dri_bo_emit_reloc(gpgpu->surface_heap_b.bo,
+  dri_bo_emit_reloc(gpgpu->aux_buf.bo,
                       I915_GEM_DOMAIN_RENDER,
                       I915_GEM_DOMAIN_RENDER,
                       0,
+                      gpgpu->aux_offset.surface_heap_offset +
                       heap->binding_table[2] +
                       offsetof(gen7_surface_state_t, ss1),
                       gpgpu->constant_b.bo);
@@ -586,7 +557,7 @@ intel_gpgpu_alloc_constant_buffer(intel_gpgpu_t *gpgpu, uint32_t size)
 static void
 intel_gpgpu_map_address_space(intel_gpgpu_t *gpgpu)
 {
-  surface_heap_t *heap = gpgpu->surface_heap_b.bo->virtual;
+  surface_heap_t *heap = gpgpu->aux_buf.bo->virtual + gpgpu->aux_offset.surface_heap_offset;
   gen7_surface_state_t *ss0 = (gen7_surface_state_t *) heap->surface[0];
   gen7_surface_state_t *ss1 = (gen7_surface_state_t *) heap->surface[1];
   memset(ss0, 0, sizeof(gen7_surface_state_t));
@@ -633,7 +604,7 @@ intel_gpgpu_bind_image_gen7(intel_gpgpu_t *gpgpu,
                               int32_t pitch,
                               int32_t tiling)
 {
-  surface_heap_t *heap = gpgpu->surface_heap_b.bo->virtual;
+  surface_heap_t *heap = gpgpu->aux_buf.bo->virtual + gpgpu->aux_offset.surface_heap_offset;
   gen7_surface_state_t *ss = (gen7_surface_state_t *) heap->surface[index];
 
   memset(ss, 0, sizeof(*ss));
@@ -717,12 +688,9 @@ static void
 intel_gpgpu_build_idrt(intel_gpgpu_t *gpgpu, cl_gpgpu_kernel *kernel)
 {
   gen6_interface_descriptor_t *desc;
-  drm_intel_bo *bo = NULL, *ker_bo = NULL;
+  drm_intel_bo *ker_bo = NULL;
 
-  bo = gpgpu->idrt_b.bo;
-  dri_bo_map(bo, 1);
-  assert(bo->virtual);
-  desc = (gen6_interface_descriptor_t*) bo->virtual;
+  desc = (gen6_interface_descriptor_t*) (gpgpu->aux_buf.bo->virtual + gpgpu->aux_offset.idrt_offset);
 
   memset(desc, 0, sizeof(*desc));
   ker_bo = (drm_intel_bo *) kernel->bo;
@@ -730,7 +698,9 @@ intel_gpgpu_build_idrt(intel_gpgpu_t *gpgpu, cl_gpgpu_kernel *kernel)
   desc->desc1.single_program_flow = 1;
   desc->desc1.floating_point_mode = 0; /* use IEEE-754 rule */
   desc->desc5.rounding_mode = 0; /* round to nearest even */
-  desc->desc2.sampler_state_pointer = gpgpu->sampler_state_b.bo->offset >> 5;
+
+  assert((gpgpu->aux_buf.bo->offset + gpgpu->aux_offset.sampler_state_offset) % 32 == 0);
+  desc->desc2.sampler_state_pointer = (gpgpu->aux_buf.bo->offset + gpgpu->aux_offset.sampler_state_offset) >> 5;
   desc->desc3.binding_table_entry_count = 0; /* no prefetch */
   desc->desc3.binding_table_pointer = 0;
   desc->desc4.curbe_read_len = kernel->curbe_sz / 32;
@@ -757,18 +727,17 @@ intel_gpgpu_build_idrt(intel_gpgpu_t *gpgpu, cl_gpgpu_kernel *kernel)
   else
     desc->desc5.group_threads_num = kernel->barrierID; /* BarrierID on GEN6 */
 
-  dri_bo_emit_reloc(bo,
+  dri_bo_emit_reloc(gpgpu->aux_buf.bo,
                     I915_GEM_DOMAIN_INSTRUCTION, 0,
                     0,
-                    offsetof(gen6_interface_descriptor_t, desc0),
+                    gpgpu->aux_offset.idrt_offset + offsetof(gen6_interface_descriptor_t, desc0),
                     ker_bo);
 
-  dri_bo_emit_reloc(bo,
+  dri_bo_emit_reloc(gpgpu->aux_buf.bo,
                     I915_GEM_DOMAIN_SAMPLER, 0,
-                    0,
-                    offsetof(gen6_interface_descriptor_t, desc2),
-                    gpgpu->sampler_state_b.bo);
-  dri_bo_unmap(bo);
+                    gpgpu->aux_offset.sampler_state_offset,
+                    gpgpu->aux_offset.idrt_offset + offsetof(gen6_interface_descriptor_t, desc2),
+                    gpgpu->aux_buf.bo);
 }
 
 static void
@@ -779,23 +748,23 @@ intel_gpgpu_upload_curbes(intel_gpgpu_t *gpgpu, const void* data, uint32_t size)
   uint32_t i, j;
 
   /* Upload the data first */
-  dri_bo_map(gpgpu->curbe_b.bo, 1);
-  assert(gpgpu->curbe_b.bo->virtual);
-  curbe = (unsigned char *) gpgpu->curbe_b.bo->virtual;
+  dri_bo_map(gpgpu->aux_buf.bo, 1);
+  assert(gpgpu->aux_buf.bo->virtual);
+  curbe = (unsigned char *) (gpgpu->aux_buf.bo->virtual + gpgpu->aux_offset.curbe_offset);
   memcpy(curbe, data, size);
 
   /* Now put all the relocations for our flat address space */
   for (i = 0; i < k->thread_n; ++i)
     for (j = 0; j < gpgpu->binded_n; ++j) {
       *(uint32_t*)(curbe + gpgpu->binded_offset[j]+i*k->curbe_sz) = gpgpu->binded_buf[j]->offset + gpgpu->target_buf_offset[j];
-      drm_intel_bo_emit_reloc(gpgpu->curbe_b.bo,
-                              gpgpu->binded_offset[j]+i*k->curbe_sz,
+      drm_intel_bo_emit_reloc(gpgpu->aux_buf.bo,
+                              gpgpu->aux_offset.curbe_offset + gpgpu->binded_offset[j]+i*k->curbe_sz,
                               gpgpu->binded_buf[j],
                               gpgpu->target_buf_offset[j],
                               I915_GEM_DOMAIN_RENDER,
                               I915_GEM_DOMAIN_RENDER);
     }
-  dri_bo_unmap(gpgpu->curbe_b.bo);
+  dri_bo_unmap(gpgpu->aux_buf.bo);
 }
 
 static void
@@ -803,7 +772,7 @@ intel_gpgpu_upload_samplers(intel_gpgpu_t *gpgpu, const void *data, uint32_t n)
 {
   if (n) {
     const size_t sz = n * sizeof(gen6_sampler_state_t);
-    memcpy(gpgpu->sampler_state_b.bo->virtual, data, sz);
+    memcpy(gpgpu->aux_buf.bo->virtual + gpgpu->aux_offset.sampler_state_offset, data, sz);
   }
 }
 
@@ -831,9 +800,10 @@ intel_gpgpu_insert_sampler(intel_gpgpu_t *gpgpu, uint32_t index, uint32_t clk_sa
   uint32_t wrap_mode;
   gen7_sampler_state_t *sampler;
 
-  sampler = (gen7_sampler_state_t *)(gpgpu->sampler_state_b.bo->virtual)  + index;
+  sampler = (gen7_sampler_state_t *)(gpgpu->aux_buf.bo->virtual + gpgpu->aux_offset.sampler_state_offset)  + index;
   memset(sampler, 0, sizeof(*sampler));
-  sampler->ss2.default_color_pointer = (gpgpu->sampler_border_color_state_b.bo->offset) >> 5;
+  assert((gpgpu->aux_buf.bo->offset + gpgpu->aux_offset.sampler_border_color_state_offset) % 32 == 0);
+  sampler->ss2.default_color_pointer = (gpgpu->aux_buf.bo->offset + gpgpu->aux_offset.sampler_border_color_state_offset) >> 5;
   if ((clk_sampler & __CLK_NORMALIZED_MASK) == CLK_NORMALIZED_COORDS_FALSE)
     sampler->ss3.non_normalized_coord = 1;
   else
@@ -877,12 +847,13 @@ intel_gpgpu_insert_sampler(intel_gpgpu_t *gpgpu, uint32_t index, uint32_t clk_sa
                                    GEN_ADDRESS_ROUNDING_ENABLE_V_MAG |
                                    GEN_ADDRESS_ROUNDING_ENABLE_R_MAG;
 
-  dri_bo_emit_reloc(gpgpu->sampler_state_b.bo,
+  dri_bo_emit_reloc(gpgpu->aux_buf.bo,
                     I915_GEM_DOMAIN_SAMPLER, 0,
-                    0,
+                    gpgpu->aux_offset.sampler_border_color_state_offset,
+                    gpgpu->aux_offset.sampler_state_offset +
                     index * sizeof(gen7_sampler_state_t) +
                     offsetof(gen7_sampler_state_t, ss2),
-                    gpgpu->sampler_border_color_state_b.bo);
+                    gpgpu->aux_buf.bo);
 
 }
 
@@ -914,9 +885,7 @@ intel_gpgpu_states_setup(intel_gpgpu_t *gpgpu, cl_gpgpu_kernel *kernel)
   gpgpu->ker = kernel;
   intel_gpgpu_build_idrt(gpgpu, kernel);
   intel_gpgpu_map_address_space(gpgpu);
-  dri_bo_unmap(gpgpu->surface_heap_b.bo);
-  dri_bo_unmap(gpgpu->sampler_state_b.bo);
-  dri_bo_unmap(gpgpu->sampler_border_color_state_b.bo);
+  dri_bo_unmap(gpgpu->aux_buf.bo);
 }
 
 static void
