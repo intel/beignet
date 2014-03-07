@@ -3854,12 +3854,12 @@ INLINE_OVERLOADABLE void vstore3(TYPE##3 v, size_t offset, SPACE TYPE *p) {\
   *(p + 3 * offset + 2) = v.s2; \
 } \
 INLINE_OVERLOADABLE TYPE##3 vload3(size_t offset, const SPACE TYPE *p) { \
-  return *(SPACE TYPE##3 *) (p + 3 * offset); \
+  return (TYPE##3)(*(p + 3 * offset), *(p+ 3 * offset + 1), *(p + 3 * offset + 2));\
 }
 
 #define DECL_UNTYPED_RDV3_SPACE(TYPE, SPACE) \
 INLINE_OVERLOADABLE TYPE##3 vload3(size_t offset, const SPACE TYPE *p) { \
-  return *(SPACE TYPE##3 *) (p + 3 * offset); \
+  return (TYPE##3)(*(p + 3 * offset), *(p+ 3 * offset + 1), *(p + 3 * offset + 2));\
 }
 
 #define DECL_UNTYPED_RW_ALL_SPACE(TYPE, SPACE) \
