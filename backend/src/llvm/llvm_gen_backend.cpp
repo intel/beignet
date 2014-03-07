@@ -578,7 +578,10 @@ namespace gbe
     void visitInsertValueInst(InsertValueInst &I) {NOT_SUPPORTED;}
     void visitExtractValueInst(ExtractValueInst &I) {NOT_SUPPORTED;}
     template <bool isLoad, typename T> void visitLoadOrStore(T &I);
-
+    // batch vec4/8/16 load/store
+    INLINE void emitBatchLoadOrStore(const ir::Type type, const uint32_t elemNum,
+                  Value *llvmValue, const ir::Register ptr,
+                  const ir::AddressSpace addrSpace, Type * elemType, bool isLoad);
     void visitInstruction(Instruction &I) {NOT_SUPPORTED;}
   };
 
@@ -2774,6 +2777,61 @@ namespace gbe
   }
   void GenWriter::regAllocateStoreInst(StoreInst &I) {}
 
+  void GenWriter::emitBatchLoadOrStore(const ir::Type type, const uint32_t elemNum,
+                                      Value *llvmValues, const ir::Register ptr,
+                                      const ir::AddressSpace addrSpace,
+                                      Type * elemType, bool isLoad) {
+    const ir::RegisterFamily pointerFamily = ctx.getPointerFamily();
+    uint32_t totalSize = elemNum * getFamilySize(getFamily(type));
+    uint32_t msgNum = totalSize > 16 ? totalSize / 16 : 1;
+    const uint32_t perMsgNum = elemNum / msgNum;
+
+    for (uint32_t msg = 0; msg < msgNum; ++msg) {
+      // Build the tuple data in the vector
+      vector<ir::Register> tupleData; // put registers here
+      for (uint32_t elemID = 0; elemID < perMsgNum; ++elemID) {
+        ir::Register reg;
+        if(regTranslator.isUndefConst(llvmValues, elemID)) {
+          Value *v = Constant::getNullValue(elemType);
+          reg = this->getRegister(v);
+        } else
+          reg = this->getRegister(llvmValues, perMsgNum*msg+elemID);
+
+        tupleData.push_back(reg);
+      }
+      const ir::Tuple tuple = ctx.arrayTuple(&tupleData[0], perMsgNum);
+
+      // We may need to update to offset the pointer
+      ir::Register addr;
+      if (msg == 0)
+        addr = ptr;
+      else {
+        const ir::Register offset = ctx.reg(pointerFamily);
+        ir::ImmediateIndex immIndex;
+        ir::Type immType;
+        // each message can read/write 16 byte
+        const int32_t stride = 16;
+        if (pointerFamily == ir::FAMILY_DWORD) {
+          immIndex = ctx.newImmediate(int32_t(msg*stride));
+          immType = ir::TYPE_S32;
+        } else {
+          immIndex = ctx.newImmediate(int64_t(msg*stride));
+          immType = ir::TYPE_S64;
+        }
+
+        addr = ctx.reg(pointerFamily);
+        ctx.LOADI(immType, offset, immIndex);
+        ctx.ADD(immType, addr, ptr, offset);
+      }
+
+      // Emit the instruction
+      if (isLoad)
+        ctx.LOAD(type, tuple, addr, addrSpace, perMsgNum, true);
+      else
+        ctx.STORE(type, tuple, addr, addrSpace, perMsgNum, true);
+    }
+  }
+
   extern int OCL_SIMD_WIDTH;
   template <bool isLoad, typename T>
   INLINE void GenWriter::emitLoadOrStore(T &I)
@@ -2811,12 +2869,14 @@ namespace gbe
       // count here.
       if (elemNum == 4 && regTranslator.isUndefConst(llvmValues, 3))
           elemNum = 3;
+
       // The code is going to be fairly different from types to types (based on
       // size of each vector element)
       const ir::Type type = getType(ctx, elemType);
       const ir::RegisterFamily pointerFamily = ctx.getPointerFamily();
+      const ir::RegisterFamily dataFamily = getFamily(type);
 
-      if ((type == ir::TYPE_FLOAT || type == ir::TYPE_U32 || type == ir::TYPE_S32) && addrSpace != ir::MEM_CONSTANT) {
+      if(dataFamily == ir::FAMILY_DWORD && addrSpace != ir::MEM_CONSTANT) {
         // One message is enough here. Nothing special to do
         if (elemNum <= 4) {
           // Build the tuple data in the vector
@@ -2842,51 +2902,11 @@ namespace gbe
         // Not supported by the hardware. So, we split the message and we use
         // strided loads and stores
         else {
-          // We simply use several uint4 loads
-          const uint32_t msgNum = elemNum / 4;
-          for (uint32_t msg = 0; msg < msgNum; ++msg) {
-            // Build the tuple data in the vector
-            vector<ir::Register> tupleData; // put registers here
-            for (uint32_t elemID = 0; elemID < 4; ++elemID) {
-              ir::Register reg;
-              if(regTranslator.isUndefConst(llvmValues, elemID)) {
-                Value *v = Constant::getNullValue(elemType);
-                reg = this->getRegister(v);
-              } else
-                reg = this->getRegister(llvmValues, 4*msg+elemID);
-
-              tupleData.push_back(reg);
-            }
-            const ir::Tuple tuple = ctx.arrayTuple(&tupleData[0], 4);
-
-            // We may need to update to offset the pointer
-            ir::Register addr;
-            if (msg == 0)
-              addr = ptr;
-            else {
-              const ir::Register offset = ctx.reg(pointerFamily);
-              ir::ImmediateIndex immIndex;
-              ir::Type immType;
-              if (pointerFamily == ir::FAMILY_DWORD) {
-                immIndex = ctx.newImmediate(int32_t(msg*sizeof(uint32_t[4])));
-                immType = ir::TYPE_S32;
-              } else {
-                immIndex = ctx.newImmediate(int64_t(msg*sizeof(uint64_t[4])));
-                immType = ir::TYPE_S64;
-              }
-
-              addr = ctx.reg(pointerFamily);
-              ctx.LOADI(immType, offset, immIndex);
-              ctx.ADD(immType, addr, ptr, offset);
-            }
-
-            // Emit the instruction
-            if (isLoad)
-              ctx.LOAD(type, tuple, addr, addrSpace, 4, true);
-            else
-              ctx.STORE(type, tuple, addr, addrSpace, 4, true);
-          }
+          emitBatchLoadOrStore(type, elemNum, llvmValues, ptr, addrSpace, elemType, isLoad);
         }
+      }
+      else if((dataFamily==ir::FAMILY_WORD && elemNum%2==0) || (dataFamily == ir::FAMILY_BYTE && elemNum%4 == 0)) {
+          emitBatchLoadOrStore(type, elemNum, llvmValues, ptr, addrSpace, elemType, isLoad);
       } else {
         for (uint32_t elemID = 0; elemID < elemNum; elemID++) {
           if(regTranslator.isUndefConst(llvmValues, elemID))

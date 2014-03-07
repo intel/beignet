@@ -529,6 +529,10 @@ namespace gbe
     void BYTE_SCATTER(Reg addr, Reg src, uint32_t elemSize, uint32_t bti);
     /*! DWord scatter (for constant cache read) */
     void DWORD_GATHER(Reg dst, Reg addr, uint32_t bti);
+    /*! Unpack the uint to char4 */
+    void UNPACK_BYTE(const GenRegister *dst, const GenRegister src, uint32_t elemNum);
+    /*! pack the char4 to uint */
+    void PACK_BYTE(const GenRegister dst, const GenRegister *src, uint32_t elemNum);
     /*! Extended math function (2 arguments) */
     void MATH(Reg dst, uint32_t function, Reg src0, Reg src1);
     /*! Extended math function (1 argument) */
@@ -1113,6 +1117,18 @@ namespace gbe
     insn->src(0) = addr;
     insn->dst(0) = dst;
     insn->extra.function = bti;
+  }
+  void Selection::Opaque::UNPACK_BYTE(const GenRegister *dst, const GenRegister src, uint32_t elemNum) {
+    SelectionInstruction *insn = this->appendInsn(SEL_OP_UNPACK_BYTE, elemNum, 1);
+    insn->src(0) = src;
+    for(uint32_t i = 0; i < elemNum; i++)
+      insn->dst(i) = dst[i];
+  }
+  void Selection::Opaque::PACK_BYTE(const GenRegister dst, const GenRegister *src, uint32_t elemNum) {
+    SelectionInstruction *insn = this->appendInsn(SEL_OP_PACK_BYTE, 1, elemNum);
+    for(uint32_t i = 0; i < elemNum; i++)
+      insn->src(i) = src[i];
+    insn->dst(0) = dst;
   }
 
   void Selection::Opaque::MATH(Reg dst, uint32_t function, Reg src0, Reg src1) {
@@ -2415,26 +2431,50 @@ namespace gbe
                         const ir::LoadInstruction &insn,
                         const uint32_t elemSize,
                         GenRegister address,
-                        GenRegister value,
                         uint32_t bti) const
     {
       using namespace ir;
-      GBE_ASSERT(insn.getValueNum() == 1);
+      const uint32_t valueNum = insn.getValueNum();
       const uint32_t simdWidth = sel.ctx.getSimdWidth();
+      if(valueNum > 1) {
+        vector<GenRegister> dst(valueNum);
+        const uint32_t typeSize = getFamilySize(getFamily(insn.getValueType()));
 
-      // We need a temporary register if we read bytes or words
-      Register dst = Register(value.value.reg);
-      if (elemSize == GEN_BYTE_SCATTER_WORD ||
-          elemSize == GEN_BYTE_SCATTER_BYTE) {
-        dst = sel.reg(FAMILY_DWORD);
-        sel.BYTE_GATHER(GenRegister::fxgrf(simdWidth, dst), address, elemSize, bti);
+        if(elemSize == GEN_BYTE_SCATTER_WORD) {
+          for(uint32_t i = 0; i < valueNum; i++)
+            dst[i] = sel.selReg(insn.getValue(i), ir::TYPE_U16);
+        } else if(elemSize == GEN_BYTE_SCATTER_BYTE) {
+          for(uint32_t i = 0; i < valueNum; i++)
+            dst[i] = sel.selReg(insn.getValue(i), ir::TYPE_U8);
+        }
+
+        uint32_t tmpRegNum = typeSize*valueNum / 4;
+        vector<GenRegister> tmp(tmpRegNum);
+        for(uint32_t i = 0; i < tmpRegNum; i++) {
+          tmp[i] = GenRegister::udxgrf(simdWidth, sel.reg(FAMILY_DWORD));
+        }
+
+        sel.UNTYPED_READ(address, tmp.data(), tmpRegNum, bti);
+        for(uint32_t i = 0; i < tmpRegNum; i++) {
+          sel.UNPACK_BYTE(dst.data() + i * 4/typeSize, tmp[i], 4/typeSize);
+        }
+      } else {
+        GBE_ASSERT(insn.getValueNum() == 1);
+        const GenRegister value = sel.selReg(insn.getValue(0));
+        // We need a temporary register if we read bytes or words
+        Register dst = Register(value.value.reg);
+        if (elemSize == GEN_BYTE_SCATTER_WORD ||
+            elemSize == GEN_BYTE_SCATTER_BYTE) {
+          dst = sel.reg(FAMILY_DWORD);
+          sel.BYTE_GATHER(GenRegister::fxgrf(simdWidth, dst), address, elemSize, bti);
+        }
+
+        // Repack bytes or words using a converting mov instruction
+        if (elemSize == GEN_BYTE_SCATTER_WORD)
+          sel.MOV(GenRegister::retype(value, GEN_TYPE_UW), GenRegister::unpacked_uw(dst));
+        else if (elemSize == GEN_BYTE_SCATTER_BYTE)
+          sel.MOV(GenRegister::retype(value, GEN_TYPE_UB), GenRegister::unpacked_ub(dst));
       }
-
-      // Repack bytes or words using a converting mov instruction
-      if (elemSize == GEN_BYTE_SCATTER_WORD)
-        sel.MOV(GenRegister::retype(value, GEN_TYPE_UW), GenRegister::unpacked_uw(dst));
-      else if (elemSize == GEN_BYTE_SCATTER_BYTE)
-        sel.MOV(GenRegister::retype(value, GEN_TYPE_UB), GenRegister::unpacked_ub(dst));
     }
 
     void emitIndirectMove(Selection::Opaque &sel,
@@ -2469,8 +2509,7 @@ namespace gbe
         else if(insn.isAligned() == true && elemSize == GEN_BYTE_SCATTER_DWORD)
           this->emitDWordGather(sel, insn, address, 0x2);
         else {
-          const GenRegister value = sel.selReg(insn.getValue(0));
-          this->emitByteGather(sel, insn, elemSize, address, value, 0x2);
+          this->emitByteGather(sel, insn, elemSize, address, 0x2);
         }
       }
       else if (insn.isAligned() == true && elemSize == GEN_BYTE_SCATTER_QWORD)
@@ -2478,8 +2517,7 @@ namespace gbe
       else if (insn.isAligned() == true && elemSize == GEN_BYTE_SCATTER_DWORD)
         this->emitUntypedRead(sel, insn, address, space == MEM_LOCAL ? 0xfe : 0x00);
       else {
-        const GenRegister value = sel.selReg(insn.getValue(0));
-        this->emitByteGather(sel, insn, elemSize, address, value, space == MEM_LOCAL ? 0xfe : 0x01);
+        this->emitByteGather(sel, insn, elemSize, address, space == MEM_LOCAL ? 0xfe : 0x01);
       }
       return true;
     }
@@ -2535,22 +2573,43 @@ namespace gbe
                          const ir::StoreInstruction &insn,
                          const uint32_t elemSize,
                          GenRegister addr,
-                         GenRegister value,
                          uint32_t bti) const
     {
       using namespace ir;
       const uint32_t simdWidth = sel.ctx.getSimdWidth();
-      const GenRegister dst = value;
+      uint32_t valueNum = insn.getValueNum();
 
-      GBE_ASSERT(insn.getValueNum() == 1);
-      if (elemSize == GEN_BYTE_SCATTER_WORD) {
-        value = GenRegister::udxgrf(simdWidth, sel.reg(FAMILY_DWORD));
-        sel.MOV(value, GenRegister::retype(dst, GEN_TYPE_UW));
-      } else if (elemSize == GEN_BYTE_SCATTER_BYTE) {
-        value = GenRegister::udxgrf(simdWidth, sel.reg(FAMILY_DWORD));
-        sel.MOV(value, GenRegister::retype(dst, GEN_TYPE_UB));
+      if(valueNum > 1) {
+        const uint32_t typeSize = getFamilySize(getFamily(insn.getValueType()));
+        vector<GenRegister> value(valueNum);
+
+        if(elemSize == GEN_BYTE_SCATTER_WORD) {
+          for(uint32_t i = 0; i < valueNum; i++)
+            value[i] = sel.selReg(insn.getValue(i), ir::TYPE_U16);
+        } else if(elemSize == GEN_BYTE_SCATTER_BYTE) {
+          for(uint32_t i = 0; i < valueNum; i++)
+            value[i] = sel.selReg(insn.getValue(i), ir::TYPE_U8);
+        }
+
+        uint32_t tmpRegNum = typeSize*valueNum / 4;
+        vector<GenRegister> tmp(tmpRegNum);
+        for(uint32_t i = 0; i < tmpRegNum; i++) {
+          tmp[i] = GenRegister::udxgrf(simdWidth, sel.reg(FAMILY_DWORD));
+          sel.PACK_BYTE(tmp[i], value.data() + i * 4/typeSize, 4/typeSize);
+        }
+
+        sel.UNTYPED_WRITE(addr, tmp.data(), tmpRegNum, bti);
+      } else {
+        const GenRegister value = sel.selReg(insn.getValue(0));
+        GBE_ASSERT(insn.getValueNum() == 1);
+        const GenRegister tmp = GenRegister::udxgrf(simdWidth, sel.reg(FAMILY_DWORD));
+        if (elemSize == GEN_BYTE_SCATTER_WORD) {
+          sel.MOV(tmp, GenRegister::retype(value, GEN_TYPE_UW));
+        } else if (elemSize == GEN_BYTE_SCATTER_BYTE) {
+          sel.MOV(tmp, GenRegister::retype(value, GEN_TYPE_UB));
+        }
+        sel.BYTE_SCATTER(addr, tmp, elemSize, bti);
       }
-      sel.BYTE_SCATTER(addr, value, elemSize, bti);
     }
 
     INLINE bool emitOne(Selection::Opaque &sel, const ir::StoreInstruction &insn) const
@@ -2566,8 +2625,7 @@ namespace gbe
         this->emitUntypedWrite(sel, insn, bti);
       else {
         const GenRegister address = sel.selReg(insn.getAddress());
-        const GenRegister value = sel.selReg(insn.getValue(0));
-        this->emitByteScatter(sel, insn, elemSize, address, value, bti);
+        this->emitByteScatter(sel, insn, elemSize, address, bti);
       }
       return true;
     }

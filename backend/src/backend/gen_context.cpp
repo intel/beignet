@@ -1776,6 +1776,35 @@ namespace gbe
     p->BYTE_SCATTER(src, bti, elemSize);
   }
 
+  void GenContext::emitUnpackByteInstruction(const SelectionInstruction &insn) {
+    const GenRegister src = ra->genReg(insn.src(0));
+    for(uint32_t i = 0; i < insn.dstNum; i++) {
+      p->MOV(ra->genReg(insn.dst(i)), GenRegister::splitReg(src, insn.dstNum, i));
+    }
+  }
+
+  void GenContext::emitPackByteInstruction(const SelectionInstruction &insn) {
+    const GenRegister dst = ra->genReg(insn.dst(0));
+    p->push();
+    if(simdWidth == 8) {
+      for(uint32_t i = 0; i < insn.srcNum; i++)
+        p->MOV(GenRegister::splitReg(dst, insn.srcNum, i), ra->genReg(insn.src(i)));
+    } else {
+      // when destination expands two registers, the source must span two registers.
+      p->curr.execWidth = 8;
+      for(uint32_t i = 0; i < insn.srcNum; i++) {
+        GenRegister dsti = GenRegister::splitReg(dst, insn.srcNum, i);
+        GenRegister src = ra->genReg(insn.src(i));
+
+        p->curr.quarterControl = 0;
+        p->MOV(dsti, src);
+        p->curr.quarterControl = 1;
+        p->MOV(GenRegister::Qn(dsti,1), GenRegister::Qn(src, 1));
+      }
+    }
+    p->pop();
+  }
+
   void GenContext::emitDWordGatherInstruction(const SelectionInstruction &insn) {
     const GenRegister dst = ra->genReg(insn.dst(0));
     const GenRegister src = ra->genReg(insn.src(0));

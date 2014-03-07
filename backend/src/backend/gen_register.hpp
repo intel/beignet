@@ -255,6 +255,31 @@ namespace gbe
       return r;
     }
 
+    // split a DWORD register into unpacked Byte or Short register
+    static INLINE GenRegister splitReg(GenRegister reg, uint32_t count, uint32_t sub_part) {
+      GenRegister r = reg;
+      GBE_ASSERT(count == 4 || count == 2);
+      GBE_ASSERT(reg.type == GEN_TYPE_UD || reg.type == GEN_TYPE_D);
+
+      if(reg.hstride != GEN_HORIZONTAL_STRIDE_0) {
+        GBE_ASSERT(reg.hstride == GEN_HORIZONTAL_STRIDE_1);
+        r.hstride = count == 4 ? GEN_HORIZONTAL_STRIDE_4 : GEN_HORIZONTAL_STRIDE_2;
+      }
+      if(count == 4) {
+        r.type = reg.type == GEN_TYPE_UD ? GEN_TYPE_UB : GEN_TYPE_B;
+        r.vstride = GEN_VERTICAL_STRIDE_32;
+      } else {
+        r.type = reg.type == GEN_TYPE_UD ? GEN_TYPE_UW : GEN_TYPE_W;
+        r.vstride = GEN_VERTICAL_STRIDE_16;
+      }
+
+      r.subnr += sub_part*typeSize(r.type);
+      r.nr += r.subnr / 32;
+      r.subnr %= 32;
+
+      return r;
+    }
+
     INLINE bool isint64(void) const {
       if ((type == GEN_TYPE_UL || type == GEN_TYPE_L) && file == GEN_GENERAL_REGISTER_FILE)
         return true;

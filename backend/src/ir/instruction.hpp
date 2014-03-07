@@ -178,7 +178,8 @@ namespace ir {
     template <typename T> INLINE bool isMemberOf(void) const {
       return T::isClassOf(*this);
     }
-    static const uint32_t MAX_SRC_NUM = 16;
+    /*! max_src for store instruction (vec16 + addr) */
+    static const uint32_t MAX_SRC_NUM = 17;
     static const uint32_t MAX_DST_NUM = 16;
   protected:
     BasicBlock *parent;      //!< The basic block containing the instruction
