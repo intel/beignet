@@ -229,6 +229,7 @@ namespace gbe
   public:
     INLINE SelectionDAG(const ir::Instruction &insn) :
       insn(insn), mergeable(0), childNum(insn.getSrcNum()), isRoot(0) {
+      GBE_ASSERT(insn.getSrcNum() < 127);
       for (uint32_t childID = 0; childID < childNum; ++childID)
         this->child[childID] = NULL;
     }
@@ -243,7 +244,7 @@ namespace gbe
     /*! When sources have been overwritten, a child insn cannot be merged */
     uint32_t mergeable:ir::Instruction::MAX_SRC_NUM;
     /*! Number of children we have in the pattern */
-    uint32_t childNum:4;
+    uint32_t childNum:7;
     /*! A root must be generated, no matter what */
     uint32_t isRoot:1;
   };
