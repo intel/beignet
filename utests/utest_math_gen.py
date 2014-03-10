@@ -466,12 +466,45 @@ static float rsqrt(float x)
   sinhUtests = func('sinh','sinh',[sinh_input_type],sinh_output_type,[sinh_input_values],'4 * FLT_ULP')
   
   ##### gentype sinpi(gentype x)
-  sinpi_input_values = base_input_values
+  sinpi_input_values = [0, 1, 3.14, -0.88, -0.12, -0.5, 0.5, -0.49, 0.49, 0.51, -0.51, -0.1, 0.1]
   sinpi_input_type = ['float','float2','float4','float8','float16']
   sinpi_output_type = ['float','float2','float4','float8','float16']
   sinpi_cpu_func='''
+static float reduce1( float x )
+{
+  SF fx, fy;
+  fx.f = fy.f = x;
+  int n;
+
+  fy.spliter.exponent = fx.spliter.exponent - 1;
+  n = (int)fy.f;
+
+  fx.f = fx.f - 2.0 * n;
+
+  return fx.f;
+}
+
 static float sinpi(float x){
-  return sin(M_PI*x);
+  float r = x;
+  if ( x > 1 || x < -1) r = reduce1(x);
+
+  // reduce to [-0.5, 0.5]
+  if(r < -0.5)
+      r = -1 - r;
+  else if (r > 0.5)
+      r = 1 - r;
+
+  if (r > 0.25 && r <= 0.5)
+    return  cos((0.5 - r) * M_PI);
+  else if (r >= 0 && r <= 0.25)
+    return  sin(r * M_PI);
+  else if (r >= -0.25 && r < 0)
+    return -sin(r * -M_PI);
+  else if (r >= -0.5 && r < -0.25){
+    return -cos((0.5 + r) * M_PI);}
+
+  // Error return
+  return 0xffffffff;
 } '''
   sinpiUtests = func('sinpi','sinpi',[sinpi_input_type],sinpi_output_type,[sinpi_input_values],'4 * FLT_ULP',sinpi_cpu_func)
   
