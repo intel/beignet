@@ -116,7 +116,8 @@ namespace gbe
     MPM.add(createFunctionAttrsPass());       // Set readonly/readnone attrs
 
     //MPM.add(createScalarReplAggregatesPass(64, true, -1, -1, 64))
-    //MPM.add(createSROAPass(/*RequiresDomTree*/ false));
+    if(optLevel > 0)
+      MPM.add(createSROAPass(/*RequiresDomTree*/ false));
     MPM.add(createEarlyCSEPass());              // Catch trivial redundancies
     MPM.add(createJumpThreadingPass());         // Thread jumps.
     MPM.add(createCorrelatedValuePropagationPass()); // Propagate conditionals
@@ -135,7 +136,7 @@ namespace gbe
     MPM.add(createLoopDeletionPass());          // Delete dead loops
     MPM.add(createLoopUnrollPass());          // Unroll small loops
     if(optLevel > 0)
-      MPM.add(createGVNPass(true));                 // Remove redundancies
+      MPM.add(createGVNPass());                 // Remove redundancies
     MPM.add(createMemCpyOptPass());             // Remove memcpy / form memset
     MPM.add(createSCCPPass());                  // Constant prop with SCCP
 

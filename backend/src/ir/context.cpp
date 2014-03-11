@@ -157,7 +157,8 @@ namespace ir {
     bb->append(*insnPtr);
 #if GBE_DEBUG
     std::string whyNot;
-    GBE_ASSERTM(insnPtr->wellFormed(whyNot), whyNot.c_str());
+    if(getUnit().getValid())
+      GBE_ASSERTM(insnPtr->wellFormed(whyNot), whyNot.c_str());
 #endif /* GBE_DEBUG */
 
     // Close the current block if this is a branch

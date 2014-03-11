@@ -178,7 +178,7 @@ namespace gbe
   }
 
   /*! LLVM IR Type to Gen IR type translation */
-  static ir::Type getType(const ir::Context &ctx, const Type *type)
+  static ir::Type getType(ir::Context &ctx, const Type *type)
   {
     GBE_ASSERT(isScalarType(type));
     if (type->isFloatTy() == true)
@@ -202,12 +202,12 @@ namespace gbe
       return ir::TYPE_S32;
     if (type == Type::getInt64Ty(type->getContext()))
       return ir::TYPE_S64;
-    GBE_ASSERT(0);
+    ctx.getUnit().setValid(false);
     return ir::TYPE_S64;
   }
 
   /*! LLVM IR Type to Gen IR unsigned type translation */
-  static ir::Type getUnsignedType(const ir::Context &ctx, const Type *type)
+  static ir::Type getUnsignedType(ir::Context &ctx, const Type *type)
   {
     GBE_ASSERT(type->isIntegerTy() == true);
     if (type == Type::getInt1Ty(type->getContext()))
@@ -220,12 +220,12 @@ namespace gbe
       return ir::TYPE_U32;
     if (type == Type::getInt64Ty(type->getContext()))
       return ir::TYPE_U64;
-    GBE_ASSERT(0);
+    ctx.getUnit().setValid(false);
     return ir::TYPE_U64;
   }
 
   /*! Type to register family translation */
-  static ir::RegisterFamily getFamily(const ir::Context &ctx, const Type *type)
+  static ir::RegisterFamily getFamily(ir::Context &ctx, const Type *type)
   {
     GBE_ASSERT(isScalarType(type) == true);
     if (type == Type::getInt1Ty(type->getContext()))
@@ -240,14 +240,14 @@ namespace gbe
       return ir::FAMILY_QWORD;
     if (type->isPointerTy())
       return ctx.getPointerFamily();
-    GBE_ASSERT(0);
+    ctx.getUnit().setValid(false);
     return ir::FAMILY_BOOL;
   }
 
   /*! Get number of element to process dealing either with a vector or a scalar
    *  value
    */
-  static ir::Type getVectorInfo(const ir::Context &ctx, Type *llvmType, Value *value, uint32_t &elemNum, bool useUnsigned = false)
+  static ir::Type getVectorInfo(ir::Context &ctx, Type *llvmType, Value *value, uint32_t &elemNum, bool useUnsigned = false)
   {
     ir::Type type;
     if (llvmType->isVectorTy() == true) {
@@ -810,7 +810,8 @@ namespace gbe
           const uint64_t u64 = CI->getZExtValue();
           return doIt(u64);
         } else {
-          GBE_ASSERTM(false, "Unsupported integer size");
+          //GBE_ASSERTM(false, "Unsupported integer size");
+          doIt.invalid();
           return doIt(uint64_t(0));
         }
       }
@@ -854,6 +855,9 @@ namespace gbe
     NewImmediateFunctor(ir::Context &ctx) : ctx(ctx) {}
     template <typename T> ir::ImmediateIndex operator() (const T &t) {
       return ctx.newImmediate(t);
+    }
+    void invalid() {
+      ctx.getUnit().setValid(false);
     }
     ir::Context &ctx;
   };
@@ -1845,6 +1849,9 @@ namespace gbe
     template <typename T> ir::Immediate operator() (const T &t) {
       return ir::Immediate(t);
     }
+    void invalid() {
+      ctx.getUnit().setValid(false);
+    }
     ir::Context &ctx;
   };
 
@@ -2187,6 +2194,9 @@ namespace gbe
     U64CPVExtractFunctor(ir::Context &ctx) : ctx(ctx) {}
     template <typename T> INLINE uint64_t operator() (const T &t) {
       return uint64_t(t);
+    }
+    void invalid() {
+      ctx.getUnit().setValid(false);
     }
     ir::Context &ctx;
   };

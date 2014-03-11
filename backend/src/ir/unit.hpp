@@ -72,12 +72,15 @@ namespace ir {
     ConstantSet& getConstantSet(void) { return constantSet; }
     /*! Return the constant set */
     const ConstantSet& getConstantSet(void) const { return constantSet; }
+    void setValid(bool value) { valid = value; }
+    bool getValid() { return valid; }
   private:
     friend class ContextInterface; //!< Can free modify the unit
     hash_map<std::string, Function*> functions; //!< All the defined functions
     ConstantSet constantSet; //!< All the constants defined in the unit
     PointerSize pointerSize; //!< Size shared by all pointers
     GBE_CLASS(Unit);
+    bool valid;
   };
 
   /*! Output the unit string in the given stream */
@@ -87,4 +90,3 @@ namespace ir {
 } /* namespace gbe */
 
 #endif /* __GBE_IR_UNIT_HPP__ */
-

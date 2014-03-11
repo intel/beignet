@@ -27,7 +27,7 @@
 namespace gbe {
 namespace ir {
 
-  Unit::Unit(PointerSize pointerSize) : pointerSize(pointerSize) {}
+  Unit::Unit(PointerSize pointerSize) : pointerSize(pointerSize), valid(true) {}
   Unit::~Unit(void) {
     for (const auto &pair : functions) GBE_DELETE(pair.second);
   }

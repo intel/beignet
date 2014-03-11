@@ -103,12 +103,21 @@ namespace gbe {
   BVAR(OCL_OUTPUT_GEN_IR, false);
 
   bool Program::buildFromLLVMFile(const char *fileName, std::string &error, int optLevel) {
-    ir::Unit unit;
-    if (llvmToGen(unit, fileName, optLevel) == false) {
+    ir::Unit *unit = new ir::Unit();
+    if (llvmToGen(*unit, fileName, optLevel) == false) {
       error = std::string(fileName) + " not found";
       return false;
     }
-    this->buildFromUnit(unit, error);
+    //If unit is not valid, maybe some thing don't support by backend, introduce by some passes
+    //use optLevel 0 to try again.
+    if(!unit->getValid()) {
+      delete unit;   //clear unit
+      unit = new ir::Unit();
+      llvmToGen(*unit, fileName, 0);  //suppose file exists and llvmToGen will not return false.
+    }
+    assert(unit->getValid());
+    this->buildFromUnit(*unit, error);
+    delete unit;
     return true;
   }
 
