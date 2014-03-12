@@ -162,6 +162,12 @@ namespace gbe
      * regenerating the code
      */
     bool limitRegisterPressure;
+  private:
+    /*! Build the curbe patch list for the given kernel */
+    void buildPatchList(void);
+    /*! allocate a new curbe register and insert to curbe pool. */
+    void allocCurbeReg(ir::Register reg, gbe_curbe_type value, uint32_t subValue = 0);
+
   };
 
 } /* namespace gbe */

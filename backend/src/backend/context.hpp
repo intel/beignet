@@ -105,8 +105,6 @@ namespace gbe
     virtual Kernel *allocateKernel(void) = 0;
     /*! Look if a stack is needed and allocate it */
     void buildStack(void);
-    /*! Build the curbe patch list for the given kernel */
-    void buildPatchList(void);
     /*! Build the list of arguments to set to launch the kernel */
     void buildArgList(void);
     /*! Build the sets of used labels */
@@ -121,6 +119,7 @@ namespace gbe
      *  of the entry
      */
     void insertCurbeReg(ir::Register, uint32_t grfOffset);
+    /*! allocate a curbe entry. */
     uint32_t newCurbeEntry(gbe_curbe_type value, uint32_t subValue, uint32_t size, uint32_t alignment = 0);
     /*! Provide for each branch and label the label index target */
     typedef map<const ir::Instruction*, ir::LabelIndex> JIPMap;

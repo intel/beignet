@@ -1001,5 +1001,11 @@ namespace gbe
     this->opaque->outputAllocation();
   }
 
+  uint32_t GenRegAllocator::getRegSize(ir::Register reg) {
+     uint32_t regSize; 
+     this->opaque->getRegAttrib(reg, regSize); 
+     return regSize;
+  }
+
 } /* namespace gbe */
 

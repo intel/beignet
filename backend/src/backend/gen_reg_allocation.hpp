@@ -57,6 +57,8 @@ namespace gbe
     GenRegister genReg(const GenRegister &reg);
     /*! Output the register allocation */
     void outputAllocation(void);
+    /*! Get register actual size in byte. */
+    uint32_t getRegSize(ir::Register reg);
   private:
     /*! Actual implementation of the register allocator (use Pimpl) */
     class Opaque;

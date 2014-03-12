@@ -180,6 +180,7 @@ namespace gbe {
 
   protected:
     friend class Context;      //!< Owns the kernels
+    friend class GenContext;
     std::string name;    //!< Kernel name
     KernelArgument *args;      //!< Each argument
     vector<PatchInfo> patches; //!< Indicates how to build the curbe

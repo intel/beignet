@@ -31,6 +31,7 @@
 #include "backend/gen_reg_allocation.hpp"
 #include "backend/gen/gen_mesa_disasm.h"
 #include "ir/function.hpp"
+#include "ir/value.hpp"
 #include "sys/cvar.hpp"
 #include <cstring>
 #include <iostream>
@@ -1860,8 +1861,116 @@ namespace gbe
 
   BVAR(OCL_OUTPUT_REG_ALLOC, false);
   BVAR(OCL_OUTPUT_ASM, false);
+
+  void GenContext::allocCurbeReg(ir::Register reg, gbe_curbe_type value, uint32_t subValue) {
+    uint32_t regSize;
+    regSize = this->ra->getRegSize(reg);
+    insertCurbeReg(reg, newCurbeEntry(value, subValue, regSize));
+  }
+
+  void GenContext::buildPatchList(void) {
+    const uint32_t ptrSize = unit.getPointerSize() == ir::POINTER_32_BITS ? 4u : 8u;
+    kernel->curbeSize = 0u;
+    auto &stackUse = dag->getUse(ir::ocl::stackptr);
+
+    // We insert the block IP mask first
+#if 0
+    this->insertCurbeReg(ir::ocl::blockip, this->newCurbeEntry(GBE_CURBE_BLOCK_IP, 0, this->simdWidth * sizeof(uint16_t)));
+    this->insertCurbeReg(ir::ocl::emask, this->newCurbeEntry(GBE_CURBE_EMASK, 0,  this->simdWidth * sizeof(uint16_t)));
+    this->insertCurbeReg(ir::ocl::notemask, this->newCurbeEntry(GBE_CURBE_NOT_EMASK, 0, sizeof(uint16_t)));
+    this->insertCurbeReg(ir::ocl::barriermask, this->newCurbeEntry(GBE_CURBE_BARRIER_MASK, 0, sizeof(uint16_t)));
+    // Already inserted registers go here
+    const size_t localIDSizde = sizeof(uint32_t) * this->simdWidth;
+    insertCurbeReg(ir::ocl::lid0, this->newCurbeEntry(GBE_CURBE_LOCAL_ID_X, 0, localIDSize));
+    insertCurbeReg(ir::ocl::lid1, this->newCurbeEntry(GBE_CURBE_LOCAL_ID_Y, 0, localIDSize));
+    insertCurbeReg(ir::ocl::lid2, this->newCurbeEntry(GBE_CURBE_LOCAL_ID_Z, 0, localIDSize));
+    // Insert the stack buffer if used
+    if (stackUse.size() != 0)
+      insertCurbeReg(ir::ocl::stackbuffer, this->newCurbeEntry(GBE_CURBE_EXTRA_ARGUMENT, GBE_STACK_BUFFER, ptrSize));
+#else
+    using namespace ir::ocl;
+    allocCurbeReg(blockip, GBE_CURBE_BLOCK_IP);
+    allocCurbeReg(emask, GBE_CURBE_EMASK);
+    allocCurbeReg(notemask, GBE_CURBE_NOT_EMASK);
+    allocCurbeReg(barriermask, GBE_CURBE_BARRIER_MASK);
+    allocCurbeReg(lid0, GBE_CURBE_LOCAL_ID_X);
+    allocCurbeReg(lid1, GBE_CURBE_LOCAL_ID_Y);
+    allocCurbeReg(lid2, GBE_CURBE_LOCAL_ID_Z);
+    if (stackUse.size() != 0)
+      allocCurbeReg(stackbuffer, GBE_CURBE_EXTRA_ARGUMENT, GBE_STACK_BUFFER);
+#endif
+    // Go over the arguments and find the related patch locations
+    const uint32_t argNum = fn.argNum();
+    for (uint32_t argID = 0u; argID < argNum; ++argID) {
+      const ir::FunctionArgument &arg = fn.getArg(argID);
+      // For pointers and values, we have nothing to do. We just push the values
+      if (arg.type == ir::FunctionArgument::GLOBAL_POINTER ||
+          arg.type == ir::FunctionArgument::LOCAL_POINTER ||
+          arg.type == ir::FunctionArgument::CONSTANT_POINTER ||
+          arg.type == ir::FunctionArgument::VALUE ||
+          arg.type == ir::FunctionArgument::STRUCTURE ||
+          arg.type == ir::FunctionArgument::IMAGE ||
+          arg.type == ir::FunctionArgument::SAMPLER)
+        this->insertCurbeReg(arg.reg, this->newCurbeEntry(GBE_CURBE_KERNEL_ARGUMENT, argID, arg.size, ptrSize));
+    }
+
+    // Go over all the instructions and find the special register we need
+    // to push
+    #define INSERT_REG(SPECIAL_REG, PATCH) \
+    if (reg == ir::ocl::SPECIAL_REG) { \
+      if (curbeRegs.find(reg) != curbeRegs.end()) continue; \
+      allocCurbeReg(reg, GBE_CURBE_##PATCH); \
+    } else
+  
+    fn.foreachInstruction([&](ir::Instruction &insn) {
+      const uint32_t srcNum = insn.getSrcNum();
+      for (uint32_t srcID = 0; srcID < srcNum; ++srcID) {
+        const ir::Register reg = insn.getSrc(srcID);
+        if (insn.getOpcode() == ir::OP_GET_IMAGE_INFO) {
+          if (srcID != 0) continue;
+          const unsigned char bti = ir::cast<ir::GetImageInfoInstruction>(insn).getImageIndex();
+          const unsigned char type =  ir::cast<ir::GetImageInfoInstruction>(insn).getInfoType();;
+          ir::ImageInfoKey key(bti, type);
+          const ir::Register imageInfo = insn.getSrc(0);
+          if (curbeRegs.find(imageInfo) == curbeRegs.end()) {
+            uint32_t offset = this->getImageInfoCurbeOffset(key, 4);
+            insertCurbeReg(imageInfo, offset);
+          }
+          continue;
+        }
+        if (fn.isSpecialReg(reg) == false) continue;
+        if (curbeRegs.find(reg) != curbeRegs.end()) continue;
+        if (reg == ir::ocl::stackptr) GBE_ASSERT(stackUse.size() > 0);
+        INSERT_REG(lsize0, LOCAL_SIZE_X)
+        INSERT_REG(lsize1, LOCAL_SIZE_Y)
+        INSERT_REG(lsize2, LOCAL_SIZE_Z)
+        INSERT_REG(gsize0, GLOBAL_SIZE_X)
+        INSERT_REG(gsize1, GLOBAL_SIZE_Y)
+        INSERT_REG(gsize2, GLOBAL_SIZE_Z)
+        INSERT_REG(goffset0, GLOBAL_OFFSET_X)
+        INSERT_REG(goffset1, GLOBAL_OFFSET_Y)
+        INSERT_REG(goffset2, GLOBAL_OFFSET_Z)
+        INSERT_REG(workdim, WORK_DIM)
+        INSERT_REG(numgroup0, GROUP_NUM_X)
+        INSERT_REG(numgroup1, GROUP_NUM_Y)
+        INSERT_REG(numgroup2, GROUP_NUM_Z)
+        INSERT_REG(stackptr, STACK_POINTER)
+        do {} while(0);
+      }
+    });
+#undef INSERT_REG
+
+
+    // After this point the vector is immutable. Sorting it will make
+    // research faster
+    std::sort(kernel->patches.begin(), kernel->patches.end());
+
+    kernel->curbeSize = ALIGN(kernel->curbeSize, GEN_REG_SIZE);
+  }
+
   bool GenContext::emitCode(void) {
     GenKernel *genKernel = static_cast<GenKernel*>(this->kernel);
+    buildPatchList();
     sel->select();
     schedulePreRegAllocation(*this, *this->sel);
     if (UNLIKELY(ra->allocate(*this->sel) == false))
