@@ -538,7 +538,7 @@ namespace gbe
 
     // Insert the stack buffer if used
     if (useStackPtr)
-      insertCurbeReg(ir::ocl::stackptr, this->newCurbeEntry(GBE_CURBE_EXTRA_ARGUMENT, GBE_STACK_BUFFER, ptrSize));
+      insertCurbeReg(ir::ocl::stackbuffer, this->newCurbeEntry(GBE_CURBE_EXTRA_ARGUMENT, GBE_STACK_BUFFER, ptrSize));
 
     // After this point the vector is immutable. Sorting it will make
     // research faster

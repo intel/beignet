@@ -147,7 +147,7 @@ namespace gbe
     // Check that everything is consistent in the kernel code
     const uint32_t perLaneSize = kernel->getStackSize();
     const uint32_t perThreadSize = perLaneSize * this->simdWidth;
-    const int32_t offset = GEN_REG_SIZE + kernel->getCurbeOffset(GBE_CURBE_EXTRA_ARGUMENT, GBE_STACK_BUFFER);
+    //const int32_t offset = GEN_REG_SIZE + kernel->getCurbeOffset(GBE_CURBE_EXTRA_ARGUMENT, GBE_STACK_BUFFER);
     GBE_ASSERT(perLaneSize > 0);
     GBE_ASSERT(isPowerOf<2>(perLaneSize) == true);
     GBE_ASSERT(isPowerOf<2>(perThreadSize) == true);
@@ -159,9 +159,8 @@ namespace gbe
       GenRegister::ud8grf(ir::ocl::stackptr) :
       GenRegister::ud16grf(ir::ocl::stackptr);
     const GenRegister stackptr = ra->genReg(selStatckPtr);
-    const uint32_t nr = offset / GEN_REG_SIZE;
-    const uint32_t subnr = (offset % GEN_REG_SIZE) / sizeof(uint32_t);
-    const GenRegister bufferptr = GenRegister::ud1grf(nr, subnr);
+    const GenRegister selStackBuffer = GenRegister::ud1grf(ir::ocl::stackbuffer);
+    const GenRegister bufferptr = ra->genReg(selStackBuffer);
 
     // We compute the per-lane stack pointer here
     p->push();

@@ -60,15 +60,16 @@ namespace ir {
     static const Register goffset1 = Register(16); // get_global_offset(1)
     static const Register goffset2 = Register(17); // get_global_offset(2)
     static const Register stackptr = Register(18); // stack pointer
-    static const Register blockip = Register(19);  // blockip
-    static const Register barrierid = Register(20);// barrierid
-    static const Register threadn = Register(21);  // number of threads
-    static const Register workdim = Register(22);  // work dimention.
-    static const Register emask = Register(23);    // store the emask bits for the branching fix.
-    static const Register notemask = Register(24); // store the !emask bits for the branching fix.
-    static const Register barriermask = Register(25); // software mask for barrier.
-    static const Register retVal = Register(26);   // helper register to do data flow analysis.
-    static const uint32_t regNum = 27;             // number of special registers
+    static const Register stackbuffer = Register(19); // stack buffer base address.
+    static const Register blockip = Register(20);  // blockip
+    static const Register barrierid = Register(21);// barrierid
+    static const Register threadn = Register(22);  // number of threads
+    static const Register workdim = Register(23);  // work dimention.
+    static const Register emask = Register(24);    // store the emask bits for the branching fix.
+    static const Register notemask = Register(25); // store the !emask bits for the branching fix.
+    static const Register barriermask = Register(26); // software mask for barrier.
+    static const Register retVal = Register(27);   // helper register to do data flow analysis.
+    static const uint32_t regNum = 28;             // number of special registers
     extern const char *specialRegMean[];           // special register name.
   } /* namespace ocl */
 

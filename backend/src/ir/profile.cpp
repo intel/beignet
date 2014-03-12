@@ -37,7 +37,7 @@ namespace ir {
         "local_size_0", "local_size_1", "local_size_2",
         "global_size_0", "global_size_1", "global_size_2",
         "global_offset_0", "global_offset_1", "global_offset_2",
-        "stack_pointer",
+        "stack_pointer", "stack_buffer",
         "block_ip",
         "barrier_id", "thread_number",
         "work_dimension",
@@ -73,6 +73,7 @@ namespace ir {
       DECL_NEW_REG(FAMILY_DWORD, goffset1, 1);
       DECL_NEW_REG(FAMILY_DWORD, goffset2, 1);
       DECL_NEW_REG(FAMILY_DWORD, stackptr, 0);
+      DECL_NEW_REG(FAMILY_DWORD, stackbuffer, 1);
       DECL_NEW_REG(FAMILY_WORD,  blockip, 0);
       DECL_NEW_REG(FAMILY_DWORD, barrierid, 1);
       DECL_NEW_REG(FAMILY_DWORD, threadn, 1);
