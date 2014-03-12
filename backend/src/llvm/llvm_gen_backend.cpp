@@ -329,7 +329,7 @@ namespace gbe
       scalarMap[key] = reg;
     }
     /*! Allocate a new scalar register */
-    ir::Register newScalar(Value *value, Value *key = NULL, uint32_t index = 0u)
+    ir::Register newScalar(Value *value, Value *key = NULL, uint32_t index = 0u, bool uniform = false)
     {
       // we don't allow normal constant, but GlobalValue is a special case,
       // it needs a register to store its address
@@ -342,7 +342,7 @@ namespace gbe
         case Type::DoubleTyID:
         case Type::PointerTyID:
           GBE_ASSERT(index == 0);
-          return this->newScalar(value, key, type, index);
+          return this->_newScalar(value, key, type, index, uniform);
           break;
         case Type::VectorTyID:
         {
@@ -353,7 +353,7 @@ namespace gbe
               elementTypeID != Type::FloatTyID &&
               elementTypeID != Type::DoubleTyID)
             GBE_ASSERTM(false, "Vectors of elements are not supported");
-            return this->newScalar(value, key, elementType, index);
+            return this->_newScalar(value, key, elementType, index, uniform);
           break;
         }
         default: NOT_SUPPORTED;
@@ -411,9 +411,9 @@ namespace gbe
     /*! This creates a scalar register for a Value (index is the vector index when
      *  the value is a vector of scalars)
      */
-    ir::Register newScalar(Value *value, Value *key, Type *type, uint32_t index) {
+    ir::Register _newScalar(Value *value, Value *key, Type *type, uint32_t index, bool uniform) {
       const ir::RegisterFamily family = getFamily(ctx, type);
-      const ir::Register reg = ctx.reg(family);
+      const ir::Register reg = ctx.reg(family, uniform);
       key = key == NULL ? value : key;
       this->insertRegister(reg, key, index);
       return reg;
@@ -507,7 +507,7 @@ namespace gbe
     /*! Each block end may require to emit MOVs for further PHIs */
     void emitMovForPHI(BasicBlock *curr, BasicBlock *succ);
     /*! Alocate one or several registers (if vector) for the value */
-    INLINE void newRegister(Value *value, Value *key = NULL);
+    INLINE void newRegister(Value *value, Value *key = NULL, bool uniform = false);
     /*! get the register for a llvm::Constant */
     ir::Register getConstantRegister(Constant *c, uint32_t index = 0);
     /*! Return a valid register from an operand (can use LOADI to make one) */
@@ -867,7 +867,7 @@ namespace gbe
     return processConstant<ir::ImmediateIndex>(CPV, NewImmediateFunctor(ctx), index);
   }
 
-  void GenWriter::newRegister(Value *value, Value *key) {
+  void GenWriter::newRegister(Value *value, Value *key, bool uniform) {
     auto type = value->getType();
     auto typeID = type->getTypeID();
     switch (typeID) {
@@ -875,14 +875,14 @@ namespace gbe
       case Type::FloatTyID:
       case Type::DoubleTyID:
       case Type::PointerTyID:
-        regTranslator.newScalar(value, key);
+        regTranslator.newScalar(value, key, 0, uniform);
         break;
       case Type::VectorTyID:
       {
         auto vectorType = cast<VectorType>(type);
         const uint32_t elemNum = vectorType->getNumElements();
         for (uint32_t elemID = 0; elemID < elemNum; ++elemID)
-          regTranslator.newScalar(value, key, elemID);
+          regTranslator.newScalar(value, key, elemID, uniform);
         break;
       }
       default: NOT_SUPPORTED;
@@ -1123,13 +1123,12 @@ namespace gbe
         const std::string &argName = I->getName().str();
         Type *type = I->getType();
 
-        //add support for vector argument
+        // function arguments are uniform values.
+        this->newRegister(I, NULL, true);
+        // add support for vector argument.
         if(type->isVectorTy()) {
           VectorType *vectorType = cast<VectorType>(type);
-
-          this->newRegister(I);
           ir::Register reg = getRegister(I, 0);
-
           Type *elemType = vectorType->getElementType();
           const uint32_t elemSize = getTypeByteSize(unit, elemType);
           const uint32_t elemNum = vectorType->getNumElements();
@@ -1147,7 +1146,7 @@ namespace gbe
 
         GBE_ASSERTM(isScalarType(type) == true,
                     "vector type in the function argument is not supported yet");
-        const ir::Register reg = regTranslator.newScalar(I);
+        const ir::Register reg = getRegister(I);
         if (type->isPointerTy() == false)
           ctx.input(argName, ir::FunctionArgument::VALUE, reg, getTypeByteSize(unit, type), getAlignmentByte(unit, type));
         else {

@@ -686,35 +686,5 @@ namespace gbe
     kernel->slmSize = fn.getSLMSize();
   }
 
-  bool Context::isScalarReg(const ir::Register &reg) const {
-    GBE_ASSERT(fn.getProfile() == ir::Profile::PROFILE_OCL);
-    if (fn.getArg(reg) != NULL) return true;
-    if (fn.getPushLocation(reg) != NULL) return true;
-    if (reg == ir::ocl::groupid0  ||
-        reg == ir::ocl::groupid1  ||
-        reg == ir::ocl::groupid2  ||
-        reg == ir::ocl::barrierid ||
-        reg == ir::ocl::threadn   ||
-        reg == ir::ocl::numgroup0 ||
-        reg == ir::ocl::numgroup1 ||
-        reg == ir::ocl::numgroup2 ||
-        reg == ir::ocl::lsize0    ||
-        reg == ir::ocl::lsize1    ||
-        reg == ir::ocl::lsize2    ||
-        reg == ir::ocl::gsize0    ||
-        reg == ir::ocl::gsize1    ||
-        reg == ir::ocl::gsize2    ||
-        reg == ir::ocl::goffset0  ||
-        reg == ir::ocl::goffset1  ||
-        reg == ir::ocl::goffset2  ||
-        reg == ir::ocl::workdim   ||
-        reg == ir::ocl::emask     ||
-        reg == ir::ocl::notemask  ||
-        reg == ir::ocl::barriermask
-      )
-      return true;
-    return false;
-  }
-
 } /* namespace gbe */
 

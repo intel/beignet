@@ -239,7 +239,8 @@ namespace ir {
           if(inserted.contains(argLocation)) {
             pushed = argLocation.getRegister();
           } else {
-            pushed = fn->newRegister(family);
+            // pushed register should be uniform register.
+            pushed = fn->newRegister(family, true);
             this->appendPushedConstant(pushed, argLocation);
             inserted.insert(argLocation);
           }

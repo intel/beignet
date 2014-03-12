@@ -45,42 +45,42 @@ namespace ir {
     };
 
 #if GBE_DEBUG
-#define DECL_NEW_REG(FAMILY, REG) \
-   r = fn.newRegister(FAMILY_DWORD); \
+#define DECL_NEW_REG(FAMILY, REG, UNIFORM) \
+   r = fn.newRegister(FAMILY_DWORD, UNIFORM); \
    GBE_ASSERT(r == REG);
 #else
-#define DECL_NEW_REG(FAMILY, REG) \
-   fn.newRegister(FAMILY_DWORD);
+#define DECL_NEW_REG(FAMILY, REG, UNIFORM) \
+   fn.newRegister(FAMILY_DWORD, UNIFORM);
 #endif /* GBE_DEBUG */
     static void init(Function &fn) {
       IF_DEBUG(Register r);
-      DECL_NEW_REG(FAMILY_DWORD, lid0);
-      DECL_NEW_REG(FAMILY_DWORD, lid1);
-      DECL_NEW_REG(FAMILY_DWORD, lid2);
-      DECL_NEW_REG(FAMILY_DWORD, groupid0);
-      DECL_NEW_REG(FAMILY_DWORD, groupid1);
-      DECL_NEW_REG(FAMILY_DWORD, groupid2);
-      DECL_NEW_REG(FAMILY_DWORD, numgroup0);
-      DECL_NEW_REG(FAMILY_DWORD, numgroup1);
-      DECL_NEW_REG(FAMILY_DWORD, numgroup2);
-      DECL_NEW_REG(FAMILY_DWORD, lsize0);
-      DECL_NEW_REG(FAMILY_DWORD, lsize1);
-      DECL_NEW_REG(FAMILY_DWORD, lsize2);
-      DECL_NEW_REG(FAMILY_DWORD, gsize0);
-      DECL_NEW_REG(FAMILY_DWORD, gsize1);
-      DECL_NEW_REG(FAMILY_DWORD, gsize2);
-      DECL_NEW_REG(FAMILY_DWORD, goffset0);
-      DECL_NEW_REG(FAMILY_DWORD, goffset1);
-      DECL_NEW_REG(FAMILY_DWORD, goffset2);
-      DECL_NEW_REG(FAMILY_DWORD, stackptr);
-      DECL_NEW_REG(FAMILY_WORD, blockip);
-      DECL_NEW_REG(FAMILY_DWORD, barrierid);
-      DECL_NEW_REG(FAMILY_DWORD, threadn);
-      DECL_NEW_REG(FAMILY_DWORD, workdim);
-      DECL_NEW_REG(FAMILY_WORD, emask);
-      DECL_NEW_REG(FAMILY_WORD, notemask);
-      DECL_NEW_REG(FAMILY_WORD, barriermask);
-      DECL_NEW_REG(FAMILY_WORD, retVal);
+      DECL_NEW_REG(FAMILY_DWORD, lid0, 0);
+      DECL_NEW_REG(FAMILY_DWORD, lid1, 0);
+      DECL_NEW_REG(FAMILY_DWORD, lid2, 0);
+      DECL_NEW_REG(FAMILY_DWORD, groupid0, 1);
+      DECL_NEW_REG(FAMILY_DWORD, groupid1, 1);
+      DECL_NEW_REG(FAMILY_DWORD, groupid2, 1);
+      DECL_NEW_REG(FAMILY_DWORD, numgroup0, 1);
+      DECL_NEW_REG(FAMILY_DWORD, numgroup1, 1);
+      DECL_NEW_REG(FAMILY_DWORD, numgroup2, 1);
+      DECL_NEW_REG(FAMILY_DWORD, lsize0, 1);
+      DECL_NEW_REG(FAMILY_DWORD, lsize1, 1);
+      DECL_NEW_REG(FAMILY_DWORD, lsize2, 1);
+      DECL_NEW_REG(FAMILY_DWORD, gsize0, 1);
+      DECL_NEW_REG(FAMILY_DWORD, gsize1, 1);
+      DECL_NEW_REG(FAMILY_DWORD, gsize2, 1);
+      DECL_NEW_REG(FAMILY_DWORD, goffset0, 1);
+      DECL_NEW_REG(FAMILY_DWORD, goffset1, 1);
+      DECL_NEW_REG(FAMILY_DWORD, goffset2, 1);
+      DECL_NEW_REG(FAMILY_DWORD, stackptr, 0);
+      DECL_NEW_REG(FAMILY_WORD,  blockip, 0);
+      DECL_NEW_REG(FAMILY_DWORD, barrierid, 1);
+      DECL_NEW_REG(FAMILY_DWORD, threadn, 1);
+      DECL_NEW_REG(FAMILY_DWORD, workdim, 1);
+      DECL_NEW_REG(FAMILY_WORD, emask, 1);
+      DECL_NEW_REG(FAMILY_WORD, notemask, 1);
+      DECL_NEW_REG(FAMILY_WORD, barriermask, 1);
+      DECL_NEW_REG(FAMILY_WORD, retVal, 1);
     }
 #undef DECL_NEW_REG
 

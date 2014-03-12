@@ -1609,7 +1609,7 @@ namespace gbe
 
   void GenContext::emitIndirectMoveInstruction(const SelectionInstruction &insn) {
     GenRegister src = ra->genReg(insn.src(0));
-    if(isScalarReg(src.reg()))
+    if(sel->isScalarReg(src.reg()))
       src = GenRegister::retype(src, GEN_TYPE_UW);
     else
       src = GenRegister::unpacked_uw(src.nr, src.subnr / typeSize(GEN_TYPE_UW));
@@ -1751,7 +1751,7 @@ namespace gbe
     const GenRegister data = ra->genReg(insn.src(1));
     const uint32_t bti = insn.extra.function;
     p->MOV(src, addr);
-    p->WRITE64(src, data, bti, elemNum, isScalarReg(data.reg()));
+    p->WRITE64(src, data, bti, elemNum, sel->isScalarReg(data.reg()));
   }
 
   void GenContext::emitUntypedWriteInstruction(const SelectionInstruction &insn) {

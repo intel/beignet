@@ -92,9 +92,9 @@ namespace ir {
     usedLabels = elem.usedLabels;
   }
 
-  Register Context::reg(RegisterFamily family) {
+  Register Context::reg(RegisterFamily family, bool uniform) {
     GBE_ASSERTM(fn != NULL, "No function currently defined");
-    return fn->newRegister(family);
+    return fn->newRegister(family, uniform);
   }
 
   LabelIndex Context::label(void) {

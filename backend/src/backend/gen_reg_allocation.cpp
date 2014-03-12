@@ -223,7 +223,7 @@ namespace gbe
     const ir::Register reg = interval.reg;
     if (RA.contains(reg) == true)
       return true; // already allocated
-    GBE_ASSERT(ctx.isScalarReg(reg) == false);
+    GBE_ASSERT(ctx.sel->isScalarReg(reg) == false);
     uint32_t regSize;
     ir::RegisterFamily family;
     getRegAttrib(reg, regSize, &family);

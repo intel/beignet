@@ -164,8 +164,8 @@ namespace ir {
     /*! Get the function profile */
     INLINE Profile getProfile(void) const { return profile; }
     /*! Get a new valid register */
-    INLINE Register newRegister(RegisterFamily family) {
-      return this->file.append(family);
+    INLINE Register newRegister(RegisterFamily family, bool uniform = false) {
+      return this->file.append(family, uniform);
     }
     /*! Get the function name */
     const std::string &getName(void) const { return name; }

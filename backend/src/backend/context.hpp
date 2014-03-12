@@ -68,8 +68,6 @@ namespace gbe
     INLINE const ir::Liveness &getLiveness(void) const { return *liveness; }
     /*! Tells if the register is used */
     bool isRegUsed(const ir::Register &reg) const;
-    /*! Indicate if a register is scalar or not */
-    bool isScalarReg(const ir::Register &reg) const;
     /*! Get the kernel we are currently compiling */
     INLINE Kernel *getKernel(void) const { return this->kernel; }
     /*! Get the function we are currently compiling */

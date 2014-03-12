@@ -318,6 +318,43 @@ namespace gbe
     INLINE ir::Register replaceDst(SelectionInstruction *insn, uint32_t regID);
     /*! spill a register (insert spill/unspill instructions) */
     INLINE bool spillRegs(const SpilledRegs &spilledRegs, uint32_t registerPool);
+    /*! indicate whether a register is a scalar/uniform register. */
+    INLINE bool isScalarReg(const ir::Register &reg) const {
+#if 0
+      printf("reg %d ", reg.value());
+      printf("uniform: %d ", getRegisterData(reg).isUniform());
+      if (ctx.getFunction().getArg(reg) != NULL) { printf("true function arg\n"); return true; }
+      if (ctx.getFunction().getPushLocation(reg) != NULL) { printf("true push location.\n"); return true; }
+      if (reg == ir::ocl::groupid0  ||
+          reg == ir::ocl::groupid1  ||
+          reg == ir::ocl::groupid2  ||
+          reg == ir::ocl::barrierid ||
+          reg == ir::ocl::threadn   ||
+          reg == ir::ocl::numgroup0 ||
+          reg == ir::ocl::numgroup1 ||
+          reg == ir::ocl::numgroup2 ||
+          reg == ir::ocl::lsize0    ||
+          reg == ir::ocl::lsize1    ||
+          reg == ir::ocl::lsize2    ||
+          reg == ir::ocl::gsize0    ||
+          reg == ir::ocl::gsize1    ||
+          reg == ir::ocl::gsize2    ||
+          reg == ir::ocl::goffset0  ||
+          reg == ir::ocl::goffset1  ||
+          reg == ir::ocl::goffset2  ||
+          reg == ir::ocl::workdim   ||
+          reg == ir::ocl::emask     ||
+          reg == ir::ocl::notemask  ||
+          reg == ir::ocl::barriermask
+        ) {
+        printf("special reg.\n");
+        return true;
+      }
+      return false;
+#endif
+      const ir::RegisterData &regData = getRegisterData(reg);
+      return regData.isUniform();
+    }
     /*! Implement public class */
     INLINE uint32_t getRegNum(void) const { return file.regNum(); }
     /*! Implements public interface */
@@ -856,7 +893,7 @@ namespace gbe
   }
 
   bool Selection::Opaque::isScalarOrBool(ir::Register reg) const {
-    if (ctx.isScalarReg(reg))
+    if (isScalarReg(reg))
       return true;
     else {
       const ir::RegisterFamily family = file.get(reg).family;
@@ -1528,6 +1565,10 @@ namespace gbe
   }
   bool Selection::spillRegs(const SpilledRegs &spilledRegs, uint32_t registerPool) {
     return this->opaque->spillRegs(spilledRegs, registerPool);
+  }
+
+  bool Selection::isScalarReg(const ir::Register &reg) const {
+    return this->opaque->isScalarReg(reg);
   }
 
   SelectionInstruction *Selection::create(SelectionOpcode opcode, uint32_t dstNum, uint32_t srcNum) {
@@ -2497,7 +2538,7 @@ namespace gbe
                  insn.getAddressSpace() == MEM_CONSTANT ||
                  insn.getAddressSpace() == MEM_PRIVATE ||
                  insn.getAddressSpace() == MEM_LOCAL);
-      GBE_ASSERT(sel.ctx.isScalarReg(insn.getValue(0)) == false);
+      GBE_ASSERT(sel.isScalarReg(insn.getValue(0)) == false);
       const Type type = insn.getValueType();
       const uint32_t elemSize = getByteScatterGatherSize(type);
       if (insn.getAddressSpace() == MEM_CONSTANT) {

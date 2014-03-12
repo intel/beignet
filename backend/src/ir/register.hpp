@@ -70,17 +70,22 @@ namespace ir {
   {
   public:
     /*! Build a register. All fields will be immutable */
-    INLINE RegisterData(RegisterFamily family = FAMILY_DWORD) : family(family) {}
+    INLINE RegisterData(RegisterFamily family,
+                        bool uniform = false) : family(family), uniform(uniform) {}
     /*! Copy constructor */
-    INLINE RegisterData(const RegisterData &other) : family(other.family) {}
+    INLINE RegisterData(const RegisterData &other) : family(other.family), uniform(other.uniform) {}
     /*! Copy operator */
     INLINE RegisterData &operator= (const RegisterData &other) {
       this->family = other.family;
+      this->uniform = other.uniform;
       return *this;
     }
     /*! Nothing really happens here */
     INLINE ~RegisterData(void) {}
     RegisterFamily family;            //!< Register size or if it is a flag
+    INLINE const bool isUniform() const { return uniform; }
+  private:
+    bool uniform;
     GBE_CLASS(RegisterData);
   };
 
@@ -107,11 +112,11 @@ namespace ir {
   {
   public:
     /*! Return the index of a newly allocated register */
-    INLINE Register append(RegisterFamily family) {
+    INLINE Register append(RegisterFamily family, bool uniform = false) {
       GBE_ASSERTM(regNum() < MAX_INDEX,
                   "Too many defined registers (only 65535 are supported)");
       const uint16_t index = regNum();
-      const RegisterData reg(family);
+      const RegisterData reg(family, uniform);
       regs.push_back(reg);
       return Register(index);
     }
