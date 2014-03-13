@@ -3282,6 +3282,9 @@ namespace gbe
 
         // Update the PcIPs
         sel.push();
+          // we don't need to set next label to the pcip
+          // as if there is no backward jump latter, then obviously everything will work fine.
+          // If there is backward jump latter, then all the pcip will be updated correctly there.
           sel.curr.physicalFlag = 0;
           sel.curr.flagIndex = uint16_t(activePred);
           sel.MOV(ip, GenRegister::immuw(uint16_t(dst)));
@@ -3300,8 +3303,8 @@ namespace gbe
         // will check those bits as well.
 
         sel.push();
-          sel.curr.physicalFlag = 0;
-          sel.curr.flagIndex = uint16_t(activePred);
+          sel.curr.flag = 0;
+          sel.curr.subFlag = 1;
           sel.curr.predicate = GEN_PREDICATE_NONE;
           sel.CMP(GEN_CONDITIONAL_G, ip, GenRegister::immuw(nextLabel));
 
@@ -3313,7 +3316,7 @@ namespace gbe
           sel.curr.execWidth = 1;
           sel.curr.noMask = 1;
           GenRegister notEmaskReg = GenRegister::uw1grf(ocl::notemask);
-          sel.OR(sel.selReg(activePred, TYPE_U16), sel.selReg(activePred, TYPE_U16), notEmaskReg);
+          sel.OR(GenRegister::flag(0, 1), GenRegister::flag(0, 1), notEmaskReg);
 
           if (simdWidth == 8)
             sel.curr.predicate = GEN_PREDICATE_ALIGN1_ALL8H;
