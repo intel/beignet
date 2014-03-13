@@ -1088,12 +1088,13 @@ namespace gbe
     }
   }
 
-  void GenEncoder::CMP(uint32_t conditional, GenRegister src0, GenRegister src1) {
+  void GenEncoder::CMP(uint32_t conditional, GenRegister src0, GenRegister src1, GenRegister dst) {
     if (needToSplitCmp(this, src0, src1) == false) {
       GenInstruction *insn = this->next(GEN_OPCODE_CMP);
       this->setHeader(insn);
       insn->header.destreg_or_condmod = conditional;
-      this->setDst(insn, GenRegister::null());
+      insn->header.thread_control = GEN_THREAD_SWITCH;
+      this->setDst(insn, dst);
       this->setSrc0(insn, src0);
       this->setSrc1(insn, src1);
     } else {
@@ -1105,7 +1106,7 @@ namespace gbe
       insnQ1->header.quarter_control = GEN_COMPRESSION_Q1;
       insnQ1->header.execution_size = GEN_WIDTH_8;
       insnQ1->header.destreg_or_condmod = conditional;
-      this->setDst(insnQ1, GenRegister::null());
+      this->setDst(insnQ1, dst);
       this->setSrc0(insnQ1, src0);
       this->setSrc1(insnQ1, src1);
 
@@ -1115,7 +1116,7 @@ namespace gbe
       insnQ2->header.quarter_control = GEN_COMPRESSION_Q2;
       insnQ2->header.execution_size = GEN_WIDTH_8;
       insnQ2->header.destreg_or_condmod = conditional;
-      this->setDst(insnQ2, GenRegister::null());
+      this->setDst(insnQ2, GenRegister::Qn(dst, 1));
       this->setSrc0(insnQ2, GenRegister::Qn(src0, 1));
       this->setSrc1(insnQ2, GenRegister::Qn(src1, 1));
     }

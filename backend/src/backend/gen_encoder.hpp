@@ -135,7 +135,7 @@ namespace gbe
     /*! Jump indexed instruction */
     void JMPI(GenRegister src);
     /*! Compare instructions */
-    void CMP(uint32_t conditional, GenRegister src0, GenRegister src1);
+    void CMP(uint32_t conditional, GenRegister src0, GenRegister src1, GenRegister dst = GenRegister::null());
     /*! Select with embedded compare (like sel.le ...) */
     void SEL_CMP(uint32_t conditional, GenRegister dst, GenRegister src0, GenRegister src1);
     /*! EOT is used to finish GPGPU threads */

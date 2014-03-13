@@ -388,9 +388,9 @@ namespace gbe
     /*! Create a new register in the register file and append it in the
      *  temporary list of the current block
      */
-    INLINE ir::Register reg(ir::RegisterFamily family) {
+    INLINE ir::Register reg(ir::RegisterFamily family, bool scalar = false) {
       GBE_ASSERT(block != NULL);
-      const ir::Register reg = file.append(family);
+      const ir::Register reg = file.append(family, scalar);
       block->append(reg);
       return reg;
     }
@@ -525,7 +525,7 @@ namespace gbe
     /*! Shift a 64-bit integer */
     void I64Shift(SelectionOpcode opcode, Reg dst, Reg src0, Reg src1, GenRegister tmp[7]);
     /*! Compare 64-bit integer */
-    void I64CMP(uint32_t conditional, Reg src0, Reg src1, GenRegister tmp[3]);
+    void I64CMP(uint32_t conditional, Reg src0, Reg src1, GenRegister tmp[3], Reg dst = GenRegister::null());
     /*! Saturated addition of 64-bit integer */
     void I64SATADD(Reg dst, Reg src0, Reg src1, GenRegister tmp[6]);
     /*! Saturated subtraction of 64-bit integer */
@@ -539,7 +539,7 @@ namespace gbe
     /*! Jump indexed instruction */
     void JMPI(Reg src, ir::LabelIndex target);
     /*! Compare instructions */
-    void CMP(uint32_t conditional, Reg src0, Reg src1);
+    void CMP(uint32_t conditional, Reg src0, Reg src1, Reg dst = GenRegister::null());
     /*! Select instruction with embedded comparison */
     void SEL_CMP(uint32_t conditional, Reg dst, Reg src0, Reg src1);
     /* Constant buffer move instruction */
@@ -895,10 +895,7 @@ namespace gbe
   bool Selection::Opaque::isScalarOrBool(ir::Register reg) const {
     if (isScalarReg(reg))
       return true;
-    else {
-      const ir::RegisterFamily family = file.get(reg).family;
-      return family == ir::FAMILY_BOOL;
-    }
+    return false;
   }
 
 #define SEL_REG(SIMD16, SIMD8, SIMD1) \
@@ -918,7 +915,7 @@ namespace gbe
     const RegisterData data = file.get(reg);
     const RegisterFamily family = data.family;
     switch (family) {
-      case FAMILY_BOOL: SEL_REG(uw1grf, uw1grf, uw1grf); break;
+      case FAMILY_BOOL: SEL_REG(uw16grf, uw8grf, uw1grf); break;
       case FAMILY_WORD: SEL_REG(uw16grf, uw8grf, uw1grf); break;
       case FAMILY_BYTE: SEL_REG(ub16grf, ub8grf, ub1grf); break;
       case FAMILY_DWORD: SEL_REG(f16grf, f8grf, f1grf); break;
@@ -963,10 +960,11 @@ namespace gbe
     insn->index = uint16_t(index);
   }
 
-  void Selection::Opaque::CMP(uint32_t conditional, Reg src0, Reg src1) {
-    SelectionInstruction *insn = this->appendInsn(SEL_OP_CMP, 0, 2);
+  void Selection::Opaque::CMP(uint32_t conditional, Reg src0, Reg src1, Reg dst) {
+    SelectionInstruction *insn = this->appendInsn(SEL_OP_CMP, 1, 2);
     insn->src(0) = src0;
     insn->src(1) = src1;
+    insn->dst(0) = dst;
     insn->extra.function = conditional;
   }
 
@@ -1246,12 +1244,13 @@ namespace gbe
     insn->src(2) = src2;
   }
 
-  void Selection::Opaque::I64CMP(uint32_t conditional, Reg src0, Reg src1, GenRegister tmp[3]) {
-    SelectionInstruction *insn = this->appendInsn(SEL_OP_I64CMP, 3, 2);
+  void Selection::Opaque::I64CMP(uint32_t conditional, Reg src0, Reg src1, GenRegister tmp[3], Reg dst) {
+    SelectionInstruction *insn = this->appendInsn(SEL_OP_I64CMP, 4, 2);
     insn->src(0) = src0;
     insn->src(1) = src1;
     for(int i=0; i<3; i++)
       insn->dst(i) = tmp[i];
+    insn->dst(3) = dst;
     insn->extra.function = conditional;
   }
 
@@ -1667,25 +1666,7 @@ namespace gbe
           }
           break;
         case ir::OP_MOV:
-          if(insn.getType() == ir::TYPE_BOOL) {
-            GenRegister flagReg;
-            uint32_t predicate = sel.curr.predicate;
-            sel.push();
-              sel.curr.execWidth = 1;
-              sel.curr.predicate = GEN_PREDICATE_NONE;
-              sel.curr.noMask = 1;
-              if(predicate == GEN_PREDICATE_NONE)
-                sel.MOV(dst, src);
-              else {
-                if(sel.curr.physicalFlag)
-                  flagReg = GenRegister::flag(sel.curr.flag, sel.curr.subFlag);
-                else
-                  flagReg = sel.selReg(ir::Register(sel.curr.flagIndex), ir::TYPE_U16);
-
-                sel.AND(dst, flagReg, src);
-              }
-            sel.pop();
-          } else if (dst.isdf()) {
+          if (dst.isdf()) {
             ir::Register r = sel.reg(ir::RegisterFamily::FAMILY_QWORD);
             sel.MOV_DF(dst, src, sel.selReg(r));
           } else
@@ -1770,7 +1751,7 @@ namespace gbe
           tmp[i] = sel.selReg(sel.reg(FAMILY_DWORD));
           tmp[i].type = GEN_TYPE_UD;
         }
-        tmp[13] = sel.selReg(sel.reg(FAMILY_BOOL));
+        tmp[13] = sel.selReg(sel.reg(FAMILY_BOOL, true));
         if(op == OP_DIV)
           sel.I64DIV(dst, src0, src1, tmp);
         else
@@ -1859,7 +1840,7 @@ namespace gbe
               tmp[i] = sel.selReg(sel.reg(FAMILY_DWORD));
               tmp[i].type = GEN_TYPE_UD;
             }
-            tmp[5] = sel.selReg(sel.reg(FAMILY_BOOL));
+            tmp[5] = sel.selReg(sel.reg(FAMILY_BOOL, true));
             sel.I64SATADD(dst, src0, src1, tmp);
             break;
           }
@@ -1900,7 +1881,7 @@ namespace gbe
               tmp[i] = sel.selReg(sel.reg(FAMILY_DWORD));
               tmp[i].type = GEN_TYPE_UD;
             }
-            tmp[5] = sel.selReg(sel.reg(FAMILY_BOOL));
+            tmp[5] = sel.selReg(sel.reg(FAMILY_BOOL, true));
             sel.I64SATSUB(dst, src0, src1, tmp);
             break;
           }
@@ -1914,7 +1895,7 @@ namespace gbe
             GenRegister tmp[7];
             for(int i = 0; i < 6; i ++)
               tmp[i] = sel.selReg(sel.reg(FAMILY_DWORD));
-            tmp[6] = sel.selReg(sel.reg(FAMILY_BOOL));
+            tmp[6] = sel.selReg(sel.reg(FAMILY_BOOL, true));
             sel.I64SHL(dst, src0, src1, tmp);
           } else
             sel.SHL(dst, src0, src1);
@@ -1924,7 +1905,7 @@ namespace gbe
             GenRegister tmp[7];
             for(int i = 0; i < 6; i ++)
               tmp[i] = sel.selReg(sel.reg(FAMILY_DWORD));
-            tmp[6] = sel.selReg(sel.reg(FAMILY_BOOL));
+            tmp[6] = sel.selReg(sel.reg(FAMILY_BOOL, true));
             sel.I64SHR(dst, src0, src1, tmp);
           } else
             sel.SHR(dst, src0, src1);
@@ -1934,7 +1915,7 @@ namespace gbe
             GenRegister tmp[7];
             for(int i = 0; i < 6; i ++)
               tmp[i] = sel.selReg(sel.reg(FAMILY_DWORD));
-            tmp[6] = sel.selReg(sel.reg(FAMILY_BOOL));
+            tmp[6] = sel.selReg(sel.reg(FAMILY_BOOL, true));
             sel.I64ASR(dst, src0, src1, tmp);
           } else
             sel.ASR(dst, src0, src1);
@@ -1951,7 +1932,7 @@ namespace gbe
             temp[i] = sel.selReg(sel.reg(FAMILY_DWORD));
             temp[i].type = GEN_TYPE_UD;
           }
-          temp[9] = sel.selReg(sel.reg(FAMILY_BOOL));
+          temp[9] = sel.selReg(sel.reg(FAMILY_BOOL, true));
           sel.I64_MUL_HI(dst, src0, src1, temp);
           break;
          }
@@ -2316,26 +2297,13 @@ namespace gbe
       sel.push();
       if (sel.isScalarOrBool(insn.getDst(0)) == true) {
         sel.curr.execWidth = 1;
-        if(type == TYPE_BOOL) {
-          if(imm.data.b) {
-            if(sel.curr.predicate == GEN_PREDICATE_NONE)
-              flagReg = GenRegister::immuw(0xffff);
-            else {
-              if(sel.curr.physicalFlag)
-                flagReg = GenRegister::flag(sel.curr.flag, sel.curr.subFlag);
-              else
-                flagReg = sel.selReg(Register(sel.curr.flagIndex), TYPE_U16);
-            }
-          } else
-            flagReg = GenRegister::immuw(0x0);
-        }
         sel.curr.predicate = GEN_PREDICATE_NONE;
         sel.curr.noMask = 1;
       }
 
       switch (type) {
         case TYPE_BOOL:
-          sel.MOV(dst, flagReg);
+          sel.MOV(dst, imm.data.b ? GenRegister::immuw(0xffff) : GenRegister::immuw(0));
         break;
         case TYPE_U32:
         case TYPE_S32:
@@ -2367,24 +2335,22 @@ namespace gbe
       using namespace ir;
       const ir::Register reg = sel.reg(FAMILY_DWORD);
       const GenRegister barrierMask = sel.selReg(ocl::barriermask, TYPE_BOOL);
-      const GenRegister tempFlag = sel.selReg(sel.reg(FAMILY_BOOL), TYPE_BOOL);
-      const GenRegister flagReg = GenRegister::flag(0, 0);
       const uint32_t params = insn.getParameters();
 
       sel.push();
         sel.curr.predicate = GEN_PREDICATE_NONE;
         sel.curr.noMask = 1;
         sel.curr.execWidth = 1;
-        sel.OR(barrierMask, flagReg, barrierMask);
-        sel.MOV(tempFlag, barrierMask);
+        sel.OR(barrierMask, GenRegister::flag(0, 0), barrierMask);
+        sel.MOV(GenRegister::flag(1, 1), barrierMask);
       sel.pop();
 
       // A barrier is OK to start the thread synchronization *and* SLM fence
       sel.push();
-      //sel.curr.predicate = GEN_PREDICATE_NONE;
-      sel.curr.flagIndex = (uint16_t)tempFlag.value.reg;
-      sel.curr.physicalFlag = 0;
-      sel.BARRIER(GenRegister::ud8grf(reg), sel.selReg(sel.reg(FAMILY_DWORD)), params);
+        //sel.curr.predicate = GEN_PREDICATE_NONE;
+        sel.curr.flag = 1;
+        sel.curr.subFlag = 1;
+        sel.BARRIER(GenRegister::ud8grf(reg), sel.selReg(sel.reg(FAMILY_DWORD)), params);
       sel.pop();
       return true;
     }
@@ -2690,33 +2656,12 @@ namespace gbe
       const Opcode opcode = insn.getOpcode();
       const Type type = insn.getType();
       const Register dst = insn.getDst(0);
-      Register tmpDst;
+      GenRegister tmpDst;
 
-      const ir::BasicBlock *insnBlock = insn.getParent();
-      const ir::Liveness &liveness = sel.ctx.getLiveness();
-      const ir::Liveness::UEVar &livein = liveness.getLiveIn(insnBlock);
-      if (!livein.contains(dst))
-        tmpDst = dst;
+      if (type == TYPE_BOOL || type == TYPE_U16 || type == TYPE_S16)
+        tmpDst = sel.selReg(sel.reg(FAMILY_WORD), TYPE_BOOL);
       else
-        tmpDst = sel.reg(FAMILY_BOOL);
-
-      // Limit the compare to the active lanes. Use the same compare as for f0.0
-      sel.push();
-        const LabelIndex label = insn.getParent()->getLabelIndex();
-        const GenRegister blockip = sel.selReg(ocl::blockip, TYPE_U16);
-        const GenRegister labelReg = GenRegister::immuw(label);
-
-        sel.curr.predicate = GEN_PREDICATE_NONE;
-        sel.curr.physicalFlag = 0;
-        sel.curr.flagIndex = uint16_t(tmpDst);
-        if (tmpDst != dst) {
-          sel.CMP(GEN_CONDITIONAL_G, blockip, labelReg);
-          sel.curr.execWidth = 1;
-          sel.AND(sel.selReg(dst, TYPE_BOOL), sel.selReg(dst, TYPE_BOOL), sel.selReg(tmpDst, TYPE_BOOL));
-          sel.XOR(sel.selReg(tmpDst, TYPE_BOOL), sel.selReg(tmpDst, TYPE_BOOL), GenRegister::immuw(0xFFFF));
-        } else
-          sel.CMP(GEN_CONDITIONAL_LE, blockip, labelReg);
-      sel.pop();
+        tmpDst = sel.selReg(sel.reg(FAMILY_DWORD), TYPE_S32);
 
       // Look for immediate values for the right source
       GenRegister src0, src1;
@@ -2740,26 +2685,38 @@ namespace gbe
       }
 
       sel.push();
-        sel.curr.physicalFlag = 0;
-        sel.curr.flagIndex = uint16_t(tmpDst);
+        sel.curr.flag = 1;
+        sel.curr.subFlag = 1;
+        sel.curr.predicate  = GEN_PREDICATE_NONE;
         if (type == TYPE_S64 || type == TYPE_U64) {
           GenRegister tmp[3];
           for(int i=0; i<3; i++)
             tmp[i] = sel.selReg(sel.reg(FAMILY_DWORD));
-          sel.I64CMP(getGenCompare(opcode), src0, src1, tmp);
+          sel.push();
+            sel.curr.execWidth = 1;
+            sel.curr.noMask = 1;
+            sel.MOV(GenRegister::flag(1, 1), GenRegister::flag(0, 0));
+          sel.pop();
+          sel.curr.predicate = GEN_PREDICATE_NORMAL;
+          sel.I64CMP(getGenCompare(opcode), src0, src1, tmp, tmpDst);
         } else if(opcode == OP_ORD) {
-          sel.CMP(GEN_CONDITIONAL_EQ, src0, src0);
-          sel.CMP(GEN_CONDITIONAL_EQ, src1, src1);
+          sel.push();
+            sel.curr.execWidth = 1;
+            sel.curr.noMask = 1;
+            sel.MOV(GenRegister::flag(1, 1), GenRegister::flag(0, 0));
+          sel.pop();
+          sel.curr.predicate = GEN_PREDICATE_NORMAL;
+
+          sel.CMP(GEN_CONDITIONAL_EQ, src0, src0, tmpDst);
+          sel.CMP(GEN_CONDITIONAL_EQ, src1, src1, tmpDst);
         } else
-          sel.CMP(getGenCompare(opcode), src0, src1);
+          sel.CMP(getGenCompare(opcode), src0, src1, tmpDst);
       sel.pop();
-      if (tmpDst != dst) {
-        sel.push();
-          sel.curr.predicate = GEN_PREDICATE_NONE;
-          sel.curr.execWidth = 1;
-          sel.OR(sel.selReg(dst, TYPE_U16), sel.selReg(dst, TYPE_U16), sel.selReg(tmpDst, TYPE_U16));
-        sel.pop();
-      }
+
+      if (!(type == TYPE_BOOL || type == TYPE_U16 || type == TYPE_S16))
+        sel.MOV(sel.selReg(dst, TYPE_U16), GenRegister::unpacked_uw((ir::Register)tmpDst.value.reg));
+      else
+        sel.MOV(sel.selReg(dst, TYPE_U16), tmpDst);
       return true;
     }
   };
@@ -2893,7 +2850,7 @@ namespace gbe
         for(int i=0; i<6; i++) {
           tmp[i] = sel.selReg(sel.reg(FAMILY_DWORD), TYPE_U32);
         }
-        tmp[6] = sel.selReg(sel.reg(FAMILY_BOOL), TYPE_BOOL);
+        tmp[6] = sel.selReg(sel.reg(FAMILY_BOOL, true), TYPE_BOOL);
         sel.CONVI64_TO_F(dst, src, tmp);
       } else if (dst.isdf()) {
         ir::Register r = sel.reg(ir::RegisterFamily::FAMILY_QWORD);
@@ -2905,7 +2862,7 @@ namespace gbe
             GenRegister tmp[3];
             tmp[0] = sel.selReg(sel.reg(FAMILY_DWORD), TYPE_U32);
             tmp[1] = sel.selReg(sel.reg(FAMILY_DWORD), TYPE_FLOAT);
-            tmp[2] = sel.selReg(sel.reg(FAMILY_BOOL), TYPE_BOOL);
+            tmp[2] = sel.selReg(sel.reg(FAMILY_BOOL, true), TYPE_BOOL);
             sel.CONVF_TO_I64(dst, src, tmp);
             break;
           }
@@ -2993,11 +2950,13 @@ namespace gbe
       const uint32_t simdWidth = sel.ctx.getSimdWidth();
       const Register pred = insn.getPredicate();
       sel.push();
-        sel.curr.predicate = GEN_PREDICATE_NORMAL;
+        sel.curr.predicate = GEN_PREDICATE_NONE;
         sel.curr.execWidth = simdWidth;
-        sel.curr.physicalFlag = 0;
-        sel.curr.flagIndex = uint16_t(pred);
+        sel.curr.flag = 1;
+        sel.curr.subFlag = 1;
+        sel.CMP(GEN_CONDITIONAL_NEQ, sel.selReg(pred, TYPE_U16), GenRegister::immuw(0));
         sel.curr.noMask = 0;
+        sel.curr.predicate = GEN_PREDICATE_NORMAL;
         if(type == ir::TYPE_S64 || type == ir::TYPE_U64)
           sel.SEL_INT64(tmp, src0, src1);
         else
@@ -3027,7 +2986,7 @@ namespace gbe
             tmp[i] = sel.selReg(sel.reg(FAMILY_DWORD));
             tmp[i].type = GEN_TYPE_UD;
           }
-          tmp[9] = sel.selReg(sel.reg(FAMILY_BOOL));
+          tmp[9] = sel.selReg(sel.reg(FAMILY_BOOL, true));
           sel.I64MADSAT(dst, src0, src1, src2, tmp);
           break;
          }
@@ -3230,37 +3189,6 @@ namespace gbe
   DECL_PATTERN(BranchInstruction)
   {
 
-    // Get active pred.
-    const ir::Register getActivePred(Selection::Opaque &sel,
-                       const ir::BranchInstruction &insn,
-                       const ir::Register pred) const
-    {
-        using namespace ir;
-        GenRegister flagReg;
-        Register activePred;
-        const ir::BasicBlock *insnBlock = insn.getParent();
-        const ir::Liveness &liveness = sel.ctx.getLiveness();
-        const ir::Liveness::UEVar &livein = liveness.getLiveIn(insnBlock);
-       
-        /* If the pred is not in the livein set, then this pred should be defined
-           in this block and we don't need to validate it. */ 
-        if (!livein.contains(pred))
-          return pred;
-
-        activePred = sel.reg(FAMILY_BOOL);
-        sel.push();
-          sel.curr.predicate = GEN_PREDICATE_NONE;
-          sel.curr.execWidth = 1;
-          sel.curr.noMask = 1;
-          if(sel.curr.physicalFlag)
-             flagReg = GenRegister::flag(sel.curr.flag, sel.curr.subFlag);
-          else
-             flagReg = sel.selReg(ir::Register(sel.curr.flagIndex), ir::TYPE_U16);
-          sel.AND(sel.selReg(activePred, TYPE_U16), flagReg, sel.selReg(pred, TYPE_U16));
-        sel.pop();
-        return activePred;
-    }
-
     void emitForwardBranch(Selection::Opaque &sel,
                            const ir::BranchInstruction &insn,
                            ir::LabelIndex dst,
@@ -3278,15 +3206,20 @@ namespace gbe
 
       if (insn.isPredicated() == true) {
         const Register pred = insn.getPredicateIndex();
-        const Register activePred = getActivePred(sel, insn, pred);
 
-        // Update the PcIPs
         sel.push();
           // we don't need to set next label to the pcip
           // as if there is no backward jump latter, then obviously everything will work fine.
           // If there is backward jump latter, then all the pcip will be updated correctly there.
-          sel.curr.physicalFlag = 0;
-          sel.curr.flagIndex = uint16_t(activePred);
+          sel.curr.predicate = GEN_PREDICATE_NONE;
+          sel.curr.noMask = 1;
+          sel.curr.execWidth = 1;
+          sel.MOV(GenRegister::flag(1, 1), GenRegister::flag(0, 0));
+        sel.pop();
+        sel.push();
+          sel.curr.flag = 1;
+          sel.curr.subFlag = 1;
+          sel.CMP(GEN_CONDITIONAL_NEQ, sel.selReg(pred, TYPE_U16), GenRegister::immuw(0));
           sel.MOV(ip, GenRegister::immuw(uint16_t(dst)));
         sel.pop();
 
@@ -3303,7 +3236,8 @@ namespace gbe
         // will check those bits as well.
 
         sel.push();
-          sel.curr.flag = 0;
+          //sel.curr.physicalFlag = 0;
+          sel.curr.flag = 1;
           sel.curr.subFlag = 1;
           sel.curr.predicate = GEN_PREDICATE_NONE;
           sel.CMP(GEN_CONDITIONAL_G, ip, GenRegister::immuw(nextLabel));
@@ -3359,27 +3293,33 @@ namespace gbe
 
       if (insn.isPredicated() == true) {
         const Register pred = insn.getPredicateIndex();
-        const Register activePred = getActivePred(sel, insn, pred);
 
         // Update the PcIPs for all the branches. Just put the IPs of the next
-        // block. Next instruction will properly reupdate the IPs of the lanes
+        // block. Next instruction will properly update the IPs of the lanes
         // that actually take the branch
         const LabelIndex next = bb.getNextBlock()->getLabelIndex();
         sel.MOV(ip, GenRegister::immuw(uint16_t(next)));
 
         sel.push();
+          sel.curr.predicate = GEN_PREDICATE_NONE;
+          sel.curr.noMask = 1;
+          sel.curr.execWidth = 1;
+          sel.MOV(GenRegister::flag(1, 1), GenRegister::flag(0, 0));
+        sel.pop();
+        sel.push();
+          sel.curr.flag = 1;
+          sel.curr.subFlag = 1;
+          sel.CMP(GEN_CONDITIONAL_NEQ, sel.selReg(pred, TYPE_U16), GenRegister::immuw(0));
           // Re-update the PcIPs for the branches that takes the backward jump
-          sel.curr.physicalFlag = 0;
-          sel.curr.flagIndex = uint16_t(activePred);
           sel.MOV(ip, GenRegister::immuw(uint16_t(dst)));
 
-        // We clear all the inactive channel to 0 as the GEN_PREDICATE_ALIGN1_ANY8/16
-        // will check those bits as well.
+          // We clear all the inactive channel to 0 as the GEN_PREDICATE_ALIGN1_ANY8/16
+          // will check those bits as well.
           sel.curr.predicate = GEN_PREDICATE_NONE;
           sel.curr.execWidth = 1;
           sel.curr.noMask = 1;
           GenRegister emaskReg = GenRegister::uw1grf(ocl::emask);
-          sel.AND(sel.selReg(activePred, TYPE_U16), sel.selReg(activePred, TYPE_U16), emaskReg);
+          sel.AND(GenRegister::flag(0, 1), GenRegister::flag(0, 1), emaskReg);
 
           // Branch to the jump target
           if (simdWidth == 8)

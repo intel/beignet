@@ -1032,6 +1032,7 @@ namespace gbe
     GenRegister tmp0 = ra->genReg(insn.dst(0));
     GenRegister tmp1 = ra->genReg(insn.dst(1));
     GenRegister tmp2 = ra->genReg(insn.dst(2));
+    GenRegister dst = ra->genReg(insn.dst(3));
     tmp0.type = (src0.type == GEN_TYPE_L) ? GEN_TYPE_D : GEN_TYPE_UD;
     tmp1.type = (src1.type == GEN_TYPE_L) ? GEN_TYPE_D : GEN_TYPE_UD;
     int flag = p->curr.flag, subFlag = p->curr.subFlag;
@@ -1105,6 +1106,12 @@ namespace gbe
     p->curr.execWidth = 1;
     p->AND(f1, f1, f4);
     p->MOV(GenRegister::flag(flag, subFlag), f1);
+    p->pop();
+    p->push();
+    p->curr.predicate = GEN_PREDICATE_NONE;
+    p->MOV(dst, GenRegister::immd(0));
+    p->curr.predicate = GEN_PREDICATE_NORMAL;
+    p->MOV(dst, GenRegister::immd(-1));
     p->pop();
   }
 
@@ -1589,8 +1596,9 @@ namespace gbe
   void GenContext::emitCompareInstruction(const SelectionInstruction &insn) {
     const GenRegister src0 = ra->genReg(insn.src(0));
     const GenRegister src1 = ra->genReg(insn.src(1));
+    const GenRegister dst = ra->genReg(insn.dst(0));
     if (insn.opcode == SEL_OP_CMP)
-      p->CMP(insn.extra.function, src0, src1);
+      p->CMP(insn.extra.function, src0, src1, dst);
     else {
       GBE_ASSERT(insn.opcode == SEL_OP_SEL_CMP);
       const GenRegister dst = ra->genReg(insn.dst(0));

@@ -223,7 +223,6 @@ namespace gbe
     const ir::Register reg = interval.reg;
     if (RA.contains(reg) == true)
       return true; // already allocated
-    GBE_ASSERT(ctx.sel->isScalarReg(reg) == false);
     uint32_t regSize;
     ir::RegisterFamily family;
     getRegAttrib(reg, regSize, &family);
@@ -298,7 +297,6 @@ namespace gbe
         intervals.push_back(tmp);
         intervals[tmp].minID = vector->insn->ID;
         intervals[tmp].maxID = vector->insn->ID;
-        //printf("tmp reg %d minID %d \n", tmp.value(), vector->insn->ID);
       }
     }
   }
@@ -351,11 +349,6 @@ namespace gbe
 
       //ignore register that already spilled
       if(spilledRegs.find(reg) != spilledRegs.end()) {
-        this->expiringID++;
-        continue;
-      }
-      // Ignore booleans that were allocated with flags
-      if (ctx.sel->getRegisterFamily(reg) == ir::FAMILY_BOOL && !grfBooleans.contains(reg)) {
         this->expiringID++;
         continue;
       }
@@ -537,12 +530,8 @@ namespace gbe
       if (RA.contains(reg))
         continue; // already allocated
 
-      if (ctx.sel->getRegisterFamily(reg) == ir::FAMILY_BOOL && !grfBooleans.contains(reg))
-        continue;
-
       // Case 1: the register belongs to a vector, allocate all the registers in
       // one piece
-      //printf("prepare to allocate reg %d \n", reg.value());
       auto it = vectorMap.find(reg);
       if (it != vectorMap.end()) {
         const SelectionVector *vector = it->second.first;
@@ -550,7 +539,6 @@ namespace gbe
         if(spilledRegs.find(vector->reg[0].reg())
            != spilledRegs.end())
           continue;
-        //printf("vector %p \n", vector);
 
         uint32_t alignment;
         ir::RegisterFamily family;
@@ -568,7 +556,6 @@ namespace gbe
         }
         for (uint32_t regID = 0; regID < vector->regNum; ++regID) {
           const ir::Register reg = vector->reg[regID].reg();
-          //printf("allocate regID %d reg %d RA.contains? %d family %d  regFamily %d\n", regID, reg.value(), RA.contains(reg), family, ctx.sel->getRegisterData(reg).family);
           GBE_ASSERT(RA.contains(reg) == false
                      && ctx.sel->getRegisterData(reg).family == family);
           insertNewReg(reg, grfOffset + alignment * regID, true);
@@ -845,6 +832,7 @@ namespace gbe
         }
 
         // Flag registers can only go to src[0]
+#if 0
         const SelectionOpcode opcode = SelectionOpcode(insn.opcode);
         if (opcode == SEL_OP_AND || opcode == SEL_OP_OR || opcode == SEL_OP_XOR
             || opcode == SEL_OP_I64AND || opcode == SEL_OP_I64OR || opcode == SEL_OP_I64XOR) {
@@ -854,7 +842,7 @@ namespace gbe
               grfBooleans.insert(reg);
           }
         }
-
+#endif
         // OK, a flag is used as a predicate or a conditional modifier
         if (insn.state.physicalFlag == 0) {
           const ir::Register reg = ir::Register(insn.state.flagIndex);
@@ -906,7 +894,7 @@ namespace gbe
     }
 
     // First we try to put all booleans registers into flags
-    this->allocateFlags(selection);
+    //this->allocateFlags(selection);
 
     // Allocate all the GRFs now (regular register and boolean that are not in
     // flag registers)
