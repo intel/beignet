@@ -3211,58 +3211,13 @@ namespace gbe
           // we don't need to set next label to the pcip
           // as if there is no backward jump latter, then obviously everything will work fine.
           // If there is backward jump latter, then all the pcip will be updated correctly there.
-          sel.curr.predicate = GEN_PREDICATE_NONE;
-          sel.curr.noMask = 1;
-          sel.curr.execWidth = 1;
-          sel.MOV(GenRegister::flag(1, 1), GenRegister::flag(0, 0));
-        sel.pop();
-        sel.push();
-          sel.curr.flag = 1;
-          sel.curr.subFlag = 1;
+          sel.curr.flag = 0;
+          sel.curr.subFlag = 0;
           sel.CMP(GEN_CONDITIONAL_NEQ, sel.selReg(pred, TYPE_U16), GenRegister::immuw(0));
           sel.MOV(ip, GenRegister::immuw(uint16_t(dst)));
         sel.pop();
 
         if (nextLabel == jip) return;
-
-        // As at each BB's begining, we already checked whether all channels are inactive,
-        // we don't really need to do this duplicate checking at the end of forward jump.
-        // Just comment out the following code, and may be deleted in the future.
-#if 0
-        // It is slightly more complicated than for backward jump. We check that
-        // all PcIPs are greater than the next block IP to be sure that we can
-        // jump
-        // We set all the inactive channel to 1 as the GEN_PREDICATE_ALIGN1_ALL8/16
-        // will check those bits as well.
-
-        sel.push();
-          //sel.curr.physicalFlag = 0;
-          sel.curr.flag = 1;
-          sel.curr.subFlag = 1;
-          sel.curr.predicate = GEN_PREDICATE_NONE;
-          sel.CMP(GEN_CONDITIONAL_G, ip, GenRegister::immuw(nextLabel));
-
-          // Branch to the jump target
-          // XXX TODO: For group size not aligned to simdWidth, ALL8/16h may not
-          // work correct, as flag register bits mapped to non-active lanes tend
-          // to be zero.
-
-          sel.curr.execWidth = 1;
-          sel.curr.noMask = 1;
-          GenRegister notEmaskReg = GenRegister::uw1grf(ocl::notemask);
-          sel.OR(GenRegister::flag(0, 1), GenRegister::flag(0, 1), notEmaskReg);
-
-          if (simdWidth == 8)
-            sel.curr.predicate = GEN_PREDICATE_ALIGN1_ALL8H;
-          else if (simdWidth == 16)
-            sel.curr.predicate = GEN_PREDICATE_ALIGN1_ALL16H;
-          else
-            NOT_SUPPORTED;
-
-          sel.JMPI(GenRegister::immd(0), jip);
-        sel.pop();
-#endif
-
       } else {
         // Update the PcIPs
         sel.MOV(ip, GenRegister::immuw(uint16_t(dst)));
@@ -3301,14 +3256,8 @@ namespace gbe
         sel.MOV(ip, GenRegister::immuw(uint16_t(next)));
 
         sel.push();
-          sel.curr.predicate = GEN_PREDICATE_NONE;
-          sel.curr.noMask = 1;
-          sel.curr.execWidth = 1;
-          sel.MOV(GenRegister::flag(1, 1), GenRegister::flag(0, 0));
-        sel.pop();
-        sel.push();
-          sel.curr.flag = 1;
-          sel.curr.subFlag = 1;
+          sel.curr.flag = 0;
+          sel.curr.subFlag = 0;
           sel.CMP(GEN_CONDITIONAL_NEQ, sel.selReg(pred, TYPE_U16), GenRegister::immuw(0));
           // Re-update the PcIPs for the branches that takes the backward jump
           sel.MOV(ip, GenRegister::immuw(uint16_t(dst)));
