@@ -959,6 +959,9 @@ namespace gbe
   ALU2(PLN)
   ALU2(MACH)
   ALU3(MAD)
+ // ALU2(BRC)
+ // ALU1(ENDIF)
+ //  ALU1(IF)
 
   void GenEncoder::SUBB(GenRegister dest, GenRegister src0, GenRegister src1) {
     push();
@@ -1053,12 +1056,24 @@ namespace gbe
     NOP();
   }
 
+#define ALU2_BRA(OP) \
+  void GenEncoder::OP(GenRegister src) { \
+    alu2(this, GEN_OPCODE_##OP, GenRegister::null(), GenRegister::null(), src); \
+  }
+
+  ALU2_BRA(IF)
+  ALU2_BRA(ENDIF)
+  ALU2_BRA(BRD)
+  ALU2_BRA(BRC)
+
   void GenEncoder::patchJMPI(uint32_t insnID, int32_t jumpDistance) {
     GenInstruction &insn = this->store[insnID];
     GBE_ASSERT(insnID < this->store.size());
-    GBE_ASSERT(insn.header.opcode == GEN_OPCODE_JMPI);
+    GBE_ASSERT(insn.header.opcode == GEN_OPCODE_JMPI ||
+               insn.header.opcode == GEN_OPCODE_BRD  ||
+               insn.header.opcode == GEN_OPCODE_ENDIF);
     if ( jumpDistance > -32769 && jumpDistance < 32768 ) {
-        this->setSrc1(&insn, GenRegister::immd(jumpDistance));
+          this->setSrc1(&insn, GenRegister::immd(jumpDistance));
     } else if ( insn.header.predicate_control == GEN_PREDICATE_NONE ) {
       // For the conditional jump distance out of S15 range, we need to use an
       // inverted jmp followed by a add ip, ip, distance to implement.

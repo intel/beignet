@@ -122,6 +122,8 @@ namespace gbe
     ALU2(PLN)
     ALU3(MAD)
     //ALU2(MOV_DF);
+    ALU2(BRC)
+    ALU1(BRD)
 #undef ALU1
 #undef ALU2
 #undef ALU3
@@ -134,6 +136,14 @@ namespace gbe
     void FENCE(GenRegister dst);
     /*! Jump indexed instruction */
     void JMPI(GenRegister src);
+    /*! IF indexed instruction */
+    void IF(GenRegister src);
+    /*! ENDIF indexed instruction */
+    void ENDIF(GenRegister src);
+    /*! BRC indexed instruction */
+    void BRC(GenRegister src);
+    /*! BRD indexed instruction */
+    void BRD(GenRegister src);
     /*! Compare instructions */
     void CMP(uint32_t conditional, GenRegister src0, GenRegister src1, GenRegister dst = GenRegister::null());
     /*! Select with embedded compare (like sel.le ...) */
@@ -184,7 +194,7 @@ namespace gbe
     /*! Extended math function (1 source) */
     void MATH(GenRegister dst, uint32_t function, GenRegister src);
 
-    /*! Patch JMPI (located at index insnID) with the given jump distance */
+    /*! Patch JMPI/BRC/BRD (located at index insnID) with the given jump distance */
     void patchJMPI(uint32_t insnID, int32_t jumpDistance);
 
     ////////////////////////////////////////////////////////////////////////

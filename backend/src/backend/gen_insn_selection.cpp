@@ -538,6 +538,14 @@ namespace gbe
     void LABEL(ir::LabelIndex label);
     /*! Jump indexed instruction */
     void JMPI(Reg src, ir::LabelIndex target);
+    /*! IF indexed instruction */
+    void IF(Reg src, ir::LabelIndex jip, ir::LabelIndex uip, int16_t offset0, int16_t offset1);
+    /*! ENDIF indexed instruction */
+    void ENDIF(Reg src, ir::LabelIndex jip);
+    /*! BRD indexed instruction */
+    void BRD(Reg src, ir::LabelIndex jip);
+    /*! BRC indexed instruction */
+    void BRC(Reg src, ir::LabelIndex jip, ir::LabelIndex uip);
     /*! Compare instructions */
     void CMP(uint32_t conditional, Reg src0, Reg src1, Reg dst = GenRegister::null());
     /*! Select instruction with embedded comparison */
@@ -958,6 +966,35 @@ namespace gbe
     SelectionInstruction *insn = this->appendInsn(SEL_OP_JMPI, 0, 1);
     insn->src(0) = src;
     insn->index = uint16_t(index);
+  }
+
+  void Selection::Opaque::BRD(Reg src, ir::LabelIndex jip) {
+    SelectionInstruction *insn = this->appendInsn(SEL_OP_BRD, 0, 1);
+    insn->src(0) = src;
+    insn->index = uint16_t(jip);
+  }
+
+  void Selection::Opaque::BRC(Reg src, ir::LabelIndex jip, ir::LabelIndex uip) {
+    SelectionInstruction *insn = this->appendInsn(SEL_OP_BRC, 0, 1);
+    insn->src(0) = src;
+    insn->index = uint16_t(jip);
+    insn->index1 = uint16_t(uip);
+  }
+
+  void Selection::Opaque::IF(Reg src, ir::LabelIndex jip, ir::LabelIndex uip,
+                             int16_t offset0, int16_t offset1) {
+    SelectionInstruction *insn = this->appendInsn(SEL_OP_IF, 0, 1);
+    insn->src(0) = src;
+    insn->index = uint16_t(jip);
+    insn->index1 = uint16_t(uip);
+    insn->offset0 = offset0;
+    insn->offset1 = offset1;
+  }
+
+  void Selection::Opaque::ENDIF(Reg src, ir::LabelIndex jip) {
+    SelectionInstruction *insn = this->appendInsn(SEL_OP_IF, 0, 1);
+    insn->src(0) = src;
+    insn->index = uint16_t(jip);
   }
 
   void Selection::Opaque::CMP(uint32_t conditional, Reg src0, Reg src1, Reg dst) {
@@ -3197,7 +3234,6 @@ namespace gbe
       using namespace ir;
       const GenRegister ip = sel.selReg(ocl::blockip, TYPE_U16);
       const LabelIndex jip = sel.ctx.getLabelIndex(&insn);
-      const uint32_t simdWidth = sel.ctx.getSimdWidth();
 
       // We will not emit any jump if we must go the next block anyway
       const BasicBlock *curr = insn.getParent();

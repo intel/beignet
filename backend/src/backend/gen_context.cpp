@@ -213,6 +213,32 @@ namespace gbe
         p->pop();
         break;
        }
+      case SEL_OP_BRC:
+        {
+          const ir::LabelIndex label0(insn.index), label1(insn.index1);
+          const LabelPair labelPair(label0, label1);
+          const GenRegister src = ra->genReg(insn.src(0));
+          this->branchPos3.push_back(std::make_pair(labelPair, p->store.size()));
+          p->BRC(src);
+        }
+        break;
+      case SEL_OP_BRD:
+        insertJumpPos(insn);
+        p->BRD(src);
+        break;
+      case SEL_OP_ENDIF:
+        insertJumpPos(insn);
+        p->ENDIF(src);
+        break;
+      case SEL_OP_IF:
+        {
+          const ir::LabelIndex label0(insn.index), label1(insn.index1);
+          const LabelPair labelPair(label0, label1, insn.offset0, insn.offset1);
+          const GenRegister src = ra->genReg(insn.src(0));
+          this->branchPos3.push_back(std::make_pair(labelPair, p->store.size()));
+          p->IF(src);
+        }
+        break;
       default: NOT_IMPLEMENTED;
     }
   }
@@ -1646,10 +1672,14 @@ namespace gbe
     }
   }
 
-  void GenContext::emitJumpInstruction(const SelectionInstruction &insn) {
+ void GenContext::insertJumpPos(const SelectionInstruction &insn) {
     const ir::LabelIndex label(insn.index);
-    const GenRegister src = ra->genReg(insn.src(0));
     this->branchPos2.push_back(std::make_pair(label, p->store.size()));
+ }
+
+  void GenContext::emitJumpInstruction(const SelectionInstruction &insn) {
+    insertJumpPos(insn);
+    const GenRegister src = ra->genReg(insn.src(0));
     p->JMPI(src);
   }
 

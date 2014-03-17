@@ -100,8 +100,9 @@ static const struct {
   [GEN_OPCODE_SENDC] = { .name = "sendc", .nsrc = 1, .ndst = 1 },
   [GEN_OPCODE_NOP] = { .name = "nop", .nsrc = 0, .ndst = 0 },
   [GEN_OPCODE_JMPI] = { .name = "jmpi", .nsrc = 0, .ndst = 0 },
+  [GEN_OPCODE_BRD] = { .name = "brd", .nsrc = 1, .ndst = 0 },
   [GEN_OPCODE_IF] = { .name = "if", .nsrc = 2, .ndst = 0 },
-  [GEN_OPCODE_IFF] = { .name = "iff", .nsrc = 2, .ndst = 1 },
+  [GEN_OPCODE_BRC] = { .name = "brc", .nsrc = 1, .ndst = 0 },
   [GEN_OPCODE_WHILE] = { .name = "while", .nsrc = 2, .ndst = 0 },
   [GEN_OPCODE_ELSE] = { .name = "else", .nsrc = 2, .ndst = 0 },
   [GEN_OPCODE_BREAK] = { .name = "break", .nsrc = 2, .ndst = 0 },
@@ -113,7 +114,7 @@ static const struct {
   [GEN_OPCODE_POP] = { .name = "pop", .nsrc = 2, .ndst = 0 },
   [GEN_OPCODE_WAIT] = { .name = "wait", .nsrc = 1, .ndst = 0 },
   [GEN_OPCODE_DO] = { .name = "do", .nsrc = 0, .ndst = 0 },
-  [GEN_OPCODE_ENDIF] = { .name = "endif", .nsrc = 2, .ndst = 0 },
+  [GEN_OPCODE_ENDIF] = { .name = "endif", .nsrc = 1, .ndst = 0 },
 };
 
 static const char *conditional_modifier[16] = {
