@@ -3248,6 +3248,10 @@ namespace gbe
 
         if (nextLabel == jip) return;
 
+        // As at each BB's begining, we already checked whether all channels are inactive,
+        // we don't really need to do this duplicate checking at the end of forward jump.
+        // Just comment out the following code, and may be deleted in the future.
+#if 0
         // It is slightly more complicated than for backward jump. We check that
         // all PcIPs are greater than the next block IP to be sure that we can
         // jump
@@ -3279,6 +3283,7 @@ namespace gbe
 
           sel.JMPI(GenRegister::immd(0), jip);
         sel.pop();
+#endif
 
       } else {
         // Update the PcIPs
