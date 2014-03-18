@@ -695,7 +695,7 @@ intel_gpgpu_build_idrt(intel_gpgpu_t *gpgpu, cl_gpgpu_kernel *kernel)
   memset(desc, 0, sizeof(*desc));
   ker_bo = (drm_intel_bo *) kernel->bo;
   desc->desc0.kernel_start_pointer = ker_bo->offset >> 6; /* reloc */
-  desc->desc1.single_program_flow = 1;
+  desc->desc1.single_program_flow = 0;
   desc->desc1.floating_point_mode = 0; /* use IEEE-754 rule */
   desc->desc5.rounding_mode = 0; /* round to nearest even */
 

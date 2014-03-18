@@ -76,8 +76,6 @@
  *
  * Also, there is some extra kludge to handle the predicates for JMPI.
  *
- * See TODO for a better idea for branching and masking
- *
  * TODO:
  * =====
  *
@@ -92,14 +90,9 @@
  * interesting approach which consists in traversing the dominator tree in post
  * order
  *
- * About masking and branching, a much better idea (that I found later unfortunately)
- * is to replace the use of the flag by uses of if/endif to enclose the basic
- * block. So, instead of using predication, we use auto-masking. The very cool
- * consequence is that we can reintegrate back the structured branches.
- * Basically, we will be able to identify branches that can be mapped to
- * structured branches and mix nicely unstructured branches (which will use
- * jpmi, if/endif to mask the blocks) and structured branches (which are pretty
- * fast)
+ * We already use if/endif to enclose each basic block. We will continue to identify
+ * those blocks which could match to structured branching and use pure structured
+ * instruction to handle them completely.
  */
 
 #include "backend/gen_insn_selection.hpp"
@@ -320,38 +313,6 @@ namespace gbe
     INLINE bool spillRegs(const SpilledRegs &spilledRegs, uint32_t registerPool);
     /*! indicate whether a register is a scalar/uniform register. */
     INLINE bool isScalarReg(const ir::Register &reg) const {
-#if 0
-      printf("reg %d ", reg.value());
-      printf("uniform: %d ", getRegisterData(reg).isUniform());
-      if (ctx.getFunction().getArg(reg) != NULL) { printf("true function arg\n"); return true; }
-      if (ctx.getFunction().getPushLocation(reg) != NULL) { printf("true push location.\n"); return true; }
-      if (reg == ir::ocl::groupid0  ||
-          reg == ir::ocl::groupid1  ||
-          reg == ir::ocl::groupid2  ||
-          reg == ir::ocl::barrierid ||
-          reg == ir::ocl::threadn   ||
-          reg == ir::ocl::numgroup0 ||
-          reg == ir::ocl::numgroup1 ||
-          reg == ir::ocl::numgroup2 ||
-          reg == ir::ocl::lsize0    ||
-          reg == ir::ocl::lsize1    ||
-          reg == ir::ocl::lsize2    ||
-          reg == ir::ocl::gsize0    ||
-          reg == ir::ocl::gsize1    ||
-          reg == ir::ocl::gsize2    ||
-          reg == ir::ocl::goffset0  ||
-          reg == ir::ocl::goffset1  ||
-          reg == ir::ocl::goffset2  ||
-          reg == ir::ocl::workdim   ||
-          reg == ir::ocl::emask     ||
-          reg == ir::ocl::notemask  ||
-          reg == ir::ocl::barriermask
-        ) {
-        printf("special reg.\n");
-        return true;
-      }
-      return false;
-#endif
       const ir::RegisterData &regData = getRegisterData(reg);
       return regData.isUniform();
     }
@@ -992,7 +953,7 @@ namespace gbe
   }
 
   void Selection::Opaque::ENDIF(Reg src, ir::LabelIndex jip) {
-    SelectionInstruction *insn = this->appendInsn(SEL_OP_IF, 0, 1);
+    SelectionInstruction *insn = this->appendInsn(SEL_OP_ENDIF, 0, 1);
     insn->src(0) = src;
     insn->index = uint16_t(jip);
   }
@@ -1412,9 +1373,17 @@ namespace gbe
     for (uint32_t regID = 0; regID < this->regNum; ++regID)
       this->regDAG[regID] = NULL;
 
+    this->block->hasBarrier = false;
+    this->block->hasBranch = bb.getLastInstruction()->getOpcode() == OP_BRA ||
+                             bb.getLastInstruction()->getOpcode() == OP_RET;
+    if (!this->block->hasBranch)
+      this->block->endifOffset = -1;
+
     // Build the DAG on the fly
     uint32_t insnNum = 0;
     const_cast<BasicBlock&>(bb).foreach([&](const Instruction &insn) {
+      if (insn.getOpcode() == OP_SYNC)
+        this->block->hasBarrier = true;
 
       // Build a selectionDAG node for instruction
       SelectionDAG *dag = this->newSelectionDAG(insn);
@@ -1465,6 +1434,7 @@ namespace gbe
   void Selection::Opaque::matchBasicBlock(uint32_t insnNum)
   {
     // Bottom up code generation
+    bool needEndif = this->block->hasBranch == false && !this->block->hasBarrier;
     for (int32_t insnID = insnNum-1; insnID >= 0; --insnID) {
       // Process all possible patterns for this instruction
       SelectionDAG &dag = *insnDAG[insnID];
@@ -1476,14 +1446,23 @@ namespace gbe
 
         // Start a new code fragment
         this->startBackwardGeneration();
+        // If there is no branch at the end of this block.
 
         // Try all the patterns from best to worst
+
         do {
           if ((*it)->emit(*this, dag))
             break;
           ++it;
         } while (it != end);
         GBE_ASSERT(it != end);
+
+        if (needEndif) {
+          const ir::BasicBlock *curr = insn.getParent();
+          const ir::BasicBlock *next = curr->getNextBlock();
+          this->ENDIF(GenRegister::immd(0), next->getLabelIndex());
+          needEndif = false;
+        }
 
         // Output the code in the current basic block
         this->endBackwardGeneration();
@@ -2133,6 +2112,7 @@ namespace gbe
       const GenRegister src1 = sel.selReg(cmpInsn.getSrc(1), type);
 
       sel.push();
+        sel.curr.noMask = 1;
         sel.curr.predicate = GEN_PREDICATE_NONE;
         sel.curr.execWidth = simdWidth;
         sel.SEL_CMP(genCmp, tmp, src0, src1);
@@ -2329,7 +2309,6 @@ namespace gbe
       const Type type = insn.getType();
       const Immediate imm = insn.getImmediate();
       const GenRegister dst = sel.selReg(insn.getDst(0), type);
-      GenRegister flagReg;
 
       sel.push();
       if (sel.isScalarOrBool(insn.getDst(0)) == true) {
@@ -2371,24 +2350,10 @@ namespace gbe
     {
       using namespace ir;
       const ir::Register reg = sel.reg(FAMILY_DWORD);
-      const GenRegister barrierMask = sel.selReg(ocl::barriermask, TYPE_BOOL);
       const uint32_t params = insn.getParameters();
 
-      sel.push();
-        sel.curr.predicate = GEN_PREDICATE_NONE;
-        sel.curr.noMask = 1;
-        sel.curr.execWidth = 1;
-        sel.OR(barrierMask, GenRegister::flag(0, 0), barrierMask);
-        sel.MOV(GenRegister::flag(1, 1), barrierMask);
-      sel.pop();
-
       // A barrier is OK to start the thread synchronization *and* SLM fence
-      sel.push();
-        //sel.curr.predicate = GEN_PREDICATE_NONE;
-        sel.curr.flag = 1;
-        sel.curr.subFlag = 1;
-        sel.BARRIER(GenRegister::ud8grf(reg), sel.selReg(sel.reg(FAMILY_DWORD)), params);
-      sel.pop();
+      sel.BARRIER(GenRegister::ud8grf(reg), sel.selReg(sel.reg(FAMILY_DWORD)), params);
       return true;
     }
 
@@ -2696,7 +2661,7 @@ namespace gbe
       GenRegister tmpDst;
 
       if (type == TYPE_BOOL || type == TYPE_U16 || type == TYPE_S16)
-        tmpDst = sel.selReg(sel.reg(FAMILY_WORD), TYPE_BOOL);
+        tmpDst = sel.selReg(dst, TYPE_BOOL);
       else
         tmpDst = sel.selReg(sel.reg(FAMILY_DWORD), TYPE_S32);
 
@@ -2724,36 +2689,23 @@ namespace gbe
       sel.push();
         sel.curr.flag = 1;
         sel.curr.subFlag = 1;
-        sel.curr.predicate  = GEN_PREDICATE_NONE;
         if (type == TYPE_S64 || type == TYPE_U64) {
           GenRegister tmp[3];
           for(int i=0; i<3; i++)
             tmp[i] = sel.selReg(sel.reg(FAMILY_DWORD));
-          sel.push();
-            sel.curr.execWidth = 1;
-            sel.curr.noMask = 1;
-            sel.MOV(GenRegister::flag(1, 1), GenRegister::flag(0, 0));
-          sel.pop();
-          sel.curr.predicate = GEN_PREDICATE_NORMAL;
           sel.I64CMP(getGenCompare(opcode), src0, src1, tmp, tmpDst);
         } else if(opcode == OP_ORD) {
           sel.push();
-            sel.curr.execWidth = 1;
-            sel.curr.noMask = 1;
-            sel.MOV(GenRegister::flag(1, 1), GenRegister::flag(0, 0));
+            sel.CMP(GEN_CONDITIONAL_EQ, src0, src0, tmpDst);
+            sel.curr.predicate = GEN_PREDICATE_NORMAL;
+            sel.CMP(GEN_CONDITIONAL_EQ, src1, src1, tmpDst);
           sel.pop();
-          sel.curr.predicate = GEN_PREDICATE_NORMAL;
-
-          sel.CMP(GEN_CONDITIONAL_EQ, src0, src0, tmpDst);
-          sel.CMP(GEN_CONDITIONAL_EQ, src1, src1, tmpDst);
         } else
           sel.CMP(getGenCompare(opcode), src0, src1, tmpDst);
       sel.pop();
 
       if (!(type == TYPE_BOOL || type == TYPE_U16 || type == TYPE_S16))
         sel.MOV(sel.selReg(dst, TYPE_U16), GenRegister::unpacked_uw((ir::Register)tmpDst.value.reg));
-      else
-        sel.MOV(sel.selReg(dst, TYPE_U16), tmpDst);
       return true;
     }
   };
@@ -2979,11 +2931,6 @@ namespace gbe
         markAllChildren(dag);
       }
 
-      // Since we cannot predicate the select instruction with our current mask,
-      // we need to perform the selection in two steps (one to select, one to
-      // update the destination register)
-      const RegisterFamily family = getFamily(type);
-      const GenRegister tmp = sel.selReg(sel.reg(family), type);
       const uint32_t simdWidth = sel.ctx.getSimdWidth();
       const Register pred = insn.getPredicate();
       sel.push();
@@ -2992,16 +2939,14 @@ namespace gbe
         sel.curr.flag = 1;
         sel.curr.subFlag = 1;
         sel.CMP(GEN_CONDITIONAL_NEQ, sel.selReg(pred, TYPE_U16), GenRegister::immuw(0));
-        sel.curr.noMask = 0;
+        //sel.curr.noMask = 0;
         sel.curr.predicate = GEN_PREDICATE_NORMAL;
         if(type == ir::TYPE_S64 || type == ir::TYPE_U64)
-          sel.SEL_INT64(tmp, src0, src1);
+          sel.SEL_INT64(dst, src0, src1);
         else
-          sel.SEL(tmp, src0, src1);
+          sel.SEL(dst, src0, src1);
       sel.pop();
 
-      // Update the destination register properly now
-      sel.MOV(dst, tmp);
       return true;
     }
   };
@@ -3041,6 +2986,7 @@ namespace gbe
     DECL_CTOR(TernaryInstruction, 1, 1);
    };
 
+
   /*! Label instruction pattern */
   DECL_PATTERN(LabelInstruction)
   {
@@ -3053,42 +2999,75 @@ namespace gbe
       const uint32_t simdWidth = sel.ctx.getSimdWidth();
       sel.LABEL(label);
 
-     // Do not emit any code for the "returning" block. There is no need for it
-     if (insn.getParent() == &sel.ctx.getFunction().getBottomBlock())
+      // Do not emit any code for the "returning" block. There is no need for it
+      if (insn.getParent() == &sel.ctx.getFunction().getBottomBlock())
         return true;
+
+      LabelIndex jip;
+      const LabelIndex nextLabel = insn.getParent()->getNextBlock()->getLabelIndex();
+      if (sel.ctx.hasJIP(&insn))
+        jip = sel.ctx.getLabelIndex(&insn);
+      else
+        jip = nextLabel;
 
       // Emit the mask computation at the head of each basic block
       sel.push();
+        sel.curr.noMask = 1;
         sel.curr.predicate = GEN_PREDICATE_NONE;
-        sel.curr.flag = 0;
-        sel.curr.subFlag = 0;
         sel.CMP(GEN_CONDITIONAL_LE, GenRegister::retype(src0, GEN_TYPE_UW), src1);
       sel.pop();
 
-      // If it is required, insert a JUMP to bypass the block
-      if (sel.ctx.hasJIP(&insn)) {
-        const LabelIndex jip = sel.ctx.getLabelIndex(&insn);
+      if (sel.block->hasBarrier) {
+        // If this block has barrier, we don't execute the block until all lanes
+        // are 1s. Set each reached lane to 1, then check all lanes. If there is any
+        // lane not reached, we jump to jip. And no need to issue if/endif for
+        // this block, as it will always excute with all lanes activated.
         sel.push();
-
-          sel.curr.noMask = 1;
-          sel.curr.execWidth = 1;
+          sel.curr.predicate = GEN_PREDICATE_NORMAL;
+          sel.MOV(GenRegister::retype(src0, GEN_TYPE_UW), GenRegister::immuw(GEN_MAX_LABEL));
           sel.curr.predicate = GEN_PREDICATE_NONE;
-          GenRegister emaskReg = GenRegister::uw1grf(ocl::emask);
-          GenRegister flagReg = GenRegister::flag(0, 0);
-          sel.AND(flagReg, flagReg, emaskReg);
-
+          sel.curr.noMask = 1;
+          sel.CMP(GEN_CONDITIONAL_EQ, GenRegister::retype(src0, GEN_TYPE_UW), GenRegister::immuw(GEN_MAX_LABEL));
           if (simdWidth == 8)
-            sel.curr.predicate = GEN_PREDICATE_ALIGN1_ANY8H;
+            sel.curr.predicate = GEN_PREDICATE_ALIGN1_ALL8H;
           else if (simdWidth == 16)
-            sel.curr.predicate = GEN_PREDICATE_ALIGN1_ANY16H;
+            sel.curr.predicate = GEN_PREDICATE_ALIGN1_ALL16H;
           else
             NOT_IMPLEMENTED;
+          sel.curr.noMask = 1;
+          sel.curr.execWidth = 1;
           sel.curr.inversePredicate = 1;
-          sel.curr.flag = 0;
-          sel.curr.subFlag = 0;
           sel.JMPI(GenRegister::immd(0), jip);
         sel.pop();
+        // FIXME, if the last BRA is unconditional jump, we don't need to update the label here.
+        sel.push();
+         sel.curr.predicate = GEN_PREDICATE_NORMAL;
+         sel.MOV(GenRegister::retype(src0, GEN_TYPE_UW), GenRegister::immuw((uint16_t)label));
+        sel.pop();
       }
+      else {
+        if (sel.ctx.hasJIP(&insn)) {
+          // If it is required, insert a JUMP to bypass the block
+          sel.push();
+            if (simdWidth == 8)
+              sel.curr.predicate = GEN_PREDICATE_ALIGN1_ANY8H;
+            else if (simdWidth == 16)
+              sel.curr.predicate = GEN_PREDICATE_ALIGN1_ANY16H;
+            else
+              NOT_IMPLEMENTED;
+            sel.curr.noMask = 1;
+            sel.curr.execWidth = 1;
+            sel.curr.inversePredicate = 1;
+            sel.JMPI(GenRegister::immd(0), jip);
+          sel.pop();
+        }
+        sel.push();
+          sel.curr.predicate = GEN_PREDICATE_NORMAL;
+          // It's easier to set the jip to a relative position over next block.
+          sel.IF(GenRegister::immd(0), nextLabel, nextLabel, sel.block->endifOffset, sel.block->endifOffset);
+        sel.pop();
+      }
+
       return true;
     }
     DECL_CTOR(LabelInstruction, 1, 1);
@@ -3225,7 +3204,6 @@ namespace gbe
   /*! Branch instruction pattern */
   DECL_PATTERN(BranchInstruction)
   {
-
     void emitForwardBranch(Selection::Opaque &sel,
                            const ir::BranchInstruction &insn,
                            ir::LabelIndex dst,
@@ -3233,16 +3211,13 @@ namespace gbe
     {
       using namespace ir;
       const GenRegister ip = sel.selReg(ocl::blockip, TYPE_U16);
-      const LabelIndex jip = sel.ctx.getLabelIndex(&insn);
 
       // We will not emit any jump if we must go the next block anyway
       const BasicBlock *curr = insn.getParent();
       const BasicBlock *next = curr->getNextBlock();
       const LabelIndex nextLabel = next->getLabelIndex();
-
       if (insn.isPredicated() == true) {
         const Register pred = insn.getPredicateIndex();
-
         sel.push();
           // we don't need to set next label to the pcip
           // as if there is no backward jump latter, then obviously everything will work fine.
@@ -3250,22 +3225,30 @@ namespace gbe
           sel.curr.flag = 0;
           sel.curr.subFlag = 0;
           sel.CMP(GEN_CONDITIONAL_NEQ, sel.selReg(pred, TYPE_U16), GenRegister::immuw(0));
+          sel.curr.predicate = GEN_PREDICATE_NORMAL;
           sel.MOV(ip, GenRegister::immuw(uint16_t(dst)));
+          if (!sel.block->hasBarrier)
+            sel.ENDIF(GenRegister::immd(0), nextLabel);
+          sel.block->endifOffset = -1;
         sel.pop();
-
-        if (nextLabel == jip) return;
       } else {
         // Update the PcIPs
+        const LabelIndex jip = sel.ctx.getLabelIndex(&insn);
         sel.MOV(ip, GenRegister::immuw(uint16_t(dst)));
-
-        // Do not emit branch when we go to the next block anyway
+        if (!sel.block->hasBarrier)
+          sel.ENDIF(GenRegister::immd(0), nextLabel);
+        sel.block->endifOffset = -1;
         if (nextLabel == jip) return;
+        // Branch to the jump target
         sel.push();
           sel.curr.execWidth = 1;
           sel.curr.noMask = 1;
           sel.curr.predicate = GEN_PREDICATE_NONE;
           sel.JMPI(GenRegister::immd(0), jip);
         sel.pop();
+        // FIXME just for the correct endif offset.
+        // JMPI still has 2 instruction.
+        sel.block->endifOffset -= 2;
       }
     }
 
@@ -3290,37 +3273,32 @@ namespace gbe
         // that actually take the branch
         const LabelIndex next = bb.getNextBlock()->getLabelIndex();
         sel.MOV(ip, GenRegister::immuw(uint16_t(next)));
-
+        GBE_ASSERT(jip == dst);
         sel.push();
           sel.curr.flag = 0;
           sel.curr.subFlag = 0;
-          sel.CMP(GEN_CONDITIONAL_NEQ, sel.selReg(pred, TYPE_U16), GenRegister::immuw(0));
-          // Re-update the PcIPs for the branches that takes the backward jump
-          sel.MOV(ip, GenRegister::immuw(uint16_t(dst)));
-
-          // We clear all the inactive channel to 0 as the GEN_PREDICATE_ALIGN1_ANY8/16
-          // will check those bits as well.
           sel.curr.predicate = GEN_PREDICATE_NONE;
+          sel.CMP(GEN_CONDITIONAL_NEQ, sel.selReg(pred, TYPE_U16), GenRegister::immuw(0));
+          sel.curr.predicate = GEN_PREDICATE_NORMAL;
+          sel.MOV(ip, GenRegister::immuw(uint16_t(dst)));
+          sel.curr.predicate = GEN_PREDICATE_NONE;
+          if (!sel.block->hasBarrier)
+            sel.ENDIF(GenRegister::immd(0), next);
           sel.curr.execWidth = 1;
-          sel.curr.noMask = 1;
-          GenRegister emaskReg = GenRegister::uw1grf(ocl::emask);
-          sel.AND(GenRegister::flag(0, 1), GenRegister::flag(0, 1), emaskReg);
-
-          // Branch to the jump target
-          if (simdWidth == 8)
-            sel.curr.predicate = GEN_PREDICATE_ALIGN1_ANY8H;
-          else if (simdWidth == 16)
+          if (simdWidth == 16)
             sel.curr.predicate = GEN_PREDICATE_ALIGN1_ANY16H;
           else
-            NOT_SUPPORTED;
+            sel.curr.predicate = GEN_PREDICATE_ALIGN1_ANY8H;
+          sel.curr.noMask = 1;
           sel.JMPI(GenRegister::immd(0), jip);
+          sel.block->endifOffset = -3;
         sel.pop();
-
       } else {
-
+        const LabelIndex next = bb.getNextBlock()->getLabelIndex();
         // Update the PcIPs
         sel.MOV(ip, GenRegister::immuw(uint16_t(dst)));
-
+        if (!sel.block->hasBarrier)
+          sel.ENDIF(GenRegister::immd(0), next);
         // Branch to the jump target
         sel.push();
           sel.curr.execWidth = 1;
@@ -3328,6 +3306,7 @@ namespace gbe
           sel.curr.predicate = GEN_PREDICATE_NONE;
           sel.JMPI(GenRegister::immd(0), jip);
         sel.pop();
+        sel.block->endifOffset = -3;
       }
     }
 

@@ -87,33 +87,29 @@ namespace gbe
       const LabelIndex label = pair.first;
       const int32_t insnID = pair.second;
       const int32_t targetID = labelPos.find(label)->second;
-      p->patchJMPI(insnID, (targetID-insnID-1) * 2);
+      p->patchJMPI(insnID, (targetID - insnID) * 2);
+    }
+    for (auto pair : branchPos3) {
+      const LabelPair labelPair = pair.first;
+      const int32_t insnID = pair.second;
+      const int32_t jip = labelPos.find(labelPair.l0)->second + labelPair.offset0;
+      const int32_t uip = labelPos.find(labelPair.l1)->second + labelPair.offset1;
+      assert((jip - insnID) * 2 < 32767 && (jip - insnID) * 2 > -32768);
+      assert((uip - insnID) * 2 < 32767 && (uip - insnID) * 2 > -32768);
+      p->patchJMPI(insnID, (((uip - insnID) * 2) << 16) | ((jip - insnID) * 2));
     }
   }
 
   void GenContext::clearFlagRegister(void) {
     // when group size not aligned to simdWidth, flag register need clear to
     // make prediction(any8/16h) work correctly
-    const GenRegister emaskReg = ra->genReg(GenRegister::uw1grf(ir::ocl::emask));
-    const GenRegister notEmaskReg = ra->genReg(GenRegister::uw1grf(ir::ocl::notemask));
-    uint32_t execWidth = p->curr.execWidth;
+    const GenRegister blockip = ra->genReg(GenRegister::uw8grf(ir::ocl::blockip));
     p->push();
-    p->curr.predicate = GEN_PREDICATE_NONE;
-    p->curr.noMask = 1;
-    /* clear all the bit in f0.0. */
-    p->curr.execWidth = 1;
-    p->MOV(GenRegister::retype(GenRegister::flag(0, 0), GEN_TYPE_UW), GenRegister::immuw(0x0000));
-    /* clear the barrier mask bits to all zero0*/
-    p->curr.noMask = 0;
-    p->curr.useFlag(0, 0);
-    p->curr.execWidth = execWidth;
-    /* set all the active lane to 1. Inactive lane remains 0. */
-    p->CMP(GEN_CONDITIONAL_EQ, GenRegister::ud16grf(126, 0), GenRegister::ud16grf(126, 0));
-    p->curr.noMask = 1;
-    p->curr.execWidth = 1;
-    p->MOV(emaskReg, GenRegister::retype(GenRegister::flag(0, 0), GEN_TYPE_UW));
-    p->XOR(notEmaskReg, emaskReg, GenRegister::immuw(0xFFFF));
-    p->MOV(ra->genReg(GenRegister::uw1grf(ir::ocl::barriermask)), notEmaskReg);
+      p->curr.noMask = 1;
+      p->curr.predicate = GEN_PREDICATE_NONE;
+      p->MOV(blockip, GenRegister::immuw(GEN_MAX_LABEL));
+      p->curr.noMask = 0;
+      p->MOV(blockip, GenRegister::immuw(0));
     p->pop();
   }
 
@@ -148,7 +144,6 @@ namespace gbe
     // Check that everything is consistent in the kernel code
     const uint32_t perLaneSize = kernel->getStackSize();
     const uint32_t perThreadSize = perLaneSize * this->simdWidth;
-    //const int32_t offset = GEN_REG_SIZE + kernel->getCurbeOffset(GBE_CURBE_EXTRA_ARGUMENT, GBE_STACK_BUFFER);
     GBE_ASSERT(perLaneSize > 0);
     GBE_ASSERT(isPowerOf<2>(perLaneSize) == true);
     GBE_ASSERT(isPowerOf<2>(perThreadSize) == true);
@@ -325,6 +320,7 @@ namespace gbe
         for (int i = 0; i < w / 8; i ++) {
           p->push();
           p->curr.predicate = GEN_PREDICATE_NONE;
+          p->curr.noMask = 1;
           p->MUL(GenRegister::retype(GenRegister::acc(), GEN_TYPE_UD), src0, src1);
           p->curr.accWrEnable = 1;
           p->MACH(tmp, src0, src1);
@@ -500,6 +496,7 @@ namespace gbe
     int execWidth = p->curr.execWidth;
     p->push();
     p->curr.predicate = GEN_PREDICATE_NONE;
+    p->curr.noMask = 1;
     p->curr.execWidth = 8;
     for (int nib = 0; nib < execWidth / 4; nib ++) {
       p->AND(dest, src.bottom_half(), GenRegister::immud(63));
@@ -539,6 +536,7 @@ namespace gbe
   void GenContext::I64ABS(GenRegister sign, GenRegister high, GenRegister low, GenRegister tmp, GenRegister flagReg) {
     p->SHR(sign, high, GenRegister::immud(31));
     p->push();
+    p->curr.noMask = 1;
     p->curr.predicate = GEN_PREDICATE_NONE;
     p->curr.useFlag(flagReg.flag_nr(), flagReg.flag_subnr());
     p->CMP(GEN_CONDITIONAL_NZ, sign, GenRegister::immud(0));
@@ -574,6 +572,7 @@ namespace gbe
       I64FullMult(e, f, g, h, a, b, c, d);
       p->push();
       p->curr.predicate = GEN_PREDICATE_NONE;
+      p->curr.noMask = 1;
       p->curr.useFlag(flagReg.flag_nr(), flagReg.flag_subnr());
       p->CMP(GEN_CONDITIONAL_NZ, i, GenRegister::immud(0));
       p->curr.predicate = GEN_PREDICATE_NORMAL;
@@ -626,6 +625,7 @@ namespace gbe
       p->OR(a, e, f);
       p->push();
       p->curr.predicate = GEN_PREDICATE_NONE;
+      p->curr.noMask = 1;
       p->curr.useFlag(flagReg.flag_nr(), flagReg.flag_subnr());
       p->CMP(GEN_CONDITIONAL_NZ, a, zero);
       p->curr.predicate = GEN_PREDICATE_NORMAL;
@@ -639,6 +639,7 @@ namespace gbe
       I64FullMult(e, f, g, h, a, b, c, d);
       p->push();
       p->curr.predicate = GEN_PREDICATE_NONE;
+      p->curr.noMask = 1;
       p->curr.useFlag(flagReg.flag_nr(), flagReg.flag_subnr());
       p->CMP(GEN_CONDITIONAL_NZ, i, zero);
       p->curr.predicate = GEN_PREDICATE_NORMAL;
@@ -670,6 +671,7 @@ namespace gbe
       p->push();
       p->curr.useFlag(flagReg.flag_nr(), flagReg.flag_subnr());
       p->curr.predicate = GEN_PREDICATE_NONE;
+      p->curr.noMask = 1;
       p->CMP(GEN_CONDITIONAL_NZ, e, zero);
       p->curr.predicate = GEN_PREDICATE_NORMAL;
       p->MOV(b, one);
@@ -793,6 +795,7 @@ namespace gbe
       case SEL_OP_I64SHL:
         p->push();
         p->curr.predicate = GEN_PREDICATE_NONE;
+        p->curr.noMask = 1;
         collectShifter(a, y);
         loadBottomHalf(e, x);
         loadTopHalf(f, x);
@@ -820,6 +823,7 @@ namespace gbe
       case SEL_OP_I64SHR:
         p->push();
         p->curr.predicate = GEN_PREDICATE_NONE;
+        p->curr.noMask = 1;
         collectShifter(a, y);
         loadBottomHalf(e, x);
         loadTopHalf(f, x);
@@ -848,6 +852,7 @@ namespace gbe
         f.type = GEN_TYPE_D;
         p->push();
         p->curr.predicate = GEN_PREDICATE_NONE;
+        p->curr.noMask = 1;
         collectShifter(a, y);
         loadBottomHalf(e, x);
         loadTopHalf(f, x);
@@ -894,6 +899,7 @@ namespace gbe
     p->push();
       p->curr.useFlag(flag.flag_nr(), flag.flag_subnr());
       p->curr.predicate = GEN_PREDICATE_NONE;
+      p->curr.noMask = 1;
       p->CMP(GEN_CONDITIONAL_EQ, exp, GenRegister::immud(32));   //high == 0
       p->curr.predicate = GEN_PREDICATE_NORMAL;
       p->MOV(dst, low);
@@ -911,6 +917,7 @@ namespace gbe
       p->pop();
 
       p->curr.predicate = GEN_PREDICATE_NONE;
+      p->curr.noMask = 1;
       p->CMP(GEN_CONDITIONAL_G, exp, GenRegister::immud(23));
       p->curr.predicate = GEN_PREDICATE_NORMAL;
       p->CMP(GEN_CONDITIONAL_L, exp, GenRegister::immud(32));  //exp>23 && high!=0
@@ -936,6 +943,7 @@ namespace gbe
       p->pop();
 
       p->curr.predicate = GEN_PREDICATE_NONE;
+      p->curr.noMask = 1;
       p->CMP(GEN_CONDITIONAL_EQ, exp, GenRegister::immud(23));
       p->curr.predicate = GEN_PREDICATE_NORMAL;
       p->MOV(dst_ud, GenRegister::immud(0));   //exp==9, SHR == 0
@@ -956,7 +964,7 @@ namespace gbe
       p->SHL(high, low, tmp);
       p->MOV(low, GenRegister::immud(0));
 
-      p->patchJMPI(jip1, (p->n_instruction() - (jip1 + 1)) * 2);
+      p->patchJMPI(jip1, (p->n_instruction() - jip1) * 2);
       p->curr.predicate = GEN_PREDICATE_NONE;
       p->CMP(GEN_CONDITIONAL_LE, exp, GenRegister::immud(31));  //update dst where high != 0
       p->curr.predicate = GEN_PREDICATE_NORMAL;
@@ -970,7 +978,7 @@ namespace gbe
       p->CMP(GEN_CONDITIONAL_EQ, high, GenRegister::immud(0x80000000));
       p->CMP(GEN_CONDITIONAL_EQ, low, GenRegister::immud(0x0));
       p->AND(dst_ud, dst_ud, GenRegister::immud(0xfffffffe));
-      p->patchJMPI(jip0, (p->n_instruction() - (jip0 + 1)) * 2);
+      p->patchJMPI(jip0, (p->n_instruction() - jip0) * 2);
 
     p->pop();
 
@@ -994,6 +1002,7 @@ namespace gbe
       p->MOV(tmp_high, high);
       p->push();
       p->curr.predicate = GEN_PREDICATE_NONE;
+      p->curr.noMask = 1;
       p->curr.useFlag(f0.flag_nr(), f0.flag_subnr());
       p->CMP(GEN_CONDITIONAL_GE, tmp_high, GenRegister::immud(0x80000000));
       p->curr.predicate = GEN_PREDICATE_NORMAL;
@@ -1006,6 +1015,7 @@ namespace gbe
       UnsignedI64ToFloat(dest, high, low, exp, mantissa, tmp, f0);
       p->push();
       p->curr.predicate = GEN_PREDICATE_NONE;
+      p->curr.noMask = 1;
       p->curr.useFlag(f0.flag_nr(), f0.flag_subnr());
       p->CMP(GEN_CONDITIONAL_GE, tmp_high, GenRegister::immud(0x80000000));
       p->curr.predicate = GEN_PREDICATE_NORMAL;
@@ -1039,6 +1049,7 @@ namespace gbe
     if(dst.is_signed_int()) {
       p->push();
       p->curr.predicate = GEN_PREDICATE_NONE;
+      p->curr.noMask = 1;
       p->curr.useFlag(flag0.flag_nr(), flag0.flag_subnr());
       p->CMP(GEN_CONDITIONAL_L, src, GenRegister::immf(0x0));
       p->curr.predicate = GEN_PREDICATE_NORMAL;
@@ -1066,11 +1077,10 @@ namespace gbe
                 f1.width = GEN_WIDTH_1;
     GenRegister f2 = GenRegister::suboffset(f1, 1);
     GenRegister f3 = GenRegister::suboffset(f1, 2);
-    GenRegister f4 = GenRegister::suboffset(f1, 3);
 
     p->push();
     p->curr.predicate = GEN_PREDICATE_NONE;
-    saveFlag(f4, flag, subFlag);
+    p->curr.noMask = 1;
     loadTopHalf(tmp0, src0);
     loadTopHalf(tmp1, src1);
     switch(insn.extra.function) {
@@ -1130,12 +1140,13 @@ namespace gbe
         NOT_IMPLEMENTED;
     }
     p->curr.execWidth = 1;
-    p->AND(f1, f1, f4);
     p->MOV(GenRegister::flag(flag, subFlag), f1);
     p->pop();
     p->push();
     p->curr.predicate = GEN_PREDICATE_NONE;
+    p->curr.noMask = 1;
     p->MOV(dst, GenRegister::immd(0));
+    p->curr.noMask = 0;
     p->curr.predicate = GEN_PREDICATE_NORMAL;
     p->MOV(dst, GenRegister::immd(-1));
     p->pop();
@@ -1163,6 +1174,7 @@ namespace gbe
     p->ADD(c, c, d);
     p->push();
     p->curr.predicate = GEN_PREDICATE_NONE;
+    p->curr.noMask = 1;
     p->curr.useFlag(flagReg.flag_nr(), flagReg.flag_subnr());
     if(! dst.is_signed_int()) {
       p->CMP(GEN_CONDITIONAL_NZ, c, GenRegister::immud(0));
@@ -1176,6 +1188,7 @@ namespace gbe
       p->MOV(a, GenRegister::immud(0x80000000u));
       p->MOV(b, GenRegister::immud(0));
       p->curr.predicate = GEN_PREDICATE_NONE;
+      p->curr.noMask = 1;
       p->CMP(GEN_CONDITIONAL_EQ, e, GenRegister::immud(0));
       p->curr.predicate = GEN_PREDICATE_NORMAL;
       p->CMP(GEN_CONDITIONAL_GE, a, GenRegister::immud(0x80000000u));
@@ -1209,6 +1222,7 @@ namespace gbe
     p->ADD(c, c, d);
     p->push();
     p->curr.predicate = GEN_PREDICATE_NONE;
+    p->curr.noMask = 1;
     p->curr.useFlag(flagReg.flag_nr(), flagReg.flag_subnr());
     if(! dst.is_signed_int()) {
       p->CMP(GEN_CONDITIONAL_NZ, c, GenRegister::immud(0));
@@ -1238,6 +1252,7 @@ namespace gbe
     src = src.top_half();
     p->push();
     p->curr.predicate = GEN_PREDICATE_NONE;
+    p->curr.noMask = 1;
     p->curr.execWidth = 8;
     p->MOV(dest, src);
     p->MOV(GenRegister::suboffset(dest, 4), GenRegister::suboffset(src, 4));
@@ -1252,6 +1267,7 @@ namespace gbe
     int execWidth = p->curr.execWidth;
     dest = dest.top_half();
     p->push();
+    p->curr.predicate = GEN_PREDICATE_NORMAL;
     p->curr.execWidth = 8;
     p->MOV(dest, src);
     p->curr.nibControl = 1;
@@ -1271,6 +1287,7 @@ namespace gbe
     src = src.bottom_half();
     p->push();
     p->curr.predicate = GEN_PREDICATE_NONE;
+    p->curr.noMask = 1;
     p->curr.execWidth = 8;
     p->MOV(dest, src);
     p->MOV(GenRegister::suboffset(dest, 4), GenRegister::suboffset(src, 4));
@@ -1286,6 +1303,7 @@ namespace gbe
     dest = dest.bottom_half();
     p->push();
     p->curr.execWidth = 8;
+    p->curr.predicate = GEN_PREDICATE_NORMAL;
     p->MOV(dest, src);
     p->curr.nibControl = 1;
     p->MOV(GenRegister::suboffset(dest, 4), GenRegister::suboffset(src, 4));
@@ -1369,6 +1387,7 @@ namespace gbe
     loadBottomHalf(d, y);
     p->push();
     p->curr.predicate = GEN_PREDICATE_NONE;
+    p->curr.noMask = 1;
     I32FullMult(GenRegister::retype(GenRegister::null(), GEN_TYPE_D), e, b, c);
     I32FullMult(GenRegister::retype(GenRegister::null(), GEN_TYPE_D), f, a, d);
     p->ADD(e, e, f);
@@ -1443,6 +1462,7 @@ namespace gbe
       // condition <- (c,d)==0 && (a,b)>=(e,f)
       p->push();
       p->curr.predicate = GEN_PREDICATE_NONE;
+      p->curr.noMask = 1;
       p->MOV(l, zero);
       p->curr.useFlag(flagReg.flag_nr(), flagReg.flag_subnr());
       p->CMP(GEN_CONDITIONAL_EQ, a, e);
@@ -1477,6 +1497,7 @@ namespace gbe
       p->ADD(m, m, one);
       p->push();
       p->curr.predicate = GEN_PREDICATE_NONE;
+      p->curr.noMask = 1;
       p->curr.useFlag(flagReg.flag_nr(), flagReg.flag_subnr());
       p->CMP(GEN_CONDITIONAL_L, m, GenRegister::immud(64));
 
@@ -1484,7 +1505,6 @@ namespace gbe
       p->curr.noMask = 1;
       p->AND(flagReg, flagReg, emaskReg);
 
-      p->curr.predicate = GEN_PREDICATE_NORMAL;
       // under condition, jump back to start point
       if (simdWidth == 8)
         p->curr.predicate = GEN_PREDICATE_ALIGN1_ANY8H;
@@ -1493,8 +1513,9 @@ namespace gbe
       else
         NOT_IMPLEMENTED;
       int jip = -(int)(p->n_instruction() - loop_start + 1) * 2;
+      p->curr.noMask = 1;
       p->JMPI(zero);
-      p->patchJMPI(p->n_instruction()-2, jip);
+      p->patchJMPI(p->n_instruction() - 2, jip + 2);
       p->pop();
       // end of loop
     }
@@ -1502,6 +1523,7 @@ namespace gbe
     if(x.is_signed_int()) {
       p->push();
       p->curr.predicate = GEN_PREDICATE_NONE;
+      p->curr.noMask = 1;
       p->curr.useFlag(flagReg.flag_nr(), flagReg.flag_subnr());
       p->CMP(GEN_CONDITIONAL_NEQ, k, zero);
       p->curr.predicate = GEN_PREDICATE_NORMAL;
@@ -1534,7 +1556,7 @@ namespace gbe
   }
 
   void GenContext::emitNoOpInstruction(const SelectionInstruction &insn) {
-    NOT_IMPLEMENTED;
+   p->NOP();
   }
 
   void GenContext::emitWaitInstruction(const SelectionInstruction &insn) {
@@ -1546,59 +1568,24 @@ namespace gbe
     const GenRegister fenceDst = ra->genReg(insn.dst(0));
     uint32_t barrierType = insn.extra.barrierType;
     const GenRegister barrierId = ra->genReg(GenRegister::ud1grf(ir::ocl::barrierid));
-    GenRegister blockIP;
-    uint32_t exeWidth = p->curr.execWidth;
-    ir::LabelIndex label = insn.parent->bb->getNextBlock()->getLabelIndex();
 
-    if (exeWidth == 16)
-      blockIP = ra->genReg(GenRegister::uw16grf(ir::ocl::blockip));
-    else if (exeWidth == 8)
-      blockIP = ra->genReg(GenRegister::uw8grf(ir::ocl::blockip));
-
-    p->push();
-    /* Set block IP to 0xFFFF and clear the flag0's all bits. to skip all the instructions
-       after the barrier, If there is any lane still remains zero. */
-    p->MOV(blockIP, GenRegister::immuw(0xFFFF));
-    p->curr.noMask = 1;
-    p->curr.execWidth = 1;
-    this->branchPos2.push_back(std::make_pair(label, p->n_instruction()));
-    if (exeWidth == 16)
-      p->curr.predicate = GEN_PREDICATE_ALIGN1_ALL16H;
-    else if (exeWidth == 8)
-      p->curr.predicate = GEN_PREDICATE_ALIGN1_ALL8H;
-    else
-      NOT_IMPLEMENTED;
-    p->curr.inversePredicate = 1;
-    // If not all channel is set to 1, the barrier is still waiting for other lanes to complete,
-    // jump to next basic block.
-    p->JMPI(GenRegister::immud(0));
-    p->curr.predicate = GEN_PREDICATE_NONE;
-    p->MOV(GenRegister::flag(0, 0), ra->genReg(GenRegister::uw1grf(ir::ocl::emask)));
-    p->pop();
-
-    p->push();
-    p->curr.useFlag(0, 0);
-    /* Restore the blockIP to current label. */
-    p->MOV(blockIP, GenRegister::immuw(insn.parent->bb->getLabelIndex()));
     if (barrierType == ir::syncGlobalBarrier) {
       p->FENCE(fenceDst);
       p->MOV(fenceDst, fenceDst);
     }
-    p->curr.predicate = GEN_PREDICATE_NONE;
-    // As only the payload.2 is used and all the other regions are ignored
-    // SIMD8 mode here is safe.
-    p->curr.execWidth = 8;
-    p->curr.physicalFlag = 0;
-    p->curr.noMask = 1;
-    // Copy barrier id from r0.
-    p->AND(src, barrierId, GenRegister::immud(0x0f000000));
-    // A barrier is OK to start the thread synchronization *and* SLM fence
-    p->BARRIER(src);
-    // Now we wait for the other threads
-    p->curr.execWidth = 1;
-    p->WAIT();
-    // we executed the barrier then restore the barrier soft mask to initial value.
-    p->MOV(ra->genReg(GenRegister::uw1grf(ir::ocl::barriermask)), ra->genReg(GenRegister::uw1grf(ir::ocl::notemask)));
+    p->push();
+      // As only the payload.2 is used and all the other regions are ignored
+      // SIMD8 mode here is safe.
+      p->curr.execWidth = 8;
+      p->curr.physicalFlag = 0;
+      p->curr.noMask = 1;
+      // Copy barrier id from r0.
+      p->AND(src, barrierId, GenRegister::immud(0x0f000000));
+      // A barrier is OK to start the thread synchronization *and* SLM fence
+      p->BARRIER(src);
+      p->curr.execWidth = 1;
+      // Now we wait for the other threads
+      p->WAIT();
     p->pop();
   }
 

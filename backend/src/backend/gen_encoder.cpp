@@ -837,6 +837,7 @@ namespace gbe
     GenRegister r = GenRegister::retype(tmp, GEN_TYPE_UD);
     push();
     curr.predicate = GEN_PREDICATE_NONE;
+    curr.noMask = 1;
     curr.execWidth = 1;
     MOV(r, GenRegister::immud(u.u[1]));
     MOV(GenRegister::suboffset(r, 1), GenRegister::immud(u.u[0]));
@@ -907,6 +908,7 @@ namespace gbe
       push();
       curr.execWidth = 8;
       curr.predicate = GEN_PREDICATE_NONE;
+      curr.noMask = 1;
       MOV(r0, src0);
       MOV(GenRegister::suboffset(r0, 4), GenRegister::suboffset(src0, 4));
       curr.predicate = GEN_PREDICATE_NORMAL;
@@ -920,6 +922,7 @@ namespace gbe
         push();
         curr.execWidth = 8;
         curr.predicate = GEN_PREDICATE_NONE;
+        curr.noMask = 1;
         MOV(r0, GenRegister::suboffset(src0, 8));
         MOV(GenRegister::suboffset(r0, 4), GenRegister::suboffset(src0, 12));
         curr.predicate = GEN_PREDICATE_NORMAL;
@@ -1058,7 +1061,7 @@ namespace gbe
 
 #define ALU2_BRA(OP) \
   void GenEncoder::OP(GenRegister src) { \
-    alu2(this, GEN_OPCODE_##OP, GenRegister::null(), GenRegister::null(), src); \
+    alu2(this, GEN_OPCODE_##OP, GenRegister::nullud(), GenRegister::nullud(), src); \
   }
 
   ALU2_BRA(IF)
@@ -1071,9 +1074,21 @@ namespace gbe
     GBE_ASSERT(insnID < this->store.size());
     GBE_ASSERT(insn.header.opcode == GEN_OPCODE_JMPI ||
                insn.header.opcode == GEN_OPCODE_BRD  ||
-               insn.header.opcode == GEN_OPCODE_ENDIF);
-    if ( jumpDistance > -32769 && jumpDistance < 32768 ) {
-          this->setSrc1(&insn, GenRegister::immd(jumpDistance));
+               insn.header.opcode == GEN_OPCODE_ENDIF ||
+               insn.header.opcode == GEN_OPCODE_IF ||
+               insn.header.opcode == GEN_OPCODE_BRC);
+
+    if (insn.header.opcode != GEN_OPCODE_JMPI || (jumpDistance > -32769 && jumpDistance < 32768))  {
+          int offset = 0;
+           if (insn.header.opcode == GEN_OPCODE_IF) {
+             this->setSrc1(&insn, GenRegister::immd(jumpDistance));
+             return;
+           }
+           else if (insn.header.opcode == GEN_OPCODE_JMPI) {
+             offset = -2;
+             /*assert(jumpDistance > -32769 && jumpDistance < 32768);*/
+           }
+          this->setSrc1(&insn, GenRegister::immd(jumpDistance + offset));
     } else if ( insn.header.predicate_control == GEN_PREDICATE_NONE ) {
       // For the conditional jump distance out of S15 range, we need to use an
       // inverted jmp followed by a add ip, ip, distance to implement.
@@ -1085,10 +1100,12 @@ namespace gbe
       // for all the branching instruction. And need to adjust the distance
       // for those branch instruction's start point and end point contains
       // this instruction.
+      GenInstruction &insn2 = this->store[insnID+1];
+      GBE_ASSERT(insn2.header.opcode == GEN_OPCODE_NOP);
       insn.header.opcode = GEN_OPCODE_ADD;
       this->setDst(&insn, GenRegister::ip());
       this->setSrc0(&insn, GenRegister::ip());
-      this->setSrc1(&insn, GenRegister::immd((jumpDistance + 2) * 8));
+      this->setSrc1(&insn, GenRegister::immd(jumpDistance * 8));
     } else {
       insn.header.predicate_inverse ^= 1;
       this->setSrc1(&insn, GenRegister::immd(2));
@@ -1099,7 +1116,7 @@ namespace gbe
       insn2.header.opcode = GEN_OPCODE_ADD;
       this->setDst(&insn2, GenRegister::ip());
       this->setSrc0(&insn2, GenRegister::ip());
-      this->setSrc1(&insn2, GenRegister::immd(jumpDistance * 8));
+      this->setSrc1(&insn2, GenRegister::immd((jumpDistance - 2) * 8));
     }
   }
 

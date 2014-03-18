@@ -42,6 +42,8 @@ namespace gbe
   /*! Translate IR compare to Gen compare */
   uint32_t getGenCompare(ir::Opcode opcode);
 
+  #define GEN_MAX_LABEL 0xFFFF
+
   /*! Selection opcodes properly encoded from 0 to n for fast jump tables
    *  generations
    */
@@ -190,6 +192,9 @@ namespace gbe
     void append(SelectionInstruction *insn);
     /*! Append a new selection instruction at the beginning of the block */
     void prepend(SelectionInstruction *insn);
+    int endifOffset;
+    bool hasBarrier;
+    bool hasBranch;
   };
 
   /*! Owns the selection engine */

@@ -100,13 +100,13 @@ static const struct {
   [GEN_OPCODE_SENDC] = { .name = "sendc", .nsrc = 1, .ndst = 1 },
   [GEN_OPCODE_NOP] = { .name = "nop", .nsrc = 0, .ndst = 0 },
   [GEN_OPCODE_JMPI] = { .name = "jmpi", .nsrc = 0, .ndst = 0 },
-  [GEN_OPCODE_BRD] = { .name = "brd", .nsrc = 1, .ndst = 0 },
-  [GEN_OPCODE_IF] = { .name = "if", .nsrc = 2, .ndst = 0 },
-  [GEN_OPCODE_BRC] = { .name = "brc", .nsrc = 1, .ndst = 0 },
-  [GEN_OPCODE_WHILE] = { .name = "while", .nsrc = 2, .ndst = 0 },
-  [GEN_OPCODE_ELSE] = { .name = "else", .nsrc = 2, .ndst = 0 },
-  [GEN_OPCODE_BREAK] = { .name = "break", .nsrc = 2, .ndst = 0 },
-  [GEN_OPCODE_CONTINUE] = { .name = "cont", .nsrc = 1, .ndst = 0 },
+  [GEN_OPCODE_BRD] = { .name = "brd", .nsrc = 0, .ndst = 0 },
+  [GEN_OPCODE_IF] = { .name = "if", .nsrc = 0, .ndst = 0 },
+  [GEN_OPCODE_BRC] = { .name = "brc", .nsrc = 0, .ndst = 0 },
+  [GEN_OPCODE_WHILE] = { .name = "while", .nsrc = 0, .ndst = 0 },
+  [GEN_OPCODE_ELSE] = { .name = "else", .nsrc = 0, .ndst = 0 },
+  [GEN_OPCODE_BREAK] = { .name = "break", .nsrc = 0, .ndst = 0 },
+  [GEN_OPCODE_CONTINUE] = { .name = "cont", .nsrc = 0, .ndst = 0 },
   [GEN_OPCODE_HALT] = { .name = "halt", .nsrc = 1, .ndst = 0 },
   [GEN_OPCODE_MSAVE] = { .name = "msave", .nsrc = 1, .ndst = 1 },
   [GEN_OPCODE_PUSH] = { .name = "push", .nsrc = 1, .ndst = 1 },
@@ -1126,17 +1126,18 @@ int gen_disasm (FILE *file, const void *opaque_insn)
     } else if (gen >= 6 && (inst->header.opcode == GEN_OPCODE_IF ||
           inst->header.opcode == GEN_OPCODE_ELSE ||
           inst->header.opcode == GEN_OPCODE_ENDIF ||
-          inst->header.opcode == GEN_OPCODE_WHILE)) {
-      // XXX format (file, " %d", inst->bits1.branch_gen6.jump_count);
-      assert(0);
+          inst->header.opcode == GEN_OPCODE_WHILE ||
+          inst->header.opcode == GEN_OPCODE_BRD ||
+          inst->header.opcode == GEN_OPCODE_JMPI)) {
+      format(file, " %d", (int16_t)inst->bits3.gen7_branch.jip);
     } else if (gen >= 6 && (inst->header.opcode == GEN_OPCODE_BREAK ||
           inst->header.opcode == GEN_OPCODE_CONTINUE ||
-          inst->header.opcode == GEN_OPCODE_HALT)) {
-      // XXX format (file, " %d %d", inst->bits3.break_cont.uip, inst->bits3.break_cont.jip);
-      assert(0);
-    } else if (inst->header.opcode == GEN_OPCODE_JMPI) {
+          inst->header.opcode == GEN_OPCODE_HALT ||
+          inst->header.opcode == GEN_OPCODE_BRC)) {
+      format (file, " %d %d", inst->bits3.gen7_branch.jip, inst->bits3.gen7_branch.uip);
+    }/* else if (inst->header.opcode == GEN_OPCODE_JMPI) {
       format (file, " %d", inst->bits3.d);
-    }
+    }*/
 
     if (opcode[inst->header.opcode].nsrc > 0) {
       pad (file, 32);

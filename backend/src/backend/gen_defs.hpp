@@ -896,6 +896,11 @@ struct GenInstruction
       uint32_t end_of_thread:1;
     } gen7_msg_gw;
 
+    struct {
+      uint32_t jip:16;
+      uint32_t uip:16;
+    } gen7_branch;
+
     int d;
     uint32_t ud;
     float f;

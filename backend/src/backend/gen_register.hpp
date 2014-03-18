@@ -118,7 +118,7 @@ namespace gbe
       this->noMask = 0;
       this->flag = 0;
       this->subFlag = 0;
-      this->predicate = GEN_PREDICATE_NORMAL;
+      this->predicate = GEN_PREDICATE_NONE;
       this->inversePredicate = 0;
       this->physicalFlag = 1;
       this->flagIndex = 0;
@@ -656,6 +656,17 @@ namespace gbe
                          GEN_WIDTH_8,
                          GEN_HORIZONTAL_STRIDE_1);
     }
+
+    static INLINE GenRegister nullud(void) {
+      return GenRegister(GEN_ARCHITECTURE_REGISTER_FILE,
+                         GEN_ARF_NULL,
+                         0,
+                         GEN_TYPE_UD,
+                         GEN_VERTICAL_STRIDE_8,
+                         GEN_WIDTH_8,
+                         GEN_HORIZONTAL_STRIDE_1);
+    }
+
 
     static INLINE bool isNull(GenRegister reg) {
       return (reg.file == GEN_ARCHITECTURE_REGISTER_FILE
