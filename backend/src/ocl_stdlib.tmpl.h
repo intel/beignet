@@ -3882,10 +3882,59 @@ INLINE_OVERLOADABLE TYPE##3 vload3(size_t offset, const SPACE TYPE *p) { \
   DECL_UNTYPED_RD_ALL_SPACE(TYPE, __constant) \
   DECL_UNTYPED_RW_ALL_SPACE(TYPE, __private)
 
-DECL_UNTYPED_RW_ALL(char)
-DECL_UNTYPED_RW_ALL(uchar)
-DECL_UNTYPED_RW_ALL(short)
-DECL_UNTYPED_RW_ALL(ushort)
+#define DECL_BYTE_RD_SPACE(TYPE, SPACE) \
+INLINE_OVERLOADABLE TYPE##2 vload2(size_t offset, const SPACE TYPE *p) { \
+  return (TYPE##2)(*(p+2*offset), *(p+2*offset+1)); \
+} \
+INLINE_OVERLOADABLE TYPE##3 vload3(size_t offset, const SPACE TYPE *p) { \
+  return (TYPE##3)(*(p+3*offset), *(p+3*offset+1), *(p+3*offset+2)); \
+} \
+INLINE_OVERLOADABLE TYPE##4 vload4(size_t offset, const SPACE TYPE *p) { \
+  return (TYPE##4)(vload2(2*offset, p), vload2(2*offset, p+2)); \
+} \
+INLINE_OVERLOADABLE TYPE##8 vload8(size_t offset, const SPACE TYPE *p) { \
+  return (TYPE##8)(vload4(2*offset, p), vload4(2*offset, p+4)); \
+} \
+INLINE_OVERLOADABLE TYPE##16 vload16(size_t offset, const SPACE TYPE *p) { \
+  return (TYPE##16)(vload8(2*offset, p), vload8(2*offset, p+8)); \
+}
+
+#define DECL_BYTE_WR_SPACE(TYPE, SPACE) \
+INLINE_OVERLOADABLE void vstore2(TYPE##2 v, size_t offset, SPACE TYPE *p) {\
+  *(p + 2 * offset) = v.s0; \
+  *(p + 2 * offset + 1) = v.s1; \
+} \
+INLINE_OVERLOADABLE void vstore3(TYPE##3 v, size_t offset, SPACE TYPE *p) {\
+  *(p + 3 * offset) = v.s0; \
+  *(p + 3 * offset + 1) = v.s1; \
+  *(p + 3 * offset + 2) = v.s2; \
+} \
+INLINE_OVERLOADABLE void vstore4(TYPE##4 v, size_t offset, SPACE TYPE *p) { \
+  vstore2(v.lo, 2*offset, p); \
+  vstore2(v.hi, 2*offset, p+2); \
+} \
+INLINE_OVERLOADABLE void vstore8(TYPE##8 v, size_t offset, SPACE TYPE *p) { \
+  vstore4(v.lo, 2*offset, p); \
+  vstore4(v.hi, 2*offset, p+4); \
+} \
+INLINE_OVERLOADABLE void vstore16(TYPE##16 v, size_t offset, SPACE TYPE *p) { \
+  vstore8(v.lo, 2*offset, p); \
+  vstore8(v.hi, 2*offset, p+8); \
+}
+
+#define DECL_BYTE_RW_ALL(TYPE) \
+  DECL_BYTE_RD_SPACE(TYPE, __global) \
+  DECL_BYTE_RD_SPACE(TYPE, __local) \
+  DECL_BYTE_RD_SPACE(TYPE, __private) \
+  DECL_BYTE_RD_SPACE(TYPE, __constant) \
+  DECL_BYTE_WR_SPACE(TYPE, __global) \
+  DECL_BYTE_WR_SPACE(TYPE, __local) \
+  DECL_BYTE_WR_SPACE(TYPE, __private)
+
+DECL_BYTE_RW_ALL(char)
+DECL_BYTE_RW_ALL(uchar)
+DECL_BYTE_RW_ALL(short)
+DECL_BYTE_RW_ALL(ushort)
 DECL_UNTYPED_RW_ALL(int)
 DECL_UNTYPED_RW_ALL(uint)
 DECL_UNTYPED_RW_ALL(long)
@@ -3900,6 +3949,9 @@ DECL_UNTYPED_RW_ALL(double)
 #undef DECL_UNTYPED_RD_SPACE_N
 #undef DECL_UNTYPED_V3_SPACE
 #undef DECL_UNTYPED_RDV3_SPACE
+#undef DECL_BYTE_RD_SPACE
+#undef DECL_BYTE_WR_SPACE
+#undef DECL_BYTE_RW_ALL
 
 PURE CONST float __gen_ocl_f16to32(short h);
 PURE CONST short __gen_ocl_f32to16(float f);
