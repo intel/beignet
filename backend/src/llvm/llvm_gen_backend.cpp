@@ -1654,10 +1654,26 @@ namespace gbe
       case ICmpInst::FCMP_OGE: ctx.GE(type, dst, src0, src1); break;
       case ICmpInst::FCMP_OLT: ctx.LT(type, dst, src0, src1); break;
       case ICmpInst::FCMP_OGT: ctx.GT(type, dst, src0, src1); break;
-      case ICmpInst::FCMP_ORD: ctx.ORD(type, dst, src0, src1); break;
+      case ICmpInst::FCMP_ORD:
+        //If there is a constant between src0 and src1, this constant value
+        //must ordered, otherwise, llvm will optimize the instruction to ture.
+        //So discard this constant value, only compare the other src.
+        if(isa<ConstantFP>(I.getOperand(0)))
+          ctx.EQ(type, dst, src1, src1);
+        else if(isa<ConstantFP>(I.getOperand(1)))
+          ctx.EQ(type, dst, src0, src0);
+        else
+          ctx.ORD(type, dst, src0, src1);
+        break;
       case ICmpInst::FCMP_UNO:
-        ctx.ORD(type, tmp, src0, src1);
-        ctx.XOR(insnType, dst, tmp, getRegister(cv));  //TODO: Use NOT directly
+        if(isa<ConstantFP>(I.getOperand(0)))
+          ctx.NE(type, dst, src1, src1);
+        else if(isa<ConstantFP>(I.getOperand(1)))
+          ctx.NE(type, dst, src0, src0);
+        else {
+          ctx.ORD(type, tmp, src0, src1);
+          ctx.XOR(insnType, dst, tmp, getRegister(cv));  //TODO: Use NOT directly
+        }
         break;
       case ICmpInst::FCMP_UEQ:
         ctx.NE(type, tmp, src0, src1);
