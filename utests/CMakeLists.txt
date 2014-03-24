@@ -169,6 +169,7 @@ set (utests_sources
   compiler_private_data_overflow.cpp
   compiler_getelementptr_bitcast.cpp
   load_program_from_bin.cpp
+  profiling_exec.cpp
   enqueue_copy_buf.cpp
   utest_assert.cpp
   utest.cpp
