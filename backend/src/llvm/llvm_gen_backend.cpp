@@ -2135,6 +2135,8 @@ namespace gbe
       case GEN_OCL_UPSAMPLE_INT:
       case GEN_OCL_UPSAMPLE_LONG:
       case GEN_OCL_MAD:
+      case GEN_OCL_FMAX:
+      case GEN_OCL_FMIN:
       case GEN_OCL_SADD_SAT_CHAR:
       case GEN_OCL_SADD_SAT_SHORT:
       case GEN_OCL_SADD_SAT_INT:
@@ -2621,6 +2623,22 @@ namespace gbe
             GBE_ASSERT(AI != AE); const ir::Register src2 = this->getRegister(*AI); ++AI;
             const ir::Register dst = this->getRegister(&I);
             ctx.MAD(getType(ctx, I.getType()), dst, src0, src1, src2);
+            break;
+          }
+          case GEN_OCL_FMAX:
+          case GEN_OCL_FMIN:{
+            GBE_ASSERT(AI != AE); const ir::Register src0 = this->getRegister(*AI); ++AI;
+            GBE_ASSERT(AI != AE); const ir::Register src1 = this->getRegister(*AI); ++AI;
+            const ir::Register dst = this->getRegister(&I);
+            const ir::Register cmp = ctx.reg(ir::FAMILY_BOOL);
+            //Becasue cmp's sources are same as sel's source, so cmp instruction and sel
+            //instruction will be merged to one sel_cmp instruction in the gen selection
+            //Add two intruction here for simple.
+            if(it->second == GEN_OCL_FMAX)
+              ctx.GE(getType(ctx, I.getType()), cmp, src0, src1);
+            else
+              ctx.LT(getType(ctx, I.getType()), cmp, src0, src1);
+            ctx.SEL(getType(ctx, I.getType()), dst, cmp, src0, src1);
             break;
           }
           case GEN_OCL_HADD: {

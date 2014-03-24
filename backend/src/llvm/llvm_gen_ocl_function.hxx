@@ -33,6 +33,8 @@ DECL_LLVM_GEN_FUNCTION(RNDE, __gen_ocl_rnde)
 DECL_LLVM_GEN_FUNCTION(RNDU, __gen_ocl_rndu)
 DECL_LLVM_GEN_FUNCTION(RNDD, __gen_ocl_rndd)
 DECL_LLVM_GEN_FUNCTION(MAD, __gen_ocl_mad)
+DECL_LLVM_GEN_FUNCTION(FMAX, __gen_ocl_fmax)
+DECL_LLVM_GEN_FUNCTION(FMIN, __gen_ocl_fmin)
 
 // Barrier function
 DECL_LLVM_GEN_FUNCTION(LBARRIER, __gen_ocl_barrier_local)

@@ -3169,6 +3169,8 @@ INLINE_OVERLOADABLE float __gen_ocl_internal_exp10(float x){
 #define remainder __gen_ocl_internal_remainder
 #define ldexp __gen_ocl_internal_ldexp
 PURE CONST float __gen_ocl_mad(float a, float b, float c);
+PURE CONST float __gen_ocl_fmax(float a, float b);
+PURE CONST float __gen_ocl_fmin(float a, float b);
 INLINE_OVERLOADABLE float mad(float a, float b, float c) {
   return __gen_ocl_mad(a, b, c);
 }
@@ -3224,14 +3226,10 @@ DECL_MIN_MAX_CLAMP(long)
 DECL_MIN_MAX_CLAMP(ulong)
 #undef DECL_MIN_MAX_CLAMP
 INLINE_OVERLOADABLE float max(float a, float b) {
-  if(isnan(b))
-    return a;
-  return a > b ? a : b;
+  return __gen_ocl_fmax(a, b);
 }
 INLINE_OVERLOADABLE float min(float a, float b) {
-  if(isnan(b))
-    return a;
-  return a < b ? a : b;
+  return __gen_ocl_fmin(a, b);
 }
 INLINE_OVERLOADABLE float clamp(float v, float l, float u) {
   return max(min(v, u), l);
