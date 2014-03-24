@@ -489,7 +489,6 @@ namespace gbe
       if(!bKernel) return false;
 
       LI = &getAnalysis<LoopInfo>();
-
       emitFunction(F);
       return false;
     }
@@ -497,6 +496,8 @@ namespace gbe
     virtual bool doFinalization(Module &M) { return false; }
     /*! handle global variable register allocation (local, constant space) */
     void allocateGlobalVariableRegister(Function &F);
+    /*! gather all the loops in the function and add them to ir::Function */
+    void gatherLoopInfo(ir::Function &fn);
     /*! Emit the complete function code and declaration */
     void emitFunction(Function &F);
     /*! Handle input and output function parameters */
@@ -1448,6 +1449,78 @@ namespace gbe
     }
 
   }
+  static INLINE void findAllLoops(LoopInfo * LI, std::vector<std::pair<Loop*, int>> &lp)
+  {
+      for (Loop::reverse_iterator I = LI->rbegin(), E = LI->rend(); I != E; ++I) {
+        lp.push_back(std::make_pair(*I, -1));
+      }
+      if (lp.size() == 0) return;
+
+      uint32_t i = 0;
+      do {
+        const std::vector<Loop*> subLoops = lp[i].first->getSubLoops();
+        for(auto sub : subLoops)
+          lp.push_back(std::make_pair(sub, i));
+        i++;
+      } while(i < lp.size());
+  }
+
+  void GenWriter::gatherLoopInfo(ir::Function &fn) {
+    vector<ir::LabelIndex> loopBBs;
+    vector<std::pair<ir::LabelIndex, ir::LabelIndex>> loopExits;
+    std::vector<std::pair<Loop*, int>> lp;
+
+    findAllLoops(LI, lp);
+#if GBE_DEBUG
+    // check two loops' interference
+    for(unsigned int i = 0; i < lp.size(); i++) {
+        SmallVector<Loop::Edge, 8> exitBBs;
+        lp[i].first->getExitEdges(exitBBs);
+
+      const std::vector<BasicBlock*> &inBBs = lp[i].first->getBlocks();
+      std::vector<ir::LabelIndex> bbs1;
+      for(auto x : inBBs) {
+        bbs1.push_back(labelMap[x]);
+      }
+      std::sort(bbs1.begin(), bbs1.end());
+      for(unsigned int j = i+1; j < lp.size(); j++) {
+        if(! lp[i].first->contains(lp[j].first)) {
+          const std::vector<BasicBlock*> &inBBs2 = lp[j].first->getBlocks();
+          std::vector<ir::LabelIndex> bbs2;
+          std::vector<ir::LabelIndex> bbs3;
+
+          for(auto x : inBBs2) {
+            bbs2.push_back(labelMap[x]);
+          }
+
+          std::sort(bbs2.begin(), bbs2.end());
+          std::set_intersection(bbs1.begin(), bbs1.end(), bbs2.begin(), bbs2.end(), std::back_inserter(bbs3));
+          GBE_ASSERT(bbs3.size() < 1);
+        }
+      }
+    }
+#endif
+
+    for (auto loop : lp) {
+      loopBBs.clear();
+      loopExits.clear();
+
+      const std::vector<BasicBlock*> &inBBs = loop.first->getBlocks();
+      for (auto b : inBBs) {
+        GBE_ASSERT(labelMap.find(b) != labelMap.end());
+        loopBBs.push_back(labelMap[b]);
+      }
+
+      SmallVector<Loop::Edge, 8> exitBBs;
+      loop.first->getExitEdges(exitBBs);
+      for(auto b : exitBBs){
+        GBE_ASSERT(labelMap.find(b.first) != labelMap.end());
+        GBE_ASSERT(labelMap.find(b.second) != labelMap.end());
+        loopExits.push_back(std::make_pair(labelMap[b.first], labelMap[b.second]));
+      }
+      fn.addLoop(loopBBs, loopExits);
+    }
+  }
 
   void GenWriter::emitFunction(Function &F)
   {
@@ -1464,6 +1537,7 @@ namespace gbe
     }
 
     ctx.startFunction(F.getName());
+    ir::Function &fn = ctx.getFunction();
     this->regTranslator.clear();
     this->labelMap.clear();
     this->emitFunctionPrototype(F);
@@ -1484,11 +1558,13 @@ namespace gbe
     for (Function::iterator BB = F.begin(), E = F.end(); BB != E; ++BB)
       this->simplifyTerminator(BB);
 
+    // gather loop info, which is useful for liveness analysis
+    gatherLoopInfo(fn);
+
     // ... then, emit the instructions for all basic blocks
     pass = PASS_EMIT_INSTRUCTIONS;
     for (Function::iterator BB = F.begin(), E = F.end(); BB != E; ++BB)
       emitBasicBlock(BB);
-    ir::Function &fn = ctx.getFunction();
     ctx.endFunction();
 
     // Liveness can be shared when we optimized the immediates and the MOVs

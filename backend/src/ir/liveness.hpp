@@ -69,8 +69,6 @@ namespace ir {
       INLINE bool inVarKill(Register reg) const {
         return varKill.contains(reg);
       }
-      UEVar extraLiveIn;
-      LiveOut extraLiveOut;
       UEVar upwardUsed;
       LiveOut liveOut;
       VarKill varKill;
@@ -94,17 +92,6 @@ namespace ir {
     const UEVar &getLiveIn(const BasicBlock *bb) const {
       const BlockInfo &info = this->getBlockInfo(bb);
       return info.upwardUsed;
-    }
-
-    /*! Get the set of extra registers alive at the end of the block */
-    const LiveOut &getExtraLiveOut(const BasicBlock *bb) const {
-      const BlockInfo &info = this->getBlockInfo(bb);
-      return info.extraLiveOut;
-    }
-    /*! Get the set of extra registers alive at the beginning of the block */
-    const UEVar &getExtraLiveIn(const BasicBlock *bb) const {
-      const BlockInfo &info = this->getBlockInfo(bb);
-      return info.extraLiveIn;
     }
 
     /*! Return the function the liveness was computed on */
@@ -143,7 +130,7 @@ namespace ir {
     void computeExtraLiveInOut(void);
     /*! Set of work list block which has exit(return) instruction */
     typedef set <struct BlockInfo*> WorkSet;
-    WorkSet workSet, extraWorkSet;
+    WorkSet workSet;
 
     /*! Use custom allocators */
     GBE_CLASS(Liveness);

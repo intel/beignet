@@ -134,6 +134,17 @@ namespace ir {
     return arg0.offset < arg1.offset;
   }
 
+  /*! CFG loops */
+  struct Loop : public NonCopyable
+  {
+  public:
+    Loop(const vector<LabelIndex> &in, const vector<std::pair<LabelIndex, LabelIndex>> &exit) :
+    bbs(in), exits(exit) {}
+    vector<LabelIndex> bbs;
+    vector<std::pair<LabelIndex, LabelIndex>> exits;
+    GBE_STRUCT(Loop);
+  };
+
   /*! A function is :
    *  - a register file
    *  - a set of basic block layout into a CGF
@@ -318,6 +329,9 @@ namespace ir {
     INLINE const uint32_t getStackSize(void) const { return this->stackSize; }
     /*! Push stack size. */
     INLINE void pushStackSize(uint32_t step) { this->stackSize += step; }
+    /*! add the loop info for later liveness analysis */
+    void addLoop(const vector<LabelIndex> &bbs, const vector<std::pair<LabelIndex, LabelIndex>> &exits);
+    INLINE const vector<Loop * > &getLoops() { return loops; }
   private:
     friend class Context;           //!< Can freely modify a function
     std::string name;               //!< Function name
@@ -327,6 +341,7 @@ namespace ir {
     vector<BasicBlock*> labels;     //!< Each label points to a basic block
     vector<Immediate> immediates;   //!< All immediate values in the function
     vector<BasicBlock*> blocks;     //!< All chained basic blocks
+    vector<Loop *> loops;           //!< Loops info of the function
     RegisterFile file;              //!< RegisterDatas used by the instructions
     Profile profile;                //!< Current function profile
     PushMap pushMap;                //!< Pushed function arguments (reg->loc)

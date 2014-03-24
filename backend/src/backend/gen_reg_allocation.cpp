@@ -870,14 +870,9 @@ namespace gbe
       for (auto reg : ctx.getLiveIn(bb))
           this->intervals[reg].minID = std::min(this->intervals[reg].minID, firstID);
 
-      for (auto reg : ctx.getExtraLiveIn(bb))
-          this->intervals[reg].minID = std::min(this->intervals[reg].minID, firstID);
       // All registers alive at the end of the block must have their intervals
       // updated as well
       for (auto reg : ctx.getLiveOut(bb))
-        this->intervals[reg].maxID = std::max(this->intervals[reg].maxID, lastID);
-
-      for (auto reg : ctx.getExtraLiveOut(bb))
         this->intervals[reg].maxID = std::max(this->intervals[reg].maxID, lastID);
     }
 

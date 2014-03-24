@@ -52,11 +52,16 @@ namespace ir {
 
   Function::~Function(void) {
     for (auto block : blocks) GBE_DELETE(block);
+    for (auto loop : loops) GBE_DELETE(loop);
     for (auto arg : args) GBE_DELETE(arg);
   }
 
   RegisterFamily Function::getPointerFamily(void) const {
     return unit.getPointerFamily();
+  }
+
+  void Function::addLoop(const vector<LabelIndex> &bbs, const vector<std::pair<LabelIndex, LabelIndex>> &exits) {
+    loops.push_back(GBE_NEW(Loop, bbs, exits));
   }
 
   void Function::sortLabels(void) {
@@ -95,6 +100,17 @@ namespace ir {
         newBra.replace(&insn);
       }
     });
+
+    // fix labels for loops
+    for (auto &x : loops) {
+      for (auto &y : x->bbs)
+        y = labelMap[y];
+
+      for (auto &z : x->exits) {
+        z.first = labelMap[z.first];
+        z.second = labelMap[z.second];
+      }
+    }
 
     // Reset the label to block mapping
     this->labels.resize(last);

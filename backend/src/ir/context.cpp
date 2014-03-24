@@ -76,13 +76,14 @@ namespace ir {
     // function
     lowerReturn(unit, fn->getName());
 
+    // Properly order labels and compute the CFG, it's needed by FunctionArgumentLower
+    fn->sortLabels();
+    fn->computeCFG();
+
     // Spill function argument to the stack if required and identify which
     // function arguments can use constant push
     lowerFunctionArguments(unit, fn->getName());
 
-    // Properly order labels and compute the CFG
-    fn->sortLabels();
-    fn->computeCFG();
     const StackElem elem = fnStack.back();
     fnStack.pop_back();
     fn = elem.fn;
