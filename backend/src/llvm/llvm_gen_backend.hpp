@@ -86,6 +86,8 @@ namespace gbe
 
   /*! Scalarize all vector op instructions */
   llvm::FunctionPass* createScalarizePass();
+  /*! Remove/add NoDuplicate function attribute for barrier functions. */
+  llvm::ModulePass* createBarrierNodupPass(bool);
 
   /*! Convert the Intrinsic call to gen function */
   llvm::BasicBlockPass *createIntrinsicLoweringPass();

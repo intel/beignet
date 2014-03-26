@@ -112,7 +112,9 @@ namespace gbe
     MPM.add(createInstructionCombiningPass());// Clean up after IPCP & DAE
     MPM.add(createCFGSimplificationPass());   // Clean up after IPCP & DAE
     MPM.add(createPruneEHPass());             // Remove dead EH info
+    MPM.add(createBarrierNodupPass(false));   // remove noduplicate fnAttr before inlining.
     MPM.add(createFunctionInliningPass(200000));
+    MPM.add(createBarrierNodupPass(true));    // restore noduplicate fnAttr after inlining.
     MPM.add(createFunctionAttrsPass());       // Set readonly/readnone attrs
 
     //MPM.add(createScalarReplAggregatesPass(64, true, -1, -1, 64))

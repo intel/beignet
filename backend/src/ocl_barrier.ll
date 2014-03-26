@@ -6,9 +6,9 @@
 
 declare i32 @_get_local_mem_fence() nounwind alwaysinline
 declare i32 @_get_global_mem_fence() nounwind alwaysinline
-declare void @__gen_ocl_barrier_local() nounwind alwaysinline
-declare void @__gen_ocl_barrier_global() nounwind alwaysinline
-declare void @__gen_ocl_barrier_local_and_global() nounwind alwaysinline
+declare void @__gen_ocl_barrier_local() nounwind alwaysinline noduplicate
+declare void @__gen_ocl_barrier_global() nounwind alwaysinline noduplicate
+declare void @__gen_ocl_barrier_local_and_global() nounwind alwaysinline noduplicate
 
 define void @barrier(i32 %flags) nounwind noduplicate alwaysinline {
   %1 = icmp eq i32 %flags, 3
