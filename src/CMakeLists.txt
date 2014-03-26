@@ -18,7 +18,9 @@ endforeach (KF)
 endmacro (MakeKernelBinStr)
 
 set (KERNEL_STR_FILES)
-set (KERNEL_NAMES cl_internal_copy_buf_align1 cl_internal_copy_buf_align4 cl_internal_copy_buf_align16)
+set (KERNEL_NAMES cl_internal_copy_buf_align1 cl_internal_copy_buf_align4
+cl_internal_copy_buf_align16 cl_internal_copy_buf_unalign_same_offset
+cl_internal_copy_buf_unalign_dst_offset cl_internal_copy_buf_unalign_src_offset)
 MakeKernelBinStr ("${CMAKE_CURRENT_SOURCE_DIR}/kernels/" "${KERNEL_NAMES}")
 
 set(OPENCL_SRC
