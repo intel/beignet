@@ -1,6 +1,6 @@
 #include "utest_helper.hpp"
 
-void test_copy_buf(size_t sz, size_t src_off, size_t dst_off, size_t cb)
+static void test_copy_buf(size_t sz, size_t src_off, size_t dst_off, size_t cb)
 {
     unsigned int i;
     OCL_MAP_BUFFER(0);
@@ -56,7 +56,7 @@ void enqueue_copy_buf(void)
     OCL_CREATE_BUFFER(buf[0], 0, sz * sizeof(char), NULL);
     OCL_CREATE_BUFFER(buf[1], 0, sz * sizeof(char), NULL);
 
-    for (i=0; i<sz; i+=8) {
+    for (i=0; i<sz; i+=7) {
         for (j=0; j<sz; j+=10) {
             test_copy_buf(sz, i, j, sz/2);
         }

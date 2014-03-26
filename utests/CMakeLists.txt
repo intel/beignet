@@ -171,6 +171,7 @@ set (utests_sources
   load_program_from_bin.cpp
   profiling_exec.cpp
   enqueue_copy_buf.cpp
+  enqueue_copy_buf_unaligned.cpp
   utest_assert.cpp
   utest.cpp
   utest_file_map.cpp
