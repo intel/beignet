@@ -744,58 +744,159 @@ LOCAL cl_int
 cl_mem_copy(cl_command_queue queue, cl_mem src_buf, cl_mem dst_buf,
             size_t src_offset, size_t dst_offset, size_t cb)
 {
-  cl_int ret;
-  cl_kernel ker;
+  cl_int ret = CL_SUCCESS;
+  cl_kernel ker = NULL;
   size_t global_off[] = {0,0,0};
   size_t global_sz[] = {1,1,1};
   size_t local_sz[] = {1,1,1};
+  const unsigned int masks[4] = {0xffffffff, 0x0ff, 0x0ffff, 0x0ffffff};
+  int aligned = 0;
+  int dw_src_offset = src_offset/4;
+  int dw_dst_offset = dst_offset/4;
+
+  if (!cb)
+    return ret;
 
   /* We use one kernel to copy the data. The kernel is lazily created. */
   assert(src_buf->ctx == dst_buf->ctx);
 
-  if ((cb % 4) || (src_offset % 4) || (dst_offset % 4)) {
-    extern char cl_internal_copy_buf_align1_str[];
-    extern int cl_internal_copy_buf_align1_str_size;
-
-    ker = cl_context_get_static_kernel_form_bin(queue->ctx, CL_ENQUEUE_COPY_BUFFER_ALIGN1,
-             cl_internal_copy_buf_align1_str, (size_t)cl_internal_copy_buf_align1_str_size, NULL);
-  } else if ((cb % 16) || (src_offset % 16) || (dst_offset % 16)) {
-    extern char cl_internal_copy_buf_align4_str[];
-    extern int cl_internal_copy_buf_align4_str_size;
-
-    ker = cl_context_get_static_kernel_form_bin(queue->ctx, CL_ENQUEUE_COPY_BUFFER_ALIGN4,
-             cl_internal_copy_buf_align4_str, (size_t)cl_internal_copy_buf_align4_str_size, NULL);
-    cb = cb/4;
-    src_offset = src_offset/4;
-    dst_offset = dst_offset/4;
-  } else {
+  /* All 16 bytes aligned, fast and easy one. */
+  if((cb % 16 == 0) && (src_offset % 16 == 0) && (dst_offset % 16 == 0)) {
     extern char cl_internal_copy_buf_align16_str[];
     extern int cl_internal_copy_buf_align16_str_size;
 
     ker = cl_context_get_static_kernel_form_bin(queue->ctx, CL_ENQUEUE_COPY_BUFFER_ALIGN16,
              cl_internal_copy_buf_align16_str, (size_t)cl_internal_copy_buf_align16_str_size, NULL);
     cb = cb/16;
-    src_offset = src_offset/4;
-    dst_offset = dst_offset/4;
+    aligned = 1;
+  } else if ((cb % 4 == 0) && (src_offset % 4 == 0) && (dst_offset % 4 == 0)) { /* all Dword aligned.*/
+    extern char cl_internal_copy_buf_align4_str[];
+    extern int cl_internal_copy_buf_align4_str_size;
+
+    ker = cl_context_get_static_kernel_form_bin(queue->ctx, CL_ENQUEUE_COPY_BUFFER_ALIGN4,
+             cl_internal_copy_buf_align4_str, (size_t)cl_internal_copy_buf_align4_str_size, NULL);
+    cb = cb/4;
+    aligned = 1;
   }
 
-  if (!ker)
-    return CL_OUT_OF_RESOURCES;
+  if (aligned) {
+    if (!ker)
+      return CL_OUT_OF_RESOURCES;
+
+    if (cb < LOCAL_SZ_0) {
+      local_sz[0] = 1;
+    } else {
+      local_sz[0] = LOCAL_SZ_0;
+    }
+    global_sz[0] = ((cb + LOCAL_SZ_0 - 1)/LOCAL_SZ_0)*LOCAL_SZ_0;
+    cl_kernel_set_arg(ker, 0, sizeof(cl_mem), &src_buf);
+    cl_kernel_set_arg(ker, 1, sizeof(int), &dw_src_offset);
+    cl_kernel_set_arg(ker, 2, sizeof(cl_mem), &dst_buf);
+    cl_kernel_set_arg(ker, 3, sizeof(int), &dw_dst_offset);
+    cl_kernel_set_arg(ker, 4, sizeof(int), &cb);
+    ret = cl_command_queue_ND_range(queue, ker, 1, global_off, global_sz, local_sz);
+    return ret;
+  }
+
+  /* Now handle the unaligned cases. */
+  int dw_num = ((dst_offset % 4 + cb) + 3) / 4;
+  unsigned int first_mask = dst_offset % 4 == 0 ? 0x0 : masks[dst_offset % 4];
+  unsigned int last_mask = masks[(dst_offset + cb) % 4];
+  /* handle the very small range copy. */
+  if (cb < 4 && dw_num == 1) {
+    first_mask = first_mask | ~last_mask;
+  }
 
   if (cb < LOCAL_SZ_0) {
     local_sz[0] = 1;
   } else {
     local_sz[0] = LOCAL_SZ_0;
   }
-  global_sz[0] = ((cb + LOCAL_SZ_0 - 1)/LOCAL_SZ_0)*LOCAL_SZ_0;
+  global_sz[0] = ((dw_num + LOCAL_SZ_0 - 1)/LOCAL_SZ_0)*LOCAL_SZ_0;
 
-  cl_kernel_set_arg(ker, 0, sizeof(cl_mem), &src_buf);
-  cl_kernel_set_arg(ker, 1, sizeof(int), &src_offset);
-  cl_kernel_set_arg(ker, 2, sizeof(cl_mem), &dst_buf);
-  cl_kernel_set_arg(ker, 3, sizeof(int), &dst_offset);
-  cl_kernel_set_arg(ker, 4, sizeof(int), &cb);
+  if (src_offset % 4 == dst_offset % 4) {
+    /* Src and dst has the same unaligned offset, just handle the
+       header and tail. */
+    extern char cl_internal_copy_buf_unalign_same_offset_str[];
+    extern int cl_internal_copy_buf_unalign_same_offset_str_size;
 
-  ret = cl_command_queue_ND_range(queue, ker, 1, global_off, global_sz, local_sz);
+    ker = cl_context_get_static_kernel_form_bin(queue->ctx, CL_ENQUEUE_COPY_BUFFER_UNALIGN_SAME_OFFSET,
+             cl_internal_copy_buf_unalign_same_offset_str,
+             (size_t)cl_internal_copy_buf_unalign_same_offset_str_size, NULL);
+
+    if (!ker)
+      return CL_OUT_OF_RESOURCES;
+
+    cl_kernel_set_arg(ker, 0, sizeof(cl_mem), &src_buf);
+    cl_kernel_set_arg(ker, 1, sizeof(int), &dw_src_offset);
+    cl_kernel_set_arg(ker, 2, sizeof(cl_mem), &dst_buf);
+    cl_kernel_set_arg(ker, 3, sizeof(int), &dw_dst_offset);
+    cl_kernel_set_arg(ker, 4, sizeof(int), &dw_num);
+    cl_kernel_set_arg(ker, 5, sizeof(int), &first_mask);
+    cl_kernel_set_arg(ker, 6, sizeof(int), &last_mask);
+    ret = cl_command_queue_ND_range(queue, ker, 1, global_off, global_sz, local_sz);
+    return ret;
+  }
+
+  /* Dst's offset < Src's offset, so one dst dword need two sequential src dwords to fill it. */
+  if (dst_offset % 4 < src_offset % 4) {
+    extern char cl_internal_copy_buf_unalign_dst_offset_str[];
+    extern int cl_internal_copy_buf_unalign_dst_offset_str_size;
+
+    int align_diff = src_offset % 4 - dst_offset % 4;
+    unsigned int dw_mask = masks[align_diff];
+    int shift = align_diff * 8;
+
+    ker = cl_context_get_static_kernel_form_bin(queue->ctx, CL_ENQUEUE_COPY_BUFFER_UNALIGN_DST_OFFSET,
+             cl_internal_copy_buf_unalign_dst_offset_str,
+             (size_t)cl_internal_copy_buf_unalign_dst_offset_str_size, NULL);
+
+    if (!ker)
+      return CL_OUT_OF_RESOURCES;
+
+    cl_kernel_set_arg(ker, 0, sizeof(cl_mem), &src_buf);
+    cl_kernel_set_arg(ker, 1, sizeof(int), &dw_src_offset);
+    cl_kernel_set_arg(ker, 2, sizeof(cl_mem), &dst_buf);
+    cl_kernel_set_arg(ker, 3, sizeof(int), &dw_dst_offset);
+    cl_kernel_set_arg(ker, 4, sizeof(int), &dw_num);
+    cl_kernel_set_arg(ker, 5, sizeof(int), &first_mask);
+    cl_kernel_set_arg(ker, 6, sizeof(int), &last_mask);
+    cl_kernel_set_arg(ker, 7, sizeof(int), &shift);
+    cl_kernel_set_arg(ker, 8, sizeof(int), &dw_mask);
+    ret = cl_command_queue_ND_range(queue, ker, 1, global_off, global_sz, local_sz);
+    return ret;
+  }
+
+  /* Dst's offset > Src's offset, so one dst dword need two sequential src - and src to fill it. */
+  if (dst_offset % 4 > src_offset % 4) {
+    extern char cl_internal_copy_buf_unalign_src_offset_str[];
+    extern int cl_internal_copy_buf_unalign_src_offset_str_size;
+
+    int align_diff = dst_offset % 4 - src_offset % 4;
+    unsigned int dw_mask = masks[4 - align_diff];
+    int shift = align_diff * 8;
+    int src_less = !(src_offset % 4) && !((src_offset + cb) % 4);
+
+    ker = cl_context_get_static_kernel_form_bin(queue->ctx, CL_ENQUEUE_COPY_BUFFER_UNALIGN_SRC_OFFSET,
+             cl_internal_copy_buf_unalign_src_offset_str,
+             (size_t)cl_internal_copy_buf_unalign_src_offset_str_size, NULL);
+
+    cl_kernel_set_arg(ker, 0, sizeof(cl_mem), &src_buf);
+    cl_kernel_set_arg(ker, 1, sizeof(int), &dw_src_offset);
+    cl_kernel_set_arg(ker, 2, sizeof(cl_mem), &dst_buf);
+    cl_kernel_set_arg(ker, 3, sizeof(int), &dw_dst_offset);
+    cl_kernel_set_arg(ker, 4, sizeof(int), &dw_num);
+    cl_kernel_set_arg(ker, 5, sizeof(int), &first_mask);
+    cl_kernel_set_arg(ker, 6, sizeof(int), &last_mask);
+    cl_kernel_set_arg(ker, 7, sizeof(int), &shift);
+    cl_kernel_set_arg(ker, 8, sizeof(int), &dw_mask);
+    cl_kernel_set_arg(ker, 9, sizeof(int), &src_less);
+    ret = cl_command_queue_ND_range(queue, ker, 1, global_off, global_sz, local_sz);
+    return ret;
+  }
+
+  /* no case can hanldle? */
+  assert(0);
 
   return ret;
 }
