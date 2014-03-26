@@ -75,7 +75,8 @@ namespace ir {
     // Remove all returns and insert one unique return block at the end of the
     // function
     lowerReturn(unit, fn->getName());
-
+    // check if there is empty labels at first
+    fn->checkEmptyLabels();
     // Properly order labels and compute the CFG, it's needed by FunctionArgumentLower
     fn->sortLabels();
     fn->computeCFG();

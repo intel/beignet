@@ -281,6 +281,8 @@ namespace ir {
     void computeCFG(void);
     /*! Sort labels in increasing orders (top block has the smallest label) */
     void sortLabels(void);
+    /*! check empty Label. */
+    void checkEmptyLabels(void);
     /*! Get the pointer family */
     RegisterFamily getPointerFamily(void) const;
     /*! Number of registers in the register file */

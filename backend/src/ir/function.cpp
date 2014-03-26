@@ -64,6 +64,18 @@ namespace ir {
     loops.push_back(GBE_NEW(Loop, bbs, exits));
   }
 
+  void Function::checkEmptyLabels(void) {
+    // Empty label map, we map the removed label to the next label.
+    map<LabelIndex, LabelIndex> labelMap;
+    map<LabelIndex, LabelIndex> revLabelMap;
+    foreachBlock([&](BasicBlock &BB) {
+      Instruction * insn = BB.getLastInstruction();
+      if (insn->getOpcode() == OP_LABEL) {
+        GBE_ASSERTM(0, "Found empty block. ");
+      }
+    });
+  }
+
   void Function::sortLabels(void) {
     uint32_t last = 0;
 

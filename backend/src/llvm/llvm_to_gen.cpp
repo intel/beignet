@@ -202,6 +202,8 @@ namespace gbe
     passes.add(createGVNPass());                  // Remove redundancies
     passes.add(createScalarizePass());        // Expand all vector ops
     passes.add(createDeadInstEliminationPass());  // Remove simplified instructions
+    passes.add(createCFGSimplificationPass());     // Merge & remove BBs
+    passes.add(createScalarizePass());        // Expand all vector ops
     passes.add(createGenPass(unit));
 
     // Print the code extra optimization passes
