@@ -65,8 +65,10 @@ namespace ir {
     static const Register barrierid = Register(21);// barrierid
     static const Register threadn = Register(22);  // number of threads
     static const Register workdim = Register(23);  // work dimention.
-    static const Register retVal = Register(24);   // helper register to do data flow analysis.
-    static const uint32_t regNum = 25;             // number of special registers
+    static const Register zero = Register(24);     //  scalar register holds zero.
+    static const Register one = Register(25);     //  scalar register holds one. 
+    static const Register retVal = Register(26);   // helper register to do data flow analysis.
+    static const uint32_t regNum = 27;             // number of special registers
     extern const char *specialRegMean[];           // special register name.
   } /* namespace ocl */
 

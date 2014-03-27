@@ -105,12 +105,19 @@ namespace gbe
     // when group size not aligned to simdWidth, flag register need clear to
     // make prediction(any8/16h) work correctly
     const GenRegister blockip = ra->genReg(GenRegister::uw8grf(ir::ocl::blockip));
+    const GenRegister zero = ra->genReg(GenRegister::uw1grf(ir::ocl::zero));
+    const GenRegister one = ra->genReg(GenRegister::uw1grf(ir::ocl::one));
     p->push();
       p->curr.noMask = 1;
       p->curr.predicate = GEN_PREDICATE_NONE;
       p->MOV(blockip, GenRegister::immuw(GEN_MAX_LABEL));
       p->curr.noMask = 0;
       p->MOV(blockip, GenRegister::immuw(0));
+      p->curr.execWidth = 1;
+      // FIXME, need to get the final use set of zero/one, if there is no user,
+      // no need to generate the following two instructions.
+      p->MOV(zero, GenRegister::immuw(0));
+      p->MOV(one, GenRegister::immw(-1));
     p->pop();
   }
 
@@ -1902,6 +1909,8 @@ namespace gbe
     allocCurbeReg(lid0, GBE_CURBE_LOCAL_ID_X);
     allocCurbeReg(lid1, GBE_CURBE_LOCAL_ID_Y);
     allocCurbeReg(lid2, GBE_CURBE_LOCAL_ID_Z);
+    allocCurbeReg(zero, GBE_CURBE_ZERO);
+    allocCurbeReg(one, GBE_CURBE_ONE);
     if (stackUse.size() != 0)
       allocCurbeReg(stackbuffer, GBE_CURBE_EXTRA_ARGUMENT, GBE_STACK_BUFFER);
     // Go over the arguments and find the related patch locations
