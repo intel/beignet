@@ -1077,7 +1077,6 @@ namespace gbe
     GenRegister tmp0 = ra->genReg(insn.dst(0));
     GenRegister tmp1 = ra->genReg(insn.dst(1));
     GenRegister tmp2 = ra->genReg(insn.dst(2));
-    GenRegister dst = ra->genReg(insn.dst(3));
     tmp0.type = (src0.type == GEN_TYPE_L) ? GEN_TYPE_D : GEN_TYPE_UD;
     tmp1.type = (src1.type == GEN_TYPE_L) ? GEN_TYPE_D : GEN_TYPE_UD;
     int flag = p->curr.flag, subFlag = p->curr.subFlag;
@@ -1149,14 +1148,6 @@ namespace gbe
     }
     p->curr.execWidth = 1;
     p->MOV(GenRegister::flag(flag, subFlag), f1);
-    p->pop();
-    p->push();
-    p->curr.predicate = GEN_PREDICATE_NONE;
-    p->curr.noMask = 1;
-    p->MOV(dst, GenRegister::immd(0));
-    p->curr.noMask = 0;
-    p->curr.predicate = GEN_PREDICATE_NORMAL;
-    p->MOV(dst, GenRegister::immd(-1));
     p->pop();
   }
 

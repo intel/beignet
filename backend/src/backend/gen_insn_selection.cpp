@@ -486,7 +486,7 @@ namespace gbe
     /*! Shift a 64-bit integer */
     void I64Shift(SelectionOpcode opcode, Reg dst, Reg src0, Reg src1, GenRegister tmp[7]);
     /*! Compare 64-bit integer */
-    void I64CMP(uint32_t conditional, Reg src0, Reg src1, GenRegister tmp[3], Reg dst = GenRegister::null());
+    void I64CMP(uint32_t conditional, Reg src0, Reg src1, GenRegister tmp[3]);
     /*! Saturated addition of 64-bit integer */
     void I64SATADD(Reg dst, Reg src0, Reg src1, GenRegister tmp[6]);
     /*! Saturated subtraction of 64-bit integer */
@@ -1244,13 +1244,12 @@ namespace gbe
     insn->src(2) = src2;
   }
 
-  void Selection::Opaque::I64CMP(uint32_t conditional, Reg src0, Reg src1, GenRegister tmp[3], Reg dst) {
-    SelectionInstruction *insn = this->appendInsn(SEL_OP_I64CMP, 4, 2);
+  void Selection::Opaque::I64CMP(uint32_t conditional, Reg src0, Reg src1, GenRegister tmp[3]) {
+    SelectionInstruction *insn = this->appendInsn(SEL_OP_I64CMP, 3, 2);
     insn->src(0) = src0;
     insn->src(1) = src1;
     for(int i=0; i<3; i++)
       insn->dst(i) = tmp[i];
-    insn->dst(3) = dst;
     insn->extra.function = conditional;
   }
 
@@ -2657,11 +2656,12 @@ namespace gbe
       const Type type = insn.getType();
       const Register dst = insn.getDst(0);
       GenRegister tmpDst;
-
-      if (type == TYPE_BOOL || type == TYPE_U16 || type == TYPE_S16)
-        tmpDst = sel.selReg(dst, TYPE_BOOL);
+      if(type == TYPE_S64 || type == TYPE_U64 ||
+         type == TYPE_DOUBLE || type == TYPE_FLOAT ||
+         type == TYPE_U32 ||  type == TYPE_S32 )
+        tmpDst = GenRegister::nullud();
       else
-        tmpDst = sel.selReg(sel.reg(FAMILY_DWORD), TYPE_S32);
+        tmpDst = sel.selReg(dst, TYPE_BOOL);
 
       // Look for immediate values for the right source
       GenRegister src0, src1;
@@ -2691,7 +2691,7 @@ namespace gbe
           GenRegister tmp[3];
           for(int i=0; i<3; i++)
             tmp[i] = sel.selReg(sel.reg(FAMILY_DWORD));
-          sel.I64CMP(getGenCompare(opcode), src0, src1, tmp, tmpDst);
+          sel.I64CMP(getGenCompare(opcode), src0, src1, tmp);
         } else if(opcode == OP_ORD) {
           sel.push();
             sel.CMP(GEN_CONDITIONAL_EQ, src0, src0, tmpDst);
@@ -2702,8 +2702,18 @@ namespace gbe
           sel.CMP(getGenCompare(opcode), src0, src1, tmpDst);
       sel.pop();
 
-      if (!(type == TYPE_BOOL || type == TYPE_U16 || type == TYPE_S16))
-        sel.MOV(sel.selReg(dst, TYPE_U16), GenRegister::unpacked_uw((ir::Register)tmpDst.value.reg));
+      if(type == TYPE_S64 || type == TYPE_U64 ||
+         type == TYPE_DOUBLE || type == TYPE_FLOAT ||
+         type == TYPE_U32 ||  type == TYPE_S32 ) {
+        sel.push();
+          sel.curr.flag = 1;
+          sel.curr.subFlag = 1;
+          sel.curr.predicate = GEN_PREDICATE_NORMAL;
+          sel.SEL(sel.selReg(dst, TYPE_U16),
+                  sel.selReg(ir::ocl::one, TYPE_U16),
+                  sel.selReg(ir::ocl::zero, TYPE_U16));
+        sel.pop();
+      }
       return true;
     }
   };
