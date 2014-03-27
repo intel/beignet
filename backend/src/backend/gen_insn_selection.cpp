@@ -148,7 +148,9 @@ namespace gbe
 
   SelectionInstruction::SelectionInstruction(SelectionOpcode op, uint32_t dst, uint32_t src) :
     parent(NULL), opcode(op), dstNum(dst), srcNum(src)
-  {}
+  {
+    extra.function = 0;
+  }
 
   void SelectionInstruction::prepend(SelectionInstruction &other) {
     gbe::prepend(&other, this);
@@ -225,6 +227,7 @@ namespace gbe
       GBE_ASSERT(insn.getSrcNum() < 127);
       for (uint32_t childID = 0; childID < childNum; ++childID)
         this->child[childID] = NULL;
+      computeBool = false;
     }
     /*! Mergeable are non-root instructions with valid sources */
     INLINE void setAsMergeable(uint32_t which) { mergeable|=(1<<which); }
@@ -240,6 +243,8 @@ namespace gbe
     uint32_t childNum:7;
     /*! A root must be generated, no matter what */
     uint32_t isRoot:1;
+    /*! A bool register is used as normal computing sources. */
+    bool computeBool;
   };
 
   /*! A pattern is a tree to match. This is the general interface for them. For
@@ -1411,6 +1416,14 @@ namespace gbe
           }
           if (mergeable) dag->setAsMergeable(srcID);
           dag->child[srcID] = child;
+          // Check whether this bool is used as a normal source
+          // oprand other than BRA/SEL.
+          if (getRegisterFamily(reg) == FAMILY_BOOL) {
+            if (insn.getOpcode() != OP_BRA &&
+                 (insn.getOpcode() != OP_SEL ||
+                   (insn.getOpcode() == OP_SEL && srcID != 0)))
+              child->computeBool = true;
+          }
         } else
           dag->child[srcID] = NULL;
       }
@@ -1686,8 +1699,16 @@ namespace gbe
           if (dst.isdf()) {
             ir::Register r = sel.reg(ir::RegisterFamily::FAMILY_QWORD);
             sel.MOV_DF(dst, src, sel.selReg(r));
-          } else
-            sel.MOV(dst, src);
+          } else {
+            sel.push();
+              if (sel.getRegisterFamily(insn.getDst(0)) == ir::FAMILY_BOOL) {
+                sel.curr.physicalFlag = 0;
+                sel.curr.flagIndex = (uint16_t)(insn.getDst(0));
+                sel.curr.modFlag = 1;
+              }
+              sel.MOV(dst, src);
+            sel.pop();
+          }
           break;
         case ir::OP_RNDD: sel.RNDD(dst, src); break;
         case ir::OP_RNDE: sel.RNDE(dst, src); break;
@@ -1842,6 +1863,16 @@ namespace gbe
       }
 
       // Output the binary instruction
+      if (sel.curr.execWidth != 1 &&
+          sel.getRegisterFamily(insn.getDst(0)) == ir::FAMILY_BOOL) {
+        GBE_ASSERT(insn.getOpcode() == OP_AND ||
+                   insn.getOpcode() == OP_OR ||
+                   insn.getOpcode() == OP_XOR);
+        sel.curr.physicalFlag = 0;
+        sel.curr.flagIndex = (uint16_t)(insn.getDst(0));
+        sel.curr.modFlag = 1;
+      }
+
       switch (opcode) {
         case OP_ADD:
           if (type == Type::TYPE_U64 || type == Type::TYPE_S64) {
@@ -2316,6 +2347,11 @@ namespace gbe
 
       switch (type) {
         case TYPE_BOOL:
+          if (!sel.isScalarOrBool(insn.getDst(0))) {
+            sel.curr.modFlag = 1;
+            sel.curr.physicalFlag = 0;
+            sel.curr.flagIndex = (uint16_t) insn.getDst(0);
+          }
           sel.MOV(dst, imm.data.b ? GenRegister::immuw(0xffff) : GenRegister::immuw(0));
         break;
         case TYPE_U32:
@@ -2656,13 +2692,20 @@ namespace gbe
       const Type type = insn.getType();
       const Register dst = insn.getDst(0);
       GenRegister tmpDst;
+      const BasicBlock *curr = insn.getParent();
+      const ir::Liveness &liveness = sel.ctx.getLiveness();
+      const ir::Liveness::LiveOut &liveOut = liveness.getLiveOut(curr);
+      bool needStoreBool = false;
+      if (liveOut.contains(dst) || dag.computeBool)
+        needStoreBool = true;
+
       if(type == TYPE_S64 || type == TYPE_U64 ||
          type == TYPE_DOUBLE || type == TYPE_FLOAT ||
-         type == TYPE_U32 ||  type == TYPE_S32 )
+         type == TYPE_U32 ||  type == TYPE_S32 /*||
+         (!needStoreBool)*/)
         tmpDst = GenRegister::nullud();
       else
         tmpDst = sel.selReg(dst, TYPE_BOOL);
-
       // Look for immediate values for the right source
       GenRegister src0, src1;
       SelectionDAG *dag0 = dag.child[0];
@@ -2685,35 +2728,42 @@ namespace gbe
       }
 
       sel.push();
-        sel.curr.flag = 1;
-        sel.curr.subFlag = 1;
+        sel.curr.physicalFlag = 0;
+        sel.curr.modFlag = 1;
+        sel.curr.flagIndex = (uint16_t)dst;
+        sel.curr.grfFlag = needStoreBool; // indicate whether we need to allocate grf to store this boolean.
         if (type == TYPE_S64 || type == TYPE_U64) {
           GenRegister tmp[3];
           for(int i=0; i<3; i++)
             tmp[i] = sel.selReg(sel.reg(FAMILY_DWORD));
+          sel.curr.flagGen = 1;
           sel.I64CMP(getGenCompare(opcode), src0, src1, tmp);
         } else if(opcode == OP_ORD) {
           sel.push();
             sel.CMP(GEN_CONDITIONAL_EQ, src0, src0, tmpDst);
             sel.curr.predicate = GEN_PREDICATE_NORMAL;
+            sel.curr.flagGen = 1;
             sel.CMP(GEN_CONDITIONAL_EQ, src1, src1, tmpDst);
           sel.pop();
-        } else
+        } else {
+          if((type == TYPE_S64 || type == TYPE_U64 ||
+              type == TYPE_DOUBLE || type == TYPE_FLOAT ||
+              type == TYPE_U32 ||  type == TYPE_S32))
+            sel.curr.flagGen = 1;
           sel.CMP(getGenCompare(opcode), src0, src1, tmpDst);
+        }
+#if 0
+        if((type == TYPE_S64 || type == TYPE_U64 ||
+            type == TYPE_DOUBLE || type == TYPE_FLOAT ||
+            type == TYPE_U32 ||  type == TYPE_S32) /*&&
+            needStoreBool*/) {
+            sel.curr.predicate = GEN_PREDICATE_NORMAL;
+            sel.SEL(sel.selReg(dst, TYPE_U16),
+                    sel.selReg(ir::ocl::one, TYPE_U16),
+                    sel.selReg(ir::ocl::zero, TYPE_U16));
+        }
+#endif
       sel.pop();
-
-      if(type == TYPE_S64 || type == TYPE_U64 ||
-         type == TYPE_DOUBLE || type == TYPE_FLOAT ||
-         type == TYPE_U32 ||  type == TYPE_S32 ) {
-        sel.push();
-          sel.curr.flag = 1;
-          sel.curr.subFlag = 1;
-          sel.curr.predicate = GEN_PREDICATE_NORMAL;
-          sel.SEL(sel.selReg(dst, TYPE_U16),
-                  sel.selReg(ir::ocl::one, TYPE_U16),
-                  sel.selReg(ir::ocl::zero, TYPE_U16));
-        sel.pop();
-      }
       return true;
     }
   };
@@ -2941,13 +2991,11 @@ namespace gbe
 
       const Register pred = insn.getPredicate();
       sel.push();
-        sel.curr.predicate = GEN_PREDICATE_NONE;
-        sel.curr.execWidth = simdWidth;
-        sel.curr.flag = 1;
-        sel.curr.subFlag = 1;
-        sel.CMP(GEN_CONDITIONAL_NEQ, sel.selReg(pred, TYPE_U16), GenRegister::immuw(0));
-        //sel.curr.noMask = 0;
+        sel.curr.physicalFlag = 0;
+        sel.curr.flagIndex = (uint16_t) pred;
         sel.curr.predicate = GEN_PREDICATE_NORMAL;
+        if (!dag0)
+          sel.curr.externFlag = 1;
         if(type == ir::TYPE_S64 || type == ir::TYPE_U64)
           sel.SEL_INT64(dst, src0, src1);
         else
@@ -3214,8 +3262,15 @@ namespace gbe
   };
 
   /*! Branch instruction pattern */
-  DECL_PATTERN(BranchInstruction)
+  class BranchInstructionPattern : public SelectionPattern
   {
+  public:
+    BranchInstructionPattern(void) : SelectionPattern(1,1) {
+      for (uint32_t op = 0; op < ir::OP_INVALID; ++op)
+        if (ir::isOpcodeFrom<ir::BranchInstruction>(ir::Opcode(op)) == true)
+          this->opcodes.push_back(ir::Opcode(op));
+    }
+
     void emitForwardBranch(Selection::Opaque &sel,
                            const ir::BranchInstruction &insn,
                            ir::LabelIndex dst,
@@ -3234,11 +3289,11 @@ namespace gbe
           // we don't need to set next label to the pcip
           // as if there is no backward jump latter, then obviously everything will work fine.
           // If there is backward jump latter, then all the pcip will be updated correctly there.
-          sel.curr.flag = 0;
-          sel.curr.subFlag = 0;
-          sel.CMP(GEN_CONDITIONAL_NEQ, sel.selReg(pred, TYPE_U16), GenRegister::immuw(0));
+          sel.curr.physicalFlag = 0;
+          sel.curr.flagIndex = (uint16_t) pred;
           sel.curr.predicate = GEN_PREDICATE_NORMAL;
           sel.MOV(ip, GenRegister::immuw(uint16_t(dst)));
+          sel.curr.predicate = GEN_PREDICATE_NONE;
           if (!sel.block->hasBarrier)
             sel.ENDIF(GenRegister::immd(0), nextLabel);
           sel.block->endifOffset = -1;
@@ -3285,10 +3340,8 @@ namespace gbe
         sel.MOV(ip, GenRegister::immuw(uint16_t(next)));
         GBE_ASSERT(jip == dst);
         sel.push();
-          sel.curr.flag = 0;
-          sel.curr.subFlag = 0;
-          sel.curr.predicate = GEN_PREDICATE_NONE;
-          sel.CMP(GEN_CONDITIONAL_NEQ, sel.selReg(pred, TYPE_U16), GenRegister::immuw(0));
+          sel.curr.physicalFlag = 0;
+          sel.curr.flagIndex = (uint16_t) pred;
           sel.curr.predicate = GEN_PREDICATE_NORMAL;
           sel.MOV(ip, GenRegister::immuw(uint16_t(dst)));
           sel.block->endifOffset = -1;
@@ -3320,8 +3373,9 @@ namespace gbe
       }
     }
 
-    INLINE bool emitOne(Selection::Opaque &sel, const ir::BranchInstruction &insn) const {
+    INLINE bool emit(Selection::Opaque &sel, SelectionDAG &dag) const {
       using namespace ir;
+      const ir::BranchInstruction &insn = cast<BranchInstruction>(dag.insn);
       const Opcode opcode = insn.getOpcode();
       if (opcode == OP_RET)
         sel.EOT();
@@ -3329,17 +3383,25 @@ namespace gbe
         const LabelIndex dst = insn.getLabelIndex();
         const LabelIndex src = insn.getParent()->getLabelIndex();
 
+        sel.push();
+        if (insn.isPredicated() == true) {
+          if (dag.child[0] == NULL)
+            sel.curr.externFlag = 1;
+        }
+
         // We handle foward and backward branches differently
         if (uint32_t(dst) <= uint32_t(src))
           this->emitBackwardBranch(sel, insn, dst, src);
         else
           this->emitForwardBranch(sel, insn, dst, src);
+        sel.pop();
       } else
         NOT_IMPLEMENTED;
+
+      markAllChildren(dag);
       return true;
     }
 
-    DECL_CTOR(BranchInstruction, 1, 1);
   };
 
   /*! Sort patterns */

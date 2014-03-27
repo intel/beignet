@@ -661,7 +661,8 @@ namespace gbe
       }
   }
 
-  INLINE void alu1(GenEncoder *p, uint32_t opcode, GenRegister dst, GenRegister src) {
+  INLINE void alu1(GenEncoder *p, uint32_t opcode, GenRegister dst,
+                   GenRegister src, uint32_t condition = 0) {
      if (dst.isdf() && src.isdf()) {
        handleDouble(p, opcode, dst, src);
      } else if (dst.isint64() && src.isint64()) { // handle int64
@@ -678,6 +679,11 @@ namespace gbe
        p->pop();
      } else if (needToSplitAlu1(p, dst, src) == false) {
        GenInstruction *insn = p->next(opcode);
+       if (condition != 0) {
+         GBE_ASSERT(opcode == GEN_OPCODE_MOV ||
+                    opcode == GEN_OPCODE_NOT);
+         insn->header.destreg_or_condmod = condition;
+       }
        p->setHeader(insn);
        p->setDst(insn, dst);
        p->setSrc0(insn, src);
@@ -706,12 +712,19 @@ namespace gbe
                    uint32_t opcode,
                    GenRegister dst,
                    GenRegister src0,
-                   GenRegister src1)
+                   GenRegister src1,
+                   uint32_t condition = 0)
   {
     if (dst.isdf() && src0.isdf() && src1.isdf()) {
        handleDouble(p, opcode, dst, src0, src1);
     } else if (needToSplitAlu2(p, dst, src0, src1) == false) {
        GenInstruction *insn = p->next(opcode);
+       if (condition != 0) {
+         GBE_ASSERT(opcode == GEN_OPCODE_OR ||
+                    opcode == GEN_OPCODE_XOR ||
+                    opcode == GEN_OPCODE_AND);
+         insn->header.destreg_or_condmod = condition;
+       }
        p->setHeader(insn);
        p->setDst(insn, dst);
        p->setSrc0(insn, src0);
@@ -817,14 +830,20 @@ namespace gbe
 #undef NO_SWIZZLE
 
 #define ALU1(OP) \
-  void GenEncoder::OP(GenRegister dest, GenRegister src0) { \
-    alu1(this, GEN_OPCODE_##OP, dest, src0); \
+  void GenEncoder::OP(GenRegister dest, GenRegister src0, uint32_t condition) { \
+    alu1(this, GEN_OPCODE_##OP, dest, src0, condition); \
   }
 
 #define ALU2(OP) \
   void GenEncoder::OP(GenRegister dest, GenRegister src0, GenRegister src1) { \
-    alu2(this, GEN_OPCODE_##OP, dest, src0, src1); \
+    alu2(this, GEN_OPCODE_##OP, dest, src0, src1, 0); \
   }
+
+#define ALU2_MOD(OP) \
+  void GenEncoder::OP(GenRegister dest, GenRegister src0, GenRegister src1, uint32_t condition) { \
+    alu2(this, GEN_OPCODE_##OP, dest, src0, src1, condition); \
+  }
+
 
 #define ALU3(OP) \
   void GenEncoder::OP(GenRegister dest, GenRegister src0, GenRegister src1, GenRegister src2) { \
@@ -947,9 +966,9 @@ namespace gbe
   ALU1(F32TO16)
   ALU2(SEL)
   ALU1(NOT)
-  ALU2(AND)
-  ALU2(OR)
-  ALU2(XOR)
+  ALU2_MOD(AND)
+  ALU2_MOD(OR)
+  ALU2_MOD(XOR)
   ALU2(SHR)
   ALU2(SHL)
   ALU2(RSR)

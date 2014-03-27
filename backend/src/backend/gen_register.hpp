@@ -118,6 +118,10 @@ namespace gbe
       this->noMask = 0;
       this->flag = 0;
       this->subFlag = 0;
+      this->grfFlag = 1;
+      this->externFlag = 0;
+      this->modFlag = 0;
+      this->flagGen = 0;
       this->predicate = GEN_PREDICATE_NONE;
       this->inversePredicate = 0;
       this->physicalFlag = 1;
@@ -125,9 +129,14 @@ namespace gbe
       this->saturate = GEN_MATH_SATURATE_NONE;
     }
     uint32_t physicalFlag:1; //!< Physical or virtual flag register
-    uint32_t flag:1;         //!< Only if physical flag
+    uint32_t flag:1;         //!< Only if physical flag,
     uint32_t subFlag:1;      //!< Only if physical flag
     uint32_t flagIndex:16;   //!< Only if virtual flag (index of the register)
+    uint32_t grfFlag:1;      //!< Only if virtual flag, 0 means we do not need to allocate GRF.
+    uint32_t externFlag:1;   //!< Only if virtual flag, 1 means this flag is from external BB.
+    uint32_t modFlag:1;      //!< Only if virtual flag, 1 means will modify flag.
+    uint32_t flagGen:1;      //!< Only if virtual flag, 1 means the gen_context stage may need to
+                             //!< generate the flag.
     uint32_t execWidth:5;
     uint32_t quarterControl:1;
     uint32_t nibControl:1;

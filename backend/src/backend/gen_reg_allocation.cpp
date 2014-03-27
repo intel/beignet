@@ -153,8 +153,13 @@ namespace gbe
     vector<SelectionVector*> vectors;
     /*! The set of booleans that will go to GRF (cannot be kept into flags) */
     set<ir::Register> grfBooleans;
+    /*! The set of booleans which be held in flags, don't need to allocate grf */
+    set<ir::Register> flagBooleans;
     /*! All the register intervals */
     vector<GenRegInterval> intervals;
+    /*! All the boolean register intervals on the corresponding BB*/
+    typedef map<ir::Register, GenRegInterval> RegIntervalMap;
+    map<SelectionBlock *, RegIntervalMap *> boolIntervalsMap;
     /*! Intervals sorting based on starting point positions */
     vector<GenRegInterval*> starting;
     /*! Intervals sorting based on ending point positions */
@@ -365,154 +370,219 @@ namespace gbe
     return ret;
   }
 
+
   void GenRegAllocator::Opaque::allocateFlags(Selection &selection) {
+    // Previously, we have a global flag allocation implemntation.
+    // After some analysis, I found the global flag allocation is not
+    // the best solution here.
+    // As for the cross block reference of bool value, we have to
+    // combine it with current emask. There is no obvious advantage to
+    // allocate deadicate physical flag register for those cross block usage.
+    // We just need to allocate physical flag within each BB. We need to handle
+    // the following cases:
+    //
+    // 1. The bool's liveness never beyond this BB. And the bool is only used as
+    //    a dst register or a pred register. This bool value could be
+    //    allocated in physical flag only if there is enough physical flag.
+    //    We already identified those bool at the instruction select stage, and
+    //    put them in the flagBooleans set.
+    // 2. The bool is defined in another BB and used in this BB, then we need
+    //    to prepend an instruction at the position where we use it.
+    // 3. The bool is defined in this BB but is also used as some instruction's
+    //    source registers rather than the pred register. We have to keep the normal
+    //    grf (UW8/UW16) register for this bool. For some CMP instruction, we need to
+    //    append a SEL instruction convert the flag to the grf register.
+    // 4. Even for the spilling flag, if there is only one spilling flag, we will also
+    //    try to reuse the temporary flag register latter. This requires all the
+    //    instructions should got it flag at the instruction selection stage. And should
+    //    not use the flag physical number directly at the gen_context stage. Otherwise,
+    //    may break the algorithm here.
+    // We will track all the validated bool value and to avoid any redundant
+    // validation for the same flag. But if there is no enough physical flag,
+    // we have to spill the previous allocated physical flag. And the spilling
+    // policy is to spill the allocate flag which live to the last time end point.
 
-    // Store the registers allocated in the map
-    map<ir::Register, uint32_t> allocatedFlags;
-    GenRegInterval spill = ir::Register(ir::RegisterFile::MAX_INDEX);
+    // we have three flags we use for booleans f0.0 , f1.0 and f1.1
+    for (auto &block : *selection.blockList) {
+      // Store the registers allocated in the map
+      map<ir::Register, uint32_t> allocatedFlags;
+      map<const GenRegInterval*, uint32_t> allocatedFlagIntervals;
 
-    // we have two flags we use for booleans f1.0 and f1.1
-    const uint32_t flagNum = 2;
-    uint32_t freeFlags[] = {0,1};
-    uint32_t freeNum = flagNum;
-
-    // Perform the linear scan allocator on the flag registers only. We only use
-    // two flags registers for the booleans right now: f1.0 and f1.1 
-    const uint32_t regNum = ctx.sel->getRegNum();
-    uint32_t endID = 0; // interval to expire
-    for (uint32_t startID = 0; startID < regNum; ++startID) {
-      const GenRegInterval &interval = *this->starting[startID];
-      const ir::Register reg = interval.reg;
-      if (ctx.sel->getRegisterFamily(reg) != ir::FAMILY_BOOL)
-        continue; // Not a flag. We don't care
-      if (grfBooleans.contains(reg))
-        continue; // Cannot use a flag register
-      if (interval.maxID == -INT_MAX)
-        continue; // Unused register
-      if (freeNum != 0) {
-        spill = interval;
-        allocatedFlags.insert(std::make_pair(reg, freeFlags[--freeNum]));
+      const uint32_t flagNum = 3;
+      uint32_t freeFlags[] = {2, 3, 0};
+      uint32_t freeNum = flagNum;
+      if (boolIntervalsMap.find(&block) == boolIntervalsMap.end())
+        continue;
+      const auto boolsMap = boolIntervalsMap[&block];
+      vector<const GenRegInterval*> flagStarting;
+      vector<const GenRegInterval*> flagEnding;
+      GBE_ASSERT(boolsMap->size() > 0);
+      uint32_t regNum = boolsMap->size();
+      flagStarting.resize(regNum);
+      flagEnding.resize(regNum);
+      uint32_t id = 0;
+      for (auto &interval : *boolsMap) {
+        flagStarting[id] = flagEnding[id] = &interval.second;
+        id++;
       }
-      else {
+      std::sort(flagStarting.begin(), flagStarting.end(), cmp<true>);
+      std::sort(flagEnding.begin(), flagEnding.end(), cmp<false>);
+
+      uint32_t endID = 0; // interval to expire
+      for (uint32_t startID = 0; startID < regNum; ++startID) {
+        const GenRegInterval *interval = flagStarting[startID];
+        const ir::Register reg = interval->reg;
+        GBE_ASSERT(ctx.sel->getRegisterFamily(reg) == ir::FAMILY_BOOL);
+        if (freeNum != 0) {
+          allocatedFlags.insert(std::make_pair(reg, freeFlags[--freeNum]));
+          allocatedFlagIntervals.insert(std::make_pair(interval, freeFlags[freeNum]));
+        } else {
         // Try to expire one register
-        while (endID != ending.size()) {
-          const GenRegInterval *toExpire = this->ending[endID];
-          const ir::Register reg = toExpire->reg;
+        while (endID != flagEnding.size()) {
+          const GenRegInterval *toExpire = flagEnding[endID];
           // Dead code produced by the insn selection -> we skip it
           if (toExpire->minID > toExpire->maxID) {
             endID++;
             continue;
           }
           // We cannot expire this interval and the next ones
-          if (toExpire->maxID >= interval.minID)
+          if (toExpire->maxID >= interval->minID)
             break;
-          // Must be a boolean allocated with a flag register
-          if (ctx.sel->getRegisterFamily(reg) != ir::FAMILY_BOOL || grfBooleans.contains(reg)) {
+          // We reuse a flag from a previous interval (the oldest one)
+          auto it = allocatedFlags.find(toExpire->reg);
+          if (it == allocatedFlags.end()) {
             endID++;
             continue;
           }
-          // We reuse a flag from a previous interval (the oldest one)
-          auto it = allocatedFlags.find(toExpire->reg);
-          GBE_ASSERT(it != allocatedFlags.end());
           freeFlags[freeNum++] = it->second;
           endID++;
           break;
         }
-
-        // We need to spill one of the previous boolean values
-        if (freeNum == 0) {
-          GBE_ASSERT(uint16_t(spill.reg) != ir::RegisterFile::MAX_INDEX);
-          // We spill the last inserted boolean and use its flag instead for
-          // this one
-          if (spill.maxID > interval.maxID) {
-            auto it = allocatedFlags.find(spill.reg);
-            GBE_ASSERT(it != allocatedFlags.end());
-            allocatedFlags.insert(std::make_pair(reg, it->second));
-            allocatedFlags.erase(spill.reg);
-            grfBooleans.insert(spill.reg);
-            spill = interval;
-          }
-          // We will use a grf for the current register
-          else {
-            grfBooleans.insert(reg);
-          }
-        }
-        else
+        if (freeNum != 0) {
           allocatedFlags.insert(std::make_pair(reg, freeFlags[--freeNum]));
-      }
-    }
-
-    // Now, we traverse all the selection instructions and we patch them to make
-    // them use flag registers
-    for (auto &block : *selection.blockList)
-    for (auto &insn : block.insnList) {
-      const uint32_t srcNum = insn.srcNum, dstNum = insn.dstNum;
-
-      // Patch the source booleans
-      for (uint32_t srcID = 0; srcID < srcNum; ++srcID) {
-        const GenRegister selReg = insn.src(srcID);
-        const ir::Register reg = selReg.reg();
-        if (selReg.physical || ctx.sel->getRegisterFamily(reg) != ir::FAMILY_BOOL)
-          continue;
-        auto it = allocatedFlags.find(reg);
-        if (it == allocatedFlags.end())
-          continue;
-        // Use a flag register for it now
-        insn.src(srcID) = GenRegister::flag(1,it->second);
-      }
-
-      // Patch the destination booleans
-      for (uint32_t dstID = 0; dstID < dstNum; ++dstID) {
-        const GenRegister selReg = insn.dst(dstID);
-        const ir::Register reg = selReg.reg();
-        if (selReg.physical || ctx.sel->getRegisterFamily(reg) != ir::FAMILY_BOOL)
-          continue;
-        auto it = allocatedFlags.find(reg);
-        if (it == allocatedFlags.end())
-          continue;
-        // Use a flag register for it now
-        insn.dst(dstID) = GenRegister::flag(1,it->second);
-      }
-
-      // Patch the predicate now. Note that only compares actually modify it (it
-      // is called a "conditional modifier"). The other instructions just read
-      // it
-      if (insn.state.physicalFlag == 0) {
-        auto it = allocatedFlags.find(ir::Register(insn.state.flagIndex));
-        // Just patch it if we can use a flag directly
-        if (it != allocatedFlags.end()) {
-          insn.state.flag = 1;
-          insn.state.subFlag = it->second;
-          insn.state.physicalFlag = 1;
+          allocatedFlagIntervals.insert(std::make_pair(interval, freeFlags[freeNum]));
         }
-        // When we let the boolean in a GRF, use f0.1 as a temporary
         else {
-          // Mov the GRF to the flag such that the flag can be read
-          SelectionInstruction *mov0 = selection.create(SEL_OP_MOV,1,1);
-          mov0->state = GenInstructionState(1);
-          mov0->state.predicate = GEN_PREDICATE_NONE;
-          mov0->state.noMask = 1;
-          mov0->src(0) = GenRegister::uw1grf(ir::Register(insn.state.flagIndex));
-          mov0->dst(0) = GenRegister::flag(0,1);
+          // FIXME we may sort the allocated flags before do the spilling in the furture.
+          int32_t spill = -1;
+          const GenRegInterval *spillInterval = NULL;
+          int32_t maxID = 0;
+          for (auto &it : allocatedFlagIntervals) {
+            if (it.first->maxID <= interval->minID)
+              continue;
+            if (it.first->maxID > maxID && it.second != 0) {
+              maxID = it.first->maxID;
+              spill = it.second;
+              spillInterval = it.first;
+            }
+          }
+          if (spill != -1) {
+            allocatedFlags.insert(std::make_pair(reg, spill));
+            allocatedFlagIntervals.insert(std::make_pair(interval, spill));
+            allocatedFlags.erase(spillInterval->reg);
+            allocatedFlagIntervals.erase(spillInterval);
+            // We spill this flag booleans register, so erase it from the flag boolean set.
+            if (flagBooleans.contains(spillInterval->reg))
+              flagBooleans.erase(spillInterval->reg);
+          } else {
+            GBE_ASSERT(0);
+          }
+        }
+        }
+      }
+      delete boolsMap;
 
-          // Do not prepend if the flag is not read (== used only as a
-          // conditional modifier)
-          if (insn.state.predicate != GEN_PREDICATE_NONE)
-            insn.prepend(*mov0);
-
-          // We can use f0.1 (our "backdoor" flag)
-          insn.state.flag = 0;
-          insn.state.subFlag = 1;
-          insn.state.physicalFlag = 1;
-
-          // Compare instructions update the flags so we must copy it back to
-          // the GRF
-          if (insn.opcode == SEL_OP_CMP || insn.opcode == SEL_OP_I64CMP) {
-            SelectionInstruction *mov1 = selection.create(SEL_OP_MOV,1,1);
-            mov1->state = mov0->state;
-            mov1->dst(0) = mov0->src(0);
-            mov1->src(0) = mov0->dst(0);
-            insn.append(*mov1);
+      // Now, we traverse all the selection instructions and we patch them to make
+      // them use flag registers
+      set<uint16_t> validatedFlags;
+      uint16_t validTempFlagReg = 0;
+      for (auto &insn : block.insnList) {
+        // Patch the predicate now. Note that only compares actually modify it (it
+        // is called a "conditional modifier"). The other instructions just read
+        // it
+        if (insn.state.physicalFlag == 0) {
+          auto it = allocatedFlags.find(ir::Register(insn.state.flagIndex));
+          if (it != allocatedFlags.end()) {
+            insn.state.flag = it->second / 2;
+            insn.state.subFlag = it->second & 1;
+            insn.state.physicalFlag = 1;
+            // modFlag is for the LOADI/MOV/AND/OR/XOR instructions which will modify a
+            // flag register. We set the condition for them to save one instruction if possible.
+            if (insn.state.modFlag == 1 &&
+                (insn.opcode == SEL_OP_MOV ||
+                 insn.opcode == SEL_OP_AND  ||
+                 insn.opcode == SEL_OP_OR  ||
+                 insn.opcode == SEL_OP_XOR))
+              insn.extra.function = GEN_CONDITIONAL_NEQ;
+            if ((insn.state.externFlag &&
+                insn.state.predicate != GEN_PREDICATE_NONE &&
+                validatedFlags.find(insn.state.flagIndex) == validatedFlags.end())) {
+              // This is an external bool, we need to validate it if it is not validated yet.
+              SelectionInstruction *cmp0 = selection.create(SEL_OP_CMP, 1, 2);
+              cmp0->state = GenInstructionState(insn.state.execWidth);
+              cmp0->state.flag = insn.state.flag;
+              cmp0->state.subFlag = insn.state.subFlag;
+              cmp0->src(0) = GenRegister::uw8grf(ir::Register(insn.state.flagIndex));
+              cmp0->src(1) = GenRegister::immuw(0);
+              cmp0->dst(0) = GenRegister::null();
+              cmp0->extra.function = GEN_CONDITIONAL_NEQ;
+              insn.prepend(*cmp0);
+              validatedFlags.insert(insn.state.flagIndex);
+            }
+          } else {
+            // This bool doesn't have a deadicated flag, we use temporary flag here.
+            // each time we need to validate it from the grf register.
+            // We track the last temporary validate register, if it's the same as
+            // current, we can avoid the revalidation.
+            insn.state.flag = 0;
+            insn.state.subFlag = 1;
+            insn.state.physicalFlag = 1;
+            if ((insn.state.predicate != GEN_PREDICATE_NONE)
+                && validTempFlagReg != insn.state.flagIndex) {
+              SelectionInstruction *cmp0 = selection.create(SEL_OP_CMP, 1, 2);
+              cmp0->state = GenInstructionState(insn.state.execWidth);
+              cmp0->state.flag = insn.state.flag;
+              cmp0->state.subFlag = insn.state.subFlag;
+              cmp0->src(0) = GenRegister::uw8grf(ir::Register(insn.state.flagIndex));
+              cmp0->src(1) = GenRegister::immuw(0);
+              cmp0->dst(0) = GenRegister::null();
+              cmp0->extra.function = GEN_CONDITIONAL_NEQ;
+              insn.prepend(*cmp0);
+            }
+            if (insn.state.modFlag == 0)
+              validTempFlagReg = insn.state.flagIndex;
+            else
+              validTempFlagReg = 0;
+          }
+          if (insn.opcode == SEL_OP_CMP &&
+            flagBooleans.contains((ir::Register)(insn.dst(0).value.reg))) {
+            // This is a CMP for a pure flag booleans, we don't need to write result to
+            // the grf. And latter, we will not allocate grf for it.
+            insn.dst(0) = GenRegister::null();
+          }
+          // If the instruction requires to generate (CMP for long/int/float..)
+          // the flag value to the register, and it's not a pure flag boolean,
+          // we need to use SEL instruction to generate the flag value to the UW8
+          // register.
+          if (insn.state.flagGen == 1 &&
+              !flagBooleans.contains((ir::Register)(insn.state.flagIndex))) {
+            SelectionInstruction *sel0 = selection.create(SEL_OP_SEL, 1, 2);
+            sel0->state = GenInstructionState(ctx.getSimdWidth());
+            sel0->state.flag = insn.state.flag;
+            sel0->state.subFlag = insn.state.subFlag;
+            sel0->state.predicate = GEN_PREDICATE_NORMAL;
+            sel0->src(0) = GenRegister::uw1grf(ir::ocl::one);
+            sel0->src(1) = GenRegister::uw1grf(ir::ocl::zero);
+            sel0->dst(0) = GenRegister::uw8grf((ir::Register)insn.state.flagIndex);
+            insn.append(*sel0);
+            // We use the zero one after the liveness analysis, we have to update
+            // the liveness data manually here.
+            GenRegInterval &interval0 = intervals[ir::ocl::zero];
+            GenRegInterval &interval1 = intervals[ir::ocl::one];
+            interval0.minID = std::min(interval0.minID, (int32_t)insn.ID);
+            interval0.maxID = std::max(interval0.maxID, (int32_t)insn.ID);
+            interval1.minID = std::min(interval1.minID, (int32_t)insn.ID);
+            interval1.maxID = std::max(interval1.maxID, (int32_t)insn.ID);
           }
         }
       }
@@ -529,6 +599,9 @@ namespace gbe
         continue; // Unused register
       if (RA.contains(reg))
         continue; // already allocated
+
+      if (flagBooleans.contains(reg))
+        continue;
 
       // Case 1: the register belongs to a vector, allocate all the registers in
       // one piece
@@ -621,6 +694,8 @@ namespace gbe
   INLINE bool GenRegAllocator::Opaque::expireReg(ir::Register reg)
   {
     auto it = RA.find(reg);
+    if (flagBooleans.contains(reg))
+      return false;
     GBE_ASSERT(it != RA.end());
     // offset less than 32 means it is not managed by our reg allocator.
     if (it->second < 32)
@@ -803,6 +878,7 @@ namespace gbe
       int32_t firstID = insnID;
       // Update the intervals of each used register. Note that we do not
       // register allocate R0, so we skip all sub-registers in r0
+      RegIntervalMap *boolsMap = new RegIntervalMap;
       for (auto &insn : block.insnList) {
         const uint32_t srcNum = insn.srcNum, dstNum = insn.dstNum;
         insn.ID  = insnID;
@@ -831,23 +907,33 @@ namespace gbe
           this->intervals[reg].maxID = std::max(this->intervals[reg].maxID, insnID);
         }
 
-        // Flag registers can only go to src[0]
-#if 0
-        const SelectionOpcode opcode = SelectionOpcode(insn.opcode);
-        if (opcode == SEL_OP_AND || opcode == SEL_OP_OR || opcode == SEL_OP_XOR
-            || opcode == SEL_OP_I64AND || opcode == SEL_OP_I64OR || opcode == SEL_OP_I64XOR) {
-          if (insn.src(1).physical == 0) {
-            const ir::Register reg = insn.src(1).reg();
-            if (ctx.sel->getRegisterFamily(reg) == ir::FAMILY_BOOL)
-              grfBooleans.insert(reg);
-          }
-        }
-#endif
         // OK, a flag is used as a predicate or a conditional modifier
         if (insn.state.physicalFlag == 0) {
           const ir::Register reg = ir::Register(insn.state.flagIndex);
           this->intervals[reg].minID = std::min(this->intervals[reg].minID, insnID);
           this->intervals[reg].maxID = std::max(this->intervals[reg].maxID, insnID);
+          // Check whether this is a pure flag booleans candidate.
+          if (insn.state.grfFlag == 0)
+            flagBooleans.insert(reg);
+          GBE_ASSERT(ctx.sel->getRegisterFamily(reg) == ir::FAMILY_BOOL);
+          // update the bool register's per-BB's interval data
+          if (boolsMap->find(reg) == boolsMap->end()) {
+            GenRegInterval boolInterval(reg);
+            boolsMap->insert(std::make_pair(reg, boolInterval));
+          }
+          boolsMap->find(reg)->second.minID = std::min(boolsMap->find(reg)->second.minID, insnID);
+          boolsMap->find(reg)->second.maxID = std::max(boolsMap->find(reg)->second.maxID, insnID);
+          if (&insn == block.insnList.back() &&
+              insn.opcode == SEL_OP_JMPI &&
+              insn.state.predicate != GEN_PREDICATE_NONE) {
+            // If this is the last instruction and is a predicated JMPI.
+            // We must extent its liveness before any other instrution.
+            // As we need to allocate f0 to it, and need to keep the f0
+            // unchanged during the block. The root cause is this instruction
+            // is out-of the if/endif region, so we have to borrow the f0
+            // to get correct bits for all channels.
+            boolsMap->find(reg)->second.minID = 0;
+          }
         }
         lastID = insnID;
         insnID++;
@@ -856,12 +942,17 @@ namespace gbe
       // All registers alive at the begining of the block must update their intervals.
       const ir::BasicBlock *bb = block.bb;
       for (auto reg : ctx.getLiveIn(bb))
-          this->intervals[reg].minID = std::min(this->intervals[reg].minID, firstID);
+        this->intervals[reg].minID = std::min(this->intervals[reg].minID, firstID);
 
       // All registers alive at the end of the block must have their intervals
       // updated as well
       for (auto reg : ctx.getLiveOut(bb))
         this->intervals[reg].maxID = std::max(this->intervals[reg].maxID, lastID);
+
+      if (boolsMap->size() > 0)
+        boolIntervalsMap.insert(std::make_pair(&block, boolsMap));
+      else
+        delete boolsMap;
     }
 
     this->intervals[ocl::retVal].minID = INT_MAX;
@@ -869,6 +960,9 @@ namespace gbe
 
     // Allocate all the vectors first since they need to be contiguous
     this->allocateVector(selection);
+
+    // First we try to put all booleans registers into flags
+    this->allocateFlags(selection);
 
     // Sort both intervals in starting point and ending point increasing orders
     const uint32_t regNum = ctx.sel->getRegNum();
@@ -888,9 +982,6 @@ namespace gbe
       else
         break;
     }
-
-    // First we try to put all booleans registers into flags
-    //this->allocateFlags(selection);
 
     // Allocate all the GRFs now (regular register and boolean that are not in
     // flag registers)

@@ -86,8 +86,9 @@ namespace gbe
     // Encoding functions
     ////////////////////////////////////////////////////////////////////////
 
-#define ALU1(OP) void OP(GenRegister dest, GenRegister src0);
+#define ALU1(OP) void OP(GenRegister dest, GenRegister src0, uint32_t condition = 0);
 #define ALU2(OP) void OP(GenRegister dest, GenRegister src0, GenRegister src1);
+#define ALU2_MOD(OP) void OP(GenRegister dest, GenRegister src0, GenRegister src1, uint32_t condition = 0);
 #define ALU3(OP) void OP(GenRegister dest, GenRegister src0, GenRegister src1, GenRegister src2);
     ALU1(MOV)
     ALU1(FBH)
@@ -103,9 +104,9 @@ namespace gbe
     ALU1(F32TO16)
     ALU2(SEL)
     ALU1(NOT)
-    ALU2(AND)
-    ALU2(OR)
-    ALU2(XOR)
+    ALU2_MOD(AND)
+    ALU2_MOD(OR)
+    ALU2_MOD(XOR)
     ALU2(SHR)
     ALU2(SHL)
     ALU2(RSR)
@@ -126,6 +127,7 @@ namespace gbe
     ALU1(BRD)
 #undef ALU1
 #undef ALU2
+#undef ALU2_MOD
 #undef ALU3
     void MOV_DF(GenRegister dest, GenRegister src0, GenRegister tmp = GenRegister::null());
     void LOAD_DF_IMM(GenRegister dest, GenRegister tmp, double value);
