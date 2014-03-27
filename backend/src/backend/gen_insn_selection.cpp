@@ -2024,7 +2024,8 @@ namespace gbe
 
       // XXX TODO: we need a clean support of FP_CONTRACT to remove below line 'return false'
       // if 'pragma FP_CONTRACT OFF' is used in cl kernel, we should not do mad optimization.
-      return false;
+      if (!sel.ctx.relaxMath)
+        return false;
       // MAD tend to increase liveness of the sources (since there are three of
       // them). TODO refine this strategy. Well, we should be able at least to
       // evaluate per basic block register pressure and selectively enable

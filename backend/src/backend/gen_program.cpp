@@ -85,7 +85,7 @@ namespace gbe {
     {8,true},
   };
 
-  Kernel *GenProgram::compileKernel(const ir::Unit &unit, const std::string &name) {
+  Kernel *GenProgram::compileKernel(const ir::Unit &unit, const std::string &name, bool relaxMath) {
 
     // Be careful when the simdWidth is forced by the programmer. We can see it
     // when the function already provides the simd width we need to use (i.e.
@@ -102,7 +102,7 @@ namespace gbe {
 
       // Force the SIMD width now and try to compile
       unit.getFunction(name)->setSimdWidth(simdWidth);
-      Context *ctx = GBE_NEW(GenContext, unit, name, limitRegisterPressure);
+      Context *ctx = GBE_NEW(GenContext, unit, name, limitRegisterPressure, relaxMath);
       kernel = ctx->compileKernel();
       if (kernel != NULL) {
         break;

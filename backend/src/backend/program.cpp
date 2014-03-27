@@ -121,6 +121,8 @@ namespace gbe {
     return true;
   }
 
+  BVAR(OCL_STRICT_CONFORMANCE, true);
+
   bool Program::buildFromUnit(const ir::Unit &unit, std::string &error) {
     constantSet = new ir::ConstantSet(unit.getConstantSet());
     const auto &set = unit.getFunctionSet();
@@ -129,7 +131,7 @@ namespace gbe {
     if (kernelNum == 0) return true;
     for (const auto &pair : set) {
       const std::string &name = pair.first;
-      Kernel *kernel = this->compileKernel(unit, name);
+      Kernel *kernel = this->compileKernel(unit, name, !OCL_STRICT_CONFORMANCE);
       kernel->setSamplerSet(pair.second->getSamplerSet());
       kernel->setImageSet(pair.second->getImageSet());
       kernel->setCompileWorkGroupSize(pair.second->getCompileWorkGroupSize());
@@ -506,7 +508,6 @@ namespace gbe {
   }
 
   BVAR(OCL_OUTPUT_BUILD_LOG, false);
-  BVAR(OCL_STRICT_CONFORMANCE, true);
   SVAR(OCL_PCH_PATH, PCH_OBJECT_DIR);
   SVAR(OCL_PCM_PATH, PCM_OBJECT_DIR);
 

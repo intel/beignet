@@ -52,7 +52,7 @@ namespace gbe
     /*! Create a new context. name is the name of the function we want to
      *  compile
      */
-    GenContext(const ir::Unit &unit, const std::string &name, bool limitRegisterPressure = false);
+    GenContext(const ir::Unit &unit, const std::string &name, bool limitRegisterPressure = false, bool relaxMath = false);
     /*! Release everything needed */
     ~GenContext(void);
     /*! Implements base class */
@@ -174,6 +174,7 @@ namespace gbe
      * regenerating the code
      */
     bool limitRegisterPressure;
+    bool relaxMath;
   private:
     /*! Build the curbe patch list for the given kernel */
     void buildPatchList(void);

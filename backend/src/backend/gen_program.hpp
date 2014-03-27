@@ -62,7 +62,7 @@ namespace gbe
     /*! Destroy the program */
     virtual ~GenProgram(void);
     /*! Implements base class */
-    virtual Kernel *compileKernel(const ir::Unit &unit, const std::string &name);
+    virtual Kernel *compileKernel(const ir::Unit &unit, const std::string &name, bool relaxMath);
     /*! Allocate an empty kernel. */
     virtual Kernel *allocateKernel(const std::string &name) {
       return GBE_NEW(GenKernel, name);
