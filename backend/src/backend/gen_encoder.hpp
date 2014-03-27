@@ -135,7 +135,7 @@ namespace gbe
     /*! Memory fence message (to order loads and stores between threads) */
     void FENCE(GenRegister dst);
     /*! Jump indexed instruction */
-    void JMPI(GenRegister src);
+    void JMPI(GenRegister src, bool longjmp = false);
     /*! IF indexed instruction */
     void IF(GenRegister src);
     /*! ENDIF indexed instruction */

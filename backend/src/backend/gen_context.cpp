@@ -1664,7 +1664,7 @@ namespace gbe
   void GenContext::emitJumpInstruction(const SelectionInstruction &insn) {
     insertJumpPos(insn);
     const GenRegister src = ra->genReg(insn.src(0));
-    p->JMPI(src);
+    p->JMPI(src, insn.extra.longjmp);
   }
 
   void GenContext::emitEotInstruction(const SelectionInstruction &insn) {

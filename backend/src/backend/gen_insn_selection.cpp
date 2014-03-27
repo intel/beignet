@@ -497,8 +497,8 @@ namespace gbe
     void FENCE(GenRegister dst);
     /*! Encode a label instruction */
     void LABEL(ir::LabelIndex label);
-    /*! Jump indexed instruction */
-    void JMPI(Reg src, ir::LabelIndex target);
+    /*! Jump indexed instruction, return the encoded instruction count according to jump distance. */
+    int JMPI(Reg src, ir::LabelIndex target, ir::LabelIndex origin);
     /*! IF indexed instruction */
     void IF(Reg src, ir::LabelIndex jip, ir::LabelIndex uip, int16_t offset0, int16_t offset1);
     /*! ENDIF indexed instruction */
@@ -923,10 +923,12 @@ namespace gbe
     insn->dst(0) = dst;
   }
 
-  void Selection::Opaque::JMPI(Reg src, ir::LabelIndex index) {
+  int Selection::Opaque::JMPI(Reg src, ir::LabelIndex index, ir::LabelIndex origin) {
     SelectionInstruction *insn = this->appendInsn(SEL_OP_JMPI, 0, 1);
     insn->src(0) = src;
     insn->index = uint16_t(index);
+    insn->extra.longjmp = abs(index - origin) > 800;
+    return insn->extra.longjmp ? 2 : 1;
   }
 
   void Selection::Opaque::BRD(Reg src, ir::LabelIndex jip) {
@@ -2997,6 +2999,7 @@ namespace gbe
       const GenRegister src0 = sel.selReg(ocl::blockip);
       const GenRegister src1 = GenRegister::immuw(label);
       const uint32_t simdWidth = sel.ctx.getSimdWidth();
+      GBE_ASSERTM(label < GEN_MAX_LABEL, "We reached the maximum label number which is reserved for barrier handling");
       sel.LABEL(label);
 
       // Do not emit any code for the "returning" block. There is no need for it
@@ -3037,7 +3040,7 @@ namespace gbe
           sel.curr.noMask = 1;
           sel.curr.execWidth = 1;
           sel.curr.inversePredicate = 1;
-          sel.JMPI(GenRegister::immd(0), jip);
+          sel.JMPI(GenRegister::immd(0), jip, label);
         sel.pop();
         // FIXME, if the last BRA is unconditional jump, we don't need to update the label here.
         sel.push();
@@ -3058,7 +3061,7 @@ namespace gbe
             sel.curr.noMask = 1;
             sel.curr.execWidth = 1;
             sel.curr.inversePredicate = 1;
-            sel.JMPI(GenRegister::immd(0), jip);
+            sel.JMPI(GenRegister::immd(0), jip, label);
           sel.pop();
         }
         sel.push();
@@ -3244,11 +3247,8 @@ namespace gbe
           sel.curr.execWidth = 1;
           sel.curr.noMask = 1;
           sel.curr.predicate = GEN_PREDICATE_NONE;
-          sel.JMPI(GenRegister::immd(0), jip);
+          sel.block->endifOffset -= sel.JMPI(GenRegister::immd(0), jip, curr->getLabelIndex());
         sel.pop();
-        // FIXME just for the correct endif offset.
-        // JMPI still has 2 instruction.
-        sel.block->endifOffset -= 2;
       }
     }
 
@@ -3262,6 +3262,7 @@ namespace gbe
       const Function &fn = sel.ctx.getFunction();
       const BasicBlock &bb = fn.getBlock(src);
       const LabelIndex jip = sel.ctx.getLabelIndex(&insn);
+      const LabelIndex label = bb.getLabelIndex();
       const uint32_t simdWidth = sel.ctx.getSimdWidth();
       GBE_ASSERT(bb.getNextBlock() != NULL);
 
@@ -3281,6 +3282,7 @@ namespace gbe
           sel.CMP(GEN_CONDITIONAL_NEQ, sel.selReg(pred, TYPE_U16), GenRegister::immuw(0));
           sel.curr.predicate = GEN_PREDICATE_NORMAL;
           sel.MOV(ip, GenRegister::immuw(uint16_t(dst)));
+          sel.block->endifOffset = -1;
           sel.curr.predicate = GEN_PREDICATE_NONE;
           if (!sel.block->hasBarrier)
             sel.ENDIF(GenRegister::immd(0), next);
@@ -3290,13 +3292,13 @@ namespace gbe
           else
             sel.curr.predicate = GEN_PREDICATE_ALIGN1_ANY8H;
           sel.curr.noMask = 1;
-          sel.JMPI(GenRegister::immd(0), jip);
-          sel.block->endifOffset = -3;
+          sel.block->endifOffset -= sel.JMPI(GenRegister::immd(0), jip, label);
         sel.pop();
       } else {
         const LabelIndex next = bb.getNextBlock()->getLabelIndex();
         // Update the PcIPs
         sel.MOV(ip, GenRegister::immuw(uint16_t(dst)));
+        sel.block->endifOffset = -1;
         if (!sel.block->hasBarrier)
           sel.ENDIF(GenRegister::immd(0), next);
         // Branch to the jump target
@@ -3304,9 +3306,8 @@ namespace gbe
           sel.curr.execWidth = 1;
           sel.curr.noMask = 1;
           sel.curr.predicate = GEN_PREDICATE_NONE;
-          sel.JMPI(GenRegister::immd(0), jip);
+          sel.block->endifOffset -= sel.JMPI(GenRegister::immd(0), jip, label);
         sel.pop();
-        sel.block->endifOffset = -3;
       }
     }
 

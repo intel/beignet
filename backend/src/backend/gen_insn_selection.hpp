@@ -125,6 +125,7 @@ namespace gbe
         uint16_t rdmsglen:3;
       };
       uint32_t barrierType;
+      bool longjmp;
     } extra;
     /*! Gen opcode */
     uint8_t opcode;

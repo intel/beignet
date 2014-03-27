@@ -1054,9 +1054,10 @@ namespace gbe
     insn->bits3.gen7_memory_fence.commit_enable = 0x1;
   }
 
-  void GenEncoder::JMPI(GenRegister src) {
+  void GenEncoder::JMPI(GenRegister src, bool longjmp) {
     alu2(this, GEN_OPCODE_JMPI, GenRegister::ip(), GenRegister::ip(), src);
-    NOP();
+    if (longjmp)
+      NOP();
   }
 
 #define ALU2_BRA(OP) \
@@ -1084,10 +1085,8 @@ namespace gbe
              this->setSrc1(&insn, GenRegister::immd(jumpDistance));
              return;
            }
-           else if (insn.header.opcode == GEN_OPCODE_JMPI) {
+           else if (insn.header.opcode == GEN_OPCODE_JMPI)
              offset = -2;
-             /*assert(jumpDistance > -32769 && jumpDistance < 32768);*/
-           }
           this->setSrc1(&insn, GenRegister::immd(jumpDistance + offset));
     } else if ( insn.header.predicate_control == GEN_PREDICATE_NONE ) {
       // For the conditional jump distance out of S15 range, we need to use an
