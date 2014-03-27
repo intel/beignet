@@ -1416,7 +1416,6 @@ namespace gbe
     GenRegister l = ra->genReg(insn.dst(12));
     GenRegister m = ra->genReg(insn.dst(13));
     GenRegister flagReg = checkFlagRegister(ra->genReg(insn.dst(14)));
-    GenRegister emaskReg = ra->genReg(GenRegister::uw1grf(ir::ocl::emask));
     GenRegister zero = GenRegister::immud(0),
                 one = GenRegister::immud(1),
                 imm31 = GenRegister::immud(31);
@@ -1503,8 +1502,6 @@ namespace gbe
 
       p->curr.execWidth = 1;
       p->curr.noMask = 1;
-      p->AND(flagReg, flagReg, emaskReg);
-
       // under condition, jump back to start point
       if (simdWidth == 8)
         p->curr.predicate = GEN_PREDICATE_ALIGN1_ANY8H;
@@ -1899,31 +1896,13 @@ namespace gbe
     auto &stackUse = dag->getUse(ir::ocl::stackptr);
 
     // We insert the block IP mask first
-#if 0
-    this->insertCurbeReg(ir::ocl::blockip, this->newCurbeEntry(GBE_CURBE_BLOCK_IP, 0, this->simdWidth * sizeof(uint16_t)));
-    this->insertCurbeReg(ir::ocl::emask, this->newCurbeEntry(GBE_CURBE_EMASK, 0,  this->simdWidth * sizeof(uint16_t)));
-    this->insertCurbeReg(ir::ocl::notemask, this->newCurbeEntry(GBE_CURBE_NOT_EMASK, 0, sizeof(uint16_t)));
-    this->insertCurbeReg(ir::ocl::barriermask, this->newCurbeEntry(GBE_CURBE_BARRIER_MASK, 0, sizeof(uint16_t)));
-    // Already inserted registers go here
-    const size_t localIDSizde = sizeof(uint32_t) * this->simdWidth;
-    insertCurbeReg(ir::ocl::lid0, this->newCurbeEntry(GBE_CURBE_LOCAL_ID_X, 0, localIDSize));
-    insertCurbeReg(ir::ocl::lid1, this->newCurbeEntry(GBE_CURBE_LOCAL_ID_Y, 0, localIDSize));
-    insertCurbeReg(ir::ocl::lid2, this->newCurbeEntry(GBE_CURBE_LOCAL_ID_Z, 0, localIDSize));
-    // Insert the stack buffer if used
-    if (stackUse.size() != 0)
-      insertCurbeReg(ir::ocl::stackbuffer, this->newCurbeEntry(GBE_CURBE_EXTRA_ARGUMENT, GBE_STACK_BUFFER, ptrSize));
-#else
     using namespace ir::ocl;
     allocCurbeReg(blockip, GBE_CURBE_BLOCK_IP);
-    allocCurbeReg(emask, GBE_CURBE_EMASK);
-    allocCurbeReg(notemask, GBE_CURBE_NOT_EMASK);
-    allocCurbeReg(barriermask, GBE_CURBE_BARRIER_MASK);
     allocCurbeReg(lid0, GBE_CURBE_LOCAL_ID_X);
     allocCurbeReg(lid1, GBE_CURBE_LOCAL_ID_Y);
     allocCurbeReg(lid2, GBE_CURBE_LOCAL_ID_Z);
     if (stackUse.size() != 0)
       allocCurbeReg(stackbuffer, GBE_CURBE_EXTRA_ARGUMENT, GBE_STACK_BUFFER);
-#endif
     // Go over the arguments and find the related patch locations
     const uint32_t argNum = fn.argNum();
     for (uint32_t argID = 0u; argID < argNum; ++argID) {

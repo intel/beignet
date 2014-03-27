@@ -41,7 +41,7 @@ namespace ir {
         "block_ip",
         "barrier_id", "thread_number",
         "work_dimension",
-        "emask", "notemask", "barriermask", "retVal"
+        "retVal"
     };
 
 #if GBE_DEBUG
@@ -78,9 +78,6 @@ namespace ir {
       DECL_NEW_REG(FAMILY_DWORD, barrierid, 1);
       DECL_NEW_REG(FAMILY_DWORD, threadn, 1);
       DECL_NEW_REG(FAMILY_DWORD, workdim, 1);
-      DECL_NEW_REG(FAMILY_WORD, emask, 1);
-      DECL_NEW_REG(FAMILY_WORD, notemask, 1);
-      DECL_NEW_REG(FAMILY_WORD, barriermask, 1);
       DECL_NEW_REG(FAMILY_WORD, retVal, 1);
     }
 #undef DECL_NEW_REG
