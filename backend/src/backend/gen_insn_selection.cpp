@@ -3045,7 +3045,11 @@ namespace gbe
         sel.pop();
       }
       else {
-        if (sel.ctx.hasJIP(&insn)) {
+        if (sel.ctx.hasJIP(&insn) &&
+            // If jump to next label and the endif offset is -1, then
+            // We don't need to add a jmpi here, as the following IF will do the same
+            // thing if all channels are disabled.
+            (jip != nextLabel || sel.block->endifOffset != -1)) {
           // If it is required, insert a JUMP to bypass the block
           sel.push();
             if (simdWidth == 8)
