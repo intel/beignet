@@ -2107,22 +2107,17 @@ namespace gbe
       // Like for regular selects, we need a temporary since we cannot predicate
       // properly
       const ir::Type type = cmpInsn.getType();
-      const RegisterFamily family = getFamily(type);
-      const GenRegister tmp = sel.selReg(sel.reg(family), type);
       const uint32_t simdWidth = sel.curr.execWidth;
       const GenRegister dst  = sel.selReg(insn.getDst(0), type);
       const GenRegister src0 = sel.selReg(cmpInsn.getSrc(0), type);
       const GenRegister src1 = sel.selReg(cmpInsn.getSrc(1), type);
 
       sel.push();
-        sel.curr.noMask = 1;
         sel.curr.predicate = GEN_PREDICATE_NONE;
         sel.curr.execWidth = simdWidth;
-        sel.SEL_CMP(genCmp, tmp, src0, src1);
+        sel.SEL_CMP(genCmp, dst, src0, src1);
       sel.pop();
 
-      // Update the destination register properly now
-      sel.MOV(dst, tmp);
 
       // We need the sources of the compare instruction
       markAllChildren(*cmp);
