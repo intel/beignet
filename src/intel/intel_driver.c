@@ -643,11 +643,14 @@ static int32_t get_intel_tiling(cl_int tiling, uint32_t *intel_tiling)
 static int intel_buffer_set_tiling(cl_buffer bo,
                                    cl_image_tiling_t tiling, size_t stride)
 {
-  uint32_t intel_tiling, required_tiling;
+  uint32_t intel_tiling;
   int ret;
   if (UNLIKELY((get_intel_tiling(tiling, &intel_tiling)) < 0))
     return -1;
+#ifndef NDEBUG
+  uint32_t required_tiling;
   required_tiling = intel_tiling;
+#endif
   ret = drm_intel_bo_set_tiling((drm_intel_bo*)bo, &intel_tiling, stride);
   assert(intel_tiling == required_tiling);
   return ret;

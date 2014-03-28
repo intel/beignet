@@ -531,6 +531,7 @@ int *cl_read_bmp(const char *filename, int *width, int *height)
   char magic[2];
   int ret;
   ret = fread(&magic[0], 1, 2, fp);
+  ret = ret;
   assert(2 == ret);
   assert(magic[0] == 'B' && magic[1] == 'M');
 

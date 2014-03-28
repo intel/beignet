@@ -449,6 +449,7 @@ void cl_event_set_status(cl_event event, cl_int status)
     /* All user events complete, now wait enqueue events */
     ret = cl_event_wait_events(enqueue_cb->num_events, enqueue_cb->wait_list,
                                enqueue_cb->event->queue);
+    ret = ret;
     assert(ret != CL_ENQUEUE_EXECUTE_DEFER);
 
     cb = enqueue_cb;
@@ -520,7 +521,6 @@ cl_int cl_event_get_timestamp(cl_event event, cl_profiling_info param_name)
     cl_gpgpu_event_get_exec_timestamp(event->gpgpu_event, 1, &ret_val);
     event->timestamp[param_name - CL_PROFILING_COMMAND_QUEUED] = ret_val;
     return CL_SUCCESS;
-  } else {
-    return CL_INVALID_VALUE;
   }
+  return CL_INVALID_VALUE;
 }

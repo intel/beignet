@@ -266,6 +266,8 @@ extern cl_mem cl_mem_new_libva_image(cl_context ctx,
                                      cl_image_format fmt,
                                      size_t row_pitch,
                                      cl_int *errcode);
+extern cl_int cl_mem_get_fd(cl_mem mem, int* fd);
+
 
 #endif /* __CL_MEM_H__ */
 

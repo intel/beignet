@@ -2939,7 +2939,6 @@ namespace gbe
         markAllChildren(dag);
       }
 
-      const uint32_t simdWidth = sel.ctx.getSimdWidth();
       const Register pred = insn.getPredicate();
       sel.push();
         sel.curr.predicate = GEN_PREDICATE_NONE;
