@@ -47,7 +47,8 @@ set(OPENCL_SRC
     intel/intel_batchbuffer.c
     intel/intel_driver.c
     x11/dricommon.c 
-    x11/va_dri2.c)
+    x11/va_dri2.c
+    performance.c)
 
 if (EGL_FOUND AND MESA_SOURCE_FOUND)
 set (OPENCL_SRC ${OPENCL_SRC} cl_mem_gl.c cl_gl_api.c x11/mesa_egl_extension.c x11/mesa_egl_res_share.c intel/intel_dri_resource_sharing.c)

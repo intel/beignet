@@ -28,6 +28,7 @@
 #include "cl_alloc.h"
 #include "cl_driver.h"
 #include "cl_khr_icd.h"
+#include "performance.h"
 
 #include <assert.h>
 #include <stdio.h>
@@ -376,6 +377,8 @@ cl_command_queue_ND_range(cl_command_queue queue,
                           const size_t *global_wk_sz,
                           const size_t *local_wk_sz)
 {
+  if(b_output_kernel_perf)
+    time_start(queue->ctx, cl_kernel_get_name(k), queue);
   const int32_t ver = cl_driver_get_ver(queue->ctx->drv);
   cl_int err = CL_SUCCESS;
 

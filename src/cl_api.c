@@ -40,6 +40,8 @@
 #include <assert.h>
 #include <unistd.h>
 
+#include "performance.h"
+
 #ifndef CL_VERSION_1_2
 #define CL_MAP_WRITE_INVALIDATE_REGION              (1 << 2)
 #define CL_DEVICE_TYPE_CUSTOM                       (1 << 4)
@@ -293,6 +295,7 @@ clCreateContext(const cl_context_properties *  properties,
                            pfn_notify,
                            user_data,
                            &err);
+  initialize_env_var();
 error:
   if (errcode_ret)
     *errcode_ret = err;
@@ -1676,6 +1679,10 @@ clEnqueueCopyBuffer(cl_command_queue     command_queue,
 
     err = cl_command_queue_flush(command_queue);
   }
+
+  if(b_output_kernel_perf)
+	  time_end(command_queue->ctx, "beignet internal kernel : cl_mem_copy", command_queue);
+
   return 0;
 
 error:
@@ -1776,6 +1783,9 @@ clEnqueueCopyBufferRect(cl_command_queue     command_queue,
 
     err = cl_command_queue_flush(command_queue);
   }
+
+  if(b_output_kernel_perf)
+    time_end(command_queue->ctx, "beignet internal kernel : cl_mem_copy_buffer_rect", command_queue);
 
 error:
   return err;
@@ -2016,6 +2026,9 @@ clEnqueueCopyImage(cl_command_queue      command_queue,
     err = cl_command_queue_flush(command_queue);
   }
 
+  if(b_output_kernel_perf)
+    time_end(command_queue->ctx, "beignet internal kernel : cl_mem_kernel_copy_image", command_queue);
+
 error:
   return err;
 }
@@ -2077,6 +2090,9 @@ clEnqueueCopyImageToBuffer(cl_command_queue  command_queue,
     err = cl_command_queue_flush(command_queue);
   }
 
+  if(b_output_kernel_perf)
+    time_end(command_queue->ctx, "beignet internal kernel : cl_mem_copy_image_to_buffer", command_queue);
+
 error:
   return err;
 }
@@ -2137,6 +2153,9 @@ clEnqueueCopyBufferToImage(cl_command_queue  command_queue,
 
     err = cl_command_queue_flush(command_queue);
   }
+
+  if(b_output_kernel_perf)
+    time_end(command_queue->ctx, "beignet internal kernel : cl_mem_copy_buffer_to_image", command_queue);
 
 error:
   return err;
@@ -2527,6 +2546,8 @@ clEnqueueNDRangeKernel(cl_command_queue  command_queue,
     err = cl_command_queue_flush(command_queue);
   }
 
+  if(b_output_kernel_perf)
+    time_end(command_queue->ctx, cl_kernel_get_name(kernel), command_queue);
 error:
   return err;
 }
