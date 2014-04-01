@@ -15,7 +15,6 @@ static void test_exec(const char* kernel_name)
 
   // Setup kernel and buffers
   OCL_CREATE_KERNEL_FROM_FILE("compiler_basic_arithmetic", kernel_name);
-std::cout <<"kernel name: " << kernel_name << std::endl;
   buf_data[0] = (T*) malloc(sizeof(T) * n);
   buf_data[1] = (T*) malloc(sizeof(T) * n);
   for (uint32_t i = 0; i < n; ++i) ((T*)buf_data[0])[i] = (T) rand();

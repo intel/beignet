@@ -31,6 +31,14 @@
 #include <vector>
 #include <iostream>
 
+/*! struct for statistics */
+struct RStatistics
+{
+  size_t passCount;
+  size_t failCount;
+  size_t finishrun;
+};
+
 /*! Quick and dirty unit test system with registration */
 struct UTest
 {
@@ -58,6 +66,10 @@ struct UTest
   static void runAll(void);
   /*! List all test cases */
   static void listAllCases(void);
+  /*! Statistics struct */
+  static RStatistics retStatistics;
+  /*! Do run a test case actually */
+  static void do_run(struct UTest utest);
 };
 
 /*! Register a new unit test */
@@ -84,11 +96,13 @@ struct UTest
  do { \
     try { \
       EXPR; \
-      std::cout << "  " << #EXPR << "    [SUCCESS]" << std::endl; \
+      std::cout << "    [SUCCESS]"; \
+      UTest::retStatistics.passCount += 1; \
     } \
     catch (Exception e) { \
-      std::cout << "  " << #EXPR << "    [FAILED]" << std::endl; \
-      std::cout << "    " << e.what() << std::endl; \
+      std::cout << "    [FAILED]"; \
+      std::cout << "\n   " << e.what(); \
+      UTest::retStatistics.failCount++; \
     } \
   } while (0)
 
@@ -96,10 +110,12 @@ struct UTest
  do { \
     try { \
       EXPR; \
-      std::cout << "  " << #EXPR << "    [FAILED]" <<  std::endl; \
+      std::cout << "    [FAILED]"; \
+      retStatistics.failCount++; \
     } \
     catch (gbe::Exception e) { \
-      std::cout << "  " << #EXPR << "    [SUCCESS]" << std::endl; \
+      std::cout << "    [SUCCESS]"; \
+      retStatistics.passCount++; \
     } \
   } while (0)
 
