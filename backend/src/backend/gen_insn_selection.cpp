@@ -423,7 +423,7 @@ namespace gbe
 #define ALU3(OP) \
   INLINE void OP(Reg dst, Reg src0, Reg src1, Reg src2) { ALU3(SEL_OP_##OP, dst, src0, src1, src2); }
 #define I64Shift(OP) \
-  INLINE void OP(Reg dst, Reg src0, Reg src1, GenRegister tmp[7]) { I64Shift(SEL_OP_##OP, dst, src0, src1, tmp); }
+  INLINE void OP(Reg dst, Reg src0, Reg src1, GenRegister tmp[6]) { I64Shift(SEL_OP_##OP, dst, src0, src1, tmp); }
     ALU1(MOV)
     ALU1WithTemp(MOV_DF)
     ALU1WithTemp(LOAD_DF_IMM)
@@ -477,13 +477,13 @@ namespace gbe
 #undef ALU3
 #undef I64Shift
     /*! Convert 64-bit integer to 32-bit float */
-    void CONVI64_TO_F(Reg dst, Reg src, GenRegister tmp[7]);
+    void CONVI64_TO_F(Reg dst, Reg src, GenRegister tmp[6]);
     /*! Convert 64-bit integer to 32-bit float */
-    void CONVF_TO_I64(Reg dst, Reg src, GenRegister tmp[3]);
+    void CONVF_TO_I64(Reg dst, Reg src, GenRegister tmp[2]);
     /*! Saturated 64bit x*y + z */
-    void I64MADSAT(Reg dst, Reg src0, Reg src1, Reg src2, GenRegister tmp[10]);
+    void I64MADSAT(Reg dst, Reg src0, Reg src1, Reg src2, GenRegister tmp[9]);
     /*! High 64bit of x*y */
-    void I64_MUL_HI(Reg dst, Reg src0, Reg src1, GenRegister tmp[10]);
+    void I64_MUL_HI(Reg dst, Reg src0, Reg src1, GenRegister tmp[9]);
     /*! (x+y)>>1 without mod. overflow */
     void I64HADD(Reg dst, Reg src0, Reg src1, GenRegister tmp[4]);
     /*! (x+y+1)>>1 without mod. overflow */
@@ -493,9 +493,9 @@ namespace gbe
     /*! Compare 64-bit integer */
     void I64CMP(uint32_t conditional, Reg src0, Reg src1, GenRegister tmp[3]);
     /*! Saturated addition of 64-bit integer */
-    void I64SATADD(Reg dst, Reg src0, Reg src1, GenRegister tmp[6]);
+    void I64SATADD(Reg dst, Reg src0, Reg src1, GenRegister tmp[5]);
     /*! Saturated subtraction of 64-bit integer */
-    void I64SATSUB(Reg dst, Reg src0, Reg src1, GenRegister tmp[6]);
+    void I64SATSUB(Reg dst, Reg src0, Reg src1, GenRegister tmp[5]);
     /*! Encode a barrier instruction */
     void BARRIER(GenRegister src, GenRegister fence, uint32_t barrierType);
     /*! Encode a barrier instruction */
@@ -567,9 +567,9 @@ namespace gbe
     /*! Multiply 64-bit integers */
     void I64MUL(Reg dst, Reg src0, Reg src1, GenRegister tmp[6]);
     /*! 64-bit integer division */
-    void I64DIV(Reg dst, Reg src0, Reg src1, GenRegister tmp[14]);
+    void I64DIV(Reg dst, Reg src0, Reg src1, GenRegister tmp[13]);
     /*! 64-bit integer remainder of division */
-    void I64REM(Reg dst, Reg src0, Reg src1, GenRegister tmp[14]);
+    void I64REM(Reg dst, Reg src0, Reg src1, GenRegister tmp[13]);
     /*! Use custom allocators */
     GBE_CLASS(Opaque);
     friend class SelectionBlock;
@@ -1195,21 +1195,21 @@ namespace gbe
       insn->dst(i + 1) = tmp[i];
   }
 
-  void Selection::Opaque::I64DIV(Reg dst, Reg src0, Reg src1, GenRegister tmp[14]) {
-    SelectionInstruction *insn = this->appendInsn(SEL_OP_I64DIV, 15, 2);
+  void Selection::Opaque::I64DIV(Reg dst, Reg src0, Reg src1, GenRegister tmp[13]) {
+    SelectionInstruction *insn = this->appendInsn(SEL_OP_I64DIV, 14, 2);
     insn->dst(0) = dst;
     insn->src(0) = src0;
     insn->src(1) = src1;
-    for(int i = 0; i < 14; i++)
+    for(int i = 0; i < 13; i++)
       insn->dst(i + 1) = tmp[i];
   }
 
-  void Selection::Opaque::I64REM(Reg dst, Reg src0, Reg src1, GenRegister tmp[14]) {
-    SelectionInstruction *insn = this->appendInsn(SEL_OP_I64REM, 15, 2);
+  void Selection::Opaque::I64REM(Reg dst, Reg src0, Reg src1, GenRegister tmp[13]) {
+    SelectionInstruction *insn = this->appendInsn(SEL_OP_I64REM, 14, 2);
     insn->dst(0) = dst;
     insn->src(0) = src0;
     insn->src(1) = src1;
-    for(int i = 0; i < 14; i++)
+    for(int i = 0; i < 13; i++)
       insn->dst(i + 1) = tmp[i];
   }
 
@@ -1258,47 +1258,47 @@ namespace gbe
     insn->extra.function = conditional;
   }
 
-  void Selection::Opaque::I64SATADD(Reg dst, Reg src0, Reg src1, GenRegister tmp[6]) {
+  void Selection::Opaque::I64SATADD(Reg dst, Reg src0, Reg src1, GenRegister tmp[5]) {
     SelectionInstruction *insn = this->appendInsn(SEL_OP_I64SATADD, 7, 2);
     insn->dst(0) = dst;
     insn->src(0) = src0;
     insn->src(1) = src1;
-    for(int i=0; i<6; i++)
+    for(int i=0; i<5; i++)
       insn->dst(i + 1) = tmp[i];
   }
 
-  void Selection::Opaque::I64SATSUB(Reg dst, Reg src0, Reg src1, GenRegister tmp[6]) {
-    SelectionInstruction *insn = this->appendInsn(SEL_OP_I64SATSUB, 7, 2);
+  void Selection::Opaque::I64SATSUB(Reg dst, Reg src0, Reg src1, GenRegister tmp[5]) {
+    SelectionInstruction *insn = this->appendInsn(SEL_OP_I64SATSUB, 6, 2);
     insn->dst(0) = dst;
     insn->src(0) = src0;
     insn->src(1) = src1;
-    for(int i=0; i<6; i++)
+    for(int i=0; i<5; i++)
       insn->dst(i + 1) = tmp[i];
   }
 
-  void Selection::Opaque::CONVI64_TO_F(Reg dst, Reg src, GenRegister tmp[7]) {
-    SelectionInstruction *insn = this->appendInsn(SEL_OP_CONVI64_TO_F, 8, 1);
+  void Selection::Opaque::CONVI64_TO_F(Reg dst, Reg src, GenRegister tmp[6]) {
+    SelectionInstruction *insn = this->appendInsn(SEL_OP_CONVI64_TO_F, 7, 1);
     insn->dst(0) = dst;
     insn->src(0) = src;
-    for(int i = 0; i < 7; i ++)
+    for(int i = 0; i < 6; i ++)
       insn->dst(i + 1) = tmp[i];
   }
 
-  void Selection::Opaque::CONVF_TO_I64(Reg dst, Reg src, GenRegister tmp[3]) {
-    SelectionInstruction *insn = this->appendInsn(SEL_OP_CONVF_TO_I64, 4, 1);
+  void Selection::Opaque::CONVF_TO_I64(Reg dst, Reg src, GenRegister tmp[2]) {
+    SelectionInstruction *insn = this->appendInsn(SEL_OP_CONVF_TO_I64, 3, 1);
     insn->dst(0) = dst;
     insn->src(0) = src;
-    for(int i = 0; i < 3; i ++)
+    for(int i = 0; i < 2; i ++)
       insn->dst(i + 1) = tmp[i];
   }
 
-  void Selection::Opaque::I64MADSAT(Reg dst, Reg src0, Reg src1, Reg src2, GenRegister tmp[10]) {
-    SelectionInstruction *insn = this->appendInsn(SEL_OP_I64MADSAT, 11, 3);
+  void Selection::Opaque::I64MADSAT(Reg dst, Reg src0, Reg src1, Reg src2, GenRegister tmp[9]) {
+    SelectionInstruction *insn = this->appendInsn(SEL_OP_I64MADSAT, 10, 3);
     insn->dst(0) = dst;
     insn->src(0) = src0;
     insn->src(1) = src1;
     insn->src(2) = src2;
-    for(int i = 0; i < 10; i ++)
+    for(int i = 0; i < 9; i ++)
       insn->dst(i + 1) = tmp[i];
   }
 
@@ -1329,12 +1329,12 @@ namespace gbe
       insn->dst(i + 1) = tmp[i];
   }
 
-  void Selection::Opaque::I64Shift(SelectionOpcode opcode, Reg dst, Reg src0, Reg src1, GenRegister tmp[7]) {
-    SelectionInstruction *insn = this->appendInsn(opcode, 8, 2);
+  void Selection::Opaque::I64Shift(SelectionOpcode opcode, Reg dst, Reg src0, Reg src1, GenRegister tmp[6]) {
+    SelectionInstruction *insn = this->appendInsn(opcode, 7, 2);
     insn->dst(0) = dst;
     insn->src(0) = src0;
     insn->src(1) = src1;
-    for(int i = 0; i < 7; i ++)
+    for(int i = 0; i < 6; i ++)
       insn->dst(i + 1) = tmp[i];
   }
 
@@ -1784,16 +1784,19 @@ namespace gbe
         GBE_ASSERT(op != OP_REM);
         sel.MATH(dst, GEN_MATH_FUNCTION_FDIV, src0, src1);
       } else if (type == TYPE_S64 || type == TYPE_U64) {
-        GenRegister tmp[14];
-        for(int i=0; i<13; i++) {
+        GenRegister tmp[13];
+        for(int i=0; i < 13; i++) {
           tmp[i] = sel.selReg(sel.reg(FAMILY_DWORD));
           tmp[i].type = GEN_TYPE_UD;
         }
-        tmp[13] = sel.selReg(sel.reg(FAMILY_BOOL, true));
-        if(op == OP_DIV)
-          sel.I64DIV(dst, src0, src1, tmp);
-        else
-          sel.I64REM(dst, src0, src1, tmp);
+        sel.push();
+          sel.curr.flag = 0;
+          sel.curr.subFlag = 1;
+          if(op == OP_DIV)
+            sel.I64DIV(dst, src0, src1, tmp);
+          else
+            sel.I64REM(dst, src0, src1, tmp);
+        sel.pop();
       }
       markAllChildren(dag);
       return true;
@@ -1883,13 +1886,16 @@ namespace gbe
           break;
         case OP_ADDSAT:
           if (type == Type::TYPE_U64 || type == Type::TYPE_S64) {
-            GenRegister tmp[6];
+            GenRegister tmp[5];
             for(int i=0; i<5; i++) {
               tmp[i] = sel.selReg(sel.reg(FAMILY_DWORD));
               tmp[i].type = GEN_TYPE_UD;
             }
-            tmp[5] = sel.selReg(sel.reg(FAMILY_BOOL, true));
-            sel.I64SATADD(dst, src0, src1, tmp);
+            sel.push();
+              sel.curr.flag = 0;
+              sel.curr.subFlag = 1;
+              sel.I64SATADD(dst, src0, src1, tmp);
+            sel.pop();
             break;
           }
           sel.push();
@@ -1924,13 +1930,16 @@ namespace gbe
           break;
         case OP_SUBSAT:
           if (type == Type::TYPE_U64 || type == Type::TYPE_S64) {
-            GenRegister tmp[6];
+            GenRegister tmp[5];
             for(int i=0; i<5; i++) {
               tmp[i] = sel.selReg(sel.reg(FAMILY_DWORD));
               tmp[i].type = GEN_TYPE_UD;
             }
-            tmp[5] = sel.selReg(sel.reg(FAMILY_BOOL, true));
-            sel.I64SATSUB(dst, src0, src1, tmp);
+            sel.push();
+              sel.curr.flag = 0;
+              sel.curr.subFlag = 1;
+              sel.I64SATSUB(dst, src0, src1, tmp);
+            sel.pop();
             break;
           }
           sel.push();
@@ -1940,31 +1949,40 @@ namespace gbe
           break;
         case OP_SHL:
           if (type == TYPE_S64 || type == TYPE_U64) {
-            GenRegister tmp[7];
+            GenRegister tmp[6];
             for(int i = 0; i < 6; i ++)
               tmp[i] = sel.selReg(sel.reg(FAMILY_DWORD));
-            tmp[6] = sel.selReg(sel.reg(FAMILY_BOOL, true));
-            sel.I64SHL(dst, src0, src1, tmp);
+            sel.push();
+              sel.curr.flag = 0;
+              sel.curr.subFlag = 1;
+              sel.I64SHL(dst, src0, src1, tmp);
+            sel.pop();
           } else
             sel.SHL(dst, src0, src1);
           break;
         case OP_SHR:
           if (type == TYPE_S64 || type == TYPE_U64) {
-            GenRegister tmp[7];
+            GenRegister tmp[6];
             for(int i = 0; i < 6; i ++)
               tmp[i] = sel.selReg(sel.reg(FAMILY_DWORD));
-            tmp[6] = sel.selReg(sel.reg(FAMILY_BOOL, true));
-            sel.I64SHR(dst, src0, src1, tmp);
+            sel.push();
+              sel.curr.flag = 0;
+              sel.curr.subFlag = 1;
+              sel.I64SHR(dst, src0, src1, tmp);
+            sel.pop();
           } else
             sel.SHR(dst, src0, src1);
           break;
         case OP_ASR:
           if (type == TYPE_S64 || type == TYPE_U64) {
-            GenRegister tmp[7];
+            GenRegister tmp[6];
             for(int i = 0; i < 6; i ++)
               tmp[i] = sel.selReg(sel.reg(FAMILY_DWORD));
-            tmp[6] = sel.selReg(sel.reg(FAMILY_BOOL, true));
-            sel.I64ASR(dst, src0, src1, tmp);
+            sel.push();
+              sel.curr.flag = 0;
+              sel.curr.subFlag = 1;
+              sel.I64ASR(dst, src0, src1, tmp);
+            sel.pop();
           } else
             sel.ASR(dst, src0, src1);
           break;
@@ -1975,13 +1993,16 @@ namespace gbe
           }
         case OP_I64_MUL_HI:
          {
-          GenRegister temp[10];
+          GenRegister temp[9];
           for(int i=0; i<9; i++) {
             temp[i] = sel.selReg(sel.reg(FAMILY_DWORD));
             temp[i].type = GEN_TYPE_UD;
           }
-          temp[9] = sel.selReg(sel.reg(FAMILY_BOOL, true));
-          sel.I64_MUL_HI(dst, src0, src1, temp);
+          sel.push();
+            sel.curr.flag = 0;
+            sel.curr.subFlag = 1;
+            sel.I64_MUL_HI(dst, src0, src1, temp);
+          sel.pop();
           break;
          }
         case OP_MUL:
@@ -2752,17 +2773,6 @@ namespace gbe
             sel.curr.flagGen = 1;
           sel.CMP(getGenCompare(opcode), src0, src1, tmpDst);
         }
-#if 0
-        if((type == TYPE_S64 || type == TYPE_U64 ||
-            type == TYPE_DOUBLE || type == TYPE_FLOAT ||
-            type == TYPE_U32 ||  type == TYPE_S32) /*&&
-            needStoreBool*/) {
-            sel.curr.predicate = GEN_PREDICATE_NORMAL;
-            sel.SEL(sel.selReg(dst, TYPE_U16),
-                    sel.selReg(ir::ocl::one, TYPE_U16),
-                    sel.selReg(ir::ocl::zero, TYPE_U16));
-        }
-#endif
       sel.pop();
       return true;
     }
@@ -2893,12 +2903,15 @@ namespace gbe
       } else if ((dstType == ir::TYPE_S32 || dstType == ir::TYPE_U32) && srcFamily == FAMILY_QWORD) {
         sel.CONVI64_TO_I(dst, src);
       } else if (dstType == ir::TYPE_FLOAT && srcFamily == FAMILY_QWORD) {
-        GenRegister tmp[7];
+        GenRegister tmp[6];
         for(int i=0; i<6; i++) {
           tmp[i] = sel.selReg(sel.reg(FAMILY_DWORD), TYPE_U32);
         }
-        tmp[6] = sel.selReg(sel.reg(FAMILY_BOOL, true), TYPE_BOOL);
-        sel.CONVI64_TO_F(dst, src, tmp);
+        sel.push();
+          sel.curr.flag = 0;
+          sel.curr.subFlag = 1;
+          sel.CONVI64_TO_F(dst, src, tmp);
+        sel.pop();
       } else if (dst.isdf()) {
         ir::Register r = sel.reg(ir::RegisterFamily::FAMILY_QWORD);
         sel.MOV_DF(dst, src, sel.selReg(r));
@@ -2906,11 +2919,14 @@ namespace gbe
         switch(src.type) {
           case GEN_TYPE_F:
           {
-            GenRegister tmp[3];
+            GenRegister tmp[2];
             tmp[0] = sel.selReg(sel.reg(FAMILY_DWORD), TYPE_U32);
             tmp[1] = sel.selReg(sel.reg(FAMILY_DWORD), TYPE_FLOAT);
-            tmp[2] = sel.selReg(sel.reg(FAMILY_BOOL, true), TYPE_BOOL);
-            sel.CONVF_TO_I64(dst, src, tmp);
+            sel.push();
+              sel.curr.flag = 0;
+              sel.curr.subFlag = 1;
+              sel.CONVF_TO_I64(dst, src, tmp);
+            sel.pop();
             break;
           }
           case GEN_TYPE_DF:
@@ -3018,13 +3034,16 @@ namespace gbe
       switch(insn.getOpcode()) {
         case OP_I64MADSAT:
          {
-          GenRegister tmp[10];
+          GenRegister tmp[9];
           for(int i=0; i<9; i++) {
             tmp[i] = sel.selReg(sel.reg(FAMILY_DWORD));
             tmp[i].type = GEN_TYPE_UD;
           }
-          tmp[9] = sel.selReg(sel.reg(FAMILY_BOOL, true));
-          sel.I64MADSAT(dst, src0, src1, src2, tmp);
+          sel.push();
+            sel.curr.flag = 0;
+            sel.curr.subFlag = 1;
+            sel.I64MADSAT(dst, src0, src1, src2, tmp);
+          sel.pop();
           break;
          }
         case OP_MAD:

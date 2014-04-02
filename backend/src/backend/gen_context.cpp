@@ -566,9 +566,8 @@ namespace gbe
     GenRegister g = ra->genReg(insn.dst(7));
     GenRegister h = ra->genReg(insn.dst(8));
     GenRegister i = ra->genReg(insn.dst(9));
-    //GenRegister flagReg = checkFlagRegister(ra->genReg(insn.dst(10)));
-    // We just simply use the temporary flag here.
-    GenRegister flagReg = GenRegister::flag(0, 1);
+    GBE_ASSERT(insn.state.flag == 0 && insn.state.subFlag == 1);
+    GenRegister flagReg = GenRegister::flag(insn.state.flag, insn.state.subFlag);
     loadTopHalf(a, x);
     loadBottomHalf(b, x);
     loadTopHalf(c, y);
@@ -615,9 +614,8 @@ namespace gbe
     GenRegister g = ra->genReg(insn.dst(7));
     GenRegister h = ra->genReg(insn.dst(8));
     GenRegister i = ra->genReg(insn.dst(9));
-    //GenRegister flagReg = checkFlagRegister(ra->genReg(insn.dst(10)));
-    // We just simply use the temporary flag here.
-    GenRegister flagReg = GenRegister::flag(0, 1);
+    GBE_ASSERT(insn.state.flag == 0 && insn.state.subFlag == 1);
+    GenRegister flagReg = GenRegister::flag(insn.state.flag, insn.state.subFlag);
     GenRegister zero = GenRegister::immud(0), one = GenRegister::immud(1);
     loadTopHalf(a, x);
     loadBottomHalf(b, x);
@@ -801,9 +799,8 @@ namespace gbe
     GenRegister e = ra->genReg(insn.dst(5));
     GenRegister f = ra->genReg(insn.dst(6));
     a.type = b.type = c.type = d.type = e.type = f.type = GEN_TYPE_UD;
-    //GenRegister flagReg = checkFlagRegister(ra->genReg(insn.dst(7)));
-    // We just simply use the temporary flag here.
-    GenRegister flagReg = GenRegister::flag(0, 1);
+    GBE_ASSERT(insn.state.flag == 0 && insn.state.subFlag == 1);
+    GenRegister flagReg = GenRegister::flag(insn.state.flag, insn.state.subFlag);
     GenRegister zero = GenRegister::immud(0);
     switch(insn.opcode) {
       case SEL_OP_I64SHL:
@@ -1007,19 +1004,18 @@ namespace gbe
     GenRegister mantissa = ra->genReg(insn.dst(4));
     GenRegister tmp = ra->genReg(insn.dst(5));
     GenRegister tmp_high = ra->genReg(insn.dst(6));
-    //GenRegister f0 = checkFlagRegister(ra->genReg(insn.dst(7)));
-    // We just simply use the temporary flag here.
-    GenRegister f0 = GenRegister::flag(0, 1);
+    GBE_ASSERT(insn.state.flag == 0 && insn.state.subFlag == 1);
+    GenRegister flagReg = GenRegister::flag(insn.state.flag, insn.state.subFlag);
     loadTopHalf(high, src);
     loadBottomHalf(low, src);
     if(!src.is_signed_int()) {
-      UnsignedI64ToFloat(dest, high, low, exp, mantissa, tmp, f0);
+      UnsignedI64ToFloat(dest, high, low, exp, mantissa, tmp, flagReg);
     } else {
       p->MOV(tmp_high, high);
       p->push();
       p->curr.predicate = GEN_PREDICATE_NONE;
       p->curr.noMask = 1;
-      p->curr.useFlag(f0.flag_nr(), f0.flag_subnr());
+      p->curr.useFlag(flagReg.flag_nr(), flagReg.flag_subnr());
       p->CMP(GEN_CONDITIONAL_GE, tmp_high, GenRegister::immud(0x80000000));
       p->curr.predicate = GEN_PREDICATE_NORMAL;
       p->NOT(high, high);
@@ -1028,11 +1024,11 @@ namespace gbe
       addWithCarry(low, low, tmp);
       p->ADD(high, high, tmp);
       p->pop();
-      UnsignedI64ToFloat(dest, high, low, exp, mantissa, tmp, f0);
+      UnsignedI64ToFloat(dest, high, low, exp, mantissa, tmp, flagReg);
       p->push();
       p->curr.predicate = GEN_PREDICATE_NONE;
       p->curr.noMask = 1;
-      p->curr.useFlag(f0.flag_nr(), f0.flag_subnr());
+      p->curr.useFlag(flagReg.flag_nr(), flagReg.flag_subnr());
       p->CMP(GEN_CONDITIONAL_GE, tmp_high, GenRegister::immud(0x80000000));
       p->curr.predicate = GEN_PREDICATE_NORMAL;
       dest.type = GEN_TYPE_UD;
@@ -1047,9 +1043,8 @@ namespace gbe
     GenRegister dst = ra->genReg(insn.dst(0));
     GenRegister high = ra->genReg(insn.dst(1));
     GenRegister tmp = ra->genReg(insn.dst(2));
-    //GenRegister flag0 = checkFlagRegister(ra->genReg(insn.dst(3)));
-    // We just simply use the temporary flag here.
-    GenRegister flag0 = GenRegister::flag(0, 1);
+    GBE_ASSERT(insn.state.flag == 0 && insn.state.subFlag == 1);
+    GenRegister flagReg = GenRegister::flag(insn.state.flag, insn.state.subFlag);
 
     if(dst.is_signed_int())
       high = GenRegister::retype(high, GEN_TYPE_D);
@@ -1068,7 +1063,7 @@ namespace gbe
       p->push();
       p->curr.predicate = GEN_PREDICATE_NONE;
       p->curr.noMask = 1;
-      p->curr.useFlag(flag0.flag_nr(), flag0.flag_subnr());
+      p->curr.useFlag(flagReg.flag_nr(), flagReg.flag_subnr());
       p->CMP(GEN_CONDITIONAL_L, src, GenRegister::immf(0x0));
       p->curr.predicate = GEN_PREDICATE_NORMAL;
       p->CMP(GEN_CONDITIONAL_NEQ, low, GenRegister::immud(0x0));
@@ -1170,9 +1165,8 @@ namespace gbe
     GenRegister c = ra->genReg(insn.dst(3));
     GenRegister d = ra->genReg(insn.dst(4));
     GenRegister e = ra->genReg(insn.dst(5));
-    //GenRegister flagReg = checkFlagRegister(ra->genReg(insn.dst(6)));
-    // We just simply use the temporary flag here.
-    GenRegister flagReg = GenRegister::flag(0, 1);
+    GBE_ASSERT(insn.state.flag == 0 && insn.state.subFlag == 1);
+    GenRegister flagReg = GenRegister::flag(insn.state.flag, insn.state.subFlag);
     loadTopHalf(a, x);
     loadBottomHalf(b, x);
     loadTopHalf(c, y);
@@ -1220,9 +1214,8 @@ namespace gbe
     GenRegister c = ra->genReg(insn.dst(3));
     GenRegister d = ra->genReg(insn.dst(4));
     GenRegister e = ra->genReg(insn.dst(5));
-    //GenRegister flagReg = checkFlagRegister(ra->genReg(insn.dst(6)));
-    // We just simply use the temporary flag here.
-    GenRegister flagReg = GenRegister::flag(0, 1);
+    GBE_ASSERT(insn.state.flag == 0 && insn.state.subFlag == 1);
+    GenRegister flagReg = GenRegister::flag(insn.state.flag, insn.state.subFlag);
     loadTopHalf(a, x);
     loadBottomHalf(b, x);
     loadTopHalf(c, y);
@@ -1428,9 +1421,8 @@ namespace gbe
     GenRegister k = ra->genReg(insn.dst(11));
     GenRegister l = ra->genReg(insn.dst(12));
     GenRegister m = ra->genReg(insn.dst(13));
-    //GenRegister flagReg = checkFlagRegister(ra->genReg(insn.dst(14)));
-    // We just simply use the temporary flag here.
-    GenRegister flagReg = GenRegister::flag(0, 1);
+    GBE_ASSERT(insn.state.flag == 0 && insn.state.subFlag == 1);
+    GenRegister flagReg = GenRegister::flag(insn.state.flag, insn.state.subFlag);
     GenRegister zero = GenRegister::immud(0),
                 one = GenRegister::immud(1),
                 imm31 = GenRegister::immud(31);

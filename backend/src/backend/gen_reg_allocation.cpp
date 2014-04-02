@@ -584,6 +584,11 @@ namespace gbe
             interval1.minID = std::min(interval1.minID, (int32_t)insn.ID);
             interval1.maxID = std::max(interval1.maxID, (int32_t)insn.ID);
           }
+        } else {
+          // If the instruction use the temporary flag register manually,
+          // we should invalidate the temp flag reg here.
+          if (insn.state.flag == 0 && insn.state.subFlag == 1)
+            validTempFlagReg = 0;
         }
       }
     }
