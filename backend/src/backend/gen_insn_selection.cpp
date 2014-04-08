@@ -1259,7 +1259,7 @@ namespace gbe
   }
 
   void Selection::Opaque::I64SATADD(Reg dst, Reg src0, Reg src1, GenRegister tmp[5]) {
-    SelectionInstruction *insn = this->appendInsn(SEL_OP_I64SATADD, 7, 2);
+    SelectionInstruction *insn = this->appendInsn(SEL_OP_I64SATADD, 6, 2);
     insn->dst(0) = dst;
     insn->src(0) = src0;
     insn->src(1) = src1;
@@ -1302,12 +1302,12 @@ namespace gbe
       insn->dst(i + 1) = tmp[i];
   }
 
-  void Selection::Opaque::I64_MUL_HI(Reg dst, Reg src0, Reg src1, GenRegister tmp[10]) {
-    SelectionInstruction *insn = this->appendInsn(SEL_OP_I64_MUL_HI, 11, 2);
+  void Selection::Opaque::I64_MUL_HI(Reg dst, Reg src0, Reg src1, GenRegister tmp[9]) {
+    SelectionInstruction *insn = this->appendInsn(SEL_OP_I64_MUL_HI, 10, 2);
     insn->dst(0) = dst;
     insn->src(0) = src0;
     insn->src(1) = src1;
-    for(int i = 0; i < 10; i ++)
+    for(int i = 0; i < 9; i ++)
       insn->dst(i + 1) = tmp[i];
   }
 
