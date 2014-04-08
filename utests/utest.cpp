@@ -29,8 +29,14 @@
 #include <sys/ioctl.h>
 #include <unistd.h>
 #include <cstring>
+#include <stdlib.h>
+#include <csignal>
 
-#define MAX_SUM_LINE 256
+struct signalMap
+{
+  const char* signalName;
+  int signalNum;
+};
 
 using namespace std;
 vector<UTest> *UTest::utestList = NULL;
@@ -38,7 +44,7 @@ vector<UTest> *UTest::utestList = NULL;
 RStatistics UTest::retStatistics;
 
 void releaseUTestList(void) { delete UTest::utestList; }
-void runAllNoIssueAtExit(void) {
+void runSummaryAtExit(void) {
   // If case crashes, count it as fail, and accumulate finishrun
   if(UTest::retStatistics.finishrun != UTest::utestList->size()) {
     UTest::retStatistics.finishrun++;
@@ -50,17 +56,68 @@ void runAllNoIssueAtExit(void) {
   printf("  pass: %zu\n",UTest::retStatistics.passCount);
   printf("  fail: %zu\n",UTest::retStatistics.failCount);
   printf("  pass rate: %f\n",1-(float)UTest::retStatistics.failCount/(float)UTest::utestList->size());
+
+  releaseUTestList();
+}
+
+void signalHandler( int signum )
+{
+  const char* name = NULL;
+
+  signalMap arr[] = {
+    {"SIGILL",  SIGILL},
+    {"SIGFPE",  SIGFPE},
+    {"SIGABRT", SIGABRT},
+    {"SIGBUS",  SIGBUS},
+    {"SIGSEGV", SIGSEGV},
+    {"SIGHUP",  SIGHUP},
+    {"SIGINT",  SIGINT},
+    {"SIGQUIT", SIGQUIT},
+    {"SIGTERM", SIGTERM},
+    {NULL,      -1}
+  };
+
+  for(int i=0; arr[i].signalNum != -1 && arr[i].signalName != NULL; i++) {
+    if(arr[i].signalNum == signum)
+
+      name = arr[i].signalName;
   }
+
+  printf("    Interrupt signal (%s) received.", name);
+
+  exit(signum);
+}
+
+void catch_signal(void){
+  struct sigaction sa;
+  int sigs[] = {
+    SIGILL, SIGFPE, SIGABRT, SIGBUS,
+    SIGSEGV, SIGHUP, SIGINT, SIGQUIT,
+    SIGTERM
+  };
+
+  sa.sa_handler = signalHandler;
+  sigemptyset(&sa.sa_mask);
+  sa.sa_flags = SA_RESETHAND;
+
+  for(unsigned int i = 0; i < sizeof(sigs)/sizeof(sigs[0]); ++i) {
+    if (sigaction(sigs[i], &sa, NULL) == -1)
+      perror("Could not set signal handler");
+  }
+}
 
 UTest::UTest(Function fn, const char *name, bool haveIssue, bool needDestroyProgram)
        : fn(fn), name(name), haveIssue(haveIssue), needDestroyProgram(needDestroyProgram) {
 
   if (utestList == NULL) {
     utestList = new vector<UTest>;
-    atexit(releaseUTestList);
+
+    catch_signal();
+    atexit(runSummaryAtExit);
   }
   utestList->push_back(*this);
 }
+
 
 static bool strequal(const char *s1, const char *s2) {
   if (strcmp(s1, s2) == 0) return true;
@@ -68,46 +125,17 @@ static bool strequal(const char *s1, const char *s2) {
 }
 
 void UTest::do_run(struct UTest utest){
-  // winsize is a struct in ioctl.h, contains terminal column number
-  struct winsize size;
-  char spaceList[MAX_SUM_LINE] = {0};
-
-  //Obtain terminal column size
-  ioctl(STDOUT_FILENO, TIOCGWINSZ, &size);
-
-  //A string contain MAX_SUM_LINE spaces, to hide the statistic line in stdout
-  for (size_t j = 0; j < size.ws_col; j++){
-    if ( j >= MAX_SUM_LINE - 1 )  break;
-    spaceList[j] = ' ';
-    spaceList[j+1] = '\0';
-  }
-  printf("\r%s\r%s()", spaceList, utest.name);
-
-  // Run one case in utestList
-  (utest.fn)();
-
-  // Print dynamic statistics line
-  sprintf(spaceList, "\n [run/total: %zu/%zu]\
-    pass: %zu; fail: %zu; pass rate: %f\r",
-    retStatistics.finishrun+1, utestList->size(),
-    retStatistics.passCount,
-    retStatistics.failCount,
-    1-(float)retStatistics.failCount/(float)utestList->size());
-
-  // If terminal column size lower than length of statistic line, print nothing, If not, print the statistics line
-  if (size.ws_col > strlen(spaceList))
-    printf("%s", spaceList);
-  else
-    printf("\n");
-
-  // Refresh console
+  // Print function name
+  printf("%s()", utest.name);
   fflush(stdout);
+
+  // Run one case in utestList, print result [SUCCESS] or [FAILED]
+  (utest.fn)();
 }
 
 void UTest::run(const char *name) {
   if (name == NULL) return;
   if (utestList == NULL) return;
-  atexit(runAllNoIssueAtExit);
 
   for (; retStatistics.finishrun < utestList->size(); ++retStatistics.finishrun) {
     const UTest &utest = (*utestList)[retStatistics.finishrun];
@@ -122,7 +150,6 @@ void UTest::run(const char *name) {
 
 void UTest::runAll(void) {
   if (utestList == NULL) return;
-  atexit(runAllNoIssueAtExit);
 
   for (; retStatistics.finishrun < utestList->size(); ++retStatistics.finishrun) {
     const UTest &utest = (*utestList)[retStatistics.finishrun];
@@ -135,7 +162,6 @@ void UTest::runAll(void) {
 
 void UTest::runAllNoIssue(void) {
   if (utestList == NULL) return;
-  atexit(runAllNoIssueAtExit);
 
   for (; retStatistics.finishrun < utestList->size(); ++retStatistics.finishrun) {
     const UTest &utest = (*utestList)[retStatistics.finishrun];

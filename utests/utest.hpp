@@ -96,12 +96,12 @@ struct UTest
  do { \
     try { \
       EXPR; \
-      std::cout << "    [SUCCESS]"; \
+      std::cout << "    [SUCCESS]" << std::endl; \
       UTest::retStatistics.passCount += 1; \
     } \
     catch (Exception e) { \
-      std::cout << "    [FAILED]"; \
-      std::cout << "\n   " << e.what(); \
+      std::cout << "    [FAILED]" << std::endl; \
+      std::cout << "    " << e.what() << std::endl; \
       UTest::retStatistics.failCount++; \
     } \
   } while (0)
@@ -110,11 +110,11 @@ struct UTest
  do { \
     try { \
       EXPR; \
-      std::cout << "    [FAILED]"; \
+      std::cout << "    [FAILED]" << std::endl; \
       retStatistics.failCount++; \
     } \
     catch (gbe::Exception e) { \
-      std::cout << "    [SUCCESS]"; \
+      std::cout << "    [SUCCESS]" << std::endl; \
       retStatistics.passCount++; \
     } \
   } while (0)
