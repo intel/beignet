@@ -28,6 +28,7 @@
 #include "backend/gen_register.hpp"
 #include "backend/program.hpp"
 #include "sys/exception.hpp"
+#include "sys/cvar.hpp"
 #include <algorithm>
 #include <climits>
 #include <iostream>
@@ -594,6 +595,7 @@ namespace gbe
     }
   }
 
+  IVAR(OCL_SIMD16_SPILL_THRESHOLD, 0, 16, 256);
   bool GenRegAllocator::Opaque::allocateGRFs(Selection &selection) {
     // Perform the linear scan allocator
     const uint32_t regNum = ctx.sel->getRegNum();
@@ -648,8 +650,16 @@ namespace gbe
     }
     if (!spilledRegs.empty()) {
       GBE_ASSERT(reservedReg != 0);
+      if (ctx.getSimdWidth() == 16) {
+        if (spilledRegs.size() > (unsigned int)OCL_SIMD16_SPILL_THRESHOLD) {
+          if (GBE_DEBUG)
+            std::cerr << "WARN: exceed simd 16 spill threshold ("
+                      << spilledRegs.size() << ">" << OCL_SIMD16_SPILL_THRESHOLD
+                      << ")" << std::endl;
+          return false;
+        }
+      }
       allocateScratchForSpilled();
-
       bool success = selection.spillRegs(spilledRegs, reservedReg);
       if (!success) {
         std::cerr << "Fail to spill registers." << std::endl;
@@ -728,9 +738,14 @@ namespace gbe
        uint32_t regSize;
        ir::RegisterFamily family;
        getRegAttrib(reg, regSize, &family);
+       // At simd16 mode, we may introduce some simd8 registers in te instruction selection stage.
+       // To spill those simd8 temporary registers will introduce unecessary complexity. We just simply
+       // avoid to spill those temporary registers here.
+       if (ctx.getSimdWidth() == 16 && reg.value() >= ctx.getFunction().getRegisterFile().regNum())
+         return;
 
-       if ((regSize == GEN_REG_SIZE && family == ir::FAMILY_DWORD)
-          || (regSize == 2*GEN_REG_SIZE && family == ir::FAMILY_QWORD)) {
+       if ((regSize == ctx.getSimdWidth()/8 * GEN_REG_SIZE && family == ir::FAMILY_DWORD)
+          || (regSize == 2 * ctx.getSimdWidth()/8 * GEN_REG_SIZE && family == ir::FAMILY_QWORD)) {
          GBE_ASSERT(offsetReg.find(grfOffset) == offsetReg.end());
          offsetReg.insert(std::make_pair(grfOffset, reg));
          spillCandidate.insert(intervals[reg]);
@@ -747,6 +762,10 @@ namespace gbe
                                                 bool isAllocated) {
     if (reservedReg == 0)
       return false;
+
+    if (interval.reg.value() >= ctx.getFunction().getRegisterFile().regNum() &&
+        ctx.getSimdWidth() == 16)
+      return false;
     SpillRegTag spillTag;
     spillTag.isTmpReg = interval.maxID == interval.minID;
     spillTag.addr = -1;
@@ -762,9 +781,12 @@ namespace gbe
     return true;
   }
 
+  // Check whethere a vector which is allocated can be spilled out
+  // If a partial of a vector is expired, the vector will be unspillable, currently.
+  // FIXME we may need to fix those unspillable vector in the furture.
   INLINE bool GenRegAllocator::Opaque::vectorCanSpill(SelectionVector *vector) {
     for(uint32_t id = 0; id < vector->regNum; id++)
-      if (spillCandidate.find(intervals[(ir::Register)(vector->reg[id]).value.reg])
+      if (spillCandidate.find(intervals[(ir::Register)(vector->reg[id].value.reg)])
           == spillCandidate.end())
         return false;
     return true;
@@ -779,8 +801,12 @@ namespace gbe
     // If there is no spill candidate or current register is spillable and current register's
     // endpoint is after all the spillCandidate register's endpoint we return false. The
     // caller will spill current register.
+    // At simd16 mode, we will always try to spill here rather than return to the caller.
+    // The reason is that the caller may have a vector to allocate, and some element may be
+    // temporary registers which could not be spilled.
     if (it == spillCandidate.end()
-        || (it->getMaxID() <= interval.maxID && alignment == GEN_REG_SIZE))
+        || (ctx.getSimdWidth() == 8 && (it->getMaxID() <= interval.maxID
+            && alignment == ctx.getSimdWidth()/8 * GEN_REG_SIZE)))
       return false;
 
     ir::Register reg = it->getReg();
@@ -800,11 +826,13 @@ namespace gbe
           spillSet.insert(vector->reg[id].reg());
           reg = vector->reg[id].reg();
           family = ctx.sel->getRegisterFamily(reg);
-          size -= family == ir::FAMILY_QWORD ? 2*GEN_REG_SIZE : GEN_REG_SIZE;
+          size -= family == ir::FAMILY_QWORD ? 2 * GEN_REG_SIZE * ctx.getSimdWidth()/8
+                                             : GEN_REG_SIZE * ctx.getSimdWidth()/8;
         }
       } else if (!isVector) {
         spillSet.insert(reg);
-        size -= family == ir::FAMILY_QWORD ? 2*GEN_REG_SIZE : GEN_REG_SIZE;
+        size -= family == ir::FAMILY_QWORD ? 2 * GEN_REG_SIZE * ctx.getSimdWidth()/8
+                                           : GEN_REG_SIZE * ctx.getSimdWidth()/8;
       } else
         needRestart = true; // is a vector which could not be spilled.
 
@@ -812,7 +840,8 @@ namespace gbe
         break;
       if (!needRestart) {
         uint32_t offset = RA.find(reg)->second;
-        uint32_t nextOffset = (family == ir::FAMILY_QWORD) ? (offset + 2*GEN_REG_SIZE) : (offset + GEN_REG_SIZE);
+        uint32_t nextOffset = (family == ir::FAMILY_QWORD) ? (offset + 2 * GEN_REG_SIZE * ctx.getSimdWidth() / 8)
+                                                           : (offset + GEN_REG_SIZE * ctx.getSimdWidth() / 8);
         auto nextRegIt = offsetReg.find(nextOffset);
         if (nextRegIt != offsetReg.end())
           reg = nextRegIt->second;
@@ -821,9 +850,18 @@ namespace gbe
       }
 
       if (needRestart) {
+#if 0
+        // FIXME, we should enable this code block in the future.
+        // If the spill set is not zero and we need a restart, we can
+        // simply return to try to allocate the registers at first.
+        // As some vectors which have expired elements may be marked as
+        // unspillable vector.
+        if (spillSet.size() > 0)
+          break;
+#endif
+        it++;
         // next register is not in spill candidate.
         // let's move to next candidate and start over.
-        it++;
         if (it == spillCandidate.end())
           return false;
         reg = it->getReg();
@@ -857,7 +895,8 @@ namespace gbe
       reservedReg = ctx.allocate(RESERVED_REG_NUM_FOR_SPILL * GEN_REG_SIZE, GEN_REG_SIZE);
       reservedReg /= GEN_REG_SIZE;
     } else {
-      reservedReg = 0;
+      reservedReg = ctx.allocate(RESERVED_REG_NUM_FOR_SPILL * GEN_REG_SIZE, GEN_REG_SIZE);
+      reservedReg /= GEN_REG_SIZE;
     }
     // schedulePreRegAllocation(ctx, selection);
 

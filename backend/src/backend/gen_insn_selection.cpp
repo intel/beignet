@@ -697,6 +697,7 @@ namespace gbe
         if(insn.opcode == SEL_OP_SPILL_REG
            || insn.opcode == SEL_OP_UNSPILL_REG)
           continue;
+        const int simdWidth = insn.state.execWidth;
 
         const uint32_t srcNum = insn.srcNum, dstNum = insn.dstNum;
         struct RegSlot {
@@ -730,9 +731,9 @@ namespace gbe
                                    it->second.isTmpReg,
                                    it->second.addr);
             if(family == ir::FAMILY_QWORD) {
-              poolOffset += 2;
+              poolOffset += 2 * simdWidth / 8;
             } else {
-              poolOffset += 1;
+              poolOffset += simdWidth / 8;
             }
             regSet.push_back(regSlot);
           }
@@ -749,12 +750,13 @@ namespace gbe
           if (!regSlot.isTmpReg) {
           /* For temporary registers, we don't need to unspill. */
             SelectionInstruction *unspill = this->create(SEL_OP_UNSPILL_REG, 1, 0);
-            unspill->state  = GenInstructionState(ctx.getSimdWidth());
+            unspill->state = GenInstructionState(simdWidth);
+            unspill->state.noMask = 1;
             unspill->dst(0) = GenRegister(GEN_GENERAL_REGISTER_FILE,
                                           registerPool + regSlot.poolOffset, 0,
                                           selReg.type, selReg.vstride,
                                           selReg.width, selReg.hstride);
-            unspill->extra.scratchOffset = regSlot.addr;
+            unspill->extra.scratchOffset = regSlot.addr + selReg.quarter * 4 * simdWidth;
             unspill->extra.scratchMsgHeader = registerPool;
             insn.prepend(*unspill);
           }
@@ -789,8 +791,8 @@ namespace gbe
             struct RegSlot regSlot(reg, dstID, poolOffset,
                                    it->second.isTmpReg,
                                    it->second.addr);
-            if(family == ir::FAMILY_QWORD) poolOffset +=2;
-            else poolOffset += 1;
+            if(family == ir::FAMILY_QWORD) poolOffset += 2 * simdWidth / 8;
+            else poolOffset += simdWidth / 8;
             regSet.push_back(regSlot);
           }
         }
@@ -806,12 +808,16 @@ namespace gbe
           if(!regSlot.isTmpReg) {
             /* For temporary registers, we don't need to unspill. */
             SelectionInstruction *spill = this->create(SEL_OP_SPILL_REG, 0, 1);
-            spill->state  = GenInstructionState(ctx.getSimdWidth());
+            spill->state  = insn.state;//GenInstructionState(simdWidth);
+            spill->state.accWrEnable = 0;
+            spill->state.saturate = 0;
+            if (insn.opcode == SEL_OP_SEL)
+              spill->state.predicate = GEN_PREDICATE_NONE;
             spill->src(0) = GenRegister(GEN_GENERAL_REGISTER_FILE,
                                         registerPool + regSlot.poolOffset, 0,
                                         selReg.type, selReg.vstride,
                                         selReg.width, selReg.hstride);
-            spill->extra.scratchOffset = regSlot.addr;
+            spill->extra.scratchOffset = regSlot.addr + selReg.quarter * 4 * simdWidth;
             spill->extra.scratchMsgHeader = registerPool;
             insn.append(*spill);
           }
@@ -2238,7 +2244,6 @@ namespace gbe
         }
 
         sel.pop();
-
         // All children are marked as root
         markAllChildren(dag);
         return true;
