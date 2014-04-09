@@ -185,7 +185,8 @@ namespace gbe
                 unsigned char sampler,
                 unsigned int simdWidth,
                 uint32_t writemask,
-                uint32_t return_format);
+                uint32_t return_format,
+                bool isLD);
 
     /*! TypedWrite instruction for texture */
     void TYPED_WRITE(GenRegister header,

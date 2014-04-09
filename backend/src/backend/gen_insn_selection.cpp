@@ -559,7 +559,7 @@ namespace gbe
     /*! Encode ternary instructions */
     void ALU3(SelectionOpcode opcode, Reg dst, Reg src0, Reg src1, Reg src2);
     /*! Encode sample instructions */
-    void SAMPLE(GenRegister *dst, uint32_t dstNum, GenRegister *msgPayloads, uint32_t msgNum, uint32_t bti, uint32_t sampler, bool is3D);
+    void SAMPLE(GenRegister *dst, uint32_t dstNum, GenRegister *msgPayloads, uint32_t msgNum, uint32_t bti, uint32_t sampler, bool isLD);
     /*! Encode typed write instructions */
     void TYPED_WRITE(GenRegister *msgs, uint32_t msgNum, uint32_t bti, bool is3D);
     /*! Get image information */
@@ -1500,7 +1500,7 @@ namespace gbe
 
   void Selection::Opaque::SAMPLE(GenRegister *dst, uint32_t dstNum,
                                  GenRegister *msgPayloads, uint32_t msgNum,
-                                 uint32_t bti, uint32_t sampler, bool is3D) {
+                                 uint32_t bti, uint32_t sampler, bool isLD) {
     SelectionInstruction *insn = this->appendInsn(SEL_OP_SAMPLE, dstNum, msgNum);
     SelectionVector *dstVector = this->appendVector();
     SelectionVector *msgVector = this->appendVector();
@@ -1524,6 +1524,7 @@ namespace gbe
     insn->extra.rdbti = bti;
     insn->extra.sampler = sampler;
     insn->extra.rdmsglen = msgNum;
+    insn->extra.isLD = isLD;
   }
 
   ///////////////////////////////////////////////////////////////////////////
@@ -3161,21 +3162,36 @@ namespace gbe
       GenRegister dst[insn.getDstNum()];
       uint32_t srcNum = insn.getSrcNum();
       uint32_t valueID = 0;
+      uint32_t msgLen = 0;
 
       for (valueID = 0; valueID < insn.getDstNum(); ++valueID)
         dst[valueID] = sel.selReg(insn.getDst(valueID), insn.getDstType());
 
       if (!insn.is3D())
         srcNum--;
-      /* U, V, [W] */
-      for (valueID = 0; valueID < srcNum; ++valueID)
-        msgPayloads[valueID] = sel.selReg(insn.getSrc(valueID), insn.getSrcType());
 
+      if (insn.getSamplerOffset() != 0) {
+        // U, lod, V, [W]
+        GBE_ASSERT(insn.getSrcType() != TYPE_FLOAT);
+        msgPayloads[0] = sel.selReg(insn.getSrc(0), insn.getSrcType());
+        msgPayloads[1] = sel.selReg(sel.reg(FAMILY_DWORD), TYPE_U32);
+        msgPayloads[2] = sel.selReg(insn.getSrc(1), insn.getSrcType());
+        if (srcNum > 2)
+          msgPayloads[3] = sel.selReg(insn.getSrc(2), insn.getSrcType());
+        // Clear the lod to zero.
+        sel.MOV(msgPayloads[1], GenRegister::immud(0));
+        msgLen = srcNum + 1;
+      } else {
+        // U, V, [W]
+        GBE_ASSERT(insn.getSrcType() == TYPE_FLOAT);
+        for (valueID = 0; valueID < srcNum; ++valueID)
+          msgPayloads[valueID] = sel.selReg(insn.getSrc(valueID), insn.getSrcType());
+        msgLen = srcNum;
+      }
       uint32_t bti = insn.getImageIndex();
-      /* We have the clamp border workaround. */
-      uint32_t sampler = insn.getSamplerIndex() + insn.getSamplerOffset() * 8;
+      uint32_t sampler = insn.getSamplerIndex();
 
-      sel.SAMPLE(dst, insn.getDstNum(), msgPayloads, srcNum, bti, sampler, insn.is3D());
+      sel.SAMPLE(dst, insn.getDstNum(), msgPayloads, msgLen, bti, sampler, insn.getSamplerOffset());
       return true;
     }
     DECL_CTOR(SampleInstruction, 1, 1);

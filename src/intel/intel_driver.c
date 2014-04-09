@@ -135,7 +135,7 @@ intel_driver_memman_init(intel_driver_t *driver)
 {
   driver->bufmgr = drm_intel_bufmgr_gem_init(driver->fd, BATCH_SIZE);
   assert(driver->bufmgr);
-  //drm_intel_bufmgr_gem_set_aub_dump(driver->bufmgr, 1); 
+  //drm_intel_bufmgr_gem_set_aub_dump(driver->bufmgr, 1);
   drm_intel_bufmgr_gem_enable_reuse(driver->bufmgr);
 }
 

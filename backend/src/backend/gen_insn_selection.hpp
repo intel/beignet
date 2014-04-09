@@ -123,6 +123,7 @@ namespace gbe
         uint16_t rdbti:8;
         uint16_t sampler:5;
         uint16_t rdmsglen:3;
+        bool     isLD;  // is this a ld message?
       };
       uint32_t barrierType;
       bool longjmp;

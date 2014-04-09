@@ -370,8 +370,8 @@ enum GenMessageTarget {
 #define GEN_SAMPLER_MESSAGE_SIMD4X2_RESINFO           2
 #define GEN_SAMPLER_MESSAGE_SIMD16_RESINFO            2
 #define GEN_SAMPLER_MESSAGE_SIMD4X2_LD                3
-#define GEN_SAMPLER_MESSAGE_SIMD8_LD                  3
-#define GEN_SAMPLER_MESSAGE_SIMD16_LD                 3
+#define GEN_SAMPLER_MESSAGE_SIMD8_LD                  7
+#define GEN_SAMPLER_MESSAGE_SIMD16_LD                 7
 
 #define GEN5_SAMPLER_MESSAGE_SAMPLE              0
 #define GEN5_SAMPLER_MESSAGE_SAMPLE_BIAS         1

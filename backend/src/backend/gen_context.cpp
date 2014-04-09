@@ -1848,7 +1848,7 @@ namespace gbe
     const unsigned char sampler = insn.extra.sampler;
     const unsigned int msgLen = insn.extra.rdmsglen;
     uint32_t simdWidth = p->curr.execWidth;
-    p->SAMPLE(dst, msgPayload, msgLen, false, bti, sampler, simdWidth, -1, 0);
+    p->SAMPLE(dst, msgPayload, msgLen, false, bti, sampler, simdWidth, -1, 0, insn.extra.isLD);
   }
 
   void GenContext::scratchWrite(const GenRegister header, uint32_t offset, uint32_t reg_num, uint32_t reg_type, uint32_t channel_mode) {

@@ -861,22 +861,9 @@ static void
 intel_gpgpu_bind_sampler(intel_gpgpu_t *gpgpu, uint32_t *samplers, size_t sampler_sz)
 {
   int index;
-#ifdef GEN7_SAMPLER_CLAMP_BORDER_WORKAROUND
-  //assert(sampler_sz <= GEN_MAX_SAMPLERS/2);
-#else
   assert(sampler_sz <= GEN_MAX_SAMPLERS);
-#endif
-  for(index = 0; index < sampler_sz; index++) {
+  for(index = 0; index < sampler_sz; index++)
     intel_gpgpu_insert_sampler(gpgpu, index, samplers[index]);
-#ifdef GEN7_SAMPLER_CLAMP_BORDER_WORKAROUND
-    /* Duplicate the sampler to 8 + index and fixup the address mode
-     * to repeat.*/
-    if ((samplers[index] & __CLK_ADDRESS_MASK) == CLK_ADDRESS_CLAMP) {
-      intel_gpgpu_insert_sampler(gpgpu, index + 8,
-                                 (samplers[index] & ~__CLK_ADDRESS_MASK) | CLK_ADDRESS_CLAMP_TO_EDGE);
-    }
-#endif
-  }
 }
 
 static void

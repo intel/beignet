@@ -49,10 +49,16 @@ DECL_LLVM_GEN_FUNCTION(FORCE_SIMD16, __gen_ocl_force_simd16)
 DECL_LLVM_GEN_FUNCTION(READ_IMAGE_I, _Z21__gen_ocl_read_imageijtffj)
 DECL_LLVM_GEN_FUNCTION(READ_IMAGE_UI, _Z22__gen_ocl_read_imageuijtffj)
 DECL_LLVM_GEN_FUNCTION(READ_IMAGE_F, _Z21__gen_ocl_read_imagefjtffj)
-
 DECL_LLVM_GEN_FUNCTION(READ_IMAGE_I_3D, _Z21__gen_ocl_read_imageijtfffj)
 DECL_LLVM_GEN_FUNCTION(READ_IMAGE_UI_3D, _Z22__gen_ocl_read_imageuijtfffj)
 DECL_LLVM_GEN_FUNCTION(READ_IMAGE_F_3D, _Z21__gen_ocl_read_imagefjtfffj)
+// work around read image with the LD message. The coords are integer type.
+DECL_LLVM_GEN_FUNCTION(READ_IMAGE_I_I, _Z21__gen_ocl_read_imageijtiij)
+DECL_LLVM_GEN_FUNCTION(READ_IMAGE_UI_I, _Z22__gen_ocl_read_imageuijtiij)
+DECL_LLVM_GEN_FUNCTION(READ_IMAGE_F_I, _Z21__gen_ocl_read_imagefjtiij)
+DECL_LLVM_GEN_FUNCTION(READ_IMAGE_I_3D_I, _Z21__gen_ocl_read_imageijtiiij)
+DECL_LLVM_GEN_FUNCTION(READ_IMAGE_UI_3D_I, _Z22__gen_ocl_read_imageuijtiiij)
+DECL_LLVM_GEN_FUNCTION(READ_IMAGE_F_3D_I, _Z21__gen_ocl_read_imagefjtiiij)
 
 // To write_image functions.
 DECL_LLVM_GEN_FUNCTION(WRITE_IMAGE_I, _Z22__gen_ocl_write_imageijiiDv4_i)

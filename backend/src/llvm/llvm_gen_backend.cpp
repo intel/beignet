@@ -2210,6 +2210,12 @@ namespace gbe
       case GEN_OCL_READ_IMAGE_I_3D:
       case GEN_OCL_READ_IMAGE_UI_3D:
       case GEN_OCL_READ_IMAGE_F_3D:
+      case GEN_OCL_READ_IMAGE_I_I:
+      case GEN_OCL_READ_IMAGE_UI_I:
+      case GEN_OCL_READ_IMAGE_F_I:
+      case GEN_OCL_READ_IMAGE_I_3D_I:
+      case GEN_OCL_READ_IMAGE_UI_3D_I:
+      case GEN_OCL_READ_IMAGE_F_3D_I:
       {
         // dst is a 4 elements vector. We allocate all 4 registers here.
         uint32_t elemNum;
@@ -2480,6 +2486,12 @@ namespace gbe
           case GEN_OCL_READ_IMAGE_I_3D:
           case GEN_OCL_READ_IMAGE_UI_3D:
           case GEN_OCL_READ_IMAGE_F_3D:
+          case GEN_OCL_READ_IMAGE_I_I:
+          case GEN_OCL_READ_IMAGE_UI_I:
+          case GEN_OCL_READ_IMAGE_F_I:
+          case GEN_OCL_READ_IMAGE_I_3D_I:
+          case GEN_OCL_READ_IMAGE_UI_3D_I:
+          case GEN_OCL_READ_IMAGE_F_3D_I:
           {
             GBE_ASSERT(AI != AE); const ir::Register surfaceReg = this->getRegister(*AI); ++AI;
             const uint8_t surfaceID = ctx.getFunction().getImageSet()->getIdx(surfaceReg);
@@ -2491,7 +2503,12 @@ namespace gbe
             GBE_ASSERT(AI != AE); const ir::Register vcoord = this->getRegister(*AI); ++AI;
             ir::Register wcoord;
             bool is3D = false;
-            if (it->second >= GEN_OCL_READ_IMAGE_I_3D) {
+            if (it->second == GEN_OCL_READ_IMAGE_I_3D    ||
+                it->second == GEN_OCL_READ_IMAGE_UI_3D   ||
+                it->second == GEN_OCL_READ_IMAGE_F_3D    ||
+                it->second == GEN_OCL_READ_IMAGE_I_3D_I  ||
+                it->second == GEN_OCL_READ_IMAGE_UI_3D_I ||
+                it->second == GEN_OCL_READ_IMAGE_F_3D_I) {
               GBE_ASSERT(AI != AE); wcoord = this->getRegister(*AI); ++AI;
               is3D = true;
             } else
@@ -2524,18 +2541,26 @@ namespace gbe
               case GEN_OCL_READ_IMAGE_UI:
               case GEN_OCL_READ_IMAGE_I_3D:
               case GEN_OCL_READ_IMAGE_UI_3D:
+              case GEN_OCL_READ_IMAGE_I_I:
+              case GEN_OCL_READ_IMAGE_UI_I:
+              case GEN_OCL_READ_IMAGE_I_3D_I:
+              case GEN_OCL_READ_IMAGE_UI_3D_I:
                 dstType = ir::TYPE_U32;
                 break;
               case GEN_OCL_READ_IMAGE_F:
               case GEN_OCL_READ_IMAGE_F_3D:
+              case GEN_OCL_READ_IMAGE_F_I:
+              case GEN_OCL_READ_IMAGE_F_3D_I:
                 dstType = ir::TYPE_FLOAT;
                 break;
               default:
                 GBE_ASSERT(0); // never been here.
             }
 
+            bool isFloatCoord = it->second <= GEN_OCL_READ_IMAGE_F_3D;
+
             ctx.SAMPLE(surfaceID, dstTuple, srcTuple, dstType == ir::TYPE_FLOAT,
-                       true, sampler, samplerOffset, is3D);
+                       isFloatCoord, sampler, samplerOffset, is3D);
             break;
           }
           case GEN_OCL_WRITE_IMAGE_I:

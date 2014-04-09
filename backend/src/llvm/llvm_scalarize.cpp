@@ -1,4 +1,4 @@
-/*
+;/*
  * Copyright © 2012 Intel Corporation
  *
  * This library is free software; you can redistribute it and/or
@@ -649,6 +649,12 @@ namespace gbe {
           case GEN_OCL_READ_IMAGE_I_3D:
           case GEN_OCL_READ_IMAGE_UI_3D:
           case GEN_OCL_READ_IMAGE_F_3D:
+          case GEN_OCL_READ_IMAGE_I_I:
+          case GEN_OCL_READ_IMAGE_UI_I:
+          case GEN_OCL_READ_IMAGE_F_I:
+          case GEN_OCL_READ_IMAGE_I_3D_I:
+          case GEN_OCL_READ_IMAGE_UI_3D_I:
+          case GEN_OCL_READ_IMAGE_F_3D_I:
           case GEN_OCL_GET_IMAGE_WIDTH:
           case GEN_OCL_GET_IMAGE_HEIGHT:
           {
@@ -797,7 +803,6 @@ namespace gbe {
     for (SmallVectorImpl<PHINode*>::iterator phiI = incompletePhis.begin(), phiE = incompletePhis.end();
        phiI != phiE; ++phiI) {
       assert(canGetComponentArgs(*phiI) && "Phi's operands never scalarized");
-
       // Fill in each component of this phi
       VectorValues& vVals = vectorVals[*phiI];
       for (int c = 0; c < GetComponentCount(*phiI); ++c) {
