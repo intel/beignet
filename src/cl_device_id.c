@@ -57,6 +57,17 @@ static struct _cl_device_id intel_ivb_gt1_device = {
 #include "cl_gen7_device.h"
 };
 
+static struct _cl_device_id intel_baytrail_t_device = {
+  INIT_ICD(dispatch)
+  .max_compute_unit = 32,
+  .max_thread_per_unit = 8,
+  .max_work_item_sizes = {512, 512, 512},
+  .max_work_group_size = 256,
+  .max_clock_frequency = 1000,
+  .wg_sz = 256,
+#include "cl_gen7_device.h"
+};
+
 /* XXX we clone IVB for HSW now */
 static struct _cl_device_id intel_hsw_device = {
   INIT_ICD(dispatch)
@@ -183,6 +194,14 @@ ivb_gt2_break:
       ret = &intel_ivb_gt2_device;
       break;
 
+    case PCI_CHIP_BAYTRAIL_T:
+      DECL_INFO_STRING(baytrail_t_device_break, intel_baytrail_t_device, name, "Intel(R) HD Graphics Bay Trail-T");
+baytrail_t_device_break:
+      intel_baytrail_t_device.vendor_id = device_id;
+      intel_baytrail_t_device.platform = intel_platform;
+      ret = &intel_baytrail_t_device;
+      break;
+
     case PCI_CHIP_SANDYBRIDGE_BRIDGE:
     case PCI_CHIP_SANDYBRIDGE_GT1:
     case PCI_CHIP_SANDYBRIDGE_GT2:
@@ -265,6 +284,7 @@ cl_get_device_info(cl_device_id     device,
 {
   if (UNLIKELY(device != &intel_ivb_gt1_device &&
                device != &intel_ivb_gt2_device &&
+               device != &intel_baytrail_t_device &&
                device != &intel_hsw_device))
     return CL_INVALID_DEVICE;
 
@@ -351,11 +371,14 @@ cl_device_get_version(cl_device_id device, cl_int *ver)
 {
   if (UNLIKELY(device != &intel_ivb_gt1_device &&
                device != &intel_ivb_gt2_device &&
+               device != &intel_baytrail_t_device &&
                device != &intel_hsw_device))
     return CL_INVALID_DEVICE;
   if (ver == NULL)
     return CL_SUCCESS;
-  if (device == &intel_ivb_gt1_device || device == &intel_ivb_gt2_device)
+  if (device == &intel_ivb_gt1_device || 
+      device == &intel_ivb_gt2_device ||
+      device == &intel_baytrail_t_device)
     *ver = 7;
   else
     *ver = 75;
@@ -387,6 +410,7 @@ cl_get_kernel_workgroup_info(cl_kernel kernel,
 {
   int err = CL_SUCCESS;
   if (UNLIKELY(device != &intel_ivb_gt1_device &&
+               device != &intel_baytrail_t_device &&
                device != &intel_ivb_gt2_device))
     return CL_INVALID_DEVICE;
 

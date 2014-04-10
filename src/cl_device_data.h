@@ -68,6 +68,8 @@
 #define PCI_CHIP_IVYBRIDGE_M_GT2        0x0166
 #define PCI_CHIP_IVYBRIDGE_S_GT1        0x015a  /* Server */
 
+#define PCI_CHIP_BAYTRAIL_T 0x0F31
+
 #define IS_IVB_GT1(devid)               \
   (devid == PCI_CHIP_IVYBRIDGE_GT1 ||   \
    devid == PCI_CHIP_IVYBRIDGE_M_GT1 || \
@@ -77,7 +79,10 @@
   (devid == PCI_CHIP_IVYBRIDGE_GT2 ||   \
    devid == PCI_CHIP_IVYBRIDGE_M_GT2)
 
-#define IS_IVYBRIDGE(devid) (IS_IVB_GT1(devid) || IS_IVB_GT2(devid))
+#define IS_BAYTRAIL_T(devid)              \
+  (devid == PCI_CHIP_BAYTRAIL_T)
+
+#define IS_IVYBRIDGE(devid) (IS_IVB_GT1(devid) || IS_IVB_GT2(devid) || IS_BAYTRAIL_T(devid))
 #define IS_GEN7(devid)      IS_IVYBRIDGE(devid)
 
 
@@ -120,6 +125,7 @@
 #define PCI_CHIP_HASWELL_CRW_M1      0x0D06 /* CRW GT1 mobile */
 #define PCI_CHIP_HASWELL_CRW_M2      0x0D16 /* CRW GT2 mobile */
 #define PCI_CHIP_HASWELL_CRW_M3      0x0D26 /* CRW GT3 mobile */
+
 
 #define IS_HASWELL(devid) (  \
 	(devid) == PCI_CHIP_HASWELL_D1 || (devid) == PCI_CHIP_HASWELL_D2 || \

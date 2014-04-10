@@ -66,7 +66,8 @@ static void profiling_exec(void)
     OCL_CREATE_BUFFER(buf[1], 0, n * sizeof(float), NULL);
     OCL_SET_ARG(0, sizeof(cl_mem), &buf[0]);
     OCL_SET_ARG(1, sizeof(cl_mem), &buf[1]);
-    globals[0] = locals[0] = n;
+    globals[0] = n;
+    locals[0] = 256;
 
     OCL_MAP_BUFFER(0);
     for (int32_t i = 0; i < (int32_t) n; ++i)
