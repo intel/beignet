@@ -1,6 +1,6 @@
 include_directories(${CMAKE_CURRENT_SOURCE_DIR}
-                    ${DRM_INCLUDE_PATH}
-                    ${DRM_INCLUDE_PATH}/../
+                    ${DRM_INCLUDE_DIRS}
+                    ${DRM_INCLUDE_DIRS}/../
                     ${CMAKE_CURRENT_SOURCE_DIR}/../backend/src/backend/
                     ${CMAKE_CURRENT_SOURCE_DIR}/../include
                     ${MESA_SOURCE_INCLUDES})
@@ -75,10 +75,10 @@ target_link_libraries(
                       cl
                       gbe
                       ${XLIB_LIBRARY}
-                      ${XEXT_LIBRARY}
-                      ${XFIXES_LIBRARY}
-                      ${DRM_INTEL_LIBRARY}
-                      ${DRM_LIBRARY}
+                      ${XEXT_LIBRARIES}
+                      ${XFIXES_LIBRARIES}
+                      ${DRM_INTEL_LIBRARIES}
+                      ${DRM_LIBRARIES}
                       ${OPENGL_LIBRARIES}
                       ${OPTIONAL_EGL_LIBRARY})
 install (TARGETS cl LIBRARY DESTINATION ${LIB_INSTALL_DIR}/beignet)

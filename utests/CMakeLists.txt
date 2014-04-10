@@ -18,7 +18,8 @@ configure_file (
   "setenv.sh"
   )
 
-link_directories (${LLVM_LIBRARY_DIR})
+#XXX only need GL if required
+link_directories (${LLVM_LIBRARY_DIR} ${OPENGL_LIBDIR})
 set (utests_sources
   utest_error.c
   compiler_basic_arithmetic.cpp
@@ -202,11 +203,14 @@ if (EGL_FOUND AND MESA_SOURCE_FOUND)
 SET(utests_sources ${utests_sources} compiler_fill_gl_image.cpp)
 SET(CMAKE_CXX_FLAGS "-DHAS_EGL ${CMAKE_CXX_FLAGS} ${DEF_OCL_PCH_PCM_PATH}")
 SET(CMAKE_C_FLAGS "-DHAS_EGL ${CMAKE_C_FLAGS} ${DEF_OCL_PCH_PCM_PATH}")
-endif (EGL_FOUND AND MESA_SOURCE_FOUND)
+SET(UTESTS_REQUIRED_EGL_LIB ${EGL_LIBRARIES})
+else()
+SET(UTESTS_REQUIRED_EGL_LIB "")
+endif()
 
 ADD_LIBRARY(utests SHARED ${ADDMATHFUNC} ${utests_sources})
 
-TARGET_LINK_LIBRARIES(utests cl m ${OPENGL_LIBRARIES} ${CMAKE_THREAD_LIBS_INIT})
+TARGET_LINK_LIBRARIES(utests cl m ${OPENGL_LIBRARIES} ${UTESTS_REQUIRED_EGL_LIB} ${CMAKE_THREAD_LIBS_INIT})
 
 ADD_EXECUTABLE(utest_run utest_run.cpp)
 TARGET_LINK_LIBRARIES(utest_run utests)

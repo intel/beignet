@@ -21,6 +21,8 @@ configure_file (
 
 INCLUDE_DIRECTORIES(${CMAKE_CURRENT_BINARY_DIR} ${CMAKE_CURRENT_SOURCE_DIR})
 
+INCLUDE (FindPkgConfig)
+
 SET(CMAKE_VERBOSE_MAKEFILE "false")
 set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${CMAKE_SOURCE_DIR}/CMake/")
 if (NOT LIB_INSTALL_DIR)
@@ -80,50 +82,65 @@ ELSE(X11_FOUND)
 ENDIF(X11_FOUND)
 
 # DRM
-Find_Package(DRM)
+pkg_check_modules(DRM REQUIRED libdrm)
 IF(DRM_FOUND)
-  MESSAGE(STATUS "Looking for DRM - found")
+  MESSAGE(STATUS "Looking for DRM - found at ${DRM_PREFIX}")
+  INCLUDE_DIRECTORIES(${DRM_INCLUDE_DIRS})
 ELSE(DRM_FOUND)
   MESSAGE(STATUS "Looking for DRM - not found")
 ENDIF(DRM_FOUND)
 
-# OpenGL
-Find_Package(OpenGL)
-# Threads
-Find_Package(Threads)
 # DRM Intel
-Find_Package(DRMIntel)
+pkg_check_modules(DRM_INTEL REQUIRED libdrm_intel)
 IF(DRM_INTEL_FOUND)
-  MESSAGE(STATUS "Looking for DRM Intel - found")
+  INCLUDE_DIRECTORIES(${DRM_INTEL_INCLUDE_DIRS})
+  MESSAGE(STATUS "Looking for DRM Intel - found at ${DRM_INTEL_PREFIX}")
 ELSE(DRM_INTEL_FOUND)
   MESSAGE(STATUS "Looking for DRM Intel - not found")
 ENDIF(DRM_INTEL_FOUND)
 
+# OpenGL (not use cmake helper)
+pkg_check_modules(OPENGL REQUIRED gl)
+IF(OPENGL_FOUND)
+  INCLUDE_DIRECTORIES(${OPENGL_INCLUDE_DIRS})
+  MESSAGE(STATUS "Looking for OpenGL - found at ${OPENGL_PREFIX}")
+ELSE(OPENGL_FOUND)
+  MESSAGE(STATUS "Looking for OpenGL - not found")
+ENDIF(OPENGL_FOUND)
+
+
+# Threads
+Find_Package(Threads)
+
 # Xext
-Find_Package(Xext)
+pkg_check_modules(XEXT REQUIRED xext)
 IF(XEXT_FOUND)
-  MESSAGE(STATUS "Looking for Xext - found")
+  INCLUDE_DIRECTORIES(${XEXT_INCLUDE_DIRS})
+  MESSAGE(STATUS "Looking for Xext - found at ${XEXT_PREFIX}")
 ELSE(XEXT_FOUND)
   MESSAGE(STATUS "Looking for Xext - not found")
 ENDIF(XEXT_FOUND)
 
 # Xfixes
-Find_Package(Xfixes)
+pkg_check_modules(XFIXES REQUIRED xfixes)
 IF(XFIXES_FOUND)
-  MESSAGE(STATUS "Looking for Xfixes - found")
+  INCLUDE_DIRECTORIES(${XFIXES_INCLUDE_DIRS})
+  MESSAGE(STATUS "Looking for Xfixes - found at ${XFIXES_PREFIX}")
 ELSE(XFIXES_FOUND)
   MESSAGE(STATUS "Looking for Xfixes - not found")
 ENDIF(XFIXES_FOUND)
 
-Find_Package(EGL)
+pkg_check_modules(EGL egl)
 IF(EGL_FOUND)
-  MESSAGE(STATUS "Looking for EGL - found")
+  MESSAGE(STATUS "Looking for EGL - found at ${EGL_PREFIX}")
 ELSE(EGL_FOUND)
   MESSAGE(STATUS "Looking for EGL - not found")
 ENDIF(EGL_FOUND)
 
+# cl_khr_gl_sharing requires to build with mesa source
+Find_Package(MesaSrc)
 IF(MESA_SOURCE_FOUND)
-  MESSAGE(STATUS "Looking for mesa source code - found")
+  MESSAGE(STATUS "Looking for mesa source code - found at ${MESA_SOURCE_PREFIX}")
 ELSE(MESA_SOURCE_FOUND)
   MESSAGE(STATUS "Looking for mesa source code - not found, cl_khr_gl_sharing will be disabled.")
 ENDIF(MESA_SOURCE_FOUND)
