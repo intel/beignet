@@ -1052,15 +1052,15 @@ namespace gbe
     for (BasicBlock::iterator I = succ->begin(); isa<PHINode>(I); ++I) {
       PHINode *PN = cast<PHINode>(I);
       Value *IV = PN->getIncomingValueForBlock(curr);
+      Type *llvmType = PN->getType();
+      const ir::Type type = getType(ctx, llvmType);
+      Value *PHICopy = this->getPHICopy(PN);
+      const ir::Register dst = this->getRegister(PHICopy);
       if (!isa<UndefValue>(IV)) {
-        Type *llvmType = PN->getType();
-        const ir::Type type = getType(ctx, llvmType);
 
         // Emit the MOV required by the PHI function. We do it simple and do not
         // try to optimize them. A next data flow analysis pass on the Gen IR
         // will remove them
-        Value *PHICopy = this->getPHICopy(PN);
-        const ir::Register dst = this->getRegister(PHICopy);
         Constant *CP = dyn_cast<Constant>(IV);
         if (CP) {
           GBE_ASSERT(isa<GlobalValue>(CP) == false);
@@ -1075,6 +1075,14 @@ namespace gbe
           const ir::Register src = this->getRegister(IV);
           ctx.MOV(type, dst, src);
         }
+        assert(!ctx.getBlock()->undefPhiRegs.contains(dst));
+      } else {
+        // If this is an undefined value, we don't need emit phi copy here.
+        // But we need to record it. As latter, at liveness's backward analysis,
+        // we don't need to pass the phi value/register to this BB which the phi
+        // value is undefined. Otherwise, the phi value's liveness will be extent
+        // incorrectly and may be extent to the basic block zero which is really bad.
+        ctx.getBlock()->undefPhiRegs.insert(dst);
       }
     }
   }

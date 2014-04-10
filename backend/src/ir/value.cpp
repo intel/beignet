@@ -97,6 +97,8 @@ namespace ir {
     // Iterate over all the predecessors
     const auto &preds = bb.getPredecessorSet();
     for (const auto &pred : preds) {
+      if (pred->undefPhiRegs.contains(reg))
+        continue;
       RegDefSet &predDef = this->getDefSet(pred, reg);
       for (auto def : predDef) udChain.insert(def);
     }

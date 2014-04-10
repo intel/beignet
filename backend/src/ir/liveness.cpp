@@ -89,8 +89,10 @@ namespace ir {
       for (auto prev : currInfo->bb.getPredecessorSet()) {
         BlockInfo *prevInfo = liveness[prev];
         for (auto currInVar : currInfo->upwardUsed) {
-          auto changed = prevInfo->liveOut.insert(currInVar);
-          if (changed.second) isChanged = true;
+          if (!prevInfo->bb.undefPhiRegs.contains(currInVar)) {
+            auto changed = prevInfo->liveOut.insert(currInVar);
+            if (changed.second) isChanged = true;
+          }
         }
         if (isChanged )
           workSet.insert(prevInfo);
@@ -116,7 +118,6 @@ namespace ir {
     });
 #endif
    }
-
 /*
   As we run in SIMD mode with prediction mask to indicate active lanes.
   If a vreg is defined in a loop, and there are som uses of the vreg out of the loop,
@@ -127,7 +128,6 @@ namespace ir {
   killed period, and the instructions before kill point were re-executed with different prediction,
   the inactive lanes of vreg maybe over-written. Then the out-of-loop use will got wrong data.
 */
-
   void Liveness::computeExtraLiveInOut(void) {
     const vector<Loop *> &loops = fn.getLoops();
     if(loops.size() == 0) return;

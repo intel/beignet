@@ -53,6 +53,8 @@ namespace ir {
     INLINE Unit &getUnit(void) { return unit; }
     /*! Get the current processed function */
     Function &getFunction(void);
+    /*! Get the current processed block */
+    BasicBlock *getBlock(void) { return bb; }
     /*! Set the SIMD width of the function */
     void setSimdWidth(uint32_t width) const {
       GBE_ASSERT(width == 8 || width == 16);

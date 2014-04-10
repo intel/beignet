@@ -81,6 +81,7 @@ namespace ir {
         functor(*curr);
       }
     }
+    set <Register> undefPhiRegs;
   private:
     friend class Function; //!< Owns the basic blocks
     BlockSet predecessors; //!< Incoming blocks
