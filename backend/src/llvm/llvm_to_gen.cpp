@@ -55,6 +55,7 @@
 #include "llvm/Assembly/PrintModulePass.h"
 #endif
 
+#include "llvm/Analysis/CFGPrinter.h"
 #include "llvm/llvm_gen_backend.hpp"
 #include "llvm/llvm_to_gen.hpp"
 #include "sys/cvar.hpp"
@@ -68,6 +69,8 @@
 namespace gbe
 {
   BVAR(OCL_OUTPUT_LLVM, false);
+  BVAR(OCL_OUTPUT_CFG, false);
+  BVAR(OCL_OUTPUT_CFG_ONLY, false);
   BVAR(OCL_OUTPUT_LLVM_BEFORE_EXTRA_PASS, false);
   using namespace llvm;
 
@@ -204,6 +207,11 @@ namespace gbe
     passes.add(createDeadInstEliminationPass());  // Remove simplified instructions
     passes.add(createCFGSimplificationPass());     // Merge & remove BBs
     passes.add(createScalarizePass());        // Expand all vector ops
+
+    if(OCL_OUTPUT_CFG)
+      passes.add(createCFGPrinterPass());
+    if(OCL_OUTPUT_CFG_ONLY)
+      passes.add(createCFGOnlyPrinterPass());
     passes.add(createGenPass(unit));
 
     // Print the code extra optimization passes
