@@ -2073,6 +2073,7 @@ namespace gbe
     /*! Register the pattern for all opcodes of the family */
     MulAddInstructionPattern(void) : SelectionPattern(2, 1) {
        this->opcodes.push_back(ir::OP_ADD);
+       this->opcodes.push_back(ir::OP_SUB);
     }
 
     /*! Implements base class */
@@ -2102,7 +2103,8 @@ namespace gbe
         GBE_ASSERT(cast<ir::BinaryInstruction>(child0->insn).getType() == TYPE_FLOAT);
         const GenRegister src0 = sel.selReg(child0->insn.getSrc(0), TYPE_FLOAT);
         const GenRegister src1 = sel.selReg(child0->insn.getSrc(1), TYPE_FLOAT);
-        const GenRegister src2 = sel.selReg(insn.getSrc(1), TYPE_FLOAT);
+        GenRegister src2 = sel.selReg(insn.getSrc(1), TYPE_FLOAT);
+        if(insn.getOpcode() == ir::OP_SUB) src2 = GenRegister::negate(src2);
         sel.MAD(dst, src2, src0, src1); // order different on HW!
         if (child0->child[0]) child0->child[0]->isRoot = 1;
         if (child0->child[1]) child0->child[1]->isRoot = 1;
@@ -2111,9 +2113,10 @@ namespace gbe
       }
       if (child1 && child1->insn.getOpcode() == OP_MUL) {
         GBE_ASSERT(cast<ir::BinaryInstruction>(child1->insn).getType() == TYPE_FLOAT);
-        const GenRegister src0 = sel.selReg(child1->insn.getSrc(0), TYPE_FLOAT);
+        GenRegister src0 = sel.selReg(child1->insn.getSrc(0), TYPE_FLOAT);
         const GenRegister src1 = sel.selReg(child1->insn.getSrc(1), TYPE_FLOAT);
         const GenRegister src2 = sel.selReg(insn.getSrc(0), TYPE_FLOAT);
+        if(insn.getOpcode() == ir::OP_SUB) src0 = GenRegister::negate(src0);
         sel.MAD(dst, src2, src0, src1); // order different on HW!
         if (child1->child[0]) child1->child[0]->isRoot = 1;
         if (child1->child[1]) child1->child[1]->isRoot = 1;
