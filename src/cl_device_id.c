@@ -182,9 +182,22 @@ ivb_gt2_break:
       intel_ivb_gt2_device.platform = intel_platform;
       ret = &intel_ivb_gt2_device;
       break;
+
+    case PCI_CHIP_SANDYBRIDGE_BRIDGE:
+    case PCI_CHIP_SANDYBRIDGE_GT1:
+    case PCI_CHIP_SANDYBRIDGE_GT2:
+    case PCI_CHIP_SANDYBRIDGE_GT2_PLUS:
+    case PCI_CHIP_SANDYBRIDGE_BRIDGE_M:
+    case PCI_CHIP_SANDYBRIDGE_M_GT1:
+    case PCI_CHIP_SANDYBRIDGE_M_GT2:
+    case PCI_CHIP_SANDYBRIDGE_M_GT2_PLUS:
+    case PCI_CHIP_SANDYBRIDGE_BRIDGE_S:
+    case PCI_CHIP_SANDYBRIDGE_S_GT:
+      // Intel(R) HD Graphics SandyBridge not supported yet
+      ret = NULL;
+      break;
     default:
-      printf("cl_get_gt_device(): error, unknown device\n");
-      exit(1);
+      printf("cl_get_gt_device(): error, unknown device: %x\n", device_id);
   }
 
   return ret;

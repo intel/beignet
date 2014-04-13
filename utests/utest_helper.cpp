@@ -337,20 +337,26 @@ cl_ocl_init(void)
   GET_PLATFORM_STR_INFO(extensions, EXTENSIONS);
 
   /* Get the device (only GPU device is supported right now) */
-  OCL_CALL (clGetDeviceIDs, platform, CL_DEVICE_TYPE_GPU, 1, &device, NULL);
-  {
-    size_t param_value_size;
-    GET_DEVICE_STR_INFO(profile, PROFILE);
-    GET_DEVICE_STR_INFO(name, NAME);
-    GET_DEVICE_STR_INFO(vendor, VENDOR);
-    GET_DEVICE_STR_INFO(version, VERSION);
-    GET_DEVICE_STR_INFO(extensions, EXTENSIONS);
-    GET_DEVICE_STR_INFO(opencl_c_version, OPENCL_C_VERSION);
+  try {
+    OCL_CALL (clGetDeviceIDs, platform, CL_DEVICE_TYPE_GPU, 1, &device, NULL);
+    {
+      size_t param_value_size;
+      GET_DEVICE_STR_INFO(profile, PROFILE);
+      GET_DEVICE_STR_INFO(name, NAME);
+      GET_DEVICE_STR_INFO(vendor, VENDOR);
+      GET_DEVICE_STR_INFO(version, VERSION);
+      GET_DEVICE_STR_INFO(extensions, EXTENSIONS);
+      GET_DEVICE_STR_INFO(opencl_c_version, OPENCL_C_VERSION);
 #ifdef HAS_EGL
-    if (std::strstr(extensionsStr.c_str(), "cl_khr_gl_sharing")) {
-      hasGLExt = true;
-    }
+      if (std::strstr(extensionsStr.c_str(), "cl_khr_gl_sharing")) {
+        hasGLExt = true;
+      }
 #endif
+    }
+  } catch (...) {
+     fprintf(stderr, "error calling clGetDeviceIDs\n");
+     status = CL_DEVICE_NOT_FOUND;
+     goto error;
   }
 
 #ifdef HAS_EGL
