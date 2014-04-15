@@ -551,13 +551,13 @@ namespace gbe
 
     static INLINE GenRegister immuw(uint16_t uw) {
       GenRegister immediate = imm(GEN_TYPE_UW);
-      immediate.value.ud = uw | (uw << 16);
+      immediate.value.ud = uw;
       return immediate;
     }
 
     static INLINE GenRegister immw(int16_t w) {
       GenRegister immediate = imm(GEN_TYPE_W);
-      immediate.value.d = w | (w << 16);
+      immediate.value.d = w;
       return immediate;
     }
 

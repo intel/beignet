@@ -39,6 +39,7 @@
 
 namespace gbe
 {
+  extern void decompactInstruction(union GenCompactInstruction *p, union GenNativeInstruction *pOut);
   ///////////////////////////////////////////////////////////////////////////
   // GenContext implementation
   ///////////////////////////////////////////////////////////////////////////
@@ -89,16 +90,18 @@ namespace gbe
       const LabelIndex label = pair.first;
       const int32_t insnID = pair.second;
       const int32_t targetID = labelPos.find(label)->second;
-      p->patchJMPI(insnID, (targetID - insnID) * 2);
+      p->patchJMPI(insnID, (targetID - insnID));
     }
     for (auto pair : branchPos3) {
       const LabelPair labelPair = pair.first;
       const int32_t insnID = pair.second;
-      const int32_t jip = labelPos.find(labelPair.l0)->second + labelPair.offset0;
-      const int32_t uip = labelPos.find(labelPair.l1)->second + labelPair.offset1;
-      assert((jip - insnID) * 2 < 32767 && (jip - insnID) * 2 > -32768);
-      assert((uip - insnID) * 2 < 32767 && (uip - insnID) * 2 > -32768);
-      p->patchJMPI(insnID, (((uip - insnID) * 2) << 16) | ((jip - insnID) * 2));
+      // FIXME the 'labelPair' implementation must be fixed, as it is hard to
+      // convert InstructionSelection offset to ASM offset since asm maybe compacted
+      const int32_t jip = labelPos.find(labelPair.l0)->second + labelPair.offset0*2;
+      const int32_t uip = labelPos.find(labelPair.l1)->second + labelPair.offset1*2;
+      assert((jip - insnID) < 32767 && (jip - insnID) > -32768);
+      assert((uip - insnID) < 32767 && (uip - insnID) > -32768);
+      p->patchJMPI(insnID, (((uip - insnID)) << 16) | ((jip - insnID)));
     }
   }
 
@@ -976,7 +979,7 @@ namespace gbe
       p->SHL(high, low, tmp);
       p->MOV(low, GenRegister::immud(0));
 
-      p->patchJMPI(jip1, (p->n_instruction() - jip1) * 2);
+      p->patchJMPI(jip1, (p->n_instruction() - jip1) );
       p->curr.predicate = GEN_PREDICATE_NONE;
       p->CMP(GEN_CONDITIONAL_LE, exp, GenRegister::immud(31));  //update dst where high != 0
       p->curr.predicate = GEN_PREDICATE_NORMAL;
@@ -990,7 +993,7 @@ namespace gbe
       p->CMP(GEN_CONDITIONAL_EQ, high, GenRegister::immud(0x80000000));
       p->CMP(GEN_CONDITIONAL_EQ, low, GenRegister::immud(0x0));
       p->AND(dst_ud, dst_ud, GenRegister::immud(0xfffffffe));
-      p->patchJMPI(jip0, (p->n_instruction() - jip0) * 2);
+      p->patchJMPI(jip0, (p->n_instruction() - jip0));
 
     p->pop();
 
@@ -1427,6 +1430,7 @@ namespace gbe
     GenRegister zero = GenRegister::immud(0),
                 one = GenRegister::immud(1),
                 imm31 = GenRegister::immud(31);
+    uint32_t jip0;
     // (a,b) <- x
     loadTopHalf(a, x);
     loadBottomHalf(b, x);
@@ -1517,10 +1521,11 @@ namespace gbe
         p->curr.predicate = GEN_PREDICATE_ALIGN1_ANY16H;
       else
         NOT_IMPLEMENTED;
-      int jip = -(int)(p->n_instruction() - loop_start + 1) * 2;
+      int distance = -(int)(p->n_instruction() - loop_start );
       p->curr.noMask = 1;
+      jip0 = p->n_instruction();
       p->JMPI(zero);
-      p->patchJMPI(p->n_instruction() - 1, jip + 2);
+      p->patchJMPI(jip0, distance);
       p->pop();
       // end of loop
     }
@@ -2002,14 +2007,24 @@ namespace gbe
     if (OCL_OUTPUT_ASM) {
       std::cout << genKernel->getName() << "'s disassemble begin:" << std::endl;
       ir::LabelIndex curLabel = (ir::LabelIndex)0;
+      GenCompactInstruction * pCom = NULL;
+      GenNativeInstruction insn;
       std::cout << "  L0:" << std::endl;
-      for (uint32_t insnID = 0; insnID < genKernel->insnNum; ++insnID) {
+      for (uint32_t insnID = 0; insnID < genKernel->insnNum; ) {
         if (labelPos.find((ir::LabelIndex)(curLabel + 1))->second == insnID) {
           std::cout << "  L" << curLabel + 1 << ":" << std::endl;
           curLabel = (ir::LabelIndex)(curLabel + 1);
         }
-        std::cout << "    (" << std::setw(8) << insnID * 2 << ")  ";
-        gen_disasm(stdout, &p->store[insnID]);
+        std::cout << "    (" << std::setw(8) << insnID << ")  ";
+        pCom = (GenCompactInstruction*)&p->store[insnID];
+        if(pCom->bits1.cmpt_control == 1) {
+          decompactInstruction(pCom, &insn);
+          gen_disasm(stdout, &insn);
+          insnID++;
+        } else {
+          gen_disasm(stdout, &p->store[insnID]);
+          insnID = insnID + 2;
+        }
       }
       std::cout << genKernel->getName() << "'s disassemble end." << std::endl;
     }

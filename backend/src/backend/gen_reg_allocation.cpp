@@ -525,7 +525,7 @@ namespace gbe
               cmp0->state.subFlag = insn.state.subFlag;
               cmp0->src(0) = GenRegister::uw8grf(ir::Register(insn.state.flagIndex));
               cmp0->src(1) = GenRegister::immuw(0);
-              cmp0->dst(0) = GenRegister::null();
+              cmp0->dst(0) = GenRegister::retype(GenRegister::null(), GEN_TYPE_UW);
               cmp0->extra.function = GEN_CONDITIONAL_NEQ;
               insn.prepend(*cmp0);
               validatedFlags.insert(insn.state.flagIndex);
@@ -546,7 +546,7 @@ namespace gbe
               cmp0->state.subFlag = insn.state.subFlag;
               cmp0->src(0) = GenRegister::uw8grf(ir::Register(insn.state.flagIndex));
               cmp0->src(1) = GenRegister::immuw(0);
-              cmp0->dst(0) = GenRegister::null();
+              cmp0->dst(0) = GenRegister::retype(GenRegister::null(), GEN_TYPE_UW);
               cmp0->extra.function = GEN_CONDITIONAL_NEQ;
               insn.prepend(*cmp0);
             }

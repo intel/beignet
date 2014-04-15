@@ -162,6 +162,7 @@ else (GBE_USE_BLOB)
     backend/gen_program.hpp
     backend/gen_program.h
     backend/gen_defs.hpp
+    backend/gen_insn_compact.cpp
     backend/gen_encoder.hpp
     backend/gen_encoder.cpp)
 

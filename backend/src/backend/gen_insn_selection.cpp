@@ -3098,7 +3098,7 @@ namespace gbe
       sel.push();
         sel.curr.noMask = 1;
         sel.curr.predicate = GEN_PREDICATE_NONE;
-        sel.CMP(GEN_CONDITIONAL_LE, GenRegister::retype(src0, GEN_TYPE_UW), src1);
+        sel.CMP(GEN_CONDITIONAL_LE, GenRegister::retype(src0, GEN_TYPE_UW), src1, GenRegister::retype(GenRegister::null(), GEN_TYPE_UW));
       sel.pop();
 
       if (sel.block->hasBarrier) {

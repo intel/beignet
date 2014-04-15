@@ -206,11 +206,12 @@ namespace gbe
     ////////////////////////////////////////////////////////////////////////
     // Helper functions to encode
     ////////////////////////////////////////////////////////////////////////
-    void setHeader(GenInstruction *insn);
-    void setDst(GenInstruction *insn, GenRegister dest);
-    void setSrc0(GenInstruction *insn, GenRegister reg);
-    void setSrc1(GenInstruction *insn, GenRegister reg);
-    GenInstruction *next(uint32_t opcode);
+    void setHeader(GenNativeInstruction *insn);
+    void setDst(GenNativeInstruction *insn, GenRegister dest);
+    void setSrc0(GenNativeInstruction *insn, GenRegister reg);
+    void setSrc1(GenNativeInstruction *insn, GenRegister reg);
+    GenCompactInstruction *nextCompact(uint32_t opcode);
+    GenNativeInstruction *next(uint32_t opcode);
     uint32_t n_instruction(void) const { return store.size(); }
     GBE_CLASS(GenEncoder); //!< Use custom allocators
   };

@@ -533,7 +533,7 @@ static int reg (FILE *file, uint32_t _reg_file, uint32_t _reg_nr)
   return err;
 }
 
-static int dest (FILE *file, const struct GenInstruction *inst)
+static int dest (FILE *file, const union GenNativeInstruction *inst)
 {
   int	err = 0;
 
@@ -587,7 +587,7 @@ static int dest (FILE *file, const struct GenInstruction *inst)
   return 0;
 }
 
-static int dest_3src (FILE *file, const struct GenInstruction *inst)
+static int dest_3src (FILE *file, const union GenNativeInstruction *inst)
 {
   int	err = 0;
   const uint32_t reg_file = GEN_GENERAL_REGISTER_FILE;
@@ -720,7 +720,7 @@ static int src_da16 (FILE *file,
   return err;
 }
 
-static int src0_3src (FILE *file, const struct GenInstruction *inst)
+static int src0_3src (FILE *file, const union GenNativeInstruction *inst)
 {
   int err = 0;
   uint32_t swz_x = (inst->bits2.da3src.src0_swizzle >> 0) & 0x3;
@@ -768,7 +768,7 @@ static int src0_3src (FILE *file, const struct GenInstruction *inst)
   return err;
 }
 
-static int src1_3src (FILE *file, const struct GenInstruction *inst)
+static int src1_3src (FILE *file, const union GenNativeInstruction *inst)
 {
   int err = 0;
   uint32_t swz_x = (inst->bits2.da3src.src1_swizzle >> 0) & 0x3;
@@ -821,7 +821,7 @@ static int src1_3src (FILE *file, const struct GenInstruction *inst)
 }
 
 
-static int src2_3src (FILE *file, const struct GenInstruction *inst)
+static int src2_3src (FILE *file, const union GenNativeInstruction *inst)
 {
   int err = 0;
   uint32_t swz_x = (inst->bits3.da3src.src2_swizzle >> 0) & 0x3;
@@ -871,7 +871,7 @@ static int src2_3src (FILE *file, const struct GenInstruction *inst)
   return err;
 }
 
-static int imm (FILE *file, uint32_t type, const struct GenInstruction *inst) {
+static int imm (FILE *file, uint32_t type, const union GenNativeInstruction *inst) {
   switch (type) {
     case GEN_TYPE_UD:
       format (file, "0x%xUD", inst->bits3.ud);
@@ -900,7 +900,7 @@ static int imm (FILE *file, uint32_t type, const struct GenInstruction *inst) {
   return 0;
 }
 
-static int src0 (FILE *file, const struct GenInstruction *inst)
+static int src0 (FILE *file, const union GenNativeInstruction *inst)
 {
   if (inst->bits1.da1.src0_reg_file == GEN_IMMEDIATE_VALUE)
     return imm (file, inst->bits1.da1.src0_reg_type,
@@ -960,7 +960,7 @@ static int src0 (FILE *file, const struct GenInstruction *inst)
   }
 }
 
-static int src1 (FILE *file, const struct GenInstruction *inst)
+static int src1 (FILE *file, const union GenNativeInstruction *inst)
 {
   if (inst->bits1.da1.src1_reg_file == GEN_IMMEDIATE_VALUE)
     return imm (file, inst->bits1.da1.src1_reg_type,
@@ -1029,7 +1029,7 @@ static const int esize[6] = {
   [5] = 32,
 };
 
-static int qtr_ctrl(FILE *file, const struct GenInstruction *inst)
+static int qtr_ctrl(FILE *file, const union GenNativeInstruction *inst)
 {
   int qtr_ctl = inst->header.quarter_control;
   int exec_size = esize[inst->header.execution_size];
@@ -1060,7 +1060,7 @@ static int qtr_ctrl(FILE *file, const struct GenInstruction *inst)
 
 int gen_disasm (FILE *file, const void *opaque_insn)
 {
-  const struct GenInstruction *inst = (const struct GenInstruction *) opaque_insn;
+  const union GenNativeInstruction *inst = (const union GenNativeInstruction *) opaque_insn;
   int	err = 0;
   int space = 0;
   int gen = 7;
