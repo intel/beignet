@@ -109,9 +109,9 @@ cl_program_new(cl_context ctx)
   p->ref_n = 1;
   p->magic = CL_MAGIC_PROGRAM_HEADER;
   p->ctx = ctx;
-  p->build_log = calloc(200, sizeof(char));
+  p->build_log = calloc(1000, sizeof(char));
   if (p->build_log)
-    p->build_log_max_sz = 200;
+    p->build_log_max_sz = 1000;
   /* The queue also belongs to its context */
   cl_context_add_ref(ctx);
 
