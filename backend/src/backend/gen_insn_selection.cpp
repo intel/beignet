@@ -725,7 +725,7 @@ namespace gbe
              && selReg.physical == 0) {
             ir::RegisterFamily family = getRegisterFamily(reg);
             if(family == ir::FAMILY_QWORD && poolOffset == 1) {
-              poolOffset += 1; // qword register fill could not share the scratch read message payload register
+              poolOffset += simdWidth / 8; // qword register fill could not share the scratch read message payload register
             }
             struct RegSlot regSlot(reg, srcID, poolOffset,
                                    it->second.isTmpReg,
@@ -786,7 +786,7 @@ namespace gbe
              && selReg.physical == 0) {
             ir::RegisterFamily family = getRegisterFamily(reg);
             if(family == ir::FAMILY_QWORD && poolOffset == 1) {
-              poolOffset += 1; // qword register spill could not share the scratch write message payload register
+              poolOffset += simdWidth / 8; // qword register spill could not share the scratch write message payload register
             }
             struct RegSlot regSlot(reg, dstID, poolOffset,
                                    it->second.isTmpReg,
