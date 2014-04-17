@@ -52,9 +52,11 @@ namespace gbe
     /*! Create a new context. name is the name of the function we want to
      *  compile
      */
-    GenContext(const ir::Unit &unit, const std::string &name, bool limitRegisterPressure = false, bool relaxMath = false);
+    GenContext(const ir::Unit &unit, const std::string &name, uint32_t deviceID, bool limitRegisterPressure = false, bool relaxMath = false);
     /*! Release everything needed */
     ~GenContext(void);
+    /*! Target device ID*/
+    uint32_t deviceID;
     /*! Implements base class */
     virtual bool emitCode(void);
     /*! Function we emit code for */

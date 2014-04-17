@@ -690,7 +690,8 @@ namespace gbe {
   extern std::string ocl_stdlib_str;
 
   BVAR(OCL_USE_PCH, true);
-  static gbe_program programNewFromSource(const char *source,
+  static gbe_program programNewFromSource(uint32_t deviceID,
+                                          const char *source,
                                           size_t stringSize,
                                           const char *options,
                                           char *err,
@@ -829,7 +830,7 @@ namespace gbe {
         err += *errSize;
         clangErrSize = *errSize;
       }
-      p = gbe_program_new_from_llvm(llName.c_str(), stringSize,
+      p = gbe_program_new_from_llvm(deviceID, llName.c_str(), stringSize,
                                     err, errSize, optLevel);
       if (err != NULL)
         *errSize += clangErrSize;

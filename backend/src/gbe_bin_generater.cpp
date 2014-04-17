@@ -192,7 +192,9 @@ void program_build_instance::serialize_program(void) throw(int)
 
 void program_build_instance::build_program(void) throw(int)
 {
-    gbe_program opaque = gbe_program_new_from_source(code, 0, build_opt.c_str(), NULL, NULL);
+    // FIXME, we need to find a graceful way to generate internal binaries for difference
+    // devices.
+    gbe_program opaque = gbe_program_new_from_source(0, code, 0, build_opt.c_str(), NULL, NULL);
     if (!opaque)
         throw FILE_BUILD_FAILED;
 

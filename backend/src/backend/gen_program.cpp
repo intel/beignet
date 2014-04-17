@@ -71,7 +71,6 @@ namespace gbe {
     fclose(f);
   }
 
-  GenProgram::GenProgram(void) {}
   GenProgram::~GenProgram(void) {}
 
   /*! We must avoid spilling at all cost with Gen */
@@ -102,7 +101,7 @@ namespace gbe {
 
       // Force the SIMD width now and try to compile
       unit.getFunction(name)->setSimdWidth(simdWidth);
-      Context *ctx = GBE_NEW(GenContext, unit, name, limitRegisterPressure, relaxMath);
+      Context *ctx = GBE_NEW(GenContext, unit, name, deviceID, limitRegisterPressure, relaxMath);
       kernel = ctx->compileKernel();
       if (kernel != NULL) {
         break;
@@ -116,12 +115,14 @@ namespace gbe {
     return kernel;
   }
 
-  static gbe_program genProgramNewFromBinary(const char *binary, size_t size) {
+  static gbe_program genProgramNewFromBinary(uint32_t deviceID, const char *binary, size_t size) {
     using namespace gbe;
     std::string binary_content;
     binary_content.assign(binary, size);
-    GenProgram *program = GBE_NEW_NO_ARG(GenProgram);
+    GenProgram *program = GBE_NEW(GenProgram, deviceID);
     std::istringstream ifs(binary_content, std::ostringstream::binary);
+    // FIXME we need to check the whether the current device ID match the binary file's.
+    deviceID = deviceID;
 
     if (!program->deserializeFromBin(ifs)) {
       delete program;
@@ -148,14 +149,15 @@ namespace gbe {
     return sz;
   }
 
-  static gbe_program genProgramNewFromLLVM(const char *fileName,
+  static gbe_program genProgramNewFromLLVM(uint32_t deviceID,
+                                           const char *fileName,
                                            size_t stringSize,
                                            char *err,
                                            size_t *errSize,
                                            int optLevel)
   {
     using namespace gbe;
-    GenProgram *program = GBE_NEW_NO_ARG(GenProgram);
+    GenProgram *program = GBE_NEW(GenProgram, deviceID);
     std::string error;
     // Try to compile the program
     if (program->buildFromLLVMFile(fileName, error, optLevel) == false) {

@@ -56,6 +56,7 @@
 #include "sys/platform.hpp"
 #include "sys/vector.hpp"
 #include <cassert>
+#include "src/cl_device_data.h"
 
 namespace gbe
 {
@@ -64,7 +65,7 @@ namespace gbe
   {
   public:
     /*! simdWidth is the default width for the instructions */
-    GenEncoder(uint32_t simdWidth, uint32_t gen);
+    GenEncoder(uint32_t simdWidth, uint32_t gen, uint32_t deviceID);
     /*! Size of the stack (should be large enough) */
     enum { MAX_STATE_NUM = 16 };
     /*! Push the current instruction state */
@@ -81,6 +82,8 @@ namespace gbe
     uint32_t stateNum;
     /*! Gen generation to encode */
     uint32_t gen;
+    /*! Device ID */
+    uint32_t deviceID;
 
     ////////////////////////////////////////////////////////////////////////
     // Encoding functions

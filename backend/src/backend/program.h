@@ -112,7 +112,8 @@ typedef void (gbe_kernel_get_image_data_cb)(gbe_kernel gbeKernel, ImageInfo *ima
 extern gbe_kernel_get_image_data_cb *gbe_kernel_get_image_data;
 
 /*! Create a new program from the given source code (zero terminated string) */
-typedef gbe_program (gbe_program_new_from_source_cb)(const char *source,
+typedef gbe_program (gbe_program_new_from_source_cb)(uint32_t deviceID,
+                                                     const char *source,
                                                      size_t stringSize,
                                                      const char *options,
                                                      char *err,
@@ -120,7 +121,7 @@ typedef gbe_program (gbe_program_new_from_source_cb)(const char *source,
 extern gbe_program_new_from_source_cb *gbe_program_new_from_source;
 
 /*! Create a new program from the given blob */
-typedef gbe_program (gbe_program_new_from_binary_cb)(const char *binary, size_t size);
+typedef gbe_program (gbe_program_new_from_binary_cb)(uint32_t deviceID, const char *binary, size_t size);
 extern gbe_program_new_from_binary_cb *gbe_program_new_from_binary;
 
 /*! Serialize a program to a bin */
@@ -128,7 +129,8 @@ typedef size_t (gbe_program_serialize_to_binary_cb)(gbe_program program, char **
 extern gbe_program_serialize_to_binary_cb *gbe_program_serialize_to_binary;
 
 /*! Create a new program from the given LLVM file */
-typedef gbe_program (gbe_program_new_from_llvm_cb)(const char *fileName,
+typedef gbe_program (gbe_program_new_from_llvm_cb)(uint32_t deviceID,
+                                                   const char *fileName,
                                                    size_t string_size,
                                                    char *err,
                                                    size_t *err_size,

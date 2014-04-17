@@ -225,7 +225,7 @@ cl_program_create_from_llvm(cl_context ctx,
   INVALID_VALUE_IF (file_name == NULL);
 
   program = cl_program_new(ctx);
-  program->opaque = gbe_program_new_from_llvm(file_name, program->build_log_max_sz, program->build_log, &program->build_log_sz, 1);
+  program->opaque = gbe_program_new_from_llvm(ctx->device->vendor_id, file_name, program->build_log_max_sz, program->build_log, &program->build_log_sz, 1);
   if (UNLIKELY(program->opaque == NULL)) {
     err = CL_INVALID_PROGRAM;
     goto error;
@@ -326,7 +326,7 @@ cl_program_build(cl_program p, const char *options)
   }
 
   if (p->source_type == FROM_SOURCE) {
-    p->opaque = gbe_program_new_from_source(p->source, p->build_log_max_sz, options, p->build_log, &p->build_log_sz);
+    p->opaque = gbe_program_new_from_source(p->ctx->device->vendor_id, p->source, p->build_log_max_sz, options, p->build_log, &p->build_log_sz);
     if (UNLIKELY(p->opaque == NULL)) {
       if (p->build_log_sz > 0 && strstr(p->build_log, "error: error reading 'options'"))
         err = CL_INVALID_BUILD_OPTIONS;
@@ -339,7 +339,7 @@ cl_program_build(cl_program p, const char *options)
     TRY (cl_program_load_gen_program, p);
     p->source_type = FROM_LLVM;
   } else if (p->source_type == FROM_BINARY) {
-    p->opaque = gbe_program_new_from_binary(p->binary, p->binary_sz);
+    p->opaque = gbe_program_new_from_binary(p->ctx->device->vendor_id, p->binary, p->binary_sz);
     if (UNLIKELY(p->opaque == NULL)) {
       err = CL_BUILD_PROGRAM_FAILURE;
       goto error;

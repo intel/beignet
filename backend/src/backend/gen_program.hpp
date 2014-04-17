@@ -58,7 +58,9 @@ namespace gbe
   {
   public:
     /*! Create an empty program */
-    GenProgram(void);
+    GenProgram(uint32_t deviceID) : deviceID(deviceID) {}
+    /*! Current device ID*/
+    uint32_t deviceID;
     /*! Destroy the program */
     virtual ~GenProgram(void);
     /*! Implements base class */
