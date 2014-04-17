@@ -206,7 +206,11 @@ namespace gbe
                                      uint32_t msg_length,
                                      uint32_t response_length)
   {
-    const GenMessageTarget sfid = GEN6_SFID_DATAPORT_CONSTANT_CACHE;
+    // FIXME there is a unknown issue with baytrail-t platform, the DWORD scatter
+    // message causes a hang at unit test case compiler_global_constant.
+    // We workaround it to use DATA CACHE instead.
+    const GenMessageTarget sfid = (p->deviceID == PCI_CHIP_BAYTRAIL_T) ?
+                                 GEN_SFID_DATAPORT_DATA_CACHE : GEN6_SFID_DATAPORT_CONSTANT_CACHE;
     setMessageDescriptor(p, insn, sfid, msg_length, response_length);
     insn->bits3.gen7_dword_rw.msg_type = msg_type;
     insn->bits3.gen7_dword_rw.bti = bti;
