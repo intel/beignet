@@ -169,6 +169,8 @@ set (utests_sources
   compiler_bool_cross_basic_block.cpp
   compiler_private_data_overflow.cpp
   compiler_getelementptr_bitcast.cpp
+  compiler_simd_any.cpp
+  compiler_simd_all.cpp
   load_program_from_bin.cpp
   profiling_exec.cpp
   enqueue_copy_buf.cpp
