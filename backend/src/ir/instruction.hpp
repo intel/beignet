@@ -567,6 +567,10 @@ namespace ir {
   Instruction RCP(Type type, Register dst, Register src);
   /*! abs.type dst src */
   Instruction ABS(Type type, Register dst, Register src);
+  /*! simd_all.type dst src */
+  Instruction SIMD_ALL(Type type, Register dst, Register src);
+  /*! simd_any.type dst src */
+  Instruction SIMD_ANY(Type type, Register dst, Register src);
   /*! log.type dst src */
   Instruction LOG(Type type, Register dst, Register src);
   /*! exp.type dst src */

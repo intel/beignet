@@ -2282,6 +2282,8 @@ namespace gbe
       case GEN_OCL_SAT_CONV_F32_TO_U32:
       case GEN_OCL_CONV_F16_TO_F32:
       case GEN_OCL_CONV_F32_TO_F16:
+      case GEN_OCL_SIMD_ANY:
+      case GEN_OCL_SIMD_ALL:
         this->newRegister(&I);
         break;
       default:
@@ -2420,6 +2422,20 @@ namespace gbe
             const ir::Register src = this->getRegister(*AI);
             const ir::Register dst = this->getRegister(&I);
             ctx.ALU1(ir::OP_ABS, ir::TYPE_S32, dst, src);
+            break;
+          }
+          case GEN_OCL_SIMD_ALL:
+          {
+            const ir::Register src = this->getRegister(*AI);
+            const ir::Register dst = this->getRegister(&I);
+            ctx.ALU1(ir::OP_SIMD_ALL, ir::TYPE_S16, dst, src);
+            break;
+          }
+          case GEN_OCL_SIMD_ANY:
+          {
+            const ir::Register src = this->getRegister(*AI);
+            const ir::Register dst = this->getRegister(&I);
+            ctx.ALU1(ir::OP_SIMD_ANY, ir::TYPE_S16, dst, src);
             break;
           }
           case GEN_OCL_COS: this->emitUnaryCallInst(I,CS,ir::OP_COS); break;

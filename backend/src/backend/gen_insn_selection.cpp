@@ -1730,6 +1730,67 @@ namespace gbe
         case ir::OP_SQR: sel.MATH(dst, GEN_MATH_FUNCTION_SQRT, src); break;
         case ir::OP_RSQ: sel.MATH(dst, GEN_MATH_FUNCTION_RSQ, src); break;
         case ir::OP_RCP: sel.MATH(dst, GEN_MATH_FUNCTION_INV, src); break;
+        case ir::OP_SIMD_ANY:
+          {
+            const GenRegister constZero = GenRegister::immuw(0);;
+            const GenRegister regOne = GenRegister::uw1grf(ir::ocl::one);
+            const GenRegister flag01 = GenRegister::flag(0, 1);
+
+            sel.push();
+              int simdWidth = sel.curr.execWidth;
+              sel.curr.predicate = GEN_PREDICATE_NONE;
+              sel.curr.execWidth = 1;
+              sel.curr.noMask = 1;
+              sel.MOV(flag01, constZero);
+
+              sel.curr.execWidth = simdWidth;
+              sel.curr.noMask = 0;
+
+              sel.curr.flag = 0;
+              sel.curr.subFlag = 1;
+              sel.CMP(GEN_CONDITIONAL_NEQ, src, constZero);
+
+              if (sel.curr.execWidth == 16)
+                sel.curr.predicate = GEN_PREDICATE_ALIGN1_ANY16H;
+              else if (sel.curr.execWidth == 8)
+                sel.curr.predicate = GEN_PREDICATE_ALIGN1_ANY8H;
+              else
+                NOT_IMPLEMENTED;
+              sel.SEL(dst, regOne, constZero);
+            sel.pop();
+          }
+          break;
+        case ir::OP_SIMD_ALL:
+          {
+            const GenRegister constZero = GenRegister::immuw(0);
+            const GenRegister regOne = GenRegister::uw1grf(ir::ocl::one);
+            const GenRegister flag01 = GenRegister::flag(0, 1);
+
+            sel.push();
+              int simdWidth = sel.curr.execWidth;
+              sel.curr.predicate = GEN_PREDICATE_NONE;
+              sel.curr.execWidth = 1;
+              sel.curr.noMask = 1;
+              sel.MOV(flag01, regOne);
+
+              sel.curr.execWidth = simdWidth;
+              sel.curr.noMask = 0;
+
+              sel.curr.flag = 0;
+              sel.curr.subFlag = 1;
+              sel.CMP(GEN_CONDITIONAL_NEQ, src, constZero);
+
+              if (sel.curr.execWidth == 16)
+                sel.curr.predicate = GEN_PREDICATE_ALIGN1_ALL16H;
+              else if (sel.curr.execWidth == 8)
+                sel.curr.predicate = GEN_PREDICATE_ALIGN1_ALL8H;
+              else
+                NOT_IMPLEMENTED;
+              sel.SEL(dst, regOne, constZero);
+            sel.pop();
+          }
+          break;
+
         default: NOT_SUPPORTED;
       }
       return true;

@@ -175,3 +175,7 @@ DECL_LLVM_GEN_FUNCTION(SAT_CONV_F32_TO_U32, _Z16convert_uint_satf)
 
 DECL_LLVM_GEN_FUNCTION(CONV_F16_TO_F32, __gen_ocl_f16to32)
 DECL_LLVM_GEN_FUNCTION(CONV_F32_TO_F16, __gen_ocl_f32to16)
+
+// SIMD level function for internal usage
+DECL_LLVM_GEN_FUNCTION(SIMD_ANY, __gen_ocl_simd_any)
+DECL_LLVM_GEN_FUNCTION(SIMD_ALL, __gen_ocl_simd_all)
