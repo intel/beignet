@@ -2594,19 +2594,22 @@ namespace gbe
       } else {
         GBE_ASSERT(insn.getValueNum() == 1);
         const GenRegister value = sel.selReg(insn.getValue(0));
-        // We need a temporary register if we read bytes or words
-        Register dst = Register(value.value.reg);
-        if (elemSize == GEN_BYTE_SCATTER_WORD ||
-            elemSize == GEN_BYTE_SCATTER_BYTE) {
-          dst = sel.reg(FAMILY_DWORD);
-          sel.BYTE_GATHER(GenRegister::fxgrf(simdWidth, dst), address, elemSize, bti);
-        }
+        GBE_ASSERT(elemSize == GEN_BYTE_SCATTER_WORD || elemSize == GEN_BYTE_SCATTER_BYTE);
 
-        // Repack bytes or words using a converting mov instruction
+        Register tmpReg = sel.reg(FAMILY_DWORD);
+        GenRegister tmpAddr = GenRegister::udxgrf(simdWidth, sel.reg(FAMILY_DWORD));
+        GenRegister tmpData = GenRegister::udxgrf(simdWidth, tmpReg);
+        // Get dword aligned addr
+        sel.AND(tmpAddr, GenRegister::retype(address,GEN_TYPE_UD), GenRegister::immud(0xfffffffc));
+        sel.UNTYPED_READ(tmpAddr, &tmpData, 1, bti);
+        // Get the remaining offset from aligned addr
+        sel.AND(tmpAddr, GenRegister::retype(address,GEN_TYPE_UD), GenRegister::immud(0x3));
+        sel.SHL(tmpAddr, tmpAddr, GenRegister::immud(0x3));
+        sel.SHR(tmpData, tmpData, tmpAddr);
         if (elemSize == GEN_BYTE_SCATTER_WORD)
-          sel.MOV(GenRegister::retype(value, GEN_TYPE_UW), GenRegister::unpacked_uw(dst));
+          sel.MOV(GenRegister::retype(value, GEN_TYPE_UW), GenRegister::unpacked_uw(tmpReg));
         else if (elemSize == GEN_BYTE_SCATTER_BYTE)
-          sel.MOV(GenRegister::retype(value, GEN_TYPE_UB), GenRegister::unpacked_ub(dst));
+          sel.MOV(GenRegister::retype(value, GEN_TYPE_UB), GenRegister::unpacked_ub(tmpReg));
       }
     }
 
