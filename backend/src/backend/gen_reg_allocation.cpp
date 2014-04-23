@@ -879,6 +879,8 @@ namespace gbe
                                                        uint32_t size,
                                                        uint32_t alignment) {
     uint32_t grfOffset;
+
+    this->expireGRF(interval);
     while ((grfOffset = ctx.allocate(size, alignment)) == 0) {
       const bool success = this->expireGRF(interval);
       if (success == false) {
