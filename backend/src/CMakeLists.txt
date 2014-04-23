@@ -58,8 +58,8 @@ set (clang_cmd ${clang_cmd} -fno-builtin -DGEN7_SAMPLER_CLAMP_BORDER_WORKAROUND)
 add_custom_command(
      OUTPUT ${pch_object}
      COMMAND rm -f ${pch_object}
-     COMMAND clang ${clang_cmd} --relocatable-pch -emit-pch -isysroot ${CMAKE_CURRENT_BINARY_DIR} ${ocl_blob_file} -o ${pch_object}
-     COMMAND clang ${clang_cmd} -emit-pch ${ocl_blob_file} -o ${local_pch_object}
+     COMMAND ${CMAKE_BINARY_PATH}clang ${clang_cmd} --relocatable-pch -emit-pch -isysroot ${CMAKE_CURRENT_BINARY_DIR} ${ocl_blob_file} -o ${pch_object}
+     COMMAND ${CMAKE_BINARY_PATH}clang ${clang_cmd} -emit-pch ${ocl_blob_file} -o ${local_pch_object}
      DEPENDS ${ocl_blob_file}
      )
 
@@ -71,14 +71,14 @@ macro(ll_add_library ll_lib ll_sources)
   add_custom_command(
        OUTPUT  ${ll}.bc
        COMMAND rm -f ${ll}.bc
-       COMMAND llvm-as -o ${ll}.bc ${GBE_SOURCE_DIR}/src/${ll}
+       COMMAND ${CMAKE_BINARY_PATH}llvm-as -o ${ll}.bc ${GBE_SOURCE_DIR}/src/${ll}
        DEPENDS ${ll}
        )
   set (ll_objects ${ll_objects} ${ll}.bc)
   endforeach (ll ${ll_sources})
   add_custom_command(
        OUTPUT ${ll_lib}
-       COMMAND llvm-link -o ${ll_lib} ${ll_objects}
+       COMMAND ${CMAKE_BINARY_PATH}llvm-link -o ${ll_lib} ${ll_objects}
        DEPENDS ${ll_objects}
        )
   add_custom_target(${ll_lib}
