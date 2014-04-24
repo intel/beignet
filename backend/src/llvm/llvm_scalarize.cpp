@@ -683,8 +683,10 @@ namespace gbe {
   {
     if(bt->getOperand(0)->getType()->isVectorTy())
       bt->setOperand(0, InsertToVector(bt, bt->getOperand(0)));
-    if(bt->getType()->isVectorTy())
+    if(bt->getType()->isVectorTy()) {
+      setAppendPoint(bt);
       extractFromVector(bt);
+    }
     return false;
   }
 
