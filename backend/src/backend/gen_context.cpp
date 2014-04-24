@@ -46,21 +46,33 @@ namespace gbe
   GenContext::GenContext(const ir::Unit &unit,
                          const std::string &name,
                          uint32_t deviceID,
-                         uint32_t reservedSpillRegs,
-                         bool limitRegisterPressure,
                          bool relaxMath) :
-    Context(unit, name), deviceID(deviceID), reservedSpillRegs(reservedSpillRegs),
-    limitRegisterPressure(limitRegisterPressure), relaxMath(relaxMath)
+    Context(unit, name), deviceID(deviceID), relaxMath(relaxMath)
   {
-    this->p = GBE_NEW(GenEncoder, simdWidth, 7, deviceID); // XXX handle more than Gen7
-    this->sel = GBE_NEW(Selection, *this);
-    this->ra = GBE_NEW(GenRegAllocator, *this);
+    this->p = NULL;
+    this->sel = NULL;
+    this->ra = NULL;
   }
 
   GenContext::~GenContext(void) {
     GBE_DELETE(this->ra);
     GBE_DELETE(this->sel);
     GBE_DELETE(this->p);
+  }
+
+  void GenContext::startNewCG(uint32_t simdWidth, uint32_t reservedSpillRegs, bool limitRegisterPressure) {
+    this->limitRegisterPressure = limitRegisterPressure;
+    this->reservedSpillRegs = reservedSpillRegs;
+    Context::startNewCG(simdWidth);
+    GBE_SAFE_DELETE(ra);
+    GBE_SAFE_DELETE(sel);
+    GBE_SAFE_DELETE(p);
+    this->p = GBE_NEW(GenEncoder, this->simdWidth, 7, deviceID); // XXX handle more than Gen7
+    this->sel = GBE_NEW(Selection, *this);
+    this->ra = GBE_NEW(GenRegAllocator, *this);
+    this->branchPos2.clear();
+    this->branchPos3.clear();
+    this->labelPos.clear();
   }
 
   void GenContext::emitInstructionStream(void) {

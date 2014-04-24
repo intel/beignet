@@ -335,12 +335,8 @@ namespace gbe
     this->liveness = GBE_NEW(ir::Liveness, const_cast<ir::Function&>(fn));
     this->dag = GBE_NEW(ir::FunctionDAG, *this->liveness);
     // r0 (GEN_REG_SIZE) is always set by the HW and used at the end by EOT
-    this->registerAllocator = GBE_NEW(RegisterAllocator, GEN_REG_SIZE, 4*KB - GEN_REG_SIZE);
-    this->scratchAllocator = GBE_NEW(ScratchAllocator, 12*KB);
-    if (fn.getSimdWidth() == 0 || OCL_SIMD_WIDTH != 15)
-      this->simdWidth = nextHighestPowerOf2(OCL_SIMD_WIDTH);
-    else
-      this->simdWidth = fn.getSimdWidth();
+    this->registerAllocator = NULL; //GBE_NEW(RegisterAllocator, GEN_REG_SIZE, 4*KB - GEN_REG_SIZE);
+    this->scratchAllocator = NULL; //GBE_NEW(ScratchAllocator, 12*KB);
   }
 
   Context::~Context(void) {
@@ -350,12 +346,28 @@ namespace gbe
     GBE_SAFE_DELETE(this->liveness);
   }
 
+  void Context::startNewCG(uint32_t simdWidth) {
+    if (simdWidth == 0 || OCL_SIMD_WIDTH != 15)
+      this->simdWidth = nextHighestPowerOf2(OCL_SIMD_WIDTH);
+    else
+      this->simdWidth = simdWidth;
+    GBE_SAFE_DELETE(this->registerAllocator);
+    GBE_SAFE_DELETE(this->scratchAllocator);
+    GBE_ASSERT(dag != NULL && liveness != NULL);
+    this->registerAllocator = GBE_NEW(RegisterAllocator, GEN_REG_SIZE, 4*KB - GEN_REG_SIZE);
+    this->scratchAllocator = GBE_NEW(ScratchAllocator, 12*KB);
+    this->curbeRegs.clear();
+    this->JIPs.clear();
+  }
+
   Kernel *Context::compileKernel(void) {
     this->kernel = this->allocateKernel();
     this->kernel->simdWidth = this->simdWidth;
     this->buildArgList();
-    this->buildUsedLabels();
-    this->buildJIPs();
+    if (usedLabels.size() == 0)
+      this->buildUsedLabels();
+    if (JIPs.size() == 0)
+      this->buildJIPs();
     this->buildStack();
     this->handleSLM();
     if (this->emitCode() == false) {

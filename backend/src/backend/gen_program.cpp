@@ -83,6 +83,7 @@ namespace gbe {
     {16, 10, false},
     {8, 0, false},
     {8, 8, false},
+    {8, 16, false},
   };
 
   Kernel *GenProgram::compileKernel(const ir::Unit &unit, const std::string &name, bool relaxMath) {
@@ -91,11 +92,20 @@ namespace gbe {
     // when the function already provides the simd width we need to use (i.e.
     // non zero)
     const ir::Function *fn = unit.getFunction(name);
-    const uint32_t codeGenNum = fn->getSimdWidth() != 0 ? 2 : 4;
-    uint32_t codeGen = fn->getSimdWidth() == 8 ? 2 : 0;
+    uint32_t codeGenNum = sizeof(codeGenStrategy) / sizeof(codeGenStrategy[0]);
+    uint32_t codeGen = 0;
+    if (fn->getSimdWidth() == 8) {
+      codeGen = 2;
+    } else if (fn->getSimdWidth() == 16) {
+      codeGenNum = 2;
+    } else if (fn->getSimdWidth() == 0) {
+      codeGen = 0;
+    } else
+      GBE_ASSERT(0);
     Kernel *kernel = NULL;
 
     // Stop when compilation is successful
+    GenContext *ctx = GBE_NEW(GenContext, unit, name, deviceID, relaxMath);
     for (; codeGen < codeGenNum; ++codeGen) {
       const uint32_t simdWidth = codeGenStrategy[codeGen].simdWidth;
       const bool limitRegisterPressure = codeGenStrategy[codeGen].limitRegisterPressure;
@@ -103,12 +113,11 @@ namespace gbe {
 
       // Force the SIMD width now and try to compile
       unit.getFunction(name)->setSimdWidth(simdWidth);
-      Context *ctx = GBE_NEW(GenContext, unit, name, deviceID, reservedSpillRegs, limitRegisterPressure, relaxMath);
+      ctx->startNewCG(simdWidth, reservedSpillRegs, limitRegisterPressure);
       kernel = ctx->compileKernel();
       if (kernel != NULL) {
         break;
       }
-      GBE_DELETE(ctx);
       fn->getImageSet()->clearInfo();
     }
 

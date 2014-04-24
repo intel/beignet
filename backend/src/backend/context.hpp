@@ -56,6 +56,8 @@ namespace gbe
     Context(const ir::Unit &unit, const std::string &name);
     /*! Release everything needed */
     virtual ~Context(void);
+    /*! start new code generation with specific simd width. */
+    void startNewCG(uint32_t simdWidth);
     /*! Compile the code */
     Kernel *compileKernel(void);
     /*! Tells if the labels is used */

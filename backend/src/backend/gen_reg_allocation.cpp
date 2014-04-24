@@ -627,7 +627,6 @@ namespace gbe
         const uint32_t grfOffset = allocateReg(interval, size, alignment);
         if(grfOffset == 0) {
           GBE_ASSERT(!(reservedReg && family != ir::FAMILY_DWORD));
-          GBE_ASSERT(ctx.reservedSpillRegs == 0 || vector->regNum < ctx.reservedSpillRegs);
           for(int i = vector->regNum-1; i >= 0; i--) {
             if (!spillReg(vector->reg[i].reg()))
               return false;
@@ -662,7 +661,8 @@ namespace gbe
       allocateScratchForSpilled();
       bool success = selection.spillRegs(spilledRegs, reservedReg);
       if (!success) {
-        std::cerr << "Fail to spill registers." << std::endl;
+        if (GBE_DEBUG)
+          std::cerr << "Fail to spill registers." << std::endl;
         return false;
       }
     }
@@ -775,6 +775,7 @@ namespace gbe
       // from the RA map.
       bool success = expireReg(interval.reg);
       GBE_ASSERT(success);
+      success = success;
       RA.erase(interval.reg);
     }
     spilledRegs.insert(std::make_pair(interval.reg, spillTag));

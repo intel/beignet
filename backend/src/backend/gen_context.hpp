@@ -52,10 +52,11 @@ namespace gbe
     /*! Create a new context. name is the name of the function we want to
      *  compile
      */
-    GenContext(const ir::Unit &unit, const std::string &name, uint32_t deviceID, uint32_t reservedSpillRegs = 0,
-               bool limitRegisterPressure = false, bool relaxMath = false);
+    GenContext(const ir::Unit &unit, const std::string &name, uint32_t deviceID, bool relaxMath = false);
     /*! Release everything needed */
     ~GenContext(void);
+    /*! Start new code generation with specific parameters */
+    void startNewCG(uint32_t simdWidth, uint32_t reservedSpillRegs, bool limitRegisterPressure);
     /*! Target device ID*/
     uint32_t deviceID;
     /*! Implements base class */
