@@ -52,7 +52,8 @@ namespace gbe
     /*! Create a new context. name is the name of the function we want to
      *  compile
      */
-    GenContext(const ir::Unit &unit, const std::string &name, uint32_t deviceID, bool limitRegisterPressure = false, bool relaxMath = false);
+    GenContext(const ir::Unit &unit, const std::string &name, uint32_t deviceID, uint32_t reservedSpillRegs = 0,
+               bool limitRegisterPressure = false, bool relaxMath = false);
     /*! Release everything needed */
     ~GenContext(void);
     /*! Target device ID*/
@@ -175,6 +176,7 @@ namespace gbe
     /*! Indicate if we need to tackle a register pressure issue when
      * regenerating the code
      */
+    uint32_t reservedSpillRegs;
     bool limitRegisterPressure;
     bool relaxMath;
   private:

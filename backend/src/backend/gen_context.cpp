@@ -46,9 +46,11 @@ namespace gbe
   GenContext::GenContext(const ir::Unit &unit,
                          const std::string &name,
                          uint32_t deviceID,
+                         uint32_t reservedSpillRegs,
                          bool limitRegisterPressure,
                          bool relaxMath) :
-    Context(unit, name), deviceID(deviceID), limitRegisterPressure(limitRegisterPressure), relaxMath(relaxMath)
+    Context(unit, name), deviceID(deviceID), reservedSpillRegs(reservedSpillRegs),
+    limitRegisterPressure(limitRegisterPressure), relaxMath(relaxMath)
   {
     this->p = GBE_NEW(GenEncoder, simdWidth, 7, deviceID); // XXX handle more than Gen7
     this->sel = GBE_NEW(Selection, *this);

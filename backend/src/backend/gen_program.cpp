@@ -76,12 +76,13 @@ namespace gbe {
   /*! We must avoid spilling at all cost with Gen */
   static const struct CodeGenStrategy {
     uint32_t simdWidth;
+    uint32_t reservedSpillRegs;
     bool limitRegisterPressure;
   } codeGenStrategy[] = {
-    {16,false},
-    {16,true},
-    {8,false},
-    {8,true},
+    {16, 0, false},
+    {16, 10, false},
+    {8, 0, false},
+    {8, 8, false},
   };
 
   Kernel *GenProgram::compileKernel(const ir::Unit &unit, const std::string &name, bool relaxMath) {
@@ -98,10 +99,11 @@ namespace gbe {
     for (; codeGen < codeGenNum; ++codeGen) {
       const uint32_t simdWidth = codeGenStrategy[codeGen].simdWidth;
       const bool limitRegisterPressure = codeGenStrategy[codeGen].limitRegisterPressure;
+      const uint32_t reservedSpillRegs = codeGenStrategy[codeGen].reservedSpillRegs;
 
       // Force the SIMD width now and try to compile
       unit.getFunction(name)->setSimdWidth(simdWidth);
-      Context *ctx = GBE_NEW(GenContext, unit, name, deviceID, limitRegisterPressure, relaxMath);
+      Context *ctx = GBE_NEW(GenContext, unit, name, deviceID, reservedSpillRegs, limitRegisterPressure, relaxMath);
       kernel = ctx->compileKernel();
       if (kernel != NULL) {
         break;
@@ -110,8 +112,7 @@ namespace gbe {
       fn->getImageSet()->clearInfo();
     }
 
-    // XXX spill must be implemented
-    GBE_ASSERTM(kernel != NULL, "Register spilling not supported yet!");
+    GBE_ASSERTM(kernel != NULL, "Fail to compile kernel, may need to increase reserved registers for spilling.");
     return kernel;
   }
 

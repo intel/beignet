@@ -27,7 +27,6 @@
 
 #include "ir/register.hpp"
 #include "backend/gen_register.hpp"
-#define RESERVED_REG_NUM_FOR_SPILL 8
 
 namespace gbe
 {

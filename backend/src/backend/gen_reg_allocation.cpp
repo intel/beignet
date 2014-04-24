@@ -627,7 +627,7 @@ namespace gbe
         const uint32_t grfOffset = allocateReg(interval, size, alignment);
         if(grfOffset == 0) {
           GBE_ASSERT(!(reservedReg && family != ir::FAMILY_DWORD));
-          GBE_ASSERT(vector->regNum < RESERVED_REG_NUM_FOR_SPILL);
+          GBE_ASSERT(ctx.reservedSpillRegs == 0 || vector->regNum < ctx.reservedSpillRegs);
           for(int i = vector->regNum-1; i >= 0; i--) {
             if (!spillReg(vector->reg[i].reg()))
               return false;
@@ -893,12 +893,11 @@ namespace gbe
 
   INLINE bool GenRegAllocator::Opaque::allocate(Selection &selection) {
     using namespace ir;
-    if (ctx.getSimdWidth() == 8) {
-      reservedReg = ctx.allocate(RESERVED_REG_NUM_FOR_SPILL * GEN_REG_SIZE, GEN_REG_SIZE);
+    if (ctx.reservedSpillRegs != 0) {
+      reservedReg = ctx.allocate(ctx.reservedSpillRegs * GEN_REG_SIZE, GEN_REG_SIZE);
       reservedReg /= GEN_REG_SIZE;
     } else {
-      reservedReg = ctx.allocate(RESERVED_REG_NUM_FOR_SPILL * GEN_REG_SIZE, GEN_REG_SIZE);
-      reservedReg /= GEN_REG_SIZE;
+      reservedReg = 0;
     }
     // schedulePreRegAllocation(ctx, selection);
 

@@ -739,7 +739,7 @@ namespace gbe
           }
         }
 
-        if (poolOffset > RESERVED_REG_NUM_FOR_SPILL) {
+        if (poolOffset > ctx.reservedSpillRegs) {
           std::cerr << "Instruction (#" << (uint32_t)insn.opcode << ") src too large pooloffset " << (uint32_t)poolOffset << std::endl;
           return false;
         }
@@ -797,7 +797,7 @@ namespace gbe
           }
         }
 
-        if (poolOffset > RESERVED_REG_NUM_FOR_SPILL){
+        if (poolOffset > ctx.reservedSpillRegs){
           std::cerr << "Instruction (#" << (uint32_t)insn.opcode << ") dst too large pooloffset " << (uint32_t)poolOffset << std::endl;
           return false;
         }
