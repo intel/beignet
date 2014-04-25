@@ -116,9 +116,17 @@ namespace gbe {
       ctx->startNewCG(simdWidth, reservedSpillRegs, limitRegisterPressure);
       kernel = ctx->compileKernel();
       if (kernel != NULL) {
+        GBE_ASSERT(ctx->getErrCode() == NO_ERROR);
         break;
       }
       fn->getImageSet()->clearInfo();
+      // If we get a out of range if/endif error.
+      // We need to set the context to if endif fix mode and restart the previous compile.
+      if ( ctx->getErrCode() == OUT_OF_RANGE_IF_ENDIF && !ctx->getIFENDIFFix() ) {
+        ctx->setIFENDIFFix(true);
+        codeGen--;
+      } else
+        GBE_ASSERT(!(ctx->getErrCode() == OUT_OF_RANGE_IF_ENDIF && ctx->getIFENDIFFix()));
     }
 
     GBE_ASSERTM(kernel != NULL, "Fail to compile kernel, may need to increase reserved registers for spilling.");

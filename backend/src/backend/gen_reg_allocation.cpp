@@ -598,6 +598,7 @@ namespace gbe
   IVAR(OCL_SIMD16_SPILL_THRESHOLD, 0, 16, 256);
   bool GenRegAllocator::Opaque::allocateGRFs(Selection &selection) {
     // Perform the linear scan allocator
+    ctx.errCode = REGISTER_ALLOCATION_FAIL;
     const uint32_t regNum = ctx.sel->getRegNum();
     for (uint32_t startID = 0; startID < regNum; ++startID) {
       const GenRegInterval &interval = *this->starting[startID];
@@ -651,21 +652,18 @@ namespace gbe
       GBE_ASSERT(reservedReg != 0);
       if (ctx.getSimdWidth() == 16) {
         if (spilledRegs.size() > (unsigned int)OCL_SIMD16_SPILL_THRESHOLD) {
-          if (GBE_DEBUG)
-            std::cerr << "WARN: exceed simd 16 spill threshold ("
-                      << spilledRegs.size() << ">" << OCL_SIMD16_SPILL_THRESHOLD
-                      << ")" << std::endl;
+          ctx.errCode = REGISTER_SPILL_EXCEED_THRESHOLD;
           return false;
         }
       }
       allocateScratchForSpilled();
       bool success = selection.spillRegs(spilledRegs, reservedReg);
       if (!success) {
-        if (GBE_DEBUG)
-          std::cerr << "Fail to spill registers." << std::endl;
+        ctx.errCode = REGISTER_SPILL_FAIL;
         return false;
       }
     }
+    ctx.errCode = NO_ERROR;
     return true;
   }
 

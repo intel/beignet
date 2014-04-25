@@ -52,6 +52,7 @@ namespace gbe
     this->p = NULL;
     this->sel = NULL;
     this->ra = NULL;
+    this->ifEndifFix = false;
   }
 
   GenContext::~GenContext(void) {
@@ -73,6 +74,7 @@ namespace gbe
     this->branchPos2.clear();
     this->branchPos3.clear();
     this->labelPos.clear();
+    this->errCode = NO_ERROR;
   }
 
   void GenContext::emitInstructionStream(void) {
@@ -98,7 +100,7 @@ namespace gbe
 	p->NOP();
   }
 
-  void GenContext::patchBranches(void) {
+  bool GenContext::patchBranches(void) {
     using namespace ir;
     for (auto pair : branchPos2) {
       const LabelIndex label = pair.first;
@@ -109,14 +111,17 @@ namespace gbe
     for (auto pair : branchPos3) {
       const LabelPair labelPair = pair.first;
       const int32_t insnID = pair.second;
-      // FIXME the 'labelPair' implementation must be fixed, as it is hard to
-      // convert InstructionSelection offset to ASM offset since asm maybe compacted
       const int32_t jip = labelPos.find(labelPair.l0)->second;
       const int32_t uip = labelPos.find(labelPair.l1)->second;
-      assert((jip - insnID) < 32767 && (jip - insnID) > -32768);
-      assert((uip - insnID) < 32767 && (uip - insnID) > -32768);
+      if (((jip - insnID) > 32767 || (jip - insnID) < -32768) ||
+          ((uip - insnID) > 32768 || (uip - insnID) < -32768)) {
+        // The only possible error instruction is if/endif here.
+        errCode = OUT_OF_RANGE_IF_ENDIF; 
+        return false;
+      }
       p->patchJMPI(insnID, (((uip - insnID)) << 16) | ((jip - insnID)));
     }
+    return true;
   }
 
   void GenContext::clearFlagRegister(void) {
@@ -2014,7 +2019,8 @@ namespace gbe
     this->clearFlagRegister();
     this->emitStackPointer();
     this->emitInstructionStream();
-    this->patchBranches();
+    if (this->patchBranches() == false)
+      return false;
     genKernel->insnNum = p->store.size();
     genKernel->insns = GBE_NEW_ARRAY_NO_ARG(GenInstruction, genKernel->insnNum);
     std::memcpy(genKernel->insns, &p->store[0], genKernel->insnNum * sizeof(GenInstruction));
@@ -2025,7 +2031,8 @@ namespace gbe
       GenNativeInstruction insn;
       std::cout << "  L0:" << std::endl;
       for (uint32_t insnID = 0; insnID < genKernel->insnNum; ) {
-        if (labelPos.find((ir::LabelIndex)(curLabel + 1))->second == insnID) {
+        if (labelPos.find((ir::LabelIndex)(curLabel + 1))->second == insnID &&
+            curLabel < this->getFunction().labelNum()) {
           std::cout << "  L" << curLabel + 1 << ":" << std::endl;
           curLabel = (ir::LabelIndex)(curLabel + 1);
         }

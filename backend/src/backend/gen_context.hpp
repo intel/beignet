@@ -42,6 +42,13 @@ namespace gbe
   class SelectionInstruction; // Pre-RA Gen instruction
   class SelectionReg;         // Pre-RA Gen register
   class GenRegister;
+  typedef enum {
+    NO_ERROR,
+    REGISTER_ALLOCATION_FAIL,
+    REGISTER_SPILL_EXCEED_THRESHOLD,
+    REGISTER_SPILL_FAIL,
+    OUT_OF_RANGE_IF_ENDIF,
+  } CompileErrorCode;
 
   /*! Context is the helper structure to build the Gen ISA or simulation code
    *  from GenIR
@@ -73,7 +80,7 @@ namespace gbe
     /*! Emit the instructions */
     void emitInstructionStream(void);
     /*! Set the correct target values for the branches */
-    void patchBranches(void);
+    bool patchBranches(void);
     /*! Forward ir::Function isSpecialReg method */
     INLINE bool isSpecialReg(ir::Register reg) const {
       return fn.isSpecialReg(reg);
@@ -177,11 +184,18 @@ namespace gbe
     uint32_t reservedSpillRegs;
     bool limitRegisterPressure;
     bool relaxMath;
+    const bool getIFENDIFFix(void) const { return ifEndifFix; }
+    void setIFENDIFFix(bool fix) { ifEndifFix = fix; }
+    const CompileErrorCode getErrCode() { return errCode; }
   private:
+    CompileErrorCode errCode;
+    bool ifEndifFix;
     /*! Build the curbe patch list for the given kernel */
     void buildPatchList(void);
     /*! allocate a new curbe register and insert to curbe pool. */
     void allocCurbeReg(ir::Register reg, gbe_curbe_type value, uint32_t subValue = 0);
+
+    friend GenRegAllocator;               //!< need to access errCode directly. 
 
   };
 

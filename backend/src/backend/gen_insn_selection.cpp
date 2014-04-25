@@ -196,7 +196,7 @@ namespace gbe
   // SelectionBlock
   ///////////////////////////////////////////////////////////////////////////
 
-  SelectionBlock::SelectionBlock(const ir::BasicBlock *bb) : bb(bb) {}
+  SelectionBlock::SelectionBlock(const ir::BasicBlock *bb) : bb(bb), endifLabel( (ir::LabelIndex) 0){}
 
   void SelectionBlock::append(ir::Register reg) { tmp.push_back(reg); }
 
@@ -981,7 +981,7 @@ namespace gbe
     this->LABEL(this->block->endifLabel);
     SelectionInstruction *insn = this->appendInsn(SEL_OP_ENDIF, 0, 1);
     insn->src(0) = src;
-    insn->index = uint16_t(jip);
+    insn->index = uint16_t(this->block->endifLabel);
   }
 
   void Selection::Opaque::CMP(uint32_t conditional, Reg src0, Reg src1, Reg dst) {
@@ -1482,13 +1482,26 @@ namespace gbe
         // If there is no branch at the end of this block.
 
         // Try all the patterns from best to worst
-
         do {
           if ((*it)->emit(*this, dag))
             break;
           ++it;
         } while (it != end);
         GBE_ASSERT(it != end);
+        // If we are in if/endif fix mode, and this block is
+        // large enough, we need to insert endif/if pair to eliminate
+        // the too long if/endif block.
+        if (this->ctx.getIFENDIFFix() &&
+            this->block->insnList.size() != 0 &&
+            this->block->insnList.size() % 1000 == 0 &&
+            (uint16_t)this->block->endifLabel != 0) {
+          ir::LabelIndex jip = this->block->endifLabel;
+          this->ENDIF(GenRegister::immd(0), jip);
+          this->push();
+            this->curr.predicate = GEN_PREDICATE_NORMAL;
+            this->IF(GenRegister::immd(0), jip, jip);
+          this->pop();
+        }
 
         if (needEndif) {
           const ir::BasicBlock *curr = insn.getParent();
