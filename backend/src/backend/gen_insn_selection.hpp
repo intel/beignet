@@ -138,10 +138,6 @@ namespace gbe
     uint16_t index;
     /*! For BRC/IF to store the UIP */
     uint16_t index1;
-    /*! For IF instruction to adjust the corresponding ENDIF's position. */
-    /*! as endif is not at the begining of any BBs.*/
-    uint16_t offset0;
-    uint16_t offset1;
     /*! instruction ID used for vector allocation. */
     uint32_t ID;
     /*! Variable sized. Destinations and sources go here */
@@ -194,6 +190,7 @@ namespace gbe
     void append(SelectionInstruction *insn);
     /*! Append a new selection instruction at the beginning of the block */
     void prepend(SelectionInstruction *insn);
+    ir::LabelIndex endifLabel;
     int endifOffset;
     bool hasBarrier;
     bool hasBranch;

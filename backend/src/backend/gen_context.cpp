@@ -111,8 +111,8 @@ namespace gbe
       const int32_t insnID = pair.second;
       // FIXME the 'labelPair' implementation must be fixed, as it is hard to
       // convert InstructionSelection offset to ASM offset since asm maybe compacted
-      const int32_t jip = labelPos.find(labelPair.l0)->second + labelPair.offset0*2;
-      const int32_t uip = labelPos.find(labelPair.l1)->second + labelPair.offset1*2;
+      const int32_t jip = labelPos.find(labelPair.l0)->second;
+      const int32_t uip = labelPos.find(labelPair.l1)->second;
       assert((jip - insnID) < 32767 && (jip - insnID) > -32768);
       assert((uip - insnID) < 32767 && (uip - insnID) > -32768);
       p->patchJMPI(insnID, (((uip - insnID)) << 16) | ((jip - insnID)));
@@ -254,7 +254,7 @@ namespace gbe
       case SEL_OP_IF:
         {
           const ir::LabelIndex label0(insn.index), label1(insn.index1);
-          const LabelPair labelPair(label0, label1, insn.offset0, insn.offset1);
+          const LabelPair labelPair(label0, label1);
           const GenRegister src = ra->genReg(insn.src(0));
           this->branchPos3.push_back(std::make_pair(labelPair, p->store.size()));
           p->IF(src);

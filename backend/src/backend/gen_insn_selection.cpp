@@ -505,7 +505,7 @@ namespace gbe
     /*! Jump indexed instruction, return the encoded instruction count according to jump distance. */
     int JMPI(Reg src, ir::LabelIndex target, ir::LabelIndex origin);
     /*! IF indexed instruction */
-    void IF(Reg src, ir::LabelIndex jip, ir::LabelIndex uip, int16_t offset0, int16_t offset1);
+    void IF(Reg src, ir::LabelIndex jip, ir::LabelIndex uip);
     /*! ENDIF indexed instruction */
     void ENDIF(Reg src, ir::LabelIndex jip);
     /*! BRD indexed instruction */
@@ -574,6 +574,14 @@ namespace gbe
     GBE_CLASS(Opaque);
     friend class SelectionBlock;
     friend class SelectionInstruction;
+  private:
+    /*! Auxiliary label for if/endif. */ 
+    uint16_t currAuxLabel;
+    INLINE ir::LabelIndex newAuxLabel()
+    {
+      currAuxLabel++;
+      return (ir::LabelIndex)currAuxLabel;
+    }
   };
 
   ///////////////////////////////////////////////////////////////////////////
@@ -607,7 +615,7 @@ namespace gbe
     ctx(ctx), block(NULL),
     curr(ctx.getSimdWidth()), file(ctx.getFunction().getRegisterFile()),
     maxInsnNum(ctx.getFunction().getLargestBlockSize()), dagPool(maxInsnNum),
-    stateNum(0), vectorNum(0), bwdCodeGeneration(false)
+    stateNum(0), vectorNum(0), bwdCodeGeneration(false), currAuxLabel(ctx.getFunction().labelNum())
   {
     const ir::Function &fn = ctx.getFunction();
     this->regNum = fn.regNum();
@@ -961,17 +969,16 @@ namespace gbe
     insn->index1 = uint16_t(uip);
   }
 
-  void Selection::Opaque::IF(Reg src, ir::LabelIndex jip, ir::LabelIndex uip,
-                             int16_t offset0, int16_t offset1) {
+  void Selection::Opaque::IF(Reg src, ir::LabelIndex jip, ir::LabelIndex uip) {
     SelectionInstruction *insn = this->appendInsn(SEL_OP_IF, 0, 1);
     insn->src(0) = src;
     insn->index = uint16_t(jip);
     insn->index1 = uint16_t(uip);
-    insn->offset0 = offset0;
-    insn->offset1 = offset1;
   }
 
   void Selection::Opaque::ENDIF(Reg src, ir::LabelIndex jip) {
+    this->block->endifLabel = this->newAuxLabel();
+    this->LABEL(this->block->endifLabel);
     SelectionInstruction *insn = this->appendInsn(SEL_OP_ENDIF, 0, 1);
     insn->src(0) = src;
     insn->index = uint16_t(jip);
@@ -3221,8 +3228,7 @@ namespace gbe
         }
         sel.push();
           sel.curr.predicate = GEN_PREDICATE_NORMAL;
-          // It's easier to set the jip to a relative position over next block.
-          sel.IF(GenRegister::immd(0), nextLabel, nextLabel, sel.block->endifOffset, sel.block->endifOffset);
+          sel.IF(GenRegister::immd(0), sel.block->endifLabel, sel.block->endifLabel);
         sel.pop();
       }
 

@@ -155,13 +155,10 @@ namespace gbe
     /*! Store the position of each label instruction in the Gen ISA stream */
     map<ir::LabelIndex, uint32_t> labelPos;
     typedef struct LabelPair {
-      LabelPair(ir::LabelIndex l0, ir::LabelIndex l1,
-                int16_t offset0 = 0, int16_t offset1 = 0) :
-                l0(l0), l1(l1), offset0(offset0), offset1(offset1) {};
+      LabelPair(ir::LabelIndex l0, ir::LabelIndex l1) :
+                l0(l0), l1(l1){};
       ir::LabelIndex l0;
       ir::LabelIndex l1;
-      int16_t offset0;
-      int16_t offset1;
     } LabelPair;
     /*! Store the Gen instructions to patch */
     vector<std::pair<LabelPair, uint32_t>> branchPos3;
