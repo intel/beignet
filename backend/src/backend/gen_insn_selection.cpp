@@ -196,7 +196,7 @@ namespace gbe
   // SelectionBlock
   ///////////////////////////////////////////////////////////////////////////
 
-  SelectionBlock::SelectionBlock(const ir::BasicBlock *bb) : bb(bb), endifLabel( (ir::LabelIndex) 0){}
+  SelectionBlock::SelectionBlock(const ir::BasicBlock *bb) : bb(bb), isLargeBlock(false), endifLabel( (ir::LabelIndex) 0){}
 
   void SelectionBlock::append(ir::Register reg) { tmp.push_back(reg); }
 
@@ -1501,6 +1501,7 @@ namespace gbe
             this->curr.predicate = GEN_PREDICATE_NORMAL;
             this->IF(GenRegister::immd(0), jip, jip);
           this->pop();
+          this->block->isLargeBlock = true;
         }
 
         if (needEndif) {

@@ -160,6 +160,7 @@ namespace gbe
     vector<GenRegInterval> intervals;
     /*! All the boolean register intervals on the corresponding BB*/
     typedef map<ir::Register, GenRegInterval> RegIntervalMap;
+    set<SelectionBlock *> flag0ReservedBlocks;
     map<SelectionBlock *, RegIntervalMap *> boolIntervalsMap;
     /*! Intervals sorting based on starting point positions */
     vector<GenRegInterval*> starting;
@@ -409,7 +410,7 @@ namespace gbe
       map<ir::Register, uint32_t> allocatedFlags;
       map<const GenRegInterval*, uint32_t> allocatedFlagIntervals;
 
-      const uint32_t flagNum = 3;
+      const uint32_t flagNum = flag0ReservedBlocks.contains(&block) ?  2 : 3;
       uint32_t freeFlags[] = {2, 3, 0};
       uint32_t freeNum = flagNum;
       if (boolIntervalsMap.find(&block) == boolIntervalsMap.end())
@@ -923,6 +924,8 @@ namespace gbe
       // Update the intervals of each used register. Note that we do not
       // register allocate R0, so we skip all sub-registers in r0
       RegIntervalMap *boolsMap = new RegIntervalMap;
+      if (block.isLargeBlock)
+        flag0ReservedBlocks.insert(&block);
       for (auto &insn : block.insnList) {
         const uint32_t srcNum = insn.srcNum, dstNum = insn.dstNum;
         insn.ID  = insnID;
@@ -977,7 +980,17 @@ namespace gbe
             // is out-of the if/endif region, so we have to borrow the f0
             // to get correct bits for all channels.
             boolsMap->find(reg)->second.minID = 0;
+            if (flag0ReservedBlocks.contains(&block))
+              flag0ReservedBlocks.erase(&block);
           }
+        } else {
+          // Make sure that instruction selection stage didn't use physiacl flags incorrectly.
+          GBE_ASSERT ((insn.opcode == SEL_OP_LABEL ||
+                       insn.opcode == SEL_OP_IF ||
+                       insn.opcode == SEL_OP_JMPI ||
+                       insn.state.predicate == GEN_PREDICATE_NONE ||
+                       (block.hasBarrier && insn.opcode == SEL_OP_MOV) ||
+                       (insn.state.flag == 0 && insn.state.subFlag == 1)));
         }
         lastID = insnID;
         insnID++;
