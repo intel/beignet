@@ -90,6 +90,10 @@ struct UTest
   static void __ANON__##FN##__(void) { UTEST_EXPECT_SUCCESS(FN()); } \
   static const UTest __##FN##__(__ANON__##FN##__, #FN, true);
 
+/*! Turn a function into a unit performance test */
+#define MAKE_BENCHMARK_FROM_FUNCTION(FN) \
+  static void __ANON__##FN##__(void) { BENCHMARK(FN()); } \
+  static const UTest __##FN##__(__ANON__##FN##__, #FN);
 
 /*! No assert is expected */
 #define UTEST_EXPECT_SUCCESS(EXPR) \
@@ -119,5 +123,17 @@ struct UTest
     } \
   } while (0)
 
+#define BENCHMARK(EXPR) \
+ do { \
+    int ret = 0; \
+    try { \
+      ret = EXPR; \
+      printf("  %s  [SUCCESS] [Result: %d]\n", #EXPR, ret);\
+    } \
+    catch (Exception e) { \
+      std::cout << "  " << #EXPR << "    [FAILED]" << std::endl; \
+      std::cout << "    " << e.what() << std::endl; \
+    } \
+  } while (0)
 #endif /* __UTEST_UTEST_HPP__ */
 
