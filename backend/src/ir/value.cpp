@@ -66,8 +66,6 @@ namespace ir {
      *  registers
      */
     void initializeOtherDef(void);
-    /*! Iterate to completely transfer the liveness and get the def sets */
-    void iterateLiveOut(void);
     /*! Use custom allocators */
     GBE_CLASS(LiveOutSet);
   };
@@ -80,7 +78,6 @@ namespace ir {
   {
     this->initializeInstructionDef();
     this->initializeOtherDef();
-    this->iterateLiveOut();
   }
 
   LiveOutSet::RegDefSet &LiveOutSet::getDefSet(const BasicBlock *bb, Register reg)
@@ -224,36 +221,6 @@ namespace ir {
       auto it = blockDefMap->find(reg);
       GBE_ASSERT(it != blockDefMap->end());
       it->second->insert(def);
-    }
-  }
-
-  void LiveOutSet::iterateLiveOut(void) {
-    bool changed = true;
-
-    while (changed) {
-      changed = false;
-
-      // Compute the union of the current liveout definitions with the previous
-      // ones. Do not take into account the killed values though
-      liveness.foreach<DF_PRED>([&](Liveness::BlockInfo &curr,
-                                    const Liveness::BlockInfo &pred)
-      {
-        const BasicBlock &bb = curr.bb;
-        const BasicBlock &pbb = pred.bb;
-        for (auto reg : curr.liveOut) {
-          if (pred.inLiveOut(reg) == false) continue;
-          if (curr.inVarKill(reg) == true) continue;
-          RegDefSet &currSet = this->getDefSet(&bb, reg);
-          RegDefSet &predSet = this->getDefSet(&pbb, reg);
-
-          // Transfer the values
-          for (auto def : predSet) {
-            if (currSet.contains(def)) continue;
-            changed = true;
-            currSet.insert(def);
-          }
-        }
-      });
     }
   }
 
