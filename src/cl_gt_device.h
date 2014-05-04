@@ -37,7 +37,7 @@
 .native_vector_width_half = 16,
 .preferred_wg_sz_mul = 16,
 .address_bits = 32,
-.max_mem_alloc_size = 128 * 1024 * 1024,
+.max_mem_alloc_size = 256 * 1024 * 1024,
 .image_support = CL_TRUE,
 .max_read_image_args = 128,
 .max_write_image_args = 8,
@@ -51,7 +51,7 @@
 .min_data_type_align_size = sizeof(cl_long) * 16,
 .single_fp_config = 0, /* XXX */
 .global_mem_cache_type = CL_READ_WRITE_CACHE,
-.global_mem_size = 128 * 1024 * 1024,
+.global_mem_size = 1024 * 1024 * 1024,
 .max_constant_buffer_size = 512 << 10,
 .max_constant_args = 8,
 .error_correction_support = CL_FALSE,
