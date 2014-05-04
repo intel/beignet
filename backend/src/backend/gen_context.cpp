@@ -144,27 +144,6 @@ namespace gbe
     p->pop();
   }
 
-  //Each emit function should only using one flag reg, otherwise, should handle the case both use f0.1
-  GenRegister GenContext::checkFlagRegister(GenRegister flagReg) {
-    uint32_t nr=0, subnr=0;
-    if(flagReg.file == GEN_ARCHITECTURE_REGISTER_FILE) {
-      assert(flagReg.nr >= GEN_ARF_FLAG && flagReg.nr < GEN_ARF_MASK);
-      return flagReg;
-    }
-
-    //flagReg is grf register, use f0.1, so f0.1 shouldn't be in use.
-    //Only check curr in the GenInstructionState stack, it seems enough now.
-    //Should check other GenInstructionState in the stack if needed in future.
-    if(p->curr.predicate == GEN_PREDICATE_NORMAL) {
-      nr = p->curr.flag;
-      subnr = p->curr.subFlag;
-      //TODO: Add mov to save/restore if f0.1 is in use
-      assert(!(nr == 0 && subnr == 2));
-    }
-
-    return GenRegister::flag(0, 1);
-  }
-
   void GenContext::emitStackPointer(void) {
     using namespace ir;
 
