@@ -1525,9 +1525,16 @@ namespace gbe
       p->SHR(g, g, one);
       // condition: m < 64
       p->ADD(m, m, one);
+
+      p->push();
+      p->curr.noMask = 1;
+      p->curr.execWidth = 1;
+      p->MOV(flagReg, zero);
+      p->pop();
+
       p->push();
       p->curr.predicate = GEN_PREDICATE_NONE;
-      p->curr.noMask = 1;
+      p->curr.noMask = 0;
       p->curr.useFlag(flagReg.flag_nr(), flagReg.flag_subnr());
       p->CMP(GEN_CONDITIONAL_L, m, GenRegister::immud(64));
 
