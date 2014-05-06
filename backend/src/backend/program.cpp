@@ -267,7 +267,7 @@ namespace gbe {
     OUT_UPDATE_SZ(compileWgSize[1]);
     OUT_UPDATE_SZ(compileWgSize[2]);
     /* samplers. */
-    if (samplerSet) {
+    if (!samplerSet->empty()) {   //samplerSet is always valid, allocated in Function::Function
       has_samplerset = 1;
       OUT_UPDATE_SZ(has_samplerset);
       size_t sz = samplerSet->serializeToBin(outs);
@@ -280,7 +280,7 @@ namespace gbe {
     }
 
     /* images. */
-    if (imageSet) {
+    if (!imageSet->empty()) {   //imageSet is always valid, allocated in Function::Function
       has_imageset = 1;
       OUT_UPDATE_SZ(has_imageset);
       size_t sz = imageSet->serializeToBin(outs);
@@ -369,6 +369,8 @@ namespace gbe {
 
       total_size += sz;
     }
+    else
+      samplerSet = NULL;
 
     IN_UPDATE_SZ(has_imageset);
     if (has_imageset) {
@@ -380,6 +382,8 @@ namespace gbe {
 
       total_size += sz;
     }
+    else
+      imageSet = NULL;
 
     IN_UPDATE_SZ(code_size);
     if (code_size) {

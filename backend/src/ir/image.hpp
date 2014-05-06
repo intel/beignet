@@ -61,6 +61,9 @@ namespace ir {
     void operator = (const ImageSet& other) {
       regMap.insert(other.regMap.begin(), other.regMap.end());
     }
+
+    bool empty() const { return regMap.empty(); }
+
     ImageSet(const ImageSet& other) : regMap(other.regMap.begin(), other.regMap.end()) { }
     ImageSet() {}
     ~ImageSet();

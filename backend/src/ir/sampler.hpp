@@ -56,6 +56,8 @@ namespace ir {
       samplerMap.insert(other.samplerMap.begin(), other.samplerMap.end());
     }
 
+    bool empty() const { return samplerMap.empty(); }
+
     SamplerSet(const SamplerSet& other) : samplerMap(other.samplerMap.begin(), other.samplerMap.end()) { }
     SamplerSet() {}
 

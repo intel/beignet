@@ -125,7 +125,7 @@ namespace gbe {
       samplerSet = from;
     }
     /*! Get defined sampler size */
-    size_t getSamplerSize(void) const { return samplerSet->getDataSize(); }
+    size_t getSamplerSize(void) const { return (samplerSet == NULL ? 0 : samplerSet->getDataSize()); }
     /*! Get defined sampler value array */
     void getSamplerData(uint32_t *samplers) const { samplerSet->getData(samplers); }
     /*! Set image set. */
@@ -145,7 +145,7 @@ namespace gbe {
        wg_sz[2] = compileWgSize[2];
     }
     /*! Get defined image size */
-    size_t getImageSize(void) const { return imageSet->getDataSize(); }
+    size_t getImageSize(void) const { return (imageSet == NULL ? 0 : imageSet->getDataSize()); }
     /*! Get defined image value array */
     void getImageData(ImageInfo *images) const { imageSet->getData(images); }
 
