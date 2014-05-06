@@ -64,8 +64,11 @@ namespace ir {
     const uint32_t srcNum = insn.getSrcNum();
     const uint32_t dstNum = insn.getDstNum();
     // First look for used before killed
+    bool uniform = true;
     for (uint32_t srcID = 0; srcID < srcNum; ++srcID) {
       const Register reg = insn.getSrc(srcID);
+      if (!fn.isUniformRegister(reg))
+        uniform = false;
       // Not killed -> it is really an upward use
       if (info.varKill.contains(reg) == false)
         info.upwardUsed.insert(reg);
@@ -73,6 +76,13 @@ namespace ir {
     // A destination is a killed value
     for (uint32_t dstID = 0; dstID < dstNum; ++dstID) {
       const Register reg = insn.getDst(dstID);
+      if ( uniform &&
+          fn.getRegisterFamily(reg) != ir::FAMILY_BOOL &&
+          fn.getRegisterFamily(reg) != ir::FAMILY_QWORD &&
+          !info.bb.definedPhiRegs.contains(reg) &&
+          insn.getOpcode() != ir::OP_LOAD &&
+          insn.getOpcode() != ir::OP_ATOMIC )
+        fn.setRegisterUniform(reg, true);
       info.varKill.insert(reg);
     }
   }

@@ -82,6 +82,7 @@ namespace ir {
       }
     }
     set <Register> undefPhiRegs;
+    set <Register> definedPhiRegs;
   private:
     friend class Function; //!< Owns the basic blocks
     BlockSet predecessors; //!< Incoming blocks
@@ -176,6 +177,10 @@ namespace ir {
     uint32_t getSimdWidth(void) const { return simdWidth; }
     /*! Extract the register from the register file */
     INLINE RegisterData getRegisterData(Register reg) const { return file.get(reg); }
+    /*! set a register to uniform or nonuniform type. */
+    INLINE void setRegisterUniform(Register reg, bool uniform) { file.setUniform(reg, uniform); }
+    /*! return true if the specified regsiter is uniform type */
+    INLINE bool isUniformRegister(Register reg) { return file.isUniform(reg); }
     /*! Get the register family from the register itself */
     INLINE RegisterFamily getRegisterFamily(Register reg) const {
       return this->getRegisterData(reg).family;

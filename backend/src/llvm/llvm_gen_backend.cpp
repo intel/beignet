@@ -1076,6 +1076,7 @@ namespace gbe
           ctx.MOV(type, dst, src);
         }
         assert(!ctx.getBlock()->undefPhiRegs.contains(dst));
+        ctx.getBlock()->definedPhiRegs.insert(dst);
       } else {
         // If this is an undefined value, we don't need emit phi copy here.
         // But we need to record it. As latter, at liveness's backward analysis,

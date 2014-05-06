@@ -84,6 +84,7 @@ namespace ir {
     INLINE ~RegisterData(void) {}
     RegisterFamily family;            //!< Register size or if it is a flag
     INLINE const bool isUniform() const { return uniform; }
+    INLINE void setUniform(bool uni) { uniform = uni; }
   private:
     bool uniform;
     GBE_CLASS(RegisterData);
@@ -135,6 +136,10 @@ namespace ir {
     INLINE void appendTuple(void) {}
     /*! Return a copy of the register at index */
     INLINE RegisterData get(Register index) const { return regs[index]; }
+    /*! Return true if the specified register is uniform type. */
+    INLINE bool isUniform(Register index) { return regs[index].isUniform(); }
+    /*! Set a register to uniform or varying data type*/
+    INLINE void setUniform(Register index, bool uniform) { regs[index].setUniform(uniform); }
     /*! Get the register index from the tuple */
     INLINE Register get(Tuple index, uint32_t which) const {
       return regTuples[uint16_t(index) + which];

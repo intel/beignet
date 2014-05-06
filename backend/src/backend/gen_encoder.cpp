@@ -1213,7 +1213,7 @@ namespace gbe
      assert(dst.file == GEN_GENERAL_REGISTER_FILE);
      assert(src0.file == GEN_GENERAL_REGISTER_FILE);
      assert(src1.file == GEN_GENERAL_REGISTER_FILE);
-     assert(dst.hstride == GEN_HORIZONTAL_STRIDE_1);
+     assert(dst.hstride == GEN_HORIZONTAL_STRIDE_1 || dst.hstride == GEN_HORIZONTAL_STRIDE_0);
 
      if (function == GEN_MATH_FUNCTION_INT_DIV_QUOTIENT ||
          function == GEN_MATH_FUNCTION_INT_DIV_REMAINDER ||
@@ -1233,7 +1233,7 @@ namespace gbe
 
      if (function == GEN_MATH_FUNCTION_INT_DIV_QUOTIENT ||
          function == GEN_MATH_FUNCTION_INT_DIV_REMAINDER) {
-        insn->header.execution_size = GEN_WIDTH_8;
+        insn->header.execution_size = this->curr.execWidth == 1 ? GEN_WIDTH_1 : GEN_WIDTH_8;
         insn->header.quarter_control = GEN_COMPRESSION_Q1;
 
         if(this->curr.execWidth == 16) {
@@ -1258,7 +1258,7 @@ namespace gbe
      GenNativeInstruction *insn = this->next(GEN_OPCODE_MATH);
      assert(dst.file == GEN_GENERAL_REGISTER_FILE);
      assert(src.file == GEN_GENERAL_REGISTER_FILE);
-     assert(dst.hstride == GEN_HORIZONTAL_STRIDE_1);
+     assert(dst.hstride == GEN_HORIZONTAL_STRIDE_1 || dst.hstride == GEN_HORIZONTAL_STRIDE_0);
      assert(src.type == GEN_TYPE_F);
 
      insn->header.destreg_or_condmod = function;

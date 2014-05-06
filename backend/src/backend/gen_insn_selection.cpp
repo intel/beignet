@@ -1718,108 +1718,114 @@ namespace gbe
       const ir::Type insnType = insn.getType();
       const GenRegister dst = sel.selReg(insn.getDst(0), getType(opcode, insnType));
       const GenRegister src = sel.selReg(insn.getSrc(0), getType(opcode, insnType));
-      switch (opcode) {
-        case ir::OP_ABS:
-          if (insn.getType() == ir::TYPE_S32) {
-            const GenRegister src_ = GenRegister::retype(src, GEN_TYPE_D);
-            const GenRegister dst_ = GenRegister::retype(dst, GEN_TYPE_D);
-            sel.MOV(dst_, GenRegister::abs(src_));
-          } else {
-            GBE_ASSERT(insn.getType() == ir::TYPE_FLOAT);
-            sel.MOV(dst, GenRegister::abs(src));
-          }
-          break;
-        case ir::OP_MOV:
-          if (dst.isdf()) {
-            ir::Register r = sel.reg(ir::RegisterFamily::FAMILY_QWORD);
-            sel.MOV_DF(dst, src, sel.selReg(r));
-          } else {
-            sel.push();
-              if (sel.getRegisterFamily(insn.getDst(0)) == ir::FAMILY_BOOL) {
-                sel.curr.physicalFlag = 0;
+      sel.push();
+        if (sel.isScalarOrBool(insn.getDst(0)) == true) {
+          sel.curr.execWidth = 1;
+          sel.curr.predicate = GEN_PREDICATE_NONE;
+          sel.curr.noMask = 1;
+        }
+        switch (opcode) {
+          case ir::OP_ABS:
+            if (insn.getType() == ir::TYPE_S32) {
+              const GenRegister src_ = GenRegister::retype(src, GEN_TYPE_D);
+              const GenRegister dst_ = GenRegister::retype(dst, GEN_TYPE_D);
+              sel.MOV(dst_, GenRegister::abs(src_));
+            } else {
+              GBE_ASSERT(insn.getType() == ir::TYPE_FLOAT);
+              sel.MOV(dst, GenRegister::abs(src));
+            }
+            break;
+          case ir::OP_MOV:
+            if (dst.isdf()) {
+              ir::Register r = sel.reg(ir::RegisterFamily::FAMILY_QWORD);
+              sel.MOV_DF(dst, src, sel.selReg(r));
+            } else {
+              sel.push();
+                if (sel.getRegisterFamily(insn.getDst(0)) == ir::FAMILY_BOOL) {
+                  sel.curr.physicalFlag = 0;
                 sel.curr.flagIndex = (uint16_t)(insn.getDst(0));
                 sel.curr.modFlag = 1;
               }
               sel.MOV(dst, src);
-            sel.pop();
-          }
-          break;
-        case ir::OP_RNDD: sel.RNDD(dst, src); break;
-        case ir::OP_RNDE: sel.RNDE(dst, src); break;
-        case ir::OP_RNDU: sel.RNDU(dst, src); break;
-        case ir::OP_RNDZ: sel.RNDZ(dst, src); break;
-        case ir::OP_FBH: sel.FBH(dst, src); break;
-        case ir::OP_FBL: sel.FBL(dst, src); break;
-        case ir::OP_COS: sel.MATH(dst, GEN_MATH_FUNCTION_COS, src); break;
-        case ir::OP_SIN: sel.MATH(dst, GEN_MATH_FUNCTION_SIN, src); break;
-        case ir::OP_LOG: sel.MATH(dst, GEN_MATH_FUNCTION_LOG, src); break;
-        case ir::OP_EXP: sel.MATH(dst, GEN_MATH_FUNCTION_EXP, src); break;
-        case ir::OP_SQR: sel.MATH(dst, GEN_MATH_FUNCTION_SQRT, src); break;
-        case ir::OP_RSQ: sel.MATH(dst, GEN_MATH_FUNCTION_RSQ, src); break;
-        case ir::OP_RCP: sel.MATH(dst, GEN_MATH_FUNCTION_INV, src); break;
-        case ir::OP_SIMD_ANY:
-          {
-            const GenRegister constZero = GenRegister::immuw(0);;
-            const GenRegister regOne = GenRegister::uw1grf(ir::ocl::one);
-            const GenRegister flag01 = GenRegister::flag(0, 1);
+              sel.pop();
+            }
+            break;
+          case ir::OP_RNDD: sel.RNDD(dst, src); break;
+          case ir::OP_RNDE: sel.RNDE(dst, src); break;
+          case ir::OP_RNDU: sel.RNDU(dst, src); break;
+          case ir::OP_RNDZ: sel.RNDZ(dst, src); break;
+          case ir::OP_FBH: sel.FBH(dst, src); break;
+          case ir::OP_FBL: sel.FBL(dst, src); break;
+          case ir::OP_COS: sel.MATH(dst, GEN_MATH_FUNCTION_COS, src); break;
+          case ir::OP_SIN: sel.MATH(dst, GEN_MATH_FUNCTION_SIN, src); break;
+          case ir::OP_LOG: sel.MATH(dst, GEN_MATH_FUNCTION_LOG, src); break;
+          case ir::OP_EXP: sel.MATH(dst, GEN_MATH_FUNCTION_EXP, src); break;
+          case ir::OP_SQR: sel.MATH(dst, GEN_MATH_FUNCTION_SQRT, src); break;
+          case ir::OP_RSQ: sel.MATH(dst, GEN_MATH_FUNCTION_RSQ, src); break;
+          case ir::OP_RCP: sel.MATH(dst, GEN_MATH_FUNCTION_INV, src); break;
+          case ir::OP_SIMD_ANY:
+            {
+              const GenRegister constZero = GenRegister::immuw(0);;
+              const GenRegister regOne = GenRegister::uw1grf(ir::ocl::one);
+              const GenRegister flag01 = GenRegister::flag(0, 1);
 
-            sel.push();
-              int simdWidth = sel.curr.execWidth;
-              sel.curr.predicate = GEN_PREDICATE_NONE;
-              sel.curr.execWidth = 1;
-              sel.curr.noMask = 1;
-              sel.MOV(flag01, constZero);
+              sel.push();
+                int simdWidth = sel.curr.execWidth;
+                sel.curr.predicate = GEN_PREDICATE_NONE;
+                sel.curr.execWidth = 1;
+                sel.curr.noMask = 1;
+                sel.MOV(flag01, constZero);
+                sel.curr.execWidth = simdWidth;
+                sel.curr.noMask = 0;
 
-              sel.curr.execWidth = simdWidth;
-              sel.curr.noMask = 0;
+                sel.curr.flag = 0;
+                sel.curr.subFlag = 1;
+                sel.CMP(GEN_CONDITIONAL_NEQ, src, constZero);
 
-              sel.curr.flag = 0;
-              sel.curr.subFlag = 1;
-              sel.CMP(GEN_CONDITIONAL_NEQ, src, constZero);
+                if (sel.curr.execWidth == 16)
+                  sel.curr.predicate = GEN_PREDICATE_ALIGN1_ANY16H;
+                else if (sel.curr.execWidth == 8)
+                  sel.curr.predicate = GEN_PREDICATE_ALIGN1_ANY8H;
+                else
+                  NOT_IMPLEMENTED;
+                sel.SEL(dst, regOne, constZero);
+              sel.pop();
+            }
+            break;
+          case ir::OP_SIMD_ALL:
+            {
+              const GenRegister constZero = GenRegister::immuw(0);
+              const GenRegister regOne = GenRegister::uw1grf(ir::ocl::one);
+              const GenRegister flag01 = GenRegister::flag(0, 1);
 
-              if (sel.curr.execWidth == 16)
-                sel.curr.predicate = GEN_PREDICATE_ALIGN1_ANY16H;
-              else if (sel.curr.execWidth == 8)
-                sel.curr.predicate = GEN_PREDICATE_ALIGN1_ANY8H;
-              else
-                NOT_IMPLEMENTED;
-              sel.SEL(dst, regOne, constZero);
-            sel.pop();
-          }
-          break;
-        case ir::OP_SIMD_ALL:
-          {
-            const GenRegister constZero = GenRegister::immuw(0);
-            const GenRegister regOne = GenRegister::uw1grf(ir::ocl::one);
-            const GenRegister flag01 = GenRegister::flag(0, 1);
+              sel.push();
+                int simdWidth = sel.curr.execWidth;
+                sel.curr.predicate = GEN_PREDICATE_NONE;
+                sel.curr.execWidth = 1;
+                sel.curr.noMask = 1;
+                sel.MOV(flag01, regOne);
 
-            sel.push();
-              int simdWidth = sel.curr.execWidth;
-              sel.curr.predicate = GEN_PREDICATE_NONE;
-              sel.curr.execWidth = 1;
-              sel.curr.noMask = 1;
-              sel.MOV(flag01, regOne);
+                sel.curr.execWidth = simdWidth;
+                sel.curr.noMask = 0;
 
-              sel.curr.execWidth = simdWidth;
-              sel.curr.noMask = 0;
+                sel.curr.flag = 0;
+                sel.curr.subFlag = 1;
+                sel.CMP(GEN_CONDITIONAL_NEQ, src, constZero);
 
-              sel.curr.flag = 0;
-              sel.curr.subFlag = 1;
-              sel.CMP(GEN_CONDITIONAL_NEQ, src, constZero);
+                if (sel.curr.execWidth == 16)
+                  sel.curr.predicate = GEN_PREDICATE_ALIGN1_ALL16H;
+                else if (sel.curr.execWidth == 8)
+                  sel.curr.predicate = GEN_PREDICATE_ALIGN1_ALL8H;
+                else
+                  NOT_IMPLEMENTED;
+                sel.SEL(dst, regOne, constZero);
+              sel.pop();
+            }
+            break;
 
-              if (sel.curr.execWidth == 16)
-                sel.curr.predicate = GEN_PREDICATE_ALIGN1_ALL16H;
-              else if (sel.curr.execWidth == 8)
-                sel.curr.predicate = GEN_PREDICATE_ALIGN1_ALL8H;
-              else
-                NOT_IMPLEMENTED;
-              sel.SEL(dst, regOne, constZero);
-            sel.pop();
-          }
-          break;
-
-        default: NOT_SUPPORTED;
-      }
+          default: NOT_SUPPORTED;
+        }
+      sel.pop();
       return true;
     }
     DECL_CTOR(UnaryInstruction, 1, 1)
@@ -1905,8 +1911,19 @@ namespace gbe
       const Type type = insn.getType();
       GenRegister dst  = sel.selReg(insn.getDst(0), type);
 
+      sel.push();
+
+      // Boolean values use scalars
+      if (sel.isScalarOrBool(insn.getDst(0)) == true) {
+        sel.curr.execWidth = 1;
+        sel.curr.predicate = GEN_PREDICATE_NONE;
+        sel.curr.noMask = 1;
+      }
+
       if(opcode == OP_DIV || opcode == OP_REM) {
-        return this->emitDivRemInst(sel, dag, opcode);
+        bool ret = this->emitDivRemInst(sel, dag, opcode);
+        sel.pop();
+        return ret;
       }
       // Immediates not supported
       if (opcode == OP_POW) {
@@ -1919,17 +1936,11 @@ namespace gbe
           NOT_IMPLEMENTED;
         }
         markAllChildren(dag);
+        sel.pop();
         return true;
       }
 
-      sel.push();
-
-      // Boolean values use scalars
-      if (sel.isScalarOrBool(insn.getDst(0)) == true) {
-        sel.curr.execWidth = 1;
-        sel.curr.predicate = GEN_PREDICATE_NONE;
-        sel.curr.noMask = 1;
-      }
+      //printf("reg = %d isscalarorbool %d \n", insn.getDst(0), sel.isScalarOrBool(insn.getDst(0)));
 
       // Look for immediate values
       GenRegister src0, src1;
@@ -2252,16 +2263,21 @@ namespace gbe
       const ir::Opcode opcode = cmpInsn.getOpcode();
       if(opcode == OP_ORD) return false;
       const uint32_t genCmp = getGenCompare(opcode);
-
-      // Like for regular selects, we need a temporary since we cannot predicate
-      // properly
-      const ir::Type type = cmpInsn.getType();
-      const uint32_t simdWidth = sel.curr.execWidth;
-      const GenRegister dst  = sel.selReg(insn.getDst(0), type);
-      const GenRegister src0 = sel.selReg(cmpInsn.getSrc(0), type);
-      const GenRegister src1 = sel.selReg(cmpInsn.getSrc(1), type);
-
       sel.push();
+        if (sel.isScalarOrBool(insn.getDst(0)) == true) {
+          sel.curr.execWidth = 1;
+          sel.curr.predicate = GEN_PREDICATE_NONE;
+          sel.curr.noMask = 1;
+        }
+
+        // Like for regular selects, we need a temporary since we cannot predicate
+        // properly
+        const ir::Type type = cmpInsn.getType();
+        const uint32_t simdWidth = sel.curr.execWidth;
+        const GenRegister dst  = sel.selReg(insn.getDst(0), type);
+        const GenRegister src0 = sel.selReg(cmpInsn.getSrc(0), type);
+        const GenRegister src1 = sel.selReg(cmpInsn.getSrc(1), type);
+
         sel.curr.predicate = GEN_PREDICATE_NONE;
         sel.curr.execWidth = simdWidth;
         sel.SEL_CMP(genCmp, dst, src0, src1);
@@ -2289,14 +2305,19 @@ namespace gbe
     {
       using namespace ir;
       const ir::BinaryInstruction &insn = cast<ir::BinaryInstruction>(dag.insn);
-      const uint32_t simdWidth = sel.curr.execWidth;
       const Type type = insn.getType();
       if (type == TYPE_U32 || type == TYPE_S32) {
+        sel.push();
+          if (sel.isScalarOrBool(insn.getDst(0)) == true) {
+            sel.curr.execWidth = 1;
+            sel.curr.predicate = GEN_PREDICATE_NONE;
+            sel.curr.noMask = 1;
+          }
+        const uint32_t simdWidth = sel.curr.execWidth;
+
         GenRegister dst  = sel.selReg(insn.getDst(0), type);
         GenRegister src0 = sel.selReg(insn.getSrc(0), type);
         GenRegister src1 = sel.selReg(insn.getSrc(1), type);
-
-        sel.push();
 
         // Either left part of the 16-wide register or just a simd 8 register
         dst  = GenRegister::retype(dst,  GEN_TYPE_D);
@@ -2308,6 +2329,7 @@ namespace gbe
         sel.curr.accWrEnable = 1;
         sel.MACH(GenRegister::retype(GenRegister::null(), GEN_TYPE_D), src0, src1);
         sel.curr.accWrEnable = 0;
+        sel.curr.execWidth = simdWidth != 1 ? 8 : 1;;
         sel.MOV(GenRegister::retype(dst, GEN_TYPE_F), GenRegister::acc());
 
         // Right part of the 16-wide register now
@@ -2378,17 +2400,33 @@ namespace gbe
           const Type type = imm.type;
           GBE_ASSERT(type == TYPE_U32 || type == TYPE_S32);
           if (type == TYPE_U32 && imm.data.u32 <= 0xffff) {
-            sel.MUL(sel.selReg(dst, type),
-                    sel.selReg(src1, type),
-                    GenRegister::immuw(imm.data.u32));
+            sel.push();
+              if (sel.isScalarOrBool(insn.getDst(0)) == true) {
+                sel.curr.execWidth = 1;
+                sel.curr.predicate = GEN_PREDICATE_NONE;
+                sel.curr.noMask = 1;
+              }
+
+              sel.MUL(sel.selReg(dst, type),
+                      sel.selReg(src1, type),
+                      GenRegister::immuw(imm.data.u32));
+            sel.pop();
             if (dag.child[childID ^ 1] != NULL)
               dag.child[childID ^ 1]->isRoot = 1;
             return true;
           }
           if (type == TYPE_S32 && (imm.data.s32 >= -32768 && imm.data.s32 <= 32767)) {
-            sel.MUL(sel.selReg(dst, type),
-                    sel.selReg(src1, type),
-                    GenRegister::immw(imm.data.s32));
+            sel.push();
+              if (sel.isScalarOrBool(insn.getDst(0)) == true) {
+                sel.curr.execWidth = 1;
+                sel.curr.predicate = GEN_PREDICATE_NONE;
+                sel.curr.noMask = 1;
+              }
+
+              sel.MUL(sel.selReg(dst, type),
+                      sel.selReg(src1, type),
+                      GenRegister::immw(imm.data.s32));
+            sel.pop();
             if (dag.child[childID ^ 1] != NULL)
               dag.child[childID ^ 1]->isRoot = 1;
             return true;
@@ -2407,9 +2445,16 @@ namespace gbe
       const Register src0 = insn.getSrc(childID);
       const Register src1 = insn.getSrc(childID ^ 1);
       if (is16BitSpecialReg(src0)) {
-        sel.MUL(sel.selReg(dst, type),
-                sel.selReg(src1, type),
-                sel.selReg(src0, TYPE_U32));
+        sel.push();
+          if (sel.isScalarOrBool(insn.getDst(0)) == true) {
+            sel.curr.execWidth = 1;
+            sel.curr.predicate = GEN_PREDICATE_NONE;
+            sel.curr.noMask = 1;
+          }
+          sel.MUL(sel.selReg(dst, type),
+                  sel.selReg(src1, type),
+                  sel.selReg(src0, TYPE_U32));
+        sel.pop();
         markAllChildren(dag);
         return true;
       }
@@ -2660,7 +2705,7 @@ namespace gbe
                  insn.getAddressSpace() == MEM_CONSTANT ||
                  insn.getAddressSpace() == MEM_PRIVATE ||
                  insn.getAddressSpace() == MEM_LOCAL);
-      GBE_ASSERT(sel.isScalarReg(insn.getValue(0)) == false);
+      //GBE_ASSERT(sel.isScalarReg(insn.getValue(0)) == false);
       const Type type = insn.getValueType();
       const uint32_t elemSize = getByteScatterGatherSize(type);
       if (insn.getAddressSpace() == MEM_CONSTANT) {
@@ -2967,11 +3012,14 @@ namespace gbe
       const GenRegister dst = sel.selReg(insn.getDst(0), dstType);
       const GenRegister src = sel.selReg(insn.getSrc(0), srcType);
       const Opcode opcode = insn.getOpcode();
-
-      if(opcode == ir::OP_SAT_CVT) {
-        sel.push();
+      sel.push();
+        if (sel.isScalarOrBool(insn.getDst(0)) == true) {
+          sel.curr.execWidth = 1;
+          sel.curr.predicate = GEN_PREDICATE_NONE;
+          sel.curr.noMask = 1;
+        }
+      if(opcode == ir::OP_SAT_CVT)
         sel.curr.saturate = 1;
-      }
 
       // We need two instructions to make the conversion
       if (opcode == OP_F16TO32) {
@@ -3037,8 +3085,7 @@ namespace gbe
       } else
         sel.MOV(dst, src);
 
-      if(opcode == ir::OP_SAT_CVT)
-        sel.pop();
+      sel.pop();
 
       return true;
     }
