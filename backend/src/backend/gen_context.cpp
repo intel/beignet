@@ -907,6 +907,10 @@ namespace gbe
                                             GenRegister mantissa, GenRegister tmp, GenRegister flag) {
     uint32_t jip0, jip1;
     GenRegister dst_ud = GenRegister::retype(dst, GEN_TYPE_UD);
+    p->push();
+      p->curr.noMask = 1;
+      p->MOV(exp, GenRegister::immud(-1)); // make sure the inactive lane is 1 when check ALL8H/ALL16H condition latter.
+    p->pop();
     p->FBH(exp, high);
     p->ADD(exp, GenRegister::negate(exp), GenRegister::immud(31));  //exp = 32 when high == 0
     p->push();
@@ -928,7 +932,6 @@ namespace gbe
         jip0 = p->n_instruction();
         p->JMPI(GenRegister::immud(0));
       p->pop();
-
       p->curr.predicate = GEN_PREDICATE_NONE;
       p->curr.noMask = 1;
       p->CMP(GEN_CONDITIONAL_G, exp, GenRegister::immud(23));
