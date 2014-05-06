@@ -195,7 +195,7 @@ namespace gbe
     /*! allocate a new curbe register and insert to curbe pool. */
     void allocCurbeReg(ir::Register reg, gbe_curbe_type value, uint32_t subValue = 0);
 
-    friend GenRegAllocator;               //!< need to access errCode directly. 
+    friend class GenRegAllocator;               //!< need to access errCode directly.
 
   };
 
