@@ -1106,14 +1106,15 @@ namespace gbe
                insn.header.opcode == GEN_OPCODE_BRC);
 
     if (insn.header.opcode != GEN_OPCODE_JMPI || (jumpDistance > -32769 && jumpDistance < 32768))  {
-          int offset = 0;
            if (insn.header.opcode == GEN_OPCODE_IF) {
              this->setSrc1(&insn, GenRegister::immd(jumpDistance));
              return;
            }
-           else if (insn.header.opcode == GEN_OPCODE_JMPI)
-             offset = -2;
-          this->setSrc1(&insn, GenRegister::immd(jumpDistance + offset));
+           else if (insn.header.opcode == GEN_OPCODE_JMPI) {
+             jumpDistance = (jumpDistance - 2)* jump_width;
+           }
+
+           this->setSrc1(&insn, GenRegister::immd(jumpDistance));
     } else if ( insn.header.predicate_control == GEN_PREDICATE_NONE ) {
       // For the conditional jump distance out of S15 range, we need to use an
       // inverted jmp followed by a add ip, ip, distance to implement.
