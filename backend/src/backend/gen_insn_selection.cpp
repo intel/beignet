@@ -847,7 +847,7 @@ namespace gbe
 
   ir::Register Selection::Opaque::replaceSrc(SelectionInstruction *insn, uint32_t regID) {
     SelectionBlock *block = insn->parent;
-    const uint32_t simdWidth = ctx.getSimdWidth();
+    const uint32_t simdWidth = insn->state.execWidth;
     ir::Register tmp;
 
     // This will append the temporary register in the instruction block
@@ -858,6 +858,8 @@ namespace gbe
     SelectionInstruction *mov = this->create(SEL_OP_MOV, 1, 1);
     mov->src(0) = GenRegister::retype(insn->src(regID), GEN_TYPE_F);
     mov->state = GenInstructionState(simdWidth);
+    if (this->isScalarOrBool(insn->src(regID).reg()))
+      mov->state.noMask = 1;
     insn->src(regID) = mov->dst(0) = GenRegister::fxgrf(simdWidth, tmp);
     insn->prepend(*mov);
 
@@ -866,7 +868,7 @@ namespace gbe
 
   ir::Register Selection::Opaque::replaceDst(SelectionInstruction *insn, uint32_t regID) {
     SelectionBlock *block = insn->parent;
-    uint32_t simdWidth = ctx.getSimdWidth();
+    uint32_t simdWidth = this->isScalarOrBool(insn->dst(regID).reg()) ? 1 : insn->state.execWidth;
     ir::Register tmp;
     ir::RegisterFamily f = file.get(insn->dst(regID).reg()).family;
     int genType = f == ir::FAMILY_QWORD ? GEN_TYPE_DF : GEN_TYPE_F;
@@ -880,6 +882,8 @@ namespace gbe
     SelectionInstruction *mov = this->create(SEL_OP_MOV, 1, 1);
     mov->dst(0) = GenRegister::retype(insn->dst(regID), genType);
     mov->state = GenInstructionState(simdWidth);
+    if (simdWidth == 1)
+      mov->state.noMask = 1;
     gr = f == ir::FAMILY_QWORD ? GenRegister::dfxgrf(simdWidth, tmp) : GenRegister::fxgrf(simdWidth, tmp);
     insn->dst(regID) = mov->src(0) = gr;
     insn->append(*mov);
@@ -1067,7 +1071,8 @@ namespace gbe
     SelectionInstruction *insn = this->appendInsn(SEL_OP_UNTYPED_READ, elemNum, 1);
     SelectionVector *srcVector = this->appendVector();
     SelectionVector *dstVector = this->appendVector();
-
+    if (this->isScalarOrBool(dst[0].reg()))
+      insn->state.noMask = 1;
     // Regular instruction to encode
     for (uint32_t elemID = 0; elemID < elemNum; ++elemID)
       insn->dst(elemID) = dst[elemID];
@@ -1138,6 +1143,8 @@ namespace gbe
     SelectionVector *srcVector = this->appendVector();
     SelectionVector *dstVector = this->appendVector();
 
+    if (this->isScalarOrBool(dst.reg()))
+      insn->state.noMask = 1;
     // Instruction to encode
     insn->src(0) = addr;
     insn->dst(0) = dst;
@@ -1172,11 +1179,22 @@ namespace gbe
 
   void Selection::Opaque::DWORD_GATHER(Reg dst, Reg addr, uint32_t bti) {
     SelectionInstruction *insn = this->appendInsn(SEL_OP_DWORD_GATHER, 1, 1);
+    SelectionVector *vector = this->appendVector();
+    SelectionVector *srcVector = this->appendVector();
 
+    if (this->isScalarOrBool(dst.reg()))
+      insn->state.noMask = 1;
     insn->src(0) = addr;
     insn->dst(0) = dst;
     insn->extra.function = bti;
+    vector->regNum = 1;
+    vector->isSrc = 0;
+    vector->reg = &insn->dst(0);
+    srcVector->regNum = 1;
+    srcVector->isSrc = 1;
+    srcVector->reg = &insn->src(0);
   }
+
   void Selection::Opaque::UNPACK_BYTE(const GenRegister *dst, const GenRegister src, uint32_t elemNum) {
     SelectionInstruction *insn = this->appendInsn(SEL_OP_UNPACK_BYTE, elemNum, 1);
     insn->src(0) = src;
@@ -2601,12 +2619,19 @@ namespace gbe
     {
       using namespace ir;
       const uint32_t valueNum = insn.getValueNum();
-      const uint32_t simdWidth = sel.ctx.getSimdWidth();
+      const uint32_t simdWidth = sel.isScalarOrBool(insn.getValue(0)) ? 1 : sel.ctx.getSimdWidth();
       GBE_ASSERT(valueNum == 1);
       GenRegister dst = GenRegister::retype(sel.selReg(insn.getValue(0)), GEN_TYPE_F);
       // get dword based address
-      GenRegister addrDW = GenRegister::udxgrf(simdWidth, sel.reg(FAMILY_DWORD));
-      sel.SHR(addrDW, GenRegister::retype(addr, GEN_TYPE_UD), GenRegister::immud(2));
+      GenRegister addrDW = GenRegister::udxgrf(simdWidth, sel.reg(FAMILY_DWORD, simdWidth == 1));
+
+      sel.push();
+        if (sel.isScalarOrBool(addr.reg())) {
+          sel.curr.noMask = 1;
+          sel.curr.execWidth = 1;
+        }
+        sel.SHR(addrDW, GenRegister::retype(addr, GEN_TYPE_UD), GenRegister::immud(2));
+      sel.pop();
 
       sel.DWORD_GATHER(dst, addrDW, bti);
     }
@@ -2640,7 +2665,8 @@ namespace gbe
     {
       using namespace ir;
       const uint32_t valueNum = insn.getValueNum();
-      const uint32_t simdWidth = sel.ctx.getSimdWidth();
+      const uint32_t simdWidth = sel.isScalarOrBool(insn.getValue(0)) ?
+                                 1 : sel.ctx.getSimdWidth();
       if(valueNum > 1) {
         vector<GenRegister> dst(valueNum);
         const uint32_t typeSize = getFamilySize(getFamily(insn.getValueType()));
@@ -2660,28 +2686,43 @@ namespace gbe
         }
 
         sel.UNTYPED_READ(address, tmp.data(), tmpRegNum, bti);
+
         for(uint32_t i = 0; i < tmpRegNum; i++) {
           sel.UNPACK_BYTE(dst.data() + i * 4/typeSize, tmp[i], 4/typeSize);
         }
-      } else {
+     } else {
         GBE_ASSERT(insn.getValueNum() == 1);
         const GenRegister value = sel.selReg(insn.getValue(0));
         GBE_ASSERT(elemSize == GEN_BYTE_SCATTER_WORD || elemSize == GEN_BYTE_SCATTER_BYTE);
 
-        Register tmpReg = sel.reg(FAMILY_DWORD);
-        GenRegister tmpAddr = GenRegister::udxgrf(simdWidth, sel.reg(FAMILY_DWORD));
+        Register tmpReg = sel.reg(FAMILY_DWORD, simdWidth == 1);
+        GenRegister tmpAddr = GenRegister::udxgrf(simdWidth, sel.reg(FAMILY_DWORD, simdWidth == 1));
         GenRegister tmpData = GenRegister::udxgrf(simdWidth, tmpReg);
         // Get dword aligned addr
-        sel.AND(tmpAddr, GenRegister::retype(address,GEN_TYPE_UD), GenRegister::immud(0xfffffffc));
-        sel.UNTYPED_READ(tmpAddr, &tmpData, 1, bti);
-        // Get the remaining offset from aligned addr
-        sel.AND(tmpAddr, GenRegister::retype(address,GEN_TYPE_UD), GenRegister::immud(0x3));
-        sel.SHL(tmpAddr, tmpAddr, GenRegister::immud(0x3));
-        sel.SHR(tmpData, tmpData, tmpAddr);
-        if (elemSize == GEN_BYTE_SCATTER_WORD)
-          sel.MOV(GenRegister::retype(value, GEN_TYPE_UW), GenRegister::unpacked_uw(tmpReg));
-        else if (elemSize == GEN_BYTE_SCATTER_BYTE)
-          sel.MOV(GenRegister::retype(value, GEN_TYPE_UB), GenRegister::unpacked_ub(tmpReg));
+        sel.push();
+          if (simdWidth == 1) {
+            sel.curr.execWidth = 1;
+            sel.curr.noMask = 1;
+          }
+          sel.AND(tmpAddr, GenRegister::retype(address,GEN_TYPE_UD), GenRegister::immud(0xfffffffc));
+        sel.pop();
+        sel.push();
+          if (simdWidth == 1)
+            sel.curr.noMask = 1;
+          sel.UNTYPED_READ(tmpAddr, &tmpData, 1, bti);
+
+          if (simdWidth == 1)
+            sel.curr.execWidth = 1;
+          // Get the remaining offset from aligned addr
+          sel.AND(tmpAddr, GenRegister::retype(address,GEN_TYPE_UD), GenRegister::immud(0x3));
+          sel.SHL(tmpAddr, tmpAddr, GenRegister::immud(0x3));
+          sel.SHR(tmpData, tmpData, tmpAddr);
+
+          if (elemSize == GEN_BYTE_SCATTER_WORD)
+            sel.MOV(GenRegister::retype(value, GEN_TYPE_UW), GenRegister::unpacked_uw(tmpReg));
+          else if (elemSize == GEN_BYTE_SCATTER_BYTE)
+            sel.MOV(GenRegister::retype(value, GEN_TYPE_UB), GenRegister::unpacked_ub(tmpReg));
+        sel.pop();
       }
     }
 

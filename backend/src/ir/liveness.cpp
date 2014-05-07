@@ -80,8 +80,9 @@ namespace ir {
           fn.getRegisterFamily(reg) != ir::FAMILY_BOOL &&
           fn.getRegisterFamily(reg) != ir::FAMILY_QWORD &&
           !info.bb.definedPhiRegs.contains(reg) &&
-          insn.getOpcode() != ir::OP_LOAD &&
-          insn.getOpcode() != ir::OP_ATOMIC )
+          insn.getOpcode() != ir::OP_ATOMIC &&
+          (dstNum == 1 || insn.getOpcode() != ir::OP_LOAD)
+         )
         fn.setRegisterUniform(reg, true);
       info.varKill.insert(reg);
     }
