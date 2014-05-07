@@ -93,15 +93,12 @@ namespace gbe
     return false;
   }
 
-  static void setMessageDescriptor(GenEncoder *p,
-                                   GenNativeInstruction *inst,
-                                   enum GenMessageTarget sfid,
-                                   unsigned msg_length,
-                                   unsigned response_length,
-                                   bool header_present = false,
-                                   bool end_of_thread = false)
+
+  void GenEncoder::setMessageDescriptor(GenNativeInstruction *inst, enum GenMessageTarget sfid,
+                                        unsigned msg_length, unsigned response_length,
+                                        bool header_present, bool end_of_thread)
   {
-     p->setSrc1(inst, GenRegister::immd(0));
+     setSrc1(inst, GenRegister::immd(0));
      inst->bits3.generic_gen5.header_present = header_present;
      inst->bits3.generic_gen5.response_length = response_length;
      inst->bits3.generic_gen5.msg_length = msg_length;
@@ -109,22 +106,28 @@ namespace gbe
      inst->header.destreg_or_condmod = sfid;
   }
 
-  static void setDPUntypedRW(GenEncoder *p,
-                             GenNativeInstruction *insn,
-                             uint32_t bti,
-                             uint32_t rgba,
-                             uint32_t msg_type,
-                             uint32_t msg_length,
-                             uint32_t response_length)
+  void GenEncoder::setTypedWriteMessage(GenNativeInstruction *insn, unsigned char bti,
+                                        unsigned char msg_type, uint32_t msg_length,
+                                        bool header_present)
+  {
+    const GenMessageTarget sfid = GEN6_SFID_DATAPORT_RENDER_CACHE;
+    setMessageDescriptor(insn, sfid, msg_length, 0, header_present);
+    insn->bits3.gen7_typed_rw.bti = bti;
+    insn->bits3.gen7_typed_rw.msg_type = msg_type;
+  }
+
+  void GenEncoder::setDPUntypedRW(GenNativeInstruction *insn, uint32_t bti,
+                                  uint32_t rgba, uint32_t msg_type,
+                                  uint32_t msg_length, uint32_t response_length)
   {
     const GenMessageTarget sfid = GEN_SFID_DATAPORT_DATA_CACHE;
-    setMessageDescriptor(p, insn, sfid, msg_length, response_length);
+    setMessageDescriptor(insn, sfid, msg_length, response_length);
     insn->bits3.gen7_untyped_rw.msg_type = msg_type;
     insn->bits3.gen7_untyped_rw.bti = bti;
     insn->bits3.gen7_untyped_rw.rgba = rgba;
-    if (p->curr.execWidth == 8)
+    if (curr.execWidth == 8)
       insn->bits3.gen7_untyped_rw.simd_mode = GEN_UNTYPED_SIMD8;
-    else if (p->curr.execWidth == 16)
+    else if (curr.execWidth == 16)
       insn->bits3.gen7_untyped_rw.simd_mode = GEN_UNTYPED_SIMD16;
     else
       NOT_SUPPORTED;
@@ -139,7 +142,7 @@ namespace gbe
                                      uint32_t response_length)
   {
     const GenMessageTarget sfid = GEN_SFID_DATAPORT_DATA_CACHE;
-    setMessageDescriptor(p, insn, sfid, msg_length, response_length);
+    p->setMessageDescriptor(insn, sfid, msg_length, response_length);
     insn->bits3.gen7_byte_rw.msg_type = msg_type;
     insn->bits3.gen7_byte_rw.bti = bti;
     insn->bits3.gen7_byte_rw.data_size = elem_size;
@@ -160,7 +163,7 @@ namespace gbe
                           uint32_t response_length)
   {
     const GenMessageTarget sfid = GEN_SFID_DATAPORT_DATA_CACHE;
-    setMessageDescriptor(p, insn, sfid, msg_length, response_length);
+    p->setMessageDescriptor(insn, sfid, msg_length, response_length);
     assert(size == 2 || size == 4);
     insn->bits3.gen7_oblock_rw.msg_type = msg_type;
     insn->bits3.gen7_oblock_rw.bti = bti;
@@ -181,26 +184,13 @@ namespace gbe
                                 uint32_t return_format)
   {
      const GenMessageTarget sfid = GEN_SFID_SAMPLER;
-     setMessageDescriptor(p, insn, sfid, msg_length, response_length);
+     p->setMessageDescriptor(insn, sfid, msg_length, response_length);
      insn->bits3.sampler_gen7.bti = bti;
      insn->bits3.sampler_gen7.sampler = sampler;
      insn->bits3.sampler_gen7.msg_type = msg_type;
      insn->bits3.sampler_gen7.simd_mode = simd_mode;
   }
 
-
-  static void setTypedWriteMessage(GenEncoder *p,
-                                   GenNativeInstruction *insn,
-                                   unsigned char bti,
-                                   unsigned char msg_type,
-                                   uint32_t msg_length,
-                                   bool header_present)
-  {
-     const GenMessageTarget sfid = GEN6_SFID_DATAPORT_RENDER_CACHE;
-     setMessageDescriptor(p, insn, sfid, msg_length, 0, header_present);
-     insn->bits3.gen7_typed_rw.bti = bti;
-     insn->bits3.gen7_typed_rw.msg_type = msg_type;
-  }
   static void setDWordScatterMessgae(GenEncoder *p,
                                      GenNativeInstruction *insn,
                                      uint32_t bti,
@@ -214,7 +204,7 @@ namespace gbe
     // We workaround it to use DATA CACHE instead.
     const GenMessageTarget sfid = (p->deviceID == PCI_CHIP_BAYTRAIL_T) ?
                                  GEN_SFID_DATAPORT_DATA_CACHE : GEN6_SFID_DATAPORT_CONSTANT_CACHE;
-    setMessageDescriptor(p, insn, sfid, msg_length, response_length);
+    p->setMessageDescriptor(insn, sfid, msg_length, response_length);
     insn->bits3.gen7_dword_rw.msg_type = msg_type;
     insn->bits3.gen7_dword_rw.bti = bti;
     insn->bits3.gen7_dword_rw.block_size = block_size;
@@ -466,11 +456,10 @@ namespace gbe
     this->setDst(insn,  GenRegister::uw16grf(dst.nr, 0));
     this->setSrc0(insn, GenRegister::ud8grf(src.nr, 0));
     this->setSrc1(insn, GenRegister::immud(0));
-    setDPUntypedRW(this,
-                   insn,
+    setDPUntypedRW(insn,
                    bti,
                    untypedRWMask[elemNum],
-                   GEN_UNTYPED_READ,
+                   GEN7_UNTYPED_READ,
                    msg_length,
                    response_length);
   }
@@ -492,11 +481,10 @@ namespace gbe
       NOT_IMPLEMENTED;
     this->setSrc0(insn, GenRegister::ud8grf(msg.nr, 0));
     this->setSrc1(insn, GenRegister::immud(0));
-    setDPUntypedRW(this,
-                   insn,
+    setDPUntypedRW(insn,
                    bti,
                    untypedRWMask[elemNum],
-                   GEN_UNTYPED_WRITE,
+                   GEN7_UNTYPED_WRITE,
                    msg_length,
                    response_length);
   }
@@ -522,7 +510,7 @@ namespace gbe
                            insn,
                            bti,
                            elemSize,
-                           GEN_BYTE_GATHER,
+                           GEN7_BYTE_GATHER,
                            msg_length,
                            response_length);
   }
@@ -546,7 +534,7 @@ namespace gbe
                            insn,
                            bti,
                            elemSize,
-                           GEN_BYTE_SCATTER,
+                           GEN7_BYTE_SCATTER,
                            msg_length,
                            response_length);
   }
@@ -575,7 +563,7 @@ namespace gbe
                            insn,
                            bti,
                            block_size,
-                           GEN_DWORD_GATHER,
+                           GEN7_DWORD_GATHER,
                            msg_length,
                            response_length);
 
@@ -601,8 +589,8 @@ namespace gbe
     this->setSrc1(insn, GenRegister::immud(0));
 
     const GenMessageTarget sfid = GEN_SFID_DATAPORT_DATA_CACHE;
-    setMessageDescriptor(this, insn, sfid, msg_length, response_length);
-    insn->bits3.gen7_atomic_op.msg_type = GEN_UNTYPED_ATOMIC_READ;
+    setMessageDescriptor(insn, sfid, msg_length, response_length);
+    insn->bits3.gen7_atomic_op.msg_type = GEN7_UNTYPED_ATOMIC_READ;
     insn->bits3.gen7_atomic_op.bti = bti;
     insn->bits3.gen7_atomic_op.return_data = 1;
     insn->bits3.gen7_atomic_op.aop_type = function;
@@ -1078,7 +1066,7 @@ namespace gbe
      this->setHeader(insn);
      this->setDst(insn, GenRegister::null());
      this->setSrc0(insn, src);
-     setMessageDescriptor(this, insn, GEN_SFID_MESSAGE_GATEWAY, 1, 0);
+     setMessageDescriptor(insn, GEN_SFID_MESSAGE_GATEWAY, 1, 0);
      insn->bits3.msg_gateway.sub_function_id = GEN_BARRIER_MSG;
      insn->bits3.msg_gateway.notify = 0x1;
   }
@@ -1087,7 +1075,7 @@ namespace gbe
     this->setHeader(insn);
     this->setDst(insn, dst);
     this->setSrc0(insn, dst);
-    setMessageDescriptor(this, insn, GEN_SFID_DATAPORT_DATA_CACHE, 1, 1, 1);
+    setMessageDescriptor(insn, GEN_SFID_DATAPORT_DATA_CACHE, 1, 1, 1);
     insn->bits3.gen7_memory_fence.msg_type = GEN_MEM_FENCE;
     insn->bits3.gen7_memory_fence.commit_enable = 0x1;
   }
@@ -1316,7 +1304,7 @@ namespace gbe
      this->setHeader(insn);
      this->setDst(insn, GenRegister::retype(GenRegister::null(), GEN_TYPE_UD));
      this->setSrc0(insn, msg);
-     setTypedWriteMessage(this, insn, bti, msg_type, msg_length, header_present);
+     setTypedWriteMessage(insn, bti, msg_type, msg_length, header_present);
   }
   static void setScratchMessage(GenEncoder *p,
                                    GenNativeInstruction *insn,
@@ -1328,7 +1316,7 @@ namespace gbe
                                    uint32_t response_length)
   {
      const GenMessageTarget sfid = GEN_SFID_DATAPORT_DATA_CACHE;
-     setMessageDescriptor(p, insn, sfid, msg_length, response_length, true);
+     p->setMessageDescriptor(insn, sfid, msg_length, response_length, true);
      insn->bits3.gen7_scratch_rw.block_size = block_size;
      insn->bits3.gen7_scratch_rw.msg_type = msg_type;
      insn->bits3.gen7_scratch_rw.channel_mode = channel_mode;

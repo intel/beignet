@@ -29,5 +29,35 @@
 
 namespace gbe
 {
+  void Gen75Encoder::setDPUntypedRW(GenNativeInstruction *insn,
+                                    uint32_t bti,
+                                    uint32_t rgba,
+                                    uint32_t msg_type,
+                                    uint32_t msg_length,
+                                    uint32_t response_length)
+  {
+    const GenMessageTarget sfid = GEN_SFID_DATAPORT1_DATA_CACHE;
+    setMessageDescriptor(insn, sfid, msg_length, response_length);
+    insn->bits3.gen7_untyped_rw.msg_type = msg_type;
+    insn->bits3.gen7_untyped_rw.bti = bti;
+    insn->bits3.gen7_untyped_rw.rgba = rgba;
+    if (curr.execWidth == 8)
+      insn->bits3.gen7_untyped_rw.simd_mode = GEN_UNTYPED_SIMD8;
+    else if (curr.execWidth == 16)
+      insn->bits3.gen7_untyped_rw.simd_mode = GEN_UNTYPED_SIMD16;
+    else
+      NOT_SUPPORTED;
+  }
 
+  void Gen75Encoder::setTypedWriteMessage(GenNativeInstruction *insn, unsigned char bti,
+                                          unsigned char msg_type, uint32_t msg_length, bool header_present)
+  {
+    const GenMessageTarget sfid = GEN_SFID_DATAPORT1_DATA_CACHE;
+    setMessageDescriptor(insn, sfid, msg_length, 0, header_present);
+    insn->bits3.gen7_typed_rw.bti = bti;
+    insn->bits3.gen7_typed_rw.msg_type = msg_type;
+
+    /* Always using the low 8 slots here. */
+    insn->bits3.gen7_typed_rw.slot = 1;
+  }
 } /* End of the name space. */

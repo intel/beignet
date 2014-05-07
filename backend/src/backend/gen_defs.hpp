@@ -209,7 +209,8 @@ enum GenMessageTarget {
   GEN6_SFID_DATAPORT_SAMPLER_CACHE  = 4,
   GEN6_SFID_DATAPORT_RENDER_CACHE   = 5,
   GEN6_SFID_DATAPORT_CONSTANT_CACHE = 9,
-  GEN_SFID_DATAPORT_DATA_CACHE     = 10,
+  GEN_SFID_DATAPORT_DATA_CACHE      = 10,
+  GEN_SFID_DATAPORT1_DATA_CACHE     = 12,
 };
 
 #define GEN_PREDICATE_NONE                    0
@@ -307,20 +308,46 @@ enum GenMessageTarget {
 #define GEN_BYTE_SCATTER_SIMD8    0
 #define GEN_BYTE_SCATTER_SIMD16   1
 
-/* Data port message type*/
-#define GEN_OBLOCK_READ           0 //0000: OWord Block Read
-#define GEN_UNALIGNED_OBLOCK_READ 1 //0001: Unaligned OWord Block Read
-#define GEN_ODBLOCK_READ          2 //0010: OWord Dual Block Read
-#define GEN_DWORD_GATHER          3 //0011: DWord Scattered Read
-#define GEN_BYTE_GATHER           4 //0100: Byte Scattered Read
-#define GEN_UNTYPED_READ          5 //0101: Untyped Surface Read
-#define GEN_UNTYPED_ATOMIC_READ   6 //0110: Untyped Atomic Operation
-#define GEN_MEMORY_FENCE          7 //0111: Memory Fence
-#define GEN_OBLOCK_WRITE          8 //1000: OWord Block Write
-#define GEN_ODBLOCK_WRITE         10//1010: OWord Dual Block Write
-#define GEN_DWORD_SCATTER         11//1011: DWord Scattered Write
-#define GEN_BYTE_SCATTER          12//1100: Byte Scattered Write
-#define GEN_UNTYPED_WRITE         13//1101: Untyped Surface Write
+/* Data port message type for gen7*/
+#define GEN7_OBLOCK_READ           0 //0000: OWord Block Read
+#define GEN7_UNALIGNED_OBLOCK_READ 1 //0001: Unaligned OWord Block Read
+#define GEN7_ODBLOCK_READ          2 //0010: OWord Dual Block Read
+#define GEN7_DWORD_GATHER          3 //0011: DWord Scattered Read
+#define GEN7_BYTE_GATHER           4 //0100: Byte Scattered Read
+#define GEN7_UNTYPED_READ          5 //0101: Untyped Surface Read
+#define GEN7_UNTYPED_ATOMIC_READ   6 //0110: Untyped Atomic Operation
+#define GEN7_MEMORY_FENCE          7 //0111: Memory Fence
+#define GEN7_OBLOCK_WRITE          8 //1000: OWord Block Write
+#define GEN7_ODBLOCK_WRITE         10//1010: OWord Dual Block Write
+#define GEN7_DWORD_SCATTER         11//1011: DWord Scattered Write
+#define GEN7_BYTE_SCATTER          12//1100: Byte Scattered Write
+#define GEN7_UNTYPED_WRITE         13//1101: Untyped Surface Write
+
+/* Data port0 message type for Gen75*/
+#define GEN75_P0_OBLOCK_READ            0 //0000: OWord Block Read
+#define GEN75_P0_UNALIGNED_OBLOCK_READ  1 //0001: Unaligned OWord Block Read
+#define GEN75_P0_ODBLOCK_READ           2 //0010: OWord Dual Block Read
+#define GEN75_P0_DWORD_GATHER           3 //0011: DWord Scattered Read
+#define GEN75_P0_BYTE_GATHER            4 //0100: Byte Scattered Read
+#define GEN75_P0_MEMORY_FENCE           7 //0111: Memory Fence
+#define GEN75_P0_OBLOCK_WRITE           8 //1000: OWord Block Write
+#define GEN75_P0_ODBLOCK_WRITE         10 //1010: OWord Dual Block Write
+#define GEN75_P0_DWORD_SCATTER         11 //1011: DWord Scattered Write
+#define GEN75_P0_BYTE_SCATTER          12 //1100: Byte Scattered Write
+
+/* Data port1 message type for Gen75*/
+#define GEN75_P1_UNTYPED_READ           1 //0001: Untyped Surface Read
+#define GEN75_P1_UNTYPED_ATOMIC_OP      2 //0010: Untyped Atomic Operation
+#define GEN75_P1_UNTYPED_ATOMIC_OP_4X2  3 //0011: Untyped Atomic Operation SIMD4x2
+#define GEN75_P1_MEDIA_BREAD            4 //0100: Media Block Read
+#define GEN75_P1_TYPED_SURFACE_READ     5 //0101: Typed Surface Read
+#define GEN75_P1_TYPED_ATOMIC_OP        6 //0110: Typed Atomic Operation
+#define GEN75_P1_TYPED_ATOMIC_OP_4X2    7 //0111: Typed Atomic Operation SIMD4x2
+#define GEN75_P1_UNTYPED_SURFACE_WRITE  9 //1001: Untyped Surface Write
+#define GEN75_P1_MEDIA_TYPED_BWRITE    10 //1010: Media Block Write
+#define GEN75_P1_ATOMIC_COUNTER        11 //1011: Atomic Counter Operation
+#define GEN75_P1_ATOMIC_COUNTER_4X2    12 //1100: Atomic Counter Operation 4X2
+#define GEN75_P1_TYPED_SURFACE_WRITE   13 //1101: Typed Surface Write
 
 /* Data port data cache scratch messages*/
 #define GEN_SCRATCH_READ                  0
@@ -867,8 +894,7 @@ union GenNativeInstruction
       struct {
         uint32_t bti:8;
         uint32_t chan_mask:4;
-        uint32_t pad:1;
-        uint32_t slot:1;
+        uint32_t slot:2;
         uint32_t msg_type:4;
         uint32_t pad2:1;
         uint32_t header_present:1;

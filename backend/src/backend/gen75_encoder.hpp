@@ -33,6 +33,12 @@ namespace gbe
   public:
     Gen75Encoder(uint32_t simdWidth, uint32_t gen, uint32_t deviceID)
          : GenEncoder(simdWidth, gen, deviceID, 8) { };
+
+    virtual void setDPUntypedRW(GenNativeInstruction *insn, uint32_t bti, uint32_t rgba,
+                   uint32_t msg_type, uint32_t msg_length, uint32_t response_length);
+    virtual void setTypedWriteMessage(GenNativeInstruction *insn, unsigned char bti,
+                                      unsigned char msg_type, uint32_t msg_length,
+                                      bool header_present);
   };
 }
 #endif /* __GBE_GEN75_ENCODER_HPP__ */

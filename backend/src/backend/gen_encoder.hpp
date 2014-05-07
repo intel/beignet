@@ -207,6 +207,15 @@ namespace gbe
     ////////////////////////////////////////////////////////////////////////
     // Helper functions to encode
     ////////////////////////////////////////////////////////////////////////
+    virtual void setDPUntypedRW(GenNativeInstruction *insn, uint32_t bti, uint32_t rgba,
+                                uint32_t msg_type, uint32_t msg_length,
+                                uint32_t response_length);
+    virtual void setTypedWriteMessage(GenNativeInstruction *insn, unsigned char bti,
+                                      unsigned char msg_type, uint32_t msg_length,
+                                      bool header_present);
+    void setMessageDescriptor(GenNativeInstruction *inst, enum GenMessageTarget sfid,
+                              unsigned msg_length, unsigned response_length,
+                              bool header_present = false, bool end_of_thread = false);
     void setHeader(GenNativeInstruction *insn);
     void setDst(GenNativeInstruction *insn, GenRegister dest);
     void setSrc0(GenNativeInstruction *insn, GenRegister reg);
