@@ -27,8 +27,40 @@
 
 #include "backend/gen75_encoder.hpp"
 
+static const uint32_t untypedRWMask[] = {
+  GEN_UNTYPED_ALPHA|GEN_UNTYPED_BLUE|GEN_UNTYPED_GREEN|GEN_UNTYPED_RED,
+  GEN_UNTYPED_ALPHA|GEN_UNTYPED_BLUE|GEN_UNTYPED_GREEN,
+  GEN_UNTYPED_ALPHA|GEN_UNTYPED_BLUE,
+  GEN_UNTYPED_ALPHA,
+  0
+};
+
 namespace gbe
 {
+  void Gen75Encoder::setHeader(GenNativeInstruction *insn) {
+    if (this->curr.execWidth == 8)
+      insn->header.execution_size = GEN_WIDTH_8;
+    else if (this->curr.execWidth == 16)
+      insn->header.execution_size = GEN_WIDTH_16;
+    else if (this->curr.execWidth == 1)
+      insn->header.execution_size = GEN_WIDTH_1;
+    else if (this->curr.execWidth == 4)
+      insn->header.execution_size = GEN_WIDTH_4;
+    else
+      NOT_IMPLEMENTED;
+    insn->header.acc_wr_control = this->curr.accWrEnable;
+    insn->header.quarter_control = this->curr.quarterControl;
+    insn->bits1.ia1.nib_ctrl = this->curr.nibControl;
+    insn->header.mask_control = this->curr.noMask;
+    insn->bits2.ia1.flag_reg_nr = this->curr.flag;
+    insn->bits2.ia1.flag_sub_reg_nr = this->curr.subFlag;
+    if (this->curr.predicate != GEN_PREDICATE_NONE) {
+      insn->header.predicate_control = this->curr.predicate;
+      insn->header.predicate_inverse = this->curr.inversePredicate;
+    }
+    insn->header.saturate = this->curr.saturate;
+  }
+
   void Gen75Encoder::setDPUntypedRW(GenNativeInstruction *insn,
                                     uint32_t bti,
                                     uint32_t rgba,
@@ -59,5 +91,90 @@ namespace gbe
 
     /* Always using the low 8 slots here. */
     insn->bits3.gen7_typed_rw.slot = 1;
+  }
+
+  void Gen75Encoder::ATOMIC(GenRegister dst, uint32_t function, GenRegister src, uint32_t bti, uint32_t srcNum) {
+    GenNativeInstruction *insn = this->next(GEN_OPCODE_SEND);
+    uint32_t msg_length = 0;
+    uint32_t response_length = 0;
+
+    if (this->curr.execWidth == 8) {
+      msg_length = srcNum;
+      response_length = 1;
+    } else if (this->curr.execWidth == 16) {
+      msg_length = 2 * srcNum;
+      response_length = 2;
+    } else
+      NOT_IMPLEMENTED;
+
+    this->setHeader(insn);
+    this->setDst(insn, GenRegister::uw16grf(dst.nr, 0));
+    this->setSrc0(insn, GenRegister::ud8grf(src.nr, 0));
+    this->setSrc1(insn, GenRegister::immud(0));
+
+    const GenMessageTarget sfid = GEN_SFID_DATAPORT1_DATA_CACHE;
+    setMessageDescriptor(insn, sfid, msg_length, response_length);
+    insn->bits3.gen7_atomic_op.msg_type = GEN75_P1_TYPED_ATOMIC_OP;
+    insn->bits3.gen7_atomic_op.bti = bti;
+    insn->bits3.gen7_atomic_op.return_data = 1;
+    insn->bits3.gen7_atomic_op.aop_type = function;
+
+    if (this->curr.execWidth == 8)
+      insn->bits3.gen7_atomic_op.simd_mode = GEN_ATOMIC_SIMD8;
+    else if (this->curr.execWidth == 16)
+      insn->bits3.gen7_atomic_op.simd_mode = GEN_ATOMIC_SIMD16;
+    else
+      NOT_SUPPORTED;
+  }
+
+  void Gen75Encoder::UNTYPED_READ(GenRegister dst, GenRegister src, uint32_t bti, uint32_t elemNum) {
+    GenNativeInstruction *insn = this->next(GEN_OPCODE_SEND);
+    assert(elemNum >= 1 || elemNum <= 4);
+    uint32_t msg_length = 0;
+    uint32_t response_length = 0;
+    if (this->curr.execWidth == 8) {
+      msg_length = 1;
+      response_length = elemNum;
+    } else if (this->curr.execWidth == 16) {
+      msg_length = 2;
+      response_length = 2 * elemNum;
+    } else
+      NOT_IMPLEMENTED;
+
+    this->setHeader(insn);
+    this->setDst(insn,  GenRegister::uw16grf(dst.nr, 0));
+    this->setSrc0(insn, GenRegister::ud8grf(src.nr, 0));
+    this->setSrc1(insn, GenRegister::immud(0));
+    setDPUntypedRW(insn,
+                   bti,
+                   untypedRWMask[elemNum],
+                   GEN75_P1_UNTYPED_READ,
+                   msg_length,
+                   response_length);
+  }
+
+  void Gen75Encoder::UNTYPED_WRITE(GenRegister msg, uint32_t bti, uint32_t elemNum) {
+    GenNativeInstruction *insn = this->next(GEN_OPCODE_SEND);
+    assert(elemNum >= 1 || elemNum <= 4);
+    uint32_t msg_length = 0;
+    uint32_t response_length = 0;
+    this->setHeader(insn);
+    if (this->curr.execWidth == 8) {
+      this->setDst(insn, GenRegister::retype(GenRegister::null(), GEN_TYPE_UD));
+      msg_length = 1 + elemNum;
+    } else if (this->curr.execWidth == 16) {
+      this->setDst(insn, GenRegister::retype(GenRegister::null(), GEN_TYPE_UW));
+      msg_length = 2 * (1 + elemNum);
+    }
+    else
+      NOT_IMPLEMENTED;
+    this->setSrc0(insn, GenRegister::ud8grf(msg.nr, 0));
+    this->setSrc1(insn, GenRegister::immud(0));
+    setDPUntypedRW(insn,
+                   bti,
+                   untypedRWMask[elemNum],
+                   GEN75_P1_UNTYPED_SURFACE_WRITE,
+                   msg_length,
+                   response_length);
   }
 } /* End of the name space. */

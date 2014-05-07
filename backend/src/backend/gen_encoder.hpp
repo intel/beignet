@@ -161,15 +161,15 @@ namespace gbe
     /*! Wait instruction (used for the barrier) */
     void WAIT(void);
     /*! Atomic instructions */
-    void ATOMIC(GenRegister dst, uint32_t function, GenRegister src, uint32_t bti, uint32_t srcNum);
+    virtual void ATOMIC(GenRegister dst, uint32_t function, GenRegister src, uint32_t bti, uint32_t srcNum);
     /*! Read 64-bits float/int arrays */
     void READ64(GenRegister dst, GenRegister tmp, GenRegister addr, GenRegister src, uint32_t bti, uint32_t elemNum);
     /*! Write 64-bits float/int arrays */
     void WRITE64(GenRegister src, GenRegister data, uint32_t bti, uint32_t elemNum, bool is_scalar);
     /*! Untyped read (upto 4 channels) */
-    void UNTYPED_READ(GenRegister dst, GenRegister src, uint32_t bti, uint32_t elemNum);
+    virtual void UNTYPED_READ(GenRegister dst, GenRegister src, uint32_t bti, uint32_t elemNum);
     /*! Untyped write (upto 4 channels) */
-    void UNTYPED_WRITE(GenRegister src, uint32_t bti, uint32_t elemNum);
+    virtual void UNTYPED_WRITE(GenRegister src, uint32_t bti, uint32_t elemNum);
     /*! Byte gather (for unaligned bytes, shorts and ints) */
     void BYTE_GATHER(GenRegister dst, GenRegister src, uint32_t bti, uint32_t elemSize);
     /*! Byte scatter (for unaligned bytes, shorts and ints) */
@@ -193,9 +193,9 @@ namespace gbe
                 bool isLD);
 
     /*! TypedWrite instruction for texture */
-    void TYPED_WRITE(GenRegister header,
-                     bool header_present,
-                     unsigned char bti);
+    virtual void TYPED_WRITE(GenRegister header,
+                             bool header_present,
+                             unsigned char bti);
     /*! Extended math function (2 sources) */
     void MATH(GenRegister dst, uint32_t function, GenRegister src0, GenRegister src1);
     /*! Extended math function (1 source) */
@@ -207,6 +207,7 @@ namespace gbe
     ////////////////////////////////////////////////////////////////////////
     // Helper functions to encode
     ////////////////////////////////////////////////////////////////////////
+    virtual void setHeader(GenNativeInstruction *insn);
     virtual void setDPUntypedRW(GenNativeInstruction *insn, uint32_t bti, uint32_t rgba,
                                 uint32_t msg_type, uint32_t msg_length,
                                 uint32_t response_length);
@@ -216,7 +217,6 @@ namespace gbe
     void setMessageDescriptor(GenNativeInstruction *inst, enum GenMessageTarget sfid,
                               unsigned msg_length, unsigned response_length,
                               bool header_present = false, bool end_of_thread = false);
-    void setHeader(GenNativeInstruction *insn);
     void setDst(GenNativeInstruction *insn, GenRegister dest);
     void setSrc0(GenNativeInstruction *insn, GenRegister reg);
     void setSrc1(GenNativeInstruction *insn, GenRegister reg);

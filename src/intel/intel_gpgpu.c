@@ -629,6 +629,53 @@ intel_gpgpu_bind_image_gen7(intel_gpgpu_t *gpgpu,
   ss->ss0.render_cache_rw_mode = 1; /* XXX do we need to set it? */
   intel_gpgpu_set_buf_reloc_gen7(gpgpu, index, obj_bo, obj_bo_offset);
   gpgpu->binded_img[index - gpgpu->img_index_base] = obj_bo;
+
+  assert(index < GEN_MAX_SURFACES);
+}
+
+static void
+intel_gpgpu_bind_image_gen75(intel_gpgpu_t *gpgpu,
+                              uint32_t index,
+                              dri_bo* obj_bo,
+                              uint32_t obj_bo_offset,
+                              uint32_t format,
+                              cl_mem_object_type type,
+                              int32_t w,
+                              int32_t h,
+                              int32_t depth,
+                              int32_t pitch,
+                              int32_t tiling)
+{
+  surface_heap_t *heap = gpgpu->aux_buf.bo->virtual + gpgpu->aux_offset.surface_heap_offset;
+  gen7_surface_state_t *ss = (gen7_surface_state_t *) heap->surface[index];
+  memset(ss, 0, sizeof(*ss));
+
+  ss->ss0.surface_type = intel_get_surface_type(type);
+  ss->ss0.surface_format = format;
+  ss->ss1.base_addr = obj_bo->offset;
+  ss->ss2.width = w - 1;
+  ss->ss2.height = h - 1;
+  ss->ss3.depth = depth - 1;
+  ss->ss4.not_str_buf.rt_view_extent = depth - 1;
+  ss->ss4.not_str_buf.min_array_element = 0;
+  ss->ss3.pitch = pitch - 1;
+  ss->ss5.cache_control = cc_llc_l3;
+  ss->ss7.shader_r = I965_SURCHAN_SELECT_RED;
+  ss->ss7.shader_g = I965_SURCHAN_SELECT_GREEN;
+  ss->ss7.shader_b = I965_SURCHAN_SELECT_BLUE;
+  ss->ss7.shader_a = I965_SURCHAN_SELECT_ALPHA;
+  if (tiling == GPGPU_TILE_X) {
+    ss->ss0.tiled_surface = 1;
+    ss->ss0.tile_walk = I965_TILEWALK_XMAJOR;
+  } else if (tiling == GPGPU_TILE_Y) {
+    ss->ss0.tiled_surface = 1;
+    ss->ss0.tile_walk = I965_TILEWALK_YMAJOR;
+  }
+  ss->ss0.render_cache_rw_mode = 1; /* XXX do we need to set it? */
+  intel_gpgpu_set_buf_reloc_gen7(gpgpu, index, obj_bo, obj_bo_offset);
+  gpgpu->binded_img[index - gpgpu->img_index_base] = obj_bo;
+
+  assert(index < GEN_MAX_SURFACES);
 }
 
 static void
@@ -665,23 +712,6 @@ intel_gpgpu_set_stack(intel_gpgpu_t *gpgpu, uint32_t offset, uint32_t size, uint
   drm_intel_bufmgr *bufmgr = gpgpu->drv->bufmgr;
   gpgpu->stack_b.bo = drm_intel_bo_alloc(bufmgr, "STACK", size, 64);
   intel_gpgpu_bind_buf(gpgpu, gpgpu->stack_b.bo, offset, 0, cchint);
-}
-
-static void
-intel_gpgpu_bind_image(intel_gpgpu_t *gpgpu,
-                       uint32_t index,
-                       cl_buffer *obj_bo,
-                       uint32_t obj_bo_offset,
-                       uint32_t format,
-                       cl_mem_object_type type,
-                       int32_t w,
-                       int32_t h,
-                       int32_t depth,
-                       int32_t pitch,
-                       cl_gpgpu_tiling tiling)
-{
-  intel_gpgpu_bind_image_gen7(gpgpu, index, (drm_intel_bo*) obj_bo, obj_bo_offset, format, type, w, h, depth, pitch, tiling);
-  assert(index < GEN_MAX_SURFACES);
 }
 
 static void
@@ -1053,12 +1083,11 @@ intel_gpgpu_event_get_exec_timestamp(intel_event_t *event,
 }
 
 LOCAL void
-intel_set_gpgpu_callbacks(void)
+intel_set_gpgpu_callbacks(int device_id)
 {
   cl_gpgpu_new = (cl_gpgpu_new_cb *) intel_gpgpu_new;
   cl_gpgpu_delete = (cl_gpgpu_delete_cb *) intel_gpgpu_delete;
   cl_gpgpu_sync = (cl_gpgpu_sync_cb *) intel_gpgpu_sync;
-  cl_gpgpu_bind_image = (cl_gpgpu_bind_image_cb *) intel_gpgpu_bind_image;
   cl_gpgpu_bind_buf = (cl_gpgpu_bind_buf_cb *) intel_gpgpu_bind_buf;
   cl_gpgpu_set_stack = (cl_gpgpu_set_stack_cb *) intel_gpgpu_set_stack;
   cl_gpgpu_state_init = (cl_gpgpu_state_init_cb *) intel_gpgpu_state_init;
@@ -1083,5 +1112,12 @@ intel_set_gpgpu_callbacks(void)
   cl_gpgpu_event_get_gpu_cur_timestamp = (cl_gpgpu_event_get_gpu_cur_timestamp_cb *)intel_gpgpu_event_get_gpu_cur_timestamp;
   cl_gpgpu_ref_batch_buf = (cl_gpgpu_ref_batch_buf_cb *)intel_gpgpu_ref_batch_buf;
   cl_gpgpu_unref_batch_buf = (cl_gpgpu_unref_batch_buf_cb *)intel_gpgpu_unref_batch_buf;
+
+  if (IS_HASWELL(device_id))
+    cl_gpgpu_bind_image = (cl_gpgpu_bind_image_cb *) intel_gpgpu_bind_image_gen75;
+  else if (IS_IVYBRIDGE(device_id))
+    cl_gpgpu_bind_image = (cl_gpgpu_bind_image_cb *) intel_gpgpu_bind_image_gen7;
+  else
+    assert(0);
 }
 

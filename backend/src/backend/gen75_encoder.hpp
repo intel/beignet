@@ -34,6 +34,10 @@ namespace gbe
     Gen75Encoder(uint32_t simdWidth, uint32_t gen, uint32_t deviceID)
          : GenEncoder(simdWidth, gen, deviceID, 8) { };
 
+    virtual void ATOMIC(GenRegister dst, uint32_t function, GenRegister src, uint32_t bti, uint32_t srcNum);
+    virtual void UNTYPED_READ(GenRegister dst, GenRegister src, uint32_t bti, uint32_t elemNum);
+    virtual void UNTYPED_WRITE(GenRegister src, uint32_t bti, uint32_t elemNum);
+    virtual void setHeader(GenNativeInstruction *insn);
     virtual void setDPUntypedRW(GenNativeInstruction *insn, uint32_t bti, uint32_t rgba,
                    uint32_t msg_type, uint32_t msg_length, uint32_t response_length);
     virtual void setTypedWriteMessage(GenNativeInstruction *insn, unsigned char bti,

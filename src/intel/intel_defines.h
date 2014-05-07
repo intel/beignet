@@ -288,6 +288,13 @@
 #define I965_TILEWALK_XMAJOR                 0
 #define I965_TILEWALK_YMAJOR                 1
 
+#define I965_SURCHAN_SELECT_ZERO             0
+#define I965_SURCHAN_SELECT_ONE              1
+#define I965_SURCHAN_SELECT_RED              4
+#define I965_SURCHAN_SELECT_GREEN            5
+#define I965_SURCHAN_SELECT_BLUE             6
+#define I965_SURCHAN_SELECT_ALPHA            7
+
 #define URB_SIZE(intel)         (IS_IGDNG(intel->device_id) ? 1024 : \
                                  IS_G4X(intel->device_id) ? 384 : 256)
 

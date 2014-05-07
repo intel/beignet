@@ -687,5 +687,5 @@ intel_setup_callbacks(void)
   cl_buffer_subdata = (cl_buffer_subdata_cb *) drm_intel_bo_subdata;
   cl_buffer_wait_rendering = (cl_buffer_wait_rendering_cb *) drm_intel_bo_wait_rendering;
   cl_buffer_get_fd = (cl_buffer_get_fd_cb *) drm_intel_bo_gem_export_to_prime;
-  intel_set_gpgpu_callbacks();
+  intel_set_gpgpu_callbacks(intel_get_device_id());
 }

@@ -234,7 +234,16 @@ typedef struct gen7_surface_state
   } ss5;
 
   uint32_t ss6; /* unused */
-  uint32_t ss7; /* unused */
+
+  struct {
+    uint32_t min_lod:12;
+    uint32_t pad0:4;
+    uint32_t shader_a:3;
+    uint32_t shader_b:3;
+    uint32_t shader_g:3;
+    uint32_t shader_r:3;
+    uint32_t pad1:4;
+  } ss7;
 } gen7_surface_state_t;
 
 STATIC_ASSERT(sizeof(gen6_surface_state_t) == sizeof(gen7_surface_state_t));

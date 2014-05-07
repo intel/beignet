@@ -28,7 +28,7 @@
 #include <stdint.h>
 
 /* Set the gpgpu related call backs */
-extern void intel_set_gpgpu_callbacks(void);
+extern void intel_set_gpgpu_callbacks(int device_id);
 
 #endif /* __INTEL_GPGPU_H__ */
 
