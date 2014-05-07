@@ -108,7 +108,7 @@ namespace gbe
       // Note that byte vector registers use two bytes per byte (and can be
       // interleaved)
       static const size_t familyVectorSize[] = {2,2,2,4,8};
-      static const size_t familyScalarSize[] = {2,1,2,4,8};
+      static const size_t familyScalarSize[] = {2,2,2,4,8};
       using namespace ir;
       const bool isScalar = ctx.sel->isScalarOrBool(reg);
       const RegisterData regData = ctx.sel->getRegisterData(reg);
