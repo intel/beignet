@@ -177,4 +177,67 @@ namespace gbe
                    msg_length,
                    response_length);
   }
+  void Gen75Encoder::LOAD_DF_IMM(GenRegister dest, GenRegister tmp, double value) {
+    union { double d; unsigned u[2]; } u;
+    u.d = value;
+    GenRegister r = GenRegister::retype(tmp, GEN_TYPE_UD);
+    push();
+    curr.predicate = GEN_PREDICATE_NONE;
+    curr.execWidth = 1;
+    MOV(r, GenRegister::immud(u.u[0]));
+    MOV(GenRegister::suboffset(r, 1), GenRegister::immud(u.u[1]));
+    pop();
+    r.type = GEN_TYPE_DF;
+    r.vstride = GEN_VERTICAL_STRIDE_0;
+    r.width = GEN_WIDTH_1;
+    r.hstride = GEN_HORIZONTAL_STRIDE_0;
+    push();
+    uint32_t width = curr.execWidth;
+    curr.execWidth = 8;
+    curr.predicate = GEN_PREDICATE_NONE;
+    curr.noMask = 1;
+    curr.quarterControl = GEN_COMPRESSION_Q1;
+    MOV(dest, r);
+    if (width == 16) {
+      curr.quarterControl = GEN_COMPRESSION_Q2;
+      MOV(GenRegister::offset(dest, 2), r);
+    }
+    pop();
+  }
+
+  void Gen75Encoder::MOV_DF(GenRegister dest, GenRegister src0, GenRegister r) {
+    int w = curr.execWidth;
+    if (src0.isdf()) {
+      GBE_ASSERT(0); // MOV DF is called from convert instruction,
+                     // We should never convert a df to a df.
+    } else {
+      GenRegister r0 = GenRegister::h2(r);
+      push();
+      curr.execWidth = 4;
+      curr.predicate = GEN_PREDICATE_NONE;
+      MOV(r0, src0);
+      MOV(GenRegister::suboffset(r0, 4), GenRegister::suboffset(src0, 4));
+      curr.predicate = GEN_PREDICATE_NORMAL;
+      curr.quarterControl = 0;
+      curr.nibControl = 0;
+      MOV(dest, r0);
+      curr.nibControl = 1;
+      MOV(GenRegister::suboffset(dest, 4), GenRegister::suboffset(r0, 4));
+      pop();
+      if (w == 16) {
+        push();
+        curr.execWidth = 4;
+        curr.predicate = GEN_PREDICATE_NONE;
+        MOV(r0, GenRegister::suboffset(src0, 8));
+        MOV(GenRegister::suboffset(r0, 4), GenRegister::suboffset(src0, 12));
+        curr.predicate = GEN_PREDICATE_NORMAL;
+        curr.quarterControl = 1;
+        curr.nibControl = 0;
+        MOV(GenRegister::suboffset(dest, 8), r0);
+        curr.nibControl = 1;
+        MOV(GenRegister::suboffset(dest, 12), GenRegister::suboffset(r0, 4));
+        pop();
+      }
+    }
+  }
 } /* End of the name space. */

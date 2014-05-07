@@ -34,6 +34,8 @@ namespace gbe
     Gen75Encoder(uint32_t simdWidth, uint32_t gen, uint32_t deviceID)
          : GenEncoder(simdWidth, gen, deviceID, 8) { };
 
+    virtual void MOV_DF(GenRegister dest, GenRegister src0, GenRegister tmp = GenRegister::null());
+    virtual void LOAD_DF_IMM(GenRegister dest, GenRegister tmp, double value);
     virtual void ATOMIC(GenRegister dst, uint32_t function, GenRegister src, uint32_t bti, uint32_t srcNum);
     virtual void UNTYPED_READ(GenRegister dst, GenRegister src, uint32_t bti, uint32_t elemNum);
     virtual void UNTYPED_WRITE(GenRegister src, uint32_t bti, uint32_t elemNum);

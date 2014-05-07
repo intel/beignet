@@ -133,8 +133,8 @@ namespace gbe
 #undef ALU2
 #undef ALU2_MOD
 #undef ALU3
-    void MOV_DF(GenRegister dest, GenRegister src0, GenRegister tmp = GenRegister::null());
-    void LOAD_DF_IMM(GenRegister dest, GenRegister tmp, double value);
+    virtual void MOV_DF(GenRegister dest, GenRegister src0, GenRegister tmp = GenRegister::null());
+    virtual void LOAD_DF_IMM(GenRegister dest, GenRegister tmp, double value);
     void LOAD_INT64_IMM(GenRegister dest, int64_t value);
     /*! Barrier message (to synchronize threads of a workgroup) */
     void BARRIER(GenRegister src);
