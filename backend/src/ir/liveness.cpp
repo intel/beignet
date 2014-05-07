@@ -76,8 +76,7 @@ namespace ir {
     // A destination is a killed value
     for (uint32_t dstID = 0; dstID < dstNum; ++dstID) {
       const Register reg = insn.getDst(dstID);
-      if ( uniform &&
-          fn.getRegisterFamily(reg) != ir::FAMILY_BOOL &&
+      if (uniform &&
           fn.getRegisterFamily(reg) != ir::FAMILY_QWORD &&
           !info.bb.definedPhiRegs.contains(reg) &&
           insn.getOpcode() != ir::OP_ATOMIC &&

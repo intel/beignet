@@ -125,6 +125,12 @@ namespace gbe
     bool expireFlag(const GenRegInterval &limit);
     /*! Allocate the virtual boolean (== flags) registers */
     void allocateFlags(Selection &selection);
+    /*! validated flags which contains valid value in the physical flag register */
+    set<uint16_t> validatedFlags;
+    /*! validated temp flag register which indicate the flag 0,1 contains which virtual flag register. */
+    uint16_t validTempFlagReg;
+    /*! validate flag for the current flag user instruction */
+    void validateFlag(Selection &selection, SelectionInstruction &insn);
     /*! Allocate the GRF registers */
     bool allocateGRFs(Selection &selection);
     /*! Create gen registers for all preallocated curbe registers. */
@@ -373,6 +379,50 @@ namespace gbe
   }
 
 
+  #define IS_IMPLICITLY_MOD_FLAG(insn) (insn.state.modFlag == 1 &&      \
+                                         (insn.opcode == SEL_OP_MOV ||  \
+                                          insn.opcode == SEL_OP_AND  || \
+                                          insn.opcode == SEL_OP_OR  ||  \
+                                          insn.opcode == SEL_OP_XOR))
+
+  #define IS_SCALAR_FLAG(insn) selection.isScalarOrBool(ir::Register(insn.state.flagIndex))
+  #define GET_FLAG_REG(insn) GenRegister::uwxgrf(IS_SCALAR_FLAG(insn) ? 1 : 8,\
+                                                 ir::Register(insn.state.flagIndex));
+  #define IS_TEMP_FLAG(insn) (insn.state.flag == 0 && insn.state.subFlag == 1)
+  // Flag is a virtual flag, this function is to validate the virtual flag
+  // to a physical flag. It is used to validate both temporary flag and the
+  // non-temporary flag registers.
+  // We track the last temporary validate register, if it's the same as
+  // current, we can avoid the revalidation.
+  void GenRegAllocator::Opaque::validateFlag(Selection &selection,
+                                             SelectionInstruction &insn) {
+    GBE_ASSERT(insn.state.physicalFlag == 1);
+    if (!IS_TEMP_FLAG(insn) && validatedFlags.find(insn.state.flagIndex) != validatedFlags.end())
+      return;
+    else if (IS_TEMP_FLAG(insn) && validTempFlagReg == insn.state.flagIndex)
+      return;
+    SelectionInstruction *cmp0 = selection.create(SEL_OP_CMP, 1, 2);
+    cmp0->state = GenInstructionState(ctx.getSimdWidth());
+    cmp0->state.flag = insn.state.flag;
+    cmp0->state.subFlag = insn.state.subFlag;
+    if (IS_SCALAR_FLAG(insn))
+      cmp0->state.noMask = 1;
+    cmp0->src(0) = GET_FLAG_REG(insn);
+    cmp0->src(1) = GenRegister::immuw(0);
+    cmp0->dst(0) = GenRegister::retype(GenRegister::null(), GEN_TYPE_UW);
+    cmp0->extra.function = GEN_CONDITIONAL_NEQ;
+    insn.prepend(*cmp0);
+    if (!IS_TEMP_FLAG(insn))
+      validatedFlags.insert(insn.state.flagIndex);
+    else {
+      if (insn.state.modFlag == 0)
+        validTempFlagReg = insn.state.flagIndex;
+      else
+        validTempFlagReg = 0;
+    }
+  }
+
+  
   void GenRegAllocator::Opaque::allocateFlags(Selection &selection) {
     // Previously, we have a global flag allocation implemntation.
     // After some analysis, I found the global flag allocation is not
@@ -496,8 +546,8 @@ namespace gbe
 
       // Now, we traverse all the selection instructions and we patch them to make
       // them use flag registers
-      set<uint16_t> validatedFlags;
-      uint16_t validTempFlagReg = 0;
+      validTempFlagReg = 0;
+      validatedFlags.clear();
       for (auto &insn : block.insnList) {
         // Patch the predicate now. Note that only compares actually modify it (it
         // is called a "conditional modifier"). The other instructions just read
@@ -505,63 +555,47 @@ namespace gbe
         if (insn.state.physicalFlag == 0) {
           auto it = allocatedFlags.find(ir::Register(insn.state.flagIndex));
           if (it != allocatedFlags.end()) {
+            insn.state.physicalFlag = 1;
             insn.state.flag = it->second / 2;
             insn.state.subFlag = it->second & 1;
-            insn.state.physicalFlag = 1;
+
             // modFlag is for the LOADI/MOV/AND/OR/XOR instructions which will modify a
             // flag register. We set the condition for them to save one instruction if possible.
-            if (insn.state.modFlag == 1 &&
-                (insn.opcode == SEL_OP_MOV ||
-                 insn.opcode == SEL_OP_AND  ||
-                 insn.opcode == SEL_OP_OR  ||
-                 insn.opcode == SEL_OP_XOR))
+            if (IS_IMPLICITLY_MOD_FLAG(insn)) {
+              // If this is a modFlag on a scalar bool, we need to remove it
+              // from the allocated flags map. Then latter, the user could
+              // validate the flag from the scalar value correctly.
+              if (IS_SCALAR_FLAG(insn)) {
+                allocatedFlags.erase(ir::Register(insn.state.flagIndex));
+                continue;
+              }
               insn.extra.function = GEN_CONDITIONAL_NEQ;
-            if ((insn.state.externFlag &&
-                insn.state.predicate != GEN_PREDICATE_NONE &&
-                validatedFlags.find(insn.state.flagIndex) == validatedFlags.end())) {
-              // This is an external bool, we need to validate it if it is not validated yet.
-              SelectionInstruction *cmp0 = selection.create(SEL_OP_CMP, 1, 2);
-              cmp0->state = GenInstructionState(insn.state.execWidth);
-              cmp0->state.flag = insn.state.flag;
-              cmp0->state.subFlag = insn.state.subFlag;
-              cmp0->src(0) = GenRegister::uw8grf(ir::Register(insn.state.flagIndex));
-              cmp0->src(1) = GenRegister::immuw(0);
-              cmp0->dst(0) = GenRegister::retype(GenRegister::null(), GEN_TYPE_UW);
-              cmp0->extra.function = GEN_CONDITIONAL_NEQ;
-              insn.prepend(*cmp0);
-              validatedFlags.insert(insn.state.flagIndex);
             }
+            // If this is an external bool, we need to validate it if it is not validated yet.
+            if ((insn.state.externFlag &&
+                 insn.state.predicate != GEN_PREDICATE_NONE))
+              validateFlag(selection, insn);
           } else {
-            // This bool doesn't have a deadicated flag, we use temporary flag here.
-            // each time we need to validate it from the grf register.
-            // We track the last temporary validate register, if it's the same as
-            // current, we can avoid the revalidation.
+            insn.state.physicalFlag = 1;
             insn.state.flag = 0;
             insn.state.subFlag = 1;
-            insn.state.physicalFlag = 1;
-            if ((insn.state.predicate != GEN_PREDICATE_NONE)
-                && validTempFlagReg != insn.state.flagIndex) {
-              SelectionInstruction *cmp0 = selection.create(SEL_OP_CMP, 1, 2);
-              cmp0->state = GenInstructionState(insn.state.execWidth);
-              cmp0->state.flag = insn.state.flag;
-              cmp0->state.subFlag = insn.state.subFlag;
-              cmp0->src(0) = GenRegister::uw8grf(ir::Register(insn.state.flagIndex));
-              cmp0->src(1) = GenRegister::immuw(0);
-              cmp0->dst(0) = GenRegister::retype(GenRegister::null(), GEN_TYPE_UW);
-              cmp0->extra.function = GEN_CONDITIONAL_NEQ;
-              insn.prepend(*cmp0);
-            }
-            if (insn.state.modFlag == 0)
-              validTempFlagReg = insn.state.flagIndex;
-            else
-              validTempFlagReg = 0;
+
+            // If this is for MOV/AND/OR/... we don't need to waste an extra instruction
+            // to generate the flag here, just continue to next instruction. And the validTempFlagReg
+            // will not be destroyed.
+            if (IS_IMPLICITLY_MOD_FLAG(insn))
+              continue;
+            // This bool doesn't have a deadicated flag, we use temporary flag here.
+            // each time we need to validate it from the grf register.
+            if (insn.state.predicate != GEN_PREDICATE_NONE)
+              validateFlag(selection, insn);
           }
+
+          // This is a CMP for a pure flag booleans, we don't need to write result to
+          // the grf. And latter, we will not allocate grf for it.
           if (insn.opcode == SEL_OP_CMP &&
-            flagBooleans.contains((ir::Register)(insn.dst(0).value.reg))) {
-            // This is a CMP for a pure flag booleans, we don't need to write result to
-            // the grf. And latter, we will not allocate grf for it.
+              flagBooleans.contains((ir::Register)(insn.dst(0).value.reg)))
             insn.dst(0) = GenRegister::null();
-          }
           // If the instruction requires to generate (CMP for long/int/float..)
           // the flag value to the register, and it's not a pure flag boolean,
           // we need to use SEL instruction to generate the flag value to the UW8
@@ -569,13 +603,18 @@ namespace gbe
           if (insn.state.flagGen == 1 &&
               !flagBooleans.contains((ir::Register)(insn.state.flagIndex))) {
             SelectionInstruction *sel0 = selection.create(SEL_OP_SEL, 1, 2);
-            sel0->state = GenInstructionState(ctx.getSimdWidth());
+            uint32_t simdWidth;
+            simdWidth = IS_SCALAR_FLAG(insn) ? 1 : ctx.getSimdWidth();
+
+            sel0->state = GenInstructionState(simdWidth);
+            if (IS_SCALAR_FLAG(insn))
+              sel0->state.noMask = 1;
             sel0->state.flag = insn.state.flag;
             sel0->state.subFlag = insn.state.subFlag;
             sel0->state.predicate = GEN_PREDICATE_NORMAL;
             sel0->src(0) = GenRegister::uw1grf(ir::ocl::one);
             sel0->src(1) = GenRegister::uw1grf(ir::ocl::zero);
-            sel0->dst(0) = GenRegister::uw8grf((ir::Register)insn.state.flagIndex);
+            sel0->dst(0) = GET_FLAG_REG(insn);
             insn.append(*sel0);
             // We use the zero one after the liveness analysis, we have to update
             // the liveness data manually here.

@@ -1958,8 +1958,6 @@ namespace gbe
         return true;
       }
 
-      //printf("reg = %d isscalarorbool %d \n", insn.getDst(0), sel.isScalarOrBool(insn.getDst(0)));
-
       // Look for immediate values
       GenRegister src0, src1;
       SelectionDAG *dag0 = dag.child[0];
@@ -1990,8 +1988,7 @@ namespace gbe
       }
 
       // Output the binary instruction
-      if (sel.curr.execWidth != 1 &&
-          sel.getRegisterFamily(insn.getDst(0)) == ir::FAMILY_BOOL) {
+      if (sel.getRegisterFamily(insn.getDst(0)) == ir::FAMILY_BOOL) {
         GBE_ASSERT(insn.getOpcode() == OP_AND ||
                    insn.getOpcode() == OP_OR ||
                    insn.getOpcode() == OP_XOR);
@@ -2626,7 +2623,7 @@ namespace gbe
       GenRegister addrDW = GenRegister::udxgrf(simdWidth, sel.reg(FAMILY_DWORD, simdWidth == 1));
 
       sel.push();
-        if (sel.isScalarOrBool(addr.reg())) {
+        if (simdWidth == 1) {
           sel.curr.noMask = 1;
           sel.curr.execWidth = 1;
         }
@@ -2913,6 +2910,7 @@ namespace gbe
         tmpDst = GenRegister::nullud();
       else
         tmpDst = sel.selReg(dst, TYPE_BOOL);
+
       // Look for immediate values for the right source
       GenRegister src0, src1;
       SelectionDAG *dag0 = dag.child[0];
@@ -2935,6 +2933,8 @@ namespace gbe
       }
 
       sel.push();
+        if (sel.isScalarOrBool(dst))
+          sel.curr.noMask = 1;
         sel.curr.physicalFlag = 0;
         sel.curr.modFlag = 1;
         sel.curr.flagIndex = (uint16_t)dst;
@@ -2957,6 +2957,15 @@ namespace gbe
               type == TYPE_DOUBLE || type == TYPE_FLOAT ||
               type == TYPE_U32 ||  type == TYPE_S32))
             sel.curr.flagGen = 1;
+          else if (sel.isScalarOrBool(dst)) {
+            // If the dest reg is a scalar bool, we can't set it as
+            // dst register, as the execution width is still 8 or 16.
+            // Instead, we set the needStoreBool to flagGen, and change
+            // the dst to null register. And let the flag reg allocation
+            // function to generate the flag grf on demand correctly latter.
+            sel.curr.flagGen = needStoreBool;
+            tmpDst = GenRegister::nullud();
+          }
           sel.CMP(getGenCompare(opcode), src0, src1, tmpDst);
         }
       sel.pop();
@@ -3195,6 +3204,12 @@ namespace gbe
 
       const Register pred = insn.getPredicate();
       sel.push();
+        if (sel.isScalarOrBool(insn.getDst(0)) == true) {
+          sel.curr.execWidth = 1;
+          sel.curr.predicate = GEN_PREDICATE_NONE;
+          sel.curr.noMask = 1;
+        }
+
         sel.curr.physicalFlag = 0;
         sel.curr.flagIndex = (uint16_t) pred;
         sel.curr.predicate = GEN_PREDICATE_NORMAL;
