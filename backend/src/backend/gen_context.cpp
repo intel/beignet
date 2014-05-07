@@ -43,10 +43,8 @@ namespace gbe
   ///////////////////////////////////////////////////////////////////////////
   // GenContext implementation
   ///////////////////////////////////////////////////////////////////////////
-  GenContext::GenContext(const ir::Unit &unit,
-                         const std::string &name,
-                         uint32_t deviceID,
-                         bool relaxMath) :
+  GenContext::GenContext(const ir::Unit &unit, const std::string &name, uint32_t deviceID,
+	     bool relaxMath) :
     Context(unit, name), deviceID(deviceID), relaxMath(relaxMath)
   {
     this->p = NULL;
@@ -68,7 +66,7 @@ namespace gbe
     GBE_SAFE_DELETE(ra);
     GBE_SAFE_DELETE(sel);
     GBE_SAFE_DELETE(p);
-    this->p = GBE_NEW(GenEncoder, this->simdWidth, 7, deviceID); // XXX handle more than Gen7
+    this->p = generateEncoder();
     this->sel = GBE_NEW(Selection, *this);
     this->ra = GBE_NEW(GenRegAllocator, *this);
     this->branchPos2.clear();

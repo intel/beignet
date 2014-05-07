@@ -26,6 +26,7 @@
 #include "backend/gen_program.h"
 #include "backend/gen_program.hpp"
 #include "backend/gen_context.hpp"
+#include "backend/gen75_context.hpp"
 #include "backend/gen_defs.hpp"
 #include "backend/gen/gen_mesa_disasm.h"
 #include "backend/gen_reg_allocation.hpp"
@@ -94,6 +95,7 @@ namespace gbe {
     const ir::Function *fn = unit.getFunction(name);
     uint32_t codeGenNum = sizeof(codeGenStrategy) / sizeof(codeGenStrategy[0]);
     uint32_t codeGen = 0;
+    GenContext *ctx = NULL;
     if (fn->getSimdWidth() == 8) {
       codeGen = 2;
     } else if (fn->getSimdWidth() == 16) {
@@ -105,7 +107,13 @@ namespace gbe {
     Kernel *kernel = NULL;
 
     // Stop when compilation is successful
-    GenContext *ctx = GBE_NEW(GenContext, unit, name, deviceID, relaxMath);
+    if (IS_IVYBRIDGE(deviceID)) {
+      ctx = GBE_NEW(GenContext, unit, name, deviceID, relaxMath);
+    } else if (IS_HASWELL(deviceID)) {
+      ctx = GBE_NEW(Gen75Context, unit, name, deviceID, relaxMath);
+    }
+    GBE_ASSERTM(ctx != NULL, "Fail to create the gen context\n");
+
     for (; codeGen < codeGenNum; ++codeGen) {
       const uint32_t simdWidth = codeGenStrategy[codeGen].simdWidth;
       const bool limitRegisterPressure = codeGenStrategy[codeGen].limitRegisterPressure;

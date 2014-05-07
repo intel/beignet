@@ -65,7 +65,7 @@ namespace gbe
   {
   public:
     /*! simdWidth is the default width for the instructions */
-    GenEncoder(uint32_t simdWidth, uint32_t gen, uint32_t deviceID);
+    GenEncoder(uint32_t simdWidth, uint32_t gen, uint32_t deviceID, int jump_width = 1);
     /*! Size of the stack (should be large enough) */
     enum { MAX_STATE_NUM = 16 };
     /*! Push the current instruction state */
@@ -84,7 +84,8 @@ namespace gbe
     uint32_t gen;
     /*! Device ID */
     uint32_t deviceID;
-
+    /*! The constant for jump. */
+    const int jump_width;
     ////////////////////////////////////////////////////////////////////////
     // Encoding functions
     ////////////////////////////////////////////////////////////////////////

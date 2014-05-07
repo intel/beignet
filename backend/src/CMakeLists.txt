@@ -158,14 +158,19 @@ else (GBE_USE_BLOB)
     backend/gen_reg_allocation.cpp
     backend/gen_reg_allocation.hpp
     backend/gen_context.cpp
-    backend/gen_context.hpp
+    backend/gen_context.cpp
+    backend/gen75_context.hpp
+    backend/gen75_context.cpp
     backend/gen_program.cpp
     backend/gen_program.hpp
     backend/gen_program.h
     backend/gen_defs.hpp
     backend/gen_insn_compact.cpp
     backend/gen_encoder.hpp
-    backend/gen_encoder.cpp)
+    backend/gen_encoder.cpp
+    backend/gen75_encoder.hpp
+    backend/gen75_encoder.cpp
+    )
 
 endif (GBE_USE_BLOB)
 

@@ -26,6 +26,7 @@
 #define __GBE_GEN_CONTEXT_HPP__
 
 #include "backend/context.hpp"
+#include "backend/gen_encoder.hpp"
 #include "backend/program.h"
 #include "backend/gen_register.hpp"
 #include "ir/function.hpp"
@@ -59,7 +60,8 @@ namespace gbe
     /*! Create a new context. name is the name of the function we want to
      *  compile
      */
-    GenContext(const ir::Unit &unit, const std::string &name, uint32_t deviceID, bool relaxMath = false);
+    GenContext(const ir::Unit &unit, const std::string &name, uint32_t deviceID,
+               bool relaxMath = false);
     /*! Release everything needed */
     ~GenContext(void);
     /*! Start new code generation with specific parameters */
@@ -187,6 +189,12 @@ namespace gbe
     const bool getIFENDIFFix(void) const { return ifEndifFix; }
     void setIFENDIFFix(bool fix) { ifEndifFix = fix; }
     const CompileErrorCode getErrCode() { return errCode; }
+
+  protected:
+    virtual GenEncoder* generateEncoder(void) {
+      return GBE_NEW(GenEncoder, this->simdWidth, 7, deviceID);
+    }
+
   private:
     CompileErrorCode errCode;
     bool ifEndifFix;

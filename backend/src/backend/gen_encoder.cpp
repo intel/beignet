@@ -223,8 +223,8 @@ namespace gbe
   //////////////////////////////////////////////////////////////////////////
   // Gen Emitter encoding class
   //////////////////////////////////////////////////////////////////////////
-  GenEncoder::GenEncoder(uint32_t simdWidth, uint32_t gen, uint32_t deviceID) :
-    stateNum(0), gen(gen), deviceID(deviceID)
+  GenEncoder::GenEncoder(uint32_t simdWidth, uint32_t gen, uint32_t deviceID, int jump_width) :
+    stateNum(0), gen(gen), deviceID(deviceID), jump_width(jump_width)
   {
     this->curr.execWidth = simdWidth;
     this->curr.quarterControl = GEN_COMPRESSION_Q1;
