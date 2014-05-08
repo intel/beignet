@@ -84,6 +84,9 @@ namespace gbe
   /*! Remove the GEP instructions */
   llvm::BasicBlockPass *createRemoveGEPPass(const ir::Unit &unit);
 
+  /*! Merge load/store if possible */
+  llvm::BasicBlockPass *createLoadStoreOptimizationPass();
+
   /*! Scalarize all vector op instructions */
   llvm::FunctionPass* createScalarizePass();
   /*! Remove/add NoDuplicate function attribute for barrier functions. */

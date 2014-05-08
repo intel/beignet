@@ -187,7 +187,7 @@ namespace gbe
     runModulePass(mod, libraryInfo, optLevel);
 
     llvm::PassManager passes;
-
+    passes.add(new DataLayout(&mod));
     // Print the code before further optimizations
     if (OCL_OUTPUT_LLVM_BEFORE_EXTRA_PASS)
 #if LLVM_VERSION_MAJOR == 3 && LLVM_VERSION_MINOR >= 5
@@ -198,6 +198,7 @@ namespace gbe
     passes.add(createIntrinsicLoweringPass());
     passes.add(createFunctionInliningPass(200000));
     passes.add(createScalarReplAggregatesPass()); // Break up allocas
+    passes.add(createLoadStoreOptimizationPass());
     passes.add(createRemoveGEPPass(unit));
     passes.add(createConstantPropagationPass());
     passes.add(createLowerSwitchPass());
