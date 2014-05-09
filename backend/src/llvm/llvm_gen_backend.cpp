@@ -1402,6 +1402,18 @@ namespace gbe
   BVAR(OCL_OPTIMIZE_PHI_MOVES, true);
   BVAR(OCL_OPTIMIZE_LOADI, true);
 
+  static const Instruction *getInstructionUseLocal(const Value *v) {
+    // Local variable can only be used in one kernel function. So, if we find
+    // one instruction that use the local variable, simply return.
+    const Instruction *insn = NULL;
+    for(Value::const_use_iterator iter = v->use_begin(); iter != v->use_end(); ++iter) {
+      if(isa<Instruction>(*iter)) return cast<const Instruction>(*iter);
+      insn = getInstructionUseLocal(*iter);
+      if(insn != NULL) break;
+    }
+    return insn;
+  }
+
   void GenWriter::allocateGlobalVariableRegister(Function &F)
   {
     // Allocate a address register for each global variable
@@ -1414,18 +1426,9 @@ namespace gbe
       ir::AddressSpace addrSpace = addressSpaceLLVMToGen(v.getType()->getAddressSpace());
       if(addrSpace == ir::MEM_LOCAL) {
         const Value * val = cast<Value>(&v);
-        // local variable can only be used in one kernel function. so, don't need to check its all uses.
-        // loop through the Constant to find the instruction that use the global variable
-        // FIXME need to find a more grace way to find the function which use this local data.
-        const Instruction * insn = NULL;
-        for( Value::const_use_iterator it = val->use_begin(), prev = val->use_begin();
-             it != prev->use_end() && insn == NULL;
-             prev = it, it = it->use_begin() )
-          for( Value::const_use_iterator innerIt = it;
-               innerIt != val->use_end() && insn == NULL;
-               innerIt++)
-            insn = dyn_cast<Instruction>(*innerIt);
+        const Instruction *insn = getInstructionUseLocal(val);
         GBE_ASSERT(insn && "Can't find a valid reference instruction for local variable.");
+
         const BasicBlock * bb = insn->getParent();
         const Function * func = bb->getParent();
         if(func != &F) continue;
