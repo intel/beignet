@@ -502,6 +502,27 @@ static const uint32_t tilex_h = 8;    /* tileX height in number of rows */
 static const uint32_t tiley_w = 128;  /* tileY width in bytes */
 static const uint32_t tiley_h = 32;   /* tileY height in number of rows */
 
+cl_image_tiling_t cl_get_default_tiling(void)
+{
+  static int initialized = 0;
+  static cl_image_tiling_t tiling = CL_TILE_X;
+  if (!initialized) {
+    char *tilingStr = getenv("OCL_TILING");
+    if (tilingStr != NULL) {
+      switch (tilingStr[0]) {
+        case '0': tiling = CL_NO_TILE; break;
+        case '1': tiling = CL_TILE_X; break;
+        case '2': tiling = CL_TILE_Y; break;
+        default:
+          break;
+      }
+    }
+    initialized = 1;
+  }
+
+  return tiling;
+}
+
 static cl_mem
 _cl_mem_new_image(cl_context ctx,
                   cl_mem_flags flags,
@@ -558,7 +579,7 @@ _cl_mem_new_image(cl_context ctx,
 
     /* Pick up tiling mode (we do only linear on SNB) */
     if (cl_driver_get_ver(ctx->drv) != 6)
-      tiling = CL_TILE_Y;
+      tiling = cl_get_default_tiling();
     depth = 1;
   }
 
@@ -579,7 +600,7 @@ _cl_mem_new_image(cl_context ctx,
 
     /* Pick up tiling mode (we do only linear on SNB) */
     if (cl_driver_get_ver(ctx->drv) != 6)
-      tiling = CL_TILE_Y;
+      tiling = cl_get_default_tiling();
   }
 #undef DO_IMAGE_ERROR
 
