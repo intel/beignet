@@ -69,7 +69,7 @@ static struct _cl_device_id intel_baytrail_t_device = {
 };
 
 /* XXX we clone IVB for HSW now */
-static struct _cl_device_id intel_hsw_device = {
+static struct _cl_device_id intel_hsw_gt1_device = {
   INIT_ICD(dispatch)
   .max_compute_unit = 64,
   .max_thread_per_unit = 8,
@@ -80,96 +80,129 @@ static struct _cl_device_id intel_hsw_device = {
 #include "cl_gen75_device.h"
 };
 
+static struct _cl_device_id intel_hsw_gt2_device = {
+  INIT_ICD(dispatch)
+  .max_compute_unit = 128,
+  .max_thread_per_unit = 8,
+  .max_work_item_sizes = {512, 512, 512},
+  .max_work_group_size = 512,
+  .max_clock_frequency = 1000,
+  .wg_sz = 1024,
+#include "cl_gen75_device.h"
+};
+
+static struct _cl_device_id intel_hsw_gt3_device = {
+  INIT_ICD(dispatch)
+  .max_compute_unit = 256,
+  .max_thread_per_unit = 8,
+  .max_work_item_sizes = {512, 512, 512},
+  .max_work_group_size = 512,
+  .max_clock_frequency = 1000,
+  .wg_sz = 2048,
+#include "cl_gen75_device.h"
+};
+
 LOCAL cl_device_id
 cl_get_gt_device(void)
 {
   cl_device_id ret = NULL;
   cl_set_thread_batch_buf(NULL);
   const int device_id = cl_driver_get_device_id();
+  cl_device_id device = NULL;
 
 #define DECL_INFO_STRING(BREAK, STRUCT, FIELD, STRING) \
     STRUCT.FIELD = STRING; \
     STRUCT.JOIN(FIELD,_sz) = sizeof(STRING); \
+    device = &STRUCT; \
     goto BREAK;
 
   switch (device_id) {
     case PCI_CHIP_HASWELL_D1:
-      DECL_INFO_STRING(has_break, intel_hsw_device, name, "Intel(R) HD Graphics Haswell M");
+      DECL_INFO_STRING(has_break, intel_hsw_gt1_device, name, "Intel(R) HD Graphics Haswell GT1 Desktop");
     case PCI_CHIP_HASWELL_D2:
-      DECL_INFO_STRING(has_break, intel_hsw_device, name, "Intel(R) HD Graphics Haswell M");
+      DECL_INFO_STRING(has_break, intel_hsw_gt2_device, name, "Intel(R) HD Graphics Haswell GT2 Desktop");
     case PCI_CHIP_HASWELL_D3:
-      DECL_INFO_STRING(has_break, intel_hsw_device, name, "Intel(R) HD Graphics Haswell M");
+      DECL_INFO_STRING(has_break, intel_hsw_gt3_device, name, "Intel(R) HD Graphics Haswell GT3 Desktop");
     case PCI_CHIP_HASWELL_S1:
-      DECL_INFO_STRING(has_break, intel_hsw_device, name, "Intel(R) HD Graphics Haswell M");
+      DECL_INFO_STRING(has_break, intel_hsw_gt1_device, name, "Intel(R) HD Graphics Haswell GT1 Server");
     case PCI_CHIP_HASWELL_S2:
-      DECL_INFO_STRING(has_break, intel_hsw_device, name, "Intel(R) HD Graphics Haswell M");
+      DECL_INFO_STRING(has_break, intel_hsw_gt2_device, name, "Intel(R) HD Graphics Haswell GT2 Server");
     case PCI_CHIP_HASWELL_S3:
-      DECL_INFO_STRING(has_break, intel_hsw_device, name, "Intel(R) HD Graphics Haswell M");
+      DECL_INFO_STRING(has_break, intel_hsw_gt3_device, name, "Intel(R) HD Graphics Haswell GT3 Server");
     case PCI_CHIP_HASWELL_M1:
-      DECL_INFO_STRING(has_break, intel_hsw_device, name, "Intel(R) HD Graphics Haswell M");
+      DECL_INFO_STRING(has_break, intel_hsw_gt1_device, name, "Intel(R) HD Graphics Haswell GT1 Mobile");
     case PCI_CHIP_HASWELL_M2:
-      DECL_INFO_STRING(has_break, intel_hsw_device, name, "Intel(R) HD Graphics Haswell M");
+      DECL_INFO_STRING(has_break, intel_hsw_gt2_device, name, "Intel(R) HD Graphics Haswell GT2 Mobile");
     case PCI_CHIP_HASWELL_M3:
-      DECL_INFO_STRING(has_break, intel_hsw_device, name, "Intel(R) HD Graphics Haswell M");
+      DECL_INFO_STRING(has_break, intel_hsw_gt3_device, name, "Intel(R) HD Graphics Haswell GT3 Mobile");
     case PCI_CHIP_HASWELL_SDV_D1:
-      DECL_INFO_STRING(has_break, intel_hsw_device, name, "Intel(R) HD Graphics Haswell M");
+      DECL_INFO_STRING(has_break, intel_hsw_gt1_device, name, "Intel(R) HD Graphics Haswell"
+                                                           " Software Development Vehicle device GT1 Desktop");
     case PCI_CHIP_HASWELL_SDV_D2:
-      DECL_INFO_STRING(has_break, intel_hsw_device, name, "Intel(R) HD Graphics Haswell M");
+      DECL_INFO_STRING(has_break, intel_hsw_gt2_device, name, "Intel(R) HD Graphics Haswell"
+                                                           " Software Development Vehicle device GT2 Desktop");
     case PCI_CHIP_HASWELL_SDV_D3:
-      DECL_INFO_STRING(has_break, intel_hsw_device, name, "Intel(R) HD Graphics Haswell M");
+      DECL_INFO_STRING(has_break, intel_hsw_gt3_device, name, "Intel(R) HD Graphics Haswell"
+                                                           " Software Development Vehicle device GT3 Desktop");
     case PCI_CHIP_HASWELL_SDV_S1:
-      DECL_INFO_STRING(has_break, intel_hsw_device, name, "Intel(R) HD Graphics Haswell M");
+      DECL_INFO_STRING(has_break, intel_hsw_gt1_device, name, "Intel(R) HD Graphics Haswell"
+                                                           " Software Development Vehicle device GT1 Server");
     case PCI_CHIP_HASWELL_SDV_S2:
-      DECL_INFO_STRING(has_break, intel_hsw_device, name, "Intel(R) HD Graphics Haswell M");
+      DECL_INFO_STRING(has_break, intel_hsw_gt2_device, name, "Intel(R) HD Graphics Haswell"
+                                                           " Software Development Vehicle device GT2 Server");
     case PCI_CHIP_HASWELL_SDV_S3:
-      DECL_INFO_STRING(has_break, intel_hsw_device, name, "Intel(R) HD Graphics Haswell M");
+      DECL_INFO_STRING(has_break, intel_hsw_gt3_device, name, "Intel(R) HD Graphics Haswell"
+                                                           " Software Development Vehicle device GT3 Server");
     case PCI_CHIP_HASWELL_SDV_M1:
-      DECL_INFO_STRING(has_break, intel_hsw_device, name, "Intel(R) HD Graphics Haswell M");
+      DECL_INFO_STRING(has_break, intel_hsw_gt1_device, name, "Intel(R) HD Graphics Haswell"
+                                                           " Software Development Vehicle device GT1 Mobile");
     case PCI_CHIP_HASWELL_SDV_M2:
-      DECL_INFO_STRING(has_break, intel_hsw_device, name, "Intel(R) HD Graphics Haswell M");
+      DECL_INFO_STRING(has_break, intel_hsw_gt2_device, name, "Intel(R) HD Graphics Haswell"
+                                                           " Software Development Vehicle device GT2 Mobile");
     case PCI_CHIP_HASWELL_SDV_M3:
-      DECL_INFO_STRING(has_break, intel_hsw_device, name, "Intel(R) HD Graphics Haswell M");
+      DECL_INFO_STRING(has_break, intel_hsw_gt3_device, name, "Intel(R) HD Graphics Haswell"
+                                                           " Software Development Vehicle device GT3 Mobile");
     case PCI_CHIP_HASWELL_ULT_D1:
-      DECL_INFO_STRING(has_break, intel_hsw_device, name, "Intel(R) HD Graphics Haswell M");
+      DECL_INFO_STRING(has_break, intel_hsw_gt1_device, name, "Intel(R) HD Graphics Haswell Ultrabook GT1 Desktop");
     case PCI_CHIP_HASWELL_ULT_D2:
-      DECL_INFO_STRING(has_break, intel_hsw_device, name, "Intel(R) HD Graphics Haswell M");
+      DECL_INFO_STRING(has_break, intel_hsw_gt2_device, name, "Intel(R) HD Graphics Haswell Ultrabook GT2 Desktop");
     case PCI_CHIP_HASWELL_ULT_D3:
-      DECL_INFO_STRING(has_break, intel_hsw_device, name, "Intel(R) HD Graphics Haswell M");
+      DECL_INFO_STRING(has_break, intel_hsw_gt3_device, name, "Intel(R) HD Graphics Haswell Ultrabook GT3 Desktop");
     case PCI_CHIP_HASWELL_ULT_S1:
-      DECL_INFO_STRING(has_break, intel_hsw_device, name, "Intel(R) HD Graphics Haswell M");
+      DECL_INFO_STRING(has_break, intel_hsw_gt1_device, name, "Intel(R) HD Graphics Haswell Ultrabook GT1 Server");
     case PCI_CHIP_HASWELL_ULT_S2:
-      DECL_INFO_STRING(has_break, intel_hsw_device, name, "Intel(R) HD Graphics Haswell M");
+      DECL_INFO_STRING(has_break, intel_hsw_gt2_device, name, "Intel(R) HD Graphics Haswell Ultrabook GT2 Server");
     case PCI_CHIP_HASWELL_ULT_S3:
-      DECL_INFO_STRING(has_break, intel_hsw_device, name, "Intel(R) HD Graphics Haswell M");
+      DECL_INFO_STRING(has_break, intel_hsw_gt3_device, name, "Intel(R) HD Graphics Haswell Ultrabook GT3 Server");
     case PCI_CHIP_HASWELL_ULT_M1:
-      DECL_INFO_STRING(has_break, intel_hsw_device, name, "Intel(R) HD Graphics Haswell M");
+      DECL_INFO_STRING(has_break, intel_hsw_gt1_device, name, "Intel(R) HD Graphics Haswell Ultrabook GT1 Mobile");
     case PCI_CHIP_HASWELL_ULT_M2:
-      DECL_INFO_STRING(has_break, intel_hsw_device, name, "Intel(R) HD Graphics Haswell M");
+      DECL_INFO_STRING(has_break, intel_hsw_gt2_device, name, "Intel(R) HD Graphics Haswell Ultrabook GT2 Mobile");
     case PCI_CHIP_HASWELL_ULT_M3:
-      DECL_INFO_STRING(has_break, intel_hsw_device, name, "Intel(R) HD Graphics Haswell M");
+      DECL_INFO_STRING(has_break, intel_hsw_gt3_device, name, "Intel(R) HD Graphics Haswell Ultrabook GT3 Mobile");
 	/* CRW */
     case PCI_CHIP_HASWELL_CRW_D1:
-      DECL_INFO_STRING(has_break, intel_hsw_device, name, "Intel(R) HD Graphics Haswell M");
+      DECL_INFO_STRING(has_break, intel_hsw_gt1_device, name, "Intel(R) HD Graphics Haswell CRW GT1 Desktop");
     case PCI_CHIP_HASWELL_CRW_D2:
-      DECL_INFO_STRING(has_break, intel_hsw_device, name, "Intel(R) HD Graphics Haswell M");
+      DECL_INFO_STRING(has_break, intel_hsw_gt2_device, name, "Intel(R) HD Graphics Haswell CRW GT2 Desktop");
     case PCI_CHIP_HASWELL_CRW_D3:
-      DECL_INFO_STRING(has_break, intel_hsw_device, name, "Intel(R) HD Graphics Haswell M");
+      DECL_INFO_STRING(has_break, intel_hsw_gt3_device, name, "Intel(R) HD Graphics Haswell CRW GT3 Desktop");
     case PCI_CHIP_HASWELL_CRW_S1:
-      DECL_INFO_STRING(has_break, intel_hsw_device, name, "Intel(R) HD Graphics Haswell M");
+      DECL_INFO_STRING(has_break, intel_hsw_gt1_device, name, "Intel(R) HD Graphics Haswell CRW GT1 Server");
     case PCI_CHIP_HASWELL_CRW_S2:
-      DECL_INFO_STRING(has_break, intel_hsw_device, name, "Intel(R) HD Graphics Haswell M");
+      DECL_INFO_STRING(has_break, intel_hsw_gt2_device, name, "Intel(R) HD Graphics Haswell CRW GT2 Server");
     case PCI_CHIP_HASWELL_CRW_S3:
-      DECL_INFO_STRING(has_break, intel_hsw_device, name, "Intel(R) HD Graphics Haswell M");
+      DECL_INFO_STRING(has_break, intel_hsw_gt3_device, name, "Intel(R) HD Graphics Haswell CRW GT3 Server");
     case PCI_CHIP_HASWELL_CRW_M1:
-      DECL_INFO_STRING(has_break, intel_hsw_device, name, "Intel(R) HD Graphics Haswell M");
+      DECL_INFO_STRING(has_break, intel_hsw_gt1_device, name, "Intel(R) HD Graphics Haswell CRW GT1 Mobile");
     case PCI_CHIP_HASWELL_CRW_M2:
-      DECL_INFO_STRING(has_break, intel_hsw_device, name, "Intel(R) HD Graphics Haswell M");
+      DECL_INFO_STRING(has_break, intel_hsw_gt2_device, name, "Intel(R) HD Graphics Haswell CRW GT2 Mobile");
     case PCI_CHIP_HASWELL_CRW_M3:
-      DECL_INFO_STRING(has_break, intel_hsw_device, name, "Intel(R) HD Graphics Haswell M");
+      DECL_INFO_STRING(has_break, intel_hsw_gt3_device, name, "Intel(R) HD Graphics Haswell CRW GT3 Mobile");
 has_break:
-      intel_hsw_device.vendor_id = device_id;
-      intel_hsw_device.platform = intel_platform;
-      ret = &intel_hsw_device;
+      device->vendor_id = device_id;
+      device->platform = intel_platform;
+      ret = device;
       break;
 
     case PCI_CHIP_IVYBRIDGE_GT1:
@@ -285,7 +318,10 @@ cl_get_device_info(cl_device_id     device,
   if (UNLIKELY(device != &intel_ivb_gt1_device &&
                device != &intel_ivb_gt2_device &&
                device != &intel_baytrail_t_device &&
-               device != &intel_hsw_device))
+               device != &intel_hsw_gt1_device &&
+               device != &intel_hsw_gt2_device &&
+               device != &intel_hsw_gt3_device
+               ))
     return CL_INVALID_DEVICE;
 
   /* Find the correct parameter */
@@ -372,16 +408,22 @@ cl_device_get_version(cl_device_id device, cl_int *ver)
   if (UNLIKELY(device != &intel_ivb_gt1_device &&
                device != &intel_ivb_gt2_device &&
                device != &intel_baytrail_t_device &&
-               device != &intel_hsw_device))
+               device != &intel_hsw_gt1_device &&
+               device != &intel_hsw_gt2_device &&
+               device != &intel_hsw_gt3_device))
     return CL_INVALID_DEVICE;
   if (ver == NULL)
     return CL_SUCCESS;
   if (device == &intel_ivb_gt1_device || 
       device == &intel_ivb_gt2_device ||
-      device == &intel_baytrail_t_device)
+      device == &intel_baytrail_t_device) {
     *ver = 7;
-  else
+  } else if (device == &intel_hsw_gt1_device || device == &intel_hsw_gt2_device
+        || device == &intel_hsw_gt3_device) {
     *ver = 75;
+  } else
+    return CL_INVALID_VALUE;
+
   return CL_SUCCESS;
 }
 #undef DECL_FIELD
@@ -410,8 +452,11 @@ cl_get_kernel_workgroup_info(cl_kernel kernel,
 {
   int err = CL_SUCCESS;
   if (UNLIKELY(device != &intel_ivb_gt1_device &&
+               device != &intel_ivb_gt2_device &&
                device != &intel_baytrail_t_device &&
-               device != &intel_ivb_gt2_device))
+               device != &intel_hsw_gt1_device &&
+               device != &intel_hsw_gt2_device &&
+               device != &intel_hsw_gt3_device))
     return CL_INVALID_DEVICE;
 
   CHECK_KERNEL(kernel);
