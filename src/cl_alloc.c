@@ -71,6 +71,7 @@ cl_free(void *ptr)
     return;
   atomic_dec(&cl_alloc_n);
   free(ptr);
+  ptr = NULL;
 }
 
 LOCAL size_t

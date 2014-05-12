@@ -93,5 +93,9 @@ void cl_event_update_status(cl_event);
 cl_int cl_event_marker(cl_command_queue, cl_event*);
 /* Do the event profiling */
 cl_int cl_event_get_timestamp(cl_event event, cl_profiling_info param_name);
+/*insert the user event*/
+cl_int cl_event_insert_user_event(user_event** p_u_ev, cl_event event);
+/*remove the user event*/
+cl_int cl_event_remove_user_event(user_event** p_u_ev, cl_event event);
 #endif /* __CL_EVENT_H__ */
 

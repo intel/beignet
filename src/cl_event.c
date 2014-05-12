@@ -231,6 +231,9 @@ cl_int cl_event_wait_events(cl_uint num_events_in_wait_list, const cl_event *eve
   }
 
   if(queue && queue->barrier_index > 0) {
+    for(j=0; j<queue->wait_events_num; j++){
+      cl_event_add_ref(queue->wait_events[j]);  //add defer enqueue's wait event reference
+  }
     return CL_ENQUEUE_EXECUTE_DEFER;
   }
 
@@ -258,9 +261,10 @@ void cl_event_new_enqueue_callback(cl_event event,
   user_event *user_events, *u_ev;
   cl_command_queue queue = event->queue;
   cl_int i;
+  cl_int err = CL_SUCCESS;
   GET_QUEUE_THREAD_GPGPU(data->queue);
 
-  /* Allocate and inialize the structure itself */
+  /* Allocate and initialize the structure itself */
   TRY_ALLOC_NO_ERR (cb, CALLOC(enqueue_callback));
   cb->num_events = num_events_in_wait_list;
   TRY_ALLOC_NO_ERR (cb->wait_list, CALLOC_ARRAY(cl_event, num_events_in_wait_list));
@@ -276,22 +280,20 @@ void cl_event_new_enqueue_callback(cl_event event,
       node = queue->wait_events[i]->waits_head;
       if(node == NULL)
         queue->wait_events[i]->waits_head = cb;
-      else
+      else{
         while((node != cb) && node->next)
           node = node->next;
         if(node == cb)   //wait on dup user event
           continue;
         node->next = cb;
+      }
 
       /* Insert the user event to enqueue_callback's wait_user_events */
-      TRY_ALLOC_NO_ERR (u_ev, CALLOC(user_event));
-      u_ev->event = queue->wait_events[i];
-      u_ev->next = cb->wait_user_events;
-      cb->wait_user_events = u_ev;
+      TRY(cl_event_insert_user_event, &cb->wait_user_events, queue->wait_events[i]);
     }
   }
 
-  /* Find out all user events that events in event_wait_list wait */
+  /* Find out all user events that in event_wait_list wait */
   for(i=0; i<num_events_in_wait_list; i++) {
     if(event_wait_list[i]->status <= CL_COMPLETE)
       continue;
@@ -309,31 +311,29 @@ void cl_event_new_enqueue_callback(cl_event event,
         node->next = cb;
       }
       /* Insert the user event to enqueue_callback's wait_user_events */
-      TRY_ALLOC_NO_ERR (u_ev, CALLOC(user_event));
-      u_ev->event = event_wait_list[i];
-      u_ev->next = cb->wait_user_events;
-      cb->wait_user_events = u_ev;
+      TRY(cl_event_insert_user_event, &cb->wait_user_events, event_wait_list[i]);
       cl_command_queue_insert_event(event->queue, event_wait_list[i]);
     } else if(event_wait_list[i]->enqueue_cb != NULL) {
       user_events = event_wait_list[i]->enqueue_cb->wait_user_events;
       while(user_events != NULL) {
         /* Insert the enqueue_callback to user event's  waits_tail */
         node = user_events->event->waits_head;
-        while((node != cb) && node->next)
-          node = node->next;
-        if(node == cb) {  //wait on dup user event
-          user_events = user_events->next;
-          continue;
+        if(node == NULL)
+          event_wait_list[i]->waits_head = cb;
+        else{
+          while((node != cb) && node->next)
+            node = node->next;
+          if(node == cb) {  //wait on dup user event
+            user_events = user_events->next;
+            continue;
+          }
+          node->next = cb;
         }
-        node->next = cb;
 
         /* Insert the user event to enqueue_callback's wait_user_events */
-        TRY_ALLOC_NO_ERR (u_ev, CALLOC(user_event));
-        u_ev->event = user_events->event;
-        u_ev->next = cb->wait_user_events;
-        cb->wait_user_events = u_ev;
+        TRY(cl_event_insert_user_event, &cb->wait_user_events, user_events->event);
+        cl_command_queue_insert_event(event->queue, user_events->event);
         user_events = user_events->next;
-        cl_command_queue_insert_event(event->queue, event_wait_list[i]);
       }
     }
   }
@@ -363,7 +363,6 @@ error:
 void cl_event_set_status(cl_event event, cl_int status)
 {
   user_callback *user_cb;
-  user_event    *u_ev, *u_ev_next;
   cl_int ret, i;
   cl_event evt;
 
@@ -419,23 +418,8 @@ void cl_event_set_status(cl_event event, cl_int status)
   /* Check all defer enqueue */
   enqueue_callback *cb, *enqueue_cb = event->waits_head;
   while(enqueue_cb) {
-    /* Remove this user event in enqueue_cb */
-    while(enqueue_cb->wait_user_events &&
-          enqueue_cb->wait_user_events->event == event) {
-      u_ev = enqueue_cb->wait_user_events;
-      enqueue_cb->wait_user_events = enqueue_cb->wait_user_events->next;
-      cl_free(u_ev);
-    }
-
-    u_ev = enqueue_cb->wait_user_events;
-    while(u_ev) {
-      u_ev_next = u_ev->next;
-      if(u_ev_next && u_ev_next->event == event) {
-        u_ev->next = u_ev_next->next;
-        cl_free(u_ev_next);
-      } else
-        u_ev->next = u_ev_next;
-    }
+    /* Remove this user event in enqueue_cb, update the header if needed. */
+    cl_event_remove_user_event(&enqueue_cb->wait_user_events, event);
 
     /* Still wait on other user events */
     if(enqueue_cb->wait_user_events != NULL) {
@@ -448,7 +432,7 @@ void cl_event_set_status(cl_event event, cl_int status)
 
     /* All user events complete, now wait enqueue events */
     ret = cl_event_wait_events(enqueue_cb->num_events, enqueue_cb->wait_list,
-                               enqueue_cb->event->queue);
+        enqueue_cb->event->queue);
     ret = ret;
     assert(ret != CL_ENQUEUE_EXECUTE_DEFER);
 
@@ -523,4 +507,49 @@ cl_int cl_event_get_timestamp(cl_event event, cl_profiling_info param_name)
     return CL_SUCCESS;
   }
   return CL_INVALID_VALUE;
+}
+
+cl_int cl_event_insert_user_event(user_event** p_u_ev, cl_event event)
+{
+  user_event * u_iter = *p_u_ev;
+  user_event * u_ev;
+
+  while(u_iter)
+  {
+    if(u_iter->event == event)
+      return CL_SUCCESS;
+    u_iter = u_iter->next;
+  }
+
+  TRY_ALLOC_NO_ERR (u_ev, CALLOC(user_event));
+  u_ev->event = event;
+  u_ev->next = *p_u_ev;
+  *p_u_ev = u_ev;
+
+
+  return CL_SUCCESS;
+error:
+  return CL_FALSE;
+}
+
+cl_int cl_event_remove_user_event(user_event** p_u_ev, cl_event event)
+{
+  user_event * u_iter = *p_u_ev;
+  user_event * u_prev = *p_u_ev;
+
+  while(u_iter){
+    if(u_iter->event == event ){
+      if(u_iter == *p_u_ev){
+        *p_u_ev = u_iter->next;
+      }else{
+        u_prev->next = u_iter->next;
+      }
+      cl_free(u_iter);
+      break;
+    }
+    u_prev = u_iter;
+    u_iter = u_iter->next;
+  }
+
+  return CL_SUCCESS;
 }
