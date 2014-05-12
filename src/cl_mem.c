@@ -952,33 +952,19 @@ cl_mem_copy_buffer_rect(cl_command_queue queue, cl_mem src_buf, cl_mem dst_buf,
   global_sz[0] = ((region[0] + local_sz[0] - 1) / local_sz[0]) * local_sz[0];
   global_sz[1] = ((region[1] + local_sz[1] - 1) / local_sz[1]) * local_sz[1];
   global_sz[2] = ((region[2] + local_sz[2] - 1) / local_sz[2]) * local_sz[2];
-  cl_int index = CL_ENQUEUE_COPY_BUFFER_RECT;
   cl_int src_offset = src_origin[2]*src_slice_pitch + src_origin[1]*src_row_pitch + src_origin[0];
   cl_int dst_offset = dst_origin[2]*dst_slice_pitch + dst_origin[1]*dst_row_pitch + dst_origin[0];
-
-  static const char *str_kernel =
-      "kernel void __cl_cpy_buffer_rect ( \n"
-      "       global char* src, global char* dst, \n"
-      "       unsigned int region0, unsigned int region1, unsigned int region2, \n"
-      "       unsigned int src_offset, unsigned int dst_offset, \n"
-      "       unsigned int src_row_pitch, unsigned int src_slice_pitch, \n"
-      "       unsigned int dst_row_pitch, unsigned int dst_slice_pitch) { \n"
-      "  int i = get_global_id(0); \n"
-      "  int j = get_global_id(1); \n"
-      "  int k = get_global_id(2); \n"
-      "  if((i >= region0) || (j>= region1) || (k>=region2)) \n"
-      "    return; \n"
-      "  src_offset += k * src_slice_pitch + j * src_row_pitch + i; \n"
-      "  dst_offset += k * dst_slice_pitch + j * dst_row_pitch + i; \n"
-      "  dst[dst_offset] = src[src_offset]; \n"
-      "}";
-
 
   /* We use one kernel to copy the data. The kernel is lazily created. */
   assert(src_buf->ctx == dst_buf->ctx);
 
   /* setup the kernel and run. */
-  ker = cl_context_get_static_kernel(queue->ctx, index, str_kernel, NULL);
+  extern char cl_internal_copy_buf_rect_str[];
+  extern int cl_internal_copy_buf_rect_str_size;
+
+  ker = cl_context_get_static_kernel_form_bin(queue->ctx, CL_ENQUEUE_COPY_BUFFER_RECT,
+      cl_internal_copy_buf_rect_str, (size_t)cl_internal_copy_buf_rect_str_size, NULL);
+
   if (!ker)
     return CL_OUT_OF_RESOURCES;
 
@@ -1007,8 +993,6 @@ cl_mem_kernel_copy_image(cl_command_queue queue, struct _cl_mem_image* src_image
   size_t global_off[] = {0,0,0};
   size_t global_sz[] = {1,1,1};
   size_t local_sz[] = {LOCAL_SZ_0,LOCAL_SZ_1,LOCAL_SZ_2};
-  cl_int index = CL_ENQUEUE_COPY_IMAGE_0;
-  char option[40] = "";
   uint32_t fixupDataType;
   uint32_t savedIntelFmt;
 
@@ -1017,15 +1001,6 @@ cl_mem_kernel_copy_image(cl_command_queue queue, struct _cl_mem_image* src_image
   global_sz[0] = ((region[0] + local_sz[0] - 1) / local_sz[0]) * local_sz[0];
   global_sz[1] = ((region[1] + local_sz[1] - 1) / local_sz[1]) * local_sz[1];
   global_sz[2] = ((region[2] + local_sz[2] - 1) / local_sz[2]) * local_sz[2];
-
-  if(src_image->image_type == CL_MEM_OBJECT_IMAGE3D) {
-    strcat(option, "-D SRC_IMAGE_3D");
-    index += 1;
-  }
-  if(dst_image->image_type == CL_MEM_OBJECT_IMAGE3D) {
-    strcat(option, " -D DST_IMAGE_3D");
-    index += 2;
-  }
 
   switch (src_image->fmt.image_channel_data_type) {
     case CL_SNORM_INT8:
@@ -1049,54 +1024,41 @@ cl_mem_kernel_copy_image(cl_command_queue queue, struct _cl_mem_image* src_image
     src_image->intel_fmt = cl_image_get_intel_format(&fmt);
     dst_image->intel_fmt = src_image->intel_fmt;
   }
-  static const char *str_kernel =
-      "#ifdef SRC_IMAGE_3D \n"
-      "  #define SRC_IMAGE_TYPE image3d_t \n"
-      "  #define SRC_COORD_TYPE int4 \n"
-      "#else \n"
-      "  #define SRC_IMAGE_TYPE image2d_t \n"
-      "  #define SRC_COORD_TYPE int2 \n"
-      "#endif \n"
-      "#ifdef DST_IMAGE_3D \n"
-      "  #define DST_IMAGE_TYPE image3d_t \n"
-      "  #define DST_COORD_TYPE int4 \n"
-      "#else \n"
-      "  #define DST_IMAGE_TYPE image2d_t \n"
-      "  #define DST_COORD_TYPE int2 \n"
-      "#endif \n"
-      "kernel void __cl_copy_image ( \n"
-      "       __read_only SRC_IMAGE_TYPE src_image, __write_only DST_IMAGE_TYPE dst_image, \n"
-      "       unsigned int region0, unsigned int region1, unsigned int region2, \n"
-      "       unsigned int src_origin0, unsigned int src_origin1, unsigned int src_origin2, \n"
-      "       unsigned int dst_origin0, unsigned int dst_origin1, unsigned int dst_origin2) { \n"
-      "  int i = get_global_id(0); \n"
-      "  int j = get_global_id(1); \n"
-      "  int k = get_global_id(2); \n"
-      "  int4 color; \n"
-      "  const sampler_t sampler = CLK_NORMALIZED_COORDS_FALSE | CLK_ADDRESS_NONE | CLK_FILTER_NEAREST; \n"
-      "  SRC_COORD_TYPE src_coord; \n"
-      "  DST_COORD_TYPE dst_coord; \n"
-      "  if((i >= region0) || (j>= region1) || (k>=region2)) \n"
-      "    return; \n"
-      "  src_coord.x = src_origin0 + i; \n"
-      "  src_coord.y = src_origin1 + j; \n"
-      "#ifdef SRC_IMAGE_3D \n"
-      "  src_coord.z = src_origin2 + k; \n"
-      "#endif \n"
-      "  dst_coord.x = dst_origin0 + i; \n"
-      "  dst_coord.y = dst_origin1 + j; \n"
-      "#ifdef DST_IMAGE_3D \n"
-      "  dst_coord.z = dst_origin2 + k; \n"
-      "#endif \n"
-      "  color = read_imagei(src_image, sampler, src_coord); \n"
-      "  write_imagei(dst_image, dst_coord, color); \n"
-      "}";
 
   /* We use one kernel to copy the data. The kernel is lazily created. */
   assert(src_image->base.ctx == dst_image->base.ctx);
 
   /* setup the kernel and run. */
-  ker = cl_context_get_static_kernel(queue->ctx, index, str_kernel, option);
+  if(src_image->image_type == CL_MEM_OBJECT_IMAGE2D) {
+    if(dst_image->image_type == CL_MEM_OBJECT_IMAGE2D) {
+      extern char cl_internal_copy_image_2d_to_2d_str[];
+      extern int cl_internal_copy_image_2d_to_2d_str_size;
+
+      ker = cl_context_get_static_kernel_form_bin(queue->ctx, CL_ENQUEUE_COPY_IMAGE_2D_TO_2D,
+          cl_internal_copy_image_2d_to_2d_str, (size_t)cl_internal_copy_image_2d_to_2d_str_size, NULL);
+    }else if(dst_image->image_type == CL_MEM_OBJECT_IMAGE3D) {
+      extern char cl_internal_copy_image_2d_to_3d_str[];
+      extern int cl_internal_copy_image_2d_to_3d_str_size;
+
+      ker = cl_context_get_static_kernel_form_bin(queue->ctx, CL_ENQUEUE_COPY_IMAGE_2D_TO_3D,
+          cl_internal_copy_image_2d_to_3d_str, (size_t)cl_internal_copy_image_2d_to_3d_str_size, NULL);
+    }
+  }else if(src_image->image_type == CL_MEM_OBJECT_IMAGE3D) {
+    if(dst_image->image_type == CL_MEM_OBJECT_IMAGE2D) {
+      extern char cl_internal_copy_image_3d_to_2d_str[];
+      extern int cl_internal_copy_image_3d_to_2d_str_size;
+
+      ker = cl_context_get_static_kernel_form_bin(queue->ctx, CL_ENQUEUE_COPY_IMAGE_3D_TO_2D,
+          cl_internal_copy_image_3d_to_2d_str, (size_t)cl_internal_copy_image_3d_to_2d_str_size, NULL);
+    }else if(dst_image->image_type == CL_MEM_OBJECT_IMAGE3D) {
+      extern char cl_internal_copy_image_3d_to_3d_str[];
+      extern int cl_internal_copy_image_3d_to_3d_str_size;
+
+      ker = cl_context_get_static_kernel_form_bin(queue->ctx, CL_ENQUEUE_COPY_IMAGE_3D_TO_3D,
+          cl_internal_copy_image_3d_to_3d_str, (size_t)cl_internal_copy_image_3d_to_3d_str_size, NULL);
+    }
+  }
+
   if (!ker) {
     ret = CL_OUT_OF_RESOURCES;
     goto fail;
@@ -1132,8 +1094,6 @@ cl_mem_copy_image_to_buffer(cl_command_queue queue, struct _cl_mem_image* image,
   size_t global_off[] = {0,0,0};
   size_t global_sz[] = {1,1,1};
   size_t local_sz[] = {LOCAL_SZ_0,LOCAL_SZ_1,LOCAL_SZ_2};
-  cl_int index = CL_ENQUEUE_COPY_IMAGE_TO_BUFFER_0;
-  char option[40] = "";
   uint32_t intel_fmt, bpp;
   cl_image_format fmt;
   size_t origin0, region0;
@@ -1143,42 +1103,6 @@ cl_mem_copy_image_to_buffer(cl_command_queue queue, struct _cl_mem_image* image,
   global_sz[0] = ((region[0] + local_sz[0] - 1) / local_sz[0]) * local_sz[0];
   global_sz[1] = ((region[1] + local_sz[1] - 1) / local_sz[1]) * local_sz[1];
   global_sz[2] = ((region[2] + local_sz[2] - 1) / local_sz[2]) * local_sz[2];
-
-  if(image->image_type == CL_MEM_OBJECT_IMAGE3D) {
-    strcat(option, "-D IMAGE_3D");
-    index += 1;
-  }
-
-  static const char *str_kernel =
-      "#ifdef IMAGE_3D \n"
-      "  #define IMAGE_TYPE image3d_t \n"
-      "  #define COORD_TYPE int4 \n"
-      "#else \n"
-      "  #define IMAGE_TYPE image2d_t \n"
-      "  #define COORD_TYPE int2 \n"
-      "#endif \n"
-      "kernel void __cl_copy_image_to_buffer ( \n"
-      "       __read_only IMAGE_TYPE image, global uchar* buffer, \n"
-      "       unsigned int region0, unsigned int region1, unsigned int region2, \n"
-      "       unsigned int src_origin0, unsigned int src_origin1, unsigned int src_origin2, \n"
-      "       unsigned int dst_offset) { \n"
-      "  int i = get_global_id(0); \n"
-      "  int j = get_global_id(1); \n"
-      "  int k = get_global_id(2); \n"
-      "  uint4 color; \n"
-      "  const sampler_t sampler = CLK_NORMALIZED_COORDS_FALSE | CLK_ADDRESS_NONE | CLK_FILTER_NEAREST; \n"
-      "  COORD_TYPE src_coord; \n"
-      "  if((i >= region0) || (j>= region1) || (k>=region2)) \n"
-      "    return; \n"
-      "  src_coord.x = src_origin0 + i; \n"
-      "  src_coord.y = src_origin1 + j; \n"
-      "#ifdef IMAGE_3D \n"
-      "  src_coord.z = src_origin2 + k; \n"
-      "#endif \n"
-      "  color = read_imageui(image, sampler, src_coord); \n"
-      "  dst_offset += (k * region1 + j) * region0 + i; \n"
-      "  buffer[dst_offset] = color.x; \n"
-      "}";
 
   /* We use one kernel to copy the data. The kernel is lazily created. */
   assert(image->base.ctx == buffer->ctx);
@@ -1195,7 +1119,20 @@ cl_mem_copy_image_to_buffer(cl_command_queue queue, struct _cl_mem_image* image,
   global_sz[0] = ((region0 + local_sz[0] - 1) / local_sz[0]) * local_sz[0];
 
   /* setup the kernel and run. */
-  ker = cl_context_get_static_kernel(queue->ctx, index, str_kernel, option);
+  if(image->image_type == CL_MEM_OBJECT_IMAGE2D) {
+      extern char cl_internal_copy_image_2d_to_buffer_str[];
+      extern int cl_internal_copy_image_2d_to_buffer_str_size;
+
+      ker = cl_context_get_static_kernel_form_bin(queue->ctx, CL_ENQUEUE_COPY_IMAGE_2D_TO_BUFFER,
+          cl_internal_copy_image_2d_to_buffer_str, (size_t)cl_internal_copy_image_2d_to_buffer_str_size, NULL);
+  }else if(image->image_type == CL_MEM_OBJECT_IMAGE3D) {
+    extern char cl_internal_copy_image_3d_to_buffer_str[];
+    extern int cl_internal_copy_image_3d_to_buffer_str_size;
+
+    ker = cl_context_get_static_kernel_form_bin(queue->ctx, CL_ENQUEUE_COPY_IMAGE_3D_TO_BUFFER,
+          cl_internal_copy_image_3d_to_buffer_str, (size_t)cl_internal_copy_image_3d_to_buffer_str_size, NULL);
+  }
+
   if (!ker) {
     ret = CL_OUT_OF_RESOURCES;
     goto fail;
@@ -1231,8 +1168,6 @@ cl_mem_copy_buffer_to_image(cl_command_queue queue, cl_mem buffer, struct _cl_me
   size_t global_off[] = {0,0,0};
   size_t global_sz[] = {1,1,1};
   size_t local_sz[] = {LOCAL_SZ_0,LOCAL_SZ_1,LOCAL_SZ_2};
-  cl_int index = CL_ENQUEUE_COPY_BUFFER_TO_IMAGE_0;
-  char option[40] = "";
   uint32_t intel_fmt, bpp;
   cl_image_format fmt;
   size_t origin0, region0;
@@ -1242,41 +1177,6 @@ cl_mem_copy_buffer_to_image(cl_command_queue queue, cl_mem buffer, struct _cl_me
   global_sz[0] = ((region[0] + local_sz[0] - 1) / local_sz[0]) * local_sz[0];
   global_sz[1] = ((region[1] + local_sz[1] - 1) / local_sz[1]) * local_sz[1];
   global_sz[2] = ((region[2] + local_sz[2] - 1) / local_sz[2]) * local_sz[2];
-
-  if(image->image_type == CL_MEM_OBJECT_IMAGE3D) {
-    strcat(option, "-D IMAGE_3D");
-    index += 1;
-  }
-
-  static const char *str_kernel =
-      "#ifdef IMAGE_3D \n"
-      "  #define IMAGE_TYPE image3d_t \n"
-      "  #define COORD_TYPE int4 \n"
-      "#else \n"
-      "  #define IMAGE_TYPE image2d_t \n"
-      "  #define COORD_TYPE int2 \n"
-      "#endif \n"
-      "kernel void __cl_copy_image_to_buffer ( \n"
-      "       __read_only IMAGE_TYPE image, global uchar* buffer, \n"
-      "       unsigned int region0, unsigned int region1, unsigned int region2, \n"
-      "       unsigned int dst_origin0, unsigned int dst_origin1, unsigned int dst_origin2, \n"
-      "       unsigned int src_offset) { \n"
-      "  int i = get_global_id(0); \n"
-      "  int j = get_global_id(1); \n"
-      "  int k = get_global_id(2); \n"
-      "  uint4 color = (uint4)(0); \n"
-      "  COORD_TYPE dst_coord; \n"
-      "  if((i >= region0) || (j>= region1) || (k>=region2)) \n"
-      "    return; \n"
-      "  dst_coord.x = dst_origin0 + i; \n"
-      "  dst_coord.y = dst_origin1 + j; \n"
-      "#ifdef IMAGE_3D \n"
-      "  dst_coord.z = dst_origin2 + k; \n"
-      "#endif \n"
-      "  src_offset += (k * region1 + j) * region0 + i; \n"
-      "  color.x = buffer[src_offset]; \n"
-      "  write_imageui(image, dst_coord, color); \n"
-      "}";
 
   /* We use one kernel to copy the data. The kernel is lazily created. */
   assert(image->base.ctx == buffer->ctx);
@@ -1293,7 +1193,19 @@ cl_mem_copy_buffer_to_image(cl_command_queue queue, cl_mem buffer, struct _cl_me
   global_sz[0] = ((region0 + local_sz[0] - 1) / local_sz[0]) * local_sz[0];
 
   /* setup the kernel and run. */
-  ker = cl_context_get_static_kernel(queue->ctx, index, str_kernel, option);
+  if(image->image_type == CL_MEM_OBJECT_IMAGE2D) {
+      extern char cl_internal_copy_buffer_to_image_2d_str[];
+      extern int cl_internal_copy_buffer_to_image_2d_str_size;
+
+      ker = cl_context_get_static_kernel_form_bin(queue->ctx, CL_ENQUEUE_COPY_BUFFER_TO_IMAGE_2D,
+          cl_internal_copy_buffer_to_image_2d_str, (size_t)cl_internal_copy_buffer_to_image_2d_str_size, NULL);
+  }else if(image->image_type == CL_MEM_OBJECT_IMAGE3D) {
+      extern char cl_internal_copy_buffer_to_image_3d_str[];
+      extern int cl_internal_copy_buffer_to_image_3d_str_size;
+
+      ker = cl_context_get_static_kernel_form_bin(queue->ctx, CL_ENQUEUE_COPY_BUFFER_TO_IMAGE_3D,
+          cl_internal_copy_buffer_to_image_3d_str, (size_t)cl_internal_copy_buffer_to_image_3d_str_size, NULL);
+  }
   if (!ker)
     return CL_OUT_OF_RESOURCES;
 

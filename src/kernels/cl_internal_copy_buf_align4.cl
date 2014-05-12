@@ -1,4 +1,4 @@
-kernel void __cl_cpy_region_align4 ( global float* src, unsigned int src_offset,
+kernel void __cl_copy_region_align4 ( global float* src, unsigned int src_offset,
                                      global float* dst, unsigned int dst_offset,
 				     unsigned int size)
 {

@@ -46,14 +46,14 @@ enum _cl_internal_ker_type {
   CL_ENQUEUE_COPY_BUFFER_UNALIGN_DST_OFFSET,
   CL_ENQUEUE_COPY_BUFFER_UNALIGN_SRC_OFFSET,
   CL_ENQUEUE_COPY_BUFFER_RECT,
-  CL_ENQUEUE_COPY_IMAGE_0,             //copy image 2d to image 2d
-  CL_ENQUEUE_COPY_IMAGE_1,             //copy image 3d to image 2d
-  CL_ENQUEUE_COPY_IMAGE_2,             //copy image 2d to image 3d
-  CL_ENQUEUE_COPY_IMAGE_3,             //copy image 3d to image 3d
-  CL_ENQUEUE_COPY_IMAGE_TO_BUFFER_0,   //copy image 2d to buffer
-  CL_ENQUEUE_COPY_IMAGE_TO_BUFFER_1,   //copy image 3d tobuffer
-  CL_ENQUEUE_COPY_BUFFER_TO_IMAGE_0,   //copy buffer to image 2d
-  CL_ENQUEUE_COPY_BUFFER_TO_IMAGE_1,   //copy buffer to image 3d
+  CL_ENQUEUE_COPY_IMAGE_2D_TO_2D,             //copy image 2d to image 2d
+  CL_ENQUEUE_COPY_IMAGE_3D_TO_2D,             //copy image 3d to image 2d
+  CL_ENQUEUE_COPY_IMAGE_2D_TO_3D,             //copy image 2d to image 3d
+  CL_ENQUEUE_COPY_IMAGE_3D_TO_3D,             //copy image 3d to image 3d
+  CL_ENQUEUE_COPY_IMAGE_2D_TO_BUFFER,   //copy image 2d to buffer
+  CL_ENQUEUE_COPY_IMAGE_3D_TO_BUFFER,   //copy image 3d tobuffer
+  CL_ENQUEUE_COPY_BUFFER_TO_IMAGE_2D,   //copy buffer to image 2d
+  CL_ENQUEUE_COPY_BUFFER_TO_IMAGE_3D,   //copy buffer to image 3d
   CL_INTERNAL_KERNEL_MAX
 };
 

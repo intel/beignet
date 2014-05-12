@@ -298,6 +298,8 @@ int main (int argc, const char **argv)
 
             gen_pci_id = (s[0] - '0') << 12 | (s[1] - '0') << 8 | (s[2] - '0') << 4 | (s[3] - '0');
             used_index[optind-1] = 1;
+            // We must set the image base index here, as we invoke the backend in a non-standard way.
+            gbe_set_image_base_index(3);
             break;
         }
 

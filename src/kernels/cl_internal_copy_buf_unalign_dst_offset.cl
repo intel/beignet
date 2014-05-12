@@ -1,4 +1,4 @@
-kernel void __cl_cpy_region_unalign_dst_offset ( global int* src, unsigned int src_offset,
+kernel void __cl_copy_region_unalign_dst_offset ( global int* src, unsigned int src_offset,
                                      global int* dst, unsigned int dst_offset,
 				     unsigned int size,
 				     unsigned int first_mask, unsigned int last_mask,

@@ -23,11 +23,30 @@ foreach (KF ${KERNEL_FILES})
 endforeach (KF)
 endmacro (MakeKernelBinStr)
 
+macro (MakeBuiltInKernelStr KERNEL_PATH KERNEL_FILES)
+  set (output_file ${KERNEL_PATH}/${BUILT_IN_NAME}.cl)
+  set (file_content)
+  file (REMOVE ${output_file})
+  foreach (KF ${KERNEL_NAMES})
+    set (input_file ${KERNEL_PATH}/${KF}.cl)
+    file(READ ${input_file} file_content )
+    STRING(REGEX REPLACE ";" "\\\\;" file_content "${file_content}")
+    file(APPEND ${output_file} ${file_content})
+  endforeach (KF)
+endmacro (MakeBuiltInKernelStr)
+
 set (KERNEL_STR_FILES)
-set (KERNEL_NAMES cl_internal_copy_buf_align1 cl_internal_copy_buf_align4
+set (KERNEL_NAMES cl_internal_copy_buf_align4
 cl_internal_copy_buf_align16 cl_internal_copy_buf_unalign_same_offset
-cl_internal_copy_buf_unalign_dst_offset cl_internal_copy_buf_unalign_src_offset)
+cl_internal_copy_buf_unalign_dst_offset cl_internal_copy_buf_unalign_src_offset
+cl_internal_copy_buf_rect cl_internal_copy_image_2d_to_2d cl_internal_copy_image_3d_to_2d
+cl_internal_copy_image_2d_to_3d cl_internal_copy_image_3d_to_3d
+cl_internal_copy_image_2d_to_buffer cl_internal_copy_image_3d_to_buffer
+cl_internal_copy_buffer_to_image_2d cl_internal_copy_buffer_to_image_3d)
+set (BUILT_IN_NAME  cl_internal_built_in_kernel)
+MakeBuiltInKernelStr ("${CMAKE_CURRENT_SOURCE_DIR}/kernels/" "${KERNEL_NAMES}")
 MakeKernelBinStr ("${CMAKE_CURRENT_SOURCE_DIR}/kernels/" "${KERNEL_NAMES}")
+MakeKernelBinStr ("${CMAKE_CURRENT_SOURCE_DIR}/kernels/" "${BUILT_IN_NAME}")
 
 set(OPENCL_SRC
     ${KERNEL_STR_FILES}
