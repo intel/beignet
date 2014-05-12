@@ -324,8 +324,6 @@ namespace gbe
     /*! Implement public class */
     INLINE uint32_t getRegNum(void) const { return file.regNum(); }
     /*! Implements public interface */
-    bool isScalarOrBool(ir::Register reg) const;
-    /*! Implements public interface */
     INLINE ir::RegisterData getRegisterData(ir::Register reg) const {
       return file.get(reg);
     }
@@ -858,7 +856,7 @@ namespace gbe
     SelectionInstruction *mov = this->create(SEL_OP_MOV, 1, 1);
     mov->src(0) = GenRegister::retype(insn->src(regID), GEN_TYPE_F);
     mov->state = GenInstructionState(simdWidth);
-    if (this->isScalarOrBool(insn->src(regID).reg()))
+    if (this->isScalarReg(insn->src(regID).reg()))
       mov->state.noMask = 1;
     insn->src(regID) = mov->dst(0) = GenRegister::fxgrf(simdWidth, tmp);
     insn->prepend(*mov);
@@ -868,7 +866,7 @@ namespace gbe
 
   ir::Register Selection::Opaque::replaceDst(SelectionInstruction *insn, uint32_t regID) {
     SelectionBlock *block = insn->parent;
-    uint32_t simdWidth = this->isScalarOrBool(insn->dst(regID).reg()) ? 1 : insn->state.execWidth;
+    uint32_t simdWidth = this->isScalarReg(insn->dst(regID).reg()) ? 1 : insn->state.execWidth;
     ir::Register tmp;
     ir::RegisterFamily f = file.get(insn->dst(regID).reg()).family;
     int genType = f == ir::FAMILY_QWORD ? GEN_TYPE_DF : GEN_TYPE_F;
@@ -890,14 +888,8 @@ namespace gbe
     return tmp;
   }
 
-  bool Selection::Opaque::isScalarOrBool(ir::Register reg) const {
-    if (isScalarReg(reg))
-      return true;
-    return false;
-  }
-
 #define SEL_REG(SIMD16, SIMD8, SIMD1) \
-  if (ctx.sel->isScalarOrBool(reg) == true) \
+  if (ctx.sel->isScalarReg(reg) == true) \
     return GenRegister::retype(GenRegister::SIMD1(reg), genType); \
   else if (simdWidth == 8) \
     return GenRegister::retype(GenRegister::SIMD8(reg), genType); \
@@ -1071,7 +1063,7 @@ namespace gbe
     SelectionInstruction *insn = this->appendInsn(SEL_OP_UNTYPED_READ, elemNum, 1);
     SelectionVector *srcVector = this->appendVector();
     SelectionVector *dstVector = this->appendVector();
-    if (this->isScalarOrBool(dst[0].reg()))
+    if (this->isScalarReg(dst[0].reg()))
       insn->state.noMask = 1;
     // Regular instruction to encode
     for (uint32_t elemID = 0; elemID < elemNum; ++elemID)
@@ -1143,7 +1135,7 @@ namespace gbe
     SelectionVector *srcVector = this->appendVector();
     SelectionVector *dstVector = this->appendVector();
 
-    if (this->isScalarOrBool(dst.reg()))
+    if (this->isScalarReg(dst.reg()))
       insn->state.noMask = 1;
     // Instruction to encode
     insn->src(0) = addr;
@@ -1182,7 +1174,7 @@ namespace gbe
     SelectionVector *vector = this->appendVector();
     SelectionVector *srcVector = this->appendVector();
 
-    if (this->isScalarOrBool(dst.reg()))
+    if (this->isScalarReg(dst.reg()))
       insn->state.noMask = 1;
     insn->src(0) = addr;
     insn->dst(0) = dst;
@@ -1613,10 +1605,6 @@ namespace gbe
     this->blockList = &this->opaque->blockList;
   }
 
-  bool Selection::isScalarOrBool(ir::Register reg) const {
-    return this->opaque->isScalarOrBool(reg);
-  }
-
   uint32_t Selection::getLargestBlockSize(void) const {
     return this->opaque->getLargestBlockSize();
   }
@@ -1737,7 +1725,7 @@ namespace gbe
       const GenRegister dst = sel.selReg(insn.getDst(0), getType(opcode, insnType));
       const GenRegister src = sel.selReg(insn.getSrc(0), getType(opcode, insnType));
       sel.push();
-        if (sel.isScalarOrBool(insn.getDst(0)) == true) {
+        if (sel.isScalarReg(insn.getDst(0)) == true) {
           sel.curr.execWidth = 1;
           sel.curr.predicate = GEN_PREDICATE_NONE;
           sel.curr.noMask = 1;
@@ -1932,7 +1920,7 @@ namespace gbe
       sel.push();
 
       // Boolean values use scalars
-      if (sel.isScalarOrBool(insn.getDst(0)) == true) {
+      if (sel.isScalarReg(insn.getDst(0)) == true) {
         sel.curr.execWidth = 1;
         sel.curr.predicate = GEN_PREDICATE_NONE;
         sel.curr.noMask = 1;
@@ -2279,7 +2267,7 @@ namespace gbe
       if(opcode == OP_ORD) return false;
       const uint32_t genCmp = getGenCompare(opcode);
       sel.push();
-        if (sel.isScalarOrBool(insn.getDst(0)) == true) {
+        if (sel.isScalarReg(insn.getDst(0)) == true) {
           sel.curr.execWidth = 1;
           sel.curr.predicate = GEN_PREDICATE_NONE;
           sel.curr.noMask = 1;
@@ -2323,7 +2311,7 @@ namespace gbe
       const Type type = insn.getType();
       if (type == TYPE_U32 || type == TYPE_S32) {
         sel.push();
-          if (sel.isScalarOrBool(insn.getDst(0)) == true) {
+          if (sel.isScalarReg(insn.getDst(0)) == true) {
             sel.curr.execWidth = 1;
             sel.curr.predicate = GEN_PREDICATE_NONE;
             sel.curr.noMask = 1;
@@ -2416,7 +2404,7 @@ namespace gbe
           GBE_ASSERT(type == TYPE_U32 || type == TYPE_S32);
           if (type == TYPE_U32 && imm.data.u32 <= 0xffff) {
             sel.push();
-              if (sel.isScalarOrBool(insn.getDst(0)) == true) {
+              if (sel.isScalarReg(insn.getDst(0)) == true) {
                 sel.curr.execWidth = 1;
                 sel.curr.predicate = GEN_PREDICATE_NONE;
                 sel.curr.noMask = 1;
@@ -2432,7 +2420,7 @@ namespace gbe
           }
           if (type == TYPE_S32 && (imm.data.s32 >= -32768 && imm.data.s32 <= 32767)) {
             sel.push();
-              if (sel.isScalarOrBool(insn.getDst(0)) == true) {
+              if (sel.isScalarReg(insn.getDst(0)) == true) {
                 sel.curr.execWidth = 1;
                 sel.curr.predicate = GEN_PREDICATE_NONE;
                 sel.curr.noMask = 1;
@@ -2461,7 +2449,7 @@ namespace gbe
       const Register src1 = insn.getSrc(childID ^ 1);
       if (is16BitSpecialReg(src0)) {
         sel.push();
-          if (sel.isScalarOrBool(insn.getDst(0)) == true) {
+          if (sel.isScalarReg(insn.getDst(0)) == true) {
             sel.curr.execWidth = 1;
             sel.curr.predicate = GEN_PREDICATE_NONE;
             sel.curr.noMask = 1;
@@ -2517,7 +2505,7 @@ namespace gbe
       const GenRegister dst = sel.selReg(insn.getDst(0), type);
 
       sel.push();
-      if (sel.isScalarOrBool(insn.getDst(0)) == true) {
+      if (sel.isScalarReg(insn.getDst(0)) == true) {
         sel.curr.execWidth = 1;
         sel.curr.predicate = GEN_PREDICATE_NONE;
         sel.curr.noMask = 1;
@@ -2525,7 +2513,7 @@ namespace gbe
 
       switch (type) {
         case TYPE_BOOL:
-          if (!sel.isScalarOrBool(insn.getDst(0))) {
+          if (!sel.isScalarReg(insn.getDst(0))) {
             sel.curr.modFlag = 1;
             sel.curr.physicalFlag = 0;
             sel.curr.flagIndex = (uint16_t) insn.getDst(0);
@@ -2616,7 +2604,7 @@ namespace gbe
     {
       using namespace ir;
       const uint32_t valueNum = insn.getValueNum();
-      const uint32_t simdWidth = sel.isScalarOrBool(insn.getValue(0)) ? 1 : sel.ctx.getSimdWidth();
+      const uint32_t simdWidth = sel.isScalarReg(insn.getValue(0)) ? 1 : sel.ctx.getSimdWidth();
       GBE_ASSERT(valueNum == 1);
       GenRegister dst = GenRegister::retype(sel.selReg(insn.getValue(0)), GEN_TYPE_F);
       // get dword based address
@@ -2662,7 +2650,7 @@ namespace gbe
     {
       using namespace ir;
       const uint32_t valueNum = insn.getValueNum();
-      const uint32_t simdWidth = sel.isScalarOrBool(insn.getValue(0)) ?
+      const uint32_t simdWidth = sel.isScalarReg(insn.getValue(0)) ?
                                  1 : sel.ctx.getSimdWidth();
       if(valueNum > 1) {
         vector<GenRegister> dst(valueNum);
@@ -2933,7 +2921,7 @@ namespace gbe
       }
 
       sel.push();
-        if (sel.isScalarOrBool(dst))
+        if (sel.isScalarReg(dst))
           sel.curr.noMask = 1;
         sel.curr.physicalFlag = 0;
         sel.curr.modFlag = 1;
@@ -2957,7 +2945,7 @@ namespace gbe
               type == TYPE_DOUBLE || type == TYPE_FLOAT ||
               type == TYPE_U32 ||  type == TYPE_S32))
             sel.curr.flagGen = 1;
-          else if (sel.isScalarOrBool(dst)) {
+          else if (sel.isScalarReg(dst)) {
             // If the dest reg is a scalar bool, we can't set it as
             // dst register, as the execution width is still 8 or 16.
             // Instead, we set the needStoreBool to flagGen, and change
@@ -3063,7 +3051,7 @@ namespace gbe
       const GenRegister src = sel.selReg(insn.getSrc(0), srcType);
       const Opcode opcode = insn.getOpcode();
       sel.push();
-        if (sel.isScalarOrBool(insn.getDst(0)) == true) {
+        if (sel.isScalarReg(insn.getDst(0)) == true) {
           sel.curr.execWidth = 1;
           sel.curr.predicate = GEN_PREDICATE_NONE;
           sel.curr.noMask = 1;
@@ -3204,7 +3192,7 @@ namespace gbe
 
       const Register pred = insn.getPredicate();
       sel.push();
-        if (sel.isScalarOrBool(insn.getDst(0)) == true) {
+        if (sel.isScalarReg(insn.getDst(0)) == true) {
           sel.curr.execWidth = 1;
           sel.curr.predicate = GEN_PREDICATE_NONE;
           sel.curr.noMask = 1;

@@ -209,8 +209,6 @@ namespace gbe
     ~Selection(void);
     /*! Implements the instruction selection itself */
     void select(void);
-    /*! Bool and scalar register use scalar physical registers */
-    bool isScalarOrBool(ir::Register reg) const;
     /*! Get the number of instructions of the largest block */
     uint32_t getLargestBlockSize(void) const;
     /*! Number of register vectors in the selection */

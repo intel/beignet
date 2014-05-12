@@ -110,7 +110,7 @@ namespace gbe
       static const size_t familyVectorSize[] = {2,2,2,4,8};
       static const size_t familyScalarSize[] = {2,2,2,4,8};
       using namespace ir;
-      const bool isScalar = ctx.sel->isScalarOrBool(reg);
+      const bool isScalar = ctx.sel->isScalarReg(reg);
       const RegisterData regData = ctx.sel->getRegisterData(reg);
       const RegisterFamily family = regData.family;
       const uint32_t typeSize = isScalar ? familyScalarSize[family] : familyVectorSize[family];
@@ -286,7 +286,7 @@ namespace gbe
       // If an element has very long interval, we don't want to put it into a
       // vector as it will add more pressure to the register allocation.
       if (it == vectorMap.end() &&
-          ctx.sel->isScalarOrBool(reg) == false &&
+          ctx.sel->isScalarReg(reg) == false &&
           ctx.isSpecialReg(reg) == false &&
           (intervals[reg].maxID - intervals[reg].minID) < 2048)
       {
@@ -385,7 +385,7 @@ namespace gbe
                                           insn.opcode == SEL_OP_OR  ||  \
                                           insn.opcode == SEL_OP_XOR))
 
-  #define IS_SCALAR_FLAG(insn) selection.isScalarOrBool(ir::Register(insn.state.flagIndex))
+  #define IS_SCALAR_FLAG(insn) selection.isScalarReg(ir::Register(insn.state.flagIndex))
   #define GET_FLAG_REG(insn) GenRegister::uwxgrf(IS_SCALAR_FLAG(insn) ? 1 : 8,\
                                                  ir::Register(insn.state.flagIndex));
   #define IS_TEMP_FLAG(insn) (insn.state.flag == 0 && insn.state.subFlag == 1)
