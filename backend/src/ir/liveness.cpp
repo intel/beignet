@@ -76,10 +76,16 @@ namespace ir {
     // A destination is a killed value
     for (uint32_t dstID = 0; dstID < dstNum; ++dstID) {
       const Register reg = insn.getDst(dstID);
+      int opCode = insn.getOpcode();
+      // FIXME, ADDSAT and uniform vector should be supported.
       if (uniform &&
           fn.getRegisterFamily(reg) != ir::FAMILY_QWORD &&
           !info.bb.definedPhiRegs.contains(reg) &&
-          insn.getOpcode() != ir::OP_ATOMIC &&
+          opCode != ir::OP_ATOMIC &&
+          opCode != ir::OP_MUL_HI &&
+          opCode != ir::OP_HADD &&
+          opCode != ir::OP_RHADD &&
+          opCode != ir::OP_ADDSAT &&
           (dstNum == 1 || insn.getOpcode() != ir::OP_LOAD)
          )
         fn.setRegisterUniform(reg, true);
