@@ -228,6 +228,7 @@ namespace gbe
       for (uint32_t childID = 0; childID < childNum; ++childID)
         this->child[childID] = NULL;
       computeBool = false;
+      isUsed = false;
     }
     /*! Mergeable are non-root instructions with valid sources */
     INLINE void setAsMergeable(uint32_t which) { mergeable|=(1<<which); }
@@ -245,6 +246,8 @@ namespace gbe
     uint32_t isRoot:1;
     /*! A bool register is used as normal computing sources. */
     bool computeBool;
+    /*! is used in this block */
+    bool isUsed;
   };
 
   /*! A pattern is a tree to match. This is the general interface for them. For
@@ -1482,6 +1485,7 @@ namespace gbe
                    (insn.getOpcode() == OP_SEL && srcID != 0)))
               child->computeBool = true;
           }
+          child->isUsed = true;
         } else
           dag->child[srcID] = NULL;
       }
@@ -1841,8 +1845,10 @@ namespace gbe
               sel.MOV_DF(dst, src, sel.selReg(r));
             } else {
               sel.push();
-                if (sel.getRegisterFamily(insn.getDst(0)) == ir::FAMILY_BOOL) {
-                  sel.curr.physicalFlag = 0;
+                auto dag = sel.regDAG[insn.getDst(0)];
+                if (sel.getRegisterFamily(insn.getDst(0)) == ir::FAMILY_BOOL &&
+                    dag->isUsed) {
+                sel.curr.physicalFlag = 0;
                 sel.curr.flagIndex = (uint16_t)(insn.getDst(0));
                 sel.curr.modFlag = 1;
               }
@@ -2044,7 +2050,8 @@ namespace gbe
       bool inverse = false;
       sel.getSrcGenRegImm(dag, src0, src1, type, inverse);
       // Output the binary instruction
-      if (sel.getRegisterFamily(insn.getDst(0)) == ir::FAMILY_BOOL) {
+      if (sel.getRegisterFamily(insn.getDst(0)) == ir::FAMILY_BOOL &&
+          dag.isUsed) {
         GBE_ASSERT(insn.getOpcode() == OP_AND ||
                    insn.getOpcode() == OP_OR ||
                    insn.getOpcode() == OP_XOR);
@@ -2576,7 +2583,7 @@ namespace gbe
 
       switch (type) {
         case TYPE_BOOL:
-          if (!sel.isScalarReg(insn.getDst(0))) {
+          if (!sel.isScalarReg(insn.getDst(0)) && sel.regDAG[insn.getDst(0)]->isUsed) {
             sel.curr.modFlag = 1;
             sel.curr.physicalFlag = 0;
             sel.curr.flagIndex = (uint16_t) insn.getDst(0);
