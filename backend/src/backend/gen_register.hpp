@@ -491,22 +491,22 @@ namespace gbe
       return retype(vec1(file, reg), GEN_TYPE_UB);
     }
 
-    static INLINE GenRegister unpacked_uw(ir::Register reg) {
+    static INLINE GenRegister unpacked_uw(ir::Register reg, bool uniform = false) {
         return GenRegister(GEN_GENERAL_REGISTER_FILE,
                            reg,
                            GEN_TYPE_UW,
-                           GEN_VERTICAL_STRIDE_16,
-                           GEN_WIDTH_8,
-                           GEN_HORIZONTAL_STRIDE_2);
+                           uniform ? GEN_VERTICAL_STRIDE_0 : GEN_VERTICAL_STRIDE_16,
+                           uniform ? GEN_WIDTH_1 : GEN_WIDTH_8,
+                           uniform ? GEN_HORIZONTAL_STRIDE_0 : GEN_HORIZONTAL_STRIDE_2);
     }
 
-    static INLINE GenRegister unpacked_ub(ir::Register reg) {
+    static INLINE GenRegister unpacked_ub(ir::Register reg, bool uniform = false) {
       return GenRegister(GEN_GENERAL_REGISTER_FILE,
                          reg,
                          GEN_TYPE_UB,
-                         GEN_VERTICAL_STRIDE_32,
-                         GEN_WIDTH_8,
-                         GEN_HORIZONTAL_STRIDE_4);
+                         uniform ? GEN_VERTICAL_STRIDE_0 : GEN_VERTICAL_STRIDE_32,
+                         uniform ? GEN_WIDTH_1 : GEN_WIDTH_8,
+                         uniform ? GEN_HORIZONTAL_STRIDE_0 : GEN_HORIZONTAL_STRIDE_4);
     }
 
     static INLINE GenRegister imm(uint32_t type) {

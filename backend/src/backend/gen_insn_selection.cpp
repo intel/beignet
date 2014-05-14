@@ -324,6 +324,14 @@ namespace gbe
       const ir::RegisterData &regData = getRegisterData(reg);
       return regData.isUniform();
     }
+
+    INLINE GenRegister unpacked_uw(const ir::Register &reg) const {
+      return GenRegister::unpacked_uw(reg, isScalarReg(reg));
+    }
+
+    INLINE GenRegister unpacked_ub(const ir::Register &reg) const {
+      return GenRegister::unpacked_ub(reg, isScalarReg(reg));
+    }
     /*! Implement public class */
     INLINE uint32_t getRegNum(void) const { return file.regNum(); }
     /*! Implements public interface */
@@ -1873,7 +1881,7 @@ namespace gbe
       //bytes and shorts must be converted to int for DIV and REM per GEN restriction
       if((family == FAMILY_WORD || family == FAMILY_BYTE)) {
         GenRegister tmp0, tmp1;
-        ir::Register reg = sel.reg(FAMILY_DWORD);
+        ir::Register reg = sel.reg(FAMILY_DWORD, simdWidth == 1);
 
         tmp0 = GenRegister::udxgrf(simdWidth, reg);
         tmp0 = GenRegister::retype(tmp0, GEN_TYPE_D);
@@ -1886,9 +1894,9 @@ namespace gbe
         sel.MATH(tmp0, function, tmp0, tmp1);
         GenRegister unpacked;
         if(family == FAMILY_WORD) {
-          unpacked = GenRegister::unpacked_uw(reg);
+          unpacked = sel.unpacked_uw(reg);
         } else {
-          unpacked = GenRegister::unpacked_ub(reg);
+          unpacked = sel.unpacked_ub(reg);
         }
         unpacked = GenRegister::retype(unpacked, getGenType(type));
         sel.MOV(dst, unpacked);
@@ -2711,9 +2719,9 @@ namespace gbe
           sel.SHR(tmpData, tmpData, tmpAddr);
 
           if (elemSize == GEN_BYTE_SCATTER_WORD)
-            sel.MOV(GenRegister::retype(value, GEN_TYPE_UW), GenRegister::unpacked_uw(tmpReg));
+            sel.MOV(GenRegister::retype(value, GEN_TYPE_UW), sel.unpacked_uw(tmpReg));
           else if (elemSize == GEN_BYTE_SCATTER_BYTE)
-            sel.MOV(GenRegister::retype(value, GEN_TYPE_UB), GenRegister::unpacked_ub(tmpReg));
+            sel.MOV(GenRegister::retype(value, GEN_TYPE_UB), sel.unpacked_ub(tmpReg));
         sel.pop();
       }
     }
@@ -3013,10 +3021,10 @@ namespace gbe
         }
         if(wideReg.hstride != GEN_VERTICAL_STRIDE_0) {
           if(multiple == 2) {
-            wideReg = GenRegister::unpacked_uw(wideReg.reg());
+            wideReg = sel.unpacked_uw(wideReg.reg());
             wideReg = GenRegister::retype(wideReg, getGenType(narrowType));
           } else if(multiple == 4) {
-            wideReg = GenRegister::unpacked_ub(wideReg.reg());
+            wideReg = sel.unpacked_ub(wideReg.reg());
             wideReg = GenRegister::retype(wideReg, getGenType(narrowType));
           } else if(multiple == 8) {  //need to specail handle long to char
             GBE_ASSERT(multiple == 8);
@@ -3079,18 +3087,18 @@ namespace gbe
         sel.F16TO32(dst, src);
       } else if (opcode == OP_F32TO16) {
         GenRegister unpacked;
-        unpacked = GenRegister::unpacked_uw(sel.reg(FAMILY_DWORD));
+        unpacked = sel.unpacked_uw(sel.reg(FAMILY_DWORD, sel.isScalarReg(insn.getSrc(0))));
         sel.F32TO16(unpacked, src);
         sel.MOV(dst, unpacked);
       } else if (dstFamily != FAMILY_DWORD && dstFamily != FAMILY_QWORD && (srcFamily == FAMILY_DWORD || srcFamily == FAMILY_QWORD)) {
         GenRegister unpacked;
         if (dstFamily == FAMILY_WORD) {
           const uint32_t type = dstType == TYPE_U16 ? GEN_TYPE_UW : GEN_TYPE_W;
-          unpacked = GenRegister::unpacked_uw(sel.reg(FAMILY_DWORD));
+          unpacked = sel.unpacked_uw(sel.reg(FAMILY_DWORD, sel.isScalarReg(insn.getSrc(0))));
           unpacked = GenRegister::retype(unpacked, type);
         } else {
           const uint32_t type = dstType == TYPE_U8 ? GEN_TYPE_UB : GEN_TYPE_B;
-          unpacked = GenRegister::unpacked_ub(sel.reg(FAMILY_DWORD));
+          unpacked = sel.unpacked_ub(sel.reg(FAMILY_DWORD, sel.isScalarReg(insn.getSrc(0))));
           unpacked = GenRegister::retype(unpacked, type);
         }
         if(srcFamily == FAMILY_QWORD) {
