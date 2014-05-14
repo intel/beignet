@@ -129,15 +129,15 @@ namespace gbe
     }
   }
 
-  uint32_t getGenCompare(ir::Opcode opcode) {
+  uint32_t getGenCompare(ir::Opcode opcode, bool inverse = false) {
     using namespace ir;
     switch (opcode) {
-      case OP_LE: return GEN_CONDITIONAL_LE;
-      case OP_LT: return GEN_CONDITIONAL_L;
-      case OP_GE: return GEN_CONDITIONAL_GE;
-      case OP_GT: return GEN_CONDITIONAL_G;
-      case OP_EQ: return GEN_CONDITIONAL_EQ;
-      case OP_NE: return GEN_CONDITIONAL_NEQ;
+      case OP_LE: return (!inverse) ? GEN_CONDITIONAL_LE : GEN_CONDITIONAL_G;
+      case OP_LT: return (!inverse) ? GEN_CONDITIONAL_L : GEN_CONDITIONAL_GE;
+      case OP_GE: return (!inverse) ? GEN_CONDITIONAL_GE : GEN_CONDITIONAL_L;
+      case OP_GT: return (!inverse) ? GEN_CONDITIONAL_G : GEN_CONDITIONAL_LE;
+      case OP_EQ: return (!inverse) ? GEN_CONDITIONAL_EQ : GEN_CONDITIONAL_NEQ;
+      case OP_NE: return (!inverse) ? GEN_CONDITIONAL_NEQ : GEN_CONDITIONAL_EQ;
       default: NOT_SUPPORTED; return 0u;
     };
   }
@@ -579,6 +579,15 @@ namespace gbe
     void I64DIV(Reg dst, Reg src0, Reg src1, GenRegister tmp[13]);
     /*! 64-bit integer remainder of division */
     void I64REM(Reg dst, Reg src0, Reg src1, GenRegister tmp[13]);
+    /* common functions for both binary instruction and sel_cmp and compare instruction.
+       It will handle the IMM or normal register assignment, and will try to avoid LOADI
+       as much as possible. */
+    void getSrcGenRegImm(SelectionDAG &dag, GenRegister &src0,
+                      GenRegister &src1, ir::Type type, bool &inverse);
+    void getSrcGenRegImm(SelectionDAG &dag,
+                      SelectionDAG *dag0, SelectionDAG *dag1,
+                      GenRegister &src0, GenRegister &src1,
+                      ir::Type type, bool &inverse);
     /*! Use custom allocators */
     GBE_CLASS(Opaque);
     friend class SelectionBlock;
@@ -592,6 +601,7 @@ namespace gbe
       currAuxLabel++;
       return (ir::LabelIndex)currAuxLabel;
     }
+
   };
 
   ///////////////////////////////////////////////////////////////////////////
@@ -1680,11 +1690,11 @@ namespace gbe
     return false;
   }
 
-  GenRegister getRegisterFromImmediate(ir::Immediate imm, bool negate = false)
+  GenRegister getRegisterFromImmediate(ir::Immediate imm, ir::Type type, bool negate = false)
   {
     using namespace ir;
     int sign = negate ? -1 : 1;
-    switch (imm.type) {
+    switch (type) {
       case TYPE_U32:   return GenRegister::immud(imm.data.u32 * sign);
       case TYPE_S32:   return GenRegister::immd(imm.data.s32 * sign);
       case TYPE_FLOAT: return GenRegister::immf(imm.data.f32 * sign);
@@ -1697,6 +1707,66 @@ namespace gbe
       default: NOT_SUPPORTED; return GenRegister::immuw(0);
     }
   }
+
+  BVAR(OCL_OPTIMIZE_IMMEDIATE, true);
+  void Selection::Opaque::getSrcGenRegImm(SelectionDAG &dag,
+                                          SelectionDAG *dag0, SelectionDAG *dag1,
+                                          GenRegister &src0, GenRegister &src1,
+                                          ir::Type type, bool &inverse) {
+    using namespace ir;
+    inverse = false;
+    // Right source can always be an immediate
+    const int src0Index = dag.insn.isMemberOf<SelectInstruction>() ? SelectInstruction::src0Index : 0;
+    const int src1Index = dag.insn.isMemberOf<SelectInstruction>() ? SelectInstruction::src1Index : 1;
+    if (OCL_OPTIMIZE_IMMEDIATE && dag1 != NULL && dag1->insn.getOpcode() == OP_LOADI &&
+        canGetRegisterFromImmediate(dag1->insn)) {
+      const auto &childInsn = cast<LoadImmInstruction>(dag1->insn);
+      src0 = this->selReg(dag.insn.getSrc(src0Index), type);
+      src1 = getRegisterFromImmediate(childInsn.getImmediate(), type);
+      if (dag0) dag0->isRoot = 1;
+    }
+    // Left source cannot be immediate but it is OK if we can commute
+    else if (OCL_OPTIMIZE_IMMEDIATE && dag0 != NULL && dag.insn.isMemberOf<BinaryInstruction>() &&
+             ((cast<BinaryInstruction>(dag.insn)).commutes() || dag.insn.getOpcode() == OP_SUB) &&
+             dag0->insn.getOpcode() == OP_LOADI && canGetRegisterFromImmediate(dag0->insn)) {
+      const auto &childInsn = cast<LoadImmInstruction>(dag0->insn);
+      src0 = dag.insn.getOpcode() != OP_SUB ?
+             this->selReg(dag.insn.getSrc(src1Index), type) :
+             GenRegister::negate(this->selReg(dag.insn.getSrc(src1Index), type));
+      Immediate imm = childInsn.getImmediate();
+      src1 = getRegisterFromImmediate(imm, type, dag.insn.getOpcode() == OP_SUB);
+      if (dag1) dag1->isRoot = 1;
+    }
+    // If it's a compare instruction, theoritically, we can easily revert the condition code to
+    // switch the two operands. But we can't do that for float due to the NaN's exist.
+    // For a normal select instruction, we can always inverse the predication to switch the two
+    // operands' position.
+    else if (OCL_OPTIMIZE_IMMEDIATE && dag0 != NULL &&
+             dag0->insn.getOpcode() == OP_LOADI && canGetRegisterFromImmediate(dag0->insn) &&
+             ((dag.insn.isMemberOf<CompareInstruction>() && type != TYPE_FLOAT && type != TYPE_DOUBLE) ||
+              (dag.insn.isMemberOf<SelectInstruction>()))) {
+      const auto &childInsn = cast<LoadImmInstruction>(dag0->insn);
+      src0 = this->selReg(dag.insn.getSrc(src1Index), type);
+      src1 = getRegisterFromImmediate(childInsn.getImmediate(), type);
+      inverse = true;
+      if (dag1) dag1->isRoot = 1;
+    }
+    // Just grab the two sources
+    else {
+      src0 = this->selReg(dag.insn.getSrc(src0Index), type);
+      src1 = this->selReg(dag.insn.getSrc(src1Index), type);
+      markAllChildren(dag);
+    }
+  }
+
+  void Selection::Opaque::getSrcGenRegImm(SelectionDAG &dag, GenRegister &src0,
+                                       GenRegister &src1, ir::Type type,
+                                       bool &inverse) {
+    SelectionDAG *dag0 = dag.child[0];
+    SelectionDAG *dag1 = dag.child[1];
+    getSrcGenRegImm(dag, dag0, dag1, src0, src1, type, inverse);
+  }
+
 
   /*! Template for the one-to-many instruction patterns */
   template <typename T, typename U>
@@ -1861,7 +1931,6 @@ namespace gbe
     DECL_CTOR(UnaryInstruction, 1, 1)
   };
 
-  BVAR(OCL_OPTIMIZE_IMMEDIATE, true);
 
   /*! Binary regular instruction pattern */
   class BinaryInstructionPattern : public SelectionPattern
@@ -1972,36 +2041,8 @@ namespace gbe
 
       // Look for immediate values
       GenRegister src0, src1;
-      SelectionDAG *dag0 = dag.child[0];
-      SelectionDAG *dag1 = dag.child[1];
-
-      // Right source can always be an immediate
-      //logica ops of bool shouldn't use 0xffff, may use flag reg, so can't optimize
-      if (OCL_OPTIMIZE_IMMEDIATE && dag1 != NULL && dag1->insn.getOpcode() == OP_LOADI &&
-          canGetRegisterFromImmediate(dag1->insn) && type != TYPE_BOOL) {
-        const auto &childInsn = cast<LoadImmInstruction>(dag1->insn);
-        src0 = sel.selReg(insn.getSrc(0), type);
-        src1 = getRegisterFromImmediate(childInsn.getImmediate());
-        if (dag0) dag0->isRoot = 1;
-      }
-      // Left source cannot be immediate but it is OK if we can commute
-      else if (OCL_OPTIMIZE_IMMEDIATE && dag0 != NULL &&
-               (insn.commutes() || insn.getOpcode() == OP_SUB) &&
-               dag0->insn.getOpcode() == OP_LOADI && canGetRegisterFromImmediate(dag0->insn) &&
-               type != TYPE_BOOL) {
-        const auto &childInsn = cast<LoadImmInstruction>(dag0->insn);
-        src0 = insn.getOpcode() != OP_SUB ?
-               sel.selReg(insn.getSrc(1), type) : GenRegister::negate(sel.selReg(insn.getSrc(1), type));
-        src1 = getRegisterFromImmediate(childInsn.getImmediate(), insn.getOpcode() == OP_SUB); 
-        if (dag1) dag1->isRoot = 1;
-      }
-      // Just grab the two sources
-      else {
-        src0 = sel.selReg(insn.getSrc(0), type);
-        src1 = sel.selReg(insn.getSrc(1), type);
-        markAllChildren(dag);
-      }
-
+      bool inverse = false;
+      sel.getSrcGenRegImm(dag, src0, src1, type, inverse);
       // Output the binary instruction
       if (sel.getRegisterFamily(insn.getDst(0)) == ir::FAMILY_BOOL) {
         GBE_ASSERT(insn.getOpcode() == OP_AND ||
@@ -2287,12 +2328,16 @@ namespace gbe
       // So both sources must match
       if (sourceMatch(cmp, 0, &dag, 1) == false) return false;
       if (sourceMatch(cmp, 1, &dag, 2) == false) return false;
-
       // OK, we merge the instructions
       const ir::CompareInstruction &cmpInsn = cast<CompareInstruction>(cmp->insn);
       const ir::Opcode opcode = cmpInsn.getOpcode();
       if(opcode == OP_ORD) return false;
-      const uint32_t genCmp = getGenCompare(opcode);
+      GenRegister src0, src1;
+      const ir::Type type = cmpInsn.getType();
+      bool inverse = false;
+      sel.getSrcGenRegImm(*cmp, src0, src1, type, inverse);
+
+      const uint32_t genCmp = getGenCompare(opcode, inverse);
       sel.push();
         if (sel.isScalarReg(insn.getDst(0)) == true) {
           sel.curr.execWidth = 1;
@@ -2302,21 +2347,12 @@ namespace gbe
 
         // Like for regular selects, we need a temporary since we cannot predicate
         // properly
-        const ir::Type type = cmpInsn.getType();
         const uint32_t simdWidth = sel.curr.execWidth;
         const GenRegister dst  = sel.selReg(insn.getDst(0), type);
-        const GenRegister src0 = sel.selReg(cmpInsn.getSrc(0), type);
-        const GenRegister src1 = sel.selReg(cmpInsn.getSrc(1), type);
-
         sel.curr.predicate = GEN_PREDICATE_NONE;
         sel.curr.execWidth = simdWidth;
         sel.SEL_CMP(genCmp, dst, src0, src1);
       sel.pop();
-
-
-      // We need the sources of the compare instruction
-      markAllChildren(*cmp);
-
       return true;
     }
   };
@@ -2936,25 +2972,8 @@ namespace gbe
 
       // Look for immediate values for the right source
       GenRegister src0, src1;
-      SelectionDAG *dag0 = dag.child[0];
-      SelectionDAG *dag1 = dag.child[1];
-
-      // Right source can always be an immediate
-      if (OCL_OPTIMIZE_IMMEDIATE && dag1 != NULL && dag1->insn.getOpcode() == OP_LOADI &&
-          canGetRegisterFromImmediate(dag1->insn) && opcode != OP_ORD) {
-        const auto &childInsn = cast<LoadImmInstruction>(dag1->insn);
-        src0 = sel.selReg(insn.getSrc(0), type);
-        Immediate imm = childInsn.getImmediate();
-        if(imm.type != type)
-          imm.type = type;
-        src1 = getRegisterFromImmediate(imm);
-        if (dag0) dag0->isRoot = 1;
-      } else {
-        src0 = sel.selReg(insn.getSrc(0), type);
-        src1 = sel.selReg(insn.getSrc(1), type);
-        markAllChildren(dag);
-      }
-
+      bool inverseCmp = false;
+      sel.getSrcGenRegImm(dag, src0, src1, type, inverseCmp);
       sel.push();
         if (sel.isScalarReg(dst))
           sel.curr.noMask = 1;
@@ -2967,7 +2986,7 @@ namespace gbe
           for(int i=0; i<3; i++)
             tmp[i] = sel.selReg(sel.reg(FAMILY_DWORD));
           sel.curr.flagGen = 1;
-          sel.I64CMP(getGenCompare(opcode), src0, src1, tmp);
+          sel.I64CMP(getGenCompare(opcode, inverseCmp), src0, src1, tmp);
         } else if(opcode == OP_ORD) {
           sel.push();
             sel.CMP(GEN_CONDITIONAL_EQ, src0, src0, tmpDst);
@@ -2989,7 +3008,7 @@ namespace gbe
             sel.curr.flagGen = needStoreBool;
             tmpDst = GenRegister::retype(GenRegister::null(), GEN_TYPE_UW);
           }
-          sel.CMP(getGenCompare(opcode), src0, src1, tmpDst);
+          sel.CMP(getGenCompare(opcode, inverseCmp), src0, src1, tmpDst);
         }
       sel.pop();
       return true;
@@ -3217,19 +3236,9 @@ namespace gbe
       SelectionDAG *dag1 = dag.child[1];
       SelectionDAG *dag2 = dag.child[2];
 
-      // Right source can always be an immediate
-      if (OCL_OPTIMIZE_IMMEDIATE && dag2 != NULL && dag2->insn.getOpcode() == OP_LOADI && canGetRegisterFromImmediate(dag2->insn)) {
-        const auto &childInsn = cast<LoadImmInstruction>(dag2->insn);
-        src0 = sel.selReg(insn.getSrc(SelectInstruction::src0Index), type);
-        src1 = getRegisterFromImmediate(childInsn.getImmediate());
-        if (dag0) dag0->isRoot = 1;
-        if (dag1) dag1->isRoot = 1;
-      } else {
-        src0 = sel.selReg(insn.getSrc(SelectInstruction::src0Index), type);
-        src1 = sel.selReg(insn.getSrc(SelectInstruction::src1Index), type);
-        markAllChildren(dag);
-      }
-
+      if (dag0) dag0->isRoot = 1;
+      bool inverse = false;
+      sel.getSrcGenRegImm(dag, dag1, dag2, src0, src1, type, inverse);
       const Register pred = insn.getPredicate();
       sel.push();
         if (sel.isScalarReg(insn.getDst(0)) == true) {
@@ -3237,7 +3246,7 @@ namespace gbe
           sel.curr.predicate = GEN_PREDICATE_NONE;
           sel.curr.noMask = 1;
         }
-
+        sel.curr.inversePredicate ^= inverse;
         sel.curr.physicalFlag = 0;
         sel.curr.flagIndex = (uint16_t) pred;
         sel.curr.predicate = GEN_PREDICATE_NORMAL;
