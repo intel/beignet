@@ -1680,18 +1680,19 @@ namespace gbe
     return false;
   }
 
-  GenRegister getRegisterFromImmediate(ir::Immediate imm)
+  GenRegister getRegisterFromImmediate(ir::Immediate imm, bool negate = false)
   {
     using namespace ir;
+    int sign = negate ? -1 : 1;
     switch (imm.type) {
-      case TYPE_U32:   return GenRegister::immud(imm.data.u32);
-      case TYPE_S32:   return GenRegister::immd(imm.data.s32);
-      case TYPE_FLOAT: return GenRegister::immf(imm.data.f32);
-      case TYPE_U16: return GenRegister::immuw(imm.data.u16);
-      case TYPE_S16: return  GenRegister::immw(imm.data.s16);
-      case TYPE_U8:  return GenRegister::immuw(imm.data.u8);
-      case TYPE_S8:  return GenRegister::immw(imm.data.s8);
-      case TYPE_DOUBLE: return GenRegister::immdf(imm.data.f64);
+      case TYPE_U32:   return GenRegister::immud(imm.data.u32 * sign);
+      case TYPE_S32:   return GenRegister::immd(imm.data.s32 * sign);
+      case TYPE_FLOAT: return GenRegister::immf(imm.data.f32 * sign);
+      case TYPE_U16: return GenRegister::immuw(imm.data.u16 * sign);
+      case TYPE_S16: return  GenRegister::immw(imm.data.s16 * sign);
+      case TYPE_U8:  return GenRegister::immuw(imm.data.u8 * sign);
+      case TYPE_S8:  return GenRegister::immw(imm.data.s8 * sign);
+      case TYPE_DOUBLE: return GenRegister::immdf(imm.data.f64 * sign);
       case TYPE_BOOL: return GenRegister::immuw(-imm.data.b);  //return 0xffff when true
       default: NOT_SUPPORTED; return GenRegister::immuw(0);
     }
@@ -1984,11 +1985,14 @@ namespace gbe
         if (dag0) dag0->isRoot = 1;
       }
       // Left source cannot be immediate but it is OK if we can commute
-      else if (OCL_OPTIMIZE_IMMEDIATE && dag0 != NULL && insn.commutes() && dag0->insn.getOpcode() == OP_LOADI &&
-               canGetRegisterFromImmediate(dag0->insn) && type != TYPE_BOOL) {
+      else if (OCL_OPTIMIZE_IMMEDIATE && dag0 != NULL &&
+               (insn.commutes() || insn.getOpcode() == OP_SUB) &&
+               dag0->insn.getOpcode() == OP_LOADI && canGetRegisterFromImmediate(dag0->insn) &&
+               type != TYPE_BOOL) {
         const auto &childInsn = cast<LoadImmInstruction>(dag0->insn);
-        src0 = sel.selReg(insn.getSrc(1), type);
-        src1 = getRegisterFromImmediate(childInsn.getImmediate());
+        src0 = insn.getOpcode() != OP_SUB ?
+               sel.selReg(insn.getSrc(1), type) : GenRegister::negate(sel.selReg(insn.getSrc(1), type));
+        src1 = getRegisterFromImmediate(childInsn.getImmediate(), insn.getOpcode() == OP_SUB); 
         if (dag1) dag1->isRoot = 1;
       }
       // Just grab the two sources
