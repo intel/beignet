@@ -2260,7 +2260,7 @@ namespace gbe
 
       // XXX TODO: we need a clean support of FP_CONTRACT to remove below line 'return false'
       // if 'pragma FP_CONTRACT OFF' is used in cl kernel, we should not do mad optimization.
-      if (!sel.ctx.relaxMath)
+      if (!sel.ctx.relaxMath || sel.ctx.getSimdWidth() == 16)
         return false;
       // MAD tend to increase liveness of the sources (since there are three of
       // them). TODO refine this strategy. Well, we should be able at least to
@@ -2278,6 +2278,12 @@ namespace gbe
       const GenRegister dst = sel.selReg(insn.getDst(0), TYPE_FLOAT);
       if (child0 && child0->insn.getOpcode() == OP_MUL) {
         GBE_ASSERT(cast<ir::BinaryInstruction>(child0->insn).getType() == TYPE_FLOAT);
+        SelectionDAG *child00 = child0->child[0];
+        SelectionDAG *child01 = child0->child[1];
+        if ((child00 && child00->insn.getOpcode() == OP_LOADI) ||
+            (child01 && child01->insn.getOpcode() == OP_LOADI) ||
+            (child1 && child1->insn.getOpcode() == OP_LOADI))
+          return false;
         const GenRegister src0 = sel.selReg(child0->insn.getSrc(0), TYPE_FLOAT);
         const GenRegister src1 = sel.selReg(child0->insn.getSrc(1), TYPE_FLOAT);
         GenRegister src2 = sel.selReg(insn.getSrc(1), TYPE_FLOAT);
@@ -2290,6 +2296,12 @@ namespace gbe
       }
       if (child1 && child1->insn.getOpcode() == OP_MUL) {
         GBE_ASSERT(cast<ir::BinaryInstruction>(child1->insn).getType() == TYPE_FLOAT);
+        SelectionDAG *child10 = child1->child[0];
+        SelectionDAG *child11 = child1->child[1];
+        if ((child10 && child10->insn.getOpcode() == OP_LOADI) ||
+            (child11 && child11->insn.getOpcode() == OP_LOADI) ||
+            (child0 && child0->insn.getOpcode() == OP_LOADI))
+          return false;
         GenRegister src0 = sel.selReg(child1->insn.getSrc(0), TYPE_FLOAT);
         const GenRegister src1 = sel.selReg(child1->insn.getSrc(1), TYPE_FLOAT);
         const GenRegister src2 = sel.selReg(insn.getSrc(0), TYPE_FLOAT);
