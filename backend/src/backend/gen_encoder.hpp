@@ -66,6 +66,8 @@ namespace gbe
   public:
     /*! simdWidth is the default width for the instructions */
     GenEncoder(uint32_t simdWidth, uint32_t gen, uint32_t deviceID, int jump_width = 1);
+
+    virtual ~GenEncoder(void) { }
     /*! Size of the stack (should be large enough) */
     enum { MAX_STATE_NUM = 16 };
     /*! Push the current instruction state */

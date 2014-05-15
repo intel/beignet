@@ -31,8 +31,10 @@ namespace gbe
   class Gen75Encoder : public GenEncoder
   {
   public:
+    virtual ~Gen75Encoder(void) { }
+
     Gen75Encoder(uint32_t simdWidth, uint32_t gen, uint32_t deviceID)
-         : GenEncoder(simdWidth, gen, deviceID, 8) { };
+         : GenEncoder(simdWidth, gen, deviceID, 8) { }
 
     virtual void MOV_DF(GenRegister dest, GenRegister src0, GenRegister tmp = GenRegister::null());
     virtual void LOAD_DF_IMM(GenRegister dest, GenRegister tmp, double value);

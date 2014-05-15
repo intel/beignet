@@ -32,9 +32,9 @@ namespace gbe
   class Gen75Context : public GenContext
   {
   public:
+    virtual ~Gen75Context(void) { }
     Gen75Context(const ir::Unit &unit, const std::string &name, uint32_t deviceID, bool relaxMath = false)
-            : GenContext(unit, name, deviceID, relaxMath) {
-    };
+            : GenContext(unit, name, deviceID, relaxMath) { }
 
   protected:
     virtual GenEncoder* generateEncoder(void) {

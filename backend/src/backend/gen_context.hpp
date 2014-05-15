@@ -63,7 +63,7 @@ namespace gbe
     GenContext(const ir::Unit &unit, const std::string &name, uint32_t deviceID,
                bool relaxMath = false);
     /*! Release everything needed */
-    ~GenContext(void);
+    virtual ~GenContext(void);
     /*! Start new code generation with specific parameters */
     void startNewCG(uint32_t simdWidth, uint32_t reservedSpillRegs, bool limitRegisterPressure);
     /*! Target device ID*/
