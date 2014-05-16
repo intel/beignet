@@ -46,6 +46,8 @@ static void compiler_movforphi_undef(void)
     }
   OCL_UNMAP_BUFFER(0);
   OCL_UNMAP_BUFFER(1);
+
+  OCL_CALL(clReleaseSampler, sampler);
 }
 
 MAKE_UTEST_FROM_FUNCTION(compiler_movforphi_undef);

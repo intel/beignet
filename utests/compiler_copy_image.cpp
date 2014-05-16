@@ -41,6 +41,8 @@ static void compiler_copy_image(void)
       OCL_ASSERT(((uint32_t*)buf_data[0])[j * w + i] == ((uint32_t*)buf_data[1])[j * w + i]);
   OCL_UNMAP_BUFFER(0);
   OCL_UNMAP_BUFFER(1);
+
+  OCL_CALL(clReleaseSampler, sampler);
 }
 
 MAKE_UTEST_FROM_FUNCTION(compiler_copy_image);

@@ -53,6 +53,8 @@ static void compiler_copy_image_3d(void)
 
   for(uint32_t i = 0; i < depth + 2; i++)
     OCL_UNMAP_BUFFER_GTT(i);
+
+  OCL_CALL(clReleaseSampler, sampler);
 }
 
 MAKE_UTEST_FROM_FUNCTION(compiler_copy_image_3d);

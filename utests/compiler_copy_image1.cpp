@@ -66,6 +66,8 @@ static void compiler_copy_image1(void)
   OCL_UNMAP_BUFFER(3);
   OCL_UNMAP_BUFFER(4);
   OCL_UNMAP_BUFFER(5);
+
+  OCL_CALL(clReleaseSampler, sampler);
 }
 
 MAKE_UTEST_FROM_FUNCTION(compiler_copy_image1);
