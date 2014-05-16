@@ -220,9 +220,9 @@ namespace gbe
     /*! Get the data for the given register */
     ir::RegisterData getRegisterData(ir::Register reg) const;
     /*! Replace a source by the returned temporary register */
-    ir::Register replaceSrc(SelectionInstruction *insn, uint32_t regID);
+    ir::Register replaceSrc(SelectionInstruction *insn, uint32_t regID, ir::Type type = ir::TYPE_FLOAT, bool needMov = true);
     /*! Replace a destination to the returned temporary register */
-    ir::Register replaceDst(SelectionInstruction *insn, uint32_t regID);
+    ir::Register replaceDst(SelectionInstruction *insn, uint32_t regID, ir::Type type = ir::TYPE_FLOAT, bool needMov = true);
     /*! spill a register (insert spill/unspill instructions) */
     bool spillRegs(const SpilledRegs &spilledRegs, uint32_t registerPool);
     /*! Indicate if a register is scalar or not */

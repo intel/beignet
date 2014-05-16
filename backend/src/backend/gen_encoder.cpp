@@ -1151,13 +1151,14 @@ namespace gbe
 
   void GenEncoder::CMP(uint32_t conditional, GenRegister src0, GenRegister src1, GenRegister dst) {
     if (needToSplitCmp(this, src0, src1) == false) {
-      if(compactAlu2(this, GEN_OPCODE_CMP, dst, src0, src1, conditional, false)) {
+      if(!GenRegister::isNull(dst) && compactAlu2(this, GEN_OPCODE_CMP, dst, src0, src1, conditional, false)) {
         return;
       }
       GenNativeInstruction *insn = this->next(GEN_OPCODE_CMP);
       this->setHeader(insn);
       insn->header.destreg_or_condmod = conditional;
-      insn->header.thread_control = GEN_THREAD_SWITCH;
+      if (GenRegister::isNull(dst))
+        insn->header.thread_control = GEN_THREAD_SWITCH;
       this->setDst(insn, dst);
       this->setSrc0(insn, src0);
       this->setSrc1(insn, src1);
@@ -1167,6 +1168,8 @@ namespace gbe
       // Instruction for the first quarter
       insnQ1 = this->next(GEN_OPCODE_CMP);
       this->setHeader(insnQ1);
+      if (GenRegister::isNull(dst))
+        insnQ1->header.thread_control = GEN_THREAD_SWITCH;
       insnQ1->header.quarter_control = GEN_COMPRESSION_Q1;
       insnQ1->header.execution_size = GEN_WIDTH_8;
       insnQ1->header.destreg_or_condmod = conditional;
@@ -1177,6 +1180,8 @@ namespace gbe
       // Instruction for the second quarter
       insnQ2 = this->next(GEN_OPCODE_CMP);
       this->setHeader(insnQ2);
+      if (GenRegister::isNull(dst))
+        insnQ2->header.thread_control = GEN_THREAD_SWITCH;
       insnQ2->header.quarter_control = GEN_COMPRESSION_Q2;
       insnQ2->header.execution_size = GEN_WIDTH_8;
       insnQ2->header.destreg_or_condmod = conditional;

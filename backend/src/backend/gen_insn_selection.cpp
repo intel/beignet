@@ -311,9 +311,9 @@ namespace gbe
     /*! Implement public class */
     INLINE uint32_t getVectorNum(void) const { return this->vectorNum; }
     /*! Implement public class */
-    INLINE ir::Register replaceSrc(SelectionInstruction *insn, uint32_t regID);
+    INLINE ir::Register replaceSrc(SelectionInstruction *insn, uint32_t regID, ir::Type type, bool needMov);
     /*! Implement public class */
-    INLINE ir::Register replaceDst(SelectionInstruction *insn, uint32_t regID);
+    INLINE ir::Register replaceDst(SelectionInstruction *insn, uint32_t regID, ir::Type type, bool needMov);
     /*! spill a register (insert spill/unspill instructions) */
     INLINE bool spillRegs(const SpilledRegs &spilledRegs, uint32_t registerPool);
     /*! should add per thread offset to the local memory address when load/store/atomic */
@@ -854,48 +854,56 @@ namespace gbe
     return true;
   }
 
-  ir::Register Selection::Opaque::replaceSrc(SelectionInstruction *insn, uint32_t regID) {
+  ir::Register Selection::Opaque::replaceSrc(SelectionInstruction *insn, uint32_t regID, ir::Type type, bool needMov) {
     SelectionBlock *block = insn->parent;
     const uint32_t simdWidth = insn->state.execWidth;
     ir::Register tmp;
-
-    // This will append the temporary register in the instruction block
-    this->block = block;
-    tmp = this->reg(ir::FAMILY_DWORD);
-
-    // Generate the MOV instruction and replace the register in the instruction
-    SelectionInstruction *mov = this->create(SEL_OP_MOV, 1, 1);
-    mov->src(0) = GenRegister::retype(insn->src(regID), GEN_TYPE_F);
-    mov->state = GenInstructionState(simdWidth);
-    if (this->isScalarReg(insn->src(regID).reg()))
-      mov->state.noMask = 1;
-    insn->src(regID) = mov->dst(0) = GenRegister::fxgrf(simdWidth, tmp);
-    insn->prepend(*mov);
-
-    return tmp;
-  }
-
-  ir::Register Selection::Opaque::replaceDst(SelectionInstruction *insn, uint32_t regID) {
-    SelectionBlock *block = insn->parent;
-    uint32_t simdWidth = this->isScalarReg(insn->dst(regID).reg()) ? 1 : insn->state.execWidth;
-    ir::Register tmp;
-    ir::RegisterFamily f = file.get(insn->dst(regID).reg()).family;
-    int genType = f == ir::FAMILY_QWORD ? GEN_TYPE_DF : GEN_TYPE_F;
     GenRegister gr;
 
     // This will append the temporary register in the instruction block
     this->block = block;
-    tmp = this->reg(f);
+    tmp = this->reg(ir::getFamily(type), simdWidth == 1);
+    gr =  this->selReg(tmp, type);
+    if (needMov) {
+      // Generate the MOV instruction and replace the register in the instruction
+      SelectionInstruction *mov = this->create(SEL_OP_MOV, 1, 1);
+      mov->src(0) = GenRegister::retype(insn->src(regID), gr.type);
+      mov->state = GenInstructionState(simdWidth);
+      if (this->isScalarReg(insn->src(regID).reg()))
+        mov->state.noMask = 1;
+      mov->dst(0) = gr;
+      insn->prepend(*mov);
+    }
+    insn->src(regID) = gr;
 
+    return tmp;
+  }
+
+  ir::Register Selection::Opaque::replaceDst(SelectionInstruction *insn, uint32_t regID, ir::Type type, bool needMov) {
+    SelectionBlock *block = insn->parent;
+    uint32_t simdWidth;
+    if (!GenRegister::isNull(insn->dst(regID)))
+      simdWidth = this->isScalarReg(insn->dst(regID).reg()) ? 1 : insn->state.execWidth;
+    else {
+      GBE_ASSERT(needMov == false);
+      simdWidth = insn->state.execWidth;
+    }
+    ir::Register tmp;
+    GenRegister gr;
+    this->block = block;
+    tmp = this->reg(ir::getFamily(type));
+    gr = this->selReg(tmp, type);
+    if (needMov) {
     // Generate the MOV instruction and replace the register in the instruction
-    SelectionInstruction *mov = this->create(SEL_OP_MOV, 1, 1);
-    mov->dst(0) = GenRegister::retype(insn->dst(regID), genType);
-    mov->state = GenInstructionState(simdWidth);
-    if (simdWidth == 1)
-      mov->state.noMask = 1;
-    gr = f == ir::FAMILY_QWORD ? GenRegister::dfxgrf(simdWidth, tmp) : GenRegister::fxgrf(simdWidth, tmp);
-    insn->dst(regID) = mov->src(0) = gr;
-    insn->append(*mov);
+      SelectionInstruction *mov = this->create(SEL_OP_MOV, 1, 1);
+      mov->dst(0) = GenRegister::retype(insn->dst(regID), gr.type);
+      mov->state = GenInstructionState(simdWidth);
+      if (simdWidth == 1)
+        mov->state.noMask = 1;
+      mov->src(0) = gr;
+      insn->append(*mov);
+    }
+    insn->dst(regID) = gr;
     return tmp;
   }
 
@@ -1640,12 +1648,12 @@ namespace gbe
     return this->opaque->getRegisterData(reg);
   }
 
-  ir::Register Selection::replaceSrc(SelectionInstruction *insn, uint32_t regID) {
-    return this->opaque->replaceSrc(insn, regID);
+  ir::Register Selection::replaceSrc(SelectionInstruction *insn, uint32_t regID, ir::Type type, bool needMov) {
+    return this->opaque->replaceSrc(insn, regID, type, needMov);
   }
 
-  ir::Register Selection::replaceDst(SelectionInstruction *insn, uint32_t regID) {
-    return this->opaque->replaceDst(insn, regID);
+  ir::Register Selection::replaceDst(SelectionInstruction *insn, uint32_t regID, ir::Type type, bool needMov) {
+    return this->opaque->replaceDst(insn, regID, type, needMov);
   }
   bool Selection::spillRegs(const SpilledRegs &spilledRegs, uint32_t registerPool) {
     return this->opaque->spillRegs(spilledRegs, registerPool);
@@ -2918,7 +2926,7 @@ namespace gbe
          type == TYPE_DOUBLE || type == TYPE_FLOAT ||
          type == TYPE_U32 ||  type == TYPE_S32 /*||
          (!needStoreBool)*/)
-        tmpDst = GenRegister::nullud();
+        tmpDst = GenRegister::retype(GenRegister::null(), GEN_TYPE_F);
       else
         tmpDst = sel.selReg(dst, TYPE_BOOL);
 
@@ -2975,7 +2983,7 @@ namespace gbe
             // the dst to null register. And let the flag reg allocation
             // function to generate the flag grf on demand correctly latter.
             sel.curr.flagGen = needStoreBool;
-            tmpDst = GenRegister::nullud();
+            tmpDst = GenRegister::retype(GenRegister::null(), GEN_TYPE_UW);
           }
           sel.CMP(getGenCompare(opcode), src0, src1, tmpDst);
         }
@@ -3308,7 +3316,8 @@ namespace gbe
       sel.push();
         sel.curr.noMask = 1;
         sel.curr.predicate = GEN_PREDICATE_NONE;
-        sel.CMP(GEN_CONDITIONAL_LE, GenRegister::retype(src0, GEN_TYPE_UW), src1, GenRegister::retype(GenRegister::null(), GEN_TYPE_UW));
+        sel.CMP(GEN_CONDITIONAL_LE, GenRegister::retype(src0, GEN_TYPE_UW), src1,
+                GenRegister::retype(GenRegister::null(), GEN_TYPE_UW));
       sel.pop();
 
       if (sel.block->hasBarrier) {
@@ -3321,7 +3330,8 @@ namespace gbe
           sel.MOV(GenRegister::retype(src0, GEN_TYPE_UW), GenRegister::immuw(GEN_MAX_LABEL));
           sel.curr.predicate = GEN_PREDICATE_NONE;
           sel.curr.noMask = 1;
-          sel.CMP(GEN_CONDITIONAL_EQ, GenRegister::retype(src0, GEN_TYPE_UW), GenRegister::immuw(GEN_MAX_LABEL));
+          sel.CMP(GEN_CONDITIONAL_EQ, GenRegister::retype(src0, GEN_TYPE_UW), GenRegister::immuw(GEN_MAX_LABEL),
+                  GenRegister::retype(GenRegister::null(), GEN_TYPE_UW));
           if (simdWidth == 8)
             sel.curr.predicate = GEN_PREDICATE_ALIGN1_ALL8H;
           else if (simdWidth == 16)

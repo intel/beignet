@@ -188,6 +188,21 @@ namespace gbe
     INLINE bool spillReg(ir::Register reg, bool isAllocated = false);
     INLINE bool vectorCanSpill(SelectionVector *vector);
     INLINE void allocateScratchForSpilled();
+
+    /*! replace specified source/dst register with temporary register and update interval */
+    INLINE ir::Register replaceReg(Selection &sel, SelectionInstruction *insn,
+                                   uint32_t regID, bool isSrc,
+                                   ir::Type type = ir::TYPE_FLOAT, bool needMov = true) {
+      ir::Register reg;
+      if (isSrc)
+        reg = sel.replaceSrc(insn, regID, type, needMov);
+      else
+        reg = sel.replaceDst(insn, regID, type, needMov);
+      intervals.push_back(reg);
+      intervals[reg].minID = insn->ID;
+      intervals[reg].maxID = insn->ID;
+      return reg;
+    }
     /*! Use custom allocator */
     GBE_CLASS(Opaque);
   };
@@ -301,15 +316,9 @@ namespace gbe
       // the MOVs
       else {
         ir::Register tmp;
-        if (vector->isSrc)
-          tmp = selection.replaceSrc(vector->insn, regID);
-        else
-          tmp = selection.replaceDst(vector->insn, regID);
+        tmp = this->replaceReg(selection, vector->insn, regID, vector->isSrc);
         const VectorLocation location = std::make_pair(vector, regID);
         this->vectorMap.insert(std::make_pair(tmp, location));
-        intervals.push_back(tmp);
-        intervals[tmp].minID = vector->insn->ID;
-        intervals[tmp].maxID = vector->insn->ID;
       }
     }
   }
@@ -590,12 +599,16 @@ namespace gbe
             if (insn.state.predicate != GEN_PREDICATE_NONE)
               validateFlag(selection, insn);
           }
-
           // This is a CMP for a pure flag booleans, we don't need to write result to
           // the grf. And latter, we will not allocate grf for it.
           if (insn.opcode == SEL_OP_CMP &&
-              flagBooleans.contains((ir::Register)(insn.dst(0).value.reg)))
-            insn.dst(0) = GenRegister::null();
+              (flagBooleans.contains(insn.dst(0).reg()) ||
+               GenRegister::isNull(insn.dst(0)))) {
+            // set a temporary register to avoid switch in this block.
+            bool isSrc = false;
+            bool needMov = false;
+            this->replaceReg(selection, &insn, 0, isSrc, ir::TYPE_FLOAT, needMov);
+          }
           // If the instruction requires to generate (CMP for long/int/float..)
           // the flag value to the register, and it's not a pure flag boolean,
           // we need to use SEL instruction to generate the flag value to the UW8
