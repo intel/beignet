@@ -254,14 +254,14 @@ static const char *access_mode[2] = {
 };
 
 static const char *reg_encoding[8] = {
-  [0] = "UD",
-  [1] = "D",
-  [2] = "UW",
-  [3] = "W",
-  [4] = "UB",
-  [5] = "B",
-  [6] = "DF",
-  [7] = "F"
+  [0] = ":UD",
+  [1] = ":D",
+  [2] = ":UW",
+  [3] = ":W",
+  [4] = ":UB",
+  [5] = ":B",
+  [6] = ":DF",
+  [7] = ":F"
 };
 
 int reg_type_size[8] = {
@@ -542,8 +542,10 @@ static int dest (FILE *file, const union GenNativeInstruction *inst)
     if (inst->bits1.da1.dest_address_mode == GEN_ADDRESS_DIRECT)
     {
       err |= reg (file, inst->bits1.da1.dest_reg_file, inst->bits1.da1.dest_reg_nr);
-      if (err == -1)
+      if (err == -1) {
+        control (file, "dest reg encoding", reg_encoding, inst->bits1.da1.dest_reg_type, NULL);
         return 0;
+      }
       if (inst->bits1.da1.dest_subreg_nr)
         format (file, ".%d", inst->bits1.da1.dest_subreg_nr /
             reg_type_size[inst->bits1.da1.dest_reg_type]);
