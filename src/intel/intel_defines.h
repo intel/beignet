@@ -299,6 +299,7 @@
                                  IS_G4X(intel->device_id) ? 384 : 256)
 
 // L3 cache stuff 
+#define GEN7_L3_SQC_REG1_ADDRESS_OFFSET          (0XB010)
 #define GEN7_L3_CNTL_REG2_ADDRESS_OFFSET         (0xB020)
 #define GEN7_L3_CNTL_REG3_ADDRESS_OFFSET         (0xB024)
 

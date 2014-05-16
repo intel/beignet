@@ -286,13 +286,15 @@ intel_gpgpu_load_idrt(intel_gpgpu_t *gpgpu)
 static const uint32_t gpgpu_l3_config_reg1[] = {
   0x00080040, 0x02040040, 0x00800040, 0x01000038,
   0x02000030, 0x01000038, 0x00000038, 0x00000040,
-  0x0A140091, 0x09100091, 0x08900091, 0x08900091
+  0x0A140091, 0x09100091, 0x08900091, 0x08900091,
+  0x010000a1
 };
 
 static const uint32_t gpgpu_l3_config_reg2[] = {
   0x00000000, 0x00000000, 0x00080410, 0x00080410,
   0x00040410, 0x00040420, 0x00080420, 0x00080020,
-  0x00204080, 0x00244890, 0x00284490, 0x002444A0
+  0x00204080, 0x00244890, 0x00284490, 0x002444A0,
+  0x00040810
 };
 
 /* Emit PIPE_CONTROLs to write the current GPU timestamp into a buffer. */
@@ -332,18 +334,24 @@ intel_gpgpu_pipe_control(intel_gpgpu_t *gpgpu)
 static void
 intel_gpgpu_set_L3(intel_gpgpu_t *gpgpu, uint32_t use_slm)
 {
-  BEGIN_BATCH(gpgpu->batch, 6);
+  BEGIN_BATCH(gpgpu->batch, 9);
+  OUT_BATCH(gpgpu->batch, CMD_LOAD_REGISTER_IMM | 1); /* length - 2 */
+  OUT_BATCH(gpgpu->batch, GEN7_L3_SQC_REG1_ADDRESS_OFFSET);
+
+  OUT_BATCH(gpgpu->batch, 0x00730000);
+
   OUT_BATCH(gpgpu->batch, CMD_LOAD_REGISTER_IMM | 1); /* length - 2 */
   OUT_BATCH(gpgpu->batch, GEN7_L3_CNTL_REG2_ADDRESS_OFFSET);
+
   if (use_slm)
-    OUT_BATCH(gpgpu->batch, gpgpu_l3_config_reg1[8]);
+    OUT_BATCH(gpgpu->batch, gpgpu_l3_config_reg1[12]);
   else
     OUT_BATCH(gpgpu->batch, gpgpu_l3_config_reg1[4]);
 
   OUT_BATCH(gpgpu->batch, CMD_LOAD_REGISTER_IMM | 1); /* length - 2 */
   OUT_BATCH(gpgpu->batch, GEN7_L3_CNTL_REG3_ADDRESS_OFFSET);
   if (use_slm)
-    OUT_BATCH(gpgpu->batch, gpgpu_l3_config_reg2[8]);
+    OUT_BATCH(gpgpu->batch, gpgpu_l3_config_reg2[12]);
   else
     OUT_BATCH(gpgpu->batch, gpgpu_l3_config_reg2[4]);
   ADVANCE_BATCH(gpgpu->batch);
