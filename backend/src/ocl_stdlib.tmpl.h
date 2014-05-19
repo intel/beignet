@@ -2386,20 +2386,21 @@ INLINE_OVERLOADABLE float __gen_ocl_internal_acos(float x) {
 INLINE_OVERLOADABLE float __gen_ocl_internal_acospi(float x) {
   return __gen_ocl_internal_acos(x) / M_PI_F;
 }
+__constant float atanhi[4] = {
+  4.6364760399e-01, /* atan(0.5)hi 0x3eed6338 */
+  7.8539812565e-01, /* atan(1.0)hi 0x3f490fda */
+  9.8279368877e-01, /* atan(1.5)hi 0x3f7b985e */
+  1.5707962513e+00, /* atan(inf)hi 0x3fc90fda */
+};
+__constant float atanlo[4] = {
+  5.0121582440e-09, /* atan(0.5)lo 0x31ac3769 */
+  3.7748947079e-08, /* atan(1.0)lo 0x33222168 */
+  3.4473217170e-08, /* atan(1.5)lo 0x33140fb4 */
+  7.5497894159e-08, /* atan(inf)lo 0x33a22168 */
+};
+
 INLINE_OVERLOADABLE float __gen_ocl_internal_atan(float x) {
   /* copied from fdlibm */
-  float atanhi[4];
-  atanhi[0] = 4.6364760399e-01; /* atan(0.5)hi 0x3eed6338 */
-  atanhi[1] = 7.8539812565e-01; /* atan(1.0)hi 0x3f490fda */
-  atanhi[2] = 9.8279368877e-01; /* atan(1.5)hi 0x3f7b985e */
-  atanhi[3] = 1.5707962513e+00; /* atan(inf)hi 0x3fc90fda */
-
-  float atanlo[4];
-  atanlo[0] = 5.0121582440e-09; /* atan(0.5)lo 0x31ac3769 */
-  atanlo[1] =  3.7748947079e-08; /* atan(1.0)lo 0x33222168 */
-  atanlo[2] =  3.4473217170e-08; /* atan(1.5)lo 0x33140fb4 */
-  atanlo[3] =  7.5497894159e-08; /* atan(inf)lo 0x33a22168 */
-
   float aT[11];
   aT[0] = 3.3333334327e-01; /* 0x3eaaaaaa */
   aT[1] =  -2.0000000298e-01; /* 0xbe4ccccd */
