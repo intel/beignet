@@ -74,6 +74,7 @@ intel_batchbuffer_reset(intel_batchbuffer_t *batch, size_t sz)
   batch->ptr = batch->map;
   batch->atomic = 0;
   batch->last_bo = batch->buffer;
+  batch->enable_slm = 0;
 }
 
 LOCAL void
@@ -119,7 +120,14 @@ intel_batchbuffer_flush(intel_batchbuffer_t *batch)
   if (!is_locked)
     intel_driver_lock_hardware(batch->intel);
 
-  dri_bo_exec(batch->buffer, used, 0, 0, 0);
+  int flag = I915_EXEC_RENDER;
+  if(batch->enable_slm) {
+    /* use the hard code here temp, must change to
+     * I915_EXEC_ENABLE_SLM when it drm accept the patch */
+    flag |= (1<<13);
+  }
+  drm_intel_gem_bo_context_exec(batch->buffer, batch->intel->ctx, used, flag);
+
   if (!is_locked)
     intel_driver_unlock_hardware(batch->intel);
 

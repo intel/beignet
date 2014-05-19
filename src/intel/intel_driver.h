@@ -78,6 +78,7 @@ typedef struct _XDisplay Display;
 typedef struct intel_driver
 {
   dri_bufmgr *bufmgr;
+  drm_intel_context *ctx;
   int fd;
   int device_id;
   int gen_ver;

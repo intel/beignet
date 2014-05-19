@@ -106,6 +106,7 @@ intel_driver_delete(intel_driver_t *driver)
 {
   if (driver == NULL)
     return;
+
   if (driver->bufmgr)
     drm_intel_bufmgr_destroy(driver->bufmgr);
   cl_free(driver);
@@ -139,6 +140,21 @@ intel_driver_memman_init(intel_driver_t *driver)
   drm_intel_bufmgr_gem_enable_reuse(driver->bufmgr);
 }
 
+static void
+intel_driver_context_init(intel_driver_t *driver)
+{
+  driver->ctx = drm_intel_gem_context_create(driver->bufmgr);
+  assert(driver->ctx);
+}
+
+static void
+intel_driver_context_destroy(intel_driver_t *driver)
+{
+  if(driver->ctx)
+    drm_intel_gem_context_destroy(driver->ctx);
+  driver->ctx = NULL;
+}
+
 static void 
 intel_driver_init(intel_driver_t *driver, int dev_fd)
 {
@@ -151,6 +167,7 @@ intel_driver_init(intel_driver_t *driver, int dev_fd)
   intel_driver_get_param(driver, I915_PARAM_CHIPSET_ID, &driver->device_id);
   assert(res);
   intel_driver_memman_init(driver);
+  intel_driver_context_init(driver);
 
 #if EMULATE_GEN
   driver->gen_ver = EMULATE_GEN;
@@ -364,6 +381,7 @@ intel_get_device_id(void)
   assert(driver != NULL);
   intel_driver_open(driver, NULL);
   intel_device_id = driver->device_id;
+  intel_driver_context_destroy(driver);
   intel_driver_close(driver);
   intel_driver_terminate(driver);
   intel_driver_delete(driver);
@@ -376,6 +394,7 @@ cl_intel_driver_delete(intel_driver_t *driver)
 {
   if (driver == NULL)
     return;
+  intel_driver_context_destroy(driver);
   intel_driver_close(driver);
   intel_driver_terminate(driver);
   intel_driver_delete(driver);

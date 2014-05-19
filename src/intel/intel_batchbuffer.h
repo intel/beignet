@@ -83,6 +83,9 @@ typedef struct intel_batchbuffer
   uint32_t size;
   uint8_t *map;
   uint8_t *ptr;
+  /** HSW: can't set LRI in batch buffer, set I915_EXEC_ENABLE_SLM
+   *  flag when call exec. */
+  uint8_t enable_slm;
   int atomic;
 } intel_batchbuffer_t;
 

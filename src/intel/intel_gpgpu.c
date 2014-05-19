@@ -118,6 +118,8 @@ struct intel_gpgpu
 
 typedef struct intel_gpgpu intel_gpgpu_t;
 
+typedef void (intel_gpgpu_set_L3_t)(intel_gpgpu_t *gpgpu, uint32_t use_slm);
+intel_gpgpu_set_L3_t *intel_gpgpu_set_L3 = NULL;
 
 static void
 intel_gpgpu_sync(void *buf)
@@ -332,8 +334,9 @@ intel_gpgpu_pipe_control(intel_gpgpu_t *gpgpu)
 }
 
 static void
-intel_gpgpu_set_L3(intel_gpgpu_t *gpgpu, uint32_t use_slm)
+intel_gpgpu_set_L3_gen7(intel_gpgpu_t *gpgpu, uint32_t use_slm)
 {
+  /* still set L3 in batch buffer for fulsim. */
   BEGIN_BATCH(gpgpu->batch, 9);
   OUT_BATCH(gpgpu->batch, CMD_LOAD_REGISTER_IMM | 1); /* length - 2 */
   OUT_BATCH(gpgpu->batch, GEN7_L3_SQC_REG1_ADDRESS_OFFSET);
@@ -354,7 +357,37 @@ intel_gpgpu_set_L3(intel_gpgpu_t *gpgpu, uint32_t use_slm)
     OUT_BATCH(gpgpu->batch, gpgpu_l3_config_reg2[12]);
   else
     OUT_BATCH(gpgpu->batch, gpgpu_l3_config_reg2[4]);
-  ADVANCE_BATCH(gpgpu->batch);
+    ADVANCE_BATCH(gpgpu->batch);
+
+  //To set L3 in HSW, enable the flag I915_EXEC_ENABLE_SLM flag when exec
+  if(use_slm)
+    gpgpu->batch->enable_slm = 1;
+  intel_gpgpu_pipe_control(gpgpu);
+}
+
+static void
+intel_gpgpu_set_L3_gen75(intel_gpgpu_t *gpgpu, uint32_t use_slm)
+{
+  /* still set L3 in batch buffer for fulsim. */
+  BEGIN_BATCH(gpgpu->batch, 6);
+  OUT_BATCH(gpgpu->batch, CMD_LOAD_REGISTER_IMM | 1); /* length - 2 */
+  OUT_BATCH(gpgpu->batch, GEN7_L3_CNTL_REG2_ADDRESS_OFFSET);
+  if (use_slm)
+    OUT_BATCH(gpgpu->batch, gpgpu_l3_config_reg1[8]);
+  else
+    OUT_BATCH(gpgpu->batch, gpgpu_l3_config_reg1[4]);
+
+  OUT_BATCH(gpgpu->batch, CMD_LOAD_REGISTER_IMM | 1); /* length - 2 */
+  OUT_BATCH(gpgpu->batch, GEN7_L3_CNTL_REG3_ADDRESS_OFFSET);
+  if (use_slm)
+    OUT_BATCH(gpgpu->batch, gpgpu_l3_config_reg2[8]);
+  else
+    OUT_BATCH(gpgpu->batch, gpgpu_l3_config_reg2[4]);
+    ADVANCE_BATCH(gpgpu->batch);
+
+  //To set L3 in HSW, enable the flag I915_EXEC_ENABLE_SLM flag when exec
+  if(use_slm)
+    gpgpu->batch->enable_slm = 1;
   intel_gpgpu_pipe_control(gpgpu);
 }
 
@@ -363,6 +396,7 @@ intel_gpgpu_batch_start(intel_gpgpu_t *gpgpu)
 {
   intel_batchbuffer_start_atomic(gpgpu->batch, 256);
   intel_gpgpu_pipe_control(gpgpu);
+  assert(intel_gpgpu_set_L3);
   intel_gpgpu_set_L3(gpgpu, gpgpu->ker->use_slm);
   intel_gpgpu_select_pipeline(gpgpu);
   intel_gpgpu_set_base_address(gpgpu);
@@ -1121,10 +1155,14 @@ intel_set_gpgpu_callbacks(int device_id)
   cl_gpgpu_ref_batch_buf = (cl_gpgpu_ref_batch_buf_cb *)intel_gpgpu_ref_batch_buf;
   cl_gpgpu_unref_batch_buf = (cl_gpgpu_unref_batch_buf_cb *)intel_gpgpu_unref_batch_buf;
 
-  if (IS_HASWELL(device_id))
+  if (IS_HASWELL(device_id)) {
     cl_gpgpu_bind_image = (cl_gpgpu_bind_image_cb *) intel_gpgpu_bind_image_gen75;
-  else if (IS_IVYBRIDGE(device_id))
+    intel_gpgpu_set_L3 = intel_gpgpu_set_L3_gen75;
+  }
+  else if (IS_IVYBRIDGE(device_id)) {
     cl_gpgpu_bind_image = (cl_gpgpu_bind_image_cb *) intel_gpgpu_bind_image_gen7;
+    intel_gpgpu_set_L3 = intel_gpgpu_set_L3_gen7;
+  }
   else
     assert(0);
 }
