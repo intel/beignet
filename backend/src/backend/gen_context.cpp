@@ -79,6 +79,12 @@ namespace gbe
     this->sel = GBE_NEW(Selection, *this);
   }
 
+  uint32_t GenContext::alignScratchSize(uint32_t size){
+    uint32_t i = 0;
+    while(i < size) i+=1024;
+    return i;
+  }
+
   void GenContext::emitInstructionStream(void) {
     // Emit Gen ISA
     for (auto &block : *sel->blockList)

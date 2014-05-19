@@ -71,8 +71,8 @@ static struct _cl_device_id intel_baytrail_t_device = {
 /* XXX we clone IVB for HSW now */
 static struct _cl_device_id intel_hsw_gt1_device = {
   INIT_ICD(dispatch)
-  .max_compute_unit = 64,
-  .max_thread_per_unit = 8,
+  .max_compute_unit = 70,
+  .max_thread_per_unit = 7,
   .max_work_item_sizes = {512, 512, 512},
   .max_work_group_size = 512,
   .max_clock_frequency = 1000,
@@ -82,8 +82,8 @@ static struct _cl_device_id intel_hsw_gt1_device = {
 
 static struct _cl_device_id intel_hsw_gt2_device = {
   INIT_ICD(dispatch)
-  .max_compute_unit = 128,
-  .max_thread_per_unit = 8,
+  .max_compute_unit = 140,
+  .max_thread_per_unit = 7,
   .max_work_item_sizes = {512, 512, 512},
   .max_work_group_size = 512,
   .max_clock_frequency = 1000,
@@ -93,8 +93,8 @@ static struct _cl_device_id intel_hsw_gt2_device = {
 
 static struct _cl_device_id intel_hsw_gt3_device = {
   INIT_ICD(dispatch)
-  .max_compute_unit = 256,
-  .max_thread_per_unit = 8,
+  .max_compute_unit = 280,
+  .max_thread_per_unit = 7,
   .max_work_item_sizes = {512, 512, 512},
   .max_work_group_size = 512,
   .max_clock_frequency = 1000,

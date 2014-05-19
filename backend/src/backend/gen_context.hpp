@@ -64,12 +64,18 @@ namespace gbe
                bool relaxMath = false);
     /*! Release everything needed */
     virtual ~GenContext(void);
+    /*! device's max srcatch buffer size */
+    const int GEN7_SCRATCH_SIZE = 12 * KB;
     /*! Start new code generation with specific parameters */
     void startNewCG(uint32_t simdWidth, uint32_t reservedSpillRegs, bool limitRegisterPressure);
     /*! Target device ID*/
     uint32_t deviceID;
     /*! Implements base class */
     virtual bool emitCode(void);
+    /*! Align the scratch size to the device's scratch unit size */
+    virtual uint32_t alignScratchSize(uint32_t size);
+    /*! Get the device's max srcatch size */
+    virtual uint32_t getScratchSize(void) { return GEN7_SCRATCH_SIZE; }
     /*! Function we emit code for */
     INLINE const ir::Function &getFunction(void) const { return fn; }
     /*! Simd width chosen for the current function */
@@ -78,7 +84,7 @@ namespace gbe
     /*! check the flag reg, if is grf, use f0.1 instead */
     GenRegister checkFlagRegister(GenRegister flagReg);
     /*! Emit the per-lane stack pointer computation */
-    void emitStackPointer(void);
+    virtual void emitStackPointer(void);
     /*! Emit the instructions */
     void emitInstructionStream(void);
     /*! Set the correct target values for the branches */

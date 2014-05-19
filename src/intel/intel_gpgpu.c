@@ -121,6 +121,9 @@ typedef struct intel_gpgpu intel_gpgpu_t;
 typedef void (intel_gpgpu_set_L3_t)(intel_gpgpu_t *gpgpu, uint32_t use_slm);
 intel_gpgpu_set_L3_t *intel_gpgpu_set_L3 = NULL;
 
+typedef uint32_t (get_scratch_index_t)(uint32_t size);
+get_scratch_index_t *get_scratch_index = NULL;
+
 static void
 intel_gpgpu_sync(void *buf)
 {
@@ -230,17 +233,34 @@ intel_gpgpu_set_base_address(intel_gpgpu_t *gpgpu)
   ADVANCE_BATCH(gpgpu->batch);
 }
 
+uint32_t get_scratch_index_gen7(uint32_t size) {
+  return size / 1024 - 1;
+}
+
+uint32_t get_scratch_index_gen75(uint32_t size) {
+    size = size >> 12;
+    uint32_t index = 0;
+    while((size >>= 1) > 0)
+      index++;   //get leading one
+
+    //non pow 2 size
+    if(size & (size - 1)) index++;
+    return index;
+}
+
 static void
 intel_gpgpu_load_vfe_state(intel_gpgpu_t *gpgpu)
 {
+  int32_t scratch_index;
   BEGIN_BATCH(gpgpu->batch, 8);
   OUT_BATCH(gpgpu->batch, CMD_MEDIA_STATE_POINTERS | (8-2));
 
   if(gpgpu->per_thread_scratch > 0) {
+    scratch_index = get_scratch_index(gpgpu->per_thread_scratch);
     OUT_RELOC(gpgpu->batch, gpgpu->scratch_b.bo,
               I915_GEM_DOMAIN_RENDER,
               I915_GEM_DOMAIN_RENDER,
-              gpgpu->per_thread_scratch/1024 - 1);
+              scratch_index);
   }
   else {
     OUT_BATCH(gpgpu->batch, 0);
@@ -359,9 +379,6 @@ intel_gpgpu_set_L3_gen7(intel_gpgpu_t *gpgpu, uint32_t use_slm)
     OUT_BATCH(gpgpu->batch, gpgpu_l3_config_reg2[4]);
     ADVANCE_BATCH(gpgpu->batch);
 
-  //To set L3 in HSW, enable the flag I915_EXEC_ENABLE_SLM flag when exec
-  if(use_slm)
-    gpgpu->batch->enable_slm = 1;
   intel_gpgpu_pipe_control(gpgpu);
 }
 
@@ -1158,10 +1175,12 @@ intel_set_gpgpu_callbacks(int device_id)
   if (IS_HASWELL(device_id)) {
     cl_gpgpu_bind_image = (cl_gpgpu_bind_image_cb *) intel_gpgpu_bind_image_gen75;
     intel_gpgpu_set_L3 = intel_gpgpu_set_L3_gen75;
+    get_scratch_index = get_scratch_index_gen75;
   }
   else if (IS_IVYBRIDGE(device_id)) {
     cl_gpgpu_bind_image = (cl_gpgpu_bind_image_cb *) intel_gpgpu_bind_image_gen7;
     intel_gpgpu_set_L3 = intel_gpgpu_set_L3_gen7;
+    get_scratch_index = get_scratch_index_gen7;
   }
   else
     assert(0);

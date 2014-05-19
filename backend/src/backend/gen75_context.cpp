@@ -54,6 +54,58 @@ namespace gbe
       allocCurbeReg(ir::ocl::slmoffset, GBE_CURBE_SLM_OFFSET);
   }
 
+  uint32_t Gen75Context::alignScratchSize(uint32_t size){
+    if(size == 0)
+      return 0;
+    uint32_t i = 2048;
+    while(i < size) i *= 2;
+    return i;
+  }
+
+  void Gen75Context::emitStackPointer(void) {
+    using namespace ir;
+
+    // Only emit stack pointer computation if we use a stack
+    if (kernel->getCurbeOffset(GBE_CURBE_STACK_POINTER, 0) <= 0)
+      return;
+
+    // Check that everything is consistent in the kernel code
+    const uint32_t perLaneSize = kernel->getStackSize();
+    const uint32_t perThreadSize = perLaneSize * this->simdWidth;
+    GBE_ASSERT(perLaneSize > 0);
+    GBE_ASSERT(isPowerOf<2>(perLaneSize) == true);
+    GBE_ASSERT(isPowerOf<2>(perThreadSize) == true);
+
+    // Use shifts rather than muls which are limited to 32x16 bit sources
+    const uint32_t perLaneShift = logi2(perLaneSize);
+    const uint32_t perThreadShift = logi2(perThreadSize);
+    const GenRegister selStatckPtr = this->simdWidth == 8 ?
+      GenRegister::ud8grf(ir::ocl::stackptr) :
+      GenRegister::ud16grf(ir::ocl::stackptr);
+    const GenRegister stackptr = ra->genReg(selStatckPtr);
+    const GenRegister selStackBuffer = GenRegister::ud1grf(ir::ocl::stackbuffer);
+    const GenRegister bufferptr = ra->genReg(selStackBuffer);
+
+    // We compute the per-lane stack pointer here
+    p->push();
+      p->curr.execWidth = 1;
+      p->curr.predicate = GEN_PREDICATE_NONE;
+      //p->AND(GenRegister::ud1grf(126,0), GenRegister::ud1grf(0,5), GenRegister::immud(0x1ff));
+      p->AND(GenRegister::ud1grf(126,0), GenRegister::ud1grf(0,5), GenRegister::immud(0x7f));
+      p->AND(GenRegister::ud1grf(126,4), GenRegister::ud1grf(0,5), GenRegister::immud(0x80));
+      p->SHR(GenRegister::ud1grf(126,4), GenRegister::ud1grf(126, 4), GenRegister::immud(7));
+      p->curr.execWidth = this->simdWidth;
+      p->SHL(stackptr, stackptr, GenRegister::immud(perLaneShift));
+      p->curr.execWidth = 1;
+      p->SHL(GenRegister::ud1grf(126,0), GenRegister::ud1grf(126,0), GenRegister::immud(1));
+      p->ADD(GenRegister::ud1grf(126,0), GenRegister::ud1grf(126,0), GenRegister::ud1grf(126, 4));
+      p->SHL(GenRegister::ud1grf(126,0), GenRegister::ud1grf(126,0), GenRegister::immud(perThreadShift));
+      p->curr.execWidth = this->simdWidth;
+      p->ADD(stackptr, stackptr, bufferptr);
+      p->ADD(stackptr, stackptr, GenRegister::ud1grf(126,0));
+    p->pop();
+  }
+
   void Gen75Context::newSelection(void) {
     this->sel = GBE_NEW(Selection75, *this);
   }

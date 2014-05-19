@@ -34,7 +34,19 @@ namespace gbe
   public:
     virtual ~Gen75Context(void) { }
     Gen75Context(const ir::Unit &unit, const std::string &name, uint32_t deviceID, bool relaxMath = false)
-            : GenContext(unit, name, deviceID, relaxMath) { }
+            : GenContext(unit, name, deviceID, relaxMath) {
+    };
+    /*! device's max srcatch buffer size */
+    const int GEN75_SCRATCH_SIZE = 2 * KB * KB;
+    /*! Emit the per-lane stack pointer computation */
+    virtual void emitStackPointer(void);
+    /*! Align the scratch size to the device's scratch unit size */
+    virtual uint32_t alignScratchSize(uint32_t size);
+    /*! Get the device's max srcatch size */
+    virtual uint32_t getScratchSize(void) {
+      //Because the allocate is use uint16_t, so clamp it, need refine
+      return std::min(GEN75_SCRATCH_SIZE, 0x7fff);
+    }
 
   protected:
     virtual GenEncoder* generateEncoder(void) {

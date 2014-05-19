@@ -313,16 +313,6 @@ namespace gbe
     allocatedBlocks.insert(std::make_pair(offset + subOffset, size - subOffset));
   }
 
-  static int
-  alignScratchSize(int size){
-    int i = 0;
-
-    for(; i < size; i+=1024)
-      ;
-
-    return i;
-  }
-
   ///////////////////////////////////////////////////////////////////////////
   // Generic Context (shared by the simulator and the HW context)
   ///////////////////////////////////////////////////////////////////////////
@@ -355,7 +345,7 @@ namespace gbe
     GBE_SAFE_DELETE(this->scratchAllocator);
     GBE_ASSERT(dag != NULL && liveness != NULL);
     this->registerAllocator = GBE_NEW(RegisterAllocator, GEN_REG_SIZE, 4*KB - GEN_REG_SIZE);
-    this->scratchAllocator = GBE_NEW(ScratchAllocator, 12*KB);
+    this->scratchAllocator = GBE_NEW(ScratchAllocator, this->getScratchSize());
     this->curbeRegs.clear();
     this->JIPs.clear();
   }
@@ -375,7 +365,7 @@ namespace gbe
       this->kernel = NULL;
     }
     if(this->kernel != NULL) {
-      this->kernel->scratchSize = alignScratchSize(scratchAllocator->getMaxScatchMemUsed());
+      this->kernel->scratchSize = this->alignScratchSize(scratchAllocator->getMaxScatchMemUsed());
       this->kernel->ctx = this;
     }
     return this->kernel;
