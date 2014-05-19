@@ -334,6 +334,10 @@ cl_mem_new_buffer(cl_context ctx,
     goto error;
   }
 
+  /* HSW: Byte scattered Read/Write has limitation that
+     the buffer size must be a multiple of 4 bytes. */
+  sz = ALIGN(sz, 4);
+
   /* Create the buffer in video memory */
   mem = cl_mem_allocate(CL_MEM_BUFFER_TYPE, ctx, flags, sz, CL_FALSE, &err);
   if (mem == NULL || err != CL_SUCCESS)
