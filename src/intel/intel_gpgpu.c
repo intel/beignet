@@ -315,9 +315,8 @@ intel_gpgpu_write_timestamp(intel_gpgpu_t *gpgpu, int idx)
 static void
 intel_gpgpu_pipe_control(intel_gpgpu_t *gpgpu)
 {
-  BEGIN_BATCH(gpgpu->batch, SIZEOF32(gen6_pipe_control_t));
   gen6_pipe_control_t* pc = (gen6_pipe_control_t*)
-    intel_batchbuffer_alloc_space(gpgpu->batch, 0);
+    intel_batchbuffer_alloc_space(gpgpu->batch, sizeof(gen6_pipe_control_t));
   memset(pc, 0, sizeof(*pc));
   pc->dw0.length = SIZEOF32(gen6_pipe_control_t) - 2;
   pc->dw0.instruction_subopcode = GEN7_PIPE_CONTROL_SUBOPCODE_3D_CONTROL;
@@ -328,6 +327,7 @@ intel_gpgpu_pipe_control(intel_gpgpu_t *gpgpu)
   pc->dw1.texture_cache_invalidation_enable = 1;
   pc->dw1.cs_stall = 1;
   pc->dw1.dc_flush_enable = 1;
+  //pc->dw1.instruction_cache_invalidate_enable = 1;
   ADVANCE_BATCH(gpgpu->batch);
 }
 

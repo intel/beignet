@@ -351,8 +351,12 @@ typedef struct gen6_pipe_control
   } dw2;
 
   struct {
-    uint64_t data;
-  } qw0;
+    uint32_t data;
+  } dw3;
+
+  struct {
+    uint32_t data;
+  } dw4;
 } gen6_pipe_control_t;
 
 typedef struct gen6_sampler_state
