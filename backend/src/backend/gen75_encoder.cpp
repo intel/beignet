@@ -183,6 +183,7 @@ namespace gbe
     GenRegister r = GenRegister::retype(tmp, GEN_TYPE_UD);
     push();
     curr.predicate = GEN_PREDICATE_NONE;
+    curr.noMask = 1;
     curr.execWidth = 1;
     MOV(r, GenRegister::immud(u.u[0]));
     MOV(GenRegister::suboffset(r, 1), GenRegister::immud(u.u[1]));

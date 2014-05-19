@@ -70,6 +70,8 @@ namespace gbe
     virtual ~GenEncoder(void) { }
     /*! Size of the stack (should be large enough) */
     enum { MAX_STATE_NUM = 16 };
+    /*! gen7 exec width of the double data type */
+    const int GEN7_DOUBLE_EXEC_WIDTH = 8;
     /*! Push the current instruction state */
     void push(void);
     /*! Pop the latest pushed state */
@@ -135,6 +137,8 @@ namespace gbe
 #undef ALU2
 #undef ALU2_MOD
 #undef ALU3
+    /*! Get double/long exec width */
+    virtual int getDoubleExecWidth(void) { return GEN7_DOUBLE_EXEC_WIDTH; }
     virtual void MOV_DF(GenRegister dest, GenRegister src0, GenRegister tmp = GenRegister::null());
     virtual void LOAD_DF_IMM(GenRegister dest, GenRegister tmp, double value);
     void LOAD_INT64_IMM(GenRegister dest, int64_t value);

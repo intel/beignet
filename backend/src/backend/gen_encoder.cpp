@@ -240,6 +240,8 @@ namespace gbe
       insn->header.execution_size = GEN_WIDTH_8;
     else if (this->curr.execWidth == 16)
       insn->header.execution_size = GEN_WIDTH_16;
+    else if (this->curr.execWidth == 4)
+      insn->header.execution_size = GEN_WIDTH_4;
     else if (this->curr.execWidth == 1)
       insn->header.execution_size = GEN_WIDTH_1;
     else
@@ -624,6 +626,7 @@ namespace gbe
                             GenRegister src0, GenRegister src1 = GenRegister::null()) {
        int w = p->curr.execWidth;
        p->push();
+       p->curr.execWidth = p->getDoubleExecWidth();
        p->curr.nibControl = 0;
        GenNativeInstruction *insn = p->next(opcode);
        p->setHeader(insn);

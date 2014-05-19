@@ -31,11 +31,15 @@ namespace gbe
   class Gen75Encoder : public GenEncoder
   {
   public:
+    /*! exec width of the double data type */    
+    const int GEN75_DOUBLE_EXEC_WIDTH = 4;
     virtual ~Gen75Encoder(void) { }
 
     Gen75Encoder(uint32_t simdWidth, uint32_t gen, uint32_t deviceID)
          : GenEncoder(simdWidth, gen, deviceID, 8) { }
 
+    /*! Get double/long exec width */
+    virtual int getDoubleExecWidth(void) { return GEN75_DOUBLE_EXEC_WIDTH; }
     virtual void MOV_DF(GenRegister dest, GenRegister src0, GenRegister tmp = GenRegister::null());
     virtual void LOAD_DF_IMM(GenRegister dest, GenRegister tmp, double value);
     virtual void ATOMIC(GenRegister dst, uint32_t function, GenRegister src, uint32_t bti, uint32_t srcNum);
