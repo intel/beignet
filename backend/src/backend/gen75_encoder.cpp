@@ -114,7 +114,7 @@ namespace gbe
 
     const GenMessageTarget sfid = GEN_SFID_DATAPORT1_DATA_CACHE;
     setMessageDescriptor(insn, sfid, msg_length, response_length);
-    insn->bits3.gen7_atomic_op.msg_type = GEN75_P1_TYPED_ATOMIC_OP;
+    insn->bits3.gen7_atomic_op.msg_type = GEN75_P1_UNTYPED_ATOMIC_OP;
     insn->bits3.gen7_atomic_op.bti = bti;
     insn->bits3.gen7_atomic_op.return_data = 1;
     insn->bits3.gen7_atomic_op.aop_type = function;
