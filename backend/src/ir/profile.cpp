@@ -41,7 +41,7 @@ namespace ir {
         "block_ip",
         "barrier_id", "thread_number", "work_dimension",
         "zero", "one",
-        "retVal"
+        "retVal", "slm_offset"
     };
 
 #if GBE_DEBUG
@@ -81,6 +81,7 @@ namespace ir {
       DECL_NEW_REG(FAMILY_DWORD, zero, 1);
       DECL_NEW_REG(FAMILY_DWORD, one, 1);
       DECL_NEW_REG(FAMILY_WORD, retVal, 1);
+      DECL_NEW_REG(FAMILY_WORD, slmoffset, 1);
     }
 #undef DECL_NEW_REG
 

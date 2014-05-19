@@ -316,6 +316,9 @@ namespace gbe
     INLINE ir::Register replaceDst(SelectionInstruction *insn, uint32_t regID);
     /*! spill a register (insert spill/unspill instructions) */
     INLINE bool spillRegs(const SpilledRegs &spilledRegs, uint32_t registerPool);
+    /*! should add per thread offset to the local memory address when load/store/atomic */
+    bool needPatchSLMAddr() const { return patchSLMAddr; }
+    void setPatchSLMAddr(bool b) { patchSLMAddr = b; }
     /*! indicate whether a register is a scalar/uniform register. */
     INLINE bool isScalarReg(const ir::Register &reg) const {
       const ir::RegisterData &regData = getRegisterData(reg);
@@ -575,6 +578,7 @@ namespace gbe
   private:
     /*! Auxiliary label for if/endif. */ 
     uint16_t currAuxLabel;
+    bool patchSLMAddr;
     INLINE ir::LabelIndex newAuxLabel()
     {
       currAuxLabel++;
@@ -608,12 +612,11 @@ namespace gbe
     return src0DAG->child[src0ID] == src1DAG->child[src1ID];
   }
 
-
   Selection::Opaque::Opaque(GenContext &ctx) :
     ctx(ctx), block(NULL),
     curr(ctx.getSimdWidth()), file(ctx.getFunction().getRegisterFile()),
     maxInsnNum(ctx.getFunction().getLargestBlockSize()), dagPool(maxInsnNum),
-    stateNum(0), vectorNum(0), bwdCodeGeneration(false), currAuxLabel(ctx.getFunction().labelNum())
+    stateNum(0), vectorNum(0), bwdCodeGeneration(false), currAuxLabel(ctx.getFunction().labelNum()), patchSLMAddr(false)
   {
     const ir::Function &fn = ctx.getFunction();
     this->regNum = fn.regNum();
@@ -1577,6 +1580,10 @@ namespace gbe
   Selection::Selection(GenContext &ctx) {
     this->blockList = NULL;
     this->opaque = GBE_NEW(Selection::Opaque, ctx);
+  }
+
+  Selection75::Selection75(GenContext &ctx) : Selection(ctx) {
+    this->opaque->setPatchSLMAddr(true);
   }
 
   void Selection::Opaque::TYPED_WRITE(GenRegister *msgs, uint32_t msgNum,
@@ -2725,7 +2732,7 @@ namespace gbe
 
     INLINE bool emitOne(Selection::Opaque &sel, const ir::LoadInstruction &insn) const {
       using namespace ir;
-      const GenRegister address = sel.selReg(insn.getAddress());
+      GenRegister address = sel.selReg(insn.getAddress(), ir::TYPE_U32);
       const AddressSpace space = insn.getAddressSpace();
       GBE_ASSERT(insn.getAddressSpace() == MEM_GLOBAL ||
                  insn.getAddressSpace() == MEM_CONSTANT ||
@@ -2734,6 +2741,11 @@ namespace gbe
       //GBE_ASSERT(sel.isScalarReg(insn.getValue(0)) == false);
       const Type type = insn.getValueType();
       const uint32_t elemSize = getByteScatterGatherSize(type);
+      if(space == MEM_LOCAL && sel.needPatchSLMAddr()) {
+        GenRegister temp = sel.selReg(sel.reg(FAMILY_DWORD), ir::TYPE_U32);
+        sel.ADD(temp, address, sel.selReg(ocl::slmoffset, ir::TYPE_U32));
+        address = temp;
+      }
       if (insn.getAddressSpace() == MEM_CONSTANT) {
         // XXX TODO read 64bit constant through constant cache
         // Per HW Spec, constant cache messages can read at least DWORD data.
@@ -2763,32 +2775,30 @@ namespace gbe
   {
     void emitUntypedWrite(Selection::Opaque &sel,
                           const ir::StoreInstruction &insn,
+                          GenRegister addr,
                           uint32_t bti) const
     {
       using namespace ir;
       const uint32_t valueNum = insn.getValueNum();
-      const uint32_t addrID = ir::StoreInstruction::addressIndex;
-      GenRegister addr;
       vector<GenRegister> value(valueNum);
 
-      addr = GenRegister::retype(sel.selReg(insn.getSrc(addrID)), GEN_TYPE_F);;
+      addr = GenRegister::retype(addr, GEN_TYPE_F);
       for (uint32_t valueID = 0; valueID < valueNum; ++valueID)
         value[valueID] = GenRegister::retype(sel.selReg(insn.getValue(valueID)), GEN_TYPE_F);
       sel.UNTYPED_WRITE(addr, value.data(), valueNum, bti);
     }
 
     void emitWrite64(Selection::Opaque &sel,
-                          const ir::StoreInstruction &insn,
-                          uint32_t bti) const
+                     const ir::StoreInstruction &insn,
+                     GenRegister addr,
+                     uint32_t bti) const
     {
       using namespace ir;
       const uint32_t valueNum = insn.getValueNum();
-      const uint32_t addrID = ir::StoreInstruction::addressIndex;
-      GenRegister addr;
       uint32_t srcID;
       /* XXX support scalar only right now. */
       GBE_ASSERT(valueNum == 1);
-      addr = GenRegister::retype(sel.selReg(insn.getSrc(addrID)), GEN_TYPE_F);
+      addr = GenRegister::retype(addr, GEN_TYPE_F);
       // The first 16 DWORD register space is for temporary usage at encode stage.
       uint32_t tmpRegNum = (sel.ctx.getSimdWidth() == 8) ? valueNum * 2 : valueNum;
       GenRegister src[valueNum];
@@ -2853,12 +2863,17 @@ namespace gbe
       const uint32_t bti = space == MEM_LOCAL ? 0xfe : 0x01;
       const Type type = insn.getValueType();
       const uint32_t elemSize = getByteScatterGatherSize(type);
+      GenRegister address = sel.selReg(insn.getAddress(), ir::TYPE_U32);
+      if(space == MEM_LOCAL && sel.needPatchSLMAddr()) {
+        GenRegister temp = sel.selReg(sel.reg(FAMILY_DWORD), ir::TYPE_U32);
+        sel.ADD(temp, address, sel.selReg(ocl::slmoffset, ir::TYPE_U32));
+        address = temp;
+      }
       if (insn.isAligned() == true && elemSize == GEN_BYTE_SCATTER_QWORD)
-        this->emitWrite64(sel, insn, bti);
+        this->emitWrite64(sel, insn, address, bti);
       else if (insn.isAligned() == true && elemSize == GEN_BYTE_SCATTER_DWORD)
-        this->emitUntypedWrite(sel, insn, bti);
+        this->emitUntypedWrite(sel, insn, address, bti);
       else {
-        const GenRegister address = sel.selReg(insn.getAddress());
         this->emitByteScatter(sel, insn, elemSize, address, bti);
       }
       return true;
@@ -3140,12 +3155,17 @@ namespace gbe
       const AddressSpace space = insn.getAddressSpace();
       const uint32_t bti = space == MEM_LOCAL ? 0xfe : 0x01;
       const uint32_t srcNum = insn.getSrcNum();
-      const GenRegister src0 = sel.selReg(insn.getSrc(0), TYPE_U32);   //address
+      GenRegister src0 = sel.selReg(insn.getSrc(0), TYPE_U32);   //address
       GenRegister src1 = src0, src2 = src0;
       if(srcNum > 1) src1 = sel.selReg(insn.getSrc(1), TYPE_U32);
       if(srcNum > 2) src2 = sel.selReg(insn.getSrc(2), TYPE_U32);
       GenRegister dst  = sel.selReg(insn.getDst(0), TYPE_U32);
       GenAtomicOpCode genAtomicOp = (GenAtomicOpCode)atomicOp;
+      if(space == MEM_LOCAL && sel.needPatchSLMAddr()){
+        GenRegister temp = sel.selReg(sel.reg(FAMILY_DWORD), TYPE_U32);
+        sel.ADD(temp, src0, sel.selReg(ocl::slmoffset, ir::TYPE_U32));
+        src0 = temp;
+      }
       sel.ATOMIC(dst, genAtomicOp, srcNum, src0, src1, src2, bti);
       return true;
     }

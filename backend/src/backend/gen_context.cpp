@@ -67,12 +67,16 @@ namespace gbe
     GBE_SAFE_DELETE(sel);
     GBE_SAFE_DELETE(p);
     this->p = generateEncoder();
-    this->sel = GBE_NEW(Selection, *this);
+    this->newSelection();
     this->ra = GBE_NEW(GenRegAllocator, *this);
     this->branchPos2.clear();
     this->branchPos3.clear();
     this->labelPos.clear();
     this->errCode = NO_ERROR;
+  }
+
+  void GenContext::newSelection(void) {
+    this->sel = GBE_NEW(Selection, *this);
   }
 
   void GenContext::emitInstructionStream(void) {
@@ -1924,6 +1928,7 @@ namespace gbe
     allocCurbeReg(one, GBE_CURBE_ONE);
     if (stackUse.size() != 0)
       allocCurbeReg(stackbuffer, GBE_CURBE_EXTRA_ARGUMENT, GBE_STACK_BUFFER);
+    allocSLMOffsetCurbe();
     // Go over the arguments and find the related patch locations
     const uint32_t argNum = fn.argNum();
     for (uint32_t argID = 0u; argID < argNum; ++argID) {
@@ -2005,6 +2010,7 @@ namespace gbe
       ra->outputAllocation();
     this->clearFlagRegister();
     this->emitStackPointer();
+    this->emitSLMOffset();
     this->emitInstructionStream();
     if (this->patchBranches() == false)
       return false;

@@ -41,6 +41,10 @@ namespace gbe
       return GBE_NEW(Gen75Encoder, this->simdWidth, 75, deviceID);
     }
 
+  private:
+    virtual void emitSLMOffset(void);
+    virtual void allocSLMOffsetCurbe(void);
+    virtual void newSelection(void);
   };
 }
 #endif /* __GBE_GEN75_CONTEXT_HPP__ */

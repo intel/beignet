@@ -194,15 +194,20 @@ namespace gbe
     virtual GenEncoder* generateEncoder(void) {
       return GBE_NEW(GenEncoder, this->simdWidth, 7, deviceID);
     }
+    /*! allocate a new curbe register and insert to curbe pool. */
+    void allocCurbeReg(ir::Register reg, gbe_curbe_type value, uint32_t subValue = 0);
 
   private:
     CompileErrorCode errCode;
     bool ifEndifFix;
     /*! Build the curbe patch list for the given kernel */
     void buildPatchList(void);
-    /*! allocate a new curbe register and insert to curbe pool. */
-    void allocCurbeReg(ir::Register reg, gbe_curbe_type value, uint32_t subValue = 0);
-
+    /*! Calc the group's slm offset from R0.0, to work around HSW SLM bug*/
+    virtual void emitSLMOffset(void) { };
+    /*! allocate group's slm offset in curbe, only for HSW */
+    virtual void allocSLMOffsetCurbe(void) { };
+    /*! new selection of device */
+    virtual void newSelection(void);
     friend class GenRegAllocator;               //!< need to access errCode directly.
 
   };

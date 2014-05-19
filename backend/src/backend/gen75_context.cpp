@@ -22,7 +22,39 @@
 
 #include "backend/gen75_context.hpp"
 #include "backend/gen75_encoder.hpp"
+#include "backend/gen_program.hpp"
+#include "backend/gen_defs.hpp"
+#include "backend/gen_encoder.hpp"
+#include "backend/gen_insn_selection.hpp"
+#include "backend/gen_insn_scheduling.hpp"
+#include "backend/gen_reg_allocation.hpp"
+#include "sys/cvar.hpp"
+#include "ir/function.hpp"
+#include "ir/value.hpp"
+#include <cstring>
 
 namespace gbe
 {
+  void Gen75Context::emitSLMOffset(void) {
+    if(kernel->getUseSLM() == false)
+      return;
+
+    const GenRegister slm_offset = ra->genReg(GenRegister::ud1grf(ir::ocl::slmoffset));
+    const GenRegister slm_index = GenRegister::ud1grf(0, 0);
+    //the slm index is hold in r0.0 24-27 bit, in 4K unit, shift left 12 to get byte unit
+    p->push();
+      p->curr.execWidth = 1;
+      p->curr.predicate = GEN_PREDICATE_NONE;
+      p->SHR(slm_offset, slm_index, GenRegister::immud(12));
+    p->pop();
+  }
+
+  void Gen75Context::allocSLMOffsetCurbe(void) {
+    if(fn.getUseSLM())
+      allocCurbeReg(ir::ocl::slmoffset, GBE_CURBE_SLM_OFFSET);
+  }
+
+  void Gen75Context::newSelection(void) {
+    this->sel = GBE_NEW(Selection75, *this);
+  }
 }

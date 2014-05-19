@@ -68,7 +68,8 @@ namespace ir {
     static const Register zero = Register(24);     //  scalar register holds zero.
     static const Register one = Register(25);     //  scalar register holds one. 
     static const Register retVal = Register(26);   // helper register to do data flow analysis.
-    static const uint32_t regNum = 27;             // number of special registers
+    static const Register slmoffset = Register(27);  // Group's SLM offset in total 64K SLM
+    static const uint32_t regNum = 28;             // number of special registers
     extern const char *specialRegMean[];           // special register name.
   } /* namespace ocl */
 

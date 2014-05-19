@@ -78,6 +78,7 @@ enum gbe_curbe_type {
   GBE_CURBE_THREAD_NUM,
   GBE_CURBE_ZERO,
   GBE_CURBE_ONE,
+  GBE_CURBE_SLM_OFFSET,
 };
 
 /*! Extra arguments use the negative range of sub-values */
