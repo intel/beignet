@@ -98,7 +98,7 @@ cl_kernel_set_arg(cl_kernel k, cl_uint index, size_t sz, const void *value)
   uint32_t offset;            /* where to patch */
   enum gbe_arg_type arg_type; /* kind of argument */
   size_t arg_sz;              /* size of the argument */
-  cl_mem mem;                 /* for __global, __constant and image arguments */
+  cl_mem mem = NULL;          /* for __global, __constant and image arguments */
 
   if (UNLIKELY(index >= k->arg_n))
     return CL_INVALID_ARG_INDEX;
@@ -133,8 +133,9 @@ cl_kernel_set_arg(cl_kernel k, cl_uint index, size_t sz, const void *value)
     // should be image, GLOBAL_PTR, CONSTANT_PTR
     if (UNLIKELY(value == NULL && arg_type == GBE_ARG_IMAGE))
       return CL_INVALID_ARG_VALUE;
-    if(value != NULL) {
+    if(value != NULL)
       mem = *(cl_mem*)value;
+    if(value != NULL && mem) {
       if (UNLIKELY(mem->magic != CL_MAGIC_MEM_HEADER))
         return CL_INVALID_MEM_OBJECT;
 
@@ -178,7 +179,10 @@ cl_kernel_set_arg(cl_kernel k, cl_uint index, size_t sz, const void *value)
     return CL_SUCCESS;
   }
 
-  if(value == NULL) {
+  if(value != NULL)
+    mem = *(cl_mem*) value;
+
+  if(value == NULL || mem == NULL) {
     /* for buffer object GLOBAL_PTR CONSTANT_PTR, it maybe NULL */
     int32_t offset = gbe_kernel_get_curbe_offset(k->opaque, GBE_CURBE_KERNEL_ARGUMENT, index);
     *((uint32_t *)(k->curbe + offset)) = 0;
