@@ -164,16 +164,18 @@ namespace gbe
 
   bool SelectionInstruction::isRead(void) const {
     return this->opcode == SEL_OP_UNTYPED_READ ||
-           this->opcode == SEL_OP_READ64 ||
+           this->opcode == SEL_OP_READ64       ||
            this->opcode == SEL_OP_ATOMIC       ||
-           this->opcode == SEL_OP_BYTE_GATHER;
+           this->opcode == SEL_OP_BYTE_GATHER  ||
+           this->opcode == SEL_OP_SAMPLE;
   }
 
   bool SelectionInstruction::isWrite(void) const {
     return this->opcode == SEL_OP_UNTYPED_WRITE ||
-           this->opcode == SEL_OP_WRITE64 ||
+           this->opcode == SEL_OP_WRITE64       ||
            this->opcode == SEL_OP_ATOMIC        ||
-           this->opcode == SEL_OP_BYTE_SCATTER;
+           this->opcode == SEL_OP_BYTE_SCATTER  ||
+           this->opcode == SEL_OP_TYPED_WRITE;
   }
 
   bool SelectionInstruction::isBranch(void) const {

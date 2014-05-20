@@ -931,8 +931,16 @@ namespace gbe
                                                        uint32_t size,
                                                        uint32_t alignment) {
     uint32_t grfOffset;
-
-    this->expireGRF(interval);
+    static uint32_t tick = 0;
+    // Doing expireGRF too freqently will cause the post register allocation
+    // scheduling very hard. As it will cause a very high register conflict rate.
+    // The tradeoff here is to reduce the freqency here. And if we are under spilling
+    // then no need to reduce that freqency as the register pressure is the most
+    // important factor.
+    if (tick % (ctx.getSimdWidth() == 8 ? 12 : 4) == 0
+        || ctx.reservedSpillRegs != 0)
+      this->expireGRF(interval);
+    tick++;
     while ((grfOffset = ctx.allocate(size, alignment)) == 0) {
       const bool success = this->expireGRF(interval);
       if (success == false) {

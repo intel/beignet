@@ -95,18 +95,26 @@ namespace gbe
   // Node for the schedule DAG
   struct ScheduleDAGNode;
 
+  typedef enum {
+    WRITE_AFTER_WRITE,
+    WRITE_AFTER_READ,
+    READ_AFTER_WRITE,
+    READ_AFTER_WRITE_MEMORY
+  } DepMode;
+
   /*! We need to chain together the node we point */
   struct ScheduleListNode : public intrusive_list_node
   {
-    INLINE ScheduleListNode(ScheduleDAGNode *node) : node(node) {}
+    INLINE ScheduleListNode(ScheduleDAGNode *node, DepMode m = READ_AFTER_WRITE) : node(node), depMode(m) {}
     ScheduleDAGNode *node;
+    DepMode depMode;
   };
 
   /*! Node of the DAG */
   struct ScheduleDAGNode
   {
     INLINE ScheduleDAGNode(SelectionInstruction &insn) :
-      insn(insn), refNum(0), retiredCycle(0) {}
+      insn(insn), refNum(0), retiredCycle(0), preRetired(false), readDistance(0x7fffffff) {}
     bool dependsOn(ScheduleDAGNode *node) const {
       GBE_ASSERT(node != NULL);
       for (auto child : node->children)
@@ -122,6 +130,8 @@ namespace gbe
     uint32_t refNum;
     /*! Cycle when the instruction is retired */
     uint32_t retiredCycle;
+    bool preRetired;
+    uint32_t readDistance;
   };
 
   /*! To track loads and stores */
@@ -144,17 +154,17 @@ namespace gbe
   {
     DependencyTracker(const Selection &selection, SelectionScheduler &scheduler);
     /*! Reset it before scheduling a new block */
-    void clear(void);
+    void clear(bool fullClear = false);
     /*! Get an index in the node array for the given register */
     uint32_t getIndex(GenRegister reg) const;
     /*! Get an index in the node array for the given memory system */
     uint32_t getIndex(uint32_t bti) const;
     /*! Add a new dependency "node0 depends on node1" */
-    void addDependency(ScheduleDAGNode *node0, ScheduleDAGNode *node1);
+    void addDependency(ScheduleDAGNode *node0, ScheduleDAGNode *node1, DepMode m);
     /*! Add a new dependency "node0 depends on node located at index" */
-    void addDependency(ScheduleDAGNode *node0, uint32_t index);
+    void addDependency(ScheduleDAGNode *node0, uint32_t index, DepMode m);
     /*! Add a new dependency "node located at index depends on node0" */
-    void addDependency(uint32_t index, ScheduleDAGNode *node0);
+    void addDependency(uint32_t index, ScheduleDAGNode *node0, DepMode m);
     /*! No dependency for null registers and immediate */
     INLINE bool ignoreDependency(GenRegister reg) const {
       if (reg.file == GEN_IMMEDIATE_VALUE)
@@ -168,23 +178,9 @@ namespace gbe
     /*! Owns the tracker */
     SelectionScheduler &scheduler;
     /*! Add a new dependency "node0 depends on node set for register reg" */
-    INLINE  void addDependency(ScheduleDAGNode *node0, GenRegister reg) {
-      if (this->ignoreDependency(reg) == false) {
-        const uint32_t index = this->getIndex(reg);
-        this->addDependency(node0, index);
-        if (reg.isdf() || reg.isint64())
-          this->addDependency(node0, index + 1);
-      }
-    }
+    void addDependency(ScheduleDAGNode *node0, GenRegister reg, DepMode m);
     /*! Add a new dependency "node set for register reg depends on node0" */
-    INLINE void addDependency(GenRegister reg, ScheduleDAGNode *node0) {
-      if (this->ignoreDependency(reg) == false) {
-        const uint32_t index = this->getIndex(reg);
-        this->addDependency(index, node0);
-        if (reg.isdf() || reg.isint64())
-          this->addDependency(index + 1, node0);
-      }
-    }
+    void addDependency(GenRegister reg, ScheduleDAGNode *node0, DepMode m);
     /*! Make the node located at insnID a barrier */
     void makeBarrier(int32_t insnID, int32_t insnNum);
     /*! Update all the writes (memory, predicates, registers) */
@@ -195,6 +191,8 @@ namespace gbe
     static const uint32_t MAX_ACC_REGISTER = 1u;
     /*! Stores the last node that wrote to a register / memory ... */
     vector<ScheduleDAGNode*> nodes;
+    /*! store nodes each node depends on */
+    map<ScheduleDAGNode *, vector<ScheduleDAGNode*>> deps;
     /*! Stores the nodes per instruction */
     vector<ScheduleDAGNode*> insnNodes;
     /*! Number of virtual register in the selection */
@@ -210,8 +208,11 @@ namespace gbe
     void clearLists(void);
     /*! Return the number of instructions to schedule in the DAG */
     int32_t buildDAG(SelectionBlock &bb);
-    /*! Schedule the DAG */
-    void scheduleDAG(SelectionBlock &bb, int32_t insnNum);
+    /*! traverse read node and update read distance for all the child. */
+    void traverseReadNode(ScheduleDAGNode *node, uint32_t degree = 0);
+    /*! Schedule the DAG, pre register allocation and post register allocation. */
+    void preScheduleDAG(SelectionBlock &bb, int32_t insnNum);
+    void postScheduleDAG(SelectionBlock &bb, int32_t insnNum);
     /*! To limit register pressure or limit insn latency problems */
     SchedulePolicy policy;
     /*! Make ScheduleListNode allocation faster */
@@ -245,22 +246,49 @@ namespace gbe
     insnNodes.resize(selection.getLargestBlockSize());
   }
 
-  void DependencyTracker::clear(void) { for (auto &x : nodes) x = NULL; }
-
-  void DependencyTracker::addDependency(ScheduleDAGNode *node0, ScheduleDAGNode *node1) {
-    if (node0 != NULL && node1 != NULL && node0 != node1 && node0->dependsOn(node1) == false) {
-      ScheduleListNode *dep = scheduler.newScheduleListNode(node0);
-      node0->refNum++;
-      node1->children.push_back(dep);
+  void DependencyTracker::clear(bool fullClear) { for (auto &x : nodes) x = NULL; if (fullClear) deps.clear(); }
+  void DependencyTracker::addDependency(ScheduleDAGNode *node0, GenRegister reg, DepMode m) {
+    if (this->ignoreDependency(reg) == false) {
+      const uint32_t index = this->getIndex(reg);
+      this->addDependency(node0, index, m);
+      if (scheduler.policy == POST_ALLOC && (reg.isdf() || reg.isint64()))
+        this->addDependency(node0, index + 1, m);
     }
   }
 
-  void DependencyTracker::addDependency(ScheduleDAGNode *node, uint32_t index) {
-    this->addDependency(node, this->nodes[index]);
+  void DependencyTracker::addDependency(GenRegister reg, ScheduleDAGNode *node0, DepMode m) {
+    if (this->ignoreDependency(reg) == false) {
+      const uint32_t index = this->getIndex(reg);
+      this->addDependency(index, node0, m);
+      if (scheduler.policy == POST_ALLOC && (reg.isdf() || reg.isint64()))
+        this->addDependency(index + 1, node0, m);
+    }
   }
 
-  void DependencyTracker::addDependency(uint32_t index, ScheduleDAGNode *node) {
-    this->addDependency(this->nodes[index], node);
+  void DependencyTracker::addDependency(ScheduleDAGNode *node0, ScheduleDAGNode *node1, DepMode depMode) {
+    if (node0 != NULL && node1 != NULL && node0 != node1 && node0->dependsOn(node1) == false) {
+      if (node1->insn.isRead())
+        depMode = depMode == READ_AFTER_WRITE ? READ_AFTER_WRITE_MEMORY : depMode;
+      ScheduleListNode *dep = scheduler.newScheduleListNode(node0, depMode);
+      node0->refNum++;
+      node1->children.push_back(dep);
+      auto it = deps.find(node0);
+      if (it != deps.end()) {
+        it->second.push_back(node1);
+      } else {
+        vector<ScheduleDAGNode*> vn;
+        vn.push_back(node1);
+        deps.insert(std::make_pair(node0, vn));
+      }
+    }
+  }
+
+  void DependencyTracker::addDependency(ScheduleDAGNode *node, uint32_t index, DepMode m) {
+    this->addDependency(node, this->nodes[index], m);
+  }
+
+  void DependencyTracker::addDependency(uint32_t index, ScheduleDAGNode *node, DepMode m) {
+    this->addDependency(this->nodes[index], node, m);
   }
 
   void DependencyTracker::makeBarrier(int32_t barrierID, int32_t insnNum) {
@@ -268,11 +296,11 @@ namespace gbe
 
     // The barrier depends on all nodes before it
     for (int32_t insnID = 0; insnID < barrierID; ++insnID)
-      this->addDependency(barrier, this->insnNodes[insnID]);
+      this->addDependency(barrier, this->insnNodes[insnID], WRITE_AFTER_WRITE);
 
     // All nodes after barriers depend on the barrier
     for (int32_t insnID = barrierID + 1; insnID < insnNum; ++insnID)
-      this->addDependency(this->insnNodes[insnID], barrier);
+      this->addDependency(this->insnNodes[insnID], barrier, WRITE_AFTER_WRITE);
   }
 
   static GenRegister getFlag(const SelectionInstruction &insn) {
@@ -332,7 +360,7 @@ namespace gbe
       if (this->ignoreDependency(dst) == false) {
         const uint32_t index = this->getIndex(dst);
         this->nodes[index] = node;
-        if (dst.isdf() || dst.isint64())
+        if (scheduler.policy == POST_ALLOC && (dst.isdf() || dst.isint64()))
           this->nodes[index + 1] = node;
       }
     }
@@ -413,10 +441,27 @@ namespace gbe
     this->active.fast_clear();
   }
 
+  void SelectionScheduler::traverseReadNode(ScheduleDAGNode *node, uint32_t degree) {
+    GBE_ASSERT(degree != 0 || node->insn.isRead());
+    if (node->readDistance != 0x7FFFFFFF)
+      return;
+    node->readDistance = degree;
+    if (degree > 5)
+      return;
+    //printf("node id %d op %d degree %d \n", node->insn.ID, node->insn.opcode, degree);
+    auto it = tracker.deps.find(node);
+    if (it != tracker.deps.end()) {
+      for (auto &depNode : it->second) {
+        if (depNode && !depNode->insn.isRead())
+          traverseReadNode(depNode, degree + 1);
+      }
+    }
+  }
+
   int32_t SelectionScheduler::buildDAG(SelectionBlock &bb) {
     nodePool.rewind();
     listPool.rewind();
-    tracker.clear();
+    tracker.clear(true);
     this->clearLists();
 
     // Track write-after-write and read-after-write dependencies
@@ -428,21 +473,21 @@ namespace gbe
 
       // read-after-write in registers
       for (uint32_t srcID = 0; srcID < insn.srcNum; ++srcID)
-        tracker.addDependency(node, insn.src(srcID));
+        tracker.addDependency(node, insn.src(srcID), READ_AFTER_WRITE);
 
       // read-after-write for predicate
       if (insn.state.predicate != GEN_PREDICATE_NONE)
-        tracker.addDependency(node, getFlag(insn));
+        tracker.addDependency(node, getFlag(insn), READ_AFTER_WRITE);
 
       // read-after-write in memory
       if (insn.isRead()) {
         const uint32_t index = tracker.getIndex(insn.extra.function);
-        tracker.addDependency(node, index);
+        tracker.addDependency(node, index, READ_AFTER_WRITE);
       }
       //read-after-write of scratch memory
       if (insn.opcode == SEL_OP_UNSPILL_REG) {
         const uint32_t index = tracker.getIndex(0xff);
-        tracker.addDependency(node, index);
+        tracker.addDependency(node, index, READ_AFTER_WRITE);
       }
 
       // Consider barriers and wait are reading memory (local and global)
@@ -451,42 +496,32 @@ namespace gbe
         insn.opcode == SEL_OP_WAIT) {
         const uint32_t local = tracker.getIndex(0xfe);
         const uint32_t global = tracker.getIndex(0x00);
-        tracker.addDependency(node, local);
-        tracker.addDependency(node, global);
+        tracker.addDependency(node, local, READ_AFTER_WRITE);
+        tracker.addDependency(node, global, READ_AFTER_WRITE);
       }
 
       // write-after-write in registers
       for (uint32_t dstID = 0; dstID < insn.dstNum; ++dstID)
-        tracker.addDependency(node, insn.dst(dstID));
+        tracker.addDependency(node, insn.dst(dstID), WRITE_AFTER_WRITE);
 
       // write-after-write for predicate
       if (insn.opcode == SEL_OP_CMP || insn.opcode == SEL_OP_I64CMP || insn.state.modFlag)
-        tracker.addDependency(node, getFlag(insn));
+        tracker.addDependency(node, getFlag(insn), WRITE_AFTER_WRITE);
 
       // write-after-write for accumulators
       if (insn.state.accWrEnable)
-        tracker.addDependency(node, GenRegister::acc());
+        tracker.addDependency(node, GenRegister::acc(), WRITE_AFTER_WRITE);
 
       // write-after-write in memory
       if (insn.isWrite()) {
         const uint32_t index = tracker.getIndex(insn.extra.function);
-        tracker.addDependency(node, index);
+        tracker.addDependency(node, index, WRITE_AFTER_WRITE);
       }
 
       // write-after-write in scratch memory
       if (insn.opcode == SEL_OP_SPILL_REG) {
         const uint32_t index = tracker.getIndex(0xff);
-        tracker.addDependency(node, index);
-      }
-
-      // Consider barriers and wait are writing memory (local and global)
-    if (insn.opcode == SEL_OP_BARRIER ||
-        insn.opcode == SEL_OP_FENCE ||
-        insn.opcode == SEL_OP_WAIT) {
-        const uint32_t local = tracker.getIndex(0xfe);
-        const uint32_t global = tracker.getIndex(0x00);
-        tracker.addDependency(node, local);
-        tracker.addDependency(node, global);
+        tracker.addDependency(node, index, WRITE_AFTER_WRITE);
       }
 
       // Track all writes done by the instruction
@@ -501,16 +536,16 @@ namespace gbe
 
       // write-after-read in registers
       for (uint32_t srcID = 0; srcID < insn.srcNum; ++srcID)
-        tracker.addDependency(insn.src(srcID), node);
+        tracker.addDependency(insn.src(srcID), node, WRITE_AFTER_READ);
 
       // write-after-read for predicate
       if (insn.state.predicate != GEN_PREDICATE_NONE)
-        tracker.addDependency(getFlag(insn), node);
+        tracker.addDependency(getFlag(insn), node, WRITE_AFTER_READ);
 
       // write-after-read in memory
       if (insn.isRead()) {
         const uint32_t index = tracker.getIndex(insn.extra.function);
-        tracker.addDependency(index, node);
+        tracker.addDependency(index, node, WRITE_AFTER_READ);
       }
 
       // Consider barriers and wait are reading memory (local and global)
@@ -519,12 +554,20 @@ namespace gbe
           insn.opcode == SEL_OP_WAIT) {
         const uint32_t local = tracker.getIndex(0xfe);
         const uint32_t global = tracker.getIndex(0x00);
-        tracker.addDependency(local, node);
-        tracker.addDependency(global, node);
+        tracker.addDependency(local, node, WRITE_AFTER_READ);
+        tracker.addDependency(global, node, WRITE_AFTER_READ);
       }
 
       // Track all writes done by the instruction
       tracker.updateWrites(node);
+    }
+
+    // Update distance to read for each read node.
+    for (int32_t insnID = 0; insnID < insnNum; ++insnID) {
+      ScheduleDAGNode *node = tracker.insnNodes[insnID];
+      const SelectionInstruction &insn = node->insn;
+      if (insn.isRead())
+        traverseReadNode(node);
     }
 
     // Make labels and branches non-schedulable (i.e. they act as barriers)
@@ -546,56 +589,92 @@ namespace gbe
     return insnNum;
   }
 
-  void SelectionScheduler::scheduleDAG(SelectionBlock &bb, int32_t insnNum) {
+  void SelectionScheduler::preScheduleDAG(SelectionBlock &bb, int32_t insnNum) {
+    printf("Not implemented yet. \n");
+  }
+
+  void SelectionScheduler::postScheduleDAG(SelectionBlock &bb, int32_t insnNum) {
     uint32_t cycle = 0;
     const bool isSIMD8 = this->ctx.getSimdWidth() == 8;
+    vector <ScheduleDAGNode *> scheduledNodes;
     while (insnNum) {
 
       // Retire all the instructions that finished
+      //printf("cycle = %d \n", cycle);
       for (auto toRetireIt = active.begin(); toRetireIt != active.end();) {
         ScheduleDAGNode *toRetireNode = toRetireIt.node()->node;
-        // Instruction is now complete
-        if (toRetireNode->retiredCycle <= cycle) {
-          toRetireIt = this->active.erase(toRetireIt);
-          // Traverse all children and make them ready if no more dependency
+        // Firstly, put all write after read children to ready.
+        if (toRetireNode->preRetired == false) {
           auto &children = toRetireNode->children;
+          toRetireNode->preRetired = true;
+          //printf("id %d pre retired \n", toRetireNode->insn.ID);
           for (auto it = children.begin(); it != children.end();) {
+            ScheduleListNode *listNode = it.node();
+            if (listNode->depMode != WRITE_AFTER_READ) {
+              ++it;
+              continue;
+            }
             if (--it->node->refNum == 0) {
-              ScheduleListNode *listNode = it.node();
+              //printf("pre push id %d to ready list. \n", listNode->node->insn.ID);
               it = children.erase(it);
               this->ready.push_back(listNode);
             } else
               ++it;
           }
+          if (children.size() == 0) {
+            toRetireIt = this->active.erase(toRetireIt);
+            continue;
+          }
         }
-        // Get the next one
-        else
+        // Instruction is now complete
+        if (toRetireNode->retiredCycle <= cycle) {
+          toRetireIt = this->active.erase(toRetireIt);
+          //printf("id %d retired \n", toRetireNode->insn.ID);
+          // Traverse all children and make them ready if no more dependency
+          auto &children = toRetireNode->children;
+          for (auto it = children.begin(); it != children.end();) {
+            ScheduleListNode *listNode = it.node();
+            if (listNode->depMode == WRITE_AFTER_READ) {
+              ++it;
+              continue;
+            }
+            if (--it->node->refNum == 0) {
+              it = children.erase(it);
+              if (listNode->depMode != WRITE_AFTER_READ)
+                this->ready.push_back(listNode);
+              //printf("push id %d to ready list. \n", listNode->node->insn.ID);
+            } else
+              ++it;
+          }
+        } else
           ++toRetireIt;
       }
 
       // Try to schedule something from the ready list
       intrusive_list<ScheduleListNode>::iterator toSchedule;
-      if (policy == POST_ALLOC) // FIFO scheduling
-        toSchedule = this->ready.begin();
-      else                      // LIFO scheduling
-        toSchedule = this->ready.rbegin();
-        // toSchedule = this->ready.begin();
-
+      toSchedule = this->ready.begin();
+      float minCost = 1000;
+      for(auto it = this->ready.begin(); it != this->ready.end(); ++it) {
+        float cost = (it->depMode == WRITE_AFTER_READ) ?  0 : ((it->depMode == WRITE_AFTER_WRITE) ? 5 : 10)
+                     - 5.0 / (it->node->readDistance == 0 ? 0.1 : it->node->readDistance);
+        if (cost < minCost) {
+          toSchedule = it;
+          minCost = cost;
+        }
+      }
       if (toSchedule != this->ready.end()) {
+        //printf("get id %d  op %d to schedule \n", toSchedule->node->insn.ID, toSchedule->node->insn.opcode);
         // The instruction is instantaneously issued to simulate zero cycle
         // scheduling
-        if (policy == POST_ALLOC)
-          cycle += getThroughputGen7(toSchedule->node->insn, isSIMD8);
+        cycle += getThroughputGen7(toSchedule->node->insn, isSIMD8);
 
         this->ready.erase(toSchedule);
         this->active.push_back(toSchedule.node());
         // When we schedule before allocation, instruction is instantaneously
         // ready. This allows to have a real LIFO strategy
-        if (policy == POST_ALLOC)
-          toSchedule->node->retiredCycle = cycle + getLatencyGen7(toSchedule->node->insn);
-        else
-          toSchedule->node->retiredCycle = cycle;
+        toSchedule->node->retiredCycle = cycle + getLatencyGen7(toSchedule->node->insn);
         bb.append(&toSchedule->node->insn);
+        scheduledNodes.push_back(toSchedule->node);
         insnNum--;
       } else
         cycle++;
@@ -611,7 +690,7 @@ namespace gbe
       for (auto &bb : *selection.blockList) {
         const int32_t insnNum = scheduler.buildDAG(bb);
         bb.insnList.clear();
-        scheduler.scheduleDAG(bb, insnNum);
+        scheduler.postScheduleDAG(bb, insnNum);
       }
     }
   }
@@ -619,10 +698,12 @@ namespace gbe
   void schedulePreRegAllocation(GenContext &ctx, Selection &selection) {
     if (OCL_PRE_ALLOC_INSN_SCHEDULE) {
       SelectionScheduler scheduler(ctx, selection, PRE_ALLOC);
+      // FIXME, need to implement proper pre reg allocation scheduling algorithm.
+      return;
       for (auto &bb : *selection.blockList) {
         const int32_t insnNum = scheduler.buildDAG(bb);
         bb.insnList.clear();
-        scheduler.scheduleDAG(bb, insnNum);
+        scheduler.preScheduleDAG(bb, insnNum);
       }
     }
   }
