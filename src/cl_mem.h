@@ -87,6 +87,7 @@ typedef  struct _cl_mem {
   cl_mapped_ptr* mapped_ptr;/* Store the mapped addresses and size by caller. */
   int mapped_ptr_sz;        /* The array size of mapped_ptr. */
   int map_ref;              /* The mapped count. */
+  uint8_t mapped_gtt;       /* This object has mapped gtt, for unmap. */
   cl_mem_dstr_cb *dstr_cb;  /* The destroy callback. */
 } _cl_mem;
 

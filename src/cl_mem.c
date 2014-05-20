@@ -48,6 +48,8 @@
 #define CL_MEM_OBJECT_IMAGE2D                       0x10F1
 #define CL_MEM_OBJECT_IMAGE3D                       0x10F2
 
+#define MAX_TILING_SIZE                             128 * MB
+
 static cl_mem_object_type
 cl_get_mem_object_type(cl_mem mem)
 {
@@ -622,6 +624,15 @@ _cl_mem_new_image(cl_context ctx,
 
   sz = aligned_pitch * aligned_h * depth;
 
+  /* If sz is large than 128MB, map gtt may fail in some system.
+     Because there is no obviours performance drop, disable tiling. */
+  if(tiling != CL_NO_TILE && sz > MAX_TILING_SIZE) {
+    tiling = CL_NO_TILE;
+    aligned_pitch = w * bpp;
+    aligned_h     = h;
+    sz = aligned_pitch * aligned_h * depth;
+  }
+
   mem = cl_mem_allocate(CL_MEM_IMAGE_TYPE, ctx, flags, sz, tiling != CL_NO_TILE, &err);
   if (mem == NULL || err != CL_SUCCESS)
     goto error;
@@ -714,7 +725,7 @@ cl_mem_delete(cl_mem mem)
     for(i=0; i<mem->mapped_ptr_sz; i++) {
       if(mem->mapped_ptr[i].ptr != NULL) {
         mem->map_ref--;
-        cl_mem_unmap_gtt(mem);
+        cl_mem_unmap_auto(mem);
       }
     }
     assert(mem->map_ref == 0);
@@ -1326,6 +1337,7 @@ cl_mem_map_gtt(cl_mem mem)
 {
   cl_buffer_map_gtt(mem->bo);
   assert(cl_buffer_get_virtual(mem->bo));
+  mem->mapped_gtt = 1;
   return cl_buffer_get_virtual(mem->bo);
 }
 
@@ -1356,8 +1368,10 @@ cl_mem_map_auto(cl_mem mem)
 LOCAL cl_int
 cl_mem_unmap_auto(cl_mem mem)
 {
-  if (IS_IMAGE(mem) && cl_mem_image(mem)->tiling != CL_NO_TILE)
+  if (mem->mapped_gtt == 1) {
     cl_buffer_unmap_gtt(mem->bo);
+    mem->mapped_gtt = 0;
+  }
   else
     cl_buffer_unmap(mem->bo);
   return CL_SUCCESS;

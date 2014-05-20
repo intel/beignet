@@ -2161,7 +2161,7 @@ error:
   return err;
 }
 
-static cl_int _cl_map_mem(cl_mem mem, void **ptr, void **mem_ptr, size_t offset, size_t size)
+static cl_int _cl_map_mem(cl_mem mem, void *ptr, void **mem_ptr, size_t offset, size_t size)
 {
   cl_int slot = -1;
   int err = CL_SUCCESS;
@@ -2172,17 +2172,13 @@ static cl_int _cl_map_mem(cl_mem mem, void **ptr, void **mem_ptr, size_t offset,
     sub_offset = buffer->sub_offset;
   }
 
-  if (!(*ptr = cl_mem_map_gtt_unsync(mem))) {
-    err = CL_MAP_FAILURE;
-    goto error;
-  }
-  *ptr = (char*)(*ptr) + offset + sub_offset;
+  ptr = (char*)ptr + offset + sub_offset;
   if(mem->flags & CL_MEM_USE_HOST_PTR) {
     assert(mem->host_ptr);
     //only calc ptr here, will do memcpy in enqueue
     *mem_ptr = mem->host_ptr + offset + sub_offset;
   } else {
-    *mem_ptr = *ptr;
+    *mem_ptr = ptr;
   }
   /* Record the mapped address. */
   if (!mem->mapped_ptr_sz) {
@@ -2190,7 +2186,7 @@ static cl_int _cl_map_mem(cl_mem mem, void **ptr, void **mem_ptr, size_t offset,
     mem->mapped_ptr = (cl_mapped_ptr *)malloc(
           sizeof(cl_mapped_ptr) * mem->mapped_ptr_sz);
     if (!mem->mapped_ptr) {
-      cl_mem_unmap_gtt(mem);
+      cl_mem_unmap_auto(mem);
       err = CL_OUT_OF_HOST_MEMORY;
       goto error;
     }
@@ -2208,7 +2204,7 @@ static cl_int _cl_map_mem(cl_mem mem, void **ptr, void **mem_ptr, size_t offset,
       cl_mapped_ptr *new_ptr = (cl_mapped_ptr *)malloc(
           sizeof(cl_mapped_ptr) * mem->mapped_ptr_sz * 2);
       if (!new_ptr) {
-        cl_mem_unmap_gtt (mem);
+        cl_mem_unmap_auto(mem);
         err = CL_OUT_OF_HOST_MEMORY;
         goto error;
       }
@@ -2223,7 +2219,7 @@ static cl_int _cl_map_mem(cl_mem mem, void **ptr, void **mem_ptr, size_t offset,
   }
   assert(slot != -1);
   mem->mapped_ptr[slot].ptr = *mem_ptr;
-  mem->mapped_ptr[slot].v_ptr = *ptr;
+  mem->mapped_ptr[slot].v_ptr = ptr;
   mem->mapped_ptr[slot].size = size;
   mem->map_ref++;
 error:
@@ -2270,10 +2266,6 @@ clEnqueueMapBuffer(cl_command_queue  command_queue,
     goto error;
   }
 
-  err = _cl_map_mem(buffer, &ptr, &mem_ptr, offset, size);
-  if (err != CL_SUCCESS)
-    goto error;
-
   TRY(cl_event_check_waitlist, num_events_in_wait_list, event_wait_list, event, buffer->ctx);
 
   data = &no_wait_data;
@@ -2282,12 +2274,25 @@ clEnqueueMapBuffer(cl_command_queue  command_queue,
   data->offset      = offset;
   data->size        = size;
   data->ptr         = ptr;
+  data->unsync_map  = 1;
 
   if(handle_events(command_queue, num_events_in_wait_list, event_wait_list,
                    event, data, CL_COMMAND_MAP_BUFFER) == CL_ENQUEUE_EXECUTE_IMM) {
+    data->unsync_map = 0;
     err = cl_enqueue_handle(event ? *event : NULL, data);
+    if (err != CL_SUCCESS)
+      goto error;
+    ptr = data->ptr;
     if(event) cl_event_set_status(*event, CL_COMPLETE);
+  } else {
+    if ((ptr = cl_mem_map_gtt_unsync(buffer)) == NULL) {
+      err = CL_MAP_FAILURE;
+      goto error;
+    }
   }
+  err = _cl_map_mem(buffer, ptr, &mem_ptr, offset, size);
+  if (err != CL_SUCCESS)
+    goto error;
 
 error:
   if (errcode_ret)
@@ -2344,11 +2349,6 @@ clEnqueueMapImage(cl_command_queue   command_queue,
     goto error;
   }
 
-  if (!(ptr = cl_mem_map_gtt_unsync(mem))) {
-    err = CL_MAP_FAILURE;
-    goto error;
-  }
-
   size_t offset = image->bpp*origin[0] + image->row_pitch*origin[1] + image->slice_pitch*origin[2];
   size_t size;
   if(region[2] == 1) {
@@ -2362,10 +2362,6 @@ clEnqueueMapImage(cl_command_queue   command_queue,
     size += image->bpp * (origin[0] + region[0]);
   }
 
-  err = _cl_map_mem(mem, &ptr, &mem_ptr, offset, size);
-  if (err != CL_SUCCESS)
-    goto error;
-
   TRY(cl_event_check_waitlist, num_events_in_wait_list, event_wait_list, event, mem->ctx);
 
   data = &no_wait_data;
@@ -2378,12 +2374,25 @@ clEnqueueMapImage(cl_command_queue   command_queue,
     data->slice_pitch = *image_slice_pitch;
   data->ptr         = ptr;
   data->offset      = offset;
+  data->unsync_map  = 1;
 
   if(handle_events(command_queue, num_events_in_wait_list, event_wait_list,
                    event, data, CL_COMMAND_MAP_IMAGE) == CL_ENQUEUE_EXECUTE_IMM) {
+    data->unsync_map = 0;
     err = cl_enqueue_handle(event ? *event : NULL, data);
+    if (err != CL_SUCCESS)
+      goto error;
+    ptr = data->ptr;
     if(event) cl_event_set_status(*event, CL_COMPLETE);
+  } else {
+    if ((ptr = cl_mem_map_gtt_unsync(mem)) == NULL) {
+      err = CL_MAP_FAILURE;
+      goto error;
+    }
   }
+  err = _cl_map_mem(mem, ptr, &mem_ptr, offset, size);
+  if (err != CL_SUCCESS)
+    goto error;
 
 error:
   if (errcode_ret)

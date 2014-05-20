@@ -60,6 +60,7 @@ typedef struct _enqueue_data {
   const void *      const_ptr;        /* Const ptr for memory read */
   void *            ptr;              /* Ptr for write and return value */
   const cl_mem*     mem_list;         /* mem_list of clEnqueueNativeKernel */
+  uint8_t           unsync_map;       /* Indicate the clEnqueueMapBuffer/Image is unsync map */
   void (*user_func)(void *);          /* pointer to a host-callable user function */
 } enqueue_data;
 
