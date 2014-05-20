@@ -46,6 +46,8 @@ using namespace std;
 #define FILE_BUILD_FAILED 3
 #define FILE_SERIALIZATION_FAILED 4
 
+static int gen_pci_id = 0;
+
 class program_build_instance {
 
 protected:
@@ -194,7 +196,7 @@ void program_build_instance::build_program(void) throw(int)
 {
     // FIXME, we need to find a graceful way to generate internal binaries for difference
     // devices.
-    gbe_program opaque = gbe_program_new_from_source(0x0152, code, 0, build_opt.c_str(), NULL, NULL);
+    gbe_program opaque = gbe_program_new_from_source(gen_pci_id, code, 0, build_opt.c_str(), NULL, NULL);
     if (!opaque)
         throw FILE_BUILD_FAILED;
 
@@ -249,7 +251,7 @@ int main (int argc, const char **argv)
         argv_saved.push_back(string(argv[i]));
     }
 
-    while ( (oc = getopt(argc, (char * const *)argv, "o:p:s")) != -1 ) {
+    while ( (oc = getopt(argc, (char * const *)argv, "t:o:p:s")) != -1 ) {
         switch (oc) {
         case 'p':
         {
@@ -282,6 +284,22 @@ int main (int argc, const char **argv)
             }
             used_index[optind-1] = 1;
             break;
+
+        case 't':
+        {
+            char *s = optarg;
+            if (optarg[0] == '0' && (optarg[1] == 'x' || optarg[1] == 'X'))
+            s += 2;
+
+            if (s[0] < '0' || s[0] > '9') {
+                cout << "Invalid target option argument" << endl;
+                return 1;
+            }
+
+            gen_pci_id = (s[0] - '0') << 12 | (s[1] - '0') << 8 | (s[2] - '0') << 4 | (s[3] - '0');
+            used_index[optind-1] = 1;
+            break;
+        }
 
         case 's':
             program_build_instance::set_str_fmt_out(true);
