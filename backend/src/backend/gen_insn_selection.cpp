@@ -778,19 +778,28 @@ namespace gbe
                       << (uint32_t)poolOffset << std::endl;
           return false;
         }
+        // FIXME, to support post register allocation scheduling,
+        // put all the reserved register to the spill/unspill's destination registers.
+        // This is not the best way. We need to refine the spill/unspill instruction to
+        // only use passed in registers and don't access hard coded offset in the future.
         while(!regSet.empty()) {
           struct RegSlot regSlot = regSet.back();
           regSet.pop_back();
           const GenRegister selReg = insn.src(regSlot.srcID);
           if (!regSlot.isTmpReg) {
           /* For temporary registers, we don't need to unspill. */
-            SelectionInstruction *unspill = this->create(SEL_OP_UNSPILL_REG, 1, 0);
+            SelectionInstruction *unspill = this->create(SEL_OP_UNSPILL_REG,
+                                            1 + (ctx.reservedSpillRegs * 8) / ctx.getSimdWidth(), 0);
             unspill->state = GenInstructionState(simdWidth);
             unspill->state.noMask = 1;
             unspill->dst(0) = GenRegister(GEN_GENERAL_REGISTER_FILE,
                                           registerPool + regSlot.poolOffset, 0,
                                           selReg.type, selReg.vstride,
                                           selReg.width, selReg.hstride);
+            for(uint32_t i = 1; i < 1 + (ctx.reservedSpillRegs * 8) / ctx.getSimdWidth(); i++)
+              unspill->dst(i) = ctx.getSimdWidth() == 8 ?
+                                GenRegister::vec8(GEN_GENERAL_REGISTER_FILE, registerPool + (i - 1), 0 ) :
+                                GenRegister::vec16(GEN_GENERAL_REGISTER_FILE, registerPool + (i - 1) * 2, 0);
             unspill->extra.scratchOffset = regSlot.addr + selReg.quarter * 4 * simdWidth;
             unspill->extra.scratchMsgHeader = registerPool;
             insn.prepend(*unspill);
@@ -826,7 +835,7 @@ namespace gbe
             struct RegSlot regSlot(reg, dstID, poolOffset,
                                    it->second.isTmpReg,
                                    it->second.addr);
-            if(family == ir::FAMILY_QWORD) poolOffset += 2 * simdWidth / 8;
+            if (family == ir::FAMILY_QWORD) poolOffset += 2 * simdWidth / 8;
             else poolOffset += simdWidth / 8;
             regSet.push_back(regSlot);
           }
@@ -845,7 +854,8 @@ namespace gbe
           const GenRegister selReg = insn.dst(regSlot.dstID);
           if(!regSlot.isTmpReg) {
             /* For temporary registers, we don't need to unspill. */
-            SelectionInstruction *spill = this->create(SEL_OP_SPILL_REG, 0, 1);
+            SelectionInstruction *spill = this->create(SEL_OP_SPILL_REG,
+                                          (ctx.reservedSpillRegs * 8) / ctx.getSimdWidth() , 1);
             spill->state  = insn.state;//GenInstructionState(simdWidth);
             spill->state.accWrEnable = 0;
             spill->state.saturate = 0;
@@ -857,6 +867,10 @@ namespace gbe
                                         selReg.width, selReg.hstride);
             spill->extra.scratchOffset = regSlot.addr + selReg.quarter * 4 * simdWidth;
             spill->extra.scratchMsgHeader = registerPool;
+            for(uint32_t i = 0; i < 0 + (ctx.reservedSpillRegs * 8) / ctx.getSimdWidth(); i++)
+              spill->dst(i) = ctx.getSimdWidth() == 8 ?
+                                GenRegister::vec8(GEN_GENERAL_REGISTER_FILE, registerPool + (i), 0 ) :
+                                GenRegister::vec16(GEN_GENERAL_REGISTER_FILE, registerPool + (i) * 2, 0);
             insn.append(*spill);
           }
 

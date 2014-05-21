@@ -736,7 +736,7 @@ namespace gbe
     for(uint32_t i = 0; i < regNum; i++) {
       const GenRegInterval * cur = starting[i];
       const GenRegInterval * exp = ending[toExpire];
-      if(exp->maxID < cur->minID) {
+      if (exp->maxID < cur->minID) {
         auto it = spilledRegs.find(exp->reg);
         GBE_ASSERT(it != spilledRegs.end());
         if(it->second.addr != -1) {

@@ -138,6 +138,7 @@ namespace gbe
   enum GenMemory : uint8_t {
     GLOBAL_MEMORY = 0,
     LOCAL_MEMORY,
+    SCRATCH_MEMORY,
     MAX_MEM_SYSTEM
   };
 
@@ -348,7 +349,7 @@ namespace gbe
 
   uint32_t DependencyTracker::getIndex(uint32_t bti) const {
     const uint32_t memDelta = grfNum + MAX_FLAG_REGISTER + MAX_ACC_REGISTER;
-    return bti == 0xfe ? memDelta + LOCAL_MEMORY : memDelta + GLOBAL_MEMORY;
+    return bti == 0xfe ? memDelta + LOCAL_MEMORY : (bti == 0xff ? memDelta + SCRATCH_MEMORY : memDelta + GLOBAL_MEMORY);
   }
 
   void DependencyTracker::updateWrites(ScheduleDAGNode *node) {
@@ -383,6 +384,7 @@ namespace gbe
       this->nodes[index] = node;
     }
 
+    // Track writes in scratch memory
     if(insn.opcode == SEL_OP_SPILL_REG) {
       const uint32_t index = this->getIndex(0xff);
       this->nodes[index] = node;
@@ -548,6 +550,12 @@ namespace gbe
         tracker.addDependency(index, node, WRITE_AFTER_READ);
       }
 
+      // write-after-read in scratch memory
+      if (insn.opcode == SEL_OP_UNSPILL_REG) {
+        const uint32_t index = tracker.getIndex(0xff);
+        tracker.addDependency(index, node, WRITE_AFTER_READ);
+      }
+
       // Consider barriers and wait are reading memory (local and global)
       if (insn.opcode == SEL_OP_BARRIER ||
           insn.opcode == SEL_OP_FENCE ||
@@ -573,7 +581,9 @@ namespace gbe
     // Make labels and branches non-schedulable (i.e. they act as barriers)
     for (int32_t insnID = 0; insnID < insnNum; ++insnID) {
       ScheduleDAGNode *node = tracker.insnNodes[insnID];
-      if (node->insn.isBranch() || node->insn.isLabel() || node->insn.opcode == SEL_OP_EOT || node->insn.opcode == SEL_OP_IF)
+      if (node->insn.isBranch() || node->insn.isLabel()
+          || node->insn.opcode == SEL_OP_EOT || node->insn.opcode == SEL_OP_IF
+          || node->insn.opcode == SEL_OP_BARRIER)
         tracker.makeBarrier(insnID, insnNum);
     }
 
@@ -681,7 +691,7 @@ namespace gbe
     }
   }
 
-  BVAR(OCL_POST_ALLOC_INSN_SCHEDULE, false);
+  BVAR(OCL_POST_ALLOC_INSN_SCHEDULE, true);
   BVAR(OCL_PRE_ALLOC_INSN_SCHEDULE, false);
 
   void schedulePostRegAllocation(GenContext &ctx, Selection &selection) {
