@@ -383,6 +383,31 @@ intel_gpgpu_set_L3_gen7(intel_gpgpu_t *gpgpu, uint32_t use_slm)
 }
 
 static void
+intel_gpgpu_set_L3_baytrail(intel_gpgpu_t *gpgpu, uint32_t use_slm)
+{
+  BEGIN_BATCH(gpgpu->batch, 9);
+
+  OUT_BATCH(gpgpu->batch, CMD_LOAD_REGISTER_IMM | 1); /* length - 2 */
+  OUT_BATCH(gpgpu->batch, GEN7_L3_SQC_REG1_ADDRESS_OFFSET);
+  OUT_BATCH(gpgpu->batch, 0x00D30000);    /* General credit : High credit = 26 : 6 */
+
+  OUT_BATCH(gpgpu->batch, CMD_LOAD_REGISTER_IMM | 1); /* length - 2 */
+  OUT_BATCH(gpgpu->batch, GEN7_L3_CNTL_REG2_ADDRESS_OFFSET);
+  if (use_slm)
+    OUT_BATCH(gpgpu->batch, 0x02040001);  /* {SLM=64, URB=64, DC=32, RO=32, Sum=192} */
+  else
+    OUT_BATCH(gpgpu->batch, 0x02040040);  /* {SLM=0, URB=128, DC=32, RO=32, Sum=192} */
+
+  OUT_BATCH(gpgpu->batch, CMD_LOAD_REGISTER_IMM | 1); /* length - 2 */
+  OUT_BATCH(gpgpu->batch, GEN7_L3_CNTL_REG3_ADDRESS_OFFSET);
+  OUT_BATCH(gpgpu->batch, 0x0);           /* {I/S=0, Const=0, Tex=0} */
+
+  ADVANCE_BATCH(gpgpu->batch);
+
+  intel_gpgpu_pipe_control(gpgpu);
+}
+
+static void
 intel_gpgpu_set_L3_gen75(intel_gpgpu_t *gpgpu, uint32_t use_slm)
 {
   /* still set L3 in batch buffer for fulsim. */
@@ -1179,7 +1204,10 @@ intel_set_gpgpu_callbacks(int device_id)
   }
   else if (IS_IVYBRIDGE(device_id)) {
     cl_gpgpu_bind_image = (cl_gpgpu_bind_image_cb *) intel_gpgpu_bind_image_gen7;
-    intel_gpgpu_set_L3 = intel_gpgpu_set_L3_gen7;
+    if (IS_BAYTRAIL_T(device_id))
+      intel_gpgpu_set_L3 = intel_gpgpu_set_L3_baytrail;
+    else
+      intel_gpgpu_set_L3 = intel_gpgpu_set_L3_gen7;
     get_scratch_index = get_scratch_index_gen7;
   }
   else
