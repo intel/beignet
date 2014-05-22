@@ -127,7 +127,8 @@ namespace ir {
     void initInstruction(BlockInfo &info, const Instruction &insn);
     /*! Now really compute LiveOut based on UEVar and VarKill */
     void computeLiveInOut(void);
-    void computeExtraLiveInOut(void);
+    void computeExtraLiveInOut(set<Register> &extentRegs);
+    void analyzeUniform(set<Register> *extentRegs);
     /*! Set of work list block which has exit(return) instruction */
     typedef set <struct BlockInfo*> WorkSet;
     WorkSet workSet;

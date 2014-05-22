@@ -43,11 +43,50 @@ namespace ir {
     // Now with iterative analysis, we compute liveout and livein sets
     this->computeLiveInOut();
     // extend register (def in loop, use out-of-loop) liveness to the whole loop
-    this->computeExtraLiveInOut();
+    set<Register> extentRegs;
+    this->computeExtraLiveInOut(extentRegs);
+    // analyze uniform values. The extentRegs contains all the values which is
+    // defined in a loop and use out-of-loop which could not be a uniform. The reason
+    // is that when it reenter the second time, it may active different lanes. So
+    // reenter many times may cause it has different values in different lanes.
+    this->analyzeUniform(&extentRegs);
   }
 
   Liveness::~Liveness(void) {
     for (auto &pair : liveness) GBE_SAFE_DELETE(pair.second);
+  }
+
+  void Liveness::analyzeUniform(set<Register> *extentRegs) {
+    fn.foreachBlock([this, extentRegs](const BasicBlock &bb) {
+      const_cast<BasicBlock&>(bb).foreach([this, extentRegs](const Instruction &insn) {
+        const uint32_t srcNum = insn.getSrcNum();
+        const uint32_t dstNum = insn.getDstNum();
+        bool uniform = true;
+        for (uint32_t srcID = 0; srcID < srcNum; ++srcID) {
+          const Register reg = insn.getSrc(srcID);
+          if (!fn.isUniformRegister(reg))
+            uniform = false;
+        }
+        // A destination is a killed value
+        for (uint32_t dstID = 0; dstID < dstNum; ++dstID) {
+          const Register reg = insn.getDst(dstID);
+          int opCode = insn.getOpcode();
+          // FIXME, ADDSAT and uniform vector should be supported.
+          if (uniform &&
+              fn.getRegisterFamily(reg) != ir::FAMILY_QWORD &&
+              !insn.getParent()->definedPhiRegs.contains(reg) &&
+              opCode != ir::OP_ATOMIC &&
+              opCode != ir::OP_MUL_HI &&
+              opCode != ir::OP_HADD &&
+              opCode != ir::OP_RHADD &&
+              opCode != ir::OP_ADDSAT &&
+              (dstNum == 1 || insn.getOpcode() != ir::OP_LOAD) &&
+              !extentRegs->contains(reg)
+             )
+            fn.setRegisterUniform(reg, true);
+        }
+      });
+    });
   }
 
   void Liveness::initBlock(const BasicBlock &bb) {
@@ -64,11 +103,8 @@ namespace ir {
     const uint32_t srcNum = insn.getSrcNum();
     const uint32_t dstNum = insn.getDstNum();
     // First look for used before killed
-    bool uniform = true;
     for (uint32_t srcID = 0; srcID < srcNum; ++srcID) {
       const Register reg = insn.getSrc(srcID);
-      if (!fn.isUniformRegister(reg))
-        uniform = false;
       // Not killed -> it is really an upward use
       if (info.varKill.contains(reg) == false)
         info.upwardUsed.insert(reg);
@@ -76,19 +112,6 @@ namespace ir {
     // A destination is a killed value
     for (uint32_t dstID = 0; dstID < dstNum; ++dstID) {
       const Register reg = insn.getDst(dstID);
-      int opCode = insn.getOpcode();
-      // FIXME, ADDSAT and uniform vector should be supported.
-      if (uniform &&
-          fn.getRegisterFamily(reg) != ir::FAMILY_QWORD &&
-          !info.bb.definedPhiRegs.contains(reg) &&
-          opCode != ir::OP_ATOMIC &&
-          opCode != ir::OP_MUL_HI &&
-          opCode != ir::OP_HADD &&
-          opCode != ir::OP_RHADD &&
-          opCode != ir::OP_ADDSAT &&
-          (dstNum == 1 || insn.getOpcode() != ir::OP_LOAD)
-         )
-        fn.setRegisterUniform(reg, true);
       info.varKill.insert(reg);
     }
   }
@@ -144,8 +167,9 @@ namespace ir {
   killed period, and the instructions before kill point were re-executed with different prediction,
   the inactive lanes of vreg maybe over-written. Then the out-of-loop use will got wrong data.
 */
-  void Liveness::computeExtraLiveInOut(void) {
+  void Liveness::computeExtraLiveInOut(set<Register> &extentRegs) {
     const vector<Loop *> &loops = fn.getLoops();
+    extentRegs.clear();
     if(loops.size() == 0) return;
 
     for (auto l : loops) {
@@ -163,7 +187,8 @@ namespace ir {
           std::set_intersection(exiting->liveOut.begin(), exiting->liveOut.end(), exit->upwardUsed.begin(), exit->upwardUsed.end(), std::back_inserter(toExtend));
         }
         if (toExtend.size() == 0) continue;
-
+        for(auto r : toExtend)
+          extentRegs.insert(r);
         for (auto bb : l->bbs) {
           BlockInfo * bI = liveness[&fn.getBlock(bb)];
           for(auto r : toExtend) {
