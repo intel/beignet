@@ -34,6 +34,7 @@
 #include <vector>
 #include <algorithm>
 #include <stdlib.h>
+#include <iostream>
 #include <stdio.h>
 
 #include "backend/program.h"
@@ -46,7 +47,7 @@ using namespace std;
 #define FILE_BUILD_FAILED 3
 #define FILE_SERIALIZATION_FAILED 4
 
-static int gen_pci_id = 0;
+static uint32_t gen_pci_id = 0;
 
 class program_build_instance {
 
@@ -296,7 +297,9 @@ int main (int argc, const char **argv)
                 return 1;
             }
 
-            gen_pci_id = (s[0] - '0') << 12 | (s[1] - '0') << 8 | (s[2] - '0') << 4 | (s[3] - '0');
+            std::stringstream str(s);
+            str >> std::hex >> gen_pci_id;
+
             used_index[optind-1] = 1;
             // We must set the image base index here, as we invoke the backend in a non-standard way.
             gbe_set_image_base_index(3);
