@@ -112,12 +112,14 @@ namespace gbe {
     INLINE uint32_t getSLMSize(void) const { return this->slmSize; }
     /*! set constant buffer size and return the cb curbe offset */
     int32_t setConstBufSize(uint32_t argID, size_t sz) {
+#ifdef GBE_COMPILER_AVAILABLE
       if(argID >= argNum) return -1;
       if(args[argID].type != GBE_ARG_CONSTANT_PTR) return -1;
       if(args[argID].bufSize != sz) {
         args[argID].bufSize = sz;
         return ctx->allocConstBuf(argID);
       }
+#endif
       return -1;
     }
     /*! Set sampler set. */

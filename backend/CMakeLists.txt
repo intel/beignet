@@ -36,6 +36,8 @@ endif (GBE_DEBUG_MEMORY)
 # Hide all symbols and allows the symbols declared as visible to be exported
 set (CMAKE_C_CXX_FLAGS "-fvisibility=hidden ${CMAKE_C_CXX_FLAGS}")
 
+set (CMAKE_C_CXX_FLAGS -DGBE_COMPILER_AVAILABLE=1)
+
 if (COMPILER STREQUAL "GCC")
   set (CMAKE_C_CXX_FLAGS "${CMAKE_C_CXX_FLAGS} -funroll-loops -Wstrict-aliasing=2 -fstrict-aliasing -msse2 -msse3 -mssse3 -msse4.1 -fPIC -Wall")
   set (CMAKE_C_CXX_FLAGS "${CMAKE_C_CXX_FLAGS}  ${LLVM_CFLAGS}")
@@ -99,6 +101,7 @@ include_directories (${CMAKE_CURRENT_BINARY_DIR})
 add_subdirectory (src)
 set(LOCAL_PCH_OBJECT_DIR ${LOCAL_PCH_OBJECT_DIR} PARENT_SCOPE)
 set(LOCAL_PCM_OBJECT_DIR ${LOCAL_PCM_OBJECT_DIR} PARENT_SCOPE)
+set(LOCAL_GBE_OBJECT_DIR ${LOCAL_GBE_OBJECT_DIR} PARENT_SCOPE)
 set (GBE_BIN_GENERATER
      OCL_PCM_PATH=${LOCAL_PCM_OBJECT_DIR} OCL_PCH_PATH=${LOCAL_PCH_OBJECT_DIR} ${CMAKE_CURRENT_BINARY_DIR}/src/gbe_bin_generater
      PARENT_SCOPE)

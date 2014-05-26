@@ -27,6 +27,7 @@
 namespace gbe {
 namespace ir {
 
+#ifdef GBE_COMPILER_AVAILABLE
   uint8_t SamplerSet::appendReg(uint32_t key, Context *ctx) {
     uint8_t samplerSlot = samplerMap.size();
     samplerMap.insert(std::make_pair(key, samplerSlot));
@@ -61,6 +62,7 @@ namespace ir {
     }
     return appendReg(SAMPLER_ID(id), ctx);
   }
+#endif
 
 #define OUT_UPDATE_SZ(elt) SERIALIZE_OUT(elt, outs, ret_size)
 #define IN_UPDATE_SZ(elt) DESERIALIZE_IN(elt, ins, total_size)

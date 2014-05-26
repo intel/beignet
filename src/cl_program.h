@@ -21,7 +21,7 @@
 #define __CL_PROGRAM_H__
 
 #include "cl_internals.h"
-#include "program.h"
+#include "cl_gbe_loader.h"
 #include "CL/cl.h"
 
 #include <stdint.h>

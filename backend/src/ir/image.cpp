@@ -64,16 +64,6 @@ namespace ir {
     setInfoOffset4Type(imageInfo, key.type, offset);
   }
 
-  Register ImageSet::appendInfo(ImageInfoKey key, Context *ctx)
-  {
-    auto it = infoRegMap.find(key.data);
-    if (it != infoRegMap.end())
-      return it->second;
-    Register reg = ctx->reg(FAMILY_DWORD);
-    infoRegMap.insert(std::make_pair(key.data, reg));
-    return reg;
-  }
-
   void ImageSet::clearInfo()
   {
     struct ImageInfo *imageInfo;
@@ -85,26 +75,6 @@ namespace ir {
       imageInfo->dataTypeSlot = -1;
       imageInfo->channelOrderSlot = -1;
     }
-  }
-
-  void ImageSet::append(Register imageReg, Context *ctx)
-  {
-    ir::FunctionArgument *arg =  ctx->getFunction().getArg(imageReg);
-    GBE_ASSERTM(arg && arg->type == ir::FunctionArgument::IMAGE, "Append an invalid reg to image set.");
-    GBE_ASSERTM(regMap.find(imageReg) == regMap.end(), "Append the same image reg twice.");
-
-    int32_t id = ctx->getFunction().getArgID(arg);
-    struct ImageInfo *imageInfo = GBE_NEW(struct ImageInfo);
-    imageInfo->arg_idx = id;
-    imageInfo->idx = regMap.size() + gbe_get_image_base_index();
-    imageInfo->wSlot = -1;
-    imageInfo->hSlot = -1;
-    imageInfo->depthSlot = -1;
-    imageInfo->dataTypeSlot = -1;
-    imageInfo->channelOrderSlot = -1;
-    imageInfo->dimOrderSlot = -1;
-    regMap.insert(std::make_pair(imageReg, imageInfo));
-    indexMap.insert(std::make_pair(imageInfo->idx, imageInfo));
   }
 
   const int32_t ImageSet::getInfoOffset(ImageInfoKey key) const
@@ -271,6 +241,37 @@ namespace ir {
    outs << spaces << "------------- End ImageSet -------------" << "\n";
   }
 
+#ifdef GBE_COMPILER_AVAILABLE
+  Register ImageSet::appendInfo(ImageInfoKey key, Context *ctx)
+  {
+    auto it = infoRegMap.find(key.data);
+    if (it != infoRegMap.end())
+      return it->second;
+    Register reg = ctx->reg(FAMILY_DWORD);
+    infoRegMap.insert(std::make_pair(key.data, reg));
+    return reg;
+  }
+
+  void ImageSet::append(Register imageReg, Context *ctx)
+  {
+    ir::FunctionArgument *arg =  ctx->getFunction().getArg(imageReg);
+    GBE_ASSERTM(arg && arg->type == ir::FunctionArgument::IMAGE, "Append an invalid reg to image set.");
+    GBE_ASSERTM(regMap.find(imageReg) == regMap.end(), "Append the same image reg twice.");
+
+    int32_t id = ctx->getFunction().getArgID(arg);
+    struct ImageInfo *imageInfo = GBE_NEW(struct ImageInfo);
+    imageInfo->arg_idx = id;
+    imageInfo->idx = regMap.size() + gbe_get_image_base_index();
+    imageInfo->wSlot = -1;
+    imageInfo->hSlot = -1;
+    imageInfo->depthSlot = -1;
+    imageInfo->dataTypeSlot = -1;
+    imageInfo->channelOrderSlot = -1;
+    imageInfo->dimOrderSlot = -1;
+    regMap.insert(std::make_pair(imageReg, imageInfo));
+    indexMap.insert(std::make_pair(imageInfo->idx, imageInfo));
+  }
+#endif
 
 } /* namespace ir */
 } /* namespace gbe */

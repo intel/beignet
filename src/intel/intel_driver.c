@@ -399,7 +399,8 @@ cl_intel_driver_delete(intel_driver_t *driver)
   intel_driver_terminate(driver);
   intel_driver_delete(driver);
 }
-#include "program.h"
+
+#include "cl_gbe_loader.h"
 static intel_driver_t*
 cl_intel_driver_new(cl_context_prop props)
 {
@@ -409,7 +410,9 @@ cl_intel_driver_new(cl_context_prop props)
   /* We use the first 2 slots(0,1) for all the bufs.
    * Notify the gbe this base index, thus gbe can avoid conflicts
    * when it allocates slots for images*/
-  gbe_set_image_base_index(3);
+  if (CompilerSupported())
+    gbe_set_image_base_index_compiler(3);
+  gbe_set_image_base_index_interp(3);
 exit:
   return driver;
 error:

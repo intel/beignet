@@ -24,6 +24,7 @@
 #include "cl_alloc.h"
 #include "cl_utils.h"
 #include "cl_khr_icd.h"
+#include "cl_gbe_loader.h"
 #include "CL/cl.h"
 #include "CL/cl_intel.h"
 
@@ -326,6 +327,11 @@ cl_program_build(cl_program p, const char *options)
   }
 
   if (p->source_type == FROM_SOURCE) {
+    if (!CompilerSupported()) {
+      err = CL_COMPILER_NOT_AVAILABLE;
+      goto error;
+    }
+
     p->opaque = gbe_program_new_from_source(p->ctx->device->vendor_id, p->source, p->build_log_max_sz, options, p->build_log, &p->build_log_sz);
     if (UNLIKELY(p->opaque == NULL)) {
       if (p->build_log_sz > 0 && strstr(p->build_log, "error: error reading 'options'"))

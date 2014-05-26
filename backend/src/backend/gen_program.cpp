@@ -53,6 +53,7 @@ namespace gbe {
   size_t GenKernel::getCodeSize(void) const { return insnNum * sizeof(GenInstruction); }
 
   void GenKernel::printStatus(int indent, std::ostream& outs) {
+#ifdef GBE_COMPILER_AVAILABLE
     Kernel::printStatus(indent, outs);
 
     FILE *f = fopen("/dev/null", "w");
@@ -70,6 +71,7 @@ namespace gbe {
     setbuffer(f, NULL, 0);
     delete [] buf;
     fclose(f);
+#endif
   }
 
   GenProgram::~GenProgram(void) {}
@@ -88,7 +90,7 @@ namespace gbe {
   };
 
   Kernel *GenProgram::compileKernel(const ir::Unit &unit, const std::string &name, bool relaxMath) {
-
+#ifdef GBE_COMPILER_AVAILABLE
     // Be careful when the simdWidth is forced by the programmer. We can see it
     // when the function already provides the simd width we need to use (i.e.
     // non zero)
@@ -139,6 +141,9 @@ namespace gbe {
 
     GBE_ASSERTM(kernel != NULL, "Fail to compile kernel, may need to increase reserved registers for spilling.");
     return kernel;
+#else
+    return NULL;
+#endif
   }
 
   static gbe_program genProgramNewFromBinary(uint32_t deviceID, const char *binary, size_t size) {
@@ -184,6 +189,7 @@ namespace gbe {
   {
     using namespace gbe;
     GenProgram *program = GBE_NEW(GenProgram, deviceID);
+#ifdef GBE_COMPILER_AVAILABLE
     std::string error;
     // Try to compile the program
     if (program->buildFromLLVMFile(fileName, error, optLevel) == false) {
@@ -195,6 +201,7 @@ namespace gbe {
       GBE_DELETE(program);
       return NULL;
     }
+#endif
     // Everything run fine
     return (gbe_program) program;
   }

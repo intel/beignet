@@ -54,6 +54,7 @@ set(OPENCL_SRC
     cl_alloc.c
     cl_kernel.c
     cl_program.c
+    cl_gbe_loader.cpp
     cl_sampler.c
     cl_event.c
     cl_enqueue.c
@@ -98,12 +99,14 @@ link_directories (${LLVM_LIBRARY_DIR})
 add_library(cl SHARED ${OPENCL_SRC})
 target_link_libraries(
                       cl
-                      gbe
+                      interp
                       ${XLIB_LIBRARY}
                       ${XEXT_LIBRARIES}
                       ${XFIXES_LIBRARIES}
                       ${DRM_INTEL_LIBRARIES}
                       ${DRM_LIBRARIES}
+                      ${CMAKE_THREAD_LIBS_INIT}
+                      ${CMAKE_DL_LIBS}
                       ${OPENGL_LIBRARIES}
                       ${OPTIONAL_EGL_LIBRARY})
 install (TARGETS cl LIBRARY DESTINATION ${LIB_INSTALL_DIR}/beignet)

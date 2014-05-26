@@ -1,6 +1,7 @@
 // This file includes defines that are common to both kernel code and
 // the NVPTX back-end.
-
+#ifndef __OCL_COMMON_DEFINES__
+#define __OCL_COMMON_DEFINES__
 //
 // Common defines for Image intrinsics
 // Channel order
@@ -121,3 +122,5 @@ typedef enum clk_sampler_type {
 // Memory synchronization
 #define CLK_LOCAL_MEM_FENCE     (1 << 0)
 #define CLK_GLOBAL_MEM_FENCE    (1 << 1)
+
+#endif   /* __OCL_COMMON_DEFINES__ */

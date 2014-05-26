@@ -100,6 +100,7 @@ namespace gbe {
     if (constantSet) delete constantSet;
   }
 
+#ifdef GBE_COMPILER_AVAILABLE
   BVAR(OCL_OUTPUT_GEN_IR, false);
 
   bool Program::buildFromLLVMFile(const char *fileName, std::string &error, int optLevel) {
@@ -139,6 +140,7 @@ namespace gbe {
     }
     return true;
   }
+#endif
 
 #define OUT_UPDATE_SZ(elt) SERIALIZE_OUT(elt, outs, ret_size)
 #define IN_UPDATE_SZ(elt) DESERIALIZE_IN(elt, ins, total_size)
@@ -511,6 +513,7 @@ namespace gbe {
     GBE_SAFE_DELETE(program);
   }
 
+#ifdef GBE_COMPILER_AVAILABLE
   BVAR(OCL_OUTPUT_BUILD_LOG, false);
   SVAR(OCL_PCH_PATH, PCH_OBJECT_DIR);
   SVAR(OCL_PCM_PATH, PCM_OBJECT_DIR);
@@ -847,6 +850,7 @@ namespace gbe {
     remove(clName.c_str());
     return p;
   }
+#endif
 
   static size_t programGetGlobalConstantSize(gbe_program gbeProgram) {
     if (gbeProgram == NULL) return 0;
@@ -1042,9 +1046,11 @@ GBE_EXPORT_SYMBOL gbe_kernel_get_sampler_data_cb *gbe_kernel_get_sampler_data = 
 GBE_EXPORT_SYMBOL gbe_kernel_get_compile_wg_size_cb *gbe_kernel_get_compile_wg_size = NULL;
 GBE_EXPORT_SYMBOL gbe_kernel_get_image_size_cb *gbe_kernel_get_image_size = NULL;
 GBE_EXPORT_SYMBOL gbe_kernel_get_image_data_cb *gbe_kernel_get_image_data = NULL;
-GBE_EXPORT_SYMBOL gbe_set_image_base_index_cb *gbe_set_image_base_index = NULL;
+GBE_EXPORT_SYMBOL gbe_set_image_base_index_cb *gbe_set_image_base_index_compiler = NULL;
+GBE_EXPORT_SYMBOL gbe_set_image_base_index_cb *gbe_set_image_base_index_interp = NULL;
 GBE_EXPORT_SYMBOL gbe_get_image_base_index_cb *gbe_get_image_base_index = NULL;
 
+#ifdef GBE_COMPILER_AVAILABLE
 namespace gbe
 {
   /* Use pre-main to setup the call backs */
@@ -1080,7 +1086,7 @@ namespace gbe
       gbe_kernel_get_image_size = gbe::kernelGetImageSize;
       gbe_kernel_get_image_data = gbe::kernelGetImageData;
       gbe_get_image_base_index = gbe::getImageBaseIndex;
-      gbe_set_image_base_index = gbe::setImageBaseIndex;
+      gbe_set_image_base_index_compiler = gbe::setImageBaseIndex;
       genSetupCallBacks();
       llvm::llvm_start_multithreaded();
     }
@@ -1095,4 +1101,4 @@ namespace gbe
 
   static CallBackInitializer cbInitializer;
 } /* namespace gbe */
-
+#endif

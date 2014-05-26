@@ -26,6 +26,7 @@
 #include "cl_khr_icd.h"
 #include "cl_thread.h"
 #include "CL/cl.h"
+#include "cl_gbe_loader.h"
 
 #include <assert.h>
 #include <stdio.h>
@@ -250,6 +251,15 @@ baytrail_t_device_break:
       break;
     default:
       printf("cl_get_gt_device(): error, unknown device: %x\n", device_id);
+  }
+
+  if (!CompilerSupported()) {
+    if (ret != NULL) {
+      ret->compiler_available = CL_FALSE;
+      //ret->linker_available = CL_FALSE;
+      ret->profile = "EMBEDDED_PROFILE";
+      ret->profile_sz = strlen(ret->profile) + 1;
+    }
   }
 
   return ret;
