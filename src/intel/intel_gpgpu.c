@@ -1135,8 +1135,12 @@ intel_gpgpu_event_get_gpu_cur_timestamp(intel_gpgpu_t* gpgpu, uint64_t* ret_ts)
   drm_intel_bufmgr *bufmgr = gpgpu->drv->bufmgr;
 
   drm_intel_reg_read(bufmgr, TIMESTAMP_ADDR, &result);
-  result = result & 0xFFFFFFFFF0000000;
-  result = result >> 28;
+  if (IS_HASWELL(gpgpu->drv->device_id)) {
+    result = result & 0x0000000FFFFFFFFF;
+  } else {
+    result = result & 0xFFFFFFFFF0000000;
+    result = result >> 28;
+  }
   result *= 80;
 
   *ret_ts = result;
@@ -1145,8 +1149,8 @@ intel_gpgpu_event_get_gpu_cur_timestamp(intel_gpgpu_t* gpgpu, uint64_t* ret_ts)
 
 /* Get the GPU execute time. */
 static void
-intel_gpgpu_event_get_exec_timestamp(intel_event_t *event,
-                                int index, uint64_t* ret_ts)
+intel_gpgpu_event_get_exec_timestamp(intel_gpgpu_t* gpgpu, intel_event_t *event,
+				     int index, uint64_t* ret_ts)
 {
   uint64_t result = 0;
 
@@ -1156,11 +1160,15 @@ intel_gpgpu_event_get_exec_timestamp(intel_event_t *event,
   uint64_t* ptr = event->ts_buf->virtual;
   result = ptr[index];
 
-  /* According to BSpec, the timestamp counter should be 36 bits,
-     but comparing to the timestamp counter from IO control reading,
-     we find the first 4 bits seems to be fake. In order to keep the
-     timestamp counter conformable, we just skip the first 4 bits. */
-  result = ((result & 0x0FFFFFFFF) << 4) * 80; //convert to nanoseconds
+  if (IS_HASWELL(gpgpu->drv->device_id))
+    result = (result & 0xFFFFFFFFF) * 80; //convert to nanoseconds
+  else
+    /* According to BSpec, the timestamp counter should be 36 bits,
+       but comparing to the timestamp counter from IO control reading,
+       we find the first 4 bits seems to be fake. In order to keep the
+       timestamp counter conformable, we just skip the first 4 bits.
+     */
+    result = ((result & 0x0FFFFFFFF) << 4) * 80; //convert to nanoseconds
   *ret_ts = result;
 
   drm_intel_gem_bo_unmap_gtt(event->ts_buf);

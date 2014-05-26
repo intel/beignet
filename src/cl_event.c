@@ -498,11 +498,11 @@ cl_int cl_event_get_timestamp(cl_event event, cl_profiling_info param_name)
     event->timestamp[param_name - CL_PROFILING_COMMAND_QUEUED] = ret_val;
     return CL_SUCCESS;
   } else if(param_name == CL_PROFILING_COMMAND_START) {
-    cl_gpgpu_event_get_exec_timestamp(event->gpgpu_event, 0, &ret_val);
+    cl_gpgpu_event_get_exec_timestamp(gpgpu, event->gpgpu_event, 0, &ret_val);
     event->timestamp[param_name - CL_PROFILING_COMMAND_QUEUED] = ret_val;
     return CL_SUCCESS;
   } else if (param_name == CL_PROFILING_COMMAND_END) {
-    cl_gpgpu_event_get_exec_timestamp(event->gpgpu_event, 1, &ret_val);
+    cl_gpgpu_event_get_exec_timestamp(gpgpu, event->gpgpu_event, 1, &ret_val);
     event->timestamp[param_name - CL_PROFILING_COMMAND_QUEUED] = ret_val;
     return CL_SUCCESS;
   }
