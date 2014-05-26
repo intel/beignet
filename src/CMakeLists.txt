@@ -5,10 +5,12 @@ include_directories(${CMAKE_CURRENT_SOURCE_DIR}
                     ${CMAKE_CURRENT_SOURCE_DIR}/../include
                     ${MESA_SOURCE_INCLUDES})
 
-set(GEN_PCI_ID)
-execute_process(COMMAND "${CMAKE_CURRENT_SOURCE_DIR}/GetGenID.sh"
+if (NOT GEN_PCI_ID)
+  execute_process(COMMAND "${CMAKE_CURRENT_SOURCE_DIR}/GetGenID.sh"
     OUTPUT_VARIABLE GEN_PCI_ID)
-message(STATUS "Platform Gen PCI id is " ${GEN_PCI_ID})
+  message(STATUS "Platform Gen PCI id is " ${GEN_PCI_ID})
+  set(GEN_PCI_ID ${GEN_PCI_ID} PARENT_SCOPE)
+endif (NOT GEN_PCI_ID)
 
 macro (MakeKernelBinStr KERNEL_PATH KERNEL_FILES)
 foreach (KF ${KERNEL_FILES})

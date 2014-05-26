@@ -178,11 +178,6 @@ set (utests_sources
   utest_file_map.cpp
   utest_helper.cpp)
 
-set(GEN_PCI_ID)
-execute_process(COMMAND "${CMAKE_CURRENT_SOURCE_DIR}/../src/GetGenID.sh"
-    OUTPUT_VARIABLE GEN_PCI_ID)
-
-message(STATUS "Platform Gen PCI id is " ${GEN_PCI_ID})
 SET (kernel_bin ${CMAKE_CURRENT_SOURCE_DIR}/../kernels/compiler_ceil)
 ADD_CUSTOM_COMMAND(
     OUTPUT ${kernel_bin}.bin
