@@ -37,7 +37,7 @@ namespace gbe
             : GenContext(unit, name, deviceID, relaxMath) {
     };
     /*! device's max srcatch buffer size */
-    const int GEN75_SCRATCH_SIZE = 2 * KB * KB;
+    #define GEN75_SCRATCH_SIZE  (2 * KB * KB)
     /*! Emit the per-lane stack pointer computation */
     virtual void emitStackPointer(void);
     /*! Align the scratch size to the device's scratch unit size */

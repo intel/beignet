@@ -65,7 +65,7 @@ namespace gbe
     /*! Release everything needed */
     virtual ~GenContext(void);
     /*! device's max srcatch buffer size */
-    const int GEN7_SCRATCH_SIZE = 12 * KB;
+    #define GEN7_SCRATCH_SIZE  (12 * KB)
     /*! Start new code generation with specific parameters */
     void startNewCG(uint32_t simdWidth, uint32_t reservedSpillRegs, bool limitRegisterPressure);
     /*! Target device ID*/

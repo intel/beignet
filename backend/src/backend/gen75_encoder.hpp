@@ -32,7 +32,7 @@ namespace gbe
   {
   public:
     /*! exec width of the double data type */    
-    const int GEN75_DOUBLE_EXEC_WIDTH = 4;
+    #define GEN75_DOUBLE_EXEC_WIDTH  4
     virtual ~Gen75Encoder(void) { }
 
     Gen75Encoder(uint32_t simdWidth, uint32_t gen, uint32_t deviceID)

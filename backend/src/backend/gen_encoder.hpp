@@ -71,7 +71,7 @@ namespace gbe
     /*! Size of the stack (should be large enough) */
     enum { MAX_STATE_NUM = 16 };
     /*! gen7 exec width of the double data type */
-    const int GEN7_DOUBLE_EXEC_WIDTH = 8;
+    #define GEN7_DOUBLE_EXEC_WIDTH  8
     /*! Push the current instruction state */
     void push(void);
     /*! Pop the latest pushed state */
