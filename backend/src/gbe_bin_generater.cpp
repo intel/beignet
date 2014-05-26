@@ -34,7 +34,6 @@
 #include <vector>
 #include <algorithm>
 #include <stdlib.h>
-#include <iostream>
 #include <stdio.h>
 
 #include "backend/program.h"
