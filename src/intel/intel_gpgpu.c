@@ -394,7 +394,7 @@ intel_gpgpu_set_L3_baytrail(intel_gpgpu_t *gpgpu, uint32_t use_slm)
   OUT_BATCH(gpgpu->batch, CMD_LOAD_REGISTER_IMM | 1); /* length - 2 */
   OUT_BATCH(gpgpu->batch, GEN7_L3_CNTL_REG2_ADDRESS_OFFSET);
   if (use_slm)
-    OUT_BATCH(gpgpu->batch, 0x02040001);  /* {SLM=64, URB=64, DC=32, RO=32, Sum=192} */
+    OUT_BATCH(gpgpu->batch, 0x01020021);  /* {SLM=64, URB=96, DC=16, RO=16, Sum=192} */
   else
     OUT_BATCH(gpgpu->batch, 0x02040040);  /* {SLM=0, URB=128, DC=32, RO=32, Sum=192} */
 
