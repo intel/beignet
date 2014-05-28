@@ -1101,6 +1101,7 @@ namespace gbe
 
   void GenEncoder::patchJMPI(uint32_t insnID, int32_t jumpDistance) {
     GenNativeInstruction &insn = *(GenNativeInstruction *)&this->store[insnID];
+    GenNativeInstruction &insn2 = *(GenNativeInstruction *)&this->store[insnID+2];
     GBE_ASSERT(insnID < this->store.size());
     GBE_ASSERT(insn.header.opcode == GEN_OPCODE_JMPI ||
                insn.header.opcode == GEN_OPCODE_BRD  ||
@@ -1129,7 +1130,6 @@ namespace gbe
       // for all the branching instruction. And need to adjust the distance
       // for those branch instruction's start point and end point contains
       // this instruction.
-      GenNativeInstruction &insn2 = *(GenNativeInstruction *)&this->store[insnID+2];
       GBE_ASSERT(insn2.header.opcode == GEN_OPCODE_NOP);
       insn.header.opcode = GEN_OPCODE_ADD;
       this->setDst(&insn, GenRegister::ip());
@@ -1138,7 +1138,6 @@ namespace gbe
     } else {
       insn.header.predicate_inverse ^= 1;
       this->setSrc1(&insn, GenRegister::immd(2));
-      GenNativeInstruction &insn2 = *(GenNativeInstruction *)&this->store[insnID+2];
       GBE_ASSERT(insn2.header.opcode == GEN_OPCODE_NOP);
       GBE_ASSERT(insnID < this->store.size());
       insn2.header.predicate_control = GEN_PREDICATE_NONE;

@@ -2702,9 +2702,8 @@ namespace gbe
                          uint32_t bti) const
     {
       using namespace ir;
-      const uint32_t valueNum = insn.getValueNum();
       const uint32_t simdWidth = sel.isScalarReg(insn.getValue(0)) ? 1 : sel.ctx.getSimdWidth();
-      GBE_ASSERT(valueNum == 1);
+      GBE_ASSERT(insn.getValueNum() == 1);
       GenRegister dst = GenRegister::retype(sel.selReg(insn.getValue(0)), GEN_TYPE_F);
       // get dword based address
       GenRegister addrDW = GenRegister::udxgrf(simdWidth, sel.reg(FAMILY_DWORD, simdWidth == 1));

@@ -20,7 +20,7 @@ typedef struct kernel_storage_node
 
 typedef struct context_storage_node
 {
-  uint64_t context_id;
+  uintptr_t context_id;
   kernel_storage_node *kernels_storage;
   char max_time_kernel_name[MAX_KERNEL_NAME_LENGTH];
   float kernel_max_time;
@@ -46,14 +46,14 @@ static context_storage_node * find_context(cl_context context)
 {
   if(NULL != prev_context_pointer )
   {
-    if(prev_context_pointer->context_id == (uint64_t)context)
+    if(prev_context_pointer->context_id == (uintptr_t)context)
       return prev_context_pointer;
   }
 
   if(NULL == record.context_storage)
   {
     record.context_storage = (context_storage_node *) malloc(sizeof(context_storage_node));
-    record.context_storage->context_id = (uint64_t)context;
+    record.context_storage->context_id = (uintptr_t)context;
     record.context_storage->kernels_storage = NULL;
     record.context_storage->kernel_max_time = 0.0f;
     record.context_storage->next = NULL;
@@ -63,7 +63,7 @@ static context_storage_node * find_context(cl_context context)
 
   context_storage_node *pre = record.context_storage;
   context_storage_node *cur = record.context_storage;
-  while(NULL !=cur && (uint64_t)context != cur->context_id )
+  while(NULL !=cur && (uintptr_t)context != cur->context_id )
   {
     pre = cur;
     cur = cur->next;
@@ -73,7 +73,7 @@ static context_storage_node * find_context(cl_context context)
 
   pre->next = (context_storage_node *)malloc(sizeof(context_storage_node));
   pre = pre->next;
-  pre->context_id = (uint64_t)context;
+  pre->context_id = (uintptr_t)context;
   pre->kernels_storage = NULL;
   pre->kernel_max_time = 0.0f;
   pre->next = NULL;

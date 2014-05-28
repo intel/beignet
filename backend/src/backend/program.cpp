@@ -643,7 +643,7 @@ namespace gbe {
 
     while (getline(idirs, pcmFileName, ':')) {
       if(access(pcmFileName.c_str(), R_OK) == 0) {
-        findPcm = true;
+        findPcm |= true;
         break;
       }
     }
