@@ -11,8 +11,7 @@ void compiler_local_slm(void)
   OCL_NDRANGE(1);
   OCL_MAP_BUFFER(0);
   for (uint32_t i = 0; i < n; ++i)
-//    std::cout << ((int32_t*)buf_data[0])[i] << std::endl;
-    OCL_ASSERT(((int32_t*)buf_data[0])[i] == (i%16 + 2 + 1+ i/16));
+    OCL_ASSERT(((uint32_t*)buf_data[0])[i] == (i%16 + 2 + 1+ i/16));
   OCL_UNMAP_BUFFER(0);
 }
 

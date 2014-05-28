@@ -989,7 +989,7 @@ LOCAL cl_int
 cl_mem_kernel_copy_image(cl_command_queue queue, struct _cl_mem_image* src_image, struct _cl_mem_image* dst_image,
                          const size_t *src_origin, const size_t *dst_origin, const size_t *region) {
   cl_int ret;
-  cl_kernel ker;
+  cl_kernel ker = NULL;
   size_t global_off[] = {0,0,0};
   size_t global_sz[] = {1,1,1};
   size_t local_sz[] = {LOCAL_SZ_0,LOCAL_SZ_1,LOCAL_SZ_2};
@@ -1090,7 +1090,7 @@ LOCAL cl_int
 cl_mem_copy_image_to_buffer(cl_command_queue queue, struct _cl_mem_image* image, cl_mem buffer,
                          const size_t *src_origin, const size_t dst_offset, const size_t *region) {
   cl_int ret;
-  cl_kernel ker;
+  cl_kernel ker = NULL;
   size_t global_off[] = {0,0,0};
   size_t global_sz[] = {1,1,1};
   size_t local_sz[] = {LOCAL_SZ_0,LOCAL_SZ_1,LOCAL_SZ_2};
@@ -1164,7 +1164,7 @@ LOCAL cl_int
 cl_mem_copy_buffer_to_image(cl_command_queue queue, cl_mem buffer, struct _cl_mem_image* image,
                          const size_t src_offset, const size_t *dst_origin, const size_t *region) {
   cl_int ret;
-  cl_kernel ker;
+  cl_kernel ker = NULL;
   size_t global_off[] = {0,0,0};
   size_t global_sz[] = {1,1,1};
   size_t local_sz[] = {LOCAL_SZ_0,LOCAL_SZ_1,LOCAL_SZ_2};
