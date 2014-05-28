@@ -1649,7 +1649,7 @@ namespace gbe
     const GenRegister src = ra->genReg(insn.src(0));
     const GenRegister dst = ra->genReg(insn.dst(0));
     const uint32_t function = insn.extra.function;
-    const uint32_t bti = insn.extra.elem;
+    const uint32_t bti = insn.getbti();
 
     p->ATOMIC(dst, function, src, bti, insn.srcNum);
   }
@@ -1780,14 +1780,14 @@ namespace gbe
     const GenRegister dst = ra->genReg(insn.dst(tmpRegSize));
     const GenRegister tmp = ra->genReg(insn.dst(0));
     const GenRegister src = ra->genReg(insn.src(0));
-    const uint32_t bti = insn.extra.function;
+    const uint32_t bti = insn.getbti();
     p->READ64(dst, tmp, tempAddr, src, bti, elemNum);
   }
 
   void GenContext::emitUntypedReadInstruction(const SelectionInstruction &insn) {
     const GenRegister dst = ra->genReg(insn.dst(0));
     const GenRegister src = ra->genReg(insn.src(0));
-    const uint32_t bti = insn.extra.function;
+    const uint32_t bti = insn.getbti();
     const uint32_t elemNum = insn.extra.elem;
     p->UNTYPED_READ(dst, src, bti, elemNum);
   }
@@ -1800,14 +1800,14 @@ namespace gbe
     const uint32_t elemNum = insn.extra.elem;
     const GenRegister addr = ra->genReg(insn.src(0)); //tmpRegSize + 1));
     const GenRegister data = ra->genReg(insn.src(1));
-    const uint32_t bti = insn.extra.function;
+    const uint32_t bti = insn.getbti();
     p->MOV(src, addr);
     p->WRITE64(src, data, bti, elemNum, sel->isScalarReg(data.reg()));
   }
 
   void GenContext::emitUntypedWriteInstruction(const SelectionInstruction &insn) {
     const GenRegister src = ra->genReg(insn.src(0));
-    const uint32_t bti = insn.extra.function;
+    const uint32_t bti = insn.getbti();
     const uint32_t elemNum = insn.extra.elem;
     p->UNTYPED_WRITE(src, bti, elemNum);
   }
@@ -1815,14 +1815,14 @@ namespace gbe
   void GenContext::emitByteGatherInstruction(const SelectionInstruction &insn) {
     const GenRegister dst = ra->genReg(insn.dst(0));
     const GenRegister src = ra->genReg(insn.src(0));
-    const uint32_t bti = insn.extra.function;
+    const uint32_t bti = insn.getbti();
     const uint32_t elemSize = insn.extra.elem;
     p->BYTE_GATHER(dst, src, bti, elemSize);
   }
 
   void GenContext::emitByteScatterInstruction(const SelectionInstruction &insn) {
     const GenRegister src = ra->genReg(insn.src(0));
-    const uint32_t bti = insn.extra.function;
+    const uint32_t bti = insn.getbti();
     const uint32_t elemSize = insn.extra.elem;
     p->BYTE_SCATTER(src, bti, elemSize);
   }
@@ -1859,14 +1859,14 @@ namespace gbe
   void GenContext::emitDWordGatherInstruction(const SelectionInstruction &insn) {
     const GenRegister dst = ra->genReg(insn.dst(0));
     const GenRegister src = ra->genReg(insn.src(0));
-    const uint32_t bti = insn.extra.function;
+    const uint32_t bti = insn.getbti();
     p->DWORD_GATHER(dst, src, bti);
   }
 
   void GenContext::emitSampleInstruction(const SelectionInstruction &insn) {
     const GenRegister dst = ra->genReg(insn.dst(0));
     const GenRegister msgPayload = GenRegister::retype(ra->genReg(insn.src(0)), GEN_TYPE_F);
-    const unsigned char bti = insn.extra.rdbti;
+    const unsigned char bti = insn.getbti();
     const unsigned char sampler = insn.extra.sampler;
     const unsigned int msgLen = insn.extra.rdmsglen;
     uint32_t simdWidth = p->curr.execWidth;
@@ -1906,7 +1906,7 @@ namespace gbe
 
   void GenContext::emitTypedWriteInstruction(const SelectionInstruction &insn) {
     const GenRegister header = GenRegister::retype(ra->genReg(insn.src(0)), GEN_TYPE_UD);
-    const uint32_t bti = insn.extra.bti;
+    const uint32_t bti = insn.getbti();
     p->TYPED_WRITE(header, true, bti);
   }
 

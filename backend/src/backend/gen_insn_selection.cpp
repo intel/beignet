@@ -167,7 +167,8 @@ namespace gbe
            this->opcode == SEL_OP_READ64       ||
            this->opcode == SEL_OP_ATOMIC       ||
            this->opcode == SEL_OP_BYTE_GATHER  ||
-           this->opcode == SEL_OP_SAMPLE;
+           this->opcode == SEL_OP_SAMPLE ||
+           this->opcode == SEL_OP_DWORD_GATHER;
   }
 
   bool SelectionInstruction::isWrite(void) const {
@@ -843,9 +844,9 @@ namespace gbe
 
         if (poolOffset > ctx.reservedSpillRegs){
           if (GBE_DEBUG)
-            std::cerr << "Instruction (#" << (uint32_t)insn.opcode
-                      << ") dst too large pooloffset "
-                      << (uint32_t)poolOffset << std::endl;
+           std::cerr << "Instruction (#" << (uint32_t)insn.opcode
+                     << ") dst too large pooloffset "
+                     << (uint32_t)poolOffset << std::endl;
           return false;
         }
         while(!regSet.empty()) {
@@ -1058,7 +1059,7 @@ namespace gbe
     if(srcNum > 1) insn->src(1) = src1;
     if(srcNum > 2) insn->src(2) = src2;
     insn->extra.function = function;
-    insn->extra.elem     = bti;
+    insn->setbti(bti);
     SelectionVector *vector = this->appendVector();
 
     vector->regNum = srcNum;
@@ -1089,7 +1090,7 @@ namespace gbe
     /* temporary addr register is to be modified, set it to dst registers.*/
     insn->dst(elemNum) = tempAddr;
     insn->src(0) = addr;
-    insn->extra.function = bti;
+    insn->setbti(bti);
     insn->extra.elem = valueNum;
 
     // Only the temporary registers need contiguous allocation
@@ -1117,7 +1118,7 @@ namespace gbe
     for (uint32_t elemID = 0; elemID < elemNum; ++elemID)
       insn->dst(elemID) = dst[elemID];
     insn->src(0) = addr;
-    insn->extra.function = bti;
+    insn->setbti(bti);
     insn->extra.elem = elemNum;
 
     // Sends require contiguous allocation
@@ -1148,7 +1149,7 @@ namespace gbe
       insn->src(elemID + 1) = src[elemID];
     for (uint32_t elemID = 0; elemID < dstNum; ++elemID)
       insn->dst(elemID) = dst[elemID];
-    insn->extra.function = bti;
+    insn->setbti(bti);
     insn->extra.elem = srcNum;
 
     // Only the addr + temporary registers need to be contiguous.
@@ -1169,7 +1170,7 @@ namespace gbe
     insn->src(0) = addr;
     for (uint32_t elemID = 0; elemID < elemNum; ++elemID)
       insn->src(elemID+1) = src[elemID];
-    insn->extra.function = bti;
+    insn->setbti(bti);
     insn->extra.elem = elemNum;
 
     // Sends require contiguous allocation for the sources
@@ -1188,7 +1189,7 @@ namespace gbe
     // Instruction to encode
     insn->src(0) = addr;
     insn->dst(0) = dst;
-    insn->extra.function = bti;
+    insn->setbti(bti);
     insn->extra.elem = elemSize;
 
     // byte gather requires vector in the sense that scalar are not allowed
@@ -1208,7 +1209,7 @@ namespace gbe
     // Instruction to encode
     insn->src(0) = addr;
     insn->src(1) = src;
-    insn->extra.function = bti;
+    insn->setbti(bti);
     insn->extra.elem = elemSize;
 
     // value and address are contiguous in the send
@@ -1226,7 +1227,7 @@ namespace gbe
       insn->state.noMask = 1;
     insn->src(0) = addr;
     insn->dst(0) = dst;
-    insn->extra.function = bti;
+    insn->setbti(bti);
     vector->regNum = 1;
     vector->isSrc = 0;
     vector->reg = &insn->dst(0);
@@ -1613,7 +1614,7 @@ namespace gbe
     msgVector->isSrc = 1;
     msgVector->reg = &insn->src(0);
 
-    insn->extra.rdbti = bti;
+    insn->setbti(bti);
     insn->extra.sampler = sampler;
     insn->extra.rdmsglen = msgNum;
     insn->extra.isLD = isLD;
@@ -1642,7 +1643,7 @@ namespace gbe
     for( i = 0; i < msgNum; ++i, ++elemID)
       insn->src(elemID) = msgs[i];
 
-    insn->extra.bti = bti;
+    insn->setbti(bti);
     insn->extra.msglen = msgNum;
     insn->extra.is3DWrite = is3D;
     // Sends require contiguous allocation

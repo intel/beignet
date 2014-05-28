@@ -142,7 +142,42 @@ namespace gbe
     uint32_t ID;
     /*! Variable sized. Destinations and sources go here */
     GenRegister regs[0];
+    INLINE uint32_t getbti() const {
+      GBE_ASSERT(isRead() || isWrite());
+      switch (opcode) {
+        case SEL_OP_ATOMIC: return extra.elem;
+        case SEL_OP_BYTE_SCATTER:
+        case SEL_OP_WRITE64:
+        case SEL_OP_DWORD_GATHER:
+        case SEL_OP_UNTYPED_WRITE:
+        case SEL_OP_UNTYPED_READ:
+        case SEL_OP_BYTE_GATHER:
+        case SEL_OP_READ64: return extra.function;
+        case SEL_OP_SAMPLE: return extra.rdbti;
+        case SEL_OP_TYPED_WRITE: return extra.bti;
+        default:
+          GBE_ASSERT(0);
+      }
+      return 0;
+    }
   private:
+    INLINE void setbti(uint32_t bti) {
+      GBE_ASSERT(isRead() || isWrite());
+      switch (opcode) {
+        case SEL_OP_ATOMIC: extra.elem = bti; return;
+        case SEL_OP_BYTE_SCATTER:
+        case SEL_OP_WRITE64:
+        case SEL_OP_UNTYPED_WRITE:
+        case SEL_OP_DWORD_GATHER:
+        case SEL_OP_UNTYPED_READ:
+        case SEL_OP_BYTE_GATHER:
+        case SEL_OP_READ64: extra.function = bti; return;
+        case SEL_OP_SAMPLE: extra.rdbti = bti; return;
+        case SEL_OP_TYPED_WRITE: extra.bti = bti; return;
+        default:
+          GBE_ASSERT(0);
+      }
+    }
     /*! Just Selection class can create SelectionInstruction */
     SelectionInstruction(SelectionOpcode, uint32_t dstNum, uint32_t srcNum);
     // Allocates (with a linear allocator) and owns SelectionInstruction

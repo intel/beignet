@@ -380,7 +380,7 @@ namespace gbe
 
     // Track writes in memory
     if (insn.isWrite()) {
-      const uint32_t index = this->getIndex(insn.extra.function);
+      const uint32_t index = this->getIndex(insn.getbti());
       this->nodes[index] = node;
     }
 
@@ -483,7 +483,7 @@ namespace gbe
 
       // read-after-write in memory
       if (insn.isRead()) {
-        const uint32_t index = tracker.getIndex(insn.extra.function);
+        const uint32_t index = tracker.getIndex(insn.getbti());
         tracker.addDependency(node, index, READ_AFTER_WRITE);
       }
       //read-after-write of scratch memory
@@ -516,7 +516,7 @@ namespace gbe
 
       // write-after-write in memory
       if (insn.isWrite()) {
-        const uint32_t index = tracker.getIndex(insn.extra.function);
+        const uint32_t index = tracker.getIndex(insn.getbti());
         tracker.addDependency(node, index, WRITE_AFTER_WRITE);
       }
 
@@ -546,7 +546,7 @@ namespace gbe
 
       // write-after-read in memory
       if (insn.isRead()) {
-        const uint32_t index = tracker.getIndex(insn.extra.function);
+        const uint32_t index = tracker.getIndex(insn.getbti());
         tracker.addDependency(index, node, WRITE_AFTER_READ);
       }
 
