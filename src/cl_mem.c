@@ -561,7 +561,7 @@ _cl_mem_new_image(cl_context ctx,
   /* Only a sub-set of the formats are supported */
   intel_fmt = cl_image_get_intel_format(fmt);
   if (UNLIKELY(intel_fmt == INTEL_UNSUPPORTED_FORMAT)) {
-    err = CL_INVALID_IMAGE_FORMAT_DESCRIPTOR;
+    err = CL_IMAGE_FORMAT_NOT_SUPPORTED;
     goto error;
   }
 
@@ -1347,13 +1347,15 @@ LOCAL cl_mem cl_mem_new_libva_image(cl_context ctx,
   struct _cl_mem_image *image = NULL;
   uint32_t intel_fmt, bpp;
 
+  /* Get the size of each pixel */
+  if (UNLIKELY((err = cl_image_byte_per_pixel(&fmt, &bpp)) != CL_SUCCESS))
+    goto error;
+
   intel_fmt = cl_image_get_intel_format(&fmt);
   if (intel_fmt == INTEL_UNSUPPORTED_FORMAT) {
     err = CL_IMAGE_FORMAT_NOT_SUPPORTED;
     goto error;
   }
-
-  cl_image_byte_per_pixel(&fmt, &bpp);
 
   mem = cl_mem_allocate(CL_MEM_IMAGE_TYPE, ctx, 0, 0, 0, &err);
   if (mem == NULL || err != CL_SUCCESS) {

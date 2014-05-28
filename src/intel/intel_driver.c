@@ -563,10 +563,12 @@ intel_alloc_buffer_from_texture_egl(cl_context ctx, unsigned int target,
   region.tiling = get_cl_tiling(region.tiling);
   if (cl_get_clformat_from_texture(region.gl_format, &cl_format) != 0)
     goto error;
+
+  if (cl_image_byte_per_pixel(&cl_format, &bpp) != CL_SUCCESS)
+    goto error;
   intel_fmt = cl_image_get_intel_format(&cl_format);
   if (intel_fmt == INTEL_UNSUPPORTED_FORMAT)
     goto error;
-  cl_image_byte_per_pixel(&cl_format, &bpp);
   cl_mem_object_type image_type;
   if (get_mem_type_from_target(target, &image_type) != 0)
     goto error;

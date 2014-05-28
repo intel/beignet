@@ -28,6 +28,9 @@ cl_image_byte_per_pixel(const cl_image_format *fmt, uint32_t *bpp)
 {
   assert(bpp);
 
+  if(fmt == NULL)
+    return CL_INVALID_IMAGE_FORMAT_DESCRIPTOR;
+
   const uint32_t type = fmt->image_channel_data_type;
   const uint32_t order = fmt->image_channel_order;
   switch (type) {
