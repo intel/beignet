@@ -3175,12 +3175,18 @@ namespace gbe
         GenRegister unpacked;
         if (dstFamily == FAMILY_WORD) {
           const uint32_t type = dstType == TYPE_U16 ? GEN_TYPE_UW : GEN_TYPE_W;
-          unpacked = sel.unpacked_uw(sel.reg(FAMILY_DWORD, sel.isScalarReg(insn.getSrc(0))));
-          unpacked = GenRegister::retype(unpacked, type);
+          if (!sel.isScalarReg(dst.reg())) {
+            unpacked = sel.unpacked_uw(sel.reg(FAMILY_DWORD, sel.isScalarReg(insn.getSrc(0))));
+            unpacked = GenRegister::retype(unpacked, type);
+          } else
+            unpacked = GenRegister::retype(sel.unpacked_uw(dst.reg()), type);
         } else {
           const uint32_t type = dstType == TYPE_U8 ? GEN_TYPE_UB : GEN_TYPE_B;
-          unpacked = sel.unpacked_ub(sel.reg(FAMILY_DWORD, sel.isScalarReg(insn.getSrc(0))));
-          unpacked = GenRegister::retype(unpacked, type);
+          if (!sel.isScalarReg(dst.reg())) {
+            unpacked = sel.unpacked_ub(sel.reg(FAMILY_DWORD, sel.isScalarReg(insn.getSrc(0))));
+            unpacked = GenRegister::retype(unpacked, type);
+          } else
+            unpacked = GenRegister::retype(sel.unpacked_ub(dst.reg()), type);
         }
         if(srcFamily == FAMILY_QWORD) {
           GenRegister tmp = sel.selReg(sel.reg(FAMILY_DWORD));
@@ -3197,7 +3203,8 @@ namespace gbe
             sel.MOV(unpacked, src);
           sel.pop();
         }
-        sel.MOV(dst, unpacked);
+        if (unpacked.reg() != dst.reg())
+          sel.MOV(dst, unpacked);
       } else if ((dstType == ir::TYPE_S32 || dstType == ir::TYPE_U32) && srcFamily == FAMILY_QWORD) {
         sel.CONVI64_TO_I(dst, src);
       } else if (dstType == ir::TYPE_FLOAT && srcFamily == FAMILY_QWORD) {
