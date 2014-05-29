@@ -195,7 +195,7 @@ target_link_libraries(
                       ${CMAKE_THREAD_LIBS_INIT}
                       ${CMAKE_DL_LIBS})
 
-add_library(interp STATIC gbe_bin_interpreter.cpp)
+add_library(gbeinterp SHARED gbe_bin_interpreter.cpp)
 
 if (LLVM_VERSION_NODOT VERSION_EQUAL 34)
   find_library(TERMINFO NAMES tinfo ncurses)
@@ -212,6 +212,7 @@ ADD_EXECUTABLE(gbe_bin_generater gbe_bin_generater.cpp)
 TARGET_LINK_LIBRARIES(gbe_bin_generater gbe)
 
 install (TARGETS gbe LIBRARY DESTINATION ${LIB_INSTALL_DIR}/beignet)
+install (TARGETS gbeinterp LIBRARY DESTINATION ${LIB_INSTALL_DIR}/beignet)
 #install (FILES backend/program.h DESTINATION include/gen)
 install (FILES ${ocl_blob_file} DESTINATION ${LIB_INSTALL_DIR}/beignet)
 install (FILES ${pch_object} DESTINATION ${LIB_INSTALL_DIR}/beignet)
@@ -221,10 +222,12 @@ install (FILES ${CMAKE_CURRENT_BINARY_DIR}/${pcm_lib} DESTINATION ${LIB_INSTALL_
 set (LOCAL_PCH_OBJECT_DIR "${local_pch_object}:${beignet_install_path}/ocl_stdlib.h.pch" PARENT_SCOPE)
 set (LOCAL_PCM_OBJECT_DIR "${CMAKE_CURRENT_BINARY_DIR}/${pcm_lib}:${beignet_install_path}/${pcm_lib}" PARENT_SCOPE)
 set (LOCAL_GBE_OBJECT_DIR "${CMAKE_CURRENT_BINARY_DIR}/libgbe.so" PARENT_SCOPE)
+set (LOCAL_INTERP_OBJECT_DIR "${CMAKE_CURRENT_BINARY_DIR}/libgbeinterp.so" PARENT_SCOPE)
 
 set (PCH_OBJECT_DIR "${beignet_install_path}/ocl_stdlib.h.pch")
 set (PCM_OBJECT_DIR "${beignet_install_path}/${pcm_lib}")
 set (GBE_OBJECT_DIR "${beignet_install_path}/libgbe.so")
+set (INTERP_OBJECT_DIR "${beignet_install_path}/libgbeinterp.so")
 configure_file (
   "GBEConfig.h.in"
   "GBEConfig.h"

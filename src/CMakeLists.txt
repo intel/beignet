@@ -99,7 +99,6 @@ link_directories (${LLVM_LIBRARY_DIR})
 add_library(cl SHARED ${OPENCL_SRC})
 target_link_libraries(
                       cl
-                      interp
                       ${XLIB_LIBRARY}
                       ${XEXT_LIBRARIES}
                       ${XFIXES_LIBRARIES}

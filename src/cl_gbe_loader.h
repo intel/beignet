@@ -24,6 +24,11 @@
 #ifdef __cplusplus
 extern "C" {
 #endif
+extern gbe_program_new_from_source_cb *compiler_program_new_from_source;
+extern gbe_program_serialize_to_binary_cb *compiler_program_serialize_to_binary;
+extern gbe_program_new_from_llvm_cb *compiler_program_new_from_llvm;
+extern gbe_kernel_set_const_buffer_size_cb *compiler_kernel_set_const_buffer_size;
+extern gbe_set_image_base_index_cb *compiler_set_image_base_index_compiler;
 int CompilerSupported();
 #ifdef __cplusplus
 }

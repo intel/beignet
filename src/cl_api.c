@@ -920,7 +920,7 @@ clGetProgramInfo(cl_program       program,
                    program->source, CL_SUCCESS);
   } else if (param_name == CL_PROGRAM_BINARY_SIZES) {
     if (program->binary == NULL) {
-      program->binary_sz = gbe_program_serialize_to_binary(program->opaque, &program->binary);
+      program->binary_sz = compiler_program_serialize_to_binary(program->opaque, &program->binary);
     }
 
     if (program->binary == NULL || program->binary_sz == 0) {
@@ -936,7 +936,7 @@ clGetProgramInfo(cl_program       program,
     /* param_value points to an array of n
        pointers allocated by the caller */
     if (program->binary == NULL) {
-      program->binary_sz = gbe_program_serialize_to_binary(program->opaque, &program->binary);
+      program->binary_sz = compiler_program_serialize_to_binary(program->opaque, &program->binary);
     }
 
     if (program->binary == NULL || program->binary_sz == 0) {

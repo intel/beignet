@@ -411,7 +411,7 @@ cl_intel_driver_new(cl_context_prop props)
    * Notify the gbe this base index, thus gbe can avoid conflicts
    * when it allocates slots for images*/
   if (CompilerSupported())
-    gbe_set_image_base_index_compiler(3);
+    compiler_set_image_base_index_compiler(3);
   gbe_set_image_base_index_interp(3);
 exit:
   return driver;
