@@ -945,9 +945,11 @@ namespace gbe
       SelectionInstruction *mov = this->create(SEL_OP_MOV, 1, 1);
       mov->dst(0) = GenRegister::retype(insn->dst(regID), gr.type);
       mov->state = GenInstructionState(simdWidth);
-      if (simdWidth == 1)
+      if (simdWidth == 1) {
         mov->state.noMask = 1;
-      mov->src(0) = gr;
+        mov->src(0) = GenRegister::retype(GenRegister::vec1(GEN_GENERAL_REGISTER_FILE, gr.reg()), gr.type);
+      } else
+        mov->src(0) = gr;
       insn->append(*mov);
     }
     insn->dst(regID) = gr;
