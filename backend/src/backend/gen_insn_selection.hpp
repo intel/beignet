@@ -38,6 +38,8 @@ namespace gbe
 {
   /*! Translate IR type to Gen type */
   uint32_t getGenType(ir::Type type);
+  /*! Translate Gen type to IR type */
+  ir::Type getIRType(uint32_t genType);
 
   /*! Translate IR compare to Gen compare */
   uint32_t getGenCompare(ir::Opcode opcode);

@@ -129,6 +129,23 @@ namespace gbe
     }
   }
 
+  ir::Type getIRType(uint32_t genType) {
+    using namespace ir;
+    switch (genType) {
+      case GEN_TYPE_B: return TYPE_S8;
+      case GEN_TYPE_UB: return TYPE_U8;
+      case GEN_TYPE_W: return TYPE_S16;
+      case GEN_TYPE_UW: return TYPE_U16;
+      case GEN_TYPE_D: return TYPE_S32;
+      case GEN_TYPE_UD: return TYPE_U32;
+      case GEN_TYPE_L: return TYPE_S64;
+      case GEN_TYPE_UL: return TYPE_U64;
+      case GEN_TYPE_F: return TYPE_FLOAT;
+      case GEN_TYPE_DF: return TYPE_DOUBLE;
+      default: NOT_SUPPORTED; return TYPE_FLOAT;
+    }
+  }
+
   uint32_t getGenCompare(ir::Opcode opcode, bool inverse = false) {
     using namespace ir;
     switch (opcode) {

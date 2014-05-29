@@ -316,7 +316,8 @@ namespace gbe
       // the MOVs
       else {
         ir::Register tmp;
-        tmp = this->replaceReg(selection, vector->insn, regID, vector->isSrc);
+        ir::Type type = getIRType(vector->reg[regID].type);
+        tmp = this->replaceReg(selection, vector->insn, regID, vector->isSrc, type);
         const VectorLocation location = std::make_pair(vector, regID);
         this->vectorMap.insert(std::make_pair(tmp, location));
       }
