@@ -301,20 +301,25 @@ namespace gbe
       return false;
     }
 
-    INLINE GenRegister top_half(void) const {
-      GenRegister r = bottom_half();
-      r.subnr += 4;
-      r.nr += r.subnr / 32;
-      r.subnr %= 32;
-      return r;
+    INLINE GenRegister top_half(int simdWidth) const {
+      GBE_ASSERT(isint64());
+      GenRegister reg = retype(*this, type == GEN_TYPE_UL ? GEN_TYPE_UD : GEN_TYPE_D);
+
+      if (reg.hstride != GEN_HORIZONTAL_STRIDE_0) {
+        reg.subnr += simdWidth * typeSize(reg.type) * hstride_size(reg);
+        reg.nr += reg.subnr / 32;
+        reg.subnr %= 32;
+      } else {
+        reg.subnr += typeSize(reg.type);
+        reg.nr += reg.subnr/32;
+        reg.subnr %= 32;
+      }
+      return reg;
     }
 
     INLINE GenRegister bottom_half(void) const {
       GBE_ASSERT(isint64());
-      GenRegister r = h2(*this);
-      r.type = type == GEN_TYPE_UL ? GEN_TYPE_UD : GEN_TYPE_D;
-      if(r.vstride != GEN_VERTICAL_STRIDE_0)
-       r.vstride = GEN_VERTICAL_STRIDE_16;
+      GenRegister r = retype(*this, type == GEN_TYPE_UL ? GEN_TYPE_UD : GEN_TYPE_D);
       return r;
     }
 

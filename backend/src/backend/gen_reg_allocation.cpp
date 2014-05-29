@@ -675,24 +675,36 @@ namespace gbe
           continue;
 
         uint32_t alignment;
-        ir::RegisterFamily family;
-        getRegAttrib(reg, alignment, &family);
-        const uint32_t size = vector->regNum * alignment;
-        const uint32_t grfOffset = allocateReg(interval, size, alignment);
+        uint32_t size = 0;
+        for (uint32_t regID = 0; regID < vector->regNum; ++regID) {
+          getRegAttrib(vector->reg[regID].reg(), alignment, NULL);
+          size += alignment;
+        }
+        // FIXME this is workaround for scheduling limitation, which requires 2*GEN_REG_SIZE under SIMD16.
+        const uint32_t maxAlignment = ctx.getSimdWidth()/8*GEN_REG_SIZE;
+        const uint32_t grfOffset = allocateReg(interval, size, maxAlignment);
         if(grfOffset == 0) {
-          GBE_ASSERT(!(reservedReg && family != ir::FAMILY_DWORD));
+          ir::RegisterFamily family;
           for(int i = vector->regNum-1; i >= 0; i--) {
+            family = ctx.sel->getRegisterFamily(vector->reg[i].reg());
+            // we currently only support DWORD/QWORD spill
+            if(family != ir::FAMILY_DWORD && family != ir::FAMILY_QWORD)
+              return false;
             if (!spillReg(vector->reg[i].reg()))
               return false;
           }
           continue;
         }
+        uint32_t subOffset = 0;
         for (uint32_t regID = 0; regID < vector->regNum; ++regID) {
           const ir::Register reg = vector->reg[regID].reg();
-          GBE_ASSERT(RA.contains(reg) == false
-                     && ctx.sel->getRegisterData(reg).family == family);
-          insertNewReg(reg, grfOffset + alignment * regID, true);
-          ctx.splitBlock(grfOffset, alignment * regID);  //splitBlock will not split if regID == 0
+          GBE_ASSERT(RA.contains(reg) == false);
+          getRegAttrib(reg, alignment, NULL);
+          // check all sub registers aligned correctly
+          GBE_ASSERT((grfOffset + subOffset) % alignment == 0 || (grfOffset + subOffset) % GEN_REG_SIZE == 0);
+          insertNewReg(reg, grfOffset + subOffset, true);
+          ctx.splitBlock(grfOffset, subOffset);  //splitBlock will not split if regID == 0
+          subOffset += alignment;
         }
       }
       // Case 2: This is a regular scalar register, allocate it alone

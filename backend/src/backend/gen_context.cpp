@@ -213,17 +213,7 @@ namespace gbe
       case SEL_OP_LOAD_INT64_IMM: p->LOAD_INT64_IMM(dst, src.value.i64); break;
       case SEL_OP_CONVI64_TO_I:
        {
-        int execWidth = p->curr.execWidth;
-        GenRegister xsrc = src.bottom_half(), xdst = dst;
-        p->push();
-        p->curr.execWidth = 8;
-        for(int i = 0; i < execWidth/4; i ++) {
-          p->curr.chooseNib(i);
-          p->MOV(xdst, xsrc);
-          xdst = GenRegister::suboffset(xdst, 4);
-          xsrc = GenRegister::suboffset(xsrc, 4);
-        }
-        p->pop();
+        p->MOV(dst, src.bottom_half());
         break;
        }
       case SEL_OP_BRC:
@@ -268,28 +258,18 @@ namespace gbe
         p->MOV_DF(dst, src, tmp);
         break;
       case SEL_OP_CONVI_TO_I64: {
-        GenRegister middle;
-        if (src.type == GEN_TYPE_B || src.type == GEN_TYPE_D) {
+        GenRegister middle = src;
+        if(src.type == GEN_TYPE_B || src.type == GEN_TYPE_W) {
           middle = tmp;
-          middle.type = src.is_signed_int() ? GEN_TYPE_D : GEN_TYPE_UD;
+          middle.type = GEN_TYPE_D;
           p->MOV(middle, src);
-        } else {
-          middle = src;
         }
-        int execWidth = p->curr.execWidth;
-        p->push();
-        p->curr.execWidth = 8;
-        for (int nib = 0; nib < execWidth / 4; nib ++) {
-          p->curr.chooseNib(nib);
-          p->MOV(dst.bottom_half(), middle);
-          if(middle.is_signed_int())
-            p->ASR(dst.top_half(), middle, GenRegister::immud(31));
-          else
-            p->MOV(dst.top_half(), GenRegister::immd(0));
-          dst = GenRegister::suboffset(dst, 4);
-          middle = GenRegister::suboffset(middle, 4);
-        }
-        p->pop();
+
+        p->MOV(dst.bottom_half(), middle);
+        if(src.is_signed_int())
+          p->ASR(dst.top_half(this->simdWidth), middle, GenRegister::immud(31));
+        else
+          p->MOV(dst.top_half(this->simdWidth), GenRegister::immud(0));
         break;
       }
       default:
@@ -304,8 +284,10 @@ namespace gbe
     GenRegister tmp = ra->genReg(insn.dst(1));
     switch (insn.opcode) {
       case SEL_OP_I64ADD: {
-        GenRegister x = GenRegister::retype(tmp, GEN_TYPE_UD),
-                    y = GenRegister::suboffset(x, p->curr.execWidth);
+        tmp = GenRegister::retype(tmp, GEN_TYPE_UL);
+        GenRegister x = tmp.bottom_half();
+        GenRegister y = tmp.top_half(this->simdWidth);
+
         loadBottomHalf(x, src0);
         loadBottomHalf(y, src1);
         addWithCarry(x, x, y);
@@ -318,8 +300,10 @@ namespace gbe
         break;
       }
       case SEL_OP_I64SUB: {
-        GenRegister x = GenRegister::retype(tmp, GEN_TYPE_UD),
-                    y = GenRegister::suboffset(x, p->curr.execWidth);
+        tmp = GenRegister::retype(tmp, GEN_TYPE_UL);
+        GenRegister x = tmp.bottom_half();
+        GenRegister y = tmp.top_half(this->simdWidth);
+
         loadBottomHalf(x, src0);
         loadBottomHalf(y, src1);
         subWithBorrow(x, x, y);
@@ -400,21 +384,8 @@ namespace gbe
       case SEL_OP_SEL:  p->SEL(dst, src0, src1); break;
       case SEL_OP_SEL_INT64:
         {
-          GenRegister xdst = GenRegister::retype(dst, GEN_TYPE_UL),
-                      xsrc0 = GenRegister::retype(src0, GEN_TYPE_UL),
-                      xsrc1 = GenRegister::retype(src1, GEN_TYPE_UL);
-          int execWidth = p->curr.execWidth;
-          p->push();
-          p->curr.execWidth = 8;
-          for (int nib = 0; nib < execWidth / 4; nib ++) {
-            p->curr.chooseNib(nib);
-            p->SEL(xdst.bottom_half(), xsrc0.bottom_half(), xsrc1.bottom_half());
-            p->SEL(xdst.top_half(), xsrc0.top_half(), xsrc1.top_half());
-            xdst = GenRegister::suboffset(xdst, 4);
-            xsrc0 = GenRegister::suboffset(xsrc0, 4);
-            xsrc1 = GenRegister::suboffset(xsrc1, 4);
-          }
-          p->pop();
+          p->SEL(dst.bottom_half(), src0.bottom_half(), src1.bottom_half());
+          p->SEL(dst.top_half(this->simdWidth), src0.top_half(this->simdWidth), src1.top_half(this->simdWidth));
         }
         break;
       case SEL_OP_AND:  p->AND(dst, src0, src1, insn.extra.function); break;
@@ -422,59 +393,20 @@ namespace gbe
       case SEL_OP_XOR:  p->XOR(dst, src0, src1, insn.extra.function); break;
       case SEL_OP_I64AND:
         {
-          GenRegister xdst = GenRegister::retype(dst, GEN_TYPE_UL),
-                      xsrc0 = GenRegister::retype(src0, GEN_TYPE_UL),
-                      xsrc1 = GenRegister::retype(src1, GEN_TYPE_UL);
-          int execWidth = p->curr.execWidth;
-          p->push();
-          p->curr.execWidth = 8;
-          for (int nib = 0; nib < execWidth / 4; nib ++) {
-            p->curr.chooseNib(nib);
-            p->AND(xdst.bottom_half(), xsrc0.bottom_half(), xsrc1.bottom_half());
-            p->AND(xdst.top_half(), xsrc0.top_half(), xsrc1.top_half());
-            xdst = GenRegister::suboffset(xdst, 4),
-            xsrc0 = GenRegister::suboffset(xsrc0, 4),
-            xsrc1 = GenRegister::suboffset(xsrc1, 4);
-          }
-          p->pop();
+          p->AND(dst.bottom_half(), src0.bottom_half(), src1.bottom_half());
+          p->AND(dst.top_half(this->simdWidth), src0.top_half(this->simdWidth), src1.top_half(this->simdWidth));
         }
         break;
       case SEL_OP_I64OR:
         {
-          GenRegister xdst = GenRegister::retype(dst, GEN_TYPE_UL),
-                      xsrc0 = GenRegister::retype(src0, GEN_TYPE_UL),
-                      xsrc1 = GenRegister::retype(src1, GEN_TYPE_UL);
-          int execWidth = p->curr.execWidth;
-          p->push();
-          p->curr.execWidth = 8;
-          for (int nib = 0; nib < execWidth / 4; nib ++) {
-            p->curr.chooseNib(nib);
-            p->OR(xdst.bottom_half(), xsrc0.bottom_half(), xsrc1.bottom_half());
-            p->OR(xdst.top_half(), xsrc0.top_half(), xsrc1.top_half());
-            xdst = GenRegister::suboffset(xdst, 4),
-            xsrc0 = GenRegister::suboffset(xsrc0, 4),
-            xsrc1 = GenRegister::suboffset(xsrc1, 4);
-          }
-          p->pop();
+          p->OR(dst.bottom_half(), src0.bottom_half(), src1.bottom_half());
+          p->OR(dst.top_half(this->simdWidth), src0.top_half(this->simdWidth), src1.top_half(this->simdWidth));
         }
         break;
       case SEL_OP_I64XOR:
         {
-          GenRegister xdst = GenRegister::retype(dst, GEN_TYPE_UL),
-                      xsrc0 = GenRegister::retype(src0, GEN_TYPE_UL),
-                      xsrc1 = GenRegister::retype(src1, GEN_TYPE_UL);
-          int execWidth = p->curr.execWidth;
-          p->push();
-          p->curr.execWidth = 8;
-          for (int nib = 0; nib < execWidth / 4; nib ++) {
-            p->curr.chooseNib(nib);
-            p->XOR(xdst.bottom_half(), xsrc0.bottom_half(), xsrc1.bottom_half());
-            p->XOR(xdst.top_half(), xsrc0.top_half(), xsrc1.top_half());
-            xdst = GenRegister::suboffset(xdst, 4),
-            xsrc0 = GenRegister::suboffset(xsrc0, 4),
-            xsrc1 = GenRegister::suboffset(xsrc1, 4);
-          }
-          p->pop();
+          p->XOR(dst.bottom_half(), src0.bottom_half(), src1.bottom_half());
+          p->XOR(dst.top_half(this->simdWidth), src0.top_half(this->simdWidth), src1.top_half(this->simdWidth));
         }
         break;
       case SEL_OP_SHR:  p->SHR(dst, src0, src1); break;
@@ -492,18 +424,8 @@ namespace gbe
           GenRegister xdst = GenRegister::retype(dst, GEN_TYPE_UL),
                       xsrc0 = GenRegister::retype(src0, GEN_TYPE_UL),
                       xsrc1 = GenRegister::retype(src1, GEN_TYPE_UL);
-          int execWidth = p->curr.execWidth;
-          p->push();
-          p->curr.execWidth = 8;
-          for (int nib = 0; nib < execWidth / 4; nib ++) {
-            p->curr.chooseNib(nib);
-            p->MOV(xdst.top_half(), xsrc0.bottom_half());
-            p->MOV(xdst.bottom_half(), xsrc1.bottom_half());
-            xdst = GenRegister::suboffset(xdst, 4);
-            xsrc0 = GenRegister::suboffset(xsrc0, 4);
-            xsrc1 = GenRegister::suboffset(xsrc1, 4);
-          }
-          p->pop();
+          p->MOV(xdst.top_half(this->simdWidth), xsrc0.bottom_half());
+          p->MOV(xdst.bottom_half(), xsrc1.bottom_half());
         }
         break;
       default: NOT_IMPLEMENTED;
@@ -511,16 +433,10 @@ namespace gbe
   }
 
   void GenContext::collectShifter(GenRegister dest, GenRegister src) {
-    int execWidth = p->curr.execWidth;
     p->push();
-    p->curr.predicate = GEN_PREDICATE_NONE;
-    p->curr.noMask = 1;
-    p->curr.execWidth = 8;
-    for (int nib = 0; nib < execWidth / 4; nib ++) {
-      p->AND(dest, src.bottom_half(), GenRegister::immud(63));
-      dest = GenRegister::suboffset(dest, 4);
-      src = GenRegister::suboffset(src, 4);
-    }
+      p->curr.predicate = GEN_PREDICATE_NONE;
+      p->curr.noMask = 1;
+    p->AND(dest, src.bottom_half(), GenRegister::immud(63));
     p->pop();
   }
 
@@ -1267,73 +1183,19 @@ namespace gbe
   }
 
   void GenContext::loadTopHalf(GenRegister dest, GenRegister src) {
-    int execWidth = p->curr.execWidth;
-    src = src.top_half();
-    p->push();
-    p->curr.predicate = GEN_PREDICATE_NONE;
-    p->curr.noMask = 1;
-    p->curr.execWidth = 8;
-    p->MOV(dest, src);
-    p->MOV(GenRegister::suboffset(dest, 4), GenRegister::suboffset(src, 4));
-    if (execWidth == 16) {
-      p->MOV(GenRegister::suboffset(dest, 8), GenRegister::suboffset(src, 8));
-      p->MOV(GenRegister::suboffset(dest, 12), GenRegister::suboffset(src, 12));
-    }
-    p->pop();
+    p->MOV(dest, src.top_half(this->simdWidth));
   }
 
   void GenContext::storeTopHalf(GenRegister dest, GenRegister src) {
-    int execWidth = p->curr.execWidth;
-    dest = dest.top_half();
-    p->push();
-    p->curr.noMask = 0;
-    p->curr.execWidth = 8;
-    p->MOV(dest, src);
-    p->curr.nibControl = 1;
-    p->MOV(GenRegister::suboffset(dest, 4), GenRegister::suboffset(src, 4));
-    if (execWidth == 16) {
-      p->curr.quarterControl = 1;
-      p->curr.nibControl = 0;
-      p->MOV(GenRegister::suboffset(dest, 8), GenRegister::suboffset(src, 8));
-      p->curr.nibControl = 1;
-      p->MOV(GenRegister::suboffset(dest, 12), GenRegister::suboffset(src, 12));
-    }
-    p->pop();
+    p->MOV(dest.top_half(this->simdWidth), src);
   }
 
   void GenContext::loadBottomHalf(GenRegister dest, GenRegister src) {
-    int execWidth = p->curr.execWidth;
-    src = src.bottom_half();
-    p->push();
-    p->curr.predicate = GEN_PREDICATE_NONE;
-    p->curr.noMask = 1;
-    p->curr.execWidth = 8;
-    p->MOV(dest, src);
-    p->MOV(GenRegister::suboffset(dest, 4), GenRegister::suboffset(src, 4));
-    if (execWidth == 16) {
-      p->MOV(GenRegister::suboffset(dest, 8), GenRegister::suboffset(src, 8));
-      p->MOV(GenRegister::suboffset(dest, 12), GenRegister::suboffset(src, 12));
-    }
-    p->pop();
+    p->MOV(dest, src.bottom_half());
   }
 
   void GenContext::storeBottomHalf(GenRegister dest, GenRegister src) {
-    int execWidth = p->curr.execWidth;
-    dest = dest.bottom_half();
-    p->push();
-    p->curr.execWidth = 8;
-    p->curr.noMask = 0;
-    p->MOV(dest, src);
-    p->curr.nibControl = 1;
-    p->MOV(GenRegister::suboffset(dest, 4), GenRegister::suboffset(src, 4));
-    if (execWidth == 16) {
-      p->curr.quarterControl = 1;
-      p->curr.nibControl = 0;
-      p->MOV(GenRegister::suboffset(dest, 8), GenRegister::suboffset(src, 8));
-      p->curr.nibControl = 1;
-      p->MOV(GenRegister::suboffset(dest, 12), GenRegister::suboffset(src, 12));
-    }
-    p->pop();
+    p->MOV(dest.bottom_half(), src);
   }
 
   void GenContext::addWithCarry(GenRegister dest, GenRegister src0, GenRegister src1) {
@@ -1770,18 +1632,12 @@ namespace gbe
     p->pop();
   }
 
-  //  For SIMD8, we allocate 2*elemNum temporary registers from dst(0), and
-  //  then follow the real destination registers.
-  //  For SIMD16, we allocate elemNum temporary registers from dst(0).
   void GenContext::emitRead64Instruction(const SelectionInstruction &insn) {
     const uint32_t elemNum = insn.extra.elem;
-    const uint32_t tmpRegSize = (p->curr.execWidth == 8) ? elemNum * 2 : elemNum;
-    const GenRegister tempAddr = ra->genReg(insn.dst(tmpRegSize + 1));
-    const GenRegister dst = ra->genReg(insn.dst(tmpRegSize));
-    const GenRegister tmp = ra->genReg(insn.dst(0));
+    const GenRegister dst = ra->genReg(insn.dst(0));
     const GenRegister src = ra->genReg(insn.src(0));
     const uint32_t bti = insn.getbti();
-    p->READ64(dst, tmp, tempAddr, src, bti, elemNum);
+    p->UNTYPED_READ(dst, src, bti, elemNum*2);
   }
 
   void GenContext::emitUntypedReadInstruction(const SelectionInstruction &insn) {
@@ -1792,17 +1648,11 @@ namespace gbe
     p->UNTYPED_READ(dst, src, bti, elemNum);
   }
 
-  //  For SIMD8, we allocate 2*elemNum temporary registers from dst(0), and
-  //  then follow the real destination registers.
-  //  For SIMD16, we allocate elemNum temporary registers from dst(0).
   void GenContext::emitWrite64Instruction(const SelectionInstruction &insn) {
     const GenRegister src = ra->genReg(insn.dst(0));
     const uint32_t elemNum = insn.extra.elem;
-    const GenRegister addr = ra->genReg(insn.src(0)); //tmpRegSize + 1));
-    const GenRegister data = ra->genReg(insn.src(1));
     const uint32_t bti = insn.getbti();
-    p->MOV(src, addr);
-    p->WRITE64(src, data, bti, elemNum, sel->isScalarReg(data.reg()));
+    p->UNTYPED_WRITE(src, bti, elemNum*2);
   }
 
   void GenContext::emitUntypedWriteInstruction(const SelectionInstruction &insn) {

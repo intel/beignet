@@ -90,6 +90,8 @@ namespace gbe
     uint32_t deviceID;
     /*! The constant for jump. */
     const int jump_width;
+    /*! simd width for this codegen */
+    uint32_t simdWidth;
     ////////////////////////////////////////////////////////////////////////
     // Encoding functions
     ////////////////////////////////////////////////////////////////////////
@@ -168,10 +170,6 @@ namespace gbe
     void WAIT(void);
     /*! Atomic instructions */
     virtual void ATOMIC(GenRegister dst, uint32_t function, GenRegister src, uint32_t bti, uint32_t srcNum);
-    /*! Read 64-bits float/int arrays */
-    void READ64(GenRegister dst, GenRegister tmp, GenRegister addr, GenRegister src, uint32_t bti, uint32_t elemNum);
-    /*! Write 64-bits float/int arrays */
-    void WRITE64(GenRegister src, GenRegister data, uint32_t bti, uint32_t elemNum, bool is_scalar);
     /*! Untyped read (upto 4 channels) */
     virtual void UNTYPED_READ(GenRegister dst, GenRegister src, uint32_t bti, uint32_t elemNum);
     /*! Untyped write (upto 4 channels) */

@@ -542,9 +542,9 @@ namespace gbe
     /*! Atomic instruction */
     void ATOMIC(Reg dst, uint32_t function, uint32_t srcNum, Reg src0, Reg src1, Reg src2, uint32_t bti);
     /*! Read 64 bits float/int array */
-    void READ64(Reg addr, Reg tempAddr, const GenRegister *dst, uint32_t elemNum, uint32_t valueNum, uint32_t bti);
+    void READ64(Reg addr, const GenRegister *dst, uint32_t elemNum, uint32_t bti);
     /*! Write 64 bits float/int array */
-    void WRITE64(Reg addr, const GenRegister *src, uint32_t srcNum, const GenRegister *dst, uint32_t dstNum, uint32_t bti);
+    void WRITE64(Reg addr, const GenRegister *src, uint32_t srcNum, uint32_t bti);
     /*! Untyped read (up to 4 elements) */
     void UNTYPED_READ(Reg addr, const GenRegister *dst, uint32_t elemNum, uint32_t bti);
     /*! Untyped write (up to 4 elements) */
@@ -1071,34 +1071,26 @@ namespace gbe
   void Selection::Opaque::NOP(void) { this->appendInsn(SEL_OP_NOP, 0, 0); }
   void Selection::Opaque::WAIT(void) { this->appendInsn(SEL_OP_WAIT, 0, 0); }
 
-  /* elemNum contains all the temporary register and the
-     real destination registers.*/
   void Selection::Opaque::READ64(Reg addr,
-                                 Reg tempAddr,
                                  const GenRegister *dst,
                                  uint32_t elemNum,
-                                 uint32_t valueNum,
                                  uint32_t bti)
   {
-    SelectionInstruction *insn = this->appendInsn(SEL_OP_READ64, elemNum + 1, 1);
+    SelectionInstruction *insn = this->appendInsn(SEL_OP_READ64, elemNum, 1);
     SelectionVector *srcVector = this->appendVector();
     SelectionVector *dstVector = this->appendVector();
 
     // Regular instruction to encode
     for (uint32_t elemID = 0; elemID < elemNum; ++elemID)
       insn->dst(elemID) = dst[elemID];
-    /* temporary addr register is to be modified, set it to dst registers.*/
-    insn->dst(elemNum) = tempAddr;
     insn->src(0) = addr;
     insn->setbti(bti);
-    insn->extra.elem = valueNum;
+    insn->extra.elem = elemNum;
 
-    // Only the temporary registers need contiguous allocation
-    dstVector->regNum = elemNum - valueNum;
+    dstVector->regNum = elemNum;
     dstVector->isSrc = 0;
     dstVector->reg = &insn->dst(0);
 
-    // Source cannot be scalar (yet)
     srcVector->regNum = 1;
     srcVector->isSrc = 1;
     srcVector->reg = &insn->src(0);
@@ -1125,36 +1117,30 @@ namespace gbe
     dstVector->regNum = elemNum;
     dstVector->isSrc = 0;
     dstVector->reg = &insn->dst(0);
-    // Source cannot be scalar (yet)
+
     srcVector->regNum = 1;
     srcVector->isSrc = 1;
     srcVector->reg = &insn->src(0);
   }
 
-  /* elemNum contains all the temporary register and the
-     real data registers.*/
   void Selection::Opaque::WRITE64(Reg addr,
                                   const GenRegister *src,
                                   uint32_t srcNum,
-                                  const GenRegister *dst,
-                                  uint32_t dstNum,
                                   uint32_t bti)
   {
-    SelectionInstruction *insn = this->appendInsn(SEL_OP_WRITE64, dstNum, srcNum + 1);
+    SelectionInstruction *insn = this->appendInsn(SEL_OP_WRITE64, 0, srcNum + 1);
     SelectionVector *vector = this->appendVector();
 
     // Regular instruction to encode
     insn->src(0) = addr;
     for (uint32_t elemID = 0; elemID < srcNum; ++elemID)
       insn->src(elemID + 1) = src[elemID];
-    for (uint32_t elemID = 0; elemID < dstNum; ++elemID)
-      insn->dst(elemID) = dst[elemID];
+
     insn->setbti(bti);
     insn->extra.elem = srcNum;
 
-    // Only the addr + temporary registers need to be contiguous.
-    vector->regNum = dstNum;
-    vector->reg = &insn->dst(0);
+    vector->regNum = srcNum + 1;
+    vector->reg = &insn->src(0);
     vector->isSrc = 1;
   }
 
@@ -2726,18 +2712,13 @@ namespace gbe
     {
       using namespace ir;
       const uint32_t valueNum = insn.getValueNum();
-      uint32_t dstID;
       /* XXX support scalar only right now. */
       GBE_ASSERT(valueNum == 1);
 
-      // The first 16 DWORD register space is for temporary usage at encode stage.
-      uint32_t tmpRegNum = (sel.ctx.getSimdWidth() == 8) ? valueNum * 2 : valueNum;
-      GenRegister dst[valueNum + tmpRegNum];
-      for (dstID = 0; dstID < tmpRegNum ; ++dstID)
-        dst[dstID] = sel.selReg(sel.reg(FAMILY_DWORD));
-      for ( uint32_t valueID = 0; valueID < valueNum; ++dstID, ++valueID)
-        dst[dstID] = sel.selReg(insn.getValue(valueID), ir::TYPE_U64);
-      sel.READ64(addr, sel.selReg(sel.reg(FAMILY_QWORD), ir::TYPE_U64), dst, valueNum + tmpRegNum, valueNum, bti);
+      GenRegister dst[valueNum];
+      for ( uint32_t dstID = 0; dstID < valueNum; ++dstID)
+        dst[dstID] = sel.selReg(insn.getValue(dstID), ir::TYPE_U64);
+      sel.READ64(addr, dst, valueNum, bti);
     }
 
     void emitByteGather(Selection::Opaque &sel,
@@ -2886,22 +2867,14 @@ namespace gbe
     {
       using namespace ir;
       const uint32_t valueNum = insn.getValueNum();
-      uint32_t srcID;
       /* XXX support scalar only right now. */
       GBE_ASSERT(valueNum == 1);
-      addr = GenRegister::retype(addr, GEN_TYPE_F);
-      // The first 16 DWORD register space is for temporary usage at encode stage.
-      uint32_t tmpRegNum = (sel.ctx.getSimdWidth() == 8) ? valueNum * 2 : valueNum;
+      addr = GenRegister::retype(addr, GEN_TYPE_UD);
       GenRegister src[valueNum];
-      GenRegister dst[tmpRegNum + 1];
-      /* dst 0 is for the temporary address register. */
-      dst[0] = sel.selReg(sel.reg(FAMILY_DWORD));
-      for (srcID = 0; srcID < tmpRegNum; ++srcID)
-        dst[srcID + 1] = sel.selReg(sel.reg(FAMILY_DWORD));
 
       for (uint32_t valueID = 0; valueID < valueNum; ++valueID)
         src[valueID] = sel.selReg(insn.getValue(valueID), ir::TYPE_U64);
-      sel.WRITE64(addr, src, valueNum, dst, tmpRegNum + 1, bti);
+      sel.WRITE64(addr, src, valueNum, bti);
     }
 
     void emitByteScatter(Selection::Opaque &sel,
@@ -3083,6 +3056,12 @@ namespace gbe
         sel.curr.noMask = 1;
       }
 
+      // As we store long/ulong low/high part separately,
+      // we need to deal with it separately, we need to change it back again
+      // when hardware support native long type.
+      const bool isInt64 = (srcType == TYPE_S64 || srcType == TYPE_U64 || dstType == TYPE_S64 || dstType == TYPE_U64);
+      const int simdWidth = sel.curr.execWidth;
+
       for(int i = 0; i < narrowNum; i++, index++) {
         GenRegister narrowReg, wideReg;
         if(narrowDst) {
@@ -3103,16 +3082,26 @@ namespace gbe
             GBE_ASSERT(multiple == 8);
           }
         }
-        if(index % multiple) {
+
+        if(!isInt64 && index % multiple) {
           wideReg = GenRegister::offset(wideReg, 0, (index % multiple) * typeSize(wideReg.type));
           wideReg.subphysical = 1;
         }
+        if(isInt64) {
+          // offset to next half
+          wideReg.subphysical = 1;
+          if(i >= multiple/2)
+            wideReg = GenRegister::offset(wideReg, 0, sel.isScalarReg(wideReg.reg()) ? 4 : simdWidth*4);
+          if(index % (multiple/2))
+            wideReg = GenRegister::offset(wideReg, 0, (index % (multiple/2)) * typeSize(wideReg.type));
+        }
+
         GenRegister xdst = narrowDst ? narrowReg : wideReg;
         GenRegister xsrc = narrowDst ? wideReg : narrowReg;
 
-        if((srcType == TYPE_S64 || srcType == TYPE_U64 || srcType == TYPE_DOUBLE) ||
-           (dstType == TYPE_S64 || dstType == TYPE_U64 || dstType == TYPE_DOUBLE)) {
-          const int simdWidth = sel.curr.execWidth;
+        if(isInt64) {
+          sel.MOV(xdst, xsrc);
+        } else if(srcType == TYPE_DOUBLE || dstType == TYPE_DOUBLE) {
           sel.push();
             sel.curr.execWidth = 8;
             xdst.subphysical = 1;

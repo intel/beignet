@@ -221,6 +221,7 @@ namespace gbe
   GenEncoder::GenEncoder(uint32_t simdWidth, uint32_t gen, uint32_t deviceID, int jump_width) :
     stateNum(0), gen(gen), deviceID(deviceID), jump_width(jump_width)
   {
+    this->simdWidth = simdWidth;
     this->curr.execWidth = simdWidth;
     this->curr.quarterControl = GEN_COMPRESSION_Q1;
     this->curr.noMask = 0;
@@ -380,76 +381,6 @@ namespace gbe
     GEN_UNTYPED_ALPHA,
     0
   };
-
-  void GenEncoder::READ64(GenRegister dst, GenRegister tmp, GenRegister addr, GenRegister src, uint32_t bti, uint32_t elemNum) {
-    GenRegister dst32 = GenRegister::retype(dst, GEN_TYPE_UD);
-    src = GenRegister::retype(src, GEN_TYPE_UD);
-    addr = GenRegister::retype(addr, GEN_TYPE_UD);
-    tmp = GenRegister::retype(tmp, GEN_TYPE_UD);
-    uint32_t originSimdWidth = curr.execWidth;
-    uint32_t originPredicate = curr.predicate;
-    uint32_t originMask = curr.noMask;
-    push();
-    for ( uint32_t channels = 0, currQuarter = GEN_COMPRESSION_Q1;
-          channels < originSimdWidth; channels += 8, currQuarter++) {
-      curr.predicate = GEN_PREDICATE_NONE;
-      curr.noMask = GEN_MASK_DISABLE;
-      curr.execWidth = 8;
-      /* XXX The following instruction is illegal, but it works as SIMD 1*4 mode
-         which is what we want here. */
-      MOV(GenRegister::h2(addr), GenRegister::suboffset(src, channels));
-      ADD(GenRegister::h2(GenRegister::suboffset(addr, 1)), GenRegister::suboffset(src, channels), GenRegister::immd(4));
-      MOV(GenRegister::h2(GenRegister::suboffset(addr, 8)), GenRegister::suboffset(src, channels + 4));
-      ADD(GenRegister::h2(GenRegister::suboffset(addr, 9)), GenRegister::suboffset(src, channels + 4), GenRegister::immd(4));
-      // Let's use SIMD16 to read all bytes for 8 doubles data at one time.
-      curr.execWidth = 16;
-      this->UNTYPED_READ(tmp, addr, bti, elemNum);
-      if (originSimdWidth == 16)
-        curr.quarterControl = currQuarter;
-      curr.predicate = originPredicate;
-      curr.noMask = originMask;
-      // Back to simd8 for correct predication flag.
-      curr.execWidth = 8;
-      MOV(GenRegister::retype(GenRegister::suboffset(dst32, channels * 2), GEN_TYPE_DF), GenRegister::retype(tmp, GEN_TYPE_DF));
-    }
-    pop();
-  }
-
-  void GenEncoder::WRITE64(GenRegister msg, GenRegister data, uint32_t bti, uint32_t elemNum, bool is_scalar) {
-    GenRegister data32 = GenRegister::retype(data, GEN_TYPE_UD);
-    GenRegister unpacked;
-    msg = GenRegister::retype(msg, GEN_TYPE_UD);
-    int originSimdWidth = curr.execWidth;
-    int originPredicate = curr.predicate;
-    int originMask = curr.noMask;
-    push();
-    for (uint32_t half = 0; half < 2; half++) {
-      curr.predicate = GEN_PREDICATE_NONE;
-      curr.noMask = GEN_MASK_DISABLE;
-      curr.execWidth = 8;
-      if (is_scalar) {
-        unpacked = data32;
-        unpacked.subnr += half * 4;
-      } else
-        unpacked = GenRegister::unpacked_ud(data32.nr, data32.subnr + half);
-      MOV(GenRegister::suboffset(msg, originSimdWidth), unpacked);
-      if (originSimdWidth == 16) {
-        if (is_scalar) {
-          unpacked = data32;
-          unpacked.subnr += half * 4;
-        } else
-          unpacked = GenRegister::unpacked_ud(data32.nr + 2, data32.subnr + half);
-        MOV(GenRegister::suboffset(msg, originSimdWidth + 8), unpacked);
-        curr.execWidth = 16;
-      }
-      if (half == 1)
-        ADD(GenRegister::retype(msg, GEN_TYPE_UD), GenRegister::retype(msg, GEN_TYPE_UD), GenRegister::immd(4));
-      curr.predicate = originPredicate;
-      curr.noMask = originMask;
-      this->UNTYPED_WRITE(msg, bti, elemNum);
-    }
-    pop();
-  }
 
   void GenEncoder::UNTYPED_READ(GenRegister dst, GenRegister src, uint32_t bti, uint32_t elemNum) {
     GenNativeInstruction *insn = this->next(GEN_OPCODE_SEND);
@@ -683,17 +614,8 @@ namespace gbe
      if (dst.isdf() && src.isdf()) {
        handleDouble(p, opcode, dst, src);
      } else if (dst.isint64() && src.isint64()) { // handle int64
-       int execWidth = p->curr.execWidth;
-       p->push();
-       p->curr.execWidth = 8;
-       for (int nib = 0; nib < execWidth / 4; nib ++) {
-         p->curr.chooseNib(nib);
-         p->MOV(dst.bottom_half(), src.bottom_half());
-         p->MOV(dst.top_half(), src.top_half());
-         dst = GenRegister::suboffset(dst, 4);
-         src = GenRegister::suboffset(src, 4);
-       }
-       p->pop();
+       p->MOV(dst.bottom_half(), src.bottom_half());
+       p->MOV(dst.top_half(p->simdWidth), src.top_half(p->simdWidth));
      } else if (needToSplitAlu1(p, dst, src) == false) {
       if(compactAlu1(p, opcode, dst, src, condition, false))
         return;
@@ -926,16 +848,8 @@ namespace gbe
 
   void GenEncoder::LOAD_INT64_IMM(GenRegister dest, int64_t value) {
     GenRegister u0 = GenRegister::immd((int)value), u1 = GenRegister::immd(value >> 32);
-    int execWidth = curr.execWidth;
-    push();
-    curr.execWidth = 8;
-    for(int nib = 0; nib < execWidth/4; nib ++) {
-      curr.chooseNib(nib);
-      MOV(dest.top_half(), u1);
-      MOV(dest.bottom_half(), u0);
-      dest = GenRegister::suboffset(dest, 4);
-    }
-    pop();
+    MOV(dest.bottom_half(), u0);
+    MOV(dest.top_half(this->simdWidth), u1);
   }
 
   void GenEncoder::MOV_DF(GenRegister dest, GenRegister src0, GenRegister r) {

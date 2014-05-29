@@ -1868,6 +1868,11 @@ namespace gbe
         uint32_t srcElemNum = 0, dstElemNum = 0 ;
         ir::Type srcType = getVectorInfo(ctx, srcValue->getType(), srcValue, srcElemNum);
         ir::Type dstType = getVectorInfo(ctx, dstValue->getType(), dstValue, dstElemNum);
+        // As long and double are not compatible in register storage
+        // and we do not support double yet, simply put an assert here
+        GBE_ASSERT(!(srcType == ir::TYPE_S64 && dstType == ir::TYPE_DOUBLE));
+        GBE_ASSERT(!(dstType == ir::TYPE_S64 && srcType == ir::TYPE_DOUBLE));
+
         if(srcElemNum > 1 || dstElemNum > 1) {
           // Build the tuple data in the vector
           vector<ir::Register> srcTupleData;
