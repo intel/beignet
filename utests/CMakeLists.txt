@@ -153,10 +153,6 @@ set (utests_sources
   runtime_createcontext.cpp
   runtime_null_kernel_arg.cpp
   runtime_event.cpp
-  compiler_double.cpp
-  compiler_double_2.cpp
-  compiler_double_3.cpp
-  compiler_double_4.cpp
   compiler_long.cpp
   compiler_long_2.cpp
   compiler_long_convert.cpp

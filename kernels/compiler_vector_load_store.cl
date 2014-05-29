@@ -25,9 +25,9 @@ __kernel void test_##type ##n(__global type *pin, \
   TEST_TYPE(int,n)   \
   TEST_TYPE(uint,n)  \
   TEST_TYPE(float,n) \
-  TEST_TYPE(double,n)\
   TEST_TYPE(long,n)  \
   TEST_TYPE(ulong,n)
+//  TEST_TYPE(double,n)
 
 #if 0
   TEST_TYPE(half,n)

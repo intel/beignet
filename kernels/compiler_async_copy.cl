@@ -21,4 +21,4 @@ DEF(uint2);
 DEF(long2);
 DEF(ulong2);
 DEF(float2);
-DEF(double2);
+//DEF(double2);

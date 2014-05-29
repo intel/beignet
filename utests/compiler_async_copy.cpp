@@ -52,4 +52,4 @@ DEF(uint, uint, 2);
 DEF(int64_t, long, 2);
 DEF(uint64_t, ulong, 2);
 DEF(float, float, 2);
-DEF(double, double, 2);
+//DEF(double, double, 2);
