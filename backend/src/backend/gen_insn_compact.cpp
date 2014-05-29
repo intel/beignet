@@ -321,6 +321,8 @@ namespace gbe {
       b.execution_size = GEN_WIDTH_8;
     else if (execWidth == 16)
       b.execution_size = GEN_WIDTH_16;
+    else if (execWidth == 4)
+      b.execution_size = GEN_WIDTH_4;
     else if (execWidth == 1)
       b.execution_size = GEN_WIDTH_1;
     else
