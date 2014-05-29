@@ -68,14 +68,17 @@ namespace gbe
   }
 
   INLINE bool needToSplitAlu1(GenEncoder *p, GenRegister dst, GenRegister src) {
-    if (p->curr.execWidth != 16) return false;
+    if (p->curr.execWidth != 16 || src.hstride == GEN_HORIZONTAL_STRIDE_0) return false;
     if (isVectorOfBytes(dst) == true) return true;
     if (isVectorOfBytes(src) == true) return true;
     return false;
   }
 
   INLINE bool needToSplitAlu2(GenEncoder *p, GenRegister dst, GenRegister src0, GenRegister src1) {
-    if (p->curr.execWidth != 16) return false;
+    if (p->curr.execWidth != 16 ||
+         (src0.hstride == GEN_HORIZONTAL_STRIDE_0 &&
+          src1.hstride == GEN_HORIZONTAL_STRIDE_0))
+      return false;
     if (isVectorOfBytes(dst) == true) return true;
     if (isVectorOfBytes(src0) == true) return true;
     if (isVectorOfBytes(src1) == true) return true;
@@ -83,7 +86,10 @@ namespace gbe
   }
 
   INLINE bool needToSplitCmp(GenEncoder *p, GenRegister src0, GenRegister src1) {
-    if (p->curr.execWidth != 16) return false;
+    if (p->curr.execWidth != 16 ||
+         (src0.hstride == GEN_HORIZONTAL_STRIDE_0 &&
+          src1.hstride == GEN_HORIZONTAL_STRIDE_0))
+      return false;
     if (isVectorOfBytes(src0) == true) return true;
     if (isVectorOfBytes(src1) == true) return true;
     if (src0.type == GEN_TYPE_D || src0.type == GEN_TYPE_UD || src0.type == GEN_TYPE_F)
@@ -92,7 +98,6 @@ namespace gbe
       return true;
     return false;
   }
-
 
   void GenEncoder::setMessageDescriptor(GenNativeInstruction *inst, enum GenMessageTarget sfid,
                                         unsigned msg_length, unsigned response_length,
@@ -268,8 +273,14 @@ namespace gbe
      insn->bits1.da1.dest_address_mode = dest.address_mode;
      insn->bits1.da1.dest_reg_nr = dest.nr;
      insn->bits1.da1.dest_subreg_nr = dest.subnr;
-     if (dest.hstride == GEN_HORIZONTAL_STRIDE_0)
-       dest.hstride = GEN_HORIZONTAL_STRIDE_1;
+     if (dest.hstride == GEN_HORIZONTAL_STRIDE_0) {
+       if (dest.type == GEN_TYPE_UB || dest.type == GEN_TYPE_B)
+         dest.hstride = GEN_HORIZONTAL_STRIDE_4;
+       else if (dest.type == GEN_TYPE_UW || dest.type == GEN_TYPE_W)
+         dest.hstride = GEN_HORIZONTAL_STRIDE_2;
+       else
+         dest.hstride = GEN_HORIZONTAL_STRIDE_1;
+     }
      insn->bits1.da1.dest_horiz_stride = dest.hstride;
   }
 

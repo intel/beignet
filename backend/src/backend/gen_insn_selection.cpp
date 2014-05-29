@@ -3076,6 +3076,13 @@ namespace gbe
         narrowDst = 0;
       }
 
+      sel.push();
+      if (sel.isScalarReg(insn.getDst(0)) == true) {
+        sel.curr.execWidth = 1;
+        sel.curr.predicate = GEN_PREDICATE_NONE;
+        sel.curr.noMask = 1;
+      }
+
       for(int i = 0; i < narrowNum; i++, index++) {
         GenRegister narrowReg, wideReg;
         if(narrowDst) {
@@ -3120,6 +3127,7 @@ namespace gbe
         } else
           sel.MOV(xdst, xsrc);
       }
+      sel.pop();
 
       return true;
     }
@@ -3154,7 +3162,14 @@ namespace gbe
       } else if (opcode == OP_F32TO16) {
         GenRegister unpacked;
         unpacked = sel.unpacked_uw(sel.reg(FAMILY_DWORD, sel.isScalarReg(insn.getSrc(0))));
-        sel.F32TO16(unpacked, src);
+        sel.push();
+          if (sel.isScalarReg(insn.getSrc(0))) {
+            sel.curr.execWidth = 1;
+            sel.curr.predicate = GEN_PREDICATE_NONE;
+            sel.curr.noMask = 1;
+          }
+          sel.F32TO16(unpacked, src);
+        sel.pop();
         sel.MOV(dst, unpacked);
       } else if (dstFamily != FAMILY_DWORD && dstFamily != FAMILY_QWORD && (srcFamily == FAMILY_DWORD || srcFamily == FAMILY_QWORD)) {
         GenRegister unpacked;
@@ -3172,8 +3187,16 @@ namespace gbe
           tmp.type = GEN_TYPE_D;
           sel.CONVI64_TO_I(tmp, src);
           sel.MOV(unpacked, tmp);
-        } else
-          sel.MOV(unpacked, src);
+        } else {
+          sel.push();
+            if (sel.isScalarReg(insn.getSrc(0))) {
+              sel.curr.execWidth = 1;
+              sel.curr.predicate = GEN_PREDICATE_NONE;
+              sel.curr.noMask = 1;
+            }
+            sel.MOV(unpacked, src);
+          sel.pop();
+        }
         sel.MOV(dst, unpacked);
       } else if ((dstType == ir::TYPE_S32 || dstType == ir::TYPE_U32) && srcFamily == FAMILY_QWORD) {
         sel.CONVI64_TO_I(dst, src);

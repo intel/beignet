@@ -941,6 +941,10 @@ namespace gbe
         || ctx.reservedSpillRegs != 0)
       this->expireGRF(interval);
     tick++;
+    // For some scalar byte register, it may be used as a destination register
+    // and the source is a scalar Dword. If that is the case, the byte register
+    // must get 4byte alignment register offset.
+    alignment = (alignment + 3) & ~3;
     while ((grfOffset = ctx.allocate(size, alignment)) == 0) {
       const bool success = this->expireGRF(interval);
       if (success == false) {
