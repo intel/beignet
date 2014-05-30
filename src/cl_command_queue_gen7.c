@@ -327,7 +327,7 @@ cl_command_queue_ND_range_gen7(cl_command_queue queue,
   /* Start a new batch buffer */
   batch_sz = cl_kernel_compute_batch_sz(ker);
   cl_gpgpu_batch_reset(gpgpu, batch_sz);
-  cl_set_thread_batch_buf(cl_gpgpu_ref_batch_buf(gpgpu));
+  cl_set_thread_batch_buf(queue, cl_gpgpu_ref_batch_buf(gpgpu));
   cl_gpgpu_batch_start(gpgpu);
 
   /* Issue the GPGPU_WALKER command */

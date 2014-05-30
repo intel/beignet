@@ -27,7 +27,7 @@
 void* cl_thread_data_create(void);
 
 /* The destructor for clean the thread specific data. */
-void cl_thread_data_destroy(void * data);
+void cl_thread_data_destroy(cl_command_queue queue);
 
 /* Used to get the gpgpu struct of each thread. */
 cl_gpgpu cl_get_thread_gpgpu(cl_command_queue queue);
@@ -36,9 +36,9 @@ cl_gpgpu cl_get_thread_gpgpu(cl_command_queue queue);
 void cl_invalid_thread_gpgpu(cl_command_queue queue);
 
 /* Used to set the batch buffer of each thread. */
-void cl_set_thread_batch_buf(void* buf);
+void cl_set_thread_batch_buf(cl_command_queue queue, void* buf);
 
 /* Used to get the batch buffer of each thread. */
-void* cl_get_thread_batch_buf(void);
+void* cl_get_thread_batch_buf(cl_command_queue queue);
 
 #endif /* __CL_THREAD_H__ */

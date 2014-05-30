@@ -107,7 +107,6 @@ LOCAL cl_device_id
 cl_get_gt_device(void)
 {
   cl_device_id ret = NULL;
-  cl_set_thread_batch_buf(NULL);
   const int device_id = cl_driver_get_device_id();
   cl_device_id device = NULL;
 

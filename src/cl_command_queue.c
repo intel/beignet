@@ -89,7 +89,7 @@ cl_command_queue_delete(cl_command_queue queue)
     queue->fulsim_out = NULL;
   }
 
-  cl_thread_data_destroy(queue->thread_data);
+  cl_thread_data_destroy(queue);
   queue->thread_data = NULL;
   cl_mem_delete(queue->perf);
   cl_context_delete(queue->ctx);
@@ -430,7 +430,7 @@ cl_command_queue_flush(cl_command_queue queue)
 LOCAL cl_int
 cl_command_queue_finish(cl_command_queue queue)
 {
-  cl_gpgpu_sync(cl_get_thread_batch_buf());
+  cl_gpgpu_sync(cl_get_thread_batch_buf(queue));
   return CL_SUCCESS;
 }
 
