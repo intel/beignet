@@ -14,6 +14,74 @@ import os,sys
 #    values
 #    ulp
 
+# reduce pi*x limitation to [-pi,pi]
+reduce1='''
+static float reduce1( float x )
+{
+  SF fx, fy;
+  fx.f = fy.f = x;
+  int n;
+
+  fy.spliter.exponent = fx.spliter.exponent - 1;
+  n = (int)fy.f;
+
+  fx.f = fx.f - 2.0 * n;
+
+  // reduce to [-1.0, 1.0]
+  fx.f = (fx.f < -1)?(fx.f + 2.0):((fx.f > 1)?(fx.f - 2.0):fx.f);
+
+  return fx.f;
+}
+'''
+# define fuction: cospi
+cospi='''
+static float cospi(float x){
+  float r = x;
+  if ( x > 1 || x < -1) r = reduce1(x);
+
+  // reduce to [0.0, 1.0]
+  if (r < 0)
+    r = fabs(r);
+
+  if (r >= 0 && r <= 0.25)
+    return  cosf(r * M_PI);
+  else if (r > 0.25 && r <= 0.5)
+    return  sinf((0.5 - r) * M_PI);
+  else if (r > 0.5 && r <= 0.75)
+    return sinf(-(r-0.5) * M_PI);
+  else if (r > 0.75 && r <= 1.0){
+    return -cosf((1 -  r) * M_PI);}
+
+  // Error return
+  return 0xffffffff;
+}
+'''
+# define function: sinpi
+sinpi='''
+static float sinpi(float x){
+  float r = x;
+  if ( x > 1 || x < -1) r = reduce1(x);
+
+  // reduce to [-0.5, 0.5]
+  if (r < -0.5)
+    r = -1 - r;
+  else if (r > 0.5)
+    r = 1 - r;
+
+  if (r > 0.25 && r <= 0.5)
+    return  cosf((0.5 - r) * M_PI);
+  else if (r >= 0 && r <= 0.25)
+    return  sinf(r * M_PI);
+  else if (r >= -0.25 && r < 0)
+    return -sinf(r * -M_PI);
+  else if (r >= -0.5 && r < -0.25){
+    return -cosf((0.5 + r) * M_PI);}
+
+  // Error return
+  return 0xffffffff;
+}
+'''
+
 base_input_values = [ 0, 1, 3.14]
 def main():
   ##### gentype acos(gentype)
@@ -144,10 +212,7 @@ static float atanpi(float x){
   cospi_input_values = base_input_values
   cospi_input_type = ['float','float2','float4','float8','float16']
   cospi_output_type = ['float','float2','float4','float8','float16']
-  cospi_cpu_func='''
-static float cospi(float x){
-  return cos(M_PI * x);
-} '''
+  cospi_cpu_func=reduce1+cospi
   cospiUtests = func('cospi','cospi',[cospi_input_type],cospi_output_type,[cospi_input_values],'2 * FLT_ULP',cospi_cpu_func)
   
 #  ##### gentype erf(gentype)
@@ -364,7 +429,7 @@ static float minmag(float x, float y){
   nextafter_input_type1 = ['float','float2','float4','float8','float16']
   nextafter_input_type2 = ['float','float2','float4','float8','float16']
   nextafter_output_type = ['float','float2','float4','float8','float16']
-  nextafterUtests = func('nextafter','nextafter',[nextafter_input_type1,nextafter_input_type2],nextafter_output_type,[nextafter_input_values1,nextafter_input_values2],'0 * FLT_ULP')
+  nextafterUtests = func('nextafter','nextafterf',[nextafter_input_type1,nextafter_input_type2],nextafter_output_type,[nextafter_input_values1,nextafter_input_values2],'0 * FLT_ULP')
   
   ##### gentype pow(gentype x, gentype y)
   pow_base_values = base_input_values
@@ -374,7 +439,7 @@ static float minmag(float x, float y){
   pow_input_type1 = ['float','float2','float4','float8','float16']
   pow_input_type2 = ['float','float2','float4','float8','float16']
   pow_output_type = ['float','float2','float4','float8','float16']
-  powUtests = func('pow','pow',[pow_input_type1,pow_input_type2],pow_output_type,[pow_input_values1,pow_input_values2],'16 * FLT_ULP')
+  powUtests = func('pow','powf',[pow_input_type1,pow_input_type2],pow_output_type,[pow_input_values1,pow_input_values2],'16 * FLT_ULP')
   
   ##### floatn pown(floatn x, intn y)
   pown_input_values1 = [FLT_MAX_POSI,FLT_MIN_NEGA,FLT_MIN_POSI,FLT_MAX_NEGA,80, -80, 3.14, -3.14, -0.5, 0.5, 1, -1, 0.0,6,-6,1500.24,-1500.24]
@@ -469,43 +534,7 @@ static float rsqrt(float x)
   sinpi_input_values = [0, 1, 3.14, -0.88, -0.12, -0.5, 0.5, -0.49, 0.49, 0.51, -0.51, -0.1, 0.1]
   sinpi_input_type = ['float','float2','float4','float8','float16']
   sinpi_output_type = ['float','float2','float4','float8','float16']
-  sinpi_cpu_func='''
-static float reduce1( float x )
-{
-  SF fx, fy;
-  fx.f = fy.f = x;
-  int n;
-
-  fy.spliter.exponent = fx.spliter.exponent - 1;
-  n = (int)fy.f;
-
-  fx.f = fx.f - 2.0 * n;
-
-  return fx.f;
-}
-
-static float sinpi(float x){
-  float r = x;
-  if ( x > 1 || x < -1) r = reduce1(x);
-
-  // reduce to [-0.5, 0.5]
-  if(r < -0.5)
-      r = -1 - r;
-  else if (r > 0.5)
-      r = 1 - r;
-
-  if (r > 0.25 && r <= 0.5)
-    return  cos((0.5 - r) * M_PI);
-  else if (r >= 0 && r <= 0.25)
-    return  sin(r * M_PI);
-  else if (r >= -0.25 && r < 0)
-    return -sin(r * -M_PI);
-  else if (r >= -0.5 && r < -0.25){
-    return -cos((0.5 + r) * M_PI);}
-
-  // Error return
-  return 0xffffffff;
-} '''
+  sinpi_cpu_func=reduce1+sinpi
   sinpiUtests = func('sinpi','sinpi',[sinpi_input_type],sinpi_output_type,[sinpi_input_values],'4 * FLT_ULP',sinpi_cpu_func)
   
   ##### gentype sqrt(gentype)
@@ -530,11 +559,12 @@ static float sinpi(float x){
   tanpi_input_values = base_input_values
   tanpi_input_type = ['float','float2','float4','float8','float16']
   tanpi_output_type = ['float','float2','float4','float8','float16']
-  tanpi_cpu_func='''
+  tanpi_cpu_func=reduce1+sinpi+cospi+'''
 static float tanpi(float x){
-  return tan(M_PI*x);
-} '''
-  tanpiUtests = func('tanpi','tanpi',[tanpi_input_type],tanpi_output_type,[tanpi_input_values],'4 * FLT_ULP',tanpi_cpu_func)
+  return sinpi(x)/cospi(x);
+}
+'''
+  tanpiUtests = func('tanpi','tanpi',[tanpi_input_type],tanpi_output_type,[tanpi_input_values],'400 * FLT_ULP',tanpi_cpu_func)
   
   ##### gentype trunc(gentype)
   trunc_input_values = base_input_values
