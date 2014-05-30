@@ -3090,7 +3090,7 @@ namespace gbe
           wideReg = sel.selReg(insn.getDst(index/multiple), narrowType);
           narrowReg = sel.selReg(insn.getSrc(i), narrowType);  //retype to narrow type
         }
-        if(wideReg.hstride != GEN_VERTICAL_STRIDE_0) {
+        if(wideReg.hstride != GEN_HORIZONTAL_STRIDE_0) {
           if(multiple == 2) {
             wideReg = sel.unpacked_uw(wideReg.reg());
             wideReg = GenRegister::retype(wideReg, getGenType(narrowType));
@@ -3107,6 +3107,15 @@ namespace gbe
           wideReg.subphysical = 1;
         }
         if(isInt64) {
+          if(wideReg.hstride != GEN_HORIZONTAL_STRIDE_0) {
+            // as we store long by bottom & high part separately, we have to divide hstride by 2
+            if (wideReg.hstride == GEN_HORIZONTAL_STRIDE_2)
+              wideReg.hstride = GEN_HORIZONTAL_STRIDE_1;
+            else if (wideReg.hstride == GEN_HORIZONTAL_STRIDE_4)
+              wideReg.hstride = GEN_HORIZONTAL_STRIDE_2;
+            else
+              GBE_ASSERT(0);
+          }
           // offset to next half
           wideReg.subphysical = 1;
           if(i >= multiple/2)
