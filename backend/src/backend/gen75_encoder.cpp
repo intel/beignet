@@ -177,6 +177,7 @@ namespace gbe
                    msg_length,
                    response_length);
   }
+
   void Gen75Encoder::LOAD_DF_IMM(GenRegister dest, GenRegister tmp, double value) {
     union { double d; unsigned u[2]; } u;
     u.d = value;
@@ -207,38 +208,37 @@ namespace gbe
   }
 
   void Gen75Encoder::MOV_DF(GenRegister dest, GenRegister src0, GenRegister r) {
+    GBE_ASSERT((src0.type == GEN_TYPE_F && dest.isdf()) || (src0.isdf() && dest.type == GEN_TYPE_F));
     int w = curr.execWidth;
-    if (src0.isdf()) {
-      GBE_ASSERT(0); // MOV DF is called from convert instruction,
-                     // We should never convert a df to a df.
-    } else {
-      GenRegister r0 = GenRegister::h2(r);
+    GenRegister r0;
+    r0 = GenRegister::h2(r);
+    push();
+    curr.execWidth = 4;
+    curr.predicate = GEN_PREDICATE_NONE;
+    curr.noMask = 1;
+    MOV(r0, src0);
+    MOV(GenRegister::suboffset(r0, 4), GenRegister::suboffset(src0, 4));
+    curr.noMask = 0;
+    curr.quarterControl = 0;
+    curr.nibControl = 0;
+    MOV(dest, r0);
+    curr.nibControl = 1;
+    MOV(GenRegister::suboffset(dest, 4), GenRegister::suboffset(r0, 4));
+    pop();
+    if (w == 16) {
       push();
       curr.execWidth = 4;
       curr.predicate = GEN_PREDICATE_NONE;
-      MOV(r0, src0);
-      MOV(GenRegister::suboffset(r0, 4), GenRegister::suboffset(src0, 4));
-      curr.predicate = GEN_PREDICATE_NORMAL;
-      curr.quarterControl = 0;
+      curr.noMask = 1;
+      MOV(r0, GenRegister::suboffset(src0, 8));
+      MOV(GenRegister::suboffset(r0, 4), GenRegister::suboffset(src0, 12));
+      curr.noMask = 0;
+      curr.quarterControl = 1;
       curr.nibControl = 0;
-      MOV(dest, r0);
+      MOV(GenRegister::suboffset(dest, 8), r0);
       curr.nibControl = 1;
-      MOV(GenRegister::suboffset(dest, 4), GenRegister::suboffset(r0, 4));
+      MOV(GenRegister::suboffset(dest, 12), GenRegister::suboffset(r0, 4));
       pop();
-      if (w == 16) {
-        push();
-        curr.execWidth = 4;
-        curr.predicate = GEN_PREDICATE_NONE;
-        MOV(r0, GenRegister::suboffset(src0, 8));
-        MOV(GenRegister::suboffset(r0, 4), GenRegister::suboffset(src0, 12));
-        curr.predicate = GEN_PREDICATE_NORMAL;
-        curr.quarterControl = 1;
-        curr.nibControl = 0;
-        MOV(GenRegister::suboffset(dest, 8), r0);
-        curr.nibControl = 1;
-        MOV(GenRegister::suboffset(dest, 12), GenRegister::suboffset(r0, 4));
-        pop();
-      }
     }
   }
 } /* End of the name space. */

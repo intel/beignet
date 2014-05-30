@@ -3266,9 +3266,10 @@ namespace gbe
         }
         if (unpacked.reg() != dst.reg())
           sel.MOV(dst, unpacked);
-      } else if ((dstType == ir::TYPE_S32 || dstType == ir::TYPE_U32) && srcFamily == FAMILY_QWORD) {
+      } else if ((dstType == ir::TYPE_S32 || dstType == ir::TYPE_U32) &&
+                 (srcType == ir::TYPE_U64 || srcType == ir::TYPE_S64))
         sel.CONVI64_TO_I(dst, src);
-      } else if (dstType == ir::TYPE_FLOAT && srcFamily == FAMILY_QWORD) {
+      else if (dstType == ir::TYPE_FLOAT && (srcType == ir::TYPE_U64 || srcType == ir::TYPE_S64)) {
         auto dag = sel.regDAG[src.reg()];
         // FIXME, in the future, we need to do a common I64 lower to I32 analysis
         // at llvm IR layer which could cover more cases then just this one.
@@ -3311,7 +3312,8 @@ namespace gbe
           sel.curr.subFlag = 1;
           sel.CONVI64_TO_F(dst, src, tmp);
         sel.pop();
-      } else if (dst.isdf()) {
+      } else if ((dst.isdf() && srcType == ir::TYPE_FLOAT) ||
+                 (src.isdf() && dstType == ir::TYPE_FLOAT)) {
         ir::Register r = sel.reg(ir::RegisterFamily::FAMILY_QWORD);
         sel.MOV_DF(dst, src, sel.selReg(r));
       } else if (dst.isint64()) {
