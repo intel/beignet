@@ -82,7 +82,8 @@ static float sinpi(float x){
 }
 '''
 
-base_input_values = [ 0, 1, 3.14]
+base_input_values = [ 0, 1, 3.14, 5.15, 6.01, 7.89]
+base_input_values1 = [ 1, 3.14, 5.15, 6.01, 7.89]
 def main():
   ##### gentype acos(gentype)
   acos_input_values = base_input_values
@@ -432,7 +433,7 @@ static float minmag(float x, float y){
   nextafterUtests = func('nextafter','nextafterf',[nextafter_input_type1,nextafter_input_type2],nextafter_output_type,[nextafter_input_values1,nextafter_input_values2],'0 * FLT_ULP')
   
   ##### gentype pow(gentype x, gentype y)
-  pow_base_values = base_input_values
+  pow_base_values = base_input_values1
   pow_input_values1 = []
   pow_input_values2 = []
   pow_input_values1,pow_input_values2=gene2ValuesLoop(pow_input_values1,pow_input_values2,pow_base_values)
@@ -442,8 +443,8 @@ static float minmag(float x, float y){
   powUtests = func('pow','powf',[pow_input_type1,pow_input_type2],pow_output_type,[pow_input_values1,pow_input_values2],'16 * FLT_ULP')
   
   ##### floatn pown(floatn x, intn y)
-  pown_input_values1 = [FLT_MAX_POSI,FLT_MIN_NEGA,FLT_MIN_POSI,FLT_MAX_NEGA,80, -80, 3.14, -3.14, -0.5, 0.5, 1, -1, 0.0,6,-6,1500.24,-1500.24]
-  pown_input_values2 = [-1,-2,-3,4,5,6,7,8,9,10,11,12,13,14,15,16,12]
+  pown_input_values1 = [FLT_MAX_POSI,FLT_MIN_NEGA,FLT_MIN_POSI,FLT_MAX_NEGA,80, -80, 3.14, -3.14, 0.5, 1, 0.0,1500.24,-1500.24]
+  pown_input_values2 = [-1,-2,-3,4,5,6,7,8,10,12,14,16,12]
   pown_input_type1 = ['float','float2','float4','float8','float16']
   pown_input_type2 = ['int','int2','int4','int8','int16']
   pown_output_type = ['float','float2','float4','float8','float16']
@@ -454,14 +455,14 @@ static float pown(float x, int y){
   pownUtests = func('pown','pown',[pown_input_type1,pown_input_type2],pown_output_type,[pown_input_values1,pown_input_values2],'16 * FLT_ULP', pown_cpu_func)
   
   ##### gentype powr(gentype x, gentype y)
-  powr_input_values1 = [FLT_MAX_POSI,FLT_MIN_NEGA,FLT_MIN_POSI,FLT_MAX_NEGA,80, -80, 3.14, -3.14, -0.5, 0.5, 1, -1, 0.0,6,-6,1500.24,-1500.24]
-  powr_input_values2 = [1,2,3.14,4,5,6,7,8,9.889,10,11,12,13,14.33,15,0,12]
+  powr_input_values1 = [80, -80, 3.14, -3.14, 0.5, 1, -1, 0.0,6,1500.24,-1500.24]
+  powr_input_values2 = [5,6,7,8,10,11,12,13,14,0,12]
   powr_input_type1 = ['float','float2','float4','float8','float16']
   powr_input_type2 = ['float','float2','float4','float8','float16']
   powr_output_type = ['float','float2','float4','float8','float16']
   powr_cpu_func='''
 static float powr(float x, int y){
-    return pow(x,y);
+    return powf(x,y);
 } '''
   powrUtests = func('powr','powr',[powr_input_type1,powr_input_type2],powr_output_type,[powr_input_values1,powr_input_values2],'16 * FLT_ULP', powr_cpu_func)
   
@@ -556,7 +557,7 @@ static float rsqrt(float x)
   tanhUtests = func('tanh','tanh',[tanh_input_type],tanh_output_type,[tanh_input_values],'5 * FLT_ULP')
   
   ##### gentype tanpi(gentype x)
-  tanpi_input_values = base_input_values
+  tanpi_input_values = [ 0, 3.14, 5.15, 6.01, 7.89]
   tanpi_input_type = ['float','float2','float4','float8','float16']
   tanpi_output_type = ['float','float2','float4','float8','float16']
   tanpi_cpu_func=reduce1+sinpi+cospi+'''
@@ -564,7 +565,7 @@ static float tanpi(float x){
   return sinpi(x)/cospi(x);
 }
 '''
-  tanpiUtests = func('tanpi','tanpi',[tanpi_input_type],tanpi_output_type,[tanpi_input_values],'400 * FLT_ULP',tanpi_cpu_func)
+  tanpiUtests = func('tanpi','tanpi',[tanpi_input_type],tanpi_output_type,[tanpi_input_values],'4 * FLT_ULP',tanpi_cpu_func)
   
   ##### gentype trunc(gentype)
   trunc_input_values = base_input_values
