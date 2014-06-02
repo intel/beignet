@@ -27,7 +27,7 @@ gbe_program_new_from_source_cb *compiler_program_new_from_source = NULL;
 gbe_program_serialize_to_binary_cb *compiler_program_serialize_to_binary = NULL;
 gbe_program_new_from_llvm_cb *compiler_program_new_from_llvm = NULL;
 gbe_kernel_set_const_buffer_size_cb *compiler_kernel_set_const_buffer_size = NULL;
-gbe_set_image_base_index_cb *compiler_set_image_base_index_compiler = NULL;
+gbe_set_image_base_index_cb *compiler_set_image_base_index = NULL;
 
 //function pointer from libgbeinterp.so
 gbe_program_new_from_binary_cb *gbe_program_new_from_binary = NULL;
@@ -192,7 +192,7 @@ struct GbeLoaderInitializer
     if (gbe_kernel_get_image_data == NULL)
       return false;
 
-    gbe_set_image_base_index_interp = *(gbe_set_image_base_index_cb**)dlsym(dlhInterp, "gbe_set_image_base_index_interp");
+    gbe_set_image_base_index_interp = *(gbe_set_image_base_index_cb**)dlsym(dlhInterp, "gbe_set_image_base_index");
     if (gbe_set_image_base_index_interp == NULL)
       return false;
 
@@ -236,8 +236,8 @@ struct GbeLoaderInitializer
       if (compiler_kernel_set_const_buffer_size == NULL)
         return;
 
-      compiler_set_image_base_index_compiler = *(gbe_set_image_base_index_cb **)dlsym(dlhCompiler, "gbe_set_image_base_index_compiler");
-      if (compiler_set_image_base_index_compiler == NULL)
+      compiler_set_image_base_index = *(gbe_set_image_base_index_cb **)dlsym(dlhCompiler, "gbe_set_image_base_index");
+      if (compiler_set_image_base_index == NULL)
         return;
 
       compilerLoaded = true;

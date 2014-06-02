@@ -99,8 +99,7 @@ typedef struct ImageInfo {
 } ImageInfo;
 
 typedef void (gbe_set_image_base_index_cb)(uint32_t base_idx);
-extern gbe_set_image_base_index_cb *gbe_set_image_base_index_compiler;
-extern gbe_set_image_base_index_cb *gbe_set_image_base_index_interp;
+extern gbe_set_image_base_index_cb *gbe_set_image_base_index;
 
 typedef uint32_t (gbe_get_image_base_index_cb)();
 extern gbe_get_image_base_index_cb *gbe_get_image_base_index;

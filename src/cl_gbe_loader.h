@@ -28,7 +28,8 @@ extern gbe_program_new_from_source_cb *compiler_program_new_from_source;
 extern gbe_program_serialize_to_binary_cb *compiler_program_serialize_to_binary;
 extern gbe_program_new_from_llvm_cb *compiler_program_new_from_llvm;
 extern gbe_kernel_set_const_buffer_size_cb *compiler_kernel_set_const_buffer_size;
-extern gbe_set_image_base_index_cb *compiler_set_image_base_index_compiler;
+extern gbe_set_image_base_index_cb *compiler_set_image_base_index;
+extern gbe_set_image_base_index_cb *gbe_set_image_base_index_interp;
 int CompilerSupported();
 #ifdef __cplusplus
 }
