@@ -523,6 +523,17 @@ namespace ir {
   const DefSet &FunctionDAG::getDef(const Instruction *insn, uint32_t srcID) const {
     return this->getDef(ValueUse(insn, srcID));
   }
+  const UseSet *FunctionDAG::getRegUse(const Register &reg) const {
+    auto it = regUse.find(reg);
+    GBE_ASSERT(it != regUse.end());
+    return it->second;
+  }
+  const DefSet *FunctionDAG::getRegDef(const Register &reg) const {
+    auto it = regDef.find(reg);
+    GBE_ASSERT(it != regDef.end());
+    return it->second;
+  }
+
   const ValueDef *FunctionDAG::getDefAddress(const ValueDef &def) const {
     auto it = defName.find(def);
     GBE_ASSERT(it != defName.end() && it->second != NULL);

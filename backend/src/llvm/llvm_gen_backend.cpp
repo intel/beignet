@@ -148,6 +148,7 @@
 #include "ir/context.hpp"
 #include "ir/unit.hpp"
 #include "ir/liveness.hpp"
+#include "ir/value.hpp"
 #include "sys/set.hpp"
 #include "sys/cvar.hpp"
 
@@ -441,6 +442,10 @@ namespace gbe
      *  compare instructions we need to invert to decrease branch complexity
      */
     set<const Value*> conditionSet;
+    /*!
+     *  <phi,phiCopy> node information for later optimization
+     */
+    map<const ir::Register, const ir::Register> phiMap;
     /*! We visit each function twice. Once to allocate the registers and once to
      *  emit the Gen IR instructions
      */
@@ -490,6 +495,7 @@ namespace gbe
 
       LI = &getAnalysis<LoopInfo>();
       emitFunction(F);
+      phiMap.clear();
       return false;
     }
 
@@ -524,6 +530,8 @@ namespace gbe
     template <bool isLoad, typename T> void emitLoadOrStore(T &I);
     /*! Will try to remove MOVs due to PHI resolution */
     void removeMOVs(const ir::Liveness &liveness, ir::Function &fn);
+    /*! Optimize phi move based on liveness information */
+    void optimizePhiCopy(ir::Liveness &liveness, ir::Function &fn);
     /*! Will try to remove redundants LOADI in basic blocks */
     void removeLOADIs(const ir::Liveness &liveness, ir::Function &fn);
     /*! To avoid lost copy, we need two values for PHI. This function create a
@@ -1275,6 +1283,77 @@ namespace gbe
     });
   }
 
+  void GenWriter::optimizePhiCopy(ir::Liveness &liveness, ir::Function &fn)
+  {
+    // The overall idea behind is we check whether there is any interference
+    // between phi and phiCopy live range. If there is no point that
+    // phi & phiCopy are both alive, then we can optimize off the move
+    // from phiCopy to phi, and use phiCopy directly instead of phi.
+    using namespace ir;
+    ir::FunctionDAG *dag = new ir::FunctionDAG(liveness);
+
+    for (auto &it : phiMap) {
+      const Register phi = it.first;
+      const Register phiCopy = it.second;
+
+      const ir::DefSet *phiCopyDef = dag->getRegDef(phiCopy);
+      const ir::UseSet *phiUse = dag->getRegUse(phi);
+      const DefSet *phiDef = dag->getRegDef(phi);
+      bool isOpt = true;
+      for (auto &x : *phiCopyDef) {
+        const ir::Instruction * phiCopyDefInsn = x->getInstruction();
+        const ir::BasicBlock *bb = phiCopyDefInsn->getParent();
+        const Liveness::LiveOut &out = liveness.getLiveOut(bb);
+        // phi & phiCopy are both alive at the endpoint of bb,
+        // thus can not be optimized.
+        if (out.contains(phi)) {
+          isOpt = false;
+          break;
+        }
+        // If phi is used in the same BB that define the phiCopy,
+        // we need carefully check the liveness of phi & phiCopy.
+        // Make sure their live ranges do not interfere.
+        bool phiUsedInSameBB = false;
+        for (auto &y : *phiUse) {
+          const ir::Instruction *phiUseInsn = y->getInstruction();
+          const ir::BasicBlock *bb2 = phiUseInsn->getParent();
+          if (bb2 == bb) {
+            phiUsedInSameBB = true;
+          }
+        }
+        // Check phi is not used between phiCopy def point and bb's end point,
+        // which is often referred as 'phi swap issue', just like below:
+        //   MOV phiCopy_1, x;
+        //   MOV phiCopy_2, phi_1;
+        if (phiUsedInSameBB ) {
+          for (auto it = --bb->end(); it != bb->end() ; --it) {
+            const Instruction &p = *it;
+
+            if (&p == phiCopyDefInsn) break;
+            // we only care MOV here
+            if (p.getSrcNum() == 1 && p.getSrc(0) == phi) {
+              isOpt = false;
+              break;
+            }
+          }
+        }
+      }
+
+      // [MOV phi, phiCopy;] can be removed. So we remove it
+      // and replace phi uses with phiCopy
+      if (isOpt) {
+        for (auto &x : *phiDef) {
+          const_cast<Instruction *>(x->getInstruction())->remove();
+        }
+        for (auto &x : *phiUse) {
+          const Instruction *phiUseInsn = x->getInstruction();
+          replaceSrc(const_cast<Instruction *>(phiUseInsn), phi, phiCopy);
+        }
+      }
+    }
+    delete dag;
+  }
+
   void GenWriter::removeMOVs(const ir::Liveness &liveness, ir::Function &fn)
   {
     // We store the last write and last read for each register
@@ -1579,9 +1658,10 @@ namespace gbe
     ctx.endFunction();
 
     // Liveness can be shared when we optimized the immediates and the MOVs
-    const ir::Liveness liveness(fn);
+    ir::Liveness liveness(fn);
 
     if (OCL_OPTIMIZE_LOADI) this->removeLOADIs(liveness, fn);
+    if (OCL_OPTIMIZE_PHI_MOVES) this->optimizePhiCopy(liveness, fn);
     if (OCL_OPTIMIZE_PHI_MOVES) this->removeMOVs(liveness, fn);
   }
 
@@ -2031,6 +2111,7 @@ namespace gbe
     const ir::Register dst = this->getRegister(&I);
     const ir::Register src = this->getRegister(copy);
     ctx.MOV(type, dst, src);
+    phiMap.insert(std::make_pair(dst, src));
   }
 
   void GenWriter::regAllocateBranchInst(BranchInst &I) {}
