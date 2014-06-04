@@ -175,7 +175,7 @@ else (GBE_USE_BLOB)
 endif (GBE_USE_BLOB)
 
 include_directories (.)
-link_directories (${LLVM_LIBRARY_DIRS})
+link_directories (${LLVM_LIBRARY_DIRS} ${DRM_LIBDIR})
 include_directories(${LLVM_INCLUDE_DIRS})
 add_library (gbe SHARED ${GBE_SRC})
 
@@ -207,7 +207,7 @@ if (LLVM_VERSION_NODOT VERSION_EQUAL 34)
   endif (${TERMINFO} STREQUAL TERMINFO-NOTFOUND)
 endif(LLVM_VERSION_NODOT VERSION_EQUAL 34)
 
-link_directories (${LLVM_LIBRARY_DIR})
+link_directories (${LLVM_LIBRARY_DIR} ${DRM_LIBDIR})
 ADD_EXECUTABLE(gbe_bin_generater gbe_bin_generater.cpp)
 TARGET_LINK_LIBRARIES(gbe_bin_generater gbe)
 

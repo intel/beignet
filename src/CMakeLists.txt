@@ -95,7 +95,7 @@ endif (OCLIcd_FOUND)
 
 SET(CMAKE_SHARED_LINKER_FLAGS "${CMAKE_SHARED_LINKER_FLAGS} -Wl,-Bsymbolic,--allow-shlib-undefined")
 
-link_directories (${LLVM_LIBRARY_DIR})
+link_directories (${LLVM_LIBRARY_DIR} ${DRM_LIBDIR})
 add_library(cl SHARED ${OPENCL_SRC})
 target_link_libraries(
                       cl

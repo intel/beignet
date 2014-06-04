@@ -19,7 +19,7 @@ configure_file (
   )
 
 #XXX only need GL if required
-link_directories (${LLVM_LIBRARY_DIR} ${OPENGL_LIBDIR})
+link_directories (${LLVM_LIBRARY_DIR} ${OPENGL_LIBDIR} ${DRM_LIBDIR})
 set (utests_sources
   utest_error.c
   compiler_basic_arithmetic.cpp

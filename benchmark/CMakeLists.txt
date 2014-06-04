@@ -3,7 +3,7 @@ INCLUDE_DIRECTORIES(${CMAKE_CURRENT_SOURCE_DIR}
                     ${CMAKE_CURRENT_SOURCE_DIR}/../include)
 
 
-link_directories (${LLVM_LIBRARY_DIR})
+link_directories (${LLVM_LIBRARY_DIR} ${DRM_LIBDIR})
 set (benchmark_sources
   ../utests/utest_error.c
   ../utests/utest_assert.cpp
