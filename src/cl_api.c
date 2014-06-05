@@ -1001,7 +1001,7 @@ clLinkProgram(cl_context            context,
               cl_int *              errcode_ret)
 {
   cl_int err = CL_SUCCESS;
-  cl_program program=NULL;
+  cl_program program = NULL;
   CHECK_CONTEXT (context);
   INVALID_VALUE_IF (num_devices > 1);
   INVALID_VALUE_IF (num_devices == 0 && device_list != NULL);
@@ -1024,6 +1024,12 @@ error:
 
 cl_int
 clUnloadCompiler(void)
+{
+  return CL_SUCCESS;
+}
+
+cl_int
+clUnloadPlatformCompiler(cl_platform_id platform)
 {
   return CL_SUCCESS;
 }

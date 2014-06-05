@@ -155,7 +155,7 @@ struct _cl_icd_dispatch const cl_khr_icd_dispatch = {
   clCreateProgramWithBuiltInKernels,
   clCompileProgram,
   clLinkProgram,
-  CL_1_2_NOTYET(clUnloadPlatformCompiler),
+  clUnloadPlatformCompiler,
   clGetKernelArgInfo,
   clEnqueueFillBuffer,
   CL_1_2_NOTYET(clEnqueueFillImage),
