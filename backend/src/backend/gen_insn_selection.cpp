@@ -103,6 +103,7 @@
 #include "sys/cvar.hpp"
 #include "sys/vector.hpp"
 #include <algorithm>
+#include <climits>
 
 namespace gbe
 {
@@ -1809,8 +1810,10 @@ namespace gbe
     }
     /*! Call the child method with the proper prototype */
     virtual bool emit(Selection::Opaque &sel, SelectionDAG &dag) const {
-      if (static_cast<const T*>(this)->emitOne(sel, ir::cast<U>(dag.insn))) {
-        markAllChildren(dag);
+      bool markChildren = true;
+      if (static_cast<const T*>(this)->emitOne(sel, ir::cast<U>(dag.insn), markChildren)) {
+        if (markChildren)
+          markAllChildren(dag);
         return true;
       }
       return false;
@@ -1839,7 +1842,7 @@ namespace gbe
       return ir::TYPE_FLOAT;
     }
 
-    INLINE bool emitOne(Selection::Opaque &sel, const ir::UnaryInstruction &insn) const {
+    INLINE bool emitOne(Selection::Opaque &sel, const ir::UnaryInstruction &insn, bool &markChildren) const {
       const ir::Opcode opcode = insn.getOpcode();
       const ir::Type insnType = insn.getType();
       const GenRegister dst = sel.selReg(insn.getDst(0), getType(opcode, insnType));
@@ -2590,7 +2593,7 @@ namespace gbe
 #define DECL_NOT_IMPLEMENTED_ONE_TO_MANY(FAMILY) \
   struct FAMILY##Pattern : public OneToManyPattern<FAMILY##Pattern, ir::FAMILY>\
   {\
-    INLINE bool emitOne(Selection::Opaque &sel, const ir::FAMILY &insn) const {\
+    INLINE bool emitOne(Selection::Opaque &sel, const ir::FAMILY &insn, bool &markChildren) const {\
       NOT_IMPLEMENTED;\
       return false;\
     }\
@@ -2601,7 +2604,7 @@ namespace gbe
   /*! Load immediate pattern */
   DECL_PATTERN(LoadImmInstruction)
   {
-    INLINE bool emitOne(Selection::Opaque &sel, const ir::LoadImmInstruction &insn) const
+    INLINE bool emitOne(Selection::Opaque &sel, const ir::LoadImmInstruction &insn, bool &markChildren) const
     {
       using namespace ir;
       const Type type = insn.getType();
@@ -2649,7 +2652,7 @@ namespace gbe
   /*! Sync instruction */
   DECL_PATTERN(SyncInstruction)
   {
-    INLINE bool emitOne(Selection::Opaque &sel, const ir::SyncInstruction &insn) const
+    INLINE bool emitOne(Selection::Opaque &sel, const ir::SyncInstruction &insn, bool &markChildren) const
     {
       using namespace ir;
       const ir::Register reg = sel.reg(FAMILY_DWORD);
@@ -2821,7 +2824,7 @@ namespace gbe
       sel.INDIRECT_MOVE(dst, src);
     }
 
-    INLINE bool emitOne(Selection::Opaque &sel, const ir::LoadInstruction &insn) const {
+    INLINE bool emitOne(Selection::Opaque &sel, const ir::LoadInstruction &insn, bool &markChildren) const {
       using namespace ir;
       GenRegister address = sel.selReg(insn.getAddress(), ir::TYPE_U32);
       const AddressSpace space = insn.getAddressSpace();
@@ -2939,7 +2942,7 @@ namespace gbe
       }
     }
 
-    INLINE bool emitOne(Selection::Opaque &sel, const ir::StoreInstruction &insn) const
+    INLINE bool emitOne(Selection::Opaque &sel, const ir::StoreInstruction &insn, bool &markChildren) const
     {
       using namespace ir;
       const AddressSpace space = insn.getAddressSpace();
@@ -3045,7 +3048,7 @@ namespace gbe
   /*! Bit cast instruction pattern */
   DECL_PATTERN(BitCastInstruction)
   {
-    INLINE bool emitOne(Selection::Opaque &sel, const ir::BitCastInstruction &insn) const
+    INLINE bool emitOne(Selection::Opaque &sel, const ir::BitCastInstruction &insn, bool &markChildren) const
     {
       using namespace ir;
       const Type dstType = insn.getDstType();
@@ -3154,7 +3157,48 @@ namespace gbe
   /*! Convert instruction pattern */
   DECL_PATTERN(ConvertInstruction)
   {
-    INLINE bool emitOne(Selection::Opaque &sel, const ir::ConvertInstruction &insn) const
+
+    INLINE bool lowerI64Reg(Selection::Opaque &sel, SelectionDAG *dag, GenRegister &src, uint32_t type) const {
+      using namespace ir;
+      GBE_ASSERT(type == GEN_TYPE_UD || type == GEN_TYPE_F);
+      if (dag->insn.getOpcode() == OP_LOADI) {
+        const auto &immInsn = cast<LoadImmInstruction>(dag->insn);
+        const auto imm = immInsn.getImmediate();
+        const Type immType = immInsn.getType();
+        if (immType == TYPE_S64 &&
+          imm.data.s64 <= INT_MAX &&
+          imm.data.s64 >= INT_MIN) {
+          src = GenRegister::immd((int32_t)imm.data.s64);
+          return true;
+        } else if (immType == TYPE_U64 &&
+                   imm.data.u64 <= UINT_MAX) {
+          src = GenRegister::immud((uint32_t)imm.data.s64);
+          return true;
+        }
+      } else if (dag->insn.getOpcode() == OP_CVT) {
+        const auto cvtInsn = cast<ConvertInstruction>(dag->insn);
+        auto srcType = cvtInsn.getSrcType();
+        if (((srcType == TYPE_U32 || srcType == TYPE_S32) &&
+            (type == GEN_TYPE_UD || type == GEN_TYPE_D)) ||
+             ((srcType == TYPE_FLOAT) && type == GEN_TYPE_F)) {
+          src = GenRegister::retype(sel.selReg(cvtInsn.getSrc(0), srcType), type);
+          dag->isRoot = 1;
+          return true;
+        } else if (srcType == TYPE_FLOAT ||
+                   srcType == TYPE_U16 ||
+                   srcType == TYPE_S16 ||
+                   srcType == TYPE_U32 ||
+                   srcType == TYPE_S32) {
+          src = GenRegister::retype(sel.selReg(sel.reg(FAMILY_DWORD), TYPE_U32), type);
+          dag->isRoot = 1;
+          sel.MOV(src, sel.selReg(cvtInsn.getSrc(0), srcType));
+          return true;
+        }
+      }
+      return false;
+    }
+
+    INLINE bool emitOne(Selection::Opaque &sel, const ir::ConvertInstruction &insn, bool &markChildren) const
     {
       using namespace ir;
       const Type dstType = insn.getDstType();
@@ -3225,6 +3269,39 @@ namespace gbe
       } else if ((dstType == ir::TYPE_S32 || dstType == ir::TYPE_U32) && srcFamily == FAMILY_QWORD) {
         sel.CONVI64_TO_I(dst, src);
       } else if (dstType == ir::TYPE_FLOAT && srcFamily == FAMILY_QWORD) {
+        auto dag = sel.regDAG[src.reg()];
+        // FIXME, in the future, we need to do a common I64 lower to I32 analysis
+        // at llvm IR layer which could cover more cases then just this one.
+        SelectionDAG *dag0, *dag1;
+        if (dag && dag->child[0] && dag->child[1]) {
+          if (dag->child[0]->insn.getOpcode() == OP_LOADI) {
+            dag0 = dag->child[1];
+            dag1 = dag->child[0];
+          } else {
+            dag0 = dag->child[0];
+            dag1 = dag->child[1];
+          }
+          GBE_ASSERT(!(dag->child[0]->insn.getOpcode() == OP_LOADI &&
+                       dag->child[1]->insn.getOpcode() == OP_LOADI));
+          if (dag->insn.getOpcode() == OP_AND ||
+              dag->insn.getOpcode() == OP_OR  ||
+              dag->insn.getOpcode() == OP_XOR) {
+            GenRegister src0;
+            GenRegister src1;
+            if (lowerI64Reg(sel, dag0, src0, GEN_TYPE_UD) &&
+                lowerI64Reg(sel, dag1, src1, GEN_TYPE_UD)) {
+              switch (dag->insn.getOpcode()) {
+                default:
+                case OP_AND: sel.AND(GenRegister::retype(dst, GEN_TYPE_UD), src0, src1); break;
+                case OP_OR:  sel.OR(GenRegister::retype(dst, GEN_TYPE_UD), src0, src1); break;
+                case OP_XOR: sel.XOR(GenRegister::retype(dst, GEN_TYPE_UD), src0, src1); break;
+              }
+              sel.MOV(dst, GenRegister::retype(dst, GEN_TYPE_UD));
+              markChildren = false;
+              return true;
+            }
+          }
+        }
         GenRegister tmp[6];
         for(int i=0; i<6; i++) {
           tmp[i] = sel.selReg(sel.reg(FAMILY_DWORD), TYPE_U32);
@@ -3269,7 +3346,7 @@ namespace gbe
   /*! Convert instruction pattern */
   DECL_PATTERN(AtomicInstruction)
   {
-    INLINE bool emitOne(Selection::Opaque &sel, const ir::AtomicInstruction &insn) const
+    INLINE bool emitOne(Selection::Opaque &sel, const ir::AtomicInstruction &insn, bool &markChildren) const
     {
       using namespace ir;
       const AtomicOps atomicOp = insn.getAtomicOpcode();
@@ -3346,7 +3423,7 @@ namespace gbe
 
   DECL_PATTERN(TernaryInstruction)
    {
-    INLINE bool emitOne(Selection::Opaque &sel, const ir::TernaryInstruction &insn) const {
+    INLINE bool emitOne(Selection::Opaque &sel, const ir::TernaryInstruction &insn, bool &markChildren) const {
       using namespace ir;
       const Type type = insn.getType();
       const GenRegister dst = sel.selReg(insn.getDst(0), type),
@@ -3386,7 +3463,7 @@ namespace gbe
   /*! Label instruction pattern */
   DECL_PATTERN(LabelInstruction)
   {
-    INLINE bool emitOne(Selection::Opaque &sel, const ir::LabelInstruction &insn) const
+    INLINE bool emitOne(Selection::Opaque &sel, const ir::LabelInstruction &insn, bool &markChildren) const
     {
       using namespace ir;
       const LabelIndex label = insn.getLabelIndex();
@@ -3477,7 +3554,7 @@ namespace gbe
 
   DECL_PATTERN(SampleInstruction)
   {
-    INLINE bool emitOne(Selection::Opaque &sel, const ir::SampleInstruction &insn) const
+    INLINE bool emitOne(Selection::Opaque &sel, const ir::SampleInstruction &insn, bool &markChildren) const
     {
       using namespace ir;
       GenRegister msgPayloads[4];
@@ -3522,7 +3599,7 @@ namespace gbe
   /*! Typed write instruction pattern. */
   DECL_PATTERN(TypedWriteInstruction)
   {
-    INLINE bool emitOne(Selection::Opaque &sel, const ir::TypedWriteInstruction &insn) const
+    INLINE bool emitOne(Selection::Opaque &sel, const ir::TypedWriteInstruction &insn, bool &markChildren) const
     {
       using namespace ir;
       const uint32_t simdWidth = sel.ctx.getSimdWidth();
@@ -3605,7 +3682,7 @@ namespace gbe
   /*! get image info instruction pattern. */
   DECL_PATTERN(GetImageInfoInstruction)
   {
-    INLINE bool emitOne(Selection::Opaque &sel, const ir::GetImageInfoInstruction &insn) const
+    INLINE bool emitOne(Selection::Opaque &sel, const ir::GetImageInfoInstruction &insn, bool &markChildren) const
     {
       using namespace ir;
       GenRegister dst;
