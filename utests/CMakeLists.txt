@@ -167,6 +167,7 @@ set (utests_sources
   compiler_getelementptr_bitcast.cpp
   compiler_simd_any.cpp
   compiler_simd_all.cpp
+  compiler_double_precision.cpp
   load_program_from_bin.cpp
   profiling_exec.cpp
   enqueue_copy_buf.cpp
