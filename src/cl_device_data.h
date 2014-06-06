@@ -67,6 +67,7 @@
 #define PCI_CHIP_IVYBRIDGE_M_GT1        0x0156  /* Mobile */
 #define PCI_CHIP_IVYBRIDGE_M_GT2        0x0166
 #define PCI_CHIP_IVYBRIDGE_S_GT1        0x015a  /* Server */
+#define PCI_CHIP_IVYBRIDGE_S_GT2        0x016a
 
 #define PCI_CHIP_BAYTRAIL_T 0x0F31
 
@@ -77,7 +78,8 @@
 
 #define IS_IVB_GT2(devid)               \
   (devid == PCI_CHIP_IVYBRIDGE_GT2 ||   \
-   devid == PCI_CHIP_IVYBRIDGE_M_GT2)
+   devid == PCI_CHIP_IVYBRIDGE_M_GT2 || \
+   devid == PCI_CHIP_IVYBRIDGE_S_GT2)
 
 #define IS_BAYTRAIL_T(devid)              \
   (devid == PCI_CHIP_BAYTRAIL_T)

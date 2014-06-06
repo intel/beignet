@@ -221,6 +221,8 @@ ivb_gt1_break:
       DECL_INFO_STRING(ivb_gt2_break, intel_ivb_gt2_device, name, "Intel(R) HD Graphics IvyBridge GT2");
     case PCI_CHIP_IVYBRIDGE_M_GT2:
       DECL_INFO_STRING(ivb_gt2_break, intel_ivb_gt2_device, name, "Intel(R) HD Graphics IvyBridge M GT2");
+    case PCI_CHIP_IVYBRIDGE_S_GT2:
+      DECL_INFO_STRING(ivb_gt2_break, intel_ivb_gt2_device, name, "Intel(R) HD Graphics IvyBridge S GT2");
 ivb_gt2_break:
       intel_ivb_gt2_device.vendor_id = device_id;
       intel_ivb_gt2_device.platform = intel_platform;
