@@ -2439,8 +2439,13 @@ namespace gbe
         sel.curr.accWrEnable = 1;
         sel.MACH(GenRegister::retype(GenRegister::null(), GEN_TYPE_D), src0, src1);
         sel.curr.accWrEnable = 0;
-        sel.curr.execWidth = simdWidth != 1 ? 8 : 1;;
-        sel.MOV(GenRegister::retype(dst, GEN_TYPE_F), GenRegister::acc());
+        if (simdWidth == 1) {
+          sel.curr.execWidth = 1;
+          sel.MOV(GenRegister::retype(dst, GEN_TYPE_F), GenRegister::vec1(GenRegister::acc()));
+        } else {
+          sel.curr.execWidth = 8;
+          sel.MOV(GenRegister::retype(dst, GEN_TYPE_F), GenRegister::acc());
+        }
 
         // Right part of the 16-wide register now
         if (simdWidth == 16) {

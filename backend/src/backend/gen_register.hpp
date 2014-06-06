@@ -687,6 +687,13 @@ namespace gbe
               && reg.nr == GEN_ARF_NULL);
     }
 
+    static INLINE GenRegister vec1(GenRegister reg) {
+      reg.width = GEN_WIDTH_1;
+      reg.hstride = GEN_HORIZONTAL_STRIDE_0;
+      reg.vstride = GEN_VERTICAL_STRIDE_0;
+      return reg;
+    }
+
     static INLINE GenRegister acc(void) {
       return GenRegister(GEN_ARCHITECTURE_REGISTER_FILE,
                          GEN_ARF_ACCUMULATOR,
