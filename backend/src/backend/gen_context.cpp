@@ -833,7 +833,7 @@ namespace gbe
     GenRegister dst_ud = GenRegister::retype(dst, GEN_TYPE_UD);
     p->push();
       p->curr.noMask = 1;
-      p->MOV(exp, GenRegister::immud(-1)); // make sure the inactive lane is 1 when check ALL8H/ALL16H condition latter.
+      p->MOV(exp, GenRegister::immud(32)); // make sure the inactive lane is 1 when check ALL8H/ALL16H condition latter.
     p->pop();
     p->FBH(exp, high);
     p->ADD(exp, GenRegister::negate(exp), GenRegister::immud(31));  //exp = 32 when high == 0
