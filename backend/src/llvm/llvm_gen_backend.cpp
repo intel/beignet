@@ -2188,6 +2188,10 @@ namespace gbe
             this->newRegister(&I);
           break;
 #endif /* LLVM_VERSION_MINOR >= 2 */
+          case Intrinsic::debugtrap:
+          case Intrinsic::dbg_value:
+          case Intrinsic::dbg_declare:
+          break;
           default:
           GBE_ASSERTM(false, "Unsupported intrinsics");
         }
@@ -2494,6 +2498,10 @@ namespace gbe
           case Intrinsic::lifetime_end:
           break;
 #endif /* LLVM_VERSION_MINOR >= 2 */
+          case Intrinsic::debugtrap:
+          case Intrinsic::dbg_value:
+          case Intrinsic::dbg_declare:
+          break;
           default: NOT_IMPLEMENTED;
         }
       } else {
