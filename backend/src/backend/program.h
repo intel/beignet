@@ -120,7 +120,6 @@ typedef gbe_program (gbe_program_new_from_source_cb)(uint32_t deviceID,
                                                      char *err,
                                                      size_t *err_size);
 extern gbe_program_new_from_source_cb *gbe_program_new_from_source;
-
 /*! Create a new program from the given blob */
 typedef gbe_program (gbe_program_new_from_binary_cb)(uint32_t deviceID, const char *binary, size_t size);
 extern gbe_program_new_from_binary_cb *gbe_program_new_from_binary;
@@ -132,6 +131,8 @@ extern gbe_program_serialize_to_binary_cb *gbe_program_serialize_to_binary;
 /*! Create a new program from the given LLVM file */
 typedef gbe_program (gbe_program_new_from_llvm_cb)(uint32_t deviceID,
                                                    const char *fileName,
+                                                   const void *module,
+                                                   const void *llvm_ctx,
                                                    size_t string_size,
                                                    char *err,
                                                    size_t *err_size,

@@ -59,7 +59,7 @@ namespace gbe
   {
   public:
     /*! Create an empty program */
-    GenProgram(uint32_t deviceID) : deviceID(deviceID) {}
+    GenProgram(uint32_t deviceID, const void* mod = NULL, const void* ctx = NULL) : deviceID(deviceID),module((void*)mod), llvm_ctx((void*)ctx) {}
     /*! Current device ID*/
     uint32_t deviceID;
     /*! Destroy the program */
@@ -70,6 +70,8 @@ namespace gbe
     virtual Kernel *allocateKernel(const std::string &name) {
       return GBE_NEW(GenKernel, name, deviceID);
     }
+    void* module;
+    void* llvm_ctx;
     /*! Use custom allocators */
     GBE_CLASS(GenProgram);
   };

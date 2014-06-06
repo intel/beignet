@@ -61,6 +61,8 @@
 #include "sys/cvar.hpp"
 #include "sys/platform.hpp"
 
+#include <clang/CodeGen/CodeGenAction.h>
+
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <fcntl.h>
@@ -163,10 +165,8 @@ namespace gbe
     MPM.run(mod);
   }
 
-  bool llvmToGen(ir::Unit &unit, const char *fileName, int optLevel)
+  bool llvmToGen(ir::Unit &unit, const char *fileName,const void* module, int optLevel)
   {
-    // Get the global LLVM context
-    llvm::LLVMContext& c = llvm::getGlobalContext();
     std::string errInfo;
     std::unique_ptr<llvm::raw_fd_ostream> o = NULL;
     if (OCL_OUTPUT_LLVM_BEFORE_EXTRA_PASS || OCL_OUTPUT_LLVM)
@@ -175,9 +175,13 @@ namespace gbe
     // Get the module from its file
     llvm::SMDiagnostic Err;
     std::auto_ptr<Module> M;
-    M.reset(ParseIRFile(fileName, Err, c));
-    if (M.get() == 0) return false;
-    Module &mod = *M.get();
+    if(fileName){
+      // only when module is null, Get the global LLVM context
+      llvm::LLVMContext& c = llvm::getGlobalContext();
+      M.reset(ParseIRFile(fileName, Err, c));
+      if (M.get() == 0) return false;
+    }
+    Module &mod = (module!=NULL)?*(llvm::Module*)module:*M.get();
 
     Triple TargetTriple(mod.getTargetTriple());
     TargetLibraryInfo *libraryInfo = new TargetLibraryInfo(TargetTriple);

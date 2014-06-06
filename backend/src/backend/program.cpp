@@ -34,6 +34,8 @@
 #include "llvm/Config/config.h"
 #include "llvm/Support/Threading.h"
 #include "llvm/Support/ManagedStatic.h"
+#include "llvm/Transforms/Utils/Cloning.h"
+#include "llvm/IR/LLVMContext.h"
 #include <cstring>
 #include <algorithm>
 #include <fstream>
@@ -103,9 +105,13 @@ namespace gbe {
 #ifdef GBE_COMPILER_AVAILABLE
   BVAR(OCL_OUTPUT_GEN_IR, false);
 
-  bool Program::buildFromLLVMFile(const char *fileName, std::string &error, int optLevel) {
+  bool Program::buildFromLLVMFile(const char *fileName, const void* module, std::string &error, int optLevel) {
     ir::Unit *unit = new ir::Unit();
-    if (llvmToGen(*unit, fileName, optLevel) == false) {
+    llvm::Module * cloned_module = NULL;
+    if(module){
+      cloned_module = llvm::CloneModule((llvm::Module*)module);
+    }
+    if (llvmToGen(*unit, fileName, module, optLevel) == false) {
       error = std::string(fileName) + " not found";
       return false;
     }
@@ -114,11 +120,18 @@ namespace gbe {
     if(!unit->getValid()) {
       delete unit;   //clear unit
       unit = new ir::Unit();
-      llvmToGen(*unit, fileName, 0);  //suppose file exists and llvmToGen will not return false.
+      if(cloned_module){
+        llvmToGen(*unit, fileName, cloned_module, 0);  //suppose file exists and llvmToGen will not return false.
+      }else{
+        llvmToGen(*unit, fileName, module, 0);  //suppose file exists and llvmToGen will not return false.
+      }
     }
     assert(unit->getValid());
     this->buildFromUnit(*unit, error);
     delete unit;
+    if(cloned_module){
+      delete (llvm::Module*) cloned_module;
+    }
     return true;
   }
 
@@ -518,7 +531,7 @@ namespace gbe {
   SVAR(OCL_PCH_PATH, PCH_OBJECT_DIR);
   SVAR(OCL_PCM_PATH, PCM_OBJECT_DIR);
 
-  static bool buildModuleFromSource(const char* input, const char* output, std::string options,
+  static bool buildModuleFromSource(const char* input, llvm::Module** out_module, llvm::LLVMContext* llvm_ctx, std::string options,
                                     size_t stringSize, char *err, size_t *errSize) {
     // Arguments to pass to the clang frontend
     vector<const char *> args;
@@ -634,7 +647,7 @@ namespace gbe {
     }
 
     // Create an action and make the compiler instance carry it out
-    llvm::OwningPtr<clang::CodeGenAction> Act(new clang::EmitLLVMOnlyAction());
+    llvm::OwningPtr<clang::CodeGenAction> Act(new clang::EmitLLVMOnlyAction(llvm_ctx));
 
     std::string dirs = OCL_PCM_PATH;
     std::string pcmFileName;
@@ -669,50 +682,23 @@ namespace gbe {
 
     llvm::Module *module = Act->takeModule();
 
-#if (LLVM_VERSION_MAJOR == 3) && (LLVM_VERSION_MINOR > 3)
-    auto mode = llvm::sys::fs::F_Binary;
-#else
-    auto mode = llvm::raw_fd_ostream::F_Binary;
-#endif
-    llvm::raw_fd_ostream OS(output, ErrorString, mode);
-    //still write to temp file for code simply, otherwise need add another function.
-    //because gbe_program_new_from_llvm also be used by cl_program_create_from_llvm, can't be removed
-    //TODO: Pass module to llvmToGen, if use module, should return Act and use OwningPtr out of this funciton
-    llvm::WriteBitcodeToFile(module, OS);
-    if (err != NULL && *errSize < stringSize - 1 && ErrorString.size() > 0) {
-      size_t errLen;
-      errLen = ErrorString.copy(err + *errSize, stringSize - *errSize - 1, 0);
-      *errSize += errLen;
-    }
-
-    if (err == NULL || OCL_OUTPUT_BUILD_LOG) {
-      // flush the error messages to the errs() if there is no
-      // error string buffer.
-      llvm::errs() << ErrorString;
-    }
-    OS.close();
+    *out_module = module;
     return true;
   }
 
   extern std::string ocl_stdlib_str;
 
   BVAR(OCL_USE_PCH, true);
-  static gbe_program programNewFromSource(uint32_t deviceID,
-                                          const char *source,
-                                          size_t stringSize,
-                                          const char *options,
-                                          char *err,
-                                          size_t *errSize)
+  static void processSourceAndOption(const char *source,
+                                     const char *options,
+                                     const char *temp_header_path,
+                                     std::string& clOpt,
+                                     std::string& clName,
+                                     int& optLevel)
   {
     char clStr[] = "/tmp/XXXXXX.cl";
-    char llStr[] = "/tmp/XXXXXX.ll";
     int clFd = mkstemps(clStr, 3);
-    int llFd = mkstemps(llStr, 3);
-    close(llFd);
-    const std::string clName = std::string(clStr);
-    const std::string llName = std::string(llStr);
-    std::string clOpt;
-    int optLevel = 1;
+    clName = std::string(clStr);
 
     FILE *clFile = fdopen(clFd, "w");
     FATAL_IF(clFile == NULL, "Failed to open temporary file");
@@ -812,6 +798,13 @@ namespace gbe {
     } else
       fwrite(ocl_stdlib_str.c_str(), strlen(ocl_stdlib_str.c_str()), 1, clFile);
 
+    //for clCompilerProgram usage.
+    if(temp_header_path){
+      clOpt += " -I ";
+      clOpt += temp_header_path;
+      clOpt += " ";
+    }
+
     if (!OCL_STRICT_CONFORMANCE) {
         fwrite(ocl_mathfunc_fastpath_str.c_str(), strlen(ocl_mathfunc_fastpath_str.c_str()), 1, clFile);
     }
@@ -823,9 +816,25 @@ namespace gbe {
     // Write the source to the cl file
     fwrite(source, strlen(source), 1, clFile);
     fclose(clFile);
+  }
+
+  static gbe_program programNewFromSource(uint32_t deviceID,
+                                          const char *source,
+                                          size_t stringSize,
+                                          const char *options,
+                                          char *err,
+                                          size_t *errSize)
+  {
+    int optLevel = 1;
+    std::string clOpt;
+    std::string clName;
+    processSourceAndOption(source, options, NULL, clOpt, clName, optLevel);
 
     gbe_program p;
-    if (buildModuleFromSource(clName.c_str(), llName.c_str(), clOpt.c_str(),
+    // will delete the module and act in the destructor of GenProgram.
+    llvm::Module * out_module;
+    llvm::LLVMContext* llvm_ctx = new llvm::LLVMContext;
+    if (buildModuleFromSource(clName.c_str(), &out_module, llvm_ctx, clOpt.c_str(),
                               stringSize, err, errSize)) {
     // Now build the program from llvm
       static std::mutex gbe_mutex;
@@ -837,14 +846,14 @@ namespace gbe {
         err += *errSize;
         clangErrSize = *errSize;
       }
-      p = gbe_program_new_from_llvm(deviceID, llName.c_str(), stringSize,
+
+      p = gbe_program_new_from_llvm(deviceID, NULL, out_module, llvm_ctx, stringSize,
                                     err, errSize, optLevel);
       if (err != NULL)
         *errSize += clangErrSize;
       gbe_mutex.unlock();
       if (OCL_OUTPUT_BUILD_LOG && options)
         llvm::errs() << options;
-      remove(llName.c_str());
     } else
       p = NULL;
     remove(clName.c_str());

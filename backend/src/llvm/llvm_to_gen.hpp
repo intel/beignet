@@ -32,7 +32,7 @@ namespace gbe {
 
   /*! Convert the LLVM IR code to a GEN IR code,
 		  optLevel 0 equal to clang -O1 and 1 equal to clang -O2*/
-  bool llvmToGen(ir::Unit &unit, const char *fileName, int optLevel);
+  bool llvmToGen(ir::Unit &unit, const char *fileName, const void* module, int optLevel);
 
 } /* namespace gbe */
 

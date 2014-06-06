@@ -22,6 +22,17 @@
  * \author Benjamin Segovia <benjamin.segovia@intel.com>
  */
 
+#include "llvm/Config/config.h"
+#if LLVM_VERSION_MAJOR == 3 && LLVM_VERSION_MINOR <= 2
+#include "llvm/LLVMContext.h"
+#include "llvm/Module.h"
+#include "llvm/DataLayout.h"
+#else
+#include "llvm/IR/LLVMContext.h"
+#include "llvm/IR/Module.h"
+#include "llvm/IR/DataLayout.h"
+#endif  /* LLVM_VERSION_MINOR <= 2 */
+
 #include "backend/program.h"
 #include "backend/gen_program.h"
 #include "backend/gen_program.hpp"
@@ -32,6 +43,8 @@
 #include "backend/gen_reg_allocation.hpp"
 #include "ir/unit.hpp"
 #include "llvm/llvm_to_gen.hpp"
+
+#include <clang/CodeGen/CodeGenAction.h>
 
 #include <cstring>
 #include <sstream>
@@ -74,7 +87,19 @@ namespace gbe {
 #endif
   }
 
-  GenProgram::~GenProgram(void) {}
+  GenProgram::~GenProgram(void){
+#ifdef GBE_COMPILER_AVAILABLE
+    if(module){
+      delete (llvm::Module*)module;
+      module = NULL;
+    }
+
+    if(llvm_ctx){
+      delete (llvm::LLVMContext*)llvm_ctx;
+      llvm_ctx = NULL;
+    }
+#endif
+  }
 
   /*! We must avoid spilling at all cost with Gen */
   static const struct CodeGenStrategy {
@@ -182,17 +207,19 @@ namespace gbe {
 
   static gbe_program genProgramNewFromLLVM(uint32_t deviceID,
                                            const char *fileName,
+                                           const void* module,
+                                           const void* llvm_ctx,
                                            size_t stringSize,
                                            char *err,
                                            size_t *errSize,
                                            int optLevel)
   {
     using namespace gbe;
-    GenProgram *program = GBE_NEW(GenProgram, deviceID);
+    GenProgram *program = GBE_NEW(GenProgram, deviceID, module, llvm_ctx);
 #ifdef GBE_COMPILER_AVAILABLE
     std::string error;
     // Try to compile the program
-    if (program->buildFromLLVMFile(fileName, error, optLevel) == false) {
+    if (program->buildFromLLVMFile(fileName, module, error, optLevel) == false) {
       if (err != NULL && errSize != NULL && stringSize > 0u) {
         const size_t msgSize = std::min(error.size(), stringSize-1u);
         std::memcpy(err, error.c_str(), msgSize);
