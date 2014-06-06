@@ -843,6 +843,7 @@ namespace gbe
       p->curr.noMask = 1;
       p->CMP(GEN_CONDITIONAL_EQ, exp, GenRegister::immud(32));   //high == 0
       p->curr.predicate = GEN_PREDICATE_NORMAL;
+      p->curr.noMask = 0;
       p->MOV(dst, low);
       p->push();
         if (simdWidth == 8)
