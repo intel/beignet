@@ -1,6 +1,6 @@
 #include "utest_helper.hpp"
 
-void sub_bufffer_check(void)
+void sub_buffer_check(void)
 {
     cl_int error;
     cl_ulong max_alloc_size;
@@ -132,4 +132,4 @@ void sub_bufffer_check(void)
     free(main_buf_content);
 }
 
-MAKE_UTEST_FROM_FUNCTION(sub_bufffer_check);
+MAKE_UTEST_FROM_FUNCTION(sub_buffer_check);
