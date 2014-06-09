@@ -3098,15 +3098,26 @@ namespace gbe
           wideReg = sel.selReg(insn.getDst(index/multiple), narrowType);
           narrowReg = sel.selReg(insn.getSrc(i), narrowType);  //retype to narrow type
         }
+
+        // set correct horizontal stride
         if(wideReg.hstride != GEN_HORIZONTAL_STRIDE_0) {
           if(multiple == 2) {
             wideReg = sel.unpacked_uw(wideReg.reg());
             wideReg = GenRegister::retype(wideReg, getGenType(narrowType));
+            if(isInt64)
+              wideReg.hstride = GEN_HORIZONTAL_STRIDE_1;
           } else if(multiple == 4) {
             wideReg = sel.unpacked_ub(wideReg.reg());
             wideReg = GenRegister::retype(wideReg, getGenType(narrowType));
-          } else if(multiple == 8) {  //need to specail handle long to char
-            GBE_ASSERT(multiple == 8);
+            if(isInt64)
+              wideReg.hstride = GEN_HORIZONTAL_STRIDE_2;
+          } else if(multiple == 8) {
+            // we currently store high/low 32bit separately in register,
+            // so, its hstride is 4 here.
+            wideReg = sel.unpacked_ub(wideReg.reg());
+            wideReg = GenRegister::retype(wideReg, getGenType(narrowType));
+          } else {
+            GBE_ASSERT(0);
           }
         }
 
@@ -3115,19 +3126,11 @@ namespace gbe
           wideReg.subphysical = 1;
         }
         if(isInt64) {
-          if(wideReg.hstride != GEN_HORIZONTAL_STRIDE_0) {
-            // as we store long by bottom & high part separately, we have to divide hstride by 2
-            if (wideReg.hstride == GEN_HORIZONTAL_STRIDE_2)
-              wideReg.hstride = GEN_HORIZONTAL_STRIDE_1;
-            else if (wideReg.hstride == GEN_HORIZONTAL_STRIDE_4)
-              wideReg.hstride = GEN_HORIZONTAL_STRIDE_2;
-            else
-              GBE_ASSERT(0);
-          }
-          // offset to next half
           wideReg.subphysical = 1;
+          // Offset to next half
           if(i >= multiple/2)
             wideReg = GenRegister::offset(wideReg, 0, sel.isScalarReg(wideReg.reg()) ? 4 : simdWidth*4);
+          // Offset to desired narrow element in wideReg
           if(index % (multiple/2))
             wideReg = GenRegister::offset(wideReg, 0, (index % (multiple/2)) * typeSize(wideReg.type));
         }
