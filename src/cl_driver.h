@@ -287,7 +287,7 @@ extern cl_buffer_release_from_texture_cb *cl_buffer_release_from_texture;
 typedef cl_buffer (cl_buffer_get_buffer_from_libva_cb)(cl_context ctx, unsigned int bo_name, size_t *sz);
 extern cl_buffer_get_buffer_from_libva_cb *cl_buffer_get_buffer_from_libva;
 
-typedef cl_buffer (cl_buffer_get_image_from_libva_cb)(cl_context ctx, unsigned int bo_name, struct _cl_mem_image *image);
+typedef cl_buffer (cl_buffer_get_image_from_libva_cb)(cl_context ctx, unsigned int bo_name, struct _cl_mem_image *image, unsigned int offset);
 extern cl_buffer_get_image_from_libva_cb *cl_buffer_get_image_from_libva;
 
 /* Unref a buffer and destroy it if no more ref */

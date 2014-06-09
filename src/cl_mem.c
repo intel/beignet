@@ -1365,7 +1365,7 @@ LOCAL cl_mem cl_mem_new_libva_image(cl_context ctx,
 
   image = cl_mem_image(mem);
 
-  mem->bo = cl_buffer_get_image_from_libva(ctx, bo_name, image);
+  mem->bo = cl_buffer_get_image_from_libva(ctx, bo_name, image, offset);
 
   image->w = width;
   image->h = height;
