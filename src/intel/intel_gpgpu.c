@@ -124,6 +124,9 @@ intel_gpgpu_set_L3_t *intel_gpgpu_set_L3 = NULL;
 typedef uint32_t (intel_gpgpu_get_scratch_index_t)(uint32_t size);
 intel_gpgpu_get_scratch_index_t *intel_gpgpu_get_scratch_index = NULL;
 
+typedef void (intel_gpgpu_post_action_t)(intel_gpgpu_t *gpgpu, int32_t flush_mode);
+intel_gpgpu_post_action_t *intel_gpgpu_post_action = NULL;
+
 static void
 intel_gpgpu_sync(void *buf)
 {
@@ -480,6 +483,24 @@ intel_gpgpu_batch_start(intel_gpgpu_t *gpgpu)
 }
 
 static void
+intel_gpgpu_post_action_gen7(intel_gpgpu_t *gpgpu, int32_t flush_mode)
+{
+  if(flush_mode)
+    intel_gpgpu_pipe_control(gpgpu);
+}
+
+static void
+intel_gpgpu_post_action_gen75(intel_gpgpu_t *gpgpu, int32_t flush_mode)
+{
+  /* flush force for set L3 */
+  intel_gpgpu_pipe_control(gpgpu);
+
+  /* Restore L3 control to disable SLM mode,
+     otherwise, may affect 3D pipeline */
+  intel_gpgpu_set_L3(gpgpu, 0);
+}
+
+static void
 intel_gpgpu_batch_end(intel_gpgpu_t *gpgpu, int32_t flush_mode)
 {
   /* Insert PIPE_CONTROL for time stamp of end*/
@@ -501,7 +522,7 @@ intel_gpgpu_batch_end(intel_gpgpu_t *gpgpu, int32_t flush_mode)
     ADVANCE_BATCH(gpgpu->batch);
   }
 
-  if(flush_mode) intel_gpgpu_pipe_control(gpgpu);
+  intel_gpgpu_post_action(gpgpu, flush_mode);
   intel_batchbuffer_end_atomic(gpgpu->batch);
 }
 
@@ -1224,6 +1245,7 @@ intel_set_gpgpu_callbacks(int device_id)
     intel_gpgpu_set_L3 = intel_gpgpu_set_L3_gen75;
     cl_gpgpu_get_cache_ctrl = (cl_gpgpu_get_cache_ctrl_cb *)intel_gpgpu_get_cache_ctrl_gen75;
     intel_gpgpu_get_scratch_index = intel_gpgpu_get_scratch_index_gen75;
+    intel_gpgpu_post_action = intel_gpgpu_post_action_gen75;
   }
   else if (IS_IVYBRIDGE(device_id)) {
     cl_gpgpu_bind_image = (cl_gpgpu_bind_image_cb *) intel_gpgpu_bind_image_gen7;
@@ -1233,6 +1255,7 @@ intel_set_gpgpu_callbacks(int device_id)
       intel_gpgpu_set_L3 = intel_gpgpu_set_L3_gen7;
     cl_gpgpu_get_cache_ctrl = (cl_gpgpu_get_cache_ctrl_cb *)intel_gpgpu_get_cache_ctrl_gen7;
     intel_gpgpu_get_scratch_index = intel_gpgpu_get_scratch_index_gen7;
+    intel_gpgpu_post_action = intel_gpgpu_post_action_gen7;
   }
   else
     assert(0);
