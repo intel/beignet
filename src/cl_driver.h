@@ -59,13 +59,27 @@ typedef enum cl_gpgpu_tiling {
   GPGPU_TILE_Y  = 2,
 } cl_gpgpu_tiling;
 
-/* Cache control options */
+/* Cache control options for gen7 */
 typedef enum cl_cache_control {
   cc_gtt      = 0x0,
   cc_l3       = 0x1,
   cc_llc      = 0x2,
   cc_llc_l3   = 0x3
 } cl_cache_control;
+
+/* L3 Cache control options for gen75 */
+typedef enum cl_l3_cache_control {
+  l3cc_uc      = 0x0,
+  l3cc_ec       = 0x1
+} cl_l3_cache_control;
+
+/* LLCCC Cache control options for gen75 */
+typedef enum cl_llccc_cache_control {
+  llccc_pte      = 0x0<<1,
+  llccc_uc       = 0x1<<1,
+  llccc_ec       = 0x2<<1,
+  llccc_ucllc    = 0x3<<1
+} cl_llccc_cache_control;
 
 typedef enum gpu_command_status {
   command_queued    = 3,
@@ -106,6 +120,9 @@ extern cl_gpgpu_bind_buf_cb *cl_gpgpu_bind_buf;
 typedef void (cl_gpgpu_bind_sampler_cb)(cl_gpgpu, uint32_t *samplers, size_t sampler_sz);
 extern cl_gpgpu_bind_sampler_cb *cl_gpgpu_bind_sampler;
 
+/* get the default cache control value. */
+typedef uint32_t (cl_gpgpu_get_cache_ctrl_cb)();
+extern cl_gpgpu_get_cache_ctrl_cb *cl_gpgpu_get_cache_ctrl;
 /* Set a 2d texture */
 typedef void (cl_gpgpu_bind_image_cb)(cl_gpgpu state,
                                       uint32_t id,

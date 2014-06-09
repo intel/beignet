@@ -121,8 +121,8 @@ typedef struct intel_gpgpu intel_gpgpu_t;
 typedef void (intel_gpgpu_set_L3_t)(intel_gpgpu_t *gpgpu, uint32_t use_slm);
 intel_gpgpu_set_L3_t *intel_gpgpu_set_L3 = NULL;
 
-typedef uint32_t (get_scratch_index_t)(uint32_t size);
-get_scratch_index_t *get_scratch_index = NULL;
+typedef uint32_t (intel_gpgpu_get_scratch_index_t)(uint32_t size);
+intel_gpgpu_get_scratch_index_t *intel_gpgpu_get_scratch_index = NULL;
 
 static void
 intel_gpgpu_sync(void *buf)
@@ -194,10 +194,22 @@ intel_gpgpu_select_pipeline(intel_gpgpu_t *gpgpu)
   ADVANCE_BATCH(gpgpu->batch);
 }
 
+static uint32_t
+intel_gpgpu_get_cache_ctrl_gen7()
+{
+  return cc_llc_l3;
+}
+
+static uint32_t
+intel_gpgpu_get_cache_ctrl_gen75()
+{
+  return llccc_ec | l3cc_ec;
+}
+
 static void
 intel_gpgpu_set_base_address(intel_gpgpu_t *gpgpu)
 {
-  const uint32_t def_cc = cc_llc_l3; /* default Cache Control value */
+  const uint32_t def_cc = cl_gpgpu_get_cache_ctrl(); /* default Cache Control value */
   BEGIN_BATCH(gpgpu->batch, 10);
   OUT_BATCH(gpgpu->batch, CMD_STATE_BASE_ADDRESS | 8);
   /* 0, Gen State Mem Obj CC, Stateless Mem Obj CC, Stateless Access Write Back */
@@ -233,12 +245,12 @@ intel_gpgpu_set_base_address(intel_gpgpu_t *gpgpu)
   ADVANCE_BATCH(gpgpu->batch);
 }
 
-uint32_t get_scratch_index_gen7(uint32_t size) {
+uint32_t intel_gpgpu_get_scratch_index_gen7(uint32_t size) {
   return size / 1024 - 1;
 }
 
-uint32_t get_scratch_index_gen75(uint32_t size) {
-    size = size >> 12;
+uint32_t intel_gpgpu_get_scratch_index_gen75(uint32_t size) {
+    size = size >> 11;
     uint32_t index = 0;
     while((size >>= 1) > 0)
       index++;   //get leading one
@@ -256,7 +268,7 @@ intel_gpgpu_load_vfe_state(intel_gpgpu_t *gpgpu)
   OUT_BATCH(gpgpu->batch, CMD_MEDIA_STATE_POINTERS | (8-2));
 
   if(gpgpu->per_thread_scratch > 0) {
-    scratch_index = get_scratch_index(gpgpu->per_thread_scratch);
+    scratch_index = intel_gpgpu_get_scratch_index(gpgpu->per_thread_scratch);
     OUT_RELOC(gpgpu->batch, gpgpu->scratch_b.bo,
               I915_GEM_DOMAIN_RENDER,
               I915_GEM_DOMAIN_RENDER,
@@ -356,11 +368,9 @@ intel_gpgpu_pipe_control(intel_gpgpu_t *gpgpu)
 static void
 intel_gpgpu_set_L3_gen7(intel_gpgpu_t *gpgpu, uint32_t use_slm)
 {
-  /* still set L3 in batch buffer for fulsim. */
   BEGIN_BATCH(gpgpu->batch, 9);
   OUT_BATCH(gpgpu->batch, CMD_LOAD_REGISTER_IMM | 1); /* length - 2 */
   OUT_BATCH(gpgpu->batch, GEN7_L3_SQC_REG1_ADDRESS_OFFSET);
-
   OUT_BATCH(gpgpu->batch, 0x00730000);
 
   OUT_BATCH(gpgpu->batch, CMD_LOAD_REGISTER_IMM | 1); /* length - 2 */
@@ -377,7 +387,7 @@ intel_gpgpu_set_L3_gen7(intel_gpgpu_t *gpgpu, uint32_t use_slm)
     OUT_BATCH(gpgpu->batch, gpgpu_l3_config_reg2[12]);
   else
     OUT_BATCH(gpgpu->batch, gpgpu_l3_config_reg2[4]);
-    ADVANCE_BATCH(gpgpu->batch);
+  ADVANCE_BATCH(gpgpu->batch);
 
   intel_gpgpu_pipe_control(gpgpu);
 }
@@ -411,25 +421,29 @@ static void
 intel_gpgpu_set_L3_gen75(intel_gpgpu_t *gpgpu, uint32_t use_slm)
 {
   /* still set L3 in batch buffer for fulsim. */
-  BEGIN_BATCH(gpgpu->batch, 6);
+  BEGIN_BATCH(gpgpu->batch, 9);
+  OUT_BATCH(gpgpu->batch, CMD_LOAD_REGISTER_IMM | 1); /* length - 2 */
+  OUT_BATCH(gpgpu->batch, GEN7_L3_SQC_REG1_ADDRESS_OFFSET);
+  OUT_BATCH(gpgpu->batch, 0x00610000);
+
   OUT_BATCH(gpgpu->batch, CMD_LOAD_REGISTER_IMM | 1); /* length - 2 */
   OUT_BATCH(gpgpu->batch, GEN7_L3_CNTL_REG2_ADDRESS_OFFSET);
+
   if (use_slm)
-    OUT_BATCH(gpgpu->batch, gpgpu_l3_config_reg1[8]);
+    OUT_BATCH(gpgpu->batch, gpgpu_l3_config_reg1[12]);
   else
     OUT_BATCH(gpgpu->batch, gpgpu_l3_config_reg1[4]);
 
   OUT_BATCH(gpgpu->batch, CMD_LOAD_REGISTER_IMM | 1); /* length - 2 */
   OUT_BATCH(gpgpu->batch, GEN7_L3_CNTL_REG3_ADDRESS_OFFSET);
   if (use_slm)
-    OUT_BATCH(gpgpu->batch, gpgpu_l3_config_reg2[8]);
+    OUT_BATCH(gpgpu->batch, gpgpu_l3_config_reg2[12]);
   else
     OUT_BATCH(gpgpu->batch, gpgpu_l3_config_reg2[4]);
     ADVANCE_BATCH(gpgpu->batch);
 
-  //To set L3 in HSW, enable the flag I915_EXEC_ENABLE_SLM flag when exec
-  if(use_slm)
-    gpgpu->batch->enable_slm = 1;
+  //if(use_slm)
+  //  gpgpu->batch->enable_slm = 1;
   intel_gpgpu_pipe_control(gpgpu);
 }
 
@@ -614,7 +628,7 @@ intel_gpgpu_alloc_constant_buffer(intel_gpgpu_t *gpgpu, uint32_t size)
   ss2->ss2.width  = s & 0x7f;            /* bits 6:0 of sz */
   ss2->ss2.height = (s >> 7) & 0x3fff;   /* bits 20:7 of sz */
   ss2->ss3.depth  = (s >> 21) & 0x3ff;   /* bits 30:21 of sz */
-  ss2->ss5.cache_control = cc_llc_l3;
+  ss2->ss5.cache_control = cl_gpgpu_get_cache_ctrl();
   heap->binding_table[2] = offsetof(surface_heap_t, surface) + 2* sizeof(gen7_surface_state_t);
 
   if(gpgpu->constant_b.bo)
@@ -652,7 +666,7 @@ intel_gpgpu_map_address_space(intel_gpgpu_t *gpgpu)
   ss1->ss2.height = ss0->ss2.height = 16383; /* bits 20:7 of sz */
   ss0->ss3.depth  = 1023; /* bits 30:21 of sz */
   ss1->ss3.depth  = 1023;  /* bits 30:21 of sz */
-  ss1->ss5.cache_control = ss0->ss5.cache_control = cc_llc_l3;
+  ss1->ss5.cache_control = ss0->ss5.cache_control = cl_gpgpu_get_cache_ctrl();
   heap->binding_table[0] = offsetof(surface_heap_t, surface);
   heap->binding_table[1] = sizeof(gen7_surface_state_t) + offsetof(surface_heap_t, surface);
 }
@@ -702,7 +716,7 @@ intel_gpgpu_bind_image_gen7(intel_gpgpu_t *gpgpu,
   ss->ss4.not_str_buf.rt_view_extent = depth - 1;
   ss->ss4.not_str_buf.min_array_element = 0;
   ss->ss3.pitch = pitch - 1;
-  ss->ss5.cache_control = cc_llc_l3;
+  ss->ss5.cache_control = cl_gpgpu_get_cache_ctrl();
   if (tiling == GPGPU_TILE_X) {
     ss->ss0.tiled_surface = 1;
     ss->ss0.tile_walk = I965_TILEWALK_XMAJOR;
@@ -743,7 +757,7 @@ intel_gpgpu_bind_image_gen75(intel_gpgpu_t *gpgpu,
   ss->ss4.not_str_buf.rt_view_extent = depth - 1;
   ss->ss4.not_str_buf.min_array_element = 0;
   ss->ss3.pitch = pitch - 1;
-  ss->ss5.cache_control = cc_llc_l3;
+  ss->ss5.cache_control = cl_gpgpu_get_cache_ctrl();
   ss->ss7.shader_r = I965_SURCHAN_SELECT_RED;
   ss->ss7.shader_g = I965_SURCHAN_SELECT_GREEN;
   ss->ss7.shader_b = I965_SURCHAN_SELECT_BLUE;
@@ -1208,7 +1222,8 @@ intel_set_gpgpu_callbacks(int device_id)
   if (IS_HASWELL(device_id)) {
     cl_gpgpu_bind_image = (cl_gpgpu_bind_image_cb *) intel_gpgpu_bind_image_gen75;
     intel_gpgpu_set_L3 = intel_gpgpu_set_L3_gen75;
-    get_scratch_index = get_scratch_index_gen75;
+    cl_gpgpu_get_cache_ctrl = (cl_gpgpu_get_cache_ctrl_cb *)intel_gpgpu_get_cache_ctrl_gen75;
+    intel_gpgpu_get_scratch_index = intel_gpgpu_get_scratch_index_gen75;
   }
   else if (IS_IVYBRIDGE(device_id)) {
     cl_gpgpu_bind_image = (cl_gpgpu_bind_image_cb *) intel_gpgpu_bind_image_gen7;
@@ -1216,9 +1231,9 @@ intel_set_gpgpu_callbacks(int device_id)
       intel_gpgpu_set_L3 = intel_gpgpu_set_L3_baytrail;
     else
       intel_gpgpu_set_L3 = intel_gpgpu_set_L3_gen7;
-    get_scratch_index = get_scratch_index_gen7;
+    cl_gpgpu_get_cache_ctrl = (cl_gpgpu_get_cache_ctrl_cb *)intel_gpgpu_get_cache_ctrl_gen7;
+    intel_gpgpu_get_scratch_index = intel_gpgpu_get_scratch_index_gen7;
   }
   else
     assert(0);
 }
-

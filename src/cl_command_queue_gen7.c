@@ -31,7 +31,7 @@
 #include <string.h>
 
 #define MAX_GROUP_SIZE_IN_HALFSLICE   512
-static INLINE size_t cl_kernel_compute_batch_sz(cl_kernel k) { return 256+32; }
+static INLINE size_t cl_kernel_compute_batch_sz(cl_kernel k) { return 256+128; }
 
 /* "Varing" payload is the part of the curbe that changes accross threads in the
  *  same work group. Right now, it consists in local IDs and block IPs
@@ -244,7 +244,7 @@ cl_bind_stack(cl_gpgpu gpgpu, cl_kernel ker)
   assert(offset >= 0);
   stack_sz *= gbe_kernel_get_simd_width(ker->opaque);
   stack_sz *= device->max_compute_unit;
-  cl_gpgpu_set_stack(gpgpu, offset, stack_sz, cc_llc_l3);
+  cl_gpgpu_set_stack(gpgpu, offset, stack_sz, cl_gpgpu_get_cache_ctrl());
 }
 
 LOCAL cl_int
