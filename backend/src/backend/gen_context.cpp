@@ -1890,10 +1890,10 @@ namespace gbe
         pCom = (GenCompactInstruction*)&p->store[insnID];
         if(pCom->bits1.cmpt_control == 1) {
           decompactInstruction(pCom, &insn);
-          gen_disasm(stdout, &insn);
+          gen_disasm(stdout, &insn, deviceID);
           insnID++;
         } else {
-          gen_disasm(stdout, &p->store[insnID]);
+          gen_disasm(stdout, &p->store[insnID], deviceID);
           insnID = insnID + 2;
         }
       }
@@ -1903,7 +1903,7 @@ namespace gbe
   }
 
   Kernel *GenContext::allocateKernel(void) {
-    return GBE_NEW(GenKernel, name);
+    return GBE_NEW(GenKernel, name, deviceID);
   }
 
 } /* namespace gbe */

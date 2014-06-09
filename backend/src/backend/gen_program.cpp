@@ -41,8 +41,8 @@
 
 namespace gbe {
 
-  GenKernel::GenKernel(const std::string &name) :
-    Kernel(name), insns(NULL), insnNum(0)
+  GenKernel::GenKernel(const std::string &name, uint32_t deviceID) :
+    Kernel(name), deviceID(deviceID), insns(NULL), insnNum(0)
   {}
   GenKernel::~GenKernel(void) { GBE_SAFE_DELETE_ARRAY(insns); }
   const char *GenKernel::getCode(void) const { return (const char*) insns; }
@@ -61,7 +61,7 @@ namespace gbe {
     setbuffer(f, buf, 4096);
 
     for (uint32_t i = 0; i < insnNum; i++) {
-      gen_disasm(f, insns+i);
+      gen_disasm(f, insns+i, deviceID);
       outs << buf;
       fflush(f);
       setbuffer(f, NULL, 0);

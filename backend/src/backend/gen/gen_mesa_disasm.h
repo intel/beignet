@@ -34,7 +34,7 @@
 extern "C" {
 #endif /* __cplusplus */
 
-extern int gen_disasm(FILE *file, const void *opaque_insn);
+extern int gen_disasm(FILE *file, const void *opaque_insn, uint32_t deviceID);
 
 #ifdef __cplusplus
 }

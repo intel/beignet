@@ -49,6 +49,7 @@
 #include <assert.h>
 
 #include "backend/gen_defs.hpp"
+#include "src/cl_device_data.h"
 
 static const struct {
   const char    *name;
@@ -319,6 +320,20 @@ static const char *target_function_gen6[16] = {
   [GEN_SFID_DATAPORT_DATA_CACHE] = "data"
 };
 
+static const char *target_function_gen75[16] = {
+  [GEN_SFID_NULL] = "null",
+  [GEN_SFID_MATH] = "math",
+  [GEN_SFID_SAMPLER] = "sampler",
+  [GEN_SFID_MESSAGE_GATEWAY] = "gateway",
+  [GEN_SFID_URB] = "urb",
+  [GEN_SFID_THREAD_SPAWNER] = "thread_spawner",
+  [GEN6_SFID_DATAPORT_SAMPLER_CACHE] = "sampler",
+  [GEN6_SFID_DATAPORT_RENDER_CACHE] = "render",
+  [GEN6_SFID_DATAPORT_CONSTANT_CACHE] = "const",
+  [GEN_SFID_DATAPORT_DATA_CACHE] = "data (0)",
+  [GEN_SFID_DATAPORT1_DATA_CACHE] = "data (1)"
+};
+
 static const char *gateway_sub_function[8] = {
   [0] = "open gateway",
   [1] = "close gateway",
@@ -412,6 +427,21 @@ static const char *data_port_data_cache_msg_type[] = {
   [11] = "DWord Scattered Write",
   [12] = "Byte Scattered Write",
   [13] = "Untyped Surface Write",
+};
+
+static const char *data_port1_data_cache_msg_type[] = {
+  [1] = "Untyped Surface Read",
+  [2] = "Untyped Atomic Operation",
+  [3] = "Untyped Atomic Operation SIMD4x2",
+  [4] = "Media Block Read",
+  [5] = "Typed Surface Read",
+  [6] = "Typed Atomic Operation",
+  [7] = "Typed Atomic Operation SIMD4x2",
+  [9] = "Untyped Surface Write",
+  [10] = "Media Block Write",
+  [11] = "Atomic Counter Operation",
+  [12] = "Atomic Counter Operation 4X2",
+  [13] = "Typed Surface Write",
 };
 
 static int column;
@@ -1060,12 +1090,17 @@ static int qtr_ctrl(FILE *file, const union GenNativeInstruction *inst)
   return 0;
 }
 
-int gen_disasm (FILE *file, const void *opaque_insn)
+int gen_disasm (FILE *file, const void *opaque_insn, uint32_t deviceID)
 {
   const union GenNativeInstruction *inst = (const union GenNativeInstruction *) opaque_insn;
   int	err = 0;
   int space = 0;
-  int gen = 7;
+  int gen = 70;
+  if (IS_IVYBRIDGE(deviceID)) {
+    gen = 70;
+  } else if (IS_HASWELL(deviceID)) {
+    gen = 75;
+  }
 
   if (inst->header.predicate_control) {
     string (file, "(");
@@ -1106,7 +1141,7 @@ int gen_disasm (FILE *file, const void *opaque_insn)
     string (file, ")");
   }
 
-  if (inst->header.opcode == GEN_OPCODE_SEND && gen < 6)
+  if (inst->header.opcode == GEN_OPCODE_SEND && gen < 60)
     format (file, " %d", inst->header.destreg_or_condmod);
 
   if (opcode[inst->header.opcode].nsrc == 3) {
@@ -1125,14 +1160,14 @@ int gen_disasm (FILE *file, const void *opaque_insn)
     if (opcode[inst->header.opcode].ndst > 0) {
       pad (file, 16);
       err |= dest (file, inst);
-    } else if (gen >= 6 && (inst->header.opcode == GEN_OPCODE_IF ||
+    } else if (gen >= 60 && (inst->header.opcode == GEN_OPCODE_IF ||
           inst->header.opcode == GEN_OPCODE_ELSE ||
           inst->header.opcode == GEN_OPCODE_ENDIF ||
           inst->header.opcode == GEN_OPCODE_WHILE ||
           inst->header.opcode == GEN_OPCODE_BRD ||
           inst->header.opcode == GEN_OPCODE_JMPI)) {
       format(file, " %d", (int16_t)inst->bits3.gen7_branch.jip);
-    } else if (gen >= 6 && (inst->header.opcode == GEN_OPCODE_BREAK ||
+    } else if (gen >= 60 && (inst->header.opcode == GEN_OPCODE_BREAK ||
           inst->header.opcode == GEN_OPCODE_CONTINUE ||
           inst->header.opcode == GEN_OPCODE_HALT ||
           inst->header.opcode == GEN_OPCODE_BRC)) {
@@ -1159,8 +1194,13 @@ int gen_disasm (FILE *file, const void *opaque_insn)
     pad (file, 16);
     space = 0;
 
-    err |= control (file, "target function", target_function_gen6,
-           target, &space);
+    if(gen == 75) {
+      err |= control (file, "target function", target_function_gen75,
+             target, &space);
+    } else {
+      err |= control (file, "target function", target_function_gen6,
+             target, &space);
+    }
 
     switch (target) {
       case GEN_SFID_MATH:
@@ -1199,6 +1239,14 @@ int gen_disasm (FILE *file, const void *opaque_insn)
                   data_port_scratch_msg_type[inst->bits3.gen7_scratch_rw.msg_type]);
         }
         break;
+      case GEN_SFID_DATAPORT1_DATA_CACHE:
+        format (file, " (bti: %d, rgba: %d, %s, %s, %s)",
+                inst->bits3.gen7_untyped_rw.bti,
+                inst->bits3.gen7_untyped_rw.rgba,
+                data_port_data_cache_simd_mode[inst->bits3.gen7_untyped_rw.simd_mode],
+                data_port_data_cache_category[inst->bits3.gen7_untyped_rw.category],
+                data_port1_data_cache_msg_type[inst->bits3.gen7_untyped_rw.msg_type]);
+        break;
       case GEN6_SFID_DATAPORT_CONSTANT_CACHE:
         format (file, " (bti: %d, %s)",
                 inst->bits3.gen7_dword_rw.bti,
@@ -1225,7 +1273,7 @@ int gen_disasm (FILE *file, const void *opaque_insn)
     string (file, "{");
     space = 1;
     err |= control(file, "access mode", access_mode, inst->header.access_mode, &space);
-    if (gen >= 6)
+    if (gen >= 60)
       err |= control (file, "write enable control", wectrl, inst->header.mask_control, &space);
     else
       err |= control (file, "mask control", mask_ctrl, inst->header.mask_control, &space);
@@ -1233,7 +1281,7 @@ int gen_disasm (FILE *file, const void *opaque_insn)
 
     err |= qtr_ctrl (file, inst);
     err |= control (file, "thread control", thread_ctrl, inst->header.thread_control, &space);
-    if (gen >= 6)
+    if (gen >= 60)
       err |= control (file, "acc write control", accwr, inst->header.acc_wr_control, &space);
     if (inst->header.opcode == GEN_OPCODE_SEND ||
         inst->header.opcode == GEN_OPCODE_SENDC)

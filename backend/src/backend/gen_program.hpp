@@ -37,7 +37,7 @@ namespace gbe
   {
   public:
     /*! Create an empty kernel with the given name */
-    GenKernel(const std::string &name);
+    GenKernel(const std::string &name, uint32_t deviceID);
     /*! Destroy it */
     virtual ~GenKernel(void);
     /*! Implements base class */
@@ -48,6 +48,7 @@ namespace gbe
     virtual size_t getCodeSize(void) const;
     /*! Implements printStatus*/
     virtual void printStatus(int indent, std::ostream& outs);
+    uint32_t deviceID;      //!< Current device ID
     GenInstruction *insns; //!< Instruction stream
     uint32_t insnNum;      //!< Number of instructions
     GBE_CLASS(GenKernel);  //!< Use custom allocators
@@ -67,7 +68,7 @@ namespace gbe
     virtual Kernel *compileKernel(const ir::Unit &unit, const std::string &name, bool relaxMath);
     /*! Allocate an empty kernel. */
     virtual Kernel *allocateKernel(const std::string &name) {
-      return GBE_NEW(GenKernel, name);
+      return GBE_NEW(GenKernel, name, deviceID);
     }
     /*! Use custom allocators */
     GBE_CLASS(GenProgram);
