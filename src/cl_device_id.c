@@ -86,7 +86,7 @@ static struct _cl_device_id intel_hsw_gt2_device = {
   .max_compute_unit = 140,
   .max_thread_per_unit = 7,
   .max_work_item_sizes = {512, 512, 512},
-  .max_work_group_size = 512,
+  .max_work_group_size = 1024,
   .max_clock_frequency = 1000,
   .wg_sz = 1024,
 #include "cl_gen75_device.h"
@@ -97,7 +97,7 @@ static struct _cl_device_id intel_hsw_gt3_device = {
   .max_compute_unit = 280,
   .max_thread_per_unit = 7,
   .max_work_item_sizes = {512, 512, 512},
-  .max_work_group_size = 512,
+  .max_work_group_size = 1024,
   .max_clock_frequency = 1000,
   .wg_sz = 2048,
 #include "cl_gen75_device.h"
