@@ -129,7 +129,7 @@ error:
 }
 
 /* just used for maximum relocation number in drm_intel */
-#define BATCH_SIZE 0x2000
+#define BATCH_SIZE 0x4000
 
 static void
 intel_driver_memman_init(intel_driver_t *driver)
