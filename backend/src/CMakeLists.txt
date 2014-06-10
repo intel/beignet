@@ -135,6 +135,8 @@ else (GBE_USE_BLOB)
     ir/value.hpp
     ir/lowering.cpp
     ir/lowering.hpp
+    ir/printf.cpp
+    ir/printf.hpp
     backend/context.cpp
     backend/context.hpp
     backend/program.cpp
