@@ -95,6 +95,10 @@ namespace gbe
   /*! Convert the Intrinsic call to gen function */
   llvm::BasicBlockPass *createIntrinsicLoweringPass();
 
+  /*! Passer the printf function call. */
+  llvm::FunctionPass* createPrintfParserPass();
+
+  void* getPrintfInfo(llvm::CallInst* inst);
 } /* namespace gbe */
 
 #endif /* __GBE_LLVM_GEN_BACKEND_HPP__ */

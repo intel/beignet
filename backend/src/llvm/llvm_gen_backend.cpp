@@ -2970,7 +2970,12 @@ namespace gbe
 #undef DEF
 
           case GEN_OCL_PRINTF:
+          {
+            ir::PrintfSet::PrintfFmt* fmt = (ir::PrintfSet::PrintfFmt*)getPrintfInfo(&I);
+            ctx.getFunction().getPrintfSet()->append(fmt, unit);
+            assert(fmt);
             break;
+          }
           case GEN_OCL_PRINTF_BUF_ADDR:
           case GEN_OCL_PRINTF_INDEX_BUF_ADDR:
           default: break;

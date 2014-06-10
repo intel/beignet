@@ -29,6 +29,7 @@
 #include "ir/instruction.hpp"
 #include "ir/profile.hpp"
 #include "ir/sampler.hpp"
+#include "ir/printf.hpp"
 #include "ir/image.hpp"
 #include "sys/vector.hpp"
 #include "sys/set.hpp"
@@ -329,6 +330,8 @@ namespace ir {
     SamplerSet* getSamplerSet(void) const {return samplerSet; }
     /*! Get image set in this function */
     ImageSet* getImageSet(void) const {return imageSet; }
+    /*! Get printf set in this function */
+    PrintfSet* getPrintfSet(void) const {return printfSet; }
     /*! Set required work group size. */
     void setCompileWorkGroupSize(size_t x, size_t y, size_t z) { compileWgSize[0] = x; compileWgSize[1] = y; compileWgSize[2] = z; }
     /*! Get required work group size. */
@@ -360,6 +363,7 @@ namespace ir {
     uint32_t stackSize;             //!< stack size for private memory.
     SamplerSet *samplerSet;         //!< samplers used in this function.
     ImageSet* imageSet;             //!< Image set in this function's arguments..
+    PrintfSet *printfSet;           //!< printfSet store the printf info.
     size_t compileWgSize[3];        //!< required work group size specified by
                                     //   __attribute__((reqd_work_group_size(X, Y, Z))).
     GBE_CLASS(Function);            //!< Use custom allocator

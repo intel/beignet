@@ -147,6 +147,7 @@ else (GBE_USE_BLOB)
     llvm/llvm_scalarize.cpp
     llvm/llvm_intrinsic_lowering.cpp
     llvm/llvm_barrier_nodup.cpp
+    llvm/llvm_printf_parser.cpp
     llvm/llvm_to_gen.cpp
     llvm/llvm_loadstore_optimization.cpp
     llvm/llvm_gen_backend.hpp
