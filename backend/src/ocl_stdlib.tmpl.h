@@ -4953,4 +4953,9 @@ INLINE_OVERLOADABLE float __gen_ocl_internal_fastpath_tanh (float x)
 #undef CONST
 #undef OVERLOADABLE
 #undef INLINE
+
+/* The printf function. */
+int __gen_ocl_printf_stub(const char * format, ...);
+#define printf __gen_ocl_printf_stub
+
 #endif /* __GEN_OCL_STDLIB_H__ */

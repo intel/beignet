@@ -2238,6 +2238,10 @@ namespace gbe
         regTranslator.newScalarProxy(ir::ocl::goffset2, dst); break;
       case GEN_OCL_GET_WORK_DIM:
         regTranslator.newScalarProxy(ir::ocl::workdim, dst); break;
+      case GEN_OCL_PRINTF_BUF_ADDR:
+        regTranslator.newScalarProxy(ir::ocl::printfbptr, dst); break;
+      case GEN_OCL_PRINTF_INDEX_BUF_ADDR:
+        regTranslator.newScalarProxy(ir::ocl::printfiptr, dst); break;
       case GEN_OCL_FBH:
       case GEN_OCL_FBL:
       case GEN_OCL_COS:
@@ -2383,6 +2387,8 @@ namespace gbe
       case GEN_OCL_SIMD_ANY:
       case GEN_OCL_SIMD_ALL:
         this->newRegister(&I);
+        break;
+      case GEN_OCL_PRINTF:
         break;
       default:
         GBE_ASSERTM(false, "Function call are not supported yet");
@@ -2962,6 +2968,11 @@ namespace gbe
             ctx.F32TO16(ir::TYPE_U16, ir::TYPE_FLOAT, getRegister(&I), getRegister(I.getOperand(0)));
             break;
 #undef DEF
+
+          case GEN_OCL_PRINTF:
+            break;
+          case GEN_OCL_PRINTF_BUF_ADDR:
+          case GEN_OCL_PRINTF_INDEX_BUF_ADDR:
           default: break;
         }
       }
