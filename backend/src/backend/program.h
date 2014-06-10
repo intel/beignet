@@ -114,6 +114,26 @@ extern gbe_kernel_get_image_size_cb *gbe_kernel_get_image_size;
 typedef void (gbe_kernel_get_image_data_cb)(gbe_kernel gbeKernel, ImageInfo *images);
 extern gbe_kernel_get_image_data_cb *gbe_kernel_get_image_data;
 
+/*! Get the printf number */
+typedef uint32_t (gbe_get_printf_num_cb)(void* printf_info);
+extern gbe_get_printf_num_cb *gbe_get_printf_num;
+
+/*! Release the printfset */
+typedef void (gbe_release_printf_info_cb)(void* printf_info);
+extern gbe_release_printf_info_cb *gbe_release_printf_info;
+
+/*! Dup the printf set */
+typedef void* (gbe_dup_printfset_cb)(gbe_kernel gbeKernel);
+extern gbe_dup_printfset_cb *gbe_dup_printfset;
+
+/*! Get the printf buffer const offset */
+typedef uint32_t (gbe_get_printf_sizeof_size_cb)(void* printf_info);
+extern gbe_get_printf_sizeof_size_cb *gbe_get_printf_sizeof_size;
+
+typedef void (gbe_output_printf_cb) (void* printf_info, void* index_addr, void* buf_addr,
+                         size_t global_wk_sz0, size_t global_wk_sz1, size_t global_wk_sz2);
+extern gbe_output_printf_cb* gbe_output_printf;
+
 /*! Create a new program from the given source code (zero terminated string) */
 typedef gbe_program (gbe_program_new_from_source_cb)(uint32_t deviceID,
                                                      const char *source,

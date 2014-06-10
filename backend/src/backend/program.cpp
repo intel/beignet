@@ -30,6 +30,7 @@
 #include "ir/liveness.hpp"
 #include "ir/value.hpp"
 #include "ir/unit.hpp"
+#include "ir/printf.hpp"
 #include "llvm/llvm_to_gen.hpp"
 #include "llvm/Config/config.h"
 #include "llvm/Support/Threading.h"
@@ -80,12 +81,13 @@
 namespace gbe {
 
   Kernel::Kernel(const std::string &name) :
-    name(name), args(NULL), argNum(0), curbeSize(0), stackSize(0), useSLM(false), slmSize(0), ctx(NULL), samplerSet(NULL), imageSet(NULL)
-  {}
+    name(name), args(NULL), argNum(0), curbeSize(0), stackSize(0), useSLM(false),
+        slmSize(0), ctx(NULL), samplerSet(NULL), imageSet(NULL), printfSet(NULL) {}
   Kernel::~Kernel(void) {
     if(ctx) GBE_DELETE(ctx);
     if(samplerSet) GBE_DELETE(samplerSet);
     if(imageSet) GBE_DELETE(imageSet);
+    if(printfSet) GBE_DELETE(printfSet);
     GBE_SAFE_DELETE_ARRAY(args);
   }
   int32_t Kernel::getCurbeOffset(gbe_curbe_type type, uint32_t subType) const {
@@ -148,6 +150,7 @@ namespace gbe {
       Kernel *kernel = this->compileKernel(unit, name, !OCL_STRICT_CONFORMANCE);
       kernel->setSamplerSet(pair.second->getSamplerSet());
       kernel->setImageSet(pair.second->getImageSet());
+      kernel->setPrintfSet(pair.second->getPrintfSet());
       kernel->setCompileWorkGroupSize(pair.second->getCompileWorkGroupSize());
       kernels.insert(std::make_pair(name, kernel));
     }
@@ -992,6 +995,40 @@ namespace gbe {
     kernel->getSamplerData(samplers);
   }
 
+  static uint32_t kernelGetPrintfNum(void * printf_info) {
+    if (printf_info == NULL) return 0;
+    const ir::PrintfSet *ps = (ir::PrintfSet *)printf_info;
+    return ps->getPrintfNum();
+  }
+
+  static void* kernelDupPrintfSet(gbe_kernel gbeKernel) {
+    if (gbeKernel == NULL) return NULL;
+    const gbe::Kernel *kernel = (const gbe::Kernel*) gbeKernel;
+    return kernel->dupPrintfSet();
+  }
+
+  static void kernelReleasePrintfSet(void * printf_info) {
+    if (printf_info == NULL) return;
+    ir::PrintfSet *ps = (ir::PrintfSet *)printf_info;
+    delete ps;
+  }
+
+  static uint32_t kernelGetPrintfSizeOfSize(void * printf_info) {
+    if (printf_info == NULL) return 0;
+    const ir::PrintfSet *ps = (ir::PrintfSet *)printf_info;
+    return ps->getPrintfSizeOfSize();
+  }
+
+  static void kernelOutputPrintf(void * printf_info, void* index_addr,
+                                 void* buf_addr, size_t global_wk_sz0,
+                                 size_t global_wk_sz1, size_t global_wk_sz2)
+  {
+    if (printf_info == NULL) return;
+    ir::PrintfSet *ps = (ir::PrintfSet *)printf_info;
+    ps->outputPrintf(index_addr, buf_addr, global_wk_sz0,
+                         global_wk_sz1, global_wk_sz2);
+  }
+
   static void kernelGetCompileWorkGroupSize(gbe_kernel gbeKernel, size_t wg_size[3]) {
     if (gbeKernel == NULL) return;
     const gbe::Kernel *kernel = (const gbe::Kernel*) gbeKernel;
@@ -1057,6 +1094,11 @@ GBE_EXPORT_SYMBOL gbe_kernel_get_image_size_cb *gbe_kernel_get_image_size = NULL
 GBE_EXPORT_SYMBOL gbe_kernel_get_image_data_cb *gbe_kernel_get_image_data = NULL;
 GBE_EXPORT_SYMBOL gbe_set_image_base_index_cb *gbe_set_image_base_index = NULL;
 GBE_EXPORT_SYMBOL gbe_get_image_base_index_cb *gbe_get_image_base_index = NULL;
+GBE_EXPORT_SYMBOL gbe_get_printf_num_cb *gbe_get_printf_num = NULL;
+GBE_EXPORT_SYMBOL gbe_dup_printfset_cb *gbe_dup_printfset = NULL;
+GBE_EXPORT_SYMBOL gbe_release_printf_info_cb *gbe_release_printf_info = NULL;
+GBE_EXPORT_SYMBOL gbe_get_printf_sizeof_size_cb *gbe_get_printf_sizeof_size = NULL;
+GBE_EXPORT_SYMBOL gbe_output_printf_cb *gbe_output_printf = NULL;
 
 #ifdef GBE_COMPILER_AVAILABLE
 namespace gbe
@@ -1095,6 +1137,11 @@ namespace gbe
       gbe_kernel_get_image_data = gbe::kernelGetImageData;
       gbe_get_image_base_index = gbe::getImageBaseIndex;
       gbe_set_image_base_index = gbe::setImageBaseIndex;
+      gbe_get_printf_num = gbe::kernelGetPrintfNum;
+      gbe_dup_printfset = gbe::kernelDupPrintfSet;
+      gbe_get_printf_sizeof_size = gbe::kernelGetPrintfSizeOfSize;
+      gbe_release_printf_info = gbe::kernelReleasePrintfSet;
+      gbe_output_printf = gbe::kernelOutputPrintf;
       genSetupCallBacks();
       llvm::llvm_start_multithreaded();
     }

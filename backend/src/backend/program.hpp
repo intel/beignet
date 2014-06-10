@@ -30,6 +30,7 @@
 #include "ir/constant.hpp"
 #include "ir/unit.hpp"
 #include "ir/function.hpp"
+#include "ir/printf.hpp"
 #include "ir/sampler.hpp"
 #include "sys/hash_map.hpp"
 #include "sys/vector.hpp"
@@ -134,6 +135,30 @@ namespace gbe {
     void setImageSet(ir::ImageSet * from) {
       imageSet = from;
     }
+    /*! Set printf set. */
+    void setPrintfSet(ir::PrintfSet * from) {
+      printfSet = from;
+    }
+    /* ! Return the offset in the sizeof(xxx). */
+    uint32_t getPrintfSizeOfSize(void) const {
+      return printfSet ? printfSet->getPrintfSizeOfSize() : 0;
+    }
+    uint32_t getPrintfNum() const {
+      return printfSet ? printfSet->getPrintfNum() : 0;
+    }
+
+    void * dupPrintfSet() const {
+      void* ptr = printfSet ? (void *)(new ir::PrintfSet(*printfSet)) : NULL;
+      return ptr;
+    }
+
+    void outputPrintf(void* index_addr, void* buf_addr, size_t global_wk_sz0,
+                      size_t global_wk_sz1, size_t global_wk_sz2) {
+      if(printfSet)
+        printfSet->outputPrintf(index_addr, buf_addr, global_wk_sz0,
+                                global_wk_sz1, global_wk_sz2);
+    }
+
     /*! Set compile work group size */
     void setCompileWorkGroupSize(const size_t wg_sz[3]) {
        compileWgSize[0] = wg_sz[0];
@@ -196,6 +221,7 @@ namespace gbe {
     Context *ctx;              //!< Save context after compiler to alloc constant buffer curbe
     ir::SamplerSet *samplerSet;//!< Copy from the corresponding function.
     ir::ImageSet *imageSet;    //!< Copy from the corresponding function.
+    ir::PrintfSet *printfSet;  //!< Copy from the corresponding function.
     size_t compileWgSize[3];   //!< required work group size by kernel attribute.
     GBE_CLASS(Kernel);         //!< Use custom allocators
   };
