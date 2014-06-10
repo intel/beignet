@@ -2682,6 +2682,7 @@ namespace gbe
       case TYPE_U32:
       case TYPE_S32:
         return GEN_BYTE_SCATTER_DWORD;
+      case TYPE_BOOL:
       case TYPE_U16:
       case TYPE_S16:
         return GEN_BYTE_SCATTER_WORD;

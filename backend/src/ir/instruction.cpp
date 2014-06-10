@@ -938,7 +938,6 @@ namespace ir {
         if (UNLIKELY(checkRegisterData(family, regID, fn, whyNot) == false))
           return false;
       }
-      CHECK_TYPE(insn.type, allButBool);
       return true;
     }
 

@@ -171,7 +171,12 @@ namespace gbe
     switch (Ty->getTypeID()) {
       case Type::VoidTyID:    NOT_SUPPORTED;
       case Type::PointerTyID: return unit.getPointerSize();
-      case Type::IntegerTyID: return cast<IntegerType>(Ty)->getBitWidth();
+      case Type::IntegerTyID:
+      {
+        // use S16 to represent SLM bool variables.
+        int bitWidth = cast<IntegerType>(Ty)->getBitWidth();
+        return (bitWidth == 1) ? 16 : bitWidth;
+      }
       case Type::HalfTyID:    return 16;
       case Type::FloatTyID:   return 32;
       case Type::DoubleTyID:  return 64;
