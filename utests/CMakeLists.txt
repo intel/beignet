@@ -172,6 +172,7 @@ set (utests_sources
   profiling_exec.cpp
   enqueue_copy_buf.cpp
   enqueue_copy_buf_unaligned.cpp
+  test_printf.cpp
   utest_assert.cpp
   utest.cpp
   utest_file_map.cpp
