@@ -420,8 +420,22 @@ LOCAL cl_int
 cl_command_queue_flush(cl_command_queue queue)
 {
   GET_QUEUE_THREAD_GPGPU(queue);
+  size_t global_wk_sz[3];
+  void* printf_info = cl_gpgpu_get_printf_info(gpgpu, global_wk_sz);
 
   cl_gpgpu_flush(gpgpu);
+
+  if (printf_info && gbe_get_printf_num(printf_info)) {
+    void *index_addr = cl_gpgpu_map_printf_buffer(gpgpu, 0);
+    void *buf_addr = cl_gpgpu_map_printf_buffer(gpgpu, 1);
+    gbe_output_printf(printf_info, index_addr, buf_addr, global_wk_sz[0],
+                      global_wk_sz[1], global_wk_sz[2]);
+    cl_gpgpu_unmap_printf_buffer(gpgpu, 0);
+    cl_gpgpu_unmap_printf_buffer(gpgpu, 1);
+    gbe_release_printf_info(printf_info);
+    global_wk_sz[0] = global_wk_sz[1] = global_wk_sz[2] = 0;
+    cl_gpgpu_set_printf_info(gpgpu, NULL, global_wk_sz);
+  }
 
   cl_invalid_thread_gpgpu(queue);
   return CL_SUCCESS;

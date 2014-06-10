@@ -59,6 +59,11 @@ gbe_kernel_get_image_size_cb *gbe_kernel_get_image_size = NULL;
 gbe_kernel_get_image_data_cb *gbe_kernel_get_image_data = NULL;
 gbe_set_image_base_index_cb *gbe_set_image_base_index_interp = NULL;
 gbe_get_image_base_index_cb *gbe_get_image_base_index = NULL;
+gbe_get_printf_num_cb* gbe_get_printf_num = NULL;
+gbe_dup_printfset_cb* gbe_dup_printfset = NULL;
+gbe_get_printf_sizeof_size_cb* gbe_get_printf_sizeof_size = NULL;
+gbe_release_printf_info_cb* gbe_release_printf_info = NULL;
+gbe_output_printf_cb* gbe_output_printf = NULL;
 
 struct GbeLoaderInitializer
 {
@@ -198,6 +203,26 @@ struct GbeLoaderInitializer
 
     gbe_get_image_base_index = *(gbe_get_image_base_index_cb**)dlsym(dlhInterp, "gbe_get_image_base_index");
     if (gbe_get_image_base_index == NULL)
+      return false;
+
+    gbe_get_printf_num = *(gbe_get_printf_num_cb**)dlsym(dlhInterp, "gbe_get_printf_num");
+    if (gbe_get_printf_num == NULL)
+      return false;
+
+    gbe_dup_printfset = *(gbe_dup_printfset_cb**)dlsym(dlhInterp, "gbe_dup_printfset");
+    if (gbe_dup_printfset == NULL)
+      return false;
+
+    gbe_get_printf_sizeof_size = *(gbe_get_printf_sizeof_size_cb**)dlsym(dlhInterp, "gbe_get_printf_sizeof_size");
+    if (gbe_get_printf_sizeof_size == NULL)
+      return false;
+
+    gbe_release_printf_info = *(gbe_release_printf_info_cb**)dlsym(dlhInterp, "gbe_release_printf_info");
+    if (gbe_release_printf_info == NULL)
+      return false;
+
+    gbe_output_printf = *(gbe_output_printf_cb**)dlsym(dlhInterp, "gbe_output_printf");
+    if (gbe_output_printf == NULL)
       return false;
 
     return true;

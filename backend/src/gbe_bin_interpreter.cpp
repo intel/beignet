@@ -21,6 +21,7 @@
 #include "sys/assert.cpp"
 #include "sys/platform.cpp"
 #include "ir/constant.cpp"
+#include "ir/printf.cpp"
 
 #pragma GCC diagnostic ignored "-Wunused-function"
 #pragma GCC diagnostic ignored "-Wunused-variable"
@@ -62,6 +63,11 @@ struct BinInterpCallBackInitializer
     gbe_kernel_get_image_data = gbe::kernelGetImageData;
     gbe_get_image_base_index = gbe::getImageBaseIndex;
     gbe_set_image_base_index = gbe::setImageBaseIndex;
+    gbe_get_printf_num = gbe::kernelGetPrintfNum;
+    gbe_dup_printfset = gbe::kernelDupPrintfSet;
+    gbe_get_printf_sizeof_size = gbe::kernelGetPrintfSizeOfSize;
+    gbe_release_printf_info = gbe::kernelReleasePrintfSet;
+    gbe_output_printf = gbe::kernelOutputPrintf;
   }
 
   ~BinInterpCallBackInitializer() {

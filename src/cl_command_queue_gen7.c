@@ -247,6 +247,19 @@ cl_bind_stack(cl_gpgpu gpgpu, cl_kernel ker)
   cl_gpgpu_set_stack(gpgpu, offset, stack_sz, cl_gpgpu_get_cache_ctrl());
 }
 
+static void
+cl_bind_printf(cl_gpgpu gpgpu, cl_kernel ker, void* printf_info, int printf_num, size_t global_sz) {
+  int32_t value = GBE_CURBE_PRINTF_INDEX_POINTER;
+  int32_t offset = gbe_kernel_get_curbe_offset(ker->opaque, value, 0);
+  size_t buf_size = global_sz * sizeof(int) * printf_num;
+  cl_gpgpu_set_printf_buffer(gpgpu, 0, buf_size, offset);
+
+  value = GBE_CURBE_PRINTF_BUF_POINTER;
+  offset = gbe_kernel_get_curbe_offset(ker->opaque, value, 0);
+  buf_size = gbe_get_printf_sizeof_size(printf_info) * global_sz;
+  cl_gpgpu_set_printf_buffer(gpgpu, 1, buf_size, offset);
+}
+
 LOCAL cl_int
 cl_command_queue_ND_range_gen7(cl_command_queue queue,
                                cl_kernel ker,
@@ -264,7 +277,10 @@ cl_command_queue_ND_range_gen7(cl_command_queue queue,
   size_t cst_sz = ker->curbe_sz= gbe_kernel_get_curbe_size(ker->opaque);
   int32_t scratch_sz = gbe_kernel_get_scratch_size(ker->opaque);
   size_t thread_n = 0u;
+  int printf_num = 0;
   cl_int err = CL_SUCCESS;
+  size_t global_size = global_wk_sz[0] * global_wk_sz[1] * global_wk_sz[2];
+  void* printf_info = NULL;
 
   /* Setup kernel */
   kernel.name = "KERNEL";
@@ -298,11 +314,19 @@ cl_command_queue_ND_range_gen7(cl_command_queue queue,
     }
   }
 
+  printf_info = gbe_dup_printfset(ker->opaque);
+  cl_gpgpu_set_printf_info(gpgpu, printf_info, (size_t *)global_wk_sz);
+
   /* Setup the kernel */
   if (queue->props & CL_QUEUE_PROFILING_ENABLE)
     cl_gpgpu_state_init(gpgpu, ctx->device->max_compute_unit, cst_sz / 32, 1);
   else
     cl_gpgpu_state_init(gpgpu, ctx->device->max_compute_unit, cst_sz / 32, 0);
+
+  printf_num = gbe_get_printf_num(printf_info);
+  if (printf_num) {
+    cl_bind_printf(gpgpu, ker, printf_info, printf_num, global_size);
+  }
 
   /* Bind user buffers */
   cl_command_queue_bind_surface(queue, ker);

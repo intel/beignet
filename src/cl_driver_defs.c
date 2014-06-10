@@ -86,4 +86,11 @@ LOCAL cl_gpgpu_event_get_exec_timestamp_cb *cl_gpgpu_event_get_exec_timestamp = 
 LOCAL cl_gpgpu_event_get_gpu_cur_timestamp_cb *cl_gpgpu_event_get_gpu_cur_timestamp = NULL;
 LOCAL cl_gpgpu_ref_batch_buf_cb *cl_gpgpu_ref_batch_buf = NULL;
 LOCAL cl_gpgpu_unref_batch_buf_cb *cl_gpgpu_unref_batch_buf = NULL;
+LOCAL cl_gpgpu_set_printf_buffer_cb *cl_gpgpu_set_printf_buffer = NULL;
+LOCAL cl_gpgpu_reloc_printf_buffer_cb *cl_gpgpu_reloc_printf_buffer = NULL;
+LOCAL cl_gpgpu_map_printf_buffer_cb *cl_gpgpu_map_printf_buffer = NULL;
+LOCAL cl_gpgpu_unmap_printf_buffer_cb *cl_gpgpu_unmap_printf_buffer = NULL;
+LOCAL cl_gpgpu_set_printf_info_cb *cl_gpgpu_set_printf_info = NULL;
+LOCAL cl_gpgpu_get_printf_info_cb *cl_gpgpu_get_printf_info = NULL;
+LOCAL cl_gpgpu_release_printf_buffer_cb *cl_gpgpu_release_printf_buffer = NULL;
 

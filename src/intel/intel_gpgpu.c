@@ -78,6 +78,9 @@ enum {max_sampler_n = 16 };
 /* Handle GPGPU state */
 struct intel_gpgpu
 {
+  void* ker_opaque;
+  size_t global_wk_sz[3];
+  void* printf_info;
   intel_driver_t *drv;
   intel_batchbuffer_t *batch;
   cl_gpgpu_kernel *ker;
@@ -97,6 +100,8 @@ struct intel_gpgpu
   struct { drm_intel_bo *bo; } scratch_b;
   struct { drm_intel_bo *bo; } constant_b;
   struct { drm_intel_bo *bo; } time_stamp_b;  /* time stamp buffer */
+  struct { drm_intel_bo *bo;
+           drm_intel_bo *ibo;} printf_b;      /* the printf buf and index buf*/
 
   struct { drm_intel_bo *bo; } aux_buf;
   struct {
@@ -155,6 +160,10 @@ intel_gpgpu_delete(intel_gpgpu_t *gpgpu)
     return;
   if(gpgpu->time_stamp_b.bo)
     drm_intel_bo_unreference(gpgpu->time_stamp_b.bo);
+  if(gpgpu->printf_b.bo)
+    drm_intel_bo_unreference(gpgpu->printf_b.bo);
+  if(gpgpu->printf_b.ibo)
+    drm_intel_bo_unreference(gpgpu->printf_b.ibo);
   if (gpgpu->aux_buf.bo)
     drm_intel_bo_unreference(gpgpu->aux_buf.bo);
   if (gpgpu->perf_b.bo)
@@ -566,6 +575,13 @@ intel_gpgpu_state_init(intel_gpgpu_t *gpgpu,
   gpgpu->urb.num_cs_entries = 64;
   gpgpu->urb.size_cs_entry = size_cs_entry;
   gpgpu->max_threads = max_threads;
+
+  if (gpgpu->printf_b.ibo)
+    dri_bo_unreference(gpgpu->printf_b.ibo);
+  gpgpu->printf_b.ibo = NULL;
+  if (gpgpu->printf_b.bo)
+    dri_bo_unreference(gpgpu->printf_b.bo);
+  gpgpu->printf_b.bo = NULL;
 
   /* Set the profile buffer*/
   if(gpgpu->time_stamp_b.bo)
@@ -1209,6 +1225,90 @@ intel_gpgpu_event_get_exec_timestamp(intel_gpgpu_t* gpgpu, intel_event_t *event,
   drm_intel_gem_bo_unmap_gtt(event->ts_buf);
 }
 
+static void
+intel_gpgpu_set_printf_buf(intel_gpgpu_t *gpgpu, uint32_t i, uint32_t size, uint32_t offset)
+{
+  drm_intel_bo *bo = NULL;
+  if (i == 0) { // the index buffer.
+    if (gpgpu->printf_b.ibo)
+      dri_bo_unreference(gpgpu->printf_b.ibo);
+    gpgpu->printf_b.ibo = dri_bo_alloc(gpgpu->drv->bufmgr, "Printf index buffer", size, 4096);
+    bo = gpgpu->printf_b.ibo;
+  } else if (i == 1) {
+    if (gpgpu->printf_b.bo)
+      dri_bo_unreference(gpgpu->printf_b.bo);
+    gpgpu->printf_b.bo = dri_bo_alloc(gpgpu->drv->bufmgr, "Printf output buffer", size, 4096);
+    bo = gpgpu->printf_b.bo;
+  } else
+    assert(0);
+
+  drm_intel_bo_map(bo, 1);
+  memset(bo->virtual, 0, size);
+  drm_intel_bo_unmap(bo);
+
+  intel_gpgpu_bind_buf(gpgpu, bo, offset, 0, 0);
+}
+
+static void*
+intel_gpgpu_map_printf_buf(intel_gpgpu_t *gpgpu, uint32_t i)
+{
+  drm_intel_bo *bo = NULL;
+  if (i == 0) {
+    bo = gpgpu->printf_b.ibo;
+  } else if (i == 1) {
+    bo = gpgpu->printf_b.bo;
+  } else
+    assert(0);
+
+  drm_intel_bo_map(bo, 1);
+  return bo->virtual;
+}
+
+static void
+intel_gpgpu_unmap_printf_buf_addr(intel_gpgpu_t *gpgpu, uint32_t i)
+{
+  drm_intel_bo *bo = NULL;
+  if (i == 0) {
+    bo = gpgpu->printf_b.ibo;
+  } else if (i == 1) {
+    bo = gpgpu->printf_b.bo;
+  } else
+  assert(0);
+
+  drm_intel_bo_unmap(bo);
+}
+
+static void
+intel_gpgpu_release_printf_buf(intel_gpgpu_t *gpgpu, uint32_t i)
+{
+  if (i == 0) {
+    drm_intel_bo_unreference(gpgpu->printf_b.ibo);
+    gpgpu->printf_b.ibo = NULL;
+  } else if (i == 1) {
+    drm_intel_bo_unreference(gpgpu->printf_b.bo);
+    gpgpu->printf_b.bo = NULL;
+  } else
+    assert(0);
+}
+
+static void
+intel_gpgpu_set_printf_info(intel_gpgpu_t *gpgpu, void* printf_info, size_t * global_sz)
+{
+  gpgpu->printf_info = printf_info;
+  gpgpu->global_wk_sz[0] = global_sz[0];
+  gpgpu->global_wk_sz[1] = global_sz[1];
+  gpgpu->global_wk_sz[2] = global_sz[2];
+}
+
+static void*
+intel_gpgpu_get_printf_info(intel_gpgpu_t *gpgpu, size_t * global_sz)
+{
+  global_sz[0] = gpgpu->global_wk_sz[0];
+  global_sz[1] = gpgpu->global_wk_sz[1];
+  global_sz[2] = gpgpu->global_wk_sz[2];
+  return gpgpu->printf_info;
+}
+
 LOCAL void
 intel_set_gpgpu_callbacks(int device_id)
 {
@@ -1239,6 +1339,12 @@ intel_set_gpgpu_callbacks(int device_id)
   cl_gpgpu_event_get_gpu_cur_timestamp = (cl_gpgpu_event_get_gpu_cur_timestamp_cb *)intel_gpgpu_event_get_gpu_cur_timestamp;
   cl_gpgpu_ref_batch_buf = (cl_gpgpu_ref_batch_buf_cb *)intel_gpgpu_ref_batch_buf;
   cl_gpgpu_unref_batch_buf = (cl_gpgpu_unref_batch_buf_cb *)intel_gpgpu_unref_batch_buf;
+  cl_gpgpu_set_printf_buffer = (cl_gpgpu_set_printf_buffer_cb *)intel_gpgpu_set_printf_buf;
+  cl_gpgpu_map_printf_buffer = (cl_gpgpu_map_printf_buffer_cb *)intel_gpgpu_map_printf_buf;
+  cl_gpgpu_unmap_printf_buffer = (cl_gpgpu_unmap_printf_buffer_cb *)intel_gpgpu_unmap_printf_buf_addr;
+  cl_gpgpu_release_printf_buffer = (cl_gpgpu_release_printf_buffer_cb *)intel_gpgpu_release_printf_buf;
+  cl_gpgpu_set_printf_info = (cl_gpgpu_set_printf_info_cb *)intel_gpgpu_set_printf_info;
+  cl_gpgpu_get_printf_info = (cl_gpgpu_get_printf_info_cb *)intel_gpgpu_get_printf_info;
 
   if (IS_HASWELL(device_id)) {
     cl_gpgpu_bind_image = (cl_gpgpu_bind_image_cb *) intel_gpgpu_bind_image_gen75;
