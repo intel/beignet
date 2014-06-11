@@ -72,9 +72,19 @@ namespace gbe {
     FILE *f = fopen("/dev/null", "w");
     char *buf = new char[4096];
     setbuffer(f, buf, 4096);
+    GenCompactInstruction * pCom = NULL;
+    GenNativeInstruction nativeInsn;
 
-    for (uint32_t i = 0; i < insnNum; i++) {
-      gen_disasm(f, insns+i, deviceID);
+    for (uint32_t i = 0; i < insnNum;) {
+      pCom = (GenCompactInstruction*)(insns+i);
+      if(pCom->bits1.cmpt_control == 1) {
+        decompactInstruction(pCom, &nativeInsn);
+        gen_disasm(f, &nativeInsn, deviceID, 1);
+        i++;
+      } else {
+        gen_disasm(f, insns+i, deviceID, 0);
+        i = i + 2;
+      }
       outs << buf;
       fflush(f);
       setbuffer(f, NULL, 0);

@@ -39,7 +39,6 @@
 
 namespace gbe
 {
-  extern void decompactInstruction(union GenCompactInstruction *p, union GenNativeInstruction *pOut);
   ///////////////////////////////////////////////////////////////////////////
   // GenContext implementation
   ///////////////////////////////////////////////////////////////////////////
@@ -1892,10 +1891,10 @@ namespace gbe
         pCom = (GenCompactInstruction*)&p->store[insnID];
         if(pCom->bits1.cmpt_control == 1) {
           decompactInstruction(pCom, &insn);
-          gen_disasm(stdout, &insn, deviceID);
+          gen_disasm(stdout, &insn, deviceID, 1);
           insnID++;
         } else {
-          gen_disasm(stdout, &p->store[insnID], deviceID);
+          gen_disasm(stdout, &p->store[insnID], deviceID, 0);
           insnID = insnID + 2;
         }
       }

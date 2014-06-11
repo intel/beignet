@@ -27,6 +27,7 @@
 
 #include "backend/program.h"
 #include "backend/program.hpp"
+#include "backend/gen_defs.hpp"
 
 // Gen ISA instruction
 struct GenInstruction;
@@ -75,7 +76,8 @@ namespace gbe
     /*! Use custom allocators */
     GBE_CLASS(GenProgram);
   };
-
+  /*! decompact GEN ASM if it is in compacted format */
+  extern void decompactInstruction(union GenCompactInstruction *p, union GenNativeInstruction *pOut);
 } /* namespace gbe */
 
 #endif /* __GBE_GEN_PROGRAM_HPP__ */

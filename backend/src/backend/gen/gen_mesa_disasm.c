@@ -1090,7 +1090,7 @@ static int qtr_ctrl(FILE *file, const union GenNativeInstruction *inst)
   return 0;
 }
 
-int gen_disasm (FILE *file, const void *opaque_insn, uint32_t deviceID)
+int gen_disasm (FILE *file, const void *opaque_insn, uint32_t deviceID, uint32_t compacted)
 {
   const union GenNativeInstruction *inst = (const union GenNativeInstruction *) opaque_insn;
   int	err = 0;
@@ -1287,6 +1287,10 @@ int gen_disasm (FILE *file, const void *opaque_insn, uint32_t deviceID)
         inst->header.opcode == GEN_OPCODE_SENDC)
       err |= control (file, "end of thread", end_of_thread,
           inst->bits3.generic_gen5.end_of_thread, &space);
+
+    if(compacted) {
+      string(file, " Compacted");
+    }
     if (space)
       string (file, " ");
     string (file, "}");
