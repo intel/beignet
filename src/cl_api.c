@@ -2681,6 +2681,58 @@ error:
 }
 
 cl_int
+clEnqueueMigrateMemObjects(cl_command_queue        command_queue,
+                           cl_uint                 num_mem_objects,
+                           const cl_mem *          mem_objects,
+                           cl_mem_migration_flags  flags,
+                           cl_uint                 num_events_in_wait_list,
+                           const cl_event *        event_wait_list,
+                           cl_event *              event)
+{
+  /* So far, we just support 1 device and no subdevice. So all the command queues
+     belong to the small context. There is no need to migrate the mem objects by now. */
+  cl_int err = CL_SUCCESS;
+  cl_uint i = 0;
+  enqueue_data *data, defer_enqueue_data = { 0 };
+
+  if (!flags & CL_MIGRATE_MEM_OBJECT_HOST)
+    CHECK_QUEUE(command_queue);
+
+  if (num_mem_objects == 0 || mem_objects == NULL) {
+    err = CL_INVALID_VALUE;
+    goto error;
+  }
+
+  if (flags && flags & ~(CL_MIGRATE_MEM_OBJECT_HOST |
+                         CL_MIGRATE_MEM_OBJECT_CONTENT_UNDEFINED)) {
+    err = CL_INVALID_VALUE;
+    goto error;
+  }
+
+  for (i = 0; i < num_mem_objects; i++) {
+    CHECK_MEM(mem_objects[i]);
+    if (mem_objects[i]->ctx != command_queue->ctx) {
+      err = CL_INVALID_CONTEXT;
+      goto error;
+    }
+  }
+
+  /* really nothing to do, fill the event. */
+  TRY(cl_event_check_waitlist, num_events_in_wait_list, event_wait_list, event, command_queue->ctx);
+  data = &defer_enqueue_data;
+  data->type = EnqueueMigrateMemObj;
+
+  if(handle_events(command_queue, num_events_in_wait_list, event_wait_list,
+                   event, data, CL_COMMAND_READ_BUFFER) == CL_ENQUEUE_EXECUTE_IMM) {
+    err = cl_enqueue_handle(event ? *event : NULL, data);
+    if(event) cl_event_set_status(*event, CL_COMPLETE);
+  }
+
+error:
+  return err;
+}
+
+cl_int
 clEnqueueNDRangeKernel(cl_command_queue  command_queue,
                        cl_kernel         kernel,
                        cl_uint           work_dim,

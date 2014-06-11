@@ -43,6 +43,7 @@ typedef enum {
   EnqueueMarker,
   EnqueueBarrier,
   EnqueueFillBuffer,
+  EnqueueMigrateMemObj,
   EnqueueInvalid
 } enqueue_type;
 
