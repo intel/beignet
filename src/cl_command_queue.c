@@ -130,7 +130,7 @@ cl_command_queue_bind_image(cl_command_queue queue, cl_kernel k)
   for (i = 0; i < k->image_sz; i++) {
     int id = k->images[i].arg_idx;
     struct _cl_mem_image *image;
-    assert(gbe_kernel_get_arg_type(k->opaque, id) == GBE_ARG_IMAGE);
+    assert(interp_kernel_get_arg_type(k->opaque, id) == GBE_ARG_IMAGE);
     image = cl_mem_image(k->args[id].mem);
     set_image_info(k->curbe, &k->images[i], image);
     cl_gpgpu_bind_image(gpgpu, k->images[i].idx, image->base.bo, image->offset,
@@ -151,10 +151,10 @@ cl_command_queue_bind_surface(cl_command_queue queue, cl_kernel k)
   enum gbe_arg_type arg_type; /* kind of argument */
   for (i = 0; i < k->arg_n; ++i) {
     uint32_t offset; // location of the address in the curbe
-    arg_type = gbe_kernel_get_arg_type(k->opaque, i);
+    arg_type = interp_kernel_get_arg_type(k->opaque, i);
     if (arg_type != GBE_ARG_GLOBAL_PTR || !k->args[i].mem)
       continue;
-    offset = gbe_kernel_get_curbe_offset(k->opaque, GBE_CURBE_KERNEL_ARGUMENT, i);
+    offset = interp_kernel_get_curbe_offset(k->opaque, GBE_CURBE_KERNEL_ARGUMENT, i);
     if (k->args[i].mem->type == CL_MEM_SUBBUFFER_TYPE) {
       struct _cl_mem_buffer* buffer = (struct _cl_mem_buffer*)k->args[i].mem;
       cl_gpgpu_bind_buf(gpgpu, k->args[i].mem->bo, offset, buffer->sub_offset, cl_gpgpu_get_cache_ctrl());
@@ -208,7 +208,7 @@ cl_fulsim_dump_all_surfaces(cl_command_queue queue, cl_kernel k)
   /* Bind user defined surface */
   for (i = 0; i < k->arg_n; ++i) {
     size_t chunk_n, chunk_remainder;
-    if (gbe_kernel_get_arg_type(k->opaque, i) != GBE_ARG_GLOBAL_PTR)
+    if (interp_kernel_get_arg_type(k->opaque, i) != GBE_ARG_GLOBAL_PTR)
       continue;
     mem = (cl_mem) k->args[i].mem;
     CHECK_MEM(mem);
@@ -316,7 +316,7 @@ cl_fulsim_read_all_surfaces(cl_command_queue queue, cl_kernel k)
   int i, curr = 0;
   /* Bind user defined surface */
   for (i = 0; i < k->arg_n; ++i) {
-    if (gbe_kernel_get_arg_type(k->opaque, i) != GBE_ARG_GLOBAL_PTR)
+    if (interp_kernel_get_arg_type(k->opaque, i) != GBE_ARG_GLOBAL_PTR)
       continue;
     mem = (cl_mem) k->args[i].mem;
     CHECK_MEM(mem);
@@ -425,14 +425,14 @@ cl_command_queue_flush(cl_command_queue queue)
 
   cl_gpgpu_flush(gpgpu);
 
-  if (printf_info && gbe_get_printf_num(printf_info)) {
+  if (printf_info && interp_get_printf_num(printf_info)) {
     void *index_addr = cl_gpgpu_map_printf_buffer(gpgpu, 0);
     void *buf_addr = cl_gpgpu_map_printf_buffer(gpgpu, 1);
-    gbe_output_printf(printf_info, index_addr, buf_addr, global_wk_sz[0],
+    interp_output_printf(printf_info, index_addr, buf_addr, global_wk_sz[0],
                       global_wk_sz[1], global_wk_sz[2]);
     cl_gpgpu_unmap_printf_buffer(gpgpu, 0);
     cl_gpgpu_unmap_printf_buffer(gpgpu, 1);
-    gbe_release_printf_info(printf_info);
+    interp_release_printf_info(printf_info);
     global_wk_sz[0] = global_wk_sz[1] = global_wk_sz[2] = 0;
     cl_gpgpu_set_printf_info(gpgpu, NULL, global_wk_sz);
   }

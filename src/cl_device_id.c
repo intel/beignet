@@ -476,7 +476,7 @@ cl_get_kernel_workgroup_info(cl_kernel kernel,
     DECL_FIELD(PREFERRED_WORK_GROUP_SIZE_MULTIPLE, device->preferred_wg_sz_mul)
     case CL_KERNEL_LOCAL_MEM_SIZE:
       {
-        size_t local_mem_sz =  gbe_kernel_get_slm_size(kernel->opaque) + kernel->local_mem_sz;
+        size_t local_mem_sz =  interp_kernel_get_slm_size(kernel->opaque) + kernel->local_mem_sz;
         _DECL_FIELD(local_mem_sz)
       }
     DECL_FIELD(COMPILE_WORK_GROUP_SIZE, kernel->compile_wg_sz)

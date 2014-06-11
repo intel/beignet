@@ -93,7 +93,7 @@ cl_program_delete(cl_program p)
   cl_context_delete(p->ctx);
 
   /* Free the program as allocated by the compiler */
-  if (p->opaque) gbe_program_delete(p->opaque);
+  if (p->opaque) interp_program_delete(p->opaque);
 
   p->magic = CL_MAGIC_DEAD_HEADER; /* For safety */
   cl_free(p);
@@ -137,13 +137,13 @@ cl_program_load_gen_program(cl_program p)
   uint32_t i;
 
   assert(p->opaque != NULL);
-  p->ker_n = gbe_program_get_kernel_num(p->opaque);
+  p->ker_n = interp_program_get_kernel_num(p->opaque);
 
   /* Allocate the kernel array */
   TRY_ALLOC (p->ker, CALLOC_ARRAY(cl_kernel, p->ker_n));
 
   for (i = 0; i < p->ker_n; ++i) {
-    const gbe_kernel opaque = gbe_program_get_kernel(p->opaque, i);
+    const gbe_kernel opaque = interp_program_get_kernel(p->opaque, i);
     assert(opaque != NULL);
     TRY_ALLOC (p->ker[i], cl_kernel_new(p));
     cl_kernel_setup(p->ker[i], opaque);
@@ -345,7 +345,7 @@ cl_program_build(cl_program p, const char *options)
     TRY (cl_program_load_gen_program, p);
     p->source_type = FROM_LLVM;
   } else if (p->source_type == FROM_BINARY) {
-    p->opaque = gbe_program_new_from_binary(p->ctx->device->vendor_id, p->binary, p->binary_sz);
+    p->opaque = interp_program_new_from_binary(p->ctx->device->vendor_id, p->binary, p->binary_sz);
     if (UNLIKELY(p->opaque == NULL)) {
       err = CL_BUILD_PROGRAM_FAILURE;
       goto error;
@@ -357,16 +357,16 @@ cl_program_build(cl_program p, const char *options)
   }
 
   for (i = 0; i < p->ker_n; i ++) {
-    const gbe_kernel opaque = gbe_program_get_kernel(p->opaque, i);
-    p->bin_sz += gbe_kernel_get_code_size(opaque);
+    const gbe_kernel opaque = interp_program_get_kernel(p->opaque, i);
+    p->bin_sz += interp_kernel_get_code_size(opaque);
   }
 
   TRY_ALLOC (p->bin, cl_calloc(p->bin_sz, sizeof(char)));
   for (i = 0; i < p->ker_n; i ++) {
-    const gbe_kernel opaque = gbe_program_get_kernel(p->opaque, i);
-    size_t sz = gbe_kernel_get_code_size(opaque);
+    const gbe_kernel opaque = interp_program_get_kernel(p->opaque, i);
+    size_t sz = interp_kernel_get_code_size(opaque);
 
-    memcpy(p->bin + copyed, gbe_kernel_get_code(opaque), sz);
+    memcpy(p->bin + copyed, interp_kernel_get_code(opaque), sz);
     copyed += sz;
   }
 

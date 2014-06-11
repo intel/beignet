@@ -50,10 +50,10 @@ cl_set_varying_payload(const cl_kernel ker,
   int32_t id_offset[3], ip_offset;
   cl_int err = CL_SUCCESS;
 
-  id_offset[0] = gbe_kernel_get_curbe_offset(ker->opaque, GBE_CURBE_LOCAL_ID_X, 0);
-  id_offset[1] = gbe_kernel_get_curbe_offset(ker->opaque, GBE_CURBE_LOCAL_ID_Y, 0);
-  id_offset[2] = gbe_kernel_get_curbe_offset(ker->opaque, GBE_CURBE_LOCAL_ID_Z, 0);
-  ip_offset = gbe_kernel_get_curbe_offset(ker->opaque, GBE_CURBE_BLOCK_IP, 0);
+  id_offset[0] = interp_kernel_get_curbe_offset(ker->opaque, GBE_CURBE_LOCAL_ID_X, 0);
+  id_offset[1] = interp_kernel_get_curbe_offset(ker->opaque, GBE_CURBE_LOCAL_ID_Y, 0);
+  id_offset[2] = interp_kernel_get_curbe_offset(ker->opaque, GBE_CURBE_LOCAL_ID_Z, 0);
+  ip_offset = interp_kernel_get_curbe_offset(ker->opaque, GBE_CURBE_BLOCK_IP, 0);
   assert(id_offset[0] >= 0 &&
          id_offset[1] >= 0 &&
          id_offset[2] >= 0 &&
@@ -107,16 +107,16 @@ cl_upload_constant_buffer(cl_command_queue queue, cl_kernel ker)
   size_t offset = 0;
   uint32_t raw_size = 0, aligned_size =0;
   gbe_program prog = ker->program->opaque;
-  const int32_t arg_n = gbe_kernel_get_arg_num(ker->opaque);
-  size_t global_const_size = gbe_program_get_global_constant_size(prog);
+  const int32_t arg_n = interp_kernel_get_arg_num(ker->opaque);
+  size_t global_const_size = interp_program_get_global_constant_size(prog);
   aligned_size = raw_size = global_const_size;
   /* Reserve 8 bytes to get rid of 0 address */
   if(global_const_size == 0) aligned_size = 8;
 
   for (arg = 0; arg < arg_n; ++arg) {
-    const enum gbe_arg_type type = gbe_kernel_get_arg_type(ker->opaque, arg);
+    const enum gbe_arg_type type = interp_kernel_get_arg_type(ker->opaque, arg);
     if (type == GBE_ARG_CONSTANT_PTR && ker->args[arg].mem) {
-      uint32_t alignment = gbe_kernel_get_arg_align(ker->opaque, arg);
+      uint32_t alignment = interp_kernel_get_arg_align(ker->opaque, arg);
       assert(alignment != 0);
       cl_mem mem = ker->args[arg].mem;
       raw_size += mem->size;
@@ -133,7 +133,7 @@ cl_upload_constant_buffer(cl_command_queue queue, cl_kernel ker)
 
   /* upload the global constant data */
   if (global_const_size > 0) {
-    gbe_program_get_global_constant_data(prog, (char*)(cst_addr+offset));
+    interp_program_get_global_constant_data(prog, (char*)(cst_addr+offset));
     offset += global_const_size;
   }
 
@@ -145,12 +145,12 @@ cl_upload_constant_buffer(cl_command_queue queue, cl_kernel ker)
   /* upload constant buffer argument */
   int32_t curbe_offset = 0;
   for (arg = 0; arg < arg_n; ++arg) {
-    const enum gbe_arg_type type = gbe_kernel_get_arg_type(ker->opaque, arg);
+    const enum gbe_arg_type type = interp_kernel_get_arg_type(ker->opaque, arg);
     if (type == GBE_ARG_CONSTANT_PTR && ker->args[arg].mem) {
       cl_mem mem = ker->args[arg].mem;
-      uint32_t alignment = gbe_kernel_get_arg_align(ker->opaque, arg);
+      uint32_t alignment = interp_kernel_get_arg_align(ker->opaque, arg);
       offset = ALIGN(offset, alignment);
-      curbe_offset = gbe_kernel_get_curbe_offset(ker->opaque, GBE_CURBE_KERNEL_ARGUMENT, arg);
+      curbe_offset = interp_kernel_get_curbe_offset(ker->opaque, GBE_CURBE_KERNEL_ARGUMENT, arg);
       assert(curbe_offset >= 0);
       *(uint32_t *) (ker->curbe + curbe_offset) = offset;
 
@@ -175,7 +175,7 @@ cl_curbe_fill(cl_kernel ker,
 {
   int32_t offset;
 #define UPLOAD(ENUM, VALUE) \
-  if ((offset = gbe_kernel_get_curbe_offset(ker->opaque, ENUM, 0)) >= 0) \
+  if ((offset = interp_kernel_get_curbe_offset(ker->opaque, ENUM, 0)) >= 0) \
     *((uint32_t *) (ker->curbe + offset)) = VALUE;
   UPLOAD(GBE_CURBE_LOCAL_SIZE_X, local_wk_sz[0]);
   UPLOAD(GBE_CURBE_LOCAL_SIZE_Y, local_wk_sz[1]);
@@ -196,24 +196,24 @@ cl_curbe_fill(cl_kernel ker,
   /* Write identity for the stack pointer. This is required by the stack pointer
    * computation in the kernel
    */
-  if ((offset = gbe_kernel_get_curbe_offset(ker->opaque, GBE_CURBE_STACK_POINTER, 0)) >= 0) {
-    const uint32_t simd_sz = gbe_kernel_get_simd_width(ker->opaque);
+  if ((offset = interp_kernel_get_curbe_offset(ker->opaque, GBE_CURBE_STACK_POINTER, 0)) >= 0) {
+    const uint32_t simd_sz = interp_kernel_get_simd_width(ker->opaque);
     uint32_t *stackptr = (uint32_t *) (ker->curbe + offset);
     int32_t i;
     for (i = 0; i < (int32_t) simd_sz; ++i) stackptr[i] = i;
   }
   /* Handle the various offsets to SLM */
-  const int32_t arg_n = gbe_kernel_get_arg_num(ker->opaque);
-  int32_t arg, slm_offset = gbe_kernel_get_slm_size(ker->opaque);
+  const int32_t arg_n = interp_kernel_get_arg_num(ker->opaque);
+  int32_t arg, slm_offset = interp_kernel_get_slm_size(ker->opaque);
   ker->local_mem_sz = 0;
   for (arg = 0; arg < arg_n; ++arg) {
-    const enum gbe_arg_type type = gbe_kernel_get_arg_type(ker->opaque, arg);
+    const enum gbe_arg_type type = interp_kernel_get_arg_type(ker->opaque, arg);
     if (type != GBE_ARG_LOCAL_PTR)
       continue;
-    uint32_t align = gbe_kernel_get_arg_align(ker->opaque, arg);
+    uint32_t align = interp_kernel_get_arg_align(ker->opaque, arg);
     assert(align != 0);
     slm_offset = ALIGN(slm_offset, align);
-    offset = gbe_kernel_get_curbe_offset(ker->opaque, GBE_CURBE_KERNEL_ARGUMENT, arg);
+    offset = interp_kernel_get_curbe_offset(ker->opaque, GBE_CURBE_KERNEL_ARGUMENT, arg);
     assert(offset >= 0);
     uint32_t *slmptr = (uint32_t *) (ker->curbe + offset);
     *slmptr = slm_offset;
@@ -231,7 +231,7 @@ cl_bind_stack(cl_gpgpu gpgpu, cl_kernel ker)
   const int32_t per_lane_stack_sz = ker->stack_size;
   const int32_t value = GBE_CURBE_EXTRA_ARGUMENT;
   const int32_t sub_value = GBE_STACK_BUFFER;
-  const int32_t offset = gbe_kernel_get_curbe_offset(ker->opaque, value, sub_value);
+  const int32_t offset = interp_kernel_get_curbe_offset(ker->opaque, value, sub_value);
   int32_t stack_sz = per_lane_stack_sz;
 
   /* No stack required for this kernel */
@@ -242,7 +242,7 @@ cl_bind_stack(cl_gpgpu gpgpu, cl_kernel ker)
    * the size we need for the complete machine
    */
   assert(offset >= 0);
-  stack_sz *= gbe_kernel_get_simd_width(ker->opaque);
+  stack_sz *= interp_kernel_get_simd_width(ker->opaque);
   stack_sz *= device->max_compute_unit;
   cl_gpgpu_set_stack(gpgpu, offset, stack_sz, cl_gpgpu_get_cache_ctrl());
 }
@@ -250,13 +250,13 @@ cl_bind_stack(cl_gpgpu gpgpu, cl_kernel ker)
 static void
 cl_bind_printf(cl_gpgpu gpgpu, cl_kernel ker, void* printf_info, int printf_num, size_t global_sz) {
   int32_t value = GBE_CURBE_PRINTF_INDEX_POINTER;
-  int32_t offset = gbe_kernel_get_curbe_offset(ker->opaque, value, 0);
+  int32_t offset = interp_kernel_get_curbe_offset(ker->opaque, value, 0);
   size_t buf_size = global_sz * sizeof(int) * printf_num;
   cl_gpgpu_set_printf_buffer(gpgpu, 0, buf_size, offset);
 
   value = GBE_CURBE_PRINTF_BUF_POINTER;
-  offset = gbe_kernel_get_curbe_offset(ker->opaque, value, 0);
-  buf_size = gbe_get_printf_sizeof_size(printf_info) * global_sz;
+  offset = interp_kernel_get_curbe_offset(ker->opaque, value, 0);
+  buf_size = interp_get_printf_sizeof_size(printf_info) * global_sz;
   cl_gpgpu_set_printf_buffer(gpgpu, 1, buf_size, offset);
 }
 
@@ -274,8 +274,8 @@ cl_command_queue_ND_range_gen7(cl_command_queue queue,
   cl_gpgpu_kernel kernel;
   const uint32_t simd_sz = cl_kernel_get_simd_width(ker);
   size_t i, batch_sz = 0u, local_sz = 0u;
-  size_t cst_sz = ker->curbe_sz= gbe_kernel_get_curbe_size(ker->opaque);
-  int32_t scratch_sz = gbe_kernel_get_scratch_size(ker->opaque);
+  size_t cst_sz = ker->curbe_sz= interp_kernel_get_curbe_size(ker->opaque);
+  int32_t scratch_sz = interp_kernel_get_scratch_size(ker->opaque);
   size_t thread_n = 0u;
   int printf_num = 0;
   cl_int err = CL_SUCCESS;
@@ -288,7 +288,7 @@ cl_command_queue_ND_range_gen7(cl_command_queue queue,
   kernel.bo = ker->bo;
   kernel.barrierID = 0;
   kernel.slm_sz = 0;
-  kernel.use_slm = gbe_kernel_use_slm(ker->opaque);
+  kernel.use_slm = interp_kernel_use_slm(ker->opaque);
 
   /* Compute the number of HW threads we need */
   TRY (cl_kernel_work_group_sz, ker, local_wk_sz, 3, &local_sz);
@@ -314,7 +314,7 @@ cl_command_queue_ND_range_gen7(cl_command_queue queue,
     }
   }
 
-  printf_info = gbe_dup_printfset(ker->opaque);
+  printf_info = interp_dup_printfset(ker->opaque);
   cl_gpgpu_set_printf_info(gpgpu, printf_info, (size_t *)global_wk_sz);
 
   /* Setup the kernel */
@@ -323,7 +323,7 @@ cl_command_queue_ND_range_gen7(cl_command_queue queue,
   else
     cl_gpgpu_state_init(gpgpu, ctx->device->max_compute_unit, cst_sz / 32, 0);
 
-  printf_num = gbe_get_printf_num(printf_info);
+  printf_num = interp_get_printf_num(printf_info);
   if (printf_num) {
     cl_bind_printf(gpgpu, ker, printf_info, printf_num, global_size);
   }

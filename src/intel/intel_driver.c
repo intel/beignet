@@ -412,7 +412,7 @@ cl_intel_driver_new(cl_context_prop props)
    * when it allocates slots for images*/
   if (CompilerSupported())
     compiler_set_image_base_index(3);
-  gbe_set_image_base_index_interp(3);
+  interp_set_image_base_index(3);
 exit:
   return driver;
 error:

@@ -30,40 +30,40 @@ gbe_kernel_set_const_buffer_size_cb *compiler_kernel_set_const_buffer_size = NUL
 gbe_set_image_base_index_cb *compiler_set_image_base_index = NULL;
 
 //function pointer from libgbeinterp.so
-gbe_program_new_from_binary_cb *gbe_program_new_from_binary = NULL;
-gbe_program_get_global_constant_size_cb *gbe_program_get_global_constant_size = NULL;
-gbe_program_get_global_constant_data_cb *gbe_program_get_global_constant_data = NULL;
-gbe_program_delete_cb *gbe_program_delete = NULL;
-gbe_program_get_kernel_num_cb *gbe_program_get_kernel_num = NULL;
-gbe_program_get_kernel_by_name_cb *gbe_program_get_kernel_by_name = NULL;
-gbe_program_get_kernel_cb *gbe_program_get_kernel = NULL;
-gbe_kernel_get_name_cb *gbe_kernel_get_name = NULL;
-gbe_kernel_get_code_cb *gbe_kernel_get_code = NULL;
-gbe_kernel_get_code_size_cb *gbe_kernel_get_code_size = NULL;
-gbe_kernel_get_arg_num_cb *gbe_kernel_get_arg_num = NULL;
-gbe_kernel_get_arg_size_cb *gbe_kernel_get_arg_size = NULL;
-gbe_kernel_get_arg_type_cb *gbe_kernel_get_arg_type = NULL;
-gbe_kernel_get_arg_align_cb *gbe_kernel_get_arg_align = NULL;
-gbe_kernel_get_simd_width_cb *gbe_kernel_get_simd_width = NULL;
-gbe_kernel_get_curbe_offset_cb *gbe_kernel_get_curbe_offset = NULL;
-gbe_kernel_get_curbe_size_cb *gbe_kernel_get_curbe_size = NULL;
-gbe_kernel_get_stack_size_cb *gbe_kernel_get_stack_size = NULL;
-gbe_kernel_get_scratch_size_cb *gbe_kernel_get_scratch_size = NULL;
-gbe_kernel_get_required_work_group_size_cb *gbe_kernel_get_required_work_group_size = NULL;
-gbe_kernel_use_slm_cb *gbe_kernel_use_slm = NULL;
-gbe_kernel_get_slm_size_cb *gbe_kernel_get_slm_size = NULL;
-gbe_kernel_get_sampler_size_cb *gbe_kernel_get_sampler_size = NULL;
-gbe_kernel_get_sampler_data_cb *gbe_kernel_get_sampler_data = NULL;
-gbe_kernel_get_compile_wg_size_cb *gbe_kernel_get_compile_wg_size = NULL;
-gbe_kernel_get_image_size_cb *gbe_kernel_get_image_size = NULL;
-gbe_kernel_get_image_data_cb *gbe_kernel_get_image_data = NULL;
-gbe_set_image_base_index_cb *gbe_set_image_base_index_interp = NULL;
-gbe_get_image_base_index_cb *gbe_get_image_base_index = NULL;
-gbe_get_printf_num_cb* gbe_get_printf_num = NULL;
-gbe_dup_printfset_cb* gbe_dup_printfset = NULL;
-gbe_get_printf_sizeof_size_cb* gbe_get_printf_sizeof_size = NULL;
-gbe_release_printf_info_cb* gbe_release_printf_info = NULL;
-gbe_output_printf_cb* gbe_output_printf = NULL;
+gbe_program_new_from_binary_cb *interp_program_new_from_binary = NULL;
+gbe_program_get_global_constant_size_cb *interp_program_get_global_constant_size = NULL;
+gbe_program_get_global_constant_data_cb *interp_program_get_global_constant_data = NULL;
+gbe_program_delete_cb *interp_program_delete = NULL;
+gbe_program_get_kernel_num_cb *interp_program_get_kernel_num = NULL;
+gbe_program_get_kernel_by_name_cb *interp_program_get_kernel_by_name = NULL;
+gbe_program_get_kernel_cb *interp_program_get_kernel = NULL;
+gbe_kernel_get_name_cb *interp_kernel_get_name = NULL;
+gbe_kernel_get_code_cb *interp_kernel_get_code = NULL;
+gbe_kernel_get_code_size_cb *interp_kernel_get_code_size = NULL;
+gbe_kernel_get_arg_num_cb *interp_kernel_get_arg_num = NULL;
+gbe_kernel_get_arg_size_cb *interp_kernel_get_arg_size = NULL;
+gbe_kernel_get_arg_type_cb *interp_kernel_get_arg_type = NULL;
+gbe_kernel_get_arg_align_cb *interp_kernel_get_arg_align = NULL;
+gbe_kernel_get_simd_width_cb *interp_kernel_get_simd_width = NULL;
+gbe_kernel_get_curbe_offset_cb *interp_kernel_get_curbe_offset = NULL;
+gbe_kernel_get_curbe_size_cb *interp_kernel_get_curbe_size = NULL;
+gbe_kernel_get_stack_size_cb *interp_kernel_get_stack_size = NULL;
+gbe_kernel_get_scratch_size_cb *interp_kernel_get_scratch_size = NULL;
+gbe_kernel_get_required_work_group_size_cb *interp_kernel_get_required_work_group_size = NULL;
+gbe_kernel_use_slm_cb *interp_kernel_use_slm = NULL;
+gbe_kernel_get_slm_size_cb *interp_kernel_get_slm_size = NULL;
+gbe_kernel_get_sampler_size_cb *interp_kernel_get_sampler_size = NULL;
+gbe_kernel_get_sampler_data_cb *interp_kernel_get_sampler_data = NULL;
+gbe_kernel_get_compile_wg_size_cb *interp_kernel_get_compile_wg_size = NULL;
+gbe_kernel_get_image_size_cb *interp_kernel_get_image_size = NULL;
+gbe_kernel_get_image_data_cb *interp_kernel_get_image_data = NULL;
+gbe_set_image_base_index_cb *interp_set_image_base_index = NULL;
+gbe_get_image_base_index_cb *interp_get_image_base_index = NULL;
+gbe_get_printf_num_cb* interp_get_printf_num = NULL;
+gbe_dup_printfset_cb* interp_dup_printfset = NULL;
+gbe_get_printf_sizeof_size_cb* interp_get_printf_sizeof_size = NULL;
+gbe_release_printf_info_cb* interp_release_printf_info = NULL;
+gbe_output_printf_cb* interp_output_printf = NULL;
 
 struct GbeLoaderInitializer
 {
@@ -84,145 +84,145 @@ struct GbeLoaderInitializer
 
     path = interpPath;
 
-    dlhInterp = dlopen(interpPath, RTLD_LAZY | RTLD_LOCAL | RTLD_DEEPBIND);
+    dlhInterp = dlopen(interpPath, RTLD_LAZY | RTLD_LOCAL);
     if (dlhInterp == NULL) {
       return false;
     }
 
-    gbe_program_new_from_binary = *(gbe_program_new_from_binary_cb**)dlsym(dlhInterp, "gbe_program_new_from_binary");
-    if (gbe_program_new_from_binary == NULL)
+    interp_program_new_from_binary = *(gbe_program_new_from_binary_cb**)dlsym(dlhInterp, "gbe_program_new_from_binary");
+    if (interp_program_new_from_binary == NULL)
       return false;
 
-    gbe_program_get_global_constant_size = *(gbe_program_get_global_constant_size_cb**)dlsym(dlhInterp, "gbe_program_get_global_constant_size");
-    if (gbe_program_get_global_constant_size == NULL)
+    interp_program_get_global_constant_size = *(gbe_program_get_global_constant_size_cb**)dlsym(dlhInterp, "gbe_program_get_global_constant_size");
+    if (interp_program_get_global_constant_size == NULL)
       return false;
 
-    gbe_program_get_global_constant_data = *(gbe_program_get_global_constant_data_cb**)dlsym(dlhInterp, "gbe_program_get_global_constant_data");
-    if (gbe_program_get_global_constant_data == NULL)
+    interp_program_get_global_constant_data = *(gbe_program_get_global_constant_data_cb**)dlsym(dlhInterp, "gbe_program_get_global_constant_data");
+    if (interp_program_get_global_constant_data == NULL)
       return false;
 
-    gbe_program_delete = *(gbe_program_delete_cb**)dlsym(dlhInterp, "gbe_program_delete");
-    if (gbe_program_delete == NULL)
+    interp_program_delete = *(gbe_program_delete_cb**)dlsym(dlhInterp, "gbe_program_delete");
+    if (interp_program_delete == NULL)
       return false;
 
-    gbe_program_get_kernel_num = *(gbe_program_get_kernel_num_cb**)dlsym(dlhInterp, "gbe_program_get_kernel_num");
-    if (gbe_program_get_kernel_num == NULL)
+    interp_program_get_kernel_num = *(gbe_program_get_kernel_num_cb**)dlsym(dlhInterp, "gbe_program_get_kernel_num");
+    if (interp_program_get_kernel_num == NULL)
       return false;
 
-    gbe_program_get_kernel_by_name = *(gbe_program_get_kernel_by_name_cb**)dlsym(dlhInterp, "gbe_program_get_kernel_by_name");
-    if (gbe_program_get_kernel_by_name == NULL)
+    interp_program_get_kernel_by_name = *(gbe_program_get_kernel_by_name_cb**)dlsym(dlhInterp, "gbe_program_get_kernel_by_name");
+    if (interp_program_get_kernel_by_name == NULL)
       return false;
 
-    gbe_program_get_kernel = *(gbe_program_get_kernel_cb**)dlsym(dlhInterp, "gbe_program_get_kernel");
-    if (gbe_program_get_kernel == NULL)
+    interp_program_get_kernel = *(gbe_program_get_kernel_cb**)dlsym(dlhInterp, "gbe_program_get_kernel");
+    if (interp_program_get_kernel == NULL)
       return false;
 
-    gbe_kernel_get_name = *(gbe_kernel_get_name_cb**)dlsym(dlhInterp, "gbe_kernel_get_name");
-    if (gbe_kernel_get_name == NULL)
+    interp_kernel_get_name = *(gbe_kernel_get_name_cb**)dlsym(dlhInterp, "gbe_kernel_get_name");
+    if (interp_kernel_get_name == NULL)
       return false;
 
-    gbe_kernel_get_code = *(gbe_kernel_get_code_cb**)dlsym(dlhInterp, "gbe_kernel_get_code");
-    if (gbe_kernel_get_code == NULL)
+    interp_kernel_get_code = *(gbe_kernel_get_code_cb**)dlsym(dlhInterp, "gbe_kernel_get_code");
+    if (interp_kernel_get_code == NULL)
       return false;
 
-    gbe_kernel_get_code_size = *(gbe_kernel_get_code_size_cb**)dlsym(dlhInterp, "gbe_kernel_get_code_size");
-    if (gbe_kernel_get_code_size == NULL)
+    interp_kernel_get_code_size = *(gbe_kernel_get_code_size_cb**)dlsym(dlhInterp, "gbe_kernel_get_code_size");
+    if (interp_kernel_get_code_size == NULL)
       return false;
 
-    gbe_kernel_get_arg_num = *(gbe_kernel_get_arg_num_cb**)dlsym(dlhInterp, "gbe_kernel_get_arg_num");
-    if (gbe_kernel_get_arg_num == NULL)
+    interp_kernel_get_arg_num = *(gbe_kernel_get_arg_num_cb**)dlsym(dlhInterp, "gbe_kernel_get_arg_num");
+    if (interp_kernel_get_arg_num == NULL)
       return false;
 
-    gbe_kernel_get_arg_size = *(gbe_kernel_get_arg_size_cb**)dlsym(dlhInterp, "gbe_kernel_get_arg_size");
-    if (gbe_kernel_get_arg_size == NULL)
+    interp_kernel_get_arg_size = *(gbe_kernel_get_arg_size_cb**)dlsym(dlhInterp, "gbe_kernel_get_arg_size");
+    if (interp_kernel_get_arg_size == NULL)
       return false;
 
-    gbe_kernel_get_arg_type = *(gbe_kernel_get_arg_type_cb**)dlsym(dlhInterp, "gbe_kernel_get_arg_type");
-    if (gbe_kernel_get_arg_type == NULL)
+    interp_kernel_get_arg_type = *(gbe_kernel_get_arg_type_cb**)dlsym(dlhInterp, "gbe_kernel_get_arg_type");
+    if (interp_kernel_get_arg_type == NULL)
       return false;
 
-    gbe_kernel_get_arg_align = *(gbe_kernel_get_arg_align_cb**)dlsym(dlhInterp, "gbe_kernel_get_arg_align");
-    if (gbe_kernel_get_arg_align == NULL)
+    interp_kernel_get_arg_align = *(gbe_kernel_get_arg_align_cb**)dlsym(dlhInterp, "gbe_kernel_get_arg_align");
+    if (interp_kernel_get_arg_align == NULL)
       return false;
 
-    gbe_kernel_get_simd_width = *(gbe_kernel_get_simd_width_cb**)dlsym(dlhInterp, "gbe_kernel_get_simd_width");
-    if (gbe_kernel_get_simd_width == NULL)
+    interp_kernel_get_simd_width = *(gbe_kernel_get_simd_width_cb**)dlsym(dlhInterp, "gbe_kernel_get_simd_width");
+    if (interp_kernel_get_simd_width == NULL)
       return false;
 
-    gbe_kernel_get_curbe_offset = *(gbe_kernel_get_curbe_offset_cb**)dlsym(dlhInterp, "gbe_kernel_get_curbe_offset");
-    if (gbe_kernel_get_curbe_offset == NULL)
+    interp_kernel_get_curbe_offset = *(gbe_kernel_get_curbe_offset_cb**)dlsym(dlhInterp, "gbe_kernel_get_curbe_offset");
+    if (interp_kernel_get_curbe_offset == NULL)
       return false;
 
-    gbe_kernel_get_curbe_size = *(gbe_kernel_get_curbe_size_cb**)dlsym(dlhInterp, "gbe_kernel_get_curbe_size");
-    if (gbe_kernel_get_curbe_size == NULL)
+    interp_kernel_get_curbe_size = *(gbe_kernel_get_curbe_size_cb**)dlsym(dlhInterp, "gbe_kernel_get_curbe_size");
+    if (interp_kernel_get_curbe_size == NULL)
       return false;
 
-    gbe_kernel_get_stack_size = *(gbe_kernel_get_stack_size_cb**)dlsym(dlhInterp, "gbe_kernel_get_stack_size");
-    if (gbe_kernel_get_stack_size == NULL)
+    interp_kernel_get_stack_size = *(gbe_kernel_get_stack_size_cb**)dlsym(dlhInterp, "gbe_kernel_get_stack_size");
+    if (interp_kernel_get_stack_size == NULL)
       return false;
 
-    gbe_kernel_get_scratch_size = *(gbe_kernel_get_scratch_size_cb**)dlsym(dlhInterp, "gbe_kernel_get_scratch_size");
-    if (gbe_kernel_get_scratch_size == NULL)
+    interp_kernel_get_scratch_size = *(gbe_kernel_get_scratch_size_cb**)dlsym(dlhInterp, "gbe_kernel_get_scratch_size");
+    if (interp_kernel_get_scratch_size == NULL)
       return false;
 
-    gbe_kernel_get_required_work_group_size = *(gbe_kernel_get_required_work_group_size_cb**)dlsym(dlhInterp, "gbe_kernel_get_required_work_group_size");
-    if (gbe_kernel_get_required_work_group_size == NULL)
+    interp_kernel_get_required_work_group_size = *(gbe_kernel_get_required_work_group_size_cb**)dlsym(dlhInterp, "gbe_kernel_get_required_work_group_size");
+    if (interp_kernel_get_required_work_group_size == NULL)
       return false;
 
-    gbe_kernel_use_slm = *(gbe_kernel_use_slm_cb**)dlsym(dlhInterp, "gbe_kernel_use_slm");
-    if (gbe_kernel_use_slm == NULL)
+    interp_kernel_use_slm = *(gbe_kernel_use_slm_cb**)dlsym(dlhInterp, "gbe_kernel_use_slm");
+    if (interp_kernel_use_slm == NULL)
       return false;
 
-    gbe_kernel_get_slm_size = *(gbe_kernel_get_slm_size_cb**)dlsym(dlhInterp, "gbe_kernel_get_slm_size");
-    if (gbe_kernel_get_slm_size == NULL)
+    interp_kernel_get_slm_size = *(gbe_kernel_get_slm_size_cb**)dlsym(dlhInterp, "gbe_kernel_get_slm_size");
+    if (interp_kernel_get_slm_size == NULL)
       return false;
 
-    gbe_kernel_get_sampler_size = *(gbe_kernel_get_sampler_size_cb**)dlsym(dlhInterp, "gbe_kernel_get_sampler_size");
-    if (gbe_kernel_get_sampler_size == NULL)
+    interp_kernel_get_sampler_size = *(gbe_kernel_get_sampler_size_cb**)dlsym(dlhInterp, "gbe_kernel_get_sampler_size");
+    if (interp_kernel_get_sampler_size == NULL)
       return false;
 
-    gbe_kernel_get_sampler_data = *(gbe_kernel_get_sampler_data_cb**)dlsym(dlhInterp, "gbe_kernel_get_sampler_data");
-    if (gbe_kernel_get_sampler_data == NULL)
+    interp_kernel_get_sampler_data = *(gbe_kernel_get_sampler_data_cb**)dlsym(dlhInterp, "gbe_kernel_get_sampler_data");
+    if (interp_kernel_get_sampler_data == NULL)
       return false;
 
-    gbe_kernel_get_compile_wg_size = *(gbe_kernel_get_compile_wg_size_cb**)dlsym(dlhInterp, "gbe_kernel_get_compile_wg_size");
-    if (gbe_kernel_get_compile_wg_size == NULL)
+    interp_kernel_get_compile_wg_size = *(gbe_kernel_get_compile_wg_size_cb**)dlsym(dlhInterp, "gbe_kernel_get_compile_wg_size");
+    if (interp_kernel_get_compile_wg_size == NULL)
       return false;
 
-    gbe_kernel_get_image_size = *(gbe_kernel_get_image_size_cb**)dlsym(dlhInterp, "gbe_kernel_get_image_size");
-    if (gbe_kernel_get_image_size == NULL)
+    interp_kernel_get_image_size = *(gbe_kernel_get_image_size_cb**)dlsym(dlhInterp, "gbe_kernel_get_image_size");
+    if (interp_kernel_get_image_size == NULL)
       return false;
 
-    gbe_kernel_get_image_data = *(gbe_kernel_get_image_data_cb**)dlsym(dlhInterp, "gbe_kernel_get_image_data");
-    if (gbe_kernel_get_image_data == NULL)
+    interp_kernel_get_image_data = *(gbe_kernel_get_image_data_cb**)dlsym(dlhInterp, "gbe_kernel_get_image_data");
+    if (interp_kernel_get_image_data == NULL)
       return false;
 
-    gbe_set_image_base_index_interp = *(gbe_set_image_base_index_cb**)dlsym(dlhInterp, "gbe_set_image_base_index");
-    if (gbe_set_image_base_index_interp == NULL)
+    interp_set_image_base_index = *(gbe_set_image_base_index_cb**)dlsym(dlhInterp, "gbe_set_image_base_index");
+    if (interp_set_image_base_index == NULL)
       return false;
 
-    gbe_get_image_base_index = *(gbe_get_image_base_index_cb**)dlsym(dlhInterp, "gbe_get_image_base_index");
-    if (gbe_get_image_base_index == NULL)
+    interp_get_image_base_index = *(gbe_get_image_base_index_cb**)dlsym(dlhInterp, "gbe_get_image_base_index");
+    if (interp_get_image_base_index == NULL)
       return false;
 
-    gbe_get_printf_num = *(gbe_get_printf_num_cb**)dlsym(dlhInterp, "gbe_get_printf_num");
-    if (gbe_get_printf_num == NULL)
+    interp_get_printf_num = *(gbe_get_printf_num_cb**)dlsym(dlhInterp, "gbe_get_printf_num");
+    if (interp_get_printf_num == NULL)
       return false;
 
-    gbe_dup_printfset = *(gbe_dup_printfset_cb**)dlsym(dlhInterp, "gbe_dup_printfset");
-    if (gbe_dup_printfset == NULL)
+    interp_dup_printfset = *(gbe_dup_printfset_cb**)dlsym(dlhInterp, "gbe_dup_printfset");
+    if (interp_dup_printfset == NULL)
       return false;
 
-    gbe_get_printf_sizeof_size = *(gbe_get_printf_sizeof_size_cb**)dlsym(dlhInterp, "gbe_get_printf_sizeof_size");
-    if (gbe_get_printf_sizeof_size == NULL)
+    interp_get_printf_sizeof_size = *(gbe_get_printf_sizeof_size_cb**)dlsym(dlhInterp, "gbe_get_printf_sizeof_size");
+    if (interp_get_printf_sizeof_size == NULL)
       return false;
 
-    gbe_release_printf_info = *(gbe_release_printf_info_cb**)dlsym(dlhInterp, "gbe_release_printf_info");
-    if (gbe_release_printf_info == NULL)
+    interp_release_printf_info = *(gbe_release_printf_info_cb**)dlsym(dlhInterp, "gbe_release_printf_info");
+    if (interp_release_printf_info == NULL)
       return false;
 
-    gbe_output_printf = *(gbe_output_printf_cb**)dlsym(dlhInterp, "gbe_output_printf");
-    if (gbe_output_printf == NULL)
+    interp_output_printf = *(gbe_output_printf_cb**)dlsym(dlhInterp, "gbe_output_printf");
+    if (interp_output_printf == NULL)
       return false;
 
     return true;

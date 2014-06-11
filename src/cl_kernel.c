@@ -83,7 +83,7 @@ LOCAL const char*
 cl_kernel_get_name(cl_kernel k)
 {
   if (UNLIKELY(k == NULL)) return NULL;
-  return gbe_kernel_get_name(k->opaque);
+  return interp_kernel_get_name(k->opaque);
 }
 
 LOCAL void
@@ -102,8 +102,8 @@ cl_kernel_set_arg(cl_kernel k, cl_uint index, size_t sz, const void *value)
 
   if (UNLIKELY(index >= k->arg_n))
     return CL_INVALID_ARG_INDEX;
-  arg_type = gbe_kernel_get_arg_type(k->opaque, index);
-  arg_sz = gbe_kernel_get_arg_size(k->opaque, index);
+  arg_type = interp_kernel_get_arg_type(k->opaque, index);
+  arg_sz = interp_kernel_get_arg_size(k->opaque, index);
 
   if (UNLIKELY(arg_type != GBE_ARG_LOCAL_PTR && arg_sz != sz)) {
     if (arg_sz == 2 && arg_type == GBE_ARG_VALUE && sz == sizeof(cl_sampler)) {
@@ -147,7 +147,7 @@ cl_kernel_set_arg(cl_kernel k, cl_uint index, size_t sz, const void *value)
 
   /* Copy the structure or the value directly into the curbe */
   if (arg_type == GBE_ARG_VALUE) {
-    offset = gbe_kernel_get_curbe_offset(k->opaque, GBE_CURBE_KERNEL_ARGUMENT, index);
+    offset = interp_kernel_get_curbe_offset(k->opaque, GBE_CURBE_KERNEL_ARGUMENT, index);
     assert(offset + sz <= k->curbe_sz);
     memcpy(k->curbe + offset, value, sz);
     k->args[index].local_sz = 0;
@@ -173,7 +173,7 @@ cl_kernel_set_arg(cl_kernel k, cl_uint index, size_t sz, const void *value)
     k->args[index].mem = NULL;
     k->args[index].sampler = sampler;
     cl_set_sampler_arg_slot(k, index, sampler);
-    offset = gbe_kernel_get_curbe_offset(k->opaque, GBE_CURBE_KERNEL_ARGUMENT, index);
+    offset = interp_kernel_get_curbe_offset(k->opaque, GBE_CURBE_KERNEL_ARGUMENT, index);
     assert(offset + 2 <= k->curbe_sz);
     memcpy(k->curbe + offset, &sampler->clkSamplerValue, 2);
     return CL_SUCCESS;
@@ -184,7 +184,7 @@ cl_kernel_set_arg(cl_kernel k, cl_uint index, size_t sz, const void *value)
 
   if(value == NULL || mem == NULL) {
     /* for buffer object GLOBAL_PTR CONSTANT_PTR, it maybe NULL */
-    int32_t offset = gbe_kernel_get_curbe_offset(k->opaque, GBE_CURBE_KERNEL_ARGUMENT, index);
+    int32_t offset = interp_kernel_get_curbe_offset(k->opaque, GBE_CURBE_KERNEL_ARGUMENT, index);
     *((uint32_t *)(k->curbe + offset)) = 0;
     assert(arg_type == GBE_ARG_GLOBAL_PTR || arg_type == GBE_ARG_CONSTANT_PTR);
 
@@ -212,7 +212,7 @@ LOCAL uint32_t
 cl_kernel_get_simd_width(cl_kernel k)
 {
   assert(k != NULL);
-  return gbe_kernel_get_simd_width(k->opaque);
+  return interp_kernel_get_simd_width(k->opaque);
 }
 
 LOCAL void
@@ -225,31 +225,31 @@ cl_kernel_setup(cl_kernel k, gbe_kernel opaque)
     cl_buffer_unreference(k->bo);
 
   /* Allocate the gen code here */
-  const uint32_t code_sz = gbe_kernel_get_code_size(opaque);
-  const char *code = gbe_kernel_get_code(opaque);
+  const uint32_t code_sz = interp_kernel_get_code_size(opaque);
+  const char *code = interp_kernel_get_code(opaque);
   k->bo = cl_buffer_alloc(bufmgr, "CL kernel", code_sz, 64u);
-  k->arg_n = gbe_kernel_get_arg_num(opaque);
+  k->arg_n = interp_kernel_get_arg_num(opaque);
 
   /* Upload the code */
   cl_buffer_subdata(k->bo, 0, code_sz, code);
   k->opaque = opaque;
 
   /* Create the curbe */
-  k->curbe_sz = gbe_kernel_get_curbe_size(k->opaque);
+  k->curbe_sz = interp_kernel_get_curbe_size(k->opaque);
 
   /* Get sampler data & size */
-  k->sampler_sz = gbe_kernel_get_sampler_size(k->opaque);
+  k->sampler_sz = interp_kernel_get_sampler_size(k->opaque);
   assert(k->sampler_sz <= GEN_MAX_SAMPLERS);
   if (k->sampler_sz > 0)
-    gbe_kernel_get_sampler_data(k->opaque, k->samplers);
-  gbe_kernel_get_compile_wg_size(k->opaque, k->compile_wg_sz);
-  k->stack_size = gbe_kernel_get_stack_size(k->opaque);
+    interp_kernel_get_sampler_data(k->opaque, k->samplers);
+  interp_kernel_get_compile_wg_size(k->opaque, k->compile_wg_sz);
+  k->stack_size = interp_kernel_get_stack_size(k->opaque);
   /* Get image data & size */
-  k->image_sz = gbe_kernel_get_image_size(k->opaque);
+  k->image_sz = interp_kernel_get_image_size(k->opaque);
   assert(k->sampler_sz <= GEN_MAX_SURFACES);
   if (k->image_sz > 0) {
     TRY_ALLOC_NO_ERR(k->images, cl_calloc(k->image_sz, sizeof(k->images[0])));
-    gbe_kernel_get_image_data(k->opaque, k->images);
+    interp_kernel_get_image_data(k->opaque, k->images);
   } else
     k->images = NULL;
   return;
@@ -317,7 +317,7 @@ cl_kernel_work_group_sz(cl_kernel ker,
   cl_uint i;
 
   for (i = 0; i < wk_dim; ++i) {
-    const uint32_t required_sz = gbe_kernel_get_required_work_group_size(ker->opaque, i);
+    const uint32_t required_sz = interp_kernel_get_required_work_group_size(ker->opaque, i);
     if (required_sz != 0 && required_sz != local_wk_sz[i]) {
       err = CL_INVALID_WORK_ITEM_SIZE;
       goto error;
