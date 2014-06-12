@@ -244,6 +244,13 @@ cl_bind_stack(cl_gpgpu gpgpu, cl_kernel ker)
   assert(offset >= 0);
   stack_sz *= interp_kernel_get_simd_width(ker->opaque);
   stack_sz *= device->max_compute_unit;
+  /* Because HSW calc stack offset per thread is relative with half slice, when
+     thread schedule in half slice is not balance, would out of bound. Because
+     the max half slice is 4 in GT4, multiply stack size with 4 for safe.
+   */
+  if(cl_driver_get_ver(ctx->drv) == 75)
+    stack_sz *= 4;
+
   cl_gpgpu_set_stack(gpgpu, offset, stack_sz, cl_gpgpu_get_cache_ctrl());
 }
 
