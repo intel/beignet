@@ -9,7 +9,7 @@ void test_printf(void)
   globals[1] = 4;
   locals[1] = 4;
   globals[2] = 8;
-  locals[2] = 8;
+  locals[2] = 2;
 
   // Run the kernel on GPU
   OCL_NDRANGE(3);
