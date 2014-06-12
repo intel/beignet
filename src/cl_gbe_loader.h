@@ -27,7 +27,6 @@ extern "C" {
 extern gbe_program_new_from_source_cb *compiler_program_new_from_source;
 extern gbe_program_serialize_to_binary_cb *compiler_program_serialize_to_binary;
 extern gbe_program_new_from_llvm_cb *compiler_program_new_from_llvm;
-extern gbe_kernel_set_const_buffer_size_cb *compiler_kernel_set_const_buffer_size;
 extern gbe_set_image_base_index_cb *compiler_set_image_base_index;
 extern gbe_program_new_from_binary_cb *interp_program_new_from_binary;
 extern gbe_program_get_global_constant_size_cb *interp_program_get_global_constant_size;

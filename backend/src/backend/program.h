@@ -303,10 +303,6 @@ extern gbe_kernel_get_scratch_size_cb *gbe_kernel_get_scratch_size;
 typedef int32_t (gbe_kernel_get_curbe_offset_cb)(gbe_kernel, enum gbe_curbe_type type, uint32_t sub_type);
 extern gbe_kernel_get_curbe_offset_cb *gbe_kernel_get_curbe_offset;
 
-/*! Set the constant pointer arg size and return the cb offset in curbe */
-typedef int32_t (gbe_kernel_set_const_buffer_size_cb)(gbe_kernel, uint32_t argID, size_t sz);
-extern gbe_kernel_set_const_buffer_size_cb *gbe_kernel_set_const_buffer_size;
-
 /*! Indicates if a work group size is required. Return the required width or 0
  *  if none
  */

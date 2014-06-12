@@ -381,27 +381,6 @@ namespace gbe
     registerAllocator->splitBlock(offset, subOffset);
   }
 
-  int32_t Context::allocConstBuf(uint32_t argID) {
-     GBE_ASSERT(kernel->args[argID].type == GBE_ARG_CONSTANT_PTR);
-
-    //free previous
-    int32_t offset = kernel->getCurbeOffset(GBE_CURBE_EXTRA_ARGUMENT, argID+GBE_CONSTANT_BUFFER);
-    if(offset >= 0)
-        deallocate(offset+GEN_REG_SIZE);
-
-    if(kernel->args[argID].bufSize > 0) {
-      //use 32 alignment here as GEN_REG_SIZE, need dynamic by type?
-      newCurbeEntry(GBE_CURBE_EXTRA_ARGUMENT, GBE_CONSTANT_BUFFER+argID, kernel->args[argID].bufSize, 32);
-    }
-
-    std::sort(kernel->patches.begin(), kernel->patches.end());
-    offset = kernel->getCurbeOffset(GBE_CURBE_EXTRA_ARGUMENT, argID+GBE_CONSTANT_BUFFER);
-    GBE_ASSERT(offset>=0);
-
-    kernel->curbeSize = ALIGN(kernel->curbeSize, GEN_REG_SIZE);
-    return offset + GEN_REG_SIZE;
-  }
-
   // FIXME TODO as we optimize scratch memory usage using the register interval.
   // we need to add some dependency in post_reg_alloc scheduler, to keep scratch
   // memory that are reused still keep the order

@@ -26,7 +26,6 @@
 gbe_program_new_from_source_cb *compiler_program_new_from_source = NULL;
 gbe_program_serialize_to_binary_cb *compiler_program_serialize_to_binary = NULL;
 gbe_program_new_from_llvm_cb *compiler_program_new_from_llvm = NULL;
-gbe_kernel_set_const_buffer_size_cb *compiler_kernel_set_const_buffer_size = NULL;
 gbe_set_image_base_index_cb *compiler_set_image_base_index = NULL;
 gbe_program_compile_from_source_cb *compiler_program_compile_from_source = NULL;
 gbe_program_new_gen_program_cb *compiler_program_new_gen_program = NULL;
@@ -279,11 +278,6 @@ struct GbeLoaderInitializer
 
       compiler_program_new_from_llvm = *(gbe_program_new_from_llvm_cb **)dlsym(dlhCompiler, "gbe_program_new_from_llvm");
       if (compiler_program_new_from_llvm == NULL)
-        return;
-
-      //gbe_kernel_set_const_buffer_size is not used by runttime
-      compiler_kernel_set_const_buffer_size = *(gbe_kernel_set_const_buffer_size_cb **)dlsym(dlhCompiler, "gbe_kernel_set_const_buffer_size");
-      if (compiler_kernel_set_const_buffer_size == NULL)
         return;
 
       compiler_set_image_base_index = *(gbe_set_image_base_index_cb **)dlsym(dlhCompiler, "gbe_set_image_base_index");

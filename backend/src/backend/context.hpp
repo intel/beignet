@@ -89,8 +89,6 @@ namespace gbe
     void deallocate(int16_t offset);
     /*! Spilt a block into 2 blocks, for some registers allocate together but  deallocate seperate */
     void splitBlock(int16_t offset, int16_t subOffset);
-    /* allocate curbe for constant ptr argument */
-    int32_t allocConstBuf(uint32_t argID);
     /* allocate a new entry for a specific image's information */
     /*! Get (search or allocate if fail to find one) image info curbeOffset.*/
     uint32_t getImageInfoCurbeOffset(ir::ImageInfoKey key, size_t size);
