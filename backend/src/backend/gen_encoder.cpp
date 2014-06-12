@@ -218,8 +218,8 @@ namespace gbe
   //////////////////////////////////////////////////////////////////////////
   // Gen Emitter encoding class
   //////////////////////////////////////////////////////////////////////////
-  GenEncoder::GenEncoder(uint32_t simdWidth, uint32_t gen, uint32_t deviceID, int jump_width) :
-    stateNum(0), gen(gen), deviceID(deviceID), jump_width(jump_width)
+  GenEncoder::GenEncoder(uint32_t simdWidth, uint32_t gen, uint32_t deviceID) :
+    stateNum(0), gen(gen), deviceID(deviceID)
   {
     this->simdWidth = simdWidth;
     this->curr.execWidth = simdWidth;
@@ -609,8 +609,8 @@ namespace gbe
       }
   }
 
-  INLINE void alu1(GenEncoder *p, uint32_t opcode, GenRegister dst,
-                   GenRegister src, uint32_t condition = 0) {
+  void alu1(GenEncoder *p, uint32_t opcode, GenRegister dst,
+            GenRegister src, uint32_t condition) {
      if (dst.isdf() && src.isdf()) {
        handleDouble(p, opcode, dst, src);
      } else if (dst.isint64() && src.isint64()) { // handle int64
@@ -649,12 +649,12 @@ namespace gbe
      }
   }
 
-  INLINE void alu2(GenEncoder *p,
-                   uint32_t opcode,
-                   GenRegister dst,
-                   GenRegister src0,
-                   GenRegister src1,
-                   uint32_t condition = 0)
+  void alu2(GenEncoder *p,
+            uint32_t opcode,
+            GenRegister dst,
+            GenRegister src0,
+            GenRegister src1,
+            uint32_t condition)
   {
     if (dst.isdf() && src0.isdf() && src1.isdf()) {
        handleDouble(p, opcode, dst, src0, src1);
@@ -1043,7 +1043,7 @@ namespace gbe
              return;
            }
            else if (insn.header.opcode == GEN_OPCODE_JMPI) {
-             jumpDistance = (jumpDistance - 2)* jump_width;
+             jumpDistance = jumpDistance - 2;
            }
 
            this->setSrc1(&insn, GenRegister::immd(jumpDistance));

@@ -241,4 +241,29 @@ namespace gbe
       pop();
     }
   }
+
+  void Gen75Encoder::JMPI(GenRegister src, bool longjmp) {
+    alu2(this, GEN_OPCODE_JMPI, GenRegister::ip(), GenRegister::ip(), src);
+  }
+
+  void Gen75Encoder::patchJMPI(uint32_t insnID, int32_t jumpDistance) {
+    GenNativeInstruction &insn = *(GenNativeInstruction *)&this->store[insnID];
+    GBE_ASSERT(insnID < this->store.size());
+    GBE_ASSERT(insn.header.opcode == GEN_OPCODE_JMPI ||
+               insn.header.opcode == GEN_OPCODE_BRD  ||
+               insn.header.opcode == GEN_OPCODE_ENDIF ||
+               insn.header.opcode == GEN_OPCODE_IF ||
+               insn.header.opcode == GEN_OPCODE_BRC);
+
+    if (insn.header.opcode == GEN_OPCODE_IF) {
+      this->setSrc1(&insn, GenRegister::immd(jumpDistance));
+      return;
+    }
+    else if (insn.header.opcode == GEN_OPCODE_JMPI) {
+      //jumpDistance'unit is Qword, and the HSW's offset of jmpi is in byte, so multi 8
+      jumpDistance = (jumpDistance - 2) * 8;
+    }
+
+    this->setSrc1(&insn, GenRegister::immd(jumpDistance));
+  }
 } /* End of the name space. */

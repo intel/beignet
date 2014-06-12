@@ -65,7 +65,7 @@ namespace gbe
   {
   public:
     /*! simdWidth is the default width for the instructions */
-    GenEncoder(uint32_t simdWidth, uint32_t gen, uint32_t deviceID, int jump_width = 1);
+    GenEncoder(uint32_t simdWidth, uint32_t gen, uint32_t deviceID);
 
     virtual ~GenEncoder(void) { }
     /*! Size of the stack (should be large enough) */
@@ -88,8 +88,6 @@ namespace gbe
     uint32_t gen;
     /*! Device ID */
     uint32_t deviceID;
-    /*! The constant for jump. */
-    const int jump_width;
     /*! simd width for this codegen */
     uint32_t simdWidth;
     ////////////////////////////////////////////////////////////////////////
@@ -149,7 +147,7 @@ namespace gbe
     /*! Memory fence message (to order loads and stores between threads) */
     void FENCE(GenRegister dst);
     /*! Jump indexed instruction */
-    void JMPI(GenRegister src, bool longjmp = false);
+    virtual void JMPI(GenRegister src, bool longjmp = false);
     /*! IF indexed instruction */
     void IF(GenRegister src);
     /*! ENDIF indexed instruction */
@@ -206,7 +204,7 @@ namespace gbe
     void MATH(GenRegister dst, uint32_t function, GenRegister src);
 
     /*! Patch JMPI/BRC/BRD (located at index insnID) with the given jump distance */
-    void patchJMPI(uint32_t insnID, int32_t jumpDistance);
+    virtual void patchJMPI(uint32_t insnID, int32_t jumpDistance);
 
     ////////////////////////////////////////////////////////////////////////
     // Helper functions to encode
@@ -230,6 +228,11 @@ namespace gbe
     GBE_CLASS(GenEncoder); //!< Use custom allocators
   };
 
+  void alu1(GenEncoder *p, uint32_t opcode, GenRegister dst,
+            GenRegister src, uint32_t condition = 0);
+
+  void alu2(GenEncoder *p, uint32_t opcode, GenRegister dst,
+            GenRegister src0, GenRegister src1, uint32_t condition = 0);
 } /* namespace gbe */
 
 #endif /* __GBE_GEN_ENCODER_HPP__ */
