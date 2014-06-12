@@ -132,6 +132,9 @@ intel_gpgpu_get_scratch_index_t *intel_gpgpu_get_scratch_index = NULL;
 typedef void (intel_gpgpu_post_action_t)(intel_gpgpu_t *gpgpu, int32_t flush_mode);
 intel_gpgpu_post_action_t *intel_gpgpu_post_action = NULL;
 
+typedef uint64_t (intel_gpgpu_read_ts_reg_t)(drm_intel_bufmgr *bufmgr);
+intel_gpgpu_read_ts_reg_t *intel_gpgpu_read_ts_reg = NULL;
+
 static void
 intel_gpgpu_sync(void *buf)
 {
@@ -1178,6 +1181,33 @@ intel_gpgpu_event_delete(intel_event_t *event)
   cl_free(event);
 }
 
+/* IVB and HSW's result MUST shift in x86_64 system */
+static uint64_t
+intel_gpgpu_read_ts_reg_gen7(drm_intel_bufmgr *bufmgr)
+{
+  uint64_t result = 0;
+  drm_intel_reg_read(bufmgr, TIMESTAMP_ADDR, &result);
+  /* In x86_64 system, the low 32bits of timestamp count are stored in the high 32 bits of
+     result which got from drm_intel_reg_read, and 32-35 bits are lost; but match bspec in
+     i386 system. It seems the kernel readq bug. So shift 32 bit in x86_64, and only remain
+     32 bits data in i386.
+  */
+#ifdef __i386__
+  return result & 0x0ffffffff;
+#else
+  return result >> 32;
+#endif  /* __i386__  */
+}
+
+/* baytrail's result should clear high 4 bits */
+static uint64_t
+intel_gpgpu_read_ts_reg_baytrail(drm_intel_bufmgr *bufmgr)
+{
+  uint64_t result = 0;
+  drm_intel_reg_read(bufmgr, TIMESTAMP_ADDR, &result);
+  return result & 0x0ffffffff;
+}
+
 /* We want to get the current time of GPU. */
 static void
 intel_gpgpu_event_get_gpu_cur_timestamp(intel_gpgpu_t* gpgpu, uint64_t* ret_ts)
@@ -1185,13 +1215,8 @@ intel_gpgpu_event_get_gpu_cur_timestamp(intel_gpgpu_t* gpgpu, uint64_t* ret_ts)
   uint64_t result = 0;
   drm_intel_bufmgr *bufmgr = gpgpu->drv->bufmgr;
 
-  drm_intel_reg_read(bufmgr, TIMESTAMP_ADDR, &result);
-  if (IS_HASWELL(gpgpu->drv->device_id)) {
-    result = result & 0x0000000FFFFFFFFF;
-  } else {
-    result = result & 0xFFFFFFFFF0000000;
-    result = result >> 28;
-  }
+  /* Get the ts that match the bspec */
+  result = intel_gpgpu_read_ts_reg(bufmgr);
   result *= 80;
 
   *ret_ts = result;
@@ -1211,15 +1236,12 @@ intel_gpgpu_event_get_exec_timestamp(intel_gpgpu_t* gpgpu, intel_event_t *event,
   uint64_t* ptr = event->ts_buf->virtual;
   result = ptr[index];
 
-  if (IS_HASWELL(gpgpu->drv->device_id))
-    result = (result & 0xFFFFFFFFF) * 80; //convert to nanoseconds
-  else
-    /* According to BSpec, the timestamp counter should be 36 bits,
-       but comparing to the timestamp counter from IO control reading,
-       we find the first 4 bits seems to be fake. In order to keep the
-       timestamp counter conformable, we just skip the first 4 bits.
-     */
-    result = ((result & 0x0FFFFFFFF) << 4) * 80; //convert to nanoseconds
+  /* According to BSpec, the timestamp counter should be 36 bits,
+     but comparing to the timestamp counter from IO control reading,
+     we find the first 4 bits seems to be fake. In order to keep the
+     timestamp counter conformable, we just skip the first 4 bits.
+  */
+  result = (result & 0x0FFFFFFFF) * 80; //convert to nanoseconds
   *ret_ts = result;
 
   drm_intel_gem_bo_unmap_gtt(event->ts_buf);
@@ -1352,13 +1374,17 @@ intel_set_gpgpu_callbacks(int device_id)
     cl_gpgpu_get_cache_ctrl = (cl_gpgpu_get_cache_ctrl_cb *)intel_gpgpu_get_cache_ctrl_gen75;
     intel_gpgpu_get_scratch_index = intel_gpgpu_get_scratch_index_gen75;
     intel_gpgpu_post_action = intel_gpgpu_post_action_gen75;
+    intel_gpgpu_read_ts_reg = intel_gpgpu_read_ts_reg_gen7; //HSW same as ivb
   }
   else if (IS_IVYBRIDGE(device_id)) {
     cl_gpgpu_bind_image = (cl_gpgpu_bind_image_cb *) intel_gpgpu_bind_image_gen7;
-    if (IS_BAYTRAIL_T(device_id))
+    if (IS_BAYTRAIL_T(device_id)) {
       intel_gpgpu_set_L3 = intel_gpgpu_set_L3_baytrail;
-    else
+      intel_gpgpu_read_ts_reg = intel_gpgpu_read_ts_reg_baytrail;
+    } else {
       intel_gpgpu_set_L3 = intel_gpgpu_set_L3_gen7;
+      intel_gpgpu_read_ts_reg = intel_gpgpu_read_ts_reg_gen7;
+    }
     cl_gpgpu_get_cache_ctrl = (cl_gpgpu_get_cache_ctrl_cb *)intel_gpgpu_get_cache_ctrl_gen7;
     intel_gpgpu_get_scratch_index = intel_gpgpu_get_scratch_index_gen7;
     intel_gpgpu_post_action = intel_gpgpu_post_action_gen7;
