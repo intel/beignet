@@ -3105,13 +3105,17 @@ namespace gbe
           if(multiple == 2) {
             wideReg = sel.unpacked_uw(wideReg.reg());
             wideReg = GenRegister::retype(wideReg, getGenType(narrowType));
-            if(isInt64)
+            if(isInt64) {
               wideReg.hstride = GEN_HORIZONTAL_STRIDE_1;
+              wideReg.vstride = GEN_VERTICAL_STRIDE_8;
+            }
           } else if(multiple == 4) {
             wideReg = sel.unpacked_ub(wideReg.reg());
             wideReg = GenRegister::retype(wideReg, getGenType(narrowType));
-            if(isInt64)
+            if(isInt64) {
               wideReg.hstride = GEN_HORIZONTAL_STRIDE_2;
+              wideReg.vstride = GEN_VERTICAL_STRIDE_16;
+            }
           } else if(multiple == 8) {
             // we currently store high/low 32bit separately in register,
             // so, its hstride is 4 here.
@@ -3129,7 +3133,7 @@ namespace gbe
         if(isInt64) {
           wideReg.subphysical = 1;
           // Offset to next half
-          if(i >= multiple/2)
+          if((i % multiple) >= multiple/2)
             wideReg = GenRegister::offset(wideReg, 0, sel.isScalarReg(wideReg.reg()) ? 4 : simdWidth*4);
           // Offset to desired narrow element in wideReg
           if(index % (multiple/2))
