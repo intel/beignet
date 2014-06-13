@@ -2837,8 +2837,25 @@ clEnqueueBarrier(cl_command_queue  command_queue)
 {
   cl_int err = CL_SUCCESS;
   CHECK_QUEUE(command_queue);
-  cl_command_queue_set_barrier(command_queue);
 
+  cl_event_barrier_with_wait_list(command_queue, 0, NULL, NULL);
+
+error:
+  return err;
+}
+
+cl_int
+clEnqueueBarrierWithWaitList(cl_command_queue command_queue,
+    cl_uint num_events_in_wait_list,
+    const cl_event *event_wait_list,
+    cl_event *event)
+{
+  cl_int err = CL_SUCCESS;
+  CHECK_QUEUE(command_queue);
+
+  TRY(cl_event_check_waitlist, num_events_in_wait_list, event_wait_list, event, command_queue->ctx);
+
+  cl_event_barrier_with_wait_list(command_queue, num_events_in_wait_list, event_wait_list, event);
 error:
   return err;
 }

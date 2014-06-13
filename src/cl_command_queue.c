@@ -506,18 +506,74 @@ cl_command_queue_remove_event(cl_command_queue queue, cl_event event)
   if(i == queue->wait_events_num)
     return;
 
-  if(queue->barrier_index >= i)
-    queue->barrier_index -= 1;
-
   for(; i<queue->wait_events_num-1; i++) {
     queue->wait_events[i] = queue->wait_events[i+1];
   }
   queue->wait_events_num -= 1;
 }
 
+#define DEFAULT_WAIT_EVENTS_SIZE  16
 LOCAL void
-cl_command_queue_set_barrier(cl_command_queue queue)
+cl_command_queue_insert_barrier_event(cl_command_queue queue, cl_event event)
 {
-    queue->barrier_index = queue->wait_events_num;
+  cl_int i=0;
+  cl_event *new_list;
+
+  assert(queue != NULL);
+  if(queue->barrier_events == NULL) {
+    queue->barrier_events_size = DEFAULT_WAIT_EVENTS_SIZE;
+    TRY_ALLOC_NO_ERR (queue->barrier_events, CALLOC_ARRAY(cl_event, queue->barrier_events_size));
+  }
+
+  for(i=0; i<queue->barrier_events_num; i++) {
+    if(queue->barrier_events[i] == event)
+      return;   //is in the barrier_events, need to insert
+  }
+
+  if(queue->barrier_events_num < queue->barrier_events_size) {
+    queue->barrier_events[queue->barrier_events_num++] = event;
+    return;
+  }
+
+  //barrier_events_num == barrier_events_size, array is full
+  queue->barrier_events_size *= 2;
+  TRY_ALLOC_NO_ERR (new_list, CALLOC_ARRAY(cl_event, queue->barrier_events_size));
+  memcpy(new_list, queue->barrier_events, sizeof(cl_event)*queue->barrier_events_num);
+  cl_free(queue->barrier_events);
+  queue->barrier_events = new_list;
+  queue->barrier_events[queue->barrier_events_num++] = event;
+  return;
+
+exit:
+  return;
+error:
+  if(queue->barrier_events)
+    cl_free(queue->barrier_events);
+  queue->barrier_events = NULL;
+  queue->barrier_events_size = 0;
+  queue->barrier_events_num = 0;
+  goto exit;
+
 }
 
+LOCAL void
+cl_command_queue_remove_barrier_event(cl_command_queue queue, cl_event event)
+{
+  cl_int i=0;
+
+  if(queue->barrier_events_num == 0)
+    return;
+
+  for(i=0; i<queue->barrier_events_num; i++) {
+    if(queue->barrier_events[i] == event)
+      break;
+  }
+
+  if(i == queue->barrier_events_num)
+    return;
+
+  for(; i<queue->barrier_events_num-1; i++) {
+    queue->barrier_events[i] = queue->barrier_events[i+1];
+  }
+  queue->barrier_events_num -= 1;
+}

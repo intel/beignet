@@ -41,6 +41,7 @@ typedef enum {
   EnqueueNDRangeKernel,
   EnqueueNativeKernel,
   EnqueueMarker,
+  EnqueueBarrier,
   EnqueueFillBuffer,
   EnqueueInvalid
 } enqueue_type;

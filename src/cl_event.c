@@ -231,10 +231,14 @@ cl_int cl_event_wait_events(cl_uint num_events_in_wait_list, const cl_event *eve
     }
   }
 
-  if(queue && queue->barrier_index > 0) {
-    for(j=0; j<queue->wait_events_num; j++){
-      cl_event_add_ref(queue->wait_events[j]);  //add defer enqueue's wait event reference
-  }
+  if(queue && queue->barrier_events_num ) {
+    if(num_events_in_wait_list == 0){
+      for(j=0; j<queue->wait_events_num; j++)
+        cl_event_add_ref(queue->wait_events[j]);  //add defer enqueue's wait event reference
+    }else{
+      for(j=0; j<num_events_in_wait_list; j++)
+        cl_event_add_ref(event_wait_list[j]);  //add defer enqueue's wait event reference
+    }
     return CL_ENQUEUE_EXECUTE_DEFER;
   }
 
@@ -275,8 +279,8 @@ void cl_event_new_enqueue_callback(cl_event event,
   cb->next = NULL;
   cb->wait_user_events = NULL;
 
-  if(queue && queue->barrier_index > 0) {
-    for(i=0; i<queue->barrier_index; i++) {
+  if(queue && queue->barrier_events_num > 0) {
+    for(i=0; i<queue->barrier_events_num; i++) {
       /* Insert the enqueue_callback to user event list */
       node = queue->wait_events[i]->waits_head;
       if(node == NULL)
@@ -314,6 +318,9 @@ void cl_event_new_enqueue_callback(cl_event event,
       /* Insert the user event to enqueue_callback's wait_user_events */
       TRY(cl_event_insert_user_event, &cb->wait_user_events, event_wait_list[i]);
       cl_command_queue_insert_event(event->queue, event_wait_list[i]);
+      if(data->type == EnqueueBarrier){
+        cl_command_queue_insert_barrier_event(event->queue, event_wait_list[i]);
+      }
     } else if(event_wait_list[i]->enqueue_cb != NULL) {
       user_events = event_wait_list[i]->enqueue_cb->wait_user_events;
       while(user_events != NULL) {
@@ -334,6 +341,9 @@ void cl_event_new_enqueue_callback(cl_event event,
         /* Insert the user event to enqueue_callback's wait_user_events */
         TRY(cl_event_insert_user_event, &cb->wait_user_events, user_events->event);
         cl_command_queue_insert_event(event->queue, user_events->event);
+        if(data->type == EnqueueBarrier){
+          cl_command_queue_insert_barrier_event(event->queue, user_events->event);
+        }
         user_events = user_events->next;
       }
     }
@@ -430,6 +440,7 @@ void cl_event_set_status(cl_event event, cl_int status)
 
     //remove user event frome enqueue_cb's ctx
     cl_command_queue_remove_event(enqueue_cb->event->queue, event);
+    cl_command_queue_remove_barrier_event(enqueue_cb->event->queue, event);
 
     /* All user events complete, now wait enqueue events */
     ret = cl_event_wait_events(enqueue_cb->num_events, enqueue_cb->wait_list,
@@ -464,29 +475,19 @@ cl_int cl_event_marker_with_wait_list(cl_command_queue queue,
                 const cl_event *event_wait_list,
                 cl_event* event)
 {
-  enqueue_data data;
-  cl_uint i = 0;
+  enqueue_data data = { 0 };
 
   *event = cl_event_new(queue->ctx, queue, CL_COMMAND_MARKER, CL_TRUE);
   if(event == NULL)
     return CL_OUT_OF_HOST_MEMORY;
 
-  //insert the input events to queue
-  for(i=0; i<num_events_in_wait_list; i++) {
-    if(event_wait_list[i]->type==CL_COMMAND_USER) {
-      cl_command_queue_insert_event(queue, event_wait_list[i]);
-    }else if(event_wait_list[i]->enqueue_cb != NULL) {
-      user_event* user_events = event_wait_list[i]->enqueue_cb->wait_user_events;
-
-      while(user_events != NULL) {
-        cl_command_queue_insert_event(queue, user_events->event);
-        user_events = user_events->next;
-      }
-    }
-  }
-
-  //if wait_events_num>0, the marker event need wait queue->wait_events
-  if(queue->wait_events_num > 0) {
+//enqueues a marker command which waits for either a list of events to complete, or if the list is
+//empty it waits for all commands previously enqueued in command_queue to complete before it  completes.
+  if(num_events_in_wait_list > 0){
+    data.type = EnqueueMarker;
+    cl_event_new_enqueue_callback(*event, &data, num_events_in_wait_list, event_wait_list);
+    return CL_SUCCESS;
+  } else if(queue->wait_events_num > 0) {
     data.type = EnqueueMarker;
     cl_event_new_enqueue_callback(*event, &data, queue->wait_events_num, queue->wait_events);
     return CL_SUCCESS;
@@ -497,6 +498,41 @@ cl_int cl_event_marker_with_wait_list(cl_command_queue queue,
   }
 
   cl_event_set_status(*event, CL_COMPLETE);
+  return CL_SUCCESS;
+}
+
+cl_int cl_event_barrier_with_wait_list(cl_command_queue queue,
+                cl_uint num_events_in_wait_list,
+                const cl_event *event_wait_list,
+                cl_event* event)
+{
+  enqueue_data data = { 0 };
+  cl_event e;
+
+  e = cl_event_new(queue->ctx, queue, CL_COMMAND_BARRIER, CL_TRUE);
+  if(e == NULL)
+    return CL_OUT_OF_HOST_MEMORY;
+
+  if(event != NULL ){
+    *event = e;
+  }
+//enqueues a barrier command which waits for either a list of events to complete, or if the list is
+//empty it waits for all commands previously enqueued in command_queue to complete before it  completes.
+  if(num_events_in_wait_list > 0){
+    data.type = EnqueueBarrier;
+    cl_event_new_enqueue_callback(e, &data, num_events_in_wait_list, event_wait_list);
+    return CL_SUCCESS;
+  } else if(queue->wait_events_num > 0) {
+    data.type = EnqueueBarrier;
+    cl_event_new_enqueue_callback(e, &data, queue->wait_events_num, queue->wait_events);
+    return CL_SUCCESS;
+  }
+
+  if(queue->last_event && queue->last_event->gpgpu_event) {
+    cl_gpgpu_event_update_status(queue->last_event->gpgpu_event, 1);
+  }
+
+  cl_event_set_status(e, CL_COMPLETE);
   return CL_SUCCESS;
 }
 

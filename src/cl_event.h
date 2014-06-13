@@ -91,6 +91,8 @@ void cl_event_set_status(cl_event, cl_int);
 void cl_event_update_status(cl_event);
 /* Create the marker event */
 cl_int cl_event_marker_with_wait_list(cl_command_queue, cl_uint, const cl_event *,  cl_event*);
+/* Create the barrier event */
+cl_int cl_event_barrier_with_wait_list(cl_command_queue, cl_uint, const cl_event *,  cl_event*);
 /* Do the event profiling */
 cl_int cl_event_get_timestamp(cl_event event, cl_profiling_info param_name);
 /*insert the user event*/
