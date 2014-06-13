@@ -502,9 +502,21 @@ void get_image_info(void)
   const size_t w = 512;
   const size_t h = 512;
   cl_image_format format;
+  cl_image_desc desc;
+
   format.image_channel_order = CL_RGBA;
   format.image_channel_data_type = CL_UNSIGNED_INT8;
-  OCL_CREATE_IMAGE2D(buf[0], 0, &format, w, h, 0, NULL);
+  desc.image_type = CL_MEM_OBJECT_IMAGE2D;
+  desc.image_width = w;
+  desc.image_height = h;
+  desc.image_row_pitch = 0;
+  desc.image_row_pitch = 0;
+  desc.image_slice_pitch = 0;
+  desc.num_mip_levels = 0;
+  desc.num_samples = 0;
+  desc.buffer = NULL;
+
+  OCL_CREATE_IMAGE(buf[0], 0, &format, &desc, NULL);
   cl_mem image = buf[0];
 
   cl_image_format ret_format;
