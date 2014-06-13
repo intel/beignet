@@ -252,8 +252,14 @@ clCreateSubDevices(cl_device_id                         in_device,
                    cl_device_id *                       out_devices,
                    cl_uint *                            num_devices_ret)
 {
-  NOT_IMPLEMENTED;
-  return 0;
+  /* Check parameter consistency */
+  if (UNLIKELY(out_devices == NULL && num_devices_ret == NULL))
+    return CL_INVALID_VALUE;
+  if (UNLIKELY(in_device == NULL && properties == NULL))
+    return CL_INVALID_VALUE;
+
+  *num_devices_ret = 0;
+  return CL_INVALID_DEVICE_PARTITION_COUNT;
 }
 
 cl_int

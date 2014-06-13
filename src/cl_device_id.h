@@ -98,6 +98,13 @@ struct _cl_device_id {
   /* Kernel specific info that we're assigning statically */
   size_t wg_sz;
   size_t preferred_wg_sz_mul;
+  /* SubDevice specific info */
+  cl_device_id parent_device;
+  cl_uint      partition_max_sub_device;
+  cl_device_partition_property partition_property[3];
+  cl_device_affinity_domain    affinity_domain;
+  cl_device_partition_property partition_type[3];
+  cl_uint      device_reference_count;
 };
 
 /* Get a device from the given platform */

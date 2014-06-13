@@ -101,5 +101,10 @@ DECL_INFO_STRING(built_in_kernels, "__cl_copy_region_align4;"
 
 DECL_INFO_STRING(driver_version, LIBCL_DRIVER_VERSION_STRING)
 #undef DECL_INFO_STRING
-
+.parent_device = NULL,
+.partition_max_sub_device = 1,
+.partition_property = {0},
+.affinity_domain = 0,
+.partition_type = {0},
+.device_reference_count = 1,
 

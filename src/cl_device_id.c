@@ -398,6 +398,12 @@ cl_get_device_info(cl_device_id     device,
     DECL_STRING_FIELD(OPENCL_C_VERSION, opencl_c_version)
     DECL_STRING_FIELD(EXTENSIONS, extensions);
     DECL_STRING_FIELD(BUILT_IN_KERNELS, built_in_kernels)
+    DECL_FIELD(PARENT_DEVICE, parent_device)
+    DECL_FIELD(PARTITION_MAX_SUB_DEVICES, partition_max_sub_device)
+    DECL_FIELD(PARTITION_PROPERTIES, partition_property)
+    DECL_FIELD(PARTITION_AFFINITY_DOMAIN, affinity_domain)
+    DECL_FIELD(PARTITION_TYPE, partition_type)
+    DECL_FIELD(REFERENCE_COUNT, device_reference_count)
 
     case CL_DRIVER_VERSION:
       if (param_value_size_ret) {
