@@ -740,7 +740,12 @@ namespace gbe {
 
        So we just disable the PCH validation of Clang and do the judgement by ourself. */
 
-    if(options) {
+    /* We always add -cl-kernel-arg-info to the options. This option just generate the arg
+       information for the backend, no other side effect and does not have performance issue. */
+    if (!options || !strstr(const_cast<char *>(options), "-cl-kernel-arg-info"))
+      clOpt += "-cl-kernel-arg-info ";
+
+    if (options) {
       char *p;
       /* FIXME: Though we can disable the pch valid check, and load pch successfully,
          but these language opts and pre-defined macro will still generate the diag msg

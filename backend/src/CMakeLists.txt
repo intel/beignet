@@ -45,7 +45,7 @@ set (pch_object ${ocl_blob_file}.pch)
 set (local_pch_object ${ocl_blob_file}.local.pch)
 # generate pch object
 if (LLVM_VERSION_NODOT VERSION_GREATER 32)
-    set (clang_cmd -cc1 -x cl -triple spir -ffp-contract=off)
+    set (clang_cmd -cc1 -x cl -triple spir -ffp-contract=off -cl-kernel-arg-info)
 else (LLVM_VERSION_NODOT VERSION_GREATER 32)
     if (LLVM_VERSION_NODOT VERSION_GREATER 31)
         set (clang_cmd -cc1 -x cl -triple nvptx -ffp-contract=off)
