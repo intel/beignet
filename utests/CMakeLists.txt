@@ -177,6 +177,7 @@ set (utests_sources
   test_printf.cpp
   enqueue_fill_buf.cpp
   enqueue_built_in_kernels.cpp
+  image_1D_buffer.cpp
   utest_assert.cpp
   utest.cpp
   utest_file_map.cpp
