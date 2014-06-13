@@ -28,6 +28,7 @@ gbe_program_serialize_to_binary_cb *compiler_program_serialize_to_binary = NULL;
 gbe_program_new_from_llvm_cb *compiler_program_new_from_llvm = NULL;
 gbe_kernel_set_const_buffer_size_cb *compiler_kernel_set_const_buffer_size = NULL;
 gbe_set_image_base_index_cb *compiler_set_image_base_index = NULL;
+gbe_program_compile_from_source_cb *compiler_program_compile_from_source = NULL;
 
 //function pointer from libgbeinterp.so
 gbe_program_new_from_binary_cb *interp_program_new_from_binary = NULL;
@@ -246,6 +247,10 @@ struct GbeLoaderInitializer
     if (dlhCompiler != NULL) {
       compiler_program_new_from_source = *(gbe_program_new_from_source_cb **)dlsym(dlhCompiler, "gbe_program_new_from_source");
       if (compiler_program_new_from_source == NULL)
+        return;
+
+      compiler_program_compile_from_source = *(gbe_program_compile_from_source_cb **)dlsym(dlhCompiler, "gbe_program_compile_from_source");
+      if (compiler_program_compile_from_source == NULL)
         return;
 
       compiler_program_serialize_to_binary = *(gbe_program_serialize_to_binary_cb **)dlsym(dlhCompiler, "gbe_program_serialize_to_binary");

@@ -949,6 +949,47 @@ error:
 }
 
 cl_int
+clCompileProgram(cl_program            program ,
+                 cl_uint               num_devices ,
+                 const cl_device_id *  device_list ,
+                 const char *          options ,
+                 cl_uint               num_input_headers ,
+                 const cl_program *    input_headers ,
+                 const char **         header_include_names ,
+                 void (CL_CALLBACK *   pfn_notify )(cl_program, void *),
+                 void *                user_data )
+{
+  cl_int err = CL_SUCCESS;
+  CHECK_PROGRAM(program);
+  INVALID_VALUE_IF (num_devices > 1);
+  INVALID_VALUE_IF (num_devices == 0 && device_list != NULL);
+  INVALID_VALUE_IF (num_devices != 0 && device_list == NULL);
+  INVALID_VALUE_IF (pfn_notify  == 0 && user_data   != NULL);
+  INVALID_VALUE_IF (num_input_headers == 0 && input_headers != NULL);
+  INVALID_VALUE_IF (num_input_headers != 0 && input_headers == NULL);
+
+  /* Everything is easy. We only support one device anyway */
+  if (num_devices != 0) {
+    assert(program->ctx);
+    INVALID_DEVICE_IF (device_list[0] != program->ctx->device);
+  }
+
+  /* TODO support create program from binary */
+  assert(program->source_type == FROM_LLVM ||
+      program->source_type == FROM_SOURCE ||
+      program->source_type == FROM_BINARY);
+  if((err = cl_program_compile(program, num_input_headers, input_headers, header_include_names, options)) != CL_SUCCESS) {
+    goto error;
+  }
+  program->is_built = CL_TRUE;
+
+  if (pfn_notify) pfn_notify(program, user_data);
+
+error:
+  return err;
+}
+
+cl_int
 clUnloadCompiler(void)
 {
   return CL_SUCCESS;

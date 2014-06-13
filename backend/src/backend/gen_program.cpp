@@ -242,6 +242,14 @@ namespace gbe {
     // Everything run fine
     return (gbe_program) program;
   }
+
+  static gbe_program genProgramNewGenProgram(uint32_t deviceID, const void* module,
+                                             const void* llvm_ctx)  {
+    using namespace gbe;
+    GenProgram *program = GBE_NEW(GenProgram, deviceID, module, llvm_ctx);
+    // Everything run fine
+    return (gbe_program) program;
+  }
 } /* namespace gbe */
 
 void genSetupCallBacks(void)
@@ -249,4 +257,5 @@ void genSetupCallBacks(void)
   gbe_program_new_from_binary = gbe::genProgramNewFromBinary;
   gbe_program_serialize_to_binary = gbe::genProgramSerializeToBinary;
   gbe_program_new_from_llvm = gbe::genProgramNewFromLLVM;
+  gbe_program_new_gen_program = gbe::genProgramNewGenProgram;
 }

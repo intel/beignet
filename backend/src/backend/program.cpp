@@ -864,6 +864,52 @@ namespace gbe {
   }
 #endif
 
+#ifdef GBE_COMPILER_AVAILABLE
+
+  static gbe_program programCompileFromSource(uint32_t deviceID,
+                                          const char *source,
+                                          const char *temp_header_path,
+                                          size_t stringSize,
+                                          const char *options,
+                                          char *err,
+                                          size_t *errSize)
+  {
+    int optLevel = 1;
+    std::string clOpt;
+    std::string clName;
+    processSourceAndOption(source, options, temp_header_path, clOpt, clName, optLevel);
+
+    gbe_program p;
+    acquireLLVMContextLock();
+    //FIXME: if use new allocated context to link two modules there would be context mismatch
+    //for some functions, so we use global context now, need switch to new context later.
+    llvm::Module * out_module;
+    llvm::LLVMContext* llvm_ctx = &llvm::getGlobalContext();
+    if (buildModuleFromSource(clName.c_str(), &out_module, llvm_ctx, clOpt.c_str(),
+                              stringSize, err, errSize)) {
+    // Now build the program from llvm
+      size_t clangErrSize = 0;
+      if (err != NULL) {
+        GBE_ASSERT(errSize != NULL);
+        stringSize -= *errSize;
+        err += *errSize;
+        clangErrSize = *errSize;
+      }
+
+      p = gbe_program_new_gen_program(deviceID, out_module, NULL);
+
+      if (err != NULL)
+        *errSize += clangErrSize;
+      if (OCL_OUTPUT_BUILD_LOG && options)
+        llvm::errs() << options;
+    } else
+      p = NULL;
+    remove(clName.c_str());
+    releaseLLVMContextLock();
+    return p;
+  }
+#endif
+
   static size_t programGetGlobalConstantSize(gbe_program gbeProgram) {
     if (gbeProgram == NULL) return 0;
     const gbe::Program *program = (const gbe::Program*) gbeProgram;
@@ -1061,10 +1107,23 @@ namespace gbe {
   }
 } /* namespace gbe */
 
+std::mutex llvm_ctx_mutex;
+void acquireLLVMContextLock()
+{
+  llvm_ctx_mutex.lock();
+}
+
+void releaseLLVMContextLock()
+{
+  llvm_ctx_mutex.unlock();
+}
+
 GBE_EXPORT_SYMBOL gbe_program_new_from_source_cb *gbe_program_new_from_source = NULL;
+GBE_EXPORT_SYMBOL gbe_program_compile_from_source_cb *gbe_program_compile_from_source = NULL;
 GBE_EXPORT_SYMBOL gbe_program_new_from_binary_cb *gbe_program_new_from_binary = NULL;
 GBE_EXPORT_SYMBOL gbe_program_serialize_to_binary_cb *gbe_program_serialize_to_binary = NULL;
 GBE_EXPORT_SYMBOL gbe_program_new_from_llvm_cb *gbe_program_new_from_llvm = NULL;
+GBE_EXPORT_SYMBOL gbe_program_new_gen_program_cb *gbe_program_new_gen_program = NULL;
 GBE_EXPORT_SYMBOL gbe_program_get_global_constant_size_cb *gbe_program_get_global_constant_size = NULL;
 GBE_EXPORT_SYMBOL gbe_program_get_global_constant_data_cb *gbe_program_get_global_constant_data = NULL;
 GBE_EXPORT_SYMBOL gbe_program_delete_cb *gbe_program_delete = NULL;
@@ -1108,6 +1167,7 @@ namespace gbe
   {
     CallBackInitializer(void) {
       gbe_program_new_from_source = gbe::programNewFromSource;
+      gbe_program_compile_from_source = gbe::programCompileFromSource;
       gbe_program_get_global_constant_size = gbe::programGetGlobalConstantSize;
       gbe_program_get_global_constant_data = gbe::programGetGlobalConstantData;
       gbe_program_delete = gbe::programDelete;

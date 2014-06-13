@@ -33,6 +33,9 @@
 #include <stdint.h>
 #include <string.h>
 #include <assert.h>
+#include <unistd.h>
+#include <sys/stat.h>
+#include <libgen.h>
 
 static void
 cl_program_release_sources(cl_program p)
@@ -446,6 +449,99 @@ cl_program_build(cl_program p, const char *options)
 
 error:
   p->is_built = 1;
+  return err;
+}
+
+LOCAL cl_int
+cl_program_compile(cl_program            p,
+                   cl_uint               num_input_headers,
+                   const cl_program *    input_headers,
+                   const char **         header_include_names,
+                   const char*           options)
+{
+  cl_int err = CL_SUCCESS;
+  int i = 0;
+
+  if (p->ref_n > 1)
+    return CL_INVALID_OPERATION;
+
+  if (options) {
+    if(p->build_opts == NULL || strcmp(options, p->build_opts) != 0) {
+      if(p->build_opts) {
+        cl_free(p->build_opts);
+        p->build_opts = NULL;
+      }
+      TRY_ALLOC (p->build_opts, cl_calloc(strlen(options) + 1, sizeof(char)));
+      memcpy(p->build_opts, options, strlen(options));
+
+      p->source_type = p->source ? FROM_SOURCE : p->binary ? FROM_BINARY : FROM_LLVM;
+    }
+  }
+
+  if (options == NULL && p->build_opts) {
+    p->source_type = p->source ? FROM_SOURCE : p->binary ? FROM_BINARY : FROM_LLVM;
+
+    cl_free(p->build_opts);
+    p->build_opts = NULL;
+  }
+
+  const char* temp_header_path = "/tmp/beignet_header/";
+  if (p->source_type == FROM_SOURCE) {
+
+    if (!CompilerSupported()) {
+      err = CL_COMPILER_NOT_AVAILABLE;
+      goto error;
+    }
+
+    //write the headers to /tmp/beignet_header for include.
+    for (i = 0; i < num_input_headers; i++) {
+      if(header_include_names[i] == NULL || input_headers[i] == NULL)
+        continue;
+
+      char temp_path[255];
+      strcpy(temp_path, temp_header_path);
+      strcat(temp_path, header_include_names[i]);
+      char* dirc = strdup(temp_path);
+      char* dir = dirname(dirc);
+      mkdir(dir, 0755);
+      if(access(dir, R_OK|W_OK) != 0){
+        err = CL_COMPILE_PROGRAM_FAILURE;
+        goto error;
+      }
+      free(dirc);
+
+      FILE* pfile = fopen(temp_path, "wb");
+      if(pfile){
+        fwrite(input_headers[i]->source, strlen(input_headers[i]->source), 1, pfile);
+        fclose(pfile);
+      }else{
+        err = CL_COMPILE_PROGRAM_FAILURE;
+        goto error;
+      }
+    }
+
+    p->opaque = compiler_program_compile_from_source(p->ctx->device->vendor_id, p->source, temp_header_path,
+        p->build_log_max_sz, options, p->build_log, &p->build_log_sz);
+
+    system("rm /tmp/beignet_header/* -rf");
+
+    if (UNLIKELY(p->opaque == NULL)) {
+      if (p->build_log_sz > 0 && strstr(p->build_log, "error: error reading 'options'"))
+        err = CL_INVALID_BUILD_OPTIONS;
+      else
+        err = CL_BUILD_PROGRAM_FAILURE;
+      goto error;
+    }
+
+    /* Create all the kernels */
+    p->source_type = FROM_LLVM;
+  }
+  p->is_built = 1;
+  return CL_SUCCESS;
+
+error:
+  cl_program_delete(p);
+  p = NULL;
   return err;
 }
 

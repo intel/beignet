@@ -142,6 +142,22 @@ typedef gbe_program (gbe_program_new_from_source_cb)(uint32_t deviceID,
                                                      char *err,
                                                      size_t *err_size);
 extern gbe_program_new_from_source_cb *gbe_program_new_from_source;
+/*! Create a new program from the given source code and compile it (zero terminated string) */
+typedef gbe_program (gbe_program_compile_from_source_cb)(uint32_t deviceID,
+                                                         const char *source,
+                                                         const char *temp_header_path,
+                                                         size_t stringSize,
+                                                         const char *options,
+                                                         char *err,
+                                                         size_t *err_size);
+extern gbe_program_compile_from_source_cb *gbe_program_compile_from_source;
+
+/*! create s new genprogram for link. */
+typedef gbe_program (gbe_program_new_gen_program_cb)(uint32_t deviceID,
+                                                     const void *module,
+                                                     const void *act);
+extern gbe_program_new_gen_program_cb *gbe_program_new_gen_program;
+
 /*! Create a new program from the given blob */
 typedef gbe_program (gbe_program_new_from_binary_cb)(uint32_t deviceID, const char *binary, size_t size);
 extern gbe_program_new_from_binary_cb *gbe_program_new_from_binary;
@@ -261,6 +277,10 @@ extern gbe_kernel_use_slm_cb *gbe_kernel_use_slm;
 /*! Get slm size needed for kernel local variables */
 typedef int32_t (gbe_kernel_get_slm_size_cb)(gbe_kernel);
 extern gbe_kernel_get_slm_size_cb *gbe_kernel_get_slm_size;
+
+/*mutex to lock global llvmcontext access.*/
+extern void acquireLLVMContextLock();
+extern void releaseLLVMContextLock();
 
 #ifdef __cplusplus
 }

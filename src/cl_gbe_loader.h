@@ -29,7 +29,6 @@ extern gbe_program_serialize_to_binary_cb *compiler_program_serialize_to_binary;
 extern gbe_program_new_from_llvm_cb *compiler_program_new_from_llvm;
 extern gbe_kernel_set_const_buffer_size_cb *compiler_kernel_set_const_buffer_size;
 extern gbe_set_image_base_index_cb *compiler_set_image_base_index;
-
 extern gbe_program_new_from_binary_cb *interp_program_new_from_binary;
 extern gbe_program_get_global_constant_size_cb *interp_program_get_global_constant_size;
 extern gbe_program_get_global_constant_data_cb *interp_program_get_global_constant_data;
@@ -64,6 +63,8 @@ extern gbe_dup_printfset_cb* interp_dup_printfset;
 extern gbe_get_printf_sizeof_size_cb* interp_get_printf_sizeof_size;
 extern gbe_release_printf_info_cb* interp_release_printf_info;
 extern gbe_output_printf_cb* interp_output_printf;
+//extern gbe_set_image_base_index_cb *gbe_set_image_base_index_interp;
+extern gbe_program_compile_from_source_cb *compiler_program_compile_from_source;
 
 int CompilerSupported();
 #ifdef __cplusplus

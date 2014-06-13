@@ -110,6 +110,12 @@ cl_program_create_from_llvm(cl_context             context,
 /* Build the program as specified by OCL */
 extern cl_int
 cl_program_build(cl_program p, const char* options);
-
+/* Compile the program as specified by OCL */
+extern cl_int
+cl_program_compile(cl_program            p,
+                   cl_uint               num_input_headers,
+                   const cl_program *    input_headers,
+                   const char **         header_include_names,
+                   const char*           options);
 #endif /* __CL_PROGRAM_H__ */
 
