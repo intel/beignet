@@ -1104,28 +1104,54 @@ namespace gbe
     // Loop over the kernel metadatas to set the required work group size.
     NamedMDNode *clKernelMetaDatas = TheModule->getNamedMetadata("opencl.kernels");
     size_t reqd_wg_sz[3] = {0, 0, 0};
-    for(uint i = 0; i < clKernelMetaDatas->getNumOperands(); i++)
-    {
-      MDNode *node = clKernelMetaDatas->getOperand(i);
-      if (node->getOperand(0) != &F) continue;
-      for(uint j = 0; j < node->getNumOperands() - 1; j++)
-      {
-        MDNode *attrNode = dyn_cast_or_null<MDNode>(node->getOperand(1 + j));
-        if (attrNode == NULL) break;
-        MDString *attrName = dyn_cast_or_null<MDString>(attrNode->getOperand(0));
-        if (attrName && attrName->getString() == "reqd_work_group_size") {
-          GBE_ASSERT(attrNode->getNumOperands() == 4);
-          ConstantInt *x = dyn_cast<ConstantInt>(attrNode->getOperand(1));
-          ConstantInt *y = dyn_cast<ConstantInt>(attrNode->getOperand(2));
-          ConstantInt *z = dyn_cast<ConstantInt>(attrNode->getOperand(3));
-          GBE_ASSERT(x && y && z);
-          reqd_wg_sz[0] = x->getZExtValue();
-          reqd_wg_sz[1] = y->getZExtValue();
-          reqd_wg_sz[2] = z->getZExtValue();
-          break;
-        }
+    ir::FunctionArgument::InfoFromLLVM llvmInfo;
+    MDNode *node = NULL;
+    MDNode *addrSpaceNode = NULL;
+    MDNode *typeNameNode = NULL;
+    MDNode *accessQualNode = NULL;
+    MDNode *typeQualNode = NULL;
+    MDNode *argNameNode = NULL;
+
+    /* First find the meta data belong to this function. */
+    for(uint i = 0; i < clKernelMetaDatas->getNumOperands(); i++) {
+      node = clKernelMetaDatas->getOperand(i);
+      if (node->getOperand(0) == &F) break;
+      node = NULL;
+    }
+
+    /* because "-cl-kernel-arg-info", should always have meta data. */
+    if (!F.arg_empty())
+      assert(node);
+
+    for(uint j = 0; j < node->getNumOperands() - 1; j++) {
+      MDNode *attrNode = dyn_cast_or_null<MDNode>(node->getOperand(1 + j));
+      if (attrNode == NULL) break;
+      MDString *attrName = dyn_cast_or_null<MDString>(attrNode->getOperand(0));
+      if (!attrName) continue;
+
+      if (attrName->getString() == "reqd_work_group_size") {
+        GBE_ASSERT(attrNode->getNumOperands() == 4);
+        ConstantInt *x = dyn_cast<ConstantInt>(attrNode->getOperand(1));
+        ConstantInt *y = dyn_cast<ConstantInt>(attrNode->getOperand(2));
+        ConstantInt *z = dyn_cast<ConstantInt>(attrNode->getOperand(3));
+        GBE_ASSERT(x && y && z);
+        reqd_wg_sz[0] = x->getZExtValue();
+        reqd_wg_sz[1] = y->getZExtValue();
+        reqd_wg_sz[2] = z->getZExtValue();
+        break;
+      } else if (attrName->getString() == "kernel_arg_addr_space") {
+        addrSpaceNode = attrNode;
+      } else if (attrName->getString() == "kernel_arg_access_qual") {
+        accessQualNode = attrNode;
+      } else if (attrName->getString() == "kernel_arg_type") {
+        typeNameNode = attrNode;
+      } else if (attrName->getString() == "kernel_arg_type_qual") {
+        typeQualNode = attrNode;
+      } else if (attrName->getString() == "kernel_arg_name") {
+        argNameNode = attrNode;
       }
     }
+
     ctx.getFunction().setCompileWorkGroupSize(reqd_wg_sz[0], reqd_wg_sz[1], reqd_wg_sz[2]);
     // Loop over the arguments and output registers for them
     if (!F.arg_empty()) {
@@ -1140,6 +1166,12 @@ namespace gbe
         const std::string &argName = I->getName().str();
         Type *type = I->getType();
 
+        llvmInfo.addrSpace = (cast<ConstantInt>(addrSpaceNode->getOperand(1 + argID)))->getZExtValue();
+        llvmInfo.typeName = (cast<MDString>(typeNameNode->getOperand(1 + argID)))->getString();
+        llvmInfo.accessQual = (cast<MDString>(accessQualNode->getOperand(1 + argID)))->getString();
+        llvmInfo.typeQual = (cast<MDString>(typeQualNode->getOperand(1 + argID)))->getString();
+        llvmInfo.argName = (cast<MDString>(argNameNode->getOperand(1 + argID)))->getString();
+
         // function arguments are uniform values.
         this->newRegister(I, NULL, true);
         // add support for vector argument.
@@ -1150,7 +1182,7 @@ namespace gbe
           const uint32_t elemSize = getTypeByteSize(unit, elemType);
           const uint32_t elemNum = vectorType->getNumElements();
           //vector's elemType always scalar type
-          ctx.input(argName, ir::FunctionArgument::VALUE, reg, elemNum*elemSize, getAlignmentByte(unit, type));
+          ctx.input(argName, ir::FunctionArgument::VALUE, reg, llvmInfo, elemNum*elemSize, getAlignmentByte(unit, type));
 
           ir::Function& fn = ctx.getFunction();
           for(uint32_t i=1; i < elemNum; i++) {
@@ -1165,7 +1197,7 @@ namespace gbe
                     "vector type in the function argument is not supported yet");
         const ir::Register reg = getRegister(I);
         if (type->isPointerTy() == false)
-          ctx.input(argName, ir::FunctionArgument::VALUE, reg, getTypeByteSize(unit, type), getAlignmentByte(unit, type));
+          ctx.input(argName, ir::FunctionArgument::VALUE, reg, llvmInfo, getTypeByteSize(unit, type), getAlignmentByte(unit, type));
         else {
           PointerType *pointerType = dyn_cast<PointerType>(type);
           Type *pointed = pointerType->getElementType();
@@ -1176,7 +1208,7 @@ namespace gbe
           if (I->hasByValAttr()) {
 #endif /* LLVM_VERSION_MINOR <= 1 */
             const size_t structSize = getTypeByteSize(unit, pointed);
-            ctx.input(argName, ir::FunctionArgument::STRUCTURE, reg, structSize, getAlignmentByte(unit, type));
+            ctx.input(argName, ir::FunctionArgument::STRUCTURE, reg, llvmInfo, structSize, getAlignmentByte(unit, type));
           }
           // Regular user provided pointer (global, local or constant)
           else {
@@ -1186,17 +1218,17 @@ namespace gbe
             const uint32_t align = getAlignmentByte(unit, pointed);
               switch (addrSpace) {
               case ir::MEM_GLOBAL:
-                ctx.input(argName, ir::FunctionArgument::GLOBAL_POINTER, reg, ptrSize, align);
+                ctx.input(argName, ir::FunctionArgument::GLOBAL_POINTER, reg, llvmInfo, ptrSize, align);
               break;
               case ir::MEM_LOCAL:
-                ctx.input(argName, ir::FunctionArgument::LOCAL_POINTER, reg, ptrSize, align);
+                ctx.input(argName, ir::FunctionArgument::LOCAL_POINTER, reg,  llvmInfo, ptrSize, align);
                 ctx.getFunction().setUseSLM(true);
               break;
               case ir::MEM_CONSTANT:
-                ctx.input(argName, ir::FunctionArgument::CONSTANT_POINTER, reg, ptrSize, align);
+                ctx.input(argName, ir::FunctionArgument::CONSTANT_POINTER, reg,  llvmInfo, ptrSize, align);
               break;
               case ir::IMAGE:
-                ctx.input(argName, ir::FunctionArgument::IMAGE, reg, ptrSize, align);
+                ctx.input(argName, ir::FunctionArgument::IMAGE, reg, llvmInfo, ptrSize, align);
                 ctx.getFunction().getImageSet()->append(reg, &ctx);
               break;
               default: GBE_ASSERT(addrSpace != ir::MEM_PRIVATE);
