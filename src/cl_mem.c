@@ -153,8 +153,15 @@ cl_get_image_info(cl_mem mem,
     FIELD_SIZE(IMAGE_WIDTH, size_t);
     FIELD_SIZE(IMAGE_HEIGHT, size_t);
     FIELD_SIZE(IMAGE_DEPTH, size_t);
+    FIELD_SIZE(IMAGE_BUFFER, cl_mem);
   default:
     return CL_INVALID_VALUE;
+  }
+
+  /* Do some further check. */
+  if (param_name == CL_IMAGE_BUFFER &&
+     image->image_type != CL_MEM_OBJECT_IMAGE1D_BUFFER) {
+     return CL_INVALID_VALUE;
   }
 
   switch(param_name)
@@ -179,6 +186,9 @@ cl_get_image_info(cl_mem mem,
     break;
   case CL_IMAGE_DEPTH:
     *(size_t *)param_value = image->depth;
+    break;
+  case CL_IMAGE_BUFFER:
+    *(cl_mem *)param_value = image->buffer_1d;
     break;
   }
 
@@ -677,6 +687,131 @@ error:
   goto exit;
 }
 
+static cl_mem
+_cl_mem_new_image_from_buffer(cl_context ctx,
+                              cl_mem_flags flags,
+                              const cl_image_format* image_format,
+                              const cl_image_desc *image_desc,
+                              cl_int *errcode_ret)
+{
+  cl_mem image = NULL;
+  cl_mem buffer = image_desc->buffer;
+  cl_int err = CL_SUCCESS;
+  *errcode_ret = err;
+  cl_ulong max_size;
+  cl_mem_flags merged_flags;
+  uint32_t bpp;
+  uint32_t intel_fmt = INTEL_UNSUPPORTED_FORMAT;
+  size_t offset = 0;
+
+  /* Get the size of each pixel */
+  if (UNLIKELY((err = cl_image_byte_per_pixel(image_format, &bpp)) != CL_SUCCESS))
+    goto error;
+
+  /* Only a sub-set of the formats are supported */
+  intel_fmt = cl_image_get_intel_format(image_format);
+  if (UNLIKELY(intel_fmt == INTEL_UNSUPPORTED_FORMAT)) {
+    err = CL_INVALID_IMAGE_FORMAT_DESCRIPTOR;
+    goto error;
+  }
+
+  if (!buffer) {
+    err = CL_INVALID_IMAGE_DESCRIPTOR;
+    goto error;
+  }
+
+  if (flags & (CL_MEM_USE_HOST_PTR|CL_MEM_ALLOC_HOST_PTR|CL_MEM_COPY_HOST_PTR)) {
+    err = CL_INVALID_IMAGE_DESCRIPTOR;
+    goto error;
+  }
+
+  /* access check. */
+  if ((buffer->flags & CL_MEM_WRITE_ONLY) &&
+      (flags & (CL_MEM_READ_WRITE|CL_MEM_READ_ONLY))) {
+    err = CL_INVALID_VALUE;
+    goto error;
+  }
+  if ((buffer->flags & CL_MEM_READ_ONLY) &&
+      (flags & (CL_MEM_READ_WRITE|CL_MEM_WRITE_ONLY))) {
+    err = CL_INVALID_VALUE;
+    goto error;
+  }
+  if ((buffer->flags & CL_MEM_HOST_WRITE_ONLY) &&
+      (flags & CL_MEM_HOST_READ_ONLY)) {
+    err = CL_INVALID_VALUE;
+    goto error;
+  }
+  if ((buffer->flags & CL_MEM_HOST_READ_ONLY) &&
+      (flags & CL_MEM_HOST_WRITE_ONLY)) {
+    err = CL_INVALID_VALUE;
+    goto error;
+  }
+  if ((buffer->flags & CL_MEM_HOST_NO_ACCESS) &&
+      (flags & (CL_MEM_HOST_READ_ONLY | CL_MEM_HOST_WRITE_ONLY))) {
+    err = CL_INVALID_VALUE;
+    goto error;
+  }
+
+  if ((err = cl_get_device_info(ctx->device,
+                                CL_DEVICE_IMAGE_MAX_BUFFER_SIZE,
+                                sizeof(max_size),
+                                &max_size,
+                                NULL)) != CL_SUCCESS) {
+    goto error;
+  }
+
+  if (image_desc->image_width > max_size) {
+    err = CL_INVALID_IMAGE_DESCRIPTOR;
+    goto error;
+  }
+
+  if (image_desc->image_width*bpp > buffer->size) {
+    err = CL_INVALID_IMAGE_DESCRIPTOR;
+    goto error;
+  }
+
+  merged_flags = buffer->flags;
+  if (flags & (CL_MEM_READ_WRITE|CL_MEM_READ_WRITE|CL_MEM_WRITE_ONLY)) {
+    merged_flags &= ~(CL_MEM_READ_WRITE|CL_MEM_READ_WRITE|CL_MEM_WRITE_ONLY);
+    merged_flags |= flags & (CL_MEM_READ_WRITE|CL_MEM_READ_WRITE|CL_MEM_WRITE_ONLY);
+  }
+  if (flags & (CL_MEM_HOST_WRITE_ONLY|CL_MEM_HOST_READ_ONLY|CL_MEM_HOST_NO_ACCESS)) {
+    merged_flags &= ~(CL_MEM_HOST_WRITE_ONLY|CL_MEM_HOST_READ_ONLY|CL_MEM_HOST_NO_ACCESS);
+    merged_flags |= flags & (CL_MEM_HOST_WRITE_ONLY|CL_MEM_HOST_READ_ONLY|CL_MEM_HOST_NO_ACCESS);
+  }
+
+  /* Because the buffer is NO_TILING, the image should be no tiling. */
+  image = cl_mem_allocate(CL_MEM_IMAGE_TYPE, ctx, flags, merged_flags, CL_FALSE, &err);
+  if (image == NULL || err != CL_SUCCESS)
+    goto error;
+
+  cl_buffer_reference(buffer->bo);
+  image->bo = buffer->bo;
+  image->size = buffer->size;
+  /* If it is a sub buffer, we need to start from the sub offset. */
+  if (buffer->type == CL_MEM_SUBBUFFER_TYPE) {
+    offset = ((struct _cl_mem_buffer *)buffer)->sub_offset;
+  }
+  if (image->flags & CL_MEM_USE_HOST_PTR) {
+    /* Now point to the right offset if buffer is a SUB_BUFFER. */
+    image->host_ptr = buffer->host_ptr + offset;
+  }
+
+  cl_mem_image_init(cl_mem_image(image), image_desc->image_width, 1, image_desc->image_type,
+                    1, *image_format, intel_fmt, bpp, image_desc->image_width*bpp, 0, CL_NO_TILE,
+                    0, 0, offset);
+  cl_mem_add_ref(buffer);
+  cl_mem_image(image)->buffer_1d = buffer;
+  return image;
+
+error:
+  if (image)
+    cl_mem_delete(image);
+  image = NULL;
+  *errcode_ret = err;
+  return image;
+}
+
 LOCAL cl_mem
 cl_mem_new_image(cl_context context,
                  cl_mem_flags flags,
@@ -695,8 +830,10 @@ cl_mem_new_image(cl_context context,
                              host_ptr, errcode_ret);
   case CL_MEM_OBJECT_IMAGE2D_ARRAY:
   case CL_MEM_OBJECT_IMAGE1D_ARRAY:
-  case CL_MEM_OBJECT_IMAGE1D_BUFFER:
     NOT_IMPLEMENTED;
+  case CL_MEM_OBJECT_IMAGE1D_BUFFER:
+    return _cl_mem_new_image_from_buffer(context, flags, image_format,
+                                         image_desc, errcode_ret);
     break;
   case CL_MEM_OBJECT_BUFFER:
   default:
@@ -718,6 +855,15 @@ cl_mem_delete(cl_mem mem)
      cl_mem_gl_delete(cl_mem_gl_image(mem));
   }
 #endif
+
+  /* iff we are a image, delete the 1d buffer if has. */
+  if (IS_IMAGE(mem)) {
+    if (cl_mem_image(mem)->buffer_1d) {
+      assert(cl_mem_image(mem)->image_type == CL_MEM_OBJECT_IMAGE1D_BUFFER);
+      cl_mem_delete(cl_mem_image(mem)->buffer_1d);
+      cl_mem_image(mem)->buffer_1d = NULL;
+    }
+  }
 
   /* Remove it from the list */
   assert(mem->ctx);

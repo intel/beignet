@@ -378,6 +378,7 @@ cl_get_device_info(cl_device_id     device,
     DECL_FIELD(GLOBAL_MEM_CACHE_SIZE, global_mem_cache_size)
     DECL_FIELD(GLOBAL_MEM_SIZE, global_mem_size)
     DECL_FIELD(MAX_CONSTANT_BUFFER_SIZE, max_constant_buffer_size)
+    DECL_FIELD(IMAGE_MAX_BUFFER_SIZE, image_mem_size)
     DECL_FIELD(MAX_CONSTANT_ARGS, max_constant_args)
     DECL_FIELD(LOCAL_MEM_TYPE, local_mem_type)
     DECL_FIELD(LOCAL_MEM_SIZE, local_mem_size)

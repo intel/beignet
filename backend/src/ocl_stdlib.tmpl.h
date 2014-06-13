@@ -92,6 +92,7 @@ typedef __texture struct _image3d_t* __image3d_t;
 typedef const ushort __sampler_t;
 typedef size_t __event_t;
 #define image1d_t __image1d_t
+#define image1d_buffer_t __image1d_t
 #define image2d_t __image2d_t
 #define image3d_t __image3d_t
 #define sampler_t __sampler_t

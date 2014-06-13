@@ -103,6 +103,7 @@ struct _cl_mem_image {
   cl_image_tiling_t tiling;       /* only IVB+ supports TILE_[X,Y] (image only) */
   size_t tile_x, tile_y;          /* tile offset, used for mipmap images.  */
   size_t offset;                  /* offset for dri_bo, used when it's reloc. */
+  cl_mem buffer_1d;               /* if the image is created from buffer, it point to the buffer.*/
 };
 
 struct _cl_mem_gl_image {
