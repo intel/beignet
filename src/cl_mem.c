@@ -571,10 +571,22 @@ _cl_mem_new_image(cl_context ctx,
     err = CL_INVALID_IMAGE_SIZE;  \
     goto error;                   \
   } while (0);
-  if (UNLIKELY(w == 0)) DO_IMAGE_ERROR;
-  if (UNLIKELY(h == 0)) DO_IMAGE_ERROR;
 
-  if (image_type == CL_MEM_OBJECT_IMAGE2D) {
+  if (UNLIKELY(w == 0)) DO_IMAGE_ERROR;
+  if (UNLIKELY(h == 0 && image_type != CL_MEM_OBJECT_IMAGE1D)) DO_IMAGE_ERROR;
+
+  if (image_type == CL_MEM_OBJECT_IMAGE1D) {
+    size_t min_pitch = bpp * w;
+    if (data && pitch == 0)
+      pitch = min_pitch;
+
+    depth = 1;
+    h = 1;
+    if (UNLIKELY(w > ctx->device->image2d_max_width)) DO_IMAGE_ERROR;
+    if (UNLIKELY(data && min_pitch > pitch)) DO_IMAGE_ERROR;
+    if (UNLIKELY(!data && pitch != 0)) DO_IMAGE_ERROR;
+    tiling = CL_NO_TILE;
+  } else if (image_type == CL_MEM_OBJECT_IMAGE2D) {
     size_t min_pitch = bpp * w;
     if (data && pitch == 0)
       pitch = min_pitch;
@@ -587,9 +599,7 @@ _cl_mem_new_image(cl_context ctx,
     if (cl_driver_get_ver(ctx->drv) != 6)
       tiling = cl_get_default_tiling();
     depth = 1;
-  }
-
-  if (image_type == CL_MEM_OBJECT_IMAGE3D) {
+  } else if (image_type == CL_MEM_OBJECT_IMAGE3D) {
     size_t min_pitch = bpp * w;
     if (data && pitch == 0)
       pitch = min_pitch;
@@ -607,7 +617,9 @@ _cl_mem_new_image(cl_context ctx,
     /* Pick up tiling mode (we do only linear on SNB) */
     if (cl_driver_get_ver(ctx->drv) != 6)
       tiling = cl_get_default_tiling();
-  }
+  } else
+    assert(0);
+
 #undef DO_IMAGE_ERROR
 
   /* Tiling requires to align both pitch and height */

@@ -516,7 +516,43 @@ clCreateImage(cl_context context,
   cl_mem mem = NULL;
   cl_int err = CL_SUCCESS;
   CHECK_CONTEXT (context);
+  if (image_format == NULL) {
+    err = CL_INVALID_IMAGE_FORMAT_DESCRIPTOR;
+    goto error;
+  }
+  if (image_format->image_channel_order < CL_R ||
+          image_format->image_channel_order > CL_RGBx) {
+    err = CL_INVALID_IMAGE_FORMAT_DESCRIPTOR;
+    goto error;
+  }
+  if (image_format->image_channel_data_type < CL_SNORM_INT8 ||
+          image_format->image_channel_data_type > CL_FLOAT) {
+    err = CL_INVALID_IMAGE_FORMAT_DESCRIPTOR;
+    goto error;
+  }
 
+  if (image_desc == NULL) {
+    err = CL_INVALID_IMAGE_DESCRIPTOR;
+    goto error;
+  }
+  if (image_desc->image_type <= CL_MEM_OBJECT_BUFFER ||
+          image_desc->image_type > CL_MEM_OBJECT_IMAGE1D_BUFFER) {
+    err = CL_INVALID_IMAGE_DESCRIPTOR;
+    goto error;
+  }
+  /* buffer refers to a valid buffer memory object if image_type is
+     CL_MEM_OBJECT_IMAGE1D_BUFFER. Otherwise it must be NULL. */
+  if (image_desc->image_type != CL_MEM_OBJECT_IMAGE1D_BUFFER &&
+         image_desc->buffer) {
+    err = CL_INVALID_IMAGE_DESCRIPTOR;
+    goto error;
+  }
+  if (image_desc->num_mip_levels || image_desc->num_samples) {
+    err = CL_INVALID_IMAGE_DESCRIPTOR;
+    goto error;
+  }
+
+  /* Other details check for image_desc will leave to image create. */
   mem = cl_mem_new_image(context,
                          flags,
                          image_format,

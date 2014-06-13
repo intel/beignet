@@ -1,3 +1,4 @@
+#include <string.h>
 #include "utest_helper.hpp"
 
 static void compiler_fill_image0(void)
@@ -5,14 +6,22 @@ static void compiler_fill_image0(void)
   const size_t w = 512;
   const size_t h = 512;
   cl_image_format format;
+  cl_image_desc desc;
+
+  memset(&desc, 0x0, sizeof(cl_image_desc));
+  memset(&format, 0x0, sizeof(cl_image_format));
 
   format.image_channel_order = CL_RGBA;
   format.image_channel_data_type = CL_UNSIGNED_INT8;
+  desc.image_type = CL_MEM_OBJECT_IMAGE2D;
+  desc.image_width = w;
+  desc.image_height = h;
+  desc.image_row_pitch = 0;
 
   // Setup kernel and images
   OCL_CREATE_KERNEL("test_fill_image0");
 
-  OCL_CREATE_IMAGE2D(buf[0], 0, &format, w, h, 0, NULL);
+  OCL_CREATE_IMAGE(buf[0], 0, &format, &desc, NULL);
 
   // Run the kernel
   OCL_SET_ARG(0, sizeof(cl_mem), &buf[0]);
