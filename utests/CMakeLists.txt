@@ -174,6 +174,7 @@ set (utests_sources
   compiler_simd_all.cpp
   compiler_double_precision.cpp
   load_program_from_bin.cpp
+  get_arg_info.cpp
   profiling_exec.cpp
   enqueue_copy_buf.cpp
   enqueue_copy_buf_unaligned.cpp
