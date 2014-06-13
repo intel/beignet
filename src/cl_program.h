@@ -117,5 +117,12 @@ cl_program_compile(cl_program            p,
                    const cl_program *    input_headers,
                    const char **         header_include_names,
                    const char*           options);
+/* link the program as specified by OCL */
+extern cl_program
+cl_program_link(cl_context            context,
+                cl_uint               num_input_programs,
+                const cl_program *    input_programs,
+                const char *          options,
+                cl_int*               errcode_ret);
 #endif /* __CL_PROGRAM_H__ */
 

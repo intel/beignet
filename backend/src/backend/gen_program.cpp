@@ -33,6 +33,9 @@
 #include "llvm/IR/DataLayout.h"
 #endif  /* LLVM_VERSION_MINOR <= 2 */
 
+#include "llvm/Linker.h"
+#include "llvm/Transforms/Utils/Cloning.h"
+
 #include "backend/program.h"
 #include "backend/gen_program.h"
 #include "backend/gen_program.hpp"
@@ -51,6 +54,7 @@
 #include <memory>
 #include <iostream>
 #include <fstream>
+#include <mutex>
 
 namespace gbe {
 
@@ -250,6 +254,84 @@ namespace gbe {
     // Everything run fine
     return (gbe_program) program;
   }
+
+  static void genProgramLinkFromLLVM(gbe_program           dst_program,
+                                     gbe_program           src_program,
+                                     size_t                stringSize,
+                                     char *                err,
+                                     size_t *              errSize)
+  {
+#ifdef GBE_COMPILER_AVAILABLE
+    using namespace gbe;
+    std::string errMsg;
+    if(((GenProgram*)dst_program)->module == NULL){
+      ((GenProgram*)dst_program)->module = llvm::CloneModule((llvm::Module*)((GenProgram*)src_program)->module);
+      errSize = 0;
+    }else{
+      //set the global variables and functions to link once to fix redefine.
+      llvm::Module* src = (llvm::Module*)((GenProgram*)src_program)->module;
+      for (llvm::Module::global_iterator I = src->global_begin(), E = src->global_end(); I != E; ++I) {
+        I->setLinkage(llvm::GlobalValue::LinkOnceAnyLinkage);
+      }
+
+      for (llvm::Module::iterator I = src->begin(), E = src->end(); I != E; ++I) {
+        I->setLinkage(llvm::GlobalValue::LinkOnceAnyLinkage);
+      }
+
+      llvm::Module* dst = (llvm::Module*)((GenProgram*)dst_program)->module;
+      llvm::Linker::LinkModules( dst,
+                                 src,
+                                 llvm::Linker::PreserveSource,
+                                 &errMsg);
+      if (errMsg.c_str() != NULL) {
+        if (err != NULL && errSize != NULL && stringSize > 0u) {
+          if(errMsg.length() < stringSize )
+            stringSize = errMsg.length();
+          strcpy(err, errMsg.c_str());
+          err[stringSize+1] = '\0';
+        }
+      }
+    }
+    // Everything run fine
+#endif
+  }
+
+  static void genProgramBuildFromLLVM(gbe_program program,
+                                      size_t stringSize,
+                                      char *err,
+                                      size_t *errSize,
+                                      const char *          options)
+  {
+#ifdef GBE_COMPILER_AVAILABLE
+    using namespace gbe;
+    std::string error;
+
+    int optLevel = 1;
+
+    if(options) {
+      char *p;
+      p = strstr(const_cast<char *>(options), "-cl-opt-disable");
+      if (p)
+        optLevel = 0;
+    }
+
+    GenProgram* p = (GenProgram*) program;
+    // Try to compile the program
+    acquireLLVMContextLock();
+    llvm::Module* module = (llvm::Module*)p->module;
+
+    if (p->buildFromLLVMFile(NULL, module, error, optLevel) == false) {
+      if (err != NULL && errSize != NULL && stringSize > 0u) {
+        const size_t msgSize = std::min(error.size(), stringSize-1u);
+        std::memcpy(err, error.c_str(), msgSize);
+        *errSize = error.size();
+      }
+      GBE_DELETE(p);
+    }
+    releaseLLVMContextLock();
+#endif
+  }
+
 } /* namespace gbe */
 
 void genSetupCallBacks(void)
@@ -258,4 +340,6 @@ void genSetupCallBacks(void)
   gbe_program_serialize_to_binary = gbe::genProgramSerializeToBinary;
   gbe_program_new_from_llvm = gbe::genProgramNewFromLLVM;
   gbe_program_new_gen_program = gbe::genProgramNewGenProgram;
+  gbe_program_link_from_llvm = gbe::genProgramLinkFromLLVM;
+  gbe_program_build_from_llvm = gbe::genProgramBuildFromLLVM;
 }

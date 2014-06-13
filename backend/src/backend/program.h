@@ -151,6 +151,13 @@ typedef gbe_program (gbe_program_compile_from_source_cb)(uint32_t deviceID,
                                                          char *err,
                                                          size_t *err_size);
 extern gbe_program_compile_from_source_cb *gbe_program_compile_from_source;
+/*! link the programs. */
+typedef void (gbe_program_link_program_cb)(gbe_program           dst_program,
+                                           gbe_program           src_program,
+                                           size_t                stringSize,
+                                           char *                err,
+                                           size_t *              errSize);
+extern gbe_program_link_program_cb *gbe_program_link_program;
 
 /*! create s new genprogram for link. */
 typedef gbe_program (gbe_program_new_gen_program_cb)(uint32_t deviceID,
@@ -176,6 +183,27 @@ typedef gbe_program (gbe_program_new_from_llvm_cb)(uint32_t deviceID,
                                                    size_t *err_size,
                                                    int optLevel);
 extern gbe_program_new_from_llvm_cb *gbe_program_new_from_llvm;
+
+/*! create s new genprogram for link. */
+typedef gbe_program (gbe_program_new_gen_program_cb)(uint32_t deviceID,
+                                                   const void *module,
+                                                   const void *act);
+extern gbe_program_new_gen_program_cb *gbe_program_new_gen_program;
+
+/*! link the programs from llvm level. */
+typedef void (gbe_program_link_from_llvm_cb)(gbe_program dst_program,
+                                             gbe_program src_program,
+                                             size_t      stringSize,
+                                             char *      err,
+                                             size_t *    errSize);
+extern gbe_program_link_from_llvm_cb *gbe_program_link_from_llvm;
+/* build the program to gen binary */
+typedef void gbe_program_build_from_llvm_cb(gbe_program program,
+                                      size_t stringSize,
+                                      char *err,
+                                      size_t *errSize,
+                                      const char *          options);
+extern gbe_program_build_from_llvm_cb *gbe_program_build_from_llvm;
 
 /*! Get the size of global constants */
 typedef size_t (gbe_program_get_global_constant_size_cb)(gbe_program gbeProgram);

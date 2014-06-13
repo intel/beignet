@@ -989,6 +989,39 @@ error:
   return err;
 }
 
+cl_program
+clLinkProgram(cl_context            context,
+              cl_uint               num_devices,
+              const cl_device_id *  device_list,
+              const char *          options,
+              cl_uint               num_input_programs,
+              const cl_program *    input_programs,
+              void (CL_CALLBACK *   pfn_notify)(cl_program  program, void * user_data),
+              void *                user_data,
+              cl_int *              errcode_ret)
+{
+  cl_int err = CL_SUCCESS;
+  cl_program program=NULL;
+  CHECK_CONTEXT (context);
+  INVALID_VALUE_IF (num_devices > 1);
+  INVALID_VALUE_IF (num_devices == 0 && device_list != NULL);
+  INVALID_VALUE_IF (num_devices != 0 && device_list == NULL);
+  INVALID_VALUE_IF (pfn_notify  == 0 && user_data   != NULL);
+  INVALID_VALUE_IF (num_input_programs == 0 && input_programs != NULL);
+  INVALID_VALUE_IF (num_input_programs != 0 && input_programs == NULL);
+
+  program = cl_program_link(context, num_input_programs, input_programs, options, &err);
+
+  program->is_built = CL_TRUE;
+
+  if (pfn_notify) pfn_notify(program, user_data);
+
+error:
+  if (errcode_ret)
+    *errcode_ret = err;
+  return program;
+}
+
 cl_int
 clUnloadCompiler(void)
 {

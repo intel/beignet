@@ -65,6 +65,9 @@ extern gbe_release_printf_info_cb* interp_release_printf_info;
 extern gbe_output_printf_cb* interp_output_printf;
 //extern gbe_set_image_base_index_cb *gbe_set_image_base_index_interp;
 extern gbe_program_compile_from_source_cb *compiler_program_compile_from_source;
+extern gbe_program_new_gen_program_cb *compiler_program_new_gen_program;
+extern gbe_program_link_program_cb *compiler_program_link_program;
+extern gbe_program_build_from_llvm_cb *compiler_program_build_from_llvm;
 
 int CompilerSupported();
 #ifdef __cplusplus

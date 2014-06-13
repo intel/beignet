@@ -452,6 +452,55 @@ error:
   return err;
 }
 
+cl_program
+cl_program_link(cl_context            context,
+                cl_uint               num_input_programs,
+                const cl_program *    input_programs,
+                const char *          options,
+                cl_int*               errcode_ret)
+{
+  cl_program p = NULL;
+  cl_int err=CL_SUCCESS;
+  cl_int i = 0;
+  int copyed = 0;
+  p = cl_program_new(context);
+
+  p->opaque = compiler_program_new_gen_program(context->device->vendor_id, NULL, NULL);
+
+  for(i = 0; i < num_input_programs; i++) {
+    if(input_programs[i])
+      compiler_program_link_program(p->opaque, input_programs[i]->opaque,
+        p->build_log_max_sz, p->build_log, &p->build_log_sz);
+    if (UNLIKELY(p->opaque == NULL)) {
+      err = CL_LINK_PROGRAM_FAILURE;
+      goto error;
+    }
+  }
+
+  compiler_program_build_from_llvm(p->opaque, p->build_log_max_sz, p->build_log, &p->build_log_sz, options);
+
+  /* Create all the kernels */
+  TRY (cl_program_load_gen_program, p);
+
+  for (i = 0; i < p->ker_n; i ++) {
+    const gbe_kernel opaque = interp_program_get_kernel(p->opaque, i);
+    p->bin_sz += interp_kernel_get_code_size(opaque);
+  }
+
+  TRY_ALLOC (p->bin, cl_calloc(p->bin_sz, sizeof(char)));
+  for (i = 0; i < p->ker_n; i ++) {
+    const gbe_kernel opaque = interp_program_get_kernel(p->opaque, i);
+    size_t sz = interp_kernel_get_code_size(opaque);
+
+    memcpy(p->bin + copyed, interp_kernel_get_code(opaque), sz);
+    copyed += sz;
+  }
+
+error:
+  p->is_built = 1;
+  return p;
+}
+
 LOCAL cl_int
 cl_program_compile(cl_program            p,
                    cl_uint               num_input_headers,
@@ -523,7 +572,11 @@ cl_program_compile(cl_program            p,
     p->opaque = compiler_program_compile_from_source(p->ctx->device->vendor_id, p->source, temp_header_path,
         p->build_log_max_sz, options, p->build_log, &p->build_log_sz);
 
-    system("rm /tmp/beignet_header/* -rf");
+    int rm_ret = system("rm /tmp/beignet_header/* -rf");
+
+    if(rm_ret){
+      assert(0);
+    }
 
     if (UNLIKELY(p->opaque == NULL)) {
       if (p->build_log_sz > 0 && strstr(p->build_log, "error: error reading 'options'"))
