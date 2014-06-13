@@ -83,12 +83,15 @@ DEF(double);
 // This is a transitional hack to bypass the LLVM 3.3 built-in types.
 // See the Khronos SPIR specification for handling of these types.
 #define __texture __attribute__((address_space(4)))
+struct _image1d_t;
+typedef __texture struct _image1d_t* __image1d_t;
 struct _image2d_t;
 typedef __texture struct _image2d_t* __image2d_t;
 struct _image3d_t;
 typedef __texture struct _image3d_t* __image3d_t;
 typedef const ushort __sampler_t;
 typedef size_t __event_t;
+#define image1d_t __image1d_t
 #define image2d_t __image2d_t
 #define image3d_t __image3d_t
 #define sampler_t __sampler_t
@@ -4546,6 +4549,15 @@ int __gen_ocl_force_simd16(void);
 // Image access functions
 /////////////////////////////////////////////////////////////////////////////
 
+// 1D read
+OVERLOADABLE int4 __gen_ocl_read_imagei(uint surface_id, sampler_t sampler, float u, uint sampler_offset);
+OVERLOADABLE int4 __gen_ocl_read_imagei(uint surface_id, sampler_t sampler, int u, uint sampler_offset);
+OVERLOADABLE uint4 __gen_ocl_read_imageui(uint surface_id, sampler_t sampler, float u, uint sampler_offset);
+OVERLOADABLE uint4 __gen_ocl_read_imageui(uint surface_id, sampler_t sampler, int u, uint sampler_offset);
+OVERLOADABLE float4 __gen_ocl_read_imagef(uint surface_id, sampler_t sampler, float u, uint sampler_offset);
+OVERLOADABLE float4 __gen_ocl_read_imagef(uint surface_id, sampler_t sampler, int u, uint sampler_offset);
+
+// 2D read
 OVERLOADABLE int4 __gen_ocl_read_imagei(uint surface_id, sampler_t sampler, float u, float v, uint sampler_offset);
 OVERLOADABLE int4 __gen_ocl_read_imagei(uint surface_id, sampler_t sampler, int u, int v, uint sampler_offset);
 OVERLOADABLE uint4 __gen_ocl_read_imageui(uint surface_id, sampler_t sampler, float u, float v, uint sampler_offset);
@@ -4553,6 +4565,7 @@ OVERLOADABLE uint4 __gen_ocl_read_imageui(uint surface_id, sampler_t sampler, in
 OVERLOADABLE float4 __gen_ocl_read_imagef(uint surface_id, sampler_t sampler, float u, float v, uint sampler_offset);
 OVERLOADABLE float4 __gen_ocl_read_imagef(uint surface_id, sampler_t sampler, int u, int v, uint sampler_offset);
 
+// 3D read
 OVERLOADABLE int4 __gen_ocl_read_imagei(uint surface_id, sampler_t sampler, float u, float v, float w, uint sampler_offset);
 OVERLOADABLE int4 __gen_ocl_read_imagei(uint surface_id, sampler_t sampler, int u, int v, int w, uint sampler_offset);
 OVERLOADABLE uint4 __gen_ocl_read_imageui(uint surface_id, sampler_t sampler, float u, float v, float w, uint sampler_offset);
@@ -4560,27 +4573,36 @@ OVERLOADABLE uint4 __gen_ocl_read_imageui(uint surface_id, sampler_t sampler, in
 OVERLOADABLE float4 __gen_ocl_read_imagef(uint surface_id, sampler_t sampler, float u, float v, float w, uint sampler_offset);
 OVERLOADABLE float4 __gen_ocl_read_imagef(uint surface_id, sampler_t sampler, int u, int v, int w, uint sampler_offset);
 
+// 1D write
+OVERLOADABLE void __gen_ocl_write_imagei(uint surface_id, int u, int4 color);
+OVERLOADABLE void __gen_ocl_write_imageui(uint surface_id, int u, uint4 color);
+OVERLOADABLE void __gen_ocl_write_imagef(uint surface_id, int u, float4 color);
+
+// 2D write
 OVERLOADABLE void __gen_ocl_write_imagei(uint surface_id, int u, int v, int4 color);
 OVERLOADABLE void __gen_ocl_write_imageui(uint surface_id, int u, int v, uint4 color);
 OVERLOADABLE void __gen_ocl_write_imagef(uint surface_id, int u, int v, float4 color);
 
+// 3D write
 OVERLOADABLE void __gen_ocl_write_imagei(uint surface_id, int u, int v, int w, int4 color);
 OVERLOADABLE void __gen_ocl_write_imageui(uint surface_id, int u, int v, int w, uint4 color);
 OVERLOADABLE void __gen_ocl_write_imagef(uint surface_id, int u, int v, int w, float4 color);
+
 int __gen_ocl_get_image_width(uint surface_id);
 int __gen_ocl_get_image_height(uint surface_id);
 int __gen_ocl_get_image_channel_data_type(uint surface_id);
 int __gen_ocl_get_image_channel_order(uint surface_id);
 int __gen_ocl_get_image_depth(uint surface_id);
 
-#define GET_IMAGE(cl_image, surface_id) \
-    uint surface_id = (uint)cl_image
-
+// 2D 3D Image Common Macro
 #ifdef GEN7_SAMPLER_CLAMP_BORDER_WORKAROUND
 #define GEN_FIX_1 1
 #else
 #define GEN_FIX_1 0
 #endif
+
+#define GET_IMAGE(cl_image, surface_id) \
+    uint surface_id = (uint)cl_image
 
 #define DECL_READ_IMAGE0(int_clamping_fix,          \
                         image_type, type, suffix, coord_type, n)             \
@@ -4647,6 +4669,52 @@ int __gen_ocl_get_image_depth(uint surface_id);
     __gen_ocl_write_image ##suffix(EXPEND_WRITE_COORD(surface_id, coord, color));\
   }
 
+
+// 1D
+#define DECL_IMAGE(int_clamping_fix, image_type, type, suffix)                       \
+  DECL_READ_IMAGE0(int_clamping_fix, image_type, type, suffix, int, 1)               \
+  DECL_READ_IMAGE1(GEN_FIX_1, int_clamping_fix, image_type, type, suffix, float, 1)  \
+  DECL_READ_IMAGE_NOSAMPLER(image_type, type, suffix, int, 1)                        \
+  DECL_WRITE_IMAGE(image_type, type, suffix, int)                                    \
+  DECL_WRITE_IMAGE(image_type, type, suffix, float)
+
+#define EXPEND_READ_COORD(id, sampler, coord) id, sampler, coord
+#define EXPEND_READ_COORD1(id, sampler, coord) id, sampler, (int)(coord < 0 ? -1 : coord)
+#define DENORMALIZE_COORD(id, dstCoord, srcCoord) dstCoord = srcCoord * __gen_ocl_get_image_width(id);
+#define EXPEND_WRITE_COORD(id, coord, color) id, coord, color
+
+#define OUT_OF_BOX(coord, surface, normalized)                   \
+  (coord < 0 ||                                                  \
+   ((normalized == 0)                                            \
+     && (coord >= __gen_ocl_get_image_width(surface)))           \
+   || ((normalized != 0) && (coord > 0x1p0)))
+
+#define FIXUP_FLOAT_COORD(tmpCoord)                            \
+  {                                                            \
+    if (tmpCoord < 0 && tmpCoord > -0x1p-20f)                  \
+      tmpCoord += -0x1p-9;                                     \
+  }
+
+DECL_IMAGE(GEN_FIX_1, image1d_t, int4, i)
+DECL_IMAGE(GEN_FIX_1, image1d_t, uint4, ui)
+DECL_IMAGE(0, image1d_t, float4, f)
+
+#undef EXPEND_READ_COORD
+#undef EXPEND_READ_COORD1
+#undef DENORMALIZE_COORD
+#undef EXPEND_WRITE_COORD
+#undef OUT_OF_BOX
+#undef FIXUP_FLOAT_COORD
+#undef DECL_IMAGE
+// End of 1D
+
+#define DECL_IMAGE(int_clamping_fix, image_type, type, suffix, n)                       \
+  DECL_READ_IMAGE0(int_clamping_fix, image_type, type, suffix, int ##n, n)              \
+  DECL_READ_IMAGE1(GEN_FIX_1, int_clamping_fix, image_type, type, suffix, float ##n, n) \
+  DECL_READ_IMAGE_NOSAMPLER(image_type, type, suffix, int ##n, n)                       \
+  DECL_WRITE_IMAGE(image_type, type, suffix, int ## n)                                  \
+  DECL_WRITE_IMAGE(image_type, type, suffix, float ## n)
+// 2D
 #define EXPEND_READ_COORD(id, sampler, coord) id, sampler, coord.s0, coord.s1
 #define EXPEND_READ_COORD1(id, sampler, coord) id, sampler, (int)(coord.s0 < 0 ? -1 : coord.s0), \
                                                (int)(coord.s1 < 0 ? -1 : coord.s1)
@@ -4669,13 +4737,6 @@ int __gen_ocl_get_image_depth(uint surface_id);
       tmpCoord.s1 += -0x1p-9f;                                 \
   }
 
-#define DECL_IMAGE(int_clamping_fix, image_type, type, suffix, n)                       \
-  DECL_READ_IMAGE0(int_clamping_fix, image_type, type, suffix, int ##n, n)              \
-  DECL_READ_IMAGE1(GEN_FIX_1, int_clamping_fix, image_type, type, suffix, float ##n, n) \
-  DECL_READ_IMAGE_NOSAMPLER(image_type, type, suffix, int ##n, n)                       \
-  DECL_WRITE_IMAGE(image_type, type, suffix, int ## n)                                  \
-  DECL_WRITE_IMAGE(image_type, type, suffix, float ## n)
-
 DECL_IMAGE(GEN_FIX_1, image2d_t, int4, i, 2)
 DECL_IMAGE(GEN_FIX_1, image2d_t, uint4, ui, 2)
 DECL_IMAGE(0, image2d_t, float4, f, 2)
@@ -4687,6 +4748,7 @@ DECL_IMAGE(0, image2d_t, float4, f, 2)
 #undef OUT_OF_BOX
 #undef FIXUP_FLOAT_COORD
 
+// 3D
 #define EXPEND_READ_COORD(id, sampler, coord) id, sampler, coord.s0, coord.s1, coord.s2
 #define EXPEND_READ_COORD1(id, sampler, coord) id, sampler, (int) (coord.s0 < 0 ? -1 : coord.s0), \
                                                (int)(coord.s1 < 0 ? -1 : coord.s1), (int)(coord.s2 < 0 ? -1 : coord.s2)

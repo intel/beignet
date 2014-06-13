@@ -71,7 +71,8 @@ namespace ir {
     static const Register slmoffset = Register(27);  // Group's SLM offset in total 64K SLM
     static const Register printfbptr = Register(28); // printf buffer address .
     static const Register printfiptr = Register(29); // printf index buffer address.
-    static const uint32_t regNum = 30;             // number of special registers
+    static const Register invalid = Register(30);  // used for valid comparation.
+    static const uint32_t regNum = 31;             // number of special registers
     extern const char *specialRegMean[];           // special register name.
   } /* namespace ocl */
 

@@ -351,7 +351,6 @@ namespace ir {
   class TypedWriteInstruction : public Instruction {
   public:
     /*! Return true if the given instruction is an instance of this class */
-    const bool is3D() const;
     static bool isClassOf(const Instruction &insn);
     const uint8_t getImageIndex() const;
     Type getSrcType(void) const;
@@ -361,7 +360,6 @@ namespace ir {
   /*! Load texels from a texture */
   class SampleInstruction : public Instruction {
   public:
-    const bool is3D() const;
     const uint8_t getImageIndex() const;
     const uint8_t getSamplerIndex(void) const;
     const uint8_t getSamplerOffset(void) const;
@@ -662,9 +660,9 @@ namespace ir {
   /*! sync.params... (see Sync instruction) */
   Instruction SYNC(uint32_t parameters);
   /*! typed write */
-  Instruction TYPED_WRITE(uint8_t imageIndex, Tuple src, Type srcType, Type coordType, bool is3D);
+  Instruction TYPED_WRITE(uint8_t imageIndex, Tuple src, Type srcType, Type coordType);
   /*! sample textures */
-  Instruction SAMPLE(uint8_t imageIndex, Tuple dst, Tuple src, bool dstIsFloat, bool srcIsFloat, uint8_t sampler, uint8_t samplerOffset, bool is3D);
+  Instruction SAMPLE(uint8_t imageIndex, Tuple dst, Tuple src, bool dstIsFloat, bool srcIsFloat, uint8_t sampler, uint8_t samplerOffset);
   /*! get image information , such as width/height/depth/... */
   Instruction GET_IMAGE_INFO(int infoType, Register dst, uint8_t imageIndex, Register infoReg);
   /*! label labelIndex */

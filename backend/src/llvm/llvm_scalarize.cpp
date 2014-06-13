@@ -639,19 +639,26 @@ namespace gbe {
 
         // Get the function arguments
         CallSite CS(call);
-        CallSite::arg_iterator CI = CS.arg_begin() + 3;
+        CallSite::arg_iterator CI = CS.arg_begin() + 2;
 
         switch (it->second) {
           default: break;
-          case GEN_OCL_READ_IMAGE_I:
-          case GEN_OCL_READ_IMAGE_UI:
-          case GEN_OCL_READ_IMAGE_F:
+          case GEN_OCL_READ_IMAGE_I_1D:
+          case GEN_OCL_READ_IMAGE_UI_1D:
+          case GEN_OCL_READ_IMAGE_F_1D:
+          case GEN_OCL_READ_IMAGE_I_2D:
+          case GEN_OCL_READ_IMAGE_UI_2D:
+          case GEN_OCL_READ_IMAGE_F_2D:
           case GEN_OCL_READ_IMAGE_I_3D:
           case GEN_OCL_READ_IMAGE_UI_3D:
           case GEN_OCL_READ_IMAGE_F_3D:
-          case GEN_OCL_READ_IMAGE_I_I:
-          case GEN_OCL_READ_IMAGE_UI_I:
-          case GEN_OCL_READ_IMAGE_F_I:
+
+	  case GEN_OCL_READ_IMAGE_I_1D_I:
+          case GEN_OCL_READ_IMAGE_UI_1D_I:
+          case GEN_OCL_READ_IMAGE_F_1D_I:
+          case GEN_OCL_READ_IMAGE_I_2D_I:
+          case GEN_OCL_READ_IMAGE_UI_2D_I:
+          case GEN_OCL_READ_IMAGE_F_2D_I:
           case GEN_OCL_READ_IMAGE_I_3D_I:
           case GEN_OCL_READ_IMAGE_UI_3D_I:
           case GEN_OCL_READ_IMAGE_F_3D_I:
@@ -666,9 +673,13 @@ namespace gbe {
           case GEN_OCL_WRITE_IMAGE_UI_3D:
           case GEN_OCL_WRITE_IMAGE_F_3D:
             CI++;
-          case GEN_OCL_WRITE_IMAGE_I:
-          case GEN_OCL_WRITE_IMAGE_UI:
-          case GEN_OCL_WRITE_IMAGE_F:
+          case GEN_OCL_WRITE_IMAGE_I_2D:
+          case GEN_OCL_WRITE_IMAGE_UI_2D:
+          case GEN_OCL_WRITE_IMAGE_F_2D:
+            CI++;
+          case GEN_OCL_WRITE_IMAGE_I_1D:
+          case GEN_OCL_WRITE_IMAGE_UI_1D:
+          case GEN_OCL_WRITE_IMAGE_F_1D:
           {
             *CI = InsertToVector(call, *CI);
             break;

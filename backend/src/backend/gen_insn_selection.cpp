@@ -3581,15 +3581,19 @@ namespace gbe
       for (valueID = 0; valueID < insn.getDstNum(); ++valueID)
         dst[valueID] = sel.selReg(insn.getDst(valueID), insn.getDstType());
 
-      if (!insn.is3D())
-        srcNum--;
+      GBE_ASSERT(srcNum == 3);
+      if (insn.getSrc(1) == ir::ocl::invalid) //not 3D
+        srcNum = 1;
+      else if (insn.getSrc(2) == ir::ocl::invalid)
+        srcNum = 2;
 
       if (insn.getSamplerOffset() != 0) {
-        // U, lod, V, [W]
+        // U, lod, [V], [W]
         GBE_ASSERT(insn.getSrcType() != TYPE_FLOAT);
         msgPayloads[0] = sel.selReg(insn.getSrc(0), insn.getSrcType());
         msgPayloads[1] = sel.selReg(sel.reg(FAMILY_DWORD), TYPE_U32);
-        msgPayloads[2] = sel.selReg(insn.getSrc(1), insn.getSrcType());
+        if (srcNum > 1)
+          msgPayloads[2] = sel.selReg(insn.getSrc(1), insn.getSrcType());
         if (srcNum > 2)
           msgPayloads[3] = sel.selReg(insn.getSrc(2), insn.getSrcType());
         // Clear the lod to zero.
@@ -3630,8 +3634,12 @@ namespace gbe
         msgs[0] = sel.selReg(sel.reg(FAMILY_DWORD), TYPE_U32);
         for(uint32_t msgID = 1; msgID < 1 + coordNum; msgID++, valueID++)
           msgs[msgID] = sel.selReg(insn.getSrc(msgID - 1), insn.getCoordType());
+
+        // fake u.
+        if (insn.getSrc(1) == ir::ocl::invalid)
+          msgs[2] = sel.selReg(sel.reg(FAMILY_DWORD), TYPE_U32);
         // fake w.
-        if (!insn.is3D())
+        if (insn.getSrc(2) == ir::ocl::invalid)
           msgs[3] = sel.selReg(sel.reg(FAMILY_DWORD), TYPE_U32);
         // LOD.
         msgs[4] = sel.selReg(sel.reg(FAMILY_DWORD), TYPE_U32);
@@ -3659,7 +3667,7 @@ namespace gbe
 
       uint32_t bti = insn.getImageIndex();
       if (simdWidth == 8)
-        sel.TYPED_WRITE(msgs, msgNum, bti, insn.is3D());
+        sel.TYPED_WRITE(msgs, msgNum, bti, insn.getSrc(2) != ir::ocl::invalid);
       else {
         sel.push();
         sel.curr.execWidth = 8;
@@ -3675,15 +3683,16 @@ namespace gbe
           sel.curr.quarterControl = (quarter == 0) ? GEN_COMPRESSION_Q1 : GEN_COMPRESSION_Q2;
           // Set U,V,W
           QUARTER_MOV0(msgs, 1, sel.selReg(insn.getSrc(0), insn.getCoordType()));
-          QUARTER_MOV0(msgs, 2, sel.selReg(insn.getSrc(1), insn.getCoordType()));
-          if (insn.is3D())
+          if (insn.getSrc(1) != ir::ocl::invalid) //not 2D
+            QUARTER_MOV0(msgs, 2, sel.selReg(insn.getSrc(1), insn.getCoordType()));
+          if (insn.getSrc(2) != ir::ocl::invalid) //not 3D
             QUARTER_MOV0(msgs, 3, sel.selReg(insn.getSrc(2), insn.getCoordType()));
           // Set R, G, B, A
           QUARTER_MOV1(msgs, 5, sel.selReg(insn.getSrc(3), insn.getSrcType()));
           QUARTER_MOV1(msgs, 6, sel.selReg(insn.getSrc(4), insn.getSrcType()));
           QUARTER_MOV1(msgs, 7, sel.selReg(insn.getSrc(5), insn.getSrcType()));
           QUARTER_MOV1(msgs, 8, sel.selReg(insn.getSrc(6), insn.getSrcType()));
-          sel.TYPED_WRITE(msgs, msgNum, bti, insn.is3D());
+          sel.TYPED_WRITE(msgs, msgNum, bti, insn.getSrc(2) != ir::ocl::invalid);
           #undef QUARTER_MOV0
           #undef QUARTER_MOV1
         }

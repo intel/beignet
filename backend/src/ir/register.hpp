@@ -160,9 +160,6 @@ namespace ir {
     GBE_CLASS(RegisterFile);
   };
 
-  /*! Useful to encode anything special */
-  static const Register invalidRegister(RegisterFile::MAX_INDEX);
-
   /*! Output the register file string in the given stream */
   std::ostream &operator<< (std::ostream &out, const RegisterFile &file);
 
