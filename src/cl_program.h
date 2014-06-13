@@ -92,6 +92,13 @@ cl_program_create_from_binary(cl_context             context,
                               cl_int *               binary_status,
                               cl_int *               errcode_ret);
 
+/* Create a program with built-in kernels*/
+extern cl_program
+cl_program_create_with_built_in_kernles(cl_context     context,
+                                  cl_uint              num_devices,
+                                  const cl_device_id * device_list,
+                                  const char *         kernel_names,
+                                  cl_int *             errcode_ret);
 /* Directly create a program from a LLVM source file */
 extern cl_program
 cl_program_create_from_llvm(cl_context             context,

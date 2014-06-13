@@ -206,7 +206,15 @@ cl_context_delete(cl_context ctx)
       cl_program_delete(ctx->internal_prgs[i]);
       ctx->internal_prgs[i] = NULL;
     }
+
+    if (ctx->internel_kernels[i]) {
+      cl_kernel_delete(ctx->built_in_kernels[i]);
+      ctx->built_in_kernels[i] = NULL;
+    }
   }
+
+  cl_program_delete(ctx->built_in_prgs);
+  ctx->built_in_prgs = NULL;
 
   /* All object lists should have been freed. Otherwise, the reference counter
    * of the context cannot be 0

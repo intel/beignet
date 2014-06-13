@@ -210,6 +210,80 @@ error:
 }
 
 LOCAL cl_program
+cl_program_create_with_built_in_kernles(cl_context     ctx,
+                                  cl_uint              num_devices,
+                                  const cl_device_id * devices,
+                                  const char *         kernel_names,
+                                  cl_int *             errcode_ret)
+{
+  cl_int err = CL_SUCCESS;
+
+  assert(ctx);
+  INVALID_DEVICE_IF (num_devices != 1);
+  INVALID_DEVICE_IF (devices == NULL);
+  INVALID_DEVICE_IF (devices[0] != ctx->device);
+
+  extern char cl_internal_built_in_kernel_str[];
+  extern int cl_internal_built_in_kernel_str_size;
+  char* p_built_in_kernel_str =cl_internal_built_in_kernel_str;
+  cl_int binary_status = CL_SUCCESS;
+
+  ctx->built_in_prgs = cl_program_create_from_binary(ctx, 1,
+                                                          &ctx->device,
+                                                          (size_t*)&cl_internal_built_in_kernel_str_size,
+                                                          (const unsigned char **)&p_built_in_kernel_str,
+                                                          &binary_status, &err);
+
+  if (!ctx->built_in_prgs)
+    return NULL;
+
+  err = cl_program_build(ctx->built_in_prgs, NULL);
+  if (err != CL_SUCCESS)
+    return NULL;
+
+  ctx->built_in_prgs->is_built = 1;
+
+  char delims[] = ";";
+  char* saveptr = NULL;
+  char* local_kernel_names;
+  char* kernel = NULL;
+  char* matched_kernel;
+  int i = 0;
+
+  //copy the content to local_kernel_names to protect the kernel_names.
+  TRY_ALLOC(local_kernel_names, cl_calloc(strlen(kernel_names)+1, sizeof(char) ) );
+  memcpy(local_kernel_names, kernel_names, strlen(kernel_names)+1);
+
+  kernel = strtok_r( local_kernel_names, delims , &saveptr);
+  while( kernel != NULL ) {
+    matched_kernel = strstr(ctx->device->built_in_kernels, kernel);
+    if(matched_kernel){
+      for (i = 0; i < ctx->built_in_prgs->ker_n; ++i) {
+        assert(ctx->built_in_prgs->ker[i]);
+        const char *ker_name = cl_kernel_get_name(ctx->built_in_prgs->ker[i]);
+        if (strcmp(ker_name, kernel) == 0) {
+          break;
+        }
+      }
+
+      ctx->built_in_kernels[i] = cl_program_create_kernel(ctx->built_in_prgs, kernel, NULL);
+    }
+    kernel = strtok_r((char*)saveptr , delims, &saveptr );
+  }
+
+  cl_free(local_kernel_names);
+
+exit:
+  if (errcode_ret)
+    *errcode_ret = err;
+  return ctx->built_in_prgs;
+error:
+  goto exit;
+
+  return CL_SUCCESS;
+}
+
+LOCAL cl_program
 cl_program_create_from_llvm(cl_context ctx,
                             cl_uint num_devices,
                             const cl_device_id *devices,

@@ -826,6 +826,30 @@ error:
     *errcode_ret = err;
   return program;
 }
+
+cl_program
+clCreateProgramWithBuiltInKernels(cl_context           context,
+                                  cl_uint              num_devices,
+                                  const cl_device_id * device_list,
+                                  const char *         kernel_names,
+                                  cl_int *             errcode_ret)
+{
+  cl_program program = NULL;
+  cl_int err = CL_SUCCESS;
+
+  CHECK_CONTEXT (context);
+  INVALID_VALUE_IF (kernel_names == NULL);
+  program = cl_program_create_with_built_in_kernles(context,
+                                                    num_devices,
+                                                    device_list,
+                                                    kernel_names,
+                                                    &err);
+error:
+  if (errcode_ret)
+    *errcode_ret = err;
+  return program;
+}
+
 cl_int
 clRetainProgram(cl_program program)
 {

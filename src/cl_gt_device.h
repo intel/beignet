@@ -75,7 +75,29 @@ DECL_INFO_STRING(version, LIBCL_VERSION_STRING)
 DECL_INFO_STRING(profile, "FULL_PROFILE")
 DECL_INFO_STRING(opencl_c_version, LIBCL_C_VERSION_STRING)
 DECL_INFO_STRING(extensions, "")
-DECL_INFO_STRING(built_in_kernels, "")
+DECL_INFO_STRING(built_in_kernels, "__cl_copy_region_align4;"
+                                   "__cl_copy_region_align16;"
+                                   "__cl_cpy_region_unalign_same_offset;"
+                                   "__cl_copy_region_unalign_dst_offset;"
+                                   "__cl_copy_region_unalign_src_offset;"
+                                   "__cl_copy_buffer_rect;"
+                                   "__cl_copy_image_2d_to_2d;"
+                                   "__cl_copy_image_3d_to_2d;"
+                                   "__cl_copy_image_2d_to_3d;"
+                                   "__cl_copy_image_3d_to_3d;"
+                                   "__cl_copy_image_2d_to_buffer;"
+                                   "__cl_copy_image_3d_to_buffer;"
+                                   "__cl_copy_buffer_to_image_2d;"
+                                   "__cl_copy_buffer_to_image_3d;"
+                                   "__cl_fill_region_unalign;"
+                                   "__cl_fill_region_align2;"
+                                   "__cl_fill_region_align4;"
+                                   "__cl_fill_region_align8_2;"
+                                   "__cl_fill_region_align8_4;"
+                                   "__cl_fill_region_align8_8;"
+                                   "__cl_fill_region_align8_16;"
+                                   "__cl_fill_region_align128;")
+
 DECL_INFO_STRING(driver_version, LIBCL_DRIVER_VERSION_STRING)
 #undef DECL_INFO_STRING
 
