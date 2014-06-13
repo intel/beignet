@@ -155,6 +155,8 @@ set (utests_sources
   runtime_createcontext.cpp
   runtime_null_kernel_arg.cpp
   runtime_event.cpp
+  runtime_barrier_list.cpp
+  runtime_marker_list.cpp
   compiler_long.cpp
   compiler_long_2.cpp
   compiler_long_convert.cpp
