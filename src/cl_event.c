@@ -33,6 +33,7 @@ cl_event_is_gpu_command_type(cl_command_type type)
 {
   switch(type) {
     case CL_COMMAND_COPY_BUFFER:
+    case CL_COMMAND_FILL_BUFFER:
     case CL_COMMAND_COPY_IMAGE:
     case CL_COMMAND_COPY_IMAGE_TO_BUFFER:
     case CL_COMMAND_COPY_BUFFER_TO_IMAGE:

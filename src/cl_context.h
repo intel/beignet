@@ -40,6 +40,7 @@ enum _cl_gl_context_type {
 };
 
 enum _cl_internal_ker_type {
+  CL_INTERNAL_KERNEL_MIN = 0,
   CL_ENQUEUE_COPY_BUFFER_ALIGN4 = 0,
   CL_ENQUEUE_COPY_BUFFER_ALIGN16,
   CL_ENQUEUE_COPY_BUFFER_UNALIGN_SAME_OFFSET,
@@ -54,6 +55,14 @@ enum _cl_internal_ker_type {
   CL_ENQUEUE_COPY_IMAGE_3D_TO_BUFFER,   //copy image 3d tobuffer
   CL_ENQUEUE_COPY_BUFFER_TO_IMAGE_2D,   //copy buffer to image 2d
   CL_ENQUEUE_COPY_BUFFER_TO_IMAGE_3D,   //copy buffer to image 3d
+  CL_ENQUEUE_FILL_BUFFER_UNALIGN,      //fill buffer with 1 aligne pattern, pattern size=1
+  CL_ENQUEUE_FILL_BUFFER_ALIGN2,       //fill buffer with 2 aligne pattern, pattern size=2
+  CL_ENQUEUE_FILL_BUFFER_ALIGN4,       //fill buffer with 4 aligne pattern, pattern size=4
+  CL_ENQUEUE_FILL_BUFFER_ALIGN8_8,     //fill buffer with 8 aligne pattern, pattern size=8
+  CL_ENQUEUE_FILL_BUFFER_ALIGN8_16,    //fill buffer with 16 aligne pattern, pattern size=16
+  CL_ENQUEUE_FILL_BUFFER_ALIGN8_32,    //fill buffer with 16 aligne pattern, pattern size=32
+  CL_ENQUEUE_FILL_BUFFER_ALIGN8_64,    //fill buffer with 16 aligne pattern, pattern size=64
+  CL_ENQUEUE_FILL_BUFFER_ALIGN128,     //fill buffer with 128 aligne pattern, pattern size=128
   CL_INTERNAL_KERNEL_MAX
 };
 

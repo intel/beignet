@@ -938,6 +938,108 @@ cl_mem_copy(cl_command_queue queue, cl_mem src_buf, cl_mem dst_buf,
 }
 
 LOCAL cl_int
+cl_mem_fill(cl_command_queue queue, const void * pattern, size_t pattern_size,
+            cl_mem buffer, size_t offset, size_t size)
+{
+  cl_int ret = CL_SUCCESS;
+  cl_kernel ker = NULL;
+  size_t global_off[] = {0,0,0};
+  size_t global_sz[] = {1,1,1};
+  size_t local_sz[] = {1,1,1};
+  char pattern_comb[4];
+  int is_128 = 0;
+  const void * pattern1 = NULL;
+
+  assert(offset % pattern_size == 0);
+  assert(size % pattern_size == 0);
+
+  if (!size)
+    return ret;
+
+  if (pattern_size == 128) {
+    /* 128 is according to pattern of double16, but double works not very
+       well on some platform. We use two float16 to handle this. */
+    extern char cl_internal_fill_buf_align128_str[];
+    extern int cl_internal_fill_buf_align128_str_size;
+
+    ker = cl_context_get_static_kernel_form_bin(queue->ctx, CL_ENQUEUE_FILL_BUFFER_ALIGN128,
+               cl_internal_fill_buf_align128_str, (size_t)cl_internal_fill_buf_align128_str_size, NULL);
+    is_128 = 1;
+    pattern_size = pattern_size / 2;
+    pattern1 = pattern + pattern_size;
+    size = size / 2;
+  } else if (pattern_size % 8 == 0) { /* Handle the 8 16 32 64 cases here. */
+    extern char cl_internal_fill_buf_align8_str[];
+    extern int cl_internal_fill_buf_align8_str_size;
+    int order = ffs(pattern_size / 8) - 1;
+
+    ker = cl_context_get_static_kernel_form_bin(queue->ctx, CL_ENQUEUE_FILL_BUFFER_ALIGN8_8 + order,
+               cl_internal_fill_buf_align8_str, (size_t)cl_internal_fill_buf_align8_str_size, NULL);
+  } else if (pattern_size == 4) {
+    extern char cl_internal_fill_buf_align4_str[];
+    extern int cl_internal_fill_buf_align4_str_size;
+
+    ker = cl_context_get_static_kernel_form_bin(queue->ctx, CL_ENQUEUE_FILL_BUFFER_ALIGN4,
+               cl_internal_fill_buf_align4_str, (size_t)cl_internal_fill_buf_align4_str_size, NULL);
+  } else if (size >= 4 && size % 4 == 0 && offset % 4 == 0) {
+    /* The unaligned case. But if copy size and offset are aligned to 4, we can fake
+       the pattern with the pattern duplication fill in. */
+    assert(pattern_size == 1 || pattern_size == 2);
+    extern char cl_internal_fill_buf_align4_str[];
+    extern int cl_internal_fill_buf_align4_str_size;
+
+    if (pattern_size == 2) {
+      memcpy(pattern_comb, pattern, sizeof(char)*2);
+      memcpy(pattern_comb + 2, pattern, sizeof(char)*2);
+    } else {
+      pattern_comb[0] = pattern_comb[1] = pattern_comb[2]
+        = pattern_comb[3] = *(char *)pattern;
+    }
+
+    ker = cl_context_get_static_kernel_form_bin(queue->ctx, CL_ENQUEUE_FILL_BUFFER_ALIGN4,
+               cl_internal_fill_buf_align4_str, (size_t)cl_internal_fill_buf_align4_str_size, NULL);
+    pattern_size = 4;
+    pattern = pattern_comb;
+  }
+  //TODO: Unaligned cases, we may need to optimize it as cl_mem_copy, using mask in kernel
+  //functions. This depend on the usage but now we just use aligned 1 and 2.
+  else if (pattern_size == 2) {
+    extern char cl_internal_fill_buf_align2_str[];
+    extern int cl_internal_fill_buf_align2_str_size;
+    ker = cl_context_get_static_kernel_form_bin(queue->ctx, CL_ENQUEUE_FILL_BUFFER_ALIGN2,
+               cl_internal_fill_buf_align2_str, (size_t)cl_internal_fill_buf_align2_str_size, NULL);
+  } else if (pattern_size == 1) {
+    extern char cl_internal_fill_buf_unalign_str[];
+    extern int cl_internal_fill_buf_unalign_str_size;
+    ker = cl_context_get_static_kernel_form_bin(queue->ctx, CL_ENQUEUE_FILL_BUFFER_UNALIGN,
+               cl_internal_fill_buf_unalign_str, (size_t)cl_internal_fill_buf_unalign_str_size, NULL);
+  } else
+    assert(0);
+
+  if (!ker)
+    return CL_OUT_OF_RESOURCES;
+
+  size = size / pattern_size;
+  offset = offset / pattern_size;
+
+  if (size < LOCAL_SZ_0) {
+    local_sz[0] = 1;
+  } else {
+    local_sz[0] = LOCAL_SZ_0;
+  }
+  global_sz[0] = ((size + LOCAL_SZ_0 - 1) / LOCAL_SZ_0) * LOCAL_SZ_0;
+  cl_kernel_set_arg(ker, 0, sizeof(cl_mem), &buffer);
+  cl_kernel_set_arg(ker, 1, pattern_size, pattern);
+  cl_kernel_set_arg(ker, 2, sizeof(cl_uint), &offset);
+  cl_kernel_set_arg(ker, 3, sizeof(cl_uint), &size);
+  if (is_128)
+    cl_kernel_set_arg(ker, 4, pattern_size, pattern1);
+
+  ret = cl_command_queue_ND_range(queue, ker, 1, global_off, global_sz, local_sz);
+  return ret;
+}
+
+LOCAL cl_int
 cl_mem_copy_buffer_rect(cl_command_queue queue, cl_mem src_buf, cl_mem dst_buf,
                        const size_t *src_origin, const size_t *dst_origin, const size_t *region,
                        size_t src_row_pitch, size_t src_slice_pitch,

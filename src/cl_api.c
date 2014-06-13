@@ -1602,6 +1602,84 @@ error:
 }
 
 cl_int
+clEnqueueFillBuffer(cl_command_queue   command_queue,
+                    cl_mem             buffer,
+                    const void *       pattern,
+                    size_t             pattern_size,
+                    size_t             offset,
+                    size_t             size,
+                    cl_uint            num_events_in_wait_list,
+                    const cl_event *   event_wait_list,
+                    cl_event *         event)
+{
+  cl_int err = CL_SUCCESS;
+  enqueue_data *data, no_wait_data = { 0 };
+  static size_t valid_sz[] = {1, 2, 4, 8, 16, 32, 64, 128};
+  int i = 0;
+
+  CHECK_QUEUE(command_queue);
+  CHECK_MEM(buffer);
+
+  if (command_queue->ctx != buffer->ctx) {
+    err = CL_INVALID_CONTEXT;
+    goto error;
+  }
+
+  if (offset < 0 || offset + size > buffer->size) {
+    err = CL_INVALID_VALUE;
+    goto error;
+  }
+
+  if (pattern == NULL) {
+    err = CL_INVALID_VALUE;
+    goto error;
+  }
+
+  for (i = 0; i < sizeof(valid_sz) / sizeof(size_t); i++) {
+    if (valid_sz[i] == pattern_size)
+      break;
+  }
+  if (i == sizeof(valid_sz) / sizeof(size_t)) {
+    err = CL_INVALID_VALUE;
+    goto error;
+  }
+
+  if (offset % pattern_size || size % pattern_size) {
+    err = CL_INVALID_VALUE;
+    goto error;
+  }
+
+  err = cl_mem_fill(command_queue, pattern, pattern_size, buffer, offset, size);
+  if (err) {
+    goto error;
+  }
+
+  TRY(cl_event_check_waitlist, num_events_in_wait_list, event_wait_list, event, buffer->ctx);
+
+  data = &no_wait_data;
+  data->type = EnqueueFillBuffer;
+  data->queue = command_queue;
+
+  if(handle_events(command_queue, num_events_in_wait_list, event_wait_list,
+                   event, data, CL_COMMAND_FILL_BUFFER) == CL_ENQUEUE_EXECUTE_IMM) {
+    if (event && (*event)->type != CL_COMMAND_USER
+        && (*event)->queue->props & CL_QUEUE_PROFILING_ENABLE) {
+      cl_event_get_timestamp(*event, CL_PROFILING_COMMAND_SUBMIT);
+    }
+
+    err = cl_command_queue_flush(command_queue);
+  }
+
+  if(b_output_kernel_perf)
+    time_end(command_queue->ctx, "beignet internal kernel : cl_fill_buffer", "", command_queue);
+
+  return 0;
+
+ error:
+  return err;
+}
+
+cl_int
 clEnqueueCopyBuffer(cl_command_queue     command_queue,
                     cl_mem               src_buffer,
                     cl_mem               dst_buffer,

@@ -188,12 +188,25 @@ error:
 LOCAL void
 cl_context_delete(cl_context ctx)
 {
+  int i = 0;
   if (UNLIKELY(ctx == NULL))
     return;
 
   /* We are not done yet */
   if (atomic_dec(&ctx->ref_n) > 1)
     return;
+
+  /* delete the internal programs. */
+  for (i = CL_INTERNAL_KERNEL_MIN; i < CL_INTERNAL_KERNEL_MAX; i++) {
+    if (ctx->internel_kernels[i]) {
+      cl_kernel_delete(ctx->internel_kernels[i]);
+      ctx->internel_kernels[i] = NULL;
+
+      assert(ctx->internal_prgs[i]);
+      cl_program_delete(ctx->internal_prgs[i]);
+      ctx->internal_prgs[i] = NULL;
+    }
+  }
 
   /* All object lists should have been freed. Otherwise, the reference counter
    * of the context cannot be 0
@@ -250,8 +263,7 @@ cl_kernel
 cl_context_get_static_kernel(cl_context ctx, cl_int index, const char * str_kernel, const char * str_option)
 {
   cl_int ret;
-  if (!ctx->internal_prgs[index])
-  {
+  if (!ctx->internal_prgs[index]) {
     size_t length = strlen(str_kernel) + 1;
     ctx->internal_prgs[index] = cl_program_create_from_source(ctx, 1, &str_kernel, &length, NULL);
 
@@ -264,7 +276,35 @@ cl_context_get_static_kernel(cl_context ctx, cl_int index, const char * str_kern
 
     ctx->internal_prgs[index]->is_built = 1;
 
-    ctx->internel_kernels[index] = cl_kernel_dup(ctx->internal_prgs[index]->ker[0]);
+    /* All CL_ENQUEUE_FILL_BUFFER_ALIGN16_xxx use the same program, different kernel. */
+    if (index >= CL_ENQUEUE_FILL_BUFFER_ALIGN8_8 && index <= CL_ENQUEUE_FILL_BUFFER_ALIGN8_64) {
+      int i = CL_ENQUEUE_FILL_BUFFER_ALIGN8_8;
+      for (; i <= CL_ENQUEUE_FILL_BUFFER_ALIGN8_64; i++) {
+        if (index != i) {
+          assert(ctx->internal_prgs[i] == NULL);
+          assert(ctx->internel_kernels[i] == NULL);
+          cl_program_add_ref(ctx->internal_prgs[index]);
+          ctx->internal_prgs[i] = ctx->internal_prgs[index];
+        }
+
+        if (i == CL_ENQUEUE_FILL_BUFFER_ALIGN8_8) {
+          ctx->internel_kernels[i] = cl_program_create_kernel(ctx->internal_prgs[index],
+                                                              "__cl_fill_region_align8_2", NULL);
+        } else if (i == CL_ENQUEUE_FILL_BUFFER_ALIGN8_16) {
+          ctx->internel_kernels[i] = cl_program_create_kernel(ctx->internal_prgs[index],
+                                                              "__cl_fill_region_align8_4", NULL);
+        } else if (i == CL_ENQUEUE_FILL_BUFFER_ALIGN8_32) {
+          ctx->internel_kernels[i] = cl_program_create_kernel(ctx->internal_prgs[index],
+                                                              "__cl_fill_region_align8_8", NULL);
+        } else if (i == CL_ENQUEUE_FILL_BUFFER_ALIGN8_64) {
+          ctx->internel_kernels[i] = cl_program_create_kernel(ctx->internal_prgs[index],
+                                                              "__cl_fill_region_align8_16", NULL);
+        } else
+          assert(0);
+      }
+    } else {
+      ctx->internel_kernels[index] = cl_kernel_dup(ctx->internal_prgs[index]->ker[0]);
+    }
   }
 
   return ctx->internel_kernels[index];
@@ -276,8 +316,7 @@ cl_context_get_static_kernel_form_bin(cl_context ctx, cl_int index,
 {
   cl_int ret;
   cl_int binary_status = CL_SUCCESS;
-  if (!ctx->internal_prgs[index])
-  {
+  if (!ctx->internal_prgs[index]) {
     ctx->internal_prgs[index] = cl_program_create_from_binary(ctx, 1, &ctx->device,
       &size, (const unsigned char **)&str_kernel, &binary_status, &ret);
 
@@ -290,7 +329,35 @@ cl_context_get_static_kernel_form_bin(cl_context ctx, cl_int index,
 
     ctx->internal_prgs[index]->is_built = 1;
 
-    ctx->internel_kernels[index] = cl_kernel_dup(ctx->internal_prgs[index]->ker[0]);
+    /* All CL_ENQUEUE_FILL_BUFFER_ALIGN16_xxx use the same program, different kernel. */
+    if (index >= CL_ENQUEUE_FILL_BUFFER_ALIGN8_8 && index <= CL_ENQUEUE_FILL_BUFFER_ALIGN8_64) {
+      int i = CL_ENQUEUE_FILL_BUFFER_ALIGN8_8;
+      for (; i <= CL_ENQUEUE_FILL_BUFFER_ALIGN8_64; i++) {
+        if (index != i) {
+          assert(ctx->internal_prgs[i] == NULL);
+          assert(ctx->internel_kernels[i] == NULL);
+          cl_program_add_ref(ctx->internal_prgs[index]);
+          ctx->internal_prgs[i] = ctx->internal_prgs[index];
+        }
+
+        if (i == CL_ENQUEUE_FILL_BUFFER_ALIGN8_8) {
+          ctx->internel_kernels[i] = cl_program_create_kernel(ctx->internal_prgs[index],
+                                                              "__cl_fill_region_align8_2", NULL);
+        } else if (i == CL_ENQUEUE_FILL_BUFFER_ALIGN8_16) {
+          ctx->internel_kernels[i] = cl_program_create_kernel(ctx->internal_prgs[index],
+                                                              "__cl_fill_region_align8_4", NULL);
+        } else if (i == CL_ENQUEUE_FILL_BUFFER_ALIGN8_32) {
+          ctx->internel_kernels[i] = cl_program_create_kernel(ctx->internal_prgs[index],
+                                                              "__cl_fill_region_align8_8", NULL);
+        } else if (i == CL_ENQUEUE_FILL_BUFFER_ALIGN8_64) {
+          ctx->internel_kernels[i] = cl_program_create_kernel(ctx->internal_prgs[index],
+                                                              "__cl_fill_region_align8_16", NULL);
+        } else
+          assert(0);
+      }
+    } else {
+      ctx->internel_kernels[index] = cl_kernel_dup(ctx->internal_prgs[index]->ker[0]);
+    }
   }
 
   return ctx->internel_kernels[index];
