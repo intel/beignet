@@ -173,6 +173,7 @@ set (utests_sources
   enqueue_copy_buf.cpp
   enqueue_copy_buf_unaligned.cpp
   test_printf.cpp
+  enqueue_fill_buf.cpp
   utest_assert.cpp
   utest.cpp
   utest_file_map.cpp
