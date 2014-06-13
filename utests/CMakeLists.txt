@@ -157,6 +157,7 @@ set (utests_sources
   runtime_event.cpp
   runtime_barrier_list.cpp
   runtime_marker_list.cpp
+  runtime_compile_link.cpp
   compiler_long.cpp
   compiler_long_2.cpp
   compiler_long_convert.cpp
