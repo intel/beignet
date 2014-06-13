@@ -2725,8 +2725,8 @@ error:
 }
 
 cl_int
-clEnqueueMarker(cl_command_queue     command_queue,
-                cl_event *           event)
+clEnqueueMarker(cl_command_queue command_queue,
+    cl_event *event)
 {
   cl_int err = CL_SUCCESS;
   CHECK_QUEUE(command_queue);
@@ -2735,7 +2735,26 @@ clEnqueueMarker(cl_command_queue     command_queue,
     goto error;
   }
 
-  cl_event_marker(command_queue, event);
+  cl_event_marker_with_wait_list(command_queue, 0, NULL, event);
+error:
+  return err;
+}
+
+cl_int
+clEnqueueMarkerWithWaitList(cl_command_queue command_queue,
+    cl_uint num_events_in_wait_list,
+    const cl_event *event_wait_list,
+    cl_event *event)
+{
+  cl_int err = CL_SUCCESS;
+  CHECK_QUEUE(command_queue);
+  if(event == NULL) {
+    err = CL_INVALID_VALUE;
+    goto error;
+  }
+  TRY(cl_event_check_waitlist, num_events_in_wait_list, event_wait_list, event, command_queue->ctx);
+
+  cl_event_marker_with_wait_list(command_queue, num_events_in_wait_list, event_wait_list, event);
 error:
   return err;
 }

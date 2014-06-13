@@ -459,13 +459,31 @@ void cl_event_update_status(cl_event event)
     cl_event_set_status(event, CL_COMPLETE);
 }
 
-cl_int cl_event_marker(cl_command_queue queue, cl_event* event)
+cl_int cl_event_marker_with_wait_list(cl_command_queue queue,
+                cl_uint num_events_in_wait_list,
+                const cl_event *event_wait_list,
+                cl_event* event)
 {
   enqueue_data data;
+  cl_uint i = 0;
 
   *event = cl_event_new(queue->ctx, queue, CL_COMMAND_MARKER, CL_TRUE);
   if(event == NULL)
     return CL_OUT_OF_HOST_MEMORY;
+
+  //insert the input events to queue
+  for(i=0; i<num_events_in_wait_list; i++) {
+    if(event_wait_list[i]->type==CL_COMMAND_USER) {
+      cl_command_queue_insert_event(queue, event_wait_list[i]);
+    }else if(event_wait_list[i]->enqueue_cb != NULL) {
+      user_event* user_events = event_wait_list[i]->enqueue_cb->wait_user_events;
+
+      while(user_events != NULL) {
+        cl_command_queue_insert_event(queue, user_events->event);
+        user_events = user_events->next;
+      }
+    }
+  }
 
   //if wait_events_num>0, the marker event need wait queue->wait_events
   if(queue->wait_events_num > 0) {
