@@ -52,6 +52,16 @@ enum gbe_arg_type {
   GBE_ARG_INVALID = 0xffffffff
 };
 
+/*! Get argument info values */
+enum gbe_get_arg_info_value {
+  GBE_GET_ARG_INFO_ADDRSPACE = 0,
+  GBE_GET_ARG_INFO_ACCESS = 1,
+  GBE_GET_ARG_INFO_TYPE = 2,
+  GBE_GET_ARG_INFO_TYPEQUAL = 3,
+  GBE_GET_ARG_INFO_NAME = 4,
+  GBE_GET_ARG_INFO_INVALID = 0xffffffff
+};
+
 /*! Constant buffer values (ie values to setup in the constant buffer) */
 enum gbe_curbe_type {
   GBE_CURBE_LOCAL_ID_X = 0,
@@ -256,6 +266,10 @@ extern gbe_kernel_get_code_size_cb *gbe_kernel_get_code_size;
 /*! Get the total number of arguments */
 typedef uint32_t (gbe_kernel_get_arg_num_cb)(gbe_kernel);
 extern gbe_kernel_get_arg_num_cb *gbe_kernel_get_arg_num;
+
+/*! Get the argument info */
+typedef void* (gbe_kernel_get_arg_info_cb)(gbe_kernel, uint32_t argID, uint32_t value);
+extern gbe_kernel_get_arg_info_cb *gbe_kernel_get_arg_info;
 
 /*! Get the size of the given argument */
 typedef uint32_t (gbe_kernel_get_arg_size_cb)(gbe_kernel, uint32_t argID);

@@ -68,6 +68,7 @@ gbe_dup_printfset_cb* interp_dup_printfset = NULL;
 gbe_get_printf_sizeof_size_cb* interp_get_printf_sizeof_size = NULL;
 gbe_release_printf_info_cb* interp_release_printf_info = NULL;
 gbe_output_printf_cb* interp_output_printf = NULL;
+gbe_kernel_get_arg_info_cb *interp_kernel_get_arg_info = NULL;
 
 struct GbeLoaderInitializer
 {
@@ -227,6 +228,10 @@ struct GbeLoaderInitializer
 
     interp_output_printf = *(gbe_output_printf_cb**)dlsym(dlhInterp, "gbe_output_printf");
     if (interp_output_printf == NULL)
+      return false;
+
+    interp_kernel_get_arg_info = *(gbe_kernel_get_arg_info_cb**)dlsym(dlhInterp, "gbe_kernel_get_arg_info");
+    if (interp_kernel_get_arg_info == NULL)
       return false;
 
     return true;

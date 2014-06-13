@@ -983,6 +983,29 @@ namespace gbe {
     return kernel->getArgNum();
   }
 
+  static void *kernelGetArgInfo(gbe_kernel genKernel, uint32_t argID, uint32_t value) {
+    if (genKernel == NULL) return NULL;
+    const gbe::Kernel *kernel = (const gbe::Kernel*) genKernel;
+    ir::FunctionArgument::InfoFromLLVM* info = kernel->getArgInfo(argID);
+
+    switch (value) {
+      case GBE_GET_ARG_INFO_ADDRSPACE:
+        return (void*)((ulong)info->addrSpace);
+      case GBE_GET_ARG_INFO_TYPE:
+        return (void *)(info->typeName.c_str());
+      case GBE_GET_ARG_INFO_ACCESS:
+        return (void *)(info->accessQual.c_str());
+      case GBE_GET_ARG_INFO_TYPEQUAL:
+        return (void *)(info->typeQual.c_str());
+      case GBE_GET_ARG_INFO_NAME:
+        return (void *)(info->argName.c_str());
+      default:
+        assert(0);
+    }
+
+    return NULL;
+  }
+
   static uint32_t kernelGetArgSize(gbe_kernel genKernel, uint32_t argID) {
     if (genKernel == NULL) return 0u;
     const gbe::Kernel *kernel = (const gbe::Kernel*) genKernel;
@@ -1156,6 +1179,7 @@ GBE_EXPORT_SYMBOL gbe_kernel_get_name_cb *gbe_kernel_get_name = NULL;
 GBE_EXPORT_SYMBOL gbe_kernel_get_code_cb *gbe_kernel_get_code = NULL;
 GBE_EXPORT_SYMBOL gbe_kernel_get_code_size_cb *gbe_kernel_get_code_size = NULL;
 GBE_EXPORT_SYMBOL gbe_kernel_get_arg_num_cb *gbe_kernel_get_arg_num = NULL;
+GBE_EXPORT_SYMBOL gbe_kernel_get_arg_info_cb *gbe_kernel_get_arg_info = NULL;
 GBE_EXPORT_SYMBOL gbe_kernel_get_arg_size_cb *gbe_kernel_get_arg_size = NULL;
 GBE_EXPORT_SYMBOL gbe_kernel_get_arg_type_cb *gbe_kernel_get_arg_type = NULL;
 GBE_EXPORT_SYMBOL gbe_kernel_get_arg_align_cb *gbe_kernel_get_arg_align = NULL;
@@ -1201,6 +1225,7 @@ namespace gbe
       gbe_kernel_get_code = gbe::kernelGetCode;
       gbe_kernel_get_code_size = gbe::kernelGetCodeSize;
       gbe_kernel_get_arg_num = gbe::kernelGetArgNum;
+      gbe_kernel_get_arg_info = gbe::kernelGetArgInfo;
       gbe_kernel_get_arg_size = gbe::kernelGetArgSize;
       gbe_kernel_get_arg_type = gbe::kernelGetArgType;
       gbe_kernel_get_arg_align = gbe::kernelGetArgAlign;

@@ -68,6 +68,7 @@ extern gbe_program_compile_from_source_cb *compiler_program_compile_from_source;
 extern gbe_program_new_gen_program_cb *compiler_program_new_gen_program;
 extern gbe_program_link_program_cb *compiler_program_link_program;
 extern gbe_program_build_from_llvm_cb *compiler_program_build_from_llvm;
+extern gbe_kernel_get_arg_info_cb *interp_kernel_get_arg_info;
 
 int CompilerSupported();
 #ifdef __cplusplus

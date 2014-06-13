@@ -50,6 +50,7 @@ namespace gbe {
     uint32_t size;     //!< Size of the argument
     uint32_t align;    //!< addr alignment of the argument
     uint32_t bufSize;  //!< Contant buffer size
+    ir::FunctionArgument::InfoFromLLVM info;
   };
 
   /*! Stores the offset where to patch where to patch */
@@ -158,6 +159,8 @@ namespace gbe {
         printfSet->outputPrintf(index_addr, buf_addr, global_wk_sz0,
                                 global_wk_sz1, global_wk_sz2);
     }
+
+    ir::FunctionArgument::InfoFromLLVM* getArgInfo(uint32_t id) const { return &args[id].info; }
 
     /*! Set compile work group size */
     void setCompileWorkGroupSize(const size_t wg_sz[3]) {

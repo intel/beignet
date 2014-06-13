@@ -93,6 +93,12 @@ extern int cl_kernel_set_arg(cl_kernel,
                              size_t      arg_size,
                              const void *arg_value);
 
+/* Get the argument information */
+extern int cl_get_kernel_arg_info(cl_kernel k, cl_uint arg_index,
+                                  cl_kernel_arg_info param_name,
+                                  size_t param_value_size, void *param_value,
+                                  size_t *param_value_size_ret);
+
 /* Compute and check the work group size from the user provided local size */
 extern cl_int
 cl_kernel_work_group_sz(cl_kernel ker,

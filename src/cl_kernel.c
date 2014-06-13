@@ -208,6 +208,89 @@ cl_kernel_set_arg(cl_kernel k, cl_uint index, size_t sz, const void *value)
   return CL_SUCCESS;
 }
 
+LOCAL int
+cl_get_kernel_arg_info(cl_kernel k, cl_uint arg_index, cl_kernel_arg_info param_name,
+                       size_t param_value_size, void *param_value, size_t *param_value_size_ret)
+{
+  assert(k != NULL);
+  void *ret_info = interp_kernel_get_arg_info(k->opaque, arg_index,
+                           param_name - CL_KERNEL_ARG_ADDRESS_QUALIFIER);
+  int str_len = 0;
+  cl_kernel_arg_type_qualifier type_qual = CL_KERNEL_ARG_TYPE_NONE;
+
+  switch (param_name) {
+  case CL_KERNEL_ARG_ADDRESS_QUALIFIER:
+    if (param_value_size < sizeof(cl_kernel_arg_address_qualifier))
+      return CL_INVALID_VALUE;
+    if (param_value_size_ret)
+      *param_value_size_ret = sizeof(cl_kernel_arg_address_qualifier);
+    if (!param_value) return CL_SUCCESS;
+    if ((ulong)ret_info == 0) {
+      *(cl_kernel_arg_address_qualifier *)param_value = CL_KERNEL_ARG_ADDRESS_PRIVATE;
+    } else if ((ulong)ret_info == 1) {
+      *(cl_kernel_arg_address_qualifier *)param_value = CL_KERNEL_ARG_ADDRESS_GLOBAL;
+    } else if ((ulong)ret_info == 2) {
+      *(cl_kernel_arg_address_qualifier *)param_value = CL_KERNEL_ARG_ADDRESS_CONSTANT;
+    } else if ((ulong)ret_info == 3) {
+      *(cl_kernel_arg_address_qualifier *)param_value = CL_KERNEL_ARG_ADDRESS_LOCAL;
+    } else {
+      /* If no address qualifier is specified, the default address qualifier
+         which is CL_KERNEL_ARG_ADDRESS_PRIVATE is returned. */
+      *(cl_kernel_arg_address_qualifier *)param_value = CL_KERNEL_ARG_ADDRESS_LOCAL;
+    }
+    return CL_SUCCESS;
+
+  case CL_KERNEL_ARG_ACCESS_QUALIFIER:
+    if (param_value_size < sizeof(cl_kernel_arg_access_qualifier))
+      return CL_INVALID_VALUE;
+    if (param_value_size_ret)
+      *param_value_size_ret = sizeof(cl_kernel_arg_access_qualifier);
+    if (!param_value) return CL_SUCCESS;
+    if (!strcmp((char*)ret_info, "write_only")) {
+      *(cl_kernel_arg_address_qualifier *)param_value = CL_KERNEL_ARG_ACCESS_WRITE_ONLY;
+    } else if (!strcmp((char*)ret_info, "read_only")) {
+      *(cl_kernel_arg_address_qualifier *)param_value = CL_KERNEL_ARG_ACCESS_READ_ONLY;
+    } else if (!strcmp((char*)ret_info, "read_write")) {
+      *(cl_kernel_arg_address_qualifier *)param_value = CL_KERNEL_ARG_ACCESS_READ_WRITE;
+    } else {
+      *(cl_kernel_arg_address_qualifier *)param_value = CL_KERNEL_ARG_ACCESS_NONE;
+    }
+    return CL_SUCCESS;
+
+  case CL_KERNEL_ARG_TYPE_NAME:
+  case CL_KERNEL_ARG_NAME:
+    str_len = strlen(ret_info);
+    if (param_value_size < str_len + 1)
+      return CL_INVALID_VALUE;
+    if (param_value_size_ret)
+      *param_value_size_ret = str_len + 1;
+    if (!param_value) return CL_SUCCESS;
+    memcpy(param_value, ret_info, str_len);
+    ((char *)param_value)[str_len] = 0;
+    return CL_SUCCESS;
+
+  case CL_KERNEL_ARG_TYPE_QUALIFIER:
+    if (param_value_size < sizeof(cl_kernel_arg_type_qualifier))
+      return CL_INVALID_VALUE;
+    if (param_value_size_ret)
+      *param_value_size_ret = sizeof(cl_kernel_arg_type_qualifier);
+    if (!param_value) return CL_SUCCESS;
+    if (strstr((char*)ret_info, "const"))
+      type_qual = type_qual | CL_KERNEL_ARG_TYPE_CONST;
+    if (strstr((char*)ret_info, "volatile"))
+      type_qual = type_qual | CL_KERNEL_ARG_TYPE_VOLATILE;
+    if (strstr((char*)ret_info, "restrict"))
+      type_qual = type_qual | CL_KERNEL_ARG_TYPE_RESTRICT;
+    *(cl_kernel_arg_type_qualifier *)param_value = type_qual;
+    return CL_SUCCESS;
+
+  default:
+    assert(0);
+  }
+
+  return CL_SUCCESS;
+}
+
 LOCAL uint32_t
 cl_kernel_get_simd_width(cl_kernel k)
 {

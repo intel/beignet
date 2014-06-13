@@ -1219,6 +1219,33 @@ error:
   return err;
 }
 
+cl_int clGetKernelArgInfo(cl_kernel kernel, cl_uint arg_index, cl_kernel_arg_info param_name,
+        size_t param_value_size, void *param_value, size_t *param_value_size_ret)
+{
+  cl_int err = CL_SUCCESS;
+  CHECK_KERNEL(kernel);
+
+  if (param_name != CL_KERNEL_ARG_ADDRESS_QUALIFIER
+          && param_name != CL_KERNEL_ARG_ACCESS_QUALIFIER
+          && param_name != CL_KERNEL_ARG_TYPE_NAME
+          && param_name != CL_KERNEL_ARG_TYPE_QUALIFIER
+          && param_name != CL_KERNEL_ARG_NAME) {
+    err = CL_INVALID_VALUE;
+    goto error;
+  }
+
+  if (arg_index >= kernel->arg_n) {
+    err = CL_INVALID_ARG_INDEX;
+    goto error;
+  }
+
+  err = cl_get_kernel_arg_info(kernel, arg_index, param_name, param_value_size,
+          param_value, param_value_size_ret);
+
+error:
+  return err;
+}
+
 cl_int
 clGetKernelInfo(cl_kernel        kernel,
                 cl_kernel_info   param_name,
