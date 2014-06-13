@@ -46,7 +46,7 @@ static void compiler_fill_gl_image(void)
   glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, w, h, 0, GL_RGBA, GL_UNSIGNED_INT_8_8_8_8, NULL);
 
   OCL_CREATE_KERNEL("test_fill_gl_image");
-  OCL_CREATE_GL_IMAGE2D(buf[0], 0, GL_TEXTURE_2D, 0, tex);
+  OCL_CREATE_GL_IMAGE(buf[0], 0, GL_TEXTURE_2D, 0, tex);
 
   // Run the kernel
   OCL_SET_ARG(0, sizeof(cl_mem), &buf[0]);
