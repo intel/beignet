@@ -484,9 +484,11 @@ cl_int cl_event_marker_with_wait_list(cl_command_queue queue,
 //enqueues a marker command which waits for either a list of events to complete, or if the list is
 //empty it waits for all commands previously enqueued in command_queue to complete before it  completes.
   if(num_events_in_wait_list > 0){
-    data.type = EnqueueMarker;
-    cl_event_new_enqueue_callback(*event, &data, num_events_in_wait_list, event_wait_list);
-    return CL_SUCCESS;
+    if(cl_event_wait_events(num_events_in_wait_list, event_wait_list, queue) == CL_ENQUEUE_EXECUTE_DEFER) {
+      data.type = EnqueueMarker;
+      cl_event_new_enqueue_callback(*event, &data, num_events_in_wait_list, event_wait_list);
+      return CL_SUCCESS;
+    }
   } else if(queue->wait_events_num > 0) {
     data.type = EnqueueMarker;
     cl_event_new_enqueue_callback(*event, &data, queue->wait_events_num, queue->wait_events);
@@ -519,9 +521,11 @@ cl_int cl_event_barrier_with_wait_list(cl_command_queue queue,
 //enqueues a barrier command which waits for either a list of events to complete, or if the list is
 //empty it waits for all commands previously enqueued in command_queue to complete before it  completes.
   if(num_events_in_wait_list > 0){
-    data.type = EnqueueBarrier;
-    cl_event_new_enqueue_callback(e, &data, num_events_in_wait_list, event_wait_list);
-    return CL_SUCCESS;
+    if(cl_event_wait_events(num_events_in_wait_list, event_wait_list, queue) == CL_ENQUEUE_EXECUTE_DEFER) {
+      data.type = EnqueueBarrier;
+      cl_event_new_enqueue_callback(e, &data, num_events_in_wait_list, event_wait_list);
+      return CL_SUCCESS;
+    }
   } else if(queue->wait_events_num > 0) {
     data.type = EnqueueBarrier;
     cl_event_new_enqueue_callback(e, &data, queue->wait_events_num, queue->wait_events);
