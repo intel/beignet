@@ -44,10 +44,6 @@
       return CL_INVALID_VALUE;              \
     break;
 
-#define CL_MEM_OBJECT_BUFFER                        0x10F0
-#define CL_MEM_OBJECT_IMAGE2D                       0x10F1
-#define CL_MEM_OBJECT_IMAGE3D                       0x10F2
-
 #define MAX_TILING_SIZE                             128 * MB
 
 static cl_mem_object_type
@@ -596,7 +592,8 @@ _cl_mem_new_image(cl_context ctx,
     if (UNLIKELY(data && min_pitch > pitch)) DO_IMAGE_ERROR;
     if (UNLIKELY(!data && pitch != 0)) DO_IMAGE_ERROR;
     tiling = CL_NO_TILE;
-  } else if (image_type == CL_MEM_OBJECT_IMAGE2D) {
+  } else if (image_type == CL_MEM_OBJECT_IMAGE2D ||
+                image_type == CL_MEM_OBJECT_IMAGE1D_ARRAY) {
     size_t min_pitch = bpp * w;
     if (data && pitch == 0)
       pitch = min_pitch;
@@ -608,8 +605,13 @@ _cl_mem_new_image(cl_context ctx,
     /* Pick up tiling mode (we do only linear on SNB) */
     if (cl_driver_get_ver(ctx->drv) != 6)
       tiling = cl_get_default_tiling();
+
+    if (image_type == CL_MEM_OBJECT_IMAGE1D_ARRAY)
+      tiling = CL_NO_TILE;
+
     depth = 1;
-  } else if (image_type == CL_MEM_OBJECT_IMAGE3D) {
+  } else if (image_type == CL_MEM_OBJECT_IMAGE3D ||
+                image_type == CL_MEM_OBJECT_IMAGE2D_ARRAY) {
     size_t min_pitch = bpp * w;
     if (data && pitch == 0)
       pitch = min_pitch;
@@ -660,8 +662,9 @@ _cl_mem_new_image(cl_context ctx,
     goto error;
 
   cl_buffer_set_tiling(mem->bo, tiling, aligned_pitch);
-  aligned_slice_pitch = (image_type == CL_MEM_OBJECT_IMAGE1D
-                         || image_type == CL_MEM_OBJECT_IMAGE2D) ? 0 : aligned_pitch * ALIGN(h, 2);
+  aligned_slice_pitch = (image_type == CL_MEM_OBJECT_IMAGE1D || image_type == CL_MEM_OBJECT_IMAGE2D
+              || image_type == CL_MEM_OBJECT_IMAGE1D_ARRAY || image_type == CL_MEM_OBJECT_IMAGE1D_BUFFER)
+                  ? 0 : aligned_pitch * ALIGN(h, 2);
 
   cl_mem_image_init(cl_mem_image(mem), w, h, image_type, depth, *fmt,
                     intel_fmt, bpp, aligned_pitch, aligned_slice_pitch, tiling,
@@ -828,9 +831,16 @@ cl_mem_new_image(cl_context context,
                              image_desc->image_width, image_desc->image_height, image_desc->image_depth,
                              image_desc->image_row_pitch, image_desc->image_slice_pitch,
                              host_ptr, errcode_ret);
-  case CL_MEM_OBJECT_IMAGE2D_ARRAY:
   case CL_MEM_OBJECT_IMAGE1D_ARRAY:
-    NOT_IMPLEMENTED;
+    return _cl_mem_new_image(context, flags, image_format, image_desc->image_type,
+                             image_desc->image_width, image_desc->image_array_size, image_desc->image_depth,
+                             image_desc->image_row_pitch, image_desc->image_slice_pitch,
+                             host_ptr, errcode_ret);
+  case CL_MEM_OBJECT_IMAGE2D_ARRAY:
+    return _cl_mem_new_image(context, flags, image_format, image_desc->image_type,
+                             image_desc->image_width, image_desc->image_height, image_desc->image_array_size,
+                             image_desc->image_row_pitch, image_desc->image_slice_pitch,
+                             host_ptr, errcode_ret);
   case CL_MEM_OBJECT_IMAGE1D_BUFFER:
     return _cl_mem_new_image_from_buffer(context, flags, image_format,
                                          image_desc, errcode_ret);

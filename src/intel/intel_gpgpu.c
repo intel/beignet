@@ -714,18 +714,31 @@ intel_gpgpu_map_address_space(intel_gpgpu_t *gpgpu)
 }
 
 static int
+intel_is_surface_array(cl_mem_object_type type)
+{
+  if (type == CL_MEM_OBJECT_IMAGE1D_ARRAY ||
+        type == CL_MEM_OBJECT_IMAGE2D_ARRAY)
+    return 1;
+
+  return 0;
+}
+
+static int
 intel_get_surface_type(cl_mem_object_type type)
 {
   switch (type) {
   case CL_MEM_OBJECT_IMAGE1D_BUFFER:
-  case CL_MEM_OBJECT_IMAGE1D: return I965_SURFACE_1D;
-
-  case CL_MEM_OBJECT_IMAGE2D: return I965_SURFACE_2D;
-  case CL_MEM_OBJECT_IMAGE3D: return I965_SURFACE_3D;
-  case CL_MEM_OBJECT_IMAGE2D_ARRAY:
+  case CL_MEM_OBJECT_IMAGE1D:
   case CL_MEM_OBJECT_IMAGE1D_ARRAY:
-    NOT_IMPLEMENTED;
-    break;
+    return I965_SURFACE_1D;
+
+  case CL_MEM_OBJECT_IMAGE2D:
+  case CL_MEM_OBJECT_IMAGE2D_ARRAY:
+    return I965_SURFACE_2D;
+
+  case CL_MEM_OBJECT_IMAGE3D:
+    return I965_SURFACE_3D;
+
   default:
       assert(0);
   }
@@ -751,11 +764,21 @@ intel_gpgpu_bind_image_gen7(intel_gpgpu_t *gpgpu,
   memset(ss, 0, sizeof(*ss));
 
   ss->ss0.surface_type = intel_get_surface_type(type);
+  if (intel_is_surface_array(type)) {
+    ss->ss0.surface_array = 1;
+    ss->ss0.surface_array_spacing = 1;
+  }
   ss->ss0.surface_format = format;
   ss->ss1.base_addr = obj_bo->offset;
   ss->ss2.width = w - 1;
-  ss->ss2.height = h - 1;
-  ss->ss3.depth = depth - 1;
+
+  if (type == CL_MEM_OBJECT_IMAGE1D_ARRAY) {
+    ss->ss2.height = 1;
+    ss->ss3.depth = h - 1;
+  } else {
+    ss->ss2.height = h - 1;
+    ss->ss3.depth = depth - 1;
+  }
   ss->ss4.not_str_buf.rt_view_extent = depth - 1;
   ss->ss4.not_str_buf.min_array_element = 0;
   ss->ss3.pitch = pitch - 1;
@@ -792,11 +815,20 @@ intel_gpgpu_bind_image_gen75(intel_gpgpu_t *gpgpu,
   memset(ss, 0, sizeof(*ss));
 
   ss->ss0.surface_type = intel_get_surface_type(type);
+  if (intel_is_surface_array(type)) {
+    ss->ss0.surface_array = 1;
+    ss->ss0.surface_array_spacing = 1;
+  }
   ss->ss0.surface_format = format;
   ss->ss1.base_addr = obj_bo->offset;
   ss->ss2.width = w - 1;
-  ss->ss2.height = h - 1;
-  ss->ss3.depth = depth - 1;
+  if (type == CL_MEM_OBJECT_IMAGE1D_ARRAY) {
+    ss->ss2.height = 1;
+    ss->ss3.depth = h - 1;
+  } else {
+    ss->ss2.height = h - 1;
+    ss->ss3.depth = depth - 1;
+  }
   ss->ss4.not_str_buf.rt_view_extent = depth - 1;
   ss->ss4.not_str_buf.min_array_element = 0;
   ss->ss3.pitch = pitch - 1;
