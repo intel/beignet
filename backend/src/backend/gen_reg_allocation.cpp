@@ -950,8 +950,7 @@ namespace gbe
     // The tradeoff here is to reduce the freqency here. And if we are under spilling
     // then no need to reduce that freqency as the register pressure is the most
     // important factor.
-    if (tick % (ctx.getSimdWidth() == 8 ? 12 : 4) == 0
-        || ctx.reservedSpillRegs != 0)
+    if (tick % 12 == 0 || ctx.reservedSpillRegs != 0)
       this->expireGRF(interval);
     tick++;
     // For some scalar byte register, it may be used as a destination register
