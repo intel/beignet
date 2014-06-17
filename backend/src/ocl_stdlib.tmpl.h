@@ -85,15 +85,21 @@ DEF(double);
 #define __texture __attribute__((address_space(4)))
 struct _image1d_t;
 typedef __texture struct _image1d_t* __image1d_t;
+struct _image1d_array_t;
+typedef __texture struct _image1d_array_t* __image1d_array_t;
 struct _image2d_t;
 typedef __texture struct _image2d_t* __image2d_t;
+struct _image2d_array_t;
+typedef __texture struct _image2d_array_t* __image2d_array_t;
 struct _image3d_t;
 typedef __texture struct _image3d_t* __image3d_t;
 typedef const ushort __sampler_t;
 typedef size_t __event_t;
 #define image1d_t __image1d_t
 #define image1d_buffer_t __image1d_t
+#define image1d_array_t __image1d_array_t
 #define image2d_t __image2d_t
+#define image2d_array_t __image2d_array_t
 #define image3d_t __image3d_t
 #define sampler_t __sampler_t
 #define event_t __event_t
@@ -4558,20 +4564,26 @@ OVERLOADABLE uint4 __gen_ocl_read_imageui(uint surface_id, sampler_t sampler, in
 OVERLOADABLE float4 __gen_ocl_read_imagef(uint surface_id, sampler_t sampler, float u, uint sampler_offset);
 OVERLOADABLE float4 __gen_ocl_read_imagef(uint surface_id, sampler_t sampler, int u, uint sampler_offset);
 
-// 2D read
+// 2D & 1D Array read
 OVERLOADABLE int4 __gen_ocl_read_imagei(uint surface_id, sampler_t sampler, float u, float v, uint sampler_offset);
+OVERLOADABLE int4 __gen_ocl_read_imagei(uint surface_id, sampler_t sampler, float u, int i, uint sampler_offset);
 OVERLOADABLE int4 __gen_ocl_read_imagei(uint surface_id, sampler_t sampler, int u, int v, uint sampler_offset);
 OVERLOADABLE uint4 __gen_ocl_read_imageui(uint surface_id, sampler_t sampler, float u, float v, uint sampler_offset);
+OVERLOADABLE uint4 __gen_ocl_read_imageui(uint surface_id, sampler_t sampler, float u, int i, uint sampler_offset);
 OVERLOADABLE uint4 __gen_ocl_read_imageui(uint surface_id, sampler_t sampler, int u, int v, uint sampler_offset);
 OVERLOADABLE float4 __gen_ocl_read_imagef(uint surface_id, sampler_t sampler, float u, float v, uint sampler_offset);
+OVERLOADABLE float4 __gen_ocl_read_imagef(uint surface_id, sampler_t sampler, float u, int i, uint sampler_offset);
 OVERLOADABLE float4 __gen_ocl_read_imagef(uint surface_id, sampler_t sampler, int u, int v, uint sampler_offset);
 
-// 3D read
+// 3D & 2D Array read
 OVERLOADABLE int4 __gen_ocl_read_imagei(uint surface_id, sampler_t sampler, float u, float v, float w, uint sampler_offset);
+OVERLOADABLE int4 __gen_ocl_read_imagei(uint surface_id, sampler_t sampler, float u, float v, int i, uint sampler_offset);
 OVERLOADABLE int4 __gen_ocl_read_imagei(uint surface_id, sampler_t sampler, int u, int v, int w, uint sampler_offset);
 OVERLOADABLE uint4 __gen_ocl_read_imageui(uint surface_id, sampler_t sampler, float u, float v, float w, uint sampler_offset);
+OVERLOADABLE uint4 __gen_ocl_read_imageui(uint surface_id, sampler_t sampler, float u, float v, int i, uint sampler_offset);
 OVERLOADABLE uint4 __gen_ocl_read_imageui(uint surface_id, sampler_t sampler, int u, int v, int w, uint sampler_offset);
 OVERLOADABLE float4 __gen_ocl_read_imagef(uint surface_id, sampler_t sampler, float u, float v, float w, uint sampler_offset);
+OVERLOADABLE float4 __gen_ocl_read_imagef(uint surface_id, sampler_t sampler, float u, float v, int i, uint sampler_offset);
 OVERLOADABLE float4 __gen_ocl_read_imagef(uint surface_id, sampler_t sampler, int u, int v, int w, uint sampler_offset);
 
 // 1D write
@@ -4579,12 +4591,12 @@ OVERLOADABLE void __gen_ocl_write_imagei(uint surface_id, int u, int4 color);
 OVERLOADABLE void __gen_ocl_write_imageui(uint surface_id, int u, uint4 color);
 OVERLOADABLE void __gen_ocl_write_imagef(uint surface_id, int u, float4 color);
 
-// 2D write
+// 2D & 1D Array write
 OVERLOADABLE void __gen_ocl_write_imagei(uint surface_id, int u, int v, int4 color);
 OVERLOADABLE void __gen_ocl_write_imageui(uint surface_id, int u, int v, uint4 color);
 OVERLOADABLE void __gen_ocl_write_imagef(uint surface_id, int u, int v, float4 color);
 
-// 3D write
+// 3D & 2D Array write
 OVERLOADABLE void __gen_ocl_write_imagei(uint surface_id, int u, int v, int w, int4 color);
 OVERLOADABLE void __gen_ocl_write_imageui(uint surface_id, int u, int v, int w, uint4 color);
 OVERLOADABLE void __gen_ocl_write_imagef(uint surface_id, int u, int v, int w, float4 color);
@@ -4670,6 +4682,22 @@ int __gen_ocl_get_image_depth(uint surface_id);
     __gen_ocl_write_image ##suffix(EXPEND_WRITE_COORD(surface_id, coord, color));\
   }
 
+#define DECL_IMAGE_INFO_COMMON(image_type)    \
+  INLINE_OVERLOADABLE  int get_image_channel_data_type(image_type image)\
+  { \
+    GET_IMAGE(image, surface_id);\
+    return __gen_ocl_get_image_channel_data_type(surface_id); \
+  }\
+  INLINE_OVERLOADABLE  int get_image_channel_order(image_type image)\
+  { \
+    GET_IMAGE(image, surface_id);\
+    return __gen_ocl_get_image_channel_order(surface_id); \
+  } \
+  INLINE_OVERLOADABLE int get_image_width(image_type image) \
+  { \
+    GET_IMAGE(image, surface_id); \
+    return __gen_ocl_get_image_width(surface_id);  \
+  }
 
 // 1D
 #define DECL_IMAGE(int_clamping_fix, image_type, type, suffix)                       \
@@ -4699,6 +4727,9 @@ int __gen_ocl_get_image_depth(uint surface_id);
 DECL_IMAGE(GEN_FIX_1, image1d_t, int4, i)
 DECL_IMAGE(GEN_FIX_1, image1d_t, uint4, ui)
 DECL_IMAGE(0, image1d_t, float4, f)
+
+// 1D Info
+DECL_IMAGE_INFO_COMMON(image1d_t)
 
 #undef EXPEND_READ_COORD
 #undef EXPEND_READ_COORD1
@@ -4742,12 +4773,38 @@ DECL_IMAGE(GEN_FIX_1, image2d_t, int4, i, 2)
 DECL_IMAGE(GEN_FIX_1, image2d_t, uint4, ui, 2)
 DECL_IMAGE(0, image2d_t, float4, f, 2)
 
+// 1D Array
+DECL_IMAGE(GEN_FIX_1, image1d_array_t, int4, i, 2)
+DECL_IMAGE(GEN_FIX_1, image1d_array_t, uint4, ui, 2)
+DECL_IMAGE(0, image1d_array_t, float4, f, 2)
+
+// 2D Info
+DECL_IMAGE_INFO_COMMON(image2d_t)
+INLINE_OVERLOADABLE int get_image_height(image2d_t image)
+{
+  GET_IMAGE(image, surface_id);
+  return __gen_ocl_get_image_height(surface_id);
+}
+INLINE_OVERLOADABLE int2 get_image_dim(image2d_t image)
+{
+  return (int2){get_image_width(image), get_image_height(image)};
+}
+
+// 1D Array info
+DECL_IMAGE_INFO_COMMON(image1d_array_t)
+INLINE_OVERLOADABLE size_t get_image_array_size(image1d_array_t image)
+{
+  GET_IMAGE(image, surface_id);
+  return __gen_ocl_get_image_height(surface_id);
+}
+
 #undef EXPEND_READ_COORD
 #undef EXPEND_READ_COORD1
 #undef DENORMALIZE_COORD
 #undef EXPEND_WRITE_COORD
 #undef OUT_OF_BOX
 #undef FIXUP_FLOAT_COORD
+// End of 2D and 1D Array
 
 // 3D
 #define EXPEND_READ_COORD(id, sampler, coord) id, sampler, coord.s0, coord.s1, coord.s2
@@ -4783,73 +4840,65 @@ DECL_IMAGE(0, image3d_t, float4, f, 4)
 DECL_IMAGE(GEN_FIX_1, image3d_t, int4, i, 3)
 DECL_IMAGE(GEN_FIX_1, image3d_t, uint4, ui, 3)
 DECL_IMAGE(0, image3d_t, float4, f, 3)
+
+// 2D Array
+DECL_IMAGE(GEN_FIX_1, image2d_array_t, int4, i, 4)
+DECL_IMAGE(GEN_FIX_1, image2d_array_t, uint4, ui, 4)
+DECL_IMAGE(0, image2d_array_t, float4, f, 4)
+
+DECL_IMAGE(GEN_FIX_1, image2d_array_t, int4, i, 3)
+DECL_IMAGE(GEN_FIX_1, image2d_array_t, uint4, ui, 3)
+DECL_IMAGE(0, image2d_array_t, float4, f, 3)
+
+// 3D Info
+DECL_IMAGE_INFO_COMMON(image3d_t)
+INLINE_OVERLOADABLE int get_image_height(image3d_t image)
+{
+  GET_IMAGE(image, surface_id);
+  return __gen_ocl_get_image_height(surface_id);
+}
+INLINE_OVERLOADABLE int get_image_depth(image3d_t image)
+{
+  GET_IMAGE(image, surface_id);
+  return __gen_ocl_get_image_depth(surface_id);
+}
+INLINE_OVERLOADABLE int4 get_image_dim(image3d_t image)
+{
+  return (int4){get_image_width(image), get_image_height(image), get_image_depth(image), 0};
+}
+
+// 2D Array Info
+DECL_IMAGE_INFO_COMMON(image2d_array_t)
+INLINE_OVERLOADABLE int get_image_height(image2d_array_t image)
+{
+  GET_IMAGE(image, surface_id);
+  return __gen_ocl_get_image_height(surface_id);
+}
+INLINE_OVERLOADABLE int2 get_image_dim(image2d_array_t image)
+{
+  return (int2){get_image_width(image), get_image_height(image)};
+}
+INLINE_OVERLOADABLE size_t get_image_array_size(image2d_array_t image)
+{
+  GET_IMAGE(image, surface_id);
+  return __gen_ocl_get_image_depth(surface_id);
+}
+
 #undef EXPEND_READ_COORD
+#undef EXPEND_READ_COORD1
 #undef DENORMALIZE_COORD
 #undef EXPEND_WRITE_COORD
 #undef OUT_OF_BOX
 #undef FIXUP_FLOAT_COORD
+// End of 3D and 2D Array
 
 #undef DECL_IMAGE
 #undef DECL_READ_IMAGE
 #undef DECL_READ_IMAGE_NOSAMPLER
 #undef DECL_WRITE_IMAGE
 #undef GEN_FIX_1
+// End of Image
 
-#define DECL_IMAGE_INFO(image_type)    \
-  INLINE_OVERLOADABLE  int get_image_width(image_type image) \
-  { \
-    GET_IMAGE(image, surface_id);\
-    return __gen_ocl_get_image_width(surface_id);\
-  } \
-  INLINE_OVERLOADABLE  int get_image_height(image_type image)\
-  { \
-    GET_IMAGE(image, surface_id);\
-    return __gen_ocl_get_image_height(surface_id); \
-  } \
-  INLINE_OVERLOADABLE  int get_image_channel_data_type(image_type image)\
-  { \
-    GET_IMAGE(image, surface_id);\
-    return __gen_ocl_get_image_channel_data_type(surface_id); \
-  }\
-  INLINE_OVERLOADABLE  int get_image_channel_order(image_type image)\
-  { \
-    GET_IMAGE(image, surface_id);\
-    return __gen_ocl_get_image_channel_order(surface_id); \
-  }
-
-DECL_IMAGE_INFO(image2d_t)
-DECL_IMAGE_INFO(image3d_t)
-
-INLINE_OVERLOADABLE  int get_image_depth(image3d_t image)
-  {
-   GET_IMAGE(image, surface_id);
-   return __gen_ocl_get_image_depth(surface_id);
-  }
-
-INLINE_OVERLOADABLE  int2 get_image_dim(image2d_t image)
-  { return (int2){get_image_width(image), get_image_height(image)}; }
-
-INLINE_OVERLOADABLE  int4 get_image_dim(image3d_t image)
-  { return (int4){get_image_width(image), get_image_height(image), get_image_depth(image), 0}; }
-#if 0
-/* The following functions are not implemented yet. */
-DECL_IMAGE_INFO(image1d_t)
-DECL_IMAGE_INFO(image1d_buffer_t)
-DECL_IMAGE_INFO(image1d_array_t)
-DECL_IMAGE_INFO(image2d_array_t)
-
-INLINE_OVERLOADABLE  int2 get_image_dim(image2d_array_t image)
-  { return __gen_ocl_get_image_dim(image); }
-
-INLINE_OVERLOADABLE  int4 get_image_dim(image2d_array_t image)
-  { return __gen_ocl_get_image_dim(image); }
-
-INLINE_OVERLOADABLE  size_t get_image_array_size(image2d_array_t image)
-  { return __gen_ocl_get_image_array_size(image); }
-
-INLINE_OVERLOADABLE  size_t get_image_array_size(image1d_array_t image)
-  { return __gen_ocl_get_image_array_size(image); }
-#endif
 
 INLINE_OVERLOADABLE float __gen_ocl_internal_fastpath_acosh (float x)
 {
