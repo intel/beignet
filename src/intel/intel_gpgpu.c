@@ -555,6 +555,8 @@ intel_gpgpu_check_binded_buf_address(intel_gpgpu_t *gpgpu)
 static void
 intel_gpgpu_flush(intel_gpgpu_t *gpgpu)
 {
+  if (!gpgpu->batch || !gpgpu->batch->buffer)
+    return;
   intel_batchbuffer_emit_mi_flush(gpgpu->batch);
   intel_batchbuffer_flush(gpgpu->batch);
   intel_gpgpu_check_binded_buf_address(gpgpu);
