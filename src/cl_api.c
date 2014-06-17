@@ -2973,10 +2973,7 @@ clEnqueueMarkerWithWaitList(cl_command_queue command_queue,
 {
   cl_int err = CL_SUCCESS;
   CHECK_QUEUE(command_queue);
-  if(event == NULL) {
-    err = CL_INVALID_VALUE;
-    goto error;
-  }
+
   TRY(cl_event_check_waitlist, num_events_in_wait_list, event_wait_list, event, command_queue->ctx);
 
   cl_event_marker_with_wait_list(command_queue, num_events_in_wait_list, event_wait_list, event);

@@ -476,10 +476,15 @@ cl_int cl_event_marker_with_wait_list(cl_command_queue queue,
                 cl_event* event)
 {
   enqueue_data data = { 0 };
+  cl_event e;
 
-  *event = cl_event_new(queue->ctx, queue, CL_COMMAND_MARKER, CL_TRUE);
-  if(event == NULL)
+  e = cl_event_new(queue->ctx, queue, CL_COMMAND_MARKER, CL_TRUE);
+  if(e == NULL)
     return CL_OUT_OF_HOST_MEMORY;
+
+  if(event != NULL ){
+    *event = e;
+  }
 
 //enqueues a marker command which waits for either a list of events to complete, or if the list is
 //empty it waits for all commands previously enqueued in command_queue to complete before it  completes.
@@ -499,7 +504,7 @@ cl_int cl_event_marker_with_wait_list(cl_command_queue queue,
     cl_gpgpu_event_update_status(queue->last_event->gpgpu_event, 1);
   }
 
-  cl_event_set_status(*event, CL_COMPLETE);
+  cl_event_set_status(e, CL_COMPLETE);
   return CL_SUCCESS;
 }
 
