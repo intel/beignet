@@ -674,7 +674,10 @@ clGetSupportedImageFormats(cl_context         ctx,
     err = CL_INVALID_VALUE;
     goto error;
   }
-  if (UNLIKELY(image_type != CL_MEM_OBJECT_IMAGE2D &&
+  if (UNLIKELY(image_type != CL_MEM_OBJECT_IMAGE1D &&
+               image_type != CL_MEM_OBJECT_IMAGE1D_ARRAY &&
+               image_type != CL_MEM_OBJECT_IMAGE2D_ARRAY &&
+               image_type != CL_MEM_OBJECT_IMAGE2D &&
                image_type != CL_MEM_OBJECT_IMAGE3D)) {
     err = CL_INVALID_VALUE;
     goto error;

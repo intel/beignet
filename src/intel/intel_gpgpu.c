@@ -91,7 +91,7 @@ struct intel_gpgpu
 
   unsigned long img_bitmap;              /* image usage bitmap. */
   unsigned int img_index_base;          /* base index for image surface.*/
-  drm_intel_bo *binded_img[max_img_n];  /* all images binded for the call */
+  drm_intel_bo *binded_img[max_img_n + 128];  /* all images binded for the call */
 
   unsigned long sampler_bitmap;          /* sampler usage bitmap. */
 
@@ -764,7 +764,10 @@ intel_gpgpu_bind_image_gen7(intel_gpgpu_t *gpgpu,
   memset(ss, 0, sizeof(*ss));
 
   ss->ss0.vertical_line_stride = 0; // always choose VALIGN_2
-  ss->ss0.surface_type = intel_get_surface_type(type);
+  if (index > 128 + 2 && type == CL_MEM_OBJECT_IMAGE1D_ARRAY)
+    ss->ss0.surface_type = I965_SURFACE_2D;
+  else
+    ss->ss0.surface_type = intel_get_surface_type(type);
   if (intel_is_surface_array(type)) {
     ss->ss0.surface_array = 1;
     ss->ss0.surface_array_spacing = 1;
@@ -811,7 +814,10 @@ intel_gpgpu_bind_image_gen75(intel_gpgpu_t *gpgpu,
   memset(ss, 0, sizeof(*ss));
 
   ss->ss0.vertical_line_stride = 0; // always choose VALIGN_2
-  ss->ss0.surface_type = intel_get_surface_type(type);
+  if (index > 128 + 2 && type == CL_MEM_OBJECT_IMAGE1D_ARRAY)
+    ss->ss0.surface_type = I965_SURFACE_2D;
+  else
+    ss->ss0.surface_type = intel_get_surface_type(type);
   if (intel_is_surface_array(type)) {
     ss->ss0.surface_array = 1;
     ss->ss0.surface_array_spacing = 1;

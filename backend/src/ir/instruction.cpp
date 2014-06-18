@@ -527,7 +527,7 @@ namespace ir {
       uint8_t srcIsFloat:1;
       uint8_t dstIsFloat:1;
       uint8_t samplerIdx:4;
-      uint8_t samplerOffset:1;
+      uint8_t samplerOffset:2;
       uint8_t imageIdx;
       static const uint32_t srcNum = 3;
       static const uint32_t dstNum = 4;

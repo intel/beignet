@@ -363,6 +363,7 @@ cl_get_device_info(cl_device_id     device,
     DECL_FIELD(IMAGE_SUPPORT, image_support)
     DECL_FIELD(MAX_READ_IMAGE_ARGS, max_read_image_args)
     DECL_FIELD(MAX_WRITE_IMAGE_ARGS, max_write_image_args)
+    DECL_FIELD(IMAGE_MAX_ARRAY_SIZE, image_max_array_size)
     DECL_FIELD(IMAGE2D_MAX_WIDTH, image2d_max_width)
     DECL_FIELD(IMAGE2D_MAX_HEIGHT, image2d_max_height)
     DECL_FIELD(IMAGE3D_MAX_WIDTH, image3d_max_width)
