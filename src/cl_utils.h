@@ -149,6 +149,35 @@ do {                                                        \
 struct _cl_mem_image *IMAGE;                                \
 IMAGE = cl_mem_image(MEM);                                  \
 
+#define FIXUP_IMAGE_REGION(IMAGE, PREGION, REGION)          \
+const size_t *REGION;                                       \
+size_t REGION ##_REC[3];                                    \
+do {                                                        \
+  if (IMAGE->image_type == CL_MEM_OBJECT_IMAGE1D_ARRAY) {   \
+    REGION ##_REC[0] = PREGION[0];                          \
+    REGION ##_REC[1] = 1;                                   \
+    REGION ##_REC[2] = PREGION[1];                          \
+    REGION = REGION ##_REC;                                 \
+  } else {                                                  \
+    REGION = PREGION;                                       \
+  }                                                         \
+} while(0)
+
+#define FIXUP_IMAGE_ORIGIN(IMAGE, PREGION, REGION)          \
+const size_t *REGION;                                       \
+size_t REGION ##_REC[3];                                    \
+do {                                                        \
+  if (IMAGE->image_type == CL_MEM_OBJECT_IMAGE1D_ARRAY) {   \
+    REGION ##_REC[0] = PREGION[0];                          \
+    REGION ##_REC[1] = 0;                                   \
+    REGION ##_REC[2] = PREGION[1];                          \
+    REGION = REGION ##_REC;                                 \
+  } else {                                                  \
+    REGION = PREGION;                                       \
+  }                                                         \
+} while(0)
+
+
 #define CHECK_EVENT(EVENT)                                    \
   do {                                                        \
     if (UNLIKELY(EVENT == NULL)) {                            \

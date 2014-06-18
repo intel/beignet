@@ -2065,8 +2065,8 @@ cl_int
 clEnqueueReadImage(cl_command_queue      command_queue,
                    cl_mem                mem,
                    cl_bool               blocking_read,
-                   const size_t *        origin,
-                   const size_t *        region,
+                   const size_t *        porigin,
+                   const size_t *        pregion,
                    size_t                row_pitch,
                    size_t                slice_pitch,
                    void *                ptr,
@@ -2079,6 +2079,8 @@ clEnqueueReadImage(cl_command_queue      command_queue,
 
   CHECK_QUEUE(command_queue);
   CHECK_IMAGE(mem, image);
+  FIXUP_IMAGE_REGION(image, pregion, region);
+  FIXUP_IMAGE_ORIGIN(image, porigin, origin);
   if (command_queue->ctx != mem->ctx) {
      err = CL_INVALID_CONTEXT;
      goto error;
@@ -2144,8 +2146,8 @@ cl_int
 clEnqueueWriteImage(cl_command_queue     command_queue,
                     cl_mem               mem,
                     cl_bool              blocking_write,
-                    const size_t *       origin,
-                    const size_t *       region,
+                    const size_t *       porigin,
+                    const size_t *       pregion,
                     size_t               row_pitch,
                     size_t               slice_pitch,
                     const void *         ptr,
@@ -2158,6 +2160,8 @@ clEnqueueWriteImage(cl_command_queue     command_queue,
 
   CHECK_QUEUE(command_queue);
   CHECK_IMAGE(mem, image);
+  FIXUP_IMAGE_REGION(image, pregion, region);
+  FIXUP_IMAGE_ORIGIN(image, porigin, origin);
   if (command_queue->ctx != mem->ctx) {
     err = CL_INVALID_CONTEXT;
     goto error;
@@ -2223,9 +2227,9 @@ cl_int
 clEnqueueCopyImage(cl_command_queue      command_queue,
                    cl_mem                src_mem,
                    cl_mem                dst_mem,
-                   const size_t *        src_origin,
-                   const size_t *        dst_origin,
-                   const size_t *        region,
+                   const size_t *        psrc_origin,
+                   const size_t *        pdst_origin,
+                   const size_t *        pregion,
                    cl_uint               num_events_in_wait_list,
                    const cl_event *      event_wait_list,
                    cl_event *            event)
@@ -2238,6 +2242,9 @@ clEnqueueCopyImage(cl_command_queue      command_queue,
   CHECK_QUEUE(command_queue);
   CHECK_IMAGE(src_mem, src_image);
   CHECK_IMAGE(dst_mem, dst_image);
+  FIXUP_IMAGE_REGION(src_image, pregion, region);
+  FIXUP_IMAGE_ORIGIN(src_image, psrc_origin, src_origin);
+  FIXUP_IMAGE_ORIGIN(dst_image, pdst_origin, dst_origin);
   if (command_queue->ctx != src_mem->ctx ||
       command_queue->ctx != dst_mem->ctx) {
     err = CL_INVALID_CONTEXT;
@@ -2307,8 +2314,8 @@ cl_int
 clEnqueueCopyImageToBuffer(cl_command_queue  command_queue,
                            cl_mem            src_mem,
                            cl_mem            dst_buffer,
-                           const size_t *    src_origin,
-                           const size_t *    region,
+                           const size_t *    psrc_origin,
+                           const size_t *    pregion,
                            size_t            dst_offset,
                            cl_uint           num_events_in_wait_list,
                            const cl_event *  event_wait_list,
@@ -2320,6 +2327,8 @@ clEnqueueCopyImageToBuffer(cl_command_queue  command_queue,
   CHECK_QUEUE(command_queue);
   CHECK_IMAGE(src_mem, src_image);
   CHECK_MEM(dst_buffer);
+  FIXUP_IMAGE_REGION(src_image, pregion, region);
+  FIXUP_IMAGE_ORIGIN(src_image, psrc_origin, src_origin);
   if (command_queue->ctx != src_mem->ctx ||
       command_queue->ctx != dst_buffer->ctx) {
     err = CL_INVALID_CONTEXT;
@@ -2372,8 +2381,8 @@ clEnqueueCopyBufferToImage(cl_command_queue  command_queue,
                            cl_mem            src_buffer,
                            cl_mem            dst_mem,
                            size_t            src_offset,
-                           const size_t *    dst_origin,
-                           const size_t *    region,
+                           const size_t *    pdst_origin,
+                           const size_t *    pregion,
                            cl_uint           num_events_in_wait_list,
                            const cl_event *  event_wait_list,
                            cl_event *        event)
@@ -2384,6 +2393,8 @@ clEnqueueCopyBufferToImage(cl_command_queue  command_queue,
   CHECK_QUEUE(command_queue);
   CHECK_MEM(src_buffer);
   CHECK_IMAGE(dst_mem, dst_image);
+  FIXUP_IMAGE_REGION(dst_image, pregion, region);
+  FIXUP_IMAGE_ORIGIN(dst_image, pdst_origin, dst_origin);
   if (command_queue->ctx != src_buffer->ctx ||
       command_queue->ctx != dst_mem->ctx) {
     err = CL_INVALID_CONTEXT;
@@ -2575,8 +2586,8 @@ clEnqueueMapImage(cl_command_queue   command_queue,
                   cl_mem             mem,
                   cl_bool            blocking_map,
                   cl_map_flags       map_flags,
-                  const size_t *     origin,
-                  const size_t *     region,
+                  const size_t *     porigin,
+                  const size_t *     pregion,
                   size_t *           image_row_pitch,
                   size_t *           image_slice_pitch,
                   cl_uint            num_events_in_wait_list,
@@ -2591,6 +2602,8 @@ clEnqueueMapImage(cl_command_queue   command_queue,
 
   CHECK_QUEUE(command_queue);
   CHECK_IMAGE(mem, image);
+  FIXUP_IMAGE_REGION(image, pregion, region);
+  FIXUP_IMAGE_ORIGIN(image, porigin, origin);
   if (command_queue->ctx != mem->ctx) {
     err = CL_INVALID_CONTEXT;
     goto error;
