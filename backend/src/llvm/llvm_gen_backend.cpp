@@ -1076,9 +1076,7 @@ namespace gbe
           if (CPV && dyn_cast<ConstantVector>(CPV) &&
               isa<UndefValue>(extractConstantElem(CPV, 0)))
             continue;
-          const ir::ImmediateIndex immIndex = this->newImmediate(CP);
-          const ir::Immediate imm = ctx.getImmediate(immIndex);
-          ctx.LOADI(imm.type, dst, immIndex);
+          ctx.MOV(type, dst, getRegister(CP));
         } else if (regTranslator.valueExists(IV,0) || dyn_cast<Constant>(IV)) {
           const ir::Register src = this->getRegister(IV);
           ctx.MOV(type, dst, src);
