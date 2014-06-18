@@ -1,0 +1,60 @@
+Cross Compiler HowTo
+====================
+
+Beignet supports both PC devices with full profile and embedded/handheld
+devices with embeded profile. This document describes how to build Beignet
+and OpenCL kernels for a target machine (embedded/handheld devices) in a
+host machine with the help of cross compiler, and also the large-size-reduced
+Beignet driver package for the target machine.
+
+Build Beignet with a cross compiler
+-----------------------------------
+
+Besides the general cross compile methods, reference the following options when
+configure Beignet with cmake.
+
+- LLVM_INSTALL_DIR
+  Beignet depends on llvm+clang, this option refers to the path of llvm-config,
+  llvm-as, llvm-link and clang in the cross compiler environment.
+
+- CMAKE_SKIP_RPATH
+  Some cross compiler systems forbid the usage of rpath in binaries/libraries,
+  set this option to be TRUE.
+
+- GEN_PCI_ID
+  It is the GPU pci_id of the target machine, for example, 0x0162 is the pciid
+  of Intel Ivybridge GPU, and 0x0f31 is Intel Baytrail GPU. The information can
+  be queried with command 'lspci -n'.
+
+- CMAKE_INSTALL_PREFIX
+  This option controls the prefix of installation path.
+
+Distribution of large-size-reduced Beignet driver package
+---------------------------------------------------------
+
+On embedded/handheld devices, storage and memory are scarce, it is necessary to
+provide only the OpenCL runtime library without OpenCL compiler, and only the
+executable binary kernel is supported on such devices.
+
+It means that just distribute libcl.so and libgbeinterp.so (~320k in total after strip)
+are enough for OpenCL embeded profile in the target machine.
+
+Build OpenCL kernels with OpenCL offline compiler
+-------------------------------------------------
+
+Since the target machine does not contain the OpenCL compiler, the OpenCL source
+kernel need to be compiled with an OpenCL offline compiler (gbe_bin_generater)
+into binary kernel in the host machine, and the OpenCL application can load the
+binary kernel with function clCreateProgramWithBinary.
+
+The OpenCL offline compiler gbe_bin_generater is the result of Beignet build and
+locates at .../your_path_to_build/backend/src/gbe_bin_generater, see below for the
+command options.
+
+gbe_bin_generater INFILE [-pbuild_parameter] -oOUTFILE -tGEN_PCI_ID
+
+For example, the following command builds OpenCL source kernel from file 'mykernel.cl'
+for Ivybridge with pci_id 0x0162, and write the result (executable binary kernel)
+into file 'mykernel.bin'.
+
+gbe_bin_generater mykernel.cl -omykernel.bin -t0x0162
