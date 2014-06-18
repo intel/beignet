@@ -16,7 +16,7 @@
  */
 
 /**
- * \file llvm_printf.cpp
+ * \file llvm_printf_parser.cpp
  *
  * When there are printf functions existing, we have something to do here.
  * Because the GPU's feature, it is relatively hard to parse and caculate the
@@ -159,19 +159,10 @@ namespace gbe
       FMT_PLUS_PLUS;
       switch (*fmt) {
         case '2':
-          state->vector_n = 2;
-          FMT_PLUS_PLUS;
-          break;
         case '3':
-          state->vector_n = 3;
-          FMT_PLUS_PLUS;
-          break;
         case '4':
-          state->vector_n = 4;
-          FMT_PLUS_PLUS;
-          break;
         case '8':
-          state->vector_n = 8;
+          state->vector_n = *fmt - '0';
           FMT_PLUS_PLUS;
           break;
         case '1':
@@ -233,7 +224,7 @@ namespace gbe
         CONVERSION_SPEC_AND_RET('s', A)
         CONVERSION_SPEC_AND_RET('p', P)
 
-        // %% has been handled
+      // %% has been handled
 
       default:
         return -1;
@@ -285,6 +276,7 @@ again:
         goto error;
 
       printf_fmt->push_back(&state);
+      num++;
 
       if (rend == end)
         break;
@@ -292,10 +284,11 @@ again:
       begin = rend;
     }
 
-    for (auto &s : *printf_fmt) {
-      if (s.type == PRINTF_SLOT_TYPE_STATE) {
-        num++;
 #if 0
+    int j = 0;
+    for (auto &s : *printf_fmt) {
+      j++;
+      if (s.type == PRINTF_SLOT_TYPE_STATE) {
         printf("---- %d ---: state : \n", j);
         printf("		     left_justified : %d\n", s.state->left_justified);
         printf("		     sign_symbol: %d\n", s.state->sign_symbol);
@@ -306,11 +299,11 @@ again:
         printf("		     precision : %d\n", s.state->precision);
         printf("		     length_modifier : %d\n", s.state->length_modifier);
         printf("		     conversion_specifier : %d\n", s.state->conversion_specifier);
-#endif
       } else if (s.type == PRINTF_SLOT_TYPE_STRING) {
-        //printf("---- %d ---: string :  %s\n", j, s.str);
+        printf("---- %d ---: string :  %s\n", j, s.str);
       }
     }
+#endif
 
     return printf_fmt;
 
@@ -335,7 +328,8 @@ error:
     static map<CallInst*, PrintfSet::PrintfFmt*> printfs;
     int printf_num;
 
-    PrintfParser(void) : FunctionPass(ID) {
+    PrintfParser(void) : FunctionPass(ID)
+    {
       module = NULL;
       builder = NULL;
       intTy = NULL;
@@ -346,7 +340,8 @@ error:
       printf_num = 0;
     }
 
-    ~PrintfParser(void) {
+    ~PrintfParser(void)
+    {
       for (auto &s : printfs) {
         delete s.second;
         s.second = NULL;
@@ -358,7 +353,8 @@ error:
     bool parseOnePrintfInstruction(CallInst *& call);
     int generateOneParameterInst(PrintfSlot& slot, Value& arg);
 
-    virtual const char *getPassName() const {
+    virtual const char *getPassName() const
+    {
       return "Printf Parser";
     }
 
@@ -400,81 +396,52 @@ error:
     /* FIXME: Because the OpenCL language do not support va macro, and we do not want
        to introduce the va_list, va_start and va_end into our code, we just simulate
        the function calls to caculate the offset caculation here. */
-    CallInst* group_id_2 = builder->CreateCall(cast<llvm::Function>(module->getOrInsertFunction(
-                             "__gen_ocl_get_group_id2",
-                             IntegerType::getInt32Ty(module->getContext()),
-                             NULL)));
-    CallInst* group_id_1 = builder->CreateCall(cast<llvm::Function>(module->getOrInsertFunction(
-                             "__gen_ocl_get_group_id1",
-                             IntegerType::getInt32Ty(module->getContext()),
-                             NULL)));
-    CallInst* group_id_0 = builder->CreateCall(cast<llvm::Function>(module->getOrInsertFunction(
-                             "__gen_ocl_get_group_id0",
-                             IntegerType::getInt32Ty(module->getContext()),
-                             NULL)));
+#define BUILD_CALL_INST(name) \
+    CallInst* name = builder->CreateCall(cast<llvm::Function>(module->getOrInsertFunction( \
+                             "__gen_ocl_get_"#name,                                         \
+                             IntegerType::getInt32Ty(module->getContext()),                 \
+                             NULL)))
 
-    CallInst* global_size_2 = builder->CreateCall(cast<llvm::Function>(module->getOrInsertFunction(
-                                "__gen_ocl_get_global_size2",
-                                IntegerType::getInt32Ty(module->getContext()),
-                                NULL)));
-    CallInst* global_size_1 = builder->CreateCall(cast<llvm::Function>(module->getOrInsertFunction(
-                                "__gen_ocl_get_global_size1",
-                                IntegerType::getInt32Ty(module->getContext()),
-                                NULL)));
-    CallInst* global_size_0 = builder->CreateCall(cast<llvm::Function>(module->getOrInsertFunction(
-                                "__gen_ocl_get_global_size0",
-                                IntegerType::getInt32Ty(module->getContext()),
-                                NULL)));
+    BUILD_CALL_INST(group_id2);
+    BUILD_CALL_INST(group_id1);
+    BUILD_CALL_INST(group_id0);
+    BUILD_CALL_INST(global_size2);
+    BUILD_CALL_INST(global_size1);
+    BUILD_CALL_INST(global_size0);
+    BUILD_CALL_INST(local_id2);
+    BUILD_CALL_INST(local_id1);
+    BUILD_CALL_INST(local_id0);
+    BUILD_CALL_INST(local_size2);
+    BUILD_CALL_INST(local_size1);
+    BUILD_CALL_INST(local_size0);
 
-    CallInst* local_id_2 = builder->CreateCall(cast<llvm::Function>(module->getOrInsertFunction(
-                             "__gen_ocl_get_local_id2",
-                             IntegerType::getInt32Ty(module->getContext()),
-                             NULL)));
-    CallInst* local_id_1 = builder->CreateCall(cast<llvm::Function>(module->getOrInsertFunction(
-                             "__gen_ocl_get_local_id1",
-                             IntegerType::getInt32Ty(module->getContext()),
-                             NULL)));
-    CallInst* local_id_0 = builder->CreateCall(cast<llvm::Function>(module->getOrInsertFunction(
-                             "__gen_ocl_get_local_id0",
-                             IntegerType::getInt32Ty(module->getContext()),
-                             NULL)));
+#undef BUILD_CALL_INST
 
-    CallInst* local_size_2 = builder->CreateCall(cast<llvm::Function>(module->getOrInsertFunction(
-                               "__gen_ocl_get_local_size2",
-                               IntegerType::getInt32Ty(module->getContext()),
-                               NULL)));
-    CallInst* local_size_1 = builder->CreateCall(cast<llvm::Function>(module->getOrInsertFunction(
-                               "__gen_ocl_get_local_size1",
-                               IntegerType::getInt32Ty(module->getContext()),
-                               NULL)));
-    CallInst* local_size_0 = builder->CreateCall(cast<llvm::Function>(module->getOrInsertFunction(
-                               "__gen_ocl_get_local_size0",
-                               IntegerType::getInt32Ty(module->getContext()),
-                               NULL)));
     Value* op0 = NULL;
     Value* val = NULL;
-    /* offset = ((local_id_2 + local_size_2 * group_id_2) * (global_size_1 * global_size_0)
-       + (local_id_1 + local_size_1 * group_id_1) * global_size_0
-       + (local_id_0 + local_size_0 * group_id_0)) * sizeof(type)  */
+    /* calculate offset for later usage.
+       offset = ((local_id2 + local_size2 * group_id2) * (global_size1 * global_size0)
+       + (local_id1 + local_size1 * group_id1) * global_size0
+       + (local_id0 + local_size0 * group_id0)) * sizeof(type)  */
 
-    // local_size_2 * group_id_2
-    val = builder->CreateMul(local_size_2, group_id_2);
-    // local_id_2 + local_size_2 * group_id_2
-    val = builder->CreateAdd(local_id_2, val);
-    // global_size_1 * global_size_0
-    op0 = builder->CreateMul(global_size_1, global_size_0);
-    // (local_id_2 + local_size_2 * group_id_2) * (global_size_1 * global_size_0)
+    // local_size2 * group_id2
+    val = builder->CreateMul(local_size2, group_id2);
+    // local_id2 + local_size2 * group_id2
+    val = builder->CreateAdd(local_id2, val);
+    // global_size1 * global_size0
+    op0 = builder->CreateMul(global_size1, global_size0);
+    // (local_id2 + local_size2 * group_id2) * (global_size1 * global_size0)
     Value* offset1 = builder->CreateMul(val, op0);
-    // local_size_1 * group_id_1
-    val = builder->CreateMul(local_size_1, group_id_1);
-    // local_id_1 + local_size_1 * group_id_1
-    val = builder->CreateAdd(local_id_1, val);
-    // (local_id_1 + local_size_1 * group_id_1) * global_size_0
-    Value* offset2 = builder->CreateMul(val, global_size_0);
-    // local_size_0 * group_id_0
-    val = builder->CreateMul(local_size_0, group_id_0);
-    // local_id_0 + local_size_0 * group_id_0
-    val = builder->CreateAdd(local_id_0, val);
+    // local_size1 * group_id1
+    val = builder->CreateMul(local_size1, group_id1);
+    // local_id1 + local_size1 * group_id1
+    val = builder->CreateAdd(local_id1, val);
+    // (local_id1 + local_size1 * group_id1) * global_size_0
+    Value* offset2 = builder->CreateMul(val, global_size0);
+    // local_size0 * group_id0
+    val = builder->CreateMul(local_size0, group_id0);
+    // local_id0 + local_size0 * group_id0
+    val = builder->CreateAdd(local_id0, val);
     // The total sum
     val = builder->CreateAdd(val, offset1);
     Value* offset = builder->CreateAdd(val, offset2);
@@ -482,12 +449,12 @@ error:
     /////////////////////////////////////////////////////
     /* calculate index address.
        index_addr = (index_offset + offset )* sizeof(int) + index_buf_ptr
-       index_offset = global_size_2 * global_size_1 * global_size_0 * printf_num */
+       index_offset = global_size2 * global_size1 * global_size0 * printf_num */
 
-    // global_size_2 * global_size_1
-    op0 = builder->CreateMul(global_size_2, global_size_1);
-    // global_size_2 * global_size_1 * global_size_0
-    Value* glXg2Xg3 = builder->CreateMul(op0, global_size_0);
+    // global_size2 * global_size1
+    op0 = builder->CreateMul(global_size2, global_size1);
+    // global_size2 * global_size1 * global_size0
+    Value* glXg2Xg3 = builder->CreateMul(op0, global_size0);
     Value* index_offset = builder->CreateMul(glXg2Xg3, ConstantInt::get(intTy, printf_num));
     // index_offset + offset
     op0 = builder->CreateAdd(index_offset, offset);
@@ -516,9 +483,9 @@ error:
       /////////////////////////////////////////////////////
       /* Calculate the data address.
       data_addr = data_offset + pbuf_ptr + offset * sizeof(specify)
-      data_offset = global_size_2 * global_size_1 * global_size_0 * out_buf_sizeof_offset
+      data_offset = global_size2 * global_size1 * global_size0 * out_buf_sizeof_offset
 
-      //global_size_2 * global_size_1 * global_size_0 * out_buf_sizeof_offset */
+      //global_size2 * global_size1 * global_size0 * out_buf_sizeof_offset */
       op0 = builder->CreateMul(glXg2Xg3, ConstantInt::get(intTy, out_buf_sizeof_offset));
       //offset * sizeof(specify)
       val = builder->CreateMul(offset, ConstantInt::get(intTy, sizeof_size));
