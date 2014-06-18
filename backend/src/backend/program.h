@@ -179,8 +179,12 @@ extern gbe_program_new_gen_program_cb *gbe_program_new_gen_program;
 typedef gbe_program (gbe_program_new_from_binary_cb)(uint32_t deviceID, const char *binary, size_t size);
 extern gbe_program_new_from_binary_cb *gbe_program_new_from_binary;
 
-/*! Serialize a program to a bin */
-typedef size_t (gbe_program_serialize_to_binary_cb)(gbe_program program, char **binary);
+/*! Create a new program from the llvm bitcode*/
+typedef gbe_program (gbe_program_new_from_llvm_binary_cb)(uint32_t deviceID, const char *binary, size_t size);
+extern gbe_program_new_from_llvm_binary_cb *gbe_program_new_from_llvm_binary;
+
+/*! Serialize a program to a bin, 0 means executable, 1 means llvm bitcode*/
+typedef size_t (gbe_program_serialize_to_binary_cb)(gbe_program program, char **binary, int binary_type);
 extern gbe_program_serialize_to_binary_cb *gbe_program_serialize_to_binary;
 
 /*! Create a new program from the given LLVM file */

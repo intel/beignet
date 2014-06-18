@@ -25,9 +25,15 @@
 extern "C" {
 #endif
 extern gbe_program_new_from_source_cb *compiler_program_new_from_source;
+extern gbe_program_compile_from_source_cb *compiler_program_compile_from_source;
+extern gbe_program_new_gen_program_cb *compiler_program_new_gen_program;
+extern gbe_program_link_program_cb *compiler_program_link_program;
+extern gbe_program_build_from_llvm_cb *compiler_program_build_from_llvm;
+extern gbe_program_new_from_llvm_binary_cb *compiler_program_new_from_llvm_binary;
 extern gbe_program_serialize_to_binary_cb *compiler_program_serialize_to_binary;
 extern gbe_program_new_from_llvm_cb *compiler_program_new_from_llvm;
 extern gbe_set_image_base_index_cb *compiler_set_image_base_index;
+
 extern gbe_program_new_from_binary_cb *interp_program_new_from_binary;
 extern gbe_program_get_global_constant_size_cb *interp_program_get_global_constant_size;
 extern gbe_program_get_global_constant_data_cb *interp_program_get_global_constant_data;
@@ -63,10 +69,6 @@ extern gbe_get_printf_sizeof_size_cb* interp_get_printf_sizeof_size;
 extern gbe_release_printf_info_cb* interp_release_printf_info;
 extern gbe_output_printf_cb* interp_output_printf;
 //extern gbe_set_image_base_index_cb *gbe_set_image_base_index_interp;
-extern gbe_program_compile_from_source_cb *compiler_program_compile_from_source;
-extern gbe_program_new_gen_program_cb *compiler_program_new_gen_program;
-extern gbe_program_link_program_cb *compiler_program_link_program;
-extern gbe_program_build_from_llvm_cb *compiler_program_build_from_llvm;
 extern gbe_kernel_get_arg_info_cb *interp_kernel_get_arg_info;
 
 int CompilerSupported();

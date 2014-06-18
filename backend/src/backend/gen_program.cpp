@@ -35,6 +35,12 @@
 
 #include "llvm/Linker.h"
 #include "llvm/Transforms/Utils/Cloning.h"
+#include "llvm/Bitcode/ReaderWriter.h"
+#include "llvm/Support/raw_ostream.h"
+#include "llvm/ADT/StringRef.h"
+#include "llvm/Support/MemoryBuffer.h"
+#include "llvm/Support/SourceMgr.h"
+#include "llvm/IRReader/IRReader.h"
 
 #include "backend/program.h"
 #include "backend/gen_program.h"
@@ -55,6 +61,7 @@
 #include <iostream>
 #include <fstream>
 #include <mutex>
+#include <unistd.h>
 
 namespace gbe {
 
@@ -188,7 +195,8 @@ namespace gbe {
   static gbe_program genProgramNewFromBinary(uint32_t deviceID, const char *binary, size_t size) {
     using namespace gbe;
     std::string binary_content;
-    binary_content.assign(binary, size);
+    //the first 5 bytes are header to differentiate from llvm bitcode binary.
+    binary_content.assign(binary+5, size-5);
     GenProgram *program = GBE_NEW(GenProgram, deviceID);
     std::istringstream ifs(binary_content, std::ostringstream::binary);
     // FIXME we need to check the whether the current device ID match the binary file's.
@@ -203,20 +211,66 @@ namespace gbe {
     return reinterpret_cast<gbe_program>(program);
   }
 
-  static size_t genProgramSerializeToBinary(gbe_program program, char **binary) {
+  static gbe_program genProgramNewFromLLVMBinary(uint32_t deviceID, const char *binary, size_t size) {
+#ifdef GBE_COMPILER_AVAILABLE
+    using namespace gbe;
+    std::string binary_content;
+    //the first byte stands for binary_type.
+    binary_content.assign(binary+1, size-1);
+    llvm::StringRef llvm_bin_str(binary_content);
+    llvm::LLVMContext& c = llvm::getGlobalContext();
+    llvm::SMDiagnostic Err;
+    llvm::MemoryBuffer* memory_buffer = llvm::MemoryBuffer::getMemBuffer(llvm_bin_str, "llvm_bin_str");
+    acquireLLVMContextLock();
+    llvm::Module* module = llvm::ParseIR(memory_buffer, Err, c);
+    releaseLLVMContextLock();
+    if(module == NULL){
+      GBE_ASSERT(0);
+    }
+
+    GenProgram *program = GBE_NEW(GenProgram, deviceID, module);
+
+    //program->printStatus(0, std::cout);
+    return reinterpret_cast<gbe_program>(program);
+#else
+      return NULL;
+#endif
+  }
+
+  static size_t genProgramSerializeToBinary(gbe_program program, char **binary, int binary_type) {
     using namespace gbe;
     size_t sz;
     std::ostringstream oss;
     GenProgram *prog = (GenProgram*)program;
 
-    if ((sz = prog->serializeToBin(oss)) == 0) {
-      *binary = 0;
-      return 0;
-    }
+    //0 means GEN binary, 1 means LLVM bitcode compiled object, 2 means LLVM bitcode library
+    if(binary_type == 0){
+      if ((sz = prog->serializeToBin(oss)) == 0) {
+        *binary = NULL;
+        return 0;
+      }
 
-    *binary = (char *)malloc(sizeof(char) * sz);
-    memcpy(*binary, oss.str().c_str(), sz*sizeof(char));
-    return sz;
+      //add header to differetiate from llvm bitcode binary.
+      //the header length is 5 bytes: 1 binary type, 4 bitcode header.
+      *binary = (char *)malloc(sizeof(char) * (sz+5) );
+      memset(*binary, 0, sizeof(char) * (sz+5) );
+      memcpy(*binary+5, oss.str().c_str(), sz*sizeof(char));
+      return sz+5;
+    }else{
+#ifdef GBE_COMPILER_AVAILABLE
+      std::string str;
+      llvm::raw_string_ostream OS(str);
+      llvm::WriteBitcodeToFile((llvm::Module*)prog->module, OS);
+      std::string& bin_str = OS.str();
+      int llsz = bin_str.size();
+      *binary = (char *)malloc(sizeof(char) * (llsz+1) );
+      *(*binary) = binary_type;
+      memcpy(*binary+1, bin_str.c_str(), llsz);
+      return llsz+1;
+#else
+      return 0;
+#endif
+    }
   }
 
   static gbe_program genProgramNewFromLLVM(uint32_t deviceID,
@@ -337,6 +391,7 @@ namespace gbe {
 void genSetupCallBacks(void)
 {
   gbe_program_new_from_binary = gbe::genProgramNewFromBinary;
+  gbe_program_new_from_llvm_binary = gbe::genProgramNewFromLLVMBinary;
   gbe_program_serialize_to_binary = gbe::genProgramSerializeToBinary;
   gbe_program_new_from_llvm = gbe::genProgramNewFromLLVM;
   gbe_program_new_gen_program = gbe::genProgramNewGenProgram;

@@ -1065,8 +1065,16 @@ clGetProgramInfo(cl_program       program,
     FILL_GETINFO_RET (char, (strlen(program->source) + 1),
                    program->source, CL_SUCCESS);
   } else if (param_name == CL_PROGRAM_BINARY_SIZES) {
-    if (program->binary == NULL) {
-      program->binary_sz = compiler_program_serialize_to_binary(program->opaque, &program->binary);
+    if (program->binary == NULL){
+      if( program->binary_type == CL_PROGRAM_BINARY_TYPE_EXECUTABLE) {
+        program->binary_sz = compiler_program_serialize_to_binary(program->opaque, &program->binary, 0);
+      }else if( program->binary_type == CL_PROGRAM_BINARY_TYPE_COMPILED_OBJECT) {
+        program->binary_sz = compiler_program_serialize_to_binary(program->opaque, &program->binary, 1);
+      }else if( program->binary_type == CL_PROGRAM_BINARY_TYPE_LIBRARY) {
+        program->binary_sz = compiler_program_serialize_to_binary(program->opaque, &program->binary, 2);
+      }else{
+        return CL_INVALID_BINARY;
+      }
     }
 
     if (program->binary == NULL || program->binary_sz == 0) {
@@ -1082,7 +1090,15 @@ clGetProgramInfo(cl_program       program,
     /* param_value points to an array of n
        pointers allocated by the caller */
     if (program->binary == NULL) {
-      program->binary_sz = compiler_program_serialize_to_binary(program->opaque, &program->binary);
+      if( program->binary_type == CL_PROGRAM_BINARY_TYPE_EXECUTABLE) {
+        program->binary_sz = compiler_program_serialize_to_binary(program->opaque, &program->binary, 0);
+      }else if( program->binary_type == CL_PROGRAM_BINARY_TYPE_COMPILED_OBJECT) {
+        program->binary_sz = compiler_program_serialize_to_binary(program->opaque, &program->binary, 1);
+      }else if( program->binary_type == CL_PROGRAM_BINARY_TYPE_LIBRARY) {
+        program->binary_sz = compiler_program_serialize_to_binary(program->opaque, &program->binary, 2);
+      }else{
+        return CL_INVALID_BINARY;
+      }
     }
 
     if (program->binary == NULL || program->binary_sz == 0) {
@@ -1134,6 +1150,9 @@ clGetProgramBuildInfo(cl_program             program,
     FILL_GETINFO_RET (char, program->build_log_sz + 1, program->build_log, CL_SUCCESS);
     if (param_value_size_ret)
       *param_value_size_ret = program->build_log_sz + 1;
+  }else if (param_name == CL_PROGRAM_BINARY_TYPE){
+
+    FILL_GETINFO_RET (cl_uint, 1, &program->binary_type, CL_SUCCESS);
   } else {
     return CL_INVALID_VALUE;
   }

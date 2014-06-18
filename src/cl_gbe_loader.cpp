@@ -24,13 +24,14 @@
 
 //function pointer from libgbe.so
 gbe_program_new_from_source_cb *compiler_program_new_from_source = NULL;
-gbe_program_serialize_to_binary_cb *compiler_program_serialize_to_binary = NULL;
-gbe_program_new_from_llvm_cb *compiler_program_new_from_llvm = NULL;
-gbe_set_image_base_index_cb *compiler_set_image_base_index = NULL;
 gbe_program_compile_from_source_cb *compiler_program_compile_from_source = NULL;
 gbe_program_new_gen_program_cb *compiler_program_new_gen_program = NULL;
 gbe_program_link_program_cb *compiler_program_link_program = NULL;
 gbe_program_build_from_llvm_cb *compiler_program_build_from_llvm = NULL;
+gbe_program_new_from_llvm_binary_cb *compiler_program_new_from_llvm_binary = NULL;
+gbe_program_serialize_to_binary_cb *compiler_program_serialize_to_binary = NULL;
+gbe_program_new_from_llvm_cb *compiler_program_new_from_llvm = NULL;
+gbe_set_image_base_index_cb *compiler_set_image_base_index = NULL;
 
 //function pointer from libgbeinterp.so
 gbe_program_new_from_binary_cb *interp_program_new_from_binary = NULL;
@@ -270,6 +271,10 @@ struct GbeLoaderInitializer
 
       compiler_program_build_from_llvm = *(gbe_program_build_from_llvm_cb **)dlsym(dlhCompiler, "gbe_program_build_from_llvm");
       if (compiler_program_build_from_llvm == NULL)
+        return;
+
+      compiler_program_new_from_llvm_binary = *(gbe_program_new_from_llvm_binary_cb **)dlsym(dlhCompiler, "gbe_program_new_from_llvm_binary");
+      if (compiler_program_new_from_llvm_binary == NULL)
         return;
 
       compiler_program_serialize_to_binary = *(gbe_program_serialize_to_binary_cb **)dlsym(dlhCompiler, "gbe_program_serialize_to_binary");

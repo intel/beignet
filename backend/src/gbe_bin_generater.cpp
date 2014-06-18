@@ -38,6 +38,7 @@
 
 #include "backend/program.h"
 #include "backend/program.hpp"
+#include "backend/src/sys/platform.hpp"
 
 using namespace std;
 
@@ -148,40 +149,59 @@ public:
 
 string program_build_instance::bin_path;
 bool program_build_instance::str_fmt_out = false;
+#define OUTS_UPDATE_SZ(elt) SERIALIZE_OUT(elt, oss, header_sz)
+#define OUTF_UPDATE_SZ(elt) SERIALIZE_OUT(elt, ofs, header_sz)
 
 void program_build_instance::serialize_program(void) throw(int)
 {
     ofstream ofs;
     ostringstream oss;
-    size_t sz;
+    size_t sz, header_sz = 0;
     ofs.open(bin_path, ofstream::out | ofstream::trunc | ofstream::binary);
 
+    //add header to differeciate from llvm bitcode binary.
+    // (5 bytes: 1 byte for binary type, 4 byte for bc code.)
+    char header = '\0';
+
     if (str_fmt_out) {
-        string array_name = "Unkown_name_array";
-        unsigned long last_slash = bin_path.rfind("/");
-        unsigned long last_dot = bin_path.rfind(".");
+      OUTS_UPDATE_SZ(header);
+      OUTS_UPDATE_SZ(header);
+      OUTS_UPDATE_SZ(header);
+      OUTS_UPDATE_SZ(header);
+      OUTS_UPDATE_SZ(header);
 
-        if (last_slash != string::npos &&  last_dot != string::npos)
-            array_name = bin_path.substr(last_slash + 1, last_dot - 1 - last_slash);
+      string array_name = "Unkown_name_array";
+      unsigned long last_slash = bin_path.rfind("/");
+      unsigned long last_dot = bin_path.rfind(".");
 
-        ofs << "char " << array_name << "[] = {" << "\n";
+      if (last_slash != string::npos &&  last_dot != string::npos)
+        array_name = bin_path.substr(last_slash + 1, last_dot - 1 - last_slash);
 
-        sz = gbe_prog->serializeToBin(oss);
+      ofs << "char " << array_name << "[] = {" << "\n";
 
-        for (size_t i = 0; i < sz; i++) {
-            unsigned char c = oss.str().c_str()[i];
-            char asic_str[9];
-            sprintf(asic_str, "%2.2x", c);
-            ofs << "0x";
-            ofs << asic_str << ((i == sz - 1) ? "" : ", ");
-        }
+      sz = gbe_prog->serializeToBin(oss);
 
-        ofs << "};\n";
+      sz+=5;
 
-	string array_size = array_name + "_size";
-	ofs << "int " << array_size << " = " << sz << ";" << "\n";
+      for (size_t i = 0; i < sz; i++) {
+        unsigned char c = oss.str().c_str()[i];
+        char asic_str[9];
+        sprintf(asic_str, "%2.2x", c);
+        ofs << "0x";
+        ofs << asic_str << ((i == sz - 1) ? "" : ", ");
+      }
+
+      ofs << "};\n";
+
+      string array_size = array_name + "_size";
+      ofs << "int " << array_size << " = " << sz << ";" << "\n";
     } else {
-        sz = gbe_prog->serializeToBin(ofs);
+      OUTF_UPDATE_SZ(header);
+      OUTF_UPDATE_SZ(header);
+      OUTF_UPDATE_SZ(header);
+      OUTF_UPDATE_SZ(header);
+      OUTF_UPDATE_SZ(header);
+      sz = gbe_prog->serializeToBin(ofs);
     }
 
     ofs.close();

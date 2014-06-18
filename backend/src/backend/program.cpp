@@ -1158,6 +1158,7 @@ GBE_EXPORT_SYMBOL gbe_program_new_from_source_cb *gbe_program_new_from_source = 
 GBE_EXPORT_SYMBOL gbe_program_compile_from_source_cb *gbe_program_compile_from_source = NULL;
 GBE_EXPORT_SYMBOL gbe_program_link_program_cb *gbe_program_link_program = NULL;
 GBE_EXPORT_SYMBOL gbe_program_new_from_binary_cb *gbe_program_new_from_binary = NULL;
+GBE_EXPORT_SYMBOL gbe_program_new_from_llvm_binary_cb *gbe_program_new_from_llvm_binary = NULL;
 GBE_EXPORT_SYMBOL gbe_program_serialize_to_binary_cb *gbe_program_serialize_to_binary = NULL;
 GBE_EXPORT_SYMBOL gbe_program_new_from_llvm_cb *gbe_program_new_from_llvm = NULL;
 GBE_EXPORT_SYMBOL gbe_program_new_gen_program_cb *gbe_program_new_gen_program = NULL;

@@ -156,6 +156,30 @@ error:
   return err;
 }
 
+inline cl_bool isBitcodeWrapper(const unsigned char *BufPtr, const unsigned char *BufEnd)
+{
+  // See if you can find the hidden message in the magic bytes :-).
+  // (Hint: it's a little-endian encoding.)
+  return BufPtr != BufEnd &&
+    BufPtr[0] == 0xDE &&
+    BufPtr[1] == 0xC0 &&
+    BufPtr[2] == 0x17 &&
+    BufPtr[3] == 0x0B;
+}
+
+inline cl_bool isRawBitcode(const unsigned char *BufPtr, const unsigned char *BufEnd)
+{
+  // These bytes sort of have a hidden message, but it's not in
+  // little-endian this time, and it's a little redundant.
+  return BufPtr != BufEnd &&
+    BufPtr[0] == 'B' &&
+    BufPtr[1] == 'C' &&
+    BufPtr[2] == 0xc0 &&
+    BufPtr[3] == 0xde;
+}
+
+#define isBitcode(BufPtr,BufEnd)  (isBitcodeWrapper(BufPtr, BufEnd) || isRawBitcode(BufPtr, BufEnd))
+
 LOCAL cl_program
 cl_program_create_from_binary(cl_context             ctx,
                               cl_uint                num_devices,
@@ -196,6 +220,23 @@ cl_program_create_from_binary(cl_context             ctx,
   memcpy(program->binary, binaries[0], lengths[0]);
   program->binary_sz = lengths[0];
   program->source_type = FROM_BINARY;
+
+  if(isBitcode((unsigned char*)program->binary+1, (unsigned char*)program->binary+program->binary_sz)) {
+    if(*program->binary == 1){
+      program->binary_type = CL_PROGRAM_BINARY_TYPE_COMPILED_OBJECT;
+    }else if(*program->binary == 2){
+      program->binary_type = CL_PROGRAM_BINARY_TYPE_LIBRARY;
+    }else{
+      err= CL_INVALID_BINARY;
+      goto error;
+    }
+    program->opaque = compiler_program_new_from_llvm_binary(program->ctx->device->vendor_id, program->binary, program->binary_sz);
+
+    if (UNLIKELY(program->opaque == NULL)) {
+      err = CL_INVALID_PROGRAM;
+      goto error;
+    }
+  }
 
   if (binary_status)
     binary_status[0] = CL_SUCCESS;
@@ -360,6 +401,7 @@ cl_program_create_from_source(cl_context ctx,
   *p = '\0';
 
   program->source_type = FROM_SOURCE;
+  program->binary_type = CL_PROGRAM_BINARY_TYPE_NONE;
 
 exit:
   cl_free(lens);
@@ -432,6 +474,7 @@ cl_program_build(cl_program p, const char *options)
     TRY (cl_program_load_gen_program, p);
     p->source_type = FROM_LLVM;
   }
+  p->binary_type = CL_PROGRAM_BINARY_TYPE_EXECUTABLE;
 
   for (i = 0; i < p->ker_n; i ++) {
     const gbe_kernel opaque = interp_program_get_kernel(p->opaque, i);
@@ -468,6 +511,7 @@ cl_program_link(cl_context            context,
   p->opaque = compiler_program_new_gen_program(context->device->vendor_id, NULL, NULL);
 
   for(i = 0; i < num_input_programs; i++) {
+    // if program create with llvm binary, need deserilize first to get module.
     if(input_programs[i])
       compiler_program_link_program(p->opaque, input_programs[i]->opaque,
         p->build_log_max_sz, p->build_log, &p->build_log_sz);
@@ -475,6 +519,13 @@ cl_program_link(cl_context            context,
       err = CL_LINK_PROGRAM_FAILURE;
       goto error;
     }
+  }
+
+  if(options && strstr(options, "-create-library")){
+    p->binary_type = CL_PROGRAM_BINARY_TYPE_LIBRARY;
+    return p;
+  }else{
+    p->binary_type = CL_PROGRAM_BINARY_TYPE_EXECUTABLE;
   }
 
   compiler_program_build_from_llvm(p->opaque, p->build_log_max_sz, p->build_log, &p->build_log_sz, options);
@@ -534,7 +585,9 @@ cl_program_compile(cl_program            p,
     p->build_opts = NULL;
   }
 
-  const char* temp_header_path = "/tmp/beignet_header/";
+  char temp_header_template[]= "/tmp/beignet.XXXXXX";
+  char* temp_header_path = mkdtemp(temp_header_template);
+
   if (p->source_type == FROM_SOURCE) {
 
     if (!CompilerSupported()) {
@@ -542,14 +595,15 @@ cl_program_compile(cl_program            p,
       goto error;
     }
 
-    //write the headers to /tmp/beignet_header for include.
+    //write the headers to /tmp/beignet.XXXXXX for include.
     for (i = 0; i < num_input_headers; i++) {
       if(header_include_names[i] == NULL || input_headers[i] == NULL)
         continue;
 
-      char temp_path[255];
-      strcpy(temp_path, temp_header_path);
-      strcat(temp_path, header_include_names[i]);
+      char temp_path[255]="";
+      strncpy(temp_path, temp_header_path, strlen(temp_header_path));
+      strncat(temp_path, "/", 1);
+      strncat(temp_path, header_include_names[i], strlen(header_include_names[i]));
       char* dirc = strdup(temp_path);
       char* dir = dirname(dirc);
       mkdir(dir, 0755);
@@ -572,9 +626,12 @@ cl_program_compile(cl_program            p,
     p->opaque = compiler_program_compile_from_source(p->ctx->device->vendor_id, p->source, temp_header_path,
         p->build_log_max_sz, options, p->build_log, &p->build_log_sz);
 
-    int rm_ret = system("rm /tmp/beignet_header/* -rf");
+    char rm_path[255]="rm ";
+    strncat(rm_path, temp_header_path, strlen(temp_header_path));
+    strncat(rm_path, " -rf", 4);
+    int temp = system(rm_path);
 
-    if(rm_ret){
+    if(temp){
       assert(0);
     }
 
@@ -588,6 +645,7 @@ cl_program_compile(cl_program            p,
 
     /* Create all the kernels */
     p->source_type = FROM_LLVM;
+    p->binary_type = CL_PROGRAM_BINARY_TYPE_COMPILED_OBJECT;
   }
   p->is_built = 1;
   return CL_SUCCESS;
