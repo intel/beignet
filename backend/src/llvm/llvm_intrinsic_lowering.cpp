@@ -20,7 +20,7 @@
  * \author Yang Rong <rong.r.yang@intel.com>
  */
 
-#include "llvm/Config/config.h"
+#include "llvm/Config/llvm-config.h"
 #if LLVM_VERSION_MINOR <= 2
 #include "llvm/Function.h"
 #include "llvm/InstrTypes.h"
@@ -42,8 +42,6 @@
 #else
 #include "llvm/IR/IRBuilder.h"
 #endif /* LLVM_VERSION_MINOR <= 1 */
-#include "llvm/Support/CallSite.h"
-#include "llvm/Support/CFG.h"
 #include "llvm/Support/raw_ostream.h"
 
 #include "llvm/llvm_gen_backend.hpp"

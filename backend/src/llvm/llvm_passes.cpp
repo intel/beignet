@@ -30,7 +30,7 @@
  * Segovia) the right to use another license for it (MIT here)
  */
 
-#include "llvm/Config/config.h"
+#include "llvm/Config/llvm-config.h"
 #if LLVM_VERSION_MINOR <= 2
 #include "llvm/CallingConv.h"
 #include "llvm/Constants.h"
@@ -86,13 +86,12 @@
 #else
 #include "llvm/IR/DataLayout.h"
 #endif
-#include "llvm/Support/CallSite.h"
-#include "llvm/Support/CFG.h"
 #include "llvm/Support/ErrorHandling.h"
 #include "llvm/Support/FormattedStream.h"
-#include "llvm/Support/GetElementPtrTypeIterator.h"
 #if (LLVM_VERSION_MAJOR == 3) && (LLVM_VERSION_MINOR <= 2)
 #include "llvm/Support/InstVisitor.h"
+#elif LLVM_VERSION_MINOR >= 5
+#include "llvm/IR/InstVisitor.h"
 #else
 #include "llvm/InstVisitor.h"
 #endif
@@ -101,7 +100,6 @@
 #include "llvm/Support/Host.h"
 #include "llvm/Support/ToolOutputFile.h"
 #include "llvm/Support/SourceMgr.h"
-#include "llvm/Config/config.h"
 
 #include "llvm/llvm_gen_backend.hpp"
 #include "ir/unit.hpp"

@@ -22,7 +22,7 @@
  * \author Benjamin Segovia <benjamin.segovia@intel.com>
  */
 
-#include "llvm/Config/config.h"
+#include "llvm/Config/llvm-config.h"
 #if LLVM_VERSION_MAJOR == 3 && LLVM_VERSION_MINOR <= 2
 #include "llvm/LLVMContext.h"
 #include "llvm/Module.h"
@@ -79,7 +79,13 @@ namespace gbe
   void runFuntionPass(Module &mod, TargetLibraryInfo *libraryInfo)
   {
     FunctionPassManager FPM(&mod);
+
+#if LLVM_VERSION_MAJOR == 3 && LLVM_VERSION_MINOR >= 5
+    FPM.add(new DataLayoutPass(&mod));
+#else
     FPM.add(new DataLayout(&mod));
+#endif
+
 #if LLVM_VERSION_MAJOR == 3 && LLVM_VERSION_MINOR >=5
     FPM.add(createVerifierPass(true));
 #else
@@ -105,7 +111,11 @@ namespace gbe
   {
     llvm::PassManager MPM;
 
+#if LLVM_VERSION_MAJOR == 3 && LLVM_VERSION_MINOR >= 5
+    MPM.add(new DataLayoutPass(&mod));
+#else
     MPM.add(new DataLayout(&mod));
+#endif
     MPM.add(new TargetLibraryInfo(*libraryInfo));
     MPM.add(createTypeBasedAliasAnalysisPass());
     MPM.add(createBasicAliasAnalysisPass());
@@ -191,7 +201,11 @@ namespace gbe
     runModulePass(mod, libraryInfo, optLevel);
 
     llvm::PassManager passes;
+#if LLVM_VERSION_MAJOR == 3 && LLVM_VERSION_MINOR >= 5
+    passes.add(new DataLayoutPass(&mod));
+#else
     passes.add(new DataLayout(&mod));
+#endif
     // Print the code before further optimizations
     if (OCL_OUTPUT_LLVM_BEFORE_EXTRA_PASS)
 #if LLVM_VERSION_MAJOR == 3 && LLVM_VERSION_MINOR >= 5

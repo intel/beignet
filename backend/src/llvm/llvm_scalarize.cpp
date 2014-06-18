@@ -63,7 +63,7 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "llvm/Config/config.h"
+#include "llvm/Config/llvm-config.h"
 #include "llvm/ADT/DenseMap.h"
 #include "llvm/ADT/PostOrderIterator.h"
 #if LLVM_VERSION_MAJOR == 3 && LLVM_VERSION_MINOR <= 2
@@ -87,8 +87,14 @@
 #else
 #include "llvm/IR/IRBuilder.h"
 #endif /* LLVM_VERSION_MINOR <= 1 */
+
+#if LLVM_VERSION_MINOR >= 5
+#include "llvm/IR/CallSite.h"
+#include "llvm/IR/CFG.h"
+#else
 #include "llvm/Support/CallSite.h"
 #include "llvm/Support/CFG.h"
+#endif
 #include "llvm/Support/raw_ostream.h"
 
 #include "llvm/llvm_gen_backend.hpp"

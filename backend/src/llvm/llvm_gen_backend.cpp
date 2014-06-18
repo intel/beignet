@@ -71,7 +71,7 @@
  *   is intercepted, we just abort
  */
 
-#include "llvm/Config/config.h"
+#include "llvm/Config/llvm-config.h"
 #if LLVM_VERSION_MINOR <= 2
 #include "llvm/CallingConv.h"
 #include "llvm/Constants.h"
@@ -127,13 +127,21 @@
 #else
 #include "llvm/IR/DataLayout.h"
 #endif
+
+#if LLVM_VERSION_MINOR >= 5
+#include "llvm/IR/CallSite.h"
+#include "llvm/IR/CFG.h"
+#else
 #include "llvm/Support/CallSite.h"
 #include "llvm/Support/CFG.h"
+#endif
+
 #include "llvm/Support/ErrorHandling.h"
 #include "llvm/Support/FormattedStream.h"
-#include "llvm/Support/GetElementPtrTypeIterator.h"
 #if (LLVM_VERSION_MAJOR == 3) && (LLVM_VERSION_MINOR <= 2)
 #include "llvm/Support/InstVisitor.h"
+#elif LLVM_VERSION_MINOR >= 5
+#include "llvm/IR/InstVisitor.h"
 #else
 #include "llvm/InstVisitor.h"
 #endif
@@ -142,7 +150,6 @@
 #include "llvm/Support/Host.h"
 #include "llvm/Support/ToolOutputFile.h"
 #include "llvm/Support/SourceMgr.h"
-#include "llvm/Config/config.h"
 
 #include "llvm/llvm_gen_backend.hpp"
 #include "ir/context.hpp"
@@ -1032,7 +1039,7 @@ namespace gbe
       // If the "taken" successor is the next block, we try to invert the
       // branch.
       BasicBlock *succ = I->getSuccessor(0);
-      if (llvm::next(Function::iterator(bb)) != Function::iterator(succ))
+      if (std::next(Function::iterator(bb)) != Function::iterator(succ))
         return;
 
       // More than one use is too complicated: we skip it
@@ -1517,8 +1524,14 @@ namespace gbe
     // one instruction that use the local variable, simply return.
     const Instruction *insn = NULL;
     for(Value::const_use_iterator iter = v->use_begin(); iter != v->use_end(); ++iter) {
-      if(isa<Instruction>(*iter)) return cast<const Instruction>(*iter);
-      insn = getInstructionUseLocal(*iter);
+    // After LLVM 3.5, use_iterator points to 'Use' instead of 'User', which is more straightforward.
+#if (LLVM_VERSION_MAJOR == 3) && (LLVM_VERSION_MINOR < 5)
+      const User *theUser = *iter;
+#else
+      const User *theUser = iter->getUser();
+#endif
+      if(isa<Instruction>(theUser)) return cast<const Instruction>(theUser);
+      insn = getInstructionUseLocal(theUser);
       if(insn != NULL) break;
     }
     return insn;
@@ -2157,7 +2170,7 @@ namespace gbe
     // successor
     if (I.isConditional() == false) {
       BasicBlock *target = I.getSuccessor(0);
-      if (llvm::next(Function::iterator(bb)) != Function::iterator(target)) {
+      if (std::next(Function::iterator(bb)) != Function::iterator(target)) {
         GBE_ASSERT(labelMap.find(target) != labelMap.end());
         const ir::LabelIndex labelIndex = labelMap[target];
         ctx.BRA(labelIndex);
@@ -2181,7 +2194,7 @@ namespace gbe
 
       // If non-taken target is the next block, there is nothing to do
       BasicBlock *bb = I.getParent();
-      if (llvm::next(Function::iterator(bb)) == Function::iterator(nonTaken))
+      if (std::next(Function::iterator(bb)) == Function::iterator(nonTaken))
         return;
 
       // This is slightly more complicated here. We need to issue one more

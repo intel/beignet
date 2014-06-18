@@ -33,7 +33,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-#include "llvm/Config/config.h"
+#include "llvm/Config/llvm-config.h"
 #if LLVM_VERSION_MINOR <= 2
 #include "llvm/Function.h"
 #include "llvm/InstrTypes.h"
@@ -55,8 +55,15 @@
 #else
 #include "llvm/IR/IRBuilder.h"
 #endif /* LLVM_VERSION_MINOR <= 1 */
+
+#if LLVM_VERSION_MINOR >= 5
+#include "llvm/IR/CallSite.h"
+#include "llvm/IR/CFG.h"
+#else
 #include "llvm/Support/CallSite.h"
 #include "llvm/Support/CFG.h"
+#endif
+
 #include "llvm/Support/raw_ostream.h"
 #include "llvm/IR/Attributes.h"
 

@@ -22,7 +22,7 @@
  * \author Benjamin Segovia <benjamin.segovia@intel.com>
  */
 
-#include "llvm/Config/config.h"
+#include "llvm/Config/llvm-config.h"
 #if LLVM_VERSION_MAJOR == 3 && LLVM_VERSION_MINOR <= 2
 #include "llvm/LLVMContext.h"
 #include "llvm/Module.h"
@@ -33,7 +33,11 @@
 #include "llvm/IR/DataLayout.h"
 #endif  /* LLVM_VERSION_MINOR <= 2 */
 
+#if LLVM_VERSION_MINOR >= 5
+#include "llvm/Linker/Linker.h"
+#else
 #include "llvm/Linker.h"
+#endif
 #include "llvm/Transforms/Utils/Cloning.h"
 #include "llvm/Bitcode/ReaderWriter.h"
 #include "llvm/Support/raw_ostream.h"
