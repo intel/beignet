@@ -4795,7 +4795,7 @@ DECL_IMAGE_INFO_COMMON(image1d_array_t)
 INLINE_OVERLOADABLE size_t get_image_array_size(image1d_array_t image)
 {
   GET_IMAGE(image, surface_id);
-  return __gen_ocl_get_image_height(surface_id);
+  return __gen_ocl_get_image_depth(surface_id);
 }
 
 #undef EXPEND_READ_COORD

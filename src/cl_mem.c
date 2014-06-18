@@ -513,6 +513,7 @@ static const uint32_t tilex_w = 512;  /* tileX width in bytes */
 static const uint32_t tilex_h = 8;    /* tileX height in number of rows */
 static const uint32_t tiley_w = 128;  /* tileY width in bytes */
 static const uint32_t tiley_h = 32;   /* tileY height in number of rows */
+static const uint32_t valign = 2;     /* vertical alignment is 2. */
 
 cl_image_tiling_t cl_get_default_tiling(void)
 {
@@ -551,7 +552,7 @@ _cl_mem_new_image(cl_context ctx,
   cl_int err = CL_SUCCESS;
   cl_mem mem = NULL;
   uint32_t bpp = 0, intel_fmt = INTEL_UNSUPPORTED_FORMAT;
-  size_t sz = 0, aligned_pitch = 0, aligned_slice_pitch = 0, aligned_h;
+  size_t sz = 0, aligned_pitch = 0, aligned_slice_pitch = 0, aligned_h = 0;
   cl_image_tiling_t tiling = CL_NO_TILE;
 
   /* Check flags consistency */
@@ -579,21 +580,29 @@ _cl_mem_new_image(cl_context ctx,
   } while (0);
 
   if (UNLIKELY(w == 0)) DO_IMAGE_ERROR;
-  if (UNLIKELY(h == 0 && image_type != CL_MEM_OBJECT_IMAGE1D)) DO_IMAGE_ERROR;
+  if (UNLIKELY(h == 0 && (image_type != CL_MEM_OBJECT_IMAGE1D &&
+      image_type != CL_MEM_OBJECT_IMAGE1D_ARRAY)))
+    DO_IMAGE_ERROR;
 
-  if (image_type == CL_MEM_OBJECT_IMAGE1D) {
+  if (image_type == CL_MEM_OBJECT_IMAGE1D ||
+      image_type == CL_MEM_OBJECT_IMAGE1D_ARRAY) {
     size_t min_pitch = bpp * w;
     if (data && pitch == 0)
       pitch = min_pitch;
 
-    depth = 1;
     h = 1;
+    if (image_type != CL_MEM_OBJECT_IMAGE1D_ARRAY)
+      depth = 1;
+    else if (data && slice_pitch == 0)
+      slice_pitch = pitch;
     if (UNLIKELY(w > ctx->device->image2d_max_width)) DO_IMAGE_ERROR;
+    if (UNLIKELY(depth > ctx->device->image2d_max_height)) DO_IMAGE_ERROR;
     if (UNLIKELY(data && min_pitch > pitch)) DO_IMAGE_ERROR;
+    if (UNLIKELY(data && (slice_pitch % pitch != 0))) DO_IMAGE_ERROR;
     if (UNLIKELY(!data && pitch != 0)) DO_IMAGE_ERROR;
+    if (UNLIKELY(!data && slice_pitch != 0)) DO_IMAGE_ERROR;
     tiling = CL_NO_TILE;
-  } else if (image_type == CL_MEM_OBJECT_IMAGE2D ||
-                image_type == CL_MEM_OBJECT_IMAGE1D_ARRAY) {
+  } else if (image_type == CL_MEM_OBJECT_IMAGE2D) {
     size_t min_pitch = bpp * w;
     if (data && pitch == 0)
       pitch = min_pitch;
@@ -606,12 +615,9 @@ _cl_mem_new_image(cl_context ctx,
     if (cl_driver_get_ver(ctx->drv) != 6)
       tiling = cl_get_default_tiling();
 
-    if (image_type == CL_MEM_OBJECT_IMAGE1D_ARRAY)
-      tiling = CL_NO_TILE;
-
     depth = 1;
   } else if (image_type == CL_MEM_OBJECT_IMAGE3D ||
-                image_type == CL_MEM_OBJECT_IMAGE2D_ARRAY) {
+             image_type == CL_MEM_OBJECT_IMAGE2D_ARRAY) {
     size_t min_pitch = bpp * w;
     if (data && pitch == 0)
       pitch = min_pitch;
@@ -637,7 +643,12 @@ _cl_mem_new_image(cl_context ctx,
   /* Tiling requires to align both pitch and height */
   if (tiling == CL_NO_TILE) {
     aligned_pitch = w * bpp;
-    aligned_h     = h;
+    if (image_type == CL_MEM_OBJECT_IMAGE1D_ARRAY ||
+        image_type == CL_MEM_OBJECT_IMAGE2D_ARRAY ||
+        image_type == CL_MEM_OBJECT_IMAGE3D)
+      aligned_h = ALIGN(h, valign);
+    else
+      aligned_h     = h;
   } else if (tiling == CL_TILE_X) {
     aligned_pitch = ALIGN(w * bpp, tilex_w);
     aligned_h     = ALIGN(h, tilex_h);
@@ -662,9 +673,12 @@ _cl_mem_new_image(cl_context ctx,
     goto error;
 
   cl_buffer_set_tiling(mem->bo, tiling, aligned_pitch);
-  aligned_slice_pitch = (image_type == CL_MEM_OBJECT_IMAGE1D || image_type == CL_MEM_OBJECT_IMAGE2D
-              || image_type == CL_MEM_OBJECT_IMAGE1D_ARRAY || image_type == CL_MEM_OBJECT_IMAGE1D_BUFFER)
-                  ? 0 : aligned_pitch * ALIGN(h, 2);
+  if (image_type == CL_MEM_OBJECT_IMAGE1D ||
+      image_type == CL_MEM_OBJECT_IMAGE2D ||
+      image_type == CL_MEM_OBJECT_IMAGE1D_BUFFER)
+    aligned_slice_pitch = 0;
+  else
+    aligned_slice_pitch = aligned_pitch * ALIGN(h, 2);
 
   cl_mem_image_init(cl_mem_image(mem), w, h, image_type, depth, *fmt,
                     intel_fmt, bpp, aligned_pitch, aligned_slice_pitch, tiling,
@@ -832,10 +846,6 @@ cl_mem_new_image(cl_context context,
                              image_desc->image_row_pitch, image_desc->image_slice_pitch,
                              host_ptr, errcode_ret);
   case CL_MEM_OBJECT_IMAGE1D_ARRAY:
-    return _cl_mem_new_image(context, flags, image_format, image_desc->image_type,
-                             image_desc->image_width, image_desc->image_array_size, image_desc->image_depth,
-                             image_desc->image_row_pitch, image_desc->image_slice_pitch,
-                             host_ptr, errcode_ret);
   case CL_MEM_OBJECT_IMAGE2D_ARRAY:
     return _cl_mem_new_image(context, flags, image_format, image_desc->image_type,
                              image_desc->image_width, image_desc->image_height, image_desc->image_array_size,

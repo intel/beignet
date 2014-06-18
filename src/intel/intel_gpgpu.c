@@ -763,6 +763,7 @@ intel_gpgpu_bind_image_gen7(intel_gpgpu_t *gpgpu,
 
   memset(ss, 0, sizeof(*ss));
 
+  ss->ss0.vertical_line_stride = 0; // always choose VALIGN_2
   ss->ss0.surface_type = intel_get_surface_type(type);
   if (intel_is_surface_array(type)) {
     ss->ss0.surface_array = 1;
@@ -772,13 +773,8 @@ intel_gpgpu_bind_image_gen7(intel_gpgpu_t *gpgpu,
   ss->ss1.base_addr = obj_bo->offset;
   ss->ss2.width = w - 1;
 
-  if (type == CL_MEM_OBJECT_IMAGE1D_ARRAY) {
-    ss->ss2.height = 1;
-    ss->ss3.depth = h - 1;
-  } else {
-    ss->ss2.height = h - 1;
-    ss->ss3.depth = depth - 1;
-  }
+  ss->ss2.height = h - 1;
+  ss->ss3.depth = depth - 1;
   ss->ss4.not_str_buf.rt_view_extent = depth - 1;
   ss->ss4.not_str_buf.min_array_element = 0;
   ss->ss3.pitch = pitch - 1;
@@ -814,6 +810,7 @@ intel_gpgpu_bind_image_gen75(intel_gpgpu_t *gpgpu,
   gen7_surface_state_t *ss = (gen7_surface_state_t *) heap->surface[index];
   memset(ss, 0, sizeof(*ss));
 
+  ss->ss0.vertical_line_stride = 0; // always choose VALIGN_2
   ss->ss0.surface_type = intel_get_surface_type(type);
   if (intel_is_surface_array(type)) {
     ss->ss0.surface_array = 1;
@@ -822,13 +819,8 @@ intel_gpgpu_bind_image_gen75(intel_gpgpu_t *gpgpu,
   ss->ss0.surface_format = format;
   ss->ss1.base_addr = obj_bo->offset;
   ss->ss2.width = w - 1;
-  if (type == CL_MEM_OBJECT_IMAGE1D_ARRAY) {
-    ss->ss2.height = 1;
-    ss->ss3.depth = h - 1;
-  } else {
-    ss->ss2.height = h - 1;
-    ss->ss3.depth = depth - 1;
-  }
+  ss->ss2.height = h - 1;
+  ss->ss3.depth = depth - 1;
   ss->ss4.not_str_buf.rt_view_extent = depth - 1;
   ss->ss4.not_str_buf.min_array_element = 0;
   ss->ss3.pitch = pitch - 1;
