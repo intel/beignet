@@ -29,6 +29,8 @@ namespace gbe
 {
   namespace ir
   {
+    pthread_mutex_t PrintfSet::lock = PTHREAD_MUTEX_INITIALIZER;
+
     uint32_t PrintfSet::append(PrintfFmt* fmt, Unit& unit)
     {
       fmts.push_back(*fmt);
@@ -74,6 +76,7 @@ namespace gbe
     void PrintfSet::outputPrintf(void* index_addr, void* buf_addr, size_t global_wk_sz0,
                                  size_t global_wk_sz1, size_t global_wk_sz2)
     {
+      LockOutput lock;
       size_t i, j, k;
       std::string pf_str;
       vector<int>* contents = NULL;
