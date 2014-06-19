@@ -222,6 +222,18 @@ intel_driver_open(intel_driver_t *intel, cl_context_prop props)
   }
 
   if(!intel_driver_is_active(intel)) {
+    printf("Trying to open render node...\n");
+    char card_name[20];
+    for(cardi = 0; cardi < 16; cardi++) {
+      sprintf(card_name, "/dev/dri/renderD%d", 128+cardi);
+      if(intel_driver_init_render(intel, card_name)) {
+        printf("Success at %s.\n", card_name);
+        break;
+      }
+    }
+  }
+
+  if(!intel_driver_is_active(intel)) {
     printf("Trying to open directly...\n");
     char card_name[20];
     for(cardi = 0; cardi < 16; cardi++) {
@@ -232,6 +244,7 @@ intel_driver_open(intel_driver_t *intel, cl_context_prop props)
       }
     }
   }
+
   if(!intel_driver_is_active(intel)) {
     printf("Device open failed\n");
     exit(-1);
@@ -315,6 +328,24 @@ intel_driver_init_master(intel_driver_t *driver, const char* dev_name)
   if (ret != -1 || errno != EINVAL) {
     printf("%s is already in use\n", dev_name);
     close(dev_fd);
+    return 0;
+  }
+
+  intel_driver_init(driver, dev_fd);
+  driver->master = 1;
+
+  return 1;
+}
+
+LOCAL int
+intel_driver_init_render(intel_driver_t *driver, const char* dev_name)
+{
+  int dev_fd;
+
+  // usually dev_name = "/dev/dri/renderD%d"
+  dev_fd = open(dev_name, O_RDWR);
+  if (dev_fd == -1) {
+    printf("open(\"%s\", O_RDWR) failed: %s\n", dev_name, strerror(errno));
     return 0;
   }
 

@@ -106,6 +106,9 @@ extern int intel_driver_init_shared(intel_driver_t*, struct dri_state*);
  */
 extern int intel_driver_init_master(intel_driver_t*, const char* dev_name);
 
+/* init driver for render node */
+extern int intel_driver_init_render(intel_driver_t*, const char* dev_name);
+
 /* terminate driver and all underlying structures */
 extern int intel_driver_terminate(intel_driver_t*);
 
