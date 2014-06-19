@@ -104,7 +104,7 @@ link_directories (${LLVM_LIBRARY_DIR} ${DRM_LIBDIR})
 add_library(cl SHARED ${OPENCL_SRC})
 target_link_libraries(
                       cl
-                      ${XLIB_LIBRARY}
+                      ${X11_LIBRARIES}
                       ${XEXT_LIBRARIES}
                       ${XFIXES_LIBRARIES}
                       ${DRM_INTEL_LIBRARIES}
