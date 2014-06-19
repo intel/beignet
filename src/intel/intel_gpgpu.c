@@ -1177,6 +1177,14 @@ intel_gpgpu_event_resume(intel_event_t *event)
 }
 
 static void
+intel_gpgpu_event_cancel(intel_event_t *event)
+{
+  assert(event->batch);           //This command have pending.
+  intel_batchbuffer_delete(event->batch);
+  event->batch = NULL;
+}
+
+static void
 intel_gpgpu_event_delete(intel_event_t *event)
 {
   assert(event->batch == NULL);   //This command must have been flushed.
@@ -1362,6 +1370,7 @@ intel_set_gpgpu_callbacks(int device_id)
   cl_gpgpu_event_update_status = (cl_gpgpu_event_update_status_cb *)intel_gpgpu_event_update_status;
   cl_gpgpu_event_pending = (cl_gpgpu_event_pending_cb *)intel_gpgpu_event_pending;
   cl_gpgpu_event_resume = (cl_gpgpu_event_resume_cb *)intel_gpgpu_event_resume;
+  cl_gpgpu_event_cancel = (cl_gpgpu_event_cancel_cb *)intel_gpgpu_event_cancel;
   cl_gpgpu_event_delete = (cl_gpgpu_event_delete_cb *)intel_gpgpu_event_delete;
   cl_gpgpu_event_get_exec_timestamp = (cl_gpgpu_event_get_exec_timestamp_cb *)intel_gpgpu_event_get_exec_timestamp;
   cl_gpgpu_event_get_gpu_cur_timestamp = (cl_gpgpu_event_get_gpu_cur_timestamp_cb *)intel_gpgpu_event_get_gpu_cur_timestamp;

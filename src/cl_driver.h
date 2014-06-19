@@ -193,19 +193,23 @@ extern cl_gpgpu_flush_cb *cl_gpgpu_flush;
 typedef cl_gpgpu_event (cl_gpgpu_event_new_cb)(cl_gpgpu);
 extern cl_gpgpu_event_new_cb *cl_gpgpu_event_new;
 
-/* new a event for a batch buffer */
+/* update the batch buffer of this event */
 typedef int (cl_gpgpu_event_update_status_cb)(cl_gpgpu_event, int);
 extern cl_gpgpu_event_update_status_cb *cl_gpgpu_event_update_status;
 
-/* new a event for a batch buffer */
+/* pending flush the batch buffer of this event */
 typedef void (cl_gpgpu_event_pending_cb)(cl_gpgpu, cl_gpgpu_event);
 extern cl_gpgpu_event_pending_cb *cl_gpgpu_event_pending;
 
-/* new a event for a batch buffer */
+/* flush the batch buffer of this event */
 typedef void (cl_gpgpu_event_resume_cb)(cl_gpgpu_event);
 extern cl_gpgpu_event_resume_cb *cl_gpgpu_event_resume;
 
-/* new a event for a batch buffer */
+/* cancel exec batch buffer of this event */
+typedef void (cl_gpgpu_event_cancel_cb)(cl_gpgpu_event);
+extern cl_gpgpu_event_cancel_cb *cl_gpgpu_event_cancel;
+
+/* delete a gpgpu event */
 typedef void (cl_gpgpu_event_delete_cb)(cl_gpgpu_event);
 extern cl_gpgpu_event_delete_cb *cl_gpgpu_event_delete;
 

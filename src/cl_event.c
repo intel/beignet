@@ -390,9 +390,15 @@ void cl_event_set_status(cl_event event, cl_int status)
 
   if(status <= CL_COMPLETE) {
     if(event->enqueue_cb) {
-      cl_enqueue_handle(event, &event->enqueue_cb->data);
-      if(event->gpgpu_event)
-        cl_gpgpu_event_update_status(event->gpgpu_event, 1);  //now set complet, need refine
+      if(status == CL_COMPLETE) {
+        cl_enqueue_handle(event, &event->enqueue_cb->data);
+        if(event->gpgpu_event)
+          cl_gpgpu_event_update_status(event->gpgpu_event, 1);  //now set complet, need refine
+      } else {
+        if(event->gpgpu_event)
+          cl_gpgpu_event_cancel(event->gpgpu_event);  //Error cancel the enqueue
+      }
+
       event->status = status;  //Change the event status after enqueue and befor unlock
 
       pthread_mutex_unlock(&event->ctx->event_lock);
@@ -453,7 +459,11 @@ void cl_event_set_status(cl_event event, cl_int status)
 
     /* Call the pending operation */
     evt = cb->event;
-    cl_event_set_status(cb->event, CL_COMPLETE);
+    /* TODO: if this event wait on several events, one event's
+       status is error, the others is complete, what's the status
+       of this event? Can't find the description in OpenCL spec.
+       Simply update to latest finish wait event.*/
+    cl_event_set_status(cb->event, status);
     if(evt->emplict == CL_FALSE) {
       cl_event_delete(evt);
     }
