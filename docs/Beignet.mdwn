@@ -142,6 +142,14 @@ The code was tested on IVB GT2 with ubuntu and fedora core distribution. The rec
 kernel version is equal or newer than 3.11. Currently Only IVB is supported right now.
 Actually, the code was run on IVB GT2/GT1, and both system are well supported now.
 
+Math Function precision
+-----------------------
+
+Currently Gen does not provide native support of high precision math functions
+required by OpenCL. We provide a software version to achieve high precision,
+which you can turn on through `export OCL_STRICT_CONFORMANCE=1`.
+But be careful, this would make your CL kernel run a little longer.
+
 TODO
 ----
 
