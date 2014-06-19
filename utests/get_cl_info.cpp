@@ -546,7 +546,7 @@ void get_image_info(void)
 
   size_t depth;
   OCL_CALL(clGetImageInfo, image, CL_IMAGE_DEPTH, sizeof(depth), &depth, NULL);
-  OCL_ASSERT(depth == 1);
+  OCL_ASSERT(depth == 0);
 }
 
 MAKE_UTEST_FROM_FUNCTION(get_image_info);

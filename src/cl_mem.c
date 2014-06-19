@@ -130,6 +130,18 @@ cl_get_mem_object_info(cl_mem mem,
   return CL_SUCCESS;
 }
 
+#define IS_1D(image) (image->image_type == CL_MEM_OBJECT_IMAGE1D ||        \
+                      image->image_type == CL_MEM_OBJECT_IMAGE1D_ARRAY ||  \
+                      image->image_type == CL_MEM_OBJECT_IMAGE1D_BUFFER)
+
+#define IS_2D(image) (image->image_type == CL_MEM_OBJECT_IMAGE2D ||        \
+                      image->image_type == CL_MEM_OBJECT_IMAGE2D_ARRAY)
+
+#define IS_3D(image) (image->image_type == CL_MEM_OBJECT_IMAGE3D)
+
+#define IS_ARRAY(image) (image->image_type == CL_MEM_OBJECT_IMAGE1D_ARRAY || \
+                         image->image_type == CL_MEM_OBJECT_IMAGE2D_ARRAY)
+
 LOCAL cl_int
 cl_get_image_info(cl_mem mem,
                   cl_image_info param_name,
@@ -149,15 +161,12 @@ cl_get_image_info(cl_mem mem,
     FIELD_SIZE(IMAGE_WIDTH, size_t);
     FIELD_SIZE(IMAGE_HEIGHT, size_t);
     FIELD_SIZE(IMAGE_DEPTH, size_t);
+    FIELD_SIZE(IMAGE_ARRAY_SIZE, size_t);
     FIELD_SIZE(IMAGE_BUFFER, cl_mem);
+    FIELD_SIZE(IMAGE_NUM_MIP_LEVELS, cl_uint);
+    FIELD_SIZE(IMAGE_NUM_SAMPLES, cl_uint);
   default:
     return CL_INVALID_VALUE;
-  }
-
-  /* Do some further check. */
-  if (param_name == CL_IMAGE_BUFFER &&
-     image->image_type != CL_MEM_OBJECT_IMAGE1D_BUFFER) {
-     return CL_INVALID_VALUE;
   }
 
   switch(param_name)
@@ -178,13 +187,20 @@ cl_get_image_info(cl_mem mem,
     *(size_t *)param_value = image->w;
     break;
   case CL_IMAGE_HEIGHT:
-    *(size_t *)param_value = image->h;
+    *(size_t *)param_value = IS_1D(image) ? 0 : image->h;
     break;
   case CL_IMAGE_DEPTH:
-    *(size_t *)param_value = image->depth;
+    *(size_t *)param_value = IS_3D(image) ? image->depth : 0;
+    break;
+  case CL_IMAGE_ARRAY_SIZE:
+    *(size_t *)param_value = IS_ARRAY(image) ? image->depth : 0;
     break;
   case CL_IMAGE_BUFFER:
     *(cl_mem *)param_value = image->buffer_1d;
+    break;
+  case CL_IMAGE_NUM_MIP_LEVELS:
+  case CL_IMAGE_NUM_SAMPLES:
+    *(cl_mem *)param_value = 0;
     break;
   }
 
@@ -591,12 +607,8 @@ _cl_mem_new_image(cl_context ctx,
       pitch = min_pitch;
 
     h = 1;
-    if (image_type != CL_MEM_OBJECT_IMAGE1D_ARRAY)
-      depth = 1;
-    else if (data && slice_pitch == 0)
-      slice_pitch = pitch;
+    depth = 1;
     if (UNLIKELY(w > ctx->device->image2d_max_width)) DO_IMAGE_ERROR;
-    if (UNLIKELY(depth > ctx->device->image_max_array_size)) DO_IMAGE_ERROR;
     if (UNLIKELY(data && min_pitch > pitch)) DO_IMAGE_ERROR;
     if (UNLIKELY(data && (slice_pitch % pitch != 0))) DO_IMAGE_ERROR;
     if (UNLIKELY(!data && pitch != 0)) DO_IMAGE_ERROR;
