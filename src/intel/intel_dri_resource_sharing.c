@@ -119,12 +119,12 @@ intel_get_gl_obj_from_texture(void *driver,
 }
 
 static GLenum
-get_cl_gl_format(gl_format format)
+get_cl_gl_format(mesa_format format)
 {
    switch (format) {
-   case MESA_FORMAT_RGBA8888:
+   case MESA_FORMAT_R8G8B8A8_UNORM:
       return GL_RGBA;
-   case MESA_FORMAT_ARGB8888:
+   case MESA_FORMAT_A8R8G8B8_UNORM:
       return GL_BGRA;
    default:
       return GL_BGRA;

@@ -18,7 +18,7 @@ SET(MESA_SOURCE_INCLUDES ${MESA_SOURCE_PREFIX}/src/mesa
                          ${MESA_SOURCE_PREFIX}/include
                          ${MESA_SOURCE_PREFIX}/src/mapi
                          ${MESA_SOURCE_PREFIX}/src/mesa/drivers/dri/i965/
-                         ${MESA_SOURCE_PREFIX}/src/mesa/drivers/dri/intel/
+                         ${MESA_SOURCE_PREFIX}/src/mesa/drivers/dri/i915/
                          ${MESA_SOURCE_PREFIX}/src/mesa/drivers/dri/common/)
 SET(MESA_SOURCE_FOUND 1 CACHE STRING "Set to 1 if mesa source code is found, 0 otherwise")
 ELSE(MESA_SOURCE_PREFIX)
