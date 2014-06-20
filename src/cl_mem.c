@@ -71,6 +71,7 @@ cl_get_mem_object_info(cl_mem mem,
                 void *param_value,
                 size_t *param_value_size_ret)
 {
+  struct _cl_mem_buffer* buf = (struct _cl_mem_buffer*)mem;
   switch(param_name)
   {
     FIELD_SIZE(MEM_TYPE, cl_mem_object_type);
@@ -98,7 +99,7 @@ cl_get_mem_object_info(cl_mem mem,
     *((size_t *)param_value) = mem->size;
     break;
   case CL_MEM_HOST_PTR:
-    *((size_t *)param_value) = (size_t)mem->host_ptr;
+    *((size_t *)param_value) = (size_t)mem->host_ptr + buf->sub_offset;
     break;
   case CL_MEM_MAP_COUNT:
     *((cl_uint *)param_value) = mem->map_ref;

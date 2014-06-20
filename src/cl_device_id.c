@@ -374,6 +374,7 @@ cl_get_device_info(cl_device_id     device,
     DECL_FIELD(MEM_BASE_ADDR_ALIGN, mem_base_addr_align)
     DECL_FIELD(MIN_DATA_TYPE_ALIGN_SIZE, min_data_type_align_size)
     DECL_FIELD(SINGLE_FP_CONFIG, single_fp_config)
+    DECL_FIELD(DOUBLE_FP_CONFIG, double_fp_config)
     DECL_FIELD(GLOBAL_MEM_CACHE_TYPE, global_mem_cache_type)
     DECL_FIELD(GLOBAL_MEM_CACHELINE_SIZE, global_mem_cache_line_size)
     DECL_FIELD(GLOBAL_MEM_CACHE_SIZE, global_mem_cache_size)

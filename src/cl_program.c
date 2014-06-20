@@ -713,3 +713,44 @@ error:
 
   return CL_OUT_OF_HOST_MEMORY;
 }
+
+LOCAL void
+cl_program_get_kernel_names(cl_program p, size_t size, char *names, size_t *size_ret)
+{
+  int i = 0;
+  const char *ker_name = NULL;
+  size_t len = 0;
+  *size_ret = 0;
+
+  if(p->ker == NULL) {
+    return;
+  }
+
+  ker_name = cl_kernel_get_name(p->ker[i]);
+  len = strlen(ker_name);
+  if(names) {
+    strncpy(names, cl_kernel_get_name(p->ker[0]), size - 1);
+    if(size < len - 1) {
+      if(size_ret) *size_ret = size;
+      return;
+    }
+    size = size - len - 1;  //sub \0
+  }
+  if(size_ret) *size_ret = strlen(ker_name) + 1;  //add NULL
+
+  for (i = 1; i < p->ker_n; ++i) {
+    ker_name = cl_kernel_get_name(p->ker[i]);
+    len = strlen(ker_name);
+    if(names) {
+      strncat(names, ";", size);
+      if(size >= 1)
+        strncat(names, ker_name, size - 1);
+      if(size < len + 1) {
+        if(size_ret) *size_ret = size;
+        break;
+      }
+      size = size - len - 1;
+    }
+    if(size_ret) *size_ret += len + 1; //add ';'
+  }
+}

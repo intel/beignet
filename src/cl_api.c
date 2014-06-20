@@ -1061,12 +1061,17 @@ clGetProgramInfo(cl_program       program,
   } else if (param_name == CL_PROGRAM_DEVICES) {
     cl_device_id dev_id = program->ctx->device;
     FILL_GETINFO_RET (cl_device_id, 1, &dev_id, CL_SUCCESS);
+  } else if (param_name == CL_PROGRAM_NUM_KERNELS) {
+    cl_uint kernels_num = program->ker_n;
+    FILL_GETINFO_RET (cl_uint, 1, &kernels_num, CL_SUCCESS);
   } else if (param_name == CL_PROGRAM_SOURCE) {
 
     if (!program->source)
       FILL_GETINFO_RET (char, 1, &ret_str, CL_SUCCESS);
     FILL_GETINFO_RET (char, (strlen(program->source) + 1),
                    program->source, CL_SUCCESS);
+  } else if(param_name == CL_PROGRAM_KERNEL_NAMES) {
+    cl_program_get_kernel_names(program, param_value_size, (char *)param_value, param_value_size_ret);
   } else if (param_name == CL_PROGRAM_BINARY_SIZES) {
     if (program->binary == NULL){
       if( program->binary_type == CL_PROGRAM_BINARY_TYPE_EXECUTABLE) {

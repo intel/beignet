@@ -125,5 +125,11 @@ cl_program_link(cl_context            context,
                 const cl_program *    input_programs,
                 const char *          options,
                 cl_int*               errcode_ret);
+/* Get the kernel names in program */
+extern void
+cl_program_get_kernel_names(cl_program p,
+                            size_t size,
+                            char *names,
+                            size_t *size_ret);
 #endif /* __CL_PROGRAM_H__ */
 

@@ -583,7 +583,7 @@ void get_mem_info(void)
     expect_ref = 2048;
     maps.insert(make_pair(CL_MEM_SIZE,
                           (void *)(new Info_Result<size_t>(((size_t)expect_ref)))));
-    expect_ref = 0;
+    expect_ref = 1024;
     maps.insert(make_pair(CL_MEM_HOST_PTR,
                           (void *)(new Info_Result<size_t>(((size_t)expect_ref)))));
     expect_ref = 1;
