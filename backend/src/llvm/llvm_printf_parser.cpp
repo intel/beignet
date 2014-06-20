@@ -221,7 +221,7 @@ namespace gbe
         CONVERSION_SPEC_AND_RET('a', a)
         CONVERSION_SPEC_AND_RET('A', A)
         CONVERSION_SPEC_AND_RET('c', C)
-        CONVERSION_SPEC_AND_RET('s', A)
+        CONVERSION_SPEC_AND_RET('s', S)
         CONVERSION_SPEC_AND_RET('p', P)
 
         // %% has been handled
@@ -349,7 +349,7 @@ error:
 
 
     bool parseOnePrintfInstruction(CallInst *& call);
-    int generateOneParameterInst(PrintfSlot& slot, Value*& arg, Type*& dst_type);
+    bool generateOneParameterInst(PrintfSlot& slot, Value*& arg, Type*& dst_type, int& sizeof_size);
 
     virtual const char *getPassName() const {
       return "Printf Parser";
@@ -472,10 +472,17 @@ error:
 
       Value *out_arg = call->getOperand(i);
       Type *dst_type = NULL;
-      int sizeof_size = generateOneParameterInst(s, out_arg, dst_type);
-      if (!sizeof_size) {
+      int sizeof_size = 0;
+      if (!generateOneParameterInst(s, out_arg, dst_type, sizeof_size)) {
         printf("Printf: %d, parameter %d may have no result because some error\n",
                printf_num, i - 1);
+        i++;
+        continue;
+      }
+
+      s.state->out_buf_sizeof_offset = out_buf_sizeof_offset;
+      if (!sizeof_size) {
+        i++;
         continue;
       }
 
@@ -495,7 +502,7 @@ error:
       op0 = builder->CreateAdd(op0, val);
       data_addr = builder->CreateIntToPtr(op0, dst_type);
       builder->CreateStore(out_arg, data_addr);
-      s.state->out_buf_sizeof_offset = out_buf_sizeof_offset;
+
       out_buf_sizeof_offset += ((sizeof_size + 3) / 4) * 4;
       i++;
     }
@@ -605,7 +612,7 @@ error:
     return changed;
   }
 
-  int PrintfParser::generateOneParameterInst(PrintfSlot& slot, Value*& arg, Type*& dst_type)
+  bool PrintfParser::generateOneParameterInst(PrintfSlot& slot, Value*& arg, Type*& dst_type, int& sizeof_size)
   {
     assert(slot.type == PRINTF_SLOT_TYPE_STATE);
     assert(builder);
@@ -619,22 +626,25 @@ error:
           case PRINTF_CONVERSION_D:
             /* Int to Int, just store. */
             dst_type = Type::getInt32PtrTy(module->getContext(), 1);
-            return sizeof(int);
+            sizeof_size = sizeof(int);
+            return true;
 
           case PRINTF_CONVERSION_C:
             /* Int to Char, add a conversion. */
             arg = builder->CreateIntCast(arg, Type::getInt8Ty(module->getContext()), false);
             dst_type = Type::getInt8PtrTy(module->getContext(), 1);
-            return sizeof(char);
+            sizeof_size = sizeof(char);
+            return true;
 
           case PRINTF_CONVERSION_F:
           case PRINTF_CONVERSION_f:
             arg = builder->CreateSIToFP(arg, Type::getFloatTy(module->getContext()));
             dst_type = Type::getFloatPtrTy(module->getContext(), 1);
-            return sizeof(float);
+            sizeof_size = sizeof(float);
+            return true;
 
           default:
-            return 0;
+            return false;
         }
 
         break;
@@ -651,26 +661,48 @@ error:
             /* Float to Int, add a conversion. */
             arg = builder->CreateFPToSI(arg, Type::getInt32Ty(module->getContext()));
             dst_type = Type::getInt32PtrTy(module->getContext(), 1);
-            return sizeof(int);
+            sizeof_size = sizeof(int);
+            return true;
 
           case PRINTF_CONVERSION_F:
           case PRINTF_CONVERSION_f:
             arg = builder->CreateFPCast(arg, Type::getFloatTy(module->getContext()));
             dst_type = Type::getFloatPtrTy(module->getContext(), 1);
-            return sizeof(float);
+            sizeof_size = sizeof(float);
+            return true;
 
           default:
-            return 0;
+            return false;
         }
 
         break;
       }
 
+      /* %p and %s */
+      case Type::PointerTyID:
+        switch (slot.state->conversion_specifier) {
+          case PRINTF_CONVERSION_S: {
+            llvm::Constant* arg0 = dyn_cast<llvm::ConstantExpr>(arg);
+            llvm::Constant* arg0_ptr = dyn_cast<llvm::Constant>(arg0->getOperand(0));
+            if (!arg0_ptr) {
+              return false;
+            }
+
+            ConstantDataSequential* fmt_arg = dyn_cast<ConstantDataSequential>(arg0_ptr->getOperand(0));
+            if (!fmt_arg || !fmt_arg->isCString()) {
+              return false;
+            }
+            sizeof_size = 0;
+            slot.state->str = fmt_arg->getAsCString();
+            return true;
+          }
+        }
+
       default:
-        return 0;
+        return false;
     }
 
-    return 0;
+    return false;
   }
 
   map<CallInst*, PrintfSet::PrintfFmt*> PrintfParser::printfs;

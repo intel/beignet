@@ -98,6 +98,12 @@ namespace gbe
                         PRINT_SOMETHING(float, %f);
                       break;
 
+                    case PRINTF_CONVERSION_S:
+                      pf_str = pf_str + "%s";
+                      printf("%s%s", pf_str.c_str(), slot.state->str.c_str());
+                      pf_str = "";
+                      break;
+
                     default:
                       assert(0);
                       return;
@@ -111,7 +117,7 @@ namespace gbe
             }
           }
         }
-	stmt++;
+        stmt++;
       }
     }
   } /* namespace ir */

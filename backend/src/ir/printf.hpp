@@ -73,6 +73,7 @@ namespace gbe
       int length_modifier;
       char conversion_specifier;
       int out_buf_sizeof_offset;  // Should *global_total_size to get the full offset.
+      std::string str;            //if %s, the string store here.
     };
 
     enum {
@@ -89,14 +90,12 @@ namespace gbe
         void *ptr;
       };
 
-      PrintfSlot(void)
-      {
+      PrintfSlot(void) {
         type = PRINTF_SLOT_TYPE_NONE;
         ptr = NULL;
       }
 
-      PrintfSlot(const char * s)
-      {
+      PrintfSlot(const char * s) {
         type = PRINTF_SLOT_TYPE_STRING;
         int len = strlen(s);
         str = (char*)malloc((len + 1) * sizeof(char));
@@ -104,15 +103,13 @@ namespace gbe
         str[len] = 0;
       }
 
-      PrintfSlot(PrintfState * st)
-      {
+      PrintfSlot(PrintfState * st) {
         type = PRINTF_SLOT_TYPE_STATE;
         state = (PrintfState *)malloc(sizeof(PrintfState));
         memcpy(state, st, sizeof(PrintfState));
       }
 
-      PrintfSlot(const PrintfSlot & other)
-      {
+      PrintfSlot(const PrintfSlot & other) {
         if (other.type == PRINTF_SLOT_TYPE_STRING) {
           int len = strlen(other.str);
           str = (char*)malloc((len + 1) * sizeof(char));
@@ -129,17 +126,14 @@ namespace gbe
         }
       }
 
-      PrintfSlot(PrintfSlot && other)
-      {
+      PrintfSlot(PrintfSlot && other) {
         void *p = other.ptr;
         type = other.type;
         other.ptr = ptr;
         ptr = p;
-
       }
 
-      ~PrintfSlot(void)
-      {
+      ~PrintfSlot(void) {
         if (ptr)
           free(ptr);
       }
@@ -150,8 +144,7 @@ namespace gbe
     class PrintfSet //: public Serializable
     {
     public:
-      PrintfSet(const PrintfSet& other)
-      {
+      PrintfSet(const PrintfSet& other) {
         for (auto &f : other.fmts) {
           fmts.push_back(f);
         }
@@ -166,13 +159,11 @@ namespace gbe
       PrintfSet(void) = default;
 
       struct LockOutput {
-        LockOutput(void)
-        {
+        LockOutput(void) {
           pthread_mutex_lock(&lock);
         }
 
-        ~LockOutput(void)
-        {
+        ~LockOutput(void) {
           pthread_mutex_unlock(&lock);
         }
       };
@@ -180,18 +171,15 @@ namespace gbe
       typedef vector<PrintfSlot> PrintfFmt;
       uint32_t append(PrintfFmt* fmt, Unit &unit);
 
-      uint32_t getPrintfNum(void) const
-      {
+      uint32_t getPrintfNum(void) const {
         return fmts.size();
       }
 
-      uint32_t getPrintfSizeOfSize(void) const
-      {
+      uint32_t getPrintfSizeOfSize(void) const {
         return sizeOfSize;
       }
 
-      uint32_t getPrintfBufferElementSize(uint32_t i)
-      {
+      uint32_t getPrintfBufferElementSize(uint32_t i) {
         PrintfSlot* slot = slots[i];
         switch (slot->state->conversion_specifier) {
           case PRINTF_CONVERSION_I:
@@ -201,7 +189,9 @@ namespace gbe
             return (uint32_t)sizeof(int);
           case PRINTF_CONVERSION_F:
           case PRINTF_CONVERSION_f:
-		  return (uint32_t)sizeof(float);
+            return (uint32_t)sizeof(float);
+          case PRINTF_CONVERSION_S:
+            return (uint32_t)0;
           default:
             break;
         }
