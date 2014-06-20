@@ -224,7 +224,7 @@ namespace gbe
         CONVERSION_SPEC_AND_RET('s', A)
         CONVERSION_SPEC_AND_RET('p', P)
 
-      // %% has been handled
+        // %% has been handled
 
       default:
         return -1;
@@ -328,8 +328,7 @@ error:
     static map<CallInst*, PrintfSet::PrintfFmt*> printfs;
     int printf_num;
 
-    PrintfParser(void) : FunctionPass(ID)
-    {
+    PrintfParser(void) : FunctionPass(ID) {
       module = NULL;
       builder = NULL;
       intTy = NULL;
@@ -340,8 +339,7 @@ error:
       printf_num = 0;
     }
 
-    ~PrintfParser(void)
-    {
+    ~PrintfParser(void) {
       for (auto &s : printfs) {
         delete s.second;
         s.second = NULL;
@@ -351,10 +349,9 @@ error:
 
 
     bool parseOnePrintfInstruction(CallInst *& call);
-    int generateOneParameterInst(PrintfSlot& slot, Value& arg);
+    int generateOneParameterInst(PrintfSlot& slot, Value*& arg, Type*& dst_type);
 
-    virtual const char *getPassName() const
-    {
+    virtual const char *getPassName() const {
       return "Printf Parser";
     }
 
@@ -473,12 +470,16 @@ error:
 
       assert(i < static_cast<int>(call->getNumOperands()) - 1);
 
-      int sizeof_size = generateOneParameterInst(s, *call->getOperand(i));
+      Value *out_arg = call->getOperand(i);
+      Type *dst_type = NULL;
+      int sizeof_size = generateOneParameterInst(s, out_arg, dst_type);
       if (!sizeof_size) {
         printf("Printf: %d, parameter %d may have no result because some error\n",
                printf_num, i - 1);
         continue;
       }
+
+      assert(dst_type);
 
       /////////////////////////////////////////////////////
       /* Calculate the data address.
@@ -492,10 +493,10 @@ error:
       //data_offset + pbuf_ptr
       op0 = builder->CreateAdd(op0, pbuf_ptr);
       op0 = builder->CreateAdd(op0, val);
-      data_addr = builder->CreateIntToPtr(op0, Type::getInt32PtrTy(module->getContext(), 1));
-      builder->CreateStore(call->getOperand(i), data_addr);
+      data_addr = builder->CreateIntToPtr(op0, dst_type);
+      builder->CreateStore(out_arg, data_addr);
       s.state->out_buf_sizeof_offset = out_buf_sizeof_offset;
-      out_buf_sizeof_offset += sizeof_size;
+      out_buf_sizeof_offset += ((sizeof_size + 3) / 4) * 4;
       i++;
     }
 
@@ -604,27 +605,66 @@ error:
     return changed;
   }
 
-  int PrintfParser::generateOneParameterInst(PrintfSlot& slot, Value& arg)
+  int PrintfParser::generateOneParameterInst(PrintfSlot& slot, Value*& arg, Type*& dst_type)
   {
     assert(slot.type == PRINTF_SLOT_TYPE_STATE);
     assert(builder);
 
     /* Check whether the arg match the format specifer. If needed, some
        conversion need to be applied. */
-    switch (arg.getType()->getTypeID()) {
+    switch (arg->getType()->getTypeID()) {
       case Type::IntegerTyID: {
         switch (slot.state->conversion_specifier) {
           case PRINTF_CONVERSION_I:
           case PRINTF_CONVERSION_D:
             /* Int to Int, just store. */
+            dst_type = Type::getInt32PtrTy(module->getContext(), 1);
             return sizeof(int);
-            break;
+
+          case PRINTF_CONVERSION_C:
+            /* Int to Char, add a conversion. */
+            arg = builder->CreateIntCast(arg, Type::getInt8Ty(module->getContext()), false);
+            dst_type = Type::getInt8PtrTy(module->getContext(), 1);
+            return sizeof(char);
+
+          case PRINTF_CONVERSION_F:
+          case PRINTF_CONVERSION_f:
+            arg = builder->CreateSIToFP(arg, Type::getFloatTy(module->getContext()));
+            dst_type = Type::getFloatPtrTy(module->getContext(), 1);
+            return sizeof(float);
 
           default:
             return 0;
         }
+
+        break;
       }
-      break;
+
+      case Type::DoubleTyID:
+      case Type::FloatTyID: {
+        /* Because the printf is a variable parameter function, it does not have the
+           function prototype, so the compiler will always promote the arg to the
+           longest precise type for float. So here, we can always find it is double. */
+        switch (slot.state->conversion_specifier) {
+          case PRINTF_CONVERSION_I:
+          case PRINTF_CONVERSION_D:
+            /* Float to Int, add a conversion. */
+            arg = builder->CreateFPToSI(arg, Type::getInt32Ty(module->getContext()));
+            dst_type = Type::getInt32PtrTy(module->getContext(), 1);
+            return sizeof(int);
+
+          case PRINTF_CONVERSION_F:
+          case PRINTF_CONVERSION_f:
+            arg = builder->CreateFPCast(arg, Type::getFloatTy(module->getContext()));
+            dst_type = Type::getFloatPtrTy(module->getContext(), 1);
+            return sizeof(float);
+
+          default:
+            return 0;
+        }
+
+        break;
+      }
 
       default:
         return 0;

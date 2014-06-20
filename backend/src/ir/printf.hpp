@@ -196,7 +196,12 @@ namespace gbe
         switch (slot->state->conversion_specifier) {
           case PRINTF_CONVERSION_I:
           case PRINTF_CONVERSION_D:
+          /* Char will be aligned to sizeof(int) here. */
+          case PRINTF_CONVERSION_C:
             return (uint32_t)sizeof(int);
+          case PRINTF_CONVERSION_F:
+          case PRINTF_CONVERSION_f:
+		  return (uint32_t)sizeof(float);
           default:
             break;
         }
