@@ -480,6 +480,23 @@ error:
   goto exit;
 }
 
+void cl_mem_replace_buffer(cl_mem buffer, cl_buffer new_bo)
+{
+  cl_buffer_unreference(buffer->bo);
+  buffer->bo = new_bo;
+  cl_buffer_reference(new_bo);
+  if (buffer->type != CL_MEM_SUBBUFFER_TYPE)
+    return;
+
+  struct _cl_mem_buffer *it = ((struct _cl_mem_buffer*)buffer)->sub_next;
+  for( ; it != (struct _cl_mem_buffer*)buffer; it = it->sub_next)
+  {
+    cl_buffer_unreference(it->base.bo);
+    it->base.bo = new_bo;
+    cl_buffer_reference(new_bo);
+  }
+}
+
 void
 cl_mem_copy_image_region(const size_t *origin, const size_t *region,
                          void *dst, size_t dst_row_pitch, size_t dst_slice_pitch,
@@ -598,10 +615,12 @@ _cl_mem_new_image(cl_context ctx,
 
   if (UNLIKELY(w == 0)) DO_IMAGE_ERROR;
   if (UNLIKELY(h == 0 && (image_type != CL_MEM_OBJECT_IMAGE1D &&
-      image_type != CL_MEM_OBJECT_IMAGE1D_ARRAY)))
+      image_type != CL_MEM_OBJECT_IMAGE1D_ARRAY &&
+      image_type != CL_MEM_OBJECT_IMAGE1D_BUFFER)))
     DO_IMAGE_ERROR;
 
-  if (image_type == CL_MEM_OBJECT_IMAGE1D) {
+  if (image_type == CL_MEM_OBJECT_IMAGE1D ||
+      image_type == CL_MEM_OBJECT_IMAGE1D_BUFFER) {
     size_t min_pitch = bpp * w;
     if (data && pitch == 0)
       pitch = min_pitch;
@@ -809,27 +828,47 @@ _cl_mem_new_image_from_buffer(cl_context ctx,
     merged_flags &= ~(CL_MEM_HOST_WRITE_ONLY|CL_MEM_HOST_READ_ONLY|CL_MEM_HOST_NO_ACCESS);
     merged_flags |= flags & (CL_MEM_HOST_WRITE_ONLY|CL_MEM_HOST_READ_ONLY|CL_MEM_HOST_NO_ACCESS);
   }
-
-  /* Because the buffer is NO_TILING, the image should be no tiling. */
-  image = cl_mem_allocate(CL_MEM_IMAGE_TYPE, ctx, flags, merged_flags, CL_FALSE, &err);
-  if (image == NULL || err != CL_SUCCESS)
-    goto error;
-
-  cl_buffer_reference(buffer->bo);
-  image->bo = buffer->bo;
-  image->size = buffer->size;
-  /* If it is a sub buffer, we need to start from the sub offset. */
+  struct _cl_mem_buffer *mem_buffer = (struct _cl_mem_buffer*)buffer;
   if (buffer->type == CL_MEM_SUBBUFFER_TYPE) {
     offset = ((struct _cl_mem_buffer *)buffer)->sub_offset;
+    mem_buffer = mem_buffer->parent;
   }
-  if (image->flags & CL_MEM_USE_HOST_PTR) {
-    /* Now point to the right offset if buffer is a SUB_BUFFER. */
-    image->host_ptr = buffer->host_ptr + offset;
-  }
+  /* Get the size of each pixel */
+  if (UNLIKELY((err = cl_image_byte_per_pixel(image_format, &bpp)) != CL_SUCCESS))
+    goto error;
 
-  cl_mem_image_init(cl_mem_image(image), image_desc->image_width, 1, image_desc->image_type,
-                    1, *image_format, intel_fmt, bpp, image_desc->image_width*bpp, 0, CL_NO_TILE,
-                    0, 0, offset);
+  // Per bspec, a image should has a at least 2 line vertical alignment,
+  // thus we can't simply attach a buffer to a 1d image surface which has the same size.
+  // We have to create a new image, and copy the buffer data to this new image.
+  // And replace all the buffer object's reference to this image.
+  image = _cl_mem_new_image(ctx, flags, image_format, image_desc->image_type,
+                    mem_buffer->base.size / bpp, 0, 0, 0, 0, NULL, errcode_ret);
+  if (image == NULL)
+    return NULL;
+  void *src = cl_mem_map(buffer);
+  void *dst = cl_mem_map(image);
+  //
+  // FIXME, we could use copy buffer to image to do this on GPU latter.
+  // currently the copy buffer to image function doesn't support 1D image.
+  // 
+  // There is a potential risk that this buffer was mapped and the caller
+  // still hold the pointer and want to access it again. This scenario is
+  // not explicitly forbidden in the spec, although it should not be permitted.
+  memcpy(dst, src, mem_buffer->base.size);
+  cl_mem_unmap(buffer);
+  cl_mem_unmap(image);
+
+  if (err != 0)
+    goto error;
+ 
+  // Now replace buffer's bo to this new bo, need to take care of sub buffer
+  // case. 
+  cl_mem_replace_buffer(buffer, image->bo);
+  /* Now point to the right offset if buffer is a SUB_BUFFER. */
+  if (buffer->flags & CL_MEM_USE_HOST_PTR)
+    image->host_ptr = buffer->host_ptr + offset;
+  cl_mem_image(image)->offset = offset;
+  cl_mem_image(image)->w = image_desc->image_width;
   cl_mem_add_ref(buffer);
   cl_mem_image(image)->buffer_1d = buffer;
   return image;
