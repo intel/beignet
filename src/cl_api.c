@@ -1603,6 +1603,11 @@ clEnqueueReadBufferRect(cl_command_queue command_queue,
     goto error;
   }
 
+  if (buffer->flags & (CL_MEM_HOST_WRITE_ONLY | CL_MEM_HOST_NO_ACCESS)) {
+     err = CL_INVALID_OPERATION;
+     goto error;
+  }
+
   if (!ptr || !region || region[0] == 0 || region[1] == 0 || region[2] == 0) {
     err = CL_INVALID_VALUE;
     goto error;
@@ -1735,6 +1740,11 @@ clEnqueueWriteBufferRect(cl_command_queue     command_queue,
 
   if (command_queue->ctx != buffer->ctx) {
     err = CL_INVALID_CONTEXT;
+    goto error;
+  }
+
+  if (buffer->flags & (CL_MEM_HOST_READ_ONLY | CL_MEM_HOST_NO_ACCESS)) {
+    err = CL_INVALID_OPERATION;
     goto error;
   }
 

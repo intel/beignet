@@ -311,9 +311,13 @@ cl_mem_new_buffer(cl_context ctx,
 		      || ((flags & CL_MEM_READ_ONLY) && (flags & (CL_MEM_WRITE_ONLY)))
               || ((flags & CL_MEM_ALLOC_HOST_PTR) && (flags & CL_MEM_USE_HOST_PTR))
               || ((flags & CL_MEM_COPY_HOST_PTR) && (flags & CL_MEM_USE_HOST_PTR))
+              || ((flags & CL_MEM_HOST_READ_ONLY) && (flags & CL_MEM_HOST_NO_ACCESS))
+              || ((flags & CL_MEM_HOST_READ_ONLY) && (flags & CL_MEM_HOST_WRITE_ONLY))
+              || ((flags & CL_MEM_HOST_WRITE_ONLY) && (flags & CL_MEM_HOST_NO_ACCESS))
               || ((flags & (~(CL_MEM_READ_WRITE | CL_MEM_WRITE_ONLY | CL_MEM_READ_ONLY
                         | CL_MEM_ALLOC_HOST_PTR | CL_MEM_COPY_HOST_PTR
-                        | CL_MEM_USE_HOST_PTR))) != 0))) {
+                        | CL_MEM_USE_HOST_PTR | CL_MEM_HOST_WRITE_ONLY
+                        | CL_MEM_HOST_READ_ONLY | CL_MEM_HOST_NO_ACCESS))) != 0))) {
     err = CL_INVALID_VALUE;
     goto error;
   }
@@ -402,9 +406,20 @@ cl_mem_new_sub_buffer(cl_mem buffer,
 
   if (flags && (((buffer->flags & CL_MEM_WRITE_ONLY) && (flags & (CL_MEM_READ_WRITE|CL_MEM_READ_ONLY)))
           || ((buffer->flags & CL_MEM_READ_ONLY) && (flags & (CL_MEM_READ_WRITE|CL_MEM_WRITE_ONLY)))
-          || (flags & (CL_MEM_USE_HOST_PTR | CL_MEM_ALLOC_HOST_PTR | CL_MEM_COPY_HOST_PTR)))) {
+          || (flags & (CL_MEM_USE_HOST_PTR | CL_MEM_ALLOC_HOST_PTR | CL_MEM_COPY_HOST_PTR))
+          || ((flags & CL_MEM_HOST_READ_ONLY) && (flags & CL_MEM_HOST_NO_ACCESS))
+          || ((flags & CL_MEM_HOST_READ_ONLY) && (flags & CL_MEM_HOST_WRITE_ONLY))
+          || ((flags & CL_MEM_HOST_WRITE_ONLY) && (flags & CL_MEM_HOST_NO_ACCESS)))) {
     err = CL_INVALID_VALUE;
     goto error;
+  }
+
+  if((flags & (CL_MEM_WRITE_ONLY | CL_MEM_READ_ONLY | CL_MEM_READ_WRITE)) == 0) {
+    flags |= buffer->flags & (CL_MEM_WRITE_ONLY | CL_MEM_READ_ONLY | CL_MEM_READ_WRITE);
+  }
+  flags |= buffer->flags & (CL_MEM_USE_HOST_PTR | CL_MEM_ALLOC_HOST_PTR | CL_MEM_COPY_HOST_PTR);
+  if((flags & (CL_MEM_HOST_WRITE_ONLY | CL_MEM_HOST_READ_ONLY | CL_MEM_HOST_NO_ACCESS)) == 0) {
+    flags |= buffer->flags & (CL_MEM_HOST_WRITE_ONLY | CL_MEM_HOST_READ_ONLY | CL_MEM_HOST_NO_ACCESS);
   }
 
   if (create_type != CL_BUFFER_CREATE_TYPE_REGION) {
@@ -429,7 +444,7 @@ cl_mem_new_sub_buffer(cl_mem buffer,
     goto error;
   }
 
-  if (info->origin & (buffer->ctx->device->mem_base_addr_align - 1)) {
+  if (info->origin & (buffer->ctx->device->mem_base_addr_align / 8 - 1)) {
     err = CL_MISALIGNED_SUB_BUFFER_OFFSET;
     goto error;
   }

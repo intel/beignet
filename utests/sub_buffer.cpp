@@ -39,7 +39,7 @@ void sub_buffer_check(void)
                 continue;
             }
             /* invalid align, should be failed. */
-            if(off & (address_align-1)) {
+            if(off & ((address_align/8)-1)) {
                 OCL_ASSERT(error != CL_SUCCESS);
                 continue;
             }
@@ -85,7 +85,7 @@ void sub_buffer_check(void)
                 continue;
             }
             /* invalid align, should be failed. */
-            if(off & (address_align-1)) {
+            if(off & (address_align/8-1)) {
                 OCL_ASSERT(error != CL_SUCCESS);
                 continue;
             }
