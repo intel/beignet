@@ -122,6 +122,7 @@ set (utests_sources
   compiler_volatile.cpp
   compiler_copy_image1.cpp
   compiler_get_image_info.cpp
+  compiler_get_image_info_array.cpp
   compiler_vect_compare.cpp
   compiler_vector_load_store.cpp
   compiler_vector_inc.cpp
@@ -182,6 +183,7 @@ set (utests_sources
   enqueue_fill_buf.cpp
   enqueue_built_in_kernels.cpp
   image_1D_buffer.cpp
+  compare_image_2d_and_1d_array.cpp
   utest_assert.cpp
   utest.cpp
   utest_file_map.cpp
