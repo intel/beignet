@@ -61,13 +61,18 @@ cl_int cl_enqueue_read_buffer_rect(enqueue_data* data)
   const size_t* host_origin = data->host_origin;
   const size_t* region = data->region;
 
-  if (!(src_ptr = cl_mem_map_auto(data->mem_obj))) {
+  cl_mem mem = data->mem_obj;
+  assert(mem->type == CL_MEM_BUFFER_TYPE ||
+         mem->type == CL_MEM_SUBBUFFER_TYPE);
+  struct _cl_mem_buffer* buffer = (struct _cl_mem_buffer*)mem;
+
+  if (!(src_ptr = cl_mem_map_auto(mem))) {
     err = CL_MAP_FAILURE;
     goto error;
   }
 
    size_t offset = origin[0] + data->row_pitch*origin[1] + data->slice_pitch*origin[2];
-   src_ptr = (char*)src_ptr + offset;
+   src_ptr = (char*)src_ptr + offset +  buffer->sub_offset;
 
    offset = host_origin[0] + data->host_row_pitch*host_origin[1] + data->host_slice_pitch*host_origin[2];
    dst_ptr = (char *)data->ptr + offset;
@@ -92,7 +97,7 @@ cl_int cl_enqueue_read_buffer_rect(enqueue_data* data)
      }
    }
 
-  err = cl_mem_unmap_auto(data->mem_obj);
+  err = cl_mem_unmap_auto(mem);
 
 error:
   return err;
@@ -130,13 +135,18 @@ cl_int cl_enqueue_write_buffer_rect(enqueue_data *data)
   const size_t* host_origin = data->host_origin;
   const size_t* region = data->region;
 
-  if (!(dst_ptr = cl_mem_map_auto(data->mem_obj))) {
+  cl_mem mem = data->mem_obj;
+  assert(mem->type == CL_MEM_BUFFER_TYPE ||
+         mem->type == CL_MEM_SUBBUFFER_TYPE);
+  struct _cl_mem_buffer* buffer = (struct _cl_mem_buffer*)mem;
+
+  if (!(dst_ptr = cl_mem_map_auto(mem))) {
     err = CL_MAP_FAILURE;
     goto error;
   }
 
   size_t offset = origin[0] + data->row_pitch*origin[1] + data->slice_pitch*origin[2];
-  dst_ptr = (char *)dst_ptr + offset;
+  dst_ptr = (char *)dst_ptr + offset + buffer->sub_offset;
 
   offset = host_origin[0] + data->host_row_pitch*host_origin[1] + data->host_slice_pitch*host_origin[2];
   src_ptr = (char*)data->const_ptr + offset;
@@ -161,7 +171,7 @@ cl_int cl_enqueue_write_buffer_rect(enqueue_data *data)
     }
   }
 
-  err = cl_mem_unmap_auto(data->mem_obj);
+  err = cl_mem_unmap_auto(mem);
 
 error:
   return err;
@@ -261,7 +271,7 @@ cl_int cl_enqueue_map_buffer(enqueue_data *data)
   if(mem->flags & CL_MEM_USE_HOST_PTR) {
     assert(mem->host_ptr);
     ptr = (char*)ptr + data->offset + buffer->sub_offset;
-    memcpy(mem->host_ptr + data->offset, ptr, data->size);
+    memcpy(mem->host_ptr + data->offset + buffer->sub_offset, ptr, data->size);
   }
 
 error:
