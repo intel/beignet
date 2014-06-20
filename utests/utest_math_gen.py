@@ -565,7 +565,7 @@ static float tanpi(float x){
   return sinpi(x)/cospi(x);
 }
 '''
-  tanpiUtests = func('tanpi','tanpi',[tanpi_input_type],tanpi_output_type,[tanpi_input_values],'4 * FLT_ULP',tanpi_cpu_func)
+  tanpiUtests = func('tanpi','tanpi',[tanpi_input_type],tanpi_output_type,[tanpi_input_values],'400 * FLT_ULP',tanpi_cpu_func)
   
   ##### gentype trunc(gentype)
   trunc_input_values = base_input_values
