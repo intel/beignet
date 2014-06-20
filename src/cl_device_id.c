@@ -38,7 +38,7 @@
 
 static struct _cl_device_id intel_ivb_gt2_device = {
   INIT_ICD(dispatch)
-  .max_compute_unit = 128,
+  .max_compute_unit = 16,
   .max_thread_per_unit = 8,
   .max_work_item_sizes = {512, 512, 512},
   .max_work_group_size = 1024,
@@ -49,7 +49,7 @@ static struct _cl_device_id intel_ivb_gt2_device = {
 
 static struct _cl_device_id intel_ivb_gt1_device = {
   INIT_ICD(dispatch)
-  .max_compute_unit = 64,
+  .max_compute_unit = 8,
   .max_thread_per_unit = 8,
   .max_work_item_sizes = {512, 512, 512},
   .max_work_group_size = 512,
@@ -60,7 +60,7 @@ static struct _cl_device_id intel_ivb_gt1_device = {
 
 static struct _cl_device_id intel_baytrail_t_device = {
   INIT_ICD(dispatch)
-  .max_compute_unit = 32,
+  .max_compute_unit = 4,
   .max_thread_per_unit = 8,
   .max_work_item_sizes = {512, 512, 512},
   .max_work_group_size = 256,
@@ -72,7 +72,7 @@ static struct _cl_device_id intel_baytrail_t_device = {
 /* XXX we clone IVB for HSW now */
 static struct _cl_device_id intel_hsw_gt1_device = {
   INIT_ICD(dispatch)
-  .max_compute_unit = 70,
+  .max_compute_unit = 10,
   .max_thread_per_unit = 7,
   .max_work_item_sizes = {512, 512, 512},
   .max_work_group_size = 512,
@@ -83,7 +83,7 @@ static struct _cl_device_id intel_hsw_gt1_device = {
 
 static struct _cl_device_id intel_hsw_gt2_device = {
   INIT_ICD(dispatch)
-  .max_compute_unit = 140,
+  .max_compute_unit = 20,
   .max_thread_per_unit = 7,
   .max_work_item_sizes = {512, 512, 512},
   .max_work_group_size = 1024,
@@ -94,7 +94,7 @@ static struct _cl_device_id intel_hsw_gt2_device = {
 
 static struct _cl_device_id intel_hsw_gt3_device = {
   INIT_ICD(dispatch)
-  .max_compute_unit = 280,
+  .max_compute_unit = 40,
   .max_thread_per_unit = 7,
   .max_work_item_sizes = {512, 512, 512},
   .max_work_group_size = 1024,
