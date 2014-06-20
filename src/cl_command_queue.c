@@ -432,11 +432,17 @@ cl_command_queue_flush(cl_command_queue queue)
 
   if (printf_info && interp_get_printf_num(printf_info)) {
     void *index_addr = cl_gpgpu_map_printf_buffer(gpgpu, 0);
-    void *buf_addr = cl_gpgpu_map_printf_buffer(gpgpu, 1);
+    void *buf_addr = NULL;
+    if (interp_get_printf_sizeof_size(printf_info))
+      buf_addr = cl_gpgpu_map_printf_buffer(gpgpu, 1);
+
     interp_output_printf(printf_info, index_addr, buf_addr, global_wk_sz[0],
                       global_wk_sz[1], global_wk_sz[2]);
+
     cl_gpgpu_unmap_printf_buffer(gpgpu, 0);
-    cl_gpgpu_unmap_printf_buffer(gpgpu, 1);
+    if (interp_get_printf_sizeof_size(printf_info))
+      cl_gpgpu_unmap_printf_buffer(gpgpu, 1);
+
     interp_release_printf_info(printf_info);
     global_wk_sz[0] = global_wk_sz[1] = global_wk_sz[2] = 0;
     cl_gpgpu_set_printf_info(gpgpu, NULL, global_wk_sz);

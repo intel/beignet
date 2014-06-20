@@ -259,12 +259,14 @@ cl_bind_printf(cl_gpgpu gpgpu, cl_kernel ker, void* printf_info, int printf_num,
   int32_t value = GBE_CURBE_PRINTF_INDEX_POINTER;
   int32_t offset = interp_kernel_get_curbe_offset(ker->opaque, value, 0);
   size_t buf_size = global_sz * sizeof(int) * printf_num;
-  cl_gpgpu_set_printf_buffer(gpgpu, 0, buf_size, offset);
+  if (offset > 0)
+    cl_gpgpu_set_printf_buffer(gpgpu, 0, buf_size, offset);
 
   value = GBE_CURBE_PRINTF_BUF_POINTER;
   offset = interp_kernel_get_curbe_offset(ker->opaque, value, 0);
   buf_size = interp_get_printf_sizeof_size(printf_info) * global_sz;
-  cl_gpgpu_set_printf_buffer(gpgpu, 1, buf_size, offset);
+  if (offset > 0)
+    cl_gpgpu_set_printf_buffer(gpgpu, 1, buf_size, offset);
 }
 
 LOCAL cl_int
