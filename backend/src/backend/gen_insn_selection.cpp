@@ -402,7 +402,7 @@ namespace gbe
     /*! Build a DAG for the basic block (return number of instructions) */
     uint32_t buildBasicBlockDAG(const ir::BasicBlock &bb);
     /*! Perform the selection on the basic block */
-    void matchBasicBlock(uint32_t insnNum);
+    void matchBasicBlock(const ir::BasicBlock &bb, uint32_t insnNum);
     /*! A root instruction needs to be generated */
     bool isRoot(const ir::Instruction &insn) const;
 
@@ -1530,10 +1530,16 @@ namespace gbe
     return insnNum;
   }
 
-  void Selection::Opaque::matchBasicBlock(uint32_t insnNum)
+  void Selection::Opaque::matchBasicBlock(const ir::BasicBlock &bb, uint32_t insnNum)
   {
     // Bottom up code generation
     bool needEndif = this->block->hasBranch == false && !this->block->hasBarrier;
+
+    if(needEndif) {
+      const ir::BasicBlock *next = bb.getNextBlock();
+      this->ENDIF(GenRegister::immd(0), next->getLabelIndex());
+    }
+
     for (int32_t insnID = insnNum-1; insnID >= 0; --insnID) {
       // Process all possible patterns for this instruction
       SelectionDAG &dag = *insnDAG[insnID];
@@ -1570,13 +1576,6 @@ namespace gbe
           this->block->isLargeBlock = true;
         }
 
-        if (needEndif) {
-          const ir::BasicBlock *curr = insn.getParent();
-          const ir::BasicBlock *next = curr->getNextBlock();
-          this->ENDIF(GenRegister::immd(0), next->getLabelIndex());
-          needEndif = false;
-        }
-
         // Output the code in the current basic block
         this->endBackwardGeneration();
       }
@@ -1593,7 +1592,7 @@ namespace gbe
       this->dagPool.rewind();
       this->appendBlock(bb);
       const uint32_t insnNum = this->buildBasicBlockDAG(bb);
-      this->matchBasicBlock(insnNum);
+      this->matchBasicBlock(bb, insnNum);
     });
    }
 
