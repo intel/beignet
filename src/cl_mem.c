@@ -640,7 +640,7 @@ _cl_mem_new_image(cl_context ctx,
     size_t min_pitch = bpp * w;
     if (data && pitch == 0)
       pitch = min_pitch;
-    size_t min_slice_pitch = min_pitch * h;
+    size_t min_slice_pitch = pitch * h;
     if (data && slice_pitch == 0)
       slice_pitch = min_slice_pitch;
     if (UNLIKELY(w > ctx->device->image3d_max_width)) DO_IMAGE_ERROR;
