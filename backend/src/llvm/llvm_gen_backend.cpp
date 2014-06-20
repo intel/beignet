@@ -1173,6 +1173,12 @@ namespace gbe
 
         llvmInfo.addrSpace = (cast<ConstantInt>(addrSpaceNode->getOperand(1 + argID)))->getZExtValue();
         llvmInfo.typeName = (cast<MDString>(typeNameNode->getOperand(1 + argID)))->getString();
+        if (llvmInfo.typeName.find("image") != std::string::npos &&
+            llvmInfo.typeName.find("*") != std::string::npos) {
+          uint32_t start = llvmInfo.typeName.find("image");
+          uint32_t end = llvmInfo.typeName.find("*");
+          llvmInfo.typeName = llvmInfo.typeName.substr(start, end - start);
+        }
         llvmInfo.accessQual = (cast<MDString>(accessQualNode->getOperand(1 + argID)))->getString();
         llvmInfo.typeQual = (cast<MDString>(typeQualNode->getOperand(1 + argID)))->getString();
         llvmInfo.argName = (cast<MDString>(argNameNode->getOperand(1 + argID)))->getString();

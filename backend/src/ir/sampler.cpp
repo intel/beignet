@@ -53,6 +53,7 @@ namespace ir {
     // type here. Once we switch to the LLVM and use the new data type sampler_t, we can remove this
     // work around.
     arg->type = ir::FunctionArgument::SAMPLER;
+    arg->info.typeName = "sampler_t";
     int32_t id = ctx->getFunction().getArgID(arg);
     GBE_ASSERT(id < (1 << __CLK_SAMPLER_ARG_BITS));
 

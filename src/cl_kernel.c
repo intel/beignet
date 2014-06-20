@@ -227,7 +227,7 @@ cl_get_kernel_arg_info(cl_kernel k, cl_uint arg_index, cl_kernel_arg_info param_
     if (!param_value) return CL_SUCCESS;
     if ((ulong)ret_info == 0) {
       *(cl_kernel_arg_address_qualifier *)param_value = CL_KERNEL_ARG_ADDRESS_PRIVATE;
-    } else if ((ulong)ret_info == 1) {
+    } else if ((ulong)ret_info == 1 || (ulong)ret_info == 4) {
       *(cl_kernel_arg_address_qualifier *)param_value = CL_KERNEL_ARG_ADDRESS_GLOBAL;
     } else if ((ulong)ret_info == 2) {
       *(cl_kernel_arg_address_qualifier *)param_value = CL_KERNEL_ARG_ADDRESS_CONSTANT;

@@ -85,6 +85,8 @@ DEF(double);
 #define __texture __attribute__((address_space(4)))
 struct _image1d_t;
 typedef __texture struct _image1d_t* __image1d_t;
+struct _image1d_buffer_t;
+typedef __texture struct _image1d_buffer_t* __image1d_buffer_t;
 struct _image1d_array_t;
 typedef __texture struct _image1d_array_t* __image1d_array_t;
 struct _image2d_t;
@@ -96,7 +98,7 @@ typedef __texture struct _image3d_t* __image3d_t;
 typedef const ushort __sampler_t;
 typedef size_t __event_t;
 #define image1d_t __image1d_t
-#define image1d_buffer_t __image1d_t
+#define image1d_buffer_t __image1d_buffer_t
 #define image1d_array_t __image1d_array_t
 #define image2d_t __image2d_t
 #define image2d_array_t __image2d_array_t
@@ -4757,9 +4759,13 @@ INLINE_OVERLOADABLE int __gen_compute_array_index(int index, image2d_array_t ima
 DECL_IMAGE(GEN_FIX_1, image1d_t, int4, i)
 DECL_IMAGE(GEN_FIX_1, image1d_t, uint4, ui)
 DECL_IMAGE(0, image1d_t, float4, f)
+DECL_IMAGE(GEN_FIX_1, image1d_buffer_t, int4, i)
+DECL_IMAGE(GEN_FIX_1, image1d_buffer_t, uint4, ui)
+DECL_IMAGE(0, image1d_buffer_t, float4, f)
 
 // 1D Info
 DECL_IMAGE_INFO_COMMON(image1d_t)
+DECL_IMAGE_INFO_COMMON(image1d_buffer_t)
 
 #undef EXPEND_READ_COORD
 #undef EXPEND_READ_COORDF
