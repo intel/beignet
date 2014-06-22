@@ -150,7 +150,7 @@ struct _cl_icd_dispatch const cl_khr_icd_dispatch = {
   clUnloadPlatformCompiler,
   clGetKernelArgInfo,
   clEnqueueFillBuffer,
-  CL_1_2_NOTYET(clEnqueueFillImage),
+  clEnqueueFillImage,
   clEnqueueMigrateMemObjects,
   clEnqueueMarkerWithWaitList,
   clEnqueueBarrierWithWaitList,

@@ -102,7 +102,12 @@ DECL_INFO_STRING(built_in_kernels, "__cl_copy_region_align4;"
                                    "__cl_fill_region_align8_4;"
                                    "__cl_fill_region_align8_8;"
                                    "__cl_fill_region_align8_16;"
-                                   "__cl_fill_region_align128;")
+                                   "__cl_fill_region_align128;"
+                                   "__cl_fill_image_1d;"
+                                   "__cl_fill_image_1d_array;"
+                                   "__cl_fill_image_2d;"
+                                   "__cl_fill_image_2d_array;"
+                                   "__cl_fill_image_3d;")
 
 DECL_INFO_STRING(driver_version, LIBCL_DRIVER_VERSION_STRING)
 #undef DECL_INFO_STRING

@@ -63,6 +63,11 @@ enum _cl_internal_ker_type {
   CL_ENQUEUE_FILL_BUFFER_ALIGN8_32,    //fill buffer with 16 aligne pattern, pattern size=32
   CL_ENQUEUE_FILL_BUFFER_ALIGN8_64,    //fill buffer with 16 aligne pattern, pattern size=64
   CL_ENQUEUE_FILL_BUFFER_ALIGN128,     //fill buffer with 128 aligne pattern, pattern size=128
+  CL_ENQUEUE_FILL_IMAGE_1D,             //fill image 1d
+  CL_ENQUEUE_FILL_IMAGE_1D_ARRAY,       //fill image 1d array
+  CL_ENQUEUE_FILL_IMAGE_2D,             //fill image 2d
+  CL_ENQUEUE_FILL_IMAGE_2D_ARRAY,       //fill image 2d array
+  CL_ENQUEUE_FILL_IMAGE_3D,             //fill image 3d
   CL_INTERNAL_KERNEL_MAX
 };
 
@@ -153,7 +158,7 @@ extern cl_buffer_mgr cl_context_get_bufmgr(cl_context ctx);
 extern cl_kernel cl_context_get_static_kernel(cl_context ctx, cl_int index, const char *str_kernel, const char * str_option);
 
 /* Get the internal used kernel from binary*/
-extern cl_kernel cl_context_get_static_kernel_form_bin(cl_context ctx, cl_int index,
+extern cl_kernel cl_context_get_static_kernel_from_bin(cl_context ctx, cl_int index,
                   const char * str_kernel, size_t size, const char * str_option);
 
 #endif /* __CL_CONTEXT_H__ */

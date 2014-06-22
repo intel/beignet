@@ -319,7 +319,7 @@ cl_context_get_static_kernel(cl_context ctx, cl_int index, const char * str_kern
 }
 
 cl_kernel
-cl_context_get_static_kernel_form_bin(cl_context ctx, cl_int index,
+cl_context_get_static_kernel_from_bin(cl_context ctx, cl_int index,
                   const char * str_kernel, size_t size, const char * str_option)
 {
   cl_int ret;

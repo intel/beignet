@@ -432,6 +432,7 @@ cl_int cl_enqueue_handle(cl_event event, enqueue_data* data)
     case EnqueueCopyImageToBuffer:
     case EnqueueNDRangeKernel:
     case EnqueueFillBuffer:
+    case EnqueueFillImage:
       cl_gpgpu_event_resume((cl_gpgpu_event)data->ptr);
       return CL_SUCCESS;
     case EnqueueNativeKernel:

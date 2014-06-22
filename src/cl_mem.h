@@ -205,6 +205,9 @@ extern cl_int cl_mem_copy(cl_command_queue queue, cl_mem src_buf, cl_mem dst_buf
 extern cl_int cl_mem_fill(cl_command_queue queue, const void * pattern, size_t pattern_size,
               cl_mem buffer, size_t offset, size_t size);
 
+extern cl_int cl_image_fill(cl_command_queue queue, const void * pattern, struct _cl_mem_image*,
+                                    const size_t *, const size_t *);
+
 /* api clEnqueueCopyBufferRect help function */
 extern cl_int cl_mem_copy_buffer_rect(cl_command_queue, cl_mem, cl_mem,
                                      const size_t *, const size_t *, const size_t *,

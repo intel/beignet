@@ -1812,6 +1812,79 @@ error:
 }
 
 cl_int
+clEnqueueFillImage(cl_command_queue   command_queue,
+                   cl_mem             image,
+                   const void *       fill_color,
+                   const size_t *     porigin,
+                   const size_t *     pregion,
+                   cl_uint            num_events_in_wait_list,
+                   const cl_event *   event_wait_list,
+                   cl_event *         event)
+{
+  cl_int err = CL_SUCCESS;
+  enqueue_data *data, no_wait_data = { 0 };
+
+  CHECK_QUEUE(command_queue);
+  CHECK_IMAGE(image, src_image);
+  FIXUP_IMAGE_REGION(src_image, pregion, region);
+  FIXUP_IMAGE_ORIGIN(src_image, porigin, origin);
+
+  if (command_queue->ctx != image->ctx) {
+    err = CL_INVALID_CONTEXT;
+    goto error;
+  }
+
+  if (fill_color == NULL) {
+    err = CL_INVALID_VALUE;
+    goto error;
+  }
+
+  if (!origin || !region || origin[0] + region[0] > src_image->w || origin[1] + region[1] > src_image->h || origin[2] + region[2] > src_image->depth) {
+     err = CL_INVALID_VALUE;
+     goto error;
+  }
+
+  if (src_image->image_type == CL_MEM_OBJECT_IMAGE2D && (origin[2] != 0 || region[2] != 1)){
+    err = CL_INVALID_VALUE;
+    goto error;
+  }
+
+  if (src_image->image_type == CL_MEM_OBJECT_IMAGE1D && (origin[2] != 0 ||origin[1] != 0 || region[2] != 1 || region[1] != 1)){
+    err = CL_INVALID_VALUE;
+    goto error;
+  }
+
+  err = cl_image_fill(command_queue, fill_color, src_image, origin, region);
+  if (err) {
+    goto error;
+  }
+
+  TRY(cl_event_check_waitlist, num_events_in_wait_list, event_wait_list, event, image->ctx);
+
+  data = &no_wait_data;
+  data->type = EnqueueFillImage;
+  data->queue = command_queue;
+
+  if(handle_events(command_queue, num_events_in_wait_list, event_wait_list,
+                   event, data, CL_COMMAND_FILL_BUFFER) == CL_ENQUEUE_EXECUTE_IMM) {
+    if (event && (*event)->type != CL_COMMAND_USER
+        && (*event)->queue->props & CL_QUEUE_PROFILING_ENABLE) {
+      cl_event_get_timestamp(*event, CL_PROFILING_COMMAND_SUBMIT);
+    }
+
+    err = cl_command_queue_flush(command_queue);
+  }
+
+  if(b_output_kernel_perf)
+    time_end(command_queue->ctx, "beignet internal kernel : cl_fill_image", "", command_queue);
+
+  return 0;
+
+ error:
+  return err;
+}
+
+cl_int
 clEnqueueFillBuffer(cl_command_queue   command_queue,
                     cl_mem             buffer,
                     const void *       pattern,
@@ -2637,9 +2710,12 @@ clEnqueueMapImage(cl_command_queue   command_queue,
     goto error;
   }
 
-  *image_row_pitch = image->row_pitch;
   if (image_slice_pitch)
     *image_slice_pitch = image->slice_pitch;
+  if (image->image_type == CL_MEM_OBJECT_IMAGE1D_ARRAY)
+    *image_row_pitch = image->slice_pitch;
+  else
+    *image_row_pitch = image->row_pitch;
 
   if ((map_flags & CL_MAP_READ &&
        mem->flags & (CL_MEM_HOST_WRITE_ONLY | CL_MEM_HOST_NO_ACCESS)) ||

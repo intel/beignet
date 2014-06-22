@@ -1051,7 +1051,7 @@ cl_mem_copy(cl_command_queue queue, cl_mem src_buf, cl_mem dst_buf,
     extern char cl_internal_copy_buf_align16_str[];
     extern int cl_internal_copy_buf_align16_str_size;
 
-    ker = cl_context_get_static_kernel_form_bin(queue->ctx, CL_ENQUEUE_COPY_BUFFER_ALIGN16,
+    ker = cl_context_get_static_kernel_from_bin(queue->ctx, CL_ENQUEUE_COPY_BUFFER_ALIGN16,
              cl_internal_copy_buf_align16_str, (size_t)cl_internal_copy_buf_align16_str_size, NULL);
     cb = cb/16;
     aligned = 1;
@@ -1059,7 +1059,7 @@ cl_mem_copy(cl_command_queue queue, cl_mem src_buf, cl_mem dst_buf,
     extern char cl_internal_copy_buf_align4_str[];
     extern int cl_internal_copy_buf_align4_str_size;
 
-    ker = cl_context_get_static_kernel_form_bin(queue->ctx, CL_ENQUEUE_COPY_BUFFER_ALIGN4,
+    ker = cl_context_get_static_kernel_from_bin(queue->ctx, CL_ENQUEUE_COPY_BUFFER_ALIGN4,
              cl_internal_copy_buf_align4_str, (size_t)cl_internal_copy_buf_align4_str_size, NULL);
     cb = cb/4;
     aligned = 1;
@@ -1106,7 +1106,7 @@ cl_mem_copy(cl_command_queue queue, cl_mem src_buf, cl_mem dst_buf,
     extern char cl_internal_copy_buf_unalign_same_offset_str[];
     extern int cl_internal_copy_buf_unalign_same_offset_str_size;
 
-    ker = cl_context_get_static_kernel_form_bin(queue->ctx, CL_ENQUEUE_COPY_BUFFER_UNALIGN_SAME_OFFSET,
+    ker = cl_context_get_static_kernel_from_bin(queue->ctx, CL_ENQUEUE_COPY_BUFFER_UNALIGN_SAME_OFFSET,
              cl_internal_copy_buf_unalign_same_offset_str,
              (size_t)cl_internal_copy_buf_unalign_same_offset_str_size, NULL);
 
@@ -1133,7 +1133,7 @@ cl_mem_copy(cl_command_queue queue, cl_mem src_buf, cl_mem dst_buf,
     unsigned int dw_mask = masks[align_diff];
     int shift = align_diff * 8;
 
-    ker = cl_context_get_static_kernel_form_bin(queue->ctx, CL_ENQUEUE_COPY_BUFFER_UNALIGN_DST_OFFSET,
+    ker = cl_context_get_static_kernel_from_bin(queue->ctx, CL_ENQUEUE_COPY_BUFFER_UNALIGN_DST_OFFSET,
              cl_internal_copy_buf_unalign_dst_offset_str,
              (size_t)cl_internal_copy_buf_unalign_dst_offset_str_size, NULL);
 
@@ -1163,7 +1163,7 @@ cl_mem_copy(cl_command_queue queue, cl_mem src_buf, cl_mem dst_buf,
     int shift = align_diff * 8;
     int src_less = !(src_offset % 4) && !((src_offset + cb) % 4);
 
-    ker = cl_context_get_static_kernel_form_bin(queue->ctx, CL_ENQUEUE_COPY_BUFFER_UNALIGN_SRC_OFFSET,
+    ker = cl_context_get_static_kernel_from_bin(queue->ctx, CL_ENQUEUE_COPY_BUFFER_UNALIGN_SRC_OFFSET,
              cl_internal_copy_buf_unalign_src_offset_str,
              (size_t)cl_internal_copy_buf_unalign_src_offset_str_size, NULL);
 
@@ -1184,6 +1184,72 @@ cl_mem_copy(cl_command_queue queue, cl_mem src_buf, cl_mem dst_buf,
   /* no case can hanldle? */
   assert(0);
 
+  return ret;
+}
+
+LOCAL cl_int
+cl_image_fill(cl_command_queue queue, const void * pattern, struct _cl_mem_image* src_image,
+           const size_t * origin, const size_t * region)
+{
+  cl_int ret = CL_SUCCESS;
+  cl_kernel ker = NULL;
+  size_t global_off[] = {0,0,0};
+  size_t global_sz[] = {1,1,1};
+  size_t local_sz[] = {LOCAL_SZ_0,LOCAL_SZ_1,LOCAL_SZ_2};
+
+  if(region[1] == 1) local_sz[1] = 1;
+  if(region[2] == 1) local_sz[2] = 1;
+  global_sz[0] = ((region[0] + local_sz[0] - 1) / local_sz[0]) * local_sz[0];
+  global_sz[1] = ((region[1] + local_sz[1] - 1) / local_sz[1]) * local_sz[1];
+  global_sz[2] = ((region[2] + local_sz[2] - 1) / local_sz[2]) * local_sz[2];
+
+  if(src_image->image_type == CL_MEM_OBJECT_IMAGE1D) {
+    extern char cl_internal_fill_image_1d_str[];
+    extern int cl_internal_fill_image_1d_str_size;
+
+    ker = cl_context_get_static_kernel_from_bin(queue->ctx, CL_ENQUEUE_FILL_IMAGE_1D,
+        cl_internal_fill_image_1d_str, (size_t)cl_internal_fill_image_1d_str_size, NULL);
+  }else if(src_image->image_type == CL_MEM_OBJECT_IMAGE1D_ARRAY) {
+    extern char cl_internal_fill_image_1d_array_str[];
+    extern int cl_internal_fill_image_1d_array_str_size;
+
+    ker = cl_context_get_static_kernel_from_bin(queue->ctx, CL_ENQUEUE_FILL_IMAGE_1D_ARRAY,
+        cl_internal_fill_image_1d_array_str, (size_t)cl_internal_fill_image_1d_array_str_size, NULL);
+  }else if(src_image->image_type == CL_MEM_OBJECT_IMAGE2D) {
+    extern char cl_internal_fill_image_2d_str[];
+    extern int cl_internal_fill_image_2d_str_size;
+
+    ker = cl_context_get_static_kernel_from_bin(queue->ctx, CL_ENQUEUE_FILL_IMAGE_2D,
+        cl_internal_fill_image_2d_str, (size_t)cl_internal_fill_image_2d_str_size, NULL);
+  }else if(src_image->image_type == CL_MEM_OBJECT_IMAGE2D_ARRAY) {
+    extern char cl_internal_fill_image_2d_array_str[];
+    extern int cl_internal_fill_image_2d_array_str_size;
+
+    ker = cl_context_get_static_kernel_from_bin(queue->ctx, CL_ENQUEUE_FILL_IMAGE_2D_ARRAY,
+        cl_internal_fill_image_2d_array_str, (size_t)cl_internal_fill_image_2d_array_str_size, NULL);
+  }else if(src_image->image_type == CL_MEM_OBJECT_IMAGE3D) {
+    extern char cl_internal_fill_image_3d_str[];
+    extern int cl_internal_fill_image_3d_str_size;
+
+    ker = cl_context_get_static_kernel_from_bin(queue->ctx, CL_ENQUEUE_FILL_IMAGE_3D,
+        cl_internal_fill_image_3d_str, (size_t)cl_internal_fill_image_3d_str_size, NULL);
+  }else{
+    return CL_IMAGE_FORMAT_NOT_SUPPORTED;
+  }
+
+  if (!ker)
+    return CL_OUT_OF_RESOURCES;
+
+  cl_kernel_set_arg(ker, 0, sizeof(cl_mem), &src_image);
+  cl_kernel_set_arg(ker, 1, sizeof(float)*4, pattern);
+  cl_kernel_set_arg(ker, 2, sizeof(cl_int), &region[0]);
+  cl_kernel_set_arg(ker, 3, sizeof(cl_int), &region[1]);
+  cl_kernel_set_arg(ker, 4, sizeof(cl_int), &region[2]);
+  cl_kernel_set_arg(ker, 5, sizeof(cl_int), &origin[0]);
+  cl_kernel_set_arg(ker, 6, sizeof(cl_int), &origin[1]);
+  cl_kernel_set_arg(ker, 7, sizeof(cl_int), &origin[2]);
+
+  ret = cl_command_queue_ND_range(queue, ker, 3, global_off, global_sz, local_sz);
   return ret;
 }
 
@@ -1212,7 +1278,7 @@ cl_mem_fill(cl_command_queue queue, const void * pattern, size_t pattern_size,
     extern char cl_internal_fill_buf_align128_str[];
     extern int cl_internal_fill_buf_align128_str_size;
 
-    ker = cl_context_get_static_kernel_form_bin(queue->ctx, CL_ENQUEUE_FILL_BUFFER_ALIGN128,
+    ker = cl_context_get_static_kernel_from_bin(queue->ctx, CL_ENQUEUE_FILL_BUFFER_ALIGN128,
                cl_internal_fill_buf_align128_str, (size_t)cl_internal_fill_buf_align128_str_size, NULL);
     is_128 = 1;
     pattern_size = pattern_size / 2;
@@ -1223,13 +1289,13 @@ cl_mem_fill(cl_command_queue queue, const void * pattern, size_t pattern_size,
     extern int cl_internal_fill_buf_align8_str_size;
     int order = ffs(pattern_size / 8) - 1;
 
-    ker = cl_context_get_static_kernel_form_bin(queue->ctx, CL_ENQUEUE_FILL_BUFFER_ALIGN8_8 + order,
+    ker = cl_context_get_static_kernel_from_bin(queue->ctx, CL_ENQUEUE_FILL_BUFFER_ALIGN8_8 + order,
                cl_internal_fill_buf_align8_str, (size_t)cl_internal_fill_buf_align8_str_size, NULL);
   } else if (pattern_size == 4) {
     extern char cl_internal_fill_buf_align4_str[];
     extern int cl_internal_fill_buf_align4_str_size;
 
-    ker = cl_context_get_static_kernel_form_bin(queue->ctx, CL_ENQUEUE_FILL_BUFFER_ALIGN4,
+    ker = cl_context_get_static_kernel_from_bin(queue->ctx, CL_ENQUEUE_FILL_BUFFER_ALIGN4,
                cl_internal_fill_buf_align4_str, (size_t)cl_internal_fill_buf_align4_str_size, NULL);
   } else if (size >= 4 && size % 4 == 0 && offset % 4 == 0) {
     /* The unaligned case. But if copy size and offset are aligned to 4, we can fake
@@ -1246,7 +1312,7 @@ cl_mem_fill(cl_command_queue queue, const void * pattern, size_t pattern_size,
         = pattern_comb[3] = *(char *)pattern;
     }
 
-    ker = cl_context_get_static_kernel_form_bin(queue->ctx, CL_ENQUEUE_FILL_BUFFER_ALIGN4,
+    ker = cl_context_get_static_kernel_from_bin(queue->ctx, CL_ENQUEUE_FILL_BUFFER_ALIGN4,
                cl_internal_fill_buf_align4_str, (size_t)cl_internal_fill_buf_align4_str_size, NULL);
     pattern_size = 4;
     pattern = pattern_comb;
@@ -1256,12 +1322,12 @@ cl_mem_fill(cl_command_queue queue, const void * pattern, size_t pattern_size,
   else if (pattern_size == 2) {
     extern char cl_internal_fill_buf_align2_str[];
     extern int cl_internal_fill_buf_align2_str_size;
-    ker = cl_context_get_static_kernel_form_bin(queue->ctx, CL_ENQUEUE_FILL_BUFFER_ALIGN2,
+    ker = cl_context_get_static_kernel_from_bin(queue->ctx, CL_ENQUEUE_FILL_BUFFER_ALIGN2,
                cl_internal_fill_buf_align2_str, (size_t)cl_internal_fill_buf_align2_str_size, NULL);
   } else if (pattern_size == 1) {
     extern char cl_internal_fill_buf_unalign_str[];
     extern int cl_internal_fill_buf_unalign_str_size;
-    ker = cl_context_get_static_kernel_form_bin(queue->ctx, CL_ENQUEUE_FILL_BUFFER_UNALIGN,
+    ker = cl_context_get_static_kernel_from_bin(queue->ctx, CL_ENQUEUE_FILL_BUFFER_UNALIGN,
                cl_internal_fill_buf_unalign_str, (size_t)cl_internal_fill_buf_unalign_str_size, NULL);
   } else
     assert(0);
@@ -1314,7 +1380,7 @@ cl_mem_copy_buffer_rect(cl_command_queue queue, cl_mem src_buf, cl_mem dst_buf,
   extern char cl_internal_copy_buf_rect_str[];
   extern int cl_internal_copy_buf_rect_str_size;
 
-  ker = cl_context_get_static_kernel_form_bin(queue->ctx, CL_ENQUEUE_COPY_BUFFER_RECT,
+  ker = cl_context_get_static_kernel_from_bin(queue->ctx, CL_ENQUEUE_COPY_BUFFER_RECT,
       cl_internal_copy_buf_rect_str, (size_t)cl_internal_copy_buf_rect_str_size, NULL);
 
   if (!ker)
@@ -1386,13 +1452,13 @@ cl_mem_kernel_copy_image(cl_command_queue queue, struct _cl_mem_image* src_image
       extern char cl_internal_copy_image_2d_to_2d_str[];
       extern int cl_internal_copy_image_2d_to_2d_str_size;
 
-      ker = cl_context_get_static_kernel_form_bin(queue->ctx, CL_ENQUEUE_COPY_IMAGE_2D_TO_2D,
+      ker = cl_context_get_static_kernel_from_bin(queue->ctx, CL_ENQUEUE_COPY_IMAGE_2D_TO_2D,
           cl_internal_copy_image_2d_to_2d_str, (size_t)cl_internal_copy_image_2d_to_2d_str_size, NULL);
     }else if(dst_image->image_type == CL_MEM_OBJECT_IMAGE3D) {
       extern char cl_internal_copy_image_2d_to_3d_str[];
       extern int cl_internal_copy_image_2d_to_3d_str_size;
 
-      ker = cl_context_get_static_kernel_form_bin(queue->ctx, CL_ENQUEUE_COPY_IMAGE_2D_TO_3D,
+      ker = cl_context_get_static_kernel_from_bin(queue->ctx, CL_ENQUEUE_COPY_IMAGE_2D_TO_3D,
           cl_internal_copy_image_2d_to_3d_str, (size_t)cl_internal_copy_image_2d_to_3d_str_size, NULL);
     }
   }else if(src_image->image_type == CL_MEM_OBJECT_IMAGE3D) {
@@ -1400,13 +1466,13 @@ cl_mem_kernel_copy_image(cl_command_queue queue, struct _cl_mem_image* src_image
       extern char cl_internal_copy_image_3d_to_2d_str[];
       extern int cl_internal_copy_image_3d_to_2d_str_size;
 
-      ker = cl_context_get_static_kernel_form_bin(queue->ctx, CL_ENQUEUE_COPY_IMAGE_3D_TO_2D,
+      ker = cl_context_get_static_kernel_from_bin(queue->ctx, CL_ENQUEUE_COPY_IMAGE_3D_TO_2D,
           cl_internal_copy_image_3d_to_2d_str, (size_t)cl_internal_copy_image_3d_to_2d_str_size, NULL);
     }else if(dst_image->image_type == CL_MEM_OBJECT_IMAGE3D) {
       extern char cl_internal_copy_image_3d_to_3d_str[];
       extern int cl_internal_copy_image_3d_to_3d_str_size;
 
-      ker = cl_context_get_static_kernel_form_bin(queue->ctx, CL_ENQUEUE_COPY_IMAGE_3D_TO_3D,
+      ker = cl_context_get_static_kernel_from_bin(queue->ctx, CL_ENQUEUE_COPY_IMAGE_3D_TO_3D,
           cl_internal_copy_image_3d_to_3d_str, (size_t)cl_internal_copy_image_3d_to_3d_str_size, NULL);
     }
   }
@@ -1475,13 +1541,13 @@ cl_mem_copy_image_to_buffer(cl_command_queue queue, struct _cl_mem_image* image,
       extern char cl_internal_copy_image_2d_to_buffer_str[];
       extern int cl_internal_copy_image_2d_to_buffer_str_size;
 
-      ker = cl_context_get_static_kernel_form_bin(queue->ctx, CL_ENQUEUE_COPY_IMAGE_2D_TO_BUFFER,
+      ker = cl_context_get_static_kernel_from_bin(queue->ctx, CL_ENQUEUE_COPY_IMAGE_2D_TO_BUFFER,
           cl_internal_copy_image_2d_to_buffer_str, (size_t)cl_internal_copy_image_2d_to_buffer_str_size, NULL);
   }else if(image->image_type == CL_MEM_OBJECT_IMAGE3D) {
     extern char cl_internal_copy_image_3d_to_buffer_str[];
     extern int cl_internal_copy_image_3d_to_buffer_str_size;
 
-    ker = cl_context_get_static_kernel_form_bin(queue->ctx, CL_ENQUEUE_COPY_IMAGE_3D_TO_BUFFER,
+    ker = cl_context_get_static_kernel_from_bin(queue->ctx, CL_ENQUEUE_COPY_IMAGE_3D_TO_BUFFER,
           cl_internal_copy_image_3d_to_buffer_str, (size_t)cl_internal_copy_image_3d_to_buffer_str_size, NULL);
   }
 
@@ -1549,13 +1615,13 @@ cl_mem_copy_buffer_to_image(cl_command_queue queue, cl_mem buffer, struct _cl_me
       extern char cl_internal_copy_buffer_to_image_2d_str[];
       extern int cl_internal_copy_buffer_to_image_2d_str_size;
 
-      ker = cl_context_get_static_kernel_form_bin(queue->ctx, CL_ENQUEUE_COPY_BUFFER_TO_IMAGE_2D,
+      ker = cl_context_get_static_kernel_from_bin(queue->ctx, CL_ENQUEUE_COPY_BUFFER_TO_IMAGE_2D,
           cl_internal_copy_buffer_to_image_2d_str, (size_t)cl_internal_copy_buffer_to_image_2d_str_size, NULL);
   }else if(image->image_type == CL_MEM_OBJECT_IMAGE3D) {
       extern char cl_internal_copy_buffer_to_image_3d_str[];
       extern int cl_internal_copy_buffer_to_image_3d_str_size;
 
-      ker = cl_context_get_static_kernel_form_bin(queue->ctx, CL_ENQUEUE_COPY_BUFFER_TO_IMAGE_3D,
+      ker = cl_context_get_static_kernel_from_bin(queue->ctx, CL_ENQUEUE_COPY_BUFFER_TO_IMAGE_3D,
           cl_internal_copy_buffer_to_image_3d_str, (size_t)cl_internal_copy_buffer_to_image_3d_str_size, NULL);
   }
   if (!ker)
