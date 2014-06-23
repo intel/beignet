@@ -68,7 +68,6 @@
 #include <clang/Basic/TargetInfo.h>
 #include <clang/Basic/TargetOptions.h>
 #include <llvm/ADT/IntrusiveRefCntPtr.h>
-#include <llvm/ADT/OwningPtr.h>
 #if LLVM_VERSION_MINOR <= 2
 #include <llvm/Module.h>
 #else
@@ -609,7 +608,7 @@ namespace gbe {
     clang::DiagnosticsEngine Diags(DiagID, &*DiagOpts, DiagClient);
 #endif /* LLVM_VERSION_MINOR <= 1 */
     // Create the compiler invocation
-    llvm::OwningPtr<clang::CompilerInvocation> CI(new clang::CompilerInvocation);
+    std::unique_ptr<clang::CompilerInvocation> CI(new clang::CompilerInvocation);
     clang::CompilerInvocation::CreateFromArgs(*CI,
                                               &args[0],
                                               &args[0] + args.size(),
@@ -617,7 +616,7 @@ namespace gbe {
 
     // Create the compiler instance
     clang::CompilerInstance Clang;
-    Clang.setInvocation(CI.take());
+    Clang.setInvocation(CI.release());
     // Get ready to report problems
 #if LLVM_VERSION_MINOR <= 2
     Clang.createDiagnostics(args.size(), &args[0]);
@@ -650,7 +649,7 @@ namespace gbe {
     }
 
     // Create an action and make the compiler instance carry it out
-    llvm::OwningPtr<clang::CodeGenAction> Act(new clang::EmitLLVMOnlyAction(llvm_ctx));
+    std::unique_ptr<clang::CodeGenAction> Act(new clang::EmitLLVMOnlyAction(llvm_ctx));
 
     std::string dirs = OCL_PCM_PATH;
     std::string pcmFileName;
