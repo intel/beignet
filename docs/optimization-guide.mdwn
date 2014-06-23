@@ -1,0 +1,28 @@
+Optimization Guide
+====================
+
+All the SIMD optimization principle also apply to Beignet optimization.  
+Furthermore, there are some special tips for Beignet optimization.
+
+1. It is recommended to choose multiple of 16 work group size. Too much SLM usage may reduce parallelism at group level. 
+   If kernel uses large amount SLM, it's better to choose large work group size. Please refer the following table for recommendations
+   with some SLM usage.
+| Amount of SLM | 0  | 4K | 8K  | 16K | 32K |  
+| WorkGroup size| 16 | 64 | 128 | 256 | 512 |
+
+2. GEN7's read/write on global memory with DWORD and DWORD4 are significantly faster than read/write on BYTE/WORD.  
+   Use DWORD or DWORD4 to access data in global memory if possible. If you cannot avoid the byte/word access, try to do it on SLM.
+
+3. Use float data type as much as possible.
+
+4. Avoid using long. GEN7's performance for long integer is poor.
+
+5. If there is a small constant buffer, define it in the kernel instead of using the constant buffer argument if possible.  
+   The compiler may optimize it if the buffer is defined inside kernel.
+
+6. Avoid unnecessary synchronizations, both in the runtime and in the kernel.  For examples, clFinish and clWaitForEvents in runtime  
+   and barrier() in the kernel.
+
+7. Consider native version of math built-ins, such as native\_sin, native\_cos, if your kernel is not precision sensitive.
+
+8. Try to eliminate branching as much as possible. For example using min, max, clamp or select built-ins instead of if/else if possible.
