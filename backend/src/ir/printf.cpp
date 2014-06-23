@@ -50,6 +50,60 @@ namespace gbe
       return (uint32_t)fmts.size();
     }
 
+    static void generatePrintfFmtString(PrintfState& state, std::string& str)
+    {
+      char num_str[16];
+      str += "%";
+
+      if (state.left_justified) {
+        str += "-";
+      }
+
+      if (state.sign_symbol == 1) {
+        str += "+";
+      } else if (state.sign_symbol == 2) {
+        str += " ";
+      }
+
+      if (state.alter_form) {
+        str += "#";
+      }
+
+      if (state.zero_padding) {
+        str += "0";
+      }
+
+      if (state.min_width >= 0) {
+        snprintf(num_str, 16, "%d", state.min_width);
+        str += num_str;
+      }
+
+      if (state.precision >= 0) {
+        str += ".";
+        snprintf(num_str, 16, "%d", state.precision);
+        str += num_str;
+      }
+
+      // TODO:  Handle the vector here.
+
+      switch (state.length_modifier) {
+        case PRINTF_LM_HH:
+          str += "hh";
+          break;
+        case PRINTF_LM_H:
+          str += "h";
+          break;
+        case PRINTF_LM_L:
+          str += "l";
+          break;
+        case PRINTF_LM_HL:
+          str += "hl";
+          break;
+        default:
+          assert(state.length_modifier == PRINTF_LM_NONE);
+      }
+    }
+
 #define PRINT_SOMETHING(target_ty, conv)  do {                          \
       pf_str = pf_str + std::string(#conv);                             \
       printf(pf_str.c_str(),                                            \
@@ -58,6 +112,7 @@ namespace gbe
              [k*global_wk_sz0*global_wk_sz1 + j*global_wk_sz0 + i]);    \
       pf_str = "";                                                      \
     } while (0)
+
 
     void PrintfSet::outputPrintf(void* index_addr, void* buf_addr, size_t global_wk_sz0,
                                  size_t global_wk_sz1, size_t global_wk_sz2)
@@ -81,26 +136,59 @@ namespace gbe
                   }
                   assert(slot.type == PRINTF_SLOT_TYPE_STATE);
 
+                  generatePrintfFmtString(*slot.state, pf_str);
+
                   switch (slot.state->conversion_specifier) {
                     case PRINTF_CONVERSION_D:
                     case PRINTF_CONVERSION_I:
-                      PRINT_SOMETHING(int, %d);
+                      PRINT_SOMETHING(int, d);
                       break;
+
+                    case PRINTF_CONVERSION_O:
+                      PRINT_SOMETHING(int, o);
+                      break;
+                    case PRINTF_CONVERSION_U:
+                      PRINT_SOMETHING(int, u);
+                      break;
+                    case PRINTF_CONVERSION_X:
+                      PRINT_SOMETHING(int, X);
+                      break;
+                    case PRINTF_CONVERSION_x:
+                      PRINT_SOMETHING(int, x);
+                      break;
+
                     case PRINTF_CONVERSION_C:
-                      PRINT_SOMETHING(char, %c);
+                      PRINT_SOMETHING(char, c);
                       break;
 
                     case PRINTF_CONVERSION_F:
+                      PRINT_SOMETHING(float, F);
+                      break;
                     case PRINTF_CONVERSION_f:
-                      if (slot.state->conversion_specifier == PRINTF_CONVERSION_F)
-                        PRINT_SOMETHING(float, %F);
-                      else
-                        PRINT_SOMETHING(float, %f);
+                      PRINT_SOMETHING(float, f);
+                      break;
+                    case PRINTF_CONVERSION_E:
+                      PRINT_SOMETHING(float, E);
+                      break;
+                    case PRINTF_CONVERSION_e:
+                      PRINT_SOMETHING(float, e);
+                      break;
+                    case PRINTF_CONVERSION_G:
+                      PRINT_SOMETHING(float, G);
+                      break;
+                    case PRINTF_CONVERSION_g:
+                      PRINT_SOMETHING(float, g);
+                      break;
+                    case PRINTF_CONVERSION_A:
+                      PRINT_SOMETHING(float, A);
+                      break;
+                    case PRINTF_CONVERSION_a:
+                      PRINT_SOMETHING(float, a);
                       break;
 
                     case PRINTF_CONVERSION_S:
-                      pf_str = pf_str + "%s";
-                      printf("%s%s", pf_str.c_str(), slot.state->str.c_str());
+                      pf_str = pf_str + "s";
+                      printf(pf_str.c_str(), slot.state->str.c_str());
                       pf_str = "";
                       break;
 

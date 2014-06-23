@@ -86,8 +86,8 @@ namespace gbe
     state->alter_form = 0;
     state->zero_padding = 0;
     state->vector_n = 0;
-    state->min_width = 0;
-    state->precision = 0;
+    state->min_width = -1;
+    state->precision = -1;
     state->length_modifier = 0;
     state->conversion_specifier = PRINTF_CONVERSION_INVALID;
     state->out_buf_sizeof_offset = -1;
@@ -108,39 +108,42 @@ namespace gbe
     FMT_PLUS_PLUS;
 
     // parse the flags.
-    switch (*fmt) {
-      case '-':
-        /* The result of the conversion is left-justified within the field. */
-        state->left_justified = 1;
-        FMT_PLUS_PLUS;
-        break;
-      case '+':
-        /* The result of a signed conversion always begins with a plus or minus sign. */
-        state->sign_symbol = 1;
-        FMT_PLUS_PLUS;
-        break;
-      case ' ':
-        /* If the first character of a signed conversion is not a sign, or if a signed
-           conversion results in no characters, a space is prefixed to the result.
-           If the space and + flags both appear,the space flag is ignored. */
-        if (state->sign_symbol == 0) state->sign_symbol = 2;
-        FMT_PLUS_PLUS;
-        break;
-      case '#':
-        /*The result is converted to an alternative form. */
-        state->alter_form = 1;
-        FMT_PLUS_PLUS;
-        break;
-      case '0':
-        if (!state->left_justified) state->zero_padding = 1;
-        FMT_PLUS_PLUS;
-        break;
-      default:
-        break;
-    }
+    while (*fmt == '-' || *fmt == '+' || *fmt == ' ' || *fmt == '#' || *fmt == '0')
+      switch (*fmt) {
+        case '-':
+          /* The result of the conversion is left-justified within the field. */
+          state->left_justified = 1;
+          FMT_PLUS_PLUS;
+          break;
+        case '+':
+          /* The result of a signed conversion always begins with a plus or minus sign. */
+          state->sign_symbol = 1;
+          FMT_PLUS_PLUS;
+          break;
+        case ' ':
+          /* If the first character of a signed conversion is not a sign, or if a signed
+             conversion results in no characters, a space is prefixed to the result.
+             If the space and + flags both appear,the space flag is ignored. */
+          if (state->sign_symbol == 0) state->sign_symbol = 2;
+          FMT_PLUS_PLUS;
+          break;
+        case '#':
+          /*The result is converted to an alternative form. */
+          state->alter_form = 1;
+          FMT_PLUS_PLUS;
+          break;
+        case '0':
+          if (!state->left_justified) state->zero_padding = 1;
+          FMT_PLUS_PLUS;
+          break;
+        default:
+          break;
+      }
 
     // The minimum field width
     while ((*fmt >= '0') && (*fmt <= '9')) {
+      if (state->min_width < 0)
+        state->min_width = 0;
       state->min_width = state->min_width * 10 + (*fmt - '0');
       FMT_PLUS_PLUS;
     }
@@ -148,6 +151,7 @@ namespace gbe
     // The precision
     if (*fmt == '.') {
       FMT_PLUS_PLUS;
+      state->precision = 0;
       while (*fmt >= '0' && *fmt <= '9') {
         state->precision = state->precision * 10 + (*fmt - '0');
         FMT_PLUS_PLUS;
@@ -285,22 +289,24 @@ again:
     }
 
 #if 0
-    int j = 0;
-    for (auto &s : *printf_fmt) {
-      j++;
-      if (s.type == PRINTF_SLOT_TYPE_STATE) {
-        printf("---- %d ---: state : \n", j);
-        printf("		     left_justified : %d\n", s.state->left_justified);
-        printf("		     sign_symbol: %d\n", s.state->sign_symbol);
-        printf("		     alter_form : %d\n", s.state->alter_form);
-        printf("		     zero_padding : %d\n", s.state->zero_padding);
-        printf("		     vector_n : %d\n", s.state->vector_n);
-        printf("		     min_width : %d\n", s.state->min_width);
-        printf("		     precision : %d\n", s.state->precision);
-        printf("		     length_modifier : %d\n", s.state->length_modifier);
-        printf("		     conversion_specifier : %d\n", s.state->conversion_specifier);
-      } else if (s.type == PRINTF_SLOT_TYPE_STRING) {
-        printf("---- %d ---: string :  %s\n", j, s.str);
+    {
+      int j = 0;
+      for (auto &s : *printf_fmt) {
+        j++;
+        if (s.type == PRINTF_SLOT_TYPE_STATE) {
+          fprintf(stderr, "---- %d ---: state : \n", j);
+          fprintf(stderr, "		     left_justified : %d\n", s.state->left_justified);
+          fprintf(stderr, "		     sign_symbol: %d\n", s.state->sign_symbol);
+          fprintf(stderr, "		     alter_form : %d\n", s.state->alter_form);
+          fprintf(stderr, "		     zero_padding : %d\n", s.state->zero_padding);
+          fprintf(stderr, "		     vector_n : %d\n", s.state->vector_n);
+          fprintf(stderr, "		     min_width : %d\n", s.state->min_width);
+          fprintf(stderr, "		     precision : %d\n", s.state->precision);
+          fprintf(stderr, "		     length_modifier : %d\n", s.state->length_modifier);
+          fprintf(stderr, "		     conversion_specifier : %d\n", s.state->conversion_specifier);
+        } else if (s.type == PRINTF_SLOT_TYPE_STRING) {
+          fprintf(stderr, "---- %d ---: string :  %s\n", j, s.str);
+        }
       }
     }
 #endif
@@ -629,6 +635,16 @@ error:
             sizeof_size = sizeof(int);
             return true;
 
+          case PRINTF_CONVERSION_O:
+          case PRINTF_CONVERSION_U:
+          case PRINTF_CONVERSION_x:
+          case PRINTF_CONVERSION_X:
+            /* To uint, add a conversion. */
+            arg = builder->CreateIntCast(arg, Type::getInt32Ty(module->getContext()), true);
+            dst_type = Type::getInt32PtrTy(module->getContext(), 1);
+            sizeof_size = sizeof(int);
+            return true;
+
           case PRINTF_CONVERSION_C:
             /* Int to Char, add a conversion. */
             arg = builder->CreateIntCast(arg, Type::getInt8Ty(module->getContext()), false);
@@ -638,9 +654,22 @@ error:
 
           case PRINTF_CONVERSION_F:
           case PRINTF_CONVERSION_f:
+          case PRINTF_CONVERSION_E:
+          case PRINTF_CONVERSION_e:
+          case PRINTF_CONVERSION_G:
+          case PRINTF_CONVERSION_g:
+          case PRINTF_CONVERSION_A:
+          case PRINTF_CONVERSION_a:
+            printf("Warning: Have a float paramter for %%d like specifier, take care of it\n");
             arg = builder->CreateSIToFP(arg, Type::getFloatTy(module->getContext()));
             dst_type = Type::getFloatPtrTy(module->getContext(), 1);
             sizeof_size = sizeof(float);
+            return true;
+
+          case PRINTF_CONVERSION_S:
+            /* Here, the case is printf("xxx%s", 0); we should output the null. */
+            sizeof_size = 0;
+            slot.state->str = "(null)";
             return true;
 
           default:
@@ -659,13 +688,31 @@ error:
           case PRINTF_CONVERSION_I:
           case PRINTF_CONVERSION_D:
             /* Float to Int, add a conversion. */
+            printf("Warning: Have a int paramter for %%f like specifier, take care of it\n");
             arg = builder->CreateFPToSI(arg, Type::getInt32Ty(module->getContext()));
+            dst_type = Type::getInt32PtrTy(module->getContext(), 1);
+            sizeof_size = sizeof(int);
+            return true;
+
+          case PRINTF_CONVERSION_O:
+          case PRINTF_CONVERSION_U:
+          case PRINTF_CONVERSION_x:
+          case PRINTF_CONVERSION_X:
+            /* Float to uint, add a conversion. */
+            printf("Warning: Have a uint paramter for %%f like specifier, take care of it\n");
+            arg = builder->CreateFPToUI(arg, Type::getInt32Ty(module->getContext()));
             dst_type = Type::getInt32PtrTy(module->getContext(), 1);
             sizeof_size = sizeof(int);
             return true;
 
           case PRINTF_CONVERSION_F:
           case PRINTF_CONVERSION_f:
+          case PRINTF_CONVERSION_E:
+          case PRINTF_CONVERSION_e:
+          case PRINTF_CONVERSION_G:
+          case PRINTF_CONVERSION_g:
+          case PRINTF_CONVERSION_A:
+          case PRINTF_CONVERSION_a:
             arg = builder->CreateFPCast(arg, Type::getFloatTy(module->getContext()));
             dst_type = Type::getFloatPtrTy(module->getContext(), 1);
             sizeof_size = sizeof(float);

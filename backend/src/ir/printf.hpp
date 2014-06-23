@@ -35,6 +35,7 @@ namespace gbe
 
     /* Things about printf info. */
     enum {
+      PRINTF_LM_NONE,
       PRINTF_LM_HH,
       PRINTF_LM_H,
       PRINTF_LM_L,
@@ -184,11 +185,21 @@ namespace gbe
         switch (slot->state->conversion_specifier) {
           case PRINTF_CONVERSION_I:
           case PRINTF_CONVERSION_D:
-          /* Char will be aligned to sizeof(int) here. */
+          case PRINTF_CONVERSION_O:
+          case PRINTF_CONVERSION_U:
+          case PRINTF_CONVERSION_X:
+          case PRINTF_CONVERSION_x:
+            /* Char will be aligned to sizeof(int) here. */
           case PRINTF_CONVERSION_C:
             return (uint32_t)sizeof(int);
+          case PRINTF_CONVERSION_E:
+          case PRINTF_CONVERSION_e:
           case PRINTF_CONVERSION_F:
           case PRINTF_CONVERSION_f:
+          case PRINTF_CONVERSION_G:
+          case PRINTF_CONVERSION_g:
+          case PRINTF_CONVERSION_A:
+          case PRINTF_CONVERSION_a:
             return (uint32_t)sizeof(float);
           case PRINTF_CONVERSION_S:
             return (uint32_t)0;
