@@ -2266,8 +2266,8 @@ INLINE_OVERLOADABLE float native_tan(float x) {
 INLINE_OVERLOADABLE float __gen_ocl_internal_tanpi(float x) {
   return native_tan(x * M_PI_F);
 }
-INLINE_OVERLOADABLE float native_exp(float x) { return __gen_ocl_exp(x); }
-INLINE_OVERLOADABLE float native_exp2(float x) { return __gen_ocl_pow(2, x); }
+INLINE_OVERLOADABLE float native_exp2(float x) { return __gen_ocl_exp(x); }
+INLINE_OVERLOADABLE float native_exp(float x) { return __gen_ocl_pow(M_E_F, x); }
 INLINE_OVERLOADABLE float native_exp10(float x) { return __gen_ocl_pow(10, x); }
 INLINE_OVERLOADABLE float __gen_ocl_internal_cbrt(float x) {
   /* copied from fdlibm */
@@ -4986,7 +4986,7 @@ INLINE_OVERLOADABLE float __gen_ocl_internal_fastpath_asinh (float x)
 
 INLINE_OVERLOADABLE float __gen_ocl_internal_fastpath_atanh (float x)
 {
-    return 0.5f * native_sqrt((1 + x) / (1 - x));
+    return 0.5f * native_log((1 + x) / (1 - x));
 }
 
 INLINE_OVERLOADABLE float __gen_ocl_internal_fastpath_cbrt (float x)
