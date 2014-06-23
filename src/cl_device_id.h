@@ -78,9 +78,12 @@ struct _cl_device_id {
   cl_bool  endian_little;
   cl_bool  available;
   cl_bool  compiler_available;
+  cl_bool  linker_available;
   cl_device_exec_capabilities execution_capabilities;
   cl_command_queue_properties queue_properties;
   cl_platform_id platform;
+  size_t printf_buffer_size;
+  cl_bool interop_user_sync;
   const char *name;
   const char *vendor;
   const char *version;

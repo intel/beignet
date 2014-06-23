@@ -63,11 +63,14 @@
 .endian_little = CL_TRUE,
 .available = CL_TRUE,
 .compiler_available = CL_TRUE,
+.linker_available = CL_TRUE,
 .execution_capabilities = CL_EXEC_KERNEL | CL_EXEC_NATIVE_KERNEL,
 .queue_properties = CL_QUEUE_PROFILING_ENABLE,
 .platform = NULL, /* == intel_platform (set when requested) */
 /* IEEE 754, XXX does IVB support CL_FP_CORRECTLY_ROUNDED_DIVIDE_SQRT? */
 .single_fp_config = CL_FP_INF_NAN | CL_FP_ROUND_TO_NEAREST , /* IEEE 754. */
+.printf_buffer_size = 1 * 1024 * 1024,
+.interop_user_sync = CL_TRUE,
 
 #define DECL_INFO_STRING(FIELD, STRING) \
     .FIELD = STRING,                    \
