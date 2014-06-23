@@ -1,13 +1,10 @@
-set (beignet_install_path ${LIB_INSTALL_DIR}/beignet/)
-
-
 set (ocl_vector_spec_file ${GBE_SOURCE_DIR}/src/builtin_vector_proto.def)
 set (ocl_vector_file ${GBE_SOURCE_DIR}/src/ocl_vector.h)
 set (ocl_as_file ${GBE_SOURCE_DIR}/src/ocl_as.h)
 set (ocl_convert_file ${GBE_SOURCE_DIR}/src/ocl_convert.h)
 set (ocl_stdlib_tmpl_file ${GBE_SOURCE_DIR}/src/ocl_stdlib.tmpl.h)
 set (ocl_common_header_file ${GBE_SOURCE_DIR}/src/ocl_common_defines.h)
-set (ocl_blob_file ${CMAKE_CURRENT_BINARY_DIR}${beignet_install_path}ocl_stdlib.h)
+set (ocl_blob_file ${CMAKE_CURRENT_BINARY_DIR}${BEIGNET_INSTALL_DIR}ocl_stdlib.h)
 set (ocl_blob_cpp_file ${GBE_SOURCE_DIR}/src/ocl_stdlib_str.cpp)
 set (ocl_gen_blob_cmd ${GBE_SOURCE_DIR}/src/update_blob_ocl_header.py)
 set (ocl_gen_vector_cmd ${GBE_SOURCE_DIR}/src/gen_builtin_vector.py)
@@ -36,7 +33,7 @@ add_custom_command(
 
 add_custom_command(
   OUTPUT ${ocl_blob_file}
-  COMMAND mkdir -p ${CMAKE_CURRENT_BINARY_DIR}/${beignet_install_path}
+  COMMAND mkdir -p ${CMAKE_CURRENT_BINARY_DIR}/${BEIGNET_INSTALL_DIR}
   COMMAND ${PYTHON_EXECUTABLE} ${ocl_gen_blob_cmd} ${ocl_stdlib_tmpl_file} ${ocl_blob_file}
   DEPENDS ${ocl_gen_blob_cmd} ${ocl_stdlib_tmpl_file} ${ocl_common_header_file} ${ocl_vector_file} ${ocl_as_file} ${ocl_convert_file}
   )
@@ -214,23 +211,23 @@ link_directories (${LLVM_LIBRARY_DIR} ${DRM_LIBDIR})
 ADD_EXECUTABLE(gbe_bin_generater gbe_bin_generater.cpp)
 TARGET_LINK_LIBRARIES(gbe_bin_generater gbe)
 
-install (TARGETS gbe LIBRARY DESTINATION ${LIB_INSTALL_DIR}/beignet)
-install (TARGETS gbeinterp LIBRARY DESTINATION ${LIB_INSTALL_DIR}/beignet)
+install (TARGETS gbe LIBRARY DESTINATION ${BEIGNET_INSTALL_DIR})
+install (TARGETS gbeinterp LIBRARY DESTINATION ${BEIGNET_INSTALL_DIR})
 #install (FILES backend/program.h DESTINATION include/gen)
-install (FILES ${ocl_blob_file} DESTINATION ${LIB_INSTALL_DIR}/beignet)
-install (FILES ${pch_object} DESTINATION ${LIB_INSTALL_DIR}/beignet)
-install (FILES ${CMAKE_CURRENT_BINARY_DIR}/${pcm_lib} DESTINATION ${LIB_INSTALL_DIR}/beignet)
+install (FILES ${ocl_blob_file} DESTINATION ${BEIGNET_INSTALL_DIR})
+install (FILES ${pch_object} DESTINATION ${BEIGNET_INSTALL_DIR})
+install (FILES ${CMAKE_CURRENT_BINARY_DIR}/${pcm_lib} DESTINATION ${BEIGNET_INSTALL_DIR})
 # When build beignet itself, we need to export the local precompiled header file and precompiled module
 # file to libcl and utests.
-set (LOCAL_PCH_OBJECT_DIR "${local_pch_object}:${beignet_install_path}/ocl_stdlib.h.pch" PARENT_SCOPE)
-set (LOCAL_PCM_OBJECT_DIR "${CMAKE_CURRENT_BINARY_DIR}/${pcm_lib}:${beignet_install_path}/${pcm_lib}" PARENT_SCOPE)
+set (LOCAL_PCH_OBJECT_DIR "${local_pch_object}:${BEIGNET_INSTALL_DIR}/ocl_stdlib.h.pch" PARENT_SCOPE)
+set (LOCAL_PCM_OBJECT_DIR "${CMAKE_CURRENT_BINARY_DIR}/${pcm_lib}:${BEIGNET_INSTALL_DIR}/${pcm_lib}" PARENT_SCOPE)
 set (LOCAL_GBE_OBJECT_DIR "${CMAKE_CURRENT_BINARY_DIR}/libgbe.so" PARENT_SCOPE)
 set (LOCAL_INTERP_OBJECT_DIR "${CMAKE_CURRENT_BINARY_DIR}/libgbeinterp.so" PARENT_SCOPE)
 
-set (PCH_OBJECT_DIR "${beignet_install_path}/ocl_stdlib.h.pch")
-set (PCM_OBJECT_DIR "${beignet_install_path}/${pcm_lib}")
-set (GBE_OBJECT_DIR "${beignet_install_path}/libgbe.so")
-set (INTERP_OBJECT_DIR "${beignet_install_path}/libgbeinterp.so")
+set (PCH_OBJECT_DIR "${BEIGNET_INSTALL_DIR}/ocl_stdlib.h.pch")
+set (PCM_OBJECT_DIR "${BEIGNET_INSTALL_DIR}/${pcm_lib}")
+set (GBE_OBJECT_DIR "${BEIGNET_INSTALL_DIR}/libgbe.so")
+set (INTERP_OBJECT_DIR "${BEIGNET_INSTALL_DIR}/libgbeinterp.so")
 configure_file (
   "GBEConfig.h.in"
   "GBEConfig.h"
