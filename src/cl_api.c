@@ -1681,7 +1681,7 @@ clEnqueueCopyBuffer(cl_command_queue     command_queue,
   }
 
   if(b_output_kernel_perf)
-	  time_end(command_queue->ctx, "beignet internal kernel : cl_mem_copy", command_queue);
+	  time_end(command_queue->ctx, "beignet internal kernel : cl_mem_copy", "", command_queue);
 
   return 0;
 
@@ -1785,7 +1785,7 @@ clEnqueueCopyBufferRect(cl_command_queue     command_queue,
   }
 
   if(b_output_kernel_perf)
-    time_end(command_queue->ctx, "beignet internal kernel : cl_mem_copy_buffer_rect", command_queue);
+    time_end(command_queue->ctx, "beignet internal kernel : cl_mem_copy_buffer_rect", "", command_queue);
 
 error:
   return err;
@@ -2027,7 +2027,7 @@ clEnqueueCopyImage(cl_command_queue      command_queue,
   }
 
   if(b_output_kernel_perf)
-    time_end(command_queue->ctx, "beignet internal kernel : cl_mem_kernel_copy_image", command_queue);
+    time_end(command_queue->ctx, "beignet internal kernel : cl_mem_kernel_copy_image", "", command_queue);
 
 error:
   return err;
@@ -2091,7 +2091,7 @@ clEnqueueCopyImageToBuffer(cl_command_queue  command_queue,
   }
 
   if(b_output_kernel_perf)
-    time_end(command_queue->ctx, "beignet internal kernel : cl_mem_copy_image_to_buffer", command_queue);
+    time_end(command_queue->ctx, "beignet internal kernel : cl_mem_copy_image_to_buffer", "", command_queue);
 
 error:
   return err;
@@ -2155,7 +2155,7 @@ clEnqueueCopyBufferToImage(cl_command_queue  command_queue,
   }
 
   if(b_output_kernel_perf)
-    time_end(command_queue->ctx, "beignet internal kernel : cl_mem_copy_buffer_to_image", command_queue);
+    time_end(command_queue->ctx, "beignet internal kernel : cl_mem_copy_buffer_to_image", "", command_queue);
 
 error:
   return err;
@@ -2556,7 +2556,12 @@ clEnqueueNDRangeKernel(cl_command_queue  command_queue,
   }
 
   if(b_output_kernel_perf)
-    time_end(command_queue->ctx, cl_kernel_get_name(kernel), command_queue);
+  {
+    if(kernel->program->build_opts != NULL)
+      time_end(command_queue->ctx, cl_kernel_get_name(kernel), kernel->program->build_opts, command_queue);
+    else
+      time_end(command_queue->ctx, cl_kernel_get_name(kernel), "", command_queue);
+  }
 error:
   return err;
 }
