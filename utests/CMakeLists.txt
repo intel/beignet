@@ -138,7 +138,6 @@ set (utests_sources
   builtin_shuffle.cpp
   builtin_shuffle2.cpp
   builtin_sign.cpp
-  builtin_sinpi.cpp
   builtin_lgamma.cpp
   builtin_lgamma_r.cpp
   builtin_tgamma.cpp

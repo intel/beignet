@@ -20,7 +20,14 @@ def udebug(ulpSize,returnType):
   #ulpNum=re.findall(r"([0-9]+)",ulpSize)[0]
   text='''
     static const char* INFORNAN;
-    static %s ULPSIZE;
+    static %s ULPSIZE, ULPSIZE_FACTOR;
+
+    const char* env_strict = getenv("OCL_STRICT_CONFORMANCE");
+
+    if ( strcmp(env_strict, "0") == 0)
+      ULPSIZE_FACTOR = 1000;
+    else
+      ULPSIZE_FACTOR = 1;
     
     if (isinf(cpu_data[index])){
       INFORNAN="INF";
@@ -29,7 +36,8 @@ def udebug(ulpSize,returnType):
       INFORNAN="NAN";
     }
     else{
-      ULPSIZE=cl_%s(cpu_data[index]) * %s;
+       ULPSIZE=ULPSIZE_FACTOR * cl_%s((cpu_data[index] == 0) ? 1 : cpu_data[index])
+               * ((ULPSIZE_FACTOR == 1) ? %s : ( (%s == 0) ? 1 : %s));
     }
 
 #if udebug 
@@ -67,6 +75,7 @@ def udebug(ulpSize,returnType):
   }
 }\n'''%(returnType,\
         ulpUnit(ulpSize),ulpNum(ulpSize),\
+        ulpNum(ulpSize), ulpNum(ulpSize),\
         paraTypeList['string'],paraTypeList['string'],\
         paraTypeList['string'],paraTypeList['string'],\
         paraTypeList['string'],paraTypeList['string'],\
@@ -128,6 +137,7 @@ which can print more values and information to assist debuging the issue.
 #include <stdio.h>
 #include <math.h>
 #include <algorithm>
+#include <string.h>
 
 #define udebug 0
 #define FLT_MAX 0x1.fffffep127f
