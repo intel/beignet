@@ -2656,16 +2656,15 @@ INLINE_OVERLOADABLE float __gen_ocl_internal_exp(float x) {
   P3 = 6.6137559770e-05, /* 0x388ab355 */
   P4 = -1.6533901999e-06, /* 0xb5ddea0e */
   P5 =	4.1381369442e-08; /* 0x3331bb4c */
-  float ln2HI[2],ln2LO[2],halF[2];
   float y,hi=0.0,lo=0.0,c,t;
   int k=0,xsb;
   unsigned hx;
-  ln2HI[0] = 6.9313812256e-01;	/* 0x3f317180 */
-  ln2HI[1] = -6.9313812256e-01;	/* 0xbf317180 */
-  ln2LO[0] = 9.0580006145e-06;  	/* 0x3717f7d1 */
-  ln2LO[1] = -9.0580006145e-06; /* 0xb717f7d1 */
-  halF[0] = 0.5;
-  halF[1] =	-0.5;
+  float ln2HI_0 = 6.9313812256e-01;	/* 0x3f317180 */
+  float ln2HI_1 = -6.9313812256e-01;	/* 0xbf317180 */
+  float ln2LO_0 = 9.0580006145e-06;  	/* 0x3717f7d1 */
+  float ln2LO_1 = -9.0580006145e-06; /* 0xb717f7d1 */
+  float half_0 = 0.5;
+  float half_1 =	-0.5;
 
   GEN_OCL_GET_FLOAT_WORD(hx,x);
   xsb = (hx>>31)&1;		/* sign bit of x */
@@ -2683,12 +2682,13 @@ INLINE_OVERLOADABLE float __gen_ocl_internal_exp(float x) {
   /* argument reduction */
   if(hx > 0x3eb17218) {		/* if  |x| > 0.5 ln2 */
     if(hx < 0x3F851592) {	/* and |x| < 1.5 ln2 */
-      hi = x-ln2HI[xsb]; lo=ln2LO[xsb]; k = 1-xsb-xsb;
+      hi = x-(xsb ==1 ? ln2HI_1 : ln2HI_0); lo= xsb == 1? ln2LO_1 : ln2LO_0; k = 1-xsb-xsb;
     } else {
-      k  = ivln2*x+halF[xsb];
+      float tmp = xsb == 1 ? half_1 : half_0;
+      k  = ivln2*x+tmp;
       t  = k;
-      hi = x - t*ln2HI[0];	/* t*ln2HI is exact here */
-      lo = t*ln2LO[0];
+      hi = x - t*ln2HI_0;	/* t*ln2HI is exact here */
+      lo = t*ln2LO_0;
     }
     x  = hi - lo;
   }
