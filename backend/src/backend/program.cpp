@@ -136,7 +136,7 @@ namespace gbe {
     return true;
   }
 
-  BVAR(OCL_STRICT_CONFORMANCE, true);
+  BVAR(OCL_STRICT_CONFORMANCE, false);
 
   bool Program::buildFromUnit(const ir::Unit &unit, std::string &error) {
     constantSet = new ir::ConstantSet(unit.getConstantSet());
