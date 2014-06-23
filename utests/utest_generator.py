@@ -24,7 +24,7 @@ def udebug(ulpSize,returnType):
 
     const char* env_strict = getenv("OCL_STRICT_CONFORMANCE");
 
-    if ( strcmp(env_strict, "0") == 0)
+    if (env_strict == NULL || strcmp(env_strict, "0") == 0)
       ULPSIZE_FACTOR = 1000;
     else
       ULPSIZE_FACTOR = 1;
