@@ -264,6 +264,10 @@ cl_mem_copy_image_region(const size_t *origin, const size_t *region,
                          const void *src, size_t src_row_pitch, size_t src_slice_pitch,
                          const struct _cl_mem_image *image);
 
+void
+cl_mem_copy_image_to_image(const size_t *dst_origin,const size_t *src_origin, const size_t *region,
+                           const struct _cl_mem_image *dst_image, const struct _cl_mem_image *src_image);
+
 extern cl_mem cl_mem_new_libva_buffer(cl_context ctx,
                                       unsigned int bo_name,
                                       cl_int *errcode);

@@ -47,6 +47,7 @@ enum _cl_internal_ker_type {
   CL_ENQUEUE_COPY_BUFFER_UNALIGN_DST_OFFSET,
   CL_ENQUEUE_COPY_BUFFER_UNALIGN_SRC_OFFSET,
   CL_ENQUEUE_COPY_BUFFER_RECT,
+  CL_ENQUEUE_COPY_IMAGE_1D_TO_1D,             //copy image 1d to image 1d
   CL_ENQUEUE_COPY_IMAGE_2D_TO_2D,             //copy image 2d to image 2d
   CL_ENQUEUE_COPY_IMAGE_3D_TO_2D,             //copy image 3d to image 2d
   CL_ENQUEUE_COPY_IMAGE_2D_TO_3D,             //copy image 2d to image 3d

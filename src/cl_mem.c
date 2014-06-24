@@ -546,6 +546,34 @@ cl_mem_copy_image_region(const size_t *origin, const size_t *region,
   }
 }
 
+void
+cl_mem_copy_image_to_image(const size_t *dst_origin,const size_t *src_origin, const size_t *region,
+                           const struct _cl_mem_image *dst_image, const struct _cl_mem_image *src_image)
+{
+  char* dst= cl_mem_map_auto((cl_mem)dst_image);
+  char* src= cl_mem_map_auto((cl_mem)src_image);
+  size_t dst_offset = dst_image->bpp * dst_origin[0] + dst_image->row_pitch * dst_origin[1] + dst_image->slice_pitch * dst_origin[2];
+  size_t src_offset = src_image->bpp * src_origin[0] + src_image->row_pitch * src_origin[1] + src_image->slice_pitch * src_origin[2];
+  dst= (char*)dst+ dst_offset;
+  src= (char*)src+ src_offset;
+  cl_uint y, z;
+  for (z = 0; z < region[2]; z++) {
+    const char* src_ptr = src;
+    char* dst_ptr = dst;
+    for (y = 0; y < region[1]; y++) {
+      memcpy(dst_ptr, src_ptr, src_image->bpp*region[0]);
+      src_ptr += src_image->row_pitch;
+      dst_ptr += dst_image->row_pitch;
+    }
+    src = (char*)src + src_image->slice_pitch;
+    dst = (char*)dst + dst_image->slice_pitch;
+  }
+
+  cl_mem_unmap_auto((cl_mem)src_image);
+  cl_mem_unmap_auto((cl_mem)dst_image);
+
+}
+
 static void
 cl_mem_copy_image(struct _cl_mem_image *image,
 		  size_t row_pitch,
@@ -1447,33 +1475,66 @@ cl_mem_kernel_copy_image(cl_command_queue queue, struct _cl_mem_image* src_image
   assert(src_image->base.ctx == dst_image->base.ctx);
 
   /* setup the kernel and run. */
-  if(src_image->image_type == CL_MEM_OBJECT_IMAGE2D) {
+  if(src_image->image_type == CL_MEM_OBJECT_IMAGE1D) {
+    if(dst_image->image_type == CL_MEM_OBJECT_IMAGE1D) {
+      extern char cl_internal_copy_image_1d_to_1d_str[];
+      extern int cl_internal_copy_image_1d_to_1d_str_size;
+
+      ker = cl_context_get_static_kernel_from_bin(queue->ctx, CL_ENQUEUE_COPY_IMAGE_1D_TO_1D,
+          cl_internal_copy_image_1d_to_1d_str, (size_t)cl_internal_copy_image_1d_to_1d_str_size, NULL);
+    }
+  } else if(src_image->image_type == CL_MEM_OBJECT_IMAGE2D) {
     if(dst_image->image_type == CL_MEM_OBJECT_IMAGE2D) {
       extern char cl_internal_copy_image_2d_to_2d_str[];
       extern int cl_internal_copy_image_2d_to_2d_str_size;
 
       ker = cl_context_get_static_kernel_from_bin(queue->ctx, CL_ENQUEUE_COPY_IMAGE_2D_TO_2D,
           cl_internal_copy_image_2d_to_2d_str, (size_t)cl_internal_copy_image_2d_to_2d_str_size, NULL);
-    }else if(dst_image->image_type == CL_MEM_OBJECT_IMAGE3D) {
+    } else if(dst_image->image_type == CL_MEM_OBJECT_IMAGE3D) {
       extern char cl_internal_copy_image_2d_to_3d_str[];
       extern int cl_internal_copy_image_2d_to_3d_str_size;
 
       ker = cl_context_get_static_kernel_from_bin(queue->ctx, CL_ENQUEUE_COPY_IMAGE_2D_TO_3D,
           cl_internal_copy_image_2d_to_3d_str, (size_t)cl_internal_copy_image_2d_to_3d_str_size, NULL);
+    } else if(dst_image->image_type == CL_MEM_OBJECT_IMAGE2D_ARRAY) {
+
+      cl_mem_copy_image_to_image(dst_origin, src_origin, region, dst_image, src_image);
+      return CL_SUCCESS;
     }
-  }else if(src_image->image_type == CL_MEM_OBJECT_IMAGE3D) {
+  } else if(src_image->image_type == CL_MEM_OBJECT_IMAGE1D_ARRAY) {
+    if(dst_image->image_type == CL_MEM_OBJECT_IMAGE1D_ARRAY) {
+
+      cl_mem_copy_image_to_image(dst_origin, src_origin, region, dst_image, src_image);
+      return CL_SUCCESS;
+    }
+  } else if(src_image->image_type == CL_MEM_OBJECT_IMAGE2D_ARRAY) {
+    if(dst_image->image_type == CL_MEM_OBJECT_IMAGE2D_ARRAY) {
+
+      cl_mem_copy_image_to_image(dst_origin, src_origin, region, dst_image, src_image);
+      return CL_SUCCESS;
+    } else if(dst_image->image_type == CL_MEM_OBJECT_IMAGE2D) {
+      cl_mem_copy_image_to_image(dst_origin, src_origin, region, dst_image, src_image);
+      return CL_SUCCESS;
+    } else if(dst_image->image_type == CL_MEM_OBJECT_IMAGE3D) {
+      cl_mem_copy_image_to_image(dst_origin, src_origin, region, dst_image, src_image);
+      return CL_SUCCESS;
+    }
+  } else if(src_image->image_type == CL_MEM_OBJECT_IMAGE3D) {
     if(dst_image->image_type == CL_MEM_OBJECT_IMAGE2D) {
       extern char cl_internal_copy_image_3d_to_2d_str[];
       extern int cl_internal_copy_image_3d_to_2d_str_size;
 
       ker = cl_context_get_static_kernel_from_bin(queue->ctx, CL_ENQUEUE_COPY_IMAGE_3D_TO_2D,
           cl_internal_copy_image_3d_to_2d_str, (size_t)cl_internal_copy_image_3d_to_2d_str_size, NULL);
-    }else if(dst_image->image_type == CL_MEM_OBJECT_IMAGE3D) {
+    } else if(dst_image->image_type == CL_MEM_OBJECT_IMAGE3D) {
       extern char cl_internal_copy_image_3d_to_3d_str[];
       extern int cl_internal_copy_image_3d_to_3d_str_size;
 
       ker = cl_context_get_static_kernel_from_bin(queue->ctx, CL_ENQUEUE_COPY_IMAGE_3D_TO_3D,
           cl_internal_copy_image_3d_to_3d_str, (size_t)cl_internal_copy_image_3d_to_3d_str_size, NULL);
+    } else if(dst_image->image_type == CL_MEM_OBJECT_IMAGE2D_ARRAY) {
+      cl_mem_copy_image_to_image(dst_origin, src_origin, region, dst_image, src_image);
+      return CL_SUCCESS;
     }
   }
 
