@@ -2267,7 +2267,7 @@ INLINE_OVERLOADABLE float __gen_ocl_internal_tanpi(float x) {
   return native_tan(x * M_PI_F);
 }
 INLINE_OVERLOADABLE float native_exp2(float x) { return __gen_ocl_exp(x); }
-INLINE_OVERLOADABLE float native_exp(float x) { return __gen_ocl_pow(M_E_F, x); }
+INLINE_OVERLOADABLE float native_exp(float x) { return __gen_ocl_exp(M_LOG2E_F*x); }
 INLINE_OVERLOADABLE float native_exp10(float x) { return __gen_ocl_pow(10, x); }
 INLINE_OVERLOADABLE float __gen_ocl_internal_cbrt(float x) {
   /* copied from fdlibm */
@@ -2640,7 +2640,7 @@ INLINE_OVERLOADABLE float __gen_ocl_internal_rint(float x) {
 
 INLINE_OVERLOADABLE float __gen_ocl_internal_exp(float x) {
   //use native instruction when it has enough precision
-  if (x > 128 || x < -128)
+  if (x > -0x1.6p1 && x < 0x1.6p1)
   {
     return native_exp(x);
   }
@@ -2648,15 +2648,8 @@ INLINE_OVERLOADABLE float __gen_ocl_internal_exp(float x) {
   float o_threshold = 8.8721679688e+01,  /* 0x42b17180 */
   u_threshold = -1.0397208405e+02,  /* 0xc2cff1b5 */
   twom100 = 7.8886090522e-31, 	 /* 2**-100=0x0d800000 */
-  ivln2	 =	1.4426950216e+00, /* 0x3fb8aa3b =1/ln2 */
-  one = 1.0,
-  huge = 1.0e+30,
-  P1 = 1.6666667163e-01, /* 0x3e2aaaab */
-  P2 = -2.7777778450e-03, /* 0xbb360b61 */
-  P3 = 6.6137559770e-05, /* 0x388ab355 */
-  P4 = -1.6533901999e-06, /* 0xb5ddea0e */
-  P5 =	4.1381369442e-08; /* 0x3331bb4c */
-  float y,hi=0.0,lo=0.0,c,t;
+  ivln2	 =	1.4426950216e+00; /* 0x3fb8aa3b =1/ln2 */
+  float y,hi=0.0,lo=0.0,t;
   int k=0,xsb;
   unsigned hx;
   float ln2HI_0 = 6.9313812256e-01;	/* 0x3f317180 */
@@ -2672,17 +2665,16 @@ INLINE_OVERLOADABLE float __gen_ocl_internal_exp(float x) {
 
   /* filter out non-finite argument */
   if(hx >= 0x42b17218) {			/* if |x|>=88.721... */
-    if(hx>0x7f800000)
-      return x+x;			/* NaN */
-    if(hx==0x7f800000)
-      return (xsb==0)? x:0.0; 	/* exp(+-inf)={inf,0} */
-    if(x > o_threshold) return huge*huge; /* overflow */
-    if(x < u_threshold) return twom100*twom100; /* underflow */
+    // native_exp already handled this
+    return native_exp(x);
   }
+
   /* argument reduction */
   if(hx > 0x3eb17218) {		/* if  |x| > 0.5 ln2 */
     if(hx < 0x3F851592) {	/* and |x| < 1.5 ln2 */
-      hi = x-(xsb ==1 ? ln2HI_1 : ln2HI_0); lo= xsb == 1? ln2LO_1 : ln2LO_0; k = 1-xsb-xsb;
+      hi = x-(xsb ==1 ? ln2HI_1 : ln2HI_0);
+      lo= xsb == 1? ln2LO_1 : ln2LO_0;
+      k = 1-xsb-xsb;
     } else {
       float tmp = xsb == 1 ? half_1 : half_0;
       k  = ivln2*x+tmp;
@@ -2692,18 +2684,8 @@ INLINE_OVERLOADABLE float __gen_ocl_internal_exp(float x) {
     }
     x  = hi - lo;
   }
-  else if(hx < 0x31800000)  { /* when |x|<2**-28 */
-    if(huge+x>one) return one+x;/* trigger inexact */
-  }
-  else k = 0;
 
-  /* x is now in primary range */
-  t  = x*x;
-  c  = x - t*(P1+t*(P2+t*(P3+t*(P4+t*P5))));
-  if(k==0)
-    return one-((x*c)/(c-(float)2.0)-x);
-  else
-    y = one-((lo-(x*c)/((float)2.0-c))-hi);
+  y = native_exp(x);
   if(k >= -125) {
     unsigned hy;
     GEN_OCL_GET_FLOAT_WORD(hy,y);
