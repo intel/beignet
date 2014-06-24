@@ -98,7 +98,7 @@ namespace gbe
       return -1;
 
 #define FMT_PLUS_PLUS do {                                  \
-      if (fmt + 1 < end) fmt++;                             \
+      if (fmt + 1 <= end) fmt++;                             \
       else {                                                \
         printf("Error, line: %d, fmt > end\n", __LINE__);   \
         return -1;                                          \
@@ -627,20 +627,21 @@ error:
        conversion need to be applied. */
     switch (arg->getType()->getTypeID()) {
       case Type::IntegerTyID: {
+        bool sign = false;
         switch (slot.state->conversion_specifier) {
           case PRINTF_CONVERSION_I:
           case PRINTF_CONVERSION_D:
-            /* Int to Int, just store. */
-            dst_type = Type::getInt32PtrTy(module->getContext(), 1);
-            sizeof_size = sizeof(int);
-            return true;
-
+            sign = true;
           case PRINTF_CONVERSION_O:
           case PRINTF_CONVERSION_U:
           case PRINTF_CONVERSION_x:
           case PRINTF_CONVERSION_X:
-            /* To uint, add a conversion. */
-            arg = builder->CreateIntCast(arg, Type::getInt32Ty(module->getContext()), true);
+            /* If the bits change, we need to consider the signed. */
+            if (arg->getType() != Type::getInt32Ty(module->getContext())) {
+              arg = builder->CreateIntCast(arg, Type::getInt32Ty(module->getContext()), sign);
+            }
+
+            /* Int to Int, just store. */
             dst_type = Type::getInt32PtrTy(module->getContext(), 1);
             sizeof_size = sizeof(int);
             return true;
@@ -744,6 +745,72 @@ error:
             return true;
           }
         }
+
+      case Type::VectorTyID: {
+        Type* vect_type = arg->getType();
+        Type* elt_type = vect_type->getVectorElementType();
+        int vec_num = vect_type->getVectorNumElements();
+        bool sign = false;
+
+        if (vec_num != slot.state->vector_n) {
+          return false;
+        }
+
+        switch (slot.state->conversion_specifier) {
+          case PRINTF_CONVERSION_I:
+          case PRINTF_CONVERSION_D:
+            sign = true;
+          case PRINTF_CONVERSION_O:
+          case PRINTF_CONVERSION_U:
+          case PRINTF_CONVERSION_x:
+          case PRINTF_CONVERSION_X:
+            if (elt_type->getTypeID() != Type::IntegerTyID)
+              return false;
+
+            /* If the bits change, we need to consider the signed. */
+            if (elt_type != Type::getInt32Ty(elt_type->getContext())) {
+              Value *II = NULL;
+              for (int i = 0; i < vec_num; i++) {
+                Value *vec = II ? II : UndefValue::get(VectorType::get(Type::getInt32Ty(elt_type->getContext()), vec_num));
+                Value *cv = ConstantInt::get(Type::getInt32Ty(elt_type->getContext()), i);
+                Value *org = builder->CreateExtractElement(arg, cv);
+                Value *cvt = builder->CreateIntCast(org, Type::getInt32Ty(module->getContext()), sign);
+                II = builder->CreateInsertElement(vec, cvt, cv);
+              }
+              arg = II;
+            }
+
+            dst_type = arg->getType()->getPointerTo(1);
+            sizeof_size = sizeof(int) * vec_num;
+            return true;
+
+          case PRINTF_CONVERSION_F:
+          case PRINTF_CONVERSION_f:
+          case PRINTF_CONVERSION_E:
+          case PRINTF_CONVERSION_e:
+          case PRINTF_CONVERSION_G:
+          case PRINTF_CONVERSION_g:
+          case PRINTF_CONVERSION_A:
+          case PRINTF_CONVERSION_a:
+            if (elt_type->getTypeID() != Type::DoubleTyID && elt_type->getTypeID() != Type::FloatTyID)
+              return false;
+
+            if (elt_type->getTypeID() != Type::FloatTyID) {
+              Value *II = NULL;
+              for (int i = 0; i < vec_num; i++) {
+                Value *vec = II ? II : UndefValue::get(VectorType::get(Type::getFloatTy(elt_type->getContext()), vec_num));
+                Value *cv = ConstantInt::get(Type::getInt32Ty(elt_type->getContext()), i);
+                Value *org = builder->CreateExtractElement(arg, cv);
+                Value* cvt  = builder->CreateFPCast(org, Type::getFloatTy(module->getContext()));
+                II = builder->CreateInsertElement(vec, cvt, cv);
+              }
+              arg = II;
+            }
+        }
+        dst_type = arg->getType()->getPointerTo(1);
+        sizeof_size = sizeof(int) * vec_num;
+        return true;
+      }
 
       default:
         return false;

@@ -182,6 +182,13 @@ namespace gbe
 
       uint32_t getPrintfBufferElementSize(uint32_t i) {
         PrintfSlot* slot = slots[i];
+        int vec_num = 1;
+        if (slot->state->vector_n > 0) {
+          vec_num = slot->state->vector_n;
+        }
+
+        assert(vec_num > 0 && vec_num <= 16);
+
         switch (slot->state->conversion_specifier) {
           case PRINTF_CONVERSION_I:
           case PRINTF_CONVERSION_D:
@@ -191,7 +198,7 @@ namespace gbe
           case PRINTF_CONVERSION_x:
             /* Char will be aligned to sizeof(int) here. */
           case PRINTF_CONVERSION_C:
-            return (uint32_t)sizeof(int);
+            return (uint32_t)(sizeof(int) * vec_num);
           case PRINTF_CONVERSION_E:
           case PRINTF_CONVERSION_e:
           case PRINTF_CONVERSION_F:
@@ -200,7 +207,7 @@ namespace gbe
           case PRINTF_CONVERSION_g:
           case PRINTF_CONVERSION_A:
           case PRINTF_CONVERSION_a:
-            return (uint32_t)sizeof(float);
+            return (uint32_t)(sizeof(float) * vec_num);
           case PRINTF_CONVERSION_S:
             return (uint32_t)0;
           default:

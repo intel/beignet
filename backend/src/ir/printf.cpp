@@ -84,8 +84,6 @@ namespace gbe
         str += num_str;
       }
 
-      // TODO:  Handle the vector here.
-
       switch (state.length_modifier) {
         case PRINTF_LM_HH:
           str += "hh";
@@ -97,7 +95,7 @@ namespace gbe
           str += "l";
           break;
         case PRINTF_LM_HL:
-          str += "hl";
+          str += "";
           break;
         default:
           assert(state.length_modifier == PRINTF_LM_NONE);
@@ -105,12 +103,12 @@ namespace gbe
     }
 
 #define PRINT_SOMETHING(target_ty, conv)  do {                          \
-      pf_str = pf_str + std::string(#conv);                             \
+      if (!vec_i)                                                       \
+        pf_str = pf_str + std::string(#conv);                           \
       printf(pf_str.c_str(),                                            \
              ((target_ty *)((char *)buf_addr + slot.state->out_buf_sizeof_offset * \
                             global_wk_sz0 * global_wk_sz1 * global_wk_sz2)) \
-             [k*global_wk_sz0*global_wk_sz1 + j*global_wk_sz0 + i]);    \
-      pf_str = "";                                                      \
+             [(k*global_wk_sz0*global_wk_sz1 + j*global_wk_sz0 + i) * vec_num + vec_i]);\
     } while (0)
 
 
@@ -126,80 +124,88 @@ namespace gbe
         for (i = 0; i < global_wk_sz0; i++) {
           for (j = 0; j < global_wk_sz1; j++) {
             for (k = 0; k < global_wk_sz2; k++) {
-              int flag = ((int *)index_addr)[stmt*global_wk_sz0*global_wk_sz1*global_wk_sz2 + k*global_wk_sz0*global_wk_sz1 + j*global_wk_sz0 + i];
+
+              int flag = ((int *)index_addr)[stmt*global_wk_sz0*global_wk_sz1*global_wk_sz2
+                                             + k*global_wk_sz0*global_wk_sz1 + j*global_wk_sz0 + i];
               if (flag) {
-                pf_str = "";
                 for (auto &slot : pf) {
+                  pf_str = "";
+                  int vec_num;
+
                   if (slot.type == PRINTF_SLOT_TYPE_STRING) {
-                    pf_str = pf_str + std::string(slot.str);
+                    printf("%s", slot.str);
                     continue;
                   }
                   assert(slot.type == PRINTF_SLOT_TYPE_STATE);
 
                   generatePrintfFmtString(*slot.state, pf_str);
 
-                  switch (slot.state->conversion_specifier) {
-                    case PRINTF_CONVERSION_D:
-                    case PRINTF_CONVERSION_I:
-                      PRINT_SOMETHING(int, d);
-                      break;
+                  vec_num = slot.state->vector_n > 0 ? slot.state->vector_n : 1;
 
-                    case PRINTF_CONVERSION_O:
-                      PRINT_SOMETHING(int, o);
-                      break;
-                    case PRINTF_CONVERSION_U:
-                      PRINT_SOMETHING(int, u);
-                      break;
-                    case PRINTF_CONVERSION_X:
-                      PRINT_SOMETHING(int, X);
-                      break;
-                    case PRINTF_CONVERSION_x:
-                      PRINT_SOMETHING(int, x);
-                      break;
+                  for (int vec_i = 0; vec_i < vec_num; vec_i++) {
+                    if (vec_i)
+                      printf(",");
 
-                    case PRINTF_CONVERSION_C:
-                      PRINT_SOMETHING(char, c);
-                      break;
+                    switch (slot.state->conversion_specifier) {
+                      case PRINTF_CONVERSION_D:
+                      case PRINTF_CONVERSION_I:
+                        PRINT_SOMETHING(int, d);
+                        break;
 
-                    case PRINTF_CONVERSION_F:
-                      PRINT_SOMETHING(float, F);
-                      break;
-                    case PRINTF_CONVERSION_f:
-                      PRINT_SOMETHING(float, f);
-                      break;
-                    case PRINTF_CONVERSION_E:
-                      PRINT_SOMETHING(float, E);
-                      break;
-                    case PRINTF_CONVERSION_e:
-                      PRINT_SOMETHING(float, e);
-                      break;
-                    case PRINTF_CONVERSION_G:
-                      PRINT_SOMETHING(float, G);
-                      break;
-                    case PRINTF_CONVERSION_g:
-                      PRINT_SOMETHING(float, g);
-                      break;
-                    case PRINTF_CONVERSION_A:
-                      PRINT_SOMETHING(float, A);
-                      break;
-                    case PRINTF_CONVERSION_a:
-                      PRINT_SOMETHING(float, a);
-                      break;
+                      case PRINTF_CONVERSION_O:
+                        PRINT_SOMETHING(int, o);
+                        break;
+                      case PRINTF_CONVERSION_U:
+                        PRINT_SOMETHING(int, u);
+                        break;
+                      case PRINTF_CONVERSION_X:
+                        PRINT_SOMETHING(int, X);
+                        break;
+                      case PRINTF_CONVERSION_x:
+                        PRINT_SOMETHING(int, x);
+                        break;
 
-                    case PRINTF_CONVERSION_S:
-                      pf_str = pf_str + "s";
-                      printf(pf_str.c_str(), slot.state->str.c_str());
-                      pf_str = "";
-                      break;
+                      case PRINTF_CONVERSION_C:
+                        PRINT_SOMETHING(char, c);
+                        break;
 
-                    default:
-                      assert(0);
-                      return;
+                      case PRINTF_CONVERSION_F:
+                        PRINT_SOMETHING(float, F);
+                        break;
+                      case PRINTF_CONVERSION_f:
+                        PRINT_SOMETHING(float, f);
+                        break;
+                      case PRINTF_CONVERSION_E:
+                        PRINT_SOMETHING(float, E);
+                        break;
+                      case PRINTF_CONVERSION_e:
+                        PRINT_SOMETHING(float, e);
+                        break;
+                      case PRINTF_CONVERSION_G:
+                        PRINT_SOMETHING(float, G);
+                        break;
+                      case PRINTF_CONVERSION_g:
+                        PRINT_SOMETHING(float, g);
+                        break;
+                      case PRINTF_CONVERSION_A:
+                        PRINT_SOMETHING(float, A);
+                        break;
+                      case PRINTF_CONVERSION_a:
+                        PRINT_SOMETHING(float, a);
+                        break;
+
+                      case PRINTF_CONVERSION_S:
+                        pf_str = pf_str + "s";
+                        printf(pf_str.c_str(), slot.state->str.c_str());
+                        break;
+
+                      default:
+                        assert(0);
+                        return;
+                    }
                   }
-                }
 
-                if (pf_str != "") {
-                  printf("%s", pf_str.c_str());
+                  pf_str = "";
                 }
               }
             }
