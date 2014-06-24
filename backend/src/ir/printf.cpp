@@ -193,6 +193,9 @@ namespace gbe
                       case PRINTF_CONVERSION_a:
                         PRINT_SOMETHING(float, a);
                         break;
+                      case PRINTF_CONVERSION_P:
+                        PRINT_SOMETHING(int, p);
+                        break;
 
                       case PRINTF_CONVERSION_S:
                         pf_str = pf_str + "s";

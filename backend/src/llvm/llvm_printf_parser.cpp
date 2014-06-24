@@ -228,7 +228,7 @@ namespace gbe
         CONVERSION_SPEC_AND_RET('s', S)
         CONVERSION_SPEC_AND_RET('p', P)
 
-        // %% has been handled
+      // %% has been handled
 
       default:
         return -1;
@@ -334,7 +334,8 @@ error:
     static map<CallInst*, PrintfSet::PrintfFmt*> printfs;
     int printf_num;
 
-    PrintfParser(void) : FunctionPass(ID) {
+    PrintfParser(void) : FunctionPass(ID)
+    {
       module = NULL;
       builder = NULL;
       intTy = NULL;
@@ -345,7 +346,8 @@ error:
       printf_num = 0;
     }
 
-    ~PrintfParser(void) {
+    ~PrintfParser(void)
+    {
       for (auto &s : printfs) {
         delete s.second;
         s.second = NULL;
@@ -357,7 +359,8 @@ error:
     bool parseOnePrintfInstruction(CallInst *& call);
     bool generateOneParameterInst(PrintfSlot& slot, Value*& arg, Type*& dst_type, int& sizeof_size);
 
-    virtual const char *getPassName() const {
+    virtual const char *getPassName() const
+    {
       return "Printf Parser";
     }
 
@@ -744,7 +747,17 @@ error:
             slot.state->str = fmt_arg->getAsCString();
             return true;
           }
+          case PRINTF_CONVERSION_P: {
+            arg = builder->CreatePtrToInt(arg, Type::getInt32Ty(module->getContext()));
+            dst_type = arg->getType()->getPointerTo(1);
+            sizeof_size = sizeof(int);
+            return true;
+          }
+          default:
+            return false;
         }
+
+        break;
 
       case Type::VectorTyID: {
         Type* vect_type = arg->getType();

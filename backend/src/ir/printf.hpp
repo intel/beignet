@@ -196,7 +196,8 @@ namespace gbe
           case PRINTF_CONVERSION_U:
           case PRINTF_CONVERSION_X:
           case PRINTF_CONVERSION_x:
-            /* Char will be aligned to sizeof(int) here. */
+          case PRINTF_CONVERSION_P:
+          /* Char will be aligned to sizeof(int) here. */
           case PRINTF_CONVERSION_C:
             return (uint32_t)(sizeof(int) * vec_num);
           case PRINTF_CONVERSION_E:
