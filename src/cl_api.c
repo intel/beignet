@@ -2533,7 +2533,9 @@ error:
   return err;
 }
 
-static cl_int _cl_map_mem(cl_mem mem, void *ptr, void **mem_ptr, size_t offset, size_t size)
+static cl_int _cl_map_mem(cl_mem mem, void *ptr, void **mem_ptr,
+                          size_t offset, size_t size,
+                          const size_t *origin, const size_t *region)
 {
   cl_int slot = -1;
   int err = CL_SUCCESS;
@@ -2593,6 +2595,15 @@ static cl_int _cl_map_mem(cl_mem mem, void *ptr, void **mem_ptr, size_t offset, 
   mem->mapped_ptr[slot].ptr = *mem_ptr;
   mem->mapped_ptr[slot].v_ptr = ptr;
   mem->mapped_ptr[slot].size = size;
+  if(origin) {
+    assert(region);
+    mem->mapped_ptr[slot].origin[0] = origin[0];
+    mem->mapped_ptr[slot].origin[1] = origin[1];
+    mem->mapped_ptr[slot].origin[2] = origin[2];
+    mem->mapped_ptr[slot].region[0] = region[0];
+    mem->mapped_ptr[slot].region[1] = region[1];
+    mem->mapped_ptr[slot].region[2] = region[2];
+  }
   mem->map_ref++;
 error:
   if (err != CL_SUCCESS)
@@ -2662,7 +2673,7 @@ clEnqueueMapBuffer(cl_command_queue  command_queue,
       goto error;
     }
   }
-  err = _cl_map_mem(buffer, ptr, &mem_ptr, offset, size);
+  err = _cl_map_mem(buffer, ptr, &mem_ptr, offset, size, NULL, NULL);
   if (err != CL_SUCCESS)
     goto error;
 
@@ -2710,13 +2721,6 @@ clEnqueueMapImage(cl_command_queue   command_queue,
     goto error;
   }
 
-  if (image_slice_pitch)
-    *image_slice_pitch = image->slice_pitch;
-  if (image->image_type == CL_MEM_OBJECT_IMAGE1D_ARRAY)
-    *image_row_pitch = image->slice_pitch;
-  else
-    *image_row_pitch = image->row_pitch;
-
   if ((map_flags & CL_MAP_READ &&
        mem->flags & (CL_MEM_HOST_WRITE_ONLY | CL_MEM_HOST_NO_ACCESS)) ||
       (map_flags & (CL_MAP_WRITE | CL_MAP_WRITE_INVALIDATE_REGION) &&
@@ -2727,17 +2731,6 @@ clEnqueueMapImage(cl_command_queue   command_queue,
   }
 
   size_t offset = image->bpp*origin[0] + image->row_pitch*origin[1] + image->slice_pitch*origin[2];
-  size_t size;
-  if(region[2] == 1) {
-    if(region[1] == 1)
-      size = image->bpp * region[0];
-    else
-      size = image->row_pitch * (region[1] - 1) + (image->bpp * (origin[0] + region[0]));
-  } else {
-    size = image->slice_pitch * (region[2] - 1);
-    size += image->row_pitch * (origin[1] + region[1]);
-    size += image->bpp * (origin[0] + region[0]);
-  }
 
   TRY(cl_event_check_waitlist, num_events_in_wait_list, event_wait_list, event, mem->ctx);
 
@@ -2746,9 +2739,6 @@ clEnqueueMapImage(cl_command_queue   command_queue,
   data->mem_obj     = mem;
   data->origin[0]   = origin[0];  data->origin[1] = origin[1];  data->origin[2] = origin[2];
   data->region[0]   = region[0];  data->region[1] = region[1];  data->region[2] = region[2];
-  data->row_pitch   = *image_row_pitch;
-  if (image_slice_pitch)
-    data->slice_pitch = *image_slice_pitch;
   data->ptr         = ptr;
   data->offset      = offset;
   data->unsync_map  = 1;
@@ -2767,9 +2757,22 @@ clEnqueueMapImage(cl_command_queue   command_queue,
       goto error;
     }
   }
-  err = _cl_map_mem(mem, ptr, &mem_ptr, offset, size);
+  err = _cl_map_mem(mem, ptr, &mem_ptr, offset, 0, origin, region);
   if (err != CL_SUCCESS)
     goto error;
+
+  if(mem->flags & CL_MEM_USE_HOST_PTR) {
+    if (image_slice_pitch)
+      *image_slice_pitch = image->host_slice_pitch;
+    *image_row_pitch = image->host_row_pitch;
+  } else {
+    if (image_slice_pitch)
+      *image_slice_pitch = image->slice_pitch;
+    if (image->image_type == CL_MEM_OBJECT_IMAGE1D_ARRAY)
+      *image_row_pitch = image->slice_pitch;
+    else
+      *image_row_pitch = image->row_pitch;
+  }
 
 error:
   if (errcode_ret)

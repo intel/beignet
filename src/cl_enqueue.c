@@ -283,6 +283,7 @@ cl_int cl_enqueue_map_image(enqueue_data *data)
   cl_int err = CL_SUCCESS;
   cl_mem mem = data->mem_obj;
   void *ptr = NULL;
+  size_t row_pitch = 0;
   CHECK_IMAGE(mem, image);
 
   if(data->unsync_map == 1)
@@ -296,12 +297,16 @@ cl_int cl_enqueue_map_image(enqueue_data *data)
     goto error;
   }
   data->ptr = ptr;
+  if (image->image_type == CL_MEM_OBJECT_IMAGE1D_ARRAY)
+    row_pitch = image->slice_pitch;
+  else
+    row_pitch = image->row_pitch;
 
   if(mem->flags & CL_MEM_USE_HOST_PTR) {
     assert(mem->host_ptr);
     cl_mem_copy_image_region(data->origin, data->region,
                              mem->host_ptr, image->host_row_pitch, image->host_slice_pitch,
-                             data->ptr, data->row_pitch, data->slice_pitch, image);
+                             data->ptr, row_pitch, image->slice_pitch, image);
   }
 
 error:
@@ -311,11 +316,13 @@ error:
 cl_int cl_enqueue_unmap_mem_object(enqueue_data *data)
 {
   cl_int err = CL_SUCCESS;
-  int i;
+  int i, j;
   size_t mapped_size = 0;
+  size_t origin[3], region[3];
   void * v_ptr = NULL;
   void * mapped_ptr = data->ptr;
   cl_mem memobj = data->mem_obj;
+  size_t row_pitch = 0;
 
   assert(memobj->mapped_ptr_sz >= memobj->map_ref);
   INVALID_VALUE_IF(!mapped_ptr);
@@ -324,6 +331,12 @@ cl_int cl_enqueue_unmap_mem_object(enqueue_data *data)
       memobj->mapped_ptr[i].ptr = NULL;
       mapped_size = memobj->mapped_ptr[i].size;
       v_ptr = memobj->mapped_ptr[i].v_ptr;
+      for(j=0; j<3; j++) {
+        region[j] = memobj->mapped_ptr[i].region[j];
+        origin[j] = memobj->mapped_ptr[i].origin[j];
+        memobj->mapped_ptr[i].region[j] = 0;
+        memobj->mapped_ptr[i].origin[j] = 0;
+      }
       memobj->mapped_ptr[i].size = 0;
       memobj->mapped_ptr[i].v_ptr = NULL;
       memobj->map_ref--;
@@ -334,10 +347,22 @@ cl_int cl_enqueue_unmap_mem_object(enqueue_data *data)
   INVALID_VALUE_IF(i == memobj->mapped_ptr_sz);
 
   if (memobj->flags & CL_MEM_USE_HOST_PTR) {
-    assert(mapped_ptr >= memobj->host_ptr &&
-      mapped_ptr + mapped_size <= memobj->host_ptr + memobj->size);
-    /* Sync the data. */
-    memcpy(v_ptr, mapped_ptr, mapped_size);
+    if(memobj->type == CL_MEM_BUFFER_TYPE ||
+       memobj->type == CL_MEM_SUBBUFFER_TYPE) {
+      assert(mapped_ptr >= memobj->host_ptr &&
+        mapped_ptr + mapped_size <= memobj->host_ptr + memobj->size);
+      /* Sync the data. */
+      memcpy(v_ptr, mapped_ptr, mapped_size);
+    } else {
+      CHECK_IMAGE(memobj, image);
+      if (image->image_type == CL_MEM_OBJECT_IMAGE1D_ARRAY)
+        row_pitch = image->slice_pitch;
+      else
+        row_pitch = image->row_pitch;
+      cl_mem_copy_image_region(origin, region, v_ptr, row_pitch, image->slice_pitch,
+                               memobj->host_ptr, image->host_row_pitch, image->host_slice_pitch,
+                               image);
+    }
   } else {
     assert(v_ptr == mapped_ptr);
   }

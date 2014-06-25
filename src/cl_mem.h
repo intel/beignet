@@ -55,6 +55,8 @@ typedef struct _cl_mapped_ptr {
   void * ptr;
   void * v_ptr;
   size_t size;
+  size_t origin[3];  /* mapped origin */
+  size_t region[3];  /* mapped region */
 }cl_mapped_ptr;
 
 typedef struct _cl_mem_dstr_cb {
