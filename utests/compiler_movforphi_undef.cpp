@@ -1,4 +1,5 @@
 #include "utest_helper.hpp"
+#include "string.h"
 
 static void compiler_movforphi_undef(void)
 {
@@ -17,6 +18,7 @@ static void compiler_movforphi_undef(void)
 
   format.image_channel_order = CL_RGBA;
   format.image_channel_data_type = CL_UNSIGNED_INT8;
+  memset(&desc, 0, sizeof(desc));
   desc.image_type = CL_MEM_OBJECT_IMAGE2D;
   desc.image_width = w;
   desc.image_height = h;
