@@ -34,7 +34,7 @@ static struct _cl_platform_id intel_platform_data = {
   INIT_ICD(dispatch)
   DECL_INFO_STRING(profile, "FULL_PROFILE")
   DECL_INFO_STRING(version, LIBCL_VERSION_STRING)
-  DECL_INFO_STRING(name, "Experiment Intel Gen OCL Driver")
+  DECL_INFO_STRING(name, "Intel Gen OCL Driver")
   DECL_INFO_STRING(vendor, "Intel")
   DECL_INFO_STRING(icd_suffix_khr, "Intel")
 };
