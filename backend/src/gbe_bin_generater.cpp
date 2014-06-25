@@ -177,6 +177,7 @@ void program_build_instance::serialize_program(void) throw(int)
       if (last_slash != string::npos &&  last_dot != string::npos)
         array_name = bin_path.substr(last_slash + 1, last_dot - 1 - last_slash);
 
+      ofs << "#include <stddef.h>" << "\n";
       ofs << "char " << array_name << "[] = {" << "\n";
 
       sz = gbe_prog->serializeToBin(oss);
@@ -194,7 +195,7 @@ void program_build_instance::serialize_program(void) throw(int)
       ofs << "};\n";
 
       string array_size = array_name + "_size";
-      ofs << "int " << array_size << " = " << sz << ";" << "\n";
+      ofs << "size_t " << array_size << " = " << sz << ";" << "\n";
     } else {
       OUTF_UPDATE_SZ(header);
       OUTF_UPDATE_SZ(header);

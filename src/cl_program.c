@@ -268,7 +268,7 @@ cl_program_create_with_built_in_kernles(cl_context     ctx,
   INVALID_DEVICE_IF (devices[0] != ctx->device);
 
   extern char cl_internal_built_in_kernel_str[];
-  extern int cl_internal_built_in_kernel_str_size;
+  extern size_t cl_internal_built_in_kernel_str_size;
   char* p_built_in_kernel_str =cl_internal_built_in_kernel_str;
   cl_int binary_status = CL_SUCCESS;
 
