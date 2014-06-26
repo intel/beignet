@@ -6,7 +6,7 @@ Furthermore, there are some special tips for Beignet optimization.
 
 1. It is recommended to choose multiple of 16 work group size. Too much SLM usage may reduce parallelism at group level. 
    If kernel uses large amount SLM, it's better to choose large work group size. Please refer the following table for recommendations
-   with some SLM usage.
+   with some SLM usage.  
 | Amount of SLM | 0  | 4K | 8K  | 16K | 32K |  
 | WorkGroup size| 16 | 64 | 128 | 256 | 512 |
 
