@@ -521,10 +521,16 @@ void
 cl_mem_copy_image_region(const size_t *origin, const size_t *region,
                          void *dst, size_t dst_row_pitch, size_t dst_slice_pitch,
                          const void *src, size_t src_row_pitch, size_t src_slice_pitch,
-                         const struct _cl_mem_image *image)
+                         const struct _cl_mem_image *image, cl_bool offset_dst, cl_bool offset_src)
 {
-  size_t offset = image->bpp * origin[0] + dst_row_pitch * origin[1] + dst_slice_pitch * origin[2];
-  dst = (char*)dst + offset;
+  if(offset_dst) {
+    size_t dst_offset = image->bpp * origin[0] + dst_row_pitch * origin[1] + dst_slice_pitch * origin[2];
+    dst = (char*)dst + dst_offset;
+  }
+  if(offset_src) {
+    size_t src_offset = image->bpp * origin[0] + src_row_pitch * origin[1] + src_slice_pitch * origin[2];
+    src = (char*)src + src_offset;
+  }
   if (!origin[0] && region[0] == image->w && dst_row_pitch == src_row_pitch &&
       (region[2] == 1 || (!origin[1] && region[1] == image->h && dst_slice_pitch == src_slice_pitch)))
   {
@@ -585,7 +591,7 @@ cl_mem_copy_image(struct _cl_mem_image *image,
   size_t region[3] = {image->w, image->h, image->depth};
 
   cl_mem_copy_image_region(origin, region, dst_ptr, image->row_pitch, image->slice_pitch,
-                           host_ptr, row_pitch, slice_pitch, image);
+                           host_ptr, row_pitch, slice_pitch, image, CL_FALSE, CL_FALSE); //offset is 0
   cl_mem_unmap_auto((cl_mem)image);
 }
 

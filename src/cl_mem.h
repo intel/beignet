@@ -264,7 +264,7 @@ void
 cl_mem_copy_image_region(const size_t *origin, const size_t *region,
                          void *dst, size_t dst_row_pitch, size_t dst_slice_pitch,
                          const void *src, size_t src_row_pitch, size_t src_slice_pitch,
-                         const struct _cl_mem_image *image);
+                         const struct _cl_mem_image *image, cl_bool offset_dst, cl_bool offset_src);
 
 void
 cl_mem_copy_image_to_image(const size_t *dst_origin,const size_t *src_origin, const size_t *region,

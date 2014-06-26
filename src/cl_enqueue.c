@@ -235,11 +235,11 @@ cl_int cl_enqueue_write_image(enqueue_data *data)
     err = CL_MAP_FAILURE;
     goto error;
   }
-
+  //dst need to add offset
   cl_mem_copy_image_region(data->origin, data->region, dst_ptr,
                            image->row_pitch, image->slice_pitch,
                            data->const_ptr, data->row_pitch,
-                           data->slice_pitch, image);
+                           data->slice_pitch, image, CL_TRUE, CL_FALSE);
   err = cl_mem_unmap_auto(mem);
 
 error:
@@ -304,9 +304,10 @@ cl_int cl_enqueue_map_image(enqueue_data *data)
 
   if(mem->flags & CL_MEM_USE_HOST_PTR) {
     assert(mem->host_ptr);
+    //src and dst need add offset in function cl_mem_copy_image_region
     cl_mem_copy_image_region(data->origin, data->region,
                              mem->host_ptr, image->host_row_pitch, image->host_slice_pitch,
-                             data->ptr, row_pitch, image->slice_pitch, image);
+                             data->ptr, row_pitch, image->slice_pitch, image, CL_TRUE, CL_TRUE);
   }
 
 error:
@@ -355,13 +356,15 @@ cl_int cl_enqueue_unmap_mem_object(enqueue_data *data)
       memcpy(v_ptr, mapped_ptr, mapped_size);
     } else {
       CHECK_IMAGE(memobj, image);
+
       if (image->image_type == CL_MEM_OBJECT_IMAGE1D_ARRAY)
         row_pitch = image->slice_pitch;
       else
         row_pitch = image->row_pitch;
+      //v_ptr have added offset, host_ptr have not added offset.
       cl_mem_copy_image_region(origin, region, v_ptr, row_pitch, image->slice_pitch,
                                memobj->host_ptr, image->host_row_pitch, image->host_slice_pitch,
-                               image);
+                               image, CL_FALSE, CL_TRUE);
     }
   } else {
     assert(v_ptr == mapped_ptr);

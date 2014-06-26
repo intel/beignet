@@ -2550,7 +2550,7 @@ static cl_int _cl_map_mem(cl_mem mem, void *ptr, void **mem_ptr,
   if(mem->flags & CL_MEM_USE_HOST_PTR) {
     assert(mem->host_ptr);
     //only calc ptr here, will do memcpy in enqueue
-    *mem_ptr = mem->host_ptr + offset + sub_offset;
+    *mem_ptr = (char *)mem->host_ptr + offset + sub_offset;
   } else {
     *mem_ptr = ptr;
   }
@@ -2700,6 +2700,7 @@ clEnqueueMapImage(cl_command_queue   command_queue,
   cl_int err = CL_SUCCESS;
   void *ptr  = NULL;
   void *mem_ptr = NULL;
+  size_t offset = 0;
   enqueue_data *data, no_wait_data = { 0 };
 
   CHECK_QUEUE(command_queue);
@@ -2730,8 +2731,6 @@ clEnqueueMapImage(cl_command_queue   command_queue,
     goto error;
   }
 
-  size_t offset = image->bpp*origin[0] + image->row_pitch*origin[1] + image->slice_pitch*origin[2];
-
   TRY(cl_event_check_waitlist, num_events_in_wait_list, event_wait_list, event, mem->ctx);
 
   data = &no_wait_data;
@@ -2740,7 +2739,6 @@ clEnqueueMapImage(cl_command_queue   command_queue,
   data->origin[0]   = origin[0];  data->origin[1] = origin[1];  data->origin[2] = origin[2];
   data->region[0]   = region[0];  data->region[1] = region[1];  data->region[2] = region[2];
   data->ptr         = ptr;
-  data->offset      = offset;
   data->unsync_map  = 1;
 
   if(handle_events(command_queue, num_events_in_wait_list, event_wait_list,
@@ -2757,14 +2755,13 @@ clEnqueueMapImage(cl_command_queue   command_queue,
       goto error;
     }
   }
-  err = _cl_map_mem(mem, ptr, &mem_ptr, offset, 0, origin, region);
-  if (err != CL_SUCCESS)
-    goto error;
 
   if(mem->flags & CL_MEM_USE_HOST_PTR) {
     if (image_slice_pitch)
       *image_slice_pitch = image->host_slice_pitch;
     *image_row_pitch = image->host_row_pitch;
+
+    offset = image->bpp*origin[0] + image->host_row_pitch*origin[1] + image->host_slice_pitch*origin[2];
   } else {
     if (image_slice_pitch)
       *image_slice_pitch = image->slice_pitch;
@@ -2772,7 +2769,10 @@ clEnqueueMapImage(cl_command_queue   command_queue,
       *image_row_pitch = image->slice_pitch;
     else
       *image_row_pitch = image->row_pitch;
+
+    offset = image->bpp*origin[0] + image->row_pitch*origin[1] + image->slice_pitch*origin[2];
   }
+  err = _cl_map_mem(mem, ptr, &mem_ptr, offset, 0, origin, region);
 
 error:
   if (errcode_ret)
