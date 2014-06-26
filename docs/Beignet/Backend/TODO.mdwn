@@ -28,17 +28,17 @@ many things must be implemented:
   instructions at the end of each basic block . They can be easily optimized.
 
 - From LLVM 3.3, we use SPIR IR. We need to use the compiler defined type to
-  represent sampler_t/image2d_t/image1d_t/....
+  represent sampler\_t/image2d\_t/image1d\_t/....
 
 - Considering to use libclc in our project and avoid to use the PCH which is not
   compatible for different clang versions. And may contribute what we have done in
-  the ocl_stdlib.h to libclc if possible.
+  the ocl\_stdlib.h to libclc if possible.
 
 - Optimize math functions. If the native math instructions don't compy with the
   OCL spec, we use pure software style to implement those math instructions which
   is extremely slow, for example. The cos and sin for HD4000 platform are very slow.
   For some applications which may not need such a high accurate results. We may
-  provide a mechanism to use native_xxx functions instead of the extremely slow
+  provide a mechanism to use native\_xxx functions instead of the extremely slow
   version.
 
 Gen IR
@@ -46,21 +46,16 @@ Gen IR
 
 The code is defined in `src/ir`. Main things to do are:
 
+- Convert unstructured BBs to structured format, and leverage Gen's structured
+  instruction such as if/else/endif to encoding those BBs. Then we can save many
+  instructions which are used to maintain software pcips and predications.
+
 - Implement those llvm.memset/llvm.memcpy more efficiently. Currently, we lower
   them as normal memcpy at llvm module level and not considering the intrinsics
   all have a constant data length.
 
 - Finishing the handling of function arguments (see the [[IR
-  description|gen_ir]] for more details)
-
-- Adding support for linking IR units together. OpenCL indeed allows to create
-  programs from several sources
-
-- Uniform analysys. This is a major performance improvement. A "uniform" value
-  is basically a value where regardless the control flow, all the activated
-  lanes will be identical. Trivial examples are immediate values, function
-  arguments. Also, operations on uniform will produce uniform values and so
-  on...
+  description|gen\_ir]] for more details)
 
 - Merging of independent uniform loads (and samples). This is a major
   performance improvement once the uniform analysis is done. Basically, several
@@ -78,19 +73,20 @@ Backend
 
 The code is defined in `src/backend`. Main things to do are:
 
-- Optimize register spilling (see the [[compiler backend description|compiler_backend]] for more details)
+- Optimize register spilling (see the [[compiler backend description|compiler\_backend]] for more details)
 
 - Implementing proper instruction selection. A "simple" tree matching algorithm
   should provide good results for Gen
 
-- Improving the instruction scheduling pass. The current scheduling code has some bugs,
-  we disable it by default currently. We need to fix them in the future.
+- Improving the instruction scheduling pass. Need to implement proper pre register
+  allocation scheduling to lower register pressure.
 
-- Some instructions are introduced in the last code generation stage. We need to
-  introduce a pass after that to eliminate dead instruction or duplicate MOVs and
-  some instructions with zero operands.
+- Reduce the macro instructions in gen\_context. The macro instructions added in
+  gen\_context will not get a chance to do post register allocation scheduling.
 
-- leverage the structured if/endif for branching processing ?
+- leverage the structured if/endif for branching processing.
+
+- Peephole optimization. There are many chances to do further peephole optimization.
 
 General plumbing
 ----------------
@@ -110,5 +106,5 @@ All of those code should be improved and cleaned up are tracked with "XXX"
 comments in the code.
 
 Parts of the code leaks memory when exceptions are used. There are some pointers
-to track and replace with std::unique_ptr. Note that we also add a custom memory
+to track and replace with std::unique\_ptr. Note that we also add a custom memory
 debugger that nicely complements (i.e. it is fast) Valgrind.

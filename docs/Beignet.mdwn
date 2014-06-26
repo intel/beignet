@@ -47,18 +47,17 @@ There are some severe OpenCL related regression in current clang 3.4/3.5 version
 **Note about LLVM 3.5**
 
 * If you want to try Clang/LLVM 3.5, you need to build the clang/llvm with cxx11 enabled:
---enable-cxx11.
+--enable-cxx11. And the recommended specified version is r211037. As LLVM 3.5 hasn't been
+released and still in active development. Use version newer than the recommended version
+may be incompatbiel with beignet.
 
 **Note about OpenCV support**
 
-* We only fully tested the OpenCV 2.4 branch with beignet. And the pass rate is about 99%
-  for beignet 0.8.0. The preferred LLVM/Clang version is 3.3. One OpenCV patch is needed
-  to work with LLVM/clang, the patch is already submitted to the OpenCV upstream 2.4 repo
-  and is waiting for review: [pull request](https://github.com/Itseez/opencv/pull/2318).
-  Before it is merged, you need to apply that patch manually to OpenCV 2.4 branch.
-* As some OpenCL kerne (in OpenCV 2.4 OCL test suite) runs more than 10 seconds, it may
-  be reset by the kernel as the kernel has a GPU hangcheck mechanism. You can disable the
-  hangcheck by invoke the following command on Ubuntu system:
+* We fully tested the OpenCV 2.4 branch with beignet. And the pass rate is about 99%
+  for beignet 0.9. The preferred LLVM/Clang version is 3.3.
+* As some OpenCL kernels run more than 10 seconds, it may  be reset by the linux kernel as
+  the there is a GPU hangcheck mechanism. You can disable the hangcheck by invoke the
+  following command on Ubuntu system:
 
   `# echo -n 0 > /sys/module/i915/parameters/enable_hangcheck`
 
@@ -142,13 +141,14 @@ The code was tested on IVB GT2 with ubuntu and fedora core distribution. The rec
 kernel version is equal or newer than 3.11. Currently Only IVB is supported right now.
 Actually, the code was run on IVB GT2/GT1, and both system are well supported now.
 
-Math Function precision
------------------------
+Known Issues
+------------
 
-Currently Gen does not provide native support of high precision math functions
-required by OpenCL. We provide a software version to achieve high precision,
-which you can turn on through `export OCL_STRICT_CONFORMANCE=1`.
-But be careful, this would make your CL kernel run a little longer.
+* We don't support "extern" keyword on OpenCL kernel side.
+* Currently Gen does not provide native support of high precision math functions
+  required by OpenCL. We provide a software version to achieve high precision,
+  which you can turn on through `export OCL_STRICT_CONFORMANCE=1`.
+  But be careful, this would make your CL kernel run a little longer.
 
 TODO
 ----
@@ -158,13 +158,13 @@ all the piglit OpenCL test cases now. And the pass rate for the OpenCV test suit
 is also good. There are still some remains work items listed as below, most of them
 are extension support and performance related.
 
-- Performance tuning. Till now, the focus of beignet project is to implement all
-  the mandatory functions/features specified by the OpenCL spec. There are plenty
-  of things need to do for performance tuning. For example, the extreme slow software
-  based sin/cos/... math functions due to the native math instruction lack of necessary
-  precision. And all the code is inlined which will increase the icache miss rate
+- Performance tuning. There are some major optimizations need to be done,
+  Peephole optimization, convert to strcutured BBs and leverage Gen's structured
+  instructions, and optimize the extreme slow software based sin/cos/... math
+  functions due to the native math instruction lack of necessary precision.
+  And all the code is inlined which will increase the icache miss rate
   significantly. And many other things which are specified partially in
-  [[here|Beignet/Backend/TODO]]. We will focus on performance tuning after the version 0.8.
+  [[here|Beignet/Backend/TODO]].
 
 - Complete cl\_khr\_gl\_sharing support. We lack of some APIs implementation such
   as clCreateFromGLBuffer,clCreateFromGLRenderbuffer,clGetGLObjectInfo... Currently,

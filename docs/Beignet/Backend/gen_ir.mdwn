@@ -22,7 +22,7 @@ One the HW side, the situation is completely different:
   for the EU. This is a SIMD scalar mode.
 
 - The only source of vectors we are going to have is on the sends instructions
-  (and marginally for some other instructions like the div_rem math instruction)
+  (and marginally for some other instructions like the div\_rem math instruction)
 
 One may therefore argue that we need vector instructions to handle the sends.
 Send will indeed require both vector destinations and sources. This may be a
@@ -33,7 +33,7 @@ Indeed, if we look carefully at the send instructions we see that they will
 require vectors that are *not* vectors in LLVM IR. This code for example:
 
 <code>
-__global uint4 *src;<br/>
+\_\_global uint4 \*src;<br/>
 uint4 x = src[get\_global\_id(0)];<br/>
 </code>
 
@@ -190,7 +190,7 @@ Look at these three examples:
 
 <code>
 struct foo { int x; int y; }; </br>
-\_\_kernel void case1(\_\_global int *dst, struct foo bar) </br>
+\_\_kernel void case1(\_\_global int \*dst, struct foo bar) </br>
 {<br/>
 &nbsp;&nbsp;dst[get\_global\_id(0)] = bar.x + bar.y;<br/>
 }
@@ -203,7 +203,7 @@ pushed into registers and we can replace the loads by register reads.
 
 <code>
 struct foo { int x[16]; }; </br>
-\_\_kernel void case1(\_\_global int *dst, struct foo bar) </br>
+\_\_kernel void case1(\_\_global int \*dst, struct foo bar) </br>
 {<br/>
 &nbsp;&nbsp;dst[get\_global\_id(0)] = bar.x[get\_local\_id(0)];<br/>
 }
@@ -217,7 +217,7 @@ not supported yet).
 
 <code>
 struct foo { int x[16]; }; </br>
-\_\_kernel void case1(\_\_global int *dst, struct foo bar) </br>
+\_\_kernel void case1(\_\_global int \*dst, struct foo bar) </br>
 {<br/>
 bar.x[0] = get\_global\_id(1);<br/>
 &nbsp;&nbsp;dst[get\_global\_id(0)] = bar.x[get\_local\_id(0)];<br/>
