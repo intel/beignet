@@ -5,7 +5,7 @@ Well, the complete code base is somehow a compiler backend for LLVM. Here, we
 really speak about the final code generation passes that you may find in
 `src/backend`.
 
-As explained in [[the scalar IR presentation|gen\_ir]], we bet on a very
+As explained in [[the scalar IR presentation|gen_ir]], we bet on a very
 simple scalar IR to make it easy to parse and modify. The idea is to fix the
 unrelated problem (very Gen specific) where we can i.e. when the code is
 generated.

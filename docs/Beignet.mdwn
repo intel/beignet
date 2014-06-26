@@ -46,10 +46,9 @@ There are some severe OpenCL related regression in current clang 3.4/3.5 version
 
 **Note about LLVM 3.5**
 
-* If you want to try Clang/LLVM 3.5, you need to build the clang/llvm with cxx11 enabled:
---enable-cxx11. And the recommended specified version is r211037. As LLVM 3.5 hasn't been
-released and still in active development. Use version newer than the recommended version
-may be incompatbiel with beignet.
+* If you want to try Clang/LLVM 3.5. The recommended specified version is r211037.
+  As LLVM 3.5 hasn't been released and still in active development. Use version
+  newer than the recommended version may be incompatbiel with beignet.
 
 **Note about OpenCV support**
 
@@ -134,12 +133,17 @@ will run all the unit tests one after the others
 
 will only run `some_unit_test0` and `some_unit_test1` tests
 
-Supported Hardware
-------------------
+Supported Targets
+-----------------
 
-The code was tested on IVB GT2 with ubuntu and fedora core distribution. The recommended
-kernel version is equal or newer than 3.11. Currently Only IVB is supported right now.
-Actually, the code was run on IVB GT2/GT1, and both system are well supported now.
+ * 3rd Generation Intel Core Processors
+ * Intel “Bay Trail” platforms with Intel HD Graphics
+ * 4rd Generation Intel Core Processors, need kernel patch currently, see below
+   for details:
+
+The 4rd Generation Inter Core Processors's support requires some Linux kernel
+modification. You need to apply the patch at:
+[https://01.org/zh/beignet/downloads/linux-kernel-patch-hsw-support](https://01.org/zh/beignet/downloads/linux-kernel-patch-hsw-support)
 
 Known Issues
 ------------
@@ -205,6 +209,11 @@ You are always welcome to contribute to this project, just need to subscribe
 to the beignet mail list and send patches to it for review.
 The official mail list is as below:
 [http://lists.freedesktop.org/mailman/listinfo/beignet](http://lists.freedesktop.org/mailman/listinfo/beignet)
+
+Documents for OpenCL application developers
+-------------------------------------------
+- [[Cross compile|Beignet/howto/cross-compiler-howto]]
+- [[Kernel Optimization Guide|Beignet/optimization-guide]]
 
 The wiki url is as below:
 [http://www.freedesktop.org/wiki/Software/Beignet/](http://www.freedesktop.org/wiki/Software/Beignet/)

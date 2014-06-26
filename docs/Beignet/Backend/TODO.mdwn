@@ -55,7 +55,7 @@ The code is defined in `src/ir`. Main things to do are:
   all have a constant data length.
 
 - Finishing the handling of function arguments (see the [[IR
-  description|gen\_ir]] for more details)
+  description|gen_ir]] for more details)
 
 - Merging of independent uniform loads (and samples). This is a major
   performance improvement once the uniform analysis is done. Basically, several
@@ -73,7 +73,7 @@ Backend
 
 The code is defined in `src/backend`. Main things to do are:
 
-- Optimize register spilling (see the [[compiler backend description|compiler\_backend]] for more details)
+- Optimize register spilling (see the [[compiler backend description|compiler_backend]] for more details)
 
 - Implementing proper instruction selection. A "simple" tree matching algorithm
   should provide good results for Gen
