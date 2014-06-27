@@ -67,12 +67,47 @@ void runtime_compile_link(void)
 
   OCL_ASSERT(err==CL_SUCCESS);
   cl_program input_programs[2] = { program_A, program_B};
-  cl_program linked_program = clLinkProgram(ctx, 0, NULL, NULL, 2, input_programs, NULL, NULL, &err);
-
+  cl_program linked_program = clLinkProgram(ctx, 0, NULL, "-create-library", 2, input_programs, NULL, NULL, &err);
 
   OCL_ASSERT(linked_program != NULL);
   OCL_ASSERT(err == CL_SUCCESS);
+  size_t      binarySize;
+  unsigned char *binary;
 
+  // Get the size of the resulting binary (only one device)
+  err= clGetProgramInfo( linked_program, CL_PROGRAM_BINARY_SIZES, sizeof( binarySize ), &binarySize, NULL );
+  OCL_ASSERT(err==CL_SUCCESS);
+
+  // Create a buffer and get the actual binary
+  binary = (unsigned char*)malloc(sizeof(unsigned char)*binarySize);
+  if (binary == NULL) {
+    OCL_ASSERT(0);
+    return ;
+  }
+
+  unsigned char *buffers[ 1 ] = { binary };
+  // Do another sanity check here first
+  size_t size;
+  cl_int loadErrors[ 1 ];
+  err = clGetProgramInfo( linked_program, CL_PROGRAM_BINARIES, 0, NULL, &size );
+  OCL_ASSERT(err==CL_SUCCESS);
+  if( size != sizeof( buffers ) ){
+    free(binary);
+    return ;
+  }
+
+  err = clGetProgramInfo( linked_program, CL_PROGRAM_BINARIES, sizeof( buffers ), &buffers, NULL );
+  OCL_ASSERT(err==CL_SUCCESS);
+
+  cl_device_id deviceID;
+  err = clGetProgramInfo( linked_program, CL_PROGRAM_DEVICES, sizeof( deviceID), &deviceID, NULL );
+  OCL_ASSERT(err==CL_SUCCESS);
+
+  cl_program program_with_binary = clCreateProgramWithBinary(ctx, 1, &deviceID, &binarySize, (const unsigned char**)buffers, loadErrors, &err);
+  OCL_ASSERT(err==CL_SUCCESS);
+
+  cl_program new_linked_program = clLinkProgram(ctx, 1, &deviceID, NULL, 1, &program_with_binary, NULL, NULL, &err);
+  OCL_ASSERT(err==CL_SUCCESS);
   // link success, run this kernel.
 
   const size_t n = 16;
@@ -104,7 +139,7 @@ void runtime_compile_link(void)
   OCL_UNMAP_BUFFER(0);
   OCL_UNMAP_BUFFER(1);
 
-  kernel = clCreateKernel(linked_program, "runtime_compile_link_a", &err);
+  kernel = clCreateKernel(new_linked_program, "runtime_compile_link_a", &err);
 
   OCL_ASSERT(err == CL_SUCCESS);
 
