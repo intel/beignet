@@ -221,7 +221,8 @@ namespace gbe
     passes.add(createConstantPropagationPass());
     passes.add(createLowerSwitchPass());
     passes.add(createPromoteMemoryToRegisterPass());
-    passes.add(createGVNPass());                  // Remove redundancies
+    if(optLevel > 0)
+      passes.add(createGVNPass());                  // Remove redundancies
     passes.add(createPrintfParserPass());
     passes.add(createScalarizePass());        // Expand all vector ops
     passes.add(createDeadInstEliminationPass());  // Remove simplified instructions
