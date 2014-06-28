@@ -410,7 +410,7 @@ cl_kernel_work_group_sz(cl_kernel ker,
   for (i = 1; i < wk_dim; ++i)
     sz *= local_wk_sz[i];
 
-  if (sz > ker->program->ctx->device->max_work_group_size) {
+  if (sz > cl_get_kernel_max_wg_sz(ker)) {
     err = CL_INVALID_WORK_ITEM_SIZE;
     goto error;
   }

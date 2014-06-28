@@ -577,7 +577,7 @@ intel_gpgpu_state_init(intel_gpgpu_t *gpgpu,
   gpgpu->sampler_bitmap = ~((1 << max_sampler_n) - 1);
 
   /* URB */
-  gpgpu->urb.num_cs_entries = 64;
+  gpgpu->urb.num_cs_entries = max_threads;
   gpgpu->urb.size_cs_entry = size_cs_entry;
   gpgpu->max_threads = max_threads;
 
@@ -1113,6 +1113,7 @@ intel_gpgpu_walker(intel_gpgpu_t *gpgpu,
   BEGIN_BATCH(gpgpu->batch, 11);
   OUT_BATCH(gpgpu->batch, CMD_GPGPU_WALKER | 9);
   OUT_BATCH(gpgpu->batch, 0);                        /* kernel index == 0 */
+  assert(thread_n <= 64);
   if (simd_sz == 16)
     OUT_BATCH(gpgpu->batch, (1 << 30) | (thread_n-1)); /* SIMD16 | thread max */
   else

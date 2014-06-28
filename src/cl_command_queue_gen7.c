@@ -304,12 +304,6 @@ cl_command_queue_ND_range_gen7(cl_command_queue queue,
   kernel.thread_n = thread_n = (local_sz + simd_sz - 1) / simd_sz;
   kernel.curbe_sz = cst_sz;
 
-  /* Barrier and SLM must fit into a single half slice */
-  if(kernel.use_slm > 0 && simd_sz == 8 && local_sz > MAX_GROUP_SIZE_IN_HALFSLICE){
-    fprintf(stderr, "Beignet: Work group CAN NOT large than %d when using barrier or local momery.\n", MAX_GROUP_SIZE_IN_HALFSLICE);
-    return CL_OUT_OF_RESOURCES;
-  }
-
   if (scratch_sz > ker->program->ctx->device->scratch_mem_size) {
     fprintf(stderr, "Beignet: Out of scratch memory %d.\n", scratch_sz);
     return CL_OUT_OF_RESOURCES;

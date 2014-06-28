@@ -25,11 +25,11 @@ struct _cl_device_id {
   DEFINE_ICD(dispatch)
   cl_device_type device_type;
   cl_uint  vendor_id;
-  cl_uint  max_compute_unit;
-  cl_uint  max_thread_per_unit;
-  cl_uint  max_work_item_dimensions;
-  size_t   max_work_item_sizes[3];
-  size_t   max_work_group_size;
+  cl_uint  max_compute_unit;               // maximum EU number
+  cl_uint  max_thread_per_unit;            // maximum EU threads per EU.
+  cl_uint  max_work_item_dimensions;       // should be 3.
+  size_t   max_work_item_sizes[3];         // equal to maximum work group size.
+  size_t   max_work_group_size;            // maximum work group size under simd16 mode.
   cl_uint  preferred_vector_width_char;
   cl_uint  preferred_vector_width_short;
   cl_uint  preferred_vector_width_int;
@@ -101,7 +101,6 @@ struct _cl_device_id {
   size_t driver_version_sz;
   size_t built_in_kernels_sz;
   /* Kernel specific info that we're assigning statically */
-  size_t wg_sz;
   size_t preferred_wg_sz_mul;
   /* SubDevice specific info */
   cl_device_id parent_device;
@@ -137,6 +136,7 @@ extern cl_int cl_get_kernel_workgroup_info(cl_kernel kernel,
                                            size_t *         param_value_size_ret);
 /* Returns the Gen device ID */
 extern cl_int cl_device_get_version(cl_device_id device, cl_int *ver);
+extern size_t cl_get_kernel_max_wg_sz(cl_kernel);
 
 #endif /* __CL_DEVICE_ID_H__ */
 

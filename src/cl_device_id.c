@@ -40,21 +40,19 @@ static struct _cl_device_id intel_ivb_gt2_device = {
   INIT_ICD(dispatch)
   .max_compute_unit = 16,
   .max_thread_per_unit = 8,
-  .max_work_item_sizes = {512, 512, 512},
+  .max_work_item_sizes = {1024, 1024, 1024},
   .max_work_group_size = 1024,
   .max_clock_frequency = 1000,
-  .wg_sz = 1024,
 #include "cl_gen7_device.h"
 };
 
 static struct _cl_device_id intel_ivb_gt1_device = {
   INIT_ICD(dispatch)
-  .max_compute_unit = 8,
-  .max_thread_per_unit = 8,
+  .max_compute_unit = 6,
+  .max_thread_per_unit = 6,
   .max_work_item_sizes = {512, 512, 512},
   .max_work_group_size = 512,
   .max_clock_frequency = 1000,
-  .wg_sz = 512,
 #include "cl_gen7_device.h"
 };
 
@@ -63,9 +61,8 @@ static struct _cl_device_id intel_baytrail_t_device = {
   .max_compute_unit = 4,
   .max_thread_per_unit = 8,
   .max_work_item_sizes = {512, 512, 512},
-  .max_work_group_size = 256,
+  .max_work_group_size = 512,
   .max_clock_frequency = 1000,
-  .wg_sz = 256,
 #include "cl_gen7_device.h"
 };
 
@@ -74,10 +71,9 @@ static struct _cl_device_id intel_hsw_gt1_device = {
   INIT_ICD(dispatch)
   .max_compute_unit = 10,
   .max_thread_per_unit = 7,
-  .max_work_item_sizes = {512, 512, 512},
-  .max_work_group_size = 512,
+  .max_work_item_sizes = {1024, 1024, 1024},
+  .max_work_group_size = 1024,
   .max_clock_frequency = 1000,
-  .wg_sz = 512,
 #include "cl_gen75_device.h"
 };
 
@@ -85,10 +81,9 @@ static struct _cl_device_id intel_hsw_gt2_device = {
   INIT_ICD(dispatch)
   .max_compute_unit = 20,
   .max_thread_per_unit = 7,
-  .max_work_item_sizes = {512, 512, 512},
+  .max_work_item_sizes = {1024, 1024, 1024},
   .max_work_group_size = 1024,
   .max_clock_frequency = 1000,
-  .wg_sz = 1024,
 #include "cl_gen75_device.h"
 };
 
@@ -96,10 +91,9 @@ static struct _cl_device_id intel_hsw_gt3_device = {
   INIT_ICD(dispatch)
   .max_compute_unit = 40,
   .max_thread_per_unit = 7,
-  .max_work_item_sizes = {512, 512, 512},
+  .max_work_item_sizes = {1024, 1024, 1024},
   .max_work_group_size = 1024,
   .max_clock_frequency = 1000,
-  .wg_sz = 2048,
 #include "cl_gen75_device.h"
 };
 
@@ -465,6 +459,26 @@ cl_device_get_version(cl_device_id device, cl_int *ver)
   _DECL_FIELD(FIELD)
 
 #include "cl_kernel.h"
+#include "cl_program.h"
+
+LOCAL size_t
+cl_get_kernel_max_wg_sz(cl_kernel kernel)
+{
+  size_t work_group_size;
+  int simd_width = interp_kernel_get_simd_width(kernel->opaque);
+  int vendor_id = kernel->program->ctx->device->vendor_id;
+  if (!interp_kernel_use_slm(kernel->opaque)) {
+    if (!IS_BAYTRAIL_T(vendor_id) || simd_width == 16)
+      work_group_size = simd_width * 64;
+    else
+      work_group_size = kernel->program->ctx->device->max_compute_unit *
+                        kernel->program->ctx->device->max_thread_per_unit * simd_width;
+  } else
+    work_group_size = kernel->program->ctx->device->max_work_group_size /
+                      (16 / simd_width);
+  return work_group_size;
+}
+
 LOCAL cl_int
 cl_get_kernel_workgroup_info(cl_kernel kernel,
                              cl_device_id device,
@@ -484,13 +498,24 @@ cl_get_kernel_workgroup_info(cl_kernel kernel,
 
   CHECK_KERNEL(kernel);
   switch (param_name) {
-    DECL_FIELD(WORK_GROUP_SIZE, device->wg_sz)
+    case CL_KERNEL_WORK_GROUP_SIZE:
+    {
+      if (param_value && param_value_size < sizeof(size_t))
+        return CL_INVALID_VALUE;
+      if (param_value_size_ret != NULL)
+        *param_value_size_ret = sizeof(size_t);
+      if (param_value) {
+        size_t work_group_size = cl_get_kernel_max_wg_sz(kernel);
+        *(size_t*)param_value = work_group_size;
+        return CL_SUCCESS;
+      }
+    }
     DECL_FIELD(PREFERRED_WORK_GROUP_SIZE_MULTIPLE, device->preferred_wg_sz_mul)
     case CL_KERNEL_LOCAL_MEM_SIZE:
-      {
-        size_t local_mem_sz =  interp_kernel_get_slm_size(kernel->opaque) + kernel->local_mem_sz;
-        _DECL_FIELD(local_mem_sz)
-      }
+    {
+      size_t local_mem_sz =  interp_kernel_get_slm_size(kernel->opaque) + kernel->local_mem_sz;
+      _DECL_FIELD(local_mem_sz)
+    }
     DECL_FIELD(COMPILE_WORK_GROUP_SIZE, kernel->compile_wg_sz)
     DECL_FIELD(PRIVATE_MEM_SIZE, kernel->stack_size)
     default:
