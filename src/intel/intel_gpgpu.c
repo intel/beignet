@@ -116,7 +116,7 @@ struct intel_gpgpu
   struct {
     uint32_t num_cs_entries;
     uint32_t size_cs_entry;  /* size of one entry in 512bit elements */
-  } urb;
+  } curb;
 
   uint32_t max_threads;      /* max threads requested by the user */
 };
@@ -275,6 +275,29 @@ uint32_t intel_gpgpu_get_scratch_index_gen75(uint32_t size) {
     return index;
 }
 
+static cl_int
+intel_gpgpu_get_max_curbe_size(uint32_t device_id)
+{
+  if (IS_BAYTRAIL_T(device_id) ||
+      IS_IVB_GT1(device_id))
+    return 992;
+  else
+    return 2016;
+}
+
+static cl_int
+intel_gpgpu_get_curbe_size(intel_gpgpu_t *gpgpu)
+{
+  int curbe_size = gpgpu->curb.size_cs_entry * gpgpu->curb.num_cs_entries;
+  int max_curbe_size = intel_gpgpu_get_max_curbe_size(gpgpu->drv->device_id);
+
+  if (curbe_size > max_curbe_size) {
+    fprintf(stderr, "warning, curbe size exceed limitation.\n");
+    return max_curbe_size;
+  } else
+    return curbe_size;
+}
+
 static void
 intel_gpgpu_load_vfe_state(intel_gpgpu_t *gpgpu)
 {
@@ -293,10 +316,10 @@ intel_gpgpu_load_vfe_state(intel_gpgpu_t *gpgpu)
     OUT_BATCH(gpgpu->batch, 0);
   }
   /* max_thread | urb entries | (reset_gateway|bypass_gate_way | gpgpu_mode) */
-  OUT_BATCH(gpgpu->batch, 0 | ((gpgpu->max_threads - 1) << 16) | (64 << 8) | 0xc4);
+  OUT_BATCH(gpgpu->batch, 0 | ((gpgpu->max_threads - 1) << 16) | (0 << 8) | 0xc4);
   OUT_BATCH(gpgpu->batch, 0);
   /* curbe_size */
-  OUT_BATCH(gpgpu->batch, 480);
+  OUT_BATCH(gpgpu->batch, intel_gpgpu_get_curbe_size(gpgpu));
   OUT_BATCH(gpgpu->batch, 0);
   OUT_BATCH(gpgpu->batch, 0);
   OUT_BATCH(gpgpu->batch, 0);
@@ -309,14 +332,7 @@ intel_gpgpu_load_curbe_buffer(intel_gpgpu_t *gpgpu)
   BEGIN_BATCH(gpgpu->batch, 4);
   OUT_BATCH(gpgpu->batch, CMD(2,0,1) | (4 - 2));  /* length-2 */
   OUT_BATCH(gpgpu->batch, 0);                     /* mbz */
-// XXX
-#if 1
-  OUT_BATCH(gpgpu->batch,
-            gpgpu->urb.size_cs_entry*
-            gpgpu->urb.num_cs_entries*32);
-#else
-  OUT_BATCH(gpgpu->batch, 5120);
-#endif
+  OUT_BATCH(gpgpu->batch, intel_gpgpu_get_curbe_size(gpgpu) * 32);
   OUT_RELOC(gpgpu->batch, gpgpu->aux_buf.bo, I915_GEM_DOMAIN_INSTRUCTION, 0, gpgpu->aux_offset.curbe_offset);
   ADVANCE_BATCH(gpgpu->batch);
 }
@@ -577,8 +593,8 @@ intel_gpgpu_state_init(intel_gpgpu_t *gpgpu,
   gpgpu->sampler_bitmap = ~((1 << max_sampler_n) - 1);
 
   /* URB */
-  gpgpu->urb.num_cs_entries = max_threads;
-  gpgpu->urb.size_cs_entry = size_cs_entry;
+  gpgpu->curb.num_cs_entries = 64;
+  gpgpu->curb.size_cs_entry = size_cs_entry;
   gpgpu->max_threads = max_threads;
 
   if (gpgpu->printf_b.ibo)
@@ -616,7 +632,7 @@ intel_gpgpu_state_init(intel_gpgpu_t *gpgpu,
   //curbe must be 32 bytes aligned
   size_aux = ALIGN(size_aux, 32);
   gpgpu->aux_offset.curbe_offset = size_aux;
-  size_aux += gpgpu->urb.num_cs_entries * gpgpu->urb.size_cs_entry * 64;
+  size_aux += gpgpu->curb.num_cs_entries * gpgpu->curb.size_cs_entry * 32;
 
   //idrt must be 32 bytes aligned
   size_aux = ALIGN(size_aux, 32);

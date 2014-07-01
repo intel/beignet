@@ -39,7 +39,7 @@
 .address_bits = 32,
 .max_mem_alloc_size = 256 * 1024 * 1024,
 .image_support = CL_TRUE,
-.max_read_image_args = 128,
+.max_read_image_args = 16,
 .max_write_image_args = 8,
 .image_max_array_size = 2048,
 .image2d_max_width = 8192,
