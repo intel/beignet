@@ -214,7 +214,7 @@ error:
 cl_int cl_event_wait_events(cl_uint num_events_in_wait_list, const cl_event *event_wait_list,
                             cl_command_queue queue)
 {
-  cl_int i, j;
+  cl_int i;
 
   /* Check whether wait user events */
   for(i=0; i<num_events_in_wait_list; i++) {
@@ -225,22 +225,12 @@ cl_int cl_event_wait_events(cl_uint num_events_in_wait_list, const cl_event *eve
     if((event_wait_list[i]->type == CL_COMMAND_USER) ||
        (event_wait_list[i]->enqueue_cb &&
        (event_wait_list[i]->enqueue_cb->wait_user_events != NULL))){
-      for(j=0; j<num_events_in_wait_list; j++)
-        cl_event_add_ref(event_wait_list[j]);  //add defer enqueue's wait event reference
       return CL_ENQUEUE_EXECUTE_DEFER;
     }
   }
 
-  if(queue && queue->barrier_events_num ) {
-    if(num_events_in_wait_list == 0){
-      for(j=0; j<queue->wait_events_num; j++)
-        cl_event_add_ref(queue->wait_events[j]);  //add defer enqueue's wait event reference
-    }else{
-      for(j=0; j<num_events_in_wait_list; j++)
-        cl_event_add_ref(event_wait_list[j]);  //add defer enqueue's wait event reference
-    }
-    return CL_ENQUEUE_EXECUTE_DEFER;
-  }
+  if(queue && queue->barrier_events_num )
+      return CL_ENQUEUE_EXECUTE_DEFER;
 
   /* Non user events or all user event finished, wait all enqueue events finish */
   for(i=0; i<num_events_in_wait_list; i++) {
@@ -273,8 +263,10 @@ void cl_event_new_enqueue_callback(cl_event event,
   TRY_ALLOC_NO_ERR (cb, CALLOC(enqueue_callback));
   cb->num_events = num_events_in_wait_list;
   TRY_ALLOC_NO_ERR (cb->wait_list, CALLOC_ARRAY(cl_event, num_events_in_wait_list));
-  for(i=0; i<num_events_in_wait_list; i++)
+  for(i=0; i<num_events_in_wait_list; i++) {
     cb->wait_list[i] = event_wait_list[i];
+    cl_event_add_ref(event_wait_list[i]);  //add defer enqueue's wait event reference
+  }
   cb->event = event;
   cb->next = NULL;
   cb->wait_user_events = NULL;
@@ -295,6 +287,7 @@ void cl_event_new_enqueue_callback(cl_event event,
 
       /* Insert the user event to enqueue_callback's wait_user_events */
       TRY(cl_event_insert_user_event, &cb->wait_user_events, queue->wait_events[i]);
+      cl_event_add_ref(queue->wait_events[i]);
     }
   }
 
@@ -317,6 +310,7 @@ void cl_event_new_enqueue_callback(cl_event event,
       }
       /* Insert the user event to enqueue_callback's wait_user_events */
       TRY(cl_event_insert_user_event, &cb->wait_user_events, event_wait_list[i]);
+      cl_event_add_ref(event_wait_list[i]);
       cl_command_queue_insert_event(event->queue, event_wait_list[i]);
       if(data->type == EnqueueBarrier){
         cl_command_queue_insert_barrier_event(event->queue, event_wait_list[i]);
@@ -340,6 +334,7 @@ void cl_event_new_enqueue_callback(cl_event event,
 
         /* Insert the user event to enqueue_callback's wait_user_events */
         TRY(cl_event_insert_user_event, &cb->wait_user_events, user_events->event);
+        cl_event_add_ref(user_events->event);
         cl_command_queue_insert_event(event->queue, user_events->event);
         if(data->type == EnqueueBarrier){
           cl_command_queue_insert_barrier_event(event->queue, user_events->event);
@@ -362,10 +357,14 @@ error:
     while(cb->wait_user_events) {
       u_ev = cb->wait_user_events;
       cb->wait_user_events = cb->wait_user_events->next;
+      cl_event_delete(u_ev->event);
       cl_free(u_ev);
     }
-    if(cb->wait_list)
-      cl_free(cb->wait_list);
+    for(i=0; i<num_events_in_wait_list; i++) {
+      if(cb->wait_list[i]) {
+        cl_event_delete(cb->wait_list[i]);
+      }
+    }
     cl_free(cb);
   }
   goto exit;
@@ -437,6 +436,7 @@ void cl_event_set_status(cl_event event, cl_int status)
   while(enqueue_cb) {
     /* Remove this user event in enqueue_cb, update the header if needed. */
     cl_event_remove_user_event(&enqueue_cb->wait_user_events, event);
+    cl_event_delete(event);
 
     /* Still wait on other user events */
     if(enqueue_cb->wait_user_events != NULL) {
