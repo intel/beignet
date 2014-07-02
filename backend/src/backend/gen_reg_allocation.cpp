@@ -256,8 +256,6 @@ namespace gbe
     getRegAttrib(reg, regSize, &family);
     uint32_t grfOffset = allocateReg(interval, regSize, regSize);
     if (grfOffset == 0) {
-      /* this register is going to be spilled. */
-      GBE_ASSERT(!(reservedReg && family != ir::FAMILY_DWORD && family != ir::FAMILY_QWORD));
       return false;
     }
     insertNewReg(reg, grfOffset);
@@ -685,12 +683,7 @@ namespace gbe
         const uint32_t maxAlignment = ctx.getSimdWidth()/8*GEN_REG_SIZE;
         const uint32_t grfOffset = allocateReg(interval, size, maxAlignment);
         if(grfOffset == 0) {
-          ir::RegisterFamily family;
           for(int i = vector->regNum-1; i >= 0; i--) {
-            family = ctx.sel->getRegisterFamily(vector->reg[i].reg());
-            // we currently only support DWORD/QWORD spill
-            if(family != ir::FAMILY_DWORD && family != ir::FAMILY_QWORD)
-              return false;
             if (!spillReg(vector->reg[i].reg()))
               return false;
           }
@@ -830,6 +823,12 @@ namespace gbe
     if (interval.reg.value() >= ctx.getFunction().getRegisterFile().regNum() &&
         ctx.getSimdWidth() == 16)
       return false;
+
+    ir::RegisterFamily family = ctx.sel->getRegisterFamily(interval.reg);
+    // we currently only support DWORD/QWORD spill
+    if(family != ir::FAMILY_DWORD && family != ir::FAMILY_QWORD)
+      return false;
+
     SpillRegTag spillTag;
     spillTag.isTmpReg = interval.maxID == interval.minID;
     spillTag.addr = -1;
