@@ -1209,9 +1209,7 @@ intel_gpgpu_event_pending(intel_gpgpu_t *gpgpu, intel_event_t *event)
   assert(event->batch == NULL);    //This command haven't pengding.
   event->batch = intel_batchbuffer_new(gpgpu->drv);
   assert(event->batch);
-  *event->batch = *gpgpu->batch;
-  if(event->batch->buffer)
-    drm_intel_bo_reference(event->batch->buffer);
+  intel_batchbuffer_take(gpgpu->batch, event->batch);
 }
 
 static void

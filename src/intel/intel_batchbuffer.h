@@ -101,6 +101,7 @@ extern void intel_batchbuffer_init(intel_batchbuffer_t*, struct intel_driver*);
 extern void intel_batchbuffer_terminate(intel_batchbuffer_t*);
 extern void intel_batchbuffer_flush(intel_batchbuffer_t*);
 extern void intel_batchbuffer_reset(intel_batchbuffer_t*, size_t sz);
+extern void intel_batchbuffer_take(intel_batchbuffer_t*, intel_batchbuffer_t *);
 
 static INLINE uint32_t
 intel_batchbuffer_space(const intel_batchbuffer_t *batch)

@@ -186,3 +186,15 @@ intel_batchbuffer_delete(intel_batchbuffer_t *batch)
   cl_free(batch);
 }
 
+LOCAL void
+intel_batchbuffer_take(intel_batchbuffer_t *from, intel_batchbuffer_t *to)
+{
+  *to = *from;
+  //Need not unreference the buffer, to will unreference it.
+  from->buffer = NULL;
+  from->map = NULL;
+  from->ptr = NULL;
+  from->size = 0;
+  from->atomic = 0;
+  from->enable_slm = 0;
+}
