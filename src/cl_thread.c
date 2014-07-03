@@ -209,6 +209,26 @@ void cl_invalid_thread_gpgpu(cl_command_queue queue)
   spec->valid = 0;
 }
 
+cl_gpgpu cl_thread_gpgpu_take(cl_command_queue queue)
+{
+  queue_thread_private *thread_private = ((queue_thread_private *)(queue->thread_data));
+  thread_spec_data* spec = NULL;
+
+  pthread_mutex_lock(&thread_private->thread_data_lock);
+  spec = thread_private->threads_data[thread_id];
+  assert(spec);
+  pthread_mutex_unlock(&thread_private->thread_data_lock);
+
+  if (!spec->valid)
+    return NULL;
+
+  assert(spec->gpgpu);
+  cl_gpgpu gpgpu = spec->gpgpu;
+  spec->gpgpu = NULL;
+  spec->valid = 0;
+  return gpgpu;
+}
+
 /* The destructor for clean the thread specific data. */
 void cl_thread_data_destroy(cl_command_queue queue)
 {

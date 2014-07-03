@@ -41,6 +41,7 @@ struct _cl_command_queue {
   cl_int    wait_events_num;           /* Number of Non-complete user events */
   cl_int    wait_events_size;          /* The size of array that wait_events point to */
   cl_event  last_event;                /* The last event in the queue, for enqueue mark used */
+  cl_event  current_event;             /* Current event. */
   cl_command_queue_properties  props;  /* Queue properties */
   cl_command_queue prev, next;         /* We chain the command queues together */
   void *thread_data;                   /* Used to store thread context data */
@@ -81,6 +82,9 @@ cl_int cl_command_queue_set_fulsim_buffer(cl_command_queue, cl_mem);
 
 /* Flush for the command queue */
 extern cl_int cl_command_queue_flush(cl_command_queue);
+
+/* Flush for the specified gpgpu */
+extern void cl_command_queue_flush_gpgpu(cl_command_queue, cl_gpgpu);
 
 /* Wait for the completion of the command queue */
 extern cl_int cl_command_queue_finish(cl_command_queue);

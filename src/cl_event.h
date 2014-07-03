@@ -63,6 +63,7 @@ struct _cl_event {
   cl_command_queue   queue;       /* The command queue associated with event */
   cl_command_type    type;        /* The command type associated with event */
   cl_int             status;      /* The execution status */
+  cl_gpgpu           gpgpu;       /* Current gpgpu, owned by this structure. */
   cl_gpgpu_event     gpgpu_event; /* The event object communicate with hardware */
   user_callback*     user_cb;     /* The event callback functions */
   enqueue_callback*  enqueue_cb;  /* This event's enqueue */
@@ -95,9 +96,11 @@ cl_int cl_event_marker_with_wait_list(cl_command_queue, cl_uint, const cl_event 
 cl_int cl_event_barrier_with_wait_list(cl_command_queue, cl_uint, const cl_event *,  cl_event*);
 /* Do the event profiling */
 cl_int cl_event_get_timestamp(cl_event event, cl_profiling_info param_name);
-/*insert the user event*/
+/* insert the user event */
 cl_int cl_event_insert_user_event(user_event** p_u_ev, cl_event event);
-/*remove the user event*/
+/* remove the user event */
 cl_int cl_event_remove_user_event(user_event** p_u_ev, cl_event event);
+/* flush the event's pending gpgpu batch buffer and notify driver this gpgpu event has been flushed. */
+void cl_event_flush(cl_event event);
 #endif /* __CL_EVENT_H__ */
 

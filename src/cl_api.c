@@ -69,7 +69,7 @@ handle_events(cl_command_queue queue, cl_int num, const cl_event *wait_list,
               cl_event* event, enqueue_data* data, cl_command_type type)
 {
   cl_int status = cl_event_wait_events(num, wait_list, queue);
-  cl_event e;
+  cl_event e = NULL;
   if(event != NULL || status == CL_ENQUEUE_EXECUTE_DEFER) {
     e = cl_event_new(queue->ctx, queue, type, event!=NULL);
 
@@ -85,6 +85,7 @@ handle_events(cl_command_queue queue, cl_int num, const cl_event *wait_list,
       cl_event_new_enqueue_callback(e, data, num, wait_list);
     }
   }
+  queue->current_event = e;
   return status;
 }
 

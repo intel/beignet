@@ -41,4 +41,7 @@ void cl_set_thread_batch_buf(cl_command_queue queue, void* buf);
 /* Used to get the batch buffer of each thread. */
 void* cl_get_thread_batch_buf(cl_command_queue queue);
 
+/* take current gpgpu from the thread gpgpu pool. */
+cl_gpgpu cl_thread_gpgpu_take(cl_command_queue queue);
+
 #endif /* __CL_THREAD_H__ */

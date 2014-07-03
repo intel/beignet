@@ -46,6 +46,17 @@ cl_event_is_gpu_command_type(cl_command_type type)
   }
 }
 
+void cl_event_flush(cl_event event)
+{
+  assert(event->gpgpu_event != NULL);
+  if (event->gpgpu) {
+    cl_command_queue_flush_gpgpu(event->queue, event->gpgpu);
+    cl_gpgpu_delete(event->gpgpu);
+    event->gpgpu = NULL;
+  }
+  cl_gpgpu_event_flush(event->gpgpu_event);
+}
+
 cl_event cl_event_new(cl_context ctx, cl_command_queue queue, cl_command_type type, cl_bool emplict)
 {
   cl_event event = NULL;
@@ -138,6 +149,11 @@ void cl_event_delete(cl_event event)
   pthread_mutex_unlock(&event->ctx->event_lock);
   cl_context_delete(event->ctx);
 
+  if (event->gpgpu) {
+    fprintf(stderr, "Warning: a event is deleted with a pending enqueued task.\n");
+    cl_gpgpu_delete(event->gpgpu);
+    event->gpgpu = NULL;
+  }
   cl_free(event);
 }
 
@@ -257,7 +273,6 @@ void cl_event_new_enqueue_callback(cl_event event,
   cl_command_queue queue = event->queue;
   cl_int i;
   cl_int err = CL_SUCCESS;
-  GET_QUEUE_THREAD_GPGPU(data->queue);
 
   /* Allocate and initialize the structure itself */
   TRY_ALLOC_NO_ERR (cb, CALLOC(enqueue_callback));
@@ -347,7 +362,7 @@ void cl_event_new_enqueue_callback(cl_event event,
     }
   }
   if(data->queue != NULL && event->gpgpu_event != NULL) {
-    cl_gpgpu_event_pending(gpgpu, event->gpgpu_event);
+    event->gpgpu = cl_thread_gpgpu_take(event->queue);
     data->ptr = (void *)event->gpgpu_event;
   }
   cb->data = *data;
@@ -397,8 +412,11 @@ void cl_event_set_status(cl_event event, cl_int status)
         if(event->gpgpu_event)
           cl_gpgpu_event_update_status(event->gpgpu_event, 1);  //now set complet, need refine
       } else {
-        if(event->gpgpu_event)
-          cl_gpgpu_event_cancel(event->gpgpu_event);  //Error cancel the enqueue
+        if(event->gpgpu_event) {
+          // Error then cancel the enqueued event.
+          cl_gpgpu_delete(event->gpgpu);
+          event->gpgpu = NULL;
+        }
       }
 
       event->status = status;  //Change the event status after enqueue and befor unlock

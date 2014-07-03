@@ -28,6 +28,7 @@
 #include "cl_alloc.h"
 #include "cl_driver.h"
 #include "cl_khr_icd.h"
+#include "cl_event.h"
 #include "performance.h"
 
 #include <assert.h>
@@ -421,10 +422,9 @@ error:
   return err;
 }
 
-LOCAL cl_int
-cl_command_queue_flush(cl_command_queue queue)
+LOCAL void
+cl_command_queue_flush_gpgpu(cl_command_queue queue, cl_gpgpu gpgpu)
 {
-  GET_QUEUE_THREAD_GPGPU(queue);
   size_t global_wk_sz[3];
   void* printf_info = cl_gpgpu_get_printf_info(gpgpu, global_wk_sz);
 
@@ -447,7 +447,15 @@ cl_command_queue_flush(cl_command_queue queue)
     global_wk_sz[0] = global_wk_sz[1] = global_wk_sz[2] = 0;
     cl_gpgpu_set_printf_info(gpgpu, NULL, global_wk_sz);
   }
+}
 
+LOCAL cl_int
+cl_command_queue_flush(cl_command_queue queue)
+{
+  GET_QUEUE_THREAD_GPGPU(queue);
+  cl_command_queue_flush_gpgpu(queue, gpgpu);
+  if (queue->current_event)
+    cl_event_flush(queue->current_event);
   cl_invalid_thread_gpgpu(queue);
   return CL_SUCCESS;
 }

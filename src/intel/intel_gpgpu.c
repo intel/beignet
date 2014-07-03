@@ -60,9 +60,8 @@ typedef struct surface_heap {
 } surface_heap_t;
 
 typedef struct intel_event {
-  intel_batchbuffer_t *batch;
-  drm_intel_bo* buffer;
-  drm_intel_bo* ts_buf;
+  drm_intel_bo *buffer;
+  drm_intel_bo *ts_buf;
   int status;
 } intel_event_t;
 
@@ -569,12 +568,19 @@ intel_gpgpu_check_binded_buf_address(intel_gpgpu_t *gpgpu)
 }
 
 static void
+intel_gpgpu_flush_batch_buffer(intel_batchbuffer_t *batch)
+{
+  assert(batch);
+  intel_batchbuffer_emit_mi_flush(batch);
+  intel_batchbuffer_flush(batch);
+}
+
+static void
 intel_gpgpu_flush(intel_gpgpu_t *gpgpu)
 {
   if (!gpgpu->batch || !gpgpu->batch->buffer)
     return;
-  intel_batchbuffer_emit_mi_flush(gpgpu->batch);
-  intel_batchbuffer_flush(gpgpu->batch);
+  intel_gpgpu_flush_batch_buffer(gpgpu->batch);
   intel_gpgpu_check_binded_buf_address(gpgpu);
 }
 
@@ -1156,11 +1162,10 @@ intel_gpgpu_event_new(intel_gpgpu_t *gpgpu)
   intel_event_t *event = NULL;
   TRY_ALLOC_NO_ERR (event, CALLOC(intel_event_t));
 
-  event->status = command_queued;
-  event->batch = NULL;
   event->buffer = gpgpu->batch->buffer;
-  if(event->buffer != NULL)
+  if (event->buffer)
     drm_intel_bo_reference(event->buffer);
+  event->status = command_queued;
 
   if(gpgpu->time_stamp_b.bo) {
     event->ts_buf = gpgpu->time_stamp_b.bo;
@@ -1175,6 +1180,17 @@ error:
   goto exit;
 }
 
+/*
+   The upper layer already flushed the batch buffer, just update
+   internal status to command_submitted.
+*/
+static void
+intel_gpgpu_event_flush(intel_event_t *event)
+{
+  assert(event->status == command_queued);
+  event->status = command_running;
+}
+
 static int
 intel_gpgpu_event_update_status(intel_event_t *event, int wait)
 {
@@ -1182,7 +1198,7 @@ intel_gpgpu_event_update_status(intel_event_t *event, int wait)
     return event->status;
 
   if (event->buffer &&
-      event->batch == NULL &&        //have flushed
+      event->status == command_running &&
       !drm_intel_bo_busy(event->buffer)) {
     event->status = command_complete;
     drm_intel_bo_unreference(event->buffer);
@@ -1203,36 +1219,8 @@ intel_gpgpu_event_update_status(intel_event_t *event, int wait)
 }
 
 static void
-intel_gpgpu_event_pending(intel_gpgpu_t *gpgpu, intel_event_t *event)
-{
-  assert(event->buffer);           //This is gpu enqueue command
-  assert(event->batch == NULL);    //This command haven't pengding.
-  event->batch = intel_batchbuffer_new(gpgpu->drv);
-  assert(event->batch);
-  intel_batchbuffer_take(gpgpu->batch, event->batch);
-}
-
-static void
-intel_gpgpu_event_resume(intel_event_t *event)
-{
-  assert(event->batch);           //This command have pending.
-  intel_batchbuffer_flush(event->batch);
-  intel_batchbuffer_delete(event->batch);
-  event->batch = NULL;
-}
-
-static void
-intel_gpgpu_event_cancel(intel_event_t *event)
-{
-  assert(event->batch);           //This command have pending.
-  intel_batchbuffer_delete(event->batch);
-  event->batch = NULL;
-}
-
-static void
 intel_gpgpu_event_delete(intel_event_t *event)
 {
-  assert(event->batch == NULL);   //This command must have been flushed.
   if(event->buffer)
     drm_intel_bo_unreference(event->buffer);
   if(event->ts_buf)
@@ -1412,10 +1400,8 @@ intel_set_gpgpu_callbacks(int device_id)
   cl_gpgpu_bind_sampler = (cl_gpgpu_bind_sampler_cb *) intel_gpgpu_bind_sampler;
   cl_gpgpu_set_scratch = (cl_gpgpu_set_scratch_cb *) intel_gpgpu_set_scratch;
   cl_gpgpu_event_new = (cl_gpgpu_event_new_cb *)intel_gpgpu_event_new;
+  cl_gpgpu_event_flush = (cl_gpgpu_event_flush_cb *)intel_gpgpu_event_flush;
   cl_gpgpu_event_update_status = (cl_gpgpu_event_update_status_cb *)intel_gpgpu_event_update_status;
-  cl_gpgpu_event_pending = (cl_gpgpu_event_pending_cb *)intel_gpgpu_event_pending;
-  cl_gpgpu_event_resume = (cl_gpgpu_event_resume_cb *)intel_gpgpu_event_resume;
-  cl_gpgpu_event_cancel = (cl_gpgpu_event_cancel_cb *)intel_gpgpu_event_cancel;
   cl_gpgpu_event_delete = (cl_gpgpu_event_delete_cb *)intel_gpgpu_event_delete;
   cl_gpgpu_event_get_exec_timestamp = (cl_gpgpu_event_get_exec_timestamp_cb *)intel_gpgpu_event_get_exec_timestamp;
   cl_gpgpu_event_get_gpu_cur_timestamp = (cl_gpgpu_event_get_gpu_cur_timestamp_cb *)intel_gpgpu_event_get_gpu_cur_timestamp;
