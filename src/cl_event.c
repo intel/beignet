@@ -261,11 +261,14 @@ void cl_event_new_enqueue_callback(cl_event event,
 
   /* Allocate and initialize the structure itself */
   TRY_ALLOC_NO_ERR (cb, CALLOC(enqueue_callback));
-  cb->num_events = num_events_in_wait_list;
+  cb->num_events = 0;
   TRY_ALLOC_NO_ERR (cb->wait_list, CALLOC_ARRAY(cl_event, num_events_in_wait_list));
   for(i=0; i<num_events_in_wait_list; i++) {
-    cb->wait_list[i] = event_wait_list[i];
-    cl_event_add_ref(event_wait_list[i]);  //add defer enqueue's wait event reference
+    //user event will insert to cb->wait_user_events, need not in wait list, avoid ref twice
+    if(event_wait_list[i]->type != CL_COMMAND_USER) {
+      cb->wait_list[cb->num_events++] = event_wait_list[i];
+      cl_event_add_ref(event_wait_list[i]);  //add defer enqueue's wait event reference
+    }
   }
   cb->event = event;
   cb->next = NULL;
@@ -360,7 +363,7 @@ error:
       cl_event_delete(u_ev->event);
       cl_free(u_ev);
     }
-    for(i=0; i<num_events_in_wait_list; i++) {
+    for(i=0; i<cb->num_events; i++) {
       if(cb->wait_list[i]) {
         cl_event_delete(cb->wait_list[i]);
       }

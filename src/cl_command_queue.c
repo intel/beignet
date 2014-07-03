@@ -517,8 +517,12 @@ cl_command_queue_remove_event(cl_command_queue queue, cl_event event)
   if(i == queue->wait_events_num)
     return;
 
-  for(; i<queue->wait_events_num-1; i++) {
-    queue->wait_events[i] = queue->wait_events[i+1];
+  if(i == queue->wait_events_num - 1) {
+    queue->wait_events[i] = NULL;
+  } else {
+    for(; i<queue->wait_events_num-1; i++) {
+      queue->wait_events[i] = queue->wait_events[i+1];
+    }
   }
   queue->wait_events_num -= 1;
 }
@@ -583,8 +587,12 @@ cl_command_queue_remove_barrier_event(cl_command_queue queue, cl_event event)
   if(i == queue->barrier_events_num)
     return;
 
-  for(; i<queue->barrier_events_num-1; i++) {
-    queue->barrier_events[i] = queue->barrier_events[i+1];
+  if(i == queue->barrier_events_num - 1) {
+    queue->barrier_events[i] = NULL;
+  } else {
+    for(; i<queue->barrier_events_num-1; i++) {
+      queue->barrier_events[i] = queue->barrier_events[i+1];
+    }
   }
   queue->barrier_events_num -= 1;
 }
