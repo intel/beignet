@@ -6,6 +6,13 @@ include_directories(${CMAKE_CURRENT_SOURCE_DIR}
                     ${MESA_SOURCE_INCLUDES})
 
 if (NOT GEN_PCI_ID)
+# lspci
+  Find_Program(LSPCI lspci)
+  IF(LSPCI)
+    MESSAGE(STATUS "Looking for lspci - found")
+  ELSE(LSPCI)
+    MESSAGE(FATAL_ERROR "Looking for lspci - not found")
+  ENDIF(LSPCI)
   execute_process(COMMAND "${CMAKE_CURRENT_SOURCE_DIR}/GetGenID.sh"
     OUTPUT_VARIABLE GEN_PCI_ID)
   message(STATUS "Platform Gen PCI id is " ${GEN_PCI_ID})
