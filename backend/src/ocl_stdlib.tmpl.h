@@ -2264,7 +2264,33 @@ INLINE_OVERLOADABLE float native_tan(float x) {
   return native_sin(x) / native_cos(x);
 }
 INLINE_OVERLOADABLE float __gen_ocl_internal_tanpi(float x) {
-  return native_tan(x * M_PI_F);
+  float sign = 1.0f;
+  int ix;
+  if(isinf(x)) return NAN;
+  if(x < 0.0f) { x = -x; sign = -1.0f; }
+  GEN_OCL_GET_FLOAT_WORD(ix, x);
+  if(x> 0x1.0p24) return 0.0f;
+  float m = __gen_ocl_internal_floor(x);
+  ix = (int)m;
+  m = x-m;
+  int n = __gen_ocl_internal_floor(m*4.0f);
+  if(m == 0.5f) {
+    return (ix&0x1) == 0 ? sign*INFINITY : sign*-INFINITY;
+  }
+  if(m == 0.0f) {
+    return (ix&0x1) == 0 ? 0.0f : -0.0f;
+  }
+
+  switch(n) {
+    case 0:
+      return sign * __kernel_tanf(m*M_PI_F, 0.0f, 1);
+    case 1:
+      return sign * 1.0f/__kernel_tanf((0.5f-m)*M_PI_F, 0.0f, 1);
+    case 2:
+      return sign * 1.0f/__kernel_tanf((0.5f-m)*M_PI_F, 0.0f, 1);
+    default:
+      return sign * -1.0f*__kernel_tanf((1.0f-m)*M_PI_F, 0.0f, 1);
+  }
 }
 INLINE_OVERLOADABLE float native_exp2(float x) { return __gen_ocl_exp(x); }
 INLINE_OVERLOADABLE float native_exp(float x) { return __gen_ocl_exp(M_LOG2E_F*x); }
