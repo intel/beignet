@@ -236,6 +236,7 @@ cl_program_create_from_binary(cl_context             ctx,
       err = CL_INVALID_PROGRAM;
       goto error;
     }
+    program->source_type = FROM_LLVM;
   }
 
   if (binary_status)
@@ -267,17 +268,16 @@ cl_program_create_with_built_in_kernles(cl_context     ctx,
   INVALID_DEVICE_IF (devices == NULL);
   INVALID_DEVICE_IF (devices[0] != ctx->device);
 
+  cl_int binary_status = CL_SUCCESS;
   extern char cl_internal_built_in_kernel_str[];
   extern size_t cl_internal_built_in_kernel_str_size;
   char* p_built_in_kernel_str =cl_internal_built_in_kernel_str;
-  cl_int binary_status = CL_SUCCESS;
 
   ctx->built_in_prgs = cl_program_create_from_binary(ctx, 1,
                                                           &ctx->device,
                                                           (size_t*)&cl_internal_built_in_kernel_str_size,
                                                           (const unsigned char **)&p_built_in_kernel_str,
                                                           &binary_status, &err);
-
   if (!ctx->built_in_prgs)
     return NULL;
 
@@ -462,7 +462,22 @@ cl_program_build(cl_program p, const char *options)
 
     /* Create all the kernels */
     TRY (cl_program_load_gen_program, p);
-    p->source_type = FROM_LLVM;
+  } else if (p->source_type == FROM_LLVM) {
+    if (!CompilerSupported()) {
+      err = CL_COMPILER_NOT_AVAILABLE;
+      goto error;
+    }
+
+    compiler_program_build_from_llvm(p->opaque, p->build_log_max_sz, p->build_log, &p->build_log_sz, options);
+    if (UNLIKELY(p->opaque == NULL)) {
+      if (p->build_log_sz > 0 && strstr(p->build_log, "error: error reading 'options'"))
+        err = CL_INVALID_BUILD_OPTIONS;
+      else
+        err = CL_BUILD_PROGRAM_FAILURE;
+      goto error;
+    }
+    /* Create all the kernels */
+    TRY (cl_program_load_gen_program, p);
   } else if (p->source_type == FROM_BINARY) {
     p->opaque = interp_program_new_from_binary(p->ctx->device->vendor_id, p->binary, p->binary_sz);
     if (UNLIKELY(p->opaque == NULL)) {
@@ -472,7 +487,6 @@ cl_program_build(cl_program p, const char *options)
 
     /* Create all the kernels */
     TRY (cl_program_load_gen_program, p);
-    p->source_type = FROM_LLVM;
   }
   p->binary_type = CL_PROGRAM_BINARY_TYPE_EXECUTABLE;
 

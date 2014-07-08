@@ -187,11 +187,18 @@ set (utests_sources
   utest_helper.cpp)
 
 SET (kernel_bin ${CMAKE_CURRENT_SOURCE_DIR}/../kernels/compiler_ceil)
-ADD_CUSTOM_COMMAND(
-    OUTPUT ${kernel_bin}.bin
-    COMMAND ${GBE_BIN_GENERATER} ${kernel_bin}.cl -o${kernel_bin}.bin -t${GEN_PCI_ID}
-    DEPENDS ${CMAKE_CURRENT_BINARY_DIR}/../backend/src/gbe_bin_generater ${kernel_bin}.cl
-    )
+
+if(GEN_PCI_ID)
+  ADD_CUSTOM_COMMAND(
+  OUTPUT ${kernel_bin}.bin
+  COMMAND ${GBE_BIN_GENERATER} ${kernel_bin}.cl -o${kernel_bin}.bin -t${GEN_PCI_ID}
+  DEPENDS ${CMAKE_CURRENT_BINARY_DIR}/../backend/src/gbe_bin_generater ${kernel_bin}.cl)
+else(GEN_PCI_ID)
+  ADD_CUSTOM_COMMAND(
+  OUTPUT ${kernel_bin}.bin
+  COMMAND ${GBE_BIN_GENERATER} ${kernel_bin}.cl -o${kernel_bin}.bin
+  DEPENDS ${CMAKE_CURRENT_BINARY_DIR}/../backend/src/gbe_bin_generater ${kernel_bin}.cl)
+endif(GEN_PCI_ID)
 
 ADD_CUSTOM_TARGET(kernel_bin.bin
     DEPENDS ${kernel_bin}.bin)

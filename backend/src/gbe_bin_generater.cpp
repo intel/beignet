@@ -156,21 +156,23 @@ void program_build_instance::serialize_program(void) throw(int)
 {
     ofstream ofs;
     ostringstream oss;
-    size_t sz, header_sz = 0;
+    size_t sz = 0, header_sz = 0;
     ofs.open(bin_path, ofstream::out | ofstream::trunc | ofstream::binary);
 
-    //add header to differeciate from llvm bitcode binary.
-    // (5 bytes: 1 byte for binary type, 4 byte for bc code.)
-    char header = '\0';
-
     if (str_fmt_out) {
-      OUTS_UPDATE_SZ(header);
-      OUTS_UPDATE_SZ(header);
-      OUTS_UPDATE_SZ(header);
-      OUTS_UPDATE_SZ(header);
-      OUTS_UPDATE_SZ(header);
 
-      string array_name = "Unkown_name_array";
+      if(gen_pci_id){
+        //add header to differeciate from llvm bitcode binary.
+        // (5 bytes: 1 byte for binary type, 4 byte for bc code, 'GENC' is for gen binary.)
+        char gen_header[6] = "\0GENC";
+        OUTS_UPDATE_SZ(gen_header[0]);
+        OUTS_UPDATE_SZ(gen_header[1]);
+        OUTS_UPDATE_SZ(gen_header[2]);
+        OUTS_UPDATE_SZ(gen_header[3]);
+        OUTS_UPDATE_SZ(gen_header[4]);
+      }
+
+      string array_name = "Unknown_name_array";
       unsigned long last_slash = bin_path.rfind("/");
       unsigned long last_dot = bin_path.rfind(".");
 
@@ -180,9 +182,15 @@ void program_build_instance::serialize_program(void) throw(int)
       ofs << "#include <stddef.h>" << "\n";
       ofs << "char " << array_name << "[] = {" << "\n";
 
-      sz = gbe_prog->serializeToBin(oss);
-
-      sz+=5;
+      if(gen_pci_id){
+        sz = gbe_prog->serializeToBin(oss);
+        sz += header_sz;
+      }else{
+        char *llvm_binary;
+        size_t bin_length = gbe_program_serialize_to_binary((gbe_program)gbe_prog, &llvm_binary, 1);
+        oss.write(llvm_binary, bin_length);
+        sz += bin_length;
+      }
 
       for (size_t i = 0; i < sz; i++) {
         unsigned char c = oss.str().c_str()[i];
@@ -191,18 +199,27 @@ void program_build_instance::serialize_program(void) throw(int)
         ofs << "0x";
         ofs << asic_str << ((i == sz - 1) ? "" : ", ");
       }
-
       ofs << "};\n";
 
       string array_size = array_name + "_size";
       ofs << "size_t " << array_size << " = " << sz << ";" << "\n";
     } else {
-      OUTF_UPDATE_SZ(header);
-      OUTF_UPDATE_SZ(header);
-      OUTF_UPDATE_SZ(header);
-      OUTF_UPDATE_SZ(header);
-      OUTF_UPDATE_SZ(header);
-      sz = gbe_prog->serializeToBin(ofs);
+      if(gen_pci_id){
+        //add header to differeciate from llvm bitcode binary.
+        // (5 bytes: 1 byte for binary type, 4 byte for bc code, 'GENC' is for gen binary.)
+        char gen_header[6] = "\0GENC";
+        OUTF_UPDATE_SZ(gen_header[0]);
+        OUTF_UPDATE_SZ(gen_header[1]);
+        OUTF_UPDATE_SZ(gen_header[2]);
+        OUTF_UPDATE_SZ(gen_header[3]);
+        OUTF_UPDATE_SZ(gen_header[4]);
+        sz = gbe_prog->serializeToBin(ofs);
+      }else{
+        char *llvm_binary;
+        size_t bin_length = gbe_program_serialize_to_binary((gbe_program)gbe_prog, &llvm_binary, 1);
+        ofs.write(llvm_binary, bin_length);
+        sz+=bin_length;
+      }
     }
 
     ofs.close();
@@ -215,15 +232,20 @@ void program_build_instance::serialize_program(void) throw(int)
 
 void program_build_instance::build_program(void) throw(int)
 {
-    // FIXME, we need to find a graceful way to generate internal binaries for difference
-    // devices.
-    gbe_program opaque = gbe_program_new_from_source(gen_pci_id, code, 0, build_opt.c_str(), NULL, NULL);
+    gbe_program  opaque = NULL;
+    if(gen_pci_id){
+      opaque = gbe_program_new_from_source(gen_pci_id, code, 0, build_opt.c_str(), NULL, NULL);
+    }else{
+      opaque = gbe_program_compile_from_source(0, code, NULL, 0, build_opt.c_str(), NULL, NULL);
+    }
     if (!opaque)
         throw FILE_BUILD_FAILED;
 
     gbe_prog = reinterpret_cast<gbe::Program*>(opaque);
 
-    assert(gbe_program_get_kernel_num(opaque));
+    if(gen_pci_id){
+      assert(gbe_program_get_kernel_num(opaque));
+    }
 }
 
 const char* program_build_instance::file_map_open(void) throw(int)
