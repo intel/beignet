@@ -5,30 +5,24 @@ include_directories(${CMAKE_CURRENT_SOURCE_DIR}
                     ${CMAKE_CURRENT_SOURCE_DIR}/../include
                     ${MESA_SOURCE_INCLUDES})
 
-if (NOT GEN_PCI_ID)
-# lspci
-  Find_Program(LSPCI lspci)
-  IF(LSPCI)
-    MESSAGE(STATUS "Looking for lspci - found")
-  ELSE(LSPCI)
-    MESSAGE(FATAL_ERROR "Looking for lspci - not found")
-  ENDIF(LSPCI)
-  execute_process(COMMAND "${CMAKE_CURRENT_SOURCE_DIR}/GetGenID.sh"
-    OUTPUT_VARIABLE GEN_PCI_ID)
-  message(STATUS "Platform Gen PCI id is " ${GEN_PCI_ID})
-  set(GEN_PCI_ID ${GEN_PCI_ID} PARENT_SCOPE)
-endif (NOT GEN_PCI_ID)
-
 macro (MakeKernelBinStr KERNEL_PATH KERNEL_FILES)
 foreach (KF ${KERNEL_FILES})
   set (input_file ${KERNEL_PATH}/${KF}.cl)
   set (output_file ${KERNEL_PATH}/${KF}_str.c)
   list (APPEND KERNEL_STR_FILES ${output_file})
-  add_custom_command(
-    OUTPUT ${output_file}
-    COMMAND rm -rf ${output_file}
-    COMMAND ${GBE_BIN_GENERATER} -s ${input_file} -o${output_file} -t${GEN_PCI_ID}
-    DEPENDS ${input_file} ${CMAKE_CURRENT_BINARY_DIR}/../backend/src/gbe_bin_generater)
+  if(GEN_PCI_ID)
+    add_custom_command(
+      OUTPUT ${output_file}
+      COMMAND rm -rf ${output_file}
+      COMMAND ${GBE_BIN_GENERATER} -s ${input_file} -o${output_file} -t${GEN_PCI_ID}
+      DEPENDS ${input_file} ${CMAKE_CURRENT_BINARY_DIR}/../backend/src/gbe_bin_generater)
+  else(GEN_PCI_ID)
+    add_custom_command(
+      OUTPUT ${output_file}
+      COMMAND rm -rf ${output_file}
+      COMMAND ${GBE_BIN_GENERATER} -s ${input_file} -o${output_file}
+      DEPENDS ${input_file} ${CMAKE_CURRENT_BINARY_DIR}/../backend/src/gbe_bin_generater)
+  endif(GEN_PCI_ID)
 endforeach (KF)
 endmacro (MakeKernelBinStr)
 
