@@ -89,7 +89,7 @@ void cl_event_new_enqueue_callback(cl_event, enqueue_data *, cl_uint, const cl_e
 /* Set the event status and call all callbacks */
 void cl_event_set_status(cl_event, cl_int);
 /* Check and update event status */
-void cl_event_update_status(cl_event);
+void cl_event_update_status(cl_event, cl_int);
 /* Create the marker event */
 cl_int cl_event_marker_with_wait_list(cl_command_queue, cl_uint, const cl_event *,  cl_event*);
 /* Create the barrier event */

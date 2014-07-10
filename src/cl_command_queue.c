@@ -75,6 +75,10 @@ cl_command_queue_delete(cl_command_queue queue)
   assert(queue);
   if (atomic_dec(&queue->ref_n) != 1) return;
 
+  // If there is a valid last event, we need to give it a chance to
+  // call the call-back function.
+  if (queue->last_event && queue->last_event->user_cb)
+    cl_event_update_status(queue->last_event, 1);
   /* Remove it from the list */
   assert(queue->ctx);
   pthread_mutex_lock(&queue->ctx->queue_lock);
@@ -454,6 +458,13 @@ cl_command_queue_flush(cl_command_queue queue)
 {
   GET_QUEUE_THREAD_GPGPU(queue);
   cl_command_queue_flush_gpgpu(queue, gpgpu);
+  // As we don't have a deadicate timer thread to take care the possible
+  // event which has a call back function registerred and the event will
+  // be released at the call back function, no other function will access
+  // the event any more. If we don't do this here, we will leak that event
+  // and all the corresponding buffers which is really bad.
+  if (queue->last_event && queue->last_event->user_cb)
+    cl_event_update_status(queue->last_event, 1);
   if (queue->current_event)
     cl_event_flush(queue->current_event);
   cl_invalid_thread_gpgpu(queue);
