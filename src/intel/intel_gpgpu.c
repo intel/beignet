@@ -28,6 +28,7 @@
 #include <sys/stat.h>
 #include <fcntl.h>
 #include <stddef.h>
+#include <errno.h>
 
 #include "intel/intel_gpgpu.h"
 #include "intel/intel_defines.h"
@@ -553,10 +554,10 @@ intel_gpgpu_batch_end(intel_gpgpu_t *gpgpu, int32_t flush_mode)
   intel_batchbuffer_end_atomic(gpgpu->batch);
 }
 
-static void
+static int
 intel_gpgpu_batch_reset(intel_gpgpu_t *gpgpu, size_t sz)
 {
-  intel_batchbuffer_reset(gpgpu->batch, sz);
+  return intel_batchbuffer_reset(gpgpu->batch, sz);
 }
 /* check we do not get a 0 starting address for binded buf */
 static void
@@ -584,7 +585,7 @@ intel_gpgpu_flush(intel_gpgpu_t *gpgpu)
   intel_gpgpu_check_binded_buf_address(gpgpu);
 }
 
-static void
+static int
 intel_gpgpu_state_init(intel_gpgpu_t *gpgpu,
                        uint32_t max_threads,
                        uint32_t size_cs_entry,
@@ -616,8 +617,9 @@ intel_gpgpu_state_init(intel_gpgpu_t *gpgpu,
   gpgpu->time_stamp_b.bo = NULL;
   if (profiling) {
     bo = dri_bo_alloc(gpgpu->drv->bufmgr, "timestamp query", 4096, 4096);
-    assert(bo);
     gpgpu->time_stamp_b.bo = bo;
+    if (!bo)
+      fprintf(stderr, "Could not allocate buffer for profiling.\n");
   }
 
   /* stack */
@@ -629,6 +631,7 @@ intel_gpgpu_state_init(intel_gpgpu_t *gpgpu,
   uint32_t size_aux = 0;
   if(gpgpu->aux_buf.bo)
     dri_bo_unreference(gpgpu->aux_buf.bo);
+  gpgpu->aux_buf.bo = NULL;
 
   //surface heap must be 4096 bytes aligned because state base address use 20bit for the address
   size_aux = ALIGN(size_aux, 4096);
@@ -656,10 +659,18 @@ intel_gpgpu_state_init(intel_gpgpu_t *gpgpu,
   size_aux += GEN_MAX_SAMPLERS * sizeof(gen7_sampler_border_color_t);
 
   bo = dri_bo_alloc(gpgpu->drv->bufmgr, "AUX_BUFFER", size_aux, 0);
-  assert(bo);
-  dri_bo_map(bo, 1);
+  if (!bo || dri_bo_map(bo, 1) != 0) {
+    fprintf(stderr, "%s:%d: %s.\n", __FILE__, __LINE__, strerror(errno));
+    if (bo)
+      dri_bo_unreference(bo);
+    if (profiling && gpgpu->time_stamp_b.bo)
+      dri_bo_unreference(gpgpu->time_stamp_b.bo);
+    gpgpu->time_stamp_b.bo = NULL;
+    return -1;
+  }
   memset(bo->virtual, 0, size_aux);
   gpgpu->aux_buf.bo = bo;
+  return 0;
 }
 
 static void
@@ -698,7 +709,8 @@ intel_gpgpu_alloc_constant_buffer(intel_gpgpu_t *gpgpu, uint32_t size)
   if(gpgpu->constant_b.bo)
     dri_bo_unreference(gpgpu->constant_b.bo);
   gpgpu->constant_b.bo = drm_intel_bo_alloc(gpgpu->drv->bufmgr, "CONSTANT_BUFFER", s, 64);
-  assert(gpgpu->constant_b.bo);
+  if (gpgpu->constant_b.bo == NULL)
+    return NULL;
   ss2->ss1.base_addr = gpgpu->constant_b.bo->offset;
   dri_bo_emit_reloc(gpgpu->aux_buf.bo,
                       I915_GEM_DOMAIN_RENDER,
@@ -882,7 +894,7 @@ intel_gpgpu_bind_buf(intel_gpgpu_t *gpgpu, drm_intel_bo *buf, uint32_t offset,
   gpgpu->binded_n++;
 }
 
-static void
+static int
 intel_gpgpu_set_scratch(intel_gpgpu_t * gpgpu, uint32_t per_thread_size)
 {
   drm_intel_bufmgr *bufmgr = gpgpu->drv->bufmgr;
@@ -899,8 +911,12 @@ intel_gpgpu_set_scratch(intel_gpgpu_t * gpgpu, uint32_t per_thread_size)
     old = NULL;
   }
 
-  if(!old)
+  if(!old && total) {
     gpgpu->scratch_b.bo = drm_intel_bo_alloc(bufmgr, "SCRATCH_BO", total, 4096);
+    if (gpgpu->scratch_b.bo == NULL)
+      return -1;
+  }
+  return 0;
 }
 static void
 intel_gpgpu_set_stack(intel_gpgpu_t *gpgpu, uint32_t offset, uint32_t size, uint32_t cchint)
@@ -966,7 +982,7 @@ intel_gpgpu_build_idrt(intel_gpgpu_t *gpgpu, cl_gpgpu_kernel *kernel)
                     gpgpu->aux_buf.bo);
 }
 
-static void
+static int
 intel_gpgpu_upload_curbes(intel_gpgpu_t *gpgpu, const void* data, uint32_t size)
 {
   unsigned char *curbe = NULL;
@@ -974,7 +990,10 @@ intel_gpgpu_upload_curbes(intel_gpgpu_t *gpgpu, const void* data, uint32_t size)
   uint32_t i, j;
 
   /* Upload the data first */
-  dri_bo_map(gpgpu->aux_buf.bo, 1);
+  if (dri_bo_map(gpgpu->aux_buf.bo, 1) != 0) {
+    fprintf(stderr, "%s:%d: %s.\n", __FILE__, __LINE__, strerror(errno));
+    return -1;
+  }
   assert(gpgpu->aux_buf.bo->virtual);
   curbe = (unsigned char *) (gpgpu->aux_buf.bo->virtual + gpgpu->aux_offset.curbe_offset);
   memcpy(curbe, data, size);
@@ -991,6 +1010,7 @@ intel_gpgpu_upload_curbes(intel_gpgpu_t *gpgpu, const void* data, uint32_t size)
                               I915_GEM_DOMAIN_RENDER);
     }
   dri_bo_unmap(gpgpu->aux_buf.bo);
+  return 0;
 }
 
 static void
@@ -1294,7 +1314,7 @@ intel_gpgpu_event_get_exec_timestamp(intel_gpgpu_t* gpgpu, intel_event_t *event,
   drm_intel_gem_bo_unmap_gtt(event->ts_buf);
 }
 
-static void
+static int
 intel_gpgpu_set_printf_buf(intel_gpgpu_t *gpgpu, uint32_t i, uint32_t size, uint32_t offset)
 {
   drm_intel_bo *bo = NULL;
@@ -1311,11 +1331,18 @@ intel_gpgpu_set_printf_buf(intel_gpgpu_t *gpgpu, uint32_t i, uint32_t size, uint
   } else
     assert(0);
 
-  drm_intel_bo_map(bo, 1);
+  if (!bo || (drm_intel_bo_map(bo, 1) != 0)) {
+    if (gpgpu->printf_b.bo)
+      drm_intel_bo_unreference(gpgpu->printf_b.bo);
+    gpgpu->printf_b.bo = NULL;
+    fprintf(stderr, "%s:%d: %s.\n", __FILE__, __LINE__, strerror(errno));
+    return -1;
+  }
   memset(bo->virtual, 0, size);
   drm_intel_bo_unmap(bo);
 
   intel_gpgpu_bind_buf(gpgpu, bo, offset, 0, 0);
+  return 0;
 }
 
 static void*

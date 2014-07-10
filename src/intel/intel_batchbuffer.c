@@ -53,7 +53,7 @@
 #include <string.h>
 #include <assert.h>
 
-LOCAL void
+LOCAL int
 intel_batchbuffer_reset(intel_batchbuffer_t *batch, size_t sz)
 {
   if (batch->buffer != NULL) {
@@ -66,15 +66,19 @@ intel_batchbuffer_reset(intel_batchbuffer_t *batch, size_t sz)
                                "batch buffer",
                                sz,
                                64);
-  assert(batch->buffer);
-
-  dri_bo_map(batch->buffer, 1);
+  if (!batch->buffer || (dri_bo_map(batch->buffer, 1) != 0)) {
+    if (batch->buffer)
+      dri_bo_unreference(batch->buffer);
+    batch->buffer = NULL;
+    return -1;
+  }
   batch->map = (uint8_t*) batch->buffer->virtual;
   batch->size = sz;
   batch->ptr = batch->map;
   batch->atomic = 0;
   batch->last_bo = batch->buffer;
   batch->enable_slm = 0;
+  return 0;
 }
 
 LOCAL void
