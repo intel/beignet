@@ -97,6 +97,13 @@
 #define PCI_CHIP_HASWELL_M1          0x0406 /* GT1 mobile */
 #define PCI_CHIP_HASWELL_M2          0x0416 /* GT2 mobile */
 #define PCI_CHIP_HASWELL_M3          0x0426 /* GT3 mobile */
+#define PCI_CHIP_HASWELL_B1          0x040B /* Haswell GT1 */
+#define PCI_CHIP_HASWELL_B2          0x041B /* Haswell GT2 */
+#define PCI_CHIP_HASWELL_B3          0x042B /* Haswell GT3 */
+#define PCI_CHIP_HASWELL_E1          0x040E /* Haswell GT1 */
+#define PCI_CHIP_HASWELL_E2          0x041E /* Haswell GT2 */
+#define PCI_CHIP_HASWELL_E3          0x042E /* Haswell GT3 */
+
 /* Software Development Vehicle devices. */
 #define PCI_CHIP_HASWELL_SDV_D1      0x0C02 /* SDV GT1 desktop */
 #define PCI_CHIP_HASWELL_SDV_D2      0x0C12 /* SDV GT2 desktop */
@@ -107,6 +114,12 @@
 #define PCI_CHIP_HASWELL_SDV_M1      0x0C06 /* SDV GT1 mobile */
 #define PCI_CHIP_HASWELL_SDV_M2      0x0C16 /* SDV GT2 mobile */
 #define PCI_CHIP_HASWELL_SDV_M3      0x0C26 /* SDV GT3 mobile */
+#define PCI_CHIP_HASWELL_SDV_B1      0x0C0B /* SDV GT1 */
+#define PCI_CHIP_HASWELL_SDV_B2      0x0C1B /* SDV GT2 */
+#define PCI_CHIP_HASWELL_SDV_B3      0x0C2B /* SDV GT3 */
+#define PCI_CHIP_HASWELL_SDV_E1      0x0C0E /* SDV GT1 */
+#define PCI_CHIP_HASWELL_SDV_E2      0x0C1E /* SDV GT2 */
+#define PCI_CHIP_HASWELL_SDV_E3      0x0C2E /* SDV GT3 */
 /* Ultrabooks */
 #define PCI_CHIP_HASWELL_ULT_D1      0x0A02 /* ULT GT1 desktop */
 #define PCI_CHIP_HASWELL_ULT_D2      0x0A12 /* ULT GT2 desktop */
@@ -117,6 +130,12 @@
 #define PCI_CHIP_HASWELL_ULT_M1      0x0A06 /* ULT GT1 mobile */
 #define PCI_CHIP_HASWELL_ULT_M2      0x0A16 /* ULT GT2 mobile */
 #define PCI_CHIP_HASWELL_ULT_M3      0x0A26 /* ULT GT3 mobile */
+#define PCI_CHIP_HASWELL_ULT_B1      0x0A0B /* ULT GT1 */
+#define PCI_CHIP_HASWELL_ULT_B2      0x0A1B /* ULT GT2 */
+#define PCI_CHIP_HASWELL_ULT_B3      0x0A2B /* ULT GT3 */
+#define PCI_CHIP_HASWELL_ULT_E1      0x0A0E /* ULT GT1 */
+#define PCI_CHIP_HASWELL_ULT_E2      0x0A1E /* ULT GT2 */
+#define PCI_CHIP_HASWELL_ULT_E3      0x0A2E /* ULT GT3 */
 /* CRW */
 #define PCI_CHIP_HASWELL_CRW_D1      0x0D02 /* CRW GT1 desktop */
 #define PCI_CHIP_HASWELL_CRW_D2      0x0D12 /* CRW GT2 desktop */
@@ -127,6 +146,12 @@
 #define PCI_CHIP_HASWELL_CRW_M1      0x0D06 /* CRW GT1 mobile */
 #define PCI_CHIP_HASWELL_CRW_M2      0x0D16 /* CRW GT2 mobile */
 #define PCI_CHIP_HASWELL_CRW_M3      0x0D26 /* CRW GT3 mobile */
+#define PCI_CHIP_HASWELL_CRW_B1      0x0D0B /* CRW GT1 */
+#define PCI_CHIP_HASWELL_CRW_B2      0x0D1B /* CRW GT2 */
+#define PCI_CHIP_HASWELL_CRW_B3      0x0D2B /* CRW GT3 */
+#define PCI_CHIP_HASWELL_CRW_E1      0x0D0E /* CRW GT1 */
+#define PCI_CHIP_HASWELL_CRW_E2      0x0D1E /* CRW GT2 */
+#define PCI_CHIP_HASWELL_CRW_E3      0x0D2E /* CRW GT3 */
 
 
 #define IS_HASWELL(devid) (  \
@@ -134,20 +159,32 @@
 	(devid) == PCI_CHIP_HASWELL_D3 || (devid) == PCI_CHIP_HASWELL_S1 || \
 	(devid) == PCI_CHIP_HASWELL_S2 || (devid) == PCI_CHIP_HASWELL_S3 || \
 	(devid) == PCI_CHIP_HASWELL_M1 || (devid) == PCI_CHIP_HASWELL_M2 || \
-	(devid) == PCI_CHIP_HASWELL_M3 || (devid) == PCI_CHIP_HASWELL_SDV_D1 || \
+	(devid) == PCI_CHIP_HASWELL_M3 || (devid) == PCI_CHIP_HASWELL_B1 || \
+	(devid) == PCI_CHIP_HASWELL_B2 || (devid) == PCI_CHIP_HASWELL_B3 || \
+	(devid) == PCI_CHIP_HASWELL_E1 || (devid) == PCI_CHIP_HASWELL_E2 || \
+	(devid) == PCI_CHIP_HASWELL_E3 || (devid) == PCI_CHIP_HASWELL_SDV_D1 || \
 	(devid) == PCI_CHIP_HASWELL_SDV_D2 || (devid) == PCI_CHIP_HASWELL_SDV_D3 || \
 	(devid) == PCI_CHIP_HASWELL_SDV_S1 || (devid) == PCI_CHIP_HASWELL_SDV_S2 || \
 	(devid) == PCI_CHIP_HASWELL_SDV_S3 || (devid) == PCI_CHIP_HASWELL_SDV_M1 || \
 	(devid) == PCI_CHIP_HASWELL_SDV_M2 || (devid) == PCI_CHIP_HASWELL_SDV_M3 || \
+	(devid) == PCI_CHIP_HASWELL_SDV_B1 || (devid) == PCI_CHIP_HASWELL_SDV_B2 || \
+	(devid) == PCI_CHIP_HASWELL_SDV_B3 || (devid) == PCI_CHIP_HASWELL_SDV_E1 || \
+	(devid) == PCI_CHIP_HASWELL_SDV_E2 || (devid) == PCI_CHIP_HASWELL_SDV_E3 || \
 	(devid) == PCI_CHIP_HASWELL_ULT_D1 || (devid) == PCI_CHIP_HASWELL_ULT_D2 || \
 	(devid) == PCI_CHIP_HASWELL_ULT_D3 || (devid) == PCI_CHIP_HASWELL_ULT_S1 || \
 	(devid) == PCI_CHIP_HASWELL_ULT_S2 || (devid) == PCI_CHIP_HASWELL_ULT_S3 || \
 	(devid) == PCI_CHIP_HASWELL_ULT_M1 || (devid) == PCI_CHIP_HASWELL_ULT_M2 || \
-	(devid) == PCI_CHIP_HASWELL_ULT_M3 || (devid) == PCI_CHIP_HASWELL_CRW_D1 || \
+	(devid) == PCI_CHIP_HASWELL_ULT_M3 || (devid) == PCI_CHIP_HASWELL_ULT_B1 || \
+	(devid) == PCI_CHIP_HASWELL_ULT_B2 || (devid) == PCI_CHIP_HASWELL_ULT_B3 || \
+	(devid) == PCI_CHIP_HASWELL_ULT_E1 || (devid) == PCI_CHIP_HASWELL_ULT_E2 || \
+	(devid) == PCI_CHIP_HASWELL_ULT_E3 || (devid) == PCI_CHIP_HASWELL_CRW_D1 || \
 	(devid) == PCI_CHIP_HASWELL_CRW_D2 || (devid) == PCI_CHIP_HASWELL_CRW_D3 || \
 	(devid) == PCI_CHIP_HASWELL_CRW_S1 || (devid) == PCI_CHIP_HASWELL_CRW_S2 || \
 	(devid) == PCI_CHIP_HASWELL_CRW_S3 || (devid) == PCI_CHIP_HASWELL_CRW_M1 || \
-	(devid) == PCI_CHIP_HASWELL_CRW_M2 || (devid) == PCI_CHIP_HASWELL_CRW_M3)
+	(devid) == PCI_CHIP_HASWELL_CRW_M2 || (devid) == PCI_CHIP_HASWELL_CRW_M3 || \
+	(devid) == PCI_CHIP_HASWELL_CRW_B1 || (devid) == PCI_CHIP_HASWELL_CRW_B2 || \
+	(devid) == PCI_CHIP_HASWELL_CRW_B3 || (devid) == PCI_CHIP_HASWELL_CRW_E1 || \
+	(devid) == PCI_CHIP_HASWELL_CRW_E2 || (devid) == PCI_CHIP_HASWELL_CRW_E3)
 
 #define IS_GEN75(devid)  IS_HASWELL(devid)
 
