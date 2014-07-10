@@ -129,6 +129,18 @@ cl_get_gt_device(void)
       DECL_INFO_STRING(has_break, intel_hsw_gt2_device, name, "Intel(R) HD Graphics Haswell GT2 Mobile");
     case PCI_CHIP_HASWELL_M3:
       DECL_INFO_STRING(has_break, intel_hsw_gt3_device, name, "Intel(R) HD Graphics Haswell GT3 Mobile");
+    case PCI_CHIP_HASWELL_B1:
+      DECL_INFO_STRING(has_break, intel_hsw_gt1_device, name, "Intel(R) HD Graphics Haswell GT1 reserved");
+    case PCI_CHIP_HASWELL_B2:
+      DECL_INFO_STRING(has_break, intel_hsw_gt2_device, name, "Intel(R) HD Graphics Haswell GT2 reserved");
+    case PCI_CHIP_HASWELL_B3:
+      DECL_INFO_STRING(has_break, intel_hsw_gt3_device, name, "Intel(R) HD Graphics Haswell GT3 reserved");
+    case PCI_CHIP_HASWELL_E1:
+      DECL_INFO_STRING(has_break, intel_hsw_gt1_device, name, "Intel(R) HD Graphics Haswell GT1 reserved");
+    case PCI_CHIP_HASWELL_E2:
+      DECL_INFO_STRING(has_break, intel_hsw_gt2_device, name, "Intel(R) HD Graphics Haswell GT2 reserved");
+    case PCI_CHIP_HASWELL_E3:
+      DECL_INFO_STRING(has_break, intel_hsw_gt3_device, name, "Intel(R) HD Graphics Haswell GT3 reserved");
     case PCI_CHIP_HASWELL_SDV_D1:
       DECL_INFO_STRING(has_break, intel_hsw_gt1_device, name, "Intel(R) HD Graphics Haswell"
                                                            " Software Development Vehicle device GT1 Desktop");
@@ -156,6 +168,24 @@ cl_get_gt_device(void)
     case PCI_CHIP_HASWELL_SDV_M3:
       DECL_INFO_STRING(has_break, intel_hsw_gt3_device, name, "Intel(R) HD Graphics Haswell"
                                                            " Software Development Vehicle device GT3 Mobile");
+    case PCI_CHIP_HASWELL_SDV_B1:
+      DECL_INFO_STRING(has_break, intel_hsw_gt1_device, name, "Intel(R) HD Graphics Haswell"
+                                                           " Software Development Vehicle device GT1 reserved");
+    case PCI_CHIP_HASWELL_SDV_B2:
+      DECL_INFO_STRING(has_break, intel_hsw_gt2_device, name, "Intel(R) HD Graphics Haswell"
+                                                           " Software Development Vehicle device GT2 reserved");
+    case PCI_CHIP_HASWELL_SDV_B3:
+      DECL_INFO_STRING(has_break, intel_hsw_gt3_device, name, "Intel(R) HD Graphics Haswell"
+                                                           " Software Development Vehicle device GT3 reserved");
+    case PCI_CHIP_HASWELL_SDV_E1:
+      DECL_INFO_STRING(has_break, intel_hsw_gt1_device, name, "Intel(R) HD Graphics Haswell"
+                                                           " Software Development Vehicle device GT1 reserved");
+    case PCI_CHIP_HASWELL_SDV_E2:
+      DECL_INFO_STRING(has_break, intel_hsw_gt2_device, name, "Intel(R) HD Graphics Haswell"
+                                                           " Software Development Vehicle device GT2 reserved");
+    case PCI_CHIP_HASWELL_SDV_E3:
+      DECL_INFO_STRING(has_break, intel_hsw_gt3_device, name, "Intel(R) HD Graphics Haswell"
+                                                           " Software Development Vehicle device GT3 reserved");
     case PCI_CHIP_HASWELL_ULT_D1:
       DECL_INFO_STRING(has_break, intel_hsw_gt1_device, name, "Intel(R) HD Graphics Haswell Ultrabook GT1 Desktop");
     case PCI_CHIP_HASWELL_ULT_D2:
@@ -174,6 +204,19 @@ cl_get_gt_device(void)
       DECL_INFO_STRING(has_break, intel_hsw_gt2_device, name, "Intel(R) HD Graphics Haswell Ultrabook GT2 Mobile");
     case PCI_CHIP_HASWELL_ULT_M3:
       DECL_INFO_STRING(has_break, intel_hsw_gt3_device, name, "Intel(R) HD Graphics Haswell Ultrabook GT3 Mobile");
+    case PCI_CHIP_HASWELL_ULT_B1:
+      DECL_INFO_STRING(has_break, intel_hsw_gt1_device, name, "Intel(R) HD Graphics Haswell Ultrabook GT1 reserved");
+    case PCI_CHIP_HASWELL_ULT_B2:
+      DECL_INFO_STRING(has_break, intel_hsw_gt2_device, name, "Intel(R) HD Graphics Haswell Ultrabook GT2 reserved");
+    case PCI_CHIP_HASWELL_ULT_B3:
+      DECL_INFO_STRING(has_break, intel_hsw_gt3_device, name, "Intel(R) HD Graphics Haswell Ultrabook GT3 reserved");
+    case PCI_CHIP_HASWELL_ULT_E1:
+      DECL_INFO_STRING(has_break, intel_hsw_gt1_device, name, "Intel(R) HD Graphics Haswell Ultrabook GT1 reserved");
+    case PCI_CHIP_HASWELL_ULT_E2:
+      DECL_INFO_STRING(has_break, intel_hsw_gt2_device, name, "Intel(R) HD Graphics Haswell Ultrabook GT2 reserved");
+    case PCI_CHIP_HASWELL_ULT_E3:
+      DECL_INFO_STRING(has_break, intel_hsw_gt3_device, name, "Intel(R) HD Graphics Haswell Ultrabook GT3 reserved");
+
 	/* CRW */
     case PCI_CHIP_HASWELL_CRW_D1:
       DECL_INFO_STRING(has_break, intel_hsw_gt1_device, name, "Intel(R) HD Graphics Haswell CRW GT1 Desktop");
@@ -193,6 +236,18 @@ cl_get_gt_device(void)
       DECL_INFO_STRING(has_break, intel_hsw_gt2_device, name, "Intel(R) HD Graphics Haswell CRW GT2 Mobile");
     case PCI_CHIP_HASWELL_CRW_M3:
       DECL_INFO_STRING(has_break, intel_hsw_gt3_device, name, "Intel(R) HD Graphics Haswell CRW GT3 Mobile");
+    case PCI_CHIP_HASWELL_CRW_B1:
+      DECL_INFO_STRING(has_break, intel_hsw_gt1_device, name, "Intel(R) HD Graphics Haswell CRW GT1 reserved");
+    case PCI_CHIP_HASWELL_CRW_B2:
+      DECL_INFO_STRING(has_break, intel_hsw_gt2_device, name, "Intel(R) HD Graphics Haswell CRW GT2 reserved");
+    case PCI_CHIP_HASWELL_CRW_B3:
+      DECL_INFO_STRING(has_break, intel_hsw_gt3_device, name, "Intel(R) HD Graphics Haswell CRW GT3 reserved");
+    case PCI_CHIP_HASWELL_CRW_E1:
+      DECL_INFO_STRING(has_break, intel_hsw_gt1_device, name, "Intel(R) HD Graphics Haswell CRW GT1 reserved");
+    case PCI_CHIP_HASWELL_CRW_E2:
+      DECL_INFO_STRING(has_break, intel_hsw_gt2_device, name, "Intel(R) HD Graphics Haswell CRW GT2 reserved");
+    case PCI_CHIP_HASWELL_CRW_E3:
+      DECL_INFO_STRING(has_break, intel_hsw_gt3_device, name, "Intel(R) HD Graphics Haswell CRW GT3 reserved");
 has_break:
       device->vendor_id = device_id;
       device->platform = intel_platform;
