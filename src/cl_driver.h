@@ -143,11 +143,11 @@ typedef void (cl_gpgpu_set_stack_cb)(cl_gpgpu, uint32_t offset, uint32_t size, u
 extern cl_gpgpu_set_stack_cb *cl_gpgpu_set_stack;
 
 /* Setup scratch */
-typedef void (cl_gpgpu_set_scratch_cb)(cl_gpgpu, uint32_t per_thread_size);
+typedef int (cl_gpgpu_set_scratch_cb)(cl_gpgpu, uint32_t per_thread_size);
 extern cl_gpgpu_set_scratch_cb *cl_gpgpu_set_scratch;
 
 /* Configure internal state */
-typedef void (cl_gpgpu_state_init_cb)(cl_gpgpu, uint32_t max_threads, uint32_t size_cs_entry, int profiling);
+typedef int (cl_gpgpu_state_init_cb)(cl_gpgpu, uint32_t max_threads, uint32_t size_cs_entry, int profiling);
 extern cl_gpgpu_state_init_cb *cl_gpgpu_state_init;
 
 /* Set the buffer object where to report performance counters */
@@ -155,7 +155,7 @@ typedef void (cl_gpgpu_set_perf_counters_cb)(cl_gpgpu, cl_buffer perf);
 extern cl_gpgpu_set_perf_counters_cb *cl_gpgpu_set_perf_counters;
 
 /* Fills current curbe buffer with data */
-typedef void (cl_gpgpu_upload_curbes_cb)(cl_gpgpu, const void* data, uint32_t size);
+typedef int (cl_gpgpu_upload_curbes_cb)(cl_gpgpu, const void* data, uint32_t size);
 extern cl_gpgpu_upload_curbes_cb *cl_gpgpu_upload_curbes;
 
 typedef cl_buffer (cl_gpgpu_alloc_constant_buffer_cb)(cl_gpgpu, uint32_t size);
@@ -174,7 +174,7 @@ typedef void (cl_gpgpu_set_sampler_cb)(cl_gpgpu, uint32_t index, uint32_t non_no
 extern cl_gpgpu_set_sampler_cb *cl_gpgpu_set_sampler;
 
 /* Allocate the batch buffer and return the BO used for the batch buffer */
-typedef void (cl_gpgpu_batch_reset_cb)(cl_gpgpu, size_t sz);
+typedef int (cl_gpgpu_batch_reset_cb)(cl_gpgpu, size_t sz);
 extern cl_gpgpu_batch_reset_cb *cl_gpgpu_batch_reset;
 
 /* Atomic begin, pipeline select, urb, pipeline state and constant buffer */
@@ -226,7 +226,7 @@ typedef void (cl_gpgpu_unref_batch_buf_cb)(void*);
 extern cl_gpgpu_unref_batch_buf_cb *cl_gpgpu_unref_batch_buf;
 
 /* Set the printf buffer */
-typedef void (cl_gpgpu_set_printf_buffer_cb)(cl_gpgpu, uint32_t, uint32_t, uint32_t);
+typedef int (cl_gpgpu_set_printf_buffer_cb)(cl_gpgpu, uint32_t, uint32_t, uint32_t);
 extern cl_gpgpu_set_printf_buffer_cb *cl_gpgpu_set_printf_buffer;
 
 /* get the printf buffer offset in the apeture*/
@@ -246,7 +246,7 @@ typedef unsigned long (cl_gpgpu_release_printf_buffer_cb)(cl_gpgpu, uint32_t);
 extern cl_gpgpu_release_printf_buffer_cb *cl_gpgpu_release_printf_buffer;
 
 /* Set the last printfset pointer */
-typedef void (cl_gpgpu_set_printf_info_cb)(cl_gpgpu, void *, size_t*);
+typedef int (cl_gpgpu_set_printf_info_cb)(cl_gpgpu, void *, size_t*);
 extern cl_gpgpu_set_printf_info_cb *cl_gpgpu_set_printf_info;
 
 /* Get the last printfset pointer */

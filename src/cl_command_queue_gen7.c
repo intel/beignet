@@ -96,7 +96,7 @@ error:
   return err;
 }
 
-static void
+static int
 cl_upload_constant_buffer(cl_command_queue queue, cl_kernel ker)
 {
   /* calculate constant buffer size
@@ -125,11 +125,15 @@ cl_upload_constant_buffer(cl_command_queue queue, cl_kernel ker)
     }
   }
   if(raw_size == 0)
-     return;
+     return 0;
 
   cl_buffer bo = cl_gpgpu_alloc_constant_buffer(gpgpu, aligned_size);
+  if (bo == NULL)
+    return -1;
   cl_buffer_map(bo, 1);
   char * cst_addr = cl_buffer_get_virtual(bo);
+  if (cst_addr == NULL)
+    return -1;
 
   /* upload the global constant data */
   if (global_const_size > 0) {
@@ -162,6 +166,7 @@ cl_upload_constant_buffer(cl_command_queue queue, cl_kernel ker)
     }
   }
   cl_buffer_unmap(bo);
+  return 0;
 }
 
 /* Will return the total amount of slm used */
@@ -254,19 +259,24 @@ cl_bind_stack(cl_gpgpu gpgpu, cl_kernel ker)
   cl_gpgpu_set_stack(gpgpu, offset, stack_sz, cl_gpgpu_get_cache_ctrl());
 }
 
-static void
+static int
 cl_bind_printf(cl_gpgpu gpgpu, cl_kernel ker, void* printf_info, int printf_num, size_t global_sz) {
   int32_t value = GBE_CURBE_PRINTF_INDEX_POINTER;
   int32_t offset = interp_kernel_get_curbe_offset(ker->opaque, value, 0);
   size_t buf_size = global_sz * sizeof(int) * printf_num;
-  if (offset > 0)
-    cl_gpgpu_set_printf_buffer(gpgpu, 0, buf_size, offset);
+  if (offset > 0) {
+    if (cl_gpgpu_set_printf_buffer(gpgpu, 0, buf_size, offset) != 0)
+      return -1;
+  }
 
   value = GBE_CURBE_PRINTF_BUF_POINTER;
   offset = interp_kernel_get_curbe_offset(ker->opaque, value, 0);
   buf_size = interp_get_printf_sizeof_size(printf_info) * global_sz;
-  if (offset > 0)
-    cl_gpgpu_set_printf_buffer(gpgpu, 1, buf_size, offset);
+  if (offset > 0) {
+    if (cl_gpgpu_set_printf_buffer(gpgpu, 1, buf_size, offset) != 0)
+      return -1;
+  }
+  return 0;
 }
 
 LOCAL cl_int
@@ -322,13 +332,15 @@ cl_command_queue_ND_range_gen7(cl_command_queue queue,
 
   /* Setup the kernel */
   if (queue->props & CL_QUEUE_PROFILING_ENABLE)
-    cl_gpgpu_state_init(gpgpu, ctx->device->max_compute_unit * ctx->device->max_thread_per_unit, cst_sz / 32, 1);
+    err = cl_gpgpu_state_init(gpgpu, ctx->device->max_compute_unit * ctx->device->max_thread_per_unit, cst_sz / 32, 1);
   else
-    cl_gpgpu_state_init(gpgpu, ctx->device->max_compute_unit * ctx->device->max_thread_per_unit, cst_sz / 32, 0);
-
+    err = cl_gpgpu_state_init(gpgpu, ctx->device->max_compute_unit * ctx->device->max_thread_per_unit, cst_sz / 32, 0);
+  if (err != 0)
+    goto error;
   printf_num = interp_get_printf_num(printf_info);
   if (printf_num) {
-    cl_bind_printf(gpgpu, ker, printf_info, printf_num, global_size);
+    if (cl_bind_printf(gpgpu, ker, printf_info, printf_num, global_size) != 0)
+      goto error;
   }
 
   /* Bind user buffers */
@@ -338,12 +350,14 @@ cl_command_queue_ND_range_gen7(cl_command_queue queue,
   /* Bind all samplers */
   cl_gpgpu_bind_sampler(gpgpu, ker->samplers, ker->sampler_sz);
 
-  cl_gpgpu_set_scratch(gpgpu, scratch_sz);
+  if (cl_gpgpu_set_scratch(gpgpu, scratch_sz) != 0)
+    goto error;
 
   /* Bind a stack if needed */
   cl_bind_stack(gpgpu, ker);
 
-  cl_upload_constant_buffer(queue, ker);
+  if (cl_upload_constant_buffer(queue, ker) != 0)
+    goto error;
 
   cl_gpgpu_states_setup(gpgpu, &kernel);
 
@@ -355,12 +369,14 @@ cl_command_queue_ND_range_gen7(cl_command_queue queue,
         memcpy(final_curbe + cst_sz * i, ker->curbe, cst_sz);
     }
     TRY (cl_set_varying_payload, ker, final_curbe, local_wk_sz, simd_sz, cst_sz, thread_n);
-    cl_gpgpu_upload_curbes(gpgpu, final_curbe, thread_n*cst_sz);
+    if (cl_gpgpu_upload_curbes(gpgpu, final_curbe, thread_n*cst_sz) != 0)
+      goto error;
   }
 
   /* Start a new batch buffer */
   batch_sz = cl_kernel_compute_batch_sz(ker);
-  cl_gpgpu_batch_reset(gpgpu, batch_sz);
+  if (cl_gpgpu_batch_reset(gpgpu, batch_sz) != 0)
+    goto error;
   cl_set_thread_batch_buf(queue, cl_gpgpu_ref_batch_buf(gpgpu));
   cl_gpgpu_batch_start(gpgpu);
 
@@ -369,7 +385,11 @@ cl_command_queue_ND_range_gen7(cl_command_queue queue,
 
   /* Close the batch buffer and submit it */
   cl_gpgpu_batch_end(gpgpu, 0);
+  return CL_SUCCESS;
+
 error:
-  return err;
+  fprintf(stderr, "error occured. \n");
+  exit(-1);
+  return CL_OUT_OF_RESOURCES;
 }
 
