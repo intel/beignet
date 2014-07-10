@@ -1365,7 +1365,7 @@ clGetEventInfo(cl_event      event,
   } else if (param_name == CL_EVENT_COMMAND_TYPE) {
     FILL_GETINFO_RET (cl_command_type, 1, &event->type, CL_SUCCESS);
   } else if (param_name == CL_EVENT_COMMAND_EXECUTION_STATUS) {
-    cl_event_update_status(event);
+    cl_event_update_status(event, 0);
     FILL_GETINFO_RET (cl_int, 1, &event->status, CL_SUCCESS);
   } else if (param_name == CL_EVENT_REFERENCE_COUNT) {
     cl_uint ref = event->ref_n;

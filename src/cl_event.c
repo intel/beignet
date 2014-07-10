@@ -55,6 +55,7 @@ void cl_event_flush(cl_event event)
     event->gpgpu = NULL;
   }
   cl_gpgpu_event_flush(event->gpgpu_event);
+  event->queue->last_event = event;
 }
 
 cl_event cl_event_new(cl_context ctx, cl_command_queue queue, cl_command_type type, cl_bool emplict)
@@ -95,8 +96,6 @@ cl_event cl_event_new(cl_context ctx, cl_command_queue queue, cl_command_type ty
   event->enqueue_cb = NULL;
   event->waits_head = NULL;
   event->emplict = emplict;
-  if(queue && event->gpgpu_event)
-    queue->last_event = event;
 
 exit:
   return event;
@@ -111,7 +110,7 @@ void cl_event_delete(cl_event event)
   if (UNLIKELY(event == NULL))
     return;
 
-  cl_event_update_status(event);
+  cl_event_update_status(event, 0);
 
   if (atomic_dec(&event->ref_n) > 1)
     return;
@@ -124,6 +123,7 @@ void cl_event_delete(cl_event event)
   while(event->user_cb) {
     cb = event->user_cb;
     if(cb->executed == CL_FALSE) {
+      cb->executed = CL_TRUE;
       cb->pfn_notify(event, event->status, cb->user_data);
     }
     event->user_cb = cb->next;
@@ -443,8 +443,8 @@ void cl_event_set_status(cl_event event, cl_int status)
   user_cb = event->user_cb;
   while(user_cb) {
     if(user_cb->status >= status) {
-      user_cb->pfn_notify(event, event->status, user_cb->user_data);
       user_cb->executed = CL_TRUE;
+      user_cb->pfn_notify(event, event->status, user_cb->user_data);
     }
     user_cb = user_cb->next;
   }
@@ -492,12 +492,12 @@ void cl_event_set_status(cl_event event, cl_int status)
   event->waits_head = NULL;
 }
 
-void cl_event_update_status(cl_event event)
+void cl_event_update_status(cl_event event, int wait)
 {
   if(event->status <= CL_COMPLETE)
     return;
   if((event->gpgpu_event) &&
-     (cl_gpgpu_event_update_status(event->gpgpu_event, 0) == command_complete))
+     (cl_gpgpu_event_update_status(event->gpgpu_event, wait) == command_complete))
     cl_event_set_status(event, CL_COMPLETE);
 }
 
