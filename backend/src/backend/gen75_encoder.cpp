@@ -253,7 +253,8 @@ namespace gbe
                insn.header.opcode == GEN_OPCODE_BRD  ||
                insn.header.opcode == GEN_OPCODE_ENDIF ||
                insn.header.opcode == GEN_OPCODE_IF ||
-               insn.header.opcode == GEN_OPCODE_BRC);
+               insn.header.opcode == GEN_OPCODE_BRC ||
+               insn.header.opcode == GEN_OPCODE_ELSE);
 
     if (insn.header.opcode == GEN_OPCODE_IF) {
       this->setSrc1(&insn, GenRegister::immd(jumpDistance));
