@@ -699,7 +699,7 @@ intel_gpgpu_alloc_constant_buffer(intel_gpgpu_t *gpgpu, uint32_t size)
   gen7_surface_state_t *ss2 = (gen7_surface_state_t *) heap->surface[2];
   memset(ss2, 0, sizeof(gen7_surface_state_t));
   ss2->ss0.surface_type = I965_SURFACE_BUFFER;
-  ss2->ss0.surface_format = I965_SURFACEFORMAT_RAW;
+  ss2->ss0.surface_format = I965_SURFACEFORMAT_R32G32B32A32_UINT;
   ss2->ss2.width  = s & 0x7f;            /* bits 6:0 of sz */
   ss2->ss2.height = (s >> 7) & 0x3fff;   /* bits 20:7 of sz */
   ss2->ss3.depth  = (s >> 21) & 0x3ff;   /* bits 30:21 of sz */

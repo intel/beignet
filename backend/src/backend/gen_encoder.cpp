@@ -1218,7 +1218,8 @@ namespace gbe
                           uint32_t simdWidth,
                           uint32_t writemask,
                           uint32_t return_format,
-                          bool isLD)
+                          bool isLD,
+                          bool isUniform)
   {
      if (writemask == 0) return;
      uint32_t msg_type = isLD ? GEN_SAMPLER_MESSAGE_SIMD8_LD :
@@ -1229,6 +1230,12 @@ namespace gbe
        msg_length++;
      uint32_t simd_mode = (simdWidth == 16) ?
                             GEN_SAMPLER_SIMD_MODE_SIMD16 : GEN_SAMPLER_SIMD_MODE_SIMD8;
+    if(isUniform) {
+      response_length = 1;
+      msg_type = GEN_SAMPLER_MESSAGE_SIMD4X2_LD;
+      msg_length = 1;
+      simd_mode = GEN_SAMPLER_SIMD_MODE_SIMD4X2;
+    }
      GenNativeInstruction *insn = this->next(GEN_OPCODE_SEND);
      this->setHeader(insn);
      this->setDst(insn, dest);
