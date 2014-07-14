@@ -2804,12 +2804,11 @@ namespace gbe
         GBE_ASSERT(elemSize == GEN_BYTE_SCATTER_WORD || elemSize == GEN_BYTE_SCATTER_BYTE);
 
         Register tmpReg = sel.reg(FAMILY_DWORD, simdWidth == 1);
-        GenRegister tmpAddr = GenRegister::udxgrf(simdWidth, sel.reg(FAMILY_DWORD, simdWidth == 1));
+        GenRegister tmpAddr = GenRegister::udxgrf(simdWidth, sel.reg(FAMILY_DWORD));
         GenRegister tmpData = GenRegister::udxgrf(simdWidth, tmpReg);
         // Get dword aligned addr
         sel.push();
           if (simdWidth == 1) {
-            sel.curr.execWidth = 1;
             sel.curr.noMask = 1;
           }
           sel.AND(tmpAddr, GenRegister::retype(address,GEN_TYPE_UD), GenRegister::immud(0xfffffffc));
