@@ -592,7 +592,7 @@ namespace gbe
     /*! Encode ternary instructions */
     void ALU3(SelectionOpcode opcode, Reg dst, Reg src0, Reg src1, Reg src2);
     /*! Encode sample instructions */
-    void SAMPLE(GenRegister *dst, uint32_t dstNum, GenRegister *msgPayloads, uint32_t msgNum, uint32_t bti, uint32_t sampler, bool isLD);
+    void SAMPLE(GenRegister *dst, uint32_t dstNum, GenRegister *msgPayloads, uint32_t msgNum, uint32_t bti, uint32_t sampler, bool isLD, bool isUniform);
     /*! Encode typed write instructions */
     void TYPED_WRITE(GenRegister *msgs, uint32_t msgNum, uint32_t bti, bool is3D);
     /*! Get image information */
@@ -1598,7 +1598,7 @@ namespace gbe
 
   void Selection::Opaque::SAMPLE(GenRegister *dst, uint32_t dstNum,
                                  GenRegister *msgPayloads, uint32_t msgNum,
-                                 uint32_t bti, uint32_t sampler, bool isLD) {
+                                 uint32_t bti, uint32_t sampler, bool isLD, bool isUniform) {
     SelectionInstruction *insn = this->appendInsn(SEL_OP_SAMPLE, dstNum, msgNum);
     SelectionVector *dstVector = this->appendVector();
     SelectionVector *msgVector = this->appendVector();
@@ -1623,6 +1623,7 @@ namespace gbe
     insn->extra.sampler = sampler;
     insn->extra.rdmsglen = msgNum;
     insn->extra.isLD = isLD;
+    insn->extra.isUniform = isUniform;
   }
 
   ///////////////////////////////////////////////////////////////////////////
@@ -2717,14 +2718,23 @@ namespace gbe
       using namespace ir;
       const uint32_t simdWidth = sel.isScalarReg(insn.getValue(0)) ? 1 : sel.ctx.getSimdWidth();
       GBE_ASSERT(insn.getValueNum() == 1);
+
+      if(simdWidth == 1) {
+        GenRegister dst = sel.selReg(insn.getValue(0), ir::TYPE_U32);
+        sel.push();
+          sel.curr.noMask = 1;
+          sel.SAMPLE(&dst, 1, &addr, 1, bti, 0, true, true);
+        sel.pop();
+        return;
+      }
+
       GenRegister dst = GenRegister::retype(sel.selReg(insn.getValue(0)), GEN_TYPE_F);
       // get dword based address
-      GenRegister addrDW = GenRegister::udxgrf(simdWidth, sel.reg(FAMILY_DWORD, simdWidth == 1));
+      GenRegister addrDW = GenRegister::udxgrf(simdWidth, sel.reg(FAMILY_DWORD));
 
       sel.push();
-        if (simdWidth == 1) {
+        if (sel.isScalarReg(addr.reg())) {
           sel.curr.noMask = 1;
-          sel.curr.execWidth = 1;
         }
         sel.SHR(addrDW, GenRegister::retype(addr, GEN_TYPE_UD), GenRegister::immud(2));
       sel.pop();
@@ -3613,7 +3623,7 @@ namespace gbe
       }
       uint32_t sampler = insn.getSamplerIndex();
 
-      sel.SAMPLE(dst, insn.getDstNum(), msgPayloads, msgLen, bti, sampler, insn.getSamplerOffset() != 0);
+      sel.SAMPLE(dst, insn.getDstNum(), msgPayloads, msgLen, bti, sampler, insn.getSamplerOffset() != 0, false);
       return true;
     }
     DECL_CTOR(SampleInstruction, 1, 1);
