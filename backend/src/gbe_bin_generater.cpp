@@ -39,6 +39,7 @@
 #include "backend/program.h"
 #include "backend/program.hpp"
 #include "backend/src/sys/platform.hpp"
+#include "src/cl_device_data.h"
 
 using namespace std;
 
@@ -159,6 +160,22 @@ void program_build_instance::serialize_program(void) throw(int)
     size_t sz = 0, header_sz = 0;
     ofs.open(bin_path, ofstream::out | ofstream::trunc | ofstream::binary);
 
+    char src_hw_info[4]="";
+    if(IS_IVYBRIDGE(gen_pci_id)){
+      src_hw_info[0]='I';
+      src_hw_info[1]='V';
+      src_hw_info[2]='B';
+      if(IS_BAYTRAIL_T(gen_pci_id)){
+        src_hw_info[0]='B';
+        src_hw_info[1]='Y';
+        src_hw_info[2]='T';
+      }
+    }else if(IS_HASWELL(gen_pci_id)){
+        src_hw_info[0]='H';
+        src_hw_info[1]='S';
+        src_hw_info[2]='W';
+    }
+
     if (str_fmt_out) {
 
       if(gen_pci_id){
@@ -170,6 +187,9 @@ void program_build_instance::serialize_program(void) throw(int)
         OUTS_UPDATE_SZ(gen_header[2]);
         OUTS_UPDATE_SZ(gen_header[3]);
         OUTS_UPDATE_SZ(gen_header[4]);
+        OUTS_UPDATE_SZ(src_hw_info[0]);
+        OUTS_UPDATE_SZ(src_hw_info[1]);
+        OUTS_UPDATE_SZ(src_hw_info[2]);
       }
 
       string array_name = "Unknown_name_array";
@@ -213,6 +233,9 @@ void program_build_instance::serialize_program(void) throw(int)
         OUTF_UPDATE_SZ(gen_header[2]);
         OUTF_UPDATE_SZ(gen_header[3]);
         OUTF_UPDATE_SZ(gen_header[4]);
+        OUTF_UPDATE_SZ(src_hw_info[0]);
+        OUTF_UPDATE_SZ(src_hw_info[1]);
+        OUTF_UPDATE_SZ(src_hw_info[2]);
         sz = gbe_prog->serializeToBin(ofs);
       }else{
         char *llvm_binary;

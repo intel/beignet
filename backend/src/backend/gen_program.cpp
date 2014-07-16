@@ -196,15 +196,36 @@ namespace gbe {
 #endif
   }
 
+#define BINARY_HEADER_LENGTH 8
+#define IS_GEN_BINARY(binary) (*binary == '\0' && *(binary+1) == 'G'&& *(binary+2) == 'E' &&*(binary+3) == 'N' &&*(binary+4) == 'C')
+#define FILL_GEN_BINARY(binary) do{*binary = '\0'; *(binary+1) = 'G'; *(binary+2) = 'E'; *(binary+3) = 'N'; *(binary+4) = 'C';}while(0)
+#define FILL_DEVICE_ID(binary, src_hw_info) do {*(binary+5) = src_hw_info[0]; *(binary+6) = src_hw_info[1]; *(binary+7) = src_hw_info[2];}while(0)
+#define DEVICE_MATCH(typeA, src_hw_info) ((IS_IVYBRIDGE(typeA) && !strcmp(src_hw_info, "IVB")) ||  \
+                                      (IS_IVYBRIDGE(typeA) && !strcmp(src_hw_info, "BYT")) ||  \
+                                      (IS_BAYTRAIL_T(typeA) && !strcmp(src_hw_info, "BYT")) ||  \
+                                      (IS_HASWELL(typeA) && !strcmp(src_hw_info, "HSW")) )
+
   static gbe_program genProgramNewFromBinary(uint32_t deviceID, const char *binary, size_t size) {
     using namespace gbe;
     std::string binary_content;
-    //the first 5 bytes are header to differentiate from llvm bitcode binary.
-    binary_content.assign(binary+5, size-5);
+    //the header length is 8 bytes: 1 byte is binary type, 4 bytes are bitcode header, 3  bytes are hw info.
+    char src_hw_info[4]="";
+    src_hw_info[0] = *(binary+5);
+    src_hw_info[1] = *(binary+6);
+    src_hw_info[2] = *(binary+7);
+
+    // check whether is gen binary ('/0GENC')
+    if(!IS_GEN_BINARY(binary)){
+        return NULL;
+    }
+    // check the whether the current device ID match the binary file's.
+    if(!DEVICE_MATCH(deviceID, src_hw_info)){
+      return NULL;
+    }
+
+    binary_content.assign(binary+BINARY_HEADER_LENGTH, size-BINARY_HEADER_LENGTH);
     GenProgram *program = GBE_NEW(GenProgram, deviceID);
     std::istringstream ifs(binary_content, std::ostringstream::binary);
-    // FIXME we need to check the whether the current device ID match the binary file's.
-    deviceID = deviceID;
 
     if (!program->deserializeFromBin(ifs)) {
       delete program;
@@ -255,11 +276,28 @@ namespace gbe {
       }
 
       //add header to differetiate from llvm bitcode binary.
-      //the header length is 5 bytes: 1 binary type, 4 bitcode header.
-      *binary = (char *)malloc(sizeof(char) * (sz+5) );
-      memset(*binary, 0, sizeof(char) * (sz+5) );
-      memcpy(*binary+5, oss.str().c_str(), sz*sizeof(char));
-      return sz+5;
+      //the header length is 8 bytes: 1 byte is binary type, 4 bytes are bitcode header, 3  bytes are hw info.
+      *binary = (char *)malloc(sizeof(char) * (sz+BINARY_HEADER_LENGTH) );
+      memset(*binary, 0, sizeof(char) * (sz+BINARY_HEADER_LENGTH) );
+      FILL_GEN_BINARY(*binary);
+      char src_hw_info[4]="";
+      if(IS_IVYBRIDGE(prog->deviceID)){
+        src_hw_info[0]='I';
+        src_hw_info[1]='V';
+        src_hw_info[2]='B';
+        if(IS_BAYTRAIL_T(prog->deviceID)){
+          src_hw_info[0]='B';
+          src_hw_info[1]='Y';
+          src_hw_info[2]='T';
+        }
+      }else if(IS_HASWELL(prog->deviceID)){
+        src_hw_info[0]='H';
+        src_hw_info[1]='S';
+        src_hw_info[2]='W';
+      }
+      FILL_DEVICE_ID(*binary, src_hw_info);
+      memcpy(*binary+BINARY_HEADER_LENGTH, oss.str().c_str(), sz*sizeof(char));
+      return sz+BINARY_HEADER_LENGTH;
     }else{
 #ifdef GBE_COMPILER_AVAILABLE
       std::string str;
