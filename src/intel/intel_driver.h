@@ -85,7 +85,7 @@ typedef struct intel_driver
   sigset_t sa_mask;
   pthread_mutex_t ctxmutex;
   int locked;
-  int master;
+  int need_close;
   Display *x11_display;
   struct dri_state *dri_ctx;
 } intel_driver_t;
