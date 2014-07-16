@@ -202,7 +202,7 @@ intel_driver_open(intel_driver_t *intel, cl_context_prop props)
       && props->gl_type != CL_GL_NOSHARE
       && props->gl_type != CL_GL_GLX_DISPLAY
       && props->gl_type != CL_GL_EGL_DISPLAY) {
-    printf("Unsupported gl share type %d.\n", props->gl_type);
+    fprintf(stderr, "Unsupported gl share type %d.\n", props->gl_type);
     exit(-1);
   }
 
@@ -216,37 +216,29 @@ intel_driver_open(intel_driver_t *intel, cl_context_prop props)
       Xfree(driver_name);
     }
     else
-      printf("X server found. dri2 connection failed! \n");
-  } else {
-    printf("Can't find X server!\n");
+      fprintf(stderr, "X server found. dri2 connection failed! \n");
   }
 
   if(!intel_driver_is_active(intel)) {
-    printf("Trying to open render node...\n");
     char card_name[20];
     for(cardi = 0; cardi < 16; cardi++) {
       sprintf(card_name, "/dev/dri/renderD%d", 128+cardi);
-      if(intel_driver_init_render(intel, card_name)) {
-        printf("Success at %s.\n", card_name);
+      if(intel_driver_init_render(intel, card_name))
         break;
-      }
     }
   }
 
   if(!intel_driver_is_active(intel)) {
-    printf("Trying to open directly...\n");
     char card_name[20];
     for(cardi = 0; cardi < 16; cardi++) {
       sprintf(card_name, "/dev/dri/card%d", cardi);
-      if(intel_driver_init_master(intel, card_name)) {
-        printf("Success at %s.\n", card_name);
+      if(intel_driver_init_master(intel, card_name))
         break;
-      }
     }
   }
 
   if(!intel_driver_is_active(intel)) {
-    printf("Device open failed\n");
+    fprintf(stderr, "Device open failed, aborting...\n");
     exit(-1);
   }
 
@@ -262,10 +254,13 @@ intel_driver_close(intel_driver_t *intel)
 {
   if(intel->dri_ctx) dri_state_release(intel->dri_ctx);
   if(intel->x11_display) XCloseDisplay(intel->x11_display);
-  if(intel->fd) close(intel->fd);
+  if(intel->need_close) {
+    close(intel->fd);
+    intel->need_close = 0;
+  }
   intel->dri_ctx = NULL;
   intel->x11_display = NULL;
-  intel->fd = 0;
+  intel->fd = -1;
 }
 
 LOCAL int
@@ -294,7 +289,7 @@ intel_driver_init_shared(intel_driver_t *driver, dri_state_t *state)
   if(state->driConnectedFlag != DRI2)
     return 0;
   intel_driver_init(driver, state->fd);
-  driver->master = 0;
+  driver->need_close = 0;
   return 1;
 }
 
@@ -308,31 +303,27 @@ intel_driver_init_master(intel_driver_t *driver, const char* dev_name)
   // usually dev_name = "/dev/dri/card%d"
   dev_fd = open(dev_name, O_RDWR);
   if (dev_fd == -1) {
-    printf("open(\"%s\", O_RDWR) failed: %s\n", dev_name, strerror(errno));
+    fprintf(stderr, "open(\"%s\", O_RDWR) failed: %s\n", dev_name, strerror(errno));
     return 0;
   }
 
-  // Check that we're authenticated and the only opener
+  // Check that we're authenticated
   memset(&client, 0, sizeof(drm_client_t));
   int ret = ioctl(dev_fd, DRM_IOCTL_GET_CLIENT, &client);
-  assert (ret == 0);
-
-  if (!client.auth) {
-    printf("%s not authenticated\n", dev_name);
+  if (ret == -1) {
+    fprintf(stderr, "ioctl(dev_fd, DRM_IOCTL_GET_CLIENT, &client) failed: %s\n", strerror(errno));
     close(dev_fd);
     return 0;
   }
 
-  client.idx = 1;
-  ret = ioctl(dev_fd, DRM_IOCTL_GET_CLIENT, &client);
-  if (ret != -1 || errno != EINVAL) {
-    printf("%s is already in use\n", dev_name);
+  if (!client.auth) {
+    fprintf(stderr, "%s not authenticated\n", dev_name);
     close(dev_fd);
     return 0;
   }
 
   intel_driver_init(driver, dev_fd);
-  driver->master = 1;
+  driver->need_close = 1;
 
   return 1;
 }
@@ -344,13 +335,11 @@ intel_driver_init_render(intel_driver_t *driver, const char* dev_name)
 
   // usually dev_name = "/dev/dri/renderD%d"
   dev_fd = open(dev_name, O_RDWR);
-  if (dev_fd == -1) {
-    printf("open(\"%s\", O_RDWR) failed: %s\n", dev_name, strerror(errno));
+  if (dev_fd == -1)
     return 0;
-  }
 
   intel_driver_init(driver, dev_fd);
-  driver->master = 1;
+  driver->need_close = 1;
 
   return 1;
 }
@@ -360,8 +349,10 @@ intel_driver_terminate(intel_driver_t *driver)
 {
   pthread_mutex_destroy(&driver->ctxmutex);
 
-  if(driver->master)
+  if(driver->need_close) {
     close(driver->fd);
+    driver->need_close = 0;
+  }
   driver->fd = -1;
   return 1;
 }
@@ -385,7 +376,6 @@ intel_driver_unlock_hardware(intel_driver_t *driver)
 LOCAL dri_bo*
 intel_driver_share_buffer(intel_driver_t *driver, const char *sname, uint32_t name)
 {
-  assert(!driver->master);
   dri_bo *bo = intel_bo_gem_create_from_name(driver->bufmgr,
                                              sname,
                                              name);
@@ -396,7 +386,6 @@ LOCAL uint32_t
 intel_driver_shared_name(intel_driver_t *driver, dri_bo *bo)
 {
   uint32_t name;
-  assert(!driver->master);
   assert(bo);
   dri_bo_flink(bo, &name);
   return name;
