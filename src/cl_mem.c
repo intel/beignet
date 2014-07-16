@@ -1399,6 +1399,16 @@ cl_mem_copy_buffer_rect(cl_command_queue queue, cl_mem src_buf, cl_mem dst_buf,
   size_t global_off[] = {0,0,0};
   size_t global_sz[] = {1,1,1};
   size_t local_sz[] = {LOCAL_SZ_0,LOCAL_SZ_1,LOCAL_SZ_1};
+  // the src and dst mem rect is continuous, the copy is degraded to buf copy
+  if((region[0] == dst_row_pitch) && (region[0] == src_row_pitch) &&
+  (region[1] * src_row_pitch == src_slice_pitch) && (region[1] * dst_row_pitch == dst_slice_pitch)){
+    cl_int src_offset = src_origin[2]*src_slice_pitch + src_origin[1]*src_row_pitch + src_origin[0];
+    cl_int dst_offset = dst_origin[2]*dst_slice_pitch + dst_origin[1]*dst_row_pitch + dst_origin[0];
+    cl_int size = region[0]*region[1]*region[2];
+    ret = cl_mem_copy(queue, src_buf, dst_buf,src_offset, dst_offset, size);
+    return ret;
+  }
+
   if(region[1] == 1) local_sz[1] = 1;
   if(region[2] == 1) local_sz[2] = 1;
   global_sz[0] = ((region[0] + local_sz[0] - 1) / local_sz[0]) * local_sz[0];
@@ -1411,18 +1421,33 @@ cl_mem_copy_buffer_rect(cl_command_queue queue, cl_mem src_buf, cl_mem dst_buf,
   assert(src_buf->ctx == dst_buf->ctx);
 
   /* setup the kernel and run. */
-  extern char cl_internal_copy_buf_rect_str[];
-  extern size_t cl_internal_copy_buf_rect_str_size;
-
-  ker = cl_context_get_static_kernel_from_bin(queue->ctx, CL_ENQUEUE_COPY_BUFFER_RECT,
-      cl_internal_copy_buf_rect_str, (size_t)cl_internal_copy_buf_rect_str_size, NULL);
+  size_t region0 = region[0];
+  if( (src_offset % 4== 0) && (dst_offset % 4== 0) && (src_row_pitch % 4== 0) && (dst_row_pitch % 4== 0)
+  && (src_slice_pitch % 4== 0) && (dst_slice_pitch % 4== 0) && (region0 % 4 == 0) ){
+    extern char cl_internal_copy_buf_rect_align4_str[];
+    extern size_t cl_internal_copy_buf_rect_align4_str_size;
+    region0 /= 4;
+    src_offset /= 4;
+    dst_offset /= 4;
+    src_row_pitch /= 4;
+    dst_row_pitch /= 4;
+    src_slice_pitch /= 4;
+    dst_slice_pitch /= 4;
+    ker = cl_context_get_static_kernel_from_bin(queue->ctx, CL_ENQUEUE_COPY_BUFFER_RECT_ALIGN4,
+    cl_internal_copy_buf_rect_align4_str, (size_t)cl_internal_copy_buf_rect_align4_str_size, NULL);
+  }else{
+    extern char cl_internal_copy_buf_rect_str[];
+    extern size_t cl_internal_copy_buf_rect_str_size;
+    ker = cl_context_get_static_kernel_from_bin(queue->ctx, CL_ENQUEUE_COPY_BUFFER_RECT,
+    cl_internal_copy_buf_rect_str, (size_t)cl_internal_copy_buf_rect_str_size, NULL);
+  }
 
   if (!ker)
     return CL_OUT_OF_RESOURCES;
 
   cl_kernel_set_arg(ker, 0, sizeof(cl_mem), &src_buf);
   cl_kernel_set_arg(ker, 1, sizeof(cl_mem), &dst_buf);
-  cl_kernel_set_arg(ker, 2, sizeof(cl_int), &region[0]);
+  cl_kernel_set_arg(ker, 2, sizeof(cl_int), &region0);
   cl_kernel_set_arg(ker, 3, sizeof(cl_int), &region[1]);
   cl_kernel_set_arg(ker, 4, sizeof(cl_int), &region[2]);
   cl_kernel_set_arg(ker, 5, sizeof(cl_int), &src_offset);
