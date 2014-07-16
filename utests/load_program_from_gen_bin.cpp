@@ -9,7 +9,7 @@ static void cpu(int global_id, float *src, float *dst) {
     dst[global_id] = ceilf(src[global_id]);
 }
 
-static void test_load_program_from_bin(void)
+static void test_load_program_from_gen_bin(void)
 {
     const size_t n = 16;
     float cpu_dst[16], cpu_src[16];
@@ -18,21 +18,37 @@ static void test_load_program_from_bin(void)
     char *ker_path = NULL;
 
     cl_file_map_t *fm = cl_file_map_new();
-    ker_path = cl_do_kiss_path("compiler_ceil.bin", device);
+    ker_path = cl_do_kiss_path("compiler_ceil.cl", device);
     OCL_ASSERT (cl_file_map_open(fm, ker_path) == CL_FILE_MAP_SUCCESS);
 
-    const unsigned char *src = (const unsigned char *)cl_file_map_begin(fm);
-    const size_t sz = cl_file_map_size(fm);
+    const char *src = (const char *)cl_file_map_begin(fm);
 
-    program = clCreateProgramWithBinary(ctx, 1,
-              &device, &sz, &src, &binary_status, &status);
+    program =clCreateProgramWithSource(ctx, 1, &src, NULL, &status);
 
     OCL_ASSERT(program && status == CL_SUCCESS);
 
     /* OCL requires to build the program even if it is created from a binary */
     OCL_ASSERT(clBuildProgram(program, 1, &device, NULL, NULL, NULL) == CL_SUCCESS);
 
-    kernel = clCreateKernel(program, "compiler_ceil", &status);
+    size_t      binarySize;
+    unsigned char *binary = NULL;
+
+    status = clGetProgramInfo( program, CL_PROGRAM_BINARY_SIZES, sizeof( binarySize ), &binarySize, NULL );
+    OCL_ASSERT(status == CL_SUCCESS);
+    // Create a buffer and get the gen binary
+    binary = (unsigned char*)malloc(sizeof(unsigned char)*binarySize);
+    OCL_ASSERT(binary != NULL);
+
+    status = clGetProgramInfo( program, CL_PROGRAM_BINARIES, sizeof( &binary), &binary, NULL );
+    OCL_ASSERT(status == CL_SUCCESS);
+
+    cl_program bin_program = clCreateProgramWithBinary(ctx, 1,
+              &device, &binarySize, (const unsigned char**)&binary, &binary_status, &status);
+    OCL_ASSERT(bin_program && status == CL_SUCCESS);
+    /* OCL requires to build the program even if it is created from a binary */
+    OCL_ASSERT(clBuildProgram(bin_program, 1, &device, NULL, NULL, NULL) == CL_SUCCESS);
+
+    kernel = clCreateKernel(bin_program, "compiler_ceil", &status);
     OCL_ASSERT(status == CL_SUCCESS);
 
     OCL_CREATE_BUFFER(buf[0], 0, n * sizeof(float), NULL);
@@ -74,4 +90,4 @@ static void test_load_program_from_bin(void)
     }
 }
 
-MAKE_UTEST_FROM_FUNCTION(test_load_program_from_bin);
+MAKE_UTEST_FROM_FUNCTION(test_load_program_from_gen_bin);
