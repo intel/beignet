@@ -32,6 +32,7 @@ gbe_program_new_from_llvm_binary_cb *compiler_program_new_from_llvm_binary = NUL
 gbe_program_serialize_to_binary_cb *compiler_program_serialize_to_binary = NULL;
 gbe_program_new_from_llvm_cb *compiler_program_new_from_llvm = NULL;
 gbe_set_image_base_index_cb *compiler_set_image_base_index = NULL;
+gbe_program_clean_llvm_resource_cb *compiler_program_clean_llvm_resource = NULL;
 
 //function pointer from libgbeinterp.so
 gbe_program_new_from_binary_cb *interp_program_new_from_binary = NULL;
@@ -287,6 +288,10 @@ struct GbeLoaderInitializer
 
       compiler_set_image_base_index = *(gbe_set_image_base_index_cb **)dlsym(dlhCompiler, "gbe_set_image_base_index");
       if (compiler_set_image_base_index == NULL)
+        return;
+
+      compiler_program_clean_llvm_resource = *(gbe_program_clean_llvm_resource_cb **)dlsym(dlhCompiler, "gbe_program_clean_llvm_resource");
+      if (compiler_program_clean_llvm_resource == NULL)
         return;
 
       compilerLoaded = true;

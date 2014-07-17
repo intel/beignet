@@ -101,7 +101,11 @@ cl_program_delete(cl_program p)
   cl_context_delete(p->ctx);
 
   /* Free the program as allocated by the compiler */
-  if (p->opaque) interp_program_delete(p->opaque);
+  if (p->opaque) {
+    if (CompilerSupported())
+      compiler_program_clean_llvm_resource(p->opaque);
+    interp_program_delete(p->opaque);
+  }
 
   p->magic = CL_MAGIC_DEAD_HEADER; /* For safety */
   cl_free(p);

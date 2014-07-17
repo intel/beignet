@@ -112,7 +112,7 @@ namespace gbe {
 #endif
   }
 
-  GenProgram::~GenProgram(void){
+  void GenProgram::CleanLlvmResource(void){
 #ifdef GBE_COMPILER_AVAILABLE
     if(module){
       delete (llvm::Module*)module;
