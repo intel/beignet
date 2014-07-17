@@ -239,6 +239,10 @@ extern gbe_kernel_get_sampler_data_cb *gbe_kernel_get_sampler_data;
 typedef void (gbe_kernel_get_compile_wg_size_cb)(gbe_kernel gbeKernel, size_t wg_sz[3]);
 extern gbe_kernel_get_compile_wg_size_cb *gbe_kernel_get_compile_wg_size;
 
+/*! Clean LLVM resource of the given program */
+typedef void (gbe_program_clean_llvm_resource_cb)(gbe_program);
+extern gbe_program_clean_llvm_resource_cb *gbe_program_clean_llvm_resource;
+
 /*! Destroy and deallocate the given program */
 typedef void (gbe_program_delete_cb)(gbe_program);
 extern gbe_program_delete_cb *gbe_program_delete;

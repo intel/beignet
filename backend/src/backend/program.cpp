@@ -528,6 +528,11 @@ namespace gbe {
     GBE_SAFE_DELETE(program);
   }
 
+  static void programCleanLlvmResource(gbe_program gbeProgram) {
+    gbe::Program *program = (gbe::Program*)(gbeProgram);
+    program->CleanLlvmResource();
+  }
+
 #ifdef GBE_COMPILER_AVAILABLE
   BVAR(OCL_OUTPUT_BUILD_LOG, false);
   SVAR(OCL_PCH_PATH, PCH_OBJECT_DIR);
@@ -838,7 +843,7 @@ namespace gbe {
     processSourceAndOption(source, options, NULL, clOpt, clName, optLevel);
 
     gbe_program p;
-    // will delete the module and act in the destructor of GenProgram.
+    // will delete the module and act in GenProgram::CleanLlvmResource().
     llvm::Module * out_module;
     llvm::LLVMContext* llvm_ctx = new llvm::LLVMContext;
     if (buildModuleFromSource(clName.c_str(), &out_module, llvm_ctx, clOpt.c_str(),
@@ -1165,6 +1170,7 @@ GBE_EXPORT_SYMBOL gbe_program_link_from_llvm_cb *gbe_program_link_from_llvm = NU
 GBE_EXPORT_SYMBOL gbe_program_build_from_llvm_cb *gbe_program_build_from_llvm = NULL;
 GBE_EXPORT_SYMBOL gbe_program_get_global_constant_size_cb *gbe_program_get_global_constant_size = NULL;
 GBE_EXPORT_SYMBOL gbe_program_get_global_constant_data_cb *gbe_program_get_global_constant_data = NULL;
+GBE_EXPORT_SYMBOL gbe_program_clean_llvm_resource_cb *gbe_program_clean_llvm_resource = NULL;
 GBE_EXPORT_SYMBOL gbe_program_delete_cb *gbe_program_delete = NULL;
 GBE_EXPORT_SYMBOL gbe_program_get_kernel_num_cb *gbe_program_get_kernel_num = NULL;
 GBE_EXPORT_SYMBOL gbe_program_get_kernel_by_name_cb *gbe_program_get_kernel_by_name = NULL;
@@ -1210,6 +1216,7 @@ namespace gbe
       gbe_program_link_program = gbe::programLinkProgram;
       gbe_program_get_global_constant_size = gbe::programGetGlobalConstantSize;
       gbe_program_get_global_constant_data = gbe::programGetGlobalConstantData;
+      gbe_program_clean_llvm_resource = gbe::programCleanLlvmResource;
       gbe_program_delete = gbe::programDelete;
       gbe_program_get_kernel_num = gbe::programGetKernelNum;
       gbe_program_get_kernel_by_name = gbe::programGetKernelByName;

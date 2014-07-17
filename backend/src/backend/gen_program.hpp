@@ -64,7 +64,9 @@ namespace gbe
     /*! Current device ID*/
     uint32_t deviceID;
     /*! Destroy the program */
-    virtual ~GenProgram(void);
+    virtual ~GenProgram(void) {};
+    /*! Clean LLVM resource */
+    virtual void CleanLlvmResource(void);
     /*! Implements base class */
     virtual Kernel *compileKernel(const ir::Unit &unit, const std::string &name, bool relaxMath);
     /*! Allocate an empty kernel. */

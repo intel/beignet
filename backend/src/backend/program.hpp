@@ -225,6 +225,8 @@ namespace gbe {
     Program(void);
     /*! Destroy the program */
     virtual ~Program(void);
+    /*! Clean LLVM resource of the program */
+    virtual void CleanLlvmResource() = 0;
     /*! Get the number of kernels in the program */
     uint32_t getKernelNum(void) const { return kernels.size(); }
     /*! Get the kernel from its name */
