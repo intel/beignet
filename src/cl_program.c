@@ -76,6 +76,11 @@ cl_program_delete(cl_program p)
     p->build_opts = NULL;
   }
 
+  if (p->build_log) {
+    free(p->build_log);
+    p->build_log = NULL;
+  }
+
   /* Remove it from the list */
   assert(p->ctx);
   pthread_mutex_lock(&p->ctx->program_lock);
