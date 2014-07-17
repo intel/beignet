@@ -345,7 +345,7 @@ namespace ir {
     {
     public:
       INLINE BranchInstruction(Opcode op, LabelIndex labelIndex, Register predicate) {
-        GBE_ASSERT(op == OP_BRA);
+        GBE_ASSERT(op == OP_BRA || op == OP_IF);
         this->opcode = op;
         this->predicate = predicate;
         this->labelIndex = labelIndex;
@@ -353,15 +353,15 @@ namespace ir {
         this->hasLabel = true;
       }
       INLINE BranchInstruction(Opcode op, LabelIndex labelIndex) {
-        GBE_ASSERT(op == OP_BRA);
-        this->opcode = OP_BRA;
+        GBE_ASSERT(op == OP_BRA || op == OP_ELSE || op == OP_ENDIF);
+        this->opcode = op;
         this->labelIndex = labelIndex;
         this->hasPredicate = false;
         this->hasLabel = true;
       }
       INLINE BranchInstruction(Opcode op) {
         GBE_ASSERT(op == OP_RET);
-        this->opcode = OP_RET;
+        this->opcode = op;
         this->hasPredicate = false;
         this->hasLabel = false;
       }
@@ -1588,6 +1588,20 @@ DECL_MEM_FN(GetImageInfoInstruction, const uint8_t, getImageIndex(void), getImag
   }
   Instruction BRA(LabelIndex labelIndex, Register pred) {
     return internal::BranchInstruction(OP_BRA, labelIndex, pred).convert();
+  }
+
+  // IF
+  Instruction IF(LabelIndex labelIndex, Register pred) {
+    return internal::BranchInstruction(OP_IF, labelIndex, pred).convert();
+  }
+
+  // ELSE
+  Instruction ELSE(LabelIndex labelIndex) {
+    return internal::BranchInstruction(OP_ELSE, labelIndex).convert();
+  }
+  // ENDIF
+  Instruction ENDIF(LabelIndex labelIndex) {
+    return internal::BranchInstruction(OP_ENDIF, labelIndex).convert();
   }
 
   // RET

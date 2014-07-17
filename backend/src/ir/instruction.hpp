@@ -649,6 +649,12 @@ namespace ir {
   Instruction BRA(LabelIndex labelIndex);
   /*! (pred) bra labelIndex */
   Instruction BRA(LabelIndex labelIndex, Register pred);
+  /*! (pred) if labelIndex */
+  Instruction IF(LabelIndex labelIndex, Register pred);
+  /*! else labelIndex */
+  Instruction ELSE(LabelIndex labelIndex);
+  /*! endif */
+  Instruction ENDIF(LabelIndex labelIndex);
   /*! ret */
   Instruction RET(void);
   /*! load.type.space {dst1,...,dst_valueNum} offset value */
