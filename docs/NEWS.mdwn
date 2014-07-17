@@ -1,0 +1,10 @@
+# News
+
+## July 4, 2014
+[Beignet 0.9.1](https://01.org/zh/beignet/downloads/beignet-0.9.1-2014-07-04) is released. This is a bug-fix release.
+
+## June 26, 2014
+[Beignet 0.9.0](https://01.org/zh/beignet/downloads/beignet-0.9-2014-06-26) is released. This is a major release. Please see the release notes for more information.
+
+## Feb 12, 2014
+[Beignet 0.8.0](https://01.org/zh/beignet/downloads/2014/beignet-0.8.0-2014-02-12) is released. This is a major release. Please see the release notes for more information.
