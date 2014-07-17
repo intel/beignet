@@ -150,6 +150,8 @@ namespace gbe
     virtual void JMPI(GenRegister src, bool longjmp = false);
     /*! IF indexed instruction */
     void IF(GenRegister src);
+    /*! ELSE indexed instruction */
+    void ELSE(GenRegister src);
     /*! ENDIF indexed instruction */
     void ENDIF(GenRegister src);
     /*! BRC indexed instruction */

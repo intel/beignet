@@ -1024,6 +1024,7 @@ namespace gbe
   }
 
   ALU2_BRA(IF)
+  ALU2_BRA(ELSE)
   ALU2_BRA(ENDIF)
   ALU2_BRA(BRD)
   ALU2_BRA(BRC)
@@ -1035,7 +1036,8 @@ namespace gbe
                insn.header.opcode == GEN_OPCODE_BRD  ||
                insn.header.opcode == GEN_OPCODE_ENDIF ||
                insn.header.opcode == GEN_OPCODE_IF ||
-               insn.header.opcode == GEN_OPCODE_BRC);
+               insn.header.opcode == GEN_OPCODE_BRC ||
+               insn.header.opcode == GEN_OPCODE_ELSE);
 
     if (insn.header.opcode != GEN_OPCODE_JMPI || (jumpDistance > -32769 && jumpDistance < 32768))  {
            if (insn.header.opcode == GEN_OPCODE_IF) {
@@ -1045,6 +1047,8 @@ namespace gbe
            else if (insn.header.opcode == GEN_OPCODE_JMPI) {
              jumpDistance = jumpDistance - 2;
            }
+           else if(insn.header.opcode == GEN_OPCODE_ENDIF)
+             jumpDistance += 2;
 
            this->setSrc1(&insn, GenRegister::immd(jumpDistance));
     } else if ( insn.header.predicate_control == GEN_PREDICATE_NONE ) {

@@ -539,8 +539,10 @@ namespace gbe
     int JMPI(Reg src, ir::LabelIndex target, ir::LabelIndex origin);
     /*! IF indexed instruction */
     void IF(Reg src, ir::LabelIndex jip, ir::LabelIndex uip);
+    /*! ELSE indexed instruction */
+    void ELSE(Reg src, ir::LabelIndex jip, ir::LabelIndex elseLabel);
     /*! ENDIF indexed instruction */
-    void ENDIF(Reg src, ir::LabelIndex jip);
+    void ENDIF(Reg src, ir::LabelIndex jip, ir::LabelIndex endifLabel = ir::LabelIndex(0));
     /*! BRD indexed instruction */
     void BRD(Reg src, ir::LabelIndex jip);
     /*! BRC indexed instruction */
@@ -1041,8 +1043,19 @@ namespace gbe
     insn->index1 = uint16_t(uip);
   }
 
-  void Selection::Opaque::ENDIF(Reg src, ir::LabelIndex jip) {
-    this->block->endifLabel = this->newAuxLabel();
+  void Selection::Opaque::ELSE(Reg src, ir::LabelIndex jip, ir::LabelIndex elseLabel) {
+
+    SelectionInstruction *insn = this->appendInsn(SEL_OP_ELSE, 0, 1);
+    insn->src(0) = src;
+    insn->index = uint16_t(jip);
+    this->LABEL(elseLabel);
+  }
+
+  void Selection::Opaque::ENDIF(Reg src, ir::LabelIndex jip, ir::LabelIndex endifLabel) {
+    if(endifLabel == 0)
+      this->block->endifLabel = this->newAuxLabel();
+    else
+      this->block->endifLabel = endifLabel;
     this->LABEL(this->block->endifLabel);
     SelectionInstruction *insn = this->appendInsn(SEL_OP_ENDIF, 0, 1);
     insn->src(0) = src;
