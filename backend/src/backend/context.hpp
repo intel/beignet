@@ -21,6 +21,7 @@
 #define __GBE_CONTEXT_HPP__
 
 #include "ir/instruction.hpp"
+#include "ir/function.hpp"
 #include "backend/program.h"
 #include "sys/set.hpp"
 #include "sys/map.hpp"

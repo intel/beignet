@@ -488,42 +488,110 @@ namespace gbe
     });
   }
 
+  /* Because of the structural analysis, control flow of blocks inside a structure
+   * is manipulated by if, else and endif. so these blocks don't need jips. so here
+   * treats all the blocks belong to the same structure as a whole.
+   */
   void Context::buildJIPs(void) {
     using namespace ir;
-
     // Linearly store the branch target for each block and its own label
     const LabelIndex noTarget(fn.labelNum());
     vector<std::pair<LabelIndex, LabelIndex>> braTargets;
-    int32_t curr = 0, blockNum = fn.blockNum();
-    braTargets.resize(blockNum);
-
+    int32_t curr = 0;
     // If some blocks are unused we mark them as such by setting their own label
     // as "invalid" (== noTarget)
+    int blockCount = 0;
+    // because some blocks maybe belong to the same structure, so the number of
+    // blocks we are dealing with may be less than the number of basic blocks.
+    // here calculate the actual block number we would handle.
+    fn.foreachBlock([&](const BasicBlock &bb)
+    {
+      if(bb.belongToStructure && bb.isStructureExit)
+        blockCount++;
+      else if(!bb.belongToStructure)
+        blockCount++;
+    });
+    braTargets.resize(blockCount);
+
+    LabelIndex structureExitLabel;
+    LabelIndex structureEntryLabel;
+    bool flag;
+    set<uint32_t> pos;
+    map<uint32_t, LabelIndex> exitMap;
+    map<uint32_t, LabelIndex> entryMap;
     for (auto &bb : braTargets) bb = std::make_pair(noTarget, noTarget);
     fn.foreachBlock([&](const BasicBlock &bb) {
-      const LabelIndex ownLabel = bb.getLabelIndex();
-      const Instruction *last = bb.getLastInstruction();
-      if (last->getOpcode() != OP_BRA)
-        braTargets[curr++] = std::make_pair(ownLabel, noTarget);
-      else {
-        const BranchInstruction *bra = cast<BranchInstruction>(last);
-        braTargets[curr++] = std::make_pair(ownLabel, bra->getLabelIndex());
+      LabelIndex ownLabel;
+      Instruction *last;
+      flag = false;
+      // bb belongs to a structure and it's not the structure's exit, just simply insert
+      // the target of bra to JIPs.
+      if(bb.belongToStructure && !bb.isStructureExit)
+      {
+        last = bb.getLastInstruction();
+        if(last->getOpcode() == OP_BRA)
+        {
+          BranchInstruction *bra = cast<BranchInstruction>(last);
+          JIPs.insert(std::make_pair(bra, bra->getLabelIndex()));
+        }
+        return;
+      }
+      else
+      {
+        // bb belongs to a structure and it's the strucutre's exit, we treat this bb
+        // as the structure it belongs to, use the label of structure's entry as this
+        // structure's label and last instruction of structure's exit as this structure's
+        // last instruction.
+        if(bb.belongToStructure && bb.isStructureExit)
+        {
+          ownLabel = (bb.matchingStructureEntry)->getLabelIndex();
+          last = bb.getLastInstruction();
+          structureExitLabel = bb.getLabelIndex();
+          structureEntryLabel = ownLabel;
+          flag = true;
+        }
+        // bb belongs to no structure.
+        else
+        {
+          ownLabel = bb.getLabelIndex();
+          last = bb.getLastInstruction();
+        }
+
+        if (last->getOpcode() != OP_BRA)
+        {
+          braTargets[curr++] = std::make_pair(ownLabel, noTarget);
+          if(flag)
+          {
+            pos.insert(curr-1);
+            exitMap[curr-1] = structureExitLabel;
+            entryMap[curr-1] = structureEntryLabel;
+          }
+        }
+        else {
+          const BranchInstruction *bra = cast<BranchInstruction>(last);
+          braTargets[curr++] = std::make_pair(ownLabel, bra->getLabelIndex());
+          if(flag)
+          {
+            exitMap[curr-1] = structureExitLabel;
+            entryMap[curr-1] = structureEntryLabel;
+            pos.insert(curr-1);
+          }
+        }
       }
     });
-
     // Backward jumps are special. We must insert the label of the next block
     // when we hit the "DO" i.e. the target label of the backward branch (as in
     // do { } while) . So, we store the bwd jumps per targets
     // XXX does not use custom allocator
     std::multimap<LabelIndex, LabelIndex> bwdTargets;
-    for (int32_t blockID = 0; blockID < blockNum; ++blockID) {
+    for (int32_t blockID = 0; blockID <curr; ++blockID) {
       const LabelIndex ownLabel = braTargets[blockID].first;
       const LabelIndex target = braTargets[blockID].second;
       if (ownLabel == noTarget) continue; // unused block
       if (target == noTarget) continue; // no branch
       if (target <= ownLabel) { // This is a backward jump
         // Last block is just "RET". So, it cannot be the last block
-        GBE_ASSERT(blockID < blockNum - 1);
+        GBE_ASSERT(blockID < curr - 1);
         const LabelIndex fallThrough = braTargets[blockID+1].first;
         bwdTargets.insert(std::make_pair(target, fallThrough));
       }
@@ -531,15 +599,21 @@ namespace gbe
 
     // Stores the current forward targets
     set<LabelIndex> fwdTargets;
-
     // Now retraverse the blocks and figure out all JIPs
-    for (int32_t blockID = 0; blockID < blockNum; ++blockID) {
+    for (int32_t blockID = 0; blockID <curr; ++blockID) {
+
       const LabelIndex ownLabel = braTargets[blockID].first;
       const LabelIndex target = braTargets[blockID].second;
-      const BasicBlock &bb = fn.getBlock(ownLabel);
-      const Instruction *label = bb.getFirstInstruction();
+      LabelIndex tmp;
+      if(pos.find(blockID)!=pos.end())
+        tmp = exitMap[blockID];
+      else
+        tmp = ownLabel;
+      BasicBlock &bb = fn.getBlock(tmp);
+      Instruction *label = bb.getFirstInstruction();
+      if(pos.find(blockID)!=pos.end())
+        label = fn.getBlock(entryMap[blockID]).getFirstInstruction();
       const Instruction *bra = bb.getLastInstruction();
-
       // Expires the branches that point to us (if any)
       auto it = fwdTargets.find(ownLabel);
       if (it != fwdTargets.end()) fwdTargets.erase(it);
@@ -569,6 +643,7 @@ namespace gbe
       auto jip = fwdTargets.lower_bound(LabelIndex(0));
       JIPs.insert(std::make_pair(bra, *jip));
     }
+
   }
 
   void Context::handleSLM(void) {

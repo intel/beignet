@@ -97,6 +97,8 @@ namespace ir {
       this->initInstruction(*info, insn);
     });
     liveness[&bb] = info;
+    if(!bb.liveout.empty())
+      info->liveOut.insert(bb.liveout.begin(), bb.liveout.end());
   }
 
   void Liveness::initInstruction(BlockInfo &info, const Instruction &insn) {

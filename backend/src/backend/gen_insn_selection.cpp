@@ -1547,10 +1547,15 @@ namespace gbe
   {
     // Bottom up code generation
     bool needEndif = this->block->hasBranch == false && !this->block->hasBarrier;
-
-    if(needEndif) {
-      const ir::BasicBlock *next = bb.getNextBlock();
-      this->ENDIF(GenRegister::immd(0), next->getLabelIndex());
+    needEndif = needEndif && bb.needEndif;
+    if (needEndif) {
+      if(!bb.needIf) // this basic block is the exit of a structure
+        this->ENDIF(GenRegister::immd(0), bb.endifLabel, bb.endifLabel);
+      else {
+        const ir::BasicBlock *next = bb.getNextBlock();
+        this->ENDIF(GenRegister::immd(0), next->getLabelIndex());
+        needEndif = false;
+      }
     }
 
     for (int32_t insnID = insnNum-1; insnID >= 0; --insnID) {
@@ -1588,7 +1593,6 @@ namespace gbe
           this->pop();
           this->block->isLargeBlock = true;
         }
-
         // Output the code in the current basic block
         this->endBackwardGeneration();
       }
@@ -3500,6 +3504,9 @@ namespace gbe
       GBE_ASSERTM(label < GEN_MAX_LABEL, "We reached the maximum label number which is reserved for barrier handling");
       sel.LABEL(label);
 
+      if(!insn.getParent()->needIf)
+        return true;
+
       // Do not emit any code for the "returning" block. There is no need for it
       if (insn.getParent() == &sel.ctx.getFunction().getBottomBlock())
         return true;
@@ -3570,7 +3577,12 @@ namespace gbe
         }
         sel.push();
           sel.curr.predicate = GEN_PREDICATE_NORMAL;
-          sel.IF(GenRegister::immd(0), sel.block->endifLabel, sel.block->endifLabel);
+          if(!insn.getParent()->needEndif && insn.getParent()->needIf) {
+            ir::LabelIndex label = insn.getParent()->endifLabel;
+            sel.IF(GenRegister::immd(0), label, label);
+          }
+          else
+            sel.IF(GenRegister::immd(0), sel.block->endifLabel, sel.block->endifLabel);
         sel.pop();
       }
 
@@ -3776,9 +3788,15 @@ namespace gbe
       } else {
         // Update the PcIPs
         const LabelIndex jip = sel.ctx.getLabelIndex(&insn);
-        sel.MOV(ip, GenRegister::immuw(uint16_t(dst)));
-        if (!sel.block->hasBarrier)
-          sel.ENDIF(GenRegister::immd(0), nextLabel);
+        if(insn.getParent()->needEndif)
+          sel.MOV(ip, GenRegister::immuw(uint16_t(dst)));
+
+        if (!sel.block->hasBarrier) {
+          if(insn.getParent()->needEndif && !insn.getParent()->needIf)
+            sel.ENDIF(GenRegister::immd(0), insn.getParent()->endifLabel, insn.getParent()->endifLabel);
+          else if(insn.getParent()->needEndif)
+            sel.ENDIF(GenRegister::immd(0), nextLabel);
+        }
         sel.block->endifOffset = -1;
         if (nextLabel == jip) return;
         // Branch to the jump target
@@ -3834,10 +3852,15 @@ namespace gbe
       } else {
         const LabelIndex next = bb.getNextBlock()->getLabelIndex();
         // Update the PcIPs
-        sel.MOV(ip, GenRegister::immuw(uint16_t(dst)));
+        if(insn.getParent()->needEndif)
+          sel.MOV(ip, GenRegister::immuw(uint16_t(dst)));
         sel.block->endifOffset = -1;
-        if (!sel.block->hasBarrier)
-          sel.ENDIF(GenRegister::immd(0), next);
+        if (!sel.block->hasBarrier) {
+          if(insn.getParent()->needEndif && !insn.getParent()->needIf)
+            sel.ENDIF(GenRegister::immd(0), insn.getParent()->endifLabel, insn.getParent()->endifLabel);
+          else if(insn.getParent()->needEndif)
+            sel.ENDIF(GenRegister::immd(0), next);
+        }
         // Branch to the jump target
         sel.push();
           sel.curr.execWidth = 1;
@@ -3870,6 +3893,34 @@ namespace gbe
         else
           this->emitForwardBranch(sel, insn, dst, src);
         sel.pop();
+      }
+      else if(opcode == OP_IF) {
+        const Register pred = insn.getPredicateIndex();
+        const LabelIndex jip = insn.getLabelIndex();
+        LabelIndex uip;
+        if(insn.getParent()->matchingEndifLabel != 0)
+          uip = insn.getParent()->matchingEndifLabel;
+        else
+          uip = jip;
+        sel.push();
+          sel.curr.physicalFlag = 0;
+          sel.curr.flagIndex = (uint64_t)pred;
+          sel.curr.externFlag = 1;
+          sel.curr.inversePredicate = 1;
+          sel.curr.predicate = GEN_PREDICATE_NORMAL;
+          sel.IF(GenRegister::immd(0), jip, uip);
+          sel.curr.inversePredicate = 0;
+        sel.pop();
+      } else if(opcode == OP_ENDIF) {
+        const LabelIndex label = insn.getLabelIndex();
+        sel.push();
+          sel.curr.noMask = 1;
+          sel.curr.predicate = GEN_PREDICATE_NONE;
+          sel.ENDIF(GenRegister::immd(0), label, label);
+        sel.pop();
+      } else if(opcode == OP_ELSE) {
+        const LabelIndex label = insn.getLabelIndex();
+        sel.ELSE(GenRegister::immd(0), label, insn.getParent()->thisElseLabel);
       } else
         NOT_IMPLEMENTED;
 

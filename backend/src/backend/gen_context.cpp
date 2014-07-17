@@ -126,7 +126,7 @@ namespace gbe
         errCode = OUT_OF_RANGE_IF_ENDIF; 
         return false;
       }
-      p->patchJMPI(insnID, (((uip - insnID)) << 16) | ((jip - insnID)));
+      p->patchJMPI(insnID, ((uip - insnID) << 16) | (0x0000ffff & (jip - insnID)));
     }
     return true;
   }
@@ -239,6 +239,17 @@ namespace gbe
           const GenRegister src = ra->genReg(insn.src(0));
           this->branchPos3.push_back(std::make_pair(labelPair, p->store.size()));
           p->IF(src);
+        }
+        break;
+      case SEL_OP_ELSE:
+        {
+          insertJumpPos(insn);
+          /*
+          const ir::LabelIndex label(insn.index), label1(insn.index);
+          const LabelPair labelPair(label, label1);
+          const GenRegister src = ra->genReg(insn.src(0));
+          this->branchPos3.push_back(std::make_pair(labelPair, p->store.size()));*/
+          p->ELSE(src);
         }
         break;
       default: NOT_IMPLEMENTED;
