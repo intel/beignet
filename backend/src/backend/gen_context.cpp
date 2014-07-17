@@ -1897,6 +1897,10 @@ namespace gbe
             curLabel < this->getFunction().labelNum()) {
           std::cout << "  L" << curLabel + 1 << ":" << std::endl;
           curLabel = (ir::LabelIndex)(curLabel + 1);
+          while(labelPos.find((ir::LabelIndex)(curLabel + 1))->second == insnID) {
+            std::cout << "  L" << curLabel + 1 << ":" << std::endl;
+            curLabel = (ir::LabelIndex)(curLabel + 1);
+          }
         }
         std::cout << "    (" << std::setw(8) << insnID << ")  ";
         pCom = (GenCompactInstruction*)&p->store[insnID];
