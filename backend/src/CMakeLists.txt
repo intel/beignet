@@ -134,6 +134,8 @@ else (GBE_USE_BLOB)
     ir/lowering.hpp
     ir/printf.cpp
     ir/printf.hpp
+    ir/structural_analysis.cpp
+    ir/structural_analysis.hpp
     backend/context.cpp
     backend/context.hpp
     backend/program.cpp

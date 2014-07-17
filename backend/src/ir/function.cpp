@@ -126,7 +126,7 @@ namespace ir {
     }
 
     // Reset the label to block mapping
-    this->labels.resize(last);
+    //this->labels.resize(last);
     foreachBlock([&](BasicBlock &bb) {
       const Instruction *first = bb.getFirstInstruction();
       const LabelInstruction *label = cast<LabelInstruction>(first);
@@ -185,7 +185,7 @@ namespace ir {
       return &bb == this->blocks[0];
   }
 
-  const BasicBlock &Function::getTopBlock(void) const {
+  BasicBlock &Function::getTopBlock(void) const {
     GBE_ASSERT(blockNum() > 0 && blocks[0] != NULL);
     return *blocks[0];
   }
@@ -202,7 +202,7 @@ namespace ir {
     return *blocks[n-1];
   }
 
-  const BasicBlock &Function::getBlock(LabelIndex label) const {
+  BasicBlock &Function::getBlock(LabelIndex label) const {
     GBE_ASSERT(label < labelNum() && labels[label] != NULL);
     return *labels[label];
   }
@@ -245,7 +245,7 @@ namespace ir {
       }
       if (bb.size() == 0) return;
       Instruction *last = bb.getLastInstruction();
-      if (last->isMemberOf<BranchInstruction>() == false) {
+      if (last->isMemberOf<BranchInstruction>() == false || last->getOpcode() == OP_ENDIF || last->getOpcode() == OP_ELSE) {
         jumpToNext = &bb;
         return;
       }
@@ -310,7 +310,11 @@ namespace ir {
   // Basic Block
   ///////////////////////////////////////////////////////////////////////////
 
-  BasicBlock::BasicBlock(Function &fn) : fn(fn) {
+  BasicBlock::BasicBlock(Function &fn) : needEndif(true), needIf(true), endifLabel(0),
+                                         matchingEndifLabel(0), matchingElseLabel(0),
+                                         thisElseLabel(0), belongToStructure(false),
+                                         isStructureExit(false), matchingStructureEntry(NULL),
+                                         fn(fn) {
     this->nextBlock = this->prevBlock = NULL;
   }
 
@@ -323,6 +327,11 @@ namespace ir {
   void BasicBlock::append(Instruction &insn) {
     insn.setParent(this);
     this->push_back(&insn);
+  }
+
+  void BasicBlock::insertAt(iterator pos, Instruction &insn) {
+    insn.setParent(this);
+    this->insert(pos, &insn);
   }
 
   Instruction *BasicBlock::getFirstInstruction(void) const {

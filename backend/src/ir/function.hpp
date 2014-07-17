@@ -31,6 +31,7 @@
 #include "ir/sampler.hpp"
 #include "ir/printf.hpp"
 #include "ir/image.hpp"
+#include "ir/structural_analysis.hpp"
 #include "sys/vector.hpp"
 #include "sys/set.hpp"
 #include "sys/map.hpp"
@@ -40,7 +41,6 @@
 
 namespace gbe {
 namespace ir {
-
   /*! Commonly used in the CFG */
   typedef set<BasicBlock*> BlockSet;
   class Unit; // Function belongs to a unit
@@ -59,6 +59,7 @@ namespace ir {
     ~BasicBlock(void);
     /*! Append a new instruction at the end of the stream */
     void append(Instruction &insn);
+    void insertAt(iterator pos, Instruction &insn);
     /*! Get the parent function */
     Function &getParent(void) { return fn; }
     const Function &getParent(void) const { return fn; }
@@ -84,6 +85,63 @@ namespace ir {
     }
     set <Register> undefPhiRegs;
     set <Register> definedPhiRegs;
+  /* these three are used by structure transforming */
+  public:
+    /* if needEndif is true, it means that this bb is the exit of an
+     * outermost structure, so this block needs another endif to match
+     * the if inserted at the entry of this structure, otherwise this
+     * block is in the middle of a structure, there's no need to insert
+     * extra endif. */
+    bool needEndif;
+    /* if needIf is true, it means that this bb is the entry of an
+     * outermost structure, so this block needs an if instruction just
+     * like other unstructured bbs. otherwise this block is in the
+     * middle of a structure, there's no need to insert an if. */
+    bool needIf;
+    /* since we need to insert an if and endif at the entry and exit
+     * bb of an outermost structure respectively, so the endif is not
+     * in the same bb with if, in order to get the endif's position,
+     * we need to store the endif label in the entry bb. */
+    LabelIndex endifLabel;
+    /* the identified if-then and if-else structure contains more than
+     * one bbs, in order to insert if, else and endif properly, we give
+     * all the IF ELSE and ENDIF a label for convenience. matchingEndifLabel
+     * is used when inserts instruction if and else, and matchingElseLabel
+     * is used when inserts instruction if. */
+    LabelIndex matchingEndifLabel;
+    LabelIndex matchingElseLabel;
+    /* IR ELSE's target is the matching ENDIF's LabelIndex, thisElseLabel
+     * is used to store the virtual label of the instruction just below
+     * ELSE. */
+    LabelIndex thisElseLabel;
+    /* betongToStructure is used as a mark of wether this bb belongs to an
+     * identified structure. */
+    bool belongToStructure;
+    /* isStructureExit and matchingStructureEntry is used for buildJIPs at
+     * backend, isStructureExit is true means the bb is an identified structure's
+     * exit bb, while matchingStructureEntry means the entry bb of the same
+     * identified structure. so if isStructureExit is false then matchingStructureEntry
+     * is meaningless. */
+    bool isStructureExit;
+    BasicBlock *matchingStructureEntry;
+    /* variable liveout is for if-else structure liveness analysis. eg. we have an sequence of
+     * bbs of 0, 1, 2, 3, 4 and the CFG is as below:
+     *  0
+     *  |\
+     *  1 \
+     *  |  2
+     *  4  |
+     *   \ /
+     *    3
+     * we would identify 1 and 4 an sequence structure and 0 1 4 2 an if-else structure.
+     * since we will insert an else instruction at the top of bb 2, we have to add an
+     * unconditional jump at the bottom of bb 4 to bb 2 for executing the inserted else. this
+     * would cause a change of CFG. at origin, bb 2 always executes before bb 4, but after
+     * this insertion, bb 2 may executes after bb 4 which leads to bb 2's livein(i.e. part of
+     * bb 0's liveout) may be destroyed by bb 4. so we inserted the livein of the entry of
+     * else node into all the basic blocks belong to 'then' part while the liveout is
+     * calculated in structural_analysis.cpp:calculateNecessaryLiveout(); */
+    std::set<Register> liveout;
   private:
     friend class Function; //!< Owns the basic blocks
     BlockSet predecessors; //!< Incoming blocks
@@ -277,13 +335,13 @@ namespace ir {
     /*! Says if this is the top basic block (entry point) */
     bool isEntryBlock(const BasicBlock &bb) const;
     /*! Get function the entry point block */
-    const BasicBlock &getTopBlock(void) const;
+    BasicBlock &getTopBlock(void) const;
     /*! Get the last block */
     const BasicBlock &getBottomBlock(void) const;
     /*! Get the last block */
     BasicBlock &getBottomBlock(void);
     /*! Get block from its label */
-    const BasicBlock &getBlock(LabelIndex label) const;
+    BasicBlock &getBlock(LabelIndex label) const;
     /*! Get the label instruction from its label index */
     const LabelInstruction *getLabelInstruction(LabelIndex index) const;
     /*! Return the number of instructions of the largest basic block */
@@ -354,6 +412,7 @@ namespace ir {
     /*! add the loop info for later liveness analysis */
     void addLoop(const vector<LabelIndex> &bbs, const vector<std::pair<LabelIndex, LabelIndex>> &exits);
     INLINE const vector<Loop * > &getLoops() { return loops; }
+    vector<BasicBlock *> &getBlocks() { return blocks; }
   private:
     friend class Context;           //!< Can freely modify a function
     std::string name;               //!< Function name

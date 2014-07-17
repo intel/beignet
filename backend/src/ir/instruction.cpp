@@ -1656,10 +1656,17 @@ DECL_MEM_FN(GetImageInfoInstruction, const uint8_t, getImageIndex(void), getImag
 
   std::ostream &operator<< (std::ostream &out, const Instruction &insn) {
     const Function &fn = insn.getFunction();
+    const BasicBlock *bb = insn.getParent();
     switch (insn.getOpcode()) {
 #define DECL_INSN(OPCODE, CLASS) \
       case OP_##OPCODE: \
-        reinterpret_cast<const internal::CLASS&>(insn).out(out, fn); \
+          if(OP_##OPCODE == OP_ELSE) \
+          { \
+            reinterpret_cast<const internal::CLASS&>(insn).out(out, fn); \
+            out << "  <**>label: " << bb->thisElseLabel; \
+            break; \
+          } \
+          reinterpret_cast<const internal::CLASS&>(insn).out(out, fn); \
         break;
 #include "instruction.hxx"
 #undef DECL_INSN
