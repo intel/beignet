@@ -492,6 +492,8 @@ namespace gbe
     /*! helper function for parsing global constant data */
     void getConstantData(const Constant * c, void* mem, uint32_t& offset) const;
     void collectGlobalConstant(void) const;
+    ir::ImmediateIndex processConstantImmIndex(Constant *CPV, uint32_t index = 0u);
+    const ir::Immediate &processConstantImm(Constant *CPV, uint32_t index = 0u);
 
     bool runOnFunction(Function &F) {
      // Do not codegen any 'available_externally' functions at all, they have
@@ -742,8 +744,7 @@ namespace gbe
     return false;
   }
 
-  template <typename U, typename T>
-  static U processConstant(Constant *CPV, T doIt, uint32_t index = 0u)
+  ir::ImmediateIndex GenWriter::processConstantImmIndex(Constant *CPV, uint32_t index)
   {
 #if GBE_DEBUG
     GBE_ASSERTM(dyn_cast<ConstantExpr>(CPV) == NULL, "Unsupported constant expression");
@@ -758,25 +759,25 @@ namespace gbe
       Type *Ty = seq->getElementType();
       if (Ty == Type::getInt1Ty(CPV->getContext())) {
         const uint64_t u64 = seq->getElementAsInteger(index);
-        return doIt(bool(u64));
+        return ctx.newImmediate(bool(u64));
       } else if (Ty == Type::getInt8Ty(CPV->getContext())) {
         const uint64_t u64 = seq->getElementAsInteger(index);
-        return doIt(uint8_t(u64));
+        return ctx.newImmediate(uint8_t(u64));
       } else if (Ty == Type::getInt16Ty(CPV->getContext())) {
         const uint64_t u64 = seq->getElementAsInteger(index);
-        return doIt(uint16_t(u64));
+        return ctx.newImmediate(uint16_t(u64));
       } else if (Ty == Type::getInt32Ty(CPV->getContext())) {
         const uint64_t u64 = seq->getElementAsInteger(index);
-        return doIt(uint32_t(u64));
+        return ctx.newImmediate(uint32_t(u64));
       } else if (Ty == Type::getInt64Ty(CPV->getContext())) {
         const uint64_t u64 = seq->getElementAsInteger(index);
-        return doIt(u64);
+        return ctx.newImmediate(u64);
       } else if (Ty == Type::getFloatTy(CPV->getContext())) {
         const float f32 = seq->getElementAsFloat(index);
-        return doIt(f32);
+        return ctx.newImmediate(f32);
       } else if (Ty == Type::getDoubleTy(CPV->getContext())) {
         const double f64 = seq->getElementAsDouble(index);
-        return doIt(f64);
+        return ctx.newImmediate(f64);
       }
     } else
 #endif /* LLVM_VERSION_MINOR > 0 */
@@ -787,28 +788,28 @@ namespace gbe
         Ty = (cast<VectorType>(Ty))->getElementType();
       if (Ty == Type::getInt1Ty(CPV->getContext())) {
         const bool b = 0;
-        return doIt(b);
+        return ctx.newImmediate(b);
       } else if (Ty == Type::getInt8Ty(CPV->getContext())) {
         const uint8_t u8 = 0;
-        return doIt(u8);
+        return ctx.newImmediate(u8);
       } else if (Ty == Type::getInt16Ty(CPV->getContext())) {
         const uint16_t u16 = 0;
-        return doIt(u16);
+        return ctx.newImmediate(u16);
       } else if (Ty == Type::getInt32Ty(CPV->getContext())) {
         const uint32_t u32 = 0;
-        return doIt(u32);
+        return ctx.newImmediate(u32);
       } else if (Ty == Type::getInt64Ty(CPV->getContext())) {
         const uint64_t u64 = 0;
-        return doIt(u64);
+        return ctx.newImmediate(u64);
       } else if (Ty == Type::getFloatTy(CPV->getContext())) {
         const float f32 = 0;
-        return doIt(f32);
+        return ctx.newImmediate(f32);
       } else if (Ty == Type::getDoubleTy(CPV->getContext())) {
         const double f64 = 0;
-        return doIt(f64);
+        return ctx.newImmediate(f64);
       } else {
         GBE_ASSERTM(false, "Unsupporte aggregate zero type.");
-        return doIt(uint32_t(0));
+        return ctx.newImmediate(uint32_t(0));
       }
     } else {
       if (dyn_cast<ConstantVector>(CPV))
@@ -820,29 +821,28 @@ namespace gbe
         Type* Ty = CI->getType();
         if (Ty == Type::getInt1Ty(CPV->getContext())) {
           const bool b = CI->getZExtValue();
-          return doIt(b);
+          return ctx.newImmediate(b);
         } else if (Ty == Type::getInt8Ty(CPV->getContext())) {
           const uint8_t u8 = CI->getZExtValue();
-          return doIt(u8);
+          return ctx.newImmediate(u8);
         } else if (Ty == Type::getInt16Ty(CPV->getContext())) {
           const uint16_t u16 = CI->getZExtValue();
-          return doIt(u16);
+          return ctx.newImmediate(u16);
         } else if (Ty == Type::getInt32Ty(CPV->getContext())) {
           const uint32_t u32 = CI->getZExtValue();
-          return doIt(u32);
+          return ctx.newImmediate(u32);
         } else if (Ty == Type::getInt64Ty(CPV->getContext())) {
           const uint64_t u64 = CI->getZExtValue();
-          return doIt(u64);
+          return ctx.newImmediate(u64);
         } else {
-          //GBE_ASSERTM(false, "Unsupported integer size");
-          doIt.invalid();
-          return doIt(uint64_t(0));
+          GBE_ASSERTM(false, "Unsupported integer size");
+          return ctx.newImmediate(uint64_t(0));
         }
       }
 
       // NULL pointers
       if(isa<ConstantPointerNull>(CPV)) {
-        return doIt(uint32_t(0));
+        return ctx.newImmediate(uint32_t(0));
       }
 
       // Floats and doubles
@@ -856,10 +856,10 @@ namespace gbe
 
           if (FPC->getType() == Type::getFloatTy(CPV->getContext())) {
             const float f32 = FPC->getValueAPF().convertToFloat();
-            return doIt(f32);
+            return ctx.newImmediate(f32);
           } else {
             const double f64 = FPC->getValueAPF().convertToDouble();
-            return doIt(f64);
+            return ctx.newImmediate(f64);
           }
         }
         break;
@@ -870,24 +870,16 @@ namespace gbe
     }
 
     GBE_ASSERTM(false, "Unsupported constant type");
-    return doIt(uint64_t(0));
+    return ctx.newImmediate(uint64_t(0));
   }
 
-  /*! Pfff. I cannot use a lambda, since it is templated. Congratulation c++ */
-  struct NewImmediateFunctor
-  {
-    NewImmediateFunctor(ir::Context &ctx) : ctx(ctx) {}
-    template <typename T> ir::ImmediateIndex operator() (const T &t) {
-      return ctx.newImmediate(t);
-    }
-    void invalid() {
-      ctx.getUnit().setValid(false);
-    }
-    ir::Context &ctx;
-  };
+  const ir::Immediate &GenWriter::processConstantImm(Constant *CPV, uint32_t index) {
+    ir::ImmediateIndex immIndex = processConstantImmIndex(CPV, index);
+    return ctx.getFunction().getImmediate(immIndex);
+  }
 
   ir::ImmediateIndex GenWriter::newImmediate(Constant *CPV, uint32_t index) {
-    return processConstant<ir::ImmediateIndex>(CPV, NewImmediateFunctor(ctx), index);
+    return processConstantImmIndex(CPV, index);
   }
 
   void GenWriter::newRegister(Value *value, Value *key, bool uniform) {
@@ -2104,18 +2096,6 @@ namespace gbe
     }
   }
 
-  /*! Once again, it is a templated functor. No lambda */
-  struct InsertExtractFunctor {
-    InsertExtractFunctor(ir::Context &ctx) : ctx(ctx) {}
-    template <typename T> ir::Immediate operator() (const T &t) {
-      return ir::Immediate(t);
-    }
-    void invalid() {
-      ctx.getUnit().setValid(false);
-    }
-    ir::Context &ctx;
-  };
-
   /*! Because there are still fake insert/extract instruction for
    *  load/store, so keep empty function here */
   void GenWriter::regAllocateInsertElement(InsertElementInst &I) {}
@@ -2482,17 +2462,6 @@ namespace gbe
     };
   }
 
-  struct U64CPVExtractFunctor {
-    U64CPVExtractFunctor(ir::Context &ctx) : ctx(ctx) {}
-    template <typename T> INLINE uint64_t operator() (const T &t) {
-      return uint64_t(t);
-    }
-    void invalid() {
-      ctx.getUnit().setValid(false);
-    }
-    ir::Context &ctx;
-  };
-
   void GenWriter::emitUnaryCallInst(CallInst &I, CallSite &CS, ir::Opcode opcode) {
     CallSite::arg_iterator AI = CS.arg_begin();
 #if GBE_DEBUG
@@ -2534,7 +2503,7 @@ namespace gbe
     {
       // This is not a kernel argument sampler, we need to append it to sampler set,
       // and allocate a sampler slot for it.
-      auto x = processConstant<ir::Immediate>(CPV, InsertExtractFunctor(ctx));
+      const ir::Immediate &x = processConstantImm(CPV);
       GBE_ASSERTM(x.getType() == ir::TYPE_U16 || x.getType() == ir::TYPE_S16, "Invalid sampler type");
 
       index = ctx.getFunction().getSamplerSet()->append(x.getIntegerValue(), &ctx);
@@ -2760,7 +2729,7 @@ handle_read_image:
 #ifdef GEN7_SAMPLER_CLAMP_BORDER_WORKAROUND
             GBE_ASSERT(AI != AE); Constant *CPV = dyn_cast<Constant>(*AI);
             assert(CPV);
-            auto x = processConstant<ir::Immediate>(CPV, InsertExtractFunctor(ctx));
+            const ir::Immediate &x = processConstantImm(CPV);
             GBE_ASSERTM(x.getType() == ir::TYPE_U32 || x.getType() == ir::TYPE_S32, "Invalid sampler type");
             samplerOffset = x.getIntegerValue();
 #endif
@@ -3145,7 +3114,8 @@ handle_write_image:
     if (I.isArrayAllocation() == true) {
       Constant *CPV = dyn_cast<Constant>(src);
       GBE_ASSERT(CPV);
-      const uint64_t elemNum = processConstant<uint64_t>(CPV, U64CPVExtractFunctor(ctx));
+      const ir::Immediate &imm = processConstantImm(CPV);
+      const uint64_t elemNum = imm.getIntegerValue();
       elementSize *= elemNum;
       if (ctx.getPointerSize() == ir::POINTER_32_BITS)
         immIndex = ctx.newImmediate(uint32_t(ALIGN(elementSize, 4)));
