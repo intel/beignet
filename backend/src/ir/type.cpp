@@ -40,6 +40,8 @@ namespace ir {
       case TYPE_HALF: return out << "half";
       case TYPE_FLOAT: return out << "float";
       case TYPE_DOUBLE: return out << "double";
+      default :
+        GBE_ASSERT(0 && "Unsupported type\n");
     };
     return out;
   }

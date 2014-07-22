@@ -135,6 +135,8 @@ namespace ir {
       case TYPE_S8: return imm.getIntegerValue();
       case TYPE_BOOL:
       case TYPE_HALF: NOT_SUPPORTED; return 0;
+      default:
+        GBE_ASSERT(0 && "Unsupported imm type.\n");
     }
     return 0;
   }

@@ -159,6 +159,8 @@ namespace ir {
       case TYPE_HALF: out << "half(" << imm.getIntegerValue() << ")"; break;
       case TYPE_FLOAT: out << imm.getFloatValue(); break;
       case TYPE_DOUBLE: out << imm.getDoubleValue(); break;
+      default:
+        GBE_ASSERT(0 && "unsupported imm type.\n");
     }
   }
 

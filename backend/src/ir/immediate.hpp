@@ -18,7 +18,7 @@
  */
 
 /**
- * \file value.hpp
+ * \file Immediate.hpp
  *
  * \author Benjamin Segovia <benjamin.segovia@intel.com>
  */
@@ -32,14 +32,53 @@
 namespace gbe {
 namespace ir {
 
+  typedef enum {
+    IMM_TRUNC = 0,
+    IMM_BITCAST,
+    IMM_ADD,
+    IMM_SUB,
+    IMM_MUL,
+    IMM_DIV,
+    IMM_REM,
+    IMM_SHL,
+    IMM_ASHR,
+    IMM_LSHR,
+    IMM_AND,
+    IMM_OR,
+    IMM_XOR
+  } ImmOpCode;
+
+  typedef enum {
+    IMM_TYPE_BOOL = TYPE_BOOL,
+    IMM_TYPE_S8 = TYPE_S8,
+    IMM_TYPE_U8 = TYPE_U8,
+    IMM_TYPE_S16 = TYPE_S16,
+    IMM_TYPE_U16 = TYPE_U16,
+    IMM_TYPE_S32 = TYPE_S32,
+    IMM_TYPE_U32 = TYPE_U32,
+    IMM_TYPE_S64 = TYPE_S64,
+    IMM_TYPE_U64 = TYPE_U64,
+    IMM_TYPE_FLOAT = TYPE_FLOAT,
+    IMM_TYPE_DOUBLE = TYPE_DOUBLE,
+    IMM_TYPE_COMP             // compond immediate which consist many immediates.
+  } ImmType;
+
   /*! The value as stored in the instruction */
   class Immediate
   {
   public:
-    INLINE Immediate(void) {}
+    INLINE Immediate(void) { }
 
-    Type getType(void) const {
-      return type;
+    INLINE Type getType(void) const {
+      return (Type)type;
+    }
+
+    INLINE bool isCompType(void) const {
+      return type == IMM_TYPE_COMP;
+    }
+
+    INLINE uint32_t getElemNum(void) const {
+      return elemNum;
     }
 
     uint32_t getTypeSize(void) const {
@@ -57,12 +96,13 @@ namespace ir {
         case TYPE_DOUBLE:
         case TYPE_S64:
         case TYPE_U64:  return 8;
+        case IMM_TYPE_COMP: return sizeof(Immediate*);
       }
     }
 
 #define DECL_CONSTRUCTOR(TYPE, FIELD, IR_TYPE)                  \
     Immediate(TYPE FIELD) {                                     \
-      this->type = IR_TYPE;                                     \
+      this->type = (ImmType)IR_TYPE;                            \
       this->elemNum = 1;                                        \
       this->data.p = &defaultData;                              \
       defaultData = 0ull;                                       \
@@ -84,7 +124,7 @@ namespace ir {
 
 #define DECL_CONSTRUCTOR(TYPE, FIELD, IR_TYPE, ELEMNUM)         \
     Immediate(TYPE *FIELD, uint32_t ELEMNUM) {                  \
-      this->type = IR_TYPE;                                     \
+      this->type = (ImmType)IR_TYPE;                            \
       this->elemNum = ELEMNUM;                                  \
       if (elemNum * ELEMNUM > 8)                                \
         this->data.p = malloc(ELEMNUM * getTypeSize());         \
@@ -107,7 +147,9 @@ namespace ir {
     DECL_CONSTRUCTOR(double, f64, TYPE_DOUBLE, elemNum)
 #undef DECL_CONSTRUCTOR
 
-    int64_t getIntegerValue(void) const {
+    Immediate(const vector<const Immediate*> immVec);
+
+    INLINE int64_t getIntegerValue(void) const {
       switch (type) {
         default:
           GBE_ASSERT(0 && "Invalid immediate type.\n");
@@ -123,45 +165,40 @@ namespace ir {
       }
     }
 
-    float getFloatValue(void) const {
-      GBE_ASSERT(type == TYPE_FLOAT);
+    INLINE float getFloatValue(void) const {
+      GBE_ASSERT(type == IMM_TYPE_FLOAT);
       return *data.f32;
     }
 
-    float asFloatValue(void) const {
-      GBE_ASSERT(type == TYPE_FLOAT || type == TYPE_U32 || type == TYPE_S32);
+    INLINE float asFloatValue(void) const {
+      GBE_ASSERT(type == IMM_TYPE_FLOAT || type == IMM_TYPE_U32 || type == IMM_TYPE_S32);
       return *data.f32;
     }
 
-    int64_t asIntegerValue(void) const {
+    INLINE int64_t asIntegerValue(void) const {
       GBE_ASSERT(elemNum == 1);
       return *data.s64;
     }
 
-    double getDoubleValue(void) const {
-      GBE_ASSERT(type == TYPE_DOUBLE);
+    INLINE double getDoubleValue(void) const {
+      GBE_ASSERT(type == IMM_TYPE_DOUBLE);
       return *data.f64;
     }
+   
+    INLINE Immediate(const Immediate & other) {
+      *this = other;
+    }
 
-    Immediate(const Immediate & other) {
-      if (this != &other) {
-        this->type = other.type;
-        this->elemNum = other.elemNum;
-        if (other.data.p != &other.defaultData) {
-          this->data.p = malloc(other.elemNum * other.getTypeSize());
-          memcpy(this->data.p, other.data.p, other.elemNum * other.getTypeSize());
-        }
-        else {
-          this->defaultData = other.defaultData;
-          this->data.p = &this->defaultData;
-        }
+    Immediate(ImmOpCode op, const Immediate &other, Type dstType) {
+      if (op == IMM_TRUNC) {
+        copy(other, 0, 1);
+      } else if (op == IMM_BITCAST) {
+        *this = other;
+        type = (ImmType)dstType;
       }
     }
 
-    Immediate & operator= (const Immediate & other) {
-      *this = Immediate(other);
-      return *this;
-    }
+    Immediate(ImmOpCode op, const Immediate &left, const Immediate &right, Type dstType);
 
     ~Immediate() {
       if (data.p != &defaultData) {
@@ -183,12 +220,27 @@ namespace ir {
       uint64_t *u64;
       float *f32;
       double *f64;
+      const Immediate *immVec[];
       void *p;
     } data;     //!< Value to store
-    Type type;  //!< Type of the value
+    ImmType type;  //!< Type of the value
     uint32_t elemNum; //!< vector imm data type
     uint64_t defaultData;
+    Immediate & operator= (const Immediate &);
+    Immediate operator+ (const Immediate &) const; 
+    Immediate operator- (const Immediate &) const; 
+    Immediate operator* (const Immediate &) const; 
+    Immediate operator/ (const Immediate &) const; 
+    Immediate operator% (const Immediate &) const; 
+    Immediate operator& (const Immediate &) const; 
+    Immediate operator| (const Immediate &) const; 
+    Immediate operator^ (const Immediate &) const; 
+    Immediate operator<< (const Immediate &) const; 
+    Immediate operator>> (const Immediate &) const; 
+    static Immediate lshr (const Immediate &left, const Immediate &right);
 
+
+    void copy(const Immediate &other, int32_t offset, uint32_t num);
     GBE_CLASS(Immediate);
   };
 

@@ -46,7 +46,8 @@ namespace ir {
     TYPE_U64,      //!< unsigned 64 bits integer
     TYPE_HALF,     //!< 16 bits floating point value
     TYPE_FLOAT,    //!< 32 bits floating point value
-    TYPE_DOUBLE    //!< 64 bits floating point value
+    TYPE_DOUBLE,   //!< 64 bits floating point value
+    TYPE_LARGE_INT //!< integer larger than 64 bits.
   };
 
   /*! Output a string for the type in the given stream */
@@ -72,8 +73,9 @@ namespace ir {
       case TYPE_U64:
       case TYPE_DOUBLE:
         return FAMILY_QWORD;
+      default:
+        return FAMILY_DWORD;
     };
-    return FAMILY_DWORD;
   }
 
   /*! Return a type for each register family */
