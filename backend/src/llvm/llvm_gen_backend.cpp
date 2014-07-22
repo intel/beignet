@@ -211,8 +211,7 @@ namespace gbe
       return ir::TYPE_S32;
     if (type == Type::getInt64Ty(type->getContext()))
       return ir::TYPE_S64;
-    ctx.getUnit().setValid(false);
-    return ir::TYPE_S64;
+    return ir::TYPE_LARGE_INT;
   }
 
   /*! LLVM IR Type to Gen IR unsigned type translation */
@@ -463,6 +462,12 @@ namespace gbe
       PASS_EMIT_INSTRUCTIONS = 1
     } pass;
 
+    typedef enum {
+      CONST_INT,
+      CONST_FLOAT,
+      CONST_DOUBLE
+    } ConstTypeId;
+
     LoopInfo *LI;
     const Module *TheModule;
     int btiBase;
@@ -492,8 +497,8 @@ namespace gbe
     /*! helper function for parsing global constant data */
     void getConstantData(const Constant * c, void* mem, uint32_t& offset) const;
     void collectGlobalConstant(void) const;
-    ir::ImmediateIndex processConstantImmIndex(Constant *CPV, uint32_t index = 0u);
-    const ir::Immediate &processConstantImm(Constant *CPV, uint32_t index = 0u);
+    ir::ImmediateIndex processConstantImmIndex(Constant *CPV, int32_t index = 0u);
+    const ir::Immediate &processConstantImm(Constant *CPV, int32_t index = 0u);
 
     bool runOnFunction(Function &F) {
      // Do not codegen any 'available_externally' functions at all, they have
@@ -609,6 +614,12 @@ namespace gbe
                   Value *llvmValue, const ir::Register ptr,
                   const ir::AddressSpace addrSpace, Type * elemType, bool isLoad, ir::BTI bti);
     void visitInstruction(Instruction &I) {NOT_SUPPORTED;}
+    private:
+      ir::ImmediateIndex processConstantImmIndexImpl(Constant *CPV, int32_t index = 0u);
+      template <typename T, typename P = T>
+      ir::ImmediateIndex processSeqConstant(ConstantDataSequential *seq,
+                                            int index, ConstTypeId tid);
+      ir::ImmediateIndex processConstantVector(ConstantVector *cv, int index);
   };
 
   char GenWriter::ID = 0;
@@ -744,13 +755,42 @@ namespace gbe
     return false;
   }
 
-  ir::ImmediateIndex GenWriter::processConstantImmIndex(Constant *CPV, uint32_t index)
+  #define GET_EFFECT_DATA(_seq, _index, _tid) \
+    ((_tid == CONST_INT) ? _seq->getElementAsInteger(_index) : \
+    ((_tid == CONST_FLOAT) ? _seq->getElementAsFloat(_index) : \
+    _seq->getElementAsDouble(_index)))
+
+  // typename P is for bool only, as c++ set the &vector<bool)vec[0] to void
+  // type. We have to use uint8_t for bool vector.
+  template <typename T, typename P>
+  ir::ImmediateIndex GenWriter::processSeqConstant(ConstantDataSequential *seq,
+                                                   int index, ConstTypeId tid) {
+    if (index >= 0) {
+      const T data = GET_EFFECT_DATA(seq, index, tid);
+      return ctx.newImmediate(data);
+    } else {
+      vector<P> array;
+      for(int i = 0; i < seq->getNumElements(); i++)
+        array.push_back(GET_EFFECT_DATA(seq, i, tid));
+      return ctx.newImmediate((T*)&array[0], array.size());
+    }
+  }
+
+  ir::ImmediateIndex GenWriter::processConstantVector(ConstantVector *cv, int index) {
+    if (index >= 0) {
+      Constant *c = cv->getOperand(index);
+      return processConstantImmIndex(c, -1);
+    } else {
+      vector<ir::ImmediateIndex> immVector;
+      for (uint32_t i = 0; i < cv->getNumOperands(); i++)
+        immVector.push_back(processConstantImmIndex(cv->getOperand(i)));
+      return ctx.newImmediate(immVector);
+    }
+  }
+
+  ir::ImmediateIndex GenWriter::processConstantImmIndexImpl(Constant *CPV, int32_t index)
   {
-#if GBE_DEBUG
-    GBE_ASSERTM(dyn_cast<ConstantExpr>(CPV) == NULL, "Unsupported constant expression");
-    if (isa<UndefValue>(CPV) && CPV->getType()->isSingleValueType())
-      GBE_ASSERTM(false, "Unsupported constant expression");
-#endif /* GBE_DEBUG */
+    GBE_ASSERT(dyn_cast<ConstantExpr>(CPV) == NULL);
 
 #if LLVM_VERSION_MINOR > 0
     ConstantDataSequential *seq = dyn_cast<ConstantDataSequential>(CPV);
@@ -758,26 +798,19 @@ namespace gbe
     if (seq) {
       Type *Ty = seq->getElementType();
       if (Ty == Type::getInt1Ty(CPV->getContext())) {
-        const uint64_t u64 = seq->getElementAsInteger(index);
-        return ctx.newImmediate(bool(u64));
+        return processSeqConstant<bool, uint8_t>(seq, index, CONST_INT);
       } else if (Ty == Type::getInt8Ty(CPV->getContext())) {
-        const uint64_t u64 = seq->getElementAsInteger(index);
-        return ctx.newImmediate(uint8_t(u64));
+        return processSeqConstant<uint8_t>(seq, index, CONST_INT);
       } else if (Ty == Type::getInt16Ty(CPV->getContext())) {
-        const uint64_t u64 = seq->getElementAsInteger(index);
-        return ctx.newImmediate(uint16_t(u64));
+        return processSeqConstant<uint16_t>(seq, index, CONST_INT);
       } else if (Ty == Type::getInt32Ty(CPV->getContext())) {
-        const uint64_t u64 = seq->getElementAsInteger(index);
-        return ctx.newImmediate(uint32_t(u64));
+        return processSeqConstant<uint32_t>(seq, index, CONST_INT);
       } else if (Ty == Type::getInt64Ty(CPV->getContext())) {
-        const uint64_t u64 = seq->getElementAsInteger(index);
-        return ctx.newImmediate(u64);
+        return processSeqConstant<uint64_t>(seq, index, CONST_INT);
       } else if (Ty == Type::getFloatTy(CPV->getContext())) {
-        const float f32 = seq->getElementAsFloat(index);
-        return ctx.newImmediate(f32);
+        return processSeqConstant<float>(seq, index, CONST_FLOAT);
       } else if (Ty == Type::getDoubleTy(CPV->getContext())) {
-        const double f64 = seq->getElementAsDouble(index);
-        return ctx.newImmediate(f64);
+        return processSeqConstant<double>(seq, index, CONST_DOUBLE);
       }
     } else
 #endif /* LLVM_VERSION_MINOR > 0 */
@@ -813,7 +846,7 @@ namespace gbe
       }
     } else {
       if (dyn_cast<ConstantVector>(CPV))
-        CPV = extractConstantElem(CPV, index);
+        return processConstantVector(dyn_cast<ConstantVector>(CPV), index);
       GBE_ASSERTM(dyn_cast<ConstantExpr>(CPV) == NULL, "Unsupported constant expression");
 
       // Integers
@@ -835,8 +868,7 @@ namespace gbe
           const uint64_t u64 = CI->getZExtValue();
           return ctx.newImmediate(u64);
         } else {
-          GBE_ASSERTM(false, "Unsupported integer size");
-          return ctx.newImmediate(uint64_t(0));
+          return ctx.newImmediate(uint64_t(CI->getZExtValue()));
         }
       }
 
@@ -845,8 +877,20 @@ namespace gbe
         return ctx.newImmediate(uint32_t(0));
       }
 
-      // Floats and doubles
       const Type::TypeID typeID = CPV->getType()->getTypeID();
+      if (isa<UndefValue>(CPV)) {
+        Type* Ty = CPV->getType();
+        if (Ty == Type::getInt1Ty(CPV->getContext())) return ctx.newImmediate(false);
+        if (Ty == Type::getInt8Ty(CPV->getContext())) return ctx.newImmediate((uint8_t)0);
+        if (Ty == Type::getInt16Ty(CPV->getContext())) return ctx.newImmediate((uint16_t)0);
+        if (Ty == Type::getInt32Ty(CPV->getContext())) return ctx.newImmediate((uint32_t)0);
+        if (Ty == Type::getInt64Ty(CPV->getContext())) return ctx.newImmediate((uint64_t)0);
+        if (Ty == Type::getFloatTy(CPV->getContext())) return ctx.newImmediate((float)0);
+        if (Ty == Type::getDoubleTy(CPV->getContext())) return ctx.newImmediate((double)0);
+        GBE_ASSERT(0 && "Unsupported undef value type.\n");
+      }
+
+      // Floats and doubles
       switch (typeID) {
         case Type::FloatTyID:
         case Type::DoubleTyID:
@@ -873,7 +917,77 @@ namespace gbe
     return ctx.newImmediate(uint64_t(0));
   }
 
-  const ir::Immediate &GenWriter::processConstantImm(Constant *CPV, uint32_t index) {
+  ir::ImmediateIndex GenWriter::processConstantImmIndex(Constant *CPV, int32_t index) {
+    if (dyn_cast<ConstantExpr>(CPV) == NULL)
+      return processConstantImmIndexImpl(CPV, index);
+
+    if (dyn_cast<ConstantExpr>(CPV)) {
+      ConstantExpr *ce = dyn_cast<ConstantExpr>(CPV);
+      ir::Type type = getType(ctx, ce->getType());
+      switch (ce->getOpcode()) {
+        default:
+          //ce->dump();
+          GBE_ASSERT(0 && "unsupported ce opcode.\n");
+        case Instruction::Trunc:
+        {
+          const ir::ImmediateIndex immIndex = processConstantImmIndex(ce->getOperand(0), -1);
+          return ctx.processImm(ir::IMM_TRUNC, immIndex, type);
+        }
+        case Instruction::BitCast:
+        {
+          const ir::ImmediateIndex immIndex = processConstantImmIndex(ce->getOperand(0), -1);
+          if (type == ir::TYPE_LARGE_INT)
+            return immIndex;
+          return ctx.processImm(ir::IMM_BITCAST, immIndex, type);
+        }
+        case Instruction::Add:
+        case Instruction::Sub:
+        case Instruction::Mul:
+        case Instruction::SDiv:
+        case Instruction::SRem:
+        case Instruction::Shl:
+        case Instruction::AShr:
+        case Instruction::LShr:
+        case Instruction::And:
+        case Instruction::Or:
+        case Instruction::Xor: {
+          const ir::ImmediateIndex lhs  = processConstantImmIndex(ce->getOperand(0), -1);
+          const ir::ImmediateIndex rhs  = processConstantImmIndex(ce->getOperand(1), -1);
+          switch (ce->getOpcode()) {
+          default:
+            //ce->dump();
+            GBE_ASSERTM(0, "Unsupported constant expression.\n");
+          case Instruction::Add:
+            return ctx.processImm(ir::IMM_ADD, lhs, rhs, type);
+          case Instruction::Sub:
+            return ctx.processImm(ir::IMM_SUB, lhs, rhs, type);
+          case Instruction::Mul:
+            return ctx.processImm(ir::IMM_MUL, lhs, rhs, type);
+          case Instruction::SDiv:
+            return ctx.processImm(ir::IMM_DIV, lhs, rhs, type);
+          case Instruction::SRem:
+            return ctx.processImm(ir::IMM_REM, lhs, rhs, type);
+          case Instruction::Shl:
+            return ctx.processImm(ir::IMM_SHL, lhs, rhs, type);
+          case Instruction::AShr:
+            return ctx.processImm(ir::IMM_ASHR, lhs, rhs, type);
+          case Instruction::LShr:
+            return ctx.processImm(ir::IMM_LSHR, lhs, rhs, type);
+          case Instruction::And:
+            return ctx.processImm(ir::IMM_AND, lhs, rhs, type);
+          case Instruction::Or:
+            return ctx.processImm(ir::IMM_OR, lhs, rhs, type);
+          case Instruction::Xor:
+            return ctx.processImm(ir::IMM_XOR, lhs, rhs, type);
+          }
+        }
+      }
+    }
+    GBE_ASSERT(0 && "unsupported constant.\n");
+    return ctx.newImmediate((uint32_t)0);
+  }
+
+  const ir::Immediate &GenWriter::processConstantImm(Constant *CPV, int32_t index) {
     ir::ImmediateIndex immIndex = processConstantImmIndex(CPV, index);
     return ctx.getFunction().getImmediate(immIndex);
   }
@@ -906,7 +1020,6 @@ namespace gbe
 
   ir::Register GenWriter::getConstantRegister(Constant *c, uint32_t elemID) {
     GBE_ASSERT(c != NULL);
-
     if(isa<GlobalValue>(c)) {
       return regTranslator.getScalar(c, elemID);
     }

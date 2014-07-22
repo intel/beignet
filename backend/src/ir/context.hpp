@@ -69,6 +69,18 @@ namespace ir {
       const Immediate imm(value);
       return fn->newImmediate(imm);
     }
+    template <typename T> INLINE ImmediateIndex newImmediate(T value, uint32_t num) {
+      const Immediate imm(value, num);
+      return fn->newImmediate(imm);
+    }
+    /*! Create a new immediate value */
+    INLINE ImmediateIndex newImmediate(vector<ImmediateIndex>indexVector) {
+      vector<const Immediate*> immVector;
+      for( uint32_t i = 0; i < indexVector.size(); i++)
+        immVector.push_back(&fn->getImmediate(indexVector[i]));
+      const Immediate imm(immVector);
+      return fn->newImmediate(imm);
+    }
     /*! Create an integer immediate value */
     INLINE ImmediateIndex newIntegerImmediate(int64_t x, Type type) {
       switch (type) {
@@ -91,6 +103,20 @@ namespace ir {
       return this->newImmediate(x);
     }
 
+    INLINE ImmediateIndex processImm(ImmOpCode op, ImmediateIndex src, Type type) {
+      const Immediate &imm = fn->getImmediate(src);
+      const Immediate &dstImm = Immediate(op, imm, type);
+      return fn->newImmediate(dstImm);
+    }
+
+    INLINE ImmediateIndex processImm(ImmOpCode op, ImmediateIndex src0,
+                                     ImmediateIndex src1, Type type) {
+      const Immediate &imm0 = fn->getImmediate(src0);
+      const Immediate &imm1 = fn->getImmediate(src1);
+      const Immediate &dstImm = Immediate(op, imm0, imm1, type);
+      return fn->newImmediate(dstImm);
+    }
+
     /*! Set an immediate value */
     template <typename T> INLINE void setImmediate(ImmediateIndex index, T value) {
       const Immediate imm(value);
@@ -101,9 +127,9 @@ namespace ir {
       GBE_ASSERTM(fn != NULL, "No function currently defined");
       const Immediate imm(value);
       const ImmediateIndex index = fn->newImmediate(imm);
-      const RegisterFamily family = getFamily(imm.type);
+      const RegisterFamily family = getFamily(imm.getType());
       const Register reg = this->reg(family);
-      this->LOADI(imm.type, reg, index);
+      this->LOADI(imm.getType(), reg, index);
       return reg;
     }
     /*! Create a new label for the current function */

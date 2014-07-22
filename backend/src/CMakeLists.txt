@@ -136,6 +136,8 @@ else (GBE_USE_BLOB)
     ir/printf.hpp
     ir/structural_analysis.cpp
     ir/structural_analysis.hpp
+    ir/immediate.hpp
+    ir/immediate.cpp
     backend/context.cpp
     backend/context.hpp
     backend/program.cpp
