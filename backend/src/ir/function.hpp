@@ -208,7 +208,7 @@ namespace ir {
     /*! Get the register file */
     INLINE const RegisterFile &getRegisterFile(void) const { return file; }
     /*! Get the given value ie immediate from the function */
-    INLINE Immediate getImmediate(ImmediateIndex ID) const {
+    INLINE const Immediate &getImmediate(ImmediateIndex ID) const {
       return immediates[ID];
     }
     /*! Create a new immediate and returns its index */
