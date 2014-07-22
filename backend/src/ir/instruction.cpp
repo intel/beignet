@@ -975,7 +975,7 @@ namespace ir {
         whyNot = "Out-of-bound immediate value index";
         return false;
       }
-      const ir::Type immType = fn.getImmediate(immediateIndex).type;
+      const ir::Type immType = fn.getImmediate(immediateIndex).getType();
       if (UNLIKELY(type != immType)) {
         whyNot = "Inconsistant type for the immediate value to load";
         return false;

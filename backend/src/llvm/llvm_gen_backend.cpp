@@ -1006,8 +1006,8 @@ namespace gbe
 
     const ir::ImmediateIndex immIndex = this->newImmediate(c, elemID);
     const ir::Immediate imm = ctx.getImmediate(immIndex);
-    const ir::Register reg = ctx.reg(getFamily(imm.type));
-    ctx.LOADI(imm.type, reg, immIndex);
+    const ir::Register reg = ctx.reg(getFamily(imm.getType()));
+    ctx.LOADI(imm.getType(), reg, immIndex);
     return reg;
   }
 
@@ -1989,7 +1989,7 @@ namespace gbe
           const ir::ImmediateIndex index = ctx.newImmediate(CPV);
           const ir::Immediate imm = ctx.getImmediate(index);
           const ir::Register reg = this->getRegister(dstValue);
-          ctx.LOADI(imm.type, reg, index);
+          ctx.LOADI(imm.getType(), reg, index);
         }
       }
       break;
@@ -2512,9 +2512,9 @@ namespace gbe
       // This is not a kernel argument sampler, we need to append it to sampler set,
       // and allocate a sampler slot for it.
       auto x = processConstant<ir::Immediate>(CPV, InsertExtractFunctor(ctx));
-      GBE_ASSERTM(x.type == ir::TYPE_U16 || x.type == ir::TYPE_S16, "Invalid sampler type");
+      GBE_ASSERTM(x.getType() == ir::TYPE_U16 || x.getType() == ir::TYPE_S16, "Invalid sampler type");
 
-      index = ctx.getFunction().getSamplerSet()->append(x.data.u32, &ctx);
+      index = ctx.getFunction().getSamplerSet()->append(x.getIntegerValue(), &ctx);
     } else {
       const ir::Register samplerReg = this->getRegister(*AI);
       index = ctx.getFunction().getSamplerSet()->append(samplerReg, &ctx);
@@ -2738,8 +2738,8 @@ handle_read_image:
             GBE_ASSERT(AI != AE); Constant *CPV = dyn_cast<Constant>(*AI);
             assert(CPV);
             auto x = processConstant<ir::Immediate>(CPV, InsertExtractFunctor(ctx));
-            GBE_ASSERTM(x.type == ir::TYPE_U32 || x.type == ir::TYPE_S32, "Invalid sampler type");
-            samplerOffset = x.data.u32;
+            GBE_ASSERTM(x.getType() == ir::TYPE_U32 || x.getType() == ir::TYPE_S32, "Invalid sampler type");
+            samplerOffset = x.getIntegerValue();
 #endif
             const ir::Tuple dstTuple = ctx.arrayTuple(&dstTupleData[0], elemNum);
             const ir::Tuple srcTuple = ctx.arrayTuple(&srcTupleData[0], 3);
@@ -3123,10 +3123,11 @@ handle_write_image:
       Constant *CPV = dyn_cast<Constant>(src);
       GBE_ASSERT(CPV);
       const uint64_t elemNum = processConstant<uint64_t>(CPV, U64CPVExtractFunctor(ctx));
-      ir::Immediate imm = ctx.getImmediate(immIndex);
-      imm.data.u64 = ALIGN(imm.data.u64 * elemNum, 4);
       elementSize *= elemNum;
-      ctx.setImmediate(immIndex, imm);
+      if (ctx.getPointerSize() == ir::POINTER_32_BITS)
+        immIndex = ctx.newImmediate(uint32_t(ALIGN(elementSize, 4)));
+      else
+        immIndex = ctx.newImmediate(uint64_t(ALIGN(elementSize, 4)));
     }
 
     // Now emit the stream of instructions to get the allocated pointer
@@ -3152,10 +3153,10 @@ handle_write_image:
       }
     }
     // Set the destination register properly
-    ctx.MOV(imm.type, dst, stack);
+    ctx.MOV(imm.getType(), dst, stack);
 
-    ctx.LOADI(imm.type, reg, immIndex);
-    ctx.ADD(imm.type, stack, stack, reg);
+    ctx.LOADI(imm.getType(), reg, immIndex);
+    ctx.ADD(imm.getType(), stack, stack, reg);
     ctx.getFunction().pushStackSize(elementSize);
   }
 
