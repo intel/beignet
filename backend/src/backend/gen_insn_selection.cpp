@@ -1729,7 +1729,7 @@ namespace gbe
     using namespace ir;
     const auto &childInsn = cast<LoadImmInstruction>(insn);
     const auto &imm = childInsn.getImmediate();
-    if(imm.type != TYPE_DOUBLE && imm.type != TYPE_S64 && imm.type != TYPE_U64)
+    if(imm.getType() != TYPE_DOUBLE && imm.getType() != TYPE_S64 && imm.getType() != TYPE_U64)
       return true;
     return false;
   }
@@ -1739,15 +1739,15 @@ namespace gbe
     using namespace ir;
     int sign = negate ? -1 : 1;
     switch (type) {
-      case TYPE_U32:   return GenRegister::immud(imm.data.u32 * sign);
-      case TYPE_S32:   return GenRegister::immd(imm.data.s32 * sign);
-      case TYPE_FLOAT: return GenRegister::immf(imm.data.f32 * sign);
-      case TYPE_U16: return GenRegister::immuw(imm.data.u16 * sign);
-      case TYPE_S16: return  GenRegister::immw(imm.data.s16 * sign);
-      case TYPE_U8:  return GenRegister::immuw(imm.data.u8 * sign);
-      case TYPE_S8:  return GenRegister::immw(imm.data.s8 * sign);
-      case TYPE_DOUBLE: return GenRegister::immdf(imm.data.f64 * sign);
-      case TYPE_BOOL: return GenRegister::immuw(-imm.data.b);  //return 0xffff when true
+      case TYPE_U32:   return GenRegister::immud(imm.getIntegerValue() * sign);
+      case TYPE_S32:   return GenRegister::immd(imm.getIntegerValue() * sign);
+      case TYPE_FLOAT: return GenRegister::immf(imm.getFloatValue() * sign);
+      case TYPE_U16: return GenRegister::immuw(imm.getIntegerValue() * sign);
+      case TYPE_S16: return  GenRegister::immw((int16_t)imm.getIntegerValue() * sign);
+      case TYPE_U8:  return GenRegister::immuw(imm.getIntegerValue() * sign);
+      case TYPE_S8:  return GenRegister::immw((int8_t)imm.getIntegerValue() * sign);
+      case TYPE_DOUBLE: return GenRegister::immdf(imm.getDoubleValue() * sign);
+      case TYPE_BOOL: return GenRegister::immuw(-imm.getIntegerValue());  //return 0xffff when true
       default: NOT_SUPPORTED; return GenRegister::immuw(0);
     }
   }
@@ -2529,9 +2529,9 @@ namespace gbe
         if (src0DAG->insn.getOpcode() == OP_LOADI) {
           const auto &loadimm = cast<LoadImmInstruction>(src0DAG->insn);
           const Immediate imm = loadimm.getImmediate();
-          const Type type = imm.type;
+          const Type type = imm.getType();
           GBE_ASSERT(type == TYPE_U32 || type == TYPE_S32);
-          if (type == TYPE_U32 && imm.data.u32 <= 0xffff) {
+          if (type == TYPE_U32 && imm.getIntegerValue() <= 0xffff) {
             sel.push();
               if (sel.isScalarReg(insn.getDst(0)) == true) {
                 sel.curr.execWidth = 1;
@@ -2541,13 +2541,13 @@ namespace gbe
 
               sel.MUL(sel.selReg(dst, type),
                       sel.selReg(src1, type),
-                      GenRegister::immuw(imm.data.u32));
+                      GenRegister::immuw(imm.getIntegerValue()));
             sel.pop();
             if (dag.child[childID ^ 1] != NULL)
               dag.child[childID ^ 1]->isRoot = 1;
             return true;
           }
-          if (type == TYPE_S32 && (imm.data.s32 >= -32768 && imm.data.s32 <= 32767)) {
+          if (type == TYPE_S32 && (imm.getIntegerValue() >= -32768 && imm.getIntegerValue() <= 32767)) {
             sel.push();
               if (sel.isScalarReg(insn.getDst(0)) == true) {
                 sel.curr.execWidth = 1;
@@ -2557,7 +2557,7 @@ namespace gbe
 
               sel.MUL(sel.selReg(dst, type),
                       sel.selReg(src1, type),
-                      GenRegister::immw(imm.data.s32));
+                      GenRegister::immw(imm.getIntegerValue()));
             sel.pop();
             if (dag.child[childID ^ 1] != NULL)
               dag.child[childID ^ 1]->isRoot = 1;
@@ -2647,21 +2647,21 @@ namespace gbe
             sel.curr.physicalFlag = 0;
             sel.curr.flagIndex = (uint16_t) insn.getDst(0);
           }
-          sel.MOV(dst, imm.data.b ? GenRegister::immuw(0xffff) : GenRegister::immuw(0));
+          sel.MOV(dst, imm.getIntegerValue() ? GenRegister::immuw(0xffff) : GenRegister::immuw(0));
         break;
         case TYPE_U32:
         case TYPE_S32:
         case TYPE_FLOAT:
           sel.MOV(GenRegister::retype(dst, GEN_TYPE_F),
-                  GenRegister::immf(imm.data.f32));
+                  GenRegister::immf(imm.asFloatValue()));
         break;
-        case TYPE_U16: sel.MOV(dst, GenRegister::immuw(imm.data.u16)); break;
-        case TYPE_S16: sel.MOV(dst, GenRegister::immw(imm.data.s16)); break;
-        case TYPE_U8:  sel.MOV(dst, GenRegister::immuw(imm.data.u8)); break;
-        case TYPE_S8:  sel.MOV(dst, GenRegister::immw(imm.data.s8)); break;
-        case TYPE_DOUBLE: sel.LOAD_DF_IMM(dst, GenRegister::immdf(imm.data.f64), sel.selReg(sel.reg(FAMILY_QWORD))); break;
-        case TYPE_S64: sel.LOAD_INT64_IMM(dst, GenRegister::immint64(imm.data.s64)); break;
-        case TYPE_U64: sel.LOAD_INT64_IMM(dst, GenRegister::immint64(imm.data.u64)); break;
+        case TYPE_U16: sel.MOV(dst, GenRegister::immuw(imm.getIntegerValue())); break;
+        case TYPE_S16: sel.MOV(dst, GenRegister::immw(imm.getIntegerValue())); break;
+        case TYPE_U8:  sel.MOV(dst, GenRegister::immuw(imm.getIntegerValue())); break;
+        case TYPE_S8:  sel.MOV(dst, GenRegister::immw(imm.getIntegerValue())); break;
+        case TYPE_DOUBLE: sel.LOAD_DF_IMM(dst, GenRegister::immdf(imm.getDoubleValue()), sel.selReg(sel.reg(FAMILY_QWORD))); break;
+        case TYPE_S64: sel.LOAD_INT64_IMM(dst, GenRegister::immint64(imm.getIntegerValue())); break;
+        case TYPE_U64: sel.LOAD_INT64_IMM(dst, GenRegister::immint64(imm.getIntegerValue())); break;
         default: NOT_SUPPORTED;
       }
       sel.pop();
@@ -3296,13 +3296,13 @@ namespace gbe
         const auto imm = immInsn.getImmediate();
         const Type immType = immInsn.getType();
         if (immType == TYPE_S64 &&
-          imm.data.s64 <= INT_MAX &&
-          imm.data.s64 >= INT_MIN) {
-          src = GenRegister::immd((int32_t)imm.data.s64);
+          imm.getIntegerValue() <= INT_MAX &&
+          imm.getIntegerValue() >= INT_MIN) {
+          src = GenRegister::immd((int32_t)imm.getIntegerValue());
           return true;
         } else if (immType == TYPE_U64 &&
-                   imm.data.u64 <= UINT_MAX) {
-          src = GenRegister::immud((uint32_t)imm.data.s64);
+                   imm.getIntegerValue() <= UINT_MAX) {
+          src = GenRegister::immud((uint32_t)imm.getIntegerValue());
           return true;
         }
       } else if (dag->insn.getOpcode() == OP_CVT) {

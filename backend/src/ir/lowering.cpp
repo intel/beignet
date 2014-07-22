@@ -120,19 +120,19 @@ namespace ir {
   };
 
   INLINE uint64_t getOffsetFromImm(const Immediate &imm) {
-    switch (imm.type) {
+    switch (imm.getType()) {
       // bit-cast these ones
       case TYPE_DOUBLE:
-      case TYPE_FLOAT:
+      case TYPE_FLOAT: NOT_SUPPORTED; return 0;
       case TYPE_S64:
       case TYPE_U64:
       case TYPE_U32:
       case TYPE_U16:
-      case TYPE_U8: return imm.data.u64;
+      case TYPE_U8:
       // sign extend these ones
-      case TYPE_S32: return int64_t(imm.data.s32);
-      case TYPE_S16: return int64_t(imm.data.s16);
-      case TYPE_S8: return int64_t(imm.data.s8);
+      case TYPE_S32:
+      case TYPE_S16:
+      case TYPE_S8: return imm.getIntegerValue();
       case TYPE_BOOL:
       case TYPE_HALF: NOT_SUPPORTED; return 0;
     }

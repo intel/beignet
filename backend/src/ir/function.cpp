@@ -146,19 +146,19 @@ namespace ir {
   void Function::outImmediate(std::ostream &out, ImmediateIndex index) const {
     GBE_ASSERT(index < immediates.size());
     const Immediate imm = immediates[index];
-    switch (imm.type) {
-      case TYPE_BOOL: out << !!imm.data.u8; break;
-      case TYPE_S8: out << imm.data.s8; break;
-      case TYPE_U8: out << imm.data.u8; break;
-      case TYPE_S16: out << imm.data.s16; break;
-      case TYPE_U16: out << imm.data.u16; break;
-      case TYPE_S32: out << imm.data.s32; break;
-      case TYPE_U32: out << imm.data.u32; break;
-      case TYPE_S64: out << imm.data.s64; break;
-      case TYPE_U64: out << imm.data.u64; break;
-      case TYPE_HALF: out << "half(" << imm.data.u16 << ")"; break;
-      case TYPE_FLOAT: out << imm.data.f32; break;
-      case TYPE_DOUBLE: out << imm.data.f64; break;
+    switch (imm.getType()) {
+      case TYPE_BOOL: out << !!imm.getIntegerValue(); break;
+      case TYPE_S8:
+      case TYPE_U8:
+      case TYPE_S16:
+      case TYPE_U16:
+      case TYPE_S32:
+      case TYPE_U32:
+      case TYPE_S64: out << imm.getIntegerValue(); break;
+      case TYPE_U64: out << (uint64_t)imm.getIntegerValue(); break;
+      case TYPE_HALF: out << "half(" << imm.getIntegerValue() << ")"; break;
+      case TYPE_FLOAT: out << imm.getFloatValue(); break;
+      case TYPE_DOUBLE: out << imm.getDoubleValue(); break;
     }
   }
 
