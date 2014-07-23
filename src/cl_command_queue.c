@@ -446,7 +446,9 @@ cl_command_queue_flush_gpgpu(cl_command_queue queue, cl_gpgpu gpgpu)
     cl_gpgpu_unmap_printf_buffer(gpgpu, 0);
     if (interp_get_printf_sizeof_size(printf_info))
       cl_gpgpu_unmap_printf_buffer(gpgpu, 1);
+  }
 
+  if (printf_info) {
     interp_release_printf_info(printf_info);
     global_wk_sz[0] = global_wk_sz[1] = global_wk_sz[2] = 0;
     cl_gpgpu_set_printf_info(gpgpu, NULL, global_wk_sz);

@@ -543,11 +543,12 @@ error:
 
     module = F.getParent();
     intTy = IntegerType::get(module->getContext(), 32);
-    builder = new IRBuilder<>(module->getContext());
 
     // As we inline all function calls, so skip non-kernel functions
     bool bKernel = isKernelFunction(F);
     if(!bKernel) return false;
+
+    builder = new IRBuilder<>(module->getContext());
 
     /* Iter the function and find printf. */
     for (llvm::Function::iterator B = F.begin(), BE = F.end(); B != BE; B++) {

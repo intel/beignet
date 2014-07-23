@@ -256,6 +256,7 @@ namespace gbe
       iter++;
     }
 
+    delete libraryInfo;
     return true;
   }
 } /* namespace gbe */
