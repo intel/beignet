@@ -243,7 +243,6 @@ namespace gbe
       passes.add(createPrintModulePass(&*o));
 #endif
     passes.run(mod);
-
     return true;
   }
 } /* namespace gbe */
