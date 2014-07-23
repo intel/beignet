@@ -536,6 +536,8 @@ namespace gbe
     INLINE void newRegister(Value *value, Value *key = NULL, bool uniform = false);
     /*! get the register for a llvm::Constant */
     ir::Register getConstantRegister(Constant *c, uint32_t index = 0);
+    /*! get constant pointer */
+    ir::Register getConstantPointerRegister(ConstantExpr *ce, uint32_t index = 0);
     /*! Return a valid register from an operand (can use LOADI to make one) */
     INLINE ir::Register getRegister(Value *value, uint32_t index = 0);
     /*! Create a new immediate from a constant */
@@ -1018,6 +1020,80 @@ namespace gbe
     };
   }
 
+  ir::Register GenWriter::getConstantPointerRegister(ConstantExpr *expr, uint32_t elemID) {
+    Value* val = expr->getOperand(0);
+
+    if (expr->isCast()) {
+      ir::Register pointer_reg;
+      if(isa<ConstantExpr>(val)) {
+        // try to get the real pointer register, for case like:
+        // store i64 ptrtoint (i8 addrspace(3)* getelementptr inbounds ...
+        // in which ptrtoint and getelementptr are ConstantExpr.
+        pointer_reg = getConstantPointerRegister(dyn_cast<ConstantExpr>(val), elemID);
+      } else {
+        pointer_reg = regTranslator.getScalar(val, elemID);
+      }
+      // if ptrToInt request another type other than 32bit, convert as requested
+      ir::Type dstType = getType(ctx, expr->getType());
+      ir::Type srcType = getType(ctx, val->getType());
+      if(srcType != dstType && dstType != ir::TYPE_S32) {
+        ir::Register tmp = ctx.reg(getFamily(dstType));
+        ctx.CVT(dstType, srcType, tmp, pointer_reg);
+        return tmp;
+      }
+      return pointer_reg;
+    }
+    else if (expr->getOpcode() == Instruction::GetElementPtr) {
+      uint32_t TypeIndex;
+      uint32_t constantOffset = 0;
+
+      Value *pointer = val;
+      CompositeType* CompTy = cast<CompositeType>(pointer->getType());
+      for(uint32_t op=1; op<expr->getNumOperands(); ++op) {
+        uint32_t offset = 0;
+        ConstantInt* ConstOP = dyn_cast<ConstantInt>(expr->getOperand(op));
+        GBE_ASSERT(ConstOP);
+        TypeIndex = ConstOP->getZExtValue();
+        if (op == 1) {
+          if (TypeIndex != 0) {
+            Type *elementType = (cast<PointerType>(pointer->getType()))->getElementType();
+            uint32_t elementSize = getTypeByteSize(unit, elementType);
+            uint32_t align = getAlignmentByte(unit, elementType);
+            elementSize += getPadding(elementSize, align);
+            offset += elementSize * TypeIndex;
+          }
+        } else {
+          for(uint32_t ty_i=0; ty_i<TypeIndex; ty_i++)
+          {
+            Type* elementType = CompTy->getTypeAtIndex(ty_i);
+            uint32_t align = getAlignmentByte(unit, elementType);
+            offset += getPadding(offset, align);
+            offset += getTypeByteSize(unit, elementType);
+          }
+          const uint32_t align = getAlignmentByte(unit, CompTy->getTypeAtIndex(TypeIndex));
+          offset += getPadding(offset, align);
+        }
+
+        constantOffset += offset;
+        CompTy = dyn_cast<CompositeType>(CompTy->getTypeAtIndex(TypeIndex));
+      }
+
+      ir::Register pointer_reg;
+      if(isa<ConstantExpr>(pointer))
+        pointer_reg = getConstantPointerRegister(dyn_cast<ConstantExpr>(pointer), elemID);
+      else
+        pointer_reg = regTranslator.getScalar(pointer, elemID);
+
+      ir::Register offset_reg = ctx.reg(ir::RegisterFamily::FAMILY_DWORD);
+      ctx.LOADI(ir::Type::TYPE_S32, offset_reg, ctx.newIntegerImmediate(constantOffset, ir::Type::TYPE_S32));
+      ir::Register reg = ctx.reg(ir::RegisterFamily::FAMILY_DWORD);
+      ctx.ADD(ir::Type::TYPE_S32, reg, pointer_reg, offset_reg);
+      return reg;
+    }
+    else
+      assert(0);
+  }
+
   ir::Register GenWriter::getConstantRegister(Constant *c, uint32_t elemID) {
     GBE_ASSERT(c != NULL);
     if(isa<GlobalValue>(c)) {
@@ -1041,77 +1117,12 @@ namespace gbe
     }
 
     if(isa<ConstantExpr>(c)) {
-      ConstantExpr * ce = dyn_cast<ConstantExpr>(c);
-
-      if(ce->isCast()) {
-        Value* op = ce->getOperand(0);
-        ir::Register pointer_reg;
-        if(isa<ConstantExpr>(op)) {
-          // try to get the real pointer register, for case like:
-          // store i64 ptrtoint (i8 addrspace(3)* getelementptr inbounds ...
-          // in which ptrtoint and getelementptr are ConstantExpr.
-          pointer_reg = getConstantRegister(dyn_cast<Constant>(op), elemID);
-        } else {
-          pointer_reg = regTranslator.getScalar(op, elemID);
-        }
-        // if ptrToInt request another type other than 32bit, convert as requested
-        ir::Type dstType = getType(ctx, ce->getType());
-        if(ce->getOpcode() == Instruction::PtrToInt && ir::TYPE_S32 != dstType) {
-          ir::Register tmp = ctx.reg(getFamily(dstType));
-          ctx.CVT(dstType, ir::TYPE_S32, tmp, pointer_reg);
-          return tmp;
-        }
-        return pointer_reg;
-      } else {
-        uint32_t TypeIndex;
-        uint32_t constantOffset = 0;
-
-        // currently only GetElementPtr is handled
-        GBE_ASSERT(ce->getOpcode() == Instruction::GetElementPtr);
-        Value *pointer = ce->getOperand(0);
-        CompositeType* CompTy = cast<CompositeType>(pointer->getType());
-        for(uint32_t op=1; op<ce->getNumOperands(); ++op) {
-          uint32_t offset = 0;
-          ConstantInt* ConstOP = dyn_cast<ConstantInt>(ce->getOperand(op));
-          GBE_ASSERT(ConstOP);
-          TypeIndex = ConstOP->getZExtValue();
-          if (op == 1) {
-            if (TypeIndex != 0) {
-              Type *elementType = (cast<PointerType>(pointer->getType()))->getElementType();
-              uint32_t elementSize = getTypeByteSize(unit, elementType);
-              uint32_t align = getAlignmentByte(unit, elementType);
-              elementSize += getPadding(elementSize, align);
-              offset += elementSize * TypeIndex;
-            }
-          } else {
-            for(uint32_t ty_i=0; ty_i<TypeIndex; ty_i++)
-            {
-              Type* elementType = CompTy->getTypeAtIndex(ty_i);
-              uint32_t align = getAlignmentByte(unit, elementType);
-              offset += getPadding(offset, align);
-              offset += getTypeByteSize(unit, elementType);
-            }
-
-            const uint32_t align = getAlignmentByte(unit, CompTy->getTypeAtIndex(TypeIndex));
-            offset += getPadding(offset, align);
-          }
-
-          constantOffset += offset;
-          CompTy = dyn_cast<CompositeType>(CompTy->getTypeAtIndex(TypeIndex));
-        }
-
-        ir::Register pointer_reg;
-        if(isa<ConstantExpr>(pointer))
-          pointer_reg = getConstantRegister(dyn_cast<Constant>(pointer), elemID);
-        else
-          pointer_reg = regTranslator.getScalar(pointer, elemID);
-
-        ir::Register offset_reg = ctx.reg(ir::RegisterFamily::FAMILY_DWORD);
-        ctx.LOADI(ir::Type::TYPE_S32, offset_reg, ctx.newIntegerImmediate(constantOffset, ir::Type::TYPE_S32));
-        ir::Register reg = ctx.reg(ir::RegisterFamily::FAMILY_DWORD);
-        ctx.ADD(ir::Type::TYPE_S32, reg, pointer_reg, offset_reg);
-        return reg;
-      }
+      // Check whether this is a constant drived from a pointer.
+      Constant *itC = c;
+      while(isa<ConstantExpr>(itC))
+        itC = dyn_cast<ConstantExpr>(itC)->getOperand(0);
+      if (itC->getType()->isPointerTy())
+        return getConstantPointerRegister(dyn_cast<ConstantExpr>(c), elemID);
     }
 
     const ir::ImmediateIndex immIndex = this->newImmediate(c, elemID);
