@@ -182,6 +182,7 @@ set (utests_sources
   enqueue_built_in_kernels.cpp
   image_1D_buffer.cpp
   compare_image_2d_and_1d_array.cpp
+  compiler_constant_expr.cpp
   utest_assert.cpp
   utest.cpp
   utest_file_map.cpp
