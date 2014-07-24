@@ -378,7 +378,7 @@ namespace gbe
     //replace uses of the GEP instruction with the newly calculated pointer
     GEPInst->replaceAllUsesWith(intToPtrInst);
     GEPInst->dropAllReferences();
-    GEPInst->removeFromParent();
+    GEPInst->eraseFromParent();
 
 #if FORMER_VERSION
     //insert new pointer into parent list
