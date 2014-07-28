@@ -52,7 +52,7 @@ void image_1D_buffer(void)
   sampler = clCreateSampler(ctx, false, CL_ADDRESS_NONE, CL_FILTER_NEAREST, &error );
   OCL_ASSERT(error == CL_SUCCESS);
 
-  cl_mem result_buf = buf[0] = clCreateBuffer(ctx, 0, buffer_sz/sizeof(int32_t), NULL, &error);
+  cl_mem result_buf = buf[0] = clCreateBuffer(ctx, 0, buffer_sz, NULL, &error);
   OCL_ASSERT(error == CL_SUCCESS);
 
   OCL_SET_ARG(0, sizeof(cl_mem), &image1);
