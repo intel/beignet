@@ -93,7 +93,7 @@ namespace ir {
   private:
     map<Register, struct ImageInfo *> regMap;
     map<uint32_t, struct ImageInfo *> indexMap;
-    map<uint32_t, Register> infoRegMap;
+    map<uint16_t, Register> infoRegMap;
     GBE_CLASS(ImageSet);
   };
 } /* namespace ir */

@@ -375,7 +375,7 @@ namespace ir {
      uint8_t index; /*! the allocated image index */
      uint8_t  type;  /*! the information type */
     };
-    uint32_t data;
+    uint16_t data;
   } ImageInfoKey;
 
   /*! Get image information */
