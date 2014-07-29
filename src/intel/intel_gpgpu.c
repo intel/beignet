@@ -690,7 +690,7 @@ intel_gpgpu_set_buf_reloc_gen7(intel_gpgpu_t *gpgpu, int32_t index, dri_bo* obj_
 }
 
 static dri_bo*
-intel_gpgpu_alloc_constant_buffer(intel_gpgpu_t *gpgpu, uint32_t size)
+intel_gpgpu_alloc_constant_buffer_gen7(intel_gpgpu_t *gpgpu, uint32_t size)
 {
   uint32_t s = size - 1;
   assert(size != 0);
@@ -704,6 +704,44 @@ intel_gpgpu_alloc_constant_buffer(intel_gpgpu_t *gpgpu, uint32_t size)
   ss2->ss2.height = (s >> 7) & 0x3fff;   /* bits 20:7 of sz */
   ss2->ss3.depth  = (s >> 21) & 0x3ff;   /* bits 30:21 of sz */
   ss2->ss5.cache_control = cl_gpgpu_get_cache_ctrl();
+  heap->binding_table[2] = offsetof(surface_heap_t, surface) + 2* sizeof(gen7_surface_state_t);
+
+  if(gpgpu->constant_b.bo)
+    dri_bo_unreference(gpgpu->constant_b.bo);
+  gpgpu->constant_b.bo = drm_intel_bo_alloc(gpgpu->drv->bufmgr, "CONSTANT_BUFFER", s, 64);
+  if (gpgpu->constant_b.bo == NULL)
+    return NULL;
+  ss2->ss1.base_addr = gpgpu->constant_b.bo->offset;
+  dri_bo_emit_reloc(gpgpu->aux_buf.bo,
+                      I915_GEM_DOMAIN_RENDER,
+                      I915_GEM_DOMAIN_RENDER,
+                      0,
+                      gpgpu->aux_offset.surface_heap_offset +
+                      heap->binding_table[2] +
+                      offsetof(gen7_surface_state_t, ss1),
+                      gpgpu->constant_b.bo);
+  return gpgpu->constant_b.bo;
+}
+
+static dri_bo*
+intel_gpgpu_alloc_constant_buffer_gen75(intel_gpgpu_t *gpgpu, uint32_t size)
+{
+  uint32_t s = size - 1;
+  assert(size != 0);
+
+  surface_heap_t *heap = gpgpu->aux_buf.bo->virtual + gpgpu->aux_offset.surface_heap_offset;
+  gen7_surface_state_t *ss2 = (gen7_surface_state_t *) heap->surface[2];
+  memset(ss2, 0, sizeof(gen7_surface_state_t));
+  ss2->ss0.surface_type = I965_SURFACE_BUFFER;
+  ss2->ss0.surface_format = I965_SURFACEFORMAT_R32G32B32A32_UINT;
+  ss2->ss2.width  = s & 0x7f;            /* bits 6:0 of sz */
+  ss2->ss2.height = (s >> 7) & 0x3fff;   /* bits 20:7 of sz */
+  ss2->ss3.depth  = (s >> 21) & 0x3ff;   /* bits 30:21 of sz */
+  ss2->ss5.cache_control = cl_gpgpu_get_cache_ctrl();
+  ss2->ss7.shader_r = I965_SURCHAN_SELECT_RED;
+  ss2->ss7.shader_g = I965_SURCHAN_SELECT_GREEN;
+  ss2->ss7.shader_b = I965_SURCHAN_SELECT_BLUE;
+  ss2->ss7.shader_a = I965_SURCHAN_SELECT_ALPHA;
   heap->binding_table[2] = offsetof(surface_heap_t, surface) + 2* sizeof(gen7_surface_state_t);
 
   if(gpgpu->constant_b.bo)
@@ -1416,7 +1454,6 @@ intel_set_gpgpu_callbacks(int device_id)
   cl_gpgpu_state_init = (cl_gpgpu_state_init_cb *) intel_gpgpu_state_init;
   cl_gpgpu_set_perf_counters = (cl_gpgpu_set_perf_counters_cb *) intel_gpgpu_set_perf_counters;
   cl_gpgpu_upload_curbes = (cl_gpgpu_upload_curbes_cb *) intel_gpgpu_upload_curbes;
-  cl_gpgpu_alloc_constant_buffer  = (cl_gpgpu_alloc_constant_buffer_cb *) intel_gpgpu_alloc_constant_buffer;
   cl_gpgpu_states_setup = (cl_gpgpu_states_setup_cb *) intel_gpgpu_states_setup;
   cl_gpgpu_upload_samplers = (cl_gpgpu_upload_samplers_cb *) intel_gpgpu_upload_samplers;
   cl_gpgpu_batch_reset = (cl_gpgpu_batch_reset_cb *) intel_gpgpu_batch_reset;
@@ -1443,6 +1480,7 @@ intel_set_gpgpu_callbacks(int device_id)
 
   if (IS_HASWELL(device_id)) {
     cl_gpgpu_bind_image = (cl_gpgpu_bind_image_cb *) intel_gpgpu_bind_image_gen75;
+    cl_gpgpu_alloc_constant_buffer  = (cl_gpgpu_alloc_constant_buffer_cb *) intel_gpgpu_alloc_constant_buffer_gen75;
     intel_gpgpu_set_L3 = intel_gpgpu_set_L3_gen75;
     cl_gpgpu_get_cache_ctrl = (cl_gpgpu_get_cache_ctrl_cb *)intel_gpgpu_get_cache_ctrl_gen75;
     intel_gpgpu_get_scratch_index = intel_gpgpu_get_scratch_index_gen75;
@@ -1451,6 +1489,7 @@ intel_set_gpgpu_callbacks(int device_id)
   }
   else if (IS_IVYBRIDGE(device_id)) {
     cl_gpgpu_bind_image = (cl_gpgpu_bind_image_cb *) intel_gpgpu_bind_image_gen7;
+    cl_gpgpu_alloc_constant_buffer  = (cl_gpgpu_alloc_constant_buffer_cb *) intel_gpgpu_alloc_constant_buffer_gen7;
     if (IS_BAYTRAIL_T(device_id)) {
       intel_gpgpu_set_L3 = intel_gpgpu_set_L3_baytrail;
       intel_gpgpu_read_ts_reg = intel_gpgpu_read_ts_reg_baytrail;
