@@ -206,6 +206,7 @@ namespace gbe
   private:
     CompileErrorCode errCode;
     bool ifEndifFix;
+    uint32_t regSpillTick;
     /*! Build the curbe patch list for the given kernel */
     void buildPatchList(void);
     /*! Calc the group's slm offset from R0.0, to work around HSW SLM bug*/

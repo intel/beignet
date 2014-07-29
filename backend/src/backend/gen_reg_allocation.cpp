@@ -353,7 +353,15 @@ namespace gbe
 
   template <bool sortStartingPoint>
   inline bool cmp(const GenRegInterval *i0, const GenRegInterval *i1) {
-    return sortStartingPoint ? i0->minID < i1->minID : i0->maxID < i1->maxID;
+    if (sortStartingPoint) {
+      if (i0->minID == i1->minID)
+        return (i0->maxID < i1->maxID);
+      return i0->minID < i1->minID;
+    } else {
+      if (i0->maxID == i1->maxID)
+        return (i0->minID < i1->minID);
+      return i0->maxID < i1->maxID;
+    }
   }
 
   bool GenRegAllocator::Opaque::expireGRF(const GenRegInterval &limit) {
@@ -943,15 +951,14 @@ namespace gbe
                                                        uint32_t size,
                                                        uint32_t alignment) {
     uint32_t grfOffset;
-    static uint32_t tick = 0;
     // Doing expireGRF too freqently will cause the post register allocation
     // scheduling very hard. As it will cause a very high register conflict rate.
     // The tradeoff here is to reduce the freqency here. And if we are under spilling
     // then no need to reduce that freqency as the register pressure is the most
     // important factor.
-    if (tick % 12 == 0 || ctx.reservedSpillRegs != 0)
+    if (ctx.regSpillTick % 12 == 0 || ctx.reservedSpillRegs != 0)
       this->expireGRF(interval);
-    tick++;
+    ctx.regSpillTick++;
     // For some scalar byte register, it may be used as a destination register
     // and the source is a scalar Dword. If that is the case, the byte register
     // must get 4byte alignment register offset.

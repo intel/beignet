@@ -50,6 +50,7 @@ namespace gbe
     this->sel = NULL;
     this->ra = NULL;
     this->ifEndifFix = false;
+    this->regSpillTick = 0;
   }
 
   GenContext::~GenContext(void) {
@@ -72,6 +73,7 @@ namespace gbe
     this->branchPos3.clear();
     this->labelPos.clear();
     this->errCode = NO_ERROR;
+    this->regSpillTick = 0;
   }
 
   void GenContext::newSelection(void) {
