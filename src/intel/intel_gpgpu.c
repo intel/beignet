@@ -1353,7 +1353,7 @@ intel_gpgpu_event_get_exec_timestamp(intel_gpgpu_t* gpgpu, intel_event_t *event,
 }
 
 static int
-intel_gpgpu_set_printf_buf(intel_gpgpu_t *gpgpu, uint32_t i, uint32_t size, uint32_t offset)
+intel_gpgpu_set_printf_buf(intel_gpgpu_t *gpgpu, uint32_t i, uint32_t size, uint32_t offset, uint8_t bti)
 {
   drm_intel_bo *bo = NULL;
   if (i == 0) { // the index buffer.
@@ -1378,7 +1378,7 @@ intel_gpgpu_set_printf_buf(intel_gpgpu_t *gpgpu, uint32_t i, uint32_t size, uint
   }
   memset(bo->virtual, 0, size);
   drm_intel_bo_unmap(bo);
-  intel_gpgpu_bind_buf(gpgpu, bo, offset, 0, size, 0);
+  intel_gpgpu_bind_buf(gpgpu, bo, offset, 0, size, bti);
   return 0;
 }
 

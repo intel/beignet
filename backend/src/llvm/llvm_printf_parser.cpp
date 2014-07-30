@@ -467,7 +467,7 @@ error:
     // (index_offset + offset)* sizeof(int)
     op0 = builder->CreateMul(op0, ConstantInt::get(intTy, sizeof(int)));
     // Final index address = index_buf_ptr + (index_offset + offset)* sizeof(int)
-    op0 = builder->CreateAdd(op0, index_buf_ptr);
+    op0 = builder->CreateAdd(index_buf_ptr, op0);
     Value* index_addr = builder->CreateIntToPtr(op0, Type::getInt32PtrTy(module->getContext(), 1));
     builder->CreateStore(ConstantInt::get(intTy, 1), index_addr);// The flag
 
@@ -507,7 +507,7 @@ error:
       //offset * sizeof(specify)
       val = builder->CreateMul(offset, ConstantInt::get(intTy, sizeof_size));
       //data_offset + pbuf_ptr
-      op0 = builder->CreateAdd(op0, pbuf_ptr);
+      op0 = builder->CreateAdd(pbuf_ptr, op0);
       op0 = builder->CreateAdd(op0, val);
       data_addr = builder->CreateIntToPtr(op0, dst_type);
       builder->CreateStore(out_arg, data_addr);
@@ -575,15 +575,14 @@ error:
 
         if (!pbuf_ptr) {
           /* alloc a new buffer ptr to collect the print output. */
-          pbuf_ptr = builder->CreateCall(cast<llvm::Function>(module->getOrInsertFunction(
-                                           "__gen_ocl_printf_get_buf_addr", Type::getInt32Ty(module->getContext()),
-                                           NULL)));
+          Type *ptrTy = Type::getInt32PtrTy(module->getContext());
+          llvm::Constant * pBuf = module->getOrInsertGlobal(StringRef("__gen_ocl_printf_buf"), ptrTy);
+          pbuf_ptr = builder->CreatePtrToInt(pBuf, Type::getInt32Ty(module->getContext()));
         }
         if (!index_buf_ptr) {
-          /* alloc a new buffer ptr to collect the print valid index. */
-          index_buf_ptr = builder->CreateCall(cast<llvm::Function>(module->getOrInsertFunction(
-                                                "__gen_ocl_printf_get_index_buf_addr", Type::getInt32Ty(module->getContext()),
-                                                NULL)));
+          Type *ptrTy = Type::getInt32PtrTy(module->getContext());
+          llvm::Constant * pBuf = module->getOrInsertGlobal(StringRef("__gen_ocl_printf_index_buf"), ptrTy);
+          index_buf_ptr = builder->CreatePtrToInt(pBuf, Type::getInt32Ty(module->getContext()));
         }
 
         deadprintfs.push_back(PrintfInst(cast<Instruction>(call),parseOnePrintfInstruction(call)));

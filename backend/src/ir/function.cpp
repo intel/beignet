@@ -220,6 +220,15 @@ namespace ir {
     const uint32_t specialNum = this->getSpecialRegNum();
     return ID >= firstID && ID < firstID + specialNum;
   }
+  Register Function::getSurfaceBaseReg(uint8_t bti) const {
+    map<uint8_t, Register>::const_iterator iter = btiRegMap.find(bti);
+    GBE_ASSERT(iter != btiRegMap.end());
+    return iter->second;
+  }
+
+  void Function::appendSurface(uint8_t bti, Register reg) {
+    btiRegMap.insert(std::make_pair(bti, reg));
+  }
 
   void Function::computeCFG(void) {
     // Clear possible previously computed CFG and compute the direct

@@ -1099,6 +1099,18 @@ namespace gbe {
     return kernel->dupPrintfSet();
   }
 
+  static uint8_t kernelGetPrintfBufBTI(void * printf_info) {
+    if (printf_info == NULL) return 0;
+    const ir::PrintfSet *ps = (ir::PrintfSet *)printf_info;
+    return ps->getBufBTI();
+  }
+
+  static uint8_t kernelGetPrintfIndexBufBTI(void * printf_info) {
+    if (printf_info == NULL) return 0;
+    const ir::PrintfSet *ps = (ir::PrintfSet *)printf_info;
+    return ps->getIndexBufBTI();
+  }
+
   static void kernelReleasePrintfSet(void * printf_info) {
     if (printf_info == NULL) return;
     ir::PrintfSet *ps = (ir::PrintfSet *)printf_info;
@@ -1207,6 +1219,8 @@ GBE_EXPORT_SYMBOL gbe_set_image_base_index_cb *gbe_set_image_base_index = NULL;
 GBE_EXPORT_SYMBOL gbe_get_image_base_index_cb *gbe_get_image_base_index = NULL;
 GBE_EXPORT_SYMBOL gbe_get_printf_num_cb *gbe_get_printf_num = NULL;
 GBE_EXPORT_SYMBOL gbe_dup_printfset_cb *gbe_dup_printfset = NULL;
+GBE_EXPORT_SYMBOL gbe_get_printf_buf_bti_cb *gbe_get_printf_buf_bti = NULL;
+GBE_EXPORT_SYMBOL gbe_get_printf_indexbuf_bti_cb *gbe_get_printf_indexbuf_bti = NULL;
 GBE_EXPORT_SYMBOL gbe_release_printf_info_cb *gbe_release_printf_info = NULL;
 GBE_EXPORT_SYMBOL gbe_get_printf_sizeof_size_cb *gbe_get_printf_sizeof_size = NULL;
 GBE_EXPORT_SYMBOL gbe_output_printf_cb *gbe_output_printf = NULL;
@@ -1253,6 +1267,8 @@ namespace gbe
       gbe_get_image_base_index = gbe::getImageBaseIndex;
       gbe_set_image_base_index = gbe::setImageBaseIndex;
       gbe_get_printf_num = gbe::kernelGetPrintfNum;
+      gbe_get_printf_buf_bti = gbe::kernelGetPrintfBufBTI;
+      gbe_get_printf_indexbuf_bti = gbe::kernelGetPrintfIndexBufBTI;
       gbe_dup_printfset = gbe::kernelDupPrintfSet;
       gbe_get_printf_sizeof_size = gbe::kernelGetPrintfSizeOfSize;
       gbe_release_printf_info = gbe::kernelReleasePrintfSet;

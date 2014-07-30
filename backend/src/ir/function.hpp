@@ -414,6 +414,9 @@ namespace ir {
     void addLoop(const vector<LabelIndex> &bbs, const vector<std::pair<LabelIndex, LabelIndex>> &exits);
     INLINE const vector<Loop * > &getLoops() { return loops; }
     vector<BasicBlock *> &getBlocks() { return blocks; }
+    /*! Get surface starting address register from bti */
+    Register getSurfaceBaseReg(uint8_t bti) const;
+    void appendSurface(uint8_t bti, Register reg);
   private:
     friend class Context;           //!< Can freely modify a function
     std::string name;               //!< Function name
@@ -424,6 +427,7 @@ namespace ir {
     vector<Immediate> immediates;   //!< All immediate values in the function
     vector<BasicBlock*> blocks;     //!< All chained basic blocks
     vector<Loop *> loops;           //!< Loops info of the function
+    map<uint8_t, Register> btiRegMap;//!< map bti to surface base address
     RegisterFile file;              //!< RegisterDatas used by the instructions
     Profile profile;                //!< Current function profile
     PushMap pushMap;                //!< Pushed function arguments (reg->loc)
