@@ -366,8 +366,6 @@ int main (int argc, const char **argv)
             str >> std::hex >> gen_pci_id;
 
             used_index[optind-1] = 1;
-            // We must set the image base index here, as we invoke the backend in a non-standard way.
-            gbe_set_image_base_index(3);
             break;
         }
 

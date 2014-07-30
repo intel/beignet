@@ -63,8 +63,6 @@ struct BinInterpCallBackInitializer
     gbe_kernel_get_sampler_data = gbe::kernelGetSamplerData;
     gbe_kernel_get_image_data = gbe::kernelGetImageData;
     gbe_kernel_get_arg_info = gbe::kernelGetArgInfo;
-    gbe_get_image_base_index = gbe::getImageBaseIndex;
-    gbe_set_image_base_index = gbe::setImageBaseIndex;
     gbe_get_printf_num = gbe::kernelGetPrintfNum;
     gbe_get_printf_buf_bti = gbe::kernelGetPrintfBufBTI;
     gbe_get_printf_indexbuf_bti = gbe::kernelGetPrintfIndexBufBTI;

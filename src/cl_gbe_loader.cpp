@@ -31,7 +31,6 @@ gbe_program_build_from_llvm_cb *compiler_program_build_from_llvm = NULL;
 gbe_program_new_from_llvm_binary_cb *compiler_program_new_from_llvm_binary = NULL;
 gbe_program_serialize_to_binary_cb *compiler_program_serialize_to_binary = NULL;
 gbe_program_new_from_llvm_cb *compiler_program_new_from_llvm = NULL;
-gbe_set_image_base_index_cb *compiler_set_image_base_index = NULL;
 gbe_program_clean_llvm_resource_cb *compiler_program_clean_llvm_resource = NULL;
 
 //function pointer from libgbeinterp.so
@@ -63,8 +62,6 @@ gbe_kernel_get_sampler_data_cb *interp_kernel_get_sampler_data = NULL;
 gbe_kernel_get_compile_wg_size_cb *interp_kernel_get_compile_wg_size = NULL;
 gbe_kernel_get_image_size_cb *interp_kernel_get_image_size = NULL;
 gbe_kernel_get_image_data_cb *interp_kernel_get_image_data = NULL;
-gbe_set_image_base_index_cb *interp_set_image_base_index = NULL;
-gbe_get_image_base_index_cb *interp_get_image_base_index = NULL;
 gbe_get_printf_num_cb* interp_get_printf_num = NULL;
 gbe_get_printf_buf_bti_cb* interp_get_printf_buf_bti = NULL;
 gbe_get_printf_indexbuf_bti_cb* interp_get_printf_indexbuf_bti = NULL;
@@ -210,14 +207,6 @@ struct GbeLoaderInitializer
     if (interp_kernel_get_image_data == NULL)
       return false;
 
-    interp_set_image_base_index = *(gbe_set_image_base_index_cb**)dlsym(dlhInterp, "gbe_set_image_base_index");
-    if (interp_set_image_base_index == NULL)
-      return false;
-
-    interp_get_image_base_index = *(gbe_get_image_base_index_cb**)dlsym(dlhInterp, "gbe_get_image_base_index");
-    if (interp_get_image_base_index == NULL)
-      return false;
-
     interp_get_printf_num = *(gbe_get_printf_num_cb**)dlsym(dlhInterp, "gbe_get_printf_num");
     if (interp_get_printf_num == NULL)
       return false;
@@ -299,10 +288,6 @@ struct GbeLoaderInitializer
 
       compiler_program_new_from_llvm = *(gbe_program_new_from_llvm_cb **)dlsym(dlhCompiler, "gbe_program_new_from_llvm");
       if (compiler_program_new_from_llvm == NULL)
-        return;
-
-      compiler_set_image_base_index = *(gbe_set_image_base_index_cb **)dlsym(dlhCompiler, "gbe_set_image_base_index");
-      if (compiler_set_image_base_index == NULL)
         return;
 
       compiler_program_clean_llvm_resource = *(gbe_program_clean_llvm_resource_cb **)dlsym(dlhCompiler, "gbe_program_clean_llvm_resource");
