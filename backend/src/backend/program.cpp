@@ -260,7 +260,7 @@ namespace gbe {
       OUT_UPDATE_SZ(arg.type);
       OUT_UPDATE_SZ(arg.size);
       OUT_UPDATE_SZ(arg.align);
-      OUT_UPDATE_SZ(arg.bufSize);
+      OUT_UPDATE_SZ(arg.bti);
     }
 
     OUT_UPDATE_SZ(patches.size());
@@ -349,7 +349,7 @@ namespace gbe {
       IN_UPDATE_SZ(arg.type);
       IN_UPDATE_SZ(arg.size);
       IN_UPDATE_SZ(arg.align);
-      IN_UPDATE_SZ(arg.bufSize);
+      IN_UPDATE_SZ(arg.bti);
     }
 
     IN_UPDATE_SZ(patch_num);
@@ -465,7 +465,7 @@ namespace gbe {
       outs << spaces_nl << "      type value: "<< arg.type << "\n";
       outs << spaces_nl << "      size: "<< arg.size << "\n";
       outs << spaces_nl << "      align: "<< arg.align << "\n";
-      outs << spaces_nl << "      bufSize: "<< arg.bufSize << "\n";
+      outs << spaces_nl << "      bti: "<< arg.bti << "\n";
     }
 
     outs << spaces_nl << "  Patches Number is " << patches.size() << "\n";
@@ -1016,6 +1016,12 @@ namespace gbe {
     return kernel->getArgSize(argID);
   }
 
+  static uint8_t kernelGetArgBTI(gbe_kernel genKernel, uint32_t argID) {
+    if (genKernel == NULL) return 0u;
+    const gbe::Kernel *kernel = (const gbe::Kernel*) genKernel;
+    return kernel->getArgBTI(argID);
+  }
+
   static uint32_t kernelGetArgAlign(gbe_kernel genKernel, uint32_t argID) {
     if (genKernel == NULL) return 0u;
     const gbe::Kernel *kernel = (const gbe::Kernel*) genKernel;
@@ -1181,6 +1187,7 @@ GBE_EXPORT_SYMBOL gbe_kernel_get_code_size_cb *gbe_kernel_get_code_size = NULL;
 GBE_EXPORT_SYMBOL gbe_kernel_get_arg_num_cb *gbe_kernel_get_arg_num = NULL;
 GBE_EXPORT_SYMBOL gbe_kernel_get_arg_info_cb *gbe_kernel_get_arg_info = NULL;
 GBE_EXPORT_SYMBOL gbe_kernel_get_arg_size_cb *gbe_kernel_get_arg_size = NULL;
+GBE_EXPORT_SYMBOL gbe_kernel_get_arg_bti_cb *gbe_kernel_get_arg_bti = NULL;
 GBE_EXPORT_SYMBOL gbe_kernel_get_arg_type_cb *gbe_kernel_get_arg_type = NULL;
 GBE_EXPORT_SYMBOL gbe_kernel_get_arg_align_cb *gbe_kernel_get_arg_align = NULL;
 GBE_EXPORT_SYMBOL gbe_kernel_get_simd_width_cb *gbe_kernel_get_simd_width = NULL;
@@ -1227,6 +1234,7 @@ namespace gbe
       gbe_kernel_get_arg_num = gbe::kernelGetArgNum;
       gbe_kernel_get_arg_info = gbe::kernelGetArgInfo;
       gbe_kernel_get_arg_size = gbe::kernelGetArgSize;
+      gbe_kernel_get_arg_bti = gbe::kernelGetArgBTI;
       gbe_kernel_get_arg_type = gbe::kernelGetArgType;
       gbe_kernel_get_arg_align = gbe::kernelGetArgAlign;
       gbe_kernel_get_simd_width = gbe::kernelGetSIMDWidth;

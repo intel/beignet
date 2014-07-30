@@ -47,6 +47,7 @@ extern gbe_kernel_get_code_cb *interp_kernel_get_code;
 extern gbe_kernel_get_code_size_cb *interp_kernel_get_code_size;
 extern gbe_kernel_get_arg_num_cb *interp_kernel_get_arg_num;
 extern gbe_kernel_get_arg_size_cb *interp_kernel_get_arg_size;
+extern gbe_kernel_get_arg_bti_cb *interp_kernel_get_arg_bti;
 extern gbe_kernel_get_arg_type_cb *interp_kernel_get_arg_type;
 extern gbe_kernel_get_arg_align_cb *interp_kernel_get_arg_align;
 extern gbe_kernel_get_simd_width_cb *interp_kernel_get_simd_width;

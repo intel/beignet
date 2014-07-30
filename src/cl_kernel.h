@@ -37,6 +37,7 @@ struct _gbe_kernel;
 typedef struct cl_argument {
   cl_mem mem;           /* For image and regular buffers */
   cl_sampler sampler;   /* For sampler. */
+  unsigned char bti;
   uint32_t local_sz:31; /* For __local size specification */
   uint32_t is_set:1;    /* All args must be set before NDRange */
 } cl_argument;

@@ -44,7 +44,7 @@ namespace ir {
   {
   public:
     /*! Append an image argument. */
-    void append(Register imageReg, Context *ctx);
+    void append(Register imageReg, Context *ctx, uint8_t bti);
     /*! Append an image info slot. */
     void appendInfo(ImageInfoKey key, uint32_t offset);
     /*! Append an image info register. */

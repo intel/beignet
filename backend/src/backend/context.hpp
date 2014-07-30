@@ -99,6 +99,7 @@ namespace gbe
     void deallocateScratchMem(int32_t offset);
     /*! Preallocated curbe register set including special registers. */
     map<ir::Register, uint32_t> curbeRegs;
+    ir::Register getSurfaceBaseReg(unsigned char bti);
   protected:
     /*! Build the instruction stream. Return false if failed */
     virtual bool emitCode(void) = 0;
@@ -139,6 +140,7 @@ namespace gbe
     set<ir::LabelIndex> usedLabels;       //!< Set of all used labels
     JIPMap JIPs;                          //!< Where to jump all labels/branches
     uint32_t simdWidth;                   //!< Number of lanes per HW threads
+    map<unsigned char, ir::Register> btiRegMap;
     GBE_CLASS(Context);                   //!< Use custom allocators
   };
 

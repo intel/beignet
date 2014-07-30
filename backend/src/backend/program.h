@@ -62,6 +62,11 @@ enum gbe_get_arg_info_value {
   GBE_GET_ARG_INFO_INVALID = 0xffffffff
 };
 
+// BTI magic number
+#define BTI_CONSTANT 0
+#define BTI_PRIVATE 1
+#define BTI_RESERVED_NUM 2
+
 /*! Constant buffer values (ie values to setup in the constant buffer) */
 enum gbe_curbe_type {
   GBE_CURBE_LOCAL_ID_X = 0,
@@ -282,6 +287,10 @@ extern gbe_kernel_get_arg_info_cb *gbe_kernel_get_arg_info;
 /*! Get the size of the given argument */
 typedef uint32_t (gbe_kernel_get_arg_size_cb)(gbe_kernel, uint32_t argID);
 extern gbe_kernel_get_arg_size_cb *gbe_kernel_get_arg_size;
+
+/*! Get the the bti of a __global buffer */
+typedef uint8_t (gbe_kernel_get_arg_bti_cb)(gbe_kernel, uint32_t argID);
+extern gbe_kernel_get_arg_bti_cb *gbe_kernel_get_arg_bti;
 
 /*! Get the type of the given argument */
 typedef enum gbe_arg_type (gbe_kernel_get_arg_type_cb)(gbe_kernel, uint32_t argID);

@@ -127,7 +127,7 @@ cl_upload_constant_buffer(cl_command_queue queue, cl_kernel ker)
   if(raw_size == 0)
      return 0;
 
-  cl_buffer bo = cl_gpgpu_alloc_constant_buffer(gpgpu, aligned_size);
+  cl_buffer bo = cl_gpgpu_alloc_constant_buffer(gpgpu, aligned_size, BTI_CONSTANT);
   if (bo == NULL)
     return -1;
   cl_buffer_map(bo, 1);
@@ -255,8 +255,7 @@ cl_bind_stack(cl_gpgpu gpgpu, cl_kernel ker)
    */
   if(cl_driver_get_ver(ctx->drv) == 75)
     stack_sz *= 4;
-
-  cl_gpgpu_set_stack(gpgpu, offset, stack_sz, cl_gpgpu_get_cache_ctrl());
+  cl_gpgpu_set_stack(gpgpu, offset, stack_sz, BTI_PRIVATE);
 }
 
 static int

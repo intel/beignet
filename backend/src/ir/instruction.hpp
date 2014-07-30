@@ -31,9 +31,14 @@
 #include "sys/intrusive_list.hpp"
 
 #include <ostream>
+#define MAX_MIXED_POINTER 4
 
 namespace gbe {
 namespace ir {
+  struct BTI {
+    uint8_t bti[MAX_MIXED_POINTER];
+    uint8_t count;
+  };
 
   /*! All opcodes */
   enum Opcode : uint8_t {
@@ -95,7 +100,7 @@ namespace ir {
   ///////////////////////////////////////////////////////////////////////////
 
   /*! Stores instruction internal data and opcode */
-  class ALIGNED(sizeof(uint64_t)) InstructionBase
+  class ALIGNED(sizeof(uint64_t)*2) InstructionBase
   {
   public:
     /*! Initialize the instruction from a 8 bytes stream */
@@ -109,7 +114,7 @@ namespace ir {
     /*! Get the instruction opcode */
     INLINE Opcode getOpcode(void) const { return opcode; }
   protected:
-    enum { opaqueSize = sizeof(uint64_t)-sizeof(uint8_t) };
+    enum { opaqueSize = sizeof(uint64_t)*2-sizeof(uint8_t) };
     Opcode opcode;               //!< Idendifies the instruction
     char opaque[opaqueSize];     //!< Remainder of it
     GBE_CLASS(InstructionBase);  //!< Use internal allocators
@@ -273,6 +278,7 @@ namespace ir {
     static const uint32_t addressIndex = 0;
     /*! Address space that is manipulated here */
     AddressSpace getAddressSpace(void) const;
+    BTI getBTI(void) const;
     /*! Return the atomic function code */
     AtomicOps getAtomicOpcode(void) const;
     /*! Return the register that contains the addresses */
@@ -292,6 +298,7 @@ namespace ir {
     Type getValueType(void) const;
     /*! Give the number of values the instruction is storing (srcNum-1) */
     uint32_t getValueNum(void) const;
+    BTI getBTI(void) const;
     /*! Address space that is manipulated here */
     AddressSpace getAddressSpace(void) const;
     /*! DWORD aligned means untyped read for Gen. That is what matters */
@@ -323,6 +330,7 @@ namespace ir {
     bool isAligned(void) const;
     /*! Return the register that contains the addresses */
     INLINE Register getAddress(void) const { return this->getSrc(0u); }
+    BTI getBTI(void) const;
     /*! Return the register that contain value valueID */
     INLINE Register getValue(uint32_t valueID) const {
       return this->getDst(valueID);
@@ -644,7 +652,7 @@ namespace ir {
   /*! F32TO16.{dstType <- srcType} dst src */
   Instruction F32TO16(Type dstType, Type srcType, Register dst, Register src);
   /*! atomic dst addr.space {src1 {src2}} */
-  Instruction ATOMIC(AtomicOps opcode, Register dst, AddressSpace space, Tuple src);
+  Instruction ATOMIC(AtomicOps opcode, Register dst, AddressSpace space, BTI bti, Tuple src);
   /*! bra labelIndex */
   Instruction BRA(LabelIndex labelIndex);
   /*! (pred) bra labelIndex */
@@ -658,9 +666,9 @@ namespace ir {
   /*! ret */
   Instruction RET(void);
   /*! load.type.space {dst1,...,dst_valueNum} offset value */
-  Instruction LOAD(Type type, Tuple dst, Register offset, AddressSpace space, uint32_t valueNum, bool dwAligned);
+  Instruction LOAD(Type type, Tuple dst, Register offset, AddressSpace space, uint32_t valueNum, bool dwAligned, BTI bti);
   /*! store.type.space offset {src1,...,src_valueNum} value */
-  Instruction STORE(Type type, Tuple src, Register offset, AddressSpace space, uint32_t valueNum, bool dwAligned);
+  Instruction STORE(Type type, Tuple src, Register offset, AddressSpace space, uint32_t valueNum, bool dwAligned, BTI bti);
   /*! loadi.type dst value */
   Instruction LOADI(Type type, Register dst, ImmediateIndex value);
   /*! sync.params... (see Sync instruction) */

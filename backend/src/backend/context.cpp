@@ -436,6 +436,12 @@ namespace gbe
   void Context::insertCurbeReg(ir::Register reg, uint32_t offset) {
     curbeRegs.insert(std::make_pair(reg, offset));
   }
+  ir::Register Context::getSurfaceBaseReg(unsigned char bti) {
+    map<unsigned char, ir::Register>::iterator iter;
+    iter = btiRegMap.find(bti);
+    GBE_ASSERT(iter != btiRegMap.end());
+    return iter->second;
+  }
 
   void Context::buildArgList(void) {
     kernel->argNum = fn.argNum();
@@ -443,6 +449,8 @@ namespace gbe
       kernel->args = GBE_NEW_ARRAY_NO_ARG(KernelArgument, kernel->argNum);
     else
       kernel->args = NULL;
+    btiRegMap.clear();
+    btiRegMap.insert(std::make_pair(1, ir::ocl::stackbuffer));
     for (uint32_t argID = 0; argID < kernel->argNum; ++argID) {
       const auto &arg = fn.getArg(argID);
 
@@ -457,6 +465,8 @@ namespace gbe
         case ir::FunctionArgument::GLOBAL_POINTER:
           kernel->args[argID].type = GBE_ARG_GLOBAL_PTR;
           kernel->args[argID].size = sizeof(void*);
+          kernel->args[argID].bti = arg.bti;
+          btiRegMap.insert(std::make_pair(arg.bti, arg.reg));
           break;
         case ir::FunctionArgument::CONSTANT_POINTER:
           kernel->args[argID].type = GBE_ARG_CONSTANT_PTR;

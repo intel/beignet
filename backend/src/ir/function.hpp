@@ -176,8 +176,8 @@ namespace ir {
     };
 
     /*! Create a function input argument */
-    INLINE FunctionArgument(Type type, Register reg, uint32_t size, const std::string &name, uint32_t align, InfoFromLLVM& info) :
-      type(type), reg(reg), size(size), align(align), name(name), info(info) { }
+    INLINE FunctionArgument(Type type, Register reg, uint32_t size, const std::string &name, uint32_t align, InfoFromLLVM& info, uint8_t bti) :
+      type(type), reg(reg), size(size), align(align), name(name), info(info), bti(bti) { }
 
     Type type;     //!< Gives the type of argument we have
     Register reg;  //!< Holds the argument
@@ -185,6 +185,7 @@ namespace ir {
     uint32_t align; //!< address alignment for the argument
     const std::string name; //!< Holds the function name for IR output
     InfoFromLLVM info;  //!< Holds the llvm passed info
+    uint8_t bti; //!< binding table index
     GBE_STRUCT(FunctionArgument); // Use custom allocator
   };
 
