@@ -440,12 +440,6 @@ cl_intel_driver_new(cl_context_prop props)
   TRY_ALLOC_NO_ERR (driver, intel_driver_new());
   if(UNLIKELY(intel_driver_open(driver, props) != CL_SUCCESS)) goto error;
   intel_driver_open(driver, props);
-  /* We use the first 2 slots(0,1) for all the bufs.
-   * Notify the gbe this base index, thus gbe can avoid conflicts
-   * when it allocates slots for images*/
-  if (CompilerSupported())
-    compiler_set_image_base_index(3);
-  interp_set_image_base_index(3);
 exit:
   return driver;
 error:

@@ -32,7 +32,6 @@ extern gbe_program_build_from_llvm_cb *compiler_program_build_from_llvm;
 extern gbe_program_new_from_llvm_binary_cb *compiler_program_new_from_llvm_binary;
 extern gbe_program_serialize_to_binary_cb *compiler_program_serialize_to_binary;
 extern gbe_program_new_from_llvm_cb *compiler_program_new_from_llvm;
-extern gbe_set_image_base_index_cb *compiler_set_image_base_index;
 extern gbe_program_clean_llvm_resource_cb *compiler_program_clean_llvm_resource;
 
 extern gbe_program_new_from_binary_cb *interp_program_new_from_binary;
@@ -63,8 +62,6 @@ extern gbe_kernel_get_sampler_data_cb *interp_kernel_get_sampler_data;
 extern gbe_kernel_get_compile_wg_size_cb *interp_kernel_get_compile_wg_size;
 extern gbe_kernel_get_image_size_cb *interp_kernel_get_image_size;
 extern gbe_kernel_get_image_data_cb *interp_kernel_get_image_data;
-extern gbe_set_image_base_index_cb *interp_set_image_base_index;
-extern gbe_get_image_base_index_cb *interp_get_image_base_index;
 extern gbe_get_printf_num_cb* interp_get_printf_num;
 extern gbe_get_printf_buf_bti_cb* interp_get_printf_buf_bti;
 extern gbe_get_printf_indexbuf_bti_cb* interp_get_printf_indexbuf_bti;
@@ -72,7 +69,6 @@ extern gbe_dup_printfset_cb* interp_dup_printfset;
 extern gbe_get_printf_sizeof_size_cb* interp_get_printf_sizeof_size;
 extern gbe_release_printf_info_cb* interp_release_printf_info;
 extern gbe_output_printf_cb* interp_output_printf;
-//extern gbe_set_image_base_index_cb *gbe_set_image_base_index_interp;
 extern gbe_kernel_get_arg_info_cb *interp_kernel_get_arg_info;
 
 int CompilerSupported();

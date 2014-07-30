@@ -1157,15 +1157,6 @@ namespace gbe {
     kernel->getImageData(images);
   }
 
-  static uint32_t gbeImageBaseIndex = 0;
-  static void setImageBaseIndex(uint32_t baseIdx) {
-     gbeImageBaseIndex = baseIdx;
-  }
-
-  static uint32_t getImageBaseIndex() {
-    return gbeImageBaseIndex;
-  }
-
   static uint32_t kernelGetRequiredWorkGroupSize(gbe_kernel kernel, uint32_t dim) {
     return 0u;
   }
@@ -1221,8 +1212,6 @@ GBE_EXPORT_SYMBOL gbe_kernel_get_sampler_data_cb *gbe_kernel_get_sampler_data = 
 GBE_EXPORT_SYMBOL gbe_kernel_get_compile_wg_size_cb *gbe_kernel_get_compile_wg_size = NULL;
 GBE_EXPORT_SYMBOL gbe_kernel_get_image_size_cb *gbe_kernel_get_image_size = NULL;
 GBE_EXPORT_SYMBOL gbe_kernel_get_image_data_cb *gbe_kernel_get_image_data = NULL;
-GBE_EXPORT_SYMBOL gbe_set_image_base_index_cb *gbe_set_image_base_index = NULL;
-GBE_EXPORT_SYMBOL gbe_get_image_base_index_cb *gbe_get_image_base_index = NULL;
 GBE_EXPORT_SYMBOL gbe_get_printf_num_cb *gbe_get_printf_num = NULL;
 GBE_EXPORT_SYMBOL gbe_dup_printfset_cb *gbe_dup_printfset = NULL;
 GBE_EXPORT_SYMBOL gbe_get_printf_buf_bti_cb *gbe_get_printf_buf_bti = NULL;
@@ -1270,8 +1259,6 @@ namespace gbe
       gbe_kernel_get_compile_wg_size = gbe::kernelGetCompileWorkGroupSize;
       gbe_kernel_get_image_size = gbe::kernelGetImageSize;
       gbe_kernel_get_image_data = gbe::kernelGetImageData;
-      gbe_get_image_base_index = gbe::getImageBaseIndex;
-      gbe_set_image_base_index = gbe::setImageBaseIndex;
       gbe_get_printf_num = gbe::kernelGetPrintfNum;
       gbe_get_printf_buf_bti = gbe::kernelGetPrintfBufBTI;
       gbe_get_printf_indexbuf_bti = gbe::kernelGetPrintfIndexBufBTI;
