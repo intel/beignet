@@ -158,6 +158,7 @@
 #include "ir/value.hpp"
 #include "sys/set.hpp"
 #include "sys/cvar.hpp"
+#include "backend/program.h"
 
 /* Not defined for LLVM 3.0 */
 #if !defined(LLVM_VERSION_MAJOR)
@@ -448,6 +449,7 @@ namespace gbe
      *  compare instructions we need to invert to decrease branch complexity
      */
     set<const Value*> conditionSet;
+    map<const Value*, int> globalPointer;
     /*!
      *  <phi,phiCopy> node information for later optimization
      */
@@ -468,7 +470,7 @@ namespace gbe
 
     LoopInfo *LI;
     const Module *TheModule;
-
+    int btiBase;
   public:
     static char ID;
     explicit GenWriter(ir::Unit &unit)
@@ -477,7 +479,8 @@ namespace gbe
         ctx(unit),
         regTranslator(ctx),
         LI(0),
-        TheModule(0)
+        TheModule(0),
+        btiBase(BTI_RESERVED_NUM)
     {
       initializeLoopInfoPass(*PassRegistry::getPassRegistry());
       pass = PASS_EMIT_REGISTERS;
@@ -510,6 +513,9 @@ namespace gbe
       LI = &getAnalysis<LoopInfo>();
       emitFunction(F);
       phiMap.clear();
+      globalPointer.clear();
+      // Reset for next function
+      btiBase = BTI_RESERVED_NUM;
       return false;
     }
 
@@ -603,10 +609,12 @@ namespace gbe
     void visitInsertValueInst(InsertValueInst &I) {NOT_SUPPORTED;}
     void visitExtractValueInst(ExtractValueInst &I) {NOT_SUPPORTED;}
     template <bool isLoad, typename T> void visitLoadOrStore(T &I);
+
+    INLINE void gatherBTI(Value *pointer, ir::BTI &bti);
     // batch vec4/8/16 load/store
     INLINE void emitBatchLoadOrStore(const ir::Type type, const uint32_t elemNum,
                   Value *llvmValue, const ir::Register ptr,
-                  const ir::AddressSpace addrSpace, Type * elemType, bool isLoad);
+                  const ir::AddressSpace addrSpace, Type * elemType, bool isLoad, ir::BTI bti);
     void visitInstruction(Instruction &I) {NOT_SUPPORTED;}
     private:
       ir::ImmediateIndex processConstantImmIndexImpl(Constant *CPV, int32_t index = 0u);
@@ -1316,7 +1324,7 @@ namespace gbe
           const uint32_t elemSize = getTypeByteSize(unit, elemType);
           const uint32_t elemNum = vectorType->getNumElements();
           //vector's elemType always scalar type
-          ctx.input(argName, ir::FunctionArgument::VALUE, reg, llvmInfo, elemNum*elemSize, getAlignmentByte(unit, type));
+          ctx.input(argName, ir::FunctionArgument::VALUE, reg, llvmInfo, elemNum*elemSize, getAlignmentByte(unit, type), 0);
 
           ir::Function& fn = ctx.getFunction();
           for(uint32_t i=1; i < elemNum; i++) {
@@ -1331,7 +1339,7 @@ namespace gbe
                     "vector type in the function argument is not supported yet");
         const ir::Register reg = getRegister(I);
         if (type->isPointerTy() == false)
-          ctx.input(argName, ir::FunctionArgument::VALUE, reg, llvmInfo, getTypeByteSize(unit, type), getAlignmentByte(unit, type));
+          ctx.input(argName, ir::FunctionArgument::VALUE, reg, llvmInfo, getTypeByteSize(unit, type), getAlignmentByte(unit, type), 0);
         else {
           PointerType *pointerType = dyn_cast<PointerType>(type);
           Type *pointed = pointerType->getElementType();
@@ -1342,7 +1350,7 @@ namespace gbe
           if (I->hasByValAttr()) {
 #endif /* LLVM_VERSION_MINOR <= 1 */
             const size_t structSize = getTypeByteSize(unit, pointed);
-            ctx.input(argName, ir::FunctionArgument::STRUCTURE, reg, llvmInfo, structSize, getAlignmentByte(unit, type));
+            ctx.input(argName, ir::FunctionArgument::STRUCTURE, reg, llvmInfo, structSize, getAlignmentByte(unit, type), 0);
           }
           // Regular user provided pointer (global, local or constant)
           else {
@@ -1352,18 +1360,20 @@ namespace gbe
             const uint32_t align = getAlignmentByte(unit, pointed);
               switch (addrSpace) {
               case ir::MEM_GLOBAL:
-                ctx.input(argName, ir::FunctionArgument::GLOBAL_POINTER, reg, llvmInfo, ptrSize, align);
+                globalPointer.insert(std::make_pair(I, btiBase));
+                ctx.input(argName, ir::FunctionArgument::GLOBAL_POINTER, reg, llvmInfo, ptrSize, align, btiBase);
+                btiBase++;
               break;
               case ir::MEM_LOCAL:
-                ctx.input(argName, ir::FunctionArgument::LOCAL_POINTER, reg,  llvmInfo, ptrSize, align);
+                ctx.input(argName, ir::FunctionArgument::LOCAL_POINTER, reg,  llvmInfo, ptrSize, align, 0xfe);
                 ctx.getFunction().setUseSLM(true);
               break;
               case ir::MEM_CONSTANT:
-                ctx.input(argName, ir::FunctionArgument::CONSTANT_POINTER, reg,  llvmInfo, ptrSize, align);
+                ctx.input(argName, ir::FunctionArgument::CONSTANT_POINTER, reg,  llvmInfo, ptrSize, align, 0x2);
               break;
               case ir::IMAGE:
-                ctx.input(argName, ir::FunctionArgument::IMAGE, reg, llvmInfo, ptrSize, align);
-                ctx.getFunction().getImageSet()->append(reg, &ctx);
+                ctx.input(argName, ir::FunctionArgument::IMAGE, reg, llvmInfo, ptrSize, align, 0x0);
+                ctx.getFunction().getImageSet()->append(reg, &ctx, btiBase++);
               break;
               default: GBE_ASSERT(addrSpace != ir::MEM_PRIVATE);
             }
@@ -2603,6 +2613,8 @@ namespace gbe
     const ir::AddressSpace addrSpace = addressSpaceLLVMToGen(llvmSpace);
     const ir::Register dst = this->getRegister(&I);
 
+    ir::BTI bti;
+    gatherBTI(*AI, bti);
     vector<ir::Register> src;
     uint32_t srcNum = 0;
     while(AI != AE) {
@@ -2610,7 +2622,7 @@ namespace gbe
       srcNum++;
     }
     const ir::Tuple srcTuple = ctx.arrayTuple(&src[0], srcNum);
-    ctx.ATOMIC(opcode, dst, addrSpace, srcTuple);
+    ctx.ATOMIC(opcode, dst, addrSpace, bti, srcTuple);
   }
 
   /* append a new sampler. should be called before any reference to
@@ -3286,7 +3298,7 @@ handle_write_image:
   void GenWriter::emitBatchLoadOrStore(const ir::Type type, const uint32_t elemNum,
                                       Value *llvmValues, const ir::Register ptr,
                                       const ir::AddressSpace addrSpace,
-                                      Type * elemType, bool isLoad) {
+                                      Type * elemType, bool isLoad, ir::BTI bti) {
     const ir::RegisterFamily pointerFamily = ctx.getPointerFamily();
     uint32_t totalSize = elemNum * getFamilySize(getFamily(type));
     uint32_t msgNum = totalSize > 16 ? totalSize / 16 : 1;
@@ -3332,10 +3344,105 @@ handle_write_image:
 
       // Emit the instruction
       if (isLoad)
-        ctx.LOAD(type, tuple, addr, addrSpace, perMsgNum, true);
+        ctx.LOAD(type, tuple, addr, addrSpace, perMsgNum, true, bti);
       else
-        ctx.STORE(type, tuple, addr, addrSpace, perMsgNum, true);
+        ctx.STORE(type, tuple, addr, addrSpace, perMsgNum, true, bti);
     }
+  }
+
+  // The idea behind is to search along the use-def chain, and find out all
+  // possible source of the pointer. Then in later codeGen, we can emit
+  // read/store instructions to these btis gathered.
+  void GenWriter::gatherBTI(Value *pointer, ir::BTI &bti) {
+    typedef map<const Value*, int>::iterator GlobalPtrIter;
+    Value *p;
+    size_t idx = 0;
+    int nBTI = 0;
+    std::vector<Value*> candidates;
+    candidates.push_back(pointer);
+    std::set<Value*> processed;
+    bool needNewBTI = true;
+
+    while (idx < candidates.size()) {
+      bool isPrivate = false;
+      p = candidates[idx];
+
+      while (dyn_cast<User>(p)) {
+
+        if (processed.find(p) == processed.end()) {
+          processed.insert(p);
+        } else {
+          // This use-def chain falls into a loop,
+          // it does not introduce a new buffer source.
+          needNewBTI = false;
+          break;
+        }
+
+        if (dyn_cast<SelectInst>(p)) {
+          SelectInst *sel = cast<SelectInst>(p);
+          p = sel->getTrueValue();
+          candidates.push_back(sel->getFalseValue());
+          continue;
+        }
+
+        if (dyn_cast<PHINode>(p)) {
+          PHINode* phi = cast<PHINode>(p);
+          int n = phi->getNumIncomingValues();
+          for (int j = 1; j < n; j++)
+            candidates.push_back(phi->getIncomingValue(j));
+          p = phi->getIncomingValue(0);
+          continue;
+        }
+
+        if (dyn_cast<AllocaInst>(p)) {
+          isPrivate = true;
+          break;
+        }
+        p = cast<User>(p)->getOperand(0);
+      }
+
+      if (needNewBTI == false) {
+        // go to next possible pointer source
+        idx++; continue;
+      }
+
+      uint8_t new_bti = 0;
+      if (isPrivate) {
+        new_bti = BTI_PRIVATE;
+      } else {
+        if(isa<Argument>(p) && dyn_cast<Argument>(p)->hasByValAttr()) {
+          // structure value implementation is not complete now,
+          // they are now treated as push constant, so, the load/store
+          // here is not as meaningful.
+          bti.bti[0] = BTI_PRIVATE;
+          bti.count = 1;
+          break;
+        }
+        Type *ty = p->getType();
+        if(ty->getPointerAddressSpace() == 3) {
+          // __local memory
+          new_bti = 0xfe;
+        } else {
+          // __global memory
+          GlobalPtrIter iter = globalPointer.find(p);
+          GBE_ASSERT(iter != globalPointer.end());
+          new_bti = iter->second;
+        }
+      }
+      // avoid duplicate
+      bool bFound = false;
+      for (int j = 0; j < nBTI; j++) {
+        if (bti.bti[j] == new_bti) {
+          bFound = true; break;
+        }
+      }
+      if (bFound == false) {
+        bti.bti[nBTI++] = new_bti;
+        bti.count = nBTI;
+      }
+      idx++;
+    }
+    GBE_ASSERT(bti.count <= MAX_MIXED_POINTER);
   }
 
   extern int OCL_SIMD_WIDTH;
@@ -3349,15 +3456,18 @@ handle_write_image:
     const bool dwAligned = (I.getAlignment() % 4) == 0;
     const ir::AddressSpace addrSpace = addressSpaceLLVMToGen(llvmSpace);
     const ir::Register ptr = this->getRegister(llvmPtr);
-
+    ir::BTI binding;
+    if(addrSpace == ir::MEM_GLOBAL || addrSpace == ir::MEM_PRIVATE) {
+      gatherBTI(llvmPtr, binding);
+    }
     // Scalar is easy. We neednot build register tuples
     if (isScalarType(llvmType) == true) {
       const ir::Type type = getType(ctx, llvmType);
       const ir::Register values = this->getRegister(llvmValues);
       if (isLoad)
-        ctx.LOAD(type, ptr, addrSpace, dwAligned, values);
+        ctx.LOAD(type, ptr, addrSpace, dwAligned, binding, values);
       else
-        ctx.STORE(type, ptr, addrSpace, dwAligned, values);
+        ctx.STORE(type, ptr, addrSpace, dwAligned, binding, values);
     }
     // A vector type requires to build a tuple
     else {
@@ -3401,18 +3511,18 @@ handle_write_image:
 
           // Emit the instruction
           if (isLoad)
-            ctx.LOAD(type, tuple, ptr, addrSpace, elemNum, dwAligned);
+            ctx.LOAD(type, tuple, ptr, addrSpace, elemNum, dwAligned, binding);
           else
-            ctx.STORE(type, tuple, ptr, addrSpace, elemNum, dwAligned);
+            ctx.STORE(type, tuple, ptr, addrSpace, elemNum, dwAligned, binding);
         }
         // Not supported by the hardware. So, we split the message and we use
         // strided loads and stores
         else {
-          emitBatchLoadOrStore(type, elemNum, llvmValues, ptr, addrSpace, elemType, isLoad);
+          emitBatchLoadOrStore(type, elemNum, llvmValues, ptr, addrSpace, elemType, isLoad, binding);
         }
       }
       else if((dataFamily==ir::FAMILY_WORD && elemNum%2==0) || (dataFamily == ir::FAMILY_BYTE && elemNum%4 == 0)) {
-          emitBatchLoadOrStore(type, elemNum, llvmValues, ptr, addrSpace, elemType, isLoad);
+          emitBatchLoadOrStore(type, elemNum, llvmValues, ptr, addrSpace, elemType, isLoad, binding);
       } else {
         for (uint32_t elemID = 0; elemID < elemNum; elemID++) {
           if(regTranslator.isUndefConst(llvmValues, elemID))
@@ -3432,9 +3542,9 @@ handle_write_image:
               ctx.ADD(ir::TYPE_S32, addr, ptr, offset);
           }
           if (isLoad)
-           ctx.LOAD(type, addr, addrSpace, dwAligned, reg);
+           ctx.LOAD(type, addr, addrSpace, dwAligned, binding, reg);
           else
-           ctx.STORE(type, addr, addrSpace, dwAligned, reg);
+           ctx.STORE(type, addr, addrSpace, dwAligned, binding, reg);
         }
       }
     }

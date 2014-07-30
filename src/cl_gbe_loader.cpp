@@ -47,6 +47,7 @@ gbe_kernel_get_code_cb *interp_kernel_get_code = NULL;
 gbe_kernel_get_code_size_cb *interp_kernel_get_code_size = NULL;
 gbe_kernel_get_arg_num_cb *interp_kernel_get_arg_num = NULL;
 gbe_kernel_get_arg_size_cb *interp_kernel_get_arg_size = NULL;
+gbe_kernel_get_arg_bti_cb *interp_kernel_get_arg_bti = NULL;
 gbe_kernel_get_arg_type_cb *interp_kernel_get_arg_type = NULL;
 gbe_kernel_get_arg_align_cb *interp_kernel_get_arg_align = NULL;
 gbe_kernel_get_simd_width_cb *interp_kernel_get_simd_width = NULL;
@@ -141,6 +142,10 @@ struct GbeLoaderInitializer
 
     interp_kernel_get_arg_size = *(gbe_kernel_get_arg_size_cb**)dlsym(dlhInterp, "gbe_kernel_get_arg_size");
     if (interp_kernel_get_arg_size == NULL)
+      return false;
+
+    interp_kernel_get_arg_bti = *(gbe_kernel_get_arg_bti_cb**)dlsym(dlhInterp, "gbe_kernel_get_arg_bti");
+    if (interp_kernel_get_arg_bti == NULL)
       return false;
 
     interp_kernel_get_arg_type = *(gbe_kernel_get_arg_type_cb**)dlsym(dlhInterp, "gbe_kernel_get_arg_type");

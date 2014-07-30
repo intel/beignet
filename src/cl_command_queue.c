@@ -167,9 +167,9 @@ cl_command_queue_bind_surface(cl_command_queue queue, cl_kernel k)
     offset = interp_kernel_get_curbe_offset(k->opaque, GBE_CURBE_KERNEL_ARGUMENT, i);
     if (k->args[i].mem->type == CL_MEM_SUBBUFFER_TYPE) {
       struct _cl_mem_buffer* buffer = (struct _cl_mem_buffer*)k->args[i].mem;
-      cl_gpgpu_bind_buf(gpgpu, k->args[i].mem->bo, offset, buffer->sub_offset, cl_gpgpu_get_cache_ctrl());
+      cl_gpgpu_bind_buf(gpgpu, k->args[i].mem->bo, offset, buffer->sub_offset, k->args[i].mem->size, interp_kernel_get_arg_bti(k->opaque, i));
     } else {
-      cl_gpgpu_bind_buf(gpgpu, k->args[i].mem->bo, offset, 0, cl_gpgpu_get_cache_ctrl());
+      cl_gpgpu_bind_buf(gpgpu, k->args[i].mem->bo, offset, 0, k->args[i].mem->size, interp_kernel_get_arg_bti(k->opaque, i));
     }
   }
 

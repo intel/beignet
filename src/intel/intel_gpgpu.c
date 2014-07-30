@@ -91,7 +91,6 @@ struct intel_gpgpu
 
   unsigned long img_bitmap;              /* image usage bitmap. */
   unsigned int img_index_base;          /* base index for image surface.*/
-  drm_intel_bo *binded_img[max_img_n + 128];  /* all images binded for the call */
 
   unsigned long sampler_bitmap;          /* sampler usage bitmap. */
 
@@ -690,13 +689,13 @@ intel_gpgpu_set_buf_reloc_gen7(intel_gpgpu_t *gpgpu, int32_t index, dri_bo* obj_
 }
 
 static dri_bo*
-intel_gpgpu_alloc_constant_buffer_gen7(intel_gpgpu_t *gpgpu, uint32_t size)
+intel_gpgpu_alloc_constant_buffer_gen7(intel_gpgpu_t *gpgpu, uint32_t size, uint8_t bti)
 {
   uint32_t s = size - 1;
   assert(size != 0);
 
   surface_heap_t *heap = gpgpu->aux_buf.bo->virtual + gpgpu->aux_offset.surface_heap_offset;
-  gen7_surface_state_t *ss2 = (gen7_surface_state_t *) heap->surface[2];
+  gen7_surface_state_t *ss2 = (gen7_surface_state_t *) heap->surface[bti];
   memset(ss2, 0, sizeof(gen7_surface_state_t));
   ss2->ss0.surface_type = I965_SURFACE_BUFFER;
   ss2->ss0.surface_format = I965_SURFACEFORMAT_R32G32B32A32_UINT;
@@ -704,7 +703,7 @@ intel_gpgpu_alloc_constant_buffer_gen7(intel_gpgpu_t *gpgpu, uint32_t size)
   ss2->ss2.height = (s >> 7) & 0x3fff;   /* bits 20:7 of sz */
   ss2->ss3.depth  = (s >> 21) & 0x3ff;   /* bits 30:21 of sz */
   ss2->ss5.cache_control = cl_gpgpu_get_cache_ctrl();
-  heap->binding_table[2] = offsetof(surface_heap_t, surface) + 2* sizeof(gen7_surface_state_t);
+  heap->binding_table[bti] = offsetof(surface_heap_t, surface) + bti* sizeof(gen7_surface_state_t);
 
   if(gpgpu->constant_b.bo)
     dri_bo_unreference(gpgpu->constant_b.bo);
@@ -717,20 +716,20 @@ intel_gpgpu_alloc_constant_buffer_gen7(intel_gpgpu_t *gpgpu, uint32_t size)
                       I915_GEM_DOMAIN_RENDER,
                       0,
                       gpgpu->aux_offset.surface_heap_offset +
-                      heap->binding_table[2] +
+                      heap->binding_table[bti] +
                       offsetof(gen7_surface_state_t, ss1),
                       gpgpu->constant_b.bo);
   return gpgpu->constant_b.bo;
 }
 
 static dri_bo*
-intel_gpgpu_alloc_constant_buffer_gen75(intel_gpgpu_t *gpgpu, uint32_t size)
+intel_gpgpu_alloc_constant_buffer_gen75(intel_gpgpu_t *gpgpu, uint32_t size, uint8_t bti)
 {
   uint32_t s = size - 1;
   assert(size != 0);
 
   surface_heap_t *heap = gpgpu->aux_buf.bo->virtual + gpgpu->aux_offset.surface_heap_offset;
-  gen7_surface_state_t *ss2 = (gen7_surface_state_t *) heap->surface[2];
+  gen7_surface_state_t *ss2 = (gen7_surface_state_t *) heap->surface[bti];
   memset(ss2, 0, sizeof(gen7_surface_state_t));
   ss2->ss0.surface_type = I965_SURFACE_BUFFER;
   ss2->ss0.surface_format = I965_SURFACEFORMAT_R32G32B32A32_UINT;
@@ -742,7 +741,7 @@ intel_gpgpu_alloc_constant_buffer_gen75(intel_gpgpu_t *gpgpu, uint32_t size)
   ss2->ss7.shader_g = I965_SURCHAN_SELECT_GREEN;
   ss2->ss7.shader_b = I965_SURCHAN_SELECT_BLUE;
   ss2->ss7.shader_a = I965_SURCHAN_SELECT_ALPHA;
-  heap->binding_table[2] = offsetof(surface_heap_t, surface) + 2* sizeof(gen7_surface_state_t);
+  heap->binding_table[bti] = offsetof(surface_heap_t, surface) + bti* sizeof(gen7_surface_state_t);
 
   if(gpgpu->constant_b.bo)
     dri_bo_unreference(gpgpu->constant_b.bo);
@@ -755,35 +754,38 @@ intel_gpgpu_alloc_constant_buffer_gen75(intel_gpgpu_t *gpgpu, uint32_t size)
                       I915_GEM_DOMAIN_RENDER,
                       0,
                       gpgpu->aux_offset.surface_heap_offset +
-                      heap->binding_table[2] +
+                      heap->binding_table[bti] +
                       offsetof(gen7_surface_state_t, ss1),
                       gpgpu->constant_b.bo);
   return gpgpu->constant_b.bo;
 }
 
-
-/* Map address space with two 2GB surfaces. One surface for untyped message and
- * one surface for byte scatters / gathers. Actually the HW does not require two
- * surfaces but Fulsim complains
- */
 static void
-intel_gpgpu_map_address_space(intel_gpgpu_t *gpgpu)
+intel_gpgpu_setup_bti(intel_gpgpu_t *gpgpu, drm_intel_bo *buf, uint32_t internal_offset, uint32_t size, unsigned char index)
 {
+  uint32_t s = size - 1;
   surface_heap_t *heap = gpgpu->aux_buf.bo->virtual + gpgpu->aux_offset.surface_heap_offset;
-  gen7_surface_state_t *ss0 = (gen7_surface_state_t *) heap->surface[0];
-  gen7_surface_state_t *ss1 = (gen7_surface_state_t *) heap->surface[1];
+  gen7_surface_state_t *ss0 = (gen7_surface_state_t *) heap->surface[index];
   memset(ss0, 0, sizeof(gen7_surface_state_t));
-  memset(ss1, 0, sizeof(gen7_surface_state_t));
-  ss1->ss0.surface_type = ss0->ss0.surface_type = I965_SURFACE_BUFFER;
-  ss1->ss0.surface_format = ss0->ss0.surface_format = I965_SURFACEFORMAT_RAW;
-  ss1->ss2.width  = ss0->ss2.width  = 127;   /* bits 6:0 of sz */
-  ss1->ss2.height = ss0->ss2.height = 16383; /* bits 20:7 of sz */
-  ss0->ss3.depth  = 1023; /* bits 30:21 of sz */
-  ss1->ss3.depth  = 1023;  /* bits 30:21 of sz */
-  ss1->ss5.cache_control = ss0->ss5.cache_control = cl_gpgpu_get_cache_ctrl();
-  heap->binding_table[0] = offsetof(surface_heap_t, surface);
-  heap->binding_table[1] = sizeof(gen7_surface_state_t) + offsetof(surface_heap_t, surface);
+  ss0->ss0.surface_type = I965_SURFACE_BUFFER;
+  ss0->ss0.surface_format = I965_SURFACEFORMAT_RAW;
+  ss0->ss2.width  = s & 0x7f;   /* bits 6:0 of sz */
+  ss0->ss2.height = (s >> 7) & 0x3fff; /* bits 20:7 of sz */
+  ss0->ss3.depth  = (s >> 21) & 0x3ff; /* bits 30:21 of sz */
+  ss0->ss5.cache_control = cl_gpgpu_get_cache_ctrl();
+  heap->binding_table[index] = offsetof(surface_heap_t, surface) + index * sizeof(gen7_surface_state_t);
+
+  ss0->ss1.base_addr = buf->offset + internal_offset;
+  dri_bo_emit_reloc(gpgpu->aux_buf.bo,
+                      I915_GEM_DOMAIN_RENDER,
+                      I915_GEM_DOMAIN_RENDER,
+                      internal_offset,
+                      gpgpu->aux_offset.surface_heap_offset +
+                      heap->binding_table[index] +
+                      offsetof(gen7_surface_state_t, ss1),
+                      buf);
 }
+
 
 static int
 intel_is_surface_array(cl_mem_object_type type)
@@ -863,7 +865,6 @@ intel_gpgpu_bind_image_gen7(intel_gpgpu_t *gpgpu,
   }
   ss->ss0.render_cache_rw_mode = 1; /* XXX do we need to set it? */
   intel_gpgpu_set_buf_reloc_gen7(gpgpu, index, obj_bo, obj_bo_offset);
-  gpgpu->binded_img[index - gpgpu->img_index_base] = obj_bo;
 
   assert(index < GEN_MAX_SURFACES);
 }
@@ -884,7 +885,6 @@ intel_gpgpu_bind_image_gen75(intel_gpgpu_t *gpgpu,
   surface_heap_t *heap = gpgpu->aux_buf.bo->virtual + gpgpu->aux_offset.surface_heap_offset;
   gen7_surface_state_t *ss = (gen7_surface_state_t *) heap->surface[index];
   memset(ss, 0, sizeof(*ss));
-
   ss->ss0.vertical_line_stride = 0; // always choose VALIGN_2
   if (index > 128 + 2 && type == CL_MEM_OBJECT_IMAGE1D_ARRAY)
     ss->ss0.surface_type = I965_SURFACE_2D;
@@ -916,20 +916,20 @@ intel_gpgpu_bind_image_gen75(intel_gpgpu_t *gpgpu,
   }
   ss->ss0.render_cache_rw_mode = 1; /* XXX do we need to set it? */
   intel_gpgpu_set_buf_reloc_gen7(gpgpu, index, obj_bo, obj_bo_offset);
-  gpgpu->binded_img[index - gpgpu->img_index_base] = obj_bo;
 
   assert(index < GEN_MAX_SURFACES);
 }
 
 static void
 intel_gpgpu_bind_buf(intel_gpgpu_t *gpgpu, drm_intel_bo *buf, uint32_t offset,
-                     uint32_t internal_offset, uint32_t cchint)
+                     uint32_t internal_offset, uint32_t size, uint8_t bti)
 {
   assert(gpgpu->binded_n < max_buf_n);
   gpgpu->binded_buf[gpgpu->binded_n] = buf;
   gpgpu->target_buf_offset[gpgpu->binded_n] = internal_offset;
   gpgpu->binded_offset[gpgpu->binded_n] = offset;
   gpgpu->binded_n++;
+  intel_gpgpu_setup_bti(gpgpu, buf, internal_offset, size, bti);
 }
 
 static int
@@ -957,11 +957,12 @@ intel_gpgpu_set_scratch(intel_gpgpu_t * gpgpu, uint32_t per_thread_size)
   return 0;
 }
 static void
-intel_gpgpu_set_stack(intel_gpgpu_t *gpgpu, uint32_t offset, uint32_t size, uint32_t cchint)
+intel_gpgpu_set_stack(intel_gpgpu_t *gpgpu, uint32_t offset, uint32_t size, uint8_t bti)
 {
   drm_intel_bufmgr *bufmgr = gpgpu->drv->bufmgr;
   gpgpu->stack_b.bo = drm_intel_bo_alloc(bufmgr, "STACK", size, 64);
-  intel_gpgpu_bind_buf(gpgpu, gpgpu->stack_b.bo, offset, 0, cchint);
+
+  intel_gpgpu_bind_buf(gpgpu, gpgpu->stack_b.bo, offset, 0, size, bti);
 }
 
 static void
@@ -1155,7 +1156,6 @@ intel_gpgpu_states_setup(intel_gpgpu_t *gpgpu, cl_gpgpu_kernel *kernel)
 {
   gpgpu->ker = kernel;
   intel_gpgpu_build_idrt(gpgpu, kernel);
-  intel_gpgpu_map_address_space(gpgpu);
   dri_bo_unmap(gpgpu->aux_buf.bo);
 }
 
@@ -1378,8 +1378,7 @@ intel_gpgpu_set_printf_buf(intel_gpgpu_t *gpgpu, uint32_t i, uint32_t size, uint
   }
   memset(bo->virtual, 0, size);
   drm_intel_bo_unmap(bo);
-
-  intel_gpgpu_bind_buf(gpgpu, bo, offset, 0, 0);
+  intel_gpgpu_bind_buf(gpgpu, bo, offset, 0, size, 0);
   return 0;
 }
 

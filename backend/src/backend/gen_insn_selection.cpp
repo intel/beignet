@@ -2697,25 +2697,55 @@ namespace gbe
   /*! Load instruction pattern */
   DECL_PATTERN(LoadInstruction)
   {
+    void readDWord(Selection::Opaque &sel,
+                   vector<GenRegister> &dst,
+                   vector<GenRegister> &dst2,
+                   GenRegister addr,
+                   uint32_t valueNum,
+                   ir::AddressSpace space,
+                   ir::BTI bti) const
+    {
+      for (uint32_t x = 0; x < bti.count; x++) {
+        if(x > 0)
+          for (uint32_t dstID = 0; dstID < valueNum; ++dstID)
+            dst2[dstID] = sel.selReg(sel.reg(ir::FAMILY_DWORD), ir::TYPE_U32);
+
+        GenRegister temp = getRelativeAddress(sel, addr, space, bti.bti[x]);
+        sel.UNTYPED_READ(temp, dst2.data(), valueNum, bti.bti[x]);
+        if(x > 0) {
+          sel.push();
+            if(sel.isScalarReg(dst[0].reg())) {
+              sel.curr.noMask = 1;
+              sel.curr.execWidth = 1;
+            }
+            for (uint32_t y = 0; y < valueNum; y++)
+              sel.ADD(dst[y], dst[y], dst2[y]);
+          sel.pop();
+        }
+      }
+    }
+
     void emitUntypedRead(Selection::Opaque &sel,
                          const ir::LoadInstruction &insn,
                          GenRegister addr,
-                         uint32_t bti) const
+                         ir::BTI bti) const
     {
       using namespace ir;
       const uint32_t valueNum = insn.getValueNum();
       vector<GenRegister> dst(valueNum);
+      vector<GenRegister> dst2(valueNum);
       for (uint32_t dstID = 0; dstID < valueNum; ++dstID)
-        dst[dstID] = GenRegister::retype(sel.selReg(insn.getValue(dstID)), GEN_TYPE_F);
-      sel.UNTYPED_READ(addr, dst.data(), valueNum, bti);
+        dst2[dstID] = dst[dstID] = sel.selReg(insn.getValue(dstID), TYPE_U32);
+      readDWord(sel, dst, dst2, addr, valueNum, insn.getAddressSpace(), bti);
     }
 
     void emitDWordGather(Selection::Opaque &sel,
                          const ir::LoadInstruction &insn,
                          GenRegister addr,
-                         uint32_t bti) const
+                         ir::BTI bti) const
     {
       using namespace ir;
+      GBE_ASSERT(bti.count == 1);
       const uint32_t simdWidth = sel.isScalarReg(insn.getValue(0)) ? 1 : sel.ctx.getSimdWidth();
       GBE_ASSERT(insn.getValueNum() == 1);
 
@@ -2723,7 +2753,7 @@ namespace gbe
         GenRegister dst = sel.selReg(insn.getValue(0), ir::TYPE_U32);
         sel.push();
           sel.curr.noMask = 1;
-          sel.SAMPLE(&dst, 1, &addr, 1, bti, 0, true, true);
+          sel.SAMPLE(&dst, 1, &addr, 1, bti.bti[0], 0, true, true);
         sel.pop();
         return;
       }
@@ -2739,63 +2769,34 @@ namespace gbe
         sel.SHR(addrDW, GenRegister::retype(addr, GEN_TYPE_UD), GenRegister::immud(2));
       sel.pop();
 
-      sel.DWORD_GATHER(dst, addrDW, bti);
+      sel.DWORD_GATHER(dst, addrDW, bti.bti[0]);
     }
 
     void emitRead64(Selection::Opaque &sel,
                          const ir::LoadInstruction &insn,
                          GenRegister addr,
-                         uint32_t bti) const
+                         ir::BTI bti) const
     {
       using namespace ir;
       const uint32_t valueNum = insn.getValueNum();
       /* XXX support scalar only right now. */
       GBE_ASSERT(valueNum == 1);
-
+      GBE_ASSERT(bti.count == 1);
       GenRegister dst[valueNum];
+      GenRegister tmpAddr = getRelativeAddress(sel, addr, insn.getAddressSpace(), bti.bti[0]);
       for ( uint32_t dstID = 0; dstID < valueNum; ++dstID)
         dst[dstID] = sel.selReg(insn.getValue(dstID), ir::TYPE_U64);
-      sel.READ64(addr, dst, valueNum, bti);
+      sel.READ64(tmpAddr, dst, valueNum, bti.bti[0]);
     }
 
-    void emitByteGather(Selection::Opaque &sel,
-                        const ir::LoadInstruction &insn,
+    void readByteAsDWord(Selection::Opaque &sel,
                         const uint32_t elemSize,
                         GenRegister address,
-                        uint32_t bti) const
+                        GenRegister dst,
+                        uint32_t simdWidth,
+                        uint8_t bti) const
     {
       using namespace ir;
-      const uint32_t valueNum = insn.getValueNum();
-      const uint32_t simdWidth = sel.isScalarReg(insn.getValue(0)) ?
-                                 1 : sel.ctx.getSimdWidth();
-      if(valueNum > 1) {
-        vector<GenRegister> dst(valueNum);
-        const uint32_t typeSize = getFamilySize(getFamily(insn.getValueType()));
-
-        if(elemSize == GEN_BYTE_SCATTER_WORD) {
-          for(uint32_t i = 0; i < valueNum; i++)
-            dst[i] = sel.selReg(insn.getValue(i), ir::TYPE_U16);
-        } else if(elemSize == GEN_BYTE_SCATTER_BYTE) {
-          for(uint32_t i = 0; i < valueNum; i++)
-            dst[i] = sel.selReg(insn.getValue(i), ir::TYPE_U8);
-        }
-
-        uint32_t tmpRegNum = typeSize*valueNum / 4;
-        vector<GenRegister> tmp(tmpRegNum);
-        for(uint32_t i = 0; i < tmpRegNum; i++) {
-          tmp[i] = GenRegister::udxgrf(simdWidth, sel.reg(FAMILY_DWORD));
-        }
-
-        sel.UNTYPED_READ(address, tmp.data(), tmpRegNum, bti);
-
-        for(uint32_t i = 0; i < tmpRegNum; i++) {
-          sel.UNPACK_BYTE(dst.data() + i * 4/typeSize, tmp[i], 4/typeSize);
-        }
-     } else {
-        GBE_ASSERT(insn.getValueNum() == 1);
-        const GenRegister value = sel.selReg(insn.getValue(0));
-        GBE_ASSERT(elemSize == GEN_BYTE_SCATTER_WORD || elemSize == GEN_BYTE_SCATTER_BYTE);
-
         Register tmpReg = sel.reg(FAMILY_DWORD, simdWidth == 1);
         GenRegister tmpAddr = GenRegister::udxgrf(simdWidth, sel.reg(FAMILY_DWORD, simdWidth == 1));
         GenRegister tmpData = GenRegister::udxgrf(simdWidth, tmpReg);
@@ -2820,10 +2821,65 @@ namespace gbe
           sel.SHR(tmpData, tmpData, tmpAddr);
 
           if (elemSize == GEN_BYTE_SCATTER_WORD)
-            sel.MOV(GenRegister::retype(value, GEN_TYPE_UW), sel.unpacked_uw(tmpReg));
+            sel.MOV(GenRegister::retype(dst, GEN_TYPE_UW), sel.unpacked_uw(tmpReg));
           else if (elemSize == GEN_BYTE_SCATTER_BYTE)
-            sel.MOV(GenRegister::retype(value, GEN_TYPE_UB), sel.unpacked_ub(tmpReg));
+            sel.MOV(GenRegister::retype(dst, GEN_TYPE_UB), sel.unpacked_ub(tmpReg));
         sel.pop();
+    }
+
+    void emitByteGather(Selection::Opaque &sel,
+                        const ir::LoadInstruction &insn,
+                        const uint32_t elemSize,
+                        GenRegister address,
+                        ir::BTI bti) const
+    {
+      using namespace ir;
+      const uint32_t valueNum = insn.getValueNum();
+      const uint32_t simdWidth = sel.isScalarReg(insn.getValue(0)) ?
+                                 1 : sel.ctx.getSimdWidth();
+      RegisterFamily family = getFamily(insn.getValueType());
+
+      if(valueNum > 1) {
+        vector<GenRegister> dst(valueNum);
+        const uint32_t typeSize = getFamilySize(family);
+
+        for(uint32_t i = 0; i < valueNum; i++)
+          dst[i] = sel.selReg(insn.getValue(i), getType(family));
+
+        uint32_t tmpRegNum = typeSize*valueNum / 4;
+        vector<GenRegister> tmp(tmpRegNum);
+        vector<GenRegister> tmp2(tmpRegNum);
+        for(uint32_t i = 0; i < tmpRegNum; i++) {
+          tmp2[i] = tmp[i] = GenRegister::udxgrf(simdWidth, sel.reg(FAMILY_DWORD));
+        }
+
+        readDWord(sel, tmp, tmp2, address, tmpRegNum, insn.getAddressSpace(), bti);
+
+        for(uint32_t i = 0; i < tmpRegNum; i++) {
+          sel.UNPACK_BYTE(dst.data() + i * 4/typeSize, tmp[i], 4/typeSize);
+        }
+      } else {
+        GBE_ASSERT(insn.getValueNum() == 1);
+        const GenRegister value = sel.selReg(insn.getValue(0), insn.getValueType());
+        GBE_ASSERT(elemSize == GEN_BYTE_SCATTER_WORD || elemSize == GEN_BYTE_SCATTER_BYTE);
+        GenRegister tmp = value;
+
+        for (int x = 0; x < bti.count; x++) {
+          if (x > 0)
+            tmp = sel.selReg(sel.reg(family, simdWidth == 1), insn.getValueType());
+
+          GenRegister addr = getRelativeAddress(sel, address, insn.getAddressSpace(), bti.bti[x]);
+          readByteAsDWord(sel, elemSize, addr, tmp, simdWidth, bti.bti[x]);
+          if (x > 0) {
+            sel.push();
+              if (simdWidth == 1) {
+                sel.curr.noMask = 1;
+                sel.curr.execWidth = 1;
+              }
+              sel.ADD(value, value, tmp);
+            sel.pop();
+          }
+        }
       }
     }
 
@@ -2837,6 +2893,18 @@ namespace gbe
       const GenRegister dst = sel.selReg(insn.getValue(0), insn.getValueType());
       const GenRegister src = address;
       sel.INDIRECT_MOVE(dst, src);
+    }
+
+    INLINE GenRegister getRelativeAddress(Selection::Opaque &sel, GenRegister address, ir::AddressSpace space, uint8_t bti) const {
+      if(space == ir::MEM_LOCAL || space == ir::MEM_CONSTANT)
+        return address;
+
+      sel.push();
+        sel.curr.noMask = 1;
+        GenRegister temp = sel.selReg(sel.reg(ir::FAMILY_DWORD), ir::TYPE_U32);
+        sel.ADD(temp, address, GenRegister::negate(sel.selReg(sel.ctx.getSurfaceBaseReg(bti), ir::TYPE_U32)));
+      sel.pop();
+      return temp;
     }
 
     INLINE bool emitOne(Selection::Opaque &sel, const ir::LoadInstruction &insn, bool &markChildren) const {
@@ -2855,24 +2923,32 @@ namespace gbe
         sel.ADD(temp, address, sel.selReg(ocl::slmoffset, ir::TYPE_U32));
         address = temp;
       }
-      if (insn.getAddressSpace() == MEM_CONSTANT) {
+      BTI bti;
+      if (space == MEM_CONSTANT || space == MEM_LOCAL) {
+        bti.bti[0] = space == MEM_CONSTANT ? BTI_CONSTANT : 0xfe;
+        bti.count = 1;
+      } else {
+        bti = insn.getBTI();
+      }
+      if (space == MEM_CONSTANT) {
         // XXX TODO read 64bit constant through constant cache
         // Per HW Spec, constant cache messages can read at least DWORD data.
         // So, byte/short data type, we have to read through data cache.
         if(insn.isAligned() == true && elemSize == GEN_BYTE_SCATTER_QWORD)
-          this->emitRead64(sel, insn, address, 0x2);
+          this->emitRead64(sel, insn, address, bti);
         else if(insn.isAligned() == true && elemSize == GEN_BYTE_SCATTER_DWORD)
-          this->emitDWordGather(sel, insn, address, 0x2);
+          this->emitDWordGather(sel, insn, address, bti);
         else {
-          this->emitByteGather(sel, insn, elemSize, address, 0x2);
+          this->emitByteGather(sel, insn, elemSize, address, bti);
         }
-      }
-      else if (insn.isAligned() == true && elemSize == GEN_BYTE_SCATTER_QWORD)
-        this->emitRead64(sel, insn, address, space == MEM_LOCAL ? 0xfe : 0x00);
-      else if (insn.isAligned() == true && elemSize == GEN_BYTE_SCATTER_DWORD)
-        this->emitUntypedRead(sel, insn, address, space == MEM_LOCAL ? 0xfe : 0x00);
-      else {
-        this->emitByteGather(sel, insn, elemSize, address, space == MEM_LOCAL ? 0xfe : 0x01);
+      } else {
+        if (insn.isAligned() == true && elemSize == GEN_BYTE_SCATTER_QWORD)
+          this->emitRead64(sel, insn, address, bti);
+        else if (insn.isAligned() == true && elemSize == GEN_BYTE_SCATTER_DWORD)
+          this->emitUntypedRead(sel, insn, address, bti);
+        else {
+          this->emitByteGather(sel, insn, elemSize, address, bti);
+        }
       }
       return true;
     }
@@ -2961,7 +3037,6 @@ namespace gbe
     {
       using namespace ir;
       const AddressSpace space = insn.getAddressSpace();
-      const uint32_t bti = space == MEM_LOCAL ? 0xfe : 0x01;
       const Type type = insn.getValueType();
       const uint32_t elemSize = getByteScatterGatherSize(type);
       GenRegister address = sel.selReg(insn.getAddress(), ir::TYPE_U32);
@@ -2970,12 +3045,29 @@ namespace gbe
         sel.ADD(temp, address, sel.selReg(ocl::slmoffset, ir::TYPE_U32));
         address = temp;
       }
-      if (insn.isAligned() == true && elemSize == GEN_BYTE_SCATTER_QWORD)
-        this->emitWrite64(sel, insn, address, bti);
-      else if (insn.isAligned() == true && elemSize == GEN_BYTE_SCATTER_DWORD)
-        this->emitUntypedWrite(sel, insn, address, bti);
-      else {
-        this->emitByteScatter(sel, insn, elemSize, address, bti);
+      if(space == MEM_LOCAL) {
+        if (insn.isAligned() == true && elemSize == GEN_BYTE_SCATTER_QWORD)
+          this->emitWrite64(sel, insn, address, 0xfe);
+        else if (insn.isAligned() == true && elemSize == GEN_BYTE_SCATTER_DWORD)
+          this->emitUntypedWrite(sel, insn, address,  0xfe);
+        else
+          this->emitByteScatter(sel, insn, elemSize, address, 0xfe);
+      } else {
+        BTI bti = insn.getBTI();
+        for (int x = 0; x < bti.count; x++) {
+          GenRegister temp = sel.selReg(sel.reg(FAMILY_DWORD), ir::TYPE_U32);
+          sel.push();
+            sel.curr.noMask = 1;
+            sel.ADD(temp, address, GenRegister::negate(sel.selReg(sel.ctx.getSurfaceBaseReg(bti.bti[x]), ir::TYPE_U32)));
+          sel.pop();
+          if (insn.isAligned() == true && elemSize == GEN_BYTE_SCATTER_QWORD)
+            this->emitWrite64(sel, insn, temp, bti.bti[x]);
+          else if (insn.isAligned() == true && elemSize == GEN_BYTE_SCATTER_DWORD)
+            this->emitUntypedWrite(sel, insn, temp,  bti.bti[x]);
+          else {
+            this->emitByteScatter(sel, insn, elemSize, temp, bti.bti[x]);
+          }
+        }
       }
       return true;
     }
@@ -3375,20 +3467,32 @@ namespace gbe
       using namespace ir;
       const AtomicOps atomicOp = insn.getAtomicOpcode();
       const AddressSpace space = insn.getAddressSpace();
-      const uint32_t bti = space == MEM_LOCAL ? 0xfe : 0x01;
       const uint32_t srcNum = insn.getSrcNum();
+
       GenRegister src0 = sel.selReg(insn.getSrc(0), TYPE_U32);   //address
       GenRegister src1 = src0, src2 = src0;
       if(srcNum > 1) src1 = sel.selReg(insn.getSrc(1), TYPE_U32);
       if(srcNum > 2) src2 = sel.selReg(insn.getSrc(2), TYPE_U32);
       GenRegister dst  = sel.selReg(insn.getDst(0), TYPE_U32);
       GenAtomicOpCode genAtomicOp = (GenAtomicOpCode)atomicOp;
-      if(space == MEM_LOCAL && sel.needPatchSLMAddr()){
-        GenRegister temp = sel.selReg(sel.reg(FAMILY_DWORD), TYPE_U32);
-        sel.ADD(temp, src0, sel.selReg(ocl::slmoffset, ir::TYPE_U32));
-        src0 = temp;
+      if(space == MEM_LOCAL) {
+        if (sel.needPatchSLMAddr()) {
+          GenRegister temp = sel.selReg(sel.reg(FAMILY_DWORD), TYPE_U32);
+          sel.ADD(temp, src0, sel.selReg(ocl::slmoffset, ir::TYPE_U32));
+          src0 = temp;
+        }
+        sel.ATOMIC(dst, genAtomicOp, srcNum, src0, src1, src2, 0xfe);
+      } else {
+        ir::BTI b = insn.getBTI();
+        for (int x = 0; x < b.count; x++) {
+          sel.push();
+            sel.curr.noMask = 1;
+            GenRegister temp = sel.selReg(sel.reg(FAMILY_DWORD), ir::TYPE_U32);
+            sel.ADD(temp, src0, GenRegister::negate(sel.selReg(sel.ctx.getSurfaceBaseReg(b.bti[x]), ir::TYPE_U32)));
+          sel.pop();
+          sel.ATOMIC(dst, genAtomicOp, srcNum, temp, src1, src2, b.bti[x]);
+        }
       }
-      sel.ATOMIC(dst, genAtomicOp, srcNum, src0, src1, src2, bti);
       return true;
     }
     DECL_CTOR(AtomicInstruction, 1, 1);

@@ -204,7 +204,7 @@ cl_kernel_set_arg(cl_kernel k, cl_uint index, size_t sz, const void *value)
   k->args[index].mem = mem;
   k->args[index].is_set = 1;
   k->args[index].local_sz = 0;
-
+  k->args[index].bti = interp_kernel_get_arg_bti(k->opaque, index);
   return CL_SUCCESS;
 }
 

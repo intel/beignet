@@ -49,7 +49,7 @@ namespace gbe {
     gbe_arg_type type; //!< Pointer, structure, image, regular value?
     uint32_t size;     //!< Size of the argument
     uint32_t align;    //!< addr alignment of the argument
-    uint32_t bufSize;  //!< Contant buffer size
+    uint8_t bti;      //!< binding table index for __global buffer
     ir::FunctionArgument::InfoFromLLVM info;
   };
 
@@ -91,6 +91,11 @@ namespace gbe {
     INLINE uint32_t getArgSize(uint32_t argID) const {
       return argID >= argNum ? 0u : args[argID].size;
     }
+    /*! Return the bti for __global buffer */
+    INLINE uint8_t getArgBTI(uint32_t argID) const {
+      return argID >= argNum ? 0u : args[argID].bti;
+    }
+    /*! Return the alignment of buffer argument */
     INLINE uint32_t getArgAlign(uint32_t argID) const {
       return argID >= argNum ? 0u : args[argID].align;
     }

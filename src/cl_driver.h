@@ -113,7 +113,7 @@ typedef void (cl_gpgpu_sync_cb)(void*);
 extern cl_gpgpu_sync_cb *cl_gpgpu_sync;
 
 /* Bind a regular unformatted buffer */
-typedef void (cl_gpgpu_bind_buf_cb)(cl_gpgpu, cl_buffer, uint32_t offset, uint32_t internal_offset, uint32_t cchint);
+typedef void (cl_gpgpu_bind_buf_cb)(cl_gpgpu, cl_buffer, uint32_t offset, uint32_t internal_offset, uint32_t size, uint8_t bti);
 extern cl_gpgpu_bind_buf_cb *cl_gpgpu_bind_buf;
 
 /* bind samplers defined in both kernel and kernel args. */
@@ -158,7 +158,7 @@ extern cl_gpgpu_set_perf_counters_cb *cl_gpgpu_set_perf_counters;
 typedef int (cl_gpgpu_upload_curbes_cb)(cl_gpgpu, const void* data, uint32_t size);
 extern cl_gpgpu_upload_curbes_cb *cl_gpgpu_upload_curbes;
 
-typedef cl_buffer (cl_gpgpu_alloc_constant_buffer_cb)(cl_gpgpu, uint32_t size);
+typedef cl_buffer (cl_gpgpu_alloc_constant_buffer_cb)(cl_gpgpu, uint32_t size, uint8_t bti);
 extern cl_gpgpu_alloc_constant_buffer_cb *cl_gpgpu_alloc_constant_buffer;
 
 /* Setup all indirect states */

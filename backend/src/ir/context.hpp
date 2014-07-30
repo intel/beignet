@@ -136,7 +136,7 @@ namespace ir {
     LabelIndex label(void);
     /*! Append a new input register for the function */
     void input(const std::string &name, FunctionArgument::Type type, Register reg,
-               FunctionArgument::InfoFromLLVM& info, uint32_t elemSz = 0u, uint32_t align = 0);
+               FunctionArgument::InfoFromLLVM& info, uint32_t elemSz = 0u, uint32_t align = 0, uint8_t bti = 0);
     /*! Append a new output register for the function */
     void output(Register reg);
     /*! Get the immediate value */
@@ -189,22 +189,22 @@ namespace ir {
 
     /*! LOAD with the destinations directly specified */
     template <typename... Args>
-    void LOAD(Type type, Register offset, AddressSpace space, bool dwAligned, Args...values)
+    void LOAD(Type type, Register offset, AddressSpace space, bool dwAligned, BTI bti, Args...values)
     {
       const Tuple index = this->tuple(values...);
       const uint16_t valueNum = std::tuple_size<std::tuple<Args...>>::value;
       GBE_ASSERT(valueNum > 0);
-      this->LOAD(type, index, offset, space, valueNum, dwAligned);
+      this->LOAD(type, index, offset, space, valueNum, dwAligned, bti);
     }
 
     /*! STORE with the sources directly specified */
     template <typename... Args>
-    void STORE(Type type, Register offset, AddressSpace space, bool dwAligned, Args...values)
+    void STORE(Type type, Register offset, AddressSpace space, bool dwAligned, BTI bti, Args...values)
     {
       const Tuple index = this->tuple(values...);
       const uint16_t valueNum = std::tuple_size<std::tuple<Args...>>::value;
       GBE_ASSERT(valueNum > 0);
-      this->STORE(type, index, offset, space, valueNum, dwAligned);
+      this->STORE(type, index, offset, space, valueNum, dwAligned, bti);
     }
 
   protected:

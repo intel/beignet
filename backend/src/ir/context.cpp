@@ -108,10 +108,10 @@ namespace ir {
   }
 
   void Context::input(const std::string &name, FunctionArgument::Type type, Register reg,
-                      FunctionArgument::InfoFromLLVM& info, uint32_t elementSize, uint32_t align) {
+                      FunctionArgument::InfoFromLLVM& info, uint32_t elementSize, uint32_t align, unsigned char bti) {
     GBE_ASSERTM(fn != NULL, "No function currently defined");
     GBE_ASSERTM(reg < fn->file.regNum(), "Out-of-bound register");
-    FunctionArgument *arg = GBE_NEW(FunctionArgument, type, reg, elementSize, name, align, info);
+    FunctionArgument *arg = GBE_NEW(FunctionArgument, type, reg, elementSize, name, align, info, bti);
     fn->args.push_back(arg);
   }
 

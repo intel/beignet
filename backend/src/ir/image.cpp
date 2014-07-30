@@ -94,8 +94,9 @@ namespace ir {
   }
 
   void ImageSet::getData(struct ImageInfo *imageInfos) const {
+      int id = 0;
       for(auto &it : regMap)
-        imageInfos[it.second->idx - gbe_get_image_base_index()] = *it.second;
+        imageInfos[id++] = *it.second;
   }
 
   ImageSet::~ImageSet() {
@@ -186,7 +187,7 @@ namespace ir {
       IN_UPDATE_SZ(img_info->channelOrderSlot);
       IN_UPDATE_SZ(img_info->dimOrderSlot);
 
-      indexMap.insert(std::make_pair(index, img_info));
+      indexMap.insert(std::make_pair(img_info->idx, img_info));
     }
 
     IN_UPDATE_SZ(magic);
@@ -252,7 +253,7 @@ namespace ir {
     return reg;
   }
 
-  void ImageSet::append(Register imageReg, Context *ctx)
+  void ImageSet::append(Register imageReg, Context *ctx, uint8_t bti)
   {
     ir::FunctionArgument *arg =  ctx->getFunction().getArg(imageReg);
     GBE_ASSERTM(arg && arg->type == ir::FunctionArgument::IMAGE, "Append an invalid reg to image set.");
@@ -261,7 +262,7 @@ namespace ir {
     int32_t id = ctx->getFunction().getArgID(arg);
     struct ImageInfo *imageInfo = GBE_NEW(struct ImageInfo);
     imageInfo->arg_idx = id;
-    imageInfo->idx = regMap.size() + gbe_get_image_base_index();
+    imageInfo->idx = bti;
     imageInfo->wSlot = -1;
     imageInfo->hSlot = -1;
     imageInfo->depthSlot = -1;
