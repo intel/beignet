@@ -137,9 +137,9 @@ namespace gbe
   /*! To track loads and stores */
   enum GenMemory : uint8_t {
     GLOBAL_MEMORY = 0,
-    LOCAL_MEMORY,
+    LOCAL_MEMORY = GLOBAL_MEMORY + 128,
     SCRATCH_MEMORY,
-    MAX_MEM_SYSTEM
+    MAX_MEM_SYSTEM 
   };
 
   /*! Do we allocate after or before the register allocation? */
@@ -349,7 +349,15 @@ namespace gbe
 
   uint32_t DependencyTracker::getIndex(uint32_t bti) const {
     const uint32_t memDelta = grfNum + MAX_FLAG_REGISTER + MAX_ACC_REGISTER;
-    return bti == 0xfe ? memDelta + LOCAL_MEMORY : (bti == 0xff ? memDelta + SCRATCH_MEMORY : memDelta + GLOBAL_MEMORY);
+    uint32_t memIndex;
+    if (bti == 0xfe)
+      memIndex = LOCAL_MEMORY;
+    else if (bti == 0xff)
+      memIndex = SCRATCH_MEMORY;
+    else {
+      memIndex = GLOBAL_MEMORY + (bti % 128);
+    }
+    return memDelta + memIndex;
   }
 
   void DependencyTracker::updateWrites(ScheduleDAGNode *node) {
