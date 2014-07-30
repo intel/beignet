@@ -226,7 +226,7 @@ typedef void (cl_gpgpu_unref_batch_buf_cb)(void*);
 extern cl_gpgpu_unref_batch_buf_cb *cl_gpgpu_unref_batch_buf;
 
 /* Set the printf buffer */
-typedef int (cl_gpgpu_set_printf_buffer_cb)(cl_gpgpu, uint32_t, uint32_t, uint32_t);
+typedef int (cl_gpgpu_set_printf_buffer_cb)(cl_gpgpu, uint32_t, uint32_t, uint32_t, uint8_t);
 extern cl_gpgpu_set_printf_buffer_cb *cl_gpgpu_set_printf_buffer;
 
 /* get the printf buffer offset in the apeture*/

@@ -133,6 +133,13 @@ extern gbe_kernel_get_image_data_cb *gbe_kernel_get_image_data;
 typedef uint32_t (gbe_get_printf_num_cb)(void* printf_info);
 extern gbe_get_printf_num_cb *gbe_get_printf_num;
 
+/*! Get the printf buffer bti */
+typedef uint8_t (gbe_get_printf_buf_bti_cb)(void* printf_info);
+extern gbe_get_printf_buf_bti_cb *gbe_get_printf_buf_bti;
+
+typedef uint8_t (gbe_get_printf_indexbuf_bti_cb)(void* printf_info);
+extern gbe_get_printf_indexbuf_bti_cb *gbe_get_printf_indexbuf_bti;
+
 /*! Release the printfset */
 typedef void (gbe_release_printf_info_cb)(void* printf_info);
 extern gbe_release_printf_info_cb *gbe_release_printf_info;

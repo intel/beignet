@@ -155,6 +155,8 @@ namespace gbe
         }
 
         sizeOfSize = other.sizeOfSize;
+        btiBuf = other.btiBuf;
+        btiIndexBuf = other.btiIndexBuf;
       }
 
       PrintfSet(void) = default;
@@ -179,6 +181,11 @@ namespace gbe
       uint32_t getPrintfSizeOfSize(void) const {
         return sizeOfSize;
       }
+
+      void setBufBTI(uint8_t b)      { btiBuf = b; }
+      void setIndexBufBTI(uint8_t b) { btiIndexBuf = b; }
+      uint8_t getBufBTI() const      { return btiBuf; }
+      uint8_t getIndexBufBTI() const { return btiIndexBuf; }
 
       uint32_t getPrintfBufferElementSize(uint32_t i) {
         PrintfSlot* slot = slots[i];
@@ -226,6 +233,8 @@ namespace gbe
       vector<PrintfSlot*> slots;
       uint32_t sizeOfSize; // Total sizeof size.
       friend struct LockOutput;
+      uint8_t btiBuf;
+      uint8_t btiIndexBuf;
       static pthread_mutex_t lock;
       GBE_CLASS(PrintfSet);
     };

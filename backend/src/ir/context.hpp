@@ -206,6 +206,7 @@ namespace ir {
       GBE_ASSERT(valueNum > 0);
       this->STORE(type, index, offset, space, valueNum, dwAligned, bti);
     }
+    void appendSurface(uint8_t bti, Register reg) { fn->appendSurface(bti, reg); }
 
   protected:
     /*! A block must be started with a label */

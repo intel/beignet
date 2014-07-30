@@ -145,6 +145,15 @@ namespace gbe {
       void* ptr = printfSet ? (void *)(new ir::PrintfSet(*printfSet)) : NULL;
       return ptr;
     }
+    uint8_t getPrintfBufBTI() const {
+      GBE_ASSERT(printfSet);
+      return printfSet->getBufBTI();
+    }
+
+    uint8_t getPrintfIndexBufBTI() const {
+      GBE_ASSERT(printfSet);
+      return printfSet->getIndexBufBTI();
+    }
 
     void outputPrintf(void* index_addr, void* buf_addr, size_t global_wk_sz0,
                       size_t global_wk_sz1, size_t global_wk_sz2) {

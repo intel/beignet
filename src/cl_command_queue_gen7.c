@@ -264,7 +264,7 @@ cl_bind_printf(cl_gpgpu gpgpu, cl_kernel ker, void* printf_info, int printf_num,
   int32_t offset = interp_kernel_get_curbe_offset(ker->opaque, value, 0);
   size_t buf_size = global_sz * sizeof(int) * printf_num;
   if (offset > 0) {
-    if (cl_gpgpu_set_printf_buffer(gpgpu, 0, buf_size, offset) != 0)
+    if (cl_gpgpu_set_printf_buffer(gpgpu, 0, buf_size, offset, interp_get_printf_indexbuf_bti(printf_info)) != 0)
       return -1;
   }
 
@@ -272,7 +272,7 @@ cl_bind_printf(cl_gpgpu gpgpu, cl_kernel ker, void* printf_info, int printf_num,
   offset = interp_kernel_get_curbe_offset(ker->opaque, value, 0);
   buf_size = interp_get_printf_sizeof_size(printf_info) * global_sz;
   if (offset > 0) {
-    if (cl_gpgpu_set_printf_buffer(gpgpu, 1, buf_size, offset) != 0)
+    if (cl_gpgpu_set_printf_buffer(gpgpu, 1, buf_size, offset, interp_get_printf_buf_bti(printf_info)) != 0)
       return -1;
   }
   return 0;

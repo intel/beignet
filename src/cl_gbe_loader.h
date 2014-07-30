@@ -66,6 +66,8 @@ extern gbe_kernel_get_image_data_cb *interp_kernel_get_image_data;
 extern gbe_set_image_base_index_cb *interp_set_image_base_index;
 extern gbe_get_image_base_index_cb *interp_get_image_base_index;
 extern gbe_get_printf_num_cb* interp_get_printf_num;
+extern gbe_get_printf_buf_bti_cb* interp_get_printf_buf_bti;
+extern gbe_get_printf_indexbuf_bti_cb* interp_get_printf_indexbuf_bti;
 extern gbe_dup_printfset_cb* interp_dup_printfset;
 extern gbe_get_printf_sizeof_size_cb* interp_get_printf_sizeof_size;
 extern gbe_release_printf_info_cb* interp_release_printf_info;

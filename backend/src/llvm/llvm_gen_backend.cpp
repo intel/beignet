@@ -1287,6 +1287,7 @@ namespace gbe
         argNameNode = attrNode;
       }
     }
+    ctx.appendSurface(1, ir::ocl::stackbuffer);
 
     ctx.getFunction().setCompileWorkGroupSize(reqd_wg_sz[0], reqd_wg_sz[1], reqd_wg_sz[2]);
     // Loop over the arguments and output registers for them
@@ -1361,6 +1362,7 @@ namespace gbe
               switch (addrSpace) {
               case ir::MEM_GLOBAL:
                 globalPointer.insert(std::make_pair(I, btiBase));
+                ctx.appendSurface(btiBase, reg);
                 ctx.input(argName, ir::FunctionArgument::GLOBAL_POINTER, reg, llvmInfo, ptrSize, align, btiBase);
                 btiBase++;
               break;
@@ -1716,18 +1718,16 @@ namespace gbe
         GBE_ASSERT(con.getName() == v.getName());
         ctx.LOADI(ir::TYPE_S32, reg, ctx.newIntegerImmediate(con.getOffset(), ir::TYPE_S32));
       } else {
-	if(v.getName().str().substr(0, 4) == ".str") {
-          /* When there are multi printf statements in multi kernel fucntions within the same
-             translate unit, if they have the same sting parameter, such as
-             kernel_func1 () {
-               printf("Line is %d\n", line_num1);
-             }
-             kernel_func2 () {
-               printf("Line is %d\n", line_num2);
-             }
-             The Clang will just generate one global string named .strXXX to represent "Line is %d\n"
-             So when translating the kernel_func1, we can not unref that global var, so we will
-             get here. Just ignore it to avoid assert. */
+        if(v.getName().equals(StringRef("__gen_ocl_printf_buf"))) {
+          ctx.appendSurface(btiBase, ir::ocl::printfbptr);
+          ctx.getFunction().getPrintfSet()->setBufBTI(btiBase);
+          globalPointer.insert(std::make_pair(&v, btiBase++));
+          regTranslator.newScalarProxy(ir::ocl::printfbptr, const_cast<GlobalVariable*>(&v));
+        } else if(v.getName().equals(StringRef("__gen_ocl_printf_index_buf"))) {
+          ctx.appendSurface(btiBase, ir::ocl::printfiptr);
+          ctx.getFunction().getPrintfSet()->setIndexBufBTI(btiBase);
+          globalPointer.insert(std::make_pair(&v, btiBase++));
+          regTranslator.newScalarProxy(ir::ocl::printfiptr, const_cast<GlobalVariable*>(&v));
         } else {
           GBE_ASSERT(0);
         }
@@ -3367,7 +3367,7 @@ handle_write_image:
       bool isPrivate = false;
       p = candidates[idx];
 
-      while (dyn_cast<User>(p)) {
+      while (dyn_cast<User>(p) && !dyn_cast<GlobalVariable>(p)) {
 
         if (processed.find(p) == processed.end()) {
           processed.insert(p);
