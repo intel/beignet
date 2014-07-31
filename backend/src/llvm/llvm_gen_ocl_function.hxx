@@ -192,5 +192,3 @@ DECL_LLVM_GEN_FUNCTION(SIMD_ALL, __gen_ocl_simd_all)
 
 // printf function
 DECL_LLVM_GEN_FUNCTION(PRINTF, __gen_ocl_printf)
-DECL_LLVM_GEN_FUNCTION(PRINTF_BUF_ADDR, __gen_ocl_printf_get_buf_addr)
-DECL_LLVM_GEN_FUNCTION(PRINTF_INDEX_BUF_ADDR, __gen_ocl_printf_get_index_buf_addr)

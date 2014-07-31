@@ -772,7 +772,7 @@ namespace gbe
       return ctx.newImmediate(data);
     } else {
       vector<P> array;
-      for(int i = 0; i < seq->getNumElements(); i++)
+      for(uint32_t i = 0; i < seq->getNumElements(); i++)
         array.push_back(GET_EFFECT_DATA(seq, i, tid));
       return ctx.newImmediate((T*)&array[0], array.size());
     }
@@ -2419,10 +2419,6 @@ namespace gbe
         regTranslator.newScalarProxy(ir::ocl::goffset2, dst); break;
       case GEN_OCL_GET_WORK_DIM:
         regTranslator.newScalarProxy(ir::ocl::workdim, dst); break;
-      case GEN_OCL_PRINTF_BUF_ADDR:
-        regTranslator.newScalarProxy(ir::ocl::printfbptr, dst); break;
-      case GEN_OCL_PRINTF_INDEX_BUF_ADDR:
-        regTranslator.newScalarProxy(ir::ocl::printfiptr, dst); break;
       case GEN_OCL_FBH:
       case GEN_OCL_FBL:
       case GEN_OCL_COS:
@@ -3211,8 +3207,6 @@ handle_write_image:
             assert(fmt);
             break;
           }
-          case GEN_OCL_PRINTF_BUF_ADDR:
-          case GEN_OCL_PRINTF_INDEX_BUF_ADDR:
           default: break;
         }
       }
