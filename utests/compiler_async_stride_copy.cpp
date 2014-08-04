@@ -19,7 +19,7 @@ static void compiler_async_stride_copy(void)
 
   OCL_MAP_BUFFER(1);
   for (uint32_t i = 0; i < n * copiesPerWorkItem * 4 * stride; ++i)
-      ((char*)buf_data[1])[i] = rand() && 0xff;
+      ((char*)buf_data[1])[i] = rand() & 0xff;
   OCL_UNMAP_BUFFER(1);
 
   // Run the kernel
@@ -33,10 +33,10 @@ static void compiler_async_stride_copy(void)
   char *dst = (char*)buf_data[0];
   char *src = (char*)buf_data[1];
   for (uint32_t i = 0; i < n * copiesPerWorkItem; i += stride * 4) {
-    OCL_ASSERT(dst[i + 0] == src[i + 0] + 3);
-    OCL_ASSERT(dst[i + 1] == src[i + 1] + 3);
-    OCL_ASSERT(dst[i + 2] == src[i + 2] + 3);
-    OCL_ASSERT(dst[i + 3] == src[i + 3] + 3);
+    OCL_ASSERT(dst[i + 0] == (char)(src[i + 0] + 3));
+    OCL_ASSERT(dst[i + 1] == (char)(src[i + 1] + 3));
+    OCL_ASSERT(dst[i + 2] == (char)(src[i + 2] + 3));
+    OCL_ASSERT(dst[i + 3] == (char)(src[i + 3] + 3));
   }
   OCL_UNMAP_BUFFER(0);
   OCL_UNMAP_BUFFER(1);
