@@ -301,7 +301,10 @@ class builtinProto():
             for n in range(0, self.paramCount):
               formatStr = self.append(formatStr, '  usrc{0}.pv{1} = param{2};'.format(n, ptype[1], n))
             formatStr = self.append(formatStr, '  for(int i =0; i < {0}; i++)'.format(ptype[1]))
-            formatStr = self.append(formatStr, '    uret.va[i] = {0}('.format(self.functionName))
+            formatStr += '\n    uret.va[i] = '
+            if self.prefix == 'relational' and self.functionName != 'bitselect' and self.functionName != 'select':
+              formatStr += '-'
+            formatStr += '{0}('.format(self.functionName)
 
             for n in range(0, self.paramCount):
               formatStr += 'usrc{0}.pa[i]'.format(n)
