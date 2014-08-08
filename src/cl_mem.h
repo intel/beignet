@@ -25,6 +25,7 @@
 #include "CL/cl.h"
 #include "cl_khr_icd.h"
 #include <assert.h>
+#include <pthread.h>
 
 #ifndef CL_VERSION_1_2
 #define CL_MEM_OBJECT_IMAGE1D                       0x10F4

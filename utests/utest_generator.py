@@ -135,7 +135,7 @@ which can print more values and information to assist debuging the issue.
 
 #include "utest_helper.hpp"
 #include <stdio.h>
-#include <math.h>
+#include <cmath>
 #include <algorithm>
 #include <string.h>
 
