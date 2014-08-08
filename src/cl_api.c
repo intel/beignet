@@ -90,10 +90,10 @@ handle_events(cl_command_queue queue, cl_int num, const cl_event *wait_list,
 }
 
 /* The following code checking overlap is from Appendix of openCL spec 1.1 */
-inline cl_bool check_copy_overlap(const size_t src_offset[3],
-                                  const size_t dst_offset[3],
-                                  const size_t region[3],
-                                  size_t row_pitch, size_t slice_pitch)
+cl_bool check_copy_overlap(const size_t src_offset[3],
+                           const size_t dst_offset[3],
+                           const size_t region[3],
+                           size_t row_pitch, size_t slice_pitch)
 {
   const size_t src_min[] = {src_offset[0], src_offset[1], src_offset[2]};
   const size_t src_max[] = {src_offset[0] + region[0],

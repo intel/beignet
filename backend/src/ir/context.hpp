@@ -117,11 +117,6 @@ namespace ir {
       return fn->newImmediate(dstImm);
     }
 
-    /*! Set an immediate value */
-    template <typename T> INLINE void setImmediate(ImmediateIndex index, T value) {
-      const Immediate imm(value);
-      fn->immediates[index] = imm;
-    }
     /*! Create a new register holding the given value. A LOADI is pushed */
     template <typename T> INLINE Register immReg(T value) {
       GBE_ASSERTM(fn != NULL, "No function currently defined");

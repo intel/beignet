@@ -2799,11 +2799,11 @@ namespace gbe
       /* XXX support scalar only right now. */
       GBE_ASSERT(valueNum == 1);
       GBE_ASSERT(bti.count == 1);
-      GenRegister dst[valueNum];
+      vector<GenRegister> dst(valueNum);
       GenRegister tmpAddr = getRelativeAddress(sel, addr, insn.getAddressSpace(), bti.bti[0]);
       for ( uint32_t dstID = 0; dstID < valueNum; ++dstID)
         dst[dstID] = sel.selReg(insn.getValue(dstID), ir::TYPE_U64);
-      sel.READ64(tmpAddr, dst, valueNum, bti.bti[0]);
+      sel.READ64(tmpAddr, dst.data(), valueNum, bti.bti[0]);
     }
 
     void readByteAsDWord(Selection::Opaque &sel,
@@ -2999,11 +2999,11 @@ namespace gbe
       /* XXX support scalar only right now. */
       GBE_ASSERT(valueNum == 1);
       addr = GenRegister::retype(addr, GEN_TYPE_UD);
-      GenRegister src[valueNum];
+      vector<GenRegister> src(valueNum);
 
       for (uint32_t valueID = 0; valueID < valueNum; ++valueID)
         src[valueID] = sel.selReg(insn.getValue(valueID), ir::TYPE_U64);
-      sel.WRITE64(addr, src, valueNum, bti);
+      sel.WRITE64(addr, src.data(), valueNum, bti);
     }
 
     void emitByteScatter(Selection::Opaque &sel,
@@ -3710,11 +3710,10 @@ namespace gbe
     {
       using namespace ir;
       GenRegister msgPayloads[4];
-      GenRegister dst[insn.getDstNum()];
+      vector<GenRegister> dst(insn.getDstNum());
       uint32_t srcNum = insn.getSrcNum();
       uint32_t valueID = 0;
       uint32_t msgLen = 0;
-
       for (valueID = 0; valueID < insn.getDstNum(); ++valueID)
         dst[valueID] = sel.selReg(insn.getDst(valueID), insn.getDstType());
 
@@ -3751,7 +3750,7 @@ namespace gbe
       }
       uint32_t sampler = insn.getSamplerIndex();
 
-      sel.SAMPLE(dst, insn.getDstNum(), msgPayloads, msgLen, bti, sampler, insn.getSamplerOffset() != 0, false);
+      sel.SAMPLE(dst.data(), insn.getDstNum(), msgPayloads, msgLen, bti, sampler, insn.getSamplerOffset() != 0, false);
       return true;
     }
     DECL_CTOR(SampleInstruction, 1, 1);
