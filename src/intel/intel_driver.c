@@ -193,7 +193,7 @@ intel_driver_init(intel_driver_t *driver, int dev_fd)
 #endif /* EMULATE_GEN */
 }
 
-static void
+static cl_int
 intel_driver_open(intel_driver_t *intel, cl_context_prop props)
 {
   int cardi;
@@ -203,7 +203,7 @@ intel_driver_open(intel_driver_t *intel, cl_context_prop props)
       && props->gl_type != CL_GL_GLX_DISPLAY
       && props->gl_type != CL_GL_EGL_DISPLAY) {
     fprintf(stderr, "Unsupported gl share type %d.\n", props->gl_type);
-    exit(-1);
+    return CL_INVALID_OPERATION;
   }
 
   intel->x11_display = XOpenDisplay(NULL);
@@ -239,7 +239,7 @@ intel_driver_open(intel_driver_t *intel, cl_context_prop props)
 
   if(!intel_driver_is_active(intel)) {
     fprintf(stderr, "Device open failed, aborting...\n");
-    exit(-1);
+    return CL_DEVICE_NOT_FOUND;
   }
 
 #ifdef HAS_EGL
@@ -247,6 +247,7 @@ intel_driver_open(intel_driver_t *intel, cl_context_prop props)
     assert(props->egl_display);
   }
 #endif
+  return CL_SUCCESS;
 }
 
 static void
@@ -399,7 +400,7 @@ intel_get_device_id(void)
 
   driver = intel_driver_new();
   assert(driver != NULL);
-  intel_driver_open(driver, NULL);
+  if(UNLIKELY(intel_driver_open(driver, NULL) != CL_SUCCESS)) return INVALID_CHIP_ID;
   intel_device_id = driver->device_id;
   intel_driver_context_destroy(driver);
   intel_driver_close(driver);
@@ -426,7 +427,7 @@ cl_intel_driver_new(cl_context_prop props)
 {
   intel_driver_t *driver = NULL;
   TRY_ALLOC_NO_ERR (driver, intel_driver_new());
-  intel_driver_open(driver, props);
+  if(UNLIKELY(intel_driver_open(driver, props) != CL_SUCCESS)) goto error;
 exit:
   return driver;
 error:

@@ -1500,6 +1500,4 @@ intel_set_gpgpu_callbacks(int device_id)
     intel_gpgpu_get_scratch_index = intel_gpgpu_get_scratch_index_gen7;
     intel_gpgpu_post_action = intel_gpgpu_post_action_gen7;
   }
-  else
-    assert(0);
 }

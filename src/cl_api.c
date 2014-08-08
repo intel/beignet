@@ -170,6 +170,7 @@ cl_check_device_type(cl_device_type device_type)
 static cl_int
 cl_device_id_is_ok(const cl_device_id device)
 {
+  if(UNLIKELY(device == NULL)) return CL_FALSE;
   return device != cl_get_gt_device() ? CL_FALSE : CL_TRUE;
 }
 
