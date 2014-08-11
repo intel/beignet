@@ -3353,10 +3353,10 @@ handle_write_image:
     std::vector<Value*> candidates;
     candidates.push_back(pointer);
     std::set<Value*> processed;
-    bool needNewBTI = true;
 
     while (idx < candidates.size()) {
       bool isPrivate = false;
+      bool needNewBTI = true;
       p = candidates[idx];
 
       while (dyn_cast<User>(p) && !dyn_cast<GlobalVariable>(p)) {
