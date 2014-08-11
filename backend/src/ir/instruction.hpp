@@ -38,6 +38,10 @@ namespace ir {
   struct BTI {
     uint8_t bti[MAX_MIXED_POINTER];
     uint8_t count;
+    BTI() : count(0) {
+      memset(bti, 0, MAX_MIXED_POINTER);
+    }
+    ~BTI() {}
   };
 
   /*! All opcodes */
