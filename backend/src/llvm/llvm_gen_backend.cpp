@@ -1090,8 +1090,10 @@ namespace gbe
       ctx.ADD(ir::Type::TYPE_S32, reg, pointer_reg, offset_reg);
       return reg;
     }
-    else
-      assert(0);
+    else {
+      GBE_ASSERT(0 && "Unsupported constant expression");
+      return regTranslator.getScalar(val, elemID);
+    }
   }
 
   ir::Register GenWriter::getConstantRegister(Constant *c, uint32_t elemID) {
