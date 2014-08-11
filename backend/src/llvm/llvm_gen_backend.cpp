@@ -693,8 +693,11 @@ namespace gbe
       case Type::TypeID::VectorTyID:
         {
           const ConstantDataSequential *cds = dyn_cast<ConstantDataSequential>(c);
+          const VectorType *vecTy = cast<VectorType>(type);
           GBE_ASSERT(cds);
           getSequentialData(cds, mem, offset);
+          if(vecTy->getNumElements() == 3) // OCL spec require align to vec4
+            offset += getTypeByteSize(unit, vecTy->getElementType());
           break;
         }
       case Type::TypeID::IntegerTyID:
