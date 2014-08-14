@@ -137,6 +137,7 @@ namespace ir {
       InstructionBase(reinterpret_cast<const char*>(&other.opcode)) {
       parent = other.parent;
     }
+
   private:
     /*! To be consistant with copy constructor */
     INLINE Instruction &operator= (const Instruction &other) { return *this; }
@@ -364,7 +365,7 @@ namespace ir {
   public:
     /*! Return true if the given instruction is an instance of this class */
     static bool isClassOf(const Instruction &insn);
-    const uint8_t getImageIndex() const;
+    uint8_t getImageIndex() const;
     Type getSrcType(void) const;
     Type getCoordType(void) const;
   };
@@ -372,9 +373,9 @@ namespace ir {
   /*! Load texels from a texture */
   class SampleInstruction : public Instruction {
   public:
-    const uint8_t getImageIndex() const;
-    const uint8_t getSamplerIndex(void) const;
-    const uint8_t getSamplerOffset(void) const;
+    uint8_t getImageIndex() const;
+    uint8_t getSamplerIndex(void) const;
+    uint8_t getSamplerOffset(void) const;
     Type getSrcType(void) const;
     Type getDstType(void) const;
     /*! Return true if the given instruction is an instance of this class */
@@ -416,7 +417,7 @@ namespace ir {
      return 0;
    }
 
-    const uint8_t getImageIndex() const;
+    uint8_t getImageIndex() const;
     uint32_t getInfoType() const;
     /*! Return true if the given instruction is an instance of this class */
     static bool isClassOf(const Instruction &insn);

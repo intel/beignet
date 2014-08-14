@@ -44,7 +44,7 @@ namespace gbe
     /*! Implements base class */
     virtual const char *getCode(void) const;
     /*! Set the instruction stream (to be implemented) */
-    virtual const void setCode(const char *, size_t size);
+    virtual void setCode(const char *, size_t size);
     /*! Implements get the code size */
     virtual size_t getCodeSize(void) const;
     /*! Implements printStatus*/

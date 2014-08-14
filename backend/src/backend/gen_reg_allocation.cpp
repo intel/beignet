@@ -60,7 +60,7 @@ namespace gbe
     const ir::Register getReg() const {
       return (ir::Register)(key & 0xFFFF);
     }
-    const int32_t getMaxID() const {
+    int32_t getMaxID() const {
       return key >> 16;
     }
     uint64_t key;

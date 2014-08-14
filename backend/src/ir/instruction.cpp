@@ -531,11 +531,11 @@ namespace ir {
       Tuple src;
       Tuple dst;
 
-      INLINE const uint8_t getImageIndex(void) const { return this->imageIdx; }
+      INLINE uint8_t getImageIndex(void) const { return this->imageIdx; }
       INLINE Type getSrcType(void) const { return this->srcIsFloat ? TYPE_FLOAT : TYPE_S32; }
       INLINE Type getDstType(void) const { return this->dstIsFloat ? TYPE_FLOAT : TYPE_U32; }
-      INLINE const uint8_t getSamplerIndex(void) const { return this->samplerIdx; }
-      INLINE const uint8_t getSamplerOffset(void) const { return this->samplerOffset; }
+      INLINE uint8_t getSamplerIndex(void) const { return this->samplerIdx; }
+      INLINE uint8_t getSamplerOffset(void) const { return this->samplerOffset; }
       uint8_t srcIsFloat:1;
       uint8_t dstIsFloat:1;
       uint8_t samplerIdx:4;
@@ -578,7 +578,7 @@ namespace ir {
       uint8_t coordType;
       uint8_t imageIdx;
 
-      INLINE const uint8_t getImageIndex(void) const { return this->imageIdx; }
+      INLINE uint8_t getImageIndex(void) const { return this->imageIdx; }
       INLINE Type getSrcType(void) const { return (Type)this->srcType; }
       INLINE Type getCoordType(void) const { return (Type)this->coordType; }
       // bti, u, v, w, 4 data elements
@@ -614,7 +614,7 @@ namespace ir {
             << " info reg %" << this->getSrc(fn, 0);
       }
 
-      INLINE const uint8_t getImageIndex(void) const { return imageIdx; }
+      INLINE uint8_t getImageIndex(void) const { return imageIdx; }
 
       uint8_t infoType;                 //!< Type of the requested information.
       uint8_t imageIdx;                //!< surface index.
@@ -1467,14 +1467,14 @@ DECL_MEM_FN(BranchInstruction, LabelIndex, getLabelIndex(void), getLabelIndex())
 DECL_MEM_FN(SyncInstruction, uint32_t, getParameters(void), getParameters())
 DECL_MEM_FN(SampleInstruction, Type, getSrcType(void), getSrcType())
 DECL_MEM_FN(SampleInstruction, Type, getDstType(void), getDstType())
-DECL_MEM_FN(SampleInstruction, const uint8_t, getSamplerIndex(void), getSamplerIndex())
-DECL_MEM_FN(SampleInstruction, const uint8_t, getSamplerOffset(void), getSamplerOffset())
-DECL_MEM_FN(SampleInstruction, const uint8_t, getImageIndex(void), getImageIndex())
+DECL_MEM_FN(SampleInstruction, uint8_t, getSamplerIndex(void), getSamplerIndex())
+DECL_MEM_FN(SampleInstruction, uint8_t, getSamplerOffset(void), getSamplerOffset())
+DECL_MEM_FN(SampleInstruction, uint8_t, getImageIndex(void), getImageIndex())
 DECL_MEM_FN(TypedWriteInstruction, Type, getSrcType(void), getSrcType())
 DECL_MEM_FN(TypedWriteInstruction, Type, getCoordType(void), getCoordType())
-DECL_MEM_FN(TypedWriteInstruction, const uint8_t, getImageIndex(void), getImageIndex())
+DECL_MEM_FN(TypedWriteInstruction, uint8_t, getImageIndex(void), getImageIndex())
 DECL_MEM_FN(GetImageInfoInstruction, uint32_t, getInfoType(void), getInfoType())
-DECL_MEM_FN(GetImageInfoInstruction, const uint8_t, getImageIndex(void), getImageIndex())
+DECL_MEM_FN(GetImageInfoInstruction, uint8_t, getImageIndex(void), getImageIndex())
 
 #undef DECL_MEM_FN
 

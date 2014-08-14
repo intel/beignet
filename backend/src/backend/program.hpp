@@ -80,7 +80,7 @@ namespace gbe {
     /*! Return the instruction stream (to be implemented) */
     virtual const char *getCode(void) const = 0;
     /*! Set the instruction stream.*/
-    virtual const void setCode(const char *, size_t size) = 0;
+    virtual void setCode(const char *, size_t size) = 0;
     /*! Return the instruction stream size (to be implemented) */
     virtual size_t getCodeSize(void) const = 0;
     /*! Get the kernel name */

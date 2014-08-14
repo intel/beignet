@@ -192,9 +192,9 @@ namespace gbe
     uint32_t reservedSpillRegs;
     bool limitRegisterPressure;
     bool relaxMath;
-    const bool getIFENDIFFix(void) const { return ifEndifFix; }
+    bool getIFENDIFFix(void) const { return ifEndifFix; }
     void setIFENDIFFix(bool fix) { ifEndifFix = fix; }
-    const CompileErrorCode getErrCode() { return errCode; }
+    CompileErrorCode getErrCode() { return errCode; }
 
   protected:
     virtual GenEncoder* generateEncoder(void) {

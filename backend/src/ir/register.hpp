@@ -83,7 +83,7 @@ namespace ir {
     /*! Nothing really happens here */
     INLINE ~RegisterData(void) {}
     RegisterFamily family;            //!< Register size or if it is a flag
-    INLINE const bool isUniform() const { return uniform; }
+    INLINE bool isUniform() const { return uniform; }
     INLINE void setUniform(bool uni) { uniform = uni; }
   private:
     bool uniform;

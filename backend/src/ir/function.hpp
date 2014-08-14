@@ -407,7 +407,7 @@ namespace ir {
     /*! Get required work group size. */
     const size_t *getCompileWorkGroupSize(void) const {return compileWgSize;}
     /*! Get stack size. */
-    INLINE const uint32_t getStackSize(void) const { return this->stackSize; }
+    INLINE uint32_t getStackSize(void) const { return this->stackSize; }
     /*! Push stack size. */
     INLINE void pushStackSize(uint32_t step) { this->stackSize += step; }
     /*! add the loop info for later liveness analysis */

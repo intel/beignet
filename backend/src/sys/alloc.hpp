@@ -73,13 +73,15 @@ public: \
   void* operator new(size_t size) { \
     return gbe::alignedMalloc(size, GBE_DEFAULT_ALIGNMENT); \
   } \
+  void  operator delete(void* ptr) { return gbe::alignedFree(ptr); } \
   void* operator new[](size_t size) { \
    return gbe::alignedMalloc(size, GBE_DEFAULT_ALIGNMENT); \
   } \
+  void  operator delete[](void* ptr) { return gbe::alignedFree(ptr); } \
   void* operator new(size_t size, void *p) { return p; } \
+  void  operator delete(void* ptr, void *p) {/*do nothing*/} \
   void* operator new[](size_t size, void *p) { return p; } \
-  void  operator delete(void* ptr) { return gbe::alignedFree(ptr); } \
-  void  operator delete[](void* ptr) { return gbe::alignedFree(ptr); }
+  void  operator delete[](void* ptr, void *p) { /*do nothing*/ }
 
 /*! Macros to handle allocation position */
 #define GBE_NEW(T,...) \

@@ -52,11 +52,11 @@ namespace ir {
     /*! clear image info. */
     void clearInfo();
     /*! Get the image's index(actual location). */
-    const uint32_t getIdx(const Register imageReg) const;
+    uint32_t getIdx(const Register imageReg) const;
     size_t getDataSize(void) { return regMap.size(); }
     size_t getDataSize(void) const { return regMap.size(); }
 
-    const int32_t getInfoOffset(ImageInfoKey key) const;
+    int32_t getInfoOffset(ImageInfoKey key) const;
     void getData(struct ImageInfo *imageInfos) const;
     void operator = (const ImageSet& other) {
       regMap.insert(other.regMap.begin(), other.regMap.end());

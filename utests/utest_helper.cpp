@@ -655,7 +655,7 @@ int cl_check_image(const int *img, int w, int h, const char *bmp)
   return (float(discrepancy) / float(n) > max_error_ratio) ? 0 : 1;
 }
 
-const float cl_FLT_ULP(float float_number)
+float cl_FLT_ULP(float float_number)
 {
   SF floatBin, ulpBin, ulpBinBase;
   floatBin.f = float_number;
@@ -668,7 +668,7 @@ const float cl_FLT_ULP(float float_number)
   return ulpBin.f - ulpBinBase.f;
 }
 
-const int cl_INT_ULP(int int_number)
+int cl_INT_ULP(int int_number)
 {
   return 0;
 }

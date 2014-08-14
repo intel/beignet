@@ -74,7 +74,7 @@ namespace gbe {
   {}
   GenKernel::~GenKernel(void) { GBE_SAFE_DELETE_ARRAY(insns); }
   const char *GenKernel::getCode(void) const { return (const char*) insns; }
-  const void GenKernel::setCode(const char * ins, size_t size) {
+  void GenKernel::setCode(const char * ins, size_t size) {
     insns = (GenInstruction *)ins;
     insnNum = size / sizeof(GenInstruction);
   }

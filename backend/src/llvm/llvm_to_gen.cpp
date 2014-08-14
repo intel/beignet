@@ -186,7 +186,8 @@ namespace gbe
 
     // Get the module from its file
     llvm::SMDiagnostic Err;
-    std::auto_ptr<Module> M;
+    std::unique_ptr<Module> M;
+
     if(fileName){
       // only when module is null, Get the global LLVM context
       llvm::LLVMContext& c = llvm::getGlobalContext();

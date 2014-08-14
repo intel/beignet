@@ -76,8 +76,7 @@ namespace ir {
       imageInfo->channelOrderSlot = -1;
     }
   }
-
-  const int32_t ImageSet::getInfoOffset(ImageInfoKey key) const
+  int32_t ImageSet::getInfoOffset(ImageInfoKey key) const
   {
     auto it = indexMap.find(key.index);
     if (it == indexMap.end())
@@ -86,7 +85,7 @@ namespace ir {
     return getInfoOffset4Type(imageInfo, key.type);
   }
 
-  const uint32_t ImageSet::getIdx(const Register imageReg) const
+  uint32_t ImageSet::getIdx(const Register imageReg) const
   {
     auto it = regMap.find(imageReg);
     GBE_ASSERT(it != regMap.end());
