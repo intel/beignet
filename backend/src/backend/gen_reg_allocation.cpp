@@ -846,7 +846,7 @@ namespace gbe
       // from the RA map.
       bool success = expireReg(interval.reg);
       GBE_ASSERT(success);
-      success = success;
+      if(!success) return success;
       RA.erase(interval.reg);
     }
     spilledRegs.insert(std::make_pair(interval.reg, spillTag));

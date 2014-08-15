@@ -141,12 +141,12 @@ cl_command_queue_bind_image(cl_command_queue queue, cl_kernel k)
     cl_gpgpu_bind_image(gpgpu, k->images[i].idx, image->base.bo, image->offset,
                         image->intel_fmt, image->image_type,
                         image->w, image->h, image->depth,
-                        image->row_pitch, image->tiling);
+                        image->row_pitch, (cl_gpgpu_tiling)image->tiling);
     if (image->image_type == CL_MEM_OBJECT_IMAGE1D_ARRAY)
       cl_gpgpu_bind_image(gpgpu, k->images[i].idx + 128, image->base.bo, image->offset,
                           image->intel_fmt, image->image_type,
                           image->w, image->h, image->depth,
-                          image->row_pitch, image->tiling);
+                          image->row_pitch, (cl_gpgpu_tiling)image->tiling);
   }
   return CL_SUCCESS;
 }

@@ -537,12 +537,19 @@ int *cl_read_bmp(const char *filename, int *width, int *height)
   char magic[2];
   int ret;
   ret = fread(&magic[0], 1, 2, fp);
-  ret = ret;
-  assert(2 == ret);
+  if(2 != ret){
+    fclose(fp);
+    free(bmppath);
+    return NULL;
+  }
   assert(magic[0] == 'B' && magic[1] == 'M');
 
   ret = fread(&hdr, sizeof(hdr), 1, fp);
-  assert(1 == ret);
+  if(1 != ret){
+    fclose(fp);
+    free(bmppath);
+    return NULL;
+  }
 
   assert(hdr.width > 0 && hdr.height > 0 && hdr.nplanes == 1 && hdr.compression == 0);
 

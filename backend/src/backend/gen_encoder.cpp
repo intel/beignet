@@ -1062,9 +1062,7 @@ namespace gbe
       // for all the branching instruction. And need to adjust the distance
       // for those branch instruction's start point and end point contains
       // this instruction.
-      GenNativeInstruction *insn2 = (GenNativeInstruction *)&this->store[insnID+2];
-      GBE_ASSERT(insn2->header.opcode == GEN_OPCODE_NOP);
-      insn2 = insn2;
+      GBE_ASSERT(((GenNativeInstruction *)&this->store[insnID+2])->header.opcode == GEN_OPCODE_NOP);
       insn.header.opcode = GEN_OPCODE_ADD;
       this->setDst(&insn, GenRegister::ip());
       this->setSrc0(&insn, GenRegister::ip());

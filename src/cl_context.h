@@ -20,9 +20,9 @@
 #ifndef __CL_CONTEXT_H__
 #define __CL_CONTEXT_H__
 
+#include "CL/cl.h"
 #include "cl_internals.h"
 #include "cl_driver.h"
-#include "CL/cl.h"
 #include "cl_khr_icd.h"
 
 #include <stdint.h>

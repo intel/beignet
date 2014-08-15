@@ -1910,7 +1910,7 @@ clEnqueueFillBuffer(cl_command_queue   command_queue,
     goto error;
   }
 
-  if (offset < 0 || offset + size > buffer->size) {
+  if (offset + size > buffer->size) {
     err = CL_INVALID_VALUE;
     goto error;
   }
@@ -1992,11 +1992,11 @@ clEnqueueCopyBuffer(cl_command_queue     command_queue,
     goto error;
   }
 
-  if (src_offset < 0 || src_offset + cb > src_buffer->size) {
+  if (src_offset + cb > src_buffer->size) {
     err = CL_INVALID_VALUE;
     goto error;
   }
-  if (dst_offset < 0 || dst_offset + cb > dst_buffer->size) {
+  if (dst_offset + cb > dst_buffer->size) {
     err = CL_INVALID_VALUE;
     goto error;
   }

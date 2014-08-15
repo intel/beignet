@@ -210,12 +210,6 @@ typedef gbe_program (gbe_program_new_from_llvm_cb)(uint32_t deviceID,
                                                    int optLevel);
 extern gbe_program_new_from_llvm_cb *gbe_program_new_from_llvm;
 
-/*! create s new genprogram for link. */
-typedef gbe_program (gbe_program_new_gen_program_cb)(uint32_t deviceID,
-                                                   const void *module,
-                                                   const void *act);
-extern gbe_program_new_gen_program_cb *gbe_program_new_gen_program;
-
 /*! link the programs from llvm level. */
 typedef void (gbe_program_link_from_llvm_cb)(gbe_program dst_program,
                                              gbe_program src_program,

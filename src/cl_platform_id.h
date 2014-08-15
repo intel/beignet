@@ -20,11 +20,10 @@
 #ifndef __CL_PLATFORM_ID_H__
 #define __CL_PLATFORM_ID_H__
 
+#include "CL/cl.h"
 #include "cl_internals.h"
 #include "cl_extensions.h"
 #include "cl_khr_icd.h"
-#include "CL/cl.h"
-
 #include "src/OCLConfig.h"
 
 struct _cl_platform_id {

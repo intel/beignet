@@ -51,7 +51,6 @@
 .max_samplers = 16,
 .mem_base_addr_align = sizeof(cl_long) * 16 * 8,
 .min_data_type_align_size = sizeof(cl_long) * 16,
-.single_fp_config = 0, /* XXX */
 .double_fp_config = 0,
 .global_mem_cache_type = CL_READ_WRITE_CACHE,
 .global_mem_size = 1024 * 1024 * 1024,

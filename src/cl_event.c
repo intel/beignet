@@ -472,9 +472,8 @@ void cl_event_set_status(cl_event event, cl_int status)
     /* All user events complete, now wait enqueue events */
     ret = cl_event_wait_events(enqueue_cb->num_events, enqueue_cb->wait_list,
         enqueue_cb->event->queue);
-    ret = ret;
     assert(ret != CL_ENQUEUE_EXECUTE_DEFER);
-
+    ret = ~ret;
     cb = enqueue_cb;
     enqueue_cb = enqueue_cb->next;
 

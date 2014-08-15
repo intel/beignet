@@ -275,7 +275,6 @@ extern cl_buffer_set_tiling_cb *cl_buffer_set_tiling;
 
 #include "cl_context.h"
 #include "cl_mem.h"
-typedef struct _cl_context *cl_context;
 
 typedef cl_buffer (cl_buffer_alloc_from_texture_cb)(cl_context, unsigned int, int, unsigned int,
                                                     struct _cl_mem_image *gl_image);

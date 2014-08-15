@@ -92,8 +92,5 @@ typedef struct cl_extensions {
   char ext_str[256];
 } cl_extensions_t;
 
-struct _cl_platform_id;
-typedef struct _cl_platform_id * cl_platform_id;
-
 extern void
 cl_intel_platform_extension_init(cl_platform_id intel_platform);

@@ -4,6 +4,8 @@
  * will allow us to make the use of a software performance simulator easier and
  * to minimize the code specific for the HW and for the simulator
  **************************************************************************/
+#ifndef __CL_DRIVER_TYPE_H__
+#define __CL_DRIVER_TYPE_H__
 
 /* Encapsulates command buffer / data buffer / kernels */
 typedef struct _cl_buffer *cl_buffer;
@@ -21,4 +23,5 @@ typedef struct _cl_gpgpu *cl_gpgpu;
 typedef struct _cl_gpgpu_event *cl_gpgpu_event;
 
 typedef struct _cl_context_prop *cl_context_prop;
-typedef struct _cl_sampler *cl_sampler;
+
+#endif

@@ -208,6 +208,9 @@ namespace ir {
     }
 
   private:
+    ImmType type;  //!< Type of the value
+    uint32_t elemNum; //!< vector imm data type
+    uint64_t defaultData;
     union {
       bool *b;
       int8_t *s8;
@@ -223,23 +226,18 @@ namespace ir {
       const Immediate *immVec[];
       void *p;
     } data;     //!< Value to store
-    ImmType type;  //!< Type of the value
-    uint32_t elemNum; //!< vector imm data type
-    uint64_t defaultData;
     Immediate & operator= (const Immediate &);
-    Immediate operator+ (const Immediate &) const; 
-    Immediate operator- (const Immediate &) const; 
-    Immediate operator* (const Immediate &) const; 
-    Immediate operator/ (const Immediate &) const; 
-    Immediate operator% (const Immediate &) const; 
-    Immediate operator& (const Immediate &) const; 
-    Immediate operator| (const Immediate &) const; 
-    Immediate operator^ (const Immediate &) const; 
-    Immediate operator<< (const Immediate &) const; 
-    Immediate operator>> (const Immediate &) const; 
+    Immediate operator+ (const Immediate &) const;
+    Immediate operator- (const Immediate &) const;
+    Immediate operator* (const Immediate &) const;
+    Immediate operator/ (const Immediate &) const;
+    Immediate operator% (const Immediate &) const;
+    Immediate operator& (const Immediate &) const;
+    Immediate operator| (const Immediate &) const;
+    Immediate operator^ (const Immediate &) const;
+    Immediate operator<< (const Immediate &) const;
+    Immediate operator>> (const Immediate &) const;
     static Immediate lshr (const Immediate &left, const Immediate &right);
-
-
     void copy(const Immediate &other, int32_t offset, uint32_t num);
     GBE_CLASS(Immediate);
   };

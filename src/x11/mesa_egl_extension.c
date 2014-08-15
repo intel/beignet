@@ -123,7 +123,6 @@ _eglLockDisplay(EGLDisplay dpy)
 static _EGLContext *
 _eglLookupContext(EGLContext ctx, EGLDisplay disp)
 {
-  disp = disp;
   return (_EGLContext *) ctx;
 }
 
