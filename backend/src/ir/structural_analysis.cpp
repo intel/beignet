@@ -121,7 +121,7 @@ namespace analysis
      * and insert IF instead
      */
     pbb->erase(it);
-    ir::Instruction insn = ir::IF(matchingElseLabel, reg);
+    ir::Instruction insn = ir::IF(matchingElseLabel, reg, node->inversePredicate);
     ir::Instruction* p_new_insn = pbb->getParent().newInstruction(insn);
     pbb->append(*p_new_insn);
     pbb->matchingEndifLabel = matchingEndifLabel;
@@ -724,7 +724,7 @@ namespace analysis
       n = *(++(node->succs().begin()));
 
       /* check for if node then n */
-      if(n->succs().size() == 1 &&
+      if( n->succs().size() == 1 &&
          n->preds().size() == 1 &&
          *(n->succs().begin()) == m &&
          !n->hasBarrier() && !node->hasBarrier())
@@ -734,6 +734,8 @@ namespace analysis
         nset.insert(n);
 
         Node* p = new IfThenNode(node, n);
+        if(node->fallthrough() == m)
+          node->inversePredicate = false;
 
         if(node->canBeHandled == false || n->canBeHandled == false)
           p->canBeHandled = false;
@@ -752,6 +754,8 @@ namespace analysis
         nset.insert(m);
 
         Node* p = new IfThenNode(node, m);
+        if(node->fallthrough() == n)
+          node->inversePredicate = false;
 
         if(node->canBeHandled == false || m->canBeHandled == false)
           p->canBeHandled = false;

@@ -430,6 +430,8 @@ namespace ir {
   public:
     /*! Indicate if the branch is predicated */
     bool isPredicated(void) const;
+    /*! Indicate if the branch is inverse predicated */
+    bool getInversePredicated(void) const;
     /*! Return the predicate register (if predicated) */
     RegisterData getPredicate(void) const {
       GBE_ASSERTM(this->isPredicated() == true, "Branch is not predicated");
@@ -663,7 +665,7 @@ namespace ir {
   /*! (pred) bra labelIndex */
   Instruction BRA(LabelIndex labelIndex, Register pred);
   /*! (pred) if labelIndex */
-  Instruction IF(LabelIndex labelIndex, Register pred);
+  Instruction IF(LabelIndex labelIndex, Register pred, bool inv_pred=true);
   /*! else labelIndex */
   Instruction ELSE(LabelIndex labelIndex);
   /*! endif */

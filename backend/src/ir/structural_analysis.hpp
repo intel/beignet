@@ -87,7 +87,7 @@ namespace analysis
   class Node
   {
   public:
-    Node(RegionType rtype, const NodeList& children): has_barrier(false), mark(false), canBeHandled(true)
+    Node(RegionType rtype, const NodeList& children): has_barrier(false), mark(false), canBeHandled(true), inversePredicate(true)
     {
       this->rtype = rtype;
       this->children = children;
@@ -118,6 +118,20 @@ namespace analysis
     bool canBeHandled;
     //label is for debug
     int label;
+    /* inversePredicate should be false under two circumstance,
+     * fallthrough is the same with succs:
+     * (1) n->succs == m && node->fallthrough == m
+     * node
+     * | \
+     * |  \
+     * m<--n
+     * (2) m->succs == n && node->fallthrough == n
+     * node
+     * | \
+     * |  \
+     * m-->n
+     * */
+    bool inversePredicate;
   };
 
   /* represents basic block */

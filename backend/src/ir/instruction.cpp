@@ -348,13 +348,14 @@ namespace ir {
       public NDstPolicy<BranchInstruction, 0>
     {
     public:
-      INLINE BranchInstruction(Opcode op, LabelIndex labelIndex, Register predicate) {
+      INLINE BranchInstruction(Opcode op, LabelIndex labelIndex, Register predicate, bool inv_pred=false) {
         GBE_ASSERT(op == OP_BRA || op == OP_IF);
         this->opcode = op;
         this->predicate = predicate;
         this->labelIndex = labelIndex;
         this->hasPredicate = true;
         this->hasLabel = true;
+        this->inversePredicate = inv_pred;
       }
       INLINE BranchInstruction(Opcode op, LabelIndex labelIndex) {
         GBE_ASSERT(op == OP_BRA || op == OP_ELSE || op == OP_ENDIF);
@@ -385,11 +386,13 @@ namespace ir {
         predicate = reg;
       }
       INLINE bool isPredicated(void) const { return hasPredicate; }
+      INLINE bool getInversePredicated(void) const { return inversePredicate; }
       INLINE bool wellFormed(const Function &fn, std::string &why) const;
       INLINE void out(std::ostream &out, const Function &fn) const;
       Register predicate;    //!< Predication means conditional branch
       LabelIndex labelIndex; //!< Index of the label the branch targets
       bool hasPredicate:1;   //!< Is it predicated?
+      bool inversePredicate:1;   //!< Is it inverse predicated?
       bool hasLabel:1;       //!< Is there any target label?
       Register dst[0];       //!< No destination
     };
@@ -1142,6 +1145,8 @@ namespace ir {
 
     INLINE void BranchInstruction::out(std::ostream &out, const Function &fn) const {
       this->outOpcode(out);
+      if(opcode == OP_IF && inversePredicate)
+        out << " !";
       if (hasPredicate)
         out << "<%" << this->getSrc(fn, 0) << ">";
       if (hasLabel) out << " -> label$" << labelIndex;
@@ -1463,6 +1468,7 @@ DECL_MEM_FN(LoadInstruction, bool, isAligned(void), isAligned())
 DECL_MEM_FN(LoadImmInstruction, Type, getType(void), getType())
 DECL_MEM_FN(LabelInstruction, LabelIndex, getLabelIndex(void), getLabelIndex())
 DECL_MEM_FN(BranchInstruction, bool, isPredicated(void), isPredicated())
+DECL_MEM_FN(BranchInstruction, bool, getInversePredicated(void), getInversePredicated())
 DECL_MEM_FN(BranchInstruction, LabelIndex, getLabelIndex(void), getLabelIndex())
 DECL_MEM_FN(SyncInstruction, uint32_t, getParameters(void), getParameters())
 DECL_MEM_FN(SampleInstruction, Type, getSrcType(void), getSrcType())
@@ -1615,8 +1621,8 @@ DECL_MEM_FN(GetImageInfoInstruction, uint8_t, getImageIndex(void), getImageIndex
   }
 
   // IF
-  Instruction IF(LabelIndex labelIndex, Register pred) {
-    return internal::BranchInstruction(OP_IF, labelIndex, pred).convert();
+  Instruction IF(LabelIndex labelIndex, Register pred, bool inv_pred) {
+    return internal::BranchInstruction(OP_IF, labelIndex, pred, inv_pred).convert();
   }
 
   // ELSE

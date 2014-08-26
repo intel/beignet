@@ -4018,7 +4018,7 @@ namespace gbe
           sel.curr.physicalFlag = 0;
           sel.curr.flagIndex = (uint64_t)pred;
           sel.curr.externFlag = 1;
-          sel.curr.inversePredicate = 1;
+          sel.curr.inversePredicate = insn.getInversePredicated();
           sel.curr.predicate = GEN_PREDICATE_NORMAL;
           sel.IF(GenRegister::immd(0), jip, uip);
           sel.curr.inversePredicate = 0;
