@@ -616,6 +616,7 @@ error:
         prf.first->eraseFromParent();
     }
 
+    deadprintfs.clear();
     delete builder;
 
     return changed;
