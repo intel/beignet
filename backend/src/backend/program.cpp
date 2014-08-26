@@ -846,11 +846,14 @@ namespace gbe {
     // will delete the module and act in GenProgram::CleanLlvmResource().
     llvm::Module * out_module;
     llvm::LLVMContext* llvm_ctx = new llvm::LLVMContext;
+
+    static std::mutex llvm_mutex;
+    if (!llvm::llvm_is_multithreaded())
+      llvm_mutex.lock();
+
     if (buildModuleFromSource(clName.c_str(), &out_module, llvm_ctx, clOpt.c_str(),
                               stringSize, err, errSize)) {
     // Now build the program from llvm
-      static std::mutex gbe_mutex;
-      gbe_mutex.lock();
       size_t clangErrSize = 0;
       if (err != NULL) {
         GBE_ASSERT(errSize != NULL);
@@ -863,11 +866,14 @@ namespace gbe {
                                     err, errSize, optLevel);
       if (err != NULL)
         *errSize += clangErrSize;
-      gbe_mutex.unlock();
       if (OCL_OUTPUT_BUILD_LOG && options)
         llvm::errs() << options;
     } else
       p = NULL;
+
+    if (!llvm::llvm_is_multithreaded())
+      llvm_mutex.unlock();
+
     remove(clName.c_str());
     return p;
   }
@@ -1250,11 +1256,9 @@ namespace gbe
       gbe_release_printf_info = gbe::kernelReleasePrintfSet;
       gbe_output_printf = gbe::kernelOutputPrintf;
       genSetupCallBacks();
-      llvm::llvm_start_multithreaded();
     }
 
     ~CallBackInitializer() {
-      llvm::llvm_stop_multithreaded();
 #if (LLVM_VERSION_MAJOR == 3) && (LLVM_VERSION_MINOR > 3)
       llvm::llvm_shutdown();
 #endif
