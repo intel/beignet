@@ -10,7 +10,12 @@ set (benchmark_sources
   ../utests/utest.cpp
   ../utests/utest_file_map.cpp
   ../utests/utest_helper.cpp
+  ../utests/vload_bench.cpp
   enqueue_copy_buf.cpp)
+
+
+SET(CMAKE_CXX_FLAGS "-DBUILD_BENCHMARK ${CMAKE_CXX_FLAGS}")
+SET(CMAKE_C_FLAGS "-DBUILD_BENCHMARK ${CMAKE_C_FLAGS}")
 
 ADD_LIBRARY(benchmarks SHARED ${ADDMATHFUNC} ${benchmark_sources})
 

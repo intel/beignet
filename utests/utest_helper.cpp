@@ -262,9 +262,10 @@ cl_kernel_init(const char *file_name, const char *kernel_name, int format, const
       goto error;
     }
     prevFileName = file_name;
+
+    /* OCL requires to build the program even if it is created from a binary */
+    OCL_CALL (clBuildProgram, program, 1, &device, build_opt, NULL, NULL);
   }
-  /* OCL requires to build the program even if it is created from a binary */
-  OCL_CALL (clBuildProgram, program, 1, &device, build_opt, NULL, NULL);
 
   /* Create a kernel from the program */
   if (kernel)

@@ -47,11 +47,13 @@ struct UTest
   /*! Empty test */
   UTest(void);
   /*! Build a new unit test and append it to the unit test list */
-  UTest(Function fn, const char *name, bool haveIssue = false, bool needDestroyProgram = true);
+  UTest(Function fn, const char *name, bool isBenchMark = false, bool haveIssue = false, bool needDestroyProgram = true);
   /*! Function to execute */
   Function fn;
   /*! Name of the test */
   const char *name;
+  /*! whether it is a bench mark. */
+  bool isBenchMark;
   /*! Indicate whether current test cases has issue to be fixes */
   bool haveIssue;
   /*! Indicate whether destroy kernels/program. */
@@ -62,6 +64,8 @@ struct UTest
   static void run(const char *name);
   /*! Run all the tests without known issue*/
   static void runAllNoIssue(void);
+  /*! Run all the benchmark. */
+  static void runAllBenchMark(void);
   /*! Run all the tests */
   static void runAll(void);
   /*! List all test cases */
@@ -77,7 +81,7 @@ struct UTest
 
 #define MAKE_UTEST_FROM_FUNCTION_KEEP_PROGRAM(FN, KEEP_PROGRAM) \
   static void __ANON__##FN##__(void) { UTEST_EXPECT_SUCCESS(FN()); } \
-  static const UTest __##FN##__(__ANON__##FN##__, #FN, false, !(KEEP_PROGRAM));
+  static const UTest __##FN##__(__ANON__##FN##__, #FN, false, false, !(KEEP_PROGRAM));
 
 
 /*! Turn a function into a unit test */
@@ -91,9 +95,14 @@ struct UTest
   static const UTest __##FN##__(__ANON__##FN##__, #FN, true);
 
 /*! Turn a function into a unit performance test */
+#define MAKE_BENCHMARK_FROM_FUNCTION_KEEP_PROGRAM(FN, KEEP_PROGRAM) \
+  static void __ANON__##FN##__(void) { BENCHMARK(FN()); } \
+  static const UTest __##FN##__(__ANON__##FN##__, #FN, true, false, !(KEEP_PROGRAM));
+
 #define MAKE_BENCHMARK_FROM_FUNCTION(FN) \
   static void __ANON__##FN##__(void) { BENCHMARK(FN()); } \
-  static const UTest __##FN##__(__ANON__##FN##__, #FN);
+  static const UTest __##FN##__(__ANON__##FN##__, #FN, true);
+
 
 /*! No assert is expected */
 #define UTEST_EXPECT_SUCCESS(EXPR) \
@@ -125,14 +134,16 @@ struct UTest
 
 #define BENCHMARK(EXPR) \
  do { \
-    int ret = 0; \
+    int ret = 0;\
     try { \
       ret = EXPR; \
-      printf("  %s  [SUCCESS] [Result: %d]\n", #EXPR, ret);\
+      std::cout << "    [Result: " << ret << "]    [SUCCESS]" << std::endl; \
+      UTest::retStatistics.passCount += 1; \
     } \
     catch (Exception e) { \
       std::cout << "  " << #EXPR << "    [FAILED]" << std::endl; \
       std::cout << "    " << e.what() << std::endl; \
+      UTest::retStatistics.failCount++; \
     } \
   } while (0)
 #endif /* __UTEST_UTEST_HPP__ */

@@ -106,8 +106,8 @@ void catch_signal(void){
   }
 }
 
-UTest::UTest(Function fn, const char *name, bool haveIssue, bool needDestroyProgram)
-       : fn(fn), name(name), haveIssue(haveIssue), needDestroyProgram(needDestroyProgram) {
+UTest::UTest(Function fn, const char *name, bool isBenchMark, bool haveIssue, bool needDestroyProgram)
+       : fn(fn), name(name), isBenchMark(isBenchMark), haveIssue(haveIssue), needDestroyProgram(needDestroyProgram) {
 
   if (utestList == NULL) {
     utestList = new vector<UTest>;
@@ -165,7 +165,19 @@ void UTest::runAllNoIssue(void) {
 
   for (; retStatistics.finishrun < utestList->size(); ++retStatistics.finishrun) {
     const UTest &utest = (*utestList)[retStatistics.finishrun];
-    if (utest.fn == NULL || utest.haveIssue) continue;
+    if (utest.fn == NULL || utest.haveIssue || utest.isBenchMark) continue;
+    do_run(utest);
+    cl_kernel_destroy(utest.needDestroyProgram);
+    cl_buffer_destroy();
+  }
+}
+
+void UTest::runAllBenchMark(void) {
+  if (utestList == NULL) return;
+
+  for (; retStatistics.finishrun < utestList->size(); ++retStatistics.finishrun) {
+    const UTest &utest = (*utestList)[retStatistics.finishrun];
+    if (utest.fn == NULL || utest.haveIssue || !utest.isBenchMark) continue;
     do_run(utest);
     cl_kernel_destroy(utest.needDestroyProgram);
     cl_buffer_destroy();

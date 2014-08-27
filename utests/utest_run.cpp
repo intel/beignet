@@ -106,6 +106,17 @@ int main(int argc, char *argv[])
 
         break;
 
+      case 'b':
+        try {
+          UTest::runAllBenchMark();
+        }
+        catch (Exception e){
+          std::cout << "  " << e.what() << "    [SUCCESS]" << std::endl;
+        }
+
+        break;
+
+
       case 'h':
       default:
         usage();

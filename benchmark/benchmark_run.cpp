@@ -98,7 +98,7 @@ int main(int argc, char *argv[])
 
       case 'n':
         try {
-          UTest::runAllNoIssue();
+          UTest::runAllBenchMark();
         }
         catch (Exception e){
           std::cout << "  " << e.what() << "    [SUCCESS]" << std::endl;
