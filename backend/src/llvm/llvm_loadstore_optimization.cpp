@@ -87,12 +87,12 @@ namespace gbe {
     bool     optimizeLoadStore(BasicBlock &BB);
 
     bool     isLoadStoreCompatible(Value *A, Value *B);
-    void     mergeLoad(BasicBlock &BB, SmallVector<Instruction*, 4> &merged);
-    void     mergeStore(BasicBlock &BB, SmallVector<Instruction*, 4> &merged);
+    void     mergeLoad(BasicBlock &BB, SmallVector<Instruction*, 16> &merged);
+    void     mergeStore(BasicBlock &BB, SmallVector<Instruction*, 16> &merged);
     BasicBlock::iterator findConsecutiveAccess(BasicBlock &BB,
-                                               SmallVector<Instruction*, 4> &merged,
+                                               SmallVector<Instruction*, 16> &merged,
                                                BasicBlock::iterator &start,
-                                               unsigned maxLimit,
+                                               unsigned maxVecSize,
                                                bool isLoad);
 
     virtual const char *getPassName() const {
@@ -154,11 +154,11 @@ namespace gbe {
     return ((-offset) == sz);
   }
 
-  void GenLoadStoreOptimization::mergeLoad(BasicBlock &BB, SmallVector<Instruction*, 4> &merged) {
+  void GenLoadStoreOptimization::mergeLoad(BasicBlock &BB, SmallVector<Instruction*, 16> &merged) {
     IRBuilder<> Builder(&BB);
 
     unsigned size = merged.size();
-    SmallVector<Value *, 4> values;
+    SmallVector<Value *, 16> values;
     for(unsigned i = 0; i < size; i++) {
       values.push_back(merged[i]);
     }
@@ -169,7 +169,7 @@ namespace gbe {
     Builder.SetInsertPoint(ld);
     VectorType *vecTy = VectorType::get(ld->getType(), size);
     Value *vecPtr = Builder.CreateBitCast(ld->getPointerOperand(),
-                                          PointerType::get(vecTy, addrSpace));
+                                        PointerType::get(vecTy, addrSpace));
     LoadInst *vecValue = Builder.CreateLoad(vecPtr);
     vecValue->setAlignment(align);
 
@@ -181,9 +181,9 @@ namespace gbe {
 
   BasicBlock::iterator
   GenLoadStoreOptimization::findConsecutiveAccess(BasicBlock &BB,
-                            SmallVector<Instruction*, 4> &merged,
+                            SmallVector<Instruction*, 16> &merged,
                             BasicBlock::iterator &start,
-                            unsigned maxLimit,
+                            unsigned maxVecSize,
                             bool isLoad) {
 
     BasicBlock::iterator stepForward = start;
@@ -193,6 +193,8 @@ namespace gbe {
 
     BasicBlock::iterator E = BB.end();
     BasicBlock::iterator J = ++start;
+
+    unsigned maxLimit = maxVecSize * 3;
 
     for(unsigned ss = 0; J != E && ss <= maxLimit; ++ss, ++J) {
       if((isLoad && isa<LoadInst>(*J)) || (!isLoad && isa<StoreInst>(*J))) {
@@ -205,12 +207,12 @@ namespace gbe {
         break;
       }
 
-      if(merged.size() >= 4) break;
+      if(merged.size() >= maxVecSize) break;
     }
     return stepForward;
   }
 
-  void GenLoadStoreOptimization::mergeStore(BasicBlock &BB, SmallVector<Instruction*, 4> &merged) {
+  void GenLoadStoreOptimization::mergeStore(BasicBlock &BB, SmallVector<Instruction*, 16> &merged) {
     IRBuilder<> Builder(&BB);
 
     unsigned size = merged.size();
@@ -239,25 +241,37 @@ namespace gbe {
 
   bool GenLoadStoreOptimization::optimizeLoadStore(BasicBlock &BB) {
     bool changed = false;
-    SmallVector<Instruction*, 4> merged;
+    SmallVector<Instruction*, 16> merged;
     for (BasicBlock::iterator BBI = BB.begin(), E = BB.end(); BBI != E;++BBI) {
       if(isa<LoadInst>(*BBI) || isa<StoreInst>(*BBI)) {
         bool isLoad = isa<LoadInst>(*BBI) ? true: false;
         Type *ty = getValueType(BBI);
         if(ty->isVectorTy()) continue;
-        // we only support DWORD data type merge
-        if(!ty->isFloatTy() && !ty->isIntegerTy(32)) continue;
-        BBI = findConsecutiveAccess(BB, merged, BBI, 10, isLoad);
-        if(merged.size() > 1) {
+        // TODO Support DWORD/WORD/BYTE LOAD for store support DWORD only now.
+        if (!(ty->isFloatTy() || ty->isIntegerTy(32) ||
+             ((ty->isIntegerTy(8) || ty->isIntegerTy(16)) && isLoad)))
+          continue;
+        unsigned maxVecSize = (ty->isFloatTy() || ty->isIntegerTy(32)) ? 4 :
+                              (ty->isIntegerTy(16) ? 8 : 16);
+        BBI = findConsecutiveAccess(BB, merged, BBI, maxVecSize, isLoad);
+        uint32_t size = merged.size();
+        uint32_t pos = 0;
+        while(size > 1) {
+          unsigned vecSize = (size >= 16) ? 16 :
+                             (size >= 8 ? 8 :
+                             (size >= 4 ? 4 :
+                             (size >= 2 ? 2 : size)));
+          SmallVector<Instruction*, 16> mergedVec(merged.begin() + pos, merged.begin() + pos + vecSize);
           if(isLoad)
-            mergeLoad(BB, merged);
+            mergeLoad(BB, mergedVec);
           else
-            mergeStore(BB, merged);
+            mergeStore(BB, mergedVec);
           // remove merged insn
-          int size = merged.size();
-          for(int i = 0; i < size; i++)
-            merged[i]->eraseFromParent();
+          for(uint32_t i = 0; i < mergedVec.size(); i++)
+            mergedVec[i]->eraseFromParent();
           changed = true;
+          pos += vecSize;
+          size -= vecSize;
         }
         merged.clear();
       }

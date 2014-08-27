@@ -614,7 +614,8 @@ namespace gbe
     // batch vec4/8/16 load/store
     INLINE void emitBatchLoadOrStore(const ir::Type type, const uint32_t elemNum,
                   Value *llvmValue, const ir::Register ptr,
-                  const ir::AddressSpace addrSpace, Type * elemType, bool isLoad, ir::BTI bti);
+                  const ir::AddressSpace addrSpace, Type * elemType, bool isLoad, ir::BTI bti,
+                  bool dwAligned);
     void visitInstruction(Instruction &I) {NOT_SUPPORTED;}
     private:
       ir::ImmediateIndex processConstantImmIndexImpl(Constant *CPV, int32_t index = 0u);
@@ -3302,7 +3303,8 @@ handle_write_image:
   void GenWriter::emitBatchLoadOrStore(const ir::Type type, const uint32_t elemNum,
                                       Value *llvmValues, const ir::Register ptr,
                                       const ir::AddressSpace addrSpace,
-                                      Type * elemType, bool isLoad, ir::BTI bti) {
+                                      Type * elemType, bool isLoad, ir::BTI bti,
+                                      bool dwAligned) {
     const ir::RegisterFamily pointerFamily = ctx.getPointerFamily();
     uint32_t totalSize = elemNum * getFamilySize(getFamily(type));
     uint32_t msgNum = totalSize > 16 ? totalSize / 16 : 1;
@@ -3348,9 +3350,9 @@ handle_write_image:
 
       // Emit the instruction
       if (isLoad)
-        ctx.LOAD(type, tuple, addr, addrSpace, perMsgNum, true, bti);
+        ctx.LOAD(type, tuple, addr, addrSpace, perMsgNum, dwAligned, bti);
       else
-        ctx.STORE(type, tuple, addr, addrSpace, perMsgNum, true, bti);
+        ctx.STORE(type, tuple, addr, addrSpace, perMsgNum, dwAligned, bti);
     }
   }
 
@@ -3522,11 +3524,11 @@ handle_write_image:
         // Not supported by the hardware. So, we split the message and we use
         // strided loads and stores
         else {
-          emitBatchLoadOrStore(type, elemNum, llvmValues, ptr, addrSpace, elemType, isLoad, binding);
+          emitBatchLoadOrStore(type, elemNum, llvmValues, ptr, addrSpace, elemType, isLoad, binding, dwAligned);
         }
       }
       else if((dataFamily==ir::FAMILY_WORD && elemNum%2==0) || (dataFamily == ir::FAMILY_BYTE && elemNum%4 == 0)) {
-          emitBatchLoadOrStore(type, elemNum, llvmValues, ptr, addrSpace, elemType, isLoad, binding);
+          emitBatchLoadOrStore(type, elemNum, llvmValues, ptr, addrSpace, elemType, isLoad, binding, dwAligned);
       } else {
         for (uint32_t elemID = 0; elemID < elemNum; elemID++) {
           if(regTranslator.isUndefConst(llvmValues, elemID))

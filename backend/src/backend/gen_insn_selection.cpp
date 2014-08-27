@@ -2843,11 +2843,97 @@ namespace gbe
         sel.pop();
     }
 
-    void emitByteGather(Selection::Opaque &sel,
-                        const ir::LoadInstruction &insn,
-                        const uint32_t elemSize,
-                        GenRegister address,
-                        ir::BTI bti) const
+    // The address is dw aligned.
+    void emitAlignedByteGather(Selection::Opaque &sel,
+                               const ir::LoadInstruction &insn,
+                               const uint32_t elemSize,
+                               GenRegister address,
+                               ir::BTI bti) const
+    {
+      using namespace ir;
+      const uint32_t valueNum = insn.getValueNum();
+      const uint32_t simdWidth = sel.isScalarReg(insn.getValue(0)) ?
+                                 1 : sel.ctx.getSimdWidth();
+      RegisterFamily family = getFamily(insn.getValueType());
+
+      vector<GenRegister> dst(valueNum);
+      const uint32_t typeSize = getFamilySize(family);
+
+      for(uint32_t i = 0; i < valueNum; i++)
+        dst[i] = sel.selReg(insn.getValue(i), getType(family));
+
+      uint32_t tmpRegNum = typeSize*valueNum / 4;
+      if (tmpRegNum == 0)
+        tmpRegNum = 1;
+      vector<GenRegister> tmp(tmpRegNum);
+      vector<GenRegister> tmp2(tmpRegNum);
+      vector<Register> tmpReg(tmpRegNum);
+      for(uint32_t i = 0; i < tmpRegNum; i++) {
+        tmpReg[i] = sel.reg(FAMILY_DWORD);
+        tmp2[i] = tmp[i] = GenRegister::udxgrf(simdWidth, tmpReg[i]);
+      }
+
+      readDWord(sel, tmp, tmp2, address, tmpRegNum, insn.getAddressSpace(), bti);
+
+      if (valueNum > 1) {
+        for(uint32_t i = 0; i < tmpRegNum; i++)
+          sel.UNPACK_BYTE(dst.data() + i * 4/typeSize, tmp[i], 4/typeSize);
+      }
+      else {
+        if (elemSize == GEN_BYTE_SCATTER_WORD)
+          sel.MOV(GenRegister::retype(dst[0], GEN_TYPE_UW), sel.unpacked_uw(tmpReg[0]));
+        else if (elemSize == GEN_BYTE_SCATTER_BYTE)
+          sel.MOV(GenRegister::retype(dst[0], GEN_TYPE_UB), sel.unpacked_ub(tmpReg[0]));
+      }
+    }
+
+    // Gather effect data to the effectData vector from the tmp vector.
+    //  x x d0 d1 | d2 d3 d4 d5 | ... ==> d0 d1 d2 d3 | d4 d5 ...
+    void getEffectByteData(Selection::Opaque &sel,
+                           vector<GenRegister> &effectData,
+                           vector<GenRegister> &tmp,
+                           uint32_t effectDataNum,
+                           GenRegister addr,
+                           uint32_t simdWidth) const
+    {
+      using namespace ir;
+      GBE_ASSERT(effectData.size() == effectDataNum);
+      GBE_ASSERT(tmp.size() == effectDataNum + 1);
+      sel.push();
+        sel.curr.noMask = 1;
+        for(uint32_t i = 0; i < effectDataNum; i++) {
+          GenRegister tmpH = GenRegister::udxgrf(simdWidth, sel.reg(FAMILY_DWORD));
+          GenRegister tmpL = effectData[i];
+          GenRegister shift = GenRegister::udxgrf(simdWidth, sel.reg(FAMILY_DWORD));
+          Register shift1Reg = sel.reg(FAMILY_DWORD);
+          GenRegister shift1 = GenRegister::udxgrf(simdWidth, shift1Reg);
+          GenRegister factor = GenRegister::udxgrf(simdWidth, sel.reg(FAMILY_DWORD));
+          sel.AND(shift, GenRegister::retype(addr, GEN_TYPE_UD), GenRegister::immud(0x3));
+          sel.SHL(shift, shift, GenRegister::immud(0x3));
+          sel.SHR(tmpL, tmp[i], shift);
+          sel.ADD(shift1, GenRegister::negate(shift), GenRegister::immud(32));
+          sel.push();
+            // Only need to consider the tmpH when the shift is not 32.
+            Register flag = sel.reg(FAMILY_BOOL);
+            sel.curr.physicalFlag = 0;
+            sel.curr.modFlag = 1;
+            sel.curr.predicate = GEN_PREDICATE_NONE;
+            sel.curr.flagIndex = (uint16_t)flag;
+            sel.CMP(GEN_CONDITIONAL_NEQ, GenRegister::unpacked_uw(shift1Reg), GenRegister::immuw(32), factor);
+            sel.curr.modFlag = 0;
+            sel.curr.predicate = GEN_PREDICATE_NORMAL;
+            sel.SHL(tmpH, tmp[i + 1], shift1);
+            sel.OR(effectData[i], tmpL, tmpH);
+          sel.pop();
+        }
+      sel.pop();
+    }
+
+    void emitUnalignedByteGather(Selection::Opaque &sel,
+                                 const ir::LoadInstruction &insn,
+                                 const uint32_t elemSize,
+                                 GenRegister address,
+                                 ir::BTI bti) const
     {
       using namespace ir;
       const uint32_t valueNum = insn.getValueNum();
@@ -2862,17 +2948,45 @@ namespace gbe
         for(uint32_t i = 0; i < valueNum; i++)
           dst[i] = sel.selReg(insn.getValue(i), getType(family));
 
-        uint32_t tmpRegNum = typeSize*valueNum / 4;
-        vector<GenRegister> tmp(tmpRegNum);
-        vector<GenRegister> tmp2(tmpRegNum);
-        for(uint32_t i = 0; i < tmpRegNum; i++) {
+        uint32_t effectDataNum = typeSize*valueNum / 4;
+        vector<GenRegister> tmp(effectDataNum + 1);
+        vector<GenRegister> tmp2(effectDataNum + 1);
+        vector<GenRegister> effectData(effectDataNum);
+        for(uint32_t i = 0; i < effectDataNum + 1; i++)
           tmp2[i] = tmp[i] = GenRegister::udxgrf(simdWidth, sel.reg(FAMILY_DWORD));
-        }
 
-        readDWord(sel, tmp, tmp2, address, tmpRegNum, insn.getAddressSpace(), bti);
+        GenRegister alignedAddr = GenRegister::udxgrf(simdWidth, sel.reg(FAMILY_DWORD));
+        sel.push();
+          if (simdWidth == 1)
+            sel.curr.noMask = 1;
+          sel.AND(alignedAddr, GenRegister::retype(address, GEN_TYPE_UD), GenRegister::immud(~0x3));
+        sel.pop();
 
-        for(uint32_t i = 0; i < tmpRegNum; i++) {
-          sel.UNPACK_BYTE(dst.data() + i * 4/typeSize, tmp[i], 4/typeSize);
+        uint32_t remainedReg = effectDataNum + 1;
+        uint32_t pos = 0;
+        do {
+          uint32_t width = remainedReg > 4 ? 4 : remainedReg;
+          vector<GenRegister> t1(tmp.begin() + pos, tmp.begin() + pos + width);
+          vector<GenRegister> t2(tmp2.begin() + pos, tmp2.begin() + pos + width);
+          if (pos != 0) {
+            sel.push();
+              if (simdWidth == 1)
+                sel.curr.noMask = 1;
+              sel.ADD(alignedAddr, alignedAddr, GenRegister::immud(pos * 4));
+            sel.pop();
+          }
+          readDWord(sel, t1, t2, alignedAddr, width, insn.getAddressSpace(), bti);
+          remainedReg -= width;
+          pos += width;
+        } while(remainedReg);
+
+        for(uint32_t i = 0; i < effectDataNum; i++)
+          effectData[i] = GenRegister::udxgrf(simdWidth, sel.reg(FAMILY_DWORD));
+
+        getEffectByteData(sel, effectData, tmp, effectDataNum, address, simdWidth);
+
+        for(uint32_t i = 0; i < effectDataNum; i++) {
+          sel.UNPACK_BYTE(dst.data() + i * 4/typeSize, effectData[i], 4/typeSize);
         }
       } else {
         GBE_ASSERT(insn.getValueNum() == 1);
@@ -2954,17 +3068,19 @@ namespace gbe
           this->emitRead64(sel, insn, address, bti);
         else if(insn.isAligned() == true && elemSize == GEN_BYTE_SCATTER_DWORD)
           this->emitDWordGather(sel, insn, address, bti);
-        else {
-          this->emitByteGather(sel, insn, elemSize, address, bti);
-        }
+        else if (insn.isAligned() == true)
+          this->emitAlignedByteGather(sel, insn, elemSize, address, bti);
+        else
+          this->emitUnalignedByteGather(sel, insn, elemSize, address, bti);
       } else {
         if (insn.isAligned() == true && elemSize == GEN_BYTE_SCATTER_QWORD)
           this->emitRead64(sel, insn, address, bti);
         else if (insn.isAligned() == true && elemSize == GEN_BYTE_SCATTER_DWORD)
           this->emitUntypedRead(sel, insn, address, bti);
-        else {
-          this->emitByteGather(sel, insn, elemSize, address, bti);
-        }
+        else if (insn.isAligned())
+          this->emitAlignedByteGather(sel, insn, elemSize, address, bti);
+        else
+          this->emitUnalignedByteGather(sel, insn, elemSize, address, bti);
       }
       return true;
     }
