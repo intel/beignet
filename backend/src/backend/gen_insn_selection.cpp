@@ -2888,36 +2888,42 @@ namespace gbe
                            vector<GenRegister> &effectData,
                            vector<GenRegister> &tmp,
                            uint32_t effectDataNum,
-                           GenRegister addr,
+                           const GenRegister &address,
                            uint32_t simdWidth) const
     {
       using namespace ir;
       GBE_ASSERT(effectData.size() == effectDataNum);
       GBE_ASSERT(tmp.size() == effectDataNum + 1);
       sel.push();
+        Register alignedFlag = sel.reg(FAMILY_BOOL);
+        GenRegister shiftL = GenRegister::udxgrf(simdWidth, sel.reg(FAMILY_DWORD));
+        Register shiftHReg = sel.reg(FAMILY_DWORD);
+        GenRegister shiftH = GenRegister::udxgrf(simdWidth, shiftHReg);
+        sel.push();
+          if (simdWidth == 1)
+            sel.curr.noMask = 1;
+          sel.AND(shiftL, GenRegister::retype(address, GEN_TYPE_UD), GenRegister::immud(0x3));
+          sel.SHL(shiftL, shiftL, GenRegister::immud(0x3));
+          sel.ADD(shiftH, GenRegister::negate(shiftL), GenRegister::immud(32));
+          sel.curr.physicalFlag = 0;
+          sel.curr.modFlag = 1;
+          sel.curr.predicate = GEN_PREDICATE_NONE;
+          sel.curr.flagIndex = (uint16_t)alignedFlag;
+          sel.CMP(GEN_CONDITIONAL_NEQ, GenRegister::unpacked_uw(shiftHReg), GenRegister::immuw(32));
+        sel.pop();
+
         sel.curr.noMask = 1;
         for(uint32_t i = 0; i < effectDataNum; i++) {
           GenRegister tmpH = GenRegister::udxgrf(simdWidth, sel.reg(FAMILY_DWORD));
           GenRegister tmpL = effectData[i];
-          GenRegister shift = GenRegister::udxgrf(simdWidth, sel.reg(FAMILY_DWORD));
-          Register shift1Reg = sel.reg(FAMILY_DWORD);
-          GenRegister shift1 = GenRegister::udxgrf(simdWidth, shift1Reg);
-          GenRegister factor = GenRegister::udxgrf(simdWidth, sel.reg(FAMILY_DWORD));
-          sel.AND(shift, GenRegister::retype(addr, GEN_TYPE_UD), GenRegister::immud(0x3));
-          sel.SHL(shift, shift, GenRegister::immud(0x3));
-          sel.SHR(tmpL, tmp[i], shift);
-          sel.ADD(shift1, GenRegister::negate(shift), GenRegister::immud(32));
+          sel.SHR(tmpL, tmp[i], shiftL);
           sel.push();
-            // Only need to consider the tmpH when the shift is not 32.
-            Register flag = sel.reg(FAMILY_BOOL);
-            sel.curr.physicalFlag = 0;
-            sel.curr.modFlag = 1;
-            sel.curr.predicate = GEN_PREDICATE_NONE;
-            sel.curr.flagIndex = (uint16_t)flag;
-            sel.CMP(GEN_CONDITIONAL_NEQ, GenRegister::unpacked_uw(shift1Reg), GenRegister::immuw(32), factor);
+            // Only need to consider the tmpH when the addr is not aligned.
             sel.curr.modFlag = 0;
+            sel.curr.physicalFlag = 0;
+            sel.curr.flagIndex = (uint16_t)alignedFlag;
             sel.curr.predicate = GEN_PREDICATE_NORMAL;
-            sel.SHL(tmpH, tmp[i + 1], shift1);
+            sel.SHL(tmpH, tmp[i + 1], shiftH);
             sel.OR(effectData[i], tmpL, tmpH);
           sel.pop();
         }
