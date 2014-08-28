@@ -3527,7 +3527,8 @@ handle_write_image:
           emitBatchLoadOrStore(type, elemNum, llvmValues, ptr, addrSpace, elemType, isLoad, binding, dwAligned);
         }
       }
-      else if((dataFamily==ir::FAMILY_WORD && elemNum%2==0) || (dataFamily == ir::FAMILY_BYTE && elemNum%4 == 0)) {
+      else if((dataFamily == ir::FAMILY_WORD && (isLoad || elemNum % 2 == 0)) ||
+              (dataFamily == ir::FAMILY_BYTE && (isLoad || elemNum % 4 == 0))) {
           emitBatchLoadOrStore(type, elemNum, llvmValues, ptr, addrSpace, elemType, isLoad, binding, dwAligned);
       } else {
         for (uint32_t elemID = 0; elemID < elemNum; elemID++) {

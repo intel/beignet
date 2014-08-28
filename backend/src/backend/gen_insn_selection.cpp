@@ -575,10 +575,10 @@ namespace gbe
     void BYTE_SCATTER(Reg addr, Reg src, uint32_t elemSize, uint32_t bti);
     /*! DWord scatter (for constant cache read) */
     void DWORD_GATHER(Reg dst, Reg addr, uint32_t bti);
-    /*! Unpack the uint to char4 */
-    void UNPACK_BYTE(const GenRegister *dst, const GenRegister src, uint32_t elemNum);
-    /*! pack the char4 to uint */
-    void PACK_BYTE(const GenRegister dst, const GenRegister *src, uint32_t elemNum);
+    /*! Unpack the uint to charN */
+    void UNPACK_BYTE(const GenRegister *dst, const GenRegister src, uint32_t elemSize, uint32_t elemNum);
+    /*! pack the charN to uint */
+    void PACK_BYTE(const GenRegister dst, const GenRegister *src, uint32_t elemSize, uint32_t elemNum);
     /*! Extended math function (2 arguments) */
     void MATH(Reg dst, uint32_t function, Reg src0, Reg src1);
     /*! Extended math function (1 argument) */
@@ -1255,16 +1255,18 @@ namespace gbe
     srcVector->reg = &insn->src(0);
   }
 
-  void Selection::Opaque::UNPACK_BYTE(const GenRegister *dst, const GenRegister src, uint32_t elemNum) {
+  void Selection::Opaque::UNPACK_BYTE(const GenRegister *dst, const GenRegister src, uint32_t elemSize, uint32_t elemNum) {
     SelectionInstruction *insn = this->appendInsn(SEL_OP_UNPACK_BYTE, elemNum, 1);
     insn->src(0) = src;
+    insn->extra.elem = 4 / elemSize;
     for(uint32_t i = 0; i < elemNum; i++)
       insn->dst(i) = dst[i];
   }
-  void Selection::Opaque::PACK_BYTE(const GenRegister dst, const GenRegister *src, uint32_t elemNum) {
+  void Selection::Opaque::PACK_BYTE(const GenRegister dst, const GenRegister *src, uint32_t elemSize, uint32_t elemNum) {
     SelectionInstruction *insn = this->appendInsn(SEL_OP_PACK_BYTE, 1, elemNum);
     for(uint32_t i = 0; i < elemNum; i++)
       insn->src(i) = src[i];
+    insn->extra.elem = 4 / elemSize;
     insn->dst(0) = dst;
   }
 
@@ -2862,9 +2864,7 @@ namespace gbe
       for(uint32_t i = 0; i < valueNum; i++)
         dst[i] = sel.selReg(insn.getValue(i), getType(family));
 
-      uint32_t tmpRegNum = typeSize*valueNum / 4;
-      if (tmpRegNum == 0)
-        tmpRegNum = 1;
+      uint32_t tmpRegNum = (typeSize*valueNum + 3) / 4;
       vector<GenRegister> tmp(tmpRegNum);
       vector<GenRegister> tmp2(tmpRegNum);
       vector<Register> tmpReg(tmpRegNum);
@@ -2875,15 +2875,10 @@ namespace gbe
 
       readDWord(sel, tmp, tmp2, address, tmpRegNum, insn.getAddressSpace(), bti);
 
-      if (valueNum > 1) {
-        for(uint32_t i = 0; i < tmpRegNum; i++)
-          sel.UNPACK_BYTE(dst.data() + i * 4/typeSize, tmp[i], 4/typeSize);
-      }
-      else {
-        if (elemSize == GEN_BYTE_SCATTER_WORD)
-          sel.MOV(GenRegister::retype(dst[0], GEN_TYPE_UW), sel.unpacked_uw(tmpReg[0]));
-        else if (elemSize == GEN_BYTE_SCATTER_BYTE)
-          sel.MOV(GenRegister::retype(dst[0], GEN_TYPE_UB), sel.unpacked_ub(tmpReg[0]));
+      for(uint32_t i = 0; i < tmpRegNum; i++) {
+        unsigned int elemNum = (valueNum - i * (4 / typeSize)) > 4/typeSize ?
+                               4/typeSize : (valueNum - i * (4 / typeSize));
+        sel.UNPACK_BYTE(dst.data() + i * 4/typeSize, tmp[i], typeSize, elemNum);
       }
     }
 
@@ -2948,7 +2943,7 @@ namespace gbe
         for(uint32_t i = 0; i < valueNum; i++)
           dst[i] = sel.selReg(insn.getValue(i), getType(family));
 
-        uint32_t effectDataNum = typeSize*valueNum / 4;
+        uint32_t effectDataNum = (typeSize*valueNum + 3) / 4;
         vector<GenRegister> tmp(effectDataNum + 1);
         vector<GenRegister> tmp2(effectDataNum + 1);
         vector<GenRegister> effectData(effectDataNum);
@@ -2986,7 +2981,9 @@ namespace gbe
         getEffectByteData(sel, effectData, tmp, effectDataNum, address, simdWidth);
 
         for(uint32_t i = 0; i < effectDataNum; i++) {
-          sel.UNPACK_BYTE(dst.data() + i * 4/typeSize, effectData[i], 4/typeSize);
+          unsigned int elemNum = (valueNum - i * (4 / typeSize)) > 4/typeSize ?
+                                 4/typeSize : (valueNum - i * (4 / typeSize));
+          sel.UNPACK_BYTE(dst.data() + i * 4/typeSize, effectData[i], typeSize, elemNum);
         }
       } else {
         GBE_ASSERT(insn.getValueNum() == 1);
@@ -3148,7 +3145,7 @@ namespace gbe
         vector<GenRegister> tmp(tmpRegNum);
         for(uint32_t i = 0; i < tmpRegNum; i++) {
           tmp[i] = GenRegister::udxgrf(simdWidth, sel.reg(FAMILY_DWORD));
-          sel.PACK_BYTE(tmp[i], value.data() + i * 4/typeSize, 4/typeSize);
+          sel.PACK_BYTE(tmp[i], value.data() + i * 4/typeSize, typeSize, 4/typeSize);
         }
 
         sel.UNTYPED_WRITE(addr, tmp.data(), tmpRegNum, bti);

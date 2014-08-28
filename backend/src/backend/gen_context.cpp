@@ -1693,7 +1693,7 @@ namespace gbe
   void GenContext::emitUnpackByteInstruction(const SelectionInstruction &insn) {
     const GenRegister src = ra->genReg(insn.src(0));
     for(uint32_t i = 0; i < insn.dstNum; i++) {
-      p->MOV(ra->genReg(insn.dst(i)), GenRegister::splitReg(src, insn.dstNum, i));
+      p->MOV(ra->genReg(insn.dst(i)), GenRegister::splitReg(src, insn.extra.elem, i));
     }
   }
 
@@ -1702,12 +1702,12 @@ namespace gbe
     p->push();
     if(simdWidth == 8) {
       for(uint32_t i = 0; i < insn.srcNum; i++)
-        p->MOV(GenRegister::splitReg(dst, insn.srcNum, i), ra->genReg(insn.src(i)));
+        p->MOV(GenRegister::splitReg(dst, insn.extra.elem, i), ra->genReg(insn.src(i)));
     } else {
       // when destination expands two registers, the source must span two registers.
       p->curr.execWidth = 8;
       for(uint32_t i = 0; i < insn.srcNum; i++) {
-        GenRegister dsti = GenRegister::splitReg(dst, insn.srcNum, i);
+        GenRegister dsti = GenRegister::splitReg(dst, insn.extra.elem, i);
         GenRegister src = ra->genReg(insn.src(i));
 
         p->curr.quarterControl = 0;
