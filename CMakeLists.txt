@@ -94,18 +94,18 @@ ELSE(DRM_INTEL_FOUND)
   MESSAGE(STATUS "Looking for DRM Intel - not found")
 ENDIF(DRM_INTEL_FOUND)
 
+# Threads
+Find_Package(Threads)
+
+IF(X11_FOUND)
 # OpenGL (not use cmake helper)
-pkg_check_modules(OPENGL REQUIRED gl)
+pkg_check_modules(OPENGL gl)
 IF(OPENGL_FOUND)
   INCLUDE_DIRECTORIES(${OPENGL_INCLUDE_DIRS})
   MESSAGE(STATUS "Looking for OpenGL - found at ${OPENGL_PREFIX}")
 ELSE(OPENGL_FOUND)
   MESSAGE(STATUS "Looking for OpenGL - not found")
 ENDIF(OPENGL_FOUND)
-
-
-# Threads
-Find_Package(Threads)
 
 # Xext
 pkg_check_modules(XEXT REQUIRED xext)
@@ -124,6 +124,7 @@ IF(XFIXES_FOUND)
 ELSE(XFIXES_FOUND)
   MESSAGE(STATUS "Looking for Xfixes - not found")
 ENDIF(XFIXES_FOUND)
+ENDIF(X11_FOUND)
 
 pkg_check_modules(EGL egl)
 IF(EGL_FOUND)
