@@ -82,9 +82,16 @@ set(OPENCL_SRC
     intel/intel_gpgpu.c
     intel/intel_batchbuffer.c
     intel/intel_driver.c
-    x11/dricommon.c 
-    x11/va_dri2.c
     performance.c)
+
+if (X11_FOUND)
+  set(CMAKE_CXX_FLAGS "-DHAS_X11 ${CMAKE_CXX_FLAGS}")
+  set(CMAKE_C_FLAGS "-DHAS_X11 ${CMAKE_C_FLAGS}")
+  set(OPENCL_SRC
+      ${OPENCL_SRC}
+      x11/dricommon.c
+      x11/va_dri2.c)
+endif (X11_FOUND)
 
 if (EGL_FOUND AND MESA_SOURCE_FOUND)
 set (OPENCL_SRC ${OPENCL_SRC} cl_mem_gl.c cl_gl_api.c x11/mesa_egl_extension.c x11/mesa_egl_res_share.c intel/intel_dri_resource_sharing.c)

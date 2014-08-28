@@ -52,12 +52,15 @@
 #include "x11/mesa_egl_extension.h"
 #endif
 
+#ifdef HAS_X11
+#include <X11/Xlibint.h>
+#include "x11/dricommon.h"
+#endif
+
 #include "intel_driver.h"
 #include "intel_gpgpu.h"
 #include "intel_batchbuffer.h"
 #include "intel_bufmgr.h"
-#include <X11/Xlibint.h>
-#include "x11/dricommon.h"
 #include "cl_mem.h"
 
 #include <assert.h>
@@ -197,7 +200,9 @@ static cl_int
 intel_driver_open(intel_driver_t *intel, cl_context_prop props)
 {
   int cardi;
+#ifdef HAS_X11
   char *driver_name;
+#endif
   if (props != NULL
       && props->gl_type != CL_GL_NOSHARE
       && props->gl_type != CL_GL_GLX_DISPLAY
@@ -206,6 +211,7 @@ intel_driver_open(intel_driver_t *intel, cl_context_prop props)
     return CL_INVALID_OPERATION;
   }
 
+#ifdef HAS_X11
   intel->x11_display = XOpenDisplay(NULL);
 
   if(intel->x11_display) {
@@ -218,6 +224,7 @@ intel_driver_open(intel_driver_t *intel, cl_context_prop props)
     else
       fprintf(stderr, "X server found. dri2 connection failed! \n");
   }
+#endif
 
   if(!intel_driver_is_active(intel)) {
     char card_name[20];
@@ -253,8 +260,10 @@ intel_driver_open(intel_driver_t *intel, cl_context_prop props)
 static void
 intel_driver_close(intel_driver_t *intel)
 {
+#ifdef HAS_X11
   if(intel->dri_ctx) dri_state_release(intel->dri_ctx);
   if(intel->x11_display) XCloseDisplay(intel->x11_display);
+#endif
   if(intel->need_close) {
     close(intel->fd);
     intel->need_close = 0;
@@ -283,6 +292,7 @@ intel_driver_is_active(intel_driver_t *driver) {
   return driver->fd >= 0;
 }
 
+#ifdef HAS_X11
 LOCAL int 
 intel_driver_init_shared(intel_driver_t *driver, dri_state_t *state)
 {
@@ -293,6 +303,7 @@ intel_driver_init_shared(intel_driver_t *driver, dri_state_t *state)
   driver->need_close = 0;
   return 1;
 }
+#endif
 
 LOCAL int
 intel_driver_init_master(intel_driver_t *driver, const char* dev_name)
