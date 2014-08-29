@@ -18,11 +18,10 @@ Prerequisite
 
 The project depends on the following external libaries:
 
-- Several X components (XLib, Xfixes, Xext)
 - libdrm libraries (libdrm and libdrm\_intel)
 - Various LLVM components
-- The compiler backend itself (libgbe)
 - Mesa git master version built with gbm enabled to support extension cl\_khr\_gl\_sharing.
+- If run with X server, beignet needs XLib, Xfixes and Xext installed. Otherwise, no X11 dependency.
 
 And if you want to work with the standard ICD libOpenCL.so, then you need
 two more packages (the following package name is for Ubuntu):
