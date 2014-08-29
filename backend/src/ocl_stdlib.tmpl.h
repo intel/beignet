@@ -3731,7 +3731,9 @@ INLINE_OVERLOADABLE float pown(float x, int n) {
     return 1;
   return powr(x, n);
 }
-INLINE_OVERLOADABLE float rootn(float x, int n) {
+
+INLINE_OVERLOADABLE float internal_rootn(float x, int n, const bool isFastpath)
+{
   float ax,re;
   int sign = 0;
   if( n == 0 )return NAN;
@@ -3758,10 +3760,17 @@ INLINE_OVERLOADABLE float rootn(float x, int n) {
   ax = __gen_ocl_fabs(x);
   if(x <0.0f && (n&1))
     sign = 1;
-  re = __gen_ocl_internal_pow(ax,1.f/n);
+  if (isFastpath)
+    re = __gen_ocl_pow(ax,1.f/n);
+  else
+    re = __gen_ocl_internal_pow(ax,1.f/n);
   if(sign)
     re = -re;
   return re;
+}
+
+INLINE_OVERLOADABLE float rootn(float x, int n) {
+  return internal_rootn(x, n, 0);
 }
 
 /////////////////////////////////////////////////////////////////////////////
@@ -5082,7 +5091,7 @@ INLINE_OVERLOADABLE float __gen_ocl_internal_fastpath_remainder (float x, float 
 
 INLINE_OVERLOADABLE float __gen_ocl_internal_fastpath_rootn(float x, int n)
 {
-    return __gen_ocl_pow(x, 1.f / n);
+  return internal_rootn(x, n, 1);
 }
 
 INLINE_OVERLOADABLE float __gen_ocl_internal_fastpath_sin (float x)
