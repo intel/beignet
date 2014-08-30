@@ -3157,8 +3157,8 @@ error:
   if (strcmp(#x, func_name) == 0)       \
     return (void *)x;
 
-void*
-clGetExtensionFunctionAddress(const char *func_name)
+static void*
+internal_clGetExtensionFunctionAddress(const char *func_name)
 {
   if (func_name == NULL)
     return NULL;
@@ -3179,6 +3179,21 @@ clGetExtensionFunctionAddress(const char *func_name)
   EXTFUNC(clCreateImageFromLibvaIntel)
   EXTFUNC(clGetMemObjectFdIntel)
   return NULL;
+}
+
+void*
+clGetExtensionFunctionAddress(const char *func_name)
+{
+  return internal_clGetExtensionFunctionAddress(func_name);
+}
+
+void*
+clGetExtensionFunctionAddressForPlatform(cl_platform_id platform,
+                              const char *func_name)
+{
+  if (UNLIKELY(platform != NULL && platform != intel_platform))
+    return NULL;
+  return internal_clGetExtensionFunctionAddress(func_name);
 }
 
 #undef EXTFUNC

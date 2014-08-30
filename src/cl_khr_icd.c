@@ -154,7 +154,7 @@ struct _cl_icd_dispatch const cl_khr_icd_dispatch = {
   clEnqueueMigrateMemObjects,
   clEnqueueMarkerWithWaitList,
   clEnqueueBarrierWithWaitList,
-  CL_1_2_NOTYET(clGetExtensionFunctionAddressForPlatform),
+  clGetExtensionFunctionAddressForPlatform,
   CL_GL_INTEROP(clCreateFromGLTexture),
   (void *) NULL,
   (void *) NULL,
