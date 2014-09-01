@@ -491,38 +491,6 @@ namespace gbe {
 
   /*********************** End of Program class member function *************************/
 
-#define REDEF_MATH_FUNC(x) "#ifdef "#x"\n#undef "#x"\n#endif\n#define "#x" __gen_ocl_internal_fastpath_"#x"\n"
-  std::string ocl_mathfunc_fastpath_str =
-    REDEF_MATH_FUNC(acosh)
-    REDEF_MATH_FUNC(asinh)
-    REDEF_MATH_FUNC(atanh)
-    REDEF_MATH_FUNC(cbrt)
-    REDEF_MATH_FUNC(cos)
-    REDEF_MATH_FUNC(cosh)
-    REDEF_MATH_FUNC(cospi)
-    REDEF_MATH_FUNC(exp)
-    REDEF_MATH_FUNC(exp10)
-    REDEF_MATH_FUNC(expm1)
-    REDEF_MATH_FUNC(fmod)
-    REDEF_MATH_FUNC(hypot)
-    REDEF_MATH_FUNC(ilogb)
-    REDEF_MATH_FUNC(ldexp)
-    REDEF_MATH_FUNC(log)
-    REDEF_MATH_FUNC(log2)
-    REDEF_MATH_FUNC(log10)
-    REDEF_MATH_FUNC(log1p)
-    REDEF_MATH_FUNC(logb)
-    REDEF_MATH_FUNC(remainder)
-    REDEF_MATH_FUNC(rootn)
-    REDEF_MATH_FUNC(sin)
-    REDEF_MATH_FUNC(sincos)
-    REDEF_MATH_FUNC(sinh)
-    REDEF_MATH_FUNC(sinpi)
-    REDEF_MATH_FUNC(tan)
-    REDEF_MATH_FUNC(tanh)
-    "\n"
-  ;
-
   static void programDelete(gbe_program gbeProgram) {
     gbe::Program *program = (gbe::Program*)(gbeProgram);
     GBE_SAFE_DELETE(program);
@@ -535,38 +503,21 @@ namespace gbe {
 
 #ifdef GBE_COMPILER_AVAILABLE
   BVAR(OCL_OUTPUT_BUILD_LOG, false);
-  SVAR(OCL_PCH_PATH, PCH_OBJECT_DIR);
-  SVAR(OCL_PCM_PATH, PCM_OBJECT_DIR);
 
-  static bool buildModuleFromSource(const char* input, llvm::Module** out_module, llvm::LLVMContext* llvm_ctx, std::string options,
-                                    size_t stringSize, char *err, size_t *errSize) {
+  static bool buildModuleFromSource(const char* input, llvm::Module** out_module, llvm::LLVMContext* llvm_ctx,
+                                    std::vector<std::string>& options, size_t stringSize, char *err,
+                                    size_t *errSize) {
     // Arguments to pass to the clang frontend
     vector<const char *> args;
     bool bFastMath = false;
 
-    vector<std::string> useless; //hold substrings to avoid c_str free
-    size_t start = 0, end = 0;
-    /* FIXME
-       clang unsupport options:
-       -cl-denorms-are-zero, -cl-strict-aliasing
-       -cl-no-signed-zeros, -cl-fp32-correctly-rounded-divide-sqrt
-       all support options, refer to clang/include/clang/Driver/Options.inc
-    */
-    //Handle -cl-opt-disable in llvmToGen, skip here
-    const std::string unsupportedOptions("-cl-denorms-are-zero, -cl-strict-aliasing, -cl-opt-disable,"
-                                         "-cl-no-signed-zeros, -cl-fp32-correctly-rounded-divide-sqrt");
-    while (end != std::string::npos) {
-      end = options.find(' ', start);
-      std::string str = options.substr(start, end - start);
-      start = end + 1;
-      if(str.size() == 0)
-        continue;
-      if(str == "-cl-fast-relaxed-math") bFastMath = true;
-      if(unsupportedOptions.find(str) != std::string::npos)
-        continue;
-      useless.push_back(str);
-      args.push_back(str.c_str());
+    for (auto &s : options) {
+      args.push_back(s.c_str());
     }
+
+    args.push_back("-cl-kernel-arg-info");
+    args.push_back("-Dcl_khr_fp64");
+
     args.push_back("-mllvm");
     args.push_back("-inline-threshold=200000");
 #ifdef GEN7_SAMPLER_CLAMP_BORDER_WORKAROUND
@@ -590,28 +541,21 @@ namespace gbe {
 #endif /* LLVM_VERSION_MINOR <= 2 */
     args.push_back(input);
 
+    args.push_back("-ffp-contract=off");
+
     // The compiler invocation needs a DiagnosticsEngine so it can report problems
     std::string ErrorString;
     llvm::raw_string_ostream ErrorInfo(ErrorString);
     llvm::IntrusiveRefCntPtr<clang::DiagnosticOptions> DiagOpts = new clang::DiagnosticOptions();
     DiagOpts->ShowCarets = false;
     DiagOpts->ShowPresumedLoc = true;
-#if LLVM_VERSION_MINOR <= 1
-    args.push_back("-triple");
-    args.push_back("ptx32");
 
-    clang::TextDiagnosticPrinter *DiagClient =
-                             new clang::TextDiagnosticPrinter(ErrorInfo, *DiagOpts)
-    llvm::IntrusiveRefCntPtr<clang::DiagnosticIDs> DiagID(new clang::DiagnosticIDs());
-    clang::DiagnosticsEngine Diags(DiagID, DiagClient);
-#else
-    args.push_back("-ffp-contract=off");
-
+  
     clang::TextDiagnosticPrinter *DiagClient =
                              new clang::TextDiagnosticPrinter(ErrorInfo, &*DiagOpts);
     llvm::IntrusiveRefCntPtr<clang::DiagnosticIDs> DiagID(new clang::DiagnosticIDs());
     clang::DiagnosticsEngine Diags(DiagID, &*DiagOpts, DiagClient);
-#endif /* LLVM_VERSION_MINOR <= 1 */
+
     // Create the compiler invocation
     std::unique_ptr<clang::CompilerInvocation> CI(new clang::CompilerInvocation);
     clang::CompilerInvocation::CreateFromArgs(*CI,
@@ -623,11 +567,7 @@ namespace gbe {
     clang::CompilerInstance Clang;
     Clang.setInvocation(CI.release());
     // Get ready to report problems
-#if LLVM_VERSION_MINOR <= 2
-    Clang.createDiagnostics(args.size(), &args[0]);
-#else
     Clang.createDiagnostics(DiagClient, false);
-#endif /* LLVM_VERSION_MINOR <= 2 */
 
     Clang.getDiagnosticOpts().ShowCarets = false;
     if (!Clang.hasDiagnostics())
@@ -636,10 +576,7 @@ namespace gbe {
     // Set Language
     clang::LangOptions & lang_opts = Clang.getLangOpts();
     lang_opts.OpenCL = 1;
-
-    clang::PreprocessorOptions& prep_opt = Clang.getPreprocessorOpts();
-    prep_opt.DisablePCHValidation = 1;
-
+    
     //llvm flags need command line parsing to take effect
     if (!Clang.getFrontendOpts().LLVMArgs.empty()) {
       unsigned NumArgs = Clang.getFrontendOpts().LLVMArgs.size();
@@ -652,32 +589,17 @@ namespace gbe {
       llvm::cl::ParseCommandLineOptions(NumArgs + 1, Args);
       delete [] Args;
     }
-
+  
     // Create an action and make the compiler instance carry it out
     std::unique_ptr<clang::CodeGenAction> Act(new clang::EmitLLVMOnlyAction(llvm_ctx));
-
-    std::string dirs = OCL_PCM_PATH;
-    std::string pcmFileName;
-    std::istringstream idirs(dirs);
-    bool findPcm = false;
-
-    while (getline(idirs, pcmFileName, ':')) {
-      if(access(pcmFileName.c_str(), R_OK) == 0) {
-        findPcm |= true;
-        break;
-      }
-    }
-
-    GBE_ASSERT(findPcm && "Could not find pre compiled module library.\n");
-
-    Clang.getCodeGenOpts().LinkBitcodeFile = pcmFileName;
+    
     auto retVal = Clang.ExecuteAction(*Act);
 
     if (err != NULL) {
       GBE_ASSERT(errSize != NULL);
       *errSize = ErrorString.copy(err, stringSize - 1, 0);
     }
-
+  
     if (err == NULL || OCL_OUTPUT_BUILD_LOG) {
       // flush the error messages to the errs() if there is no
       // error string buffer.
@@ -693,16 +615,61 @@ namespace gbe {
     return true;
   }
 
-  extern std::string ocl_stdlib_str;
 
-  BVAR(OCL_USE_PCH, true);
+  SVAR(OCL_HEADER_FILE_DIR, OCL_HEADER_DIR);
+
   static void processSourceAndOption(const char *source,
                                      const char *options,
                                      const char *temp_header_path,
-                                     std::string& clOpt,
+                                     std::vector<std::string>& clOpt,
                                      std::string& clName,
                                      int& optLevel)
   {
+    size_t start = 0, end = 0;
+
+    std::string hdirs = OCL_HEADER_FILE_DIR;
+    std::istringstream hidirs(hdirs);
+    std::string headerFilePath;
+    bool findOcl = false;
+
+    while (getline(hidirs, headerFilePath, ':')) {
+      std::string oclDotHName = headerFilePath + "/ocl.h";
+      if(access(oclDotHName.c_str(), R_OK) == 0) {
+        findOcl = true;
+        break;
+      }
+    }
+    assert(findOcl);
+    std::string includePath  = "-I" + headerFilePath;
+    clOpt.push_back(includePath);
+
+    if (options) {
+      char *str = (char *)malloc(sizeof(char) * (strlen(options) + 1));
+      memcpy(str, options, strlen(options) + 1);
+      std::string optionStr(str);
+      const std::string unsupportedOptions("-cl-denorms-are-zero, -cl-strict-aliasing, -cl-opt-disable,"
+                       "-cl-no-signed-zeros, -cl-fp32-correctly-rounded-divide-sqrt");
+      while (end != std::string::npos) {
+        end = optionStr.find(' ', start);
+        std::string str = optionStr.substr(start, end - start);
+        start = end + 1;
+        if(str.size() == 0)
+          continue;
+
+        if(unsupportedOptions.find(str) != std::string::npos)
+          continue;
+
+        clOpt.push_back(str);
+      }
+      free(str);
+    }
+
+    //for clCompilerProgram usage.
+    if(temp_header_path){
+      clOpt.push_back("-I");
+      clOpt.push_back(temp_header_path);
+    }
+
     char clStr[] = "/tmp/XXXXXX.cl";
     int clFd = mkstemps(clStr, 3);
     clName = std::string(clStr);
@@ -710,120 +677,8 @@ namespace gbe {
     FILE *clFile = fdopen(clFd, "w");
     FATAL_IF(clFile == NULL, "Failed to open temporary file");
 
-    bool usePCH = OCL_USE_PCH;
-    bool findPCH = false;
-
-    /* Because our header file is so big, we want to avoid recompile the header from
-       scratch. We use the PCH support of Clang to save the huge compiling time.
-       We just use the most general build opt to build the PCH header file, so if
-       user pass new build options here, the PCH can not pass the Clang's compitable
-       validating. Clang will do three kinds of compatible check: Language Option,
-       Target Option and Preprocessing Option. Other kinds of options such as the
-       CodeGen options will not affect the AST result, so no need to check.
-
-       According to OpenCL 1.1's spec, the CL build options:
-       -D name=definition
-       If the definition is not used in our header, it is compitable
-
-       -cl-single-precision-constant
-       -cl-denorms-are-zero
-       -cl-std=
-       Language options, really affect.
-
-       -cl-opt-disable
-       -cl-mad-enable
-       -cl-no-signed-zeros
-       -cl-unsafe-math-optimizations
-       -cl-finite-math-only
-       -cl-fast-relaxed-math
-       CodeGen options, not affect
-
-       -Werror
-       -w
-       Our header should not block the compiling because of warning.
-
-       So we just disable the PCH validation of Clang and do the judgement by ourself. */
-
-    /* We always add -cl-kernel-arg-info to the options. This option just generate the arg
-       information for the backend, no other side effect and does not have performance issue. */
-    if (!options || !strstr(const_cast<char *>(options), "-cl-kernel-arg-info"))
-      clOpt += "-cl-kernel-arg-info ";
-
-    if (options) {
-      char *p;
-      /* FIXME: Though we can disable the pch valid check, and load pch successfully,
-         but these language opts and pre-defined macro will still generate the diag msg
-         to the diag engine of the Clang and cause the Clang to report error.
-         We filter them all here to avoid these. */
-      const char * incompatible_opts[] = {
-          "-cl-single-precision-constant",
-//        "-cl-denorms-are-zero",
-          "-cl-fast-relaxed-math",
-          "-cl-std=",
-      };
-      const char * incompatible_defs[] = {
-          "GET_FLOAT_WORD",
-          "__NV_CL_C_VERSION",
-          "GEN7_SAMPLER_CLAMP_BORDER_WORKAROUND"
-      };
-
-      for (unsigned int i = 0; i < sizeof(incompatible_opts)/sizeof(char *); i++ ) {
-        p = strstr(const_cast<char *>(options), incompatible_opts[i]);
-        if (p) {
-          usePCH = false;
-          break;
-        }
-      }
-
-      if (usePCH) {
-        for (unsigned int i = 0; i < sizeof(incompatible_defs)/sizeof(char *); i++ ) {
-          p = strstr(const_cast<char *>(options), incompatible_defs[i]);
-          if (p) {
-            usePCH = false;
-            break;
-          }
-        }
-      }
-
-      p = strstr(const_cast<char *>(options), "-cl-opt-disable");
-      if (p)
-        optLevel = 0;
-
-      clOpt += options;
-    }
-
-    std::string dirs = OCL_PCH_PATH;
-    std::istringstream idirs(dirs);
-    std::string pchFileName;
-
-    while (getline(idirs, pchFileName, ':')) {
-      if(access(pchFileName.c_str(), R_OK) == 0) {
-        findPCH = true;
-        break;
-      }
-    }
-
-    if (usePCH && findPCH) {
-      clOpt += " -include-pch ";
-      clOpt += pchFileName;
-      clOpt += " ";
-    } else
-      fwrite(ocl_stdlib_str.c_str(), strlen(ocl_stdlib_str.c_str()), 1, clFile);
-
-    //for clCompilerProgram usage.
-    if(temp_header_path){
-      clOpt += " -I ";
-      clOpt += temp_header_path;
-      clOpt += " ";
-    }
-
-    if (!OCL_STRICT_CONFORMANCE) {
-        fwrite(ocl_mathfunc_fastpath_str.c_str(), strlen(ocl_mathfunc_fastpath_str.c_str()), 1, clFile);
-    }
-
-    // reset the file number in case we have inserted something into the kernel
-    std::string resetFileNum = "#line 1\n";
-    fwrite(resetFileNum.c_str(), strlen(resetFileNum.c_str()), 1, clFile);
+    clOpt.push_back("-include");
+    clOpt.push_back("ocl.h");
 
     // Write the source to the cl file
     fwrite(source, strlen(source), 1, clFile);
@@ -838,7 +693,7 @@ namespace gbe {
                                           size_t *errSize)
   {
     int optLevel = 1;
-    std::string clOpt;
+    std::vector<std::string> clOpt;
     std::string clName;
     processSourceAndOption(source, options, NULL, clOpt, clName, optLevel);
 
@@ -846,12 +701,11 @@ namespace gbe {
     // will delete the module and act in GenProgram::CleanLlvmResource().
     llvm::Module * out_module;
     llvm::LLVMContext* llvm_ctx = new llvm::LLVMContext;
-
     static std::mutex llvm_mutex;
     if (!llvm::llvm_is_multithreaded())
       llvm_mutex.lock();
 
-    if (buildModuleFromSource(clName.c_str(), &out_module, llvm_ctx, clOpt.c_str(),
+    if (buildModuleFromSource(clName.c_str(), &out_module, llvm_ctx, clOpt,
                               stringSize, err, errSize)) {
     // Now build the program from llvm
       size_t clangErrSize = 0;
@@ -890,7 +744,7 @@ namespace gbe {
                                           size_t *errSize)
   {
     int optLevel = 1;
-    std::string clOpt;
+    std::vector<std::string> clOpt;
     std::string clName;
     processSourceAndOption(source, options, temp_header_path, clOpt, clName, optLevel);
 
@@ -900,7 +754,7 @@ namespace gbe {
     //for some functions, so we use global context now, need switch to new context later.
     llvm::Module * out_module;
     llvm::LLVMContext* llvm_ctx = &llvm::getGlobalContext();
-    if (buildModuleFromSource(clName.c_str(), &out_module, llvm_ctx, clOpt.c_str(),
+    if (buildModuleFromSource(clName.c_str(), &out_module, llvm_ctx, clOpt,
                               stringSize, err, errSize)) {
     // Now build the program from llvm
       if (err != NULL) {

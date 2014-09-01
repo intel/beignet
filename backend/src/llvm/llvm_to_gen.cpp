@@ -72,10 +72,8 @@
 
 namespace gbe
 {
-  BVAR(OCL_OUTPUT_LLVM, false);
   BVAR(OCL_OUTPUT_CFG, false);
   BVAR(OCL_OUTPUT_CFG_ONLY, false);
-  BVAR(OCL_OUTPUT_LLVM_BEFORE_EXTRA_PASS, false);
   using namespace llvm;
 
   void runFuntionPass(Module &mod, TargetLibraryInfo *libraryInfo)
@@ -177,28 +175,67 @@ namespace gbe
     MPM.run(mod);
   }
 
+
+#if LLVM_VERSION_MAJOR == 3 && LLVM_VERSION_MINOR >= 5
+#define OUTPUT_BITCODE(STAGE, MOD)  do {         \
+   llvm::PassManager passes__;                   \
+   if (OCL_OUTPUT_LLVM_##STAGE) {                \
+     passes__.add(createPrintModulePass(*o));    \
+     passes__.run(MOD);                          \
+   }                                             \
+ }while(0)
+#else
+#define OUTPUT_BITCODE(STAGE, MOD)  do {         \
+   llvm::PassManager passes__;                   \
+   if (OCL_OUTPUT_LLVM_##STAGE) {                \
+     passes__.add(createPrintModulePass(&*o));   \
+     passes__.run(MOD);                          \
+   }                                             \
+ }while(0)
+#endif
+
+  BVAR(OCL_OUTPUT_LLVM_BEFORE_LINK, false);
+  BVAR(OCL_OUTPUT_LLVM_AFTER_LINK, false);
+  BVAR(OCL_OUTPUT_LLVM_AFTER_GEN, false);
+
   bool llvmToGen(ir::Unit &unit, const char *fileName,const void* module, int optLevel)
   {
     std::string errInfo;
     std::unique_ptr<llvm::raw_fd_ostream> o = NULL;
-    if (OCL_OUTPUT_LLVM_BEFORE_EXTRA_PASS || OCL_OUTPUT_LLVM)
+    if (OCL_OUTPUT_LLVM_BEFORE_LINK || OCL_OUTPUT_LLVM_AFTER_LINK || OCL_OUTPUT_LLVM_AFTER_GEN)
       o = std::unique_ptr<llvm::raw_fd_ostream>(new llvm::raw_fd_ostream(fileno(stdout), false));
 
     // Get the module from its file
     llvm::SMDiagnostic Err;
+
+    Module* cl_mod = NULL;
+    if (module) {
+      cl_mod = reinterpret_cast<Module*>(const_cast<void*>(module));
+    } else if (fileName){
+      llvm::LLVMContext& c = llvm::getGlobalContext();
+      cl_mod = ParseIRFile(fileName, Err, c);
+    }
+
+    if (!cl_mod) return false;
+
+    OUTPUT_BITCODE(BEFORE_LINK, (*cl_mod));
+
     std::unique_ptr<Module> M;
 
-    if(fileName){
-      // only when module is null, Get the global LLVM context
-      llvm::LLVMContext& c = llvm::getGlobalContext();
-      M.reset(ParseIRFile(fileName, Err, c));
-      if (M.get() == 0) return false;
-    }
-    Module &mod = (module!=NULL)?*(llvm::Module*)module:*M.get();
+    /* Before do any thing, we first filter in all CL functions in bitcode. */ 
+    M.reset(runBitCodeLinker(cl_mod));
+    if (!module)
+      delete cl_mod;
+    if (M.get() == 0)
+      return false;
+
+    Module &mod = *M.get();
 
     Triple TargetTriple(mod.getTargetTriple());
     TargetLibraryInfo *libraryInfo = new TargetLibraryInfo(TargetTriple);
     libraryInfo->disableAllFunctions();
+
+    OUTPUT_BITCODE(AFTER_LINK, mod);
 
     runFuntionPass(mod, libraryInfo);
     runModulePass(mod, libraryInfo, optLevel);
@@ -210,12 +247,6 @@ namespace gbe
     passes.add(new DataLayout(&mod));
 #endif
     // Print the code before further optimizations
-    if (OCL_OUTPUT_LLVM_BEFORE_EXTRA_PASS)
-#if LLVM_VERSION_MAJOR == 3 && LLVM_VERSION_MINOR >= 5
-      passes.add(createPrintModulePass(*o));
-#else
-      passes.add(createPrintModulePass(&*o));
-#endif
     passes.add(createIntrinsicLoweringPass());
     passes.add(createFunctionInliningPass(200000));
     passes.add(createScalarReplAggregatesPass()); // Break up allocas
@@ -237,15 +268,10 @@ namespace gbe
     if(OCL_OUTPUT_CFG_ONLY)
       passes.add(createCFGOnlyPrinterPass());
     passes.add(createGenPass(unit));
+    passes.run(mod);
 
     // Print the code extra optimization passes
-    if (OCL_OUTPUT_LLVM)
-#if LLVM_VERSION_MAJOR == 3 && LLVM_VERSION_MINOR >= 5
-      passes.add(createPrintModulePass(*o));
-#else
-      passes.add(createPrintModulePass(&*o));
-#endif
-    passes.run(mod);
+    OUTPUT_BITCODE(AFTER_GEN, mod);
 
     const ir::Unit::FunctionSet& fs = unit.getFunctionSet();
     ir::Unit::FunctionSet::const_iterator iter = fs.begin();
