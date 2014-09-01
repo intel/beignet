@@ -616,6 +616,7 @@ namespace gbe {
   }
 
 
+  SVAR(OCL_PCH_PATH, OCL_PCH_OBJECT);
   SVAR(OCL_HEADER_FILE_DIR, OCL_HEADER_DIR);
 
   static void processSourceAndOption(const char *source,
@@ -625,6 +626,10 @@ namespace gbe {
                                      std::string& clName,
                                      int& optLevel)
   {
+    std::string dirs = OCL_PCH_PATH;
+    std::istringstream idirs(dirs);
+    std::string pchFileName;
+    bool findPCH = false;
     size_t start = 0, end = 0;
 
     std::string hdirs = OCL_HEADER_FILE_DIR;
@@ -670,6 +675,13 @@ namespace gbe {
       clOpt.push_back(temp_header_path);
     }
 
+    while (getline(idirs, pchFileName, ':')) {
+      if(access(pchFileName.c_str(), R_OK) == 0) {
+        findPCH = true;
+        break;
+      }
+    }
+
     char clStr[] = "/tmp/XXXXXX.cl";
     int clFd = mkstemps(clStr, 3);
     clName = std::string(clStr);
@@ -677,8 +689,14 @@ namespace gbe {
     FILE *clFile = fdopen(clFd, "w");
     FATAL_IF(clFile == NULL, "Failed to open temporary file");
 
-    clOpt.push_back("-include");
-    clOpt.push_back("ocl.h");
+    if (!findPCH) {
+      clOpt.push_back("-include");
+      clOpt.push_back("ocl.h");
+    } else {
+      clOpt.push_back("-fno-validate-pch");
+      clOpt.push_back("-include-pch");
+      clOpt.push_back(pchFileName);
+    }
 
     // Write the source to the cl file
     fwrite(source, strlen(source), 1, clFile);
