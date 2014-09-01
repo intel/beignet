@@ -1,0 +1,31 @@
+##integer
+ugentype abs (gentype x)
+ugentype abs_diff (gentype x, gentype y)
+gentype add_sat (gentype x,  gentype y)
+gentype hadd (gentype x,  gentype y)
+gentype rhadd (gentype x, gentype y)
+gentype clamp (gentype x, gentype minval, gentype maxval)
+gentype clamp (gentype x, sgentype minval, sgentype maxval)
+gentype clz (gentype x)
+gentype mad_hi (gentype a, gentype b, gentype c)
+gentype mad_sat (gentype a, gentype b, gentype c)
+gentype max (gentype x,  gentype y)
+gentype max (gentype x,  sgentype y)
+gentype min (gentype x,  gentype y)
+gentype min (gentype x,  sgentype y)
+gentype mul_hi (gentype x,  gentype y)
+gentype rotate (gentype v,  gentype i)
+gentype sub_sat (gentype x,  gentype y)
+shortn upsample (charn hi, ucharn lo)
+ushortn upsample (ucharn hi, ucharn lo)
+intn upsample (shortn hi, ushortn lo)
+uintn upsample (ushortn hi, ushortn lo)
+longn upsample (intn hi, uintn lo)
+ulongn upsample (uintn hi, uintn lo)
+
+# XXX not implemented
+#gentype popcount (gentype x)
+
+##fast_integer
+gentype mad24 (gentype x, gentype y, gentype z)
+gentype mul24 (gentype x, gentype y)
