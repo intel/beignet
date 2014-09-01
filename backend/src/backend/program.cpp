@@ -1000,7 +1000,7 @@ namespace gbe {
 
     switch (value) {
       case GBE_GET_ARG_INFO_ADDRSPACE:
-        return (void*)((ulong)info->addrSpace);
+        return (void*)((unsigned long)info->addrSpace);
       case GBE_GET_ARG_INFO_TYPE:
         return (void *)(info->typeName.c_str());
       case GBE_GET_ARG_INFO_ACCESS:
