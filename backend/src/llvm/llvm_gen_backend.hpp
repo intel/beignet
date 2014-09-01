@@ -98,6 +98,9 @@ namespace gbe
   /*! Passer the printf function call. */
   llvm::FunctionPass* createPrintfParserPass();
 
+  /*! Add all the function call of ocl to our bitcode. */
+  llvm::Module* runBitCodeLinker(llvm::Module *mod);
+
   void* getPrintfInfo(llvm::CallInst* inst);
 } /* namespace gbe */
 
