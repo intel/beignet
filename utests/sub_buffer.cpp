@@ -128,7 +128,7 @@ void sub_buffer_check(void)
         }
     }
 
-
+    clReleaseMemObject(main_buf);
     free(main_buf_content);
 }
 

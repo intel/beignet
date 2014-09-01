@@ -1854,8 +1854,8 @@ namespace gbe
         INSERT_REG(numgroup1, GROUP_NUM_Y)
         INSERT_REG(numgroup2, GROUP_NUM_Z)
         INSERT_REG(stackptr, STACK_POINTER)
-        INSERT_REG(printfbptr, PRINTF_BUF_POINTER);
-        INSERT_REG(printfiptr, PRINTF_INDEX_POINTER);
+        INSERT_REG(printfbptr, PRINTF_BUF_POINTER)
+        INSERT_REG(printfiptr, PRINTF_INDEX_POINTER)
         do {} while(0);
       }
     });
