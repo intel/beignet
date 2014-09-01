@@ -1726,6 +1726,18 @@ namespace gbe
           ctx.getFunction().getPrintfSet()->setIndexBufBTI(btiBase);
           globalPointer.insert(std::make_pair(&v, btiBase++));
           regTranslator.newScalarProxy(ir::ocl::printfiptr, const_cast<GlobalVariable*>(&v));
+	} else if(v.getName().str().substr(0, 4) == ".str") {
+          /* When there are multi printf statements in multi kernel fucntions within the same
+             translate unit, if they have the same sting parameter, such as
+             kernel_func1 () {
+               printf("Line is %d\n", line_num1);
+             }
+             kernel_func2 () {
+               printf("Line is %d\n", line_num2);
+             }
+             The Clang will just generate one global string named .strXXX to represent "Line is %d\n"
+             So when translating the kernel_func1, we can not unref that global var, so we will
+             get here. Just ignore it to avoid assert. */
         } else {
           GBE_ASSERT(0);
         }
