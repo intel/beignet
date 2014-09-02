@@ -34,7 +34,7 @@ void runtime_barrier_list(void)
 
   clEnqueueNDRangeKernel(queue, kernel, 1, NULL, globals, locals, 2, &ev[0], &ev[2]);
 
-  for (cl_uint i = 0; i != sizeof(ev) / sizeof(cl_event); ++i) {
+  for (cl_uint i = 0; i < 3; ++i) {
     clGetEventInfo(ev[i], CL_EVENT_COMMAND_EXECUTION_STATUS, sizeof(status), &status, NULL);
     OCL_ASSERT(status >= CL_SUBMITTED);
   }
