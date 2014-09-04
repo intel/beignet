@@ -3720,7 +3720,7 @@ namespace gbe
         msgLen = srcNum;
       }
       // We switch to a fixup bti for linear filter on a image1d array sampling.
-      uint32_t bti = insn.getImageIndex() + (insn.getSamplerOffset() == 2 ? 128 : 0);
+      uint32_t bti = insn.getImageIndex() + (insn.getSamplerOffset() == 2 ? BTI_MAX_IMAGE_NUM : 0);
       if (bti > 253) {
         std::cerr << "Too large bti " << bti;
         return false;

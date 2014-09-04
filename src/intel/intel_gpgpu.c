@@ -35,6 +35,7 @@
 #include "intel/intel_structs.h"
 #include "intel/intel_batchbuffer.h"
 #include "intel/intel_driver.h"
+#include "program.h" // for BTI_RESERVED_NUM
 
 #include "cl_alloc.h"
 #include "cl_utils.h"
@@ -819,6 +820,22 @@ intel_get_surface_type(cl_mem_object_type type)
   return 0;
 }
 
+/* Get fixed surface type. If it is a 1D array image with a large index,
+   we need to fixup it to 2D type due to a Gen7/Gen75's sampler issue
+   on a integer type surface with clamp address mode and nearest filter mode.
+*/
+static uint32_t get_surface_type(intel_gpgpu_t *gpgpu, int index, cl_mem_object_type type)
+{
+  uint32_t surface_type;
+  if (((IS_IVYBRIDGE(gpgpu->drv->device_id) || IS_HASWELL(gpgpu->drv->device_id))) &&
+      index >= 128 + BTI_RESERVED_NUM &&
+      type == CL_MEM_OBJECT_IMAGE1D_ARRAY)
+    surface_type = I965_SURFACE_2D;
+  else
+    surface_type = intel_get_surface_type(type);
+  return surface_type;
+}
+
 static void
 intel_gpgpu_bind_image_gen7(intel_gpgpu_t *gpgpu,
                               uint32_t index,
@@ -836,12 +853,8 @@ intel_gpgpu_bind_image_gen7(intel_gpgpu_t *gpgpu,
   gen7_surface_state_t *ss = (gen7_surface_state_t *) heap->surface[index];
 
   memset(ss, 0, sizeof(*ss));
-
   ss->ss0.vertical_line_stride = 0; // always choose VALIGN_2
-  if (index > 128 + 2 && type == CL_MEM_OBJECT_IMAGE1D_ARRAY)
-    ss->ss0.surface_type = I965_SURFACE_2D;
-  else
-    ss->ss0.surface_type = intel_get_surface_type(type);
+  ss->ss0.surface_type = get_surface_type(gpgpu, index, type);
   if (intel_is_surface_array(type)) {
     ss->ss0.surface_array = 1;
     ss->ss0.surface_array_spacing = 1;
@@ -886,10 +899,7 @@ intel_gpgpu_bind_image_gen75(intel_gpgpu_t *gpgpu,
   gen7_surface_state_t *ss = (gen7_surface_state_t *) heap->surface[index];
   memset(ss, 0, sizeof(*ss));
   ss->ss0.vertical_line_stride = 0; // always choose VALIGN_2
-  if (index > 128 + 2 && type == CL_MEM_OBJECT_IMAGE1D_ARRAY)
-    ss->ss0.surface_type = I965_SURFACE_2D;
-  else
-    ss->ss0.surface_type = intel_get_surface_type(type);
+  ss->ss0.surface_type = get_surface_type(gpgpu, index, type);
   if (intel_is_surface_array(type)) {
     ss->ss0.surface_array = 1;
     ss->ss0.surface_array_spacing = 1;
