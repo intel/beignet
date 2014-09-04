@@ -500,6 +500,11 @@ namespace gbe
     ir::ImmediateIndex processConstantImmIndex(Constant *CPV, int32_t index = 0u);
     const ir::Immediate &processConstantImm(Constant *CPV, int32_t index = 0u);
 
+    uint32_t incBtiBase() {
+      GBE_ASSERT(btiBase <= BTI_MAX_ID);
+      return btiBase++;
+    }
+
     bool runOnFunction(Function &F) {
      // Do not codegen any 'available_externally' functions at all, they have
      // definitions outside the translation unit.
@@ -1363,7 +1368,7 @@ namespace gbe
                 globalPointer.insert(std::make_pair(I, btiBase));
                 ctx.appendSurface(btiBase, reg);
                 ctx.input(argName, ir::FunctionArgument::GLOBAL_POINTER, reg, llvmInfo, ptrSize, align, btiBase);
-                btiBase++;
+                incBtiBase();
               break;
               case ir::MEM_LOCAL:
                 ctx.input(argName, ir::FunctionArgument::LOCAL_POINTER, reg,  llvmInfo, ptrSize, align, 0xfe);
@@ -1374,7 +1379,7 @@ namespace gbe
               break;
               case ir::IMAGE:
                 ctx.input(argName, ir::FunctionArgument::IMAGE, reg, llvmInfo, ptrSize, align, 0x0);
-                ctx.getFunction().getImageSet()->append(reg, &ctx, btiBase++);
+                ctx.getFunction().getImageSet()->append(reg, &ctx, incBtiBase());
               break;
               default: GBE_ASSERT(addrSpace != ir::MEM_PRIVATE);
             }
@@ -1720,12 +1725,12 @@ namespace gbe
         if(v.getName().equals(StringRef("__gen_ocl_printf_buf"))) {
           ctx.appendSurface(btiBase, ir::ocl::printfbptr);
           ctx.getFunction().getPrintfSet()->setBufBTI(btiBase);
-          globalPointer.insert(std::make_pair(&v, btiBase++));
+          globalPointer.insert(std::make_pair(&v, incBtiBase()));
           regTranslator.newScalarProxy(ir::ocl::printfbptr, const_cast<GlobalVariable*>(&v));
         } else if(v.getName().equals(StringRef("__gen_ocl_printf_index_buf"))) {
           ctx.appendSurface(btiBase, ir::ocl::printfiptr);
           ctx.getFunction().getPrintfSet()->setIndexBufBTI(btiBase);
-          globalPointer.insert(std::make_pair(&v, btiBase++));
+          globalPointer.insert(std::make_pair(&v, incBtiBase()));
           regTranslator.newScalarProxy(ir::ocl::printfiptr, const_cast<GlobalVariable*>(&v));
 	} else if(v.getName().str().substr(0, 4) == ".str") {
           /* When there are multi printf statements in multi kernel fucntions within the same

@@ -66,6 +66,8 @@ enum gbe_get_arg_info_value {
 #define BTI_CONSTANT 0
 #define BTI_PRIVATE 1
 #define BTI_RESERVED_NUM 2
+#define BTI_MAX_IMAGE_NUM 128
+#define BTI_MAX_ID (BTI_MAX_IMAGE_NUM + BTI_RESERVED_NUM - 1)
 
 /*! Constant buffer values (ie values to setup in the constant buffer) */
 enum gbe_curbe_type {

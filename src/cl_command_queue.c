@@ -17,6 +17,7 @@
  * Author: Benjamin Segovia <benjamin.segovia@intel.com>
  */
 
+#include "program.h" // for BTI_MAX_IMAGE_NUM
 #include "cl_command_queue.h"
 #include "cl_context.h"
 #include "cl_program.h"
@@ -142,8 +143,10 @@ cl_command_queue_bind_image(cl_command_queue queue, cl_kernel k)
                         image->intel_fmt, image->image_type,
                         image->w, image->h, image->depth,
                         image->row_pitch, (cl_gpgpu_tiling)image->tiling);
+    // TODO, this workaround is for GEN7/GEN75 only, we may need to do it in the driver layer
+    // on demand.
     if (image->image_type == CL_MEM_OBJECT_IMAGE1D_ARRAY)
-      cl_gpgpu_bind_image(gpgpu, k->images[i].idx + 128, image->base.bo, image->offset,
+      cl_gpgpu_bind_image(gpgpu, k->images[i].idx + BTI_MAX_IMAGE_NUM, image->base.bo, image->offset,
                           image->intel_fmt, image->image_type,
                           image->w, image->h, image->depth,
                           image->row_pitch, (cl_gpgpu_tiling)image->tiling);
