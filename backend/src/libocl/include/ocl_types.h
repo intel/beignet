@@ -1,10 +1,7 @@
 #ifndef __OCL_TYPES_H__
 #define __OCL_TYPES_H__
 
-#ifdef cl_khr_fp64
 #pragma OPENCL EXTENSION cl_khr_fp64 : enable
-#endif
-
 #include "ocl_defines.h"
 
 #define NULL ((void*)0)

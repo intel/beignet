@@ -129,7 +129,7 @@ FOREACH(M ${OCL_BASH_GENERATED_MODULES})
 ENDFOREACH(M) 
 
 
-SET (CLANG_OCL_FLAGS -fno-builtin -Dcl_khr_fp64 -ffp-contract=off -cl-kernel-arg-info -DGEN7_SAMPLER_CLAMP_BORDER_WORKAROUND)
+SET (CLANG_OCL_FLAGS -fno-builtin -ffp-contract=off -cl-kernel-arg-info -DGEN7_SAMPLER_CLAMP_BORDER_WORKAROUND)
 
 MACRO(ADD_CL_TO_BC_TARGET _file)
     # CMake seems can not add pattern rule, use MACRO to replace.

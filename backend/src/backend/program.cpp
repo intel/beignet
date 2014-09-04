@@ -516,8 +516,6 @@ namespace gbe {
     }
 
     args.push_back("-cl-kernel-arg-info");
-    args.push_back("-Dcl_khr_fp64");
-
     args.push_back("-mllvm");
     args.push_back("-inline-threshold=200000");
 #ifdef GEN7_SAMPLER_CLAMP_BORDER_WORKAROUND

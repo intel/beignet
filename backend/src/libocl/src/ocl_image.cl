@@ -188,7 +188,7 @@ OVERLOADABLE int __gen_compute_array_index(int index, image2d_array_t image)
 #define FIXUP_FLOAT_COORD(tmpCoord)                            \
   {                                                            \
     if (tmpCoord < 0 && tmpCoord > -0x1p-20f)                  \
-      tmpCoord += -0x1p-9;                                     \
+      tmpCoord += -0x1p-9f;                                     \
   }
 
 DECL_IMAGE(GEN_FIX_1, image1d_t, int4, i)
@@ -229,7 +229,7 @@ DECL_IMAGE_INFO_COMMON(image1d_buffer_t)
 #define FIXUP_FLOAT_COORD(tmpCoord)                            \
   {                                                            \
     if (tmpCoord.s0 < 0 && tmpCoord.s0 > -0x1p-20f)            \
-      tmpCoord.s0 += -0x1p-9;                                  \
+      tmpCoord.s0 += -0x1p-9f;                                  \
     if (tmpCoord.s1 < 0 && tmpCoord.s1 > -0x1p-20f)            \
       tmpCoord.s1 += -0x1p-9f;                                 \
   }
@@ -258,7 +258,7 @@ DECL_IMAGE(0, image2d_t, float4, f, 2)
 #define FIXUP_FLOAT_COORD(tmpCoord)                            \
   {                                                            \
     if (tmpCoord.s0 < 0 && tmpCoord.s0 > -0x1p-20f)            \
-      tmpCoord.s0 += -0x1p-9;                                  \
+      tmpCoord.s0 += -0x1p-9f;                                  \
   }
 
 DECL_IMAGE(GEN_FIX_1, image1d_array_t, int4, i, 2)
@@ -306,12 +306,12 @@ OVERLOADABLE size_t get_image_array_size(image1d_array_t image)
 
 #define FIXUP_FLOAT_COORD(tmpCoord)                             \
   {                                                             \
-    if (tmpCoord.s0 < 0 && tmpCoord.s0 > -0x1p-20)              \
-      tmpCoord.s0 += -0x1p-9;                                   \
-    if (tmpCoord.s1 < 0 && tmpCoord.s1 > -0x1p-20)              \
-      tmpCoord.s1 += -0x1p-9;                                   \
-    if (tmpCoord.s2 < 0 && tmpCoord.s2 > -0x1p-20)              \
-      tmpCoord.s2 += -0x1p-9;                                   \
+    if (tmpCoord.s0 < 0 && tmpCoord.s0 > -0x1p-20f)              \
+      tmpCoord.s0 += -0x1p-9f;                                   \
+    if (tmpCoord.s1 < 0 && tmpCoord.s1 > -0x1p-20f)              \
+      tmpCoord.s1 += -0x1p-9f;                                   \
+    if (tmpCoord.s2 < 0 && tmpCoord.s2 > -0x1p-20f)              \
+      tmpCoord.s2 += -0x1p-9f;                                   \
   }
 #define GET_IMAGE_ARRAY_SIZE(a,b,c,d)
 
@@ -341,10 +341,10 @@ DECL_IMAGE(0, image3d_t, float4, f, 3)
 
 #define FIXUP_FLOAT_COORD(tmpCoord)                             \
   {                                                             \
-    if (tmpCoord.s0 < 0 && tmpCoord.s0 > -0x1p-20)              \
-      tmpCoord.s0 += -0x1p-9;                                   \
-    if (tmpCoord.s1 < 0 && tmpCoord.s1 > -0x1p-20)              \
-      tmpCoord.s1 += -0x1p-9;                                   \
+    if (tmpCoord.s0 < 0 && tmpCoord.s0 > -0x1p-20f)              \
+      tmpCoord.s0 += -0x1p-9f;                                   \
+    if (tmpCoord.s1 < 0 && tmpCoord.s1 > -0x1p-20f)              \
+      tmpCoord.s1 += -0x1p-9f;                                   \
   }
 #define GET_IMAGE_ARRAY_SIZE(image, coord, coord_type, ai) \
   coord_type ai = __gen_compute_array_index(coord.s2, image);

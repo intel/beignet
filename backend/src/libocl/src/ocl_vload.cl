@@ -1,3 +1,4 @@
+#pragma OPENCL EXTENSION cl_khr_fp64 : enable
 #include "ocl_vload.h"
 #include "ocl_relational.h"
 

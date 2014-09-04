@@ -19,5 +19,6 @@
 #include "ocl_sync.h"
 #include "ocl_vload.h"
 #include "ocl_workitem.h"
+#pragma OPENCL EXTENSION cl_khr_fp64 : disable
 
 #endif

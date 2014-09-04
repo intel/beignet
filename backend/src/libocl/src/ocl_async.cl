@@ -1,3 +1,4 @@
+#pragma OPENCL EXTENSION cl_khr_fp64 : enable
 #include "ocl_async.h"
 #include "ocl_sync.h"
 #include "ocl_workitem.h"
