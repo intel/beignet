@@ -628,6 +628,7 @@ namespace gbe {
     std::istringstream idirs(dirs);
     std::string pchFileName;
     bool findPCH = false;
+    bool invalidPCH = false;
     size_t start = 0, end = 0;
 
     std::string hdirs = OCL_HEADER_FILE_DIR;
@@ -652,6 +653,10 @@ namespace gbe {
       std::string optionStr(str);
       const std::string unsupportedOptions("-cl-denorms-are-zero, -cl-strict-aliasing, -cl-opt-disable,"
                        "-cl-no-signed-zeros, -cl-fp32-correctly-rounded-divide-sqrt");
+
+      const std::string uncompatiblePCHOptions = ("-cl-single-precision-constant, -cl-fast-relaxed-math");
+      const std::string fastMathOption = ("-cl-fast-relaxed-math");
+
       while (end != std::string::npos) {
         end = optionStr.find(' ', start);
         std::string str = optionStr.substr(start, end - start);
@@ -661,6 +666,14 @@ namespace gbe {
 
         if(unsupportedOptions.find(str) != std::string::npos)
           continue;
+
+        if (uncompatiblePCHOptions.find(str) != std::string::npos)
+          invalidPCH = true;
+
+        if (fastMathOption.find(str) != std::string::npos) {
+          clOpt.push_back("-D");
+          clOpt.push_back("__FAST_RELAXED_MATH__=1");
+        }
 
         clOpt.push_back(str);
       }
@@ -687,7 +700,7 @@ namespace gbe {
     FILE *clFile = fdopen(clFd, "w");
     FATAL_IF(clFile == NULL, "Failed to open temporary file");
 
-    if (!findPCH) {
+    if (!findPCH || invalidPCH) {
       clOpt.push_back("-include");
       clOpt.push_back("ocl.h");
     } else {
