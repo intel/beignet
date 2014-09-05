@@ -69,6 +69,7 @@ OVERLOADABLE int atomic_cmpxchg (volatile __local int *p, int cmp, int val);
 
 // XXX for conformance test
 // The following atom_xxx api is on OpenCL spec 1.0.
+#define atom_add atomic_add
 #define atom_sub atomic_sub
 #define atom_and atomic_and
 #define atom_or atomic_or

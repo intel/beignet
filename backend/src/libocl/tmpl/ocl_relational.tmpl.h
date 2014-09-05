@@ -22,7 +22,32 @@ OVERLOADABLE int isordered(float x, float y);
 OVERLOADABLE int isunordered(float x, float y);
 OVERLOADABLE int signbit(float x);
 
+// any
+#define DEC1(type) OVERLOADABLE int any(type a);
+#define DEC2(type) OVERLOADABLE int any(type a);
+#define DEC3(type) OVERLOADABLE int any(type a);
+#define DEC4(type) OVERLOADABLE int any(type a);
+#define DEC8(type) OVERLOADABLE int any(type a);
+#define DEC16(type) OVERLOADABLE int any(type a);
+DEC1(char);
+DEC1(short);
+DEC1(int);
+DEC1(long);
+#define DEC(n) DEC##n(char##n); DEC##n(short##n); DEC##n(int##n); DEC##n(long##n);
+DEC(2);
+DEC(3);
+DEC(4);
+DEC(8);
+DEC(16);
+#undef DEC
+#undef DEC1
+#undef DEC2
+#undef DEC3
+#undef DEC4
+#undef DEC8
+#undef DEC16
 
+// all
 #define DEC1(type) OVERLOADABLE int all(type a);
 #define DEC2(type) OVERLOADABLE int all(type a);
 #define DEC3(type) OVERLOADABLE int all(type a);
