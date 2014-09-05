@@ -879,6 +879,10 @@ namespace gbe
           const uint64_t u64 = CI->getZExtValue();
           return ctx.newImmediate(u64);
         } else {
+          if (CI->getValue().getActiveBits() > 64) {
+            ctx.getUnit().setValid(false);
+            return ctx.newImmediate(uint64_t(0));
+          }
           return ctx.newImmediate(uint64_t(CI->getZExtValue()));
         }
       }
