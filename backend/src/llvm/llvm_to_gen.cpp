@@ -76,14 +76,14 @@ namespace gbe
   BVAR(OCL_OUTPUT_LLVM_BEFORE_EXTRA_PASS, false);
   using namespace llvm;
 
-  void runFuntionPass(Module &mod, TargetLibraryInfo *libraryInfo)
+  void runFuntionPass(Module &mod, TargetLibraryInfo *libraryInfo, DataLayout &DL)
   {
     FunctionPassManager FPM(&mod);
 
 #if LLVM_VERSION_MAJOR == 3 && LLVM_VERSION_MINOR >= 5
-    FPM.add(new DataLayoutPass(&mod));
+    FPM.add(new DataLayoutPass(DL));
 #else
-    FPM.add(new DataLayout(&mod));
+    FPM.add(&DL);
 #endif
 
 #if LLVM_VERSION_MAJOR == 3 && LLVM_VERSION_MINOR >=5
@@ -107,14 +107,14 @@ namespace gbe
     FPM.doFinalization();
   }
 
-  void runModulePass(Module &mod, TargetLibraryInfo *libraryInfo, int optLevel)
+  void runModulePass(Module &mod, TargetLibraryInfo *libraryInfo, DataLayout &DL, int optLevel)
   {
     llvm::PassManager MPM;
 
 #if LLVM_VERSION_MAJOR == 3 && LLVM_VERSION_MINOR >= 5
-    MPM.add(new DataLayoutPass(&mod));
+    MPM.add(new DataLayoutPass(DL));
 #else
-    MPM.add(new DataLayout(&mod));
+    MPM.add(&DL);
 #endif
     MPM.add(new TargetLibraryInfo(*libraryInfo));
     MPM.add(createTypeBasedAliasAnalysisPass());
@@ -192,19 +192,20 @@ namespace gbe
       if (M.get() == 0) return false;
     }
     Module &mod = (module!=NULL)?*(llvm::Module*)module:*M.get();
+    DataLayout DL(&mod);
 
     Triple TargetTriple(mod.getTargetTriple());
     TargetLibraryInfo *libraryInfo = new TargetLibraryInfo(TargetTriple);
     libraryInfo->disableAllFunctions();
 
-    runFuntionPass(mod, libraryInfo);
-    runModulePass(mod, libraryInfo, optLevel);
+    runFuntionPass(mod, libraryInfo, DL);
+    runModulePass(mod, libraryInfo, DL, optLevel);
 
     llvm::PassManager passes;
 #if LLVM_VERSION_MAJOR == 3 && LLVM_VERSION_MINOR >= 5
-    passes.add(new DataLayoutPass(&mod));
+    passes.add(new DataLayoutPass(DL));
 #else
-    passes.add(new DataLayout(&mod));
+    passes.add(&DL);
 #endif
     // Print the code before further optimizations
     if (OCL_OUTPUT_LLVM_BEFORE_EXTRA_PASS)
@@ -215,7 +216,7 @@ namespace gbe
 #endif
     passes.add(createIntrinsicLoweringPass());
     passes.add(createFunctionInliningPass(200000));
-    passes.add(createScalarReplAggregatesPass()); // Break up allocas
+    passes.add(createScalarReplAggregatesPass(64, true, -1, -1, 64));
     passes.add(createLoadStoreOptimizationPass());
     passes.add(createRemoveGEPPass(unit));
     passes.add(createConstantPropagationPass());
