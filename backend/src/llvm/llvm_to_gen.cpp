@@ -76,14 +76,14 @@ namespace gbe
   BVAR(OCL_OUTPUT_LLVM_BEFORE_EXTRA_PASS, false);
   using namespace llvm;
 
-  void runFuntionPass(Module &mod, TargetLibraryInfo *libraryInfo, DataLayout &DL)
+  void runFuntionPass(Module &mod, TargetLibraryInfo *libraryInfo, const DataLayout &DL)
   {
     FunctionPassManager FPM(&mod);
 
 #if LLVM_VERSION_MAJOR == 3 && LLVM_VERSION_MINOR >= 5
     FPM.add(new DataLayoutPass(DL));
 #else
-    FPM.add(&DL);
+    FPM.add(new DataLayout(DL));
 #endif
 
 #if LLVM_VERSION_MAJOR == 3 && LLVM_VERSION_MINOR >=5
@@ -107,14 +107,14 @@ namespace gbe
     FPM.doFinalization();
   }
 
-  void runModulePass(Module &mod, TargetLibraryInfo *libraryInfo, DataLayout &DL, int optLevel)
+  void runModulePass(Module &mod, TargetLibraryInfo *libraryInfo, const DataLayout &DL, int optLevel)
   {
     llvm::PassManager MPM;
 
 #if LLVM_VERSION_MAJOR == 3 && LLVM_VERSION_MINOR >= 5
     MPM.add(new DataLayoutPass(DL));
 #else
-    MPM.add(&DL);
+    MPM.add(new DataLayout(DL));
 #endif
     MPM.add(new TargetLibraryInfo(*libraryInfo));
     MPM.add(createTypeBasedAliasAnalysisPass());
@@ -205,7 +205,7 @@ namespace gbe
 #if LLVM_VERSION_MAJOR == 3 && LLVM_VERSION_MINOR >= 5
     passes.add(new DataLayoutPass(DL));
 #else
-    passes.add(&DL);
+    passes.add(new DataLayout(DL));
 #endif
     // Print the code before further optimizations
     if (OCL_OUTPUT_LLVM_BEFORE_EXTRA_PASS)
