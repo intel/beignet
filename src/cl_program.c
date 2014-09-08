@@ -743,7 +743,7 @@ cl_program_get_kernel_names(cl_program p, size_t size, char *names, size_t *size
   int i = 0;
   const char *ker_name = NULL;
   size_t len = 0;
-  *size_ret = 0;
+  if(size_ret) *size_ret = 0;
 
   if(p->ker == NULL) {
     return;
