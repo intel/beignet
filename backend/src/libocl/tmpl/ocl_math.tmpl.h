@@ -109,7 +109,7 @@ OVERLOADABLE float native_exp10(float x);
 OVERLOADABLE float native_log(float x);
 OVERLOADABLE float native_log2(float x);
 OVERLOADABLE float native_log10(float x);
-OVERLOADABLE float native_powr(float x);
+OVERLOADABLE float native_powr(float x, float y);
 OVERLOADABLE float native_recip(float x);
 OVERLOADABLE float native_rsqrt(float x);
 OVERLOADABLE float native_sin(float x);
