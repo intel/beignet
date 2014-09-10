@@ -555,6 +555,7 @@ namespace gbe {
     //Handle -cl-opt-disable in llvmToGen, skip here
     const std::string unsupportedOptions("-cl-denorms-are-zero, -cl-strict-aliasing, -cl-opt-disable,"
                                          "-cl-no-signed-zeros, -cl-fp32-correctly-rounded-divide-sqrt");
+    bool useDefaultCLCVersion = true;
     while (end != std::string::npos) {
       end = options.find(' ', start);
       std::string str = options.substr(start, end - start);
@@ -564,9 +565,24 @@ namespace gbe {
       if(str == "-cl-fast-relaxed-math") bFastMath = true;
       if(unsupportedOptions.find(str) != std::string::npos)
         continue;
+      if(str.find("-cl-std=") != std::string::npos) {
+        useDefaultCLCVersion = false;
+        if (str == "-cl-std=CL1.1")
+          args.push_back("-D__OPENCL_C_VERSION__=110");
+        else if (str == "-cl-std=CL1.2")
+          args.push_back("-D__OPENCL_C_VERSION__=120");
+        else {
+          if (err && stringSize > 0 && errSize)
+            *errSize = snprintf(err, stringSize, "Invalid build option: %s\n", str.c_str());
+          return false;
+        }
+        continue;
+      }
       useless.push_back(str);
       args.push_back(str.c_str());
     }
+    if (useDefaultCLCVersion)
+      args.push_back("-D__OPENCL_C_VERSION__=120");
     args.push_back("-mllvm");
     args.push_back("-inline-threshold=200000");
 #ifdef GEN7_SAMPLER_CLAMP_BORDER_WORKAROUND
@@ -759,7 +775,6 @@ namespace gbe {
           "-cl-single-precision-constant",
 //        "-cl-denorms-are-zero",
           "-cl-fast-relaxed-math",
-          "-cl-std=",
       };
       const char * incompatible_defs[] = {
           "GET_FLOAT_WORD",
