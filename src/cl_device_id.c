@@ -515,6 +515,22 @@ cl_device_get_version(cl_device_id device, cl_int *ver)
 
 #include "cl_kernel.h"
 #include "cl_program.h"
+static int
+cl_check_builtin_kernel_dimension(cl_kernel kernel, cl_device_id device)
+{
+  const char * n = cl_kernel_get_name(kernel);
+  const char * builtin_kernels_2d = "__cl_copy_image_2d_to_2d;__cl_copy_image_2d_to_buffer;__cl_copy_buffer_to_image_2d;__cl_fill_image_2d;__cl_fill_image_2d_array;";
+  const char * builtin_kernels_3d = "__cl_copy_image_3d_to_2d;__cl_copy_image_2d_to_3d;__cl_copy_image_3d_to_3d;__cl_copy_image_3d_to_buffer;__cl_copy_buffer_to_image_3d;__cl_fill_image_3d";
+    if (!strstr(device->built_in_kernels, n)){
+      return 0;
+    }else if(strstr(builtin_kernels_2d, n)){
+      return 2;
+    }else if(strstr(builtin_kernels_3d, n)){
+      return 3;
+    }else
+      return 1;
+
+}
 
 LOCAL size_t
 cl_get_kernel_max_wg_sz(cl_kernel kernel)
@@ -543,6 +559,7 @@ cl_get_kernel_workgroup_info(cl_kernel kernel,
                              size_t* param_value_size_ret)
 {
   int err = CL_SUCCESS;
+  int dimension = 0;
   if (UNLIKELY(device != &intel_ivb_gt1_device &&
                device != &intel_ivb_gt2_device &&
                device != &intel_baytrail_t_device &&
@@ -573,6 +590,23 @@ cl_get_kernel_workgroup_info(cl_kernel kernel,
     }
     DECL_FIELD(COMPILE_WORK_GROUP_SIZE, kernel->compile_wg_sz)
     DECL_FIELD(PRIVATE_MEM_SIZE, kernel->stack_size)
+    case CL_KERNEL_GLOBAL_WORK_SIZE:
+      dimension = cl_check_builtin_kernel_dimension(kernel, device);
+      if ( !dimension ) return CL_INVALID_VALUE;
+      if (param_value_size_ret != NULL)
+        *param_value_size_ret = sizeof(device->max_1d_global_work_sizes);
+      if (param_value) {
+        if (dimension == 1) {
+          memcpy(param_value, device->max_1d_global_work_sizes, sizeof(device->max_1d_global_work_sizes));
+        }else if(dimension == 2){
+          memcpy(param_value, device->max_2d_global_work_sizes, sizeof(device->max_2d_global_work_sizes));
+        }else if(dimension == 3){
+          memcpy(param_value, device->max_3d_global_work_sizes, sizeof(device->max_3d_global_work_sizes));
+        }else
+          return CL_INVALID_VALUE;
+
+        return CL_SUCCESS;
+      }
     default:
       return CL_INVALID_VALUE;
   };

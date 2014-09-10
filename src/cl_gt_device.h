@@ -21,6 +21,9 @@
 .device_type = CL_DEVICE_TYPE_GPU,
 .vendor_id = 0, /* == device_id (set when requested) */
 .max_work_item_dimensions = 3,
+.max_1d_global_work_sizes = {1024 * 1024 * 256, 1, 1},
+.max_2d_global_work_sizes = {8192, 8192, 1},
+.max_3d_global_work_sizes = {8192, 8192, 2048},
 .preferred_vector_width_char = 8,
 .preferred_vector_width_short = 8,
 .preferred_vector_width_int = 4,

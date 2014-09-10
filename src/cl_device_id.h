@@ -30,6 +30,9 @@ struct _cl_device_id {
   cl_uint  max_work_item_dimensions;       // should be 3.
   size_t   max_work_item_sizes[3];         // equal to maximum work group size.
   size_t   max_work_group_size;            // maximum work group size under simd16 mode.
+  size_t   max_1d_global_work_sizes[3];       // maximum 1d global work size for builtin kernels.
+  size_t   max_2d_global_work_sizes[3];       // maximum 2d global work size for builtin kernels.
+  size_t   max_3d_global_work_sizes[3];       // maximum 3d global work size for builtin kernels.
   cl_uint  preferred_vector_width_char;
   cl_uint  preferred_vector_width_short;
   cl_uint  preferred_vector_width_int;

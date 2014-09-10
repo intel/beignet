@@ -59,6 +59,8 @@ struct _cl_kernel {
   cl_ulong local_mem_sz;      /* local memory size specified in kernel args. */
   size_t compile_wg_sz[3];    /* Required workgroup size by __attribute__((reqd_work_gro
                                  up_size(X, Y, Z))) qualifier.*/
+  size_t global_work_sz[3];    /* maximum global size that can be used to execute a kernel
+                                (i.e. global_work_size argument to clEnqueueNDRangeKernel.)*/
   size_t stack_size;          /* stack size per work item. */
   cl_argument *args;          /* To track argument setting */
   uint32_t arg_n:31;          /* Number of arguments */
