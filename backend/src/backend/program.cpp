@@ -617,12 +617,15 @@ namespace gbe {
   SVAR(OCL_PCH_PATH, OCL_PCH_OBJECT);
   SVAR(OCL_HEADER_FILE_DIR, OCL_HEADER_DIR);
 
-  static void processSourceAndOption(const char *source,
+  static bool processSourceAndOption(const char *source,
                                      const char *options,
                                      const char *temp_header_path,
                                      std::vector<std::string>& clOpt,
                                      std::string& clName,
-                                     int& optLevel)
+                                     int& optLevel,
+                                     size_t stringSize,
+                                     char *err,
+                                     size_t *errSize)
   {
     std::string dirs = OCL_PCH_PATH;
     std::istringstream idirs(dirs);
@@ -646,6 +649,7 @@ namespace gbe {
     assert(findOcl);
     std::string includePath  = "-I" + headerFilePath;
     clOpt.push_back(includePath);
+    bool useDefaultCLCVersion = true;
 
     if (options) {
       char *str = (char *)malloc(sizeof(char) * (strlen(options) + 1));
@@ -656,7 +660,6 @@ namespace gbe {
 
       const std::string uncompatiblePCHOptions = ("-cl-single-precision-constant, -cl-fast-relaxed-math");
       const std::string fastMathOption = ("-cl-fast-relaxed-math");
-
       while (end != std::string::npos) {
         end = optionStr.find(' ', start);
         std::string str = optionStr.substr(start, end - start);
@@ -664,8 +667,23 @@ namespace gbe {
         if(str.size() == 0)
           continue;
 
-        if(unsupportedOptions.find(str) != std::string::npos)
+        if(unsupportedOptions.find(str) != std::string::npos) {
           continue;
+        }
+
+        if(str.find("-cl-std=") != std::string::npos) {
+          useDefaultCLCVersion = false;
+          if (str == "-cl-std=CL1.1")
+            clOpt.push_back("-D__OPENCL_C_VERSION__=110");
+          else if (str == "-cl-std=CL1.2")
+            clOpt.push_back("-D__OPENCL_C_VERSION__=120");
+          else {
+            if (err && stringSize > 0 && errSize)
+              *errSize = snprintf(err, stringSize, "Invalid build option: %s\n", str.c_str());
+            return false;
+          }
+          continue;
+        }
 
         if (uncompatiblePCHOptions.find(str) != std::string::npos)
           invalidPCH = true;
@@ -680,6 +698,8 @@ namespace gbe {
       free(str);
     }
 
+    if (useDefaultCLCVersion)
+      clOpt.push_back("-D__OPENCL_C_VERSION__=120");
     //for clCompilerProgram usage.
     if(temp_header_path){
       clOpt.push_back("-I");
@@ -712,6 +732,7 @@ namespace gbe {
     // Write the source to the cl file
     fwrite(source, strlen(source), 1, clFile);
     fclose(clFile);
+    return true;
   }
 
   static gbe_program programNewFromSource(uint32_t deviceID,
@@ -724,7 +745,9 @@ namespace gbe {
     int optLevel = 1;
     std::vector<std::string> clOpt;
     std::string clName;
-    processSourceAndOption(source, options, NULL, clOpt, clName, optLevel);
+    if (!processSourceAndOption(source, options, NULL, clOpt, clName,
+                                optLevel, stringSize, err, errSize))
+      return NULL;
 
     gbe_program p;
     // will delete the module and act in GenProgram::CleanLlvmResource().
@@ -775,7 +798,9 @@ namespace gbe {
     int optLevel = 1;
     std::vector<std::string> clOpt;
     std::string clName;
-    processSourceAndOption(source, options, temp_header_path, clOpt, clName, optLevel);
+    if (!processSourceAndOption(source, options, temp_header_path, clOpt, clName,
+                                optLevel, stringSize, err, errSize))
+      return NULL;
 
     gbe_program p;
     acquireLLVMContextLock();

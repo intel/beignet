@@ -424,6 +424,43 @@ error:
   goto exit;
 }
 
+/* Before we do the real work, we need to check whether our platform
+   cl version can meet -cl-std= */
+static int check_cl_version_option(cl_program p, const char* options) {
+  const char* s = NULL;
+  int ver1 = 0;
+  int ver2 = 0;
+  char version_str[64];
+
+  if (options && (s = strstr(options, "-cl-std="))) {
+
+    if (s + strlen("-cl-std=CLX.X") > options + strlen(options)) {
+      return 0;
+    }
+
+    if (s[8] != 'C' || s[9] != 'L' || s[10] > '9' || s[10] < '0' || s[11] != '.'
+        || s[12] > '9' || s[12] < '0') {
+      return 0;
+    }
+
+    ver1 = (s[10] - '0') * 10 + (s[12] - '0');
+
+    if (cl_get_device_info(p->ctx->device, CL_DEVICE_OPENCL_C_VERSION, sizeof(version_str),
+                                  version_str, NULL) != CL_SUCCESS)
+      return 0;
+
+    assert(strstr(version_str, "OpenCL") && version_str[0] == 'O');
+    ver2 = (version_str[9] - '0') * 10 + (version_str[11] - '0');
+
+    if (ver2 < ver1)
+      return 0;
+
+    return 1;
+  }
+
+  return 1;
+}
+
 LOCAL cl_int
 cl_program_build(cl_program p, const char *options)
 {
@@ -433,6 +470,9 @@ cl_program_build(cl_program p, const char *options)
 
   if (p->ref_n > 1)
     return CL_INVALID_OPERATION;
+
+  if (!check_cl_version_option(p, options))
+    return CL_BUILD_PROGRAM_FAILURE;
 
   if (options) {
     if(p->build_opts == NULL || strcmp(options, p->build_opts) != 0) {
@@ -526,10 +566,15 @@ cl_program_link(cl_context            context,
                 cl_int*               errcode_ret)
 {
   cl_program p = NULL;
-  cl_int err=CL_SUCCESS;
+  cl_int err = CL_SUCCESS;
   cl_int i = 0;
   int copyed = 0;
   p = cl_program_new(context);
+
+  if (!check_cl_version_option(p, options)) {
+    err = CL_BUILD_PROGRAM_FAILURE;
+    goto error;
+  }
 
   p->opaque = compiler_program_new_gen_program(context->device->vendor_id, NULL, NULL);
 
@@ -587,6 +632,9 @@ cl_program_compile(cl_program            p,
 
   if (p->ref_n > 1)
     return CL_INVALID_OPERATION;
+
+  if (!check_cl_version_option(p, options))
+    return CL_BUILD_PROGRAM_FAILURE;
 
   if (options) {
     if(p->build_opts == NULL || strcmp(options, p->build_opts) != 0) {
