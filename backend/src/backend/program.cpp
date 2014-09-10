@@ -105,6 +105,7 @@ namespace gbe {
 
 #ifdef GBE_COMPILER_AVAILABLE
   BVAR(OCL_OUTPUT_GEN_IR, false);
+  BVAR(OCL_STRICT_CONFORMANCE, false);
 
   bool Program::buildFromLLVMFile(const char *fileName, const void* module, std::string &error, int optLevel) {
     ir::Unit *unit = new ir::Unit();
@@ -112,7 +113,7 @@ namespace gbe {
     if(module){
       cloned_module = llvm::CloneModule((llvm::Module*)module);
     }
-    if (llvmToGen(*unit, fileName, module, optLevel) == false) {
+    if (llvmToGen(*unit, fileName, module, optLevel, OCL_STRICT_CONFORMANCE) == false) {
       error = std::string(fileName) + " not found";
       return false;
     }
@@ -122,9 +123,11 @@ namespace gbe {
       delete unit;   //clear unit
       unit = new ir::Unit();
       if(cloned_module){
-        llvmToGen(*unit, fileName, cloned_module, 0);  //suppose file exists and llvmToGen will not return false.
+        //suppose file exists and llvmToGen will not return false.
+        llvmToGen(*unit, fileName, cloned_module, 0, OCL_STRICT_CONFORMANCE);
       }else{
-        llvmToGen(*unit, fileName, module, 0);  //suppose file exists and llvmToGen will not return false.
+        //suppose file exists and llvmToGen will not return false.
+        llvmToGen(*unit, fileName, module, 0, OCL_STRICT_CONFORMANCE);
       }
     }
     assert(unit->getValid());
@@ -135,8 +138,6 @@ namespace gbe {
     }
     return true;
   }
-
-  BVAR(OCL_STRICT_CONFORMANCE, false);
 
   bool Program::buildFromUnit(const ir::Unit &unit, std::string &error) {
     constantSet = new ir::ConstantSet(unit.getConstantSet());

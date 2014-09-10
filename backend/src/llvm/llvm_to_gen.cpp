@@ -198,7 +198,7 @@ namespace gbe
   BVAR(OCL_OUTPUT_LLVM_AFTER_LINK, false);
   BVAR(OCL_OUTPUT_LLVM_AFTER_GEN, false);
 
-  bool llvmToGen(ir::Unit &unit, const char *fileName,const void* module, int optLevel)
+  bool llvmToGen(ir::Unit &unit, const char *fileName,const void* module, int optLevel, bool strictMath)
   {
     std::string errInfo;
     std::unique_ptr<llvm::raw_fd_ostream> o = NULL;
@@ -223,7 +223,7 @@ namespace gbe
     std::unique_ptr<Module> M;
 
     /* Before do any thing, we first filter in all CL functions in bitcode. */ 
-    M.reset(runBitCodeLinker(cl_mod));
+    M.reset(runBitCodeLinker(cl_mod, strictMath));
     if (!module)
       delete cl_mod;
     if (M.get() == 0)

@@ -50,7 +50,7 @@ SVAR(OCL_BITCODE_LIB_PATH, OCL_BITCODE_BIN);
 
 namespace gbe
 {
-  static Module* createOclBitCodeModule(LLVMContext& ctx)
+  static Module* createOclBitCodeModule(LLVMContext& ctx, bool strictMath)
   {
     std::string bitCodeFiles = OCL_BITCODE_LIB_PATH;
     std::istringstream bitCodeFilePath(bitCodeFiles);
@@ -71,6 +71,13 @@ namespace gbe
     if (!oclLib) {
       printf("Fatal Error: ocl lib can not be opened\n");
       return NULL;
+    }
+
+    if (strictMath) {
+      llvm::GlobalVariable* mathFastFlag = oclLib->getGlobalVariable("__ocl_math_fastpath_flag");
+      assert(mathFastFlag);
+      Type* intTy = IntegerType::get(ctx, 32);
+      mathFastFlag->setInitializer(ConstantInt::get(intTy, 0));
     }
 
     return oclLib;
@@ -126,11 +133,11 @@ namespace gbe
   }
 
 
-  Module* runBitCodeLinker(Module *mod)
+  Module* runBitCodeLinker(Module *mod, bool strictMath)
   {
     LLVMContext& ctx = mod->getContext();
     std::set<std::string> materializedFuncs;
-    Module* clonedLib = createOclBitCodeModule(ctx);
+    Module* clonedLib = createOclBitCodeModule(ctx, strictMath);
     assert(clonedLib && "Can not create the beignet bitcode\n");
 
     std::vector<const char *> kernels;
