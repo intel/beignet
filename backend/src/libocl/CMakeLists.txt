@@ -67,9 +67,9 @@ MACRO(GENERATE_HEADER_PY _mod)
     ADD_CUSTOM_COMMAND(OUTPUT ${output_name}
 	COMMAND mkdir -p ${LIBOCL_BINARY_DIR}/include/
 	#COMMAND echo "cat ${tmpl_name} \\> ${output_name}"
-	COMMAND cat ${tmpl_name} > ${output_name} 
+	COMMAND cat ${tmpl_name} > ${output_name}
 	#COMMAND echo "${LIBOCL_SOURCE_DIR}/script/gen_vector.py ${def_name} ${output_name} 1"
-	COMMAND ${LIBOCL_SOURCE_DIR}/script/gen_vector.py ${def_name} ${output_name} 1
+	COMMAND ${PYTHON_EXECUTABLE} ${LIBOCL_SOURCE_DIR}/script/gen_vector.py ${def_name} ${output_name} 1
 	#COMMAND echo "echo \\#endif \\>\\> ${output_name}"
 	COMMAND echo "\\#endif" >> ${output_name}
 	DEPENDS ${tmpl_name}
@@ -83,8 +83,8 @@ MACRO(GENERATE_SOURCE_PY _mod)
     SET(OCL_SOURCE_FILES ${OCL_SOURCE_FILES} ${output_name})
     ADD_CUSTOM_COMMAND(OUTPUT ${output_name}
 	COMMAND mkdir -p ${LIBOCL_BINARY_DIR}/src/
-	COMMAND cat ${tmpl_name} > ${output_name} 
-	COMMAND ${LIBOCL_SOURCE_DIR}/script/gen_vector.py ${def_name} ${output_name} 0
+	COMMAND cat ${tmpl_name} > ${output_name}
+	COMMAND ${PYTHON_EXECUTABLE} ${LIBOCL_SOURCE_DIR}/script/gen_vector.py ${def_name} ${output_name} 0
 	DEPENDS ${tmpl_name}
 	COMMENT "Generate the source by python: ${output_name}"
 	)
