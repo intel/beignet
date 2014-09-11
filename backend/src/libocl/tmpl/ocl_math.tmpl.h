@@ -61,6 +61,7 @@ OVERLOADABLE float exp10(float x);
 OVERLOADABLE float expm1(float x);
 OVERLOADABLE float fmin(float a, float b);
 OVERLOADABLE float fmax(float a, float b);
+OVERLOADABLE float fma(float a, float b, float c);
 OVERLOADABLE float fdim(float x, float y);
 OVERLOADABLE float maxmag(float x, float y);
 OVERLOADABLE float minmag(float x, float y);
