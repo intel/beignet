@@ -807,10 +807,14 @@ namespace gbe {
       p = strstr(const_cast<char *>(options), "-cl-opt-disable");
       if (p)
         optLevel = 0;
-
+      // XXX enable cl_khr_fp64 may cause some potential bugs.
+      // we may need to revisit here latter when we want to support fp64 completely.
+      // For now, as we don't support fp64 actually, just disable it by default.
+#if 0
       #define ENABLE_CL_KHR_FP64_STR "#pragma OPENCL EXTENSION cl_khr_fp64 : enable\n"
       if (!strstr(const_cast<char *>(options), "-cl-std=CL1.1"))
         fwrite(ENABLE_CL_KHR_FP64_STR, strlen(ENABLE_CL_KHR_FP64_STR), 1, clFile);
+#endif
 
       clOpt += options;
     }
