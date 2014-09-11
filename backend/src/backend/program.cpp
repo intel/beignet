@@ -576,13 +576,14 @@ namespace gbe {
             *errSize = snprintf(err, stringSize, "Invalid build option: %s\n", str.c_str());
           return false;
         }
-        continue;
       }
       useless.push_back(str);
       args.push_back(str.c_str());
     }
-    if (useDefaultCLCVersion)
+    if (useDefaultCLCVersion) {
       args.push_back("-D__OPENCL_C_VERSION__=120");
+      args.push_back("-cl-std=CL1.2");
+    }
     args.push_back("-mllvm");
     args.push_back("-inline-threshold=200000");
 #ifdef GEN7_SAMPLER_CLAMP_BORDER_WORKAROUND
@@ -775,6 +776,7 @@ namespace gbe {
           "-cl-single-precision-constant",
 //        "-cl-denorms-are-zero",
           "-cl-fast-relaxed-math",
+          "-cl-std=CL1.1"
       };
       const char * incompatible_defs[] = {
           "GET_FLOAT_WORD",
@@ -803,6 +805,10 @@ namespace gbe {
       p = strstr(const_cast<char *>(options), "-cl-opt-disable");
       if (p)
         optLevel = 0;
+
+      #define ENABLE_CL_KHR_FP64_STR "#pragma OPENCL EXTENSION cl_khr_fp64 : enable\n"
+      if (!strstr(const_cast<char *>(options), "-cl-std=CL1.1"))
+        fwrite(ENABLE_CL_KHR_FP64_STR, strlen(ENABLE_CL_KHR_FP64_STR), 1, clFile);
 
       clOpt += options;
     }

@@ -50,7 +50,7 @@ else (LLVM_VERSION_NODOT VERSION_GREATER 32)
         set (clang_cmd -cc1 -x cl -triple ptx32)
     endif (LLVM_VERSION_NODOT VERSION_GREATER 31)
 endif (LLVM_VERSION_NODOT VERSION_GREATER 32)
-set (clang_cmd ${clang_cmd} -fno-builtin -DGEN7_SAMPLER_CLAMP_BORDER_WORKAROUND)
+set (clang_cmd ${clang_cmd} -cl-std=CL1.2 -fno-builtin -DGEN7_SAMPLER_CLAMP_BORDER_WORKAROUND)
 
 add_custom_command(
      OUTPUT ${pch_object}
