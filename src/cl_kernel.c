@@ -99,6 +99,7 @@ cl_kernel_set_arg(cl_kernel k, cl_uint index, size_t sz, const void *value)
   enum gbe_arg_type arg_type; /* kind of argument */
   size_t arg_sz;              /* size of the argument */
   cl_mem mem = NULL;          /* for __global, __constant and image arguments */
+  cl_context ctx = k->program->ctx;
 
   if (UNLIKELY(index >= k->arg_n))
     return CL_INVALID_ARG_INDEX;
@@ -136,7 +137,7 @@ cl_kernel_set_arg(cl_kernel k, cl_uint index, size_t sz, const void *value)
     if(value != NULL)
       mem = *(cl_mem*)value;
     if(value != NULL && mem) {
-      if (UNLIKELY(mem->magic != CL_MAGIC_MEM_HEADER))
+      if( CL_SUCCESS != is_valid_mem(mem, ctx->buffers))
         return CL_INVALID_MEM_OBJECT;
 
       if (UNLIKELY((arg_type == GBE_ARG_IMAGE && !IS_IMAGE(mem))

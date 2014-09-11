@@ -289,6 +289,21 @@ error:
 
 }
 
+LOCAL cl_int
+is_valid_mem(cl_mem mem, cl_mem buffers)
+{
+  cl_mem tmp = buffers;
+  while(tmp){
+    if(mem == tmp){
+      if (UNLIKELY(mem->magic != CL_MAGIC_MEM_HEADER))
+        return CL_INVALID_MEM_OBJECT;
+      return CL_SUCCESS;
+    }
+    tmp = tmp->next;
+  }
+  return CL_INVALID_MEM_OBJECT;
+}
+
 LOCAL cl_mem
 cl_mem_new_buffer(cl_context ctx,
                   cl_mem_flags flags,
