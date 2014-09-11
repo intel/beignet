@@ -227,7 +227,7 @@ namespace gbe
     if (!module)
       delete cl_mod;
     if (M.get() == 0)
-      return false;
+      return true;
 
     Module &mod = *M.get();
     DataLayout DL(&mod);
