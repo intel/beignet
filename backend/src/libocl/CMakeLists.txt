@@ -129,8 +129,7 @@ FOREACH(M ${OCL_BASH_GENERATED_MODULES})
 ENDFOREACH(M) 
 
 
-SET (CLANG_OCL_FLAGS -fno-builtin -ffp-contract=off -cl-kernel-arg-info -DGEN7_SAMPLER_CLAMP_BORDER_WORKAROUND)
-
+SET (CLANG_OCL_FLAGS -fno-builtin -ffp-contract=off -cl-kernel-arg-info -DGEN7_SAMPLER_CLAMP_BORDER_WORKAROUND "-cl-std=CL1.2")
 MACRO(ADD_CL_TO_BC_TARGET _file)
     # CMake seems can not add pattern rule, use MACRO to replace.
     STRING(REGEX REPLACE "${LIBOCL_BINARY_DIR}/src/\(o.*\)\\.cl" "${LIBOCL_BINARY_DIR}/lib/\\1.bc" output_name ${_file})

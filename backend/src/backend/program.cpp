@@ -659,7 +659,7 @@ namespace gbe {
       const std::string unsupportedOptions("-cl-denorms-are-zero, -cl-strict-aliasing, -cl-opt-disable,"
                        "-cl-no-signed-zeros, -cl-fp32-correctly-rounded-divide-sqrt");
 
-      const std::string uncompatiblePCHOptions = ("-cl-single-precision-constant, -cl-fast-relaxed-math");
+      const std::string uncompatiblePCHOptions = ("-cl-single-precision-constant, -cl-fast-relaxed-math, -cl-std=CL1.1");
       const std::string fastMathOption = ("-cl-fast-relaxed-math");
       while (end != std::string::npos) {
         end = optionStr.find(' ', start);
@@ -683,7 +683,6 @@ namespace gbe {
               *errSize = snprintf(err, stringSize, "Invalid build option: %s\n", str.c_str());
             return false;
           }
-          continue;
         }
 
         if (uncompatiblePCHOptions.find(str) != std::string::npos)
@@ -699,8 +698,10 @@ namespace gbe {
       free(str);
     }
 
-    if (useDefaultCLCVersion)
+    if (useDefaultCLCVersion) {
       clOpt.push_back("-D__OPENCL_C_VERSION__=120");
+      clOpt.push_back("-cl-std=CL1.2");
+    }
     //for clCompilerProgram usage.
     if(temp_header_path){
       clOpt.push_back("-I");
@@ -720,6 +721,10 @@ namespace gbe {
 
     FILE *clFile = fdopen(clFd, "w");
     FATAL_IF(clFile == NULL, "Failed to open temporary file");
+
+    #define ENABLE_CL_KHR_FP64_STR "#pragma OPENCL EXTENSION cl_khr_fp64 : enable\n"
+    if (options && !strstr(const_cast<char *>(options), "-cl-std=CL1.1"))
+      fwrite(ENABLE_CL_KHR_FP64_STR, strlen(ENABLE_CL_KHR_FP64_STR), 1, clFile);
 
     if (!findPCH || invalidPCH) {
       clOpt.push_back("-include");
