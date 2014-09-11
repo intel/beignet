@@ -113,7 +113,8 @@ namespace gbe {
       cloned_module = llvm::CloneModule((llvm::Module*)module);
     }
     if (llvmToGen(*unit, fileName, module, optLevel) == false) {
-      error = std::string(fileName) + " not found";
+      if (fileName)
+        error = std::string(fileName) + " not found";
       return false;
     }
     //If unit is not valid, maybe some thing don't support by backend, introduce by some passes
