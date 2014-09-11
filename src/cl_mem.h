@@ -176,6 +176,9 @@ extern cl_int cl_get_mem_object_info(cl_mem, cl_mem_info, size_t, void *, size_t
 /* Query information about an image */
 extern cl_int cl_get_image_info(cl_mem, cl_image_info, size_t, void *, size_t *);
 
+/* Query whether mem is in buffers */
+extern cl_int is_valid_mem(cl_mem mem, cl_mem buffers);
+
 /* Create a new memory object and initialize it with possible user data */
 extern cl_mem cl_mem_new_buffer(cl_context, cl_mem_flags, size_t, void*, cl_int*);
 
