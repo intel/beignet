@@ -115,6 +115,7 @@ namespace gbe {
     if (llvmToGen(*unit, fileName, module, optLevel) == false) {
       if (fileName)
         error = std::string(fileName) + " not found";
+      delete unit;
       return false;
     }
     //If unit is not valid, maybe some thing don't support by backend, introduce by some passes
