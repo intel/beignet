@@ -247,6 +247,9 @@ cl_program_create_from_binary(cl_context             ctx,
     }
     program->source_type = FROM_LLVM;
   }
+  else if (*program->binary == 0) {
+    program->binary_type = CL_PROGRAM_BINARY_TYPE_EXECUTABLE;
+  }
 
   if (binary_status)
     binary_status[0] = CL_SUCCESS;
