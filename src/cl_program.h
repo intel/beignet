@@ -54,6 +54,7 @@ struct _cl_program {
   uint32_t ker_n;         /* Number of declared kernels */
   uint32_t source_type:2; /* Built from binary, source or LLVM */
   uint32_t is_built:1;    /* Did we call clBuildProgram on it? */
+  int32_t build_status;   /* build status. */
   char *build_opts;       /* The build options for this program */
   size_t build_log_max_sz; /*build log maximum size in byte.*/
   char *build_log;         /* The build log for this program. */

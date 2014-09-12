@@ -119,6 +119,7 @@ cl_program_new(cl_context ctx)
   /* Allocate the structure */
   TRY_ALLOC_NO_ERR (p, CALLOC(struct _cl_program));
   SET_ICD(p->dispatch)
+  p->build_status = CL_BUILD_NONE;
   p->ref_n = 1;
   p->magic = CL_MAGIC_PROGRAM_HEADER;
   p->ctx = ctx;
@@ -471,12 +472,15 @@ cl_program_build(cl_program p, const char *options)
   int i = 0;
   int copyed = 0;
 
-  if (p->ref_n > 1)
-    return CL_INVALID_OPERATION;
+  if (p->ref_n > 1) {
+    err = CL_INVALID_OPERATION;
+    goto error;
+  }
 
-  if (!check_cl_version_option(p, options))
-    return CL_BUILD_PROGRAM_FAILURE;
-
+  if (!check_cl_version_option(p, options)) {
+    err = CL_BUILD_PROGRAM_FAILURE;
+    goto error;
+  }
   if (options) {
     if(p->build_opts == NULL || strcmp(options, p->build_opts) != 0) {
       if(p->build_opts) {
@@ -555,9 +559,12 @@ cl_program_build(cl_program p, const char *options)
     memcpy(p->bin + copyed, interp_kernel_get_code(opaque), sz);
     copyed += sz;
   }
+  p->is_built = 1;
+  p->build_status = CL_BUILD_SUCCESS;
+  return CL_SUCCESS;
 
 error:
-  p->is_built = 1;
+  p->build_status = CL_BUILD_ERROR;
   return err;
 }
 
@@ -594,7 +601,7 @@ cl_program_link(cl_context            context,
 
   if(options && strstr(options, "-create-library")){
     p->binary_type = CL_PROGRAM_BINARY_TYPE_LIBRARY;
-    return p;
+    goto done;
   }else{
     p->binary_type = CL_PROGRAM_BINARY_TYPE_EXECUTABLE;
   }
@@ -617,9 +624,17 @@ cl_program_link(cl_context            context,
     memcpy(p->bin + copyed, interp_kernel_get_code(opaque), sz);
     copyed += sz;
   }
+done:
+  p->is_built = 1;
+  p->build_status = CL_BUILD_SUCCESS;
+  if (errcode_ret)
+    *errcode_ret = err;
+  return p;
 
 error:
-  p->is_built = 1;
+  p->build_status = CL_BUILD_ERROR;
+  if (errcode_ret)
+    *errcode_ret = err;
   return p;
 }
 
@@ -633,11 +648,15 @@ cl_program_compile(cl_program            p,
   cl_int err = CL_SUCCESS;
   int i = 0;
 
-  if (p->ref_n > 1)
-    return CL_INVALID_OPERATION;
+  if (p->ref_n > 1) {
+    err = CL_INVALID_OPERATION;
+    goto error;
+  }
 
-  if (!check_cl_version_option(p, options))
-    return CL_BUILD_PROGRAM_FAILURE;
+  if (!check_cl_version_option(p, options)) {
+    err = CL_BUILD_PROGRAM_FAILURE;
+    goto error;
+  }
 
   if (options) {
     if(p->build_opts == NULL || strcmp(options, p->build_opts) != 0) {
@@ -722,9 +741,11 @@ cl_program_compile(cl_program            p,
     p->binary_type = CL_PROGRAM_BINARY_TYPE_COMPILED_OBJECT;
   }
   p->is_built = 1;
+  p->build_status = CL_BUILD_SUCCESS;
   return CL_SUCCESS;
 
 error:
+  p->build_status = CL_BUILD_ERROR;
   cl_program_delete(p);
   p = NULL;
   return err;

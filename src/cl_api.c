@@ -1140,17 +1140,7 @@ clGetProgramBuildInfo(cl_program             program,
   INVALID_DEVICE_IF (device != program->ctx->device);
 
   if (param_name == CL_PROGRAM_BUILD_STATUS) {
-    cl_build_status status;
-
-    if (!program->is_built)
-      status = CL_BUILD_NONE;
-    else if (program->ker_n > 0)
-      status = CL_BUILD_SUCCESS;
-    else
-      status = CL_BUILD_ERROR;
-    // TODO: Support CL_BUILD_IN_PROGRESS ?
-
-    FILL_GETINFO_RET (cl_build_status, 1, &status, CL_SUCCESS);
+    FILL_GETINFO_RET (cl_build_status, 1, &program->build_status, CL_SUCCESS);
   } else if (param_name == CL_PROGRAM_BUILD_OPTIONS) {
     if (program->is_built && program->build_opts)
       ret_str = program->build_opts;
