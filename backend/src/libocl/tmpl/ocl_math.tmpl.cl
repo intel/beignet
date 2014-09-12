@@ -3204,9 +3204,6 @@ OVERLOADABLE float pown(float x, int n) {
 }
 
 OVERLOADABLE float rootn(float x, int n) {
-  if (__ocl_math_fastpath_flag)
-    return __gen_ocl_internal_fastpath_rootn(x, n);
-
   float ax,re;
   int sign = 0;
   if( n == 0 )return NAN;
@@ -3233,7 +3230,10 @@ OVERLOADABLE float rootn(float x, int n) {
   ax = __gen_ocl_fabs(x);
   if(x <0.0f && (n&1))
     sign = 1;
-  re = __gen_ocl_internal_pow(ax,1.f/n);
+  if (__ocl_math_fastpath_flag)
+    re = __gen_ocl_pow(ax, 1.f/n);
+  else
+    re = __gen_ocl_internal_pow(ax,1.f/n);
   if(sign)
     re = -re;
   return re;
