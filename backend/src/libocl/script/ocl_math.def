@@ -26,7 +26,7 @@ gentype fabs (gentype)
 gentype fdim (gentype x, gentype y)
 gentype floor (gentype)
 # XXX we use madd for fma
-#gentype fma (gentype a, gentype b, gentype c)
+gentype fma (gentype a, gentype b, gentype c)
 gentype fmax (gentype x, gentype y)
 gentypef fmax (gentypef x, float y)
 gentyped fmax (gentyped x, double y)
