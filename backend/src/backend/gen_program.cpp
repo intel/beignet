@@ -56,6 +56,7 @@
 #include "backend/gen_reg_allocation.hpp"
 #include "ir/unit.hpp"
 #include "llvm/llvm_to_gen.hpp"
+#include "llvm/llvm_gen_backend.hpp"
 
 #include <clang/CodeGen/CodeGenAction.h>
 
@@ -371,9 +372,10 @@ namespace gbe {
       }
 
       for (llvm::Module::iterator I = src->begin(), E = src->end(); I != E; ++I) {
+        llvm::Function *F = llvm::dyn_cast<llvm::Function>(I);
+        if (F && isKernelFunction(*F)) continue;
         I->setLinkage(llvm::GlobalValue::LinkOnceAnyLinkage);
       }
-
       llvm::Module* dst = (llvm::Module*)((GenProgram*)dst_program)->module;
       llvm::Linker::LinkModules( dst,
                                  src,
