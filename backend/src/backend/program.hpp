@@ -176,6 +176,11 @@ namespace gbe {
        wg_sz[1] = compileWgSize[1];
        wg_sz[2] = compileWgSize[2];
     }
+    /*! Set function attributes string. */
+    void setFunctionAttributes(const std::string& functionAttributes) {  this->functionAttributes= functionAttributes; }
+    /*! Get function attributes string. */
+    const char* getFunctionAttributes(void) const {return this->functionAttributes.c_str();}
+
     /*! Get defined image size */
     size_t getImageSize(void) const { return (imageSet == NULL ? 0 : imageSet->getDataSize()); }
     /*! Get defined image value array */
@@ -228,6 +233,7 @@ namespace gbe {
     ir::ImageSet *imageSet;    //!< Copy from the corresponding function.
     ir::PrintfSet *printfSet;  //!< Copy from the corresponding function.
     size_t compileWgSize[3];   //!< required work group size by kernel attribute.
+    std::string functionAttributes; //!< function attribute qualifiers combined.
     GBE_CLASS(Kernel);         //!< Use custom allocators
   };
 

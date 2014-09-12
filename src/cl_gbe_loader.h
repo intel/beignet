@@ -42,6 +42,7 @@ extern gbe_program_get_kernel_num_cb *interp_program_get_kernel_num;
 extern gbe_program_get_kernel_by_name_cb *interp_program_get_kernel_by_name;
 extern gbe_program_get_kernel_cb *interp_program_get_kernel;
 extern gbe_kernel_get_name_cb *interp_kernel_get_name;
+extern gbe_kernel_get_attributes_cb *interp_kernel_get_attributes;
 extern gbe_kernel_get_code_cb *interp_kernel_get_code;
 extern gbe_kernel_get_code_size_cb *interp_kernel_get_code_size;
 extern gbe_kernel_get_arg_num_cb *interp_kernel_get_arg_num;

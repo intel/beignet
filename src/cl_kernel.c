@@ -86,6 +86,13 @@ cl_kernel_get_name(cl_kernel k)
   return interp_kernel_get_name(k->opaque);
 }
 
+LOCAL const char*
+cl_kernel_get_attributes(cl_kernel k)
+{
+  if (UNLIKELY(k == NULL)) return NULL;
+  return interp_kernel_get_attributes(k->opaque);
+}
+
 LOCAL void
 cl_kernel_add_ref(cl_kernel k)
 {

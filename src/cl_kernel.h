@@ -79,6 +79,9 @@ extern void cl_kernel_setup(cl_kernel k, gbe_kernel opaque);
 /* Get the kernel name */
 extern const char *cl_kernel_get_name(cl_kernel k);
 
+/* Get the kernel attributes*/
+extern const char *cl_kernel_get_attributes(cl_kernel k);
+
 /* Get the simd width as used in the code */
 extern uint32_t cl_kernel_get_simd_width(cl_kernel k);
 

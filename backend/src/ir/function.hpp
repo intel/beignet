@@ -406,6 +406,10 @@ namespace ir {
     void setCompileWorkGroupSize(size_t x, size_t y, size_t z) { compileWgSize[0] = x; compileWgSize[1] = y; compileWgSize[2] = z; }
     /*! Get required work group size. */
     const size_t *getCompileWorkGroupSize(void) const {return compileWgSize;}
+    /*! Set function attributes string. */
+    void setFunctionAttributes(const std::string& functionAttributes) {  this->functionAttributes= functionAttributes; }
+    /*! Get function attributes string. */
+    const std::string& getFunctionAttributes(void) const {return this->functionAttributes;}
     /*! Get stack size. */
     INLINE uint32_t getStackSize(void) const { return this->stackSize; }
     /*! Push stack size. */
@@ -441,6 +445,7 @@ namespace ir {
     PrintfSet *printfSet;           //!< printfSet store the printf info.
     size_t compileWgSize[3];        //!< required work group size specified by
                                     //   __attribute__((reqd_work_group_size(X, Y, Z))).
+    std::string functionAttributes; //!< function attribute qualifiers combined.
     GBE_CLASS(Function);            //!< Use custom allocator
   };
 

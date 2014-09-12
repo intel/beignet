@@ -42,6 +42,7 @@ gbe_program_get_kernel_num_cb *interp_program_get_kernel_num = NULL;
 gbe_program_get_kernel_by_name_cb *interp_program_get_kernel_by_name = NULL;
 gbe_program_get_kernel_cb *interp_program_get_kernel = NULL;
 gbe_kernel_get_name_cb *interp_kernel_get_name = NULL;
+gbe_kernel_get_attributes_cb *interp_kernel_get_attributes = NULL;
 gbe_kernel_get_code_cb *interp_kernel_get_code = NULL;
 gbe_kernel_get_code_size_cb *interp_kernel_get_code_size = NULL;
 gbe_kernel_get_arg_num_cb *interp_kernel_get_arg_num = NULL;
@@ -125,6 +126,10 @@ struct GbeLoaderInitializer
 
     interp_kernel_get_name = *(gbe_kernel_get_name_cb**)dlsym(dlhInterp, "gbe_kernel_get_name");
     if (interp_kernel_get_name == NULL)
+      return false;
+
+    interp_kernel_get_attributes = *(gbe_kernel_get_attributes_cb**)dlsym(dlhInterp, "gbe_kernel_get_attributes");
+    if (interp_kernel_get_attributes == NULL)
       return false;
 
     interp_kernel_get_code = *(gbe_kernel_get_code_cb**)dlsym(dlhInterp, "gbe_kernel_get_code");
