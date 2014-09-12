@@ -159,6 +159,7 @@
 #include "sys/set.hpp"
 #include "sys/cvar.hpp"
 #include "backend/program.h"
+#include <sstream>
 
 /* Not defined for LLVM 3.0 */
 #if !defined(LLVM_VERSION_MAJOR)
@@ -1253,6 +1254,8 @@ namespace gbe
     MDNode *typeQualNode = NULL;
     MDNode *argNameNode = NULL;
 
+    std::string functionAttributes;
+
     /* First find the meta data belong to this function. */
     for(uint i = 0; i < clKernelMetaDatas->getNumOperands(); i++) {
       node = clKernelMetaDatas->getOperand(i);
@@ -1263,6 +1266,7 @@ namespace gbe
     /* because "-cl-kernel-arg-info", should always have meta data. */
     if (!F.arg_empty())
       assert(node);
+
 
     for(uint j = 0; j < node->getNumOperands() - 1; j++) {
       MDNode *attrNode = dyn_cast_or_null<MDNode>(node->getOperand(1 + j));
@@ -1279,6 +1283,19 @@ namespace gbe
         reqd_wg_sz[0] = x->getZExtValue();
         reqd_wg_sz[1] = y->getZExtValue();
         reqd_wg_sz[2] = z->getZExtValue();
+        functionAttributes += attrName->getString();
+        std::stringstream param;
+        char buffer[100];
+        param <<"(";
+        param << reqd_wg_sz[0];
+        param << ",";
+        param << reqd_wg_sz[1];
+        param << ",";
+        param << reqd_wg_sz[2];
+        param <<")";
+        param >> buffer;
+        functionAttributes += buffer;
+        functionAttributes += " ";
         break;
       } else if (attrName->getString() == "kernel_arg_addr_space") {
         addrSpaceNode = attrNode;
@@ -1290,11 +1307,39 @@ namespace gbe
         typeQualNode = attrNode;
       } else if (attrName->getString() == "kernel_arg_name") {
         argNameNode = attrNode;
+      } else if (attrName->getString() == "vec_type_hint") {
+        GBE_ASSERT(attrNode->getNumOperands() == 3);
+        functionAttributes += attrName->getString();
+        functionAttributes += " ";
+      } else if (attrName->getString() == "work_group_size_hint") {
+        GBE_ASSERT(attrNode->getNumOperands() == 4);
+        ConstantInt *x = dyn_cast<ConstantInt>(attrNode->getOperand(1));
+        ConstantInt *y = dyn_cast<ConstantInt>(attrNode->getOperand(2));
+        ConstantInt *z = dyn_cast<ConstantInt>(attrNode->getOperand(3));
+        GBE_ASSERT(x && y && z);
+        reqd_wg_sz[0] = x->getZExtValue();
+        reqd_wg_sz[1] = y->getZExtValue();
+        reqd_wg_sz[2] = z->getZExtValue();
+        functionAttributes += attrName->getString();
+        std::stringstream param;
+        char buffer[100];
+        param <<"(";
+        param << reqd_wg_sz[0];
+        param << ",";
+        param << reqd_wg_sz[1];
+        param << ",";
+        param << reqd_wg_sz[2];
+        param <<")";
+        param >> buffer;
+        functionAttributes += buffer;
+        functionAttributes += " ";
       }
     }
     ctx.appendSurface(1, ir::ocl::stackbuffer);
 
     ctx.getFunction().setCompileWorkGroupSize(reqd_wg_sz[0], reqd_wg_sz[1], reqd_wg_sz[2]);
+
+    ctx.getFunction().setFunctionAttributes(functionAttributes);
     // Loop over the arguments and output registers for them
     if (!F.arg_empty()) {
       uint32_t argID = 0;

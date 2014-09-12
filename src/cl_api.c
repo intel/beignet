@@ -1295,6 +1295,9 @@ clGetKernelInfo(cl_kernel        kernel,
   } else if (param_name == CL_KERNEL_FUNCTION_NAME) {
     const char * n = cl_kernel_get_name(kernel);
     FILL_GETINFO_RET (cl_char, strlen(n)+1, n, CL_SUCCESS);
+  } else if (param_name == CL_KERNEL_ATTRIBUTES) {
+    const char * n = cl_kernel_get_attributes(kernel);
+    FILL_GETINFO_RET (cl_char, strlen(n)+1, n, CL_SUCCESS);
   } else {
     return CL_INVALID_VALUE;
   }

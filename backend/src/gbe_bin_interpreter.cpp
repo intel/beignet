@@ -47,6 +47,7 @@ struct BinInterpCallBackInitializer
     gbe_kernel_get_stack_size = gbe::kernelGetStackSize;
     gbe_kernel_get_image_size = gbe::kernelGetImageSize;
     gbe_kernel_get_name = gbe::kernelGetName;
+    gbe_kernel_get_attributes = gbe::kernelGetAttributes;
     gbe_kernel_get_arg_type = gbe::kernelGetArgType;
     gbe_kernel_get_arg_size = gbe::kernelGetArgSize;
     gbe_kernel_get_arg_bti = gbe::kernelGetArgBTI;

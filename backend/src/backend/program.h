@@ -277,6 +277,10 @@ extern gbe_program_get_kernel_cb *gbe_program_get_kernel;
 typedef const char *(gbe_kernel_get_name_cb)(gbe_kernel);
 extern gbe_kernel_get_name_cb *gbe_kernel_get_name;
 
+/*! Get the kernel attributes*/
+typedef const char *(gbe_kernel_get_attributes_cb)(gbe_kernel);
+extern gbe_kernel_get_attributes_cb *gbe_kernel_get_attributes;
+
 /*! Get the kernel source code */
 typedef const char *(gbe_kernel_get_code_cb)(gbe_kernel);
 extern gbe_kernel_get_code_cb *gbe_kernel_get_code;

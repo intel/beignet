@@ -153,6 +153,7 @@ namespace gbe {
       kernel->setImageSet(pair.second->getImageSet());
       kernel->setPrintfSet(pair.second->getPrintfSet());
       kernel->setCompileWorkGroupSize(pair.second->getCompileWorkGroupSize());
+      kernel->setFunctionAttributes(pair.second->getFunctionAttributes());
       kernels.insert(std::make_pair(name, kernel));
     }
     return true;
@@ -1002,6 +1003,12 @@ namespace gbe {
     return kernel->getName();
   }
 
+  static const char *kernelGetAttributes(gbe_kernel genKernel) {
+    if (genKernel == NULL) return NULL;
+    const gbe::Kernel *kernel = (const gbe::Kernel*) genKernel;
+    return kernel->getFunctionAttributes();
+  }
+
   static const char *kernelGetCode(gbe_kernel genKernel) {
     if (genKernel == NULL) return NULL;
     const gbe::Kernel *kernel = (const gbe::Kernel*) genKernel;
@@ -1218,6 +1225,7 @@ GBE_EXPORT_SYMBOL gbe_program_get_kernel_num_cb *gbe_program_get_kernel_num = NU
 GBE_EXPORT_SYMBOL gbe_program_get_kernel_by_name_cb *gbe_program_get_kernel_by_name = NULL;
 GBE_EXPORT_SYMBOL gbe_program_get_kernel_cb *gbe_program_get_kernel = NULL;
 GBE_EXPORT_SYMBOL gbe_kernel_get_name_cb *gbe_kernel_get_name = NULL;
+GBE_EXPORT_SYMBOL gbe_kernel_get_attributes_cb *gbe_kernel_get_attributes = NULL;
 GBE_EXPORT_SYMBOL gbe_kernel_get_code_cb *gbe_kernel_get_code = NULL;
 GBE_EXPORT_SYMBOL gbe_kernel_get_code_size_cb *gbe_kernel_get_code_size = NULL;
 GBE_EXPORT_SYMBOL gbe_kernel_get_arg_num_cb *gbe_kernel_get_arg_num = NULL;
@@ -1265,6 +1273,7 @@ namespace gbe
       gbe_program_get_kernel_by_name = gbe::programGetKernelByName;
       gbe_program_get_kernel = gbe::programGetKernel;
       gbe_kernel_get_name = gbe::kernelGetName;
+      gbe_kernel_get_attributes = gbe::kernelGetAttributes;
       gbe_kernel_get_code = gbe::kernelGetCode;
       gbe_kernel_get_code_size = gbe::kernelGetCodeSize;
       gbe_kernel_get_arg_num = gbe::kernelGetArgNum;
