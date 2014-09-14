@@ -1249,6 +1249,7 @@ namespace gbe
     // Loop over the kernel metadatas to set the required work group size.
     NamedMDNode *clKernelMetaDatas = TheModule->getNamedMetadata("opencl.kernels");
     size_t reqd_wg_sz[3] = {0, 0, 0};
+    size_t hint_wg_sz[3] = {0, 0, 0};
     ir::FunctionArgument::InfoFromLLVM llvmInfo;
     MDNode *node = NULL;
     MDNode *addrSpaceNode = NULL;
@@ -1320,18 +1321,18 @@ namespace gbe
         ConstantInt *y = dyn_cast<ConstantInt>(attrNode->getOperand(2));
         ConstantInt *z = dyn_cast<ConstantInt>(attrNode->getOperand(3));
         GBE_ASSERT(x && y && z);
-        reqd_wg_sz[0] = x->getZExtValue();
-        reqd_wg_sz[1] = y->getZExtValue();
-        reqd_wg_sz[2] = z->getZExtValue();
+        hint_wg_sz[0] = x->getZExtValue();
+        hint_wg_sz[1] = y->getZExtValue();
+        hint_wg_sz[2] = z->getZExtValue();
         functionAttributes += attrName->getString();
         std::stringstream param;
         char buffer[100];
         param <<"(";
-        param << reqd_wg_sz[0];
+        param << hint_wg_sz[0];
         param << ",";
-        param << reqd_wg_sz[1];
+        param << hint_wg_sz[1];
         param << ",";
-        param << reqd_wg_sz[2];
+        param << hint_wg_sz[2];
         param <<")";
         param >> buffer;
         functionAttributes += buffer;
