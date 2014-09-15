@@ -57,6 +57,23 @@ namespace analysis
       iter++;
     }
   }
+  void ControlTree::handleSelfLoopNode(Node *loopnode, ir::LabelIndex& whileLabel)
+  {
+    ir::BasicBlock *pbb = loopnode->getExit();
+    ir::BranchInstruction* pinsn = static_cast<ir::BranchInstruction *>(pbb->getLastInstruction());
+    ir::Register reg = pinsn->getPredicateIndex();
+    ir::BasicBlock::iterator it = pbb->end();
+    it--;
+    /* since this node is an while node, so we remove the BRA instruction at the bottom of the exit BB of 'node',
+     * and insert WHILE instead
+     */
+    pbb->erase(it);
+    whileLabel = pinsn->getLabelIndex();
+    ir::Instruction insn = ir::WHILE(whileLabel, reg);
+    ir::Instruction* p_new_insn = pbb->getParent().newInstruction(insn);
+    pbb->append(*p_new_insn);
+    pbb->whileLabel = whileLabel;
+  }
 
   /* recursive mark the bbs' variable needEndif, the bbs all belong to node.*/
   void ControlTree::markNeedIf(Node *node, bool status)
@@ -207,7 +224,7 @@ namespace analysis
      * structures */
     while(rit != nodes.rend())
     {
-      if((*rit)->type() == IfThen || (*rit)->type() == IfElse)
+      if((*rit)->type() == IfThen || (*rit)->type() == IfElse|| (*rit)->type() == SelfLoop)
       {
         if(false == (*rit)->mark && (*rit)->canBeHandled)
         {
@@ -256,12 +273,12 @@ namespace analysis
      */
     while(rit != nodes.rend())
     {
-      if(((*rit)->type() == IfThen || (*rit)->type() == IfElse || (*rit)->type() == Block) &&
+      if(((*rit)->type() == IfThen || (*rit)->type() == IfElse || (*rit)->type() == Block ||(*rit)->type() == SelfLoop) &&
           (*rit)->canBeHandled && (*rit)->mark == true)
       {
         markStructuredNodes(*rit, false);
         std::set<int> ns = getStructureBasicBlocksIndex(*rit, bbs);
-        ir::BasicBlock *entry = (*it)->getEntry();
+        ir::BasicBlock *entry = (*rit)->getEntry();
 
         int entryIndex = *(ns.begin());
         for(size_t i=0; i<bbs.size(); ++i)
@@ -362,6 +379,14 @@ namespace analysis
               handleThenNode2(*child_iter, *else_node, elseBBLabel);
               child_iter--;
               handleIfNode(*child_iter, endiflabel, elselabel);
+            }
+            break;
+
+          case SelfLoop:
+            {
+              NodeList::iterator child_iter = (*it)->children.begin();
+              ir::LabelIndex whilelabel;
+              handleSelfLoopNode(*child_iter, whilelabel);
             }
             break;
 
@@ -835,7 +860,6 @@ namespace analysis
    * ignore the identification of cyclic regions. */
   Node * ControlTree::cyclicRegionType(Node *node, NodeList &nset)
   {
-#if 0
     /* check for self-loop */
     if(nset.size() == 1)
     {
@@ -875,7 +899,6 @@ namespace analysis
         return insertNode(p);
       }
     }
-#endif
     return NULL;
   }
 
@@ -998,9 +1021,9 @@ namespace analysis
           if(nset.find(entry) != nset.end())
             entry = region;
         }
+        // FIXME loop optimization is still buggy and under development, now disable it by default.
         else
         {
-        /* We now only deal with acyclic regions at this moment. */
 #if 0
           reachUnder.clear();
           nset.clear();
@@ -1027,9 +1050,11 @@ namespace analysis
           }
           else
           {
-#endif
             post_ctr++;
-         // }
+          }
+#else
+          post_ctr++;
+#endif
         }
       }
 

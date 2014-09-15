@@ -191,7 +191,6 @@ namespace analysis
     }
   };
 
-#if 0
   /* Self loop structure node */
   class SelfLoopNode : public Node
   {
@@ -259,7 +258,6 @@ namespace analysis
       return NULL;
     }
   };
-#endif
 
   /* computes the control tree, and do the structure identification during the computation */
   class ControlTree
@@ -308,6 +306,8 @@ namespace analysis
     bool pathBack(Node*, Node*);
     /* check if there is a barrier in a basic block */
     bool checkForBarrier(const ir::BasicBlock*);
+    /* insert while instruction at the proper position of Node */
+    void handleSelfLoopNode(Node *, ir::LabelIndex&);
     /* mark all the BasicBlockNodes of the control tree node n as status */
     void markStructuredNodes(Node *n, bool status);
     /* mark all the ir::BasicBlocks' needEndIf of n as status */

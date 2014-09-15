@@ -142,6 +142,9 @@ namespace ir {
      * else node into all the basic blocks belong to 'then' part while the liveout is
      * calculated in structural_analysis.cpp:calculateNecessaryLiveout(); */
     std::set<Register> liveout;
+    /* selfLoop's label.
+     * */
+    LabelIndex whileLabel;
   private:
     friend class Function; //!< Owns the basic blocks
     BlockSet predecessors; //!< Incoming blocks

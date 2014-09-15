@@ -1044,7 +1044,7 @@ namespace gbe
              this->setSrc1(&insn, GenRegister::immd(jumpDistance));
              return;
            }
-           else if (insn.header.opcode == GEN_OPCODE_JMPI) {
+           else if (insn.header.opcode == GEN_OPCODE_JMPI){
              jumpDistance = jumpDistance - 2;
            }
            else if(insn.header.opcode == GEN_OPCODE_ENDIF)
