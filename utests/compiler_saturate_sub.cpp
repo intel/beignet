@@ -108,7 +108,7 @@ compiler_saturate_sub(int8_t, test_char)
 compiler_saturate_sub(uint8_t, test_uchar)
 compiler_saturate_sub(int16_t, test_short)
 compiler_saturate_sub(uint16_t, test_ushort)
-//compiler_saturate_sub(int32_t, test_int) // TODO due to the possible hardware bug, we disable this, uncomment it when it's done.
+compiler_saturate_sub(int32_t, test_int)
 compiler_saturate_sub(uint32_t, test_uint)
 //compiler_saturate_sub(int64_t, test_long)
 //compiler_saturate_sub(uint64_t, test_ulong)
