@@ -253,7 +253,7 @@ OVERLOADABLE int ocl_sadd_sat(int x, int y);
 INLINE_OVERLOADABLE int add_sat(int x, int y) { return ocl_sadd_sat(x, y); }
 OVERLOADABLE int ocl_ssub_sat(int x, int y);
 INLINE_OVERLOADABLE int sub_sat(int x, int y) {
-  return (y == 0x80000000u) ? (x & 0x7FFFFFFF) : ocl_ssub_sat(x, y);
+  return (y == 0x80000000u) ? (ocl_sadd_sat(ocl_sadd_sat(0x7fffffff, x), 1)) : ocl_ssub_sat(x, y);
 }
 OVERLOADABLE long ocl_sadd_sat(long x, long y);
 INLINE_OVERLOADABLE long add_sat(long x, long y) {
