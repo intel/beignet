@@ -20,7 +20,6 @@ The project depends on the following external libaries:
 
 - libdrm libraries (libdrm and libdrm\_intel)
 - Various LLVM components
-- Mesa git master version built with gbm enabled to support extension cl\_khr\_gl\_sharing.
 - If run with X server, beignet needs XLib, Xfixes and Xext installed. Otherwise, no X11 dependency.
 
 And if you want to work with the standard ICD libOpenCL.so, then you need
@@ -39,46 +38,13 @@ with anything older.
 
 [http://llvm.org/releases/](http://llvm.org/releases/)
 
-LLVM 3.3 , 3.4 and 3.5 are supported. Till now, the recommended LLVM version is 3.3.
-There are some severe OpenCL related regression in current clang 3.4/3.5 version.
+LLVM 3.3 , 3.4 and 3.5 are supported. Till now, the recommended LLVM/CLANG version is 3.5.
+There are some severe OpenCL related regression in clang 3.4 version.
 
 **Note about LLVM 3.4**
 
 * If you want to try Clang/LLVM 3.4, you need to disable terminfo:
 --disable-terminfo. It's a llvm 3.4 bug.
-
-**Note about LLVM 3.5**
-
-* If you want to try Clang/LLVM 3.5. The recommended specified version is r211037.
-  As LLVM 3.5 hasn't been released and still in active development. Use version
-  newer than the recommended version may be incompatbiel with beignet.
-
-**Note about OpenCV support**
-
-* We fully tested the OpenCV 2.4 branch with beignet. And the pass rate is about 99%
-  for beignet 0.9. The preferred LLVM/Clang version is 3.3.
-* As some OpenCL kernels run more than 10 seconds, it may  be reset by the linux kernel as
-  the there is a GPU hangcheck mechanism. You can disable the hangcheck by invoke the
-  following command on Ubuntu system:
-
-  `# echo -n 0 > /sys/module/i915/parameters/enable_hangcheck`
-
-  But this command is a little bit dangerous, as if your kernel hang, then the gpu will hang
-  forever.
-* For the OpenCV 3.0 branch, the pass rate may a little bit lower than the 2.4 branch.
-
-Also note that the code was compiled on GCC 4.6, GCC 4.7 and GCC 4.8. Since the code uses
-really recent C++11 features, you may expect problems with older compilers. Last
-time I tried, the code breaks ICC 12 and Clang with internal compiler errors
-while compiling anonymous nested lambda functions.
-
-**Note about Linux Kernel**
-* There is a known issue in some versions of linux kernel which enable register whitelist feature
-  but miss some necessary registers which are required for beignet. The problematic version are
-  around 3.15 and 3.16 which have commit f0a346b... but haven't commit c9224f... If it is the case,
-  you can apply c9224f... manually and rebuild the kernel or just disable the parse command by
-  invoke the following command (use Ubuntu as an example):
-  `# echo 0 > /sys/module/i915/parameters/enable_cmd_parser`
 
 
 How to build and install
@@ -98,6 +64,12 @@ Basically, from the root directory of the project
 
 `> cmake ../ # to configure`
 
+Please be noted that the code was compiled on GCC 4.6, GCC 4.7 and GCC 4.8 and CLANG 3.5 and
+ICC 14.0.3. Since the code uses really recent C++11 features, you may expect problems with
+older compilers. The default compiler should be GCC, and if you want to choose compiler manually,
+you need to configure it as below:
+`> cmake -DCOMPILER=[GCC|CLANG|ICC] ../`
+
 CMake will check the dependencies and will complain if it does not find them.
 
 `> make`
@@ -112,9 +84,11 @@ be found in `utests/`.
 Simply invoke:
 `> make install`
 
-It installs the following three files to the beignet/ directory relatively to
+It installs the following six files to the beignet/ directory relatively to
 your library installation directory.
 - libcl.so
+- libgbeinterp.so
+- libgbe.so
 - ocl\_stdlib.h, ocl\_stdlib.h.pch
 - beignet.bc
 
@@ -124,8 +98,8 @@ It installs the OCL icd vendor files to /etc/OpenCL/vendors, if the system suppo
 How to run
 ----------
 
-Apart from the OpenCL library itself that can be used by any OpenCL application,
-this code also produces various tests to ensure the compiler and the run-time
+After build and install of beignet, you may need to check whether it works on your
+platform. Beignet also produces various tests to ensure the compiler and the run-time
 consistency. This small test framework uses a simple c++ registration system to
 register all the unit tests.
 
@@ -144,37 +118,68 @@ will run all the unit tests one after the others
 
 will only run `some_unit_test0` and `some_unit_test1` tests
 
+On all supported target platform, the pass rate should be 100%. If it is not, you may
+need to refer the "Known Issues" section.
+
 Supported Targets
 -----------------
 
  * 3rd Generation Intel Core Processors
  * Intel “Bay Trail” platforms with Intel HD Graphics
- * 4rd Generation Intel Core Processors, need kernel patch currently, see below
+ * 4th Generation Intel Core Processors, need kernel patch currently, see below
    for details:
-
-The 4rd Generation Inter Core Processors's support requires some Linux kernel
-modification. You need to apply the patch at:
-[https://01.org/zh/beignet/downloads/linux-kernel-patch-hsw-support](https://01.org/zh/beignet/downloads/linux-kernel-patch-hsw-support)
 
 Known Issues
 ------------
 
-* We don't support "extern" keyword on OpenCL kernel side.
-* Currently Gen does not provide native support of high precision math functions
+* GPU hang issues.
+  To check whether GPU hang, you could execute dmesg and check whether it has the following message:
+  `[17909.175965] [drm:i915_hangcheck_hung] *ERROR* Hangcheck timer elapsed...`
+  If it does, there was a GPU hang. Usually, this means something wrong in the kernel, as it indicates
+  the OCL kernel hasn't finished for about 6 seconds or even more. If you think the OCL kernel does need
+  to run that long and have confidence with the kernel, you could disable the linux kernel driver's
+  hang check feature to fix this hang issue. Just invoke the following command on Ubuntu system:
+
+  `# echo -n 0 > /sys/module/i915/parameters/enable_hangcheck`
+
+  But this command is a little bit dangerous, as if your kernel really hang, then the gpu will lock up
+  forever until a reboot.
+
+* Almost all unit tests fail on Linux kernel 3.15/3.16.
+  There is a known issue in some versions of linux kernel which enable register whitelist feature
+  but miss some necessary registers which are required for beignet. The problematic version are
+  around 3.15 and 3.16 which have commit f0a346b... but haven't commit c9224f... If it is the case,
+  you can apply c9224f... manually and rebuild the kernel or just disable the parse command by
+  invoke the following command (use Ubuntu as an example):
+  `# echo 0 > /sys/module/i915/parameters/enable_cmd_parser`
+
+* Some unit test cases, maybe 20 to 30, fail on 4th Generation (HSW) platform.
+  The 4th Generation Intel Core Processors's support requires some Linux kernel
+  modification. You need to apply the patch at:
+  [https://01.org/zh/beignet/downloads/linux-kernel-patch-hsw-support](https://01.org/zh/beignet/downloads/linux-kernel-patch-hsw-support)
+
+* Precision issue.
+  Currently Gen does not provide native support of high precision math functions
   required by OpenCL. We provide a software version to achieve high precision,
   which you can turn on through `export OCL_STRICT_CONFORMANCE=1`.
   But be careful, this would make your CL kernel run a little longer.
 
+* cl\_khr\_gl\_sharing.
+  This extension highly depends on mesa support. It seems that mesa would not provide
+  such type of extensions, we may have to hack with mesa source code to support this
+  extension. This feature used to work with a previous mesa git version. But now, it's
+  simply broken.
+
 TODO
 ----
 
-Interns of the OpenCL 1.1 spec, beignet is quite complete now. We can pass almost
+In terms of the OpenCL 1.2 spec, beignet is quite complete now. We can pass almost
 all the piglit OpenCL test cases now. And the pass rate for the OpenCV test suite
-is also good. There are still some remains work items listed as below, most of them
-are extension support and performance related.
+is also good which is about 99%. There are still some remains work items listed as below,
+most of them are extension support and performance related.
 
 - Performance tuning. There are some major optimizations need to be done,
-  Peephole optimization, convert to strcutured BBs and leverage Gen's structured
+  Peephole optimization, convert to structured BBs and leverage Gen's structured
   instructions, and optimize the extreme slow software based sin/cos/... math
   functions due to the native math instruction lack of necessary precision.
   And all the code is inlined which will increase the icache miss rate
@@ -183,9 +188,8 @@ are extension support and performance related.
 
 - Complete cl\_khr\_gl\_sharing support. We lack of some APIs implementation such
   as clCreateFromGLBuffer,clCreateFromGLRenderbuffer,clGetGLObjectInfo... Currently,
-  the working APIs are clCreateFromGLTexture,clCreateFromGLTexture2D. This work
-  highly depends on mesa support. It seems that mesa would not provide such type
-  of extensions, we may have to hack with mesa source code to support this extension.
+  the working APIs are clCreateFromGLTexture,clCreateFromGLTexture2D. We may need to
+  find a graceful way to co-work with mesa.
 
 - Check that NDRangeKernels can be pushed into _different_ queues from several
   threads.
@@ -226,5 +230,5 @@ Documents for OpenCL application developers
 - [[Cross compile|Beignet/howto/cross-compiler-howto]]
 - [[Kernel Optimization Guide|Beignet/optimization-guide]]
 
-The wiki url is as below:
+The wiki URL is as below:
 [http://www.freedesktop.org/wiki/Software/Beignet/](http://www.freedesktop.org/wiki/Software/Beignet/)
