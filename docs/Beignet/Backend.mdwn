@@ -88,7 +88,7 @@ Implementation details
 Several key decisions may use the hardware in an usual way. See the following
 documents for the technical details about the compiler implementation:
 
-- [[Flat address space|flat_address_space]]
+- [[Mixed buffer pointer)|mixed_buffer_pointer]] 
 - [[Unstructured branches|unstructured_branches]]
 - [[Scalar intermediate representation|gen_ir]]
 - [[Clean backend implementation|compiler_backend]]
