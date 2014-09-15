@@ -1,0 +1,46 @@
+Mixed Buffer Pointer
+--------------------
+
+Segmented address space...
+--------------------------
+
+The first challenge with OpenCL is its very liberal use of pointers. The memory
+is segment into several address spaces:
+
+- private. This is the memory for each work item
+
+- global. These are buffers in memory shared by all work items and work groups
+
+- constant. These are constant buffers in memory shared by all work items and
+work groups as well
+
+- local. These is a memory shared by all work items in the *same* work group
+
+... But with no restriction inside each address space
+-----------------------------------------------------
+
+The challenge is that there is no restriction in OpenCL inside each address
+space i.e. the full C semantic applies in particular regarding pointer
+arithmetic.
+
+Therefore the following code is valid:
+
+<code>
+\_\_kernel void example(\_\_global int *dst, \_\_global int *src0, \_\_global int *src1)<br/>
+{<br/>
+&nbsp;&nbsp;\_\_global int *from;<br/>
+&nbsp;&nbsp;if (get\_global\_id(0) % 2)<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;from = src0;<br/>
+&nbsp;&nbsp;else<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;from = src1;<br/>
+&nbsp;&nbsp;dst[get\_global\_id(0)] = from[get\_global\_id(0)];<br/>
+}
+</code>
+
+As one may see, the load done in the last line actually mixes pointers from both
+source src0 and src1. This typically makes the use of binding table indices
+pretty hard. In we use binding table 0 for dst, 1 for src0 and 2 for src1 (for
+example), we are not able to express the load in the last line with one send
+only. The pointer "from" in the last line is so called a mixed buffer pointer.
+
+(To be updated)
