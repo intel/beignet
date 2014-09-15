@@ -46,6 +46,8 @@ There are some severe OpenCL related regression in clang 3.4 version.
 * If you want to try Clang/LLVM 3.4, you need to disable terminfo:
 --disable-terminfo. It's a llvm 3.4 bug.
 
+Please be noted that the code was compiled on GCC 4.6, GCC 4.7 and GCC 4.8. Since the code
+uses really recent C++11 features, you may expect problems with older compilers.
 
 How to build and install
 ------------------------
@@ -63,12 +65,6 @@ Basically, from the root directory of the project
 `> cd build`
 
 `> cmake ../ # to configure`
-
-Please be noted that the code was compiled on GCC 4.6, GCC 4.7 and GCC 4.8 and CLANG 3.5 and
-ICC 14.0.3. Since the code uses really recent C++11 features, you may expect problems with
-older compilers. The default compiler should be GCC, and if you want to choose compiler manually,
-you need to configure it as below:
-`> cmake -DCOMPILER=[GCC|CLANG|ICC] ../`
 
 CMake will check the dependencies and will complain if it does not find them.
 
