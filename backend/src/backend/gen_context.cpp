@@ -255,6 +255,16 @@ namespace gbe
           p->ELSE(src);
         }
         break;
+      case SEL_OP_WHILE:
+        {
+          /*const ir::LabelIndex label0(insn.index), label1(insn.index1);
+          const LabelPair labelPair(label0, label1);
+          const GenRegister src = ra->genReg(insn.src(0));
+          this->branchPos3.push_back(std::make_pair(labelPair, p->store.size()));*/
+          insertJumpPos(insn);
+          p->WHILE(src);
+        }
+        break;
       default: NOT_IMPLEMENTED;
     }
   }

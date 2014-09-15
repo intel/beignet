@@ -867,7 +867,7 @@ namespace analysis
       {
         Node* p = new SelfLoopNode(node);
 
-        p->canBeHandled = false;
+        p->canBeHandled = true;
 
         return insertNode(p);
       }

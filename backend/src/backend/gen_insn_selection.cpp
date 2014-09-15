@@ -544,6 +544,8 @@ namespace gbe
     void ELSE(Reg src, ir::LabelIndex jip, ir::LabelIndex elseLabel);
     /*! ENDIF indexed instruction */
     void ENDIF(Reg src, ir::LabelIndex jip, ir::LabelIndex endifLabel = ir::LabelIndex(0));
+    /*! WHILE indexed instruction */
+    void WHILE(Reg src, ir::LabelIndex jip);
     /*! BRD indexed instruction */
     void BRD(Reg src, ir::LabelIndex jip);
     /*! BRC indexed instruction */
@@ -1061,6 +1063,12 @@ namespace gbe
     SelectionInstruction *insn = this->appendInsn(SEL_OP_ENDIF, 0, 1);
     insn->src(0) = src;
     insn->index = uint16_t(this->block->endifLabel);
+  }
+
+  void Selection::Opaque::WHILE(Reg src, ir::LabelIndex jip) {
+    SelectionInstruction *insn = this->appendInsn(SEL_OP_WHILE, 0, 1);
+    insn->src(0) = src;
+    insn->index = uint16_t(jip);
   }
 
   void Selection::Opaque::CMP(uint32_t conditional, Reg src0, Reg src1, Reg dst) {
@@ -4217,6 +4225,18 @@ namespace gbe
       } else if(opcode == OP_ELSE) {
         const LabelIndex label = insn.getLabelIndex();
         sel.ELSE(GenRegister::immd(0), label, insn.getParent()->thisElseLabel);
+      } else if(opcode == OP_WHILE) {
+        const Register pred = insn.getPredicateIndex();
+        const LabelIndex jip = insn.getLabelIndex();
+        sel.push();
+        sel.curr.physicalFlag = 0;
+        sel.curr.flagIndex = (uint64_t)pred;
+        sel.curr.externFlag = 1;
+        sel.curr.inversePredicate = insn.getInversePredicated();
+        sel.curr.predicate = GEN_PREDICATE_NORMAL;
+        sel.WHILE(GenRegister::immd(0), jip);
+        sel.curr.inversePredicate = 0;
+        sel.pop();
       } else
         NOT_IMPLEMENTED;
 

@@ -1026,6 +1026,7 @@ namespace gbe
   ALU2_BRA(IF)
   ALU2_BRA(ELSE)
   ALU2_BRA(ENDIF)
+  ALU2_BRA(WHILE)
   ALU2_BRA(BRD)
   ALU2_BRA(BRC)
 
@@ -1037,7 +1038,17 @@ namespace gbe
                insn.header.opcode == GEN_OPCODE_ENDIF ||
                insn.header.opcode == GEN_OPCODE_IF ||
                insn.header.opcode == GEN_OPCODE_BRC ||
+               insn.header.opcode == GEN_OPCODE_WHILE ||
                insn.header.opcode == GEN_OPCODE_ELSE);
+
+    if( insn.header.opcode == GEN_OPCODE_WHILE ){
+      // if this WHILE instruction jump back to an ELSE instruction,
+      // need add distance to go to the next instruction.
+      GenNativeInstruction & insn_else = *(GenNativeInstruction *)&this->store[insnID+jumpDistance];
+      if(insn_else.header.opcode == GEN_OPCODE_ELSE){
+        jumpDistance += 2;
+      }
+    }
 
     if (insn.header.opcode != GEN_OPCODE_JMPI || (jumpDistance > -32769 && jumpDistance < 32768))  {
            if (insn.header.opcode == GEN_OPCODE_IF) {

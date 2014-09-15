@@ -154,6 +154,8 @@ namespace gbe
     void ELSE(GenRegister src);
     /*! ENDIF indexed instruction */
     void ENDIF(GenRegister src);
+    /*! WHILE indexed instruction */
+    void WHILE(GenRegister src);
     /*! BRC indexed instruction */
     void BRC(GenRegister src);
     /*! BRD indexed instruction */
