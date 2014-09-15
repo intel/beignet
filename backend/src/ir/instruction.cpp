@@ -349,7 +349,7 @@ namespace ir {
     {
     public:
       INLINE BranchInstruction(Opcode op, LabelIndex labelIndex, Register predicate, bool inv_pred=false) {
-        GBE_ASSERT(op == OP_BRA || op == OP_IF);
+        GBE_ASSERT(op == OP_BRA || op == OP_IF || op == OP_WHILE);
         this->opcode = op;
         this->predicate = predicate;
         this->labelIndex = labelIndex;
@@ -1719,6 +1719,11 @@ DECL_MEM_FN(GetImageInfoInstruction, uint8_t, getImageIndex(void), getImageIndex
   // ENDIF
   Instruction ENDIF(LabelIndex labelIndex) {
     return internal::BranchInstruction(OP_ENDIF, labelIndex).convert();
+  }
+
+  // WHILE
+  Instruction WHILE(LabelIndex labelIndex, Register pred) {
+    return internal::BranchInstruction(OP_WHILE, labelIndex, pred).convert();
   }
 
   // RET

@@ -687,6 +687,8 @@ namespace ir {
   Instruction ELSE(LabelIndex labelIndex);
   /*! endif */
   Instruction ENDIF(LabelIndex labelIndex);
+  /*! (pred) while labelIndex */
+  Instruction WHILE(LabelIndex labelIndex, Register pred);
   /*! ret */
   Instruction RET(void);
   /*! load.type.space {dst1,...,dst_valueNum} offset value */
