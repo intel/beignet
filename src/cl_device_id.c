@@ -607,6 +607,7 @@ cl_get_kernel_workgroup_info(cl_kernel kernel,
 
         return CL_SUCCESS;
       }
+      return CL_SUCCESS;
     default:
       return CL_INVALID_VALUE;
   };
