@@ -86,13 +86,10 @@ namespace gbe
     FPM.add(new DataLayout(DL));
 #endif
 
-    // XXX remove the verifier pass to workaround a non-fatal error.
-    // add this pass cause the Clang abort with the following error message:
-    // "Global is external, but doesn't have external or weak linkage"
 #if LLVM_VERSION_MAJOR == 3 && LLVM_VERSION_MINOR >=5
-    //FPM.add(createVerifierPass(true));
+    FPM.add(createVerifierPass(true));
 #else
-    //FPM.add(createVerifierPass());
+    FPM.add(createVerifierPass());
 #endif
     FPM.add(new TargetLibraryInfo(*libraryInfo));
     FPM.add(createTypeBasedAliasAnalysisPass());

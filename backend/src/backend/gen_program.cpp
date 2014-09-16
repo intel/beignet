@@ -365,17 +365,7 @@ namespace gbe {
       ((GenProgram*)dst_program)->module = llvm::CloneModule((llvm::Module*)((GenProgram*)src_program)->module);
       errSize = 0;
     }else{
-      //set the global variables and functions to link once to fix redefine.
       llvm::Module* src = (llvm::Module*)((GenProgram*)src_program)->module;
-      for (llvm::Module::global_iterator I = src->global_begin(), E = src->global_end(); I != E; ++I) {
-        I->setLinkage(llvm::GlobalValue::LinkOnceAnyLinkage);
-      }
-
-      for (llvm::Module::iterator I = src->begin(), E = src->end(); I != E; ++I) {
-        llvm::Function *F = llvm::dyn_cast<llvm::Function>(I);
-        if (F && isKernelFunction(*F)) continue;
-        I->setLinkage(llvm::GlobalValue::LinkOnceAnyLinkage);
-      }
       llvm::Module* dst = (llvm::Module*)((GenProgram*)dst_program)->module;
       llvm::Linker::LinkModules( dst,
                                  src,
