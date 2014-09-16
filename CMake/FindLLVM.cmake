@@ -3,7 +3,7 @@
 # LLVM_INCLUDE_DIR - where to find llvm include files
 # LLVM_LIBRARY_DIR - where to find llvm libs
 # LLVM_CFLAGS      - llvm compiler flags
-# LLVM_LFLAGS      - llvm linker flags
+# LLVM_LDFLAGS      - llvm linker flags
 # LLVM_MODULE_LIBS - list of llvm libs for working with modules.
 # LLVM_FOUND       - True if llvm found.
 if (LLVM_INSTALL_DIR)
@@ -62,7 +62,7 @@ execute_process(
 
 execute_process(
   COMMAND ${LLVM_CONFIG_EXECUTABLE} --ldflags
-  OUTPUT_VARIABLE LLVM_LFLAGS
+  OUTPUT_VARIABLE LLVM_LDFLAGS
   OUTPUT_STRIP_TRAILING_WHITESPACE
 )
 

@@ -82,7 +82,6 @@ elseif (COMPILER STREQUAL "ICC")
 endif ()
 set (CMAKE_CXX_FLAGS "${CMAKE_C_CXX_FLAGS} -std=c++0x -Wno-invalid-offsetof -fno-rtti")
 set (CMAKE_C_FLAGS "${CMAKE_C_CXX_FLAGS}")
-set (CMAKE_SHARED_LINKER_FLAGS "-Wl,--no-undefined ${LLVM_LFLAGS}")
 set (CMAKE_CXX_FLAGS_DEBUG          "-O0 -g -DGBE_DEBUG=1")
 set (CMAKE_CXX_FLAGS_RELWITHDEBINFO "-O2 -g -DGBE_DEBUG=1")
 set (CMAKE_CXX_FLAGS_MINSIZEREL     "-Os -DNDEBUG -DGBE_DEBUG=0")
@@ -95,6 +94,8 @@ set (CMAKE_C_FLAGS_RELEASE        "-O2 -DNDEBUG -DGBE_DEBUG=0")
 # Front end stuff we need
 #INCLUDE(CMake/FindLLVM.cmake)
 Find_Package(LLVM 3.3)
+
+set (CMAKE_SHARED_LINKER_FLAGS "-Wl,--no-undefined ${LLVM_LDFLAGS}")
 
 # XLib
 Find_Package(X11)
