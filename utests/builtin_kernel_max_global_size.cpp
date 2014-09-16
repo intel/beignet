@@ -18,12 +18,13 @@ void builtin_kernel_max_global_size(void)
   OCL_ASSERT(builtin_kernel_1d != NULL);
   size_t param_value_size;
   void* param_value;
-  clGetKernelWorkGroupInfo(builtin_kernel_1d, device, CL_KERNEL_GLOBAL_WORK_SIZE, 0, NULL, &param_value_size);
+  OCL_CALL(clGetKernelWorkGroupInfo, builtin_kernel_1d, device, CL_KERNEL_GLOBAL_WORK_SIZE, 0, NULL, &param_value_size);
   param_value = malloc(param_value_size);
-  clGetKernelWorkGroupInfo(builtin_kernel_1d, device, CL_KERNEL_GLOBAL_WORK_SIZE, param_value_size, param_value, 0);
+  OCL_CALL(clGetKernelWorkGroupInfo, builtin_kernel_1d, device, CL_KERNEL_GLOBAL_WORK_SIZE, param_value_size, param_value, 0);
   OCL_ASSERT(*(size_t*)param_value == 256 * 1024 *1024);
   clReleaseKernel(builtin_kernel_1d);
   clReleaseProgram(built_in_prog);
+  free(built_in_kernel_names);
   free(param_value);
 }
 
