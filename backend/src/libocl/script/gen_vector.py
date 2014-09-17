@@ -289,42 +289,9 @@ class builtinProto():
             formatStr += ';'
             self.append(formatStr)
             return formatStr
-        if self.functionName != 'select' and ptypeSeqs[0] == ptypeSeqs[self.paramCount-1] and ptype[1] > 4:
-            formatStr += '\n{ \n  union{'
-            formatStr = self.append(formatStr, '    {0} va[{1}];'.format(vtype[0], vtype[1]))
-            formatStr = self.append(formatStr, '    {0}{1} vv{2};'.format(vtype[0], vtype[1], vtype[1]))
-            formatStr += '\n  }uret;'
-            formatStr += '\n  union{'
-            formatStr = self.append(formatStr, '    {0} pa[{1}];'.format(ptype[0], ptype[1]))
-            formatStr = self.append(formatStr, '    {0}{1} pv{2};'.format(ptype[0], ptype[1], ptype[1]))
-            formatStr += '\n  }'
-            for n in range(0, self.paramCount):
-              formatStr += 'usrc{0}'.format(n)
-              if n+1 != self.paramCount:
-                formatStr +=', '
-            formatStr += ';'
-
-            for n in range(0, self.paramCount):
-              formatStr = self.append(formatStr, '  usrc{0}.pv{1} = param{2};'.format(n, ptype[1], n))
-            formatStr = self.append(formatStr, '  for(int i =0; i < {0}; i++)'.format(ptype[1]))
-            formatStr += '\n    uret.va[i] = '
-            if self.prefix == 'relational' and self.functionName != 'bitselect' and self.functionName != 'select':
-              formatStr += '-'
-            formatStr += '{0}('.format(self.functionName)
-
-            for n in range(0, self.paramCount):
-              formatStr += 'usrc{0}.pa[i]'.format(n)
-              if n+1 != self.paramCount:
-                formatStr +=', '
-            formatStr += ');'
-            formatStr = self.append(formatStr, ' return uret.vv{0};'.format(vtype[1]))
-            formatStr += '\n}'
-            formatStr = self.append(formatStr)
-            return formatStr
-        else:
-          formatStr = self.append(formatStr, '{{return ({0}{1})('.format(vtype[0], vtype[1]))
-          self.indent = len(formatStr)
-          for j in range(0, vtype[1]):
+        formatStr = self.append(formatStr, '{{return ({0}{1})('.format(vtype[0], vtype[1]))
+        self.indent = len(formatStr)
+        for j in range(0, vtype[1]):
             if (j != 0):
                 formatStr += ','
                 if (j + 1) % 2 == 0:
@@ -359,10 +326,10 @@ class builtinProto():
 
             formatStr += ')'
 
-          formatStr += '); }\n'
-          self.append(formatStr)
+        formatStr += '); }\n'
+        self.append(formatStr)
 
-          return formatStr
+        return formatStr
 
     def output(self):
         for line in self.outputStr:
