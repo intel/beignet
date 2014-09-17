@@ -204,9 +204,10 @@ namespace gbe
 
     /* We use beignet's bitcode as dst because it will have a lot of
        lazy functions which will not be loaded. */
-    if(Linker::LinkModules(clonedLib, mod, Linker::DestroySource, NULL)) {
+    std::string errorMsg;
+    if(Linker::LinkModules(clonedLib, mod, Linker::DestroySource, &errorMsg)) {
       delete clonedLib;
-      printf("Fatal Error: link the bitcode error\n");
+      printf("Fatal Error: link the bitcode error:\n%s\n", errorMsg.c_str());
       return NULL;
     }
 
