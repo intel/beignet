@@ -63,6 +63,21 @@ namespace ir {
     return 0;
   }
 
+  enum ARFRegister {
+    ARF_NULL = 0,
+    ARF_ADDRESS,
+    ARF_ACCUMULATOR,
+    ARF_FLAG,
+    ARF_MASK,
+    ARF_MASK_STACK,
+    ARF_MASK_STACK_DEPTH,
+    ARF_STATE,
+    ARF_CONTROL,
+    ARF_NOTIFICATION_COUNT,
+    ARF_IP,
+    ARF_TM
+  };
+
   /*! A register can be either a byte, a word, a dword or a qword. We store this
    *  value into a register data (which makes the register file) 
    */

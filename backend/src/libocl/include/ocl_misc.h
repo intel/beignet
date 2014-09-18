@@ -136,4 +136,13 @@ DEF(ulong)
 short __gen_ocl_simd_any(short);
 short __gen_ocl_simd_all(short);
 
+struct time_stamp {
+  // time tick
+  ulong tick;
+  // If context-switch or frequency change occurs since last read of tm,
+  // event will be non-zero, otherwise, it will be zero.
+  uint event;
+};
+
+struct time_stamp __gen_ocl_get_timestamp(void);
 #endif

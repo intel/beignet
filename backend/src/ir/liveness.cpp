@@ -79,6 +79,7 @@ namespace ir {
               opCode != ir::OP_MUL_HI &&
               opCode != ir::OP_HADD &&
               opCode != ir::OP_RHADD &&
+              opCode != ir::OP_READ_ARF &&
               opCode != ir::OP_ADDSAT &&
               (dstNum == 1 || insn.getOpcode() != ir::OP_LOAD) &&
               !extentRegs->contains(reg)

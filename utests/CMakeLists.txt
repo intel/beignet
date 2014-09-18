@@ -172,6 +172,7 @@ set (utests_sources
   compiler_getelementptr_bitcast.cpp
   compiler_simd_any.cpp
   compiler_simd_all.cpp
+  compiler_time_stamp.cpp
   compiler_double_precision.cpp
   load_program_from_bin_file.cpp
   load_program_from_gen_bin.cpp

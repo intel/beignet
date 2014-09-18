@@ -261,6 +261,7 @@ enum GenMessageTarget {
 #define GEN_ARF_CONTROL               0x80
 #define GEN_ARF_NOTIFICATION_COUNT    0x90
 #define GEN_ARF_IP                    0xA0
+#define GEN_ARF_TM                    0xC0
 
 #define GEN_MRF_COMPR4   (1 << 7)
 

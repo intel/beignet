@@ -2646,6 +2646,8 @@ namespace gbe
       case GEN_OCL_CONV_F32_TO_F16:
       case GEN_OCL_SIMD_ANY:
       case GEN_OCL_SIMD_ALL:
+      case GEN_OCL_READ_TM:
+      case GEN_OCL_REGION:
         this->newRegister(&I);
         break;
       case GEN_OCL_PRINTF:
@@ -2796,6 +2798,26 @@ namespace gbe
             const ir::Register src = this->getRegister(*AI);
             const ir::Register dst = this->getRegister(&I);
             ctx.ALU1(ir::OP_SIMD_ANY, ir::TYPE_S16, dst, src);
+            break;
+          }
+          case GEN_OCL_READ_TM:
+          {
+            const ir::Register dst = this->getRegister(&I);
+            ctx.READ_ARF(ir::TYPE_U32, dst, ir::ARF_TM);
+            break;
+          }
+          case GEN_OCL_REGION:
+          {
+            const ir::Register dst = this->getRegister(&I);
+            // offset must be immediate
+            GBE_ASSERT(AI != AE); Constant *CPV = dyn_cast<Constant>(*AI);
+            assert(CPV);
+            const ir::Immediate &x = processConstantImm(CPV);
+
+            AI++;
+            const ir::Register src = this->getRegister(*AI);
+
+            ctx.REGION(dst, src, x.getIntegerValue());
             break;
           }
           case GEN_OCL_COS: this->emitUnaryCallInst(I,CS,ir::OP_COS); break;

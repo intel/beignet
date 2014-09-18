@@ -496,6 +496,23 @@ namespace ir {
     static bool isClassOf(const Instruction &insn);
   };
 
+  /*! Read one register (8 DWORD) in arf */
+  class ReadARFInstruction : public Instruction {
+  public:
+    Type getType() const;
+    ir::ARFRegister getARFRegister() const;
+    /*! Return true if the given instruction is an instance of this class */
+    static bool isClassOf(const Instruction &insn);
+  };
+
+  /*! return a region of a register, make sure the offset does not exceed the register size */
+  class RegionInstruction : public Instruction {
+  public:
+    uint32_t getOffset(void) const;
+    /*! Return true if the given instruction is an instance of this class */
+    static bool isClassOf(const Instruction &insn);
+  };
+
   /*! Specialize the instruction. Also performs typechecking first based on the
    *  opcode. Crashes if it fails
    */
@@ -680,6 +697,9 @@ namespace ir {
   Instruction LOADI(Type type, Register dst, ImmediateIndex value);
   /*! sync.params... (see Sync instruction) */
   Instruction SYNC(uint32_t parameters);
+
+  Instruction READ_ARF(Type type, Register dst, ARFRegister arf);
+  Instruction REGION(Register dst, Register src, uint32_t offset);
   /*! typed write */
   Instruction TYPED_WRITE(uint8_t imageIndex, Tuple src, Type srcType, Type coordType);
   /*! sample textures */

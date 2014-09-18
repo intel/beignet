@@ -668,6 +668,48 @@ namespace ir {
       Register dst[0], src[0];
     };
 
+    class ALIGNED_INSTRUCTION ReadARFInstruction :
+      public BasePolicy,
+      public NSrcPolicy<ReadARFInstruction, 0>,
+      public NDstPolicy<ReadARFInstruction, 1>
+    {
+    public:
+      INLINE ReadARFInstruction(Type type, Register dst, ARFRegister arf) {
+        this->type = type;
+        this->dst[0] = dst;
+        this->opcode = OP_READ_ARF;
+        this->arf = arf;
+      }
+      INLINE ir::ARFRegister getARFRegister(void) const { return this->arf; }
+      INLINE Type getType(void) const { return this->type; }
+      INLINE bool wellFormed(const Function &fn, std::string &why) const;
+      INLINE void out(std::ostream &out, const Function &fn) const;
+      Type type;
+      ARFRegister arf;
+      Register dst[1];
+      Register src[0];
+    };
+
+    class ALIGNED_INSTRUCTION RegionInstruction :
+      public BasePolicy,
+      public NSrcPolicy<RegionInstruction, 1>,
+      public NDstPolicy<RegionInstruction, 1>
+    {
+    public:
+      INLINE RegionInstruction(Register dst, Register src, uint32_t offset) {
+        this->offset = offset;
+        this->dst[0] = dst;
+        this->src[0] = src;
+        this->opcode = OP_REGION;
+      }
+      INLINE uint32_t getOffset(void) const { return this->offset; }
+      INLINE bool wellFormed(const Function &fn, std::string &why) const;
+      INLINE void out(std::ostream &out, const Function &fn) const;
+      uint32_t offset;
+      Register dst[1];
+      Register src[1];
+    };
+
     class ALIGNED_INSTRUCTION LabelInstruction :
       public BasePolicy,
       public NSrcPolicy<LabelInstruction, 0>,
@@ -1022,6 +1064,30 @@ namespace ir {
       return true;
     }
 
+    INLINE bool ReadARFInstruction::wellFormed(const Function &fn, std::string &whyNot) const
+    {
+      if (UNLIKELY( this->type != TYPE_U32 && this->type != TYPE_S32)) {
+        whyNot = "Only support S32/U32 type";
+        return false;
+      }
+
+      const RegisterFamily family = getFamily(this->type);
+      if (UNLIKELY(checkRegisterData(family, dst[0], fn, whyNot) == false))
+        return false;
+
+      return true;
+    }
+
+    INLINE bool RegionInstruction::wellFormed(const Function &fn, std::string &whyNot) const
+    {
+      if (UNLIKELY(checkRegisterData(FAMILY_DWORD, src[0], fn, whyNot) == false))
+        return false;
+      if (UNLIKELY(checkRegisterData(FAMILY_DWORD, dst[0], fn, whyNot) == false))
+        return false;
+
+      return true;
+    }
+
     // Only a label index is required
     INLINE bool LabelInstruction::wellFormed(const Function &fn, std::string &whyNot) const
     {
@@ -1136,6 +1202,16 @@ namespace ir {
       out << " bti";
       for (uint32_t i = 0; i < bti.count; ++i)
         out << ": " << (int)bti.bti[i];
+    }
+
+    INLINE void ReadARFInstruction::out(std::ostream &out, const Function &fn) const {
+      this->outOpcode(out);
+      out << " %" << this->getDst(fn, 0) << " arf:" << arf;
+    }
+
+    INLINE void RegionInstruction::out(std::ostream &out, const Function &fn) const {
+      this->outOpcode(out);
+      out << " %" << this->getDst(fn, 0) << " %" << this->getSrc(fn, 0) << " offset: " << this->offset;
     }
 
     INLINE void LabelInstruction::out(std::ostream &out, const Function &fn) const {
@@ -1286,6 +1362,14 @@ END_INTROSPECTION(StoreInstruction)
 START_INTROSPECTION(SyncInstruction)
 #include "ir/instruction.hxx"
 END_INTROSPECTION(SyncInstruction)
+
+START_INTROSPECTION(ReadARFInstruction)
+#include "ir/instruction.hxx"
+END_INTROSPECTION(ReadARFInstruction)
+
+START_INTROSPECTION(RegionInstruction)
+#include "ir/instruction.hxx"
+END_INTROSPECTION(RegionInstruction)
 
 START_INTROSPECTION(LabelInstruction)
 #include "ir/instruction.hxx"
@@ -1471,6 +1555,9 @@ DECL_MEM_FN(BranchInstruction, bool, isPredicated(void), isPredicated())
 DECL_MEM_FN(BranchInstruction, bool, getInversePredicated(void), getInversePredicated())
 DECL_MEM_FN(BranchInstruction, LabelIndex, getLabelIndex(void), getLabelIndex())
 DECL_MEM_FN(SyncInstruction, uint32_t, getParameters(void), getParameters())
+DECL_MEM_FN(ReadARFInstruction, Type, getType(void), getType())
+DECL_MEM_FN(ReadARFInstruction, ARFRegister, getARFRegister(void), getARFRegister())
+DECL_MEM_FN(RegionInstruction, uint32_t, getOffset(void), getOffset())
 DECL_MEM_FN(SampleInstruction, Type, getSrcType(void), getSrcType())
 DECL_MEM_FN(SampleInstruction, Type, getDstType(void), getDstType())
 DECL_MEM_FN(SampleInstruction, uint8_t, getSamplerIndex(void), getSamplerIndex())
@@ -1665,6 +1752,13 @@ DECL_MEM_FN(GetImageInfoInstruction, uint8_t, getImageIndex(void), getImageIndex
   // FENCE
   Instruction SYNC(uint32_t parameters) {
     return internal::SyncInstruction(parameters).convert();
+  }
+
+  Instruction READ_ARF(Type type, Register dst, ARFRegister arf) {
+    return internal::ReadARFInstruction(type, dst, arf).convert();
+  }
+  Instruction REGION(Register dst, Register src, uint32_t offset) {
+    return internal::RegionInstruction(dst, src, offset).convert();
   }
 
   // LABEL

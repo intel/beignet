@@ -190,6 +190,10 @@ namespace gbe
     static const uint32_t MAX_FLAG_REGISTER = 8u;
     /*! Maximum number of *physical* accumulators registers */
     static const uint32_t MAX_ACC_REGISTER = 1u;
+    /*! Maximum number of *physical* tm registers */
+    static const uint32_t MAX_TM_REGISTER = 1u;
+    /*! Maximum number of *physical* arf registers */
+    static const uint32_t MAX_ARF_REGISTER = MAX_FLAG_REGISTER + MAX_ACC_REGISTER + MAX_TM_REGISTER;
     /*! Stores the last node that wrote to a register / memory ... */
     vector<ScheduleDAGNode*> nodes;
     /*! store nodes each node depends on */
@@ -237,12 +241,12 @@ namespace gbe
   {
     if (scheduler.policy == PRE_ALLOC) {
       this->grfNum = selection.getRegNum();
-      nodes.resize(grfNum + MAX_FLAG_REGISTER + MAX_ACC_REGISTER + MAX_MEM_SYSTEM);
+      nodes.resize(grfNum + MAX_ARF_REGISTER + MAX_MEM_SYSTEM);
     } else {
       const uint32_t simdWidth = scheduler.ctx.getSimdWidth();
       GBE_ASSERT(simdWidth == 8 || simdWidth == 16);
       this->grfNum = simdWidth == 8 ? 128 : 64;
-      nodes.resize(grfNum + MAX_FLAG_REGISTER + MAX_ACC_REGISTER + MAX_MEM_SYSTEM);
+      nodes.resize(grfNum + MAX_ARF_REGISTER + MAX_MEM_SYSTEM);
     }
     insnNodes.resize(selection.getLargestBlockSize());
   }
@@ -327,6 +331,8 @@ namespace gbe
         } else if (file == GEN_ARF_ACCUMULATOR) {
           GBE_ASSERT(nr < MAX_ACC_REGISTER);
           return grfNum + MAX_FLAG_REGISTER + nr;
+        } else if (file == GEN_ARF_TM) {
+          return grfNum + MAX_FLAG_REGISTER + MAX_ACC_REGISTER;
         } else {
           NOT_SUPPORTED;
           return 0;
@@ -348,7 +354,7 @@ namespace gbe
   }
 
   uint32_t DependencyTracker::getIndex(uint32_t bti) const {
-    const uint32_t memDelta = grfNum + MAX_FLAG_REGISTER + MAX_ACC_REGISTER;
+    const uint32_t memDelta = grfNum + MAX_ARF_REGISTER;
     return bti == 0xfe ? memDelta + LOCAL_MEMORY : (bti == 0xff ? memDelta + SCRATCH_MEMORY : memDelta + GLOBAL_MEMORY);
   }
 
@@ -583,6 +589,7 @@ namespace gbe
       ScheduleDAGNode *node = tracker.insnNodes[insnID];
       if (node->insn.isBranch() || node->insn.isLabel()
           || node->insn.opcode == SEL_OP_EOT || node->insn.opcode == SEL_OP_IF
+          || node->insn.opcode == SEL_OP_READ_ARF
           || node->insn.opcode == SEL_OP_BARRIER)
         tracker.makeBarrier(insnID, insnNum);
     }

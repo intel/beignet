@@ -216,3 +216,16 @@ DEF(ulong)
 #undef DEC8X
 #undef DEC16
 #undef DEC16X
+
+uint __gen_ocl_read_tm(void);
+uint __gen_ocl_region(ushort offset, uint data);
+
+struct time_stamp __gen_ocl_get_timestamp(void) {
+  struct time_stamp val;
+
+  uint tm = __gen_ocl_read_tm();
+  val.tick = ((ulong)__gen_ocl_region(1, tm) << 32) | __gen_ocl_region(0, tm);
+  val.event = __gen_ocl_region(2, tm);
+
+  return val;
+};

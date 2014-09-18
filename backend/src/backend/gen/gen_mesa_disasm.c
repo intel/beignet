@@ -552,6 +552,9 @@ static int reg (FILE *file, uint32_t _reg_file, uint32_t _reg_nr)
         string (file, "ip");
         return -1;
         break;
+      case GEN_ARF_TM:
+        format (file, "tm%d", _reg_nr & 0x0f);
+        break;
       default:
         format (file, "ARF%d", _reg_nr);
         break;

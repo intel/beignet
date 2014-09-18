@@ -458,6 +458,7 @@ namespace gbe
 #define I64Shift(OP) \
   INLINE void OP(Reg dst, Reg src0, Reg src1, GenRegister tmp[6]) { I64Shift(SEL_OP_##OP, dst, src0, src1, tmp); }
     ALU1(MOV)
+    ALU1(READ_ARF)
     ALU1WithTemp(MOV_DF)
     ALU1WithTemp(LOAD_DF_IMM)
     ALU1(LOAD_INT64_IMM)
@@ -3979,6 +3980,70 @@ namespace gbe
     DECL_CTOR(GetImageInfoInstruction, 1, 1);
   };
 
+  class ReadARFInstructionPattern : public SelectionPattern
+  {
+  public:
+    ReadARFInstructionPattern(void) : SelectionPattern(1,1) {
+      this->opcodes.push_back(ir::OP_READ_ARF);
+    }
+
+    INLINE uint32_t getRegNum(ir::ARFRegister arf) const {
+      if (arf == ir::ARF_TM) {
+        return 0xc0;
+      } else {
+        GBE_ASSERT(0);
+        return 0;
+      }
+    }
+
+    INLINE bool emit(Selection::Opaque &sel, SelectionDAG &dag) const {
+      using namespace ir;
+      const ir::ReadARFInstruction &insn = cast<ir::ReadARFInstruction>(dag.insn);
+      GenRegister dst;
+      dst = sel.selReg(insn.getDst(0), insn.getType());
+
+      sel.push();
+        sel.curr.predicate = GEN_PREDICATE_NONE;
+        sel.curr.noMask = 1;
+        sel.curr.execWidth = 8;
+        sel.READ_ARF(dst, GenRegister(GEN_ARCHITECTURE_REGISTER_FILE,
+                      getRegNum(insn.getARFRegister()),
+                      0,
+                      getGenType(insn.getType()),
+                      GEN_VERTICAL_STRIDE_8,
+                      GEN_WIDTH_8,
+                      GEN_HORIZONTAL_STRIDE_1));
+      sel.pop();
+      return true;
+    }
+  };
+
+  /*! Get a region of a register */
+  class RegionInstructionPattern : public SelectionPattern
+  {
+  public:
+    RegionInstructionPattern(void) : SelectionPattern(1,1) {
+      this->opcodes.push_back(ir::OP_REGION);
+    }
+    INLINE bool emit(Selection::Opaque &sel, SelectionDAG &dag) const {
+      using namespace ir;
+      const ir::RegionInstruction &insn = cast<ir::RegionInstruction>(dag.insn);
+      GenRegister dst, src;
+      dst = sel.selReg(insn.getDst(0), ir::TYPE_U32);
+      src = GenRegister::ud1grf(insn.getSrc(0));
+      src.subphysical = 1;
+      src = GenRegister::offset(src, 0, insn.getOffset()*4);
+
+      sel.push();
+        sel.curr.noMask = 1;
+        sel.curr.predicate = GEN_PREDICATE_NONE;
+        sel.MOV(dst, src);
+      sel.pop();
+      markAllChildren(dag);
+      return true;
+    }
+  };
+
   /*! Branch instruction pattern */
   class BranchInstructionPattern : public SelectionPattern
   {
@@ -4190,6 +4255,8 @@ namespace gbe
     this->insert<SelectModifierInstructionPattern>();
     this->insert<SampleInstructionPattern>();
     this->insert<GetImageInfoInstructionPattern>();
+    this->insert<ReadARFInstructionPattern>();
+    this->insert<RegionInstructionPattern>();
 
     // Sort all the patterns with the number of instructions they output
     for (uint32_t op = 0; op < ir::OP_INVALID; ++op)
