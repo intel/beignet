@@ -72,7 +72,7 @@ MACRO(GENERATE_HEADER_PY _mod)
 	COMMAND ${PYTHON_EXECUTABLE} ${LIBOCL_SOURCE_DIR}/script/gen_vector.py ${def_name} ${output_name} 1
 	#COMMAND echo "echo \\#endif \\>\\> ${output_name}"
 	COMMAND echo "\\#endif" >> ${output_name}
-	DEPENDS ${tmpl_name}
+	DEPENDS ${tmpl_name} ${def_name} ${LIBOCL_SOURCE_DIR}/script/gen_vector.py
 	COMMENT "Generate the header by python: ${output_name}"
 	)
 ENDMACRO(GENERATE_HEADER_PY)
@@ -85,7 +85,7 @@ MACRO(GENERATE_SOURCE_PY _mod)
 	COMMAND mkdir -p ${LIBOCL_BINARY_DIR}/src/
 	COMMAND cat ${tmpl_name} > ${output_name}
 	COMMAND ${PYTHON_EXECUTABLE} ${LIBOCL_SOURCE_DIR}/script/gen_vector.py ${def_name} ${output_name} 0
-	DEPENDS ${tmpl_name}
+	DEPENDS ${tmpl_name} ${def_name} ${LIBOCL_SOURCE_DIR}/script/gen_vector.py
 	COMMENT "Generate the source by python: ${output_name}"
 	)
 ENDMACRO(GENERATE_SOURCE_PY)
