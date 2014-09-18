@@ -640,14 +640,22 @@ error:
           case PRINTF_CONVERSION_U:
           case PRINTF_CONVERSION_x:
           case PRINTF_CONVERSION_X:
-            /* If the bits change, we need to consider the signed. */
-            if (arg->getType() != Type::getInt32Ty(module->getContext())) {
-              arg = builder->CreateIntCast(arg, Type::getInt32Ty(module->getContext()), sign);
-            }
+            if (slot.state->length_modifier == PRINTF_LM_L) { /* we would rather print long. */
+              if (arg->getType() != Type::getInt64Ty(module->getContext())) {
+                arg = builder->CreateIntCast(arg, Type::getInt64Ty(module->getContext()), sign);
+              }
+              dst_type = Type::getInt64PtrTy(module->getContext(), 1);
+              sizeof_size = sizeof(int64_t);
+            } else {
+              /* If the bits change, we need to consider the signed. */
+              if (arg->getType() != Type::getInt32Ty(module->getContext())) {
+                arg = builder->CreateIntCast(arg, Type::getInt32Ty(module->getContext()), sign);
+              }
 
-            /* Int to Int, just store. */
-            dst_type = Type::getInt32PtrTy(module->getContext(), 1);
-            sizeof_size = sizeof(int);
+              /* Int to Int, just store. */
+              dst_type = Type::getInt32PtrTy(module->getContext(), 1);
+              sizeof_size = sizeof(int);
+            }
             return true;
 
           case PRINTF_CONVERSION_C:

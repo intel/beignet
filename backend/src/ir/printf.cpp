@@ -149,20 +149,35 @@ namespace gbe
                     switch (slot.state->conversion_specifier) {
                       case PRINTF_CONVERSION_D:
                       case PRINTF_CONVERSION_I:
-                        PRINT_SOMETHING(int, d);
+                        if (slot.state->length_modifier == PRINTF_LM_L)
+                          PRINT_SOMETHING(uint64_t, d);
+                        else
+                          PRINT_SOMETHING(int, d);
                         break;
 
                       case PRINTF_CONVERSION_O:
-                        PRINT_SOMETHING(int, o);
+                        if (slot.state->length_modifier == PRINTF_LM_L)
+                          PRINT_SOMETHING(uint64_t, o);
+                        else
+                          PRINT_SOMETHING(int, o);
                         break;
                       case PRINTF_CONVERSION_U:
-                        PRINT_SOMETHING(int, u);
+                        if (slot.state->length_modifier == PRINTF_LM_L)
+                          PRINT_SOMETHING(uint64_t, u);
+                        else
+                          PRINT_SOMETHING(int, u);
                         break;
                       case PRINTF_CONVERSION_X:
-                        PRINT_SOMETHING(int, X);
+                        if (slot.state->length_modifier == PRINTF_LM_L)
+                          PRINT_SOMETHING(uint64_t, X);
+                        else
+                          PRINT_SOMETHING(int, X);
                         break;
                       case PRINTF_CONVERSION_x:
-                        PRINT_SOMETHING(int, x);
+                        if (slot.state->length_modifier == PRINTF_LM_L)
+                          PRINT_SOMETHING(uint64_t, x);
+                        else
+                          PRINT_SOMETHING(int, x);
                         break;
 
                       case PRINTF_CONVERSION_C:

@@ -7,6 +7,7 @@ test_printf(void)
   uint a = 'x';
   float f = 5.0f;
   int3 vec;
+  ulong cc = 1004294967296;
   vec.x = x;
   vec.y = y;
   vec.z = z;
@@ -15,6 +16,8 @@ test_printf(void)
     printf("--- Welcome to the printf test of %s ---\n", "Intel Beignet");
 
     printf("### output a char is %c\n", a);
+
+    printf("@@@ A long value is %ld\n", cc);
   }
 
   if (x % 15 == 0)
