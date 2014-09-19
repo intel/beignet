@@ -31,7 +31,6 @@
 #include "ir/sampler.hpp"
 #include "ir/printf.hpp"
 #include "ir/image.hpp"
-#include "ir/structural_analysis.hpp"
 #include "sys/vector.hpp"
 #include "sys/set.hpp"
 #include "sys/map.hpp"
