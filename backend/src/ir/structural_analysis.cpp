@@ -59,20 +59,24 @@ namespace analysis
   }
   void ControlTree::handleSelfLoopNode(Node *loopnode, ir::LabelIndex& whileLabel)
   {
+              //NodeList::iterator child_iter = (*it)->children.begin();
     ir::BasicBlock *pbb = loopnode->getExit();
-    ir::BranchInstruction* pinsn = static_cast<ir::BranchInstruction *>(pbb->getLastInstruction());
-    ir::Register reg = pinsn->getPredicateIndex();
+    GBE_ASSERT(pbb->isLoopExit);
     ir::BasicBlock::iterator it = pbb->end();
     it--;
+    if (pbb->hasExtraBra)
+      it--;
+    ir::BranchInstruction* pinsn = static_cast<ir::BranchInstruction *>(&*it);
+    ir::Register reg = pinsn->getPredicateIndex();
     /* since this node is an while node, so we remove the BRA instruction at the bottom of the exit BB of 'node',
      * and insert WHILE instead
      */
-    pbb->erase(it);
     whileLabel = pinsn->getLabelIndex();
     ir::Instruction insn = ir::WHILE(whileLabel, reg);
     ir::Instruction* p_new_insn = pbb->getParent().newInstruction(insn);
-    pbb->append(*p_new_insn);
+    pbb->insertAt(it, *p_new_insn);
     pbb->whileLabel = whileLabel;
+    pbb->erase(it);
   }
 
   /* recursive mark the bbs' variable needEndif, the bbs all belong to node.*/
@@ -257,11 +261,15 @@ namespace analysis
     for(size_t i = 0; i < blocks.size(); ++i)
     {
       bbs[i] = blocks[i];
-      if(bbs[i]->getLastInstruction()->getOpcode() != ir::OP_BRA && i != blocks.size() - 1)
+      if(i != blocks.size() -1 &&
+         (bbs[i]->getLastInstruction()->getOpcode() != ir::OP_BRA ||
+         (bbs[i]->isStructureExit && bbs[i]->isLoopExit)))
       {
         ir::Instruction insn = ir::BRA(bbs[i]->getNextBlock()->getLabelIndex());
         ir::Instruction* pNewInsn = bbs[i]->getParent().newInstruction(insn);
         bbs[i]->append(*pNewInsn);
+        if (bbs[i]->isStructureExit && bbs[i]->isLoopExit)
+          bbs[i]->hasExtraBra = true;
       }
     }
 
@@ -337,6 +345,9 @@ namespace analysis
           it--;
 
           bbs[i]->erase(it);
+
+          if (bbs[i]->hasExtraBra)
+            bbs[i]->hasExtraBra = false;
         }
       }
     }
@@ -346,7 +357,6 @@ namespace analysis
     fn->sortLabels();
     fn->computeCFG();
 
-#if 1
     it = begin;
     while(it != end)
     {
@@ -384,9 +394,8 @@ namespace analysis
 
           case SelfLoop:
             {
-              NodeList::iterator child_iter = (*it)->children.begin();
               ir::LabelIndex whilelabel;
-              handleSelfLoopNode(*child_iter, whilelabel);
+              handleSelfLoopNode(*it, whilelabel);
             }
             break;
 
@@ -397,7 +406,6 @@ namespace analysis
 
       it++;
     }
-#endif
 
   }
 
@@ -868,7 +876,7 @@ namespace analysis
         Node* p = new SelfLoopNode(node);
 
         p->canBeHandled = true;
-
+        node->getExit()->isLoopExit = true;
         return insertNode(p);
       }
       else

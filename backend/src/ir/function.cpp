@@ -260,14 +260,23 @@ namespace ir {
         jumpToNext = &bb;
         return;
       }
-      const BranchInstruction &insn = cast<BranchInstruction>(*last);
-      if (insn.getOpcode() == OP_BRA) {
+      ir::BasicBlock::iterator it = --bb.end();
+      uint32_t handledInsns = 0;
+      while ((handledInsns < 2 && it != bb.end()) &&
+             static_cast<ir::BranchInstruction *>(&*it)->getOpcode() == OP_BRA) {
+        const BranchInstruction &insn = cast<BranchInstruction>(*it);
+        if (insn.getOpcode() != OP_BRA)
+          break;
         const LabelIndex label = insn.getLabelIndex();
         BasicBlock *target = this->blocks[label];
         GBE_ASSERT(target != NULL);
         target->predecessors.insert(&bb);
         bb.successors.insert(target);
-        if ( insn.isPredicated() == true) jumpToNext = &bb;
+        if (insn.isPredicated() == true) jumpToNext = &bb;
+        // If we are going to handle the second bra, this bra must be a predicated bra
+        GBE_ASSERT(handledInsns == 0 || insn.isPredicated() == true);
+        --it;
+        ++handledInsns;
       }
     });
   }
@@ -324,7 +333,9 @@ namespace ir {
   BasicBlock::BasicBlock(Function &fn) : needEndif(true), needIf(true), endifLabel(0),
                                          matchingEndifLabel(0), matchingElseLabel(0),
                                          thisElseLabel(0), belongToStructure(false),
-                                         isStructureExit(false), matchingStructureEntry(NULL),
+                                         isStructureExit(false), isLoopExit(false),
+                                         hasExtraBra(false),
+                                         matchingStructureEntry(NULL),
                                          fn(fn) {
     this->nextBlock = this->prevBlock = NULL;
   }

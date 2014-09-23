@@ -122,6 +122,11 @@ namespace ir {
      * identified structure. so if isStructureExit is false then matchingStructureEntry
      * is meaningless. */
     bool isStructureExit;
+    /* This block is an exit point of a loop block. It may not be exit point of
+       the large structure block. */
+    bool isLoopExit;
+    /* This block has an extra branch in the end of the block. */
+    bool hasExtraBra;
     BasicBlock *matchingStructureEntry;
     /* variable liveout is for if-else structure liveness analysis. eg. we have an sequence of
      * bbs of 0, 1, 2, 3, 4 and the CFG is as below:
