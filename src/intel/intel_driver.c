@@ -675,15 +675,13 @@ cl_buffer intel_share_buffer_from_libva(cl_context ctx,
 
 cl_buffer intel_share_image_from_libva(cl_context ctx,
                                        unsigned int bo_name,
-                                       struct _cl_mem_image *image,
-                                       unsigned int offset)
+                                       struct _cl_mem_image *image)
 {
   drm_intel_bo *intel_bo;
   uint32_t intel_tiling, intel_swizzle_mode;
 
   intel_bo = intel_driver_share_buffer((intel_driver_t *)ctx->drv, "shared from libva", bo_name);
 
-  intel_bo->offset += offset;
   drm_intel_bo_get_tiling(intel_bo, &intel_tiling, &intel_swizzle_mode);
   image->tiling = get_cl_tiling(intel_tiling);
 
