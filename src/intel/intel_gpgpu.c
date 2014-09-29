@@ -818,13 +818,13 @@ intel_gpgpu_setup_bti_gen8(intel_gpgpu_t *gpgpu, drm_intel_bo *buf,
   ss0->ss8_9.surface_base_addr_lo = (buf->offset64 + internal_offset) & 0xffffffff;
   ss0->ss8_9.surface_base_addr_hi = ((buf->offset64 + internal_offset) >> 32) & 0xffffffff;
   dri_bo_emit_reloc(gpgpu->aux_buf.bo,
-                      I915_GEM_DOMAIN_RENDER,
-                      I915_GEM_DOMAIN_RENDER,
-                      internal_offset,
-                      gpgpu->aux_offset.surface_heap_offset +
-                      heap->binding_table[index] +
-                      offsetof(gen8_surface_state_t, ss1),
-                      buf);
+                    I915_GEM_DOMAIN_RENDER,
+                    I915_GEM_DOMAIN_RENDER,
+                    internal_offset,
+                    gpgpu->aux_offset.surface_heap_offset +
+                    heap->binding_table[index] +
+                    offsetof(gen8_surface_state_t, ss1),
+                    buf);
 }
 
 static int
@@ -981,6 +981,18 @@ intel_gpgpu_bind_buf(intel_gpgpu_t *gpgpu, drm_intel_bo *buf, uint32_t offset,
   intel_gpgpu_setup_bti(gpgpu, buf, internal_offset, size, bti);
 }
 
+static void
+intel_gpgpu_bind_buf_gen8(intel_gpgpu_t *gpgpu, drm_intel_bo *buf, uint32_t offset,
+                          uint32_t internal_offset, uint32_t size, uint8_t bti)
+{
+  assert(gpgpu->binded_n < max_buf_n);
+  gpgpu->binded_buf[gpgpu->binded_n] = buf;
+  gpgpu->target_buf_offset[gpgpu->binded_n] = internal_offset;
+  gpgpu->binded_offset[gpgpu->binded_n] = offset;
+  gpgpu->binded_n++;
+  intel_gpgpu_setup_bti_gen8(gpgpu, buf, internal_offset, size, bti);
+}
+
 static int
 intel_gpgpu_set_scratch(intel_gpgpu_t * gpgpu, uint32_t per_thread_size)
 {
@@ -1011,7 +1023,7 @@ intel_gpgpu_set_stack(intel_gpgpu_t *gpgpu, uint32_t offset, uint32_t size, uint
   drm_intel_bufmgr *bufmgr = gpgpu->drv->bufmgr;
   gpgpu->stack_b.bo = drm_intel_bo_alloc(bufmgr, "STACK", size, 64);
 
-  intel_gpgpu_bind_buf(gpgpu, gpgpu->stack_b.bo, offset, 0, size, bti);
+  cl_gpgpu_bind_buf((cl_gpgpu)gpgpu, (cl_buffer)gpgpu->stack_b.bo, offset, 0, size, bti);
 }
 
 static void
@@ -1427,7 +1439,7 @@ intel_gpgpu_set_printf_buf(intel_gpgpu_t *gpgpu, uint32_t i, uint32_t size, uint
   }
   memset(bo->virtual, 0, size);
   drm_intel_bo_unmap(bo);
-  intel_gpgpu_bind_buf(gpgpu, bo, offset, 0, size, bti);
+  cl_gpgpu_bind_buf((cl_gpgpu)gpgpu, (cl_buffer)bo, offset, 0, size, bti);
   return 0;
 }
 
@@ -1525,6 +1537,12 @@ intel_set_gpgpu_callbacks(int device_id)
   cl_gpgpu_release_printf_buffer = (cl_gpgpu_release_printf_buffer_cb *)intel_gpgpu_release_printf_buf;
   cl_gpgpu_set_printf_info = (cl_gpgpu_set_printf_info_cb *)intel_gpgpu_set_printf_info;
   cl_gpgpu_get_printf_info = (cl_gpgpu_get_printf_info_cb *)intel_gpgpu_get_printf_info;
+
+  if (IS_BROADWELL(device_id)) {
+    cl_gpgpu_bind_buf = (cl_gpgpu_bind_buf_cb *)intel_gpgpu_bind_buf_gen8;
+    cl_gpgpu_get_cache_ctrl = (cl_gpgpu_get_cache_ctrl_cb *)intel_gpgpu_get_cache_ctrl_gen8;
+    return;
+  }
 
   if (IS_HASWELL(device_id)) {
     cl_gpgpu_bind_image = (cl_gpgpu_bind_image_cb *) intel_gpgpu_bind_image_gen75;
