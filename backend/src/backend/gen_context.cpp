@@ -1794,7 +1794,7 @@ namespace gbe
   }
 
   void GenContext::buildPatchList(void) {
-    const uint32_t ptrSize = unit.getPointerSize() == ir::POINTER_32_BITS ? 4u : 8u;
+    const uint32_t ptrSize = this->getPointerSize();
     kernel->curbeSize = 0u;
     auto &stackUse = dag->getUse(ir::ocl::stackptr);
 
@@ -1816,12 +1816,13 @@ namespace gbe
       // For pointers and values, we have nothing to do. We just push the values
       if (arg.type == ir::FunctionArgument::GLOBAL_POINTER ||
           arg.type == ir::FunctionArgument::LOCAL_POINTER ||
-          arg.type == ir::FunctionArgument::CONSTANT_POINTER ||
-          arg.type == ir::FunctionArgument::VALUE ||
+          arg.type == ir::FunctionArgument::CONSTANT_POINTER)
+        this->insertCurbeReg(arg.reg, this->newCurbeEntry(GBE_CURBE_KERNEL_ARGUMENT, argID, ptrSize, ptrSize));
+      if (arg.type == ir::FunctionArgument::VALUE ||
           arg.type == ir::FunctionArgument::STRUCTURE ||
           arg.type == ir::FunctionArgument::IMAGE ||
           arg.type == ir::FunctionArgument::SAMPLER)
-        this->insertCurbeReg(arg.reg, this->newCurbeEntry(GBE_CURBE_KERNEL_ARGUMENT, argID, arg.size, ptrSize));
+        this->insertCurbeReg(arg.reg, this->newCurbeEntry(GBE_CURBE_KERNEL_ARGUMENT, argID, arg.size, arg.size));
     }
 
     // Go over all the instructions and find the special register we need

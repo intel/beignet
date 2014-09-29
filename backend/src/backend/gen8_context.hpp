@@ -47,6 +47,8 @@ namespace gbe
       //Because the allocate is use uint16_t, so clamp it, need refine
       return std::min(GEN8_SCRATCH_SIZE, 0x7fff);
     }
+    /*! Get the pointer argument size for curbe alloc */
+    virtual uint32_t getPointerSize(void) { return 8; }
 
   protected:
     virtual GenEncoder* generateEncoder(void) {

@@ -76,6 +76,8 @@ namespace gbe
     virtual uint32_t alignScratchSize(uint32_t size);
     /*! Get the device's max srcatch size */
     virtual uint32_t getScratchSize(void) { return GEN7_SCRATCH_SIZE; }
+    /*! Get the pointer argument size for curbe alloc */
+    virtual uint32_t getPointerSize(void) { return 4; }
     /*! Function we emit code for */
     INLINE const ir::Function &getFunction(void) const { return fn; }
     /*! Simd width chosen for the current function */
