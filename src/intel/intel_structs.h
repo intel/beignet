@@ -275,38 +275,38 @@ typedef struct gen8_surface_state
   } ss0;
 
   struct {
-    uint32_t pad2:1;
-    uint32_t mem_obj_ctrl_state:7;
-    uint32_t base_mip_level:5;
-    uint32_t pad1:1;
-    uint32_t pad0:3;
     uint32_t surface_qpitch:15;
+    uint32_t pad0:3;
+    uint32_t pad1:1;
+    uint32_t base_mip_level:5;
+    uint32_t mem_obj_ctrl_state:7;
+    uint32_t pad2:1;
   } ss1;
 
   struct {
+    uint32_t width:14;
     uint32_t pad1:2;
     uint32_t height:14;
     uint32_t pad0:2;
-    uint32_t width:14;
   } ss2;
 
   struct {
-    uint32_t depth:11;
-    uint32_t pad1:1;
-    uint32_t pad0:2;
     uint32_t surface_pitch:18;
+    uint32_t pad1:2;
+    uint32_t pad0:1;
+    uint32_t depth:11;
   } ss3;
 
   struct {
     union {
       struct {
-        uint32_t pad1:1;
-        uint32_t render_target_and_sample_rotation:2;
-        uint32_t min_array_elt:11;
-        uint32_t render_target_view_ext:11;
-        uint32_t multisample_format:1;
-        uint32_t multisample_num:3;
         uint32_t multisample_pos_palette_idx:3;
+        uint32_t multisample_num:3;
+        uint32_t multisample_format:1;
+        uint32_t render_target_view_ext:11;
+        uint32_t min_array_elt:11;
+        uint32_t render_target_and_sample_rotation:2;
+        uint32_t pad1:1;
       };
 
       uint32_t pad0;
@@ -314,59 +314,59 @@ typedef struct gen8_surface_state
   } ss4;
 
   struct {
-    uint32_t x_offset:7;
-    uint32_t pad5:1;
-    uint32_t y_offset:3;
+    uint32_t mip_count:4;
+    uint32_t surface_min_lod:4;
+    uint32_t pad5:4;
+    uint32_t pad4:2;
+    uint32_t conherency_type:1;
+    uint32_t pad3:3;
+    uint32_t pad2:2;
     union {
-      uint32_t pad4:1;
+      uint32_t pad1:1;
       uint32_t cube_ewa:1;
     };
-    uint32_t pad3:2;
-    uint32_t pad2:3;
-    uint32_t conherency_type:1;
-    uint32_t pad1:2;
-    uint32_t pad0:4;
-    uint32_t surface_min_lod:4;
-    uint32_t mip_count:4;
+    uint32_t y_offset:3;
+    uint32_t pad0:1;
+    uint32_t x_offset:7;
   } ss5;
 
   struct {
     union {
-      struct {
-        uint32_t seperate_uv_plane_enable:1;
-        uint32_t pad3:1;
-        uint32_t uv_plane_x_offset:14;
+      union {
+        struct {
+          uint32_t aux_surface_mode:3;
+          uint32_t aux_surface_pitch:9;
+          uint32_t pad3:4;
+        };
+        struct {
+          uint32_t uv_plane_y_offset:14;
+          uint32_t pad2:2;
+        };
       };
-      struct {
-        uint32_t pad2:1;
-        uint32_t aux_sruface_qpitch:15;
-      };
-    };
 
-    union {
       struct {
-        uint32_t pad1:2;
-        uint32_t uv_plane_y_offset:14;
+        uint32_t uv_plane_x_offset:14;
+        uint32_t pad1:1;
+        uint32_t seperate_uv_plane_enable:1;
       };
       struct {
-        uint32_t pad0:4;
-        uint32_t aux_surface_pitch:9;
-        uint32_t aux_surface_mode:3;
+        uint32_t aux_sruface_qpitch:15;
+        uint32_t pad0:1;
       };
     };
   } ss6;
 
   struct {
-    uint32_t red_clear_color:1;
-    uint32_t green_clear_color:1;
-    uint32_t blue_clear_color:1;
-    uint32_t alpha_clear_color:1;
-    uint32_t shader_channel_select_red:3;
-    uint32_t shader_channel_select_green:3;
-    uint32_t shader_channel_select_blue:3;
-    uint32_t shader_channel_select_alpha:3;
-    uint32_t pad0:4;
     uint32_t resource_min_lod:12;
+    uint32_t pad0:4;
+    uint32_t shader_channel_select_alpha:3;
+    uint32_t shader_channel_select_blue:3;
+    uint32_t shader_channel_select_green:3;
+    uint32_t shader_channel_select_red:3;
+    uint32_t alpha_clear_color:1;
+    uint32_t blue_clear_color:1;
+    uint32_t green_clear_color:1;
+    uint32_t red_clear_color:1;
   } ss7;
 
   struct {
@@ -375,20 +375,20 @@ typedef struct gen8_surface_state
   } ss8_9;
 
   struct {
-    union {
-      struct {
-        uint32_t pad5:2;
-        uint32_t v_plane_x_offset:14;
-        uint32_t pad4:2;
-        uint32_t v_plane_y_offset:14;
-        uint32_t pad3:20;
-      };
-      uint64_t aux_surface_base_addr:52;
-    };
+    uint32_t pad5:10;
+    uint32_t pad4:1;
+    uint32_t pad3:1;
 
-    uint32_t pad2:1;
-    uint32_t pad1:1;
-    uint32_t pad0:10;
+    union {
+      uint64_t aux_surface_base_addr:52;
+      struct {
+        uint32_t pad2:20;
+        uint32_t v_plane_y_offset:14;
+        uint32_t pad1:2;
+        uint32_t v_plane_x_offset:14;
+        uint32_t pad0:2;
+      };
+    };
   } ss10_11;
 
   struct {
