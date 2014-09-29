@@ -97,6 +97,38 @@ static struct _cl_device_id intel_hsw_gt3_device = {
 #include "cl_gen75_device.h"
 };
 
+/* XXX we clone IVB for HSW now */
+static struct _cl_device_id intel_brw_gt1_device = {
+  INIT_ICD(dispatch)
+  .max_compute_unit = 12,
+  .max_thread_per_unit = 7,
+  .max_work_item_sizes = {1024, 1024, 1024},
+  .max_work_group_size = 1024,
+  .max_clock_frequency = 1000,
+#include "cl_gen75_device.h"
+};
+
+static struct _cl_device_id intel_brw_gt2_device = {
+  INIT_ICD(dispatch)
+  .max_compute_unit = 24,
+  .max_thread_per_unit = 7,
+  .max_work_item_sizes = {1024, 1024, 1024},
+  .max_work_group_size = 1024,
+  .max_clock_frequency = 1000,
+#include "cl_gen75_device.h"
+};
+
+static struct _cl_device_id intel_brw_gt3_device = {
+  INIT_ICD(dispatch)
+  .max_compute_unit = 48,
+  .max_thread_per_unit = 7,
+  .max_work_item_sizes = {1024, 1024, 1024},
+  .max_work_group_size = 1024,
+  .max_clock_frequency = 1000,
+#include "cl_gen75_device.h"
+};
+
+
 LOCAL cl_device_id
 cl_get_gt_device(void)
 {
@@ -286,6 +318,54 @@ baytrail_t_device_break:
       ret = &intel_baytrail_t_device;
       break;
 
+    case PCI_CHIP_BROADWLL_M_GT1:
+      DECL_INFO_STRING(brw_gt1_break, intel_brw_gt1_device, name, "Intel(R) HD Graphics IvyBridge GT1");
+    case PCI_CHIP_BROADWLL_D_GT1:
+      DECL_INFO_STRING(brw_gt1_break, intel_brw_gt1_device, name, "Intel(R) HD Graphics IvyBridge GT1");
+    case PCI_CHIP_BROADWLL_S_GT1:
+      DECL_INFO_STRING(brw_gt1_break, intel_brw_gt1_device, name, "Intel(R) HD Graphics IvyBridge GT1");
+    case PCI_CHIP_BROADWLL_W_GT1:
+      DECL_INFO_STRING(brw_gt1_break, intel_brw_gt1_device, name, "Intel(R) HD Graphics IvyBridge GT1");
+    case PCI_CHIP_BROADWLL_U_GT1:
+      DECL_INFO_STRING(brw_gt1_break, intel_brw_gt1_device, name, "Intel(R) HD Graphics IvyBridge GT1");
+brw_gt1_break:
+      intel_brw_gt1_device.vendor_id = device_id;
+      intel_brw_gt1_device.platform = intel_platform;
+      ret = &intel_brw_gt1_device;
+      break;
+
+    case PCI_CHIP_BROADWLL_M_GT2:
+      DECL_INFO_STRING(brw_gt2_break, intel_brw_gt2_device, name, "Intel(R) HD Graphics IvyBridge GT1");
+    case PCI_CHIP_BROADWLL_D_GT2:
+      DECL_INFO_STRING(brw_gt2_break, intel_brw_gt2_device, name, "Intel(R) HD Graphics IvyBridge GT1");
+    case PCI_CHIP_BROADWLL_S_GT2:
+      DECL_INFO_STRING(brw_gt2_break, intel_brw_gt2_device, name, "Intel(R) HD Graphics IvyBridge GT1");
+    case PCI_CHIP_BROADWLL_W_GT2:
+      DECL_INFO_STRING(brw_gt2_break, intel_brw_gt2_device, name, "Intel(R) HD Graphics IvyBridge GT1");
+    case PCI_CHIP_BROADWLL_U_GT2:
+      DECL_INFO_STRING(brw_gt2_break, intel_brw_gt2_device, name, "Intel(R) HD Graphics IvyBridge GT1");
+brw_gt2_break:
+      intel_brw_gt2_device.vendor_id = device_id;
+      intel_brw_gt2_device.platform = intel_platform;
+      ret = &intel_brw_gt2_device;
+      break;
+
+    case PCI_CHIP_BROADWLL_M_GT3:
+      DECL_INFO_STRING(brw_gt3_break, intel_brw_gt3_device, name, "Intel(R) HD Graphics IvyBridge GT1");
+    case PCI_CHIP_BROADWLL_D_GT3:
+      DECL_INFO_STRING(brw_gt3_break, intel_brw_gt3_device, name, "Intel(R) HD Graphics IvyBridge GT1");
+    case PCI_CHIP_BROADWLL_S_GT3:
+      DECL_INFO_STRING(brw_gt3_break, intel_brw_gt3_device, name, "Intel(R) HD Graphics IvyBridge GT1");
+    case PCI_CHIP_BROADWLL_W_GT3:
+      DECL_INFO_STRING(brw_gt3_break, intel_brw_gt3_device, name, "Intel(R) HD Graphics IvyBridge GT1");
+    case PCI_CHIP_BROADWLL_U_GT3:
+      DECL_INFO_STRING(brw_gt3_break, intel_brw_gt3_device, name, "Intel(R) HD Graphics IvyBridge GT1");
+brw_gt3_break:
+      intel_brw_gt3_device.vendor_id = device_id;
+      intel_brw_gt3_device.platform = intel_platform;
+      ret = &intel_brw_gt3_device;
+      break;
+
     case PCI_CHIP_SANDYBRIDGE_BRIDGE:
     case PCI_CHIP_SANDYBRIDGE_GT1:
     case PCI_CHIP_SANDYBRIDGE_GT2:
@@ -380,7 +460,10 @@ cl_get_device_info(cl_device_id     device,
                device != &intel_baytrail_t_device &&
                device != &intel_hsw_gt1_device &&
                device != &intel_hsw_gt2_device &&
-               device != &intel_hsw_gt3_device
+               device != &intel_hsw_gt3_device &&
+               device != &intel_brw_gt1_device &&
+               device != &intel_brw_gt2_device &&
+               device != &intel_brw_gt3_device
                ))
     return CL_INVALID_DEVICE;
 
@@ -482,7 +565,10 @@ cl_device_get_version(cl_device_id device, cl_int *ver)
                device != &intel_baytrail_t_device &&
                device != &intel_hsw_gt1_device &&
                device != &intel_hsw_gt2_device &&
-               device != &intel_hsw_gt3_device))
+               device != &intel_hsw_gt3_device &&
+               device != &intel_brw_gt1_device &&
+               device != &intel_brw_gt2_device &&
+               device != &intel_brw_gt3_device))
     return CL_INVALID_DEVICE;
   if (ver == NULL)
     return CL_SUCCESS;
@@ -493,6 +579,9 @@ cl_device_get_version(cl_device_id device, cl_int *ver)
   } else if (device == &intel_hsw_gt1_device || device == &intel_hsw_gt2_device
         || device == &intel_hsw_gt3_device) {
     *ver = 75;
+  } else if (device == &intel_brw_gt1_device || device == &intel_brw_gt2_device
+        || device == &intel_brw_gt3_device) {
+    *ver = 8;
   } else
     return CL_INVALID_VALUE;
 
@@ -565,7 +654,10 @@ cl_get_kernel_workgroup_info(cl_kernel kernel,
                device != &intel_baytrail_t_device &&
                device != &intel_hsw_gt1_device &&
                device != &intel_hsw_gt2_device &&
-               device != &intel_hsw_gt3_device))
+               device != &intel_hsw_gt3_device &&
+               device != &intel_brw_gt1_device &&
+               device != &intel_brw_gt2_device &&
+               device != &intel_brw_gt3_device))
     return CL_INVALID_DEVICE;
 
   CHECK_KERNEL(kernel);

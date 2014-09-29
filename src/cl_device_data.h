@@ -155,7 +155,6 @@
 #define PCI_CHIP_HASWELL_CRW_E2      0x0D1E /* CRW GT2 */
 #define PCI_CHIP_HASWELL_CRW_E3      0x0D2E /* CRW GT3 */
 
-
 #define IS_HASWELL(devid) (  \
 	(devid) == PCI_CHIP_HASWELL_D1 || (devid) == PCI_CHIP_HASWELL_D2 || \
 	(devid) == PCI_CHIP_HASWELL_D3 || (devid) == PCI_CHIP_HASWELL_S1 || \
@@ -189,6 +188,47 @@
 	(devid) == PCI_CHIP_HASWELL_CRW_E2 || (devid) == PCI_CHIP_HASWELL_CRW_E3)
 
 #define IS_GEN75(devid)  IS_HASWELL(devid)
+
+/* BRW */
+#define PCI_CHIP_BROADWLL_M_GT1       0x1602 /* Intel(R) Broadwell Mobile - Halo (EDRAM) - GT1 */
+#define PCI_CHIP_BROADWLL_D_GT1       0x1606 /* Intel(R) Broadwell U-Processor - GT1 */
+#define PCI_CHIP_BROADWLL_S_GT1       0x160A /* Intel(R) Broadwell Server - GT1 */
+#define PCI_CHIP_BROADWLL_W_GT1       0x160D /* Intel(R) Broadwell Workstation - GT1 */
+#define PCI_CHIP_BROADWLL_U_GT1       0x160E /* Intel(R) Broadwell ULX - GT1 */
+#define PCI_CHIP_BROADWLL_M_GT2       0x1612 /* Intel(R) Broadwell Mobile - Halo (EDRAM) - GT2 */
+#define PCI_CHIP_BROADWLL_D_GT2       0x1616 /* Intel(R) Broadwell U-Processor - GT2 */
+#define PCI_CHIP_BROADWLL_S_GT2       0x161A /* Intel(R) Broadwell Server - GT2 */
+#define PCI_CHIP_BROADWLL_W_GT2       0x161D /* Intel(R) Broadwell Workstation - GT2 */
+#define PCI_CHIP_BROADWLL_U_GT2       0x161E /* Intel(R) Broadwell ULX - GT2 */
+#define PCI_CHIP_BROADWLL_M_GT3       0x1622 /* Intel(R) Broadwell Mobile - Halo (EDRAM) - GT3 */
+#define PCI_CHIP_BROADWLL_D_GT3       0x1626 /* Intel(R) Broadwell U-Processor - GT3 */
+#define PCI_CHIP_BROADWLL_S_GT3       0x162A /* Intel(R) Broadwell Server - GT3 */
+#define PCI_CHIP_BROADWLL_W_GT3       0x162D /* Intel(R) Broadwell Workstation - GT3 */
+#define PCI_CHIP_BROADWLL_U_GT3       0x162E /* Intel(R) Broadwell ULX - GT3 */
+
+#define IS_BRW_GT1(devid)               \
+  (devid == PCI_CHIP_BROADWLL_M_GT1 ||   \
+   devid == PCI_CHIP_BROADWLL_D_GT1 || \
+   devid == PCI_CHIP_BROADWLL_S_GT1 || \
+   devid == PCI_CHIP_BROADWLL_W_GT1 || \
+   devid == PCI_CHIP_BROADWLL_U_GT1)
+
+#define IS_BRW_GT2(devid)               \
+  (devid == PCI_CHIP_BROADWLL_M_GT2 ||   \
+   devid == PCI_CHIP_BROADWLL_D_GT2 || \
+   devid == PCI_CHIP_BROADWLL_S_GT2 || \
+   devid == PCI_CHIP_BROADWLL_W_GT2 || \
+   devid == PCI_CHIP_BROADWLL_U_GT2)
+
+#define IS_BRW_GT3(devid)               \
+  (devid == PCI_CHIP_BROADWLL_M_GT3 ||   \
+   devid == PCI_CHIP_BROADWLL_D_GT3 || \
+   devid == PCI_CHIP_BROADWLL_S_GT3 || \
+   devid == PCI_CHIP_BROADWLL_W_GT3 || \
+   devid == PCI_CHIP_BROADWLL_U_GT3)
+
+#define IS_BROADWELL(devid) (IS_BRW_GT1(devid) || IS_BRW_GT2(devid) || IS_BRW_GT3(devid))
+#define IS_GEN8(devid)      IS_BROADWELL(devid)
 
 #endif /* __CL_DEVICE_DATA_H__ */
 
