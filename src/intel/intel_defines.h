@@ -304,6 +304,8 @@
 #define GEN7_L3_CNTL_REG2_ADDRESS_OFFSET         (0xB020)
 #define GEN7_L3_CNTL_REG3_ADDRESS_OFFSET         (0xB024)
 
+#define GEN8_L3_CNTL_REG_ADDRESS_OFFSET          (0x7034)
+
 // To issue pipe controls (reset L3 / SLM or stall)
 #define GEN7_PIPE_CONTROL_MEDIA 0x2
 #define GEN7_PIPE_CONTROL_3D 0x3

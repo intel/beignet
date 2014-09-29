@@ -586,6 +586,22 @@ intel_gpgpu_set_L3_gen75(intel_gpgpu_t *gpgpu, uint32_t use_slm)
 }
 
 static void
+intel_gpgpu_set_L3_gen8(intel_gpgpu_t *gpgpu, uint32_t use_slm)
+{
+  BEGIN_BATCH(gpgpu->batch, 3);
+  OUT_BATCH(gpgpu->batch, CMD_LOAD_REGISTER_IMM | 1); /* length - 2 */
+  OUT_BATCH(gpgpu->batch, GEN8_L3_CNTL_REG_ADDRESS_OFFSET);
+  if(use_slm)
+    OUT_BATCH(gpgpu->batch, 0x60000121);  /* {SLM=192, URB=128, Rest=384} */
+  else
+    OUT_BATCH(gpgpu->batch, 0x80000140);  /* {SLM=0, URB=256, Rest=512, Sum=768} */
+
+  //if(use_slm)
+  //  gpgpu->batch->enable_slm = 1;
+  intel_gpgpu_pipe_control(gpgpu);
+}
+
+static void
 intel_gpgpu_batch_start(intel_gpgpu_t *gpgpu)
 {
   intel_batchbuffer_start_atomic(gpgpu->batch, 256);
@@ -1122,25 +1138,22 @@ intel_gpgpu_build_idrt_gen8(intel_gpgpu_t *gpgpu, cl_gpgpu_kernel *kernel)
   desc->desc5.curbe_read_offset = 0;
 
   /* Barriers / SLM are automatically handled on Gen7+ */
-  if (gpgpu->drv->gen_ver == 7 || gpgpu->drv->gen_ver == 75) {
-    size_t slm_sz = kernel->slm_sz;
-    desc->desc6.group_threads_num = kernel->use_slm ? kernel->thread_n : 0;
-    desc->desc6.barrier_enable = kernel->use_slm;
-    if (slm_sz <= 4*KB)
-      slm_sz = 4*KB;
-    else if (slm_sz <= 8*KB)
-      slm_sz = 8*KB;
-    else if (slm_sz <= 16*KB)
-      slm_sz = 16*KB;
-    else if (slm_sz <= 32*KB)
-      slm_sz = 32*KB;
-    else
-      slm_sz = 64*KB;
-    slm_sz = slm_sz >> 12;
-    desc->desc6.slm_sz = slm_sz;
-  }
+  size_t slm_sz = kernel->slm_sz;
+  /* group_threads_num should not be set to 0 even if the barrier is disabled per bspec */
+  desc->desc6.group_threads_num = kernel->thread_n;
+  desc->desc6.barrier_enable = kernel->use_slm;
+  if (slm_sz <= 4*KB)
+    slm_sz = 4*KB;
+  else if (slm_sz <= 8*KB)
+    slm_sz = 8*KB;
+  else if (slm_sz <= 16*KB)
+    slm_sz = 16*KB;
+  else if (slm_sz <= 32*KB)
+    slm_sz = 32*KB;
   else
-    desc->desc6.group_threads_num = kernel->barrierID; /* BarrierID on GEN6 */
+    slm_sz = 64*KB;
+  slm_sz = slm_sz >> 12;
+  desc->desc6.slm_sz = slm_sz;
 }
 
 static int
@@ -1651,7 +1664,7 @@ intel_set_gpgpu_callbacks(int device_id)
 
   if (IS_BROADWELL(device_id)) {
     cl_gpgpu_bind_image = (cl_gpgpu_bind_image_cb *) intel_gpgpu_bind_image_gen75;
-    intel_gpgpu_set_L3 = intel_gpgpu_set_L3_gen75;
+    intel_gpgpu_set_L3 = intel_gpgpu_set_L3_gen8;
     cl_gpgpu_get_cache_ctrl = (cl_gpgpu_get_cache_ctrl_cb *)intel_gpgpu_get_cache_ctrl_gen8;
     intel_gpgpu_get_scratch_index = intel_gpgpu_get_scratch_index_gen75;
     intel_gpgpu_post_action = intel_gpgpu_post_action_gen75;
