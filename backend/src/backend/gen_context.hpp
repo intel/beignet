@@ -26,7 +26,7 @@
 #define __GBE_GEN_CONTEXT_HPP__
 
 #include "backend/context.hpp"
-#include "backend/gen_encoder.hpp"
+#include "backend/gen7_encoder.hpp"
 #include "backend/program.h"
 #include "backend/gen_register.hpp"
 #include "ir/function.hpp"
@@ -198,7 +198,7 @@ namespace gbe
 
   protected:
     virtual GenEncoder* generateEncoder(void) {
-      return GBE_NEW(GenEncoder, this->simdWidth, 7, deviceID);
+      return GBE_NEW(Gen7Encoder, this->simdWidth, 7, deviceID);
     }
     /*! allocate a new curbe register and insert to curbe pool. */
     void allocCurbeReg(ir::Register reg, gbe_curbe_type value, uint32_t subValue = 0);

@@ -49,6 +49,7 @@
 #include <assert.h>
 
 #include "backend/gen_defs.hpp"
+#include "backend/gen7_instruction.hpp"
 #include "src/cl_device_data.h"
 
 static const struct {
@@ -566,7 +567,7 @@ static int reg (FILE *file, uint32_t _reg_file, uint32_t _reg_nr)
   return err;
 }
 
-static int dest (FILE *file, const union GenNativeInstruction *inst)
+static int dest (FILE *file, const union Gen7NativeInstruction *inst)
 {
   int	err = 0;
 
@@ -622,7 +623,7 @@ static int dest (FILE *file, const union GenNativeInstruction *inst)
   return 0;
 }
 
-static int dest_3src (FILE *file, const union GenNativeInstruction *inst)
+static int dest_3src (FILE *file, const union Gen7NativeInstruction *inst)
 {
   int	err = 0;
   const uint32_t reg_file = GEN_GENERAL_REGISTER_FILE;
@@ -755,7 +756,7 @@ static int src_da16 (FILE *file,
   return err;
 }
 
-static int src0_3src (FILE *file, const union GenNativeInstruction *inst)
+static int src0_3src (FILE *file, const union Gen7NativeInstruction *inst)
 {
   int err = 0;
   uint32_t swz_x = (inst->bits2.da3src.src0_swizzle >> 0) & 0x3;
@@ -803,7 +804,7 @@ static int src0_3src (FILE *file, const union GenNativeInstruction *inst)
   return err;
 }
 
-static int src1_3src (FILE *file, const union GenNativeInstruction *inst)
+static int src1_3src (FILE *file, const union Gen7NativeInstruction *inst)
 {
   int err = 0;
   uint32_t swz_x = (inst->bits2.da3src.src1_swizzle >> 0) & 0x3;
@@ -856,7 +857,7 @@ static int src1_3src (FILE *file, const union GenNativeInstruction *inst)
 }
 
 
-static int src2_3src (FILE *file, const union GenNativeInstruction *inst)
+static int src2_3src (FILE *file, const union Gen7NativeInstruction *inst)
 {
   int err = 0;
   uint32_t swz_x = (inst->bits3.da3src.src2_swizzle >> 0) & 0x3;
@@ -906,7 +907,7 @@ static int src2_3src (FILE *file, const union GenNativeInstruction *inst)
   return err;
 }
 
-static int imm (FILE *file, uint32_t type, const union GenNativeInstruction *inst) {
+static int imm (FILE *file, uint32_t type, const union Gen7NativeInstruction *inst) {
   switch (type) {
     case GEN_TYPE_UD:
       format (file, "0x%xUD", inst->bits3.ud);
@@ -935,7 +936,7 @@ static int imm (FILE *file, uint32_t type, const union GenNativeInstruction *ins
   return 0;
 }
 
-static int src0 (FILE *file, const union GenNativeInstruction *inst)
+static int src0 (FILE *file, const union Gen7NativeInstruction *inst)
 {
   if (inst->bits1.da1.src0_reg_file == GEN_IMMEDIATE_VALUE)
     return imm (file, inst->bits1.da1.src0_reg_type,
@@ -995,7 +996,7 @@ static int src0 (FILE *file, const union GenNativeInstruction *inst)
   }
 }
 
-static int src1 (FILE *file, const union GenNativeInstruction *inst)
+static int src1 (FILE *file, const union Gen7NativeInstruction *inst)
 {
   if (inst->bits1.da1.src1_reg_file == GEN_IMMEDIATE_VALUE)
     return imm (file, inst->bits1.da1.src1_reg_type,
@@ -1064,7 +1065,7 @@ static const int esize[6] = {
   [5] = 32,
 };
 
-static int qtr_ctrl(FILE *file, const union GenNativeInstruction *inst)
+static int qtr_ctrl(FILE *file, const union Gen7NativeInstruction *inst)
 {
   int qtr_ctl = inst->header.quarter_control;
   int exec_size = esize[inst->header.execution_size];
@@ -1095,7 +1096,7 @@ static int qtr_ctrl(FILE *file, const union GenNativeInstruction *inst)
 
 int gen_disasm (FILE *file, const void *opaque_insn, uint32_t deviceID, uint32_t compacted)
 {
-  const union GenNativeInstruction *inst = (const union GenNativeInstruction *) opaque_insn;
+  const union Gen7NativeInstruction *inst = (const union Gen7NativeInstruction *) opaque_insn;
   int	err = 0;
   int space = 0;
   int gen = 70;

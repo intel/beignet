@@ -17,35 +17,33 @@
  */
 
 /**
- * \file gen75_context.hpp
+ * \file gen8_context.hpp
  */
-#ifndef __GBE_GEN75_ENCODER_HPP__
-#define __GBE_GEN75_ENCODER_HPP__
+#ifndef __GBE_GEN8_ENCODER_HPP__
+#define __GBE_GEN8_ENCODER_HPP__
 
 #include "backend/gen_encoder.hpp"
-#include "backend/gen7_encoder.hpp"
-
 
 namespace gbe
 {
   /* This class is used to implement the HSW
      specific logic for encoder. */
-  class Gen75Encoder : public Gen7Encoder
+  class Gen8Encoder : public GenEncoder
   {
   public:
-    /*! exec width of the double data type */    
-    #define GEN75_DOUBLE_EXEC_WIDTH  4
-    virtual ~Gen75Encoder(void) { }
+    /*! exec width of the double data type */
+    #define GEN8_DOUBLE_EXEC_WIDTH  4
+    virtual ~Gen8Encoder(void) { }
 
-    Gen75Encoder(uint32_t simdWidth, uint32_t gen, uint32_t deviceID)
-         : Gen7Encoder(simdWidth, gen, deviceID) { }
+    Gen8Encoder(uint32_t simdWidth, uint32_t gen, uint32_t deviceID)
+         : GenEncoder(simdWidth, gen, deviceID) { }
 
     /*! Jump indexed instruction */
     virtual void JMPI(GenRegister src, bool longjmp = false);
     /*! Patch JMPI/BRC/BRD (located at index insnID) with the given jump distance */
     virtual void patchJMPI(uint32_t insnID, int32_t jumpDistance);
     /*! Get double/long exec width */
-    virtual int getDoubleExecWidth(void) { return GEN75_DOUBLE_EXEC_WIDTH; }
+    virtual int getDoubleExecWidth(void) { return GEN8_DOUBLE_EXEC_WIDTH; }
     virtual void MOV_DF(GenRegister dest, GenRegister src0, GenRegister tmp = GenRegister::null());
     virtual void LOAD_DF_IMM(GenRegister dest, GenRegister tmp, double value);
     virtual void ATOMIC(GenRegister dst, uint32_t function, GenRegister src, uint32_t bti, uint32_t srcNum);
@@ -57,6 +55,12 @@ namespace gbe
     virtual void setTypedWriteMessage(GenNativeInstruction *insn, unsigned char bti,
                                       unsigned char msg_type, uint32_t msg_length,
                                       bool header_present);
+    virtual void setDst(GenNativeInstruction *insn, GenRegister dest);
+    virtual void setSrc0(GenNativeInstruction *insn, GenRegister reg);
+    virtual void setSrc1(GenNativeInstruction *insn, GenRegister reg);
+    virtual bool disableCompact() { return true; }
+    virtual void alu3(uint32_t opcode, GenRegister dst,
+                       GenRegister src0, GenRegister src1, GenRegister src2);
   };
 }
-#endif /* __GBE_GEN75_ENCODER_HPP__ */
+#endif /* __GBE_GEN8_ENCODER_HPP__ */

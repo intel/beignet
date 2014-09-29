@@ -99,12 +99,18 @@ set (GBE_SRC
     backend/gen_program.cpp
     backend/gen_program.hpp
     backend/gen_program.h
+    backend/gen7_instruction.hpp
+    backend/gen8_instruction.hpp
     backend/gen_defs.hpp
     backend/gen_insn_compact.cpp
     backend/gen_encoder.hpp
     backend/gen_encoder.cpp
+    backend/gen7_encoder.hpp
+    backend/gen7_encoder.cpp
     backend/gen75_encoder.hpp
     backend/gen75_encoder.cpp
+    backend/gen8_encoder.hpp
+    backend/gen8_encoder.cpp
     )
 
 

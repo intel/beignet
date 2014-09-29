@@ -261,12 +261,13 @@ namespace gbe {
   };
 
   void decompactInstruction(GenCompactInstruction * p, void *insn) {
-    GenNativeInstruction *pOut = (union GenNativeInstruction *) insn;
+    Gen7NativeInstruction *pOut = (union Gen7NativeInstruction *) insn;
+    GenNativeInstruction *pNative = (union GenNativeInstruction *) insn;
 
-    memset(pOut, 0, sizeof(GenNativeInstruction));
+    memset(pOut, 0, sizeof(Gen7NativeInstruction));
     union ControlBits control_bits;
     control_bits.data = control_table[(uint32_t)p->bits1.control_index].bit_pattern;
-    pOut->low.low = (uint32_t)p->bits1.opcode | ((control_bits.data & 0xffff) << 8);
+    pNative->low.low = (uint32_t)p->bits1.opcode | ((control_bits.data & 0xffff) << 8);
     pOut->header.destreg_or_condmod = p->bits1.destreg_or_condmod;
     pOut->header.saturate = control_bits.saturate;
     pOut->header.acc_wr_control = p->bits1.acc_wr_control;
@@ -280,7 +281,7 @@ namespace gbe {
     subreg_bits.data = subreg_table[(uint32_t)p->bits1.sub_reg_index].bit_pattern;
     src0_bits.data = srcreg_table[p->bits1.src0_index_lo | p->bits2.src0_index_hi << 2].bit_pattern;
 
-    pOut->low.high |= data_type_bits.data & 0x7fff;
+    pNative->low.high |= data_type_bits.data & 0x7fff;
     pOut->bits1.da1.dest_horiz_stride = data_type_bits.dest_horiz_stride;
     pOut->bits1.da1.dest_address_mode = data_type_bits.dest_address_mode;
     pOut->bits1.da1.dest_reg_nr = p->bits2.dest_reg_nr;
@@ -288,7 +289,7 @@ namespace gbe {
 
     pOut->bits2.da1.src0_subreg_nr = subreg_bits.src0_subreg_nr;
     pOut->bits2.da1.src0_reg_nr = p->bits2.src0_reg_nr;
-    pOut->high.low |= (src0_bits.data << 13);
+    pNative->high.low |= (src0_bits.data << 13);
     pOut->bits2.da1.flag_sub_reg_nr = control_bits.flag_sub_reg_nr;
     pOut->bits2.da1.flag_reg_nr = control_bits.flag_reg_nr;
 
@@ -300,7 +301,7 @@ namespace gbe {
       src1_bits.data = srcreg_table[p->bits2.src1_index].bit_pattern;
       pOut->bits3.da1.src1_subreg_nr = subreg_bits.src1_subreg_nr;
       pOut->bits3.da1.src1_reg_nr = p->bits2.src1_reg_nr;
-      pOut->high.high |= (src1_bits.data << 13);
+      pNative->high.high |= (src1_bits.data << 13);
     }
   }
 
@@ -439,6 +440,9 @@ namespace gbe {
   }
 
   bool compactAlu1(GenEncoder *p, uint32_t opcode, GenRegister dst, GenRegister src, uint32_t condition, bool split) {
+    if(p->disableCompact())
+      return false;
+
     if(split) {
       // TODO support it
       return false;
@@ -474,6 +478,9 @@ namespace gbe {
   }
 
   bool compactAlu2(GenEncoder *p, uint32_t opcode, GenRegister dst, GenRegister src0, GenRegister src1, uint32_t condition, bool split) {
+    if(p->disableCompact())
+      return false;
+
     if(split) {
       // TODO support it
       return false;

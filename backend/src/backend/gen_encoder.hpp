@@ -70,8 +70,6 @@ namespace gbe
     virtual ~GenEncoder(void) { }
     /*! Size of the stack (should be large enough) */
     enum { MAX_STATE_NUM = 16 };
-    /*! gen7 exec width of the double data type */
-    #define GEN7_DOUBLE_EXEC_WIDTH  8
     /*! Push the current instruction state */
     void push(void);
     /*! Pop the latest pushed state */
@@ -138,7 +136,7 @@ namespace gbe
 #undef ALU2_MOD
 #undef ALU3
     /*! Get double/long exec width */
-    virtual int getDoubleExecWidth(void) { return GEN7_DOUBLE_EXEC_WIDTH; }
+    virtual int getDoubleExecWidth(void) = 0;
     virtual void MOV_DF(GenRegister dest, GenRegister src0, GenRegister tmp = GenRegister::null());
     virtual void LOAD_DF_IMM(GenRegister dest, GenRegister tmp, double value);
     void LOAD_INT64_IMM(GenRegister dest, int64_t value);
@@ -214,7 +212,6 @@ namespace gbe
     ////////////////////////////////////////////////////////////////////////
     // Helper functions to encode
     ////////////////////////////////////////////////////////////////////////
-    virtual void setHeader(GenNativeInstruction *insn);
     virtual void setDPUntypedRW(GenNativeInstruction *insn, uint32_t bti, uint32_t rgba,
                                 uint32_t msg_type, uint32_t msg_length,
                                 uint32_t response_length);
@@ -224,13 +221,18 @@ namespace gbe
     void setMessageDescriptor(GenNativeInstruction *inst, enum GenMessageTarget sfid,
                               unsigned msg_length, unsigned response_length,
                               bool header_present = false, bool end_of_thread = false);
-    void setDst(GenNativeInstruction *insn, GenRegister dest);
-    void setSrc0(GenNativeInstruction *insn, GenRegister reg);
-    void setSrc1(GenNativeInstruction *insn, GenRegister reg);
+    virtual void setHeader(GenNativeInstruction *insn) = 0;
+    virtual void setDst(GenNativeInstruction *insn, GenRegister dest) = 0;
+    virtual void setSrc0(GenNativeInstruction *insn, GenRegister reg) = 0;
+    virtual void setSrc1(GenNativeInstruction *insn, GenRegister reg) = 0;
     GenCompactInstruction *nextCompact(uint32_t opcode);
+    virtual bool disableCompact() { return false; }
     GenNativeInstruction *next(uint32_t opcode);
     uint32_t n_instruction(void) const { return store.size(); }
     GBE_CLASS(GenEncoder); //!< Use custom allocators
+
+    virtual void alu3(uint32_t opcode, GenRegister dst,
+                       GenRegister src0, GenRegister src1, GenRegister src2) = 0;
   };
 
   void alu1(GenEncoder *p, uint32_t opcode, GenRegister dst,
