@@ -98,6 +98,61 @@ typedef struct gen6_interface_descriptor
   uint32_t desc7; /* unused */
 } gen6_interface_descriptor_t;
 
+typedef struct gen8_interface_descriptor
+{
+  struct {
+    uint32_t pad6:6;
+    uint32_t kernel_start_pointer:26;
+  } desc0;
+  struct {
+    uint32_t kernel_start_pointer_high:16;
+    uint32_t pad6:16;
+  } desc1;
+
+  struct {
+    uint32_t pad:7;
+    uint32_t software_exception:1;
+    uint32_t pad2:3;
+    uint32_t maskstack_exception:1;
+    uint32_t pad3:1;
+    uint32_t illegal_opcode_exception:1;
+    uint32_t pad4:2;
+    uint32_t floating_point_mode:1;
+    uint32_t thread_priority:1;
+    uint32_t single_program_flow:1;
+    uint32_t denorm_mode:1;
+    uint32_t thread_preemption_disable:1;
+    uint32_t pad5:11;
+  } desc2;
+
+  struct {
+    uint32_t pad:2;
+    uint32_t sampler_count:3;
+    uint32_t sampler_state_pointer:27;
+  } desc3;
+
+  struct {
+    uint32_t binding_table_entry_count:5;  /* prefetch entries only */
+    uint32_t binding_table_pointer:27;     /* 11 bit only on IVB+ */
+  } desc4;
+
+  struct {
+    uint32_t curbe_read_offset:16;         /* in GRFs */
+    uint32_t curbe_read_len:16;            /* in GRFs */
+  } desc5;
+
+  struct {
+    uint32_t group_threads_num:8;        /* 0..64, 0 - no barrier use */
+    uint32_t barrier_return_byte:8;
+    uint32_t slm_sz:5;                   /* 0..16 - 0K..64K */
+    uint32_t barrier_enable:1;
+    uint32_t rounding_mode:2;
+    uint32_t barrier_return_grf_offset:8;
+  } desc6;
+
+  uint32_t desc7; /* unused */
+} gen8_interface_descriptor_t;
+
 typedef struct gen7_surface_state
 {
   struct {
@@ -180,17 +235,12 @@ typedef struct gen7_surface_state
 typedef struct gen8_surface_state
 {
   struct {
-    union {
-      struct {
-        uint32_t cube_pos_z:1;
-        uint32_t cube_neg_z:1;
-        uint32_t cube_pos_y:1;
-        uint32_t cube_neg_y:1;
-        uint32_t cube_pos_x:1;
-        uint32_t cube_neg_x:1;
-      };
-      uint32_t pad1:6;
-    };
+    uint32_t cube_pos_z:1;
+    uint32_t cube_neg_z:1;
+    uint32_t cube_pos_y:1;
+    uint32_t cube_neg_y:1;
+    uint32_t cube_pos_x:1;
+    uint32_t cube_neg_x:1;
     uint32_t media_boundary_pixel_mode:2;
     uint32_t render_cache_rw_mode:1;
     uint32_t sampler_L2_bypass_mode:1;
@@ -252,10 +302,7 @@ typedef struct gen8_surface_state
     uint32_t conherency_type:1;
     uint32_t pad3:3;
     uint32_t pad2:2;
-    union {
-      uint32_t pad1:1;
-      uint32_t cube_ewa:1;
-    };
+    uint32_t cube_ewa:1;
     uint32_t y_offset:3;
     uint32_t pad0:1;
     uint32_t x_offset:7;
@@ -302,25 +349,20 @@ typedef struct gen8_surface_state
 
   struct {
     uint32_t surface_base_addr_lo;
-    uint32_t surface_base_addr_hi;
-  } ss8_9;
+  } ss8;
 
   struct {
-    uint32_t pad5:10;
-    uint32_t pad4:1;
-    uint32_t pad3:1;
+    uint32_t surface_base_addr_hi;
+  } ss9;
 
-    union {
-      uint64_t aux_surface_base_addr:52;
-      struct {
-        uint32_t pad2:20;
-        uint32_t v_plane_y_offset:14;
-        uint32_t pad1:2;
-        uint32_t v_plane_x_offset:14;
-        uint32_t pad0:2;
-      };
-    };
-  } ss10_11;
+	struct {
+		uint32_t pad0:12;
+		uint32_t aux_base_addr_lo:20;
+	} ss10;
+
+	struct {
+		uint32_t aux_base_addr_hi:32;
+	} ss11;
 
   struct {
     uint32_t pad0;
