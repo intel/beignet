@@ -115,7 +115,7 @@ namespace gbe
       const LabelIndex label = pair.first;
       const int32_t insnID = pair.second;
       const int32_t targetID = labelPos.find(label)->second;
-      p->patchJMPI(insnID, (targetID - insnID));
+      p->patchJMPI(insnID, (targetID - insnID), 0);
     }
     for (auto pair : branchPos3) {
       const LabelPair labelPair = pair.first;
@@ -128,7 +128,7 @@ namespace gbe
         errCode = OUT_OF_RANGE_IF_ENDIF; 
         return false;
       }
-      p->patchJMPI(insnID, ((uip - insnID) << 16) | (0x0000ffff & (jip - insnID)));
+      p->patchJMPI(insnID, jip - insnID, uip - insnID);
     }
     return true;
   }
@@ -928,7 +928,7 @@ namespace gbe
       p->SHL(high, low, tmp);
       p->MOV(low, GenRegister::immud(0));
 
-      p->patchJMPI(jip1, (p->n_instruction() - jip1) );
+      p->patchJMPI(jip1, (p->n_instruction() - jip1), 0);
       p->curr.predicate = GEN_PREDICATE_NONE;
       p->CMP(GEN_CONDITIONAL_LE, exp, GenRegister::immud(31));  //update dst where high != 0
       p->curr.predicate = GEN_PREDICATE_NORMAL;
@@ -942,7 +942,7 @@ namespace gbe
       p->CMP(GEN_CONDITIONAL_EQ, high, GenRegister::immud(0x80000000));
       p->CMP(GEN_CONDITIONAL_EQ, low, GenRegister::immud(0x0));
       p->AND(dst_ud, dst_ud, GenRegister::immud(0xfffffffe));
-      p->patchJMPI(jip0, (p->n_instruction() - jip0));
+      p->patchJMPI(jip0, (p->n_instruction() - jip0), 0);
 
     p->pop();
 
@@ -1427,7 +1427,7 @@ namespace gbe
       p->curr.noMask = 1;
       jip0 = p->n_instruction();
       p->JMPI(zero);
-      p->patchJMPI(jip0, distance);
+      p->patchJMPI(jip0, distance, 0);
       p->pop();
       // end of loop
     }

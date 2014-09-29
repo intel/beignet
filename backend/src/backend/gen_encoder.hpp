@@ -207,7 +207,7 @@ namespace gbe
     void MATH(GenRegister dst, uint32_t function, GenRegister src);
 
     /*! Patch JMPI/BRC/BRD (located at index insnID) with the given jump distance */
-    virtual void patchJMPI(uint32_t insnID, int32_t jumpDistance);
+    virtual void patchJMPI(uint32_t insnID, int32_t jip, int32_t uip);
 
     ////////////////////////////////////////////////////////////////////////
     // Helper functions to encode

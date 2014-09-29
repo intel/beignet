@@ -820,7 +820,7 @@ namespace gbe
   ALU2_BRA(BRD)
   ALU2_BRA(BRC)
 
-  void GenEncoder::patchJMPI(uint32_t insnID, int32_t jumpDistance) {
+  void GenEncoder::patchJMPI(uint32_t insnID, int32_t jip, int32_t uip) {
     GenNativeInstruction &insn = *(GenNativeInstruction *)&this->store[insnID];
     GBE_ASSERT(insnID < this->store.size());
     GBE_ASSERT(insn.header.opcode == GEN_OPCODE_JMPI ||
@@ -834,24 +834,21 @@ namespace gbe
     if( insn.header.opcode == GEN_OPCODE_WHILE ){
       // if this WHILE instruction jump back to an ELSE instruction,
       // need add distance to go to the next instruction.
-      GenNativeInstruction & insn_else = *(GenNativeInstruction *)&this->store[insnID+jumpDistance];
+      GenNativeInstruction & insn_else = *(GenNativeInstruction *)&this->store[insnID+jip];
       if(insn_else.header.opcode == GEN_OPCODE_ELSE){
-        jumpDistance += 2;
+        jip += 2;
       }
     }
 
-    if (insn.header.opcode != GEN_OPCODE_JMPI || (jumpDistance > -32769 && jumpDistance < 32768))  {
-           if (insn.header.opcode == GEN_OPCODE_IF) {
-             this->setSrc1(&insn, GenRegister::immd(jumpDistance));
-             return;
-           }
-           else if (insn.header.opcode == GEN_OPCODE_JMPI){
-             jumpDistance = jumpDistance - 2;
-           }
-           else if(insn.header.opcode == GEN_OPCODE_ENDIF)
-             jumpDistance += 2;
-
-           this->setSrc1(&insn, GenRegister::immd(jumpDistance));
+    if (insn.header.opcode != GEN_OPCODE_JMPI || (jip > -32769 && jip < 32768))  {
+      if (insn.header.opcode == GEN_OPCODE_IF) {
+        this->setSrc1(&insn, GenRegister::immd((jip & 0xffff) | uip<<16));
+        return;
+      } else if (insn.header.opcode == GEN_OPCODE_JMPI) {
+        jip = jip - 2;
+      } else if(insn.header.opcode == GEN_OPCODE_ENDIF)
+        jip += 2;
+       this->setSrc1(&insn, GenRegister::immd((jip & 0xffff) | uip<<16));
     } else if ( insn.header.predicate_control == GEN_PREDICATE_NONE ) {
       // For the conditional jump distance out of S15 range, we need to use an
       // inverted jmp followed by a add ip, ip, distance to implement.
@@ -867,7 +864,7 @@ namespace gbe
       insn.header.opcode = GEN_OPCODE_ADD;
       this->setDst(&insn, GenRegister::ip());
       this->setSrc0(&insn, GenRegister::ip());
-      this->setSrc1(&insn, GenRegister::immd(jumpDistance * 8));
+      this->setSrc1(&insn, GenRegister::immd(jip * 8));
     } else {
       GenNativeInstruction &insn2 = *(GenNativeInstruction *)&this->store[insnID+2];
       insn.header.predicate_inverse ^= 1;
@@ -878,7 +875,7 @@ namespace gbe
       insn2.header.opcode = GEN_OPCODE_ADD;
       this->setDst(&insn2, GenRegister::ip());
       this->setSrc0(&insn2, GenRegister::ip());
-      this->setSrc1(&insn2, GenRegister::immd((jumpDistance - 2) * 8));
+      this->setSrc1(&insn2, GenRegister::immd((jip - 2) * 8));
     }
   }
 

@@ -250,7 +250,7 @@ namespace gbe
     alu2(this, GEN_OPCODE_JMPI, GenRegister::ip(), GenRegister::ip(), src);
   }
 
-  void Gen75Encoder::patchJMPI(uint32_t insnID, int32_t jumpDistance) {
+  void Gen75Encoder::patchJMPI(uint32_t insnID, int32_t jip, int32_t uip) {
     GenNativeInstruction &insn = *(GenNativeInstruction *)&this->store[insnID];
     GBE_ASSERT(insnID < this->store.size());
     GBE_ASSERT(insn.header.opcode == GEN_OPCODE_JMPI ||
@@ -264,19 +264,17 @@ namespace gbe
     if( insn.header.opcode == GEN_OPCODE_WHILE ){
       // if this WHILE instruction jump back to an ELSE instruction,
       // need add distance to go to the next instruction.
-      GenNativeInstruction & insn_else = *(GenNativeInstruction *)&this->store[insnID+jumpDistance];
+      GenNativeInstruction & insn_else = *(GenNativeInstruction *)&this->store[insnID+jip];
       if(insn_else.header.opcode == GEN_OPCODE_ELSE){
-        jumpDistance += 2;
+        jip += 2;
       }
     }
 
-    if (insn.header.opcode != GEN_OPCODE_JMPI)
-      this->setSrc1(&insn, GenRegister::immd(jumpDistance));
-    else {
+    if (insn.header.opcode == GEN_OPCODE_JMPI) {
       //jumpDistance'unit is Qword, and the HSW's JMPI offset of jmpi is in byte, so multi 8
-      jumpDistance = (jumpDistance - 2) * 8;
-      this->setSrc1(&insn, GenRegister::immd(jumpDistance));
+      jip = (jip - 2) * 8;
     }
+    this->setSrc1(&insn, GenRegister::immd((jip & 0xffff) | uip<<16));
     return;
   }
 } /* End of the name space. */
