@@ -27,6 +27,7 @@ struct _cl_device_id {
   cl_uint  vendor_id;
   cl_uint  max_compute_unit;               // maximum EU number
   cl_uint  max_thread_per_unit;            // maximum EU threads per EU.
+  cl_uint  sub_slice_count;                // Device's sub slice count
   cl_uint  max_work_item_dimensions;       // should be 3.
   size_t   max_work_item_sizes[3];         // equal to maximum work group size.
   size_t   max_work_group_size;            // maximum work group size under simd16 mode.

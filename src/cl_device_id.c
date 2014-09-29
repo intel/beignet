@@ -40,6 +40,7 @@ static struct _cl_device_id intel_ivb_gt2_device = {
   INIT_ICD(dispatch)
   .max_compute_unit = 16,
   .max_thread_per_unit = 8,
+  .sub_slice_count = 2,
   .max_work_item_sizes = {1024, 1024, 1024},
   .max_work_group_size = 1024,
   .max_clock_frequency = 1000,
@@ -50,6 +51,7 @@ static struct _cl_device_id intel_ivb_gt1_device = {
   INIT_ICD(dispatch)
   .max_compute_unit = 6,
   .max_thread_per_unit = 6,
+  .sub_slice_count = 1,
   .max_work_item_sizes = {512, 512, 512},
   .max_work_group_size = 512,
   .max_clock_frequency = 1000,
@@ -60,6 +62,7 @@ static struct _cl_device_id intel_baytrail_t_device = {
   INIT_ICD(dispatch)
   .max_compute_unit = 4,
   .max_thread_per_unit = 8,
+  .sub_slice_count = 1,
   .max_work_item_sizes = {512, 512, 512},
   .max_work_group_size = 512,
   .max_clock_frequency = 1000,
@@ -71,6 +74,7 @@ static struct _cl_device_id intel_hsw_gt1_device = {
   INIT_ICD(dispatch)
   .max_compute_unit = 10,
   .max_thread_per_unit = 7,
+  .sub_slice_count = 1,
   .max_work_item_sizes = {1024, 1024, 1024},
   .max_work_group_size = 1024,
   .max_clock_frequency = 1000,
@@ -81,6 +85,7 @@ static struct _cl_device_id intel_hsw_gt2_device = {
   INIT_ICD(dispatch)
   .max_compute_unit = 20,
   .max_thread_per_unit = 7,
+  .sub_slice_count = 2,
   .max_work_item_sizes = {1024, 1024, 1024},
   .max_work_group_size = 1024,
   .max_clock_frequency = 1000,
@@ -91,6 +96,7 @@ static struct _cl_device_id intel_hsw_gt3_device = {
   INIT_ICD(dispatch)
   .max_compute_unit = 40,
   .max_thread_per_unit = 7,
+  .sub_slice_count = 4,
   .max_work_item_sizes = {1024, 1024, 1024},
   .max_work_group_size = 1024,
   .max_clock_frequency = 1000,
@@ -102,6 +108,7 @@ static struct _cl_device_id intel_brw_gt1_device = {
   INIT_ICD(dispatch)
   .max_compute_unit = 12,
   .max_thread_per_unit = 7,
+  .sub_slice_count = 2,
   .max_work_item_sizes = {1024, 1024, 1024},
   .max_work_group_size = 1024,
   .max_clock_frequency = 1000,
@@ -112,6 +119,7 @@ static struct _cl_device_id intel_brw_gt2_device = {
   INIT_ICD(dispatch)
   .max_compute_unit = 24,
   .max_thread_per_unit = 7,
+  .sub_slice_count = 3,
   .max_work_item_sizes = {1024, 1024, 1024},
   .max_work_group_size = 1024,
   .max_clock_frequency = 1000,
@@ -122,6 +130,7 @@ static struct _cl_device_id intel_brw_gt3_device = {
   INIT_ICD(dispatch)
   .max_compute_unit = 48,
   .max_thread_per_unit = 7,
+  .sub_slice_count = 6,
   .max_work_item_sizes = {1024, 1024, 1024},
   .max_work_group_size = 1024,
   .max_clock_frequency = 1000,
@@ -634,8 +643,8 @@ cl_get_kernel_max_wg_sz(cl_kernel kernel)
       work_group_size = kernel->program->ctx->device->max_compute_unit *
                         kernel->program->ctx->device->max_thread_per_unit * simd_width;
   } else
-    work_group_size = kernel->program->ctx->device->max_work_group_size /
-                      (16 / simd_width);
+    work_group_size = kernel->program->ctx->device->max_compute_unit * simd_width *
+                 kernel->program->ctx->device->max_thread_per_unit / kernel->program->ctx->device->sub_slice_count;
   return work_group_size;
 }
 
