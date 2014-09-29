@@ -98,75 +98,6 @@ typedef struct gen6_interface_descriptor
   uint32_t desc7; /* unused */
 } gen6_interface_descriptor_t;
 
-typedef struct gen6_surface_state
-{
-  struct {
-    uint32_t cube_pos_z:1;
-    uint32_t cube_neg_z:1;
-    uint32_t cube_pos_y:1;
-    uint32_t cube_neg_y:1;
-    uint32_t cube_pos_x:1;
-    uint32_t cube_neg_x:1;
-    uint32_t pad:2;
-    uint32_t render_cache_read_mode:1;
-    uint32_t cube_map_corner_mode:1;
-    uint32_t mipmap_layout_mode:1;
-    uint32_t vert_line_stride_ofs:1;
-    uint32_t vert_line_stride:1;
-    uint32_t color_blend:1;
-    uint32_t writedisable_blue:1;
-    uint32_t writedisable_green:1;
-    uint32_t writedisable_red:1;
-    uint32_t writedisable_alpha:1;
-    uint32_t surface_format:9;
-    uint32_t data_return_format:1;
-    uint32_t pad0:1;
-    uint32_t surface_type:3;
-  } ss0;
-
-  struct {
-    uint32_t base_addr;
-  } ss1;
-
-  struct {
-    uint32_t render_target_rotation:2;
-    uint32_t mip_count:4;
-    uint32_t width:13;
-    uint32_t height:13;
-  } ss2;
-
-  struct {
-    uint32_t tile_walk:1;
-    uint32_t tiled_surface:1;
-    uint32_t pad:1;
-    uint32_t pitch:18;
-    uint32_t depth:11;
-  } ss3;
-
-  struct {
-    uint32_t multisample_pos_index:3;
-    uint32_t pad:1;
-    uint32_t multisample_count:3;
-    uint32_t pad1:1;
-    uint32_t rt_view_extent:9;
-    uint32_t min_array_elt:11;
-    uint32_t min_lod:4;
-  } ss4;
-
-  struct {
-    uint32_t pad:16;
-    uint32_t cache_control:2;  /* different values for GT and IVB */
-    uint32_t gfdt:1;           /* allows selective flushing of LLC (e.g. for scanout) */
-    uint32_t encrypted_data:1;
-    uint32_t y_offset:4;
-    uint32_t vertical_alignment:1;
-    uint32_t x_offset:7;
-  } ss5;
-
-  uint32_t ss6; /* unused */
-  uint32_t ss7; /* unused */
-} gen6_surface_state_t;
-
 typedef struct gen7_surface_state
 {
   struct {
@@ -407,8 +338,13 @@ typedef struct gen8_surface_state
   } ss15;
 } gen8_surface_state_t;
 
-STATIC_ASSERT(sizeof(gen6_surface_state_t) == sizeof(gen7_surface_state_t));
-static const size_t surface_state_sz = sizeof(gen6_surface_state_t);
+typedef union gen_surface_state
+{
+  gen7_surface_state_t gen7_surface_state;
+  gen8_surface_state_t gen8_surface_state;
+} gen_surface_state_t;
+
+static const size_t surface_state_sz = sizeof(gen_surface_state_t);
 
 typedef struct gen6_vfe_state_inline
 {

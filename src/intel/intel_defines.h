@@ -87,6 +87,7 @@
 
 #define PIPELINE_SELECT_3D              0
 #define PIPELINE_SELECT_MEDIA           1
+#define PIPELINE_SELECT_GPGPU           2
 
 #define UF0_CS_REALLOC                  (1 << 13)
 #define UF0_VFE_REALLOC                 (1 << 12)

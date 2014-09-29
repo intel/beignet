@@ -58,15 +58,8 @@
 /* Stores both binding tables and surface states */
 typedef struct surface_heap {
   uint32_t binding_table[256];
-  char surface[256][sizeof(gen6_surface_state_t)];
+  char surface[256*sizeof(gen_surface_state_t)];
 } surface_heap_t;
-
-/* Stores both binding tables and surface states */
-typedef struct surface_heap_gen8 {
-  uint32_t binding_table[256];
-  char surface[256][sizeof(gen8_surface_state_t)];
-} surface_heap_gen8_t;
-
 
 typedef struct intel_event {
   drm_intel_bo *buffer;
@@ -141,6 +134,14 @@ intel_gpgpu_post_action_t *intel_gpgpu_post_action = NULL;
 
 typedef uint64_t (intel_gpgpu_read_ts_reg_t)(drm_intel_bufmgr *bufmgr);
 intel_gpgpu_read_ts_reg_t *intel_gpgpu_read_ts_reg = NULL;
+
+
+typedef void (intel_gpgpu_set_base_address_t)(intel_gpgpu_t *gpgpu);
+intel_gpgpu_set_base_address_t *intel_gpgpu_set_base_address = NULL;
+
+typedef void (intel_gpgpu_setup_bti_t)(intel_gpgpu_t *gpgpu, drm_intel_bo *buf, uint32_t internal_offset,
+                                       uint32_t size, unsigned char index, uint32_t format);
+intel_gpgpu_setup_bti_t *intel_gpgpu_setup_bti = NULL;
 
 static void
 intel_gpgpu_sync(void *buf)
@@ -234,7 +235,7 @@ intel_gpgpu_get_cache_ctrl_gen8()
 }
 
 static void
-intel_gpgpu_set_base_address(intel_gpgpu_t *gpgpu)
+intel_gpgpu_set_base_address_gen7(intel_gpgpu_t *gpgpu)
 {
   const uint32_t def_cc = cl_gpgpu_get_cache_ctrl(); /* default Cache Control value */
   BEGIN_BATCH(gpgpu->batch, 10);
@@ -270,6 +271,58 @@ intel_gpgpu_set_base_address(intel_gpgpu_t *gpgpu)
   OUT_BATCH(gpgpu->batch, 0 | BASE_ADDRESS_MODIFY);
 #endif /* USE_FULSIM */
   ADVANCE_BATCH(gpgpu->batch);
+}
+
+static void
+intel_gpgpu_set_base_address_gen8(intel_gpgpu_t *gpgpu)
+{
+    const uint32_t def_cc = cl_gpgpu_get_cache_ctrl(); /* default Cache Control value */
+    BEGIN_BATCH(gpgpu->batch, 16);
+    OUT_BATCH(gpgpu->batch, CMD_STATE_BASE_ADDRESS | 14);
+    /* 0, Gen State Mem Obj CC, Stateless Mem Obj CC, Stateless Access Write Back */
+    OUT_BATCH(gpgpu->batch, 0 | (def_cc << 4) | (0 << 1)| BASE_ADDRESS_MODIFY);    /* General State Base Addr   */
+    OUT_BATCH(gpgpu->batch, 0);
+    OUT_BATCH(gpgpu->batch, 0 | (def_cc << 16));
+    /* 0, State Mem Obj CC */
+    /* We use a state base address for the surface heap since IVB clamp the
+     * binding table pointer at 11 bits. So, we cannot use pointers directly while
+     * using the surface heap
+     */
+    assert(gpgpu->aux_offset.surface_heap_offset % 4096 == 0);
+    OUT_RELOC(gpgpu->batch, gpgpu->aux_buf.bo,
+              I915_GEM_DOMAIN_SAMPLER,
+              I915_GEM_DOMAIN_SAMPLER,
+              gpgpu->aux_offset.surface_heap_offset + (0 | (def_cc << 4) | (0 << 1)| BASE_ADDRESS_MODIFY));
+    OUT_BATCH(gpgpu->batch, 0);
+    OUT_RELOC(gpgpu->batch, gpgpu->aux_buf.bo,
+              I915_GEM_DOMAIN_RENDER,
+              I915_GEM_DOMAIN_RENDER,
+              (0 | (def_cc << 4) | (0 << 1)| BASE_ADDRESS_MODIFY)); /* Dynamic State Base Addr */
+    OUT_BATCH(gpgpu->batch, 0);
+    OUT_BATCH(gpgpu->batch, 0 | (def_cc << 4) | BASE_ADDRESS_MODIFY); /* Indirect Obj Base Addr */
+    OUT_BATCH(gpgpu->batch, 0);
+    //OUT_BATCH(gpgpu->batch, 0 | (def_cc << 4) | BASE_ADDRESS_MODIFY); /* Instruction Base Addr  */
+    OUT_RELOC(gpgpu->batch, (drm_intel_bo *)gpgpu->ker->bo,
+              I915_GEM_DOMAIN_INSTRUCTION,
+              I915_GEM_DOMAIN_INSTRUCTION,
+              0 + (0 | (def_cc << 4) | (0 << 1)| BASE_ADDRESS_MODIFY));
+    OUT_BATCH(gpgpu->batch, 0);
+    /* If we output an AUB file, we limit the total size to 64MB */
+#if USE_FULSIM
+    OUT_BATCH(gpgpu->batch, 0x04000000 | BASE_ADDRESS_MODIFY); /* General State Access Upper Bound */
+    OUT_BATCH(gpgpu->batch, 0x04000000 | BASE_ADDRESS_MODIFY); /* Dynamic State Access Upper Bound */
+    OUT_BATCH(gpgpu->batch, 0x04000000 | BASE_ADDRESS_MODIFY); /* Indirect Obj Access Upper Bound */
+    OUT_BATCH(gpgpu->batch, 0x04000000 | BASE_ADDRESS_MODIFY); /* Instruction Access Upper Bound */
+#else
+    OUT_BATCH(gpgpu->batch, 0xfffff000 | BASE_ADDRESS_MODIFY);
+    /* According to mesa i965 driver code, we must set the dynamic state access upper bound
+     * to a valid bound value, otherwise, the border color pointer may be rejected and you
+     * may get incorrect border color. This is a known hardware bug. */
+    OUT_BATCH(gpgpu->batch, 0xfffff000 | BASE_ADDRESS_MODIFY);
+    OUT_BATCH(gpgpu->batch, 0xfffff000 | BASE_ADDRESS_MODIFY);
+    OUT_BATCH(gpgpu->batch, 0xfffff000 | BASE_ADDRESS_MODIFY);
+#endif /* USE_FULSIM */
+    ADVANCE_BATCH(gpgpu->batch);
 }
 
 uint32_t intel_gpgpu_get_scratch_index_gen7(uint32_t size) {
@@ -702,86 +755,28 @@ intel_gpgpu_set_buf_reloc_gen7(intel_gpgpu_t *gpgpu, int32_t index, dri_bo* obj_
 }
 
 static dri_bo*
-intel_gpgpu_alloc_constant_buffer_gen7(intel_gpgpu_t *gpgpu, uint32_t size, uint8_t bti)
+intel_gpgpu_alloc_constant_buffer(intel_gpgpu_t *gpgpu, uint32_t size, uint8_t bti)
 {
-  uint32_t s = size - 1;
-  assert(size != 0);
-
-  surface_heap_t *heap = gpgpu->aux_buf.bo->virtual + gpgpu->aux_offset.surface_heap_offset;
-  gen7_surface_state_t *ss2 = (gen7_surface_state_t *) heap->surface[bti];
-  memset(ss2, 0, sizeof(gen7_surface_state_t));
-  ss2->ss0.surface_type = I965_SURFACE_BUFFER;
-  ss2->ss0.surface_format = I965_SURFACEFORMAT_R32G32B32A32_UINT;
-  ss2->ss2.width  = s & 0x7f;            /* bits 6:0 of sz */
-  ss2->ss2.height = (s >> 7) & 0x3fff;   /* bits 20:7 of sz */
-  ss2->ss3.depth  = (s >> 21) & 0x3ff;   /* bits 30:21 of sz */
-  ss2->ss5.cache_control = cl_gpgpu_get_cache_ctrl();
-  heap->binding_table[bti] = offsetof(surface_heap_t, surface) + bti* sizeof(gen7_surface_state_t);
-
   if(gpgpu->constant_b.bo)
     dri_bo_unreference(gpgpu->constant_b.bo);
-  gpgpu->constant_b.bo = drm_intel_bo_alloc(gpgpu->drv->bufmgr, "CONSTANT_BUFFER", s, 64);
+  gpgpu->constant_b.bo = drm_intel_bo_alloc(gpgpu->drv->bufmgr, "CONSTANT_BUFFER", size, 64);
   if (gpgpu->constant_b.bo == NULL)
     return NULL;
-  ss2->ss1.base_addr = gpgpu->constant_b.bo->offset;
-  dri_bo_emit_reloc(gpgpu->aux_buf.bo,
-                      I915_GEM_DOMAIN_RENDER,
-                      I915_GEM_DOMAIN_RENDER,
-                      0,
-                      gpgpu->aux_offset.surface_heap_offset +
-                      heap->binding_table[bti] +
-                      offsetof(gen7_surface_state_t, ss1),
-                      gpgpu->constant_b.bo);
-  return gpgpu->constant_b.bo;
-}
 
-static dri_bo*
-intel_gpgpu_alloc_constant_buffer_gen75(intel_gpgpu_t *gpgpu, uint32_t size, uint8_t bti)
-{
-  uint32_t s = size - 1;
-  assert(size != 0);
-
-  surface_heap_t *heap = gpgpu->aux_buf.bo->virtual + gpgpu->aux_offset.surface_heap_offset;
-  gen7_surface_state_t *ss2 = (gen7_surface_state_t *) heap->surface[bti];
-  memset(ss2, 0, sizeof(gen7_surface_state_t));
-  ss2->ss0.surface_type = I965_SURFACE_BUFFER;
-  ss2->ss0.surface_format = I965_SURFACEFORMAT_R32G32B32A32_UINT;
-  ss2->ss2.width  = s & 0x7f;            /* bits 6:0 of sz */
-  ss2->ss2.height = (s >> 7) & 0x3fff;   /* bits 20:7 of sz */
-  ss2->ss3.depth  = (s >> 21) & 0x3ff;   /* bits 30:21 of sz */
-  ss2->ss5.cache_control = cl_gpgpu_get_cache_ctrl();
-  ss2->ss7.shader_r = I965_SURCHAN_SELECT_RED;
-  ss2->ss7.shader_g = I965_SURCHAN_SELECT_GREEN;
-  ss2->ss7.shader_b = I965_SURCHAN_SELECT_BLUE;
-  ss2->ss7.shader_a = I965_SURCHAN_SELECT_ALPHA;
-  heap->binding_table[bti] = offsetof(surface_heap_t, surface) + bti* sizeof(gen7_surface_state_t);
-
-  if(gpgpu->constant_b.bo)
-    dri_bo_unreference(gpgpu->constant_b.bo);
-  gpgpu->constant_b.bo = drm_intel_bo_alloc(gpgpu->drv->bufmgr, "CONSTANT_BUFFER", s, 64);
-  if (gpgpu->constant_b.bo == NULL)
-    return NULL;
-  ss2->ss1.base_addr = gpgpu->constant_b.bo->offset;
-  dri_bo_emit_reloc(gpgpu->aux_buf.bo,
-                      I915_GEM_DOMAIN_RENDER,
-                      I915_GEM_DOMAIN_RENDER,
-                      0,
-                      gpgpu->aux_offset.surface_heap_offset +
-                      heap->binding_table[bti] +
-                      offsetof(gen7_surface_state_t, ss1),
-                      gpgpu->constant_b.bo);
+  intel_gpgpu_setup_bti(gpgpu, gpgpu->constant_b.bo, 0, size, bti, I965_SURFACEFORMAT_R32G32B32A32_UINT);
   return gpgpu->constant_b.bo;
 }
 
 static void
-intel_gpgpu_setup_bti(intel_gpgpu_t *gpgpu, drm_intel_bo *buf, uint32_t internal_offset, uint32_t size, unsigned char index)
+intel_gpgpu_setup_bti_gen7(intel_gpgpu_t *gpgpu, drm_intel_bo *buf, uint32_t internal_offset,
+                                   uint32_t size, unsigned char index, uint32_t format)
 {
   uint32_t s = size - 1;
   surface_heap_t *heap = gpgpu->aux_buf.bo->virtual + gpgpu->aux_offset.surface_heap_offset;
-  gen7_surface_state_t *ss0 = (gen7_surface_state_t *) heap->surface[index];
+  gen7_surface_state_t *ss0 = (gen7_surface_state_t *) &heap->surface[index * sizeof(gen7_surface_state_t)];
   memset(ss0, 0, sizeof(gen7_surface_state_t));
   ss0->ss0.surface_type = I965_SURFACE_BUFFER;
-  ss0->ss0.surface_format = I965_SURFACEFORMAT_RAW;
+  ss0->ss0.surface_format = format;
   ss0->ss2.width  = s & 0x7f;   /* bits 6:0 of sz */
   ss0->ss2.height = (s >> 7) & 0x3fff; /* bits 20:7 of sz */
   ss0->ss3.depth  = (s >> 21) & 0x3ff; /* bits 30:21 of sz */
@@ -800,15 +795,15 @@ intel_gpgpu_setup_bti(intel_gpgpu_t *gpgpu, drm_intel_bo *buf, uint32_t internal
 }
 
 static void
-intel_gpgpu_setup_bti_gen8(intel_gpgpu_t *gpgpu, drm_intel_bo *buf,
-                           uint32_t internal_offset, uint32_t size, unsigned char index)
+intel_gpgpu_setup_bti_gen8(intel_gpgpu_t *gpgpu, drm_intel_bo *buf, uint32_t internal_offset,
+                                   uint32_t size, unsigned char index, uint32_t format)
 {
   uint32_t s = size - 1;
-  surface_heap_gen8_t *heap = gpgpu->aux_buf.bo->virtual + gpgpu->aux_offset.surface_heap_offset;
-  gen8_surface_state_t *ss0 = (gen8_surface_state_t *) heap->surface[index];
+  surface_heap_t *heap = gpgpu->aux_buf.bo->virtual + gpgpu->aux_offset.surface_heap_offset;
+  gen8_surface_state_t *ss0 = (gen8_surface_state_t *) &heap->surface[index * sizeof(gen8_surface_state_t)];
   memset(ss0, 0, sizeof(gen8_surface_state_t));
   ss0->ss0.surface_type = I965_SURFACE_BUFFER;
-  ss0->ss0.surface_format = I965_SURFACEFORMAT_RAW;
+  ss0->ss0.surface_format = format;
   ss0->ss2.width  = s & 0x7f;   /* bits 6:0 of sz */
   assert(ss0->ss2.width & 0x03);
   ss0->ss2.height = (s >> 7) & 0x3fff; /* bits 20:7 of sz */
@@ -889,7 +884,7 @@ intel_gpgpu_bind_image_gen7(intel_gpgpu_t *gpgpu,
                               int32_t tiling)
 {
   surface_heap_t *heap = gpgpu->aux_buf.bo->virtual + gpgpu->aux_offset.surface_heap_offset;
-  gen7_surface_state_t *ss = (gen7_surface_state_t *) heap->surface[index];
+  gen7_surface_state_t *ss = (gen7_surface_state_t *) &heap->surface[index * sizeof(gen7_surface_state_t)];
 
   memset(ss, 0, sizeof(*ss));
   ss->ss0.vertical_line_stride = 0; // always choose VALIGN_2
@@ -935,7 +930,7 @@ intel_gpgpu_bind_image_gen75(intel_gpgpu_t *gpgpu,
                               int32_t tiling)
 {
   surface_heap_t *heap = gpgpu->aux_buf.bo->virtual + gpgpu->aux_offset.surface_heap_offset;
-  gen7_surface_state_t *ss = (gen7_surface_state_t *) heap->surface[index];
+  gen7_surface_state_t *ss = (gen7_surface_state_t *) &heap->surface[index * sizeof(gen7_surface_state_t)];
   memset(ss, 0, sizeof(*ss));
   ss->ss0.vertical_line_stride = 0; // always choose VALIGN_2
   ss->ss0.surface_type = get_surface_type(gpgpu, index, type);
@@ -978,19 +973,7 @@ intel_gpgpu_bind_buf(intel_gpgpu_t *gpgpu, drm_intel_bo *buf, uint32_t offset,
   gpgpu->target_buf_offset[gpgpu->binded_n] = internal_offset;
   gpgpu->binded_offset[gpgpu->binded_n] = offset;
   gpgpu->binded_n++;
-  intel_gpgpu_setup_bti(gpgpu, buf, internal_offset, size, bti);
-}
-
-static void
-intel_gpgpu_bind_buf_gen8(intel_gpgpu_t *gpgpu, drm_intel_bo *buf, uint32_t offset,
-                          uint32_t internal_offset, uint32_t size, uint8_t bti)
-{
-  assert(gpgpu->binded_n < max_buf_n);
-  gpgpu->binded_buf[gpgpu->binded_n] = buf;
-  gpgpu->target_buf_offset[gpgpu->binded_n] = internal_offset;
-  gpgpu->binded_offset[gpgpu->binded_n] = offset;
-  gpgpu->binded_n++;
-  intel_gpgpu_setup_bti_gen8(gpgpu, buf, internal_offset, size, bti);
+  intel_gpgpu_setup_bti(gpgpu, buf, internal_offset, size, bti, I965_SURFACEFORMAT_RAW);
 }
 
 static int
@@ -1514,6 +1497,7 @@ intel_set_gpgpu_callbacks(int device_id)
   cl_gpgpu_state_init = (cl_gpgpu_state_init_cb *) intel_gpgpu_state_init;
   cl_gpgpu_set_perf_counters = (cl_gpgpu_set_perf_counters_cb *) intel_gpgpu_set_perf_counters;
   cl_gpgpu_upload_curbes = (cl_gpgpu_upload_curbes_cb *) intel_gpgpu_upload_curbes;
+  cl_gpgpu_alloc_constant_buffer  = (cl_gpgpu_alloc_constant_buffer_cb *) intel_gpgpu_alloc_constant_buffer;
   cl_gpgpu_states_setup = (cl_gpgpu_states_setup_cb *) intel_gpgpu_states_setup;
   cl_gpgpu_upload_samplers = (cl_gpgpu_upload_samplers_cb *) intel_gpgpu_upload_samplers;
   cl_gpgpu_batch_reset = (cl_gpgpu_batch_reset_cb *) intel_gpgpu_batch_reset;
@@ -1539,23 +1523,29 @@ intel_set_gpgpu_callbacks(int device_id)
   cl_gpgpu_get_printf_info = (cl_gpgpu_get_printf_info_cb *)intel_gpgpu_get_printf_info;
 
   if (IS_BROADWELL(device_id)) {
-    cl_gpgpu_bind_buf = (cl_gpgpu_bind_buf_cb *)intel_gpgpu_bind_buf_gen8;
+    intel_gpgpu_setup_bti = intel_gpgpu_setup_bti_gen8;
+    cl_gpgpu_bind_image = (cl_gpgpu_bind_image_cb *) intel_gpgpu_bind_image_gen75;
+    intel_gpgpu_set_L3 = intel_gpgpu_set_L3_gen75;
     cl_gpgpu_get_cache_ctrl = (cl_gpgpu_get_cache_ctrl_cb *)intel_gpgpu_get_cache_ctrl_gen8;
+    intel_gpgpu_get_scratch_index = intel_gpgpu_get_scratch_index_gen75;
+    intel_gpgpu_post_action = intel_gpgpu_post_action_gen75;
+    intel_gpgpu_read_ts_reg = intel_gpgpu_read_ts_reg_gen7; //HSW same as ivb
+    intel_gpgpu_set_base_address = intel_gpgpu_set_base_address_gen8;
     return;
   }
 
   if (IS_HASWELL(device_id)) {
     cl_gpgpu_bind_image = (cl_gpgpu_bind_image_cb *) intel_gpgpu_bind_image_gen75;
-    cl_gpgpu_alloc_constant_buffer  = (cl_gpgpu_alloc_constant_buffer_cb *) intel_gpgpu_alloc_constant_buffer_gen75;
     intel_gpgpu_set_L3 = intel_gpgpu_set_L3_gen75;
     cl_gpgpu_get_cache_ctrl = (cl_gpgpu_get_cache_ctrl_cb *)intel_gpgpu_get_cache_ctrl_gen75;
     intel_gpgpu_get_scratch_index = intel_gpgpu_get_scratch_index_gen75;
     intel_gpgpu_post_action = intel_gpgpu_post_action_gen75;
     intel_gpgpu_read_ts_reg = intel_gpgpu_read_ts_reg_gen7; //HSW same as ivb
+    intel_gpgpu_set_base_address = intel_gpgpu_set_base_address_gen7;
+    intel_gpgpu_setup_bti = intel_gpgpu_setup_bti_gen7;
   }
   else if (IS_IVYBRIDGE(device_id)) {
     cl_gpgpu_bind_image = (cl_gpgpu_bind_image_cb *) intel_gpgpu_bind_image_gen7;
-    cl_gpgpu_alloc_constant_buffer  = (cl_gpgpu_alloc_constant_buffer_cb *) intel_gpgpu_alloc_constant_buffer_gen7;
     if (IS_BAYTRAIL_T(device_id)) {
       intel_gpgpu_set_L3 = intel_gpgpu_set_L3_baytrail;
       intel_gpgpu_read_ts_reg = intel_gpgpu_read_ts_reg_baytrail;
@@ -1566,5 +1556,7 @@ intel_set_gpgpu_callbacks(int device_id)
     cl_gpgpu_get_cache_ctrl = (cl_gpgpu_get_cache_ctrl_cb *)intel_gpgpu_get_cache_ctrl_gen7;
     intel_gpgpu_get_scratch_index = intel_gpgpu_get_scratch_index_gen7;
     intel_gpgpu_post_action = intel_gpgpu_post_action_gen7;
+    intel_gpgpu_set_base_address = intel_gpgpu_set_base_address_gen7;
+    intel_gpgpu_setup_bti = intel_gpgpu_setup_bti_gen7;
   }
 }
