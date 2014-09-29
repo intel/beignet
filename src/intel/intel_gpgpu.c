@@ -815,15 +815,15 @@ intel_gpgpu_setup_bti_gen8(intel_gpgpu_t *gpgpu, drm_intel_bo *buf,
   ss0->ss3.depth  = (s >> 21) & 0x3ff; /* bits 30:21 of sz */
   ss0->ss1.mem_obj_ctrl_state = cl_gpgpu_get_cache_ctrl();
   heap->binding_table[index] = offsetof(surface_heap_t, surface) + index * sizeof(gen8_surface_state_t);
-// TODO:
-//  ss0->ss1.base_addr = buf->offset + internal_offset;
+  ss0->ss8_9.surface_base_addr_lo = (buf->offset64 + internal_offset) & 0xffffffff;
+  ss0->ss8_9.surface_base_addr_hi = ((buf->offset64 + internal_offset) >> 32) & 0xffffffff;
   dri_bo_emit_reloc(gpgpu->aux_buf.bo,
                       I915_GEM_DOMAIN_RENDER,
                       I915_GEM_DOMAIN_RENDER,
                       internal_offset,
                       gpgpu->aux_offset.surface_heap_offset +
                       heap->binding_table[index] +
-                      offsetof(gen7_surface_state_t, ss1),
+                      offsetof(gen8_surface_state_t, ss1),
                       buf);
 }
 
