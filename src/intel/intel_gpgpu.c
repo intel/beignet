@@ -61,6 +61,13 @@ typedef struct surface_heap {
   char surface[256][sizeof(gen6_surface_state_t)];
 } surface_heap_t;
 
+/* Stores both binding tables and surface states */
+typedef struct surface_heap_gen8 {
+  uint32_t binding_table[256];
+  char surface[256][sizeof(gen8_surface_state_t)];
+} surface_heap_gen8_t;
+
+
 typedef struct intel_event {
   drm_intel_bo *buffer;
   drm_intel_bo *ts_buf;
@@ -219,6 +226,11 @@ static uint32_t
 intel_gpgpu_get_cache_ctrl_gen75()
 {
   return llccc_ec | l3cc_ec;
+}
+static uint32_t
+intel_gpgpu_get_cache_ctrl_gen8()
+{
+  return tcc_llc_ec_l3 | mtllc_wb;
 }
 
 static void
@@ -787,6 +799,33 @@ intel_gpgpu_setup_bti(intel_gpgpu_t *gpgpu, drm_intel_bo *buf, uint32_t internal
                       buf);
 }
 
+static void
+intel_gpgpu_setup_bti_gen8(intel_gpgpu_t *gpgpu, drm_intel_bo *buf,
+                           uint32_t internal_offset, uint32_t size, unsigned char index)
+{
+  uint32_t s = size - 1;
+  surface_heap_gen8_t *heap = gpgpu->aux_buf.bo->virtual + gpgpu->aux_offset.surface_heap_offset;
+  gen8_surface_state_t *ss0 = (gen8_surface_state_t *) heap->surface[index];
+  memset(ss0, 0, sizeof(gen8_surface_state_t));
+  ss0->ss0.surface_type = I965_SURFACE_BUFFER;
+  ss0->ss0.surface_format = I965_SURFACEFORMAT_RAW;
+  ss0->ss2.width  = s & 0x7f;   /* bits 6:0 of sz */
+  assert(ss0->ss2.width & 0x03);
+  ss0->ss2.height = (s >> 7) & 0x3fff; /* bits 20:7 of sz */
+  ss0->ss3.depth  = (s >> 21) & 0x3ff; /* bits 30:21 of sz */
+  ss0->ss1.mem_obj_ctrl_state = cl_gpgpu_get_cache_ctrl();
+  heap->binding_table[index] = offsetof(surface_heap_t, surface) + index * sizeof(gen8_surface_state_t);
+// TODO:
+//  ss0->ss1.base_addr = buf->offset + internal_offset;
+  dri_bo_emit_reloc(gpgpu->aux_buf.bo,
+                      I915_GEM_DOMAIN_RENDER,
+                      I915_GEM_DOMAIN_RENDER,
+                      internal_offset,
+                      gpgpu->aux_offset.surface_heap_offset +
+                      heap->binding_table[index] +
+                      offsetof(gen7_surface_state_t, ss1),
+                      buf);
+}
 
 static int
 intel_is_surface_array(cl_mem_object_type type)

@@ -81,6 +81,22 @@ typedef enum cl_llccc_cache_control {
   llccc_ucllc    = 0x3<<1
 } cl_llccc_cache_control;
 
+/* Target Cache control options for gen8 */
+typedef enum cl_target_cache_control {
+  tcc_ec_only    = 0x0<<3,
+  tcc_llc_only   = 0x1<<3,
+  tcc_llc_ec     = 0x2<<3,
+  tcc_llc_ec_l3  = 0x3<<3
+} cl_target_cache_control;
+
+/* Memory type LLC/ELLC Cache control options for gen8 */
+typedef enum cl_mtllc_cache_control {
+  mtllc_pte      = 0x0<<5,
+  mtllc_none     = 0x1<<5,
+  mtllc_wt       = 0x2<<5,
+  mtllc_wb       = 0x3<<5
+} cl_mtllc_cache_control;
+
 typedef enum gpu_command_status {
   command_queued    = 3,
   command_submitted = 2,
