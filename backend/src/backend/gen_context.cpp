@@ -1903,7 +1903,7 @@ namespace gbe
       std::cout << genKernel->getName() << "'s disassemble begin:" << std::endl;
       ir::LabelIndex curLabel = (ir::LabelIndex)0;
       GenCompactInstruction * pCom = NULL;
-      GenNativeInstruction insn;
+      GenInstruction insn[2];
       std::cout << "  L0:" << std::endl;
       for (uint32_t insnID = 0; insnID < genKernel->insnNum; ) {
         if (labelPos.find((ir::LabelIndex)(curLabel + 1))->second == insnID &&

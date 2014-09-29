@@ -79,7 +79,7 @@ namespace gbe
     GBE_CLASS(GenProgram);
   };
   /*! decompact GEN ASM if it is in compacted format */
-  extern void decompactInstruction(union GenCompactInstruction *p, union GenNativeInstruction *pOut);
+  extern void decompactInstruction(union GenCompactInstruction *p, void *insn);
 } /* namespace gbe */
 
 #endif /* __GBE_GEN_PROGRAM_HPP__ */

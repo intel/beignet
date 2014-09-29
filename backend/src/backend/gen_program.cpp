@@ -89,13 +89,13 @@ namespace gbe {
     char *buf = new char[4096];
     setbuffer(f, buf, 4096);
     GenCompactInstruction * pCom = NULL;
-    GenNativeInstruction nativeInsn;
+    GenInstruction insn[2];
 
     for (uint32_t i = 0; i < insnNum;) {
       pCom = (GenCompactInstruction*)(insns+i);
       if(pCom->bits1.cmpt_control == 1) {
-        decompactInstruction(pCom, &nativeInsn);
-        gen_disasm(f, &nativeInsn, deviceID, 1);
+        decompactInstruction(pCom, &insn);
+        gen_disasm(f, &insn, deviceID, 1);
         i++;
       } else {
         gen_disasm(f, insns+i, deviceID, 0);

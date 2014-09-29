@@ -260,7 +260,8 @@ namespace gbe {
     uint32_t data;
   };
 
-  void decompactInstruction(GenCompactInstruction * p, GenNativeInstruction *pOut) {
+  void decompactInstruction(GenCompactInstruction * p, void *insn) {
+    GenNativeInstruction *pOut = (union GenNativeInstruction *) insn;
 
     memset(pOut, 0, sizeof(GenNativeInstruction));
     union ControlBits control_bits;
