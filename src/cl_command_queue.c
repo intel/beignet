@@ -410,7 +410,7 @@ cl_command_queue_ND_range(cl_command_queue queue,
   }
 #endif /* USE_FULSIM */
 
-  if (ver == 7 || ver == 75)
+  if (ver == 7 || ver == 75 || ver == 8)
     TRY (cl_command_queue_ND_range_gen7, queue, k, work_dim, global_wk_off, global_wk_sz, local_wk_sz);
   else
     FATAL ("Unknown Gen Device");
