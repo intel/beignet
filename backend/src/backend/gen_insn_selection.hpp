@@ -284,6 +284,13 @@ namespace gbe
       Selection75(GenContext &ctx);
   };
 
+  class Selection8: public Selection
+  {
+    public:
+      /*! Initialize internal structures used for the selection */
+      Selection8(GenContext &ctx);
+  };
+
 } /* namespace gbe */
 
 #endif /*  __GEN_INSN_SELECTION_HPP__ */

@@ -343,6 +343,8 @@ namespace gbe
     /*! should add per thread offset to the local memory address when load/store/atomic */
     bool needPatchSLMAddr() const { return patchSLMAddr; }
     void setPatchSLMAddr(bool b) { patchSLMAddr = b; }
+    bool has32X32Mul() const { return bHas32X32Mul; }
+    void setHas32X32Mul(bool b) { bHas32X32Mul = b; }
     /*! indicate whether a register is a scalar/uniform register. */
     INLINE bool isScalarReg(const ir::Register &reg) const {
       const ir::RegisterData &regData = getRegisterData(reg);
@@ -625,6 +627,7 @@ namespace gbe
     /*! Auxiliary label for if/endif. */ 
     uint16_t currAuxLabel;
     bool patchSLMAddr;
+    bool bHas32X32Mul;
     INLINE ir::LabelIndex newAuxLabel()
     {
       currAuxLabel++;
@@ -663,7 +666,8 @@ namespace gbe
     ctx(ctx), block(NULL),
     curr(ctx.getSimdWidth()), file(ctx.getFunction().getRegisterFile()),
     maxInsnNum(ctx.getFunction().getLargestBlockSize()), dagPool(maxInsnNum),
-    stateNum(0), vectorNum(0), bwdCodeGeneration(false), currAuxLabel(ctx.getFunction().labelNum()), patchSLMAddr(false)
+    stateNum(0), vectorNum(0), bwdCodeGeneration(false), currAuxLabel(ctx.getFunction().labelNum()),
+    patchSLMAddr(false), bHas32X32Mul(false)
   {
     const ir::Function &fn = ctx.getFunction();
     this->regNum = fn.regNum();
@@ -1667,6 +1671,11 @@ namespace gbe
     this->opaque->setPatchSLMAddr(true);
   }
 
+  Selection8::Selection8(GenContext &ctx) : Selection(ctx) {
+    this->opaque->setPatchSLMAddr(true);
+    this->opaque->setHas32X32Mul(true);
+  }
+
   void Selection::Opaque::TYPED_WRITE(GenRegister *msgs, uint32_t msgNum,
                                       uint32_t bti, bool is3D) {
     uint32_t elemID = 0;
@@ -2444,18 +2453,23 @@ namespace gbe
       using namespace ir;
       const ir::BinaryInstruction &insn = cast<ir::BinaryInstruction>(dag.insn);
       const Type type = insn.getType();
-      if (type == TYPE_U32 || type == TYPE_S32) {
-        sel.push();
-          if (sel.isScalarReg(insn.getDst(0)) == true) {
-            sel.curr.execWidth = 1;
-            sel.curr.predicate = GEN_PREDICATE_NONE;
-            sel.curr.noMask = 1;
-          }
-        const uint32_t simdWidth = sel.curr.execWidth;
+      if (type != TYPE_U32 && type != TYPE_S32)
+        return false;
 
-        GenRegister dst  = sel.selReg(insn.getDst(0), type);
-        GenRegister src0 = sel.selReg(insn.getSrc(0), type);
-        GenRegister src1 = sel.selReg(insn.getSrc(1), type);
+      GenRegister dst  = sel.selReg(insn.getDst(0), type);
+      GenRegister src0 = sel.selReg(insn.getSrc(0), type);
+      GenRegister src1 = sel.selReg(insn.getSrc(1), type);
+      if (sel.has32X32Mul()) {
+        sel.MUL(dst, src0, src1);
+      } else {
+        sel.push();
+        if (sel.isScalarReg(insn.getDst(0)) == true) {
+          sel.curr.execWidth = 1;
+          sel.curr.predicate = GEN_PREDICATE_NONE;
+          sel.curr.noMask = 1;
+        }
+
+        const int simdWidth = sel.curr.execWidth;
 
         // Either left part of the 16-wide register or just a simd 8 register
         dst  = GenRegister::retype(dst,  GEN_TYPE_D);
@@ -2498,13 +2512,11 @@ namespace gbe
           } else
             sel.MOV(GenRegister::retype(GenRegister::next(dst), GEN_TYPE_F), GenRegister::acc());
         }
-
         sel.pop();
-        // All children are marked as root
-        markAllChildren(dag);
-        return true;
-      } else
-        return false;
+      }
+      // All children are marked as root
+      markAllChildren(dag);
+      return true;
     }
   };
 

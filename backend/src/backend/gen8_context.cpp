@@ -107,6 +107,6 @@ namespace gbe
   }
 
   void Gen8Context::newSelection(void) {
-    this->sel = GBE_NEW(Selection75, *this);
+    this->sel = GBE_NEW(Selection8, *this);
   }
 }

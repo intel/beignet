@@ -346,7 +346,8 @@ namespace gbe
           p->push();
           p->curr.predicate = GEN_PREDICATE_NONE;
           p->curr.noMask = 1;
-          p->MUL(GenRegister::retype(GenRegister::acc(), GEN_TYPE_UD), src0, src1);
+          p->MUL(GenRegister::retype(GenRegister::acc(), GEN_TYPE_UD), src0,
+                     GenRegister::h2(GenRegister::retype(src1, GEN_TYPE_UW)));
           p->curr.accWrEnable = 1;
           p->MACH(tmp, src0, src1);
           p->pop();
@@ -1262,7 +1263,7 @@ namespace gbe
     p->push();
     p->curr.execWidth = 8;
     for(int i = 0; i < execWidth; i += 8) {
-      p->MUL(acc, src0, src1);
+      p->MUL(acc, src0, GenRegister::h2(GenRegister::retype(src1, GEN_TYPE_UW)));
       p->curr.accWrEnable = 1;
       p->MACH(high, src0, src1);
       p->curr.accWrEnable = 0;
