@@ -613,24 +613,18 @@ namespace gbe
   }
 
   void GenEncoder::UPSAMPLE_SHORT(GenRegister dest, GenRegister src0, GenRegister src1) {
-    dest.type = GEN_TYPE_B;
-    dest.hstride = GEN_HORIZONTAL_STRIDE_2;
-    src0.type = GEN_TYPE_B;
-    src0.hstride = GEN_HORIZONTAL_STRIDE_2;
-    src1.type = GEN_TYPE_B;
-    src1.hstride = GEN_HORIZONTAL_STRIDE_2;
+    dest = GenRegister::retype(GenRegister::unpacked_uw(dest.nr, dest.subnr), GEN_TYPE_B);
+    src0 = GenRegister::retype(GenRegister::unpacked_uw(src0.nr, src0.subnr), GEN_TYPE_B);
+    src1 = GenRegister::retype(GenRegister::unpacked_uw(src1.nr, src1.subnr), GEN_TYPE_B);
     MOV(dest, src1);
     dest.subnr ++;
     MOV(dest, src0);
   }
 
   void GenEncoder::UPSAMPLE_INT(GenRegister dest, GenRegister src0, GenRegister src1) {
-    dest.type = GEN_TYPE_W;
-    dest.hstride = GEN_HORIZONTAL_STRIDE_2;
-    src0.type = GEN_TYPE_W;
-    src0.hstride = GEN_HORIZONTAL_STRIDE_2;
-    src1.type = GEN_TYPE_W;
-    src1.hstride = GEN_HORIZONTAL_STRIDE_2;
+    dest = GenRegister::unpacked_uw(dest.nr, dest.subnr);
+    src0 = GenRegister::unpacked_uw(src0.nr, src0.subnr);
+    src1 = GenRegister::unpacked_uw(src1.nr, src1.subnr);
     MOV(dest, src1);
     dest.subnr += 2;
     MOV(dest, src0);
