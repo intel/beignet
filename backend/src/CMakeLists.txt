@@ -96,6 +96,8 @@ set (GBE_SRC
     backend/gen_context.cpp
     backend/gen75_context.hpp
     backend/gen75_context.cpp
+    backend/gen8_context.hpp
+    backend/gen8_context.cpp
     backend/gen_program.cpp
     backend/gen_program.hpp
     backend/gen_program.h

@@ -51,6 +51,7 @@
 #include "backend/gen_program.hpp"
 #include "backend/gen_context.hpp"
 #include "backend/gen75_context.hpp"
+#include "backend/gen8_context.hpp"
 #include "backend/gen_defs.hpp"
 #include "backend/gen/gen_mesa_disasm.h"
 #include "backend/gen_reg_allocation.hpp"
@@ -164,6 +165,8 @@ namespace gbe {
       ctx = GBE_NEW(GenContext, unit, name, deviceID, relaxMath);
     } else if (IS_HASWELL(deviceID)) {
       ctx = GBE_NEW(Gen75Context, unit, name, deviceID, relaxMath);
+    } else if (IS_BROADWELL(deviceID)) {
+      ctx = GBE_NEW(Gen8Context, unit, name, deviceID, relaxMath);
     }
     GBE_ASSERTM(ctx != NULL, "Fail to create the gen context\n");
 
