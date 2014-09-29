@@ -207,7 +207,8 @@ namespace gbe {
 #define DEVICE_MATCH(typeA, src_hw_info) ((IS_IVYBRIDGE(typeA) && !strcmp(src_hw_info, "IVB")) ||  \
                                       (IS_IVYBRIDGE(typeA) && !strcmp(src_hw_info, "BYT")) ||  \
                                       (IS_BAYTRAIL_T(typeA) && !strcmp(src_hw_info, "BYT")) ||  \
-                                      (IS_HASWELL(typeA) && !strcmp(src_hw_info, "HSW")) )
+                                      (IS_HASWELL(typeA) && !strcmp(src_hw_info, "HSW")) ||  \
+                                      (IS_BROADWELL(typeA) && !strcmp(src_hw_info, "BDW")) )
 
   static gbe_program genProgramNewFromBinary(uint32_t deviceID, const char *binary, size_t size) {
     using namespace gbe;
@@ -297,6 +298,10 @@ namespace gbe {
       }else if(IS_HASWELL(prog->deviceID)){
         src_hw_info[0]='H';
         src_hw_info[1]='S';
+        src_hw_info[2]='W';
+      }else if(IS_BROADWELL(prog->deviceID)){
+        src_hw_info[0]='B';
+        src_hw_info[1]='D';
         src_hw_info[2]='W';
       }
       FILL_DEVICE_ID(*binary, src_hw_info);

@@ -174,6 +174,10 @@ void program_build_instance::serialize_program(void) throw(int)
         src_hw_info[0]='H';
         src_hw_info[1]='S';
         src_hw_info[2]='W';
+    }else if(IS_BROADWELL(gen_pci_id)){
+        src_hw_info[0]='B';
+        src_hw_info[1]='D';
+        src_hw_info[2]='W';
     }
 
     if (str_fmt_out) {
