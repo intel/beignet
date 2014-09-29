@@ -246,6 +246,167 @@ typedef struct gen7_surface_state
   } ss7;
 } gen7_surface_state_t;
 
+typedef struct gen8_surface_state
+{
+  struct {
+    union {
+      struct {
+        uint32_t cube_pos_z:1;
+        uint32_t cube_neg_z:1;
+        uint32_t cube_pos_y:1;
+        uint32_t cube_neg_y:1;
+        uint32_t cube_pos_x:1;
+        uint32_t cube_neg_x:1;
+      };
+      uint32_t pad1:6;
+    };
+    uint32_t media_boundary_pixel_mode:2;
+    uint32_t render_cache_rw_mode:1;
+    uint32_t sampler_L2_bypass_mode:1;
+    uint32_t vertical_line_stride_offset:1;
+    uint32_t vertical_line_stride:1;
+    uint32_t tile_mode:2;
+    uint32_t horizontal_alignment:2;
+    uint32_t vertical_alignment:2;
+    uint32_t surface_format:9;
+    uint32_t pad0:1;
+    uint32_t surface_array:1;
+    uint32_t surface_type:3;
+  } ss0;
+
+  struct {
+    uint32_t pad2:1;
+    uint32_t mem_obj_ctrl_state:7;
+    uint32_t base_mip_level:5;
+    uint32_t pad1:1;
+    uint32_t pad0:3;
+    uint32_t surface_qpitch:15;
+  } ss1;
+
+  struct {
+    uint32_t pad1:2;
+    uint32_t height:14;
+    uint32_t pad0:2;
+    uint32_t width:14;
+  } ss2;
+
+  struct {
+    uint32_t depth:11;
+    uint32_t pad1:1;
+    uint32_t pad0:2;
+    uint32_t surface_pitch:18;
+  } ss3;
+
+  struct {
+    union {
+      struct {
+        uint32_t pad1:1;
+        uint32_t render_target_and_sample_rotation:2;
+        uint32_t min_array_elt:11;
+        uint32_t render_target_view_ext:11;
+        uint32_t multisample_format:1;
+        uint32_t multisample_num:3;
+        uint32_t multisample_pos_palette_idx:3;
+      };
+
+      uint32_t pad0;
+    };
+  } ss4;
+
+  struct {
+    uint32_t x_offset:7;
+    uint32_t pad5:1;
+    uint32_t y_offset:3;
+    union {
+      uint32_t pad4:1;
+      uint32_t cube_ewa:1;
+    };
+    uint32_t pad3:2;
+    uint32_t pad2:3;
+    uint32_t conherency_type:1;
+    uint32_t pad1:2;
+    uint32_t pad0:4;
+    uint32_t surface_min_lod:4;
+    uint32_t mip_count:4;
+  } ss5;
+
+  struct {
+    union {
+      struct {
+        uint32_t seperate_uv_plane_enable:1;
+        uint32_t pad3:1;
+        uint32_t uv_plane_x_offset:14;
+      };
+      struct {
+        uint32_t pad2:1;
+        uint32_t aux_sruface_qpitch:15;
+      };
+    };
+
+    union {
+      struct {
+        uint32_t pad1:2;
+        uint32_t uv_plane_y_offset:14;
+      };
+      struct {
+        uint32_t pad0:4;
+        uint32_t aux_surface_pitch:9;
+        uint32_t aux_surface_mode:3;
+      };
+    };
+  } ss6;
+
+  struct {
+    uint32_t red_clear_color:1;
+    uint32_t green_clear_color:1;
+    uint32_t blue_clear_color:1;
+    uint32_t alpha_clear_color:1;
+    uint32_t shader_channel_select_red:3;
+    uint32_t shader_channel_select_green:3;
+    uint32_t shader_channel_select_blue:3;
+    uint32_t shader_channel_select_alpha:3;
+    uint32_t pad0:4;
+    uint32_t resource_min_lod:12;
+  } ss7;
+
+  struct {
+    uint32_t surface_base_addr_lo;
+    uint32_t surface_base_addr_hi;
+  } ss8_9;
+
+  struct {
+    union {
+      struct {
+        uint32_t pad5:2;
+        uint32_t v_plane_x_offset:14;
+        uint32_t pad4:2;
+        uint32_t v_plane_y_offset:14;
+        uint32_t pad3:20;
+      };
+      uint64_t aux_surface_base_addr:52;
+    };
+
+    uint32_t pad2:1;
+    uint32_t pad1:1;
+    uint32_t pad0:10;
+  } ss10_11;
+
+  struct {
+    uint32_t pad0;
+  } ss12;
+
+  /* 13~15 have meaning only when aux surface mode == AUX_HIZ */
+  struct {
+    uint32_t pad0;
+  } ss13;
+  struct {
+    uint32_t pad0;
+  } ss14;
+  struct {
+    uint32_t pad0;
+  } ss15;
+} gen8_surface_state_t;
+
 STATIC_ASSERT(sizeof(gen6_surface_state_t) == sizeof(gen7_surface_state_t));
 static const size_t surface_state_sz = sizeof(gen6_surface_state_t);
 
