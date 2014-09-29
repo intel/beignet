@@ -1672,7 +1672,6 @@ namespace gbe
   }
 
   Selection8::Selection8(GenContext &ctx) : Selection(ctx) {
-    this->opaque->setPatchSLMAddr(true);
     this->opaque->setHas32X32Mul(true);
   }
 

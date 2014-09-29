@@ -36,22 +36,11 @@
 namespace gbe
 {
   void Gen8Context::emitSLMOffset(void) {
-    if(kernel->getUseSLM() == false)
-      return;
-
-    const GenRegister slm_offset = ra->genReg(GenRegister::ud1grf(ir::ocl::slmoffset));
-    const GenRegister slm_index = GenRegister::ud1grf(0, 0);
-    //the slm index is hold in r0.0 24-27 bit, in 4K unit, shift left 12 to get byte unit
-    p->push();
-      p->curr.execWidth = 1;
-      p->curr.predicate = GEN_PREDICATE_NONE;
-      p->SHR(slm_offset, slm_index, GenRegister::immud(12));
-    p->pop();
+    return;
   }
 
   void Gen8Context::allocSLMOffsetCurbe(void) {
-    if(fn.getUseSLM())
-      allocCurbeReg(ir::ocl::slmoffset, GBE_CURBE_SLM_OFFSET);
+    return;
   }
 
   uint32_t Gen8Context::alignScratchSize(uint32_t size){
