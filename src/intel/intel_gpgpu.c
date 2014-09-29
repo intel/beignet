@@ -342,15 +342,27 @@ uint32_t intel_gpgpu_get_scratch_index_gen7(uint32_t size) {
 }
 
 uint32_t intel_gpgpu_get_scratch_index_gen75(uint32_t size) {
+    //align in backend, if non pow2, must align when alloc scratch bo.
+    assert((size & (size - 1)) == 0);
     size = size >> 11;
     uint32_t index = 0;
     while((size >>= 1) > 0)
       index++;   //get leading one
 
-    //non pow 2 size
-    if(size & (size - 1)) index++;
     return index;
 }
+
+uint32_t intel_gpgpu_get_scratch_index_gen8(uint32_t size) {
+    //align in backend, if non pow2, must align when alloc scratch bo.
+    assert((size & (size - 1)) == 0);
+    size = size >> 10;
+    uint32_t index = 0;
+    while((size >>= 1) > 0)
+      index++;   //get leading one
+
+    return index;
+}
+
 
 static cl_int
 intel_gpgpu_get_max_curbe_size(uint32_t device_id)
@@ -1142,7 +1154,9 @@ intel_gpgpu_build_idrt_gen8(intel_gpgpu_t *gpgpu, cl_gpgpu_kernel *kernel)
   /* group_threads_num should not be set to 0 even if the barrier is disabled per bspec */
   desc->desc6.group_threads_num = kernel->thread_n;
   desc->desc6.barrier_enable = kernel->use_slm;
-  if (slm_sz <= 4*KB)
+  if (slm_sz == 0)
+    slm_sz = 0;
+  else if (slm_sz <= 4*KB)
     slm_sz = 4*KB;
   else if (slm_sz <= 8*KB)
     slm_sz = 8*KB;
@@ -1666,7 +1680,7 @@ intel_set_gpgpu_callbacks(int device_id)
     cl_gpgpu_bind_image = (cl_gpgpu_bind_image_cb *) intel_gpgpu_bind_image_gen75;
     intel_gpgpu_set_L3 = intel_gpgpu_set_L3_gen8;
     cl_gpgpu_get_cache_ctrl = (cl_gpgpu_get_cache_ctrl_cb *)intel_gpgpu_get_cache_ctrl_gen8;
-    intel_gpgpu_get_scratch_index = intel_gpgpu_get_scratch_index_gen75;
+    intel_gpgpu_get_scratch_index = intel_gpgpu_get_scratch_index_gen8;
     intel_gpgpu_post_action = intel_gpgpu_post_action_gen75;
     intel_gpgpu_read_ts_reg = intel_gpgpu_read_ts_reg_gen7; //HSW same as ivb
     intel_gpgpu_set_base_address = intel_gpgpu_set_base_address_gen8;

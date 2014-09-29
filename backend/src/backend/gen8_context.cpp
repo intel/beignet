@@ -46,7 +46,7 @@ namespace gbe
   uint32_t Gen8Context::alignScratchSize(uint32_t size){
     if(size == 0)
       return 0;
-    uint32_t i = 2048;
+    uint32_t i = 1024;
     while(i < size) i *= 2;
     return i;
   }
