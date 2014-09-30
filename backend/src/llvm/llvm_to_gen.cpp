@@ -119,6 +119,7 @@ namespace gbe
     MPM.add(new TargetLibraryInfo(*libraryInfo));
     MPM.add(createTypeBasedAliasAnalysisPass());
     MPM.add(createBasicAliasAnalysisPass());
+    MPM.add(createIntrinsicLoweringPass());
     MPM.add(createGlobalOptimizerPass());     // Optimize out global vars
 
     MPM.add(createIPSCCPPass());              // IP SCCP
