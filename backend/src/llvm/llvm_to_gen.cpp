@@ -152,9 +152,19 @@ namespace gbe
     MPM.add(createIndVarSimplifyPass());        // Canonicalize indvars
     MPM.add(createLoopIdiomPass());             // Recognize idioms like memset.
     MPM.add(createLoopDeletionPass());          // Delete dead loops
-    MPM.add(createLoopUnrollPass());          // Unroll small loops
-    if(optLevel > 0)
+    MPM.add(createLoopUnrollPass()); //1024, 32, 1024, 512)); //Unroll loops
+    if(optLevel > 0) {
+      MPM.add(createSROAPass(/*RequiresDomTree*/ false));
       MPM.add(createGVNPass());                 // Remove redundancies
+    }
+#if LLVM_VERSION_MAJOR == 3 && LLVM_VERSION_MINOR >= 5
+    MPM.add(createCustomLoopUnrollPass()); //1024, 32, 1024, 512)); //Unroll loops
+    MPM.add(createLoopUnrollPass()); //1024, 32, 1024, 512)); //Unroll loops
+    if(optLevel > 0) {
+      MPM.add(createSROAPass(/*RequiresDomTree*/ false));
+      MPM.add(createGVNPass());                 // Remove redundancies
+    }
+#endif
     MPM.add(createMemCpyOptPass());             // Remove memcpy / form memset
     MPM.add(createSCCPPass());                  // Constant prop with SCCP
 

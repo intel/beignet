@@ -27,6 +27,7 @@
 #define __GBE_LLVM_GEN_BACKEND_HPP__
 
 #include "llvm/Pass.h"
+#include "llvm/Analysis/LoopPass.h"
 #include "sys/platform.hpp"
 #include "sys/map.hpp"
 #include "sys/hash_map.hpp"
@@ -100,6 +101,9 @@ namespace gbe
 
   /*! Passer the printf function call. */
   llvm::FunctionPass* createPrintfParserPass();
+
+  /* customized loop unrolling pass. */
+  llvm::LoopPass *createCustomLoopUnrollPass();
 
   /*! Add all the function call of ocl to our bitcode. */
   llvm::Module* runBitCodeLinker(llvm::Module *mod, bool strictMath);
