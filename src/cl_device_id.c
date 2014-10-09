@@ -328,15 +328,15 @@ baytrail_t_device_break:
       break;
 
     case PCI_CHIP_BROADWLL_M_GT1:
-      DECL_INFO_STRING(brw_gt1_break, intel_brw_gt1_device, name, "Intel(R) HD Graphics IvyBridge GT1");
+      DECL_INFO_STRING(brw_gt1_break, intel_brw_gt1_device, name, "Intel(R) HD Graphics BroadWell Mobile GT1");
     case PCI_CHIP_BROADWLL_D_GT1:
-      DECL_INFO_STRING(brw_gt1_break, intel_brw_gt1_device, name, "Intel(R) HD Graphics IvyBridge GT1");
+      DECL_INFO_STRING(brw_gt1_break, intel_brw_gt1_device, name, "Intel(R) HD Graphics BroadWell U-Processor GT1");
     case PCI_CHIP_BROADWLL_S_GT1:
-      DECL_INFO_STRING(brw_gt1_break, intel_brw_gt1_device, name, "Intel(R) HD Graphics IvyBridge GT1");
+      DECL_INFO_STRING(brw_gt1_break, intel_brw_gt1_device, name, "Intel(R) HD Graphics BroadWell Server GT1");
     case PCI_CHIP_BROADWLL_W_GT1:
-      DECL_INFO_STRING(brw_gt1_break, intel_brw_gt1_device, name, "Intel(R) HD Graphics IvyBridge GT1");
+      DECL_INFO_STRING(brw_gt1_break, intel_brw_gt1_device, name, "Intel(R) HD Graphics BroadWell Workstation GT1");
     case PCI_CHIP_BROADWLL_U_GT1:
-      DECL_INFO_STRING(brw_gt1_break, intel_brw_gt1_device, name, "Intel(R) HD Graphics IvyBridge GT1");
+      DECL_INFO_STRING(brw_gt1_break, intel_brw_gt1_device, name, "Intel(R) HD Graphics BroadWell ULX GT1");
 brw_gt1_break:
       intel_brw_gt1_device.vendor_id = device_id;
       intel_brw_gt1_device.platform = intel_platform;
@@ -344,15 +344,15 @@ brw_gt1_break:
       break;
 
     case PCI_CHIP_BROADWLL_M_GT2:
-      DECL_INFO_STRING(brw_gt2_break, intel_brw_gt2_device, name, "Intel(R) HD Graphics IvyBridge GT1");
+      DECL_INFO_STRING(brw_gt2_break, intel_brw_gt2_device, name, "Intel(R) HD Graphics BroadWell Mobile GT2");
     case PCI_CHIP_BROADWLL_D_GT2:
-      DECL_INFO_STRING(brw_gt2_break, intel_brw_gt2_device, name, "Intel(R) HD Graphics IvyBridge GT1");
+      DECL_INFO_STRING(brw_gt2_break, intel_brw_gt2_device, name, "Intel(R) HD Graphics BroadWell U-Processor GT2");
     case PCI_CHIP_BROADWLL_S_GT2:
-      DECL_INFO_STRING(brw_gt2_break, intel_brw_gt2_device, name, "Intel(R) HD Graphics IvyBridge GT1");
+      DECL_INFO_STRING(brw_gt2_break, intel_brw_gt2_device, name, "Intel(R) HD Graphics BroadWell Server GT2");
     case PCI_CHIP_BROADWLL_W_GT2:
-      DECL_INFO_STRING(brw_gt2_break, intel_brw_gt2_device, name, "Intel(R) HD Graphics IvyBridge GT1");
+      DECL_INFO_STRING(brw_gt2_break, intel_brw_gt2_device, name, "Intel(R) HD Graphics BroadWell Workstation GT2");
     case PCI_CHIP_BROADWLL_U_GT2:
-      DECL_INFO_STRING(brw_gt2_break, intel_brw_gt2_device, name, "Intel(R) HD Graphics IvyBridge GT1");
+      DECL_INFO_STRING(brw_gt2_break, intel_brw_gt2_device, name, "Intel(R) HD Graphics BroadWell ULX GT2");
 brw_gt2_break:
       intel_brw_gt2_device.vendor_id = device_id;
       intel_brw_gt2_device.platform = intel_platform;
@@ -360,15 +360,15 @@ brw_gt2_break:
       break;
 
     case PCI_CHIP_BROADWLL_M_GT3:
-      DECL_INFO_STRING(brw_gt3_break, intel_brw_gt3_device, name, "Intel(R) HD Graphics IvyBridge GT1");
+      DECL_INFO_STRING(brw_gt3_break, intel_brw_gt3_device, name, "Intel(R) HD Graphics BroadWell Mobile GT2");
     case PCI_CHIP_BROADWLL_D_GT3:
-      DECL_INFO_STRING(brw_gt3_break, intel_brw_gt3_device, name, "Intel(R) HD Graphics IvyBridge GT1");
+      DECL_INFO_STRING(brw_gt3_break, intel_brw_gt3_device, name, "Intel(R) HD Graphics BroadWell U-Processor GT2");
     case PCI_CHIP_BROADWLL_S_GT3:
-      DECL_INFO_STRING(brw_gt3_break, intel_brw_gt3_device, name, "Intel(R) HD Graphics IvyBridge GT1");
+      DECL_INFO_STRING(brw_gt3_break, intel_brw_gt3_device, name, "Intel(R) HD Graphics BroadWell Server GT2");
     case PCI_CHIP_BROADWLL_W_GT3:
-      DECL_INFO_STRING(brw_gt3_break, intel_brw_gt3_device, name, "Intel(R) HD Graphics IvyBridge GT1");
+      DECL_INFO_STRING(brw_gt3_break, intel_brw_gt3_device, name, "Intel(R) HD Graphics BroadWell Workstation GT2");
     case PCI_CHIP_BROADWLL_U_GT3:
-      DECL_INFO_STRING(brw_gt3_break, intel_brw_gt3_device, name, "Intel(R) HD Graphics IvyBridge GT1");
+      DECL_INFO_STRING(brw_gt3_break, intel_brw_gt3_device, name, "Intel(R) HD Graphics BroadWell ULX GT2");
 brw_gt3_break:
       intel_brw_gt3_device.vendor_id = device_id;
       intel_brw_gt3_device.platform = intel_platform;
