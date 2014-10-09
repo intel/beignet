@@ -273,7 +273,8 @@ namespace gbe
     if(insn.header.opcode == GEN_OPCODE_ELSE)
       uip = jip;
 
-    if (insn.header.opcode == GEN_OPCODE_IF) {
+    if (insn.header.opcode == GEN_OPCODE_IF ||
+        insn.header.opcode == GEN_OPCODE_ELSE) {
       Gen8NativeInstruction *gen8_insn = &insn.gen8_insn;
       this->setSrc0(&insn, GenRegister::immud(0));
       gen8_insn->bits2.gen8_branch.uip = uip*8;
