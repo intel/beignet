@@ -1035,6 +1035,71 @@ intel_gpgpu_bind_image_gen75(intel_gpgpu_t *gpgpu,
 }
 
 static void
+intel_gpgpu_bind_image_gen8(intel_gpgpu_t *gpgpu,
+                            uint32_t index,
+                            dri_bo* obj_bo,
+                            uint32_t obj_bo_offset,
+                            uint32_t format,
+                            cl_mem_object_type type,
+                            int32_t w,
+                            int32_t h,
+                            int32_t depth,
+                            int32_t pitch,
+                            int32_t tiling)
+{
+  surface_heap_t *heap = gpgpu->aux_buf.bo->virtual + gpgpu->aux_offset.surface_heap_offset;
+  gen8_surface_state_t *ss = (gen8_surface_state_t *) &heap->surface[index * sizeof(gen8_surface_state_t)];
+  memset(ss, 0, sizeof(*ss));
+  ss->ss0.vertical_line_stride = 0; // always choose VALIGN_2
+  ss->ss0.surface_type = get_surface_type(gpgpu, index, type);
+  ss->ss0.surface_format = format;
+  if (intel_is_surface_array(type)) {
+    ss->ss0.surface_array = 1;
+  }
+  ss->ss0.horizontal_alignment = 1;
+  ss->ss0.vertical_alignment = 1;
+
+  if (tiling == GPGPU_TILE_X) {
+    ss->ss0.tile_mode = GEN8_TILEMODE_XMAJOR;
+  } else if (tiling == GPGPU_TILE_Y) {
+    ss->ss0.tile_mode = GEN8_TILEMODE_YMAJOR;
+  } else
+    assert(tiling == GPGPU_NO_TILE);// W mode is not supported now.
+
+  ss->ss2.width = w - 1;
+  ss->ss2.height = h - 1;
+  ss->ss3.depth = depth - 1;
+
+  ss->ss8.surface_base_addr_lo = obj_bo->offset64 & 0xffffffff;
+  ss->ss9.surface_base_addr_hi = (obj_bo->offset64 >> 32) & 0xffffffff;
+
+  ss->ss4.render_target_view_ext = depth - 1;
+  ss->ss4.min_array_elt = 0;
+  ss->ss3.surface_pitch = pitch - 1;
+
+  ss->ss1.mem_obj_ctrl_state = cl_gpgpu_get_cache_ctrl();
+  ss->ss7.red_clear_color = 1;
+  ss->ss7.shader_channel_select_red = I965_SURCHAN_SELECT_RED;
+  ss->ss7.shader_channel_select_green = I965_SURCHAN_SELECT_GREEN;
+  ss->ss7.shader_channel_select_blue = I965_SURCHAN_SELECT_BLUE;
+  ss->ss7.shader_channel_select_alpha = I965_SURCHAN_SELECT_ALPHA;
+  ss->ss0.render_cache_rw_mode = 1; /* XXX do we need to set it? */
+
+  heap->binding_table[index] = offsetof(surface_heap_t, surface) +
+                               index * surface_state_sz;
+  dri_bo_emit_reloc(gpgpu->aux_buf.bo,
+                    I915_GEM_DOMAIN_RENDER,
+                    I915_GEM_DOMAIN_RENDER,
+                    obj_bo_offset,
+                    gpgpu->aux_offset.surface_heap_offset +
+                    heap->binding_table[index] +
+                    offsetof(gen8_surface_state_t, ss8),
+                    obj_bo);
+
+  assert(index < GEN_MAX_SURFACES);
+}
+
+static void
 intel_gpgpu_bind_buf(intel_gpgpu_t *gpgpu, drm_intel_bo *buf, uint32_t offset,
                      uint32_t internal_offset, uint32_t size, uint8_t bti)
 {
@@ -1228,7 +1293,7 @@ int translate_wrap_mode(uint32_t cl_address_mode, int using_nearest)
 }
 
 static void
-intel_gpgpu_insert_sampler(intel_gpgpu_t *gpgpu, uint32_t index, uint32_t clk_sampler)
+intel_gpgpu_insert_sampler_gen7(intel_gpgpu_t *gpgpu, uint32_t index, uint32_t clk_sampler)
 {
   int using_nearest = 0;
   uint32_t wrap_mode;
@@ -1291,13 +1356,77 @@ intel_gpgpu_insert_sampler(intel_gpgpu_t *gpgpu, uint32_t index, uint32_t clk_sa
 
 }
 
+
 static void
-intel_gpgpu_bind_sampler(intel_gpgpu_t *gpgpu, uint32_t *samplers, size_t sampler_sz)
+intel_gpgpu_insert_sampler_gen8(intel_gpgpu_t *gpgpu, uint32_t index, uint32_t clk_sampler)
+{
+  int using_nearest = 0;
+  uint32_t wrap_mode;
+  gen8_sampler_state_t *sampler;
+
+  sampler = (gen8_sampler_state_t *)(gpgpu->aux_buf.bo->virtual + gpgpu->aux_offset.sampler_state_offset)  + index;
+  memset(sampler, 0, sizeof(*sampler));
+  assert((gpgpu->aux_buf.bo->offset + gpgpu->aux_offset.sampler_border_color_state_offset) % 32 == 0);
+  if ((clk_sampler & __CLK_NORMALIZED_MASK) == CLK_NORMALIZED_COORDS_FALSE)
+    sampler->ss3.non_normalized_coord = 1;
+  else
+    sampler->ss3.non_normalized_coord = 0;
+
+  switch (clk_sampler & __CLK_FILTER_MASK) {
+  case CLK_FILTER_NEAREST:
+    sampler->ss0.min_filter = GEN_MAPFILTER_NEAREST;
+    sampler->ss0.mip_filter = GEN_MIPFILTER_NONE;
+    sampler->ss0.mag_filter = GEN_MAPFILTER_NEAREST;
+    using_nearest = 1;
+    break;
+  case CLK_FILTER_LINEAR:
+    sampler->ss0.min_filter = GEN_MAPFILTER_LINEAR;
+    sampler->ss0.mip_filter = GEN_MIPFILTER_NONE;
+    sampler->ss0.mag_filter = GEN_MAPFILTER_LINEAR;
+    break;
+  }
+
+  wrap_mode = translate_wrap_mode(clk_sampler & __CLK_ADDRESS_MASK, using_nearest);
+  sampler->ss3.s_wrap_mode = wrap_mode;
+  /* XXX mesa i965 driver code point out that if the surface is a 1D surface, we may need
+   * to set t_wrap_mode to GEN_TEXCOORDMODE_WRAP. */
+  sampler->ss3.t_wrap_mode = wrap_mode;
+  sampler->ss3.r_wrap_mode = wrap_mode;
+
+  sampler->ss0.lod_preclamp = 1; /* OpenGL mode */
+  sampler->ss0.default_color_mode = 0; /* OpenGL/DX10 mode */
+
+  sampler->ss0.base_level = 0;
+
+  sampler->ss1.max_lod = 0;
+  sampler->ss1.min_lod = 0;
+
+  if (sampler->ss0.min_filter != GEN_MAPFILTER_NEAREST)
+     sampler->ss3.address_round |= GEN_ADDRESS_ROUNDING_ENABLE_U_MIN |
+                                   GEN_ADDRESS_ROUNDING_ENABLE_V_MIN |
+                                   GEN_ADDRESS_ROUNDING_ENABLE_R_MIN;
+  if (sampler->ss0.mag_filter != GEN_MAPFILTER_NEAREST)
+     sampler->ss3.address_round |= GEN_ADDRESS_ROUNDING_ENABLE_U_MAG |
+                                   GEN_ADDRESS_ROUNDING_ENABLE_V_MAG |
+                                   GEN_ADDRESS_ROUNDING_ENABLE_R_MAG;
+}
+
+static void
+intel_gpgpu_bind_sampler_gen7(intel_gpgpu_t *gpgpu, uint32_t *samplers, size_t sampler_sz)
 {
   int index;
   assert(sampler_sz <= GEN_MAX_SAMPLERS);
   for(index = 0; index < sampler_sz; index++)
-    intel_gpgpu_insert_sampler(gpgpu, index, samplers[index]);
+    intel_gpgpu_insert_sampler_gen7(gpgpu, index, samplers[index]);
+}
+
+static void
+intel_gpgpu_bind_sampler_gen8(intel_gpgpu_t *gpgpu, uint32_t *samplers, size_t sampler_sz)
+{
+  int index;
+  assert(sampler_sz <= GEN_MAX_SAMPLERS);
+  for(index = 0; index < sampler_sz; index++)
+    intel_gpgpu_insert_sampler_gen8(gpgpu, index, samplers[index]);
 }
 
 static void
@@ -1659,7 +1788,7 @@ intel_set_gpgpu_callbacks(int device_id)
   cl_gpgpu_batch_start = (cl_gpgpu_batch_start_cb *) intel_gpgpu_batch_start;
   cl_gpgpu_batch_end = (cl_gpgpu_batch_end_cb *) intel_gpgpu_batch_end;
   cl_gpgpu_flush = (cl_gpgpu_flush_cb *) intel_gpgpu_flush;
-  cl_gpgpu_bind_sampler = (cl_gpgpu_bind_sampler_cb *) intel_gpgpu_bind_sampler;
+  cl_gpgpu_bind_sampler = (cl_gpgpu_bind_sampler_cb *) intel_gpgpu_bind_sampler_gen7;
   cl_gpgpu_set_scratch = (cl_gpgpu_set_scratch_cb *) intel_gpgpu_set_scratch;
   cl_gpgpu_event_new = (cl_gpgpu_event_new_cb *)intel_gpgpu_event_new;
   cl_gpgpu_event_flush = (cl_gpgpu_event_flush_cb *)intel_gpgpu_event_flush;
@@ -1677,7 +1806,7 @@ intel_set_gpgpu_callbacks(int device_id)
   cl_gpgpu_get_printf_info = (cl_gpgpu_get_printf_info_cb *)intel_gpgpu_get_printf_info;
 
   if (IS_BROADWELL(device_id)) {
-    cl_gpgpu_bind_image = (cl_gpgpu_bind_image_cb *) intel_gpgpu_bind_image_gen75;
+    cl_gpgpu_bind_image = (cl_gpgpu_bind_image_cb *) intel_gpgpu_bind_image_gen8;
     intel_gpgpu_set_L3 = intel_gpgpu_set_L3_gen8;
     cl_gpgpu_get_cache_ctrl = (cl_gpgpu_get_cache_ctrl_cb *)intel_gpgpu_get_cache_ctrl_gen8;
     intel_gpgpu_get_scratch_index = intel_gpgpu_get_scratch_index_gen8;
@@ -1688,6 +1817,7 @@ intel_set_gpgpu_callbacks(int device_id)
     intel_gpgpu_load_vfe_state = intel_gpgpu_load_vfe_state_gen8;
     cl_gpgpu_walker = (cl_gpgpu_walker_cb *)intel_gpgpu_walker_gen8;
     intel_gpgpu_build_idrt = intel_gpgpu_build_idrt_gen8;
+    cl_gpgpu_bind_sampler = (cl_gpgpu_bind_sampler_cb *) intel_gpgpu_bind_sampler_gen8;
     return;
   }
 
