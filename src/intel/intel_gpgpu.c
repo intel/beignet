@@ -774,7 +774,7 @@ intel_gpgpu_state_init(intel_gpgpu_t *gpgpu,
   size_aux += sizeof(surface_heap_t);
 
   //curbe must be 32 bytes aligned
-  size_aux = ALIGN(size_aux, 32);
+  size_aux = ALIGN(size_aux, 64);
   gpgpu->aux_offset.curbe_offset = size_aux;
   size_aux += gpgpu->curb.num_cs_entries * gpgpu->curb.size_cs_entry * 32;
 
@@ -1681,8 +1681,8 @@ intel_set_gpgpu_callbacks(int device_id)
     intel_gpgpu_set_L3 = intel_gpgpu_set_L3_gen8;
     cl_gpgpu_get_cache_ctrl = (cl_gpgpu_get_cache_ctrl_cb *)intel_gpgpu_get_cache_ctrl_gen8;
     intel_gpgpu_get_scratch_index = intel_gpgpu_get_scratch_index_gen8;
-    intel_gpgpu_post_action = intel_gpgpu_post_action_gen75;
-    intel_gpgpu_read_ts_reg = intel_gpgpu_read_ts_reg_gen7; //HSW same as ivb
+    intel_gpgpu_post_action = intel_gpgpu_post_action_gen7; //BDW need not restore SLM, same as gen7
+    intel_gpgpu_read_ts_reg = intel_gpgpu_read_ts_reg_gen7;
     intel_gpgpu_set_base_address = intel_gpgpu_set_base_address_gen8;
     intel_gpgpu_setup_bti = intel_gpgpu_setup_bti_gen8;
     intel_gpgpu_load_vfe_state = intel_gpgpu_load_vfe_state_gen8;
