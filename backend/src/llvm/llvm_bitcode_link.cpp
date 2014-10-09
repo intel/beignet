@@ -94,7 +94,8 @@ namespace gbe
           continue;
         }
 
-        if (call->getCalledFunction()->getIntrinsicID() != 0)
+        if (call->getCalledFunction() &&
+            call->getCalledFunction()->getIntrinsicID() != 0)
           continue;
 
         Value *Callee = call->getCalledValue();
