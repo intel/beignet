@@ -38,8 +38,6 @@ namespace gbe
     };
     /*! device's max srcatch buffer size */
     #define GEN8_SCRATCH_SIZE  (2 * KB * KB)
-    /*! Emit the per-lane stack pointer computation */
-    virtual void emitStackPointer(void);
     /*! Align the scratch size to the device's scratch unit size */
     virtual uint32_t alignScratchSize(uint32_t size);
     /*! Get the device's max srcatch size */

@@ -48,11 +48,11 @@ namespace ir {
 
 #if GBE_DEBUG
 #define DECL_NEW_REG(FAMILY, REG, UNIFORM) \
-   r = fn.newRegister(FAMILY_DWORD, UNIFORM); \
+   r = fn.newRegister(FAMILY, UNIFORM); \
    GBE_ASSERT(r == REG);
 #else
 #define DECL_NEW_REG(FAMILY, REG, UNIFORM) \
-   fn.newRegister(FAMILY_DWORD, UNIFORM);
+   fn.newRegister(FAMILY, UNIFORM);
 #endif /* GBE_DEBUG */
     static void init(Function &fn) {
       IF_DEBUG(Register r);
@@ -75,7 +75,7 @@ namespace ir {
       DECL_NEW_REG(FAMILY_DWORD, goffset1, 1);
       DECL_NEW_REG(FAMILY_DWORD, goffset2, 1);
       DECL_NEW_REG(FAMILY_DWORD, stackptr, 0);
-      DECL_NEW_REG(FAMILY_DWORD, stackbuffer, 1);
+      DECL_NEW_REG(FAMILY_QWORD, stackbuffer, 1);
       DECL_NEW_REG(FAMILY_WORD,  blockip, 0);
       DECL_NEW_REG(FAMILY_DWORD, barrierid, 1);
       DECL_NEW_REG(FAMILY_DWORD, threadn, 1);
