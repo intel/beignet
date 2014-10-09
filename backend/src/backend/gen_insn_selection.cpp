@@ -2458,10 +2458,18 @@ namespace gbe
       GenRegister dst  = sel.selReg(insn.getDst(0), type);
       GenRegister src0 = sel.selReg(insn.getSrc(0), type);
       GenRegister src1 = sel.selReg(insn.getSrc(1), type);
+
+      sel.push();
       if (sel.has32X32Mul()) {
-        sel.MUL(dst, src0, src1);
+        //Seems scalar mul need QWROD dst, otherwise will touch the dst's follow register.
+        if (sel.isScalarReg(insn.getDst(0)) == true) {
+          sel.curr.execWidth = 1;
+          GenRegister tmp = sel.selReg(sel.reg(FAMILY_QWORD), Type::TYPE_S64);
+          sel.MUL(tmp, src0, src1);
+          sel.MOV(dst, GenRegister::retype(tmp, GEN_TYPE_D));
+        } else
+          sel.MUL(dst, src0, src1);
       } else {
-        sel.push();
         if (sel.isScalarReg(insn.getDst(0)) == true) {
           sel.curr.execWidth = 1;
           sel.curr.predicate = GEN_PREDICATE_NONE;
@@ -2511,8 +2519,9 @@ namespace gbe
           } else
             sel.MOV(GenRegister::retype(GenRegister::next(dst), GEN_TYPE_F), GenRegister::acc());
         }
-        sel.pop();
       }
+      sel.pop();
+
       // All children are marked as root
       markAllChildren(dag);
       return true;
