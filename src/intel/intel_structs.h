@@ -593,6 +593,61 @@ typedef struct gen7_sampler_state
 
 STATIC_ASSERT(sizeof(gen6_sampler_state_t) == sizeof(gen7_sampler_state_t));
 
+typedef struct gen8_sampler_state
+{
+  struct {
+    uint32_t aniso_algorithm:1;
+    uint32_t lod_bias:13;
+    uint32_t min_filter:3;
+    uint32_t mag_filter:3;
+    uint32_t mip_filter:2;
+    uint32_t base_level:5;
+    uint32_t lod_preclamp:2;
+    uint32_t default_color_mode:1;
+    uint32_t pad0:1;
+    uint32_t disable:1;
+  } ss0;
+
+  struct {
+    uint32_t cube_control_mode:1;
+    uint32_t shadow_function:3;
+    uint32_t chromakey_mode:1;
+    uint32_t chromakey_index:2;
+    uint32_t chromakey_enable:1;
+    uint32_t max_lod:12;
+    uint32_t min_lod:12;
+  } ss1;
+
+  struct {
+    uint32_t lod_clamp_mag_mode:1;
+    uint32_t flexible_filter_valign:1;
+    uint32_t flexible_filter_halign:1;
+    uint32_t flexible_filter_coeff_size:1;
+    uint32_t flexible_filter_mode:1;
+    uint32_t pad1:1;
+    uint32_t indirect_state_ptr:18;
+    uint32_t pad0:2;
+    uint32_t sep_filter_height:2;
+    uint32_t sep_filter_width:2;
+    uint32_t sep_filter_coeff_table_size:2;
+  } ss2;
+
+  struct {
+    uint32_t r_wrap_mode:3;
+    uint32_t t_wrap_mode:3;
+    uint32_t s_wrap_mode:3;
+    uint32_t pad:1;
+    uint32_t non_normalized_coord:1;
+    uint32_t trilinear_quality:2;
+    uint32_t address_round:6;
+    uint32_t max_aniso:3;
+    uint32_t pad0:2;
+    uint32_t non_sep_filter_footprint_mask:8;
+  } ss3;
+} gen8_sampler_state_t;
+
+STATIC_ASSERT(sizeof(gen6_sampler_state_t) == sizeof(gen8_sampler_state_t));
+
 #undef BITFIELD_BIT
 #undef BITFIELD_RANGE
 

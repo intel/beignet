@@ -289,6 +289,11 @@
 #define I965_TILEWALK_XMAJOR                 0
 #define I965_TILEWALK_YMAJOR                 1
 
+#define GEN8_TILEMODE_LINEAR                 0
+#define GEN8_TILEMODE_WMAJOR                 1
+#define GEN8_TILEMODE_XMAJOR                 2
+#define GEN8_TILEMODE_YMAJOR                 3
+
 #define I965_SURCHAN_SELECT_ZERO             0
 #define I965_SURCHAN_SELECT_ONE              1
 #define I965_SURCHAN_SELECT_RED              4
