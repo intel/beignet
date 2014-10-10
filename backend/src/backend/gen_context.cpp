@@ -764,14 +764,14 @@ namespace gbe
         p->SHL(c, e, a);
         p->SHL(d, f, a);
         p->OR(e, d, b);
-        p->MOV(flagReg, GenRegister::immuw(0xFFFF));
+        setFlag(flagReg, GenRegister::immuw(0xFFFF));
         p->curr.predicate = GEN_PREDICATE_NORMAL;
         p->curr.useFlag(flagReg.flag_nr(), flagReg.flag_subnr());
         p->CMP(GEN_CONDITIONAL_Z, a, zero);
         p->SEL(d, d, e);
         p->curr.predicate = GEN_PREDICATE_NONE;
         p->AND(a, a, GenRegister::immud(32));
-        p->MOV(flagReg, GenRegister::immuw(0xFFFF));
+        setFlag(flagReg, GenRegister::immuw(0xFFFF));
         p->curr.predicate = GEN_PREDICATE_NORMAL;
         p->curr.useFlag(flagReg.flag_nr(), flagReg.flag_subnr());
         p->CMP(GEN_CONDITIONAL_Z, a, zero);
@@ -792,14 +792,14 @@ namespace gbe
         p->SHR(c, f, a);
         p->SHR(d, e, a);
         p->OR(e, d, b);
-        p->MOV(flagReg, GenRegister::immuw(0xFFFF));
+        setFlag(flagReg, GenRegister::immuw(0xFFFF));
         p->curr.predicate = GEN_PREDICATE_NORMAL;
         p->curr.useFlag(flagReg.flag_nr(), flagReg.flag_subnr());
         p->CMP(GEN_CONDITIONAL_Z, a, zero);
         p->SEL(d, d, e);
         p->curr.predicate = GEN_PREDICATE_NONE;
         p->AND(a, a, GenRegister::immud(32));
-        p->MOV(flagReg, GenRegister::immuw(0xFFFF));
+        setFlag(flagReg, GenRegister::immuw(0xFFFF));
         p->curr.predicate = GEN_PREDICATE_NORMAL;
         p->curr.useFlag(flagReg.flag_nr(), flagReg.flag_subnr());
         p->CMP(GEN_CONDITIONAL_Z, a, zero);
@@ -821,7 +821,7 @@ namespace gbe
         p->ASR(c, f, a);
         p->SHR(d, e, a);
         p->OR(e, d, b);
-        p->MOV(flagReg, GenRegister::immuw(0xFFFF));
+        setFlag(flagReg, GenRegister::immuw(0xFFFF));
         p->curr.predicate = GEN_PREDICATE_NORMAL;
         p->curr.useFlag(flagReg.flag_nr(), flagReg.flag_subnr());
         p->CMP(GEN_CONDITIONAL_Z, a, zero);
@@ -829,7 +829,7 @@ namespace gbe
         p->curr.predicate = GEN_PREDICATE_NONE;
         p->AND(a, a, GenRegister::immud(32));
         p->ASR(f, f, GenRegister::immd(31));
-        p->MOV(flagReg, GenRegister::immuw(0xFFFF));
+        setFlag(flagReg, GenRegister::immuw(0xFFFF));
         p->curr.predicate = GEN_PREDICATE_NORMAL;
         p->curr.useFlag(flagReg.flag_nr(), flagReg.flag_subnr());
         p->CMP(GEN_CONDITIONAL_Z, a, zero);
@@ -842,6 +842,14 @@ namespace gbe
       default:
         NOT_IMPLEMENTED;
     }
+  }
+  void GenContext::setFlag(GenRegister flagReg, GenRegister src) {
+    p->push();
+    p->curr.noMask = 1;
+    p->curr.execWidth = 1;
+    p->curr.predicate = GEN_PREDICATE_NONE;
+    p->MOV(flagReg, src);
+    p->pop();
   }
 
   void GenContext::saveFlag(GenRegister dest, int flag, int subFlag) {

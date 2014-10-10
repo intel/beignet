@@ -118,6 +118,7 @@ namespace gbe
     void I64FullAdd(GenRegister high1, GenRegister low1, GenRegister high2, GenRegister low2);
     void I32FullMult(GenRegister high, GenRegister low, GenRegister src0, GenRegister src1);
     void I64FullMult(GenRegister dst1, GenRegister dst2, GenRegister dst3, GenRegister dst4, GenRegister x_high, GenRegister x_low, GenRegister y_high, GenRegister y_low);
+    void setFlag(GenRegister flag, GenRegister src);
     void saveFlag(GenRegister dest, int flag, int subFlag);
     void UnsignedI64ToFloat(GenRegister dst, GenRegister high, GenRegister low, GenRegister exp, GenRegister mantissa, GenRegister tmp, GenRegister flag);
 
