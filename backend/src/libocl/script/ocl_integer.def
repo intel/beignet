@@ -23,8 +23,7 @@ uintn upsample (ushortn hi, ushortn lo)
 longn upsample (intn hi, uintn lo)
 ulongn upsample (uintn hi, uintn lo)
 
-# XXX not implemented
-#gentype popcount (gentype x)
+gentype popcount (gentype x)
 
 ##fast_integer
 gentype mad24 (gentype x, gentype y, gentype z)

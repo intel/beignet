@@ -19,6 +19,7 @@
 
 PURE CONST uint __gen_ocl_fbh(uint);
 PURE CONST uint __gen_ocl_fbl(uint);
+PURE CONST uint __gen_ocl_cbit(uint);
 
 OVERLOADABLE char clz(char x) {
   if (x < 0)
@@ -86,6 +87,35 @@ OVERLOADABLE ulong clz(ulong x) {
   return v;
 }
 
+OVERLOADABLE char popcount(char x) {
+  return x == 0 ? 0 : x < 0?__gen_ocl_cbit(x) - 24 : __gen_ocl_cbit(x);
+}
+OVERLOADABLE short popcount(short x) {
+  return x == 0 ? 0 : x < 0?__gen_ocl_cbit(x) - 16 : __gen_ocl_cbit(x);
+}
+#define SDEF(TYPE)        \
+OVERLOADABLE TYPE popcount(TYPE x){ return x == 0? 0:__gen_ocl_cbit(x);}
+SDEF(uchar);
+SDEF(ushort);
+SDEF(int);
+SDEF(uint);
+#undef SDEF
+
+OVERLOADABLE long popcount(long x) {
+  union { int i[2]; long x; } u;
+  u.x = x;
+  uint v = popcount(u.i[1]);
+  v += popcount(u.i[0]);
+  return v;
+}
+
+OVERLOADABLE ulong popcount(ulong x) {
+  union { uint i[2]; ulong x; } u;
+  u.x = x;
+  uint v = popcount(u.i[1]);
+  v += popcount(u.i[0]);
+  return v;
+}
 
 // sat
 #define SDEF(TYPE)        \

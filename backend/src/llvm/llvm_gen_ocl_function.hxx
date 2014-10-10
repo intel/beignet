@@ -151,6 +151,7 @@ DECL_LLVM_GEN_FUNCTION(I64RHADD, _Z15__gen_ocl_rhaddmm)
 DECL_LLVM_GEN_FUNCTION(UPSAMPLE_SHORT, _Z18__gen_ocl_upsampless)
 DECL_LLVM_GEN_FUNCTION(UPSAMPLE_INT, _Z18__gen_ocl_upsampleii)
 DECL_LLVM_GEN_FUNCTION(UPSAMPLE_LONG, _Z18__gen_ocl_upsamplell)
+DECL_LLVM_GEN_FUNCTION(CBIT, __gen_ocl_cbit)
 
 // saturate convert
 DECL_LLVM_GEN_FUNCTION(SAT_CONV_U8_TO_I8,  _Z16convert_char_sath)
