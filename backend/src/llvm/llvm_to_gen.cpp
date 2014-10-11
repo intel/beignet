@@ -259,6 +259,7 @@ namespace gbe
       passes.add(createGVNPass());                  // Remove redundancies
     passes.add(createPrintfParserPass());
     passes.add(createScalarizePass());        // Expand all vector ops
+    passes.add(createLegalizePass());
     passes.add(createDeadInstEliminationPass());  // Remove simplified instructions
     passes.add(createCFGSimplificationPass());     // Merge & remove BBs
     passes.add(createScalarizePass());        // Expand all vector ops

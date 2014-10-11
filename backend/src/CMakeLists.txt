@@ -77,6 +77,7 @@ set (GBE_SRC
     llvm/llvm_gen_backend.cpp
     llvm/llvm_passes.cpp
     llvm/llvm_scalarize.cpp
+    llvm/llvm_legalize.cpp
     llvm/llvm_intrinsic_lowering.cpp
     llvm/llvm_barrier_nodup.cpp
     llvm/llvm_printf_parser.cpp
