@@ -115,7 +115,7 @@ namespace gbe
                                         unsigned char msg_type, uint32_t msg_length,
                                         bool header_present)
   {
-    const GenMessageTarget sfid = GEN6_SFID_DATAPORT_RENDER_CACHE;
+    const GenMessageTarget sfid = GEN_SFID_DATAPORT_RENDER;
     setMessageDescriptor(insn, sfid, msg_length, 0, header_present);
     insn->bits3.gen7_typed_rw.bti = bti;
     insn->bits3.gen7_typed_rw.msg_type = msg_type;
@@ -125,7 +125,7 @@ namespace gbe
                                   uint32_t rgba, uint32_t msg_type,
                                   uint32_t msg_length, uint32_t response_length)
   {
-    const GenMessageTarget sfid = GEN_SFID_DATAPORT_DATA_CACHE;
+    const GenMessageTarget sfid = GEN_SFID_DATAPORT_DATA;
     setMessageDescriptor(insn, sfid, msg_length, response_length);
     insn->bits3.gen7_untyped_rw.msg_type = msg_type;
     insn->bits3.gen7_untyped_rw.bti = bti;
@@ -146,7 +146,7 @@ namespace gbe
                                      uint32_t msg_length,
                                      uint32_t response_length)
   {
-    const GenMessageTarget sfid = GEN_SFID_DATAPORT_DATA_CACHE;
+    const GenMessageTarget sfid = GEN_SFID_DATAPORT_DATA;
     p->setMessageDescriptor(insn, sfid, msg_length, response_length);
     insn->bits3.gen7_byte_rw.msg_type = msg_type;
     insn->bits3.gen7_byte_rw.bti = bti;
@@ -167,7 +167,7 @@ namespace gbe
                           uint32_t msg_length,
                           uint32_t response_length)
   {
-    const GenMessageTarget sfid = GEN_SFID_DATAPORT_DATA_CACHE;
+    const GenMessageTarget sfid = GEN_SFID_DATAPORT_DATA;
     p->setMessageDescriptor(insn, sfid, msg_length, response_length);
     assert(size == 2 || size == 4);
     insn->bits3.gen7_oblock_rw.msg_type = msg_type;
@@ -208,7 +208,7 @@ namespace gbe
     // message causes a hang at unit test case compiler_global_constant.
     // We workaround it to use DATA CACHE instead.
     const GenMessageTarget sfid = (p->deviceID == PCI_CHIP_BAYTRAIL_T) ?
-                                 GEN_SFID_DATAPORT_DATA_CACHE : GEN6_SFID_DATAPORT_CONSTANT_CACHE;
+                                 GEN_SFID_DATAPORT_DATA : GEN_SFID_DATAPORT_CONSTANT;
     p->setMessageDescriptor(insn, sfid, msg_length, response_length);
     insn->bits3.gen7_dword_rw.msg_type = msg_type;
     insn->bits3.gen7_dword_rw.bti = bti;
@@ -399,7 +399,7 @@ namespace gbe
     this->setSrc0(insn, GenRegister::ud8grf(src.nr, 0));
     this->setSrc1(insn, GenRegister::immud(0));
 
-    const GenMessageTarget sfid = GEN_SFID_DATAPORT_DATA_CACHE;
+    const GenMessageTarget sfid = GEN_SFID_DATAPORT_DATA;
     setMessageDescriptor(insn, sfid, msg_length, response_length);
     insn->bits3.gen7_atomic_op.msg_type = GEN7_UNTYPED_ATOMIC_READ;
     insn->bits3.gen7_atomic_op.bti = bti;
@@ -791,7 +791,7 @@ namespace gbe
     this->setHeader(insn);
     this->setDst(insn, dst);
     this->setSrc0(insn, dst);
-    setMessageDescriptor(insn, GEN_SFID_DATAPORT_DATA_CACHE, 1, 1, 1);
+    setMessageDescriptor(insn, GEN_SFID_DATAPORT_DATA, 1, 1, 1);
     insn->bits3.gen7_memory_fence.msg_type = GEN_MEM_FENCE;
     insn->bits3.gen7_memory_fence.commit_enable = 0x1;
   }
@@ -1055,7 +1055,7 @@ namespace gbe
                                    uint32_t msg_length,
                                    uint32_t response_length)
   {
-     const GenMessageTarget sfid = GEN_SFID_DATAPORT_DATA_CACHE;
+     const GenMessageTarget sfid = GEN_SFID_DATAPORT_DATA;
      p->setMessageDescriptor(insn, sfid, msg_length, response_length, true);
      insn->bits3.gen7_scratch_rw.block_size = block_size;
      insn->bits3.gen7_scratch_rw.msg_type = msg_type;

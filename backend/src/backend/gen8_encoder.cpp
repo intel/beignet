@@ -70,7 +70,7 @@ namespace gbe
                                     uint32_t response_length)
   {
     Gen8NativeInstruction *gen8_insn = &insn->gen8_insn;
-    const GenMessageTarget sfid = GEN_SFID_DATAPORT1_DATA_CACHE;
+    const GenMessageTarget sfid = GEN_SFID_DATAPORT1_DATA;
     setMessageDescriptor(insn, sfid, msg_length, response_length);
     gen8_insn->bits3.gen7_untyped_rw.msg_type = msg_type;
     gen8_insn->bits3.gen7_untyped_rw.bti = bti;
@@ -87,7 +87,7 @@ namespace gbe
                                           unsigned char msg_type, uint32_t msg_length, bool header_present)
   {
     Gen8NativeInstruction *gen8_insn = &insn->gen8_insn;
-    const GenMessageTarget sfid = GEN_SFID_DATAPORT1_DATA_CACHE;
+    const GenMessageTarget sfid = GEN_SFID_DATAPORT1_DATA;
     setMessageDescriptor(insn, sfid, msg_length, 0, header_present);
     gen8_insn->bits3.gen7_typed_rw.bti = bti;
     gen8_insn->bits3.gen7_typed_rw.msg_type = msg_type;
@@ -116,7 +116,7 @@ namespace gbe
     this->setSrc0(insn, GenRegister::ud8grf(src.nr, 0));
     this->setSrc1(insn, GenRegister::immud(0));
 
-    const GenMessageTarget sfid = GEN_SFID_DATAPORT1_DATA_CACHE;
+    const GenMessageTarget sfid = GEN_SFID_DATAPORT1_DATA;
     setMessageDescriptor(insn, sfid, msg_length, response_length);
     gen8_insn->bits3.gen7_atomic_op.msg_type = GEN75_P1_UNTYPED_ATOMIC_OP;
     gen8_insn->bits3.gen7_atomic_op.bti = bti;

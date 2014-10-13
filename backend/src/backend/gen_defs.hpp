@@ -201,18 +201,18 @@ enum GenAtomicOpCode {
 /*! Gen SFID */
 enum GenMessageTarget {
   GEN_SFID_NULL                     = 0,
-  GEN_SFID_MATH                     = 1,
+  GEN_SFID_RESERVED                 = 1,
   GEN_SFID_SAMPLER                  = 2,
   GEN_SFID_MESSAGE_GATEWAY          = 3,
-  GEN_SFID_DATAPORT_READ            = 4,
-  GEN_SFID_DATAPORT_WRITE           = 5,
+  GEN_SFID_DATAPORT_SAMPLER         = 4,
+  GEN_SFID_DATAPORT_RENDER          = 5,
   GEN_SFID_URB                      = 6,
   GEN_SFID_THREAD_SPAWNER           = 7,
-  GEN6_SFID_DATAPORT_SAMPLER_CACHE  = 4,
-  GEN6_SFID_DATAPORT_RENDER_CACHE   = 5,
-  GEN6_SFID_DATAPORT_CONSTANT_CACHE = 9,
-  GEN_SFID_DATAPORT_DATA_CACHE      = 10,
-  GEN_SFID_DATAPORT1_DATA_CACHE     = 12,
+  GEN_SFID_VIDEO_MOTION_EST         = 8,
+  GEN_SFID_DATAPORT_CONSTANT        = 9,
+  GEN_SFID_DATAPORT_DATA            = 10,
+  GEN_SFID_PIXEL_INTERPOLATOR       = 11,
+  GEN_SFID_DATAPORT1_DATA           = 12, /* New for HSW and BDW. */
 };
 
 #define GEN_PREDICATE_NONE                    0

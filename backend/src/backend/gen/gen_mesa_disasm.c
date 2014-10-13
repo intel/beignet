@@ -308,31 +308,35 @@ static const char *end_of_thread[2] = {
   [1] = "EOT"
 };
 
-static const char *target_function_gen6[16] = {
+static const char *target_function_gen7[16] = {
   [GEN_SFID_NULL] = "null",
-  [GEN_SFID_MATH] = "math",
+  [GEN_SFID_RESERVED] = NULL,
   [GEN_SFID_SAMPLER] = "sampler",
   [GEN_SFID_MESSAGE_GATEWAY] = "gateway",
+  [GEN_SFID_DATAPORT_SAMPLER] = "dataport_sampler",
+  [GEN_SFID_DATAPORT_RENDER] = "render",
   [GEN_SFID_URB] = "urb",
   [GEN_SFID_THREAD_SPAWNER] = "thread_spawner",
-  [GEN6_SFID_DATAPORT_SAMPLER_CACHE] = "sampler",
-  [GEN6_SFID_DATAPORT_RENDER_CACHE] = "render",
-  [GEN6_SFID_DATAPORT_CONSTANT_CACHE] = "const",
-  [GEN_SFID_DATAPORT_DATA_CACHE] = "data"
+  [GEN_SFID_VIDEO_MOTION_EST] = "video_motion_estimation",
+  [GEN_SFID_DATAPORT_CONSTANT] = "const",
+  [GEN_SFID_DATAPORT_DATA] = "data",
+  [GEN_SFID_PIXEL_INTERPOLATOR] = "pix_interpolator",
 };
 
 static const char *target_function_gen75[16] = {
   [GEN_SFID_NULL] = "null",
-  [GEN_SFID_MATH] = "math",
+  [GEN_SFID_RESERVED] = NULL,
   [GEN_SFID_SAMPLER] = "sampler",
   [GEN_SFID_MESSAGE_GATEWAY] = "gateway",
+  [GEN_SFID_DATAPORT_SAMPLER] = "dataport_sampler",
+  [GEN_SFID_DATAPORT_RENDER] = "render",
   [GEN_SFID_URB] = "urb",
   [GEN_SFID_THREAD_SPAWNER] = "thread_spawner",
-  [GEN6_SFID_DATAPORT_SAMPLER_CACHE] = "sampler",
-  [GEN6_SFID_DATAPORT_RENDER_CACHE] = "render",
-  [GEN6_SFID_DATAPORT_CONSTANT_CACHE] = "const",
-  [GEN_SFID_DATAPORT_DATA_CACHE] = "data (0)",
-  [GEN_SFID_DATAPORT1_DATA_CACHE] = "data (1)"
+  [GEN_SFID_VIDEO_MOTION_EST] = "video_motion_estimation",
+  [GEN_SFID_DATAPORT_CONSTANT] = "const",
+  [GEN_SFID_DATAPORT_DATA] = "data (0)",
+  [GEN_SFID_PIXEL_INTERPOLATOR] = "pix_interpolator",
+  [GEN_SFID_DATAPORT1_DATA] = "data (1)",
 };
 
 static const char *gateway_sub_function[8] = {
@@ -1128,7 +1132,15 @@ int gen_disasm (FILE *file, const void *opaque_insn, uint32_t deviceID, uint32_t
   if (inst->header.opcode == GEN_OPCODE_MATH) {
     string (file, " ");
     err |= control (file, "function", math_function,
-        inst->header.destreg_or_condmod, NULL);
+                    inst->header.destreg_or_condmod, &space);
+    err |= control (file, "math saturate", math_saturate,
+                    inst->bits3.math_gen5.saturate, &space);
+    err |= control (file, "math signed", math_signed,
+                    inst->bits3.math_gen5.int_type, &space);
+    err |= control (file, "math scalar", math_scalar,
+                    inst->bits3.math_gen5.data_type, &space);
+    err |= control (file, "math precision", math_precision,
+                    inst->bits3.math_gen5.precision, &space);
   } else if (inst->header.opcode != GEN_OPCODE_SEND &&
       inst->header.opcode != GEN_OPCODE_SENDC) {
     err |= control (file, "conditional modifier", conditional_modifier,
@@ -1202,23 +1214,11 @@ int gen_disasm (FILE *file, const void *opaque_insn, uint32_t deviceID, uint32_t
       err |= control (file, "target function", target_function_gen75,
              target, &space);
     } else {
-      err |= control (file, "target function", target_function_gen6,
+      err |= control (file, "target function", target_function_gen7,
              target, &space);
     }
 
     switch (target) {
-      case GEN_SFID_MATH:
-        err |= control (file, "math function", math_function,
-            inst->bits3.math_gen5.function, &space);
-        err |= control (file, "math saturate", math_saturate,
-            inst->bits3.math_gen5.saturate, &space);
-        err |= control (file, "math signed", math_signed,
-            inst->bits3.math_gen5.int_type, &space);
-        err |= control (file, "math scalar", math_scalar,
-            inst->bits3.math_gen5.data_type, &space);
-        err |= control (file, "math precision", math_precision,
-            inst->bits3.math_gen5.precision, &space);
-        break;
       case GEN_SFID_SAMPLER:
         format (file, " (%d, %d, %d, %d)",
                 inst->bits3.sampler_gen7.bti,
@@ -1226,7 +1226,7 @@ int gen_disasm (FILE *file, const void *opaque_insn, uint32_t deviceID, uint32_t
                 inst->bits3.sampler_gen7.msg_type,
                 inst->bits3.sampler_gen7.simd_mode);
         break;
-      case GEN_SFID_DATAPORT_DATA_CACHE:
+      case GEN_SFID_DATAPORT_DATA:
         if(inst->bits3.gen7_untyped_rw.category == 0) {
           format (file, " (bti: %d, rgba: %d, %s, %s, %s)",
                   inst->bits3.gen7_untyped_rw.bti,
@@ -1243,7 +1243,7 @@ int gen_disasm (FILE *file, const void *opaque_insn, uint32_t deviceID, uint32_t
                   data_port_scratch_msg_type[inst->bits3.gen7_scratch_rw.msg_type]);
         }
         break;
-      case GEN_SFID_DATAPORT1_DATA_CACHE:
+      case GEN_SFID_DATAPORT1_DATA:
         format (file, " (bti: %d, rgba: %d, %s, %s, %s)",
                 inst->bits3.gen7_untyped_rw.bti,
                 inst->bits3.gen7_untyped_rw.rgba,
@@ -1251,7 +1251,7 @@ int gen_disasm (FILE *file, const void *opaque_insn, uint32_t deviceID, uint32_t
                 data_port_data_cache_category[inst->bits3.gen7_untyped_rw.category],
                 data_port1_data_cache_msg_type[inst->bits3.gen7_untyped_rw.msg_type]);
         break;
-      case GEN6_SFID_DATAPORT_CONSTANT_CACHE:
+      case GEN_SFID_DATAPORT_CONSTANT:
         format (file, " (bti: %d, %s)",
                 inst->bits3.gen7_dword_rw.bti,
                 data_port_data_cache_msg_type[inst->bits3.gen7_dword_rw.msg_type]);
