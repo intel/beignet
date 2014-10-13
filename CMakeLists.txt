@@ -115,7 +115,7 @@ ELSE(DRM_FOUND)
 ENDIF(DRM_FOUND)
 
 # DRM Intel
-pkg_check_modules(DRM_INTEL REQUIRED libdrm_intel)
+pkg_check_modules(DRM_INTEL libdrm_intel>=2.4.52)
 IF(DRM_INTEL_FOUND)
   INCLUDE_DIRECTORIES(${DRM_INTEL_INCLUDE_DIRS})
   MESSAGE(STATUS "Looking for DRM Intel - found at ${DRM_INTEL_PREFIX}")
