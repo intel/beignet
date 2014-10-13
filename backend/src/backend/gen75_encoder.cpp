@@ -270,11 +270,13 @@ namespace gbe
       }
     }
 
-    if (insn.header.opcode == GEN_OPCODE_JMPI) {
+    if (insn.header.opcode != GEN_OPCODE_JMPI)
+      this->setSrc1(&insn, GenRegister::immd((jip & 0xffff) | (uip<<16)));
+    else if (insn.header.opcode == GEN_OPCODE_JMPI) {
       //jumpDistance'unit is Qword, and the HSW's JMPI offset of jmpi is in byte, so multi 8
       jip = (jip - 2) * 8;
+      this->setSrc1(&insn, GenRegister::immd(jip));
     }
-    this->setSrc1(&insn, GenRegister::immd((jip & 0xffff) | uip<<16));
     return;
   }
 } /* End of the name space. */
