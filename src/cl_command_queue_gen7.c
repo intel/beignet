@@ -271,6 +271,14 @@ cl_bind_printf(cl_gpgpu gpgpu, cl_kernel ker, void* printf_info, int printf_num,
   value = GBE_CURBE_PRINTF_BUF_POINTER;
   offset = interp_kernel_get_curbe_offset(ker->opaque, value, 0);
   buf_size = interp_get_printf_sizeof_size(printf_info) * global_sz;
+  /* because of the printf may exist in a loop, which loop number can not be gotten by
+     static analysis. So we set the data buffer as big as we can. Out of bound printf
+     info will be discarded. */
+  if (buf_size < 1*1024)
+    buf_size = 1*1024*1024;
+  else
+    buf_size = 4*1024*1024; //at most.
+
   if (offset > 0) {
     if (cl_gpgpu_set_printf_buffer(gpgpu, 1, buf_size, offset, interp_get_printf_buf_bti(printf_info)) != 0)
       return -1;
