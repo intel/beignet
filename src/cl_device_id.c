@@ -633,7 +633,7 @@ cl_check_builtin_kernel_dimension(cl_kernel kernel, cl_device_id device)
 LOCAL size_t
 cl_get_kernel_max_wg_sz(cl_kernel kernel)
 {
-  size_t work_group_size;
+  size_t work_group_size, thread_cnt;
   int simd_width = interp_kernel_get_simd_width(kernel->opaque);
   int vendor_id = kernel->program->ctx->device->vendor_id;
   if (!interp_kernel_use_slm(kernel->opaque)) {
@@ -642,9 +642,13 @@ cl_get_kernel_max_wg_sz(cl_kernel kernel)
     else
       work_group_size = kernel->program->ctx->device->max_compute_unit *
                         kernel->program->ctx->device->max_thread_per_unit * simd_width;
-  } else
-    work_group_size = kernel->program->ctx->device->max_compute_unit * simd_width *
+  } else {
+    thread_cnt = kernel->program->ctx->device->max_compute_unit *
                  kernel->program->ctx->device->max_thread_per_unit / kernel->program->ctx->device->sub_slice_count;
+    if(thread_cnt > 64)
+      thread_cnt = 64;
+    work_group_size = thread_cnt * simd_width;
+  }
   return work_group_size;
 }
 
