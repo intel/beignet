@@ -157,6 +157,20 @@ namespace gbe
     builtinFuncs.push_back("__gen_memset_g");
     builtinFuncs.push_back("__gen_memset_l");
 
+    builtinFuncs.push_back("__gen_memcpy_gg_align");
+    builtinFuncs.push_back("__gen_memcpy_gp_align");
+    builtinFuncs.push_back("__gen_memcpy_gl_align");
+    builtinFuncs.push_back("__gen_memcpy_pg_align");
+    builtinFuncs.push_back("__gen_memcpy_pp_align");
+    builtinFuncs.push_back("__gen_memcpy_pl_align");
+    builtinFuncs.push_back("__gen_memcpy_lg_align");
+    builtinFuncs.push_back("__gen_memcpy_lp_align");
+    builtinFuncs.push_back("__gen_memcpy_ll_align");
+    builtinFuncs.push_back("__gen_memset_p_align");
+    builtinFuncs.push_back("__gen_memset_g_align");
+    builtinFuncs.push_back("__gen_memset_l_align");
+
+
     for (Module::iterator SF = mod->begin(), E = mod->end(); SF != E; ++SF) {
       if (SF->isDeclaration()) continue;
       if (!isKernelFunction(*SF)) continue;
