@@ -120,7 +120,7 @@ IF(DRM_INTEL_FOUND)
   INCLUDE_DIRECTORIES(${DRM_INTEL_INCLUDE_DIRS})
   MESSAGE(STATUS "Looking for DRM Intel - found at ${DRM_INTEL_PREFIX}")
 ELSE(DRM_INTEL_FOUND)
-  MESSAGE(STATUS "Looking for DRM Intel - not found")
+  MESSAGE(FATAL_ERROR "Looking for DRM Intel (>= 2.4.52) - not found")
 ENDIF(DRM_INTEL_FOUND)
 
 # Threads
