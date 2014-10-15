@@ -110,7 +110,7 @@ static struct _cl_device_id intel_brw_gt1_device = {
   .max_thread_per_unit = 7,
   .sub_slice_count = 2,
   .max_work_item_sizes = {1024, 1024, 1024},
-  .max_work_group_size = 1024,
+  .max_work_group_size = 512,
   .max_clock_frequency = 1000,
 #include "cl_gen75_device.h"
 };
@@ -121,7 +121,7 @@ static struct _cl_device_id intel_brw_gt2_device = {
   .max_thread_per_unit = 7,
   .sub_slice_count = 3,
   .max_work_item_sizes = {1024, 1024, 1024},
-  .max_work_group_size = 1024,
+  .max_work_group_size = 512,
   .max_clock_frequency = 1000,
 #include "cl_gen75_device.h"
 };
@@ -132,7 +132,7 @@ static struct _cl_device_id intel_brw_gt3_device = {
   .max_thread_per_unit = 7,
   .sub_slice_count = 6,
   .max_work_item_sizes = {1024, 1024, 1024},
-  .max_work_group_size = 1024,
+  .max_work_group_size = 512,
   .max_clock_frequency = 1000,
 #include "cl_gen75_device.h"
 };
@@ -648,6 +648,8 @@ cl_get_kernel_max_wg_sz(cl_kernel kernel)
     if(thread_cnt > 64)
       thread_cnt = 64;
     work_group_size = thread_cnt * simd_width;
+    if(work_group_size > kernel->program->ctx->device->max_work_group_size)
+      work_group_size = kernel->program->ctx->device->max_work_group_size;
   }
   return work_group_size;
 }
