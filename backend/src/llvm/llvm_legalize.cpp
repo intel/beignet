@@ -172,7 +172,6 @@ namespace gbe {
     SmallVectorImpl<Value*> &v0 = iter->second;
 
     uint64_t shiftBits = dyn_cast<ConstantInt>(p->getOperand(1))->getZExtValue();
-    Type *intTy = IntegerType::get(p->getContext(), 32);
     Type *splitTy = v0[0]->getType();
 
     unsigned elemNum = v0.size();
@@ -201,8 +200,8 @@ namespace gbe {
       v1.push_back(Builder.CreateShl(v0[0], unaligned));
 
       for (unsigned i = 0; i < elemNum - shift - 1; i++) {
-        Value *t0 = Builder.CreateLShr(v0[i], ConstantInt::get(intTy, szSplit-unaligned));
-        Value *t1 = Builder.CreateShl(v0[i + 1], ConstantInt::get(intTy, unaligned));
+        Value *t0 = Builder.CreateLShr(v0[i], ConstantInt::get(v0[0]->getType(), szSplit-unaligned));
+        Value *t1 = Builder.CreateShl(v0[i + 1], ConstantInt::get(v0[i + 1]->getType(), unaligned));
         Value *t2 = Builder.CreateOr(t0, t1);
         v1.push_back(t2);
       }
@@ -221,7 +220,6 @@ namespace gbe {
     GBE_ASSERT(iter != valueMap.end());
     SmallVectorImpl<Value*> &opVec = iter->second;
 
-    Type *intTy = IntegerType::get(p->getContext(), 32);
     unsigned szTotal = op1->getType()->getPrimitiveSizeInBits();
     unsigned elemNum = opVec.size();
     unsigned szSplit = szTotal / elemNum;
@@ -243,13 +241,13 @@ namespace gbe {
     } else {
       // not aligned case
       for (unsigned s = elemShift; s < elemNum-1; s++) {
-        Value *t0 = Builder.CreateLShr(opVec[s], ConstantInt::get(intTy, unalign));
-        Value *t1 = Builder.CreateShl(opVec[s + 1], ConstantInt::get(intTy, szSplit - unalign));
+        Value *t0 = Builder.CreateLShr(opVec[s], ConstantInt::get(opVec[s]->getType(), unalign));
+        Value *t1 = Builder.CreateShl(opVec[s + 1], ConstantInt::get(opVec[s + 1]->getType(), szSplit - unalign));
         Value *t2 = Builder.CreateOr(t0, t1);
         result.push_back(t2);
       }
       // last element only need lshr
-      result.push_back(Builder.CreateLShr(opVec[elemNum-1], ConstantInt::get(intTy, unalign)));
+      result.push_back(Builder.CreateLShr(opVec[elemNum-1], ConstantInt::get(opVec[elemNum - 1]->getType(), unalign)));
 
       for (unsigned s = 0; s < elemShift; s++) {
         result.push_back(ConstantInt::getSigned(opVec[0]->getType(), 0));
