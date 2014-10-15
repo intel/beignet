@@ -865,6 +865,39 @@ intel_gpgpu_setup_bti_gen7(intel_gpgpu_t *gpgpu, drm_intel_bo *buf, uint32_t int
 }
 
 static void
+intel_gpgpu_setup_bti_gen75(intel_gpgpu_t *gpgpu, drm_intel_bo *buf, uint32_t internal_offset,
+                                   uint32_t size, unsigned char index, uint32_t format)
+{
+  uint32_t s = size - 1;
+  surface_heap_t *heap = gpgpu->aux_buf.bo->virtual + gpgpu->aux_offset.surface_heap_offset;
+  gen7_surface_state_t *ss0 = (gen7_surface_state_t *) &heap->surface[index * sizeof(gen7_surface_state_t)];
+  memset(ss0, 0, sizeof(gen7_surface_state_t));
+  ss0->ss0.surface_type = I965_SURFACE_BUFFER;
+  ss0->ss0.surface_format = format;
+  if(format != I965_SURFACEFORMAT_RAW) {
+    ss0->ss7.shader_r = I965_SURCHAN_SELECT_RED;
+    ss0->ss7.shader_g = I965_SURCHAN_SELECT_GREEN;
+    ss0->ss7.shader_b = I965_SURCHAN_SELECT_BLUE;
+    ss0->ss7.shader_a = I965_SURCHAN_SELECT_ALPHA;
+  }
+  ss0->ss2.width  = s & 0x7f;   /* bits 6:0 of sz */
+  ss0->ss2.height = (s >> 7) & 0x3fff; /* bits 20:7 of sz */
+  ss0->ss3.depth  = (s >> 21) & 0x3ff; /* bits 30:21 of sz */
+  ss0->ss5.cache_control = cl_gpgpu_get_cache_ctrl();
+  heap->binding_table[index] = offsetof(surface_heap_t, surface) + index * sizeof(gen7_surface_state_t);
+
+  ss0->ss1.base_addr = buf->offset + internal_offset;
+  dri_bo_emit_reloc(gpgpu->aux_buf.bo,
+                      I915_GEM_DOMAIN_RENDER,
+                      I915_GEM_DOMAIN_RENDER,
+                      internal_offset,
+                      gpgpu->aux_offset.surface_heap_offset +
+                      heap->binding_table[index] +
+                      offsetof(gen7_surface_state_t, ss1),
+                      buf);
+}
+
+static void
 intel_gpgpu_setup_bti_gen8(intel_gpgpu_t *gpgpu, drm_intel_bo *buf, uint32_t internal_offset,
                                    uint32_t size, unsigned char index, uint32_t format)
 {
@@ -1822,7 +1855,6 @@ intel_set_gpgpu_callbacks(int device_id)
   }
 
   intel_gpgpu_set_base_address = intel_gpgpu_set_base_address_gen7;
-  intel_gpgpu_setup_bti = intel_gpgpu_setup_bti_gen7;
   intel_gpgpu_load_vfe_state = intel_gpgpu_load_vfe_state_gen7;
   cl_gpgpu_walker = (cl_gpgpu_walker_cb *)intel_gpgpu_walker_gen7;
   intel_gpgpu_build_idrt = intel_gpgpu_build_idrt_gen7;
@@ -1834,6 +1866,7 @@ intel_set_gpgpu_callbacks(int device_id)
     intel_gpgpu_get_scratch_index = intel_gpgpu_get_scratch_index_gen75;
     intel_gpgpu_post_action = intel_gpgpu_post_action_gen75;
     intel_gpgpu_read_ts_reg = intel_gpgpu_read_ts_reg_gen7; //HSW same as ivb
+    intel_gpgpu_setup_bti = intel_gpgpu_setup_bti_gen75;
   }
   else if (IS_IVYBRIDGE(device_id)) {
     cl_gpgpu_bind_image = (cl_gpgpu_bind_image_cb *) intel_gpgpu_bind_image_gen7;
@@ -1847,5 +1880,6 @@ intel_set_gpgpu_callbacks(int device_id)
     cl_gpgpu_get_cache_ctrl = (cl_gpgpu_get_cache_ctrl_cb *)intel_gpgpu_get_cache_ctrl_gen7;
     intel_gpgpu_get_scratch_index = intel_gpgpu_get_scratch_index_gen7;
     intel_gpgpu_post_action = intel_gpgpu_post_action_gen7;
+    intel_gpgpu_setup_bti = intel_gpgpu_setup_bti_gen7;
   }
 }
