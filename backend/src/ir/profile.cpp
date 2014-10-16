@@ -83,7 +83,7 @@ namespace ir {
       DECL_NEW_REG(FAMILY_DWORD, zero, 1);
       DECL_NEW_REG(FAMILY_DWORD, one, 1);
       DECL_NEW_REG(FAMILY_WORD, retVal, 1);
-      DECL_NEW_REG(FAMILY_WORD, slmoffset, 1);
+      DECL_NEW_REG(FAMILY_DWORD, slmoffset, 1);
       DECL_NEW_REG(FAMILY_DWORD, printfbptr, 1);
       DECL_NEW_REG(FAMILY_DWORD, printfiptr, 1);
       DECL_NEW_REG(FAMILY_DWORD, invalid, 1);
