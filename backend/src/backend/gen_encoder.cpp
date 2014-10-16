@@ -678,6 +678,14 @@ namespace gbe
     }
   }
 
+  void GenEncoder::F16TO32(GenRegister dest, GenRegister src0) {
+    alu1(this, GEN_OPCODE_F16TO32, dest, src0);
+  }
+
+  void GenEncoder::F32TO16(GenRegister dest, GenRegister src0) {
+    alu1(this, GEN_OPCODE_F32TO16, dest, src0);
+  }
+
   ALU1(MOV)
   ALU1(RNDZ)
   ALU1(RNDE)
@@ -686,8 +694,6 @@ namespace gbe
   ALU1(FBH)
   ALU1(FBL)
   ALU1(CBIT)
-  ALU1(F16TO32)
-  ALU1(F32TO16)
   ALU2(SEL)
   ALU1(NOT)
   ALU2_MOD(AND)

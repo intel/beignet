@@ -107,8 +107,6 @@ namespace gbe
     ALU1(RNDE)
     ALU1(RNDD)
     ALU1(RNDU)
-    ALU1(F16TO32)
-    ALU1(F32TO16)
     ALU2(SEL)
     ALU1(NOT)
     ALU2_MOD(AND)
@@ -136,6 +134,9 @@ namespace gbe
 #undef ALU2
 #undef ALU2_MOD
 #undef ALU3
+
+    virtual void F16TO32(GenRegister dest, GenRegister src0);
+    virtual void F32TO16(GenRegister dest, GenRegister src0);
     /*! Get double/long exec width */
     virtual int getDoubleExecWidth(void) = 0;
     virtual void MOV_DF(GenRegister dest, GenRegister src0, GenRegister tmp = GenRegister::null());

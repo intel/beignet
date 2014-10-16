@@ -246,12 +246,12 @@ enum GenMessageTarget {
 #define GEN_TYPE_UB  4
 #define GEN_TYPE_B   5
 #define GEN_TYPE_VF  5 /* packed float vector, immediates only? */
-#define GEN_TYPE_HF  6
 #define GEN_TYPE_V   6 /* packed int vector, immediates only, uword dest only */
 #define GEN_TYPE_DF  6
 #define GEN_TYPE_F   7
 #define GEN_TYPE_UL  8
 #define GEN_TYPE_L   9
+#define GEN_TYPE_HF  10
 
 #define GEN_ARF_NULL                  0x00
 #define GEN_ARF_ADDRESS               0x10

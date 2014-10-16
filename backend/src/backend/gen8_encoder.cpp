@@ -96,6 +96,14 @@ namespace gbe
     gen8_insn->bits3.gen7_typed_rw.slot = 1;
   }
 
+  void Gen8Encoder::F16TO32(GenRegister dest, GenRegister src0) {
+    MOV(GenRegister::retype(dest, GEN_TYPE_F), GenRegister::retype(src0, GEN_TYPE_HF));
+  }
+
+  void Gen8Encoder::F32TO16(GenRegister dest, GenRegister src0) {
+    MOV(GenRegister::retype(dest, GEN_TYPE_HF), GenRegister::retype(src0, GEN_TYPE_F));
+  }
+
   void Gen8Encoder::ATOMIC(GenRegister dst, uint32_t function, GenRegister src, uint32_t bti, uint32_t srcNum) {
     GenNativeInstruction *insn = this->next(GEN_OPCODE_SEND);
     Gen8NativeInstruction *gen8_insn = &insn->gen8_insn;
