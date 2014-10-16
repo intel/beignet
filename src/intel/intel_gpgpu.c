@@ -907,6 +907,12 @@ intel_gpgpu_setup_bti_gen8(intel_gpgpu_t *gpgpu, drm_intel_bo *buf, uint32_t int
   memset(ss0, 0, sizeof(gen8_surface_state_t));
   ss0->ss0.surface_type = I965_SURFACE_BUFFER;
   ss0->ss0.surface_format = format;
+  if(format != I965_SURFACEFORMAT_RAW) {
+    ss0->ss7.shader_channel_select_red = I965_SURCHAN_SELECT_RED;
+    ss0->ss7.shader_channel_select_green = I965_SURCHAN_SELECT_GREEN;
+    ss0->ss7.shader_channel_select_blue = I965_SURCHAN_SELECT_BLUE;
+    ss0->ss7.shader_channel_select_alpha = I965_SURCHAN_SELECT_ALPHA;
+  }
   ss0->ss2.width  = s & 0x7f;   /* bits 6:0 of sz */
   assert(ss0->ss2.width & 0x03);
   ss0->ss2.height = (s >> 7) & 0x3fff; /* bits 20:7 of sz */
