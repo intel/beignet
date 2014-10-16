@@ -498,8 +498,6 @@ namespace gbe
     ALU1(CBIT)
     ALU2WithTemp(HADD)
     ALU2WithTemp(RHADD)
-    ALU2(UPSAMPLE_SHORT)
-    ALU2(UPSAMPLE_INT)
     ALU2(UPSAMPLE_LONG)
     ALU1WithTemp(CONVI_TO_I64)
     ALU1WithTemp(CONVF_TO_I64)
@@ -2291,11 +2289,27 @@ namespace gbe
           break;
          }
         case OP_UPSAMPLE_SHORT:
-          sel.UPSAMPLE_SHORT(dst, src0, src1);
+        {
+          dst = GenRegister::retype(sel.unpacked_uw(dst.reg()), GEN_TYPE_B);
+          src0 = GenRegister::retype(sel.unpacked_uw(src0.reg()), GEN_TYPE_B);
+          src1 = GenRegister::retype(sel.unpacked_uw(src1.reg()), GEN_TYPE_B);
+          sel.MOV(dst, src1);
+          dst.subphysical = 1;
+          dst = dst.offset(dst, 0, typeSize(GEN_TYPE_B));
+          sel.MOV(dst, src0);
           break;
+        }
         case OP_UPSAMPLE_INT:
-          sel.UPSAMPLE_INT(dst, src0, src1);
+        {
+          dst = sel.unpacked_uw(dst.reg());
+          src0 = sel.unpacked_uw(src0.reg());
+          src1 = sel.unpacked_uw(src1.reg());
+          sel.MOV(dst, src1);
+          dst.subphysical = 1;
+          dst = dst.offset(dst, 0, typeSize(GEN_TYPE_W));
+          sel.MOV(dst, src0);
           break;
+        }
         case OP_UPSAMPLE_LONG:
           sel.UPSAMPLE_LONG(dst, src0, src1);
           break;

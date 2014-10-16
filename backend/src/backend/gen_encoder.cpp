@@ -612,24 +612,6 @@ namespace gbe
     pop();
   }
 
-  void GenEncoder::UPSAMPLE_SHORT(GenRegister dest, GenRegister src0, GenRegister src1) {
-    dest = GenRegister::retype(GenRegister::unpacked_uw(dest.nr, dest.subnr), GEN_TYPE_B);
-    src0 = GenRegister::retype(GenRegister::unpacked_uw(src0.nr, src0.subnr), GEN_TYPE_B);
-    src1 = GenRegister::retype(GenRegister::unpacked_uw(src1.nr, src1.subnr), GEN_TYPE_B);
-    MOV(dest, src1);
-    dest.subnr ++;
-    MOV(dest, src0);
-  }
-
-  void GenEncoder::UPSAMPLE_INT(GenRegister dest, GenRegister src0, GenRegister src1) {
-    dest = GenRegister::unpacked_uw(dest.nr, dest.subnr);
-    src0 = GenRegister::unpacked_uw(src0.nr, src0.subnr);
-    src1 = GenRegister::unpacked_uw(src1.nr, src1.subnr);
-    MOV(dest, src1);
-    dest.subnr += 2;
-    MOV(dest, src0);
-  }
-
   void GenEncoder::LOAD_INT64_IMM(GenRegister dest, int64_t value) {
     GenRegister u0 = GenRegister::immd((int)value), u1 = GenRegister::immd(value >> 32);
     MOV(dest.bottom_half(), u0);

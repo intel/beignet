@@ -442,8 +442,6 @@ namespace gbe
       case SEL_OP_ADD:  p->ADD(dst, src0, src1); break;
       case SEL_OP_MUL:  p->MUL(dst, src0, src1); break;
       case SEL_OP_MACH: p->MACH(dst, src0, src1); break;
-      case SEL_OP_UPSAMPLE_SHORT: p->UPSAMPLE_SHORT(dst, src0, src1); break;
-      case SEL_OP_UPSAMPLE_INT: p->UPSAMPLE_INT(dst, src0, src1); break;
       case SEL_OP_UPSAMPLE_LONG:
         {
           GenRegister xdst = GenRegister::retype(dst, GEN_TYPE_UL),

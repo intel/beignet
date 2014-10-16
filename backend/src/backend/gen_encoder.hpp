@@ -101,8 +101,6 @@ namespace gbe
     ALU1(FBL)
     ALU1(CBIT)
     ALU2(SUBB)
-    ALU2(UPSAMPLE_SHORT)
-    ALU2(UPSAMPLE_INT)
     ALU1(RNDZ)
     ALU1(RNDE)
     ALU1(RNDD)
