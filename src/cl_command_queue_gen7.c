@@ -317,7 +317,10 @@ cl_command_queue_ND_range_gen7(cl_command_queue queue,
   kernel.use_slm = interp_kernel_use_slm(ker->opaque);
 
   /* Compute the number of HW threads we need */
-  TRY (cl_kernel_work_group_sz, ker, local_wk_sz, 3, &local_sz);
+  if(UNLIKELY(err = cl_kernel_work_group_sz(ker, local_wk_sz, 3, &local_sz) != CL_SUCCESS)) {
+    fprintf(stderr, "Beignet: Work group size exceed Kerne's work group size.\n");
+    return err;
+  }
   kernel.thread_n = thread_n = (local_sz + simd_sz - 1) / simd_sz;
   kernel.curbe_sz = cst_sz;
 
@@ -395,8 +398,7 @@ cl_command_queue_ND_range_gen7(cl_command_queue queue,
   return CL_SUCCESS;
 
 error:
-  fprintf(stderr, "error occured. \n");
-  exit(-1);
+  /* only some command/buffer internal error reach here, so return error code OOR */
   return CL_OUT_OF_RESOURCES;
 }
 
