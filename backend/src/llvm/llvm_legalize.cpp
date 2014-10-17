@@ -392,6 +392,7 @@ namespace gbe {
     }
     valueMap.insert(std::make_pair(p, v2));
   }
+
   void Legalize::legalizeBitCast(IRBuilder<> &Builder, Instruction *p) {
     SmallVector<Value*, 16> split;
     Type *dstTy = p->getType();
@@ -412,16 +413,23 @@ namespace gbe {
       //bitcast from large integer to vector, so we do insertElement to build the vector
       ValueMapIter iter = valueMap.find(p->getOperand(0));
       SmallVectorImpl<Value*> &opVec = iter->second;
-      Type *elemTy = cast<VectorType>(dstTy)->getElementType();
-      GBE_ASSERT(elemTy == opVec[0]->getType());
+      Type *splitTy = opVec[0]->getType();
+      GBE_ASSERT(dstTy->getPrimitiveSizeInBits() % splitTy->getPrimitiveSizeInBits() == 0);
+      GBE_ASSERT(dstTy->getPrimitiveSizeInBits() / splitTy->getPrimitiveSizeInBits() == opVec.size());
       Value *vec = NULL;
       Type *idxTy = IntegerType::get(p->getContext(), 32);
       for (unsigned i = 0; i < opVec.size(); ++i) {
-        Value *tmp = vec ? vec : UndefValue::get(dstTy);
+        Value *tmp = vec ? vec : UndefValue::get(VectorType::get(splitTy, opVec.size()));
         Value *idx = ConstantInt::get(idxTy, i);
         vec = Builder.CreateInsertElement(tmp, opVec[i], idx);
       }
-      p->replaceAllUsesWith(vec);
+      Type *elemTy = cast<VectorType>(dstTy)->getElementType();
+      if (elemTy == opVec[0]->getType())
+        p->replaceAllUsesWith(vec);
+      else {
+        Value *newVec = Builder.CreateBitCast(vec, dstTy);
+        p->replaceAllUsesWith(newVec);
+      }
     } else {
       p->dump(); GBE_ASSERT(0 && "Unsupported bitcast");
     }
