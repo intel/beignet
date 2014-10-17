@@ -217,7 +217,7 @@ namespace gbe
   // SelectionBlock
   ///////////////////////////////////////////////////////////////////////////
 
-  SelectionBlock::SelectionBlock(const ir::BasicBlock *bb) : bb(bb), isLargeBlock(false), endifLabel( (ir::LabelIndex) 0){}
+  SelectionBlock::SelectionBlock(const ir::BasicBlock *bb) : bb(bb), isLargeBlock(false), endifLabel( (ir::LabelIndex) 0), removeSimpleIfEndif(false){}
 
   void SelectionBlock::append(ir::Register reg) { tmp.push_back(reg); }
 
@@ -405,6 +405,8 @@ namespace gbe
     uint32_t buildBasicBlockDAG(const ir::BasicBlock &bb);
     /*! Perform the selection on the basic block */
     void matchBasicBlock(const ir::BasicBlock &bb, uint32_t insnNum);
+    /*! a simple block can use predication instead of if/endif*/
+    bool isSimpleBlock(const ir::BasicBlock &bb, uint32_t insnNum);
     /*! A root instruction needs to be generated */
     bool isRoot(const ir::Instruction &insn) const;
 
@@ -925,6 +927,11 @@ namespace gbe
       SelectionInstruction *mov = this->create(SEL_OP_MOV, 1, 1);
       mov->src(0) = GenRegister::retype(insn->src(regID), gr.type);
       mov->state = GenInstructionState(simdWidth);
+      if(this->block->removeSimpleIfEndif){
+        mov->state.predicate = GEN_PREDICATE_NORMAL;
+        mov->state.flag = 0;
+        mov->state.subFlag = 0;
+      }
       if (this->isScalarReg(insn->src(regID).reg()))
         mov->state.noMask = 1;
       mov->dst(0) = gr;
@@ -954,6 +961,11 @@ namespace gbe
       SelectionInstruction *mov = this->create(SEL_OP_MOV, 1, 1);
       mov->dst(0) = GenRegister::retype(insn->dst(regID), gr.type);
       mov->state = GenInstructionState(simdWidth);
+      if(this->block->removeSimpleIfEndif){
+        mov->state.predicate = GEN_PREDICATE_NORMAL;
+        mov->state.flag = 0;
+        mov->state.subFlag = 0;
+      }
       if (simdWidth == 1) {
         mov->state.noMask = 1;
         mov->src(0) = GenRegister::retype(GenRegister::vec1(GEN_GENERAL_REGISTER_FILE, gr.reg()), gr.type);
@@ -1482,6 +1494,40 @@ namespace gbe
     return false;
   }
 
+  bool Selection::Opaque::isSimpleBlock(const ir::BasicBlock &bb, uint32_t insnNum) {
+
+    // FIXME should include structured innermost if/else/endif
+    if(bb.belongToStructure)
+      return false;
+
+    // FIXME scalar reg should not be excluded and just need some special handling.
+    for (int32_t insnID = insnNum-1; insnID >= 0; --insnID) {
+      SelectionDAG &dag = *insnDAG[insnID];
+      const ir::Instruction& insn = dag.insn;
+      if ( (insn.getDstNum() && this->isScalarReg(insn.getDst(0)) == true) ||
+         insn.isMemberOf<ir::CompareInstruction>() ||
+         insn.isMemberOf<ir::SelectInstruction>() ||
+         insn.getOpcode() == ir::OP_SIMD_ANY ||
+         insn.getOpcode() == ir::OP_SIMD_ALL ||
+         insn.getOpcode() == ir::OP_ELSE)
+        return false;
+    }
+
+    // there would generate a extra CMP instruction for predicated BRA with extern flag,
+    // should retrun false to keep the if/endif.
+    if((insnDAG[insnNum-1]->insn.isMemberOf<ir::BranchInstruction>())){
+      if (insnDAG[insnNum-1]->insn.getOpcode() == ir::OP_BRA) {
+        const ir::BranchInstruction &insn = ir::cast<ir::BranchInstruction>(insnDAG[insnNum-1]->insn);
+        if(insn.isPredicated() && insnDAG[insnNum-1]->child[0] == NULL){
+          return false;
+        }
+      }
+    }
+
+    return true;
+  }
+
+
   uint32_t Selection::Opaque::buildBasicBlockDAG(const ir::BasicBlock &bb)
   {
     using namespace ir;
@@ -1562,7 +1608,8 @@ namespace gbe
     // Bottom up code generation
     bool needEndif = this->block->hasBranch == false && !this->block->hasBarrier;
     needEndif = needEndif && bb.needEndif;
-    if (needEndif) {
+    this->block->removeSimpleIfEndif = insnNum < 10 && isSimpleBlock(bb, insnNum);
+    if (needEndif && !this->block->removeSimpleIfEndif) {
       if(!bb.needIf) // this basic block is the exit of a structure
         this->ENDIF(GenRegister::immd(0), bb.endifLabel, bb.endifLabel);
       else {
@@ -1583,6 +1630,13 @@ namespace gbe
 
         // Start a new code fragment
         this->startBackwardGeneration();
+
+        if(this->block->removeSimpleIfEndif){
+          this->push();
+            this->curr.predicate = GEN_PREDICATE_NORMAL;
+            this->curr.flag = 0;
+            this->curr.subFlag = 0;
+        }
         // If there is no branch at the end of this block.
 
         // Try all the patterns from best to worst
@@ -1592,6 +1646,13 @@ namespace gbe
           ++it;
         } while (it != end);
         GBE_ASSERT(it != end);
+
+        if(this->block->removeSimpleIfEndif){
+            this->curr.predicate = GEN_PREDICATE_NONE;
+            this->curr.flag = 0;
+            this->curr.subFlag = 0;
+          this->pop();
+        }
         // If we are in if/endif fix mode, and this block is
         // large enough, we need to insert endif/if pair to eliminate
         // the too long if/endif block.
@@ -3852,15 +3913,17 @@ namespace gbe
             sel.JMPI(GenRegister::immd(0), jip, label);
           sel.pop();
         }
-        sel.push();
-          sel.curr.predicate = GEN_PREDICATE_NORMAL;
-          if(!insn.getParent()->needEndif && insn.getParent()->needIf) {
-            ir::LabelIndex label = insn.getParent()->endifLabel;
-            sel.IF(GenRegister::immd(0), label, label);
-          }
-          else
-            sel.IF(GenRegister::immd(0), sel.block->endifLabel, sel.block->endifLabel);
-        sel.pop();
+        if(!sel.block->removeSimpleIfEndif){
+          sel.push();
+            sel.curr.predicate = GEN_PREDICATE_NORMAL;
+            if(!insn.getParent()->needEndif && insn.getParent()->needIf) {
+              ir::LabelIndex label = insn.getParent()->endifLabel;
+              sel.IF(GenRegister::immd(0), label, label);
+            }
+            else
+              sel.IF(GenRegister::immd(0), sel.block->endifLabel, sel.block->endifLabel);
+          sel.pop();
+        }
       }
 
       return true;
@@ -4121,7 +4184,7 @@ namespace gbe
           sel.curr.predicate = GEN_PREDICATE_NORMAL;
           sel.MOV(ip, GenRegister::immuw(uint16_t(dst)));
           sel.curr.predicate = GEN_PREDICATE_NONE;
-          if (!sel.block->hasBarrier)
+          if (!sel.block->hasBarrier && !sel.block->removeSimpleIfEndif)
             sel.ENDIF(GenRegister::immd(0), nextLabel);
           sel.block->endifOffset = -1;
         sel.pop();
@@ -4131,7 +4194,7 @@ namespace gbe
         if(insn.getParent()->needEndif)
           sel.MOV(ip, GenRegister::immuw(uint16_t(dst)));
 
-        if (!sel.block->hasBarrier) {
+        if (!sel.block->hasBarrier && !sel.block->removeSimpleIfEndif) {
           if(insn.getParent()->needEndif && !insn.getParent()->needIf)
             sel.ENDIF(GenRegister::immd(0), insn.getParent()->endifLabel, insn.getParent()->endifLabel);
           else if(insn.getParent()->needEndif)
@@ -4179,7 +4242,7 @@ namespace gbe
           sel.MOV(ip, GenRegister::immuw(uint16_t(dst)));
           sel.block->endifOffset = -1;
           sel.curr.predicate = GEN_PREDICATE_NONE;
-          if (!sel.block->hasBarrier)
+          if (!sel.block->hasBarrier && !sel.block->removeSimpleIfEndif)
             sel.ENDIF(GenRegister::immd(0), next);
           sel.curr.execWidth = 1;
           if (simdWidth == 16)
@@ -4195,7 +4258,7 @@ namespace gbe
         if(insn.getParent()->needEndif)
           sel.MOV(ip, GenRegister::immuw(uint16_t(dst)));
         sel.block->endifOffset = -1;
-        if (!sel.block->hasBarrier) {
+        if (!sel.block->hasBarrier && !sel.block->removeSimpleIfEndif) {
           if(insn.getParent()->needEndif && !insn.getParent()->needIf)
             sel.ENDIF(GenRegister::immd(0), insn.getParent()->endifLabel, insn.getParent()->endifLabel);
           else if(insn.getParent()->needEndif)
@@ -4265,13 +4328,13 @@ namespace gbe
         const Register pred = insn.getPredicateIndex();
         const LabelIndex jip = insn.getLabelIndex();
         sel.push();
-        sel.curr.physicalFlag = 0;
-        sel.curr.flagIndex = (uint64_t)pred;
-        sel.curr.externFlag = 1;
-        sel.curr.inversePredicate = insn.getInversePredicated();
-        sel.curr.predicate = GEN_PREDICATE_NORMAL;
-        sel.WHILE(GenRegister::immd(0), jip);
-        sel.curr.inversePredicate = 0;
+          sel.curr.physicalFlag = 0;
+          sel.curr.flagIndex = (uint64_t)pred;
+          sel.curr.externFlag = 1;
+          sel.curr.inversePredicate = insn.getInversePredicated();
+          sel.curr.predicate = GEN_PREDICATE_NORMAL;
+          sel.WHILE(GenRegister::immd(0), jip);
+          sel.curr.inversePredicate = 0;
         sel.pop();
       } else
         NOT_IMPLEMENTED;

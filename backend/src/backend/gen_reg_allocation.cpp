@@ -1072,7 +1072,8 @@ namespace gbe
                        insn.opcode == SEL_OP_JMPI ||
                        insn.state.predicate == GEN_PREDICATE_NONE ||
                        (block.hasBarrier && insn.opcode == SEL_OP_MOV) ||
-                       (insn.state.flag == 0 && insn.state.subFlag == 1)));
+                       (insn.state.flag == 0 && insn.state.subFlag == 1) ||
+                       (block.removeSimpleIfEndif && insn.state.flag == 0 && insn.state.subFlag == 0) ));
         }
         lastID = insnID;
         insnID++;

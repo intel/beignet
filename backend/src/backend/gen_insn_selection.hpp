@@ -233,6 +233,7 @@ namespace gbe
     int endifOffset;
     bool hasBarrier;
     bool hasBranch;
+    bool removeSimpleIfEndif;
   };
 
   /*! Owns the selection engine */
