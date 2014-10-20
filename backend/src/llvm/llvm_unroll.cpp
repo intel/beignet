@@ -15,8 +15,9 @@
  * License along with this library. If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include <set>
 #include "llvm/Config/llvm-config.h"
+#if LLVM_VERSION_MAJOR == 3 && LLVM_VERSION_MINOR >= 5
+#include <set>
 #if LLVM_VERSION_MINOR <= 2
 #include "llvm/Function.h"
 #include "llvm/InstrTypes.h"
@@ -224,3 +225,4 @@ namespace gbe {
       return new CustomLoopUnroll();
     }
 } // end namespace
+#endif
