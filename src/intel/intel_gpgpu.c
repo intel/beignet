@@ -868,6 +868,9 @@ intel_gpgpu_setup_bti_gen7(intel_gpgpu_t *gpgpu, drm_intel_bo *buf, uint32_t int
   ss0->ss0.surface_type = I965_SURFACE_BUFFER;
   ss0->ss0.surface_format = format;
   ss0->ss2.width  = s & 0x7f;   /* bits 6:0 of sz */
+  // Per bspec, I965_SURFACE_BUFFER and RAW format, size must be a multiple of 4 byte.
+  if(format == I965_SURFACEFORMAT_RAW)
+    assert((ss0->ss2.width & 0x03) == 3);
   ss0->ss2.height = (s >> 7) & 0x3fff; /* bits 20:7 of sz */
   ss0->ss3.depth  = (s >> 21) & 0x3ff; /* bits 30:21 of sz */
   ss0->ss5.cache_control = cl_gpgpu_get_cache_ctrl();
@@ -901,6 +904,9 @@ intel_gpgpu_setup_bti_gen75(intel_gpgpu_t *gpgpu, drm_intel_bo *buf, uint32_t in
     ss0->ss7.shader_a = I965_SURCHAN_SELECT_ALPHA;
   }
   ss0->ss2.width  = s & 0x7f;   /* bits 6:0 of sz */
+  // Per bspec, I965_SURFACE_BUFFER and RAW format, size must be a multiple of 4 byte.
+  if(format == I965_SURFACEFORMAT_RAW)
+    assert((ss0->ss2.width & 0x03) == 3);
   ss0->ss2.height = (s >> 7) & 0x3fff; /* bits 20:7 of sz */
   ss0->ss3.depth  = (s >> 21) & 0x3ff; /* bits 30:21 of sz */
   ss0->ss5.cache_control = cl_gpgpu_get_cache_ctrl();
@@ -934,7 +940,9 @@ intel_gpgpu_setup_bti_gen8(intel_gpgpu_t *gpgpu, drm_intel_bo *buf, uint32_t int
     ss0->ss7.shader_channel_select_alpha = I965_SURCHAN_SELECT_ALPHA;
   }
   ss0->ss2.width  = s & 0x7f;   /* bits 6:0 of sz */
-  assert(ss0->ss2.width & 0x03);
+  // Per bspec, I965_SURFACE_BUFFER and RAW format, size must be a multiple of 4 byte.
+  if(format == I965_SURFACEFORMAT_RAW)
+    assert((ss0->ss2.width & 0x03) == 3);
   ss0->ss2.height = (s >> 7) & 0x3fff; /* bits 20:7 of sz */
   ss0->ss3.depth  = (s >> 21) & 0x3ff; /* bits 30:21 of sz */
   ss0->ss1.mem_obj_ctrl_state = cl_gpgpu_get_cache_ctrl();

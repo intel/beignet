@@ -109,7 +109,11 @@ cl_upload_constant_buffer(cl_command_queue queue, cl_kernel ker)
   gbe_program prog = ker->program->opaque;
   const int32_t arg_n = interp_kernel_get_arg_num(ker->opaque);
   size_t global_const_size = interp_program_get_global_constant_size(prog);
-  aligned_size = raw_size = global_const_size;
+  raw_size = global_const_size;
+  // Surface state need 4 byte alignment, and Constant argument's buffer size
+  // have align to 4 byte when alloc, so align global constant size to 4 can
+  // ensure the finally aligned_size align to 4.
+  aligned_size =  ALIGN(raw_size, 4);
   /* Reserve 8 bytes to get rid of 0 address */
   if(global_const_size == 0) aligned_size = 8;
 
