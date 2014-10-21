@@ -60,6 +60,7 @@ namespace gbe {
       if (!isKernelFunction(F)) return false;
       return legalizeFunction(F);
     }
+    void legalizeSelect(IRBuilder<> &Builder, Instruction *p);
     void legalizeICmp(IRBuilder<> &Builder, Instruction *p);
     void legalizeShl(IRBuilder<> &Builder, Instruction *p);
     void legalizeLShr(IRBuilder<> &Builder, Instruction *p);
@@ -105,6 +106,56 @@ namespace gbe {
     for (unsigned i = 0; i < imm.size(); i++) {
       split.push_back(ConstantInt::get(splitTy, imm[i]));
     }
+  }
+
+
+  void Legalize::legalizeSelect(IRBuilder<> &Builder, Instruction *p) {
+    SelectInst *sel = dyn_cast<SelectInst>(p);
+    Value *op0 = sel->getOperand(0);
+    Value *op1 = sel->getOperand(1);
+    Value *op2 = sel->getOperand(2);
+
+    ValueMapIter iter1 = valueMap.find(op1);
+    ValueMapIter iter2 = valueMap.find(op2);
+    SmallVector<Value*, 16> v;
+    if (iter1 != valueMap.end() && iter2 != valueMap.end()) {
+      SmallVectorImpl<Value*> &opVec1 = iter1->second;
+      SmallVectorImpl<Value*> &opVec2 = iter2->second;
+
+      GBE_ASSERT(opVec1.size() == opVec2.size());
+
+      for (unsigned i = 0; i < opVec1.size(); i++) {
+        Value *elemV = Builder.CreateSelect(op0, opVec1[i], opVec2[i]);
+        v.push_back(elemV);
+      }
+    } else if (iter1 != valueMap.end()) {
+      SmallVectorImpl<Value*> &opVec1 = iter1->second;
+      Type *splitTy = opVec1[0]->getType();
+      GBE_ASSERT(isa<ConstantInt>(op2));
+      ConstantInt *CI = dyn_cast<ConstantInt>(op2);
+      SmallVector<APInt, 16> imm;
+
+      splitLargeInteger(CI->getValue(), splitTy, imm);
+      for (unsigned i = 0; i < opVec1.size(); i++) {
+        Value *elemV = Builder.CreateSelect(op0, opVec1[i], ConstantInt::get(splitTy, imm[i]));
+        v.push_back(elemV);
+      }
+    } else if (iter2 != valueMap.end()) {
+      SmallVectorImpl<Value*> &opVec2 = iter2->second;
+      Type *splitTy = opVec2[0]->getType();
+      GBE_ASSERT(isa<ConstantInt>(op1));
+      ConstantInt *CI = dyn_cast<ConstantInt>(op1);
+      SmallVector<APInt, 16> imm;
+
+      splitLargeInteger(CI->getValue(), splitTy, imm);
+      for (unsigned i = 0; i < opVec2.size(); i++) {
+        Value *elemV = Builder.CreateSelect(op0, ConstantInt::get(splitTy, imm[i]), opVec2[i]) ;
+        v.push_back(elemV);
+      }
+    } else {
+      p->dump(); GBE_ASSERT(0 && "unsupported select.");
+    }
+    valueMap.insert(std::make_pair(p, v));
   }
 
   void Legalize::legalizeICmp(IRBuilder<> &Builder, Instruction *p) {
@@ -514,6 +565,9 @@ namespace gbe {
         Builder.SetInsertPoint(insn);
         switch(insn->getOpcode()) {
           default: { insn->dump(); GBE_ASSERT(false && "Illegal instruction\n"); break;}
+          case Instruction::Select:
+            legalizeSelect(Builder, insn);
+            break;
           case Instruction::ICmp:
             legalizeICmp(Builder, insn);
             break;
