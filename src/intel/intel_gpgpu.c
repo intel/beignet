@@ -1094,6 +1094,7 @@ intel_gpgpu_bind_image_gen8(intel_gpgpu_t *gpgpu,
   ss->ss0.surface_format = format;
   if (intel_is_surface_array(type)) {
     ss->ss0.surface_array = 1;
+    ss->ss1.surface_qpitch = (h + 3)/4;
   }
   ss->ss0.horizontal_alignment = 1;
   ss->ss0.vertical_alignment = 1;
@@ -1117,7 +1118,6 @@ intel_gpgpu_bind_image_gen8(intel_gpgpu_t *gpgpu,
   ss->ss3.surface_pitch = pitch - 1;
 
   ss->ss1.mem_obj_ctrl_state = cl_gpgpu_get_cache_ctrl();
-  ss->ss7.red_clear_color = 1;
   ss->ss7.shader_channel_select_red = I965_SURCHAN_SELECT_RED;
   ss->ss7.shader_channel_select_green = I965_SURCHAN_SELECT_GREEN;
   ss->ss7.shader_channel_select_blue = I965_SURCHAN_SELECT_BLUE;

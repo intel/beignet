@@ -610,13 +610,6 @@ cl_mem_copy_image(struct _cl_mem_image *image,
   cl_mem_unmap_auto((cl_mem)image);
 }
 
-static const uint32_t tile_sz = 4096; /* 4KB per tile */
-static const uint32_t tilex_w = 512;  /* tileX width in bytes */
-static const uint32_t tilex_h = 8;    /* tileX height in number of rows */
-static const uint32_t tiley_w = 128;  /* tileY width in bytes */
-static const uint32_t tiley_h = 32;   /* tileY height in number of rows */
-static const uint32_t valign = 2;     /* vertical alignment is 2. */
-
 cl_image_tiling_t cl_get_default_tiling(void)
 {
   static int initialized = 0;
@@ -749,13 +742,13 @@ _cl_mem_new_image(cl_context ctx,
   /* Tiling requires to align both pitch and height */
   if (tiling == CL_NO_TILE) {
     aligned_pitch = w * bpp;
-    aligned_h  = ALIGN(h, valign);
+    aligned_h  = ALIGN(h, cl_buffer_get_tiling_align(ctx, CL_NO_TILE, 1));
   } else if (tiling == CL_TILE_X) {
-    aligned_pitch = ALIGN(w * bpp, tilex_w);
-    aligned_h     = ALIGN(h, tilex_h);
+    aligned_pitch = ALIGN(w * bpp, cl_buffer_get_tiling_align(ctx, CL_TILE_X, 0));
+    aligned_h     = ALIGN(h, cl_buffer_get_tiling_align(ctx, CL_TILE_X, 1));
   } else if (tiling == CL_TILE_Y) {
-    aligned_pitch = ALIGN(w * bpp, tiley_w);
-    aligned_h     = ALIGN(h, tiley_h);
+    aligned_pitch = ALIGN(w * bpp, cl_buffer_get_tiling_align(ctx, CL_TILE_Y, 0));
+    aligned_h     = ALIGN(h, cl_buffer_get_tiling_align(ctx, CL_TILE_Y, 1));
   }
 
   sz = aligned_pitch * aligned_h * depth;
@@ -779,7 +772,7 @@ _cl_mem_new_image(cl_context ctx,
       image_type == CL_MEM_OBJECT_IMAGE1D_BUFFER)
     aligned_slice_pitch = 0;
   else
-    aligned_slice_pitch = aligned_pitch * ALIGN(h, 2);
+    aligned_slice_pitch = aligned_pitch * ALIGN(h, cl_buffer_get_tiling_align(ctx, CL_NO_TILE, 1));
 
   cl_mem_image_init(cl_mem_image(mem), w, h, image_type, depth, *fmt,
                     intel_fmt, bpp, aligned_pitch, aligned_slice_pitch, tiling,

@@ -476,6 +476,44 @@ static int get_cl_tiling(uint32_t drm_tiling)
   return CL_NO_TILE;
 }
 
+static uint32_t intel_buffer_get_tiling_align(cl_context ctx, uint32_t tiling_mode, uint32_t dim)
+{
+  uint32_t gen_ver = ((intel_driver_t *)ctx->drv)->gen_ver;
+  uint32_t ret = 0;
+
+  switch (tiling_mode) {
+  case CL_TILE_X:
+    if (dim == 0) { //tileX width in bytes
+      ret = 512;
+    } else if (dim == 1) { //tileX height in number of rows
+      ret = 8;
+    } else
+      assert(0);
+    break;
+
+  case CL_TILE_Y:
+    if (dim == 0) { //tileY width in bytes
+      ret = 128;
+    } else if (dim == 1) { //tileY height in number of rows
+      ret = 32;
+    } else
+      assert(0);
+    break;
+
+  case CL_NO_TILE:
+    if (dim == 1) { //vertical alignment
+      if (gen_ver == 8)
+        ret = 4;
+      else
+        ret = 2;
+    } else
+      assert(0);
+    break;
+  }
+
+  return ret;
+}
+
 #if defined(HAS_EGL)
 #include "intel_dri_resource_sharing.h"
 #include "cl_image.h"
@@ -741,5 +779,6 @@ intel_setup_callbacks(void)
   cl_buffer_subdata = (cl_buffer_subdata_cb *) drm_intel_bo_subdata;
   cl_buffer_wait_rendering = (cl_buffer_wait_rendering_cb *) drm_intel_bo_wait_rendering;
   cl_buffer_get_fd = (cl_buffer_get_fd_cb *) drm_intel_bo_gem_export_to_prime;
+  cl_buffer_get_tiling_align = (cl_buffer_get_tiling_align_cb *)intel_buffer_get_tiling_align;
   intel_set_gpgpu_callbacks(intel_get_device_id());
 }

@@ -360,6 +360,9 @@ extern cl_buffer_wait_rendering_cb *cl_buffer_wait_rendering;
 typedef int (cl_buffer_get_fd_cb)(cl_buffer, int *fd);
 extern cl_buffer_get_fd_cb *cl_buffer_get_fd;
 
+typedef int (cl_buffer_get_tiling_align_cb)(cl_context ctx, uint32_t tiling_mode, uint32_t dim);
+extern cl_buffer_get_tiling_align_cb *cl_buffer_get_tiling_align;
+
 /* Get the device id */
 typedef int (cl_driver_get_device_id_cb)(void);
 extern cl_driver_get_device_id_cb *cl_driver_get_device_id;
