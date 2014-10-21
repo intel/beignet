@@ -60,6 +60,9 @@ namespace gbe {
       if (!isKernelFunction(F)) return false;
       return legalizeFunction(F);
     }
+    Value *getComponent(Value *v, uint32_t i, Type *ty);
+    bool isIncomplete(Value *v);
+    void legalizePHI(IRBuilder <> Builder, Instruction *p);
     void legalizeSelect(IRBuilder<> &Builder, Instruction *p);
     void legalizeICmp(IRBuilder<> &Builder, Instruction *p);
     void legalizeShl(IRBuilder<> &Builder, Instruction *p);
@@ -76,6 +79,7 @@ namespace gbe {
     static char ID;
   private:
     std::set<Value *> processed;
+    std::set<PHINode *> incompletePHIs;
     std::map<Value *, SmallVector<Value*, 16>> valueMap;
     typedef std::map<Value*, SmallVector<Value*, 16>>::iterator ValueMapIter;
   };
@@ -108,6 +112,64 @@ namespace gbe {
     }
   }
 
+  bool Legalize::isIncomplete(Value *v) {
+    return valueMap.find(v) == valueMap.end() && !isa<ConstantInt>(v);
+  }
+
+  Value *Legalize::getComponent(Value *v, uint32_t i, Type *ty) {
+    GBE_ASSERT(!isIncomplete(v));
+    if (isa<ConstantInt>(v)) {
+      GBE_ASSERT(ty);
+      ConstantInt *CI = dyn_cast<ConstantInt>(v);
+      SmallVector<APInt, 16> imm;
+      splitLargeInteger(CI->getValue(), ty, imm);
+      return ConstantInt::get(ty, imm[i]);
+    }
+    return valueMap.find(v)->second[i];
+  }
+
+  void Legalize::legalizePHI(IRBuilder <> Builder, Instruction *p) {
+    PHINode *phi = dyn_cast<PHINode>(p);
+    bool incomplete = false, allConst = true;
+    uint32_t compNum = 0;
+    Type *splitTy = NULL;
+    for (unsigned int i = 0; i < phi->getNumIncomingValues(); ++i) {
+      Value *val = phi->getIncomingValue(i);
+      if (isIncomplete(val)) {
+        incomplete = true;
+        break;
+      }
+      if (allConst && valueMap.find(val) != valueMap.end()) {
+        allConst = false;
+        splitTy = valueMap.find(val)->second[0]->getType();
+        compNum = valueMap.find(val)->second.size();
+      }
+    }
+
+    if (incomplete) {
+      // FIME, if a PHINode is totally incomplete which means
+      // we don't even know the base type of this instruction.
+      // Then it will be a little bit difficult to handle here.
+      // Will do it in the future.
+      incompletePHIs.insert(phi);
+      GBE_ASSERT(0 && "unsupported PHI");
+    }
+    else {
+      GBE_ASSERT(!allConst);
+      SmallVector<Value*, 16> v;
+      for (unsigned int i = 0; i < compNum; ++i) {
+        PHINode* res = Builder.CreatePHI(splitTy, phi->getNumIncomingValues());
+
+        // Loop over pairs of operands: [Value*, BasicBlock*]
+        for (unsigned int j = 0; j < phi->getNumIncomingValues(); j++) {
+          BasicBlock* bb = phi->getIncomingBlock(j);
+          res->addIncoming(getComponent(phi->getIncomingValue(j), i, splitTy), bb);
+        }
+        v.push_back(res);
+      }
+      valueMap.insert(std::make_pair(phi, v));
+    }
+  }
 
   void Legalize::legalizeSelect(IRBuilder<> &Builder, Instruction *p) {
     SelectInst *sel = dyn_cast<SelectInst>(p);
@@ -565,6 +627,9 @@ namespace gbe {
         Builder.SetInsertPoint(insn);
         switch(insn->getOpcode()) {
           default: { insn->dump(); GBE_ASSERT(false && "Illegal instruction\n"); break;}
+          case Instruction::PHI:
+            legalizePHI(Builder, insn);
+            break;
           case Instruction::Select:
             legalizeSelect(Builder, insn);
             break;
@@ -621,6 +686,7 @@ namespace gbe {
 
     processed.clear();
     valueMap.clear();
+    incompletePHIs.clear();
     return changed;
   }
 
