@@ -189,8 +189,8 @@ namespace ir {
       return T::isClassOf(*this);
     }
     /*! max_src for store instruction (vec16 + addr) */
-    static const uint32_t MAX_SRC_NUM = 17;
-    static const uint32_t MAX_DST_NUM = 16;
+    static const uint32_t MAX_SRC_NUM = 32;
+    static const uint32_t MAX_DST_NUM = 32;
   protected:
     BasicBlock *parent;      //!< The basic block containing the instruction
     GBE_CLASS(Instruction);  //!< Use internal allocators

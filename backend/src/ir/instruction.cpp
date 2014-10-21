@@ -261,7 +261,7 @@ namespace ir {
         this->src = src;
         this->dstFamily = getFamily(dstType);
         this->srcFamily = getFamily(srcType);
-        GBE_ASSERT(srcNum <= 16 && dstNum <= 16);
+        GBE_ASSERT(srcNum <= Instruction::MAX_SRC_NUM && dstNum <= Instruction::MAX_DST_NUM);
         this->dstNum = dstNum;
         this->srcNum = srcNum;
       }

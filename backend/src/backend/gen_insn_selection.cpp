@@ -245,7 +245,7 @@ namespace gbe
   public:
     INLINE SelectionDAG(const ir::Instruction &insn) :
       insn(insn), mergeable(0), childNum(insn.getSrcNum()), isRoot(0) {
-      GBE_ASSERT(insn.getSrcNum() < 127);
+      GBE_ASSERT(insn.getSrcNum() <= ir::Instruction::MAX_SRC_NUM);
       for (uint32_t childID = 0; childID < childNum; ++childID)
         this->child[childID] = NULL;
       computeBool = false;

@@ -106,18 +106,18 @@ namespace gbe {
 
     void setComponent(int c, llvm::Value* val)
     {
-      assert(c >= 0 && c < 16 && "Out of bounds component");
+      assert(c >= 0 && c < 32 && "Out of bounds component");
       vals[c] = val;
     }
     llvm::Value* getComponent(int c)
     {
-      assert(c >= 0 && c < 16 && "Out of bounds component");
+      assert(c >= 0 && c < 32 && "Out of bounds component");
       assert(vals[c] && "Requesting non-existing component");
       return vals[c];
     }
 
     // {Value* x, Value* y, Value* z, Value* w}
-    llvm::Value* vals[16];
+    llvm::Value* vals[32];
   };
 
   class Scalarize : public FunctionPass {
@@ -441,7 +441,7 @@ namespace gbe {
 
   void Scalarize::makeScalarizedCalls(Function* f, ArrayRef<Value*> args, int count, VectorValues& vVals)
   {
-    assert(count > 0 && count <= 16 && "invalid number of vector components");
+    assert(count > 0 && count <= 32 && "invalid number of vector components");
     for (int i = 0; i < count; ++i) {
       Value* res;
       SmallVector<Value*, 8> callArgs(args.begin(), args.end());
@@ -455,7 +455,7 @@ namespace gbe {
   void Scalarize::makePerComponentScalarizedCalls(Instruction* inst, ArrayRef<Value*> args)
   {
     int count = GetComponentCount(inst);
-    assert(count > 0 && count <= 16 && "invalid number of vector components");
+    assert(count > 0 && count <= 32 && "invalid number of vector components");
     assert((inst->getNumOperands() == args.size() || isa<PHINode>(inst))
            && "not enough arguments passed for instruction");
 
