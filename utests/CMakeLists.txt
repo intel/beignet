@@ -187,6 +187,7 @@ set (utests_sources
   builtin_kernel_max_global_size.cpp
   image_1D_buffer.cpp
   compare_image_2d_and_1d_array.cpp
+  compiler_fill_image_1d_array.cpp
   compiler_constant_expr.cpp
   vload_bench.cpp
   utest_assert.cpp
