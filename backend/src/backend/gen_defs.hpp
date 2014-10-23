@@ -432,6 +432,8 @@ enum GenMessageTarget {
 #define GEN_MATH_FUNCTION_INT_DIV_QUOTIENT_AND_REMAINDER   11
 #define GEN_MATH_FUNCTION_INT_DIV_QUOTIENT                 12
 #define GEN_MATH_FUNCTION_INT_DIV_REMAINDER                13
+#define GEN8_MATH_FUNCTION_INVM                            14
+#define GEN8_MATH_FUNCTION_RSQRTM                          15
 
 #define GEN_MATH_INTEGER_UNSIGNED     0
 #define GEN_MATH_INTEGER_SIGNED       1
