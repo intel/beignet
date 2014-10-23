@@ -407,6 +407,8 @@ namespace gbe
     void matchBasicBlock(const ir::BasicBlock &bb, uint32_t insnNum);
     /*! a simple block can use predication instead of if/endif*/
     bool isSimpleBlock(const ir::BasicBlock &bb, uint32_t insnNum);
+    /*! an instruction has a QWORD family src or dst operand. */
+    bool hasQWord(const ir::Instruction &insn);
     /*! A root instruction needs to be generated */
     bool isRoot(const ir::Instruction &insn) const;
 
@@ -1494,6 +1496,20 @@ namespace gbe
     return false;
   }
 
+  bool Selection::Opaque::hasQWord(const ir::Instruction &insn) {
+    for (uint32_t i = 0; i < insn.getSrcNum(); i++) {
+      const ir::Register reg = insn.getSrc(i);
+      if (getRegisterFamily(reg) == ir::FAMILY_QWORD)
+        return true;
+    }
+    for (uint32_t i = 0; i < insn.getDstNum(); i++) {
+      const ir::Register reg = insn.getDst(i);
+      if (getRegisterFamily(reg) == ir::FAMILY_QWORD)
+        return true;
+    }
+    return false;
+  } 
+
   bool Selection::Opaque::isSimpleBlock(const ir::BasicBlock &bb, uint32_t insnNum) {
 
     // FIXME should include structured innermost if/else/endif
@@ -1511,6 +1527,18 @@ namespace gbe
          insn.getOpcode() == ir::OP_SIMD_ALL ||
          insn.getOpcode() == ir::OP_ELSE)
         return false;
+
+      // Most of the QWord(long) related instruction introduce some CMP or
+      // more than 10 actual instructions at latter stage.
+      if (hasQWord(insn))
+        return false;
+
+      // Unaligned load may introduce CMP instruction.
+      if ( insn.isMemberOf<ir::LoadInstruction>()) {
+        const ir::LoadInstruction &ld = ir::cast<ir::LoadInstruction>(insn);
+        if (!ld.isAligned())
+          return false;
+      }
     }
 
     // there would generate a extra CMP instruction for predicated BRA with extern flag,
