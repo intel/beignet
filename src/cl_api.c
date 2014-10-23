@@ -2653,6 +2653,8 @@ clEnqueueMapBuffer(cl_command_queue  command_queue,
   data->size        = size;
   data->ptr         = ptr;
   data->unsync_map  = 1;
+  if (map_flags & (CL_MAP_WRITE | CL_MAP_WRITE_INVALIDATE_REGION))
+    data->write_map = 1;
 
   if(handle_events(command_queue, num_events_in_wait_list, event_wait_list,
                    event, data, CL_COMMAND_MAP_BUFFER) == CL_ENQUEUE_EXECUTE_IMM) {
@@ -2735,6 +2737,8 @@ clEnqueueMapImage(cl_command_queue   command_queue,
   data->region[0]   = region[0];  data->region[1] = region[1];  data->region[2] = region[2];
   data->ptr         = ptr;
   data->unsync_map  = 1;
+  if (map_flags & (CL_MAP_WRITE | CL_MAP_WRITE_INVALIDATE_REGION))
+    data->write_map = 1;
 
   if(handle_events(command_queue, num_events_in_wait_list, event_wait_list,
                    event, data, CL_COMMAND_MAP_IMAGE) == CL_ENQUEUE_EXECUTE_IMM) {
@@ -3203,7 +3207,7 @@ clMapBufferIntel(cl_mem mem, cl_int *errcode_ret)
   void *ptr = NULL;
   cl_int err = CL_SUCCESS;
   CHECK_MEM (mem);
-  ptr = cl_mem_map(mem);
+  ptr = cl_mem_map(mem, 1);
 error:
   if (errcode_ret)
     *errcode_ret = err;

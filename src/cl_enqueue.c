@@ -38,7 +38,7 @@ cl_int cl_enqueue_read_buffer(enqueue_data* data)
   void* src_ptr;
   struct _cl_mem_buffer* buffer = (struct _cl_mem_buffer*)mem;
 
-  if (!(src_ptr = cl_mem_map_auto(data->mem_obj))) {
+  if (!(src_ptr = cl_mem_map_auto(data->mem_obj, 0))) {
     err = CL_MAP_FAILURE;
     goto error;
   }
@@ -66,7 +66,7 @@ cl_int cl_enqueue_read_buffer_rect(enqueue_data* data)
          mem->type == CL_MEM_SUBBUFFER_TYPE);
   struct _cl_mem_buffer* buffer = (struct _cl_mem_buffer*)mem;
 
-  if (!(src_ptr = cl_mem_map_auto(mem))) {
+  if (!(src_ptr = cl_mem_map_auto(mem, 0))) {
     err = CL_MAP_FAILURE;
     goto error;
   }
@@ -112,7 +112,7 @@ cl_int cl_enqueue_write_buffer(enqueue_data *data)
   struct _cl_mem_buffer* buffer = (struct _cl_mem_buffer*)mem;
   void* dst_ptr;
 
-  if (!(dst_ptr = cl_mem_map_auto(data->mem_obj))) {
+  if (!(dst_ptr = cl_mem_map_auto(data->mem_obj, 1))) {
     err = CL_MAP_FAILURE;
     goto error;
   }
@@ -140,7 +140,7 @@ cl_int cl_enqueue_write_buffer_rect(enqueue_data *data)
          mem->type == CL_MEM_SUBBUFFER_TYPE);
   struct _cl_mem_buffer* buffer = (struct _cl_mem_buffer*)mem;
 
-  if (!(dst_ptr = cl_mem_map_auto(mem))) {
+  if (!(dst_ptr = cl_mem_map_auto(mem, 1))) {
     err = CL_MAP_FAILURE;
     goto error;
   }
@@ -188,7 +188,7 @@ cl_int cl_enqueue_read_image(enqueue_data *data)
   const size_t* origin = data->origin;
   const size_t* region = data->region;
 
-  if (!(src_ptr = cl_mem_map_auto(mem))) {
+  if (!(src_ptr = cl_mem_map_auto(mem, 0))) {
     err = CL_MAP_FAILURE;
     goto error;
   }
@@ -231,7 +231,7 @@ cl_int cl_enqueue_write_image(enqueue_data *data)
   cl_mem mem = data->mem_obj;
   CHECK_IMAGE(mem, image);
 
-  if (!(dst_ptr = cl_mem_map_auto(mem))) {
+  if (!(dst_ptr = cl_mem_map_auto(mem, 1))) {
     err = CL_MAP_FAILURE;
     goto error;
   }
@@ -260,7 +260,7 @@ cl_int cl_enqueue_map_buffer(enqueue_data *data)
     //because using unsync map in clEnqueueMapBuffer, so force use map_gtt here
     ptr = cl_mem_map_gtt(mem);
   else
-    ptr = cl_mem_map_auto(mem);
+    ptr = cl_mem_map_auto(mem, data->write_map ? 1 : 0);
 
   if (ptr == NULL) {
     err = CL_MAP_FAILURE;
@@ -290,7 +290,7 @@ cl_int cl_enqueue_map_image(enqueue_data *data)
     //because using unsync map in clEnqueueMapBuffer, so force use map_gtt here
     ptr = cl_mem_map_gtt(mem);
   else
-    ptr = cl_mem_map_auto(mem);
+    ptr = cl_mem_map_auto(mem, data->write_map ? 1 : 0);
 
   if (ptr == NULL) {
     err = CL_MAP_FAILURE;
@@ -412,7 +412,7 @@ cl_int cl_enqueue_native_kernel(enqueue_data *data)
       const cl_mem buffer = mem_list[i];
       CHECK_MEM(buffer);
 
-      *((void **)args_mem_loc[i]) = cl_mem_map_auto(buffer);
+      *((void **)args_mem_loc[i]) = cl_mem_map_auto(buffer, 0);
   }
   data->user_func(data->ptr);
 

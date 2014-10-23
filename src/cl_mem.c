@@ -571,8 +571,8 @@ void
 cl_mem_copy_image_to_image(const size_t *dst_origin,const size_t *src_origin, const size_t *region,
                            const struct _cl_mem_image *dst_image, const struct _cl_mem_image *src_image)
 {
-  char* dst= cl_mem_map_auto((cl_mem)dst_image);
-  char* src= cl_mem_map_auto((cl_mem)src_image);
+  char* dst= cl_mem_map_auto((cl_mem)dst_image, 1);
+  char* src= cl_mem_map_auto((cl_mem)src_image, 0);
   size_t dst_offset = dst_image->bpp * dst_origin[0] + dst_image->row_pitch * dst_origin[1] + dst_image->slice_pitch * dst_origin[2];
   size_t src_offset = src_image->bpp * src_origin[0] + src_image->row_pitch * src_origin[1] + src_image->slice_pitch * src_origin[2];
   dst= (char*)dst+ dst_offset;
@@ -601,7 +601,7 @@ cl_mem_copy_image(struct _cl_mem_image *image,
 		  size_t slice_pitch,
 		  void* host_ptr)
 {
-  char* dst_ptr = cl_mem_map_auto((cl_mem)image);
+  char* dst_ptr = cl_mem_map_auto((cl_mem)image, 1);
   size_t origin[3] = {0, 0, 0};
   size_t region[3] = {image->w, image->h, image->depth};
 
@@ -907,8 +907,8 @@ _cl_mem_new_image_from_buffer(cl_context ctx,
                     mem_buffer->base.size / bpp, 0, 0, 0, 0, NULL, errcode_ret);
   if (image == NULL)
     return NULL;
-  void *src = cl_mem_map(buffer);
-  void *dst = cl_mem_map(image);
+  void *src = cl_mem_map(buffer, 0);
+  void *dst = cl_mem_map(image, 1);
   //
   // FIXME, we could use copy buffer to image to do this on GPU latter.
   // currently the copy buffer to image function doesn't support 1D image.
@@ -1748,9 +1748,9 @@ cl_mem_copy_buffer_to_image(cl_command_queue queue, cl_mem buffer, struct _cl_me
 
 
 LOCAL void*
-cl_mem_map(cl_mem mem)
+cl_mem_map(cl_mem mem, int write)
 {
-  cl_buffer_map(mem->bo, 1);
+  cl_buffer_map(mem->bo, write);
   assert(cl_buffer_get_virtual(mem->bo));
   return cl_buffer_get_virtual(mem->bo);
 }
@@ -1787,12 +1787,12 @@ cl_mem_unmap_gtt(cl_mem mem)
 }
 
 LOCAL void*
-cl_mem_map_auto(cl_mem mem)
+cl_mem_map_auto(cl_mem mem, int write)
 {
   if (IS_IMAGE(mem) && cl_mem_image(mem)->tiling != CL_NO_TILE)
     return cl_mem_map_gtt(mem);
   else
-    return cl_mem_map(mem);
+    return cl_mem_map(mem, write);
 }
 
 LOCAL cl_int

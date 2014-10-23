@@ -232,7 +232,7 @@ extern cl_int cl_mem_copy_buffer_to_image(cl_command_queue, cl_mem, struct _cl_m
                                           const size_t, const size_t *, const size_t *);
 
 /* Directly map a memory object */
-extern void *cl_mem_map(cl_mem);
+extern void *cl_mem_map(cl_mem, int);
 
 /* Unmap a memory object */
 extern cl_int cl_mem_unmap(cl_mem);
@@ -247,7 +247,7 @@ extern void *cl_mem_map_gtt_unsync(cl_mem);
 extern cl_int cl_mem_unmap_gtt(cl_mem);
 
 /* Directly map a memory object - tiled images are mapped in GTT mode */
-extern void *cl_mem_map_auto(cl_mem);
+extern void *cl_mem_map_auto(cl_mem, int);
 
 /* Unmap a memory object - tiled images are unmapped in GTT mode */
 extern cl_int cl_mem_unmap_auto(cl_mem);

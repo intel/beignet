@@ -336,7 +336,7 @@ cl_fulsim_read_all_surfaces(cl_command_queue queue, cl_kernel k)
     assert(mem->bo);
     chunk_n = cl_buffer_get_size(mem->bo) / chunk_sz;
     chunk_remainder = cl_buffer_get_size(mem->bo) % chunk_sz;
-    to = cl_mem_map(mem);
+    to = cl_mem_map(mem, 1);
     for (j = 0; j < chunk_n; ++j) {
       char name[256];
       sprintf(name, "dump%03i.bmp", curr);
