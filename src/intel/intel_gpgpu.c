@@ -768,8 +768,8 @@ intel_gpgpu_state_init(intel_gpgpu_t *gpgpu,
     dri_bo_unreference(gpgpu->aux_buf.bo);
   gpgpu->aux_buf.bo = NULL;
 
-  //surface heap must be 4096 bytes aligned because state base address use 20bit for the address
-  size_aux = ALIGN(size_aux, 4096);
+  /* begin with surface heap to make sure it's page aligned,
+     because state base address use 20bit for the address */
   gpgpu->aux_offset.surface_heap_offset = size_aux;
   size_aux += sizeof(surface_heap_t);
 
@@ -793,7 +793,10 @@ intel_gpgpu_state_init(intel_gpgpu_t *gpgpu,
   gpgpu->aux_offset.sampler_border_color_state_offset = size_aux;
   size_aux += GEN_MAX_SAMPLERS * sizeof(gen7_sampler_border_color_t);
 
-  bo = dri_bo_alloc(gpgpu->drv->bufmgr, "AUX_BUFFER", size_aux, 0);
+  /* make sure aux buffer is page aligned */
+  size_aux = ALIGN(size_aux, 4096);
+
+  bo = dri_bo_alloc(gpgpu->drv->bufmgr, "AUX_BUFFER", size_aux, 4096);
   if (!bo || dri_bo_map(bo, 1) != 0) {
     fprintf(stderr, "%s:%d: %s.\n", __FILE__, __LINE__, strerror(errno));
     if (bo)
