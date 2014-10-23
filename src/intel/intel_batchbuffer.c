@@ -118,8 +118,9 @@ intel_batchbuffer_flush(intel_batchbuffer_t *batch)
 
   *(uint32_t*)batch->ptr = MI_BATCH_BUFFER_END;
   batch->ptr += 4;
-  dri_bo_unmap(batch->buffer);
   used = batch->ptr - batch->map;
+  dri_bo_unmap(batch->buffer);
+  batch->ptr = batch->map = NULL;
 
   if (!is_locked)
     intel_driver_lock_hardware(batch->intel);
