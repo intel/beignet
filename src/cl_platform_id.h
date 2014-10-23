@@ -25,6 +25,7 @@
 #include "cl_extensions.h"
 #include "cl_khr_icd.h"
 #include "src/OCLConfig.h"
+#include "src/git_sha1.h"
 
 struct _cl_platform_id {
   DEFINE_ICD(dispatch)
@@ -62,10 +63,15 @@ extern cl_int cl_get_platform_info(cl_platform_id    platform,
 #define _JOINT(x, y) _STR(x) "." _STR(y)
 #define _JOINT3(x, y, z) _STR(x) "." _STR(y) "." _STR(z)
 
+#ifdef BEIGNET_GIT_SHA1
+       #define BEIGNET_GIT_SHA1_STRING " (" BEIGNET_GIT_SHA1 ")"
+#else
+       #define BEIGNET_GIT_SHA1_STRING
+#endif
 
 #define LIBCL_DRIVER_VERSION_STRING _JOINT(LIBCL_DRIVER_VERSION_MAJOR, LIBCL_DRIVER_VERSION_MINOR)
-#define LIBCL_VERSION_STRING "OpenCL " _JOINT(LIBCL_C_VERSION_MAJOR, LIBCL_C_VERSION_MINOR) " beignet " LIBCL_DRIVER_VERSION_STRING
-#define LIBCL_C_VERSION_STRING "OpenCL C " _JOINT(LIBCL_C_VERSION_MAJOR, LIBCL_C_VERSION_MINOR) " beignet " LIBCL_DRIVER_VERSION_STRING
+#define LIBCL_VERSION_STRING "OpenCL " _JOINT(LIBCL_C_VERSION_MAJOR, LIBCL_C_VERSION_MINOR) " beignet " LIBCL_DRIVER_VERSION_STRING BEIGNET_GIT_SHA1_STRING
+#define LIBCL_C_VERSION_STRING "OpenCL C " _JOINT(LIBCL_C_VERSION_MAJOR, LIBCL_C_VERSION_MINOR) " beignet " LIBCL_DRIVER_VERSION_STRING BEIGNET_GIT_SHA1_STRING
 
 #endif /* __CL_PLATFORM_ID_H__ */
 

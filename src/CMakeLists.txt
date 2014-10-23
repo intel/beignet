@@ -109,6 +109,13 @@ SET(CMAKE_CXX_FLAGS "-DHAS_OCLIcd ${CMAKE_CXX_FLAGS}")
 SET(CMAKE_C_FLAGS "-DHAS_OCLIcd ${CMAKE_C_FLAGS}")
 endif (OCLIcd_FOUND)
 
+set(GIT_SHA1 "git_sha1.h")
+add_custom_command(OUTPUT  ${GIT_SHA1}
+  COMMAND chmod +x ${CMAKE_CURRENT_SOURCE_DIR}/git_sha1.sh
+  COMMAND ${CMAKE_CURRENT_SOURCE_DIR}/git_sha1.sh ${CMAKE_CURRENT_SOURCE_DIR} ${GIT_SHA1}
+ )
+add_custom_target(GIT_SHA1 ALL DEPENDS ${GIT_SHA1})
+
 SET(CMAKE_SHARED_LINKER_FLAGS "${CMAKE_SHARED_LINKER_FLAGS} -Wl,-Bsymbolic,--allow-shlib-undefined")
 
 link_directories (${LLVM_LIBRARY_DIR} ${DRM_LIBDIR})
