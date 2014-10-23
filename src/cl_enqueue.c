@@ -31,24 +31,13 @@
 
 cl_int cl_enqueue_read_buffer(enqueue_data* data)
 {
-  cl_int err = CL_SUCCESS;
   cl_mem mem = data->mem_obj;
   assert(mem->type == CL_MEM_BUFFER_TYPE ||
          mem->type == CL_MEM_SUBBUFFER_TYPE);
-  void* src_ptr;
   struct _cl_mem_buffer* buffer = (struct _cl_mem_buffer*)mem;
 
-  if (!(src_ptr = cl_mem_map_auto(data->mem_obj, 0))) {
-    err = CL_MAP_FAILURE;
-    goto error;
-  }
-
-  memcpy(data->ptr, (char*)src_ptr + data->offset + buffer->sub_offset, data->size);
-
-  err = cl_mem_unmap_auto(data->mem_obj);
-
-error:
-  return err;
+  return cl_buffer_get_subdata(mem->bo, data->offset + buffer->sub_offset,
+			       data->size, data->ptr);
 }
 
 cl_int cl_enqueue_read_buffer_rect(enqueue_data* data)
@@ -105,24 +94,13 @@ error:
 
 cl_int cl_enqueue_write_buffer(enqueue_data *data)
 {
-  cl_int err = CL_SUCCESS;
   cl_mem mem = data->mem_obj;
   assert(mem->type == CL_MEM_BUFFER_TYPE ||
          mem->type == CL_MEM_SUBBUFFER_TYPE);
   struct _cl_mem_buffer* buffer = (struct _cl_mem_buffer*)mem;
-  void* dst_ptr;
 
-  if (!(dst_ptr = cl_mem_map_auto(data->mem_obj, 1))) {
-    err = CL_MAP_FAILURE;
-    goto error;
-  }
-
-  memcpy((char*)dst_ptr + data->offset + buffer->sub_offset, data->const_ptr, data->size);
-
-  err = cl_mem_unmap_auto(data->mem_obj);
-
-error:
-  return err;
+  return cl_buffer_subdata(mem->bo, data->offset + buffer->sub_offset,
+			   data->size, data->const_ptr);
 }
 
 cl_int cl_enqueue_write_buffer_rect(enqueue_data *data)

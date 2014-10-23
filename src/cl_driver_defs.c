@@ -44,6 +44,7 @@ LOCAL cl_buffer_get_size_cb *cl_buffer_get_size = NULL;
 LOCAL cl_buffer_pin_cb *cl_buffer_pin = NULL;
 LOCAL cl_buffer_unpin_cb *cl_buffer_unpin = NULL;
 LOCAL cl_buffer_subdata_cb *cl_buffer_subdata = NULL;
+LOCAL cl_buffer_get_subdata_cb *cl_buffer_get_subdata = NULL;
 LOCAL cl_buffer_wait_rendering_cb *cl_buffer_wait_rendering = NULL;
 LOCAL cl_buffer_get_buffer_from_libva_cb *cl_buffer_get_buffer_from_libva = NULL;
 LOCAL cl_buffer_get_image_from_libva_cb *cl_buffer_get_image_from_libva = NULL;

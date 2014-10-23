@@ -353,6 +353,10 @@ extern cl_buffer_unpin_cb *cl_buffer_unpin;
 typedef int (cl_buffer_subdata_cb)(cl_buffer, unsigned long, unsigned long, const void*);
 extern cl_buffer_subdata_cb *cl_buffer_subdata;
 
+/* Get data from buffer */
+typedef int (cl_buffer_get_subdata_cb)(cl_buffer, unsigned long, unsigned long, void*);
+extern cl_buffer_get_subdata_cb *cl_buffer_get_subdata;
+
 /* Wait for all pending rendering for this buffer to complete */
 typedef int (cl_buffer_wait_rendering_cb) (cl_buffer);
 extern cl_buffer_wait_rendering_cb *cl_buffer_wait_rendering;

@@ -777,6 +777,7 @@ intel_setup_callbacks(void)
   cl_buffer_pin = (cl_buffer_pin_cb *) drm_intel_bo_pin;
   cl_buffer_unpin = (cl_buffer_unpin_cb *) drm_intel_bo_unpin;
   cl_buffer_subdata = (cl_buffer_subdata_cb *) drm_intel_bo_subdata;
+  cl_buffer_get_subdata = (cl_buffer_get_subdata_cb *) drm_intel_bo_get_subdata;
   cl_buffer_wait_rendering = (cl_buffer_wait_rendering_cb *) drm_intel_bo_wait_rendering;
   cl_buffer_get_fd = (cl_buffer_get_fd_cb *) drm_intel_bo_gem_export_to_prime;
   cl_buffer_get_tiling_align = (cl_buffer_get_tiling_align_cb *)intel_buffer_get_tiling_align;
