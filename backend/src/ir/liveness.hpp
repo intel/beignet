@@ -132,6 +132,7 @@ namespace ir {
     /*! Set of work list block which has exit(return) instruction */
     typedef set <struct BlockInfo*> WorkSet;
     WorkSet workSet;
+    WorkSet unvisitBlocks;
 
     /*! Use custom allocators */
     GBE_CLASS(Liveness);

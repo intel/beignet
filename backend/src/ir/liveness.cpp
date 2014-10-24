@@ -41,7 +41,11 @@ namespace ir {
       }
     });
     // Now with iterative analysis, we compute liveout and livein sets
-    this->computeLiveInOut();
+    while (unvisitBlocks.size()) {
+      if (workSet.size() == 0)
+        workSet.insert(--unvisitBlocks.end(), unvisitBlocks.end());
+      this->computeLiveInOut();
+    }
     // extend register (def in loop, use out-of-loop) liveness to the whole loop
     set<Register> extentRegs;
     this->computeExtraLiveInOut(extentRegs);
@@ -98,6 +102,7 @@ namespace ir {
       this->initInstruction(*info, insn);
     });
     liveness[&bb] = info;
+    unvisitBlocks.insert(info);
     if(!bb.liveout.empty())
       info->liveOut.insert(bb.liveout.begin(), bb.liveout.end());
   }
@@ -124,12 +129,16 @@ namespace ir {
     while(!workSet.empty()) {
       auto currInfo = *workSet.begin();
       workSet.erase(currInfo);
+      if (unvisitBlocks.find(currInfo) != unvisitBlocks.end())
+        unvisitBlocks.erase(currInfo);
       for (auto currOutVar : currInfo->liveOut)
         if (!currInfo->varKill.contains(currOutVar))
           currInfo->upwardUsed.insert(currOutVar);
       bool isChanged = false;
       for (auto prev : currInfo->bb.getPredecessorSet()) {
         BlockInfo *prevInfo = liveness[prev];
+        if (unvisitBlocks.find(currInfo) != unvisitBlocks.end())
+          unvisitBlocks.erase(currInfo);
         for (auto currInVar : currInfo->upwardUsed) {
           if (!prevInfo->bb.undefPhiRegs.contains(currInVar)) {
             auto changed = prevInfo->liveOut.insert(currInVar);
