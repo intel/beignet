@@ -4,9 +4,9 @@ SOURCE_DIR=$1
 FILE=$2
 
 touch ${SOURCE_DIR}/${FILE}_tmp
-if test -d $1/../.git; then
+if test -d ${SOURCE_DIR}/../.git; then
         if which git > /dev/null; then
-            git --git-dir=$1/../.git log -n 1 --oneline | \
+            git --git-dir=${SOURCE_DIR}/../.git log -n 1 --oneline | \
                 sed 's/^\([^ ]*\) .*/#define BEIGNET_GIT_SHA1 "git-\1"/' \
                 > ${SOURCE_DIR}/${FILE}_tmp
         fi
