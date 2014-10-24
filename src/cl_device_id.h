@@ -60,7 +60,7 @@ struct _cl_device_id {
   size_t   image3d_max_width;
   size_t   image3d_max_height;
   size_t   image3d_max_depth;
-  cl_ulong image_mem_size;
+  size_t   image_mem_size;
   cl_uint  max_samplers;
   size_t   max_parameter_size;
   cl_uint  mem_base_addr_align;
