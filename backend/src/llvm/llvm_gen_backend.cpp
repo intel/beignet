@@ -365,6 +365,18 @@ namespace gbe
             return this->_newScalar(value, key, elementType, index, uniform);
           break;
         }
+        case Type::StructTyID:
+        {
+          auto structType = cast<StructType>(type);
+          auto elementType = structType->getElementType(index);
+          auto elementTypeID = elementType->getTypeID();
+          if (elementTypeID != Type::IntegerTyID &&
+              elementTypeID != Type::FloatTyID &&
+              elementTypeID != Type::DoubleTyID)
+            GBE_ASSERTM(false, "Strcuts of elements are not supported");
+            return this->_newScalar(value, key, elementType, index, uniform);
+          break;
+        }
         default: NOT_SUPPORTED;
       };
       return ir::Register();
@@ -586,6 +598,7 @@ namespace gbe
     DECL_VISIT_FN(FCmpInst, FCmpInst);
     DECL_VISIT_FN(InsertElement, InsertElementInst);
     DECL_VISIT_FN(ExtractElement, ExtractElementInst);
+    DECL_VISIT_FN(ExtractValue, ExtractValueInst);
     DECL_VISIT_FN(ShuffleVectorInst, ShuffleVectorInst);
     DECL_VISIT_FN(SelectInst, SelectInst);
     DECL_VISIT_FN(BranchInst, BranchInst);
@@ -613,7 +626,6 @@ namespace gbe
     void visitUnreachableInst(UnreachableInst &I) {NOT_SUPPORTED;}
     void visitGetElementPtrInst(GetElementPtrInst &I) {NOT_SUPPORTED;}
     void visitInsertValueInst(InsertValueInst &I) {NOT_SUPPORTED;}
-    void visitExtractValueInst(ExtractValueInst &I) {NOT_SUPPORTED;}
     template <bool isLoad, typename T> void visitLoadOrStore(T &I);
 
     INLINE void gatherBTI(Value *pointer, ir::BTI &bti);
@@ -1026,6 +1038,14 @@ namespace gbe
       {
         auto vectorType = cast<VectorType>(type);
         const uint32_t elemNum = vectorType->getNumElements();
+        for (uint32_t elemID = 0; elemID < elemNum; ++elemID)
+          regTranslator.newScalar(value, key, elemID, uniform);
+        break;
+      }
+      case Type::StructTyID:
+      {
+        auto structType = cast<StructType>(type);
+        const uint32_t elemNum = structType->getNumElements();
         for (uint32_t elemID = 0; elemID < elemNum; ++elemID)
           regTranslator.newScalar(value, key, elemID, uniform);
         break;
@@ -2327,6 +2347,15 @@ namespace gbe
   void GenWriter::emitExtractElement(ExtractElementInst &I) {
   }
 
+  void GenWriter::regAllocateExtractValue(ExtractValueInst &I) {
+    Value *agg = I.getAggregateOperand();
+    for (const unsigned *i = I.idx_begin(), *e = I.idx_end(); i != e; i++)
+      regTranslator.newValueProxy(agg, &I, *i, 0);
+  }
+
+  void GenWriter::emitExtractValue(ExtractValueInst &I) {
+  }
+
   void GenWriter::regAllocateShuffleVectorInst(ShuffleVectorInst &I) {}
   void GenWriter::emitShuffleVectorInst(ShuffleVectorInst &I) {}
 
@@ -2441,6 +2470,17 @@ namespace gbe
           case Intrinsic::debugtrap:
           case Intrinsic::dbg_value:
           case Intrinsic::dbg_declare:
+          break;
+          case Intrinsic::sadd_with_overflow:
+          case Intrinsic::uadd_with_overflow:
+          case Intrinsic::ssub_with_overflow:
+          case Intrinsic::usub_with_overflow:
+          case Intrinsic::smul_with_overflow:
+          case Intrinsic::umul_with_overflow:
+            this->newRegister(&I);
+          break;
+          case Intrinsic::bswap:
+            this->newRegister(&I);
           break;
           default:
           GBE_ASSERTM(false, "Unsupported intrinsics");
@@ -2741,7 +2781,6 @@ namespace gbe
             const ir::Register src2 = this->getRegister(I.getOperand(2));
             ctx.MUL(ir::TYPE_FLOAT, tmp, src0, src1);
             ctx.ADD(ir::TYPE_FLOAT, dst, tmp, src2);
-            break;
           }
           break;
           case Intrinsic::lifetime_start:
@@ -2751,6 +2790,29 @@ namespace gbe
           case Intrinsic::debugtrap:
           case Intrinsic::dbg_value:
           case Intrinsic::dbg_declare:
+          break;
+          case Intrinsic::uadd_with_overflow:
+          {
+            Type *llvmDstType = I.getType();
+            GBE_ASSERT(llvmDstType->isStructTy());
+            ir::Type dst0Type = getType(ctx, llvmDstType->getStructElementType(0));
+            const ir::Register dst0  = this->getRegister(&I, 0);
+            const ir::Register src0 = this->getRegister(I.getOperand(0));
+            const ir::Register src1 = this->getRegister(I.getOperand(1));
+            ctx.ADD(dst0Type, dst0, src0, src1);
+
+            ir::Register overflow = this->getRegister(&I, 1);
+            ctx.LT(dst0Type, overflow, dst0, src1);
+          }
+          break;
+          case Intrinsic::sadd_with_overflow:
+          case Intrinsic::ssub_with_overflow:
+          case Intrinsic::usub_with_overflow:
+          case Intrinsic::smul_with_overflow:
+          case Intrinsic::umul_with_overflow:
+          NOT_IMPLEMENTED;
+          break;
+          case Intrinsic::bswap:
           break;
           default: NOT_IMPLEMENTED;
         }
