@@ -132,7 +132,7 @@ namespace gbe {
             blocks.insert(bb);
         for(auto bb : blocks) {
           for (BasicBlock::iterator inst = bb->begin(), instE = bb->end(); inst != instE; ++inst) {
-            unsigned addrSpace = 0;
+            unsigned addrSpace = -1;
             if (isa<LoadInst>(*inst)) {
               LoadInst *ld = cast<LoadInst>(&*inst);
               addrSpace = ld->getPointerAddressSpace();
