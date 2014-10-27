@@ -104,6 +104,7 @@ set (utests_sources
   compiler_write_only.cpp
   compiler_write_only_shorts.cpp
   compiler_switch.cpp
+  compiler_overflow.cpp
   compiler_math.cpp
   compiler_atomic_functions.cpp
   compiler_async_copy.cpp
