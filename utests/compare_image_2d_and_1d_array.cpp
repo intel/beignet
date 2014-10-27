@@ -8,6 +8,10 @@ static void compare_image_2d_and_1d_array(void)
   cl_image_format format;
   cl_image_desc desc;
   cl_sampler sampler;
+  uint32_t* dst0;
+  uint32_t* dst1;
+  size_t origin[3] = { };
+  size_t region[3];
 
   // Create the 1D array buffer.
   memset(&desc, 0x0, sizeof(cl_image_desc));
@@ -60,19 +64,26 @@ static void compare_image_2d_and_1d_array(void)
   locals[1] = 16;
   OCL_NDRANGE(2);
 
-  OCL_MAP_BUFFER_GTT(0);
-  OCL_MAP_BUFFER_GTT(1);
+  // Check result
+  region[0] = w;
+  region[1] = h;
+  region[2] = 1;
+  dst0 = (uint32_t*)malloc(w*h*sizeof(uint32_t));
+  dst1 = (uint32_t*)malloc(w*h*sizeof(uint32_t));
+  OCL_READ_IMAGE(buf[0], origin, region, dst0);
+  OCL_READ_IMAGE(buf[1], origin, region, dst1);
+
   for (int j = 0; j < h; ++j) {
     for (int i = 0; i < w; i++) {
       // Because the array index will not join the sample caculation, the result should
       // be different between the 2D and 1D_array.
       if (j % 2 == 0)
-        OCL_ASSERT(((uint32_t*)buf_data[0])[j * w + i] == ((uint32_t*)buf_data[1])[j * w + i]);
+        OCL_ASSERT(dst0[j * w + i] == dst1[j * w + i]);
     }
   }
-  OCL_UNMAP_BUFFER_GTT(0);
-  OCL_UNMAP_BUFFER_GTT(1);
 
+  free(dst0);
+  free(dst1);
   OCL_CALL(clReleaseSampler, sampler);
 }
 
