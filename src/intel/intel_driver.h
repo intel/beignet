@@ -54,6 +54,7 @@
 #include <drm.h>
 #include <i915_drm.h>
 #include <intel_bufmgr.h>
+#include <intel/intel_gpgpu.h>
 
 #define CMD_MI                                  (0x0 << 29)
 #define CMD_2D                                  (0x2 << 29)
@@ -73,6 +74,7 @@
 #define BR13_8888                               (0x3 << 24)
 
 struct dri_state;
+struct intel_gpgpu_node;
 typedef struct _XDisplay Display;
 
 typedef struct intel_driver
@@ -88,7 +90,33 @@ typedef struct intel_driver
   int need_close;
   Display *x11_display;
   struct dri_state *dri_ctx;
+  struct intel_gpgpu_node *gpgpu_list;
 } intel_driver_t;
+
+#define SET_BLOCKED_SIGSET(DRIVER)   do {                     \
+  sigset_t bl_mask;                                           \
+  sigfillset(&bl_mask);                                       \
+  sigdelset(&bl_mask, SIGFPE);                                \
+  sigdelset(&bl_mask, SIGILL);                                \
+  sigdelset(&bl_mask, SIGSEGV);                               \
+  sigdelset(&bl_mask, SIGBUS);                                \
+  sigdelset(&bl_mask, SIGKILL);                               \
+  pthread_sigmask(SIG_SETMASK, &bl_mask, &(DRIVER)->sa_mask); \
+} while (0)
+
+#define RESTORE_BLOCKED_SIGSET(DRIVER) do {                   \
+  pthread_sigmask(SIG_SETMASK, &(DRIVER)->sa_mask, NULL);     \
+} while (0)
+
+#define PPTHREAD_MUTEX_LOCK(DRIVER) do {                      \
+  SET_BLOCKED_SIGSET(DRIVER);                                 \
+  pthread_mutex_lock(&(DRIVER)->ctxmutex);                    \
+} while (0)
+
+#define PPTHREAD_MUTEX_UNLOCK(DRIVER) do {                    \
+  pthread_mutex_unlock(&(DRIVER)->ctxmutex);                  \
+  RESTORE_BLOCKED_SIGSET(DRIVER);                             \
+} while (0)
 
 /* device control */
 extern void intel_driver_lock_hardware(intel_driver_t*);

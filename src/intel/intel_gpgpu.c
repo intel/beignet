@@ -33,8 +33,6 @@
 #include "intel/intel_gpgpu.h"
 #include "intel/intel_defines.h"
 #include "intel/intel_structs.h"
-#include "intel/intel_batchbuffer.h"
-#include "intel/intel_driver.h"
 #include "program.h" // for BTI_RESERVED_NUM
 
 #include "cl_alloc.h"
@@ -68,58 +66,6 @@ typedef struct intel_event {
 } intel_event_t;
 
 #define MAX_IF_DESC    32
-
-/* We can bind only a limited number of buffers */
-enum { max_buf_n = 128 };
-
-enum { max_img_n = 128};
-
-enum {max_sampler_n = 16 };
-
-/* Handle GPGPU state */
-struct intel_gpgpu
-{
-  void* ker_opaque;
-  size_t global_wk_sz[3];
-  void* printf_info;
-  intel_driver_t *drv;
-  intel_batchbuffer_t *batch;
-  cl_gpgpu_kernel *ker;
-  drm_intel_bo *binded_buf[max_buf_n];  /* all buffers binded for the call */
-  uint32_t target_buf_offset[max_buf_n];/* internal offset for buffers binded for the call */
-  uint32_t binded_offset[max_buf_n];    /* their offsets in the curbe buffer */
-  uint32_t binded_n;                    /* number of buffers binded */
-
-  unsigned long img_bitmap;              /* image usage bitmap. */
-  unsigned int img_index_base;          /* base index for image surface.*/
-
-  unsigned long sampler_bitmap;          /* sampler usage bitmap. */
-
-  struct { drm_intel_bo *bo; } stack_b;
-  struct { drm_intel_bo *bo; } perf_b;
-  struct { drm_intel_bo *bo; } scratch_b;
-  struct { drm_intel_bo *bo; } constant_b;
-  struct { drm_intel_bo *bo; } time_stamp_b;  /* time stamp buffer */
-  struct { drm_intel_bo *bo;
-           drm_intel_bo *ibo;} printf_b;      /* the printf buf and index buf*/
-
-  struct { drm_intel_bo *bo; } aux_buf;
-  struct {
-    uint32_t surface_heap_offset;
-    uint32_t curbe_offset;
-    uint32_t idrt_offset;
-    uint32_t sampler_state_offset;
-    uint32_t sampler_border_color_state_offset;
-  } aux_offset;
-
-  uint32_t per_thread_scratch;
-  struct {
-    uint32_t num_cs_entries;
-    uint32_t size_cs_entry;  /* size of one entry in 512bit elements */
-  } curb;
-
-  uint32_t max_threads;      /* max threads requested by the user */
-};
 
 typedef struct intel_gpgpu intel_gpgpu_t;
 
@@ -172,7 +118,7 @@ static void intel_gpgpu_unref_batch_buf(void *buf)
 }
 
 static void
-intel_gpgpu_delete(intel_gpgpu_t *gpgpu)
+intel_gpgpu_delete_finished(intel_gpgpu_t *gpgpu)
 {
   if (gpgpu == NULL)
     return;
@@ -196,6 +142,77 @@ intel_gpgpu_delete(intel_gpgpu_t *gpgpu)
 
   intel_batchbuffer_delete(gpgpu->batch);
   cl_free(gpgpu);
+}
+
+/* Destroy the all intel_gpgpu, no matter finish or not, when driver destroy */
+void intel_gpgpu_delete_all(intel_driver_t *drv)
+{
+  struct intel_gpgpu_node *p;
+  if(drv->gpgpu_list == NULL)
+    return;
+
+  PPTHREAD_MUTEX_LOCK(drv);
+  while(drv->gpgpu_list) {
+    p = drv->gpgpu_list;
+    drv->gpgpu_list = p->next;
+    intel_gpgpu_delete_finished(p->gpgpu);
+    cl_free(p);
+  }
+  PPTHREAD_MUTEX_UNLOCK(drv);
+}
+
+static void
+intel_gpgpu_delete(intel_gpgpu_t *gpgpu)
+{
+  intel_driver_t *drv = gpgpu->drv;
+  struct intel_gpgpu_node *p, *node;
+
+  PPTHREAD_MUTEX_LOCK(drv);
+  p = drv->gpgpu_list;
+  if(p) {
+    node = p->next;
+    while(node) {
+      if(node->gpgpu->batch && node->gpgpu->batch->buffer &&
+         !drm_intel_bo_busy(node->gpgpu->batch->buffer)) {
+        p->next = node->next;
+        intel_gpgpu_delete_finished(node->gpgpu);
+        cl_free(node);
+        node = p->next;
+      } else {
+        p = node;
+        node = node->next;
+      }
+    }
+    node = drv->gpgpu_list;
+    if(node->gpgpu->batch && node->gpgpu->batch->buffer &&
+       !drm_intel_bo_busy(node->gpgpu->batch->buffer)) {
+      drv->gpgpu_list = drv->gpgpu_list->next;
+      intel_gpgpu_delete_finished(node->gpgpu);
+      cl_free(node);
+      node = p->next;
+    }
+  }
+  if (gpgpu == NULL)
+    return;
+
+  if(gpgpu->batch && gpgpu->batch->buffer &&
+     !drm_intel_bo_busy(gpgpu->batch->buffer)) {
+    TRY_ALLOC_NO_ERR (node, CALLOC(struct intel_gpgpu_node));
+    node->gpgpu = gpgpu;
+    node->next = NULL;
+    p = drv->gpgpu_list;
+    if(p == NULL)
+      drv->gpgpu_list= node;
+    else {
+      while(p->next)
+        p = p->next;
+      p->next = node;
+    }
+  } else
+    intel_gpgpu_delete_finished(gpgpu);
+
+error:
+  PPTHREAD_MUTEX_UNLOCK(drv);
 }
 
 static intel_gpgpu_t*

@@ -136,8 +136,9 @@ intel_batchbuffer_flush(intel_batchbuffer_t *batch)
   if (!is_locked)
     intel_driver_unlock_hardware(batch->intel);
 
-  // Release the buffer
-  intel_batchbuffer_terminate(batch);
+  // Can't release buffer here. gpgpu only can be delete only when the batch buffer is complete.
+  // Remain the buffer for gpgpu delete check.
+  //intel_batchbuffer_terminate(batch);
 }
 
 LOCAL void 

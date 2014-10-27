@@ -79,31 +79,6 @@
 #include "cl_device_id.h"
 #include "cl_platform_id.h"
 
-#define SET_BLOCKED_SIGSET(DRIVER)   do {                     \
-  sigset_t bl_mask;                                           \
-  sigfillset(&bl_mask);                                       \
-  sigdelset(&bl_mask, SIGFPE);                                \
-  sigdelset(&bl_mask, SIGILL);                                \
-  sigdelset(&bl_mask, SIGSEGV);                               \
-  sigdelset(&bl_mask, SIGBUS);                                \
-  sigdelset(&bl_mask, SIGKILL);                               \
-  pthread_sigmask(SIG_SETMASK, &bl_mask, &(DRIVER)->sa_mask); \
-} while (0)
-
-#define RESTORE_BLOCKED_SIGSET(DRIVER) do {                   \
-  pthread_sigmask(SIG_SETMASK, &(DRIVER)->sa_mask, NULL);     \
-} while (0)
-
-#define PPTHREAD_MUTEX_LOCK(DRIVER) do {                      \
-  SET_BLOCKED_SIGSET(DRIVER);                                 \
-  pthread_mutex_lock(&(DRIVER)->ctxmutex);                    \
-} while (0)
-
-#define PPTHREAD_MUTEX_UNLOCK(DRIVER) do {                    \
-  pthread_mutex_unlock(&(DRIVER)->ctxmutex);                  \
-  RESTORE_BLOCKED_SIGSET(DRIVER);                             \
-} while (0)
-
 static void
 intel_driver_delete(intel_driver_t *driver)
 {
@@ -423,11 +398,13 @@ intel_get_device_id(void)
   return intel_device_id;
 }
 
+extern void intel_gpgpu_delete_all(intel_driver_t *driver);
 static void
 cl_intel_driver_delete(intel_driver_t *driver)
 {
   if (driver == NULL)
     return;
+  intel_gpgpu_delete_all(driver);
   intel_driver_context_destroy(driver);
   intel_driver_close(driver);
   intel_driver_terminate(driver);
