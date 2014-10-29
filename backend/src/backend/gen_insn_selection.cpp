@@ -2566,14 +2566,12 @@ namespace gbe
 
       sel.push();
       if (sel.has32X32Mul()) {
-        //Seems scalar mul need QWROD dst, otherwise will touch the dst's follow register.
         if (sel.isScalarReg(insn.getDst(0)) == true) {
           sel.curr.execWidth = 1;
-          GenRegister tmp = sel.selReg(sel.reg(FAMILY_QWORD), Type::TYPE_S64);
-          sel.MUL(tmp, src0, src1);
-          sel.MOV(dst, GenRegister::retype(tmp, GEN_TYPE_D));
-        } else
-          sel.MUL(dst, src0, src1);
+          sel.curr.predicate = GEN_PREDICATE_NONE;
+          sel.curr.noMask = 1;
+        }
+        sel.MUL(dst, src0, src1);
       } else {
         if (sel.isScalarReg(insn.getDst(0)) == true) {
           sel.curr.execWidth = 1;
