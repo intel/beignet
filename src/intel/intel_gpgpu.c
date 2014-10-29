@@ -96,6 +96,14 @@ intel_gpgpu_load_vfe_state_t *intel_gpgpu_load_vfe_state = NULL;
 typedef void (intel_gpgpu_build_idrt_t)(intel_gpgpu_t *gpgpu, cl_gpgpu_kernel *kernel);
 intel_gpgpu_build_idrt_t *intel_gpgpu_build_idrt = NULL;
 
+
+typedef void (intel_gpgpu_load_curbe_buffer_t)(intel_gpgpu_t *gpgpu);
+intel_gpgpu_load_curbe_buffer_t *intel_gpgpu_load_curbe_buffer = NULL;
+
+
+typedef void (intel_gpgpu_load_idrt_t)(intel_gpgpu_t *gpgpu);
+intel_gpgpu_load_idrt_t *intel_gpgpu_load_idrt = NULL;
+
 static void
 intel_gpgpu_sync(void *buf)
 {
@@ -277,10 +285,7 @@ intel_gpgpu_set_base_address_gen7(intel_gpgpu_t *gpgpu)
             I915_GEM_DOMAIN_INSTRUCTION,
             gpgpu->aux_offset.surface_heap_offset + (0 | (def_cc << 8) | (def_cc << 4) | (0 << 3)| BASE_ADDRESS_MODIFY));
 
-  OUT_RELOC(gpgpu->batch, gpgpu->aux_buf.bo,
-            I915_GEM_DOMAIN_RENDER,
-            I915_GEM_DOMAIN_RENDER,
-            0 | (def_cc << 8) |  BASE_ADDRESS_MODIFY); /* Dynamic State Base Addr */
+  OUT_BATCH(gpgpu->batch, 0 | (def_cc << 8) | BASE_ADDRESS_MODIFY); /* Dynamic State Base Addr */
 
   OUT_BATCH(gpgpu->batch, 0 | (def_cc << 8) | BASE_ADDRESS_MODIFY); /* Indirect Obj Base Addr */
   OUT_BATCH(gpgpu->batch, 0 | (def_cc << 8) | BASE_ADDRESS_MODIFY); /* Instruction Base Addr  */
@@ -463,7 +468,18 @@ intel_gpgpu_load_vfe_state_gen8(intel_gpgpu_t *gpgpu)
 }
 
 static void
-intel_gpgpu_load_curbe_buffer(intel_gpgpu_t *gpgpu)
+intel_gpgpu_load_curbe_buffer_gen7(intel_gpgpu_t *gpgpu)
+{
+  BEGIN_BATCH(gpgpu->batch, 4);
+  OUT_BATCH(gpgpu->batch, CMD(2,0,1) | (4 - 2));  /* length-2 */
+  OUT_BATCH(gpgpu->batch, 0);                     /* mbz */
+  OUT_BATCH(gpgpu->batch, intel_gpgpu_get_curbe_size(gpgpu) * 32);
+  OUT_RELOC(gpgpu->batch, gpgpu->aux_buf.bo, I915_GEM_DOMAIN_INSTRUCTION, 0, gpgpu->aux_offset.curbe_offset);
+  ADVANCE_BATCH(gpgpu->batch);
+}
+
+static void
+intel_gpgpu_load_curbe_buffer_gen8(intel_gpgpu_t *gpgpu)
 {
   BEGIN_BATCH(gpgpu->batch, 4);
   OUT_BATCH(gpgpu->batch, CMD(2,0,1) | (4 - 2));  /* length-2 */
@@ -474,7 +490,18 @@ intel_gpgpu_load_curbe_buffer(intel_gpgpu_t *gpgpu)
 }
 
 static void
-intel_gpgpu_load_idrt(intel_gpgpu_t *gpgpu)
+intel_gpgpu_load_idrt_gen7(intel_gpgpu_t *gpgpu)
+{
+  BEGIN_BATCH(gpgpu->batch, 4);
+  OUT_BATCH(gpgpu->batch, CMD(2,0,2) | (4 - 2)); /* length-2 */
+  OUT_BATCH(gpgpu->batch, 0);                    /* mbz */
+  OUT_BATCH(gpgpu->batch, 1 << 5);
+  OUT_RELOC(gpgpu->batch, gpgpu->aux_buf.bo, I915_GEM_DOMAIN_INSTRUCTION, 0, gpgpu->aux_offset.idrt_offset);
+  ADVANCE_BATCH(gpgpu->batch);
+}
+
+static void
+intel_gpgpu_load_idrt_gen8(intel_gpgpu_t *gpgpu)
 {
   BEGIN_BATCH(gpgpu->batch, 4);
   OUT_BATCH(gpgpu->batch, CMD(2,0,2) | (4 - 2)); /* length-2 */
@@ -483,6 +510,7 @@ intel_gpgpu_load_idrt(intel_gpgpu_t *gpgpu)
   OUT_BATCH(gpgpu->batch, gpgpu->aux_offset.idrt_offset);
   ADVANCE_BATCH(gpgpu->batch);
 }
+
 
 static const uint32_t gpgpu_l3_config_reg1[] = {
   0x00080040, 0x02040040, 0x00800040, 0x01000038,
@@ -1227,7 +1255,7 @@ intel_gpgpu_build_idrt_gen7(intel_gpgpu_t *gpgpu, cl_gpgpu_kernel *kernel)
   desc->desc5.rounding_mode = 0; /* round to nearest even */
 
   assert((gpgpu->aux_buf.bo->offset + gpgpu->aux_offset.sampler_state_offset) % 32 == 0);
-  desc->desc2.sampler_state_pointer = gpgpu->aux_offset.sampler_state_offset >> 5;
+  desc->desc2.sampler_state_pointer = (gpgpu->aux_buf.bo->offset + gpgpu->aux_offset.sampler_state_offset) >> 5;
   desc->desc3.binding_table_entry_count = 0; /* no prefetch */
   desc->desc3.binding_table_pointer = 0;
   desc->desc4.curbe_read_len = kernel->curbe_sz / 32;
@@ -1259,6 +1287,12 @@ intel_gpgpu_build_idrt_gen7(intel_gpgpu_t *gpgpu, cl_gpgpu_kernel *kernel)
                     0,
                     gpgpu->aux_offset.idrt_offset + offsetof(gen6_interface_descriptor_t, desc0),
                     ker_bo);
+
+  dri_bo_emit_reloc(gpgpu->aux_buf.bo,
+                    I915_GEM_DOMAIN_SAMPLER, 0,
+                    gpgpu->aux_offset.sampler_state_offset,
+                    gpgpu->aux_offset.idrt_offset + offsetof(gen6_interface_descriptor_t, desc2),
+                    gpgpu->aux_buf.bo);
 }
 
 static void
@@ -1884,6 +1918,8 @@ intel_set_gpgpu_callbacks(int device_id)
     intel_gpgpu_load_vfe_state = intel_gpgpu_load_vfe_state_gen8;
     cl_gpgpu_walker = (cl_gpgpu_walker_cb *)intel_gpgpu_walker_gen8;
     intel_gpgpu_build_idrt = intel_gpgpu_build_idrt_gen8;
+    intel_gpgpu_load_curbe_buffer = intel_gpgpu_load_curbe_buffer_gen8;
+    intel_gpgpu_load_idrt = intel_gpgpu_load_idrt_gen8;
     cl_gpgpu_bind_sampler = (cl_gpgpu_bind_sampler_cb *) intel_gpgpu_bind_sampler_gen8;
     return;
   }
@@ -1892,6 +1928,8 @@ intel_set_gpgpu_callbacks(int device_id)
   intel_gpgpu_load_vfe_state = intel_gpgpu_load_vfe_state_gen7;
   cl_gpgpu_walker = (cl_gpgpu_walker_cb *)intel_gpgpu_walker_gen7;
   intel_gpgpu_build_idrt = intel_gpgpu_build_idrt_gen7;
+  intel_gpgpu_load_curbe_buffer = intel_gpgpu_load_curbe_buffer_gen7;
+  intel_gpgpu_load_idrt = intel_gpgpu_load_idrt_gen7;
 
   if (IS_HASWELL(device_id)) {
     cl_gpgpu_bind_image = (cl_gpgpu_bind_image_cb *) intel_gpgpu_bind_image_gen75;
