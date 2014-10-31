@@ -389,26 +389,6 @@ static const char *math_function_gen8[16] = {
   [GEN8_MATH_FUNCTION_RSQRTM] = "rsqrtm",
 };
 
-static const char *math_saturate[2] = {
-  [0] = "",
-  [1] = "sat"
-};
-
-static const char *math_signed[2] = {
-  [0] = "",
-  [1] = "signed"
-};
-
-static const char *math_scalar[2] = {
-  [0] = "",
-  [1] = "scalar"
-};
-
-static const char *math_precision[2] = {
-  [0] = "",
-  [1] = "partial_precision"
-};
-
 static const char *data_port_data_cache_simd_mode[] = {
   "SIMD4x2",
   "SIMD16",
@@ -1187,14 +1167,6 @@ int gen_disasm (FILE *file, const void *inst, uint32_t deviceID, uint32_t compac
                      MATH_FUNCTION(inst), &space);
     }
 
-    err |= control(file, "math saturate", math_saturate,
-                   MATH_SATURATE(inst), &space);
-    err |= control(file, "math signed", math_signed,
-                   MATH_SIGNED(inst), &space);
-    err |= control(file, "math scalar", math_scalar,
-                   MATH_SCALAR(inst), &space);
-    err |= control(file, "math precision", math_precision,
-                   MATH_PRECISION(inst), &space);
   } else if (OPCODE(inst) != GEN_OPCODE_SEND &&
              OPCODE(inst) != GEN_OPCODE_SENDC) {
     err |= control(file, "conditional modifier", conditional_modifier,
