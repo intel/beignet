@@ -1034,7 +1034,7 @@ namespace ir {
       }
       const ir::Type immType = fn.getImmediate(immediateIndex).getType();
       if (UNLIKELY(type != immType)) {
-        whyNot = "Inconsistant type for the immediate value to load";
+        whyNot = "Inconsistent type for the immediate value to load";
         return false;
       }
       const RegisterFamily family = getFamily(type);
