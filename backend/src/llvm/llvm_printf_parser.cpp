@@ -665,7 +665,7 @@ error:
           case PRINTF_CONVERSION_g:
           case PRINTF_CONVERSION_A:
           case PRINTF_CONVERSION_a:
-            printf("Warning: Have a float paramter for %%d like specifier, take care of it\n");
+            printf("Warning: Have a float parameter for %%d like specifier, take care of it\n");
             arg = builder->CreateSIToFP(arg, Type::getFloatTy(module->getContext()));
             dst_type = Type::getFloatPtrTy(module->getContext(), 1);
             sizeof_size = sizeof(float);
@@ -693,7 +693,7 @@ error:
           case PRINTF_CONVERSION_I:
           case PRINTF_CONVERSION_D:
             /* Float to Int, add a conversion. */
-            printf("Warning: Have a int paramter for %%f like specifier, take care of it\n");
+            printf("Warning: Have a int parameter for %%f like specifier, take care of it\n");
             arg = builder->CreateFPToSI(arg, Type::getInt32Ty(module->getContext()));
             dst_type = Type::getInt32PtrTy(module->getContext(), 1);
             sizeof_size = sizeof(int);
@@ -704,7 +704,7 @@ error:
           case PRINTF_CONVERSION_x:
           case PRINTF_CONVERSION_X:
             /* Float to uint, add a conversion. */
-            printf("Warning: Have a uint paramter for %%f like specifier, take care of it\n");
+            printf("Warning: Have a uint parameter for %%f like specifier, take care of it\n");
             arg = builder->CreateFPToUI(arg, Type::getInt32Ty(module->getContext()));
             dst_type = Type::getInt32PtrTy(module->getContext(), 1);
             sizeof_size = sizeof(int);
