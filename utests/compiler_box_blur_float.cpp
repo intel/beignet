@@ -13,7 +13,7 @@ static void compiler_box_blur_float()
   OCL_CREATE_KERNEL("compiler_box_blur_float");
 
   /* Load the picture */
-  tmp = cl_read_bmp("lenna128x128.bmp", &w, &h);
+  tmp = cl_read_bmp("sample.bmp", &w, &h);
   sz = w * h * sizeof(float[4]);
   src = (float4*)malloc(sz);
 

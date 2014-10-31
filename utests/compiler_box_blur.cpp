@@ -12,7 +12,7 @@ static void compiler_box_blur()
   OCL_CREATE_KERNEL("compiler_box_blur");
 
   /* Load the picture */
-  src = cl_read_bmp("lenna128x128.bmp", &w, &h);
+  src = cl_read_bmp("sample.bmp", &w, &h);
   sz = w * h * sizeof(int);
 
   /* Run the kernel */
