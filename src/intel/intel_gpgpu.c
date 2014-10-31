@@ -739,14 +739,6 @@ intel_gpgpu_batch_reset(intel_gpgpu_t *gpgpu, size_t sz)
 {
   return intel_batchbuffer_reset(gpgpu->batch, sz);
 }
-/* check we do not get a 0 starting address for binded buf */
-static void
-intel_gpgpu_check_binded_buf_address(intel_gpgpu_t *gpgpu)
-{
-  uint32_t i;
-  for (i = 0; i < gpgpu->binded_n; ++i)
-    assert(gpgpu->binded_buf[i]->offset != 0);
-}
 
 static void
 intel_gpgpu_flush_batch_buffer(intel_batchbuffer_t *batch)
@@ -762,7 +754,16 @@ intel_gpgpu_flush(intel_gpgpu_t *gpgpu)
   if (!gpgpu->batch || !gpgpu->batch->buffer)
     return;
   intel_gpgpu_flush_batch_buffer(gpgpu->batch);
-  intel_gpgpu_check_binded_buf_address(gpgpu);
+  /* FIXME:
+     Remove old assert here for binded buffer offset 0 which
+     tried to guard possible NULL buffer pointer check in kernel, as
+     in case like "runtime_null_kernel_arg", but that's wrong to just
+     take buffer offset 0 as NULL, and cause failure for normal
+     kernels which has no such NULL ptr check but with buffer offset 0
+     (which is possible now and will be normal if full PPGTT is on).
+
+     Need to fix NULL ptr check otherwise.
+  */
 }
 
 static int
