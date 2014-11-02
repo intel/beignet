@@ -2805,9 +2805,23 @@ namespace gbe
             ctx.LT(dst0Type, overflow, dst0, src1);
           }
           break;
+          case Intrinsic::usub_with_overflow:
+          {
+            Type *llvmDstType = I.getType();
+            GBE_ASSERT(llvmDstType->isStructTy());
+            ir::Type dst0Type = getType(ctx, llvmDstType->getStructElementType(0));
+            const ir::Register dst0  = this->getRegister(&I, 0);
+            const ir::Register src0 = this->getRegister(I.getOperand(0));
+            const ir::Register src1 = this->getRegister(I.getOperand(1));
+            ctx.SUB(dst0Type, dst0, src0, src1);
+
+            ir::Register overflow = this->getRegister(&I, 1);
+            const ir::Type unsignedType = makeTypeUnsigned(dst0Type);
+            ctx.GT(unsignedType, overflow, dst0, src0);
+          }
+          break;
           case Intrinsic::sadd_with_overflow:
           case Intrinsic::ssub_with_overflow:
-          case Intrinsic::usub_with_overflow:
           case Intrinsic::smul_with_overflow:
           case Intrinsic::umul_with_overflow:
           NOT_IMPLEMENTED;
