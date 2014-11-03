@@ -802,13 +802,8 @@ namespace gbe
           }
         }
 
-        if (poolOffset > ctx.reservedSpillRegs) {
-          if (GBE_DEBUG)
-            std::cerr << "Instruction (#" << (uint32_t)insn.opcode
-                      << ") src too large pooloffset "
-                      << (uint32_t)poolOffset << std::endl;
+        if (poolOffset > ctx.reservedSpillRegs)
           return false;
-        }
         // FIXME, to support post register allocation scheduling,
         // put all the reserved register to the spill/unspill's destination registers.
         // This is not the best way. We need to refine the spill/unspill instruction to
@@ -872,13 +867,8 @@ namespace gbe
           }
         }
 
-        if (poolOffset > ctx.reservedSpillRegs){
-          if (GBE_DEBUG)
-           std::cerr << "Instruction (#" << (uint32_t)insn.opcode
-                     << ") dst too large pooloffset "
-                     << (uint32_t)poolOffset << std::endl;
+        if (poolOffset > ctx.reservedSpillRegs)
           return false;
-        }
         while(!regSet.empty()) {
           struct RegSlot regSlot = regSet.back();
           regSet.pop_back();
