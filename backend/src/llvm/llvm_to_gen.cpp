@@ -107,7 +107,7 @@ namespace gbe
     FPM.doFinalization();
   }
 
-  void runModulePass(Module &mod, TargetLibraryInfo *libraryInfo, const DataLayout &DL, int optLevel)
+  void runModulePass(Module &mod, TargetLibraryInfo *libraryInfo, const DataLayout &DL, int optLevel, bool strictMath)
   {
     llvm::PassManager MPM;
 
@@ -158,11 +158,16 @@ namespace gbe
       MPM.add(createGVNPass());                 // Remove redundancies
     }
 #if LLVM_VERSION_MAJOR == 3 && LLVM_VERSION_MINOR >= 5
-    MPM.add(createCustomLoopUnrollPass()); //1024, 32, 1024, 512)); //Unroll loops
-    MPM.add(createLoopUnrollPass()); //1024, 32, 1024, 512)); //Unroll loops
-    if(optLevel > 0) {
-      MPM.add(createSROAPass(/*RequiresDomTree*/ false));
-      MPM.add(createGVNPass());                 // Remove redundancies
+    // FIXME Workaround: we find that CustomLoopUnroll may increase register pressure greatly,
+    // and it may even make som cl kernel cannot compile because of limited scratch memory for spill.
+    // As we observe this under strict math. So we disable CustomLoopUnroll if strict math is enabled.
+    if (!strictMath) {
+      MPM.add(createCustomLoopUnrollPass()); //1024, 32, 1024, 512)); //Unroll loops
+      MPM.add(createLoopUnrollPass()); //1024, 32, 1024, 512)); //Unroll loops
+      if(optLevel > 0) {
+        MPM.add(createSROAPass(/*RequiresDomTree*/ false));
+        MPM.add(createGVNPass());                 // Remove redundancies
+      }
     }
 #endif
     MPM.add(createMemCpyOptPass());             // Remove memcpy / form memset
@@ -250,7 +255,7 @@ namespace gbe
     OUTPUT_BITCODE(AFTER_LINK, mod);
 
     runFuntionPass(mod, libraryInfo, DL);
-    runModulePass(mod, libraryInfo, DL, optLevel);
+    runModulePass(mod, libraryInfo, DL, optLevel, strictMath);
     llvm::PassManager passes;
 #if LLVM_VERSION_MAJOR == 3 && LLVM_VERSION_MINOR >= 5
     passes.add(new DataLayoutPass(DL));
