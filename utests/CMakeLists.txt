@@ -192,6 +192,7 @@ set (utests_sources
   compiler_fill_image_1d_array.cpp
   compiler_fill_image_2d_array.cpp
   compiler_constant_expr.cpp
+  compiler_assignment_operation_in_if.cpp
   vload_bench.cpp
   utest_assert.cpp
   utest.cpp
