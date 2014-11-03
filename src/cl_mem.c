@@ -377,22 +377,6 @@ cl_mem_new_buffer(cl_context ctx,
     goto error;
   }
 
-  /* CL_MEM_ALLOC_HOST_PTR and CL_MEM_USE_HOST_PTR
-     are mutually exclusive. */
-  if (UNLIKELY(flags & CL_MEM_ALLOC_HOST_PTR &&
-               flags & CL_MEM_USE_HOST_PTR)) {
-    err = CL_INVALID_HOST_PTR;
-    goto error;
-  }
-
-  /* CL_MEM_COPY_HOST_PTR and CL_MEM_USE_HOST_PTR
-     are mutually exclusive. */
-  if (UNLIKELY(flags & CL_MEM_COPY_HOST_PTR &&
-               flags & CL_MEM_USE_HOST_PTR)) {
-    err = CL_INVALID_HOST_PTR;
-    goto error;
-  }
-
   if ((err = cl_get_device_info(ctx->device,
                                 CL_DEVICE_MAX_MEM_ALLOC_SIZE,
                                 sizeof(max_mem_size),
