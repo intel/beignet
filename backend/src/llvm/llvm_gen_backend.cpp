@@ -2827,6 +2827,95 @@ namespace gbe
           NOT_IMPLEMENTED;
           break;
           case Intrinsic::bswap:
+          {
+            // FIXME, this is an unoptimized version, could be optimized by
+            // leveraging GEN's register region/indirect address feature.
+            Type *llvmDstType = I.getType();
+            uint32_t elementSize = getTypeByteSize(unit, llvmDstType);
+
+            const ir::Register dst0  = this->getRegister(&I);
+            const ir::Register src0 = this->getRegister(I.getOperand(0));
+            switch(elementSize)
+            {
+              case 2:
+                {
+                  ir::Type srcType = getUnsignedType(ctx, llvmDstType);
+                  ir::Register tmp1 = ctx.reg(getFamily(srcType));
+                  ir::Register tmp2 = ctx.reg(getFamily(srcType));
+
+                  ir::Register regWMask = ctx.reg( ir::FAMILY_WORD );
+                  const ir::ImmediateIndex wMask = ctx.newIntegerImmediate(0x00FF, ir::TYPE_S16);
+                  ir::Register regShift = ctx.reg( ir::FAMILY_WORD );
+                  const ir::ImmediateIndex shift = ctx.newIntegerImmediate(8, ir::TYPE_S16);
+
+                  ctx.LOADI(ir::TYPE_S16, regWMask, wMask);
+                  ctx.AND(srcType, tmp1, src0, regWMask);
+
+                  ctx.LOADI(ir::TYPE_S16, regShift, shift);
+                  ctx.SHL(srcType, tmp2, tmp1, regShift);
+
+                  ir::Register tmp3 = ctx.reg( getFamily(srcType) );
+                  ctx.SHR(srcType, tmp3, src0, regShift);
+
+                  ctx.OR(srcType, dst0, tmp2, tmp3);
+                }
+                break;
+              case 4:
+                {
+                  ir::Type srcType = getUnsignedType(ctx, llvmDstType);
+                  ir::Register tmp1 = ctx.reg(getFamily(srcType));
+                  ir::Register tmp2 = ctx.reg(getFamily(srcType));
+                  ir::Register tmp3 = ctx.reg(getFamily(srcType));
+                  ir::Register tmp4 = ctx.reg(getFamily(srcType));
+                  ir::Register tmp5 = ctx.reg(getFamily(srcType));
+                  ir::Register tmp6 = ctx.reg(getFamily(srcType));
+                  ir::Register tmp7 = ctx.reg(getFamily(srcType));
+                  ir::Register tmp8 = ctx.reg(getFamily(srcType));
+
+                  ir::Register regDWMask = ctx.reg( ir::FAMILY_DWORD );
+                  ir::Register regShift = ctx.reg( ir::FAMILY_DWORD );
+                  ir::ImmediateIndex wMask = ctx.newIntegerImmediate(0x000000FF, ir::TYPE_S32);
+                  ir::ImmediateIndex shift = ctx.newIntegerImmediate(24, ir::TYPE_S32);
+                  ctx.LOADI(ir::TYPE_S32, regDWMask, wMask);
+                  ctx.AND(srcType, tmp1, src0, regDWMask);
+                  ctx.LOADI(ir::TYPE_S32, regShift, shift);
+                  ctx.SHL(srcType, tmp2, tmp1, regShift);
+
+                  wMask = ctx.newIntegerImmediate(0x0000FF00, ir::TYPE_S32);
+                  shift = ctx.newIntegerImmediate(8, ir::TYPE_S32);
+                  ctx.LOADI(ir::TYPE_S32, regDWMask, wMask);
+                  ctx.AND(srcType, tmp3, src0, regDWMask);
+                  ctx.LOADI(ir::TYPE_S32, regShift, shift);
+                  ctx.SHL(srcType, tmp4, tmp3, regShift);
+
+                  wMask = ctx.newIntegerImmediate(0x00FF0000, ir::TYPE_S32);
+                  shift = ctx.newIntegerImmediate(8, ir::TYPE_S32);
+                  ctx.LOADI(ir::TYPE_S32, regDWMask, wMask);
+                  ctx.AND(srcType, tmp5, src0, regDWMask);
+                  ctx.LOADI(ir::TYPE_S32, regShift, shift);
+                  ctx.SHR(srcType, tmp6, tmp5, regShift);
+
+                  wMask = ctx.newIntegerImmediate(0xFF000000, ir::TYPE_S32);
+                  shift = ctx.newIntegerImmediate(24, ir::TYPE_S32);
+                  ctx.LOADI(ir::TYPE_S32, regDWMask, wMask);
+                  ctx.AND(srcType, tmp7, src0, regDWMask);
+                  ctx.LOADI(ir::TYPE_S32, regShift, shift);
+                  ctx.SHR(srcType, tmp8, tmp7, regShift);
+
+                  ir::Register tmp9 = ctx.reg(getFamily(srcType));
+                  ir::Register tmp10 = ctx.reg(getFamily(srcType));
+                  ctx.OR(srcType, tmp9, tmp2, tmp4);
+                  ctx.OR(srcType, tmp10, tmp6, tmp8);
+                  ctx.OR(srcType, dst0, tmp9, tmp10);
+                }
+                break;
+              case 8:
+                NOT_IMPLEMENTED;
+                break;
+              default:
+                GBE_ASSERT(0);
+            }
+          }
           break;
           default: NOT_IMPLEMENTED;
         }
