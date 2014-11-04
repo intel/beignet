@@ -194,13 +194,17 @@ namespace gbe
                                    uint32_t regID, bool isSrc,
                                    ir::Type type = ir::TYPE_FLOAT, bool needMov = true) {
       ir::Register reg;
-      if (isSrc)
+      if (isSrc) {
         reg = sel.replaceSrc(insn, regID, type, needMov);
-      else
+        intervals.push_back(reg);
+        intervals[reg].minID = insn->ID - 1;
+        intervals[reg].maxID = insn->ID;
+      } else {
         reg = sel.replaceDst(insn, regID, type, needMov);
-      intervals.push_back(reg);
-      intervals[reg].minID = insn->ID;
-      intervals[reg].maxID = insn->ID;
+        intervals.push_back(reg);
+        intervals[reg].minID = insn->ID;
+        intervals[reg].maxID = insn->ID + 1;
+      }
       return reg;
     }
     /*! Use custom allocator */
