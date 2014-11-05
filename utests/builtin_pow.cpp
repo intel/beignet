@@ -1,6 +1,7 @@
 #include "utest_helper.hpp"
 #include <cmath>
 #include <algorithm>
+#include <string.h>
 
 #define udebug 0
 #define printf_c(...) \
@@ -15,12 +16,12 @@ const int count_input = count_input_ori * count_input_ori;
 
 float input_data1[count_input];
 float input_data2[count_input];
-const int max_function = 1;
+const int max_function = 2; // builtin_pow.cl has 2 outputs: pow(src1,src2) and src1
 
 static void cpu_compiler_math(const float *src1, const float *src2, float *dst)
 {
   dst[0] = powf(src1[0], src2[0]);
-//  dst[1] = src1[0];
+  dst[1] = src1[0];
 }
 
 static void builtin_pow(void)
@@ -35,6 +36,11 @@ static void builtin_pow(void)
       input_data1[i*count_input_ori+k] = ori_data[i];
       input_data2[i*count_input_ori+k] = ori_data[k];
     }
+
+  const char* env_strict = getenv("OCL_STRICT_CONFORMANCE");
+  float ULPSIZE_FACTOR = 1.0;
+  if (env_strict == NULL || strcmp(env_strict, "0") == 0)
+    ULPSIZE_FACTOR = 10000.;
 
   OCL_CREATE_KERNEL("builtin_pow");
 
@@ -69,7 +75,7 @@ static void builtin_pow(void)
 #if udebug
       if ( (isinf(cpu_data[index_cur]) && !isinf(gpu_data[index_cur])) ||
            (isnan(cpu_data[index_cur]) && !isnan(gpu_data[index_cur])) ||
-           (fabs(gpu_data[index_cur] - cpu_data[index_cur]) > 1e-5f)   )
+           (fabs(gpu_data[index_cur] - cpu_data[index_cur]) > cl_FLT_ULP(cpu_data[index_cur]) * ULPSIZE_FACTOR.)   )
       {
         printf_c("%d/%d: x:%f, y:%f -> gpu:%f  cpu:%f\n", k, i, input_data1[k], input_data2[k], gpu_data[index_cur], cpu_data[index_cur]);
       }
@@ -82,11 +88,11 @@ static void builtin_pow(void)
        OCL_ASSERT(isnan(gpu_data[index_cur]));
      else
      {
-       OCL_ASSERT(fabs(gpu_data[index_cur] - cpu_data[index_cur]) < 1e-3f);
+       OCL_ASSERT(fabs(gpu_data[index_cur] - cpu_data[index_cur]) < cl_FLT_ULP(cpu_data[index_cur]) * ULPSIZE_FACTOR);
      }
 #endif
     }
   }
 }
 
-MAKE_UTEST_FROM_FUNCTION_WITH_ISSUE(builtin_pow)
+MAKE_UTEST_FROM_FUNCTION(builtin_pow)
