@@ -104,6 +104,6 @@ static void compiler_bswap_ ##type(void)\
 MAKE_UTEST_FROM_FUNCTION(compiler_bswap_ ## type);
 
 compiler_bswap(int16_t, compiler_bswap_short)
-compiler_bswap(uint16_t, compiler_bswap_short)
+compiler_bswap(uint16_t, compiler_bswap_ushort)
 compiler_bswap(int32_t, compiler_bswap_int)
-compiler_bswap(uint32_t, compiler_bswap_int)
+compiler_bswap(uint32_t, compiler_bswap_uint)
