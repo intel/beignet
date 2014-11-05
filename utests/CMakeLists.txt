@@ -22,7 +22,6 @@ set (utests_sources
   utest_error.c
   compiler_basic_arithmetic.cpp
   compiler_displacement_map_element.cpp
-  compiler_shader_toy.cpp
   compiler_mandelbrot.cpp
   compiler_mandelbrot_alternate.cpp
   compiler_box_blur_float.cpp
