@@ -46,8 +46,8 @@ OVERLOADABLE float fmod (float x, float y);
 OVERLOADABLE float remainder(float x, float p);
 OVERLOADABLE float ldexp(float x, int n);
 OVERLOADABLE float powr(float x, float y);
+OVERLOADABLE float pow(float x, float y);
 //no pow, we use powr instead
-#define pow powr
 OVERLOADABLE float fabs(float x);
 OVERLOADABLE float trunc(float x);
 OVERLOADABLE float round(float x);

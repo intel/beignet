@@ -2695,8 +2695,6 @@ OVERLOADABLE float atanh(float x) {
   return __gen_ocl_internal_atanh(x);
 }
 
-#define pow powr
-
 OVERLOADABLE float cbrt(float x) {
   if (__ocl_math_fastpath_flag)
     return __gen_ocl_internal_fastpath_cbrt(x);
@@ -3198,9 +3196,23 @@ OVERLOADABLE float remquo(float x, float y, private int *quo) { BODY; }
 #undef BODY
 
 OVERLOADABLE float pown(float x, int n) {
-  if (x == 0 && n == 0)
-    return 1;
+  if (x == 0.f && n == 0)
+    return 1.f;
+  if (x < 0.f && (n&1) )
+    return -powr(-x, n);
   return powr(x, n);
+}
+
+OVERLOADABLE float pow(float x, float y) {
+  int n;
+  if (x == 0.f && y == 0.f)
+    return 1.f;
+  if (x >= 0.f)
+    return powr(x, y);
+  n = y;
+  if ((float)n == y)//is exact integer
+    return pown(x, n);
+  return NAN;
 }
 
 OVERLOADABLE float rootn(float x, int n) {
