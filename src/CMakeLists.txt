@@ -119,6 +119,7 @@ SET(CMAKE_SHARED_LINKER_FLAGS "${CMAKE_SHARED_LINKER_FLAGS} -Wl,-Bsymbolic,--all
 
 link_directories (${LLVM_LIBRARY_DIR} ${DRM_LIBDIR})
 add_library(cl SHARED ${OPENCL_SRC})
+ADD_DEPENDENCIES(cl ${GIT_SHA1})
 target_link_libraries(
                       cl
                       ${X11_LIBRARIES}
