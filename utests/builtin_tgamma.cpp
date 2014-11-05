@@ -1,5 +1,6 @@
 #include <cmath>
 #include "utest_helper.hpp"
+#include <string.h>
 
 void builtin_tgamma(void)
 {
@@ -14,6 +15,10 @@ void builtin_tgamma(void)
   OCL_SET_ARG(1, sizeof(cl_mem), &buf[1]);
   globals[0] = n;
   locals[0] = 16;
+  const char* env_strict = getenv("OCL_STRICT_CONFORMANCE");
+  float ULPSIZE_FACTOR = 1.0;
+  if (env_strict == NULL || strcmp(env_strict, "0") == 0)
+    ULPSIZE_FACTOR = 10000.;
 
   for (int j = 0; j < 1024; j ++) {
     OCL_MAP_BUFFER(0);
@@ -27,10 +32,10 @@ void builtin_tgamma(void)
     OCL_MAP_BUFFER(1);
     float *dst = (float*)buf_data[1];
     for (int i = 0; i < n; ++i) {
-      float cpu = gammaf(src[i]);
+      float cpu = tgammaf(src[i]);
       if (isinf(cpu)) {
         OCL_ASSERT(isinf(dst[i]));
-      } else if (fabsf(cpu - dst[i]) >= 1e-3) {
+      } else if (fabsf(cpu - dst[i]) >= cl_FLT_ULP(cpu) * ULPSIZE_FACTOR) {
         printf("%f %f %f\n", src[i], cpu, dst[i]);
         OCL_ASSERT(0);
       }
