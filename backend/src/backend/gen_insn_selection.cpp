@@ -1604,9 +1604,10 @@ namespace gbe
           // Check whether this bool is used as a normal source
           // oprand other than BRA/SEL.
           if (getRegisterFamily(reg) == FAMILY_BOOL) {
-            if (insn.getOpcode() != OP_BRA &&
+            if ((insn.getOpcode() != OP_BRA &&
                  (insn.getOpcode() != OP_SEL ||
-                   (insn.getOpcode() == OP_SEL && srcID != 0)))
+                 (insn.getOpcode() == OP_SEL && srcID != 0))) ||
+               (isScalarReg(reg)))
               child->computeBool = true;
           }
           child->isUsed = true;
@@ -3804,7 +3805,16 @@ namespace gbe
         sel.curr.physicalFlag = 0;
         sel.curr.flagIndex = (uint16_t) pred;
         sel.curr.predicate = GEN_PREDICATE_NORMAL;
-        if (!dag0)
+        // FIXME in general, if the flag is a uniform flag.
+        // we should treat that flag as extern flag, as we
+        // never genrate a uniform physical flag. As we can
+        // never predicate which channel is active when this
+        // flag is used.
+        // We need to concentrate this logic to the modFlag bit.
+        // If an instruction has that bit, it will generate physical
+        // flag, otherwise it will not. But current modFlag is
+        // just a hint. We need to fix it in the future.
+        if (!dag0 || (sel.isScalarReg(dag0->insn.getDst(0))))
           sel.curr.externFlag = 1;
         if(type == ir::TYPE_S64 || type == ir::TYPE_U64)
           sel.SEL_INT64(dst, src0, src1);

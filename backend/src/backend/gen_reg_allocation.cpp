@@ -585,6 +585,8 @@ namespace gbe
               // If this is a modFlag on a scalar bool, we need to remove it
               // from the allocated flags map. Then latter, the user could
               // validate the flag from the scalar value correctly.
+              // The reason is we can not predicate the active channel when we
+              // need to use this flag.
               if (IS_SCALAR_FLAG(insn)) {
                 allocatedFlags.erase(ir::Register(insn.state.flagIndex));
                 continue;
