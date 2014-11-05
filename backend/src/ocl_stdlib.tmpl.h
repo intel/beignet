@@ -3190,7 +3190,6 @@ INLINE_OVERLOADABLE float __gen_ocl_internal_exp10(float x){
 #define atan2pi __gen_ocl_internal_atan2pi
 #define atanpi __gen_ocl_internal_atanpi
 #define atanh __gen_ocl_internal_atanh
-#define pow powr
 #define cbrt __gen_ocl_internal_cbrt
 #define rint __gen_ocl_internal_rint
 #define copysign __gen_ocl_internal_copysign
@@ -3729,9 +3728,23 @@ INLINE_OVERLOADABLE float remquo(float x, float y, private int *quo) { BODY; }
 #undef BODY
 INLINE_OVERLOADABLE float native_divide(float x, float y) { return x/y; }
 INLINE_OVERLOADABLE float pown(float x, int n) {
-  if (x == 0 && n == 0)
-    return 1;
+  if (x == 0.f && n == 0)
+    return 1.f;
+  if (x < 0.f && (n&1) )
+    return -powr(-x, n);
   return powr(x, n);
+}
+
+INLINE_OVERLOADABLE float pow(float x, float y) {
+  int n;
+  if (x == 0.f && y == 0.f)
+    return 1.f;
+  if (x >= 0.f)
+    return powr(x, y);
+  n = y;
+  if ((float)n == y)//is exact integer
+    return pown(x, n);
+  return NAN;
 }
 
 INLINE_OVERLOADABLE float internal_rootn(float x, int n, const bool isFastpath)
