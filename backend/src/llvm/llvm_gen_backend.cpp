@@ -954,7 +954,7 @@ namespace gbe
       ir::Type type = getType(ctx, ce->getType());
       switch (ce->getOpcode()) {
         default:
-          //ce->dump();
+          ce->dump();
           GBE_ASSERT(0 && "unsupported ce opcode.\n");
         case Instruction::Trunc:
         {
@@ -968,6 +968,23 @@ namespace gbe
             return immIndex;
           return ctx.processImm(ir::IMM_BITCAST, immIndex, type);
         }
+        case Instruction::FPToUI:
+        case Instruction::FPToSI:
+        case Instruction::SIToFP:
+        case Instruction::UIToFP:
+        {
+          const ir::ImmediateIndex immIndex = processConstantImmIndex(ce->getOperand(0), -1);
+          switch (ce->getOpcode()) {
+            default:
+              GBE_ASSERT(0);
+            case Instruction::FPToUI: return ctx.processImm(ir::IMM_FPTOUI, immIndex, type);
+            case Instruction::FPToSI: return ctx.processImm(ir::IMM_FPTOSI, immIndex, type);
+            case Instruction::SIToFP: return ctx.processImm(ir::IMM_SITOFP, immIndex, type);
+            case Instruction::UIToFP: return ctx.processImm(ir::IMM_UITOFP, immIndex, type);
+          }
+        }
+        case Instruction::FCmp:
+        case Instruction::ICmp:
         case Instruction::Add:
         case Instruction::Sub:
         case Instruction::Mul:
@@ -1007,7 +1024,35 @@ namespace gbe
             return ctx.processImm(ir::IMM_OR, lhs, rhs, type);
           case Instruction::Xor:
             return ctx.processImm(ir::IMM_XOR, lhs, rhs, type);
+          case Instruction::FCmp:
+          case Instruction::ICmp:
+            switch (ce->getPredicate()) {
+              default:
+                NOT_SUPPORTED;
+              case ICmpInst::ICMP_EQ:
+              case ICmpInst::FCMP_OEQ: return ctx.processImm(ir::IMM_OEQ, lhs, rhs, type);
+              case ICmpInst::ICMP_NE:
+              case ICmpInst::FCMP_ONE: return ctx.processImm(ir::IMM_ONE, lhs, rhs, type);
+              case ICmpInst::ICMP_ULE:
+              case ICmpInst::ICMP_SLE:
+              case ICmpInst::FCMP_OLE: return ctx.processImm(ir::IMM_OLE, lhs, rhs, type);
+              case ICmpInst::ICMP_UGE:
+              case ICmpInst::ICMP_SGE:
+              case ICmpInst::FCMP_OGE: return ctx.processImm(ir::IMM_OGE, lhs, rhs, type);
+              case ICmpInst::ICMP_ULT:
+              case ICmpInst::ICMP_SLT:
+              case ICmpInst::FCMP_OLT: return ctx.processImm(ir::IMM_OLT, lhs, rhs, type);
+              case ICmpInst::ICMP_UGT:
+              case ICmpInst::ICMP_SGT:
+              case ICmpInst::FCMP_OGT: return ctx.processImm(ir::IMM_OGT, lhs, rhs, type);
+              case ICmpInst::FCMP_ORD: return ctx.processImm(ir::IMM_ORD, lhs, rhs, type);
+              case ICmpInst::FCMP_TRUE:
+                Value *cv = ConstantInt::get(ce->getType(), 1);
+                return ctx.newImmediate(cv);
+            }
+            break;
           }
+          break;
         }
       }
     }
