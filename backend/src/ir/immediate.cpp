@@ -23,15 +23,15 @@ using namespace ir;
 #define SCALAR_SAME_TYPE_ASSERT()                           \
       GBE_ASSERT(this->getType() == right.getType()       && \
                  this->getElemNum() == right.getElemNum() && \
-                 this->getElemNum() == 1                  && \
-                 this->getType() != TYPE_BOOL);
+                 this->getElemNum() == 1)
 
 #define DECLAR_BINARY_ALL_TYPE_OP(OP) \
     Immediate Immediate::operator OP (const Immediate &right) const { \
-      SCALAR_SAME_TYPE_ASSERT(); \
+      /*SCALAR_SAME_TYPE_ASSERT();*/ \
       switch (this->getType()) { \
         default: \
           GBE_ASSERT(0); \
+        case TYPE_BOOL:     return Immediate(*this->data.b OP *right.data.b);   \
         case TYPE_S8:     return Immediate(*this->data.s8 OP *right.data.s8);   \
         case TYPE_U8:     return Immediate(*this->data.u8 OP *right.data.u8);   \
         case TYPE_S16:    return Immediate(*this->data.s16 OP *right.data.s16); \
@@ -50,15 +50,24 @@ using namespace ir;
     DECLAR_BINARY_ALL_TYPE_OP(-)
     DECLAR_BINARY_ALL_TYPE_OP(*)
     DECLAR_BINARY_ALL_TYPE_OP(/)
+    DECLAR_BINARY_ALL_TYPE_OP(>)
+    //DECLAR_BINARY_ALL_TYPE_OP(<)
+    DECLAR_BINARY_ALL_TYPE_OP(==)
+    DECLAR_BINARY_ALL_TYPE_OP(!=)
+    DECLAR_BINARY_ALL_TYPE_OP(>=)
+    DECLAR_BINARY_ALL_TYPE_OP(<=)
+    DECLAR_BINARY_ALL_TYPE_OP(&&)
 
 #undef DECLAR_BINARY_ALL_TYPE_OP
 
+
 #define DECLAR_BINARY_INT_TYPE_OP(OP) \
     Immediate Immediate::operator OP (const Immediate &right) const { \
-      SCALAR_SAME_TYPE_ASSERT(); \
+      /*SCALAR_SAME_TYPE_ASSERT();*/ \
       switch (this->getType()) { \
         default: \
           GBE_ASSERT(0); \
+        case TYPE_BOOL:   return Immediate(*this->data.b OP *right.data.b);   \
         case TYPE_S8:     return Immediate(*this->data.s8 OP *right.data.s8);   \
         case TYPE_U8:     return Immediate(*this->data.u8 OP *right.data.u8);   \
         case TYPE_S16:    return Immediate(*this->data.s16 OP *right.data.s16); \
@@ -122,6 +131,25 @@ using namespace ir;
         }
     }
 
+    Immediate Immediate::less (const Immediate &left, const Immediate &right) {
+      GBE_ASSERT(left.getType() > TYPE_BOOL && left.getType() <= TYPE_U64);
+      switch (left.getType()) {
+        default:
+          GBE_ASSERT(0);
+        case TYPE_S8:     return Immediate(*left.data.s8 < *right.data.s8);
+        case TYPE_U8:     return Immediate(*left.data.u8 < *right.data.u8);
+        case TYPE_S16:    return Immediate(*left.data.s16 < *right.data.s16);
+        case TYPE_U16:    return Immediate(*left.data.u16 < *right.data.u16);
+        case TYPE_S32:    return Immediate(*left.data.s32 < *right.data.s32);
+        case TYPE_U32:    return Immediate(*left.data.u32 < *right.data.u32);
+        case TYPE_S64:    return Immediate(*left.data.s64 < *right.data.s64);
+        case TYPE_U64:    return Immediate(*left.data.u64 < *right.data.u64);
+        case TYPE_FLOAT:  return Immediate(*left.data.f32 < *right.data.f32);
+        case TYPE_DOUBLE: return Immediate(*left.data.f64 < *right.data.f64);
+      }
+    }
+
+
     Immediate::Immediate(ImmOpCode op, const Immediate &left, const Immediate &right, Type dstType) {
       switch (op) {
         default:
@@ -181,9 +209,16 @@ using namespace ir;
           }
           break;
         }
+        case IMM_OEQ: *this = left == right; break;
+        case IMM_ONE: *this = left != right; break;
+        case IMM_OLE: *this = left <= right; break;
+        case IMM_OGE: *this = left >= right; break;
+        case IMM_OLT: *this = less(left, right); break;
+        case IMM_OGT: *this = left > right; break;
+        case IMM_ORD: *this = (left == left) && (right == right); break;
       }
       // If the dst type is large int, we will not change the imm type to large int.
-      GBE_ASSERT(type == (ImmType)dstType || dstType == TYPE_LARGE_INT);
+      GBE_ASSERT(type == (ImmType)dstType || dstType == TYPE_LARGE_INT || dstType == TYPE_BOOL);
     }
 
     Immediate::Immediate(const vector<const Immediate*> immVec) {
