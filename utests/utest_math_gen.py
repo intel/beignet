@@ -216,17 +216,17 @@ static float atanpi(float x){
   cospi_cpu_func=reduce1+cospi
   cospiUtests = func('cospi','cospi',[cospi_input_type],cospi_output_type,[cospi_input_values],'2 * FLT_ULP',cospi_cpu_func)
   
-#  ##### gentype erf(gentype)
-#  erf_input_values = base_input_values
-#  erf_input_type = ['float','float2','float4','float8','float16']
-#  erf_output_type = ['float','float2','float4','float8','float16']
-#  erfUtests = func('erf','erf',[erf_input_type],erf_output_type,[erf_input_values],'16 * FLT_ULP')
+  ##### gentype erf(gentype)
+  erf_input_values = base_input_values
+  erf_input_type = ['float','float2','float4','float8','float16']
+  erf_output_type = ['float','float2','float4','float8','float16']
+  erfUtests = func('erf','erf',[erf_input_type],erf_output_type,[erf_input_values],'16 * FLT_ULP')
 
-#  ##### gentype erfc(gentype)
-#  erfc_input_values = base_input_values
-#  erfc_input_type = ['float','float2','float4','float8','float16']
-#  erfc_output_type = ['float','float2','float4','float8','float16']
-#  erfcUtests = func('erfc','erfc',[erfc_input_type],erfc_output_type,[erfc_input_values],'16 * FLT_ULP')
+  ##### gentype erfc(gentype)
+  erfc_input_values = base_input_values
+  erfc_input_type = ['float','float2','float4','float8','float16']
+  erfc_output_type = ['float','float2','float4','float8','float16']
+  erfcUtests = func('erfc','erfc',[erfc_input_type],erfc_output_type,[erfc_input_values],'16 * FLT_ULP')
   
   ##### gentype exp(gentype x)
   exp_input_values = base_input_values
