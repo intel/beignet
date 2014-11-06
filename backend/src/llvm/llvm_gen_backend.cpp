@@ -1444,7 +1444,7 @@ namespace gbe
           const uint32_t elemSize = getTypeByteSize(unit, elemType);
           const uint32_t elemNum = vectorType->getNumElements();
           //vector's elemType always scalar type
-          ctx.input(argName, ir::FunctionArgument::VALUE, reg, llvmInfo, elemNum*elemSize, getAlignmentByte(unit, type), 0);
+          ctx.input(argName, ir::FunctionArgument::VALUE, reg, llvmInfo, getTypeByteSize(unit, type), getAlignmentByte(unit, type), 0);
 
           ir::Function& fn = ctx.getFunction();
           for(uint32_t i=1; i < elemNum; i++) {
