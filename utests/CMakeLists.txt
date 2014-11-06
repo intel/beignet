@@ -155,6 +155,7 @@ set (utests_sources
   builtin_convert_sat.cpp
   sub_buffer.cpp
   runtime_createcontext.cpp
+  runtime_set_kernel_arg.cpp
   runtime_null_kernel_arg.cpp
   runtime_event.cpp
   runtime_barrier_list.cpp
