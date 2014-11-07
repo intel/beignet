@@ -31,6 +31,7 @@
 #include <assert.h>
 #include <stdio.h>
 #include <string.h>
+#include <stdlib.h>
 
 #ifndef CL_VERSION_1_2
 #define CL_DEVICE_BUILT_IN_KERNELS 0x103F
@@ -400,6 +401,22 @@ brw_gt3_break:
       ret->profile_sz = strlen(ret->profile) + 1;
     }
   }
+
+#ifdef HAS_USERPTR
+  cl_driver dummy = cl_driver_new(NULL);
+  cl_buffer_mgr bufmgr = cl_driver_get_bufmgr(dummy);
+
+  const size_t sz = 4096;
+  char* host_ptr = (char*)aligned_alloc(4096, sz);
+  cl_buffer bo = cl_buffer_alloc_userptr(bufmgr, "CL memory object", host_ptr, sz, 0);
+  if (bo == NULL)
+    ret->host_unified_memory = CL_FALSE;
+  else
+    cl_buffer_unreference(bo);
+
+  free(host_ptr);
+  cl_driver_delete(dummy);
+#endif
 
   return ret;
 }

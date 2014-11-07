@@ -60,7 +60,11 @@
 .max_constant_buffer_size = 512 << 10,
 .max_constant_args = 8,
 .error_correction_support = CL_FALSE,
+#ifdef HAS_USERPTR
+.host_unified_memory = CL_TRUE,
+#else
 .host_unified_memory = CL_FALSE,
+#endif
 .profiling_timer_resolution = 80, /* ns */
 .endian_little = CL_TRUE,
 .available = CL_TRUE,
