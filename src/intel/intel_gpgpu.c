@@ -648,10 +648,11 @@ intel_gpgpu_set_L3_gen8(intel_gpgpu_t *gpgpu, uint32_t use_slm)
   BEGIN_BATCH(gpgpu->batch, 3);
   OUT_BATCH(gpgpu->batch, CMD_LOAD_REGISTER_IMM | 1); /* length - 2 */
   OUT_BATCH(gpgpu->batch, GEN8_L3_CNTL_REG_ADDRESS_OFFSET);
+  // FIXME, this is a workaround for switch SLM enable and disable random hang
   if(use_slm)
     OUT_BATCH(gpgpu->batch, 0x60000121);  /* {SLM=192, URB=128, Rest=384} */
   else
-    OUT_BATCH(gpgpu->batch, 0x80000140);  /* {SLM=0, URB=256, Rest=512, Sum=768} */
+    OUT_BATCH(gpgpu->batch, 0x60000160);  /* {SLM=0, URB=384, Rest=384, Sum=768} */
 
   //if(use_slm)
   //  gpgpu->batch->enable_slm = 1;
