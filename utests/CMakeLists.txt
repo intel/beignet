@@ -195,6 +195,7 @@ set (utests_sources
   compiler_constant_expr.cpp
   compiler_assignment_operation_in_if.cpp
   vload_bench.cpp
+  runtime_use_host_ptr_buffer.cpp
   utest_assert.cpp
   utest.cpp
   utest_file_map.cpp
@@ -213,6 +214,11 @@ else(GEN_PCI_ID)
   COMMAND ${GBE_BIN_GENERATER} ${kernel_bin}.cl -o${kernel_bin}.bin
   DEPENDS ${CMAKE_CURRENT_BINARY_DIR}/../backend/src/gbe_bin_generater ${kernel_bin}.cl)
 endif(GEN_PCI_ID)
+
+if (DRM_INTEL_USERPTR)
+SET(CMAKE_CXX_FLAGS "-DHAS_USERPTR ${CMAKE_CXX_FLAGS}")
+SET(CMAKE_C_FLAGS "-DHAS_USERPTR ${CMAKE_C_FLAGS}")
+endif (DRM_INTEL_USERPTR)
 
 ADD_CUSTOM_TARGET(kernel_bin.bin
     DEPENDS ${kernel_bin}.bin)
