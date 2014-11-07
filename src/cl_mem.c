@@ -33,6 +33,7 @@
 #include <assert.h>
 #include <stdio.h>
 #include <string.h>
+#include <unistd.h>
 
 #define FIELD_SIZE(CASE,TYPE)               \
   case JOIN(CL_,CASE):                      \
@@ -223,6 +224,7 @@ cl_mem_allocate(enum cl_mem_type type,
                 cl_mem_flags flags,
                 size_t sz,
                 cl_int is_tiled,
+                void *host_ptr,
                 cl_int *errcode)
 {
   cl_buffer_mgr bufmgr = NULL;
@@ -251,6 +253,7 @@ cl_mem_allocate(enum cl_mem_type type,
   mem->ref_n = 1;
   mem->magic = CL_MAGIC_MEM_HEADER;
   mem->flags = flags;
+  mem->is_userptr = 0;
 
   if (sz != 0) {
     /* Pinning will require stricter alignment rules */
@@ -260,7 +263,28 @@ cl_mem_allocate(enum cl_mem_type type,
     /* Allocate space in memory */
     bufmgr = cl_context_get_bufmgr(ctx);
     assert(bufmgr);
+
+#ifdef HAS_USERPTR
+    if (ctx->device->host_unified_memory) {
+      /* currently only cl buf is supported, will add cl image support later */
+      if ((flags & CL_MEM_USE_HOST_PTR) && host_ptr != NULL) {
+        /* userptr not support tiling */
+        if (!is_tiled) {
+          int page_size = getpagesize();
+          if ((((unsigned long)host_ptr | sz) & (page_size - 1)) == 0) {
+            mem->is_userptr = 1;
+            mem->bo = cl_buffer_alloc_userptr(bufmgr, "CL userptr memory object", host_ptr, sz, 0);
+          }
+        }
+      }
+    }
+
+    if (!mem->is_userptr)
+      mem->bo = cl_buffer_alloc(bufmgr, "CL memory object", sz, alignment);
+#else
     mem->bo = cl_buffer_alloc(bufmgr, "CL memory object", sz, alignment);
+#endif
+
     if (UNLIKELY(mem->bo == NULL)) {
       err = CL_MEM_OBJECT_ALLOCATION_FAILURE;
       goto error;
@@ -387,12 +411,15 @@ cl_mem_new_buffer(cl_context ctx,
   sz = ALIGN(sz, 4);
 
   /* Create the buffer in video memory */
-  mem = cl_mem_allocate(CL_MEM_BUFFER_TYPE, ctx, flags, sz, CL_FALSE, &err);
+  mem = cl_mem_allocate(CL_MEM_BUFFER_TYPE, ctx, flags, sz, CL_FALSE, data, &err);
   if (mem == NULL || err != CL_SUCCESS)
     goto error;
 
   /* Copy the data if required */
-  if (flags & CL_MEM_COPY_HOST_PTR || flags & CL_MEM_USE_HOST_PTR)
+  if (flags & CL_MEM_COPY_HOST_PTR)
+    cl_buffer_subdata(mem->bo, 0, sz, data);
+
+  if ((flags & CL_MEM_USE_HOST_PTR) && !mem->is_userptr)
     cl_buffer_subdata(mem->bo, 0, sz, data);
 
   if (flags & CL_MEM_USE_HOST_PTR || flags & CL_MEM_COPY_HOST_PTR)
@@ -762,7 +789,7 @@ _cl_mem_new_image(cl_context ctx,
     sz = aligned_pitch * aligned_h * depth;
   }
 
-  mem = cl_mem_allocate(CL_MEM_IMAGE_TYPE, ctx, flags, sz, tiling != CL_NO_TILE, &err);
+  mem = cl_mem_allocate(CL_MEM_IMAGE_TYPE, ctx, flags, sz, tiling != CL_NO_TILE, NULL, &err);
   if (mem == NULL || err != CL_SUCCESS)
     goto error;
 
@@ -1834,7 +1861,7 @@ LOCAL cl_mem cl_mem_new_libva_buffer(cl_context ctx,
   cl_int err = CL_SUCCESS;
   cl_mem mem = NULL;
 
-  mem = cl_mem_allocate(CL_MEM_BUFFER_TYPE, ctx, 0, 0, CL_FALSE, &err);
+  mem = cl_mem_allocate(CL_MEM_BUFFER_TYPE, ctx, 0, 0, CL_FALSE, NULL, &err);
   if (mem == NULL || err != CL_SUCCESS)
     goto error;
 
@@ -1875,7 +1902,7 @@ LOCAL cl_mem cl_mem_new_libva_image(cl_context ctx,
     goto error;
   }
 
-  mem = cl_mem_allocate(CL_MEM_IMAGE_TYPE, ctx, 0, 0, 0, &err);
+  mem = cl_mem_allocate(CL_MEM_IMAGE_TYPE, ctx, 0, 0, 0, NULL, &err);
   if (mem == NULL || err != CL_SUCCESS) {
     err = CL_OUT_OF_HOST_MEMORY;
     goto error;

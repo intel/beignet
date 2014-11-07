@@ -63,7 +63,7 @@ cl_mem_new_gl_texture(cl_context ctx,
     goto error;
   }
 
-  mem = cl_mem_allocate(CL_MEM_GL_IMAGE_TYPE, ctx, flags, 0, 0, &err);
+  mem = cl_mem_allocate(CL_MEM_GL_IMAGE_TYPE, ctx, flags, 0, 0, NULL, &err);
   if (mem == NULL || err != CL_SUCCESS)
     goto error;
 

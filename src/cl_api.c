@@ -2665,9 +2665,13 @@ clEnqueueMapBuffer(cl_command_queue  command_queue,
     ptr = data->ptr;
     if(event) cl_event_set_status(*event, CL_COMPLETE);
   } else {
-    if ((ptr = cl_mem_map_gtt_unsync(buffer)) == NULL) {
-      err = CL_MAP_FAILURE;
-      goto error;
+    if (buffer->is_userptr)
+      ptr = buffer->host_ptr;
+    else {
+      if ((ptr = cl_mem_map_gtt_unsync(buffer)) == NULL) {
+        err = CL_MAP_FAILURE;
+        goto error;
+      }
     }
   }
   err = _cl_map_mem(buffer, ptr, &mem_ptr, offset, size, NULL, NULL);

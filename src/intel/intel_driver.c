@@ -690,6 +690,20 @@ cl_buffer intel_share_image_from_libva(cl_context ctx,
   return (cl_buffer)intel_bo;
 }
 
+static cl_buffer intel_buffer_alloc_userptr(cl_buffer_mgr bufmgr, const char* name, void *data,size_t size, unsigned long flags)
+{
+#ifdef HAS_USERPTR
+  drm_intel_bo *bo;
+  bo = drm_intel_bo_alloc_userptr((drm_intel_bufmgr *)bufmgr, name, data, I915_TILING_NONE, 0, size, flags);
+  /* Fallback to unsynchronized userptr allocation if kernel has no MMU notifier enabled. */
+  if (bo == NULL)
+    bo = drm_intel_bo_alloc_userptr((drm_intel_bufmgr *)bufmgr, name, data, I915_TILING_NONE, 0, size, flags | I915_USERPTR_UNSYNCHRONIZED);
+  return (cl_buffer)bo;
+#else
+  return NULL;
+#endif
+}
+
 static int32_t get_intel_tiling(cl_int tiling, uint32_t *intel_tiling)
 {
   switch (tiling) {
@@ -734,6 +748,7 @@ intel_setup_callbacks(void)
   cl_driver_get_bufmgr = (cl_driver_get_bufmgr_cb *) intel_driver_get_bufmgr;
   cl_driver_get_device_id = (cl_driver_get_device_id_cb *) intel_get_device_id;
   cl_buffer_alloc = (cl_buffer_alloc_cb *) drm_intel_bo_alloc;
+  cl_buffer_alloc_userptr = (cl_buffer_alloc_userptr_cb*) intel_buffer_alloc_userptr;
   cl_buffer_set_tiling = (cl_buffer_set_tiling_cb *) intel_buffer_set_tiling;
 #if defined(HAS_EGL)
   cl_buffer_alloc_from_texture = (cl_buffer_alloc_from_texture_cb *) intel_alloc_buffer_from_texture;

@@ -92,6 +92,7 @@ typedef  struct _cl_mem {
   int map_ref;              /* The mapped count. */
   uint8_t mapped_gtt;       /* This object has mapped gtt, for unmap. */
   cl_mem_dstr_cb *dstr_cb;  /* The destroy callback. */
+  uint8_t is_userptr;    /* CL_MEM_USE_HOST_PTR is enabled*/
 } _cl_mem;
 
 struct _cl_mem_image {
@@ -262,6 +263,7 @@ cl_mem_allocate(enum cl_mem_type type,
                 cl_mem_flags flags,
                 size_t sz,
                 cl_int is_tiled,
+                void *host_ptr,
                 cl_int *errcode);
 
 void

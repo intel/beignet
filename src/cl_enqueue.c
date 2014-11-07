@@ -234,11 +234,15 @@ cl_int cl_enqueue_map_buffer(enqueue_data *data)
          mem->type == CL_MEM_SUBBUFFER_TYPE);
   struct _cl_mem_buffer* buffer = (struct _cl_mem_buffer*)mem;
 
-  if(data->unsync_map == 1)
-    //because using unsync map in clEnqueueMapBuffer, so force use map_gtt here
-    ptr = cl_mem_map_gtt(mem);
-  else
-    ptr = cl_mem_map_auto(mem, data->write_map ? 1 : 0);
+  if (mem->is_userptr)
+    ptr = mem->host_ptr;
+  else {
+    if(data->unsync_map == 1)
+      //because using unsync map in clEnqueueMapBuffer, so force use map_gtt here
+      ptr = cl_mem_map_gtt(mem);
+    else
+      ptr = cl_mem_map_auto(mem, data->write_map ? 1 : 0);
+  }
 
   if (ptr == NULL) {
     err = CL_MAP_FAILURE;
@@ -246,7 +250,7 @@ cl_int cl_enqueue_map_buffer(enqueue_data *data)
   }
   data->ptr = ptr;
 
-  if(mem->flags & CL_MEM_USE_HOST_PTR) {
+  if((mem->flags & CL_MEM_USE_HOST_PTR) && !mem->is_userptr) {
     assert(mem->host_ptr);
     ptr = (char*)ptr + data->offset + buffer->sub_offset;
     memcpy(mem->host_ptr + data->offset + buffer->sub_offset, ptr, data->size);
@@ -331,7 +335,8 @@ cl_int cl_enqueue_unmap_mem_object(enqueue_data *data)
       assert(mapped_ptr >= memobj->host_ptr &&
         mapped_ptr + mapped_size <= memobj->host_ptr + memobj->size);
       /* Sync the data. */
-      memcpy(v_ptr, mapped_ptr, mapped_size);
+      if (!memobj->is_userptr)
+        memcpy(v_ptr, mapped_ptr, mapped_size);
     } else {
       CHECK_IMAGE(memobj, image);
 

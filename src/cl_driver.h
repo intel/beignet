@@ -285,6 +285,9 @@ extern cl_gpgpu_walker_cb *cl_gpgpu_walker;
 typedef cl_buffer (cl_buffer_alloc_cb)(cl_buffer_mgr, const char*, size_t, size_t);
 extern cl_buffer_alloc_cb *cl_buffer_alloc;
 
+typedef cl_buffer (cl_buffer_alloc_userptr_cb)(cl_buffer_mgr, const char*, void *, size_t, unsigned long);
+extern cl_buffer_alloc_userptr_cb *cl_buffer_alloc_userptr;
+
 /* Set a buffer's tiling mode */
 typedef cl_buffer (cl_buffer_set_tiling_cb)(cl_buffer, int tiling, size_t stride);
 extern cl_buffer_set_tiling_cb *cl_buffer_set_tiling;
