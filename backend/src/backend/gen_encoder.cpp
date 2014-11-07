@@ -69,6 +69,10 @@ namespace gbe
 
   INLINE bool needToSplitAlu1(GenEncoder *p, GenRegister dst, GenRegister src) {
     if (p->curr.execWidth != 16 || src.hstride == GEN_HORIZONTAL_STRIDE_0) return false;
+    if (isVectorOfBytes(dst) == true &&
+        ((isVectorOfBytes(src) == true && src.hstride == dst.hstride)
+          || src.hstride == GEN_HORIZONTAL_STRIDE_0))
+      return false;
     if (isVectorOfBytes(dst) == true) return true;
     if (isVectorOfBytes(src) == true) return true;
     return false;
@@ -79,7 +83,13 @@ namespace gbe
          (src0.hstride == GEN_HORIZONTAL_STRIDE_0 &&
           src1.hstride == GEN_HORIZONTAL_STRIDE_0))
       return false;
-    if (isVectorOfBytes(dst) == true) return true;
+    if (isVectorOfBytes(dst) == true &&
+        ((isVectorOfBytes(src0) == true && src0.hstride == dst.hstride) ||
+          src0.hstride == GEN_HORIZONTAL_STRIDE_0) &&
+        ((isVectorOfBytes(src1) == true && src1.hstride == dst.hstride) ||
+          src1.hstride == GEN_HORIZONTAL_STRIDE_0))
+      return false;
+    if (isVectorOfBytes(dst) == true ) return true;
     if (isVectorOfBytes(src0) == true) return true;
     if (isVectorOfBytes(src1) == true) return true;
     return false;
