@@ -747,7 +747,11 @@ cl_program_compile(cl_program            p,
     /* Create all the kernels */
     p->source_type = FROM_LLVM;
     p->binary_type = CL_PROGRAM_BINARY_TYPE_COMPILED_OBJECT;
+  }else if(p->source_type == FROM_BINARY){
+    err = CL_INVALID_OPERATION;
+    return err;
   }
+
   p->is_built = 1;
   p->build_status = CL_BUILD_SUCCESS;
   return CL_SUCCESS;
