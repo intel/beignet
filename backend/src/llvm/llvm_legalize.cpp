@@ -516,8 +516,15 @@ namespace gbe {
       Type *splitTy = vecTy->getElementType();
       unsigned elements = srcTy->getPrimitiveSizeInBits()/splitTy->getPrimitiveSizeInBits();
       // bitcast large integer from vector, so we do extractElement to get split integer
+      unsigned splitSz = splitTy->getPrimitiveSizeInBits();
+      Value *src = p->getOperand(0);
+      // if it is cast from <4 x float> to i128
+      // we cast <4 x float> to <4 x i32> first
+      if (!splitTy->isIntegerTy())
+        src = Builder.CreateBitCast(src, VectorType::get(IntegerType::get(p->getContext(), splitSz), elements));
+
       for (unsigned i = 0; i < elements; i++) {
-        Value *NV = Builder.CreateExtractElement(p->getOperand(0),
+        Value *NV = Builder.CreateExtractElement(src,
                       ConstantInt::get(IntegerType::get(p->getContext(), 32), i));
         split.push_back(NV);
       }
