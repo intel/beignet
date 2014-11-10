@@ -112,6 +112,7 @@
 #include "llvm/Target/Mangler.h"
 #endif
 
+#include "llvm/ADT/PostOrderIterator.h"
 #include "llvm/Transforms/Scalar.h"
 #include "llvm/MC/MCAsmInfo.h"
 #include "llvm/MC/MCContext.h"
@@ -542,6 +543,8 @@ namespace gbe
     void allocateGlobalVariableRegister(Function &F);
     /*! gather all the loops in the function and add them to ir::Function */
     void gatherLoopInfo(ir::Function &fn);
+    /*! do topological sorting of basicblocks */
+    void sortBasicBlock(Function &F);
     /*! Emit the complete function code and declaration */
     void emitFunction(Function &F);
     /*! Handle input and output function parameters */
@@ -1938,7 +1941,53 @@ namespace gbe
       fn.addLoop(loopBBs, loopExits);
     }
   }
+/*!
 
+  Sorting Basic blocks is mainly used to solve register liveness issue, take a
+  look at below CFG:
+
+       -<--1--
+      |       |
+      |        ->2
+   -- 3 <---     |
+  |   ^     |     -->4--
+  |   |     |        |  |
+  |   |     -----5<--   |
+  |   |                 |
+  |    ----------6<-----
+  |
+   -->7
+
+  A register %10 defined in bb4, and used in bb5 & bb6. In normal liveness
+  analysis, %10 is not alive in bb3. But under simd execution model, after
+  executing bb4, some channel jump through bb5 to bb3, other channel may jump
+  to bb6, we must execute bb3 first, then bb6, to avoid missing instructions.
+  The physical register of %10 was assigned some value in bb4, but when
+  executing bb3, its content may be over-written as it is dead in bb3. When
+  jumping back to execute bb6, it will get polluted data. What a disaster!
+  What we do here is do a topological sorting of basic blocks, For this case
+  we can see the bb3 will be placed after bb5 & bb6. The liveness calculation
+  is just as normal and will be correct.
+
+  Another advantage of sorting basic blocks is reducing register pressure.
+  In the above CFG, a register defined in bb3 and used in bb7 will be
+  alive through 3,4,5,6,7. But in fact it should be only alive in bb3 and bb7.
+  After topological sorting, this kind of register would be only alive in bb3
+  and bb7. Register pressure in 4,5,6 is reduced.
+*/
+
+  void GenWriter::sortBasicBlock(Function &F) {
+    typedef ReversePostOrderTraversal<Function*> RPOTType;
+    RPOTType rpot(&F);
+    Function::BasicBlockListType &bbList = F.getBasicBlockList();
+
+    for (RPOTType::rpo_iterator bbI = rpot.begin(), bbE = rpot.end(); bbI != bbE; ++bbI) {
+      (*bbI)->removeFromParent();
+    }
+    for (RPOTType::rpo_iterator bbI = rpot.begin(), bbE = rpot.end(); bbI != bbE; ++bbI) {
+      bbList.push_back(*bbI);
+    }
+  }
   void GenWriter::emitFunction(Function &F)
   {
     switch (F.getCallingConv()) {
@@ -1960,6 +2009,8 @@ namespace gbe
     this->emitFunctionPrototype(F);
 
     this->allocateGlobalVariableRegister(F);
+
+    sortBasicBlock(F);
     // Visit all the instructions and emit the IR registers or the value to
     // value mapping when a new register is not needed
     pass = PASS_EMIT_REGISTERS;
