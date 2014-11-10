@@ -249,6 +249,14 @@ cl_program_create_from_binary(cl_context             ctx,
     program->source_type = FROM_LLVM;
   }
   else if (*program->binary == 0) {
+    program->opaque = interp_program_new_from_binary(program->ctx->device->vendor_id, program->binary, program->binary_sz);
+    if (UNLIKELY(program->opaque == NULL)) {
+      err = CL_INVALID_PROGRAM;
+      goto error;
+    }
+
+    /* Create all the kernels */
+    TRY (cl_program_load_gen_program, program);
     program->binary_type = CL_PROGRAM_BINARY_TYPE_EXECUTABLE;
   }
 
