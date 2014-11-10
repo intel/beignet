@@ -201,6 +201,15 @@ set (utests_sources
   utest_file_map.cpp
   utest_helper.cpp)
 
+if (X11_FOUND)
+  set(utests_sources
+      ${utests_sources}
+      runtime_climage_from_boname.cpp)
+  SET(UTESTS_REQUIRED_X11_LIB ${X11_LIBRARIES} ${XEXT_LIBRARIES})
+else()
+SET(UTESTS_REQUIRED_X11_LIB "")
+endif (X11_FOUND)
+
 SET (kernel_bin ${CMAKE_CURRENT_SOURCE_DIR}/../kernels/compiler_ceil)
 
 if(GEN_PCI_ID)
@@ -249,7 +258,7 @@ endif ()
 
 ADD_LIBRARY(utests SHARED ${ADDMATHFUNC} ${utests_sources})
 
-TARGET_LINK_LIBRARIES(utests cl m ${OPENGL_LIBRARIES} ${UTESTS_REQUIRED_EGL_LIB} ${CMAKE_THREAD_LIBS_INIT})
+TARGET_LINK_LIBRARIES(utests cl m ${OPENGL_LIBRARIES} ${UTESTS_REQUIRED_EGL_LIB} ${CMAKE_THREAD_LIBS_INIT} ${UTESTS_REQUIRED_X11_LIB})
 
 ADD_EXECUTABLE(utest_run utest_run.cpp)
 TARGET_LINK_LIBRARIES(utest_run utests)
