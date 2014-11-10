@@ -407,14 +407,18 @@ brw_gt3_break:
   cl_buffer_mgr bufmgr = cl_driver_get_bufmgr(dummy);
 
   const size_t sz = 4096;
-  char* host_ptr = (char*)aligned_alloc(4096, sz);
-  cl_buffer bo = cl_buffer_alloc_userptr(bufmgr, "CL memory object", host_ptr, sz, 0);
-  if (bo == NULL)
-    ret->host_unified_memory = CL_FALSE;
+  void* host_ptr = NULL;
+  int err = posix_memalign(&host_ptr, 4096, sz);
+  if (err == 0) {
+    cl_buffer bo = cl_buffer_alloc_userptr(bufmgr, "CL memory object", host_ptr, sz, 0);
+    if (bo == NULL)
+      ret->host_unified_memory = CL_FALSE;
+    else
+      cl_buffer_unreference(bo);
+    free(host_ptr);
+  }
   else
-    cl_buffer_unreference(bo);
-
-  free(host_ptr);
+    ret->host_unified_memory = CL_FALSE;
   cl_driver_delete(dummy);
 #endif
 

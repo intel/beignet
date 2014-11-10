@@ -6,7 +6,10 @@ static void runtime_use_host_ptr_buffer(void)
 
   // Setup kernel and buffers
   OCL_CREATE_KERNEL("runtime_use_host_ptr_buffer");
-  buf_data[0] = (uint32_t*) aligned_alloc(4096, sizeof(uint32_t) * n);
+
+  int ret = posix_memalign(&buf_data[0], 4096, sizeof(uint32_t) * n);
+  OCL_ASSERT(ret == 0);
+
   for (uint32_t i = 0; i < n; ++i) ((uint32_t*)buf_data[0])[i] = i;
   OCL_CREATE_BUFFER(buf[0], CL_MEM_USE_HOST_PTR, n * sizeof(uint32_t), buf_data[0]);
 
