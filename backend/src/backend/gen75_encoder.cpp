@@ -211,8 +211,9 @@ namespace gbe
     pop();
   }
 
-  void Gen75Encoder::MOV_DF(GenRegister dest, GenRegister src0, GenRegister r) {
+  void Gen75Encoder::MOV_DF(GenRegister dest, GenRegister src0, GenRegister tmp) {
     GBE_ASSERT((src0.type == GEN_TYPE_F && dest.isdf()) || (src0.isdf() && dest.type == GEN_TYPE_F));
+    GenRegister r = GenRegister::retype(tmp, GEN_TYPE_F);
     int w = curr.execWidth;
     GenRegister r0;
     r0 = GenRegister::h2(r);

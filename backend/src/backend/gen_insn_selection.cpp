@@ -1982,7 +1982,7 @@ namespace gbe
           case ir::OP_MOV:
             if (dst.isdf()) {
               ir::Register r = sel.reg(ir::RegisterFamily::FAMILY_QWORD);
-              sel.MOV_DF(dst, src, sel.selReg(r));
+              sel.MOV_DF(dst, src, sel.selReg(r, ir::TYPE_U64));
             } else {
               sel.push();
                 auto dag = sel.regDAG[insn.getDst(0)];
@@ -2784,7 +2784,7 @@ namespace gbe
         case TYPE_S16: sel.MOV(dst, GenRegister::immw(imm.getIntegerValue())); break;
         case TYPE_U8:  sel.MOV(dst, GenRegister::immuw(imm.getIntegerValue())); break;
         case TYPE_S8:  sel.MOV(dst, GenRegister::immw(imm.getIntegerValue())); break;
-        case TYPE_DOUBLE: sel.LOAD_DF_IMM(dst, GenRegister::immdf(imm.getDoubleValue()), sel.selReg(sel.reg(FAMILY_QWORD))); break;
+        case TYPE_DOUBLE: sel.LOAD_DF_IMM(dst, GenRegister::immdf(imm.getDoubleValue()), sel.selReg(sel.reg(FAMILY_QWORD), TYPE_U64)); break;
         case TYPE_S64: sel.LOAD_INT64_IMM(dst, GenRegister::immint64(imm.getIntegerValue())); break;
         case TYPE_U64: sel.LOAD_INT64_IMM(dst, GenRegister::immint64(imm.getIntegerValue())); break;
         default: NOT_SUPPORTED;
@@ -3687,7 +3687,7 @@ namespace gbe
       } else if ((dst.isdf() && srcType == ir::TYPE_FLOAT) ||
                  (src.isdf() && dstType == ir::TYPE_FLOAT)) {
         ir::Register r = sel.reg(ir::RegisterFamily::FAMILY_QWORD);
-        sel.MOV_DF(dst, src, sel.selReg(r));
+        sel.MOV_DF(dst, src, sel.selReg(r, TYPE_U64));
       } else if (dst.isint64()) {
         switch(src.type) {
           case GEN_TYPE_F:
