@@ -37,10 +37,35 @@ Therefore the following code is valid:
 }
 </code>
 
-As one may see, the load done in the last line actually mixes pointers from both
-source src0 and src1. This typically makes the use of binding table indices
-pretty hard. In we use binding table 0 for dst, 1 for src0 and 2 for src1 (for
+As one may see, the load done in the last line actually mixes pointers from
+both source src0 and src1. The pointer "from" in the last line is so called a
+mixed buffer pointer. This typically makes the use of binding table indices
+pretty hard. If we use binding table 0 for dst, 1 for src0 and 2 for src1 (for
 example), we are not able to express the load in the last line with one send
-only. The pointer "from" in the last line is so called a mixed buffer pointer.
+only.
 
-(To be updated)
+To support such kind of usage, we did some analysis through the def-use chain
+for all load/store instructions to find out all of the referenced memory object.
+In the above example, src0 is assigned a unique binding table index (like 2),
+src1 is assigned another binding table index (like 3), the load instruction
+above will be translated into two dataport messages with binding table index
+of src0 and src1.
+
+Here we take advantage of out-of-bound behaviour of Gen. The dataport messages
+we use will return zero value if it is an out-of-bound read. And if it is
+out-of-bound write, it will be skipped.
+
+To take use of out-of-bound check, we all use absolute graphics virtual
+address to represent pointer. As the surfaces do not overlap with each other,
+the addresses comming from src0 will be separated from addresses from src1.
+So, right before dataport message was generated, we subtract absolute graphics
+virtual address of the pointer with surface's base address. In the above
+example, first dataport message will read from src0's surface, and thus use
+binding table index of src0. So we first subtract pointer with src0's base
+address. Then use this relative address as the address of the message. You can
+see addresses not comming from src0 will follow out-of-bound behaviour (that is
+filled with zero). Only address from src0 will get valid data. Next, we can do
+similar thing for the second message. After that, we can easily sum them up to
+get the final result. For store operation, we follow same kind of logic,
+but as it is dataport write, we do not need an extra addition.
+
