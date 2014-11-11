@@ -1061,7 +1061,7 @@ intel_gpgpu_bind_image_gen7(intel_gpgpu_t *gpgpu,
     ss->ss0.surface_array_spacing = 1;
   }
   ss->ss0.surface_format = format;
-  ss->ss1.base_addr = obj_bo->offset + obj_bo_offset;
+  ss->ss1.base_addr = obj_bo->offset;
   ss->ss2.width = w - 1;
 
   ss->ss2.height = h - 1;
@@ -1078,7 +1078,7 @@ intel_gpgpu_bind_image_gen7(intel_gpgpu_t *gpgpu,
     ss->ss0.tile_walk = I965_TILEWALK_YMAJOR;
   }
   ss->ss0.render_cache_rw_mode = 1; /* XXX do we need to set it? */
-  intel_gpgpu_set_buf_reloc_gen7(gpgpu, index, obj_bo, obj_bo->offset + obj_bo_offset);
+  intel_gpgpu_set_buf_reloc_gen7(gpgpu, index, obj_bo, obj_bo_offset);
 
   assert(index < GEN_MAX_SURFACES);
 }
@@ -1106,7 +1106,7 @@ intel_gpgpu_bind_image_gen75(intel_gpgpu_t *gpgpu,
     ss->ss0.surface_array_spacing = 1;
   }
   ss->ss0.surface_format = format;
-  ss->ss1.base_addr = obj_bo->offset + obj_bo_offset;
+  ss->ss1.base_addr = obj_bo->offset;
   ss->ss2.width = w - 1;
   ss->ss2.height = h - 1;
   ss->ss3.depth = depth - 1;
@@ -1126,7 +1126,7 @@ intel_gpgpu_bind_image_gen75(intel_gpgpu_t *gpgpu,
     ss->ss0.tile_walk = I965_TILEWALK_YMAJOR;
   }
   ss->ss0.render_cache_rw_mode = 1; /* XXX do we need to set it? */
-  intel_gpgpu_set_buf_reloc_gen7(gpgpu, index, obj_bo, obj_bo->offset + obj_bo_offset);
+  intel_gpgpu_set_buf_reloc_gen7(gpgpu, index, obj_bo, obj_bo_offset);
 
   assert(index < GEN_MAX_SURFACES);
 }
