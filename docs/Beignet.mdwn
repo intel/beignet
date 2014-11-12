@@ -119,7 +119,14 @@ will run all the unit tests one after the others
 will only run `some_unit_test0` and `some_unit_test1` tests
 
 On all supported target platform, the pass rate should be 100%. If it is not, you may
-need to refer the "Known Issues" section.
+need to refer the "Known Issues" section. Please be noted, the `. setenv.sh` is only
+required to run unit test cases. For all other OpenCL applications, don't execute that
+command.
+
+Normally, beignet needs to run under X server environment as normal user. If there isn't X server,
+beignet provides two alternative to run:
+* Run as root without X.
+* Enable the drm render nodes by passing drm.rnodes=1 to the kernel boot args, then you can run beignet with non-root and without X.
 
 Supported Targets
 -----------------
@@ -211,9 +218,9 @@ And the intel 01.org:
 
 The team
 --------
-Beignet project was created by Ben Segovia. Since 2013, Now we have a team in
-Intel China OTC graphics team continue to work on this project.
-The official contact for this project is: Zou Nanhai (<nanhai.zou@intel.com>).
+Beignet project was created by Ben Segovia. Since 2013, Now Intel China OTC graphics
+team continue to work on this project. The official contact for this project is:  
+Zou Nanhai (<nanhai.zou@intel.com>).
 
 How to contribute
 -----------------
