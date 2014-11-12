@@ -1028,8 +1028,10 @@ intel_get_surface_type(cl_mem_object_type type)
 static uint32_t get_surface_type(intel_gpgpu_t *gpgpu, int index, cl_mem_object_type type)
 {
   uint32_t surface_type;
-  if (((IS_IVYBRIDGE(gpgpu->drv->device_id) || IS_HASWELL(gpgpu->drv->device_id))) &&
-      index >= 128 + BTI_RESERVED_NUM &&
+  if (((IS_IVYBRIDGE(gpgpu->drv->device_id) ||
+        IS_HASWELL(gpgpu->drv->device_id) ||
+        IS_BROADWELL(gpgpu->drv->device_id))) &&
+      index >= BTI_MAX_IMAGE_NUM + BTI_RESERVED_NUM &&
       type == CL_MEM_OBJECT_IMAGE1D_ARRAY)
     surface_type = I965_SURFACE_2D;
   else
