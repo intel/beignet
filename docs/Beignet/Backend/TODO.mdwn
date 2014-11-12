@@ -24,9 +24,6 @@ The code is defined in `src/llvm`.  We used the SPIR and the OpenCL profile
 to compile the code. Therefore, a good part of the job is already done. However,
 many things must be implemented:
 
-- Better resolving of the PHI functions. Today, we always generate MOV
-  instructions at the end of each basic block . They can be easily optimized.
-
 - From LLVM 3.3, we use SPIR IR. We need to use the compiler defined type to
   represent sampler\_t/image2d\_t/image1d\_t/....
 
@@ -34,25 +31,14 @@ many things must be implemented:
   compatible for different clang versions. And may contribute what we have done in
   the ocl\_stdlib.h to libclc if possible.
 
-- Optimize math functions. If the native math instructions don't compy with the
-  OCL spec, we use pure software style to implement those math instructions which
-  is extremely slow, for example. The cos and sin for HD4000 platform are very slow.
-  For some applications which may not need such a high accurate results. We may
-  provide a mechanism to use native\_xxx functions instead of the extremely slow
-  version.
+- Optimize math functions.
 
 Gen IR
 ------
 
 The code is defined in `src/ir`. Main things to do are:
 
-- Convert unstructured BBs to structured format, and leverage Gen's structured
-  instruction such as if/else/endif to encoding those BBs. Then we can save many
-  instructions which are used to maintain software pcips and predications.
-
-- Implement those llvm.memset/llvm.memcpy more efficiently. Currently, we lower
-  them as normal memcpy at llvm module level and not considering the intrinsics
-  all have a constant data length.
+- Support structurized while loop and self loop BBs.
 
 - Finishing the handling of function arguments (see the [[IR
   description|gen_ir]] for more details)
@@ -66,7 +52,8 @@ The code is defined in `src/ir`. Main things to do are:
 - Implement fast path for small local variables. When the kernel only defines
   a small local array/variable, there will be a good chance to allocate the local
   array/variable in register space rather than system memory. This will reduce a
-  lot of memory load/stroe from the system memory.
+  lot of memory load/stroe from the system memory. After custom loop unrolling,
+  this optimization is not very important for most cases now.
 
 Backend
 -------
@@ -84,9 +71,9 @@ The code is defined in `src/backend`. Main things to do are:
 - Reduce the macro instructions in gen\_context. The macro instructions added in
   gen\_context will not get a chance to do post register allocation scheduling.
 
-- leverage the structured if/endif for branching processing.
-
 - Peephole optimization. There are many chances to do further peephole optimization.
+
+- Implement a better framework to do backend instructions optimizations.
 
 General plumbing
 ----------------
@@ -104,7 +91,3 @@ and writes) are not properly decoded yet.
 
 All of those code should be improved and cleaned up are tracked with "XXX"
 comments in the code.
-
-Parts of the code leaks memory when exceptions are used. There are some pointers
-to track and replace with std::unique\_ptr. Note that we also add a custom memory
-debugger that nicely complements (i.e. it is fast) Valgrind.

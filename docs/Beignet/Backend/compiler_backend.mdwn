@@ -100,8 +100,12 @@ do smarter scratch memory allocation to reduce scratch memory requirement.
 Instruction scheduling
 ----------------------
 
-Intra-basic block instruction scheduling is relatively simple. It is implemented
-but has known bug, we need further effort to fix it.
+Pre register allocation instruction scheduling is not implemented. Although it
+may reduce register pressure but it may also increase register dependencies. We
+need to think about a trade-off mechanism to do this optimization.  
+Post register allocation scheduling has been implemented, and could get about
+8% performance improvement. But those cycles data are based on experiments not
+accurate. We may need to tweak it when we get more information.
 
 Instruction encoding
 --------------------

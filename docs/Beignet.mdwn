@@ -126,8 +126,8 @@ Supported Targets
 
  * 3rd Generation Intel Core Processors
  * Intel “Bay Trail” platforms with Intel HD Graphics
- * 4th Generation Intel Core Processors, need kernel patch currently, see below
-   for details:
+ * 4th Generation Intel Core Processors, need kernel patch currently, see the "Known Issues" section.
+ * 5th Generation Intel Core Processors "Broadwell".
 
 Known Issues
 ------------
@@ -154,8 +154,8 @@ Known Issues
   `# echo 0 > /sys/module/i915/parameters/enable_cmd_parser`
 
 * Some unit test cases, maybe 20 to 30, fail on 4th Generation (HSW) platform.
-  The 4th Generation Intel Core Processors's support requires some Linux kernel
-  modification. You need to apply the patch at:
+  _The 4th Generation Intel Core Processors's support requires some Linux kernel
+  modification_. You need to apply the patch at:  
   [https://01.org/zh/beignet/downloads/linux-kernel-patch-hsw-support](https://01.org/zh/beignet/downloads/linux-kernel-patch-hsw-support)
 
 * Precision issue.
@@ -179,12 +179,12 @@ is also good which is about 99%. There are still some remains work items listed 
 most of them are extension support and performance related.
 
 - Performance tuning. There are some major optimizations need to be done,
-  Peephole optimization, convert to structured BBs and leverage Gen's structured
-  instructions, and optimize the extreme slow software based sin/cos/... math
-  functions due to the native math instruction lack of necessary precision.
-  And all the code is inlined which will increase the icache miss rate
-  significantly. And many other things which are specified partially in
-  [[here|Beignet/Backend/TODO]].
+  Peephole optimization, futher tuning the structurized BB transformation to
+  support more pattern such as self loop/while loop. And optimize the slow
+  software based sin/cos/... math functions due to the native math instruction
+  lack of necessary precision. And all the code is inlined which will increase
+  the icache miss rate significantly. And many other things which are specified
+  partially in [[here|Beignet/Backend/TODO]].
 
 - Complete cl\_khr\_gl\_sharing support. We lack of some APIs implementation such
   as clCreateFromGLBuffer,clCreateFromGLRenderbuffer,clGetGLObjectInfo... Currently,
@@ -198,9 +198,6 @@ most of them are extension support and performance related.
   (i.e. for each NDRangeKernels). This is really inefficient since some
   expensive pipe controls are issued for each batch buffer.
 
-- Valgrind reports some leaks in libdrm. It sounds like a false positive but it
-  has to be checked. Idem for LLVM. There is one leak here to check.
-
 More generally, everything in the run-time that triggers the "FATAL" macro means
 that something that must be supported is not implemented properly (either it
 does not comply with the standard or it is just missing)
@@ -208,7 +205,7 @@ does not comply with the standard or it is just missing)
 Project repository
 ------------------
 Right now, we host our project on fdo at:
-[http://cgit.freedesktop.org/beignet/](http://cgit.freedesktop.org/beignet/).
+[http://cgit.freedesktop.org/beignet/](http://cgit.freedesktop.org/beignet/).  
 And the intel 01.org:
 [https://01.org/beignet](https://01.org/beignet)
 
@@ -223,7 +220,12 @@ How to contribute
 You are always welcome to contribute to this project, just need to subscribe
 to the beignet mail list and send patches to it for review.
 The official mail list is as below:
-[http://lists.freedesktop.org/mailman/listinfo/beignet](http://lists.freedesktop.org/mailman/listinfo/beignet)
+[http://lists.freedesktop.org/mailman/listinfo/beignet](http://lists.freedesktop.org/mailman/listinfo/beignet)  
+The official bugzilla is at:
+[https://bugs.freedesktop.org/enter_bug.cgi?product=Beignet](https://bugs.freedesktop.org/enter_bug.cgi?product=Beignet)  
+You are welcome to submit beignet bug. Please be noted, please specify the exact platform
+information, such as BYT/IVB/HSW/BDW, and GT1/GT2/GT3. You can easily get this information
+by running the beignet's unit test.
 
 Documents for OpenCL application developers
 -------------------------------------------
