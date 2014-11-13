@@ -31,13 +31,18 @@
 
 cl_int cl_enqueue_read_buffer(enqueue_data* data)
 {
+  cl_int err = CL_SUCCESS;
   cl_mem mem = data->mem_obj;
   assert(mem->type == CL_MEM_BUFFER_TYPE ||
          mem->type == CL_MEM_SUBBUFFER_TYPE);
   struct _cl_mem_buffer* buffer = (struct _cl_mem_buffer*)mem;
-
-  return cl_buffer_get_subdata(mem->bo, data->offset + buffer->sub_offset,
-			       data->size, data->ptr);
+  if (!mem->is_userptr) {
+    if (cl_buffer_get_subdata(mem->bo, data->offset + buffer->sub_offset,
+			       data->size, data->ptr) != 0)
+      err = CL_MAP_FAILURE;
+  } else
+    memcpy(data->ptr, (char*)mem->host_ptr + data->offset + buffer->sub_offset, data->size);
+  return err;
 }
 
 cl_int cl_enqueue_read_buffer_rect(enqueue_data* data)
