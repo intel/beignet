@@ -37,7 +37,6 @@ static int thread_array_num = 1;
 static int *thread_slot_map = NULL;
 static int thread_magic_num = 1;
 static pthread_mutex_t thread_queue_map_lock = PTHREAD_MUTEX_INITIALIZER;
-static pthread_key_t destroy_key;
 
 static __thread int thread_id = -1;
 static __thread int thread_magic = -1;
@@ -55,13 +54,6 @@ typedef struct _queue_thread_private {
   pthread_mutex_t thread_data_lock;
 } queue_thread_private;
 
-static void thread_data_destructor(void *dummy) {
-  pthread_mutex_lock(&thread_queue_map_lock);
-  thread_slot_map[thread_id] = 0;
-  pthread_mutex_unlock(&thread_queue_map_lock);
-  free(dummy);
-}
-
 static thread_spec_data * __create_thread_spec_data(cl_command_queue queue, int create)
 {
   queue_thread_private *thread_private = ((queue_thread_private *)(queue->thread_data));
@@ -69,7 +61,6 @@ static thread_spec_data * __create_thread_spec_data(cl_command_queue queue, int 
   int i = 0;
 
   if (thread_id == -1) {
-    void * dummy = malloc(sizeof(int));
 
     pthread_mutex_lock(&thread_queue_map_lock);
     for (i = 0; i < thread_array_num; i++) {
@@ -90,8 +81,6 @@ static thread_spec_data * __create_thread_spec_data(cl_command_queue queue, int 
 
     thread_magic = thread_magic_num++;
     pthread_mutex_unlock(&thread_queue_map_lock);
-
-    pthread_setspecific(destroy_key, dummy);
   }
 
   pthread_mutex_lock(&thread_private->thread_data_lock);
@@ -129,7 +118,6 @@ void* cl_thread_data_create(void)
     thread_slot_map = calloc(thread_array_num, sizeof(int));
     pthread_mutex_unlock(&thread_queue_map_lock);
 
-    pthread_key_create(&destroy_key, thread_data_destructor);
   }
 
   pthread_mutex_init(&thread_private->thread_data_lock, NULL);
@@ -238,7 +226,6 @@ void cl_thread_data_destroy(cl_command_queue queue)
   thread_spec_data** threads_data;
 
   pthread_mutex_lock(&thread_private->thread_data_lock);
-  assert(thread_private->threads_data_num == thread_array_num);
   threads_data_num = thread_private->threads_data_num;
   threads_data = thread_private->threads_data;
   thread_private->threads_data_num = 0;
