@@ -637,6 +637,13 @@ namespace gbe {
         Value *Callee = call->getCalledValue();
         const std::string fnName = Callee->getName();
         auto it = instrinsicMap.map.find(fnName);
+        // FIXME, should create a complete error reporting mechanism
+        // when found error in beignet managed passes including Gen pass.
+        if (it == instrinsicMap.map.end()) {
+          std::cerr << "Unresolved symbol: " << fnName << std::endl;
+          std::cerr << "Aborting..." << std::endl;
+          exit(-1);
+        }
         GBE_ASSERT(it != instrinsicMap.map.end());
 
         // Get the function arguments
