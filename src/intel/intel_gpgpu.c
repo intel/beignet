@@ -582,7 +582,7 @@ intel_gpgpu_set_L3_gen7(intel_gpgpu_t *gpgpu, uint32_t use_slm)
   BEGIN_BATCH(gpgpu->batch, 9);
   OUT_BATCH(gpgpu->batch, CMD_LOAD_REGISTER_IMM | 1); /* length - 2 */
   OUT_BATCH(gpgpu->batch, GEN7_L3_SQC_REG1_ADDRESS_OFFSET);
-  OUT_BATCH(gpgpu->batch, 0x00730000);
+  OUT_BATCH(gpgpu->batch, 0x00A00000);
 
   OUT_BATCH(gpgpu->batch, CMD_LOAD_REGISTER_IMM | 1); /* length - 2 */
   OUT_BATCH(gpgpu->batch, GEN7_L3_CNTL_REG2_ADDRESS_OFFSET);
@@ -644,7 +644,7 @@ intel_gpgpu_set_L3_gen75(intel_gpgpu_t *gpgpu, uint32_t use_slm)
   OUT_BATCH(gpgpu->batch, (1 << 6ul) << 16);          /* enable atomic in L3 */
   OUT_BATCH(gpgpu->batch, CMD_LOAD_REGISTER_IMM | 1); /* length - 2 */
   OUT_BATCH(gpgpu->batch, GEN7_L3_SQC_REG1_ADDRESS_OFFSET);
-  OUT_BATCH(gpgpu->batch, 0x00610000);
+  OUT_BATCH(gpgpu->batch, 0x00800000);
 
   OUT_BATCH(gpgpu->batch, CMD_LOAD_REGISTER_IMM | 1); /* length - 2 */
   OUT_BATCH(gpgpu->batch, GEN7_L3_CNTL_REG2_ADDRESS_OFFSET);
