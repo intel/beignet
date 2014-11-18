@@ -785,7 +785,7 @@ _cl_mem_new_image(cl_context ctx,
   if(tiling != CL_NO_TILE && sz > MAX_TILING_SIZE) {
     tiling = CL_NO_TILE;
     aligned_pitch = w * bpp;
-    aligned_h     = h;
+    aligned_h     = ALIGN(h, cl_buffer_get_tiling_align(ctx, CL_NO_TILE, 1));
     sz = aligned_pitch * aligned_h * depth;
   }
 
