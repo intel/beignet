@@ -40,8 +40,15 @@ cl_int cl_enqueue_read_buffer(enqueue_data* data)
     if (cl_buffer_get_subdata(mem->bo, data->offset + buffer->sub_offset,
 			       data->size, data->ptr) != 0)
       err = CL_MAP_FAILURE;
-  } else
-    memcpy(data->ptr, (char*)mem->host_ptr + data->offset + buffer->sub_offset, data->size);
+  } else {
+    void* src_ptr = cl_mem_map_auto(mem, 0);
+    if (src_ptr == NULL)
+      err = CL_MAP_FAILURE;
+    else {
+      memcpy(data->ptr, (char*)src_ptr + data->offset + buffer->sub_offset, data->size);
+      cl_mem_unmap_auto(mem);
+    }
+  }
   return err;
 }
 
@@ -99,13 +106,28 @@ error:
 
 cl_int cl_enqueue_write_buffer(enqueue_data *data)
 {
+  cl_int err = CL_SUCCESS;
   cl_mem mem = data->mem_obj;
   assert(mem->type == CL_MEM_BUFFER_TYPE ||
          mem->type == CL_MEM_SUBBUFFER_TYPE);
   struct _cl_mem_buffer* buffer = (struct _cl_mem_buffer*)mem;
 
-  return cl_buffer_subdata(mem->bo, data->offset + buffer->sub_offset,
-			   data->size, data->const_ptr);
+  if (mem->is_userptr) {
+    void* dst_ptr = cl_mem_map_auto(mem, 1);
+    if (dst_ptr == NULL)
+      err = CL_MAP_FAILURE;
+    else {
+      memcpy((char*)dst_ptr + data->offset + buffer->sub_offset, data->const_ptr, data->size);
+      cl_mem_unmap_auto(mem);
+    }
+  }
+  else {
+    if (cl_buffer_subdata(mem->bo, data->offset + buffer->sub_offset,
+			   data->size, data->const_ptr) != 0)
+      err = CL_MAP_FAILURE;
+  }
+
+  return err;
 }
 
 cl_int cl_enqueue_write_buffer_rect(enqueue_data *data)
@@ -240,7 +262,7 @@ cl_int cl_enqueue_map_buffer(enqueue_data *data)
   struct _cl_mem_buffer* buffer = (struct _cl_mem_buffer*)mem;
 
   if (mem->is_userptr)
-    ptr = mem->host_ptr;
+    ptr = cl_mem_map_auto(mem, data->write_map ? 1 : 0);
   else {
     if(data->unsync_map == 1)
       //because using unsync map in clEnqueueMapBuffer, so force use map_gtt here

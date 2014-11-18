@@ -1818,8 +1818,13 @@ cl_mem_map_auto(cl_mem mem, int write)
 {
   if (IS_IMAGE(mem) && cl_mem_image(mem)->tiling != CL_NO_TILE)
     return cl_mem_map_gtt(mem);
-  else
-    return cl_mem_map(mem, write);
+  else {
+    if (mem->is_userptr) {
+      cl_buffer_wait_rendering(mem->bo);
+      return mem->host_ptr;
+    }else
+      return cl_mem_map(mem, write);
+  }
 }
 
 LOCAL cl_int
@@ -1829,7 +1834,7 @@ cl_mem_unmap_auto(cl_mem mem)
     cl_buffer_unmap_gtt(mem->bo);
     mem->mapped_gtt = 0;
   }
-  else
+  else if (!mem->is_userptr)
     cl_buffer_unmap(mem->bo);
   return CL_SUCCESS;
 }
