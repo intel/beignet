@@ -300,10 +300,6 @@ namespace analysis
     bool isCyclic(Node*);
     /* is this a back edge? */
     bool isBackedge(const Node*, const Node*);
-    /* returns true if there is a node k such that there is a
-     * (possibly empty) path from m to k that does not pass through n
-     * and an edge k->n that is a back edge, and false otherwise. */
-    bool pathBack(Node*, Node*);
     /* check if there is a barrier in a basic block */
     bool checkForBarrier(const ir::BasicBlock*);
     /* insert while instruction at the proper position of Node */
