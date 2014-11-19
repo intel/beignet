@@ -637,11 +637,15 @@ cl_mem_copy_image(struct _cl_mem_image *image,
   cl_mem_unmap_auto((cl_mem)image);
 }
 
-cl_image_tiling_t cl_get_default_tiling(void)
+cl_image_tiling_t cl_get_default_tiling(cl_driver drv)
 {
   static int initialized = 0;
   static cl_image_tiling_t tiling = CL_TILE_X;
+
   if (!initialized) {
+    // FIXME, need to find out the performance diff's root cause on BDW.
+    if(cl_driver_get_ver(drv) == 8)
+      tiling = CL_TILE_Y;
     char *tilingStr = getenv("OCL_TILING");
     if (tilingStr != NULL) {
       switch (tilingStr[0]) {
@@ -733,7 +737,7 @@ _cl_mem_new_image(cl_context ctx,
 
     /* Pick up tiling mode (we do only linear on SNB) */
     if (cl_driver_get_ver(ctx->drv) != 6)
-      tiling = cl_get_default_tiling();
+      tiling = cl_get_default_tiling(ctx->drv);
 
     depth = 1;
   } else if (image_type == CL_MEM_OBJECT_IMAGE3D ||
@@ -743,7 +747,7 @@ _cl_mem_new_image(cl_context ctx,
       h = 1;
       tiling = CL_NO_TILE;
     } else if (cl_driver_get_ver(ctx->drv) != 6)
-      tiling = cl_get_default_tiling();
+      tiling = cl_get_default_tiling(ctx->drv);
 
     size_t min_pitch = bpp * w;
     if (data && pitch == 0)
