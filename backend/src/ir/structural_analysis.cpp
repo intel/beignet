@@ -864,6 +864,9 @@ namespace analysis
         return NULL;
     }
 
+    //FIXME: as our IR could only handle self loop, the while loop node
+    //is disabled to avoid performace regression by the path function.
+#if 0
     /* check for improper region */
     for(NodeList::const_iterator m = nset.begin(); m != nset.end(); m++)
     {
@@ -888,6 +891,8 @@ namespace analysis
         return insertNode(p);
       }
     }
+#endif
+
     return NULL;
   }
 
@@ -1023,18 +1028,28 @@ namespace analysis
           }
 
           Node* loop_header = NULL;
-          for (auto l : loops) {
-            ir::BasicBlock &a = fn->getBlock(l->bbs[0]);
-            loop_header = bbmap.find(&a)->second;
+          //if n is basic block node, query the llvm loop info to find the loop whoose loop header is n;
+          if(n->type() == BasicBlock){
+            for (auto l : loops) {
+              ir::BasicBlock &a = fn->getBlock(l->bbs[0]);
+              loop_header = bbmap.find(&a)->second;
 
-            if(loop_header == n){
-              for (auto bb : l->bbs) {
-                ir::BasicBlock &tmp = fn->getBlock(bb);
-                Node* node_ = bbmap.find(&tmp)->second;
-                reachUnder.push_front(node_);
-                nset.insert(node_);
+              if(loop_header == n){
+                for (auto bb : l->bbs) {
+                  ir::BasicBlock &tmp = fn->getBlock(bb);
+                  Node* node_ = bbmap.find(&tmp)->second;
+                  reachUnder.push_front(node_);
+                  nset.insert(node_);
+                }
+                break;
               }
-              break;
+            }
+          }else{
+          //n is compacted node, it would have a successor pointed to itself for self loop.
+            if(n->succs().find(n) != n->succs().end())
+            {
+                reachUnder.push_front(n);
+                nset.insert(n);
             }
           }
 
