@@ -135,7 +135,6 @@ namespace gbe {
     bool limitRegisterPressure;
   } codeGenStrategy[] = {
     {16, 0, false},
-    {16, 10, false},
     {8, 0, false},
     {8, 8, false},
     {8, 16, false},
@@ -151,9 +150,9 @@ namespace gbe {
     uint32_t codeGen = 0;
     GenContext *ctx = NULL;
     if (fn->getSimdWidth() == 8) {
-      codeGen = 2;
+      codeGen = 1;
     } else if (fn->getSimdWidth() == 16) {
-      codeGenNum = 2;
+      codeGenNum = 1;
     } else if (fn->getSimdWidth() == 0) {
       codeGen = 0;
     } else
