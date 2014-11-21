@@ -230,5 +230,8 @@ extern float cl_FLT_ULP(float float_number);
 /* Calculator ULP of each INT value */
 extern int cl_INT_ULP(int int_number);
 
+/* subtract the time */
+int time_subtract(struct timeval *y, struct timeval *x, struct timeval *result);
+
 #endif /* __UTEST_HELPER_HPP__ */
 
