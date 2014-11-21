@@ -436,9 +436,6 @@ void cl_event_set_status(cl_event event, cl_int status)
     event->status = status;
   pthread_mutex_unlock(&event->ctx->event_lock);
 
-  if(event->status <= CL_COMPLETE)
-    cl_event_delete(event);
-
   /* Call user callback */
   user_cb = event->user_cb;
   while(user_cb) {
@@ -449,46 +446,48 @@ void cl_event_set_status(cl_event event, cl_int status)
     user_cb = user_cb->next;
   }
 
-  if(event->type != CL_COMMAND_USER)
-    return;
+  if(event->type == CL_COMMAND_USER) {
+    /* Check all defer enqueue */
+    enqueue_callback *cb, *enqueue_cb = event->waits_head;
+    while(enqueue_cb) {
+      /* Remove this user event in enqueue_cb, update the header if needed. */
+      cl_event_remove_user_event(&enqueue_cb->wait_user_events, event);
+      cl_event_delete(event);
 
-  /* Check all defer enqueue */
-  enqueue_callback *cb, *enqueue_cb = event->waits_head;
-  while(enqueue_cb) {
-    /* Remove this user event in enqueue_cb, update the header if needed. */
-    cl_event_remove_user_event(&enqueue_cb->wait_user_events, event);
-    cl_event_delete(event);
+      /* Still wait on other user events */
+      if(enqueue_cb->wait_user_events != NULL) {
+        enqueue_cb = enqueue_cb->next;
+        continue;
+      }
 
-    /* Still wait on other user events */
-    if(enqueue_cb->wait_user_events != NULL) {
+      //remove user event frome enqueue_cb's ctx
+      cl_command_queue_remove_event(enqueue_cb->event->queue, event);
+      cl_command_queue_remove_barrier_event(enqueue_cb->event->queue, event);
+
+      /* All user events complete, now wait enqueue events */
+      ret = cl_event_wait_events(enqueue_cb->num_events, enqueue_cb->wait_list,
+          enqueue_cb->event->queue);
+      assert(ret != CL_ENQUEUE_EXECUTE_DEFER);
+      ret = ~ret;
+      cb = enqueue_cb;
       enqueue_cb = enqueue_cb->next;
-      continue;
+
+      /* Call the pending operation */
+      evt = cb->event;
+      /* TODO: if this event wait on several events, one event's
+         status is error, the others is complete, what's the status
+         of this event? Can't find the description in OpenCL spec.
+         Simply update to latest finish wait event.*/
+      cl_event_set_status(cb->event, status);
+      if(evt->emplict == CL_FALSE) {
+        cl_event_delete(evt);
+      }
     }
-
-    //remove user event frome enqueue_cb's ctx
-    cl_command_queue_remove_event(enqueue_cb->event->queue, event);
-    cl_command_queue_remove_barrier_event(enqueue_cb->event->queue, event);
-
-    /* All user events complete, now wait enqueue events */
-    ret = cl_event_wait_events(enqueue_cb->num_events, enqueue_cb->wait_list,
-        enqueue_cb->event->queue);
-    assert(ret != CL_ENQUEUE_EXECUTE_DEFER);
-    ret = ~ret;
-    cb = enqueue_cb;
-    enqueue_cb = enqueue_cb->next;
-
-    /* Call the pending operation */
-    evt = cb->event;
-    /* TODO: if this event wait on several events, one event's
-       status is error, the others is complete, what's the status
-       of this event? Can't find the description in OpenCL spec.
-       Simply update to latest finish wait event.*/
-    cl_event_set_status(cb->event, status);
-    if(evt->emplict == CL_FALSE) {
-      cl_event_delete(evt);
-    }
+    event->waits_head = NULL;
   }
-  event->waits_head = NULL;
+
+  if(event->status <= CL_COMPLETE)
+    cl_event_delete(event);
 }
 
 void cl_event_update_status(cl_event event, int wait)
