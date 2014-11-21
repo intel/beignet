@@ -28,28 +28,6 @@ void test_copy_buf(size_t sz, size_t src_off, size_t dst_off, size_t cb)
     src_off, dst_off, cb*sizeof(char), 0, NULL, NULL));
 }
 
-int tim_subtract(struct timeval *y, struct timeval *x, struct timeval *result){
-  if ( x->tv_sec > y->tv_sec )
-    return   -1;
-
-  if ((x->tv_sec == y->tv_sec) && (x->tv_usec > y->tv_usec))
-    return   -1;
-
-  if ( result != NULL){
-    result->tv_sec = ( y->tv_sec - x->tv_sec );
-    result->tv_usec = ( y->tv_usec - x->tv_usec );
-
-    if (result->tv_usec < 0){
-      result->tv_sec --;
-      result->tv_usec += 1000000;
-    }
-  }
-
-  int msec = 1000.0*(y->tv_sec - x->tv_sec) + (y->tv_usec - x->tv_usec)/1000.0;
-  return msec;
-}
-
-
 int enqueue_copy_buf(void)
 {
   size_t i;
@@ -63,7 +41,7 @@ int enqueue_copy_buf(void)
   }
 
   gettimeofday(&stop,0);
-  return tim_subtract(&stop, &start, 0);
+  return time_subtract(&stop, &start, 0);
 }
 
 MAKE_BENCHMARK_FROM_FUNCTION(enqueue_copy_buf);
