@@ -1941,6 +1941,25 @@ namespace gbe
       fn.addLoop(loopBBs, loopExits);
     }
   }
+
+
+  static unsigned getChildNo(BasicBlock *bb) {
+    TerminatorInst *term = bb->getTerminator();
+    return term->getNumSuccessors();
+  }
+
+  // return NULL if index out-range of children number
+  static BasicBlock *getChildPossible(BasicBlock *bb, unsigned index) {
+
+    TerminatorInst *term = bb->getTerminator();
+    unsigned childNo = term->getNumSuccessors();
+    BasicBlock *child = NULL;
+    if(index < childNo) {
+      child = term->getSuccessor(index);
+    }
+    return child;
+  }
+
 /*!
 
   Sorting Basic blocks is mainly used to solve register liveness issue, take a
@@ -1958,7 +1977,7 @@ namespace gbe
   |
    -->7
 
-  A register %10 defined in bb4, and used in bb5 & bb6. In normal liveness
+  1.) A register %10 defined in bb4, and used in bb5 & bb6. In normal liveness
   analysis, %10 is not alive in bb3. But under simd execution model, after
   executing bb4, some channel jump through bb5 to bb3, other channel may jump
   to bb6, we must execute bb3 first, then bb6, to avoid missing instructions.
@@ -1969,25 +1988,80 @@ namespace gbe
   we can see the bb3 will be placed after bb5 & bb6. The liveness calculation
   is just as normal and will be correct.
 
-  Another advantage of sorting basic blocks is reducing register pressure.
+  2.) Another advantage of sorting basic blocks is reducing register pressure.
   In the above CFG, a register defined in bb3 and used in bb7 will be
   alive through 3,4,5,6,7. But in fact it should be only alive in bb3 and bb7.
   After topological sorting, this kind of register would be only alive in bb3
   and bb7. Register pressure in 4,5,6 is reduced.
+
+  3.) Classical post-order traversal will automatically choose a order for the
+  successors of a basic block, But this order may be hard to handle, take a look
+  at below CFG:
+
+       1 <-----
+      /        |
+      2 --> 4 -
+      |
+      3
+      |
+      5
+  In the post oder traversal, it may be: 5->4->3->2->1, as 4, 3 does not have
+  strict order. This is a serious issue, a value defined in bb3, used in bb5
+  may be overwritten in bb1. Remember the simd execution model? some lanes
+  may execute bb4 after other lanes finish bb3, and then jump to bb1, but live
+  range of the register does not cover bb1. what we done here is for a loop
+  exit (here bb3), we alwasy make sure it is visited first in the post-order
+  traversal, for the graph, that means 5->3->4->2->1. Then a definition in bb3,
+  and used in 5 will not interfere with any other values defined in the loop.
+  FIXME: For irreducible graph, we need to identify it and convert to reducible graph.
 */
-
   void GenWriter::sortBasicBlock(Function &F) {
-    typedef ReversePostOrderTraversal<Function*> RPOTType;
-    RPOTType rpot(&F);
-    Function::BasicBlockListType &bbList = F.getBasicBlockList();
+    BasicBlock &entry = F.getEntryBlock();
+    std::vector<BasicBlock *> visitStack;
+    std::vector<BasicBlock *> sorted;
+    std::set<BasicBlock *> visited;
 
-    for (RPOTType::rpo_iterator bbI = rpot.begin(), bbE = rpot.end(); bbI != bbE; ++bbI) {
-      (*bbI)->removeFromParent();
+    visitStack.push_back(&entry);
+    visited.insert(&entry);
+
+    while (!visitStack.empty()) {
+      BasicBlock *top = visitStack.back();
+      unsigned childNo = getChildNo(top);
+      GBE_ASSERT(childNo <= 2);
+
+      BasicBlock *child0 = getChildPossible(top, 0);
+      BasicBlock *child1 = getChildPossible(top, 1);
+      if(childNo == 2) {
+        Loop *loop = LI->getLoopFor(top);
+        // visit loop exit node first, so loop exit block will be placed
+        // after blocks in loop in 'reverse post-order' list.
+        if (loop && loop->contains(child0) && !loop->contains(child1)) {
+          BasicBlock *tmp = child0; child0 = child1; child1 = tmp;
+        }
+      }
+
+      if (child0 != NULL && visited.find(child0) == visited.end()) {
+        visitStack.push_back(child0);
+        visited.insert(child0);
+      } else if (child1 != NULL && visited.find(child1) == visited.end()) {
+        visitStack.push_back(child1);
+        visited.insert(child1);
+      } else {
+        sorted.push_back(visitStack.back());
+        visitStack.pop_back();
+      }
     }
-    for (RPOTType::rpo_iterator bbI = rpot.begin(), bbE = rpot.end(); bbI != bbE; ++bbI) {
-      bbList.push_back(*bbI);
+
+    Function::BasicBlockListType &bbList = F.getBasicBlockList();
+    for (std::vector<BasicBlock *>::iterator iter = sorted.begin(); iter != sorted.end(); ++iter) {
+      (*iter)->removeFromParent();
+    }
+
+    for (std::vector<BasicBlock *>::reverse_iterator iter = sorted.rbegin(); iter != sorted.rend(); ++iter) {
+      bbList.push_back(*iter);
     }
   }
+
   void GenWriter::emitFunction(Function &F)
   {
     switch (F.getCallingConv()) {
