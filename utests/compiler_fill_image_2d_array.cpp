@@ -37,9 +37,9 @@ static void compiler_fill_image_2d_array(void)
   globals[0] = w/2;
   locals[0] = 16;
   globals[1] = h;
-  locals[1] = 8;
+  locals[1] = 4;
   globals[2] = array;
-  locals[2] = 8;
+  locals[2] = 4;
   OCL_NDRANGE(3);
 
   // Check result
