@@ -66,7 +66,7 @@ namespace gbe
   static const OCLIntrinsicMap instrinsicMap;
 
   /*! Pad the offset */
-  uint32_t getPadding(uint32_t offset, uint32_t align);
+  int32_t getPadding(int32_t offset, int32_t align);
 
   /*! Get the type alignment in bytes */
   uint32_t getAlignmentByte(const ir::Unit &unit, llvm::Type* Ty);
