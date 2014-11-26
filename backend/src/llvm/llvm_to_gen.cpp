@@ -74,6 +74,7 @@ namespace gbe
 {
   BVAR(OCL_OUTPUT_CFG, false);
   BVAR(OCL_OUTPUT_CFG_ONLY, false);
+  BVAR(OCL_OUTPUT_CFG_GEN_IR, false);
   using namespace llvm;
 
   void runFuntionPass(Module &mod, TargetLibraryInfo *libraryInfo, const DataLayout &DL)
@@ -297,6 +298,8 @@ namespace gbe
       analysis::ControlTree *ct = new analysis::ControlTree(iter->second);
       ct->analyze();
       delete ct;
+      if (OCL_OUTPUT_CFG_GEN_IR)
+        iter->second->outputCFG();
       iter++;
     }
 

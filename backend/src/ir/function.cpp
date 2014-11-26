@@ -281,6 +281,27 @@ namespace ir {
     });
   }
 
+  void Function::outputCFG(void) {
+    std::string fileName = getName() + std::string(".dot");
+    ::FILE *fp = fopen(fileName.c_str(), "w");
+    if (fp == NULL) return;
+
+    printf("writing Gen IR CFG to %s\n", fileName.c_str());
+    fprintf(fp, "digraph \"%s\" {\n", getName().c_str());
+    this->foreachBlock([this, fp](BasicBlock &bb) {
+      uint32_t lid = bb.getLabelIndex();
+      fprintf(fp, "Node%d [shape=record, label=\"{%d}\"];\n", lid, lid);
+      set<BasicBlock*> &succ = bb.successors;
+      for (auto x : succ) {
+        uint32_t next = x->getLabelIndex();
+        fprintf(fp, "Node%d -> Node%d\n", lid, next);
+      }
+    });
+    fprintf(fp, "}\n");
+    fclose(fp);
+  }
+
+
   std::ostream &operator<< (std::ostream &out, const Function &fn)
   {
     out << ".decl_function " << fn.getName() << std::endl;

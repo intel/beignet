@@ -428,6 +428,8 @@ namespace ir {
     /*! Get surface starting address register from bti */
     Register getSurfaceBaseReg(uint8_t bti) const;
     void appendSurface(uint8_t bti, Register reg);
+    /*! Output the control flow graph to .dot file */
+    void outputCFG();
   private:
     friend class Context;           //!< Can freely modify a function
     std::string name;               //!< Function name
