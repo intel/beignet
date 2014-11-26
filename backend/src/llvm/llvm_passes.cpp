@@ -126,7 +126,7 @@ namespace gbe
     return bKernel;
   }
 
-  uint32_t getPadding(uint32_t offset, uint32_t align) {
+  int32_t getPadding(int32_t offset, int32_t align) {
     return (align - (offset % align)) % align; 
   }
 
@@ -279,32 +279,33 @@ namespace gbe
 
     for(uint32_t op=1; op<GEPInst->getNumOperands(); ++op)
     {
-      uint32_t TypeIndex;
+      int32_t TypeIndex;
       //we have a constant struct/array acces
       if(ConstantInt* ConstOP = dyn_cast<ConstantInt>(GEPInst->getOperand(op)))
       {
-        uint32_t offset = 0;
+        int32_t offset = 0;
         TypeIndex = ConstOP->getZExtValue();
+        int32_t step = TypeIndex > 0 ? 1 : -1;
         if (op == 1) {
           if (TypeIndex != 0) {
             Type *elementType = (cast<PointerType>(parentPointer->getType()))->getElementType();
             uint32_t elementSize = getTypeByteSize(unit, elementType);
             uint32_t align = getAlignmentByte(unit, elementType);
             elementSize += getPadding(elementSize, align);
-            offset += elementSize * TypeIndex;
+            offset += elementSize * TypeIndex * step;
           }
         } else {
-          for(uint32_t ty_i=0; ty_i<TypeIndex; ty_i++)
+          for(int32_t ty_i=0; ty_i != TypeIndex; ty_i += step)
           {
             Type* elementType = CompTy->getTypeAtIndex(ty_i);
             uint32_t align = getAlignmentByte(unit, elementType);
-            offset += getPadding(offset, align);
-            offset += getTypeByteSize(unit, elementType);
+            offset += getPadding(offset, align * step);
+            offset += getTypeByteSize(unit, elementType) * step;
           }
 
           //add getPaddingding for accessed type
           const uint32_t align = getAlignmentByte(unit, CompTy->getTypeAtIndex(TypeIndex));
-          offset += getPadding(offset, align);
+          offset += getPadding(offset, align * step);
         }
 
         constantOffset += offset;

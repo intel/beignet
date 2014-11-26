@@ -1126,7 +1126,7 @@ namespace gbe
       return pointer_reg;
     }
     else if (expr->getOpcode() == Instruction::GetElementPtr) {
-      uint32_t TypeIndex;
+      int32_t TypeIndex;
       uint32_t constantOffset = 0;
 
       Value *pointer = val;
@@ -1136,6 +1136,7 @@ namespace gbe
         ConstantInt* ConstOP = dyn_cast<ConstantInt>(expr->getOperand(op));
         GBE_ASSERT(ConstOP);
         TypeIndex = ConstOP->getZExtValue();
+        GBE_ASSERT(TypeIndex >= 0);
         if (op == 1) {
           if (TypeIndex != 0) {
             Type *elementType = (cast<PointerType>(pointer->getType()))->getElementType();
@@ -1145,7 +1146,7 @@ namespace gbe
             offset += elementSize * TypeIndex;
           }
         } else {
-          for(uint32_t ty_i=0; ty_i<TypeIndex; ty_i++)
+          for(int32_t ty_i=0; ty_i<TypeIndex; ty_i++)
           {
             Type* elementType = CompTy->getTypeAtIndex(ty_i);
             uint32_t align = getAlignmentByte(unit, elementType);
