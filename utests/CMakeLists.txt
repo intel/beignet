@@ -36,6 +36,7 @@ set (utests_sources
   compiler_array1.cpp
   compiler_array2.cpp
   compiler_array3.cpp
+  compiler_array4.cpp
   compiler_byte_scatter.cpp
   compiler_ceil.cpp
   compiler_clz_short.cpp
