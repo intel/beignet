@@ -201,12 +201,12 @@ set (utests_sources
   utest_helper.cpp)
 
 if (X11_FOUND)
-  set(utests_sources
+  SET(utests_sources
       ${utests_sources}
       runtime_climage_from_boname.cpp)
   SET(UTESTS_REQUIRED_X11_LIB ${X11_LIBRARIES} ${XEXT_LIBRARIES})
 else()
-SET(UTESTS_REQUIRED_X11_LIB "")
+  SET(UTESTS_REQUIRED_X11_LIB "")
 endif (X11_FOUND)
 
 SET (kernel_bin ${CMAKE_CURRENT_SOURCE_DIR}/../kernels/compiler_ceil)
@@ -224,8 +224,8 @@ else(GEN_PCI_ID)
 endif(GEN_PCI_ID)
 
 if (DRM_INTEL_USERPTR)
-SET(CMAKE_CXX_FLAGS "-DHAS_USERPTR ${CMAKE_CXX_FLAGS}")
-SET(CMAKE_C_FLAGS "-DHAS_USERPTR ${CMAKE_C_FLAGS}")
+  SET(CMAKE_CXX_FLAGS "-DHAS_USERPTR ${CMAKE_CXX_FLAGS}")
+  SET(CMAKE_C_FLAGS "-DHAS_USERPTR ${CMAKE_C_FLAGS}")
 endif (DRM_INTEL_USERPTR)
 
 ADD_CUSTOM_TARGET(kernel_bin.bin
@@ -243,16 +243,16 @@ add_custom_target(utest_generator
     )
 
 if (EGL_FOUND AND MESA_SOURCE_FOUND)
-SET(utests_sources ${utests_sources} compiler_fill_gl_image.cpp)
-SET(CMAKE_CXX_FLAGS "-DHAS_EGL ${CMAKE_CXX_FLAGS} ${DEF_OCL_PCH_PCM_PATH}")
-SET(CMAKE_C_FLAGS "-DHAS_EGL ${CMAKE_C_FLAGS} ${DEF_OCL_PCH_PCM_PATH}")
-SET(UTESTS_REQUIRED_EGL_LIB ${EGL_LIBRARIES})
+  SET(utests_sources ${utests_sources} compiler_fill_gl_image.cpp)
+  SET(CMAKE_CXX_FLAGS "-DHAS_EGL ${CMAKE_CXX_FLAGS} ${DEF_OCL_PCH_PCM_PATH}")
+  SET(CMAKE_C_FLAGS "-DHAS_EGL ${CMAKE_C_FLAGS} ${DEF_OCL_PCH_PCM_PATH}")
+  SET(UTESTS_REQUIRED_EGL_LIB ${EGL_LIBRARIES})
 else()
-SET(UTESTS_REQUIRED_EGL_LIB "")
+  SET(UTESTS_REQUIRED_EGL_LIB "")
 endif()
 
 if (COMPILER STREQUAL "CLANG")
-SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wno-tautological-compare")
+  SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wno-tautological-compare")
 endif ()
 
 ADD_LIBRARY(utests SHARED ${ADDMATHFUNC} ${utests_sources})
