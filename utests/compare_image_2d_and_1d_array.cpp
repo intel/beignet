@@ -61,7 +61,7 @@ static void compare_image_2d_and_1d_array(void)
   globals[0] = 32;
   globals[1] = 16;
   locals[0] = 32;
-  locals[1] = 16;
+  locals[1] = 8;
   OCL_NDRANGE(2);
 
   // Check result
