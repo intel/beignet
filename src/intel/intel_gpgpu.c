@@ -1170,8 +1170,8 @@ intel_gpgpu_bind_image_gen8(intel_gpgpu_t *gpgpu,
   ss->ss2.height = h - 1;
   ss->ss3.depth = depth - 1;
 
-  ss->ss8.surface_base_addr_lo = obj_bo->offset64 & 0xffffffff;
-  ss->ss9.surface_base_addr_hi = (obj_bo->offset64 >> 32) & 0xffffffff;
+  ss->ss8.surface_base_addr_lo = (obj_bo->offset64 + obj_bo_offset) & 0xffffffff;
+  ss->ss9.surface_base_addr_hi = ((obj_bo->offset64 + obj_bo_offset) >> 32) & 0xffffffff;
 
   ss->ss4.render_target_view_ext = depth - 1;
   ss->ss4.min_array_elt = 0;
