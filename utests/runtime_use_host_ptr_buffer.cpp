@@ -20,17 +20,11 @@ static void runtime_use_host_ptr_buffer(void)
   OCL_NDRANGE(1);
 
   // Check result
-
-#ifdef HAS_USERPTR
-  OCL_FINISH();
-#else
   void* mapptr = (int*)clEnqueueMapBuffer(queue, buf[0], CL_TRUE, CL_MAP_READ, 0, n*sizeof(uint32_t), 0, NULL, NULL, NULL);
   OCL_ASSERT(mapptr == buf_data[0]);
-  clEnqueueUnmapMemObject(queue, buf[0], mapptr, 0, NULL, NULL);
-#endif
-
   for (uint32_t i = 0; i < n; ++i)
     OCL_ASSERT(((uint32_t*)buf_data[0])[i] == i / 2);
+  clEnqueueUnmapMemObject(queue, buf[0], mapptr, 0, NULL, NULL);
 
   free(buf_data[0]);
   buf_data[0] = NULL;
