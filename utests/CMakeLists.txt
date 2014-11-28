@@ -224,11 +224,6 @@ else(GEN_PCI_ID)
   DEPENDS ${CMAKE_CURRENT_BINARY_DIR}/../backend/src/gbe_bin_generater ${kernel_bin}.cl)
 endif(GEN_PCI_ID)
 
-if (DRM_INTEL_USERPTR)
-  SET(CMAKE_CXX_FLAGS "-DHAS_USERPTR ${CMAKE_CXX_FLAGS}")
-  SET(CMAKE_C_FLAGS "-DHAS_USERPTR ${CMAKE_C_FLAGS}")
-endif (DRM_INTEL_USERPTR)
-
 ADD_CUSTOM_TARGET(kernel_bin.bin
     DEPENDS ${kernel_bin}.bin)
 
