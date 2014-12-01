@@ -464,10 +464,16 @@ namespace gbe
      */
     set<const Value*> conditionSet;
     map<const Value*, int> globalPointer;
+    typedef map<const Value*, int>::iterator GlobalPtrIter;
+
     /*!
      *  <phi,phiCopy> node information for later optimization
      */
     map<const ir::Register, const ir::Register> phiMap;
+
+    map<Value *, SmallVector<Value *, 4>> pointerOrigMap;
+    typedef map<Value *, SmallVector<Value *, 4>>::iterator PtrOrigMapIter;
+
     /*! We visit each function twice. Once to allocate the registers and once to
      *  emit the Gen IR instructions
      */
@@ -529,14 +535,22 @@ namespace gbe
       bool bKernel = isKernelFunction(F);
       if(!bKernel) return false;
 
+      analyzePointerOrigin(F);
       LI = &getAnalysis<LoopInfo>();
       emitFunction(F);
       phiMap.clear();
       globalPointer.clear();
+      pointerOrigMap.clear();
       // Reset for next function
       btiBase = BTI_RESERVED_NUM;
       return false;
     }
+    /*! Given a possible pointer value, find out the interested escape like
+        load/store or atomic instruction */
+    void findPointerEscape(Value *ptr);
+    /*! For all possible pointers, GlobalVariable, function pointer argument,
+        alloca instruction, find their pointer escape points */
+    void analyzePointerOrigin(Function &F);
 
     virtual bool doFinalization(Module &M) { return false; }
     /*! handle global variable register allocation (local, constant space) */
@@ -647,6 +661,83 @@ namespace gbe
   };
 
   char GenWriter::ID = 0;
+
+  void GenWriter::findPointerEscape(Value *ptr) {
+    std::vector<Value*> workList;
+    std::set<Value *> visited;
+
+    if (ptr->use_empty()) return;
+
+    workList.push_back(ptr);
+
+    for (unsigned i = 0; i < workList.size(); i++) {
+      Value *work = workList[i];
+      if (work->use_empty()) continue;
+
+      for (Value::use_iterator iter = work->use_begin(); iter != work->use_end(); ++iter) {
+      // After LLVM 3.5, use_iterator points to 'Use' instead of 'User',
+      // which is more straightforward.
+  #if (LLVM_VERSION_MAJOR == 3) && (LLVM_VERSION_MINOR < 5)
+        User *theUser = *iter;
+  #else
+        User *theUser = iter->getUser();
+  #endif
+        if (visited.find(theUser) != visited.end()) continue;
+        // pointer address is used as the ValueOperand in store instruction, should be skipped
+        if (StoreInst *load = dyn_cast<StoreInst>(theUser)) {
+          if (load->getValueOperand() == work) {
+            continue;
+          }
+        }
+
+        visited.insert(theUser);
+
+        if (isa<LoadInst>(theUser) || isa<StoreInst>(theUser) || isa<CallInst>(theUser)) {
+          if (isa<CallInst>(theUser)) {
+            Function *F = dyn_cast<CallInst>(theUser)->getCalledFunction();
+            if (!F || F->getIntrinsicID() != 0) continue;
+          }
+
+          PtrOrigMapIter ptrIter = pointerOrigMap.find(theUser);
+          if (ptrIter == pointerOrigMap.end()) {
+            // create new one
+            SmallVector<Value *, 4> pointers;
+            pointers.push_back(ptr);
+            pointerOrigMap.insert(std::make_pair(theUser, pointers));
+          } else {
+            // append it
+            (*ptrIter).second.push_back(ptr);
+          }
+        } else {
+          workList.push_back(theUser);
+        }
+      }
+    }
+  }
+
+  void GenWriter::analyzePointerOrigin(Function &F) {
+    // GlobalVariable
+    Module::GlobalListType &globalList = const_cast<Module::GlobalListType &> (TheModule->getGlobalList());
+    for(auto i = globalList.begin(); i != globalList.end(); i ++) {
+      GlobalVariable &v = *i;
+      if(!v.isConstantUsed()) continue;
+      findPointerEscape(&v);
+    }
+    // function argument
+    for (Function::arg_iterator I = F.arg_begin(), E = F.arg_end(); I != E; ++I) {
+      if (I->getType()->isPointerTy()) {
+        findPointerEscape(I);
+      }
+    }
+    // alloca
+    BasicBlock &bb = F.getEntryBlock();
+    for (BasicBlock::iterator iter = bb.begin(), iterE = bb.end(); iter != iterE; ++iter) {
+      if (AllocaInst *ai = dyn_cast<AllocaInst>(iter)) {
+        findPointerEscape(ai);
+      }
+    }
+  }
+
   void getSequentialData(const ConstantDataSequential *cda, void *ptr, uint32_t &offset) {
     StringRef data = cda->getRawDataValues();
     memcpy((char*)ptr+offset, data.data(), data.size());
@@ -2897,7 +2988,7 @@ namespace gbe
     const ir::Register dst = this->getRegister(&I);
 
     ir::BTI bti;
-    gatherBTI(*AI, bti);
+    gatherBTI(&I, bti);
     vector<ir::Register> src;
     uint32_t srcNum = 0;
     while(AI != AE) {
@@ -3772,96 +3863,56 @@ handle_write_image:
   }
 
   // The idea behind is to search along the use-def chain, and find out all
-  // possible source of the pointer. Then in later codeGen, we can emit
-  // read/store instructions to these btis gathered.
-  void GenWriter::gatherBTI(Value *pointer, ir::BTI &bti) {
-    typedef map<const Value*, int>::iterator GlobalPtrIter;
-    Value *p;
-    size_t idx = 0;
-    int nBTI = 0;
-    std::vector<Value*> candidates;
-    candidates.push_back(pointer);
-    std::set<Value*> processed;
-
-    while (idx < candidates.size()) {
-      bool isPrivate = false;
-      bool needNewBTI = true;
-      p = candidates[idx];
-
-      while (dyn_cast<User>(p) && !dyn_cast<GlobalVariable>(p)) {
-
-        if (processed.find(p) == processed.end()) {
-          processed.insert(p);
-        } else {
-          // This use-def chain falls into a loop,
-          // it does not introduce a new buffer source.
-          needNewBTI = false;
-          break;
+  // possible sources of the pointer. Then in later codeGen, we can emit
+  // read/store instructions to these BTIs gathered.
+  void GenWriter::gatherBTI(Value *insn, ir::BTI &bti) {
+    PtrOrigMapIter iter = pointerOrigMap.find(insn);
+    if (iter != pointerOrigMap.end()) {
+      SmallVectorImpl<Value *> &origins = iter->second;
+      uint8_t nBTI = 0;
+      for (unsigned i = 0; i < origins.size(); i++) {
+        uint8_t new_bti = 0;
+        Value *origin = origins[i];
+        unsigned space = origin->getType()->getPointerAddressSpace();
+        switch (space) {
+          case 0:
+            new_bti = BTI_PRIVATE;
+            break;
+          case 1:
+          {
+            GlobalPtrIter iter = globalPointer.find(origin);
+            GBE_ASSERT(iter != globalPointer.end());
+            new_bti = iter->second;
+            break;
+          }
+          case 2:
+            new_bti = BTI_CONSTANT;
+            break;
+          case 3:
+            new_bti = 0xfe;
+            break;
+          default:
+            GBE_ASSERT(0 && "address space not unhandled in gatherBTI()\n");
+            break;
         }
 
-        if (dyn_cast<SelectInst>(p)) {
-          SelectInst *sel = cast<SelectInst>(p);
-          p = sel->getTrueValue();
-          candidates.push_back(sel->getFalseValue());
-          continue;
+        // avoid duplicate
+        bool bFound = false;
+        for (int j = 0; j < nBTI; j++) {
+          if (bti.bti[j] == new_bti) {
+            bFound = true; break;
+          }
         }
-
-        if (dyn_cast<PHINode>(p)) {
-          PHINode* phi = cast<PHINode>(p);
-          int n = phi->getNumIncomingValues();
-          for (int j = 1; j < n; j++)
-            candidates.push_back(phi->getIncomingValue(j));
-          p = phi->getIncomingValue(0);
-          continue;
-        }
-
-        if (dyn_cast<AllocaInst>(p)) {
-          isPrivate = true;
-          break;
-        }
-        p = cast<User>(p)->getOperand(0);
-      }
-
-      if (needNewBTI == false) {
-        // go to next possible pointer source
-        idx++; continue;
-      }
-
-      uint8_t new_bti = 0;
-      if (isPrivate) {
-        new_bti = BTI_PRIVATE;
-      } else {
-        if(isa<Argument>(p) && dyn_cast<Argument>(p)->hasByValAttr()) {
-          // structure value implementation is not complete now,
-          // they are now treated as push constant, so, the load/store
-          // here is not as meaningful.
-          bti.bti[0] = BTI_PRIVATE;
-          bti.count = 1;
-          break;
-        }
-        Type *ty = p->getType();
-        if(ty->getPointerAddressSpace() == 3) {
-          // __local memory
-          new_bti = 0xfe;
-        } else {
-          // __global memory
-          GlobalPtrIter iter = globalPointer.find(p);
-          GBE_ASSERT(iter != globalPointer.end());
-          new_bti = iter->second;
+        if (bFound == false) {
+          bti.bti[nBTI++] = new_bti;
+          bti.count = nBTI;
         }
       }
-      // avoid duplicate
-      bool bFound = false;
-      for (int j = 0; j < nBTI; j++) {
-        if (bti.bti[j] == new_bti) {
-          bFound = true; break;
-        }
-      }
-      if (bFound == false) {
-        bti.bti[nBTI++] = new_bti;
-        bti.count = nBTI;
-      }
-      idx++;
+    } else {
+      insn->dump();
+      std::cerr << "Illegal pointer which is not from a valid memory space." << std::endl;
+      std::cerr << "Aborting..." << std::endl;
+      exit(-1);
     }
     GBE_ASSERT(bti.count <= MAX_MIXED_POINTER);
   }
@@ -3878,9 +3929,8 @@ handle_write_image:
     const ir::AddressSpace addrSpace = addressSpaceLLVMToGen(llvmSpace);
     const ir::Register ptr = this->getRegister(llvmPtr);
     ir::BTI binding;
-    if(addrSpace == ir::MEM_GLOBAL || addrSpace == ir::MEM_PRIVATE) {
-      gatherBTI(llvmPtr, binding);
-    }
+    gatherBTI(&I, binding);
+
     // Scalar is easy. We neednot build register tuples
     if (isScalarType(llvmType) == true) {
       const ir::Type type = getType(ctx, llvmType);
