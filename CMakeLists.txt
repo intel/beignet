@@ -1,6 +1,7 @@
 # compiler choose,now support ICC,GCC CLANG compiler
-set (COMPILER "GCC" CACHE INT "Compiler to choose on Linux (GCC,ICC,CLANG)")
 if (COMPILER STREQUAL "GCC")
+  find_program(CMAKE_C_COMPILER NAMES gcc)
+  find_program(CMAKE_CXX_COMPILER NAMES g++)
 elseif (COMPILER STREQUAL "CLANG")
   set (CMAKE_C_COMPILER   "clang")
   set (CMAKE_CXX_COMPILER "clang++")
@@ -20,7 +21,13 @@ set (LIBCL_DRIVER_VERSION_MINOR 0)
 set (LIBCL_DRIVER_VERSION_PATCH 0)
 set (LIBCL_C_VERSION_MAJOR 1)
 set (LIBCL_C_VERSION_MINOR 2)
-
+if( ${CMAKE_CXX_COMPILER_ID} STREQUAL "Clang")
+  set(COMPILER "CLANG")
+elseif(${CMAKE_CXX_COMPILER_ID} STREQUAL "GNU")
+  set(COMPILER "GCC")
+elseif(${CMAKE_CXX_COMPILER_ID} STREQUAL "Intel")
+  set(COMPILER "ICC")
+endif()
 configure_file (
   "src/OCLConfig.h.in"
   "src/OCLConfig.h"
