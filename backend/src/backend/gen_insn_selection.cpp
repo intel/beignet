@@ -3291,6 +3291,18 @@ namespace gbe
       }
     }
 
+    INLINE GenRegister getRelativeAddress(Selection::Opaque &sel, GenRegister address, ir::AddressSpace space, uint8_t bti) const {
+      if(space == ir::MEM_LOCAL || space == ir::MEM_CONSTANT)
+        return address;
+
+      sel.push();
+        sel.curr.noMask = 1;
+        GenRegister temp = sel.selReg(sel.reg(ir::FAMILY_DWORD), ir::TYPE_U32);
+        sel.ADD(temp, address, GenRegister::negate(sel.selReg(sel.ctx.getSurfaceBaseReg(bti), ir::TYPE_U32)));
+      sel.pop();
+      return temp;
+    }
+
     INLINE bool emitOne(Selection::Opaque &sel, const ir::StoreInstruction &insn, bool &markChildren) const
     {
       using namespace ir;
@@ -3303,28 +3315,16 @@ namespace gbe
         sel.ADD(temp, address, sel.selReg(ocl::slmoffset, ir::TYPE_U32));
         address = temp;
       }
-      if(space == MEM_LOCAL) {
+
+      BTI bti = insn.getBTI();
+      for (int x = 0; x < bti.count; x++) {
+        GenRegister temp = getRelativeAddress(sel, address, space, bti.bti[x]);
         if (insn.isAligned() == true && elemSize == GEN_BYTE_SCATTER_QWORD)
-          this->emitWrite64(sel, insn, address, 0xfe);
+          this->emitWrite64(sel, insn, temp, bti.bti[x]);
         else if (insn.isAligned() == true && elemSize == GEN_BYTE_SCATTER_DWORD)
-          this->emitUntypedWrite(sel, insn, address,  0xfe);
-        else
-          this->emitByteScatter(sel, insn, elemSize, address, 0xfe);
-      } else {
-        BTI bti = insn.getBTI();
-        for (int x = 0; x < bti.count; x++) {
-          GenRegister temp = sel.selReg(sel.reg(FAMILY_DWORD), ir::TYPE_U32);
-          sel.push();
-            sel.curr.noMask = 1;
-            sel.ADD(temp, address, GenRegister::negate(sel.selReg(sel.ctx.getSurfaceBaseReg(bti.bti[x]), ir::TYPE_U32)));
-          sel.pop();
-          if (insn.isAligned() == true && elemSize == GEN_BYTE_SCATTER_QWORD)
-            this->emitWrite64(sel, insn, temp, bti.bti[x]);
-          else if (insn.isAligned() == true && elemSize == GEN_BYTE_SCATTER_DWORD)
-            this->emitUntypedWrite(sel, insn, temp,  bti.bti[x]);
-          else {
-            this->emitByteScatter(sel, insn, elemSize, temp, bti.bti[x]);
-          }
+          this->emitUntypedWrite(sel, insn, temp,  bti.bti[x]);
+        else {
+          this->emitByteScatter(sel, insn, elemSize, temp, bti.bti[x]);
         }
       }
       return true;
