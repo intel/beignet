@@ -292,7 +292,7 @@ namespace gbe
             uint32_t elementSize = getTypeByteSize(unit, elementType);
             uint32_t align = getAlignmentByte(unit, elementType);
             elementSize += getPadding(elementSize, align);
-            offset += elementSize * TypeIndex * step;
+            offset += elementSize * TypeIndex;
           }
         } else {
           for(int32_t ty_i=0; ty_i != TypeIndex; ty_i += step)
