@@ -738,9 +738,9 @@ cl_program_compile(cl_program            p,
 
     if (UNLIKELY(p->opaque == NULL)) {
       if (p->build_log_sz > 0 && strstr(p->build_log, "error: error reading 'options'"))
-        err = CL_INVALID_BUILD_OPTIONS;
+        err = CL_INVALID_COMPILER_OPTIONS;
       else
-        err = CL_BUILD_PROGRAM_FAILURE;
+        err = CL_COMPILE_PROGRAM_FAILURE;
       goto error;
     }
 
@@ -758,8 +758,6 @@ cl_program_compile(cl_program            p,
 
 error:
   p->build_status = CL_BUILD_ERROR;
-  cl_program_delete(p);
-  p = NULL;
   return err;
 }
 
