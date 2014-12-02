@@ -1217,38 +1217,18 @@ namespace gbe
       return pointer_reg;
     }
     else if (expr->getOpcode() == Instruction::GetElementPtr) {
-      int32_t TypeIndex;
       uint32_t constantOffset = 0;
 
       Value *pointer = val;
       CompositeType* CompTy = cast<CompositeType>(pointer->getType());
       for(uint32_t op=1; op<expr->getNumOperands(); ++op) {
-        uint32_t offset = 0;
+        int32_t TypeIndex;
         ConstantInt* ConstOP = dyn_cast<ConstantInt>(expr->getOperand(op));
-        GBE_ASSERT(ConstOP);
+        if (ConstOP == NULL)
+          goto error;
         TypeIndex = ConstOP->getZExtValue();
         GBE_ASSERT(TypeIndex >= 0);
-        if (op == 1) {
-          if (TypeIndex != 0) {
-            Type *elementType = (cast<PointerType>(pointer->getType()))->getElementType();
-            uint32_t elementSize = getTypeByteSize(unit, elementType);
-            uint32_t align = getAlignmentByte(unit, elementType);
-            elementSize += getPadding(elementSize, align);
-            offset += elementSize * TypeIndex;
-          }
-        } else {
-          for(int32_t ty_i=0; ty_i<TypeIndex; ty_i++)
-          {
-            Type* elementType = CompTy->getTypeAtIndex(ty_i);
-            uint32_t align = getAlignmentByte(unit, elementType);
-            offset += getPadding(offset, align);
-            offset += getTypeByteSize(unit, elementType);
-          }
-          const uint32_t align = getAlignmentByte(unit, CompTy->getTypeAtIndex(TypeIndex));
-          offset += getPadding(offset, align);
-        }
-
-        constantOffset += offset;
+        constantOffset += getGEPConstOffset(unit, CompTy, TypeIndex);
         CompTy = dyn_cast<CompositeType>(CompTy->getTypeAtIndex(TypeIndex));
       }
 
@@ -1264,10 +1244,11 @@ namespace gbe
       ctx.ADD(ir::Type::TYPE_S32, reg, pointer_reg, offset_reg);
       return reg;
     }
-    else {
-      GBE_ASSERT(0 && "Unsupported constant expression");
-      return regTranslator.getScalar(val, elemID);
-    }
+
+error:
+    expr->dump();
+    GBE_ASSERT(0 && "Unsupported constant expression");
+    return regTranslator.getScalar(val, elemID);
   }
 
   ir::Register GenWriter::getConstantRegister(Constant *c, uint32_t elemID) {

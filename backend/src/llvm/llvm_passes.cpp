@@ -220,6 +220,35 @@ namespace gbe
     return size_bit/8;
   }
 
+  int32_t getGEPConstOffset(const ir::Unit &unit, CompositeType *CompTy, int32_t TypeIndex) {
+    int32_t offset = 0;
+    SequentialType * seqType = dyn_cast<SequentialType>(CompTy);
+    if (seqType != NULL) {
+      if (TypeIndex != 0) {
+        Type *elementType = seqType->getElementType();
+        uint32_t elementSize = getTypeByteSize(unit, elementType);
+        uint32_t align = getAlignmentByte(unit, elementType);
+        elementSize += getPadding(elementSize, align);
+        offset = elementSize * TypeIndex;
+      }
+    } else {
+      int32_t step = TypeIndex > 0 ? 1 : -1;
+      GBE_ASSERT(CompTy->isStructTy());
+      for(int32_t ty_i=0; ty_i != TypeIndex; ty_i += step)
+      {
+        Type* elementType = CompTy->getTypeAtIndex(ty_i);
+        uint32_t align = getAlignmentByte(unit, elementType);
+        offset += getPadding(offset, align * step);
+        offset += getTypeByteSize(unit, elementType) * step;
+      }
+
+      //add getPaddingding for accessed type
+      const uint32_t align = getAlignmentByte(unit, CompTy->getTypeAtIndex(TypeIndex));
+      offset += getPadding(offset, align * step);
+    }
+    return offset;
+  }
+
   class GenRemoveGEPPasss : public BasicBlockPass
   {
 
@@ -268,41 +297,12 @@ namespace gbe
     for(uint32_t op=1; op<GEPInst->getNumOperands(); ++op)
     {
       int32_t TypeIndex;
-      //we have a constant struct/array acces
-      if(ConstantInt* ConstOP = dyn_cast<ConstantInt>(GEPInst->getOperand(op)))
-      {
-        int32_t offset = 0;
+      ConstantInt* ConstOP = dyn_cast<ConstantInt>(GEPInst->getOperand(op));
+      if (ConstOP != NULL) {
         TypeIndex = ConstOP->getZExtValue();
-        int32_t step = TypeIndex > 0 ? 1 : -1;
-        SequentialType * seqType = dyn_cast<SequentialType>(CompTy);
-        if (seqType != NULL) {
-          if (TypeIndex != 0) {
-            Type *elementType = seqType->getElementType();
-            uint32_t elementSize = getTypeByteSize(unit, elementType);
-            uint32_t align = getAlignmentByte(unit, elementType);
-            elementSize += getPadding(elementSize, align);
-            offset += elementSize * TypeIndex;
-          }
-        } else {
-          GBE_ASSERT(CompTy->isStructTy());
-          for(int32_t ty_i=0; ty_i != TypeIndex; ty_i += step)
-          {
-            Type* elementType = CompTy->getTypeAtIndex(ty_i);
-            uint32_t align = getAlignmentByte(unit, elementType);
-            offset += getPadding(offset, align * step);
-            offset += getTypeByteSize(unit, elementType) * step;
-          }
-
-          //add getPaddingding for accessed type
-          const uint32_t align = getAlignmentByte(unit, CompTy->getTypeAtIndex(TypeIndex));
-          offset += getPadding(offset, align * step);
-        }
-
-        constantOffset += offset;
+        constantOffset += getGEPConstOffset(unit, CompTy, TypeIndex);
       }
-      // none constant index (=> only array/verctor allowed)
-      else
-      {
+      else {
         // we only have array/vectors here, 
         // therefore all elements have the same size
         TypeIndex = 0;

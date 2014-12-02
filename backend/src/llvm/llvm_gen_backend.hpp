@@ -29,6 +29,11 @@
 #include "llvm/Config/llvm-config.h"
 #include "llvm/Pass.h"
 #include "llvm/Analysis/LoopPass.h"
+#if LLVM_VERSION_MINOR <= 2
+#include "llvm/Instructions.h"
+#else
+#include "llvm/IR/Instructions.h"
+#endif
 #include "sys/platform.hpp"
 #include "sys/map.hpp"
 #include "sys/hash_map.hpp"
@@ -76,6 +81,9 @@ namespace gbe
 
   /*! Get the type size in bytes */
   uint32_t getTypeByteSize(const ir::Unit &unit, llvm::Type* Ty);
+
+  /*! Get GEP constant offset for the specified operand.*/
+  int32_t getGEPConstOffset(const ir::Unit &unit, llvm::CompositeType *CompTy, int32_t TypeIndex);
 
   /*! whether this is a kernel function */
   bool isKernelFunction(const llvm::Function &f);
