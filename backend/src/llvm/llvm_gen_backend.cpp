@@ -3041,51 +3041,43 @@ namespace gbe
                 break;
               case 4:
                 {
-                  ir::Type srcType = getUnsignedType(ctx, llvmDstType);
+                  ir::Type srcType = getType(ctx, llvmDstType);
                   ir::Register tmp1 = ctx.reg(getFamily(srcType));
                   ir::Register tmp2 = ctx.reg(getFamily(srcType));
                   ir::Register tmp3 = ctx.reg(getFamily(srcType));
                   ir::Register tmp4 = ctx.reg(getFamily(srcType));
                   ir::Register tmp5 = ctx.reg(getFamily(srcType));
                   ir::Register tmp6 = ctx.reg(getFamily(srcType));
-                  ir::Register tmp7 = ctx.reg(getFamily(srcType));
-                  ir::Register tmp8 = ctx.reg(getFamily(srcType));
 
                   ir::Register regDWMask = ctx.reg( ir::FAMILY_DWORD );
-                  ir::Register regShift = ctx.reg( ir::FAMILY_DWORD );
-                  ir::ImmediateIndex wMask = ctx.newIntegerImmediate(0x000000FF, ir::TYPE_S32);
-                  ir::ImmediateIndex shift = ctx.newIntegerImmediate(24, ir::TYPE_S32);
-                  ctx.LOADI(ir::TYPE_S32, regDWMask, wMask);
-                  ctx.AND(srcType, tmp1, src0, regDWMask);
-                  ctx.LOADI(ir::TYPE_S32, regShift, shift);
-                  ctx.SHL(srcType, tmp2, tmp1, regShift);
+                  ir::Register regShift_8 = ctx.reg( ir::FAMILY_DWORD );
+                  ir::Register regShift_24 = ctx.reg( ir::FAMILY_DWORD );
+                  ir::ImmediateIndex wMask_L = ctx.newIntegerImmediate(0x0000FF00, ir::TYPE_S32);
+                  ir::ImmediateIndex wMask_H = ctx.newIntegerImmediate(0x00FF0000, ir::TYPE_S32);
+                  ir::ImmediateIndex shift_8 = ctx.newIntegerImmediate(8, ir::TYPE_S32);
+                  ir::ImmediateIndex shift_24 = ctx.newIntegerImmediate(24, ir::TYPE_S32);
 
-                  wMask = ctx.newIntegerImmediate(0x0000FF00, ir::TYPE_S32);
-                  shift = ctx.newIntegerImmediate(8, ir::TYPE_S32);
-                  ctx.LOADI(ir::TYPE_S32, regDWMask, wMask);
-                  ctx.AND(srcType, tmp3, src0, regDWMask);
-                  ctx.LOADI(ir::TYPE_S32, regShift, shift);
-                  ctx.SHL(srcType, tmp4, tmp3, regShift);
+                  ctx.LOADI(ir::TYPE_S32, regShift_24, shift_24);
+                  ctx.SHL(srcType, tmp1, src0, regShift_24);
 
-                  wMask = ctx.newIntegerImmediate(0x00FF0000, ir::TYPE_S32);
-                  shift = ctx.newIntegerImmediate(8, ir::TYPE_S32);
-                  ctx.LOADI(ir::TYPE_S32, regDWMask, wMask);
-                  ctx.AND(srcType, tmp5, src0, regDWMask);
-                  ctx.LOADI(ir::TYPE_S32, regShift, shift);
-                  ctx.SHR(srcType, tmp6, tmp5, regShift);
+                  ctx.LOADI(ir::TYPE_S32, regDWMask, wMask_L);
+                  ctx.AND(srcType, tmp2, src0, regDWMask);
+                  ctx.LOADI(ir::TYPE_S32, regShift_8, shift_8);
+                  ctx.SHL(srcType, tmp3, tmp2, regShift_8);
 
-                  wMask = ctx.newIntegerImmediate(0xFF000000, ir::TYPE_S32);
-                  shift = ctx.newIntegerImmediate(24, ir::TYPE_S32);
-                  ctx.LOADI(ir::TYPE_S32, regDWMask, wMask);
-                  ctx.AND(srcType, tmp7, src0, regDWMask);
-                  ctx.LOADI(ir::TYPE_S32, regShift, shift);
-                  ctx.SHR(srcType, tmp8, tmp7, regShift);
+                  ctx.LOADI(ir::TYPE_S32, regDWMask, wMask_H);
+                  ctx.AND(srcType, tmp4, src0, regDWMask);
+                  ctx.LOADI(ir::TYPE_S32, regShift_8, shift_8);
+                  ctx.SHR(makeTypeUnsigned(srcType), tmp5, tmp4, regShift_8);
 
-                  ir::Register tmp9 = ctx.reg(getFamily(srcType));
-                  ir::Register tmp10 = ctx.reg(getFamily(srcType));
-                  ctx.OR(srcType, tmp9, tmp2, tmp4);
-                  ctx.OR(srcType, tmp10, tmp6, tmp8);
-                  ctx.OR(srcType, dst0, tmp9, tmp10);
+                  ctx.LOADI(ir::TYPE_S32, regShift_24, shift_24);
+                  ctx.SHR(makeTypeUnsigned(srcType), tmp6, src0, regShift_24);
+
+                  ir::Register tmp7 = ctx.reg(getFamily(srcType));
+                  ir::Register tmp8 = ctx.reg(getFamily(srcType));
+                  ctx.OR(srcType, tmp7, tmp1, tmp3);
+                  ctx.OR(srcType, tmp8, tmp5, tmp6);
+                  ctx.OR(srcType, dst0, tmp7, tmp8);
                 }
                 break;
               case 8:
