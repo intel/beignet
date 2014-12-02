@@ -2980,7 +2980,8 @@ namespace gbe
             ctx.ADD(dst0Type, dst0, src0, src1);
 
             ir::Register overflow = this->getRegister(&I, 1);
-            ctx.LT(dst0Type, overflow, dst0, src1);
+            const ir::Type unsignedType = makeTypeUnsigned(dst0Type);
+            ctx.LT(unsignedType, overflow, dst0, src1);
           }
           break;
           case Intrinsic::usub_with_overflow:
