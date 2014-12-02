@@ -275,7 +275,7 @@ namespace gbe
     Value* currentAddrInst = 
       new PtrToIntInst(parentPointer, IntegerType::get(GEPInst->getContext(), ptrSize), "", GEPInst);
 
-    uint32_t constantOffset = 0;
+    int32_t constantOffset = 0;
 
     for(uint32_t op=1; op<GEPInst->getNumOperands(); ++op)
     {
@@ -286,15 +286,17 @@ namespace gbe
         int32_t offset = 0;
         TypeIndex = ConstOP->getZExtValue();
         int32_t step = TypeIndex > 0 ? 1 : -1;
-        if (op == 1) {
+        SequentialType * seqType = dyn_cast<SequentialType>(CompTy);
+        if (seqType != NULL) {
           if (TypeIndex != 0) {
-            Type *elementType = (cast<PointerType>(parentPointer->getType()))->getElementType();
+            Type *elementType = seqType->getElementType();
             uint32_t elementSize = getTypeByteSize(unit, elementType);
             uint32_t align = getAlignmentByte(unit, elementType);
             elementSize += getPadding(elementSize, align);
             offset += elementSize * TypeIndex;
           }
         } else {
+          GBE_ASSERT(CompTy->isStructTy());
           for(int32_t ty_i=0; ty_i != TypeIndex; ty_i += step)
           {
             Type* elementType = CompTy->getTypeAtIndex(ty_i);
