@@ -38,7 +38,7 @@ static void builtin_pow(void)
     }
 
   const char* env_strict = getenv("OCL_STRICT_CONFORMANCE");
-  float ULPSIZE_FACTOR = 1.0;
+  float ULPSIZE_FACTOR = 16.0;
   if (env_strict == NULL || strcmp(env_strict, "0") == 0)
     ULPSIZE_FACTOR = 10000.;
 

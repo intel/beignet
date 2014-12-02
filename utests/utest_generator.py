@@ -8,6 +8,91 @@ FLT_MAX_NEGA='-0x1.0p-126f'
 
 paraTypeList={'float':'%e','int':'%d','double':'%lf','uint':'%d','string':'%s'}
 
+Single_Precision_ULPs={'acos' : '4' ,
+                      'acospi' : '5' ,
+                      'asin' : '4' ,
+                      'asinpi' : '5' ,
+                      'atan' : '5' ,
+                      'atan2' : '6' ,
+                      'atanpi' : '5' ,
+                      'atan2pi' : '6' ,
+                      'acosh' : '4' ,
+                      'asinh' : '4' ,
+                      'atanh' : '5' ,
+                      'cbrt' : '2' ,
+                      'ceil' : '-1' ,
+                      'copysign' : '0' ,
+                      'cos' : '4' ,
+                      'cosh' : '4' ,
+                      'cospi' : '4' ,
+                      'erfc' : '16' ,
+                      'erf' : '16' ,
+                      'exp' : '3' ,
+                      'exp2' : '3' ,
+                      'exp10' : '3' ,
+                      'expm1' : '3' ,
+                      'fabs' : '0' ,
+                      'fdim' : '-1' ,
+                      'floor' : '-1' ,
+                      'fma' : '-1' ,
+                      'fmax' : '0' ,
+                      'fmin' : '0' ,
+                      'fmod' : '0' ,
+                      'fract' : '-1' ,
+                      'frexp' : '0' ,
+                      'hypot' : '4' ,
+                      'ilogb' : '0' ,
+                      'ldexp' : '-1' ,
+                      'log' : '3' ,
+                      'log2' : '3' ,
+                      'log10' : '3' ,
+                      'log1p' : '2' ,
+                      'logb' : '0' ,
+                      'maxmag' : '0' ,
+                      'minmag' : '0' ,
+                      'modf' : '0' ,
+                      'nan' : '0' ,
+                      'nextafter' : '0' ,
+                      'pow' : '16' ,
+                      'pown,' : '16' ,
+                      'powr,' : '16' ,
+                      'remainder' : '0' ,
+                      'remquo' : '0' ,
+                      'rint' : '-1' ,
+                      'rootn' : '16' ,
+                      'round' : '-1' ,
+                      'rsqrt' : '2' ,
+                      'sin' : '4' ,
+                      'sincos' : '4' ,
+                      'sinh' : '4' ,
+                      'sinpi' : '4' ,
+                      'sqrt' : '3' ,
+                      'tan' : '5' ,
+                      'tanh' : '5' ,
+                      'tanpi' : '6' ,
+                      'tgamma' : '16' ,
+                      'trunc' : '-1' ,
+                      'half_cos' : '8192' ,
+                      'half_divide' : '8192' ,
+                      'half_exp' : '8192' ,
+                      'half_exp2' : '8192' ,
+                      'half_exp10' : '8192' ,
+                      'half_log2' : '8192' ,
+                      'half_log10' : '8192' ,
+                      'half_powr' : '8192' ,
+                      'half_recip' : '8192' ,
+                      'half_rsqrt' : '8192' ,
+                      'half_sin' : '8192' ,
+                      'half_sqrt' : '8192' ,
+                      'half_tan' : '8192' }
+
+def Min_ulp(function):
+    if function in Single_Precision_ULPs.keys():
+         ulpValues = Single_Precision_ULPs[function]
+    else:
+         ulpValues = 1
+    return ulpValues
+
 
 def ulpUnit(ulpSize):
   return re.findall(r"([a-zA-Z_]+)",ulpSize)[0]
@@ -15,7 +100,7 @@ def ulpUnit(ulpSize):
 def ulpNum(ulpSize):
   return re.findall(r"([0-9]+)",ulpSize)[0]
 
-def udebug(ulpSize,returnType):
+def udebug(ulpSize,returnType,function):
   #ulpUnit=re.findall(r"([a-zA-Z_]+)",ulpSize)[0]
   #ulpNum=re.findall(r"([0-9]+)",ulpSize)[0]
   text='''
@@ -27,7 +112,7 @@ def udebug(ulpSize,returnType):
     if (env_strict == NULL || strcmp(env_strict, "0") == 0)
       ULPSIZE_FACTOR = 1000;
     else
-      ULPSIZE_FACTOR = 1;
+      ULPSIZE_FACTOR = %s;
     
     if (isinf(cpu_data[index])){
       INFORNAN="INF";
@@ -53,7 +138,7 @@ def udebug(ulpSize,returnType):
       else
         printf_c("%s expect:%s\\n", log, INFORNAN);
       }
-    else if (diff <= ULPSIZE){
+    else if ((ULPSIZE >= 0 && diff <= ULPSIZE) || (ULPSIZE < 0 && diff == 0)){
       printf("%s expect:%s\\n", log, ULPSIZE);
       }
     else
@@ -69,11 +154,14 @@ def udebug(ulpSize,returnType):
       }
     else{
       sprintf(log, "%s expect:%s\\n", log, ULPSIZE);
-      OCL_ASSERTM(fabs(gpu_data[index]-cpu_data[index]) <= ULPSIZE, log);
+      if (ULPSIZE < 0)
+            OCL_ASSERTM(gpu_data[index] == cpu_data[index], log);
+      else
+            OCL_ASSERTM(fabs(gpu_data[index]-cpu_data[index]) <= ULPSIZE, log);
       }
 #endif
   }
-}\n'''%(returnType,\
+}\n'''%(returnType,Min_ulp(function),\
         ulpUnit(ulpSize),ulpNum(ulpSize),\
         ulpNum(ulpSize), ulpNum(ulpSize),\
         paraTypeList['string'],paraTypeList['string'],\
@@ -317,7 +405,7 @@ static void %s_%s(void)
 
     self.cpplines += funcline
 
-    self.cpplines += [ udebug(self.ulp,self.retType(index)) ]
+    self.cpplines += [ udebug(self.ulp,self.retType(index),self.funcName) ]
     self.cpplines += [ "MAKE_UTEST_FROM_FUNCTION(%s_%s)"%(self.fileName,namesuffix) ]
 
   def genCL(self,index):
