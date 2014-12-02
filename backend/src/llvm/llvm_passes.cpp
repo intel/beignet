@@ -225,19 +225,10 @@ namespace gbe
 
    public:
     static char ID;
-#define FORMER_VERSION 0
-#if FORMER_VERSION
-   GenRemoveGEPPasss(map<const Value *, const Value *>& 
-                                       parentCompositePointer)
-     : BasicBlockPass(ID),
-     parentPointers(parentCompositePointer) {}
-    map<const Value *, const Value *>& parentPointers;
-#else
-   GenRemoveGEPPasss(const ir::Unit &unit) :
-     BasicBlockPass(ID),
-     unit(unit) {}
-  const ir::Unit &unit;
-#endif
+    GenRemoveGEPPasss(const ir::Unit &unit) :
+      BasicBlockPass(ID),
+      unit(unit) {}
+    const ir::Unit &unit;
     void getAnalysisUsage(AnalysisUsage &AU) const {
       AU.setPreservesCFG();
     }
@@ -267,9 +258,6 @@ namespace gbe
   {
     const uint32_t ptrSize = unit.getPointerSize();
     Value* parentPointer = GEPInst->getOperand(0);
-#if FORMER_VERSION
-    Value* topParent = parentPointer;
-#endif
     CompositeType* CompTy = cast<CompositeType>(parentPointer->getType());
 
     Value* currentAddrInst = 
@@ -384,13 +372,6 @@ namespace gbe
     GEPInst->replaceAllUsesWith(intToPtrInst);
     GEPInst->dropAllReferences();
     GEPInst->eraseFromParent();
-
-#if FORMER_VERSION
-    //insert new pointer into parent list
-    while(parentPointers.find(topParent)!=parentPointers.end())
-      topParent = parentPointers.find(topParent)->second;
-    parentPointers[intToPtrInst] = topParent;
-#endif
 
     return true;
   }
