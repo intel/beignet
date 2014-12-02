@@ -86,13 +86,13 @@ typedef  struct _cl_mem {
   size_t size;              /* original request size, not alignment size, used in constant buffer */
   cl_context ctx;           /* Context it belongs to */
   cl_mem_flags flags;       /* Flags specified at the creation time */
-  void * host_ptr;          /* Pointer of the host mem specified by CL_MEM_ALLOC_HOST_PTR */
+  void * host_ptr;          /* Pointer of the host mem specified by CL_MEM_ALLOC_HOST_PTR, CL_MEM_USE_HOST_PTR */
   cl_mapped_ptr* mapped_ptr;/* Store the mapped addresses and size by caller. */
   int mapped_ptr_sz;        /* The array size of mapped_ptr. */
   int map_ref;              /* The mapped count. */
   uint8_t mapped_gtt;       /* This object has mapped gtt, for unmap. */
   cl_mem_dstr_cb *dstr_cb;  /* The destroy callback. */
-  uint8_t is_userptr;    /* CL_MEM_USE_HOST_PTR is enabled*/
+  uint8_t is_userptr;       /* CL_MEM_USE_HOST_PTR is enabled*/
 } _cl_mem;
 
 struct _cl_mem_image {

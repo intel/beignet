@@ -266,15 +266,25 @@ cl_mem_allocate(enum cl_mem_type type,
 
 #ifdef HAS_USERPTR
     if (ctx->device->host_unified_memory) {
+      int page_size = getpagesize();
       /* currently only cl buf is supported, will add cl image support later */
-      if ((flags & CL_MEM_USE_HOST_PTR) && host_ptr != NULL) {
-        /* userptr not support tiling */
-        if (!is_tiled) {
-          int page_size = getpagesize();
-          if ((((unsigned long)host_ptr | sz) & (page_size - 1)) == 0) {
-            mem->is_userptr = 1;
-            mem->bo = cl_buffer_alloc_userptr(bufmgr, "CL userptr memory object", host_ptr, sz, 0);
+      if (type == CL_MEM_BUFFER_TYPE) {
+        if (flags & CL_MEM_USE_HOST_PTR) {
+          assert(host_ptr != NULL);
+          /* userptr not support tiling */
+          if (!is_tiled) {
+            if ((((unsigned long)host_ptr | sz) & (page_size - 1)) == 0) {
+              mem->is_userptr = 1;
+              mem->bo = cl_buffer_alloc_userptr(bufmgr, "CL userptr memory object", host_ptr, sz, 0);
+            }
           }
+        }
+        else if (flags & CL_MEM_ALLOC_HOST_PTR) {
+          const size_t alignedSZ = ALIGN(sz, page_size);
+          void* internal_host_ptr = cl_aligned_malloc(alignedSZ, page_size);
+          mem->host_ptr = internal_host_ptr;
+          mem->is_userptr = 1;
+          mem->bo = cl_buffer_alloc_userptr(bufmgr, "CL userptr memory object", internal_host_ptr, alignedSZ, 0);
         }
       }
     }
@@ -400,13 +410,17 @@ cl_mem_new_buffer(cl_context ctx,
     goto error;
 
   /* Copy the data if required */
-  if (flags & CL_MEM_COPY_HOST_PTR)
-    cl_buffer_subdata(mem->bo, 0, sz, data);
+  if (flags & CL_MEM_COPY_HOST_PTR) {
+    if (mem->is_userptr)
+      memcpy(mem->host_ptr, data, sz);
+    else
+      cl_buffer_subdata(mem->bo, 0, sz, data);
+  }
 
   if ((flags & CL_MEM_USE_HOST_PTR) && !mem->is_userptr)
     cl_buffer_subdata(mem->bo, 0, sz, data);
 
-  if (flags & CL_MEM_USE_HOST_PTR || flags & CL_MEM_COPY_HOST_PTR)
+  if (flags & CL_MEM_USE_HOST_PTR)
     mem->host_ptr = data;
 
 exit:
@@ -1068,6 +1082,9 @@ cl_mem_delete(cl_mem mem)
   } else if (LIKELY(mem->bo != NULL)) {
     cl_buffer_unreference(mem->bo);
   }
+
+  if (mem->is_userptr && (mem->flags & CL_MEM_ALLOC_HOST_PTR))
+    cl_free(mem->host_ptr);
 
   cl_free(mem);
 }

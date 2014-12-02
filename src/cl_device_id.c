@@ -27,6 +27,7 @@
 #include "cl_thread.h"
 #include "CL/cl.h"
 #include "cl_gbe_loader.h"
+#include "cl_alloc.h"
 
 #include <assert.h>
 #include <stdio.h>
@@ -407,15 +408,14 @@ brw_gt3_break:
   cl_buffer_mgr bufmgr = cl_driver_get_bufmgr(dummy);
 
   const size_t sz = 4096;
-  void* host_ptr = NULL;
-  int err = posix_memalign(&host_ptr, 4096, sz);
-  if (err == 0) {
+  void* host_ptr = cl_aligned_malloc(sz, 4096);;
+  if (host_ptr != NULL) {
     cl_buffer bo = cl_buffer_alloc_userptr(bufmgr, "CL memory object", host_ptr, sz, 0);
     if (bo == NULL)
       ret->host_unified_memory = CL_FALSE;
     else
       cl_buffer_unreference(bo);
-    free(host_ptr);
+    cl_free(host_ptr);
   }
   else
     ret->host_unified_memory = CL_FALSE;
