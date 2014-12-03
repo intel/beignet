@@ -85,6 +85,13 @@ void test(const char *kernel_name)
   for (int32_t i = 0; i < (int32_t) n; ++i)
     cpu(i, cpu_src, cpu_dst);
 
+  for (int32_t i = 0; i < (int32_t) n; ++i)
+    cpu_dst[i] = cpu_dst[i] -1;
+
+  // Run on CPU
+  for (int32_t i = 0; i < (int32_t) n; ++i)
+    cpu(i, cpu_dst, cpu_dst);
+
   OCL_MAP_BUFFER(1);
  // dump_data(cpu_src, cpu_dst, n);
 

@@ -1,6 +1,7 @@
 #define TEST_TYPE(TYPE, LENGTH)                                       \
 kernel void compiler_bswap_##TYPE(global TYPE * src, global TYPE * dst){ \
    dst[get_global_id(0)]= __builtin_bswap##LENGTH(src[get_global_id(0)]); \
+   dst[get_global_id(0)]= __builtin_bswap##LENGTH(dst[get_global_id(0)] -1 ); \
 }
 
 
