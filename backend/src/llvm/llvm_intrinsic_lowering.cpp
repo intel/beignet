@@ -72,10 +72,12 @@ namespace gbe {
             return 'p';
           case 1:
             return 'g';
+          case 2:
+            return 'c';
           case 3:
             return 'l';
           default:
-            assert("Non support address space");
+            assert(0 && "Non support address space");
             return '\0';
         }
       }

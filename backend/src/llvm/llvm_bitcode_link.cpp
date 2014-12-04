@@ -170,6 +170,13 @@ namespace gbe
     builtinFuncs.push_back("__gen_memset_g_align");
     builtinFuncs.push_back("__gen_memset_l_align");
 
+    builtinFuncs.push_back("__gen_memcpy_pc");
+    builtinFuncs.push_back("__gen_memcpy_gc");
+    builtinFuncs.push_back("__gen_memcpy_lc");
+
+    builtinFuncs.push_back("__gen_memcpy_pc_align");
+    builtinFuncs.push_back("__gen_memcpy_gc_align");
+    builtinFuncs.push_back("__gen_memcpy_lc_align");
 
     for (Module::iterator SF = mod->begin(), E = mod->end(); SF != E; ++SF) {
       if (SF->isDeclaration()) continue;
