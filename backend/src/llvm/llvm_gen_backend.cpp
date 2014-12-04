@@ -849,7 +849,7 @@ namespace gbe
       if(!v.isConstantUsed()) continue;
       const char *name = v.getName().data();
       unsigned addrSpace = v.getType()->getAddressSpace();
-      if(addrSpace == ir::AddressSpace::MEM_CONSTANT) {
+      if(addrSpace == ir::AddressSpace::MEM_CONSTANT || v.isConstant()) {
         GBE_ASSERT(v.hasInitializer());
         const Constant *c = v.getInitializer();
         Type * type = c->getType();
@@ -1945,7 +1945,7 @@ error:
         this->newRegister(const_cast<GlobalVariable*>(&v));
         ir::Register reg = regTranslator.getScalar(const_cast<GlobalVariable*>(&v), 0);
         ctx.LOADI(ir::TYPE_S32, reg, ctx.newIntegerImmediate(oldSlm + padding/8, ir::TYPE_S32));
-      } else if(addrSpace == ir::MEM_CONSTANT) {
+      } else if(addrSpace == ir::MEM_CONSTANT || v.isConstant()) {
         GBE_ASSERT(v.hasInitializer());
         this->newRegister(const_cast<GlobalVariable*>(&v));
         ir::Register reg = regTranslator.getScalar(const_cast<GlobalVariable*>(&v), 0);
@@ -1963,7 +1963,7 @@ error:
           ctx.getFunction().getPrintfSet()->setIndexBufBTI(btiBase);
           globalPointer.insert(std::make_pair(&v, incBtiBase()));
           regTranslator.newScalarProxy(ir::ocl::printfiptr, const_cast<GlobalVariable*>(&v));
-	} else if(v.getName().str().substr(0, 4) == ".str") {
+        } else if(v.getName().str().substr(0, 4) == ".str") {
           /* When there are multi printf statements in multi kernel fucntions within the same
              translate unit, if they have the same sting parameter, such as
              kernel_func1 () {
@@ -1976,12 +1976,12 @@ error:
              So when translating the kernel_func1, we can not unref that global var, so we will
              get here. Just ignore it to avoid assert. */
         } else {
-          GBE_ASSERT(0);
+          GBE_ASSERT(0 && "Unsupported private memory access pattern");
         }
       }
     }
-
   }
+
   static INLINE void findAllLoops(LoopInfo * LI, std::vector<std::pair<Loop*, int>> &lp)
   {
       for (Loop::reverse_iterator I = LI->rbegin(), E = LI->rend(); I != E; ++I) {
@@ -3782,27 +3782,33 @@ error:
       for (unsigned i = 0; i < origins.size(); i++) {
         uint8_t new_bti = 0;
         Value *origin = origins[i];
-        unsigned space = origin->getType()->getPointerAddressSpace();
-        switch (space) {
-          case 0:
-            new_bti = BTI_PRIVATE;
-            break;
-          case 1:
-          {
-            GlobalPtrIter iter = globalPointer.find(origin);
-            GBE_ASSERT(iter != globalPointer.end());
-            new_bti = iter->second;
-            break;
+        // all constant put into constant cache, including __constant & const __private
+        if (isa<GlobalVariable>(origin)
+            && dyn_cast<GlobalVariable>(origin)->isConstant()) {
+          new_bti = BTI_CONSTANT;
+        } else {
+          unsigned space = origin->getType()->getPointerAddressSpace();
+          switch (space) {
+            case 0:
+              new_bti = BTI_PRIVATE;
+              break;
+            case 1:
+            {
+              GlobalPtrIter iter = globalPointer.find(origin);
+              GBE_ASSERT(iter != globalPointer.end());
+              new_bti = iter->second;
+              break;
+            }
+            case 2:
+              new_bti = BTI_CONSTANT;
+              break;
+            case 3:
+              new_bti = 0xfe;
+              break;
+            default:
+              GBE_ASSERT(0 && "address space not unhandled in gatherBTI()\n");
+              break;
           }
-          case 2:
-            new_bti = BTI_CONSTANT;
-            break;
-          case 3:
-            new_bti = 0xfe;
-            break;
-          default:
-            GBE_ASSERT(0 && "address space not unhandled in gatherBTI()\n");
-            break;
         }
 
         // avoid duplicate
