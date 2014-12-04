@@ -132,7 +132,7 @@ using namespace ir;
     }
 
     Immediate Immediate::less (const Immediate &left, const Immediate &right) {
-      GBE_ASSERT(left.getType() > TYPE_BOOL && left.getType() <= TYPE_U64);
+      GBE_ASSERT(left.getType() > TYPE_BOOL && left.getType() <= TYPE_DOUBLE);
       switch (left.getType()) {
         default:
           GBE_ASSERT(0);
@@ -149,6 +149,30 @@ using namespace ir;
       }
     }
 
+    Immediate Immediate::extract (const Immediate &left, const Immediate &right, Type dstType) {
+      GBE_ASSERT(left.getType() > TYPE_BOOL && left.getType() <= TYPE_DOUBLE);
+      GBE_ASSERT(dstType == left.getType());
+      uint32_t index = right.getIntegerValue();
+      GBE_ASSERT(index >= 0 && index < left.getElemNum());
+      if (left.type != IMM_TYPE_COMP) {
+        switch (left.getType()) {
+          default:
+            GBE_ASSERT(0);
+          case TYPE_BOOL:   return Immediate(left.data.b[index]);
+          case TYPE_S8:     return Immediate(left.data.s8[index]);
+          case TYPE_U8:     return Immediate(left.data.u8[index]);
+          case TYPE_S16:    return Immediate(left.data.s16[index]);
+          case TYPE_U16:    return Immediate(left.data.u16[index]);
+          case TYPE_S32:    return Immediate(left.data.s32[index]);
+          case TYPE_U32:    return Immediate(left.data.u32[index]);
+          case TYPE_S64:    return Immediate(left.data.s64[index]);
+          case TYPE_U64:    return Immediate(left.data.u64[index]);
+          case TYPE_FLOAT:  return Immediate(left.data.f32[index]);
+          case TYPE_DOUBLE: return Immediate(left.data.f64[index]);
+        }
+      } else
+        return *left.data.immVec[index];
+    }
 
     Immediate::Immediate(ImmOpCode op, const Immediate &left, const Immediate &right, Type dstType) {
       switch (op) {
@@ -180,7 +204,7 @@ using namespace ir;
         case IMM_LSHR:
         {
           if (left.getElemNum() == 1)
-            lshr(left, right);
+            *this = lshr(left, right);
           else {
             GBE_ASSERT(right.getIntegerValue() <= (left.getElemNum() * left.getTypeSize() * 8));
             GBE_ASSERT(right.getIntegerValue() % (left.getTypeSize() * 8) == 0);
@@ -216,16 +240,17 @@ using namespace ir;
         case IMM_OLT: *this = less(left, right); break;
         case IMM_OGT: *this = left > right; break;
         case IMM_ORD: *this = (left == left) && (right == right); break;
+        case IMM_EXTRACT: *this = extract(left, right, dstType); break;
       }
       // If the dst type is large int, we will not change the imm type to large int.
       GBE_ASSERT(type == (ImmType)dstType || dstType == TYPE_LARGE_INT || dstType == TYPE_BOOL);
     }
 
-    Immediate::Immediate(const vector<const Immediate*> immVec) {
+    Immediate::Immediate(const vector<const Immediate*> immVec, Type dstType) {
       if (immVec.size() == 1) {
         *this = *immVec[0];
       } else if (!(immVec[0]->isCompType()) && immVec[0]->elemNum == 1) {
-        this->type = immVec[0]->type;
+        this->type = (ImmType)dstType;
         this->elemNum = immVec.size();
         if (immVec[0]->getTypeSize() * immVec.size() < 8)
           this->data.p = &this->defaultData;
@@ -238,6 +263,7 @@ using namespace ir;
           p += immVec[i]->getTypeSize();
         }
       } else {
+        GBE_ASSERT(0);
         this->type = IMM_TYPE_COMP;
         if (immVec.size() * sizeof(Immediate*) < 8)
           this->data.p = &this->defaultData;
