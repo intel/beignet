@@ -902,7 +902,7 @@ namespace gbe
       vector<ir::ImmediateIndex> immVector;
       for (uint32_t i = 0; i < cv->getNumOperands(); i++)
         immVector.push_back(processConstantImmIndex(cv->getOperand(i)));
-      return ctx.newImmediate(immVector);
+      return ctx.newImmediate(immVector, getType(ctx, cv->getType()->getElementType()));
     }
   }
 
@@ -1045,11 +1045,25 @@ namespace gbe
 
     if (dyn_cast<ConstantExpr>(CPV)) {
       ConstantExpr *ce = dyn_cast<ConstantExpr>(CPV);
+
+      if (!isScalarType(ce->getType())) {
+        VectorType *vecType = cast<VectorType>(ce->getType());
+        GBE_ASSERT(ce->getOpcode() == Instruction::BitCast);
+        GBE_ASSERT(isScalarType(vecType->getElementType()));
+        ir::Type elemType = getType(ctx, vecType->getElementType());
+
+        const ir::ImmediateIndex immIndex = processConstantImmIndex(ce->getOperand(0), -1);
+        const ir::Immediate imm = ctx.getImmediate(immIndex);
+        GBE_ASSERT(vecType->getNumElements() == imm.getElemNum() &&
+                   getTypeByteSize(unit, vecType->getElementType()) == imm.getTypeSize());
+        return ctx.processImm(ir::IMM_BITCAST, immIndex, elemType);
+      }
       ir::Type type = getType(ctx, ce->getType());
       switch (ce->getOpcode()) {
         default:
           ce->dump();
           GBE_ASSERT(0 && "unsupported ce opcode.\n");
+        case Instruction::FPTrunc:
         case Instruction::Trunc:
         {
           const ir::ImmediateIndex immIndex = processConstantImmIndex(ce->getOperand(0), -1);
@@ -1066,6 +1080,9 @@ namespace gbe
         case Instruction::FPToSI:
         case Instruction::SIToFP:
         case Instruction::UIToFP:
+        case Instruction::SExt:
+        case Instruction::ZExt:
+        case Instruction::FPExt:
         {
           const ir::ImmediateIndex immIndex = processConstantImmIndex(ce->getOperand(0), -1);
           switch (ce->getOpcode()) {
@@ -1075,15 +1092,26 @@ namespace gbe
             case Instruction::FPToSI: return ctx.processImm(ir::IMM_FPTOSI, immIndex, type);
             case Instruction::SIToFP: return ctx.processImm(ir::IMM_SITOFP, immIndex, type);
             case Instruction::UIToFP: return ctx.processImm(ir::IMM_UITOFP, immIndex, type);
+            case Instruction::SExt:  return ctx.processImm(ir::IMM_SEXT, immIndex, type);
+            case Instruction::ZExt:  return ctx.processImm(ir::IMM_ZEXT, immIndex, type);
+            case Instruction::FPExt: return ctx.processImm(ir::IMM_FPEXT, immIndex, type);
           }
         }
+
+        case Instruction::ExtractElement:
         case Instruction::FCmp:
         case Instruction::ICmp:
+        case Instruction::FAdd:
         case Instruction::Add:
         case Instruction::Sub:
+        case Instruction::FSub:
         case Instruction::Mul:
+        case Instruction::FMul:
         case Instruction::SDiv:
+        case Instruction::UDiv:
+        case Instruction::FDiv:
         case Instruction::SRem:
+        case Instruction::FRem:
         case Instruction::Shl:
         case Instruction::AShr:
         case Instruction::LShr:
@@ -1096,15 +1124,23 @@ namespace gbe
           default:
             //ce->dump();
             GBE_ASSERTM(0, "Unsupported constant expression.\n");
+
+          case Instruction::ExtractElement:
+            return ctx.processImm(ir::IMM_EXTRACT, lhs, rhs, type);
           case Instruction::Add:
+          case Instruction::FAdd:
             return ctx.processImm(ir::IMM_ADD, lhs, rhs, type);
+          case Instruction::FSub:
           case Instruction::Sub:
             return ctx.processImm(ir::IMM_SUB, lhs, rhs, type);
           case Instruction::Mul:
+          case Instruction::FMul:
             return ctx.processImm(ir::IMM_MUL, lhs, rhs, type);
           case Instruction::SDiv:
+          case Instruction::FDiv:
             return ctx.processImm(ir::IMM_DIV, lhs, rhs, type);
           case Instruction::SRem:
+          case Instruction::FRem:
             return ctx.processImm(ir::IMM_REM, lhs, rhs, type);
           case Instruction::Shl:
             return ctx.processImm(ir::IMM_SHL, lhs, rhs, type);

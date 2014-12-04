@@ -74,11 +74,11 @@ namespace ir {
       return fn->newImmediate(imm);
     }
     /*! Create a new immediate value */
-    INLINE ImmediateIndex newImmediate(vector<ImmediateIndex>indexVector) {
+    INLINE ImmediateIndex newImmediate(vector<ImmediateIndex>indexVector, Type dstType) {
       vector<const Immediate*> immVector;
       for( uint32_t i = 0; i < indexVector.size(); i++)
         immVector.push_back(&fn->getImmediate(indexVector[i]));
-      const Immediate imm(immVector);
+      const Immediate imm(immVector, dstType);
       return fn->newImmediate(imm);
     }
     /*! Create an integer immediate value */

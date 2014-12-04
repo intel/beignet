@@ -56,7 +56,11 @@ namespace ir {
     IMM_FPTOUI,
     IMM_FPTOSI,
     IMM_SITOFP,
-    IMM_UITOFP
+    IMM_UITOFP,
+    IMM_EXTRACT,
+    IMM_SEXT,
+    IMM_ZEXT,
+    IMM_FPEXT
   } ImmOpCode;
 
   typedef enum {
@@ -158,9 +162,25 @@ namespace ir {
     DECL_CONSTRUCTOR(double, f64, TYPE_DOUBLE, elemNum)
 #undef DECL_CONSTRUCTOR
 
-    Immediate(const vector<const Immediate*> immVec);
+    Immediate(const vector<const Immediate*> immVec, Type dstType);
 
     INLINE int64_t getIntegerValue(void) const {
+      switch (type) {
+        default:
+          GBE_ASSERT(0 && "Invalid immediate type.\n");
+        case TYPE_BOOL: return *data.b;
+        case TYPE_S8:   return *data.s8;
+        case TYPE_U8:   return *data.u8;
+        case TYPE_S16:  return *data.s16;
+        case TYPE_U16:  return *data.u16;
+        case TYPE_S32:  return *data.s32;
+        case TYPE_U32:  return *data.u32;
+        case TYPE_S64:  return *data.s64;
+        case TYPE_U64:  return *data.u64;
+      }
+    }
+
+    INLINE uint64_t getUnsignedIntegerValue(void) const {
       switch (type) {
         default:
           GBE_ASSERT(0 && "Invalid immediate type.\n");
@@ -208,13 +228,54 @@ namespace ir {
           copy(other, 0, 1);
           break;
         case IMM_BITCAST:
-          *this = other;
-          type = (ImmType)dstType;
+          if (other.type != IMM_TYPE_COMP) {
+            *this = other;
+            type = (ImmType)dstType;
+          } else {
+            vector<const Immediate*> immVec;
+            for(uint32_t i = 0; i < other.getElemNum(); i++)
+              immVec.push_back(other.data.immVec[i]);
+            *this = Immediate(immVec, dstType);
+          }
           break;
         case IMM_FPTOUI: *this = Immediate((uint32_t)*other.data.f32); break;
         case IMM_FPTOSI: *this = Immediate((int32_t)*other.data.f32); break;
         case IMM_UITOFP: *this = Immediate((float)*other.data.u32); break;
         case IMM_SITOFP: *this = Immediate((float)*other.data.s32); break;
+        case IMM_SEXT:
+        {
+          int64_t value = other.getIntegerValue();
+          if (other.getType() == TYPE_BOOL)
+            value = -value;
+          switch (dstType) {
+            default:
+              GBE_ASSERT(0 && "Illegal sext constant expression");
+            case TYPE_S8:     *this = Immediate((int8_t)value); break;
+            case TYPE_S16:    *this = Immediate((int16_t)value); break;
+            case TYPE_S32:    *this = Immediate((int32_t)value); break;
+            case TYPE_S64:    *this = Immediate((int64_t)value); break;
+          }
+        }
+        case IMM_ZEXT:
+        {
+          uint64_t value = other.getUnsignedIntegerValue();
+          switch (dstType) {
+            default:
+              GBE_ASSERT(0 && "Illegal sext constant expression");
+            case TYPE_U8:     *this = Immediate((uint8_t)value); break;
+            case TYPE_U16:    *this = Immediate((uint16_t)value); break;
+            case TYPE_U32:    *this = Immediate((uint32_t)value); break;
+            case TYPE_U64:    *this = Immediate((uint64_t)value); break;
+          }
+          break;
+        }
+        case IMM_FPEXT:
+        {
+          GBE_ASSERT(other.getType() == TYPE_FLOAT && dstType == TYPE_DOUBLE);
+          double value = other.getFloatValue();
+          *this = Immediate(value);
+          break;
+        }
       }
     }
 
@@ -265,6 +326,7 @@ namespace ir {
     Immediate operator>> (const Immediate &) const;
     static Immediate lshr (const Immediate &left, const Immediate &right);
     static Immediate less (const Immediate &left, const Immediate &right);
+    static Immediate extract (const Immediate &left, const Immediate &right, Type dstType);
 
     void copy(const Immediate &other, int32_t offset, uint32_t num);
     GBE_CLASS(Immediate);
