@@ -56,6 +56,9 @@ void test(const char *kernel_name, int func_type)
 
   U max = get_max<U>();
 
+  // test add and sub overflow when src1 is 1:
+  // uadd.with.overflow: max + 1
+  // usub.with.overflow: 0 - 1
   OCL_MAP_BUFFER(0);
   for (uint32_t i = 0; i < n; ++i) {
     if(func_type == 0) {
@@ -96,6 +99,55 @@ void test(const char *kernel_name, int func_type)
       OCL_ASSERT(((T*)buf_data[2])[i].x == max);
       OCL_ASSERT(((T*)buf_data[2])[i].y == max-1);
       OCL_ASSERT(((T*)buf_data[2])[i].z == max-1);
+      OCL_ASSERT(((T*)buf_data[2])[i].w == n-i);
+    }else
+      OCL_ASSERT(0);
+  }
+  OCL_UNMAP_BUFFER(2);
+
+  // test add and sub overflow when src1 is max:
+  // uadd.with.overflow: max + max
+  // usub.with.overflow: 0 - max
+  OCL_MAP_BUFFER(0);
+  for (uint32_t i = 0; i < n; ++i) {
+    if(func_type == 0) {
+      ((T*)buf_data[0])[i].x = max;
+      ((T*)buf_data[0])[i].y = max;
+      ((T*)buf_data[0])[i].z = max;
+      ((T*)buf_data[0])[i].w = i;
+    }else if(func_type == 1) {
+      ((T*)buf_data[0])[i].x = 0;
+      ((T*)buf_data[0])[i].y = 0;
+      ((T*)buf_data[0])[i].z = 0;
+      ((T*)buf_data[0])[i].w = n+2-i;
+    }else
+      OCL_ASSERT(0);
+  }
+  OCL_UNMAP_BUFFER(0);
+  OCL_MAP_BUFFER(1);
+  for (uint32_t i = 0; i < n; ++i) {
+      ((T*)buf_data[1])[i].x = max;
+      ((T*)buf_data[1])[i].y = max;
+      ((T*)buf_data[1])[i].z = max;
+      ((T*)buf_data[1])[i].w = 1;
+  }
+  OCL_UNMAP_BUFFER(1);
+
+  globals[0] = n;
+  locals[0] = 16;
+  OCL_NDRANGE(1);
+  OCL_MAP_BUFFER(2);
+  for (uint32_t i = 0; i < 16; ++i) {
+    // printf("%u,%u,%u,%u\n", ((T*)buf_data[2])[i].x,((T*)buf_data[2])[i].y, ((T*)buf_data[2])[i].z, ((T*)buf_data[2])[i].w  );
+    if(func_type == 0) {
+      OCL_ASSERT(((T*)buf_data[2])[i].x == max-1);
+      OCL_ASSERT(((T*)buf_data[2])[i].y == max);
+      OCL_ASSERT(((T*)buf_data[2])[i].z == max);
+      OCL_ASSERT(((T*)buf_data[2])[i].w == i+2);
+    }else if(func_type == 1) {
+      OCL_ASSERT(((T*)buf_data[2])[i].x == 1);
+      OCL_ASSERT(((T*)buf_data[2])[i].y == 0);
+      OCL_ASSERT(((T*)buf_data[2])[i].z == 0);
       OCL_ASSERT(((T*)buf_data[2])[i].w == n-i);
     }else
       OCL_ASSERT(0);
