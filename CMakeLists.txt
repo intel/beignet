@@ -178,12 +178,12 @@ ELSE(EGL_FOUND)
 ENDIF(EGL_FOUND)
 
 # cl_khr_gl_sharing requires to build with mesa source
-Find_Package(MesaSrc)
-IF(MESA_SOURCE_FOUND)
-  MESSAGE(STATUS "Looking for mesa source code - found at ${MESA_SOURCE_PREFIX}")
-ELSE(MESA_SOURCE_FOUND)
-  MESSAGE(STATUS "Looking for mesa source code - not found, cl_khr_gl_sharing will be disabled.")
-ENDIF(MESA_SOURCE_FOUND)
+#Find_Package(MesaSrc)
+#IF(MESA_SOURCE_FOUND)
+#  MESSAGE(STATUS "Looking for mesa source code - found at ${MESA_SOURCE_PREFIX}")
+#ELSE(MESA_SOURCE_FOUND)
+#  MESSAGE(STATUS "Looking for mesa source code - not found, cl_khr_gl_sharing will be disabled.")
+#ENDIF(MESA_SOURCE_FOUND)
 
 Find_Package(OCLIcd)
 IF(OCLIcd_FOUND)
