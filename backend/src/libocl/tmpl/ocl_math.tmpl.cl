@@ -1499,8 +1499,7 @@ union {float f; unsigned i;} u;
     return (float)(e-127);
   }
 }
-#define FP_ILOGB0 (-0x7FFFFFFF-1)
-#define FP_ILOGBNAN FP_ILOGB0
+
 OVERLOADABLE int ilogb(float x) {
   if (__ocl_math_fastpath_flag)
     return __gen_ocl_internal_fastpath_ilogb(x);

@@ -91,6 +91,7 @@ INLINE_OVERLOADABLE int __ocl_finitef (float x){
 #define M_2_SQRTPI_F 1.1283791670955126F
 #define M_SQRT2_F    1.4142135623730951F
 #define M_SQRT1_2_F  0.7071067811865476F
-
+#define FP_ILOGB0    (-0x7FFFFFFF-1)
+#define FP_ILOGBNAN  FP_ILOGB0
 
 #endif /* __OCL_FLOAT_H__ */
