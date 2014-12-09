@@ -401,7 +401,7 @@ cl_ocl_init(void)
 
 error:
   if (props)
-    delete props;
+    delete[] props;
   return status;
 }
 
