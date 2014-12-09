@@ -70,7 +70,7 @@ static void compiler_fill_gl_image(void)
     for (uint32_t i = 0; i < w; i++)
       OCL_ASSERT(resultColor[j * w + i] == color);
   OCL_UNMAP_BUFFER(0);
-  delete resultColor;
+  delete[] resultColor;
 }
 
 MAKE_UTEST_FROM_FUNCTION(compiler_fill_gl_image);
