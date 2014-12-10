@@ -48,15 +48,14 @@ void runSummaryAtExit(void) {
   // If case crashes, count it as fail, and accumulate finishrun
   if(UTest::retStatistics.finishrun != UTest::utestList->size()) {
     UTest::retStatistics.finishrun++;
-    UTest::retStatistics.failCount++;
+   // UTest::retStatistics.failCount++;
   }
   printf("\nsummary:\n----------\n");
   printf("  total: %zu\n",UTest::utestList->size());
-  printf("  run: %zu\n",UTest::retStatistics.finishrun);
+  printf("  run: %zu\n",UTest::retStatistics.actualrun);
   printf("  pass: %zu\n",UTest::retStatistics.passCount);
   printf("  fail: %zu\n",UTest::retStatistics.failCount);
-  printf("  pass rate: %f\n",1-(float)UTest::retStatistics.failCount/(float)UTest::utestList->size());
-
+  printf("  pass rate: %f\n", (UTest::retStatistics.actualrun)?((float)UTest::retStatistics.passCount/(float)UTest::retStatistics.actualrun):(float)0);
   releaseUTestList();
 }
 
@@ -84,6 +83,7 @@ void signalHandler( int signum )
   }
 
   printf("    Interrupt signal (%s) received.", name);
+  UTest::retStatistics.failCount++;
 
   exit(signum);
 }
@@ -128,7 +128,7 @@ void UTest::do_run(struct UTest utest){
   // Print function name
   printf("%s()", utest.name);
   fflush(stdout);
-
+  retStatistics.actualrun++;
   // Run one case in utestList, print result [SUCCESS] or [FAILED]
   (utest.fn)();
 }
