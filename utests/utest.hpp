@@ -37,6 +37,7 @@ struct RStatistics
   size_t passCount;
   size_t failCount;
   size_t finishrun;
+  size_t actualrun;
 };
 
 /*! Quick and dirty unit test system with registration */
