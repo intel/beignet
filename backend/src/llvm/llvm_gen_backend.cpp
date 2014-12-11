@@ -257,9 +257,10 @@ namespace gbe
   /*! Get number of element to process dealing either with a vector or a scalar
    *  value
    */
-  static ir::Type getVectorInfo(ir::Context &ctx, Type *llvmType, Value *value, uint32_t &elemNum, bool useUnsigned = false)
+  static ir::Type getVectorInfo(ir::Context &ctx, Value *value, uint32_t &elemNum, bool useUnsigned = false)
   {
     ir::Type type;
+    Type *llvmType = value->getType();
     if (llvmType->isVectorTy() == true) {
       VectorType *vectorType = cast<VectorType>(llvmType);
       Type *elementType = vectorType->getElementType();
@@ -629,6 +630,7 @@ namespace gbe
     void emitAtomicInst(CallInst &I, CallSite &CS, ir::AtomicOps opcode);
 
     uint8_t appendSampler(CallSite::arg_iterator AI);
+    uint8_t getImageID(CallInst &I);
 
     // These instructions are not supported at all
     void visitVAArgInst(VAArgInst &I) {NOT_SUPPORTED;}
@@ -2507,8 +2509,8 @@ error:
         Value *srcValue = I.getOperand(0);
         Value *dstValue = &I;
         uint32_t srcElemNum = 0, dstElemNum = 0 ;
-        ir::Type srcType = getVectorInfo(ctx, srcValue->getType(), srcValue, srcElemNum);
-        ir::Type dstType = getVectorInfo(ctx, dstValue->getType(), dstValue, dstElemNum);
+        ir::Type srcType = getVectorInfo(ctx, srcValue, srcElemNum);
+        ir::Type dstType = getVectorInfo(ctx, dstValue, dstElemNum);
         // As long and double are not compatible in register storage
         // and we do not support double yet, simply put an assert here
         GBE_ASSERT(!(srcType == ir::TYPE_S64 && dstType == ir::TYPE_DOUBLE));
@@ -2908,7 +2910,7 @@ error:
       {
         // dst is a 4 elements vector. We allocate all 4 registers here.
         uint32_t elemNum;
-        (void)getVectorInfo(ctx, I.getType(), &I, elemNum);
+        (void)getVectorInfo(ctx, &I, elemNum);
         GBE_ASSERT(elemNum == 4);
         this->newRegister(&I);
         break;
@@ -3034,6 +3036,15 @@ error:
       index = ctx.getFunction().getSamplerSet()->append(samplerReg, &ctx);
     }
     return index;
+  }
+
+  uint8_t GenWriter::getImageID(CallInst &I) {
+    PtrOrigMapIter iter = pointerOrigMap.find(&I);
+    GBE_ASSERT(iter != pointerOrigMap.end());
+    SmallVectorImpl<Value *> &origins = iter->second;
+    GBE_ASSERT(origins.size() == 1);
+    const ir::Register imageReg = this->getRegister(origins[0]);
+    return ctx.getFunction().getImageSet()->getIdx(imageReg);
   }
 
   void GenWriter::emitCallInst(CallInst &I) {
@@ -3199,7 +3210,6 @@ error:
           default: NOT_IMPLEMENTED;
         }
       } else {
-        int image_dim;
         // Get the name of the called function and handle it
         Value *Callee = I.getCalledValue();
         const std::string fnName = Callee->getName();
@@ -3315,13 +3325,13 @@ error:
           case GEN_OCL_GET_IMAGE_CHANNEL_DATA_TYPE:
           case GEN_OCL_GET_IMAGE_CHANNEL_ORDER:
           {
-            GBE_ASSERT(AI != AE); const ir::Register surfaceReg = this->getRegister(*AI); ++AI;
+            const uint8_t imageID = getImageID(I);
+            GBE_ASSERT(AI != AE); ++AI;
             const ir::Register reg = this->getRegister(&I, 0);
             int infoType = it->second - GEN_OCL_GET_IMAGE_WIDTH;
-            const uint8_t surfaceID = ctx.getFunction().getImageSet()->getIdx(surfaceReg);
-            ir::ImageInfoKey key(surfaceID, infoType);
+            ir::ImageInfoKey key(imageID, infoType);
             const ir::Register infoReg = ctx.getFunction().getImageSet()->appendInfo(key, &ctx);
-            ctx.GET_IMAGE_INFO(infoType, reg, surfaceID, infoReg);
+            ctx.GET_IMAGE_INFO(infoType, reg, imageID, infoReg);
             break;
           }
 
@@ -3331,69 +3341,75 @@ error:
           case GEN_OCL_READ_IMAGE_I_1D_I:
           case GEN_OCL_READ_IMAGE_UI_1D_I:
           case GEN_OCL_READ_IMAGE_F_1D_I:
-            image_dim = 1;
-            goto handle_read_image;
           case GEN_OCL_READ_IMAGE_I_2D:
           case GEN_OCL_READ_IMAGE_UI_2D:
           case GEN_OCL_READ_IMAGE_F_2D:
           case GEN_OCL_READ_IMAGE_I_2D_I:
           case GEN_OCL_READ_IMAGE_UI_2D_I:
           case GEN_OCL_READ_IMAGE_F_2D_I:
-            image_dim = 2;
-            goto handle_read_image;
           case GEN_OCL_READ_IMAGE_I_3D:
           case GEN_OCL_READ_IMAGE_UI_3D:
           case GEN_OCL_READ_IMAGE_F_3D:
           case GEN_OCL_READ_IMAGE_I_3D_I:
           case GEN_OCL_READ_IMAGE_UI_3D_I:
           case GEN_OCL_READ_IMAGE_F_3D_I:
-            image_dim = 3;
-handle_read_image:
           {
-            GBE_ASSERT(AI != AE); const ir::Register surfaceReg = this->getRegister(*AI); ++AI;
-            const uint8_t surfaceID = ctx.getFunction().getImageSet()->getIdx(surfaceReg);
+            const uint8_t imageID = getImageID(I);
+            GBE_ASSERT(AI != AE); ++AI;
             GBE_ASSERT(AI != AE);
             const uint8_t sampler = this->appendSampler(AI);
-            ++AI;
+            ++AI; GBE_ASSERT(AI != AE);
+            uint32_t coordNum;
+            (void)getVectorInfo(ctx, *AI, coordNum);
+            if (coordNum == 4)
+              coordNum = 3;
+            const uint32_t imageDim = coordNum;
+            GBE_ASSERT(imageDim >= 1 && imageDim <= 3);
 
-            ir::Register ucoord;
-            ir::Register vcoord;
-            ir::Register wcoord;
-
-            GBE_ASSERT(AI != AE); ucoord = this->getRegister(*AI); ++AI;
-            if (image_dim > 1) {
-              GBE_ASSERT(AI != AE);
-              vcoord = this->getRegister(*AI);
-              ++AI;
-            } else {
-              vcoord = ir::ocl::invalid;
-            }
-
-            if (image_dim > 2) {
-              GBE_ASSERT(AI != AE);
-              wcoord = this->getRegister(*AI);
-              ++AI;
-            } else {
-              wcoord = ir::ocl::invalid;
-            }
-
-            vector<ir::Register> dstTupleData, srcTupleData;
-            const uint32_t elemNum = 4;
-            for (uint32_t elemID = 0; elemID < elemNum; ++elemID) {
-              const ir::Register reg = this->getRegister(&I, elemID);
-              dstTupleData.push_back(reg);
-            }
-            srcTupleData.push_back(ucoord);
-            srcTupleData.push_back(vcoord);
-            srcTupleData.push_back(wcoord);
             uint8_t samplerOffset = 0;
+            Value *coordVal = *AI;
+            ++AI; GBE_ASSERT(AI != AE);
+            Value *samplerOffsetVal = *AI;
 #ifdef GEN7_SAMPLER_CLAMP_BORDER_WORKAROUND
-            GBE_ASSERT(AI != AE); Constant *CPV = dyn_cast<Constant>(*AI);
+            Constant *CPV = dyn_cast<Constant>(samplerOffsetVal);
             assert(CPV);
             const ir::Immediate &x = processConstantImm(CPV);
             GBE_ASSERTM(x.getType() == ir::TYPE_U32 || x.getType() == ir::TYPE_S32, "Invalid sampler type");
             samplerOffset = x.getIntegerValue();
 #endif
+            bool isFloatCoord = it->second <= GEN_OCL_READ_IMAGE_F_3D;
+            bool requiredFloatCoord = samplerOffset == 0;
+
+            vector<ir::Register> dstTupleData, srcTupleData;
+            for (uint32_t elemID = 0; elemID < 3; elemID++) {
+              ir::Register reg;
+
+              if (elemID < imageDim)
+                reg = this->getRegister(coordVal, elemID);
+              else
+                reg = ir::ocl::invalid;
+
+              if (isFloatCoord == requiredFloatCoord)
+                srcTupleData.push_back(reg);
+              else if (!requiredFloatCoord) {
+                ir::Register intCoordReg = ctx.reg(ir::RegisterFamily::FAMILY_DWORD);
+                ctx.CVT(ir::TYPE_S32, ir::TYPE_FLOAT, intCoordReg, reg);
+                srcTupleData.push_back(intCoordReg);
+              } else {
+                ir::Register floatCoordReg = ctx.reg(ir::RegisterFamily::FAMILY_DWORD);
+                ctx.CVT(ir::TYPE_FLOAT, ir::TYPE_S32, floatCoordReg, reg);
+                srcTupleData.push_back(floatCoordReg);
+              }
+            }
+
+            uint32_t elemNum;
+            (void)getVectorInfo(ctx, &I, elemNum);
+            GBE_ASSERT(elemNum == 4);
+
+            for (uint32_t elemID = 0; elemID < elemNum; ++elemID) {
+              const ir::Register reg = this->getRegister(&I, elemID);
+              dstTupleData.push_back(reg);
+            }
             const ir::Tuple dstTuple = ctx.arrayTuple(&dstTupleData[0], elemNum);
             const ir::Tuple srcTuple = ctx.arrayTuple(&srcTupleData[0], 3);
 
@@ -3426,58 +3442,46 @@ handle_read_image:
                 GBE_ASSERT(0); // never been here.
             }
 
-            bool isFloatCoord = it->second <= GEN_OCL_READ_IMAGE_F_3D;
-
-            ctx.SAMPLE(surfaceID, dstTuple, srcTuple, dstType == ir::TYPE_FLOAT,
-                       isFloatCoord, sampler, samplerOffset);
+            ctx.SAMPLE(imageID, dstTuple, srcTuple, dstType == ir::TYPE_FLOAT,
+                       requiredFloatCoord, sampler, samplerOffset);
             break;
           }
 
           case GEN_OCL_WRITE_IMAGE_I_1D:
           case GEN_OCL_WRITE_IMAGE_UI_1D:
           case GEN_OCL_WRITE_IMAGE_F_1D:
-            image_dim = 1;
-            goto handle_write_image;
           case GEN_OCL_WRITE_IMAGE_I_2D:
           case GEN_OCL_WRITE_IMAGE_UI_2D:
           case GEN_OCL_WRITE_IMAGE_F_2D:
-            image_dim = 2;
-            goto handle_write_image;
           case GEN_OCL_WRITE_IMAGE_I_3D:
           case GEN_OCL_WRITE_IMAGE_UI_3D:
           case GEN_OCL_WRITE_IMAGE_F_3D:
-            image_dim = 3;
-handle_write_image:
           {
-            GBE_ASSERT(AI != AE); const ir::Register surfaceReg = this->getRegister(*AI); ++AI;
-            const uint8_t surfaceID = ctx.getFunction().getImageSet()->getIdx(surfaceReg);
-            ir::Register ucoord, vcoord, wcoord;
-
-            GBE_ASSERT(AI != AE); ucoord = this->getRegister(*AI); ++AI;
-
-            if (image_dim > 1) {
-              GBE_ASSERT(AI != AE);
-              vcoord = this->getRegister(*AI);
-              ++AI;
-            } else
-              vcoord = ir::ocl::invalid;
-
-            if (image_dim > 2) {
-              GBE_ASSERT(AI != AE);
-              wcoord = this->getRegister(*AI);
-              ++AI;
-            } else {
-              wcoord = ir::ocl::invalid;
-            }
-
-            GBE_ASSERT(AI != AE);
+            const uint8_t imageID = getImageID(I);
+            GBE_ASSERT(AI != AE); ++AI; GBE_ASSERT(AI != AE);
+            uint32_t coordNum;
+            (void)getVectorInfo(ctx, *AI, coordNum);
+            if (coordNum == 4)
+              coordNum = 3;
+            const uint32_t imageDim = coordNum;
             vector<ir::Register> srcTupleData;
+            GBE_ASSERT(imageDim >= 1 && imageDim <= 3);
 
-            srcTupleData.push_back(ucoord);
-            srcTupleData.push_back(vcoord);
-            srcTupleData.push_back(wcoord);
+            for (uint32_t elemID = 0; elemID < 3; elemID++) {
+              ir::Register reg;
 
-            const uint32_t elemNum = 4;
+              if (elemID < imageDim)
+                reg = this->getRegister(*AI, elemID);
+              else
+                reg = ir::ocl::invalid;
+
+              srcTupleData.push_back(reg);
+            }
+            ++AI; GBE_ASSERT(AI != AE);
+            uint32_t elemNum;
+            (void)getVectorInfo(ctx, *AI, elemNum);
+            GBE_ASSERT(elemNum == 4);
+
             for (uint32_t elemID = 0; elemID < elemNum; ++elemID) {
               const ir::Register reg = this->getRegister(*AI, elemID);
               srcTupleData.push_back(reg);
@@ -3504,7 +3508,7 @@ handle_write_image:
                 GBE_ASSERT(0); // never been here.
             }
 
-            ctx.TYPED_WRITE(surfaceID, srcTuple, srcType, ir::TYPE_U32);
+            ctx.TYPED_WRITE(imageID, srcTuple, srcType, ir::TYPE_U32);
             break;
           }
           case GEN_OCL_MUL_HI_INT:
