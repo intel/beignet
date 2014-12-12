@@ -136,17 +136,23 @@ GEN_VALIDATE_ARRAY_INDEX(int, image1d_buffer_t)
 // integer type surfaces correctly with CLK_ADDRESS_CLAMP and CLK_FILTER_NEAREST.
 // The work around is to use a LD message instead of normal sample message.
 ///////////////////////////////////////////////////////////////////////////////
+
+bool __gen_ocl_sampler_need_fix(sampler_t);
+bool __gen_ocl_sampler_need_rounding_fix(sampler_t);
+
 bool __gen_sampler_need_fix(const sampler_t sampler)
 {
-  return (((sampler & __CLK_ADDRESS_MASK) == CLK_ADDRESS_CLAMP) &&
-          ((sampler & __CLK_FILTER_MASK) == CLK_FILTER_NEAREST));
+  return __gen_ocl_sampler_need_fix(sampler);
+
+//  return (((sampler & __CLK_ADDRESS_MASK) == CLK_ADDRESS_CLAMP) &&
+//          ((sampler & __CLK_FILTER_MASK) == CLK_FILTER_NEAREST));
 }
 
 bool __gen_sampler_need_rounding_fix(const sampler_t sampler)
 {
-  return ((sampler & CLK_NORMALIZED_COORDS_TRUE) == 0);
+  return __gen_ocl_sampler_need_rounding_fix(sampler);
+//  return ((sampler & CLK_NORMALIZED_COORDS_TRUE) == 0);
 }
-
 
 INLINE_OVERLOADABLE float __gen_fixup_float_coord(float tmpCoord)
 {
@@ -311,7 +317,7 @@ INLINE_OVERLOADABLE float3 __gen_fixup_neg_boundary(float3 coord)
             __gen_sampler_need_rounding_fix(sampler))                         \
           tmpCoord = __gen_fixup_float_coord(tmpCoord);                       \
         if (int_clamping_fix) {                                               \
-            if (sampler & CLK_NORMALIZED_COORDS_TRUE)                         \
+            if (!__gen_sampler_need_rounding_fix(sampler))                    \
               tmpCoord = __gen_denormalize_coord(cl_image, tmpCoord);         \
             tmpCoord = __gen_fixup_neg_boundary(tmpCoord);                    \
             return __gen_ocl_read_image ##suffix(                             \
@@ -328,9 +334,10 @@ INLINE_OVERLOADABLE float3 __gen_fixup_neg_boundary(float3 coord)
                                                coord_type coord)              \
   {                                                                           \
     coord = __gen_validate_array_index(coord, cl_image);                      \
+    sampler_t defaultSampler = CLK_NORMALIZED_COORDS_FALSE | CLK_ADDRESS_NONE \
+                               | CLK_FILTER_NEAREST;                          \
     return __gen_ocl_read_image ##suffix(                                     \
-             cl_image, CLK_NORMALIZED_COORDS_FALSE | CLK_ADDRESS_NONE         \
-             | CLK_FILTER_NEAREST, coord, 0);                                 \
+             cl_image, defaultSampler, coord, 0);                             \
   }
 
 #define DECL_WRITE_IMAGE(image_type, image_data_type, suffix, coord_type)     \
@@ -419,15 +426,15 @@ INLINE_OVERLOADABLE int4 __gen_fixup_1darray_coord(int2 coord, image1d_array_t i
             __gen_sampler_need_rounding_fix(sampler))                         \
           tmpCoord = __gen_fixup_float_coord(tmpCoord);                       \
         if (int_clamping_fix) {                                               \
-            if (sampler & CLK_NORMALIZED_COORDS_TRUE)                         \
+            if (!__gen_sampler_need_rounding_fix(sampler))                    \
               tmpCoord = __gen_denormalize_coord(cl_image, tmpCoord);         \
             float4 newCoord = __gen_fixup_1darray_coord(tmpCoord, cl_image);  \
             return __gen_ocl_read_image ##suffix(                             \
-                     cl_image, sampler, newCoord, 2);                       \
+                     cl_image, sampler, newCoord, 2);                         \
         }                                                                     \
       }                                                                       \
     }                                                                         \
-    return  __gen_ocl_read_image ##suffix(cl_image, sampler, tmpCoord, 0);  \
+    return  __gen_ocl_read_image ##suffix(cl_image, sampler, tmpCoord, 0);    \
   }
 
 #define DECL_IMAGE_1DArray(int_clamping_fix, image_data_type, suffix)         \

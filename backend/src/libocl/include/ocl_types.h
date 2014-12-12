@@ -87,8 +87,8 @@ DEF(double);
 // FIXME:
 // This is a transitional hack to bypass the LLVM 3.3 built-in types.
 // See the Khronos SPIR specification for handling of these types.
-#define sampler_t __sampler_t
-typedef const ushort __sampler_t;
+//#define sampler_t __sampler_t
+//typedef const ushort __sampler_t;
 
 /////////////////////////////////////////////////////////////////////////////
 // OpenCL built-in event types

@@ -137,6 +137,7 @@ namespace gbe
   /* customized loop unrolling pass. */
   llvm::LoopPass *createCustomLoopUnrollPass();
 #endif
+  llvm::FunctionPass* createSamplerFixPass();
 
   /*! Add all the function call of ocl to our bitcode. */
   llvm::Module* runBitCodeLinker(llvm::Module *mod, bool strictMath);

@@ -204,6 +204,11 @@ namespace ir {
         return isImage1dT() || isImage1dArrayT() || isImage1dBufferT() ||
                isImage2dT() || isImage2dArrayT() || isImage3dT();
       }
+
+      bool isSamplerType() const {
+        return typeName.compare("sampler_t") == 0;
+      }
+
     };
 
     /*! Create a function input argument */
