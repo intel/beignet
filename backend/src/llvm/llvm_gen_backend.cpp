@@ -1572,6 +1572,12 @@ error:
           continue;
         }
 
+        if (llvmInfo.isSamplerType()) {
+          ctx.input(argName, ir::FunctionArgument::SAMPLER, reg, llvmInfo, getTypeByteSize(unit, type), getAlignmentByte(unit, type), 0);
+          (void)ctx.getFunction().getSamplerSet()->append(reg, &ctx);
+          continue;
+        }
+
         if (type->isPointerTy() == false)
           ctx.input(argName, ir::FunctionArgument::VALUE, reg, llvmInfo, getTypeByteSize(unit, type), getAlignmentByte(unit, type), 0);
         else {
@@ -2994,7 +3000,7 @@ error:
       // This is not a kernel argument sampler, we need to append it to sampler set,
       // and allocate a sampler slot for it.
       const ir::Immediate &x = processConstantImm(CPV);
-      GBE_ASSERTM(x.getType() == ir::TYPE_U16 || x.getType() == ir::TYPE_S16, "Invalid sampler type");
+      GBE_ASSERTM(x.getType() == ir::TYPE_U32 || x.getType() == ir::TYPE_S32, "Invalid sampler type");
 
       index = ctx.getFunction().getSamplerSet()->append(x.getIntegerValue(), &ctx);
     } else {

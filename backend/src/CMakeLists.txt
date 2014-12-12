@@ -73,6 +73,7 @@ set (GBE_SRC
     backend/program.cpp
     backend/program.hpp
     backend/program.h
+    llvm/llvm_sampler_fix.cpp
     llvm/llvm_bitcode_link.cpp
     llvm/llvm_gen_backend.cpp
     llvm/llvm_passes.cpp

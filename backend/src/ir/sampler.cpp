@@ -49,11 +49,7 @@ namespace ir {
     ir::FunctionArgument *arg =  ctx->getFunction().getArg(samplerReg);
     GBE_ASSERT(arg != NULL);
 
-    // XXX As LLVM 3.2/3.1 doesn't have a new data type for the sampler_t, we have to fix up the argument
-    // type here. Once we switch to the LLVM and use the new data type sampler_t, we can remove this
-    // work around.
-    arg->type = ir::FunctionArgument::SAMPLER;
-    arg->info.typeName = "sampler_t";
+    GBE_ASSERT(arg->type == ir::FunctionArgument::SAMPLER);
     int32_t id = ctx->getFunction().getArgID(arg);
     GBE_ASSERT(id < (1 << __CLK_SAMPLER_ARG_BITS));
 

@@ -121,6 +121,7 @@ namespace gbe
     MPM.add(createTypeBasedAliasAnalysisPass());
     MPM.add(createBasicAliasAnalysisPass());
     MPM.add(createIntrinsicLoweringPass());
+    MPM.add(createSamplerFixPass());
     MPM.add(createGlobalOptimizerPass());     // Optimize out global vars
 
     MPM.add(createIPSCCPPass());              // IP SCCP

@@ -114,11 +114,8 @@ cl_kernel_set_arg(cl_kernel k, cl_uint index, size_t sz, const void *value)
   arg_sz = interp_kernel_get_arg_size(k->opaque, index);
 
   if (UNLIKELY(arg_type != GBE_ARG_LOCAL_PTR && arg_sz != sz)) {
-    if (arg_sz == 2 && arg_type == GBE_ARG_VALUE && sz == sizeof(cl_sampler)) {
-      /* FIXME, this is a workaround for the case when a kernel arg
-         defined a sampler_t but doesn't use it.*/
-      arg_type = GBE_ARG_SAMPLER;
-    } else
+    if (arg_type != GBE_ARG_SAMPLER ||
+        (arg_type == GBE_ARG_SAMPLER && sz != sizeof(cl_sampler)))
       return CL_INVALID_ARG_SIZE;
   }
 
@@ -182,8 +179,9 @@ cl_kernel_set_arg(cl_kernel k, cl_uint index, size_t sz, const void *value)
     k->args[index].sampler = sampler;
     cl_set_sampler_arg_slot(k, index, sampler);
     offset = interp_kernel_get_curbe_offset(k->opaque, GBE_CURBE_KERNEL_ARGUMENT, index);
-    assert(offset + 2 <= k->curbe_sz);
-    memcpy(k->curbe + offset, &sampler->clkSamplerValue, 2);
+    //assert(arg_sz == 4);
+    assert(offset + 4 <= k->curbe_sz);
+    memcpy(k->curbe + offset, &sampler->clkSamplerValue, 4);
     return CL_SUCCESS;
   }
 
