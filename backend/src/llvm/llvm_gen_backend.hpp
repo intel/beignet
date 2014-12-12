@@ -26,6 +26,7 @@
 #ifndef __GBE_LLVM_GEN_BACKEND_HPP__
 #define __GBE_LLVM_GEN_BACKEND_HPP__
 
+#include <cxxabi.h>
 #include "llvm/Config/llvm-config.h"
 #include "llvm/Pass.h"
 #include "llvm/Analysis/LoopPass.h"
@@ -65,10 +66,31 @@ namespace gbe
     }
     /*! Sort intrinsics with their names */
     hash_map<std::string, OCLInstrinsic> map;
+    OCLInstrinsic find(const std::string symbol) const {
+      auto it = map.find(symbol);
+
+      if (it == map.end()) {
+        int status;
+        const char *realName = abi::__cxa_demangle(symbol.c_str(), NULL, NULL, &status);
+        if (status == 0) {
+          std::string realFnName(realName), stripName;
+          stripName = realFnName.substr(0, realFnName.find("("));
+          it = map.find(stripName);
+        }
+      }
+      // FIXME, should create a complete error reporting mechanism
+      // when found error in beignet managed passes including Gen pass.
+      if (it == map.end()) {
+        std::cerr << "Unresolved symbol: " << symbol << std::endl;
+        std::cerr << "Aborting..." << std::endl;
+        exit(-1);
+      }
+      return it->second;
+    }
   };
 
   /*! Sort the OCL Gen instrinsic functions (built on pre-main) */
-  static const OCLIntrinsicMap instrinsicMap;
+  static const OCLIntrinsicMap intrinsicMap;
 
   /*! Pad the offset */
   int32_t getPadding(int32_t offset, int32_t align);

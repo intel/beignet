@@ -20,176 +20,94 @@
 #include "ocl_integer.h"
 #include "ocl_common.h"
 
+#define int1 int
+#define float1 float
+
 ///////////////////////////////////////////////////////////////////////////////
 // Beignet builtin functions.
 ///////////////////////////////////////////////////////////////////////////////
 
-// 1D read
-OVERLOADABLE int4 __gen_ocl_read_imagei(uint surface_id, sampler_t sampler,
-                                        float u, uint sampler_offset);
-OVERLOADABLE int4 __gen_ocl_read_imagei(uint surface_id, sampler_t sampler,
-                                        int u, uint sampler_offset);
-OVERLOADABLE uint4 __gen_ocl_read_imageui(uint surface_id, sampler_t sampler,
-                                          float u, uint sampler_offset);
-OVERLOADABLE uint4 __gen_ocl_read_imageui(uint surface_id, sampler_t sampler,
-                                          int u, uint sampler_offset);
-OVERLOADABLE float4 __gen_ocl_read_imagef(uint surface_id, sampler_t sampler,
-                                          float u, uint sampler_offset);
-OVERLOADABLE float4 __gen_ocl_read_imagef(uint surface_id, sampler_t sampler,
-                                          int u, uint sampler_offset);
+#define DECL_GEN_OCL_RW_IMAGE(image_type, n) \
+  OVERLOADABLE int4 __gen_ocl_read_imagei(image_type image, sampler_t sampler,            \
+                                          float ##n coord, uint sampler_offset);          \
+  OVERLOADABLE int4 __gen_ocl_read_imagei(image_type image, sampler_t sampler,            \
+                                          int ##n coord, uint sampler_offset);            \
+  OVERLOADABLE uint4 __gen_ocl_read_imageui(image_type image, sampler_t sampler,          \
+                                            float ##n coord, uint sampler_offset);        \
+  OVERLOADABLE uint4 __gen_ocl_read_imageui(image_type image, sampler_t sampler,          \
+                                            int ##n coord, uint sampler_offset);          \
+  OVERLOADABLE float4 __gen_ocl_read_imagef(image_type image, sampler_t sampler,          \
+                                            float ##n coord, uint sampler_offset);        \
+  OVERLOADABLE float4 __gen_ocl_read_imagef(image_type image, sampler_t sampler,          \
+                                            int ##n coord, uint sampler_offset);          \
+  OVERLOADABLE void __gen_ocl_write_imagei(image_type image, int ##n coord , int4 color); \
+  OVERLOADABLE void __gen_ocl_write_imageui(image_type image, int ##n coord, uint4 color);\
+  OVERLOADABLE void __gen_ocl_write_imagef(image_type image, int ##n coord, float4 color);
 
-// 2D & 1D Array read
-OVERLOADABLE int4 __gen_ocl_read_imagei(uint surface_id, sampler_t sampler,
-                                        float2 coord, uint sampler_offset);
-OVERLOADABLE int4 __gen_ocl_read_imagei(uint surface_id, sampler_t sampler,
-                                        int2 coord, uint sampler_offset);
-OVERLOADABLE uint4 __gen_ocl_read_imageui(uint surface_id, sampler_t sampler,
-                                          float2 coord, uint sampler_offset);
-OVERLOADABLE uint4 __gen_ocl_read_imageui(uint surface_id, sampler_t sampler,
-                                          int2 coord, uint sampler_offset);
-OVERLOADABLE float4 __gen_ocl_read_imagef(uint surface_id, sampler_t sampler,
-                                          float2 coord, uint sampler_offset);
-OVERLOADABLE float4 __gen_ocl_read_imagef(uint surface_id, sampler_t sampler,
-                                          int2 coord, uint sampler_offset);
+#define DECL_GEN_OCL_QUERY_IMAGE(image_type) \
+  OVERLOADABLE int __gen_ocl_get_image_width(image_type image);                           \
+  OVERLOADABLE int __gen_ocl_get_image_height(image_type image);                          \
+  OVERLOADABLE int __gen_ocl_get_image_channel_data_type(image_type image);               \
+  OVERLOADABLE int __gen_ocl_get_image_channel_order(image_type image);                   \
+  OVERLOADABLE int __gen_ocl_get_image_depth(image_type image);                           \
 
-// 3D & 2D Array read
-OVERLOADABLE int4 __gen_ocl_read_imagei(uint surface_id, sampler_t sampler,
-                                        float4 coord, uint sampler_offset);
-OVERLOADABLE int4 __gen_ocl_read_imagei(uint surface_id, sampler_t sampler,
-                                        int4 coord, uint sampler_offset);
-OVERLOADABLE uint4 __gen_ocl_read_imageui(uint surface_id, sampler_t sampler,
-                                          float4 coord, uint sampler_offset);
-OVERLOADABLE uint4 __gen_ocl_read_imageui(uint surface_id, sampler_t sampler,
-                                          int4 coord, uint sampler_offset);
-OVERLOADABLE float4 __gen_ocl_read_imagef(uint surface_id, sampler_t sampler,
-                                          float4 coord, uint sampler_offset);
-OVERLOADABLE float4 __gen_ocl_read_imagef(uint surface_id, sampler_t sampler,
-                                          int4 coord, uint sampler_offset);
+DECL_GEN_OCL_RW_IMAGE(image1d_t, 1)
+DECL_GEN_OCL_RW_IMAGE(image1d_buffer_t, 1)
+DECL_GEN_OCL_RW_IMAGE(image1d_array_t, 2)
+DECL_GEN_OCL_RW_IMAGE(image1d_array_t, 4)
+DECL_GEN_OCL_RW_IMAGE(image2d_t, 2)
+DECL_GEN_OCL_RW_IMAGE(image2d_array_t, 3)
+DECL_GEN_OCL_RW_IMAGE(image3d_t, 3)
+DECL_GEN_OCL_RW_IMAGE(image2d_array_t, 4)
+DECL_GEN_OCL_RW_IMAGE(image3d_t, 4)
 
-// Don't know why we need to support 3 component coordinates, but it's in the old
-// version, let's keep to support it.
-INLINE_OVERLOADABLE int4 __gen_ocl_read_imagei(uint surface_id, sampler_t sampler,
-                                               float3 coord, uint sampler_offset)
-{
-   return __gen_ocl_read_imagei(surface_id, sampler,
-            (float4)(coord.s0, coord.s1, coord.s2, 0), sampler_offset);
-}
-INLINE_OVERLOADABLE int4 __gen_ocl_read_imagei(uint surface_id, sampler_t sampler,
-                                               int3 coord, uint sampler_offset)
-{
-  return __gen_ocl_read_imagei(surface_id, sampler,
-           (int4)(coord.s0, coord.s1, coord.s2, 0), sampler_offset);
-}
-INLINE_OVERLOADABLE uint4 __gen_ocl_read_imageui(uint surface_id, sampler_t sampler,
-                                                 float3 coord, uint sampler_offset)
-{
-  return __gen_ocl_read_imageui(surface_id, sampler,
-           (float4)(coord.s0, coord.s1, coord.s2, 0), sampler_offset);
-}
-INLINE_OVERLOADABLE uint4 __gen_ocl_read_imageui(uint surface_id, sampler_t sampler,
-                                                 int3 coord, uint sampler_offset)
-{
-  return __gen_ocl_read_imageui(surface_id, sampler,
-           (int4)(coord.s0, coord.s1, coord.s2, 0), sampler_offset);
-}
-INLINE_OVERLOADABLE float4 __gen_ocl_read_imagef(uint surface_id, sampler_t sampler,
-                             float3 coord, uint sampler_offset)
-{
-  return __gen_ocl_read_imagef(surface_id, sampler,
-           (float4)(coord.s0, coord.s1, coord.s2, 0), sampler_offset);
-}
-INLINE_OVERLOADABLE float4 __gen_ocl_read_imagef(uint surface_id, sampler_t sampler,
-                                                 int3 coord, uint sampler_offset)
-{
-  return __gen_ocl_read_imagef(surface_id, sampler,
-           (int4)(coord.s0, coord.s1, coord.s2, 0), sampler_offset);
-}
-
-// 1D write
-OVERLOADABLE void __gen_ocl_write_imagei(uint surface_id, int u, int4 color);
-OVERLOADABLE void __gen_ocl_write_imageui(uint surface_id, int u, uint4 color);
-OVERLOADABLE void __gen_ocl_write_imagef(uint surface_id, int u, float4 color);
-
-// 2D & 1D Array write
-OVERLOADABLE void __gen_ocl_write_imagei(uint surface_id, int2 coord, int4 color);
-OVERLOADABLE void __gen_ocl_write_imageui(uint surface_id, int2 coord, uint4 color);
-OVERLOADABLE void __gen_ocl_write_imagef(uint surface_id, int2 coord, float4 color);
-
-// 3D & 2D Array write
-OVERLOADABLE void __gen_ocl_write_imagei(uint surface_id, int4 coord, int4 color);
-OVERLOADABLE void __gen_ocl_write_imageui(uint surface_id, int4 coord, uint4 color);
-OVERLOADABLE void __gen_ocl_write_imagef(uint surface_id, int4 coord, float4 color);
-
-INLINE_OVERLOADABLE void __gen_ocl_write_imagei(uint surface_id, int3 coord, int4 color)
-{
-  __gen_ocl_write_imagei(surface_id, (int4)(coord.s0, coord.s1, coord.s2, 0), color);
-}
-INLINE_OVERLOADABLE void __gen_ocl_write_imageui(uint surface_id, int3 coord, uint4 color)
-{
-  __gen_ocl_write_imageui(surface_id, (int4)(coord.s0, coord.s1, coord.s2, 0), color);
-}
-INLINE_OVERLOADABLE void __gen_ocl_write_imagef(uint surface_id, int3 coord, float4 color)
-{
-  __gen_ocl_write_imagef(surface_id, (int4)(coord.s0, coord.s1, coord.s2, 0), color);
-}
-
-int __gen_ocl_get_image_width(uint surface_id);
-int __gen_ocl_get_image_height(uint surface_id);
-int __gen_ocl_get_image_channel_data_type(uint surface_id);
-int __gen_ocl_get_image_channel_order(uint surface_id);
-int __gen_ocl_get_image_depth(uint surface_id);
-
-
-#define GET_IMAGE(cl_image, surface_id) \
-    uint surface_id = (uint)cl_image
-
+DECL_GEN_OCL_QUERY_IMAGE(image1d_t)
+DECL_GEN_OCL_QUERY_IMAGE(image1d_buffer_t)
+DECL_GEN_OCL_QUERY_IMAGE(image1d_array_t)
+DECL_GEN_OCL_QUERY_IMAGE(image2d_t)
+DECL_GEN_OCL_QUERY_IMAGE(image2d_array_t)
+DECL_GEN_OCL_QUERY_IMAGE(image3d_t)
 ///////////////////////////////////////////////////////////////////////////////
 // helper functions to validate array index.
 ///////////////////////////////////////////////////////////////////////////////
 INLINE_OVERLOADABLE float2 __gen_validate_array_index(float2 coord, image1d_array_t image)
 {
-  GET_IMAGE(image, surface_id);
-  float array_size = __gen_ocl_get_image_depth(surface_id);
+  float array_size = __gen_ocl_get_image_depth(image);
   coord.s1 = clamp(rint(coord.s1), 0.f, array_size - 1.f);
   return coord;
 }
 
 INLINE_OVERLOADABLE float4 __gen_validate_array_index(float4 coord, image2d_array_t image)
 {
-  GET_IMAGE(image, surface_id);
-  float array_size = __gen_ocl_get_image_depth(surface_id);
+  float array_size = __gen_ocl_get_image_depth(image);
   coord.s2 = clamp(rint(coord.s2), 0.f, array_size - 1.f);
   return coord;
 }
 
 INLINE_OVERLOADABLE float3 __gen_validate_array_index(float3 coord, image2d_array_t image)
 {
-  GET_IMAGE(image, surface_id);
-  float array_size = __gen_ocl_get_image_depth(surface_id);
+  float array_size = __gen_ocl_get_image_depth(image);
   coord.s2 = clamp(rint(coord.s2), 0.f, array_size - 1.f);
   return coord;
 }
 
 INLINE_OVERLOADABLE int2 __gen_validate_array_index(int2 coord, image1d_array_t image)
 {
-  GET_IMAGE(image, surface_id);
-  int array_size = __gen_ocl_get_image_depth(surface_id);
+  int array_size = __gen_ocl_get_image_depth(image);
   coord.s1 = clamp(coord.s1, 0, array_size - 1);
   return coord;
 }
 
 INLINE_OVERLOADABLE int4 __gen_validate_array_index(int4 coord, image2d_array_t image)
 {
-  GET_IMAGE(image, surface_id);
-  int array_size = __gen_ocl_get_image_depth(surface_id);
+  int array_size = __gen_ocl_get_image_depth(image);
   coord.s2 = clamp(coord.s2, 0, array_size - 1);
   return coord;
 }
 
 INLINE_OVERLOADABLE int3 __gen_validate_array_index(int3 coord, image2d_array_t image)
 {
-  GET_IMAGE(image, surface_id);
-  int array_size = __gen_ocl_get_image_depth(surface_id);
+  int array_size = __gen_ocl_get_image_depth(image);
   coord.s2 = clamp(coord.s2, 0, array_size - 1);
   return coord;
 }
@@ -273,62 +191,54 @@ INLINE_OVERLOADABLE float4 __gen_fixup_float_coord(float4 tmpCoord)
 // coordiates.
 INLINE_OVERLOADABLE float __gen_denormalize_coord(const image1d_t image, float srcCoord)
 {
-  GET_IMAGE(image, surface_id);
-  return srcCoord * __gen_ocl_get_image_width(surface_id);
+  return srcCoord * __gen_ocl_get_image_width(image);
 }
 
 INLINE_OVERLOADABLE float2 __gen_denormalize_coord(const image1d_array_t image, float2 srcCoord)
 {
-  GET_IMAGE(image, surface_id);
-  srcCoord.s0 = srcCoord.s0 * __gen_ocl_get_image_width(surface_id);
+  srcCoord.s0 = srcCoord.s0 * __gen_ocl_get_image_width(image);
   return srcCoord;
 }
 
 INLINE_OVERLOADABLE float __gen_denormalize_coord(const image1d_buffer_t image, float srcCoord)
 {
-  GET_IMAGE(image, surface_id);
-  return srcCoord * __gen_ocl_get_image_width(surface_id);
+  return srcCoord * __gen_ocl_get_image_width(image);
 }
 
 INLINE_OVERLOADABLE float2 __gen_denormalize_coord(const image2d_t image, float2 srcCoord)
 {
-  GET_IMAGE(image, surface_id);
-  srcCoord.s0 = srcCoord.s0 * __gen_ocl_get_image_width(surface_id);
-  srcCoord.s1 = srcCoord.s1 * __gen_ocl_get_image_height(surface_id);
+  srcCoord.s0 = srcCoord.s0 * __gen_ocl_get_image_width(image);
+  srcCoord.s1 = srcCoord.s1 * __gen_ocl_get_image_height(image);
   return srcCoord;
 }
 
 INLINE_OVERLOADABLE float3 __gen_denormalize_coord(const image2d_array_t image, float3 srcCoord)
 {
-  GET_IMAGE(image, surface_id);
-  srcCoord.s0 = srcCoord.s0 * __gen_ocl_get_image_width(surface_id);
-  srcCoord.s1 = srcCoord.s1 * __gen_ocl_get_image_height(surface_id);
+  srcCoord.s0 = srcCoord.s0 * __gen_ocl_get_image_width(image);
+  srcCoord.s1 = srcCoord.s1 * __gen_ocl_get_image_height(image);
   return srcCoord;
 }
 
 INLINE_OVERLOADABLE float3 __gen_denormalize_coord(const image3d_t image, float3 srcCoord)
 {
-  GET_IMAGE(image, surface_id);
-  srcCoord.s0 = srcCoord.s0 * __gen_ocl_get_image_width(surface_id);
-  srcCoord.s1 = srcCoord.s1 * __gen_ocl_get_image_height(surface_id);
-  srcCoord.s2 = srcCoord.s2 * __gen_ocl_get_image_depth(surface_id);
+  srcCoord.s0 = srcCoord.s0 * __gen_ocl_get_image_width(image);
+  srcCoord.s1 = srcCoord.s1 * __gen_ocl_get_image_height(image);
+  srcCoord.s2 = srcCoord.s2 * __gen_ocl_get_image_depth(image);
   return srcCoord;
 }
 
 INLINE_OVERLOADABLE float4 __gen_denormalize_coord(const image2d_array_t image, float4 srcCoord)
 {
-  GET_IMAGE(image, surface_id);
-  srcCoord.s0 = srcCoord.s0 * __gen_ocl_get_image_width(surface_id);
-  srcCoord.s1 = srcCoord.s1 * __gen_ocl_get_image_height(surface_id);
+  srcCoord.s0 = srcCoord.s0 * __gen_ocl_get_image_width(image);
+  srcCoord.s1 = srcCoord.s1 * __gen_ocl_get_image_height(image);
   return srcCoord;
 }
 
 INLINE_OVERLOADABLE float4 __gen_denormalize_coord(const image3d_t image, float4 srcCoord)
 {
-  GET_IMAGE(image, surface_id);
-  srcCoord.s0 = srcCoord.s0 * __gen_ocl_get_image_width(surface_id);
-  srcCoord.s1 = srcCoord.s1 * __gen_ocl_get_image_height(surface_id);
-  srcCoord.s2 = srcCoord.s2 * __gen_ocl_get_image_depth(surface_id);
+  srcCoord.s0 = srcCoord.s0 * __gen_ocl_get_image_width(image);
+  srcCoord.s1 = srcCoord.s1 * __gen_ocl_get_image_height(image);
+  srcCoord.s2 = srcCoord.s2 * __gen_ocl_get_image_depth(image);
   return srcCoord;
 }
 
@@ -381,11 +291,10 @@ INLINE_OVERLOADABLE float3 __gen_fixup_neg_boundary(float3 coord)
                                         const sampler_t sampler,              \
                                         coord_type coord)                     \
   {                                                                           \
-    GET_IMAGE(cl_image, surface_id);                                          \
     coord = __gen_validate_array_index(coord, cl_image);                      \
     if (int_clamping_fix && __gen_sampler_need_fix(sampler))                  \
-      return __gen_ocl_read_image ##suffix(surface_id, sampler, coord, 1);    \
-    return __gen_ocl_read_image ##suffix(surface_id, sampler, coord, 0);      \
+      return __gen_ocl_read_image ##suffix(cl_image, sampler, coord, 1);      \
+    return __gen_ocl_read_image ##suffix(cl_image, sampler, coord, 0);        \
   }
 
 // For float coordinates
@@ -395,7 +304,6 @@ INLINE_OVERLOADABLE float3 __gen_fixup_neg_boundary(float3 coord)
                                         const sampler_t sampler,              \
                                         coord_type coord)                     \
   {                                                                           \
-    GET_IMAGE(cl_image, surface_id);                                          \
     coord_type tmpCoord = __gen_validate_array_index(coord, cl_image);        \
     if (GEN_FIX_FLOAT_ROUNDING | int_clamping_fix) {                          \
       if (__gen_sampler_need_fix(sampler)) {                                  \
@@ -407,11 +315,11 @@ INLINE_OVERLOADABLE float3 __gen_fixup_neg_boundary(float3 coord)
               tmpCoord = __gen_denormalize_coord(cl_image, tmpCoord);         \
             tmpCoord = __gen_fixup_neg_boundary(tmpCoord);                    \
             return __gen_ocl_read_image ##suffix(                             \
-                     surface_id, sampler, tmpCoord, 1);                       \
+                     cl_image, sampler, tmpCoord, 1);                         \
         }                                                                     \
       }                                                                       \
     }                                                                         \
-    return  __gen_ocl_read_image ##suffix(surface_id, sampler, tmpCoord, 0);  \
+    return  __gen_ocl_read_image ##suffix(cl_image, sampler, tmpCoord, 0);    \
   }
 
 #define DECL_READ_IMAGE_NOSAMPLER(image_type, image_data_type,                \
@@ -419,10 +327,9 @@ INLINE_OVERLOADABLE float3 __gen_fixup_neg_boundary(float3 coord)
   OVERLOADABLE image_data_type read_image ##suffix(image_type cl_image,       \
                                                coord_type coord)              \
   {                                                                           \
-    GET_IMAGE(cl_image, surface_id);                                          \
     coord = __gen_validate_array_index(coord, cl_image);                      \
     return __gen_ocl_read_image ##suffix(                                     \
-             surface_id, CLK_NORMALIZED_COORDS_FALSE | CLK_ADDRESS_NONE       \
+             cl_image, CLK_NORMALIZED_COORDS_FALSE | CLK_ADDRESS_NONE         \
              | CLK_FILTER_NEAREST, coord, 0);                                 \
   }
 
@@ -431,14 +338,9 @@ INLINE_OVERLOADABLE float3 __gen_fixup_neg_boundary(float3 coord)
                                          coord_type coord,                    \
                                          image_data_type color)               \
   {                                                                           \
-    GET_IMAGE(cl_image, surface_id);                                          \
     coord_type fixedCoord = __gen_validate_array_index(coord, cl_image);      \
-    __gen_ocl_write_image ##suffix(surface_id, fixedCoord, color);            \
+    __gen_ocl_write_image ##suffix(cl_image, fixedCoord, color);              \
   }
-
-#define int1 int
-#define float1 float
-
 
 #define DECL_IMAGE(int_clamping_fix, image_type, image_data_type, suffix, n)  \
   DECL_READ_IMAGE0(int_clamping_fix, image_type,                              \
@@ -495,13 +397,12 @@ INLINE_OVERLOADABLE int4 __gen_fixup_1darray_coord(int2 coord, image1d_array_t i
                                         const sampler_t sampler,              \
                                         coord_type coord)                     \
   {                                                                           \
-    GET_IMAGE(cl_image, surface_id);                                          \
     coord = __gen_validate_array_index(coord, cl_image);                      \
     if (int_clamping_fix && __gen_sampler_need_fix(sampler)) {                \
       int4 newCoord = __gen_fixup_1darray_coord(coord, cl_image);             \
-      return __gen_ocl_read_image ##suffix(surface_id, sampler, newCoord, 2); \
+      return __gen_ocl_read_image ##suffix(cl_image, sampler, newCoord, 2); \
     }                                                                         \
-    return  __gen_ocl_read_image ##suffix(surface_id, sampler, coord, 0);     \
+    return  __gen_ocl_read_image ##suffix(cl_image, sampler, coord, 0);     \
   }
 
 // For float coordiates
@@ -511,7 +412,6 @@ INLINE_OVERLOADABLE int4 __gen_fixup_1darray_coord(int2 coord, image1d_array_t i
                                         const sampler_t sampler,              \
                                         coord_type coord)                     \
   {                                                                           \
-    GET_IMAGE(cl_image, surface_id);                                          \
     coord_type tmpCoord = __gen_validate_array_index(coord, cl_image);        \
     if (GEN_FIX_FLOAT_ROUNDING | int_clamping_fix) {                          \
       if (__gen_sampler_need_fix(sampler)) {                                  \
@@ -523,11 +423,11 @@ INLINE_OVERLOADABLE int4 __gen_fixup_1darray_coord(int2 coord, image1d_array_t i
               tmpCoord = __gen_denormalize_coord(cl_image, tmpCoord);         \
             float4 newCoord = __gen_fixup_1darray_coord(tmpCoord, cl_image);  \
             return __gen_ocl_read_image ##suffix(                             \
-                     surface_id, sampler, newCoord, 2);                       \
+                     cl_image, sampler, newCoord, 2);                       \
         }                                                                     \
       }                                                                       \
     }                                                                         \
-    return  __gen_ocl_read_image ##suffix(surface_id, sampler, tmpCoord, 0);  \
+    return  __gen_ocl_read_image ##suffix(cl_image, sampler, tmpCoord, 0);  \
   }
 
 #define DECL_IMAGE_1DArray(int_clamping_fix, image_data_type, suffix)         \
@@ -547,18 +447,15 @@ DECL_IMAGE_1DArray(0, float4, f)
 #define DECL_IMAGE_INFO_COMMON(image_type)                                    \
   OVERLOADABLE  int get_image_channel_data_type(image_type image)             \
   {                                                                           \
-    GET_IMAGE(image, surface_id);                                             \
-    return __gen_ocl_get_image_channel_data_type(surface_id);                 \
+    return __gen_ocl_get_image_channel_data_type(image);                 \
   }                                                                           \
   OVERLOADABLE  int get_image_channel_order(image_type image)                 \
   {                                                                           \
-    GET_IMAGE(image, surface_id);                                             \
-    return __gen_ocl_get_image_channel_order(surface_id);                     \
+    return __gen_ocl_get_image_channel_order(image);                     \
   }                                                                           \
   OVERLOADABLE int get_image_width(image_type image)                          \
   {                                                                           \
-    GET_IMAGE(image, surface_id);                                             \
-    return __gen_ocl_get_image_width(surface_id);                             \
+    return __gen_ocl_get_image_width(image);                             \
   }
 
 DECL_IMAGE_INFO_COMMON(image1d_t)
@@ -571,8 +468,7 @@ DECL_IMAGE_INFO_COMMON(image2d_array_t)
 // 2D extra Info
 OVERLOADABLE int get_image_height(image2d_t image)
 {
-  GET_IMAGE(image, surface_id);
-  return __gen_ocl_get_image_height(surface_id);
+  return __gen_ocl_get_image_height(image);
 }
 OVERLOADABLE int2 get_image_dim(image2d_t image)
 {
@@ -583,13 +479,11 @@ OVERLOADABLE int2 get_image_dim(image2d_t image)
 // 3D extra Info
 OVERLOADABLE int get_image_height(image3d_t image)
 {
-  GET_IMAGE(image, surface_id);
-  return __gen_ocl_get_image_height(surface_id);
+  return __gen_ocl_get_image_height(image);
 }
 OVERLOADABLE int get_image_depth(image3d_t image)
 {
-  GET_IMAGE(image, surface_id);
-  return __gen_ocl_get_image_depth(surface_id);
+  return __gen_ocl_get_image_depth(image);
 }
 OVERLOADABLE int4 get_image_dim(image3d_t image)
 {
@@ -602,8 +496,7 @@ OVERLOADABLE int4 get_image_dim(image3d_t image)
 // 2D Array extra Info
 OVERLOADABLE int get_image_height(image2d_array_t image)
 {
-  GET_IMAGE(image, surface_id);
-  return __gen_ocl_get_image_height(surface_id);
+  return __gen_ocl_get_image_height(image);
 }
 OVERLOADABLE int2 get_image_dim(image2d_array_t image)
 {
@@ -611,14 +504,12 @@ OVERLOADABLE int2 get_image_dim(image2d_array_t image)
 }
 OVERLOADABLE size_t get_image_array_size(image2d_array_t image)
 {
-  GET_IMAGE(image, surface_id);
-  return __gen_ocl_get_image_depth(surface_id);
+  return __gen_ocl_get_image_depth(image);
 }
 
 // 1D Array info
 OVERLOADABLE size_t get_image_array_size(image1d_array_t image)
 {
-  GET_IMAGE(image, surface_id);
-  return __gen_ocl_get_image_depth(surface_id);
+  return __gen_ocl_get_image_depth(image);
 }
 // End of 1DArray

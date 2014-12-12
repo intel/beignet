@@ -180,6 +180,30 @@ namespace ir {
       std::string accessQual;
       std::string typeQual;
       std::string argName; // My different from arg->getName()
+
+      bool isImage1dT() const {
+        return typeName.compare("image1d_t") == 0;
+      }
+      bool isImage1dArrayT() const {
+        return typeName.compare("image1d_array_t") == 0;
+      }
+      bool isImage1dBufferT() const {
+        return typeName.compare("image1d_buffer_t") == 0;
+      }
+      bool isImage2dT() const {
+        return typeName.compare("image2d_t") == 0;
+      }
+      bool isImage2dArrayT() const {
+        return typeName.compare("image2d_array_t") == 0;
+      }
+      bool isImage3dT() const {
+        return typeName.compare("image3d_t") == 0;
+      }
+
+      bool isImageType() const {
+        return isImage1dT() || isImage1dArrayT() || isImage1dBufferT() ||
+               isImage2dT() || isImage2dArrayT() || isImage3dT();
+      }
     };
 
     /*! Create a function input argument */
