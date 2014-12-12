@@ -636,42 +636,17 @@ namespace gbe {
       } else {
         Value *Callee = call->getCalledValue();
         const std::string fnName = Callee->getName();
-        auto it = instrinsicMap.map.find(fnName);
-        // FIXME, should create a complete error reporting mechanism
-        // when found error in beignet managed passes including Gen pass.
-        if (it == instrinsicMap.map.end()) {
-          std::cerr << "Unresolved symbol: " << fnName << std::endl;
-          std::cerr << "Aborting..." << std::endl;
-          exit(-1);
-        }
-        GBE_ASSERT(it != instrinsicMap.map.end());
+        auto genIntrinsicID = intrinsicMap.find(fnName);
 
         // Get the function arguments
         CallSite CS(call);
         CallSite::arg_iterator CI = CS.arg_begin() + 1;
 
-        switch (it->second) {
+        switch (genIntrinsicID) {
           default: break;
-          case GEN_OCL_READ_IMAGE_I_1D:
-          case GEN_OCL_READ_IMAGE_UI_1D:
-          case GEN_OCL_READ_IMAGE_F_1D:
-          case GEN_OCL_READ_IMAGE_I_2D:
-          case GEN_OCL_READ_IMAGE_UI_2D:
-          case GEN_OCL_READ_IMAGE_F_2D:
-          case GEN_OCL_READ_IMAGE_I_3D:
-          case GEN_OCL_READ_IMAGE_UI_3D:
-          case GEN_OCL_READ_IMAGE_F_3D:
-          case GEN_OCL_READ_IMAGE_I_1D_I:
-          case GEN_OCL_READ_IMAGE_UI_1D_I:
-          case GEN_OCL_READ_IMAGE_F_1D_I:
-          case GEN_OCL_READ_IMAGE_I_2D_I:
-          case GEN_OCL_READ_IMAGE_UI_2D_I:
-          case GEN_OCL_READ_IMAGE_F_2D_I:
-          case GEN_OCL_READ_IMAGE_I_3D_I:
-          case GEN_OCL_READ_IMAGE_UI_3D_I:
-          case GEN_OCL_READ_IMAGE_F_3D_I:
-          case GEN_OCL_GET_IMAGE_WIDTH:
-          case GEN_OCL_GET_IMAGE_HEIGHT:
+          case GEN_OCL_READ_IMAGE_I:
+          case GEN_OCL_READ_IMAGE_UI:
+          case GEN_OCL_READ_IMAGE_F:
           {
             ++CI;
             if ((*CI)->getType()->isVectorTy()) 
@@ -680,15 +655,9 @@ namespace gbe {
             extractFromVector(call);
             break;
           }
-          case GEN_OCL_WRITE_IMAGE_I_3D:
-          case GEN_OCL_WRITE_IMAGE_UI_3D:
-          case GEN_OCL_WRITE_IMAGE_F_3D:
-          case GEN_OCL_WRITE_IMAGE_I_2D:
-          case GEN_OCL_WRITE_IMAGE_UI_2D:
-          case GEN_OCL_WRITE_IMAGE_F_2D:
-          case GEN_OCL_WRITE_IMAGE_I_1D:
-          case GEN_OCL_WRITE_IMAGE_UI_1D:
-          case GEN_OCL_WRITE_IMAGE_F_1D:
+          case GEN_OCL_WRITE_IMAGE_I:
+          case GEN_OCL_WRITE_IMAGE_UI:
+          case GEN_OCL_WRITE_IMAGE_F:
           {
             if ((*CI)->getType()->isVectorTy()) 
               *CI = InsertToVector(call, *CI);

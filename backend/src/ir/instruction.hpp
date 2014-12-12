@@ -58,7 +58,6 @@ namespace ir {
     MEM_LOCAL,      //!< Local memory (thread group memory)
     MEM_CONSTANT,   //!< Immutable global memory
     MEM_PRIVATE,    //!< Per thread private memory
-    IMAGE,          //!< For texture image.
     MEM_INVALID
   };
 

@@ -286,7 +286,6 @@ namespace gbe
       case 1: return ir::MEM_GLOBAL;
       case 2: return ir::MEM_CONSTANT;
       case 3: return ir::MEM_LOCAL;
-      case 4: return ir::IMAGE;
     }
     GBE_ASSERT(false);
     return ir::MEM_GLOBAL;
@@ -1538,18 +1537,13 @@ error:
 
         llvmInfo.addrSpace = (cast<ConstantInt>(addrSpaceNode->getOperand(1 + argID)))->getZExtValue();
         llvmInfo.typeName = (cast<MDString>(typeNameNode->getOperand(1 + argID)))->getString();
-        if (llvmInfo.typeName.find("image") != std::string::npos &&
-            llvmInfo.typeName.find("*") != std::string::npos) {
-          uint32_t start = llvmInfo.typeName.find("image");
-          uint32_t end = llvmInfo.typeName.find("*");
-          llvmInfo.typeName = llvmInfo.typeName.substr(start, end - start);
-        }
         llvmInfo.accessQual = (cast<MDString>(accessQualNode->getOperand(1 + argID)))->getString();
         llvmInfo.typeQual = (cast<MDString>(typeQualNode->getOperand(1 + argID)))->getString();
         llvmInfo.argName = (cast<MDString>(argNameNode->getOperand(1 + argID)))->getString();
 
         // function arguments are uniform values.
         this->newRegister(I, NULL, true);
+
         // add support for vector argument.
         if(type->isVectorTy()) {
           VectorType *vectorType = cast<VectorType>(type);
@@ -1572,6 +1566,12 @@ error:
         GBE_ASSERTM(isScalarType(type) == true,
                     "vector type in the function argument is not supported yet");
         const ir::Register reg = getRegister(I);
+        if (llvmInfo.isImageType()) {
+          ctx.input(argName, ir::FunctionArgument::IMAGE, reg, llvmInfo, 4, 4, 0);
+          ctx.getFunction().getImageSet()->append(reg, &ctx, incBtiBase());
+          continue;
+        }
+
         if (type->isPointerTy() == false)
           ctx.input(argName, ir::FunctionArgument::VALUE, reg, llvmInfo, getTypeByteSize(unit, type), getAlignmentByte(unit, type), 0);
         else {
@@ -1605,10 +1605,6 @@ error:
               break;
               case ir::MEM_CONSTANT:
                 ctx.input(argName, ir::FunctionArgument::CONSTANT_POINTER, reg,  llvmInfo, ptrSize, align, 0x2);
-              break;
-              case ir::IMAGE:
-                ctx.input(argName, ir::FunctionArgument::IMAGE, reg, llvmInfo, ptrSize, align, 0x0);
-                ctx.getFunction().getImageSet()->append(reg, &ctx, incBtiBase());
               break;
               default: GBE_ASSERT(addrSpace != ir::MEM_PRIVATE);
             }
@@ -2772,16 +2768,8 @@ error:
 
     // Get the name of the called function and handle it
     const std::string fnName = Callee->getName();
-    auto it = instrinsicMap.map.find(fnName);
-    // FIXME, should create a complete error reporting mechanism
-    // when found error in beignet managed passes including Gen pass.
-    if (it == instrinsicMap.map.end()) {
-      std::cerr << "Unresolved symbol: " << fnName << std::endl;
-      std::cerr << "Aborting..." << std::endl;
-      exit(-1);
-    }
-    GBE_ASSERT(it != instrinsicMap.map.end());
-    switch (it->second) {
+    auto genIntrinsicID = intrinsicMap.find(fnName);
+    switch (genIntrinsicID) {
       case GEN_OCL_GET_GROUP_ID0:
         regTranslator.newScalarProxy(ir::ocl::groupid0, dst); break;
       case GEN_OCL_GET_GROUP_ID1:
@@ -2878,35 +2866,13 @@ error:
       case GEN_OCL_LGBARRIER:
         ctx.getFunction().setUseSLM(true);
         break;
-      case GEN_OCL_WRITE_IMAGE_I_1D:
-      case GEN_OCL_WRITE_IMAGE_UI_1D:
-      case GEN_OCL_WRITE_IMAGE_F_1D:
-      case GEN_OCL_WRITE_IMAGE_I_2D:
-      case GEN_OCL_WRITE_IMAGE_UI_2D:
-      case GEN_OCL_WRITE_IMAGE_F_2D:
-      case GEN_OCL_WRITE_IMAGE_I_3D:
-      case GEN_OCL_WRITE_IMAGE_UI_3D:
-      case GEN_OCL_WRITE_IMAGE_F_3D:
+      case GEN_OCL_WRITE_IMAGE_I:
+      case GEN_OCL_WRITE_IMAGE_UI:
+      case GEN_OCL_WRITE_IMAGE_F:
         break;
-      case GEN_OCL_READ_IMAGE_I_1D:
-      case GEN_OCL_READ_IMAGE_UI_1D:
-      case GEN_OCL_READ_IMAGE_F_1D:
-      case GEN_OCL_READ_IMAGE_I_2D:
-      case GEN_OCL_READ_IMAGE_UI_2D:
-      case GEN_OCL_READ_IMAGE_F_2D:
-      case GEN_OCL_READ_IMAGE_I_3D:
-      case GEN_OCL_READ_IMAGE_UI_3D:
-      case GEN_OCL_READ_IMAGE_F_3D:
-
-      case GEN_OCL_READ_IMAGE_I_1D_I:
-      case GEN_OCL_READ_IMAGE_UI_1D_I:
-      case GEN_OCL_READ_IMAGE_F_1D_I:
-      case GEN_OCL_READ_IMAGE_I_2D_I:
-      case GEN_OCL_READ_IMAGE_UI_2D_I:
-      case GEN_OCL_READ_IMAGE_F_2D_I:
-      case GEN_OCL_READ_IMAGE_I_3D_I:
-      case GEN_OCL_READ_IMAGE_UI_3D_I:
-      case GEN_OCL_READ_IMAGE_F_3D_I:
+      case GEN_OCL_READ_IMAGE_I:
+      case GEN_OCL_READ_IMAGE_UI:
+      case GEN_OCL_READ_IMAGE_F:
       {
         // dst is a 4 elements vector. We allocate all 4 registers here.
         uint32_t elemNum;
@@ -3039,11 +3005,7 @@ error:
   }
 
   uint8_t GenWriter::getImageID(CallInst &I) {
-    PtrOrigMapIter iter = pointerOrigMap.find(&I);
-    GBE_ASSERT(iter != pointerOrigMap.end());
-    SmallVectorImpl<Value *> &origins = iter->second;
-    GBE_ASSERT(origins.size() == 1);
-    const ir::Register imageReg = this->getRegister(origins[0]);
+    const ir::Register imageReg = this->getRegister(I.getOperand(0));
     return ctx.getFunction().getImageSet()->getIdx(imageReg);
   }
 
@@ -3213,8 +3175,7 @@ error:
         // Get the name of the called function and handle it
         Value *Callee = I.getCalledValue();
         const std::string fnName = Callee->getName();
-        auto it = instrinsicMap.map.find(fnName);
-        GBE_ASSERT(it != instrinsicMap.map.end());
+        auto genIntrinsicID = intrinsicMap.find(fnName);
 
         // Get the function arguments
         CallSite CS(&I);
@@ -3223,7 +3184,7 @@ error:
         CallSite::arg_iterator AE = CS.arg_end();
 #endif /* GBE_DEBUG */
 
-        switch (it->second) {
+        switch (genIntrinsicID) {
           case GEN_OCL_POW:
           {
             const ir::Register src0 = this->getRegister(*AI); ++AI;
@@ -3328,31 +3289,16 @@ error:
             const uint8_t imageID = getImageID(I);
             GBE_ASSERT(AI != AE); ++AI;
             const ir::Register reg = this->getRegister(&I, 0);
-            int infoType = it->second - GEN_OCL_GET_IMAGE_WIDTH;
+            int infoType = genIntrinsicID - GEN_OCL_GET_IMAGE_WIDTH;
             ir::ImageInfoKey key(imageID, infoType);
             const ir::Register infoReg = ctx.getFunction().getImageSet()->appendInfo(key, &ctx);
             ctx.GET_IMAGE_INFO(infoType, reg, imageID, infoReg);
             break;
           }
 
-          case GEN_OCL_READ_IMAGE_I_1D:
-          case GEN_OCL_READ_IMAGE_UI_1D:
-          case GEN_OCL_READ_IMAGE_F_1D:
-          case GEN_OCL_READ_IMAGE_I_1D_I:
-          case GEN_OCL_READ_IMAGE_UI_1D_I:
-          case GEN_OCL_READ_IMAGE_F_1D_I:
-          case GEN_OCL_READ_IMAGE_I_2D:
-          case GEN_OCL_READ_IMAGE_UI_2D:
-          case GEN_OCL_READ_IMAGE_F_2D:
-          case GEN_OCL_READ_IMAGE_I_2D_I:
-          case GEN_OCL_READ_IMAGE_UI_2D_I:
-          case GEN_OCL_READ_IMAGE_F_2D_I:
-          case GEN_OCL_READ_IMAGE_I_3D:
-          case GEN_OCL_READ_IMAGE_UI_3D:
-          case GEN_OCL_READ_IMAGE_F_3D:
-          case GEN_OCL_READ_IMAGE_I_3D_I:
-          case GEN_OCL_READ_IMAGE_UI_3D_I:
-          case GEN_OCL_READ_IMAGE_F_3D_I:
+          case GEN_OCL_READ_IMAGE_I:
+          case GEN_OCL_READ_IMAGE_UI:
+          case GEN_OCL_READ_IMAGE_F:
           {
             const uint8_t imageID = getImageID(I);
             GBE_ASSERT(AI != AE); ++AI;
@@ -3360,7 +3306,7 @@ error:
             const uint8_t sampler = this->appendSampler(AI);
             ++AI; GBE_ASSERT(AI != AE);
             uint32_t coordNum;
-            (void)getVectorInfo(ctx, *AI, coordNum);
+            const ir::Type coordType = getVectorInfo(ctx, *AI, coordNum);
             if (coordNum == 4)
               coordNum = 3;
             const uint32_t imageDim = coordNum;
@@ -3377,7 +3323,7 @@ error:
             GBE_ASSERTM(x.getType() == ir::TYPE_U32 || x.getType() == ir::TYPE_S32, "Invalid sampler type");
             samplerOffset = x.getIntegerValue();
 #endif
-            bool isFloatCoord = it->second <= GEN_OCL_READ_IMAGE_F_3D;
+            bool isFloatCoord = coordType == ir::TYPE_FLOAT;
             bool requiredFloatCoord = samplerOffset == 0;
 
             vector<ir::Register> dstTupleData, srcTupleData;
@@ -3403,7 +3349,7 @@ error:
             }
 
             uint32_t elemNum;
-            (void)getVectorInfo(ctx, &I, elemNum);
+            ir::Type dstType = getVectorInfo(ctx, &I, elemNum);
             GBE_ASSERT(elemNum == 4);
 
             for (uint32_t elemID = 0; elemID < elemNum; ++elemID) {
@@ -3413,49 +3359,14 @@ error:
             const ir::Tuple dstTuple = ctx.arrayTuple(&dstTupleData[0], elemNum);
             const ir::Tuple srcTuple = ctx.arrayTuple(&srcTupleData[0], 3);
 
-            ir::Type dstType = ir::TYPE_U32;
-
-            switch(it->second) {
-              case GEN_OCL_READ_IMAGE_I_1D:
-              case GEN_OCL_READ_IMAGE_UI_1D:
-              case GEN_OCL_READ_IMAGE_I_2D:
-              case GEN_OCL_READ_IMAGE_UI_2D:
-              case GEN_OCL_READ_IMAGE_I_3D:
-              case GEN_OCL_READ_IMAGE_UI_3D:
-              case GEN_OCL_READ_IMAGE_I_1D_I:
-              case GEN_OCL_READ_IMAGE_UI_1D_I:
-              case GEN_OCL_READ_IMAGE_I_2D_I:
-              case GEN_OCL_READ_IMAGE_UI_2D_I:
-              case GEN_OCL_READ_IMAGE_I_3D_I:
-              case GEN_OCL_READ_IMAGE_UI_3D_I:
-                dstType = ir::TYPE_U32;
-                break;
-              case GEN_OCL_READ_IMAGE_F_1D:
-              case GEN_OCL_READ_IMAGE_F_2D:
-              case GEN_OCL_READ_IMAGE_F_3D:
-              case GEN_OCL_READ_IMAGE_F_1D_I:
-              case GEN_OCL_READ_IMAGE_F_2D_I:
-              case GEN_OCL_READ_IMAGE_F_3D_I:
-                dstType = ir::TYPE_FLOAT;
-                break;
-              default:
-                GBE_ASSERT(0); // never been here.
-            }
-
             ctx.SAMPLE(imageID, dstTuple, srcTuple, dstType == ir::TYPE_FLOAT,
                        requiredFloatCoord, sampler, samplerOffset);
             break;
           }
 
-          case GEN_OCL_WRITE_IMAGE_I_1D:
-          case GEN_OCL_WRITE_IMAGE_UI_1D:
-          case GEN_OCL_WRITE_IMAGE_F_1D:
-          case GEN_OCL_WRITE_IMAGE_I_2D:
-          case GEN_OCL_WRITE_IMAGE_UI_2D:
-          case GEN_OCL_WRITE_IMAGE_F_2D:
-          case GEN_OCL_WRITE_IMAGE_I_3D:
-          case GEN_OCL_WRITE_IMAGE_UI_3D:
-          case GEN_OCL_WRITE_IMAGE_F_3D:
+          case GEN_OCL_WRITE_IMAGE_I:
+          case GEN_OCL_WRITE_IMAGE_UI:
+          case GEN_OCL_WRITE_IMAGE_F:
           {
             const uint8_t imageID = getImageID(I);
             GBE_ASSERT(AI != AE); ++AI; GBE_ASSERT(AI != AE);
@@ -3479,7 +3390,7 @@ error:
             }
             ++AI; GBE_ASSERT(AI != AE);
             uint32_t elemNum;
-            (void)getVectorInfo(ctx, *AI, elemNum);
+            ir::Type srcType = getVectorInfo(ctx, *AI, elemNum);
             GBE_ASSERT(elemNum == 4);
 
             for (uint32_t elemID = 0; elemID < elemNum; ++elemID) {
@@ -3487,27 +3398,6 @@ error:
               srcTupleData.push_back(reg);
             }
             const ir::Tuple srcTuple = ctx.arrayTuple(&srcTupleData[0], 7);
-
-            ir::Type srcType = ir::TYPE_U32;
-
-            switch(it->second) {
-              case GEN_OCL_WRITE_IMAGE_I_1D:
-              case GEN_OCL_WRITE_IMAGE_UI_1D:
-              case GEN_OCL_WRITE_IMAGE_I_2D:
-              case GEN_OCL_WRITE_IMAGE_UI_2D:
-              case GEN_OCL_WRITE_IMAGE_I_3D:
-              case GEN_OCL_WRITE_IMAGE_UI_3D:
-                srcType = ir::TYPE_U32;
-                break;
-              case GEN_OCL_WRITE_IMAGE_F_1D:
-              case GEN_OCL_WRITE_IMAGE_F_2D:
-              case GEN_OCL_WRITE_IMAGE_F_3D:
-                srcType = ir::TYPE_FLOAT;
-                break;
-              default:
-                GBE_ASSERT(0); // never been here.
-            }
-
             ctx.TYPED_WRITE(imageID, srcTuple, srcType, ir::TYPE_U32);
             break;
           }
@@ -3646,7 +3536,7 @@ error:
             //Becasue cmp's sources are same as sel's source, so cmp instruction and sel
             //instruction will be merged to one sel_cmp instruction in the gen selection
             //Add two intruction here for simple.
-            if(it->second == GEN_OCL_FMAX)
+            if(genIntrinsicID == GEN_OCL_FMAX)
               ctx.GE(getType(ctx, I.getType()), cmp, src0, src1);
             else
               ctx.LT(getType(ctx, I.getType()), cmp, src0, src1);

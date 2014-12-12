@@ -87,27 +87,8 @@ DEF(double);
 // FIXME:
 // This is a transitional hack to bypass the LLVM 3.3 built-in types.
 // See the Khronos SPIR specification for handling of these types.
-#define __texture __attribute__((address_space(4)))
-struct _image1d_t;
-typedef __texture struct _image1d_t* __image1d_t;
-struct _image1d_buffer_t;
-typedef __texture struct _image1d_buffer_t* __image1d_buffer_t;
-struct _image1d_array_t;
-typedef __texture struct _image1d_array_t* __image1d_array_t;
-struct _image2d_t;
-typedef __texture struct _image2d_t* __image2d_t;
-struct _image2d_array_t;
-typedef __texture struct _image2d_array_t* __image2d_array_t;
-struct _image3d_t;
-typedef __texture struct _image3d_t* __image3d_t;
-typedef const ushort __sampler_t;
-#define image1d_t __image1d_t
-#define image1d_buffer_t __image1d_buffer_t
-#define image1d_array_t __image1d_array_t
-#define image2d_t __image2d_t
-#define image2d_array_t __image2d_array_t
-#define image3d_t __image3d_t
 #define sampler_t __sampler_t
+typedef const ushort __sampler_t;
 
 /////////////////////////////////////////////////////////////////////////////
 // OpenCL built-in event types
