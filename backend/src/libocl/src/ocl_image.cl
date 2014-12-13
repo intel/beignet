@@ -364,12 +364,20 @@ INLINE_OVERLOADABLE float3 __gen_fixup_neg_boundary(float3 coord)
   DECL_IMAGE(0, image_type, float4, f, n)
 
 DECL_IMAGE_TYPE(image1d_t, 1)
-DECL_IMAGE_TYPE(image1d_buffer_t, 1)
 DECL_IMAGE_TYPE(image2d_t, 2)
 DECL_IMAGE_TYPE(image3d_t, 4)
 DECL_IMAGE_TYPE(image3d_t, 3)
 DECL_IMAGE_TYPE(image2d_array_t, 4)
 DECL_IMAGE_TYPE(image2d_array_t, 3)
+
+#define DECL_IMAGE_1DBuffer(int_clamping_fix, image_data_type, suffix)        \
+  DECL_READ_IMAGE_NOSAMPLER(image1d_buffer_t, image_data_type,                \
+                            suffix, int)                                      \
+  DECL_WRITE_IMAGE(image1d_buffer_t, image_data_type, suffix, int)
+
+DECL_IMAGE_1DBuffer(GEN_FIX_INT_CLAMPING, int4, i)
+DECL_IMAGE_1DBuffer(GEN_FIX_INT_CLAMPING, uint4, ui)
+DECL_IMAGE_1DBuffer(0, float4, f)
 
 // For 1D Array:
 // fixup_1darray_coord functions are to convert 1d array coord to 2d array coord
