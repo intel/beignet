@@ -1003,11 +1003,11 @@ static int
 intel_get_surface_type(cl_mem_object_type type)
 {
   switch (type) {
-  case CL_MEM_OBJECT_IMAGE1D_BUFFER:
   case CL_MEM_OBJECT_IMAGE1D:
   case CL_MEM_OBJECT_IMAGE1D_ARRAY:
     return I965_SURFACE_1D;
 
+  case CL_MEM_OBJECT_IMAGE1D_BUFFER:
   case CL_MEM_OBJECT_IMAGE2D:
   case CL_MEM_OBJECT_IMAGE2D_ARRAY:
     return I965_SURFACE_2D;

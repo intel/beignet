@@ -50,7 +50,7 @@
 .image3d_max_width = 8192,
 .image3d_max_height = 8192,
 .image3d_max_depth = 2048,
-.image_mem_size = 8192,
+.image_mem_size = 65536,
 .max_samplers = 16,
 .mem_base_addr_align = sizeof(cl_long) * 16 * 8,
 .min_data_type_align_size = sizeof(cl_long) * 16,
