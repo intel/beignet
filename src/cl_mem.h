@@ -72,6 +72,7 @@ enum cl_mem_type {
   CL_MEM_SUBBUFFER_TYPE,
   CL_MEM_IMAGE_TYPE,
   CL_MEM_GL_IMAGE_TYPE,
+  CL_MEM_BUFFER1D_IMAGE_TYPE
 };
 #define IS_IMAGE(mem) (mem->type >= CL_MEM_IMAGE_TYPE)
 #define IS_GL_IMAGE(mem) (mem->type == CL_MEM_GL_IMAGE_TYPE)
@@ -115,6 +116,11 @@ struct _cl_mem_gl_image {
   uint32_t target;
   int      miplevel;
   uint32_t texture;
+};
+
+struct _cl_mem_buffer1d_image {
+  struct _cl_mem_image base;
+  uint32_t size;
 };
 
 inline static void

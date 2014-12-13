@@ -52,7 +52,7 @@
   OVERLOADABLE int __gen_ocl_get_image_depth(image_type image);                           \
 
 DECL_GEN_OCL_RW_IMAGE(image1d_t, 1)
-DECL_GEN_OCL_RW_IMAGE(image1d_buffer_t, 1)
+DECL_GEN_OCL_RW_IMAGE(image1d_buffer_t, 2)
 DECL_GEN_OCL_RW_IMAGE(image1d_array_t, 2)
 DECL_GEN_OCL_RW_IMAGE(image1d_array_t, 4)
 DECL_GEN_OCL_RW_IMAGE(image2d_t, 2)
@@ -370,9 +370,23 @@ DECL_IMAGE_TYPE(image3d_t, 3)
 DECL_IMAGE_TYPE(image2d_array_t, 4)
 DECL_IMAGE_TYPE(image2d_array_t, 3)
 
+#define DECL_READ_IMAGE1D_BUFFER_NOSAMPLER(image_type, image_data_type,       \
+                                  suffix, coord_type)                         \
+  OVERLOADABLE image_data_type read_image ##suffix(image_type cl_image,       \
+                                               coord_type coord)              \
+  {                                                                           \
+    sampler_t defaultSampler = CLK_NORMALIZED_COORDS_FALSE | CLK_ADDRESS_NONE \
+                               | CLK_FILTER_NEAREST;                          \
+    int2 effectCoord;                                                         \
+    effectCoord.s0 = coord % 8192;                                            \
+    effectCoord.s1 = coord / 8192;                                            \
+    return __gen_ocl_read_image ##suffix(                                     \
+             cl_image, defaultSampler, effectCoord, 0);                       \
+  }
+
 #define DECL_IMAGE_1DBuffer(int_clamping_fix, image_data_type, suffix)        \
-  DECL_READ_IMAGE_NOSAMPLER(image1d_buffer_t, image_data_type,                \
-                            suffix, int)                                      \
+  DECL_READ_IMAGE1D_BUFFER_NOSAMPLER(image1d_buffer_t, image_data_type,       \
+                                     suffix, int)                             \
   DECL_WRITE_IMAGE(image1d_buffer_t, image_data_type, suffix, int)
 
 DECL_IMAGE_1DBuffer(GEN_FIX_INT_CLAMPING, int4, i)
