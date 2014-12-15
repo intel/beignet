@@ -1464,14 +1464,13 @@ namespace gbe
   } selectionLibraryInitializer;
 
   bool Selection::Opaque::isRoot(const ir::Instruction &insn) const {
-    if (insn.getDstNum() > 1 ||
-        insn.hasSideEffect() ||
+    if (insn.hasSideEffect() ||
         insn.isMemberOf<ir::BranchInstruction>() ||
         insn.isMemberOf<ir::LabelInstruction>())
     return true;
 
     // No side effect, not a branch and no destination? Impossible
-    GBE_ASSERT(insn.getDstNum() == 1);
+    GBE_ASSERT(insn.getDstNum() >= 1);
 
     // Root if alive outside the block.
     // XXX we should use Value and not registers in liveness info
