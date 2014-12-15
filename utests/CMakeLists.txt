@@ -104,7 +104,6 @@ set (utests_sources
   compiler_write_only.cpp
   compiler_write_only_shorts.cpp
   compiler_switch.cpp
-  compiler_overflow.cpp
   compiler_bswap.cpp
   compiler_math.cpp
   compiler_atomic_functions.cpp
@@ -200,6 +199,12 @@ set (utests_sources
   utest.cpp
   utest_file_map.cpp
   utest_helper.cpp)
+
+if (LLVM_VERSION_NODOT VERSION_GREATER 34)
+  SET(utests_sources
+      ${utests_sources}
+      compiler_overflow.cpp)
+endif (LLVM_VERSION_NODOT VERSION_GREATER 34)
 
 if (X11_FOUND)
   set(utests_sources
