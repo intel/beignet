@@ -75,6 +75,33 @@ namespace gbe
       char conversion_specifier;
       int out_buf_sizeof_offset;  // Should *global_total_size to get the full offset.
       std::string str;            //if %s, the string store here.
+
+      PrintfState(void) {
+        left_justified = 0;
+        sign_symbol = 0;
+        alter_form = 0;
+        zero_padding = 0;
+        vector_n = 0;
+        min_width = 0;
+        precision = 0;
+        length_modifier = 0;
+        conversion_specifier = 0;
+        out_buf_sizeof_offset = 0;
+      }
+
+      PrintfState(const PrintfState & other) {
+        left_justified = other.left_justified;
+        sign_symbol = other.sign_symbol;
+        alter_form = other.alter_form;
+        zero_padding = other.zero_padding;
+        vector_n = other.vector_n;
+        min_width = other.min_width;
+        precision = other.precision;
+        length_modifier = other.length_modifier;
+        conversion_specifier = other.conversion_specifier;
+        out_buf_sizeof_offset = other.out_buf_sizeof_offset;
+        str = other.str;
+      }
     };
 
     enum {
@@ -106,8 +133,7 @@ namespace gbe
 
       PrintfSlot(PrintfState * st) {
         type = PRINTF_SLOT_TYPE_STATE;
-        state = (PrintfState *)malloc(sizeof(PrintfState));
-        memcpy(state, st, sizeof(PrintfState));
+        state = new PrintfState(*st);
       }
 
       PrintfSlot(const PrintfSlot & other) {
@@ -119,8 +145,7 @@ namespace gbe
           type = PRINTF_SLOT_TYPE_STRING;
         } else if (other.type == PRINTF_SLOT_TYPE_STATE) {
           type = PRINTF_SLOT_TYPE_STATE;
-          state = (PrintfState *)malloc(sizeof(PrintfState));
-          memcpy(state, other.state, sizeof(PrintfState));
+          state = new PrintfState(*other.state);
         } else {
           type = PRINTF_SLOT_TYPE_NONE;
           ptr = NULL;
