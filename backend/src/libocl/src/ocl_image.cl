@@ -143,15 +143,11 @@ bool __gen_ocl_sampler_need_rounding_fix(sampler_t);
 bool __gen_sampler_need_fix(const sampler_t sampler)
 {
   return __gen_ocl_sampler_need_fix(sampler);
-
-//  return (((sampler & __CLK_ADDRESS_MASK) == CLK_ADDRESS_CLAMP) &&
-//          ((sampler & __CLK_FILTER_MASK) == CLK_FILTER_NEAREST));
 }
 
 bool __gen_sampler_need_rounding_fix(const sampler_t sampler)
 {
   return __gen_ocl_sampler_need_rounding_fix(sampler);
-//  return ((sampler & CLK_NORMALIZED_COORDS_TRUE) == 0);
 }
 
 INLINE_OVERLOADABLE float __gen_fixup_float_coord(float tmpCoord)
