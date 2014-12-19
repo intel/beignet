@@ -117,4 +117,18 @@ OVERLOADABLE float native_sin(float x);
 OVERLOADABLE float native_sqrt(float x);
 OVERLOADABLE float native_tan(float x);
 
-// half  not supported now.
+// half
+#define half_cos cos
+#define half_divide native_divide
+#define half_exp native_exp
+#define half_exp2 native_exp2
+#define half_exp10 native_exp10
+#define half_log native_log
+#define half_log2 native_log2
+#define half_log10 native_log10
+#define half_powr powr
+#define half_recip native_recip
+#define half_rsqrt native_rsqrt
+#define half_sin sin
+#define half_sqrt native_sqrt
+#define half_tan tan
