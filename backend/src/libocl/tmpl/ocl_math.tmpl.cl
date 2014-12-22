@@ -3414,7 +3414,15 @@ OVERLOADABLE float pow(float x, float y) {
 OVERLOADABLE float rootn(float x, int n) {
   float ax,re;
   int sign = 0;
+  int hx;
   if( n == 0 )return NAN;
+
+  GEN_OCL_GET_FLOAT_WORD(hx, x);
+  // Gen does not support denorm, flush to zero
+  if ((hx & 0x7fffffff) < 0x00800000) {
+    x = hx < 0 ? -0.0f : 0.0f;
+  }
+
   //rootn ( x, n )  returns a NaN for x < 0 and n is even.
   if( x < 0 && 0 == (n&1) )
     return NAN;
