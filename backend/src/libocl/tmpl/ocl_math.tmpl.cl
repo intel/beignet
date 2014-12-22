@@ -3260,6 +3260,8 @@ OVERLOADABLE float fract(float x, private float *p) { BODY; }
   int n,hx,hy,hz,ix,iy,sx,i,sy; \
   uint q,sxy; \
   Zero[0] = 0.0;Zero[1] = -0.0; \
+  if (x == 0.0f) { x = 0.0f; }; \
+  if (y == 0.0f) { y = 0.0f; }\
   GEN_OCL_GET_FLOAT_WORD(hx,x);GEN_OCL_GET_FLOAT_WORD(hy,y); \
   sxy = (hx ^ hy) & 0x80000000;sx = hx&0x80000000;sy = hy&0x80000000; \
   hx ^=sx; hy &= 0x7fffffff; \
