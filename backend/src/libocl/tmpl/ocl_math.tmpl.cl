@@ -2709,10 +2709,10 @@ OVERLOADABLE float __gen_ocl_internal_exp10(float x){
   P[3] = 2.034649854009453E+000;
   P[4] = 2.650948748208892E+000;
   P[5] = 2.302585167056758E+000;
-  if( isinf(x))
-    return INFINITY;
 
-  if( x < -MAXL10 )return 0.0;
+  if( x < -MAXL10 ) return 0.0;
+
+  if( isinf(x))  return INFINITY;
   /* The following is necessary because range reduction blows up: */
   if( x == 0 )return 1.0;
 
