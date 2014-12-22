@@ -2672,7 +2672,6 @@ OVERLOADABLE float __gen_ocl_internal_remainder(float x, float p){
 }
 
 OVERLOADABLE float __gen_ocl_internal_ldexp(float x, int n) {
-  if(!__ocl_finitef(x)||x==(float)0.0) return x;
   x = __gen_ocl_scalbnf(x,n);
   return x;
 }
@@ -2878,6 +2877,7 @@ OVERLOADABLE float ldexp(float x, int n) {
   if (__ocl_math_fastpath_flag)
     return __gen_ocl_internal_fastpath_ldexp(x, n);
 
+  if (x == (float)0.0f) x = 0.0f;
   return __gen_ocl_internal_ldexp(x, n);
 }
 
