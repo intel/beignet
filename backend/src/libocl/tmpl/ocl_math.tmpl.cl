@@ -1926,7 +1926,6 @@ OVERLOADABLE float __gen_ocl_internal_round(float x) {
   return y;
 }
 OVERLOADABLE float __gen_ocl_internal_ceil(float x)  { return __gen_ocl_rndu(x); }
-OVERLOADABLE float powr(float x, float y) { return __gen_ocl_pow(x,y); }
 OVERLOADABLE float __gen_ocl_internal_rint(float x) {
   return __gen_ocl_rnde(x);
 }
@@ -3016,6 +3015,7 @@ OVERLOADABLE float __gen_ocl_internal_pow(float x, float y) {
   }
    /* y==zero: x**0 = 1 */
   if(iy==0) return one;
+  /* pow(+1, y) returns 1 for any y, even a NAN */
   if(hx==0x3f800000) return one;
   /* +-NaN return x+y */
   if(ix > 0x7f800000 || iy > 0x7f800000)
@@ -3115,6 +3115,7 @@ OVERLOADABLE float __gen_ocl_internal_pow(float x, float y) {
     GEN_OCL_SET_FLOAT_WORD(t_h,is+0x00400000+(k<<21));
     t_l = ax - (t_h-bp[k]);
     s_l = v*((u-s_h*t_h)-s_h*t_l);
+
     /* compute log(ax) */
     s2 = s*s;
     r = s2*s2*(L1+s2*(L2+s2*(L3+s2*(L4+s2*(L5+s2*L6)))));
@@ -3122,7 +3123,7 @@ OVERLOADABLE float __gen_ocl_internal_pow(float x, float y) {
     s2  = s_h*s_h;
     t_h = 3.0f+s2+r;
     GEN_OCL_GET_FLOAT_WORD(is,t_h);
-    GEN_OCL_SET_FLOAT_WORD(t_h,is&0xfffff000);
+    GEN_OCL_SET_FLOAT_WORD(t_h,is&0xffffe000);
     t_l = r-((t_h-3.0f)-s2);
     /* u+v = s*(1+...) */
     u = s_h*t_h;
@@ -3130,7 +3131,7 @@ OVERLOADABLE float __gen_ocl_internal_pow(float x, float y) {
     /* 2/(3log2)*(s+...) */
     p_h = u+v;
     GEN_OCL_GET_FLOAT_WORD(is,p_h);
-    GEN_OCL_SET_FLOAT_WORD(p_h,is&0xfffff000);
+    GEN_OCL_SET_FLOAT_WORD(p_h,is&0xffffe000);
     p_l = v-(p_h-u);
     z_h = cp_h*p_h;		/* cp_h+cp_l = 2/(3*log2) */
     z_l = cp_l*p_h+p_l*cp+dp_l[k];
@@ -3138,13 +3139,13 @@ OVERLOADABLE float __gen_ocl_internal_pow(float x, float y) {
     t = (float)n;
     t1 = (((z_h+z_l)+dp_h[k])+t);
     GEN_OCL_GET_FLOAT_WORD(is,t1);
-    GEN_OCL_SET_FLOAT_WORD(t1,is&0xfffff000);
+    GEN_OCL_SET_FLOAT_WORD(t1,is&0xffffe000);
     t2 = z_l-(((t1-t)-dp_h[k])-z_h);
   }
 
   /* split up y into y1+y2 and compute (y1+y2)*(t1+t2) */
   GEN_OCL_GET_FLOAT_WORD(is,y);
-  GEN_OCL_SET_FLOAT_WORD(y1,is&0xfffff000);
+  GEN_OCL_SET_FLOAT_WORD(y1,is&0xffffe000);
   p_l = (y-y1)*t1+y*t2;
   p_h = y1*t1;
   z = p_l+p_h;
@@ -3320,6 +3321,54 @@ OVERLOADABLE float remquo(float x, float y, local int *quo) { BODY; }
 OVERLOADABLE float remquo(float x, float y, private int *quo) { BODY; }
 #undef BODY
 
+OVERLOADABLE float powr(float x, float y) {
+  unsigned int hx, sx, hy, sy;
+
+  if (__ocl_math_fastpath_flag)
+    return __gen_ocl_pow(x,y);
+  else {
+    if (isnan(x) || isnan(y)) return NAN;
+    GEN_OCL_GET_FLOAT_WORD(hx,x);
+    GEN_OCL_GET_FLOAT_WORD(hy,y);
+    sx = (hx & 0x80000000) >> 31;
+    sy = (hy & 0x80000000) >> 31;
+
+    if ((hx&0x7fffffff) < 0x00800000) {	   /* x < 2**-126  */
+      x = 0.0f;/* Gen does not support subnormal number now */
+      hx = hx &0x80000000;
+    }
+    if ((hy&0x7fffffff) < 0x00800000) {	  /* y < 2**-126  */
+      y = 0.0;/* Gen does not support subnormal number now */
+      hy = hy &0x80000000;
+    }
+
+    // (x < 0) ** y = NAN (y!=0)
+    if ((sx && (hx & 0x7fffffff))) return NAN;
+
+    // +/-0 ** +/-0 = NAN
+    if ( !(hx&0x7fffffff) && !(hy&0x7fffffff)) return NAN;
+
+    // +inf ** +/-0 = NAN
+    if ( ((hx & 0x7f800000) ==0x7f800000) && !(hy&0x7fffffff)) return NAN;
+
+    // others except nan/inf/0 ** 0 = 1.0
+    if (!(hy&0x7fffffff)) return 1.0f;
+
+    // +1 ** inf = NAN; +1 ** finite = 1;
+    if (hx == 0x3f800000) {
+      return isinf(y) ? NAN : 1.0f;
+    }
+
+    if ( !(hx & 0x7fffffff)) {
+        // +/-0 ** y<0 = +inf
+        // +/-0 ** y>0 = +0
+      return sy ? INFINITY : 0.0f;
+    }
+
+    return __gen_ocl_internal_pow(x,y);
+  }
+}
+
 OVERLOADABLE float pown(float x, int n) {
   if (x == 0.f && n == 0)
     return 1.f;
@@ -3329,15 +3378,19 @@ OVERLOADABLE float pown(float x, int n) {
 }
 
 OVERLOADABLE float pow(float x, float y) {
-  int n;
-  if (x == 0.f && y == 0.f)
-    return 1.f;
-  if (x >= 0.f)
-    return powr(x, y);
-  n = y;
-  if ((float)n == y)//is exact integer
-    return pown(x, n);
-  return NAN;
+  if (!__ocl_math_fastpath_flag)
+    return __gen_ocl_internal_pow(x,y);
+  else {
+    int n;
+    if (x == 0.f && y == 0.f)
+      return 1.f;
+    if (x >= 0.f)
+      return powr(x, y);
+    n = y;
+    if ((float)n == y)//is exact integer
+      return pown(x, n);
+    return NAN;
+  }
 }
 
 OVERLOADABLE float rootn(float x, int n) {
