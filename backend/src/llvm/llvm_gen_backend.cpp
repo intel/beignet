@@ -3332,6 +3332,8 @@ error:
             bool isFloatCoord = coordType == ir::TYPE_FLOAT;
             bool requiredFloatCoord = samplerOffset == 0;
 
+            GBE_ASSERT(isFloatCoord == requiredFloatCoord);
+
             vector<ir::Register> dstTupleData, srcTupleData;
             for (uint32_t elemID = 0; elemID < 3; elemID++) {
               ir::Register reg;
@@ -3341,17 +3343,7 @@ error:
               else
                 reg = ir::ocl::invalid;
 
-              if (isFloatCoord == requiredFloatCoord)
-                srcTupleData.push_back(reg);
-              else if (!requiredFloatCoord) {
-                ir::Register intCoordReg = ctx.reg(ir::RegisterFamily::FAMILY_DWORD);
-                ctx.CVT(ir::TYPE_S32, ir::TYPE_FLOAT, intCoordReg, reg);
-                srcTupleData.push_back(intCoordReg);
-              } else {
-                ir::Register floatCoordReg = ctx.reg(ir::RegisterFamily::FAMILY_DWORD);
-                ctx.CVT(ir::TYPE_FLOAT, ir::TYPE_S32, floatCoordReg, reg);
-                srcTupleData.push_back(floatCoordReg);
-              }
+              srcTupleData.push_back(reg);
             }
 
             uint32_t elemNum;
