@@ -19,6 +19,7 @@
 #include "ocl_math.h"
 #include "ocl_integer.h"
 #include "ocl_common.h"
+#include "ocl_convert.h"
 
 #define int1 int
 #define float1 float
@@ -286,22 +287,27 @@ INLINE_OVERLOADABLE float3 __gen_fixup_neg_boundary(float3 coord)
 #define GEN_FIX_INT_CLAMPING 0
 #endif
 
+#define convert_float1 convert_float
+#define convert_int1 convert_int
+
 // For integer coordinates
 #define DECL_READ_IMAGE0(int_clamping_fix, image_type,                        \
-                         image_data_type, suffix, coord_type)                 \
+                         image_data_type, suffix, coord_type, n)              \
   OVERLOADABLE image_data_type read_image ##suffix(image_type cl_image,       \
                                         const sampler_t sampler,              \
                                         coord_type coord)                     \
   {                                                                           \
     coord = __gen_validate_array_index(coord, cl_image);                      \
     if (int_clamping_fix && __gen_sampler_need_fix(sampler))                  \
-      return __gen_ocl_read_image ##suffix(cl_image, sampler, coord, 1);      \
-    return __gen_ocl_read_image ##suffix(cl_image, sampler, coord, 0);        \
+      return __gen_ocl_read_image ##suffix(cl_image, sampler,                 \
+                                           convert_int ##n(coord), 1);        \
+    return __gen_ocl_read_image ##suffix(cl_image, sampler,                   \
+                                         convert_float ##n (coord), 0);       \
   }
 
 // For float coordinates
 #define DECL_READ_IMAGE1(int_clamping_fix, image_type,                        \
-                         image_data_type, suffix, coord_type)                 \
+                         image_data_type, suffix, coord_type, n)              \
   OVERLOADABLE image_data_type read_image ##suffix(image_type cl_image,       \
                                         const sampler_t sampler,              \
                                         coord_type coord)                     \
@@ -317,15 +323,16 @@ INLINE_OVERLOADABLE float3 __gen_fixup_neg_boundary(float3 coord)
               tmpCoord = __gen_denormalize_coord(cl_image, tmpCoord);         \
             tmpCoord = __gen_fixup_neg_boundary(tmpCoord);                    \
             return __gen_ocl_read_image ##suffix(                             \
-                     cl_image, sampler, tmpCoord, 1);                         \
+                     cl_image, sampler, convert_int ##n(tmpCoord), 1);        \
         }                                                                     \
       }                                                                       \
     }                                                                         \
-    return  __gen_ocl_read_image ##suffix(cl_image, sampler, tmpCoord, 0);    \
+    return  __gen_ocl_read_image ##suffix(cl_image, sampler,                  \
+                                          convert_float ##n (tmpCoord), 0);   \
   }
 
 #define DECL_READ_IMAGE_NOSAMPLER(image_type, image_data_type,                \
-                                  suffix, coord_type)                         \
+                                  suffix, coord_type, n)                      \
   OVERLOADABLE image_data_type read_image ##suffix(image_type cl_image,       \
                                                coord_type coord)              \
   {                                                                           \
@@ -333,7 +340,7 @@ INLINE_OVERLOADABLE float3 __gen_fixup_neg_boundary(float3 coord)
     sampler_t defaultSampler = CLK_NORMALIZED_COORDS_FALSE | CLK_ADDRESS_NONE \
                                | CLK_FILTER_NEAREST;                          \
     return __gen_ocl_read_image ##suffix(                                     \
-             cl_image, defaultSampler, coord, 0);                             \
+             cl_image, defaultSampler, convert_float ##n (coord), 0);         \
   }
 
 #define DECL_WRITE_IMAGE(image_type, image_data_type, suffix, coord_type)     \
@@ -347,11 +354,11 @@ INLINE_OVERLOADABLE float3 __gen_fixup_neg_boundary(float3 coord)
 
 #define DECL_IMAGE(int_clamping_fix, image_type, image_data_type, suffix, n)  \
   DECL_READ_IMAGE0(int_clamping_fix, image_type,                              \
-                   image_data_type, suffix, int ##n)                          \
+                   image_data_type, suffix, int ##n, n)                       \
   DECL_READ_IMAGE1(int_clamping_fix, image_type,                              \
-                   image_data_type, suffix, float ##n)                        \
-  DECL_READ_IMAGE_NOSAMPLER(image_type, image_data_type, suffix, int ##n)     \
-  DECL_WRITE_IMAGE(image_type, image_data_type, suffix, int ## n)             \
+                   image_data_type, suffix, float ##n, n)                     \
+  DECL_READ_IMAGE_NOSAMPLER(image_type, image_data_type, suffix, int ##n, n)  \
+  DECL_WRITE_IMAGE(image_type, image_data_type, suffix, int ##n)              \
 
 // 1D
 #define DECL_IMAGE_TYPE(image_type, n)                                        \
@@ -377,7 +384,7 @@ DECL_IMAGE_TYPE(image2d_array_t, 3)
     effectCoord.s0 = coord % 8192;                                            \
     effectCoord.s1 = coord / 8192;                                            \
     return __gen_ocl_read_image ##suffix(                                     \
-             cl_image, defaultSampler, effectCoord, 0);                       \
+             cl_image, defaultSampler, convert_float2(effectCoord), 0);       \
   }
 
 #define DECL_IMAGE_1DBuffer(int_clamping_fix, image_data_type, suffix)        \
@@ -425,9 +432,10 @@ INLINE_OVERLOADABLE int4 __gen_fixup_1darray_coord(int2 coord, image1d_array_t i
     coord = __gen_validate_array_index(coord, cl_image);                      \
     if (int_clamping_fix && __gen_sampler_need_fix(sampler)) {                \
       int4 newCoord = __gen_fixup_1darray_coord(coord, cl_image);             \
-      return __gen_ocl_read_image ##suffix(cl_image, sampler, newCoord, 2); \
+      return __gen_ocl_read_image ##suffix(cl_image, sampler, newCoord, 2);   \
     }                                                                         \
-    return  __gen_ocl_read_image ##suffix(cl_image, sampler, coord, 0);     \
+    return  __gen_ocl_read_image ##suffix(cl_image, sampler,                  \
+                                          convert_float2 (coord), 0);         \
   }
 
 // For float coordiates
@@ -448,18 +456,19 @@ INLINE_OVERLOADABLE int4 __gen_fixup_1darray_coord(int2 coord, image1d_array_t i
               tmpCoord = __gen_denormalize_coord(cl_image, tmpCoord);         \
             float4 newCoord = __gen_fixup_1darray_coord(tmpCoord, cl_image);  \
             return __gen_ocl_read_image ##suffix(                             \
-                     cl_image, sampler, newCoord, 2);                         \
+                     cl_image, sampler, convert_int4(newCoord), 2);         \
         }                                                                     \
       }                                                                       \
     }                                                                         \
-    return  __gen_ocl_read_image ##suffix(cl_image, sampler, tmpCoord, 0);    \
+    return  __gen_ocl_read_image ##suffix(cl_image, sampler,                \
+                                          convert_float2 (tmpCoord), 0);      \
   }
 
 #define DECL_IMAGE_1DArray(int_clamping_fix, image_data_type, suffix)         \
   DECL_READ_IMAGE0_1DArray(int_clamping_fix, image_data_type, suffix, int2)   \
   DECL_READ_IMAGE1_1DArray(int_clamping_fix, image_data_type,                 \
                            suffix, float2)                                    \
-  DECL_READ_IMAGE_NOSAMPLER(image1d_array_t, image_data_type, suffix, int2)   \
+  DECL_READ_IMAGE_NOSAMPLER(image1d_array_t, image_data_type, suffix, int2, 2)\
   DECL_WRITE_IMAGE(image1d_array_t, image_data_type, suffix, int2)            \
 
 DECL_IMAGE_1DArray(GEN_FIX_INT_CLAMPING, int4, i)
