@@ -26,7 +26,6 @@
 
 #include "ir/constant.hpp"
 #include "ir/register.hpp"
-#include "sys/hash_map.hpp"
 #include "sys/map.hpp"
 
 namespace gbe {
@@ -41,7 +40,7 @@ namespace ir {
   class Unit : public NonCopyable
   {
   public:
-    typedef hash_map<std::string, Function*> FunctionSet;
+    typedef map<std::string, Function*> FunctionSet;
     /*! Create an empty unit */
     Unit(PointerSize pointerSize = POINTER_32_BITS);
     /*! Release everything (*including* the function pointers) */
@@ -76,7 +75,7 @@ namespace ir {
     bool getValid() { return valid; }
   private:
     friend class ContextInterface; //!< Can free modify the unit
-    hash_map<std::string, Function*> functions; //!< All the defined functions
+    FunctionSet functions; //!< All the defined functions
     ConstantSet constantSet; //!< All the constants defined in the unit
     PointerSize pointerSize; //!< Size shared by all pointers
     GBE_CLASS(Unit);

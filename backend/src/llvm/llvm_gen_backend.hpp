@@ -37,7 +37,6 @@
 #endif
 #include "sys/platform.hpp"
 #include "sys/map.hpp"
-#include "sys/hash_map.hpp"
 #include <algorithm>
 
 // LLVM Type
@@ -57,7 +56,7 @@ namespace gbe
 
   /*! Build the hash map for OCL functions on Gen */
   struct OCLIntrinsicMap {
-    /*! Build the intrinsic hash map */
+    /*! Build the intrinsic map */
     OCLIntrinsicMap(void) {
 #define DECL_LLVM_GEN_FUNCTION(ID, NAME) \
   map.insert(std::make_pair(#NAME, GEN_OCL_##ID));
@@ -65,7 +64,7 @@ namespace gbe
 #undef DECL_LLVM_GEN_FUNCTION
     }
     /*! Sort intrinsics with their names */
-    hash_map<std::string, OCLInstrinsic> map;
+    gbe::map<std::string, OCLInstrinsic> map;
     OCLInstrinsic find(const std::string symbol) const {
       auto it = map.find(symbol);
 
