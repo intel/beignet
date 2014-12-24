@@ -39,13 +39,19 @@ namespace gbe
     if(kernel->getUseSLM() == false)
       return;
 
-    const GenRegister slm_offset = ra->genReg(GenRegister::ud1grf(ir::ocl::slmoffset));
     const GenRegister slm_index = GenRegister::ud1grf(0, 0);
-    //the slm index is hold in r0.0 24-27 bit, in 4K unit, shift left 12 to get byte unit
+    //the slm index is hold in r0.0 24-27 bit, in 4K unit, move it to sr0.1's 8-11 bits.
     p->push();
       p->curr.execWidth = 1;
       p->curr.predicate = GEN_PREDICATE_NONE;
-      p->SHR(slm_offset, slm_index, GenRegister::immud(12));
+      GenRegister sr0 = GenRegister(GEN_ARCHITECTURE_REGISTER_FILE,
+                                    GEN_ARF_STATE,
+                                    1,
+                                    GEN_TYPE_UD,
+                                    GEN_VERTICAL_STRIDE_8,
+                                    GEN_WIDTH_8,
+                                    GEN_HORIZONTAL_STRIDE_1);
+      p->SHR(sr0, slm_index, GenRegister::immud(16));
     p->pop();
   }
 
