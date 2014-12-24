@@ -55,8 +55,8 @@ static struct _cl_device_id intel_ivb_gt1_device = {
   .max_compute_unit = 6,
   .max_thread_per_unit = 6,
   .sub_slice_count = 1,
-  .max_work_item_sizes = {512, 512, 512},
-  .max_work_group_size = 512,
+  .max_work_item_sizes = {256, 256, 256},
+  .max_work_group_size = 256,
   .max_clock_frequency = 1000,
 #include "cl_gen7_device.h"
 };
