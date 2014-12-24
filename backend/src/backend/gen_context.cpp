@@ -1816,7 +1816,6 @@ namespace gbe
     allocCurbeReg(one, GBE_CURBE_ONE);
     if (stackUse.size() != 0)
       allocCurbeReg(stackbuffer, GBE_CURBE_EXTRA_ARGUMENT, GBE_STACK_BUFFER);
-    allocSLMOffsetCurbe();
     // Go over the arguments and find the related patch locations
     const uint32_t argNum = fn.argNum();
     for (uint32_t argID = 0u; argID < argNum; ++argID) {

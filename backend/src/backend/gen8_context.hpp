@@ -55,7 +55,6 @@ namespace gbe
 
   private:
     virtual void emitSLMOffset(void);
-    virtual void allocSLMOffsetCurbe(void);
     virtual void newSelection(void);
   };
 }

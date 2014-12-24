@@ -55,11 +55,6 @@ namespace gbe
     p->pop();
   }
 
-  void Gen75Context::allocSLMOffsetCurbe(void) {
-    if(fn.getUseSLM())
-      allocCurbeReg(ir::ocl::slmoffset, GBE_CURBE_SLM_OFFSET);
-  }
-
   uint32_t Gen75Context::alignScratchSize(uint32_t size){
     if(size == 0)
       return 0;
