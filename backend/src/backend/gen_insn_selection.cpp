@@ -1746,7 +1746,7 @@ namespace gbe
   }
 
   Selection75::Selection75(GenContext &ctx) : Selection(ctx) {
-    this->opaque->setPatchSLMAddr(true);
+    this->opaque->setPatchSLMAddr(false);
   }
 
   Selection8::Selection8(GenContext &ctx) : Selection(ctx) {
