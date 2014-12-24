@@ -39,10 +39,6 @@ namespace gbe
     return;
   }
 
-  void Gen8Context::allocSLMOffsetCurbe(void) {
-    return;
-  }
-
   uint32_t Gen8Context::alignScratchSize(uint32_t size){
     if(size == 0)
       return 0;

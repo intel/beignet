@@ -214,8 +214,6 @@ namespace gbe
     void buildPatchList(void);
     /*! Calc the group's slm offset from R0.0, to work around HSW SLM bug*/
     virtual void emitSLMOffset(void) { };
-    /*! allocate group's slm offset in curbe, only for HSW */
-    virtual void allocSLMOffsetCurbe(void) { };
     /*! new selection of device */
     virtual void newSelection(void);
     friend class GenRegAllocator;               //!< need to access errCode directly.
