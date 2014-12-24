@@ -15,6 +15,7 @@ void sub_buffer_check(void)
     error = clGetDeviceInfo(device, CL_DEVICE_MEM_BASE_ADDR_ALIGN, sizeof(address_align ), &address_align, NULL );
     OCL_ASSERT(error == CL_SUCCESS);
 
+    max_alloc_size /= 8;
     main_buf_content = (char *)malloc(sizeof(char) * max_alloc_size);
 
     for (cl_ulong i = 0; i < max_alloc_size; i++) {
@@ -25,8 +26,8 @@ void sub_buffer_check(void)
     OCL_ASSERT(error == CL_SUCCESS);
 
     /* Test read sub buffer. */
-    for (cl_ulong sz = 64; sz < max_alloc_size; sz*=4) {
-        for (cl_ulong off = 0; off < max_alloc_size; off += 1234) {
+    for (cl_ulong sz = max_alloc_size / 4; sz <= max_alloc_size; sz += max_alloc_size / 4) {
+        for (cl_ulong off = 0; off < max_alloc_size; off += 1234 + max_alloc_size / 3) {
             cl_buffer_region region;
             region.origin = off;
             region.size = sz;
@@ -71,8 +72,8 @@ void sub_buffer_check(void)
     }
 
 
-    for (cl_ulong sz = 64; sz < max_alloc_size; sz*=4) {
-        for (cl_ulong off = 0; off < max_alloc_size; off += 1234) {
+    for (cl_ulong sz = max_alloc_size / 4; sz <= max_alloc_size; sz += max_alloc_size / 4) {
+        for (cl_ulong off = 0; off < max_alloc_size; off += 1234 + max_alloc_size / 3) {
             cl_buffer_region region;
             region.origin = off;
             region.size = sz;
