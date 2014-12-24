@@ -33,6 +33,7 @@
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
+#include <sys/sysinfo.h>
 
 #ifndef CL_VERSION_1_2
 #define CL_DEVICE_BUILT_IN_KERNELS 0x103F
@@ -421,6 +422,15 @@ brw_gt3_break:
     ret->host_unified_memory = CL_FALSE;
   cl_driver_delete(dummy);
 #endif
+
+  struct sysinfo info;
+  if (sysinfo(&info) == 0) {
+    uint64_t two_gb = 2 * 1024 * 1024 * 1024ul; 
+    uint64_t totalram = info.totalram * info.mem_unit;
+    ret->global_mem_size = (totalram > two_gb) ? 
+                            two_gb : info.totalram;
+    ret->max_mem_alloc_size = ret->global_mem_size / 2;
+  }
 
   return ret;
 }
