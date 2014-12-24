@@ -21,7 +21,6 @@ add_dependencies(beignet_bitcode libocl)
 set (GBE_SRC
     ${ocl_blob_file}
     sys/vector.hpp
-    sys/hash_map.hpp
     sys/map.hpp
     sys/set.hpp
     sys/intrusive_list.hpp

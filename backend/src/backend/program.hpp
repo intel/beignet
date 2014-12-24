@@ -32,7 +32,6 @@
 #include "ir/function.hpp"
 #include "ir/printf.hpp"
 #include "ir/sampler.hpp"
-#include "sys/hash_map.hpp"
 #include "sys/vector.hpp"
 #include <string>
 
@@ -307,7 +306,7 @@ namespace gbe {
     /*! Allocate an empty kernel. */
     virtual Kernel *allocateKernel(const std::string &name) = 0;
     /*! Kernels sorted by their name */
-    hash_map<std::string, Kernel*> kernels;
+    map<std::string, Kernel*> kernels;
     /*! Global (constants) outside any kernel */
     ir::ConstantSet *constantSet;
     /*! Use custom allocators */
