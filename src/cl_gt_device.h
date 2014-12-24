@@ -40,7 +40,7 @@
 .native_vector_width_half = 8,
 .preferred_wg_sz_mul = 16,
 .address_bits = 32,
-.max_mem_alloc_size = 256 * 1024 * 1024,
+.max_mem_alloc_size = 512 * 1024 * 1024,
 .image_support = CL_TRUE,
 .max_read_image_args = BTI_MAX_READ_IMAGE_ARGS,
 .max_write_image_args = BTI_MAX_WRITE_IMAGE_ARGS,
@@ -57,7 +57,7 @@
 .double_fp_config = 0,
 .global_mem_cache_type = CL_READ_WRITE_CACHE,
 .global_mem_size = 1024 * 1024 * 1024,
-.max_constant_buffer_size = 512 << 10,
+.max_constant_buffer_size = 128 * 1024 * 1024,
 .max_constant_args = 8,
 .error_correction_support = CL_FALSE,
 #ifdef HAS_USERPTR
