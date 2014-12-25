@@ -289,13 +289,6 @@ intel_gpgpu_set_base_address_gen7(intel_gpgpu_t *gpgpu)
 
   OUT_BATCH(gpgpu->batch, 0 | (def_cc << 8) | BASE_ADDRESS_MODIFY); /* Indirect Obj Base Addr */
   OUT_BATCH(gpgpu->batch, 0 | (def_cc << 8) | BASE_ADDRESS_MODIFY); /* Instruction Base Addr  */
-  /* If we output an AUB file, we limit the total size to 64MB */
-#if USE_FULSIM
-  OUT_BATCH(gpgpu->batch, 0x04000000 | BASE_ADDRESS_MODIFY); /* General State Access Upper Bound */
-  OUT_BATCH(gpgpu->batch, 0x04000000 | BASE_ADDRESS_MODIFY); /* Dynamic State Access Upper Bound */
-  OUT_BATCH(gpgpu->batch, 0x04000000 | BASE_ADDRESS_MODIFY); /* Indirect Obj Access Upper Bound */
-  OUT_BATCH(gpgpu->batch, 0x04000000 | BASE_ADDRESS_MODIFY); /* Instruction Access Upper Bound */
-#else
   OUT_BATCH(gpgpu->batch, 0 | BASE_ADDRESS_MODIFY);
   /* According to mesa i965 driver code, we must set the dynamic state access upper bound
    * to a valid bound value, otherwise, the border color pointer may be rejected and you
@@ -303,7 +296,6 @@ intel_gpgpu_set_base_address_gen7(intel_gpgpu_t *gpgpu)
   OUT_BATCH(gpgpu->batch, 0xfffff000 | BASE_ADDRESS_MODIFY);
   OUT_BATCH(gpgpu->batch, 0 | BASE_ADDRESS_MODIFY);
   OUT_BATCH(gpgpu->batch, 0 | BASE_ADDRESS_MODIFY);
-#endif /* USE_FULSIM */
   ADVANCE_BATCH(gpgpu->batch);
 }
 
@@ -341,13 +333,7 @@ intel_gpgpu_set_base_address_gen8(intel_gpgpu_t *gpgpu)
               I915_GEM_DOMAIN_INSTRUCTION,
               0 + (0 | (def_cc << 4) | (0 << 1)| BASE_ADDRESS_MODIFY));
     OUT_BATCH(gpgpu->batch, 0);
-    /* If we output an AUB file, we limit the total size to 64MB */
-#if USE_FULSIM
-    OUT_BATCH(gpgpu->batch, 0x04000000 | BASE_ADDRESS_MODIFY); /* General State Access Upper Bound */
-    OUT_BATCH(gpgpu->batch, 0x04000000 | BASE_ADDRESS_MODIFY); /* Dynamic State Access Upper Bound */
-    OUT_BATCH(gpgpu->batch, 0x04000000 | BASE_ADDRESS_MODIFY); /* Indirect Obj Access Upper Bound */
-    OUT_BATCH(gpgpu->batch, 0x04000000 | BASE_ADDRESS_MODIFY); /* Instruction Access Upper Bound */
-#else
+
     OUT_BATCH(gpgpu->batch, 0xfffff000 | BASE_ADDRESS_MODIFY);
     /* According to mesa i965 driver code, we must set the dynamic state access upper bound
      * to a valid bound value, otherwise, the border color pointer may be rejected and you
@@ -355,7 +341,6 @@ intel_gpgpu_set_base_address_gen8(intel_gpgpu_t *gpgpu)
     OUT_BATCH(gpgpu->batch, 0xfffff000 | BASE_ADDRESS_MODIFY);
     OUT_BATCH(gpgpu->batch, 0xfffff000 | BASE_ADDRESS_MODIFY);
     OUT_BATCH(gpgpu->batch, 0xfffff000 | BASE_ADDRESS_MODIFY);
-#endif /* USE_FULSIM */
     ADVANCE_BATCH(gpgpu->batch);
 }
 
