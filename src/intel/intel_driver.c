@@ -109,13 +109,28 @@ error:
 /* just used for maximum relocation number in drm_intel */
 #define BATCH_SIZE 0x4000
 
+/* set OCL_DUMP_AUB=1 to get aub file */
+static void
+intel_driver_aub_dump(intel_driver_t *driver)
+{
+  char *val;
+  val = getenv("OCL_DUMP_AUB");
+  if (!val)
+    return;
+  if (atoi(val) != 0) {
+    drm_intel_bufmgr_gem_set_aub_filename(driver->bufmgr,
+					  "beignet.aub");
+    drm_intel_bufmgr_gem_set_aub_dump(driver->bufmgr, 1);
+  }
+}
+
 static void
 intel_driver_memman_init(intel_driver_t *driver)
 {
   driver->bufmgr = drm_intel_bufmgr_gem_init(driver->fd, BATCH_SIZE);
   assert(driver->bufmgr);
-  //drm_intel_bufmgr_gem_set_aub_dump(driver->bufmgr, 1);
   drm_intel_bufmgr_gem_enable_reuse(driver->bufmgr);
+  intel_driver_aub_dump(driver);
 }
 
 static void
