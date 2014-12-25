@@ -90,10 +90,6 @@ cl_command_queue_delete(cl_command_queue queue)
     if (queue->ctx->queues == queue)
       queue->ctx->queues = queue->next;
   pthread_mutex_unlock(&queue->ctx->queue_lock);
-  if (queue->fulsim_out != NULL) {
-    cl_mem_delete(queue->fulsim_out);
-    queue->fulsim_out = NULL;
-  }
 
   cl_thread_data_destroy(queue);
   queue->thread_data = NULL;
@@ -179,197 +175,6 @@ cl_command_queue_bind_surface(cl_command_queue queue, cl_kernel k)
   return CL_SUCCESS;
 }
 
-
-#if USE_FULSIM
-extern void drm_intel_bufmgr_gem_stop_aubfile(cl_buffer_mgr);
-extern void drm_intel_bufmgr_gem_set_aubfile(cl_buffer_mgr, FILE*);
-extern void aub_exec_dump_raw_file(cl_buffer, size_t offset, size_t sz);
-
-static void
-cl_run_fulsim(void)
-{
-  const char *run_it = getenv("OCL_SIMULATOR");
-  const char *debug_mode = getenv("OCL_FULSIM_DEBUG_MODE");
-  if (run_it == NULL || strcmp(run_it, "1")) return;
-
-#if EMULATE_GEN == 7 /* IVB */
-  if (debug_mode == NULL || strcmp(debug_mode, "1"))
-    system("wine AubLoad.exe dump.aub -device ivbB0");
-  else
-    system("wine AubLoad.exe dump.aub -device ivbB0 -debug");
-#elif EMULATE_GEN == 75 /* HSW */
-  if (debug_mode == NULL || strcmp(debug_mode, "1"))
-    system("wine AubLoad.exe dump.aub -device hsw.h.a0");
-  else
-    system("wine AubLoad.exe dump.aub -device hsw.h.a0 -debug");
-#else
-#error "Unknown device"
-#endif
-}
-
-/* Each buffer is dump using several chunks of this size */
-static const size_t chunk_sz = 8192u;
-
-static cl_int
-cl_fulsim_dump_all_surfaces(cl_command_queue queue, cl_kernel k)
-{
-  cl_int err = CL_SUCCESS;
-  cl_mem mem = NULL;
-  int i;
-  size_t j;
-
-  /* Bind user defined surface */
-  for (i = 0; i < k->arg_n; ++i) {
-    size_t chunk_n, chunk_remainder;
-    if (interp_kernel_get_arg_type(k->opaque, i) != GBE_ARG_GLOBAL_PTR)
-      continue;
-    mem = (cl_mem) k->args[i].mem;
-    CHECK_MEM(mem);
-    chunk_n = cl_buffer_get_size(mem->bo) / chunk_sz;
-    chunk_remainder = cl_buffer_get_size(mem->bo) % chunk_sz;
-    for (j = 0; j < chunk_n; ++j)
-      aub_exec_dump_raw_file(mem->bo, j * chunk_sz, chunk_sz);
-    if (chunk_remainder)
-      aub_exec_dump_raw_file(mem->bo, chunk_n * chunk_sz, chunk_remainder);
-  }
-error:
-  return err;
-}
-
-struct bmphdr {
-  /* 2 bytes of magic here, "BM", total header size is 54 bytes! */
-  int filesize;      /*  4 total file size incl header */
-  short as0, as1;    /*  8 app specific */
-  int bmpoffset;     /* 12 ofset of bmp data  */
-  int headerbytes;   /* 16 bytes in header from this point (40 actually) */
-  int width;         /* 20  */
-  int height;        /* 24  */
-  short nplanes;     /* 26 no of color planes */
-  short bpp;         /* 28 bits/pixel */
-  int compression;   /* 32 BI_RGB = 0 = no compression */
-  int sizeraw;       /* 36 size of raw bmp file, excluding header, incl padding */
-  int hres;          /* 40 horz resolutions pixels/meter */
-  int vres;          /* 44 */
-  int npalcolors;    /* 48 No of colors in palette */
-  int nimportant;    /* 52 No of important colors */
-  /* raw b, g, r data here, dword aligned per scan line */
-};
-
-static int*
-cl_read_bmp(const char *filename, int *width, int *height)
-{
-  int n;
-  struct bmphdr hdr;
-
-  FILE *fp = fopen(filename, "rb");
-  assert(fp);
-
-  char magic[2];
-  n = fread(&magic[0], 1, 2, fp);
-  assert(n == 2 && magic[0] == 'B' && magic[1] == 'M');
-
-  n = fread(&hdr, 1, sizeof(hdr), fp);
-  assert(n == sizeof(hdr));
-
-  assert(hdr.width > 0 &&
-         hdr.height > 0 &&
-         hdr.nplanes == 1
-         && hdr.compression == 0);
-
-  int *rgb32 = (int *) cl_malloc(hdr.width * hdr.height * sizeof(int));
-  assert(rgb32);
-  int x, y;
-
-  int *dst = rgb32;
-  for (y = 0; y < hdr.height; y++) {
-    for (x = 0; x < hdr.width; x++) {
-      assert(!feof(fp));
-      int b = (getc(fp) & 0x0ff);
-      int g = (getc(fp) & 0x0ff);
-      int r = (getc(fp) & 0x0ff);
-      *dst++ = (r | (g << 8) | (b << 16) | 0xff000000);	/* abgr */
-    }
-    while (x & 3) {
-      getc(fp);
-      x++;
-    }
-  }
-  fclose(fp);
-  *width = hdr.width;
-  *height = hdr.height;
-  return rgb32;
-}
-
-static char*
-cl_read_dump(const char *name, size_t *size)
-{
-  char *raw = NULL, *dump = NULL;
-  size_t i, sz;
-  int w, h;
-  if ((raw = (char*) cl_read_bmp(name, &w, &h)) == NULL)
-    return NULL;
-  sz = w * h;
-  dump = (char*) cl_malloc(sz);
-  assert(dump);
-  for (i = 0; i < sz; ++i)
-    dump[i] = raw[4*i];
-  cl_free(raw);
-  if (size)
-    *size = sz;
-  return dump;
-}
-
-static cl_int
-cl_fulsim_read_all_surfaces(cl_command_queue queue, cl_kernel k)
-{
-  cl_int err = CL_SUCCESS;
-  cl_mem mem = NULL;
-  char *from = NULL, *to = NULL;
-  size_t size, j, chunk_n, chunk_remainder;
-  int i, curr = 0;
-  /* Bind user defined surface */
-  for (i = 0; i < k->arg_n; ++i) {
-    if (interp_kernel_get_arg_type(k->opaque, i) != GBE_ARG_GLOBAL_PTR)
-      continue;
-    mem = (cl_mem) k->args[i].mem;
-    CHECK_MEM(mem);
-    assert(mem->bo);
-    chunk_n = cl_buffer_get_size(mem->bo) / chunk_sz;
-    chunk_remainder = cl_buffer_get_size(mem->bo) % chunk_sz;
-    to = cl_mem_map(mem, 1);
-    for (j = 0; j < chunk_n; ++j) {
-      char name[256];
-      sprintf(name, "dump%03i.bmp", curr);
-#ifdef NDEBUG
-      from = cl_read_dump(name, NULL);
-#else
-      from = cl_read_dump(name, &size);
-      assert(size == chunk_sz);
-#endif /* NDEBUG */
-      memcpy(to + j*chunk_sz, from, chunk_sz);
-      cl_free(from);
-      curr++;
-    }
-    if (chunk_remainder) {
-      char name[256];
-      sprintf(name, "dump%03i.bmp", curr);
-#ifdef NDEBUG
-      from = cl_read_dump(name, NULL);
-#else
-      from = cl_read_dump(name, &size);
-      assert(size == chunk_remainder);
-#endif /* NDEBUG */
-      memcpy(to + chunk_n*chunk_sz, from, chunk_remainder);
-      cl_free(from);
-      curr++;
-    }
-    cl_mem_unmap(mem);
-  }
-error:
-  return err;
-}
-#endif
-
 extern cl_int cl_command_queue_ND_range_gen7(cl_command_queue, cl_kernel, uint32_t, const size_t *, const size_t *, const size_t *);
 
 static cl_int
@@ -398,32 +203,10 @@ cl_command_queue_ND_range(cl_command_queue queue,
   /* Check that the user did not forget any argument */
   TRY (cl_kernel_check_args, k);
 
-#if USE_FULSIM
-  cl_buffer_mgr bufmgr = NULL;
-  FILE *file = NULL;
-  const char *run_it = getenv("OCL_SIMULATOR");
-  if (run_it != NULL && strcmp(run_it, "1") == 0) {
-    file = fopen("dump.aub", "wb");
-    FATAL_IF (file == NULL, "Unable to open file dump.aub");
-    bufmgr = cl_context_get_bufmgr(queue->ctx);
-    drm_intel_bufmgr_gem_set_aubfile(bufmgr, file);
-  }
-#endif /* USE_FULSIM */
-
   if (ver == 7 || ver == 75 || ver == 8)
     TRY (cl_command_queue_ND_range_gen7, queue, k, work_dim, global_wk_off, global_wk_sz, local_wk_sz);
   else
     FATAL ("Unknown Gen Device");
-
-#if USE_FULSIM
-  if (run_it != NULL && strcmp(run_it, "1") == 0) {
-    TRY (cl_fulsim_dump_all_surfaces, queue, k);
-    drm_intel_bufmgr_gem_stop_aubfile(bufmgr);
-    fclose(file);
-    cl_run_fulsim();
-    TRY (cl_fulsim_read_all_surfaces, queue, k);
-  }
-#endif /* USE_FULSIM */
 
 error:
   return err;

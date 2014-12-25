@@ -46,7 +46,6 @@ struct _cl_command_queue {
   cl_command_queue prev, next;         /* We chain the command queues together */
   void *thread_data;                   /* Used to store thread context data */
   cl_mem perf;                         /* Where to put the perf counters */
-  cl_mem fulsim_out;                   /* Fulsim will output this buffer */
 };
 
 /* The macro to get the thread specified gpgpu struct. */
@@ -76,9 +75,6 @@ extern cl_int cl_command_queue_ND_range(cl_command_queue queue,
 
 /* The memory object where to report the performance */
 extern cl_int cl_command_queue_set_report_buffer(cl_command_queue, cl_mem);
-
-/* Fulsim will dump this buffer (mostly to check its consistency */
-cl_int cl_command_queue_set_fulsim_buffer(cl_command_queue, cl_mem);
 
 /* Flush for the command queue */
 extern cl_int cl_command_queue_flush(cl_command_queue);
