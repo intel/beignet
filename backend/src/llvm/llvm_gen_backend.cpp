@@ -1419,6 +1419,32 @@ error:
     }
   }
 
+  /*! To track read image args and write args */
+  struct ImageArgsInfo{
+    uint32_t readImageArgs;
+    uint32_t writeImageArgs;
+  };
+
+  static void collectImageArgs(std::string& accessQual, ImageArgsInfo& imageArgsInfo)
+  {
+    if(accessQual.find("read") != std::string::npos)
+    {
+      imageArgsInfo.readImageArgs++;
+      GBE_ASSERT(imageArgsInfo.readImageArgs <= BTI_MAX_READ_IMAGE_ARGS);
+    }
+    else if(accessQual.find("write") != std::string::npos)
+    {
+      imageArgsInfo.writeImageArgs++;
+      GBE_ASSERT(imageArgsInfo.writeImageArgs <= BTI_MAX_WRITE_IMAGE_ARGS);
+    }
+    else
+    {
+      //default is read_only per spec.
+      imageArgsInfo.readImageArgs++;
+      GBE_ASSERT(imageArgsInfo.readImageArgs <= BTI_MAX_READ_IMAGE_ARGS);
+    }
+  }
+
   void GenWriter::emitFunctionPrototype(Function &F)
   {
     GBE_ASSERTM(F.hasStructRetAttr() == false,
@@ -1525,6 +1551,7 @@ error:
     // Loop over the arguments and output registers for them
     if (!F.arg_empty()) {
       uint32_t argID = 0;
+      ImageArgsInfo imageArgsInfo = {};
       Function::arg_iterator I = F.arg_begin(), E = F.arg_end();
 
       // Insert a new register for each function argument
@@ -1569,6 +1596,7 @@ error:
         if (llvmInfo.isImageType()) {
           ctx.input(argName, ir::FunctionArgument::IMAGE, reg, llvmInfo, 4, 4, 0);
           ctx.getFunction().getImageSet()->append(reg, &ctx, incBtiBase());
+          collectImageArgs(llvmInfo.accessQual, imageArgsInfo);
           continue;
         }
 
