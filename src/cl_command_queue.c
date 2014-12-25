@@ -146,7 +146,7 @@ cl_command_queue_bind_image(cl_command_queue queue, cl_kernel k)
     // TODO, this workaround is for GEN7/GEN75 only, we may need to do it in the driver layer
     // on demand.
     if (image->image_type == CL_MEM_OBJECT_IMAGE1D_ARRAY)
-      cl_gpgpu_bind_image(gpgpu, k->images[i].idx + BTI_MAX_IMAGE_NUM, image->base.bo, image->offset,
+      cl_gpgpu_bind_image(gpgpu, k->images[i].idx + BTI_WORKAROUND_IMAGE_OFFSET, image->base.bo, image->offset,
                           image->intel_fmt, image->image_type,
                           image->w, image->h, image->depth,
                           image->row_pitch, (cl_gpgpu_tiling)image->tiling);
