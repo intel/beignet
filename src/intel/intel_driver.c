@@ -130,6 +130,7 @@ intel_driver_memman_init(intel_driver_t *driver)
   driver->bufmgr = drm_intel_bufmgr_gem_init(driver->fd, BATCH_SIZE);
   assert(driver->bufmgr);
   drm_intel_bufmgr_gem_enable_reuse(driver->bufmgr);
+  driver->device_id = drm_intel_bufmgr_gem_get_devid(driver->bufmgr);
   intel_driver_aub_dump(driver);
 }
 
@@ -154,11 +155,7 @@ intel_driver_init(intel_driver_t *driver, int dev_fd)
   driver->fd = dev_fd;
   driver->locked = 0;
   pthread_mutex_init(&driver->ctxmutex, NULL);
-#ifndef NDEBUG
-  int res =
-#endif /* NDEBUG */
-  intel_driver_get_param(driver, I915_PARAM_CHIPSET_ID, &driver->device_id);
-  assert(res);
+
   intel_driver_memman_init(driver);
   intel_driver_context_init(driver);
 
@@ -263,20 +260,6 @@ intel_driver_close(intel_driver_t *intel)
   intel->dri_ctx = NULL;
   intel->x11_display = NULL;
   intel->fd = -1;
-}
-
-LOCAL int
-intel_driver_get_param(intel_driver_t *driver, int param, int *value)
-{
-  int ret;
-  struct drm_i915_getparam gp;
-
-  memset(&gp, 0, sizeof(struct drm_i915_getparam));
-  gp.param = param;
-  gp.value = value;
-
-  ret = drmCommandWriteRead(driver->fd, DRM_I915_GETPARAM, &gp, sizeof(gp));
-  return ret == 0;
 }
 
 LOCAL int

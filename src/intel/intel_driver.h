@@ -143,9 +143,6 @@ extern int intel_driver_terminate(intel_driver_t*);
 /* simple check if driver was initialized (checking fd should suffice) */
 extern int intel_driver_is_active(intel_driver_t*);
 
-/* query device parameters using driver ioctl */
-extern int intel_driver_get_param(intel_driver_t*, int param, int *value);
-
 /* init the call backs used by the ocl driver */
 extern void intel_setup_callbacks(void);
 
