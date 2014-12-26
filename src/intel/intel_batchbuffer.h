@@ -96,7 +96,6 @@ extern void intel_batchbuffer_emit_reloc(intel_batchbuffer_t*,
                                          uint32_t read_domains,
                                          uint32_t write_domains,
                                          uint32_t delta);
-extern void intel_batchbuffer_emit_mi_flush(intel_batchbuffer_t*);
 extern void intel_batchbuffer_init(intel_batchbuffer_t*, struct intel_driver*);
 extern void intel_batchbuffer_terminate(intel_batchbuffer_t*);
 extern void intel_batchbuffer_flush(intel_batchbuffer_t*);

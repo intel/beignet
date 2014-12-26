@@ -158,13 +158,6 @@ intel_batchbuffer_emit_reloc(intel_batchbuffer_t *batch,
   intel_batchbuffer_emit_dword(batch, bo->offset + delta);
 }
 
-LOCAL void
-intel_batchbuffer_emit_mi_flush(intel_batchbuffer_t *batch)
-{
-  intel_batchbuffer_require_space(batch, 4);
-  intel_batchbuffer_emit_dword(batch, MI_FLUSH | STATE_INSTRUCTION_CACHE_INVALIDATE);
-}
-
 LOCAL intel_batchbuffer_t*
 intel_batchbuffer_new(intel_driver_t *intel)
 {

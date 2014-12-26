@@ -761,7 +761,6 @@ static void
 intel_gpgpu_flush_batch_buffer(intel_batchbuffer_t *batch)
 {
   assert(batch);
-  intel_batchbuffer_emit_mi_flush(batch);
   intel_batchbuffer_flush(batch);
 }
 
@@ -1611,6 +1610,9 @@ intel_gpgpu_walker_gen7(intel_gpgpu_t *gpgpu,
   OUT_BATCH(gpgpu->batch, CMD_MEDIA_STATE_FLUSH | 0);
   OUT_BATCH(gpgpu->batch, 0);                        /* kernel index == 0 */
   ADVANCE_BATCH(gpgpu->batch);
+
+  if (IS_IVYBRIDGE(gpgpu->drv->device_id))
+    intel_gpgpu_pipe_control(gpgpu);
 }
 
 static void
