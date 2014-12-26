@@ -61,8 +61,6 @@
 
 #define MI_NOOP                                 (CMD_MI | 0)
 #define MI_BATCH_BUFFER_END                     (CMD_MI | (0xA << 23))
-#define MI_FLUSH                                (CMD_MI | (0x4 << 23))
-#define STATE_INSTRUCTION_CACHE_INVALIDATE      (0x1 << 0)
 
 #define XY_COLOR_BLT_CMD                        (CMD_2D | (0x50 << 22) | 0x04)
 #define XY_COLOR_BLT_WRITE_ALPHA                (1 << 21)
