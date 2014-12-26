@@ -31,7 +31,7 @@
 #include <string.h>
 
 #define MAX_GROUP_SIZE_IN_HALFSLICE   512
-static INLINE size_t cl_kernel_compute_batch_sz(cl_kernel k) { return 256+128; }
+static INLINE size_t cl_kernel_compute_batch_sz(cl_kernel k) { return 256+256; }
 
 /* "Varing" payload is the part of the curbe that changes accross threads in the
  *  same work group. Right now, it consists in local IDs and block IPs
