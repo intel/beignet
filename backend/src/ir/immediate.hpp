@@ -84,6 +84,8 @@ namespace ir {
   public:
     INLINE Immediate(void) { }
 
+    Immediate & operator= (const Immediate &);
+
     INLINE Type getType(void) const {
       return (Type)type;
     }
@@ -307,7 +309,6 @@ namespace ir {
       const Immediate *immVec[];
       void *p;
     } data;     //!< Value to store
-    Immediate & operator= (const Immediate &);
     Immediate operator+ (const Immediate &) const;
     Immediate operator- (const Immediate &) const;
     Immediate operator* (const Immediate &) const;
