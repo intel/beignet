@@ -31,12 +31,16 @@
 #include "ir/value.hpp"
 #include "ir/unit.hpp"
 #include "ir/printf.hpp"
+
+#ifdef GBE_COMPILER_AVAILABLE
 #include "llvm/llvm_to_gen.hpp"
 #include "llvm/Config/llvm-config.h"
 #include "llvm/Support/Threading.h"
 #include "llvm/Support/ManagedStatic.h"
 #include "llvm/Transforms/Utils/Cloning.h"
 #include "llvm/IR/LLVMContext.h"
+#endif
+
 #include <cstring>
 #include <algorithm>
 #include <fstream>
@@ -46,6 +50,7 @@
 #include <unistd.h>
 #include <mutex>
 
+#ifdef GBE_COMPILER_AVAILABLE
 /* Not defined for LLVM 3.0 */
 #if !defined(LLVM_VERSION_MAJOR)
 #define LLVM_VERSION_MAJOR 3
@@ -75,6 +80,8 @@
 #endif  /* LLVM_VERSION_MINOR <= 2 */
 #include <llvm/Bitcode/ReaderWriter.h>
 #include <llvm/Support/raw_ostream.h>
+#endif
+
 #include "src/GBEConfig.h"
 
 namespace gbe {

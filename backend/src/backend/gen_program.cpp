@@ -22,6 +22,7 @@
  * \author Benjamin Segovia <benjamin.segovia@intel.com>
  */
 
+#ifdef GBE_COMPILER_AVAILABLE
 #include "llvm/Config/llvm-config.h"
 #if LLVM_VERSION_MAJOR == 3 && LLVM_VERSION_MINOR <= 2
 #include "llvm/LLVMContext.h"
@@ -45,6 +46,7 @@
 #include "llvm/Support/MemoryBuffer.h"
 #include "llvm/Support/SourceMgr.h"
 #include "llvm/IRReader/IRReader.h"
+#endif
 
 #include "backend/program.h"
 #include "backend/gen_program.h"
@@ -56,10 +58,12 @@
 #include "backend/gen/gen_mesa_disasm.h"
 #include "backend/gen_reg_allocation.hpp"
 #include "ir/unit.hpp"
+
+#ifdef GBE_COMPILER_AVAILABLE
 #include "llvm/llvm_to_gen.hpp"
 #include "llvm/llvm_gen_backend.hpp"
-
 #include <clang/CodeGen/CodeGenAction.h>
+#endif
 
 #include <cstring>
 #include <sstream>
