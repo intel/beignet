@@ -250,7 +250,7 @@ namespace gbe {
     uint32_t getKernelNum(void) const { return kernels.size(); }
     /*! Get the kernel from its name */
     Kernel *getKernel(const std::string &name) const {
-      auto it = kernels.find(name);
+      map<std::string, Kernel*>::const_iterator it = kernels.find(name);
       if (it == kernels.end())
         return NULL;
       else
@@ -260,9 +260,9 @@ namespace gbe {
     Kernel *getKernel(uint32_t ID) const {
       uint32_t currID = 0;
       Kernel *kernel = NULL;
-      for (const auto &pair : kernels) {
+      for (map<std::string, Kernel*>::const_iterator it = kernels.begin(); it != kernels.end(); ++it) {
         if (currID == ID) {
-          kernel = pair.second;
+          kernel = it->second;
           break;
         }
         currID++;

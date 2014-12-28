@@ -106,7 +106,8 @@ namespace gbe {
 
   Program::Program(void) : constantSet(NULL) {}
   Program::~Program(void) {
-    for (auto &kernel : kernels) GBE_DELETE(kernel.second);
+    for (map<std::string, Kernel*>::iterator it = kernels.begin(); it != kernels.end(); ++it)
+      GBE_DELETE(it->second);
     if (constantSet) delete constantSet;
   }
 
@@ -191,8 +192,8 @@ namespace gbe {
     }
 
     OUT_UPDATE_SZ(ker_num);
-    for (auto ker : kernels) {
-      size_t sz = ker.second->serializeToBin(outs);
+    for (map<std::string, Kernel*>::iterator it = kernels.begin(); it != kernels.end(); ++it) {
+      size_t sz = it->second->serializeToBin(outs);
       if (!sz)
         return 0;
 
@@ -275,7 +276,8 @@ namespace gbe {
     }
 
     OUT_UPDATE_SZ(patches.size());
-    for (auto patch : patches) {
+    for (size_t i = 0; i < patches.size(); ++i) {
+      const PatchInfo& patch = patches[i];
       unsigned int tmp;
       tmp = patch.type;
       OUT_UPDATE_SZ(tmp);
@@ -446,8 +448,8 @@ namespace gbe {
       constantSet->printStatus(indent + 4, outs);
     }
 
-    for (auto ker : kernels) {
-      ker.second->printStatus(indent + 4, outs);
+    for (map<std::string, Kernel*>::iterator it = kernels.begin(); it != kernels.end(); ++it) {
+      it->second->printStatus(indent + 4, outs);
     }
 
     outs << spaces << "================ End Program ================" << "\n";
@@ -481,7 +483,8 @@ namespace gbe {
 
     outs << spaces_nl << "  Patches Number is " << patches.size() << "\n";
     num = 0;
-    for (auto patch : patches) {
+    for (size_t i = 0; i < patches.size(); ++i) {
+      PatchInfo& patch = patches[i];
       num++;
       outs << spaces_nl << "  patch " << num << ":\n";
       outs << spaces_nl << "      type value: "<< patch.type << "\n";

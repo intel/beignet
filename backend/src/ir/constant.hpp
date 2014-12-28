@@ -76,12 +76,13 @@ namespace ir {
     Constant& getConstant(size_t i) { return constants[i]; }
     /*! Get a special constant */
     Constant& getConstant(const std::string & name) {
-      for (auto & c : constants) {
+      for (size_t i = 0; i < constants.size(); ++i) {
+        Constant& c = constants[i];
         if (c.getName() == name)
           return c;
       }
       GBE_ASSERT(false);
-      return *(Constant *)nullptr;
+      return *(Constant *)NULL;
     }
     /*! Number of bytes of serialized constant data */
     size_t getDataSize(void) const { return data.size(); }

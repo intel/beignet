@@ -171,11 +171,13 @@ namespace gbe
     {
     public:
       PrintfSet(const PrintfSet& other) {
-        for (auto &f : other.fmts) {
+        for (size_t i = 0; i < other.fmts.size(); ++i) {
+          const PrintfFmt& f = other.fmts[i];
           fmts.push_back(f);
         }
 
-        for (auto &s : other.slots) {
+        for (size_t i = 0; i < other.fmts.size(); ++i) {
+          PrintfSlot* s = other.slots[i];
           slots.push_back(s);
         }
 

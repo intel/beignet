@@ -56,7 +56,8 @@ namespace ir {
     /*! Apply the given functor on all the functions */
     template <typename T>
     INLINE void apply(const T &functor) const {
-      for (const auto &pair : functions) functor(*pair.second);
+      for (FunctionSet::const_iterator it = functions.begin(); it != functions.end(); ++it)
+        functor(*(it->second));
     }
     /*! Return the size of the pointers manipulated */
     INLINE PointerSize getPointerSize(void) const { return pointerSize; }
