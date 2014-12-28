@@ -353,12 +353,20 @@ namespace ir {
      *  this is not an input argument
      */
     INLINE const FunctionArgument *getArg(const Register &reg) const {
-      for (auto arg : args) if (arg->reg == reg) return arg;
+      for (size_t i = 0; i < args.size(); ++i) {
+        const FunctionArgument* arg = args[i];
+        if (arg->reg == reg)
+          return arg;
+      }
       return NULL;
     }
 
     INLINE FunctionArgument *getArg(const Register &reg) {
-      for (auto arg : args) if (arg->reg == reg) return arg;
+      for (size_t i = 0; i < args.size(); ++i) {
+        FunctionArgument* arg = args[i];
+        if (arg->reg == reg)
+          return arg;
+      }
       return NULL;
     }
 
@@ -417,12 +425,18 @@ namespace ir {
     /*! Apply the given functor on all basic blocks */
     template <typename T>
     INLINE void foreachBlock(const T &functor) const {
-      for (auto block : blocks) functor(*block);
+      for (size_t i = 0; i < blocks.size(); ++i) {
+        BasicBlock* block = blocks[i];
+        functor(*block);
+      }
     }
     /*! Apply the given functor on all instructions */
     template <typename T>
     INLINE void foreachInstruction(const T &functor) const {
-      for (auto block : blocks) block->foreach(functor);
+      for (size_t i = 0; i < blocks.size(); ++i) {
+        BasicBlock* block = blocks[i];
+        block->foreach(functor);
+      }
     }
     /*! Does it use SLM */
     INLINE bool getUseSLM(void) const { return this->useSLM; }

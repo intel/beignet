@@ -58,7 +58,7 @@ namespace ir {
 
   void ImageSet::appendInfo(ImageInfoKey key, uint32_t offset)
   {
-    auto it = indexMap.find(key.index);
+    map<uint32_t, struct ImageInfo *>::iterator it = indexMap.find(key.index);
     assert(it != indexMap.end());
     struct ImageInfo *imageInfo = it->second;
     setInfoOffset4Type(imageInfo, key.type, offset);
@@ -67,8 +67,8 @@ namespace ir {
   void ImageSet::clearInfo()
   {
     struct ImageInfo *imageInfo;
-    for(auto &it : indexMap) {
-      imageInfo = it.second;
+    for (map<uint32_t, struct ImageInfo *>::iterator it = indexMap.begin(); it != indexMap.end(); ++it) {
+      imageInfo = it->second;
       imageInfo->wSlot = -1;
       imageInfo->hSlot = -1;
       imageInfo->depthSlot = -1;
@@ -78,7 +78,7 @@ namespace ir {
   }
   int32_t ImageSet::getInfoOffset(ImageInfoKey key) const
   {
-    auto it = indexMap.find(key.index);
+    map<uint32_t, struct ImageInfo *>::const_iterator it = indexMap.find(key.index);
     if (it == indexMap.end())
       return -1;
     struct ImageInfo *imageInfo = it->second;
@@ -87,20 +87,20 @@ namespace ir {
 
   uint32_t ImageSet::getIdx(const Register imageReg) const
   {
-    auto it = regMap.find(imageReg);
+    map<Register, struct ImageInfo *>::const_iterator it = regMap.find(imageReg);
     GBE_ASSERT(it != regMap.end());
     return it->second->idx;
   }
 
   void ImageSet::getData(struct ImageInfo *imageInfos) const {
       int id = 0;
-      for(auto &it : regMap)
-        imageInfos[id++] = *it.second;
+      for (map<Register, struct ImageInfo *>::const_iterator it = regMap.begin(); it != regMap.end(); ++it)
+        imageInfos[id++] = *(it->second);
   }
 
   ImageSet::~ImageSet() {
-    for(auto &it : regMap)
-      GBE_DELETE(it.second);
+    for (map<Register, struct ImageInfo *>::const_iterator it = regMap.begin(); it != regMap.end(); ++it)
+      GBE_DELETE(it->second);
   }
 
 #define OUT_UPDATE_SZ(elt) SERIALIZE_OUT(elt, outs, ret_size)
@@ -113,29 +113,29 @@ namespace ir {
     OUT_UPDATE_SZ(magic_begin);
 
     OUT_UPDATE_SZ(regMap.size());
-    for (auto iter : regMap) {
-      OUT_UPDATE_SZ(iter.first);
-      OUT_UPDATE_SZ(iter.second->arg_idx);
-      OUT_UPDATE_SZ(iter.second->idx);
-      OUT_UPDATE_SZ(iter.second->wSlot);
-      OUT_UPDATE_SZ(iter.second->hSlot);
-      OUT_UPDATE_SZ(iter.second->depthSlot);
-      OUT_UPDATE_SZ(iter.second->dataTypeSlot);
-      OUT_UPDATE_SZ(iter.second->channelOrderSlot);
-      OUT_UPDATE_SZ(iter.second->dimOrderSlot);
+    for (map<Register, struct ImageInfo *>::const_iterator it = regMap.begin(); it != regMap.end(); ++it) {
+      OUT_UPDATE_SZ(it->first);
+      OUT_UPDATE_SZ(it->second->arg_idx);
+      OUT_UPDATE_SZ(it->second->idx);
+      OUT_UPDATE_SZ(it->second->wSlot);
+      OUT_UPDATE_SZ(it->second->hSlot);
+      OUT_UPDATE_SZ(it->second->depthSlot);
+      OUT_UPDATE_SZ(it->second->dataTypeSlot);
+      OUT_UPDATE_SZ(it->second->channelOrderSlot);
+      OUT_UPDATE_SZ(it->second->dimOrderSlot);
     }
 
     OUT_UPDATE_SZ(indexMap.size());
-    for (auto iter : indexMap) {
-      OUT_UPDATE_SZ(iter.first);
-      OUT_UPDATE_SZ(iter.second->arg_idx);
-      OUT_UPDATE_SZ(iter.second->idx);
-      OUT_UPDATE_SZ(iter.second->wSlot);
-      OUT_UPDATE_SZ(iter.second->hSlot);
-      OUT_UPDATE_SZ(iter.second->depthSlot);
-      OUT_UPDATE_SZ(iter.second->dataTypeSlot);
-      OUT_UPDATE_SZ(iter.second->channelOrderSlot);
-      OUT_UPDATE_SZ(iter.second->dimOrderSlot);
+    for (map<uint32_t, struct ImageInfo *>::iterator it = indexMap.begin(); it != indexMap.end(); ++it) {
+      OUT_UPDATE_SZ(it->first);
+      OUT_UPDATE_SZ(it->second->arg_idx);
+      OUT_UPDATE_SZ(it->second->idx);
+      OUT_UPDATE_SZ(it->second->wSlot);
+      OUT_UPDATE_SZ(it->second->hSlot);
+      OUT_UPDATE_SZ(it->second->depthSlot);
+      OUT_UPDATE_SZ(it->second->dataTypeSlot);
+      OUT_UPDATE_SZ(it->second->channelOrderSlot);
+      OUT_UPDATE_SZ(it->second->dimOrderSlot);
     }
 
     OUT_UPDATE_SZ(magic_end);
@@ -211,31 +211,31 @@ namespace ir {
     outs << spaces_nl  << "  ImageSet Map: [reg, arg_idx, idx, wSlot, hSlot, depthSlot, "
                 "dataTypeSlot, channelOrderSlot, dimOrderSlot]\n";
     outs << spaces_nl << "     regMap size: " << regMap.size() << "\n";
-    for (auto iter : regMap) {
-      outs << spaces_nl << "         [" << iter.first << ", "
-           << iter.second->arg_idx << ", "
-           << iter.second->idx << ", "
-           << iter.second->wSlot << ", "
-           << iter.second->hSlot << ", "
-           << iter.second->depthSlot << ", "
-           << iter.second->dataTypeSlot << ", "
-           << iter.second->channelOrderSlot << ", "
-           << iter.second->dimOrderSlot << "]" << "\n";
+    for (map<Register, struct ImageInfo *>::const_iterator it = regMap.begin(); it != regMap.end(); ++it) {
+      outs << spaces_nl << "         [" << it->first << ", "
+           << it->second->arg_idx << ", "
+           << it->second->idx << ", "
+           << it->second->wSlot << ", "
+           << it->second->hSlot << ", "
+           << it->second->depthSlot << ", "
+           << it->second->dataTypeSlot << ", "
+           << it->second->channelOrderSlot << ", "
+           << it->second->dimOrderSlot << "]" << "\n";
    }
 
    outs << spaces_nl << "  ImageSet Map: [index, arg_idx, idx, wSlot, hSlot, depthSlot, "
            "dataTypeSlot, channelOrderSlot, dimOrderSlot]\n";
    outs << spaces_nl << "     regMap size: " << indexMap.size() << "\n";
-   for (auto iter : indexMap) {
-     outs << spaces_nl << "         [" << iter.first << ", "
-          << iter.second->arg_idx << ", "
-          << iter.second->idx << ", "
-          << iter.second->wSlot << ", "
-          << iter.second->hSlot << ", "
-          << iter.second->depthSlot << ", "
-          << iter.second->dataTypeSlot << ", "
-          << iter.second->channelOrderSlot << ", "
-          << iter.second->dimOrderSlot << ", " << "\n";
+   for (map<uint32_t, struct ImageInfo *>::iterator it = indexMap.begin(); it != indexMap.end(); ++it) {
+     outs << spaces_nl << "         [" << it->first << ", "
+          << it->second->arg_idx << ", "
+          << it->second->idx << ", "
+          << it->second->wSlot << ", "
+          << it->second->hSlot << ", "
+          << it->second->depthSlot << ", "
+          << it->second->dataTypeSlot << ", "
+          << it->second->channelOrderSlot << ", "
+          << it->second->dimOrderSlot << ", " << "\n";
    }
 
    outs << spaces << "------------- End ImageSet -------------" << "\n";

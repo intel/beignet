@@ -100,8 +100,8 @@ namespace ir {
     template <DataFlowDirection dir, typename T>
     void foreach(const T &functor) {
       // Iterate on all blocks
-      for (const auto &pair : liveness) {
-        BlockInfo &info = *pair.second;
+      for (Info::iterator pair = liveness.begin(); pair != liveness.end(); ++pair) {
+        BlockInfo &info = *(pair->second);
         const BasicBlock &bb = info.bb;
         const BlockSet *set = NULL;
         if (dir == DF_SUCC)
@@ -109,8 +109,8 @@ namespace ir {
         else
           set = &bb.getPredecessorSet();
         // Iterate over all successors
-        for (auto other : *set) {
-          auto otherInfo = liveness.find(other);
+        for (BlockSet::iterator other = (*set).begin(); other != (*set).end(); ++other) {
+          Info::iterator otherInfo = liveness.find(*other);
           GBE_ASSERT(otherInfo != liveness.end() && otherInfo->second != NULL);
           functor(info, *otherInfo->second);
         }

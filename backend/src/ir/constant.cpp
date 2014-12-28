@@ -56,7 +56,8 @@ namespace ir {
     }
 
     OUT_UPDATE_SZ(constants.size());
-    for (auto const &cnst : constants) {
+    for (size_t i = 0; i < constants.size(); ++i) {
+      Constant& cnst = constants[i];
       size_t bytes = sizeof(cnst.getName().size())        //name length self
                      + cnst.getName().size()*sizeof(char) //name
                      + sizeof(cnst.getSize())             //size

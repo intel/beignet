@@ -48,8 +48,8 @@ namespace ir {
     size_t getDataSize(void) { return samplerMap.size(); }
     size_t getDataSize(void) const { return samplerMap.size(); }
     void getData(uint32_t *samplers) const {
-      for(auto &it : samplerMap)
-        samplers[it.second] = it.first;
+      for (map<uint32_t, uint32_t>::const_iterator it = samplerMap.begin(); it != samplerMap.end(); ++it)
+        samplers[it->second] = it->first;
     }
 
     void operator = (const SamplerSet& other) {

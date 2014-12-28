@@ -35,11 +35,11 @@ namespace gbe
     {
       fmts.push_back(*fmt);
 
-      for (auto &f : fmts.back()) {
-        if (f.type == PRINTF_SLOT_TYPE_STRING)
+      for (PrintfFmt::iterator f = fmts.back().begin(); f != fmts.back().end(); ++f) {
+        if (f->type == PRINTF_SLOT_TYPE_STRING)
           continue;
 
-        slots.push_back(&f);
+        slots.push_back(&(*f));
       }
 
       /* Update the total size of size. */
@@ -121,14 +121,16 @@ namespace gbe
       std::string pf_str;
       int stmt = 0;
 
-      for (auto &pf : fmts) {
+      for (size_t count = 0; count < fmts.size(); ++count) {
+        PrintfFmt& pf = fmts[count];
         for (i = 0; i < global_wk_sz0; i++) {
           for (j = 0; j < global_wk_sz1; j++) {
             for (k = 0; k < global_wk_sz2; k++) {
               int loop_num = ((int *)index_addr)[stmt*global_wk_sz0*global_wk_sz1*global_wk_sz2
                                                  + k*global_wk_sz0*global_wk_sz1 + j*global_wk_sz0 + i];
               for (int n = 0; n < loop_num; n++) {
-                for (auto &slot : pf) {
+                for (PrintfFmt::iterator pfit = pf.begin(); pfit != pf.end(); ++pfit) {
+                  PrintfSlot& slot = *pfit;
                   pf_str = "";
                   int vec_num;
 
