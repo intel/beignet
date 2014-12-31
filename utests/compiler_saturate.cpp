@@ -2,7 +2,7 @@
 
 namespace {
 
-constexpr int n = 16;
+const int n = 16;
 
 // declaration only, we should create each template specification for each type.
 template<typename T>

@@ -160,8 +160,8 @@ Info_Result<T>* cast_as(void *info)
 	cl_int ret; \
 	size_t ret_size; \
 	\
-	Info_Result<TYPE>* info = cast_as<TYPE>(x.second); \
-	ret = FUNC (__VA_ARGS__, x.first, \
+	Info_Result<TYPE>* info = cast_as<TYPE>(x->second); \
+	ret = FUNC (__VA_ARGS__, x->first, \
 		info->size, info->get_ret(), &ret_size); \
 	OCL_ASSERT((!ret)); \
 	OCL_ASSERT((info->check_result())); \
@@ -221,8 +221,8 @@ void get_program_info(void)
     maps.insert(make_pair(CL_PROGRAM_BINARIES,
                           (void *)(new Info_Result<char **>(&expect_source, &sz, 1))));
 
-    std::for_each(maps.begin(), maps.end(), [](pair<cl_program_info, void *> x) {
-        switch (x.first) {
+    for (map<cl_program_info, void *>::iterator x = maps.begin(); x != maps.end(); ++x) {
+        switch (x->first) {
         case CL_PROGRAM_REFERENCE_COUNT:
         case CL_PROGRAM_NUM_DEVICES:
             CALL_PROGINFO_AND_RET(cl_uint);
@@ -245,7 +245,7 @@ void get_program_info(void)
         default:
             break;
         }
-    });
+    }
 }
 
 MAKE_UTEST_FROM_FUNCTION(get_program_info);
@@ -296,8 +296,8 @@ void get_queue_info(void)
                           (void *)(new Info_Result<cl_command_queue_properties>(
                                        ((cl_command_queue_properties)prop)))));
 
-    std::for_each(maps.begin(), maps.end(), [](pair<cl_program_info, void *> x) {
-        switch (x.first) {
+    for (map<cl_program_info, void *>::iterator x = maps.begin(); x != maps.end(); ++x) {
+        switch (x->first) {
         case CL_QUEUE_CONTEXT:
             CALL_QUEUEINFO_AND_RET(cl_context);
             break;
@@ -313,7 +313,7 @@ void get_queue_info(void)
         default:
             break;
         }
-    });
+    }
 }
 
 MAKE_UTEST_FROM_FUNCTION(get_queue_info);
@@ -345,8 +345,8 @@ void get_program_build_info(void)
     maps.insert(make_pair(CL_PROGRAM_BUILD_LOG, /* not supported now, just "" */
                           (void *)(new Info_Result<char *>(log, sz))));
 
-    std::for_each(maps.begin(), maps.end(), [](pair<cl_program_info, void *> x) {
-        switch (x.first) {
+    for (map<cl_program_info, void *>::iterator x = maps.begin(); x != maps.end(); ++x) {
+        switch (x->first) {
         case CL_PROGRAM_BUILD_STATUS:
             CALL_PROG_BUILD_INFO_AND_RET(cl_build_status);
             break;
@@ -359,7 +359,7 @@ void get_program_build_info(void)
         default:
             break;
         }
-    });
+    }
 }
 
 MAKE_UTEST_FROM_FUNCTION(get_program_build_info);
@@ -409,8 +409,8 @@ void get_context_info(void)
                           (void *)(new Info_Result<char*>(
                                        (const char*)NULL, 100*sizeof(cl_context_properties)))));
 
-    std::for_each(maps.begin(), maps.end(), [](pair<cl_context_info, void *> x) {
-        switch (x.first) {
+    for (map<cl_program_info, void *>::iterator x = maps.begin(); x != maps.end(); ++x) {
+        switch (x->first) {
         case CL_CONTEXT_NUM_DEVICES:
             CALL_CONTEXTINFO_AND_RET(cl_uint);
             break;
@@ -426,7 +426,7 @@ void get_context_info(void)
         default:
             break;
         }
-    });
+    }
 }
 
 MAKE_UTEST_FROM_FUNCTION(get_context_info);
@@ -469,8 +469,8 @@ void get_kernel_info(void)
     maps.insert(make_pair(CL_KERNEL_FUNCTION_NAME,
                           (void *)(new Info_Result<char*>(expected_name, strlen(expected_name)+1))));
 
-    std::for_each(maps.begin(), maps.end(), [](pair<cl_kernel_info, void *> x) {
-        switch (x.first) {
+    for (map<cl_program_info, void *>::iterator x = maps.begin(); x != maps.end(); ++x) {
+        switch (x->first) {
         case CL_KERNEL_PROGRAM:
             CALL_KERNELINFO_AND_RET(cl_program);
             break;
@@ -489,7 +489,7 @@ void get_kernel_info(void)
         default:
             break;
         }
-    });
+    }
 }
 
 MAKE_UTEST_FROM_FUNCTION(get_kernel_info);
@@ -600,8 +600,8 @@ void get_mem_info(void)
     maps.insert(make_pair(CL_MEM_OFFSET,
                           (void *)(new Info_Result<size_t>(((size_t)expect_ref)))));
 
-    std::for_each(maps.begin(), maps.end(), [](pair<cl_mem_info, void *> x) {
-        switch (x.first) {
+    for (map<cl_program_info, void *>::iterator x = maps.begin(); x != maps.end(); ++x) {
+        switch (x->first) {
         case CL_MEM_TYPE:
             CALL_GETMEMINFO_AND_RET(cl_mem_object_type);
             break;
@@ -633,7 +633,7 @@ void get_mem_info(void)
         default:
             break;
         }
-    });
+    }
 
     clEnqueueUnmapMemObject(queue, buf[0], map_ptr, 0, NULL, NULL);
 }

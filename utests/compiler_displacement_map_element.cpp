@@ -1,8 +1,8 @@
 #include "utest_helper.hpp"
 
 typedef unsigned int uint;
-constexpr int W = 16, H = 16;
-constexpr int SIZE = W * H;
+const int W = 16, H = 16;
+const int SIZE = W * H;
 uint in_1[SIZE];
 uint disp_map[SIZE];
 uint out_1[SIZE];
