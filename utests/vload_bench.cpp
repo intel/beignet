@@ -11,7 +11,7 @@ static double vload_bench(const char *kernelFunc, uint32_t N, uint32_t offset, b
   struct timeval start, end;
 
   // Setup kernel and buffers
-  std::string kernelName = kernelFunc + std::to_string(N);
+  std::string kernelName = kernelFunc + std::to_string((long long unsigned int)N);
   OCL_CALL (cl_kernel_init, "vload_bench.cl", kernelName.c_str(), SOURCE, NULL);
   //OCL_CREATE_KERNEL("compiler_array");
   buf_data[0] = (T*) malloc(sizeof(T) * n);
@@ -42,7 +42,7 @@ static double vload_bench(const char *kernelFunc, uint32_t N, uint32_t offset, b
     OCL_MAP_BUFFER(0);
     OCL_MAP_BUFFER(1);
     for (uint32_t i = 0; i < globals[0]; ++i) {
-      OCL_ASSERT(((T*)buf_data[0])[i + offset] == ((uint32_t*)buf_data[1])[i]);
+      OCL_ASSERT((uint32_t)(((T*)buf_data[0])[i + offset]) == ((uint32_t*)buf_data[1])[i]);
     }
     return 0;
   }
