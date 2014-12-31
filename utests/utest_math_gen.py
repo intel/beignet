@@ -462,7 +462,10 @@ static float pown(float x, int y){
   powr_output_type = ['float','float2','float4','float8','float16']
   powr_cpu_func='''
 static float powr(float x, int y){
-    return powf(x,y);
+    if (x<0)
+        return NAN;
+    else
+        return powf(x,y);
 } '''
   powrUtests = func('powr','powr',[powr_input_type1,powr_input_type2],powr_output_type,[powr_input_values1,powr_input_values2],'16 * FLT_ULP', powr_cpu_func)
   
