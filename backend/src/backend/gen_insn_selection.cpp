@@ -529,7 +529,7 @@ namespace gbe
     /*! Saturated 64bit x*y + z */
     void I64MADSAT(Reg dst, Reg src0, Reg src1, Reg src2, GenRegister tmp[9]);
     /*! High 64bit of x*y */
-    void I64_MUL_HI(Reg dst, Reg src0, Reg src1, GenRegister tmp[9]);
+    void I64_MUL_HI(Reg dst, Reg src0, Reg src1, GenRegister *tmp, int tmp_num);
     /*! (x+y)>>1 without mod. overflow */
     void I64HADD(Reg dst, Reg src0, Reg src1, GenRegister tmp[4]);
     /*! (x+y+1)>>1 without mod. overflow */
@@ -1487,12 +1487,12 @@ namespace gbe
       insn->dst(i + 1) = tmp[i];
   }
 
-  void Selection::Opaque::I64_MUL_HI(Reg dst, Reg src0, Reg src1, GenRegister tmp[9]) {
-    SelectionInstruction *insn = this->appendInsn(SEL_OP_I64_MUL_HI, 10, 2);
+  void Selection::Opaque::I64_MUL_HI(Reg dst, Reg src0, Reg src1, GenRegister *tmp, int tmp_num) {
+    SelectionInstruction *insn = this->appendInsn(SEL_OP_I64_MUL_HI, tmp_num + 1, 2);
     insn->dst(0) = dst;
     insn->src(0) = src0;
     insn->src(1) = src1;
-    for(int i = 0; i < 9; i ++)
+    for(int i = 0; i < tmp_num; i ++)
       insn->dst(i + 1) = tmp[i];
   }
 
@@ -2388,17 +2388,26 @@ namespace gbe
           }
         case OP_I64_MUL_HI:
          {
-          GenRegister temp[9];
-          for(int i=0; i<9; i++) {
-            temp[i] = sel.selReg(sel.reg(FAMILY_DWORD));
-            temp[i].type = GEN_TYPE_UD;
-          }
-          sel.push();
-            sel.curr.flag = 0;
-            sel.curr.subFlag = 1;
-            sel.I64_MUL_HI(dst, src0, src1, temp);
-          sel.pop();
-          break;
+           int tmp_num;
+           GenRegister temp[9];
+           if (sel.hasLongType()) {
+             for(int i=0; i<9; i++) {
+               temp[i] = sel.selReg(sel.reg(FAMILY_QWORD), ir::TYPE_U64);
+             }
+             tmp_num = 6;
+           } else {
+             for(int i=0; i<9; i++) {
+               temp[i] = sel.selReg(sel.reg(FAMILY_DWORD));
+               temp[i].type = GEN_TYPE_UD;
+             }
+             tmp_num = 9;
+           }
+           sel.push();
+           sel.curr.flag = 0;
+           sel.curr.subFlag = 1;
+           sel.I64_MUL_HI(dst, src0, src1, temp, tmp_num);
+           sel.pop();
+           break;
          }
         case OP_MUL:
           if (type == TYPE_U32 || type == TYPE_S32) {

@@ -102,6 +102,122 @@ namespace gbe
     }
   }
 
+  static void calculateFullU64MUL(GenEncoder* p, GenRegister src0, GenRegister src1, GenRegister dst_h,
+                                  GenRegister dst_l, GenRegister s0l_s1h, GenRegister s0h_s1l)
+  {
+    src0.type = src1.type = GEN_TYPE_UD;
+    dst_h.type = dst_l.type = GEN_TYPE_UL;
+    s0l_s1h.type = s0h_s1l.type = GEN_TYPE_UL;
+
+    GenRegister s0l = src0.hstride == GEN_HORIZONTAL_STRIDE_0 ?
+      GenRegister::retype(src0, GEN_TYPE_UD) : GenRegister::unpacked_ud(src0.nr, src0.subnr);
+    GenRegister s1l = src1.hstride == GEN_HORIZONTAL_STRIDE_0 ?
+      GenRegister::retype(src1, GEN_TYPE_UD)  : GenRegister::unpacked_ud(src1.nr, src1.subnr);
+    GenRegister s0h = GenRegister::offset(s0l, 0, 4);
+    GenRegister s1h = GenRegister::offset(s1l, 0, 4);
+
+    /* Low 32 bits X low 32 bits. */
+    p->MUL(dst_l, s0l, s1l);
+    /* High 32 bits X High 32 bits. */
+    p->MUL(dst_h, s0h, s1h);
+    /* Low 32 bits X high 32 bits. */
+    p->MUL(s0l_s1h, s0l, s1h);
+    /* High 32 bits X low 32 bits. */
+    p->MUL(s0h_s1l, s0h, s1l);
+
+    /*  Because the max product of s0l*s1h is (2^N - 1) * (2^N - 1) = 2^2N + 1 - 2^(N+1), here N = 32
+        The max of addding 2 32bits integer to it is
+        2^2N + 1 - 2^(N+1) + 2*(2^N - 1) = 2^2N - 1
+        which means the product s0h_s1l adds dst_l's high 32 bits and then adds s0l_s1h's low 32 bits will not
+        overflow and have no carry.
+        By this manner, we can avoid using acc register, which has a lot of restrictions. */
+
+    GenRegister dst_l_h = dst_l.hstride == GEN_HORIZONTAL_STRIDE_0 ? GenRegister::retype(dst_l, GEN_TYPE_UD) :
+      GenRegister::unpacked_ud(dst_l.nr, dst_l.subnr + 1);
+    p->ADD(s0h_s1l, s0h_s1l, dst_l_h);
+    GenRegister s0l_s1h_l = s0l_s1h.hstride == GEN_HORIZONTAL_STRIDE_0 ? GenRegister::retype(s0l_s1h, GEN_TYPE_UD) :
+      GenRegister::unpacked_ud(s0l_s1h.nr, s0l_s1h.subnr);
+    p->ADD(s0h_s1l, s0h_s1l, s0l_s1h_l);
+    GenRegister s0l_s1h_h = s0l_s1h.hstride == GEN_HORIZONTAL_STRIDE_0 ? GenRegister::retype(s0l_s1h, GEN_TYPE_UD) :
+      GenRegister::unpacked_ud(s0l_s1h.nr, s0l_s1h.subnr + 1);
+    p->ADD(dst_h, dst_h, s0l_s1h_h);
+
+    // No longer need s0l_s1h
+    GenRegister tmp = s0l_s1h;
+
+    p->SHL(tmp, s0h_s1l, GenRegister::immud(32));
+    GenRegister tmp_unpacked = tmp.hstride == GEN_HORIZONTAL_STRIDE_0 ? GenRegister::retype(tmp, GEN_TYPE_UD) :
+      GenRegister::unpacked_ud(tmp.nr, tmp.subnr + 1);
+    p->MOV(dst_l_h, tmp_unpacked);
+
+    p->SHR(tmp, s0h_s1l, GenRegister::immud(32));
+    p->ADD(dst_h, dst_h, tmp);
+  }
+
+  static void calculateFullS64MUL(GenEncoder* p, GenRegister src0, GenRegister src1, GenRegister dst_h,
+                                  GenRegister dst_l, GenRegister s0_abs, GenRegister s1_abs, 
+                                  GenRegister tmp0, GenRegister tmp1, GenRegister sign, GenRegister flagReg)
+  {
+    tmp0.type = tmp1.type = GEN_TYPE_UL;
+    sign.type = GEN_TYPE_UL;
+    src0.type = src1.type = GEN_TYPE_UL;
+    /* First, need to get the sign. */
+    p->SHR(tmp0, src0, GenRegister::immud(63));
+    p->SHR(tmp1, src1, GenRegister::immud(63));
+    p->XOR(sign, tmp0, tmp1);
+
+    src0.type = src1.type = GEN_TYPE_L;
+
+    tmp0.type = tmp1.type = GEN_TYPE_UL;
+    s0_abs.type = s1_abs.type = GEN_TYPE_L;
+    p->MOV(s0_abs, GenRegister::abs(src0));
+    p->MOV(s1_abs, GenRegister::abs(src1));
+    calculateFullU64MUL(p, s0_abs, s1_abs, dst_h, dst_l, tmp0, tmp1);
+
+    p->push();
+    p->curr.predicate = GEN_PREDICATE_NONE;
+    p->curr.noMask = 1;
+    p->curr.useFlag(flagReg.flag_nr(), flagReg.flag_subnr());
+    p->CMP(GEN_CONDITIONAL_NZ, sign, GenRegister::immud(0), tmp0);
+    p->curr.noMask = 0;
+    p->curr.predicate = GEN_PREDICATE_NORMAL;
+
+    /* Calculate the neg for the whole 128 bits. */
+    dst_l.type = GEN_TYPE_UL;
+    dst_h.type = GEN_TYPE_L;
+    p->NOT(dst_l, dst_l);
+    p->NOT(dst_h, dst_h);
+    p->ADD(dst_l, dst_l, GenRegister::immud(0x01));
+    p->curr.useFlag(flagReg.flag_nr(), flagReg.flag_subnr());
+    p->CMP(GEN_CONDITIONAL_Z, dst_l, GenRegister::immud(0), tmp0);
+    p->ADD(dst_h, dst_h, GenRegister::immud(0x01));
+    p->pop();
+  }
+
+  void Gen8Context::emitI64MULHIInstruction(const SelectionInstruction &insn)
+  {
+    GenRegister src0 = ra->genReg(insn.src(0));
+    GenRegister src1 = ra->genReg(insn.src(1));
+    GenRegister dst_h = ra->genReg(insn.dst(0));
+    GenRegister dst_l = ra->genReg(insn.dst(1));
+    GenRegister s0_abs = ra->genReg(insn.dst(2));
+    GenRegister s1_abs = ra->genReg(insn.dst(3));
+    GenRegister tmp0 = ra->genReg(insn.dst(4));
+    GenRegister tmp1 = ra->genReg(insn.dst(5));
+    GenRegister sign = ra->genReg(insn.dst(6));
+    GenRegister flagReg = GenRegister::flag(insn.state.flag, insn.state.subFlag);
+
+    if(src0.type == GEN_TYPE_UL) {
+      GBE_ASSERT(src1.type == GEN_TYPE_UL);
+      calculateFullU64MUL(p, src0, src1, dst_h, dst_l, tmp0, tmp1);
+    } else {
+      GBE_ASSERT(src0.type == GEN_TYPE_L);
+      GBE_ASSERT(src1.type == GEN_TYPE_L);
+      calculateFullS64MUL(p, src0, src1, dst_h, dst_l, s0_abs, s1_abs, tmp0,
+                          tmp1, sign, flagReg);
+    }
+  }
+
   void Gen8Context::emitI64MULInstruction(const SelectionInstruction &insn)
   {
     GenRegister src0 = ra->genReg(insn.src(0));
