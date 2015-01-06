@@ -67,8 +67,36 @@ namespace gbe
       return false;
   }
 
+  INLINE bool isVectorOfLongs(GenRegister reg) {
+    if (reg.hstride != GEN_HORIZONTAL_STRIDE_0 &&
+        (reg.type == GEN_TYPE_UL || reg.type == GEN_TYPE_L))
+      return true;
+    else
+      return false;
+  }
+
+  INLINE bool isCrossMoreThan2(GenRegister reg) {
+    if (reg.hstride == GEN_HORIZONTAL_STRIDE_0)
+      return false;
+
+    const uint32_t typeSz = typeSize(reg.type);
+    const uint32_t horizontal = stride(reg.hstride);
+    if (horizontal * typeSz * 16 > GEN_REG_SIZE * 2) {
+      return true;
+    }
+    return false;
+  }
+
   INLINE bool needToSplitAlu1(GenEncoder *p, GenRegister dst, GenRegister src) {
-    if (p->curr.execWidth != 16 || src.hstride == GEN_HORIZONTAL_STRIDE_0) return false;
+    if (p->curr.execWidth != 16) return false;
+    if (isVectorOfLongs(dst) == true) return true;
+    if (isCrossMoreThan2(dst) == true) return true;
+
+    if (src.hstride == GEN_HORIZONTAL_STRIDE_0) return false;
+
+    if (isCrossMoreThan2(src) == true) return true;
+    if (isVectorOfLongs(src) == true) return true;
+
     if (isVectorOfBytes(dst) == true &&
         ((isVectorOfBytes(src) == true && src.hstride == dst.hstride)
           || src.hstride == GEN_HORIZONTAL_STRIDE_0))
@@ -79,15 +107,24 @@ namespace gbe
   }
 
   INLINE bool needToSplitAlu2(GenEncoder *p, GenRegister dst, GenRegister src0, GenRegister src1) {
-    if (p->curr.execWidth != 16 ||
-         (src0.hstride == GEN_HORIZONTAL_STRIDE_0 &&
-          src1.hstride == GEN_HORIZONTAL_STRIDE_0))
+    if (p->curr.execWidth != 16) return false;
+    if (isVectorOfLongs(dst) == true) return true;
+    if (isCrossMoreThan2(dst) == true) return true;
+
+    if (src0.hstride == GEN_HORIZONTAL_STRIDE_0 &&
+		src1.hstride == GEN_HORIZONTAL_STRIDE_0)
       return false;
+
+    if (isVectorOfLongs(src0) == true) return true;
+    if (isVectorOfLongs(src1) == true) return true;
+    if (isCrossMoreThan2(src0) == true) return true;
+    if (isCrossMoreThan2(src1) == true) return true;
+
     if (isVectorOfBytes(dst) == true &&
         ((isVectorOfBytes(src0) == true && src0.hstride == dst.hstride) ||
-          src0.hstride == GEN_HORIZONTAL_STRIDE_0) &&
+         src0.hstride == GEN_HORIZONTAL_STRIDE_0) &&
         ((isVectorOfBytes(src1) == true && src1.hstride == dst.hstride) ||
-          src1.hstride == GEN_HORIZONTAL_STRIDE_0))
+         src1.hstride == GEN_HORIZONTAL_STRIDE_0))
       return false;
     if (isVectorOfBytes(dst) == true ) return true;
     if (isVectorOfBytes(src0) == true) return true;
@@ -95,13 +132,23 @@ namespace gbe
     return false;
   }
 
-  INLINE bool needToSplitCmp(GenEncoder *p, GenRegister src0, GenRegister src1) {
-    if (p->curr.execWidth != 16 ||
-         (src0.hstride == GEN_HORIZONTAL_STRIDE_0 &&
-          src1.hstride == GEN_HORIZONTAL_STRIDE_0))
+  INLINE bool needToSplitCmp(GenEncoder *p, GenRegister src0, GenRegister src1, GenRegister dst) {
+    if (p->curr.execWidth != 16) return false;
+    if (isVectorOfLongs(dst) == true) return true;
+    if (isCrossMoreThan2(dst) == true) return true;
+
+    if (src0.hstride == GEN_HORIZONTAL_STRIDE_0 &&
+            src1.hstride == GEN_HORIZONTAL_STRIDE_0)
       return false;
+
     if (isVectorOfBytes(src0) == true) return true;
     if (isVectorOfBytes(src1) == true) return true;
+
+    if (isVectorOfLongs(src0) == true) return true;
+    if (isVectorOfLongs(src1) == true) return true;
+    if (isCrossMoreThan2(src0) == true) return true;
+    if (isCrossMoreThan2(src1) == true) return true;
+
     if (src0.type == GEN_TYPE_D || src0.type == GEN_TYPE_UD || src0.type == GEN_TYPE_F)
       return true;
     if (src1.type == GEN_TYPE_D || src1.type == GEN_TYPE_UD || src1.type == GEN_TYPE_F)
@@ -874,7 +921,7 @@ namespace gbe
   }
 
   void GenEncoder::CMP(uint32_t conditional, GenRegister src0, GenRegister src1, GenRegister dst) {
-    if (needToSplitCmp(this, src0, src1) == false) {
+    if (needToSplitCmp(this, src0, src1, dst) == false) {
       if(!GenRegister::isNull(dst) && compactAlu2(this, GEN_OPCODE_CMP, dst, src0, src1, conditional, false)) {
         return;
       }
