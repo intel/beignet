@@ -2255,14 +2255,14 @@ namespace gbe
 
       switch (opcode) {
         case OP_ADD:
-          if (type == Type::TYPE_U64 || type == Type::TYPE_S64) {
+          if ((type == Type::TYPE_U64 || type == Type::TYPE_S64) && !sel.hasLongType()) {
             GenRegister t = sel.selReg(sel.reg(RegisterFamily::FAMILY_QWORD), Type::TYPE_S64);
             sel.I64ADD(dst, src0, src1, t);
           } else
             sel.ADD(dst, src0, src1);
           break;
         case OP_ADDSAT:
-          if (type == Type::TYPE_U64 || type == Type::TYPE_S64) {
+          if ((type == Type::TYPE_U64 || type == Type::TYPE_S64) && !sel.hasLongType()) {
             GenRegister tmp[5];
             for(int i=0; i<5; i++) {
               tmp[i] = sel.selReg(sel.reg(FAMILY_DWORD));
@@ -2281,32 +2281,32 @@ namespace gbe
           sel.pop();
           break;
         case OP_XOR:
-          if (type == Type::TYPE_U64 || type == Type::TYPE_S64)
+          if ((type == Type::TYPE_U64 || type == Type::TYPE_S64) && !sel.hasLongType())
             sel.I64XOR(dst, src0, src1);
           else
             sel.XOR(dst, src0, src1);
           break;
         case OP_OR:
-          if (type == Type::TYPE_U64 || type == Type::TYPE_S64)
+          if ((type == Type::TYPE_U64 || type == Type::TYPE_S64) && !sel.hasLongType())
             sel.I64OR(dst, src0, src1);
           else
             sel.OR(dst, src0, src1);
           break;
         case OP_AND:
-          if (type == Type::TYPE_U64 || type == Type::TYPE_S64)
+          if ((type == Type::TYPE_U64 || type == Type::TYPE_S64) && !sel.hasLongType())
             sel.I64AND(dst, src0, src1);
           else
             sel.AND(dst, src0, src1);
           break;
         case OP_SUB:
-          if (type == Type::TYPE_U64 || type == Type::TYPE_S64) {
+          if ((type == Type::TYPE_U64 || type == Type::TYPE_S64) && !sel.hasLongType()) {
             GenRegister t = sel.selReg(sel.reg(RegisterFamily::FAMILY_QWORD), Type::TYPE_S64);
             sel.I64SUB(dst, src0, src1, t);
           } else
             sel.ADD(dst, src0, GenRegister::negate(src1));
           break;
         case OP_SUBSAT:
-          if (type == Type::TYPE_U64 || type == Type::TYPE_S64) {
+          if ((type == Type::TYPE_U64 || type == Type::TYPE_S64) && !sel.hasLongType()) {
             GenRegister tmp[5];
             for(int i=0; i<5; i++) {
               tmp[i] = sel.selReg(sel.reg(FAMILY_DWORD));
@@ -2325,7 +2325,7 @@ namespace gbe
           sel.pop();
           break;
         case OP_SHL:
-          if (type == TYPE_S64 || type == TYPE_U64) {
+          if ((type == Type::TYPE_U64 || type == Type::TYPE_S64) && !sel.hasLongType()) {
             GenRegister tmp[6];
             for(int i = 0; i < 6; i ++)
               tmp[i] = sel.selReg(sel.reg(FAMILY_DWORD));
@@ -2338,7 +2338,7 @@ namespace gbe
             sel.SHL(dst, src0, src1);
           break;
         case OP_SHR:
-          if (type == TYPE_S64 || type == TYPE_U64) {
+          if ((type == Type::TYPE_U64 || type == Type::TYPE_S64) && !sel.hasLongType()) {
             GenRegister tmp[6];
             for(int i = 0; i < 6; i ++)
               tmp[i] = sel.selReg(sel.reg(FAMILY_DWORD));
@@ -2351,7 +2351,7 @@ namespace gbe
             sel.SHR(dst, src0, src1);
           break;
         case OP_ASR:
-          if (type == TYPE_S64 || type == TYPE_U64) {
+          if ((type == Type::TYPE_U64 || type == Type::TYPE_S64) && !sel.hasLongType()) {
             GenRegister tmp[6];
             for(int i = 0; i < 6; i ++)
               tmp[i] = sel.selReg(sel.reg(FAMILY_DWORD));

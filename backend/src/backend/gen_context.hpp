@@ -126,8 +126,8 @@ namespace gbe
     void emitLabelInstruction(const SelectionInstruction &insn);
     virtual void emitUnaryInstruction(const SelectionInstruction &insn);
     virtual void emitUnaryWithTempInstruction(const SelectionInstruction &insn);
-    void emitBinaryInstruction(const SelectionInstruction &insn);
-    void emitBinaryWithTempInstruction(const SelectionInstruction &insn);
+    virtual void emitBinaryInstruction(const SelectionInstruction &insn);
+    virtual void emitBinaryWithTempInstruction(const SelectionInstruction &insn);
     void emitTernaryInstruction(const SelectionInstruction &insn);
     void emitI64MULHIInstruction(const SelectionInstruction &insn);
     void emitI64MADSATInstruction(const SelectionInstruction &insn);

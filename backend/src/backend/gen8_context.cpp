@@ -71,6 +71,33 @@ namespace gbe
     }
   }
 
+  void Gen8Context::emitBinaryInstruction(const SelectionInstruction &insn) {
+    switch (insn.opcode) {
+      case SEL_OP_SEL_INT64:
+      case SEL_OP_I64AND:
+      case SEL_OP_I64OR:
+      case SEL_OP_I64XOR:
+        /* Should never come to here, just use the common OPCODE. */
+        GBE_ASSERT(0);
+        break;
+      default:
+        GenContext::emitBinaryInstruction(insn);
+    }
+  }
+
+  void Gen8Context::emitBinaryWithTempInstruction(const SelectionInstruction &insn)
+  {
+    switch (insn.opcode) {
+      case SEL_OP_I64ADD:
+      case SEL_OP_I64SUB:
+        /* Should never come to here, just use the common OPCODE. */
+        GBE_ASSERT(0);
+        break;
+      default:
+        GenContext::emitBinaryWithTempInstruction(insn);
+    }
+  }
+
   void Gen8Context::packLongVec(GenRegister unpacked, GenRegister packed, uint32_t simd)
   {
     GBE_ASSERT(packed.subnr == 0);

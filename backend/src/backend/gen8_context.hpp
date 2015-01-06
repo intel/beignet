@@ -50,6 +50,8 @@ namespace gbe
 
     virtual void emitUnaryInstruction(const SelectionInstruction &insn);
     virtual void emitUnaryWithTempInstruction(const SelectionInstruction &insn);
+    virtual void emitBinaryInstruction(const SelectionInstruction &insn);
+    virtual void emitBinaryWithTempInstruction(const SelectionInstruction &insn);
     virtual void emitWrite64Instruction(const SelectionInstruction &insn);
     virtual void emitRead64Instruction(const SelectionInstruction &insn);
   protected:
