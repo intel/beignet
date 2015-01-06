@@ -173,6 +173,7 @@ set (utests_sources
   runtime_compile_link.cpp
   compiler_long.cpp
   compiler_long_2.cpp
+  compiler_long_hi_sat.cpp
   compiler_long_convert.cpp
   compiler_long_shl.cpp
   compiler_long_shr.cpp
