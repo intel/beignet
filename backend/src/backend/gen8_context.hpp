@@ -48,6 +48,8 @@ namespace gbe
     /*! Get the pointer argument size for curbe alloc */
     virtual uint32_t getPointerSize(void) { return 8; }
 
+    virtual void emitUnaryInstruction(const SelectionInstruction &insn);
+    virtual void emitUnaryWithTempInstruction(const SelectionInstruction &insn);
     virtual void emitWrite64Instruction(const SelectionInstruction &insn);
     virtual void emitRead64Instruction(const SelectionInstruction &insn);
   protected:

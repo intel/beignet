@@ -51,6 +51,26 @@ namespace gbe
     this->sel = GBE_NEW(Selection8, *this);
   }
 
+  void Gen8Context::emitUnaryInstruction(const SelectionInstruction &insn)
+  {
+    switch (insn.opcode) {
+      case SEL_OP_CONVI64_TO_I:
+
+      default:
+        GenContext::emitUnaryInstruction(insn);
+    }
+  }
+
+  void Gen8Context::emitUnaryWithTempInstruction(const SelectionInstruction &insn)
+  {
+    switch (insn.opcode) {
+      case SEL_OP_CONVI_TO_I64:
+
+      default:
+        GenContext::emitUnaryWithTempInstruction(insn);
+    }
+  }
+
   void Gen8Context::packLongVec(GenRegister unpacked, GenRegister packed, uint32_t simd)
   {
     GBE_ASSERT(packed.subnr == 0);
