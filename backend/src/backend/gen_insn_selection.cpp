@@ -342,6 +342,8 @@ namespace gbe
     INLINE bool spillRegs(const SpilledRegs &spilledRegs, uint32_t registerPool);
     bool has32X32Mul() const { return bHas32X32Mul; }
     void setHas32X32Mul(bool b) { bHas32X32Mul = b; }
+    bool hasLongType() const { return bHasLongType; }
+    void setHasLongType(bool b) { bHasLongType = b; }
     /*! indicate whether a register is a scalar/uniform register. */
     INLINE bool isScalarReg(const ir::Register &reg) const {
       const ir::RegisterData &regData = getRegisterData(reg);
@@ -627,6 +629,7 @@ namespace gbe
     /*! Auxiliary label for if/endif. */ 
     uint16_t currAuxLabel;
     bool bHas32X32Mul;
+    bool bHasLongType;
     INLINE ir::LabelIndex newAuxLabel()
     {
       currAuxLabel++;
@@ -666,7 +669,7 @@ namespace gbe
     curr(ctx.getSimdWidth()), file(ctx.getFunction().getRegisterFile()),
     maxInsnNum(ctx.getFunction().getLargestBlockSize()), dagPool(maxInsnNum),
     stateNum(0), vectorNum(0), bwdCodeGeneration(false), currAuxLabel(ctx.getFunction().labelNum()),
-    bHas32X32Mul(false)
+    bHas32X32Mul(false), bHasLongType(false)
   {
     const ir::Function &fn = ctx.getFunction();
     this->regNum = fn.regNum();
@@ -986,7 +989,13 @@ namespace gbe
       case FAMILY_WORD: SEL_REG(uw16grf, uw8grf, uw1grf); break;
       case FAMILY_BYTE: SEL_REG(ub16grf, ub8grf, ub1grf); break;
       case FAMILY_DWORD: SEL_REG(f16grf, f8grf, f1grf); break;
-      case FAMILY_QWORD: SEL_REG(df16grf, df8grf, df1grf); break;
+      case FAMILY_QWORD:
+        if (!this->hasLongType()) {
+          SEL_REG(df16grf, df8grf, df1grf);
+        } else {
+          SEL_REG(ul16grf, ul8grf, ul1grf);
+        }
+        break;
       default: NOT_SUPPORTED;
     }
     GBE_ASSERT(false);
@@ -1746,6 +1755,7 @@ namespace gbe
 
   Selection8::Selection8(GenContext &ctx) : Selection(ctx) {
     this->opaque->setHas32X32Mul(true);
+    this->opaque->setHasLongType(true);
   }
 
   void Selection::Opaque::TYPED_WRITE(GenRegister *msgs, uint32_t msgNum,
