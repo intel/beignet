@@ -174,6 +174,7 @@ set (utests_sources
   compiler_long.cpp
   compiler_long_2.cpp
   compiler_long_hi_sat.cpp
+  compiler_long_div.cpp
   compiler_long_convert.cpp
   compiler_long_shl.cpp
   compiler_long_shr.cpp
