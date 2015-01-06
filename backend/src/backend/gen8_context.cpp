@@ -218,6 +218,154 @@ namespace gbe
     }
   }
 
+  void Gen8Context::emitI64MADSATInstruction(const SelectionInstruction &insn)
+  {
+    GenRegister src0 = ra->genReg(insn.src(0));
+    GenRegister src1 = ra->genReg(insn.src(1));
+    GenRegister src2 = ra->genReg(insn.src(2));
+    GenRegister dst_l = ra->genReg(insn.dst(0));
+    GenRegister dst_h = ra->genReg(insn.dst(1));
+    GenRegister s0_abs = ra->genReg(insn.dst(2));
+    GenRegister s1_abs = ra->genReg(insn.dst(3));
+    GenRegister tmp0 = ra->genReg(insn.dst(4));
+    GenRegister tmp1 = ra->genReg(insn.dst(5));
+    GenRegister sign = ra->genReg(insn.dst(6));
+    GenRegister flagReg = GenRegister::flag(insn.state.flag, insn.state.subFlag);
+
+    if (src0.type == GEN_TYPE_UL) {
+      /* Always should be the same long type. */
+      GBE_ASSERT(src1.type == GEN_TYPE_UL);
+      GBE_ASSERT(src2.type == GEN_TYPE_UL);
+      dst_l.type = dst_h.type = GEN_TYPE_UL;
+      tmp0.type = tmp1.type = GEN_TYPE_UL;
+      calculateFullU64MUL(p, src0, src1, dst_h, dst_l, tmp0, tmp1);
+
+      /* Inplement the logic:
+      dst_l += src2;
+      if (dst_h)
+        dst_l = 0xFFFFFFFFFFFFFFFFULL;
+      if (dst_l < src2)  // carry if overflow
+        dst_l = 0xFFFFFFFFFFFFFFFFULL;
+      */
+      p->ADD(dst_l, dst_l, src2);
+
+      p->push();
+      p->curr.predicate = GEN_PREDICATE_NONE;
+      p->curr.noMask = 1;
+      p->curr.useFlag(flagReg.flag_nr(), flagReg.flag_subnr());
+      p->CMP(GEN_CONDITIONAL_NZ, dst_h, GenRegister::immud(0), tmp0);
+      p->curr.noMask = 0;
+      p->MOV(dst_l, GenRegister::immuint64(0xFFFFFFFFFFFFFFFF));
+      p->pop();
+
+      p->push();
+      p->curr.predicate = GEN_PREDICATE_NONE;
+      p->curr.noMask = 1;
+      p->curr.useFlag(flagReg.flag_nr(), flagReg.flag_subnr());
+      p->CMP(GEN_CONDITIONAL_L, dst_l, src2, tmp0);
+      p->curr.noMask = 0;
+      p->MOV(dst_l, GenRegister::immuint64(0xFFFFFFFFFFFFFFFF));
+      p->pop();
+    } else {
+      GBE_ASSERT(src0.type == GEN_TYPE_L);
+      GBE_ASSERT(src1.type == GEN_TYPE_L);
+      GBE_ASSERT(src2.type == GEN_TYPE_L);
+
+      calculateFullS64MUL(p, src0, src1, dst_h, dst_l, s0_abs, s1_abs, tmp0,
+                          tmp1, sign, flagReg);
+
+      GenRegister sum = sign;
+      sum.type = GEN_TYPE_UL;
+      src2.type = GEN_TYPE_L;
+      dst_l.type = GEN_TYPE_UL;
+      p->NOP();
+      p->ADD(sum, src2, dst_l);
+
+      /* Implement this logic:
+      if(src2 >= 0) {
+        if(dst_l > sum) {
+          dst_h++;
+          if(CL_LONG_MIN == dst_h) {
+            dst_h = CL_LONG_MAX;
+            sum = CL_ULONG_MAX;
+          }
+        }
+      } */
+      p->push();
+      p->curr.predicate = GEN_PREDICATE_NONE;
+      p->curr.noMask = 1;
+      p->curr.useFlag(flagReg.flag_nr(), flagReg.flag_subnr());
+      p->CMP(GEN_CONDITIONAL_GE, src2, GenRegister::immud(0), tmp1);
+      p->curr.noMask = 0;
+      p->curr.predicate = GEN_PREDICATE_NORMAL;
+      p->CMP(GEN_CONDITIONAL_G, dst_l, sum, tmp1);
+      p->ADD(dst_h, dst_h, GenRegister::immud(1));
+      p->MOV(tmp0, GenRegister::immint64(-0x7FFFFFFFFFFFFFFFLL - 1LL));
+      p->CMP(GEN_CONDITIONAL_EQ, dst_h, tmp0, tmp1);
+      p->MOV(dst_h, GenRegister::immint64(0x7FFFFFFFFFFFFFFFLL));
+      p->MOV(sum, GenRegister::immuint64(0xFFFFFFFFFFFFFFFFULL));
+      p->pop();
+      p->NOP();
+
+      /* Implement this logic:
+      else {
+        if(dst_l < sum) {
+          dst_h--;
+          if(CL_LONG_MAX == dst_h) {
+            dst_h = CL_LONG_MIN;
+            sum = 0;
+          }
+        }
+      } */
+      p->push();
+      p->curr.predicate = GEN_PREDICATE_NONE;
+      p->curr.noMask = 1;
+      p->curr.useFlag(flagReg.flag_nr(), flagReg.flag_subnr());
+      p->CMP(GEN_CONDITIONAL_L, src2, GenRegister::immud(0), tmp1);
+      p->curr.noMask = 0;
+      p->curr.predicate = GEN_PREDICATE_NORMAL;
+      p->CMP(GEN_CONDITIONAL_L, dst_l, sum, tmp1);
+      p->ADD(dst_h, dst_h, GenRegister::immd(-1));
+      p->MOV(tmp0, GenRegister::immint64(0x7FFFFFFFFFFFFFFFLL));
+      p->CMP(GEN_CONDITIONAL_EQ, dst_h, tmp0, tmp1);
+      p->MOV(dst_h, GenRegister::immint64(-0x7FFFFFFFFFFFFFFFLL - 1LL));
+      p->MOV(sum, GenRegister::immud(0));
+      p->pop();
+      p->NOP();
+
+      /* saturate logic:
+      if(dst_h > 0)
+        sum = CL_LONG_MAX;
+      else if(dst_h < -1)
+        sum = CL_LONG_MIN;
+      cl_long result = (cl_long) sum; */
+      p->MOV(dst_l, sum);
+
+      dst_h.type = GEN_TYPE_L;
+      p->push();
+      p->curr.predicate = GEN_PREDICATE_NONE;
+      p->curr.noMask = 1;
+      p->curr.useFlag(flagReg.flag_nr(), flagReg.flag_subnr());
+      p->CMP(GEN_CONDITIONAL_G, dst_h, GenRegister::immud(0), tmp1);
+      p->curr.noMask = 0;
+      p->curr.predicate = GEN_PREDICATE_NORMAL;
+      p->MOV(dst_l, GenRegister::immint64(0x7FFFFFFFFFFFFFFFLL));
+      p->pop();
+      p->NOP();
+
+      p->push();
+      p->curr.predicate = GEN_PREDICATE_NONE;
+      p->curr.noMask = 1;
+      p->curr.useFlag(flagReg.flag_nr(), flagReg.flag_subnr());
+      p->CMP(GEN_CONDITIONAL_L, dst_h, GenRegister::immd(-1), tmp1);
+      p->curr.noMask = 0;
+      p->curr.predicate = GEN_PREDICATE_NORMAL;
+      p->MOV(dst_l, GenRegister::immint64(-0x7FFFFFFFFFFFFFFFLL - 1LL));
+      p->pop();
+      p->NOP();
+    }
+  }
+
   void Gen8Context::emitI64MULInstruction(const SelectionInstruction &insn)
   {
     GenRegister src0 = ra->genReg(insn.src(0));

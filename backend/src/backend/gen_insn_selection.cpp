@@ -527,7 +527,7 @@ namespace gbe
     /*! Convert 64-bit integer to 32-bit float */
     void CONVF_TO_I64(Reg dst, Reg src, GenRegister tmp[2]);
     /*! Saturated 64bit x*y + z */
-    void I64MADSAT(Reg dst, Reg src0, Reg src1, Reg src2, GenRegister tmp[9]);
+    void I64MADSAT(Reg dst, Reg src0, Reg src1, Reg src2, GenRegister* tmp, int tmp_num);
     /*! High 64bit of x*y */
     void I64_MUL_HI(Reg dst, Reg src0, Reg src1, GenRegister *tmp, int tmp_num);
     /*! (x+y)>>1 without mod. overflow */
@@ -1477,13 +1477,13 @@ namespace gbe
       insn->dst(i + 1) = tmp[i];
   }
 
-  void Selection::Opaque::I64MADSAT(Reg dst, Reg src0, Reg src1, Reg src2, GenRegister tmp[9]) {
-    SelectionInstruction *insn = this->appendInsn(SEL_OP_I64MADSAT, 10, 3);
+  void Selection::Opaque::I64MADSAT(Reg dst, Reg src0, Reg src1, Reg src2, GenRegister *tmp, int tmp_num) {
+    SelectionInstruction *insn = this->appendInsn(SEL_OP_I64MADSAT, tmp_num + 1, 3);
     insn->dst(0) = dst;
     insn->src(0) = src0;
     insn->src(1) = src1;
     insn->src(2) = src2;
-    for(int i = 0; i < 9; i ++)
+    for(int i = 0; i < tmp_num; i ++)
       insn->dst(i + 1) = tmp[i];
   }
 
@@ -4060,17 +4060,27 @@ namespace gbe
       switch(insn.getOpcode()) {
         case OP_I64MADSAT:
          {
-          GenRegister tmp[9];
-          for(int i=0; i<9; i++) {
-            tmp[i] = sel.selReg(sel.reg(FAMILY_DWORD));
-            tmp[i].type = GEN_TYPE_UD;
-          }
-          sel.push();
-            sel.curr.flag = 0;
-            sel.curr.subFlag = 1;
-            sel.I64MADSAT(dst, src0, src1, src2, tmp);
-          sel.pop();
-          break;
+           GenRegister tmp[9];
+           int tmp_num;
+           if (!sel.hasLongType()) {
+             tmp_num = 9;
+             for(int i=0; i<9; i++) {
+               tmp[i] = sel.selReg(sel.reg(FAMILY_DWORD));
+               tmp[i].type = GEN_TYPE_UD;
+             }
+           } else {
+             tmp_num = 6;
+             for(int i=0; i<6; i++) {
+               tmp[i] = sel.selReg(sel.reg(FAMILY_QWORD), ir::TYPE_U64);
+               tmp[i].type = GEN_TYPE_UL;
+             }
+           }
+           sel.push();
+           sel.curr.flag = 0;
+           sel.curr.subFlag = 1;
+           sel.I64MADSAT(dst, src0, src1, src2, tmp, tmp_num);
+           sel.pop();
+           break;
          }
         case OP_MAD:
          {
