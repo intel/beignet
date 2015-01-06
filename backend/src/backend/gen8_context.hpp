@@ -55,6 +55,12 @@ namespace gbe
     virtual void emitI64MULHIInstruction(const SelectionInstruction &insn);
     virtual void emitI64RHADDInstruction(const SelectionInstruction &insn);
     virtual void emitI64HADDInstruction(const SelectionInstruction &insn);
+    virtual void emitI64ShiftInstruction(const SelectionInstruction &insn);
+    virtual void emitI64CompareInstruction(const SelectionInstruction &insn);
+    virtual void emitI64SATADDInstruction(const SelectionInstruction &insn);
+    virtual void emitI64SATSUBInstruction(const SelectionInstruction &insn);
+    virtual void emitI64ToFloatInstruction(const SelectionInstruction &insn);
+    virtual void emitFloatToI64Instruction(const SelectionInstruction &insn);
     virtual void emitI64MADSATInstruction(const SelectionInstruction &insn);
 
     virtual void emitWrite64Instruction(const SelectionInstruction &insn);

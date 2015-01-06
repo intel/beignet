@@ -102,6 +102,50 @@ namespace gbe
     }
   }
 
+  void Gen8Context::emitI64ShiftInstruction(const SelectionInstruction &insn)
+  {
+    switch (insn.opcode) {
+      case SEL_OP_I64SHL:
+      case SEL_OP_I64SHR:
+      case SEL_OP_I64ASR:
+        /* Should never come to here, just use the common OPCODE. */
+        GBE_ASSERT(0);
+        break;
+      default:
+        GenContext::emitI64ShiftInstruction(insn);
+    }
+  }
+
+  void Gen8Context::emitI64CompareInstruction(const SelectionInstruction &insn)
+  {
+    /* Should never come to here, just use the common OPCODE. */
+    GBE_ASSERT(0);
+  }
+
+  void Gen8Context::emitI64SATADDInstruction(const SelectionInstruction &insn)
+  {
+    /* Should never come to here, just use the common OPCODE. */
+    GBE_ASSERT(0);
+  }
+
+  void Gen8Context::emitI64SATSUBInstruction(const SelectionInstruction &insn)
+  {
+    /* Should never come to here, just use the common OPCODE. */
+    GBE_ASSERT(0);
+  }
+
+  void Gen8Context::emitI64ToFloatInstruction(const SelectionInstruction &insn)
+  {
+    /* Should never come to here, just use the common OPCODE. */
+    GBE_ASSERT(0);
+  }
+
+  void Gen8Context::emitFloatToI64Instruction(const SelectionInstruction &insn)
+  {
+    /* Should never come to here, just use the common OPCODE. */
+    GBE_ASSERT(0);
+  }
+
   static void calculateFullU64MUL(GenEncoder* p, GenRegister src0, GenRegister src1, GenRegister dst_h,
                                   GenRegister dst_l, GenRegister s0l_s1h, GenRegister s0h_s1l)
   {

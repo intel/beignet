@@ -3506,7 +3506,7 @@ namespace gbe
         sel.curr.modFlag = 1;
         sel.curr.flagIndex = (uint16_t)dst;
         sel.curr.grfFlag = needStoreBool; // indicate whether we need to allocate grf to store this boolean.
-        if (type == TYPE_S64 || type == TYPE_U64) {
+        if ((type == TYPE_S64 || type == TYPE_U64) && !sel.hasLongType()) {
           GenRegister tmp[3];
           for(int i=0; i<3; i++)
             tmp[i] = sel.selReg(sel.reg(FAMILY_DWORD));
@@ -4059,7 +4059,7 @@ namespace gbe
         // just a hint. We need to fix it in the future.
         if (!dag0 || (sel.isScalarReg(dag0->insn.getDst(0))))
           sel.curr.externFlag = 1;
-        if(type == ir::TYPE_S64 || type == ir::TYPE_U64)
+        if((type == ir::TYPE_S64 || type == ir::TYPE_U64) && !sel.hasLongType())
           sel.SEL_INT64(dst, src0, src1);
         else
           sel.SEL(dst, src0, src1);
