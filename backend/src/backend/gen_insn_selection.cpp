@@ -569,9 +569,9 @@ namespace gbe
     /*! Atomic instruction */
     void ATOMIC(Reg dst, uint32_t function, uint32_t srcNum, Reg src0, Reg src1, Reg src2, uint32_t bti);
     /*! Read 64 bits float/int array */
-    void READ64(Reg addr, const GenRegister *dst, uint32_t elemNum, uint32_t bti);
+    void READ64(Reg addr, const GenRegister *dst, const GenRegister *tmp, uint32_t elemNum, uint32_t bti, bool native_long);
     /*! Write 64 bits float/int array */
-    void WRITE64(Reg addr, const GenRegister *src, uint32_t srcNum, uint32_t bti);
+    void WRITE64(Reg addr, const GenRegister *src, const GenRegister *tmp, uint32_t srcNum, uint32_t bti, bool native_long);
     /*! Untyped read (up to 4 elements) */
     void UNTYPED_READ(Reg addr, const GenRegister *dst, uint32_t elemNum, uint32_t bti);
     /*! Untyped write (up to 4 elements) */
@@ -1127,16 +1127,34 @@ namespace gbe
 
   void Selection::Opaque::READ64(Reg addr,
                                  const GenRegister *dst,
+                                 const GenRegister *tmp,
                                  uint32_t elemNum,
-                                 uint32_t bti)
+                                 uint32_t bti,
+                                 bool native_long)
   {
-    SelectionInstruction *insn = this->appendInsn(SEL_OP_READ64, elemNum, 1);
-    SelectionVector *srcVector = this->appendVector();
-    SelectionVector *dstVector = this->appendVector();
+    SelectionInstruction *insn = NULL;
+    SelectionVector *srcVector = NULL;
+    SelectionVector *dstVector = NULL;
 
-    // Regular instruction to encode
-    for (uint32_t elemID = 0; elemID < elemNum; ++elemID)
-      insn->dst(elemID) = dst[elemID];
+    if (!native_long) {
+      insn = this->appendInsn(SEL_OP_READ64, elemNum, 1);
+      srcVector = this->appendVector();
+      dstVector = this->appendVector();
+      // Regular instruction to encode
+      for (uint32_t elemID = 0; elemID < elemNum; ++elemID)
+        insn->dst(elemID) = dst[elemID];
+    } else {
+      insn = this->appendInsn(SEL_OP_READ64, elemNum*2, 1);
+      srcVector = this->appendVector();
+      dstVector = this->appendVector();
+
+      for (uint32_t elemID = 0; elemID < elemNum; ++elemID)
+        insn->dst(elemID) = tmp[elemID];
+
+      for (uint32_t elemID = 0; elemID < elemNum; ++elemID)
+        insn->dst(elemID + elemNum) = dst[elemID];
+    }
+
     insn->src(0) = addr;
     insn->setbti(bti);
     insn->extra.elem = elemNum;
@@ -1179,23 +1197,52 @@ namespace gbe
 
   void Selection::Opaque::WRITE64(Reg addr,
                                   const GenRegister *src,
+                                  const GenRegister *tmp,
                                   uint32_t srcNum,
-                                  uint32_t bti)
+                                  uint32_t bti,
+                                  bool native_long)
   {
-    SelectionInstruction *insn = this->appendInsn(SEL_OP_WRITE64, 0, srcNum + 1);
-    SelectionVector *vector = this->appendVector();
+    SelectionVector *vector = NULL;
+    SelectionInstruction *insn = NULL;
 
-    // Regular instruction to encode
-    insn->src(0) = addr;
-    for (uint32_t elemID = 0; elemID < srcNum; ++elemID)
-      insn->src(elemID + 1) = src[elemID];
+    if (!native_long) {
+      insn = this->appendInsn(SEL_OP_WRITE64, 0, srcNum + 1);
+      vector = this->appendVector();
+      // Regular instruction to encode
+      insn->src(0) = addr;
+      for (uint32_t elemID = 0; elemID < srcNum; ++elemID)
+        insn->src(elemID + 1) = src[elemID];
 
-    insn->setbti(bti);
-    insn->extra.elem = srcNum;
+      insn->setbti(bti);
+      insn->extra.elem = srcNum;
 
-    vector->regNum = srcNum + 1;
-    vector->reg = &insn->src(0);
-    vector->isSrc = 1;
+      vector->regNum = srcNum + 1;
+      vector->reg = &insn->src(0);
+      vector->isSrc = 1;
+    } else { // handle the native long case
+      insn = this->appendInsn(SEL_OP_WRITE64, srcNum, srcNum*2 + 1);
+      vector = this->appendVector();
+
+      insn->src(0) = addr;
+      for (uint32_t elemID = 0; elemID < srcNum; ++elemID)
+        insn->src(elemID) = src[elemID];
+
+      insn->src(srcNum) = addr;
+      for (uint32_t elemID = 0; elemID < srcNum; ++elemID)
+        insn->src(srcNum + 1 + elemID) = tmp[0];
+
+      /* We also need to add the tmp reigster to dst, in order
+         to avoid the post schedule error . */
+      for (uint32_t elemID = 0; elemID < srcNum; ++elemID)
+        insn->dst(elemID) = tmp[0];
+
+      insn->setbti(bti);
+      insn->extra.elem = srcNum;
+
+      vector->regNum = srcNum + 1;
+      vector->reg = &insn->src(srcNum);
+      vector->isSrc = 1;
+    }
   }
 
   void Selection::Opaque::UNTYPED_WRITE(Reg addr,
@@ -2932,7 +2979,17 @@ namespace gbe
       GenRegister tmpAddr = getRelativeAddress(sel, addr, bti.bti[0]);
       for ( uint32_t dstID = 0; dstID < valueNum; ++dstID)
         dst[dstID] = sel.selReg(insn.getValue(dstID), ir::TYPE_U64);
-      sel.READ64(tmpAddr, dst.data(), valueNum, bti.bti[0]);
+
+      if (sel.hasLongType()) {
+        vector<GenRegister> tmp(valueNum);
+        for (uint32_t valueID = 0; valueID < valueNum; ++valueID) {
+          tmp[valueID] = GenRegister::retype(sel.selReg(sel.reg(ir::FAMILY_QWORD), ir::TYPE_U64), GEN_TYPE_UL);
+        }
+
+        sel.READ64(tmpAddr, dst.data(), tmp.data(), valueNum, bti.bti[0], true);
+      } else {
+        sel.READ64(tmpAddr, dst.data(), NULL, valueNum, bti.bti[0], false);
+      }
     }
 
     void readByteAsDWord(Selection::Opaque &sel,
@@ -3247,7 +3304,16 @@ namespace gbe
 
       for (uint32_t valueID = 0; valueID < valueNum; ++valueID)
         src[valueID] = sel.selReg(insn.getValue(valueID), ir::TYPE_U64);
-      sel.WRITE64(addr, src.data(), valueNum, bti);
+
+      if (sel.hasLongType()) {
+        vector<GenRegister> tmp(valueNum);
+        for (uint32_t valueID = 0; valueID < valueNum; ++valueID) {
+          tmp[valueID] = GenRegister::retype(sel.selReg(sel.reg(ir::FAMILY_QWORD), ir::TYPE_U64), GEN_TYPE_UL);
+        }
+        sel.WRITE64(addr, src.data(), tmp.data(), valueNum, bti, true);
+      } else {
+        sel.WRITE64(addr, src.data(), NULL, valueNum, bti, false);
+      }
     }
 
     void emitByteScatter(Selection::Opaque &sel,

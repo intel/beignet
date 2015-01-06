@@ -109,4 +109,42 @@ namespace gbe
     p->pop();
   }
 
+  void Gen8Context::emitRead64Instruction(const SelectionInstruction &insn)
+  {
+    const uint32_t bti = insn.getbti();
+    const uint32_t elemNum = insn.extra.elem;
+    GBE_ASSERT(elemNum == 1);
+
+    const GenRegister addr = ra->genReg(insn.src(0));
+    const GenRegister tmp_dst = ra->genReg(insn.dst(0));
+
+    /* Because BDW's store and load send instructions for 64 bits require the bti to be surfaceless,
+       which we can not accept. We just fallback to 2 DW untyperead here. */
+    p->UNTYPED_READ(tmp_dst, addr, bti, elemNum*2);
+
+    for (uint32_t elemID = 0; elemID < elemNum; elemID++) {
+      GenRegister long_tmp = ra->genReg(insn.dst(elemID));
+      GenRegister the_long = ra->genReg(insn.dst(elemID + elemNum));
+      this->packLongVec(long_tmp, the_long, p->curr.execWidth);
+    }
+  }
+
+  void Gen8Context::emitWrite64Instruction(const SelectionInstruction &insn)
+  {
+    const uint32_t bti = insn.getbti();
+    const uint32_t elemNum = insn.extra.elem;
+    GBE_ASSERT(elemNum == 1);
+
+    const GenRegister addr = ra->genReg(insn.src(elemNum));
+
+    /* Because BDW's store and load send instructions for 64 bits require the bti to be surfaceless,
+       which we can not accept. We just fallback to 2 DW untypewrite here. */
+    for (uint32_t elemID = 0; elemID < elemNum; elemID++) {
+      GenRegister the_long = ra->genReg(insn.src(elemID));
+      GenRegister long_tmp = ra->genReg(insn.src(elemNum + 1 + elemID));
+      this->unpackLongVec(the_long, long_tmp, p->curr.execWidth);
+    }
+
+    p->UNTYPED_WRITE(addr, bti, elemNum*2);
+  }
 }
