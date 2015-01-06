@@ -331,11 +331,15 @@ namespace gbe
       gen8_insn->bits2.da1.src0_negate = reg.negation;
       gen8_insn->bits2.da1.src0_address_mode = reg.address_mode;
       if (reg.file == GEN_IMMEDIATE_VALUE) {
-        gen8_insn->bits3.ud = reg.value.ud;
-
-        /* Required to set some fields in src1 as well: */
-        gen8_insn->bits2.da1.src1_reg_file = 0; /* arf */
-        gen8_insn->bits2.da1.src1_reg_type = reg.type;
+        if (reg.type == GEN_TYPE_L || reg.type == GEN_TYPE_UL) {
+          gen8_insn->bits3.ud = (uint32_t)(reg.value.i64 >> 32);
+          gen8_insn->bits2.ud = (uint32_t)(reg.value.i64);
+        } else {
+          gen8_insn->bits3.ud = reg.value.ud;
+          /* Required to set some fields in src1 as well: */
+          gen8_insn->bits2.da1.src1_reg_file = 0; /* arf */
+          gen8_insn->bits2.da1.src1_reg_type = reg.type;
+        }
       }
       else {
         if (gen8_insn->header.access_mode == GEN_ALIGN_1) {

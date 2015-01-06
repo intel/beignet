@@ -232,6 +232,8 @@ union Gen8NativeInstruction
       struct {
         uint32_t uip:32;
       } gen8_branch;
+
+      uint32_t ud;
     } bits2;
 
     union {
